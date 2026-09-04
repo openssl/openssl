@@ -241,6 +241,30 @@ static BN_ULONG is_one(const BIGNUM *z)
  * operations. Then remove ECP_NISTZ256_REFERENCE_IMPLEMENTATION
  * and never define it again. (The correct macro denoting presence of
  * ecp_nistz256 module is ECP_NISTZ256_ASM.)
+ *
+ * riscv64 is a deliberate, reviewed exception to "never define it again":
+ * crypto/ec/asm/ecp_nistz256-riscv64.pl supplies only the field-level
+ * primitives (mul_mont, sqr_mont, add, sub, ...), which dominate the cost
+ * of a scalar multiplication, while point_double/point_add/point_add_affine
+ * below keep running as portable C rather than gaining a dedicated riscv64
+ * assembly implementation. This is expected to remain the case until (or
+ * unless) someone writes riscv64 point-level assembly; unlike the other
+ * ports, it is not a temporary bring-up scaffold on riscv64.
+ *
+ * This makes the constant-time behaviour of this C code load-bearing for a
+ * production configuration for the first time, which deserves being made
+ * explicit here rather than left implicit: the "obviously not
+ * constant-time" branch in point_add() below (guarded by
+ * is_equal(U1,U2) & ~in1infty & ~in2infty & is_equal(S1,S2)) is the same
+ * shortcut every other architecture's assembly also avoids taking, on the
+ * same grounds -- it is only reachable when the two points passed to
+ * point_add are equal (as affine points), which does not happen along the
+ * windowed-multiplication paths in this file (ecp_nistz256_windowed_mul /
+ * ecp_nistz256_points_mul call point_add on an accumulator against table
+ * entries of independently-generated multiples of the input point, never
+ * against itself). It can matter for callers that invoke point_add()
+ * directly with attacker-influenced, potentially-equal points outside of
+ * scalar multiplication.
  */
 #ifndef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
 void ecp_nistz256_point_double(P256_POINT *r, const P256_POINT *a);
@@ -508,6 +532,62 @@ static void ecp_nistz256_point_add_affine(P256_POINT *r,
     memcpy(r->X, res_x, sizeof(res_x));
     memcpy(r->Y, res_y, sizeof(res_y));
     memcpy(r->Z, res_z, sizeof(res_z));
+}
+
+/*
+ * Portable, constant-time precomputation-table access for platforms whose
+ * assembly provides only the field arithmetic (e.g. RISC-V).  The table uses
+ * the natural layout: point/affine entries are stored contiguously, entry k
+ * at slot k.  The gather routines scan every slot with a mask so the memory
+ * access pattern is independent of the (secret) index; index 0 yields the
+ * all-zero point (the implicit infinity).
+ */
+void ecp_nistz256_scatter_w5(P256_POINT *val, const P256_POINT *in_t, int idx)
+{
+    /* idx is 1-based here (row[0] is the implicit infinity, offset -1) */
+    memcpy(&val[idx - 1], in_t, sizeof(P256_POINT));
+}
+
+void ecp_nistz256_gather_w5(P256_POINT *val, const P256_POINT *in_t, int idx)
+{
+    const size_t n = sizeof(P256_POINT) / sizeof(BN_ULONG);
+    BN_ULONG *out = (BN_ULONG *)val;
+    int i;
+
+    memset(val, 0, sizeof(P256_POINT));
+    for (i = 0; i < 16; i++) {
+        BN_ULONG mask = 0 - is_zero((BN_ULONG)(idx - (i + 1)));
+        const BN_ULONG *ent = (const BN_ULONG *)&in_t[i];
+        size_t w;
+
+        for (w = 0; w < n; w++)
+            out[w] |= ent[w] & mask;
+    }
+}
+
+void ecp_nistz256_scatter_w7(P256_POINT_AFFINE *val,
+    const P256_POINT_AFFINE *in_t, int idx)
+{
+    /* idx is 0-based here (see ecp_nistz256_mult_precompute) */
+    memcpy(&val[idx], in_t, sizeof(P256_POINT_AFFINE));
+}
+
+void ecp_nistz256_gather_w7(P256_POINT_AFFINE *val,
+    const P256_POINT_AFFINE *in_t, int idx)
+{
+    const size_t n = sizeof(P256_POINT_AFFINE) / sizeof(BN_ULONG);
+    BN_ULONG *out = (BN_ULONG *)val;
+    int i;
+
+    memset(val, 0, sizeof(P256_POINT_AFFINE));
+    for (i = 0; i < 64; i++) {
+        BN_ULONG mask = 0 - is_zero((BN_ULONG)(idx - (i + 1)));
+        const BN_ULONG *ent = (const BN_ULONG *)&in_t[i];
+        size_t w;
+
+        for (w = 0; w < n; w++)
+            out[w] |= ent[w] & mask;
+    }
 }
 #endif
 
