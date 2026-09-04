@@ -724,6 +724,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     tmp_altname = X509_get_ext_d2i(const_x, NID_subject_alt_name, &i, NULL);
     if (tmp_altname == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
+    GENERAL_NAMES_free(tmp_altname);
     tmp_nc = X509_get_ext_d2i(const_x, NID_name_constraints, &i, NULL);
     if (tmp_nc == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
@@ -779,8 +780,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->skid = tmp_skid;
     AUTHORITY_KEYID_free(((X509 *)const_x)->akid);
     ((X509 *)const_x)->akid = tmp_akid;
-    sk_GENERAL_NAME_pop_free(((X509 *)const_x)->altname, GENERAL_NAME_free);
-    ((X509 *)const_x)->altname = tmp_altname;
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
     /*
