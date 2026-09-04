@@ -971,6 +971,39 @@ err:
     return testresult;
 }
 
+/*
+ * A certificate modified after it was decoded is refused, even as its own
+ * trust anchor.
+ */
+static int test_verify_unfinalized(void)
+{
+    X509 *cert = NULL;
+    X509_EXTENSION *ext = NULL;
+    STACK_OF(X509) *trusted = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cert = load_cert_pem(root_f, NULL))
+        || !TEST_ptr(ext = X509_delete_ext(cert, 0))
+        || !TEST_ptr(trusted = sk_X509_new_null())
+        || !TEST_true(X509_add_cert(trusted, cert, X509_ADD_FLAG_UP_REF))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, NULL, cert, NULL)))
+        goto err;
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+    X509_VERIFY_PARAM_set_flags(X509_STORE_CTX_get0_param(ctx),
+        X509_V_FLAG_PARTIAL_CHAIN);
+    ret = TEST_int_eq(X509_verify_cert(ctx), -1)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx), X509_V_ERR_INVALID_CALL);
+
+err:
+    X509_STORE_CTX_free(ctx);
+    OSSL_STACK_OF_X509_free(trusted);
+    X509_EXTENSION_free(ext);
+    X509_free(cert);
+    return ret;
+}
+
 static int test_store_ctx_default_libctx(void)
 {
     return do_test_store_ctx_libctx(0, 1, X509_V_OK);
@@ -1223,6 +1256,7 @@ int setup_tests(void)
     ADD_TEST(test_invalid_name_constraints);
     ADD_TEST(test_invalid_subject_alt_name);
     ADD_TEST(test_store_ctx);
+    ADD_TEST(test_verify_unfinalized);
     ADD_TEST(test_distinguishing_id);
     ADD_TEST(test_req_distinguishing_id);
     ADD_TEST(test_self_signed_good);
