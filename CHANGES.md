@@ -27,10 +27,10 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 4.1
+OpenSSL 4.2
 -----------
 
-### Changes between 4.0 and 4.1 [xx XXX xxxx]
+### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
  * A certificate's cached extension information is now populated only when
    the certificate is finalized (decoded or signed), no longer on first use.
@@ -43,6 +43,12 @@ OpenSSL 4.1
 
    *Bob Beck*
 
+ * A certificate that has not been signed is now encoded by `i2d_X509()` as
+   an unsigned certificate (RFC 9925), with `id-alg-unsigned` as the signature
+   algorithm and an empty signature, instead of failing to encode.
+
+   *Bob Beck*
+
  * A certificate whose subjectAltName, nameConstraints,
    cRLDistributionPoints, or RFC 3779 IP address block or AS identifier
    extension cannot be decoded is no longer marked `EXFLAG_INVALID` when
@@ -50,6 +56,11 @@ OpenSSL 4.1
    it, and the verification fails there instead.
 
    *Bob Beck*
+
+OpenSSL 4.1
+-----------
+
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
