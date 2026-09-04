@@ -280,6 +280,10 @@ void OSSL_FN_CTX_peak_usage(const OSSL_FN_CTX *ctx, size_t *peak_n_frames,
 /**
  * Free an OSSL_FN_CTX.
  *
+ * The whole context allocation, including the arena and everything that
+ * was carved out of it, is cleansed before being freed, so clearing of
+ * temporary numbers comes for free with the freeing of the context.
+ *
  * @param[in]   ctx     The OSSL_FN_CTX to be freed.  This may be NULL.
  */
 void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx);
