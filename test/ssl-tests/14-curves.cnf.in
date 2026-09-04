@@ -10,39 +10,82 @@ use warnings;
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 
+# Set in test/generate_ssl_tests.pl:read_config()
 our $fips_mode;
 our $fips_3_4;
 our $fips_3_5;
+our $fips_4_2;
 
-my @curves = ("prime256v1", "secp384r1", "secp521r1");
+my @curves = qw(
+    prime256v1
+    secp384r1
+    secp521r1
+    ) unless (disabled("ec"));
 
-my @curves_no_fips = ("X25519", "X448");
+my @curves_no_fips;
+push @curves_no_fips, qw(
+    X25519
+    X448
+    ) unless (disabled("ecx"));
 
 push @curves, @curves_no_fips if !$fips_mode;
 
+#Curves suitable for for both TLS 1.2 and TLS 1.3
+my @curves_tls = qw(
+    ffdhe2048
+    ffdhe3072
+    ffdhe4096
+    ffdhe6144
+    ffdhe8192
+    ) unless (disabled("dh"));
+
 #Curves *only* suitable for use in TLSv1.3
-my @curves_tls_1_3 = ("ffdhe2048", "ffdhe3072", "ffdhe4096", "ffdhe6144",
-                      "ffdhe8192");
-my @curves_tls_1_3_no_fips = ("brainpoolP256r1tls13", "brainpoolP384r1tls13",
-                              "brainpoolP512r1tls13");
+my @curves_tls_1_3 = @curves_tls;
+
+my @curves_tls_1_3_no_fips;
+push @curves_tls_1_3_no_fips, qw(
+    brainpoolP256r1tls13
+    brainpoolP384r1tls13
+    brainpoolP512r1tls13
+    ) unless (disabled("ec"));
 
 push @curves_tls_1_3, @curves_tls_1_3_no_fips if !$fips_mode;
 push @curves, @curves_tls_1_3;
 
-my @curves_tls_1_2 = ();
-push @curves_tls_1_2,
-    "sect233k1", "sect233r1", "sect283k1", "sect283r1", "sect409k1",
-    "sect409r1", "sect571k1", "sect571r1", "secp224r1"
-    unless ($fips_3_4 || disabled("tls-deprecated-ec"));
+my @curves_tls_1_2 = @curves_tls;
+push @curves_tls_1_2, qw(
+    sect233k1
+    sect233r1
+    sect283k1
+    sect283r1
+    sect409k1
+    sect409r1
+    sect571k1
+    sect571r1
+    secp224r1
+    ) unless ($fips_3_4 || disabled("tls-deprecated-ec"));
 
 my @curves_non_fips = ();
-push @curves_non_fips,
-    "sect163k1", "sect163r2", "prime192v1", "sect163r1", "sect193r1",
-    "sect193r2", "sect239k1", "secp160k1", "secp160r1", "secp160r2",
-    "secp192k1", "secp224k1",  "secp256k1"
-    unless disabled("tls-deprecated-ec");
-push @curves_non_fips,
-    "brainpoolP256r1", "brainpoolP384r1", "brainpoolP512r1";
+push @curves_non_fips, qw(
+    sect163k1
+    sect163r2
+    prime192v1
+    sect163r1
+    sect193r1
+    sect193r2
+    sect239k1
+    secp160k1
+    secp160r1
+    secp160r2
+    secp192k1
+    secp224k1
+    secp256k1
+    ) unless disabled("tls-deprecated-ec");
+push @curves_non_fips, qw(
+    brainpoolP256r1
+    brainpoolP384r1
+    brainpoolP512r1
+    ) unless (disabled("ec"));
 
 push @curves_tls_1_2, @curves_non_fips if !$fips_mode;
 
@@ -50,15 +93,15 @@ my @curves_no_nid = ();
 push @curves_no_nid, qw(X25519MLKEM768)
     unless (disabled("ml-kem") || disabled("ecx") || ($fips_mode && !$fips_3_5));
 push @curves_no_nid, qw(SecP256r1MLKEM768 SecP384r1MLKEM1024)
-    unless (disabled("ml-kem") || ($fips_mode && !$fips_3_5));
+    unless (disabled("ml-kem") || disabled("ec") || ($fips_mode && !$fips_3_5));
 push @curves_no_nid, qw(curveSM2)
-    unless ($fips_mode || disabled("sm2"));
+    unless (disabled("sm2") || $fips_mode);
 push @curves_no_nid, qw(curveSM2MLKEM768)
-    unless ($fips_mode || disabled("sm2") || disabled("ml-kem"));
+    unless (disabled("ml-kem") || disabled("sm2") || $fips_mode);
 push @curves_no_nid, qw(MLKEM512X25519)
-    unless (disabled("ml-kem") || disabled("ecx") || $fips_mode);
+    unless (disabled("ml-kem") || disabled("ecx") || ($fips_mode && !$fips_4_2));
 push @curves_no_nid, qw(SecP256r1MLKEM512)
-    unless (disabled("ml-kem") || $fips_mode);
+    unless (disabled("ml-kem") || disabled("ec") || ($fips_mode && !$fips_4_2));
 
 push @curves_tls_1_3, @curves_no_nid;
 push @curves, @curves_no_nid;
@@ -81,6 +124,7 @@ sub get_key_type {
 sub generate_tests() {
     foreach (0..$#curves) {
         my $curve = $curves[$_];
+        my $cipher = $curve =~ m{^ffdhe\d+$} ? "DHE" : "ECDHE";
         push @tests, {
             name => "curve-${curve}",
             server => {
@@ -89,12 +133,12 @@ sub generate_tests() {
                 "MaxProtocol" => "TLSv1.3"
             },
             client => {
-                "CipherString" => 'ECDHE@SECLEVEL=1',
+                "CipherString" => $cipher . '@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.3",
                 "Curves" => $curve
             },
             test   => {
-                "ExpectedTmpKeyType" => get_key_type($curve),
+                "ExpectedTmpKeyType" => $curve,
                 "ExpectedProtocol" => "TLSv1.3",
                 "ExpectedResult" => "Success"
             },
@@ -102,6 +146,7 @@ sub generate_tests() {
     }
     foreach (0..$#curves_tls_1_2) {
         my $curve = $curves_tls_1_2[$_];
+        my $cipher = ($curve =~ m{^ffdhe}) ? "DHE" : "ECDHE";
         push @tests, {
             name => "curve-${curve}",
             server => {
@@ -110,7 +155,7 @@ sub generate_tests() {
                 "MaxProtocol" => "TLSv1.3"
             },
             client => {
-                "CipherString" => 'ECDHE@SECLEVEL=1',
+                "CipherString" => $cipher . '@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.2",
                 "Curves" => $curve
             },
@@ -143,7 +188,7 @@ sub generate_tests() {
                 "ExpectedProtocol" => "TLSv1.3",
                 "ExpectedResult" => "Success"
             },
-        };
+        } unless $curve =~ m{^ffdhe\d+$}; # Valid in both protocols
     }
     foreach (0..$#curves_tls_1_2) {
         my $curve = $curves_tls_1_2[$_];
@@ -162,7 +207,7 @@ sub generate_tests() {
             test   => {
                 "ExpectedResult" => "ClientFail"
             },
-        };
+        } unless $curve =~ m{^ffdhe\d+$}; # Valid in both protocols
     }
     if (!$fips_3_4) {
       foreach (0..$#curves_tls_1_3) {
@@ -185,7 +230,7 @@ sub generate_tests() {
                 #ECDHE key exchange
                 "ExpectedResult" => "ServerFail"
             },
-        };
+        } unless $curve =~ m{^ffdhe\d+$}; # Valid in both protocols
         push @tests, {
                 name => "curve-${curve}-tls13-in-tls12-2",
                 server => {
