@@ -253,11 +253,51 @@ struct rbuf_map_st {
     CRYPTO_RWLOCK *lock;
 };
 
+/**
+ * \defgroup peer_state Peer pairing states
+ *
+ * State values describing whether a peer is still associated with its
+ * counterpart. Stored in the peer's state field and compared for
+ * equality; the values are not a bitmask and must not be OR'd
+ * together.
+ *
+ * @{
+ */
+
+/** Peer is associated with a live counterpart. */
 #define PEER_STATE_PAIRED 0
+
+/** Peer's counterpart has gone away; the peer is unassociated. */
 #define PEER_STATE_ORPHANED 1
+/**
+ * \brief Shared state for a datagram BIO pair.
+ *
+ * Refcounted so that both ends of a pair (and any BIO holding a
+ * reference to the peer) can keep the structure alive independently.
+ * The object is freed when the last reference is dropped, and the peer_state
+ * is set to PEER_STATE_ORPHANED when either side leaves the pair, either
+ * via BIO_free() or BIO_destroy_dgram_pair()
+ *
+ * This structure is pointed to by each half of a BIO_dgram pair via the pair pointer
+ * It is only allocated and assigned when a pair is formed.
+ */
 struct bio_dgram_peer_st {
+    /**
+     * Reference count. Initialised with CRYPTO_NEW_REF() and
+     * released with CRYPTO_FREE_REF() once it reaches zero.
+     */
     CRYPTO_REF_COUNT ref_cnt;
+
+    /**
+     * Current pairing state; one of \c PEER_STATE_PAIRED or
+     * \c PEER_STATE_ORPHANED (see \ref peer_state).
+     */
     int peer_state;
+
+    /**
+     * Ring buffer mappings for the two datagram directions,
+     * indexed one per direction.
+     */
     struct rbuf_map_st map[2];
 };
 
@@ -286,6 +326,11 @@ struct bio_dgram_pair_st {
     unsigned int grows_on_write : 1; /* Set for BIO_s_dgram_mem only */
 };
 
+/*
+ * When operating as a pair, we use the shared structure to hold our ring buffers
+ * and locks to ensure that they remain allocated until the last half of a pair
+ * dissolves the pair.
+ */
 static struct rbuf_map_st *dgram_rbuf_map_get_self(struct bio_dgram_pair_st *self)
 {
     if (self->pair->map[0].self == self)
@@ -455,6 +500,13 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
         return 0;
     }
 
+    /*
+     * Create a new pair structure, init it with appropriate
+     * ring buffers and lock, and assign it to each half of the
+     * pair.
+     * Once this is done, each half of the pair uses the shared
+     * ring buffers/lock available here instead of their own private copy
+     */
     pair = OPENSSL_zalloc(sizeof(*pair));
     if (pair == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
@@ -517,10 +569,18 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
     if (ring_buf_init(&b1->rbuf, b1->req_buf_len) == 0)
         return 0;
 
+    /*
+     * Since one half of the pair is going away, we are now
+     * orphaned
+     */
     b1->pair->peer_state = PEER_STATE_ORPHANED;
     if (!CRYPTO_DOWN_REF(&b1->pair->ref_cnt, &ref))
         return 0;
     if (ref == 0) {
+        /*
+         * The last half of the pair is leaving, clean up the
+         * shared data
+         */
         CRYPTO_FREE_REF(&b1->pair->ref_cnt);
         CRYPTO_THREAD_lock_free(b1->pair->map[0].lock);
         CRYPTO_THREAD_lock_free(b1->pair->map[1].lock);
@@ -528,6 +588,10 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
         ring_buf_destroy(&b1->pair->map[1].rbuf);
         OPENSSL_free(b1->pair);
     }
+    /*
+     * Make sure the leaving pair no longer references the shared peer data,
+     * since it is no longer part of the pair.
+     */
     b1->pair = NULL;
     return 1;
 }
