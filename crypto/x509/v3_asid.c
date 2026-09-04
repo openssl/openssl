@@ -775,6 +775,18 @@ int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
     } while (0)
 
 /*
+ * Decode the AS identifier extension of x into *pext, NULL if absent.
+ * Returns 1 on success, 0 if the extension is present but cannot be decoded.
+ */
+static int asid_ext_d2i(const X509 *x, ASIdentifiers **pext)
+{
+    int crit;
+
+    *pext = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, &crit, NULL);
+    return *pext != NULL || crit == -1;
+}
+
+/*
  * Core code for RFC 3779 3.3 path validation.
  */
 static int asid_validate_path_internal(X509_STORE_CTX *ctx,
@@ -782,7 +794,8 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     ASIdentifiers *ext)
 {
     ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
-    int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
+    ASIdentifiers **exts = NULL; /* per chain cert; child_* point into these */
+    int n, i, ret = 1, inherit_as = 0, inherit_rdi = 0;
     X509 *x;
 
     if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
@@ -790,6 +803,13 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
         || !ossl_assert(ctx == NULL || ctx->verify_cb != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
+    n = sk_X509_num(chain);
+    if ((exts = OPENSSL_calloc(n, sizeof(*exts))) == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+        if (ctx != NULL)
+            ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
 
@@ -804,7 +824,9 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     } else {
         i = 0;
         x = sk_X509_value(chain, i);
-        if ((ext = x->rfc3779_asid) == NULL)
+        if (!asid_ext_d2i(x, &exts[i]))
+            validation_err(X509_V_ERR_INVALID_EXTENSION);
+        if ((ext = exts[i]) == NULL)
             goto done;
     }
     if (!X509v3_asid_is_canonical(ext))
@@ -834,43 +856,46 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
      * Now walk up the chain.  Extensions must be in canonical form, no
      * cert may list resources that its parent doesn't list.
      */
-    for (i++; i < sk_X509_num(chain); i++) {
+    for (i++; i < n; i++) {
         x = sk_X509_value(chain, i);
         if (!ossl_assert(x != NULL)) {
             if (ctx != NULL)
                 ctx->error = X509_V_ERR_UNSPECIFIED;
-            return 0;
+            ret = 0;
+            goto done;
         }
-        if (x->rfc3779_asid == NULL) {
+        if (!asid_ext_d2i(x, &exts[i]))
+            validation_err(X509_V_ERR_INVALID_EXTENSION);
+        if (exts[i] == NULL) {
             if (child_as != NULL || child_rdi != NULL)
                 validation_err(X509_V_ERR_UNNESTED_RESOURCE);
             continue;
         }
-        if (!X509v3_asid_is_canonical(x->rfc3779_asid))
+        if (!X509v3_asid_is_canonical(exts[i]))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
-        if (x->rfc3779_asid->asnum == NULL && child_as != NULL) {
+        if (exts[i]->asnum == NULL && child_as != NULL) {
             validation_err(X509_V_ERR_UNNESTED_RESOURCE);
             child_as = NULL;
             inherit_as = 0;
         }
-        if (x->rfc3779_asid->asnum != NULL && x->rfc3779_asid->asnum->type == ASIdentifierChoice_asIdsOrRanges) {
+        if (exts[i]->asnum != NULL && exts[i]->asnum->type == ASIdentifierChoice_asIdsOrRanges) {
             if (inherit_as
-                || asid_contains(x->rfc3779_asid->asnum->u.asIdsOrRanges,
+                || asid_contains(exts[i]->asnum->u.asIdsOrRanges,
                     child_as)) {
-                child_as = x->rfc3779_asid->asnum->u.asIdsOrRanges;
+                child_as = exts[i]->asnum->u.asIdsOrRanges;
                 inherit_as = 0;
             } else {
                 validation_err(X509_V_ERR_UNNESTED_RESOURCE);
             }
         }
-        if (x->rfc3779_asid->rdi == NULL && child_rdi != NULL) {
+        if (exts[i]->rdi == NULL && child_rdi != NULL) {
             validation_err(X509_V_ERR_UNNESTED_RESOURCE);
             child_rdi = NULL;
             inherit_rdi = 0;
         }
-        if (x->rfc3779_asid->rdi != NULL && x->rfc3779_asid->rdi->type == ASIdentifierChoice_asIdsOrRanges) {
-            if (inherit_rdi || asid_contains(x->rfc3779_asid->rdi->u.asIdsOrRanges, child_rdi)) {
-                child_rdi = x->rfc3779_asid->rdi->u.asIdsOrRanges;
+        if (exts[i]->rdi != NULL && exts[i]->rdi->type == ASIdentifierChoice_asIdsOrRanges) {
+            if (inherit_rdi || asid_contains(exts[i]->rdi->u.asIdsOrRanges, child_rdi)) {
+                child_rdi = exts[i]->rdi->u.asIdsOrRanges;
                 inherit_rdi = 0;
             } else {
                 validation_err(X509_V_ERR_UNNESTED_RESOURCE);
@@ -884,16 +909,22 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     if (!ossl_assert(x != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
-        return 0;
+        ret = 0;
+        goto done;
     }
-    if (x->rfc3779_asid != NULL) {
-        if (x->rfc3779_asid->asnum != NULL && x->rfc3779_asid->asnum->type == ASIdentifierChoice_inherit)
+    if (exts[n - 1] != NULL) {
+        if (exts[n - 1]->asnum != NULL
+            && exts[n - 1]->asnum->type == ASIdentifierChoice_inherit)
             validation_err(X509_V_ERR_UNNESTED_RESOURCE);
-        if (x->rfc3779_asid->rdi != NULL && x->rfc3779_asid->rdi->type == ASIdentifierChoice_inherit)
+        if (exts[n - 1]->rdi != NULL
+            && exts[n - 1]->rdi->type == ASIdentifierChoice_inherit)
             validation_err(X509_V_ERR_UNNESTED_RESOURCE);
     }
 
 done:
+    for (i = 0; i < n; i++)
+        ASIdentifiers_free(exts[i]);
+    OPENSSL_free(exts);
     return ret;
 }
 
