@@ -98,8 +98,6 @@ struct X509_req_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
-    OSSL_LIB_CTX *libctx;
-    char *propq;
 };
 
 struct X509_crl_info_st {
@@ -446,8 +444,18 @@ void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
     const char **propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
-int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
-    const char *propq);
+/**
+ * @brief Get the library context and property query of a request.
+ *
+ * As for ossl_x509_get0_libctx(): the request has none of its own; the
+ * one given to X509_REQ_new_ex() is kept by its X509_PUBKEY.
+ *
+ * @param x the certificate request
+ * @param libctx where to store the library context, may be NULL
+ * @param propq where to store the property query, may be NULL
+ */
+void ossl_x509_req_get0_libctx(const X509_REQ *x, OSSL_LIB_CTX **libctx,
+    const char **propq);
 int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,
     void *data, unsigned char *md, unsigned int *len,
     OSSL_LIB_CTX *libctx, const char *propq);
