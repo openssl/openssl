@@ -491,11 +491,11 @@ SHA3_squeeze:
 
 .Loop_squeeze:
 	ldr	x4,[x0],#8
-	cmp	$len,#8
-	blo	.Lsqueeze_tail
 #ifdef	__AARCH64EB__
 	rev	x4,x4
 #endif
+	cmp	$len,#8
+	blo	.Lsqueeze_tail
 	str	x4,[$out],#8
 	subs	$len,$len,#8
 	beq	.Lsqueeze_done
@@ -546,7 +546,16 @@ SHA3_squeeze:
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
 }								}}}
+
 								{{{
+#
+# A 5*5 matrix of double words
+# Each double word represents data for 2 separate Streams.
+# Registers q0..q24 hold the state.
+# A word is 64 bits so .2d = double word
+# Note that XAR and RAX1 instructions actually use .2d not .16b
+# (since they operate on lanes - not 16 bytes)
+# This is fixed up in the foreach(split("\n",$code)) at the end of the file.
 my @A = map([ "v".$_.".16b", "v".($_+1).".16b", "v".($_+2).".16b",
                              "v".($_+3).".16b", "v".($_+4).".16b" ],
             (0, 5, 10, 15, 20));
@@ -554,6 +563,32 @@ my @A = map([ "v".$_.".16b", "v".($_+1).".16b", "v".($_+2).".16b",
 my @C = map("v$_.16b", (25..31));
 my @D = @C[4,5,6,2,3];
 
+#
+# @brief Internal KeccakF1600 function to process 2 lanes in parallel.
+# @details It does not save or restore any registers.
+#    As there are only 32 vector register to play with and 25 of them are used
+#    for just for the state, trying to interleave the permute steps nicely is
+#    tricky.
+# @param q0..q24 the input/output state of double words
+# @comment uses registers X9, X10, and q25..q31
+# @assumptions The SHA3 features eor3, rax1, xar, bcax are available
+#
+# The algorithm does 24 rounds of the following steps:
+# 1) Theta
+#    C[x] = A[x][0] ^ A[x][1] ^ A[x][2] ^ A[x][3] ^ A[x][4]
+#    D[x] = C[(x-1)%5] ^ ROTL1(C[(x+1)%5])
+#    A`[x][y] = A[x][y] ^ D[x]
+#  EOR3 can be used twice to form C[x].
+#  RAX1 is used by D[x] (rotate and XOR)
+#
+# 2) Rho and Pi
+#    B[y][(2x + 3y)%5] = ROL(A[x][y], r[x][y])
+# XAR (XOR and rotate right, to do ROL we rotate 64-x)
+# 3) Chi
+#    A`[x][y] = B[x][y] ^ (~B[(x+1)%5][y] AND B[(x+2)%5][y])
+# BCAX ((Bitwise clear = NOT) AND XOR)
+# 4) Iota
+#    A`[0][0] = A[0][0] ^ IotaRoundConstant
 $code.=<<___;
 .type	KeccakF1600_ce,%function
 .align	5
@@ -701,7 +736,6 @@ ___
 
 {
 my ($ctx,$inp,$len,$bsz) = map("x$_",(0..3));
-
 $code.=<<___;
 .globl	SHA3_absorb_cext
 .type	SHA3_absorb_cext,%function
@@ -756,11 +790,8 @@ $code.=<<___;
 	eor	$A[4][4],$A[4][4],v31.16b
 
 .Lprocess_block_ce:
-
 	bl	KeccakF1600_ce
-
 	b	.Loop_absorb_ce
-
 .align	4
 .Labsorbed_ce:
 ___
@@ -799,11 +830,11 @@ SHA3_squeeze_cext:
 
 .Loop_squeeze_ce:
 	ldr	x4,[x9],#8
-	cmp	$len,#8
-	blo	.Lsqueeze_tail_ce
 #ifdef	__AARCH64EB__
 	rev	x4,x4
 #endif
+	cmp	$len,#8
+	blo	.Lsqueeze_tail_ce
 	str	x4,[$out],#8
 	beq	.Lsqueeze_done_ce
 
@@ -852,6 +883,343 @@ SHA3_squeeze_cext:
 .size	SHA3_squeeze_cext,.-SHA3_squeeze_cext
 ___
 }								}}}
+
+{{{
+my $shake128_rate = 168; # 21 words
+my $shake256_rate = 136; # 17 words
+
+# @brief Call this at the start of a function, it saves the Frame Pointer,
+#        Return Address (LR), and the vector registers q8..q15
+#        Although the requirement is only to save the low part v8..v15,
+#        we need to save the hi part also, so that we can zeroize nicely
+#        when we are finished.
+# @param $name name of function, function_end() should have a matching name
+# @param $is_global set to 1 to indicate this function can be called externally.
+sub function_start {
+    my ($name, $is_global) = @_;
+    if ($is_global == 1) {
+$code.=<<___;
+.globl  $name
+___
+    }
+$code.=<<___;
+.type   $name,%function
+.align  5
+$name:
+    AARCH64_SIGN_LINK_REGISTER
+    stp x29,x30,[sp,#-144]!
+    add x29,sp,#0
+    stp q8,q9,[sp,#16]      // per ABI requirement
+    stp q10,q11,[sp,#48]
+    stp q12,q13,[sp,#80]
+    stp q14,q15,[sp,#112]
+___
+}
+
+# @brief Call this at the end of a function, it restores the Frame Pointer,
+#        Return Address (LR), and the vector registers q8..q15
+#        The q8..15 registers are also cleared from the stack.
+#        We restore q8..15 instead of v8..v15 because we need to clean up
+#.       q vectors when the squeeze has finished.
+# @param $name name of function, function_start() should have a matching name
+sub function_end {
+    my ($name) = @_;
+$code.=<<___;
+    eor v0.16b, v0.16b, v0.16b
+    ldp q8,q9,[sp,#16]
+    ldp q10,q11,[sp,#48]
+    ldp q12,q13,[sp,#80]
+    ldp q14,q15,[sp,#112]
+    stp q0, q0, [sp, #16]
+    stp q0, q0, [sp, #48]
+    stp q0, q0, [sp, #80]
+    stp q0, q0, [sp, #112]
+    ldp x29, x30, [sp], #144
+    AARCH64_VALIDATE_LINK_REGISTER
+    ret
+.size   $name,.-$name
+___
+}
+
+## @brief Copy aligned input to 4 vector registers representing the double word state
+##        You only can move directly into the state on the first absorb call. Subsequent
+##        absorbs require XORing into the state.
+## @param $inp Input buffer containing 2 lane Double Words. It Must be aligned to a 16 byte boundary.
+##             It is post incremented by 64 (4 double words)
+## @param $i The state double word index (Normally a multiple of 4).. Maps to q$i
+## @param $j The state double word index (Normally a (multiple of 4) + 1)
+## @param $k The state double word index (Normally a (multiple of 4) + 2)
+## @param $l The state double word index (Normally a (multiple of 4) + 3)
+sub copy_4x2_input_align16_to_qvectors {
+    my ($inp, $i, $j, $k, $l) = @_;
+$code.=<<___;
+    ldp q$i,q$j,[$inp],#32
+    ldp q$k,q$l,[$inp],#32
+___
+}
+
+## @brief Copy aligned input to 1 vector register representing the double word state
+## @param $inp Input buffer (Must be aligned to 16 byte boundary)
+##             It is not post incremented
+## @param $i The state double word index. Maps to q$i
+sub copy_1x2_input_align16_to_qvectors {
+    my ($inp, $i) = @_;
+$code.=<<___;
+    ldr q$i,[$inp]
+___
+}
+
+## @brief Copy aligned input to 21 vector register representing the double word state
+##        and clear the remaining 4 vector registers.
+## @param $inp Input buffer (Must be aligned to 16 byte boundary),
+##             It is not post incremented
+sub shake128_2x_copy_input_block_to_qvectors {
+    my ($inp) = @_;
+    copy_4x2_input_align16_to_qvectors($inp,0,1,2,3);
+    copy_4x2_input_align16_to_qvectors($inp,4,5,6,7);
+    copy_4x2_input_align16_to_qvectors($inp,8,9,10,11);
+    copy_4x2_input_align16_to_qvectors($inp,12,13,14,15);
+    copy_4x2_input_align16_to_qvectors($inp,16,17,18,19);
+    copy_1x2_input_align16_to_qvectors($inp,20);
+    zero_4_qvectors(21,22,23,24);
+}
+## @brief Copy aligned input to 17 vector register representing the double word state
+##        and clear the remaining 8 vector registers.
+## @param $inp Input buffer (Must be aligned to 16 byte boundary)
+##             It is not post incremented
+sub shake256_2x_copy_input_block_to_qvectors {
+    my ($inp) = @_;
+    copy_4x2_input_align16_to_qvectors($inp,0,1,2,3);
+    copy_4x2_input_align16_to_qvectors($inp,4,5,6,7);
+    copy_4x2_input_align16_to_qvectors($inp,8,9,10,11);
+    copy_4x2_input_align16_to_qvectors($inp,12,13,14,15);
+    copy_1x2_input_align16_to_qvectors($inp,16);
+    zero_4_qvectors(17,18,19,20);
+    zero_4_qvectors(21,22,23,24);
+}
+
+## @brief Copy $state into 25 double words in q0..q24.
+## @param $state A 5*5 state of double words (Must be aligned to 16 byte boundary).
+##               It is not post incremented.
+sub load_qvectors_from_aligned16_state {
+    my ($state) = @_;
+    for($i=0; $i<24; $i+=2) {
+        my $j=$i+1;
+        my $offs=16*$i;
+$code.=<<___;
+    ldp q$i,q$j,[$state,#$offs]
+___
+    }
+    my $offs=16*$i;
+$code.=<<___;
+    ldr q$i,[$state,#$offs]
+___
+}
+
+## @brief Save 4 Double word q vectors to $state
+## @param $state Output 5x5 double word state array (aligned to 16 byte boundary).
+##               It is not post incremented.
+## @param $i Saves to 4 vectors starting at q$i
+sub save_4_qvectors_to_aligned16_state {
+    my ($state, $i) = @_;
+    my $j = $i+1;
+    my $k = $i+2;
+    my $l = $i+3;
+$code.=<<___;
+    stp q$i,q$j,[$state,#16*$i]
+    stp q$k,q$l,[$state,#16*($i+2)]
+___
+}
+
+## @brief Save All 25 Double word q vectors to $state
+## @param $state A 5 by 5 double word state array (aligned to 16 byte boundary).
+##               It is not post incremented.
+## @param $i Saves to 4 vectors starting at q$i
+sub save_qvectors_to_aligned16_state {
+    my ($state) = @_;
+    for ($i=0; $i<24; $i+=4) {
+        save_4_qvectors_to_aligned16_state($state,$i);
+    }
+$code.=<<___;
+    str q$i,[$state,#16*$i]
+___
+}
+
+## @brief Set 4 double words in q$i, q$j, q$k, q$l to zero.
+##        This is used to zero the state 'capacity' data after the rate words.
+sub zero_4_qvectors {
+    my ($i, $j, $k, $l) = @_;
+$code.=<<___;
+    eor v$i.16b,v$i.16b,v$i.16b
+    eor v$j.16b,v$j.16b,v$j.16b
+    eor v$k.16b,v$k.16b,v$k.16b
+    eor v$l.16b,v$l.16b,v$l.16b
+___
+}
+
+## @brief Move 4 double words from q$i..q($i+3) to 2 output buffers.
+##        Each double word copies the first lane to $out1 and the second lane to $out2
+## @param out1 An output buffer for lane1 that can hold 4 words,
+##        It is post incremented by 4 words. It must be 8 byte aligned.
+## @param out2 An Output buffer for lane2 that can hold 4 words.
+##        It is post incremented by 4 words. It must be 8 byte aligned.
+sub copy_4x2_qvectors_to_out2 {
+    my ($out1, $out2, $i) = @_;
+    my $j = $i+1;
+    my $k = $i+2;
+    my $l = $i+3;
+$code.=<<___;
+    st1 {v$i.d}[0], [$out1], #8
+    st1 {v$i.d}[1], [$out2], #8
+    st1 {v$j.d}[0], [$out1], #8
+    st1 {v$j.d}[1], [$out2], #8
+    st1 {v$k.d}[0], [$out1], #8
+    st1 {v$k.d}[1], [$out2], #8
+    st1 {v$l.d}[0], [$out1], #8
+    st1 {v$l.d}[1], [$out2], #8
+___
+}
+## @brief Move 1 double word from q$i to 2 output buffers.
+##        Each double word copies the first lane to $out1 and the second lane to $out2
+## @param out1 An output buffer for lane0 that can hold 1 word,
+##             It is post incremented by 1 word. It must be 8 byte aligned.
+## @param out2 An Output buffer for lane1 that can hold 1 word,
+##             It is post incremented by 1 word. It must be 8 byte aligned.
+sub copy_1x2_qvectors_to_out2 {
+    my ($out1, $out2, $i) = @_;
+$code.=<<___;
+    st1 {v$i.d}[0], [$out1], #8
+    st1 {v$i.d}[1], [$out2], #8
+___
+}
+
+## @brief Copy 21 double words from q0..q20 to 2 output streams
+## @param out1 is post incremented by 21 words
+## @param out2 is post incremented by 21 words
+sub shake128_2x_copy_qvectors_to_out_block{
+    my ($out1, $out2) = @_;
+    for($i=0; $i<20; $i+=4) {
+        copy_4x2_qvectors_to_out2($out1, $out2, $i);
+    }
+    copy_1x2_qvectors_to_out2($out1, $out2, 20);
+}
+
+## @brief Copy 17 double words from q0..q16 to 2 output streams
+## @param out1 is post incremented by 17 words
+## @param out2 is post incremented by 17 words
+sub shake256_2x_copy_qvectors_to_out_block{
+    my ($out1, $out2) = @_;
+    for($i=0; $i<16; $i+=4) {
+        copy_4x2_qvectors_to_out2($out1, $out2, $i);
+    }
+    copy_1x2_qvectors_to_out2($out1, $out2, 16);
+}
+
+{
+# These functions are intended for a one shot absorb and squeeze of a single block
+
+## @param $inp 16 byte aligned interleaved message (21 double words)
+## @param $state_out Output state of 5x5 double words.
+## @param $out1 Output Stream1 of 168 bytes (Must be Aligned to an 8 byte boundary)
+## @param $out2 Output Stream2 of 168 bytes (Must be Aligned to an 8 byte boundary)
+my ($state_out,$inp,$out1,$out2) = map("x$_",(0..3));
+function_start('ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze', 1);
+    shake128_2x_copy_input_block_to_qvectors($inp);
+$code.=<<___;
+    bl  KeccakF1600_ce
+___
+    shake128_2x_copy_qvectors_to_out_block($out1, $out2);
+    save_qvectors_to_aligned16_state($state_out);
+function_end('ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze');
+
+## @param $inp 16 byte aligned interleaved message (17 double words)
+## @param $state_out Output state of 5x5 double words.
+## @param $out1 Output Stream1 of 136 bytes (Must be Aligned to an 8 byte boundary)
+## @param $out2 Output Stream2 of 136 bytes (Must be Aligned to an 8 byte boundary)
+my ($state_out,$inp,$out1,$out2) = map("x$_",(0..3));
+function_start('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze', 1);
+    shake256_2x_copy_input_block_to_qvectors($inp);
+$code.=<<___;
+    bl  KeccakF1600_ce
+___
+    shake256_2x_copy_qvectors_to_out_block($out1, $out2);
+    save_qvectors_to_aligned16_state($state_out);
+function_end('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze');
+
+# These functions are intended for multiple squeeze(s) of a single block
+# May be called multiple times after ossl_shake???_2x_oneshot_singleblock_absorb_interleaved_squeeze
+
+## @brief A 2 way SHAKE128 squeeze of a single block
+## @param $state The Input/Output state of 5x5 double words
+## @param $out1 Output Stream1 of 168 bytes (Must be Aligned to an 8 byte boundary)
+## @param $out2 Output Stream2 of 168 bytes (Must be Aligned to an 8 byte boundary)
+my ($state,$out1,$out2) = map("x$_",(0..2));
+function_start('ossl_shake128_2x_squeeze_singleblock', 1);
+    load_qvectors_from_aligned16_state($state);
+$code.=<<___;
+    bl  KeccakF1600_ce
+___
+    shake128_2x_copy_qvectors_to_out_block($out1, $out2);
+    save_qvectors_to_aligned16_state($state);
+function_end('ossl_shake128_2x_squeeze_singleblock');
+
+## @brief A 2 way SHAKE256 squeeze of a single block
+## @param $state The Input/Output state of 5x5 double words
+## @param $out1 Output Stream1 of 136 bytes (Must be Aligned to an 8 byte boundary)
+## @param $out2 Output Stream2 of 136 bytes (Must be Aligned to an 8 byte boundary)
+my ($state,$out1,$out2) = map("x$_",(0..2));
+function_start('ossl_shake256_2x_squeeze_singleblock', 1);
+    load_qvectors_from_aligned16_state($state);
+$code.=<<___;
+    bl  KeccakF1600_ce
+___
+    shake256_2x_copy_qvectors_to_out_block($out1, $out2);
+    save_qvectors_to_aligned16_state($state);
+function_end('ossl_shake256_2x_squeeze_singleblock');
+
+## @brief A 2 way SHAKE256 one shot function that does not use external state.
+##        it absorbs a single block, and assumes that 1 or more blocks will be squeezed at once
+## @param $inp 16 byte aligned interleaved message (17 double words)
+## @param $out1 Output Stream1 of outlen bytes (Must be Aligned to an 8 byte boundary)
+## @param $out2 Output Stream2 of outlen bytes (Must be Aligned to an 8 byte boundary)
+## @param $outlen Must be a non zero multiple of the rate (136)
+my ($inp,$out1,$out2,$outlen) = map("x$_",(0..4));
+function_start('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze', 1);
+    shake256_2x_copy_input_block_to_qvectors($inp);
+$code.=<<___;
+.Loop_shake256_2x_squeeze:
+    bl  KeccakF1600_ce
+    subs $outlen,$outlen,#$shake256_rate
+___
+    shake256_2x_copy_qvectors_to_out_block($out1, $out2);
+$code.=<<___;
+    b.ne .Loop_shake256_2x_squeeze
+___
+function_end('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze');
+}                               }}}
+
+$code.=<<___;
+## @brief To be called on completion if the values stored in the state are secret.
+##        This clears the temporary vectors q0..q7, q16..q31. It does not clear q8..q15 as they
+##        are saved and restored on each call.
+.globl SHA3_secure_vector_clear_armv8
+.type   SHA3_secure_vector_clear_armv8,%function
+.align  5
+SHA3_secure_vector_clear_armv8:
+___
+    zero_4_qvectors(0,1,2,3);
+    zero_4_qvectors(4,5,6,7);
+
+    zero_4_qvectors(16,17,18,19);
+    zero_4_qvectors(20,21,22,23);
+
+    zero_4_qvectors(24,25,26,27);
+    zero_4_qvectors(28,29,30,31);
+$code.=<<___;
+    ret
+.size  SHA3_secure_vector_clear_armv8,.-SHA3_secure_vector_clear_armv8
+___
+
 $code.=<<___;
 .asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <https://github.com/dot-asm>"
 ___
@@ -874,7 +1242,6 @@ ___
 foreach(split("\n",$code)) {
 
 	s/\`([^\`]*)\`/eval($1)/ge;
-
 	m/\bld1r\b/ and s/\.16b/.2d/g	or
 	s/\b(eor3|rax1|xar|bcax)\s+(v.*)/unsha3($1,$2)/ge;
 
