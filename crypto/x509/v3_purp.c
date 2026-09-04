@@ -40,7 +40,6 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf);
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf);
-static int check_name_constraints(const NAME_CONSTRAINTS *nc);
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
@@ -534,7 +533,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ASN1_BIT_STRING *ns;
     EXTENDED_KEY_USAGE *extusage;
     int i;
-    int res;
     uint32_t tmp_ex_flags;
     unsigned char tmp_fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     long tmp_ex_pathlen;
@@ -544,9 +542,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     uint32_t tmp_ex_nscert;
     ASN1_OCTET_STRING *tmp_skid;
     AUTHORITY_KEYID *tmp_akid;
-    STACK_OF(GENERAL_NAME) *tmp_altname;
-    NAME_CONSTRAINTS *tmp_nc;
-    STACK_OF(DIST_POINT) *tmp_crldp = NULL;
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
@@ -719,39 +714,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
             tmp_ex_flags |= EXFLAG_SS;
         }
     }
-
-    /* Handle subject alternative names and various other extensions */
-    tmp_altname = X509_get_ext_d2i(const_x, NID_subject_alt_name, &i, NULL);
-    if (tmp_altname == NULL && i != -1)
-        tmp_ex_flags |= EXFLAG_INVALID;
-    GENERAL_NAMES_free(tmp_altname);
-    tmp_nc = X509_get_ext_d2i(const_x, NID_name_constraints, &i, NULL);
-    if (tmp_nc == NULL && i != -1)
-        tmp_ex_flags |= EXFLAG_INVALID;
-    if (!check_name_constraints(tmp_nc))
-        tmp_ex_flags |= EXFLAG_INVALID;
-    NAME_CONSTRAINTS_free(tmp_nc);
-
-    /* Validate the CRL distribution point entries */
-    res = ossl_x509_decode_crldp(const_x, &tmp_crldp);
-    if (res == 0)
-        tmp_ex_flags |= EXFLAG_INVALID;
-    sk_DIST_POINT_pop_free(tmp_crldp, DIST_POINT_free);
-
-#ifndef OPENSSL_NO_RFC3779
-    /* Validate the RFC 3779 extensions */
-    STACK_OF(IPAddressFamily) *tmp_rfc3779_addr
-        = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
-    if (tmp_rfc3779_addr == NULL && i != -1)
-        tmp_ex_flags |= EXFLAG_INVALID;
-    sk_IPAddressFamily_pop_free(tmp_rfc3779_addr, IPAddressFamily_free);
-
-    struct ASIdentifiers_st *tmp_rfc3779_asid
-        = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
-    if (tmp_rfc3779_asid == NULL && i != -1)
-        tmp_ex_flags |= EXFLAG_INVALID;
-    ASIdentifiers_free(tmp_rfc3779_asid);
-#endif
 
     scan_ext_flags(const_x, &tmp_ex_flags);
 
@@ -1090,45 +1052,6 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf)
 {
     return 1;
-}
-
-static int check_name_constraints(const NAME_CONSTRAINTS *nc)
-{
-    GENERAL_SUBTREE *sub;
-    int ret = 1;
-
-    if (nc == NULL)
-        goto done;
-
-    for (int i = 0; nc->permittedSubtrees != NULL
-        && i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees);
-        i++) {
-        sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
-        if (sub->base->type == GEN_OTHERNAME
-            && OBJ_obj2nid(sub->base->d.otherName->type_id)
-                == NID_id_on_SmtpUTF8Mailbox) {
-            /* RFC 9598 prohibits GEN_OTHERNAME email constraints */
-            ERR_raise(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE);
-            ret = 0;
-            goto done;
-        }
-    }
-    for (int i = 0; nc->excludedSubtrees != NULL
-        && i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees);
-        i++) {
-        sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
-        if (sub->base->type == GEN_OTHERNAME
-            && OBJ_obj2nid(sub->base->d.otherName->type_id)
-                == NID_id_on_SmtpUTF8Mailbox) {
-            /* RFC 9598 prohibits GEN_OTHERNAME email constraints */
-            ERR_raise(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE);
-            ret = 0;
-            goto done;
-        }
-    }
-
-done:
-    return ret;
 }
 
 /*-

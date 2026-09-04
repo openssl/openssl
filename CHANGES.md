@@ -34,7 +34,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * A certificate whose subjectAltName, nameConstraints,
+   cRLDistributionPoints, or RFC 3779 IP address block or AS identifier
+   extension cannot be decoded is no longer marked `EXFLAG_INVALID` when
+   parsed. Each of these extensions is decoded where a verification uses
+   it, and the verification fails there instead.
+
+   *Bob Beck*
 
 OpenSSL 4.1
 -----------
