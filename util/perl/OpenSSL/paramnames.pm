@@ -700,6 +700,7 @@ sub trie_matched {
   my $with_count = shift;
   my $field = shift;
   my $num = shift;
+  my $dup = shift;
   my $indent1 = shift;
   my $indent2 = shift;
 
@@ -717,9 +718,13 @@ sub trie_matched {
     printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
   } else {
     printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
-    printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
-    printf "%s               \"param %%s is repeated\", s);\n", $indent2;
-    printf "%sreturn 0;\n", $indent2;
+    if (defined $dup && $dup eq 'first') {
+      printf "%sbreak;\n", $indent2;
+    } else {
+      printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
+      printf "%s               \"param %%s is repeated\", s);\n", $indent2;
+      printf "%sreturn 0;\n", $indent2;
+    }
     printf "%s}\n", $indent1;
     printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
@@ -732,6 +737,7 @@ sub generate_decoder_from_trie {
     my $trieref = shift;
     my $identmap = shift;
     my $concat_num = shift;
+    my $process_dup = shift;
     my $ifdefs = shift;
     my $idt = "    ";
     my $indent0 = $idt x ($n + 3);
@@ -745,6 +751,7 @@ sub generate_decoder_from_trie {
 
         $field = $identmap->{$trieref->{'name'}};
         my $num = $concat_num->{$field};
+        my $dup = $process_dup->{$field};
         output_ifdef($ifdefs->{$field});
         printf "%sif (ossl_likely($strcmp(\"$suf\", s + $n) == 0", $indent0;
         if (not $case_sensitive) {
@@ -754,7 +761,7 @@ sub generate_decoder_from_trie {
         }
         print ")) {\n";
         printf "%s/* %s */\n", $indent1, $trieref->{'name'};
-        trie_matched($with_count, $field, $num, $indent1, $indent2);
+        trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
         printf "%s}\n", $indent0;
 
         # If this is at the top level and it's conditional, we have to
@@ -773,10 +780,11 @@ sub generate_decoder_from_trie {
         if ($l eq 'val') {
             $field = $identmap->{$trieref->{'val'}};
             my $num = $concat_num->{$field};
+            my $dup = $process_dup->{$field};
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
             output_ifdef($ifdefs->{$field});
-            trie_matched($with_count, $field, $num, $indent1, $indent2);
+            trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
             output_endifdef($ifdefs->{$field});
         } else {
             printf "%sbreak;\n", $indent1;
@@ -786,7 +794,7 @@ sub generate_decoder_from_trie {
                 printf "   case '%s':", uc $l if ($l =~ /[a-z]/);
             }
             print "\n";
-            generate_decoder_from_trie($with_count, $n + 1, $trieref->{$l}, $identmap, $concat_num, $ifdefs);
+            generate_decoder_from_trie($with_count, $n + 1, $trieref->{$l}, $identmap, $concat_num, $process_dup, $ifdefs);
         }
     }
     if ($need_break) {
@@ -863,6 +871,7 @@ sub output_param_decoder {
     my @keys = ();
     my %prms = ();
     my %concat_num = ();
+    my %process_dup = ();
     my %ifdefs = ();
 
     if (!$headers_included) {
@@ -903,6 +912,10 @@ sub output_param_decoder {
             } elsif (substr($pnum, 0, 3) eq '#if') {
                 # Trim the `#if' from the front
                 $ifdefs{$pident} = substr($pnum, 3);
+            } elsif ($pnum =~ '^duplicate: *(first)') {
+                # This provides a provision for other duplicate resolution methods
+                # even though they aren't implemented yet
+                $process_dup{$pident} = $1;
             } elsif (not defined $concat_num{$pident}) {
                 $concat_num{$pident} = $pnum;
             }
@@ -959,7 +972,7 @@ sub output_param_decoder {
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
     print "        for (; (s = p->key) != NULL; p++)\n";
-    generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%ifdefs);
+    generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
     print "    return 1;\n";
     print "}\n#endif\n";
     print "/* End of machine generated */";
