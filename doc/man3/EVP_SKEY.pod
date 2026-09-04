@@ -126,10 +126,16 @@ Either output pair may be NULL if the caller does not need that part.
 The returned pointers are valid for the lifetime of I<skey>.
 Returns 1 on success, 0 on error.
 
-These metadata fields are typically populated when parsing PKCS#12 files.
-The friendly name and local key ID correspond to PKCS#12 bag attributes
-(B<NID_friendlyName> and B<NID_localKeyID>), while the algorithm OID and
-parameters are extracted from the PKCS8 B<AlgorithmIdentifier>.
+These metadata fields are populated on obtaining the key object (e.g. when
+parsing PKCS#12 files).  For PKCS#12 files the friendly name and local key ID
+correspond to PKCS#12 bag attributes (B<NID_friendlyName> and
+B<NID_localKeyID>), while the algorithm OID and parameters are extracted from
+the PKCS8 B<AlgorithmIdentifier>.
+
+The implementation is in general provider-dependent. If the corresponding
+callback is not implemented for the EVP_SKEYMGMT, 0 is returned. However, as
+metadata is completely optional, the success doesn't indicate that the data is
+available.
 
 =head2 Selections
 

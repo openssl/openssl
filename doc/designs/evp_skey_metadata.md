@@ -126,3 +126,8 @@ We implement the following accessors:
 These accessors use dedicated `OSSL_FUNC_SKEYMGMT_GET_LOCAL_KEYID` and
 `OSSL_FUNC_SKEYMGMT_GET_ALGORITHM_ID` dispatch functions, following the
 pattern of `EVP_SKEY_get0_key_id()`.
+
+The implementation is in general provider-dependent. If the corresponding
+callback is not implemented for the EVP_SKEYMGMT, 0 is returned. However, as
+metadata is completely optional, the success doesn't indicate that the data is
+available.

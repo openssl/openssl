@@ -45,6 +45,10 @@ static int generic_import_metadata(PROV_SKEY *skey,
         skey->alias = OPENSSL_strndup(p->alias->data, p->alias->data_size);
         if (skey->alias == NULL)
             return 0;
+        if (strlen(skey->alias) != p->alias->data_size) {
+            ERR_raise(ERR_R_PROV_LIB, PROV_R_INVALID_DATA);
+            return 0;
+        }
     }
 
     if (p->local_keyid != NULL
@@ -80,7 +84,7 @@ static int generic_import_metadata(PROV_SKEY *skey,
     return 1;
 }
 
-void *generic_import(void *provctx, int selection, const OSSL_PARAM params[])
+void *generic_import(void *provctx, int selection ossl_unused, const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct generic_skey_import_st p;
@@ -88,9 +92,6 @@ void *generic_import(void *provctx, int selection, const OSSL_PARAM params[])
     int ok = 0;
 
     if (!ossl_prov_is_running())
-        return NULL;
-
-    if ((selection & OSSL_SKEYMGMT_SELECT_SECRET_KEY) == 0)
         return NULL;
 
     if (!generic_skey_import_decoder(params, &p))
@@ -139,34 +140,34 @@ int generic_export(void *keydata, int selection,
     OSSL_PARAM params[6];
     int idx = 0;
 
-    if (!ossl_prov_is_running() || gen == NULL)
+    if (!ossl_prov_is_running() || gen == NULL || selection == 0)
         return 0;
 
     /* If we use generic SKEYMGMT as a "base class", we shouldn't check the type */
-    if ((selection & OSSL_SKEYMGMT_SELECT_SECRET_KEY) == 0)
-        return 0;
+    if ((selection & OSSL_SKEYMGMT_SELECT_SECRET_KEY) != 0)
+        params[idx++] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+            gen->data, gen->length);
 
-    params[idx++] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
-        gen->data, gen->length);
+    if ((selection & OSSL_SKEYMGMT_SELECT_PARAMETERS) != 0) {
+        if (gen->alias != NULL)
+            params[idx++] = OSSL_PARAM_construct_utf8_string(
+                OSSL_SKEY_PARAM_ALIAS, gen->alias, 0);
 
-    if (gen->alias != NULL)
-        params[idx++] = OSSL_PARAM_construct_utf8_string(
-            OSSL_SKEY_PARAM_ALIAS, gen->alias, 0);
+        if (gen->local_keyid != NULL)
+            params[idx++] = OSSL_PARAM_construct_octet_string(
+                OSSL_SKEY_PARAM_LOCAL_KEYID,
+                gen->local_keyid, gen->local_keyid_len);
 
-    if (gen->local_keyid != NULL)
-        params[idx++] = OSSL_PARAM_construct_octet_string(
-            OSSL_SKEY_PARAM_LOCAL_KEYID,
-            gen->local_keyid, gen->local_keyid_len);
+        if (gen->algorithm_oid != NULL)
+            params[idx++] = OSSL_PARAM_construct_octet_string(
+                OSSL_SKEY_PARAM_ALGORITHM_OID,
+                gen->algorithm_oid, gen->algorithm_oid_len);
 
-    if (gen->algorithm_oid != NULL)
-        params[idx++] = OSSL_PARAM_construct_octet_string(
-            OSSL_SKEY_PARAM_ALGORITHM_OID,
-            gen->algorithm_oid, gen->algorithm_oid_len);
-
-    if (gen->algorithm_params != NULL)
-        params[idx++] = OSSL_PARAM_construct_octet_string(
-            OSSL_SKEY_PARAM_ALGORITHM_PARAMS,
-            gen->algorithm_params, gen->algorithm_params_len);
+        if (gen->algorithm_params != NULL)
+            params[idx++] = OSSL_PARAM_construct_octet_string(
+                OSSL_SKEY_PARAM_ALGORITHM_PARAMS,
+                gen->algorithm_params, gen->algorithm_params_len);
+    }
 
     params[idx] = OSSL_PARAM_construct_end();
 

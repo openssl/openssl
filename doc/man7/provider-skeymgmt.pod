@@ -161,14 +161,16 @@ B<OSSL_SKEY_PARAM_ALIAS> if it was set during import.
 
 OSSL_FUNC_skeymgmt_get_local_keyid() retrieves the local key ID from I<keydata>.
 On success, it sets I<*id> to point to the key ID bytes and I<*len> to their
-length, and returns 1.  Returns 0 if no local key ID is available.
+length, and returns 1 on success and 0 on error. As metadata is optional, the
+resulting value still can be NULL and 0 correspondingly.
 
 OSSL_FUNC_skeymgmt_get_algorithm_id() retrieves the algorithm identifier from
 I<keydata>.  On success, it sets I<*oid> and I<*oid_len> to point to the
 DER-encoded algorithm OID, and I<*params> and I<*params_len> to point to the
-DER-encoded algorithm parameters.  Either output pointer pair may be NULL if the
-caller does not need that part.  Returns 1 if at least one of OID or parameters
-is available, 0 otherwise.
+DER-encoded algorithm parameters.  Either output pointer pair may be NULL if
+the caller does not need that part.  Returns 1 if the requested data is set
+successfully and 0 otherwise.  As metadata is optional, the resulting value
+still can be NULL and 0 correspondingly.
 
 =head2 Common Import and Export Parameters
 
