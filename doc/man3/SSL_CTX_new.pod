@@ -141,7 +141,8 @@ The following return values can occur:
 =item NULL
 
 The creation of a new SSL_CTX object failed. Check the error stack to find out
-the reason.
+the reason. A malformed C<TLS-CIPHERSUITE> provider capability also causes
+context creation to fail; see L<provider-base(7)>.
 
 =item Pointer to an SSL_CTX object
 

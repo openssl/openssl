@@ -581,6 +581,70 @@ L<OSSL_PARAM_int(3)>.
 Capabilities describe some of the services that a provider can offer.
 Applications can query the capabilities to discover those services.
 
+=head3 "TLS-CIPHERSUITE" Capability
+
+The "TLS-CIPHERSUITE" capability adds TLS 1.3 ciphersuites to libssl. Each
+callback describes one ciphersuite. All parameters below are mandatory;
+unknown parameters are ignored.
+
+=over 4
+
+=item "tls-ciphersuite-name" (B<OSSL_CAPABILITY_TLS_CIPHERSUITE_NAME>) <UTF8 string>
+
+A name of 1 to 255 bytes. Each byte must be in the range 0x21 through 0x7e,
+excluding colon. It must be unique, ignoring case, among the OpenSSL and
+standard names of built-in ciphersuites and provider-defined names. The
+parameter data size must describe exactly the string bytes, with or without
+one terminating NUL; embedded NULs and trailing bytes are rejected.
+
+=item "tls-ciphersuite-code-point" (B<OSSL_CAPABILITY_TLS_CIPHERSUITE_CODE_POINT>) <unsigned integer>
+
+A nonzero 16-bit TLS value that is not a GREASE value and does not collide
+with a built-in or previously discovered ciphersuite. Libssl does not check
+IANA allocation status. Use a Private Use value unless the advertised suite
+has an assigned code point.
+
+=item "tls-ciphersuite-aead-name" (B<OSSL_CAPABILITY_TLS_CIPHERSUITE_AEAD>) <UTF8 string>
+
+An AEAD fetch name of 1 to 255 bytes. The cipher must be non-CCM and report a
+positive key length no greater than B<EVP_MAX_KEY_LENGTH>, a 12-byte IV and a
+one-byte block size. Libssl derives and supplies the reported key length;
+discovery does not prove that the cipher rejects other lengths. The cipher
+must support the TLS 1.3 record operations used by libssl:
+setting the IV length and authentication tag, obtaining the authentication
+tag, AAD updates, and in-place encryption and decryption.
+
+=item "tls-ciphersuite-digest-name" (B<OSSL_CAPABILITY_TLS_CIPHERSUITE_DIGEST>) <UTF8 string>
+
+A TLS 1.3 transcript digest fetch name of 1 to 255 bytes: SHA2-256 with a
+32-byte output or SHA2-384 with a 48-byte output.
+
+=item "tls-ciphersuite-security-bits" (B<OSSL_CAPABILITY_TLS_CIPHERSUITE_SECURITY_BITS>) <unsigned integer>
+
+At least 128 and no greater than the AEAD key size in bits.
+
+=item "tls-ciphersuite-tag-length" (B<OSSL_CAPABILITY_TLS_CIPHERSUITE_TAG_LENGTH>) <unsigned integer>
+
+The record authentication tag length. It must be 16.
+
+Unsigned integer parameters must use between 1 and 8 data bytes.
+
+=back
+
+The AEAD and digest are fetched using the SSL_CTX library context and property
+query. They need not be implemented by the provider advertising the
+ciphersuite. The fetched objects are retained by the descriptor.
+Discovery occurs at SSL_CTX creation; the registry is then immutable.
+Existing providers return 0 both for unsupported capabilities and for errors.
+Libssl therefore treats an outer capability failure as unsupported and
+discards descriptors and errors produced by that provider query. A callback
+validation or allocation failure remains fatal. Entries whose AEAD or digest
+fetch fails are skipped; fetch failures are not classified. Malformed entries,
+collisions, profile violations, allocation failures and registry failures
+abort context creation. An SSL_CTX accepts at most 128 provider-defined
+ciphersuites.
+
+
 =head3 "TLS-GROUP" Capability
 
 The "TLS-GROUP" capability can be queried by libssl to discover the list of

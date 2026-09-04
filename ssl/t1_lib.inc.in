@@ -25,6 +25,7 @@ sub produce_ssl_param_decoder {
  */
 #define tls_group_params_list
 #define tls_sigalg_params_list
+#define tls_ciphersuite_params_list
 
 {- produce_ssl_param_decoder('tls_group_params',
                          (['OSSL_CAPABILITY_TLS_GROUP_NAME',          'name',     'utf8_string', 'duplicate: first'],
@@ -55,4 +56,13 @@ sub produce_ssl_param_decoder {
                           ['OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS',    'max_dtls',    'int',         'duplicate: first'],
                           ['OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS',     'min_tls',     'int',         'duplicate: first'],
                           ['OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS',     'max_tls',     'int',         'duplicate: first'],
+                         )); -}
+
+{- produce_ssl_param_decoder('tls_ciphersuite_params',
+                         (['OSSL_CAPABILITY_TLS_CIPHERSUITE_NAME',          'name',       'utf8_string', 'duplicate: first'],
+                          ['OSSL_CAPABILITY_TLS_CIPHERSUITE_CODE_POINT',    'code_point', 'uint',        'duplicate: first'],
+                          ['OSSL_CAPABILITY_TLS_CIPHERSUITE_AEAD',          'aead',       'utf8_string', 'duplicate: first'],
+                          ['OSSL_CAPABILITY_TLS_CIPHERSUITE_DIGEST',        'digest',     'utf8_string', 'duplicate: first'],
+                          ['OSSL_CAPABILITY_TLS_CIPHERSUITE_SECURITY_BITS', 'secbits',    'uint',        'duplicate: first'],
+                          ['OSSL_CAPABILITY_TLS_CIPHERSUITE_TAG_LENGTH',    'taglen',     'uint',        'duplicate: first'],
                          )); -}
