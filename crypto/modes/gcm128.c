@@ -248,7 +248,7 @@ static void gcm_ghash_1bit(uint64_t Xi[2], const u128 Htable[16],
 }
 #endif
 
-#if !defined(GHASH_ASM) || (defined(INCLUDE_C_GMULT_4BIT) \
+#if (!defined(GHASH_ASM) || defined(INCLUDE_C_GMULT_4BIT)) \
     && !(defined(__riscv) && __riscv_xlen == 64))
 static const size_t rem_4bit[16] = {
     PACK(0x0000), PACK(0x1C20), PACK(0x3840), PACK(0x2460),
