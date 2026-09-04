@@ -174,9 +174,9 @@ static void gcm_init_1bit(u128 Htable[16], const uint64_t H[2])
 static void gcm_gmult_1bit(uint64_t Xi[2], const u128 Htable[16])
 {
     u128 V, Z = { 0, 0 };
-    long X;
+    uint64_t X;
     size_t i, j;
-    const long *xi = (const long *)Xi;
+    const unsigned long *xi = (const unsigned long *)Xi;
     DECLARE_IS_ENDIAN;
 
     /* H is stored in host byte order, no byte swapping */
@@ -187,21 +187,21 @@ static void gcm_gmult_1bit(uint64_t Xi[2], const u128 Htable[16])
         if (IS_LITTLE_ENDIAN) {
             if (sizeof(long) == 8) {
 #ifdef BSWAP8
-                X = (long)(BSWAP8(xi[j]));
+                X = BSWAP8((uint64_t)xi[j]);
 #else
                 const uint8_t *p = (const uint8_t *)(xi + j);
-                X = (long)((uint64_t)GETU32(p) << 32 | GETU32(p + 4));
+                X = (uint64_t)GETU32(p) << 32 | GETU32(p + 4);
 #endif
             } else {
                 const uint8_t *p = (const uint8_t *)(xi + j);
-                X = (long)GETU32(p);
+                X = GETU32(p);
             }
         } else {
             X = xi[j];
         }
 
         for (i = 0; i < 8 * sizeof(long); ++i, X <<= 1) {
-            uint64_t M = (uint64_t)(X >> (8 * sizeof(long) - 1));
+            uint64_t M = 0 - (X >> (8 * sizeof(long) - 1));
             Z.hi ^= V.hi & M;
             Z.lo ^= V.lo & M;
 
@@ -249,7 +249,7 @@ static void gcm_ghash_1bit(uint64_t Xi[2], const u128 Htable[16],
 #endif
 
 #if (!defined(GHASH_ASM) || defined(INCLUDE_C_GMULT_4BIT)) \
-    && !(defined(__riscv) && __riscv_xlen == 64))
+    && !(defined(__riscv) && __riscv_xlen == 64)
 static const size_t rem_4bit[16] = {
     PACK(0x0000), PACK(0x1C20), PACK(0x3840), PACK(0x2460),
     PACK(0x7080), PACK(0x6CA0), PACK(0x48C0), PACK(0x54E0),
@@ -326,8 +326,8 @@ static void gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16])
 
 #endif
 
-#if !defined(GHASH_ASM) || (defined(INCLUDE_C_GHASH_4BIT) \
-    && !(defined(__riscv) && __riscv_xlen == 64))
+#if (!defined(GHASH_ASM) || defined(INCLUDE_C_GHASH_4BIT)) \
+    && !(defined(__riscv) && __riscv_xlen == 64)
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
 /*
  * Streamed gcm_mult_4bit, see CRYPTO_gcm128_[en|de]crypt for
@@ -524,11 +524,7 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
 #if defined(__riscv) && __riscv_xlen == 64
     ctx->ginit = gcm_init_1bit;
     ctx->gmult = gcm_gmult_1bit;
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
     ctx->ghash = gcm_ghash_1bit;
-#else
-    ctx->ghash = NULL;
-#endif
 #else
     ctx->ginit = gcm_init_4bit;
 #if !defined(GHASH_ASM)
