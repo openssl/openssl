@@ -190,7 +190,10 @@ static int dgram_pair_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags,
     size_t *num_processed);
 
-static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1);
+static int dgram_pair_lock_both_write(struct bio_dgram_pair_st *a,
+    struct bio_dgram_pair_st *b);
+static void dgram_pair_unlock_both(struct bio_dgram_pair_st *a,
+    struct bio_dgram_pair_st *b);
 static size_t dgram_pair_read_inner(struct bio_dgram_pair_st *b, uint8_t *buf,
     size_t sz);
 
@@ -246,8 +249,10 @@ struct dgram_hdr {
 };
 
 struct bio_dgram_pair_st {
-    /* The other half of the BIO pair. NULL for dgram_mem. */
-    BIO *peer;
+    /* The other half of the BIO pair, holding a reference. NULL for dgram_mem. */
+    struct bio_dgram_pair_st *peer;
+    /* Keeps the peer alive until the other half drops its reference. */
+    CRYPTO_REF_COUNT ref_cnt;
     /* Writes are directed to our own ringbuf and reads to our peer. */
     struct ring_buf rbuf;
     /* Requested size of rbuf buffer in bytes once we initialize. */
@@ -273,6 +278,8 @@ struct bio_dgram_pair_st {
 #define MIN_BUF_LEN (1024)
 
 #define is_dgram_pair(b) (b->peer != NULL)
+/* A half without a ring buffer is unpaired or its BIO has been freed. */
+#define is_closed(b) ((b)->rbuf.start == NULL)
 
 static int dgram_pair_init(BIO *bio)
 {
@@ -285,14 +292,49 @@ static int dgram_pair_init(BIO *bio)
     /* default buffer size */
     b->req_buf_len = 9 * (sizeof(struct dgram_hdr) + b->mtu);
 
+    if (!CRYPTO_NEW_REF(&b->ref_cnt, 1)) {
+        OPENSSL_free(b);
+        return 0;
+    }
+
     b->lock = CRYPTO_THREAD_lock_new();
     if (b->lock == NULL) {
+        CRYPTO_FREE_REF(&b->ref_cnt);
         OPENSSL_free(b);
         return 0;
     }
 
     bio->ptr = b;
     return 1;
+}
+
+/* Drops a reference to a pair half, freeing it along with the last one. */
+static void dgram_pair_release(struct bio_dgram_pair_st *b)
+{
+    int ref;
+
+    CRYPTO_DOWN_REF(&b->ref_cnt, &ref);
+    if (ref > 0)
+        return;
+
+    ring_buf_destroy(&b->rbuf);
+    BIO_ADDR_free(b->local_addr);
+    CRYPTO_THREAD_lock_free(b->lock);
+    CRYPTO_FREE_REF(&b->ref_cnt);
+    OPENSSL_free(b);
+}
+
+/* Detaches from a peer whose BIO has been freed. Not threadsafe. */
+static void dgram_pair_drop_closed_peer(struct bio_dgram_pair_st *b)
+{
+    struct bio_dgram_pair_st *peerb = b->peer;
+
+    if (peerb == NULL || !is_closed(peerb))
+        return;
+
+    b->peer = NULL;
+    ring_buf_destroy(&b->rbuf);
+    dgram_pair_release(peerb);
 }
 
 static int dgram_mem_init(BIO *bio)
@@ -318,7 +360,7 @@ static int dgram_mem_init(BIO *bio)
 
 static int dgram_pair_free(BIO *bio)
 {
-    struct bio_dgram_pair_st *b;
+    struct bio_dgram_pair_st *b, *peerb;
 
     if (bio == NULL)
         return 0;
@@ -327,11 +369,18 @@ static int dgram_pair_free(BIO *bio)
     if (!ossl_assert(b != NULL))
         return 0;
 
-    /* We are being freed. Disconnect any peer and destroy buffers. */
-    dgram_pair_ctrl_destroy_bio_pair(bio);
+    peerb = b->peer;
+    if (peerb != NULL) {
+        /* Both locks keep the peer's I/O from seeing our buffer go away. */
+        if (!dgram_pair_lock_both_write(b, peerb))
+            return 0;
+        ring_buf_destroy(&b->rbuf);
+        dgram_pair_unlock_both(b, peerb);
+        b->peer = NULL;
+        dgram_pair_release(peerb);
+    }
 
-    CRYPTO_THREAD_lock_free(b->lock);
-    OPENSSL_free(b);
+    dgram_pair_release(b);
     return 1;
 }
 
@@ -339,6 +388,7 @@ static int dgram_pair_free(BIO *bio)
 static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
 {
     struct bio_dgram_pair_st *b1, *b2;
+    int ref;
 
     /* peer must be non-NULL. */
     if (bio1 == NULL || bio2 == NULL) {
@@ -360,6 +410,9 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
     }
+
+    dgram_pair_drop_closed_peer(b1);
+    dgram_pair_drop_closed_peer(b2);
 
     /*
      * This ctrl cannot be used to associate a BIO pair half which is already
@@ -390,43 +443,51 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
             return 0;
         }
 
-    b1->peer = bio2;
-    b2->peer = bio1;
+    /* Each half keeps the other alive until it lets go of it. */
+    if (!CRYPTO_UP_REF(&b1->ref_cnt, &ref)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    if (!CRYPTO_UP_REF(&b2->ref_cnt, &ref)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
+        CRYPTO_DOWN_REF(&b1->ref_cnt, &ref);
+        goto err;
+    }
+
+    b1->peer = b2;
+    b2->peer = b1;
     b1->role = 0;
     b2->role = 1;
     bio1->init = 1;
     bio2->init = 1;
     return 1;
+
+err:
+    ring_buf_destroy(&b1->rbuf);
+    ring_buf_destroy(&b2->rbuf);
+    return 0;
 }
 
 /* BIO_destroy_bio_pair (BIO_C_DESTROY_BIO_PAIR) */
 static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
 {
-    BIO *bio2;
     struct bio_dgram_pair_st *b1 = bio1->ptr, *b2;
 
     ring_buf_destroy(&b1->rbuf);
     bio1->init = 0;
 
-    BIO_ADDR_free(b1->local_addr);
-
-    /* Early return if we don't have a peer. */
-    if (b1->peer == NULL)
+    b2 = b1->peer;
+    if (b2 == NULL)
         return 1;
 
-    bio2 = b1->peer;
-    b2 = bio2->ptr;
-
-    /* Invariant. */
-    if (!ossl_assert(b2->peer == bio1))
-        return 0;
-
-    /* Free buffers. */
-    ring_buf_destroy(&b2->rbuf);
-
-    bio2->init = 0;
     b1->peer = NULL;
-    b2->peer = NULL;
+    /* A peer whose BIO was already freed has let go of us. */
+    if (b2->peer == b1) {
+        b2->peer = NULL;
+        ring_buf_destroy(&b2->rbuf);
+        dgram_pair_release(b1);
+    }
+    dgram_pair_release(b2);
     return 1;
 }
 
@@ -434,6 +495,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
 static int dgram_pair_ctrl_eof(BIO *bio)
 {
     struct bio_dgram_pair_st *b = bio->ptr, *peerb;
+    int ret;
 
     if (!ossl_assert(b != NULL))
         return -1;
@@ -441,18 +503,15 @@ static int dgram_pair_ctrl_eof(BIO *bio)
     /* If we aren't initialized, we can never read anything */
     if (!bio->init)
         return 1;
-    if (!is_dgram_pair(b))
-        return 0;
 
-    peerb = b->peer->ptr;
-    if (!ossl_assert(peerb != NULL))
+    peerb = is_dgram_pair(b) ? b->peer : b;
+    if (CRYPTO_THREAD_read_lock(peerb->lock) == 0)
         return -1;
 
-    /*
-     * Since we are emulating datagram semantics, never indicate EOF so long as
-     * we have a peer.
-     */
-    return 0;
+    /* With datagram semantics, EOF only means the peer has gone away. */
+    ret = is_closed(peerb);
+    CRYPTO_THREAD_unlock(peerb->lock);
+    return ret;
 }
 
 /* BIO_set_write_buf_size (BIO_C_SET_WRITE_BUF_SIZE) */
@@ -461,6 +520,7 @@ static int dgram_pair_ctrl_set_write_buf_size(BIO *bio, size_t len)
     struct bio_dgram_pair_st *b = bio->ptr;
 
     /* Changing buffer sizes is not permitted while a peer is connected. */
+    dgram_pair_drop_closed_peer(b);
     if (b->peer != NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_IN_USE);
         return 0;
@@ -501,12 +561,17 @@ static size_t dgram_pair_ctrl_pending(BIO *bio)
     if (!bio->init)
         return 0;
     if (is_dgram_pair(b))
-        readb = b->peer->ptr;
+        readb = b->peer;
     else
         readb = b;
 
     if (CRYPTO_THREAD_write_lock(readb->lock) == 0)
         return 0;
+
+    if (is_closed(readb)) {
+        CRYPTO_THREAD_unlock(readb->lock);
+        return 0;
+    }
 
     saved_idx = readb->rbuf.idx[1];
     saved_count = readb->rbuf.count;
@@ -557,7 +622,7 @@ static int dgram_pair_ctrl_get_local_addr_cap(BIO *bio)
         return 0;
 
     if (is_dgram_pair(b))
-        readb = b->peer->ptr;
+        readb = b->peer;
     else
         readb = b;
 
@@ -567,14 +632,12 @@ static int dgram_pair_ctrl_get_local_addr_cap(BIO *bio)
 /* BIO_dgram_get_effective_caps (BIO_CTRL_DGRAM_GET_EFFECTIVE_CAPS) */
 static int dgram_pair_ctrl_get_effective_caps(BIO *bio)
 {
-    struct bio_dgram_pair_st *b = bio->ptr, *peerb;
+    struct bio_dgram_pair_st *b = bio->ptr;
 
     if (b->peer == NULL)
         return 0;
 
-    peerb = b->peer->ptr;
-
-    return peerb->cap;
+    return b->peer->cap;
 }
 
 /* BIO_dgram_get_caps (BIO_CTRL_DGRAM_GET_CAPS) */
@@ -625,14 +688,12 @@ static int dgram_pair_ctrl_get_mtu(BIO *bio)
 /* BIO_dgram_set_mtu (BIO_CTRL_DGRAM_SET_MTU) */
 static int dgram_pair_ctrl_set_mtu(BIO *bio, size_t mtu)
 {
-    struct bio_dgram_pair_st *b = bio->ptr, *peerb;
+    struct bio_dgram_pair_st *b = bio->ptr;
 
     b->mtu = mtu;
 
-    if (b->peer != NULL) {
-        peerb = b->peer->ptr;
-        peerb->mtu = mtu;
-    }
+    if (b->peer != NULL)
+        b->peer->mtu = mtu;
 
     return 1;
 }
@@ -909,11 +970,11 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
         return -BIO_R_TRANSFER_ERROR;
 
     if (is_dgram_pair(b))
-        readb = b->peer->ptr;
+        readb = b->peer;
     else
         readb = b;
-    if (!ossl_assert(readb != NULL && readb->rbuf.start != NULL))
-        return -BIO_R_TRANSFER_ERROR;
+    if (is_closed(readb))
+        return -BIO_R_BROKEN_PIPE;
 
     if (sz > 0 && buf == NULL)
         return -BIO_R_INVALID_ARGUMENT;
@@ -1024,7 +1085,7 @@ static int dgram_pair_read(BIO *bio, char *buf, int sz_)
         return -1;
     }
 
-    peerb = b->peer->ptr;
+    peerb = b->peer;
 
     /*
      * For BIO_read we have to acquire both locks because we touch the retry
@@ -1073,7 +1134,7 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     }
 
     if (is_dgram_pair(b))
-        readb = b->peer->ptr;
+        readb = b->peer;
     else
         readb = b;
 
@@ -1232,8 +1293,16 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
     if (!bio->init)
         return -BIO_R_UNINITIALIZED;
 
-    if (!ossl_assert(b != NULL && b->rbuf.start != NULL))
+    if (!ossl_assert(b != NULL))
         return -BIO_R_TRANSFER_ERROR;
+
+    if (is_dgram_pair(b))
+        readb = b->peer;
+    else
+        readb = b;
+    /* Nothing can be delivered once either half is unpaired or freed. */
+    if (is_closed(b) || is_closed(readb))
+        return -BIO_R_BROKEN_PIPE;
 
     if (sz > 0 && buf == NULL)
         return -BIO_R_INVALID_ARGUMENT;
@@ -1241,10 +1310,6 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
     if (local != NULL && b->local_addr_enable == 0)
         return -BIO_R_LOCAL_ADDR_NOT_AVAILABLE;
 
-    if (is_dgram_pair(b))
-        readb = b->peer->ptr;
-    else
-        readb = b;
     if (peer != NULL && (readb->cap & BIO_DGRAM_CAP_HANDLES_DST_ADDR) == 0)
         return -BIO_R_PEER_ADDR_NOT_AVAILABLE;
 
