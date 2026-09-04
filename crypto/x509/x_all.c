@@ -676,9 +676,9 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
         data, len, cert->libctx, cert->propq);
 }
 
-/* calculate cert digest using the same hash algorithm as in its signature */
-ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
-    EVP_MD **md_used, int *md_is_fallback)
+ASN1_OCTET_STRING *ossl_x509_digest_sig_ex(const X509 *cert,
+    EVP_MD **md_used, int *md_is_fallback,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned int len;
     unsigned char hash[EVP_MAX_MD_SIZE];
@@ -691,11 +691,6 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
         *md_used = NULL;
     if (md_is_fallback != NULL)
         *md_is_fallback = 0;
-
-    if (cert == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
 
     if (!OBJ_find_sigid_algs(X509_get_signature_nid(cert), &mdnid, &pknid)) {
         ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
@@ -719,8 +714,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
             }
             RSA_PSS_PARAMS_free(pss);
             /* Fetch explicitly and do not fallback */
-            if ((md = EVP_MD_fetch(cert->libctx, EVP_MD_get0_name(mmd),
-                     cert->propq))
+            if ((md = EVP_MD_fetch(libctx, EVP_MD_get0_name(mmd),
+                     propq))
                 == NULL)
                 /* Error code from fetch is sufficient */
                 return NULL;
@@ -737,8 +732,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
                 md_name = "SHA256";
                 break;
             }
-            if ((md = EVP_MD_fetch(cert->libctx, md_name,
-                     cert->propq))
+            if ((md = EVP_MD_fetch(libctx, md_name,
+                     propq))
                 == NULL)
                 return NULL;
             if (md_is_fallback != NULL)
@@ -748,8 +743,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
             ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
             return NULL;
         }
-    } else if ((md = EVP_MD_fetch(cert->libctx, OBJ_nid2sn(mdnid),
-                    cert->propq))
+    } else if ((md = EVP_MD_fetch(libctx, OBJ_nid2sn(mdnid),
+                    propq))
         == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
@@ -768,6 +763,22 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
 err:
     EVP_MD_free(md);
     return NULL;
+}
+
+/* calculate cert digest using the same hash algorithm as in its signature */
+ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
+    EVP_MD **md_used, int *md_is_fallback)
+{
+    if (cert == NULL) {
+        if (md_used != NULL)
+            *md_used = NULL;
+        if (md_is_fallback != NULL)
+            *md_is_fallback = 0;
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    return ossl_x509_digest_sig_ex(cert, md_used, md_is_fallback,
+        cert->libctx, cert->propq);
 }
 
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
