@@ -10,6 +10,7 @@
 /* We need to use some RAND deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <openssl/async.h>
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
 #include <openssl/core_names.h>
@@ -604,6 +605,61 @@ err:
     return NULL;
 }
 
+typedef struct rand_seed_construction_st {
+    ASYNC_JOB *job;
+    struct rand_seed_construction_st *next;
+} RAND_SEED_CONSTRUCTION;
+
+static int rand_seed_construction_begin(OSSL_LIB_CTX *ctx,
+    RAND_SEED_CONSTRUCTION *marker)
+{
+    RAND_SEED_CONSTRUCTION *current, *head;
+    ASYNC_JOB *job = ASYNC_get_current_job();
+
+    head = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx);
+    for (current = head; current != NULL; current = current->next) {
+        if (current->job == job) {
+            ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
+            return 0;
+        }
+    }
+
+    marker->job = job;
+    marker->next = head;
+    if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx,
+            marker)) {
+        ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    return 1;
+}
+
+static int rand_seed_construction_end(OSSL_LIB_CTX *ctx,
+    RAND_SEED_CONSTRUCTION *marker)
+{
+    RAND_SEED_CONSTRUCTION *current, *head;
+
+    head = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx);
+    if (head == marker) {
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY,
+                ctx, marker->next)) {
+            ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        return 1;
+    }
+
+    for (current = head; current != NULL; current = current->next) {
+        if (current->next == marker) {
+            current->next = marker->next;
+            return 1;
+        }
+    }
+
+    ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+    return 0;
+}
+
 /*
  * Get the global seed source, creating and storing it if it does not
  * exist yet.  If several threads race here, exactly one instance is
@@ -612,6 +668,7 @@ err:
 static EVP_RAND_CTX *rand_get0_seed(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
     EVP_RAND_CTX *ret, *seed;
+    RAND_SEED_CONSTRUCTION marker;
 
     if (!CRYPTO_THREAD_read_lock(dgbl->lock))
         return NULL;
@@ -621,19 +678,17 @@ static EVP_RAND_CTX *rand_get0_seed(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         return ret;
 
     /*
-     * Prevent a configured RAND from recursively constructing itself.  The
-     * marker is local to this thread and library context, so unrelated seed
-     * source construction can continue.
+     * Mark before fetching so recursion through provider lookup is covered
+     * as well as recursion during context creation or instantiation.
      */
-    if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx)
-        != NULL)
-        return NULL;
-    if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx,
-            dgbl))
+    if (!rand_seed_construction_begin(ctx, &marker))
         return NULL;
 
     seed = rand_new_seed(ctx);
-    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx, NULL);
+    if (!rand_seed_construction_end(ctx, &marker)) {
+        EVP_RAND_CTX_free(seed);
+        return NULL;
+    }
     if (seed == NULL)
         return NULL;
 

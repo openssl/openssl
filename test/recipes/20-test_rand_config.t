@@ -86,7 +86,7 @@ if (disabled("fips-jitter")) {
           strict => 'yes',
           args => ['-hex', '1'],
           expected_exit => 1,
-          stderr_re => qr/random number generator:.*:error retrieving entropy/,
+          stderr_re => qr/error:1200006E:/,
           desc => 'recursive strict seed source fails cleanly' };
 }
 
