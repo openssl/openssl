@@ -122,7 +122,7 @@ static void demux_default_handler(QUIC_URXE *e, void *arg,
     ossl_qrx_inject_urxe(h->qrx, e);
 }
 
-static int helper_init(struct helper *h)
+static int helper_init(struct helper *h, int validated)
 {
     int rc = 0;
     size_t i;
@@ -222,10 +222,12 @@ static int helper_init(struct helper *h)
         goto err;
 
     /*
-     * Our helper should always skip validation
-     * as the tests are not written to expect delayed connections
+     * Most tests are not written to expect delayed connections, so skip
+     * validation, unless a script opts out to test the anti-amplification
+     * credit gating with OP_NO_VALIDATION().
      */
-    ossl_quic_tx_packetiser_set_validated(h->txp);
+    if (validated)
+        ossl_quic_tx_packetiser_set_validated(h->txp);
 
     if (!TEST_ptr(h->demux = ossl_quic_demux_new(h->bio2, 8,
                       fake_now, NULL)))
@@ -274,6 +276,8 @@ err:
 #define OPK_STREAM_TXFC_BUMP 21 /* Bump stream TXFC CWM */
 #define OPK_HANDSHAKE_COMPLETE 22 /* Mark handshake as complete */
 #define OPK_NOP 23 /* No-op */
+#define OPK_NO_VALIDATION 24 /* Run with an unvalidated TXP (must be first op) */
+#define OPK_ADD_CREDIT 25 /* Add unvalidated path credit */
 
 struct script_op {
     uint32_t opcode;
@@ -331,6 +335,10 @@ struct script_op {
     { OPK_HANDSHAKE_COMPLETE }
 #define OP_NOP() \
     { OPK_NOP }
+#define OP_NO_VALIDATION() \
+    { OPK_NO_VALIDATION }
+#define OP_ADD_CREDIT(credit) \
+    { OPK_ADD_CREDIT, (credit) }
 
 static int schedule_handshake_done(struct helper *h)
 {
@@ -1272,6 +1280,56 @@ static const struct script_op script_18[] = {
     OP_END
 };
 
+/* 19. Initial datagram gated by anti-amplification credit */
+static int flush_qtx(struct helper *h)
+{
+    ossl_qtx_finish_dgram(h->args.qtx);
+    ossl_qtx_flush_net(h->args.qtx);
+    return 1;
+}
+
+static int check_credit_19(struct helper *h)
+{
+    /*
+     * Exactly 3 of the 1203 credit must remain after the 1200 byte datagram
+     * was charged, confirming the charge covers the wire size of the packet
+     * rather than just its payload.
+     */
+    if (!TEST_true(ossl_quic_tx_packetiser_check_unvalidated_credit(h->txp, 2))
+        || !TEST_false(ossl_quic_tx_packetiser_check_unvalidated_credit(h->txp,
+            3)))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_19[] = {
+    OP_NO_VALIDATION(),
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM, secret_1),
+    OP_CRYPTO_SEND(QUIC_PN_SPACE_INITIAL, crypto_1),
+    /* no credit, nothing can be sent */
+    OP_TXP_GENERATE_NONE(),
+    OP_CHECK(flush_qtx),
+    OP_RX_PKT_NONE(),
+    /* 3 * 400 = 1200 does not exceed the 1200 byte datagram, still blocked */
+    OP_ADD_CREDIT(400),
+    OP_TXP_GENERATE_NONE(),
+    OP_CHECK(flush_qtx),
+    OP_RX_PKT_NONE(),
+    /* 3 * 401 = 1203 covers the whole datagram including packet overhead */
+    OP_ADD_CREDIT(1),
+    OP_TXP_GENERATE(),
+    OP_RX_PKT(),
+    OP_EXPECT_DGRAM_LEN(1200, 1200),
+    OP_CHECK(check_credit_19),
+    OP_NEXT_FRAME(),
+    OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_CRYPTO),
+    OP_EXPECT_NO_FRAME(),
+    OP_RX_PKT_NONE(),
+    OP_TXP_GENERATE_NONE(),
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1290,7 +1348,8 @@ static const struct script_op *const scripts[] = {
     script_15,
     script_16,
     script_17,
-    script_18
+    script_18,
+    script_19
 };
 
 static void skip_padding(struct helper *h)
@@ -1312,7 +1371,7 @@ static int run_script(int script_idx, const struct script_op *script)
     const struct script_op *op;
     size_t opn = 0;
 
-    if (!helper_init(&h))
+    if (!helper_init(&h, script->opcode != OPK_NO_VALIDATION))
         goto err;
 
     have_helper = 1;
@@ -1593,6 +1652,13 @@ static int run_script(int script_idx, const struct script_op *script)
             ossl_quic_tx_packetiser_notify_handshake_complete(h.txp);
             break;
         case OPK_NOP:
+            break;
+        case OPK_NO_VALIDATION:
+            /* Handled by run_script() when initialising the helper. */
+            break;
+        case OPK_ADD_CREDIT:
+            ossl_quic_tx_packetiser_add_unvalidated_credit(h.txp,
+                (size_t)op->arg0);
             break;
         default:
             TEST_error("bad opcode");
