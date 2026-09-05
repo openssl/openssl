@@ -1616,6 +1616,54 @@ subtest "EdDSA -noattr tests for CMS" => sub {
     }
 };
 
+subtest "CMS -noattr with content sizes at the internal read boundary" => sub {
+    plan tests => 9;
+
+    SKIP: {
+        skip "ECX (EdDSA) is not supported in this build", 9
+            if disabled("ecx");
+        skip "ECX (EdDSA) -noattr is not supported with old FIPS providers", 9
+            if $old_fips;
+
+        my $crt = srctop_file("test", "certs", "root-ed25519.pem");
+        my $key = srctop_file("test", "certs", "root-ed25519.privkey.pem");
+
+        # Signing and verifying with a one-shot (md-less) algorithm reads the
+        # content from the input BIO in 10240 byte chunks.  Content that is
+        # empty or an exact multiple of the chunk size used to be rejected
+        # because a file BIO does not report EOF until a read hits the end.
+        foreach my $size (0, 10240, 20480) {
+            my $content = "boundary-$size.bin";
+            my $tampered = "boundary-$size-tampered.bin";
+            my $sig = "boundary-$size.cms";
+
+            open(my $fh, ">", $content) or die "Cannot write $content: $!";
+            binmode $fh;
+            print $fh "A" x $size;
+            close $fh;
+            open($fh, ">", $tampered) or die "Cannot write $tampered: $!";
+            binmode $fh;
+            print $fh "A" x $size, "B";
+            close $fh;
+
+            ok(run(app(["openssl", "cms", @prov, "-sign", "-binary", "-noattr",
+                        "-in", $content, "-outform", "DER", "-signer", $crt,
+                        "-inkey", $key, "-out", $sig])),
+               "sign $size bytes of content with Ed25519 and -noattr");
+
+            ok(run(app(["openssl", "cms", @prov, "-verify", "-binary",
+                        "-in", $sig, "-inform", "DER", "-certfile", $crt,
+                        "-noverify", "-content", $content])),
+               "verify the detached signature over $size bytes of content");
+
+            ok(!run(app(["openssl", "cms", @prov, "-verify", "-binary",
+                         "-in", $sig, "-inform", "DER", "-certfile", $crt,
+                         "-noverify", "-content", $tampered])),
+               "reject the signature for $size bytes of tampered content");
+        }
+    }
+};
+
 subtest "ML-DSA tests for CMS" => sub {
     plan tests => 4;
 
