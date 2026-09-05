@@ -3075,45 +3075,8 @@ static const struct script_op script_59[] = {
 };
 
 /* 60. Connection close reason truncation */
-static char long_reason[2048];
-
-static int init_reason(struct helper *h, struct helper_local *hl)
-{
-    memset(long_reason, '~', sizeof(long_reason));
-    memcpy(long_reason, "This is a long reason string.", 29);
-    long_reason[OSSL_NELEM(long_reason) - 1] = '\0';
-    return 1;
-}
-
-static int check_shutdown_reason(struct helper *h, struct helper_local *hl)
-{
-    const QUIC_TERMINATE_CAUSE *tc = ossl_quic_tserver_get_terminate_cause(ACQUIRE_S());
-
-    if (tc == NULL) {
-        h->check_spin_again = 1;
-        return 0;
-    }
-
-    if (!TEST_size_t_ge(tc->reason_len, 50)
-        || !TEST_mem_eq(long_reason, tc->reason_len,
-            tc->reason, tc->reason_len))
-        return 0;
-
-    return 1;
-}
-
 static const struct script_op script_60[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_CHECK(init_reason, 0),
-    OP_C_SHUTDOWN_WAIT(long_reason, 0),
-    OP_CHECK(check_shutdown_reason, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

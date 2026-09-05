@@ -3126,8 +3126,56 @@ DEF_SCRIPT(script_59, "place holder for multistrem script_59")
 {
 }
 
-DEF_SCRIPT(script_60, "place holder for multistrem script_60")
+/* 60. Connection close reason truncation */
+static char long_reason_60[2048];
+
+DEF_FUNC(init_reason_60)
 {
+    memset(long_reason_60, '~', sizeof(long_reason_60));
+    memcpy(long_reason_60, "This is a long reason string.", 29);
+    long_reason_60[OSSL_NELEM(long_reason_60) - 1] = '\0';
+    return 1;
+}
+
+DEF_FUNC(check_shutdown_reason_60)
+{
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+    const QUIC_TERMINATE_CAUSE *tc;
+
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_ptr(ch))
+        goto err;
+
+    tc = ossl_quic_channel_get_terminate_cause(ch);
+    if (tc == NULL)
+        F_SPIN_AGAIN();
+
+    if (!TEST_size_t_ge(tc->reason_len, 50)
+        || !TEST_mem_eq(long_reason_60, tc->reason_len,
+            tc->reason, tc->reason_len))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_60, "Connection close reason truncation")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_FUNC(init_reason_60);
+    OP_SHUTDOWN_WAIT(C, 0, 0, long_reason_60);
+    OP_SELECT_SSL(0, S);
+    OP_FUNC(check_shutdown_reason_60);
 }
 
 DEF_SCRIPT(script_61, "place holder for multistrem script_61")
