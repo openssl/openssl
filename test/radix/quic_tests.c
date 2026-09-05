@@ -806,6 +806,77 @@ DEF_SCRIPT(check_ctx_cbks, "Check new_pending and client_hello callbacks")
     OP_FUNC(check_pending);
 }
 
+static int inject_new_cids(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[1000];
+    size_t i, j, written;
+    uint64_t seq_no = 2, retire_prior_to = seq_no - 1;
+    QUIC_CONN_ID new_cid = { 0 };
+
+    if (hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    ossl_quic_channel_get_diag_local_cid(fault->ch, &new_cid);
+
+    for (i = 0; i < 20; i++) {
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, seq_no)) /* seq no */
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, retire_prior_to)) /* retire prior to */
+            || !TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id_len))) /* len */
+            goto err;
+        seq_no++;
+        retire_prior_to++;
+
+        for (j = 0; j < new_cid.id_len && i < OSSL_NELEM(new_cid.id); ++j)
+            if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id[i])))
+                goto err;
+
+        for (; j < new_cid.id_len; ++j)
+            if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x55)))
+                goto err;
+
+        for (j = 0; j < QUIC_STATELESS_RESET_TOKEN_LEN; ++j)
+            if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+                goto err;
+    }
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(new_connid, "verify remote peer does not send excessive amount of NEW_CONNID frames")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_WRITE_B(C, "apple");
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_ACCEPT, 42 /* error code */);
+    OP_SET_INCOMING_STREAM_POLICY(S, SSL_INCOMING_STREAM_POLICY_ACCEPT, 42 /* error code */);
+    OP_READ_EXPECT_B(S, "apple");
+
+    OP_WRITE_B(S, "orange");
+    OP_READ_EXPECT_B(C, "orange");
+
+    OP_SET_INJECT_PLAIN(S, inject_new_cids);
+
+    OP_WRITE_B(S, "banana");
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR, 0, 0);
+}
 /*
  * List of Test Scripts
  * ============================================================================
@@ -818,4 +889,5 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_cwm),
     USE(check_pc_flood),
     USE(check_ctx_cbks),
+    USE(new_connid),
 };
