@@ -243,7 +243,9 @@ int X509_EXTENSION_set_object(X509_EXTENSION *ex, const ASN1_OBJECT *obj)
         return 0;
     ASN1_OBJECT_free(ex->object);
     ex->object = OBJ_dup(obj);
-    return ex->object != NULL;
+    if (ex->object == NULL)
+        return 0;
+    return ossl_x509_extension_decode_value(ex);
 }
 
 int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
@@ -251,6 +253,21 @@ int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
     if (ex == NULL)
         return 0;
     ex->critical = (crit) ? 0xFF : 0;
+    /* The outcome carries the criticality when there is no decoded value */
+    switch (ex->outcome) {
+    case X509_EXT_VALUE_UNKNOWN:
+    case X509_EXT_VALUE_UNKNOWN_CRITICAL:
+        ex->outcome = crit ? X509_EXT_VALUE_UNKNOWN_CRITICAL
+                           : X509_EXT_VALUE_UNKNOWN;
+        break;
+    case X509_EXT_VALUE_INVALID:
+    case X509_EXT_VALUE_INVALID_CRITICAL:
+        ex->outcome = crit ? X509_EXT_VALUE_INVALID_CRITICAL
+                           : X509_EXT_VALUE_INVALID;
+        break;
+    default:
+        break;
+    }
     return 1;
 }
 
@@ -263,7 +280,7 @@ int X509_EXTENSION_set_data(X509_EXTENSION *ex, const ASN1_OCTET_STRING *data)
     i = ASN1_OCTET_STRING_set(&ex->value, data->data, data->length);
     if (!i)
         return 0;
-    return 1;
+    return ossl_x509_extension_decode_value(ex);
 }
 
 const ASN1_OBJECT *X509_EXTENSION_get_object(const X509_EXTENSION *ex)

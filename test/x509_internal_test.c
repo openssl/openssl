@@ -32,6 +32,7 @@
 
 #include "../crypto/x509/ext_dat.h"
 #include "../crypto/x509/standard_exts.h"
+#include "../crypto/x509/x509_local.h"
 
 static int test_standard_exts(void)
 {
@@ -2024,6 +2025,72 @@ err:
     return ret;
 }
 
+/*
+ * The decoded value of an extension follows its DER value: set when the
+ * value is decoded or set, NULL when no method is registered for the OID
+ * or the value does not decode.
+ */
+static int test_extension_decoded_value(void)
+{
+    static const unsigned char malformed[] = { 0x05, 0x00 };
+    int ret = 0;
+    BASIC_CONSTRAINTS *bc = NULL;
+    X509_EXTENSION *ext = NULL, *copy = NULL;
+    ASN1_OCTET_STRING *oct = NULL;
+    ASN1_OBJECT *obj = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int der_len;
+
+    if (!TEST_ptr(bc = BASIC_CONSTRAINTS_new()))
+        goto err;
+    bc->ca = 0xFF;
+    if (!TEST_ptr(ext = X509V3_EXT_i2d(NID_basic_constraints, 1, bc)))
+        goto err;
+
+    /* Created through the setters: decoded */
+    if (!TEST_ptr(ext->method)
+        || !TEST_int_eq(ext->method->ext_nid, NID_basic_constraints)
+        || !TEST_ptr(ext->decoded)
+        || !TEST_true(((BASIC_CONSTRAINTS *)ext->decoded)->ca))
+        goto err;
+
+    /* Round trip through DER: decoded again on the way in */
+    if (!TEST_int_gt(der_len = i2d_X509_EXTENSION(ext, &der), 0))
+        goto err;
+    p = der;
+    if (!TEST_ptr(copy = d2i_X509_EXTENSION(NULL, &p, der_len))
+        || !TEST_ptr(copy->decoded)
+        || !TEST_ptr_ne(copy->decoded, ext->decoded)
+        || !TEST_true(((BASIC_CONSTRAINTS *)copy->decoded)->ca))
+        goto err;
+
+    /* A value that does not decode: known method, no value */
+    if (!TEST_ptr(oct = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(oct, malformed, sizeof(malformed)))
+        || !TEST_true(X509_EXTENSION_set_data(ext, oct))
+        || !TEST_ptr(ext->method)
+        || !TEST_ptr_null(ext->decoded))
+        goto err;
+
+    /* An OID with no method: neither */
+    if (!TEST_ptr(obj = OBJ_txt2obj("1.2.3.4.5.6.7.8.9", 1))
+        || !TEST_true(X509_EXTENSION_set_object(copy, obj))
+        || !TEST_ptr_null(copy->method)
+        || !TEST_ptr_null(copy->decoded))
+        goto err;
+
+    ret = 1;
+err:
+    ASN1_OBJECT_free(obj);
+    OPENSSL_free(der);
+    ASN1_OCTET_STRING_free(oct);
+    X509_EXTENSION_free(copy);
+    X509_EXTENSION_free(ext);
+    BASIC_CONSTRAINTS_free(bc);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
@@ -2050,6 +2117,7 @@ int setup_tests(void)
     ADD_TEST(test_failed_sign_unfinalizes);
     ADD_TEST(test_mutators_unfinalize);
     ADD_TEST(test_unsigned_cert_roundtrip);
+    ADD_TEST(test_extension_decoded_value);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
 #ifndef OPENSSL_NO_MD5
