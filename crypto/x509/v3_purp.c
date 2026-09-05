@@ -758,10 +758,7 @@ static int check_ca(const X509 *x)
 
 void X509_set_proxy_flag(X509 *x)
 {
-    if (CRYPTO_THREAD_write_lock(x->lock)) {
-        x->ex_flags |= EXFLAG_PROXY;
-        CRYPTO_THREAD_unlock(x->lock);
-    }
+    x->ex_flags |= EXFLAG_PROXY;
 }
 
 void X509_set_proxy_pathlen(X509 *x, long l)
