@@ -1275,18 +1275,6 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
     } while (0)
 
 /*
- * Decode the IP address block extension of x into *pext, NULL if absent.
- * Returns 1 on success, 0 if the extension is present but cannot be decoded.
- */
-static int addr_ext_d2i(const X509 *x, IPAddrBlocks **pext)
-{
-    int crit;
-
-    *pext = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, &crit, NULL);
-    return *pext != NULL || crit == -1;
-}
-
-/*
  * Core code for RFC 3779 2.3 path validation.
  *
  * Returns 1 for success, 0 on error.
@@ -1300,6 +1288,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
 {
     IPAddrBlocks *child = NULL;
     IPAddrBlocks **exts = NULL; /* per chain cert; child points into these */
+    void *ext_tmp;
     int n, i, j, ret = 0, rv;
     X509 *x;
 
@@ -1329,8 +1318,9 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     } else {
         i = 0;
         x = sk_X509_value(chain, i);
-        if (!addr_ext_d2i(x, &exts[i]))
+        if (!ossl_x509_decode_ext(x, NID_sbgp_ipAddrBlock, &ext_tmp))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
+        exts[i] = ext_tmp;
         if ((ext = exts[i]) == NULL) {
             ret = 1; /* Return success */
             goto done;
@@ -1353,8 +1343,9 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
      */
     for (i++; i < n; i++) {
         x = sk_X509_value(chain, i);
-        if (!addr_ext_d2i(x, &exts[i]))
+        if (!ossl_x509_decode_ext(x, NID_sbgp_ipAddrBlock, &ext_tmp))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
+        exts[i] = ext_tmp;
         if (!X509v3_addr_is_canonical(exts[i]))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
         if (exts[i] == NULL) {

@@ -387,13 +387,23 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
     return DIST_POINT_set_dpname(dp->distpoint, iname) ? 1 : -1;
 }
 
+int ossl_x509_decode_ext(const X509 *x, int nid, void **pval)
+{
+    int crit;
+
+    *pval = X509_get_ext_d2i(x, nid, &crit, NULL);
+    return *pval != NULL || crit == -1;
+}
+
 int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp)
 {
+    void *ext;
     int i;
 
-    *pcrldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &i, NULL);
-    if (*pcrldp == NULL && i != -1)
+    *pcrldp = NULL;
+    if (!ossl_x509_decode_ext(x, NID_crl_distribution_points, &ext))
         return 0;
+    *pcrldp = ext;
 
     for (i = 0; i < sk_DIST_POINT_num(*pcrldp); i++) {
         int res = setup_dp(x, sk_DIST_POINT_value(*pcrldp, i));
