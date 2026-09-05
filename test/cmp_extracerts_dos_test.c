@@ -212,8 +212,8 @@ static OSSL_CMP_MSG *build_rejectable_msg_with_unique_cert(int index)
         goto err;
 
     /* PBM protection with a secret the server ctx will never be given */
-    memset(ref, (unsigned char)(0xA0 + (index & 0x0F)), sizeof(ref));
-    memset(secret, (unsigned char)(0x50 + (index & 0x0F)), sizeof(secret));
+    memset(ref, (unsigned char)(0x50 + (index & 0x0F)), sizeof(ref));
+    memset(secret, (unsigned char)(0xA0 + (index & 0x0F)), sizeof(secret));
     if (!TEST_true(OSSL_CMP_CTX_set_option(client_ctx,
             OSSL_CMP_OPT_UNPROTECTED_SEND, 0))
         || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(client_ctx, ref,

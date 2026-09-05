@@ -547,7 +547,7 @@ const OPTIONS cmp_options[] = {
 
     OPT_SECTION("Client authentication"),
     { "ref", OPT_REF, 's',
-        "Reference value to use as senderKID in case no -cert is given" },
+        "Reference value to use as senderKID except with signature-based protection" },
     { "secret", OPT_SECRET, 's',
         "Prefer PBM (over signatures) for protecting msgs with given password source" },
     { "cert", OPT_CERT, 's',
@@ -564,7 +564,7 @@ const OPTIONS cmp_options[] = {
     { "digest", OPT_DIGEST, 's',
         "Digest to use in message protection and POPO signatures. Default \"sha256\"" },
     { "mac", OPT_MAC, 's',
-        "MAC algorithm to use in PBM-based message protection. Default \"hmac-sha1\"" },
+        "MAC algorithm to use in MAC-based message protection. Default \"hmac-sha1\"" },
     { "extracerts", OPT_EXTRACERTS, 's',
         "Certificates to append in extraCerts field of outgoing messages." },
     { OPT_MORE_STR, 0, 0,
@@ -1281,7 +1281,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
         CMP_err("Server credentials (-srv_secret or -srv_cert) must be given if -use_mock_srv or -port is used");
         goto err;
     } else {
-        CMP_warn("server will not be able to handle PBM-protected requests since -srv_secret is not given");
+        CMP_warn("server will not be able to handle MAC-protected requests since -srv_secret is not given");
     }
 
     if (opt_srv_secret == NULL
@@ -1653,9 +1653,19 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx)
         return 0;
     }
 
-    if (opt_ref == NULL && opt_cert == NULL && opt_subject == NULL) {
-        /* cert or subject should determine the sender */
-        CMP_err("must give -ref if no -cert and no -subject given");
+    if (opt_ref == NULL && opt_cert == NULL && opt_oldcert == NULL
+        && opt_csr == NULL && opt_subject == NULL && !opt_unprotected_requests) {
+        /*
+         * The sender name will be taken from the subject of any -cert, -oldcert,
+         * or else -csr, otherwise from any -subject, or from -ref.
+         * With password-based protection, -ref is the preferred source.
+         *
+         * The senderKID is taken from the subjectKeyIdentifier of the
+         * protection certificate if present. With password-based protection,
+         * the commonName of the sender field, if present, is taken by default
+         * as per RFC 9483 section 3.1 but may be overridden by -ref.
+         */
+        CMP_err("Must give -ref if no -cert, -oldcert, -csr, -subject, nor -unprotected_requests given");
         return 0;
     }
     if (opt_secret == NULL && ((opt_cert == NULL) != (opt_key == NULL))) {
@@ -1675,8 +1685,10 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx)
             if (res == 0)
                 return 0;
         }
-        if (opt_cert != NULL || opt_key != NULL)
-            CMP_warn("-cert and -key not used for protection since -secret is given");
+        if (opt_cert != NULL || opt_key != NULL) {
+            CMP_warn("Ignoring -cert and -key since -secret option selects password-based message protection");
+            opt_cert = opt_key = NULL;
+        }
     }
     if (opt_ref != NULL
         && !OSSL_CMP_CTX_set1_referenceValue(ctx, (unsigned char *)opt_ref,
