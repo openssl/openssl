@@ -559,7 +559,7 @@ DEPEND[openssl.pc]=libcrypto.pc libssl.pc
 
 GENERATE[builddata.pm]=util/mkinstallvars.pl \
     COMMENT="This file should be used when building against this OpenSSL build, and should never be installed" \
-    PREFIX=. BINDIR=apps APPLINKDIR=ms \
+    PREFIX=. BINDIR=apps "APPLINKDIR=$(SRCDIR)/ms" \
     LIBDIR= INCLUDEDIR=include "INCLUDEDIR=$(SRCDIR)/include" \
     MODULESDIR=providers \
     libdir= CMAKECONFIGDIR= PKGCONFIGDIR= \
