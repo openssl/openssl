@@ -459,9 +459,6 @@ static int ecpkparams_reuse_error_test(void)
     EC_GROUP_set_asn1_flag(grp, OPENSSL_EC_NAMED_CURVE);
 
     /* On failure the passed in object is consumed, so do not free it again. */
-    if (!TEST_ptr_null(EC_GROUP_get_ecpkparameters(grp, params)))
-        goto err;
-    params = NULL;
     params = EC_GROUP_get_ecpkparameters(grp, params);
     if (!TEST_ptr_null(params))
         goto err;
