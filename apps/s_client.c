@@ -127,7 +127,8 @@ static void print_ocsp_response(BIO *bp, OCSP_RESPONSE *rsp);
 static int ldap_ExtendedResponse_parse(const char *buf, long rem);
 static int is_dNS_name(const char *host);
 
-static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
+static const unsigned char cert_type_both[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
+static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk };
 static int enable_server_rpk = 0;
 
 static int saved_errno;
@@ -619,6 +620,8 @@ typedef enum OPTION_choice {
     OPT_ENABLE_PHA,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+    OPT_SERVER_CERT_TYPE,
+    OPT_CLIENT_CERT_TYPE,
     OPT_EXPECTED_RPK,
     OPT_SCTP_LABEL_BUG,
     OPT_KTLS,
@@ -832,6 +835,10 @@ const OPTIONS s_client_options[] = {
     { "enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication" },
     { "enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server" },
     { "enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client" },
+    { "server_cert_type", OPT_SERVER_CERT_TYPE, 's',
+        "Supported server certificate types in preference order (rpk, x509)" },
+    { "client_cert_type", OPT_CLIENT_CERT_TYPE, 's',
+        "Supported client certificate types in preference order (rpk, x509)" },
 #ifndef OPENSSL_NO_SRTP
     { "use_srtp", OPT_USE_SRTP, 's',
         "Offer SRTP key management with a colon-separated profile list" },
@@ -1107,6 +1114,10 @@ int s_client_main(int argc, char **argv)
     char *psksessf = NULL;
     int enable_pha = 0;
     int enable_client_rpk = 0;
+    int opt_server_rpk = 0;
+    const char *server_cert_type_arg = NULL, *client_cert_type_arg = NULL;
+    unsigned char server_cert_types[4], client_cert_types[4];
+    size_t server_cert_types_len = 0, client_cert_types_len = 0;
 #ifndef OPENSSL_NO_SCTP
     int sctp_label_bug = 0;
 #endif
@@ -1780,9 +1791,16 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_ENABLE_SERVER_RPK:
             enable_server_rpk = 1;
+            opt_server_rpk = 1;
             break;
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
+            break;
+        case OPT_SERVER_CERT_TYPE:
+            server_cert_type_arg = opt_arg();
+            break;
+        case OPT_CLIENT_CERT_TYPE:
+            client_cert_type_arg = opt_arg();
             break;
         case OPT_EXPECTED_RPK:
             if ((rpk_files == NULL
@@ -1792,6 +1810,60 @@ int s_client_main(int argc, char **argv)
             enable_server_rpk = 1;
             break;
         }
+    }
+
+    /*
+     * The explicit certificate type lists subsume -enable_*_rpk;
+     * combining the two forms for the same peer is a usage error.
+     */
+    if (server_cert_type_arg != NULL) {
+        if (opt_server_rpk) {
+            BIO_printf(bio_err,
+                "%s: -enable_server_rpk and -server_cert_type are mutually exclusive\n",
+                prog);
+            goto end;
+        }
+        server_cert_types_len = parse_cert_types(server_cert_type_arg,
+            server_cert_types, sizeof(server_cert_types));
+        if (server_cert_types_len == 0) {
+            BIO_printf(bio_err, "%s: Invalid certificate type list '%s'\n",
+                prog, server_cert_type_arg);
+            goto end;
+        }
+        if (memchr(server_cert_types, TLSEXT_cert_type_rpk,
+                server_cert_types_len)
+            != NULL)
+            enable_server_rpk = 1;
+    }
+    if (client_cert_type_arg != NULL) {
+        if (enable_client_rpk) {
+            BIO_printf(bio_err,
+                "%s: -enable_client_rpk and -client_cert_type are mutually exclusive\n",
+                prog);
+            goto end;
+        }
+        client_cert_types_len = parse_cert_types(client_cert_type_arg,
+            client_cert_types, sizeof(client_cert_types));
+        if (client_cert_types_len == 0) {
+            BIO_printf(bio_err, "%s: Invalid certificate type list '%s'\n",
+                prog, client_cert_type_arg);
+            goto end;
+        }
+        if (key_file == NULL && cert_file == NULL) {
+            BIO_printf(bio_err, "%s: -client_cert_type requires a client key\n",
+                prog);
+            goto end;
+        }
+        if (cert_file == NULL
+            && memchr(client_cert_types, TLSEXT_cert_type_x509,
+                   client_cert_types_len)
+                != NULL)
+            BIO_puts(bio_err,
+                "Warning: no client certificate was loaded, the x509 client certificate type is unusable\n");
+        if (memchr(client_cert_types, TLSEXT_cert_type_rpk,
+                client_cert_types_len)
+            != NULL)
+            enable_client_rpk = 1;
     }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -2244,7 +2316,8 @@ int s_client_main(int argc, char **argv)
 
     ssl_ctx_add_crls(ctx, crls, crl_download);
 
-    if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
+    if ((cert != NULL || (key != NULL && enable_client_rpk))
+        && !set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
 
     if (!noservername) {
@@ -2264,6 +2337,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     } else if (rpk_files != NULL) {
+        SSL_CTX_dane_set_flags(ctx, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
         if (SSL_CTX_dane_enable(ctx) <= 0) {
             BIO_printf(bio_err, "%s: Error enabling RPK verification\n", prog);
             goto end;
@@ -2309,13 +2383,31 @@ int s_client_main(int argc, char **argv)
     if (enable_pha)
         SSL_set_post_handshake_auth(con, 1);
 
-    if (enable_client_rpk
-        && !SSL_set1_client_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
-        BIO_puts(bio_err, "Error setting client certificate types\n");
-        goto end;
+    if (client_cert_type_arg != NULL) {
+        if (!SSL_set1_client_cert_type(con, client_cert_types,
+                client_cert_types_len)) {
+            BIO_puts(bio_err, "Error setting client certificate types\n");
+            goto end;
+        }
+    } else if (enable_client_rpk && key == NULL) {
+        BIO_puts(bio_err,
+            "Warning: no client key was loaded, -enable_client_rpk has no effect\n");
+    } else if (enable_client_rpk) {
+        if (cert != NULL
+                ? !SSL_set1_client_cert_type(con, cert_type_both, sizeof(cert_type_both))
+                : !SSL_set1_client_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
+            BIO_puts(bio_err, "Error setting client certificate types\n");
+            goto end;
+        }
     }
-    if (enable_server_rpk
-        && !SSL_set1_server_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
+    if (server_cert_type_arg != NULL) {
+        if (!SSL_set1_server_cert_type(con, server_cert_types,
+                server_cert_types_len)) {
+            BIO_puts(bio_err, "Error setting server certificate types\n");
+            goto end;
+        }
+    } else if (enable_server_rpk
+        && !SSL_set1_server_cert_type(con, cert_type_both, sizeof(cert_type_both))) {
         BIO_puts(bio_err, "Error setting server certificate types\n");
         goto end;
     }

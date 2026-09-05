@@ -78,6 +78,49 @@ be set; the SSL_VERIFY_POST_HANDSHAKE flag is optional. The
 SSL_VERIFY_FAIL_IF_NO_PEER_CERT flag is also applicable and has the same
 effect as with the client authentication during the handshake.
 
+A request that cannot be satisfied fails without affecting the connection:
+with an B<SSL_R_INVALID_CONFIG> error when the configuration or cipher does
+not permit client authentication, and with an
+B<SSL_R_WRONG_CERTIFICATE_TYPE> error when the connection has no client
+certificate type (RFC7250) in common and a certificate is optional.
+When B<SSL_VERIFY_FAIL_IF_NO_PEER_CERT> is set and there is no common
+client certificate type, the request is instead accepted, and sending it
+terminates the connection with a B<certificate_required> alert, just as
+when the client declines to return a certificate.
+
+The client's response arrives asynchronously, and only once the client
+reads from the connection; a server is therefore best advised to request
+post-handshake authentication at a point where the client is waiting for
+server output rather than mid-request, and to expect that client data
+already in flight when a required certificate cannot be produced may be
+discarded unread when the connection is terminated.
+A client that declines to authenticate returns an empty certificate list
+(or no raw public key), which is not itself a protocol error unless
+B<SSL_VERIFY_FAIL_IF_NO_PEER_CERT> is set.
+Otherwise the request does not disturb the flow of application data: the
+server keeps reading client data as usual, and the client's
+authentication messages, whenever they arrive, are consumed transparently
+within L<SSL_read(3)> (with B<SSL_MODE_AUTO_RETRY> set, as it is by
+default; without it the read reports B<SSL_ERROR_WANT_READ> and is
+retried).
+
+Detecting the outcome takes some care.
+A verify callback runs when client credentials (a certificate or raw
+public key) arrive, but does not run when an optional request is declined
+with an empty certificate list, and the info callback does not report
+TLS 1.3 post-handshake exchanges, so neither reliably signals completion.
+When a certificate is required, a decline surfaces as a connection error.
+When a certificate is optional, message ordering provides a reliable
+recipe: the client sends its authentication response before any
+application data it writes after processing the request, so a server that
+elicits an application-level response after requesting authentication
+can, upon reading that response, check L<SSL_get0_peer_certificate(3)> or
+L<SSL_get0_peer_rpk(3)>, together with L<SSL_get_verify_result(3)>; at
+that point an absent credential conclusively means the client declined.
+As a last resort, a message callback (see L<SSL_CTX_set_msg_callback(3)>)
+observes the client's post-handshake Certificate message directly,
+whether empty or not.
+
 =head1 NOTES
 
 The verification of certificates can be controlled by a set of logically

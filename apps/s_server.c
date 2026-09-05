@@ -139,7 +139,8 @@ static int use_zc_sendfile = 0;
 
 static const char *session_id_prefix = NULL;
 
-static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
+static const unsigned char cert_type_both[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
+static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk };
 static int enable_client_rpk = 0;
 
 #ifndef OPENSSL_NO_DTLS
@@ -1297,6 +1298,9 @@ typedef enum OPTION_choice {
     OPT_CERT_COMP,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+    OPT_SERVER_CERT_TYPE,
+    OPT_CLIENT_CERT_TYPE,
+    OPT_NO_DEFAULT_CERT,
     OPT_EXPECTED_RPK,
 #ifndef OPENSSL_NO_ECH
     OPT_ECH_PEM,
@@ -1348,6 +1352,8 @@ const OPTIONS s_server_options[] = {
     { "no-CAstore", OPT_NOCASTORE, '-',
         "Do not load certificates from the default certificates store URI" },
     { "nocert", OPT_NOCERT, '-', "Don't use any certificates (Anon-DH)" },
+    { "no_default_cert", OPT_NO_DEFAULT_CERT, '-',
+        "Don't use the default certificate files, only explicitly named ones" },
     { "verify", OPT_VERIFY, 'p', "Turn on peer certificate verification, set depth" },
     { "Verify", OPT_UPPER_V_VERIFY, 'p',
         "Turn on peer certificate verification, must have a cert, set depth" },
@@ -1576,6 +1582,10 @@ const OPTIONS s_server_options[] = {
 #endif
     { "enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server" },
     { "enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client" },
+    { "server_cert_type", OPT_SERVER_CERT_TYPE, 's',
+        "Supported server certificate types in preference order (rpk, x509)" },
+    { "client_cert_type", OPT_CLIENT_CERT_TYPE, 's',
+        "Supported client certificate types in preference order (rpk, x509)" },
     OPT_R_OPTIONS,
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -1734,6 +1744,8 @@ int s_server_main(int argc, char *argv[])
     int s_server_session_id_context = 1; /* anything will do */
     const char *s_cert_file = TEST_CERT, *s_key_file = NULL, *s_chain_file = NULL;
     const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
+    int s_cert_file_explicit = 0, s_cert_file2_explicit = 0;
+    int no_default_cert = 0;
     char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
 #ifndef OPENSSL_NO_OCSP
     int s_tlsextstatus = 0;
@@ -1764,6 +1776,10 @@ int s_server_main(int argc, char *argv[])
     int tfo = 0;
     int cert_comp = 0;
     int enable_server_rpk = 0;
+    int opt_client_rpk = 0;
+    const char *server_cert_type_arg = NULL, *client_cert_type_arg = NULL;
+    unsigned char server_cert_types[4], client_cert_types[4];
+    size_t server_cert_types_len = 0, client_cert_types_len = 0;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1912,6 +1928,7 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_CERT:
             s_cert_file = opt_arg();
+            s_cert_file_explicit = 1;
             break;
         case OPT_NAMEOPT:
             if (!set_nameopt(opt_arg()))
@@ -1968,6 +1985,9 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_NOCERT:
             nocert = 1;
+            break;
+        case OPT_NO_DEFAULT_CERT:
+            no_default_cert = 1;
             break;
         case OPT_CAPATH:
             CApath = opt_arg();
@@ -2299,6 +2319,7 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_CERT2:
             s_cert_file2 = opt_arg();
+            s_cert_file2_explicit = 1;
             break;
         case OPT_KEY2:
             s_key_file2 = opt_arg();
@@ -2411,6 +2432,13 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
+            opt_client_rpk = 1;
+            break;
+        case OPT_SERVER_CERT_TYPE:
+            server_cert_type_arg = opt_arg();
+            break;
+        case OPT_CLIENT_CERT_TYPE:
+            client_cert_type_arg = opt_arg();
             break;
         case OPT_EXPECTED_RPK:
             if ((rpk_files == NULL
@@ -2429,6 +2457,49 @@ int s_server_main(int argc, char *argv[])
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
+
+    /*
+     * The explicit certificate type lists subsume the -enable_*_rpk;
+     * combining the two forms for the same peer is a usage error.
+     */
+    if (server_cert_type_arg != NULL) {
+        if (enable_server_rpk) {
+            BIO_printf(bio_err,
+                "%s: -enable_server_rpk and -server_cert_type are mutually exclusive\n",
+                prog);
+            goto end;
+        }
+        server_cert_types_len = parse_cert_types(server_cert_type_arg,
+            server_cert_types, sizeof(server_cert_types));
+        if (server_cert_types_len == 0) {
+            BIO_printf(bio_err, "%s: Invalid certificate type list '%s'\n",
+                prog, server_cert_type_arg);
+            goto end;
+        }
+        if (memchr(server_cert_types, TLSEXT_cert_type_rpk,
+                server_cert_types_len)
+            != NULL)
+            enable_server_rpk = 1;
+    }
+    if (client_cert_type_arg != NULL) {
+        if (opt_client_rpk) {
+            BIO_printf(bio_err,
+                "%s: -enable_client_rpk and -client_cert_type are mutually exclusive\n",
+                prog);
+            goto end;
+        }
+        client_cert_types_len = parse_cert_types(client_cert_type_arg,
+            client_cert_types, sizeof(client_cert_types));
+        if (client_cert_types_len == 0) {
+            BIO_printf(bio_err, "%s: Invalid certificate type list '%s'\n",
+                prog, client_cert_type_arg);
+            goto end;
+        }
+        if (memchr(client_cert_types, TLSEXT_cert_type_rpk,
+                client_cert_types_len)
+            != NULL)
+            enable_client_rpk = 1;
+    }
 
     if (!app_RAND_load())
         goto end;
@@ -2512,6 +2583,21 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 
+    /* Load only explicitly named certificates */
+    if (no_default_cert) {
+        if (!s_cert_file_explicit)
+            s_cert_file = NULL;
+        if (!s_cert_file2_explicit)
+            s_cert_file2 = NULL;
+        if (!nocert && s_cert_file == NULL && s_key_file == NULL) {
+            BIO_printf(bio_err,
+                "%s: -no_default_cert requires a key (-key) or certificate"
+                " (-cert); use -nocert for a server with neither\n",
+                prog);
+            goto end;
+        }
+    }
+
     if (s_key_file == NULL)
         s_key_file = s_cert_file;
 
@@ -2521,38 +2607,56 @@ int s_server_main(int argc, char *argv[])
     if (!load_excert(&exc))
         goto end;
 
-    if (nocert == 0) {
+    /*
+     * With -no_default_cert and no explicitly named identity, the server
+     * runs without a certificate or key (PSK or anonymous ciphers only).
+     */
+    if (nocert == 0 && s_key_file != NULL) {
         s_key = load_key(s_key_file, s_key_format, 0, pass,
-            "server certificate private key");
+            "server private key");
         if (s_key == NULL)
             goto end;
 
-        s_cert = load_cert_pass(s_cert_file, s_cert_format, 1, pass,
-            "server certificate");
+        if (s_cert_file != NULL) {
+            s_cert = load_cert_pass(s_cert_file, s_cert_format, 1, pass,
+                "server certificate");
 
-        if (s_cert == NULL)
-            goto end;
-        if (s_chain_file != NULL) {
-            if (!load_certs(s_chain_file, 0, &s_chain, NULL,
-                    "server certificate chain"))
+            if (s_cert == NULL)
                 goto end;
-        }
 
-        if (tlsextcbp.servername != NULL) {
+            if (s_chain_file != NULL) {
+                if (!load_certs(s_chain_file, 0, &s_chain, NULL,
+                        "server certificate chain"))
+                    goto end;
+            }
+        } else if (!enable_server_rpk) {
+            BIO_puts(bio_err,
+                "No server certificate configured, and server RPK is not enabled\n");
+            goto end;
+        }
+    }
+
+    if (nocert == 0 && tlsextcbp.servername != NULL) {
+        if (s_key_file2 != NULL) {
             s_key2 = load_key(s_key_file2, s_key_format, 0, pass,
                 "second server certificate private key");
             if (s_key2 == NULL)
                 goto end;
 
-            s_cert2 = load_cert_pass(s_cert_file2, s_cert_format, 1, pass,
-                "second server certificate");
-
-            if (s_cert2 == NULL)
+            if (s_cert_file2 != NULL) {
+                s_cert2 = load_cert_pass(s_cert_file2, s_cert_format, 1, pass,
+                    "second server certificate");
+                if (s_cert2 == NULL)
+                    goto end;
+            } else if (!enable_server_rpk) {
+                BIO_puts(bio_err,
+                    "No second server certificate configured, and server RPK is not enabled\n");
                 goto end;
-#ifndef OPENSSL_NO_ECH
-            tlsextcbp.scert = s_cert2;
-#endif
+            }
         }
+#ifndef OPENSSL_NO_ECH
+        tlsextcbp.scert = s_cert2;
+#endif
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto_neg_in) {
@@ -2582,27 +2686,34 @@ int s_server_main(int argc, char *argv[])
         }
     }
 
-    if (s_dcert_file != NULL) {
+    if (s_dkey_file == NULL)
+        s_dkey_file = s_dcert_file;
 
-        if (s_dkey_file == NULL)
-            s_dkey_file = s_dcert_file;
+    if (s_dkey_file != NULL) {
+        if (s_dcert_file == NULL && !enable_server_rpk) {
+            BIO_puts(bio_err,
+                "A second key (-dkey) without a certificate (-dcert) requires server RPK support\n");
+            goto end;
+        }
 
         s_dkey = load_key(s_dkey_file, s_dkey_format,
             0, dpass, "second certificate private key");
         if (s_dkey == NULL)
             goto end;
 
-        s_dcert = load_cert_pass(s_dcert_file, s_dcert_format, 1, dpass,
-            "second server certificate");
+        if (s_dcert_file != NULL) {
+            s_dcert = load_cert_pass(s_dcert_file, s_dcert_format, 1, dpass,
+                "second server certificate");
 
-        if (s_dcert == NULL) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-        if (s_dchain_file != NULL) {
-            if (!load_certs(s_dchain_file, 0, &s_dchain, NULL,
-                    "second server certificate chain"))
+            if (s_dcert == NULL) {
+                ERR_print_errors(bio_err);
                 goto end;
+            }
+            if (s_dchain_file != NULL) {
+                if (!load_certs(s_dchain_file, 0, &s_dchain, NULL,
+                        "second server certificate chain"))
+                    goto end;
+            }
         }
     }
 
@@ -2816,7 +2927,7 @@ int s_server_main(int argc, char *argv[])
     }
 #endif
 
-    if (s_cert2) {
+    if (s_key2) {
         ctx2 = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
         if (ctx2 == NULL) {
             ERR_print_errors(bio_err);
@@ -2890,7 +3001,7 @@ int s_server_main(int argc, char *argv[])
      * If we have a 2nd context to which we might switch, then set
      * the same alpn callback for that too.
      */
-    if (s_cert2 != NULL && alpn_ctx.data != NULL)
+    if (s_key2 != NULL && alpn_ctx.data != NULL)
         SSL_CTX_set_alpn_select_cb(ctx2, alpn_cb, &alpn_ctx);
 
     if (!no_dhe) {
@@ -2983,7 +3094,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
 #endif
 
-    if (s_dcert != NULL) {
+    if (s_dkey != NULL) {
         if (!set_cert_key_stuff(ctx, s_dcert, s_dkey, s_dchain, build_chain))
             goto end;
     }
@@ -3120,13 +3231,43 @@ int s_server_main(int argc, char *argv[])
         if (ctx2 != NULL && !SSL_CTX_compress_certs(ctx2, 0))
             BIO_puts(bio_s_out, "Error compressing certs on ctx2\n");
     }
-    if (enable_server_rpk
-        && !SSL_CTX_set1_server_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
-        BIO_puts(bio_err, "Error setting server certificate types\n");
-        goto end;
+    if (server_cert_type_arg != NULL) {
+        if (!SSL_CTX_set1_server_cert_type(ctx, server_cert_types,
+                server_cert_types_len)) {
+            BIO_puts(bio_err, "Error setting server certificate types\n");
+            goto end;
+        }
+    } else if (enable_server_rpk) {
+        if (s_key == NULL) {
+            BIO_puts(bio_err,
+                "Warning: no private key was loaded, -enable_server_rpk has no effect\n");
+        } else {
+            /*
+             * Advertise X.509 alongside RPK when at least one loaded identity
+             * has a certificate.  The -cert2 identity counts: an SNI switch
+             * brings in the second context's keys and certificates, but
+             * certificate type negotiation always runs against this (the
+             * default) context's list.
+             */
+            int have_cert = s_cert != NULL || s_dcert != NULL || s_cert2 != NULL;
+
+            if (have_cert
+                    ? !SSL_CTX_set1_server_cert_type(ctx, cert_type_both, sizeof(cert_type_both))
+                    : !SSL_CTX_set1_server_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
+                BIO_puts(bio_err, "Error setting server certificate types\n");
+                goto end;
+            }
+        }
     }
-    if (enable_client_rpk
-        && !SSL_CTX_set1_client_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
+
+    if (client_cert_type_arg != NULL) {
+        if (!SSL_CTX_set1_client_cert_type(ctx, client_cert_types,
+                client_cert_types_len)) {
+            BIO_puts(bio_err, "Error setting client certificate types\n");
+            goto end;
+        }
+    } else if (enable_client_rpk
+        && !SSL_CTX_set1_client_cert_type(ctx, cert_type_both, sizeof(cert_type_both))) {
         BIO_puts(bio_err, "Error setting client certificate types\n");
         goto end;
     }

@@ -400,11 +400,40 @@ static int get_compressed_certificate_alg(SSL_CONNECTION *sc)
 }
 
 /*
+ * Will this handshake include a server Certificate message?
+ *
+ * Valid return values are:
+ *   1: Yes
+ *   0: No
+ *
+ * Note: certificate authentication combined with an external PSK
+ * (RFC 9973) would falsify the "hit means no certificate" assumption
+ * below, along with its analogues in the state machine write
+ * transitions and in tls_construct_stoc_client_cert_type().  An
+ * implementation of that extension must revisit all of them.
+ */
+int send_server_certificate(SSL_CONNECTION *s)
+{
+    if (s->hit)
+        return 0;
+
+    /* Anonymous, SRP and non-RSA PSK ciphers carry no certificate */
+    if (!SSL_CONNECTION_IS_VERSION13(s)
+        && (s->s3.tmp.new_cipher->algorithm_auth
+               & (SSL_aNULL | SSL_aSRP | SSL_aPSK))
+            != 0)
+        return 0;
+
+    return 1;
+}
+
+/*
  * Should we send a CertificateRequest message?
  *
  * Valid return values are:
  *   1: Yes
  *   0: No
+ *   -1: Would, but can't, due to a client_certificate_type mismatch.
  */
 int send_certificate_request(SSL_CONNECTION *s)
 {
@@ -442,9 +471,15 @@ int send_certificate_request(SSL_CONNECTION *s)
          * are omitted
          */
         && !(s->s3.tmp.new_cipher->algorithm_auth & SSL_aPSK)) {
+        /*
+         * Return -1 when actually receiving a client cert is optional, and not
+         * possible due to a client_certificate_type mismatch.
+         */
+        if (s->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_ERROR
+            && !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
+            return -1;
         return 1;
     }
-
     return 0;
 }
 
@@ -658,7 +693,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
         if (s->hit)
             st->hand_state = TLS_ST_SW_FINISHED;
-        else if (send_certificate_request(s))
+        else if (send_certificate_request(s) > 0)
             st->hand_state = TLS_ST_SW_CERT_REQ;
         else if (do_compressed_cert(s))
             st->hand_state = TLS_ST_SW_COMP_CERT;
@@ -875,13 +910,11 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
             else
                 st->hand_state = TLS_ST_SW_CHANGE;
         } else {
-            /* Check if it is anon DH or anon ECDH, */
-            /* normal PSK or SRP */
-            if (!(s->s3.tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
+            if (send_server_certificate(s)) {
                 st->hand_state = TLS_ST_SW_CERT;
             } else if (send_server_key_exchange(s)) {
                 st->hand_state = TLS_ST_SW_KEY_EXCH;
-            } else if (send_certificate_request(s)) {
+            } else if (send_certificate_request(s) > 0) {
                 st->hand_state = TLS_ST_SW_CERT_REQ;
             } else {
                 st->hand_state = TLS_ST_SW_SRVR_DONE;
@@ -904,7 +937,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
         /* Fall through */
 
     case TLS_ST_SW_KEY_EXCH:
-        if (send_certificate_request(s)) {
+        if (send_certificate_request(s) > 0) {
             st->hand_state = TLS_ST_SW_CERT_REQ;
             return WRITE_TRAN_CONTINUE;
         }
@@ -1307,7 +1340,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
         break;
 
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
-        if (!s->hit && !send_certificate_request(s)) {
+        if (!s->hit && send_certificate_request(s) <= 0) {
             if (!SSL_CONNECTION_IS_VERSION13(s)
                 || (s->options & SSL_OP_NO_TX_CERTIFICATE_COMPRESSION) != 0)
                 s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
@@ -1965,7 +1998,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
             && clienthello->dtls_cookie_len == 0
             && ossl_assert(ssl_get_min_max_version(s, &minversion,
-                                &maxversion, NULL)
+                               &maxversion, NULL)
                 == 0)
             && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0) {
             OPENSSL_free(clienthello);
@@ -3372,6 +3405,20 @@ err:
 CON_FUNC_RETURN tls_construct_certificate_request(SSL_CONNECTION *s,
     WPACKET *pkt)
 {
+    static const uint32_t must_auth = SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_PEER;
+
+    /*
+     * Raise a fatal connection error (same as when the client declines the
+     * certificate request) on client_certificate_type mismatch when client
+     * certs are required, but can't possibly be exchanged.
+     */
+    if (s->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_ERROR
+        && (s->verify_mode & must_auth) == must_auth) {
+        SSLfatal(s, SSL_AD_CERTIFICATE_REQUIRED,
+            SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
+        return CON_FUNC_ERROR;
+    }
+
     if (SSL_CONNECTION_IS_VERSION13(s)) {
         /* Send random context when doing post-handshake auth */
         if (s->post_handshake_auth == SSL_PHA_REQUEST_PENDING) {

@@ -293,7 +293,11 @@ sub start
     if (defined $self->cert) {
         $execcmd .= " -cert ".$self->cert." -cert2 ".$self->cert;
     } else {
-        $execcmd .= " -nocert";
+        # Suppress just the default certificate files: serverflags must
+        # name the identity, -key alone (RPK-only) or -key and -cert as
+        # usual.  A test wanting a server with no certificate and no key
+        # at all (PSK-only or anonymous) passes -nocert in serverflags.
+        $execcmd .= " -no_default_cert";
     }
 
     if ($self->{isdtls}) {
