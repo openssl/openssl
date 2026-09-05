@@ -479,6 +479,15 @@ OpenSSL 4.1
 
    *Dimitri John Ledkov*
 
+ * Fixed CRL scope checking for certificates without a CRL distribution
+   points extension. A CRL having an issuing distribution point extension
+   including a name that matches the certificate issuer name or any
+   issuerAltName of the certificate is now accepted, as required
+   by the default distribution point rule at the end of RFC 5280 section 6.3.3,
+   instead of being rejected with X509_V_ERR_DIFFERENT_CRL_SCOPE.
+
+   *Paul Grubbs*
+
 OpenSSL 4.0
 -----------
 
