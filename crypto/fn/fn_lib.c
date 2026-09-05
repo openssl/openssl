@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -343,4 +343,86 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
     }
 
     return a;
+}
+
+/*-
+ * Serialise |a| as |len| big-endian bytes into |out|, in constant time.
+ *
+ * The low |len| bytes of |a| are written most-significant first; |a|'s value
+ * must fit in |len| bytes.  Returns 1 on success, 0 if |a| has a byte set
+ * beyond |len| (i.e. does not fit) or on a NULL argument.
+ *
+ * Constant-time profile: the byte layout depends only on |len| and |a|'s
+ * public width, never on its value.
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
+{
+    const size_t lw = sizeof(OSSL_FN_ULONG);
+    size_t dsize, nbytes, i;
+    unsigned char over = 0;
+
+    if (ossl_unlikely(a == NULL || out == NULL))
+        return 0;
+
+    dsize = (size_t)a->dsize;
+    nbytes = dsize * lw;
+
+    for (i = 0; i < len; i++) {
+        size_t limb = i / lw;
+
+        out[len - 1 - i] = limb < dsize
+            ? (unsigned char)(a->d[limb] >> (8 * (i % lw)))
+            : 0;
+    }
+    /* Every byte of |a| beyond |len| must be zero for the value to fit. */
+    for (; i < nbytes; i++)
+        over |= (unsigned char)(a->d[i / lw] >> (8 * (i % lw)));
+
+    return over == 0;
+}
+
+/*-
+ * Conditionally swap |a| and |b| if |condition| is non-zero.
+ * Both operands must be the same width.
+ * The counterpart of BIGNUM's BN_consttime_swap().
+ *
+ * Constant-time profile: |condition| is folded into an all-ones or all-zeros
+ * mask, and every limb of both operands is written unconditionally, so
+ * neither the condition nor the limb values steer control flow.  The only
+ * branches are on the operands' public width.
+ */
+int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
+{
+    size_t i, dsize;
+    OSSL_FN_ULONG mask;
+
+    if (ossl_unlikely(a == b))
+        return 1;
+
+    /*
+     * Swapping only the limbs the two have in common would leave the wider
+     * operand holding a mix of both values, so a width mismatch is an error
+     * rather than a partial swap.
+     */
+    if (ossl_unlikely(a->dsize != b->dsize)) {
+        ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL,
+            "Both operands must be the same width, but they are %zu bytes "
+            "and %zu bytes",
+            (size_t)a->dsize * sizeof(OSSL_FN_ULONG),
+            (size_t)b->dsize * sizeof(OSSL_FN_ULONG));
+        return 0;
+    }
+
+    /* All ones when condition is non-zero, all zeros when it is zero. */
+    mask = ~constant_time_is_zero_bn((OSSL_FN_ULONG)condition);
+    dsize = (size_t)a->dsize;
+
+    for (i = 0; i < dsize; i++) {
+        OSSL_FN_ULONG t = (a->d[i] ^ b->d[i]) & mask;
+
+        a->d[i] ^= t;
+        b->d[i] ^= t;
+    }
+
+    return 1;
 }
