@@ -27,8 +27,10 @@ jobs:
     - name: tool download
       run: |
         wget https://scan.coverity.com/download/linux64 \
-             --post-data "token=${{ secrets.COVERITY_TOKEN }}&project=openssl%2Fopenssl" \
+             --post-data "token=${COVERITY_TOKEN}&project=openssl%2Fopenssl" \
              --progress=dot:giga -O coverity_tool.tgz
+      env:
+        COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
     - name: config
       run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-lms enable-fips enable-rc5 enable-md2 enable-nextprotoneg enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
     - name: config dump
@@ -41,9 +43,12 @@ jobs:
       run: tar czvf openssl.tgz cov-int
     - name: Coverity upload
       run: |
-        curl --form token="${{ secrets.COVERITY_TOKEN }}" \
+        curl --form token="${COVERITY_TOKEN}" \
              --form email=openssl-commits@openssl.org \
              --form file=@openssl.tgz \
              --form version="`date -u -I` `git rev-parse --short HEAD`" \
              --form description="analysis of `git branch --show-current`" \
              https://scan.coverity.com/builds?project=openssl%2Fopenssl
+
+      env:
+        COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
