@@ -32,6 +32,11 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * The FIPS provider's self-tests no longer replace the library context's
+   private DRBG while a known answer test runs.
+
+   *Dimitri John Ledkov*
+
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
    `OSSL_PARAM_locate()` calls.  This should ensure that the list
