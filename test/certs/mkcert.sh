@@ -135,7 +135,7 @@ genca() {
     local cert=$1; shift
     local cakey=$1; shift
     local cacert=$1; shift
-    local bcon="basicConstraints = critical,CA:true"
+    local bcon="basicConstraints = critical,CA:true${OPENSSL_PATHLEN:+,pathlen:$OPENSSL_PATHLEN}"
     local ku="keyUsage = keyCertSign,cRLSign"
     local skid="subjectKeyIdentifier = hash"
     local akid="authorityKeyIdentifier = keyid"
