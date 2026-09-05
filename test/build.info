@@ -821,7 +821,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[pemtest]=../include ../apps/include
   DEPEND[pemtest]=../libcrypto libtestutil.a
 
-  SOURCE[dtls13_internal_test]=dtls13_internal_test.c
+  SOURCE[dtls13_internal_test]=dtls13_internal_test.c helpers/ssltestlib.c
   INCLUDE[dtls13_internal_test]=.. ../include ../apps/include
   DEPEND[dtls13_internal_test]=../libssl.a ../libcrypto.a libtestutil.a
 

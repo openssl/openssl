@@ -840,14 +840,17 @@ int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
             /* We've wrapped around, so clear the buffer just in case */
             return 0;
     } else {
-        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == UINT16_MAX)
+        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == DTLS1_MAX_EPOCH)
+            return 0;
+
+        /*
+         * RFC 9147 Section 8: sending implementations MUST NOT allow the
+         * epoch to exceed 2^48-1.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == DTLS1_3_MAX_EPOCH)
             return 0;
 
         s->rlayer.d->w_conn_epoch++;
-
-        if (s->rlayer.d->w_conn_epoch == 0)
-            /* We've wrapped around, so clear the buffer just in case */
-            return 0;
     }
 
     return 1;

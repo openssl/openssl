@@ -48,6 +48,14 @@ typedef struct tls_record_st {
 #endif
 } TLS_RECORD;
 
+/*
+ * RFC 9147 Section 8: sending implementations MUST NOT allow the epoch to
+ * exceed 2^48-1. This margin (rather than the 2^64-1 wire/representation
+ * ceiling of Section 6.1) is what actually bounds w_conn_epoch for DTLS 1.3.
+ */
+#define DTLS1_3_MAX_EPOCH ((uint64_t)0xFFFFFFFFFFFFULL)
+#define DTLS1_MAX_EPOCH UINT16_MAX
+
 typedef struct dtls_record_layer_st {
     /*
      * The current data and handshake epoch. This is initially
