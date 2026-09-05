@@ -974,6 +974,113 @@ end:
 }
 #endif /* OPENSSL_NO_DTLS */
 
+#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
+/* A DTLSv1.2 record with an unexpected version that gets silently discarded */
+static unsigned char record_badversion[] = {
+    SSL3_RT_APPLICATION_DATA, /* Content type */
+    0xfe, 0xff, /* Unexpected record version */
+    0, 1, /* Epoch */
+    0, 0, 0, 0, 0xff, 0xff, /* Record sequence number */
+    0, 16, /* Record length */
+    0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5,
+    0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5 /* Dummy data */
+};
+
+/* A DTLSv1.3 record with mismatched epoch bits that gets silently discarded */
+static unsigned char record_badepochbits[] = {
+    0x2d, /* Unified header: fixed bits, S and L bit, epoch bits 01 */
+    0, 42, /* Record sequence number */
+    0, 16, /* Record length */
+    0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5,
+    0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5 /* Dummy data */
+};
+
+/*
+ * Test that a record silently discarded by the record layer does not break
+ * the framing of the records that follow it in the same datagram.
+ */
+static int test_discard_record_framing(int version)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    int testresult = 0;
+    BIO *bio;
+    char msg[] = { 0x00, 0x01, 0x02, 0x03 };
+    unsigned char pkt[512], *fragment;
+    size_t fraglen;
+    char buf[10];
+    int ret;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            version, version,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Drain pending post-handshake messages, e.g. ACKs and session tickets */
+    while ((ret = SSL_read(cssl, buf, sizeof(buf))) > 0)
+        ;
+    if (!TEST_int_eq(SSL_get_error(cssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
+        goto end;
+
+    if (version == DTLS1_3_VERSION) {
+        fragment = record_badepochbits;
+        fraglen = sizeof(record_badepochbits);
+    } else {
+        fragment = record_badversion;
+        fraglen = sizeof(record_badversion);
+    }
+    memcpy(pkt, fragment, fraglen);
+
+    /* Recreate the app data datagram with the discarded record prepended */
+    bio = SSL_get_wbio(sssl);
+    if (!TEST_ptr(bio)
+        || !TEST_int_gt(ret = BIO_read(bio, pkt + fraglen,
+                            (int)(sizeof(pkt) - fraglen)),
+            0)
+        || !TEST_int_eq(mempacket_test_inject(bio, (char *)pkt,
+                            (int)fraglen + ret, -1,
+                            INJECT_PACKET_IGNORE_REC_SEQ),
+            (int)fraglen + ret))
+        goto end;
+
+    /* The app data record following the discarded one must still be read */
+    if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg))
+        || !TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_DTLS1_2
+static int test_discard_record_framing_dtls1(void)
+{
+    return test_discard_record_framing(DTLS1_2_VERSION);
+}
+#endif /* OPENSSL_NO_DTLS1_2 */
+
+#ifndef OPENSSL_NO_DTLS1_3
+static int test_discard_record_framing_dtls13(void)
+{
+    return test_discard_record_framing(DTLS1_3_VERSION);
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+#endif /* !OPENSSL_NO_DTLS1_2 || !OPENSSL_NO_DTLS1_3 */
+
 /* Confirm that we can create a connections using DTLSv1_listen() */
 #ifndef OPENSSL_NO_DTLS1_2
 static int test_listen(void)
@@ -1052,9 +1159,11 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data_dtls1);
+    ADD_TEST(test_discard_record_framing_dtls1);
 #endif
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_duplicate_app_data_dtls13);
+    ADD_TEST(test_discard_record_framing_dtls13);
 #endif
 
     return 1;

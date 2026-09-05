@@ -400,6 +400,25 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
     return 1;
 }
 
+/* Consume a discarded record's body so following records stay framed */
+static void dtls_discard_record_body(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
+    size_t reclen, size_t hdrlen)
+{
+    size_t already = rl->packet_length - hdrlen, more, nread = 0;
+
+    if (reclen > already) {
+        more = reclen - already;
+        /* For DTLS read_n() consumes at most the rest of the datagram */
+        (void)rl->funcs->read_n(rl, more, more, 1, 1, &nread);
+    } else {
+        /* Give back over-read bytes belonging to the next record */
+        rl->rbuf.left += already - reclen;
+        rl->rbuf.offset -= already - reclen;
+    }
+    rr->length = 0;
+    rl->packet_length = 0;
+}
+
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -499,9 +518,10 @@ again:
             && rr->type != SSL3_RT_HANDSHAKE
             && rr->type != SSL3_RT_ACK
             && !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
-            /* Silently discard */
+            /* Silently discard; the record length is unknown so drop it all */
             rr->length = 0;
             rl->packet_length = 0;
+            rl->rbuf.left = 0;
             goto again;
         }
 
@@ -536,8 +556,10 @@ again:
                  */
                 || (lbitisset ? !PACKET_get_net_2(&dtlsrecord, &length)
                               : (length = (unsigned int)TLS_BUFFER_get_len(&rl->rbuf)) > 0)) {
+                /* The record length is unknown so drop the whole datagram */
                 rr->length = 0;
                 rl->packet_length = 0;
+                rl->rbuf.left = 0;
                 goto again;
             }
 
@@ -555,8 +577,8 @@ again:
                 if (eebits == 2 && (epoch64 == 1 || epoch64 == 0)) {
                     epoch64 = 2;
                 } else {
-                    rr->length = 0;
-                    rl->packet_length = 0;
+                    dtls_discard_record_body(rl, rr, length,
+                        (size_t)(PACKET_data(&dtlsrecord) - rl->packet));
                     goto again;
                 }
             }
@@ -565,8 +587,10 @@ again:
                 || !PACKET_get_net_2(&dtlsrecord, &epoch)
                 || !PACKET_copy_bytes(&dtlsrecord, recseqnum, 6)
                 || !PACKET_get_net_2(&dtlsrecord, &length)) {
+                /* The record length is unknown so drop the whole datagram */
                 rr->length = 0;
                 rl->packet_length = 0;
+                rl->rbuf.left = 0;
                 goto again;
             }
             epoch64 = epoch;
@@ -593,23 +617,20 @@ again:
                 && rl->version == DTLS1_3_VERSION)) {
             if (rr->rec_version != rl->version) {
                 /* unexpected version, silently discard */
-                rr->length = 0;
-                rl->packet_length = 0;
+                dtls_discard_record_body(rl, rr, rr->length, rechdrlen);
                 goto again;
             }
         }
 
         if (rr->rec_version >> 8 != (rl->version == DTLS_ANY_VERSION ? DTLS1_VERSION_MAJOR : rl->version >> 8)) {
             /* wrong version, silently discard record */
-            rr->length = 0;
-            rl->packet_length = 0;
+            dtls_discard_record_body(rl, rr, rr->length, rechdrlen);
             goto again;
         }
 
         if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
             /* record too long, silently discard it */
-            rr->length = 0;
-            rl->packet_length = 0;
+            dtls_discard_record_body(rl, rr, rr->length, rechdrlen);
             goto again;
         }
 
@@ -619,8 +640,7 @@ again:
          */
         if (rr->length > rl->max_frag_len + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
-            rr->length = 0;
-            rl->packet_length = 0;
+            dtls_discard_record_body(rl, rr, rr->length, rechdrlen);
             goto again;
         }
 
