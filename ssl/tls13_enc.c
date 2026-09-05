@@ -583,6 +583,19 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             labellen = sizeof(client_early_traffic) - 1;
             log_label = CLIENT_EARLY_LABEL;
 
+            /*
+             * Client: never install early-write keys from an underived (zero)
+             * s->early_secret. It is set only when the first-offered PSK's
+             * binder derived it this ClientHello flight (see
+             * s->ext.early_secret_derived). If it is not set, the PSK offer and
+             * the early_data decision diverged; fail closed rather than protect
+             * 0-RTT under a secret a passive observer could reconstruct.
+             */
+            if ((which & SSL3_CC_CLIENT) != 0 && !s->ext.early_secret_derived) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
 #ifndef OPENSSL_NO_ECH
             /* if ECH worked then use the innerch and not the h/s buffer here */
             if (((which & SSL3_CC_SERVER) && s->ext.ech.success == 1)
@@ -605,8 +618,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             }
 
             /*
-             * 0-RTT keys off the frozen slot-0 PSK (candidate_at(0)), which
-             * may be the external psksession rather than s->session.
+             * 0-RTT keys off the recorded first-offered PSK, which may be the
+             * external psksession rather than s->session.
              */
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                 && s->ext.early_data_session != NULL) {
@@ -697,6 +710,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                 /* SSLfatal() already called */
                 goto err;
             }
+            s->ext.early_exporter_ready = 1;
         } else if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->client_finished_secret;
@@ -1046,6 +1060,8 @@ int tls13_export_keying_material_early(SSL_CONNECTION *s,
         sslcipher = SSL_SESSION_get0_cipher(s->ext.early_data_session);
     else
         sslcipher = SSL_SESSION_get0_cipher(s->session);
+    if (sslcipher == NULL)
+        goto err;
 
     md = ssl_md(SSL_CONNECTION_GET_CTX(s), sslcipher->algorithm2);
 
