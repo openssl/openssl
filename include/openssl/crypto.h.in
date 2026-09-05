@@ -25,6 +25,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #define HEADER_CRYPTO_H
 #endif
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -170,6 +171,39 @@ unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
 int OPENSSL_hexchar2int(unsigned char c);
 int OPENSSL_strcasecmp(const char *s1, const char *s2);
 int OPENSSL_strncasecmp(const char *s1, const char *s2, size_t n);
+
+/**
+ * @brief Portable asprintf() backed by OPENSSL_malloc().
+ *
+ * @param str    receives the allocated buffer
+ * @param format printf-style format string
+ * @returns bytes written on success, or -1 on error
+ * @see OPENSSL_asprintf(3)
+ */
+int OPENSSL_asprintf(char **str, const char *format, ...)
+#if defined(__has_attribute)
+#if __has_attribute(format)
+    __attribute__((__format__(__printf__, 2, 3)))
+#endif
+#endif
+    ;
+
+/**
+ * @brief va_list form of OPENSSL_asprintf().
+ *
+ * @param str    receives the allocated buffer
+ * @param format printf-style format string
+ * @param args   variadic arguments; consumed by the call
+ * @returns bytes written on success, or -1 on error
+ * @see OPENSSL_asprintf(3)
+ */
+int OPENSSL_vasprintf(char **str, const char *format, va_list args)
+#if defined(__has_attribute)
+#if __has_attribute(format)
+    __attribute__((__format__(__printf__, 2, 0)))
+#endif
+#endif
+    ;
 
 #define OPENSSL_MALLOC_MAX_NELEMS(type) (((1U << (sizeof(int) * 8 - 1)) - 1) / sizeof(type))
 
