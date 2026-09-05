@@ -118,7 +118,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             return -1;
         }
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_PRE, pval, it, NULL))
-            return 0;
+            return -1;
         i = ossl_asn1_get_choice_selector_const(pval, it);
         if ((i >= 0) && (i < it->tcount)) {
             const ASN1_VALUE **pchval;
@@ -127,10 +127,11 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             pchval = ossl_asn1_get_const_field_ptr(pval, chtt);
             return asn1_template_ex_i2d(pchval, out, chtt, -1, aclass);
         }
-        /* Fixme: error condition if selector out of range */
+        /* FIXME: Called only in the error path? */
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_POST, pval, it, NULL))
-            return 0;
-        break;
+            return -1;
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_NO_MATCHING_CHOICE_TYPE);
+        return -1;
 
     case ASN1_ITYPE_EXTERN:
         /* If new style i2d it does all the work */
@@ -144,12 +145,8 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* fall through */
 
     case ASN1_ITYPE_SEQUENCE:
-        i = ossl_asn1_enc_restore(&seqcontlen, out, pval, it);
-        /* An error occurred */
-        if (i < 0)
-            return 0;
         /* We have a valid cached encoding... */
-        if (i > 0)
+        if (ossl_asn1_enc_restore(&seqcontlen, out, pval, it))
             return seqcontlen;
         /* Otherwise carry on */
         seqcontlen = 0;
@@ -161,7 +158,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                 | V_ASN1_UNIVERSAL;
         }
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_PRE, pval, it, NULL))
-            return 0;
+            return -1;
         /* First work out sequence content length */
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
@@ -169,7 +166,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             int tmplen;
             seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
-                return 0;
+                return -1;
             pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             tmplen = asn1_template_ex_i2d(pseqval, NULL, seqtt, -1, aclass);
             if (tmplen == -1 || (tmplen > INT_MAX - seqcontlen))
@@ -187,7 +184,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             const ASN1_VALUE **pseqval;
             seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
-                return 0;
+                return -1;
             pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             /* FIXME: check for errors in enhanced version */
             asn1_template_ex_i2d(pseqval, out, seqtt, -1, aclass);
@@ -195,13 +192,13 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         if (ndef == 2)
             ASN1_put_eoc(out);
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_POST, pval, it, NULL))
-            return 0;
+            return -1;
         return seqlen;
 
     default:
-        return 0;
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_TEMPLATE);
+        return -1;
     }
-    return 0;
 }
 
 static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
