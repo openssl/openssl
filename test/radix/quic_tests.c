@@ -3280,8 +3280,25 @@ DEF_SCRIPT(script_63, "Fault injection - STREAM frame exceeding stream limit")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_LIMIT_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_64, "place holder for multistrem script_64")
+/* 64. Fault injection - STREAM - zero-length no-FIN is accepted */
+DEF_SCRIPT(script_64, "Fault injection - STREAM - zero-length no-FIN is accepted")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_data_frame_plain);
+
+    OP_NEW_STREAM(S, Sa, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(S_BIDI_ID(20) + 1, 1);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+    OP_READ_EXPECT(Ca, "orange", 6);
 }
 
 DEF_SCRIPT(script_65, "place holder for multistrem script_65")

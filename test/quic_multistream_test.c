@@ -2304,71 +2304,6 @@ static const struct script_op script_32[] = {
     OP_END
 };
 
-static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    int ok = 0;
-    WPACKET wpkt;
-    unsigned char frame_buf[64];
-    size_t written;
-    uint64_t type = OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN, offset, flen, i;
-
-    if (hdr->type != QUIC_PKT_TYPE_1RTT)
-        return 1;
-
-    switch (h->inject_word1) {
-    default:
-        return 0;
-    case 0:
-        return 1;
-    case 1:
-        offset = 0;
-        flen = 0;
-        break;
-    case 2:
-        offset = (((uint64_t)1) << 62) - 1;
-        flen = 5;
-        break;
-    case 3:
-        offset = 1 * 1024 * 1024 * 1024; /* 1G */
-        flen = 5;
-        break;
-    case 4:
-        offset = 0;
-        flen = 1;
-        break;
-    }
-
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
-            sizeof(frame_buf), 0)))
-        return 0;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
-            h->inject_word0 - 1))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, flen)))
-        goto err;
-
-    for (i = 0; i < flen; ++i)
-        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
-            goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        goto err;
-
-    ok = 1;
-err:
-    if (ok)
-        WPACKET_finish(&wpkt);
-    else
-        WPACKET_cleanup(&wpkt);
-    return ok;
-}
-
 /* 33. Fault injection - STREAM frame with illegal offset */
 static const struct script_op script_33[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -3100,21 +3035,7 @@ static const struct script_op script_63[] = {
 
 /* 64. Fault injection - STREAM - zero-length no-FIN is accepted */
 static const struct script_op script_64[] = {
-    OP_S_SET_INJECT_PLAIN(script_32_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_S_NEW_STREAM_UNI(a, S_UNI_ID(0)),
-    OP_S_WRITE(a, "apple", 5),
-
-    OP_C_ACCEPT_STREAM_WAIT(a),
-    OP_C_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(S_BIDI_ID(20) + 1, 1),
-    OP_S_WRITE(a, "orange", 6),
-    OP_C_READ_EXPECT(a, "orange", 6),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
