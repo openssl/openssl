@@ -440,6 +440,9 @@ extern const OSSL_DISPATCH ossl_ecdsa_signature_functions[];
 extern const OSSL_DISPATCH ossl_ecdsa_sha1_signature_functions[];
 extern const OSSL_DISPATCH ossl_ecdsa_sha224_signature_functions[];
 extern const OSSL_DISPATCH ossl_ecdsa_sha256_signature_functions[];
+#ifdef FIPS_MODULE
+extern const OSSL_DISPATCH ossl_ecdsa_sha256_internal_signature_functions[];
+#endif
 extern const OSSL_DISPATCH ossl_ecdsa_sha384_signature_functions[];
 extern const OSSL_DISPATCH ossl_ecdsa_sha512_signature_functions[];
 extern const OSSL_DISPATCH ossl_ecdsa_sha3_224_signature_functions[];

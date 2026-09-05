@@ -47,6 +47,7 @@ struct ecdsa_all_set_ctx_params_st {
 #endif
     OSSL_PARAM *nonce;
     OSSL_PARAM *sig; /* ecdsa_sigalg_set_ctx_params */
+    OSSL_PARAM *katent; /* ecdsa_sigalg_set_ctx_params */
 };
 
 #define ecdsa_set_ctx_params_st ecdsa_all_set_ctx_params_st
@@ -157,10 +158,23 @@ typedef struct {
 #endif
     /* If this is set then the generated k is not random */
     unsigned int nonce_type;
+#ifdef FIPS_MODULE
+    /*
+     * The bytes the nonce derivation should mix in instead of drawing them
+     * from a DRBG, letting a KAT reproduce a signature without any fixed
+     * entropy generator being installed where other work could reach it.
+     * Only contexts created through the module's internal dispatch table
+     * accept these, so a caller outside the module cannot pin its own nonce.
+     */
+    unsigned char *kat_entropy;
+    size_t kat_entropy_len;
+    int allow_kat_entropy;
+#endif
     OSSL_FIPS_IND_DECLARE
 } PROV_ECDSA_CTX;
 
-static void *ecdsa_newctx(void *provctx, const char *propq)
+static void *ecdsa_newctx_ex(void *provctx, const char *propq,
+    ossl_unused int allow_kat_entropy)
 {
     PROV_ECDSA_CTX *ctx;
 
@@ -181,6 +195,7 @@ static void *ecdsa_newctx(void *provctx, const char *propq)
     ctx->flag_allow_md = 1;
 #ifdef FIPS_MODULE
     ctx->verify_message = 1;
+    ctx->allow_kat_entropy = allow_kat_entropy;
 #endif
     ctx->libctx = PROV_LIBCTX_OF(provctx);
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL) {
@@ -189,6 +204,22 @@ static void *ecdsa_newctx(void *provctx, const char *propq)
     }
     return ctx;
 }
+
+static void *ecdsa_newctx(void *provctx, const char *propq)
+{
+    return ecdsa_newctx_ex(provctx, propq, 0);
+}
+
+#ifdef FIPS_MODULE
+/*
+ * Reachable only through fips_query_internal(), i.e. from an EVP call made
+ * inside the module itself.  See ossl_ecdsa_sha256_internal_signature_functions.
+ */
+static void *ecdsa_internal_newctx(void *provctx, const char *propq)
+{
+    return ecdsa_newctx_ex(provctx, propq, 1);
+}
+#endif
 
 static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
     const char *mdname, const char *mdprops,
@@ -347,6 +378,38 @@ static int ecdsa_sign_init(void *vctx, void *ec, const OSSL_PARAM params[])
  * Sign tbs without digesting it first.  This is suitable for "primitive"
  * signing and signing the digest of a message.
  */
+#ifdef FIPS_MODULE
+/*
+ * A TEST-RAND handing back exactly the bytes the KAT supplied.  It is passed to
+ * the signing code as an argument and freed when the signature is done, so it
+ * is never reachable by anything else.
+ */
+static EVP_RAND_CTX *ecdsa_kat_rand_new(PROV_ECDSA_CTX *ctx)
+{
+    EVP_RAND *rand = EVP_RAND_fetch(ctx->libctx, "TEST-RAND", NULL);
+    EVP_RAND_CTX *rctx = NULL;
+    unsigned int strength = 256;
+    OSSL_PARAM p[3];
+
+    if (rand == NULL)
+        return NULL;
+    rctx = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    if (rctx == NULL)
+        return NULL;
+
+    p[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    p[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+        ctx->kat_entropy, ctx->kat_entropy_len);
+    p[2] = OSSL_PARAM_construct_end();
+    if (!EVP_RAND_instantiate(rctx, strength, 0, NULL, 0, p)) {
+        EVP_RAND_CTX_free(rctx);
+        return NULL;
+    }
+    return rctx;
+}
+#endif /* FIPS_MODULE */
+
 static int ecdsa_sign_directly(void *vctx,
     unsigned char *sig, size_t *siglen, size_t sigsize,
     const unsigned char *tbs, size_t tbslen)
@@ -374,6 +437,26 @@ static int ecdsa_sign_directly(void *vctx,
 
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
+
+#ifdef FIPS_MODULE
+    if (ctx->kat_entropy != NULL) {
+        EVP_RAND_CTX *rand = ecdsa_kat_rand_new(ctx);
+
+        if (rand == NULL)
+            return 0;
+        /*
+         * The ordinary hedged nonce derivation, only drawing from |rand|.  The
+         * KAT therefore covers the same code an approved signature uses.
+         */
+        ret = ossl_ecdsa_sign_with_rand(tbs, (int)tbslen, sig, &sltmp,
+            ctx->ec, rand);
+        EVP_RAND_CTX_free(rand);
+        if (ret <= 0)
+            return 0;
+        *siglen = sltmp;
+        return 1;
+    }
+#endif
 
     if (ctx->nonce_type != 0) {
         const char *mdname = NULL;
@@ -649,6 +732,9 @@ static void ecdsa_freectx(void *vctx)
     EC_KEY_free(ctx->ec);
     BN_clear_free(ctx->kinv);
     BN_clear_free(ctx->r);
+#ifdef FIPS_MODULE
+    OPENSSL_clear_free(ctx->kat_entropy, ctx->kat_entropy_len);
+#endif
     OPENSSL_free(ctx);
 }
 
@@ -669,6 +755,10 @@ static void *ecdsa_dupctx(void *vctx)
     dstctx->md = NULL;
     dstctx->mdctx = NULL;
     dstctx->sig = NULL;
+#ifdef FIPS_MODULE
+    dstctx->kat_entropy = NULL;
+    dstctx->kat_entropy_len = 0;
+#endif
 
     if (srcctx->ec != NULL && !EC_KEY_up_ref(srcctx->ec))
         goto err;
@@ -757,6 +847,24 @@ static int ecdsa_common_set_ctx_params(PROV_ECDSA_CTX *ctx,
 
     if (p->nonce != NULL && !OSSL_PARAM_get_uint(p->nonce, &ctx->nonce_type))
         return 0;
+
+    if (p->katent != NULL) {
+#ifdef FIPS_MODULE
+        if (!ctx->allow_kat_entropy) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
+            return 0;
+        }
+        OPENSSL_clear_free(ctx->kat_entropy, ctx->kat_entropy_len);
+        ctx->kat_entropy = NULL;
+        ctx->kat_entropy_len = 0;
+        if (!OSSL_PARAM_get_octet_string(p->katent, (void **)&ctx->kat_entropy,
+                0, &ctx->kat_entropy_len))
+            return 0;
+#else
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
+        return 0;
+#endif
+    }
     return 1;
 }
 
@@ -1084,3 +1192,49 @@ IMPL_ECDSA_SIGALG(sha3_224, "SHA3-224");
 IMPL_ECDSA_SIGALG(sha3_256, "SHA3-256");
 IMPL_ECDSA_SIGALG(sha3_384, "SHA3-384");
 IMPL_ECDSA_SIGALG(sha3_512, "SHA3-512");
+
+#ifdef FIPS_MODULE
+/*
+ * ECDSA-SHA256 as reached from inside the module, via fips_query_internal().
+ * Identical to ossl_ecdsa_sha256_signature_functions except that its contexts
+ * accept OSSL_SIGNATURE_PARAM_KAT_ENTROPY, which pins the nonce.  It is not in
+ * any table returned to an external caller, so there is no way to obtain such a
+ * context from outside.  Only SHA256 exists because that is the only digest the
+ * signature KATs use.
+ */
+const OSSL_DISPATCH ossl_ecdsa_sha256_internal_signature_functions[] = {
+    { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ecdsa_internal_newctx },
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT,
+        (void (*)(void))ecdsa_sha256_sign_init },
+    { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))ecdsa_sign },
+    { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,
+        (void (*)(void))ecdsa_sha256_sign_message_init },
+    { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_UPDATE,
+        (void (*)(void))ecdsa_signverify_message_update },
+    { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_FINAL,
+        (void (*)(void))ecdsa_sign_message_final },
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT,
+        (void (*)(void))ecdsa_sha256_verify_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY,
+        (void (*)(void))ecdsa_verify },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,
+        (void (*)(void))ecdsa_sha256_verify_message_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_UPDATE,
+        (void (*)(void))ecdsa_signverify_message_update },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_FINAL,
+        (void (*)(void))ecdsa_verify_message_final },
+    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))ecdsa_freectx },
+    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))ecdsa_dupctx },
+    { OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES,
+        (void (*)(void))ecdsa_sigalg_query_key_types },
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,
+        (void (*)(void))ecdsa_get_ctx_params },
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+        (void (*)(void))ecdsa_gettable_ctx_params },
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,
+        (void (*)(void))ecdsa_sigalg_set_ctx_params },
+    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
+        (void (*)(void))ecdsa_sigalg_settable_ctx_params },
+    OSSL_DISPATCH_END
+};
+#endif /* FIPS_MODULE */

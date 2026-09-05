@@ -573,6 +573,30 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { NULL, NULL, NULL }
 };
 
+/*
+ * The same algorithms as seen from inside the module.  Derived from the table
+ * above at init rather than written out again, so the two cannot drift apart
+ * as algorithms are added; only ECDSA-SHA256 is substituted, for a variant
+ * whose contexts accept the KAT's fixed nonce entropy.
+ */
+static OSSL_ALGORITHM fips_signature_internal[OSSL_NELEM(fips_signature)];
+
+static void cache_internal_signatures(void)
+{
+    memcpy(fips_signature_internal, fips_signature, sizeof(fips_signature));
+#ifndef OPENSSL_NO_EC
+    {
+        size_t i;
+
+        for (i = 0; fips_signature_internal[i].algorithm_names != NULL; i++)
+            if (fips_signature_internal[i].implementation
+                == ossl_ecdsa_sha256_signature_functions)
+                fips_signature_internal[i].implementation
+                    = ossl_ecdsa_sha256_internal_signature_functions;
+    }
+#endif
+}
+
 static const OSSL_ALGORITHM fips_asym_cipher[] = {
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_asym_cipher_functions },
     { NULL, NULL, NULL }
@@ -754,6 +778,8 @@ static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id
         return fips_macs_internal;
     case OSSL_OP_KDF:
         return fips_kdfs_internal;
+    case OSSL_OP_SIGNATURE:
+        return fips_signature_internal;
     }
 
     return fips_query(provctx, operation_id, no_cache);
@@ -997,6 +1023,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         SELF_TEST_disable_conditional_error_state();
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
+    cache_internal_signatures();
 
     /* initialize deferred self-test infrastructure */
     if ((fgbl->deferred_lock = CRYPTO_THREAD_lock_new()) == NULL) {
