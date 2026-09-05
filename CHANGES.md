@@ -216,6 +216,14 @@ OpenSSL 4.1
 
    *Jakub Zelenka*
 
+ * Deprecated ERR_add_error_data() and ERR_add_error_vdata(). Their `num`
+   argument counts the strings that follow it, nothing verifies that the
+   count is right, and a value larger than the number of arguments actually
+   passed reads beyond them. Use ERR_add_error_txt() to append a single
+   string, or ERR_raise_data() to raise an error carrying formatted text.
+
+   *Bob Beck*
+
  * Deprecated BIO_snprintf() and BIO_vsnprintf(). C99 snprintf() is now
    universally available, and the wrappers return -1 on truncation rather
    than the would-have-been length, so callers reaching for the standard

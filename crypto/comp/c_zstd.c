@@ -601,8 +601,8 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
         do {
             zret = ZSTD_decompressStream(ctx->decompress.state, &outBuf, &ctx->decompress.inbuf);
             if (ZSTD_isError(zret)) {
-                ERR_raise(ERR_LIB_COMP, COMP_R_ZSTD_DECOMPRESS_ERROR);
-                ERR_add_error_data(1, ZSTD_getErrorName(zret));
+                ERR_raise_data(ERR_LIB_COMP, COMP_R_ZSTD_DECOMPRESS_ERROR,
+                    "%s", ZSTD_getErrorName(zret));
                 return -1;
             }
             /* No more output space */
@@ -680,8 +680,8 @@ static int bio_zstd_write(BIO *b, const char *in, int inl)
         /* Compress some more */
         zret = ZSTD_compressStream2(ctx->compress.state, &ctx->compress.outbuf, &inBuf, ZSTD_e_end);
         if (ZSTD_isError(zret)) {
-            ERR_raise(ERR_LIB_COMP, COMP_R_ZSTD_COMPRESS_ERROR);
-            ERR_add_error_data(1, ZSTD_getErrorName(zret));
+            ERR_raise_data(ERR_LIB_COMP, COMP_R_ZSTD_COMPRESS_ERROR,
+                "%s", ZSTD_getErrorName(zret));
             return 0;
         } else if (zret == 0) {
             done = 1;
@@ -726,8 +726,8 @@ static int bio_zstd_flush(BIO *b)
         /* Compress some more */
         zret = ZSTD_flushStream(ctx->compress.state, &ctx->compress.outbuf);
         if (ZSTD_isError(zret)) {
-            ERR_raise(ERR_LIB_COMP, COMP_R_ZSTD_COMPRESS_ERROR);
-            ERR_add_error_data(1, ZSTD_getErrorName(zret));
+            ERR_raise_data(ERR_LIB_COMP, COMP_R_ZSTD_COMPRESS_ERROR,
+                "%s", ZSTD_getErrorName(zret));
             return 0;
         }
         if (zret == 0)

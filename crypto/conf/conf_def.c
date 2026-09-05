@@ -17,6 +17,7 @@
 #include <sys/stat.h> /* struct stat */
 #endif
 #include "internal/cryptlib.h"
+#include "crypto/err.h"
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
@@ -214,7 +215,6 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     int again;
     int first_call = 1;
     long eline = 0;
-    char btmp[DECIMAL_SIZE(eline) + 1];
     CONF_VALUE *v = NULL, *tv;
     CONF_VALUE *sv = NULL;
     char *section = NULL, *buf;
@@ -587,8 +587,7 @@ err:
 #endif
     if (line != NULL)
         *line = eline;
-    snprintf(btmp, sizeof(btmp), "%ld", eline);
-    ERR_add_error_data(2, "line ", btmp);
+    ossl_err_add_error_fmt("line %ld", eline);
     if (h != conf->data) {
         CONF_free(conf->data);
         conf->data = NULL;

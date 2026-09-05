@@ -614,8 +614,9 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         vtmp.section = NULL;
         vtmp.value = (char *)str;
         if (!X509V3_get_value_bool(&vtmp, &atmp->value.boolean)) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BOOLEAN);
-            goto bad_str;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BOOLEAN,
+                "string=%s", str);
+            goto bad_form;
         }
         break;
 
@@ -628,8 +629,9 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         if ((atmp->value.integer
                 = s2i_ASN1_INTEGER(NULL, str))
             == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_INTEGER);
-            goto bad_str;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_INTEGER,
+                "string=%s", str);
+            goto bad_form;
         }
         break;
 
@@ -639,8 +641,9 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             goto bad_form;
         }
         if ((atmp->value.object = OBJ_txt2obj(str, 0)) == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT);
-            goto bad_str;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "string=%s", str);
+            goto bad_form;
         }
         break;
 
@@ -651,17 +654,20 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             goto bad_form;
         }
         if ((atmp->value.asn1_string = ASN1_STRING_new()) == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
-            goto bad_str;
+            ERR_raise_data(ERR_LIB_ASN1, ERR_R_ASN1_LIB,
+                "string=%s", str);
+            goto bad_form;
         }
         if (!ASN1_STRING_set1_string(atmp->value.asn1_string, str)) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
-            goto bad_str;
+            ERR_raise_data(ERR_LIB_ASN1, ERR_R_ASN1_LIB,
+                "string=%s", str);
+            goto bad_form;
         }
         atmp->value.asn1_string->type = utype;
         if (!ASN1_TIME_check(atmp->value.asn1_string)) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE);
-            goto bad_str;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+                "string=%s", str);
+            goto bad_form;
         }
 
         break;
@@ -687,8 +693,9 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         if (ASN1_mbstring_copy(&atmp->value.asn1_string, (unsigned char *)str,
                 -1, format, ASN1_tag2bit(utype))
             <= 0) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
-            goto bad_str;
+            ERR_raise_data(ERR_LIB_ASN1, ERR_R_ASN1_LIB,
+                "string=%s", str);
+            goto bad_form;
         }
 
         break;
@@ -702,22 +709,25 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 
         if (format == ASN1_GEN_FORMAT_HEX) {
             if ((rdata = OPENSSL_hexstr2buf(str, &rdlen)) == NULL) {
-                ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_HEX);
-                goto bad_str;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_HEX,
+                    "string=%s", str);
+                goto bad_form;
             }
             atmp->value.asn1_string->data = rdata;
             atmp->value.asn1_string->length = rdlen;
             atmp->value.asn1_string->type = utype;
         } else if (format == ASN1_GEN_FORMAT_ASCII) {
             if (!ASN1_STRING_set1_string(atmp->value.asn1_string, str)) {
-                ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
-                goto bad_str;
+                ERR_raise_data(ERR_LIB_ASN1, ERR_R_ASN1_LIB,
+                    "string=%s", str);
+                goto bad_form;
             }
         } else if ((format == ASN1_GEN_FORMAT_BITLIST)
             && (utype == V_ASN1_BIT_STRING)) {
             if (!CONF_parse_list(str, ',', 1, bitstr_cb, atmp->value.bit_string)) {
-                ERR_raise(ERR_LIB_ASN1, ASN1_R_LIST_ERROR);
-                goto bad_str;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_LIST_ERROR,
+                    "string=%s", str);
+                goto bad_form;
             }
             no_unused = 0;
 
@@ -732,15 +742,14 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         break;
 
     default:
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_TYPE);
-        goto bad_str;
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_TYPE,
+            "string=%s", str);
+        goto bad_form;
     }
 
     atmp->type = utype;
     return atmp;
 
-bad_str:
-    ERR_add_error_data(2, "string=", str);
 bad_form:
 
     ASN1_TYPE_free(atmp);
