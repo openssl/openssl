@@ -478,7 +478,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         OSSL_ECH_HANDLING_DUPLICATE,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease2, NULL },
-    { /* Required by the TLSv1.3 spec to always be the last extension */
+    { /* Required by the (D)TLSv1.3 spec to always be the last extension */
         TLSEXT_TYPE_psk,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
             | SSL_EXT_TLS1_3_ONLY,
