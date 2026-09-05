@@ -628,10 +628,21 @@ static int check_extensions(X509_STORE_CTX *ctx)
     }
 
     for (i = 0; i < num; i++) {
+        GENERAL_NAMES *san;
+        void *ext;
+        int san_absent, san_empty;
+
         x = sk_X509_value(ctx->chain, i);
         /* RFC 5280, 4.2: a given extension MUST NOT appear more than once */
         CB_FAIL_IF((x->ex_flags & EXFLAG_DUPLICATE) != 0,
             ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
+        /* A subjectAltName that cannot be decoded is invalid */
+        CB_FAIL_IF(!ossl_x509_decode_ext(x, NID_subject_alt_name, &ext),
+            ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
+        san = ext;
+        san_absent = san == NULL;
+        san_empty = san != NULL && sk_GENERAL_NAME_num(san) <= 0;
+        GENERAL_NAMES_free(san);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
@@ -673,12 +684,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
                            * !(i == 0 && (x->ex_flags & EXFLAG_CA) == 0
                            *          && (x->ex_flags & EXFLAG_SI) != 0)
                            */
-            GENERAL_NAMES *san = X509_get_ext_d2i(x, NID_subject_alt_name,
-                NULL, NULL);
-            int san_absent = san == NULL;
-            int san_empty = san != NULL && sk_GENERAL_NAME_num(san) <= 0;
-
-            GENERAL_NAMES_free(san);
             /* Check Basic Constraints according to RFC 5280 section 4.2.1.9 */
             if (x->ex_pathlen != -1) {
                 CB_FAIL_IF((x->ex_flags & EXFLAG_CA) == 0,
@@ -916,14 +921,21 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
 {
     NAME_CONSTRAINTS **ncs; /* the nameConstraints of each chain certificate */
     int n = sk_X509_num(ctx->chain);
-    int i, ret;
+    int i, ret = 0;
 
     if ((ncs = OPENSSL_calloc(n, sizeof(*ncs))) == NULL)
         return -1;
-    for (i = 0; i < n; i++)
-        ncs[i] = X509_get_ext_d2i(sk_X509_value(ctx->chain, i),
-            NID_name_constraints, NULL, NULL);
+    for (i = 0; i < n; i++) {
+        X509 *x = sk_X509_value(ctx->chain, i);
+        void *nc;
+
+        if (!ossl_x509_decode_ext(x, NID_name_constraints, &nc)
+            && !verify_cb_cert(ctx, x, i, X509_V_ERR_INVALID_EXTENSION))
+            goto out;
+        ncs[i] = nc;
+    }
     ret = do_check_name_constraints(ctx, ncs);
+out:
     for (i = 0; i < n; i++)
         NAME_CONSTRAINTS_free(ncs[i]);
     OPENSSL_free(ncs);

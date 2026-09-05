@@ -105,6 +105,161 @@ err:
     return ret;
 }
 
+/*
+ * A root, an intermediate CA with a nameConstraints extension that cannot be
+ * decoded, a leaf issued by that CA, and a leaf issued by the root with a
+ * subjectAltName extension that cannot be decoded. Valid until 2126.
+ */
+static const char *garbled_root[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDCDCCAfCgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtHYXJi\n"
+    "bGVkIEV4dGVuc2lvbiBUZXN0IFJvb3QwIBcNMjYwOTA1MTk0NjQ4WhgPMjEyNjA4\n"
+    "MTIxOTQ2NDhaMCYxJDAiBgNVBAMMG0dhcmJsZWQgRXh0ZW5zaW9uIFRlc3QgUm9v\n"
+    "dDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmh+ZtXf1Oyd6s/Suc8\n"
+    "SFDz5u+w4OnJCCf07/GfKk1/QT11KBJcu7AUJqtBgilcWvbOs2q8NFDhSv8kZ7Ue\n"
+    "MYzXDw0JFo/Cs/YrNiZNqOhI4R9o84dUZ7XVmt6Iu2GwDheQvHSuyzmbPw6zo2zJ\n"
+    "YVDo+pI72j0JtJFGFQ1pNZ/pTj3lug1oEBcx4UG6/61rRMrneVJHcWyyUf+AvXkr\n"
+    "7KcWbq2QL+xPA6vrhu/385JHEcqOS8v2akinuFanJGB6fa8wJvkrsSHACvsFNHwp\n"
+    "urc1kPENttC28QTcFBUSzeqrkjjkafxjzItygD0D60FkI16wWgk2qXI4lwttMN6a\n"
+    "Z0cCAwEAAaM/MD0wDwYDVR0TAQH/BAUwAwEB/zALBgNVHQ8EBAMCAQYwHQYDVR0O\n"
+    "BBYEFDJ6bkh0WSgBQjMiOPJWvRlh/H4gMA0GCSqGSIb3DQEBCwUAA4IBAQC4L3Vi\n"
+    "7FIQsFz7Bwd/PmuGwspe+Anjy1r9pGiQHkllaurvYCBLjm/tQWaPZncvfsU7Acmy\n"
+    "Dfmh7G2oLw/YRy5uFK/oET37SaPxevYO5HhkPpkxB7qTg992eTuWQwKKLH+EYr1r\n"
+    "rkjDpuraCYSQYnh9x2RR9lK+ERJRidRNSfSiTRYVRRTlH2kjG6N41/9tfvCqatE0\n"
+    "Cf4KLxV8YdQIxmEs/JXhBHKtKGOGl20kLyOvA/0/3FziOS4LI9uUV2cvZGiOPwJg\n"
+    "LopVTfXTUiM7mb+oLfElVdneOSqsC2+ZZFAw52Niqv2+ZBEc+IUs2RpsjYP6cTaY\n"
+    "QnX1zu91+MuUuQIk\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *garbled_nc_ca[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDOTCCAiGgAwIBAgIBAjANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtHYXJi\n"
+    "bGVkIEV4dGVuc2lvbiBUZXN0IFJvb3QwIBcNMjYwOTA1MTk0NjQ4WhgPMjEyNjA4\n"
+    "MTIxOTQ2NDhaMCYxJDAiBgNVBAMMG0dhcmJsZWQgTmFtZSBDb25zdHJhaW50cyBD\n"
+    "QTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOtHvtK5JE2HDpL6xHlC\n"
+    "ENXAr9DU01VfDJyqQWj7mDVY5ZPGpWnHAN0eYMSMus5CXrnBSwzVgFIfl7nOAnzS\n"
+    "8lfVMH8bIwEJYJoNbGTwFpTeLOWB+H8ry1+nZyRdjeFrMRQcTaj3YOwN7a3CbeX5\n"
+    "3QvvhK5R8w/G2+aN5YMkijDMMDGKs4jouB8dRH7z1HTk3FP97Hroc6DEgtsFs0PL\n"
+    "MQYfJ5gFfQDjOD4AKp+YgvENkNxK8UV+dJbMvPfqNoFx8hgySNXJBOZJiADmv7Ln\n"
+    "ksLrVkUp48GX2pUTeOFXvMyO7hDIRQ1foo1EcPwuSe2SvDVVfR2zD0qrmc+pKW83\n"
+    "cRMCAwEAAaNwMG4wDwYDVR0TAQH/BAUwAwEB/zALBgNVHQ8EBAMCAQYwHQYDVR0O\n"
+    "BBYEFAo/TdWxq2CBisLp2sDd+Qcbm0doMB8GA1UdIwQYMBaAFDJ6bkh0WSgBQjMi\n"
+    "OPJWvRlh/H4gMA4GA1UdHgEB/wQEMAMCATANBgkqhkiG9w0BAQsFAAOCAQEAjHoJ\n"
+    "Apq6D93MR0TCVmPWfaXzW/+O/mvUlmvp/4MY5nXmn1chjyDB/qAaXU5jTNvloPpB\n"
+    "BTpHouz9PP+OhI8m9MuygMCduymidEuDjFTy7xmPsVCGPrJUbaPONA4y2dp3d262\n"
+    "KV/2rR0dTpNgTOahovudHxKjd3xDTdniJErbF5qKmiwLxb9/BdMGPkW2b4PARYZF\n"
+    "oLJNaI8bDEf5+yx1LqI/jxSsORRcdYMsTn9qoVgmbfx6O5CeZvLMP43RJo1EScYT\n"
+    "gMLf6kGl92hJIK10p7LxNWjexGzeXKXPNmsCLC2Ialgton0mVynheilsVmAnFCvn\n"
+    "ZLSl9mcD5YOyK8bV3Q==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *garbled_nc_ee[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDSjCCAjKgAwIBAgIBAzANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtHYXJi\n"
+    "bGVkIE5hbWUgQ29uc3RyYWludHMgQ0EwIBcNMjYwOTA1MTk0NjQ4WhgPMjEyNjA4\n"
+    "MTIxOTQ2NDhaMBoxGDAWBgNVBAMMD3d3dy5leGFtcGxlLm9yZzCCASIwDQYJKoZI\n"
+    "hvcNAQEBBQADggEPADCCAQoCggEBAKKf1+eU6A2ZwVbdOpJt7dZRpKfSKYSta1ZV\n"
+    "7hgpf36wmeNAwknPO68HBfzpc4Z+mpr2nSkJgzO7QB9K74lUqAdLa0fQB//cx1U+\n"
+    "blrPlJWGQQfnQE//EtAIxvirTqRkHJ3mddDzfaWRl/V3Qn6mNoRQ2gg1r5pBfox8\n"
+    "FNSk/RgfcMSyZJ5JmFqameMp6SZ9wVQA+exnDD2buGQx5etclti/Os8zA6MyIoi5\n"
+    "TJRuhBtPuDt4VbV7FHp7+7HRrB6TFGCcwEERT+5kXewiHkbYn+DWFguBMzKaZPig\n"
+    "LElIm7dsYJgcnO6OjCyGiobBe/aIiRtKOUpd6DLn0yLqAWuIW68CAwEAAaOBjDCB\n"
+    "iTAJBgNVHRMEAjAAMAsGA1UdDwQEAwIFoDATBgNVHSUEDDAKBggrBgEFBQcDATAd\n"
+    "BgNVHQ4EFgQUzklSF40LQLJI8NVmMrqVScRah0EwHwYDVR0jBBgwFoAUCj9N1bGr\n"
+    "YIGKwunawN35BxubR2gwGgYDVR0RBBMwEYIPd3d3LmV4YW1wbGUub3JnMA0GCSqG\n"
+    "SIb3DQEBCwUAA4IBAQCPtmVK/5rLEV4TrQ90esUL33j8tCRkg5dnIQP0FhAjEegD\n"
+    "4sbY1ZfTYlbZ77FbW9PfPzUDrVD1OGZXzYDQPP4LZx1MAGYrAMgmROX1nMVN+oyp\n"
+    "z7knckY3VE2fek2qoxccj8RRDQKX53XaupgqP7xUTKIZALJkWzwet2UAJRR620K7\n"
+    "dkZqxBK/7Aqzclctn3nD9b1K5UmaROVGzshsGBZsL8HAJFILiwwOtu++nS5VXxYU\n"
+    "KjNofgYAtO8+8aOFpTvmOguflzQx+kVfOcZ/ux3FTowjt4jOPL6NqSeSAnyxmjF+\n"
+    "CFy7N0lG8K9FxsrYSqWBLy7/6V6mgAXQgqIOQfwK\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *garbled_san_ee[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDOTCCAiGgAwIBAgIBBDANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtHYXJi\n"
+    "bGVkIEV4dGVuc2lvbiBUZXN0IFJvb3QwIBcNMjYwOTA1MTk0NjQ4WhgPMjEyNjA4\n"
+    "MTIxOTQ2NDhaMBoxGDAWBgNVBAMMD3d3dy5leGFtcGxlLm9yZzCCASIwDQYJKoZI\n"
+    "hvcNAQEBBQADggEPADCCAQoCggEBAKKf1+eU6A2ZwVbdOpJt7dZRpKfSKYSta1ZV\n"
+    "7hgpf36wmeNAwknPO68HBfzpc4Z+mpr2nSkJgzO7QB9K74lUqAdLa0fQB//cx1U+\n"
+    "blrPlJWGQQfnQE//EtAIxvirTqRkHJ3mddDzfaWRl/V3Qn6mNoRQ2gg1r5pBfox8\n"
+    "FNSk/RgfcMSyZJ5JmFqameMp6SZ9wVQA+exnDD2buGQx5etclti/Os8zA6MyIoi5\n"
+    "TJRuhBtPuDt4VbV7FHp7+7HRrB6TFGCcwEERT+5kXewiHkbYn+DWFguBMzKaZPig\n"
+    "LElIm7dsYJgcnO6OjCyGiobBe/aIiRtKOUpd6DLn0yLqAWuIW68CAwEAAaN8MHow\n"
+    "CQYDVR0TBAIwADALBgNVHQ8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwHQYD\n"
+    "VR0OBBYEFM5JUheNC0CySPDVZjK6lUnEWodBMB8GA1UdIwQYMBaAFDJ6bkh0WSgB\n"
+    "QjMiOPJWvRlh/H4gMAsGA1UdEQQEMAOCATANBgkqhkiG9w0BAQsFAAOCAQEAVW1u\n"
+    "3ukoESMi9o0nS9UKWXpT5XVelsa9UzjbHyK6HdETgiaM/lChVAR6iMrb29tRjHPH\n"
+    "J9JKK1EjngBAbUwRDpqMpWo1o0PpRb0pY0rajfuvD+rncfx6QuqSzaRGRoQvlVO1\n"
+    "OgvkVNxIPSKn85joh/H8V5KdpFd4wd0vU9nCXMtZ+NeC+3MjcCaLliVvGzdAApfY\n"
+    "VhjseBbmlhL6gXhr9XJ0ac7XaShs28JIJzzi42/VuGwcMjicmB7WM/A1xizOER/o\n"
+    "1Y/T4Ktdzm3qZ9qVnYH9OaGlwdjX8TxqHk/avcitwTrO4NAdA63lDAJcF6jeaIQf\n"
+    "sFssHWHsjqTtSoxdxg==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/*
+ * Verify ee with root trusted and ca, if not NULL, untrusted; expect failure
+ * with X509_V_ERR_INVALID_EXTENSION.
+ */
+static int verify_invalid_extension(const char **ee, const char **ca,
+    unsigned long flags)
+{
+    X509 *root = NULL, *cacert = NULL, *eecert = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(root = X509_from_strings(garbled_root))
+        || !TEST_ptr(eecert = X509_from_strings(ee))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, root))
+        || !TEST_true(X509_STORE_set_flags(store, flags))
+        || !TEST_ptr(untrusted = sk_X509_new_null())
+        || !TEST_ptr(ctx = X509_STORE_CTX_new()))
+        goto err;
+    if (ca != NULL
+        && (!TEST_ptr(cacert = X509_from_strings(ca))
+            || !TEST_true(sk_X509_push(untrusted, cacert))))
+        goto err;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, eecert, untrusted))
+        || !TEST_int_eq(X509_verify_cert(ctx), 0)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_INVALID_EXTENSION))
+        goto err;
+    ret = 1;
+err:
+    X509_STORE_CTX_free(ctx);
+    sk_X509_free(untrusted);
+    X509_STORE_free(store);
+    X509_free(eecert);
+    X509_free(cacert);
+    X509_free(root);
+    return ret;
+}
+
+static int test_invalid_name_constraints(void)
+{
+    return verify_invalid_extension(garbled_nc_ee, garbled_nc_ca, 0)
+        && verify_invalid_extension(garbled_nc_ee, garbled_nc_ca,
+            X509_V_FLAG_X509_STRICT);
+}
+
+static int test_invalid_subject_alt_name(void)
+{
+    return verify_invalid_extension(garbled_san_ee, NULL, 0)
+        && verify_invalid_extension(garbled_san_ee, NULL,
+            X509_V_FLAG_X509_STRICT);
+}
+
 static int test_distinguishing_id(void)
 {
     X509 *x = NULL;
@@ -863,6 +1018,8 @@ int setup_tests(void)
         goto err;
 
     ADD_TEST(test_alt_chains_cert_forgery);
+    ADD_TEST(test_invalid_name_constraints);
+    ADD_TEST(test_invalid_subject_alt_name);
     ADD_TEST(test_store_ctx);
     ADD_TEST(test_distinguishing_id);
     ADD_TEST(test_req_distinguishing_id);

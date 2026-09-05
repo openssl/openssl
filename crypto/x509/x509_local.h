@@ -202,6 +202,17 @@ int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
  *          error such as a memory allocation failure
  */
 int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp);
+/**
+ * @brief Decode one extension of a certificate.
+ * An absent extension is a success with *pval set to NULL. The caller frees
+ * *pval with the free function of the extension's type.
+ * @param x the certificate whose extension is decoded
+ * @param nid the NID of the extension
+ * @param pval receives the decoded extension, or NULL if it is absent
+ * @returns 1 on success, 0 if the extension is present more than once or
+ *          cannot be decoded
+ */
+int ossl_x509_decode_ext(const X509 *x, int nid, void **pval);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
