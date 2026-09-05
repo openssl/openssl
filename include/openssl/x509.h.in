@@ -955,6 +955,22 @@ int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit);
 int X509_EXTENSION_set_data(X509_EXTENSION *ex, const ASN1_OCTET_STRING *data);
 const ASN1_OBJECT *X509_EXTENSION_get_object(const X509_EXTENSION *ex);
 const ASN1_OCTET_STRING *X509_EXTENSION_get_data(const X509_EXTENSION *ne);
+
+/*
+ * Outcome of decoding an extension's value, reported by
+ * X509_EXTENSION_get0_value() and the functions that look an extension up
+ * by NID.
+ */
+#define X509_EXT_VALUE_DECODED 0 /* decoded; *value is set */
+#define X509_EXT_VALUE_UNKNOWN 1 /* no X509V3_EXT_METHOD for the OID, not critical */
+#define X509_EXT_VALUE_UNKNOWN_CRITICAL 2 /* no X509V3_EXT_METHOD for the OID, critical */
+#define X509_EXT_VALUE_INVALID 3 /* the value does not decode, not critical */
+#define X509_EXT_VALUE_INVALID_CRITICAL 4 /* the value does not decode, critical */
+#define X509_EXT_VALUE_MALLOC_FAILED 5 /* the decode ran out of memory */
+#define X509_EXT_VALUE_ERROR 6 /* the decode failed without saying why */
+#define X509_EXT_VALUE_ABSENT 7 /* no extension with the NID */
+#define X509_EXT_VALUE_DUPLICATE 8 /* more than one extension with the NID */
+
 int X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x);

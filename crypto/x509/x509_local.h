@@ -69,11 +69,38 @@ struct x509_attributes_st {
     STACK_OF(ASN1_TYPE) *set;
 };
 
+/**
+ * @struct X509_extension_st
+ * @brief An X.509 extension: its OID, criticality and DER value, together
+ * with the value decoded per the X509V3_EXT_METHOD registered for the OID
+ * and the outcome of that decode.
+ * The decoded value and outcome are a function of the value bytes and of
+ * the method table at the time the value was decoded or set; they are
+ * written only when value is written.
+ */
 struct X509_extension_st {
     ASN1_OBJECT *object;
     ASN1_BOOLEAN critical;
     ASN1_OCTET_STRING value;
+    const X509V3_EXT_METHOD *method; /**< Method for object, NULL if none is registered */
+    void *decoded; /**< value decoded per method, NULL unless outcome is X509_EXT_VALUE_DECODED */
+    uint8_t outcome; /**< X509_EXT_VALUE_* outcome of decoding value; carries critical when there is no decoded value */
 };
+
+/**
+ * @brief Decode the value of an extension per the method registered for
+ * its OID and store the result in ex->decoded and ex->outcome.
+ * Any previous decoded value is freed. The outcome is X509_EXT_VALUE_UNKNOWN
+ * or X509_EXT_VALUE_UNKNOWN_CRITICAL when no method is registered for the
+ * OID, X509_EXT_VALUE_INVALID or X509_EXT_VALUE_INVALID_CRITICAL when the
+ * value does not decode, X509_EXT_VALUE_MALLOC_FAILED when the decode ran
+ * out of memory and X509_EXT_VALUE_ERROR when it failed without reporting
+ * why. The first four are successes of this function; the last two are
+ * failures.
+ * @param ex the extension whose value is decoded
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_x509_extension_decode_value(X509_EXTENSION *ex);
 
 /*
  * Method to handle CRL access. In general a CRL could be very large (several
