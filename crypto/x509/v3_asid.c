@@ -775,18 +775,6 @@ int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
     } while (0)
 
 /*
- * Decode the AS identifier extension of x into *pext, NULL if absent.
- * Returns 1 on success, 0 if the extension is present but cannot be decoded.
- */
-static int asid_ext_d2i(const X509 *x, ASIdentifiers **pext)
-{
-    int crit;
-
-    *pext = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, &crit, NULL);
-    return *pext != NULL || crit == -1;
-}
-
-/*
  * Core code for RFC 3779 3.3 path validation.
  */
 static int asid_validate_path_internal(X509_STORE_CTX *ctx,
@@ -795,6 +783,7 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
 {
     ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
     ASIdentifiers **exts = NULL; /* per chain cert; child_* point into these */
+    void *ext_tmp;
     int n, i, ret = 1, inherit_as = 0, inherit_rdi = 0;
     X509 *x;
 
@@ -824,8 +813,9 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     } else {
         i = 0;
         x = sk_X509_value(chain, i);
-        if (!asid_ext_d2i(x, &exts[i]))
+        if (!ossl_x509_decode_ext(x, NID_sbgp_autonomousSysNum, &ext_tmp))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
+        exts[i] = ext_tmp;
         if ((ext = exts[i]) == NULL)
             goto done;
     }
@@ -864,8 +854,9 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
             ret = 0;
             goto done;
         }
-        if (!asid_ext_d2i(x, &exts[i]))
+        if (!ossl_x509_decode_ext(x, NID_sbgp_autonomousSysNum, &ext_tmp))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
+        exts[i] = ext_tmp;
         if (exts[i] == NULL) {
             if (child_as != NULL || child_rdi != NULL)
                 validation_err(X509_V_ERR_UNNESTED_RESOURCE);

@@ -21,6 +21,7 @@
 #include "crypto/x509.h"
 #include "crypto/punycode.h"
 #include "ext_dat.h"
+#include "x509_local.h"
 
 OSSL_SAFE_MATH_SIGNED(int, int)
 
@@ -283,9 +284,12 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
     int r, i, name_count, constraint_count;
     const X509_NAME *nm;
     GENERAL_NAMES *altname;
+    void *ext;
 
     nm = X509_get_subject_name(x);
-    altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+    if (!ossl_x509_decode_ext(x, NID_subject_alt_name, &ext))
+        return X509_V_ERR_INVALID_EXTENSION;
+    altname = ext;
 
     /*
      * Guard against certificates with an excessive number of names or
