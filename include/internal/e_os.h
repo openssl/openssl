@@ -370,6 +370,21 @@ typedef _locale_t locale_t;
 
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define ossl_always_inline __inline__ __attribute__((always_inline))
+#define ossl_noinline __attribute__((noinline))
+#elif defined(_MSC_VER)
+#define ossl_always_inline __forceinline
+#define ossl_noinline __declspec(noinline)
+#elif defined(__cplusplus) \
+    || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#define ossl_always_inline inline
+#define ossl_noinline
+#else
+#define ossl_always_inline
+#define ossl_noinline
+#endif
+
 /*
  * Can we use a global destructor?  We can use a global destructor via
  * __attribute__ on anything like a modern gcc/clang.  We can also use

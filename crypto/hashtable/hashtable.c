@@ -53,7 +53,7 @@
 #include <string.h>
 #include <internal/rcu.h>
 #include <internal/hashtable.h>
-#include <internal/hashfunc.h>
+#include <internal/xxhash.h>
 #include <openssl/rand.h>
 
 /*
@@ -178,7 +178,7 @@ static void internal_free_nop(HT_VALUE *v)
 
 static uint64_t internal_ht_hash_fn(HT_KEY *key)
 {
-    return ossl_fnv1a_hash(key->keybuf, key->keysize);
+    return ossl_xxh3(key->keybuf, key->keysize, 0);
 }
 
 HT *ossl_ht_new(const HT_CONFIG *conf)

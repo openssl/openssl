@@ -12,7 +12,7 @@
 #include <openssl/sslerr.h>
 #include <crypto/rand.h>
 #include "quic_local.h"
-#include "internal/hashfunc.h"
+#include "internal/xxhash.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/quic_tls.h"
 #include "internal/quic_rx_depack.h"
@@ -5369,7 +5369,7 @@ struct ssl_token_store_st {
 
 static unsigned long quic_token_hash(const QUIC_TOKEN *item)
 {
-    return (unsigned long)ossl_fnv1a_hash(item->hashkey, item->hashkey_len);
+    return (unsigned long)ossl_xxh3(item->hashkey, item->hashkey_len, 0);
 }
 
 static int quic_token_cmp(const QUIC_TOKEN *a, const QUIC_TOKEN *b)

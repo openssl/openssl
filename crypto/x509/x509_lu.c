@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/hashtable.h"
-#include "internal/hashfunc.h"
+#include "internal/xxhash.h"
 #include "internal/refcount.h"
 #include <openssl/x509.h>
 #include "crypto/x509.h"
@@ -194,7 +194,7 @@ static uint64_t obj_ht_hash(HT_KEY *key)
 {
     OBJS_KEY *k = (OBJS_KEY *)key;
 
-    return ossl_fnv1a_hash(k->keyfields.xn_canon, k->keyfields.xn_canon_enclen);
+    return ossl_xxh3(k->keyfields.xn_canon, k->keyfields.xn_canon_enclen, 0);
 }
 
 X509_STORE *X509_STORE_new(void)
