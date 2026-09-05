@@ -1335,10 +1335,15 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     (void)ERR_set_mark();
     fetched_md = EVP_MD_fetch(libctx, name, propq);
 
-    if (fetched_md != NULL)
+    if (fetched_md != NULL) {
         md = fetched_md;
-    else
+    } else {
         md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
+        /* Reject aliases such as signature algorithm OIDs */
+        if (md != NULL
+            && EVP_MD_get_type(md) != OBJ_obj2nid(si->digestAlgorithm->algorithm))
+            md = NULL;
+    }
     if (md == NULL) {
         (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_DIGEST_ALGORITHM);

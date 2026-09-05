@@ -331,6 +331,40 @@ static int test_CMS_add1_cert(void)
     return ret;
 }
 
+static int test_CMS_SignerInfo_verify_sigalg_oid(void)
+{
+    static const char msg[] = "Hello World!\r\n";
+    BIO *msgbio = NULL;
+    CMS_ContentInfo *cms = NULL;
+    CMS_SignerInfo *si;
+    X509_ALGOR *dalg = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(msgbio = BIO_new_mem_buf(msg, sizeof(msg) - 1))
+        || !TEST_ptr(cms = CMS_sign(NULL, NULL, NULL, NULL, CMS_PARTIAL))
+        || !TEST_ptr(si = CMS_add1_signer(cms, cert, privkey, EVP_sha256(), 0))
+        || !TEST_true(CMS_final(cms, msgbio, NULL, 0)))
+        goto end;
+
+    if (!TEST_int_gt(CMS_SignerInfo_verify(si), 0))
+        goto end;
+
+    /* A signature algorithm OID as digestAlgorithm must not verify */
+    CMS_SignerInfo_get0_algs(si, NULL, NULL, &dalg, NULL);
+    if (!TEST_true(X509_ALGOR_set0(dalg,
+            OBJ_nid2obj(NID_sha256WithRSAEncryption),
+            V_ASN1_UNDEF, NULL))
+        || !TEST_int_le(CMS_SignerInfo_verify(si), 0))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    CMS_ContentInfo_free(cms);
+    BIO_free(msgbio);
+    return ret;
+}
+
 static int test_CMS_add1_signer_ed448(const EVP_MD *md, unsigned int flags,
     int expect_success)
 {
@@ -1001,6 +1035,7 @@ int setup_tests(void)
     ADD_TEST(test_short_mac_on_auth_envelope_data);
     ADD_TEST(test_CMS_add_standard_smimecap_ex);
     ADD_TEST(test_CMS_add1_cert);
+    ADD_TEST(test_CMS_SignerInfo_verify_sigalg_oid);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
     ADD_TEST(test_encrypted_data);
