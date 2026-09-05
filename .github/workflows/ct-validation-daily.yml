@@ -92,20 +92,39 @@ jobs:
         # run Valgrind on.
         include:
           # Default builds use assembler implementations (when available)
-          - name: linux-x86_64
+          - name: x86_64
             runs-on: ubuntu-latest
             config_extra: ""
-          - name: linux-aarch64
+            ia32cap: ""
+            # Set ADX (bit 19) and BMI2 (bit 8) of OPENSSL_ia32cap LV1.
+            # NOTE: Step "Assert host CPU has ADX + BMI2" below ensures host CPU
+            #       actually supports ADX + BMI2.
+            # NOTE: Valgrind reports ADX as absent even on host CPU with ADX.
+            ia32cap_lv1_or: "0x80100"
+          - name: x86_64-no-adx-no-bmi2
+            runs-on: ubuntu-latest
+            config_extra: ""
+            # Clear ADX (bit 19) and BMI2 (bit 8) of OPENSSL_ia32cap LV1,
+            # leaving LV0/LV2/LV3/LV4 untouched
+            ia32cap: "~0x0:~0x80100:~0x0:~0x0:~0x0"
+            ia32cap_lv1_or: ""
+          - name: aarch64
             runs-on: ubuntu-24.04-arm
             config_extra: ""
+            ia32cap: ""
+            ia32cap_lv1_or: ""
 
           # no-asm builds always use C implementations
-          - name: linux-x86_64-no-asm
+          - name: x86_64-no-asm
             runs-on: ubuntu-latest
             config_extra: no-asm
-          - name: linux-aarch64-no-asm
+            ia32cap: ""
+            ia32cap_lv1_or: ""
+          - name: aarch64-no-asm
             runs-on: ubuntu-24.04-arm
             config_extra: no-asm
+            ia32cap: ""
+            ia32cap_lv1_or: ""
 
     name: CT validation (${{ matrix.name }})
     runs-on: ${{ matrix.runs-on }}
@@ -123,6 +142,20 @@ jobs:
           sudo apt-get -y update
           sudo apt-get -y install valgrind
 
+      - name: Assert host CPU has ADX + BMI2
+        # Establishes that force-setting ADX + BMI2 in the CPU-capability
+        # vector cannot SIGILL.
+        if: matrix.name == 'x86_64'
+        run: |
+          flags=" $(grep -m1 '^flags' /proc/cpuinfo) "
+          for f in adx bmi2; do
+            case "$flags" in
+              *" $f "*) ;;
+              *) echo "::error::ubuntu-latest CPU lacks expected capability $f. Update the CT matrix."; exit 1 ;;
+            esac
+          done
+          echo "Host CPU advertises ADX + BMI2."
+
       - name: Configure with CT validation enabled
         run: |
           ./Configure enable-ct-validation ${{ matrix.config_extra }}
@@ -131,22 +164,97 @@ jobs:
       - name: Build
         run: make -j$(nproc)
 
+      - name: Set ia32cap
+        # Pin the runtime CPU-capability vector so a specific x86_64 asm
+        # ladder is exercised regardless of the runner's actual CPU.
+        if: matrix.ia32cap != '' || matrix.ia32cap_lv1_or != ''
+        env:
+          IA32CAP: ${{ matrix.ia32cap }}
+          IA32CAP_LV1_OR: ${{ matrix.ia32cap_lv1_or }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$IA32CAP" ] && [ -n "$IA32CAP_LV1_OR" ]; then
+            echo "::error::Cannot set OPENSSL_ia32cap using multiple methods"
+            exit 1
+          fi
+
+          if [ -n "$IA32CAP" ]; then
+            # Set OPENSSL_ia32cap = matrix.ia32cap
+            echo "OPENSSL_ia32cap=$IA32CAP" >> $GITHUB_ENV
+            echo "OPENSSL_ia32cap: $IA32CAP"
+
+          elif [ -n "$IA32CAP_LV1_OR" ]; then
+            # Set OPENSSL_ia32cap.LV1 |= matrix.ia32cap_lv1_or
+
+            # Detect value of OPENSSL_ia32cap in Valgrind context
+            tmp="${RUNNER_TEMP:-/tmp}"
+            cat > "$tmp/ia32cap_probe.c" <<'PROBE_EOF'
+              #include <openssl/crypto.h>
+              #include <stdio.h>
+
+              /*
+               * OPENSSL_ia32cap_P is a hidden symbol, so it is not reachable
+               * through libcrypto.so; linking libcrypto.a resolves it.
+               */
+              extern unsigned int OPENSSL_ia32cap_P[];
+
+              int main(void)
+              {
+                  if (OPENSSL_init_crypto(0, NULL) != 1)
+                      return 1;
+
+                  /* LV1 is the OPENSSL_ia32cap_P[3]:[2] pair */
+                  printf("0x%08x%08x\n", OPENSSL_ia32cap_P[3], OPENSSL_ia32cap_P[2]);
+                  return 0;
+              }
+          PROBE_EOF
+            cc -o "$tmp/ia32cap_probe" -Iinclude "$tmp/ia32cap_probe.c" \
+              libcrypto.a -lpthread -ldl
+            ia32cap_lv1=$(env -u OPENSSL_ia32cap valgrind -q "$tmp/ia32cap_probe")
+            case "$ia32cap_lv1" in
+              0x*) ;;
+              *) echo "::error::ia32cap probe printed '$ia32cap_lv1'"; exit 1 ;;
+            esac
+
+            # Set OPENSSL_ia32cap.LV1 |= matrix.ia32cap_lv1_or
+            ia32cap_lv1_new=$(printf '0x%x' $(( ia32cap_lv1 | IA32CAP_LV1_OR )))
+            echo "OPENSSL_ia32cap=~0x0:$ia32cap_lv1_new:~0x0:~0x0:~0x0" >> $GITHUB_ENV
+            echo "OPENSSL_ia32cap.LV1: $ia32cap_lv1 -> $ia32cap_lv1_new"
+          fi
+
       - name: Run CT validation under Valgrind
         # OSSL_VALGRIND_CT=yes causes OpenSSL::Test::test() to wrap each
         # test binary with valgrind --track-origins=yes --error-exitcode=1.
         # util/wrap.pl -> util/shlib_wrap.sh sets LD_LIBRARY_PATH first, so
         # the shared libraries are found correctly.
         #
-        # Algorithms covered:
+        # Algorithms & implementations covered:
         # - memcmp: test_crypto_memcmp
-        # - ML-KEM: test_internal_ml_kem
-        # - ML-DSA: test_internal_ml_dsa
+        #     - any x86_64
+        #     - any aarch64
+        # - ML-KEM/ML-DSA: test_internal_ml_kem/test_internal_ml_dsa
+        #     - any x86_64
+        #     - any aarch64
+        # - x25519 - ossl_x25519: test_evp_ct
+        #     - x86_64 asm ADX/BMI2 (fe64 asm)
+        #     - x86_64 asm no-ADX/no-BMI2 (fe51 asm)
+        #     - x86_64 no-asm (fe51 C)
+        #     - any aarch64 (fe51 C)
+        #     - FUTURE: x86 (fe C)
+        # - x25519 - ossl_x25519_public_from_private: test_evp_ct
+        #     - any x86_64 (fe C)
+        #     - any aarch64 (fe C)
         #
         # Also covered:
         # - test_ct_validation_helpers: The Valgrind-based constant-time
         #   validation helpers from constant_time.h, like CONSTTIME_SECRET and
         #   CONSTTIME_DECLASSIFY
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_ct_validation_helpers" \
+          make TESTS="test_internal_ml_kem \
+                      test_internal_ml_dsa \
+                      test_crypto_memcmp \
+                      test_evp_ct \
+                      test_ct_validation_helpers" \
                OSSL_VALGRIND_CT=yes \
                test
