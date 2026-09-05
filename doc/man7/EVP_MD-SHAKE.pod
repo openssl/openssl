@@ -3,12 +3,13 @@
 =head1 NAME
 
 EVP_MD-SHAKE, EVP_MD-CSHAKE, EVP_MD-CSHAKE-KECCAK,
+EVP_MD-TURBOSHAKE, EVP_MD-KANGAROOTWELVE
 - The SHAKE / KECCAK family EVP_MD implementations
 
 =head1 DESCRIPTION
 
-Support for computing SHAKE, CSHAKE or CSHAKE-KECCAK digests through the
-B<EVP_MD> API.
+Support for computing SHAKE, CSHAKE, CSHAKE-KECCAK, TurboSHAKE, or
+KangarooTwelve (KT) digests through the B<EVP_MD> API.
 
 CSHAKE is an Extendable Output Function (XOF), that allows custom strings
 "n" and "s". If these strings are both empty then it is identical to SHAKE,
@@ -17,10 +18,19 @@ otherwise it uses CSHAKE-KECCAK.
 CSHAKE-KECCAK is an Extendable Output Function (XOF), with a definition
 similar to SHAKE but appends 2 extra zero bits. It is used internally by CSHAKE.
 
+TurboSHAKE is an Extendable Output Function (XOF) defined by RFC 9861. It
+uses the same rate and capacity as SHAKE, but uses Keccak-p[1600,12] and a
+domain separation byte.
+
+KT-128 and KT-256 are KangarooTwelve Extendable Output Functions (XOFs)
+defined by RFC 9861. They use tree hashing over TurboSHAKE and support a
+customisation string.
+
 =head2 Identities
 
-This implementation is available in the FIPS provider as well as the default
-provider, and includes the following varieties:
+The SHAKE, CSHAKE, and CSHAKE-KECCAK implementations are available in the FIPS
+provider as well as the default provider. TurboSHAKE and KangarooTwelve are
+available in the default provider. The following varieties are included:
 
 =over 4
 
@@ -54,6 +64,22 @@ by L<EVP_MAC-KMAC256(7)>.  Using the notation from NIST FIPS 202
 (Section 6.2), we have S<KECCAK-KMAC-256(M, d)> = S<KECCAK[512](M || 00, d)>
 (see the description of KMAC256 in Appendix A of NIST SP 800-185).
 
+=item TURBOSHAKE-128
+
+Known names are "TURBOSHAKE-128" and "TURBOSHAKE128".
+
+=item TURBOSHAKE-256
+
+Known names are "TURBOSHAKE-256" and "TURBOSHAKE256".
+
+=item KT-128
+
+Known names are "KT-128" and "KT128".
+
+=item KT-256
+
+Known names are "KT-256" and "KT256".
+
 =back
 
 =head2 Parameters
@@ -74,11 +100,15 @@ The CSHAKE-128 and CSHAKE-256 implementations have default digest lengths of
 32 and 64 bytes respectively (which correspond to security strengths of 128 and
 256 bits respectively).
 
+The TURBOSHAKE-128 and KT-128 implementations have a default digest length of
+32 bytes. The TURBOSHAKE-256 and KT-256 implementations have a default digest
+length of 64 bytes.
+
 For SHAKE this parameter must be set before calling either EVP_DigestFinal_ex()
 or EVP_DigestFinal(), since these functions were not designed to handle
-variable length output. If it is not set CSHAKE will use the default value.
-It is recommended to either use EVP_DigestSqueeze() or
-EVP_DigestFinalXOF() instead.
+variable length output. If it is not set, CSHAKE, TurboSHAKE, and
+KangarooTwelve will use the default value. It is recommended to either use
+EVP_DigestSqueeze() or EVP_DigestFinalXOF() instead.
 
 =item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
 
@@ -89,11 +119,18 @@ An alias of "xoflen".
 Sets the function name string used by CSHAKE that can be set to one of
 "", "TupleHash", "ParallelHash" or "KMAC". The default value is "".
 
-=item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
+=item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string or octet string>
 
-Sets a customisation string used by CSHAKE.
-It is an optional value with a length of at most 512 bytes, and is
-empty by default.
+Sets a customisation string used by CSHAKE or KangarooTwelve.
+For CSHAKE, it may be set as a UTF8 string with a length of at most 512
+bytes. For KangarooTwelve, it may be set as an octet string with a length of
+at most 512 bytes. It is empty by default.
+
+=item "domain-separator" (B<OSSL_DIGEST_PARAM_DOMAIN_SEPARATOR>) <unsigned integer>
+
+Sets or gets the TurboSHAKE domain separation byte. Valid values are 1 to 127,
+inclusive. The default value is 31 (0x1f). This parameter is only supported by
+TURBOSHAKE-128 and TURBOSHAKE-256.
 
 =item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>) <UTF8 string>
 
@@ -106,11 +143,17 @@ See L<EVP_DigestInit(3)/PARAMETERS> for further information related to parameter
 
 =head1 NOTES
 
-For SHAKE-128 and CSHAKE-128, to ensure the maximum security strength of
-128 bits, the output length passed to EVP_DigestFinalXOF() should be at least 32.
+For SHAKE-128, CSHAKE-128, TURBOSHAKE-128, and KT-128, to ensure the maximum
+security strength of 128 bits, the output length passed to EVP_DigestFinalXOF()
+should be at least 32.
 
-For SHAKE-256 and CSHAKE-256, to ensure the maximum security strength of
-256 bits, the output length passed to EVP_DigestFinalXOF() should be at least 64.
+For SHAKE-256, CSHAKE-256, TURBOSHAKE-256, and KT-256, to ensure the maximum
+security strength of 256 bits, the output length passed to EVP_DigestFinalXOF()
+should be at least 64.
+
+KangarooTwelve uses TurboSHAKE domain separation bytes 0x06, 0x07, and 0x0b
+internally. Protocols that use both KangarooTwelve and TurboSHAKE should avoid
+these TurboSHAKE domain separator values.
 
 The SHA3 specification allows bit strings to be used, but OpenSSL only allows
 byte strings for inputs, and outputs.
@@ -125,6 +168,8 @@ byte strings for inputs, and outputs.
 
 =item SP800-185 Section 4 KMAC
 
+=item RFC 9861 TurboSHAKE and KangarooTwelve
+
 =back
 
 =head1 SEE ALSO
@@ -137,6 +182,8 @@ Since OpenSSL 3.4 the SHAKE-128 and SHAKE-256 implementations have no default
 digest length.
 
 CSHAKE-128 and CSHAKE-256 were added in OpenSSL 4.0
+
+TURBOSHAKE-128, TURBOSHAKE-256, KT-128, and KT-256 were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

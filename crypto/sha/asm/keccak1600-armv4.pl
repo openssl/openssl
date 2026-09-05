@@ -70,6 +70,10 @@
 #	Cortex-Mx, x>=3. Otherwise, non-NEON results for NEON-capable
 #	processors are presented mostly for reference purposes.
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -163,6 +167,18 @@ KeccakF1600_int:
 KeccakF1600_enter:
 	str	lr,[sp,#440]
 	eor	@E[1],@E[1],@E[1]
+	str	@E[1],[sp,#444]
+	b	.Lround2x
+
+.type	KeccakP1600_12_int, %function
+KeccakP1600_12_int:
+	add	@C[9],sp,#$A[4][2]
+	add	@E[2],sp,#$A[0][0]
+	add	@E[0],sp,#$A[1][0]
+	ldmia	@C[9],{@C[4]-@C[9]}		@ A[4][2..4]
+KeccakP1600_12_enter:
+	str	lr,[sp,#440]
+	mov	@E[1],#96
 	str	@E[1],[sp,#444]
 	b	.Lround2x
 
@@ -702,7 +718,10 @@ $code.=<<___;
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
 .size	KeccakF1600_int,.-KeccakF1600_int
+___
 
+my $p12_start = length($code);
+$code.=<<___;
 .type	KeccakF1600, %function
 .align	5
 KeccakF1600:
@@ -749,6 +768,11 @@ KeccakF1600:
 #endif
 .size	KeccakF1600,.-KeccakF1600
 ___
+
+my $p12 = rename_labels(substr($code, $p12_start),
+                        "KeccakF1600", "KeccakP1600_12");
+$p12 =~ s/KeccakF1600_enter/KeccakP1600_12_enter/g;
+$code .= $p12;
 { my ($A_flat,$inp,$len,$bsz) = map("r$_",(10..12,14));
 
 ########################################################################
@@ -776,6 +800,7 @@ ___
 # +488->+-----------------------+
 #       | ....
 
+$p12_start = length($code);
 $code.=<<___;
 .global	SHA3_absorb
 .type	SHA3_absorb,%function
@@ -931,6 +956,11 @@ SHA3_absorb:
 #endif
 .size	SHA3_absorb,.-SHA3_absorb
 ___
+
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_absorb", "ossl_keccak1600_p12_absorb");
+$p12 =~ s/KeccakF1600_int/KeccakP1600_12_int/g;
+$code .= $p12;
 }
 
 { my ($out,$len,$A_flat,$bsz,$next) = map("r$_", (4,5,10,12,0));
@@ -942,6 +972,7 @@ ___
 # The first 4 parameters are passed in via r0..r3,
 # next is passed on the stack [sp, #0]
 
+$p12_start = length($code);
 $code.=<<___;
 .global	SHA3_squeeze
 .type	SHA3_squeeze,%function
@@ -1099,6 +1130,11 @@ SHA3_squeeze:
 #endif
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
+
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
+$p12 =~ s/KeccakF1600/KeccakP1600_12/g;
+$code .= $p12;
 }
 
 $code.=<<___;
