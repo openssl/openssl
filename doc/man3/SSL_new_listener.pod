@@ -130,16 +130,40 @@ in that it polls a listening SSL object, and, if a new connection is available,
 writes that connection into the SSL object pointed to by B<new_conn>.  Note that
 once a connection is returned from a listener via this call, accepting
 connections via L<SSL_accept_connection(3)> is no longer permissible, and will
-result in an error.  Note that many calls into the QUIC api may trigger the quic reactor
-(such as L<SSL_poll(3)>), and will set the port into a mode in which L<SSL_accept_connection(3)>
-is assumed.  To avoid this, it is recommended that, if the use of SSL_listen_ex use is desired, that
-it is the first I/O call made to the SSL object to which the port is attached.
+result in an error. Many calls into the QUIC API may trigger the QUIC reactor
+(such as L<SSL_poll(3)>) and select L<SSL_accept_connection(3)> mode for the
+port. Applications intending to use SSL_listen_ex() must call it before any
+operation selects that mode; in practice, it should be the first I/O call made
+on the listener.
 
 Likewise, if a listener has accepted a connection via
 L<SSL_accept_connection(3)>, it is impermissible to accept connections via
-B<SSL_listen_ex()>.  Note also that SSL objects passed in the B<new_conn>
-parameter to B<SSL_listen_ex()> must be created using L<OSSL_QUIC_method(3)> or
-L<OSSL_QUIC_server_method(3)>.
+B<SSL_listen_ex()>. The SSL object passed in the B<new_conn> parameter must be
+a fresh standalone connection returned by L<SSL_new(3)>.
+L<OSSL_QUIC_method(3)> is intended for this use. The connection must not use
+thread assisted mode, have been started or shut down, have streams or network
+BIOs configured on it, or belong to another QUIC object hierarchy. The
+application must not access I<new_conn> concurrently while SSL_listen_ex() is
+executing.
+
+On success, I<new_conn> is adopted into the listener's object hierarchy and
+uses its shared network port and TLS configuration derived from the listener.
+Certificates, verification parameters, ciphersuites, ALPN configuration and
+other security policy must be configured on the listener's
+B<SSL_CTX>. The connection is reset to accepted-connection defaults. TLS
+callbacks and QUIC message tracing callbacks are derived from the listener.
+Application ex data set on I<new_conn> is retained. Applications must not rely
+on any other configuration applied to I<new_conn> before the call being
+retained. Configure such settings on the listener or after SSL_listen_ex()
+succeeds. Applications must not call L<SSL_set_bio(3)> or L<SSL_set_fd(3)> to
+install a private connected BIO or file descriptor on the returned connection;
+it continues to use the listener's shared network port.
+
+Once B<SSL_listen_ex()> returns success, the connection written to I<new_conn>
+is already in the accept (server) state. Use L<SSL_do_handshake(3)> (or
+L<SSL_handle_events(3)>) to progress its handshake towards completion.
+L<SSL_accept(3)> must not be used for this purpose; use
+L<SSL_do_handshake(3)> instead.
 
 The SSL_accept_connection() call is supported only on a listener SSL object and
 accepts a new incoming connection. A new SSL object representing the accepted
@@ -217,8 +241,7 @@ SSL_listen() returns 1 on success or 0 on failure.
 
 SSL_listen_ex() returns 1 when a new connection was accepted on the new_conn
 parameter, 0 if no new connection was available at the time of the call, or -1
-in the event an internal error occurred, signaling a need to check the error
-queue.
+on error, signaling a need to check the error queue.
 
 SSL_accept_connection() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
@@ -254,7 +277,7 @@ SSL_listen_ex() was added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 
-Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
