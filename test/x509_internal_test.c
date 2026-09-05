@@ -1098,8 +1098,91 @@ err:
     return ret;
 }
 
+/*
+ * Signing leaves the cached encoding of the signed part current and equal
+ * to the decoded one; modifying the object afterwards marks it stale.
+ */
+static int test_sign_caches_encoding(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    X509 *cert = NULL, *cert_copy = NULL;
+    X509_CRL *crl = NULL, *crl_copy = NULL;
+    X509_REQ *req = NULL, *req_copy = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"sign test", -1, -1, 0)))
+        goto err;
+
+    /* Certificate */
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_true(cert->cert_info.enc.modified)
+        || !TEST_true(X509_set_subject_name(cert, name))
+        || !TEST_true(X509_set_issuer_name(cert, name))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert), 3600))
+        || !TEST_true(X509_set_pubkey(cert, pkey))
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_false(cert->cert_info.enc.modified)
+        || !TEST_ptr(cert_copy = X509_dup(cert))
+        || !TEST_false(cert_copy->cert_info.enc.modified)
+        || !TEST_mem_eq(cert->cert_info.enc.enc,
+            (size_t)cert->cert_info.enc.len,
+            cert_copy->cert_info.enc.enc,
+            (size_t)cert_copy->cert_info.enc.len)
+        || !TEST_int_eq(X509_cmp(cert, cert_copy), 0)
+        || !TEST_true(X509_set_version(cert, X509_VERSION_2))
+        || !TEST_true(cert->cert_info.enc.modified)
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_false(cert->cert_info.enc.modified)
+        || !TEST_int_ne(X509_cmp(cert, cert_copy), 0))
+        goto err;
+
+    /* CRL */
+    if (!TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(crl->crl.enc.modified)
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, X509_getm_notBefore(cert)))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
+        || !TEST_false(crl->crl.enc.modified)
+        || !TEST_ptr(crl_copy = X509_CRL_dup(crl))
+        || !TEST_false(crl_copy->crl.enc.modified)
+        || !TEST_mem_eq(crl->crl.enc.enc, (size_t)crl->crl.enc.len,
+            crl_copy->crl.enc.enc, (size_t)crl_copy->crl.enc.len))
+        goto err;
+
+    /* Request */
+    if (!TEST_ptr(req = X509_REQ_new())
+        || !TEST_true(req->req_info.enc.modified)
+        || !TEST_true(X509_REQ_set_subject_name(req, name))
+        || !TEST_true(X509_REQ_set_pubkey(req, pkey))
+        || !TEST_int_gt(X509_REQ_sign(req, pkey, EVP_sha256()), 0)
+        || !TEST_false(req->req_info.enc.modified)
+        || !TEST_ptr(req_copy = X509_REQ_dup(req))
+        || !TEST_false(req_copy->req_info.enc.modified)
+        || !TEST_mem_eq(req->req_info.enc.enc, (size_t)req->req_info.enc.len,
+            req_copy->req_info.enc.enc, (size_t)req_copy->req_info.enc.len))
+        goto err;
+
+    ret = 1;
+err:
+    X509_REQ_free(req_copy);
+    X509_REQ_free(req);
+    X509_CRL_free(crl_copy);
+    X509_CRL_free(crl);
+    X509_free(cert_copy);
+    X509_free(cert);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_sign_caches_encoding);
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
     ADD_ALL_TESTS(test_ipaddr_to_asc, OSSL_NELEM(ipaddr_to_asc_tests));
