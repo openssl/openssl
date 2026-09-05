@@ -231,6 +231,59 @@ static int test_ipaddr_to_asc(int idx)
     return good;
 }
 
+/* Adding an extension to a CRL marks its cached encoding stale */
+static int test_crl_add_ext_modifies(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    X509_CRL *crl = NULL, *copy = NULL;
+    ASN1_TIME *tm = NULL;
+    ASN1_INTEGER *num = NULL;
+    X509_EXTENSION *ext = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"crl ext test", -1, -1, 0))
+        || !TEST_ptr(tm = ASN1_TIME_set(NULL, 0))
+        || !TEST_ptr(num = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(num, 1))
+        || !TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, tm))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0))
+        goto err;
+
+    /* X509_CRL_add1_ext_i2d() on a decoded copy */
+    if (!TEST_ptr(copy = X509_CRL_dup(crl))
+        || !TEST_false(copy->crl.enc.modified)
+        || !TEST_true(X509_CRL_add1_ext_i2d(copy, NID_crl_number, num, 0, 0))
+        || !TEST_true(copy->crl.enc.modified))
+        goto err;
+    X509_CRL_free(copy);
+    copy = NULL;
+
+    /* X509_CRL_add_ext() on a decoded copy */
+    if (!TEST_ptr(ext = X509V3_EXT_i2d(NID_crl_number, 0, num))
+        || !TEST_ptr(copy = X509_CRL_dup(crl))
+        || !TEST_false(copy->crl.enc.modified)
+        || !TEST_true(X509_CRL_add_ext(copy, ext, -1))
+        || !TEST_true(copy->crl.enc.modified))
+        goto err;
+
+    ret = 1;
+err:
+    X509_EXTENSION_free(ext);
+    X509_CRL_free(copy);
+    X509_CRL_free(crl);
+    ASN1_INTEGER_free(num);
+    ASN1_TIME_free(tm);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 static int ck_purp(ossl_unused const X509_PURPOSE *purpose,
     ossl_unused const X509 *x, int ca)
 {
@@ -1050,6 +1103,7 @@ int setup_tests(void)
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
     ADD_ALL_TESTS(test_ipaddr_to_asc, OSSL_NELEM(ipaddr_to_asc_tests));
+    ADD_TEST(test_crl_add_ext_modifies);
     ADD_TEST(tests_X509_PURPOSE);
     ADD_TEST(tests_X509_check_time);
     ADD_TEST(tests_X509_check_crypto);
