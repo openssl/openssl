@@ -653,6 +653,18 @@ again:
     rl->rstate = SSL_ST_READ_HEADER;
 
     /*
+     * RFC 9147 permits DTLSPlaintext only in epoch 0. Silently discard it
+     * after reading the fragment so later records remain framed.
+     */
+    if (rl->version == DTLS1_3_VERSION
+        && rl->epoch != 0
+        && !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
+
+    /*
      * rfc9147:
      * This procedure requires the ciphertext length to be at least 16 bytes.
      * Receivers MUST reject shorter records as if they had failed deprotection

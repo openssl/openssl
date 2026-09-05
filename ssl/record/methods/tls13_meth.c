@@ -143,16 +143,20 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     }
 
     /*
-     * If we're sending an alert and ctx != NULL then we must be forcing
-     * plaintext alerts. If we're reading and ctx != NULL then we allow
-     * plaintext alerts at certain points in the handshake. If we've got this
-     * far then we have already validated that a plaintext alert is ok here.
+     * Plaintext alerts are allowed only when explicitly enabled. DTLS needs
+     * this check here because it does not run the TLS header validator.
      */
     if (rec->type == SSL3_RT_ALERT) {
+        if (!rl->allow_plain_alerts)
+            return 0;
         memmove(rec->data, rec->input, rec->length);
         rec->input = rec->data;
         return 1;
     }
+
+    /* Keyed DTLS 1.3 layers accept only unified headers. */
+    if (isdtls && !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rec->type))
+        return 0;
 
     /* For integrity-only ciphers, nonce_len is same as MAC size */
     if (rl->mac_ctx != NULL) {
@@ -220,8 +224,16 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         addlen = 1;
     }
 
-    if ((isdtls && !ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(rec->type)))
-        || !WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
+    /*
+     * Reject unsupported CID before WPACKET setup so cleanup cannot touch
+     * an uninitialised packet.
+     */
+    if (isdtls && !ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(rec->type))) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
         || !WPACKET_put_bytes_u8(&wpkt, rec->type)
         || (isdtls && (sbit ? !WPACKET_put_bytes_u16(&wpkt, rl->sequence) : !WPACKET_put_bytes_u8(&wpkt, rl->sequence)))
         || (!isdtls && !WPACKET_put_bytes_u16(&wpkt, rec->rec_version))
@@ -515,6 +527,10 @@ const struct record_functions_st dtls_1_3_funcs = {
     tls_default_set_protocol_version,
     tls_default_read_n,
     dtls_get_more_records,
+    /*
+     * Keep this NULL: the TLS validator raises fatal errors, while DTLS must
+     * silently discard invalid records (RFC 9147 section 4.5.2).
+     */
     NULL,
     tls13_post_process_record,
     NULL,

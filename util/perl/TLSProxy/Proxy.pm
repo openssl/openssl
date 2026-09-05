@@ -690,32 +690,38 @@ sub construct_alert_message
     die "construct_alert_message only valid for DTLSv1.3 tests\n"
         if !$self->{isdtls} || !$self->is_tls13();
 
-    my $seqhi = ($sequence_number >> 32) & 0xffff;
-    my $seqmi = ($sequence_number >> 16) & 0xffff;
-    my $seqlo = ($sequence_number >> 0) & 0xffff;
-
-    # DTLS Record Layer Header
-    my $content_type = pack("C", 21);              # Alert (21)
-    my $legacy_version = pack("n", 0xFEFD);        # DTLS 1.2 (0xFEFD)
-    my $epoch_bytes = pack("n", $epoch);           # 2 bytes
-    my $sequence_bytes = pack('nnn', $seqhi, $seqmi, $seqlo);
-
-    my $length = pack("n", 2);                     # 2 bytes for alert payload
-
-    # Alert Message
     my $alert_level = pack("C", 1);                # Warning (1)
     my $alert_description = pack("C", 0);          # close_notify (0)
+    my $alert_payload = $alert_level.$alert_description;
 
-    # Combine all parts
-    my $packet = $content_type.
-                 $legacy_version.
-                 $epoch_bytes.
-                 $sequence_bytes.
-                 $length.
-                 $alert_level.
-                 $alert_description;
+    if ($epoch == 0) {
+        # Epoch 0 uses DTLSPlaintext.
+        my $seqhi = ($sequence_number >> 32) & 0xffff;
+        my $seqmi = ($sequence_number >> 16) & 0xffff;
+        my $seqlo = ($sequence_number >> 0) & 0xffff;
 
-    return $packet;
+        return pack("C", 21).                 # Alert (21)
+               pack("n", 0xFEFD).             # legacy version DTLS 1.2
+               pack("n", $epoch).
+               pack('nnn', $seqhi, $seqmi, $seqlo).
+               pack("n", length($alert_payload)).
+               $alert_payload;
+    }
+
+    # Keyed epochs use DTLSCiphertext. The p_ossltest cipher leaves the
+    # payload unchanged and does not verify the tag. The inner plaintext
+    # holds close_notify and its content type; a zero tag follows.
+    # The header uses a 16 bit sequence number and a length field. Mask the
+    # sequence number with the first two payload bytes, as in Record.pm.
+    my $payload = $alert_payload.pack("C", 21).("\x00" x 16);
+    my $maskhi = unpack("n", substr($payload, 0, 2));
+    my $seqlo = ($sequence_number & 0xffff) ^ $maskhi;
+    my $first = 0x20 | 0x08 | 0x04 | ($epoch & 0x03);
+
+    return pack("C", $first).
+           pack("n", $seqlo).
+           pack("n", length($payload)).
+           $payload;
 }
 
 sub process_packet
