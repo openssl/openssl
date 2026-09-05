@@ -1180,9 +1180,76 @@ err:
     return ret;
 }
 
+/* A modified, unsigned certificate or CRL is equal only to itself */
+static int test_cmp_modified(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    X509 *cert = NULL, *copy = NULL;
+    X509_CRL *crl = NULL, *crl_copy = NULL;
+    ASN1_INTEGER *serial = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"cmp test", -1, -1, 0))
+        || !TEST_ptr(serial = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(serial, 2)))
+        goto err;
+
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_true(X509_set_subject_name(cert, name))
+        || !TEST_true(X509_set_issuer_name(cert, name))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert), 3600))
+        || !TEST_true(X509_set_pubkey(cert, pkey))
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_ptr(copy = X509_dup(cert))
+        || !TEST_int_eq(X509_cmp(cert, copy), 0)
+        || !TEST_int_eq(X509_cmp(cert, cert), 0)
+        /* The copy is modified but still equal to itself */
+        || !TEST_true(X509_set_serialNumber(copy, serial))
+        || !TEST_int_eq(X509_cmp(copy, copy), 0)
+        || !TEST_int_eq(X509_cmp(cert, copy), -1)
+        || !TEST_int_eq(X509_cmp(copy, cert), 1)
+        /* Both modified: unequal */
+        || !TEST_true(X509_set_serialNumber(cert, serial))
+        || !TEST_int_ne(X509_cmp(cert, copy), 0)
+        /* Signing again makes them comparable and equal */
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_int_gt(X509_sign(copy, pkey, EVP_sha256()), 0)
+        || !TEST_int_eq(X509_cmp(cert, copy), 0))
+        goto err;
+
+    if (!TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, X509_getm_notBefore(cert)))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
+        || !TEST_ptr(crl_copy = X509_CRL_dup(crl))
+        || !TEST_int_eq(X509_CRL_match(crl, crl), 0)
+        || !TEST_true(X509_CRL_set_version(crl_copy, X509_CRL_VERSION_2))
+        || !TEST_int_eq(X509_CRL_match(crl_copy, crl_copy), 0)
+        || !TEST_int_eq(X509_CRL_match(crl, crl_copy), -1)
+        || !TEST_int_eq(X509_CRL_match(crl_copy, crl), 1))
+        goto err;
+
+    ret = 1;
+err:
+    X509_CRL_free(crl_copy);
+    X509_CRL_free(crl);
+    X509_free(copy);
+    X509_free(cert);
+    ASN1_INTEGER_free(serial);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
+    ADD_TEST(test_cmp_modified);
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
     ADD_ALL_TESTS(test_ipaddr_to_asc, OSSL_NELEM(ipaddr_to_asc_tests));
