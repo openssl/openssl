@@ -2429,6 +2429,20 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         return 0;
     }
 
+    /*
+     * RFC 8446 Appendix D.3 requires a client that attempted 0-RTT to
+     * fail the connection if the ServerHello selects TLS 1.2 or older.
+     * early_data_session is retained only when the early_data extension was
+     * actually constructed, so it distinguishes a real 0-RTT attempt from
+     * one that was suppressed before the ClientHello was sent.
+     */
+    if (!SSL_CONNECTION_IS_DTLS(s) && s->ext.early_data_session != NULL
+        && s->version != TLS1_3_VERSION) {
+        s->version = origv;
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_WRONG_SSL_VERSION);
+        return 0;
+    }
+
     if (s->hello_retry_request != SSL_HRR_NONE && s->version != version1_3) {
         s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_WRONG_SSL_VERSION);
