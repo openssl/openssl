@@ -107,7 +107,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 1;
 }
 
-ASN1_SEQUENCE_ref(X509, x509_cb) = {
+ASN1_SEQUENCE_ref_nolock(X509, x509_cb) = {
     ASN1_EMBED(X509, cert_info, X509_CINF),
     ASN1_EMBED(X509, sig_alg, X509_ALGOR),
     ASN1_EMBED(X509, signature, ASN1_BIT_STRING)

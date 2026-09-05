@@ -16,6 +16,18 @@
 
 /* Internal ASN1 structures and functions: not for application use */
 
+/**
+ * @def ASN1_SEQUENCE_ref_nolock(tname, cb)
+ * ASN1_SEQUENCE_ref() from <openssl/asn1t.h> for a structure with a
+ * references member but no lock member. The ASN1_AUX ref_lock offset is -1,
+ * and ossl_asn1_do_lock() allocates and frees no lock for it.
+ * @param tname the structure's type name
+ * @param cb the ASN1_aux_cb callback, or NULL
+ */
+#define ASN1_SEQUENCE_ref_nolock(tname, cb)                                                                         \
+    static const ASN1_AUX tname##_aux = { NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), -1, cb, 0, NULL }; \
+    ASN1_SEQUENCE(tname)
+
 /* ASN1 public key method structure */
 
 #include <openssl/core.h>
