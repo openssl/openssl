@@ -150,6 +150,12 @@ OpenSSL 4.1
 
    *Shreenidhi Shedi*
 
+ * Changed `DirName` output produced by X.509 v3 extension printing. It now
+   uses the readable comma-separated form and emits UTF-8 characters directly,
+   instead of the legacy slash-separated ASCII form produced by `X509_NAME_oneline()`.
+
+   *Nikola Pajkovsky*
+
  * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
    list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
    available in the active providers are advertised.  `PKCS7_sign_add_signer()`
