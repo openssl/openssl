@@ -12,6 +12,7 @@
 #include "testutil.h"
 #include "helpers/ssltestlib.h"
 #include "internal/packet.h"
+#include "../ssl/ssl_local.h"
 
 #ifndef OPENSSL_NO_ECH
 
@@ -1270,20 +1271,11 @@ end:
 }
 
 #define CLIENT_VERSION_LEN 2
-static int ext_grease_ok = 0;
-
-static int is_grease(unsigned int v)
-{
-    return (v & 0x0f0f) == 0x0a0a && (v >> 8) == (v & 0xff);
-}
-
 static void grease_msg_cb(int write_p, int version, int content_type,
     const void *buf, size_t len, SSL *ssl, void *arg)
 {
-    const unsigned char *grease_ch_buf = buf;
-    PACKET pkt, ciphers, session, compression, exts, ext_data;
-    PACKET inner;
-    unsigned int ext_type = 0;
+    PACKET pkt, exts, tmp;
+    unsigned ext_type = 0;
     int found_expected = 0;
 
     /*
@@ -1293,30 +1285,26 @@ static void grease_msg_cb(int write_p, int version, int content_type,
      */
     if (write_p != 0 || content_type != SSL3_RT_HANDSHAKE
         || len < SSL3_HM_HEADER_LENGTH
-        || grease_ch_buf[0] != SSL3_MT_CLIENT_HELLO)
+        || *(const uint8_t *)buf != SSL3_MT_CLIENT_HELLO)
         return;
 
     memset(&pkt, 0, sizeof(pkt));
-    memset(&ciphers, 0, sizeof(ciphers));
-    memset(&session, 0, sizeof(session));
-    memset(&compression, 0, sizeof(compression));
     memset(&exts, 0, sizeof(exts));
-    memset(&ext_data, 0, sizeof(ext_data));
-    memset(&inner, 0, sizeof(inner));
+    memset(&tmp, 0, sizeof(tmp));
 
-    if (!TEST_ptr(grease_ch_buf)
-        || !TEST_true(PACKET_buf_init(&pkt, grease_ch_buf, len))
+    if (!TEST_ptr(buf)
+        || !TEST_true(PACKET_buf_init(&pkt, buf, len))
         /* Skip handshake message header */
         || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
         /* Skip client_version + random */
         || !TEST_true(PACKET_forward(&pkt,
             CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
         /* Skip session_id */
-        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &session))
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &tmp))
         /* Skip cipher suites */
-        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &ciphers))
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &tmp))
         /* Skip compression */
-        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &compression))
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &tmp))
         /* Get extensions */
         || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &exts)))
         return;
@@ -1325,20 +1313,18 @@ static void grease_msg_cb(int write_p, int version, int content_type,
     while (PACKET_remaining(&exts) > 0) {
         if (!TEST_true(PACKET_get_net_2(&exts, &ext_type))
             || !TEST_true(PACKET_get_length_prefixed_2(&exts,
-                &ext_data)))
+                &tmp)))
             return;
         if (verbose)
             TEST_info("Server saw: ext: %04x", ext_type);
-        if (is_grease(ext_type))
-            found_expected++;
-        if (ext_type == TEST_EXT_TYPE1)
-            found_expected++;
-        if (ext_type == TEST_EXT_TYPE2)
+        if (ossl_is_grease_value(ext_type)
+            || ext_type == TEST_EXT_TYPE1
+            || ext_type == TEST_EXT_TYPE2)
             found_expected++;
     }
     if (!TEST_int_eq(found_expected, 4))
         return;
-    ext_grease_ok = 1;
+    *(int *)arg = 1;
     return;
 }
 
@@ -1383,6 +1369,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     SSL_SESSION *sess = NULL;
     size_t written = 0, readbytes = 0;
     unsigned char ed[21], buf[1024];
+    int ext_grease_ok = 0;
 
     /* split idx into kemind, kdfind, aeadind */
     kemsz = OSSL_NELEM(kem_str_list);
@@ -1447,6 +1434,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
             goto end;
         /* set server callback to check custom and GREASE extensions present */
         SSL_CTX_set_msg_callback(sctx, grease_msg_cb);
+        SSL_CTX_set_msg_callback_arg(sctx, &ext_grease_ok);
     }
     if (combo == OSSL_ECH_TEST_CBS) {
         SSL_CTX_ech_set_callback(sctx, ech_test_cb);
@@ -1579,7 +1567,6 @@ end:
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
     ch_test_cb_ok = 0;
-    ext_grease_ok = 0;
     return res;
 }
 

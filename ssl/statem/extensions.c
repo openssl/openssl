@@ -588,8 +588,8 @@ int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt)
     type = ext_defs[tind].type;
     /*
      * GREASE extension types break the invariant that the actual
-     * extension type is in the type field of ext_defs so handle
-     * those accordingly
+     * extension type is in the type field of ext_defs, so handle
+     * those accordingly.
      */
     if (type == TLSEXT_TYPE_grease1)
         type = ossl_grease_value(s, OSSL_GREASE_EXT1);
@@ -720,8 +720,8 @@ static int verify_extension(SSL_CONNECTION *s, unsigned int context,
     }
 
     /*
-     * Check for GREASE extensions we added through tls_construct_ctos_grease1/2
-     * in ssl/statem/extensions_clnt.c
+     * Check for GREASE extensions we added through tls_construct_ctos_grease1()
+     * or tls_construct_ctos_grease2() in extensions_clnt.c
      */
     if (!s->server
         && ossl_is_grease_value(type)
