@@ -124,6 +124,10 @@ int ossl_bn_rsa_fips186_5_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     BN_GENCB *cb, uint32_t c);
 
 OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
+#ifdef FIPS_MODULE
+void ossl_bn_ctx_set0_nonce_rand(BN_CTX *ctx, EVP_RAND_CTX *rand);
+EVP_RAND_CTX *ossl_bn_ctx_get0_nonce_rand(BN_CTX *ctx);
+#endif
 
 extern const BIGNUM ossl_bn_inv_sqrt_2;
 

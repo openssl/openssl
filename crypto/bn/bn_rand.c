@@ -312,6 +312,9 @@ int ossl_bn_gen_dsa_nonce_fixed_top(BIGNUM *out, const BIGNUM *range,
     int ret = 0;
     EVP_MD *md = NULL;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
+#ifdef FIPS_MODULE
+    EVP_RAND_CTX *nonce_rand = ossl_bn_ctx_get0_nonce_rand(ctx);
+#endif
 
     if (mdctx == NULL)
         goto end;
@@ -342,10 +345,27 @@ int ossl_bn_gen_dsa_nonce_fixed_top(BIGNUM *out, const BIGNUM *range,
         unsigned char i = 0;
 
         for (done = 1; done < num_k_bytes;) {
+            /*
+             * This is the only draw whose value decides the result, so it is
+             * the only one a caller can redirect.  Everything else the
+             * operation draws - blinding above all - keeps coming from the
+             * library context, because pinning that would defeat the
+             * countermeasure it exists for.
+             */
+#ifdef FIPS_MODULE
+            if ((nonce_rand != NULL
+                        ? EVP_RAND_generate(nonce_rand, random_bytes,
+                              sizeof(random_bytes), 0, 0, NULL, 0)
+                        : RAND_priv_bytes_ex(libctx, random_bytes,
+                              sizeof(random_bytes), 0))
+                <= 0)
+                goto end;
+#else
             if (RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes),
                     0)
                 <= 0)
                 goto end;
+#endif
 
             if (!EVP_DigestInit_ex(mdctx, md, NULL)
                 || !EVP_DigestUpdate(mdctx, &i, sizeof(i))

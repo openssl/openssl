@@ -75,6 +75,17 @@ struct bignum_ctx {
     int flags;
     /* The library context */
     OSSL_LIB_CTX *libctx;
+#ifdef FIPS_MODULE
+    /*
+     * Where the hedged DSA/ECDSA nonce derivation draws the randomness it mixes
+     * in, or NULL for |libctx|'s private DRBG.  Borrowed: the caller owns it and
+     * must outlive this BN_CTX.  Naming it here lets the module's own KATs
+     * reproduce a signature without installing a fixed generator anywhere other
+     * work could reach it.  Deliberately governs nothing else the operation
+     * draws, and exists only in the FIPS module, which is its only user.
+     */
+    EVP_RAND_CTX *nonce_rand;
+#endif
 };
 
 #ifndef FIPS_MODULE
@@ -246,6 +257,21 @@ OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
         return NULL;
     return ctx->libctx;
 }
+
+#ifdef FIPS_MODULE
+void ossl_bn_ctx_set0_nonce_rand(BN_CTX *ctx, EVP_RAND_CTX *rand)
+{
+    if (ctx != NULL)
+        ctx->nonce_rand = rand;
+}
+
+EVP_RAND_CTX *ossl_bn_ctx_get0_nonce_rand(BN_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->nonce_rand;
+}
+#endif /* FIPS_MODULE */
 
 /************/
 /* BN_STACK */
