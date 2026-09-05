@@ -163,5 +163,17 @@ int ossl_ecdsa_deterministic_sign(const unsigned char *dgst, int dlen,
     EC_KEY *eckey, unsigned int nonce_type,
     const char *digestname,
     OSSL_LIB_CTX *libctx, const char *propq);
+#ifdef FIPS_MODULE
+/*
+ * Sign with the ordinary hedged nonce derivation, but draw the randomness it
+ * mixes in from |rand| instead of the library context's private DRBG.  The
+ * caller owns |rand|.  This exists for the module's own KATs, which need a
+ * reproducible nonce without installing a fixed entropy DRBG where other work
+ * could reach it; |rand| == NULL behaves exactly like an ordinary sign.
+ */
+int ossl_ecdsa_sign_with_rand(const unsigned char *dgst, int dlen,
+    unsigned char *sig, unsigned int *siglen,
+    EC_KEY *eckey, EVP_RAND_CTX *rand);
+#endif
 #endif /* OPENSSL_NO_EC */
 #endif

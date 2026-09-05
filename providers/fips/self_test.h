@@ -37,7 +37,7 @@ typedef struct self_test_post_params_st {
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
     int on_demand_test);
 int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    self_test_id_t id, int switch_rand);
+    self_test_id_t id);
 int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx);
 int SELF_TEST_lock_deferred(void *fips_global);
 void SELF_TEST_unlock_deferred(void *fips_global);
@@ -122,9 +122,6 @@ typedef struct st_kat_sign_st {
     const char *keytype;
     int mode;
     const ST_KAT_PARAM *key;
-    ST_BUFFER entropy;
-    ST_BUFFER nonce;
-    ST_BUFFER persstr;
     const ST_KAT_PARAM *init;
     const ST_KAT_PARAM *verify;
 } ST_KAT_SIGN;

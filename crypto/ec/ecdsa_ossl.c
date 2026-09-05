@@ -265,6 +265,58 @@ int ossl_ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
         0, NULL, NULL, NULL);
 }
 
+#ifdef FIPS_MODULE
+int ossl_ecdsa_sign_with_rand(const unsigned char *dgst, int dlen,
+    unsigned char *sig, unsigned int *siglen,
+    EC_KEY *eckey, EVP_RAND_CTX *rand)
+{
+    BIGNUM *kinv = NULL, *r = NULL;
+    BN_CTX *ctx;
+    ECDSA_SIG *s = NULL;
+    int ret = 0;
+
+    if (sig == NULL) {
+        *siglen = ECDSA_size(eckey);
+        return 1;
+    }
+
+    if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        *siglen = 0;
+        return 0;
+    }
+    /*
+     * The nonce derivation below draws from |rand|.  Nothing is installed
+     * anywhere, so no other operation can see it, and the association dies with
+     * the BN_CTX.  Blinding and the rest still use the library context's DRBG.
+     */
+    ossl_bn_ctx_set0_nonce_rand(ctx, rand);
+
+    /*
+     * Derive the nonce exactly as an ordinary sign would - the digest is passed
+     * through, so this is the hedged path, not the deterministic one - then let
+     * the normal signing code consume the result.
+     */
+    if (!ecdsa_sign_setup(eckey, ctx, &kinv, &r, dgst, dlen,
+            0, NULL, NULL, NULL))
+        goto err;
+
+    if ((s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey)) == NULL)
+        goto err;
+
+    *siglen = i2d_ECDSA_SIG(s, &sig);
+    ret = 1;
+err:
+    if (!ret)
+        *siglen = 0;
+    ECDSA_SIG_free(s);
+    BN_clear_free(kinv);
+    BN_clear_free(r);
+    BN_CTX_free(ctx);
+    return ret;
+}
+#endif /* FIPS_MODULE */
+
 ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r,
     EC_KEY *eckey)
