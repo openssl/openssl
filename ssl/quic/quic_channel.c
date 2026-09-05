@@ -105,6 +105,11 @@ static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state);
 
 DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
 
+typedef struct cfq_data_retire_cid {
+    uint64_t rtcid_seq;
+    QUIC_CHANNEL *rtcid_ch;
+} CFQ_DATA_RETIRE_CID_T;
+
 QUIC_NEEDS_LOCK
 static QLOG *ch_get_qlog(QUIC_CHANNEL *ch)
 {
@@ -2972,18 +2977,32 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
     ch_start_terminating(ch, &tcause, 0);
 }
 
-static void free_frame_data(unsigned char *buf, size_t buf_len, void *arg)
+static void free_frame_rtcid(unsigned char *buf, size_t buf_len, void *arg)
 {
+    CFQ_DATA_RETIRE_CID_T *cfq_data_rtcid = (CFQ_DATA_RETIRE_CID_T *)arg;
+    QUIC_CHANNEL *ch = cfq_data_rtcid->rtcid_ch;
+
+    if (ch->cur_retire_prior_to < cfq_data_rtcid->rtcid_seq)
+        ch->cur_retire_prior_to = cfq_data_rtcid->rtcid_seq;
+
     OPENSSL_free(buf);
+    OPENSSL_free(cfq_data_rtcid);
 }
 
 static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
 {
+    CFQ_DATA_RETIRE_CID_T *cfq_data_rtcid = NULL;
     BUF_MEM *buf_mem = NULL;
     WPACKET wpkt;
     size_t l;
 
     ossl_quic_srtm_remove(ch->srtm, ch, seq_num);
+
+    cfq_data_rtcid = OPENSSL_malloc(sizeof(CFQ_DATA_RETIRE_CID_T));
+    if (cfq_data_rtcid == NULL)
+        goto err;
+    cfq_data_rtcid->rtcid_seq = seq_num;
+    cfq_data_rtcid->rtcid_ch = ch;
 
     if ((buf_mem = BUF_MEM_new()) == NULL)
         goto err;
@@ -3003,7 +3022,7 @@ static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
     if (ossl_quic_cfq_add_frame(ch->cfq, 1, QUIC_PN_SPACE_APP,
             OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, 0,
             (unsigned char *)buf_mem->data, l,
-            free_frame_data, NULL)
+            free_frame_rtcid, cfq_data_rtcid)
         == NULL)
         goto err;
 
@@ -3017,6 +3036,7 @@ err:
         OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
         "internal error enqueueing retire conn id");
     BUF_MEM_free(buf_mem);
+    OPENSSL_free(cfq_data_rtcid);
     return 0;
 }
 
@@ -3025,6 +3045,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
 {
     uint64_t new_remote_seq_num = ch->cur_remote_seq_num;
     uint64_t new_retire_prior_to = ch->cur_retire_prior_to;
+    uint64_t retire_prior_to;
 
     if (!ossl_quic_channel_is_active(ch))
         return;
@@ -3123,10 +3144,10 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      * that NEW_CONNECTION_ID frame, by definition this will always be met.
      * This may change in future when we change our CID handling.
      */
-    while (new_retire_prior_to > ch->cur_retire_prior_to) {
-        if (!ch_enqueue_retire_conn_id(ch, ch->cur_retire_prior_to))
-            break;
-        ++ch->cur_retire_prior_to;
+    retire_prior_to = ch->cur_retire_prior_to;
+    while (new_retire_prior_to > retire_prior_to) {
+        ch_enqueue_retire_conn_id(ch, retire_prior_to);
+        retire_prior_to++;
     }
 }
 
