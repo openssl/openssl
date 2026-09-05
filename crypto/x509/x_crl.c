@@ -51,12 +51,10 @@ static int crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     if (!a || !a->revoked)
         return 1;
     switch (operation) {
-        /*
-         * Just set cmp function here. We don't sort because that would
-         * affect the output of X509_CRL_print().
-         */
     case ASN1_OP_D2I_POST:
+        /* Sort by serial number for X509_CRL_get0_by_serial() */
         (void)sk_X509_REVOKED_set_cmp_func(a->revoked, X509_REVOKED_cmp);
+        sk_X509_REVOKED_sort(a->revoked);
         break;
     }
     return 1;
@@ -392,7 +390,7 @@ static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
     return ret;
 }
 
-ASN1_SEQUENCE_ref(X509_CRL, crl_cb) = {
+ASN1_SEQUENCE_ref_nolock(X509_CRL, crl_cb) = {
     ASN1_EMBED(X509_CRL, crl, X509_CRL_INFO),
     ASN1_EMBED(X509_CRL, sig_alg, X509_ALGOR),
     ASN1_EMBED(X509_CRL, signature, ASN1_BIT_STRING)
@@ -528,16 +526,6 @@ static int def_crl_lookup(X509_CRL *crl,
     if (crl->crl.revoked == NULL)
         return 0;
 
-    /*
-     * Sort revoked into serial number order if not already sorted. Do this
-     * under a lock to avoid race condition.
-     */
-    if (!sk_X509_REVOKED_is_sorted(crl->crl.revoked)) {
-        if (!CRYPTO_THREAD_write_lock(crl->lock))
-            return 0;
-        sk_X509_REVOKED_sort(crl->crl.revoked);
-        CRYPTO_THREAD_unlock(crl->lock);
-    }
     rtmp.serialNumber = *serial;
     idx = sk_X509_REVOKED_find(crl->crl.revoked, &rtmp);
     if (idx < 0)
