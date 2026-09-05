@@ -550,8 +550,9 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
     bio_dgram_data *data = NULL;
-#ifndef __DJGPP__
-    /* There are currently no cases where this is used on djgpp/watt32. */
+#if !defined(__DJGPP__) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU) \
+    || defined(IP_DONTFRAG) || defined(IP_DONTFRAGMENT) \
+    || defined(IPV6_DONTFRAG) || defined(IPV6_MTU_DISCOVER))
     int sockopt_val = 0;
 #endif
     int d_errno;
