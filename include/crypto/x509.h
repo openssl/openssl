@@ -138,7 +138,6 @@ struct X509_crl_st {
     /* alternative method to handle this CRL */
     const X509_CRL_METHOD *meth;
     void *meth_data;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_LIB_CTX *libctx;
     char *propq;
