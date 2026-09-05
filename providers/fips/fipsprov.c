@@ -1378,7 +1378,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
         if ((st = OSSL_SELF_TEST_new(cb, cb_arg)) == NULL)
             goto done;
 
-        ret = SELF_TEST_kats_execute(st, libctx, id, 1);
+        ret = SELF_TEST_kats_execute(st, libctx, id);
 
     done:
         OSSL_SELF_TEST_free(st);
