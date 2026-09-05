@@ -376,6 +376,10 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         goto error;
     }
 
+    /* The replacement inherits the library context of the object it replaces */
+    if (*x != NULL && !x509_pubkey_set0_libctx(pk, (*x)->libctx, (*x)->propq))
+        goto error;
+
     X509_PUBKEY_free(*x);
     if (!EVP_PKEY_up_ref(pkey)) {
         ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
