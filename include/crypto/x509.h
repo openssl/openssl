@@ -95,7 +95,6 @@ struct X509_req_st {
     X509_ALGOR sig_alg; /* signature algorithm */
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
@@ -212,7 +211,6 @@ struct x509_st {
      */
     unsigned char fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     X509_CERT_AUX *aux;
-    CRYPTO_RWLOCK *lock;
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
