@@ -1550,6 +1550,12 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
         /* the BIO may not block, so we must wait for the 1st line to come in */
+        if (read_len <= 0 && !BIO_should_retry(fbio)) {
+            ERR_raise(ERR_LIB_HTTP, HTTP_R_FAILED_READING_DATA);
+            BIO_printf(bio_err, "%s: HTTP CONNECT failed, error reading data\n",
+                prog);
+            goto end;
+        }
         if (read_len < (int)HTTP_LINE1_MINLEN)
             continue;
 
