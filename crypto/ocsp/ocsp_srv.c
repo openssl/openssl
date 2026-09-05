@@ -216,13 +216,16 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pkctx = NULL;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
     int i;
 
     if (ctx == NULL)
         return 0;
 
+    ossl_x509_get0_libctx(signer, &libctx, &propq);
     if (!EVP_DigestSignInit_ex(ctx, &pkctx, EVP_MD_get0_name(dgst),
-            signer->libctx, signer->propq, key, NULL)) {
+            libctx, propq, key, NULL)) {
         EVP_MD_CTX_free(ctx);
         return 0;
     }
@@ -276,9 +279,13 @@ err:
 
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
     if (cert == NULL)
         return 0;
-    return OCSP_RESPID_set_by_key_ex(respid, cert, cert->libctx, cert->propq);
+    ossl_x509_get0_libctx(cert, &libctx, &propq);
+    return OCSP_RESPID_set_by_key_ex(respid, cert, libctx, propq);
 }
 
 int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OSSL_LIB_CTX *libctx,
@@ -321,7 +328,11 @@ err:
 
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
     if (cert == NULL)
         return 0;
-    return OCSP_RESPID_match_ex(respid, cert, cert->libctx, cert->propq);
+    ossl_x509_get0_libctx(cert, &libctx, &propq);
+    return OCSP_RESPID_match_ex(respid, cert, libctx, propq);
 }

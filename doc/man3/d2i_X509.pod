@@ -575,6 +575,12 @@ elsewhere.
 Represents a B<Name> type as used for subject and issuer names in
 IETF RFC 6960 and elsewhere.
 
+=item B<X509>
+
+A certificate that has not been signed is encoded as an unsigned certificate
+as specified in RFC 9925, using B<id-alg-unsigned> as the signature algorithm
+and an empty signature.
+
 =item B<X509_REQ>
 
 Represents a PKCS#10 certificate request.

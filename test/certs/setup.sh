@@ -437,6 +437,17 @@ NC="excluded;otherName:SRVName;UTF8STRING:foo@example.org" ./mkcert.sh genca \
     nccaothername-key nccaothername-cert \
     "otherName.1 = SRVName;UTF8STRING:foo@example.org"
 
+# CA with an SmtpUTF8Mailbox othername name constraint, prohibited by RFC 9598
+
+NC="permitted;otherName:1.3.6.1.5.5.7.8.9;UTF8STRING:beck@example.org" \
+    ./mkcert.sh genca "Test NC CA SmtpUTF8" nccasmtputf8-key nccasmtputf8-cert \
+    root-key root-cert
+
+./mkcert.sh req nc-smtputf8-key "O = NC SmtpUTF8 Test Certificate" | \
+    ./mkcert.sh geneealt nc-smtputf8-key nc-smtputf8-cert \
+    nccasmtputf8-key nccasmtputf8-cert \
+    "email.1 = beck@example.org"
+
 # RSA-PSS signatures
 # SHA1
 ./mkcert.sh genee PSS-SHA1 ee-key ee-pss-sha1-cert ca-key ca-cert \

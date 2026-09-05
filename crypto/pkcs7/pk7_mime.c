@@ -63,7 +63,7 @@ PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
     ret = (PKCS7 *)SMIME_read_ASN1_ex(bio, 0, bcont, ASN1_ITEM_rptr(PKCS7),
         (ASN1_VALUE **)p7, libctx, propq);
     if (ret != NULL)
-        ossl_pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_SignerInfos_set_ctx(ret);
     return ret;
 }
 

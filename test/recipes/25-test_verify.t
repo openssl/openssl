@@ -70,7 +70,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 222;
+plan tests => 223;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -531,9 +531,12 @@ ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
 ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
    "Name constraints URI with userinfo");
 
-ok(!verify("bad-cert-smtputf8-name-constraints", "root-cert", ["bad-cert-smtputf8-name-constraints"], [],
-	  "-partial_chain", "-attime", "1623060000"),
-   "Name constraints bad othername name constraint");
+ok(verify("bad-cert-smtputf8-name-constraints", "", ["bad-cert-smtputf8-name-constraints"], [],
+	  "-partial_chain"),
+   "Name constraints SmtpUTF8Mailbox othername constraint unused on a trust anchor");
+
+ok(!verify("nc-smtputf8-cert", "", ["root-cert"], ["nccasmtputf8-cert"], ),
+   "Name constraints SmtpUTF8Mailbox othername constraint rejected when applied");
 
 #Check that we get the expected failure return code
 with({ exit_checker => sub { return shift == 2; } },

@@ -41,13 +41,16 @@ unsigned long X509_issuer_and_serial_hash(const X509 *a)
     unsigned char md[16];
     char *f = NULL;
     EVP_MD *digest = NULL;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
 
     if (ctx == NULL)
         goto err;
     f = X509_NAME_oneline(a->cert_info.issuer, NULL, 0);
     if (f == NULL)
         goto err;
-    digest = EVP_MD_fetch(a->libctx, SN_md5, a->propq);
+    ossl_x509_get0_libctx(a, &libctx, &propq);
+    digest = EVP_MD_fetch(libctx, SN_md5, propq);
     if (digest == NULL)
         goto err;
 
@@ -86,14 +89,34 @@ int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
 
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 {
-    int rv;
+    int rv = 0;
+
+    if (a == b)
+        return 0;
+
+    /* A CRL modified since it was signed or decoded is equal only to itself */
+    if (a->crl.enc.modified || b->crl.enc.modified)
+        return a->crl.enc.modified ? 1 : -1;
 
     if ((a->flags & EXFLAG_NO_FINGERPRINT) == 0
         && (b->flags & EXFLAG_NO_FINGERPRINT) == 0)
-        rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
-    else
-        return -2;
+        rv = memcmp(a->fingerprint, b->fingerprint, sizeof(a->fingerprint));
+    if (rv != 0)
+        return rv < 0 ? -1 : 1;
 
+    /* Check for match against stored encoding too */
+    if (a->crl.enc.len < b->crl.enc.len)
+        return -1;
+    if (a->crl.enc.len > b->crl.enc.len)
+        return 1;
+    rv = memcmp(a->crl.enc.enc, b->crl.enc.enc, a->crl.enc.len);
+    if (rv != 0)
+        return rv < 0 ? -1 : 1;
+    /* Same TBS: the signature algorithm and signature must match too */
+    rv = X509_ALGOR_cmp(&a->sig_alg, &b->sig_alg);
+    if (rv != 0)
+        return rv < 0 ? -1 : 1;
+    rv = ASN1_STRING_cmp(&a->signature, &b->signature);
     return rv < 0 ? -1 : rv > 0;
 }
 
@@ -141,14 +164,7 @@ unsigned long X509_subject_name_hash_old(const X509 *x)
 }
 #endif
 
-/*
- * Compare two certificates: they must be identical for this to work. NB:
- * Although "cmp" operations are generally prototyped to take "const"
- * arguments (eg. for use in STACKs), the way X509 handling is - these
- * operations may involve ensuring the hashes are up-to-date and ensuring
- * certain cert information is cached. So this is the point where the
- * "depth-first" constification tree has to halt with an evil cast.
- */
+/* Compare two certificates: they must be identical for this to work. */
 int X509_cmp(const X509 *a, const X509 *b)
 {
     int rv = 0;
@@ -156,25 +172,34 @@ int X509_cmp(const X509 *a, const X509 *b)
     if (a == b) /* for efficiency */
         return 0;
 
-    /* attempt to compute cert hash */
-    (void)X509_check_purpose((X509 *)a, -1, 0);
-    (void)X509_check_purpose((X509 *)b, -1, 0);
+    /*
+     * A certificate modified since it was signed or decoded is equal only
+     * to itself
+     */
+    if (a->cert_info.enc.modified || b->cert_info.enc.modified)
+        return a->cert_info.enc.modified ? 1 : -1;
 
-    if ((a->ex_flags & EXFLAG_NO_FINGERPRINT) == 0
-        && (b->ex_flags & EXFLAG_NO_FINGERPRINT) == 0)
-        rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
+    /* The fingerprints are only there on finalized certificates */
+    if ((a->ex_flags & (EXFLAG_SET | EXFLAG_NO_FINGERPRINT)) == EXFLAG_SET
+        && (b->ex_flags & (EXFLAG_SET | EXFLAG_NO_FINGERPRINT)) == EXFLAG_SET)
+        rv = memcmp(a->fingerprint, b->fingerprint, sizeof(a->fingerprint));
     if (rv != 0)
         return rv < 0 ? -1 : 1;
 
     /* Check for match against stored encoding too */
-    if (!a->cert_info.enc.modified && !b->cert_info.enc.modified) {
-        if (a->cert_info.enc.len < b->cert_info.enc.len)
-            return -1;
-        if (a->cert_info.enc.len > b->cert_info.enc.len)
-            return 1;
-        rv = memcmp(a->cert_info.enc.enc,
-            b->cert_info.enc.enc, a->cert_info.enc.len);
-    }
+    if (a->cert_info.enc.len < b->cert_info.enc.len)
+        return -1;
+    if (a->cert_info.enc.len > b->cert_info.enc.len)
+        return 1;
+    rv = memcmp(a->cert_info.enc.enc,
+        b->cert_info.enc.enc, a->cert_info.enc.len);
+    if (rv != 0)
+        return rv < 0 ? -1 : 1;
+    /* Same TBS: the signature algorithm and signature must match too */
+    rv = X509_ALGOR_cmp(&a->sig_alg, &b->sig_alg);
+    if (rv != 0)
+        return rv < 0 ? -1 : 1;
+    rv = ASN1_STRING_cmp(&a->signature, &b->signature);
     return rv < 0 ? -1 : rv > 0;
 }
 

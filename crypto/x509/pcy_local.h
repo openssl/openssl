@@ -68,7 +68,7 @@ struct X509_POLICY_DATA_st {
 
 #define POLICY_DATA_FLAG_CRITICAL 0x10
 
-/* This structure is cached with a certificate */
+/* The policy data of one certificate, held by the policy tree level for it */
 
 struct X509_POLICY_CACHE_st {
     /* anyPolicy data or NULL if no anyPolicy */
@@ -87,6 +87,8 @@ struct X509_POLICY_CACHE_st {
      * if absent.
      */
     long map_skip;
+    /* Non-zero if a policy extension was invalid, e.g. duplicate OIDs. */
+    int invalid;
 };
 
 /*
@@ -107,6 +109,8 @@ struct X509_POLICY_NODE_st {
 struct X509_POLICY_LEVEL_st {
     /* Cert for this level */
     X509 *cert;
+    /* Policy data of cert */
+    X509_POLICY_CACHE *cache;
     /* nodes at this level */
     STACK_OF(X509_POLICY_NODE) *nodes;
     /* anyPolicy node */
@@ -154,7 +158,21 @@ void ossl_policy_data_free(X509_POLICY_DATA *data);
 
 X509_POLICY_DATA *ossl_policy_cache_find_data(const X509_POLICY_CACHE *cache,
     const ASN1_OBJECT *id);
-int ossl_policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps);
+/**
+ * @brief Add policyMappings entries to a policy cache.
+ *
+ * Processes a decoded policyMappings extension and records the mapped policy
+ * data in the cache.  The passed POLICY_MAPPINGS structure is modified and
+ * freed by this call.
+ *
+ * @param cache the policy cache to populate
+ * @param maps the decoded policyMappings extension, consumed by this call
+ * @returns 1 on success, 0 on a fatal error such as a memory allocation
+ *          failure.  Invalid mappings are not fatal: cache->invalid is set
+ *          and 1 is returned.
+ */
+int ossl_policy_cache_set_mapping(X509_POLICY_CACHE *cache,
+    POLICY_MAPPINGS *maps);
 
 STACK_OF(X509_POLICY_NODE) *ossl_policy_node_cmp_new(void);
 
@@ -176,6 +194,16 @@ void ossl_policy_node_free(X509_POLICY_NODE *node);
 int ossl_policy_node_match(const X509_POLICY_LEVEL *lvl,
     const X509_POLICY_NODE *node, const ASN1_OBJECT *oid);
 
-const X509_POLICY_CACHE *ossl_policy_cache_set(X509 *x);
+/**
+ * @brief Build the policy cache from a certificate's policy extensions.
+ *
+ * A cache is always allocated, even when the certificate carries no policy
+ * extensions, so a NULL return indicates an allocation failure. An invalid
+ * policy extension is not fatal: the returned cache has its invalid flag set.
+ *
+ * @param x the certificate whose policy extensions are parsed
+ * @returns the newly allocated policy cache, or NULL on allocation failure
+ */
+X509_POLICY_CACHE *ossl_policy_cache_new(const X509 *x);
 
 #endif /* !defined(OSSL_LIBCRYPTO_X509_PCY_LOCAL_H) */

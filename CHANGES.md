@@ -27,6 +27,36 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 4.2
+-----------
+
+### Changes between 4.1 and 4.2 [xx XXX xxxx]
+
+ * A certificate's cached extension information is now populated only when
+   the certificate is finalized (decoded or signed), no longer on first use.
+   Modifying the certificate with a setter, or by adding or removing an
+   extension, discards it until the certificate is signed or decoded again.
+   `X509_get_extension_flags()` and related functions, `X509_check_purpose()`,
+   `X509_check_ca()`, `X509_check_issued()`, `X509_self_signed()` and
+   certificate verification require a finalized certificate and fail on one
+   that is not. See x509(7).
+
+   *Bob Beck*
+
+ * A certificate that has not been signed is now encoded by `i2d_X509()` as
+   an unsigned certificate (RFC 9925), with `id-alg-unsigned` as the signature
+   algorithm and an empty signature, instead of failing to encode.
+
+   *Bob Beck*
+
+ * A certificate whose subjectAltName, nameConstraints,
+   cRLDistributionPoints, or RFC 3779 IP address block or AS identifier
+   extension cannot be decoded is no longer marked `EXFLAG_INVALID` when
+   parsed. Each of these extensions is decoded where a verification uses
+   it, and the verification fails there instead.
+
+   *Bob Beck*
+
 OpenSSL 4.1
 -----------
 
