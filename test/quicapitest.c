@@ -2359,6 +2359,73 @@ err:
     return testresult;
 }
 
+/*
+ * Streams rejected by the incoming stream policy are never placed on the accept
+ * queue. Check that they are still garbage collected and that the peer is
+ * granted credit for another stream, so that a peer which keeps opening streams
+ * neither grows the stream map without bound nor exhausts its stream limit.
+ */
+static int test_reject_stream_gc(void)
+{
+    /* Comfortably more than the default initial stream limit of 100. */
+    static const int num_streams = 250;
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    QUIC_CHANNEL *ch;
+    QUIC_STREAM_MAP *qsm;
+    uint64_t sid;
+    size_t written = 0;
+    int testresult = 0, i;
+
+    if (!TEST_ptr(cctx)
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey, 0, &qtserv,
+            &clientquic, NULL, NULL))
+        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic))
+        || !TEST_true(SSL_set_incoming_stream_policy(clientquic,
+            SSL_INCOMING_STREAM_POLICY_REJECT, 42))
+        || !TEST_ptr(ch = ossl_quic_conn_get_channel(clientquic)))
+        goto err;
+
+    qsm = ossl_quic_channel_get_qsm(ch);
+
+    for (i = 0; i < num_streams; i++) {
+        if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid))
+            || !TEST_true(ossl_quic_tserver_write(qtserv, sid,
+                (unsigned char *)"x", 1, &written)))
+            goto err;
+
+        /*
+         * Let the client reject the stream and the server pick up both the
+         * resulting frames and the MAX_STREAMS credit they release.
+         */
+        ossl_quic_tserver_tick(qtserv);
+        if (!TEST_int_eq(SSL_handle_events(clientquic), 1))
+            goto err;
+        ossl_quic_tserver_tick(qtserv);
+        if (!TEST_int_eq(SSL_handle_events(clientquic), 1))
+            goto err;
+    }
+
+    /*
+     * Every rejected stream should have been collected by now, so the map must
+     * not have grown in proportion to the number of streams opened.
+     */
+    if (!TEST_size_t_lt(OPENSSL_LH_num_items((OPENSSL_LHASH *)qsm->map),
+            (size_t)num_streams / 10)
+        || !TEST_size_t_eq(SSL_get_accept_stream_queue_len(clientquic), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 static int test_quic_resize_txe(void)
 {
     SSL_CTX *cctx = NULL;
@@ -2519,6 +2586,7 @@ int setup_tests(void)
     ADD_TEST(test_get_shutdown);
     ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
     ADD_TEST(test_session_cb);
+    ADD_TEST(test_reject_stream_gc);
     ADD_TEST(test_quic_resize_txe);
 
     return 1;
