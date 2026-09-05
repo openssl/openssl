@@ -1670,9 +1670,7 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     int cb_ret = 0;
 
 #if !defined(OPENSSL_NO_DTLS)
-    DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
-        ? (DTLS_LISTENER *)s->d1->listener
-        : NULL;
+    DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
     if (dl != NULL && dl->require_hvr_cookie && sctx->app_gen_cookie_cb == NULL) {
         cb_ret = ossl_dtls_listener_gen_cookie_cb(ussl, s->d1->cookie, &cookie_leni);
@@ -1965,7 +1963,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
             && clienthello->dtls_cookie_len == 0
             && ossl_assert(ssl_get_min_max_version(s, &minversion,
-                                &maxversion, NULL)
+                               &maxversion, NULL)
                 == 0)
             && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0) {
             OPENSSL_free(clienthello);
