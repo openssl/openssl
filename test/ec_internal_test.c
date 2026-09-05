@@ -454,7 +454,7 @@ static int ecpkparams_reuse_error_test(void)
     if (!TEST_ptr(params = EC_GROUP_get_ecpkparameters(grp, NULL)))
         goto err;
 
-    /* Take the named curve arm and make the OID lookup fail. */
+    /* Take the named curve arm and make it fail on the undefined NID. */
     EC_GROUP_set_curve_name(grp, NID_undef);
     EC_GROUP_set_asn1_flag(grp, OPENSSL_EC_NAMED_CURVE);
 
