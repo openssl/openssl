@@ -695,7 +695,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
         ERR_raise(ERR_LIB_CONF, CONF_R_LIST_CANNOT_BE_NULL);
         return 0;
     }
-    /* strchr() converts sep to unsigned char, so reject every NUL alias. */
+    /* Reject separators whose byte value is NUL. */
     if ((unsigned char)sep == '\0') {
         ERR_raise(ERR_LIB_CONF, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;

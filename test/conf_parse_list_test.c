@@ -8,6 +8,7 @@
  */
 
 #include <limits.h>
+#include <string.h>
 
 #include <openssl/conf.h>
 #include <openssl/err.h>
@@ -26,6 +27,32 @@ static int list_cb(const char *elem, int len, void *arg)
     return 1;
 }
 
+static int count_and_stop_cb(const char *elem, int len, void *arg)
+{
+    (void)list_cb(elem, len, arg);
+    return 0;
+}
+
+static const char *expected[] = { "one", "two" };
+
+static int check_list_cb(const char *elem, int len, void *arg)
+{
+    int *idx = arg;
+    size_t expected_len;
+
+    if (!TEST_int_lt(*idx, (int)OSSL_NELEM(expected)))
+        return 0;
+
+    expected_len = strlen(expected[*idx]);
+    if (!TEST_ptr(elem)
+        || !TEST_int_eq(len, (int)expected_len)
+        || !TEST_mem_eq(elem, expected_len, expected[*idx], expected_len))
+        return 0;
+
+    (*idx)++;
+    return 1;
+}
+
 static int test_invalid_separator(int sep)
 {
     unsigned long err;
@@ -33,7 +60,7 @@ static int test_invalid_separator(int sep)
 
     ERR_clear_error();
     callback_count = 0;
-    if (!TEST_false(CONF_parse_list("entry", sep, 0, list_cb, NULL))
+    if (!TEST_false(CONF_parse_list("entry", sep, 0, count_and_stop_cb, NULL))
         || !TEST_int_eq(callback_count, 0))
         goto end;
 
@@ -51,11 +78,12 @@ end:
 
 static int test_valid_separator(void)
 {
-    ERR_clear_error();
-    callback_count = 0;
+    int idx = 0;
 
-    return TEST_true(CONF_parse_list("one,two", ',', 0, list_cb, NULL))
-        && TEST_int_eq(callback_count, 2)
+    ERR_clear_error();
+
+    return TEST_true(CONF_parse_list("one,two", ',', 0, check_list_cb, &idx))
+        && TEST_int_eq(idx, (int)OSSL_NELEM(expected))
         && TEST_ulong_eq(ERR_get_error(), 0);
 }
 
