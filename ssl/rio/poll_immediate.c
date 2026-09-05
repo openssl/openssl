@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -148,15 +148,16 @@ static int poll_translate_ssl_quic(SSL *ssl,
          * it is possible the object became ready after our initial
          * poll_readout() call (before we determined that nothing was ready and
          * we needed to block). We now need to do another readout, in which case
-         * blocking is to be aborted.
+         * blocking is to be aborted. do_tick is 0 because ticking here would
+         * block on the notifier condvar while still registered.
          */
         if (!ossl_quic_conn_poll_events(ssl, events, /*do_tick = */ 0, &revents)) {
-            ossl_quic_leave_blocking_section(ssl, wctx);
+            ossl_quic_deregister_blocking_section(ssl, wctx);
             return 0;
         }
 
         if (revents != 0) {
-            ossl_quic_leave_blocking_section(ssl, wctx);
+            ossl_quic_deregister_blocking_section(ssl, wctx);
             *abort_blocking = 1;
             return 1;
         }
@@ -165,11 +166,11 @@ static int poll_translate_ssl_quic(SSL *ssl,
     return 1;
 }
 
-static void postpoll_translation_cleanup_ssl_quic(SSL *ssl,
+static void postpoll_translation_deregister_ssl_quic(SSL *ssl,
     QUIC_REACTOR_WAIT_CTX *wctx)
 {
     if (ossl_quic_get_notifier_fd(ssl) != -1)
-        ossl_quic_leave_blocking_section(ssl, wctx);
+        ossl_quic_deregister_blocking_section(ssl, wctx);
 }
 #endif /* OPENSSL_NO_QUIC */
 
@@ -408,6 +409,11 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
     SSL *ssl;
     size_t i;
 
+    /*
+     * Two-phase cleanup: deregister from all reactors first without blocking,
+     * then wait for still-signalled notifiers. See quic_reactor.h for why this
+     * avoids the cross-reactor leave-ordering deadlock.
+     */
     for (i = 0; i < num_items; ++i) {
         item = &ITEM_N(items, stride, i);
 
@@ -422,7 +428,7 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
             case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
-                postpoll_translation_cleanup_ssl_quic(ssl, wctx);
+                postpoll_translation_deregister_ssl_quic(ssl, wctx);
                 break;
 #endif
 
@@ -444,6 +450,12 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
             break;
         }
     }
+
+    /*
+     * Phase 2 also prevents the retry loop from re-registering before the
+     * signal cycle observed by this blocking attempt has been drained.
+     */
+    ossl_quic_reactor_wait_ctx_drain(wctx);
 }
 
 static int poll_translate(SSL_POLL_ITEM *items,
@@ -579,9 +591,11 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
 out:
     /*
-     * On abort_blocking, the item which triggered the abort has already
-     * balanced its own enter/leave of the blocking section (see
-     * poll_translate_ssl_quic()); only items 0..i-1 still need cleanup here.
+     * poll_translate_ssl_quic() either leaves the triggering item unregistered
+     * or deregisters it before returning. SSL_get_event_timeout() failures
+     * increment i so the registered triggering item is included in the cleanup
+     * prefix. Phase 2 drains every reactor recorded in wctx, including one
+     * already deregistered by the triggering item.
      */
     if (!ok || *abort_blocking)
         postpoll_translation_cleanup(items, i, stride, wctx);
