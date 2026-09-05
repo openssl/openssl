@@ -23,7 +23,8 @@ $VERSION = "1.0";
                                          srctop_dir srctop_file
                                          data_file data_dir
                                          result_file result_dir
-                                         pipe with cmdstr
+                                         pipe with cmdstr app_fails
+                                         slurp_file
                                          openssl_versions
                                          ok_nofips is_nofips isnt_nofips));
 
@@ -833,6 +834,60 @@ sub with {
     foreach (keys %saved_hooks) {
         $hooks{$_} = $saved_hooks{$_};
     }
+}
+
+=over 4
+
+=item B<slurp_file FILENAME>
+
+C<slurp_file> reads back the whole file FILENAME, usually an output
+captured with the C<stdout> or C<stderr> option of C<cmd> and its
+derivatives, and returns its content as a single string.  If the file
+cannot be opened, an empty string is returned.
+
+=back
+
+=cut
+
+sub slurp_file {
+    my ($file) = @_;
+    my $content = '';
+
+    if (open(my $fh, '<', $file)) {
+        $content = do { local $/; <$fh> };
+        close($fh);
+    }
+    return $content;
+}
+
+=over 4
+
+=item B<app_fails APPNAME, TEST_NAME, REGEXP, LIST>
+
+C<app_fails> runs the C<openssl> sub-command B<APPNAME> with the command
+line arguments in LIST, expecting a non-zero (failure) exit status, as a
+test named B<TEST_NAME>.  If REGEXP is defined, it additionally checks, as
+a second test, that the stderr output of the command matches it.
+
+=back
+
+=cut
+
+sub app_fails {
+    my ($appname, $testtext, $re, @args) = @_;
+
+    my $stderr_file = "app_fails_stderr.txt";
+
+    with({ exit_checker => sub { return shift != 0; } },
+        sub {
+            ok(run(app(['openssl', $appname, @args], stderr => $stderr_file)),
+               $testtext);
+        });
+
+    if (defined $re) {
+        ok(slurp_file($stderr_file) =~ $re, "$testtext: stderr matches");
+    }
+    unlink($stderr_file) if -f $stderr_file;
 }
 
 =over 4

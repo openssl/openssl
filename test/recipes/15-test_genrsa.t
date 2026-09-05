@@ -11,7 +11,8 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file
+                     app_fails slurp_file/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
@@ -25,7 +26,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
     ($no_fips ? 0 : 5)          # Extra FIPS related tests
-    + 16;
+    + 18;
 
 # We want to know that an absurdly small number of bits isn't support
 is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
@@ -115,6 +116,58 @@ ok(run(app(([ 'openssl', 'asn1parse',
    "Check the default size of the PBKDF2 PARAM 'salt length' is 16");
 ok(run(app([ 'openssl', 'rsa', '-in', 'genrsatest-enc.pem', '-passin', 'pass:x' ])),
    "rsa decrypt");
+
+subtest "genrsa error cases" => sub {
+    plan tests => 14;
+
+    app_fails('genrsa', "unknown cipher option should fail",
+              qr/Unknown option or cipher: badcipher/,
+              '-badcipher');
+    app_fails('genrsa', "non-numeric primes argument should fail",
+              qr/Can't parse "abc" as a number/,
+              '-primes', 'abc', $good);
+    app_fails('genrsa', "too small number of primes should fail",
+              qr/Error generating RSA key/,
+              '-primes', '1', $good);
+    app_fails('genrsa', "too large number of primes should fail",
+              qr/Error generating RSA key/,
+              '-primes', '100', $good);
+    app_fails('genrsa', "invalid passout argument should fail",
+              qr/Error getting password/,
+              '-passout', 'bad:pass', $good);
+    app_fails('genrsa', "non-numeric bits argument should fail",
+              qr/Can't parse "abc" as a number/,
+              'abc');
+    app_fails('genrsa', "negative bits argument should fail",
+              qr/Invalid number of bits: -5/,
+              '--', '-5');
+};
+
+subtest "genrsa verbose mode" => sub {
+    plan tests => 6;
+
+    my $stderr_file = "genrsa_verbose.txt";
+
+    ok(run(app(['openssl', 'genrsa', '-verbose', '-f4',
+                '-out', 'genrsatest-verbose.pem', $good],
+               stderr => $stderr_file)),
+       "genrsa -verbose generates a key");
+    my $err = slurp_file($stderr_file);
+    ok($err =~ qr/Generating RSA key with $good bits/,
+       "-verbose reports the key generation");
+    ok($err =~ qr/e is 65537 \(0x010001\)/,
+       "-verbose reports the public exponent");
+
+    ok(run(app(['openssl', 'genrsa', '-quiet', '-f4',
+                '-out', 'genrsatest-quiet.pem', $good],
+               stderr => $stderr_file)),
+       "genrsa -quiet generates a key");
+    $err = slurp_file($stderr_file);
+    ok($err !~ qr/Generating RSA key/,
+       "-quiet does not report the key generation");
+    ok($err !~ qr/e is/, "-quiet does not report the public exponent");
+    unlink($stderr_file) if -f $stderr_file;
+};
 
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips-and-base.cnf");
