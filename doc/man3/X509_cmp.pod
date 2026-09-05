@@ -28,8 +28,7 @@ The X509_cmp() function compares two B<X509> objects indicated by parameters
 I<a> and I<b>. The comparison is based on the B<memcmp> result of the hash
 values of two B<X509> objects and the canonical (DER) encoding values.
 A certificate that has been modified since it was signed or decoded, and
-not signed again, compares equal only to itself, and sorts after any
-certificate that has not been modified.
+not signed again, compares equal only to itself.
 
 The X509_NAME_cmp() function compares two B<X509_NAME> objects indicated by
 parameters I<a> and I<b>, any of which may be NULL.
@@ -52,8 +51,7 @@ objects, respectively.
 The X509_CRL_match() function compares two B<X509_CRL> objects. Unlike the
 X509_CRL_cmp() function, this function compares the whole CRL content instead
 of just the issuer name. A CRL that has been modified since it was signed or
-decoded, and not signed again, compares equal only to itself, and sorts after
-any CRL that has not been modified.
+decoded, and not signed again, compares equal only to itself.
 
 =head1 RETURN VALUES
 
@@ -70,8 +68,11 @@ to indicate an error, and callers should still be prepared to receive it.
 
 These functions in fact utilize the underlying B<memcmp> of the C library to do
 the comparison job. Data to be compared varies from DER encoding data, hash
-value or B<ASN1_STRING>. The sign of the comparison can be used to order the
-objects but it does not have a special meaning in some cases.
+value or B<ASN1_STRING>. The sign of the result of X509_cmp() and
+X509_CRL_match() orders objects consistently only while none of them has been
+modified since it was signed or decoded, and the internal hash of each could
+be computed. A modified object compares unequal to every other object, but
+two modified objects are not ordered with respect to each other.
 
 X509_NAME_cmp() and wrappers utilize the value B<-2> to indicate errors in some
 circumstances, which could cause confusion for the applications.
