@@ -3236,8 +3236,26 @@ DEF_SCRIPT(script_61, "Fault injection - RESET_STREAM exceeding stream count FC"
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_LIMIT_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_62, "place holder for multistrem script_62")
+/* 62. Fault injection - STOP_SENDING with high ID */
+DEF_SCRIPT(script_62, "Fault injection - STOP_SENDING with high ID")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_61_inject_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "orange", 6);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "orange", 6);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(OSSL_QUIC_FRAME_TYPE_STOP_SENDING, C_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4));
+    OP_WRITE(Sa, "fruit", 5);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_63, "place holder for multistrem script_63")
