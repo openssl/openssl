@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 42;
+plan tests => 43;
 
 ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");
@@ -1091,6 +1091,41 @@ subtest "CMS parse authenticatedData authAttrs and unauthAttrs\n" => sub {
        "authAttrs parsed as SET OF Attribute");
     ok($dump =~ /unauthAttrs:.*?object:.*?1\.3\.6\.1\.4\.1\.5949\.99\.2.*?UTF8STRING:unauth-attr-value/s,
        "unauthAttrs parsed as SET OF Attribute");
+};
+
+subtest "reject signature algorithm OID as digestAlgorithm\n" => sub {
+    plan tests => 8;
+
+    my $sha256_oid = pack("H*", "608648016503040201");
+    my $sigalg_oid = pack("H*", "2a864886f70d01010b");
+
+    foreach my $app ("cms", "smime") {
+        foreach my $attrs ("attrs", "noattr") {
+            my @noattr = $attrs eq "noattr" ? ("-noattr") : ();
+            my $sig = "digalg-$app-$attrs.der";
+
+            ok(run(app(["openssl", $app, @defaultprov, "-sign", "-in", $smcont,
+                        "-outform", "DER", "-nodetach", "-md", "sha256",
+                        @noattr, "-signer", $smrsa1, "-out", $sig])),
+               "sign ($app, $attrs)");
+
+            # Replace the sha256 OID with sha256WithRSAEncryption in the DER
+            open(my $fh, "<", $sig) or die "Cannot read $sig: $!";
+            binmode $fh;
+            my $der = do { local $/; <$fh> };
+            close($fh);
+            $der =~ s/\Q$sha256_oid\E/$sigalg_oid/g;
+            open($fh, ">", $sig) or die "Cannot write $sig: $!";
+            binmode $fh;
+            print $fh $der;
+            close($fh);
+
+            ok(!run(app(["openssl", $app, @defaultprov, "-verify", "-noverify",
+                         "-in", $sig, "-inform", "DER",
+                         "-out", "$sig.txt"])),
+               "must not verify with signature algorithm OID ($app, $attrs)");
+        }
+    }
 };
 
 subtest "CAdES <=> CAdES consistency tests\n" => sub {
