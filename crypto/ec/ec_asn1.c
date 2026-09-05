@@ -156,12 +156,27 @@ DECLARE_ASN1_FUNCTIONS(ECPKPARAMETERS)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECPKPARAMETERS, ECPKPARAMETERS)
 IMPLEMENT_ASN1_FUNCTIONS(ECPKPARAMETERS)
 
-ASN1_SEQUENCE(EC_PRIVATEKEY) = {
+/* Minor tweak to operation: zero private key data */
+static int eckey_priv_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+    void *exarg)
+{
+    EC_PRIVATEKEY *key;
+
+    if (operation == ASN1_OP_FREE_PRE) {
+        /* The structure is still valid during ASN1_OP_FREE_PRE */
+        key = (EC_PRIVATEKEY *)*pval;
+        if (key->privateKey != NULL)
+            OPENSSL_cleanse(key->privateKey->data, key->privateKey->length);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(EC_PRIVATEKEY, eckey_priv_cb) = {
     ASN1_EMBED(EC_PRIVATEKEY, version, INT32),
     ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
     ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
     ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
-} static_ASN1_SEQUENCE_END(EC_PRIVATEKEY)
+} static_ASN1_SEQUENCE_END_cb(EC_PRIVATEKEY, EC_PRIVATEKEY)
 
 DECLARE_ASN1_FUNCTIONS(EC_PRIVATEKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(EC_PRIVATEKEY, EC_PRIVATEKEY)
