@@ -49,8 +49,8 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
     if (x == NULL)
         return 0;
     in = &x->cert_info.serialNumber;
-    if (in != serial)
-        return ASN1_STRING_copy(in, serial);
+    if (in != serial && !ASN1_STRING_copy(in, serial))
+        return 0;
     x->cert_info.enc.modified = 1;
     return 1;
 }
