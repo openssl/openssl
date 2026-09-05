@@ -462,7 +462,9 @@ static int ecpkparams_reuse_error_test(void)
     if (!TEST_ptr_null(EC_GROUP_get_ecpkparameters(grp, params)))
         goto err;
     params = NULL;
-
+    params = EC_GROUP_get_ecpkparameters(grp, params);
+    if (!TEST_ptr_null(params))
+        goto err;
     testresult = 1;
 
 err:
