@@ -45,6 +45,27 @@ B<X509_ATTRIBUTE_>I<XXX> functions handle certificate attributes.
 
 B<X509_EXTENSION_>I<XXX> functions handle certificate extensions.
 
+=head1 EXTENSION VALUES
+
+The value of an extension is decoded when the extension is parsed, or its
+type or data set, into the structure for its type given by the
+B<X509V3_EXT_METHOD> registered for the type at that time. Applications that
+register their own methods with X509V3_EXT_add() do so before parsing the
+certificates that carry them. The decoded structure is owned by the extension
+and read with L<X509_EXTENSION_get0_value(3)>, L<X509_get0_ext_value(3)> and
+the related functions, which also report why there is no value: no method for
+the type, a value the method rejected, or the extension being absent or
+present more than once.
+
+Parsing a certificate succeeds whatever its extensions contain, so that the
+certificate can be displayed and examined. Whether the certificate is fit for
+use is decided when it is finalized (see L</CACHED CERTIFICATE INFORMATION>
+below): a certificate with an extension of a known type whose value does not
+decode, or with more than one instance of an extension, is finalized as
+invalid. L<X509_check_purpose(3)> fails on it with
+B<X509V3_R_INVALID_CERTIFICATE>, and L<X509_verify_cert(3)> rejects it with
+B<X509_V_ERR_INVALID_EXTENSION> or B<X509_V_ERR_DUPLICATE_EXTENSION>.
+
 =head1 CACHED CERTIFICATE INFORMATION
 
 Some information derived from a certificate's extensions is computed once and
