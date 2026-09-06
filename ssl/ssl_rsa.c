@@ -11,6 +11,7 @@
 #include "ssl_local.h"
 #include "internal/packet.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/asn1.h"
 #include <openssl/bio.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -20,6 +21,87 @@
 
 static int ssl_set_cert(CERT *c, X509 *x509, SSL_CTX *ctx);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx);
+
+/**
+ * @brief Decode a certificate to present to the peer from DER a PEM block or
+ * a file supplied.
+ * The certificate is immutable and decoded by X509_parse_from_bytes(). Bytes
+ * after the certificate are ignored, except that with trusted set they are
+ * the certificate's trust settings, as a TRUSTED CERTIFICATE PEM block
+ * carries: the certificate is decoded with them by d2i_X509_AUX() and can be
+ * modified.
+ * @param ctx the SSL_CTX whose library context and property query decode the
+ *            public key
+ * @param data the DER encoding of the certificate, and whatever followed it
+ * @param len the number of bytes at data
+ * @param trusted nonzero if bytes after the certificate are its trust
+ *                settings
+ * @returns the certificate, or NULL on error
+ */
+static X509 *parse_certificate(SSL_CTX *ctx, const unsigned char *data,
+    long len, int trusted)
+{
+    const unsigned char *p = data;
+    long cert_len = len, content_len;
+    int tag, xclass;
+    X509 *x;
+
+    /* The certificate is the first object; its decoder reports a bad header */
+    ERR_set_mark();
+    if ((ASN1_get_object(&p, &content_len, &tag, &xclass, len) & 0x81) == 0)
+        cert_len = (long)(p - data) + content_len;
+    ERR_pop_to_mark();
+
+    if (cert_len >= len || !trusted)
+        return X509_parse_from_bytes(ctx->libctx, ctx->propq, data,
+            (size_t)cert_len);
+
+    x = X509_new_ex(ctx->libctx, ctx->propq);
+    if (x == NULL || d2i_X509_AUX(&x, &data, len) == NULL) {
+        X509_free(x);
+        return NULL;
+    }
+    return x;
+}
+
+/**
+ * @brief Read a certificate to present to the peer from a BIO.
+ * The BIO holds a PEM block when type is SSL_FILETYPE_PEM, a DER certificate
+ * when type is SSL_FILETYPE_ASN1. The reader and the decoder report their
+ * failures; a PEM read at the end of the input reports PEM_R_NO_START_LINE.
+ * @param ctx the SSL_CTX the certificate is for, as for parse_certificate()
+ * @param in the BIO to read from
+ * @param type SSL_FILETYPE_PEM or SSL_FILETYPE_ASN1
+ * @param name the PEM block name to accept, PEM_STRING_X509 or
+ *             PEM_STRING_X509_TRUSTED; the latter also accepts
+ *             PEM_STRING_X509 blocks, and trust settings after the certificate
+ * @param cb the password callback for an encrypted PEM block, or NULL
+ * @param u the argument of the password callback
+ * @returns the certificate, or NULL on error or at the end of the input
+ */
+static X509 *read_certificate(SSL_CTX *ctx, BIO *in, int type, const char *name,
+    pem_password_cb *cb, void *u)
+{
+    unsigned char *data = NULL;
+    BUF_MEM *buf = NULL;
+    long len;
+    X509 *x = NULL;
+
+    if (type == SSL_FILETYPE_ASN1) {
+        if ((len = asn1_d2i_read_bio(in, &buf)) >= 0)
+            x = parse_certificate(ctx, (const unsigned char *)buf->data, len,
+                0);
+    } else if (type == SSL_FILETYPE_PEM) {
+        if (PEM_bytes_read_bio(&data, &len, NULL, name, in, cb, u))
+            x = parse_certificate(ctx, data, len,
+                strcmp(name, PEM_STRING_X509_TRUSTED) == 0);
+    } else {
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
+    }
+    OPENSSL_free(data);
+    BUF_MEM_free(buf);
+    return x;
+}
 
 #define SYNTHV1CONTEXT (SSL_EXT_TLS1_2_AND_BELOW_ONLY \
     | SSL_EXT_CLIENT_HELLO                            \
@@ -53,10 +135,13 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
 
 int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 {
-    int j;
     BIO *in = NULL;
     int ret = 0;
-    X509 *cert = NULL, *x = NULL;
+    X509 *x = NULL;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return 0;
 
     if (file == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
@@ -74,30 +159,11 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         goto end;
     }
 
-    x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
+    x = read_certificate(ssl->ctx, in, type, PEM_STRING_X509,
+        sc->default_passwd_callback, sc->default_passwd_callback_userdata);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
-        goto end;
-    }
-    if (type == SSL_FILETYPE_ASN1) {
-        j = ERR_R_ASN1_LIB;
-        cert = d2i_X509_bio(in, &x);
-    } else if (type == SSL_FILETYPE_PEM) {
-        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
-
-        if (sc == NULL)
-            goto end;
-
-        j = ERR_R_PEM_LIB;
-        cert = PEM_read_bio_X509(in, &x, sc->default_passwd_callback,
-            sc->default_passwd_callback_userdata);
-    } else {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
-        goto end;
-    }
-
-    if (cert == NULL) {
-        ERR_raise(ERR_LIB_SSL, j);
+        if (type == SSL_FILETYPE_ASN1 || type == SSL_FILETYPE_PEM)
+            ERR_raise(ERR_LIB_SSL, type == SSL_FILETYPE_ASN1 ? ERR_R_ASN1_LIB : ERR_R_PEM_LIB);
         goto end;
     }
 
@@ -113,15 +179,8 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
     X509 *x;
     int ret;
 
-    x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
-    if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
-        return 0;
-    }
-
-    if (d2i_X509(&x, &d, (long)len) == NULL) {
-        X509_free(x);
-        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
+    if ((x = parse_certificate(ssl->ctx, d, len, 0)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         return 0;
     }
 
@@ -310,10 +369,9 @@ static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
 
 int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 {
-    int j = SSL_R_BAD_VALUE;
     BIO *in = NULL;
     int ret = 0;
-    X509 *x = NULL, *cert = NULL;
+    X509 *x = NULL;
 
     if (file == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
@@ -331,24 +389,11 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
         goto end;
     }
 
-    x = X509_new_ex(ctx->libctx, ctx->propq);
+    x = read_certificate(ctx, in, type, PEM_STRING_X509,
+        ctx->default_passwd_callback, ctx->default_passwd_callback_userdata);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
-        goto end;
-    }
-    if (type == SSL_FILETYPE_ASN1) {
-        j = ERR_R_ASN1_LIB;
-        cert = d2i_X509_bio(in, &x);
-    } else if (type == SSL_FILETYPE_PEM) {
-        j = ERR_R_PEM_LIB;
-        cert = PEM_read_bio_X509(in, &x, ctx->default_passwd_callback,
-            ctx->default_passwd_callback_userdata);
-    } else {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SSL_FILETYPE);
-        goto end;
-    }
-    if (cert == NULL) {
-        ERR_raise(ERR_LIB_SSL, j);
+        if (type == SSL_FILETYPE_ASN1 || type == SSL_FILETYPE_PEM)
+            ERR_raise(ERR_LIB_SSL, type == SSL_FILETYPE_ASN1 ? ERR_R_ASN1_LIB : ERR_R_PEM_LIB);
         goto end;
     }
 
@@ -364,15 +409,8 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
     X509 *x;
     int ret;
 
-    x = X509_new_ex(ctx->libctx, ctx->propq);
-    if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
-        return 0;
-    }
-
-    if (d2i_X509(&x, &d, (long)len) == NULL) {
-        X509_free(x);
-        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
+    if ((x = parse_certificate(ctx, d, len, 0)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         return 0;
     }
 
@@ -504,14 +542,9 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         goto end;
     }
 
-    x = X509_new_ex(real_ctx->libctx, real_ctx->propq);
+    x = read_certificate(real_ctx, in, SSL_FILETYPE_PEM,
+        PEM_STRING_X509_TRUSTED, passwd_callback, passwd_callback_userdata);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
-        goto end;
-    }
-    if (PEM_read_bio_X509_AUX(in, &x, passwd_callback,
-            passwd_callback_userdata)
-        == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PEM_LIB);
         goto end;
     }
@@ -544,31 +577,23 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         }
 
         while (1) {
-            ca = X509_new_ex(real_ctx->libctx, real_ctx->propq);
-            if (ca == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
-                goto end;
-            }
-            if (PEM_read_bio_X509(in, &ca, passwd_callback,
-                    passwd_callback_userdata)
-                != NULL) {
-                if (ctx)
-                    r = SSL_CTX_add0_chain_cert(ctx, ca);
-                else
-                    r = SSL_add0_chain_cert(ssl, ca);
-                /*
-                 * Note that we must not free ca if it was successfully added to
-                 * the chain (while we must free the main certificate, since its
-                 * reference count is increased by SSL_CTX_use_certificate).
-                 */
-                if (!r) {
-                    X509_free(ca);
-                    ret = 0;
-                    goto end;
-                }
-            } else {
-                X509_free(ca);
+            ca = read_certificate(real_ctx, in, SSL_FILETYPE_PEM,
+                PEM_STRING_X509, passwd_callback, passwd_callback_userdata);
+            if (ca == NULL)
                 break;
+            if (ctx)
+                r = SSL_CTX_add0_chain_cert(ctx, ca);
+            else
+                r = SSL_add0_chain_cert(ssl, ca);
+            /*
+             * Note that we must not free ca if it was successfully added to
+             * the chain (while we must free the main certificate, since its
+             * reference count is increased by SSL_CTX_use_certificate).
+             */
+            if (!r) {
+                X509_free(ca);
+                ret = 0;
+                goto end;
             }
         }
         /* When the while loop ends, it's usually just EOF. */
