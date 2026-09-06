@@ -2277,7 +2277,8 @@ err:
 
 /*
  * A certificate decoded from a buffer holds the buffer, and its strings and
- * TBSCertificate encoding point into it. Trailing bytes are an error.
+ * TBSCertificate encoding point into it. It cannot be modified. Trailing
+ * bytes are an error.
  */
 static int test_parse_from_buffer(void)
 {
@@ -2288,6 +2289,7 @@ static int test_parse_from_buffer(void)
     const unsigned char *data, *p;
     const ASN1_STRING *value;
     const X509_NAME *subject;
+    ASN1_OCTET_STRING *skid = NULL;
     int der_len, out_len, ret = 0;
 
     if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
@@ -2323,6 +2325,36 @@ static int test_parse_from_buffer(void)
         || !TEST_mem_eq(out, out_len, der, der_len))
         goto err;
 
+    /* It is immutable: setters and signing fail and leave it finalized */
+    ERR_set_mark();
+    if (!TEST_false(X509_set_version(parsed, X509_VERSION_1))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            X509_R_IMMUTABLE_CERTIFICATE)
+        || !TEST_false(X509_set_serialNumber(parsed,
+            X509_get_serialNumber(cert)))
+        || !TEST_false(X509_set_issuer_name(parsed, X509_get_subject_name(cert)))
+        || !TEST_false(X509_set_subject_name(parsed,
+            X509_get_subject_name(cert)))
+        || !TEST_false(X509_set1_notBefore(parsed, X509_get0_notBefore(cert)))
+        || !TEST_false(X509_set1_notAfter(parsed, X509_get0_notAfter(cert)))
+        || !TEST_false(X509_set_pubkey(parsed, key))
+        || !TEST_false(X509_add_ext(parsed, X509_get_ext(cert, 0), -1))
+        || !TEST_ptr(skid = X509_get_ext_d2i(cert, NID_subject_key_identifier,
+                         NULL, NULL))
+        || !TEST_int_le(X509_add1_ext_i2d(parsed, NID_subject_key_identifier,
+                            skid, 0, 0),
+            0)
+        || !TEST_ptr_null(X509_delete_ext(parsed, 0))
+        || !TEST_int_le(X509_sign(parsed, key, EVP_sha256()), 0)
+        || !TEST_int_eq(X509_get_version(parsed), X509_VERSION_3)
+        || !TEST_int_eq(X509_get_ext_count(parsed), X509_get_ext_count(cert))
+        || !TEST_ptr(X509_get0_subject_key_id(parsed))
+        || !TEST_int_eq(X509_cmp(parsed, cert), 0)) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
     /* Decoding other bytes into it makes it an owned copy again */
     p = der;
     if (!TEST_ptr(d2i_X509(&parsed, &p, der_len))
@@ -2347,6 +2379,7 @@ static int test_parse_from_buffer(void)
 
     ret = 1;
 err:
+    ASN1_OCTET_STRING_free(skid);
     X509_free(parsed);
     X509_free(cert);
     CRYPTO_BUFFER_free(buf);
