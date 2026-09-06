@@ -274,6 +274,23 @@ int ossl_x509_name_constraints_check_CN(const X509 *x,
  */
 void ossl_x509_reset_ext_cache(X509 *x);
 /**
+ * @brief Check that a certificate may be modified.
+ * A certificate decoded by ossl_x509_parse_from_buffer() is immutable.
+ * @param x the certificate
+ * @returns 1 if it may be modified, 0 with X509_R_IMMUTABLE_CERTIFICATE raised
+ *          if not
+ */
+int ossl_x509_check_mutable(const X509 *x);
+/**
+ * @brief Mark a certificate modified: the one entry point for its setters.
+ * Discards the cached extension data as ossl_x509_reset_ext_cache() and marks
+ * the saved TBSCertificate encoding stale, leaving the certificate unfinalized.
+ * @param x the certificate being modified
+ * @returns 1, or 0 with X509_R_IMMUTABLE_CERTIFICATE raised if the certificate
+ *          may not be modified
+ */
+int ossl_x509_set_modified(X509 *x);
+/**
  * @brief Finalize a certificate: build its cached extension data.
  * Called when a certificate is decoded or signed. An invalid extension sets
  * EXFLAG_INVALID; the error is raised when the cache is used.

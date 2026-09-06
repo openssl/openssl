@@ -156,6 +156,24 @@ X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     return (X509 *)ASN1_item_new_ex(ASN1_ITEM_rptr(X509), libctx, propq);
 }
 
+int ossl_x509_check_mutable(const X509 *x)
+{
+    if (x->buf != NULL) {
+        ERR_raise(ERR_LIB_X509, X509_R_IMMUTABLE_CERTIFICATE);
+        return 0;
+    }
+    return 1;
+}
+
+int ossl_x509_set_modified(X509 *x)
+{
+    if (!ossl_x509_check_mutable(x))
+        return 0;
+    ossl_x509_reset_ext_cache(x);
+    x->cert_info.enc.modified = 1;
+    return 1;
+}
+
 X509 *ossl_x509_parse_from_buffer(CRYPTO_BUFFER *buf)
 {
     const unsigned char *p = CRYPTO_BUFFER_data(buf);
