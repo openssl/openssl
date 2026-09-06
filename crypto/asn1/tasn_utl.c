@@ -166,7 +166,7 @@ void ossl_asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 }
 
 int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, long inlen,
-    const ASN1_ITEM *it)
+    const ASN1_ITEM *it, int borrow)
 {
     ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
 
@@ -181,9 +181,18 @@ int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, long inlen,
 
     if (inlen <= 0)
         return 0;
-    if ((enc->enc = OPENSSL_malloc(inlen)) == NULL)
-        return 0;
-    memcpy(enc->enc, in, inlen);
+    if (borrow) {
+        /*
+         * The owner of the input, which outlives this value, clears enc
+         * before the value is freed. The encoding is not modified through
+         * enc while it is borrowed.
+         */
+        enc->enc = (unsigned char *)in;
+    } else {
+        if ((enc->enc = OPENSSL_malloc(inlen)) == NULL)
+            return 0;
+        memcpy(enc->enc, in, inlen);
+    }
     enc->len = inlen;
     enc->modified = 0;
 

@@ -76,7 +76,7 @@ void ossl_asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int ossl_asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
     const ASN1_ITEM *it);
 int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, long inlen,
-    const ASN1_ITEM *it);
+    const ASN1_ITEM *it, int borrow);
 
 void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);
 void ossl_asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);
@@ -87,9 +87,34 @@ ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 int ossl_i2c_ASN1_BIT_STRING(const ASN1_BIT_STRING *a, unsigned char **pp);
 ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     const unsigned char **pp, long length);
+/**
+ * @brief ossl_c2i_ASN1_BIT_STRING() with the option to borrow the input.
+ * With borrow set and the unused bits of the last octet already zero, the
+ * string points into the input; otherwise it is a copy.
+ * @param a the string to decode into, allocated if a or *a is NULL
+ * @param pp the input; advanced past the content
+ * @param length the content length
+ * @param borrow nonzero to point the string into the input
+ * @returns the string, or NULL on error
+ */
+ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING_ex(ASN1_BIT_STRING **a,
+    const unsigned char **pp, long length, int borrow);
 int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp);
 ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     long length);
+/**
+ * @brief ossl_c2i_ASN1_INTEGER() with the option to borrow the input.
+ * With borrow set and the value non-negative, the string points into the
+ * input past any padding octet; a negative value is a copy, as its internal
+ * form differs from the content.
+ * @param a the integer to decode into, allocated if a or *a is NULL
+ * @param pp the input; advanced past the content
+ * @param length the content length
+ * @param borrow nonzero to point the integer into the input
+ * @returns the integer, or NULL on error
+ */
+ASN1_INTEGER *ossl_c2i_ASN1_INTEGER_ex(ASN1_INTEGER **a, const unsigned char **pp,
+    long length, int borrow);
 
 /* Internal functions used by x_int64.c */
 int ossl_c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp,

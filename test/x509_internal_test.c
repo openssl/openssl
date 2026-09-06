@@ -321,7 +321,7 @@ static int test_enc_save_failure(void)
     /* A zero input length is a failure */
     info = &copy->crl;
     if (!TEST_false(ossl_asn1_enc_save((ASN1_VALUE **)&info, buf, 0,
-            ASN1_ITEM_rptr(X509_CRL_INFO)))
+            ASN1_ITEM_rptr(X509_CRL_INFO), 0))
         || !TEST_ptr_null(copy->crl.enc.enc)
         || !TEST_int_eq(copy->crl.enc.len, 0)
         || !TEST_true(copy->crl.enc.modified))
