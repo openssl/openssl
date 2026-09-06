@@ -35,16 +35,16 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
     int ind, const char *name);
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
-static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
+static int nc_match(const GENERAL_NAME *gen, const NAME_CONSTRAINTS *nc);
 static int nc_subtrees_supported(const STACK_OF(GENERAL_SUBTREE) *subtrees);
-static int nc_match_single(int effective_type, GENERAL_NAME *gen,
-    GENERAL_NAME *base);
+static int nc_match_single(int effective_type, const GENERAL_NAME *gen,
+    const GENERAL_NAME *base);
 static int nc_dn(const X509_NAME *sub, const X509_NAME *nm);
-static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
-static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
-static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base);
-static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
-static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
+static int nc_dns(const ASN1_IA5STRING *sub, const ASN1_IA5STRING *dns);
+static int nc_email(const ASN1_IA5STRING *sub, const ASN1_IA5STRING *eml);
+static int nc_email_eai(const ASN1_TYPE *emltype, const ASN1_IA5STRING *base);
+static int nc_uri(const ASN1_IA5STRING *uri, const ASN1_IA5STRING *base);
+static int nc_ip(const ASN1_OCTET_STRING *ip, const ASN1_OCTET_STRING *base);
 
 const X509V3_EXT_METHOD ossl_v3_name_constraints = {
     NID_name_constraints, 0,
@@ -101,7 +101,7 @@ IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 #define ia5memchr(str, start, c) memchr(start, c, IA5_OFFSET_LEN(str, start))
 
 /* Like memrrchr but for ASN1_IA5STRING */
-static char *ia5memrchr(ASN1_IA5STRING *str, int c)
+static const char *ia5memrchr(const ASN1_IA5STRING *str, int c)
 {
     int i;
 
@@ -111,7 +111,7 @@ static char *ia5memrchr(ASN1_IA5STRING *str, int c)
     if (i == 0)
         return NULL;
 
-    return (char *)&str->data[i - 1];
+    return (const char *)&str->data[i - 1];
 }
 
 /*
@@ -281,13 +281,18 @@ static int add_lengths(int *out, int a, int b)
 
 int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
 {
+    return ossl_x509_name_constraints_check(x, nc);
+}
+
+int ossl_x509_name_constraints_check(const X509 *x, const NAME_CONSTRAINTS *nc)
+{
     int r, i, name_count, constraint_count;
     const X509_NAME *nm;
-    GENERAL_NAMES *altname;
-    void *ext;
+    const GENERAL_NAMES *altname;
+    const void *ext;
 
     nm = X509_get_subject_name(x);
-    if (!ossl_x509_decode_ext(x, NID_subject_alt_name, &ext))
+    if (!ossl_x509_get0_ext_value(x, NID_subject_alt_name, &ext))
         return X509_V_ERR_INVALID_EXTENSION;
     altname = ext;
 
@@ -349,7 +354,7 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
 
     r = X509_V_OK;
     for (i = 0; i < sk_GENERAL_NAME_num(altname); i++) {
-        GENERAL_NAME *gen = sk_GENERAL_NAME_value(altname, i);
+        const GENERAL_NAME *gen = sk_GENERAL_NAME_value(altname, i);
 
         r = nc_match(gen, nc);
         if (r != X509_V_OK)
@@ -357,7 +362,6 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
     }
 
 out:
-    GENERAL_NAMES_free(altname);
     return r;
 }
 
@@ -479,6 +483,12 @@ static int cn2dnsid(const ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
  */
 int NAME_CONSTRAINTS_check_CN(const X509 *x, NAME_CONSTRAINTS *nc)
 {
+    return ossl_x509_name_constraints_check_CN(x, nc);
+}
+
+int ossl_x509_name_constraints_check_CN(const X509 *x,
+    const NAME_CONSTRAINTS *nc)
+{
     int r, i;
     const X509_NAME *nm = X509_get_subject_name(x);
     ASN1_STRING stmp;
@@ -523,7 +533,7 @@ int NAME_CONSTRAINTS_check_CN(const X509 *x, NAME_CONSTRAINTS *nc)
  * Return nonzero if the GeneralSubtree has valid 'minimum' field
  * (must be absent or 0) and valid 'maximum' field (must be absent).
  */
-static int nc_minmax_valid(GENERAL_SUBTREE *sub)
+static int nc_minmax_valid(const GENERAL_SUBTREE *sub)
 {
     BIGNUM *bn = NULL;
     int ok = 1;
@@ -541,7 +551,7 @@ static int nc_minmax_valid(GENERAL_SUBTREE *sub)
     return ok;
 }
 
-static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
+static int nc_match(const GENERAL_NAME *gen, const NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
     int i, r, match = 0;
@@ -603,8 +613,8 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
     return X509_V_OK;
 }
 
-static int nc_match_single(int effective_type, GENERAL_NAME *gen,
-    GENERAL_NAME *base)
+static int nc_match_single(int effective_type, const GENERAL_NAME *gen,
+    const GENERAL_NAME *base)
 {
     switch (gen->type) {
     case GEN_OTHERNAME:
@@ -667,7 +677,7 @@ static int nc_dn(const X509_NAME *nm, const X509_NAME *base)
     return X509_V_OK;
 }
 
-static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
+static int nc_dns(const ASN1_IA5STRING *dns, const ASN1_IA5STRING *base)
 {
     char *baseptr = (char *)base->data;
     char *dnsptr = (char *)dns->data;
@@ -702,7 +712,7 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
  * Octet-to-octet comparison of `emltype` and `base` hostname parts
  * (ASCII-parts should be compared in case-insensitive manner)
  */
-static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
+static int nc_email_eai(const ASN1_TYPE *emltype, const ASN1_IA5STRING *base)
 {
     ASN1_UTF8STRING *eml;
     char *baseptr = NULL;
@@ -772,7 +782,7 @@ end:
     return ret;
 }
 
-static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
+static int nc_email(const ASN1_IA5STRING *eml, const ASN1_IA5STRING *base)
 {
     const char *baseptr = (char *)base->data;
     const char *emlptr = (char *)eml->data;
@@ -817,7 +827,7 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
     return X509_V_OK;
 }
 
-static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
+static int nc_uri(const ASN1_IA5STRING *uri, const ASN1_IA5STRING *base)
 {
     const char *baseptr = (char *)base->data;
     char *uri_copy;
@@ -874,7 +884,7 @@ end:
     return ret;
 }
 
-static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base)
+static int nc_ip(const ASN1_OCTET_STRING *ip, const ASN1_OCTET_STRING *base)
 {
     int hostlen, baselen, i;
     unsigned char *hostptr, *baseptr, *maskptr;
