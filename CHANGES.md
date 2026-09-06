@@ -32,6 +32,25 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed the ASN.1 decoder to reject constructed BIT STRING encodings
+   instead of misinterpreting them.  Each primitive fragment of a BER
+   constructed BIT STRING carries its own leading "unused bits" byte,
+   but the decoder concatenated fragments' raw content octets directly,
+   folding interior "unused bits" bytes into the reassembled value as
+   if they were data bits and miscounting the padding.  This let some
+   invalid encodings be accepted and some valid ones be misread.
+
+   This reduces the BER and CER input accepted for BIT STRING: valid
+   DER input is unaffected, since DER requires the primitive encoding,
+   but some previously-accepted constructed BER encodings are now
+   rejected, including ones consisting of a single fragment that
+   happened to decode correctly by accident.  The typed BIT STRING
+   encoder (`ossl_i2c_ASN1_BIT_STRING()`) only ever produces the
+   primitive encoding, so this does not affect anything OpenSSL itself
+   emits.
+
+   *Naveenkumar K R*
+
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
    `OSSL_PARAM_locate()` calls.  This should ensure that the list

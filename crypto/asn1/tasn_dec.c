@@ -815,6 +815,23 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
             return 0;
         }
 
+        /*
+         * Unlike other constructed strings, every primitive fragment of a
+         * constructed BIT STRING carries its own leading "unused bits"
+         * byte, and only the final fragment may have it non-zero (X.690
+         * 8.6.3-8.6.4). asn1_collect() below just concatenates raw content
+         * octets, which would fold interior "unused bits" bytes into the
+         * reassembled value as if they were data bits, silently corrupting
+         * the result (see GitHub issue openssl/openssl#12810). The typed
+         * BIT STRING encoder, ossl_i2c_ASN1_BIT_STRING(), only ever
+         * produces the primitive encoding, so reject the constructed form
+         * here instead of risking a misinterpretation of untrusted input.
+         */
+        if (utype == V_ASN1_BIT_STRING) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BITSTRING_FORMAT);
+            return 0;
+        }
+
         /* Free any returned 'buf' content */
         free_cont = 1;
         /*
