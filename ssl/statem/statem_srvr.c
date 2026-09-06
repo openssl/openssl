@@ -4179,7 +4179,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
     unsigned long l;
-    const unsigned char *certstart, *certbytes;
+    const unsigned char *certbytes;
     STACK_OF(X509) *sk = NULL;
     PACKET spkt, context;
     size_t chainidx;
@@ -4229,19 +4229,9 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
             goto err;
         }
 
-        certstart = certbytes;
-        x = X509_new_ex(sctx->libctx, sctx->propq);
+        x = X509_parse_from_bytes(sctx->libctx, sctx->propq, certbytes, l);
         if (x == NULL) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_X509_LIB);
-            goto err;
-        }
-        if (d2i_X509(&x, (const unsigned char **)&certbytes, l) == NULL) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
-            goto err;
-        }
-
-        if (certbytes != (certstart + l)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
             goto err;
         }
 
