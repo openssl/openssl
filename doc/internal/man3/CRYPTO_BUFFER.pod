@@ -1,0 +1,115 @@
+=pod
+
+=head1 NAME
+
+CRYPTO_BUFFER, CRYPTO_BUFFER_POOL,
+CRYPTO_BUFFER_POOL_new, CRYPTO_BUFFER_POOL_free,
+CRYPTO_BUFFER_new, CRYPTO_BUFFER_alloc,
+CRYPTO_BUFFER_new_from_static_data_unsafe,
+CRYPTO_BUFFER_free, CRYPTO_BUFFER_up_ref,
+CRYPTO_BUFFER_data, CRYPTO_BUFFER_len
+- buffers and buffer pools
+
+=head1 SYNOPSIS
+
+ #include "internal/pool.h"
+
+ typedef struct crypto_buffer_st CRYPTO_BUFFER;
+ typedef struct crypto_buffer_pool_st CRYPTO_BUFFER_POOL;
+
+ CRYPTO_BUFFER_POOL *CRYPTO_BUFFER_POOL_new(void);
+
+ void CRYPTO_BUFFER_POOL_free(CRYPTO_BUFFER_POOL *pool);
+
+ CRYPTO_BUFFER *CRYPTO_BUFFER_new(const uint8_t *data, size_t len,
+    CRYPTO_BUFFER_POOL *pool);
+
+ CRYPTO_BUFFER *CRYPTO_BUFFER_alloc(uint8_t **out_data,
+     size_t len);
+
+ CRYPTO_BUFFER *CRYPTO_BUFFER_new_from_static_data_unsafe(const uint8_t *data,
+    size_t len, CRYPTO_BUFFER_POOL *pool);
+
+ void CRYPTO_BUFFER_free(CRYPTO_BUFFER *buf);
+
+ int CRYPTO_BUFFER_up_ref(CRYPTO_BUFFER *buf);
+
+ const uint8_t *CRYPTO_BUFFER_data(const CRYPTO_BUFFER *buf);
+
+ size_t CRYPTO_BUFFER_len(const CRYPTO_BUFFER *buf);
+
+=head1 DESCRIPTION
+
+A B<CRYPTO_BUFFER> is a reference-counted, immutable blob of bytes. A
+B<CRYPTO_BUFFER_POOL> is a table of B<CRYPTO_BUFFER>s allowing a single copy
+of a given blob to be kept in memory and referenced from multiple places.
+B<CRYPTO_BUFFER>s may be created pooled, or unpooled.
+
+When unpooled, a B<CRYPTO_BUFFER> is just a reference counted independently
+allocated object. When pooled, all B<CRYPTO_BUFFER>s from the pool with the
+same blob of bytes point to a single copy of the blob in memory.
+
+A pool holds no references to its buffers: a buffer is removed from its pool
+when its last reference is released. A pool must outlive the buffers created
+within it, and must be empty when it is freed.
+
+CRYPTO_BUFFER_POOL_new() creates an empty pool.
+
+CRYPTO_BUFFER_POOL_free() frees I<pool>, which must be empty. If I<pool> is
+NULL nothing is done.
+
+CRYPTO_BUFFER_new() creates a B<CRYPTO_BUFFER> containing a copy of I<len>
+bytes from I<data>. If I<pool> is not NULL the returned value may be a
+reference to a previously existing B<CRYPTO_BUFFER> in the pool that
+contains the same data; otherwise the new buffer is added to the pool.
+
+CRYPTO_BUFFER_alloc() creates an unpooled B<CRYPTO_BUFFER> of the given size
+and writes the underlying data pointer to I<*out_data>. After calling this
+function, I<len> bytes of contents must be written through I<out_data>
+before the returned pointer is passed to any other function. Once
+initialised, the buffer must be treated as immutable.
+
+CRYPTO_BUFFER_new_from_static_data_unsafe() behaves like CRYPTO_BUFFER_new()
+but does not copy I<data>. I<data> must be immutable and last for the
+lifetime of the address space.
+
+CRYPTO_BUFFER_free() releases a reference to I<buf>. When the last reference
+is released the buffer is removed from its pool, if any, and freed. If
+I<buf> is NULL nothing is done.
+
+CRYPTO_BUFFER_up_ref() takes an additional reference to I<buf>.
+
+CRYPTO_BUFFER_data() returns a pointer to the bytes contained in I<buf>.
+
+CRYPTO_BUFFER_len() returns the length, in bytes, of the data contained in
+I<buf>.
+
+=head1 RETURN VALUES
+
+CRYPTO_BUFFER_POOL_new(), CRYPTO_BUFFER_new(), CRYPTO_BUFFER_alloc() and
+CRYPTO_BUFFER_new_from_static_data_unsafe() return the new object, or NULL
+on error.
+
+CRYPTO_BUFFER_up_ref() returns 1 on success, 0 on error.
+
+CRYPTO_BUFFER_data() returns a pointer to the buffer's bytes.
+
+CRYPTO_BUFFER_len() returns the length of the buffer's bytes.
+
+CRYPTO_BUFFER_POOL_free() and CRYPTO_BUFFER_free() do not return values.
+
+=head1 HISTORY
+
+These functions were originally developed in BoringSSL, and are public API
+in BoringSSL.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
