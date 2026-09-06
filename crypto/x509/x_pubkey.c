@@ -126,8 +126,8 @@ static int x509_pubkey_ex_new_ex(ASN1_VALUE **pval, const ASN1_ITEM *it,
 static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     const unsigned char **in, long len,
     const ASN1_ITEM *it, int tag, int aclass,
-    char opt, ASN1_TLC *ctx, OSSL_LIB_CTX *libctx,
-    const char *propq)
+    char opt, ASN1_TLC *ctx, int depth, int borrow,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     const unsigned char *in_saved = *in;
     size_t publen;
@@ -146,7 +146,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     /* This ensures that |*in| advances properly no matter what */
     if ((ret = asn1_item_embed_d2i(pval, in, len,
              ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
-             tag, aclass, opt, ctx, 0, 0,
+             tag, aclass, opt, ctx, depth, borrow,
              NULL, NULL))
         <= 0) {
         x509_pubkey_ex_free(pval, it);
@@ -261,19 +261,33 @@ static int x509_pubkey_ex_print(BIO *out, const ASN1_VALUE **pval, int indent,
         ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL), pctx);
 }
 
-static const ASN1_EXTERN_FUNCS x509_pubkey_ff = {
-    NULL,
-    NULL,
-    x509_pubkey_ex_free,
-    0, /* Default clear behaviour is OK */
-    NULL,
-    x509_pubkey_ex_i2d,
-    x509_pubkey_ex_print,
-    x509_pubkey_ex_new_ex,
-    x509_pubkey_ex_d2i_ex,
+static const OSSL_ASN1_EXTERN_FUNCS x509_pubkey_ff = {
+    .ef = {
+        .asn1_ex_free = x509_pubkey_ex_free,
+        .asn1_ex_i2d = x509_pubkey_ex_i2d,
+        .asn1_ex_print = x509_pubkey_ex_print,
+        .asn1_ex_new_ex = x509_pubkey_ex_new_ex,
+    },
+    .ex_d2i_borrow = x509_pubkey_ex_d2i_ex,
 };
 
-IMPLEMENT_EXTERN_ASN1(X509_PUBKEY, V_ASN1_SEQUENCE, x509_pubkey_ff)
+/*
+ * An ASN1_ITYPE_EXTERN_INTERNAL item: the decode takes part in a borrowing
+ * decode. Written out because IMPLEMENT_EXTERN_ASN1() hardcodes
+ * ASN1_ITYPE_EXTERN.
+ */
+const ASN1_ITEM *X509_PUBKEY_it(void)
+{
+    static const ASN1_ITEM local_it = {
+        .itype = ASN1_ITYPE_EXTERN_INTERNAL,
+        .utype = V_ASN1_SEQUENCE,
+        .funcs = &x509_pubkey_ff,
+        .sname = "X509_PUBKEY"
+    };
+
+    return &local_it;
+}
+
 IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
 
 X509_PUBKEY *X509_PUBKEY_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
