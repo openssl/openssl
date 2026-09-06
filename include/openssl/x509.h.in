@@ -915,6 +915,13 @@ const X509_EXTENSION *X509_get_ext(const X509 *x, int loc);
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
 int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc);
 void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx);
+/**
+ * @brief Find a certificate extension by NID and get a borrowed pointer to
+ * its decoded value and the X509_EXT_VALUE_* outcome.
+ * @see X509_get0_ext_value(3), X509V3_get0_value(3)
+ */
+int X509_get0_ext_value(const X509 *x, int nid, const void **value,
+    int *outcome);
 int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
     unsigned long flags);
 
@@ -927,6 +934,13 @@ const X509_EXTENSION *X509_CRL_get_ext(const X509_CRL *x, int loc);
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
 int X509_CRL_add_ext(X509_CRL *x, const X509_EXTENSION *ex, int loc);
 void *X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit, int *idx);
+/**
+ * @brief Find a CRL extension by NID and get a borrowed pointer to its
+ * decoded value and the X509_EXT_VALUE_* outcome.
+ * @see X509_CRL_get0_ext_value(3), X509V3_get0_value(3)
+ */
+int X509_CRL_get0_ext_value(const X509_CRL *x, int nid, const void **value,
+    int *outcome);
 int X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
     unsigned long flags);
 
@@ -941,6 +955,13 @@ X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
 int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
 void *X509_REVOKED_get_ext_d2i(const X509_REVOKED *x, int nid, int *crit,
     int *idx);
+/**
+ * @brief Find a CRL entry extension by NID and get a borrowed pointer to its
+ * decoded value and the X509_EXT_VALUE_* outcome.
+ * @see X509_REVOKED_get0_ext_value(3), X509V3_get0_value(3)
+ */
+int X509_REVOKED_get0_ext_value(const X509_REVOKED *x, int nid,
+    const void **value, int *outcome);
 int X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value, int crit,
     unsigned long flags);
 
@@ -971,6 +992,13 @@ const ASN1_OCTET_STRING *X509_EXTENSION_get_data(const X509_EXTENSION *ne);
 #define X509_EXT_VALUE_ABSENT 7 /* no extension with the NID */
 #define X509_EXT_VALUE_DUPLICATE 8 /* more than one extension with the NID */
 
+/**
+ * @brief Get a borrowed pointer to the decoded value of an extension and the
+ * X509_EXT_VALUE_* outcome of decoding it.
+ * @see X509_EXTENSION_get0_value(3), X509V3_get0_value(3)
+ */
+int X509_EXTENSION_get0_value(const X509_EXTENSION *ex, const void **value,
+    int *outcome);
 int X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x);
