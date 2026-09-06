@@ -683,6 +683,110 @@ err:
     return ok;
 }
 
+/*
+ * Decode one primitive as ASN1_ANY from DER that outlives the value, and
+ * report whether the resulting ASN1_STRING points into that DER.
+ */
+static int decode_borrowed(const unsigned char *der, size_t der_len,
+    int expected_type, ASN1_TYPE **out)
+{
+    const unsigned char *p = der;
+    ASN1_TYPE *t = NULL;
+
+    if (!TEST_ptr(t = (ASN1_TYPE *)ossl_asn1_item_d2i_borrow(NULL, &p,
+                      (long)der_len, ASN1_ITEM_rptr(ASN1_ANY), NULL, NULL))
+        || !TEST_ptr_eq(p, der + der_len)
+        || !TEST_int_eq(t->type, expected_type)) {
+        ASN1_TYPE_free(t);
+        return 0;
+    }
+    *out = t;
+    return 1;
+}
+
+static int points_into(const ASN1_STRING *str, const unsigned char *der,
+    size_t der_len)
+{
+    return (str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED) != 0
+        && str->data >= der && str->data + str->length <= der + der_len;
+}
+
+/*
+ * A borrowed decode points strings, non-negative integers and bit strings
+ * with clear unused bits into the input, and copies the rest.
+ */
+static int test_d2i_borrow(void)
+{
+    /* OCTET STRING "abc" */
+    static const unsigned char oct[] = { 0x04, 0x03, 'a', 'b', 'c' };
+    /* INTEGER 128: a padding octet then 0x80 */
+    static const unsigned char pos[] = { 0x02, 0x02, 0x00, 0x80 };
+    /* INTEGER -128 */
+    static const unsigned char neg[] = { 0x02, 0x01, 0x80 };
+    /* BIT STRING, 3 unused bits, all clear */
+    static const unsigned char bits_ok[] = { 0x03, 0x02, 0x03, 0xf8 };
+    /* BIT STRING, 3 unused bits, one set: not DER */
+    static const unsigned char bits_bad[] = { 0x03, 0x02, 0x03, 0xff };
+    /* The same as owned decodes */
+    const unsigned char *p;
+    ASN1_TYPE *t = NULL, *owned = NULL;
+    int ret = 0;
+
+    if (!decode_borrowed(oct, sizeof(oct), V_ASN1_OCTET_STRING, &t)
+        || !TEST_true(points_into(t->value.octet_string, oct, sizeof(oct)))
+        || !TEST_ptr_eq(t->value.octet_string->data, oct + 2)
+        || !TEST_int_eq(t->value.octet_string->length, 3))
+        goto err;
+    ASN1_TYPE_free(t);
+    t = NULL;
+
+    if (!decode_borrowed(pos, sizeof(pos), V_ASN1_INTEGER, &t)
+        || !TEST_true(points_into(t->value.integer, pos, sizeof(pos)))
+        || !TEST_ptr_eq(t->value.integer->data, pos + 3)
+        || !TEST_int_eq(t->value.integer->length, 1)
+        || !TEST_int_eq(ASN1_INTEGER_get(t->value.integer), 128))
+        goto err;
+    ASN1_TYPE_free(t);
+    t = NULL;
+
+    if (!decode_borrowed(neg, sizeof(neg), V_ASN1_INTEGER, &t)
+        || !TEST_false(points_into(t->value.integer, neg, sizeof(neg)))
+        || !TEST_int_eq(ASN1_INTEGER_get(t->value.integer), -128))
+        goto err;
+    ASN1_TYPE_free(t);
+    t = NULL;
+
+    if (!decode_borrowed(bits_ok, sizeof(bits_ok), V_ASN1_BIT_STRING, &t)
+        || !TEST_true(points_into(t->value.bit_string, bits_ok, sizeof(bits_ok)))
+        || !TEST_ptr_eq(t->value.bit_string->data, bits_ok + 3)
+        || !TEST_int_eq(t->value.bit_string->length, 1)
+        || !TEST_int_eq(ASN1_BIT_STRING_get_bit(t->value.bit_string, 0), 1)
+        || !TEST_int_eq(ASN1_BIT_STRING_get_bit(t->value.bit_string, 5), 0))
+        goto err;
+    ASN1_TYPE_free(t);
+    t = NULL;
+
+    if (!decode_borrowed(bits_bad, sizeof(bits_bad), V_ASN1_BIT_STRING, &t)
+        || !TEST_false(points_into(t->value.bit_string, bits_bad, sizeof(bits_bad)))
+        || !TEST_int_eq(t->value.bit_string->data[0], 0xf8))
+        goto err;
+
+    /* An owned decode of the same bytes is a copy */
+    p = oct;
+    if (!TEST_ptr(owned = d2i_ASN1_TYPE(NULL, &p, sizeof(oct)))
+        || !TEST_false(points_into(owned->value.octet_string, oct, sizeof(oct)))
+        || !TEST_int_eq(ASN1_STRING_cmp(owned->value.octet_string,
+                            owned->value.octet_string),
+            0))
+        goto err;
+
+    ret = 1;
+err:
+    ASN1_TYPE_free(t);
+    ASN1_TYPE_free(owned);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -698,5 +802,6 @@ int setup_tests(void)
     ADD_TEST(test_ossl_uni2utf8);
     ADD_TEST(test_empty_uni_conversions);
     ADD_TEST(test_asn1_string_to_utf8);
+    ADD_TEST(test_d2i_borrow);
     return 1;
 }

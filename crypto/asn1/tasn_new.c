@@ -73,6 +73,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed,
     switch (it->itype) {
 
     case ASN1_ITYPE_EXTERN:
+    case ASN1_ITYPE_EXTERN_INTERNAL:
         ef = it->funcs;
         if (ef != NULL) {
             if (ef->asn1_ex_new_ex != NULL) {
@@ -176,6 +177,7 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
     switch (it->itype) {
 
     case ASN1_ITYPE_EXTERN:
+    case ASN1_ITYPE_EXTERN_INTERNAL:
         ef = it->funcs;
         if (ef && ef->asn1_ex_clear)
             ef->asn1_ex_clear(pval, it);

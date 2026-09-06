@@ -299,11 +299,17 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
 ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     long len)
 {
+    return ossl_c2i_ASN1_INTEGER_ex(a, pp, len, 0);
+}
+
+ASN1_INTEGER *ossl_c2i_ASN1_INTEGER_ex(ASN1_INTEGER **a, const unsigned char **pp,
+    long len, int borrow)
+{
     ASN1_INTEGER *ret = NULL;
     size_t r;
     int neg;
 
-    r = c2i_ibuf(NULL, NULL, *pp, len);
+    r = c2i_ibuf(NULL, &neg, *pp, len);
 
     if (r == 0)
         return NULL;
@@ -315,6 +321,19 @@ ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         ret->type = V_ASN1_INTEGER;
     } else
         ret = *a;
+
+    /*
+     * The internal form of a non-negative integer is the content without
+     * its padding octet, which is the last r octets of the content.
+     */
+    if (borrow && neg == 0) {
+        ossl_asn1_string_set0_not_owned(ret, *pp + (len - (long)r), (int)r);
+        ret->type &= ~V_ASN1_NEG;
+        *pp += len;
+        if (a != NULL)
+            (*a) = ret;
+        return ret;
+    }
 
     if (ASN1_STRING_set1_data(ret, NULL, r) == 0) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
