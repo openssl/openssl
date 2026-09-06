@@ -115,11 +115,11 @@ X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
 {
     X509_EXTENSION *ret;
 
+    if (!ossl_x509_check_mutable(x))
+        return NULL;
     ret = X509v3_delete_extension(&x->cert_info.extensions, loc);
-    if (ret != NULL) {
-        x->cert_info.enc.modified = 1;
-        ossl_x509_reset_ext_cache(x);
-    }
+    if (ret != NULL)
+        (void)ossl_x509_set_modified(x);
     return ret;
 }
 
@@ -127,7 +127,8 @@ int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
 {
     STACK_OF(X509_EXTENSION) **exts = &x->cert_info.extensions;
 
-    ossl_x509_reset_ext_cache(x);
+    if (!ossl_x509_set_modified(x))
+        return 0;
     /* x->cert_info.extensions might initially be NULL */
     if (X509v3_add_ext(exts, ex, loc) == NULL)
         return 0;
@@ -141,7 +142,6 @@ int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
         sk_X509_EXTENSION_free(*exts);
         *exts = NULL;
     }
-    x->cert_info.enc.modified = 1;
     return 1;
 }
 
@@ -167,8 +167,8 @@ int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
      * Assume modified, sadly the underlying function does not tell us whether
      * changes were made, or not.
      */
-    x->cert_info.enc.modified = 1;
-    ossl_x509_reset_ext_cache(x);
+    if (!ossl_x509_set_modified(x))
+        return 0;
     return X509V3_add1_i2d(&x->cert_info.extensions, nid, value, crit,
         flags);
 }

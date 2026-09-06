@@ -222,9 +222,9 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * The X509_sign_ctx, X509_REQ_sign{,_ctx}, X509_CRL_sign{,_ctx} functions
      * which exist below are the same.
      */
-    x->cert_info.enc.modified = 1;
+    if (!ossl_x509_set_modified(x))
+        return 0;
     ossl_x509_get0_libctx(x, &libctx, &propq);
-    ossl_x509_reset_ext_cache(x);
     ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
         pkey, md, libctx, propq);
@@ -247,8 +247,8 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
     if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
         && !X509_set_version(x, X509_VERSION_3))
         return 0;
-    x->cert_info.enc.modified = 1;
-    ossl_x509_reset_ext_cache(x);
+    if (!ossl_x509_set_modified(x))
+        return 0;
     ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
         &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, ctx);
