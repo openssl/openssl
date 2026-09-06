@@ -2275,6 +2275,89 @@ err:
     return ret;
 }
 
+/*
+ * A certificate decoded from a buffer holds the buffer, and its strings and
+ * TBSCertificate encoding point into it. Trailing bytes are an error.
+ */
+static int test_parse_from_buffer(void)
+{
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL;
+    CRYPTO_BUFFER *buf = NULL, *long_buf = NULL;
+    unsigned char *der = NULL, *long_der = NULL, *out = NULL;
+    const unsigned char *data, *p;
+    const ASN1_STRING *value;
+    const X509_NAME *subject;
+    int der_len, out_len, ret = 0;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = make_unsigned_cert(key, "buffer test"))
+        || !TEST_true(set_key_ids(cert, 0x33))
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
+        || !TEST_int_gt(der_len = i2d_X509(cert, &der), 0)
+        || !TEST_ptr(buf = CRYPTO_BUFFER_new(der, der_len, NULL))
+        || !TEST_ptr(parsed = ossl_x509_parse_from_buffer(buf)))
+        goto err;
+    data = CRYPTO_BUFFER_data(buf);
+
+    if (!TEST_ptr_eq(parsed->buf, buf)
+        || !TEST_int_eq(X509_cmp(parsed, cert), 0)
+        || !TEST_true(points_into(parsed->cert_info.enc.enc,
+            parsed->cert_info.enc.len, data, der_len))
+        || !TEST_false(parsed->cert_info.enc.modified)
+        || !TEST_true(points_into(parsed->cert_info.serialNumber.data,
+            parsed->cert_info.serialNumber.length, data, der_len))
+        || !TEST_true(points_into(parsed->signature.data,
+            parsed->signature.length, data, der_len))
+        || !TEST_ptr(subject = X509_get_subject_name(parsed))
+        || !TEST_true(points_into(subject->bytes->data, subject->bytes->length,
+            data, der_len))
+        || !TEST_ptr(value = X509_NAME_ENTRY_get_data(
+                         X509_NAME_get_entry(subject, 0)))
+        || !TEST_true(points_into(value->data, value->length, data, der_len)))
+        goto err;
+
+    /* It verifies and re-encodes to the same bytes */
+    if (!TEST_int_eq(X509_verify(parsed, key), 1)
+        || !TEST_int_eq(out_len = i2d_X509(parsed, &out), der_len)
+        || !TEST_mem_eq(out, out_len, der, der_len))
+        goto err;
+
+    /* Decoding other bytes into it makes it an owned copy again */
+    p = der;
+    if (!TEST_ptr(d2i_X509(&parsed, &p, der_len))
+        || !TEST_ptr_null(parsed->buf)
+        || !TEST_false(points_into(parsed->cert_info.enc.enc,
+            parsed->cert_info.enc.len, data, der_len))
+        || !TEST_false(points_into(parsed->cert_info.serialNumber.data,
+            parsed->cert_info.serialNumber.length, data, der_len))
+        || !TEST_int_eq(X509_cmp(parsed, cert), 0))
+        goto err;
+
+    /* A buffer with bytes after the certificate is rejected */
+    X509_free(parsed);
+    parsed = NULL;
+    if (!TEST_ptr(long_der = OPENSSL_malloc(der_len + 1)))
+        goto err;
+    memcpy(long_der, der, der_len);
+    long_der[der_len] = 0;
+    if (!TEST_ptr(long_buf = CRYPTO_BUFFER_new(long_der, der_len + 1, NULL))
+        || !TEST_ptr_null(parsed = ossl_x509_parse_from_buffer(long_buf)))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(parsed);
+    X509_free(cert);
+    CRYPTO_BUFFER_free(buf);
+    CRYPTO_BUFFER_free(long_buf);
+    OPENSSL_free(der);
+    OPENSSL_free(long_der);
+    OPENSSL_free(out);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
@@ -2304,6 +2387,7 @@ int setup_tests(void)
     ADD_TEST(test_extension_decoded_value);
     ADD_TEST(test_get0_ext_value);
     ADD_TEST(test_name_and_pubkey_borrow);
+    ADD_TEST(test_parse_from_buffer);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
 #ifndef OPENSSL_NO_MD5
