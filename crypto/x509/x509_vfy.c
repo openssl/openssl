@@ -103,6 +103,22 @@ static int null_callback(int ok, X509_STORE_CTX *e)
  * the cert being self-issued) and any present authority key identifier to
  * match the subject key identifier, etc.
  */
+/**
+ * @brief Tell whether a finalized certificate is self-signed, from its cache.
+ * The certificate's extensions are judged by check_extensions(), so an
+ * invalid extension does not stop the chain being built here.
+ * @param cert the certificate, finalized
+ * @returns 1 if self-signed, 0 if not, -1 if cert is not finalized
+ */
+static int is_self_signed(const X509 *cert)
+{
+    if ((cert->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return -1;
+    }
+    return (cert->ex_flags & EXFLAG_SS) != 0;
+}
+
 int X509_self_signed(const X509 *cert, int verify_signature)
 {
     EVP_PKEY *pkey;
@@ -628,21 +644,23 @@ static int check_extensions(X509_STORE_CTX *ctx)
     }
 
     for (i = 0; i < num; i++) {
-        GENERAL_NAMES *san;
-        void *ext;
+        const GENERAL_NAMES *san;
+        const void *ext;
         int san_absent, san_empty;
 
         x = sk_X509_value(ctx->chain, i);
         /* RFC 5280, 4.2: a given extension MUST NOT appear more than once */
         CB_FAIL_IF((x->ex_flags & EXFLAG_DUPLICATE) != 0,
             ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
+        /* An extension of a known type whose value does not decode */
+        CB_FAIL_IF((x->ex_flags & EXFLAG_INVALID) != 0,
+            ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
         /* A subjectAltName that cannot be decoded is invalid */
-        CB_FAIL_IF(!ossl_x509_decode_ext(x, NID_subject_alt_name, &ext),
+        CB_FAIL_IF(!ossl_x509_get0_ext_value(x, NID_subject_alt_name, &ext),
             ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
         san = ext;
         san_absent = san == NULL;
         san_empty = san != NULL && sk_GENERAL_NAME_num(san) <= 0;
-        GENERAL_NAMES_free(san);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
@@ -793,7 +811,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
 static int do_check_name_constraints(X509_STORE_CTX *ctx,
-    NAME_CONSTRAINTS **ncs)
+    const NAME_CONSTRAINTS **ncs)
 {
     int i;
 
@@ -881,10 +899,10 @@ static int do_check_name_constraints(X509_STORE_CTX *ctx,
          * to be obeyed.
          */
         for (j = sk_X509_num(ctx->chain) - 1; j > i; j--) {
-            NAME_CONSTRAINTS *nc = ncs[j];
+            const NAME_CONSTRAINTS *nc = ncs[j];
 
             if (nc) {
-                int rv = NAME_CONSTRAINTS_check(x, nc);
+                int rv = ossl_x509_name_constraints_check(x, nc);
 
                 /*
                  * Apply DNS name constraints to the EE subject commonName
@@ -900,7 +918,7 @@ static int do_check_name_constraints(X509_STORE_CTX *ctx,
                     && (ctx->param->hostflags
                            & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)
                         != 0)
-                    rv = NAME_CONSTRAINTS_check_CN(x, nc);
+                    rv = ossl_x509_name_constraints_check_CN(x, nc);
 
                 switch (rv) {
                 case X509_V_OK:
@@ -919,7 +937,7 @@ static int do_check_name_constraints(X509_STORE_CTX *ctx,
 
 static int check_name_constraints(X509_STORE_CTX *ctx)
 {
-    NAME_CONSTRAINTS **ncs; /* the nameConstraints of each chain certificate */
+    const NAME_CONSTRAINTS **ncs; /* the nameConstraints of each chain certificate */
     int n = sk_X509_num(ctx->chain);
     int i, ret = 0;
 
@@ -927,17 +945,15 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
         return -1;
     for (i = 0; i < n; i++) {
         X509 *x = sk_X509_value(ctx->chain, i);
-        void *nc;
+        const void *nc;
 
-        if (!ossl_x509_decode_ext(x, NID_name_constraints, &nc)
+        if (!ossl_x509_get0_ext_value(x, NID_name_constraints, &nc)
             && !verify_cb_cert(ctx, x, i, X509_V_ERR_INVALID_EXTENSION))
             goto out;
         ncs[i] = nc;
     }
     ret = do_check_name_constraints(ctx, ncs);
 out:
-    for (i = 0; i < n; i++)
-        NAME_CONSTRAINTS_free(ncs[i]);
     OPENSSL_free(ncs);
     return ret;
 }
@@ -3917,7 +3933,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
 
             if (ok > 0) {
-                int self_signed = X509_self_signed(curr, 0);
+                int self_signed = is_self_signed(curr);
 
                 if (self_signed < 0) {
                     X509_free(issuer);
@@ -3963,7 +3979,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
                         goto memerr;
                     }
-                    if ((self_signed = X509_self_signed(issuer, 0)) < 0)
+                    if ((self_signed = is_self_signed(issuer)) < 0)
                         goto int_err;
                 } else {
                     /*
@@ -4039,7 +4055,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (X509_self_signed(curr, 0) > 0 || num > max_depth) ? NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
+            issuer = (is_self_signed(curr) > 0 || num > max_depth) ? NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
                  * Once we have reached a self-signed cert or num > max_depth
@@ -4108,7 +4124,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         CB_FAIL_IF(DANETLS_ENABLED(dane)
                 && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
             ctx, NULL, num - 1, X509_V_ERR_DANE_NO_MATCH);
-        if (X509_self_signed(sk_X509_value(ctx->chain, num - 1), 0) > 0)
+        if (is_self_signed(sk_X509_value(ctx->chain, num - 1)) > 0)
             return verify_cb_cert(ctx, NULL, num - 1,
                 num == 1
                     ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT

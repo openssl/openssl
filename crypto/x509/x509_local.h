@@ -241,6 +241,32 @@ int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp);
  */
 int ossl_x509_decode_ext(const X509 *x, int nid, void **pval);
 /**
+ * @brief Get a borrowed pointer to the decoded value of one extension of a
+ * certificate.
+ * An absent extension is a success with *value set to NULL.
+ * @param x the certificate
+ * @param nid the NID of the extension
+ * @param value receives the decoded value, or NULL if the extension is absent
+ * @returns 1 on success, 0 if the extension is present more than once or
+ *          its value does not decode
+ */
+int ossl_x509_get0_ext_value(const X509 *x, int nid, const void **value);
+/**
+ * @brief NAME_CONSTRAINTS_check() for a borrowed name constraints value.
+ * @param x the certificate whose names are checked
+ * @param nc the name constraints to check them against
+ * @returns X509_V_OK or an X509_V_ERR_* code, as NAME_CONSTRAINTS_check()
+ */
+int ossl_x509_name_constraints_check(const X509 *x, const NAME_CONSTRAINTS *nc);
+/**
+ * @brief NAME_CONSTRAINTS_check_CN() for a borrowed name constraints value.
+ * @param x the certificate whose commonName is checked
+ * @param nc the name constraints to check it against
+ * @returns X509_V_OK or an X509_V_ERR_* code, as NAME_CONSTRAINTS_check_CN()
+ */
+int ossl_x509_name_constraints_check_CN(const X509 *x,
+    const NAME_CONSTRAINTS *nc);
+/**
  * @brief Discard the cached extension data of a certificate.
  * Clears the derived extension data and what X509_set_proxy_flag() and
  * X509_set_proxy_pathlen() set, leaving the certificate unfinalized.

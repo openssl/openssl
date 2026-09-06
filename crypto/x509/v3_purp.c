@@ -398,6 +398,15 @@ int ossl_x509_decode_ext(const X509 *x, int nid, void **pval)
     return *pval != NULL || crit == -1;
 }
 
+int ossl_x509_get0_ext_value(const X509 *x, int nid, const void **value)
+{
+    int outcome;
+
+    if (X509_get0_ext_value(x, nid, value, &outcome))
+        return 1;
+    return outcome == X509_EXT_VALUE_ABSENT;
+}
+
 int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp)
 {
     void *ext;
@@ -459,13 +468,23 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
 {
     OPENSSL_LHASH *h = NULL;
     uint8_t ex_bitset[(NUM_NID + 7) / 8];
+    int outcome;
 
     memset(ex_bitset, 0, sizeof(ex_bitset));
-    /* A certificate MUST NOT include more than one instance of an extension. */
+    /*
+     * A certificate MUST NOT include more than one instance of an extension,
+     * and an extension of a known type whose value does not decode makes it
+     * invalid (RFC 5280 section 4.2).
+     */
     for (int i = 0; i < X509_get_ext_count(x509); i++) {
         const X509_EXTENSION *ex = X509_get_ext(x509, i);
         const ASN1_OBJECT *a = X509_EXTENSION_get_object(ex);
         int nid = OBJ_obj2nid(a);
+
+        X509_EXTENSION_get0_value(ex, NULL, &outcome);
+        if (outcome == X509_EXT_VALUE_INVALID
+            || outcome == X509_EXT_VALUE_INVALID_CRITICAL)
+            *flags |= EXFLAG_INVALID;
 
         /*
          * Known NIDs within the build-time bitset limit are checked for
@@ -476,10 +495,8 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
         if (nid > NID_undef && nid < NUM_NID) {
             unsigned int ex_bit = nid;
 
-            if ((ex_bitset[ex_bit >> 3] & (1u << (ex_bit & 7))) != 0) {
-                *flags |= EXFLAG_DUPLICATE;
-                break;
-            }
+            if ((ex_bitset[ex_bit >> 3] & (1u << (ex_bit & 7))) != 0)
+                *flags |= EXFLAG_DUPLICATE | EXFLAG_INVALID;
             ex_bitset[ex_bit >> 3] |= (1u << (ex_bit & 7));
         } else {
             /*
@@ -501,19 +518,13 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
              */
             if (h == NULL && (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL)
                 break;
-            if (OPENSSL_LH_insert(h, (void *)a) != NULL) {
-                *flags |= EXFLAG_DUPLICATE;
-                break;
-            }
+            if (OPENSSL_LH_insert(h, (void *)a) != NULL)
+                *flags |= EXFLAG_DUPLICATE | EXFLAG_INVALID;
         }
         if (nid == NID_freshest_crl)
             *flags |= EXFLAG_FRESHEST;
-        if (!X509_EXTENSION_get_critical(ex))
-            continue;
-        if (!X509_supported_extension(ex)) {
+        if (X509_EXTENSION_get_critical(ex) && !X509_supported_extension(ex))
             *flags |= EXFLAG_CRITICAL;
-            break;
-        }
     }
     OPENSSL_LH_free(h);
 }
@@ -535,11 +546,11 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
  */
 static void x509v3_cache_extensions(X509 *x)
 {
-    BASIC_CONSTRAINTS *bs;
-    PROXY_CERT_INFO_EXTENSION *pci;
-    ASN1_BIT_STRING *usage;
-    ASN1_BIT_STRING *ns;
-    EXTENDED_KEY_USAGE *extusage;
+    const BASIC_CONSTRAINTS *bs;
+    const PROXY_CERT_INFO_EXTENSION *pci;
+    const ASN1_BIT_STRING *usage;
+    const ASN1_BIT_STRING *ns;
+    const EXTENDED_KEY_USAGE *extusage;
     int i;
 
     if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509), x,
@@ -552,7 +563,7 @@ static void x509v3_cache_extensions(X509 *x)
 
     /* Handle basic constraints */
     x->ex_pathlen = -1;
-    if ((bs = X509_get_ext_d2i(x, NID_basic_constraints, &i, NULL)) != NULL) {
+    if (X509_get0_ext_value(x, NID_basic_constraints, (const void **)&bs, NULL)) {
         if (bs->ca)
             x->ex_flags |= EXFLAG_CA;
         if (bs->pathlen != NULL) {
@@ -567,14 +578,11 @@ static void x509v3_cache_extensions(X509 *x)
                 x->ex_pathlen = ASN1_INTEGER_get(bs->pathlen);
             }
         }
-        BASIC_CONSTRAINTS_free(bs);
         x->ex_flags |= EXFLAG_BCONS;
-    } else if (i != -1) {
-        x->ex_flags |= EXFLAG_INVALID;
     }
 
     /* Handle proxy certificates */
-    if ((pci = X509_get_ext_d2i(x, NID_proxyCertInfo, &i, NULL)) != NULL) {
+    if (X509_get0_ext_value(x, NID_proxyCertInfo, (const void **)&pci, NULL)) {
         if ((x->ex_flags & EXFLAG_CA) != 0
             || X509_get_ext_by_NID(x, NID_subject_alt_name, -1) >= 0
             || X509_get_ext_by_NID(x, NID_issuer_alt_name, -1) >= 0) {
@@ -584,14 +592,11 @@ static void x509v3_cache_extensions(X509 *x)
             x->ex_pcpathlen = ASN1_INTEGER_get(pci->pcPathLengthConstraint);
         else
             x->ex_pcpathlen = -1;
-        PROXY_CERT_INFO_EXTENSION_free(pci);
         x->ex_flags |= EXFLAG_PROXY;
-    } else if (i != -1) {
-        x->ex_flags |= EXFLAG_INVALID;
     }
 
     /* Handle (basic) key usage */
-    if ((usage = X509_get_ext_d2i(x, NID_key_usage, &i, NULL)) != NULL) {
+    if (X509_get0_ext_value(x, NID_key_usage, (const void **)&usage, NULL)) {
         x->ex_kusage = 0;
         if (usage->length > 0) {
             x->ex_kusage = usage->data[0];
@@ -599,19 +604,16 @@ static void x509v3_cache_extensions(X509 *x)
                 x->ex_kusage |= usage->data[1] << 8;
         }
         x->ex_flags |= EXFLAG_KUSAGE;
-        ASN1_BIT_STRING_free(usage);
         /* Check for empty key usage according to RFC 5280 section 4.2.1.3 */
         if (x->ex_kusage == 0) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_EMPTY_KEY_USAGE);
             x->ex_flags |= EXFLAG_INVALID;
         }
-    } else if (i != -1) {
-        x->ex_flags |= EXFLAG_INVALID;
     }
 
     /* Handle extended key usage */
     x->ex_xkusage = 0;
-    if ((extusage = X509_get_ext_d2i(x, NID_ext_key_usage, &i, NULL)) != NULL) {
+    if (X509_get0_ext_value(x, NID_ext_key_usage, (const void **)&extusage, NULL)) {
         x->ex_flags |= EXFLAG_XKUSAGE;
         for (i = 0; i < sk_ASN1_OBJECT_num(extusage); i++) {
             switch (OBJ_obj2nid(sk_ASN1_OBJECT_value(extusage, i))) {
@@ -648,33 +650,20 @@ static void x509v3_cache_extensions(X509 *x)
                 break;
             }
         }
-        sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
-    } else if (i != -1) {
-        x->ex_flags |= EXFLAG_INVALID;
     }
 
     /* Handle legacy Netscape extension */
-    if ((ns = X509_get_ext_d2i(x, NID_netscape_cert_type, &i, NULL)) != NULL) {
+    if (X509_get0_ext_value(x, NID_netscape_cert_type, (const void **)&ns, NULL)) {
         if (ns->length > 0)
             x->ex_nscert = ns->data[0];
         else
             x->ex_nscert = 0;
         x->ex_flags |= EXFLAG_NSCERT;
-        ASN1_BIT_STRING_free(ns);
-    } else if (i != -1) {
-        x->ex_flags |= EXFLAG_INVALID;
     }
 
     /* Handle subject key identifier and issuer/authority key identifier */
-    ASN1_OCTET_STRING_free(x->skid);
-    x->skid = X509_get_ext_d2i(x, NID_subject_key_identifier, &i, NULL);
-    if (x->skid == NULL && i != -1)
-        x->ex_flags |= EXFLAG_INVALID;
-
-    AUTHORITY_KEYID_free(x->akid);
-    x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &i, NULL);
-    if (x->akid == NULL && i != -1)
-        x->ex_flags |= EXFLAG_INVALID;
+    X509_get0_ext_value(x, NID_subject_key_identifier, (const void **)&x->skid, NULL);
+    X509_get0_ext_value(x, NID_authority_key_identifier, (const void **)&x->akid, NULL);
 
     /* Setting EXFLAG_SS is equivalent to ossl_x509_likely_issued(x, x) == X509_V_OK */
     if (X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)) == 0) {
@@ -707,6 +696,8 @@ void ossl_x509_reset_ext_cache(X509 *x)
     x->ex_pcpathlen = -1;
     x->ex_kusage = 0;
     x->ex_nscert = 0;
+    x->skid = NULL;
+    x->akid = NULL;
 }
 
 void ossl_x509_finalize(X509 *x)
@@ -1028,6 +1019,9 @@ int X509_check_issued(const X509 *issuer, const X509 *subject)
 {
     int ret;
 
+    if (X509_check_purpose(issuer, -1, 0) != 1
+        || X509_check_purpose(subject, -1, 0) != 1)
+        return X509_V_ERR_UNSPECIFIED;
     if ((ret = ossl_x509_likely_issued(issuer, subject)) != X509_V_OK)
         return ret;
     return ossl_x509_signing_allowed(issuer, subject);
@@ -1048,9 +1042,11 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
         != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    if (X509_check_purpose(issuer, -1, 0) != 1
-        || X509_check_purpose(subject, -1, 0) != 1)
+    if ((issuer->ex_flags & EXFLAG_SET) == 0
+        || (subject->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return X509_V_ERR_UNSPECIFIED;
+    }
 
     if (issuer == subject
         || (X509_NAME_cmp(X509_get_issuer_name(issuer), X509_get_issuer_name(subject)) == 0

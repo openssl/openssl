@@ -25,7 +25,7 @@
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,
-    GENERAL_NAMES *gens);
+    const GENERAL_NAMES *gens);
 static void str_free(OPENSSL_STRING str);
 static int append_ia5(STACK_OF(OPENSSL_STRING) **sk,
     const ASN1_IA5STRING *email);
@@ -448,26 +448,25 @@ static int sk_strcmp(const char *const *a, const char *const *b)
 
 STACK_OF(OPENSSL_STRING) *X509_get1_email(const X509 *x)
 {
-    GENERAL_NAMES *gens;
-    STACK_OF(OPENSSL_STRING) *ret;
+    const void *gens;
 
-    gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
-    ret = get_email(X509_get_subject_name(x), gens);
-    sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
-    return ret;
+    X509_get0_ext_value(x, NID_subject_alt_name, &gens, NULL);
+    return get_email(X509_get_subject_name(x), gens);
 }
 
 STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x)
 {
-    AUTHORITY_INFO_ACCESS *info;
+    const void *ext;
+    const AUTHORITY_INFO_ACCESS *info;
     STACK_OF(OPENSSL_STRING) *ret = NULL;
     int i;
 
-    info = X509_get_ext_d2i(x, NID_info_access, NULL, NULL);
-    if (!info)
+    if (!X509_get0_ext_value(x, NID_info_access, &ext, NULL))
         return NULL;
+    info = ext;
     for (i = 0; i < sk_ACCESS_DESCRIPTION_num(info); i++) {
-        ACCESS_DESCRIPTION *ad = sk_ACCESS_DESCRIPTION_value(info, i);
+        const ACCESS_DESCRIPTION *ad = sk_ACCESS_DESCRIPTION_value(info, i);
+
         if (OBJ_obj2nid(ad->method) == NID_ad_OCSP) {
             if (ad->location->type == GEN_URI) {
                 if (!append_ia5(&ret, ad->location->d.uniformResourceIdentifier))
@@ -475,31 +474,29 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x)
             }
         }
     }
-    AUTHORITY_INFO_ACCESS_free(info);
     return ret;
 }
 
 STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x)
 {
-    GENERAL_NAMES *gens;
+    const void *gens;
     STACK_OF(X509_EXTENSION) *exts;
     STACK_OF(OPENSSL_STRING) *ret;
 
     exts = X509_REQ_get_extensions(x);
-    gens = X509V3_get_d2i(exts, NID_subject_alt_name, NULL, NULL);
+    X509V3_get0_value(exts, NID_subject_alt_name, &gens, NULL);
     ret = get_email(X509_REQ_get_subject_name(x), gens);
-    sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     return ret;
 }
 
 static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,
-    GENERAL_NAMES *gens)
+    const GENERAL_NAMES *gens)
 {
     STACK_OF(OPENSSL_STRING) *ret = NULL;
     const X509_NAME_ENTRY *ne;
     const ASN1_IA5STRING *email;
-    GENERAL_NAME *gen;
+    const GENERAL_NAME *gen;
     int i = -1;
 
     /* Now add any email address(es) to STACK */
@@ -869,7 +866,8 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
 static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, int check_type, int othername_nid, char **peername)
 {
-    GENERAL_NAMES *gens = NULL;
+    const void *ext;
+    const GENERAL_NAMES *gens;
     const X509_NAME *name = NULL;
     int i;
     int cnid = NID_undef;
@@ -901,11 +899,11 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
     if (chklen == 0)
         chklen = strlen(chk);
 
-    gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
-    if (gens) {
+    if (X509_get0_ext_value(x, NID_subject_alt_name, &ext, NULL)) {
+        gens = ext;
         for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-            GENERAL_NAME *gen;
-            ASN1_STRING *cstr;
+            const GENERAL_NAME *gen;
+            const ASN1_STRING *cstr;
 
             gen = sk_GENERAL_NAME_value(gens, i);
             switch (gen->type) {
@@ -966,7 +964,6 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
                 != 0)
                 break;
         }
-        GENERAL_NAMES_free(gens);
         if (rv != 0)
             return rv;
     }

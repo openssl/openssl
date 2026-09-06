@@ -200,8 +200,8 @@ struct x509_st {
     uint32_t ex_kusage;
     uint32_t ex_xkusage;
     uint32_t ex_nscert;
-    ASN1_OCTET_STRING *skid;
-    AUTHORITY_KEYID *akid;
+    const ASN1_OCTET_STRING *skid; /* Borrowed from the extension */
+    const AUTHORITY_KEYID *akid; /* Borrowed from the extension */
     /*
      * Internal-use fingerprint for X509_cmp(), see
      * ossl_x509_internal_fingerprint(). Not cryptographically secure and
