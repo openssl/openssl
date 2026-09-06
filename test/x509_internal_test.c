@@ -1478,6 +1478,7 @@ static int test_invalid_ext_raises(void)
     ASN1_OCTET_STRING *oct = NULL;
     X509_EXTENSION *ext = NULL;
     unsigned long errcode;
+    int outcome;
 
     if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
         || !TEST_ptr(cert = make_unsigned_cert(key, "invalid ext test"))
@@ -1490,7 +1491,10 @@ static int test_invalid_ext_raises(void)
         || !TEST_ptr(parsed = reparse_cert(cert)))
         goto err;
 
-    if (!TEST_int_ne(X509_get_extension_flags(parsed) & EXFLAG_INVALID, 0))
+    if (!TEST_int_ne(X509_get_extension_flags(parsed) & EXFLAG_INVALID, 0)
+        || !TEST_false(X509_get0_ext_value(parsed, NID_basic_constraints,
+            NULL, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_INVALID_CRITICAL))
         goto err;
 
     ERR_clear_error();
@@ -2040,7 +2044,8 @@ static int test_extension_decoded_value(void)
     ASN1_OBJECT *obj = NULL;
     unsigned char *der = NULL;
     const unsigned char *p;
-    int der_len;
+    const void *value;
+    int der_len, outcome;
 
     if (!TEST_ptr(bc = BASIC_CONSTRAINTS_new()))
         goto err;
@@ -2052,7 +2057,10 @@ static int test_extension_decoded_value(void)
     if (!TEST_ptr(ext->method)
         || !TEST_int_eq(ext->method->ext_nid, NID_basic_constraints)
         || !TEST_ptr(ext->decoded)
-        || !TEST_true(((BASIC_CONSTRAINTS *)ext->decoded)->ca))
+        || !TEST_true(((BASIC_CONSTRAINTS *)ext->decoded)->ca)
+        || !TEST_true(X509_EXTENSION_get0_value(ext, &value, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_DECODED)
+        || !TEST_ptr_eq(value, ext->decoded))
         goto err;
 
     /* Round trip through DER: decoded again on the way in */
@@ -2065,19 +2073,46 @@ static int test_extension_decoded_value(void)
         || !TEST_true(((BASIC_CONSTRAINTS *)copy->decoded)->ca))
         goto err;
 
-    /* A value that does not decode: known method, no value */
+    /*
+     * A value that does not decode: known method, no value, INVALID; ext is
+     * critical so INVALID_CRITICAL, and set_critical() moves between the two
+     */
     if (!TEST_ptr(oct = ASN1_OCTET_STRING_new())
         || !TEST_true(ASN1_OCTET_STRING_set(oct, malformed, sizeof(malformed)))
         || !TEST_true(X509_EXTENSION_set_data(ext, oct))
         || !TEST_ptr(ext->method)
-        || !TEST_ptr_null(ext->decoded))
+        || !TEST_ptr_null(ext->decoded)
+        || !TEST_false(X509_EXTENSION_get0_value(ext, &value, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_INVALID_CRITICAL)
+        || !TEST_ptr_null(value)
+        || !TEST_true(X509_EXTENSION_set_critical(ext, 0))
+        || !TEST_false(X509_EXTENSION_get0_value(ext, NULL, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_INVALID)
+        || !TEST_true(X509_EXTENSION_set_critical(ext, 1))
+        || !TEST_false(X509_EXTENSION_get0_value(ext, NULL, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_INVALID_CRITICAL))
         goto err;
 
-    /* An OID with no method: neither */
+    /* An OID with no method: neither, UNKNOWN; copy is critical */
     if (!TEST_ptr(obj = OBJ_txt2obj("1.2.3.4.5.6.7.8.9", 1))
         || !TEST_true(X509_EXTENSION_set_object(copy, obj))
         || !TEST_ptr_null(copy->method)
-        || !TEST_ptr_null(copy->decoded))
+        || !TEST_ptr_null(copy->decoded)
+        || !TEST_false(X509_EXTENSION_get0_value(copy, &value, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_UNKNOWN_CRITICAL)
+        || !TEST_ptr_null(value)
+        || !TEST_true(X509_EXTENSION_set_critical(copy, 0))
+        || !TEST_false(X509_EXTENSION_get0_value(copy, NULL, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_UNKNOWN)
+        || !TEST_false(X509_EXTENSION_get0_value(copy, NULL, NULL)))
+        goto err;
+
+    /* Fresh from X509_EXTENSION_new(): UNKNOWN */
+    X509_EXTENSION_free(copy);
+    if (!TEST_ptr(copy = X509_EXTENSION_new())
+        || !TEST_false(X509_EXTENSION_get0_value(copy, &value, &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_UNKNOWN)
+        || !TEST_ptr_null(value))
         goto err;
 
     ret = 1;
@@ -2088,6 +2123,69 @@ err:
     X509_EXTENSION_free(copy);
     X509_EXTENSION_free(ext);
     BASIC_CONSTRAINTS_free(bc);
+    return ret;
+}
+
+/* X509_get0_ext_value() returns the extension's own decoded value */
+static int test_get0_ext_value(void)
+{
+    int ret = 0, outcome = 0;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL;
+    BASIC_CONSTRAINTS *bc = NULL;
+    const void *got, *again, *from_ext;
+    const X509_EXTENSION *ext;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = make_unsigned_cert(key, "get0 ext test"))
+        || !TEST_ptr(bc = BASIC_CONSTRAINTS_new()))
+        goto err;
+    bc->ca = 0xFF;
+    if (!TEST_int_eq(X509_add1_ext_i2d(cert, NID_basic_constraints, bc, 1,
+                         X509V3_ADD_DEFAULT),
+            1)
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
+        || !TEST_ptr(parsed = reparse_cert(cert)))
+        goto err;
+
+    /* Present: the value, and the same pointer every time */
+    if (!TEST_true(X509_get0_ext_value(parsed, NID_basic_constraints, &got,
+            &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_DECODED)
+        || !TEST_ptr(got)
+        || !TEST_true(((const BASIC_CONSTRAINTS *)got)->ca)
+        || !TEST_true(X509_get0_ext_value(parsed, NID_basic_constraints,
+            &again, NULL))
+        || !TEST_ptr_eq(got, again)
+        || !TEST_ptr(ext = X509_get_ext(parsed,
+                         X509_get_ext_by_NID(parsed, NID_basic_constraints, -1)))
+        || !TEST_true(X509_EXTENSION_get0_value(ext, &from_ext, NULL))
+        || !TEST_ptr_eq(from_ext, got))
+        goto err;
+
+    /* Absent: *value is NULL */
+    if (!TEST_false(X509_get0_ext_value(parsed, NID_key_usage, &got,
+            &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_ABSENT)
+        || !TEST_ptr_null(got))
+        goto err;
+
+    /* Duplicate */
+    if (!TEST_int_eq(X509_add1_ext_i2d(cert, NID_basic_constraints, bc, 1,
+                         X509V3_ADD_APPEND),
+            1)
+        || !TEST_false(X509_get0_ext_value(cert, NID_basic_constraints, &got,
+            &outcome))
+        || !TEST_int_eq(outcome, X509_EXT_VALUE_DUPLICATE)
+        || !TEST_ptr_null(got))
+        goto err;
+
+    ret = 1;
+err:
+    BASIC_CONSTRAINTS_free(bc);
+    X509_free(parsed);
+    X509_free(cert);
+    EVP_PKEY_free(key);
     return ret;
 }
 
@@ -2118,6 +2216,7 @@ int setup_tests(void)
     ADD_TEST(test_mutators_unfinalize);
     ADD_TEST(test_unsigned_cert_roundtrip);
     ADD_TEST(test_extension_decoded_value);
+    ADD_TEST(test_get0_ext_value);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
 #ifndef OPENSSL_NO_MD5
