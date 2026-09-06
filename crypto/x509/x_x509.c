@@ -59,8 +59,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_D2I_PRE:
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
         X509_CERT_AUX_free(ret->aux);
-        ASN1_OCTET_STRING_free(ret->skid);
-        AUTHORITY_KEYID_free(ret->akid);
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
 
         /* fall through */
@@ -87,8 +85,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_FREE_POST:
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
         X509_CERT_AUX_free(ret->aux);
-        ASN1_OCTET_STRING_free(ret->skid);
-        AUTHORITY_KEYID_free(ret->akid);
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
 

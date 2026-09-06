@@ -1151,13 +1151,13 @@ static const struct {
     { { "ee-cert.pem", NULL }, { { NULL, ca_cert_pathlen_255 } }, 0,
         X509_V_OK },
     { { "ee-cert.pem", NULL }, { { NULL, ca_cert_pathlen_max } }, 0,
-        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
+        X509_V_ERR_INVALID_EXTENSION },
     { { "pc1-cert.pem", NULL },
         { { "ee-client.pem", NULL }, { NULL, ca_cert_pathlen_max } }, 1,
-        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
+        X509_V_ERR_INVALID_EXTENSION },
     { { NULL, bad_pc7_cert },
         { { "ee-client.pem", NULL }, { "ca-cert.pem", NULL } }, 1,
-        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
+        X509_V_ERR_INVALID_EXTENSION },
 };
 
 static X509 *load_pathlen_cert(const PATHLEN_CERT *pc)
