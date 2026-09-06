@@ -316,6 +316,16 @@ void *X509_ACERT_get_ext_d2i(const X509_ACERT *x, int nid, int *crit, int *idx)
     return X509V3_get_d2i(x->acinfo->extensions, nid, crit, idx);
 }
 
+int X509_ACERT_get0_ext_value(const X509_ACERT *x, int nid,
+    const void **value, int *outcome)
+{
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return X509V3_get0_value(x->acinfo->extensions, nid, value, outcome);
+}
+
 int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
     unsigned long flags)
 {

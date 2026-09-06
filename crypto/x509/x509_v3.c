@@ -297,6 +297,20 @@ const ASN1_OCTET_STRING *X509_EXTENSION_get_data(const X509_EXTENSION *ex)
     return &ex->value;
 }
 
+int X509_EXTENSION_get0_value(const X509_EXTENSION *ex, const void **value,
+    int *outcome)
+{
+    if (ex == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (value != NULL)
+        *value = ex->decoded;
+    if (outcome != NULL)
+        *outcome = ex->outcome;
+    return ex->outcome == X509_EXT_VALUE_DECODED;
+}
+
 int X509_EXTENSION_get_critical(const X509_EXTENSION *ex)
 {
     if (ex == NULL)

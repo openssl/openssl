@@ -2,11 +2,13 @@
 
 =head1 NAME
 
-X509V3_get_d2i, X509V3_add1_i2d, X509V3_EXT_d2i, X509V3_EXT_i2d,
-X509_get_ext_d2i, X509_add1_ext_i2d,
-X509_ACERT_get_ext_d2i, X509_ACERT_add1_ext_i2d,
-X509_CRL_get_ext_d2i, X509_CRL_add1_ext_i2d,
-X509_REVOKED_get_ext_d2i, X509_REVOKED_add1_ext_i2d,
+X509V3_get_d2i, X509V3_get0_value, X509V3_add1_i2d,
+X509V3_EXT_d2i, X509V3_EXT_i2d,
+X509_get_ext_d2i, X509_get0_ext_value, X509_add1_ext_i2d,
+X509_ACERT_get_ext_d2i, X509_ACERT_get0_ext_value, X509_ACERT_add1_ext_i2d,
+X509_CRL_get_ext_d2i, X509_CRL_get0_ext_value, X509_CRL_add1_ext_i2d,
+X509_REVOKED_get_ext_d2i, X509_REVOKED_get0_ext_value,
+X509_REVOKED_add1_ext_i2d,
 X509_get0_extensions, X509_ACERT_get0_extensions, X509_CRL_get0_extensions,
 X509_REVOKED_get0_extensions - X509 extension decode and encode functions
 
@@ -16,6 +18,8 @@ X509_REVOKED_get0_extensions - X509 extension decode and encode functions
 
  void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
                       int *idx);
+ int X509V3_get0_value(const STACK_OF(X509_EXTENSION) *x, int nid,
+                       const void **value, int *outcome);
  int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
                      int crit, unsigned long flags);
 
@@ -23,18 +27,26 @@ X509_REVOKED_get0_extensions - X509 extension decode and encode functions
  X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 
  void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx);
+ int X509_get0_ext_value(const X509 *x, int nid, const void **value,
+                         int *outcome);
  int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
                        unsigned long flags);
 
  void *X509_ACERT_get_ext_d2i(const X509_ACERT *x, int nid, int *crit, int *idx);
+ int X509_ACERT_get0_ext_value(const X509_ACERT *x, int nid,
+                               const void **value, int *outcome);
  int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
                              unsigned long flags);
 
  void *X509_CRL_get_ext_d2i(const X509_CRL *crl, int nid, int *crit, int *idx);
+ int X509_CRL_get0_ext_value(const X509_CRL *crl, int nid, const void **value,
+                             int *outcome);
  int X509_CRL_add1_ext_i2d(X509_CRL *crl, int nid, void *value, int crit,
                            unsigned long flags);
 
  void *X509_REVOKED_get_ext_d2i(const X509_REVOKED *r, int nid, int *crit, int *idx);
+ int X509_REVOKED_get0_ext_value(const X509_REVOKED *r, int nid,
+                                 const void **value, int *outcome);
  int X509_REVOKED_add1_ext_i2d(X509_REVOKED *r, int nid, void *value, int crit,
                                unsigned long flags);
 
@@ -53,7 +65,16 @@ If I<crit> is not NULL then I<*crit> is set to a status value: -2 if the
 extension occurs multiple times (this is only returned if I<idx> is NULL),
 -1 if the extension could not be found, 0 if the extension is found and is
 not critical and 1 if critical. A pointer to an extension specific structure
-or NULL is returned.
+or NULL is returned. The caller owns the returned structure and frees it with
+the free function of its type.
+
+X509V3_get0_value() looks for the extension with OID I<nid> in I<x> and gets
+its value as L<X509_EXTENSION_get0_value(3)> does: if I<value> is not NULL,
+I<*value> is set to a borrowed pointer to the decoded structure, or to NULL if
+there is none; if I<outcome> is not NULL, I<*outcome> is set to one of the
+B<X509_EXT_VALUE_> values described there, or to B<X509_EXT_VALUE_ABSENT> if
+there is no extension with OID I<nid>, or to B<X509_EXT_VALUE_DUPLICATE> if
+there is more than one.
 
 X509V3_add1_i2d() adds extension I<value> to STACK I<*x> (allocating a new
 STACK if necessary) using OID I<nid> and criticality I<crit> according
@@ -62,25 +83,28 @@ to I<flags>.
 X509V3_EXT_d2i() attempts to decode the ASN.1 data contained in extension
 I<ext> and returns a pointer to an extension specific structure or NULL
 if the extension could not be decoded (invalid syntax or not supported).
+The caller owns the returned structure.
 
 X509V3_EXT_i2d() encodes the extension specific structure I<ext_struc>
 with OID I<ext_nid> and criticality I<crit>.
 
-X509_get_ext_d2i() and X509_add1_ext_i2d() operate on the extensions of
-certificate I<x>. They are otherwise identical to X509V3_get_d2i() and
-X509V3_add1_i2d().
+X509_get_ext_d2i(), X509_get0_ext_value() and X509_add1_ext_i2d() operate on
+the extensions of certificate I<x>. They are otherwise identical to
+X509V3_get_d2i(), X509V3_get0_value() and X509V3_add1_i2d().
 
-X509_ACERT_get_ext_d2i() and X509_ACERT_add1_ext_i2d() operate on the extensions
-of B<X509_ACERT> structure I<x>. They are otherwise identical to X509V3_get_d2i()
+X509_ACERT_get_ext_d2i(), X509_ACERT_get0_ext_value() and
+X509_ACERT_add1_ext_i2d() operate on the extensions of B<X509_ACERT> structure
+I<x>. They are otherwise identical to X509V3_get_d2i(), X509V3_get0_value()
 and X509V3_add1_i2d().
 
-X509_CRL_get_ext_d2i() and X509_CRL_add1_ext_i2d() operate on the extensions
-of CRL I<crl>. They are otherwise identical to X509V3_get_d2i() and
-X509V3_add1_i2d().
+X509_CRL_get_ext_d2i(), X509_CRL_get0_ext_value() and X509_CRL_add1_ext_i2d()
+operate on the extensions of CRL I<crl>. They are otherwise identical to
+X509V3_get_d2i(), X509V3_get0_value() and X509V3_add1_i2d().
 
-X509_REVOKED_get_ext_d2i() and X509_REVOKED_add1_ext_i2d() operate on the
-extensions of B<X509_REVOKED> structure I<r> (i.e for CRL entry extensions).
-They are otherwise identical to X509V3_get_d2i() and X509V3_add1_i2d().
+X509_REVOKED_get_ext_d2i(), X509_REVOKED_get0_ext_value() and
+X509_REVOKED_add1_ext_i2d() operate on the extensions of B<X509_REVOKED>
+structure I<r> (i.e for CRL entry extensions). They are otherwise identical to
+X509V3_get_d2i(), X509V3_get0_value() and X509V3_add1_i2d().
 
 X509_get0_extensions(), X509_ACERT_get0_extensions(),
 X509_CRL_get0_extensions() and X509_REVOKED_get0_extensions() return a
@@ -215,6 +239,9 @@ The following extensions are used by certificate transparency, RFC6962
 X509V3_get_d2i(), its variants, and X509V3_EXT_d2i() return
 a pointer to an extension specific structure or NULL if an error occurs.
 
+X509V3_get0_value() and its variants return 1 if I<*outcome> is
+B<X509_EXT_VALUE_DECODED> and 0 otherwise.
+
 X509V3_add1_i2d() and its variants return 1 if the operation is successful
 and 0 if it fails due to a non-fatal error (extension not found, already exists,
 cannot be encoded) or -1 due to a fatal error such as a memory allocation
@@ -250,6 +277,10 @@ L<X509_verify_cert(3)>
 
 X509_ACERT_get_ext_d2i(), X509_ACERT_add1_ext_i2d(),
 X509_ACERT_get0_extensions() were added in OpenSSL 3.4.
+
+X509V3_get0_value(), X509_get0_ext_value(), X509_ACERT_get0_ext_value(),
+X509_CRL_get0_ext_value() and X509_REVOKED_get0_ext_value() were added in
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
