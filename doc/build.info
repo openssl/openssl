@@ -1787,6 +1787,10 @@ DEPEND[html/man3/OSSL_LIB_CTX.html]=man3/OSSL_LIB_CTX.pod
 GENERATE[html/man3/OSSL_LIB_CTX.html]=man3/OSSL_LIB_CTX.pod
 DEPEND[man/man3/OSSL_LIB_CTX.3]=man3/OSSL_LIB_CTX.pod
 GENERATE[man/man3/OSSL_LIB_CTX.3]=man3/OSSL_LIB_CTX.pod
+DEPEND[html/man3/OSSL_LIB_CTX_set_certificate_pool.html]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
+GENERATE[html/man3/OSSL_LIB_CTX_set_certificate_pool.html]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
+DEPEND[man/man3/OSSL_LIB_CTX_set_certificate_pool.3]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
+GENERATE[man/man3/OSSL_LIB_CTX_set_certificate_pool.3]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
 DEPEND[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 GENERATE[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 DEPEND[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
@@ -3518,6 +3522,7 @@ html/man3/OSSL_IETF_ATTR_SYNTAX_print.html \
 html/man3/OSSL_INDICATOR_set_callback.html \
 html/man3/OSSL_ITEM.html \
 html/man3/OSSL_LIB_CTX.html \
+html/man3/OSSL_LIB_CTX_set_certificate_pool.html \
 html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html \
 html/man3/OSSL_PARAM.html \
 html/man3/OSSL_PARAM_BLD.html \
@@ -4198,6 +4203,7 @@ man/man3/OSSL_IETF_ATTR_SYNTAX_print.3 \
 man/man3/OSSL_INDICATOR_set_callback.3 \
 man/man3/OSSL_ITEM.3 \
 man/man3/OSSL_LIB_CTX.3 \
+man/man3/OSSL_LIB_CTX_set_certificate_pool.3 \
 man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3 \
 man/man3/OSSL_PARAM.3 \
 man/man3/OSSL_PARAM_BLD.3 \

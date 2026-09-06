@@ -25,6 +25,7 @@
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 #include <openssl/err.h>
+#include "internal/pool.h"
 
 typedef struct ex_callback_st EX_CALLBACK;
 DEFINE_STACK_OF(EX_CALLBACK)
@@ -121,6 +122,17 @@ typedef struct ossl_ex_data_global_st {
 #define OSSL_LIB_CTX_MAX_INDEXES 23
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
+/**
+ * @brief Get the pool certificates share their bytes in.
+ * There is one pool, on the global default library context, created and
+ * freed with that context.
+ * @param ctx the library context the certificate is decoded through, or NULL
+ *            for the default
+ * @returns the pool, or NULL if pooling is disabled for the context or on
+ *          error
+ * @see OSSL_LIB_CTX_set_certificate_pool(3)
+ */
+CRYPTO_BUFFER_POOL *ossl_lib_ctx_get0_certificate_pool(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default_nocreate(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
