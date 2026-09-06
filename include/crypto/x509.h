@@ -19,6 +19,7 @@
 #include "crypto/types.h"
 
 #include <crypto/asn1.h>
+#include "internal/pool.h"
 #include <crypto/siphash.h>
 
 /*
@@ -216,6 +217,12 @@ struct x509_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
+    /*
+     * The bytes the certificate was decoded from, when it was decoded by
+     * ossl_x509_parse_from_buffer(): the strings of the certificate and
+     * cert_info.enc point into them. NULL otherwise.
+     */
+    CRYPTO_BUFFER *buf;
 } /* X509 */;
 
 /*
@@ -433,6 +440,15 @@ ASN1_OCTET_STRING *ossl_x509_digest_sig_ex(const X509 *cert,
  */
 void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
     const char **propq);
+/**
+ * @brief Decode a certificate from a buffer, without copying its bytes.
+ * The certificate holds a reference to the buffer; its strings and its saved
+ * TBSCertificate encoding point into the buffer's bytes. The buffer must
+ * contain exactly one certificate.
+ * @param buf the DER encoding of the certificate
+ * @returns the certificate, or NULL on error
+ */
+X509 *ossl_x509_parse_from_buffer(CRYPTO_BUFFER *buf);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 /**

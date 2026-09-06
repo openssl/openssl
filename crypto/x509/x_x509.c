@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/asn1t.h>
@@ -31,6 +32,22 @@ ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 /* X509 top level structure needs a bit of customisation */
+
+/*
+ * Drop the buffer a certificate was decoded from, along with the saved
+ * TBSCertificate encoding that points into it. The strings that point into
+ * the buffer do not own their data and are freed as usual.
+ */
+static void x509_release_buffer(X509 *x)
+{
+    if (x->buf == NULL)
+        return;
+    x->cert_info.enc.enc = NULL;
+    x->cert_info.enc.len = 0;
+    x->cert_info.enc.modified = 1;
+    CRYPTO_BUFFER_free(x->buf);
+    x->buf = NULL;
+}
 
 static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)
@@ -60,6 +77,13 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
         X509_CERT_AUX_free(ret->aux);
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
+        /*
+         * A certificate being decoded from its buffer has no saved encoding
+         * yet and keeps the buffer; one with a saved encoding is being decoded
+         * from other bytes.
+         */
+        if (ret->cert_info.enc.enc != NULL)
+            x509_release_buffer(ret);
 
         /* fall through */
 
@@ -80,6 +104,10 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_D2I_POST:
         ossl_x509_finalize(ret);
+        break;
+
+    case ASN1_OP_FREE_PRE:
+        x509_release_buffer(ret);
         break;
 
     case ASN1_OP_FREE_POST:
@@ -126,6 +154,36 @@ void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
 X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     return (X509 *)ASN1_item_new_ex(ASN1_ITEM_rptr(X509), libctx, propq);
+}
+
+X509 *ossl_x509_parse_from_buffer(CRYPTO_BUFFER *buf)
+{
+    const unsigned char *p = CRYPTO_BUFFER_data(buf);
+    size_t len = CRYPTO_BUFFER_len(buf);
+    X509 *x;
+
+    if (len > LONG_MAX) {
+        ERR_raise(ERR_LIB_X509, ASN1_R_TOO_LONG);
+        return NULL;
+    }
+    if ((x = X509_new()) == NULL)
+        return NULL;
+    if (!CRYPTO_BUFFER_up_ref(buf)) {
+        X509_free(x);
+        return NULL;
+    }
+    x->buf = buf;
+    /* On failure the decode frees x */
+    if (ossl_asn1_item_d2i_borrow((ASN1_VALUE **)&x, &p, (long)len,
+            ASN1_ITEM_rptr(X509), NULL, NULL)
+        == NULL)
+        return NULL;
+    if (p != CRYPTO_BUFFER_data(buf) + len) {
+        ERR_raise(ERR_LIB_X509, ASN1_R_TOO_LONG);
+        X509_free(x);
+        return NULL;
+    }
+    return x;
 }
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
