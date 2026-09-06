@@ -452,6 +452,22 @@ void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
  */
 X509 *ossl_x509_parse_from_buffer(OSSL_LIB_CTX *libctx, const char *propq,
     CRYPTO_BUFFER *buf);
+/**
+ * @brief X509_parse_from_bytes() for a certificate that trust settings may
+ * follow, as in a TRUSTED CERTIFICATE PEM block.
+ * The trust settings are attached to the certificate as d2i_X509_AUX() does.
+ * They come from the bytes, so the bytes must come from a source the caller
+ * trusts.
+ * @param libctx the library context, or NULL for the default
+ * @param propq the property query for the public key, as for X509_new_ex()
+ * @param data the DER encoding of the certificate, and of the trust settings
+ *             if any
+ * @param len the number of bytes at data
+ * @returns the certificate, or NULL on error
+ * @see X509_parse_from_bytes(3), d2i_X509_AUX(3)
+ */
+X509 *ossl_x509_parse_from_bytes_aux(OSSL_LIB_CTX *libctx, const char *propq,
+    const unsigned char *data, size_t len);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 /**

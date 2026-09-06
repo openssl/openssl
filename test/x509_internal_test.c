@@ -2407,6 +2407,57 @@ err:
     return ret;
 }
 
+/*
+ * A TRUSTED CERTIFICATE's bytes are the certificate followed by its trust
+ * settings; the certificate decoded from them is immutable and carries the
+ * settings. Bytes that are only a certificate decode the same way, without.
+ */
+static int test_parse_from_bytes_aux(void)
+{
+    static const unsigned char alias[] = "trusted";
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL;
+    unsigned char *der = NULL, *aux_der = NULL;
+    const unsigned char *got;
+    int der_len, aux_len, got_len, ret = 0;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = make_unsigned_cert(key, "aux test"))
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
+        || !TEST_int_gt(der_len = i2d_X509(cert, &der), 0)
+        || !TEST_true(X509_alias_set1(cert, alias, sizeof(alias) - 1))
+        || !TEST_int_gt(aux_len = i2d_X509_AUX(cert, &aux_der), der_len))
+        goto err;
+
+    if (!TEST_ptr(parsed = ossl_x509_parse_from_bytes_aux(NULL, NULL, aux_der,
+                      aux_len))
+        || !TEST_ptr(parsed->buf)
+        || !TEST_ptr(got = X509_alias_get0(parsed, &got_len))
+        || !TEST_mem_eq(got, got_len, alias, sizeof(alias) - 1)
+        || !TEST_int_eq(X509_cmp(parsed, cert), 0)
+        || !TEST_false(X509_set_version(parsed, X509_VERSION_1)))
+        goto err;
+    X509_free(parsed);
+    parsed = NULL;
+
+    if (!TEST_ptr(parsed = ossl_x509_parse_from_bytes_aux(NULL, NULL, der,
+                      der_len))
+        || !TEST_ptr(parsed->buf)
+        || !TEST_ptr_null(X509_alias_get0(parsed, &got_len))
+        || !TEST_int_eq(X509_cmp(parsed, cert), 0))
+        goto err;
+
+    ret = 1;
+err:
+    ERR_clear_error();
+    X509_free(parsed);
+    X509_free(cert);
+    OPENSSL_free(der);
+    OPENSSL_free(aux_der);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
@@ -2437,6 +2488,7 @@ int setup_tests(void)
     ADD_TEST(test_get0_ext_value);
     ADD_TEST(test_name_and_pubkey_borrow);
     ADD_TEST(test_parse_from_buffer);
+    ADD_TEST(test_parse_from_bytes_aux);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
 #ifndef OPENSSL_NO_MD5

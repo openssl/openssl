@@ -16,6 +16,8 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include "x509_local.h"
+#include "internal/asn1.h"
+#include "crypto/x509.h"
 
 #include <crypto/asn1.h>
 
@@ -95,6 +97,9 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
     BIO *in = NULL;
     int count = 0;
     X509 *x = NULL;
+    unsigned char *data = NULL;
+    BUF_MEM *buf = NULL;
+    long len;
 
     if (file == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -108,16 +113,11 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
         goto err;
     }
 
-    x = X509_new_ex(libctx, propq);
-    if (x == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
-        goto err;
-    }
-
     if (type == X509_FILETYPE_PEM) {
         for (;;) {
             ERR_set_mark();
-            if (PEM_read_bio_X509_AUX(in, &x, NULL, "") == NULL) {
+            if (!PEM_bytes_read_bio(&data, &len, NULL, PEM_STRING_X509_TRUSTED,
+                    in, NULL, "")) {
                 if ((ERR_GET_REASON(ERR_peek_last_error()) == PEM_R_NO_START_LINE) && (count > 0)) {
                     ERR_pop_to_mark();
                     break;
@@ -133,25 +133,28 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
                 }
             }
             ERR_clear_last_mark();
+            x = ossl_x509_parse_from_bytes_aux(libctx, propq, data, (size_t)len);
+            OPENSSL_free(data);
+            data = NULL;
+            if (x == NULL) {
+                ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+                count = 0;
+                goto err;
+            }
             if (!X509_STORE_add_cert(ctx->store_ctx, x)) {
                 count = 0;
                 goto err;
             }
-            /*
-             * X509_STORE_add_cert() added a reference rather than a copy,
-             * so we need a fresh X509 object.
-             */
+            /* X509_STORE_add_cert() took a reference */
             X509_free(x);
-            x = X509_new_ex(libctx, propq);
-            if (x == NULL) {
-                ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
-                count = 0;
-                goto err;
-            }
+            x = NULL;
             count++;
         }
     } else if (type == X509_FILETYPE_ASN1) {
-        if (d2i_X509_bio(in, &x) == NULL) {
+        if ((len = asn1_d2i_read_bio(in, &buf)) < 0
+            || (x = X509_parse_from_bytes(libctx, propq,
+                    (const unsigned char *)buf->data, (size_t)len))
+                == NULL) {
             ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);
             goto err;
         }
@@ -161,6 +164,8 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
         goto err;
     }
 err:
+    OPENSSL_free(data);
+    BUF_MEM_free(buf);
     X509_free(x);
     BIO_free(in);
     return count;

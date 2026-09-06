@@ -224,6 +224,40 @@ X509 *X509_parse_from_bytes(OSSL_LIB_CTX *libctx, const char *propq,
     return x;
 }
 
+X509 *ossl_x509_parse_from_bytes_aux(OSSL_LIB_CTX *libctx, const char *propq,
+    const unsigned char *data, size_t len)
+{
+    const unsigned char *p = data;
+    size_t cert_len = len;
+    long content_len;
+    int tag, xclass;
+    X509 *x;
+
+    if (len > LONG_MAX) {
+        ERR_raise(ERR_LIB_X509, ASN1_R_TOO_LONG);
+        return NULL;
+    }
+    /*
+     * The certificate is the first definite-length object; the decode reports
+     * a malformed header, so one is left for it to report.
+     */
+    ERR_set_mark();
+    if ((ASN1_get_object(&p, &content_len, &tag, &xclass, (long)len) & 0x81) == 0)
+        cert_len = (size_t)(p - data) + (size_t)content_len;
+    ERR_pop_to_mark();
+
+    if ((x = X509_parse_from_bytes(libctx, propq, data, cert_len)) == NULL)
+        return NULL;
+    if (cert_len < len) {
+        p = data + cert_len;
+        if (d2i_X509_CERT_AUX(&x->aux, &p, (long)(len - cert_len)) == NULL) {
+            X509_free(x);
+            return NULL;
+        }
+    }
+    return x;
+}
+
 int X509_set_ex_data(X509 *r, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
