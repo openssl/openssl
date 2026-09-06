@@ -5745,3 +5745,4 @@ X509_CRL_get0_ext_value                 ?	4_1_0	EXIST::FUNCTION:
 X509_REVOKED_get0_ext_value             ?	4_1_0	EXIST::FUNCTION:
 X509_ACERT_get0_ext_value               ?	4_1_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_set_certificate_pool       ?	4_1_0	EXIST::FUNCTION:
+X509_parse_from_bytes                   ?	4_1_0	EXIST::FUNCTION:

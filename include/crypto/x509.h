@@ -445,10 +445,13 @@ void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
  * The certificate holds a reference to the buffer; its strings and its saved
  * TBSCertificate encoding point into the buffer's bytes. The buffer must
  * contain exactly one certificate.
+ * @param libctx the library context for the public key, as for X509_new_ex()
+ * @param propq the property query for the public key, as for X509_new_ex()
  * @param buf the DER encoding of the certificate
  * @returns the certificate, or NULL on error
  */
-X509 *ossl_x509_parse_from_buffer(CRYPTO_BUFFER *buf);
+X509 *ossl_x509_parse_from_buffer(OSSL_LIB_CTX *libctx, const char *propq,
+    CRYPTO_BUFFER *buf);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 /**

@@ -3135,6 +3135,10 @@ DEPEND[html/man3/X509_new.html]=man3/X509_new.pod
 GENERATE[html/man3/X509_new.html]=man3/X509_new.pod
 DEPEND[man/man3/X509_new.3]=man3/X509_new.pod
 GENERATE[man/man3/X509_new.3]=man3/X509_new.pod
+DEPEND[html/man3/X509_parse_from_bytes.html]=man3/X509_parse_from_bytes.pod
+GENERATE[html/man3/X509_parse_from_bytes.html]=man3/X509_parse_from_bytes.pod
+DEPEND[man/man3/X509_parse_from_bytes.3]=man3/X509_parse_from_bytes.pod
+GENERATE[man/man3/X509_parse_from_bytes.3]=man3/X509_parse_from_bytes.pod
 DEPEND[html/man3/X509_sign.html]=man3/X509_sign.pod
 GENERATE[html/man3/X509_sign.html]=man3/X509_sign.pod
 DEPEND[man/man3/X509_sign.3]=man3/X509_sign.pod
@@ -3859,6 +3863,7 @@ html/man3/X509_get_subject_name.html \
 html/man3/X509_get_version.html \
 html/man3/X509_load_http.html \
 html/man3/X509_new.html \
+html/man3/X509_parse_from_bytes.html \
 html/man3/X509_sign.html \
 html/man3/X509_verify.html \
 html/man3/X509_verify_cert.html \
@@ -4540,6 +4545,7 @@ man/man3/X509_get_subject_name.3 \
 man/man3/X509_get_version.3 \
 man/man3/X509_load_http.3 \
 man/man3/X509_new.3 \
+man/man3/X509_parse_from_bytes.3 \
 man/man3/X509_sign.3 \
 man/man3/X509_verify.3 \
 man/man3/X509_verify_cert.3 \

@@ -573,6 +573,12 @@ int X509_NAME_set(X509_NAME **xn, const X509_NAME *name);
 DECLARE_ASN1_FUNCTIONS(X509_CINF)
 DECLARE_ASN1_FUNCTIONS(X509)
 X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Decode an immutable certificate that keeps one copy of its bytes.
+ * @see X509_parse_from_bytes(3)
+ */
+X509 *X509_parse_from_bytes(OSSL_LIB_CTX *libctx, const char *propq,
+    const unsigned char *data, size_t len);
 DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
 
 #define X509_get_ex_new_index(l, p, newf, dupf, freef) \

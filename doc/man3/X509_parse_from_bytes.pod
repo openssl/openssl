@@ -1,0 +1,55 @@
+=pod
+
+=head1 NAME
+
+X509_parse_from_bytes
+- decode an immutable certificate
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509.h>
+
+ X509 *X509_parse_from_bytes(OSSL_LIB_CTX *libctx, const char *propq,
+                             const unsigned char *data, size_t len);
+
+=head1 DESCRIPTION
+
+X509_parse_from_bytes() decodes the certificate whose DER encoding is the
+I<len> bytes at I<data>, which must contain exactly one certificate. The
+certificate keeps one copy of the encoding, and the values its accessors
+return point into that copy. The certificate is
+immutable: the functions that modify a certificate, such as
+L<X509_set_version(3)>, L<X509_add_ext(3)> and L<X509_sign(3)>, fail on it with
+B<X509_R_IMMUTABLE_CERTIFICATE>. References, ex_data and trust settings are not
+part of the certificate and can be set.
+
+Unless pooling is disabled for I<libctx> with
+L<OSSL_LIB_CTX_set_certificate_pool(3)>, the copy of the encoding is shared with
+every other certificate decoded from the same bytes.
+
+I<libctx> and I<propq> are used as by L<X509_new_ex(3)>; I<libctx> may be NULL
+for the default library context.
+
+=head1 RETURN VALUES
+
+X509_parse_from_bytes() returns the certificate, or NULL on error.
+
+=head1 SEE ALSO
+
+L<d2i_X509(3)>, L<X509_new_ex(3)>, L<OSSL_LIB_CTX_set_certificate_pool(3)>,
+L<x509(7)>
+
+=head1 HISTORY
+
+The function described on this page was added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
