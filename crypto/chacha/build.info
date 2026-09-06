@@ -14,6 +14,8 @@ IF[{- !$disabled{asm} -}]
 
   $CHACHAASM_loongarch64=chacha-loongarch64.S
 
+  $CHACHAASM_mips32=chacha-mips.S
+
   $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s
   IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
     $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s chachap10-ppc.s
@@ -57,5 +59,6 @@ GENERATE[chacha-s390x.S]=asm/chacha-s390x.pl
 GENERATE[chacha-ia64.S]=asm/chacha-ia64.pl
 GENERATE[chacha-ia64.s]=chacha-ia64.S
 GENERATE[chacha-loongarch64.S]=asm/chacha-loongarch64.pl
+GENERATE[chacha-mips.S]=asm/chacha-mips.pl
 GENERATE[chacha-riscv64-v-zbb.s]=asm/chacha-riscv64-v-zbb.pl
 GENERATE[chacha-riscv64-v-zbb-zvkb.s]=asm/chacha-riscv64-v-zbb.pl zvkb
