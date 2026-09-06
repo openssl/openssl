@@ -2316,7 +2316,13 @@ static int test_parse_from_buffer(void)
             data, der_len))
         || !TEST_ptr(value = X509_NAME_ENTRY_get_data(
                          X509_NAME_get_entry(subject, 0)))
-        || !TEST_true(points_into(value->data, value->length, data, der_len)))
+        || !TEST_true(points_into(value->data, value->length, data, der_len))
+        || !TEST_ptr(X509_get0_subject_key_id(parsed))
+        || !TEST_true(points_into(X509_get0_subject_key_id(parsed)->data,
+            X509_get0_subject_key_id(parsed)->length, data, der_len))
+        || !TEST_ptr(X509_get0_authority_key_id(parsed))
+        || !TEST_true(points_into(X509_get0_authority_key_id(parsed)->data,
+            X509_get0_authority_key_id(parsed)->length, data, der_len)))
         goto err;
 
     /* It verifies and re-encodes to the same bytes */
