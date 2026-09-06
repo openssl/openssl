@@ -39,11 +39,15 @@ int ossl_x509_extension_decode_value(X509_EXTENSION *ex)
         return 1;
     }
     ERR_set_mark();
-    if (ex->method->it != NULL)
+    if (ex->method->it == NULL)
+        ex->decoded = ex->method->d2i(NULL, &p, ex->value.length);
+    else if ((ex->value.flags & ASN1_STRING_FLAG_DATA_NOT_OWNED) != 0)
+        /* The value's bytes outlive the extension; the decoded value may point into them */
+        ex->decoded = ossl_asn1_item_d2i_borrow(NULL, &p, ex->value.length,
+            ASN1_ITEM_ptr(ex->method->it), NULL, NULL);
+    else
         ex->decoded = ASN1_item_d2i(NULL, &p, ex->value.length,
             ASN1_ITEM_ptr(ex->method->it));
-    else
-        ex->decoded = ex->method->d2i(NULL, &p, ex->value.length);
     if (ex->decoded != NULL) {
         ex->outcome = X509_EXT_VALUE_DECODED;
         ERR_clear_last_mark();
