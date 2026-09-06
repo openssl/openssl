@@ -53,6 +53,42 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DSA
+static EVP_PKEY *load_example_dsa_key(void)
+{
+    char *keyFilePath = NULL;
+    EVP_PKEY *pkey = NULL;
+
+    if (!TEST_ptr(keyFilePath = test_mk_file_path(certsDir,
+                      "server-dsa-key.pem")))
+        return NULL;
+    pkey = load_pkey_pem(keyFilePath, NULL);
+
+    OPENSSL_free(keyFilePath);
+    return pkey;
+}
+
+static int test_x509_req_set_pubkey_mfail(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_REQ *req = NULL;
+    int ret = -1;
+
+    if (!TEST_ptr(req = X509_REQ_new_ex(NULL, NULL))
+        || !TEST_ptr(pkey = load_example_dsa_key()))
+        goto err;
+
+    MFAIL_start();
+    ret = X509_REQ_set_pubkey(req, pkey);
+    MFAIL_end();
+
+err:
+    X509_REQ_free(req);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+#endif
+
 OPT_TEST_DECLARE_USAGE("certdir\n")
 
 int setup_tests(void)
@@ -65,6 +101,9 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_x509_req_detect_invalid_version);
+#ifndef OPENSSL_NO_DSA
+    ADD_MFAIL_NO_CHECK_TEST(test_x509_req_set_pubkey_mfail);
+#endif
     return 1;
 }
 
