@@ -34,6 +34,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added X509_EXTENSION_get0_value(), X509_get0_ext_value() and related
+   functions giving a borrowed pointer to an extension's value as decoded
+   when the extension was parsed. See X509_EXTENSION_get0_value(3) and
+   the EXTENSION VALUES section of x509(7).
+
+   *Bob Beck*
+
  * A certificate's cached extension information is now populated only when
    the certificate is finalized (decoded or signed), no longer on first use.
    Modifying the certificate with a setter, or by adding or removing an
