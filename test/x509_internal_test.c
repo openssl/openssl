@@ -2283,7 +2283,7 @@ err:
 static int test_parse_from_buffer(void)
 {
     EVP_PKEY *key = NULL;
-    X509 *cert = NULL, *parsed = NULL;
+    X509 *cert = NULL, *parsed = NULL, *shared = NULL;
     CRYPTO_BUFFER *buf = NULL, *long_buf = NULL;
     unsigned char *der = NULL, *long_der = NULL, *out = NULL;
     const unsigned char *data, *p;
@@ -2298,7 +2298,7 @@ static int test_parse_from_buffer(void)
         || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
         || !TEST_int_gt(der_len = i2d_X509(cert, &der), 0)
         || !TEST_ptr(buf = CRYPTO_BUFFER_new(der, der_len, NULL))
-        || !TEST_ptr(parsed = ossl_x509_parse_from_buffer(buf)))
+        || !TEST_ptr(parsed = ossl_x509_parse_from_buffer(NULL, NULL, buf)))
         goto err;
     data = CRYPTO_BUFFER_data(buf);
 
@@ -2372,6 +2372,15 @@ static int test_parse_from_buffer(void)
         || !TEST_int_eq(X509_cmp(parsed, cert), 0))
         goto err;
 
+    /* From bytes: two certificates decoded from the same bytes share them */
+    X509_free(parsed);
+    if (!TEST_ptr(parsed = X509_parse_from_bytes(NULL, NULL, der, der_len))
+        || !TEST_ptr(shared = X509_parse_from_bytes(NULL, NULL, der, der_len))
+        || !TEST_ptr_eq(parsed->buf, shared->buf)
+        || !TEST_int_eq(X509_cmp(parsed, cert), 0)
+        || !TEST_int_eq(X509_cmp(shared, cert), 0))
+        goto err;
+
     /* A buffer with bytes after the certificate is rejected */
     X509_free(parsed);
     parsed = NULL;
@@ -2380,12 +2389,13 @@ static int test_parse_from_buffer(void)
     memcpy(long_der, der, der_len);
     long_der[der_len] = 0;
     if (!TEST_ptr(long_buf = CRYPTO_BUFFER_new(long_der, der_len + 1, NULL))
-        || !TEST_ptr_null(parsed = ossl_x509_parse_from_buffer(long_buf)))
+        || !TEST_ptr_null(parsed = ossl_x509_parse_from_buffer(NULL, NULL, long_buf)))
         goto err;
 
     ret = 1;
 err:
     ASN1_OCTET_STRING_free(skid);
+    X509_free(shared);
     X509_free(parsed);
     X509_free(cert);
     CRYPTO_BUFFER_free(buf);

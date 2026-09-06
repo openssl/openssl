@@ -174,7 +174,8 @@ int ossl_x509_set_modified(X509 *x)
     return 1;
 }
 
-X509 *ossl_x509_parse_from_buffer(CRYPTO_BUFFER *buf)
+X509 *ossl_x509_parse_from_buffer(OSSL_LIB_CTX *libctx, const char *propq,
+    CRYPTO_BUFFER *buf)
 {
     const unsigned char *p = CRYPTO_BUFFER_data(buf);
     size_t len = CRYPTO_BUFFER_len(buf);
@@ -184,7 +185,7 @@ X509 *ossl_x509_parse_from_buffer(CRYPTO_BUFFER *buf)
         ERR_raise(ERR_LIB_X509, ASN1_R_TOO_LONG);
         return NULL;
     }
-    if ((x = X509_new()) == NULL)
+    if ((x = X509_new_ex(libctx, propq)) == NULL)
         return NULL;
     if (!CRYPTO_BUFFER_up_ref(buf)) {
         X509_free(x);
@@ -201,6 +202,25 @@ X509 *ossl_x509_parse_from_buffer(CRYPTO_BUFFER *buf)
         X509_free(x);
         return NULL;
     }
+    return x;
+}
+
+X509 *X509_parse_from_bytes(OSSL_LIB_CTX *libctx, const char *propq,
+    const unsigned char *data, size_t len)
+{
+    CRYPTO_BUFFER *buf;
+    X509 *x;
+
+    if (data == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    buf = CRYPTO_BUFFER_new(data, len,
+        ossl_lib_ctx_get0_certificate_pool(libctx));
+    if (buf == NULL)
+        return NULL;
+    x = ossl_x509_parse_from_buffer(libctx, propq, buf);
+    CRYPTO_BUFFER_free(buf);
     return x;
 }
 
