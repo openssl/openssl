@@ -55,7 +55,11 @@ struct X509_name_entry_st {
 struct X509_name_st {
     STACK_OF(X509_NAME_ENTRY) *entries; /* DN components */
     int modified; /* true if 'bytes' needs to be built */
-    BUF_MEM *bytes; /* cached encoding: cannot be NULL */
+    /*
+     * The encoding, valid when modified is clear. Never NULL. From a
+     * borrowing decode the data points into the decoded input.
+     */
+    ASN1_STRING *bytes;
     /* canonical encoding used for rapid Name comparison */
     unsigned char *canon_enc;
     int canon_enclen;

@@ -26,7 +26,8 @@
 static int x509_name_ex_d2i(ASN1_VALUE **val,
     const unsigned char **in, long len,
     const ASN1_ITEM *it,
-    int tag, int aclass, char opt, ASN1_TLC *ctx);
+    int tag, int aclass, char opt, ASN1_TLC *ctx, int depth, int borrow,
+    OSSL_LIB_CTX *libctx, const char *propq);
 
 static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
     const ASN1_ITEM *it, int tag, int aclass);
@@ -70,18 +71,33 @@ static_ASN1_ITEM_TEMPLATE_END(X509_NAME_INTERNAL)
      * convert to the external form.
      */
 
-    static const ASN1_EXTERN_FUNCS x509_name_ff
+    static const OSSL_ASN1_EXTERN_FUNCS x509_name_ff
     = {
-          NULL,
-          x509_name_ex_new,
-          x509_name_ex_free,
-          0, /* Default clear behaviour is OK */
-          x509_name_ex_d2i,
-          x509_name_ex_i2d,
-          x509_name_ex_print
+          .ef = {
+              .asn1_ex_new = x509_name_ex_new,
+              .asn1_ex_free = x509_name_ex_free,
+              .asn1_ex_i2d = x509_name_ex_i2d,
+              .asn1_ex_print = x509_name_ex_print,
+          },
+          .ex_d2i_borrow = x509_name_ex_d2i,
       };
 
-IMPLEMENT_EXTERN_ASN1(X509_NAME, V_ASN1_SEQUENCE, x509_name_ff)
+/*
+ * An ASN1_ITYPE_EXTERN_INTERNAL item: the decode takes part in a borrowing
+ * decode. Written out because IMPLEMENT_EXTERN_ASN1() hardcodes
+ * ASN1_ITYPE_EXTERN.
+ */
+const ASN1_ITEM *X509_NAME_it(void)
+{
+    static const ASN1_ITEM local_it = {
+        .itype = ASN1_ITYPE_EXTERN_INTERNAL,
+        .utype = V_ASN1_SEQUENCE,
+        .funcs = &x509_name_ff,
+        .sname = "X509_NAME"
+    };
+
+    return &local_it;
+}
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_NAME)
 
@@ -97,8 +113,8 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
         ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         goto err;
     }
-    if ((ret->bytes = BUF_MEM_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
+    if ((ret->bytes = ASN1_STRING_new()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
     ret->modified = 1;
@@ -121,7 +137,7 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
         return;
     a = (X509_NAME *)*pval;
 
-    BUF_MEM_free(a->bytes);
+    ASN1_STRING_free(a->bytes);
     sk_X509_NAME_ENTRY_pop_free(a->entries, X509_NAME_ENTRY_free);
     OPENSSL_free(a->canon_enc);
     OPENSSL_free(a);
@@ -141,7 +157,8 @@ static void local_sk_X509_NAME_ENTRY_pop_free(STACK_OF(X509_NAME_ENTRY) *ne)
 static int x509_name_ex_d2i(ASN1_VALUE **val,
     const unsigned char **in, long len,
     const ASN1_ITEM *it, int tag, int aclass,
-    char opt, ASN1_TLC *ctx)
+    char opt, ASN1_TLC *ctx, int depth, int borrow,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     const unsigned char *p = *in, *q;
     union {
@@ -165,21 +182,24 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     q = p;
 
     /* Get internal representation of Name */
-    ret = ASN1_item_ex_d2i(&intname.a,
+    ret = asn1_item_embed_d2i(&intname.a,
         &p, len, ASN1_ITEM_rptr(X509_NAME_INTERNAL),
-        tag, aclass, opt, ctx);
+        tag, aclass, opt, ctx, depth, borrow, NULL, NULL);
 
-    if (ret <= 0)
+    if (ret <= 0) {
+        ASN1_item_ex_free(&intname.a, ASN1_ITEM_rptr(X509_NAME_INTERNAL));
         return ret;
+    }
 
     if (*val)
         x509_name_ex_free(val, NULL);
     if (!x509_name_ex_new(&nm.a, NULL))
         goto err;
     /* We've decoded it: now cache encoding */
-    if (!BUF_MEM_grow(nm.x->bytes, p - q))
+    if (borrow)
+        ossl_asn1_string_set0_not_owned(nm.x->bytes, q, (int)(p - q));
+    else if (!ASN1_STRING_set1_data(nm.x->bytes, q, p - q))
         goto err;
-    memcpy(nm.x->bytes->data, q, p - q);
 
     /* Convert internal representation to X509_NAME structure */
     for (i = 0; i < sk_STACK_OF_X509_NAME_ENTRY_num(intname.s); i++) {
@@ -242,7 +262,7 @@ static int x509_name_encode(X509_NAME *a)
         NULL
     };
     int len;
-    unsigned char *p;
+    unsigned char *enc, *p;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry;
     int i, set = -1;
@@ -267,13 +287,12 @@ static int x509_name_encode(X509_NAME *a)
     }
     len = ASN1_item_ex_i2d(&intname.a, NULL,
         ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
-    if (!BUF_MEM_grow(a->bytes, len)) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
+    if (len < 0 || (enc = OPENSSL_malloc(len)) == NULL)
         goto err;
-    }
-    p = (unsigned char *)a->bytes->data;
+    p = enc;
     ASN1_item_ex_i2d(&intname.a,
         &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+    ASN1_STRING_set0(a->bytes, enc, len);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
         local_sk_X509_NAME_ENTRY_free);
     a->modified = 0;
@@ -547,7 +566,7 @@ int X509_NAME_get0_der(const X509_NAME *nm, const unsigned char **pder,
     if (i2d_X509_NAME(nm, NULL) <= 0)
         return 0;
     if (pder != NULL)
-        *pder = (unsigned char *)nm->bytes->data;
+        *pder = nm->bytes->data;
     if (pderlen != NULL)
         *pderlen = nm->bytes->length;
     return 1;
