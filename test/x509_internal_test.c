@@ -20,6 +20,7 @@
 #include "testutil.h"
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
+#include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "crypto/evp.h"
 #include "../crypto/asn1/asn1_local.h"
@@ -2189,6 +2190,91 @@ err:
     return ret;
 }
 
+static int points_into(const unsigned char *data, size_t len,
+    const unsigned char *der, size_t der_len)
+{
+    return data >= der && data + len <= der + der_len;
+}
+
+/*
+ * A borrowing decode of an X509_NAME points the entry values and the
+ * encoding into the input, and one of an X509_PUBKEY points the key bits
+ * into it.
+ */
+static int test_name_and_pubkey_borrow(void)
+{
+    /* An Ed25519 SubjectPublicKeyInfo */
+    static const unsigned char spki[] = {
+        0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00,
+        0x1f, 0x2e, 0x3d, 0x4c, 0x5b, 0x6a, 0x79, 0x88, 0x97, 0xa6, 0xb5, 0xc4,
+        0xd3, 0xe2, 0xf1, 0x00, 0x0f, 0x1e, 0x2d, 0x3c, 0x4b, 0x5a, 0x69, 0x78,
+        0x87, 0x96, 0xa5, 0xb4, 0xc3, 0xd2, 0xe1, 0xf0
+    };
+    X509_NAME *name = NULL, *borrowed = NULL, *owned = NULL;
+    X509_PUBKEY *pubkey = NULL;
+    const ASN1_STRING *value;
+    const unsigned char *p, *pk;
+    unsigned char *der = NULL;
+    int der_len, pklen, ret = 0;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"borrowed", -1, -1, 0))
+        || !TEST_int_gt(der_len = i2d_X509_NAME(name, &der), 0))
+        goto err;
+
+    p = der;
+    if (!TEST_ptr(borrowed = (X509_NAME *)ossl_asn1_item_d2i_borrow(NULL, &p,
+                      der_len, ASN1_ITEM_rptr(X509_NAME), NULL, NULL))
+        || !TEST_ptr_eq(p, der + der_len)
+        || !TEST_int_eq(X509_NAME_cmp(borrowed, name), 0)
+        || !TEST_ptr(value = X509_NAME_ENTRY_get_data(
+                         X509_NAME_get_entry(borrowed, 0)))
+        || !TEST_true((value->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED) != 0)
+        || !TEST_true(points_into(value->data, value->length, der, der_len))
+        || !TEST_true((borrowed->bytes->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)
+            != 0)
+        || !TEST_ptr_eq(borrowed->bytes->data, der)
+        || !TEST_int_eq(borrowed->bytes->length, der_len))
+        goto err;
+
+    /* Modifying the borrowed name gives it an owned encoding */
+    if (!TEST_true(X509_NAME_add_entry_by_txt(borrowed, "O", MBSTRING_ASC,
+            (const unsigned char *)"owned", -1, -1, 0))
+        || !TEST_int_gt(i2d_X509_NAME(borrowed, NULL), der_len)
+        || !TEST_true((borrowed->bytes->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)
+            == 0)
+        || !TEST_false(points_into(borrowed->bytes->data,
+            borrowed->bytes->length, der, der_len)))
+        goto err;
+
+    /* An owned decode of the same bytes copies */
+    p = der;
+    if (!TEST_ptr(owned = d2i_X509_NAME(NULL, &p, der_len))
+        || !TEST_ptr(value = X509_NAME_ENTRY_get_data(
+                         X509_NAME_get_entry(owned, 0)))
+        || !TEST_false(points_into(value->data, value->length, der, der_len)))
+        goto err;
+
+    p = spki;
+    if (!TEST_ptr(pubkey = (X509_PUBKEY *)ossl_asn1_item_d2i_borrow(NULL, &p,
+                      sizeof(spki), ASN1_ITEM_rptr(X509_PUBKEY), NULL, NULL))
+        || !TEST_ptr_eq(p, spki + sizeof(spki))
+        || !TEST_true(X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey))
+        || !TEST_int_eq(pklen, 32)
+        || !TEST_ptr_eq(pk, spki + 12))
+        goto err;
+
+    ret = 1;
+err:
+    X509_PUBKEY_free(pubkey);
+    X509_NAME_free(owned);
+    X509_NAME_free(borrowed);
+    X509_NAME_free(name);
+    OPENSSL_free(der);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
@@ -2217,6 +2303,7 @@ int setup_tests(void)
     ADD_TEST(test_unsigned_cert_roundtrip);
     ADD_TEST(test_extension_decoded_value);
     ADD_TEST(test_get0_ext_value);
+    ADD_TEST(test_name_and_pubkey_borrow);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
 #ifndef OPENSSL_NO_MD5
