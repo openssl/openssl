@@ -6447,6 +6447,8 @@ static int test_evp_aead_late_aad(int idx)
     const EVP_CIPHER_TEST_INFO *info = &cipher_list[idx];
     EVP_CIPHER_CTX *ctx_enc = NULL; /* late AAD after plaintext: must fail */
     EVP_CIPHER_CTX *ctx_dec = NULL; /* late AAD after ciphertext: must fail */
+    EVP_CIPHER_CTX *ctx_c_enc = NULL; /* as ctx_enc, EVP_Cipher() interface */
+    EVP_CIPHER_CTX *ctx_c_dec = NULL; /* as ctx_dec, EVP_Cipher() interface */
 
     unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
@@ -6454,12 +6456,9 @@ static int test_evp_aead_late_aad(int idx)
     unsigned char msg[] = "message";
     unsigned char out[sizeof(msg) + EVP_MAX_BLOCK_LENGTH];
 
-    int i = 0, len = 0, testresult = 0, expected = 0;
-    char *errmsg = NULL;
-    unsigned long err_code = 0;
+    int i = 0, len = 0, testresult = 0;
 
     if (info->taglen == 0 /* skip non-AEAD */
-        || info->mode == EVP_CIPH_GCM_MODE /* rejects, raises 102 PROV_R_CIPHER_OPERATION_FAILED */
         || info->mode == EVP_CIPH_CCM_MODE /* fails at first AAD */
         || info->mode == EVP_CIPH_OCB_MODE /* accepts late AAD */
         /* skip TLS stitched MTE cipher */
@@ -6478,87 +6477,62 @@ static int test_evp_aead_late_aad(int idx)
         iv[i] = (unsigned char)(0xB0 + i);
 
     /* encrypt: aad, then plaintext, then a late aad update must be rejected */
-    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())) {
-        errmsg = "ENC_ALLOC";
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_EncryptUpdate(ctx_enc, out, &len, msg, sizeof(msg)))
+        || !TEST_false(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: encrypt", info->name);
         goto err;
     }
-    if (!TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))) {
-        errmsg = "ENC_INIT";
-        goto err;
-    }
-    if (!TEST_true(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))) {
-        errmsg = "ENC_AAD";
-        goto err;
-    }
-    if (!TEST_true(EVP_EncryptUpdate(ctx_enc, out, &len, msg, sizeof(msg)))) {
-        errmsg = "ENC_PLAINTEXT";
-        goto err;
-    }
-    ERR_set_mark();
-    if (!TEST_false(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))) {
-        ERR_clear_last_mark();
-        errmsg = "ENC_LATE_AAD_NOT_REJECTED";
-        goto err;
-    }
-    err_code = ERR_peek_last_error();
-    if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
-        || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
-        ERR_clear_last_mark();
-        expected = PROV_R_UPDATE_CALL_OUT_OF_ORDER;
-        errmsg = "ENC_LATE_AAD_WRONG_REASON";
-        goto err;
-    }
-    ERR_pop_to_mark();
 
-    /* decrypt: same sequence, late aad after ciphertext must be rejected */
-    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())) {
-        errmsg = "DEC_ALLOC";
+    /*
+     * decrypt: same sequence, late aad after ciphertext must be rejected.
+     * the ciphertext content is irrelevant; the tag is never finalized here.
+     */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, out, &len, msg, sizeof(msg)))
+        || !TEST_false(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: decrypt", info->name);
         goto err;
     }
-    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))) {
-        errmsg = "DEC_INIT";
+
+    /* encrypt, EVP_Cipher() interface: out == NULL is AAD, same as update */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_c_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_c_enc, info->ciph, key, iv, NULL))
+        || !TEST_int_ge(EVP_Cipher(ctx_c_enc, NULL, aad, sizeof(aad)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_c_enc, out, msg, sizeof(msg)), 0)
+        || !TEST_int_lt(EVP_Cipher(ctx_c_enc, NULL, aad, sizeof(aad)), 0)
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: encrypt (EVP_Cipher)", info->name);
         goto err;
     }
-    if (!TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))) {
-        errmsg = "DEC_AAD";
+
+    /* decrypt, EVP_Cipher() interface */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_c_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_c_dec, info->ciph, key, iv, NULL))
+        || !TEST_int_ge(EVP_Cipher(ctx_c_dec, NULL, aad, sizeof(aad)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_c_dec, out, msg, sizeof(msg)), 0)
+        || !TEST_int_lt(EVP_Cipher(ctx_c_dec, NULL, aad, sizeof(aad)), 0)
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: decrypt (EVP_Cipher)", info->name);
         goto err;
     }
-    /* the ciphertext content is irrelevant; the tag is never finalized here */
-    if (!TEST_true(EVP_DecryptUpdate(ctx_dec, out, &len, msg, sizeof(msg)))) {
-        errmsg = "DEC_CIPHERTEXT";
-        goto err;
-    }
-    ERR_set_mark();
-    if (!TEST_false(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))) {
-        ERR_clear_last_mark();
-        errmsg = "DEC_LATE_AAD_NOT_REJECTED";
-        goto err;
-    }
-    err_code = ERR_peek_last_error();
-    if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
-        || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
-        ERR_clear_last_mark();
-        expected = PROV_R_UPDATE_CALL_OUT_OF_ORDER;
-        errmsg = "DEC_LATE_AAD_WRONG_REASON";
-        goto err;
-    }
-    ERR_pop_to_mark();
 
     testresult = 1;
-
 err:
-    if (errmsg != NULL) {
-        if (expected != 0)
-            TEST_info("test_evp_aead_late_aad %d, %s: %s"
-                      " (expected reason %d, got %d)",
-                idx, errmsg, info->name,
-                expected, ERR_GET_REASON(err_code));
-        else
-            TEST_info("test_evp_aead_late_aad %d, %s: %s",
-                idx, errmsg, info->name);
-    }
     EVP_CIPHER_CTX_free(ctx_enc);
     EVP_CIPHER_CTX_free(ctx_dec);
+    EVP_CIPHER_CTX_free(ctx_c_enc);
+    EVP_CIPHER_CTX_free(ctx_c_dec);
     return testresult;
 }
 
