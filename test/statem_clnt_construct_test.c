@@ -15,6 +15,7 @@
  * are covered with mfail tests.
  */
 
+#include <stdio.h>
 #include <openssl/ssl.h>
 #include <openssl/ec.h>
 #ifndef OPENSSL_NO_ECH
@@ -1411,7 +1412,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     unsigned int max_identity_len, unsigned char *psk,
     unsigned int max_psk_len)
 {
-    if (BIO_snprintf(identity, max_identity_len, "%s", CKE_PSK_IDENTITY) <= 0
+    if (snprintf(identity, max_identity_len, "%s", CKE_PSK_IDENTITY) <= 0
         || max_psk_len < sizeof(cke_psk))
         return 0;
     memcpy(psk, cke_psk, sizeof(cke_psk));
