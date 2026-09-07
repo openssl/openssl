@@ -42,6 +42,13 @@ additional input or generating output.  The three possible states directly
 correspond to those for initialised above.  The three different streams should
 not be mixed.
 
+=item AAD updated
+
+This state represents an AEAD CIPHER after it has been given additional
+authenticated data with EVP_CipherUpdate and a NULL output buffer.  AAD must
+be supplied before any plaintext or ciphertext; further AAD updates stay in
+this state.
+
 =item finaled
 
 This state represents the CIPHER when it has generated output.
@@ -132,33 +139,34 @@ This is the canonical list.
 
 =begin man
 
- Function Call                ---------------------------------------------- Current State -----------------------------------------------
-                              start   newed    initialised   updated     finaled   initialised   updated    initialised   updated    freed
-                                                                                    decryption  decryption   encryption  encryption
+ Function Call                ---------------------------------------------------- Current State -----------------------------------------------------
+                              start   newed    initialised AAD updated   updated     finaled   initialised   updated    initialised   updated    freed
+                                                                                                decryption  decryption   encryption  encryption
  EVP_CIPHER_CTX_new           newed
- EVP_CipherInit                    initialised initialised initialised initialised initialised initialised  initialised initialised
- EVP_DecryptInit                   initialised initialised initialised initialised initialised initialised  initialised initialised
-                                    decryption  decryption  decryption  decryption  decryption  decryption  decryption  decryption
- EVP_EncryptInit                   initialised initialised initialised initialised initialised initialised  initialised initialised
-                                    encryption  encryption  encryption  encryption  encryption  encryption  encryption  encryption
- EVP_CipherUpdate                                updated     updated
- EVP_DecryptUpdate                                                                   updated     updated
-                                                                                    decryption  decryption
- EVP_EncryptUpdate                                                                                            updated     updated
-                                                                                                             encryption  encryption
- EVP_CipherFinal                                             finaled
- EVP_DecryptFinal                                                                                finaled
- EVP_EncryptFinal                                                                                                         finaled
- EVP_CIPHER_CTX_free          freed   freed       freed       freed       freed       freed       freed        freed       freed
- EVP_CIPHER_CTX_reset                 newed       newed       newed       newed       newed       newed        newed       newed
- EVP_CIPHER_CTX_get_params            newed    initialised   updated               initialised   updated    initialised   updated
-                                                                                    decryption  decryption   encryption  encryption
- EVP_CIPHER_CTX_set_params            newed    initialised   updated               initialised   updated    initialised   updated
-                                                                                    decryption  decryption   encryption  encryption
- EVP_CIPHER_CTX_gettable_params       newed    initialised   updated               initialised   updated    initialised   updated
-                                                                                    decryption  decryption   encryption  encryption
- EVP_CIPHER_CTX_settable_params       newed    initialised   updated               initialised   updated    initialised   updated
-                                                                                    decryption  decryption   encryption  encryption
+ EVP_CipherInit                    initialised initialised initialised initialised initialised initialised initialised  initialised initialised
+ EVP_DecryptInit                   initialised initialised initialised initialised initialised initialised initialised  initialised initialised
+                                    decryption  decryption decryption   decryption  decryption  decryption  decryption  decryption  decryption
+ EVP_EncryptInit                   initialised initialised initialised initialised initialised initialised initialised  initialised initialised
+                                    encryption  encryption encryption   encryption  encryption  encryption  encryption  encryption  encryption
+ EVP_CipherUpdate                                updated     updated     updated
+ EVP_CipherUpdate (AAD)                                AAD updated AAD updated
+ EVP_DecryptUpdate                                                                               updated     updated
+                                                                                                decryption  decryption
+ EVP_EncryptUpdate                                                                                                        updated     updated
+                                                                                                                         encryption  encryption
+ EVP_CipherFinal                                             finaled     finaled
+ EVP_DecryptFinal                                                                                            finaled
+ EVP_EncryptFinal                                                                                                                     finaled
+ EVP_CIPHER_CTX_free          freed   freed       freed       freed       freed       freed       freed       freed        freed       freed
+ EVP_CIPHER_CTX_reset                 newed       newed       newed       newed       newed       newed       newed        newed       newed
+ EVP_CIPHER_CTX_get_params            newed    initialised AAD updated   updated               initialised   updated    initialised   updated
+                                                                                                decryption  decryption   encryption  encryption
+ EVP_CIPHER_CTX_set_params            newed    initialised AAD updated   updated               initialised   updated    initialised   updated
+                                                                                                decryption  decryption   encryption  encryption
+ EVP_CIPHER_CTX_gettable_params       newed    initialised AAD updated   updated               initialised   updated    initialised   updated
+                                                                                                decryption  decryption   encryption  encryption
+ EVP_CIPHER_CTX_settable_params       newed    initialised AAD updated   updated               initialised   updated    initialised   updated
+                                                                                                decryption  decryption   encryption  encryption
 
 =end man
 
@@ -166,11 +174,12 @@ This is the canonical list.
 
 <table style="border:1px solid; border-collapse:collapse">
 <tr><th style="border:1px solid" align="left">Function Call</th>
-    <th style="border:1px solid" colspan="10">Current State</th></tr>
+    <th style="border:1px solid" colspan="11">Current State</th></tr>
 <tr><th style="border:1px solid"></th>
     <th style="border:1px solid" align="center">start</th>
     <th style="border:1px solid" align="center">newed</th>
     <th style="border:1px solid" align="center">initialised</th>
+    <th style="border:1px solid" align="center">AAD<br>updated</th>
     <th style="border:1px solid" align="center">updated</th>
     <th style="border:1px solid" align="center">finaled</th>
     <th style="border:1px solid" align="center">initialised<br>decryption</th>
@@ -180,6 +189,7 @@ This is the canonical list.
     <th style="border:1px solid" align="center">freed</th></tr>
 <tr><th style="border:1px solid" align="left">EVP_CIPHER_CTX_new</th>
     <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
@@ -199,9 +209,11 @@ This is the canonical list.
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_DecryptInit</th>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">initialised<br>decryption</td>
     <td style="border:1px solid" align="center">initialised<br>decryption</td>
     <td style="border:1px solid" align="center">initialised<br>decryption</td>
     <td style="border:1px solid" align="center">initialised<br>decryption</td>
@@ -221,12 +233,26 @@ This is the canonical list.
     <td style="border:1px solid" align="center">initialised<br>encryption</td>
     <td style="border:1px solid" align="center">initialised<br>encryption</td>
     <td style="border:1px solid" align="center">initialised<br>encryption</td>
+    <td style="border:1px solid" align="center">initialised<br>encryption</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_CipherUpdate</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center">updated</td>
+    <td style="border:1px solid" align="center">updated</td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_CipherUpdate (AAD)</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">AAD<br>updated</td>
+    <td style="border:1px solid" align="center">AAD<br>updated</td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
@@ -234,6 +260,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_DecryptUpdate</th>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
@@ -252,6 +279,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">updated<br>encryption</td>
     <td style="border:1px solid" align="center">updated<br>encryption</td>
     <td style="border:1px solid" align="center"></td></tr>
@@ -259,6 +287,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
@@ -273,11 +302,13 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">finaled<br>decryption</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_EncryptFinal</th>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
@@ -298,10 +329,12 @@ This is the canonical list.
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center">freed</td>
+    <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_CIPHER_CTX_reset</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">newed</td>
@@ -314,6 +347,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">AAD<br>updated</td>
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">initialised<br>decryption</td>
@@ -325,6 +359,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">AAD<br>updated</td>
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">initialised<br>decryption</td>
@@ -336,6 +371,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">AAD<br>updated</td>
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">initialised<br>decryption</td>
@@ -347,6 +383,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">AAD<br>updated</td>
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">initialised<br>decryption</td>
