@@ -139,6 +139,10 @@ See L<openssl-fipsinstall(1)/OPTIONS> B<-x963kdf_digest_check>
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-dsa_sign_disabled>
 
+=item B<aes-ecb-encrypt-disabled>
+
+See L<openssl-fipsinstall(1)/OPTIONS> B<-aes_ecb_encrypt_disabled>
+
 =item B<tdes-encrypt-disabled>
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-tdes_encrypt_disabled>

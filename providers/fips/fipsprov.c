@@ -262,6 +262,29 @@ static const OSSL_ALGORITHM fips_digests_internal[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_ciphers_internal[] = {
+    { PROV_NAMES_AES_256_ECB, FIPS_DEFAULT_PROPERTIES, ossl_aes256ecb_internal_functions },
+    { PROV_NAMES_AES_192_ECB, FIPS_DEFAULT_PROPERTIES, ossl_aes192ecb_internal_functions },
+    { PROV_NAMES_AES_128_ECB, FIPS_DEFAULT_PROPERTIES, ossl_aes128ecb_internal_functions },
+    { PROV_NAMES_AES_256_CBC, FIPS_DEFAULT_PROPERTIES, ossl_aes256cbc_functions },
+    { PROV_NAMES_AES_192_CBC, FIPS_DEFAULT_PROPERTIES, ossl_aes192cbc_functions },
+    { PROV_NAMES_AES_128_CBC, FIPS_DEFAULT_PROPERTIES, ossl_aes128cbc_functions },
+    { PROV_NAMES_AES_256_CTR, FIPS_DEFAULT_PROPERTIES, ossl_aes256ctr_functions },
+    { PROV_NAMES_AES_192_CTR, FIPS_DEFAULT_PROPERTIES, ossl_aes192ctr_functions },
+    { PROV_NAMES_AES_128_CTR, FIPS_DEFAULT_PROPERTIES, ossl_aes128ctr_functions },
+    { PROV_NAMES_AES_256_GCM, FIPS_DEFAULT_PROPERTIES, ossl_aes256gcm_functions },
+    { PROV_NAMES_AES_192_GCM, FIPS_DEFAULT_PROPERTIES, ossl_aes192gcm_functions },
+    { PROV_NAMES_AES_128_GCM, FIPS_DEFAULT_PROPERTIES, ossl_aes128gcm_functions },
+    { PROV_NAMES_AES_256_WRAP, FIPS_DEFAULT_PROPERTIES, ossl_aes256wrap_functions },
+    { PROV_NAMES_AES_192_WRAP, FIPS_DEFAULT_PROPERTIES, ossl_aes192wrap_functions },
+    { PROV_NAMES_AES_128_WRAP, FIPS_DEFAULT_PROPERTIES, ossl_aes128wrap_functions },
+#ifndef OPENSSL_NO_DES
+    { PROV_NAMES_DES_EDE3_ECB, FIPS_DEFAULT_PROPERTIES, ossl_tdes_ede3_ecb_functions },
+    { PROV_NAMES_DES_EDE3_CBC, FIPS_DEFAULT_PROPERTIES, ossl_tdes_ede3_cbc_functions },
+#endif /* OPENSSL_NO_DES */
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
     /* Our primary name[:ASN.1 OID name][:our older names] */
     ALG(PROV_NAMES_AES_256_ECB, ossl_aes256ecb_functions),
@@ -750,6 +773,8 @@ static const OSSL_ALGORITHM *fips_query_internal(void *provctx, int operation_id
     switch (operation_id) {
     case OSSL_OP_DIGEST:
         return fips_digests_internal;
+    case OSSL_OP_CIPHER:
+        return fips_ciphers_internal;
     case OSSL_OP_MAC:
         return fips_macs_internal;
     case OSSL_OP_KDF:

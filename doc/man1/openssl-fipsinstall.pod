@@ -35,6 +35,7 @@ B<openssl fipsinstall>
 [B<-dsa_sign_disabled>]
 [B<-no_pbkdf2_lower_bound_check>]
 [B<-no_short_mac>]
+[B<-aes_ecb_encrypt_disabled>]
 [B<-tdes_encrypt_disabled>]
 [B<-rsa_pkcs15_padding_disabled>]
 [B<-rsa_pss_saltlen_check>]
@@ -272,11 +273,17 @@ See NIST SP 800-131Ar2 for details.
 Configure the module to not allow DSA signing (DSA signature verification is
 still allowed). See FIPS 140-3 IG C.K for details.
 
+=item B<-aes_ecb_encrypt_disabled>
+
+Configure the module to not allow AES ECB encryption.
+AES ECB decryption is still allowed for legacy purposes.
+See SP800-131Ar2 for details.
+
 =item B<-tdes_encrypt_disabled>
 
 Configure the module to not allow Triple-DES encryption.
 Triple-DES decryption is still allowed for legacy purposes.
-See SP800-131Ar2 for details.
+See SP800-131Ar3 for details.
 
 =item B<-rsa_pkcs15_padding_disabled>
 
@@ -493,9 +500,13 @@ B<-x963kdf_key_check>,
 B<-x942kdf_key_check>,
 B<-ecdh_cofactor_check>
 
-The following options was added in OpenSSL 4.0:
+The following option was added in OpenSSL 4.0:
 
 B<-defer_tests>
+
+The following option was added in OpenSSL 4.1:
+
+ B<-aes_ecb_encrypt_disabled>
 
 =head1 COPYRIGHT
 

@@ -117,7 +117,7 @@ SOURCE[$AES_GOAL]=\
         cipher_aes_cbc_hmac_sha1_etm_hw.c \
         cipher_aes_cbc_hmac_sha256_etm_hw.c \
         cipher_aes_cbc_hmac_sha512_etm_hw.c \
-        cipher_cts.c
+        cipher_cts.c cipher_aes_ecb.c
 DEFINE[$AES_GOAL]=$AESXTSDEF
 
 # Extra code to satisfy the FIPS and non-FIPS separation.

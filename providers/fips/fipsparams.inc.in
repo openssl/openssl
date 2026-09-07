@@ -43,6 +43,7 @@
         [ 'sskdf_digest_check', 'SSKDF_DIGEST_CHECK', 'unsigned char', '0', 'indicator' ],
         [ 'x963kdf_digest_check', 'X963KDF_DIGEST_CHECK', 'unsigned char', '0', 'indicator' ],
         [ 'dsa_sign_disallowed', 'DSA_SIGN_DISABLED', 'unsigned char', '0', 'indicator' ],
+        [ 'aes_ecb_encrypt_disallowed', 'AES_ECB_ENCRYPT_DISABLED', 'unsigned char', '0', 'indicator' ],
         [ 'tdes_encrypt_disallowed', 'TDES_ENCRYPT_DISABLED', 'unsigned char', '0', 'indicator' ],
         [ 'rsa_pkcs15_padding_disabled', 'RSA_PKCS15_PAD_DISABLED', 'unsigned char', '0', 'indicator' ],
         [ 'rsa_pss_saltlen_check', 'RSA_PSS_SALTLEN_CHECK', 'unsigned char', '0', 'indicator' ],

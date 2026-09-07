@@ -529,11 +529,13 @@ static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
 {
     STACK_OF(OPENSSL_STRING) *names = cipher_names_list;
     const char *name = EVP_CIPHER_get0_name(cipher);
+    int mode = EVP_CIPHER_get_mode(cipher);
     char *namedup = NULL;
 
     /* Skip Triple-DES encryption operations in FIPS mode */
     if (OSSL_PROVIDER_available(libctx, "fips")
-        && strncmp(name, "DES", 3) == 0)
+        && (strncmp(name, "DES", 3) == 0
+        || mode == EVP_CIPH_ECB_MODE))
         return;
     assert(name != NULL);
     /* the cipher will be freed after returning, strdup is needed */

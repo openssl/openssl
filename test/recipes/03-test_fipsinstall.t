@@ -49,6 +49,7 @@ my @commandline =
         ( 'sskdf_digest_check',             'sskdf-digest-check' ),
         ( 'x963kdf_digest_check',           'x963kdf-digest-check' ),
         ( 'dsa_sign_disabled',              'dsa-sign-disabled' ),
+        ( 'aes_ecb_encrypt_disabled',       'aes-ecb-encrypt-disabled' ),
         ( 'tdes_encrypt_disabled',          'tdes-encrypt-disabled' ),
         ( 'rsa_pkcs15_pad_disabled',        'rsa-pkcs15-pad-disabled' ),
         ( 'rsa_pss_saltlen_check',          'rsa-pss-saltlen-check' ),
