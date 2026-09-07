@@ -355,8 +355,19 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     int cadesVerify = (flags & CMS_CADES) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
 
-    if (dcont == NULL && !check_content(cms))
+    if (dcont == NULL && !check_content(cms)) {
+        /*
+         * A CMS_ContentInfo can be verified more than once (e.g. retried
+         * with a different store).  If a previous call left verify_result
+         * == 1 ("so far, fine") on any SignerInfo, this early failure must
+         * still be reflected there instead of silently keeping the stale
+         * "verified" state from the earlier call.
+         */
+        sinfos = CMS_get0_SignerInfos(cms);
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
+            sk_CMS_SignerInfo_value(sinfos, i)->verify_result = 0;
         return 0;
+    }
     if (dcont != NULL && !(flags & CMS_BINARY)) {
         const ASN1_OBJECT *coid = CMS_get0_eContentType(cms);
 
@@ -468,7 +479,13 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         tmpin = (len == 0) ? dcont : BIO_new_mem_buf(ptr, len);
         if (tmpin == NULL) {
             ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
-            goto err2;
+            /*
+             * goto err, not err2: cmsbio/tmpout are still NULL here, so the
+             * err-label cleanup is safe, and this must go through the
+             * verify_result reset loop at err (ret is still 0) instead of
+             * bypassing it via err2.
+             */
+            goto err;
         }
     } else {
         tmpin = dcont;

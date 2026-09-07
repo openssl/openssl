@@ -404,6 +404,167 @@ end:
     return ret;
 }
 
+/* self-signed throwaway cert for the second signer in the test below */
+static X509 *make_self_signed_cert(EVP_PKEY *pkey, const char *cn)
+{
+    X509 *newcert = NULL, *ret = NULL;
+    X509_NAME *name = NULL;
+    ASN1_INTEGER *serial = NULL;
+
+    if (!TEST_ptr(newcert = X509_new())
+            || !TEST_true(X509_set_version(newcert, X509_VERSION_3)))
+        goto err;
+
+    if (!TEST_ptr(serial = ASN1_INTEGER_new())
+            || !TEST_true(ASN1_INTEGER_set(serial, 1))
+            || !TEST_true(X509_set_serialNumber(newcert, serial)))
+        goto err;
+
+    if (!TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(newcert), 0))
+            || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(newcert),
+                                          60L * 60L * 24L * 365L)))
+        goto err;
+
+    if (!TEST_true(X509_set_pubkey(newcert, pkey)))
+        goto err;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+            || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+                              (const unsigned char *)cn, -1, -1, 0))
+            || !TEST_true(X509_set_subject_name(newcert, name))
+            || !TEST_true(X509_set_issuer_name(newcert, name)))
+        goto err;
+
+    if (!TEST_int_gt(X509_sign(newcert, pkey, EVP_sha256()), 0))
+        goto err;
+
+    ret = newcert;
+    newcert = NULL;
+err:
+    X509_free(newcert);
+    X509_NAME_free(name);
+    ASN1_INTEGER_free(serial);
+    return ret;
+}
+
+/*
+ * Companion to test_CMS_verify_result_no_signer_cert() above: covers the
+ * mixed case (scount == 1) that test leaves untested, per review feedback
+ * on PR #32643 (https://github.com/openssl/openssl/pull/32643) -- a
+ * two-signer message where only *one* signer's certificate is available at
+ * verification time.  Before the fix this signer's own verify_result would
+ * be reset by the >= scount cleanup loop, but the point of covering
+ * scount == 1 explicitly is to pin down that the *other*, cert-missing
+ * signer is not left at verify_result == 1 by an off-by-something in the
+ * boundary.  Also checks that supplying both certs makes CMS_verify()
+ * succeed, as requested in review.
+ */
+static int test_CMS_verify_result_partial_signer_cert(void)
+{
+    CMS_ContentInfo *cms = NULL, *cms2 = NULL;
+    BIO *in = NULL, *out = NULL, *der = NULL;
+    X509_STORE *store = NULL;
+    EVP_PKEY *pkey2 = NULL;
+    X509 *cert2 = NULL;
+    STACK_OF(X509) *both_certs = NULL;
+    STACK_OF(CMS_SignerInfo) *sinfos;
+    const unsigned char *p;
+    unsigned char *derbuf = NULL;
+    long derlen;
+    int i, found_verified = 0, found_unverified = 0, ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf("Hello World\n", -1))
+            || !TEST_ptr(out = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(der = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(store = X509_STORE_new())
+            || !TEST_ptr(both_certs = sk_X509_new_null()))
+        goto end;
+
+    if (!TEST_ptr(pkey2 = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", 2048))
+            || !TEST_ptr(cert2 = make_self_signed_cert(pkey2, "second-signer")))
+        goto end;
+
+    /* two signers with two *different* certs, neither embedded */
+    if (!TEST_ptr(cms = CMS_sign(NULL, NULL, NULL, in,
+                                 CMS_BINARY | CMS_PARTIAL | CMS_NOCERTS))
+            || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
+            || !TEST_ptr(CMS_add1_signer(cms, cert2, pkey2, NULL, CMS_NOCERTS))
+            || !TEST_true(CMS_final(cms, in, NULL, CMS_BINARY)))
+        goto end;
+
+    /* round-trip through DER so no in-memory signer cert pointers linger */
+    if (!TEST_true(i2d_CMS_bio(der, cms)))
+        goto end;
+    derlen = BIO_get_mem_data(der, &derbuf);
+    p = derbuf;
+    if (!TEST_ptr(cms2 = d2i_CMS_ContentInfo(NULL, &p, derlen)))
+        goto end;
+
+    /* only 'cert' (the 1st signer's) is supplied -> scount == 1, not 0 or 2 */
+    if (!TEST_int_ge(sk_X509_push(both_certs, cert), 1))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(CMS_verify(cms2, both_certs, store, NULL, out,
+                                CMS_BINARY | CMS_VERIFY_PARTIAL), 0)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                            CMS_R_SIGNER_CERTIFICATE_NOT_FOUND))
+        goto end;
+
+    sinfos = CMS_get0_SignerInfos(cms2);
+    if (!TEST_int_eq(sk_CMS_SignerInfo_num(sinfos), 2))
+        goto end;
+    /*
+     * Neither signer must report success: CMS_verify() overall failed with
+     * CMS_R_SIGNER_CERTIFICATE_NOT_FOUND before any content/attr verification
+     * ran, so both entries must still be at verify_result == 0, regardless
+     * of whether that particular signer's own cert was found.
+     */
+    for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+
+        if (!TEST_int_eq(CMS_SignerInfo_get_verification_result(si,
+                             CMS_VERIFY_RESULT), 0))
+            goto end;
+    }
+
+    /* now supply both certs: verification of both signers must succeed */
+    if (!TEST_int_ge(sk_X509_push(both_certs, cert2), 1))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(CMS_verify(cms2, both_certs, store, NULL, out,
+                                CMS_BINARY | CMS_VERIFY_PARTIAL), 1))
+        goto end;
+
+    for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+        int r = CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_RESULT);
+
+        if (r)
+            found_verified++;
+        else
+            found_unverified++;
+    }
+    if (!TEST_int_eq(found_verified, 2) || !TEST_int_eq(found_unverified, 0))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms2);
+    X509_STORE_free(store);
+    /* both_certs does not own cert/cert2 (no _UP_REF push), just free the stack */
+    sk_X509_free(both_certs);
+    X509_free(cert2);
+    EVP_PKEY_free(pkey2);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(der);
+    return ret;
+}
+
 static int test_CMS_add1_signer_ed448(const EVP_MD *md, unsigned int flags,
     int expect_success)
 {
@@ -1075,6 +1236,7 @@ int setup_tests(void)
     ADD_TEST(test_CMS_add_standard_smimecap_ex);
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_CMS_verify_result_no_signer_cert);
+    ADD_TEST(test_CMS_verify_result_partial_signer_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
     ADD_TEST(test_encrypted_data);
