@@ -1364,7 +1364,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 goto out;
 
             if (allow_fail && c_stream == NULL) {
-                if (!TEST_size_t_eq(ERR_GET_REASON(ERR_get_error()),
+                if (!TEST_size_t_eq(ERR_GET_REASON(ERR_peek_last_error()),
                         SSL_R_STREAM_COUNT_LIMITED))
                     goto out;
 
