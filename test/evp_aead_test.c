@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
 #include "testutil.h"
@@ -364,12 +365,106 @@ err:
     return testresult;
 }
 
+/*
+ * With AEAD ciphers, associated data must precede the payload. Once plaintext
+ * or ciphertext processing has begun, a further AAD update (out == NULL) must
+ * be rejected, and the rejection must be reported the same way across every
+ * AEAD: ERR_LIB_PROV / PROV_R_UPDATE_CALL_OUT_OF_ORDER. The invariant is
+ * checked in both the encrypt and decrypt directions.
+ */
+static int test_evp_aead_late_aad(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_enc = NULL; /* late AAD after plaintext: must fail */
+    EVP_CIPHER_CTX *ctx_dec = NULL; /* late AAD after ciphertext: must fail */
+    EVP_CIPHER_CTX *ctx_c_enc = NULL; /* as ctx_enc, EVP_Cipher() interface */
+    EVP_CIPHER_CTX *ctx_c_dec = NULL; /* as ctx_dec, EVP_Cipher() interface */
+
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char aad[] = "aad";
+    unsigned char msg[] = "message";
+    unsigned char out[sizeof(msg) + EVP_MAX_BLOCK_LENGTH];
+
+    int i = 0, len = 0, testresult = 0;
+
+    if (info->mode == EVP_CIPH_CCM_MODE /* fails at first AAD */
+        || info->mode == EVP_CIPH_SIV_MODE /* accepts late AAD */
+        || info->mode == EVP_CIPH_OCB_MODE) /* accepts late AAD */
+        return 1;
+
+    for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    /* encrypt: aad, then plaintext, then a late aad update must be rejected */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_EncryptUpdate(ctx_enc, out, &len, msg, sizeof(msg)))
+        || !TEST_false(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: encrypt", info->name);
+        goto err;
+    }
+
+    /*
+     * decrypt: same sequence, late aad after ciphertext must be rejected.
+     * the ciphertext content is irrelevant; the tag is never finalized here.
+     */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, out, &len, msg, sizeof(msg)))
+        || !TEST_false(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: decrypt", info->name);
+        goto err;
+    }
+
+    /* encrypt, EVP_Cipher() interface: out == NULL is AAD, same as update */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_c_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_c_enc, info->ciph, key, iv, NULL))
+        || !TEST_int_ge(EVP_Cipher(ctx_c_enc, NULL, aad, sizeof(aad)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_c_enc, out, msg, sizeof(msg)), 0)
+        || !TEST_int_lt(EVP_Cipher(ctx_c_enc, NULL, aad, sizeof(aad)), 0)
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: encrypt (EVP_Cipher)", info->name);
+        goto err;
+    }
+
+    /* decrypt, EVP_Cipher() interface */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_c_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_c_dec, info->ciph, key, iv, NULL))
+        || !TEST_int_ge(EVP_Cipher(ctx_c_dec, NULL, aad, sizeof(aad)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_c_dec, out, msg, sizeof(msg)), 0)
+        || !TEST_int_lt(EVP_Cipher(ctx_c_dec, NULL, aad, sizeof(aad)), 0)
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        TEST_info("test_evp_aead_late_aad %s: decrypt (EVP_Cipher)", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    EVP_CIPHER_CTX_free(ctx_c_enc);
+    EVP_CIPHER_CTX_free(ctx_c_dec);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!setup_aead_list())
         return 0;
 
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     return 1;
 }
 
