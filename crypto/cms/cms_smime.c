@@ -480,10 +480,9 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         if (tmpin == NULL) {
             ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
             /*
-             * goto err, not err2: cmsbio/tmpout are still NULL here, so the
-             * err-label cleanup is safe, and this must go through the
-             * verify_result reset loop at err (ret is still 0) instead of
-             * bypassing it via err2.
+             * cmsbio/tmpout are still NULL here, so the err-label cleanup is
+             * safe, and this must go through the verify_result reset loop at
+             * err (ret is still 0) rather than skipping it.
              */
             goto err;
         }
@@ -578,7 +577,6 @@ err:
     if (out != tmpout)
         BIO_free_all(tmpout);
 
-err2:
     if (si_chains != NULL) {
         for (i = 0; i < scount; ++i)
             OSSL_STACK_OF_X509_free(si_chains[i]);

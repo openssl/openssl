@@ -351,17 +351,17 @@ static int test_CMS_verify_result_no_signer_cert(void)
     int i, ret = 0;
 
     if (!TEST_ptr(in = BIO_new_mem_buf("Hello World\n", -1))
-            || !TEST_ptr(out = BIO_new(BIO_s_mem()))
-            || !TEST_ptr(der = BIO_new(BIO_s_mem()))
-            || !TEST_ptr(store = X509_STORE_new()))
+        || !TEST_ptr(out = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(der = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(store = X509_STORE_new()))
         goto end;
 
     /* two signers, neither certificate embedded */
     if (!TEST_ptr(cms = CMS_sign(NULL, NULL, NULL, in,
-                                 CMS_BINARY | CMS_PARTIAL | CMS_NOCERTS))
-            || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
-            || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
-            || !TEST_true(CMS_final(cms, in, NULL, CMS_BINARY)))
+                      CMS_BINARY | CMS_PARTIAL | CMS_NOCERTS))
+        || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
+        || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
+        || !TEST_true(CMS_final(cms, in, NULL, CMS_BINARY)))
         goto end;
 
     /* round-trip through DER so no in-memory signer cert pointers linger */
@@ -374,9 +374,10 @@ static int test_CMS_verify_result_no_signer_cert(void)
 
     ERR_clear_error();
     if (!TEST_int_eq(CMS_verify(cms2, NULL, store, NULL, out,
-                                CMS_BINARY | CMS_VERIFY_PARTIAL), 0)
-            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
-                            CMS_R_SIGNER_CERTIFICATE_NOT_FOUND))
+                         CMS_BINARY | CMS_VERIFY_PARTIAL),
+            0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            CMS_R_SIGNER_CERTIFICATE_NOT_FOUND))
         goto end;
 
     sinfos = CMS_get0_SignerInfos(cms2);
@@ -386,9 +387,11 @@ static int test_CMS_verify_result_no_signer_cert(void)
         CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
 
         if (!TEST_int_eq(CMS_SignerInfo_get_verification_result(si,
-                             CMS_VERIFY_RESULT), 0)
-                || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si,
-                                    CMS_VERIFY_CERT), 0))
+                             CMS_VERIFY_RESULT),
+                0)
+            || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si,
+                                CMS_VERIFY_CERT),
+                0))
             goto end;
     }
 
@@ -412,27 +415,27 @@ static X509 *make_self_signed_cert(EVP_PKEY *pkey, const char *cn)
     ASN1_INTEGER *serial = NULL;
 
     if (!TEST_ptr(newcert = X509_new())
-            || !TEST_true(X509_set_version(newcert, X509_VERSION_3)))
+        || !TEST_true(X509_set_version(newcert, X509_VERSION_3)))
         goto err;
 
     if (!TEST_ptr(serial = ASN1_INTEGER_new())
-            || !TEST_true(ASN1_INTEGER_set(serial, 1))
-            || !TEST_true(X509_set_serialNumber(newcert, serial)))
+        || !TEST_true(ASN1_INTEGER_set(serial, 1))
+        || !TEST_true(X509_set_serialNumber(newcert, serial)))
         goto err;
 
     if (!TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(newcert), 0))
-            || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(newcert),
-                                          60L * 60L * 24L * 365L)))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(newcert),
+            60L * 60L * 24L * 365L)))
         goto err;
 
     if (!TEST_true(X509_set_pubkey(newcert, pkey)))
         goto err;
 
     if (!TEST_ptr(name = X509_NAME_new())
-            || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-                              (const unsigned char *)cn, -1, -1, 0))
-            || !TEST_true(X509_set_subject_name(newcert, name))
-            || !TEST_true(X509_set_issuer_name(newcert, name)))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)cn, -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(newcert, name))
+        || !TEST_true(X509_set_issuer_name(newcert, name)))
         goto err;
 
     if (!TEST_int_gt(X509_sign(newcert, pkey, EVP_sha256()), 0))
@@ -474,22 +477,22 @@ static int test_CMS_verify_result_partial_signer_cert(void)
     int i, found_verified = 0, found_unverified = 0, ret = 0;
 
     if (!TEST_ptr(in = BIO_new_mem_buf("Hello World\n", -1))
-            || !TEST_ptr(out = BIO_new(BIO_s_mem()))
-            || !TEST_ptr(der = BIO_new(BIO_s_mem()))
-            || !TEST_ptr(store = X509_STORE_new())
-            || !TEST_ptr(both_certs = sk_X509_new_null()))
+        || !TEST_ptr(out = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(der = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(both_certs = sk_X509_new_null()))
         goto end;
 
     if (!TEST_ptr(pkey2 = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", 2048))
-            || !TEST_ptr(cert2 = make_self_signed_cert(pkey2, "second-signer")))
+        || !TEST_ptr(cert2 = make_self_signed_cert(pkey2, "second-signer")))
         goto end;
 
     /* two signers with two *different* certs, neither embedded */
     if (!TEST_ptr(cms = CMS_sign(NULL, NULL, NULL, in,
-                                 CMS_BINARY | CMS_PARTIAL | CMS_NOCERTS))
-            || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
-            || !TEST_ptr(CMS_add1_signer(cms, cert2, pkey2, NULL, CMS_NOCERTS))
-            || !TEST_true(CMS_final(cms, in, NULL, CMS_BINARY)))
+                      CMS_BINARY | CMS_PARTIAL | CMS_NOCERTS))
+        || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
+        || !TEST_ptr(CMS_add1_signer(cms, cert2, pkey2, NULL, CMS_NOCERTS))
+        || !TEST_true(CMS_final(cms, in, NULL, CMS_BINARY)))
         goto end;
 
     /* round-trip through DER so no in-memory signer cert pointers linger */
@@ -506,9 +509,10 @@ static int test_CMS_verify_result_partial_signer_cert(void)
 
     ERR_clear_error();
     if (!TEST_int_eq(CMS_verify(cms2, both_certs, store, NULL, out,
-                                CMS_BINARY | CMS_VERIFY_PARTIAL), 0)
-            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
-                            CMS_R_SIGNER_CERTIFICATE_NOT_FOUND))
+                         CMS_BINARY | CMS_VERIFY_PARTIAL),
+            0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            CMS_R_SIGNER_CERTIFICATE_NOT_FOUND))
         goto end;
 
     sinfos = CMS_get0_SignerInfos(cms2);
@@ -524,7 +528,8 @@ static int test_CMS_verify_result_partial_signer_cert(void)
         CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
 
         if (!TEST_int_eq(CMS_SignerInfo_get_verification_result(si,
-                             CMS_VERIFY_RESULT), 0))
+                             CMS_VERIFY_RESULT),
+                0))
             goto end;
     }
 
@@ -534,7 +539,8 @@ static int test_CMS_verify_result_partial_signer_cert(void)
 
     ERR_clear_error();
     if (!TEST_int_eq(CMS_verify(cms2, both_certs, store, NULL, out,
-                                CMS_BINARY | CMS_VERIFY_PARTIAL), 1))
+                         CMS_BINARY | CMS_VERIFY_PARTIAL),
+            1))
         goto end;
 
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
