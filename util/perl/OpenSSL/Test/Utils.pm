@@ -14,8 +14,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.1";
 @ISA = qw(Exporter);
-@EXPORT = qw(alldisabled anydisabled disabled config available_protocols
-             have_IPv4 have_IPv6);
+@EXPORT = qw(alldisabled anydisabled disabled config target
+             available_protocols have_IPv4 have_IPv6);
 
 =head1 NAME
 
@@ -66,6 +66,10 @@ disabled.
 =item B<config STRING>
 
 Returns an item from the %config hash in \$TOP/configdata.pm.
+
+=item B<target STRING>
+
+Returns an item from the %target hash in \$TOP/configdata.pm.
 
 =item B<have_IPv4>
 
@@ -164,6 +168,11 @@ sub available_protocols {
 sub config {
     load_configdata() unless $configdata_loaded;
     return $config{$_[0]};
+}
+
+sub target {
+    load_configdata() unless $configdata_loaded;
+    return $target{$_[0]};
 }
 
 # IPv4 / IPv6 checker
