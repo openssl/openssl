@@ -62,6 +62,32 @@ push @cmake_configure, "-A", "Win32"
     if config('target') =~ /^VC-WIN32/;
 push @cmake_configure, "-A", "ARM64"
     if config('target') =~ /^VC-WIN64-ARM/;
+
+# With Unix generators, cmake compiles the consumer project with the
+# host compiler's default word size, which may deviate from the OpenSSL
+# build's (e.g. linux-x86 on an x86_64 host).  Translate the word size
+# and ABI selectors from the OpenSSL build's own flags, much like the
+# -A platform selection above.  An arch selector may come from the
+# target's flags or from user supplied ones.
+my @flag_tokens = map { split(/\s+/, $_) } (target('cflags') // '',
+                                            target('CFLAGS') // '',
+                                            @{config('cflags') // []},
+                                            @{config('CFLAGS') // []});
+my @abi_cflags;
+while (@flag_tokens) {
+    my $token = shift @flag_tokens;
+    if ($token =~ /^(-m(?:31|32|64|x32)|-mabi=.*|-maix(?:32|64)|-q(?:32|64)|-xarch=.*|\+DD(?:32|64))$/) {
+        # cmake passes CMAKE_C_FLAGS on the C link line as well
+        push @abi_cflags, $token;
+    } elsif ($token eq '-arch' && @flag_tokens) {
+        # Darwin; the Xcode generator requires the dedicated setting
+        push @cmake_configure,
+            "-DCMAKE_OSX_ARCHITECTURES=" . shift @flag_tokens;
+    }
+}
+push @cmake_configure, "-DCMAKE_C_FLAGS=" . join(" ", @abi_cflags)
+    if @abi_cflags;
+
 push @cmake_configure, "-DTEST_LEGACY_PROVIDER=OFF"
     if disabled("legacy") || disabled("module");
 
