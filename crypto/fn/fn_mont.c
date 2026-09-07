@@ -327,15 +327,16 @@ end:
 /*
  * Arena payload size needed by OSSL_FN_mul_mont().
  *
+ * The runtime canonicalises each operand into [0, N) when needed, a test
+ * that branches on operand values.  Sizing inspects widths only, so the
+ * canonicalisation scratch numbers and their OSSL_FN_mod frames are
+ * budgeted unconditionally; the arena may therefore be slightly larger
+ * than a particular call needs.
+ *
  * Constant-time profile:
- *   - This function is NOT fully constant-time.
- *   - What leaks: the a->dsize != len and OSSL_FN_cmp(a, N) >= 0 tests (and
- *     the same for b) branch on the operand values to choose how many scratch
- *     limbs to budget, so both the branch taken and the returned size reveal
- *     whether each operand was already reduced and correctly sized.  The
- *     comparison OSSL_FN_cmp is itself constant-time; no other value leak.
- *   - The primitives used (OSSL_FN_cmp, OSSL_FN_mod_ctx_size) branch only on
- *     public widths, except that OSSL_FN_cmp performs a value comparison.
+ *   - This function is constant-time.  It branches only on public widths
+ *     (operand dsize vs the modulus width), and the returned size depends
+ *     on widths alone.
  */
 size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont)
@@ -347,25 +348,20 @@ size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     }
 
     int len = mont->N->dsize;
-    int num = 0;
+    /* a and b each get a canonicalisation budget; see above. */
+    int num = 2;
     size_t ret = 0, tmp;
     int err = 0;
 
-    if (a->dsize != len || OSSL_FN_cmp(a, mont->N) >= 0) {
-        num++;
-        if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
-            return 0;
-        if (tmp > ret)
-            ret = tmp;
-    }
+    if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
+        return 0;
+    if (tmp > ret)
+        ret = tmp;
 
-    if (b->dsize != len || OSSL_FN_cmp(b, mont->N) >= 0) {
-        num++;
-        if ((tmp = OSSL_FN_mod_ctx_size(NULL, b, mont->N)) == 0)
-            return 0;
-        if (tmp > ret)
-            ret = tmp;
-    }
+    if ((tmp = OSSL_FN_mod_ctx_size(NULL, b, mont->N)) == 0)
+        return 0;
+    if (tmp > ret)
+        ret = tmp;
 
     if (r != NULL && r->dsize != len)
         num++;
@@ -461,13 +457,16 @@ end:
 /*
  * Arena payload size needed by OSSL_FN_to_mont().
  *
+ * The runtime canonicalises a into [0, N) when needed, a test that
+ * branches on the operand value.  Sizing inspects widths only, so the
+ * canonicalisation scratch number and its OSSL_FN_mod frame are budgeted
+ * unconditionally; the arena may therefore be slightly larger than a
+ * particular call needs.
+ *
  * Constant-time profile:
- *   - This function is NOT constant-time when an operand needs canonicalising.
- *   - What leaks: the a->dsize != len and OSSL_FN_cmp(a, N) >= 0 tests branch
- *     on the operand value to choose how many scratch limbs to budget, so
- *     both the branch taken and the returned size reveal whether a was already
- *     reduced and correctly sized.  OSSL_FN_cmp is itself constant-time; no
- *     other value leak.
+ *   - This function is constant-time.  It branches only on public widths
+ *     (operand dsize vs the modulus width), and the returned size depends
+ *     on widths alone.
  */
 size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
@@ -478,17 +477,15 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     }
 
     int len = mont->N->dsize;
-    int num = 0;
+    /* a gets a canonicalisation budget; see above. */
+    int num = 1;
     size_t ret = 0, tmp;
     int err = 0;
 
-    if (a->dsize != len || OSSL_FN_cmp(a, mont->N) >= 0) {
-        num++;
-        if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
-            return 0;
-        if (tmp > ret)
-            ret = tmp;
-    }
+    if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
+        return 0;
+    if (tmp > ret)
+        ret = tmp;
 
     if (r != NULL && r->dsize != len)
         num++;

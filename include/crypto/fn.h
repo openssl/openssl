@@ -1300,7 +1300,7 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx);
  * has free space for 2 frame, 7 numbers, and
  * 7 * max(a->dsize, b->dsize, mont->N->dsize) + 2 limbs.
  * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_mul_mont_ctx_size() for an exact, conditional value.
+ * smaller - see OSSL_FN_mul_mont_ctx_size() for an exact value.
  *
  * A timing side-channel may leak limb-size misalignment or whether the input
  * operands exceed the modulus. However, this leakage is non-critical and
@@ -1323,9 +1323,8 @@ int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * If `r == NULL`, the returned size is calculated as if @p r has the same size
  * as the modulus.
  *
- * A timing side-channel may leak limb-size misalignment or whether the input
- * operands exceed the modulus. However, this leakage is non-critical and
- * acceptable from a security perspective.
+ * This function inspects widths only; the returned size depends on the
+ * operand and modulus widths alone, never on limb values.
  */
 size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont);
@@ -1381,7 +1380,7 @@ size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  * the same size and that the OSSL_FN_CTX has free space for 2 frame,
  * 5 numbers, and 5 * max(a->dsize, mont->N->dsize) + 2 limbs.
  * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_to_mont_ctx_size() for an exact, conditional value.
+ * smaller - see OSSL_FN_to_mont_ctx_size() for an exact value.
  *
  * A timing side-channel may leak limb-size misalignment or whether @p a
  * exceeds the modulus. However, this leakage is non-critical and acceptable
@@ -1403,9 +1402,8 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
  * If `r == NULL`, the returned size is calculated as if @p r has the same
  * size as the modulus.
  *
- * A timing side-channel may leak limb-size misalignment or whether @p a
- * exceeds the modulus. However, this leakage is non-critical and acceptable
- * from a security perspective.
+ * This function inspects widths only; the returned size depends on the
+ * operand and modulus widths alone, never on limb values.
  */
 size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
