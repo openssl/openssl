@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <limits.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -16,6 +17,10 @@
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SOCK
+
+#define DTLS_RECORD_EPOCH_AND_SEQ_LEN 8
+
+static const char *certsdir = NULL;
 
 /* Just a ClientHello without a cookie */
 static const unsigned char clienthello_nocookie[] = {
@@ -316,6 +321,7 @@ static int dtls_listen_test(int i)
         goto err;
     BIO_set_mem_eof_return(inbio, -1);
     SSL_set0_rbio(ssl, inbio);
+    inbio = NULL;
 
     /* Process the incoming packet */
     if (!TEST_int_ge(ret = DTLSv1_listen(ssl, peer), 0))
@@ -347,12 +353,171 @@ err:
     OPENSSL_free(peer);
     return success;
 }
+
+#ifndef OPENSSL_NO_DTLS1_2
+static unsigned char *create_cookie_clienthello(int *outlen,
+    const unsigned char *seq)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    BIO *rbio = NULL, *wbio = NULL;
+    BIO *ssl_rbio = NULL, *ssl_wbio = NULL;
+    char *data = NULL;
+    long datalen;
+    unsigned char *ret = NULL;
+    int sslret;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(rbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(wbio = BIO_new(BIO_s_mem())))
+        goto err;
+
+    ssl_rbio = rbio;
+    ssl_wbio = wbio;
+    SSL_set0_rbio(ssl, rbio);
+    SSL_set0_wbio(ssl, wbio);
+    rbio = wbio = NULL;
+    SSL_set_connect_state(ssl);
+
+    if (!TEST_int_le(sslret = SSL_connect(ssl), 0)
+        || !TEST_int_eq(SSL_get_error(ssl, sslret), SSL_ERROR_WANT_READ)
+        || !TEST_int_gt(BIO_reset(ssl_wbio), 0)
+        || !TEST_int_eq(BIO_write(ssl_rbio, verify, sizeof(verify)),
+            sizeof(verify))
+        || !TEST_int_le(sslret = SSL_connect(ssl), 0)
+        || !TEST_int_eq(SSL_get_error(ssl, sslret), SSL_ERROR_WANT_READ)
+        || !TEST_long_ge(datalen = BIO_get_mem_data(ssl_wbio, &data),
+            DTLS1_RT_HEADER_LENGTH)
+        || !TEST_long_le(datalen, INT_MAX))
+        goto err;
+
+    if (!TEST_ptr(ret = OPENSSL_memdup(data, datalen)))
+        goto err;
+
+    *outlen = (int)datalen;
+
+    /* DTLS record header bytes 3..10 are epoch and sequence number. */
+    memcpy(ret + 3, seq, DTLS_RECORD_EPOCH_AND_SEQ_LEN);
+
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    BIO_free(rbio);
+    BIO_free(wbio);
+    return ret;
+}
+
+static int dtls_listen_write_seq_test(int tst)
+{
+    static const unsigned char initial_seq[DTLS_RECORD_EPOCH_AND_SEQ_LEN] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02
+    };
+    static const unsigned char wrap_seq[DTLS_RECORD_EPOCH_AND_SEQ_LEN] = {
+        0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    };
+    static const unsigned char expected_record_seq[2 + DTLS_RECORD_EPOCH_AND_SEQ_LEN] = {
+        0xfe, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x02
+    };
+    const unsigned char *seq = tst == 0 ? initial_seq : wrap_seq;
+    unsigned char *inbuf = NULL;
+    int inbuflen = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    BIO *outbio = NULL;
+    BIO *inbio = NULL;
+    BIO_ADDR *peer = NULL;
+    char *cert = NULL;
+    char *privkey = NULL;
+    char *data;
+    long datalen;
+    int ret, success = 0;
+
+    if (!TEST_ptr(inbuf = create_cookie_clienthello(&inbuflen, seq)))
+        goto err;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(peer = BIO_ADDR_new()))
+        goto err;
+    SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
+    SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
+    cert = test_mk_file_path(certsdir, "servercert.pem");
+    privkey = test_mk_file_path(certsdir, "serverkey.pem");
+    if (!TEST_ptr(cert)
+        || !TEST_ptr(privkey)
+        || !TEST_true(SSL_CTX_use_certificate_file(ctx, cert,
+            SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(ctx, privkey,
+            SSL_FILETYPE_PEM)))
+        goto err;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(outbio = BIO_new(BIO_s_mem())))
+        goto err;
+
+    SSL_set0_wbio(ssl, outbio);
+    if (!TEST_ptr(inbio = BIO_new_mem_buf(inbuf, inbuflen)))
+        goto err;
+
+    BIO_set_mem_eof_return(inbio, -1);
+    SSL_set0_rbio(ssl, inbio);
+    inbio = NULL;
+
+    if (!TEST_int_eq(ret = DTLSv1_listen(ssl, peer), 1))
+        goto err;
+
+    datalen = BIO_get_mem_data(outbio, &data);
+    if (!TEST_long_eq(datalen, 0))
+        goto err;
+
+    ret = SSL_accept(ssl);
+    if (tst == 1) {
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(ssl, ret), SSL_ERROR_SSL)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_SEQUENCE_CTR_WRAPPED))
+            goto err;
+        success = 1;
+        goto err;
+    }
+
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(ssl, ret), SSL_ERROR_WANT_READ))
+        goto err;
+
+    datalen = BIO_get_mem_data(outbio, &data);
+    if (!TEST_long_ge(datalen, DTLS1_RT_HEADER_LENGTH)
+        || !TEST_mem_eq(data + 1, sizeof(expected_record_seq),
+            expected_record_seq, sizeof(expected_record_seq)))
+        goto err;
+
+    SSL_set0_rbio(ssl, NULL);
+    success = 1;
+
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    BIO_free(inbio);
+    OPENSSL_free(inbuf);
+    OPENSSL_free(cert);
+    OPENSSL_free(privkey);
+    OPENSSL_free(peer);
+    return success;
+}
+#endif
 #endif
 
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_SOCK
+    if (!TEST_ptr(certsdir = test_get_argument(0)))
+        return 0;
+
     ADD_ALL_TESTS(dtls_listen_test, (int)OSSL_NELEM(testpackets));
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_ALL_TESTS(dtls_listen_write_seq_test, 2);
+#endif
 #endif
     return 1;
 }
