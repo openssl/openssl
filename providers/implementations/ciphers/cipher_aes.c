@@ -14,7 +14,7 @@
  */
 #include "internal/deprecated.h"
 
-/* Dispatch functions for AES cipher modes ecb, cbc, cts, ofb, cfb, ctr */
+/* Dispatch functions for AES cipher modes cbc, cts, ofb, cfb, ctr */
 
 #include "cipher_cts.h"
 #include "cipher_aes.h"
@@ -71,12 +71,6 @@ static int aes_cbc_cts_dinit(void *ctx, const unsigned char *key, size_t keylen,
     return ossl_cipher_cbc_cts_set_ctx_params(ctx, params);
 }
 
-/* ossl_aes256ecb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 256, 128, 0, block)
-/* ossl_aes192ecb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 192, 128, 0, block)
-/* ossl_aes128ecb_functions */
-IMPLEMENT_generic_cipher(aes, AES, ecb, ECB, 0, 128, 128, 0, block)
 /* ossl_aes256cbc_functions */
 IMPLEMENT_generic_cipher(aes, AES, cbc, CBC, 0, 256, 128, 128, block)
 /* ossl_aes192cbc_functions */
