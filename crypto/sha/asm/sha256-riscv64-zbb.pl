@@ -66,19 +66,38 @@ my $K256 = "K256";
 # Function arguments
 my ($INP, $LEN, $ADDR) = ("a1", "a2", "sp");
 my ($KT, $T1, $T2, $T3, $T4, $T5, $T6, $T7, $T8) = ("t0", "t1", "t2", "t3", "t4", "t5", "t6", "a3", "a4");
+# Shift amounts for misaligned input (Zbb only, T7/T8 are free there)
+my ($SHL, $SHR) = ($T7, $T8);
+my ($MISALIGNED_INPUT, $ALIGNED_INPUT) = (0, 1);
 # Parity-indexed pairs: W = W[i], U = W[i-15], X = a ^ b
 my ($W0, $W1, $U0, $U1, $X0, $X1) = ("a5", "a6", "a7", "s0", "s1", "s10");
 my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ("s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9");
 
+# Misaligned: $dst = (lo >> SHL) | (hi << SHR) from two aligned loads
+sub loadDword {
+    my ($ALIGNED, $dst, $off) = @_;
+    if ($ALIGNED) {
+        return "ld $dst, $off($INP)";
+    }
+    my $code=<<___;
+    ld $T5, $off($INP)
+    ld $T6, ($off+8)($INP)
+    srl $dst, $T5, $SHL
+    sll $T6, $T6, $SHR
+    or $dst, $dst, $T6
+___
+    return $code;
+}
+
 sub MSGSCHEDULE0 {
-    my ($index) = @_;
+    my ($ALIGNED, $index) = @_;
     if ($use_zbb) {
         # Odd rounds: W[i] is already in W1
         if ($index & 1) {
             return "";
         }
         my $code=<<___;
-        ld $W1, 4*$index($INP)
+        @{[loadDword $ALIGNED, $W1, "4*$index"]}
         @{[rev8 $W1, $W1]} # rev8 $W1, $W1
         srli $W0, $W1, 32
         sw $W0, 4*$index($ADDR)
@@ -245,9 +264,9 @@ ___
 }
 
 sub SHA256ROUND0 {
-    my ($INDEX, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
+    my ($ALIGNED, $INDEX, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
     my $code=<<___;
-    @{[MSGSCHEDULE0 $INDEX]}
+    @{[MSGSCHEDULE0 $ALIGNED, $INDEX]}
     @{[SHA256ROUND $INDEX, $a, $b, $c, $d, $e, $f, $g, $h]}
 ___
 
@@ -300,6 +319,21 @@ sha256_block_data_order@{[$isaext]}:
     lw $F, 20(a0)
     lw $G, 24(a0)
     lw $H, 28(a0)
+___
+
+if ($use_zbb) {
+$code .= <<___;
+
+    andi $SHL, $INP, 7
+    beqz $SHL, L_round_loop
+    andi $INP, $INP, -8
+    slli $SHL, $SHL, 3
+    li $T1, 64
+    sub $SHR, $T1, $SHL
+___
+}
+
+$code .= <<___;
 
 L_round_loop:
     # Decrement length by 1
@@ -309,20 +343,47 @@ L_round_loop:
     xor $X1, $B, $C
 ___
 
-for (my $i = 0; $i < 16; $i += 8) {
+# Rounds 0..15, plus a misaligned-input copy for Zbb (byte loads need none)
+if ($use_zbb) {
     $code .= <<___;
-    @{[SHA256ROUND0 $i, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND0 $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND0 $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND0 $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
-    @{[SHA256ROUND0 $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND0 $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND0 $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND0 $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+    bnez $SHL, L_load_misaligned
 ___
 }
 
+for (my $i = 0; $i < 16; $i += 8) {
+    $code .= <<___;
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA256ROUND0 $ALIGNED_INPUT, $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
+
+if ($use_zbb) {
+    $code .= <<___;
+    j L_message_schedule
+L_load_misaligned:
+___
+    for (my $i = 0; $i < 16; $i += 8) {
+        $code .= <<___;
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA256ROUND0 $MISALIGNED_INPUT, $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+    }
+}
+
 $code .= <<___;
+L_message_schedule:
     # Round 16's W[i-16] is W[0]; later rounds reuse the previous W[i-15]
     lw $U1, 0($ADDR)
 ___
