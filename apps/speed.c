@@ -3730,29 +3730,40 @@ int speed_main(int argc, char **argv)
                 || EVP_PKEY_derive_init(test_ctx) <= 0 /* init derivation test_ctx */
                 || EVP_PKEY_derive_set_peer(test_ctx, key_A) <= 0 /* set peer pubkey in test_ctx */
                 || EVP_PKEY_derive(test_ctx, NULL, &test_outlen) <= 0 /* determine max length */
-                || EVP_PKEY_derive(ctx, loopargs[i].secret_a, &outlen) <= 0 /* compute a*B */
+            ) {
+                ecdh_checks = 0;
+                /* stop all the ecdh's */
+                /* usually the previous check for ctx catches these failures */
+                BIO_puts(bio_err, "ECDH setup failure for test_ctx.\n");
+                dofail();
+                op_count = 1;
+                goto ecdh_err_break;
+            }
+            if (EVP_PKEY_derive(ctx, loopargs[i].secret_a, &outlen) <= 0 /* compute a*B */
                 || EVP_PKEY_derive(test_ctx, loopargs[i].secret_b, &test_outlen) <= 0 /* compute b*A */
-                || test_outlen != outlen /* compare output length */) {
+                || test_outlen != outlen /* compare output length */
+            ) {
+                /* skip only this */
+                ecdh_doit[testnum] = 0;
                 ecdh_checks = 0;
                 error = ERR_peek_error();
                 /* skip or stop depending on error code */
                 if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                     && ERR_GET_REASON(error) == PROV_R_COFACTOR_REQUIRED) {
-                    /* skip only this */
-                    ecdh_doit[testnum] = 0;
                     ERR_get_error(); /* skip this error */
-                    ERR_print_errors(bio_err); /* print unhandled errors if exist */
                     if (!mr) {
                         /* space after 'Skip' is to align with 'Doing' */
                         BIO_printf(bio_err, "Skip  %s with cofactor required\n",
                             ecdh_choices[testnum].name);
                     }
                 } else {
-                    /* stop all the ecdh's */
-                    BIO_puts(bio_err, "ECDH computation failure.\n");
-                    dofail();
-                    op_count = 1;
+                    if (!mr) {
+                        /* space after 'Skip' is to align with 'Doing' */
+                        BIO_printf(bio_err, "Skip  %s with ECDH computation failure\n",
+                            ecdh_choices[testnum].name);
+                    }
                 }
+                ERR_print_errors(bio_err); /* print unhandled errors if exist */
                 goto ecdh_err_break;
             }
 
