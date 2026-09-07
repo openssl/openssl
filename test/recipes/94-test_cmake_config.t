@@ -20,6 +20,11 @@ setup("test_cmake_config");
 plan skip_all => "cmake is not available"
     unless IPC::Cmd::can_run("cmake");
 
+# Cross compiling the consumer project would require a toolchain
+# file, which is a bigger endeavour than is fitting for this test.
+plan skip_all => 'This is unsupported for cross compiled configurations'
+    if config('CROSS_COMPILE');
+
 # The cmake-built dummies aren't sanitizer-instrumented, but wrap.pl
 # inherits the sanitizer runtime environment from the outer test run.
 # ASan refuses to attach to a non-instrumented executable, MSan
