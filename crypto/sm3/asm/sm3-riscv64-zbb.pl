@@ -67,6 +67,9 @@ my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ("s2", "s3", "s4", "s5", "s6", "s7", "s8",
 my ($W9, $W10, $W11, $W12, $W13 ,$W14 ,$W15) = ("s0", "s1", "a5", "a6", "a7", "s10", "s11");
 my @W = (undef, undef, undef, undef, undef, undef, undef, undef, undef,
         $W9, $W10, $W11, $W12, $W13, $W14, $W15);
+# Misaligned input only; they reuse round temporaries, so are set up per block
+my ($BASE, $SHL, $SHR) = ($T3, $T4, $T5);
+my ($MISALIGNED_INPUT, $ALIGNED_INPUT) = (0, 1);
 
 # W[9..15] live in registers, the rest on the stack; Wload/Wstore skip registers
 sub Wreg {
@@ -233,48 +236,64 @@ ___
     return $code;
 }
 
+# Misaligned: $dst = (lo >> SHL) | (hi << SHR) from two aligned loads
+sub loadDword {
+    my ($ALIGNED, $dst, $off) = @_;
+    if ($ALIGNED) {
+        return "ld $dst, $off($INP)";
+    }
+    my $code=<<___;
+    ld $TMP0, $off($BASE)
+    ld $TMP1, ($off+8)($BASE)
+    srl $dst, $TMP0, $SHL
+    sll $TMP1, $TMP1, $SHR
+    or $dst, $dst, $TMP1
+___
+    return $code;
+}
+
 # One ld plus rev8 yields two message words, the first in the top half
 sub loadMsgRev32 {
+    my ($ALIGNED) = @_;
     my $code=<<___;
-
-    ld $T1, 0($INP)
+    @{[loadDword $ALIGNED, $T1, 0]}
     @{[rev8 $T1, $T1]}
     srli $T2, $T1, 32
     sw $T2, 0($ADDR)
     sw $T1, 4($ADDR)
 
-    ld $T1, 8($INP)
+    @{[loadDword $ALIGNED, $T1, 8]}
     @{[rev8 $T1, $T1]}
     srli $T2, $T1, 32
     sw $T2, 8($ADDR)
     sw $T1, 12($ADDR)
 
-    ld $T1, 16($INP)
+    @{[loadDword $ALIGNED, $T1, 16]}
     @{[rev8 $T1, $T1]}
     srli $T2, $T1, 32
     sw $T2, 16($ADDR)
     sw $T1, 20($ADDR)
 
-    ld $T1, 24($INP)
+    @{[loadDword $ALIGNED, $T1, 24]}
     @{[rev8 $T1, $T1]}
     srli $T2, $T1, 32
     sw $T2, 24($ADDR)
     sw $T1, 28($ADDR)
 
-    ld $W9, 32($INP)
+    @{[loadDword $ALIGNED, $W9, 32]}
     @{[rev8 $W9, $W9]}
     srli $T2, $W9, 32
     sw $T2, 32($ADDR)
 
-    ld $W11, 40($INP)
+    @{[loadDword $ALIGNED, $W11, 40]}
     @{[rev8 $W11, $W11]}
     srli $W10, $W11, 32
 
-    ld $W13, 48($INP)
+    @{[loadDword $ALIGNED, $W13, 48]}
     @{[rev8 $W13, $W13]}
     srli $W12, $W13, 32
 
-    ld $W15, 56($INP)
+    @{[loadDword $ALIGNED, $W15, 56]}
     @{[rev8 $W15, $W15]}
     srli $W14, $W15, 32
 ___
@@ -322,7 +341,20 @@ L_round_loop:
     # Decrement length by 1
     addi $LEN, $LEN, -1
 
-    @{[loadMsgRev32]}
+    andi $T1, $INP, 7
+    bnez $T1, L_load_misaligned
+    @{[loadMsgRev32 $ALIGNED_INPUT]}
+    j L_rounds
+
+L_load_misaligned:
+    andi $BASE, $INP, -8
+    andi $SHL, $INP, 7
+    slli $SHL, $SHL, 3
+    li $SHR, 64
+    sub $SHR, $SHR, $SHL
+    @{[loadMsgRev32 $MISALIGNED_INPUT]}
+
+L_rounds:
 ___
 
 for (my $i = 0; $i < 16; $i += 4) {
