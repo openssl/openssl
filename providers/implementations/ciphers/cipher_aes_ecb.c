@@ -117,6 +117,7 @@ static void *aes_ecb_dupctx(void *ctx)
     ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL)
         return NULL;
+    ret->internal = in->internal;
     in->aesbase.base.hw->copyctx(&ret->aesbase.base, &in->aesbase.base);
     OSSL_FIPS_IND_COPY(ret, in)
     return ret;
