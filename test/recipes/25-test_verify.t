@@ -70,7 +70,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 222;
+plan tests => 223;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -340,6 +340,10 @@ ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
 ok(verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)],
           "-allow_proxy_certs"),
    "accept proxy cert 1");
+ok(verify("pc1-pathlen-max-cert", "sslclient", [qw(root-cert)],
+          [qw(ee-client-pathlen-max ca-cert-pathlen-max)],
+          "-allow_proxy_certs"),
+   "accept proxy cert below CA with maximum path length");
 ok(verify("pc2-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
           "-allow_proxy_certs"),
    "accept proxy cert 2");

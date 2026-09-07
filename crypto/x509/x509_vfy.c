@@ -742,7 +742,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
             return 0;
         /* Check path length */
         CB_FAIL_IF(i > 1 && x->ex_pathlen != -1
-                && plen > x->ex_pathlen + proxy_path_length,
+                && plen - proxy_path_length > x->ex_pathlen,
             ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED);
         /* Increment path length if not a self-issued intermediate CA */
         if (i > 0 && (x->ex_flags & EXFLAG_SI) == 0)
