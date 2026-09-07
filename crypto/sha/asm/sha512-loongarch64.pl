@@ -10,7 +10,7 @@
 #
 # or
 #
-# Copyright (c) 2025, Julian Zhu <jz531210@gmail.com>
+# Copyright (c) 2025-2026, Julian Zhu <jz531210@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,9 @@ my ($vt0, $vt1, $vt2, $vt3, $vt4, $vt5, $vt6, $vt7) = map("\$vr$_",(8..15));
 my ($INP, $LEN, $ADDR) = ($a1, $a2, $sp);
 my ($KT, $T1, $T2, $T3, $T4, $T5, $T6) = ($t0, $t1, $t2, $t3, $t4, $t5, $t6);
 my ($A, $B, $C, $D, $E, $F, $G, $H) = ($s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7);
+# Register pairs indexed by round parity, reused by later rounds:
+# W = W[i], U = W[i-15] (next round's W[i-16]), X = a ^ b (next round's b ^ c)
+my ($W0, $W1, $U0, $U1, $X0, $X1) = ($a3, $a4, $a5, $a6, $a7, $t7);
 my @VMSGS = ($va0, $va1, $va2, $va3, $va4, $va5, $va6, $va7);
 
 sub strip {
@@ -85,8 +88,9 @@ sub MSGSCHEDULE0_lsx {
 ___
     }
 
+    my $Wi = ($index & 1) ? $W1 : $W0;
     $code .= <<___;
-    vpickve2gr.d $T1, $msg, @{[$index%2]}
+    vpickve2gr.d $Wi, $msg, @{[$index%2]}
 ___
 
     return strip($code);
@@ -99,10 +103,11 @@ sub MSGSCHEDULE0 {
         return MSGSCHEDULE0_lsx($index);
     }
 
+    my $Wi = ($index & 1) ? $W1 : $W0;
     my $code=<<___;
-    ld.d $T1, $INP, @{[8*$index]}
-    revb.d $T1, $T1
-    st.d $T1, $ADDR, @{[8*$index]}
+    ld.d $Wi, $INP, @{[8*$index]}
+    revb.d $Wi, $Wi
+    st.d $Wi, $ADDR, @{[8*$index]}
 ___
     return strip($code);
 }
@@ -155,8 +160,9 @@ ___
 ___
     }
 
+    my $Wi = ($index & 1) ? $W1 : $W0;
     $code .= <<___;
-    vpickve2gr.d $T1, $m01, @{[$index%2]}
+    vpickve2gr.d $Wi, $m01, @{[$index%2]}
 ___
 
     return strip($code);
@@ -169,62 +175,68 @@ sub MSGSCHEDULE1 {
         return MSGSCHEDULE1_lsx($index);
     }
 
+    # W[i-2] and W[i-16] are already in registers, only W[i-7] and W[i-15] are loaded
+    my $Wi2 = ($index & 1) ? $W1 : $W0;
+    # W[i] goes into the register holding W[i-2], so only the final add may write it
+    my $Wi = $Wi2;
+    my $Wi15 = ($index & 1) ? $U1 : $U0;
+    my $Wi16 = ($index & 1) ? $U0 : $U1;
     my $code=<<___;
-    ld.d $T1, $ADDR, @{[(($index-2)&0x0f)*8]}
-    ld.d $T2, $ADDR, @{[(($index-15)&0x0f)*8]}
     ld.d $T3, $ADDR, @{[(($index-7)&0x0f)*8]}
-    ld.d $T4, $ADDR, @{[($index&0x0f)*8]}
-    rotri.d $T5, $T1, 19
-    rotri.d $T6, $T1, 61
-    srli.d $T1, $T1, 6
+    ld.d $Wi15, $ADDR, @{[(($index-15)&0x0f)*8]}
+    rotri.d $T5, $Wi2, 19
+    rotri.d $T6, $Wi2, 61
+    srli.d $T1, $Wi2, 6
     xor $T1, $T1, $T5
     xor $T1, $T1, $T6
     add.d $T1, $T1, $T3
-    rotri.d $T5, $T2, 1
-    rotri.d $T6, $T2, 8
-    srli.d $T2, $T2, 7
+    rotri.d $T5, $Wi15, 1
+    rotri.d $T6, $Wi15, 8
+    srli.d $T2, $Wi15, 7
     xor $T2, $T2, $T5
     xor $T2, $T2, $T6
-    add.d $T1, $T1, $T2
-    add.d $T1, $T1, $T4
-    st.d $T1, $ADDR, @{[8*($index&0x0f)]}
+    add.d $T2, $T2, $Wi16
+    add.d $Wi, $T1, $T2
+    st.d $Wi, $ADDR, @{[8*($index&0x0f)]}
 ___
     return strip($code);
 }
 
 sub sha512_T1 {
     my ($index, $e, $f, $g, $h) = @_;
+    my $Wi = ($index & 1) ? $W1 : $W0;
     my $code=<<___;
     ld.d $T4, $KT, @{[8*$index]}
-    add.d $h, $h, $T1
-    add.d $h, $h, $T4
     rotri.d $T2, $e, 14
     rotri.d $T3, $e, 18
-    rotri.d $T4, $e, 41
-    xor $T2, $T2, $T3
+    rotri.d $T5, $e, 41
+    add.d $h, $h, $Wi
     xor $T1, $f, $g
-    xor $T2, $T2, $T4
+    add.d $h, $h, $T4
+    xor $T2, $T2, $T3
     and $T1, $T1, $e
-    add.d $h, $h, $T2
+    xor $T2, $T2, $T5
     xor $T1, $T1, $g
-    add.d $T1, $T1, $h
+    add.d $T2, $T2, $h
+    add.d $T1, $T1, $T2
 ___
     return strip($code);
 }
 
 sub sha512_T2 {
-    my ($a, $b, $c) = @_;
+    my ($index, $a, $b, $c) = @_;
+    my $Xab = ($index & 1) ? $X1 : $X0;
+    my $Xbc = ($index & 1) ? $X0 : $X1;
     my $code=<<___;
     rotri.d $T2, $a, 28
     rotri.d $T3, $a, 34
     rotri.d $T4, $a, 39
+    xor $Xab, $a, $b
     xor $T2, $T2, $T3
-    xor $T5, $b, $c
-    and $T3, $b, $c
-    and $T5, $T5, $a
+    and $T5, $Xab, $Xbc
     xor $T2, $T2, $T4
-    xor $T3, $T3, $T5
-    add.d $T2, $T2, $T3
+    xor $T5, $T5, $b
+    add.d $T2, $T2, $T5
 ___
     return strip($code);
 }
@@ -235,7 +247,7 @@ sub SHA512ROUND {
     my $code=<<___;
     @{[$ms->($index)]}
     @{[sha512_T1 $index, $e, $f, $g, $h]}
-    @{[sha512_T2 $a, $b, $c]}
+    @{[sha512_T2 $index, $a, $b, $c]}
     add.d $d, $d, $T1
     add.d $h, $T2, $T1
 ___
@@ -288,9 +300,32 @@ $code .= <<___;
 L_round_loop:
     # Decrement length by 1
     addi.d $LEN, $LEN, -1
+
+    # b ^ c for round 0's Maj
+    xor $X1, $B, $C
 ___
 
-for (my $i = 0; $i < 80; $i += 8) {
+for (my $i = 0; $i < 16; $i += 8) {
+    $code .= <<___;
+    @{[SHA512ROUND $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA512ROUND $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA512ROUND $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA512ROUND $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA512ROUND $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA512ROUND $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA512ROUND $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA512ROUND $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
+
+if (!$use_lsx) {
+$code .= <<___;
+    # W[0], the W[i-16] of round 16
+    ld.d $U1, $ADDR, 0
+___
+}
+
+for (my $i = 16; $i < 80; $i += 8) {
     $code .= <<___;
     @{[SHA512ROUND $i, $A, $B, $C, $D, $E, $F, $G, $H]}
     @{[SHA512ROUND $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
