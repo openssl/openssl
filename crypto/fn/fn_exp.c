@@ -47,11 +47,12 @@
  *
  * |in_mont| mirrors OSSL_FN_mod_exp_mont(): NULL models the function-owned
  * context, a real value sizes for a reused one.  Both give the same size:
- * to_mont_ctx_size() gates |a|'s reduction on a comparison against |N|, and
- * |N| equals |m| either way (the model points it at |m|; a reused context
- * holds a copy made by OSSL_FN_MONT_CTX_new()).  The loop and from_mont
- * operate on reduced ml-wide Montgomery-domain values; their sizing helpers
- * read only mont->N->dsize (== ml), so those operands are not modelled here.
+ * the mont sizing helpers inspect widths only, so the only |in_mont| datum
+ * they read is mont->N->dsize, and |N| equals |m| either way (the model
+ * points it at |m|; a reused context holds a copy made by
+ * OSSL_FN_MONT_CTX_new()).  The loop and from_mont operate on reduced
+ * ml-wide Montgomery-domain values; their sizing helpers read only
+ * mont->N->dsize (== ml), so those operands are not modelled here.
  */
 static size_t mod_exp_mont_nested(const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_MONT_CTX *in_mont)
