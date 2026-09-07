@@ -96,10 +96,26 @@ push @cmake_configure, "-DCMAKE_C_FLAGS=" . join(" ", @abi_cflags)
 push @cmake_configure, "-DTEST_LEGACY_PROVIDER=OFF"
     if disabled("legacy") || disabled("module");
 
-ok(run(cmd([@cmake_configure])),
+# cmake and ctest are host tools; wrap.pl (run by OpenSSL::Test::run())
+# would substitute the build's shared libraries into their processes
+# where sonames match (such as 3.x trees, currently), breaking them when
+# the ABIs differ. Only the dummy executables should be run through the
+# wrapper (OPENSSL_WRAP_PL in the consumer project).
+sub run_host_command {
+    my ($command) = @_;
+    my ($success, $error, $output) =
+        IPC::Cmd::run(command => $command);
+    if (!$success) {
+        diag($error) if defined $error;
+        diag(join("", @{$output})) if defined $output;
+    }
+    return $success;
+}
+
+ok(run_host_command(\@cmake_configure),
    "configure the cmake test project");
-ok(run(cmd(["cmake", "--build", $cmake_build_dir, "--config", "Release"])),
+ok(run_host_command(["cmake", "--build", $cmake_build_dir, "--config", "Release"]),
    "build the cmake test project");
-ok(run(cmd(["ctest", "--test-dir", $cmake_build_dir,
-            "-C", "Release", "--output-on-failure"])),
+ok(run_host_command(["ctest", "--test-dir", $cmake_build_dir,
+                     "-C", "Release", "--output-on-failure"]),
    "run the cmake test project");
