@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -236,7 +236,8 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
         goto end;
     }
 
-    if (!CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx) || load_ctx->invalid_log_entries > 0) {
+    if (CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx) <= 0
+        || load_ctx->invalid_log_entries > 0) {
         ERR_raise(ERR_LIB_CT, CT_R_LOG_CONF_INVALID);
         goto end;
     }
