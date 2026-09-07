@@ -56,10 +56,14 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
 #ifdef REGISTRY_KEY
     DWORD keysizebytes;
     DWORD ktype;
-    HKEY hkey;
+    HKEY hkey = NULL;
     LSTATUS ret;
-    DWORD index = 0;
-    LPCWSTR tempstr = NULL;
+    WCHAR *tempstr = NULL;
+    int mblen;
+
+    if (dst == NULL || dstsizebytes == 0)
+        return NULL;
+    dst[0] = '\0';
 
     /*
      * Narrow call: TEXT(REGISTRY_KEY) would widen only the first literal of the
@@ -80,6 +84,14 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
         goto out;
     if (keysizebytes > MAX_PATH * sizeof(WCHAR))
         goto out;
+    /*
+     * A registry value may be stored with an arbitrary byte count, so a
+     * REG_SZ is not guaranteed to contain a whole number of WCHARs.  Reject
+     * such a value rather than reading a partial character out of the
+     * allocation below.
+     */
+    if (keysizebytes == 0 || (keysizebytes % sizeof(WCHAR)) != 0)
+        goto out;
 
     /*
      * RegQueryValueExW does not guarantee the buffer is null terminated,
@@ -95,14 +107,26 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
         != ERROR_SUCCESS)
         goto out;
 
-    if (!WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, dstsizebytes,
-            NULL, NULL))
+    /*
+     * A UTF-8 encoding can be up to three times as long as its UTF-16 source,
+     * so the conversion can fail with ERROR_INSUFFICIENT_BUFFER even though
+     * the value passed the MAX_PATH check above.  In that case dst may hold a
+     * partial, unterminated result, so clear it instead of leaving a silently
+     * truncated directory behind.
+     */
+    mblen = WideCharToMultiByte(CP_UTF8, 0, tempstr, -1, dst, (int)dstsizebytes,
+        NULL, NULL);
+    if (mblen <= 0) {
+        dst[0] = '\0';
         goto out;
+    }
+    dst[dstsizebytes - 1] = '\0';
 
     retval = dst;
 out:
     OPENSSL_free(tempstr);
-    RegCloseKey(hkey);
+    if (hkey != NULL)
+        RegCloseKey(hkey);
 #endif /* REGISTRY_KEY */
     return retval;
 }
@@ -116,16 +140,19 @@ static CRYPTO_ONCE defaults_setup_init = CRYPTO_ONCE_STATIC_INIT;
  */
 DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
 {
-    get_windows_regdirs(openssldir, sizeof(openssldir), L"OPENSSLDIR");
-    get_windows_regdirs(modulesdir, sizeof(modulesdir), L"MODULESDIR");
-
     /*
-     * Set our pointers only if the directories are fetched properly
+     * Set our pointers only if the directories are fetched properly.  The
+     * return value has to be checked: on failure get_windows_regdirs() makes
+     * no promise about the state of the destination buffer, so testing it
+     * with strlen() alone is not enough to tell a successful lookup from a
+     * failed one.
      */
-    if (strlen(openssldir) > 0)
+    if (get_windows_regdirs(openssldir, sizeof(openssldir), L"OPENSSLDIR") != NULL
+        && openssldir[0] != '\0')
         openssldirptr = openssldir;
 
-    if (strlen(modulesdir) > 0)
+    if (get_windows_regdirs(modulesdir, sizeof(modulesdir), L"MODULESDIR") != NULL
+        && modulesdir[0] != '\0')
         modulesdirptr = modulesdir;
 
     return 1;
