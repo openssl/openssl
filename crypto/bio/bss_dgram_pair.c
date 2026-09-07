@@ -12,6 +12,7 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 #include "internal/safe_math.h"
+#include "internal/threads_common.h"
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 
@@ -294,6 +295,11 @@ struct bio_dgram_peer_st {
      */
     int peer_state;
 
+    /*
+     * Lock for peer_state atomic ops where needed
+     */
+    CRYPTO_RWLOCK *peerlock;
+
     /**
      * Ring buffer mappings for the two datagram directions,
      * indexed one per direction.
@@ -517,8 +523,17 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
     }
+    pair->peerlock = CRYPTO_THREAD_lock_new();
+    if (pair->peerlock == NULL) {
+        CRYPTO_FREE_REF(&pair->ref_cnt);
+        OPENSSL_free(pair->peerlock);
+        OPENSSL_free(pair);
+        return 0;
+    }
+
     if (ring_buf_init(&pair->map[0].rbuf, b1->req_buf_len) == 0) {
         CRYPTO_FREE_REF(&pair->ref_cnt);
+        CRYPTO_THREAD_lock_free(pair->peerlock);
         OPENSSL_free(pair);
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
@@ -526,6 +541,7 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
 
     if (ring_buf_init(&pair->map[1].rbuf, b2->req_buf_len) == 0) {
         CRYPTO_FREE_REF(&pair->ref_cnt);
+        CRYPTO_THREAD_lock_free(pair->peerlock);
         OPENSSL_free(pair);
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
@@ -537,6 +553,7 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
     if (pair->map[0].lock == NULL || pair->map[1].lock == NULL) {
         CRYPTO_THREAD_lock_free(pair->map[0].lock);
         CRYPTO_THREAD_lock_free(pair->map[1].lock);
+        CRYPTO_THREAD_lock_free(pair->peerlock);
         CRYPTO_FREE_REF(&pair->ref_cnt);
         OPENSSL_free(pair);
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
@@ -544,6 +561,7 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
     }
     pair->map[0].self = b1;
     pair->map[1].self = b2;
+    TSAN_BENIGN(pair, "publishing pair");
     b1->pair = pair;
     b2->pair = pair;
     b1->role = 0;
@@ -558,6 +576,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
 {
     struct bio_dgram_pair_st *b1 = bio1->ptr;
     int ref;
+    int newval = PEER_STATE_ORPHANED;
 
     /* Early return if we don't have a peer. */
     if (b1->pair == NULL)
@@ -573,7 +592,9 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
      * Since one half of the pair is going away, we are now
      * orphaned
      */
-    b1->pair->peer_state = PEER_STATE_ORPHANED;
+    if (!CRYPTO_atomic_store_int(&b1->pair->peer_state, newval, b1->pair->peerlock))
+        return 0;
+
     if (!CRYPTO_DOWN_REF(&b1->pair->ref_cnt, &ref))
         return 0;
     if (ref == 0) {
@@ -584,6 +605,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
         CRYPTO_FREE_REF(&b1->pair->ref_cnt);
         CRYPTO_THREAD_lock_free(b1->pair->map[0].lock);
         CRYPTO_THREAD_lock_free(b1->pair->map[1].lock);
+        CRYPTO_THREAD_lock_free(b1->pair->peerlock);
         ring_buf_destroy(&b1->pair->map[0].rbuf);
         ring_buf_destroy(&b1->pair->map[1].rbuf);
         OPENSSL_free(b1->pair);
@@ -592,6 +614,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
      * Make sure the leaving pair no longer references the shared peer data,
      * since it is no longer part of the pair.
      */
+    TSAN_BENIGN(b1->pair, "b1 no longer accesses b1->pair");
     b1->pair = NULL;
     return 1;
 }
@@ -600,6 +623,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
 static int dgram_pair_ctrl_eof(BIO *bio)
 {
     struct bio_dgram_pair_st *b = bio->ptr, *peerb = NULL;
+    int peer_state;
 
     if (!ossl_assert(b != NULL))
         return -1;
@@ -613,7 +637,10 @@ static int dgram_pair_ctrl_eof(BIO *bio)
     /*
      * orphaned pairs always return EOF
      */
-    if (b->pair->peer_state == PEER_STATE_ORPHANED)
+    if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock))
+        return -1;
+
+    if (peer_state == PEER_STATE_ORPHANED)
         return 1;
 
     dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
@@ -670,12 +697,16 @@ static size_t dgram_pair_ctrl_pending(BIO *bio)
     size_t l;
     struct ring_buf *rbufptr;
     CRYPTO_RWLOCK *lock;
+    int peer_state;
 
     /* Safe to check; init may not change during this call */
     if (!bio->init)
         return 0;
     if (is_dgram_pair(b)) {
-        if (b->pair->peer_state == PEER_STATE_ORPHANED)
+        if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock))
+            return 0;
+
+        if (peer_state == PEER_STATE_ORPHANED)
             return 0;
     }
 
@@ -1156,11 +1187,11 @@ static int dgram_pair_lock_both_write(struct bio_dgram_pair_st *a,
 {
     struct bio_dgram_pair_st *x, *y;
 
-    if (is_dgram_pair(a)) {
+    if (is_dgram_pair(b)) {
         if (CRYPTO_THREAD_write_lock(b->pair->map[0].lock) == 0)
             return 0;
         if (CRYPTO_THREAD_write_lock(b->pair->map[1].lock) == 0) {
-            CRYPTO_THREAD_unlock(b->pair->map[1].lock);
+            CRYPTO_THREAD_unlock(b->pair->map[0].lock);
             return 0;
         }
     } else {
@@ -1203,6 +1234,7 @@ static int dgram_pair_read(BIO *bio, char *buf, int sz_)
     int ret;
     ossl_ssize_t l;
     struct bio_dgram_pair_st *b = bio->ptr, *peerb;
+    int peer_state;
 
     if (sz_ < 0) {
         ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT);
@@ -1214,7 +1246,10 @@ static int dgram_pair_read(BIO *bio, char *buf, int sz_)
         return -1;
     }
 
-    if (b->pair->peer_state == PEER_STATE_ORPHANED) {
+    if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock))
+        return -1;
+
+    if (peer_state == PEER_STATE_ORPHANED) {
         ERR_raise(ERR_LIB_BIO, BIO_R_BROKEN_PIPE);
         return -1;
     }
@@ -1256,6 +1291,7 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr, *readb;
     CRYPTO_RWLOCK *lock;
+    int peer_state;
 
     if (num_msg == 0) {
         *num_processed = 0;
@@ -1269,7 +1305,12 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     }
 
     if (is_dgram_pair(b)) {
-        if (b->pair->peer_state == PEER_STATE_ORPHANED) {
+        if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock)) {
+            *num_processed = 0;
+            return 0;
+        }
+
+        if (peer_state == PEER_STATE_ORPHANED) {
             *num_processed = 0;
             ERR_raise(ERR_LIB_BIO, BIO_R_BROKEN_PIPE);
             return 0;
@@ -1429,6 +1470,7 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
     struct bio_dgram_pair_st *b = bio->ptr, *readb;
     struct dgram_hdr hdr = { 0 };
     struct ring_buf *rbufptr;
+    int peer_state;
 
     if (!is_multi)
         BIO_clear_retry_flags(bio);
@@ -1437,7 +1479,9 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
         return -BIO_R_UNINITIALIZED;
 
     if (is_dgram_pair(b)) {
-        if (b->pair->peer_state == PEER_STATE_ORPHANED)
+        if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock))
+            return -BIO_R_UNINITIALIZED;
+        if (peer_state == PEER_STATE_ORPHANED)
             return -BIO_R_BROKEN_PIPE;
     }
 
@@ -1452,10 +1496,6 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
     if (local != NULL && b->local_addr_enable == 0)
         return -BIO_R_LOCAL_ADDR_NOT_AVAILABLE;
 
-    if (is_dgram_pair(b)) {
-        if (b->pair->peer_state == PEER_STATE_ORPHANED)
-            return -BIO_R_BROKEN_PIPE;
-    }
     dgram_bio_get_peer_data(b, NULL, NULL, &readb);
 
     if (peer != NULL && (readb->cap & BIO_DGRAM_CAP_HANDLES_DST_ADDR) == 0)

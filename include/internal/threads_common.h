@@ -14,7 +14,9 @@
 
 #if defined(__clang__) && defined(__has_feature)
 #if __has_feature(thread_sanitizer)
+#if !defined(__SANITIZE_THREAD__)
 #define __SANITIZE_THREAD__
+#endif
 #endif
 #endif
 
