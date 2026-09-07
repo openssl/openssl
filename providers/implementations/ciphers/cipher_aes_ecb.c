@@ -28,7 +28,9 @@
 
 typedef struct prov_aes_ecb_ctx_st {
     PROV_AES_CTX aesbase;
+#ifdef FIPS_MODULE
     int operation_allowed;
+#endif
 } PROV_AES_ECB_CTX;
 
 struct aes_ecb_get_ctx_param_list_st {
@@ -77,7 +79,9 @@ static void *aes_ecb_newctx(void *provctx, size_t kbits)
     if (ctx != NULL) {
         ossl_cipher_generic_initkey(&ctx->aesbase, kbits, AES_CBC_BLK_BITS,
             0, EVP_CIPH_ECB_MODE, 0, ossl_prov_cipher_hw_aes_ecb(kbits), provctx);
+#ifdef FIPS_MODULE
         ctx->operation_allowed = 1;
+#endif
     }
     return ctx;
 }
@@ -101,7 +105,9 @@ static void *aes_ecb_dupctx(void *ctx)
     ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL)
         return NULL;
+#ifdef FIPS_MODULE
     ret->operation_allowed = in->operation_allowed;
+#endif
     in->aesbase.base.hw->copyctx(&ret->aesbase.base, &in->aesbase.base);
     return ret;
 }
