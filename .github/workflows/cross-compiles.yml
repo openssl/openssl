@@ -475,13 +475,19 @@ jobs:
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: >-
+        matrix.platform.tests != 'none' &&
+        matrix.platform.tests != '' &&
+        (env.EXTENDED == 'true' || matrix.platform.arch == 's390x-linux-gnu')
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      if: env.EXTENDED != 'true' && matrix.platform.tests == '' && matrix.platform.tests != 'none'
+      if: >-
+        env.EXTENDED != 'true' &&
+        matrix.platform.tests != 'none' &&
+        (matrix.platform.tests == '' || matrix.platform.arch != 's390x-linux-gnu')
       run: |
         .github/workflows/make-test \
                   TESTS="test_evp*" \
