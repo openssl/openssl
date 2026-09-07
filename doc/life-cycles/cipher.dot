@@ -5,6 +5,7 @@ digraph cipher {
     newed [fontcolor="#c94c4c", style="solid"];
 
     initialised [fontcolor="#c94c4c"];
+    aad [label="AAD updated\n(AEAD)", fontcolor="#c94c4c"];
     updated [fontcolor="#c94c4c"];
     finaled [fontcolor="#c94c4c"];
     end [label="freed", color="#deeaee", style="filled"];
@@ -19,6 +20,10 @@ digraph cipher {
     initialised -> initialised [label="EVP_CipherInit\n(not required but allowed)",
                                 style=dashed];
     initialised -> updated [label="EVP_CipherUpdate", weight=2];
+    initialised -> aad [label="EVP_CipherUpdate\n(AEAD, out = NULL)"];
+    aad -> aad [label="EVP_CipherUpdate\n(AEAD, out = NULL)"];
+    aad -> updated [label="EVP_CipherUpdate"];
+    aad -> finaled [label="EVP_CipherFinal"];
     updated -> updated [label="EVP_CipherUpdate"];
     updated -> finaled [label="EVP_CipherFinal"];
     finaled -> finaled [label="EVP_CIPHER_CTX_get_params\n(AEAD encryption)",
