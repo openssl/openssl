@@ -479,6 +479,10 @@ OpenSSL 4.1
 
    *Dimitri John Ledkov*
 
+ * Added `X509v3_addr_get_safi`, which gets the SAFI from the IPAddressFamily structure.
+
+   *Nihal Kotte*
+
 OpenSSL 4.0
 -----------
 
