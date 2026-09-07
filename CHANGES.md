@@ -32,6 +32,17 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * The AES-GCM-SIV provider is now hardware-accelerated end to end. POLYVAL no
+   longer enters the GHASH kernel one block per call, the keystream is no
+   longer produced one EVP call per block, and both halves have native
+   kernels on x86-64 (AES-NI, AVX-512 VAES/VPCLMULQDQ, bitsliced AES on
+   SSSE3-only CPUs) and aarch64 (FEAT_AES/PMULL). AES-256-GCM-SIV at 1 MiB
+   goes from ~0.6 GB/s to 8.5-10 GB/s on Zen 4, 5.7 GB/s on AVX2-class
+   CPUs, 4.8 GB/s on AES-NI-without-AVX CPUs and 7 GB/s on Apple M3; the
+   output is unchanged.
+
+   *Alexey Eromenko*
+
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
    `OSSL_PARAM_locate()` calls.  This should ensure that the list

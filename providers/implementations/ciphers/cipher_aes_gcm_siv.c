@@ -70,7 +70,7 @@ static void *ossl_aes_gcm_siv_dupctx(void *vctx)
         return NULL;
     /* NULL-out these things we create later */
     ret->aad = NULL;
-    ret->ecb_ctx = NULL;
+    ret->scratch = NULL;
 
     if (in->aad != NULL) {
         if ((ret->aad = OPENSSL_memdup(in->aad, UP16(ret->aad_len))) == NULL)
