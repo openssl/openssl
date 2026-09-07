@@ -1257,6 +1257,81 @@ err:
     return ret;
 }
 
+/*
+ * A zero length read is a successful no-op returning zero read bytes,
+ * and releasing a record without consuming any bytes succeeds likewise.
+ * Neither may fail once at least one byte has been consumed, otherwise
+ * quic_read_actual() turns the failed read into a fatal SSL error for
+ * SSL_read_ex() called with a zero length buffer.
+ */
+static int test_rstream_zero_length_read(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt = NULL;
+    unsigned char pdata[10], buf[10];
+    const unsigned char *record = NULL;
+    size_t readbytes = 0, rec_len = 0, i;
+    int fin = 0;
+    int ret = 0;
+
+    for (i = 0; i < sizeof(pdata); ++i)
+        pdata[i] = (unsigned char)(0x40 + i);
+
+    if (!TEST_ptr(pkt = pkt_test_new(1200))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, 0,
+            pdata, sizeof(pdata), 0)))
+        goto err;
+
+    /* a zero length read before anything is consumed */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 0, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 0))
+        goto err;
+
+    /* consume some bytes so the stream offset is not zero */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 5, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 5)
+        || !TEST_mem_eq(buf, 5, pdata, 5))
+        goto err;
+
+    /* a zero length read with data pending at a nonzero offset */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 0, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 0))
+        goto err;
+
+    /* releasing a record without consuming anything succeeds too */
+    if (!TEST_true(ossl_quic_rstream_get_record(rstream, &record, &rec_len,
+            &fin))
+        || !TEST_size_t_eq(rec_len, 5)
+        || !TEST_true(ossl_quic_rstream_release_record(rstream, 0)))
+        goto err;
+
+    /* the remaining bytes are intact and still readable */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 5)
+        || !TEST_mem_eq(buf, 5, pdata + 5, 5))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    pkt_test_free(pkt);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
 #define FILL_PATTERN "abcdefghijklmnopqrstuvwxyz0123456789" \
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
