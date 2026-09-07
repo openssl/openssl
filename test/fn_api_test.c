@@ -5169,16 +5169,10 @@ static int test_kronecker_legendre(int i)
     /*
      * ctx must hold both kronecker's and mod_exp's scratch needs.
      * Size for the larger of the two (mod_exp typically needs more).
-     * OSSL_FN_mod_exp_ctx_size() is value-dependent on |a| (a reduction
-     * frame is budgeted when a >= m), so fa is pre-set to p; the loop
-     * below never uses a larger value than p + 1, which sizes the same.
-     *
-     * TODO(FIXNUM): the value dependence shouldn't be necessary; a
-     * reduction should generally always be budgeted.  Reconsider if the
-     * mont functions are ever made value-agnostic.
+     * Both sizing helpers inspect widths only, so no operand values need
+     * pre-setting for them (fp's low limb, which selects the mod_exp
+     * path, is already set above).
      */
-    if (!TEST_true(OSSL_FN_set_word(fa, p)))
-        goto err;
     size_t ksz = OSSL_FN_kronecker_ctx_size(fa, fp);
     size_t esz = OSSL_FN_mod_exp_ctx_size(r, fa, exp, fp);
     size_t sz = ksz > esz ? ksz : esz;
