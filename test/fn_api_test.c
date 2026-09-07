@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1116,6 +1116,67 @@ static int test_zero(void)
     ret = 1;
 err:
     OSSL_FN_free(a);
+    return ret;
+}
+
+/*-
+ * Any non-zero condition must swap and zero must not, so the conditions
+ * cover 1, a value with the low bit clear, a value with several bits set,
+ * and a negative one (the argument is a plain int, so -1 is all-bits-set
+ * once folded into the mask).
+ */
+static const int consttime_swap_conditions[] = { 0, 1, 2, 42, -1 };
+
+static int test_consttime_swap(int i)
+{
+    int ret = 0;
+    const int condition = consttime_swap_conditions[i];
+    const int swapped = consttime_swap_conditions[i] != 0;
+    OSSL_FN *a = NULL, *b = NULL, *ref_a = NULL, *ref_b = NULL, *narrow = NULL;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(b = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ref_a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ref_b = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(narrow = OSSL_FN_new_limbs(1))
+        || !TEST_true(ossl_fn_set_words(a, num2, LIMBSOF(num2)))
+        || !TEST_true(ossl_fn_set_words(b, num3, LIMBSOF(num3)))
+        || !TEST_true(ossl_fn_set_words(ref_a, num2, LIMBSOF(num2)))
+        || !TEST_true(ossl_fn_set_words(ref_b, num3, LIMBSOF(num3))))
+        goto err;
+
+    /* On a swap each operand takes the other's value; otherwise both stand. */
+    if (!TEST_true(OSSL_FN_consttime_swap(condition, a, b))
+        || !TEST_int_eq(OSSL_FN_cmp(a, swapped ? ref_b : ref_a), 0)
+        || !TEST_int_eq(OSSL_FN_cmp(b, swapped ? ref_a : ref_b), 0))
+        goto err;
+
+    /* Swapping again on the same condition restores the originals. */
+    if (!TEST_true(OSSL_FN_consttime_swap(condition, a, b))
+        || !TEST_int_eq(OSSL_FN_cmp(a, ref_a), 0)
+        || !TEST_int_eq(OSSL_FN_cmp(b, ref_b), 0))
+        goto err;
+
+    /* Aliased operands are a no-op, not a self-cancelling xor. */
+    if (!TEST_true(OSSL_FN_consttime_swap(condition, a, a))
+        || !TEST_int_eq(OSSL_FN_cmp(a, ref_a), 0))
+        goto err;
+
+    /* A width mismatch is refused outright, leaving both operands untouched. */
+    if (!TEST_false(OSSL_FN_consttime_swap(condition, a, narrow))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_RESULT_ARG_TOO_SMALL)
+        || !TEST_int_eq(OSSL_FN_cmp(a, ref_a), 0)
+        || !TEST_true(OSSL_FN_is_zero(narrow)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(b);
+    OSSL_FN_free(ref_a);
+    OSSL_FN_free(ref_b);
+    OSSL_FN_free(narrow);
     return ret;
 }
 
@@ -5339,6 +5400,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
     ADD_TEST(test_one);
     ADD_TEST(test_zero);
+    ADD_ALL_TESTS(test_consttime_swap, OSSL_NELEM(consttime_swap_conditions));
     ADD_ALL_TESTS(test_lshift1, 2);
     ADD_ALL_TESTS(test_lshift, 6);
     ADD_ALL_TESTS(test_rshift1, 2);
