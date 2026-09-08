@@ -3346,8 +3346,25 @@ DEF_SCRIPT(script_68, "Send a CertificateRequest message post-handshake")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
-DEF_SCRIPT(script_69, "place holder for multistrem script_69")
+DEF_SCRIPT(script_69, "Send a TLS KeyUpdate message post-handshake")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_HANDSHAKE(S, script_68_inject_handshake);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(2, 0);
+    OP_NEW_TICKET(S);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN + SSL_AD_UNEXPECTED_MESSAGE, 0, 0);
 }
 
 DEF_SCRIPT(script_70, "place holder for multistrem script_70")
