@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -13,6 +13,7 @@
 #include "crypto/bn.h"
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
+#include "crypto/fn_constants.h"
 #include "rsa_local.h"
 
 /*
@@ -26,7 +27,11 @@
 int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *r = NULL, *p1 = NULL, *q1 = NULL;
+    const OSSL_FN *fn_p, *fn_q, *fn_e, *fn_dmp1, *fn_dmq1, *fn_iqmp;
+    const OSSL_FN *fn_one = OSSL_FN_value_one();
+    OSSL_FN *r = NULL, *p1 = NULL, *q1 = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    size_t pl, ql, size;
 
     /* check if only some of the crt components are set */
     if (rsa->dmp1 == NULL || rsa->dmq1 == NULL || rsa->iqmp == NULL) {
@@ -35,47 +40,66 @@ int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
         return 1; /* return ok if all components are NULL */
     }
 
-    BN_CTX_start(ctx);
-    r = BN_CTX_get(ctx);
-    p1 = BN_CTX_get(ctx);
-    q1 = BN_CTX_get(ctx);
-    if (q1 != NULL) {
-        BN_set_flags(r, BN_FLG_CONSTTIME);
-        BN_set_flags(p1, BN_FLG_CONSTTIME);
-        BN_set_flags(q1, BN_FLG_CONSTTIME);
-        ret = 1;
-    } else {
-        ret = 0;
-    }
-    ret = ret
-        /* p1 = p -1 */
-        && (BN_copy(p1, rsa->p) != NULL)
-        && BN_sub_word(p1, 1)
-        /* q1 = q - 1 */
-        && (BN_copy(q1, rsa->q) != NULL)
-        && BN_sub_word(q1, 1)
-        /* (a) 1 < dP < (p – 1). */
-        && (BN_cmp(rsa->dmp1, BN_value_one()) > 0)
-        && (BN_cmp(rsa->dmp1, p1) < 0)
+    fn_p = bn_get_ossl_fn(rsa->p);
+    fn_q = bn_get_ossl_fn(rsa->q);
+    fn_e = bn_get_ossl_fn(rsa->e);
+    fn_dmp1 = bn_get_ossl_fn(rsa->dmp1);
+    fn_dmq1 = bn_get_ossl_fn(rsa->dmq1);
+    fn_iqmp = bn_get_ossl_fn(rsa->iqmp);
+    if (fn_p == NULL || fn_q == NULL || fn_e == NULL || fn_dmp1 == NULL
+        || fn_dmq1 == NULL || fn_iqmp == NULL)
+        return 0;
+    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+    ql = ossl_fn_get_dsize((OSSL_FN *)fn_q);
+
+    p1 = OSSL_FN_secure_new_limbs(pl);
+    q1 = OSSL_FN_secure_new_limbs(ql);
+    r = OSSL_FN_secure_new_limbs(pl > ql ? pl : ql);
+    if (r == NULL || p1 == NULL || q1 == NULL)
+        goto err;
+
+    if (!OSSL_FN_copy(p1, fn_p) || !OSSL_FN_sub_word(p1, 1)
+        || !OSSL_FN_copy(q1, fn_q) || !OSSL_FN_sub_word(q1, 1))
+        goto err;
+
+    /*
+     * The three mod_mul checks run in one arena, sized for the largest:
+     * each reduces a product of a CRT component (prime width) and e
+     * modulo a prime(-minus-one).
+     */
+    size = OSSL_FN_mod_mul_ctx_size(r, fn_dmp1, fn_e, p1);
+    size = ossl_fn_ctx_max_size(size,
+        OSSL_FN_mod_mul_ctx_size(r, fn_dmq1, fn_e, q1));
+    size = ossl_fn_ctx_max_size(size,
+        OSSL_FN_mod_mul_ctx_size(r, fn_iqmp, fn_q, fn_p));
+    if (size == 0
+        || (fn_ctx = OSSL_FN_CTX_secure_new_size(rsa->libctx, size)) == NULL)
+        goto err;
+
+    ret = /* (a) 1 < dP < (p – 1). */
+        (OSSL_FN_cmp(fn_dmp1, fn_one) > 0)
+        && (OSSL_FN_cmp(fn_dmp1, p1) < 0)
         /* (b) 1 < dQ < (q - 1). */
-        && (BN_cmp(rsa->dmq1, BN_value_one()) > 0)
-        && (BN_cmp(rsa->dmq1, q1) < 0)
+        && (OSSL_FN_cmp(fn_dmq1, fn_one) > 0)
+        && (OSSL_FN_cmp(fn_dmq1, q1) < 0)
         /* (c) 1 < qInv < p */
-        && (BN_cmp(rsa->iqmp, BN_value_one()) > 0)
-        && (BN_cmp(rsa->iqmp, rsa->p) < 0)
-        /* (d) 1 = (dP . e) mod (p - 1)*/
-        && BN_mod_mul(r, rsa->dmp1, rsa->e, p1, ctx)
-        && BN_is_one(r)
+        && (OSSL_FN_cmp(fn_iqmp, fn_one) > 0)
+        && (OSSL_FN_cmp(fn_iqmp, fn_p) < 0)
+        /* (d) 1 = (dP . e) mod (p - 1) */
+        && OSSL_FN_mod_mul(r, fn_dmp1, fn_e, p1, fn_ctx)
+        && OSSL_FN_is_one(r)
         /* (e) 1 = (dQ . e) mod (q - 1) */
-        && BN_mod_mul(r, rsa->dmq1, rsa->e, q1, ctx)
-        && BN_is_one(r)
+        && OSSL_FN_mod_mul(r, fn_dmq1, fn_e, q1, fn_ctx)
+        && OSSL_FN_is_one(r)
         /* (f) 1 = (qInv . q) mod p */
-        && BN_mod_mul(r, rsa->iqmp, rsa->q, rsa->p, ctx)
-        && BN_is_one(r);
-    BN_clear(r);
-    BN_clear(p1);
-    BN_clear(q1);
-    BN_CTX_end(ctx);
+        && OSSL_FN_mod_mul(r, fn_iqmp, fn_q, fn_p, fn_ctx)
+        && OSSL_FN_is_one(r);
+
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_clear_free(r);
+    OSSL_FN_clear_free(p1);
+    OSSL_FN_clear_free(q1);
     return ret;
 }
 
@@ -90,41 +114,55 @@ int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
 int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *low;
+    const OSSL_FN *fn_p = bn_get_ossl_fn(p);
+    const OSSL_FN *fn_is2 = &ossl_fn_static_inv_sqrt_2_storage.fn;
+    OSSL_FN *low = NULL;
+    size_t pl, is2_bits, low_limbs;
     int shift;
 
-    nbits >>= 1;
-    shift = nbits - BN_num_bits(&ossl_bn_inv_sqrt_2);
-
-    /* Upper bound check */
-    if (BN_num_bits(p) != nbits)
+    if (fn_p == NULL)
         return 0;
 
-    BN_CTX_start(ctx);
-    low = BN_CTX_get(ctx);
+    nbits >>= 1;
+    is2_bits = OSSL_FN_num_bits(fn_is2);
+    shift = (int)(nbits - is2_bits);
+
+    /* Upper bound check */
+    if (OSSL_FN_num_bits(fn_p) != (size_t)nbits)
+        return 0;
+
+    /*
+     * The shifted √2 bound needs the prime width when shifting left, the
+     * constant's own width otherwise.
+     */
+    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+    low_limbs = ossl_fn_get_dsize((OSSL_FN *)fn_is2);
+    if (shift >= 0 && pl > low_limbs)
+        low_limbs = pl;
+    low = OSSL_FN_new_limbs(low_limbs);
     if (low == NULL)
-        goto err;
+        return 0;
 
     /* set low = (√2)(2^(nbits/2 - 1) */
-    if (BN_copy(low, &ossl_bn_inv_sqrt_2) == NULL)
+    if (!OSSL_FN_copy(low, fn_is2))
         goto err;
 
     if (shift >= 0) {
         /*
-         * We don't have all the bits. ossl_bn_inv_sqrt_2 contains a rounded up
-         * value, so there is a very low probability that we'll reject a valid
-         * value.
+         * We don't have all the bits. ossl_fn_inv_sqrt_2 contains a rounded
+         * up value, so there is a very low probability that we'll reject a
+         * valid value.
          */
-        if (!BN_lshift(low, low, shift))
+        if (!OSSL_FN_lshift(low, low, shift))
             goto err;
-    } else if (!BN_rshift(low, low, -shift)) {
+    } else if (!OSSL_FN_rshift(low, low, -shift)) {
         goto err;
     }
-    if (BN_cmp(p, low) <= 0)
+    if (OSSL_FN_cmp(fn_p, low) <= 0)
         goto err;
     ret = 1;
 err:
-    BN_CTX_end(ctx);
+    OSSL_FN_free(low);
     return ret;
 }
 
@@ -138,33 +176,49 @@ err:
 int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *p1 = NULL, *gcd = NULL;
+    const OSSL_FN *fn_p, *fn_e;
+    OSSL_FN *p1 = NULL, *gcd = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    size_t pl, size;
+
+    fn_p = bn_get_ossl_fn(p);
+    fn_e = bn_get_ossl_fn(e);
+    if (fn_p == NULL || fn_e == NULL)
+        return 0;
+    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
 
     /* (Steps 5 a-b) prime test */
-    if (BN_check_prime(p, ctx, NULL) != 1
+    size = ossl_fn_check_prime_ctx_size(fn_p);
+    if (size == 0
+        || (fn_ctx = OSSL_FN_CTX_new_size(NULL, size)) == NULL)
+        return 0;
+    ret = ossl_fn_check_prime(fn_p, 0, fn_ctx, 1, NULL, NULL);
+    OSSL_FN_CTX_free(fn_ctx);
+    fn_ctx = NULL;
+    if (ret != 1
         /* (Step 5c) (√2)(2^(nbits/2 - 1) <= p <= 2^(nbits/2 - 1) */
         || ossl_rsa_check_prime_factor_range(p, nbits, ctx) != 1)
         return 0;
 
-    BN_CTX_start(ctx);
-    p1 = BN_CTX_get(ctx);
-    gcd = BN_CTX_get(ctx);
-    if (gcd != NULL) {
-        BN_set_flags(p1, BN_FLG_CONSTTIME);
-        BN_set_flags(gcd, BN_FLG_CONSTTIME);
-        ret = 1;
-    } else {
-        ret = 0;
-    }
-    ret = ret
-        /* (Step 5d) GCD(p-1, e) = 1 */
-        && (BN_copy(p1, p) != NULL)
-        && BN_sub_word(p1, 1)
-        && BN_gcd(gcd, p1, e, ctx)
-        && BN_is_one(gcd);
+    p1 = OSSL_FN_secure_new_limbs(pl);
+    gcd = OSSL_FN_secure_new_limbs(pl);
+    if (p1 == NULL || gcd == NULL)
+        goto err;
 
-    BN_clear(p1);
-    BN_CTX_end(ctx);
+    /* (Step 5d) GCD(p-1, e) = 1 */
+    if (!OSSL_FN_copy(p1, fn_p) || !OSSL_FN_sub_word(p1, 1))
+        goto err;
+    size = OSSL_FN_gcd_ctx_size(p1, fn_e);
+    if (size == 0
+        || (fn_ctx = OSSL_FN_CTX_secure_new_size(NULL, size)) == NULL)
+        goto err;
+    ret = OSSL_FN_gcd(gcd, p1, fn_e, fn_ctx)
+        && OSSL_FN_is_one(gcd);
+
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_clear_free(p1);
+    OSSL_FN_clear_free(gcd);
     return ret;
 }
 
@@ -177,46 +231,69 @@ int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
 int ossl_rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
 {
     int ret;
-    BIGNUM *r, *p1, *q1, *lcm, *p1q1, *gcd;
+    const OSSL_FN *fn_d, *fn_e, *fn_lcm;
+    OSSL_FN *r = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    size_t size;
+
+    /*
+     * The LCM is computed by ossl_rsa_get_lcm() (already OSSL_FN inside,
+     * BIGNUM at the boundary); only the closing mod_mul runs on OSSL_FN
+     * here.
+     */
+    BIGNUM *lcm = NULL, *gcd = NULL, *p1 = NULL, *q1 = NULL, *p1q1 = NULL;
+
+    fn_d = bn_get_ossl_fn(rsa->d);
+    fn_e = bn_get_ossl_fn(rsa->e);
+    if (fn_d == NULL || fn_e == NULL)
+        return 0;
 
     /* (Step 6a) 2^(nbits/2) < d */
-    if (BN_num_bits(rsa->d) <= (nbits >> 1))
+    if (OSSL_FN_num_bits(fn_d) <= (size_t)(nbits >> 1))
         return 0;
 
     BN_CTX_start(ctx);
-    r = BN_CTX_get(ctx);
+    lcm = BN_CTX_get(ctx);
+    gcd = BN_CTX_get(ctx);
     p1 = BN_CTX_get(ctx);
     q1 = BN_CTX_get(ctx);
-    lcm = BN_CTX_get(ctx);
     p1q1 = BN_CTX_get(ctx);
-    gcd = BN_CTX_get(ctx);
-    if (gcd != NULL) {
-        BN_set_flags(r, BN_FLG_CONSTTIME);
-        BN_set_flags(p1, BN_FLG_CONSTTIME);
-        BN_set_flags(q1, BN_FLG_CONSTTIME);
-        BN_set_flags(lcm, BN_FLG_CONSTTIME);
-        BN_set_flags(p1q1, BN_FLG_CONSTTIME);
-        BN_set_flags(gcd, BN_FLG_CONSTTIME);
-        ret = 1;
-    } else {
+    if (p1q1 == NULL) {
         ret = 0;
+        goto end;
     }
-    ret = (ret
-        /* LCM(p - 1, q - 1) */
-        && (ossl_rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1,
-                p1q1)
-            == 1)
-        /* (Step 6a) d < LCM(p - 1, q - 1) */
-        && (BN_cmp(rsa->d, lcm) < 0)
-        /* (Step 6b) 1 = (e . d) mod LCM(p - 1, q - 1) */
-        && BN_mod_mul(r, rsa->e, rsa->d, lcm, ctx)
-        && BN_is_one(r));
 
-    BN_clear(r);
-    BN_clear(p1);
-    BN_clear(q1);
+    ret = 0;
+    /* LCM(p - 1, q - 1) */
+    if (ossl_rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) != 1)
+        goto end;
+    fn_lcm = bn_get_ossl_fn(lcm);
+    if (fn_lcm == NULL)
+        goto end;
+
+    /* (Step 6a) d < LCM(p - 1, q - 1) */
+    if (OSSL_FN_cmp(fn_d, fn_lcm) >= 0)
+        goto end;
+
+    /* (Step 6b) 1 = (e . d) mod LCM(p - 1, q - 1) */
+    r = OSSL_FN_secure_new_limbs(ossl_fn_get_dsize((OSSL_FN *)fn_lcm));
+    if (r == NULL)
+        goto end;
+    size = OSSL_FN_mod_mul_ctx_size(r, fn_e, fn_d, fn_lcm);
+    if (size == 0
+        || (fn_ctx = OSSL_FN_CTX_secure_new_size(rsa->libctx, size)) == NULL)
+        goto end;
+    ret = OSSL_FN_mod_mul(r, fn_e, fn_d, fn_lcm, fn_ctx)
+        && OSSL_FN_is_one(r);
+
+end:
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_clear_free(r);
     BN_clear(lcm);
     BN_clear(gcd);
+    BN_clear(p1);
+    BN_clear(q1);
+    BN_clear(p1q1);
     BN_CTX_end(ctx);
     return ret;
 }
@@ -313,17 +390,11 @@ int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
      * no frame of its own; the sizing companions account for the
      * operations' frames.
      */
-    {
-        size_t sz, largest = 0;
-
-        if ((sz = OSSL_FN_mul_ctx_size(fn_p1q1, fn_p1, fn_q1)) > largest)
-            largest = sz;
-        if ((sz = OSSL_FN_gcd_ctx_size(fn_p1, fn_q1)) > largest)
-            largest = sz;
-        if ((sz = OSSL_FN_div_ctx_size(fn_lcm, NULL, fn_p1q1, fn_gcd)) > largest)
-            largest = sz;
-        fn_size = largest;
-    }
+    fn_size = ossl_fn_ctx_max_size(
+        ossl_fn_ctx_max_size(
+            OSSL_FN_mul_ctx_size(fn_p1q1, fn_p1, fn_q1),
+            OSSL_FN_gcd_ctx_size(fn_p1, fn_q1)),
+        OSSL_FN_div_ctx_size(fn_lcm, NULL, fn_p1q1, fn_gcd));
     if (fn_size == 0)
         goto err;
     fn_ctx = OSSL_FN_CTX_secure_new_size(NULL, fn_size);
@@ -363,13 +434,20 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
 {
     int ret = 0, status;
     int nbits;
-    BN_CTX *ctx = NULL;
-    BIGNUM *gcd = NULL;
+    const OSSL_FN *fn_n, *fn_sf;
+    OSSL_FN *gcd = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    size_t size;
 
     if (rsa->n == NULL || rsa->e == NULL)
         return 0;
 
-    nbits = BN_num_bits(rsa->n);
+    fn_n = bn_get_ossl_fn(rsa->n);
+    fn_sf = ossl_fn_get0_small_factors();
+    if (fn_n == NULL || fn_sf == NULL)
+        return 0;
+
+    nbits = (int)OSSL_FN_num_bits(fn_n);
     if (nbits > OPENSSL_RSA_MAX_MODULUS_BITS) {
         ERR_raise(ERR_LIB_RSA, RSA_R_MODULUS_TOO_LARGE);
         return 0;
@@ -385,7 +463,7 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
         return 0;
     }
 #endif
-    if (!BN_is_odd(rsa->n)) {
+    if (!OSSL_FN_is_odd(fn_n)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         return 0;
     }
@@ -395,23 +473,32 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
         return 0;
     }
 
-    ctx = BN_CTX_new_ex(rsa->libctx);
-    gcd = BN_new();
-    if (ctx == NULL || gcd == NULL)
-        goto err;
-
-    /* (Steps d-f):
+    /*
+     * (Steps d-f):
      * The modulus is composite, but not a power of a prime.
      * The modulus has no factors smaller than 752.
      */
-    if (!BN_gcd(gcd, rsa->n, ossl_bn_get0_small_factors(), ctx)
-        || !BN_is_one(gcd)) {
+    gcd = OSSL_FN_new_limbs(ossl_fn_get_dsize((OSSL_FN *)fn_n));
+    if (gcd == NULL)
+        goto err;
+    size = OSSL_FN_gcd_ctx_size(fn_n, fn_sf);
+    if (size == 0
+        || (fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, size)) == NULL)
+        goto err;
+    if (!OSSL_FN_gcd(gcd, fn_n, fn_sf, fn_ctx) || !OSSL_FN_is_one(gcd)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         goto err;
     }
+    OSSL_FN_CTX_free(fn_ctx);
+    fn_ctx = NULL;
 
     /* Highest number of MR rounds from FIPS 186-5 Section B.3 Table B.1 */
-    ret = ossl_bn_miller_rabin_is_prime(rsa->n, 5, ctx, NULL, 1, &status);
+    size = ossl_fn_miller_rabin_is_prime_ctx_size(fn_n);
+    if (size == 0
+        || (fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, size)) == NULL)
+        goto err;
+    ret = ossl_fn_miller_rabin_is_prime(fn_n, 5, fn_ctx, NULL, 1, &status,
+        rsa->libctx);
 #ifdef FIPS_MODULE
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
 #else
@@ -424,8 +511,8 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
 
     ret = 1;
 err:
-    BN_free(gcd);
-    BN_CTX_free(ctx);
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_free(gcd);
     return ret;
 }
 
@@ -456,6 +543,10 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
     int ret = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *r = NULL;
+    const OSSL_FN *fn_n, *fn_p, *fn_q;
+    OSSL_FN *prod = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    size_t size;
 
     if (rsa->p == NULL
         || rsa->q == NULL
@@ -483,8 +574,15 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
         ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
+
+    fn_n = bn_get_ossl_fn(rsa->n);
+    fn_p = bn_get_ossl_fn(rsa->p);
+    fn_q = bn_get_ossl_fn(rsa->q);
+    if (fn_n == NULL || fn_p == NULL || fn_q == NULL)
+        return 0;
+
     /* (Step 3.b): check the modulus */
-    if (nbits != BN_num_bits(rsa->n)) {
+    if ((size_t)nbits != OSSL_FN_num_bits(fn_n)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEYPAIR);
         return 0;
     }
@@ -498,15 +596,28 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
     if (ctx == NULL)
         return 0;
 
-    BN_CTX_start(ctx);
-    r = BN_CTX_get(ctx);
-    if (r == NULL || !BN_mul(r, rsa->p, rsa->q, ctx))
-        goto err;
     /* (Step 4.c): Check n = pq */
-    if (BN_cmp(rsa->n, r) != 0) {
+    prod = OSSL_FN_secure_new_limbs(ossl_fn_get_dsize((OSSL_FN *)fn_n)
+        + 1);
+    if (prod == NULL)
+        goto err;
+    size = OSSL_FN_mul_ctx_size(prod, fn_p, fn_q);
+    if (size == 0
+        || (fn_ctx = OSSL_FN_CTX_secure_new_size(rsa->libctx, size)) == NULL)
+        goto err;
+    if (!OSSL_FN_mul(prod, fn_p, fn_q, fn_ctx))
+        goto err;
+    if (OSSL_FN_cmp(fn_n, prod) != 0) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_REQUEST);
         goto err;
     }
+    OSSL_FN_CTX_free(fn_ctx);
+    fn_ctx = NULL;
+
+    BN_CTX_start(ctx);
+    r = BN_CTX_get(ctx);
+    if (r == NULL)
+        goto bn_err;
 
     /* (Step 5): check prime factors p & q */
     ret = ossl_rsa_check_prime_factor(rsa->p, rsa->e, nbits, ctx)
@@ -519,9 +630,12 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
     if (ret != 1)
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEYPAIR);
 
-err:
+bn_err:
     BN_clear(r);
     BN_CTX_end(ctx);
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_clear_free(prod);
     BN_CTX_free(ctx);
     return ret;
 }
