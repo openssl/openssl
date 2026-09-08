@@ -377,6 +377,13 @@ int ossl_gcm_cipher(void *vctx,
     if (!ossl_prov_is_running())
         return 0;
 
+    /* TLS records must include the explicit IV and tag, even with no payload. */
+    if (ctx->tls_aad_len == UNINITIALISED_SIZET
+        && in != NULL && inl == 0) {
+        *outl = 0;
+        return 1;
+    }
+
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
