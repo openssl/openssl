@@ -98,9 +98,6 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     size_t own_size = OSSL_FN_CTX_size(1, n_numbers, n_numbers * ml);
 
     size_t nested_size = mod_exp_mont_nested(a, m, in_mont);
-    if (own_size == 0 || nested_size == 0)
-        return 0;
-
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
@@ -133,9 +130,6 @@ size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r,
     size_t mul_size = OSSL_FN_mod_mul_ctx_size(m, m, m, m);
 
     size_t nested_size = ossl_fn_ctx_max_size(mod_size, mul_size);
-    if (own_size == 0 || nested_size == 0)
-        return 0;
-
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
