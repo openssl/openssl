@@ -69,9 +69,6 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     size_t mod_size = OSSL_FN_mod_ctx_size(r, &t_L, n);
 
     size_t nested_size = ossl_fn_ctx_max_size(div_size, mod_size);
-    if (own_size == 0 || nested_size == 0)
-        return 0;
-
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
