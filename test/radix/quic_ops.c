@@ -1375,7 +1375,7 @@ struct radix_fault_st {
     uint64_t word0, word1;
     /* Handshake message mutator state. */
     unsigned char *handbuf;
-    size_t handbuflen;
+    size_t handbuflen, handbufalloc;
     radix_fault_handshake_cb hcb;
 };
 
@@ -1495,6 +1495,73 @@ static int radix_fault_prepend_frame(RADIX_FAULT *fault,
     return 1;
 }
 
+#define RADIX_FAULT_GROWTH_ALLOWANCE 1024
+
+static int radix_fault_handshake_mutate(const unsigned char *msgin,
+    size_t msginlen,
+    unsigned char **msgout, size_t *msgoutlen,
+    void *arg)
+{
+    RADIX_FAULT *fault = arg;
+    unsigned char *buf;
+
+    buf = OPENSSL_malloc(msginlen + RADIX_FAULT_GROWTH_ALLOWANCE);
+    if (buf == NULL)
+        return 0;
+
+    OPENSSL_free(fault->handbuf);
+    fault->handbuf = buf;
+    fault->handbuflen = msginlen;
+    fault->handbufalloc = msginlen + RADIX_FAULT_GROWTH_ALLOWANCE;
+    memcpy(buf, msgin, msginlen);
+
+    if (fault->hcb != NULL && !fault->hcb(fault, buf, fault->handbuflen))
+        return 0;
+
+    *msgout = buf;
+    *msgoutlen = fault->handbuflen;
+
+    return 1;
+}
+
+static void radix_fault_handshake_finish(void *arg)
+{
+    RADIX_FAULT *fault = arg;
+
+    OPENSSL_free(fault->handbuf);
+    fault->handbuf = NULL;
+}
+
+static int radix_fault_resize_handshake(RADIX_FAULT *fault, size_t newlen)
+{
+    unsigned char *buf;
+    size_t oldlen = fault->handbuflen;
+
+    if (fault->handbufalloc == 0 || newlen > fault->handbufalloc)
+        return 0;
+
+    buf = fault->handbuf;
+
+    if (newlen > oldlen)
+        memset(buf + oldlen, 0, newlen - oldlen);
+
+    fault->handbuflen = newlen;
+
+    return 1;
+}
+
+static int radix_fault_resize_message(RADIX_FAULT *fault, size_t newlen)
+{
+    if (!radix_fault_resize_handshake(fault, newlen + SSL3_HM_HEADER_LENGTH))
+        return 0;
+
+    fault->handbuf[1] = (unsigned char)((newlen >> 16) & 0xff);
+    fault->handbuf[2] = (unsigned char)((newlen >> 8) & 0xff);
+    fault->handbuf[3] = (unsigned char)((newlen) & 0xff);
+
+    return 1;
+}
+
 DEF_FUNC(hf_set_inject_plain)
 {
     int ok = 0;
@@ -1534,45 +1601,6 @@ err:
 }
 
 /*
- * ossl_statem_mutate_handshake_cb: intercepts an outgoing TLS handshake
- * message on the crypto stream before it is queued for transmission.
- */
-static int radix_fault_handshake_mutate(const unsigned char *msgin,
-    size_t msginlen,
-    unsigned char **msgout,
-    size_t *msgoutlen,
-    void *arg)
-{
-    RADIX_FAULT *fault = arg;
-    unsigned char *buf;
-
-    buf = OPENSSL_malloc(msginlen);
-    if (buf == NULL)
-        return 0;
-
-    OPENSSL_free(fault->handbuf);
-    fault->handbuf = buf;
-    fault->handbuflen = msginlen;
-    memcpy(buf, msgin, msginlen);
-
-    if (fault->hcb != NULL && !fault->hcb(fault, buf, fault->handbuflen))
-        return 0;
-
-    *msgout = buf;
-    *msgoutlen = fault->handbuflen;
-
-    return 1;
-}
-
-static void radix_fault_handshake_finish(void *arg)
-{
-    RADIX_FAULT *fault = arg;
-
-    OPENSSL_free(fault->handbuf);
-    fault->handbuf = NULL;
-}
-
-/*
  * Arms the handshake mutator callback without attaching it to any
  * connection yet. Used by scripts that need to intercept a server's very
  * first handshake flight: the corresponding connection does not exist until
@@ -1592,6 +1620,45 @@ DEF_FUNC(hf_set_inject_handshake_cb)
     radix_fault.handbuf = NULL;
     radix_fault.handbuflen = 0;
     radix_fault.hcb = radix_fault_ptr_to_handshake_cb(cbptr);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_inject_handshake)
+{
+    int ok = 0;
+    SSL *ssl;
+    void *cbptr;
+
+    F_POP(cbptr);
+    REQUIRE_SSL(ssl);
+
+    OPENSSL_free(radix_fault.handbuf);
+    radix_fault.handbuf = NULL;
+    radix_fault.handbuflen = 0;
+    radix_fault.handbufalloc = 0;
+    radix_fault.hcb = radix_fault_ptr_to_handshake_cb(cbptr);
+
+    if (!TEST_true(ossl_statem_set_mutator(ssl, radix_fault_handshake_mutate,
+            radix_fault_handshake_finish, &radix_fault)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_new_ticket)
+{
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_new_session_ticket(ssl)))
+        goto err;
 
     ok = 1;
 err:
@@ -1977,6 +2044,15 @@ err:
 #define OP_SET_INJECT_HANDSHAKE_CB(cb)               \
     (OP_PUSH_P(radix_fault_handshake_cb_to_ptr(cb)), \
         OP_FUNC(hf_set_inject_handshake_cb))
+
+#define OP_SET_INJECT_HANDSHAKE(name, cb)               \
+    (OP_SELECT_SSL(0, name),                            \
+        OP_PUSH_P(radix_fault_handshake_cb_to_ptr(cb)), \
+        OP_FUNC(hf_set_inject_handshake))
+
+#define OP_NEW_TICKET(name)  \
+    (OP_SELECT_SSL(0, name), \
+        OP_FUNC(hf_new_ticket))
 
 #define OP_PUSH_STREAM_ID_PLUS_ONE(name) \
     (OP_SELECT_SSL(0, name),             \
