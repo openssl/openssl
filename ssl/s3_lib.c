@@ -121,8 +121,13 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_AEAD,
         TLS1_3_VERSION,
         TLS1_3_VERSION,
-        DTLS1_3_VERSION,
-        DTLS1_3_VERSION,
+        /*
+         * RFC 9147 (DTLS 1.3): "TLS_AES_128_CCM_8_SHA256 MUST NOT be used in
+         * DTLS without additional safeguards against forgery." We implement
+         * no such safeguards, so this cipher is not available under DTLS.
+         */
+        0,
+        0,
         SSL_NOT_DEFAULT | SSL_MEDIUM,
         SSL_HANDSHAKE_MAC_SHA256,
         64, /* CCM8 uses a short tag, so we have a low security strength */

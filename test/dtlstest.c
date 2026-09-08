@@ -1474,6 +1474,66 @@ end:
 
     return testresult;
 }
+
+/*
+ * RFC 9147 (DTLS 1.3): TLS_AES_128_CCM_8_SHA256 MUST NOT be used in DTLS
+ * without additional safeguards against forgery, due to its short
+ * authentication tag. OpenSSL does not implement such safeguards, so a
+ * DTLS1.3 connection offering only this ciphersuite must fail to find a
+ * usable cipher rather than falling back to negotiating it anyway.
+ */
+static int test_dtls13_ccm8_not_offered(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    int ret;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    /* CCM8 ciphers are considered low security due to their short tag */
+    SSL_CTX_set_security_level(sctx, 0);
+    SSL_CTX_set_security_level(cctx, 0);
+
+    if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, TLS1_3_RFC_AES_128_CCM_8_SHA256))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, TLS1_3_RFC_AES_128_CCM_8_SHA256)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /*
+     * The client must fail before it can even construct a ClientHello: it
+     * has no cipher left that is permitted under DTLS to offer.
+     */
+    if (!TEST_int_le(ret = SSL_connect(clientssl), 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            SSL_R_NO_CIPHERS_AVAILABLE))
+        goto end;
+    ERR_clear_error();
+
+    /* The server independently has nothing usable configured either */
+    if (!TEST_int_le(ret = SSL_accept(serverssl), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            SSL_R_NO_CIPHERS_AVAILABLE))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 /* Confirm that we can create a connections using DTLSv1_listen() */
@@ -1561,6 +1621,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert, 8);
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert_plant, 3);
     ADD_TEST(test_dtls13_epoch0_plaintext_alert);
+    ADD_TEST(test_dtls13_ccm8_not_offered);
 #endif
 
     return 1;

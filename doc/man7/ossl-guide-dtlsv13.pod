@@ -228,6 +228,14 @@ OpenSSL does not support Connection IDs in DTLSv1.3. If a client that supports C
 IDs connects to an OpenSSL server, the server will ignore the Connection ID and will not
 include a Connection ID in its responses.
 
+=head1 CIPHER SUITES
+
+RFC 9147 requires that TLS_AES_128_CCM_8_SHA256 must not be used with DTLS
+without additional safeguards against forgery, due to its short
+authentication tag. OpenSSL does not implement such safeguards, so this
+ciphersuite is not available when negotiating DTLS, even though it remains
+available for TLS.
+
 =head1 HOW TO UTILIZE DTLSV1.3 IN OPENSSL
 
 =head2 SSL_set_min_proto_version and SSL_set_max_proto_version
