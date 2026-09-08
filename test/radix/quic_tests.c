@@ -3197,8 +3197,61 @@ DEF_SCRIPT(script_65, "Fault injection - CRYPTO - zero-length is accepted")
     OP_READ_EXPECT(Ca, "orange", 6);
 }
 
-DEF_SCRIPT(script_66, "place holder for multistrem script_66")
+static int script_66_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[64];
+    size_t written;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, fault->word1)))
+        goto err;
+
+    if (fault->word1 == OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+                fault->word0 - 1)))
+            goto err;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_VLINT_MAX))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_66, "Fault injection - large MAX_STREAM_DATA")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_66_inject_plain);
+
+    OP_NEW_STREAM(S, Sa, 0);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_SET_INJECT_WORD(S_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+    OP_WRITE(Ca, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
 DEF_SCRIPT(script_67, "place holder for multistrem script_67")
