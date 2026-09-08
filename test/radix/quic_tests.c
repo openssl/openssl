@@ -663,8 +663,14 @@ static int mutcbk_inject_frames(const QUIC_PKT_HDR *hdrin,
      * packet send itself failed (tearing down the connection), so once
      * we're done mutating we must pass subsequent packets through
      * unmodified instead.
+     *
+     * PATH_CHALLENGE is only valid in 0-RTT and 1-RTT packets. The client can
+     * still send a Handshake packet after SSL_connect() returns, e.g. a PTO
+     * probe while HANDSHAKE_DONE is in flight, which the server drops once the
+     * handshake is confirmed. So only a 1-RTT packet is mutated and anything
+     * else passes through without consuming the one shot.
      */
-    if (mutctx->mutctx_done) {
+    if (mutctx->mutctx_done || hdrin->type != QUIC_PKT_TYPE_1RTT) {
         *hdrout = (QUIC_PKT_HDR *)hdrin;
         *iovecout = iovecin;
         *numout = numin;
@@ -777,6 +783,7 @@ DEF_FUNC(mount_flood)
 
     mutctx.mutctx_inject = inject_frames;
     mutctx.mutctx_inject_sz = sizeof(PATH_CHALLENGE_FRAMES) - 1;
+    mutctx.mutctx_done = 0;
     REQUIRE_SSL(ssl);
     ch = ossl_quic_conn_get_channel(ssl);
     if (!TEST_ptr(ch))
