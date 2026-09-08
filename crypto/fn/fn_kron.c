@@ -192,8 +192,5 @@ size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
 
     size_t nested_size = OSSL_FN_mod_ctx_size(&t_L, &t_L, &t_L);
 
-    if (own_size == 0 || nested_size == 0)
-        return 0;
-
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }

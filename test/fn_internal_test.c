@@ -442,6 +442,33 @@ end:
     return ret;
 }
 
+static int test_ctx_size_compose(void)
+{
+    size_t s1 = 42, s2 = 100;
+    size_t maxu = OSSL_SAFE_MATH_MAXU(size_t);
+
+    return TEST_size_t_eq(ossl_fn_ctx_add_size(s1, s2), s1 + s2)
+        && TEST_size_t_eq(ossl_fn_ctx_add_size(OSSL_FN_CTX_SIZE_NONE, s1),
+            s1)
+        && TEST_size_t_eq(ossl_fn_ctx_add_size(s1, OSSL_FN_CTX_SIZE_NONE),
+            s1)
+        && TEST_size_t_eq(ossl_fn_ctx_add_size(OSSL_FN_CTX_SIZE_NONE,
+                              OSSL_FN_CTX_SIZE_NONE),
+            OSSL_FN_CTX_SIZE_NONE)
+        && TEST_size_t_eq(ossl_fn_ctx_add_size(0, s1), 0)
+        && TEST_size_t_eq(ossl_fn_ctx_add_size(s1, 0), 0)
+        && TEST_size_t_eq(ossl_fn_ctx_add_size(maxu, s1), 0)
+        && TEST_size_t_eq(ossl_fn_ctx_max_size(s1, s2), s2)
+        && TEST_size_t_eq(ossl_fn_ctx_max_size(s2, s1), s2)
+        && TEST_size_t_eq(ossl_fn_ctx_max_size(OSSL_FN_CTX_SIZE_NONE, s1),
+            s1)
+        && TEST_size_t_eq(ossl_fn_ctx_max_size(OSSL_FN_CTX_SIZE_NONE,
+                              OSSL_FN_CTX_SIZE_NONE),
+            OSSL_FN_CTX_SIZE_NONE)
+        && TEST_size_t_eq(ossl_fn_ctx_max_size(0, s1), 0)
+        && TEST_size_t_eq(ossl_fn_ctx_max_size(s1, 0), 0);
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_struct);
@@ -452,6 +479,7 @@ int setup_tests(void)
     ADD_TEST(test_secure_ctx);
     ADD_TEST(test_secure_ctx_size);
     ADD_TEST(test_ctx_peak_used);
+    ADD_TEST(test_ctx_size_compose);
 
     return 1;
 }
