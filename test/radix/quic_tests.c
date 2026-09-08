@@ -3254,8 +3254,24 @@ DEF_SCRIPT(script_66, "Fault injection - large MAX_STREAM_DATA")
     OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
-DEF_SCRIPT(script_67, "place holder for multistrem script_67")
+DEF_SCRIPT(script_67, "Fault injection - large MAX_DATA")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_66_inject_plain);
+
+    OP_NEW_STREAM(S, Sa, 0);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_MAX_DATA);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+    OP_WRITE(Ca, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
 DEF_SCRIPT(script_68, "place holder for multistrem script_68")
