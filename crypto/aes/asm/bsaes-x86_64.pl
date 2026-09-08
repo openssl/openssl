@@ -115,7 +115,7 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 
 my ($inp,$out,$len,$key,$ivp)=("%rdi","%rsi","%rdx","%rcx");
 my @XMM=map("%xmm$_",(15,0..14));	# best on Atom, +10% over (0..15)
-my $ecb=0;	# suppress unreferenced ECB subroutines, spare some space...
+my $ecb=1;	# the AES-GCM-SIV provider uses bsaes_ecb_encrypt_blocks on SSSE3-without-AES-NI
 
 {
 my ($key,$rounds,$const)=("%rax","%r10d","%r11");
