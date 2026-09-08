@@ -65,6 +65,12 @@ OpenSSL Releases
 
    *Tong Li*
 
+ * Added script to generate CMP test credentials.
+
+   This work was sponsored by Siemens AG.
+
+   *Rajeev Ranjan*
+
  *  Header files in OpenSSL are being changed to reflect modern development
     practices - Include files should all be guarded for inclusion by a define
     and must be self contained, meaning they include all dependencies they need
