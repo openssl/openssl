@@ -542,8 +542,6 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
     }
 out:
     OPENSSL_free(wpath);
-    if (hModule != NULL)
-        CloseHandle(hModule);
     return utf8len;
 }
 
