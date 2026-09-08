@@ -1081,6 +1081,9 @@ static int set_new_cipher(SSL *ssl, const char *name)
     STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(ssl);
     int i;
 
+    if (s == NULL)
+        return 0;
+
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
 
