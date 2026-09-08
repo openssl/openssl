@@ -103,7 +103,14 @@ jobs:
       matrix:
         zoo:
           - image: docker.io/library/debian:11
-            install: apt-get update && apt-get install -y gcc make perl
+            # Debian 11 LTS ended 2026-08-31: bullseye-security metadata is
+            # expired and its pool has been pruned.  Use the snapshot repos
+            # the image pins itself.
+            install: |
+              sed -i -e 's|^deb |#deb |' \
+                    -e 's|^# deb http://snapshot|deb http://snapshot|' /etc/apt/sources.list && \
+              apt-get -o Acquire::Check-Valid-Until=false update && \
+              apt-get install -y gcc make perl
           - image: docker.io/library/debian:12
             install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/debian:trixie
