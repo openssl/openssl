@@ -5138,6 +5138,14 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
     if (is_fips && cipher >= 4)
         return 1;
 
+    /*
+     * RFC 9147 (DTLS 1.3): TLS_AES_128_CCM_8_SHA256 MUST NOT be used in
+     * DTLS without additional safeguards against forgery, which we do not
+     * implement, so this cipher is not offered under DTLS.
+     */
+    if (testdtls && cipher == 0)
+        return 1;
+
     if (ciphersuites[cipher] == NULL)
         return TEST_skip("Cipher not supported");
 
@@ -5841,6 +5849,13 @@ static int test_early_data_psk_with_all_ciphers(int idx)
      * as currently FIPS module does not support them.
      */
     if ((idx == 2 || idx == 5 || idx == 6) && is_fips == 1)
+        return 1;
+    /*
+     * RFC 9147 (DTLS 1.3): TLS_AES_128_CCM_8_SHA256 MUST NOT be used in
+     * DTLS without additional safeguards against forgery, which we do not
+     * implement, so this cipher is not offered under DTLS.
+     */
+    if (idx == 4 && testdtls)
         return 1;
 
     /* We always set this up with a final parameter of "2" for PSK */
@@ -7103,10 +7118,26 @@ static int test_tls13_ciphersuite(int idx)
              * TEST_strn_eq is used below because t13_cipher can contain
              * multiple ciphersuites
              */
-            if (max_ver == version1_3
-                && !TEST_strn_eq(t13_cipher, negotiated_scipher,
-                    strlen(negotiated_scipher)))
-                goto end;
+            if (max_ver == version1_3) {
+                const char *expected = t13_cipher;
+
+                /*
+                 * TLS_AES_128_CCM_8_SHA256 is not offered under DTLS (RFC
+                 * 9147 forbids it without additional forgery safeguards we
+                 * do not implement). When an entry lists it first for a
+                 * DTLS1.3 run, the next cipher in the list is what actually
+                 * gets negotiated instead.
+                 */
+                if (testdtls
+                    && strncmp(t13_cipher, TLS1_3_RFC_AES_128_CCM_8_SHA256,
+                           strlen(TLS1_3_RFC_AES_128_CCM_8_SHA256))
+                        == 0)
+                    expected = TLS1_3_RFC_AES_128_CCM_SHA256;
+
+                if (!TEST_strn_eq(expected, negotiated_scipher,
+                        strlen(negotiated_scipher)))
+                    goto end;
+            }
 
 #ifndef OPENSSL_NO_TLS1_2
             /* Below validation is not done when t12_cipher is NULL */
