@@ -24,7 +24,6 @@ B<openssl> B<x509>
 [B<-outform> B<DER>|B<PEM>]
 [B<-nocert>]
 [B<-noout>]
-[B<-setalias> I<arg>]
 [B<-dateopt>]
 [B<-text>]
 [B<-certopt> I<option>]
@@ -81,6 +80,7 @@ B<openssl> B<x509>
 [B<-addtrust> I<arg>]
 [B<-clrreject>]
 [B<-addreject> I<arg>]
+[B<-setalias> I<arg>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
@@ -145,7 +145,7 @@ X.509 extensions to be added can be specified using the B<-extfile> option.
 
 =item B<-req>
 
-By default a certificate is expected on input.
+By default, a certificate is expected on input.
 With this option a PKCS#10 certificate request is expected instead,
 which must be correctly self-signed.
 
@@ -215,14 +215,6 @@ Do not output a certificate (except for printing as requested by below options).
 =item B<-noout>
 
 This option prevents output except for printing as requested by below options.
-
-=item B<-setalias> I<arg>
-
-Sets the alias ("nickname") of the certificate. This will allow the certificate
-to be referred to using a user-defined name, for example "Steve's Certificate".
-
-No option has been implemented to clear an alias,
-but an alias may be overridden by setting a different one.
 
 =back
 
@@ -495,7 +487,7 @@ self-signed, for instance when the key cannot be used for signing, such as DH.
 =item B<-clrext>
 
 When transforming a certificate to a new certificate
-by default all certificate extensions are retained.
+by default, all certificate extensions are retained.
 
 When transforming a certificate or certificate request,
 the B<-clrext> option prevents taking over any extensions from the source.
@@ -629,23 +621,24 @@ and saved into the serial number file determined as described above.
 
 =head2 Trust Attributes
 
-When a certificate is validated w.r.t. a given trust store, a chain of
+As detailed in L<openssl-verification-options(1)>, when a certificate
+is validated w.r.t. a given trust store and intended use, a chain of
 certificates is built until a suitably trusted certificate is reached.
-By default a CA certificate is trusted when it is in the trust store
+By default, a CA certificate is trusted when it is in the trust store
 and is a self-signed (root) CA certificate.
 A CA certificate having no explicit trust attributes is trusted for any use.
 
-To provide finer control over the uses CA certificate is trusted for,
-explicit trust attributes may be set for it.
-For example, a CA may be trusted to issue only SSL client certificates,
+To provide finer control over the uses a CA certificate is trusted for,
+explicit trust attributes may be set for it in an auxiliary structure that
+is held along with the certificate and can be stored in its PEM encoding.
+For example, a CA certificate may be marked as trusted to issue only SSL client certificates,
 or to issue any kind of certificate other than an SSL server certificate.
 
-A B<trusted certificate> is a certificate that has
-one more more trust attributes attached to it, namely,
+A certificate can have one more more trust attributes attached to it, namely,
 the permitted and prohibited uses of the certificate.
 
-Trust attributes names should coincide with the names of extended key usages
-(EKUs) as defined in RFC 5280 section 4.2.1.12. Valid names include
+Trust attribute names should coincide with the names of extended key usages
+(EKUs) as defined in RFC 5280 section 4.2.1.12. Valid names are, among others,
 B<clientAuth>, B<serverAuth>, B<emailProtection>, and B<anyExtendedKeyUsage>.
 Further ones may be defined by applications of OpenSSL.
 B<anyExtendedKeyUsage> enables all uses when added to the trust list
@@ -660,27 +653,39 @@ on the meaning of trust attributes in certificate validation.
 
 =item B<-trustout>
 
-Mark any certificate PEM output as <trusted> certificate rather than ordinary.
-An ordinary or trusted certificate can be input but by default an ordinary
-certificate is output and any trust attributes are discarded.
+Include trust-related attributes in certificate PEM output, which implies the
+PEM header C<TRUSTED CERTIFICATE> rather than the ordinary one: C<CERTIFICATE>.
+The input certificate can be an ordinary one or can already bear trust attributes.
+By default, an ordinary certificate is output and any pre-existing trust attributes are discarded.
 The B<-trustout> option is implied when
 the B<-addtrust>, B<-addreject>, or B<-setalias> options are given.
 
 =item B<-clrtrust>
 
-Clears all the permitted or trusted uses of the certificate.
+Clears all the permitted uses of the certificate.
 
 =item B<-addtrust> I<arg>
 
-Adds a trusted certificate use.
+Adds a permitted (i.e., marked trusted) trust anchor use.
 
 =item B<-clrreject>
 
-Clears all the prohibited or rejected uses of the certificate.
+Clears all the prohibited uses of the certificate.
 
 =item B<-addreject> I<arg>
 
-Adds a prohibited trust anchor use.
+Adds a prohibited (i.e., marked rejected) trust anchor use.
+
+=item B<-setalias> I<arg>
+
+Sets the alias ("nickname") of the certificate. This will allow the certificate
+to be referred to using a user-defined name, for example "Steve's Certificate".
+
+The name is held as part of the auxiliary structure that is mentioned above
+and can be stored in the PEM encoding of the certificate.
+
+No option has been implemented to clear an alias,
+but an alias may be overridden by setting a different one.
 
 =back
 
@@ -745,7 +750,8 @@ Don't give a hexadecimal dump of the certificate signature.
 
 =item B<no_aux>
 
-Don't print out certificate trust attribute information.
+Don't print out the auxiliary structure containing
+certificate trust attribute information.
 
 =item B<no_extensions>
 

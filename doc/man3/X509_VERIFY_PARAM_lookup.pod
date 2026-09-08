@@ -24,13 +24,13 @@ X509_VERIFY_PARAM_table_cleanup
 These functions manipulate the internal table of B<X509_VERIFY_PARAM>
 structures to be used in certificate verification.
 
-Currently several standard entries are defined with the following names:
+Currently, several standard entries are defined with the following names:
 C<ssl_client>, C<ssl_server>, C<code_sign>,
 C<smime_sign>, C<pkcs7> (which is equivalent to C<smime_sign>), and C<default>.
 
-These entries are immutable but the list may be extended.
+These entries are immutable, but the list may be extended.
 
-X509_VERIFY_PARAM_lookup() determines the B<X509_VERIFY_PARAM> structure
+X509_VERIFY_PARAM_lookup() locates the B<X509_VERIFY_PARAM> structure
 associated with the given I<name> by looking it up in the internal table.
 
 X509_VERIFY_PARAM_get0() returns the B<X509_VERIFY_PARAM> structure
@@ -45,7 +45,7 @@ so the caller must not free it in this case.
 X509_VERIFY_PARAM_get_count() returns the total number of entries in the table.
 
 X509_VERIFY_PARAM_table_cleanup() removes all custom table entries,
-restoring the original state containing just the standard entries.
+restoring the original state, containing just the standard entries.
 
 =head1 RETURN VALUES
 
@@ -56,6 +56,22 @@ X509_VERIFY_PARAM_add0_table() returns 1 on success, 0 on error.
 X509_VERIFY_PARAM_get_count() returns a nonnegative integer.
 
 X509_VERIFY_PARAM_table_cleanup() does not return a value.
+
+=head1 NOTES
+
+X509_VERIFY_PARAM_add0_table() and X509_VERIFY_PARAM_table_cleanup()
+do not implement locking. For this reason,
+they must not be used concurrently with any functions that access the table.
+These include not only the functions X509_VERIFY_PARAM_get_count(),
+X509_VERIFY_PARAM_get0(), and X509_VERIFY_PARAM_lookup() documented here,
+but also any of their users like L<X509_STORE_CTX_set_default(3)>,
+L<X509_verify_cert(3)>, and L<X509_STORE_CTX_verify(3)>,
+as well as their numerous users.
+
+=head1 SEE ALSO
+
+L<X509_STORE_CTX_set_default(3)>,
+L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>
 
 =head1 COPYRIGHT
 

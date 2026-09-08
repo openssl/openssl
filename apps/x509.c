@@ -228,14 +228,15 @@ const OPTIONS x509_options[] = {
         "Create CA serial number file if it does not exist" },
 
     OPT_SECTION("Certificate trust output"),
-    { "trustout", OPT_TRUSTOUT, '-', "Mark certificate PEM output as trusted" },
-    { "setalias", OPT_SETALIAS, 's', "Set certificate alias (nickname)" },
+    { "trustout", OPT_TRUSTOUT, '-',
+        "Include trust-related attributes in certificate PEM output" },
     { "clrtrust", OPT_CLRTRUST, '-', "Clear all trusted uses" },
     { "addtrust", OPT_ADDTRUST, 's', "Trust certificate for a given use" },
     { "clrreject", OPT_CLRREJECT, '-',
         "Clears all the rejected uses of the certificate" },
     { "addreject", OPT_ADDREJECT, 's',
         "Reject certificate for a given use" },
+    { "setalias", OPT_SETALIAS, 's', "Set certificate alias (nickname)" },
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,

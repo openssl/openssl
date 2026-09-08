@@ -98,18 +98,18 @@ For the list of recognized EKUs see the L</Extended Key Usage> section below.
 
 A verification method determines a set verification parameters,
 such as the verification purpose and flags,
-the trust id, the maximum verification depth
+the trust ID, the maximum verification depth
 (i.e., the number of subordinate CA certificates allowed in a chain),
 and the authentication security level.
 
-By default, no purpose and trust id are set,
+By default, no purpose and trust ID are set,
 only the flag B<X509_V_FLAG_TRUSTED_FIRST> is set,
 the maximum verification depth is 100,
 the authentication security level is unset,
 and certificate policy processing is not enabled.
 
-The I<trust id> determines which trust anchors are acceptable
-depending on their auxiliary trust or reject attributes (see L</Trust Anchors> below).
+The I<trust ID> determines which trust anchors are acceptable, depending
+on any given trust or reject attributes (see L</Trust Anchors> below).
 The trust attributes can be set using the B<-addtrust> and B<-addreject> options
 for L<openssl-x509(1)>.
 
@@ -146,7 +146,7 @@ When validating a certificate, a chain of certificates is acceptable only if
 the signature of its last certificate can be verified using a trust anchor.
 
 In practice, trust anchors are typically given in the form of certificates,
-where their essential fields are the subjectPublicKeyInfo containing the public key,
+where their essential fields are the C<subjectPublicKeyInfo> containing the public key,
 the subject distinguished name (DN) and/or subject alternative names,
 Usually, a I<trust anchor certificate> is self-signed but does not need to be.
 A self-signed certificate must also be I<self-issued>,
@@ -200,13 +200,12 @@ the first such name equals the C<issuer> field of the certificate.
 
 =back
 
-Independent of any extended key usage (EKU) X.509v3 extension included,
-from the OpenSSL perspective a trust anchor certificate
-should be augmented with an explicit designation for which
-uses of a target certificate the certificate may serve as a trust anchor.
-If this information is missing, it is by default trusted for all uses.
-In PEM encoding, the presence of trust attributes
-is indicated by the C<TRUSTED CERTIFICATE> string.
+Regardless of any extended key usage (EKU) X.509v3 extension that
+a trust anchor certificate may contain, OpenSSL supports
+associating such a certificate with an explicit designation indicating
+for which uses of target certificates it may serve as a trust anchor.
+Without this designation, it is by default permitted for all uses.
+
 Such a designation provides a set of positive trust attributes
 explicitly stating acceptance for the listed uses
 and/or a set of negative trust attributes explicitly rejecting the listed uses.
@@ -217,6 +216,9 @@ For the list of EKUs with currently predefined meaning
 see the L</Extended Key Usage> section below.
 The special EKU B<anyExtendedKeyUsage>
 enables all uses when trusted or blocks all uses when rejected.
+
+The trust attributes are held in an auxiliary structure and can be persisted in
+the certificate PEM encoding, indicated by the C<TRUSTED CERTIFICATE> string.
 
 A certificate, which may be CA certificate or an end-entity certificate,
 is considered a trust anchor for the intended use
@@ -474,7 +476,7 @@ If a subjectAlternativeName extension is given it must not be empty.
 
 =item *
 
-The signatureAlgorithm field and the cert signature must be consistent.
+The C<signatureAlgorithm> field and the cert signature must be consistent.
 
 =item *
 
@@ -695,7 +697,7 @@ This option has no effect and is retained for backward compatibility only.
 =head2 Certificate Extensions
 
 Options like B<-purpose> and B<-verify_name> trigger the processing of specific
-certificate extensions such as extended key usage (EKU)
+certificate extensions, such as extended key usage (EKU),
 that determine what certificates can be used for.
 
 The following two subsections on the B<basicConstraints> and B<keyUsage>

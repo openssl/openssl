@@ -444,7 +444,7 @@ X509_VAL_free,
 X509_VAL_new,
 X509_VERIFY_PARAM_new,
 X509_VERIFY_PARAM_free,
-X509_dup,
+X509_dup
 - ASN1 object utilities
 
 =head1 SYNOPSIS

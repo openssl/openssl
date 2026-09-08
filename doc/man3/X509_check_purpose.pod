@@ -44,7 +44,7 @@ X509_check_purpose() checks if certificate I<x> supports the purpose
 represented by I<id>.
 If I<ca> is nonzero, then certificate I<x> is checked to determine
 if it is a CA certificiate, with various levels of certainty returned.
-The certificate I<x> must be a complete certificate
+The certificate I<x> must be a complete certificate,
 otherwise the function returns an error.
 
 See L<openssl-verification-options(1)/Purposes> for details on purposes.
@@ -88,7 +88,7 @@ the purpose with the given id or -1 if not found.
 X509_PURPOSE_add() adds or modifies a purpose entry identified by I<sname>.
 Unless the id stays the same for an existing entry, I<id> must be fresh,
 which can be achieved by using the result of X509_PURPOSE_get_unused_id().
-The function also sets in the entry the trust id I<trust>, the given I<flags>,
+The function also sets in the entry the trust ID I<trust>, the given I<flags>,
 the purpose (long) name I<name>, the short name I<sname>, the purpose checking
 function I<ck> of type B<int (*) (const X509_PURPOSE *, const X509 *, int)>,
 and its user data I<arg> which may be retrieved via the B<X509_PURPOSE> pointer.
@@ -103,7 +103,7 @@ X509_PURPOSE_get0_name() returns the (long) name of the given B<X509_PURPOSE>.
 
 X509_PURPOSE_get0_sname() returns the short name of the given B<X509_PURPOSE>.
 
-X509_PURPOSE_get_trust() returns the trust id of the given B<X509_PURPOSE>.
+X509_PURPOSE_get_trust() returns the trust ID of the given B<X509_PURPOSE>.
 
 X509_PURPOSE_set() assigns the given I<purpose> id to the location pointed at by
 I<p>.
@@ -119,8 +119,8 @@ This is safe despite the I<x> argument's type change to I<const X509 *> as of Op
 X509_check_purpose() returns the following values.
 
 It returns -1 if an error condition occurred,
-for instance the purpose I<id> is invalid
-or I<x> does not point to a complete certificate structure
+for instance, the purpose I<id> is invalid,
+or I<x> does not point to a complete certificate structure,
 or some further basic well-formedness checks failed.
 
 It returns 0 if I<x> does not support the purpose represented by I<id>.
@@ -140,15 +140,11 @@ CA certificate, it can return the following values with the given meanings:
 
 =item 3 self-signed X.509v1 certificate (which cannot have basicConstraints)
 
-=item 4 basicConstraints absent but keyUsage present and keyCertSign asserted
+=item 4 basicConstraints absent, but keyUsage present and keyCertSign asserted
 
 =item 5 legacy Netscape-specific CA flags present
 
 =back
-
-=head1 SEE ALSO
-
-L<X509_PURPOSE_add(3)>
 
 X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
@@ -172,7 +168,7 @@ X509_PURPOSE_get0_name() returns the (long) name of the given B<X509_PURPOSE>.
 
 X509_PURPOSE_get0_sname() returns the short name of the given B<X509_PURPOSE>.
 
-X509_PURPOSE_get_trust() returns the trust id of the given B<X509_PURPOSE>.
+X509_PURPOSE_get_trust() returns the trust ID of the given B<X509_PURPOSE>.
 
 X509_PURPOSE_set() returns 1 on success, 0 on error.
 
@@ -181,6 +177,10 @@ X509_PURPOSE_set() returns 1 on success, 0 on error.
 The X509_PURPOSE implementation so far is not thread-safe.
 There may be race conditions retrieving purpose information while
 X509_PURPOSE_add() or X509_PURPOSE_cleanup(void) is being called.
+
+=head1 SEE ALSO
+
+L<X509_PURPOSE_add(3)>
 
 =head1 HISTORY
 
