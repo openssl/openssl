@@ -23,6 +23,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 #include <openssl/posix_time.h>
+#include <openssl/asn1t.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -683,6 +684,52 @@ err:
     return ok;
 }
 
+static int asn1_dup_test_op_dup_post_count;
+static int asn1_dup_test_op_free_post_count;
+static int asn1_dup_test_cb(int operation, ASN1_VALUE **in, const ASN1_ITEM *it,
+    void *exarg)
+{
+    if (operation == ASN1_OP_DUP_POST) {
+        asn1_dup_test_op_dup_post_count++;
+        return 0;
+    }
+    if (operation == ASN1_OP_FREE_POST)
+        asn1_dup_test_op_free_post_count++;
+    return 1;
+}
+
+typedef struct {
+    ASN1_INTEGER *value;
+} ASN1_DUP_TEST;
+
+ASN1_SEQUENCE_cb(ASN1_DUP_TEST, asn1_dup_test_cb) = {
+    ASN1_SIMPLE(ASN1_DUP_TEST, value, ASN1_INTEGER)
+} static_ASN1_SEQUENCE_END_cb(ASN1_DUP_TEST, ASN1_DUP_TEST)
+
+IMPLEMENT_STATIC_ASN1_ALLOC_FUNCTIONS(ASN1_DUP_TEST)
+
+static int test_asn1_item_dup_failure_frees(void)
+{
+    ASN1_DUP_TEST *src = NULL, *dup = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(src = ASN1_DUP_TEST_new())
+        || !TEST_true(ASN1_INTEGER_set(src->value, 1)))
+        goto end;
+
+    asn1_dup_test_op_dup_post_count = 0;
+    asn1_dup_test_op_free_post_count = 0;
+    dup = ASN1_item_dup(ASN1_ITEM_rptr(ASN1_DUP_TEST), src);
+
+    ret = TEST_ptr_null(dup)
+        && TEST_int_eq(asn1_dup_test_op_dup_post_count, 1)
+        && TEST_int_eq(asn1_dup_test_op_free_post_count, 1);
+end:
+    ASN1_DUP_TEST_free(src);
+    ASN1_DUP_TEST_free(dup);
+    return ret;
+}
+
 #ifndef OPENSSL_NO_ECX
 static int test_asn1_item_dup_mfail(void)
 {
@@ -725,6 +772,7 @@ int setup_tests(void)
     ADD_TEST(test_ossl_uni2utf8);
     ADD_TEST(test_empty_uni_conversions);
     ADD_TEST(test_asn1_string_to_utf8);
+    ADD_TEST(test_asn1_item_dup_failure_frees);
 #ifndef OPENSSL_NO_ECX
     ADD_MFAIL_NO_CHECK_TEST(test_asn1_item_dup_mfail);
 #endif
