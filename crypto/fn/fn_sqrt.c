@@ -408,8 +408,5 @@ size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
             ossl_fn_ctx_max_size(mod_mul_size,
                 ossl_fn_ctx_max_size(mod_size, kronecker_size))));
 
-    if (own_size == 0 || nested_size == 0)
-        return 0;
-
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
