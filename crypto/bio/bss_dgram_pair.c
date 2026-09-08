@@ -763,9 +763,18 @@ static size_t dgram_pair_ctrl_get_write_guarantee(BIO *bio)
 static int dgram_pair_ctrl_get_local_addr_cap(BIO *bio)
 {
     struct bio_dgram_pair_st *b = bio->ptr, *readb;
+    int peer_state;
 
     if (!bio->init)
         return 0;
+
+    if (is_dgram_pair(b)) {
+        if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock))
+            return 0;
+
+        if (peer_state == PEER_STATE_ORPHANED)
+            return 0;
+    }
 
     dgram_bio_get_peer_data(b, NULL, NULL, &readb);
 
@@ -776,8 +785,15 @@ static int dgram_pair_ctrl_get_local_addr_cap(BIO *bio)
 static int dgram_pair_ctrl_get_effective_caps(BIO *bio)
 {
     struct bio_dgram_pair_st *b = bio->ptr, *peerb;
+    int peer_state;
 
     if (b->pair == NULL)
+        return 0;
+
+    if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock))
+        return 0;
+
+    if (peer_state == PEER_STATE_ORPHANED)
         return 0;
 
     dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
@@ -834,12 +850,18 @@ static int dgram_pair_ctrl_get_mtu(BIO *bio)
 static int dgram_pair_ctrl_set_mtu(BIO *bio, size_t mtu)
 {
     struct bio_dgram_pair_st *b = bio->ptr, *peerb;
+    int peer_state;
 
     b->mtu = mtu;
 
-    if (b->pair != NULL) {
-        dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
-        peerb->mtu = mtu;
+    if (is_dgram_pair(b)) {
+        if (!CRYPTO_atomic_load_int(&b->pair->peer_state, &peer_state, b->pair->peerlock))
+            return 0;
+
+        if (peer_state == PEER_STATE_PAIRED) {
+            dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
+            peerb->mtu = mtu;
+        }
     }
 
     return 1;
