@@ -468,10 +468,22 @@ the function C<with> further down.
 =cut
 
 sub run {
-    my ($cmd, $display_cmd) = shift->(0);
+    my ($cmd, $display_cmd, @stderr_redirected) = shift->(0);
     my %opts = @_;
 
     return () if !$cmd;
+
+    my $harness_quiet = $ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE};
+
+    # Under a non-verbose harness, STDERR is the harness's TAP pipe, which a
+    # chatty command must not write to.  Its stderr is kept in a file that is
+    # only written out, as TAP comments, when the command fails.  A stderr
+    # redirection made by the recipe is left alone.
+    my $stderr_file;
+    if ($harness_quiet && $^O ne 'VMS' && !grep { $_ } @stderr_redirected) {
+        $stderr_file = catfile(result_dir(), "stderr-$$.log");
+        $cmd .= " 2> ".$stderr_file;
+    }
 
     my $prefix = "";
     if ( $^O eq "VMS" ) { # VMS
@@ -535,7 +547,17 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    my $harness_quiet = $ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE};
+    if (defined $stderr_file) {
+        if (!$r && open(my $errfh, '<', $stderr_file)) {
+            while (<$errfh>) {
+                chomp;
+                print STDOUT "# $_\n";
+            }
+            close $errfh;
+        }
+        unlink $stderr_file;
+    }
+
     if ($^O eq 'VMS') {
         # Restore STDOUT / STDERR on VMS
         if ($harness_quiet) {
@@ -1384,13 +1406,11 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    # Under a non-verbose harness nothing drains the command's stderr, so a
-    # chatty command can fill the pipe buffer and then block forever waiting
-    # for a reader that never comes.  Send it to the null device unless the
-    # recipe asked for a specific redirection.  On VMS this also keeps
-    # program output from escaping TAP::Parser.
-    $stderr=" 2> ".$null
-        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    # VMS program output escapes TAP::Parser
+    if ($^O eq 'VMS') {
+        $stderr=" 2> ".$null
+            unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    }
 
     $cmdstr .= "$stdin$stdout$stderr";
 
@@ -1399,7 +1419,8 @@ sub __decorate_cmd {
         print STDERR "DEBUG[__decorate_cmd]: \$display_cmd = \"$display_cmd\"\n";
     }
 
-    return ($cmdstr, $display_cmd);
+    # Tell run() if the recipe redirected stderr itself
+    return ($cmdstr, $display_cmd, exists($opts{stderr}));
 }
 
 =head1 SEE ALSO
