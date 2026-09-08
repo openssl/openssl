@@ -1257,6 +1257,125 @@ err:
     return ret;
 }
 
+static int cleanse_buf_check(const unsigned char *buf, size_t size,
+    size_t data_start, size_t data_end)
+{
+    size_t i;
+
+    for (i = 0; i < size; ++i)
+        if (!TEST_uchar_eq(buf[i],
+                i >= data_start && i < data_end ? 0x00 : 0xAA)) {
+            TEST_info("byte %zu", i);
+            return 0;
+        }
+
+    return 1;
+}
+
+/*
+ * With cleansing enabled, every dropped duplicate byte of an incoming
+ * frame must be wiped in its packet buffer: a retransmit reaching below
+ * the consumed offset, a retransmit consumed entirely, a duplicate
+ * contained in an existing range and the tail trimmed away when a short
+ * frame is prepended to a direct storage chunk. Otherwise the plaintext
+ * stays in the recycled packet buffer which nothing else cleanses.
+ */
+static int test_rstream_cleanse_dropped_bytes(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkts[60] = { NULL };
+    unsigned char src_a[16], src_b[16], src_c[16], src_d[16], src_e[16];
+    unsigned char buf[16], fill = 0xFF;
+    size_t num_pkts = 0, readbytes = 0, i;
+    int fin = 0;
+    int ret = 0;
+
+    memset(src_a, 0xAA, sizeof(src_a));
+    memset(src_b, 0xAA, sizeof(src_b));
+    memset(src_c, 0xAA, sizeof(src_c));
+    memset(src_d, 0xAA, sizeof(src_d));
+    memset(src_e, 0xAA, sizeof(src_e));
+    for (i = 0; i < 10; ++i)
+        src_a[3 + i] = (unsigned char)(0x40 + i);
+
+    for (i = 0; i < OSSL_NELEM(pkts); ++i)
+        if (!TEST_ptr(pkts[num_pkts++] = pkt_test_new(1200)))
+            goto err;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+    ossl_quic_rstream_set_cleanse(rstream, 1);
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[0], 0,
+            src_a + 3, 10, 0))
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, 5, &readbytes,
+            &fin))
+        || !TEST_size_t_eq(readbytes, 5))
+        goto err;
+
+    /* a retransmit reaching below the consumed offset is wiped whole */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[1], 0,
+            src_b + 3, 10, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[1]), 1)
+        || !cleanse_buf_check(src_b, sizeof(src_b), 3, 13))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 5, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 5))
+        goto err;
+
+    /* a fully consumed retransmit is wiped whole */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[2], 0,
+            src_c + 3, 10, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[2]), 1)
+        || !cleanse_buf_check(src_c, sizeof(src_c), 3, 13))
+        goto err;
+
+    /*
+     * disjoint 1-byte frames on 1200 byte datagrams take the stream
+     * past the overhead limit so short chunks use direct storage
+     */
+    for (i = 0; i < 55; ++i)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[3 + i],
+                100 + 2 * i, &fill, 1, 0)))
+            goto err;
+
+    /* the copied direct storage chunk has its source wiped already */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[58], 20,
+            src_d + 3, 2, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[58]), 1)
+        || !cleanse_buf_check(src_d, sizeof(src_d), 3, 5))
+        goto err;
+
+    /*
+     * [18, 21) prepends [18, 20) to the direct storage chunk [20, 22)
+     * and drops the duplicate byte [20, 21), all three source bytes
+     * must be wiped
+     */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[59], 18,
+            src_e + 3, 3, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[59]), 1)
+        || !cleanse_buf_check(src_e, sizeof(src_e), 3, 6))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    for (i = 0; i < num_pkts; ++i)
+        pkt_test_free(pkts[i]);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
 #define FILL_PATTERN "abcdefghijklmnopqrstuvwxyz0123456789" \
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -2566,6 +2685,7 @@ int setup_tests(void)
     ADD_TEST(test_rstream_dstorage_two_sided_overlap);
     ADD_TEST(test_rstream_zero_length_read);
     ADD_TEST(test_rstream_fin_final_size);
+    ADD_TEST(test_rstream_cleanse_dropped_bytes);
     ADD_TEST(test_rstream_chunk_partial_overlap);
     ADD_TEST(test_rstream_chunk_full_overlap);
     ADD_TEST(test_rstream_range_overlap);
