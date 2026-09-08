@@ -838,22 +838,34 @@ sub with {
 
 =over 4
 
-=item B<slurp_file FILENAME>
+=item B<slurp_file FILENAME, OPTS>
 
 C<slurp_file> reads back the whole file FILENAME, usually an output
 captured with the C<stdout> or C<stderr> option of C<cmd> and its
 derivatives, and returns its content as a single string.  If the file
 cannot be opened, an empty string is returned.
 
+The following options OPTS are available:
+
+=over 4
+
+=item B<binary =E<gt> 0|1>
+
+When set to 1, the file is read in binary mode, for example to read
+back a DER encoded output.  The default is 0, reading in text mode.
+
+=back
+
 =back
 
 =cut
 
 sub slurp_file {
-    my ($file) = @_;
+    my ($file, %opts) = @_;
     my $content = '';
 
     if (open(my $fh, '<', $file)) {
+        binmode $fh if $opts{binary};
         $content = do { local $/; <$fh> };
         close($fh);
     }
