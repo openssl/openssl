@@ -21,11 +21,18 @@ that isn't a problem in OpenSSL itself (like an OS malfunction or a Perl issue).
 You may want increased verbosity, that can be accomplished like this:
 
 Full verbosity, showing full output of all successful and failed test cases
-(`make` macro `VERBOSE` or `V`):
+(with the `prove` flag `-v`, passed via the `make` macro `PROVEFLAGS`, or
+the environment variables `HARNESS_VERBOSE`, `VERBOSE` or `V`):
 
-    $ make V=1 test                                  # Unix
-    $ mms /macro=(V=1) test                          ! OpenVMS
-    $ nmake V=1 test                                 # Windows
+    $ make test PROVEFLAGS=-v                      # Unix
+    $ mms /macro=("PROVEFLAGS=-v") test            ! OpenVMS
+    $ nmake test PROVEFLAGS=-v                     # Windows
+
+or equivalently:
+
+    $ make V=1 test                                # Unix
+    $ mms /macro=(V=1) test                        ! OpenVMS
+    $ nmake V=1 test                               # Windows
 
 Verbosity on failed (sub-)tests only
 (`VERBOSE_FAILURE` or `VF` or `REPORT_FAILURES`):
@@ -48,6 +55,28 @@ And of course, you can combine (Unix examples shown):
 
     $ make test TESTS='test_rsa test_dsa' VF=1
     $ make test TESTS="test_cmp_*" VFP=1
+
+Running prove directly
+----------------------
+
+Under the hood, the tests are run with the standard Perl test runner
+`prove`, with all the OpenSSL specific setup carried by the plugin module
+`OpenSSL::TestHarness` (generated in the build tree as
+`util/perl/OpenSSL/TestHarness.pm`).  From the build tree, tests can be
+run directly like this:
+
+    $ PERL5LIB=util/perl prove -P OpenSSL::TestHarness -- TESTS...
+
+or to simply run all of them:
+
+    $ PERL5LIB=util/perl prove -P OpenSSL::TestHarness
+
+The source and build directory locations are baked into the generated
+plugin module, so no other environment variables are needed.  The
+`TESTS` grammar described in section Running Selected Tests below is
+understood (test names, group numbers, wildcards, `-name` negations,
+`alltests` and `list`), and explicit recipe file paths work too.
+Usual `prove` flags such as `-v` or `-j4` may be added before the `--`.
 
 You can find the list of available tests like this:
 
@@ -148,6 +177,10 @@ for `TAP::Harness` to know more.
 To run up to four tests in parallel at any given time:
 
     $ make HARNESS_JOBS=4 test
+
+or, equivalently, using the `prove` flag `-j`:
+
+    $ make test PROVEFLAGS=-j4
 
 Random numbers in tests
 -----------------------
