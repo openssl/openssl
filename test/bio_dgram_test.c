@@ -793,6 +793,13 @@ static int check_detached(BIO *bio, int reason)
         || !TEST_int_eq(BIO_pending(bio), 0))
         return 0;
 
+    /* Ctrls reaching for peer data must not touch the freed half. */
+    if (!TEST_uint_eq(BIO_dgram_get_effective_caps(bio), 0)
+        || !TEST_int_eq(BIO_dgram_get_local_addr_cap(bio), 0)
+        || !TEST_true(BIO_dgram_set_mtu(bio, 1506))
+        || !TEST_uint_eq(BIO_dgram_get_mtu(bio), 1506))
+        return 0;
+
     ERR_clear_error();
     if (!TEST_int_lt(BIO_read(bio, buf, sizeof(buf)), 0)
         || !TEST_false(BIO_should_retry(bio))
