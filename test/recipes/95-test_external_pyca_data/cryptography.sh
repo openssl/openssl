@@ -64,6 +64,9 @@ echo "------------------------------------------------------------------"
 echo "Building cryptography and installing test requirements"
 echo "------------------------------------------------------------------"
 OPENSSL_LIB_DIR="$O_LIB" OPENSSL_INCLUDE_DIR="$INSTALLTOP/include/" pip install . --group test
+# Replace the PyPI cryptography_vectors with the in-tree one so the
+# versions match when the submodule is not pinned at a PyPI release
+pip install ./vectors
 
 echo "------------------------------------------------------------------"
 echo "Print linked libraries"
