@@ -1720,6 +1720,11 @@ static int xof_fail_test(void)
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (test_get_argument_count() > 0) {
         if (test_get_argument_count() != 2
             || strcmp(test_get_argument(0), "fips") != 0

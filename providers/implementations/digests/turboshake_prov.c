@@ -87,8 +87,6 @@ int ossl_turboshake_init_keccak(KECCAK1600_CTX *ctx, size_t bitlen,
     if (!ossl_sha3_init(ctx, (unsigned char)domain, bitlen))
         return 0;
     memset(ctx->A, 0, sizeof(ctx->A));
-    ctx->bufsz = 0;
-    ctx->xof_state = XOF_STATE_INIT;
     ctx->md_size = xoflen;
     ctx->meth = turboshake_p12_md;
     return 1;

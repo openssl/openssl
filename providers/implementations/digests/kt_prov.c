@@ -201,7 +201,6 @@ static int kt_init(void *vctx, const OSSL_PARAM params[])
     ctx->cv_count = 0;
     ctx->tree_started = 0;
     ctx->finalized = 0;
-    memset(&ctx->root, 0, sizeof(ctx->root));
     memset(&ctx->leaf, 0, sizeof(ctx->leaf));
     if (!ossl_turboshake_init_keccak(&ctx->root, ctx->bitlen,
             KT_DOMAIN_SINGLE_NODE, ctx->xoflen))
