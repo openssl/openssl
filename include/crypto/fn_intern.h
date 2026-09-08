@@ -17,11 +17,35 @@
 #pragma once
 
 #include <stdbool.h>
+#include "internal/common.h"
+#include "internal/safe_math.h"
 #include "crypto/fn.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Context-size composition helpers, shared by all the *_ctx_size()
+ * functions, which all compose nested arena budgets the same way: sum the
+ * operation's own scratch frame with the largest nested frame it may need.
+ *
+ * ossl_fn_ctx_add_size() adds two sizes overflow-safely, returning 0 on
+ * overflow (0 is the "cannot size" sentinel for all *_ctx_size()
+ * functions).  ossl_fn_ctx_max_size() picks the larger of two sequential
+ * frame budgets.
+ */
+static ossl_inline ossl_unused size_t ossl_fn_ctx_add_size(size_t a, size_t b)
+{
+    if (ossl_unlikely(b > OSSL_SAFE_MATH_MAXU(size_t) - a))
+        return 0;
+    return a + b;
+}
+
+static ossl_inline ossl_unused size_t ossl_fn_ctx_max_size(size_t a, size_t b)
+{
+    return a > b ? a : b;
+}
 
 #if OSSL_FN_BYTES == 4
 /* 32-bit systems */
