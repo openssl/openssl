@@ -692,6 +692,7 @@ static int test_asn1_item_dup_mfail(void)
 
     if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "ED25519"))
         || !TEST_ptr(src = X509_REQ_new_ex(NULL, ""))
+        || !TEST_true(X509_REQ_set_version(src, X509_REQ_VERSION_1))
         || !TEST_true(X509_REQ_set_pubkey(src, key))
         || !TEST_int_gt(X509_REQ_sign(src, key, NULL), 0))
         goto end;
