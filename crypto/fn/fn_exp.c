@@ -27,19 +27,6 @@
 #define MONT_MUL_MOD
 #undef RECP_MUL_MOD
 
-/* maximum precomputation table size for *variable* sliding windows */
-#define TABLE_SIZE 32
-
-/*
- * Sliding-window size selection: a function of the exponent bit count (a
- * public magnitude), capped at 6, so TABLE_SIZE == 1 << 5 always suffices.
- */
-#define OSSL_FN_WINDOW_BITS_FOR_EXPONENT_SIZE(b) \
-    ((b) > 671 ? 6 : (b) > 239 ? 5               \
-            : (b) > 79         ? 4               \
-            : (b) > 23         ? 3               \
-                               : 1)
-
 /*-
  * mod_exp_mont_nested() -- Montgomery-path nested arena size for
  * OSSL_FN_mod_exp_mont().  |own_size| is added by the callers.  Nested frames
