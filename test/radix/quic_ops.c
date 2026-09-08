@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/sockets.h"
+#include "internal/statem.h"
 #include <openssl/rand.h>
 
 static const unsigned char alpn_ossltest[] = {
@@ -1325,6 +1326,31 @@ static ossl_inline radix_fault_plain_cb radix_fault_ptr_to_plain_cb(void *ptr)
     return u.cb;
 }
 
+typedef int (*radix_fault_handshake_cb)(RADIX_FAULT *fault, unsigned char *buf,
+    size_t buf_len);
+
+static ossl_inline void *radix_fault_handshake_cb_to_ptr(radix_fault_handshake_cb cb)
+{
+    union {
+        radix_fault_handshake_cb cb;
+        void *ptr;
+    } u;
+
+    u.cb = cb;
+    return u.ptr;
+}
+
+static ossl_inline radix_fault_handshake_cb radix_fault_ptr_to_handshake_cb(void *ptr)
+{
+    union {
+        radix_fault_handshake_cb cb;
+        void *ptr;
+    } u;
+
+    u.ptr = ptr;
+    return u.cb;
+}
+
 struct radix_fault_st {
     QUIC_PKT_HDR hdr;
     OSSL_QTX_IOVEC io;
@@ -1332,6 +1358,9 @@ struct radix_fault_st {
     radix_fault_plain_cb cb;
     QUIC_CHANNEL *ch;
     uint64_t word0, word1;
+    radix_fault_handshake_cb hcb;
+    unsigned char *handbuf;
+    size_t handbuflen, handbufalloc;
 };
 
 /* Fault injection against one channel at a time. */
@@ -1450,6 +1479,73 @@ static int radix_fault_prepend_frame(RADIX_FAULT *fault,
     return 1;
 }
 
+#define RADIX_FAULT_GROWTH_ALLOWANCE 1024
+
+static int radix_fault_handshake_mutate(const unsigned char *msgin,
+    size_t msginlen,
+    unsigned char **msgout, size_t *msgoutlen,
+    void *arg)
+{
+    RADIX_FAULT *fault = arg;
+    unsigned char *buf;
+
+    buf = OPENSSL_malloc(msginlen + RADIX_FAULT_GROWTH_ALLOWANCE);
+    if (buf == NULL)
+        return 0;
+
+    OPENSSL_free(fault->handbuf);
+    fault->handbuf = buf;
+    fault->handbuflen = msginlen;
+    fault->handbufalloc = msginlen + RADIX_FAULT_GROWTH_ALLOWANCE;
+    memcpy(buf, msgin, msginlen);
+
+    if (fault->hcb != NULL && !fault->hcb(fault, buf, fault->handbuflen))
+        return 0;
+
+    *msgout = buf;
+    *msgoutlen = fault->handbuflen;
+
+    return 1;
+}
+
+static void radix_fault_handshake_finish(void *arg)
+{
+    RADIX_FAULT *fault = arg;
+
+    OPENSSL_free(fault->handbuf);
+    fault->handbuf = NULL;
+}
+
+static int radix_fault_resize_handshake(RADIX_FAULT *fault, size_t newlen)
+{
+    unsigned char *buf;
+    size_t oldlen = fault->handbuflen;
+
+    if (fault->handbufalloc == 0 || newlen > fault->handbufalloc)
+        return 0;
+
+    buf = fault->handbuf;
+
+    if (newlen > oldlen)
+        memset(buf + oldlen, 0, newlen - oldlen);
+
+    fault->handbuflen = newlen;
+
+    return 1;
+}
+
+static int radix_fault_resize_message(RADIX_FAULT *fault, size_t newlen)
+{
+    if (!radix_fault_resize_handshake(fault, newlen + SSL3_HM_HEADER_LENGTH))
+        return 0;
+
+    fault->handbuf[1] = (unsigned char)((newlen >> 16) & 0xff);
+    fault->handbuf[2] = (unsigned char)((newlen >> 8) & 0xff);
+    fault->handbuf[3] = (unsigned char)((newlen) & 0xff);
+
+    return 1;
+}
+
 DEF_FUNC(hf_set_inject_plain)
 {
     int ok = 0;
@@ -1482,6 +1578,45 @@ DEF_FUNC(hf_set_inject_word)
     int ok = 0;
 
     F_POP2(radix_fault.word0, radix_fault.word1);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_inject_handshake)
+{
+    int ok = 0;
+    SSL *ssl;
+    void *cbptr;
+
+    F_POP(cbptr);
+    REQUIRE_SSL(ssl);
+
+    OPENSSL_free(radix_fault.handbuf);
+    radix_fault.handbuf = NULL;
+    radix_fault.handbuflen = 0;
+    radix_fault.handbufalloc = 0;
+    radix_fault.hcb = radix_fault_ptr_to_handshake_cb(cbptr);
+
+    if (!TEST_true(ossl_statem_set_mutator(ssl, radix_fault_handshake_mutate,
+            radix_fault_handshake_finish, &radix_fault)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_new_ticket)
+{
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_new_session_ticket(ssl)))
+        goto err;
 
     ok = 1;
 err:
@@ -1857,6 +1992,15 @@ err:
     (OP_PUSH_U64(word0),                 \
         OP_PUSH_U64(word1),              \
         OP_FUNC(hf_set_inject_word))
+
+#define OP_SET_INJECT_HANDSHAKE(name, cb)               \
+    (OP_SELECT_SSL(0, name),                            \
+        OP_PUSH_P(radix_fault_handshake_cb_to_ptr(cb)), \
+        OP_FUNC(hf_set_inject_handshake))
+
+#define OP_NEW_TICKET(name)  \
+    (OP_SELECT_SSL(0, name), \
+        OP_FUNC(hf_new_ticket))
 
 #define OP_PUSH_STREAM_ID_PLUS_ONE(name) \
     (OP_SELECT_SSL(0, name),             \

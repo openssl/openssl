@@ -3274,8 +3274,76 @@ DEF_SCRIPT(script_67, "Fault injection - large MAX_DATA")
     OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
-DEF_SCRIPT(script_68, "place holder for multistrem script_68")
+static int script_68_inject_handshake(RADIX_FAULT *fault, unsigned char *msg,
+    size_t msglen)
 {
+    const unsigned char *data;
+    size_t datalen;
+    const unsigned char certreq[] = {
+        SSL3_MT_CERTIFICATE_REQUEST, /* CertificateRequest message */
+        0, 0, 12, /* Length of message */
+        1, 1, /* certificate_request_context */
+        0, 8, /* Extensions block length */
+        0, TLSEXT_TYPE_signature_algorithms, /* sig_algs extension*/
+        0, 4, /* 4 bytes of sig algs extension*/
+        0, 2, /* sigalgs list is 2 bytes long */
+        8, 4 /* rsa_pss_rsae_sha256 */
+    };
+    const unsigned char keyupdate[] = {
+        SSL3_MT_KEY_UPDATE, /* KeyUpdate message */
+        0, 0, 1, /* Length of message */
+        SSL_KEY_UPDATE_NOT_REQUESTED /* update_not_requested */
+    };
+
+    /* We transform the NewSessionTicket message into something else */
+    switch (fault->word0) {
+    case 0:
+        return 1;
+
+    case 1:
+        /* CertificateRequest message */
+        data = certreq;
+        datalen = sizeof(certreq);
+        break;
+
+    case 2:
+        /* KeyUpdate message */
+        data = keyupdate;
+        datalen = sizeof(keyupdate);
+        break;
+
+    default:
+        return 0;
+    }
+
+    if (!TEST_true(radix_fault_resize_message(fault,
+            datalen - SSL3_HM_HEADER_LENGTH)))
+        return 0;
+
+    memcpy(msg, data, datalen);
+
+    return 1;
+}
+
+DEF_SCRIPT(script_68, "Send a CertificateRequest message post-handshake")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_HANDSHAKE(S, script_68_inject_handshake);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(1, 0);
+    OP_NEW_TICKET(S);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
 DEF_SCRIPT(script_69, "place holder for multistrem script_69")
