@@ -4912,6 +4912,615 @@ err:
     return ret;
 }
 
+/*
+ * OSSL_FN_mod_exp2_mont()
+ *
+ * The coverage shape mirrors the mod_exp tests: an independent reference
+ * oracle (a^p * b^q mod m via the already-tested single-base reference,
+ * combined with mod_mul), plus a handful of known-answer cases that anchor
+ * both.  The aliasing and ctx-size guards from the single-base family
+ * apply to the double-base implementation too (|r == m| is the only
+ * operand-rejection, the others alias safely).
+ */
+
+struct mod_exp2_test_st {
+    const OSSL_FN_ULONG *a1;
+    size_t a1_size;
+    const OSSL_FN_ULONG *p1;
+    size_t p1_size;
+    const OSSL_FN_ULONG *a2;
+    size_t a2_size;
+    const OSSL_FN_ULONG *p2;
+    size_t p2_size;
+    const OSSL_FN_ULONG *m;
+    size_t m_size;
+    /* Optional known answer; NULL => compare against the reference oracle. */
+    const OSSL_FN_ULONG *ex;
+    size_t ex_size;
+};
+
+/* Known answers. */
+static const OSSL_FN_ULONG ex_2_10__3_5_m7[] = { OSSL_FN_ULONG_C(3) }; /* (1024 mod 7)*(243 mod 7) = 2*5 = 10 mod 7 = 3 */
+
+static struct mod_exp2_test_st test_mod_exp2_cases[] = {
+    /* Known-answer.  Only odd moduli are admitted (Montgomery requires odd). */
+    { exp_a2, LIMBSOF(exp_a2), exp_p10, LIMBSOF(exp_p10),
+        exp_a3, LIMBSOF(exp_a3), exp_p5, LIMBSOF(exp_p5),
+        exp_m7, LIMBSOF(exp_m7), ex_2_10__3_5_m7,
+        LIMBSOF(ex_2_10__3_5_m7) },
+    /*
+     * Window 3 across both exponents, plus a base >= modulus
+     * to exercise the internal reduction.
+     */
+    { exp_a7, LIMBSOF(exp_a7), exp_p5, LIMBSOF(exp_p5),
+        exp_a3, LIMBSOF(exp_a3), exp_p30, LIMBSOF(exp_p30),
+        exp_m5, LIMBSOF(exp_m5), NULL, 0 },
+    /* Window 5 on both exponents, wide operands under secp128r1 prime. */
+    { num5, LIMBSOF(num5), exp_p256, LIMBSOF(exp_p256),
+        mod_secp128r1_x2, LIMBSOF(mod_secp128r1_x2), exp_p256,
+        LIMBSOF(exp_p256), mod_secp128r1_p, LIMBSOF(mod_secp128r1_p),
+        NULL, 0 },
+};
+
+/*
+ * Reference oracle: (a1^p1 mod m) * (a2^p2 mod m) mod m.  Built on the
+ * already-tested mod_exp_reference() single-base oracle and OSSL_FN_mod_mul
+ * (which has its own tests), so the dependency chain is anchored.
+ */
+static int mod_exp2_reference(OSSL_FN *r, const OSSL_FN *a1,
+    const OSSL_FN *p1, const OSSL_FN *a2, const OSSL_FN *p2,
+    const OSSL_FN *m, OSSL_FN_CTX *ctx)
+{
+    const void *token = OSSL_FN_CTX_start(ctx);
+    size_t ml = ossl_fn_get_dsize(m);
+    OSSL_FN *e1, *e2;
+    int ret = 0;
+
+    if (token == NULL)
+        return 0;
+    if ((e1 = OSSL_FN_CTX_get_limbs(ctx, ml)) == NULL
+        || (e2 = OSSL_FN_CTX_get_limbs(ctx, ml)) == NULL)
+        goto end;
+
+    if (!mod_exp_reference(e1, a1, p1, m, ctx))
+        goto end;
+    if (!mod_exp_reference(e2, a2, p2, m, ctx))
+        goto end;
+
+    if (!OSSL_FN_mod_mul(r, e1, e2, m, ctx))
+        goto end;
+    ret = 1;
+end:
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+static int test_mod_exp2_common(struct mod_exp2_test_st *tc)
+{
+    size_t a1_size = tc->a1_size;
+    size_t a2_size = tc->a2_size;
+    size_t m_size = tc->m_size;
+    size_t r_size = m_size;
+    OSSL_FN_CTX *ctx_fn = NULL, *ctx_ref = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp1 = NULL, *fp2 = NULL;
+    OSSL_FN *fm = NULL, *r_got = NULL, *r_ref = NULL;
+    size_t size;
+    int ret = 0;
+
+    size_t a_max = a1_size > a2_size ? a1_size : a2_size;
+    size_t L = a_max > m_size ? a_max : m_size;
+
+    fa1 = OSSL_FN_new_limbs(L);
+    fa2 = OSSL_FN_new_limbs(L);
+    fp1 = OSSL_FN_new_limbs(tc->p1_size);
+    fp2 = OSSL_FN_new_limbs(tc->p2_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r_got = OSSL_FN_new_limbs(r_size);
+    r_ref = OSSL_FN_new_limbs(r_size);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp1) || !TEST_ptr(fp2)
+        || !TEST_ptr(fm) || !TEST_ptr(r_got) || !TEST_ptr(r_ref))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, tc->a1, a1_size))
+        || !TEST_true(ossl_fn_set_words(fa2, tc->a2, a2_size))
+        || !TEST_true(ossl_fn_set_words(fp1, tc->p1, tc->p1_size))
+        || !TEST_true(ossl_fn_set_words(fp2, tc->p2, tc->p2_size))
+        || !TEST_true(ossl_fn_set_words(fm, tc->m, m_size)))
+        goto err;
+
+    /* Validate the ctx-size helper by allocating the function ctx from it. */
+    size = OSSL_FN_mod_exp2_mont_ctx_size(r_got, fa1, fp1, fa2, fp2, fm, NULL);
+    if (!TEST_size_t_ne(size, 0))
+        goto err;
+    if (!TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size)))
+        goto err;
+    /* Generous separate ctx for the reference oracle. */
+    if (!TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 40, 40 * m_size + 40)))
+        goto err;
+
+    if (!TEST_true(pollute(r_got, 0, r_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp2_mont(r_got, fa1, fp1, fa2, fp2, fm,
+            ctx_fn, NULL)))
+        goto err;
+
+    if (tc->ex != NULL) {
+        if (!TEST_mem_eq(ossl_fn_get_words(r_got), r_size * OSSL_FN_BYTES,
+                tc->ex, tc->ex_size * OSSL_FN_BYTES))
+            goto err;
+    } else {
+        if (!TEST_true(mod_exp2_reference(r_ref, fa1, fp1, fa2, fp2, fm,
+                ctx_ref)))
+            goto err;
+        if (!TEST_mem_eq(ossl_fn_get_words(r_got), r_size * OSSL_FN_BYTES,
+                ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx_fn);
+    OSSL_FN_CTX_free(ctx_ref);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp1);
+    OSSL_FN_free(fp2);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r_got);
+    OSSL_FN_free(r_ref);
+    return ret;
+}
+
+static int test_mod_exp2(int i)
+{
+    return test_mod_exp2_common(&test_mod_exp2_cases[i]);
+}
+
+/* r aliasing p1 must succeed (copy-truncate writes r last). */
+static int test_mod_exp2_alias_p1(void)
+{
+    /* num5 ^ exp_p256 * x2 ^ exp_p256 mod secp128r1 prime. */
+    size_t a_size = LIMBSOF(mod_secp128r1_x2);
+    size_t p_size = LIMBSOF(exp_p256);
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    OSSL_FN_CTX *ctx_fn = NULL, *ctx_ref = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp1 = NULL, *fp2 = NULL;
+    OSSL_FN *fm = NULL, *r_alias = NULL, *r_ref = NULL;
+    size_t size;
+    int ret = 0;
+
+    fa1 = OSSL_FN_new_limbs(a_size);
+    fa2 = OSSL_FN_new_limbs(a_size);
+    fp1 = OSSL_FN_new_limbs(p_size);
+    fp2 = OSSL_FN_new_limbs(p_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r_alias = OSSL_FN_new_limbs(m_size);
+    r_ref = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp1) || !TEST_ptr(fp2)
+        || !TEST_ptr(fm) || !TEST_ptr(r_alias) || !TEST_ptr(r_ref))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, num5, LIMBSOF(num5)))
+        || !TEST_true(ossl_fn_set_words(fa2, mod_secp128r1_x2,
+            LIMBSOF(mod_secp128r1_x2)))
+        || !TEST_true(ossl_fn_set_words(fp1, exp_p256, LIMBSOF(exp_p256)))
+        || !TEST_true(ossl_fn_set_words(fp2, exp_p256, LIMBSOF(exp_p256)))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p,
+            LIMBSOF(mod_secp128r1_p))))
+        goto err;
+
+    size = OSSL_FN_mod_exp2_mont_ctx_size(r_alias, fa1, fp1, fa2, fp2, fm,
+        NULL);
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
+        || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 40, 40 * m_size + 40)))
+        goto err;
+
+    /* Reference on a full-size result. */
+    if (!TEST_true(mod_exp2_reference(r_ref, fa1, fp1, fa2, fp2, fm,
+            ctx_ref)))
+        goto err;
+
+    /* Write into r == p1; the copy-truncate at the end must succeed. */
+    if (!TEST_true(OSSL_FN_mod_exp2_mont(fp1, fa1, fp1, fa2, fp2, fm,
+            ctx_fn, NULL)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(fp1), m_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx_fn);
+    OSSL_FN_CTX_free(ctx_ref);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp1);
+    OSSL_FN_free(fp2);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r_alias);
+    OSSL_FN_free(r_ref);
+    return ret;
+}
+
+/* r == m must be rejected as with OSSL_FN_mod_exp_mont(). */
+static int test_mod_exp2_alias_m_rejected(void)
+{
+    size_t m_size = LIMBSOF(exp_m7);
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp1 = NULL, *fp2 = NULL, *fm = NULL;
+    int ret = 0;
+
+    fa1 = OSSL_FN_new_limbs(m_size);
+    fa2 = OSSL_FN_new_limbs(m_size);
+    fp1 = OSSL_FN_new_limbs(m_size);
+    fp2 = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp1) || !TEST_ptr(fp2)
+        || !TEST_ptr(fm))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, exp_a3, LIMBSOF(exp_a3)))
+        || !TEST_true(ossl_fn_set_words(fa2, exp_a5, LIMBSOF(exp_a5)))
+        || !TEST_true(ossl_fn_set_words(fp1, exp_p5, LIMBSOF(exp_p5)))
+        || !TEST_true(ossl_fn_set_words(fp2, exp_p10, LIMBSOF(exp_p10)))
+        || !TEST_true(ossl_fn_set_words(fm, exp_m7, m_size)))
+        goto err;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 8, 40, 40 * m_size + 40)))
+        goto err;
+
+    if (!TEST_false(OSSL_FN_mod_exp2_mont(fm, fa1, fp1, fa2, fp2, fm, ctx,
+            NULL)))
+        goto err;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp1);
+    OSSL_FN_free(fp2);
+    OSSL_FN_free(fm);
+    return ret;
+}
+
+/* Zero modulus is even, so the mont-path odd-modulus guard must reject it. */
+static int test_mod_exp2_modulus_zero(void)
+{
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp1 = NULL, *fp2 = NULL;
+    OSSL_FN *fm = NULL, *r = NULL;
+    int ret = 0;
+
+    fa1 = OSSL_FN_new_limbs(1);
+    fa2 = OSSL_FN_new_limbs(1);
+    fp1 = OSSL_FN_new_limbs(1);
+    fp2 = OSSL_FN_new_limbs(1);
+    fm = OSSL_FN_new_limbs(1);
+    r = OSSL_FN_new_limbs(1);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp1) || !TEST_ptr(fp2)
+        || !TEST_ptr(fm) || !TEST_ptr(r))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, exp_a3, LIMBSOF(exp_a3)))
+        || !TEST_true(ossl_fn_set_words(fa2, exp_a5, LIMBSOF(exp_a5)))
+        || !TEST_true(ossl_fn_set_words(fp1, exp_p5, LIMBSOF(exp_p5)))
+        || !TEST_true(ossl_fn_set_words(fp2, exp_p10, LIMBSOF(exp_p10)))
+        || !TEST_true(ossl_fn_set_words(fm, exp_m0, LIMBSOF(exp_m0))))
+        goto err;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 8, 40, 40 * 1 + 40)))
+        goto err;
+
+    if (!TEST_false(OSSL_FN_mod_exp2_mont(r, fa1, fp1, fa2, fp2, fm, ctx,
+            NULL)))
+        goto err;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp1);
+    OSSL_FN_free(fp2);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/*
+ * Result-width variations: r larger than m (zero-pad high limbs) and r
+ * smaller than m (low limbs of the true result).  The reference oracle is
+ * the comparison basis.
+ */
+static int test_mod_exp2_result_size(int i)
+{
+    /* num5 ^ exp_p256 * x2 ^ exp_p256 mod secp128r1 prime, window 5. */
+    size_t a_size = LIMBSOF(num5);
+    size_t p_size = LIMBSOF(exp_p256);
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > m_size ? a_size : m_size;
+    size_t r_size = i == 0 ? m_size + 2 : m_size - 1;
+    size_t check = i == 0 ? m_size : m_size - 1;
+    OSSL_FN_CTX *ctx_fn = NULL, *ctx_ref = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp = NULL, *fm = NULL;
+    OSSL_FN *r_got = NULL, *r_ref = NULL;
+    size_t size;
+    int ret = 0;
+
+    fa1 = OSSL_FN_new_limbs(L);
+    fa2 = OSSL_FN_new_limbs(L);
+    fp = OSSL_FN_new_limbs(p_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r_got = OSSL_FN_new_limbs(r_size);
+    r_ref = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp) || !TEST_ptr(fm)
+        || !TEST_ptr(r_got) || !TEST_ptr(r_ref))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fa2, mod_secp128r1_x2,
+            LIMBSOF(mod_secp128r1_x2)))
+        || !TEST_true(ossl_fn_set_words(fp, exp_p256, p_size))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
+        goto err;
+
+    size = OSSL_FN_mod_exp2_mont_ctx_size(r_got, fa1, fp, fa2, fp, fm, NULL);
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
+        || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 40, 40 * m_size + 40)))
+        goto err;
+
+    if (!TEST_true(pollute(r_got, 0, r_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp2_mont(r_got, fa1, fp, fa2, fp, fm,
+            ctx_fn, NULL)))
+        goto err;
+    if (!TEST_true(mod_exp2_reference(r_ref, fa1, fp, fa2, fp, fm, ctx_ref)))
+        goto err;
+
+    if (!TEST_mem_eq(ossl_fn_get_words(r_got), check * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), check * OSSL_FN_BYTES))
+        goto err;
+    /* Oversized: high limbs beyond m_size must be zero-padded. */
+    if (i == 0 && !TEST_true(check_limbs_value(r_got, m_size, r_size, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx_fn);
+    OSSL_FN_CTX_free(ctx_ref);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r_got);
+    OSSL_FN_free(r_ref);
+    return ret;
+}
+
+/*
+ * OSSL_FN_mod_exp2_mont_ctx_size(): the size must be positive, must not
+ * depend on whether in_mont is NULL or a real reused context, and must not
+ * exceed the dispatcher-sized arena.  Peak usage is compared against the
+ * budget after a successful run.
+ */
+static int test_mod_exp2_mont_ctx_size(void)
+{
+    /* num5 ^ exp_p256 * x2 ^ exp_p256 mod secp128r1 prime, window 5. */
+    size_t a_size = LIMBSOF(num5);
+    size_t p_size = LIMBSOF(exp_p256);
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > m_size ? a_size : m_size;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN_CTX *ctx_fn = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp = NULL, *fm = NULL, *r = NULL;
+    size_t sz_null, sz_mont;
+    size_t peak_frames, peak_numbers, peak_limbs;
+    int ret = 0;
+
+    fa1 = OSSL_FN_new_limbs(L);
+    fa2 = OSSL_FN_new_limbs(L);
+    fp = OSSL_FN_new_limbs(p_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp) || !TEST_ptr(fm)
+        || !TEST_ptr(r))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fa2, mod_secp128r1_x2,
+            LIMBSOF(mod_secp128r1_x2)))
+        || !TEST_true(ossl_fn_set_words(fp, exp_p256, p_size))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
+        goto err;
+
+    if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm)))
+        goto err;
+
+    sz_null = OSSL_FN_mod_exp2_mont_ctx_size(r, fa1, fp, fa2, fp, fm, NULL);
+    sz_mont = OSSL_FN_mod_exp2_mont_ctx_size(r, fa1, fp, fa2, fp, fm, mont);
+    if (!TEST_size_t_ne(sz_null, 0) || !TEST_size_t_ne(sz_mont, 0))
+        goto err;
+    /* NULL and real in_mont produce the same arena size. */
+    if (!TEST_size_t_eq(sz_null, sz_mont))
+        goto err;
+
+    if (!TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, sz_null)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod_exp2_mont(r, fa1, fp, fa2, fp, fm, ctx_fn,
+            NULL)))
+        goto err;
+    OSSL_FN_CTX_peak_usage(ctx_fn, &peak_frames, &peak_numbers, &peak_limbs);
+    if (!TEST_size_t_gt(peak_frames, 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_CTX_free(ctx_fn);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/*
+ * OSSL_FN_mod_exp2_mont() with a borrowed OSSL_FN_MONT_CTX: exercise the
+ * in_mont != NULL path (borrowed context, not freed here) across two
+ * exponentiations against the same modulus, and confirm the result matches
+ * the reference oracle.
+ */
+static int test_mod_exp2_mont_in_mont(void)
+{
+    /* num5 ^ exp_p256 * x2 ^ exp_p256 mod secp128r1 prime, window 5. */
+    size_t a_size = LIMBSOF(num5);
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > m_size ? a_size : m_size;
+    OSSL_FN_CTX *ctx_fn = NULL, *ctx_ref = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp1 = NULL, *fp2 = NULL;
+    OSSL_FN *fm = NULL, *r = NULL, *r_ref = NULL;
+    size_t size;
+    int ret = 0;
+
+    fa1 = OSSL_FN_new_limbs(L);
+    fa2 = OSSL_FN_new_limbs(L);
+    fp1 = OSSL_FN_new_limbs(LIMBSOF(exp_p256));
+    fp2 = OSSL_FN_new_limbs(LIMBSOF(exp_p256));
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    r_ref = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp1) || !TEST_ptr(fp2)
+        || !TEST_ptr(fm) || !TEST_ptr(r) || !TEST_ptr(r_ref))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fa2, mod_secp128r1_x2,
+            LIMBSOF(mod_secp128r1_x2)))
+        || !TEST_true(ossl_fn_set_words(fp1, exp_p256, LIMBSOF(exp_p256)))
+        || !TEST_true(ossl_fn_set_words(fp2, exp_p256, LIMBSOF(exp_p256)))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
+        goto err;
+
+    if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm)))
+        goto err;
+
+    size = OSSL_FN_mod_exp2_mont_ctx_size(r, fa1, fp1, fa2, fp2, fm, mont);
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
+        || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 40, 40 * m_size + 40)))
+        goto err;
+
+    /* First call with the borrowed context. */
+    if (!TEST_true(pollute(r, 0, m_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp2_mont(r, fa1, fp1, fa2, fp2, fm, ctx_fn,
+            mont)))
+        goto err;
+    if (!TEST_true(mod_exp2_reference(r_ref, fa1, fp1, fa2, fp2, fm,
+            ctx_ref)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(r), m_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+        goto err;
+
+    /*
+     * Second call reusing the same |mont| confirms it is not freed by the
+     * first call and still works.  Vary both exponents to force a
+     * different window walk.
+     */
+    if (!TEST_true(ossl_fn_set_words(fp1, exp_p30, LIMBSOF(exp_p30)))
+        || !TEST_true(ossl_fn_set_words(fp2, exp_p30, LIMBSOF(exp_p30))))
+        goto err;
+    if (!TEST_true(pollute(r, 0, m_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp2_mont(r, fa1, fp1, fa2, fp2, fm, ctx_fn,
+            mont)))
+        goto err;
+    if (!TEST_true(mod_exp2_reference(r_ref, fa1, fp1, fa2, fp2, fm,
+            ctx_ref)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(r), m_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_CTX_free(ctx_fn);
+    OSSL_FN_CTX_free(ctx_ref);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp1);
+    OSSL_FN_free(fp2);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    OSSL_FN_free(r_ref);
+    return ret;
+}
+
+/*
+ * OSSL_FN_mod_exp2_mont() with a borrowed OSSL_FN_MONT_CTX built for a
+ * different modulus must be rejected (ERR_R_PASSED_INVALID_ARGUMENT).
+ */
+static int test_mod_exp2_mont_in_mont_mismatch(void)
+{
+    size_t m_size = LIMBSOF(exp_m7);
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN *fa1 = NULL, *fa2 = NULL, *fp1 = NULL, *fp2 = NULL;
+    OSSL_FN *fm = NULL, *fm_other = NULL, *r = NULL;
+    int ret = 0;
+
+    fa1 = OSSL_FN_new_limbs(LIMBSOF(exp_a3));
+    fa2 = OSSL_FN_new_limbs(LIMBSOF(exp_a5));
+    fp1 = OSSL_FN_new_limbs(LIMBSOF(exp_p5));
+    fp2 = OSSL_FN_new_limbs(LIMBSOF(exp_p10));
+    fm = OSSL_FN_new_limbs(m_size);
+    fm_other = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa1) || !TEST_ptr(fa2) || !TEST_ptr(fp1) || !TEST_ptr(fp2)
+        || !TEST_ptr(fm) || !TEST_ptr(fm_other) || !TEST_ptr(r))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa1, exp_a3, LIMBSOF(exp_a3)))
+        || !TEST_true(ossl_fn_set_words(fa2, exp_a5, LIMBSOF(exp_a5)))
+        || !TEST_true(ossl_fn_set_words(fp1, exp_p5, LIMBSOF(exp_p5)))
+        || !TEST_true(ossl_fn_set_words(fp2, exp_p10, LIMBSOF(exp_p10)))
+        || !TEST_true(ossl_fn_set_words(fm, exp_m7, m_size))
+        || !TEST_true(ossl_fn_set_words(fm_other, exp_m5, m_size)))
+        goto err;
+
+    /* The Montgomery context is built for m5, the call passes m7. */
+    if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm_other)))
+        goto err;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 8, 40, 40 * m_size + 40)))
+        goto err;
+
+    if (!TEST_false(OSSL_FN_mod_exp2_mont(r, fa1, fp1, fa2, fp2, fm, ctx,
+            mont)))
+        goto err;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa1);
+    OSSL_FN_free(fa2);
+    OSSL_FN_free(fp1);
+    OSSL_FN_free(fp2);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(fm_other);
+    OSSL_FN_free(r);
+    return ret;
+}
+
 /*-
  * Focused tests for OSSL_FN_kronecker(), the Kronecker/Jacobi symbol.
  *
@@ -5396,6 +6005,14 @@ int setup_tests(void)
     ADD_TEST(test_mod_exp_mont_in_mont);
     ADD_TEST(test_mod_exp_mont_in_mont_mismatch);
     ADD_TEST(test_mod_exp_mont_ctx_size);
+    ADD_ALL_TESTS(test_mod_exp2, OSSL_NELEM(test_mod_exp2_cases));
+    ADD_TEST(test_mod_exp2_alias_p1);
+    ADD_TEST(test_mod_exp2_alias_m_rejected);
+    ADD_TEST(test_mod_exp2_modulus_zero);
+    ADD_ALL_TESTS(test_mod_exp2_result_size, 2);
+    ADD_TEST(test_mod_exp2_mont_in_mont);
+    ADD_TEST(test_mod_exp2_mont_in_mont_mismatch);
+    ADD_TEST(test_mod_exp2_mont_ctx_size);
     ADD_ALL_TESTS(test_kronecker, OSSL_NELEM(kronecker_cases));
     ADD_ALL_TESTS(test_kronecker_legendre, OSSL_NELEM(legendre_primes));
     ADD_ALL_TESTS(test_kronecker_legendre_wide, OSSL_NELEM(kronecker_wide_cases));
