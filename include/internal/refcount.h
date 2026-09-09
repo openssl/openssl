@@ -96,18 +96,18 @@ static __inline__ int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 #define HAVE_ATOMICS 1
 
 typedef struct {
-    volatile int val;
+    volatile long val;
 } CRYPTO_REF_COUNT;
 
 static __inline bool CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedExchangeAdd((void *)&refcnt->val, 1) + 1;
+    *ret = _InterlockedExchangeAdd(&refcnt->val, 1) + 1;
     return true;
 }
 
 static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedExchangeAdd((void *)&refcnt->val, -1) - 1;
+    *ret = _InterlockedExchangeAdd(&refcnt->val, -1) - 1;
     return 1;
 }
 
@@ -116,7 +116,7 @@ static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 #define HAVE_ATOMICS 1
 
 typedef struct {
-    volatile int val;
+    volatile long val;
 } CRYPTO_REF_COUNT;
 
 #if (defined(_M_ARM) && _M_ARM >= 7) || defined(_M_ARM64)
