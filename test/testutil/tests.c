@@ -438,7 +438,11 @@ static int test_err_helper(int lib, int reason, const char *str)
 
         ERR_new();
         ERR_set_debug(e->file, e->line, e->fn);
-        ERR_set_error(ERR_GET_LIB(e->code), ERR_GET_REASON(e->code), e->data);
+        if (e->data != NULL)
+            ERR_set_error(ERR_GET_LIB(e->code), ERR_GET_REASON(e->code),
+                "%s", e->data);
+        else
+            ERR_set_error(ERR_GET_LIB(e->code), ERR_GET_REASON(e->code), NULL);
 
         OPENSSL_free(e->file);
         OPENSSL_free(e->fn);

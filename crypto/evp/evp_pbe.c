@@ -15,6 +15,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 #include "crypto/evp.h"
+#include "crypto/err.h"
 #include "evp_local.h"
 
 /* Password based encryption (PBE) functions */
@@ -125,7 +126,7 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(cipher_nid), propq);
         if (cipher == NULL) {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_CIPHER,
-                OBJ_nid2sn(cipher_nid));
+                "%s", ossl_string_or_null(OBJ_nid2sn(cipher_nid)));
             goto err;
         }
     }

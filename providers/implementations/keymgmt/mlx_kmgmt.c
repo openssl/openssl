@@ -186,9 +186,8 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
             return 0;
         if (len != sub_arg->publen) {
             ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
-                "Unexpected %s public key length %lu != %lu",
-                sub_arg->algorithm_name, (unsigned long)len,
-                sub_arg->publen);
+                "Unexpected %s public key length %zu != %zu",
+                sub_arg->algorithm_name, len, sub_arg->publen);
             return 0;
         }
         ++sub_arg->pubcount;
