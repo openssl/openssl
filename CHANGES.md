@@ -118,6 +118,18 @@ OpenSSL 4.1
 
    *Mounir IDRASSI*
 
+ * The padding request held by an `EVP_CIPHER_CTX` is now kept across
+   re-initialisation, whether it was made with `EVP_CIPHER_CTX_set_padding()`,
+   the `EVP_CIPH_NO_PADDING` flag or the `OSSL_CIPHER_PARAM_PADDING` parameter,
+   which `EVP_CIPHER_CTX_test_flags()` now reports as well. Re-enabling padding
+   through the flag takes effect on the next initialisation, where before the
+   cipher went on producing unpadded output. The request is sent to the
+   provider at each initialisation, so a cipher whose provider implements no
+   `OSSL_FUNC_cipher_set_ctx_params()` function now fails to initialise when
+   the request can be neither delivered nor already met.
+
+   *Madan mohan Manokar*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early

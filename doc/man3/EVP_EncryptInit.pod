@@ -592,6 +592,22 @@ then no padding is performed, the total amount of data encrypted or decrypted
 must then be a multiple of the block size or an error will occur. I<x> B<MUST
 NOT> be NULL.
 
+The choice is kept by the context, so initializing I<x> again for another
+operation keeps the padding that was last asked for. The same holds for
+padding set through the "padding" parameter described in
+L</Gettable and Settable EVP_CIPHER_CTX parameters>, including when that
+parameter is passed to the initialization call itself.
+
+Keeping the choice means sending it to the provider again whenever I<x> is
+initialized. A provider that implements no OSSL_FUNC_cipher_set_ctx_params()
+function, which L<provider-cipher(7)> does not require, cannot be sent it,
+and a cipher of that kind takes its padding from the parameters of the
+initialization call instead. Where such a cipher is asked for padding that
+the initialization call does not carry and that is known to differ from the
+padding the provider was last given, the initialization fails with
+B<EVP_R_CANNOT_SET_PARAMETERS> rather than run with padding other than the
+one asked for.
+
 =item EVP_CIPHER_get_key_length() and EVP_CIPHER_CTX_get_key_length()
 
 Return the key length of a cipher when passed an B<EVP_CIPHER> or
@@ -1312,7 +1328,10 @@ can be used to manipulate and test these B<EVP_CIPHER_CTX> flags:
 
 =item EVP_CIPH_NO_PADDING
 
-Used by EVP_CIPHER_CTX_set_padding().
+Used by EVP_CIPHER_CTX_set_padding(). Setting or clearing this flag directly
+does not reach the provider before the context is next initialized, which is
+also where a request that cannot be delivered is reported; see
+EVP_CIPHER_CTX_set_padding().
 
 See also L</Gettable and Settable EVP_CIPHER_CTX parameters> "padding"
 
