@@ -933,6 +933,64 @@ static int dh_load_pkcs3_namedgroup_privlen_test(void)
     return ret;
 }
 
+static int bn_mod_exp_hits = 0;
+static int (*orig_bn_mod_exp)(const DH *dh, BIGNUM *r, const BIGNUM *a,
+    const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+
+static int tst_bn_mod_exp(const DH *dh, BIGNUM *r, const BIGNUM *a,
+    const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
+{
+    bn_mod_exp_hits++;
+    return orig_bn_mod_exp(dh, r, a, p, m, ctx, m_ctx);
+}
+
+/*
+ * The default method's compute_key and generate_key operations must keep
+ * routing modular exponentiation through the DH_METHOD::bn_mod_exp hook,
+ * so surgical DH_meth_set_bn_mod_exp() overrides keep being honored.
+ */
+static int dh_bn_mod_exp_override_test(void)
+{
+    int ret = 0;
+    DH *dh = NULL;
+    DH_METHOD *method = NULL;
+    const DH_METHOD *def = DH_get_default_method();
+    const BIGNUM *pub_key = NULL;
+    unsigned char *buf = NULL;
+    int buflen;
+
+    if (!TEST_ptr(dh = DH_new_by_nid(NID_ffdhe2048))
+        || !TEST_ptr(method = DH_meth_dup(def)))
+        goto err;
+
+    orig_bn_mod_exp = DH_meth_get_bn_mod_exp(def);
+    if (!TEST_true(orig_bn_mod_exp != NULL)
+        || !TEST_true(DH_meth_set_bn_mod_exp(method, tst_bn_mod_exp))
+        || !TEST_true(DH_set_method(dh, method)))
+        goto err;
+
+    /* Public key generation must go through the bn_mod_exp hook */
+    bn_mod_exp_hits = 0;
+    if (!TEST_true(DH_generate_key(dh))
+        || !TEST_int_eq(bn_mod_exp_hits, 1))
+        goto err;
+
+    /* Shared secret computation must go through the hook as well */
+    DH_get0_key(dh, &pub_key, NULL);
+    buflen = DH_size(dh);
+    if (!TEST_ptr(buf = OPENSSL_malloc(buflen))
+        || !TEST_int_gt(DH_compute_key(buf, pub_key, dh), 0)
+        || !TEST_int_eq(bn_mod_exp_hits, 2))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(buf);
+    DH_free(dh);
+    DH_meth_free(method);
+    return ret;
+}
+
 #endif
 
 int setup_tests(void)
@@ -949,6 +1007,7 @@ int setup_tests(void)
     ADD_TEST(dh_load_pkcs3_namedgroup_privlen_test);
     ADD_TEST(dh_rfc5114_fix_nid_test);
     ADD_TEST(dh_set_dh_nid_test);
+    ADD_TEST(dh_bn_mod_exp_override_test);
 #endif
     return 1;
 }
