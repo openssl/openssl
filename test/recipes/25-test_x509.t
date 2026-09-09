@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 156;
+plan tests => 157;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
