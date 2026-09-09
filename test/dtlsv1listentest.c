@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/time.h"
 #include "../ssl/ssl_local.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -25,6 +28,8 @@ static char *cert = NULL;
 static char *privkey = NULL;
 
 #ifndef OPENSSL_NO_SOCK
+
+#define DTLS_RECORD_EPOCH_AND_SEQ_LEN 8
 
 /* Just a ClientHello without a cookie */
 static const unsigned char clienthello_nocookie[] = {
@@ -615,6 +620,187 @@ err:
     return success;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
+static unsigned char *create_cookie_clienthello(int *outlen,
+    unsigned char *out_seq)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc = NULL;
+    BIO *rbio = NULL, *wbio = NULL;
+    BIO *ssl_rbio = NULL, *ssl_wbio = NULL;
+    char *data = NULL;
+    long datalen;
+    unsigned char *ret = NULL;
+    int sslret;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(rbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(wbio = BIO_new(BIO_s_mem())))
+        goto err;
+
+    ssl_rbio = rbio;
+    ssl_wbio = wbio;
+    SSL_set0_rbio(ssl, rbio);
+    SSL_set0_wbio(ssl, wbio);
+    rbio = wbio = NULL;
+    SSL_set_connect_state(ssl);
+
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl)))
+        goto err;
+
+    /* Send the initial, cookie-less ClientHello: record sequence 0. */
+    if (!TEST_int_le(sslret = SSL_connect(ssl), 0)
+        || !TEST_int_eq(SSL_get_error(ssl, sslret), SSL_ERROR_WANT_READ))
+        goto err;
+
+    /*
+     * Simulate the initial ClientHello (or the server's HelloVerifyRequest)
+     * being lost in transit: force the retransmit timer to look expired and
+     * drive a genuine retransmission of the buffered ClientHello through
+     * the normal write path. This consumes record sequence 1 for real,
+     * so the retried (with-cookie) ClientHello below naturally lands on
+     * sequence 2 -- rather than the test asserting that value by fiat.
+     */
+    sc->d1->next_timeout = ossl_ms2time(1);
+    if (!TEST_long_eq(DTLSv1_handle_timeout(ssl), 1))
+        goto err;
+
+    /* Neither copy of the cookie-less ClientHello is needed -- discard both. */
+    if (!TEST_int_gt(BIO_reset(ssl_wbio), 0)
+        || !TEST_int_eq(BIO_write(ssl_rbio, verify, sizeof(verify)),
+            sizeof(verify))
+        || !TEST_int_le(sslret = SSL_connect(ssl), 0)
+        || !TEST_int_eq(SSL_get_error(ssl, sslret), SSL_ERROR_WANT_READ)
+        || !TEST_long_ge(datalen = BIO_get_mem_data(ssl_wbio, &data),
+            DTLS1_RT_HEADER_LENGTH)
+        || !TEST_long_le(datalen, INT_MAX))
+        goto err;
+
+    if (!TEST_ptr(ret = OPENSSL_memdup(data, datalen)))
+        goto err;
+
+    *outlen = (int)datalen;
+
+    /*
+     * Report back the epoch+sequence number (DTLS record header bytes
+     * 3..10) that the client's own record layer actually assigned to the
+     * first record of the retried ClientHello. The caller uses this to
+     * work out what it should expect back from the server, instead of the
+     * test dictating a fixed sequence number.
+     */
+    memcpy(out_seq, ret + 3, DTLS_RECORD_EPOCH_AND_SEQ_LEN);
+
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    BIO_free(rbio);
+    BIO_free(wbio);
+    return ret;
+}
+
+static int dtls_listen_write_seq_test(int tst)
+{
+    unsigned char actual_seq[DTLS_RECORD_EPOCH_AND_SEQ_LEN];
+    unsigned char *inbuf = NULL;
+    int inbuflen = 0;
+    SSL_CONNECTION *s = NULL;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    BIO *outbio = NULL;
+    BIO *inbio = NULL;
+    BIO_ADDR *peer = NULL;
+    char *data;
+    long datalen;
+    int ret, success = 0;
+
+    if (!TEST_ptr(inbuf = create_cookie_clienthello(&inbuflen, actual_seq)))
+        goto err;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(peer = BIO_ADDR_new()))
+        goto err;
+    SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
+    SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
+    if (!TEST_true(SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(ctx, privkey,
+            SSL_FILETYPE_PEM)))
+        goto err;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(outbio = BIO_new(BIO_s_mem())))
+        goto err;
+
+    SSL_set0_wbio(ssl, outbio);
+    if (!TEST_ptr(inbio = BIO_new_mem_buf(inbuf, inbuflen)))
+        goto err;
+
+    BIO_set_mem_eof_return(inbio, -1);
+    SSL_set0_rbio(ssl, inbio);
+    inbio = NULL;
+
+    if (!TEST_int_eq(ret = DTLSv1_listen(ssl, peer), 1))
+        goto err;
+
+    datalen = BIO_get_mem_data(outbio, &data);
+    if (!TEST_long_eq(datalen, 0))
+        goto err;
+
+    if (tst == 1) {
+        /* Drive the DTLS 1.2 write-side uint48 wrap path directly. */
+        s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+        if (!TEST_ptr(s)
+            || !TEST_true(s->rlayer.wrlmethod->set_sequence != NULL)
+            || !TEST_true(s->rlayer.wrlmethod->set_sequence(s->rlayer.wrl,
+                0xffffffffffffULL)))
+            goto err;
+    }
+
+    ret = SSL_accept(ssl);
+    if (tst == 1) {
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(ssl, ret), SSL_ERROR_SSL)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_SEQUENCE_CTR_WRAPPED))
+            goto err;
+        success = 1;
+        goto err;
+    }
+
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(ssl, ret), SSL_ERROR_WANT_READ))
+        goto err;
+
+    datalen = BIO_get_mem_data(outbio, &data);
+    if (!TEST_long_ge(datalen, DTLS1_RT_HEADER_LENGTH)
+        /* The server's response record is always DTLS1.2 once a cookie has
+         * been validated -- that's what DTLSv1_listen() negotiates down to. */
+        || !TEST_uint_eq(((unsigned char)data[1] << 8) | (unsigned char)data[2],
+            DTLS1_2_VERSION)
+        /*
+         * This is the actual regression check: the server's write sequence
+         * must continue from the epoch/sequence number of the ClientHello
+         * record DTLSv1_listen() validated the cookie against -- whatever
+         * that value turned out to be, not one the test dictates.
+         */
+        || !TEST_mem_eq(data + 3, DTLS_RECORD_EPOCH_AND_SEQ_LEN,
+            actual_seq, DTLS_RECORD_EPOCH_AND_SEQ_LEN))
+        goto err;
+
+    SSL_set0_rbio(ssl, NULL);
+    success = 1;
+
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    BIO_free(inbio);
+    OPENSSL_free(inbuf);
+    OPENSSL_free(peer);
+    return success;
+}
+#endif
+
 #ifndef OPENSSL_NO_DTLS1_3
 /*
  * Test that DTLSv1_listen() clamps the max version to DTLS 1.2.
@@ -755,6 +941,9 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_SOCK
     ADD_ALL_TESTS(dtls_listen_test,
         (int)OSSL_NELEM(testpackets) + (int)OSSL_NELEM(testpackets13));
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_ALL_TESTS(dtls_listen_write_seq_test, 2);
+#endif
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_dtls_listen_dtls13_negotiated_to_dtls12);
     ADD_TEST(test_dtls13_listen_client_dtls13_only);

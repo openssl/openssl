@@ -1965,7 +1965,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
             && clienthello->dtls_cookie_len == 0
             && ossl_assert(ssl_get_min_max_version(s, &minversion,
-                                &maxversion, NULL)
+                               &maxversion, NULL)
                 == 0)
             && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0) {
             OPENSSL_free(clienthello);

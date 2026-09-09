@@ -26,19 +26,51 @@ OpenSSL Releases
 OpenSSL 4.1
 -----------
 
+### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
-  * Support for DTLS 1.3 (RFC 9147) added. The DTLS 1.3 work includes:
-    * DTLS 1.3 support in the SSL listener API. `SSL_new_listener()` can
-      create a DTLS listener that demultiplexes incoming datagrams into
-      per-peer connections accepted with `SSL_accept_connection()`.
-    See the ossl-guide-dtlsv13(7) manpage for details.
+OpenSSL 4.1.0 is a feature release adding significant new functionality
+to OpenSSL.
 
-  * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
-    `CRYPTO_atomic_cmp_exch_ptr` have been added.
-  * Initial support for the Elbrus2000 (e2k) architecture
+This release incorporates the following potentially significant or incompatible
+changes:
 
-  * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
+  * Added `VC-WIN32-MSVC2013` and `VC-WIN64A-MSVC2013` build targets to provide
+    internal functions for bridging the gaps in C99 standard support
+    that are present in MSVC 2013.
+
+  * Added optimized ML-DSA and ML-KEM NTT operations on `ppc64le`;
+    optimized ML-DSA operations on `s390x`, and `x86_64`;
+    AVX-512-optimized SHAKE x4 operations for ML-DSA on `x86_64`;
+    AVX-512 and VAES optimizations for AES-CBC decryption on `x86_64`.
+
+  * Changed `tsget` utility to use `Net::Curl::Easy` (from the `Net-Curl` CPAN
+    distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who rely
+    on `tsget` should install `Net::Curl::Easy` before upgrading.
+
+  * Dropped Windows-on-Itanium (`VC-WIN64I`) and Windows CE (`VC-CE`) targets
+    from Configurations.
+
+  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure`, as these options
+    did not really disable the implementations.  Use `no-ec` to disable
+    the elliptic curve support.
+
+This release adds the following new features:
+
+  * Support for DTLS 1.3 ([RFC 9147]).
+    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
+
+  * Support for [RFC 8701] GREASE (Generate Random Extensions And Sustain
+    Extensibility).
+
+  * DTLS support in the SSL listener API.
+
+  * Support for IKEV2 KDF.
+
+  * Initial support for the Elbrus2000 (`e2k`) architecture.
 
 OpenSSL 4.0
 -----------
@@ -2536,7 +2568,9 @@ OpenSSL 0.9.x
 [README-QUIC.md]: ./README-QUIC.md
 [RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
 [RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
+[RFC 8701]: https://datatracker.ietf.org/doc/html/rfc8701
 [RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[RFC 9147]: https://datatracker.ietf.org/doc/html/rfc9147
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final

@@ -447,8 +447,11 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
         goto bad;
     if ((ret = ASN1_TYPE_new()) == NULL)
         goto bad;
-    if ((ret->value.asn1_string = ASN1_STRING_type_new(utype)) == NULL)
+    if ((ret->value.asn1_string = ASN1_STRING_type_new(utype)) == NULL) {
+        ASN1_TYPE_free(ret);
+        ret = NULL;
         goto bad;
+    }
 
     ret->type = utype;
     ret->value.asn1_string->data = der;

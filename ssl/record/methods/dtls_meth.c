@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,8 @@
 #include "internal/safe_math.h"
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
+
+static int dtls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl);
 
 /* mod 128 saturating subtract of two 64-bit values */
 static int satsub64(uint64_t l1, uint64_t l2)
@@ -400,6 +402,57 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
     return 1;
 }
 
+/*
+ * Reconstruct the full sequence number as recommended by rfc9147 section
+ * 4.2.2. Select the candidate closest to the replay window's right edge plus
+ * one, ignore candidates outside the uint64_t range, and break ties forward.
+ * An empty replay window is represented by max_seq_num == 0.
+ */
+uint64_t dtls13_reconstruct_seq_num(uint64_t max_seq_num, uint64_t truncated,
+    size_t seqlen)
+{
+    uint64_t mask, period, expected, candidate, alt, best, best_dist, dist;
+
+    mask = DTLS13_UNI_HDR_SEQ_MASK(seqlen);
+    period = mask + 1;
+
+    /* At the end of the range only candidates in the last block can be valid. */
+    if (max_seq_num == UINT64_MAX)
+        return (UINT64_MAX & ~mask) | truncated;
+
+    expected = max_seq_num + 1;
+
+    /* The candidate in the same period-sized block as |expected| */
+    candidate = (expected & ~mask) | truncated;
+    best = candidate;
+    best_dist = candidate > expected ? candidate - expected
+                                     : expected - candidate;
+
+    /* The candidate one period behind, if it does not underflow */
+    if (candidate >= period) {
+        alt = candidate - period;
+        dist = alt > expected ? alt - expected : expected - alt;
+        /* Strictly closer only: a tie goes to the forward candidate */
+        if (dist < best_dist) {
+            best = alt;
+            best_dist = dist;
+        }
+    }
+
+    /* The candidate one period ahead, if it does not overflow */
+    if (candidate <= UINT64_MAX - period) {
+        alt = candidate + period;
+        dist = alt > expected ? alt - expected : expected - alt;
+        /* Ties go forward */
+        if (dist <= best_dist) {
+            best = alt;
+            best_dist = dist;
+        }
+    }
+
+    return best;
+}
+
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -653,6 +706,18 @@ again:
     rl->rstate = SSL_ST_READ_HEADER;
 
     /*
+     * RFC 9147 permits DTLSPlaintext only in epoch 0. Silently discard it
+     * after reading the fragment so later records remain framed.
+     */
+    if (rl->version == DTLS1_3_VERSION
+        && rl->epoch != 0
+        && !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
+
+    /*
      * rfc9147:
      * This procedure requires the ciphertext length to be at least 16 bytes.
      * Receivers MUST reject shorter records as if they had failed deprotection
@@ -673,12 +738,36 @@ again:
         goto again;
     }
 
-    rl->sequence = ((uint64_t)recseqnum[0]) << 40;
-    rl->sequence |= ((uint64_t)recseqnum[1]) << 32;
-    rl->sequence |= ((uint64_t)recseqnum[2]) << 24;
-    rl->sequence |= ((uint64_t)recseqnum[3]) << 16;
-    rl->sequence |= ((uint64_t)recseqnum[4]) << 8;
-    rl->sequence |= ((uint64_t)recseqnum[5]) << 0;
+    if (rl->version == DTLS1_3_VERSION && rr->epoch == rl->epoch
+        && DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
+        /* Reconstruct current-epoch unified records using its replay window. */
+        uint64_t truncated = 0;
+        size_t i;
+
+        /* A unified header carries 8 or 16 bits of the sequence number */
+        if (!ossl_assert(recseqnumlen == 1 || recseqnumlen == 2)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+
+        for (i = 0; i < recseqnumlen; i++)
+            truncated = (truncated << 8) | recseqnum[recseqnumoffs + i];
+
+        rl->sequence = dtls13_reconstruct_seq_num(rl->bitmap.max_seq_num,
+            truncated, recseqnumlen);
+    } else {
+        /*
+         * DTLSPlaintext carries 48 bits. A buffered next-epoch unified record
+         * is re-parsed after that epoch's record layer is installed, so this
+         * provisional value is unused.
+         */
+        rl->sequence = ((uint64_t)recseqnum[0]) << 40;
+        rl->sequence |= ((uint64_t)recseqnum[1]) << 32;
+        rl->sequence |= ((uint64_t)recseqnum[2]) << 24;
+        rl->sequence |= ((uint64_t)recseqnum[3]) << 16;
+        rl->sequence |= ((uint64_t)recseqnum[4]) << 8;
+        rl->sequence |= ((uint64_t)recseqnum[5]) << 0;
+    }
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
@@ -902,10 +991,14 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
         uint8_t lbit = DTLS13_UNI_HDR_LEN_BIT;
         uint8_t ebits = rl->epoch & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
         uint8_t unifiedhdrbits = fixedbits | cbit | sbit | lbit | ebits;
+        uint64_t seqnum;
+
+        /* Truncate only the wire encoding, not the AEAD nonce counter. */
+        seqnum = rl->sequence & DTLS13_UNI_HDR_SEQ_MASK(sbit ? 2 : 1);
 
         if (!WPACKET_put_bytes_u8(thispkt, unifiedhdrbits)
-            || (sbit ? !WPACKET_put_bytes_u16(thispkt, rl->sequence)
-                     : !WPACKET_put_bytes_u8(thispkt, rl->sequence))
+            || (sbit ? !WPACKET_put_bytes_u16(thispkt, seqnum)
+                     : !WPACKET_put_bytes_u8(thispkt, seqnum))
             || !WPACKET_start_sub_packet_u16(thispkt)
             || (rl->eivlen > 0
                 && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
@@ -944,7 +1037,21 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
         return 0;
     }
 
-    return tls_increment_sequence_ctr(rl);
+    return dtls_increment_sequence_ctr(rl);
+}
+
+static int dtls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
+{
+    if (rl->version == DTLS1_3_VERSION)
+        return tls_increment_sequence_ctr(rl);
+
+    if (rl->sequence >= 0xffffffffffffULL) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
+        return 0;
+    }
+
+    rl->sequence++;
+    return 1;
 }
 
 static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
@@ -1041,7 +1148,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_compression,
     tls_set_max_frag_len,
     dtls_get_max_record_overhead,
-    tls_increment_sequence_ctr,
+    dtls_increment_sequence_ctr,
     dtls_get_sequence_number,
     dtls_set_sequence_number,
     dtls_get_epoch,

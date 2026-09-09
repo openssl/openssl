@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@ setup("test_dhparam");
 
 plan skip_all => "DH is not supported in this build"
     if disabled("dh");
-plan tests => 23;
+plan tests => 26;
 
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 
@@ -156,7 +156,7 @@ subtest "Generate: 512 bit PKCS3 params, generator 2, explicit PEM file" => sub 
     checkdhparams("gen-pkcs3-2-512.exp.pem", "PKCS3", 2, "PEM", 512, 125);
 };
 SKIP: {
-    skip "Skipping tests that require DSA", 4 if disabled("dsa");
+    skip "Skipping tests that require DSA", 7 if disabled("dsa");
 
     subtest "Generate: 512 bit X9.42 params, generator 0, PEM file" => sub {
         plan tests => 5;
@@ -182,6 +182,19 @@ SKIP: {
                     '-dsaparam', '-outform', 'DER', '512' ])));
         checkdhparams("gen-x942-0-512.der", "X9.42", 0, "DER", 512);
     };
+    subtest "Convert: 1024 bit DSA params to X9.42 params, PEM file" => sub {
+        plan tests => 5;
+        ok(run(app([ 'openssl', 'dhparam', '-dsaparam',
+                    '-in', data_file("dsa-1024.pem"),
+                    '-out', 'conv-x942-0-1024.pem' ])));
+        checkdhparams("conv-x942-0-1024.pem", "X9.42", 0, "PEM", 1024);
+    };
+    ok(!run(app([ 'openssl', 'dhparam', '-dsaparam', '-noout',
+                '-in', data_file("pkcs3-2-1024.pem") ])),
+       "Reading PKCS3 DH params with -dsaparam should fail");
+    ok(!run(app([ 'openssl', 'dhparam', '-noout',
+                '-in', data_file("dsa-1024.pem") ])),
+       "Reading DSA params without -dsaparam should fail");
 }
 SKIP: {
     skip "Skipping tests that are only supported in a fips build with security ".
