@@ -139,19 +139,22 @@ static int test_parse_combinations(int idx)
 {
     int ret = 0;
     PKCS12 *p12 = NULL;
+    PKCS12_PARSE_CTX *ctx = NULL;
     EVP_PKEY *key = NULL, *key2 = NULL;
     X509 *cert = NULL, *cert2 = NULL;
     STACK_OF(X509) *ca = NULL, *ca2 = NULL;
-    int want_key = (idx >> 2) & 1;
-    int want_cert = (idx >> 1) & 1;
-    int want_ca = idx & 1;
+    int use_parse_ex = idx >= 8;
+    int combo = idx & 7;
+    int want_key = (combo >> 2) & 1;
+    int want_cert = (combo >> 1) & 1;
+    int want_ca = combo & 1;
     int baseline_ca_count = 0;
 
     if (in_file == NULL || !has_key || !has_cert)
         return 1;
 
-    TEST_info("combination %d: want_key=%d want_cert=%d want_ca=%d",
-        idx, want_key, want_cert, want_ca);
+    TEST_info("%s combination %d: want_key=%d want_cert=%d want_ca=%d",
+        use_parse_ex ? "parse_ex" : "parse", combo, want_key, want_cert, want_ca);
 
     /* Baseline: full parse to count CA certs */
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
@@ -175,11 +178,28 @@ static int test_parse_combinations(int idx)
     /* Test the specific combination */
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
         goto err;
-    if (!TEST_true(PKCS12_parse(p12, in_pass,
-            want_key ? &key2 : NULL,
-            want_cert ? &cert2 : NULL,
-            want_ca ? &ca2 : NULL)))
-        goto err;
+
+    if (use_parse_ex) {
+        if (!TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
+            goto err;
+
+        if (want_key)
+            PKCS12_PARSE_CTX_set_pkey(ctx, &key2);
+        if (want_cert)
+            PKCS12_PARSE_CTX_set_cert(ctx, &cert2);
+        if (want_ca)
+            PKCS12_PARSE_CTX_set_ca(ctx, &ca2);
+
+        if (!TEST_true(PKCS12_parse_ex(p12, in_pass, ctx,
+                testctx, "provider=default")))
+            goto err;
+    } else {
+        if (!TEST_true(PKCS12_parse(p12, in_pass,
+                want_key ? &key2 : NULL,
+                want_cert ? &cert2 : NULL,
+                want_ca ? &ca2 : NULL)))
+            goto err;
+    }
 
     if (want_key) {
         if (!TEST_ptr(key2))
@@ -218,8 +238,9 @@ static int test_parse_combinations(int idx)
     ret = 1;
 err:
     if (!ret)
-        TEST_info("failed combination %d: want_key=%d want_cert=%d want_ca=%d",
-            idx, want_key, want_cert, want_ca);
+        TEST_info("failed %s combination %d: want_key=%d want_cert=%d want_ca=%d",
+            use_parse_ex ? "parse_ex" : "parse", combo, want_key, want_cert, want_ca);
+    PKCS12_PARSE_CTX_free(ctx);
     PKCS12_free(p12);
     EVP_PKEY_free(key);
     X509_free(cert);
@@ -613,7 +634,7 @@ int setup_tests(void)
 
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
-    ADD_ALL_TESTS(test_parse_combinations, 8);
+    ADD_ALL_TESTS(test_parse_combinations, 16);
     ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_mfail_test);
     ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_existing_ca_mfail_test);
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
