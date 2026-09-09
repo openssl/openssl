@@ -954,6 +954,56 @@ ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si)
     return si->signature;
 }
 
+/*
+ * The md-less signing and verification paths below re-read the content from
+ * |in| after CMS_final() or CMS_verify() has already drained it once.  That
+ * is only sound for a rewindable source BIO: for a filter chain (such as
+ * BIO_f_cipher or BIO_f_base64 over a source) BIO_seek() resets only the
+ * underlying source while the filter keeps its end-of-data (or error) state,
+ * which on the next read is indistinguishable from an empty source.  Reject
+ * chains instead of signing or verifying wrong content: transforming filters
+ * never worked on these paths, and their exhausted or failed state cannot be
+ * told apart from a clean end of content at read time.
+ */
+static int cms_bio_rewind(BIO *in)
+{
+    if (BIO_next(in) != NULL) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+    return BIO_seek(in, 0) >= 0;
+}
+
+/*
+ * Read the next chunk of content from |in| into |buf|.
+ * Returns the number of bytes read, 0 at the clean end of the content, or
+ * -1 on error.  A read result of 0 is the normal end of the content (a file
+ * BIO only reports EOF once a read has hit the end of the file, so the
+ * content may be empty or an exact multiple of the previous read sizes),
+ * unless the BIO asks for a retry: content that is not fully available
+ * cannot be signed or verified here.  A memory BIO at the end of its data
+ * returns a negative value with the retry flag set, but also reports EOF,
+ * which distinguishes it from a genuine retry request.
+ */
+static int cms_bio_read_chunk(BIO *in, unsigned char *buf, size_t buf_len)
+{
+    int n = BIO_read(in, buf, buf_len > INT_MAX ? INT_MAX : (int)buf_len);
+
+    if (n > 0)
+        return n;
+    if (BIO_should_retry(in)) {
+        if (n < 0 && BIO_eof(in) == 1)
+            return 0;
+        ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
+        return -1;
+    }
+    if (n < 0) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
+        return -1;
+    }
+    return 0;
+}
+
 static int cms_bio_read(BIO *in,
     unsigned char **buffer, size_t *buffer_len)
 {
@@ -961,18 +1011,9 @@ static int cms_bio_read(BIO *in,
     size_t offset = 0;
     int n;
 
-    if (BIO_seek(in, 0) < 0)
-        return -1;
-
     *buffer = NULL;
     *buffer_len = 0;
 
-    /*
-     * Read data from BIO into memory.  A file BIO only reports EOF once a
-     * read has hit the end of the file, so a read returning 0 is the normal
-     * end of the content (which may be empty or an exact multiple of the
-     * chunk size) rather than an error.
-     */
     for (;;) {
         if (offset == *buffer_len) {
             *buffer_len += 10240;
@@ -982,7 +1023,7 @@ static int cms_bio_read(BIO *in,
             *buffer = tmp;
         }
 
-        n = BIO_read(in, &(*buffer)[offset], (int)(*buffer_len - offset));
+        n = cms_bio_read_chunk(in, &(*buffer)[offset], *buffer_len - offset);
         if (n < 0)
             goto err;
         if (n == 0)
@@ -1009,6 +1050,9 @@ static int cms_EVP_PKEY_sign(EVP_PKEY_CTX *pctx, BIO *in,
     size_t buffer_len;
     int ret;
 
+    if (cms_bio_rewind(in) != 1)
+        return 0;
+
     if (!has_msg_update) {
         unsigned char *buffer = NULL;
 
@@ -1020,16 +1064,15 @@ static int cms_EVP_PKEY_sign(EVP_PKEY_CTX *pctx, BIO *in,
         unsigned char buffer[1024];
         int n;
 
-        if (BIO_seek(in, 0) < 0)
-            return 0;
-
         do {
-            n = BIO_read(in, buffer, sizeof(buffer));
-            if (n <= 0)
+            n = cms_bio_read_chunk(in, buffer, sizeof(buffer));
+            if (n < 0)
+                return 0;
+            if (n == 0)
                 break;
             if (EVP_PKEY_sign_message_update(pctx, buffer, n) != 1)
                 return 0;
-        } while (!BIO_eof(in));
+        } while (BIO_eof(in) != 1);
         ret = EVP_PKEY_sign_message_final(pctx, sig, sig_len);
     }
     return ret;
@@ -1040,6 +1083,9 @@ static int cms_EVP_PKEY_verify(EVP_PKEY_CTX *pctx, BIO *in, unsigned char *sig,
 {
     size_t buffer_len;
     int ret;
+
+    if (cms_bio_rewind(in) != 1)
+        return 0;
 
     if (!has_msg_update) {
         unsigned char *buffer = NULL;
@@ -1053,16 +1099,15 @@ static int cms_EVP_PKEY_verify(EVP_PKEY_CTX *pctx, BIO *in, unsigned char *sig,
         unsigned char buffer[1024];
         int n;
 
-        if (BIO_seek(in, 0) < 0)
-            return 0;
-
         do {
-            n = BIO_read(in, buffer, sizeof(buffer));
-            if (n <= 0)
+            n = cms_bio_read_chunk(in, buffer, sizeof(buffer));
+            if (n < 0)
+                return 0;
+            if (n == 0)
                 break;
             if (EVP_PKEY_verify_message_update(pctx, buffer, n) != 1)
                 return 0;
-        } while (!BIO_eof(in));
+        } while (BIO_eof(in) != 1);
         if (EVP_PKEY_CTX_set_signature(pctx, sig, siglen) != 1)
             return 0;
         ret = EVP_PKEY_verify_message_final(pctx);

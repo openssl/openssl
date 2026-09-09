@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 42;
+plan tests => 43;
 
 ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");
@@ -1617,12 +1617,12 @@ subtest "EdDSA -noattr tests for CMS" => sub {
 };
 
 subtest "CMS -noattr with content sizes at the internal read boundary" => sub {
-    plan tests => 9;
+    plan tests => 15;
 
     SKIP: {
-        skip "ECX (EdDSA) is not supported in this build", 9
+        skip "ECX (EdDSA) is not supported in this build", 15
             if disabled("ecx");
-        skip "ECX (EdDSA) -noattr is not supported with old FIPS providers", 9
+        skip "ECX (EdDSA) -noattr is not supported with old FIPS providers", 15
             if $old_fips;
 
         my $crt = srctop_file("test", "certs", "root-ed25519.pem");
@@ -1632,7 +1632,7 @@ subtest "CMS -noattr with content sizes at the internal read boundary" => sub {
         # content from the input BIO in 10240 byte chunks.  Content that is
         # empty or an exact multiple of the chunk size used to be rejected
         # because a file BIO does not report EOF until a read hits the end.
-        foreach my $size (0, 10240, 20480) {
+        foreach my $size (0, 10239, 10240, 10241, 20480) {
             my $content = "boundary-$size.bin";
             my $tampered = "boundary-$size-tampered.bin";
             my $sig = "boundary-$size.cms";
