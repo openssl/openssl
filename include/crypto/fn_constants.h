@@ -33,6 +33,20 @@ OSSL_FN_STATIC_DECLARE(inv_sqrt_2, OSSL_FN_LIMBS_N(256));
 /* The literal 2, used as a small DH generator in some groups */
 OSSL_FN_STATIC_DECLARE(const_2, 1);
 
+/*
+ * The product of the primes 3..751 (see SP 800-89 5.3.3, step f).  The
+ * product is 1037 bits: 16 limb pairs plus one 32-bit tail limb, packed
+ * by BN_DEF() into 17 limbs on 64-bit and 33 on 32-bit.  The storage is
+ * sized to hold exactly the given limbs, so the top limb is never zero.
+ */
+#if OSSL_FN_BYTES == 8
+#define OSSL_FN_SMALL_PRIME_FACTORS_LIMBS 17
+#else
+#define OSSL_FN_SMALL_PRIME_FACTORS_LIMBS 33
+#endif
+OSSL_FN_STATIC_DECLARE(small_prime_factors,
+    OSSL_FN_SMALL_PRIME_FACTORS_LIMBS);
+
 /* DH, FFDHE, and MODP group parameters (from RFCs 3526 and 5114) */
 OSSL_FN_STATIC_DECLARE(modp_1536_p, OSSL_FN_LIMBS_N(1536));
 OSSL_FN_STATIC_DECLARE(modp_1536_q, OSSL_FN_LIMBS_N(1536));
