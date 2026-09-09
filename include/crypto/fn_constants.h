@@ -22,6 +22,9 @@
 
 #include "crypto/fn_intern.h"
 
+/* The literal 1 */
+OSSL_FN_STATIC_DECLARE(one, 1);
+
 /*
  * 1 / sqrt(2) * 2^256, rounded up.
  */
