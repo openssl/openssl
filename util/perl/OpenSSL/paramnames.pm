@@ -566,6 +566,7 @@ my %params = (
     'OSSL_PKEY_PARAM_RSA_TEST_Q1' =>  "q1",
     'OSSL_PKEY_PARAM_RSA_TEST_Q2' =>  "q2",
     'OSSL_SIGNATURE_PARAM_KAT' =>     "kat",
+    'OSSL_SIGNATURE_PARAM_KAT_ENTROPY' => "kat-entropy",
 
 # KEM parameters
     'OSSL_KEM_PARAM_OPERATION' =>            "operation",

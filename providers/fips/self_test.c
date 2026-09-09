@@ -222,7 +222,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
 
-    if (!SELF_TEST_kats_execute(ev, libctx, ST_ID_MAC_HMAC, 0))
+    if (!SELF_TEST_kats_execute(ev, libctx, ST_ID_MAC_HMAC))
         goto err;
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);

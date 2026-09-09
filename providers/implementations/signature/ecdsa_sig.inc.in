@@ -35,6 +35,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_SIGNATURE_PARAM_SIGNATURE',         'sig',   'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_KAT',               'kat',   'uint',
                            "#if !defined(OPENSSL_NO_ACVP_TESTS)"],
+                          ['OSSL_SIGNATURE_PARAM_KAT_ENTROPY',       'katent', 'octet_string',
+                           'hidden'],
                           ['OSSL_SIGNATURE_PARAM_NONCE_TYPE',        'nonce', 'uint'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',    'ind_k', 'int', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK', 'ind_d', 'int', 'fips'],

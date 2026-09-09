@@ -31,12 +31,6 @@
 #define SELF_TEST_KEM_ENABLED 1
 #endif
 
-static int set_kat_drbg(OSSL_LIB_CTX *ctx,
-    const unsigned char *entropy, size_t entropy_len,
-    const unsigned char *nonce, size_t nonce_len,
-    const unsigned char *persstr, size_t persstr_len);
-static int reset_main_drbg(OSSL_LIB_CTX *ctx);
-
 static int self_test_digest(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
@@ -513,13 +507,6 @@ static int self_test_digest_sign(const ST_DEFINITION *t,
 
     OSSL_SELF_TEST_onbegin(st, typ, t->desc);
 
-    if (t->u.sig.entropy.buf != NULL) {
-        if (!set_kat_drbg(libctx, t->u.sig.entropy.buf, t->u.sig.entropy.len,
-                t->u.sig.nonce.buf, t->u.sig.nonce.len,
-                t->u.sig.persstr.buf, t->u.sig.persstr.len))
-            goto err;
-    }
-
     paramskey = kat_params_to_ossl_params(libctx, t->u.sig.key, NULL);
     paramsinit = kat_params_to_ossl_params(libctx, t->u.sig.init, NULL);
     paramsverify = kat_params_to_ossl_params(libctx, t->u.sig.verify, NULL);
@@ -608,10 +595,6 @@ err:
     OSSL_PARAM_free(paramskey);
     OSSL_PARAM_free(paramsinit);
     OSSL_PARAM_free(paramsverify);
-    if (t->u.sig.entropy.buf != NULL) {
-        if (!reset_main_drbg(libctx))
-            ret = 0;
-    }
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
@@ -964,155 +947,6 @@ err:
     return ret;
 }
 
-/*
- * Swap the library context DRBG for KAT testing
- *
- * In FIPS 140-3, the asymmetric POST must be a KAT, not a PCT.  For DSA and ECDSA,
- * the sign operation includes the random value 'k'.  For a KAT to work, we
- * have to have control of the DRBG to make sure it is in a "test" state, where
- * its output is truly deterministic.
- *
- */
-
-/*
- * Replacement "random" sources
- * main_rand is used for most tests and it's set to generate mode.
- * kat_rand is used for KATs where specific input is mandated.
- */
-static EVP_RAND_CTX *kat_rand = NULL;
-static EVP_RAND_CTX *main_rand = NULL;
-
-static int set_kat_drbg(OSSL_LIB_CTX *ctx,
-    const unsigned char *entropy, size_t entropy_len,
-    const unsigned char *nonce, size_t nonce_len,
-    const unsigned char *persstr, size_t persstr_len)
-{
-    EVP_RAND *rand;
-    unsigned int strength = 256;
-    EVP_RAND_CTX *parent_rand = NULL;
-    int reseed_time_interval = 0;
-    unsigned int reseed_requests = 0;
-    OSSL_PARAM drbg_params[3] = {
-        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
-    };
-
-    /* If not NULL, we didn't cleanup from last call: BAD */
-    if (kat_rand != NULL)
-        return 0;
-
-    rand = EVP_RAND_fetch(ctx, "TEST-RAND", NULL);
-    if (rand == NULL)
-        return 0;
-
-    parent_rand = EVP_RAND_CTX_new(rand, NULL);
-    EVP_RAND_free(rand);
-    if (parent_rand == NULL)
-        goto err;
-
-    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
-        &strength);
-    if (!EVP_RAND_CTX_set_params(parent_rand, drbg_params))
-        goto err;
-
-    rand = EVP_RAND_fetch(ctx, "HASH-DRBG", NULL);
-    if (rand == NULL)
-        goto err;
-
-    kat_rand = EVP_RAND_CTX_new(rand, parent_rand);
-    EVP_RAND_free(rand);
-    if (kat_rand == NULL)
-        goto err;
-
-    drbg_params[0] = OSSL_PARAM_construct_utf8_string("digest", "SHA256", 0);
-    if (!EVP_RAND_CTX_set_params(kat_rand, drbg_params))
-        goto err;
-
-    /* Instantiate the RNGs */
-    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)entropy, entropy_len);
-    drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
-        (void *)nonce, nonce_len);
-    if (!EVP_RAND_instantiate(parent_rand, strength, 0, NULL, 0, drbg_params))
-        goto err;
-
-    EVP_RAND_CTX_free(parent_rand);
-    parent_rand = NULL;
-
-    /* Disable time/request based reseeding to make selftests deterministic */
-    drbg_params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
-        &reseed_time_interval);
-    drbg_params[1] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
-        &reseed_requests);
-    if (!EVP_RAND_instantiate(kat_rand, strength, 0, persstr, persstr_len, drbg_params))
-        goto err;
-
-    /* When we set the new private generator this one is freed, so upref it */
-    if (!EVP_RAND_CTX_up_ref(main_rand))
-        goto err;
-
-    /* Update the library context DRBG */
-    if (RAND_set0_private(ctx, kat_rand) > 0) {
-        /* Keeping a copy to verify zeroization */
-        if (EVP_RAND_CTX_up_ref(kat_rand))
-            return 1;
-        RAND_set0_private(ctx, main_rand);
-    }
-
-err:
-    EVP_RAND_CTX_free(parent_rand);
-    EVP_RAND_CTX_free(kat_rand);
-    kat_rand = NULL;
-    return 0;
-}
-
-static int reset_main_drbg(OSSL_LIB_CTX *ctx)
-{
-    int ret = 1;
-
-    if (!RAND_set0_private(ctx, main_rand))
-        ret = 0;
-    if (kat_rand != NULL) {
-        if (!EVP_RAND_uninstantiate(kat_rand)
-            || !EVP_RAND_verify_zeroization(kat_rand))
-            ret = 0;
-        EVP_RAND_CTX_free(kat_rand);
-        kat_rand = NULL;
-    }
-    return ret;
-}
-
-static int setup_main_random(OSSL_LIB_CTX *libctx)
-{
-    OSSL_PARAM drbg_params[3] = {
-        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
-    };
-    unsigned int strength = 256, generate = 1;
-    EVP_RAND *rand;
-
-    rand = EVP_RAND_fetch(libctx, "TEST-RAND", NULL);
-    if (rand == NULL)
-        return 0;
-
-    main_rand = EVP_RAND_CTX_new(rand, NULL);
-    EVP_RAND_free(rand);
-    if (main_rand == NULL)
-        goto err;
-
-    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_GENERATE,
-        &generate);
-    drbg_params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
-        &strength);
-
-    if (!EVP_RAND_instantiate(main_rand, strength, 0, NULL, 0, drbg_params))
-        goto err;
-    return 1;
-err:
-    EVP_RAND_CTX_free(main_rand);
-    /* Ensure this global variable does not reference freed memory */
-    main_rand = NULL;
-    return 0;
-}
-
 static int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     self_test_id_t id)
 {
@@ -1177,7 +1011,7 @@ static int SELF_TEST_kat_deps(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
         return 0;
 
     for (int i = 0; test->depends_on[i] != ST_ID_MAX; i++)
-        if (!SELF_TEST_kats_execute(st, libctx, test->depends_on[i], 0))
+        if (!SELF_TEST_kats_execute(st, libctx, test->depends_on[i]))
             return 0;
 
     return 1;
@@ -1188,9 +1022,8 @@ static int SELF_TEST_kat_deps(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
  * Return 1 if successful, otherwise return 0.
  */
 int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    self_test_id_t id, int switch_rand)
+    self_test_id_t id)
 {
-    EVP_RAND_CTX *saved_rand = NULL;
     int ret;
 
     if (id >= ST_ID_MAX || st_all_tests[id].id != id) {
@@ -1216,21 +1049,6 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     case SELF_TEST_STATE_PASSED:
     case SELF_TEST_STATE_IMPLICIT:
         return 1;
-    }
-
-    if (switch_rand) {
-        saved_rand = ossl_rand_get0_private_noncreating(libctx);
-        if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
-            return 0;
-        if (!setup_main_random(libctx)
-            || !RAND_set0_private(libctx, main_rand)) {
-            /* Decrement saved_rand reference counter */
-            EVP_RAND_CTX_free(saved_rand);
-            EVP_RAND_CTX_free(main_rand);
-            /* Ensure this global variable does not reference freed memory */
-            main_rand = NULL;
-            return 0;
-        }
     }
 
     /* Mark test as in progress */
@@ -1282,11 +1100,6 @@ done:
             ossl_set_self_test_state(i, st_all_tests[id].state);
     }
 
-    if (switch_rand) {
-        RAND_set0_private(libctx, saved_rand);
-        /* The above call will cause main_rand to be freed */
-        main_rand = NULL;
-    }
     return ret;
 }
 
@@ -1298,30 +1111,12 @@ done:
  */
 int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
-    EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
     int i, ret = 1;
 
-    if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
-        return 0;
-    if (!setup_main_random(libctx)
-        || !RAND_set0_private(libctx, main_rand)) {
-        /* Decrement saved_rand reference counter */
-        EVP_RAND_CTX_free(saved_rand);
-        EVP_RAND_CTX_free(main_rand);
-        /* Ensure this global variable does not reference freed memory */
-        main_rand = NULL;
-        return 0;
-    }
-
-    for (i = 0; i < ST_ID_MAX; i++) {
+    for (i = 0; i < ST_ID_MAX; i++)
         if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
-            if (!SELF_TEST_kats_execute(st, libctx, i, 0))
+            if (!SELF_TEST_kats_execute(st, libctx, i))
                 ret = 0;
-    }
-
-    RAND_set0_private(libctx, saved_rand);
-    /* The above call will cause main_rand to be freed */
-    main_rand = NULL;
     return ret;
 }
 
