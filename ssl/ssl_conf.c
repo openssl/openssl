@@ -583,14 +583,14 @@ static int cmd_SecurityLevel(SSL_CONF_CTX *cctx, const char *value)
     if (OPENSSL_strtoul(value, NULL, 10, &ul) && ul <= INT_MAX) {
         int seclevel = (int)ul;
 
-	if (cctx->ctx) {
-	    SSL_CTX_set_security_level(cctx->ctx, seclevel);
-	    rv = 1;
-	}
-	if (cctx->ssl) {
-	    SSL_set_security_level(cctx->ssl, seclevel);
-	    rv = 1;
-	}
+        if (cctx->ctx) {
+            SSL_CTX_set_security_level(cctx->ctx, seclevel);
+            rv = 1;
+        }
+        if (cctx->ssl) {
+            SSL_set_security_level(cctx->ssl, seclevel);
+            rv = 1;
+        }
     }
     return rv;
 }
@@ -629,8 +629,8 @@ static int do_add(SSL_CONF_CTX *cctx,
         return 1;
     }
     if (ctx != NULL) {
-	libctx = ctx->libctx;
-	propq = ctx->propq;
+        libctx = ctx->libctx;
+        propq = ctx->propq;
     }
     st = &ctx->cert_store;
     if (*st == NULL) {
