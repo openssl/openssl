@@ -41,6 +41,9 @@ struct evp_md_ctx_st {
     EVP_MD *fetched_digest;
 } /* EVP_MD_CTX */;
 
+/* What ctx->prov_no_padding holds when the provider's padding is not known. */
+#define EVP_PROV_PADDING_UNKNOWN (-1)
+
 struct evp_cipher_ctx_st {
     const EVP_CIPHER *cipher;
     int encrypt; /* encrypt or decrypt */
@@ -59,6 +62,13 @@ struct evp_cipher_ctx_st {
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
     size_t numpipes;
+    /*
+     * The no-padding state of algctx as far as this context can tell:
+     * 1 if it was left with padding off, 0 if with padding on, and
+     * EVP_PROV_PADDING_UNKNOWN if something may have changed it since,
+     * which forces the next init to ask again.
+     */
+    int prov_no_padding;
 
     /*
      * Opaque ctx returned from a providers cipher algorithm implementation

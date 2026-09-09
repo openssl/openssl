@@ -66,6 +66,107 @@ void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+/*
+ * Bring the padding held by the provider context in step with ctx->flags.
+ * Nothing is sent when what the provider context was left holding is known to
+ * agree, so re-initialising a context that keeps its provider context costs no
+ * round trip.
+ *
+ * A successful push is recorded in ctx->prov_no_padding by
+ * EVP_CIPHER_CTX_set_params() itself, which does so for any padding parameter
+ * it carries, wherever it came from.
+ */
+static int evp_cipher_sync_padding(EVP_CIPHER_CTX *ctx,
+    const OSSL_PARAM params[])
+{
+    OSSL_PARAM padding[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    int no_padding = (ctx->flags & EVP_CIPH_NO_PADDING) != 0;
+    unsigned int pd = no_padding ? 0 : 1;
+
+    if (ctx->prov_no_padding == no_padding)
+        return 1;
+
+    /*
+     * provider-cipher(7) does not require set_ctx_params, and a cipher that
+     * takes its padding from the init call has no need of it.  Nothing can be
+     * sent to such a cipher from here, so the question is only whether to fail
+     * the init, and that depends on what is known:
+     *
+     * - this init carries a padding parameter of its own, so the provider is
+     *   being told by the init itself and there is nothing to do here;
+     * - the padding held by the provider context is unknown, so whether the
+     *   request is already met cannot be decided.  A cipher of this kind is
+     *   given its padding at init and keeps it, so the likely answer is that
+     *   it is met; failing the init would refuse the ordinary sequence of one
+     *   init with parameters followed by re-inits without them;
+     * - otherwise the padding held is known to differ, this init is not
+     *   carrying the request, and there is no way to send it, so the request
+     *   cannot be met and that is reported.
+     */
+    if (ctx->cipher != NULL && ctx->cipher->set_ctx_params == NULL) {
+        int known = ctx->prov_no_padding != EVP_PROV_PADDING_UNKNOWN;
+        const OSSL_PARAM *p = NULL;
+
+        if (params != NULL)
+            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+        ctx->prov_no_padding = EVP_PROV_PADDING_UNKNOWN;
+        if (p != NULL)
+            return 1;
+        if (!known)
+            return 1;
+        ERR_raise(ERR_LIB_EVP, EVP_R_CANNOT_SET_PARAMETERS);
+        return 0;
+    }
+
+    padding[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
+    if (!EVP_CIPHER_CTX_set_params(ctx, padding)) {
+        /*
+         * A set_ctx_params that fails may still have applied the padding
+         * before failing on something else, so nothing is known about it now.
+         */
+        ctx->prov_no_padding = EVP_PROV_PADDING_UNKNOWN;
+        ERR_raise(ERR_LIB_EVP, EVP_R_CANNOT_SET_PARAMETERS);
+        return 0;
+    }
+    return 1;
+}
+
+/*
+ * Records a padding request that came in as part of an init call.  The
+ * provider's own init is what applies it, but it has to be remembered here
+ * too, so that a later init - which may build a new provider context - knows
+ * to ask for it again.
+ *
+ * That init is also about to move the padding held by the provider context,
+ * out of sight of this code and to a value it cannot assume, so anything
+ * recorded about that context stops being worth anything here.  Recording the
+ * parameter as though the provider had honoured it would be a guess, and one
+ * that skips a later push if the provider ignored the parameter or failed
+ * after part of it: what is known is that it is no longer known.
+ */
+static int evp_cipher_note_padding_param(EVP_CIPHER_CTX *ctx,
+    const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    unsigned int pd;
+
+    if (params == NULL)
+        return 1;
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+    if (p == NULL)
+        return 1;
+    if (!OSSL_PARAM_get_uint(p, &pd)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CANNOT_SET_PARAMETERS);
+        return 0;
+    }
+    if (pd == 0)
+        ctx->flags |= EVP_CIPH_NO_PADDING;
+    else
+        ctx->flags &= ~EVP_CIPH_NO_PADDING;
+    ctx->prov_no_padding = EVP_PROV_PADDING_UNKNOWN;
+    return 1;
+}
+
 static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     const EVP_CIPHER *cipher,
     const unsigned char *key,
@@ -151,16 +252,27 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
+        /* A new provider context starts with the provider's own default. */
+        ctx->prov_no_padding = 0;
     }
 
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-        /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
-         */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
-            return 0;
-    }
+    /*
+     * A padding request held in ctx->flags has to reach the provider context,
+     * whether it arrived through EVP_CIPHER_CTX_set_padding(), the padding
+     * flag or a parameter, and whether the context here is a new one or one
+     * that was left over from a previous init.
+     *
+     * It goes in a call of its own, rather than joining the length parameters
+     * below, so that a padding failure is not reported as a length error.
+     * Such a failure leaves the padding held by the provider context unknown,
+     * so a retry on this context asks again and fails again rather than
+     * carrying on with padding that was never agreed.
+     *
+     * The init parameters are passed in because a cipher that has no
+     * set_ctx_params can still be given padding by this very init.
+     */
+    if (!evp_cipher_sync_padding(ctx, params))
+        return 0;
 
 #ifndef FIPS_MODULE
     /*
@@ -197,6 +309,9 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         }
     }
 #endif
+
+    if (!evp_cipher_note_padding_param(ctx, params))
+        return 0;
 
     if (is_pipeline)
         return 1;
@@ -317,20 +432,23 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
+        /* A new provider context starts with the provider's own default. */
+        ctx->prov_no_padding = 0;
     }
+
+    /*
+     * The padding held in ctx->flags has to reach the provider context, just
+     * as evp_cipher_init_internal() does it for the raw-key path.
+     */
+    if (!evp_cipher_sync_padding(ctx, params))
+        return 0;
+
+    if (!evp_cipher_note_padding_param(ctx, params))
+        return 0;
 
     if (skey != NULL && ctx->cipher->prov != skey->skeymgmt->prov) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
-    }
-
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-        /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
-         */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
-            return 0;
     }
 
     if (iv == NULL)
@@ -919,6 +1037,8 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
         return 1;
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->algctx, params);
+    /* A provider that failed here may have applied the padding regardless. */
+    ctx->prov_no_padding = (ok != 0) ? !pad : EVP_PROV_PADDING_UNKNOWN;
 
     return ok != 0;
 }
@@ -1161,6 +1281,40 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
                 r = 0;
                 ctx->iv_len = -1;
             }
+        }
+        /*
+         * Keep ctx->flags in step with the padding the provider was just
+         * given, so that a padding request made this way - rather than
+         * through EVP_CIPHER_CTX_set_padding() - is still known here and can
+         * be re-applied when a later init allocates a new provider context.
+         *
+         * A call that failed is a different matter: set_ctx_params applies
+         * what it is given as it goes, so it may well have applied the
+         * padding and then failed on another parameter.  The padding held by
+         * the provider context is then whatever that call left behind, and
+         * the next init has to ask again rather than trust what was recorded
+         * before it.
+         */
+        if (r > 0) {
+            unsigned int pd;
+
+            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+            if (p != NULL) {
+                if (!OSSL_PARAM_get_uint(p, &pd)) {
+                    r = 0;
+                    ctx->prov_no_padding = EVP_PROV_PADDING_UNKNOWN;
+                } else {
+                    if (pd == 0)
+                        ctx->flags |= EVP_CIPH_NO_PADDING;
+                    else
+                        ctx->flags &= ~EVP_CIPH_NO_PADDING;
+                    ctx->prov_no_padding = (pd == 0);
+                }
+            }
+        } else {
+            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+            if (p != NULL)
+                ctx->prov_no_padding = EVP_PROV_PADDING_UNKNOWN;
         }
     }
     return r;
