@@ -218,7 +218,7 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
 {
     int64_t i;
     uint64_t u;
-    BIGNUM *bn;
+    BIGNUM *bn = NULL;
 #ifndef OPENSSL_SYS_UEFI
     double d;
     int dok;
