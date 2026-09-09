@@ -34,7 +34,9 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added several new commands to the SSL_CONF API.
+
+   *Stephen Wall*
 
 OpenSSL 4.1
 -----------
