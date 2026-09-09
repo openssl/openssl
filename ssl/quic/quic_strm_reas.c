@@ -12,6 +12,7 @@
 #include "internal/quic_stream.h"
 #include "internal/quic_strm_reas.h"
 #include "internal/list.h"
+#include "internal/quic_channel.h"
 
 #define STDERR NULL
 /* ARGSUSED */
@@ -62,6 +63,7 @@ struct stream_chunk_t {
 struct quic_rstream_qparm_st {
     size_t rsqp_pkt_overhead_treshold;
     size_t rsqp_pkt_overhead_sz;
+    QUIC_CHANNEL *rsqp_ch;
 };
 
 #define sc_data sc_data_u.u_data
@@ -105,27 +107,25 @@ OSSL_RBT_GENERATE(srange, stream_range_t, sr_rbe, srange_cmp);
 
 static void rsqp_add_overhead(QUIC_RSTREAM_QPARM *rsqp, size_t sc_overhead)
 {
-    if (rsqp != NULL)
-        rsqp->rsqp_pkt_overhead_sz += sc_overhead;
+    rsqp->rsqp_pkt_overhead_sz += sc_overhead;
 }
 
 static void rsqp_sub_overhead(QUIC_RSTREAM_QPARM *rsqp, size_t sc_overhead)
 {
-    if (rsqp != NULL)
-        rsqp->rsqp_pkt_overhead_sz -= sc_overhead;
+    rsqp->rsqp_pkt_overhead_sz -= sc_overhead;
 }
 
 /*
-  * Cleansing (SSL_OP_CLEANSE_PLAINTEXT) must write through the const
-  * data pointers received from ossl_sframe_set_insert(), which may
-  * point into a shared packet buffer. That is safe: each chunk
-  * references the disjoint payload slice of its own frame and a
-  * processed packet is kept alive only by the chunks stored on it,
-  * so nobody else reads the wiped bytes.
-  *
-  * The const should eventually be dropped from the prototypes
-  * instead; until then deconst() is used.
-  */
+ * Cleansing (SSL_OP_CLEANSE_PLAINTEXT) must write through the const
+ * data pointers received from ossl_sframe_set_insert(), which may
+ * point into a shared packet buffer. That is safe: each chunk
+ * references the disjoint payload slice of its own frame and a
+ * processed packet is kept alive only by the chunks stored on it,
+ * so nobody else reads the wiped bytes.
+ *
+ * The const should eventually be dropped from the prototypes
+ * instead; until then deconst() is used.
+ */
 static unsigned char *deconst(const unsigned char *data)
 {
     union {
@@ -175,10 +175,9 @@ static int srange_cmp(const struct stream_range_t *a_sr,
 }
 
 static int keep_schunk_data_on_packet(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
-    UINT_RANGE *r)
+    size_t overhead)
 {
-    if (fs->rsqp != NULL
-        && fs->rsqp->rsqp_pkt_overhead_sz >= fs->rsqp->rsqp_pkt_overhead_treshold)
+    if ((fs->rsqp->rsqp_pkt_overhead_sz + overhead) >= fs->rsqp->rsqp_pkt_overhead_treshold)
         return 0;
 
     return 1;
@@ -201,26 +200,20 @@ static struct stream_chunk_t *new_schunk(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
     rsize = r->end - r->start;
     assert(rsize <= pkt->datagram_len);
     overhead = UINT64_TO_SIZE_T(pkt->datagram_len - rsize);
-    rsqp_add_overhead(fs->rsqp, overhead);
 
-    if (keep_schunk_data_on_packet(fs, pkt, r) == 1) {
+    if (keep_schunk_data_on_packet(fs, pkt, overhead) == 1) {
         sc->sc_st = ST_TYPE_PKT;
         sc->sc_pkt = pkt;
         ossl_qrx_pkt_up_ref(pkt);
+        rsqp_add_overhead(fs->rsqp, overhead);
         sc->sc_data = data;
         sc->sc_range = *r;
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr,
-                "%s sc: %p sc overhead: %d pkt_buf_overhead_sz: %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(pkt, sc),
-                fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(pkt, sc),
-                fs->rsqp->rsqp_pkt_overhead_sz);
+        DEBUG_PRINT(STDERR,
+            "%s sc: %p sc overhead: %llu pkt_buf_overhead_sz: %llu -> %zu\n",
+            OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(pkt, sc),
+            fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(pkt, sc),
+            fs->rsqp->rsqp_pkt_overhead_sz);
     } else {
-        /*
-         * Only data which stay on packet must be accounted as overhead.
-         */
-        rsqp_sub_overhead(fs->rsqp, overhead);
-
         if (rsize <= DIRECT_STORAGE_SZ) {
             DEBUG_PRINT(STDERR, "%s ST_TYPE_DIRECT sc: %p %llu\n", OPENSSL_FUNC,
                 (void *)sc, rsize);
@@ -257,14 +250,12 @@ static void destroy_schunk(SFRAME_SET *fs, struct stream_chunk_t *sc)
 
     switch (sc->sc_st) {
     case ST_TYPE_PKT:
-        assert(fs->rsqp == NULL
-            || fs->rsqp->rsqp_pkt_overhead_sz >= SCHUNK_OVERHEAD(sc->sc_pkt, sc));
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr,
-                "%s sc: %p sc overhead: %d pkt_buf_overhead_sz: %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(sc->sc_pkt, sc),
-                fs->rsqp->rsqp_pkt_overhead_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(sc->sc_pkt, sc));
+        assert(fs->rsqp->rsqp_pkt_overhead_sz >= SCHUNK_OVERHEAD(sc->sc_pkt, sc));
+        DEBUG_PRINT(STDERR,
+            "%s sc: %p sc overhead: %llu pkt_buf_overhead_sz: %zu -> %llu\n",
+            OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(sc->sc_pkt, sc),
+            fs->rsqp->rsqp_pkt_overhead_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(sc->sc_pkt, sc));
         rsqp_sub_overhead(fs->rsqp,
             UINT64_TO_SIZE_T(SCHUNK_OVERHEAD(sc->sc_pkt, sc)));
         ossl_qrx_pkt_release(sc->sc_pkt);
@@ -330,6 +321,8 @@ static struct stream_range_t *create_range(SFRAME_SET *fs,
 
 void ossl_sframe_set_init(SFRAME_SET *fs, QUIC_RSTREAM_QPARM *rsqp)
 {
+    assert(rsqp != NULL);
+
     memset(fs, 0, sizeof(*fs));
     OSSL_RBT_INIT(srange, &fs->ranges);
     fs->rsqp = rsqp;
@@ -359,7 +352,7 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
      */
     rsize = r->end - r->start;
     if (r->start < sr->sr_range.start && r->end > sr->sr_range.end
-        && rsize > DIRECT_STORAGE_SZ && ossl_list_sc_num(&sr->sr_chunks) > 1)
+        && ossl_list_sc_num(&sr->sr_chunks) > 1)
         return 0;
 
     head_sc = ossl_list_sc_head(&sr->sr_chunks);
@@ -567,6 +560,7 @@ static void prepend_chunk(SFRAME_SET *fs, struct stream_range_t *sr,
     struct stream_chunk_t *sc)
 {
     size_t unused_sz;
+    uint64_t offset;
 
     assert(sc->sc_range.start < sc->sc_range.end);
     assert(sr->sr_range.start > sc->sc_range.start);
@@ -576,8 +570,11 @@ static void prepend_chunk(SFRAME_SET *fs, struct stream_range_t *sr,
     assert(sc->sc_range.end >= sr->sr_range.start);
 
     unused_sz = UINT64_TO_SIZE_T(sc->sc_range.end - sr->sr_range.start);
-    if (fs->cleanse && unused_sz > 0)
-        OPENSSL_cleanse(sc->sc_data_w, unused_sz);
+    if (fs->cleanse && unused_sz > 0) {
+        offset = sr->sr_range.start - sc->sc_range.start;
+        assert(unused_sz + offset == sc->sc_range.end - sc->sc_range.start);
+        OPENSSL_cleanse(&sc->sc_data_w[offset], unused_sz);
+    }
 
     sc->sc_range.end = sr->sr_range.start;
     DEBUG_PRINT(STDERR, "[ %llu, %llu ] -> ",
@@ -590,11 +587,10 @@ static void prepend_chunk(SFRAME_SET *fs, struct stream_range_t *sr,
 
     if (sc->sc_st == ST_TYPE_PKT) {
         rsqp_add_overhead(fs->rsqp, unused_sz);
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz);
+        DEBUG_PRINT(STDERR, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
+            OPENSSL_FUNC, (void *)sc, unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz);
     }
 
     fs->stream_chunks++;
@@ -632,11 +628,10 @@ static void append_chunk(SFRAME_SET *fs, struct stream_range_t *sr,
 
     if (sc->sc_st == ST_TYPE_PKT) {
         rsqp_add_overhead(fs->rsqp, unused_sz);
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz);
+        DEBUG_PRINT(STDERR, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
+            OPENSSL_FUNC, (void *)sc, unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz);
     }
 
     fs->stream_chunks++;
@@ -713,11 +708,10 @@ static int chop_range(SFRAME_SET *fs, struct stream_range_t *sr,
 
     if (sc->sc_st == ST_TYPE_PKT) {
         rsqp_add_overhead(fs->rsqp, unused_sz);
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz);
+        DEBUG_PRINT(STDERR, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
+            OPENSSL_FUNC, (void *)sc, unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz);
     }
 
     return 1;
@@ -797,6 +791,7 @@ static struct stream_range_t *append_range(SFRAME_SET *fs,
 
 /*
  * receives a chunk of data from stream frame.
+ * note there is a tri-state return value:
  */
 int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
     const unsigned char *data, int fin)
@@ -807,28 +802,47 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
     struct stream_chunk_t *sc = NULL;
     struct stream_range_t key_sr = { 0 };
 
+    assert(r->start <= r->end);
+
     /*
-     * receive the FIN frame if FIN frame. If FIN was not seen yet,
-     * then record FIN's offset (r->end). If FIN was received then
-     * verify FIN's offset match, error out on mismatch.
+     * receive the FIN frame. If FIN was not seen yet, then record
+     * FIN's offset (r->end). If FIN was received then verify FIN's
+     * offset match, error out on mismatch.
      */
     if (fin != 0) {
         if (fs->fin == 0) {
+            sr = OSSL_RBT_MAX(srange, &fs->ranges);
+            if (r->end < fs->offset
+                || (sr != NULL && sr->sr_range.end > r->end)) {
+                ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+                    OSSL_QUIC_ERR_FINAL_SIZE_ERROR,
+                    OSSL_QUIC_FRAME_TYPE_STREAM_FIN,
+                    "stream final size error");
+                return 0;
+            }
             fs->fin = 1;
             fs->fin_off = r->end;
         } else if (fs->fin_off != r->end) {
+            ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+                OSSL_QUIC_ERR_FINAL_SIZE_ERROR,
+                OSSL_QUIC_FRAME_TYPE_STREAM_FIN,
+                "stream final size error");
             return 0;
         }
     }
 
     /*
-     * discard any data past FIN offset (of FIN offset is set).
+     * reject any data at or past the FIN offset (if FIN offset is set).
      */
     if (fs->fin != 0) {
-        if (fs->fin_off < r->end)
-            r->end = fs->fin_off; /* truncate bytes beyond FIN */
-        if (fs->fin_off < r->start)
+        if (fs->fin_off < r->end) {
+            ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+                OSSL_QUIC_ERR_FINAL_SIZE_ERROR,
+                (fin == 0) ? OSSL_QUIC_FRAME_TYPE_STREAM
+                           : OSSL_QUIC_FRAME_TYPE_STREAM_FIN,
+                "stream final size error");
             return 0;
+        }
     }
 
     if (r->end <= fs->offset) {
@@ -1215,18 +1229,17 @@ int ossl_sframe_set_move_offset(SFRAME_SET *fs, uint64_t new_offset)
 
         if (sc->sc_st == ST_TYPE_PKT) {
             rsqp_add_overhead(fs->rsqp, unused_sz);
-            if (fs->rsqp != NULL)
-                DEBUG_PRINT(stderr, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
-                    OPENSSL_FUNC, (void *)sc, unused_sz,
-                    fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
-                    fs->rsqp->rsqp_pkt_overhead_sz);
+            DEBUG_PRINT(STDERR, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
+                OPENSSL_FUNC, (void *)sc, unused_sz,
+                fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
+                fs->rsqp->rsqp_pkt_overhead_sz);
         }
     }
 
     return 1;
 }
 
-QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(void)
+QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(QUIC_CHANNEL *ch)
 {
     QUIC_RSTREAM_QPARM *rsqp;
 
@@ -1234,6 +1247,7 @@ QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(void)
     if (rsqp != NULL) {
         rsqp->rsqp_pkt_overhead_treshold = PKT_BUFFER_OVERHEAD_TRESHOLD;
         rsqp->rsqp_pkt_overhead_sz = 0;
+        rsqp->rsqp_ch = ch;
     }
 
     return rsqp;
