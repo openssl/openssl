@@ -20,12 +20,13 @@ struct quic_rstream_st {
     UINT_RANGE head_range;
 };
 
-#if !defined(NDEBUG) && defined(WITH_RSTREAM_DEBUG)
-#include <stdio.h>
-#define DEBUG_PRINT(...) fprintf(__VA_ARGS__)
-#else
-#define DEBUG_PRINT(...) (void)(0)
-#endif
+/* ARGSUSED */
+#define STDERR NULL
+static void print_foo(void *f, ...)
+{
+}
+
+#define DEBUG_PRINT print_foo
 
 QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
     OSSL_STATM *statm, QUIC_RSTREAM_QPARM *rsqp)
@@ -79,11 +80,11 @@ static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
     size_t readbytes_ = 0;
     int fin_ = 0, ret = 1;
 
-    DEBUG_PRINT(stderr, "%s want: %zu\n", OPENSSL_FUNC, size);
+    DEBUG_PRINT(STDERR, "%s want: %zu\n", OPENSSL_FUNC, size);
     while (ossl_sframe_set_peek(&qrs->fs, &iter, &range, &data, &fin_)) {
         size_t l = (size_t)(range.end - range.start);
 
-        DEBUG_PRINT(stderr, "\t[ %llu, %llu ]\n", range.start, range.end);
+        DEBUG_PRINT(STDERR, "\t[ %llu, %llu ]\n", range.start, range.end);
         if (l > size) {
             l = size;
             fin_ = 0;
@@ -104,11 +105,11 @@ static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
         ret = ossl_sframe_set_move_offset(&qrs->fs, offset);
 
     if (ret) {
-        DEBUG_PRINT(stderr, "%s got: %zu\n", OPENSSL_FUNC, readbytes_);
+        DEBUG_PRINT(STDERR, "%s got: %zu\n", OPENSSL_FUNC, readbytes_);
         *readbytes = readbytes_;
         *fin = fin_;
     } else {
-        DEBUG_PRINT(stderr, "%s got: nothing\n", OPENSSL_FUNC);
+        DEBUG_PRINT(STDERR, "%s got: nothing\n", OPENSSL_FUNC);
     }
 
     return ret;
@@ -181,7 +182,7 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
         return 1;
     }
 
-    DEBUG_PRINT(stderr, "%s head: [ %llu, %llu ]\n", OPENSSL_FUNC,
+    DEBUG_PRINT(STDERR, "%s head: [ %llu, %llu ]\n", OPENSSL_FUNC,
         qrs->head_range.start, qrs->head_range.end);
     /* if final empty frame, we drop it immediately */
     if (qrs->head_range.end == qrs->head_range.start) {
