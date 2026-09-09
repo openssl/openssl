@@ -49,10 +49,8 @@ size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
 
     if (ossl_rand_seed_source_strict(ctx)) {
         /*
-         * With strict seeding the seed source must be used, even when the
-         * request arrives before anything instantiated it: create it now
-         * and fail instead of silently substituting the operating system
-         * entropy sources.
+         * With strict seeding the configured seed source must be used,
+         * even when the request arrives before anything instantiated it.
          */
         rng = ossl_rand_get0_seed(ctx);
         if (rng == NULL || !evp_rand_can_seed(rng)) {

@@ -587,11 +587,9 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
 
     if (dtls1_check_timeout_num(s) < 0) {
         /*
-         * SSLfatal() already called, so the connection is finished. Stop the
-         * timer rather than returning with next_timeout left in the past:
-         * nothing will re-arm or clear it from here, so DTLSv1_get_timeout()
-         * would report "due now" for ever and spin any caller which waits on
-         * it.
+         * SSLfatal() already called, so the connection is finished. Nothing
+         * re-arms or clears the timer after this, and an expired timeout left
+         * in place makes DTLSv1_get_timeout() report it due for ever.
          */
         dtls1_stop_timer(s);
         return -1;
@@ -1418,10 +1416,9 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     /* Create new pending connection if needed */
     if (conn_ssl == NULL) {
         /*
-         * Reject before allocating anything if we have reached the pending
-         * connection limit. The LHASH item count is O(1), and this check does
-         * not need a conn_ssl, so performing it first avoids creating and then
-         * immediately freeing a connection when we are at capacity.
+         * Reject before allocating anything if the pending connection limit
+         * is reached. The LHASH item count is O(1) and the check does not
+         * need a conn_ssl.
          */
         if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns)
             goto release;
@@ -2460,9 +2457,8 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
 
     /*
      * Wait only if the caller has not asked us not to and the listener is in
-     * blocking mode. Note that the check for a network BIO below is deliberately
-     * left ahead of this, so that asking to wait on a listener which has none
-     * remains an error rather than silently returning nothing.
+     * blocking mode. A listener with no network BIO takes the blocking path,
+     * which reports the missing BIO as an error.
      */
     if (!no_block && !ossl_dtls_blocking(ssl) && dl->net_rbio != NULL)
         no_block = 1;
@@ -3099,11 +3095,7 @@ int ossl_dtls_set_blocking_mode(SSL *s, int blocking)
         return 0;
     }
 
-    /*
-     * Refuse to claim blocking we cannot deliver, as QUIC does. Checked before
-     * anything is written, so that a call which fails leaves the mode alone
-     * rather than reporting failure having already changed it.
-     */
+    /* Blocking mode which cannot be delivered is refused, as in QUIC. */
     if (blocking && !ossl_dtls_can_support_blocking(s)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
         return 0;
@@ -3197,27 +3189,16 @@ int ossl_dtls_conn_wait_for_datagram(SSL *s)
  * connection which is in blocking mode.
  *
  * The socket is shared with every other connection and is always
- * non-blocking, so a send which cannot be completed has nowhere to wait. For
- * DTLS the record layer would otherwise discard the datagram - a reasonable
- * default for an unreliable transport, but not what an application which asked
- * for blocking writes expects.
+ * non-blocking, so a send which cannot be completed has nowhere else to wait.
  *
  * Only one wait is performed. The caller retries the send, and comes back here
- * if it still cannot proceed, so a wakeup which turns out not to leave room in
- * the socket buffer costs an extra attempt rather than a lost datagram.
+ * if it still cannot proceed.
  *
- * The retransmission timer deliberately does not shorten this wait, unlike the
- * one for a datagram above. There the wakeup is useful, because the wait can
- * service the timer itself; here it cannot. Servicing it would mean
- * retransmitting a flight from inside tls_retry_write_records(), which is
- * part-way through sending one and holds write buffer state that a
- * re-entrant do_dtls1_write() would clobber. Waking for a timer nothing then
- * services would be worse than not waking: the timeout stays expired, and an
- * expired timeout reads as a zero deadline, so every later wait would return
- * at once and the caller's retry loop would spin without sleeping. Waiting for
- * the socket alone is also what the send actually needs. Retransmission is not
- * the right response to a flight which has not finished going out, and once it
- * has, the state machine handles the timer as usual.
+ * The retransmission timer does not bound this wait. The timer cannot be
+ * serviced from here: the caller is inside tls_retry_write_records(), which
+ * holds write buffer state that do_dtls1_write() uses. A wait woken by a
+ * timer nothing services finds the timeout still expired, which reads as a
+ * zero deadline, and returns at once on every later call.
  *
  * Returns 1 if the send should be retried, or 0 if the wait could not be
  * performed or the listener has failed.

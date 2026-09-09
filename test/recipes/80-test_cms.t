@@ -1075,9 +1075,7 @@ subtest "CMS parse authenticatedData authAttrs and unauthAttrs\n" => sub {
 
     # BouncyCastle authenticatedData (HMAC-SHA256, KEK) carrying both an
     # authenticated and an unauthenticated attribute. Per RFC 5652 these are
-    # SET OF Attribute, so with the CMS_AuthenticatedData template fixed to use
-    # X509_ATTRIBUTE they are rendered as attributes (object:/set:) rather than
-    # as an X509_ALGOR (algorithm:/parameter:) they were misparsed into before.
+    # SET OF Attribute, and are rendered as attributes (object:/set:).
     my $exit = 0;
     my $dump = join "\n",
                run(app(["openssl", "cms", @defaultprov, "-cmsout", "-noout",

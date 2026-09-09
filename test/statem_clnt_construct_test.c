@@ -945,7 +945,7 @@ err:
 #ifndef OSSL_NO_USABLE_TLS1_3
 /*
  * With middlebox compat on, the TLS 1.3 path changes the write keys; without a
- * negotiated cipher that fails rather than succeeding.
+ * negotiated cipher that fails.
  */
 static int test_construct_cert_change_cipher_fail(void)
 {
