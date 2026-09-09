@@ -33,6 +33,19 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The padding request held by an `EVP_CIPHER_CTX` is now kept across
+   re-initialisation, whether it was made with `EVP_CIPHER_CTX_set_padding()`,
+   the `EVP_CIPH_NO_PADDING` flag or the `OSSL_CIPHER_PARAM_PADDING` parameter,
+   which `EVP_CIPHER_CTX_test_flags()` now reports as well. Re-enabling padding
+   through the flag takes effect on the next initialisation, where before the
+   cipher went on producing unpadded output. The request is sent to the
+   provider at each initialisation, so a cipher whose provider implements no
+   `OSSL_FUNC_cipher_set_ctx_params()` function now fails to initialise when
+   the request can be neither delivered nor already met.
+   <!-- https://github.com/openssl/openssl/pull/32760 -->
+
+   *Madan Mohan Manokar*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
