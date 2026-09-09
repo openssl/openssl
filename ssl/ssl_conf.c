@@ -503,7 +503,7 @@ static int cmd_SetCertificateFlags(SSL_CONF_CTX *cctx, const char *value)
 typedef int (*cb_func)(X509_VERIFY_PARAM *param, const char *value, size_t len);
 
 static int set_expected(SSL_CONF_CTX *cctx, const char *value,
-                        cb_func set_func, cb_func add_func)
+    cb_func set_func, cb_func add_func)
 {
     int rv = 0;
     X509_VERIFY_PARAM *param = NULL;
@@ -531,7 +531,7 @@ static int set_expected(SSL_CONF_CTX *cctx, const char *value,
     cb = set_func;
     do {
         token = strpbrk(ptr, ",;");
-        if(token != NULL)
+        if (token != NULL)
             *token = '\0';
         if (*ptr != '\0') {
             rv = cb(param, ptr, 0);
@@ -539,7 +539,7 @@ static int set_expected(SSL_CONF_CTX *cctx, const char *value,
                 goto end;
             cb = add_func;
         }
-        if(token != NULL)
+        if (token != NULL)
             ptr = token + 1;
     } while (token != NULL);
 end:
@@ -550,29 +550,29 @@ end:
 static int cmd_SetExpectedDNSName(SSL_CONF_CTX *cctx, const char *value)
 {
     return set_expected(cctx, value,
-                        X509_VERIFY_PARAM_set1_host,
-                        X509_VERIFY_PARAM_add1_host);
+        X509_VERIFY_PARAM_set1_host,
+        X509_VERIFY_PARAM_add1_host);
 }
 
 static int cmd_AddExpectedDNSName(SSL_CONF_CTX *cctx, const char *value)
 {
     return set_expected(cctx, value,
-                        X509_VERIFY_PARAM_add1_host,
-                        X509_VERIFY_PARAM_add1_host);
+        X509_VERIFY_PARAM_add1_host,
+        X509_VERIFY_PARAM_add1_host);
 }
 
 static int cmd_SetExpectedIPAddress(SSL_CONF_CTX *cctx, const char *value)
 {
     return set_expected(cctx, value,
-                        (cb_func)X509_VERIFY_PARAM_set1_ip_asc,
-                        (cb_func)X509_VERIFY_PARAM_add1_ip_asc);
+        (cb_func)X509_VERIFY_PARAM_set1_ip_asc,
+        (cb_func)X509_VERIFY_PARAM_add1_ip_asc);
 }
 
 static int cmd_AddExpectedIPAddress(SSL_CONF_CTX *cctx, const char *value)
 {
     return set_expected(cctx, value,
-                        (cb_func)X509_VERIFY_PARAM_add1_ip_asc,
-                        (cb_func)X509_VERIFY_PARAM_add1_ip_asc);
+        (cb_func)X509_VERIFY_PARAM_add1_ip_asc,
+        (cb_func)X509_VERIFY_PARAM_add1_ip_asc);
 }
 
 static int cmd_SecurityLevel(SSL_CONF_CTX *cctx, const char *value)
