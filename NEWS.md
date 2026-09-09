@@ -26,7 +26,7 @@ OpenSSL Releases
 OpenSSL 4.1
 -----------
 
-### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
+### Major changes between OpenSSL 4.0 and OpenSSL 4.1 alpha 1 [in pre-release]
 
   * Support for DTLS 1.3 (RFC 9147) added. The DTLS 1.3 work includes:
     * DTLS 1.3 support in the SSL listener API. `SSL_new_listener()` can
