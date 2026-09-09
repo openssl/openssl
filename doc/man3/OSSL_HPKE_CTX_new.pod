@@ -9,6 +9,8 @@ OSSL_HPKE_suite_check, OSSL_HPKE_str2suite,
 OSSL_HPKE_keygen, OSSL_HPKE_get_grease_value,
 OSSL_HPKE_get_ciphertext_size, OSSL_HPKE_get_public_encap_size,
 OSSL_HPKE_get_recommended_ikmelen,
+OSSL_HPKE_get_suite, OSSL_HPKE_get_public_key_size,
+OSSL_HPKE_mode_is_supported, OSSL_HPKE_suite2str,
 OSSL_HPKE_CTX_set1_psk, OSSL_HPKE_CTX_set1_ikme,
 OSSL_HPKE_CTX_set1_authpriv, OSSL_HPKE_CTX_set1_authpub,
 OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
@@ -75,9 +77,13 @@ OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
                                 OSSL_LIB_CTX *libctx, const char *propq);
 
  int OSSL_HPKE_str2suite(const char *str, OSSL_HPKE_SUITE *suite);
+ char *OSSL_HPKE_suite2str(OSSL_HPKE_SUITE suite);
  size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
  size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
  size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite);
+ OSSL_HPKE_SUITE OSSL_HPKE_get_suite(const OSSL_HPKE_CTX *ctx);
+ size_t OSSL_HPKE_get_public_key_size(OSSL_HPKE_SUITE suite);
+ int OSSL_HPKE_mode_is_supported(OSSL_HPKE_SUITE suite, int mode);
 
 =head1 DESCRIPTION
 
@@ -460,13 +466,44 @@ codepoints. Valid (case-insensitive) names are:
 String variants of the numbers listed in L</OSSL_HPKE_SUITE Identifiers>
 can also be used.
 
+OSSL_HPKE_suite2str() is the inverse of OSSL_HPKE_str2suite(). It takes an
+B<OSSL_HPKE_SUITE> I<suite> and returns a newly allocated string in the format
+"KEM,KDF,AEAD" using the canonical names for each component (e.g.,
+"X25519,hkdf-sha256,aes-128-gcm"). The caller must free the returned string
+using OPENSSL_free(3). Returns NULL on error.
+
+OSSL_HPKE_get_suite() retrieves the B<OSSL_HPKE_SUITE> associated with an
+existing B<OSSL_HPKE_CTX> I<ctx>. This allows callers to recover the suite
+from a context without separately tracking it after context creation.
+If I<ctx> is NULL, a zeroed suite with reserved identifiers is returned and an
+error is raised.
+
+OSSL_HPKE_get_public_key_size() returns the public key size (Npk) for the
+KEM identified by the I<suite>. Note that this returns the KEM public key size,
+which may differ from the encapsulated key size (Nenc) returned by
+OSSL_HPKE_get_public_encap_size() for some KEMs (e.g., hybrid KEMs).
+
+OSSL_HPKE_mode_is_supported() checks whether a given HPKE I<mode> is supported
+for the specified I<suite>. This can be used to determine whether authenticated
+modes (B<OSSL_HPKE_MODE_AUTH> and B<OSSL_HPKE_MODE_PSKAUTH>) are available
+for a particular KEM, since not all KEMs support AuthEncap/AuthDecap.
+
 =head1 RETURN VALUES
 
 OSSL_HPKE_CTX_new() returns an OSSL_HPKE_CTX pointer or NULL on error.
 
 OSSL_HPKE_get_ciphertext_size(), OSSL_HPKE_get_public_encap_size(),
-OSSL_HPKE_get_recommended_ikmelen() all return a size_t with the
-relevant value or zero on error.
+OSSL_HPKE_get_recommended_ikmelen() and OSSL_HPKE_get_public_key_size() all
+return a size_t with the relevant value or zero on error.
+
+OSSL_HPKE_get_suite() returns an B<OSSL_HPKE_SUITE>. If I<ctx> is NULL, the
+returned suite will contain reserved (zero) identifiers.
+
+OSSL_HPKE_suite2str() returns a newly allocated string that must be freed
+by the caller using OPENSSL_free(3), or NULL on error.
+
+OSSL_HPKE_mode_is_supported() returns 1 if the mode is supported for the
+given suite, or 0 otherwise.
 
 All other functions return 1 for success or zero for error.
 
@@ -563,6 +600,10 @@ The RFC9180 specification: https://datatracker.ietf.org/doc/rfc9180/
 =head1 HISTORY
 
 This functionality described here was added in OpenSSL 3.2.
+
+OSSL_HPKE_get_suite(), OSSL_HPKE_get_public_key_size(),
+OSSL_HPKE_mode_is_supported() and OSSL_HPKE_suite2str() were added in
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
