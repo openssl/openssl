@@ -39,9 +39,6 @@ jobs:
           }, {
             branch: '3.4',
             cppflags: 'CPPFLAGS=-ansi'
-          }, {
-            branch: '3.0',
-            cppflags: 'CPPFLAGS=-ansi'
           }
         ]
     runs-on: ubuntu-latest
