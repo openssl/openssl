@@ -17,6 +17,16 @@
 typedef unsigned short prime_t;
 # define NUMPRIMES 2048
 
+/*
+ * Packs a 64-bit limb as one or two array entries depending on limb
+ * width; shared by crypto/bn/bn_prime.c and crypto/fn/fn_prime_consts.c.
+ */
+# if BN_BITS2 == 64
+#  define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo
+# else
+#  define BN_DEF(lo, hi) lo, hi
+# endif
+
 static const prime_t primes[2048] = {
         2,     3,     5,     7,    11,    13,    17,    19,
        23,    29,    31,    37,    41,    43,    47,    53,
