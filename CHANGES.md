@@ -12,6 +12,7 @@ appropriate release branch.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 4.1](#openssl-41)
  - [OpenSSL 4.0](#openssl-40)
  - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
@@ -43,11 +44,13 @@ OpenSSL 4.1
    groups, signature algorithms, key share, and extensions in the `ClientHello`
    to prevent ecosystem ossification.
    Added `-grease` option to `openssl s_client` to enable this.
+   <!-- https://github.com/openssl/openssl/pull/30303 -->
 
    *William McCormack*
 
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2.  Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
+   <!-- https://github.com/openssl/openssl/pull/30007 -->
 
    *Adriano Sela Aviles*
 
@@ -75,6 +78,7 @@ OpenSSL 4.1
    `max_udp_payload_size`, `initial_max_data`,
    `initial_max_stream_data_bidi_local`, `initial_max_stream_data_uni`,
    `ack_delay_exponent`, and `max_ack_delay`.
+   <!-- https://github.com/openssl/openssl/pull/29664 -->
 
    *Nikolas Gauder*
 
@@ -103,17 +107,20 @@ OpenSSL 4.1
    enforced on both sides (previously client-only), and only when an ECC TLS 1.2
    ciphersuite is negotiated—a missing "uncompressed" is ignored under TLS 1.3
    or with a non-ECC cipher.
+   <!-- https://github.com/openssl/openssl/pull/30940 -->
 
    *Viktor Dukhovni*
 
  * Added a new verification error, `X509_V_ERR_DUPLICATE_EXTENSION`,
    with a descriptive message for certificates containing duplicate X.509
    extensions, which are explicitly prohibited by [RFC 5280].
+   <!-- https://github.com/openssl/openssl/pull/30233 -->
 
    *Daniel Kubec*
 
  * Implemented extended support of metadata for symmetric key objects
    (`EVP_SKEY`).
+   <!-- https://github.com/openssl/openssl/pull/32644 -->
 
    *Dmitry Belyavskiy*
 
@@ -131,6 +138,7 @@ OpenSSL 4.1
    `CMS_SignerInfo_get_verification_result()`
    and `CMS_SignerInfo_get0_signer_cert()` functions to access the detailed
    verification results.
+   <!-- https://github.com/openssl/openssl/pull/27604 -->
 
    *Jan Lübbe*
 
@@ -139,16 +147,25 @@ OpenSSL 4.1
    command.
 
    This work was sponsored by Siemens AG.
+   <!-- https://github.com/openssl/openssl/pull/29043 -->
 
    *David von Oheimb*
 
  * Changed the output of the `-disabled` option for the `openssl list` command
    to display disabled features, protocols, and algorithms, in relevant
    sections.
+   <!-- https://github.com/openssl/openssl/pull/30212 -->
 
    *Paul Louvel*
 
- * Added `-testmode` option for `openssl s_time` command.
+ * Added `-n` option for the `openssl rand` command to suppress the trailing
+   newline in hexadecimal output mode.
+   <!-- https://github.com/openssl/openssl/pull/31795 -->
+
+   *Evy Garden*
+
+ * Added `-testmode` option for the `openssl s_time` command.
+   <!-- https://github.com/openssl/openssl/pull/31192 -->
 
    *Jakub Zelenka*
 
@@ -160,8 +177,9 @@ OpenSSL 4.1
    the previous 16 MB limit for file-based input.  This improves performance
    and supports large files without doubling memory use.  Other platforms
    and `stdin` input continue to use the existing buffer-based implementation.
+   <!-- https://github.com/openssl/openssl/pull/30429 -->
 
-   *John Claus*
+   *John Claus, Viktor Dukhovni, and David von Oheimb*
 
  * Added a `seed_strict` option to the `random` configuration section,
    which makes the configured random seed source strictly enforced when
@@ -178,10 +196,12 @@ OpenSSL 4.1
    and `enable-fips-jitter` builds always seed strictly.  Additionally,
    the property query used to fetch the default seed source can now be set
    at build time with `-DOPENSSL_DEFAULT_SEED_PROPQ`.
+   <!-- https://github.com/openssl/openssl/pull/31939 -->
 
    *Jakub Zelenka*
 
  * Added IKEV2 KDF (`EVP_KDF-IKEV2KDF`) to `EVP_KDF`.
+   <!-- https://github.com/openssl/openssl/pull/30121 -->
 
    *Helen Zhang*
 
@@ -189,6 +209,7 @@ OpenSSL 4.1
    and `CRYPTO_atomic_cmp_exch_ptr` functions to `libcrypto`, that implement
    the respective atomic operations with a locking-based fallback on platforms
    that do not support them.
+   <!-- https://github.com/openssl/openssl/pull/30670 -->
 
    *Neil Horman*
 
@@ -196,17 +217,20 @@ OpenSSL 4.1
    of an EC point to an octet string conforming
    to [Section 2.3.4 of SECG SEC 1][SECG SEC 1 Section 2.3.4] ("Elliptic Curve
    Cryptography") standard.
+   <!-- https://github.com/openssl/openssl/pull/30597 -->
 
    *Igor Ustinov*
 
  * Added `EVP_KDF_CTX_get0_kdf()` and `EVP_KDF_CTX_get1_kdf()` functions
    as a replacement for the now deprecated `EVP_KDF_CTX_kdf()`.
+   <!-- https://github.com/openssl/openssl/pull/28954 -->
 
    *Leon Timmermans*
 
  * Added `ASN1_STRING_new_not_owned()` function to `libcrypto`.  It provides
    the ability to construct an `ASN1_STRING` with data for which ownership
    is not taken by the created `ASN1_STRING` object.
+   <!-- https://github.com/openssl/openssl/pull/30964 -->
 
    *Bob Beck*
 
@@ -216,11 +240,13 @@ OpenSSL 4.1
    `PKCS7_sign_add_signer()` was updated in the same way, so that legacy
    ciphers, such as RC2 and DES, are no longer included in `SMIMECapabilities`
    by default when only the default provider is loaded.
+   <!-- https://github.com/openssl/openssl/pull/31990 -->
 
    *Todd Short*
 
  * Added `CTLOG_STORE_add0_log()` function to add individual CT logs
    to a `CTLOG_STORE`.
+   <!-- https://github.com/openssl/openssl/pull/30427 -->
 
    *Tim Perry*
 
@@ -228,6 +254,7 @@ OpenSSL 4.1
    to `EVP_default_properties_is_fips_enabled(NULL)`, which is a shorthand
    to check whether the `fips=yes` property is currently enabled in the default
    library context.
+   <!-- https://github.com/openssl/openssl/pull/30339 -->
 
    *Dimitri John Ledkov*
 
@@ -237,6 +264,7 @@ OpenSSL 4.1
    those which are actually processed.  It should also provide a small
    performance improvement, because repeated iteration over passed parameter
    arrays is avoided.
+   <!-- https://github.com/openssl/openssl/pull/32536 -->
 
    *Dr Paul Dale*
 
@@ -246,6 +274,7 @@ OpenSSL 4.1
    `id-RSAES-OAEP` (`NID_rsaesOaep`, 1.2.840.113549.1.1.7) with a plain
    `RSAPublicKey` body are now decoded as RSA keys.  The OAEP
    `AlgorithmIdentifier` parameters are not interpreted.
+   <!-- https://github.com/openssl/openssl/pull/30961 -->
 
    *Craig Lorentzen*
 
@@ -257,11 +286,13 @@ OpenSSL 4.1
    extension, or that sends it together with [RFC 9149] parameters such as
    `new_session_count = 0` or `resumption_count = 0`, is effectively signaling
    no interest in session tickets and session resumption.
+   <!-- https://github.com/openssl/openssl/pull/30639 -->
 
    *Daniel Kubec*
 
  * Improved DTLS handshake robustness under UDP reordering by buffering
    and replaying early `ChangeCipherSpec` (CCS) records at the expected state.
+   <!-- https://github.com/openssl/openssl/pull/30225 -->
 
    *Tong Li*
 
@@ -274,11 +305,13 @@ OpenSSL 4.1
    during chain verification, DNS name constraints are applied to the subject
    `commonName` of the leaf certificate only when that flag is set, rather than
    whenever the leaf had no DNS subject alternative name.
+   <!-- https://github.com/openssl/openssl/pull/31982 -->
 
    *Bob Beck*
 
  * Added various optimizations for the Elbrus2000 architecture
    in the cryptographic and BN code.
+   <!-- https://github.com/openssl/openssl/pull/31269 -->
 
    *Gleb Popov*
 
@@ -289,45 +322,68 @@ OpenSSL 4.1
    is enabled (e.g. `-mbranch-protection=standard`).  No functional changes
    to the assembly implementations are required, but compliance ensures
    correct operation with shadow stack enforcement.
+   <!-- https://github.com/openssl/openssl/pull/31162 -->
 
    *Guillaume Gardet and Gowtham Suresh Kumar*
 
+ * Added optimized ML-DSA and ML-KEM NTT operations on `ppc64le`.
+   <!-- https://github.com/openssl/openssl/pull/29611 -->
+   <!-- https://github.com/openssl/openssl/pull/30709 -->
+
+   *Danny Tsen*
+
  * Added optimized ML-DSA NTT operations on `s390x`
    (or other architectures with 128 bit vector registers).
+   <!-- https://github.com/openssl/openssl/pull/30812 -->
 
    *Timo Keller*
 
  * Added AVX2-optimized ML-DSA NTT operations on `x86_64`.
+   <!-- https://github.com/openssl/openssl/pull/30160 -->
 
    *Marcel Cornu and Tomasz Kantecki*
 
  * Added AVX-512-optimized SHAKE x4 operations for ML-DSA on `x86_64`.
+   <!-- https://github.com/openssl/openssl/pull/31090 -->
 
    *Marcel Cornu and Tomasz Kantecki*
 
  * Added AVX-512 and VAES optimizations for AES-CBC decryption.  Decryption
    performance for large inputs (1024 bytes or more) improved by 3.5x to 3.8x.
+   <!-- https://github.com/openssl/openssl/pull/30902 -->
 
    *Madan Mohan Manokar*
 
  * Added `VC-WIN32-MSVC2013` and `VC-WIN64A-MSVC2013` build targets to provide
    internal functions for bridging the gaps in C99 standard support
    that are present in MSVC 2013.
+   <!-- https://github.com/openssl/openssl/pull/31640 -->
+   <!-- https://github.com/openssl/openssl/pull/31988 -->
 
    *Bob Beck*
 
+ * Added support for the (BSD-specific) `mdoc` format for the manual pages
+   output, which can be selected via `--manpage-format=mdoc` configuration
+   option.  It requires presence of `pod2mdoc` utility in order for it to work.
+   <!-- https://github.com/openssl/openssl/pull/28450 -->
+
+   *Enji Cooper*
+
  * Added unit tests setup activated via `enable-unit-tests` option.  This works
    only on platforms with ld `--wrap` support (Linux, BSD).
+   <!-- https://github.com/openssl/openssl/pull/30788 -->
 
    *Jakub Zelenka*
 
  * Added test framework for testing function memory allocation failures.
+   <!-- https://github.com/openssl/openssl/pull/30871 -->
 
    *Jakub Zelenka*
 
  * Updated header files to reflect modern development practices: all include
    files now have header guards and they are self-contained (they include all
    dependencies they need to be included on their own).
+   <!-- https://github.com/openssl/openssl/pull/31001 -->
 
    *Bob Beck*
 
@@ -335,6 +391,7 @@ OpenSSL 4.1
    protocol from an earlier connection after a resumption negotiated
    a different protocol (or none), on both the server and the client,
    which could otherwise affect a later 0-RTT decision.
+   <!-- https://github.com/openssl/openssl/pull/32401 -->
 
    *Daniel Kubec and Viktor Dukhovni*
 
@@ -342,12 +399,14 @@ OpenSSL 4.1
    queued connections on allocation failure. Invalid arguments, including
    non-QUIC SSL objects, and internal failures now return `-1`, reserving `0`
    for "no connection available".
+   <!-- https://github.com/openssl/openssl/pull/32491 -->
 
    *Mounir IDRASSI*
 
  * Fixed QUIC child objects to inherit the effective flags of their explicit
    event domain.  `SSL_get0_domain()` now reports that domain for connections
    and streams in the hierarchy.
+   <!-- https://github.com/openssl/openssl/pull/32491 -->
 
    *Mounir IDRASSI*
 
@@ -356,42 +415,55 @@ OpenSSL 4.1
    ticket has aged out and an external PSK is offered in its place. The early
    data was being encrypted with the retired ticket's secret, rather than
    the external PSK's, causing the server to reject it with a bad record MAC.
+   <!-- https://github.com/openssl/openssl/pull/32202 -->
 
    *Viktor Dukhovni*
 
  * Fixed TLS 1.3 servers to reject early data when a resumed PSK's
    ticket age is outside tolerance, per [RFC 9846], instead of accepting
    0-RTT data from a ticket that has aged out.
+   <!-- https://github.com/openssl/openssl/pull/32202 -->
 
    *Daniel Kubec*
 
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
+   <!-- https://github.com/openssl/openssl/pull/31964 -->
 
    *Viktor Dukhovni*
 
  * Fixed a TLS 1.3 server with no session ID context to accept external PSK
    connections and to stop issuing unusable session tickets.
+   <!-- https://github.com/openssl/openssl/pull/31964 -->
 
    *Viktor Dukhovni*
 
  * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
    differs from the ciphersuite associated with the selected PSK. Same-hash
    PSK resumption can still continue without accepting 0-RTT data.
+   <!-- https://github.com/openssl/openssl/pull/32032 -->
 
    *Mounir IDRASSI*
 
  * Fixed X.509v3 extension configuration parsing to reject repeated fields
    in the `basicConstraints`, `basicAttConstraints`, and `policyConstraints`
    X.509v3 extension configurations, instead of silently using the last value.
+   <!-- https://github.com/openssl/openssl/pull/32181 -->
 
    *Adam Tabak*
 
  * Fixed X.509 verification of certificate chains that use DSA signatures
    with SHA-384 or SHA-512 by registering `dsa_with_SHA384` and
    `dsa_with_SHA512` in the signature-algorithm cross-reference table.
+   <!-- https://github.com/openssl/openssl/pull/30655 -->
 
    *John Claus*
+
+ * Fixed reading of binary data (for example, certificates in DER format)
+   by `openssl` command from `stdin` on Windows.
+   <!-- https://github.com/openssl/openssl/pull/30559 -->
+
+   *Milan Brož*
 
  * TLS clients no longer send the TLS padding extension ([RFC 7685]).  It was
    only ever sent when `SSL_OP_TLSEXT_PADDING` was set, to work around
@@ -400,17 +472,20 @@ OpenSSL 4.1
    be running the problematic version.
    `SSL_OP_TLSEXT_PADDING` is now a no-op retained for compatibility,
    and is no longer included in `SSL_OP_ALL`.
+   <!-- https://github.com/openssl/openssl/pull/32389 -->
 
    *Bob Beck*
 
  * Changed `tsget` utility to use `Net::Curl::Easy` (from the `Net-Curl` CPAN
    distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who rely
    on `tsget` should install `Net::Curl::Easy` before upgrading.
+   <!-- https://github.com/openssl/openssl/pull/31445 -->
 
    *Shreenidhi Shedi*
 
  * Deprecated the `enable-unit-test` configure option and the
    `SSL_test_functions()` function.  Both will be removed in OpenSSL 5.0.
+   <!-- https://github.com/openssl/openssl/pull/30788 -->
 
    *Jakub Zelenka*
 
@@ -419,35 +494,41 @@ OpenSSL 4.1
    is now considered universally available;  moreover, the fact that `BIO_*()`
    functions return -1 on truncation, rather than the would-have-been length,
    makes their usage error-prone.  Use `snprintf()` and `vsnprintf()` directly.
+   <!-- https://github.com/openssl/openssl/pull/31640 -->
 
    *Bob Beck*
 
- * Deprecated undocumented public functions `UTF8_putc()` and `UTF8_getc()`,
+ * Deprecated undocumented public functions `UTF8_putc()` and `UTF8_getc()`.
    No public replacement is planned.
+   <!-- https://github.com/openssl/openssl/pull/30967 -->
 
    *Bob Beck*
 
  * Deprecated `EVP_CIPHER_CTX_get_num()` and `EVP_CIPHER_CTX_set_num()`
    functions.  Refer to `ossl-migration-guide(7)` for more info.
+   <!-- https://github.com/openssl/openssl/pull/30335 -->
 
    *Shane Lontis*
 
- * Deprecated `ASN1_STRING_set()` and `ASN1_STRING_length()`.  The replacement
-   functions `ASN1_STRING_set1_data()` or `ASN1_STRING_set1_string()`,
-   and `ASN1_STRING_get_length()` should be used in their place.  This prepares
-   the `ASN1_STRING` type to support modern `size_t` length values
-   in the future.
+ * Deprecated `ASN1_STRING_set()` and `ASN1_STRING_length()` functions.
+   The replacement functions `ASN1_STRING_set1_data()`
+   or `ASN1_STRING_set1_string()`, and `ASN1_STRING_get_length()` should be used
+   in their place.  This prepares the `ASN1_STRING` type to support modern
+   `size_t` length values in the future.
+   <!-- https://github.com/openssl/openssl/pull/31194 -->
 
    *Bob Beck*
 
  * Deprecated `ASN1_BIT_STRING_name_print()`, `ASN1_BIT_STRING_num_asc()`,
    and `ASN1_BIT_STRING_set_asc()` functions. Refer to the manual
    pages for more information.
+   <!-- https://github.com/openssl/openssl/pull/30853 -->
 
    *Bob Beck*
 
  * Deprecated `ASN1_BIT_STRING_set()` function in favour
    of `ASN1_BIT_STRING_set1()`.
+   <!-- https://github.com/openssl/openssl/pull/30692 -->
 
    *Norbert Pócs*
 
@@ -455,6 +536,7 @@ OpenSSL 4.1
    plumbing that leaked into the public API, and no longer return a streaming
    boundary.  Use `BIO_new_CMS()` or `BIO_new_PKCS7()` to stream CMS and PKCS#7
    content.
+   <!-- https://github.com/openssl/openssl/pull/32242 -->
 
    *Bob Beck*
 
@@ -463,17 +545,21 @@ OpenSSL 4.1
    a reference identifier to check using `X509_VERIFY_PARAM_set1_host()`,
    `X509_VERIFY_PARAM_set1_email()`, or `X509_VERIFY_PARAM_set1_ip_asc()`,
    and using `X509_verify_cert()`.
+   <!-- https://github.com/openssl/openssl/pull/30403 -->
 
    *Bob Beck*
 
  * Dropped Windows-on-Itanium (`VC-WIN64I`) and Windows CE (`VC-CE`) targets
    from Configurations.
+   <!-- https://github.com/openssl/openssl/pull/31601 -->
+   <!-- https://github.com/openssl/openssl/pull/31913 -->
 
    *Bob Beck*
 
  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure`, as these options
    did not really disable the implementations.  Use `no-ec` to disable
    the elliptic curve support.
+   <!-- https://github.com/openssl/openssl/pull/30446 -->
 
    *Tomáš Mráz*
 
