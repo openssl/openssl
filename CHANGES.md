@@ -138,6 +138,12 @@ OpenSSL 4.2
 
    *Timo Keller*
 
+ * Ed25519 now uses base 2^51 arithmetic on supported platforms, making it
+   roughly twice as fast.
+   <!-- https://github.com/openssl/openssl/pull/32777 -->
+
+   *Alex Gaynor*
+
 OpenSSL 4.1
 -----------
 
