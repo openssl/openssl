@@ -408,7 +408,7 @@ size_t ossl_quic_rstream_get_chunk_count(QUIC_RSTREAM *qrs);
  */
 size_t ossl_quic_rstream_get_range_count(QUIC_RSTREAM *qrs);
 
-QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(void);
+QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(QUIC_CHANNEL *ch);
 void ossl_quic_rstream_qparm_destroy(QUIC_RSTREAM_QPARM *rsqp);
 #endif
 
