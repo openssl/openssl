@@ -522,6 +522,11 @@ Authority Key Identifier issuer and serial number must be paired.
 
 Certificate includes more than one instance of a particular extension.
 
+=item B<X509_V_ERR_NEGATIVE_CRL_NUMBER: CRL Number or Base CRL Number is negative>
+
+The CRL Number or Base CRL Number extension contains a negative integer.
+This is only reported when B<X509_V_FLAG_X509_STRICT> is set.
+
 =back
 
 =head1 NOTES
