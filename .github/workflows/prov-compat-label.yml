@@ -12,6 +12,7 @@ name: Provider compatibility for PRs
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - 'doc/**'
       - '*.md'
