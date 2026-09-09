@@ -5720,6 +5720,7 @@ CMS_SignerInfo_get_verification_result  ?	4_1_0	EXIST::FUNCTION:CMS
 EVP_SKEY_get0_local_keyid               ?	4_1_0	EXIST::FUNCTION:
 EVP_SKEY_get0_algorithm_id              ?	4_1_0	EXIST::FUNCTION:
 CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
+OSSL_HTTP_REQ_CTX_proxy_connect         ?	4_1_0	EXIST::FUNCTION:HTTP
 CRYPTO_atomic_load_ptr                  ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_store_ptr                 ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
