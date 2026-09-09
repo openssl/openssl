@@ -1558,6 +1558,11 @@ static int cshake_custom_fips_test(void)
             &fipsprov, "fips"))
         goto err;
 
+    if (fips_provider_version_lt(libctx, 4, 1, 0)) {
+        ret = TEST_skip("FIPS provider version before 4.1.0");
+        goto err;
+    }
+
     ret = cshake_custom_utf8_test_libctx(libctx, "fips=yes")
         && cshake_custom_octet_rejected_test_libctx(libctx, "fips=yes")
         && cshake_custom_limit_test_libctx(libctx, "fips=yes");
