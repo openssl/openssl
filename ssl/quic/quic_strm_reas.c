@@ -12,13 +12,15 @@
 #include "internal/quic_stream.h"
 #include "internal/quic_strm_reas.h"
 #include "internal/list.h"
+#include "internal/quic_channel.h"
 
-#if !defined(NDEBUG) && defined(WITH_STRM_REAS_DEBUG)
-#include <stdio.h>
-#define DEBUG_PRINT(...) fprintf(__VA_ARGS__)
-#else
-#define DEBUG_PRINT(...) (void)(0)
-#endif
+#define STDERR NULL
+/* ARGSUSED */
+static void print_foo(void *f, ...)
+{
+}
+
+#define DEBUG_PRINT print_foo
 
 #define DIRECT_STORAGE_SZ (2 * sizeof(void *))
 
@@ -61,6 +63,7 @@ struct stream_chunk_t {
 struct quic_rstream_qparm_st {
     size_t rsqp_pkt_overhead_treshold;
     size_t rsqp_pkt_overhead_sz;
+    QUIC_CHANNEL *rsqp_ch;
 };
 
 #define sc_data sc_data_u.u_data
@@ -104,27 +107,25 @@ OSSL_RBT_GENERATE(srange, stream_range_t, sr_rbe, srange_cmp);
 
 static void rsqp_add_overhead(QUIC_RSTREAM_QPARM *rsqp, size_t sc_overhead)
 {
-    if (rsqp != NULL)
-        rsqp->rsqp_pkt_overhead_sz += sc_overhead;
+    rsqp->rsqp_pkt_overhead_sz += sc_overhead;
 }
 
 static void rsqp_sub_overhead(QUIC_RSTREAM_QPARM *rsqp, size_t sc_overhead)
 {
-    if (rsqp != NULL)
-        rsqp->rsqp_pkt_overhead_sz -= sc_overhead;
+    rsqp->rsqp_pkt_overhead_sz -= sc_overhead;
 }
 
 /*
-  * Cleansing (SSL_OP_CLEANSE_PLAINTEXT) must write through the const
-  * data pointers received from ossl_sframe_set_insert(), which may
-  * point into a shared packet buffer. That is safe: each chunk
-  * references the disjoint payload slice of its own frame and a
-  * processed packet is kept alive only by the chunks stored on it,
-  * so nobody else reads the wiped bytes.
-  *
-  * The const should eventually be dropped from the prototypes
-  * instead; until then deconst() is used.
-  */
+ * Cleansing (SSL_OP_CLEANSE_PLAINTEXT) must write through the const
+ * data pointers received from ossl_sframe_set_insert(), which may
+ * point into a shared packet buffer. That is safe: each chunk
+ * references the disjoint payload slice of its own frame and a
+ * processed packet is kept alive only by the chunks stored on it,
+ * so nobody else reads the wiped bytes.
+ *
+ * The const should eventually be dropped from the prototypes
+ * instead; until then deconst() is used.
+ */
 static unsigned char *deconst(const unsigned char *data)
 {
     union {
@@ -216,10 +217,9 @@ static int srange_cmp(const struct stream_range_t *a_sr,
 }
 
 static int keep_schunk_data_on_packet(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
-    UINT_RANGE *r)
+    size_t overhead)
 {
-    if (fs->rsqp != NULL
-        && fs->rsqp->rsqp_pkt_overhead_sz >= fs->rsqp->rsqp_pkt_overhead_treshold)
+    if ((fs->rsqp->rsqp_pkt_overhead_sz + overhead) >= fs->rsqp->rsqp_pkt_overhead_treshold)
         return 0;
 
     return 1;
@@ -242,33 +242,27 @@ static struct stream_chunk_t *new_schunk(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
     rsize = r->end - r->start;
     assert(rsize <= pkt->datagram_len);
     overhead = UINT64_TO_SIZE_T(pkt->datagram_len - rsize);
-    rsqp_add_overhead(fs->rsqp, overhead);
 
-    if (keep_schunk_data_on_packet(fs, pkt, r) == 1) {
+    if (keep_schunk_data_on_packet(fs, pkt, overhead) == 1) {
         sc->sc_st = ST_TYPE_PKT;
         sc->sc_pkt = pkt;
         ossl_qrx_pkt_up_ref(pkt);
+        rsqp_add_overhead(fs->rsqp, overhead);
         sc->sc_data = data;
         sc->sc_range = *r;
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr,
-                "%s sc: %p sc overhead: %d pkt_buf_overhead_sz: %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(pkt, sc),
-                fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(pkt, sc),
-                fs->rsqp->rsqp_pkt_overhead_sz);
+        DEBUG_PRINT(STDERR,
+            "%s sc: %p sc overhead: %llu pkt_buf_overhead_sz: %llu -> %zu\n",
+            OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(pkt, sc),
+            fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(pkt, sc),
+            fs->rsqp->rsqp_pkt_overhead_sz);
     } else {
-        /*
-         * Only data which stay on packet must be accounted as overhead.
-         */
-        rsqp_sub_overhead(fs->rsqp, overhead);
-
         if (rsize <= DIRECT_STORAGE_SZ) {
-            DEBUG_PRINT(stderr, "%s ST_TYPE_DIRECT sc: %p %llu\n", OPENSSL_FUNC,
+            DEBUG_PRINT(STDERR, "%s ST_TYPE_DIRECT sc: %p %llu\n", OPENSSL_FUNC,
                 (void *)sc, rsize);
             sc->sc_st = ST_TYPE_DIRECT;
             sc->sc_data_w = sc->sc_dstorage;
         } else {
-            DEBUG_PRINT(stderr, "%s ST_TYPE_HEAP sc: %p %llu\n", OPENSSL_FUNC,
+            DEBUG_PRINT(STDERR, "%s ST_TYPE_HEAP sc: %p %llu\n", OPENSSL_FUNC,
                 (void *)sc, rsize);
             sc->sc_st = ST_TYPE_HEAP;
             sc->sc_buf = OPENSSL_malloc(UINT64_TO_SIZE_T(rsize));
@@ -301,14 +295,12 @@ static void destroy_schunk(SFRAME_SET *fs, struct stream_chunk_t *sc)
 
     switch (sc->sc_st) {
     case ST_TYPE_PKT:
-        assert(fs->rsqp == NULL
-            || fs->rsqp->rsqp_pkt_overhead_sz >= SCHUNK_OVERHEAD(sc->sc_pkt, sc));
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr,
-                "%s sc: %p sc overhead: %d pkt_buf_overhead_sz: %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(sc->sc_pkt, sc),
-                fs->rsqp->rsqp_pkt_overhead_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(sc->sc_pkt, sc));
+        assert(fs->rsqp->rsqp_pkt_overhead_sz >= SCHUNK_OVERHEAD(sc->sc_pkt, sc));
+        DEBUG_PRINT(STDERR,
+            "%s sc: %p sc overhead: %llu pkt_buf_overhead_sz: %zu -> %llu\n",
+            OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(sc->sc_pkt, sc),
+            fs->rsqp->rsqp_pkt_overhead_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(sc->sc_pkt, sc));
         rsqp_sub_overhead(fs->rsqp,
             UINT64_TO_SIZE_T(SCHUNK_OVERHEAD(sc->sc_pkt, sc)));
         ossl_qrx_pkt_release(sc->sc_pkt);
@@ -374,6 +366,8 @@ static struct stream_range_t *create_range(SFRAME_SET *fs,
 
 void ossl_sframe_set_init(SFRAME_SET *fs, QUIC_RSTREAM_QPARM *rsqp)
 {
+    assert(rsqp != NULL);
+
     memset(fs, 0, sizeof(*fs));
     OSSL_RBT_INIT(srange, &fs->ranges);
     fs->rsqp = rsqp;
@@ -403,7 +397,7 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
      */
     rsize = r->end - r->start;
     if (r->start < sr->sr_range.start && r->end > sr->sr_range.end
-        && rsize > DIRECT_STORAGE_SZ && ossl_list_sc_num(&sr->sr_chunks) > 1)
+        && ossl_list_sc_num(&sr->sr_chunks) > 1)
         return 0;
 
     head_sc = ossl_list_sc_head(&sr->sr_chunks);
@@ -424,14 +418,14 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
         if (head_sc->sc_st != ST_TYPE_DIRECT)
             return 0;
 
-        DEBUG_PRINT(stderr, "%s @in %p [ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "%s @in %p [ %llu, %llu ]\n",
             OPENSSL_FUNC, *data, r->start, r->end);
         rsize = r->end - r->start;
         if (rsize <= DIRECT_STORAGE_SZ) {
             /*
              * update existing chunk
              */
-            DEBUG_PRINT(stderr,
+            DEBUG_PRINT(STDERR,
                 "%s overwrite dstorage %p [ %llu, %llu ] -> [ %llu, %llu ] "
                 "sr: %p [ %llu, %llu ]\n",
                 OPENSSL_FUNC, (void *)head_sc,
@@ -452,12 +446,12 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
              */
             new_sc = new_schunk(fs, pkt, r, *data);
             if (new_sc == NULL) {
-                DEBUG_PRINT(stderr, "%s new_chunk() alloc failed\n",
+                DEBUG_PRINT(STDERR, "%s new_chunk() alloc failed\n",
                     OPENSSL_FUNC);
                 return -1;
             }
 
-            DEBUG_PRINT(stderr,
+            DEBUG_PRINT(STDERR,
                 "%s replace chunk %p [ %llu, %llu ] -> %p [ %llu, %llu ]\n",
                 OPENSSL_FUNC,
                 (void *)head_sc, head_sc->sc_range.start, head_sc->sc_range.end,
@@ -466,7 +460,7 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
             ossl_list_sc_insert_head(&sr->sr_chunks, new_sc);
             destroy_schunk(fs, head_sc);
         }
-        DEBUG_PRINT(stderr, "\trange: %p [ %llu, %llu ] -> [ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "\trange: %p [ %llu, %llu ] -> [ %llu, %llu ]\n",
             (void *)sr, sr->sr_range.start, sr->sr_range.end, r->start, r->end);
         sr->sr_range.start = r->start;
         sr->sr_range.end = r->end;
@@ -486,7 +480,7 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
         if (dsize == 0)
             return 0;
 
-        DEBUG_PRINT(stderr, "%s append: @in %p [ %llu, %llu ] dsize: %llu "
+        DEBUG_PRINT(STDERR, "%s append: @in %p [ %llu, %llu ] dsize: %llu "
                             "tail_sc: %p [ %llu, %llu] sr: %p [ %llu, %llu ]\n",
             OPENSSL_FUNC, *data, r->start, r->end, dsize,
             (void *)tail_sc, tail_sc->sc_range.start, tail_sc->sc_range.end,
@@ -512,17 +506,17 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
         rsize = (rsize < dsize) ? rsize : dsize;
         offset = SCHUNK_SIZE(tail_sc);
         memcpy(&tail_sc->sc_data_w[offset], *data, UINT64_TO_SIZE_T(rsize));
-        DEBUG_PRINT(stderr, "%s append tail_sc: %p [ %llu, %llu ] -> ",
+        DEBUG_PRINT(STDERR, "%s append tail_sc: %p [ %llu, %llu ] -> ",
             OPENSSL_FUNC, (void *)tail_sc,
             tail_sc->sc_range.start, tail_sc->sc_range.end);
         tail_sc->sc_range.end += rsize;
-        DEBUG_PRINT(stderr, "[ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "[ %llu, %llu ]\n",
             tail_sc->sc_range.start, tail_sc->sc_range.end);
         assert(SCHUNK_SIZE(tail_sc) <= DIRECT_STORAGE_SZ);
-        DEBUG_PRINT(stderr, "\trange: %p [ %llu, %llu ] -> ",
+        DEBUG_PRINT(STDERR, "\trange: %p [ %llu, %llu ] -> ",
             (void *)sr, sr->sr_range.start, sr->sr_range.end);
         sr->sr_range.end = tail_sc->sc_range.end;
-        DEBUG_PRINT(stderr, "[ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "[ %llu, %llu ]\n",
             sr->sr_range.start, sr->sr_range.end);
 
         if (fs->cleanse)
@@ -542,7 +536,7 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
         if (dsize == 0)
             return 0;
 
-        DEBUG_PRINT(stderr, "%s prepend: @in %p [ %llu, %llu ] dsize: %llu "
+        DEBUG_PRINT(STDERR, "%s prepend: @in %p [ %llu, %llu ] dsize: %llu "
                             "sr: %p [ %llu, %llu ]\n",
             OPENSSL_FUNC, *data, r->start, r->end, dsize,
             (void *)sr, sr->sr_range.start, sr->sr_range.end);
@@ -568,17 +562,17 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
         assert(offset < r->end - r->start);
         data_buf = *data;
         memcpy(head_sc->sc_data_w, &data_buf[offset], UINT64_TO_SIZE_T(rsize));
-        DEBUG_PRINT(stderr, "%s prepend head_sc: %p [ %llu, %llu ] -> ",
+        DEBUG_PRINT(STDERR, "%s prepend head_sc: %p [ %llu, %llu ] -> ",
             OPENSSL_FUNC, (void *)head_sc,
             head_sc->sc_range.start, head_sc->sc_range.end);
         head_sc->sc_range.start -= rsize;
-        DEBUG_PRINT(stderr, "[ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "[ %llu, %llu ]\n",
             head_sc->sc_range.start, head_sc->sc_range.end);
         assert(SCHUNK_SIZE(head_sc) <= DIRECT_STORAGE_SZ);
-        DEBUG_PRINT(stderr, "\trange: %p [ %llu, %llu ] -> ",
+        DEBUG_PRINT(STDERR, "\trange: %p [ %llu, %llu ] -> ",
             (void *)sr, sr->sr_range.start, sr->sr_range.end);
         sr->sr_range.start = head_sc->sc_range.start;
-        DEBUG_PRINT(stderr, "[ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "[ %llu, %llu ]\n",
             sr->sr_range.start, sr->sr_range.end);
         assert(r->end - r->start >= rsize);
 
@@ -596,7 +590,7 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
      * returns 1 if all data were consumed
      */
     assert(r->end >= r->start);
-    DEBUG_PRINT(stderr, "%s @out %p [ %llu, %llu ]\n",
+    DEBUG_PRINT(STDERR, "%s @out %p [ %llu, %llu ]\n",
         OPENSSL_FUNC, *data, r->start, r->end);
 
     return ((r->end - r->start) == 0) ? 1 : 0;
@@ -625,7 +619,7 @@ static const unsigned char *trim_partial_overlap(SFRAME_SET *fs,
             if (fs->cleanse)
                 OPENSSL_cleanse(deconst(data), UINT64_TO_SIZE_T(unused_sz));
 
-            DEBUG_PRINT(stderr, "%s right overlap %p [ %llu, %llu ]:\n\t"
+            DEBUG_PRINT(STDERR, "%s right overlap %p [ %llu, %llu ]:\n\t"
                                 "r: [ %llu, %llu ] -> [ %llu, %llu ]\n",
                 OPENSSL_FUNC,
                 (void *)sr, sr->sr_range.start, sr->sr_range.end,
@@ -642,7 +636,7 @@ static const unsigned char *trim_partial_overlap(SFRAME_SET *fs,
                                     + (sr->sr_range.start - r->start)),
                     UINT64_TO_SIZE_T(unused_sz));
 
-            DEBUG_PRINT(stderr, "%s left overlap %p [ %llu, %llu]:\n\t"
+            DEBUG_PRINT(STDERR, "%s left overlap %p [ %llu, %llu]:\n\t"
                                 "r: [ %llu, %llu ] -> [ %llu, %llu ]\n",
                 OPENSSL_FUNC,
                 (void *)sr, sr->sr_range.start, sr->sr_range.end,
@@ -661,7 +655,7 @@ static const unsigned char *trim_partial_overlap(SFRAME_SET *fs,
 static void prepend_chunk(SFRAME_SET *fs, struct stream_range_t *sr,
     struct stream_chunk_t *sc)
 {
-    DEBUG_PRINT(stderr, "%s %p [ %llu, %llu ] add to head %p [ %llu, %llu ] "
+    DEBUG_PRINT(STDERR, "%s %p [ %llu, %llu ] add to head %p [ %llu, %llu ] "
                         "-> [ %llu, %llu ]\n",
         OPENSSL_FUNC,
         (void *)sc, sc->sc_range.start, sc->sc_range.end,
@@ -688,7 +682,7 @@ static void prepend_chunk(SFRAME_SET *fs, struct stream_range_t *sr,
 static void append_chunk(SFRAME_SET *fs, struct stream_range_t *sr,
     struct stream_chunk_t *sc)
 {
-    DEBUG_PRINT(stderr, "%s %p [ %llu, %llu ] add to tail %p [ %llu, %llu ] "
+    DEBUG_PRINT(STDERR, "%s %p [ %llu, %llu ] add to tail %p [ %llu, %llu ] "
                         "-> [ %llu, %llu ]\n",
         OPENSSL_FUNC,
         (void *)sc, sc->sc_range.start, sc->sc_range.end,
@@ -722,7 +716,7 @@ static void replace_chunks_in_range(SFRAME_SET *fs, struct stream_range_t *sr,
 
     ossl_list_sc_insert_head(&sr->sr_chunks, sc);
     fs->stream_chunks++;
-    DEBUG_PRINT(stderr, "%s range: %p [ %llu, %llu ] -> [ %llu, %llu ]\n",
+    DEBUG_PRINT(STDERR, "%s range: %p [ %llu, %llu ] -> [ %llu, %llu ]\n",
         OPENSSL_FUNC, (void *)sr, sr->sr_range.start, sr->sr_range.end,
         sc->sc_range.start, sc->sc_range.end);
     sr->sr_range.start = sc->sc_range.start;
@@ -782,11 +776,10 @@ static int chop_range(SFRAME_SET *fs, struct stream_range_t *sr,
 
     if (sc->sc_st == ST_TYPE_PKT) {
         rsqp_add_overhead(fs->rsqp, unused_sz);
-        if (fs->rsqp != NULL)
-            DEBUG_PRINT(stderr, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
-                OPENSSL_FUNC, (void *)sc, unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
-                fs->rsqp->rsqp_pkt_overhead_sz);
+        DEBUG_PRINT(STDERR, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
+            OPENSSL_FUNC, (void *)sc, unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
+            fs->rsqp->rsqp_pkt_overhead_sz);
     }
 
     return 1;
@@ -812,7 +805,7 @@ static struct stream_range_t *merge_ranges(SFRAME_SET *fs,
     assert(super_sr->sr_range.start <= sub_sr->sr_range.start
         && super_sr->sr_range.end >= sub_sr->sr_range.end);
 
-    DEBUG_PRINT(stderr, "%s super: %p [ %llu, %llu ], sub: %p [ %llu, %llu]\n",
+    DEBUG_PRINT(STDERR, "%s super: %p [ %llu, %llu ], sub: %p [ %llu, %llu]\n",
         OPENSSL_FUNC, (void *)super_sr, super_sr->sr_range.start,
         super_sr->sr_range.end, (void *)sub_sr, sub_sr->sr_range.start,
         sub_sr->sr_range.end);
@@ -842,7 +835,7 @@ static struct stream_range_t *append_range(SFRAME_SET *fs,
      */
     assert(left_sr->sr_range.end >= right_sr->sr_range.start);
 
-    DEBUG_PRINT(stderr, "%s %p [ %llu, %llu ] + %p [ %llu, %llu ] = %p "
+    DEBUG_PRINT(STDERR, "%s %p [ %llu, %llu ] + %p [ %llu, %llu ] = %p "
                         "[ %llu, %llu ]\n",
         OPENSSL_FUNC, (void *)left_sr, left_sr->sr_range.start,
         left_sr->sr_range.end, (void *)right_sr, right_sr->sr_range.start,
@@ -866,6 +859,7 @@ static struct stream_range_t *append_range(SFRAME_SET *fs,
 
 /*
  * receives a chunk of data from stream frame.
+ * note there is a tri-state return value:
  */
 int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
     const unsigned char *data, int fin)
@@ -876,35 +870,54 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
     struct stream_chunk_t *sc = NULL;
     struct stream_range_t key_sr = { 0 };
 
+    assert(r->start <= r->end);
+
     /*
-     * receive the FIN frame if FIN frame. If FIN was not seen yet,
-     * then record FIN's offset (r->end). If FIN was received then
-     * verify FIN's offset match, error out on mismatch.
+     * receive the FIN frame. If FIN was not seen yet, then record
+     * FIN's offset (r->end). If FIN was received then verify FIN's
+     * offset match, error out on mismatch.
      */
     if (fin != 0) {
         if (fs->fin == 0) {
+            sr = OSSL_RBT_MAX(srange, &fs->ranges);
+            if (r->end < fs->offset
+                || (sr != NULL && sr->sr_range.end > r->end)) {
+                ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+                    OSSL_QUIC_ERR_FINAL_SIZE_ERROR,
+                    OSSL_QUIC_FRAME_TYPE_STREAM_FIN,
+                    "stream final size error");
+                return 0;
+            }
             fs->fin = 1;
             fs->fin_off = r->end;
         } else if (fs->fin_off != r->end) {
+            ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+                OSSL_QUIC_ERR_FINAL_SIZE_ERROR,
+                OSSL_QUIC_FRAME_TYPE_STREAM_FIN,
+                "stream final size error");
             return 0;
         }
     }
 
     /*
-     * discard any data past FIN offset (of FIN offset is set).
+     * reject any data at or past the FIN offset (if FIN offset is set).
      */
     if (fs->fin != 0) {
-        if (fs->fin_off < r->end)
-            r->end = fs->fin_off; /* truncate bytes beyond FIN */
-        if (fs->fin_off < r->start)
+        if (fs->fin_off < r->end) {
+            ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+                OSSL_QUIC_ERR_FINAL_SIZE_ERROR,
+                (fin == 0) ? OSSL_QUIC_FRAME_TYPE_STREAM
+                           : OSSL_QUIC_FRAME_TYPE_STREAM_FIN,
+                "stream final size error");
             return 0;
+        }
     }
 
     if (r->end <= fs->offset) {
         /*
          * retransmitted range got consumed already.
          */
-        DEBUG_PRINT(stderr, "%s [ %llu, %llu ] <= %llu\n", OPENSSL_FUNC,
+        DEBUG_PRINT(STDERR, "%s [ %llu, %llu ] <= %llu\n", OPENSSL_FUNC,
             r->start, r->end, fs->offset);
         if (fs->cleanse && data != NULL)
             OPENSSL_cleanse(deconst(data), UINT64_TO_SIZE_T(r->end - r->start));
@@ -918,7 +931,7 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
          * Make sure retransmitted chunk does not reintroduce
          * bytes which were consumed already.
          */
-        DEBUG_PRINT(stderr, "%s [ %llu, %llu ] -> [ %llu, %llu ]\n", OPENSSL_FUNC,
+        DEBUG_PRINT(STDERR, "%s [ %llu, %llu ] -> [ %llu, %llu ]\n", OPENSSL_FUNC,
             r->start, r->end, fs->offset, r->end);
         if (fs->cleanse)
             OPENSSL_cleanse(deconst(data),
@@ -946,7 +959,7 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
         sr = create_range(fs, sc);
         if (sr == NULL)
             goto err;
-        DEBUG_PRINT(stderr, "%s chunk: %p [ %llu, %llu ] new range: %p\n",
+        DEBUG_PRINT(STDERR, "%s chunk: %p [ %llu, %llu ] new range: %p\n",
             OPENSSL_FUNC, (void *)sc, sc->sc_range.start, sc->sc_range.end,
             (void *)sr);
         sc = NULL;
@@ -957,7 +970,7 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
          * retransmission, the whole chunk is found in existing range already
          */
         if (r->start >= sr->sr_range.start && r->end <= sr->sr_range.end) {
-            DEBUG_PRINT(stderr,
+            DEBUG_PRINT(STDERR,
                 "%s [ %llu, %llu ] found in %p [ %llu, %llu ]\n", OPENSSL_FUNC,
                 r->start, r->end, (void *)sr, sr->sr_range.start,
                 sr->sr_range.end);
@@ -994,7 +1007,7 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
             sr = NULL;
             goto err;
         }
-        DEBUG_PRINT(stderr, "%s %p [ %llu, %llu ] -> %p [ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "%s %p [ %llu, %llu ] -> %p [ %llu, %llu ]\n",
             OPENSSL_FUNC, (void *)sc, sc->sc_range.start, sc->sc_range.end,
             (void *)sr, sr->sr_range.start, sr->sr_range.end);
 
@@ -1046,7 +1059,7 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
 
         while (adjacent_sr != NULL) {
             OSSL_RBT_REMOVE(srange, &fs->ranges, adjacent_sr);
-            DEBUG_PRINT(stderr, "%s %p [ %llu, %llu ] >< %p [ %llu, %llu ]\n",
+            DEBUG_PRINT(STDERR, "%s %p [ %llu, %llu ] >< %p [ %llu, %llu ]\n",
                 OPENSSL_FUNC, (void *)sr, sr->sr_range.start, sr->sr_range.end,
                 (void *)adjacent_sr, adjacent_sr->sr_range.start,
                 adjacent_sr->sr_range.end);
@@ -1139,7 +1152,7 @@ int ossl_sframe_set_peek(SFRAME_SET *fs, void **iterator,
          * no chunks are ready to be consumed, if there is a gap.
          */
         if (sc != NULL && sc->sc_range.start > start) {
-            DEBUG_PRINT(stderr, "%s sc: %p sr: %p sc->start %llu, fs->offset: %llu\n",
+            DEBUG_PRINT(STDERR, "%s sc: %p sr: %p sc->start %llu, fs->offset: %llu\n",
                 OPENSSL_FUNC, (void *)sc, (void *)sr, sc->sc_range.start, start);
             sc = NULL;
         }
@@ -1161,7 +1174,7 @@ int ossl_sframe_set_peek(SFRAME_SET *fs, void **iterator,
         assert(sc == NULL || sc->sc_range.start < sc->sc_range.end);
     } else {
         /* iterator got invalidated by move/flatten operation on range */
-        DEBUG_PRINT(stderr, "%s iterator got invalidated\n", OPENSSL_FUNC);
+        DEBUG_PRINT(STDERR, "%s iterator got invalidated\n", OPENSSL_FUNC);
         return 0;
     }
 
@@ -1182,7 +1195,7 @@ int ossl_sframe_set_peek(SFRAME_SET *fs, void **iterator,
         else
             *fin = 0;
 
-        DEBUG_PRINT(stderr, "%s no more chunks\n", OPENSSL_FUNC);
+        DEBUG_PRINT(STDERR, "%s no more chunks\n", OPENSSL_FUNC);
 
         return 0;
     }
@@ -1195,7 +1208,7 @@ int ossl_sframe_set_peek(SFRAME_SET *fs, void **iterator,
     *fin = fs->fin && sc->sc_range.end == fs->fin_off;
 
     if (sr->sr_it_sc != NULL)
-        DEBUG_PRINT(stderr, "%s %p [ %llu, %llu ] %p [ %llu, %llu ]\n",
+        DEBUG_PRINT(STDERR, "%s %p [ %llu, %llu ] %p [ %llu, %llu ]\n",
             OPENSSL_FUNC, (void *)sr->sr_it_sc,
             sr->sr_it_sc->sc_range.start, sr->sr_it_sc->sc_range.end,
             (void *)sc, sc->sc_range.start, sc->sc_range.end);
@@ -1207,7 +1220,7 @@ int ossl_sframe_set_peek(SFRAME_SET *fs, void **iterator,
      * peek operation indicates error if there are no data to read
      * in range.
      */
-    DEBUG_PRINT(stderr,
+    DEBUG_PRINT(STDERR,
         "%s peek range: [ %llu, %llu ] range: %p [ %llu, %llu ]\n", OPENSSL_FUNC,
         range->start, range->end, (void *)sr, sr->sr_range.start,
         sr->sr_range.end);
@@ -1262,7 +1275,7 @@ int ossl_sframe_set_move_offset(SFRAME_SET *fs, uint64_t new_offset)
         }
     }
 
-    DEBUG_PRINT(stderr, "%s offset: %llu -> %llu range: %p [ %llu, %llu ] -> ",
+    DEBUG_PRINT(STDERR, "%s offset: %llu -> %llu range: %p [ %llu, %llu ] -> ",
         OPENSSL_FUNC, fs->offset - new_offset, new_offset,
         (void *)sr, sr->sr_range.start, sr->sr_range.end);
 
@@ -1274,22 +1287,21 @@ int ossl_sframe_set_move_offset(SFRAME_SET *fs, uint64_t new_offset)
         OSSL_RBT_REMOVE(srange, &fs->ranges, sr);
         destroy_srange(fs, sr);
         fs->stream_ranges--;
-        DEBUG_PRINT(stderr, "[ NULL ]\n");
+        DEBUG_PRINT(STDERR, "[ NULL ]\n");
     } else {
         unused_sz = UINT64_TO_SIZE_T(new_offset - sc->sc_range.start);
         sc_data_trim_left(sc, unused_sz, fs->cleanse);
         sc->sc_range.start = new_offset;
         sr->sr_range.start = new_offset;
-        DEBUG_PRINT(stderr, "[ %lli, %llu ]\n",
+        DEBUG_PRINT(STDERR, "[ %lli, %llu ]\n",
             sr->sr_range.start, sr->sr_range.end);
 
         if (sc->sc_st == ST_TYPE_PKT) {
             rsqp_add_overhead(fs->rsqp, unused_sz);
-            if (fs->rsqp != NULL)
-                DEBUG_PRINT(stderr, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
-                    OPENSSL_FUNC, (void *)sc, unused_sz,
-                    fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
-                    fs->rsqp->rsqp_pkt_overhead_sz);
+            DEBUG_PRINT(STDERR, "%s sc: %p unused_sz: %zu %zu -> %zu\n",
+                OPENSSL_FUNC, (void *)sc, unused_sz,
+                fs->rsqp->rsqp_pkt_overhead_sz - unused_sz,
+                fs->rsqp->rsqp_pkt_overhead_sz);
         }
     }
 
@@ -1310,7 +1322,7 @@ int ossl_sframe_set_avail(SFRAME_SET *fs, uint64_t *avail, int *fin)
     return 1;
 }
 
-QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(void)
+QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(QUIC_CHANNEL *ch)
 {
     QUIC_RSTREAM_QPARM *rsqp;
 
@@ -1318,6 +1330,7 @@ QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(void)
     if (rsqp != NULL) {
         rsqp->rsqp_pkt_overhead_treshold = PKT_BUFFER_OVERHEAD_TRESHOLD;
         rsqp->rsqp_pkt_overhead_sz = 0;
+        rsqp->rsqp_ch = ch;
     }
 
     return rsqp;
