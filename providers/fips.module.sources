@@ -263,6 +263,8 @@ crypto/fn/fn_mod.c
 crypto/fn/fn_mod_inv.c
 crypto/fn/fn_mont.c
 crypto/fn/fn_mul.c
+crypto/fn/fn_prime.c
+crypto/fn/fn_prime_consts.c
 crypto/fn/fn_rand.c
 crypto/fn/fn_shift.c
 crypto/fn/fn_sqr.c
