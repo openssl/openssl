@@ -94,6 +94,9 @@ __owur static ossl_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *ou
     EVP_MAC_CTX *mac_ctx;
     int ret = 0;
 
+    if (len > 0 && (in == NULL || out == NULL))
+        return 0;
+
     mac_ctx = EVP_MAC_CTX_dup(ctx->mac_ctx_init);
     if (mac_ctx == NULL)
         return 0;
@@ -107,7 +110,8 @@ __owur static ossl_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *ou
             goto err;
     } else {
         memset(&t, 0, sizeof(t));
-        memcpy(&t, in, len);
+        if (len > 0)
+            memcpy(&t, in, len);
         t.byte[len] = 0x80;
         siv128_dbl(&ctx->d);
         siv128_xorblock(&t, &ctx->d);
