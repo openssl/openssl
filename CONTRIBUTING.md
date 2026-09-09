@@ -64,9 +64,13 @@ how many you submit, not how much you put in each.
 ### You are the author of what you submit
 
 You are the author of everything you submit, whatever produced the
-first draft.  Before opening a pull request, you must have read the
-change in full, understood why it is correct, built and tested it
-yourself, and satisfied yourself that the problem it fixes is real.
+first draft.  Before opening a pull request, you must have:
+
+- read the change in full,
+- understood why it is correct,
+- built and tested it yourself, and
+- satisfied yourself that the problem it fixes is real.
+
 Be prepared to answer a reviewer's questions about any line of it.
 The `Assisted-by:` trailer (see below) discloses that a tool was used;
 it does not transfer responsibility for the result.
@@ -87,15 +91,19 @@ encouraged if they aid understanding.  Keep commit message titles
 
 ### The review process
 
-Pull requests (PRs) go through multiple phases before merging.  First,
-the label 'approval: review pending' is added.  Once you receive two or
-more approvals from [Committers], the label changes to 'approval: done',
-and 24 hours later to 'approval: ready to merge', provided the PR has
-not been updated in the meantime (any push, comment, or label change
-defers the transition, which is then done manually by a committer).
-Some time after this, your PR is merged and closed.  Reviewers may ask
-for changes at any phase before merging, and any changes (that change
-patch contents) require re-approval.
+Pull requests (PRs) go through multiple phases before merging:
+
+1. The label 'approval: review pending' is added.
+2. Once you receive two or more approvals from [Committers], the label
+   changes to 'approval: done'.
+3. 24 hours later it changes to 'approval: ready to merge', provided
+   the PR has not been updated in the meantime (any push, comment, or
+   label change defers the transition, which is then done manually by
+   a committer).
+4. Some time after this, your PR is merged and closed.
+
+Reviewers may ask for changes at any phase before merging, and any
+changes (that change patch contents) require re-approval.
 
 [Committers]: https://openssl-library.org/about/committers/index.html
 
@@ -178,11 +186,14 @@ guidelines:
     We do not accept merge commits; remove them (usually by rebasing)
     before submission.
 
- 5. Code provided should follow our [coding style](STYLE.md) and
-    [documentation policy](DOCUMENTATION.md) and compile without warnings.
-    Where `gcc` or `clang` is available, verify this with the
-    `--strict-warnings` `Configure` option.  OpenSSL compiles on many
-    varied platforms: use only portable features.
+ 5. Code provided should:
+
+    - follow our [coding style](STYLE.md) and [documentation
+      policy](DOCUMENTATION.md),
+    - compile without warnings (where `gcc` or `clang` is available,
+      verify this with the `--strict-warnings` `Configure` option),
+    - use only portable features; OpenSSL compiles on many varied
+      platforms.
 
     Consistent formatting is enforced with `clang-format`, configured
     in [.clang-format](.clang-format); OpenSSL uses `WebKit` style.
