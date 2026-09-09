@@ -1291,7 +1291,7 @@ int load_rpk_file(SSL *ssl, const char *file)
                 found = 1;
             }
             X509_free(cert);
-        } else if (WHEN_PKEY_TYPE(name, PEM_STRING_PKCS8INF, NID_undef) == 0
+        } else if (WHEN_PKEY_TYPE(name, PEM_STRING_PKCS8INF, NID_undef)
             || WHEN_PKEY_TYPE(name, PEM_STRING_RSA, EVP_PKEY_RSA)
             || WHEN_PKEY_TYPE(name, PEM_STRING_ECPRIVATEKEY, EVP_PKEY_EC)
             || WHEN_PKEY_TYPE(name, PEM_STRING_DSA, EVP_PKEY_DSA)) {

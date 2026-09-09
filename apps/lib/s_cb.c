@@ -161,16 +161,20 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 {
     int chflags = chain ? SSL_BUILD_CHAIN_FLAG_CHECK : 0;
 
-    if (cert == NULL)
-        return 1;
-    if (SSL_CTX_use_certificate(ctx, cert) <= 0) {
-        BIO_puts(bio_err, "error setting certificate\n");
-        ERR_print_errors(bio_err);
-        return 0;
+    /* When own RPK is enabled, the key alone is sufficient */
+    if (key != NULL) {
+        if (SSL_CTX_use_PrivateKey(ctx, key) <= 0) {
+            BIO_puts(bio_err, "error setting private key\n");
+            ERR_print_errors(bio_err);
+            return 0;
+        }
     }
 
-    if (SSL_CTX_use_PrivateKey(ctx, key) <= 0) {
-        BIO_puts(bio_err, "error setting private key\n");
+    if (cert == NULL)
+        return 1;
+
+    if (SSL_CTX_use_certificate(ctx, cert) <= 0) {
+        BIO_puts(bio_err, "error setting certificate\n");
         ERR_print_errors(bio_err);
         return 0;
     }
@@ -194,6 +198,38 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
         return 0;
     }
     return 1;
+}
+
+/*
+ * Parse a comma-separated RFC 7250 certificate type list, "rpk" or "x509"
+ * in preference order, into TLSEXT_cert_type_* values.  Returns the number
+ * of types written to |types| (at most |max|), or 0 on a syntax error or
+ * an over-long list.
+ */
+size_t parse_cert_types(const char *arg, unsigned char *types, size_t max)
+{
+    size_t n = 0;
+    const char *p = arg;
+    const char *comma;
+    size_t len;
+
+    do {
+        comma = strchr(p, ',');
+        len = comma != NULL ? (size_t)(comma - p) : strlen(p);
+        if (n == max)
+            return 0;
+        if (len == 3 && OPENSSL_strncasecmp(p, "rpk", len) == 0)
+            types[n++] = TLSEXT_cert_type_rpk;
+        else if (len == 4 && OPENSSL_strncasecmp(p, "x509", len) == 0)
+            types[n++] = TLSEXT_cert_type_x509;
+        else if (len == 5 && OPENSSL_strncasecmp(p, "x.509", len) == 0)
+            types[n++] = TLSEXT_cert_type_x509;
+        else
+            return 0;
+        p = comma + 1;
+    } while (comma != NULL);
+
+    return n;
 }
 
 static STRINT_PAIR cert_type_list[] = {

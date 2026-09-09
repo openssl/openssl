@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include "helpers/ssltestlib.h"
 #include "internal/dane.h"
@@ -36,6 +37,7 @@ static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
 
 static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
+static const unsigned char cert_type_rpk_only[] = { TLSEXT_cert_type_rpk };
 static const unsigned char SID_CTX[] = { 'r', 'p', 'k' };
 
 /*
@@ -773,6 +775,282 @@ end:
     SSL_CTX_free(cctx);
     return ret;
 }
+
+/*
+ * Post-handshake authentication when there is no common client
+ * certificate type: the client offers only RPK, the server is not
+ * configured for RPK client certificates.
+ *   idx = 0 - a certificate is optional: the request fails cleanly
+ *             and the connection remains usable
+ *   idx = 1 - a certificate is required: sending the request tears
+ *             the connection down
+ */
+static int test_rpk_pha_mismatch(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    unsigned char buf[1];
+    int testresult = 0;
+
+#ifdef OSSL_NO_USABLE_TLS1_3
+    return TEST_skip("PHA requires TLSv1.3");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL,
+            TLS_server_method(), TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set1_client_cert_type(cctx, cert_type_rpk_only,
+            sizeof(cert_type_rpk_only))))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_use_PrivateKey_file(clientssl, privkey,
+                         SSL_FILETYPE_PEM),
+            1))
+        goto end;
+    SSL_set_post_handshake_auth(clientssl, 1);
+
+    /*
+     * Client authentication is not requested during the handshake, so
+     * the certificate type mismatch does not prevent the connection.
+     */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    if (idx == 0) {
+        SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
+        ERR_clear_error();
+        if (!TEST_false(SSL_verify_client_post_handshake(serverssl)))
+            goto end;
+        if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+                SSL_R_WRONG_CERTIFICATE_TYPE))
+            goto end;
+        /* The connection is still usable */
+        if (!TEST_int_eq(SSL_write(serverssl, "x", 1), 1)
+            || !TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)), 1))
+            goto end;
+    } else {
+        SSL_set_verify(serverssl,
+            SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+        if (!TEST_true(SSL_verify_client_post_handshake(serverssl)))
+            goto end;
+        ERR_clear_error();
+        /* Writing the CertificateRequest aborts the connection */
+        if (!TEST_int_le(SSL_write(serverssl, "x", 1), 0))
+            goto end;
+        if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+                SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Post-handshake authentication with client application data already in
+ * flight: the client writes data the server has not yet read, the server
+ * then requests authentication, and the buffered data must arrive intact
+ * before the client's authentication messages are transparently consumed.
+ */
+static int test_rpk_pha_buffered(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    X509 *x509 = NULL;
+    unsigned char buf[16];
+    int testresult = 0;
+
+#ifdef OSSL_NO_USABLE_TLS1_3
+    return TEST_skip("PHA requires TLSv1.3");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL,
+            TLS_server_method(), TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set1_client_cert_type(cctx, cert_type_rpk,
+            sizeof(cert_type_rpk)))
+        || !TEST_true(SSL_CTX_set1_client_cert_type(sctx, cert_type_rpk,
+            sizeof(cert_type_rpk)))
+        || !TEST_int_gt(SSL_CTX_dane_enable(sctx), 0))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_int_gt(SSL_dane_enable(serverssl, NULL), 0))
+        goto end;
+
+    if (!TEST_ptr(x509 = load_cert_pem(cert, NULL))
+        || !TEST_true(SSL_add_expected_rpk(serverssl,
+            X509_get0_pubkey(x509))))
+        goto end;
+
+    /* The client authenticates with the bare key matching |cert| */
+    if (!TEST_int_eq(SSL_use_PrivateKey_file(clientssl, privkey,
+                         SSL_FILETYPE_PEM),
+            1))
+        goto end;
+    SSL_set_post_handshake_auth(clientssl, 1);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    /* Client data the server does not read yet */
+    if (!TEST_int_eq(SSL_write(clientssl, "ping", 4), 4))
+        goto end;
+
+    /* Now request post-handshake authentication */
+    SSL_set_verify(serverssl, SSL_VERIFY_PEER, rpk_verify_server_cb);
+    if (!TEST_true(SSL_verify_client_post_handshake(serverssl))
+        || !TEST_true(SSL_do_handshake(serverssl)))
+        goto end;
+
+    /* The client processes the request and sends its response */
+    if (!TEST_int_le(SSL_read(clientssl, buf, sizeof(buf)), 0))
+        goto end;
+
+    /* The buffered application data arrives first, and intact */
+    if (!TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), 4)
+        || !TEST_mem_eq(buf, 4, "ping", 4))
+        goto end;
+
+    /* The authentication messages are consumed transparently */
+    if (!TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0))
+        goto end;
+    if (!TEST_ptr(SSL_get0_peer_rpk(serverssl))
+        || !TEST_int_eq(SSL_get_negotiated_client_cert_type(serverssl),
+            TLSEXT_cert_type_rpk)
+        || !TEST_long_eq(SSL_get_verify_result(serverssl), X509_V_OK))
+        goto end;
+
+    /* And the connection remains usable in both directions */
+    if (!TEST_int_eq(SSL_write(serverssl, "pong", 4), 4)
+        || !TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)), 4)
+        || !TEST_mem_eq(buf, 4, "pong", 4))
+        goto end;
+
+    testresult = 1;
+end:
+    X509_free(x509);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_EC
+/*
+ * Certificate slot selection with a mixture of bare-key and certified
+ * identities: a bare ECDSA private key alongside an RSA certificate
+ * and key, with both RPK and X.509 advertised by the server.
+ *   idx = 0 - TLSv1.3, X.509 negotiated: the bare slot is skipped
+ *   idx = 1 - TLSv1.3, RPK negotiated: a bare key is usable
+ *   idx = 2 - TLSv1.2, X.509 negotiated
+ *   idx = 3 - TLSv1.2, RPK negotiated
+ */
+static int test_rpk_mixed_slots(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    X509 *rsa_x509 = NULL, *ecdsa_x509 = NULL;
+    X509 *peer = NULL;
+    int rpk = (idx & 1) != 0;
+    int tls_version = (idx & 2) != 0 ? TLS1_2_VERSION : TLS1_3_VERSION;
+    int testresult = 0;
+
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (tls_version == TLS1_3_VERSION)
+        return TEST_skip("TLSv1.3 disabled");
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    if (tls_version == TLS1_2_VERSION)
+        return TEST_skip("TLSv1.2 disabled");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL,
+            TLS_server_method(), TLS_client_method(),
+            tls_version, tls_version,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* Add a bare ECDSA key: a private key with no certificate */
+    if (!TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, privkey2,
+                         SSL_FILETYPE_PEM),
+            1))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set1_server_cert_type(sctx, cert_type_rpk,
+            sizeof(cert_type_rpk))))
+        goto end;
+    if (rpk
+        && (!TEST_true(SSL_CTX_set1_server_cert_type(cctx, cert_type_rpk_only,
+                sizeof(cert_type_rpk_only)))
+            || !TEST_int_gt(SSL_CTX_dane_enable(cctx), 0)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (rpk) {
+        /* Accept whichever of the two server keys is selected */
+        if (!TEST_ptr(rsa_x509 = load_cert_pem(cert, NULL))
+            || !TEST_ptr(ecdsa_x509 = load_cert_pem(cert2, NULL))
+            || !TEST_int_gt(SSL_dane_enable(clientssl, "example.com"), 0)
+            || !TEST_true(SSL_add_expected_rpk(clientssl,
+                X509_get0_pubkey(rsa_x509)))
+            || !TEST_true(SSL_add_expected_rpk(clientssl,
+                X509_get0_pubkey(ecdsa_x509))))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    if (rpk) {
+        if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(clientssl),
+                TLSEXT_cert_type_rpk)
+            || !TEST_ptr(SSL_get0_peer_rpk(clientssl)))
+            goto end;
+    } else {
+        /* Only the certified (RSA) identity can serve an X.509 handshake */
+        if (!TEST_int_eq(SSL_get_negotiated_server_cert_type(clientssl),
+                TLSEXT_cert_type_x509)
+            || !TEST_ptr(peer = SSL_get0_peer_certificate(clientssl))
+            || !TEST_true(EVP_PKEY_is_a(X509_get0_pubkey(peer), "RSA")))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    X509_free(rsa_x509);
+    X509_free(ecdsa_x509);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
 OPT_TEST_DECLARE_USAGE("certdir\n")
 
 int setup_tests(void)
@@ -827,6 +1105,11 @@ int setup_tests(void)
 
     ADD_TEST(test_rpk_api);
     ADD_ALL_TESTS(test_rpk, RPK_TESTS * RPK_DIMS);
+    ADD_ALL_TESTS(test_rpk_pha_mismatch, 2);
+    ADD_TEST(test_rpk_pha_buffered);
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_rpk_mixed_slots, 4);
+#endif
     return 1;
 
 err:

@@ -121,8 +121,10 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
-[B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
+[B<-client_cert_type> I<list>]
+[B<-enable_server_rpk>]
+[B<-server_cert_type> I<list>]
 [B<-expected-rpks>]
 [I<host>:I<port>]
 [B<-ech_config_list>]
@@ -830,6 +832,30 @@ Enable creation of connections via TCP fast open (RFC7413).
 Verification errors are displayed, for debugging, but the command will
 proceed unless the B<-verify_return_error> option is used.
 
+=item B<-enable_client_rpk>
+
+Enable support for sending raw public keys (RFC7250) to the server.
+A raw public key will be sent by the client, if solicited by the server,
+provided a suitable private key is configured; a certificate is not
+required.
+When both a certificate and a key are configured, both raw public keys
+and X.509 certificates are offered; with just a private key only raw
+public keys are offered.
+With no key at all the option has no effect.
+Some servers may nevertheless not request any client credentials,
+or may request a certificate.
+
+=item B<-client_cert_type> I<list>
+
+Specify the supported client certificate types as a comma-separated
+list of B<rpk> and B<x509>, in preference order.
+This is an explicit alternative to B<-enable_client_rpk>, and the two
+are mutually exclusive.
+A client key is required (see B<-key> and B<-cert>).
+Listing B<x509> without a configured certificate draws a warning: only
+an empty certificate list could then be sent in response to a request
+for an X.509 client certificate.
+
 =item B<-enable_server_rpk>
 
 Enable support for receiving raw public keys (RFC7250) from the server.
@@ -838,13 +864,18 @@ support raw public keys may elect to use them.
 Servers that don't support raw public keys or prefer to use X.509
 certificates can still elect to send X.509 certificates as usual.
 
-=item B<-enable_client_rpk>
+=item B<-server_cert_type> I<list>
 
-Enable support for sending raw public keys (RFC7250) to the server.
-A raw public key will be sent by the client, if solicited by the server,
-provided a suitable key and public certificate pair is configured.
-Some servers may nevertheless not request any client credentials,
-or may request a certificate.
+Specify the acceptable server certificate types as a comma-separated
+list of B<rpk> and B<x509> (case-insensitive, with B<x.509> accepted as
+a synonym for the latter), in preference order.
+This is an explicit alternative to B<-enable_server_rpk>, and the two
+are mutually exclusive.
+The list is used verbatim.
+When B<x509> is not listed, a server that supports the certificate type
+extension but cannot provide a raw public key fails the handshake with
+an B<unsupported_certificate> alert; a server unaware of the extension
+may still send an X.509 certificate, which is then processed as usual.
 
 =item B<-expected-rpks> I<file>
 
@@ -1162,6 +1193,9 @@ options were added in OpenSSL 3.6.
 The B<ech> options were added in OpenSSL 4.0.
 
 The B<-expected-rpks> option was added in OpenSSL 4.0.
+
+The B<-server_cert_type> and B<-client_cert_type> options were added in
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

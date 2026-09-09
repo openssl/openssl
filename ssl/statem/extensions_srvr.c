@@ -2394,14 +2394,29 @@ EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
 {
-    if (sc->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_ERROR
-        && (send_certificate_request(sc)
-            || sc->post_handshake_auth == SSL_PHA_EXT_RECEIVED)) {
-        /* Did not receive an acceptable cert type - and doing client auth */
-        SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
-        return EXT_RETURN_FAIL;
+    int canask = send_certificate_request(sc);
+
+    switch (sc->ext.client_cert_type_ctos) {
+    case OSSL_CERT_TYPE_CTOS_NONE:
+        sc->ext.client_cert_type = TLSEXT_cert_type_x509;
+        return EXT_RETURN_NOT_SENT;
+
+    case OSSL_CERT_TYPE_CTOS_ERROR:
+        /*
+         * Did not receive an acceptable cert type - and doing client
+         * auth.  In an abbreviated or TLS 1.3 PSK handshake no
+         * CertificateRequest is sent, so the mismatch is harmless
+         * there; a post-handshake request fails cleanly instead in
+         * SSL_verify_client_post_handshake().
+         */
+        if (canask > 0 && !sc->hit) {
+            SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_WRONG_CERTIFICATE_TYPE);
+            return EXT_RETURN_FAIL;
+        }
+        return EXT_RETURN_NOT_SENT;
     }
 
+    /* X.509 is an implicit choice */
     if (sc->ext.client_cert_type == TLSEXT_cert_type_x509) {
         sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         return EXT_RETURN_NOT_SENT;
@@ -2411,14 +2426,8 @@ EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
      * Note: only supposed to send this if we are going to do a cert request,
      * but (D)TLSv1.3 could do a PHA request if the client supports it
      */
-    if ((!send_certificate_request(sc) && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
-        || sc->ext.client_cert_type_ctos != OSSL_CERT_TYPE_CTOS_GOOD
-        || sc->client_cert_type == NULL) {
-        /* if we don't send it, reset to TLSEXT_cert_type_x509 */
-        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
-        sc->ext.client_cert_type = TLSEXT_cert_type_x509;
+    if (canask == 0 && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
         return EXT_RETURN_NOT_SENT;
-    }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
         || !WPACKET_start_sub_packet_u16(pkt)
@@ -2430,7 +2439,12 @@ EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-/* One of |pref|, |other| is configured and the values are sanitized */
+/*
+ * One of |pref|, |other| is configured and the values are sanitized.
+ * Unknown code points in the peer's list are deliberately skipped, not
+ * rejected: a peer offering a future certificate type alongside one we
+ * support must not be turned away.
+ */
 static int reconcile_cert_type(const unsigned char *pref, size_t pref_len,
     const unsigned char *other, size_t other_len,
     uint8_t *chosen_cert_type)
@@ -2450,16 +2464,11 @@ int tls_parse_ctos_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
 {
+    const uint8_t dflt = TLSEXT_cert_type_x509;
+    const uint8_t *our = &dflt;
     PACKET supported_cert_types;
     const unsigned char *data;
-    size_t len;
-
-    /* Ignore the extension */
-    if (sc->client_cert_type == NULL) {
-        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
-        sc->ext.client_cert_type = TLSEXT_cert_type_x509;
-        return 1;
-    }
+    size_t len, our_len = 1;
 
     if (!PACKET_as_length_prefixed_1(pkt, &supported_cert_types)) {
         sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_ERROR;
@@ -2476,12 +2485,26 @@ int tls_parse_ctos_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
+
+    if (sc->client_cert_type != NULL) {
+        our = sc->client_cert_type;
+        our_len = sc->client_cert_type_len;
+    }
+
     /* client_cert_type: client (peer) has priority */
     sc->ext.client_cert_type_ctos = reconcile_cert_type(data, len,
-        sc->client_cert_type, sc->client_cert_type_len,
-        &sc->ext.client_cert_type);
+        our, our_len, &sc->ext.client_cert_type);
 
-    /* Ignore the error until sending - so we can check cert auth*/
+    /*
+     * With TLS 1.2 or earlier we haven't chosen the cipher yet,
+     * so can't yet call send_certificate_request() which checks
+     * the cipher.  If we're not sending a cert request we allow
+     * unsupported cert type code points, so we delay the check
+     * to tls_construct_stoc_client_cert_type() by which time the
+     * cipher is known for all protocol versions.
+     *
+     * (We could some day check here, conditional on TLS 1.3)
+     */
     return 1;
 }
 
@@ -2489,15 +2512,45 @@ EXT_RETURN tls_construct_stoc_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
 {
-    if (sc->ext.server_cert_type == TLSEXT_cert_type_x509) {
-        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
-        return EXT_RETURN_NOT_SENT;
-    }
-    if (sc->ext.server_cert_type_ctos != OSSL_CERT_TYPE_CTOS_GOOD
-        || sc->server_cert_type == NULL) {
-        /* if we don't send it, reset to TLSEXT_cert_type_x509 */
+    switch (sc->ext.server_cert_type_ctos) {
+    case OSSL_CERT_TYPE_CTOS_NONE:
+        /*
+         * When the client does not signal a server certificate type,
+         * X.509 is implicit; if we cannot provide one for a handshake
+         * that includes a Certificate message, we have no choice but
+         * to fail.  Without a Certificate message (session resumption,
+         * PSK, SRP or anonymous ciphers) the mismatch is harmless.
+         */
+        if (sc->server_cert_type != NULL && send_server_certificate(sc)) {
+            const uint8_t dflt = TLSEXT_cert_type_x509;
+
+            sc->ext.server_cert_type_ctos = reconcile_cert_type(
+                sc->server_cert_type, sc->server_cert_type_len,
+                &dflt, 1, &sc->ext.server_cert_type);
+            if (sc->ext.server_cert_type_ctos == OSSL_CERT_TYPE_CTOS_ERROR) {
+                SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE,
+                    SSL_R_WRONG_CERTIFICATE_TYPE);
+                return EXT_RETURN_FAIL;
+            }
+        }
+        break;
+
+    case OSSL_CERT_TYPE_CTOS_ERROR:
+        /* The client's list had no type we can provide */
+        if (send_server_certificate(sc)) {
+            SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE,
+                SSL_R_WRONG_CERTIFICATE_TYPE);
+            return EXT_RETURN_FAIL;
+        }
+        /* ... but no Certificate message makes the mismatch harmless */
         sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.server_cert_type = TLSEXT_cert_type_x509;
+        return EXT_RETURN_NOT_SENT;
+    }
+
+    /* Negotiation of X.509 is implicit */
+    if (sc->ext.server_cert_type == TLSEXT_cert_type_x509) {
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         return EXT_RETURN_NOT_SENT;
     }
 
@@ -2515,16 +2568,11 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
 {
+    const uint8_t dflt = TLSEXT_cert_type_x509;
+    const uint8_t *our = &dflt;
     PACKET supported_cert_types;
     const unsigned char *data;
-    size_t len;
-
-    /* Ignore the extension */
-    if (sc->server_cert_type == NULL) {
-        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
-        sc->ext.server_cert_type = TLSEXT_cert_type_x509;
-        return 1;
-    }
+    size_t len, our_len = 1;
 
     if (!PACKET_as_length_prefixed_1(pkt, &supported_cert_types)) {
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -2539,16 +2587,25 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    /* server_cert_type: server (this) has priority */
-    sc->ext.server_cert_type_ctos = reconcile_cert_type(sc->server_cert_type, sc->server_cert_type_len,
-        data, len,
-        &sc->ext.server_cert_type);
-    if (sc->ext.server_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)
-        return 1;
 
-    /* Did not receive an acceptable cert type */
-    SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
-    return 0;
+    if (sc->server_cert_type != NULL) {
+        our = sc->server_cert_type;
+        our_len = sc->server_cert_type_len;
+    }
+
+    /* server_cert_type: server (this) has priority */
+    sc->ext.server_cert_type_ctos = reconcile_cert_type(our, our_len,
+        data, len, &sc->ext.server_cert_type);
+
+    /*
+     * With TLS 1.2 or earlier we haven't chosen the cipher yet, so
+     * we can't yet tell whether this handshake will include a server
+     * Certificate message.  When it doesn't (session resumption, PSK,
+     * SRP or anonymous ciphers), a mismatch is harmless, so we delay
+     * the check to tls_construct_stoc_server_cert_type() by which
+     * time the answer is known for all protocol versions.
+     */
+    return 1;
 }
 
 #ifndef OPENSSL_NO_ECH

@@ -12927,7 +12927,7 @@ end:
 #ifndef OPENSSL_NO_TLS1_2
 
 #define CERT_TYPE_C "\x0" /* TLSEXT_cert_type_x509 */
-#define CERT_TYPE_S "\x2" /* TLSEXT_cert_type_rpk */
+#define CERT_TYPE_S "\x2\x0" /* TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 */
 
 #ifndef OPENSSL_NO_CT
 #define CB_ARG "callback arg"
