@@ -170,7 +170,8 @@ static int test_x509_sig_aid(X509 *eecert, const char *ee_filename,
     }
 
     algid_prov[0] = '\0';
-    if (!TEST_true(EVP_PKEY_CTX_get_params(pctx, params)))
+    if (!TEST_int_gt(EVP_PKEY_CTX_get_params(pctx, params), 0)
+        || !TEST_true(OSSL_PARAM_modified(params)))
         goto end;
     algid_prov_len = params[0].return_size;
 

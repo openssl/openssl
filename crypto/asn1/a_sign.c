@@ -12,6 +12,7 @@
 #include <sys/types.h>
 
 #include "internal/cryptlib.h"
+#include "internal/params.h"
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -202,10 +203,12 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
             goto err;
 
-        if ((aid_len = params[0].return_size) == 0) {
+        if (!OSSL_PARAM_modified(params) || !ossl_param_has_content(params)) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;
         }
+
+        aid_len = params[0].return_size;
 
         if (algor1 != NULL && !replace_algor_contents_from_DER(algor1, aid, aid_len))
             goto err;
