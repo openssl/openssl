@@ -115,11 +115,6 @@ jobs:
           #         the build.
           #     `extra_config` adds extra config build option for the branch.
           {
-            name: openssl-3.0,
-            dir: branch-3.0,
-            tgz: branch-3.0.tar.gz,
-            extra_config: "",
-          }, {
             name: openssl-3.4,
             dir: branch-3.4,
             tgz: branch-3.4.tar.gz,
@@ -219,10 +214,8 @@ jobs:
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
         tree_a: [ branch-master, branch-4.1, branch-4.0, branch-3.6, branch-3.5, branch-3.4,
-                  branch-3.0,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
-        tree_b: [ branch-master, branch-4.1, branch-4.0, branch-3.6, branch-3.5, branch-3.4,
-                  branch-3.0  ]
+        tree_b: [ branch-master, branch-4.1, branch-4.0, branch-3.6, branch-3.5, branch-3.4 ]
     steps:
       - name: early exit checks
         id: early_exit
