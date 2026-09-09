@@ -1816,13 +1816,13 @@ err:
             *serv_sess_out = SSL_SESSION_dup(tmp);
     }
 
-    if (SSL_get_peer_tmp_key(client.ssl, &tmp_key)) {
+    ret->tmp_key_type = SSL_get_negotiated_group(client.ssl);
+    if (ret->tmp_key_type == NID_undef
+        && SSL_get_peer_tmp_key(client.ssl, &tmp_key)) {
         ret->tmp_key_type = pkey_type(tmp_key);
         EVP_PKEY_free(tmp_key);
         if (ret->tmp_key_type == EVP_PKEY_KEYMGMT)
             ret->tmp_key_type = SSL_get_negotiated_group(client.ssl);
-    } else {
-        ret->tmp_key_type = SSL_get_negotiated_group(client.ssl);
     }
 
     SSL_get_peer_signature_nid(client.ssl, &ret->server_sign_hash);

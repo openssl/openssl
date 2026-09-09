@@ -27,6 +27,16 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 4.2
+-----------
+
+### Changes between 4.1 and 4.2 [xx XXX xxxx]
+
+ * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
+   newly assigned IANA codepoints per draft-rosomakho-tls-ecdhe-mlkem512-00.
+
+   *Viktor Dukhovni*
+
 OpenSSL 4.1
 -----------
 

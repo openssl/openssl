@@ -425,6 +425,7 @@ static int test_ml_kem_from_data_propq(void)
 #ifndef OPENSSL_NO_EC
 static const char *mlx_kem_algs[] = {
 #ifndef OPENSSL_NO_ECX
+    "MLKEM512X25519",
     "X25519MLKEM768",
 #endif
     "SecP256r1MLKEM768",
