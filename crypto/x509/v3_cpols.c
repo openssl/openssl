@@ -168,6 +168,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
     STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 {
     int i;
+    int policyid_seen = 0;
     CONF_VALUE *cnf;
     POLICYINFO *pol;
     POLICYQUALINFO *qual;
@@ -181,12 +182,18 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
         if (strcmp(cnf->name, "policyIdentifier") == 0) {
             ASN1_OBJECT *pobj;
 
+            if (policyid_seen) {
+                ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
+                    "field=%s", cnf->name);
+                goto err;
+            }
             if ((pobj = OBJ_txt2obj(cnf->value, 0)) == NULL) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER);
                 X509V3_conf_err(cnf);
                 goto err;
             }
             pol->policyid = pobj;
+            policyid_seen = 1;
 
         } else if (!ossl_v3_name_cmp(cnf->name, "CPS")) {
             if (pol->qualifiers == NULL)
@@ -243,7 +250,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             goto err;
         }
     }
-    if (pol->policyid == NULL) {
+    if (!policyid_seen) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_POLICY_IDENTIFIER);
         goto err;
     }
@@ -316,6 +323,11 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 
         value = cnf->value;
         if (strcmp(cnf->name, "explicitText") == 0) {
+            if (not->exptext != NULL) {
+                ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
+                    "field=%s", cnf->name);
+                goto err;
+            }
             tag = displaytext_str2tag(value, &tag_len);
             if ((not->exptext = ASN1_STRING_type_new(tag)) == NULL) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
