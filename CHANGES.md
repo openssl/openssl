@@ -31,7 +31,7 @@ OpenSSL Releases
 OpenSSL 4.1
 -----------
 
-### Changes between 4.0 and 4.1 alpha 1 [9 Sep 2026]
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
  * Added support for DTLS 1.3 ([RFC 9147]).
    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
