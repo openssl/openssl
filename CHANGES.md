@@ -32,59 +32,24 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
- * Refactored remaining cipher `OSSL_PARAM` name parsing so that automatically
-   generated parsers are used instead of `OSSL_PARAM_locate()` calls.
-   This should ensure that the list of acceptable parameters better matches
-   those which are actually processed.  It should also provide a small
-   performance improvement, because repeated iteration over passed parameter
-   arrays is avoided.
-
-   *Dr Paul Dale*
-
- * Added a `seed_strict` option to the `random` configuration section,
-   which makes the configured random seed source strictly enforced when
-   a provider (such as the FIPS provider) requests entropy or a nonce.
-
-   When a provider requests seeding material before the primary DRBG
-   has been created, the request falls back to the operating system entropy
-   sources, because the seed source only comes into existence as a side
-   effect of creating the primary DRBG.  Whether a configured seed source
-   is used therefore depends on operation order.  With `seed_strict` enabled,
-   the seed source is instead instantiated on demand and an error is reported
-   if it cannot be used.  The option is off by default with two exceptions:
-   the `JITTER` seed source seeds strictly unless the option disables it,
-   and `enable-fips-jitter` builds always seed strictly.  Additionally,
-   the property query used to fetch the default seed source can now be set
-   at build time with `-DOPENSSL_DEFAULT_SEED_PROPQ`.
-
-   *Jakub Zelenka*
-
- * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
-   protocol from an earlier connection after a resumption negotiated
-   a different protocol (or none), on both the server and the client,
-   which could otherwise affect a later 0-RTT decision.
-
-   *Daniel Kubec and Viktor Dukhovni*
-
- * Implemented extended support of metadata for symmetric key objects
-   (`EVP_SKEY`).
-
-   *Dmitry Belyavskiy*
-
- * Declared support for AArch64 Guarded Control Stack (GCS) in assembly code.
-
-   When building with compilers that support GCS (Clang 18+, GCC 15+),
-   assembly modules are marked as compatible when branch protection
-   is enabled (e.g. `-mbranch-protection=standard`).  No functional changes
-   to the assembly implementations are required, but compliance ensures
-   correct operation with shadow stack enforcement.
-
-   *Guillaume Gardet and Gowtham Suresh Kumar*
-
  * Added support for DTLS 1.3 ([RFC 9147]).
    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
 
    *Frederik Wedel-Heinen and Ryan Hooper*
+
+ * Added support for [RFC 8701] GREASE (Generate Random Extensions And Sustain
+   Extensibility).  When `SSL_OP_GREASE` is set, the TLS client injects
+   reserved GREASE values into cipher suites, supported versions, supported
+   groups, signature algorithms, key share, and extensions in the `ClientHello`
+   to prevent ecosystem ossification.
+   Added `-grease` option to `openssl s_client` to enable this.
+
+   *William McCormack*
+
+ * Added support for Ed25519 and Ed448 certificates in DTLS 1.2.  Previously,
+   these certificate types were only supported in TLS 1.2 and TLS 1.3.
+
+   *Adriano Sela Aviles*
 
  * Added DTLS support to the SSL listener API.  `SSL_new_listener()` can now
    create a DTLS listener that demultiplexes incoming datagrams into per-peer
@@ -105,82 +70,13 @@ OpenSSL 4.1
 
    *Ryan Hooper*
 
- * Fixed `SSL_listen_ex()` to correctly adopt a QUIC connection and to preserve
-   queued connections on allocation failure. Invalid arguments, including
-   non-QUIC SSL objects, and internal failures now return `-1`, reserving `0`
-   for "no connection available".
+ * Implemented an ability to configure additional QUIC transport parameters
+   via the `SSL_get_value_uint()`/`SSL_set_value_uint()` functions:
+   `max_udp_payload_size`, `initial_max_data`,
+   `initial_max_stream_data_bidi_local`, `initial_max_stream_data_uni`,
+   `ack_delay_exponent`, and `max_ack_delay`.
 
-   *Mounir IDRASSI*
-
- * Fixed QUIC child objects to inherit the effective flags of their explicit
-   event domain.  `SSL_get0_domain()` now reports that domain for connections
-   and streams in the hierarchy.
-
-   *Mounir IDRASSI*
-
- * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
-   PSK identity ([RFC 9846 Section 4.3.10]) when a 0-RTT-capable resumption
-   ticket has aged out and an external PSK is offered in its place. The early
-   data was being encrypted with the retired ticket's secret, rather than
-   the external PSK's, causing the server to reject it with a bad record MAC.
-
-   *Viktor Dukhovni*
-
- * Fixed TLS 1.3 servers to reject early data when a resumed PSK's
-   ticket age is outside tolerance, per [RFC 9846], instead of accepting
-   0-RTT data from a ticket that has aged out.
-
-   *Daniel Kubec*
-
- * TLS clients no longer send the TLS padding extension ([RFC 7685]).  It was
-   only ever sent when `SSL_OP_TLSEXT_PADDING` was set, to work around
-   a `ClientHello` length bug in F5 middleboxes;  the fix shipped long ago
-   and the affected hardware is long out of support, so nothing should still
-   be running the problematic version.
-   `SSL_OP_TLSEXT_PADDING` is now a no-op retained for compatibility,
-   and is no longer included in `SSL_OP_ALL`.
-
-   *Bob Beck*
-
- * Fixed X.509v3 extension configuration parsing to reject repeated fields
-   in the `basicConstraints`, `basicAttConstraints`, and `policyConstraints`
-   X.509v3 extension configurations, instead of silently using the last value.
-
-   *Adam Tabak*
-
- * Changed `tsget` utility to use `Net::Curl::Easy` (from the `Net-Curl` CPAN
-   distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who rely
-   on `tsget` should install `Net::Curl::Easy` before upgrading.
-
-   *Shreenidhi Shedi*
-
- * Added `CMS_add_standard_smimecap_ex()` API function, which populates
-   an `SMIMECapabilities` list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()`
-   so that only algorithms available in the active providers are advertised.
-   `PKCS7_sign_add_signer()` was updated in the same way, so that legacy
-   ciphers, such as RC2 and DES, are no longer included in `SMIMECapabilities`
-   by default when only the default provider is loaded.
-
-   *Todd Short*
-
- * Added various optimizations for the Elbrus2000 architecture
-   in the cryptographic and BN code.
-
-   *Gleb Popov*
-
- * Fixed TLS 1.3 external PSK connections being wrongly rejected when
-   the client sets a non-empty session ID context.
-
-   *Viktor Dukhovni*
-
- * Fixed a TLS 1.3 server with no session ID context to accept external PSK
-   connections and to stop issuing unusable session tickets.
-
-   *Viktor Dukhovni*
-
- * Added AVX-512-optimized SHAKE x4 operations for ML-DSA on `x86_64`.
-
-   *Marcel Cornu and Tomasz Kantecki*
+   *Nikolas Gauder*
 
  * Simplified EC key point format handling.
 
@@ -210,44 +106,139 @@ OpenSSL 4.1
 
    *Viktor Dukhovni*
 
- * Added unit tests setup activated via `enable-unit-tests` option.  This works
-   only on platforms with ld `--wrap` support (Linux, BSD).
+ * Added a new verification error, `X509_V_ERR_DUPLICATE_EXTENSION`,
+   with a descriptive message for certificates containing duplicate X.509
+   extensions, which are explicitly prohibited by [RFC 5280].
 
-   *Jakub Zelenka*
+   *Daniel Kubec*
 
- * Deprecated the `enable-unit-test` configure option and the
-   `SSL_test_functions()` function.  Both will be removed in OpenSSL 5.0.
+ * Implemented extended support of metadata for symmetric key objects
+   (`EVP_SKEY`).
 
-   *Jakub Zelenka*
+   *Dmitry Belyavskiy*
 
- * Deprecated `BIO_snprintf()` and `BIO_vsnprintf()`.  `snprintf()`, being part
-   of C99 standard, that is the baseline for OpenSSL since version 3.6,
-   is now considered universally available;  moreover, the fact that `BIO_*()`
-   functions return -1 on truncation, rather than the would-have-been length,
-   makes their usage error-prone.  Use `snprintf()` and `vsnprintf()` directly.
+ * Added `CMS_VERIFY_PARTIAL` flag to `CMS_verify()`, `-verify_partial`
+   option to `openssl cms -verify` operation,
+   and `CMS_SignerInfo_get_verification_result()`
+   and `CMS_SignerInfo_get0_signer_cert()` functions.
 
-   *Bob Beck*
+   If the `CMS_VERIFY_PARTIAL` flag is set, the `CMS_verify()` call
+   is successful if at least one of the individual signatures can be verified
+   (as opposed to all of them), which may be useful to gracefully handle various
+   situations, like missing CAs, expired certificates, or unsupported
+   algorithms;  applications can call `CMS_get0_signers()` to check if the set
+   of valid signatures satisfies its policy, or use
+   `CMS_SignerInfo_get_verification_result()`
+   and `CMS_SignerInfo_get0_signer_cert()` functions to access the detailed
+   verification results.
+
+   *Jan Lübbe*
+
+ * Added `OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES` option for `OSSL_CMP_CTX`
+   and a corresponding `-nonmatched_error_nonces` option for the `openssl cmp`
+   command.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
+ * Changed the output of the `-disabled` option for the `openssl list` command
+   to display disabled features, protocols, and algorithms, in relevant
+   sections.
+
+   *Paul Louvel*
 
  * Added `-testmode` option for `openssl s_time` command.
 
    *Jakub Zelenka*
 
- * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
-   differs from the ciphersuite associated with the selected PSK. Same-hash
-   PSK resumption can still continue without accepting 0-RTT data.
+ * Added ability to utilise memory-mapped I/O when reading raw input
+   from a file for one-shot sign/verify operations (such as Ed25519,
+   Ed448, and ML-DSA) to `openssl pkeyutl` command on platforms
+   that support it (Unix-like).  The `openssl dgst` command uses the same
+   approach for one-shot sign/verify when the input is from a file, removing
+   the previous 16 MB limit for file-based input.  This improves performance
+   and supports large files without doubling memory use.  Other platforms
+   and `stdin` input continue to use the existing buffer-based implementation.
 
-   *Mounir IDRASSI*
+   *John Claus*
 
- * Added support for Ed25519 and Ed448 certificates in DTLS 1.2.  Previously,
-   these certificate types were only supported in TLS 1.2 and TLS 1.3.
+ * Added a `seed_strict` option to the `random` configuration section,
+   which makes the configured random seed source strictly enforced when
+   a provider (such as the FIPS provider) requests entropy or a nonce.
 
-   *Adriano Sela Aviles*
+   When a provider requests seeding material before the primary DRBG
+   has been created, the request falls back to the operating system entropy
+   sources, because the seed source only comes into existence as a side
+   effect of creating the primary DRBG.  Whether a configured seed source
+   is used therefore depends on operation order.  With `seed_strict` enabled,
+   the seed source is instead instantiated on demand and an error is reported
+   if it cannot be used.  The option is off by default with two exceptions:
+   the `JITTER` seed source seeds strictly unless the option disables it,
+   and `enable-fips-jitter` builds always seed strictly.  Additionally,
+   the property query used to fetch the default seed source can now be set
+   at build time with `-DOPENSSL_DEFAULT_SEED_PROPQ`.
 
- * Added `VC-WIN32-MSVC2013` and `VC-WIN64A-MSVC2013` build targets to provide
-   internal functions for bridging the gaps in C99 standard support
-   that are present in MSVC 2013.
+   *Jakub Zelenka*
+
+ * Added IKEV2 KDF (`EVP_KDF-IKEV2KDF`) to `EVP_KDF`.
+
+   *Helen Zhang*
+
+ * Added `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`,
+   and `CRYPTO_atomic_cmp_exch_ptr` functions to `libcrypto`, that implement
+   the respective atomic operations with a locking-based fallback on platforms
+   that do not support them.
+
+   *Neil Horman*
+
+ * Added `EVP_EC_affine2oct()` function, that converts the affine coordinates
+   of an EC point to an octet string conforming
+   to [Section 2.3.4 of SECG SEC 1][SECG SEC 1 Section 2.3.4] ("Elliptic Curve
+   Cryptography") standard.
+
+   *Igor Ustinov*
+
+ * Added `EVP_KDF_CTX_get0_kdf()` and `EVP_KDF_CTX_get1_kdf()` functions
+   as a replacement for the now deprecated `EVP_KDF_CTX_kdf()`.
+
+   *Leon Timmermans*
+
+ * Added `ASN1_STRING_new_not_owned()` function to `libcrypto`.  It provides
+   the ability to construct an `ASN1_STRING` with data for which ownership
+   is not taken by the created `ASN1_STRING` object.
 
    *Bob Beck*
+
+ * Added `CMS_add_standard_smimecap_ex()` API function, which populates
+   an `SMIMECapabilities` list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()`
+   so that only algorithms available in the active providers are advertised.
+   `PKCS7_sign_add_signer()` was updated in the same way, so that legacy
+   ciphers, such as RC2 and DES, are no longer included in `SMIMECapabilities`
+   by default when only the default provider is loaded.
+
+   *Todd Short*
+
+ * Added `CTLOG_STORE_add0_log()` function to add individual CT logs
+   to a `CTLOG_STORE`.
+
+   *Tim Perry*
+
+ * Added `FIPS_mode()` macro as a convenience alias
+   to `EVP_default_properties_is_fips_enabled(NULL)`, which is a shorthand
+   to check whether the `fips=yes` property is currently enabled in the default
+   library context.
+
+   *Dimitri John Ledkov*
+
+ * Refactored remaining cipher `OSSL_PARAM` name parsing so that automatically
+   generated parsers are used instead of `OSSL_PARAM_locate()` calls.
+   This should ensure that the list of acceptable parameters better matches
+   those which are actually processed.  It should also provide a small
+   performance improvement, because repeated iteration over passed parameter
+   arrays is avoided.
+
+   *Dr Paul Dale*
 
  * Improved interoperability with TPM 1.2 Endorsement Key certificates
    per [TCG Credential Profiles specification Version 1.2, Section 3.2.7]:
@@ -269,86 +260,10 @@ OpenSSL 4.1
 
    *Daniel Kubec*
 
- * Added test framework for testing function memory allocation failures.
-
-   *Jakub Zelenka*
-
- * Dropped Windows-on-Itanium (`VC-WIN64I`) and Windows CE (`VC-CE`) targets
-   from Configurations.
-
-   *Bob Beck*
-
  * Improved DTLS handshake robustness under UDP reordering by buffering
    and replaying early `ChangeCipherSpec` (CCS) records at the expected state.
 
    *Tong Li*
-
- * Updated header files to reflect modern development practices: all include
-   files now have header guards and they are self-contained (they include all
-   dependencies they need to be included on their own).
-
-   *Bob Beck*
-
- * Deprecated `ASN1_STRING_set()` and `ASN1_STRING_length()`.  The replacement
-   functions `ASN1_STRING_set1_data()` or `ASN1_STRING_set1_string()`,
-   and `ASN1_STRING_get_length()` should be used in their place.  This prepares
-   the `ASN1_STRING` type to support modern `size_t` length values
-   in the future.
-
-   *Bob Beck*
-
- * Deprecated `EVP_CIPHER_CTX_get_num()` and `EVP_CIPHER_CTX_set_num()`
-   functions.  Refer to `ossl-migration-guide(7)` for more info.
-
-   *Shane Lontis*
-
- * Deprecated `ASN1_BIT_STRING_name_print()`, `ASN1_BIT_STRING_num_asc()`,
-   and `ASN1_BIT_STRING_set_asc()` functions. Refer to the manual
-   pages for more information.
-
-   *Bob Beck*
-
- * Added `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`,
-   and `CRYPTO_atomic_cmp_exch_ptr` functions to `libcrypto`, that implement
-   the respective atomic operations with a locking-based fallback on platforms
-   that do not support them.
-
-   *Neil Horman*
-
- * Added ability to utilise memory-mapped I/O when reading raw input
-   from a file for one-shot sign/verify operations (such as Ed25519,
-   Ed448, and ML-DSA) to `openssl pkeyutl` command on platforms
-   that support it (Unix-like).  The `openssl dgst` command uses the same
-   approach for one-shot sign/verify when the input is from a file, removing
-   the previous 16 MB limit for file-based input.  This improves performance
-   and supports large files without doubling memory use.  Other platforms
-   and `stdin` input continue to use the existing buffer-based implementation.
-
-   *John Claus*
-
- * Deprecated `X509_check_host()`, `X509_check_email()`, `X509_check_ip()`,
-   and `X509_check_ip_asc()` functions.  Applications should migrate to setting
-   a reference identifier to check using `X509_VERIFY_PARAM_set1_host()`,
-   `X509_VERIFY_PARAM_set1_email()`, or `X509_VERIFY_PARAM_set1_ip_asc()`,
-   and using `X509_verify_cert()`.
-
-   *Bob Beck*
-
- * Added `ASN1_STRING_new_not_owned()` function to `libcrypto`.  It provides
-   the ability to construct an `ASN1_STRING` with data for which ownership
-   is not taken by the created `ASN1_STRING` object.
-
-   *Bob Beck*
-
- * Fixed X.509 verification of certificate chains that use DSA signatures
-   with SHA-384 or SHA-512 by registering `dsa_with_SHA384` and
-   `dsa_with_SHA512` in the signature-algorithm cross-reference table.
-
-   *John Claus*
-
- * Added AVX2-optimized ML-DSA NTT operations on `x86_64`.
-
-   *Marcel Cornu and Tomasz Kantecki*
 
  * Updated X.509 certificate verification to no longer consult the subject
    distinguished name (DN) by default.  Previously, when a certificate contained
@@ -362,60 +277,179 @@ OpenSSL 4.1
 
    *Bob Beck*
 
- * Added `CMS_VERIFY_PARTIAL` flag to `CMS_verify()`, `-verify_partial`
-   option to `openssl cms -verify` operation,
-   and `CMS_SignerInfo_get_verification_result()`
-   and `CMS_SignerInfo_get0_signer_cert()` functions.
+ * Added various optimizations for the Elbrus2000 architecture
+   in the cryptographic and BN code.
 
-   If the `CMS_VERIFY_PARTIAL` flag is set, the `CMS_verify()` call
-   is successful if at least one of the individual signatures can be verified
-   (as opposed to all of them), which may be useful to gracefully handle various
-   situations, like missing CAs, expired certificates, or unsupported
-   algorithms;  applications can call `CMS_get0_signers()` to check if the set
-   of valid signatures satisfies its policy, or use
-   `CMS_SignerInfo_get_verification_result()`
-   and `CMS_SignerInfo_get0_signer_cert()` functions to access the detailed
-   verification results.
+   *Gleb Popov*
 
-   *Jan Lübbe*
+ * Declared support for AArch64 Guarded Control Stack (GCS) in assembly code.
 
- * Changed the output of the `-disabled` option for the `openssl list` command
-   to display disabled features, protocols, and algorithms, in relevant
-   sections.
+   When building with compilers that support GCS (Clang 18+, GCC 15+),
+   assembly modules are marked as compatible when branch protection
+   is enabled (e.g. `-mbranch-protection=standard`).  No functional changes
+   to the assembly implementations are required, but compliance ensures
+   correct operation with shadow stack enforcement.
 
-   *Paul Louvel*
+   *Guillaume Gardet and Gowtham Suresh Kumar*
 
- * Added `CTLOG_STORE_add0_log()` function to add individual CT logs
-   to a `CTLOG_STORE`.
+ * Added optimized ML-DSA NTT operations on `s390x`
+   (or other architectures with 128 bit vector registers).
 
-   *Tim Perry*
+   *Timo Keller*
 
- * Dropped `no-ecdsa` and `no-ecdh` options from `Configure`, as these options
-   did not really disable the implementations.  Use `no-ec` to disable
-   the elliptic curve support.
+ * Added AVX2-optimized ML-DSA NTT operations on `x86_64`.
 
-   *Tomáš Mráz*
+   *Marcel Cornu and Tomasz Kantecki*
 
- * Added `EVP_EC_affine2oct()` function, that converts the affine coordinates
-   of an EC point to an octet string conforming
-   to [Section 2.3.4 of SECG SEC 1][SECG SEC 1 Section 2.3.4] ("Elliptic Curve
-   Cryptography") standard.
+ * Added AVX-512-optimized SHAKE x4 operations for ML-DSA on `x86_64`.
 
-   *Igor Ustinov*
+   *Marcel Cornu and Tomasz Kantecki*
 
- * Implemented an ability to configure additional QUIC transport parameters
-   via the `SSL_get_value_uint()`/`SSL_set_value_uint()` functions:
-   `max_udp_payload_size`, `initial_max_data`,
-   `initial_max_stream_data_bidi_local`, `initial_max_stream_data_uni`,
-   `ack_delay_exponent`, and `max_ack_delay`.
+ * Added AVX-512 and VAES optimizations for AES-CBC decryption.  Decryption
+   performance for large inputs (1024 bytes or more) improved by 3.5x to 3.8x.
 
-   *Nikolas Gauder*
+   *Madan Mohan Manokar*
 
- * Added a new verification error, `X509_V_ERR_DUPLICATE_EXTENSION`,
-   with a descriptive message for certificates containing duplicate X.509
-   extensions, which are explicitly prohibited by [RFC 5280].
+ * Added `VC-WIN32-MSVC2013` and `VC-WIN64A-MSVC2013` build targets to provide
+   internal functions for bridging the gaps in C99 standard support
+   that are present in MSVC 2013.
+
+   *Bob Beck*
+
+ * Added unit tests setup activated via `enable-unit-tests` option.  This works
+   only on platforms with ld `--wrap` support (Linux, BSD).
+
+   *Jakub Zelenka*
+
+ * Added test framework for testing function memory allocation failures.
+
+   *Jakub Zelenka*
+
+ * Updated header files to reflect modern development practices: all include
+   files now have header guards and they are self-contained (they include all
+   dependencies they need to be included on their own).
+
+   *Bob Beck*
+
+ * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
+   protocol from an earlier connection after a resumption negotiated
+   a different protocol (or none), on both the server and the client,
+   which could otherwise affect a later 0-RTT decision.
+
+   *Daniel Kubec and Viktor Dukhovni*
+
+ * Fixed `SSL_listen_ex()` to correctly adopt a QUIC connection and to preserve
+   queued connections on allocation failure. Invalid arguments, including
+   non-QUIC SSL objects, and internal failures now return `-1`, reserving `0`
+   for "no connection available".
+
+   *Mounir IDRASSI*
+
+ * Fixed QUIC child objects to inherit the effective flags of their explicit
+   event domain.  `SSL_get0_domain()` now reports that domain for connections
+   and streams in the hierarchy.
+
+   *Mounir IDRASSI*
+
+ * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
+   PSK identity ([RFC 9846 Section 4.3.10]) when a 0-RTT-capable resumption
+   ticket has aged out and an external PSK is offered in its place. The early
+   data was being encrypted with the retired ticket's secret, rather than
+   the external PSK's, causing the server to reject it with a bad record MAC.
+
+   *Viktor Dukhovni*
+
+ * Fixed TLS 1.3 servers to reject early data when a resumed PSK's
+   ticket age is outside tolerance, per [RFC 9846], instead of accepting
+   0-RTT data from a ticket that has aged out.
 
    *Daniel Kubec*
+
+ * Fixed TLS 1.3 external PSK connections being wrongly rejected when
+   the client sets a non-empty session ID context.
+
+   *Viktor Dukhovni*
+
+ * Fixed a TLS 1.3 server with no session ID context to accept external PSK
+   connections and to stop issuing unusable session tickets.
+
+   *Viktor Dukhovni*
+
+ * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
+   differs from the ciphersuite associated with the selected PSK. Same-hash
+   PSK resumption can still continue without accepting 0-RTT data.
+
+   *Mounir IDRASSI*
+
+ * Fixed X.509v3 extension configuration parsing to reject repeated fields
+   in the `basicConstraints`, `basicAttConstraints`, and `policyConstraints`
+   X.509v3 extension configurations, instead of silently using the last value.
+
+   *Adam Tabak*
+
+ * Fixed X.509 verification of certificate chains that use DSA signatures
+   with SHA-384 or SHA-512 by registering `dsa_with_SHA384` and
+   `dsa_with_SHA512` in the signature-algorithm cross-reference table.
+
+   *John Claus*
+
+ * TLS clients no longer send the TLS padding extension ([RFC 7685]).  It was
+   only ever sent when `SSL_OP_TLSEXT_PADDING` was set, to work around
+   a `ClientHello` length bug in F5 middleboxes;  the fix shipped long ago
+   and the affected hardware is long out of support, so nothing should still
+   be running the problematic version.
+   `SSL_OP_TLSEXT_PADDING` is now a no-op retained for compatibility,
+   and is no longer included in `SSL_OP_ALL`.
+
+   *Bob Beck*
+
+ * Changed `tsget` utility to use `Net::Curl::Easy` (from the `Net-Curl` CPAN
+   distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who rely
+   on `tsget` should install `Net::Curl::Easy` before upgrading.
+
+   *Shreenidhi Shedi*
+
+ * Deprecated the `enable-unit-test` configure option and the
+   `SSL_test_functions()` function.  Both will be removed in OpenSSL 5.0.
+
+   *Jakub Zelenka*
+
+ * Deprecated `BIO_snprintf()` and `BIO_vsnprintf()`.  `snprintf()`, being part
+   of C99 standard, that is the baseline for OpenSSL since version 3.6,
+   is now considered universally available;  moreover, the fact that `BIO_*()`
+   functions return -1 on truncation, rather than the would-have-been length,
+   makes their usage error-prone.  Use `snprintf()` and `vsnprintf()` directly.
+
+   *Bob Beck*
+
+ * Deprecated undocumented public functions `UTF8_putc()` and `UTF8_getc()`,
+   No public replacement is planned.
+
+   *Bob Beck*
+
+ * Deprecated `EVP_CIPHER_CTX_get_num()` and `EVP_CIPHER_CTX_set_num()`
+   functions.  Refer to `ossl-migration-guide(7)` for more info.
+
+   *Shane Lontis*
+
+ * Deprecated `ASN1_STRING_set()` and `ASN1_STRING_length()`.  The replacement
+   functions `ASN1_STRING_set1_data()` or `ASN1_STRING_set1_string()`,
+   and `ASN1_STRING_get_length()` should be used in their place.  This prepares
+   the `ASN1_STRING` type to support modern `size_t` length values
+   in the future.
+
+   *Bob Beck*
+
+ * Deprecated `ASN1_BIT_STRING_name_print()`, `ASN1_BIT_STRING_num_asc()`,
+   and `ASN1_BIT_STRING_set_asc()` functions. Refer to the manual
+   pages for more information.
+
+   *Bob Beck*
+
+ * Deprecated `ASN1_BIT_STRING_set()` function in favour
+   of `ASN1_BIT_STRING_set1()`.
+
+   *Norbert Pócs*
 
  * Deprecated `CMS_stream()` and `PKCS7_stream()` functions.  These are internal
    plumbing that leaked into the public API, and no longer return a streaming
@@ -424,58 +458,24 @@ OpenSSL 4.1
 
    *Bob Beck*
 
- * Added `OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES` option for `OSSL_CMP_CTX`
-   and a corresponding `-nonmatched_error_nonces` option for the `openssl cmp`
-   command.
-
-   This work was sponsored by Siemens AG.
-
-   *David von Oheimb*
-
- * Added support for [RFC 8701] GREASE (Generate Random Extensions And Sustain
-   Extensibility).  When `SSL_OP_GREASE` is set, the TLS client injects
-   reserved GREASE values into cipher suites, supported versions, supported
-   groups, signature algorithms, key share, and extensions in the `ClientHello`
-   to prevent ecosystem ossification.
-   Added `-grease` option to `openssl s_client` to enable this.
-
-   *William McCormack*
-
- * Deprecated undocumented public functions `UTF8_putc()` and `UTF8_getc()`,
-   No public replacement is planned.
+ * Deprecated `X509_check_host()`, `X509_check_email()`, `X509_check_ip()`,
+   and `X509_check_ip_asc()` functions.  Applications should migrate to setting
+   a reference identifier to check using `X509_VERIFY_PARAM_set1_host()`,
+   `X509_VERIFY_PARAM_set1_email()`, or `X509_VERIFY_PARAM_set1_ip_asc()`,
+   and using `X509_verify_cert()`.
 
    *Bob Beck*
 
- * Added IKEV2 KDF (`EVP_KDF-IKEV2KDF`) to `EVP_KDF`.
+ * Dropped Windows-on-Itanium (`VC-WIN64I`) and Windows CE (`VC-CE`) targets
+   from Configurations.
 
-   *Helen Zhang*
+   *Bob Beck*
 
- * Added AVX-512 and VAES optimizations for AES-CBC decryption.  Decryption
-   performance for large inputs (1024 bytes or more) improved by 3.5x to 3.8x.
+ * Dropped `no-ecdsa` and `no-ecdh` options from `Configure`, as these options
+   did not really disable the implementations.  Use `no-ec` to disable
+   the elliptic curve support.
 
-   *Madan Mohan Manokar*
-
- * Deprecated `ASN1_BIT_STRING_set()` function in favour
-   of `ASN1_BIT_STRING_set1()`.
-
-   *Norbert Pócs*
-
- * Added optimized ML-DSA NTT operations on `s390x`
-   (or other architectures with 128 bit vector registers).
-
-   *Timo Keller*
-
- * Added `EVP_KDF_CTX_get0_kdf()` and `EVP_KDF_CTX_get1_kdf()` functions
-   as a replacement for the now deprecated `EVP_KDF_CTX_kdf()`.
-
-   *Leon Timmermans*
-
- * Added `FIPS_mode()` macro as a convenience alias
-   to `EVP_default_properties_is_fips_enabled(NULL)`, which is a shorthand
-   to check whether the `fips=yes` property is currently enabled in the default
-   library context.
-
-   *Dimitri John Ledkov*
+   *Tomáš Mráz*
 
  * Fixed CRL scope checking for certificates without a CRL distribution
    points extension. A CRL having an issuing distribution point extension
