@@ -22,7 +22,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pemerr.h>
-# include <openssl/pkcs12.h>
+#include <openssl/pkcs12.h>
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif
