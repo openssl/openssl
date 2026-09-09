@@ -5523,6 +5523,103 @@ err:
 }
 
 /*
+ * Test ossl_dtls_conn_is_peel_eligible(), the new_conn eligibility check
+ * for the upcoming SSL_listen_ex() support for DTLS listeners.
+ *
+ * A peel-eligible new_conn must be exactly what SSL_new(ctx) on a DTLS
+ * context produces: no handshake started, no listener association, no
+ * BIOs set. Anything else must be rejected.
+ */
+static int test_dtls_conn_is_peel_eligible(void)
+{
+    SSL_CTX *ctx = NULL, *tls_ctx = NULL;
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *fresh = NULL, *listener = NULL, *tls_ssl = NULL;
+    SSL *started = NULL, *biod = NULL;
+    SSL *acc_listener = NULL, *acc_clientssl = NULL, *acc_serverssl = NULL;
+    BIO_ADDR *acc_client_addr = NULL;
+    BIO *bio1 = NULL, *bio2 = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    /* Case 1: a bare SSL_new(ctx) on a DTLS context -- must be eligible */
+    if (!TEST_ptr(fresh = SSL_new(ctx)))
+        goto err;
+    if (!TEST_true(ossl_dtls_conn_is_peel_eligible(fresh)))
+        goto err;
+
+    /* Case 2: the listener object itself -- must be rejected */
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(listener)))
+        goto err;
+
+    /* Case 3: a non-DTLS (TLS) SSL -- must be rejected */
+    if (!TEST_ptr(tls_ctx = SSL_CTX_new(TLS_server_method())))
+        goto err;
+    if (!TEST_ptr(tls_ssl = SSL_new(tls_ctx)))
+        goto err;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(tls_ssl)))
+        goto err;
+
+    /* Case 4: handshake already started -- must be rejected */
+    if (!TEST_ptr(started = SSL_new(ctx)))
+        goto err;
+    SSL_set_accept_state(started);
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(started)))
+        goto err;
+
+    /* Case 5: BIOs already attached -- must be rejected */
+    if (!TEST_ptr(biod = SSL_new(ctx)))
+        goto err;
+    if (!TEST_true(BIO_new_bio_pair(&bio1, 0, &bio2, 0)))
+        goto err;
+    SSL_set_bio(biod, bio1, bio1); /* SSL now owns bio1 */
+    bio1 = NULL;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(biod)))
+        goto err;
+
+    /*
+     * Case 6: an SSL already handed back by SSL_accept_connection() on a
+     * listener -- must be rejected. It already has a listener association
+     * and its handshake has already been advanced past the initial state.
+     */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto err;
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &acc_listener, &acc_clientssl, &acc_client_addr)))
+        goto err;
+    if (!drive_until_connection_queued(acc_listener, acc_clientssl)
+        || !TEST_ptr(acc_serverssl = SSL_accept_connection(acc_listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto err;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(acc_serverssl)))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(acc_serverssl);
+    SSL_free(acc_clientssl);
+    SSL_free(acc_listener);
+    BIO_ADDR_free(acc_client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bio2);
+    SSL_free(biod);
+    SSL_free(started);
+    SSL_free(tls_ssl);
+    SSL_CTX_free(tls_ctx);
+    SSL_free(listener);
+    SSL_free(fresh);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
  * Test the blocking mode of a DTLS listener and of the connections it creates.
  *
  * Blocking is the default, as it is for QUIC: a listener which was never
@@ -6108,6 +6205,7 @@ int setup_tests(void)
 
     /* Peeloff mode tests */
     ADD_TEST(test_dtls_listener_test_and_set_peeloff);
+    ADD_TEST(test_dtls_conn_is_peel_eligible);
 
     /* Blocking mode tests */
     ADD_TEST(test_dtls_blocking_mode);

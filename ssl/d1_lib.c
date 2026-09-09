@@ -2056,6 +2056,44 @@ int ossl_dtls_listener_test_and_set_peeloff(SSL *ssl, int using_peeloff)
 }
 
 /*
+ * ossl_dtls_conn_is_peel_eligible - is ssl a valid target for SSL_listen_ex()?
+ *
+ * A peel-eligible new_conn is exactly what SSL_new(ctx) on a DTLS SSL_CTX
+ * produces: no handshake started, no listener association, no BIOs set.
+ * Nothing else may be done to it before it is passed to SSL_listen_ex().
+ */
+int ossl_dtls_conn_is_peel_eligible(SSL *ssl)
+{
+    SSL_CONNECTION *sc;
+
+    if (!IS_DTLS(ssl) || IS_DTLS_LISTENER(ssl))
+        return 0;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    if (sc == NULL || sc->d1 == NULL)
+        return 0;
+
+    /*
+     * SSL_in_before() alone is not enough: SSL_set_accept_state() and
+     * SSL_set_connect_state() both call ossl_statem_clear(), which resets
+     * the state machine back to MSG_FLOW_UNINITED/TLS_ST_BEFORE, so
+     * SSL_in_before() stays true even once one of those has been called.
+     * handshake_func is what those functions actually set, and is the only
+     * reliable signal that connect/accept state has been chosen.
+     */
+    if (!SSL_in_before(ssl) || sc->handshake_func != NULL)
+        return 0;
+
+    if (SSL_get0_listener(ssl) != NULL || sc->d1->listener != NULL)
+        return 0;
+
+    if (SSL_get_rbio(ssl) != NULL || SSL_get_wbio(ssl) != NULL)
+        return 0;
+
+    return 1;
+}
+
+/*
  * dtls_listener_conn_ready - check if connection is ready for accept queue.
  *
  * Determines whether the SSL object has completed cookie validation (if required)

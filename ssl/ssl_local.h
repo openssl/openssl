@@ -3089,6 +3089,7 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio);
 BIO *ossl_dtls_listener_get_net_rbio(const SSL *s);
 BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
 int ossl_dtls_listener_test_and_set_peeloff(SSL *ssl, int using_peeloff);
+int ossl_dtls_conn_is_peel_eligible(SSL *ssl);
 
 /* Established connections API - these handle their own locking */
 SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
