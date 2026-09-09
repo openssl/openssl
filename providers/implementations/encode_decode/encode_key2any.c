@@ -96,7 +96,7 @@ static PKCS8_PRIV_KEY_INFO *key_to_p8info(const void *key, int key_nid,
 {
     /* der, derlen store the key DER output and its length */
     unsigned char *der = NULL;
-    int derlen;
+    int derlen = 0;
     /* The final PKCS#8 info */
     PKCS8_PRIV_KEY_INFO *p8info = NULL;
 
@@ -106,7 +106,10 @@ static PKCS8_PRIV_KEY_INFO *key_to_p8info(const void *key, int key_nid,
             params_type, params, der, derlen)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_ASN1_LIB);
         PKCS8_PRIV_KEY_INFO_free(p8info);
-        OPENSSL_free(der);
+        if (derlen > 0)
+            OPENSSL_clear_free(der, derlen);
+        else
+            OPENSSL_free(der);
         p8info = NULL;
     }
 
