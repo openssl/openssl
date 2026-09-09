@@ -10,6 +10,9 @@
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
+#include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "rsa_local.h"
 
 void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)
@@ -60,16 +63,16 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
 {
     RSA_PRIME_INFO *pinfo;
     BIGNUM *p1 = NULL, *p2 = NULL;
-    BN_CTX *ctx = NULL;
-    int i, rv = 0, ex_primes;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_pp = NULL;
+    const OSSL_FN *fn_p1, *fn_p2;
+    size_t fn_size, ppl;
+    int i, rv = 0, ex_primes, pp_bits;
 
     if ((ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0) {
         /* invalid */
         goto err;
     }
-
-    if ((ctx = BN_CTX_new()) == NULL)
-        goto err;
 
     /* calculate pinfo->pp = p * q for first 'extra' prime */
     p1 = rsa->p;
@@ -82,8 +85,35 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
             if (pinfo->pp == NULL)
                 goto err;
         }
-        if (!BN_mul(pinfo->pp, p1, p2, ctx))
+
+        fn_p1 = bn_get_ossl_fn(p1);
+        fn_p2 = bn_get_ossl_fn(p2);
+        if (fn_p1 == NULL || fn_p2 == NULL)
             goto err;
+        ppl = ossl_fn_get_dsize((OSSL_FN *)fn_p1)
+            + ossl_fn_get_dsize((OSSL_FN *)fn_p2);
+
+        if ((fn_pp = bn_acquire_ossl_fn(pinfo->pp, (int)ppl)) == NULL)
+            goto err;
+        fn_size = OSSL_FN_mul_ctx_size(fn_pp, fn_p1, fn_p2);
+        if (fn_size == 0)
+            goto err;
+        fn_ctx = OSSL_FN_CTX_secure_new_size(NULL, fn_size);
+        if (fn_ctx == NULL)
+            goto err;
+        if (!OSSL_FN_mul(fn_pp, fn_p1, fn_p2, fn_ctx)) {
+            bn_release(pinfo->pp, (int)ppl);
+            OSSL_FN_CTX_free(fn_ctx);
+            fn_ctx = NULL;
+            goto err;
+        }
+        pp_bits = (int)OSSL_FN_num_bits(fn_pp);
+        bn_release(pinfo->pp,
+            pp_bits > 0 ? (pp_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+        fn_pp = NULL;
+        OSSL_FN_CTX_free(fn_ctx);
+        fn_ctx = NULL;
+
         /* save previous one */
         p1 = pinfo->pp;
         p2 = pinfo->r;
@@ -91,7 +121,7 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
 
     rv = 1;
 err:
-    BN_CTX_free(ctx);
+    OSSL_FN_CTX_free(fn_ctx);
     return rv;
 }
 
