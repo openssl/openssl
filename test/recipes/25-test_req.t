@@ -636,6 +636,24 @@ subtest "generating certificate requests with -pkeyopt" => sub {
     }
 };
 
+# Read a CSR without a system config
+subtest "Generate cert without system config" => sub {
+    plan tests => 3;
+
+    ok(run(app(["openssl", "genrsa", "-out", "testreq-key.key", "2048"])),
+        "generate a private key");
+
+    ok(run(app(["openssl", "req",
+        "-new", "-config", srctop_file("test", "test.cnf"),
+        "-key", "testreq-key.key", "-out", "testreq-csr.pem"])),
+        "generate CSR");
+
+    # No system config file. Expect to not segfault/fail
+    ok(run(app(["openssl", "req", "-in", "testreq-csr.pem", "-noout"],
+        env => { OPENSSL_CONF => "/dev/null" })),
+        "attempt to read the CSR without a config");
+};
+
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
 
 run_conversion('req conversions',
