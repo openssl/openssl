@@ -220,6 +220,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
             key->minfo->algorithm_name, (unsigned long)encap_slen);
         goto end;
     }
+    OSSL_USDT_release_context(ctx);
     EVP_PKEY_CTX_free(ctx);
 
     /*-
@@ -253,6 +254,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
             key->xinfo->algorithm_name, (unsigned long)encap_clen);
         goto end;
     }
+    OSSL_USDT_release_context(ctx);
     EVP_PKEY_CTX_free(ctx);
 
     /* Derive the ECDH shared secret */
@@ -279,6 +281,7 @@ end:
         OPENSSL_cleanse(shsec,
             ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes);
     EVP_PKEY_free(xkey);
+    OSSL_USDT_release_context(ctx);
     EVP_PKEY_CTX_free(ctx);
     return ret;
 }
@@ -342,6 +345,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
             key->minfo->algorithm_name, (unsigned long)decap_slen);
         goto end;
     }
+    OSSL_USDT_release_context(ctx);
     EVP_PKEY_CTX_free(ctx);
 
     /* ECDH decapsulation */
@@ -372,6 +376,7 @@ end:
     if (ret == 0)
         OPENSSL_cleanse(shsec,
             ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes);
+    OSSL_USDT_release_context(ctx);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(xkey);
     return ret;
