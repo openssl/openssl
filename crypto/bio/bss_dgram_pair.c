@@ -251,6 +251,7 @@ struct dgram_hdr {
 struct rbuf_map_st {
     struct bio_dgram_pair_st *self;
     struct ring_buf rbuf;
+    uint32_t cap;
     CRYPTO_RWLOCK *lock;
 };
 
@@ -373,22 +374,25 @@ static void dgram_bio_get_self_data(struct bio_dgram_pair_st *self, struct ring_
 }
 
 static void dgram_bio_get_peer_data(struct bio_dgram_pair_st *self, struct ring_buf **rbufptr,
-    CRYPTO_RWLOCK **lock, struct bio_dgram_pair_st **peer)
+    CRYPTO_RWLOCK **lock, uint32_t *caps, struct bio_dgram_pair_st **peer)
 {
     struct rbuf_map_st *map;
     CRYPTO_RWLOCK *mylock;
     struct ring_buf *myrbuf;
     struct bio_dgram_pair_st *mypeer;
+    uint32_t mycaps;
 
     if (is_dgram_pair(self)) {
         map = dgram_rbuf_map_get_peer(self);
         mylock = map->lock;
         myrbuf = &map->rbuf;
         mypeer = map->self;
+        mycaps = map->cap;
     } else {
         mylock = self->lock;
         myrbuf = &self->rbuf;
         mypeer = self;
+        mycaps = self->cap;
     }
     if (lock != NULL)
         *lock = mylock;
@@ -396,6 +400,8 @@ static void dgram_bio_get_peer_data(struct bio_dgram_pair_st *self, struct ring_
         *rbufptr = myrbuf;
     if (peer != NULL)
         *peer = mypeer;
+    if (caps != NULL)
+        *caps = mycaps;
 }
 
 #define MIN_BUF_LEN (1024)
@@ -561,6 +567,8 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
     }
     pair->map[0].self = b1;
     pair->map[1].self = b2;
+    pair->map[0].cap = b1->cap;
+    pair->map[1].cap = b2->cap;
     TSAN_BENIGN(pair, "publishing pair");
     b1->pair = pair;
     b2->pair = pair;
@@ -643,7 +651,7 @@ static int dgram_pair_ctrl_eof(BIO *bio)
     if (peer_state == PEER_STATE_ORPHANED)
         return 1;
 
-    dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
+    dgram_bio_get_peer_data(b, NULL, NULL, NULL, &peerb);
     if (!ossl_assert(peerb != NULL))
         return -1;
 
@@ -710,7 +718,7 @@ static size_t dgram_pair_ctrl_pending(BIO *bio)
             return 0;
     }
 
-    dgram_bio_get_peer_data(b, &rbufptr, &lock, &readb);
+    dgram_bio_get_peer_data(b, &rbufptr, &lock, NULL, &readb);
 
     if (CRYPTO_THREAD_write_lock(lock) == 0)
         return 0;
@@ -739,7 +747,7 @@ static size_t dgram_pair_ctrl_get_write_guarantee(BIO *bio)
     struct ring_buf *rbufptr;
     CRYPTO_RWLOCK *lock;
 
-    dgram_bio_get_peer_data(b, &rbufptr, &lock, NULL);
+    dgram_bio_get_peer_data(b, &rbufptr, &lock, NULL, NULL);
 
     if (CRYPTO_THREAD_read_lock(lock) == 0)
         return 0;
@@ -764,6 +772,7 @@ static int dgram_pair_ctrl_get_local_addr_cap(BIO *bio)
 {
     struct bio_dgram_pair_st *b = bio->ptr, *readb;
     int peer_state;
+    uint32_t caps;
 
     if (!bio->init)
         return 0;
@@ -776,9 +785,9 @@ static int dgram_pair_ctrl_get_local_addr_cap(BIO *bio)
             return 0;
     }
 
-    dgram_bio_get_peer_data(b, NULL, NULL, &readb);
+    dgram_bio_get_peer_data(b, NULL, NULL, &caps, &readb);
 
-    return (~readb->cap & (BIO_DGRAM_CAP_HANDLES_SRC_ADDR | BIO_DGRAM_CAP_PROVIDES_DST_ADDR)) == 0;
+    return (~caps & (BIO_DGRAM_CAP_HANDLES_SRC_ADDR | BIO_DGRAM_CAP_PROVIDES_DST_ADDR)) == 0;
 }
 
 /* BIO_dgram_get_effective_caps (BIO_CTRL_DGRAM_GET_EFFECTIVE_CAPS) */
@@ -786,6 +795,7 @@ static int dgram_pair_ctrl_get_effective_caps(BIO *bio)
 {
     struct bio_dgram_pair_st *b = bio->ptr, *peerb;
     int peer_state;
+    uint32_t caps;
 
     if (b->pair == NULL)
         return 0;
@@ -796,9 +806,9 @@ static int dgram_pair_ctrl_get_effective_caps(BIO *bio)
     if (peer_state == PEER_STATE_ORPHANED)
         return 0;
 
-    dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
+    dgram_bio_get_peer_data(b, NULL, NULL, &caps, &peerb);
 
-    return peerb->cap;
+    return caps;
 }
 
 /* BIO_dgram_get_caps (BIO_CTRL_DGRAM_GET_CAPS) */
@@ -813,8 +823,14 @@ static uint32_t dgram_pair_ctrl_get_caps(BIO *bio)
 static int dgram_pair_ctrl_set_caps(BIO *bio, uint32_t caps)
 {
     struct bio_dgram_pair_st *b = bio->ptr;
+    struct rbuf_map_st *map;
 
     b->cap = caps;
+
+    if (is_dgram_pair(b)) {
+        map = dgram_rbuf_map_get_self(b);
+        map->cap = caps;
+    }
     return 1;
 }
 
@@ -859,7 +875,7 @@ static int dgram_pair_ctrl_set_mtu(BIO *bio, size_t mtu)
             return 0;
 
         if (peer_state == PEER_STATE_PAIRED) {
-            dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
+            dgram_bio_get_peer_data(b, NULL, NULL, NULL, &peerb);
             peerb->mtu = mtu;
         }
     }
@@ -1139,7 +1155,7 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
     if (!ossl_assert(b != NULL))
         return -BIO_R_TRANSFER_ERROR;
 
-    dgram_bio_get_peer_data(b, &rbufptr, NULL, NULL);
+    dgram_bio_get_peer_data(b, &rbufptr, NULL, NULL, NULL);
 
     if (!ossl_assert(rbufptr->start != NULL))
         return -BIO_R_TRANSFER_ERROR;
@@ -1276,7 +1292,7 @@ static int dgram_pair_read(BIO *bio, char *buf, int sz_)
         return -1;
     }
 
-    dgram_bio_get_peer_data(b, NULL, NULL, &peerb);
+    dgram_bio_get_peer_data(b, NULL, NULL, NULL, &peerb);
 
     /*
      * For BIO_read we have to acquire both locks because we touch the retry
@@ -1339,7 +1355,7 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
         }
     }
 
-    dgram_bio_get_peer_data(b, NULL, &lock, &readb);
+    dgram_bio_get_peer_data(b, NULL, &lock, NULL, &readb);
     if (CRYPTO_THREAD_write_lock(lock) == 0) {
         ERR_raise(ERR_LIB_BIO, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
         *num_processed = 0;
@@ -1489,10 +1505,11 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
 {
     static const BIO_ADDR zero_addr;
     size_t saved_idx, saved_count;
-    struct bio_dgram_pair_st *b = bio->ptr, *readb;
+    struct bio_dgram_pair_st *b = bio->ptr;
     struct dgram_hdr hdr = { 0 };
     struct ring_buf *rbufptr;
     int peer_state;
+    uint32_t caps;
 
     if (!is_multi)
         BIO_clear_retry_flags(bio);
@@ -1518,9 +1535,9 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
     if (local != NULL && b->local_addr_enable == 0)
         return -BIO_R_LOCAL_ADDR_NOT_AVAILABLE;
 
-    dgram_bio_get_peer_data(b, NULL, NULL, &readb);
+    dgram_bio_get_peer_data(b, NULL, NULL, &caps, NULL);
 
-    if (peer != NULL && (readb->cap & BIO_DGRAM_CAP_HANDLES_DST_ADDR) == 0)
+    if (peer != NULL && (caps & BIO_DGRAM_CAP_HANDLES_DST_ADDR) == 0)
         return -BIO_R_PEER_ADDR_NOT_AVAILABLE;
 
     hdr.len = sz;
