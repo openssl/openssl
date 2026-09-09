@@ -119,7 +119,7 @@ static void parseit(void)
 
     /*
      * Get the count (parsing stops at the '@' if present), and percentage.
-     * Ignore an unparsable/overflowing count rather than acting on garbage.
+     * An unparsable or overflowing count is ignored.
      * Validate that the count is followed by '@' or end-of-string.
      */
     if (!ossl_strtol(md_failstring, &end, 10, &md_count)

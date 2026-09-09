@@ -49,9 +49,9 @@ static SOCKET create_socket(void)
     char port_str[6];
 
     /*
-     * Resolve the wildcard address for our port. Requesting AF_INET6 gives a
-     * single socket that, BIO_listen will clear IPV6_V6ONLY below, and the
-     * socket accepts both IPv6 and IPv4 clients.
+     * Resolve the wildcard address for our port. With AF_INET6 and
+     * IPV6_V6ONLY cleared by BIO_listen below, a single socket accepts both
+     * IPv6 and IPv4 clients.
      */
     snprintf(port_str, sizeof(port_str), "%d", server_port);
     if (!BIO_lookup_ex(NULL, port_str, BIO_LOOKUP_SERVER, AF_INET6,
