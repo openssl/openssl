@@ -8776,6 +8776,171 @@ static int test_invalid_ctx_for_digest(void)
     return ret;
 }
 
+/* Check that a zero-length GCM input is a no-op via EVP_Cipher(). */
+static int test_gcm_oneshot_zero_length(void)
+{
+    static const unsigned char key[16] = { 1 };
+    static const unsigned char iv[12] = { 2 };
+    static const unsigned char aad[] = { 0x61, 0x62, 0x00 };
+    unsigned char tag[2][16];
+    unsigned char out[1];
+    unsigned char dummy = 0;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int i, outl, ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-128-GCM",
+                      testpropq)))
+        goto end;
+
+    for (i = 0; i < 2; i++) {
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+            || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad, 1))
+            || (i != 0
+                && !TEST_int_eq(EVP_Cipher(ctx, out, &dummy, 0), 0))
+            || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad + 1, 2))
+            || !TEST_true(EVP_EncryptFinal_ex(ctx, out, &outl))
+            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                sizeof(tag[i]), tag[i]),
+                0))
+            goto end;
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = NULL;
+    }
+    ret = TEST_mem_eq(tag[0], sizeof(tag[0]), tag[1], sizeof(tag[1]));
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/* An empty TLS payload still requires an explicit IV and an authentic tag. */
+static int test_gcm_oneshot_tls_empty_record(void)
+{
+    static const unsigned char key[16] = { 1 };
+    static const unsigned char iv[12] = { 2 };
+    static const struct {
+        int enc;
+        int empty;
+        int badtag;
+    } tests[] = {
+        { 1, 0, 0 }, /* Generate a valid empty-plaintext record first. */
+        { 0, 0, 0 }, /* Verify its tag. */
+        { 0, 0, 1 }, /* Reject a corrupted tag. */
+        { 1, 1, 0 }, /* Reject zero record bytes on encrypt. */
+        { 0, 1, 0 } /* Reject zero record bytes on decrypt. */
+    };
+    unsigned char record[EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN] = { 0 };
+    unsigned char buf[sizeof(record)];
+    unsigned char aad[EVP_AEAD_TLS1_AAD_LEN] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 23, 3, 3, 0, 0
+    };
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-128-GCM",
+                      testpropq)))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(tests); i++) {
+        aad[sizeof(aad) - 1] = EVP_GCM_TLS_EXPLICIT_IV_LEN
+            + (tests[i].enc ? 0 : EVP_GCM_TLS_TAG_LEN);
+        memcpy(buf, record, sizeof(buf));
+        if (tests[i].badtag)
+            buf[sizeof(buf) - 1] ^= 1;
+
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_CipherInit_ex2(ctx, cipher, key, iv,
+                tests[i].enc, NULL))
+            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+                                -1, (void *)iv),
+                0)
+            || !TEST_int_eq(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
+                                sizeof(aad), aad),
+                EVP_GCM_TLS_TAG_LEN)
+            || !TEST_int_eq(EVP_Cipher(ctx, buf, buf,
+                                tests[i].empty ? 0 : sizeof(buf)),
+                tests[i].empty || tests[i].badtag ? -1 : (int)sizeof(buf)))
+            goto end;
+        if (tests[i].enc && !tests[i].empty)
+            memcpy(record, buf, sizeof(record));
+        ERR_clear_error();
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = NULL;
+    }
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/* Check that non-final OCB calls reject NULL output, including empty input. */
+static int test_ocb_oneshot_null_output(int idx)
+{
+    static const unsigned char key[16] = { 1 };
+    static const unsigned char iv[12] = { 2 };
+    static const unsigned char in[16] = { 0x61, 0x62, 0x00 };
+    static const unsigned int inlens[] = { 0, 3, 16 };
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int enc = idx / 3;
+    int ret = 0;
+
+    if ((cipher = EVP_CIPHER_fetch(testctx, "AES-128-OCB", testpropq)) == NULL)
+        return TEST_skip("AES-128-OCB cipher is not available");
+
+    ERR_clear_error();
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_CipherInit_ex2(ctx, cipher, key, iv, enc, NULL))
+        || !TEST_int_lt(EVP_Cipher(ctx, NULL, in, inlens[idx % 3]), 0)
+        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_PROV)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_NULL_OUTPUT_BUFFER))
+        goto end;
+    ERR_clear_error();
+
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/* An empty OCB call must still validate the key and apply the buffered IV. */
+static int test_ocb_oneshot_zero_length(int idx)
+{
+    static const unsigned char key[16] = { 1 };
+    static const unsigned char iv[12] = { 2 };
+    static const unsigned char in[16] = { 3 };
+    unsigned char out[16] = { 0 };
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int enc = idx / 3;
+    int state = idx % 3; /* 0: ready, 1: missing key, 2: missing IV */
+    int ret = 0;
+
+    if ((cipher = EVP_CIPHER_fetch(testctx, "AES-128-OCB", testpropq)) == NULL)
+        return TEST_skip("AES-128-OCB cipher is not available");
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_CipherInit_ex2(ctx, cipher,
+            state == 1 ? NULL : key, state == 2 ? NULL : iv, enc, NULL))
+        || !TEST_int_eq(EVP_Cipher(ctx, out, in, 0), state == 0 ? 0 : -1)
+        || (state == 0
+            && !TEST_int_eq(EVP_Cipher(ctx, out, in, sizeof(in)), sizeof(in))))
+        goto end;
+    ERR_clear_error();
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 static int test_evp_cipher_negative_length(void)
 {
     EVP_CIPHER_CTX *ctx = NULL;
@@ -10235,6 +10400,10 @@ int setup_tests(void)
 
     ADD_TEST(test_invalid_ctx_for_digest);
 
+    ADD_TEST(test_gcm_oneshot_zero_length);
+    ADD_TEST(test_gcm_oneshot_tls_empty_record);
+    ADD_ALL_TESTS(test_ocb_oneshot_null_output, 6);
+    ADD_ALL_TESTS(test_ocb_oneshot_zero_length, 6);
     ADD_TEST(test_evp_cipher_negative_length);
     ADD_TEST(test_aes_xts_rejects_missing_iv);
 
