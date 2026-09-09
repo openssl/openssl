@@ -151,7 +151,7 @@ static int cshake_set_encode_string(const char *in,
      */
     if (inlen == 0)
         return 1;
-    if (inlen >= CSHAKE_MAX_STRING)
+    if (inlen > CSHAKE_MAX_STRING)
         return 0;
     return ossl_sp800_185_encode_string(out, outmax, outlen,
         (const unsigned char *)in, inlen);

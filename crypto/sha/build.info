@@ -118,6 +118,7 @@ GENERATE[sha256-x86_64.s]=asm/sha512-x86_64.pl
 GENERATE[sha256-mb-x86_64.s]=asm/sha256-mb-x86_64.pl
 GENERATE[sha512-x86_64.s]=asm/sha512-x86_64.pl
 GENERATE[keccak1600-x86_64.s]=asm/keccak1600-x86_64.pl
+DEPEND[keccak1600-x86_64.s]=asm/keccak1600-common.pl
 
 GENERATE[sha1-sparcv9a.S]=asm/sha1-sparcv9a.pl
 GENERATE[sha1-sparcv9.S]=asm/sha1-sparcv9.pl
@@ -133,6 +134,7 @@ GENERATE[sha512-ppc.s]=asm/sha512-ppc.pl
 GENERATE[sha256p8-ppc.s]=asm/sha512p8-ppc.pl
 GENERATE[sha512p8-ppc.s]=asm/sha512p8-ppc.pl
 GENERATE[keccak1600-ppc64.s]=asm/keccak1600-ppc64.pl
+DEPEND[keccak1600-ppc64.s]=asm/keccak1600-common.pl
 
 GENERATE[sha1-parisc.s]=asm/sha1-parisc.pl
 GENERATE[sha256-parisc.s]=asm/sha512-parisc.pl
@@ -161,6 +163,7 @@ INCLUDE[sha256-armv4.o]=..
 GENERATE[sha512-armv4.S]=asm/sha512-armv4.pl
 INCLUDE[sha512-armv4.o]=..
 GENERATE[keccak1600-armv4.S]=asm/keccak1600-armv4.pl
+DEPEND[keccak1600-armv4.S]=asm/keccak1600-common.pl
 INCLUDE[keccak1600-armv4.o]=..
 
 GENERATE[sha1-armv8.S]=asm/sha1-armv8.pl
@@ -170,6 +173,7 @@ INCLUDE[sha256-armv8.o]=..
 GENERATE[sha512-armv8.S]=asm/sha512-armv8.pl
 INCLUDE[sha512-armv8.o]=..
 GENERATE[keccak1600-armv8.S]=asm/keccak1600-armv8.pl
+DEPEND[keccak1600-armv8.S]=asm/keccak1600-common.pl
 INCLUDE[keccak1600-armv8.o]=..
 
 GENERATE[sha1-s390x.S]=asm/sha1-s390x.pl
@@ -179,6 +183,7 @@ INCLUDE[sha256-s390x.o]=..
 GENERATE[sha512-s390x.S]=asm/sha512-s390x.pl
 INCLUDE[sha512-s390x.o]=..
 GENERATE[keccak1600-s390x.S]=asm/keccak1600-s390x.pl
+DEPEND[keccak1600-s390x.S]=asm/keccak1600-common.pl
 
 GENERATE[sha1-c64xplus.S]=asm/sha1-c64xplus.pl
 GENERATE[sha256-c64xplus.S]=asm/sha256-c64xplus.pl
