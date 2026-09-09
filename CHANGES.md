@@ -30,7 +30,7 @@ OpenSSL Releases
 OpenSSL 4.1
 -----------
 
-### Changes between 4.0 and 4.1 alpha 1 [9 Sep 2026]
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
