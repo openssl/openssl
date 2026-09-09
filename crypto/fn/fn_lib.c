@@ -164,6 +164,11 @@ const OSSL_FN *OSSL_FN_value_one(void)
     return &ossl_fn_static_one_storage.fn;
 }
 
+const OSSL_FN *ossl_fn_get0_small_factors(void)
+{
+    return &ossl_fn_static_small_prime_factors_storage.fn;
+}
+
 static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
 {
     OSSL_FN_ULONG x, mask;

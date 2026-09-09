@@ -154,6 +154,14 @@ const OSSL_FN_ULONG *ossl_fn_get_words(const OSSL_FN *f);
 
 size_t ossl_fn_get_dsize(const OSSL_FN *f);
 
+/*
+ * The product of the primes 3..751 (see SP 800-89 5.3.3 step f), the
+ * small-factors constant used by primality-related key validation.  A
+ * read-only view on static constant storage; never NULL, never to be
+ * freed, cleared, or written to.
+ */
+const OSSL_FN *ossl_fn_get0_small_factors(void);
+
 void ossl_fn_set_negative(OSSL_FN *f, bool neg);
 
 bool ossl_fn_is_negative(const OSSL_FN *f);

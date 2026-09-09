@@ -487,6 +487,12 @@ static int test_static_const_views(void)
         || !TEST_false(OSSL_FN_is_zero(fs)))
         return 0;
 
+    /* small_prime_factors: the internal accessor and the BN view agree */
+    if (!TEST_ptr(fs = ossl_fn_get0_small_factors())
+        || !TEST_ptr_eq(bn_get_ossl_fn(ossl_bn_get0_small_factors()), fs)
+        || !TEST_size_t_eq(OSSL_FN_num_bits(fs), 1037))
+        return 0;
+
     return 1;
 }
 
