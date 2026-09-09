@@ -18,7 +18,8 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
-static const char *fips_config_file = NULL;
+static OSSL_LIB_CTX *fips_libctx = NULL;
+static OSSL_PROVIDER *nullprov = NULL, *fipsprov = NULL;
 
 static const uint8_t shake256_input[] = {
     0x8d, 0x80, 0x01, 0xe2, 0xc0, 0x96, 0xf1, 0xb8,
@@ -1549,28 +1550,9 @@ static int cshake_custom_test(void)
 
 static int cshake_custom_fips_test(void)
 {
-    OSSL_LIB_CTX *libctx = NULL;
-    OSSL_PROVIDER *nullprov = NULL, *fipsprov = NULL;
-    int ret = 0;
-
-    if (!TEST_ptr(fips_config_file)
-        || !test_get_libctx(&libctx, &nullprov, fips_config_file,
-            &fipsprov, "fips"))
-        goto err;
-
-    if (fips_provider_version_lt(libctx, 4, 1, 0)) {
-        ret = TEST_skip("FIPS provider version before 4.1.0");
-        goto err;
-    }
-
-    ret = cshake_custom_utf8_test_libctx(libctx, "fips=yes")
-        && cshake_custom_octet_rejected_test_libctx(libctx, "fips=yes")
-        && cshake_custom_limit_test_libctx(libctx, "fips=yes");
-err:
-    OSSL_PROVIDER_unload(fipsprov);
-    OSSL_PROVIDER_unload(nullprov);
-    OSSL_LIB_CTX_free(libctx);
-    return ret;
+    return cshake_custom_utf8_test_libctx(fips_libctx, "fips=yes")
+        && cshake_custom_octet_rejected_test_libctx(fips_libctx, "fips=yes")
+        && cshake_custom_limit_test_libctx(fips_libctx, "fips=yes");
 }
 
 #ifndef OPENSSL_NO_KT
@@ -1725,6 +1707,8 @@ static int xof_fail_test(void)
 
 int setup_tests(void)
 {
+    const char *fips_config_file;
+
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
         return 0;
@@ -1735,7 +1719,13 @@ int setup_tests(void)
             || strcmp(test_get_argument(0), "fips") != 0
             || !TEST_ptr(fips_config_file = test_get_argument(1)))
             return 0;
-        ADD_TEST(cshake_custom_fips_test);
+        if (!test_get_libctx(&fips_libctx, &nullprov, fips_config_file,
+                &fipsprov, "fips")) {
+            cleanup_tests();
+            return 0;
+        }
+        if (fips_provider_version_ge(fips_libctx, 4, 1, 0))
+            ADD_TEST(cshake_custom_fips_test);
         return 1;
     }
 
@@ -1773,6 +1763,13 @@ int setup_tests(void)
     ADD_TEST(cshake_custom_test);
     ADD_TEST(xof_fail_test);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    OSSL_PROVIDER_unload(fipsprov);
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_LIB_CTX_free(fips_libctx);
 }
 
 OPT_TEST_DECLARE_USAGE("[fips configfile]")
