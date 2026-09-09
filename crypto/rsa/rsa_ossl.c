@@ -422,8 +422,22 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
             goto err;
 
     if (padding == RSA_X931_PADDING) {
-        if (!BN_sub(f, rsa->n, ret))
+        /* f = n - ret, on OSSL_FN views; pick the smaller of ret and f */
+        const OSSL_FN *fn_n = bn_get_ossl_fn(rsa->n);
+        OSSL_FN *fn_f, *fn_ret;
+        size_t nl;
+
+        if (fn_n == NULL)
             goto err;
+        nl = ossl_fn_get_dsize((OSSL_FN *)fn_n);
+        fn_f = bn_acquire_ossl_fn(f, (int)nl);
+        fn_ret = bn_acquire_ossl_fn(ret, (int)nl);
+        if (fn_f == NULL || fn_ret == NULL)
+            goto err;
+        if (!OSSL_FN_sub(fn_f, fn_n, fn_ret))
+            goto err;
+        bn_release(f, (int)nl);
+        bn_release(ret, (int)nl);
         if (BN_cmp(ret, f) > 0)
             res = f;
         else
@@ -766,9 +780,22 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         goto err;
 
     /* For X9.31: Assuming e is odd it does a 12 mod 16 test */
-    if ((padding == RSA_X931_PADDING) && ((bn_get_words(ret)[0] & 0xf) != 12))
-        if (!BN_sub(ret, rsa->n, ret))
+    if ((padding == RSA_X931_PADDING) && ((bn_get_words(ret)[0] & 0xf) != 12)) {
+        /* ret = n - ret, on OSSL_FN views */
+        const OSSL_FN *fn_n = bn_get_ossl_fn(rsa->n);
+        OSSL_FN *fn_ret;
+        size_t nl;
+
+        if (fn_n == NULL)
             goto err;
+        nl = ossl_fn_get_dsize((OSSL_FN *)fn_n);
+        fn_ret = bn_acquire_ossl_fn(ret, (int)nl);
+        if (fn_ret == NULL)
+            goto err;
+        if (!OSSL_FN_sub(fn_ret, fn_n, fn_ret))
+            goto err;
+        bn_release(ret, (int)nl);
+    }
 
     i = BN_bn2binpad(ret, buf, num);
     if (i < 0)
