@@ -4495,6 +4495,145 @@ err:
     EVP_CIPHER_free(cipher);
     return ret;
 }
+
+/*
+ * These distinct AAD inputs previously produced the same tag when split
+ * around an empty EVP_Cipher() call.
+ */
+static int test_chacha20_poly1305_zero_length_cipher(void)
+{
+    static const unsigned char key[32] = { 1 };
+    static const unsigned char iv[12] = { 2 };
+    static const unsigned char plaintext[] = { 0x42 };
+    /* aad[0] is 61 62 followed by 16 zero bytes, split after 1 byte. */
+    /* aad[1] is 61, 15 zero bytes, 62, 00, split after 17 bytes. */
+    static const unsigned char aad[2][18] = {
+        { 0x61, 0x62 },
+        { 0x61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x62, 0 }
+    };
+    static const int split[2] = { 1, 17 };
+    unsigned char ciphertext[2][sizeof(plaintext)];
+    unsigned char tag[2][16], ref_tag[16];
+    unsigned char scratch[1], dummy = 0, recovered[sizeof(plaintext)];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int i, outl, finl, ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "ChaCha20-Poly1305",
+                      testpropq)))
+        goto end;
+
+    /* Reference: aad[0] fed in one update, no empty call. */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad[0],
+            (int)sizeof(aad[0])))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext[0], &outl, plaintext,
+            (int)sizeof(plaintext)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext[0] + outl, &finl))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                            sizeof(ref_tag), ref_tag),
+            0))
+        goto end;
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+
+    /* Encrypt with each AAD split around an empty EVP_Cipher() call. */
+    for (i = 0; i < 2; i++) {
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+            || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad[i],
+                split[i]))
+            /*
+             * EVP_Cipher() returns the number of bytes written for a
+             * custom cipher, so 0 is the expected success value here.
+             */
+            || !TEST_int_eq(EVP_Cipher(ctx, scratch, &dummy, 0), 0)
+            || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl,
+                aad[i] + split[i],
+                (int)sizeof(aad[i]) - split[i]))
+            || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext[i], &outl,
+                plaintext, (int)sizeof(plaintext)))
+            || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext[i] + outl,
+                &finl))
+            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                sizeof(tag[i]), tag[i]),
+                0))
+            goto end;
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = NULL;
+    }
+
+    /* Check tag transparency and distinct tags for the two AAD values. */
+    if (!TEST_mem_eq(tag[0], sizeof(tag[0]), ref_tag, sizeof(ref_tag))
+        || !TEST_mem_ne(tag[0], sizeof(tag[0]), tag[1], sizeof(tag[1])))
+        goto end;
+
+    /* Decryption with the matching AAD accepts the tag. */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, cipher, key, iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad[0], split[0]))
+        || !TEST_int_eq(EVP_Cipher(ctx, scratch, &dummy, 0), 0)
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad[0] + split[0],
+            (int)sizeof(aad[0]) - split[0]))
+        || !TEST_true(EVP_DecryptUpdate(ctx, recovered, &outl, ciphertext[0],
+            (int)sizeof(ciphertext[0])))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                            sizeof(tag[0]), tag[0]),
+            0)
+        || !TEST_true(EVP_DecryptFinal_ex(ctx, recovered + outl, &finl))
+        || !TEST_mem_eq(recovered, sizeof(recovered), plaintext,
+            sizeof(plaintext)))
+        goto end;
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+
+    /* Decryption with the other AAD rejects the tag. */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, cipher, key, iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad[1], split[1]))
+        || !TEST_int_eq(EVP_Cipher(ctx, scratch, &dummy, 0), 0)
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad[1] + split[1],
+            (int)sizeof(aad[1]) - split[1]))
+        || !TEST_true(EVP_DecryptUpdate(ctx, recovered, &outl, ciphertext[0],
+            (int)sizeof(ciphertext[0])))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                            sizeof(tag[0]), tag[0]),
+            0)
+        || !TEST_false(EVP_DecryptFinal_ex(ctx, recovered + outl, &finl)))
+        goto end;
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+
+    /*
+     * A TLS record with no plaintext still requires a 16-byte tag.
+     * The TLS AAD record length is 0 for encryption and 16 for decryption;
+     * a zero-length EVP_Cipher() call must fail in both cases.
+     */
+    for (i = 0; i < 2; i++) {
+        unsigned char tls_aad[EVP_AEAD_TLS1_AAD_LEN] = { 0 };
+
+        tls_aad[EVP_AEAD_TLS1_AAD_LEN - 1] = (i == 0) ? 0 : 16;
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !(i == 0
+                    ? TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+                    : TEST_true(EVP_DecryptInit_ex2(ctx, cipher, key, iv, NULL)))
+            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
+                                sizeof(tls_aad), tls_aad),
+                0)
+            || !TEST_int_eq(EVP_Cipher(ctx, scratch, &dummy, 0), -1))
+            goto end;
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = NULL;
+    }
+
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
 #ifndef OPENSSL_NO_DH
@@ -10148,6 +10287,7 @@ int setup_tests(void)
 #endif
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
+    ADD_TEST(test_chacha20_poly1305_zero_length_cipher);
 #endif
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_DH_priv_pub);
