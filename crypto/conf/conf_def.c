@@ -643,6 +643,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
     int q, r, rr = 0, to = 0;
     char *s, *e, *rp, *p, *rrp, *np, *cp, v;
     BUF_MEM *buf;
+    int ret = 0;
 
     if ((buf = BUF_MEM_new()) == NULL)
         return 0;
@@ -783,11 +784,12 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
     buf->data[to] = '\0';
     OPENSSL_free(*pto);
     *pto = buf->data;
-    OPENSSL_free(buf);
-    return 1;
+    /* Take ownership of the buf mem data */
+    buf->data = NULL;
+    ret = 1;
 err:
     BUF_MEM_free(buf);
-    return 0;
+    return ret;
 }
 
 #ifndef OPENSSL_NO_POSIX_IO
