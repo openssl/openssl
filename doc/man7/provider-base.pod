@@ -339,6 +339,15 @@ array are typically direct pointers to those public functions. Note that the BIO
 functions take an B<OSSL_CORE_BIO> type rather than the standard B<BIO>
 type. This is to ensure that a provider does not mix BIOs from the core
 with BIOs used on the provider side (the two are not compatible).
+
+There is one exception to the exact correspondence: while the public
+L<BIO_ctrl(3)> returns B<long>, the core function (OSSL_FUNC_BIO_ctrl_fn)
+is defined to return B<int> for historical reasons.  The core checks that
+the underlying return value fits in an B<int> and returns an error if it
+does not.  In practice, all BIO control commands return values that fit in
+an B<int>, so providers should treat B<int> as the effective return range
+of BIO_ctrl().
+
 OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
 passed into a provider. This may be ignored by a provider.
 
