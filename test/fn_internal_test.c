@@ -453,9 +453,17 @@ end:
  */
 static int test_static_const_views(void)
 {
+    const OSSL_FN *f1 = NULL;
     const OSSL_FN *f2 = NULL;
     const OSSL_FN *fp = NULL;
     const OSSL_FN *fs = NULL;
+
+    /* The literal 1: 1 limb, value 1, one shared storage object */
+    if (!TEST_ptr(f1 = OSSL_FN_value_one())
+        || !TEST_size_t_eq(ossl_fn_get_dsize(f1), 1)
+        || !TEST_true(OSSL_FN_is_word(f1, 1))
+        || !TEST_ptr_eq(bn_get_ossl_fn(BN_value_one()), f1))
+        return 0;
 
     /* The literal 2: 1 limb, value 2 */
     if (!TEST_ptr(f2 = bn_get_ossl_fn(&ossl_bignum_const_2))
