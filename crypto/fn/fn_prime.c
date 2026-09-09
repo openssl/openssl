@@ -18,7 +18,7 @@
 /*
  * Calculate the number of trial divisions that gives the best speed in
  * combination with the Miller-Rabin prime test, based on the size of the
- * candidate prime.  The size is the candidate's public width in bits.
+ * candidate prime.  The size is the candidate's significant size in bits.
  */
 static int ossl_fn_calc_trial_divisions(size_t bits)
 {
@@ -38,8 +38,8 @@ static int ossl_fn_calc_trial_divisions(size_t bits)
  * positive rate of 2^-128.  If the size of the prime is larger than 2048
  * the caller probably wants a higher security level than 128, so switch
  * to 128 rounds giving a false positive rate of 2^-256.
- * Returns the number of rounds.  The size is the candidate's public width
- * in bits.
+ * Returns the number of rounds.  The size is the candidate's significant
+ * size in bits.
  */
 static int ossl_fn_mr_min_checks(size_t bits)
 {
@@ -84,12 +84,13 @@ size_t ossl_fn_miller_rabin_is_prime_ctx_size(const OSSL_FN *w)
  * Test, or C.3.1 Miller-Rabin Probabilistic Primality Test (if |enhanced| is
  * zero).  The Step numbers listed in the code refer to the enhanced case.
  *
- * The number of rounds and the random-base draws branch on |w|'s public
- * width and on the public iteration count, not on limb values; the modular
- * arithmetic (gcd, modexp, modmul) is constant-time with respect to the
- * operand values.  What leaks, as OSSL_FN's own properties: the magnitude of
- * |w| (via its width), the iteration count, and the composite/prime verdict
- * that is the whole point of the test.
+ * The number of rounds and the random-base draws branch on |w|'s
+ * significant bit count and on the public iteration count, not on limb
+ * values beyond that; the modular arithmetic (gcd, modexp, modmul) is
+ * constant-time with respect to the operand values.  What leaks, as
+ * OSSL_FN's own properties: the magnitude of |w| (via its significant bit
+ * count), the iteration count, and the composite/prime verdict that is the
+ * whole point of the test.
  *
  * If |enhanced| is set, then |status| returns one of the following:
  *     BN_PRIMETEST_PROBABLY_PRIME
@@ -109,7 +110,12 @@ int ossl_fn_miller_rabin_is_prime(const OSSL_FN *w, int iterations,
             *b = NULL;
     OSSL_FN_MONT_CTX *mont = NULL;
     const void *token = NULL;
-    size_t wbits = (size_t)w->dsize * OSSL_FN_BITS;
+    /*
+     * The default round count is calibrated to the candidate's actual
+     * magnitude, so it is derived from the significant bit count; the
+     * container width may round up into the next calibration band.
+     */
+    size_t wbits = OSSL_FN_num_bits(w);
 
     /* w must be odd */
     if (!OSSL_FN_is_odd(w))
@@ -250,7 +256,12 @@ static int ossl_fn_is_prime_int(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb, OSSL_LIB_CTX *libctx)
 {
     int i, status, ret = -1;
-    size_t wbits = (size_t)w->dsize * OSSL_FN_BITS;
+    /*
+     * The trial-division depth is calibrated to the candidate's actual
+     * magnitude, so it is derived from the significant bit count; the
+     * container width may round up into the next calibration band.
+     */
+    size_t wbits = OSSL_FN_num_bits(w);
 
     /* w must be bigger than 1 */
     if (OSSL_FN_is_zero(w) || OSSL_FN_is_one(w))
@@ -296,7 +307,8 @@ err:
 int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb, OSSL_LIB_CTX *libctx)
 {
-    int min_checks = ossl_fn_mr_min_checks((size_t)w->dsize * OSSL_FN_BITS);
+    /* Significant bit count, for the calibration reason given above. */
+    int min_checks = ossl_fn_mr_min_checks(OSSL_FN_num_bits(w));
 
     if (checks < min_checks)
         checks = min_checks;
