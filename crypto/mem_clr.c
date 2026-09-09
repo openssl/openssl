@@ -21,5 +21,13 @@ static volatile memset_t memset_func = memset;
 
 void OPENSSL_cleanse(void *ptr, size_t len)
 {
-    memset_func(ptr, 0, len);
+    /*
+     * If len is zero, ptr may be NULL. However, due to a C language bug, memset
+     * cannot be called with NULL and zero. This will be fixed in C2y and
+     * retroactively applied to older versions of C, but we still support older
+     * compilers and sanitizers, so explicitly check len. See
+     * https://developers.redhat.com/articles/2024/12/11/making-memcpynull-null-0-well-defined
+     */
+    if (len != 0)
+        memset_func(ptr, 0, len);
 }
