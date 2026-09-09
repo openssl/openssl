@@ -2248,6 +2248,56 @@ int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst)
 }
 
 /*
+ * ossl_dtls_listen_ex - DTLS backend for SSL_listen_ex().
+ *
+ * Pulls the next already-cookie-validated connection off listener's
+ * incoming_connections (the same queue SSL_accept_connection() drains) and
+ * transplants its state onto new_conn.
+ *
+ * Return value: 1 on success; 0 strictly means "nothing ready yet" -- the
+ * only path that returns 0 is an empty queue; -1 covers everything else
+ */
+int ossl_dtls_listen_ex(SSL *listener, SSL *new_conn)
+{
+    DTLS_LISTENER *dl;
+    SSL *src;
+
+    if (!IS_DTLS_LISTENER(listener) || !ossl_dtls_conn_is_peel_eligible(new_conn)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
+
+    dl = (DTLS_LISTENER *)listener;
+
+    /* Latches this listener to peeloff mode even if the queue below is empty. */
+    if (!ossl_dtls_listener_test_and_set_peeloff(listener, DTLS_PEELOFF_LISTEN))
+        return -1;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    src = sk_SSL_shift(dl->incoming_connections);
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    if (src == NULL)
+        return 0;
+
+    if (!ossl_dtls_transfer_connection_state(src, new_conn)) {
+        SSL_CONNECTION *src_sc = SSL_CONNECTION_FROM_SSL_ONLY(src);
+
+        /* src is unchanged and still registered; unregister before freeing. */
+        if (src_sc != NULL && src_sc->d1 != NULL)
+            ossl_dtls_listener_unregister_established_conn(listener, &src_sc->d1->peer_addr);
+        dtls_listener_connection_free(src);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    /* src is now an empty, fresh shell -- ordinary SSL_free() applies. */
+    SSL_free(src);
+
+    return 1;
+}
+
+/*
  * dtls_listener_conn_ready - check if connection is ready for accept queue.
  *
  * Determines whether the SSL object has completed cookie validation (if required)

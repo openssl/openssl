@@ -8504,10 +8504,15 @@ int SSL_listen_ex(SSL *listener, SSL *new_conn)
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(listener) && IS_QUIC(new_conn))
         return ossl_quic_peeloff_conn(listener, new_conn);
-    else
 #endif
-        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
-            "SSL_listen_ex only operates on QUIC SSL objects");
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS_LISTENER(listener) && IS_DTLS(new_conn))
+        return ossl_dtls_listen_ex(listener, new_conn);
+#endif
+
+    ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+        "SSL_listen_ex only operates on QUIC or DTLS listener SSL objects");
     return -1;
 }
 

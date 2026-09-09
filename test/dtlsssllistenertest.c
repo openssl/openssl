@@ -5827,6 +5827,154 @@ err:
 }
 
 /*
+ * Test SSL_listen_ex() end-to-end for DTLS listeners: a real connection
+ * queued via cookie validation, peeled via SSL_listen_ex() into a
+ * pre-created new_conn, and required to actually finish its handshake and
+ * exchange data on the peeled object -- not just return a truthy value.
+ */
+static int test_dtls_listen_ex_basic(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *new_conn = NULL;
+    BIO_ADDR *client_addr = NULL;
+    const char msg[] = "hello from SSL_listen_ex's client";
+    const char reply[] = "hello from SSL_listen_ex's server";
+    char buf[64];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    if (!TEST_ptr(new_conn = SSL_new(sctx)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 1))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(new_conn, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+    if (!TEST_true(SSL_read_ex(new_conn, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(new_conn, reply, sizeof(reply), &written))
+        || !TEST_size_t_eq(written, sizeof(reply)))
+        goto end;
+    if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, reply, sizeof(reply)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test SSL_listen_ex() on a DTLS listener with nothing queued: must return
+ * 0, and only 0, not -1.
+ */
+static int test_dtls_listen_ex_no_connection(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *listener = NULL, *new_conn = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    if (!TEST_ptr(new_conn = SSL_new(ctx)))
+        goto err;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 0))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(new_conn);
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
+ * Test SSL_listen_ex() argument validation for DTLS: NULL listener/new_conn
+ * and wrong-typed or ineligible objects must return -1, never 0.
+ */
+static int test_dtls_listen_ex_invalid_args(void)
+{
+    SSL_CTX *ctx = NULL, *tls_ctx = NULL;
+    SSL *listener = NULL, *new_conn = NULL, *tls_ssl = NULL, *started = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    if (!TEST_ptr(new_conn = SSL_new(ctx)))
+        goto err;
+
+    /* NULL listener or new_conn. */
+    if (!TEST_int_eq(SSL_listen_ex(NULL, new_conn), -1))
+        goto err;
+    if (!TEST_int_eq(SSL_listen_ex(listener, NULL), -1))
+        goto err;
+
+    /* listener argument is not actually a listener. */
+    if (!TEST_int_eq(SSL_listen_ex(new_conn, new_conn), -1))
+        goto err;
+
+    /* new_conn is not DTLS. */
+    if (!TEST_ptr(tls_ctx = SSL_CTX_new(TLS_server_method())))
+        goto err;
+    if (!TEST_ptr(tls_ssl = SSL_new(tls_ctx)))
+        goto err;
+    if (!TEST_int_eq(SSL_listen_ex(listener, tls_ssl), -1))
+        goto err;
+
+    /* new_conn is DTLS but not peel-eligible (handshake role already set). */
+    if (!TEST_ptr(started = SSL_new(ctx)))
+        goto err;
+    SSL_set_accept_state(started);
+    if (!TEST_int_eq(SSL_listen_ex(listener, started), -1))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(started);
+    SSL_free(tls_ssl);
+    SSL_CTX_free(tls_ctx);
+    SSL_free(new_conn);
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
  * Test the blocking mode of a DTLS listener and of the connections it creates.
  *
  * Blocking is the default, as it is for QUIC: a listener which was never
@@ -6415,6 +6563,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls_conn_is_peel_eligible);
     ADD_TEST(test_dtls_transfer_connection_state_basic);
     ADD_TEST(test_dtls_transfer_connection_state_invalid_args);
+    ADD_TEST(test_dtls_listen_ex_basic);
+    ADD_TEST(test_dtls_listen_ex_no_connection);
+    ADD_TEST(test_dtls_listen_ex_invalid_args);
 
     /* Blocking mode tests */
     ADD_TEST(test_dtls_blocking_mode);
