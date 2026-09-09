@@ -632,23 +632,48 @@ err:
  */
 int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
 {
+    /* k = 2; check that (2^e)^d == 2 (mod n) */
     int ret = 0;
-    BIGNUM *k, *tmp;
+    const OSSL_FN *fn_n, *fn_e, *fn_d;
+    OSSL_FN *k = NULL, *tmp = NULL;
+    OSSL_FN_MONT_CTX *mont_n = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    size_t nl, fn_size;
 
-    BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    k = BN_CTX_get(ctx);
-    if (k == NULL)
+    fn_n = bn_get_ossl_fn(rsa->n);
+    fn_e = bn_get_ossl_fn(rsa->e);
+    fn_d = bn_get_ossl_fn(rsa->d);
+    if (fn_n == NULL || fn_e == NULL || fn_d == NULL)
+        return 0;
+    nl = ossl_fn_get_dsize((OSSL_FN *)fn_n);
+
+    k = OSSL_FN_secure_new_limbs(nl);
+    tmp = OSSL_FN_secure_new_limbs(nl);
+    mont_n = OSSL_FN_MONT_CTX_new(fn_n);
+    if (k == NULL || tmp == NULL || mont_n == NULL)
         goto err;
-    BN_set_flags(k, BN_FLG_CONSTTIME);
 
-    ret = (BN_set_word(k, 2)
-        && BN_mod_exp(tmp, k, rsa->e, rsa->n, ctx)
-        && BN_mod_exp(tmp, tmp, rsa->d, rsa->n, ctx)
-        && BN_cmp(k, tmp) == 0);
+    /* The two exponentiations run sequentially in one arena. */
+    fn_size = ossl_fn_ctx_max_size(
+        OSSL_FN_mod_exp_mont_ctx_size(tmp, k, fn_e, fn_n, NULL),
+        OSSL_FN_mod_exp_mont_ctx_size(tmp, tmp, fn_d, fn_n, NULL));
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(rsa->libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    if (!OSSL_FN_set_word(k, 2))
+        goto err;
+    ret = OSSL_FN_mod_exp_mont(tmp, k, fn_e, fn_n, fn_ctx, mont_n)
+        && OSSL_FN_mod_exp_mont(tmp, tmp, fn_d, fn_n, fn_ctx, mont_n)
+        && OSSL_FN_cmp(k, tmp) == 0;
     if (ret == 0)
         ERR_raise(ERR_LIB_RSA, RSA_R_PAIRWISE_TEST_FAILURE);
 err:
-    BN_CTX_end(ctx);
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_MONT_CTX_free(mont_n);
+    OSSL_FN_clear_free(k);
+    OSSL_FN_clear_free(tmp);
     return ret;
 }
