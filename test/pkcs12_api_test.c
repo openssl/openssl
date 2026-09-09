@@ -134,6 +134,101 @@ err:
     return TEST_true(ret);
 }
 
+static int test_parse_combinations(int idx)
+{
+    int ret = 0;
+    PKCS12 *p12 = NULL;
+    EVP_PKEY *key = NULL, *key2 = NULL;
+    X509 *cert = NULL, *cert2 = NULL;
+    STACK_OF(X509) *ca = NULL, *ca2 = NULL;
+    int want_key = (idx >> 2) & 1;
+    int want_cert = (idx >> 1) & 1;
+    int want_ca = idx & 1;
+    int baseline_ca_count = 0;
+
+    if (in_file == NULL || !has_key || !has_cert)
+        return 1;
+
+    TEST_info("combination %d: want_key=%d want_cert=%d want_ca=%d",
+        idx, want_key, want_cert, want_ca);
+
+    /* Baseline: full parse to count CA certs */
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+    if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
+        goto err;
+    if (!TEST_ptr(key) || !TEST_ptr(cert))
+        goto err;
+    if (has_ca && !TEST_ptr(ca))
+        goto err;
+    baseline_ca_count = ca == NULL ? 0 : sk_X509_num(ca);
+    EVP_PKEY_free(key);
+    key = NULL;
+    X509_free(cert);
+    cert = NULL;
+    OSSL_STACK_OF_X509_free(ca);
+    ca = NULL;
+    PKCS12_free(p12);
+    p12 = NULL;
+
+    /* Test the specific combination */
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+    if (!TEST_true(PKCS12_parse(p12, in_pass,
+            want_key ? &key2 : NULL,
+            want_cert ? &cert2 : NULL,
+            want_ca ? &ca2 : NULL)))
+        goto err;
+
+    if (want_key) {
+        if (!TEST_ptr(key2))
+            goto err;
+    }
+
+    if (want_cert) {
+        /*
+         * PKCS12_parse only sets *cert when the key is also requested and
+         * found, because it matches certs against *pkey.
+         */
+        if (want_key) {
+            if (!TEST_ptr(cert2))
+                goto err;
+        } else {
+            if (!TEST_ptr_null(cert2))
+                goto err;
+        }
+    }
+
+    if (want_ca) {
+        int actual_ca_count = ca2 == NULL ? 0 : sk_X509_num(ca2);
+        int expected_ca_count = baseline_ca_count;
+
+        /*
+         * The matching cert is only excluded from the CA stack when both
+         * key and cert pointers are provided.  Otherwise it ends up in CA.
+         */
+        if (!want_key || !want_cert)
+            expected_ca_count++;
+
+        if (!TEST_int_eq(actual_ca_count, expected_ca_count))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    if (!ret)
+        TEST_info("failed combination %d: want_key=%d want_cert=%d want_ca=%d",
+            idx, want_key, want_cert, want_ca);
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    EVP_PKEY_free(key2);
+    X509_free(cert2);
+    OSSL_STACK_OF_X509_free(ca2);
+    return ret;
+}
+
 /*
  * If appending an additional certificate to the CA stack fails,
  * PKCS12_parse() should free its own allocated CA stack.
@@ -422,6 +517,7 @@ int setup_tests(void)
 
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
+    ADD_ALL_TESTS(test_parse_combinations, 8);
     ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_mfail_test);
     ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_existing_ca_mfail_test);
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
