@@ -177,7 +177,7 @@ cert_contains($tgt_info_cert,
               "Target:",
               1, 'X.509 Targeting Information Target');
 cert_contains($tgt_info_cert,
-              "Target Name: DirName:CN = W",
+              "Target Name: DirName:CN=W",
               1, 'X.509 Targeting Information Target Name');
 cert_contains($tgt_info_cert,
               "Target Group: DNS:wildboarsoftware.com",
@@ -203,7 +203,7 @@ cert_contains($hnc_cert,
               "Permitted:",
               1, 'X.509 Holder Name Constraints Permitted');
 cert_contains($hnc_cert,
-              "DirName:CN = Wildboar",
+              "DirName:CN=Wildboar",
               1, 'X.509 Holder Name Constraint');
 
 my $dnc_cert = srctop_file(@certs, "ext-delegatedNameConstraints.pem");
@@ -214,7 +214,7 @@ cert_contains($dnc_cert,
               "Permitted:",
               1, 'X.509 Delegated Name Constraints Permitted');
 cert_contains($dnc_cert,
-              "DirName:CN = Wildboar",
+              "DirName:CN=Wildboar",
               1, 'X.509 Delegated Name Constraint');
 my $sda_cert = srctop_file(@certs, "ext-subjectDirectoryAttributes.pem");
 cert_contains($sda_cert,
@@ -324,12 +324,12 @@ cert_contains($audit_id_cert,
 
 my $iobo_cert = srctop_file(@certs, "ext-issuedOnBehalfOf.pem");
 cert_contains($iobo_cert,
-              "DirName:CN = Wildboar",
+              "DirName:CN=Wildboar",
               1, 'X.509 Issued On Behalf Of');
 
 my $auth_att_id_cert = srctop_file(@certs, "ext-authorityAttributeIdentifier.pem");
 cert_contains($auth_att_id_cert,
-              "DirName:CN = Wildboar",
+              "DirName:CN=Wildboar",
               1, 'X.509 Authority Attribute Identifier');
 cert_contains($auth_att_id_cert,
               "Issuer Serial: 01030507",
@@ -340,7 +340,7 @@ cert_contains($auth_att_id_cert,
 
 my $role_spec_cert = srctop_file(@certs, "ext-roleSpecCertIdentifier.pem");
 cert_contains($role_spec_cert,
-              "Role Name: DirName:CN = Wildboar",
+              "Role Name: DirName:CN=Wildboar",
               1, 'X.509 Role Spec Certificate Identifier');
 cert_contains($role_spec_cert,
               "Role Certificate Issuer: DirName:CN",
@@ -371,7 +371,7 @@ cert_contains($attr_desc_cert,
               "Privilege Policy Identifier: 2.5.4.10",
               1, 'X.509 Attribute Descriptor');
 cert_contains($attr_desc_cert,
-              "DirName:CN = Wildboar",
+              "DirName:CN=Wildboar",
               1, 'X.509 Attribute Descriptor');
 cert_contains($attr_desc_cert,
               "Algorithm: sha256",
@@ -440,7 +440,7 @@ cert_contains($aaa_cert,
 
 my $aa_idp_cert = srctop_file(@certs, "ext-aAissuingDistributionPoint.pem");
 cert_contains($aa_idp_cert,
-              "DirName:CN = Wildboar",
+              "DirName:CN=Wildboar",
               1, 'X.509 Attribute Authority Issuing Distribution Point');
 cert_contains($aa_idp_cert,
               "CA Compromise",
