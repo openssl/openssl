@@ -547,6 +547,20 @@ end:
     return rv;
 }
 
+static inline int wrap_X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param,
+    const char *ip_asc, size_t namelen)
+{
+    return X509_VERIFY_PARAM_set1_ip_asc(param, ip_asc);
+    (void)namelen;
+}
+
+static inline int wrap_X509_VERIFY_PARAM_add1_ip_asc(X509_VERIFY_PARAM *param,
+    const char *ip_asc, size_t namelen)
+{
+    return X509_VERIFY_PARAM_add1_ip_asc(param, ip_asc);
+    (void)namelen;
+}
+
 static int cmd_SetExpectedDNSName(SSL_CONF_CTX *cctx, const char *value)
 {
     return set_expected(cctx, value,
@@ -564,15 +578,15 @@ static int cmd_AddExpectedDNSName(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_SetExpectedIPAddress(SSL_CONF_CTX *cctx, const char *value)
 {
     return set_expected(cctx, value,
-        (cb_func)X509_VERIFY_PARAM_set1_ip_asc,
-        (cb_func)X509_VERIFY_PARAM_add1_ip_asc);
+        wrap_X509_VERIFY_PARAM_set1_ip_asc,
+        wrap_X509_VERIFY_PARAM_add1_ip_asc);
 }
 
 static int cmd_AddExpectedIPAddress(SSL_CONF_CTX *cctx, const char *value)
 {
     return set_expected(cctx, value,
-        (cb_func)X509_VERIFY_PARAM_add1_ip_asc,
-        (cb_func)X509_VERIFY_PARAM_add1_ip_asc);
+        wrap_X509_VERIFY_PARAM_add1_ip_asc,
+        wrap_X509_VERIFY_PARAM_add1_ip_asc);
 }
 
 static int cmd_SecurityLevel(SSL_CONF_CTX *cctx, const char *value)
