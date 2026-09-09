@@ -36,6 +36,16 @@ typedef struct ossl_record_method_st OSSL_RECORD_METHOD;
  */
 typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 
+/*
+ * Rebind rl's callback argument to cbarg. rl->cbarg is normally set once,
+ * permanently, at record layer creation time and handed back verbatim to
+ * every OSSL_FUNC_rlayer_* callback. This exists solely for DTLS connection
+ * transplantation (SSL_listen_ex()), where a live record layer moves to a
+ * new owning SSL_CONNECTION and its callbacks must follow it there, rather
+ * than continuing to call back into the connection it left behind.
+ */
+void ossl_record_layer_set_cbarg(OSSL_RECORD_LAYER *rl, void *cbarg);
+
 #define OSSL_RECORD_ROLE_CLIENT 0
 #define OSSL_RECORD_ROLE_SERVER 1
 

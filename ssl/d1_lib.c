@@ -2094,6 +2094,160 @@ int ossl_dtls_conn_is_peel_eligible(SSL *ssl)
 }
 
 /*
+ * dtls_swap_connection_bodies - exchange the entire connection state of a
+ * and b, other than each side's own identity (SSL_CTX, reference count,
+ * lock, ex_data), which stays put.
+ *
+ * Self-inverse: calling this a second time with the same two arguments
+ * restores both a and b to exactly what they held before the first call.
+ * ossl_dtls_transfer_connection_state() relies on this to roll back cleanly
+ * if it can't make the swap visible via established_conns afterward.
+ */
+static void dtls_swap_connection_bodies(SSL_CONNECTION *a, SSL_CONNECTION *b)
+{
+    SSL_CONNECTION tmp;
+    SSL_CTX *a_ctx, *b_ctx;
+    CRYPTO_REF_COUNT a_references, b_references;
+    CRYPTO_RWLOCK *a_lock, *b_lock;
+    CRYPTO_EX_DATA a_ex_data, b_ex_data;
+
+    a_ctx = a->ssl.ctx;
+    a_references = a->ssl.references;
+    a_lock = a->ssl.lock;
+    a_ex_data = a->ssl.ex_data;
+
+    b_ctx = b->ssl.ctx;
+    b_references = b->ssl.references;
+    b_lock = b->ssl.lock;
+    b_ex_data = b->ssl.ex_data;
+
+    tmp = *a;
+    *a = *b;
+    *b = tmp;
+
+    a->ssl.ctx = a_ctx;
+    a->ssl.references = a_references;
+    a->ssl.lock = a_lock;
+    a->ssl.ex_data = a_ex_data;
+    a->user_ssl = SSL_CONNECTION_GET_SSL(a);
+
+    b->ssl.ctx = b_ctx;
+    b->ssl.references = b_references;
+    b->ssl.lock = b_lock;
+    b->ssl.ex_data = b_ex_data;
+    b->user_ssl = SSL_CONNECTION_GET_SSL(b);
+
+    /* rlayer.s is a back-pointer to the owning SSL_CONNECTION on each side. */
+    a->rlayer.s = a;
+    b->rlayer.s = b;
+
+    /*
+     * Whichever of a/b now holds a live rrl/wrl (there may be one on either
+     * side, depending on which direction this call is undoing) still thinks
+     * its owner is the other side. Rebind rather than recreate the record
+     * layer, which would reset per-epoch protocol state that cannot be
+     * rederived -- most importantly the DTLS anti-replay bitmap.
+     */
+    ossl_record_layer_set_cbarg(a->rlayer.rrl, a);
+    ossl_record_layer_set_cbarg(a->rlayer.wrl, a);
+    ossl_record_layer_set_cbarg(b->rlayer.rrl, b);
+    ossl_record_layer_set_cbarg(b->rlayer.wrl, b);
+}
+
+/*
+ * ossl_dtls_transfer_connection_state - transplant src's connection state
+ * onto dst, for SSL_listen_ex().
+ *
+ * src must already have been popped off its listener's incoming_connections
+ * by the caller (this is naturally true of any src the caller could have a
+ * pointer to at all -- sk_SSL_shift() is how one is obtained in the first
+ * place) but must still be registered in that listener's established_conns
+ * table, i.e. mid-handshake, not fresh. This function does not touch
+ * incoming_connections itself. dst must have already passed
+ * ossl_dtls_conn_is_peel_eligible(): a bare, untouched SSL_new() result on a
+ * DTLS SSL_CTX.
+ *
+ * On success (1), dst becomes, in every respect but its own identity
+ * (SSL_CTX, reference count, lock, ex_data), the connection src was: same
+ * peer address, same in-flight handshake state, same live record layer
+ * (including its DTLS anti-replay bitmap) now addressed to dst instead of
+ * src. src ends up in the state of a just-created, never-touched SSL_new()
+ * result, safe to SSL_free() normally -- the caller still owns that
+ * reference and is expected to free it.
+ *
+ * On failure (0), neither src nor dst is modified.
+ *
+ * dl->mutex is held for the entire operation, not just the
+ * established_conns calls at either end of it: dst must never become
+ * reachable through established_conns before its body has actually been
+ * swapped in (another thread could find it and drive a half-migrated
+ * connection), and src must never be unreachable while it's still the only
+ * side holding valid state. Holding the lock across the swap itself is
+ * cheap -- it's a handful of struct assignments, nothing fallible -- so
+ * there's no reason to split the critical section and reopen that window.
+ */
+int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst)
+{
+    SSL_CONNECTION *src_sc, *dst_sc;
+    SSL *listener;
+    DTLS_LISTENER *dl;
+    BIO_ADDR peer_addr;
+
+    src_sc = SSL_CONNECTION_FROM_SSL_ONLY(src);
+    dst_sc = SSL_CONNECTION_FROM_SSL_ONLY(dst);
+
+    if (src_sc == NULL || dst_sc == NULL
+        || src_sc->d1 == NULL || dst_sc->d1 == NULL
+        || src_sc->d1->listener == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    listener = src_sc->d1->listener;
+    dl = (DTLS_LISTENER *)listener;
+    /* src_sc->d1 gets overwritten by the swap below; take a copy now. */
+    peer_addr = src_sc->d1->peer_addr;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+
+    /*
+     * src holds no reference on the listener while queued (avoids a
+     * listener->src->listener cycle); dst is about to become the
+     * externally-owned side and needs its own, kept until dst is freed.
+     */
+    if (!SSL_up_ref(listener)) {
+        ossl_crypto_mutex_unlock(dl->mutex);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    ossl_dgram_conn_lookup_unregister(dl->established_conns, &peer_addr);
+
+    /*
+     * Swap the two connections' bodies wholesale: dst takes on src's
+     * mid-handshake state (including the version/method the handshake has
+     * negotiated so far), and src takes on dst's original, never-touched
+     * state. Only now, with dst fully populated, is it safe to make it
+     * visible via established_conns.
+     */
+    dtls_swap_connection_bodies(dst_sc, src_sc);
+
+    if (!ossl_dgram_conn_lookup_register_addr(dl->established_conns, &peer_addr, dst)) {
+        /* Undo the swap -- self-inverse -- and put src back as it was. */
+        dtls_swap_connection_bodies(dst_sc, src_sc);
+        ossl_dgram_conn_lookup_register_addr(dl->established_conns, &peer_addr, src);
+        SSL_free(listener);
+        ossl_crypto_mutex_unlock(dl->mutex);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    return 1;
+}
+
+/*
  * dtls_listener_conn_ready - check if connection is ready for accept queue.
  *
  * Determines whether the SSL object has completed cookie validation (if required)
