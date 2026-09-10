@@ -86,6 +86,39 @@ openssl x509 -in sroot-cert.pem -trustout \
 ./mkcert.sh genca "CA2" ca-key ca-name2 root-key root-cert
 ./mkcert.sh genca "CA" ca-key ca-root2 root-key2 root-cert2
 DAYS=-1 ./mkcert.sh genca "CA" ca-key ca-expired root-key root-cert
+# CA key rollover chain: a self-issued transition certificate carries the
+# new CA key (ca-key) but is signed by the old key (root-key), so its SKID
+# differs from its AKID keyIdentifier and it must not be classified as
+# self-signed.  The old root reuses root-key, the leaf ee-key.  Explicit
+# serials 1000-1002 keep the same-named issuers of these certificates
+# distinct for X509_STORE lookups.
+./mkcert.sh req root-key "CN = Test Rollover CA" |
+    openssl x509 -req -sha256 -signkey root-key.pem -set_serial 1000 \
+        -not_before 20200101000000Z -days 36525 -out rollover-root.pem \
+        -extfile <(printf "%s\n" \
+            "basicConstraints = critical,CA:true" \
+            "keyUsage = keyCertSign,cRLSign" \
+            "subjectKeyIdentifier = hash" \
+            "authorityKeyIdentifier = keyid")
+./mkcert.sh req ca-key "CN = Test Rollover CA" |
+    openssl x509 -req -sha256 -CA rollover-root.pem -CAkey root-key.pem \
+        -set_serial 1001 -not_before 20200101000000Z -days 36525 \
+        -out rollover-ca.pem \
+        -extfile <(printf "%s\n" \
+            "basicConstraints = critical,CA:true" \
+            "keyUsage = keyCertSign,cRLSign" \
+            "subjectKeyIdentifier = hash" \
+            "authorityKeyIdentifier = keyid")
+./mkcert.sh req ee-key "CN = Test Rollover EE" |
+    openssl x509 -req -sha256 -CA rollover-ca.pem -CAkey ca-key.pem \
+        -set_serial 1002 -not_before 20200101000000Z -days 36525 \
+        -out rollover-ee.pem \
+        -extfile <(printf "%s\n" \
+            "basicConstraints = critical,CA:false" \
+            "keyUsage = digitalSignature,keyEncipherment" \
+            "extendedKeyUsage = serverAuth,clientAuth" \
+            "subjectKeyIdentifier = hash" \
+            "authorityKeyIdentifier = keyid")
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
 openssl x509 -in ca-cert.pem -trustout \
     -addtrust serverAuth -out ca+serverAuth.pem
