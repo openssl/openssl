@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 #include "dsa_local.h"
@@ -38,6 +40,9 @@ static int dsa_init(DSA *dsa);
 static int dsa_finish(DSA *dsa);
 static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
     BN_CTX *ctx);
+static int ossl_dsa_fn_verify(const DSA *dsa, BIGNUM *v,
+    const unsigned char *dgst, int dgst_len, int qbits,
+    const BIGNUM *r, const BIGNUM *s);
 
 static const DSA_METHOD openssl_dsa_meth = {
     "OpenSSL DSA method",
@@ -80,6 +85,8 @@ DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa,
     BIGNUM *kinv = NULL;
     BIGNUM *m, *blind, *blindm, *tmp;
     BN_CTX *ctx = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    const void *token = NULL;
     int reason = ERR_R_BN_LIB;
     DSA_SIG *ret = NULL;
     int rv = 0;
@@ -139,42 +146,129 @@ redo:
      *   s := blind^-1 * k^-1 * (blind * m + blind * r * priv_key) mod q
      */
 
-    /*
-     * Generate a blinding value
-     * The size of q is tested in dsa_sign_setup() so there should not be an infinite loop here.
-     */
-    do {
-        if (!BN_priv_rand_ex(blind, BN_num_bits(dsa->params.q) - 1,
-                BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, 0, ctx))
+    {
+        const OSSL_FN *fn_kinv = NULL, *fn_q = NULL, *fn_priv = NULL;
+        OSSL_FN *fn_r = NULL, *fn_s = NULL, *fn_m = NULL;
+        OSSL_FN *fn_blind = NULL, *fn_blindm = NULL, *fn_tmp = NULL;
+        size_t fn_size, mod_mul_size;
+        int qbits, qlimbs, fn_bits;
+        int fn_ok = 0;
+
+        qbits = BN_num_bits(dsa->params.q);
+        qlimbs = (qbits + BN_BITS2 - 1) / BN_BITS2;
+
+        fn_q = bn_get_ossl_fn(dsa->params.q);
+        fn_priv = bn_get_ossl_fn(dsa->priv_key);
+        fn_kinv = bn_get_ossl_fn(kinv);
+        if (fn_q == NULL || fn_priv == NULL || fn_kinv == NULL)
             goto err;
-    } while (BN_is_zero(blind));
-    BN_set_flags(blind, BN_FLG_CONSTTIME);
-    BN_set_flags(blindm, BN_FLG_CONSTTIME);
-    BN_set_flags(tmp, BN_FLG_CONSTTIME);
 
-    /* tmp := blind * priv_key * r mod q */
-    if (!BN_mod_mul(tmp, blind, dsa->priv_key, dsa->params.q, ctx))
-        goto err;
-    if (!BN_mod_mul(tmp, tmp, ret->r, dsa->params.q, ctx))
-        goto err;
+        /*
+         * Acquire the writable values at the q width before the
+         * OSSL_FN_CTX sizing, which derives from their allocated widths.
+         */
+        if ((fn_r = bn_acquire_ossl_fn(ret->r, qlimbs)) == NULL
+            || (fn_s = bn_acquire_ossl_fn(ret->s, qlimbs)) == NULL
+            || (fn_m = bn_acquire_ossl_fn(m, qlimbs)) == NULL
+            || (fn_blind = bn_acquire_ossl_fn(blind, qlimbs)) == NULL
+            || (fn_blindm = bn_acquire_ossl_fn(blindm, qlimbs)) == NULL
+            || (fn_tmp = bn_acquire_ossl_fn(tmp, qlimbs)) == NULL)
+            goto release;
 
-    /* blindm := blind * m mod q */
-    if (!BN_mod_mul(blindm, blind, m, dsa->params.q, ctx))
-        goto err;
+        /*
+         * The arena serves the operations sequentially, so their sizes
+         * sum.  All operands are q-wide.
+         */
+        mod_mul_size = OSSL_FN_mod_mul_ctx_size(fn_tmp, fn_tmp, fn_r, fn_q);
+        fn_size = 5 * mod_mul_size
+            + OSSL_FN_mod_inverse_ctx_size(fn_blind, fn_blind, fn_q)
+            /* the body's own outer frame */
+            + OSSL_FN_CTX_size(1, 0, 0);
+        if (fn_size == 0)
+            goto release;
+        fn_ctx = OSSL_FN_CTX_secure_new_size(dsa->libctx, fn_size);
+        if (fn_ctx == NULL)
+            goto release;
+        if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
+            goto release;
 
-    /* s : = (blind * priv_key * r) + (blind * m) mod q */
-    if (!BN_mod_add_quick(ret->s, tmp, blindm, dsa->params.q))
-        goto err;
+        /*
+         * Generate a blinding value
+         * The size of q is tested in dsa_sign_setup() so there should not
+         * be an infinite loop here.
+         */
+        do {
+            if (!OSSL_FN_priv_rand(fn_blind, qbits - 1,
+                    OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY,
+                    0, dsa->libctx))
+                goto release;
+        } while (OSSL_FN_is_zero(fn_blind));
 
-    /* s := s * k^-1 mod q */
-    if (!BN_mod_mul(ret->s, ret->s, kinv, dsa->params.q, ctx))
-        goto err;
+        /* tmp := blind * priv_key * r mod q */
+        if (!OSSL_FN_mod_mul(fn_tmp, fn_blind, fn_priv, fn_q, fn_ctx))
+            goto release;
+        if (!OSSL_FN_mod_mul(fn_tmp, fn_tmp, fn_r, fn_q, fn_ctx))
+            goto release;
 
-    /* s:= s * blind^-1 mod q */
-    if (BN_mod_inverse(blind, blind, dsa->params.q, ctx) == NULL)
-        goto err;
-    if (!BN_mod_mul(ret->s, ret->s, blind, dsa->params.q, ctx))
-        goto err;
+        /* blindm := blind * m mod q */
+        if (!OSSL_FN_mod_mul(fn_blindm, fn_blind, fn_m, fn_q, fn_ctx))
+            goto release;
+
+        /* s := (blind * priv_key * r) + (blind * m) mod q */
+        if (!OSSL_FN_mod_add_quick(fn_s, fn_tmp, fn_blindm, fn_q))
+            goto release;
+
+        /* s := s * k^-1 mod q */
+        if (!OSSL_FN_mod_mul(fn_s, fn_s, fn_kinv, fn_q, fn_ctx))
+            goto release;
+
+        /* s := s * blind^-1 mod q */
+        if (!OSSL_FN_mod_inverse(fn_blind, fn_blind, fn_q, fn_ctx))
+            goto release;
+        if (!OSSL_FN_mod_mul(fn_s, fn_s, fn_blind, fn_q, fn_ctx))
+            goto release;
+
+        if (!OSSL_FN_CTX_end(fn_ctx, token)) {
+            token = NULL;
+            goto release;
+        }
+        token = NULL;
+        fn_ok = 1;
+
+    release:
+        if (token != NULL)
+            OSSL_FN_CTX_end(fn_ctx, token);
+        token = NULL;
+        OSSL_FN_CTX_free(fn_ctx);
+        fn_ctx = NULL;
+
+        /*
+         * Restore the tops of the acquired values.  m, blind, blindm and
+         * tmp are BN_CTX pool members, so this must happen on all paths
+         * before the pool reclaims them.  Successful r and s get their
+         * significance-derived tops.
+         */
+        if (fn_r != NULL) {
+            fn_bits = fn_ok ? (int)OSSL_FN_num_bits(fn_r) : 0;
+            bn_release(ret->r,
+                fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : qlimbs);
+        }
+        if (fn_s != NULL) {
+            fn_bits = fn_ok ? (int)OSSL_FN_num_bits(fn_s) : 0;
+            bn_release(ret->s,
+                fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : qlimbs);
+        }
+        if (fn_m != NULL)
+            bn_release(m, qlimbs);
+        if (fn_blind != NULL)
+            bn_release(blind, qlimbs);
+        if (fn_blindm != NULL)
+            bn_release(blindm, qlimbs);
+        if (fn_tmp != NULL)
+            bn_release(tmp, qlimbs);
+        if (!fn_ok)
+            goto err;
+    }
 
     /*
      * Redo if r or s is zero as required by FIPS 186-4: Section 4.6
@@ -196,6 +290,9 @@ err:
         DSA_SIG_free(ret);
         ret = NULL;
     }
+    if (token != NULL)
+        OSSL_FN_CTX_end(fn_ctx, token);
+    OSSL_FN_CTX_free(fn_ctx);
     BN_CTX_free(ctx);
     BN_clear_free(kinv);
     return ret;
@@ -294,12 +391,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     BN_set_flags(k, BN_FLG_CONSTTIME);
     BN_set_flags(l, BN_FLG_CONSTTIME);
 
-    if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
-        if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
-                dsa->lock, dsa->params.p, ctx))
-            goto err;
-    }
-
     /* Compute r = (g^k mod p) mod q */
 
     /*
@@ -323,11 +414,10 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     if ((dsa)->meth->bn_mod_exp != NULL) {
         if (!dsa->meth->bn_mod_exp(dsa, r, dsa->params.g, k, dsa->params.p,
-                ctx, dsa->method_mont_p))
+                ctx, NULL))
             goto err;
     } else {
-        if (!BN_mod_exp_mont(r, dsa->params.g, k, dsa->params.p, ctx,
-                dsa->method_mont_p))
+        if (!ossl_dsa_fn_mod_exp(dsa, r, dsa->params.g, k, dsa->params.p))
             goto err;
     }
 
@@ -397,51 +487,50 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
         goto err;
     }
 
-    /*
-     * Calculate W = inv(S) mod Q save W in u2
-     */
-    if ((BN_mod_inverse(u2, s, dsa->params.q, ctx)) == NULL)
-        goto err;
-
-    /* save M in u1 */
-    if (dgst_len > (i >> 3))
-        /*
-         * if the digest length is greater than the size of q use the
-         * BN_num_bits(dsa->q) leftmost bits of the digest, see fips 186-3,
-         * 4.2
-         */
-        dgst_len = (i >> 3);
-    if (BN_bin2bn(dgst, dgst_len, u1) == NULL)
-        goto err;
-
-    /* u1 = M * w mod q */
-    if (!BN_mod_mul(u1, u1, u2, dsa->params.q, ctx))
-        goto err;
-
-    /* u2 = r * w mod q */
-    if (!BN_mod_mul(u2, r, u2, dsa->params.q, ctx))
-        goto err;
-
-    if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dsa->method_mont_p,
-            dsa->lock, dsa->params.p, ctx);
-        if (!mont)
+    if (dsa->meth->dsa_mod_exp == NULL) {
+        if (!ossl_dsa_fn_verify(dsa, u1, dgst, dgst_len, i, r, s))
             goto err;
-    }
+    } else {
+        /*
+         * Calculate W = inv(S) mod Q save W in u2
+         */
+        if ((BN_mod_inverse(u2, s, dsa->params.q, ctx)) == NULL)
+            goto err;
 
-    if (dsa->meth->dsa_mod_exp != NULL) {
+        /* save M in u1 */
+        if (dgst_len > (i >> 3))
+            /*
+             * if the digest length is greater than the size of q use the
+             * BN_num_bits(dsa->q) leftmost bits of the digest, see fips
+             * 186-3, 4.2
+             */
+            dgst_len = (i >> 3);
+        if (BN_bin2bn(dgst, dgst_len, u1) == NULL)
+            goto err;
+
+        /* u1 = M * w mod q */
+        if (!BN_mod_mul(u1, u1, u2, dsa->params.q, ctx))
+            goto err;
+
+        /* u2 = r * w mod q */
+        if (!BN_mod_mul(u2, r, u2, dsa->params.q, ctx))
+            goto err;
+
+        if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
+            mont = BN_MONT_CTX_set_locked(&dsa->method_mont_p,
+                dsa->lock, dsa->params.p, ctx);
+            if (!mont)
+                goto err;
+        }
+
         if (!dsa->meth->dsa_mod_exp(dsa, t1, dsa->params.g, u1, dsa->pub_key, u2,
                 dsa->params.p, ctx, mont))
             goto err;
-    } else {
-        if (!BN_mod_exp2_mont(t1, dsa->params.g, u1, dsa->pub_key, u2,
-                dsa->params.p, ctx, mont))
+
+        /* let u1 = u1 mod q */
+        if (!BN_mod(u1, t1, dsa->params.q, ctx))
             goto err;
     }
-
-    /* let u1 = u1 mod q */
-    if (!BN_mod(u1, t1, dsa->params.q, ctx))
-        goto err;
 
     /*
      * V is now in u1.  If the signature is correct, it will be equal to R.
@@ -468,7 +557,250 @@ static int dsa_init(DSA *dsa)
 static int dsa_finish(DSA *dsa)
 {
     BN_MONT_CTX_free(dsa->method_mont_p);
+    dsa->method_mont_p = NULL;
+    OSSL_FN_MONT_CTX_free(dsa->method_mont_fn_p);
+    dsa->method_mont_fn_p = NULL;
     return 1;
+}
+
+/*
+ * The OSSL_FN modular exponentiation backing the default DSA_METHOD's
+ * private-key calculations.  This is where the BIGNUM -> OSSL_FN
+ * conversion happens: read-only operands are passed as views, the
+ * writable result is acquired at the modulus width before OSSL_FN_CTX
+ * sizing, and the OSSL_FN_CTX arena is explicitly sized from the
+ * operation's sizing companion.
+ */
+int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
+    const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m)
+{
+    int ret = 0;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN_MONT_CTX *fn_mont = NULL;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_p = NULL, *fn_m = NULL;
+    const void *token = NULL;
+    int limbs, fn_bits;
+    size_t fn_size;
+
+    fn_a = bn_get_ossl_fn(a);
+    fn_p = bn_get_ossl_fn(p);
+    fn_m = bn_get_ossl_fn(m);
+    if (fn_a == NULL || fn_p == NULL || fn_m == NULL)
+        return 0;
+    limbs = (int)ossl_fn_get_dsize(fn_m);
+
+    /* Acquire the writable result before OSSL_FN_CTX sizing. */
+    if ((fn_r = bn_acquire_ossl_fn(r, limbs)) == NULL)
+        return 0;
+
+    if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
+        /*
+         * We take the input DSA as const, but we lie, because in some cases
+         * we want to get a hold of its Montgomery context.
+         *
+         * We cast to remove the const qualifier in this case, it should be
+         * fine...
+         */
+        OSSL_FN_MONT_CTX **pmont
+            = (OSSL_FN_MONT_CTX **)&dsa->method_mont_fn_p;
+
+        fn_mont = OSSL_FN_MONT_CTX_set_locked(pmont, dsa->lock, fn_m);
+        if (fn_mont == NULL)
+            goto err;
+    }
+
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, fn_a, fn_p, fn_m, fn_mont);
+    if (fn_size == 0)
+        goto err;
+
+    fn_ctx = OSSL_FN_CTX_secure_new_size(dsa->libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+    if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
+        goto err;
+
+    ret = OSSL_FN_mod_exp_mont(fn_r, fn_a, fn_p, fn_m, fn_ctx, fn_mont);
+
+    if (ret) {
+        fn_bits = (int)OSSL_FN_num_bits(fn_r);
+        bn_release(r, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    }
+
+    if (!OSSL_FN_CTX_end(fn_ctx, token)) {
+        token = NULL;
+        goto err;
+    }
+    token = NULL;
+err:
+    if (token != NULL)
+        OSSL_FN_CTX_end(fn_ctx, token);
+    OSSL_FN_CTX_free(fn_ctx);
+    return ret;
+}
+
+/*
+ * The OSSL_FN verify calculation backing the default DSA_METHOD:
+ *
+ *   w  = s^-1 mod q
+ *   u1 = m * w mod q            (m = digest, FIPS 186-3 4.2 truncated)
+ *   u2 = r * w mod q
+ *   t  = g^u1 * y^u2 mod p      (dual modexp, Shamir's trick)
+ *   v  = t mod q
+ *
+ * All operands are public, so a plain OSSL_FN_CTX is sufficient, and
+ * the whole dance runs in one arena sized for the largest step.  The
+ * result is released into |v| (compared against r by the caller).
+ * |qbits| is BN_num_bits(q).  The method_mont_fn_p cache is used for
+ * the p modulus of the dual modexp, mirroring ossl_dsa_fn_mod_exp().
+ */
+static int ossl_dsa_fn_verify(const DSA *dsa, BIGNUM *v,
+    const unsigned char *dgst, int dgst_len, int qbits,
+    const BIGNUM *r, const BIGNUM *s)
+{
+    int ret = 0;
+    BIGNUM *m = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN_MONT_CTX *fn_mont = NULL;
+    const void *token = NULL;
+    const OSSL_FN *fn_q, *fn_p, *fn_g, *fn_y;
+    const OSSL_FN *fn_r, *fn_s, *fn_m;
+    OSSL_FN *fn_u1, *fn_u2, *fn_t, *fn_v;
+    size_t fn_size, q_size, p_size;
+    int qlimbs, plimbs, fn_bits;
+
+    /*
+     * Read-only operand views.  qlimbs / plimbs are the allocated widths
+     * the writable results are acquired at.
+     */
+    if ((fn_q = bn_get_ossl_fn(dsa->params.q)) == NULL
+        || (fn_p = bn_get_ossl_fn(dsa->params.p)) == NULL
+        || (fn_g = bn_get_ossl_fn(dsa->params.g)) == NULL
+        || (fn_y = bn_get_ossl_fn(dsa->pub_key)) == NULL
+        || (fn_r = bn_get_ossl_fn(r)) == NULL
+        || (fn_s = bn_get_ossl_fn(s)) == NULL)
+        return 0;
+    qlimbs = (int)ossl_fn_get_dsize(fn_q);
+    plimbs = (int)ossl_fn_get_dsize(fn_p);
+
+    if ((m = BN_new()) == NULL)
+        return 0;
+
+    /*
+     * Save M in m.  If the digest length is greater than the size of q,
+     * use the BN_num_bits(q) leftmost bits of the digest, see FIPS 186-3,
+     * 4.2.
+     */
+    if (dgst_len > (qbits >> 3))
+        dgst_len = (qbits >> 3);
+    if (BN_bin2bn(dgst, dgst_len, m) == NULL)
+        goto err;
+    /*
+     * A zero m has no limbs allocated, so its OSSL_FN view is NULL.
+     * That's a valid zero, not an error: u1 = M * w mod q is then zero.
+     * The truncation above ensures that the width of m never exceeds
+     * qlimbs, so the m_q header below models it for sizing.
+     */
+    fn_m = bn_get_ossl_fn(m);
+
+    /*
+     * Get scratch OSSL_FNs for the writable temporaries u1, u2, t, all
+     * from the context arena (u1 and u2 at the q width, t at the p
+     * width), and acquire the writable result v at the q width, all
+     * before OSSL_FN_CTX sizing.
+     */
+    if ((fn_v = bn_acquire_ossl_fn(v, qlimbs)) == NULL)
+        goto err;
+
+    /*
+     * The context arena holds the u1, u2 and t temporaries itself (one
+     * frame, three numbers, 2 * qlimbs + plimbs limbs), plus the largest
+     * of the sequential steps' nested needs.  The steps are modelled
+     * with width-only headers at the actual operand widths (the sizing
+     * helpers inspect dsize only, never the limbs): u1 and u2 are
+     * qlimbs-wide, t is plimbs-wide, v is qlimbs-wide.
+     */
+    {
+        OSSL_FN u_q = { .dsize = qlimbs };
+        OSSL_FN t_p = { .dsize = plimbs };
+        OSSL_FN m_q = { .dsize = qlimbs };
+
+        q_size = ossl_fn_ctx_max_size(
+            OSSL_FN_mod_inverse_ctx_size(&u_q, fn_s, fn_q),
+            OSSL_FN_mod_mul_ctx_size(&u_q, &m_q, &u_q, fn_q));
+        p_size = ossl_fn_ctx_max_size(
+            OSSL_FN_mod_exp2_mont_ctx_size(&t_p, fn_g, &u_q, fn_y, &u_q,
+                fn_p, NULL),
+            OSSL_FN_mod_ctx_size(fn_v, &t_p, fn_q));
+        fn_size = ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 3,
+                                           2 * (size_t)qlimbs + (size_t)plimbs),
+            ossl_fn_ctx_max_size(q_size, p_size));
+        if (fn_size == 0)
+            goto err;
+    }
+
+    fn_ctx = OSSL_FN_CTX_new_size(dsa->libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+    if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
+        goto err;
+
+    if ((fn_u1 = OSSL_FN_CTX_get_limbs(fn_ctx, qlimbs)) == NULL
+        || (fn_u2 = OSSL_FN_CTX_get_limbs(fn_ctx, qlimbs)) == NULL
+        || (fn_t = OSSL_FN_CTX_get_limbs(fn_ctx, plimbs)) == NULL)
+        goto err;
+
+    if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
+        /*
+         * We take the input DSA as const, but we lie, because in some
+         * cases we want to get a hold of its Montgomery context.
+         *
+         * We cast to remove the const qualifier in this case, it should
+         * be fine...
+         */
+        OSSL_FN_MONT_CTX **pmont
+            = (OSSL_FN_MONT_CTX **)&dsa->method_mont_fn_p;
+
+        fn_mont = OSSL_FN_MONT_CTX_set_locked(pmont, dsa->lock, fn_p);
+        if (fn_mont == NULL)
+            goto err;
+    }
+
+    /* w = s^-1 mod q, saved in u2 */
+    if (!OSSL_FN_mod_inverse(fn_u2, fn_s, fn_q, fn_ctx))
+        goto err;
+    /* u1 = M * w mod q (a zero M has a NULL view, and gives u1 = 0) */
+    if (fn_m == NULL)
+        OSSL_FN_clear(fn_u1);
+    else if (!OSSL_FN_mod_mul(fn_u1, fn_m, fn_u2, fn_q, fn_ctx))
+        goto err;
+    /* u2 = r * w mod q */
+    if (!OSSL_FN_mod_mul(fn_u2, fn_r, fn_u2, fn_q, fn_ctx))
+        goto err;
+    /* t = g^u1 * y^u2 mod p */
+    if (!OSSL_FN_mod_exp2_mont(fn_t, fn_g, fn_u1, fn_y, fn_u2, fn_p,
+            fn_ctx, fn_mont))
+        goto err;
+    /* v = t mod q */
+    if (!OSSL_FN_mod(fn_v, fn_t, fn_q, fn_ctx))
+        goto err;
+
+    fn_bits = (int)OSSL_FN_num_bits(fn_v);
+    bn_release(v, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    ret = 1;
+
+    if (!OSSL_FN_CTX_end(fn_ctx, token)) {
+        token = NULL;
+        goto err;
+    }
+    token = NULL;
+err:
+    if (token != NULL)
+        OSSL_FN_CTX_end(fn_ctx, token);
+    OSSL_FN_CTX_free(fn_ctx);
+    BN_free(m);
+    return ret;
 }
 
 /*
@@ -482,19 +814,82 @@ static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
     BN_CTX *ctx)
 {
     BIGNUM *res = NULL;
-    BIGNUM *r, *e;
+    BIGNUM *r = NULL, *e;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN_MONT_CTX *fn_mont = NULL;
+    const OSSL_FN *fn_k = NULL, *fn_q = NULL;
+    OSSL_FN *fn_r = NULL, *fn_e = NULL;
+    const void *token = NULL;
+    size_t fn_size;
+    int qlimbs, fn_bits;
+
+    if ((fn_q = bn_get_ossl_fn(q)) == NULL)
+        return NULL;
+    qlimbs = (int)ossl_fn_get_dsize(fn_q);
 
     if ((r = BN_new()) == NULL)
         return NULL;
 
     BN_CTX_start(ctx);
-    if ((e = BN_CTX_get(ctx)) != NULL
-        && BN_set_word(r, 2)
-        && BN_sub(e, q, r)
-        && BN_mod_exp_mont(r, k, e, q, ctx, NULL))
+    if ((e = BN_CTX_get(ctx)) == NULL)
+        goto err;
+
+    /*
+     * The exponent e = q - 2 is public; the base k is secret.  Acquire the
+     * writable results before the OSSL_FN_CTX sizing, which derives from
+     * their allocated widths.
+     */
+    if ((fn_k = bn_get_ossl_fn(k)) == NULL
+        || (fn_r = bn_acquire_ossl_fn(r, qlimbs)) == NULL
+        || (fn_e = bn_acquire_ossl_fn(e, qlimbs)) == NULL)
+        goto err;
+
+    if (OSSL_FN_copy_truncate(fn_e, fn_q) == NULL
+        || !OSSL_FN_sub_word(fn_e, 2))
+        goto err;
+
+    /*
+     * The Montgomery context for q is local to this function, never the
+     * key's cached context for p.
+     */
+    if ((fn_mont = OSSL_FN_MONT_CTX_new(fn_q)) == NULL)
+        goto err;
+
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, fn_k, fn_e, fn_q, fn_mont);
+    if (fn_size == 0)
+        goto err;
+
+    fn_ctx = OSSL_FN_CTX_secure_new_size(ossl_bn_get_libctx(ctx), fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+    if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
+        goto err;
+
+    if (OSSL_FN_mod_exp_mont(fn_r, fn_k, fn_e, fn_q, fn_ctx, fn_mont)) {
+        fn_bits = (int)OSSL_FN_num_bits(fn_r);
+        bn_release(r, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
         res = r;
-    else
-        BN_free(r);
+        r = NULL;
+    }
+
+    if (!OSSL_FN_CTX_end(fn_ctx, token)) {
+        token = NULL;
+        BN_free(res);
+        res = NULL;
+    }
+    token = NULL;
+err:
+    /*
+     * e is a BN_CTX pool member; if it was acquired, its top must be
+     * restored before BN_CTX_end() returns it to the pool.
+     */
+    if (fn_e != NULL)
+        bn_release(e, qlimbs);
+    if (token != NULL)
+        OSSL_FN_CTX_end(fn_ctx, token);
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_MONT_CTX_free(fn_mont);
     BN_CTX_end(ctx);
+    BN_free(r);
     return res;
 }

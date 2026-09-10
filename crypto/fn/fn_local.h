@@ -35,24 +35,18 @@
 #define OSSL_FN_LOW_HALF_MASK ((OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS / 2)) - 1)
 #define OSSL_FN_HIGH_HALF_MASK (OSSL_FN_LOW_HALF_MASK << (OSSL_FN_BITS / 2))
 
-struct ossl_fn_st {
-    /* Flag: alloced with OSSL_FN_new() or  OSSL_FN_secure_new() */
-    unsigned int is_dynamically_allocated : 1;
-    /* Flag: alloced with OSSL_FN_secure_new() */
-    unsigned int is_securely_allocated : 1;
+/* maximum precomputation table size for *variable* sliding windows */
+#define TABLE_SIZE 32
 
-    /*
-     * The d array, with its size in number of OSSL_FN_ULONG.
-     * This stores the number itself.
-     *
-     * Note: |dsize| is an int, because it turns out that some lower level
-     * (possibly assembler) functions expect that type (especially, that
-     * type size).
-     * This deviates from the design in doc/designs/fixed-size-large-numbers.md
-     */
-    int dsize;
-    OSSL_FN_ULONG d[];
-};
+/*
+ * Sliding-window size selection: a function of the exponent bit count (a
+ * public magnitude), capped at 6, so TABLE_SIZE == 1 << 5 always suffices.
+ */
+#define OSSL_FN_WINDOW_BITS_FOR_EXPONENT_SIZE(b) \
+    ((b) > 671 ? 6 : (b) > 239 ? 5               \
+            : (b) > 79         ? 4               \
+            : (b) > 23         ? 3               \
+                               : 1)
 
 static ossl_inline size_t ossl_fn_totalsize(size_t limbs)
 {

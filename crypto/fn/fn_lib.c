@@ -13,6 +13,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include "internal/common.h"
+#include "crypto/fn_constants.h"
 #include "crypto/fnerr.h"
 #include "fn_local.h"
 #include "internal/constant_time.h"
@@ -154,6 +155,14 @@ int OSSL_FN_zero(OSSL_FN *a)
     return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(0));
 }
 
+/* The literal 1, backing OSSL_FN_value_one() */
+OSSL_FN_STATIC_DEFINE(one, 1, 1);
+
+const OSSL_FN *OSSL_FN_value_one(void)
+{
+    return &ossl_fn_static_one_storage.fn;
+}
+
 static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
 {
     OSSL_FN_ULONG x, mask;
@@ -249,6 +258,31 @@ int OSSL_FN_is_bit_set(const OSSL_FN *a, int n)
     if (limb >= (size_t)a->dsize)
         return 0;
     return (a->d[limb] >> off) & OSSL_FN_ULONG_C(1);
+}
+
+/*-
+ * Clears bit |n| of |a|.  An out-of-range index (n < 0 or n >= the
+ * operand's width in bits) leaves |a| unchanged and fails with
+ * OSSL_FN_R_RESULT_ARG_TOO_SMALL; OSSL_FN is fixed-size, so the operand
+ * cannot be grown to reach |n|.  The only control flow branches on the
+ * operand's public width (dsize) and on the caller-chosen index |n|, not
+ * on limb values; whether the bit was previously set is not revealed.
+ */
+int OSSL_FN_clear_bit(OSSL_FN *a, int n)
+{
+    size_t limb, off;
+
+    if (n < 0)
+        limb = (size_t)a->dsize; /* force the out-of-range error below */
+    else
+        limb = (size_t)n / OSSL_FN_BITS;
+    off = (size_t)n % OSSL_FN_BITS;
+    if (limb >= (size_t)a->dsize) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        return 0;
+    }
+    a->d[limb] &= ~(OSSL_FN_ULONG_C(1) << off);
+    return 1;
 }
 
 /*-

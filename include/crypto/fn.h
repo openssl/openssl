@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <openssl/opensslconf.h>
 #include <openssl/bn_limbs.h>
+#include <openssl/crypto.h>
 #include <openssl/types.h>
 #include "crypto/types.h"
 
@@ -172,6 +173,19 @@ int OSSL_FN_one(OSSL_FN *a);
 int OSSL_FN_zero(OSSL_FN *a);
 
 /**
+ * Return a read-only OSSL_FN holding the value one.
+ *
+ * @returns     A pointer to statically allocated constant storage holding
+ *              a 1-limb OSSL_FN with the value 1.  Never NULL.
+ *
+ * @note The returned OSSL_FN is a view on static constant storage; it must
+ *       not be freed, cleared, or written to.  This is a convenience
+ *       accessor for operations that need a constant 1 operand without
+ *       allocating.
+ */
+const OSSL_FN *OSSL_FN_value_one(void);
+
+/**
  * Copy the contents of one OSSL_FN instance to another.
  *
  * @param[out]  a       The destination OSSL_FN
@@ -192,6 +206,15 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
  * @returns     the destination.
  */
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
+
+/*
+ * Sentinel return value for the OSSL_FN_*_ctx_size() family, meaning "this
+ * operation needs no context"; the caller may skip the OSSL_FN_CTX
+ * allocation and pass NULL, which such an operation must accept.  This is
+ * unambiguous because every genuine arena holds at least one frame, so 1
+ * is smaller than any possible real size.
+ */
+#define OSSL_FN_CTX_SIZE_NONE ((size_t)1)
 
 /**
  * Calculate the arena payload size for an OSSL_FN_CTX.
@@ -378,6 +401,23 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
  *       itself, which is the information the caller asked for.
  */
 int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
+
+/**
+ * Clear bit @p n of @p a.
+ *
+ * @param[in,out]       a       The operand
+ * @param[in]           n       The bit index (0 = least significant)
+ * @returns             1 on success, 0 on error
+ *
+ * @note An out-of-range index (n < 0 or n >= the operand's width in bits)
+ *       leaves @p a unchanged and fails with
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL (OSSL_FN is fixed-size, so the
+ *       operand cannot be grown to reach @p n).  The only control flow
+ *       branches on the operand's public width (its dsize) and on the
+ *       caller-chosen index @p n, not on limb values; whether the bit was
+ *       previously set is not revealed.
+ */
+int OSSL_FN_clear_bit(OSSL_FN *a, int n);
 
 /**
  * Test whether the unsigned value of @p a equals the single-limb word @p w.
@@ -1164,6 +1204,64 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
 
 /**
+ * Calculate  a1^p1 * a2^p2 mod m  with a double-base Montgomery
+ * sliding-window algorithm (Shamir's trick), roughly the price of one
+ * modular exponentiation.
+ *
+ * Callers performing many verifications against the same modulus may pass a
+ * reused OSSL_FN_MONT_CTX to amortise the RR / n0 setup, mirroring
+ * BN_mod_exp2_mont().
+ *
+ * @param[out]          r       The OSSL_FN for the result.  Destination width
+ *                              is the caller's choice: if smaller than the
+ *                              modulus, the result is truncated; if larger,
+ *                              zero-padded.  |r| must not alias |m|.
+ * @param[in]           a1      The first base.
+ * @param[in]           p1      The first exponent.
+ * @param[in]           a2      The second base.
+ * @param[in]           p2      The second exponent.
+ * @param[in]           m       The modulus.  Must be odd and non-zero.
+ * @param[in]           ctx     A context to get temporary OSSL_FN instances
+ *                              from, sized per
+ *                              OSSL_FN_mod_exp2_mont_ctx_size().
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to have this function build and free its own.
+ *                              When non-NULL it is borrowed (used as-is,
+ *                              never freed here) and its modulus must be |m|.
+ * @returns             1 on success, 0 on error.
+ *
+ * @note This path is not constant-time per se; do not use it for secret
+ *       exponents.  See the implementation in crypto/fn/fn_exp.c.
+ */
+int OSSL_FN_mod_exp2_mont(OSSL_FN *r, const OSSL_FN *a1, const OSSL_FN *p1,
+    const OSSL_FN *a2, const OSSL_FN *p2, const OSSL_FN *m, OSSL_FN_CTX *ctx,
+    OSSL_FN_MONT_CTX *in_mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_exp2_mont() needs.
+ *
+ * The arena also serves a call that passes NULL |in_mont| (the function
+ * builds and frees its own context then), since the operand modelling makes
+ * the two cases the same size.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a1      The first base
+ * @param[in]           p1      The first exponent
+ * @param[in]           a2      The second base
+ * @param[in]           p2      The second exponent
+ * @param[in]           m       The modulus
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to model the function-owned context
+ *                              OSSL_FN_mod_exp2_mont() builds when called
+ *                              with in_mont == NULL.
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_exp2_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a1,
+    const OSSL_FN *p1, const OSSL_FN *a2, const OSSL_FN *p2, const OSSL_FN *m,
+    OSSL_FN_MONT_CTX *in_mont);
+
+/**
  * Compute the Kronecker symbol (a/b).
  *
  * @param[in]           a       The first operand
@@ -1269,6 +1367,27 @@ size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
  * @returns             An allocated OSSL_FN_MONT_CTX, or NULL on error.
  */
 OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod);
+
+/**
+ * Thread-safe lazy initialization of a shared Montgomery context cache.
+ *
+ * @param[in,out]       pmont   The cache slot to read / fill
+ * @param[in]           lock    A read/write lock guarding @p pmont
+ * @param[in]           mod     The modulus
+ * @returns             The cached Montgomery context for @p mod, or NULL on
+ *                      error.  The returned pointer remains owned by
+ *                      @p pmont; the caller must not free it.
+ *
+ * @note If @p pmont already holds a context, it is returned unchanged;
+ *       whether it was initialized for @p mod is the caller's
+ *       responsibility.  Otherwise a context is built for @p mod outside
+ *       the lock (so concurrent lazy inits on the same slot duplicate the
+ *       work rather than serialize on it) and published under a write
+ *       lock; the loser of the race discards its work and returns the
+ *       winner's context.  Leak profile as for OSSL_FN_MONT_CTX_new().
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_set_locked(OSSL_FN_MONT_CTX **pmont,
+    CRYPTO_RWLOCK *lock, const OSSL_FN *mod);
 
 /**
  * Free a Montgomery context.

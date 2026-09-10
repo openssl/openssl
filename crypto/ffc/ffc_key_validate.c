@@ -8,6 +8,9 @@
  */
 
 #include "internal/ffc.h"
+#include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Partial public key validation.
@@ -64,32 +67,57 @@ int ossl_ffc_validate_public_key(const FFC_PARAMS *params,
 {
     int ok = 0;
     BIGNUM *tmp = NULL;
-    BN_CTX *ctx = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_tmp = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_x = NULL, *fn_m = NULL;
+    const void *token = NULL;
+    size_t fn_size;
 
     if (!ossl_ffc_validate_public_key_partial(params, pub_key, ret))
         return 0;
 
     if (*ret == 0 && params->q != NULL) {
-        ctx = BN_CTX_new_ex(NULL);
-        if (ctx == NULL)
+        fn_a = bn_get_ossl_fn(pub_key);
+        fn_x = bn_get_ossl_fn(params->q);
+        fn_m = bn_get_ossl_fn(params->p);
+        if (fn_a == NULL || fn_x == NULL || fn_m == NULL)
             goto err;
-        BN_CTX_start(ctx);
-        tmp = BN_CTX_get(ctx);
+
+        if ((tmp = BN_new()) == NULL
+            || (fn_tmp = bn_acquire_ossl_fn(tmp, (int)ossl_fn_get_dsize(fn_m))) == NULL)
+            goto err;
+
+        fn_size = OSSL_FN_mod_exp_ctx_size(fn_tmp, fn_a, fn_x, fn_m);
+        if (fn_size == 0)
+            goto err;
+
+        fn_ctx = OSSL_FN_CTX_new_size(NULL, fn_size);
+        if (fn_ctx == NULL)
+            goto err;
+        if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
+            goto err;
 
         /* Check pub_key^q == 1 mod p */
-        if (tmp == NULL
-            || !BN_mod_exp(tmp, pub_key, params->q, params->p, ctx))
+        if (!OSSL_FN_mod_exp(fn_tmp, fn_a, fn_x, fn_m, fn_ctx))
             goto err;
-        if (!BN_is_one(tmp))
+        if (!OSSL_FN_is_one(fn_tmp))
             *ret |= FFC_ERROR_PUBKEY_INVALID;
+
+        bn_release(tmp, (int)ossl_fn_get_dsize(fn_tmp));
+
+        if (!OSSL_FN_CTX_end(fn_ctx, token)) {
+            token = NULL;
+            goto err;
+        }
+        token = NULL;
     }
 
     ok = 1;
 err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    if (token != NULL)
+        OSSL_FN_CTX_end(fn_ctx, token);
+    OSSL_FN_CTX_free(fn_ctx);
+    BN_free(tmp);
     return ok;
 }
 
