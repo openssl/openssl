@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -172,7 +172,7 @@ err:
 
 static int test_quic_client(void)
 {
-    return (test_quic_client_ex(INVALID_SOCKET));
+    return test_quic_client_ex(INVALID_SOCKET);
 }
 
 static int test_quic_client_connect_first(void)
@@ -202,12 +202,12 @@ static int test_quic_client_connect_first(void)
 
     close(c_fd);
 
-    return (rv);
+    return rv;
 
 err:
     if (c_fd != INVALID_SOCKET)
         close(c_fd);
-    return (0);
+    return 0;
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")

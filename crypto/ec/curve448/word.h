@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2014 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,9 +21,9 @@
 #include "internal/constant_time.h"
 
 #ifdef INT128_MAX
-#include "arch_64/arch_intrinsics.h"
+#include "arch_64/arch_intrinsics.inc"
 #else
-#include "arch_32/arch_intrinsics.h"
+#include "arch_32/arch_intrinsics.inc"
 #endif
 
 #if (ARCH_WORD_BITS == 64)

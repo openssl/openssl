@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include "app_libctx.h"
 #include "internal/nelem.h"
 #include "internal/numbers.h"
+#include <stdio.h>
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 #include <unistd.h>
@@ -148,7 +149,7 @@ char *opt_appname(const char *argv0)
     size_t len = strlen(prog);
 
     if (argv0 != NULL)
-        BIO_snprintf(prog + len, sizeof(prog) - len - 1, " %s", argv0);
+        snprintf(prog + len, sizeof(prog) - len - 1, " %s", argv0);
     return prog;
 }
 
@@ -1236,9 +1237,7 @@ int opt_isdir(const char *name)
     if (len_0 > MAX_PATH)
         return -1;
 
-#if !defined(_WIN32_WCE) || _WIN32_WCE >= 101
     if (!MultiByteToWideChar(CP_ACP, 0, name, (int)len_0, tempname, MAX_PATH))
-#endif
         for (i = 0; i < len_0; i++)
             tempname[i] = (WCHAR)name[i];
 

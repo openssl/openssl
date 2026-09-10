@@ -15,6 +15,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include <internal/endian.h>
 #include <prov/implementations.h>
 #include "cipher_aes_gcm_siv.h"
@@ -57,6 +58,9 @@ static int aes_gcm_siv_initkey(void *vctx)
 
     memset(&data, 0, sizeof(data));
     memcpy(&data.block[sizeof(data.counter)], ctx->nonce, NONCE_SIZE);
+
+    ctx->generated_tag = 0;
+    memset(ctx->tag, 0, TAG_SIZE);
 
     /* msg_auth_key is always 16 bytes in size, regardless of AES128/AES256 */
     /* counter is stored little-endian */
@@ -134,17 +138,6 @@ static int aes_gcm_siv_aad(PROV_AES_GCM_SIV_CTX *ctx,
     return 1;
 }
 
-static int aes_gcm_siv_finish(PROV_AES_GCM_SIV_CTX *ctx)
-{
-    int ret = 0;
-
-    if (ctx->enc)
-        return ctx->generated_tag;
-    ret = !CRYPTO_memcmp(ctx->tag, ctx->user_tag, sizeof(ctx->tag));
-    ret &= ctx->have_user_tag;
-    return ret;
-}
-
 static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *in,
     unsigned char *out, size_t len)
 {
@@ -159,8 +152,6 @@ static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
     DECLARE_IS_ENDIAN;
 
     ctx->generated_tag = 0;
-    if (!ctx->speed && ctx->used_enc)
-        return 0;
     /* need to check the size of the input! */
     if (len64 > ((int64_t)1 << 36))
         return 0;
@@ -220,8 +211,6 @@ static int aes_gcm_siv_decrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
     DECLARE_IS_ENDIAN;
 
     ctx->generated_tag = 0;
-    if (!ctx->speed && ctx->used_dec)
-        return 0;
     /* need to check the size of the input! */
     if (len64 > ((int64_t)1 << 36))
         return 0;
@@ -271,6 +260,30 @@ static int aes_gcm_siv_decrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
     return !error;
 }
 
+static int aes_gcm_siv_finish(PROV_AES_GCM_SIV_CTX *ctx)
+{
+    int ret = 0;
+
+    if (ctx->enc) {
+        /*
+         * generate the tag on FINAL so an init/final with no update
+         * (an empty message) still produces it, matching the other AEADs
+         */
+        if (ctx->generated_tag == 0
+            && aes_gcm_siv_encrypt(ctx, NULL, NULL, 0) == 0)
+            return 0;
+        return ctx->generated_tag;
+    }
+    if (ctx->generated_tag == 0
+        && aes_gcm_siv_decrypt(ctx, NULL, NULL, 0) == 0)
+        return 0;
+    ret = CRYPTO_memcmp(ctx->tag, ctx->user_tag, sizeof(ctx->tag)) == 0;
+    ret &= ctx->have_user_tag;
+    if (ret == 0 && ctx->have_user_tag)
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+    return ret;
+}
+
 static int aes_gcm_siv_cipher(void *vctx, unsigned char *out,
     const unsigned char *in, size_t len)
 {
@@ -279,6 +292,18 @@ static int aes_gcm_siv_cipher(void *vctx, unsigned char *out,
     /* EncryptFinal or DecryptFinal */
     if (in == NULL)
         return aes_gcm_siv_finish(ctx);
+
+    /*
+     * SIV derives the CTR IV from the tag, which depends on the whole plaintext,
+     * so the payload cannot be streamed.
+     * Payload must arrive in a single update, after which the tag is fixed.
+     * Any later AAD or payload update is therefore out of order and errors out.
+     * The speed benchmark test is exempt.
+     */
+    if (!ctx->speed && (ctx->used_enc || ctx->used_dec)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+        return 0;
+    }
 
     /* Deal with associated data */
     if (out == NULL)

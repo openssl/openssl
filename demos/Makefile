@@ -6,6 +6,7 @@ MODULES = bio \
           encrypt \
           guide \
           http3 \
+          info \
           kdf \
           keyexch \
           mac \

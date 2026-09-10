@@ -1,11 +1,14 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ENDECODER_LOCAL_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ENDECODER_LOCAL_H
 
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
@@ -26,3 +29,5 @@ void *ossl_prov_import_key(const OSSL_DISPATCH *fns, void *provctx,
 void ossl_prov_free_key(const OSSL_DISPATCH *fns, void *key);
 int ossl_read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin, unsigned char **data,
     long *len);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ENDECODER_LOCAL_H) */

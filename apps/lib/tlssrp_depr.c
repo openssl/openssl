@@ -203,6 +203,8 @@ int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
         BIO_printf(bio_err,
             "Cannot initialize SRP verifier file \"%s\":ret=%d\n",
             srp_verifier_file, ret);
+        SRP_VBASE_free(srp_callback_parm->vb);
+        srp_callback_parm->vb = NULL;
         return 0;
     }
     SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, verify_callback);
@@ -223,4 +225,12 @@ void lookup_srp_user(srpsrvparm *srp_callback_parm, BIO *bio_s_out)
             srp_callback_parm->user->info);
     else
         BIO_puts(bio_s_out, "LOOKUP not successful\n");
+}
+
+void cleanup_srp(srpsrvparm *srp_callback_parm)
+{
+    SRP_user_pwd_free(srp_callback_parm->user);
+    srp_callback_parm->user = NULL;
+    SRP_VBASE_free(srp_callback_parm->vb);
+    srp_callback_parm->vb = NULL;
 }

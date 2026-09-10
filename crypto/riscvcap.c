@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@
 #include "internal/cryptlib.h"
 
 #define OPENSSL_RISCVCAP_IMPL
-#include "crypto/riscv_arch.h"
+#include "arch/riscv_arch.h"
 
 #ifdef OSSL_RISCV_HWPROBE
 #include <unistd.h>
@@ -129,7 +129,7 @@ size_t riscv_vlen(void)
     return vlen;
 }
 
-#if defined(__GNUC__) && __GNUC__ >= 2
+#if defined(__GNUC__)
 __attribute__((constructor))
 #endif
 void OPENSSL_cpuid_setup(void)

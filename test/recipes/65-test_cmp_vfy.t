@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright Nokia 2007-2019
 # Copyright Siemens AG 2015-2019
 #
@@ -37,6 +37,7 @@ my @basic_cmd = ("cmp_vfy_test",
                  data_file("IR_unprotected.der"),
                  data_file("IP_waitingStatus_PBM.der"),
                  data_file("IR_rmprotection.der"),
+                 data_file("error_protected.der"),
                  data_file("insta.cert.pem"),
                  data_file("insta_ca.cert.pem"),
                  data_file("IR_protected_0_extraCerts.der"),

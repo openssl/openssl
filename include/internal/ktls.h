@@ -98,7 +98,7 @@ static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
  * record using this control message.
  */
 static ossl_inline int ktls_send_ctrl_message(int fd,
-    unsigned char record_type, const void *data, size_t lengthi, int flags)
+    unsigned char record_type, const void *data, size_t length, int flags)
 {
     struct msghdr msg = { 0 };
     int cmsg_len = sizeof(record_type);

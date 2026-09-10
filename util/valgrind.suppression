@@ -121,6 +121,17 @@
    fun:malloc
    ...
    fun:OSSL_provider_init
+   fun:provider_init
+   fun:provider_activate
+   ...
+}
+{
+   provider_activate_strdup_without_provider_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   ...
+   fun:OSSL_provider_init
    fun:provider_activate
    ...
 }

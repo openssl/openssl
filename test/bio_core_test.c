@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -7,6 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdarg.h>
+#include <stddef.h>
 #include <string.h>
 #include <openssl/bio.h>
 #include "testutil.h"
@@ -64,6 +67,22 @@ static const OSSL_DISPATCH biocbs[] = {
     OSSL_DISPATCH_END
 };
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+static int call_bio_vsnprintf(char *buf, size_t n, const char *format, ...)
+{
+    va_list args;
+    int ret;
+
+    va_start(args, format);
+    OSSL_BEGIN_ALLOW_DEPRECATED
+    ret = BIO_vsnprintf(buf, n, format, args);
+    OSSL_END_ALLOW_DEPRECATED
+    va_end(args);
+
+    return ret;
+}
+#endif
+
 static int test_bio_core(void)
 {
     BIO *cbio = NULL, *cbiobad = NULL;
@@ -108,6 +127,109 @@ err:
     return testresult;
 }
 
+static int test_bio_vprintf_boundary(void)
+{
+    BIO *bio = NULL;
+    char *data;
+    long len;
+    int w;
+    int testresult = 0;
+
+    /*
+     * At width 512, vsnprintf() reports 512 bytes excluding the NUL,
+     * so BIO_vprintf() must use its realloc path.
+     */
+    for (w = 511; w <= 513; w++) {
+        bio = BIO_new(BIO_s_mem());
+        if (!TEST_ptr(bio))
+            goto err;
+        if (!TEST_int_eq(BIO_printf(bio, "%*d", w, 0), w))
+            goto err;
+        len = BIO_get_mem_data(bio, &data);
+        if (!TEST_long_eq(len, w)
+            || !TEST_char_eq(data[w - 1], '0')
+            || !TEST_char_eq(data[0], ' '))
+            goto err;
+        BIO_free(bio);
+        bio = NULL;
+    }
+    testresult = 1;
+err:
+    BIO_free(bio);
+    return testresult;
+}
+
+static int test_bio_printf_c99_length_modifiers(void)
+{
+    static const char expected[] = "zu=12345 zd=-42 zx=3039 td=-7 ju=4294967338 jx=10000002a";
+    static const char long_tail[] = "12345";
+    BIO *bio = NULL;
+    char *memdata = NULL;
+    long memlen;
+    size_t z = (size_t)12345;
+    ossl_ssize_t zs = (ossl_ssize_t)-42;
+    ptrdiff_t t = (ptrdiff_t)-7;
+    ossl_uintmax_t j = (((ossl_uintmax_t)1) << 32) + 42;
+    int expected_len = (int)strlen(expected);
+    size_t long_tail_len = strlen(long_tail);
+    int testresult = 0;
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+    char buf[128];
+
+    OSSL_BEGIN_ALLOW_DEPRECATED
+    if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
+                         "zu=%zu zd=%zd zx=%zx td=%td ju=%ju jx=%jx",
+                         z, zs, z, t, j, j),
+            expected_len)
+        || !TEST_str_eq(buf, expected))
+        goto err;
+
+    if (!TEST_int_eq(call_bio_vsnprintf(buf, sizeof(buf),
+                         "zu=%zu zd=%zd zx=%zx td=%td ju=%ju jx=%jx",
+                         z, zs, z, t, j, j),
+            expected_len)
+        || !TEST_str_eq(buf, expected))
+        goto err;
+    OSSL_END_ALLOW_DEPRECATED
+#endif
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(BIO_printf(bio,
+                            "zu=%zu zd=%zd zx=%zx td=%td ju=%ju jx=%jx",
+                            z, zs, z, t, j, j),
+            expected_len))
+        goto err;
+
+    memlen = BIO_get_mem_data(bio, &memdata);
+    if (!TEST_long_eq(memlen, (long)strlen(expected))
+        || !TEST_mem_eq(memdata, (size_t)memlen, expected, strlen(expected)))
+        goto err;
+
+    BIO_free(bio);
+    bio = NULL;
+    memdata = NULL;
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(BIO_printf(bio, "%600zu", z), 600))
+        goto err;
+
+    memlen = BIO_get_mem_data(bio, &memdata);
+    if (!TEST_long_eq(memlen, 600)
+        || !TEST_mem_eq(memdata + (size_t)memlen - long_tail_len,
+            long_tail_len, long_tail, long_tail_len))
+        goto err;
+
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+    OSSL_BEGIN_ALLOW_DEPRECATED
+    if (!TEST_int_eq(BIO_snprintf(buf, 4, "%zu", z), -1))
+        goto err;
+    OSSL_END_ALLOW_DEPRECATED
+#endif
+
+    testresult = 1;
+err:
+    BIO_free(bio);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -116,5 +238,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_bio_core);
+    ADD_TEST(test_bio_vprintf_boundary);
+    ADD_TEST(test_bio_printf_c99_length_modifiers);
     return 1;
 }

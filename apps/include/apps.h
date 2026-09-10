@@ -317,11 +317,13 @@ extern char *psk_key;
 
 unsigned char *next_protos_parse(size_t *outlen, const char *in);
 
-int check_cert_attributes(BIO *bio, X509 *x,
+int check_cert_might_be_valid(BIO *bio, BIO *bio_err, X509 *x,
     const char *checkhost, const char *checkemail,
-    const char *checkip, int print);
+    const char *checkip);
 
 void store_setup_crl_download(X509_STORE *st);
+
+int host_is_ip_address(const char *host);
 
 typedef struct app_http_tls_info_st {
     const char *server;

@@ -1,0 +1,246 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_armcap - the Arm processor capabilities vector
+
+=head1 SYNOPSIS
+
+ env OPENSSL_armcap=... <application>
+
+=head1 DESCRIPTION
+
+libcrypto supports a range of Arm instruction set extensions. These
+extensions are represented by bits in the Arm processor capabilities vector.
+When libcrypto initializes, it stores the results returned by Arm CPU
+capabilities detection logic in the Arm processor capabilities vector. The
+CPU capabilities detection methods are OS-dependent, using a combination of
+information gathered by the kernel during boot, and probe functions that attempt
+to execute instructions and trap illegal instruction signals with a signal
+handler.
+
+To override the set of extensions available to an application, set the
+B<OPENSSL_armcap> environment variable before starting the application. The
+environment variable is assigned a numerical value that denotes the bits in
+the Arm processor capabilities vector. The arm_arch.h header file defines
+the possible values, which are explained in detail below.
+
+Multiple extensions are enabled by logically OR-ing the values that represent
+the desired extensions.
+
+B<Notes>: Attempting to executing an instruction from an extension that the
+target CPU does not support will result in an illegal instruction exception
+(SIGILL).
+
+Please note that not all possible values in the Arm processor capabilities
+vector are actual processor capabilities. Some values represent OpenSSL
+performance preferences for some implementations which only make sense on
+specific CPUs.
+
+The following extensions are defined:
+
+=over 4
+
+=item 0x0001
+
+Name: B<ARMV7_NEON>
+
+Meaning: Indicates support for the Armv7 Neon SIMD extensions on the processor.
+
+Effect: Enables various Armv7 Neon SIMD implementations.
+
+=item 0x00002
+
+Name: B<ARMV7_TICK>
+
+Meaning: Indicates support for the Armv7 system timer on the processor.
+
+Effect: This is used as a seed for some random number generators.
+
+=item 0x00004
+
+Name: B<ARMV8_AES>
+
+Meaning: Indicates support for the Armv8.0 AES hardware-acceleration extensions
+on the processor.
+
+Effect: Enables various Armv8.0 AES hardware-accelerated implementations.
+
+=item 0x00008
+
+Name: B<ARMV8_SHA1>
+
+Meaning: Indicates support for the Armv8.0 SHA1 hardware-acceleration extensions
+on the processor.
+
+Effect: Enables various Armv8.0 SHA1 hardware-accelerated implementations.
+
+=item 0x00010
+
+Name: B<ARMV8_SHA256>
+
+Meaning: Indicates support for the Armv8.0 SHA256 hardware-acceleration
+extensions on the processor.
+
+Effect: Enables various Armv8.0 SHA256 hardware-accelerated implementations.
+
+=item 0x00020
+
+Name: B<ARMV8_PMULL>
+
+Meaning: Indicates support for the Armv8.0 polynomial multiplication
+hardware-acceleration extensions on the processor.
+
+Effect: Used to hardware-accelerate polynomial multiplication, for example in
+AES-GCM.
+
+=item 0x00040
+
+Name: B<ARMV8_SHA512>
+
+Meaning: Indicates support for the Armv8.2 SHA512 hardware-acceleration
+extensions on the processor.
+
+Effect: Enables Armv8.2 SHA512 hardware-accelerated implementations.
+
+=item 0x00080
+
+Name: B<ARMV8_CPUID>
+
+Meaning: Indicates support for the Armv8.0 hardware identification extensions on
+the processor.
+
+Effect: Allows implementations to change their behaviour, dependant on the
+processor platform in order to achieve better performance.
+
+=item 0x00100
+
+Name: B<ARMV8_RNG>
+
+Meaning: Indicates support for the Armv8.5 hardware random number generation
+extensions on the processor.
+
+Effect: Enables hardware random number generation on supported AArch64
+processors.
+
+=item 0x00200
+
+Name: B<ARMV8_SM3>
+
+Meaning: Indicates support for the Armv8.2 SM3 hardware-acceleration extensions
+on the processor.
+
+Effect: Enables Armv8.2 SM3 hardware-accelerated implementations.
+
+=item 0x00400
+
+Name: B<ARMV8_SM4>
+
+Meaning: Indicates support for the Armv8.2 SM4 hardware-acceleration extensions
+on the processor.
+
+Effect: Enables Armv8.2 SM4 hardware-accelerated implementations.
+
+=item 0x00800
+
+Name: B<ARMV8_SHA3>
+
+Meaning: Indicates support for the Armv8.2 SHA3 hardware-acceleration extensions
+on the processor.
+
+Effect: Enables SHA3 hardware-accelerated implementations (see also
+ARMV8_HAVE_SHA3_AND_WORTH_USING).
+
+=item 0x01000
+
+Name: B<ARMV8_UNROLL8_EOR3>
+
+Meaning: Indicates support for the Arm EOR3 instruction, which is a part of the
+Armv8.2 SHA3 extensions, and enables 8x Loop unrolling in the AES-CTR
+implementation.
+
+Effect: Enables the 8x loop unrolling utilising EOR3 implementation of AES-CTR
+on platforms that support the SHA3 extension and have enough vector bandwidth.
+
+=item 0x02000
+
+Name: B<ARMV8_SVE>
+
+Meaning: Indicates support for the Armv8.2 SVE hardware extension on the
+processor.
+
+Effect: Enables various Armv8.2 SVE implementations.
+
+=item 0x04000
+
+Name: B<ARMV9_SVE2>
+
+Meaning: Indicates support for the Armv9.0 SVE2 hardware extension on the
+processor.
+
+Effect: Enables various Armv9.0 SVE2 implementations.
+
+=item 0x08000
+
+Name: B<ARMV8_HAVE_SHA3_AND_WORTH_USING>
+
+Meaning: Indicates support for the Armv8.2 SHA3 hardware-acceleration extensions
+on the processor, and that the hardware bandwidth is sufficient for it to be
+worth using.
+
+Effect: On certain Apple platforms, although the SHA3 extension is supported, it
+is actually slower than other implementations. This flag disables the
+hardware-accelerated SHA3 implementations on these platforms.
+
+=item 0x10000
+
+Name: B<ARMV8_UNROLL12_EOR3>
+
+Meaning: Indicates support for the Arm EOR3 instruction, which is a part of the
+Armv8.2 SHA3 extensions, and enables 12x loop unrolling in the AES-CTR
+implementation.
+
+Effect: Enables the 12x loop unrolling utilising EOR3 implementation of AES-CTR
+on platforms that support the extension and have enough vector bandwidth.
+
+=item 0x20000
+
+Name: B<ARMV9_SVE2_POLY1305>
+
+Meaning: Indicates support for the Armv9.0 SVE2 hardware extension, and enables
+its use in the Poly1305 implementation.
+
+Effect: Enables the Armv9.0 SVE2 Poly1305 implementation if SVE2 is enabled, the
+vector length is greater than 128 bits, and the vector length is a power of 2.
+
+=back
+
+=head1 RETURN VALUES
+
+Not available.
+
+=head1 EXAMPLES
+
+Check currently detected capabilities:
+
+ $ openssl info -cpusettings
+ OPENSSL_armcap=0x987d
+
+The detected capabilities in the above example indicate that ARMV7_NEON,
+ARMV8_AES, ARMV8_SHA1, ARMV8_SHA256, ARMV8_PMULL, ARMV8_SHA512, ARMV8_SHA3,
+ARMV8_UNROLL8_EOR3, and ARMV8_HAVE_SHA3_AND_WORTH_USING are enabled.
+
+Disable all instruction set extensions:
+
+ export OPENSSL_armcap=0x00
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

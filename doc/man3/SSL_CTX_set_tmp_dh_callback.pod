@@ -66,7 +66,7 @@ it off. The default setting is off.
 
 If "auto" DH parameters are switched on then the parameters will be selected to
 be consistent with the size of the key associated with the server's certificate.
-If there is no certificate (e.g. for PSK ciphersuites), then it it will be
+If there is no certificate (e.g. for PSK ciphersuites), then it will be
 consistent with the size of the negotiated symmetric cipher key.
 
 Applications may supply their own DH parameters instead of using the built-in
@@ -114,7 +114,7 @@ L<openssl-ciphers(1)>, L<openssl-dhparam(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -20,6 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/x509.h>
 #include "opt.h"
+#include "mfail/mfail.h"
 
 /*-
  * Simple unit tests should implement setup_tests().
@@ -64,13 +65,40 @@
  * injected, asserts test_fn returns 0. When no failure is injected
  * (all allocation points exhausted), asserts test_fn returns 1 and stops.
  *
- * The slow variant is for marking the slow test that can be skipped using
- * environment variable.
+ * The NO_CHECK variant disables the assertion that failed tests must
+ * result in function failure.
  *
  * test_fn has no parameters and returns 1 on success, 0 on failure.
  */
-#define ADD_MFAIL_TEST(test_fn) add_mfail_test(#test_fn, test_fn, 0)
-#define ADD_MFAIL_SLOW_TEST(test_fn) add_mfail_test(#test_fn, test_fn, 1)
+
+/* Per-test flags for add_mfail_test() */
+#define MFAIL_TEST_NO_CHECK (1 << 0)
+#define MFAIL_TEST_SAMPLED (1 << 1)
+
+#define ADD_MFAIL_TEST(test_fn) \
+    add_mfail_test(#test_fn, test_fn, 0, 0)
+#define ADD_MFAIL_NO_CHECK_TEST(test_fn) \
+    add_mfail_test(#test_fn, test_fn, MFAIL_TEST_NO_CHECK, 0)
+
+/* Caps injection at |cnt| points (exhaustive when allocations <= cnt) */
+#define ADD_MFAIL_SAMPLED_TEST(test_fn, cnt) \
+    add_mfail_test(#test_fn, test_fn, MFAIL_TEST_SAMPLED, cnt)
+#define ADD_MFAIL_SAMPLED_NO_CHECK_TEST(test_fn, cnt) \
+    add_mfail_test(#test_fn, test_fn,                 \
+        MFAIL_TEST_NO_CHECK | MFAIL_TEST_SAMPLED, cnt)
+
+/* Runs the exhaustive mfail cycle for each 0 <= idx < num */
+#define ADD_MFAIL_ALL_TESTS(test_fn, num) \
+    add_mfail_all_tests(#test_fn, test_fn, num, 0, 0)
+#define ADD_MFAIL_ALL_NO_CHECK_TESTS(test_fn, num) \
+    add_mfail_all_tests(#test_fn, test_fn, num, MFAIL_TEST_NO_CHECK, 0)
+
+/* Sampled variants of the above */
+#define ADD_MFAIL_SAMPLED_ALL_TESTS(test_fn, num, cnt) \
+    add_mfail_all_tests(#test_fn, test_fn, num, MFAIL_TEST_SAMPLED, cnt)
+#define ADD_MFAIL_SAMPLED_ALL_NO_CHECK_TESTS(test_fn, num, cnt) \
+    add_mfail_all_tests(#test_fn, test_fn, num,                 \
+        MFAIL_TEST_NO_CHECK | MFAIL_TEST_SAMPLED, cnt)
 
 /*
  * A variant of the same without TAP output.
@@ -242,17 +270,10 @@ int test_arg_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,
 void add_test(const char *test_case_name, int (*test_fn)(void));
 void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
     int subtest);
-void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int slow);
-
-/*
- * Start the memory allocation failure counter.
- */
-void mfail_start(void);
-
-/*
- * Stop the memory allocation failure counter.
- */
-void mfail_end(void);
+void add_mfail_test(const char *test_case_name, int (*test_fn)(void),
+    int flags, int sampled);
+void add_mfail_all_tests(const char *test_case_name, int (*test_fn)(int idx),
+    int num, int flags, int sampled);
 
 #define MFAIL_start mfail_start
 #define MFAIL_end mfail_end
@@ -316,17 +337,10 @@ const OPTIONS *test_get_options(void);
  */
 
 #define PRINTF_FORMAT(a, b)
-#if defined(__GNUC__) && defined(__STDC_VERSION__)    \
-    && !defined(__MINGW32__) && !defined(__MINGW64__) \
+#if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__MINGW64__) \
     && !defined(__APPLE__)
-/*
- * Because we support the 'z' modifier, which made its appearance in C99,
- * we can't use __attribute__ with pre C99 dialects.
- */
-#if __STDC_VERSION__ >= 199901L
 #undef PRINTF_FORMAT
 #define PRINTF_FORMAT(a, b) __attribute__((format(printf, a, b)))
-#endif
 #endif
 
 #define DECLARE_COMPARISON(type, name, opname)    \
@@ -698,6 +712,14 @@ STACK_OF(X509) *load_certs_pem(const char *file);
 X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx);
 int test_asn1_string_to_time_t(const char *asn1_string, time_t *out_time_t);
 int compare_with_reference_file(BIO *membio, const char *reffile);
+
+/*
+ * Parse a non-negative decimal integer from |value| into |*result|.  Returns 1
+ * on success, 0 on failure (NULL/empty/non-numeric/negative/overflowing input,
+ * or trailing garbage).  Test binaries link only against the public ABI, so
+ * this wraps OPENSSL_strtoul() rather than the libcrypto-internal helpers.
+ */
+int test_strtoint(const char *value, int *result);
 /*
  * Create an X509 from an array of strings.
  */
@@ -706,6 +728,10 @@ X509 *X509_from_strings(const char **pem);
  * Create a CRL from an array of strings.
  */
 X509_CRL *CRL_from_strings(const char **pem);
+/*
+ * Create a PKEY from an array of strings.
+ */
+EVP_PKEY *PKEY_from_strings(const char **pem);
 /*
  * Glue an array of strings together.  Return a BIO and put the string
  * into |*out| so we can free it.

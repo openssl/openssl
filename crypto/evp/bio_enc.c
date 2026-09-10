@@ -396,9 +396,6 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
         dctx = BIO_get_data(dbio);
-        dctx->cipher = EVP_CIPHER_CTX_new();
-        if (dctx->cipher == NULL)
-            return 0;
         ret = EVP_CIPHER_CTX_copy(dctx->cipher, ctx->cipher);
         if (ret)
             BIO_set_init(dbio, 1);

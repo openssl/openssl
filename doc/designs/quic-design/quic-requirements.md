@@ -60,7 +60,7 @@ and that were specific to QUIC
 
 * For the MVP a single interop target (i.e. the server implementation list):
 
-  1. [Cloudfare](https://cloudflare-quic.com/)
+  1. [Cloudflare](https://cloudflare-quic.com/)
 
 * Testing against other implementations is not a release requirement for the MVP.
 

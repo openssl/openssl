@@ -50,7 +50,7 @@ ignored.
 
 RAND_set1_random_provider() specifies a provider, I<prov>, which will be used
 by the library context I<ctx> for all of the generate calls above instead
-of the built-in in DRBGs and entropy source.  Pass NULL for the provider
+of the built-in DRBGs and entropy source.  Pass NULL for the provider
 to disable the random provider functionality.  In this case, the built-in DRBGs
 and entropy source will be used.  This call should not be considered thread safe.
 
@@ -115,7 +115,7 @@ The RAND_set1_random_provider() function was added in OpenSSL 3.5
 
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

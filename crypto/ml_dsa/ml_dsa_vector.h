@@ -1,11 +1,14 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_VECTOR_H)
+#define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_VECTOR_H
 
 #include <assert.h>
 #include "ml_dsa_poly.h"
@@ -149,33 +152,6 @@ vector_mult_scalar(const VECTOR *lhs, const POLY *rhs, VECTOR *out)
         ossl_ml_dsa_poly_ntt_mult(lhs->poly + i, rhs, out->poly + i);
 }
 
-static ossl_inline ossl_unused int
-vector_expand_S(EVP_MD_CTX *h_ctx, const EVP_MD *md, int eta,
-    const uint8_t *seed, VECTOR *s1, VECTOR *s2)
-{
-    return ossl_ml_dsa_vector_expand_S(h_ctx, md, eta, seed, s1, s2);
-}
-
-static ossl_inline ossl_unused void
-vector_expand_mask(VECTOR *out, const uint8_t *rho_prime, size_t rho_prime_len,
-    uint32_t kappa, uint32_t gamma1,
-    EVP_MD_CTX *h_ctx, const EVP_MD *md)
-{
-    size_t i;
-    uint8_t derived_seed[ML_DSA_RHO_PRIME_BYTES + 2];
-
-    memcpy(derived_seed, rho_prime, ML_DSA_RHO_PRIME_BYTES);
-
-    for (i = 0; i < out->num_poly; i++) {
-        size_t index = kappa + i;
-
-        derived_seed[ML_DSA_RHO_PRIME_BYTES] = index & 0xFF;
-        derived_seed[ML_DSA_RHO_PRIME_BYTES + 1] = (index >> 8) & 0xFF;
-        poly_expand_mask(out->poly + i, derived_seed, sizeof(derived_seed),
-            gamma1, h_ctx, md);
-    }
-}
-
 /* Scale back previously rounded value */
 static ossl_inline ossl_unused void
 vector_scale_power2_round_ntt(const VECTOR *in, VECTOR *out)
@@ -272,3 +248,5 @@ vector_use_hint(const VECTOR *h, const VECTOR *r, uint32_t gamma2, VECTOR *out)
     for (i = 0; i < out->num_poly; i++)
         poly_use_hint(h->poly + i, r->poly + i, gamma2, out->poly + i);
 }
+
+#endif /* !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_VECTOR_H) */

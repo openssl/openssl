@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -160,7 +160,7 @@ static int bn_left_align(BIGNUM *num)
 
 #if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) \
     && !defined(PEDANTIC) && !defined(BN_DIV3W)
-#if defined(__GNUC__) && __GNUC__ >= 2
+#if defined(__GNUC__)
 #if defined(__i386) || defined(__i386__)
 /*-
  * There were two reasons for implementing this template:

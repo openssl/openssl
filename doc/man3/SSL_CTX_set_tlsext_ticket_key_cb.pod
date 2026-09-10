@@ -29,8 +29,7 @@ see L<openssl_user_macros(7)>:
 SSL_CTX_set_tlsext_ticket_key_evp_cb() sets a callback function I<cb> for handling
 session tickets for the ssl context I<sslctx>. Session tickets, defined in
 RFC5077 provide an enhanced session resumption capability where the server
-implementation is not required to maintain per session state. It only applies
-to TLS and there is no SSLv3 implementation.
+implementation is not required to maintain per session state.
 
 The callback function I<cb> will be called for every client instigated TLS
 session when session ticket extension is presented in the TLS hello
@@ -241,7 +240,7 @@ OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2014-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2014-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

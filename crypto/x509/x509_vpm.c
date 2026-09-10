@@ -35,7 +35,7 @@ static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
 {
     X509_BUFFER *buf;
 
-    if ((buf = OPENSSL_zalloc(sizeof *buf)) != NULL
+    if ((buf = OPENSSL_zalloc(sizeof(*buf))) != NULL
         && (buf->data = OPENSSL_memdup(bytes, length)) != NULL) {
         buf->len = length;
     } else {
@@ -56,7 +56,7 @@ static X509_BUFFER *buffer_from_string(const uint8_t *bytes, size_t length)
     X509_BUFFER *buf, *ret = NULL;
     uint8_t *data = NULL;
 
-    if ((buf = OPENSSL_zalloc(sizeof *buf)) == NULL)
+    if ((buf = OPENSSL_zalloc(sizeof(*buf))) == NULL)
         goto err;
 
     if ((data = (uint8_t *)OPENSSL_strndup((char *)bytes, length)) == NULL)
@@ -271,8 +271,8 @@ static int validate_hostname_part(const char *name, size_t len,
             }
             if (!is_label_ok(c, charset) && c != '-')
                 return 0;
+            part_len++;
         }
-        part_len++;
         if (part_len > 63)
             return 0;
 
@@ -324,11 +324,11 @@ static int validate_email_name(const char *name, size_t len, int rfc822)
         at = next;
 
     /* Ensure the local part is not oversize */
-    local_len = len - (at - name);
+    local_len = at - name;
     if (local_len > 64)
         goto err;
 
-    if (!validate_local_part(name, len, &local_charset))
+    if (!validate_local_part(name, local_len, &local_charset))
         goto err;
 
     if (rfc822 && local_charset == OSSL_CHARSET_NONASCII)

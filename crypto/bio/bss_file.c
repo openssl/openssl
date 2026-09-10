@@ -163,23 +163,16 @@ static int file_read(BIO *b, char *out, int outl)
 
 static int file_write(BIO *b, const char *in, int inl)
 {
-    int ret = 0;
+    size_t ret = 0;
 
-    if (b->init && (in != NULL)) {
+    if (inl < INT_MAX && inl >= 0 && b->init && (in != NULL)) {
         if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
-            ret = (int)UP_fwrite(in, inl, 1, b->ptr);
+            ret = (int)UP_fwrite(in, 1, (size_t)inl, b->ptr);
         else
-            ret = (int)fwrite(in, inl, 1, (FILE *)b->ptr);
-        if (ret)
-            ret = inl;
-        /* ret=fwrite(in,1,(int)inl,(FILE *)b->ptr); */
-        /*
-         * according to Tim Hudson <tjh@openssl.org>, the commented out
-         * version above can cause 'inl' write calls under some stupid stdio
-         * implementations (VMS)
-         */
+            ret = fwrite(in, 1, (size_t)inl, (FILE *)b->ptr);
     }
-    return ret;
+
+    return (int)ret;
 }
 
 static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -189,6 +182,9 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
     FILE **fpp;
     char p[4];
     int st;
+#if defined(OPENSSL_SYS_WINDOWS)
+    int oldErr;
+#endif
 
     switch (cmd) {
     case BIO_C_FILE_SEEK:
@@ -205,6 +201,10 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
          * so we map the 0:non-0 return value here to 0:1 with a
          * double negation
          */
+#if defined(OPENSSL_SYS_WINDOWS)
+        oldErr = errno;
+        errno = 0;
+#endif
         if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = !!(long)UP_feof(fp);
         else
@@ -218,6 +218,8 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
          */
         if (ret == 0 && errno == EINVAL)
             ret = -EINVAL;
+        else if (errno == 0)
+            errno = oldErr;
 #endif
         break;
     case BIO_C_FILE_TELL:
@@ -339,7 +341,13 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         /* the ptr parameter is actually a FILE ** in this case. */
         if (ptr != NULL) {
             fpp = (FILE **)ptr;
-            *fpp = (FILE *)b->ptr;
+            if (BIO_FLAGS_UPLINK_INTERNAL == 0
+                || b->flags & BIO_FLAGS_UPLINK_INTERNAL) {
+                *fpp = (FILE *)b->ptr;
+            } else { /* avoid returning internal FILE * to the app */
+                *fpp = NULL;
+                ret = 0;
+            }
         }
         break;
     case BIO_CTRL_GET_CLOSE:

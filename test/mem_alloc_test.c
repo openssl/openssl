@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,7 +78,7 @@ static const struct array_alloc_vector {
 
     { 1, 1, EXP_NONNULL, EXP_NONNULL },
 
-    { SQRT_SIZE_T / 2, SQRT_SIZE_T, EXP_OOM, EXP_OOM },
+    { SQRT_SIZE_T - 1, SQRT_SIZE_T - 1, EXP_OOM, EXP_OOM },
 
     { SQRT_SIZE_T, SQRT_SIZE_T, EXP_ZERO_SIZE, EXP_INT_OF },
 
@@ -88,8 +88,6 @@ static const struct array_alloc_vector {
 #else /* Of course there are no archutectures other than 32- and 64-bit ones */
     { 274177, 67280421310721LLU, EXP_NONNULL, EXP_INT_OF },
 #endif
-
-    { SIZE_MAX / 4 * 3, SIZE_MAX / 2, EXP_OOM, EXP_INT_OF },
 };
 
 static const struct array_realloc_vector {
@@ -190,7 +188,7 @@ static int secure_memory_is_secure;
 static void *my_malloc(const size_t num,
     const char *const file, const int line)
 {
-    void *const p = malloc(num);
+    void *const p = num > 0 ? malloc(num) : NULL;
 
 #if CUSTOM_FN_PRINT_CALLS
     if (file == test_fn || file == NULL
@@ -203,13 +201,21 @@ static void *my_malloc(const size_t num,
 
     return p;
 }
+
 static void *my_realloc(void *const addr, const size_t num,
     const char *const file, const int line)
 {
 #if CUSTOM_FN_PRINT_CALLS
     const uintptr_t old_addr = (uintptr_t)addr;
 #endif
-    void *const p = realloc(addr, num);
+    void *p = NULL;
+
+    if (addr == NULL && num > 0)
+        p = malloc(num);
+    else if (num == 0)
+        free(addr);
+    else
+        p = realloc(addr, num);
 
 #if CUSTOM_FN_PRINT_CALLS
     if (file == test_fn || file == NULL

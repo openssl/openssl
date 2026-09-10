@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -587,7 +587,7 @@ err:
 #endif
     if (line != NULL)
         *line = eline;
-    BIO_snprintf(btmp, sizeof(btmp), "%ld", eline);
+    snprintf(btmp, sizeof(btmp), "%ld", eline);
     ERR_add_error_data(2, "line ", btmp);
     if (h != conf->data) {
         CONF_free(conf->data);

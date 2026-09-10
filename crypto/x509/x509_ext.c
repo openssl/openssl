@@ -84,7 +84,7 @@ int X509_get_ext_by_OBJ(const X509 *x, const ASN1_OBJECT *obj, int lastpos)
 
 int X509_get_ext_by_critical(const X509 *x, int crit, int lastpos)
 {
-    return (X509v3_get_ext_by_critical(x->cert_info.extensions, crit, lastpos));
+    return X509v3_get_ext_by_critical(x->cert_info.extensions, crit, lastpos);
 }
 
 const X509_EXTENSION *X509_get_ext(const X509 *x, int loc)

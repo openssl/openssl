@@ -12,7 +12,7 @@
 #define HAVE_AVX2_INTRINSICS 1
 #endif
 
-#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64) || defined(__e2k__)
 #if !defined(_M_ARM64EC)
 #if defined(HAVE_AVX2_INTRINSICS)
 size_t encode_base64_avx2(EVP_ENCODE_CTX *ctx,

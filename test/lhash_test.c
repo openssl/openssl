@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -31,6 +31,8 @@
 #endif
 
 DEFINE_LHASH_OF_EX(int);
+
+static void hashtable_intfree(HT_VALUE *v);
 
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
     -17, 16, 17, -23, 35, 37, 173, 11 };
@@ -304,6 +306,84 @@ end:
     return rc;
 }
 
+/*
+ * MFAIL coverage for the RCU replacement branch of ossl_ht_insert_locked.
+ */
+static int test_hashtable_insert_replace_mfail(void)
+{
+    HT_CONFIG hash_conf = {
+        .collision_check = 1,
+        .no_rcu = 0, /* RCU enabled - exercises cbi pre-alloc on replace */
+    };
+    INTKEY key;
+    HT *ht = NULL;
+    int *old = NULL;
+    int ret = 0;
+    static int v1 = 100;
+    static int v2 = 200;
+
+    if (!TEST_ptr(ht = ossl_ht_new(&hash_conf)))
+        goto end;
+
+    /* Seed the table outside MFAIL for later replacement */
+    HT_INIT_KEY(&key);
+    HT_KEY_RESET(&key);
+    HT_SET_KEY_FIELD(&key, mykey, int_tests[0]);
+    if (!TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&key), &v1, NULL),
+            1))
+        goto end;
+
+    /* Replacement under MFAIL. */
+    MFAIL_start();
+    ret = ossl_ht_test_int_insert(ht, TO_HT_KEY(&key), &v2, &old);
+    MFAIL_end();
+
+end:
+    ossl_ht_free(ht);
+    return ret > 0 ? 1 : 0;
+}
+
+static int test_hashtable_free_mfail(void)
+{
+    HT_CONFIG hash_conf = {
+        .ht_free_fn = hashtable_intfree,
+        .collision_check = 1,
+        .no_rcu = 0,
+    };
+    INTKEY key;
+    HT *ht = NULL;
+    int *p;
+    size_t i;
+
+    if (!TEST_ptr(ht = ossl_ht_new(&hash_conf)))
+        return 0;
+
+    /* Seed values. */
+    HT_INIT_KEY(&key);
+    for (i = 0; i < n_int_tests; i++) {
+        if (!TEST_ptr(p = OPENSSL_malloc(sizeof(*p))))
+            goto end;
+        *p = int_tests[i];
+        HT_KEY_RESET(&key);
+        HT_SET_KEY_FIELD(&key, mykey, *p);
+        if (!TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&key),
+                             p, NULL),
+                1)) {
+            OPENSSL_free(p);
+            goto end;
+        }
+    }
+    MFAIL_start();
+    ossl_ht_free(ht);
+    MFAIL_end();
+    ht = NULL;
+
+    return 1;
+end:
+    ossl_ht_free(ht);
+    return 0;
+}
+
 static unsigned long int stress_hash(const int *p)
 {
     return *p;
@@ -496,28 +576,67 @@ typedef struct test_mt_entry {
 
 static HT *m_ht = NULL;
 #define TEST_MT_POOL_SZ 256
-#define TEST_THREAD_ITERATIONS 1000000
-#define NUM_WORKERS 16
+/*-
+ * TEST_THREAD_ITERATIONS is chosen so that collisions between workers
+ * on the same key are exercised, not to make the test run for any
+ * particular length of time.
+ *
+ * Choosing too large a number consumes a multithreaded machine with the
+ * kernel madly exercising lock contention, for no real gain in coverage
+ * for our code, making the tests run excessively long.  A million
+ * iterations is really painful.
+ *
+ * A race needs two workers on one key at once, so what must be covered is
+ * each ordered pair of behaviours -- NUM_BEHAVIORS squared, or 16 --
+ * arriving together on a key.  With W workers an operation collides with
+ * probability P = 1 - ((TEST_MT_POOL_SZ - 1) / TEST_MT_POOL_SZ) ^ (W - 1),
+ * and a collision is equally likely to be any of the 16, so each is seen
+ * an expected E = W * TEST_THREAD_ITERATIONS * P / 16 times per
+ * configuration.  The chance of never seeing one is about 16 * exp(-E):
+ *
+ *     workers        E    P(some combination never exercised)
+ *           2       73    1e-31
+ *           4      438    1e-189
+ *           8     2027    1e-879
+ *          16     8553    1e-3713
+ *
+ * Coverage rises with the square of the worker count but run time only
+ * linearly, so the value is sized for the fewest workers worth supporting.
+ * At two workers 10000 iterations would miss a combination one run in
+ * nine, and 20000 one run in a thousand; the value below is far enough
+ * past that to leave each combination met at many different points in the
+ * interleaving.  More buys only further chances of landing in a narrow
+ * timing window, not more of the state space.
+ */
+#define TEST_THREAD_ITERATIONS 150000
+/*-
+ * Four workers is enough to interleave more than a pair of threads on a
+ * key, which two cannot do, without tying up a whole machine.
+ */
+#define MAX_NUM_WORKERS 4
 
 static struct test_mt_entry test_mt_entries[TEST_MT_POOL_SZ];
 static char **worker_exits;
 static thread_t *workers;
-static int num_workers = NUM_WORKERS;
+static int num_workers = MAX_NUM_WORKERS;
 
 static int setup_num_workers(void)
 {
     char *harness_jobs = getenv("HARNESS_JOBS");
     char *lhash_workers = getenv("LHASH_WORKERS");
-    /* If we have HARNESS_JOBS set, don't eat more than a quarter */
+    /* If we have HARNESS_JOBS set, don't use more workers than that */
     if (harness_jobs != NULL) {
-        int jobs = atoi(harness_jobs);
-        if (jobs > 0)
-            num_workers = jobs / 4;
+        int jobs;
+
+        if (test_strtoint(harness_jobs, &jobs) && jobs > 0
+            && jobs < num_workers)
+            num_workers = jobs;
     }
     /* But if we have explicitly set LHASH_WORKERS use that */
     if (lhash_workers != NULL) {
-        int jobs = atoi(lhash_workers);
-        if (jobs > 0)
+        int jobs;
+
+        if (test_strtoint(lhash_workers, &jobs) && jobs > 0)
             num_workers = jobs;
     }
 
@@ -799,5 +918,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_int_hashtable, 2);
     ADD_ALL_TESTS(test_hashtable_stress, 4);
     ADD_ALL_TESTS(test_hashtable_multithread, 2);
+    ADD_MFAIL_TEST(test_hashtable_insert_replace_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_hashtable_free_mfail);
     return 1;
 }

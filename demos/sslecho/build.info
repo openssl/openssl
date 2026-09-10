@@ -6,6 +6,15 @@
 
 PROGRAMS{noinst} = sslecho
 
+
 INCLUDE[sslecho]=../../include
 SOURCE[sslecho]=main.c
 DEPEND[sslecho]=../../libcrypto ../../libssl
+
+IF[{- !$disabled{"ech"} -}]
+    PROGRAMS{noinst} = echecho
+
+    INCLUDE[echecho]=../../include
+    SOURCE[echecho]=echecho.c
+    DEPEND[echecho]=../../libcrypto ../../libssl
+ENDIF

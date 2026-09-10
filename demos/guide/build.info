@@ -5,6 +5,7 @@
 #    LD_LIBRARY_PATH=../.. ./tls-client-block www.example.com 443
 
 PROGRAMS{noinst} = tls-client-block \
+                   tls-server-block \
                    quic-client-block \
                    quic-multi-stream \
                    tls-client-non-block \
@@ -16,6 +17,10 @@ PROGRAMS{noinst} = tls-client-block \
 INCLUDE[tls-client-block]=../../include
 SOURCE[tls-client-block]=tls-client-block.c
 DEPEND[tls-client-block]=../../libcrypto ../../libssl
+
+INCLUDE[tls-server-block]=../../include
+SOURCE[tls-server-block]=tls-server-block.c
+DEPEND[tls-server-block]=../../libcrypto ../../libssl
 
 INCLUDE[quic-client-block]=../../include
 SOURCE[quic-client-block]=quic-client-block.c

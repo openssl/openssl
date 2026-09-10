@@ -147,12 +147,13 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
     }
     pbkdf2_salt = pbkdf2_param->salt->value.octet_string;
 
-    /* RFC 9579 specifies missing key length as invalid */
+    /* RFC 9879 specifies missing key length as invalid */
     if (pbkdf2_param->keylength != NULL)
         keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
-    if (keylen <= 0 || keylen > EVP_MAX_MD_SIZE) {
+    /* RFC 9879 specifies too short key length as untrustworthy too */
+    if (keylen < 20 || keylen > EVP_MAX_MD_SIZE) {
         ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR,
-            "Invalid Key length (%d is not in the range 1..64)", keylen);
+            "Invalid Key length (%d is not in the range 20..64)", keylen);
         goto err;
     }
 
@@ -349,7 +350,7 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         }
     }
     X509_SIG_get0(p12->mac->dinfo, NULL, &macoct);
-    if ((maclen != (unsigned int)ASN1_STRING_length(macoct))
+    if ((maclen != ASN1_STRING_get_length(macoct))
         || CRYPTO_memcmp(mac, ASN1_STRING_get0_data(macoct), maclen) != 0)
         return 0;
 

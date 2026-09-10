@@ -223,10 +223,42 @@ static int new_style_read_ex(void)
     return ok;
 }
 
+static int test_short_file_write(void)
+{
+#if defined(OPENSSL_SYS_MACOSX)
+    int ok = 0;
+    char *data = "If you liked it then you should have put a test on it";
+    char buf[20];
+    FILE *stream = NULL;
+    BIO *bp = NULL;
+
+    stream = fmemopen(buf, 20, "wb");
+    if (!TEST_ptr(stream))
+        goto err;
+
+    bp = BIO_new_fp(stream, BIO_NOCLOSE);
+    if (!TEST_ptr(bp))
+        goto err;
+
+    if (!TEST_int_eq(BIO_write(bp, data, strlen(data)), 20))
+        goto err;
+
+    ok = 1;
+
+err:
+    fclose(stream);
+    BIO_free(bp);
+    return ok;
+#else
+    return TEST_skip("short file write test not supported on this platform");
+#endif
+}
+
 int setup_tests(void)
 {
     ADD_TEST(old_style_read_without_eof_ctrl);
     ADD_TEST(old_style_read_with_eof_ctrl);
     ADD_TEST(new_style_read_ex);
+    ADD_TEST(test_short_file_write);
     return 1;
 }

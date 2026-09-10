@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -141,7 +141,20 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             i = BIO_read(in, &(b->data[len]), (int)want);
 
             if (i <= 0) {
-                ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
+                /*
+                 * A read error (i < 0), an EOF in the middle of an object
+                 * (diff != 0, some bytes already buffered), or an EOF while
+                 * still inside an indefinite-length constructed value awaiting
+                 * its end-of-contents octets (eos != 0) all mean the input is
+                 * truncated.  Only a clean EOF at a top-level object boundary
+                 * (i == 0, diff == 0, eos == 0) is the normal end of input:
+                 * fail without queuing an error so that callers looping over
+                 * concatenated DER values (e.g. the libcrypto d2i_*_bio()
+                 * consumers in CPython's ssl module) terminate cleanly instead
+                 * of seeing a spurious ASN1_R_NOT_ENOUGH_DATA.
+                 */
+                if (i < 0 || diff != 0 || eos != 0)
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
             }
 
@@ -169,8 +182,15 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
         diff--;
         if ((*(q++) & V_ASN1_PRIMITIVE_TAG) == V_ASN1_PRIMITIVE_TAG) {
+            unsigned int i = 0;
             /* Multi-byte tag.  See if we have the whole thing yet */
             do {
+                if (i > 4) {
+                    /* The tag value must fit into int */
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_HEADER_TOO_LONG);
+                    goto err;
+                }
+                ++i;
                 diff--;
             } while (diff > 0 && *(q++) & 0x80);
 

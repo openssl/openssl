@@ -20,6 +20,10 @@
 #include <openssl/ech.h>
 #include <openssl/hpke.h>
 
+#include <internal/packet.h>
+#include <internal/ssl.h>
+#include <internal/statem.h>
+
 /*
  * Define this to get loads more lines of tracing which is
  * very useful for interop.

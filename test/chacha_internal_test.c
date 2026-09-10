@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@
 #include "testutil.h"
 #include "crypto/chacha.h"
 #if defined(__powerpc64__) && !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #endif
 
 static const unsigned int key[] = {

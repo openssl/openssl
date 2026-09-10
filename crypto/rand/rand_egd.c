@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -104,7 +104,6 @@ static int hpns_connect_attempt = 0;
 
 #endif /* defined(OPENSSL_SYS_HPNS) */
 
-
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     FILE *fp = NULL;
@@ -137,7 +136,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     for (;;) {
         if (connect(fd, (struct sockaddr *)&addr, i) == 0)
             break;
-# ifdef EISCONN
+#ifdef EISCONN
         if (errno == EISCONN)
             break;
 #endif

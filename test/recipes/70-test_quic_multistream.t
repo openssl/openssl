@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -37,8 +37,12 @@ SKIP: {
     skip "no qlog", 1 if disabled('qlog');
     skip "not running CI tests", 1 unless $ENV{OSSL_RUN_CI_TESTS};
 
-    subtest "check qlog output" => sub {
-        plan tests => 1;
+    subtest "generate and check qlog output" => sub {
+        plan tests => 2;
+        ok(run(test(["quic_radix_test",
+                     srctop_file("test", "certs", "servercert.pem"),
+                     srctop_file("test", "certs", "serverkey.pem")])),
+               "running quic_radix_test to contribute qlog output");
 
         ok(run(cmd([data_file("verify-qlog.py")], exe_shell => "python3")),
                "running qlog verification script");

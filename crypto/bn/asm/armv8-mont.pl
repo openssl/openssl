@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -67,7 +67,7 @@ $n0="x4";	# const BN_ULONG *n0,
 $num="x5";	# int num);
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 #ifndef	__KERNEL__
 .extern OPENSSL_armv8_rsa_neonized
 .hidden OPENSSL_armv8_rsa_neonized

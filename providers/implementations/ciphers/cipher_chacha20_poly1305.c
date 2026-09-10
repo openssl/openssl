@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,7 +36,6 @@ static OSSL_FUNC_cipher_final_fn chacha20_poly1305_final;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn chacha20_poly1305_gettable_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn chacha20_poly1305_settable_ctx_params;
 #define chacha20_poly1305_gettable_params ossl_cipher_generic_gettable_params
-#define chacha20_poly1305_update chacha20_poly1305_cipher
 
 static void *chacha20_poly1305_newctx(void *provctx)
 {
@@ -69,13 +68,10 @@ static void *chacha20_poly1305_dupctx(void *provctx)
     if (ctx == NULL)
         return NULL;
     dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
-    if (dctx != NULL && dctx->base.tlsmac != NULL && dctx->base.alloced) {
-        dctx->base.tlsmac = OPENSSL_memdup(dctx->base.tlsmac,
-            dctx->base.tlsmacsize);
-        if (dctx->base.tlsmac == NULL) {
-            OPENSSL_free(dctx);
-            dctx = NULL;
-        }
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base, &ctx->base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
     }
     return dctx;
 }
@@ -190,6 +186,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
+        ctx->iv_state = IV_STATE_UNINITIALISED;
     }
 
     if (p.tag != NULL) {
@@ -249,9 +246,11 @@ static int chacha20_poly1305_einit(void *vctx, const unsigned char *key,
     ret = ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+        PROV_CHACHA20_POLY1305_CTX *cctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
 
         hw->initiv(ctx);
+        cctx->iv_state = IV_STATE_BUFFERED;
     }
     if (ret && !chacha20_poly1305_set_ctx_params(vctx, params))
         ret = 0;
@@ -268,9 +267,11 @@ static int chacha20_poly1305_dinit(void *vctx, const unsigned char *key,
     ret = ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+        PROV_CHACHA20_POLY1305_CTX *cctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
 
         hw->initiv(ctx);
+        cctx->iv_state = IV_STATE_BUFFERED;
     }
     if (ret && !chacha20_poly1305_set_ctx_params(vctx, params))
         ret = 0;
@@ -287,11 +288,6 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (inl == 0) {
-        *outl = 0;
-        return 1;
-    }
-
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
@@ -301,6 +297,27 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
         return 0;
 
     return 1;
+}
+
+static int chacha20_poly1305_update(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize,
+    const unsigned char *in, size_t inl)
+{
+    PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
+
+    if (ctx->iv_state == IV_STATE_FINISHED)
+        return 0;
+
+    /*
+     * a zero-length update is a nop, ALWAYS SUCCEED via early exit
+     * NB: ONLY EVP_Cipher() / final produce or check the tag
+     */
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
+    }
+
+    return chacha20_poly1305_cipher(vctx, out, outl, outsize, in, inl);
 }
 
 static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
@@ -322,6 +339,9 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     *outl = 0;
+
+    /* Don't reuse the IV */
+    ctx->iv_state = IV_STATE_FINISHED;
     return 1;
 }
 

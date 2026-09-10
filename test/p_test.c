@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,7 +43,6 @@ typedef struct p_test_ctx {
     OSSL_LIB_CTX *libctx;
 } P_TEST_CTX;
 
-static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
 static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 static OSSL_FUNC_core_new_error_fn *c_new_error;
 static OSSL_FUNC_core_set_error_debug_fn *c_set_error_debug;
@@ -258,9 +257,6 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
-            break;
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_FUNC_core_get_params(in);
             break;

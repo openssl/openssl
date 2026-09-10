@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,23 +36,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <windows.h>
 #include <tchar.h>
+#include "internal/e_os.h"
 #include "internal/numbers.h"
 #ifndef LPDIR_H
 #include "LPdir.h"
-#endif
-
-/*
- * We're most likely overcautious here, but let's reserve for broken WinCE
- * headers and explicitly opt for UNICODE call. Keep in mind that our WinCE
- * builds are compiled with -DUNICODE [as well as -D_UNICODE].
- */
-#if defined(LP_SYS_WINCE) && !defined(FindFirstFile)
-#define FindFirstFile FindFirstFileW
-#endif
-#if defined(LP_SYS_WINCE) && !defined(FindNextFile)
-#define FindNextFile FindNextFileW
 #endif
 
 #ifndef NAME_MAX

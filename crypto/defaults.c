@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,8 +61,12 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
     DWORD index = 0;
     LPCWSTR tempstr = NULL;
 
-    ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-        TEXT(REGISTRY_KEY), KEY_WOW64_32KEY,
+    /*
+     * Narrow call: TEXT(REGISTRY_KEY) would widen only the first literal of the
+     * concatenation, which MSVC 12.0 rejects.  The subkey path is ASCII.
+     */
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+        REGISTRY_KEY, KEY_WOW64_32KEY,
         KEY_QUERY_VALUE, &hkey);
     if (ret != ERROR_SUCCESS)
         goto out;

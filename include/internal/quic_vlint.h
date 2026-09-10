@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,7 +54,7 @@ static ossl_unused ossl_inline size_t ossl_quic_vlint_encode_len(uint64_t v)
 }
 
 /*
- * This function writes a QUIC varable-length encoded integer to buf.
+ * This function writes a QUIC variable-length encoded integer to buf.
  * The smallest usable representation is used.
  *
  * It is the caller's responsibility to ensure that the buffer is big enough by

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -82,7 +82,7 @@ $rem_4bit="%r14";
 $sp="%r15";
 
 $code.=<<___;
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 .text
 

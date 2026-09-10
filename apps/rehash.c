@@ -235,12 +235,12 @@ static int handle_symlink(const char *filename, const char *fullpath)
 static int do_file(const char *filename, const char *fullpath, enum Hash h)
 {
     STACK_OF(X509_INFO) *inf = NULL;
-    X509_INFO *x;
+    X509_INFO *x = NULL, *tmp;
     const X509_NAME *name = NULL;
     BIO *b;
     const char *ext;
     unsigned char digest[EVP_MAX_MD_SIZE];
-    int type, errs = 0;
+    int type, j, num = 0, errs = 0;
     size_t i;
 
     /* Does it end with a recognized extension? */
@@ -265,15 +265,26 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     if (inf == NULL)
         goto end;
 
-    if (sk_X509_INFO_num(inf) != 1) {
+    /* Count the number of certs and CRLs and make x point to the last X509_INFO */
+    for (j = 0; j < sk_X509_INFO_num(inf); j++) {
+        tmp = sk_X509_INFO_value(inf, j);
+        if (tmp->x509 != NULL) {
+            x = tmp;
+            num++;
+        }
+        if (tmp->crl != NULL) {
+            x = tmp;
+            num++;
+        }
+    }
+    if (num != 1) {
         BIO_printf(bio_err,
             "%s: warning: skipping %s, "
-            "it does not contain exactly one certificate or CRL\n",
+            "it does not contain exactly one certificate or CRL in PEM format\n",
             opt_getprog(), filename);
         /* This is not an error. */
         goto end;
     }
-    x = sk_X509_INFO_value(inf, 0);
     if (x->x509 != NULL) {
         type = TYPE_CERT;
         name = X509_get_subject_name(x->x509);
@@ -282,7 +293,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
             ++errs;
             goto end;
         }
-    } else if (x->crl != NULL) {
+    } else {
         type = TYPE_CRL;
         name = X509_CRL_get_issuer(x->crl);
         if (!X509_CRL_digest(x->crl, evpmd, digest, NULL)) {
@@ -290,9 +301,6 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
             ++errs;
             goto end;
         }
-    } else {
-        ++errs;
-        goto end;
     }
     if (name != NULL) {
         if (h == HASH_NEW || h == HASH_BOTH) {
@@ -400,7 +408,7 @@ static int do_dir(const char *dirname, enum Hash h)
     numfiles = sk_OPENSSL_STRING_num(files);
     for (n = 0; n < numfiles; ++n) {
         filename = sk_OPENSSL_STRING_value(files, n);
-        if (BIO_snprintf(buf, buflen, "%s%s%s",
+        if (snprintf(buf, buflen, "%s%s%s",
                 dirname, pathsep, filename)
             >= buflen)
             continue;
@@ -424,7 +432,7 @@ static int do_dir(const char *dirname, enum Hash h)
                 nextep = ep->next;
                 if (ep->old_id < bp->num_needed) {
                     /* Link exists, and is used as-is */
-                    BIO_snprintf(buf, buflen, "%08x.%s%d", bp->hash,
+                    snprintf(buf, buflen, "%08x.%s%d", bp->hash,
                         suffixes[bp->type], ep->old_id);
                     if (verbose)
                         BIO_printf(bio_out, "link %s -> %s\n",
@@ -434,7 +442,7 @@ static int do_dir(const char *dirname, enum Hash h)
                     while (bit_isset(idmask, nextid))
                         nextid++;
 
-                    BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
+                    snprintf(buf, buflen, "%s%s%08x.%s%d",
                         dirname, pathsep, bp->hash,
                         suffixes[bp->type], nextid);
                     if (verbose)
@@ -456,7 +464,7 @@ static int do_dir(const char *dirname, enum Hash h)
                     bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
-                    BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
+                    snprintf(buf, buflen, "%s%s%08x.%s%d",
                         dirname, pathsep, bp->hash,
                         suffixes[bp->type], ep->old_id);
                     if (verbose)

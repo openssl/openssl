@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -370,7 +370,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
             continue;
         }
         if (!TEST_int_eq(mdpth, want_depth)) {
-            TEST_info("In test test %d", testno);
+            TEST_info("In test %d", testno);
             ret = 0;
         }
     }

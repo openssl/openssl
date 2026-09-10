@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # Author: Min Zhou <zhoumin@loongson.cn>
-# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -46,7 +46,7 @@ open STDOUT,">$output";
 my ($out, $inp, $len, $key, $counter) = ($a0, $a1, $a2, $a3, $a4);
 
 $code .= <<EOF;
-#include "loongarch_arch.h"
+#include "arch/loongarch_arch.h"
 
 .text
 

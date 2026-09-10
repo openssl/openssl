@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -60,6 +60,9 @@ if ($opt eq '-H') {
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_APPS_PROGS_H)
+#define OSSL_APPS_PROGS_H
+
 #include "function.h"
 
 EOF
@@ -74,6 +77,7 @@ EOF
     }
     print "\n";
     print "extern FUNCTION functions[];\n";
+    print "\n#endif /* !defined(OSSL_APPS_PROGS_H) */\n";
 }
 
 if ($opt eq '-C') {

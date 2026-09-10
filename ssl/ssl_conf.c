@@ -9,6 +9,7 @@
 
 #include "internal/e_os.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include "ssl_local.h"
 #include <openssl/conf.h>
@@ -288,7 +289,8 @@ static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("TLSv1.2", SSL_OP_NO_TLSv1_2),
         SSL_FLAG_TBL_INV("TLSv1.3", SSL_OP_NO_TLSv1_3),
         SSL_FLAG_TBL_INV("DTLSv1", SSL_OP_NO_DTLSv1),
-        SSL_FLAG_TBL_INV("DTLSv1.2", SSL_OP_NO_DTLSv1_2)
+        SSL_FLAG_TBL_INV("DTLSv1.2", SSL_OP_NO_DTLSv1_2),
+        SSL_FLAG_TBL_INV("DTLSv1.3", SSL_OP_NO_DTLSv1_3)
     };
     cctx->tbl = ssl_protocol_list;
     cctx->ntbl = OSSL_NELEM(ssl_protocol_list);
@@ -321,7 +323,8 @@ static int protocol_from_string(const char *value)
         { "TLSv1.2", TLS1_2_VERSION },
         { "TLSv1.3", TLS1_3_VERSION },
         { "DTLSv1", DTLS1_VERSION },
-        { "DTLSv1.2", DTLS1_2_VERSION }
+        { "DTLSv1.2", DTLS1_2_VERSION },
+        { "DTLSv1.3", DTLS1_3_VERSION }
     };
     size_t i;
     size_t n = OSSL_NELEM(versions);
@@ -723,9 +726,11 @@ out:
 static int cmd_NumTickets(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
-    int num_tickets = atoi(value);
+    unsigned long ul;
 
-    if (num_tickets >= 0) {
+    if (OPENSSL_strtoul(value, NULL, 10, &ul) && ul <= INT_MAX) {
+        int num_tickets = (int)ul;
+
         if (cctx->ctx)
             rv = SSL_CTX_set_num_tickets(cctx->ctx, num_tickets);
         if (cctx->ssl)

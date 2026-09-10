@@ -497,6 +497,37 @@ OPENSSL_SIGALG="sha3-256" ./mkcert.sh genee server.example ee-key-ec-named-named
 OPENSSL_SIGALG="sha3-384" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-384 ca-key-ec-named ca-cert-ec-named
 OPENSSL_SIGALG="sha3-512" ./mkcert.sh genee server.example ee-key-ec-named-named ee-cert-ec-sha3-512 ca-key-ec-named ca-cert-ec-named
 
+# DSA roots and EE certs: id-dsa-with-sha384 / id-dsa-with-sha512
+# (regression for https://github.com/openssl/openssl/issues/30432)
+_DSA_CERT_DIR=$(cd "$(dirname "$0")" && pwd)
+(
+    set -e
+    d=$(mktemp -d)
+    trap 'rm -rf "$d"' EXIT
+    cd "$d"
+    openssl dsaparam -out dsap.pem 2048
+    openssl gendsa -out ca384k.pem dsap.pem
+    openssl req -new -x509 -key ca384k.pem -sha384 -out root-cert-dsa-sha384.pem \
+        -days 3650 -subj "/CN=OpenSSL Test DSA SHA-384 Root" -nodes
+    openssl gendsa -out ee384k.pem dsap.pem
+    openssl req -new -key ee384k.pem -out ee384.csr \
+        -subj "/CN=OpenSSL Test DSA SHA-384 EE"
+    openssl x509 -req -in ee384.csr -CA root-cert-dsa-sha384.pem -CAkey ca384k.pem \
+        -CAcreateserial -out ee-cert-dsa-sha384.pem -days 3650 -sha384
+    openssl gendsa -out ca512k.pem dsap.pem
+    openssl req -new -x509 -key ca512k.pem -sha512 -out root-cert-dsa-sha512.pem \
+        -days 3650 -subj "/CN=OpenSSL Test DSA SHA-512 Root" -nodes
+    openssl gendsa -out ee512k.pem dsap.pem
+    openssl req -new -key ee512k.pem -out ee512.csr \
+        -subj "/CN=OpenSSL Test DSA SHA-512 EE"
+    openssl x509 -req -in ee512.csr -CA root-cert-dsa-sha512.pem -CAkey ca512k.pem \
+        -CAcreateserial -out ee-cert-dsa-sha512.pem -days 3650 -sha512
+    cp root-cert-dsa-sha384.pem ee-cert-dsa-sha384.pem \
+        root-cert-dsa-sha512.pem ee-cert-dsa-sha512.pem \
+        "$_DSA_CERT_DIR"
+)
+unset _DSA_CERT_DIR
+
 # EC cert seigned RSA intermediate CA
 OPENSSL_KEYALG=ec OPENSSL_KEYBITS=prime256v1 ./mkcert.sh genee \
     "P-256 cert EE issuer" p256-ee-rsa-ca-key \

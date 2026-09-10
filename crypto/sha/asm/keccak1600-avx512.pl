@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -22,7 +22,7 @@
 # It's impossible to have one that is optimal for every step, hence
 # it's changing as algorithm progresses. Data is saved in linear order,
 # but in-register order morphs between rounds. Even rounds take in
-# linear layout, and odd rounds - transposed, or "verticaly-shaped"...
+# linear layout, and odd rounds - transposed, or "vertically-shaped"...
 #
 ########################################################################
 # Numbers are cycles per processed byte out of large message.

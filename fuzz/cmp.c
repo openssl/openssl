@@ -176,8 +176,13 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return 0;
 
     in = BIO_new(BIO_s_mem());
+    if (in == NULL) {
+        ERR_clear_error();
+        return 0;
+    }
     if ((size_t)BIO_write(in, buf, (int)len) != len) {
         BIO_free(in);
+        ERR_clear_error();
         return 0;
     }
 

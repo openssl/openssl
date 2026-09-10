@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 
-# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (C) Cavium networks Ltd. 2016.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -30,7 +30,7 @@ open OUT,"| \"$^X\" $xlate $flavour \"$output\""
 *STDOUT=*OUT;
 
 $code=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 /* These are offsets into the CIPH_DIGEST struct */
 #define CIPHER_KEY	0
@@ -2555,6 +2555,7 @@ $code.=<<___;
 
 .global	asm_sha256_hmac_aescbc_dec
 .type	asm_sha256_hmac_aescbc_dec,%function
+.align  4
 
 asm_sha256_hmac_aescbc_dec:
 	AARCH64_VALID_CALL_TARGET

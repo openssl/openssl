@@ -76,14 +76,10 @@ static void *aes_wrap_dupctx(void *wctx)
     if (ctx == NULL)
         return NULL;
     dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
-
-    if (dctx != NULL && dctx->base.tlsmac != NULL && dctx->base.alloced) {
-        dctx->base.tlsmac = OPENSSL_memdup(dctx->base.tlsmac,
-            dctx->base.tlsmacsize);
-        if (dctx->base.tlsmac == NULL) {
-            OPENSSL_free(dctx);
-            dctx = NULL;
-        }
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base, &ctx->base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
     }
     return dctx;
 }
@@ -144,6 +140,7 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
             AES_set_decrypt_key(key, (int)(keylen * 8), &wctx->ks.ks);
             ctx->block = (block128_f)AES_decrypt;
         }
+        ctx->key_set = 1;
     }
     return aes_wrap_set_ctx_params(ctx, params);
 }
@@ -214,7 +211,11 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
      * relies on all fields being present.
      */
     if (wctx->updated) {
-        ERR_raise(ERR_LIB_PROV, EVP_R_UPDATE_ERROR);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+        return -1;
+    }
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return -1;
     }
     wctx->updated = 1;

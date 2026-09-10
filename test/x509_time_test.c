@@ -628,7 +628,7 @@ static int test_days(int n)
     struct tm t;
     int r;
 
-    BIO_snprintf(d, sizeof(d), "%04d%02d%02d050505Z",
+    snprintf(d, sizeof(d), "%04d%02d%02d050505Z",
         day_of_week_tests[n].y, day_of_week_tests[n].m,
         day_of_week_tests[n].d);
 

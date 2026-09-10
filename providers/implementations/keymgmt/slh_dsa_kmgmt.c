@@ -303,7 +303,7 @@ static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,
     uint8_t msg[16] = { 0 };
     size_t msg_len = sizeof(msg);
     uint8_t *sig = NULL;
-    size_t sig_len;
+    size_t sig_len = 0;
     OSSL_LIB_CTX *lib_ctx;
     int alloc_ctx = 0;
 
@@ -347,7 +347,7 @@ static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,
 err:
     if (alloc_ctx)
         ossl_slh_dsa_hash_ctx_free(ctx);
-    OPENSSL_free(sig);
+    OPENSSL_clear_free(sig, sig_len);
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
     return ret;
@@ -372,10 +372,8 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
             gctx->entropy, gctx->entropy_len))
         goto err;
 #ifdef FIPS_MODULE
-    if (!slh_dsa_fips140_pairwise_test(key, ctx)) {
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+    if (!slh_dsa_fips140_pairwise_test(key, ctx))
         goto err;
-    }
 #endif /* FIPS_MODULE */
     ossl_slh_dsa_hash_ctx_free(ctx);
     return key;
@@ -427,7 +425,7 @@ static void slh_dsa_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
-    OPENSSL_cleanse(gctx->entropy, gctx->entropy_len);
+    OPENSSL_cleanse(gctx->entropy, sizeof(gctx->entropy));
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }

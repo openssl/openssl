@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
+#include "tbl_standard.h"
 
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
@@ -106,8 +107,6 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
 /*
  * Now the tables and helper functions for the string table:
  */
-
-#include "tbl_standard.h"
 
 static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
     const ASN1_STRING_TABLE *const *b)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,22 +27,8 @@ static const unsigned char cbc_key[] = {
 
 /* Unique initialisation vector */
 static const unsigned char cbc_iv[] = {
-    0x99,
-    0xaa,
-    0x3e,
-    0x68,
-    0xed,
-    0x81,
-    0x73,
-    0xa0,
-    0xee,
-    0xd0,
-    0x66,
-    0x84,
-    0x99,
-    0xaa,
-    0x3e,
-    0x68,
+    0x99, 0xaa, 0x3e, 0x68, 0xed, 0x81, 0x73, 0xa0, 0xee, 0xd0,
+    0x66, 0x84, 0x99, 0xaa, 0x3e, 0x68
 };
 
 /* Example plaintext to encrypt */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -93,7 +93,7 @@ static int compare_with_file(const char *alg, int type, BIO *membio)
         goto err;
     }
 
-    BIO_snprintf(filename, sizeof(filename), "%s.%s", alg, suffix);
+    snprintf(filename, sizeof(filename), "%s.%s", alg, suffix);
     fullfile = test_mk_file_path(datadir, filename);
     if (!TEST_ptr(fullfile))
         goto err;
@@ -905,34 +905,9 @@ static int test_fromdata_dh_named_group(void)
      *                 -pkeyopt priv_len:224 -text
      */
     static const unsigned char priv_data[] = {
-        0x88,
-        0x85,
-        0xe7,
-        0x9f,
-        0xee,
-        0x6d,
-        0xc5,
-        0x7c,
-        0x78,
-        0xaf,
-        0x63,
-        0x5d,
-        0x38,
-        0x2a,
-        0xd0,
-        0xed,
-        0x56,
-        0x4b,
-        0x47,
-        0x21,
-        0x2b,
-        0xfa,
-        0x55,
-        0xfa,
-        0x87,
-        0xe8,
-        0xa9,
-        0x7b,
+        0x88, 0x85, 0xe7, 0x9f, 0xee, 0x6d, 0xc5, 0x7c, 0x78, 0xaf,
+        0x63, 0x5d, 0x38, 0x2a, 0xd0, 0xed, 0x56, 0x4b, 0x47, 0x21,
+        0x2b, 0xfa, 0x55, 0xfa, 0x87, 0xe8, 0xa9, 0x7b
     };
     static const unsigned char pub_data[] = {
         0x00, 0xd6, 0x2d, 0x77, 0xe0, 0xd3, 0x7d, 0xf8, 0xeb, 0x98, 0x50, 0xa1,
@@ -1146,34 +1121,9 @@ static int test_fromdata_dh_fips186_4(void)
      *                 -pkeyopt group:ffdhe2048 -pkeyopt priv_len:224 -text
      */
     static const unsigned char priv_data[] = {
-        0x88,
-        0x85,
-        0xe7,
-        0x9f,
-        0xee,
-        0x6d,
-        0xc5,
-        0x7c,
-        0x78,
-        0xaf,
-        0x63,
-        0x5d,
-        0x38,
-        0x2a,
-        0xd0,
-        0xed,
-        0x56,
-        0x4b,
-        0x47,
-        0x21,
-        0x2b,
-        0xfa,
-        0x55,
-        0xfa,
-        0x87,
-        0xe8,
-        0xa9,
-        0x7b,
+        0x88, 0x85, 0xe7, 0x9f, 0xee, 0x6d, 0xc5, 0x7c, 0x78, 0xaf,
+        0x63, 0x5d, 0x38, 0x2a, 0xd0, 0xed, 0x56, 0x4b, 0x47, 0x21,
+        0x2b, 0xfa, 0x55, 0xfa, 0x87, 0xe8, 0xa9, 0x7b
     };
     static const unsigned char pub_data[] = {
         0xd6, 0x2d, 0x77, 0xe0, 0xd3, 0x7d, 0xf8, 0xeb, 0x98, 0x50, 0xa1, 0x82,
@@ -1601,7 +1551,13 @@ err:
 }
 #endif /* OPENSSL_NO_ECX */
 
-static int test_fromdata_ec(void)
+/*
+ * tst uses indexes 0..3
+ * 0 = uncompressed format
+ * 1 = compressed format
+ * 2 = affine coordinates via EVP_EC_affine2oct()
+ */
+static int test_fromdata_ec(int tst)
 {
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL;
@@ -1637,6 +1593,19 @@ static int test_fromdata_ec(void)
         0x02, 0xa5, 0x77, 0x57, 0xc8, 0xa3, 0x47, 0x73,
         0x3a, 0x6a, 0x08, 0x28, 0x39, 0xbd, 0xc9, 0xd2
     };
+    /* SAME IN AFFINE COORDINATES */
+    static const unsigned char x_buf[] = {
+        0x1b, 0x93, 0x67, 0x55, 0x1c, 0x55, 0x9f, 0x63,
+        0xd1, 0x22, 0xa4, 0xd8, 0xd1, 0x0a, 0x60, 0x6d,
+        0x02, 0xa5, 0x77, 0x57, 0xc8, 0xa3, 0x47, 0x73,
+        0x3a, 0x6a, 0x08, 0x28, 0x39, 0xbd, 0xc9, 0xd2
+    };
+    static const unsigned char y_buf[] = {
+        0x80, 0xec, 0xe9, 0xa7, 0x08, 0x29, 0x71, 0x2f,
+        0xc9, 0x56, 0x82, 0xee, 0x9a, 0x85, 0x0f, 0x6d,
+        0x7f, 0x59, 0x5f, 0x8c, 0xd1, 0x96, 0x0b, 0xdf,
+        0x29, 0x3e, 0x49, 0x07, 0x88, 0x3f, 0x9a, 0x29
+    };
     static const unsigned char ec_priv_keydata[] = {
         0x33, 0xd0, 0x43, 0x83, 0xa9, 0x89, 0x56, 0x03,
         0xd2, 0xd7, 0xfe, 0x6b, 0x01, 0x6f, 0xe4, 0x59,
@@ -1659,6 +1628,10 @@ static int test_fromdata_ec(void)
             NULL, 0),
         OSSL_PARAM_END
     };
+    BIGNUM *x = NULL;
+    BIGNUM *y = NULL;
+    unsigned char *buf = NULL;
+    size_t buflen = 0;
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
         goto err;
@@ -1678,11 +1651,35 @@ static int test_fromdata_ec(void)
      * `OSSL_PKEY_PARAM_PUB_KEY` and expect to default to uncompressed
      * format.
      */
-    if (OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_PUB_KEY,
-            ec_pub_keydata_compressed,
-            sizeof(ec_pub_keydata_compressed))
-        <= 0)
+    switch (tst) {
+    case 0:
+        if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                OSSL_PKEY_PARAM_PUB_KEY,
+                ec_pub_keydata_compressed,
+                sizeof(ec_pub_keydata_compressed))))
+            goto err;
+        break;
+    case 1:
+        if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                OSSL_PKEY_PARAM_PUB_KEY,
+                ec_pub_keydata, sizeof(ec_pub_keydata))))
+            goto err;
+        break;
+    case 2:
+        if (!TEST_ptr(x = BN_bin2bn(x_buf, sizeof(x_buf), NULL))
+            || !TEST_ptr(y = BN_bin2bn(y_buf, sizeof(y_buf), NULL)))
+            goto err;
+        if (!TEST_true(EVP_EC_affine2oct(x, y, 32, &buf, &buflen))
+            || !TEST_ptr(buf)
+            || !TEST_size_t_eq(buflen, 65))
+            goto err;
+        if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                OSSL_PKEY_PARAM_PUB_KEY, buf, buflen)))
+            goto err;
+        break;
+    default:
         goto err;
+    }
     if (OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, ec_priv_bn) <= 0)
         goto err;
     if (!TEST_ptr(fromdata_params = OSSL_PARAM_BLD_to_param(bld)))
@@ -1818,11 +1815,15 @@ err:
     BN_free(p);
     BN_free(bn_priv);
     BN_free(ec_priv_bn);
+    BN_free(x);
+    BN_free(y);
     OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_free(pk);
     EVP_PKEY_free(copy_pk);
     EVP_PKEY_CTX_free(ctx);
+    if (buf != NULL)
+        OPENSSL_free(buf);
     return ret;
 }
 
@@ -2307,7 +2308,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_fromdata_ecx, 4 * 3);
 #endif
-    ADD_TEST(test_fromdata_ec);
+    ADD_ALL_TESTS(test_fromdata_ec, 3);
     ADD_TEST(test_ec_dup_no_operation);
     ADD_TEST(test_ec_dup_keygen_operation);
 #endif

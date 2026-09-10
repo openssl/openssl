@@ -1,11 +1,14 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if !defined(OSSL_INTERNAL_NAMEMAP_H)
+#define OSSL_INTERNAL_NAMEMAP_H
 
 #include "internal/cryptlib.h"
 
@@ -39,3 +42,5 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
  */
 int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
     const char *names, const char separator);
+
+#endif /* !defined(OSSL_INTERNAL_NAMEMAP_H) */

@@ -199,7 +199,10 @@ struct asn1_string_table_st {
  */
 typedef struct ASN1_TEMPLATE_st ASN1_TEMPLATE;
 typedef struct ASN1_TLC_st ASN1_TLC;
-/* This is just an opaque pointer */
+/*
+ * This is deliberately used as an opaque pointer to a structure that
+ * is never defined. In other words it will behave like void *
+ */
 typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 /* Declare ASN1 functions: the implement macro is in asn1t.h */
@@ -530,14 +533,23 @@ void ASN1_STRING_clear_free(ASN1_STRING *a);
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
 DECLARE_ASN1_DUP_FUNCTION(ASN1_STRING)
 ASN1_STRING *ASN1_STRING_type_new(int type);
+ASN1_STRING *ASN1_STRING_new_not_owned(int type, const uint8_t *data,
+    size_t length);
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
 /*
  * Since this is used to store all sorts of things, via macros, for now,
  * make its data void *
  */
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_DEPRECATEDIN_4_1_FOR("use ASN1_STRING_set1_data() or ASN1_STRING_set1_string()")
 int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
-void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
+OSSL_DEPRECATEDIN_4_1_FOR("use ASN1_STRING_get_length()")
 int ASN1_STRING_length(const ASN1_STRING *x);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
+void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
+int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len);
+int ASN1_STRING_set1_string(ASN1_STRING *str, const char *cstring);
+size_t ASN1_STRING_get_length(const ASN1_STRING *x);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 #endif
@@ -555,11 +567,13 @@ int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
 int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
     const unsigned char *flags, int flags_len);
 
-int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_DEPRECATEDIN_4_1 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
     BIT_STRING_BITNAME *tbl, int indent);
-int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
-int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
+OSSL_DEPRECATEDIN_4_1 int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
+OSSL_DEPRECATEDIN_4_1 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
     BIT_STRING_BITNAME *tbl);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *length,
     int *unused_bits);
 int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data,
@@ -616,8 +630,10 @@ DECLARE_ASN1_FUNCTIONS(ASN1_UTF8STRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_NULL)
 DECLARE_ASN1_FUNCTIONS(ASN1_BMPSTRING)
 
-int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
-int UTF8_putc(unsigned char *str, int len, unsigned long value);
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_DEPRECATEDIN_4_1 int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
+OSSL_DEPRECATEDIN_4_1 int UTF8_putc(unsigned char *str, int len, unsigned long value);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
 /* clang-format off */
 {-

@@ -96,6 +96,14 @@ SSL_set0_client_CA_list() or similar functions
 
 =item any Encrypted Client Hello (ECH) settings (see L<SSL_set1_echstore(3)>).
 
+=item type of server certificate set via L<SSL_set1_server_cert_type(3)>.
+
+=item type of client certificate set via L<SSL_set1_client_cert_type(3)>.
+
+=item certificate transparency validation callback set via L<SSL_set_ct_validation_callback(3)>,
+
+=item OCSP validation set via L<SSL_set_tlsext_status_type(3)>.
+
 =back
 
 SSL_dup() is not supported on QUIC SSL objects and returns NULL if called on

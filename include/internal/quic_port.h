@@ -47,8 +47,8 @@ typedef struct quic_port_args_st {
      * connection object for the incoming channel
      * user_ssl_arg is expected to point to a quic listener object
      */
-    SSL *(*get_conn_user_ssl)(QUIC_CHANNEL *ch, void *arg);
-    void *user_ssl_arg;
+    SSL *(*get_conn_user_ssl)(QUIC_CHANNEL *ch, QUIC_LISTENER *ql);
+    QUIC_LISTENER *ql;
 
     /*
      * This SSL_CTX will be used when constructing the handshake layer object
@@ -94,6 +94,9 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
  * there are no pending incoming channels.
  */
 QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port);
+
+/* Returns the first incoming channel without removing it, or NULL. */
+QUIC_CHANNEL *ossl_quic_port_peek_incoming(QUIC_PORT *port);
 
 /* Returns 1 if there is at least one connection incoming. */
 int ossl_quic_port_have_incoming(QUIC_PORT *port);
@@ -240,6 +243,10 @@ uint64_t ossl_quic_port_get_net_bio_epoch(const QUIC_PORT *port);
  */
 void ossl_quic_port_raise_net_error(QUIC_PORT *port,
     QUIC_CHANNEL *triggering_ch);
+
+uint64_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port);
+
+void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, uint64_t max_pending_channels);
 
 #endif
 

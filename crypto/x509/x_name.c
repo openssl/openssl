@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -404,8 +404,10 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
 
     out->type = V_ASN1_UTF8STRING;
     out->length = ASN1_STRING_to_UTF8(&out->data, in);
-    if (out->length == -1)
+    if (out->length < 0)
         return 0;
+    if (out->length == 0)
+        return 1;
 
     to = out->data;
     from = to;

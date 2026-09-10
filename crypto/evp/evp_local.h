@@ -7,7 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H)
+#define OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H
+
 #include <openssl/core_dispatch.h>
+#include <openssl/evp.h>
+
+#include <crypto/evp.h>
+
 #include "internal/refcount.h"
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
@@ -95,6 +102,7 @@ struct evp_keymgmt_st {
     int id; /* libcrypto internal */
 
     int name_id;
+    int no_store;
     /* NID for the legacy alg if there is one */
     int legacy_alg;
     char *type_name;
@@ -141,6 +149,7 @@ struct evp_keymgmt_st {
 
 struct evp_keyexch_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -161,6 +170,7 @@ struct evp_keyexch_st {
 
 struct evp_signature_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -204,6 +214,7 @@ struct evp_signature_st {
 
 struct evp_skeymgmt_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -221,12 +232,17 @@ struct evp_skeymgmt_st {
     /* Key identifier */
     OSSL_FUNC_skeymgmt_get_key_id_fn *get_key_id;
 
+    /* Key metadata accessors */
+    OSSL_FUNC_skeymgmt_get_local_keyid_fn *get_local_keyid;
+    OSSL_FUNC_skeymgmt_get_algorithm_id_fn *get_algorithm_id;
+
     /* destructor */
     OSSL_FUNC_skeymgmt_free_fn *free;
 } /* EVP_SKEYMGMT */;
 
 struct evp_asym_cipher_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -247,6 +263,7 @@ struct evp_asym_cipher_st {
 
 struct evp_kem_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -298,14 +315,14 @@ void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *));
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *));
 void evp_generic_do_all_prefetched(OSSL_LIB_CTX *libctx, int operation_id,
@@ -316,7 +333,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     void *user_arg,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *));
 
@@ -390,3 +407,28 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
     void (*fn)(const char *name, void *data),
     void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+
+#define EVP_DO_ALL_PROVIDED_THUNK(type)                                                       \
+    struct type##_do_all_provided_thunk {                                                     \
+        void (*fn)(type * method, void *arg);                                                 \
+        void *arg;                                                                            \
+    };                                                                                        \
+    static ossl_inline ossl_unused void type##_do_all_provided_thunk(void *method, void *arg) \
+    {                                                                                         \
+        struct type##_do_all_provided_thunk *t = arg;                                         \
+        (*t->fn)((type *)method, t->arg);                                                     \
+    }
+
+EVP_DO_ALL_PROVIDED_THUNK(EVP_ASYM_CIPHER)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_MD)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_CIPHER)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_RAND)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KEYEXCH)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KDF)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KEM)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KEYMGMT)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_MAC)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_SIGNATURE)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_SKEYMGMT)
+
+#endif /* !defined(OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H) */

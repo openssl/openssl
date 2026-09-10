@@ -24,7 +24,7 @@ the default path when it is asked to load trusted CA certificates
 from a file and no other path is specified. If the file exists, CA certificates
 are loaded from the file.
 
-The X509_get_default_cert_dir() function returns a default delimeter-separated
+The X509_get_default_cert_dir() function returns a default delimiter-separated
 list of paths to a directories containing trusted CA certificates named in the
 hashed format. OpenSSL will use this as the default list of paths when it is
 asked to load trusted CA certificates from a directory and no other path is
@@ -76,7 +76,7 @@ L<SSL_CTX_load_verify_locations(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

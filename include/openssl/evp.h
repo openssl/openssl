@@ -17,6 +17,7 @@
 #endif
 
 #include <stdarg.h>
+#include <string.h>
 
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
@@ -121,6 +122,7 @@ int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq);
 char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx);
 int EVP_default_properties_is_fips_enabled(OSSL_LIB_CTX *libctx);
 int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
+#define FIPS_mode() EVP_default_properties_is_fips_enabled(NULL)
 
 #define EVP_PKEY_MO_SIGN 0x0001
 #define EVP_PKEY_MO_VERIFY 0x0002
@@ -152,6 +154,8 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
 
 /* Note if suitable for use in FIPS mode */
 #define EVP_MD_FLAG_FIPS 0x0400
+
+#define EVP_MD_FLAG_NO_STORE 0x0800
 
 /* Digest ctrls */
 
@@ -265,6 +269,8 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
 #define EVP_CIPH_FLAG_GET_WRAP_CIPHER 0x4000000
 #define EVP_CIPH_FLAG_INVERSE_CIPHER 0x8000000
 #define EVP_CIPH_FLAG_ENC_THEN_MAC 0x10000000
+/* flag to indicate that this cipher isn't cached, and so should be refcounted*/
+#define EVP_CIPH_FLAG_NO_STORE 0x20000000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in
@@ -1944,6 +1950,24 @@ const char *EVP_SKEY_get0_skeymgmt_name(const EVP_SKEY *skey);
 const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey);
 EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     OSSL_PROVIDER *prov, const char *propquery);
+int EVP_SKEY_get0_local_keyid(const EVP_SKEY *skey,
+    const unsigned char **id, size_t *len);
+int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
+    const unsigned char **oid, size_t *oid_len,
+    const unsigned char **params, size_t *params_len);
+
+/*
+ * The seemingly redundant expression (char *)(strstr(curve, "")) serves to
+ * cast const char * to char *, while avoiding accidental casting of improper
+ * (non-string) types.
+ * The direct cast of the result of strstr() to char * is necessary in C++,
+ * where strstr can return const char *.
+ */
+#define EVP_EC_gen(curve)               \
+    EVP_PKEY_Q_keygen(NULL, NULL, "EC", \
+        (curve) ? (char *)(strstr(curve, "")) : NULL)
+int EVP_EC_affine2oct(const BIGNUM *x, const BIGNUM *y, size_t field_len,
+    unsigned char **pbuf, size_t *pbsize);
 
 #ifdef __cplusplus
 }

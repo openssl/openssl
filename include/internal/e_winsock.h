@@ -12,7 +12,7 @@
 #pragma once
 
 #ifdef WINDOWS
-#if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
+#if !defined(_WIN32_WINNT)
 /*
  * The _WIN32_WINNT is described here:
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
@@ -40,7 +40,7 @@
  */
 #define _WIN32_WINNT 0x0501
 #endif
-#if defined(_WIN32_WINNT) || defined(_WIN32_WCE)
+#if defined(_WIN32_WINNT)
 /*
  * Just like defining _WIN32_WINNT including winsock2.h implies
  * certain "discipline" for maintaining [broad] binary compatibility.

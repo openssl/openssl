@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,10 +21,11 @@ typedef struct qlog_st QLOG;
 
 enum {
     QLOG_EVENT_TYPE_NONE,
-
+/* clang-format off */
 #define QLOG_EVENT(cat, name) QLOG_EVENT_TYPE_##cat##_##name,
-#include "internal/qlog_events.h"
+#include "internal/qlog_events.inc"
 #undef QLOG_EVENT
+    /* clang-format on */
 
     QLOG_EVENT_TYPE_NUM
 };

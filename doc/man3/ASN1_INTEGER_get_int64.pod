@@ -108,7 +108,7 @@ B<ASN1_ENUMERATED> structure respectively or NULL if an error occurs. They will
 only fail due to a memory allocation error.
 
 ASN1_INTEGER_to_BN() and ASN1_ENUMERATED_to_BN() return a B<BIGNUM> structure
-of NULL if an error occurs. They can fail if the passed type is incorrect
+or NULL if an error occurs. They can fail if the passed type is incorrect
 (due to programming error) or due to a memory allocation failure.
 
 =head1 SEE ALSO
@@ -123,7 +123,7 @@ were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

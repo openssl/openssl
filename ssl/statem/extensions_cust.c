@@ -411,9 +411,6 @@ int custom_exts_copy_conn(custom_ext_methods *dst,
             if (methdst == NULL)
                 return 0;
 
-            for (i = 0; i < dst->meths_count; i++)
-                custom_ext_copy_old_cb(&methdst[i], &dst->meths[i], &err);
-
             dst->meths = methdst;
             methdst += dst->meths_count;
 
@@ -629,7 +626,6 @@ int SSL_extension_supported(unsigned int ext_type)
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:
 #endif
-    case TLSEXT_TYPE_padding:
     case TLSEXT_TYPE_renegotiate:
     case TLSEXT_TYPE_max_fragment_length:
     case TLSEXT_TYPE_server_name:

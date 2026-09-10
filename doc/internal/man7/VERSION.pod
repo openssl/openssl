@@ -26,7 +26,7 @@ The keys that are recognised are:
 
 The three parts of OpenSSL's 3 numbered version number, MAJOR.MINOR.PATCH.
 These are used to compose the values for the C macros B<OPENSSL_VERSION_MAJOR>,
-B<OPENSSL_VERSION_MINOR>, B<OPENSSL_VERSION_PACTH>.
+B<OPENSSL_VERSION_MINOR>, B<OPENSSL_VERSION_PATCH>.
 
 =item B<PRE_RELEASE_TAG>
 
@@ -89,7 +89,7 @@ the string will be C<3.0.0>.
 =item $config{full_version}
 
 The fully loaded version number, a string composed from $config{version},
-$config{prerelease} and $config{build_metadata}.  See   See L</EXAMPLES> for
+$config{prerelease} and $config{build_metadata}.  See L</EXAMPLES> for
 a few examples.
 
 =back
@@ -139,7 +139,7 @@ L<OpenSSL_version(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

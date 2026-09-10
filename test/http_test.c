@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2020
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -11,6 +11,7 @@
 #include <openssl/http.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
+#include <openssl/err.h>
 #include <string.h>
 
 #include "testutil.h"
@@ -164,7 +165,7 @@ static int test_http_method(int do_get, int do_txt, int suggested_status)
     int res = 0;
     int real_server = do_txt && 0; /* remove "&& 0" for using real server */
 
-    BIO_snprintf(path, sizeof(path), "/%d%s", suggested_status,
+    snprintf(path, sizeof(path), "/%d%s", suggested_status,
         do_get > 1 ? "/will-be-redirected" : RPATH);
     if (do_txt) {
         content_type = "text/plain";
@@ -286,8 +287,10 @@ err:
     return res;
 }
 
-static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
-    const char *exp_port, const char *exp_path)
+static int test_http_url_invalid(const char *url);
+
+static int test_http_url_frag_ok(const char *url, int exp_ssl, const char *exp_host,
+    const char *exp_port, const char *exp_path, const char *exp_frag)
 {
     char *user, *host, *port, *path, *query, *frag;
     int exp_num, num, ssl;
@@ -304,8 +307,8 @@ static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
         && TEST_int_eq(ssl, exp_ssl);
     if (res && *user != '\0')
         res = TEST_str_eq(user, "user:pass");
-    if (res && *frag != '\0')
-        res = TEST_str_eq(frag, "fr");
+    if (res)
+        res = TEST_str_eq(frag, exp_frag);
     if (res && *query != '\0')
         res = TEST_str_eq(query, "q");
     OPENSSL_free(user);
@@ -315,6 +318,12 @@ static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
     OPENSSL_free(query);
     OPENSSL_free(frag);
     return res;
+}
+
+static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
+    const char *exp_port, const char *exp_path)
+{
+    return test_http_url_frag_ok(url, exp_ssl, exp_host, exp_port, exp_path, "");
 }
 
 static int test_http_url_path_query_ok(const char *url, const char *exp_path_qu)
@@ -348,6 +357,11 @@ static int test_http_url_dns(void)
     return test_http_url_ok("host:65535/path", 0, "host", "65535", "/path");
 }
 
+static int test_http_url_ip(void)
+{
+    return test_http_url_ok("1.2.3.4:5678//blahblablah", 0, "1.2.3.4", "5678", "//blahblablah");
+}
+
 static int test_http_url_timestamp(void)
 {
     return test_http_url_ok("host/p/2017-01-03T00:00:00", 0, "host", "80",
@@ -367,7 +381,9 @@ static int test_http_url_path_query(void)
 
 static int test_http_url_userinfo_query_fragment(void)
 {
-    return test_http_url_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p");
+    return test_http_url_frag_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p", "fr")
+        && test_http_url_frag_ok("host.example.org/some/path#://not-a-scheme/not.a.host:404", 0,
+            "host.example.org", "80", "/some/path", "://not-a-scheme/not.a.host:404");
 }
 
 static int test_http_url_at_sign_outside_authority(void)
@@ -384,7 +400,8 @@ static int test_http_url_ipv4(void)
 
 static int test_http_url_ipv6(void)
 {
-    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/");
+    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/")
+        && test_http_url_invalid("http://[FF01::101/path]");
 }
 
 static int test_http_url_invalid(const char *url)
@@ -420,6 +437,57 @@ static int test_http_url_invalid_port(void)
 static int test_http_url_invalid_path(void)
 {
     return test_http_url_invalid("https://[FF01::101]pkix");
+}
+
+static int test_http_crlf_rejected(void)
+{
+    BIO *wbio = BIO_new(BIO_s_mem());
+    BIO *rbio = BIO_new(BIO_s_mem());
+    BIO *req = BIO_new(BIO_s_mem());
+    BIO *proxy_bio = BIO_new(BIO_s_mem());
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+    int res = 0;
+
+    if (!TEST_ptr(wbio)
+        || !TEST_ptr(rbio)
+        || !TEST_ptr(req)
+        || !TEST_ptr(proxy_bio)
+        || !TEST_int_eq(BIO_puts(req, "x"), 1)
+        || !TEST_ptr(rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 0)))
+        goto err;
+
+    ERR_clear_error();
+    res = TEST_false(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+              NULL, NULL, "/path\r\nInjected: value"))
+        && TEST_false(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+            "server\r\nInjected: value", "80", RPATH))
+        && TEST_false(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+            "server", "80\r\nInjected: value", RPATH))
+        && TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+            NULL, NULL, RPATH))
+        && TEST_false(OSSL_HTTP_REQ_CTX_add1_header(rctx,
+            "X-Test\r\nInjected", "value"))
+        && TEST_false(OSSL_HTTP_REQ_CTX_add1_header(rctx,
+            "X-Test", "value\r\nInjected: value"))
+        && TEST_false(OSSL_HTTP_set1_request(rctx, RPATH, NULL,
+            "text/plain\r\nInjected: value", req,
+            NULL, 0 /* expect_asn1 */, 0 /* max_resp_len */,
+            0 /* timeout */, 0 /* keep_alive */))
+        && TEST_false(OSSL_HTTP_proxy_connect(proxy_bio,
+            "server\r\nInjected: value", "443", NULL, NULL,
+            0 /* timeout */, NULL, NULL))
+        && TEST_false(OSSL_HTTP_proxy_connect(proxy_bio,
+            "server", "443\r\nInjected: value", NULL, NULL,
+            0 /* timeout */, NULL, NULL));
+
+err:
+    ERR_clear_error();
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free(rbio);
+    BIO_free(req);
+    BIO_free(proxy_bio);
+    return res;
 }
 
 static int test_http_get_txt(void)
@@ -521,7 +589,7 @@ static int test_http_resp_hdr_limit(size_t limit)
     int res = 0;
     OSSL_HTTP_REQ_CTX *rctx = NULL;
 
-    if (TEST_ptr(wbio) == 0 || TEST_ptr(rbio) == 0)
+    if (!TEST_ptr(wbio) || !TEST_ptr(rbio))
         goto err;
 
     mock_args.txt = text1;
@@ -533,7 +601,7 @@ static int test_http_resp_hdr_limit(size_t limit)
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 8192);
-    if (TEST_ptr(rctx) == 0)
+    if (!TEST_ptr(rctx))
         goto err;
 
     if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
@@ -567,7 +635,7 @@ static int test_hdr_resp_hdr_limit_none(void)
 
 static int test_hdr_resp_hdr_limit_short(void)
 {
-    return (test_http_resp_hdr_limit(1));
+    return test_http_resp_hdr_limit(1);
 }
 
 static int test_hdr_resp_hdr_limit_256(void)
@@ -600,6 +668,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_http_url_dns);
+    ADD_TEST(test_http_url_ip);
     ADD_TEST(test_http_url_timestamp);
     ADD_TEST(test_http_url_path_query);
     ADD_TEST(test_http_url_userinfo_query_fragment);
@@ -609,6 +678,7 @@ int setup_tests(void)
     ADD_TEST(test_http_url_invalid_prefix);
     ADD_TEST(test_http_url_invalid_port);
     ADD_TEST(test_http_url_invalid_path);
+    ADD_TEST(test_http_crlf_rejected);
 
     ADD_TEST(test_http_get_txt);
     ADD_TEST(test_http_get_txt_redirected);

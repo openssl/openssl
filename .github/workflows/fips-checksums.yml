@@ -6,7 +6,16 @@
 # https://www.openssl.org/source/license.html
 
 name: FIPS Check and ABIDIFF
-on: [pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
 
 permissions:
   contents: read

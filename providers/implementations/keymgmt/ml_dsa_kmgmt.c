@@ -100,6 +100,7 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
+    OPENSSL_cleanse(sig, sizeof(sig));
     return ret;
 }
 #endif
@@ -142,6 +143,23 @@ ML_DSA_KEY *ossl_prov_ml_dsa_new(PROV_CTX *ctx, const char *propq, int evp_type)
         ossl_ml_dsa_set_prekey(key, flags_set, flags_clr, NULL, 0, NULL, 0);
     }
     return key;
+}
+
+static ML_DSA_KEY *ossl_prov_ml_dsa_new_ex(PROV_CTX *ctx, const OSSL_PARAM params[], int evp_type)
+{
+    struct ml_dsa_new_key_ex_params_st p;
+    const char *propq = NULL;
+
+    if (!ml_dsa_new_key_ex_params_decoder(params, &p))
+        return 0;
+
+    if (p.propq != NULL) {
+        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        propq = p.propq->data;
+    }
+
+    return ossl_prov_ml_dsa_new(ctx, propq, evp_type);
 }
 
 static void ml_dsa_free_key(void *keydata)
@@ -293,8 +311,18 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
     int include_priv;
     int res;
 
+    /*
+     * Once a key is fully initialised (has at least a public component),
+     * further mutation is no longer safe and disallowed.
+     */
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
+    if (ossl_ml_dsa_key_has(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
+        /* Invalid attempt to mutate a key. */
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_IMMUTABLE_ONCE_SET,
+            "Keys are immutable once key material has been loaded or generated");
+        return 0;
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
@@ -304,10 +332,8 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
 #ifdef FIPS_MODULE
     if (res > 0) {
         res = ml_dsa_pairwise_test(key);
-        if (!res) {
+        if (!res)
             ossl_ml_dsa_key_reset(key);
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT_IMPORT);
-        }
     }
 #endif /* FIPS_MODULE */
     return res;
@@ -508,10 +534,8 @@ static void *ml_dsa_gen(void *genctx, int evp_type)
         goto err;
     }
 #ifdef FIPS_MODULE
-    if (!ml_dsa_pairwise_test(key)) {
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+    if (!ml_dsa_pairwise_test(key))
         goto err;
-    }
 #endif
     return key;
 err:
@@ -559,7 +583,7 @@ static void ml_dsa_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
-    OPENSSL_cleanse(gctx->entropy, gctx->entropy_len);
+    OPENSSL_cleanse(gctx->entropy, sizeof(gctx->entropy));
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }
@@ -578,12 +602,17 @@ static void ml_dsa_gen_cleanup(void *genctx)
     {                                                                                         \
         return ossl_prov_ml_dsa_new(provctx, NULL, EVP_PKEY_ML_DSA_##alg);                    \
     }                                                                                         \
+    static void *ml_dsa_##alg##_new_key_ex(void *provctx, const OSSL_PARAM params[])          \
+    {                                                                                         \
+        return ossl_prov_ml_dsa_new_ex(provctx, params, EVP_PKEY_ML_DSA_##alg);               \
+    }                                                                                         \
     static void *ml_dsa_##alg##_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)         \
     {                                                                                         \
         return ml_dsa_gen(genctx, EVP_PKEY_ML_DSA_##alg);                                     \
     }                                                                                         \
     const OSSL_DISPATCH ossl_ml_dsa_##alg##_keymgmt_functions[] = {                           \
         { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ml_dsa_##alg##_new_key },                    \
+        { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))ml_dsa_##alg##_new_key_ex },              \
         { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ml_dsa_free_key },                          \
         { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ml_dsa_has },                                \
         { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ml_dsa_match },                            \

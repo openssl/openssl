@@ -91,6 +91,13 @@ precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
 are mutually exclusive. Providers may add algorithms in addition to
 the standard built-in ones.
 
+A complete list of available algorithms can be obtained using:
+    openssl list -public-key-algorithms
+
+When selecting an algorithm from this output, use the C<PEM string> for legacy
+algorithms, or the portion of the C<IDs> field before the C<@> symbol for
+provided algorithms.
+
 Valid built-in algorithm names for private key generation are RSA, RSA-PSS, EC,
 X25519, X448, ED25519, ED448, ML-DSA and ML-KEM.
 

@@ -68,7 +68,7 @@ then the above behaviour is modified and an error B<is> returned if no
 recipient encrypted key can be decrypted B<without> generating a random
 content encryption key. Applications should use this flag with
 B<extreme caution> especially in automated gateways as it can leave them
-open to attack.
+open to attack. See L<EVP_PKEY_decrypt(3)> for more details.
 
 It is possible to determine the correct recipient key by other means (for
 example looking them up in a database) and setting them in the CMS structure
@@ -103,7 +103,7 @@ mentioned in CMS_verify() also applies to CMS_decrypt().
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<CMS_encrypt(3)>
+L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<EVP_PKEY_decrypt(3)>
 
 =head1 HISTORY
 
@@ -112,7 +112,7 @@ were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

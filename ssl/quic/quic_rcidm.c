@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -270,8 +270,11 @@ static void rcidm_check_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
     assert(rcid->state != RCID_STATE_RETIRING || rcidm->num_retiring > 0);
 }
 
-static int rcid_cmp(const RCID *a, const RCID *b)
+static int rcid_cmp(const void *av, const void *bv)
 {
+    const RCID *a = av;
+    const RCID *b = bv;
+
     if (a->seq_num < b->seq_num)
         return -1;
     if (a->seq_num > b->seq_num)

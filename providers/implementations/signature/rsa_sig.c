@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -602,7 +603,7 @@ rsa_signverify_init(PROV_RSA_CTX *prsactx, void *vrsa,
 
         break;
     default:
-        ERR_raise(ERR_LIB_RSA, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
@@ -988,8 +989,19 @@ static int rsa_verify_recover(void *vprsactx,
             break;
 
         case RSA_PKCS1_PADDING: {
+            int mdsize = EVP_MD_get_size(prsactx->md);
             size_t sltmp;
 
+            if (mdsize <= 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
+                return 0;
+            }
+            if (routsize < (size_t)mdsize) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                    "buffer size is %d, should be %d",
+                    routsize, mdsize);
+                return 0;
+            }
             ret = ossl_rsa_verify(prsactx->mdnid, NULL, 0, rout, &sltmp,
                 sig, siglen, prsactx->rsa);
             if (ret <= 0) {
@@ -1005,9 +1017,23 @@ static int rsa_verify_recover(void *vprsactx,
             return 0;
         }
     } else {
+        int rsasize = RSA_size(prsactx->rsa);
+
+        if (routsize < (size_t)rsasize) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                "buffer size is %d, should be %d",
+                routsize, rsasize);
+            return 0;
+        }
         ret = RSA_public_decrypt((int)siglen, sig, rout, prsactx->rsa,
             prsactx->pad_mode);
-        if (ret <= 0) {
+        /*
+         * RSA_public_decrypt() returns -1 on error and otherwise the number
+         * of recovered bytes, which may legitimately be zero for a raw
+         * PKCS#1 v1.5 signature that encodes an empty payload.  Treat only
+         * a negative result as an error.
+         */
+        if (ret < 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }
@@ -1464,10 +1490,10 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
                 value = OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX;
                 break;
             default: {
-                int len = BIO_snprintf(p.slen->data, p.slen->data_size, "%d",
+                int len = snprintf(p.slen->data, p.slen->data_size, "%d",
                     prsactx->saltlen);
 
-                if (len <= 0)
+                if (len <= 0 || (size_t)len >= p.slen->data_size)
                     return 0;
                 p.slen->return_size = len;
                 break;
@@ -1670,8 +1696,11 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                 saltlen = RSA_PSS_SALTLEN_AUTO;
             else if (strcmp(p.slen->data, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX) == 0)
                 saltlen = RSA_PSS_SALTLEN_AUTO_DIGEST_MAX;
-            else
-                saltlen = atoi(p.slen->data);
+            else if (!ossl_strtoint(p.slen->data, NULL, 10, &saltlen)) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH,
+                    "invalid RSA-PSS saltlen value");
+                return 0;
+            }
         }
 
         /*
@@ -1884,7 +1913,7 @@ static int rsa_sigalg_signverify_init(void *vprsactx, void *vrsa,
 
     /* PSS is currently not supported as a sigalg */
     if (prsactx->pad_mode == RSA_PKCS1_PSS_PADDING) {
-        ERR_raise(ERR_LIB_RSA, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 

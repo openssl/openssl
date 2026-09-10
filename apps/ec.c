@@ -54,7 +54,7 @@ const OPTIONS ec_options[] = {
     { "check", OPT_CHECK, '-', "check key consistency" },
     { "", OPT_CIPHER, '-', "Any supported cipher" },
     { "param_enc", OPT_PARAM_ENC, 's',
-        "Specifies the way the ec parameters are encoded" },
+        "Selects between named_curve and explicit EC parameter encoding" },
     { "conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form " },
 
     OPT_SECTION("Output"),

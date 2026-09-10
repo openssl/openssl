@@ -1233,7 +1233,8 @@ cert_loop:
             goto end;
     }
 
-    if (!check_cert_attributes(out, x, checkhost, checkemail, checkip, 1))
+    if (!check_cert_might_be_valid(out, bio_err, x, checkhost, checkemail,
+            checkip))
         goto err;
 
     if (noout || nocert) {
@@ -1265,6 +1266,8 @@ end_cert_loop:
     goto end;
 
 err:
+    /* Every path reaching this label is a failure path */
+    ret = 1;
     ERR_print_errors(bio_err);
 
 end:

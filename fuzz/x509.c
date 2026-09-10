@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     if (ctx == NULL)
         goto err;
 
-    X509_STORE_CTX_init(ctx, store, x509_1, NULL);
+    if (!X509_STORE_CTX_init(ctx, store, x509_1, NULL))
+        goto err;
 
     if (crl != NULL) {
         crls = sk_X509_CRL_new_null();

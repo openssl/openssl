@@ -306,7 +306,7 @@ int ssl_cert_set0_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
     for (i = 0; i < sk_X509_num(chain); i++) {
         X509 *x = sk_X509_value(chain, i);
 
-        r = ssl_security_cert(s, ctx, x, 0, 0);
+        r = ssl_security_cert(s, ctx, x, 0);
         if (r != 1) {
             ERR_raise(ERR_LIB_SSL, r);
             return 0;
@@ -340,7 +340,7 @@ int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 
     if (!cpk)
         return 0;
-    r = ssl_security_cert(s, ctx, x, 0, 0);
+    r = ssl_security_cert(s, ctx, x, 0);
     if (r != 1) {
         ERR_raise(ERR_LIB_SSL, r);
         return 0;
@@ -434,6 +434,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     SSL_CTX *sctx;
 #ifndef OPENSSL_NO_OCSP
     SSL *ssl;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 #endif
 
     /* Something must be passed in */
@@ -496,10 +497,8 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
      */
 #ifndef OPENSSL_NO_OCSP
     ssl = SSL_CONNECTION_GET_SSL(s);
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
-    if (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION) {
+
+    if (ssl_version_cmp(s, SSL_version(ssl), version1_3) >= 0) {
         /* ignore status_request_v2 if TLS version < 1.3 */
         int status = SSL_get_tlsext_status_type(ssl);
 
@@ -982,22 +981,20 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0)
             continue;
 #endif
-        if (strlen(dir) + strlen(filename) + 2 > sizeof(buf)) {
+#ifdef OPENSSL_SYS_VMS
+        r = snprintf(buf, sizeof(buf), "%s%s", dir, filename);
+#else
+        r = snprintf(buf, sizeof(buf), "%s/%s", dir, filename);
+#endif
+        if (r < 0 || (size_t)r >= sizeof(buf)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PATH_TOO_LONG);
             goto err;
         }
-#ifdef OPENSSL_SYS_VMS
-        r = BIO_snprintf(buf, sizeof(buf), "%s%s", dir, filename);
-#else
-        r = BIO_snprintf(buf, sizeof(buf), "%s/%s", dir, filename);
-#endif
 #ifndef OPENSSL_NO_POSIX_IO
         /* Skip subdirectories */
         if (!stat(buf, &st) && S_ISDIR(st.st_mode))
             continue;
 #endif
-        if (r <= 0 || r >= (int)sizeof(buf))
-            goto err;
         if (!add_file_cert_subjects_to_stack(stack, buf, name_hash))
             goto err;
     }
@@ -1175,7 +1172,7 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
      */
     for (i = 0; i < sk_X509_num(chain); i++) {
         x = sk_X509_value(chain, i);
-        rv = ssl_security_cert(s, ctx, x, 0, 0);
+        rv = ssl_security_cert(s, ctx, x, 0);
         if (rv != 1) {
             ERR_raise(ERR_LIB_SSL, rv);
             OSSL_STACK_OF_X509_free(chain);
@@ -1248,8 +1245,10 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
     int op, int bits, int nid, void *other,
     void *ex)
 {
-    int level, minbits, pfs_mask;
+    int level, minbits, pfs_mask, minversion;
     const SSL_CONNECTION *sc;
+    const int version1_3 = SSL_is_dtls(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    const int version1_2 = SSL_is_dtls(s) ? DTLS1_2_VERSION : TLS1_2_VERSION;
 
     minbits = ssl_get_security_level_bits(s, ctx, &level);
 
@@ -1279,24 +1278,21 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
         /* SHA1 HMAC is 160 bits of security */
         if (minbits > 160 && c->algorithm_mac & SSL_SHA1)
             return 0;
+
         /* Level 3: forward secure ciphersuites only */
         pfs_mask = SSL_kDHE | SSL_kECDHE | SSL_kDHEPSK | SSL_kECDHEPSK;
-        if (level >= 3 && c->min_tls != TLS1_3_VERSION && !(c->algorithm_mkey & pfs_mask))
+        minversion = SSL_is_dtls(s) ? c->min_dtls : c->min_tls;
+
+        if (level >= 3 && minversion != version1_3 && !(c->algorithm_mkey & pfs_mask))
             return 0;
         break;
     }
     case SSL_SECOP_VERSION:
         if ((sc = SSL_CONNECTION_FROM_CONST_SSL(s)) == NULL)
             return 0;
-        if (!SSL_CONNECTION_IS_DTLS(sc)) {
-            /* SSLv3, TLS v1.0 and TLS v1.1 only allowed at level 0 */
-            if (nid <= TLS1_1_VERSION && level > 0)
-                return 0;
-        } else {
-            /* DTLS v1.0 only allowed at level 0 */
-            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level > 0)
-                return 0;
-        }
+        /* SSLv3, TLS v1.0 and TLS v1.1 and DTLS v1.0 only allowed at level 0 */
+        if (ssl_version_cmp(sc, nid, version1_2) < 0 && level > 0)
+            return 0;
         break;
 
     case SSL_SECOP_COMPRESSION:

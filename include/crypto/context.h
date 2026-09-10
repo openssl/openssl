@@ -1,11 +1,14 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if !defined(OSSL_CRYPTO_CONTEXT_H)
+#define OSSL_CRYPTO_CONTEXT_H
 
 #include <openssl/core.h>
 
@@ -48,3 +51,5 @@ void ossl_release_default_drbg_ctx(void);
 #if defined(OPENSSL_THREADS)
 void ossl_threads_ctx_free(void *);
 #endif
+
+#endif /* !defined(OSSL_CRYPTO_CONTEXT_H) */

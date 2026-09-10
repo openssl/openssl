@@ -24,6 +24,7 @@
 #include <openssl/comp.h>
 #endif
 #include <ctype.h>
+#include <inttypes.h>
 
 #undef SIZE
 #undef BSIZE
@@ -162,7 +163,7 @@ static EVP_SKEY *skey_from_params(const EVP_CIPHER *cipher, const char *skeymgmt
 
     skey = EVP_SKEY_import(app_get0_libctx(), EVP_SKEYMGMT_get0_name(mgmt),
         app_get0_propq(), OSSL_SKEYMGMT_SELECT_ALL, params);
-    OSSL_PARAM_free(params);
+    app_params_free(params);
     EVP_SKEYMGMT_free(mgmt);
 
     return skey;
@@ -472,7 +473,7 @@ int enc_main(int argc, char **argv)
             for (;;) {
                 char prompt[200];
 
-                BIO_snprintf(prompt, sizeof(prompt), "enter %s %s password:",
+                snprintf(prompt, sizeof(prompt), "enter %s %s password:",
                     EVP_CIPHER_get0_name(cipher),
                     (enc) ? "encryption" : "decryption");
                 strbuf[0] = '\0';
@@ -826,8 +827,8 @@ int enc_main(int argc, char **argv)
 
     ret = 0;
     if (verbose) {
-        BIO_printf(bio_err, "bytes read   : %8ju\n"
-                            "bytes written: %8ju\n",
+        BIO_printf(bio_err, "bytes read   : %8" PRIu64 "\n"
+                            "bytes written: %8" PRIu64 "\n",
             BIO_number_read(in), BIO_number_written(out));
     }
 end:

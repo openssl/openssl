@@ -35,6 +35,21 @@
 #define AES_CBC_HMAC_SHA_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_TLS1_MULTIBLOCK)
 
+#if !defined(OPENSSL_NO_MULTIBLOCK)
+static int aes_get_multiblock_interleave(const OSSL_PARAM *p,
+    unsigned int *interleave)
+{
+    return p != NULL
+        && OSSL_PARAM_get_uint(p, interleave)
+        && (*interleave == 4 || *interleave == 8);
+}
+
+static unsigned int tls1_aad_plaintext_len(const unsigned char *aad)
+{
+    return ((unsigned int)aad[11] << 8) | aad[12];
+}
+#endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
+
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;
 static OSSL_FUNC_cipher_freectx_fn aes_cbc_hmac_sha1_freectx;
@@ -112,8 +127,12 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      */
     if (p.mb_aad != NULL) {
         if (p.mb_aad->data_type != OSSL_PARAM_OCTET_STRING
-            || p.ileave == NULL
-            || !OSSL_PARAM_get_uint(p.ileave, &mb_param.interleave)) {
+            || p.mb_aad->data == NULL
+            || p.mb_aad->data_size < EVP_AEAD_TLS1_AAD_LEN
+            || !aes_get_multiblock_interleave(p.ileave, &mb_param.interleave)
+            || tls1_aad_plaintext_len(p.mb_aad->data) > SSL3_RT_MAX_PLAIN_LENGTH
+            || p.mb_aad->data_size
+                > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -134,10 +153,15 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      */
     if (p.enc != NULL) {
         if (p.enc->data_type != OSSL_PARAM_OCTET_STRING
+            || p.enc->data == NULL
             || p.enc_in == NULL
             || p.enc_in->data_type != OSSL_PARAM_OCTET_STRING
-            || p.ileave == NULL
-            || !OSSL_PARAM_get_uint(p.ileave, &mb_param.interleave)) {
+            || p.enc_in->data == NULL
+            || p.enc_in->data_size == 0
+            || p.enc->data_size != p.enc_in->data_size
+            || !aes_get_multiblock_interleave(p.ileave, &mb_param.interleave)
+            || p.enc_in->data_size
+                > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -176,8 +200,7 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        if (ctx->base.tlsversion == SSL3_VERSION
-            || ctx->base.tlsversion == TLS1_VERSION) {
+        if (ctx->base.tlsversion == TLS1_VERSION) {
             if (!ossl_assert(ctx->base.removetlsfixed >= AES_BLOCK_SIZE)) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -307,6 +330,7 @@ static void *aes_cbc_hmac_sha1_newctx(void *provctx, size_t kbits,
 static void *aes_cbc_hmac_sha1_dupctx(void *provctx)
 {
     PROV_AES_HMAC_SHA1_CTX *ctx = provctx;
+    PROV_AES_HMAC_SHA1_CTX *dctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -314,7 +338,14 @@ static void *aes_cbc_hmac_sha1_dupctx(void *provctx)
     if (ctx == NULL)
         return NULL;
 
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base_ctx.base,
+            &ctx->base_ctx.base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 static void aes_cbc_hmac_sha1_freectx(void *vctx)
@@ -356,11 +387,22 @@ static void *aes_cbc_hmac_sha256_newctx(void *provctx, size_t kbits,
 static void *aes_cbc_hmac_sha256_dupctx(void *provctx)
 {
     PROV_AES_HMAC_SHA256_CTX *ctx = provctx;
+    PROV_AES_HMAC_SHA256_CTX *dctx;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (ctx == NULL)
+        return NULL;
+
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base_ctx.base,
+            &ctx->base_ctx.base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 static void aes_cbc_hmac_sha256_freectx(void *vctx)

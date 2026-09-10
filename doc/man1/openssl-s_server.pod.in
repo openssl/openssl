@@ -344,6 +344,9 @@ Download CRLs from distribution points given in CDP extensions of certificates
 A file in PEM format containing trusted CA certificates (root and/or
 intermediate) used to verify the client certificate chain.
 
+This and the following two options, B<-verifyCApath> and B<-verifyCAstore>,
+take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
+
 =item B<-verifyCApath> I<dir>
 
 A directory containing trusted certificates to use
@@ -353,14 +356,14 @@ see L<openssl-verify(1)> for more information.
 
 =item B<-verifyCAstore> I<uri>
 
-The URI of a store containing trusted certificates to use
+URI of a store containing trusted certificates to use
 for verifying client certificates.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this is generally treated like B<-verifyCApath> or
+B<-verifyCAfile>, depending on whether the URI points to a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
-When any of B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> is
-specified, they are loaded into a separate verification store (via
-L<SSL_CTX_set1_verify_cert_store(3)>) and used for client certificate
-verification instead of the store built from B<-CAfile>, B<-CApath>, and
-B<-CAstore>. Note that B<-CAfile> is the sole source of acceptable issuing
+Note that B<-CAfile> is the sole source of acceptable issuing
 CA names sent to the client in the Certificate Request message during the
 handshake; B<-CApath>, B<-CAstore>, and the B<-verifyCA*> options do not
 contribute to this list.
@@ -369,6 +372,9 @@ contribute to this list.
 
 A file in PEM format containing trusted certificates to use
 when attempting to build the server certificate chain.
+
+This and the following two options, B<-chainCApath> and B<-chainCAstore>,
+take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
 =item B<-chainCApath> I<dir>
 
@@ -382,10 +388,9 @@ see L<openssl-verify(1)> for more information.
 The URI of a store containing trusted certificates to use
 for building the server certificate chain provided to the client.
 The URI may indicate a single certificate, as well as a collection of them.
-With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
-B<-chainCApath>, depending on if the URI indicates a directory or a
-single file.
-See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+With URIs in the C<file:> scheme, this is generally treated like B<-chainCApath> or
+B<-chainCAfile>, depending on whether the URI points to a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
 =item B<-nocert>
 
@@ -612,11 +617,11 @@ further information).
 
 =item B<-no_tx_cert_comp>
 
-Disables support for sending TLSv1.3 compressed certificates.
+Disables support for sending (D)TLSv1.3 compressed certificates.
 
 =item B<-no_rx_cert_comp>
 
-Disables support for receiving TLSv1.3 compressed certificates.
+Disables support for receiving (D)TLSv1.3 compressed certificates.
 
 =item B<-no_comp>
 
@@ -627,8 +632,8 @@ OpenSSL 1.1.0.
 =item B<-num_tickets>
 
 Control the number of tickets that will be sent to the client after a full
-handshake in TLSv1.3. The default number of tickets is 2. This option does not
-affect the number of tickets sent after a resumption handshake.
+handshake in (D)TLSv1.3. The default number of tickets is 2. This option does
+not affect the number of tickets sent after a resumption handshake.
 
 =item B<-dhparam> I<infile>
 
@@ -696,8 +701,8 @@ connect to that peer and complete the handshake.
 =item B<-sctp>
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
-conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
-available where OpenSSL has support for SCTP enabled.
+conjunction with B<-dtls>, B<-dtls1>, B<-dtls1_2> or B<-dtls1_3>. This option
+is only available where OpenSSL has support for SCTP enabled.
 
 =item B<-sctp_label_bug>
 
@@ -725,7 +730,8 @@ The I<val> list is a comma-separated list of supported protocol
 names.  The list should contain the most desirable protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
-The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
+The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> or B<-dtls1_3>
+is used.
 
 =item B<-ktls>
 
@@ -773,16 +779,20 @@ B<-WWW>, B<-HTTP> or B<-rev>.
 
 =item B<-stateless>
 
-Require TLSv1.3 cookies.
+Require (D)TLSv1.3 cookies.
 
 =item B<-anti_replay>, B<-no_anti_replay>
 
 Switches replay protection on or off, respectively. Replay protection is on by
 default unless overridden by a configuration file. When it is on, OpenSSL will
-automatically detect if a session ticket has been used more than once, TLSv1.3
-has been negotiated, and early data is enabled on the server. A full handshake
-is forced if a session ticket is used a second or subsequent time. Any early
-data that was sent will be rejected.
+automatically detect if a session ticket has been used more than once,
+(D)TLSv1.3 has been negotiated, and early data is enabled on the server. A full
+handshake is forced if a session ticket is used a second or subsequent time.
+Any early data that was sent will be rejected.
+
+Note that the server manages an internal cache of session tickets. If a client
+closes the connection without sending the close_notify alert, the
+corresponding session ticket is removed and a full handshake is forced.
 
 =item B<-tfo>
 
@@ -801,6 +811,17 @@ Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 {- $OpenSSL::safe::opt_x_item -}
 
 {- $OpenSSL::safe::opt_trust_item -}
+
+The certificates loaded via the B<-CAfile>, B<-CApath>, and B<-CAstore> options
+are used as trust anchors when verifying client certificates unless
+overridden by B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> options.
+They are also used as trust anchors when attempting
+to build the server certificate chain provided to clients unless
+overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
+
+B<-CAfile> also determines the list of acceptable issuing CA names
+sent to the client in the Certificate Request message during the handshake;
+B<-CApath>, B<-CAstore>, and the B<-verifyCA*> options do not contribute here.
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -899,12 +920,12 @@ End the current SSL connection and exit.
 
 =item B<r>
 
-Renegotiate the SSL session (TLSv1.2 and below only).
+Renegotiate the SSL session ((D)TLSv1.2 and below only).
 
 =item B<R>
 
-Renegotiate the SSL session and request a client certificate (TLSv1.2 and below
-only).
+Renegotiate the SSL session and request a client certificate ((D)TLSv1.2 and
+below only).
 
 =item B<P>
 
@@ -917,15 +938,15 @@ Print out some session cache status information.
 
 =item B<k>
 
-Send a key update message to the client (TLSv1.3 only)
+Send a key update message to the client ((D)TLSv1.3 only).
 
 =item B<K>
 
-Send a key update message to the client and request one back (TLSv1.3 only)
+Send a key update message to the client and request one back ((D)TLSv1.3 only).
 
 =item B<c>
 
-Send a certificate request to the client (TLSv1.3 only)
+Send a certificate request to the client ((D)TLSv1.3 only).
 
 =back
 
@@ -967,7 +988,7 @@ L<SSL_CONF_cmd(3)>,
 L<SSL_CTX_set_max_send_fragment(3)>,
 L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>,
-L<ossl_store-file(7)>
+L<ossl_store(7)>
 
 =head1 HISTORY
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file data_file/;
 
 setup("test_pkcs7");
 
-plan tests => 7;
+plan tests => 10;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -43,3 +43,16 @@ is(cmp_text($out, data_file('grfc.out')),
 
 my $malformed = data_file('malformed.pkcs7');
 ok(run(app(["openssl", "pkcs7", "-in", $malformed])));
+
+# Test that -print_certs prints CRLs contained in a PKCS#7 structure
+my $crlp7 = "testcrl.p7";
+ok(run(app(["openssl", "crl2pkcs7",
+            "-in", srctop_file("test", "testcrl.pem"),
+            "-out", $crlp7])),
+   "create a PKCS#7 structure containing a CRL");
+my @crlout = run(app(["openssl", "pkcs7", "-print_certs", "-in", $crlp7]),
+                 capture => 1);
+ok(grep(/Certificate Revocation List \(CRL\):/, @crlout) == 1,
+   "print_certs shows the CRL contents");
+ok(grep(/-----BEGIN X509 CRL-----/, @crlout) == 1,
+   "print_certs outputs the CRL in PEM form");

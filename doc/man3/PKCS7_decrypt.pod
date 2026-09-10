@@ -22,6 +22,14 @@ B<flags> is an optional set of flags.
 Although the recipients certificate is not needed to decrypt the data it is needed
 to locate the appropriate (of possible several) recipients in the PKCS#7 structure.
 
+When RSA PKCS#1 v1.5 Key Transport is in use, the invoked EVP_PKEY_decrypt()
+will use implicit rejection mechanism. It always returns the result of RSA
+decryption of the symmetric key to avoid Marvin attack. This result is
+deterministic and can happen to match the symmetric cipher used for the content
+encryption. In case when the certificate is not provided, the last
+RecipientInfo producing the key looking valid will be used. It may cause
+getting garbage content on decryption.
+
 The following flags can be passed in the B<flags> parameter.
 
 If the B<PKCS7_TEXT> flag is set MIME headers for type B<text/plain> are deleted
@@ -38,16 +46,13 @@ The error can be obtained from ERR_get_error(3)
 PKCS7_decrypt() must be passed the correct recipient key and certificate. It would
 be better if it could look up the correct key and certificate from a database.
 
-The lack of single pass processing and need to hold all data in memory as
-mentioned in PKCS7_sign() also applies to PKCS7_verify().
-
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<PKCS7_encrypt(3)>
+L<ERR_get_error(3)>, L<PKCS7_encrypt(3)>, L<EVP_PKEY_decrypt(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

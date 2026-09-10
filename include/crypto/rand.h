@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,6 +39,16 @@
 /*
  * Defines related to seed sources
  */
+
+/* Name of the seed source used to seed the primary DRBG. */
+#ifndef OPENSSL_NO_FIPS_JITTER
+#define OPENSSL_SEED_SRC_NAME "JITTER"
+#elif defined(OPENSSL_DEFAULT_SEED_SRC)
+#define OPENSSL_SEED_SRC_NAME OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC)
+#else
+#define OPENSSL_SEED_SRC_NAME "SEED-SRC"
+#endif
+
 #ifndef DEVRANDOM
 /*
  * set this to a comma-separated list of 'random' device files to try out. By
@@ -143,6 +153,8 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool);
 EVP_RAND_CTX *ossl_rand_get0_private_noncreating(OSSL_LIB_CTX *ctx);
 #else
 EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx);
+EVP_RAND_CTX *ossl_rand_get0_seed(OSSL_LIB_CTX *ctx);
+int ossl_rand_seed_source_strict(OSSL_LIB_CTX *ctx);
 #endif
 
 /* Generate a uniformly distributed random integer in the interval [0, upper) */

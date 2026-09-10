@@ -233,7 +233,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
                      * bytes.
                      */
                     ERR_clear_last_mark();
-                    ERR_raise(ERR_LIB_ASN1, EVP_R_DECODE_ERROR);
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
                     goto end;
                 }
             }
@@ -280,7 +280,7 @@ X509_PUBKEY *X509_PUBKEY_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_PUBKEY *pubkey = NULL;
 
-    pubkey = (X509_PUBKEY *)ASN1_item_new_ex(X509_PUBKEY_it(), libctx, propq);
+    pubkey = (X509_PUBKEY *)ASN1_item_new_ex(ASN1_ITEM_rptr(X509_PUBKEY), libctx, propq);
     if (!x509_pubkey_set0_libctx(pubkey, libctx, propq)) {
         X509_PUBKEY_free(pubkey);
         pubkey = NULL;

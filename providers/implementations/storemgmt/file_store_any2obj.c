@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -193,6 +193,10 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
     ok = 0;
     mem_want = ossl_blob_length(bitlen, isdss, ispub);
+
+    if (mem_want > BLOB_MAX_LENGTH) {
+        goto next;
+    }
     if (!BUF_MEM_grow(mem, mem_len + mem_want)) {
         ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         goto err;
@@ -336,6 +340,7 @@ static int raw2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
 
     BIO_free(in);
+    in = NULL;
 
     if (BUF_MEM_grow(mem, len) != len) {
         ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);

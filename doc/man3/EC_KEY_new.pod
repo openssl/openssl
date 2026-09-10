@@ -2,7 +2,6 @@
 
 =head1 NAME
 
-EVP_EC_gen,
 EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_ex,
 EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
 EC_KEY_new_by_curve_name_ex, EC_KEY_new_by_curve_name, EC_KEY_free,
@@ -20,8 +19,6 @@ EC_KEY objects
 =head1 SYNOPSIS
 
  #include <openssl/ec.h>
-
- EVP_PKEY *EVP_EC_gen(const char *curve);
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -66,8 +63,6 @@ see L<openssl_user_macros(7)>:
  int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
 
 =head1 DESCRIPTION
-
-EVP_EC_gen() generates a new EC key pair on the given I<curve>.
 
 All of the functions described below are deprecated.
 Applications should instead use EVP_EC_gen(), L<EVP_PKEY_Q_keygen(3)>, or
@@ -223,15 +218,14 @@ L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 
-EVP_EC_gen() was added in OpenSSL 3.0.
-All other functions described here were deprecated in OpenSSL 3.0.
+All the functions described here were deprecated in OpenSSL 3.0.
 For replacement see L<EVP_PKEY-EC(7)>.
 
 The EC_KEY_get0_engine() was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

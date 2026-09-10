@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,9 +59,9 @@ static CRYPTO_ONCE version_strings_once = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(version_strings_setup)
 {
-    BIO_snprintf(openssldir, sizeof(openssldir), "OPENSSLDIR: \"%s\"",
+    snprintf(openssldir, sizeof(openssldir), "OPENSSLDIR: \"%s\"",
         ossl_get_openssldir());
-    BIO_snprintf(modulesdir, sizeof(modulesdir), "MODULESDIR: \"%s\"",
+    snprintf(modulesdir, sizeof(modulesdir), "MODULESDIR: \"%s\"",
         ossl_get_modulesdir());
     return 1;
 }

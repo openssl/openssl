@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
@@ -8,6 +8,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if !defined(OSSL_LIBCRYPTO_SM3_SM3_LOCAL_H)
+#define OSSL_LIBCRYPTO_SM3_SM3_LOCAL_H
 
 #include <string.h>
 #include "internal/cryptlib.h"
@@ -44,12 +47,12 @@
 
 #if defined(OPENSSL_SM3_ASM)
 #if defined(__aarch64__) || defined(_M_ARM64)
-#include "crypto/arm_arch.h"
+#include "arch/arm_arch.h"
 #define HWSM3_CAPABLE (OPENSSL_armcap_P & ARMV8_SM3)
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 #endif
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-#include "crypto/riscv_arch.h"
+#include "arch/riscv_arch.h"
 #define HWSM3_CAPABLE 1
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 #endif
@@ -69,10 +72,12 @@ void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void ossl_sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void ossl_sm3_transform(SM3_CTX *c, const unsigned char *data);
 
-#include "crypto/md32_common.h"
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 
 #ifndef PEDANTIC
-#if defined(__GNUC__) && __GNUC__ >= 2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#if defined(__GNUC__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #if defined(__riscv_zksh)
 #define P0(x) ({ MD32_REG_T ret;        \
                        asm ("sm3p0 %0, %1" \
@@ -129,3 +134,5 @@ void ossl_sm3_transform(SM3_CTX *c, const unsigned char *data);
 #define SM3_F 0x163138aaUL
 #define SM3_G 0xe38dee4dUL
 #define SM3_H 0xb0fb0e4eUL
+
+#endif /* !defined(OSSL_LIBCRYPTO_SM3_SM3_LOCAL_H) */

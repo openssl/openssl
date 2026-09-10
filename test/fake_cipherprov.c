@@ -9,13 +9,13 @@
  */
 
 #include <string.h>
+#include <openssl/err.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
 #include <openssl/rand.h>
 #include <openssl/provider.h>
 #include <openssl/proverr.h>
 #include <openssl/param_build.h>
-#include "testutil.h"
 #include "fake_cipherprov.h"
 
 #define MAX_KEYNAME 32
@@ -65,7 +65,7 @@ static void *fake_skeymgmt_import(void *provctx, int selection, const OSSL_PARAM
 {
     PROV_CIPHER_FAKE_CTX *ctx = NULL;
 
-    if (!TEST_ptr(ctx = OPENSSL_zalloc(sizeof(PROV_CIPHER_FAKE_CTX))))
+    if ((ctx = OPENSSL_zalloc(sizeof(PROV_CIPHER_FAKE_CTX))) == NULL)
         return 0;
 
     if (ctx_from_key_params(ctx, p) != 1) {
@@ -74,6 +74,47 @@ static void *fake_skeymgmt_import(void *provctx, int selection, const OSSL_PARAM
     }
 
     return ctx;
+}
+
+static void *fake_skeymgmt_generate(void *provctx, const OSSL_PARAM *params)
+{
+    PROV_CIPHER_FAKE_CTX *ctx = NULL;
+    size_t i;
+
+    if ((ctx = OPENSSL_zalloc(sizeof(PROV_CIPHER_FAKE_CTX))) == NULL)
+        return NULL;
+
+    if (ctx_from_key_params(ctx, params) != 1) {
+        OPENSSL_free(ctx);
+        return NULL;
+    }
+
+    /* Deterministic fill so the provider doesn't depend on a DRBG. */
+    for (i = 0; i < sizeof(ctx->key); i++)
+        ctx->key[i] = (unsigned char)i;
+
+    return ctx;
+}
+
+static const char *fake_skeymgmt_get_key_id(void *keydata)
+{
+    PROV_CIPHER_FAKE_CTX *ctx = (PROV_CIPHER_FAKE_CTX *)keydata;
+
+    if (ctx == NULL || ctx->key_name[0] == '\0')
+        return NULL;
+
+    return ctx->key_name;
+}
+
+static const OSSL_PARAM fake_skeymgmt_known_settable_params[] = {
+    OSSL_PARAM_utf8_string(FAKE_CIPHER_PARAM_KEY_NAME, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_SKEY_PARAM_RAW_BYTES, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *fake_skeymgmt_settable_params(ossl_unused void *provctx)
+{
+    return fake_skeymgmt_known_settable_params;
 }
 
 static int fake_skeymgmt_export(void *keydata, int selection,
@@ -103,8 +144,14 @@ static int fake_skeymgmt_export(void *keydata, int selection,
 
 static const OSSL_DISPATCH fake_skeymgmt_funcs[] = {
     { OSSL_FUNC_SKEYMGMT_FREE, (void (*)(void))fake_skeymgmt_free },
+    { OSSL_FUNC_SKEYMGMT_GENERATE, (void (*)(void))fake_skeymgmt_generate },
     { OSSL_FUNC_SKEYMGMT_IMPORT, (void (*)(void))fake_skeymgmt_import },
     { OSSL_FUNC_SKEYMGMT_EXPORT, (void (*)(void))fake_skeymgmt_export },
+    { OSSL_FUNC_SKEYMGMT_GET_KEY_ID, (void (*)(void))fake_skeymgmt_get_key_id },
+    { OSSL_FUNC_SKEYMGMT_IMP_SETTABLE_PARAMS,
+        (void (*)(void))fake_skeymgmt_settable_params },
+    { OSSL_FUNC_SKEYMGMT_GEN_SETTABLE_PARAMS,
+        (void (*)(void))fake_skeymgmt_settable_params },
     OSSL_DISPATCH_END
 };
 
@@ -308,19 +355,29 @@ static int fake_cipher_provider_init(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH *in,
     const OSSL_DISPATCH **out, void **provctx)
 {
-    if (!TEST_ptr(*provctx = OSSL_LIB_CTX_new()))
+    if ((*provctx = OSSL_LIB_CTX_new()) == NULL)
         return 0;
     *out = fake_cipher_method;
     return 1;
 }
 
+#ifdef FAKE_CIPHER_AS_MODULE
+/* Entry point when built as a loadable module (e.g. -provider fake-cipher). */
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
+    const OSSL_DISPATCH *in,
+    const OSSL_DISPATCH **out, void **provctx)
+{
+    return fake_cipher_provider_init(handle, in, out, provctx);
+}
+#endif
+
 OSSL_PROVIDER *fake_cipher_start(OSSL_LIB_CTX *libctx)
 {
     OSSL_PROVIDER *p;
 
-    if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, FAKE_PROV_NAME,
-            fake_cipher_provider_init))
-        || !TEST_ptr(p = OSSL_PROVIDER_try_load(libctx, FAKE_PROV_NAME, 1)))
+    if (!OSSL_PROVIDER_add_builtin(libctx, FAKE_PROV_NAME,
+            fake_cipher_provider_init)
+        || (p = OSSL_PROVIDER_try_load(libctx, FAKE_PROV_NAME, 1)) == NULL)
         return NULL;
 
     return p;

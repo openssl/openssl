@@ -9,6 +9,11 @@
 #ifndef OSSL_INTERNAL_STATEM_H
 #define OSSL_INTERNAL_STATEM_H
 
+#include <stddef.h>
+
+#include <openssl/e_os2.h>
+#include <openssl/ssl.h>
+
 /*****************************************************************************
  *                                                                           *
  * These enums should be considered PRIVATE to the state machine. No         *
@@ -112,6 +117,8 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE hand_state;
     /* The handshake state requested by an API call (e.g. HelloRequest) */
     OSSL_HANDSHAKE_STATE request_state;
+    /* The handshake state waiting for acknowledge */
+    OSSL_HANDSHAKE_STATE deferred_ack_state;
     ERROR_STATE error_state;
     int in_init;
     int read_state_first_init;

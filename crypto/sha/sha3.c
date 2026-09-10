@@ -12,11 +12,11 @@
 #include "internal/common.h"
 
 #if defined(__aarch64__) && defined(KECCAK1600_ASM)
-#include "crypto/arm_arch.h"
+#include "arch/arm_arch.h"
 #endif
 
 #if defined(__s390x__) && defined(OPENSSL_CPUID_OBJ)
-#include "crypto/s390x_arch.h"
+#include "arch/s390x_arch.h"
 #if defined(KECCAK1600_ASM)
 #define S390_SHA3 1
 #define S390_SHA3_CAPABLE(name) \

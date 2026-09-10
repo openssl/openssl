@@ -306,9 +306,9 @@ ASN1_NDEF_SEQUENCE(CMS_AuthEnvelopedData) = {
     ASN1_IMP_OPT(CMS_AuthEnvelopedData, originatorInfo, CMS_OriginatorInfo, 0),
     ASN1_SET_OF(CMS_AuthEnvelopedData, recipientInfos, CMS_RecipientInfo),
     ASN1_SIMPLE(CMS_AuthEnvelopedData, authEncryptedContentInfo, CMS_EncryptedContentInfo),
-    ASN1_IMP_SET_OF_OPT(CMS_AuthEnvelopedData, authAttrs, X509_ALGOR, 2),
+    ASN1_IMP_SET_OF_OPT(CMS_AuthEnvelopedData, authAttrs, X509_ATTRIBUTE, 1),
     ASN1_SIMPLE(CMS_AuthEnvelopedData, mac, ASN1_OCTET_STRING),
-    ASN1_IMP_SET_OF_OPT(CMS_AuthEnvelopedData, unauthAttrs, X509_ALGOR, 3)
+    ASN1_IMP_SET_OF_OPT(CMS_AuthEnvelopedData, unauthAttrs, X509_ATTRIBUTE, 2)
 } ASN1_NDEF_SEQUENCE_END(CMS_AuthEnvelopedData)
 
 ASN1_NDEF_SEQUENCE(CMS_AuthenticatedData) = {
@@ -318,9 +318,9 @@ ASN1_NDEF_SEQUENCE(CMS_AuthenticatedData) = {
     ASN1_SIMPLE(CMS_AuthenticatedData, macAlgorithm, X509_ALGOR),
     ASN1_IMP(CMS_AuthenticatedData, digestAlgorithm, X509_ALGOR, 1),
     ASN1_SIMPLE(CMS_AuthenticatedData, encapContentInfo, CMS_EncapsulatedContentInfo),
-    ASN1_IMP_SET_OF_OPT(CMS_AuthenticatedData, authAttrs, X509_ALGOR, 2),
+    ASN1_IMP_SET_OF_OPT(CMS_AuthenticatedData, authAttrs, X509_ATTRIBUTE, 2),
     ASN1_SIMPLE(CMS_AuthenticatedData, mac, ASN1_OCTET_STRING),
-    ASN1_IMP_SET_OF_OPT(CMS_AuthenticatedData, unauthAttrs, X509_ALGOR, 3)
+    ASN1_IMP_SET_OF_OPT(CMS_AuthenticatedData, unauthAttrs, X509_ATTRIBUTE, 3)
 } static_ASN1_NDEF_SEQUENCE_END(CMS_AuthenticatedData)
 
 ASN1_NDEF_SEQUENCE(CMS_CompressedData)
@@ -358,7 +358,7 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     switch (operation) {
 
     case ASN1_OP_STREAM_PRE:
-        if (CMS_stream(&sarg->boundary, cms) <= 0)
+        if (ossl_cms_stream(cms) <= 0)
             return 0;
         /* fall through */
     case ASN1_OP_DETACHED_PRE:
@@ -372,6 +372,13 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (CMS_dataFinal(cms, sarg->ndef_bio) <= 0)
             return 0;
         break;
+
+    case ASN1_OP_GET0_STREAM_CONTENT: {
+        ASN1_STRING **content = exarg;
+        ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
+
+        *content = pos == NULL ? NULL : *pos;
+    } break;
 
     case ASN1_OP_FREE_POST:
         OPENSSL_free(cms->ctx.propq);

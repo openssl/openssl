@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#if (defined(_WIN64) || defined(_WIN32_WCE)) && !defined(UNICODE)
+#if defined(_WIN64) && !defined(UNICODE)
 #define UNICODE
 #endif
 #if defined(UNICODE) && !defined(_UNICODE)

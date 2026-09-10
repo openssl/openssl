@@ -499,6 +499,7 @@ id-pkix 11		: id-qcs
 id-pkix 14		: id-cp
 id-pkix 12		: id-cct
 id-pkix 21		: id-ppl
+id-pkix 25 1		: id-rdna-unsigned
 id-pkix 48		: id-ad
 
 # PKIX Modules
@@ -640,6 +641,7 @@ id-alg 1		: id-alg-des40
 id-alg 2		: id-alg-noSignature
 id-alg 3		: id-alg-dh-sig-hmac-sha1
 id-alg 4		: id-alg-dh-pop
+id-alg 36		: id-alg-unsigned
 
 # CMC controls
 id-cmc 1		: id-cmc-statusInfo

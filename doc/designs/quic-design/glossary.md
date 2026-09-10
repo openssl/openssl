@@ -56,7 +56,7 @@ dispatches calls to libssl public APIs to the APL.
 
 **Engine:** See `QUIC_ENGINE`.
 
-**Event Leader:** The QSO which is is the top-level QSO in a hierarchy of QSOs,
+**Event Leader:** The QSO which is the top-level QSO in a hierarchy of QSOs,
 and which is responsible for event processing for all QSOs in that hierarchy.
 This may be a QLSO or QCSO. See [the server API
 design](server/quic-server-api.md).

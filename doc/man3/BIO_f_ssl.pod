@@ -56,6 +56,7 @@ SSL structure is also freed using SSL_free().
 
 BIO_set_ssl() sets the internal SSL pointer of SSL BIO B<b> to B<ssl> using
 the close flag B<c>.
+On success, ownership of B<ssl> is transferred to BIO B<b>.
 
 BIO_get_ssl() retrieves the SSL pointer of SSL BIO B<b>, it can then be
 manipulated using the standard SSL library functions.
@@ -302,7 +303,7 @@ be modified to handle this fix or they may free up an already freed BIO.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

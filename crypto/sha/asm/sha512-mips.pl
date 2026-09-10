@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -308,7 +308,7 @@ $FRAMESIZE=16*$SZ+16*$SZREG;
 $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? "0xc0fff008" : "0xc0ff0000";
 
 $code.=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 .text
 .set	noat

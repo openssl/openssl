@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -175,9 +175,55 @@ static int test_insert(void)
     return 1;
 }
 
+static int test_join(void)
+{
+    OSSL_LIST(int)
+    l_h, l_t;
+    INTL elem_h[20];
+    INTL elem_t[20];
+    int i;
+
+    ossl_list_int_init(&l_h);
+    ossl_list_int_init(&l_t);
+    ossl_list_int_join(&l_h, &l_t);
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_t), 0))
+        return 0;
+
+    for (i = 0; i < (int)OSSL_NELEM(elem_h); i++) {
+        ossl_list_int_init_elem(&elem_h[i]);
+        elem_h[i].n = i;
+        ossl_list_int_insert_head(&l_h, &elem_h[i]);
+    }
+
+    for (i = 0; i < (int)OSSL_NELEM(elem_t); i++) {
+        ossl_list_int_init_elem(&elem_t[i]);
+        elem_t[i].n = i + 10;
+        ossl_list_int_insert_head(&l_t, &elem_t[i]);
+    }
+
+    ossl_list_int_join(NULL, NULL);
+
+    ossl_list_int_join(NULL, &l_t);
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_t), OSSL_NELEM(elem_t)))
+        return 0;
+
+    ossl_list_int_join(&l_h, NULL);
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h)))
+        return 0;
+
+    ossl_list_int_join(&l_h, &l_t);
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h) + OSSL_NELEM(elem_t)))
+        return 0;
+
+    if (!TEST_true(ossl_list_int_is_empty(&l_t)))
+        return 0;
+
+    return 1;
+}
 int setup_tests(void)
 {
     ADD_TEST(test_fizzbuzz);
     ADD_TEST(test_insert);
+    ADD_TEST(test_join);
     return 1;
 }

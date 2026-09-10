@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -213,14 +213,19 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        sz = p.tag->data_size;
         if (!ctx->enc || ctx->taglen == UNINITIALISED_SIZET) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        if (p.tag->data != NULL && (sz > EVP_GCM_TLS_TAG_LEN || sz == 0)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
-            return 0;
+        if (p.tag->data == NULL) {
+            /* size query: report the tag length, as for the iv above */
+            sz = ctx->taglen;
+        } else {
+            sz = p.tag->data_size;
+            if (sz > EVP_GCM_TLS_TAG_LEN || sz == 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
+                return 0;
+            }
         }
 
         if (!OSSL_PARAM_set_octet_string(p.tag, ctx->buf, sz)) {
@@ -263,7 +268,11 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        if (sz == 0 || ctx->enc) {
+        if (ctx->enc) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
+            return 0;
+        }
+        if (sz == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
             return 0;
         }
@@ -466,8 +475,11 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             goto err;
         }
-        if (!hw->cipherfinal(ctx, ctx->buf))
+        if (hw->cipherfinal(ctx, ctx->buf) == 0) {
+            if (ctx->enc == 0)
+                ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
             goto err;
+        }
         ctx->iv_state = IV_STATE_FINISHED; /* Don't reuse the IV */
         goto finish;
     }
@@ -521,8 +533,9 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
         return 1;
     }
     /* Fixed field must be at least 4 bytes and invocation field at least 8 */
-    if ((len < EVP_GCM_TLS_FIXED_IV_LEN)
-        || (ctx->ivlen - (int)len) < EVP_GCM_TLS_EXPLICIT_IV_LEN)
+    if (len < EVP_GCM_TLS_FIXED_IV_LEN
+        || len > ctx->ivlen
+        || (ctx->ivlen - len) < EVP_GCM_TLS_EXPLICIT_IV_LEN)
         return 0;
     if (len > 0)
         memcpy(ctx->iv, iv, len);

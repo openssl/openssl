@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -203,11 +203,19 @@ static void aes_cbc_hmac_sha1_etm_freectx(void *vctx)
 static void *aes_cbc_hmac_sha1_etm_dupctx(void *provctx)
 {
     PROV_AES_HMAC_SHA1_ETM_CTX *ctx = provctx;
+    PROV_AES_HMAC_SHA1_ETM_CTX *dctx;
 
     if (ctx == NULL)
         return NULL;
 
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base_ctx.base,
+            &ctx->base_ctx.base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 static void *aes_cbc_hmac_sha256_etm_newctx(void *provctx, size_t kbits,
@@ -240,11 +248,19 @@ static void aes_cbc_hmac_sha256_etm_freectx(void *vctx)
 static void *aes_cbc_hmac_sha256_etm_dupctx(void *provctx)
 {
     PROV_AES_HMAC_SHA256_ETM_CTX *ctx = provctx;
+    PROV_AES_HMAC_SHA256_ETM_CTX *dctx;
 
     if (ctx == NULL)
         return NULL;
 
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base_ctx.base,
+            &ctx->base_ctx.base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 static void *aes_cbc_hmac_sha512_etm_newctx(void *provctx, size_t kbits,
@@ -277,11 +293,19 @@ static void aes_cbc_hmac_sha512_etm_freectx(void *vctx)
 static void *aes_cbc_hmac_sha512_etm_dupctx(void *provctx)
 {
     PROV_AES_HMAC_SHA512_ETM_CTX *ctx = provctx;
+    PROV_AES_HMAC_SHA512_ETM_CTX *dctx;
 
     if (ctx == NULL)
         return NULL;
 
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base_ctx.base,
+            &ctx->base_ctx.base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 #define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)                    \

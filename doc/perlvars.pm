@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -151,11 +151,12 @@ $OpenSSL::safe::opt_version_synopsis = ""
 . "$OpenSSL::safe::opt_versiontls_synopsis\n"
 . "[B<-dtls>]\n"
 . "[B<-dtls1>]\n"
-. "[B<-dtls1_2>]";
+. "[B<-dtls1_2>]\n"
+. "[B<-dtls1_3>]";
 $OpenSSL::safe::opt_version_item = "\n"
 . "$OpenSSL::safe::opt_versiontls_item\n"
 . "\n"
-. "=item B<-dtls>, B<-dtls1>, B<-dtls1_2>\n"
+. "=item B<-dtls>, B<-dtls1>, B<-dtls1_2>, B<-dtls1_3>\n"
 . "\n"
 . "These specify the use of DTLS instead of TLS.\n"
 . "See L<openssl(1)/TLS Version Options>.";

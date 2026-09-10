@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #pragma once
 
 #include <openssl/conf.h>
+#include <openssl/types.h>
 
 /*
  * namespaces:
@@ -43,7 +44,7 @@ typedef struct ossl_method_construct_method_st {
         const char *name, const char *propdef, void *data);
     /* Construct a new method */
     void *(*construct)(const OSSL_ALGORITHM *algodef, OSSL_PROVIDER *prov,
-        void *data);
+        void *data, int no_store);
     /* Destruct a method */
     void (*destruct)(void *method, void *data);
 } OSSL_METHOD_CONSTRUCT_METHOD;

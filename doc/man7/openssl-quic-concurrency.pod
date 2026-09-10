@@ -150,6 +150,29 @@ default concurrency model if the application does not explicitly specify a
 concurrency model or disable it. This is known as Legacy Blocking Compatibility
 Mode, and its usage is not recommended for multi-threaded applications.
 
+=head1 THREAD CANCELLATION
+
+The restrictions in L<openssl-threads(7)/THREAD CANCELLATION> also apply to
+OpenSSL QUIC APIs, including calls used in nonblocking mode.
+
+CCM and TACM use domain-wide synchronisation during API processing. Event
+processing may perform network I/O while it is held, which can be a POSIX
+cancellation point. Interruption can leave later use or teardown of the domain
+unsafe.
+
+TACM and CCM with B<SSL_DOMAIN_FLAG_BLOCKING> also maintain internal wait state
+for blocking calls. If interruption prevents cleanup of this state, later calls
+on the affected domain can block indefinitely. L<SSL_poll(3)> can maintain such
+state in multiple domains in one call.
+
+Because most blocking QUIC functions do not provide a per-call timeout,
+applications requiring prompt cooperative cancellation should use nonblocking
+mode and an application-driven event loop as described in
+L<openssl-quic(7)/APPLICATION-DRIVEN EVENT LOOPS>, waiting for the application
+cancellation event alongside QUIC events. Alternatively, an application can
+call L<SSL_poll(3)> with a finite timeout and check a cancellation condition
+between calls.
+
 =head1 RECOMMENDED USAGE
 
 New applications are advised to choose a concurrency model as follows:
@@ -323,13 +346,15 @@ blocking mode can be changed explicitly using L<SSL_set_blocking_mode(3)>.
 
 =head1 SEE ALSO
 
-L<openssl-quic(7)>, L<SSL_handle_events(3)>, L<SSL_get_event_timeout(3)>,
+L<openssl-quic(7)>, L<openssl-threads(7)>, L<SSL_handle_events(3)>,
+L<SSL_get_event_timeout(3)>, L<SSL_get_rpoll_descriptor(3)>,
+L<SSL_get_wpoll_descriptor(3)>, L<SSL_poll(3)>,
 L<OSSL_QUIC_client_thread_method(3)>, L<SSL_CTX_set_domain_flags(3)>,
 L<SSL_new_domain(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

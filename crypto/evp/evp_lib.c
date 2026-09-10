@@ -180,7 +180,9 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
             break;
 
         default:
-            ret = EVP_CIPHER_get_asn1_iv(c, type) >= 0 ? 1 : -1;
+            ret = EVP_CIPHER_get_asn1_iv(c, type);
+            if (ret == 0 && EVP_CIPHER_CTX_get_iv_length(c) == 0)
+                ret = 1;
         }
     } else if (cipher->prov != NULL) {
         /* We cheat, there's no need for an object ID for this use */
@@ -283,7 +285,7 @@ int EVP_CIPHER_get_type(const EVP_CIPHER *cipher)
     case NID_des_ede3_cfb8:
     case NID_des_ede3_cfb1:
 
-        return NID_des_cfb64;
+        return NID_des_ede3_cfb64;
 
     default:
 #ifdef FIPS_MODULE
@@ -310,6 +312,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
     size_t blksz = 0;
     size_t keylen = 0;
     unsigned int mode = 0;
+    int no_store = cipher->flags & EVP_CIPH_FLAG_NO_STORE;
     OSSL_PARAM params[11];
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &blksz);
@@ -332,7 +335,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
         cipher->block_size = (int)blksz;
         cipher->iv_len = (int)ivlen;
         cipher->key_len = (int)keylen;
-        cipher->flags = mode;
+        cipher->flags = mode | no_store;
         if (aead)
             cipher->flags |= EVP_CIPH_FLAG_AEAD_CIPHER;
         if (custom_iv)
@@ -1029,12 +1032,17 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
         params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits);
     } else if (OPENSSL_strcasecmp(type, "EC") == 0) {
         name = va_arg(args, char *);
+        if (name == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+            goto end;
+        }
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
             name, 0);
     }
 
     ret = evp_pkey_keygen(libctx, type, propq, params);
 
+end:
     va_end(args);
     return ret;
 }

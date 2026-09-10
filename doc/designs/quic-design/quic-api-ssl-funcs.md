@@ -108,9 +108,6 @@ Notes:
 | `SSL_test_functions`                         | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `SSL_select_next_proto`                      | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | **⇒ Methods**                                |         |       |       |            |              |
-| `SSLv3_method`                               | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
-| `SSLv3_client_method`                        | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
-| `SSLv3_server_method`                        | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `TLS_method`                                 | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `TLS_client_method`                          | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `TLS_server_method`                          | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
@@ -879,7 +876,6 @@ The following options must be explicitly forbidden:
 - `SSL_OP_ENABLE_MIDDLEBOX_COMPAT` — forbidden by QUIC RFCs
 - `SSL_OP_ENABLE_KTLS` — not currently supported for QUIC
 - `SSL_OP_SAFARI_ECDHE_ECDSA_BUG`
-- `SSL_OP_TLSEXT_PADDING`
 - `SSL_OP_TLS_ROLLBACK_BUG`
 - `SSL_OP_IGNORE_UNEXPECTED_EOF`
 - `SSL_OP_ALLOW_NO_DHE_KEX`

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,10 +59,21 @@ typedef struct vector_st VECTOR;
 typedef struct matrix_st MATRIX;
 typedef struct ml_dsa_sig_st ML_DSA_SIG;
 
-int ossl_ml_dsa_matrix_expand_A(EVP_MD_CTX *g_ctx, const EVP_MD *md,
+typedef int(ML_DSA_MATRIX_EXPAND_A_FN)(EVP_MD_CTX *g_ctx, const EVP_MD *md,
     const uint8_t *rho, MATRIX *out);
-int ossl_ml_dsa_vector_expand_S(EVP_MD_CTX *h_ctx, const EVP_MD *md, int eta,
-    const uint8_t *seed, VECTOR *s1, VECTOR *s2);
+typedef int(ML_DSA_VECTOR_EXPAND_S_FN)(EVP_MD_CTX *h_ctx, const EVP_MD *md,
+    int eta, const uint8_t *seed, VECTOR *s1, VECTOR *s2);
+typedef void(ML_DSA_VECTOR_EXPAND_MASK_FN)(VECTOR *out,
+    const uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES], uint32_t kappa, uint32_t gamma1,
+    EVP_MD_CTX *h_ctx, const EVP_MD *md);
+
+typedef struct ossl_ml_dsa_sample_ops_st {
+    ML_DSA_MATRIX_EXPAND_A_FN *matrix_expand_A;
+    ML_DSA_VECTOR_EXPAND_S_FN *vector_expand_S;
+    ML_DSA_VECTOR_EXPAND_MASK_FN *vector_expand_mask;
+} OSSL_ML_DSA_SAMPLE_OPS;
+
+const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void);
 void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,
     VECTOR *vk);
 int ossl_ml_dsa_poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
@@ -75,6 +86,16 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
 void ossl_ml_dsa_poly_ntt(POLY *s);
 void ossl_ml_dsa_poly_ntt_inverse(POLY *s);
 void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
+
+/* Optimization for s390x */
+/* z13 supports VX, z14 supports VXE; z14 means __ARCH__ == 12 */
+#if defined(OPENSSL_ML_DSA_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
+#include "arch/s390x_arch.h"
+#define VX_COMPILER_SUPPORT_VEC128
+void ossl_ml_dsa_poly_ntt_vec128(POLY *p);
+void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p);
+void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out);
+#endif
 
 void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r0);
 uint32_t ossl_ml_dsa_key_compress_high_bits(uint32_t r, uint32_t gamma2);

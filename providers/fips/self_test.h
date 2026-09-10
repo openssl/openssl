@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_FIPS_SELF_TEST_H)
+#define OSSL_PROVIDERS_FIPS_SELF_TEST_H
+
 #include <openssl/core_dispatch.h>
 #include <openssl/types.h>
 #include <openssl/self_test.h>
@@ -177,3 +180,5 @@ typedef struct self_test_st {
 extern ST_DEFINITION st_all_tests[ST_ID_MAX];
 int ossl_get_self_test_state(self_test_id_t id, enum st_test_state *state);
 int ossl_set_self_test_state(self_test_id_t id, enum st_test_state state);
+
+#endif /* !defined(OSSL_PROVIDERS_FIPS_SELF_TEST_H) */

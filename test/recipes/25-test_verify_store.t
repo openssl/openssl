@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -72,9 +72,11 @@ SKIP: {
                 -CAstore => $CAcert,
                 $CAcert );
 
+    # Put a pubkey and DH params to the store to test
+    # that other things in the store are just ignored
     open(my $out, '>', $CAobjects) or die $!;
-    my $pubkey = qx(openssl x509 -pubkey -noout -in $CAcert);
-    print $out $pubkey;
+    my @pubkey = run(app([qw(openssl x509 -pubkey -noout -in), $CAcert]), capture => 1);
+    print $out @pubkey;
     my @files;
     push @files, srctop_file("test", "certs", "dhp2048.pem")
         unless disabled("dh");

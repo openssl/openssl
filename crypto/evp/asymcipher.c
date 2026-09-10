@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,12 +19,26 @@
 
 static void evp_asym_cipher_free(void *data)
 {
-    EVP_ASYM_CIPHER_free(data);
+    EVP_ASYM_CIPHER *cipher = (EVP_ASYM_CIPHER *)data;
+    int i;
+
+    if (cipher == NULL)
+        return;
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
+    if (i > 0)
+        return;
+    OPENSSL_free(cipher->type_name);
+    ossl_provider_free(cipher->prov);
+    CRYPTO_FREE_REF(&cipher->refcnt);
+    OPENSSL_free(cipher);
 }
 
 static int evp_asym_cipher_up_ref(void *data)
 {
-    return EVP_ASYM_CIPHER_up_ref(data);
+    EVP_ASYM_CIPHER *cipher = (EVP_ASYM_CIPHER *)data;
+    int ref = 0;
+
+    return CRYPTO_UP_REF(&cipher->refcnt, &ref);
 }
 
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
@@ -102,7 +116,9 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
          * iteration we're on.
          */
         EVP_ASYM_CIPHER_free(cipher);
+        cipher = NULL;
         EVP_KEYMGMT_free(tmp_keymgmt);
+        tmp_keymgmt = NULL;
 
         switch (iter) {
         case 1:
@@ -325,7 +341,7 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 
 static void *evp_asym_cipher_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_ASYM_CIPHER *cipher = NULL;
@@ -338,6 +354,7 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
     }
 
     cipher->name_id = name_id;
+    cipher->no_store = no_store;
     if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     cipher->description = algodef->algorithm_description;
@@ -436,31 +453,29 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
 
     return cipher;
 err:
-    EVP_ASYM_CIPHER_free(cipher);
+    evp_asym_cipher_free(cipher);
     return NULL;
 }
 
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
 {
-    int i;
-
-    if (cipher == NULL)
-        return;
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
-    if (i > 0)
-        return;
-    OPENSSL_free(cipher->type_name);
-    ossl_provider_free(cipher->prov);
-    CRYPTO_FREE_REF(&cipher->refcnt);
-    OPENSSL_free(cipher);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_asym_cipher_free(cipher);
+#else
+    if (cipher != NULL && (cipher->no_store != 0))
+        evp_asym_cipher_free(cipher);
+#endif
 }
 
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&cipher->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_asym_cipher_up_ref(cipher);
+#else
+    if (cipher->no_store != 0)
+        return evp_asym_cipher_up_ref(cipher);
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher)
@@ -513,8 +528,12 @@ void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
         void *arg),
     void *arg)
 {
+    struct EVP_ASYM_CIPHER_do_all_provided_thunk t;
+
+    t.fn = fn;
+    t.arg = arg;
     evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
-        (void (*)(void *, void *))fn, arg,
+        EVP_ASYM_CIPHER_do_all_provided_thunk, &t,
         evp_asym_cipher_from_algorithm,
         evp_asym_cipher_up_ref,
         evp_asym_cipher_free);

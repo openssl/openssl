@@ -1,0 +1,16 @@
+#
+# To run the demos when linked with a shared library (default) ensure that
+# libcrypto is on the library path. For example:
+#
+#    LD_LIBRARY_PATH=../.. ./pkread
+
+PROGRAMS{noinst} = pkread \
+                   pkwrite
+
+INCLUDE[pkread]=../../include
+SOURCE[pkread]=pkread.c
+DEPEND[pkread]=../../libcrypto
+
+INCLUDE[pkwrite]=../../include
+SOURCE[pkwrite]=pkwrite.c
+DEPEND[pkwrite]=../../libcrypto

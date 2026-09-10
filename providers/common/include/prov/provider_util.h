@@ -1,11 +1,14 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDER_UTIL_H)
+#define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDER_UTIL_H
 
 #include <openssl/provider.h>
 #include <openssl/types.h>
@@ -109,3 +112,5 @@ void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
 /* Duplicate a lump of memory safely */
 int ossl_prov_memdup(const void *src, size_t src_len,
     unsigned char **dest, size_t *dest_len);
+
+#endif /* !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDER_UTIL_H) */

@@ -117,7 +117,7 @@ int X509_up_ref(X509 *x)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&x->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&x->references, &i))
         return 0;
 
     REF_PRINT_COUNT("X509", i, x);

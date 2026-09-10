@@ -218,8 +218,8 @@ static struct tls_group_st xor_group = {
     128, /* secbits */
     TLS1_2_VERSION, /* mintls */
     0, /* maxtls */
-    -1, /* mindtls */
-    -1, /* maxdtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
     0 /* is_kem */
 };
 
@@ -230,8 +230,8 @@ static struct tls_group_st xor_kemgroup = {
     128, /* secbits */
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
-    -1, /* mindtls */
-    -1, /* maxdtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
     1 /* is_kem */
 };
 
@@ -286,6 +286,8 @@ struct tls_sigalg_st {
     unsigned int secbits;
     unsigned int mintls;
     unsigned int maxtls;
+    unsigned int mindtls;
+    unsigned int maxdtls;
 };
 
 #define XORSIGALG_NAME "xorhmacsig"
@@ -301,6 +303,8 @@ static struct tls_sigalg_st xor_sigalg = {
     128, /* secbits */
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
 };
 
 static struct tls_sigalg_st xor_sigalg_hash = {
@@ -308,6 +312,8 @@ static struct tls_sigalg_st xor_sigalg_hash = {
     128, /* secbits */
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
+    DTLS1_3_VERSION, /* mindtls */
+    0, /* maxdtls */
 };
 
 static struct tls_sigalg_st xor_sigalg12 = {
@@ -315,6 +321,8 @@ static struct tls_sigalg_st xor_sigalg12 = {
     128, /* secbits */
     TLS1_2_VERSION, /* mintls */
     TLS1_2_VERSION, /* maxtls */
+    DTLS1_2_VERSION, /* mindtls */
+    DTLS1_2_VERSION, /* maxdtls */
 };
 
 static const OSSL_PARAM xor_sig_nohash_params[] = {
@@ -333,6 +341,10 @@ static const OSSL_PARAM xor_sig_nohash_params[] = {
         &xor_sigalg.mintls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
         &xor_sigalg.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,
+        &xor_sigalg.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,
+        &xor_sigalg.maxdtls),
     OSSL_PARAM_END
 };
 
@@ -354,6 +366,10 @@ static const OSSL_PARAM xor_sig_hash_params[] = {
         &xor_sigalg_hash.mintls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
         &xor_sigalg_hash.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,
+        &xor_sigalg_hash.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,
+        &xor_sigalg_hash.maxdtls),
     OSSL_PARAM_END
 };
 
@@ -373,6 +389,10 @@ static const OSSL_PARAM xor_sig_12_params[] = {
         &xor_sigalg12.mintls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
         &xor_sigalg12.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,
+        &xor_sigalg12.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,
+        &xor_sigalg12.maxdtls),
     OSSL_PARAM_END
 };
 
@@ -408,7 +428,7 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
                 dummy_group_names[i] = OPENSSL_zalloc(dummy_name_max_size);
                 if (dummy_group_names[i] == NULL)
                     return 0;
-                BIO_snprintf(dummy_group_names[i],
+                snprintf(dummy_group_names[i],
                     dummy_name_max_size,
                     "%s%d", dummy_base, i);
             }
@@ -725,7 +745,7 @@ static int xor_key_up_ref(XORKEY *key)
 {
     int refcnt;
 
-    if (CRYPTO_UP_REF(&key->references, &refcnt) <= 0)
+    if (!CRYPTO_UP_REF(&key->references, &refcnt))
         return 0;
 
     assert(refcnt > 1);
@@ -1282,7 +1302,7 @@ static XORKEY *xor_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
         plen = 0;
     } else {
         p = ASN1_STRING_get0_data(oct);
-        plen = ASN1_STRING_length(oct);
+        plen = (int)ASN1_STRING_get_length(oct);
     }
 
     xork = xor_key_op(palg, p, plen, KEY_OP_PRIVATE,
@@ -2598,7 +2618,7 @@ static int xor_get_aid(unsigned char **oidbuf, const char *tls_name)
 
     aidlen = i2d_X509_ALGOR(algor, oidbuf);
     X509_ALGOR_free(algor);
-    return (aidlen);
+    return aidlen;
 }
 
 /*

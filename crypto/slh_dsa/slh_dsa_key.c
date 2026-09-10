@@ -58,7 +58,6 @@ static int slh_dsa_key_hash_init(SLH_DSA_KEY *key)
     key->hash_func = ossl_slh_get_hash_fn(is_shake, security_category);
     return 1;
 err:
-    slh_dsa_key_hash_cleanup(key);
     return 0;
 }
 
@@ -202,7 +201,7 @@ int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
         if (!key_checked
             && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
             if (key1->has_priv && key2->has_priv) {
-                if (memcmp(key1->priv, key2->priv,
+                if (CRYPTO_memcmp(key1->priv, key2->priv,
                         key1->params->pk_len)
                     != 0)
                     return 0;
@@ -308,6 +307,12 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *param_pub,
     key->pub = p;
     return 1;
 err:
+    /*
+     * A private key of unexpected length may have been copied into |priv|
+     * before |has_priv| was set, in which case the reset below would not
+     * erase it, so cleanse unconditionally.
+     */
+    OPENSSL_cleanse(key->priv, sizeof(key->priv));
     ossl_slh_dsa_key_reset(key);
     return 0;
 }

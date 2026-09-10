@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <openssl/bn.h>
 #include "internal/cryptlib.h"
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 #include "bn_local.h" /* for definition of bn_mul_mont */
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,

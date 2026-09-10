@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,7 +23,7 @@ size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
 
 #if defined(__aarch64__) && defined(OPENSSL_CPUID_OBJ)
 #define IS_AARCH_64 1
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len);
 size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);

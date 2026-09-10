@@ -138,7 +138,7 @@ The public key value.
 
 This parameter is only used when importing or exporting the public key value with
 the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
-The public key format format is the same as "encoded-pub-key".
+The public key format is the same as "encoded-pub-key".
 
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 

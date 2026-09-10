@@ -83,7 +83,7 @@
 #endif
 
 #ifdef WINDOWS
-#if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
+#if !defined(_WIN32_WINNT)
 /*
  * The _WIN32_WINNT is described here:
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
@@ -109,18 +109,15 @@
  *	0x0603 // Windows 8.1
  *	0x0A00 // Windows 10
  */
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0600
 #endif
 #include <windows.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
-#if defined(_WIN32_WCE) && !defined(EACCES)
-#define EACCES 13
-#endif
 #include <string.h>
 #include <malloc.h>
-#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
+#if defined(_MSC_VER) && !defined(_DLL) && defined(stdin)
 #if _MSC_VER >= 1300 && _MSC_VER < 1600
 #undef stdin
 #undef stdout
@@ -136,10 +133,6 @@ FILE *__iob_func(void);
 #include <io.h>
 #include <fcntl.h>
 
-#ifdef OPENSSL_SYS_WINCE
-#define OPENSSL_NO_POSIX_IO
-#endif
-
 #define EXIT(n) exit(n)
 #define LIST_SEPARATOR_CHAR ';'
 #ifndef W_OK
@@ -148,11 +141,7 @@ FILE *__iob_func(void);
 #ifndef R_OK
 #define R_OK 4
 #endif
-#ifdef OPENSSL_SYS_WINCE
-#define DEFAULT_HOME ""
-#else
 #define DEFAULT_HOME "C:"
-#endif
 
 /* Avoid Visual Studio 13 GetVersion deprecated problems */
 #if defined(_MSC_VER) && _MSC_VER >= 1800
@@ -161,6 +150,20 @@ FILE *__iob_func(void);
 #else
 #define check_winnt() (GetVersion() < 0x80000000)
 #define check_win_minplat(x) (LOBYTE(LOWORD(GetVersion())) >= (x))
+#endif
+
+/*
+ * MSVC versions earlier than Visual Studio 2015 (_MSC_VER < 1900) do not
+ * declare or define C99 snprintf or vsnprintf.  Definitions are supplied
+ * by crypto/msvc2013_snprintf.c, which is built only on the matching
+ * Configure target variants.
+ */
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#include <stdarg.h>
+int msvc_translate_printf_format(const char *format, const char **out,
+    char **tmp);
+int snprintf(char *buf, size_t n, const char *fmt, ...);
+int vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
 #endif
 
 #else /* The non-microsoft world */
@@ -232,7 +235,7 @@ FILE *__iob_func(void);
 /***********************************************/
 
 #if defined(OPENSSL_SYS_WINDOWS)
-#if defined(_MSC_VER) && (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
+#if defined(_MSC_VER) && (_MSC_VER >= 1310)
 #define open _open
 #define fdopen _fdopen
 #define close _close

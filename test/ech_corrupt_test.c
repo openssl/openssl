@@ -710,10 +710,10 @@ typedef struct {
 #define OSSL_ECH_BORK_GREASE (1 << 4)
 #define OSSL_ECH_BORK_REPLACE (1 << 5)
 
-/* a truncated ECH, with another bogus ext to match overall length */
+/* a truncated ECH, padded with a known HRR ext to match overall length */
 static unsigned char shortech[] = {
     0xfe, 0x0d, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
-    0xdd, 0xdd, 0x00, 0x00
+    0x00, 0x2c, 0x00, 0x00
 };
 
 /* a too-long ECH internal length */
@@ -1767,7 +1767,7 @@ static int ech_retry_config_test(int idx)
         if (!TEST_int_ne((int)retryconfiglen, 0))
             goto end;
         if (verbose)
-            TEST_info("ech_retry_config_test: retryconfglen: %d\n", (int)retryconfiglen);
+            TEST_info("ech_retry_config_test: retryconfglen: %zu\n", retryconfiglen);
         /* we kow the size to expect as the configs are hard-coded above */
         if (!TEST_size_t_eq(retryconfiglen, 64))
             goto end;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,11 +258,66 @@ end:
     return result;
 }
 
+/*
+ * SSL_CTX_set_ciphersuites() must not crash on empty list elements.
+ * CONF_parse_list() signals them with elem=NULL; ciphersuite_cb() must skip
+ * such entries rather than passing NULL to memcpy().
+ */
+#ifndef OPENSSL_NO_TLS1_3
+static int cipher_in_ctx(const SSL_CTX *ctx, uint32_t id)
+{
+    const STACK_OF(SSL_CIPHER) *sk = SSL_CTX_get_ciphers(ctx);
+    int i;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++)
+        if (SSL_CIPHER_get_id(sk_SSL_CIPHER_value(sk, i)) == id)
+            return 1;
+    return 0;
+}
+
+static int test_set_ciphersuites_empty_elem(void)
+{
+    SSL_CTX *ctx = NULL;
+    int result = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_method())))
+        goto end;
+
+    /* Double colon: both surrounding valid suites must be applied */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,
+            "TLS_AES_128_GCM_SHA256::TLS_AES_256_GCM_SHA384")))
+        goto end;
+    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256))
+        || !TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_256_GCM_SHA384)))
+        goto end;
+
+    /* Leading separator: empty first element, one valid suite must apply */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx, ":TLS_AES_128_GCM_SHA256")))
+        goto end;
+    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    /* Trailing separator: empty last element, one valid suite must apply */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx, "TLS_AES_128_GCM_SHA256:")))
+        goto end;
+    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    result = 1;
+end:
+    SSL_CTX_free(ctx);
+    return result;
+}
+#endif
+
 int setup_tests(void)
 {
     ADD_TEST(test_default_cipherlist_implicit);
     ADD_TEST(test_default_cipherlist_explicit);
     ADD_TEST(test_default_cipherlist_clear);
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_TEST(test_set_ciphersuites_empty_elem);
+#endif
     ADD_TEST(test_stdname_cipherlist);
     return 1;
 }

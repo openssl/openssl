@@ -133,7 +133,9 @@ void sha256_block_data_order_c(SHA256_CTX *ctx, const void *in, size_t num);
 #endif /* SHA256_ASM */
     void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
-#include "crypto/md32_common.h"
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 #undef HASH_UPDATE_THUNK
 
 int SHA256_Update(SHA256_CTX *ctx, const void *data, size_t sz)
@@ -162,7 +164,7 @@ static const SHA_LONG K256[64] = {
 };
 
 #ifndef PEDANTIC
-#if defined(__GNUC__) && __GNUC__ >= 2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#if defined(__GNUC__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #if defined(__riscv_zknh)
 #define Sigma0(x) ({ MD32_REG_T ret;            \
                         asm ("sha256sum0 %0, %1"    \

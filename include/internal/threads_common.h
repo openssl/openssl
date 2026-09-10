@@ -10,6 +10,8 @@
 #ifndef _CRYPTO_THREADS_COMMON_H_
 #define _CRYPTO_THREADS_COMMON_H_
 
+#include <openssl/types.h>
+
 #if defined(__clang__) && defined(__has_feature)
 #if __has_feature(thread_sanitizer)
 #define __SANITIZE_THREAD__
@@ -21,7 +23,7 @@
 extern void AnnotateBenignRaceSized(const char *f, int l,
     const volatile void *mem, unsigned int size, const char *desc);
 #define TSAN_BENIGN(x, desc) \
-    AnnotateBenignRaceSized(__FILE__, __LINE__, &(x), sizeof(x), desc);
+    AnnotateBenignRaceSized(__FILE__, __LINE__, (x), sizeof(*(x)), desc);
 #else
 #define TSAN_BENIGN(x, desc)
 #endif
@@ -86,7 +88,7 @@ void CRYPTO_THREAD_clean_local(void);
 #endif
 
 /* Allow us to know if atomics will be implemented with a fallback lock or not. */
-#if defined(OSSL_USE_GCC_ATOMICS) || defined(OSSL_USE_SOLARIS_ATOMICS) || defined(USE_INTERLOCKEDOR64)
+#if defined(OSSL_USE_GCC_ATOMICS) || defined(OSSL_USE_SOLARIS_ATOMICS) || defined(OSSL_USE_INTERLOCKEDOR64)
 #define OSSL_ATOMICS_LOCKLESS
 #endif
 

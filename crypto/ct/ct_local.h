@@ -1,11 +1,14 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if !defined(OSSL_LIBCRYPTO_CT_CT_LOCAL_H)
+#define OSSL_LIBCRYPTO_CT_CT_LOCAL_H
 
 #include <stddef.h>
 #include <openssl/ct.h>
@@ -14,45 +17,14 @@
 #include <openssl/x509v3.h>
 #include <openssl/safestack.h>
 
+#include "internal/common.h"
+
 /*
  * From RFC6962: opaque SerializedSCT<1..2^16-1>; struct { SerializedSCT
  * sct_list <1..2^16-1>; } SignedCertificateTimestampList;
  */
 #define MAX_SCT_SIZE 65535
 #define MAX_SCT_LIST_SIZE MAX_SCT_SIZE
-
-/*
- * Macros to read and write integers in network-byte order.
- */
-
-#define n2s(c, s) ((s = (((unsigned int)((c)[0])) << 8) | (((unsigned int)((c)[1])))), c += 2)
-
-#define s2n(s, c) ((c[0] = (unsigned char)(((s) >> 8) & 0xff), \
-                       c[1] = (unsigned char)(((s)) & 0xff)),  \
-    c += 2)
-
-#define l2n3(l, c) ((c[0] = (unsigned char)(((l) >> 16) & 0xff),   \
-                        c[1] = (unsigned char)(((l) >> 8) & 0xff), \
-                        c[2] = (unsigned char)(((l)) & 0xff)),     \
-    c += 3)
-
-#define n2l8(c, l) (l = ((uint64_t)(*((c)++))) << 56, \
-    l |= ((uint64_t)(*((c)++))) << 48,                \
-    l |= ((uint64_t)(*((c)++))) << 40,                \
-    l |= ((uint64_t)(*((c)++))) << 32,                \
-    l |= ((uint64_t)(*((c)++))) << 24,                \
-    l |= ((uint64_t)(*((c)++))) << 16,                \
-    l |= ((uint64_t)(*((c)++))) << 8,                 \
-    l |= ((uint64_t)(*((c)++))))
-
-#define l2n8(l, c) (*((c)++) = (unsigned char)(((l) >> 56) & 0xff), \
-    *((c)++) = (unsigned char)(((l) >> 48) & 0xff),                 \
-    *((c)++) = (unsigned char)(((l) >> 40) & 0xff),                 \
-    *((c)++) = (unsigned char)(((l) >> 32) & 0xff),                 \
-    *((c)++) = (unsigned char)(((l) >> 24) & 0xff),                 \
-    *((c)++) = (unsigned char)(((l) >> 16) & 0xff),                 \
-    *((c)++) = (unsigned char)(((l) >> 8) & 0xff),                  \
-    *((c)++) = (unsigned char)(((l)) & 0xff))
 
 /* Signed Certificate Timestamp */
 struct sct_st {
@@ -215,3 +187,5 @@ __owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
  * Handlers for Certificate Transparency X509v3/OCSP extensions
  */
 extern const X509V3_EXT_METHOD ossl_v3_ct_scts[3];
+
+#endif /* !defined(OSSL_LIBCRYPTO_CT_CT_LOCAL_H) */

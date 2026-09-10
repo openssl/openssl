@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the \"License\").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,7 +33,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 {- produce_param_decoder('drbg_ctr_set_ctx_params',
                          (['OSSL_DRBG_PARAM_PROPERTIES',           'propq',       'utf8_string'],
                           ['OSSL_DRBG_PARAM_CIPHER',               'cipher',      'utf8_string'],
-                          ['OSSL_DRBG_PARAM_USE_DF',               'df',          'int'],
+                          ['OSSL_DRBG_PARAM_USE_DF',               'df',          'int', '!fips'],
                           ['OSSL_PROV_PARAM_CORE_PROV_NAME',       'prov',        'utf8_string'],
                           ['OSSL_DRBG_PARAM_RESEED_REQUESTS',      'reseed_req',  'uint'],
                           ['OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL', 'reseed_time', 'uint64'],

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -267,8 +267,8 @@ static int print_test_data(void)
     printf("\niv[8]     = ");
     for (j = 0; j < 8; j++)
         printf("%02X", cbc_iv[j]);
-    printf("\ndata[%d]  = '%s'", (int)strlen(cbc_data) + 1, cbc_data);
-    printf("\ndata[%d]  = ", (int)strlen(cbc_data) + 1);
+    printf("\ndata[%zu]  = '%s'", strlen(cbc_data) + 1, cbc_data);
+    printf("\ndata[%zu]  = ", strlen(cbc_data) + 1);
     for (j = 0; j < strlen(cbc_data) + 1; j++)
         printf("%02X", cbc_data[j]);
     printf("\n");
@@ -279,13 +279,13 @@ static int print_test_data(void)
     printf("\n");
 
     printf("cfb64 cipher text\n");
-    printf("cipher[%d]= ", (int)strlen(cbc_data) + 1);
+    printf("cipher[%zu]= ", strlen(cbc_data) + 1);
     for (j = 0; j < strlen(cbc_data) + 1; j++)
         printf("%02X", cfb64_ok[j]);
     printf("\n");
 
     printf("ofb64 cipher text\n");
-    printf("cipher[%d]= ", (int)strlen(cbc_data) + 1);
+    printf("cipher[%zu]= ", strlen(cbc_data) + 1);
     for (j = 0; j < strlen(cbc_data) + 1; j++)
         printf("%02X", ofb64_ok[j]);
     printf("\n");
@@ -387,7 +387,7 @@ static int test_bf_cfb64(void)
     memset(cbc_out, 0, 40);
     memcpy(iv, cbc_iv, 8);
     n = 0;
-    BF_cfb64_encrypt((unsigned char *)cbc_data, cbc_out, (long)13,
+    BF_cfb64_encrypt((unsigned char *)cbc_data, cbc_out, 13,
         &key, iv, &n, BF_ENCRYPT);
     BF_cfb64_encrypt((unsigned char *)&(cbc_data[13]), &(cbc_out[13]),
         len - 13, &key, iv, &n, BF_ENCRYPT);
@@ -419,7 +419,7 @@ static int test_bf_ofb64(void)
     memset(cbc_out, 0, 40);
     memcpy(iv, cbc_iv, 8);
     n = 0;
-    BF_ofb64_encrypt((unsigned char *)cbc_data, cbc_out, (long)13, &key, iv,
+    BF_ofb64_encrypt((unsigned char *)cbc_data, cbc_out, 13, &key, iv,
         &n);
     BF_ofb64_encrypt((unsigned char *)&(cbc_data[13]), &(cbc_out[13]),
         len - 13, &key, iv, &n);

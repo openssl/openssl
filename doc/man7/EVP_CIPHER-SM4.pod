@@ -39,6 +39,13 @@ L<EVP_EncryptInit(3)/PARAMETERS>.
 
 =head1 NOTES
 
+SM4 implementations in OpenSSL may use secret-dependent table lookups and
+are not guaranteed to be constant-time. In particular, the portable C
+implementation uses S-box and T-table lookups and may be vulnerable to
+cache-timing side-channel attacks. Which code path is used depends on CPU
+capabilities; see L<OPENSSL_armcap(3)>, L<OPENSSL_ia32cap(3)> and
+L<OPENSSL_riscvcap(3)>.
+
 The SM4-XTS implementation allows streaming to be performed, but each
 L<EVP_EncryptUpdate(3)> or L<EVP_DecryptUpdate(3)> call requires each input
 to be a multiple of the blocksize. Only the final EVP_EncryptUpdate() or
@@ -48,11 +55,12 @@ stealing (CTS) is used to fill the block.
 
 =head1 SEE ALSO
 
-L<provider-cipher(7)>, L<OSSL_PROVIDER-default(7)>
+L<OPENSSL_armcap(3)>, L<OPENSSL_ia32cap(3)>, L<OPENSSL_riscvcap(3)>,
+L<OSSL_PROVIDER-default(7)>, L<provider-cipher(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -190,21 +190,47 @@ Memory Allocation Failure Tests
 
 Some tests use the `ADD_MFAIL_TEST` framework to exhaustively verify that
 functions handle every possible allocation failure gracefully. These tests
-run repeatedly, failing one allocation later each iteration, and can be
-controlled with the following environment variables:
+run repeatedly, failing one allocation later each iteration. The
+`ADD_MFAIL_NO_CHECK_TEST` variant relaxes the requirement that the test
+return 0 when a failure was triggered. The `ADD_MFAIL_ALL_TESTS` and
+`ADD_MFAIL_ALL_NO_CHECK_TESTS` variants apply the same cycle to each index
+of a parameterised test, the same way `ADD_ALL_TESTS` does.
+
+The `ADD_MFAIL_SAMPLED_TEST(fn, cnt)` variant (and its `NO_CHECK` and `ALL`
+forms) caps injection at `cnt` points: it injects at every allocation when
+there are at most `cnt` of them, and otherwise samples `cnt` points spread
+across the run. This keeps tests with very many allocations bounded. On
+`no-cached-fetch` builds, where allocation counts explode, non-sampled tests
+run the counting phase only and skip injection; sampled tests still run.
+
+An mfail test returns 1 on success or 0 on failure; under `NO_CHECK` a 0 is
+tolerated since a function may legitimately fail when an allocation fails.
+Returning -1 forces a failure that is reported even under `NO_CHECK`, for
+assertions that must hold regardless of which allocation was made to fail.
+
+Behavior is controlled with the following environment variables:
 
     OPENSSL_TEST_MFAIL_DISABLE=1    Disable mfail custom allocator installation.
 
     OPENSSL_TEST_MFAIL_SKIP_ALL=1   Skip all mfail tests.
 
-    OPENSSL_TEST_MFAIL_SKIP_SLOW=1  Skip only slow mfail tests
-                                    (registered with ADD_MFAIL_SLOW_TEST).
+    OPENSSL_TEST_MFAIL_SKIP_SLOW=1  Skip mfail tests whose allocation count
+                                    exceeds the slow threshold.
+
+    OPENSSL_TEST_MFAIL_SLOW=N       Slow threshold (default 1000).
+
+    OPENSSL_TEST_MFAIL_COUNT=N      Override the sampled point count, taking
+                                    precedence over the per-test value.
+
+    OPENSSL_TEST_MFAIL_COUNT_ONLY=1 Run the counting phase only, never inject.
 
     OPENSSL_TEST_MFAIL_POINT=N      Run only failure point N (0-indexed),
                                     useful for debugging a specific failure.
 
     OPENSSL_TEST_MFAIL_START=N      Start iteration from point N, skipping
                                     earlier points that are already fixed.
+
+    OPENSSL_TEST_MFAIL_BACKTRACE=1  Print a backtrace at each injection point.
 
 For example, to debug a failure at allocation point 42:
 

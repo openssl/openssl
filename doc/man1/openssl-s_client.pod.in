@@ -26,9 +26,13 @@ B<openssl> B<s_client>
 [B<-verify> I<depth>]
 [B<-verify_return_error>]
 [B<-verify_quiet>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<uri>]
+[B<-chainCAfile> I<filename>]
+[B<-chainCApath> I<directory>]
+[B<-chainCAstore> I<uri>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-cert_chain> I<filename>]
@@ -39,9 +43,6 @@ B<openssl> B<s_client>
 [B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pass> I<arg>]
-[B<-chainCAfile> I<filename>]
-[B<-chainCApath> I<directory>]
-[B<-chainCAstore> I<uri>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
@@ -116,7 +117,6 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
-{- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -325,22 +325,38 @@ This will typically abort the handshake with a fatal error.
 
 Limit verify output to only errors.
 
+{- $OpenSSL::safe::opt_trust_item -}
+
+The certificates loaded via the B<-CAfile>, B<-CApath>, and B<-CAstore> options
+are used as trust anchors when verifying the server's certificate unless
+overridden by B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> options.
+They are also used as trust anchors when attempting
+to build the client certificate chain provided to the server unless
+overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
+
 =item B<-verifyCAfile> I<filename>
 
-A file in PEM format containing trusted certificates to use
-for verifying the server's certificate.
+A file in PEM format containing one or more CA certificates
+to trust for verifying the server's certificate.
+
+This and the following two options, B<-verifyCApath> and B<-verifyCAstore>,
+take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
 =item B<-verifyCApath> I<dir>
 
-A directory containing trusted certificates to use
-for verifying the server's certificate.
+A directory with files in PEM format containing CA certificates
+to trust for verifying the server's certificate.
 This directory must be in "hash format",
 see L<openssl-verify(1)> for more information.
 
 =item B<-verifyCAstore> I<uri>
 
-The URI of a store containing trusted certificates to use
-for verifying the server's certificate.
+URI of a store containing CA certificates
+to trust for verifying the server's certificate.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this is generally treated like B<-verifyCApath> or
+B<-verifyCAfile>, depending on if the URI indicates a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
 When any of B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> is
 specified, they are loaded into a separate verification store (via
@@ -350,31 +366,33 @@ B<-CAstore>.
 
 =item B<-chainCAfile> I<file>
 
-A file in PEM format containing trusted certificates to use
-when attempting to build the client certificate chain.
+A file in PEM format containing one or more trusted CA certificates to use
+when attempting to build the client certificate chain provided to the server.
+
+This and the following two options, B<-chainCApath> and B<-chainCAstore>,
+take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
 =item B<-chainCApath> I<directory>
 
-A directory containing trusted certificates to use
-for building the client certificate chain provided to the server.
+A directory with files in PEM format containing trusted CA certificates to use
+when attempting to build the client certificate chain provided to the server.
 This directory must be in "hash format",
 see L<openssl-verify(1)> for more information.
 
 =item B<-chainCAstore> I<uri>
 
 The URI of a store containing trusted certificates to use
-when attempting to build the client certificate chain.
+when attempting to build the client certificate chain provided to the server.
 The URI may indicate a single certificate, as well as a collection of them.
-With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
-B<-chainCApath>, depending on if the URI indicates a directory or a
-single file.
-See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+With URIs in the C<file:> scheme, this is generally treated like B<-chainCApath> or
+B<-chainCAfile>, depending on whether the URI points to a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
 =item B<-requestCAfile> I<file>
 
 A file containing a list of certificates whose subject names will be sent
 to the server in the B<certificate_authorities> extension. Only supported
-for TLS 1.3
+for TLS 1.3 and DTLS 1.3
 
 =item B<-dane_tlsa_domain> I<domain>
 
@@ -537,8 +555,8 @@ input. This implicitly turns on B<-nocommands> as well.
 
 =item B<-quiet>
 
-Inhibit printing of session and certificate information.  This implicitly
-turns on B<-ign_eof> and B<-nocommands> as well.
+Inhibit printing any non-error-related information.  This implicitly
+turns on B<-ign_eof>, B<-nocommands> and B<-verify_quiet> as well.
 
 =item B<-no_ign_eof>
 
@@ -560,13 +578,13 @@ This option must be provided in order to use a PSK cipher.
 =item B<-psk_session> I<file>
 
 Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
-Note that this will only work if TLSv1.3 is negotiated.
+Note that this will only work if (D)TLSv1.3 is negotiated.
 
 =item B<-sctp>
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
-conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
-available where OpenSSL has support for SCTP enabled.
+conjunction with B<-dtls>, B<-dtls1>, B<-dtls1_2> or B<-dtls1_3>. This option
+is only available where OpenSSL has support for SCTP enabled.
 
 =item B<-sctp_label_bug>
 
@@ -633,11 +651,11 @@ For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
 =item B<-no_tx_cert_comp>
 
-Disables support for sending TLSv1.3 compressed certificates.
+Disables support for sending (D)TLSv1.3 compressed certificates.
 
 =item B<-no_rx_cert_comp>
 
-Disables support for receiving TLSv1.3 compressed certificate.
+Disables support for receiving (D)TLSv1.3 compressed certificate.
 
 =item B<-brief>
 
@@ -726,10 +744,8 @@ The I<protocols> list is a comma-separated list of protocol names that
 the client should advertise support for. The list should contain the most
 desirable protocols first.  Protocol names are printable ASCII strings,
 for example "http/1.1" or "spdy/3".
-An empty list of protocols is treated specially and will cause the
-client to advertise support for the TLS extension but disconnect just
-after receiving ServerHello with a list of server supported protocols.
-The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
+The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> or B<-dtls1_3> is
+used.
 
 =item B<-ct>, B<-noct>
 
@@ -759,8 +775,8 @@ data and when the server accepts the early data.
 
 =item B<-enable_pha>
 
-For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
-happen whether or not a certificate has been provided via B<-cert>.
+For (D)TLSv1.3 only, send the Post-Handshake Authentication extension. This
+will happen whether or not a certificate has been provided via B<-cert>.
 
 =item B<-use_srtp> I<value>
 
@@ -802,8 +818,6 @@ Enable creation of connections via TCP fast open (RFC7413).
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_x_item -}
-
-{- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_s_item -}
 
@@ -942,7 +956,7 @@ End the current SSL connection and exit.
 
 =item B<R>
 
-Renegotiate the SSL session (TLSv1.2 and below only).
+Renegotiate the SSL session ((D)TLSv1.2 and below only).
 
 =item B<C>
 
@@ -950,11 +964,11 @@ Attempt to reconnect to the server using a resumption handshake.
 
 =item B<k>
 
-Send a key update message to the server (TLSv1.3 only)
+Send a key update message to the server ((D)TLSv1.3 only)
 
 =item B<K>
 
-Send a key update message to the server and request one back (TLSv1.3 only)
+Send a key update message to the server and request one back ((D)TLSv1.3 only)
 
 =back
 
@@ -995,7 +1009,7 @@ Reconnect to the peer and attempt a resumption handshake
 
 =item B<keyup>
 
-Send a Key Update message. TLSv1.3 only. This command takes an optional
+Send a Key Update message. (D)TLSv1.3 only. This command takes an optional
 argument. If the argument "req" is supplied then the peer is also requested to
 update its keys. Otherwise if "noreq" is supplied the peer is not requested
 to update its keys. The default is "req".
@@ -1121,7 +1135,7 @@ L<SSL_CONF_cmd(3)>,
 L<SSL_CTX_set_max_send_fragment(3)>,
 L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>,
-L<ossl_store-file(7)>
+L<ossl_store(7)>
 
 =head1 HISTORY
 

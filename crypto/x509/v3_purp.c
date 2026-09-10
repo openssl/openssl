@@ -40,6 +40,7 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf);
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf);
+static int check_name_constraints(const NAME_CONSTRAINTS *nc);
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
@@ -728,6 +729,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     tmp_nc = X509_get_ext_d2i(const_x, NID_name_constraints, &i, NULL);
     if (tmp_nc == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
+    if (!check_name_constraints(tmp_nc))
+        tmp_ex_flags |= EXFLAG_INVALID;
 
     /* Handle CRL distribution point entries */
     res = setup_crldp(const_x, &tmp_crldp);
@@ -1099,6 +1102,45 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf)
 {
     return 1;
+}
+
+static int check_name_constraints(const NAME_CONSTRAINTS *nc)
+{
+    GENERAL_SUBTREE *sub;
+    int ret = 1;
+
+    if (nc == NULL)
+        goto done;
+
+    for (int i = 0; nc->permittedSubtrees != NULL
+        && i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees);
+        i++) {
+        sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
+        if (sub->base->type == GEN_OTHERNAME
+            && OBJ_obj2nid(sub->base->d.otherName->type_id)
+                == NID_id_on_SmtpUTF8Mailbox) {
+            /* RFC 9598 prohibits GEN_OTHERNAME email constraints */
+            ERR_raise(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE);
+            ret = 0;
+            goto done;
+        }
+    }
+    for (int i = 0; nc->excludedSubtrees != NULL
+        && i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees);
+        i++) {
+        sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
+        if (sub->base->type == GEN_OTHERNAME
+            && OBJ_obj2nid(sub->base->d.otherName->type_id)
+                == NID_id_on_SmtpUTF8Mailbox) {
+            /* RFC 9598 prohibits GEN_OTHERNAME email constraints */
+            ERR_raise(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE);
+            ret = 0;
+            goto done;
+        }
+    }
+
+done:
+    return ret;
 }
 
 /*-

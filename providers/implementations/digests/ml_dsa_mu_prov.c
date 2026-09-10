@@ -83,7 +83,7 @@ static void mu_freectx(void *vctx)
     OPENSSL_free(ctx->propq);
     EVP_MD_free(ctx->md);
     EVP_MD_CTX_free(ctx->mdctx);
-    OPENSSL_free(ctx);
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 static void *mu_dupctx(void *ctx)

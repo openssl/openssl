@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,8 +9,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include <openssl/e_os2.h>
+#include <openssl/crypto.h>
 
 #ifdef OPENSSL_SYS_UNIX
 #include <sys/stat.h>
@@ -120,10 +122,14 @@ int main(int ac, char **av)
         default:
             usage();
             break;
-        case 'c':
-            if ((count = atoi(optarg)) < 0)
+        case 'c': {
+            unsigned long ul;
+
+            if (!OPENSSL_strtoul(optarg, NULL, 10, &ul) || ul > INT_MAX)
                 usage();
+            count = (int)ul;
             break;
+        }
         case 'd':
             debug = 1;
             break;

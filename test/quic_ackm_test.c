@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include <openssl/ssl.h>
 #include "internal/quic_ackm.h"
 #include "internal/quic_cc.h"
+#include "internal/quic_vlint.h"
 
 static OSSL_TIME fake_time = { 0 };
 
@@ -147,13 +148,26 @@ struct tx_ack_test_case {
     const OSSL_QUIC_ACK_RANGE *ack_ranges;
     size_t num_ack_ranges;
     const char *expect_ack; /* 1=ack, 2=lost, 4=discarded */
+    int expect_reject; /* if nonzero the ACK must be rejected (returns 0) */
 };
 
 #define DEFINE_TX_ACK_CASE(n, pntable)                       \
     static const struct tx_ack_test_case tx_ack_case_##n = { \
         (pntable), OSSL_NELEM(pntable),                      \
         tx_ack_range_##n, OSSL_NELEM(tx_ack_range_##n),      \
-        tx_ack_expect_##n                                    \
+        tx_ack_expect_##n, 0                                 \
+    }
+
+/*
+ * As DEFINE_TX_ACK_CASE, but the ACK acknowledges a packet number that was
+ * never sent and so must be rejected by ossl_ackm_on_rx_ack_frame()
+ * (RFC 9000 s. 13.1).
+ */
+#define DEFINE_TX_ACK_CASE_REJECT(n, pntable)                \
+    static const struct tx_ack_test_case tx_ack_case_##n = { \
+        (pntable), OSSL_NELEM(pntable),                      \
+        tx_ack_range_##n, OSSL_NELEM(tx_ack_range_##n),      \
+        tx_ack_expect_##n, 1                                 \
     }
 
 /* One range, partial coverage of space */
@@ -207,32 +221,32 @@ static const char tx_ack_expect_5[] = {
 };
 DEFINE_TX_ACK_CASE(5, linear_20);
 
-/* One range, covering entire space */
+/* One range covering the whole space (0..19, highest sent PN is 19): all acked */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_6[] = {
-    { 0, 20 },
+    { 0, 19 },
 };
 static const char tx_ack_expect_6[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 DEFINE_TX_ACK_CASE(6, linear_20);
 
-/* One range, covering more space than exists */
+/* One range above the highest sent PN (30 > 19): ACK rejected */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_7[] = {
     { 0, 30 },
 };
 static const char tx_ack_expect_7[] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
-DEFINE_TX_ACK_CASE(7, linear_20);
+DEFINE_TX_ACK_CASE_REJECT(7, linear_20);
 
-/* One range, covering nothing (too high) */
+/* One range entirely above the sent PNs (21..30): ACK rejected */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_8[] = {
     { 21, 30 },
 };
 static const char tx_ack_expect_8[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
-DEFINE_TX_ACK_CASE(8, linear_20);
+DEFINE_TX_ACK_CASE_REJECT(8, linear_20);
 
 /* One range, covering nothing (too low) */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_9[] = {
@@ -289,6 +303,20 @@ static const char tx_ack_expect_13[] = {
 };
 DEFINE_TX_ACK_CASE(13, high_linear_20);
 
+/*
+ * Largest range claims the maximum PN (2**62 - 1, never sent) plus a second
+ * range over real packets so loss detection would otherwise run. ACK rejected;
+ * otherwise largest_acked_pkt pins at the maximum and every in-flight packet is
+ * declared lost.
+ */
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_14[] = {
+    { OSSL_QUIC_VLINT_MAX, OSSL_QUIC_VLINT_MAX }, { 15, 19 }
+};
+static const char tx_ack_expect_14[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+DEFINE_TX_ACK_CASE_REJECT(14, linear_20);
+
 static const struct tx_ack_test_case *const tx_ack_cases[] = {
     &tx_ack_case_1,
     &tx_ack_case_2,
@@ -303,6 +331,7 @@ static const struct tx_ack_test_case *const tx_ack_cases[] = {
     &tx_ack_case_11,
     &tx_ack_case_12,
     &tx_ack_case_13,
+    &tx_ack_case_14,
 };
 
 enum {
@@ -402,6 +431,25 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         /* Try acknowledging. */
         ack.ack_ranges = (OSSL_QUIC_ACK_RANGE *)c->ack_ranges;
         ack.num_ack_ranges = c->num_ack_ranges;
+
+        if (c->expect_reject) {
+            /* ACK of an unsent PN: rejected without touching loss detection. */
+            if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack, space,
+                                 fake_time),
+                    0))
+                goto err;
+
+            for (i = 0; i < c->pn_table_len; ++i) {
+                if (!TEST_int_eq(h.pkts[i].acked, 0)
+                    || !TEST_int_eq(h.pkts[i].lost, 0)
+                    || !TEST_int_eq(h.pkts[i].discarded, 0))
+                    goto err;
+            }
+
+            testresult = 1;
+            goto err;
+        }
+
         if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack, space, fake_time), 1))
             goto err;
 
@@ -495,11 +543,11 @@ struct tx_ack_time_op {
 };
 
 #define TX_OP_PKT(advance, pn, num_pn) \
-    { TX_ACK_TIME_OP_PKT, (advance) * OSSL_TIME_MS, (pn), (num_pn), NULL },
+    { TX_ACK_TIME_OP_PKT, (advance) * OSSL_TIME_MS, (pn), (num_pn), NULL }
 #define TX_OP_ACK(advance, pn, num_pn) \
-    { TX_ACK_TIME_OP_ACK, (advance) * OSSL_TIME_MS, (pn), (num_pn), NULL },
+    { TX_ACK_TIME_OP_ACK, (advance) * OSSL_TIME_MS, (pn), (num_pn), NULL }
 #define TX_OP_EXPECT(expect) \
-    { TX_ACK_TIME_OP_EXPECT, 0, 0, 0, (expect) },
+    { TX_ACK_TIME_OP_EXPECT, 0, 0, 0, (expect) }
 #define TX_OP_END { TX_ACK_TIME_OP_END }
 
 static const char tx_ack_time_script_1_expect[] = {
@@ -507,11 +555,11 @@ static const char tx_ack_time_script_1_expect[] = {
 };
 
 static const struct tx_ack_time_op tx_ack_time_script_1[] = {
-    TX_OP_PKT(0, 0, 1)
-        TX_OP_PKT(3600000, 1, 1)
-            TX_OP_ACK(1000, 1, 1)
-                TX_OP_EXPECT(tx_ack_time_script_1_expect)
-                    TX_OP_END
+    TX_OP_PKT(0, 0, 1),
+    TX_OP_PKT(3600000, 1, 1),
+    TX_OP_ACK(1000, 1, 1),
+    TX_OP_EXPECT(tx_ack_time_script_1_expect),
+    TX_OP_END
 };
 
 static const struct tx_ack_time_op *const tx_ack_time_scripts[] = {
@@ -577,7 +625,7 @@ static int test_tx_ack_time_script(int tidx)
             ack.num_ack_ranges = 1;
 
             ack_range.start = s->pn;
-            ack_range.end = s->pn + s->num_pn;
+            ack_range.end = s->pn + s->num_pn - 1;
 
             fake_time = ossl_time_add(fake_time,
                 ossl_ticks2time(s->time_advance));
@@ -648,55 +696,55 @@ struct rx_test_op {
     {                                                         \
         RX_OPK_PKT, (advance) * OSSL_TIME_MS, (pn), (num_pn), \
         0, 0, NULL, 0, 0                                      \
-    },
+    }
 
 #define RX_OP_CHECK_UNPROC(advance, pn, num_pn)                        \
     {                                                                  \
         RX_OPK_CHECK_UNPROC, (advance) * OSSL_TIME_MS, (pn), (num_pn), \
         0, 0, NULL, 0, 0                                               \
-    },
+    }
 
 #define RX_OP_CHECK_PROC(advance, pn, num_pn)                        \
     {                                                                \
         RX_OPK_CHECK_PROC, (advance) * OSSL_TIME_MS, (pn), (num_pn), \
         0, 0, NULL, 0, 0                                             \
-    },
+    }
 
 #define RX_OP_CHECK_STATE(advance, expect_desired, expect_deadline) \
     {                                                               \
         RX_OPK_CHECK_STATE, (advance) * OSSL_TIME_MS, 0, 0,         \
         (expect_desired), (expect_deadline), NULL, 0, 0             \
-    },
+    }
 
 #define RX_OP_CHECK_ACKS(advance, ack_ranges)              \
     {                                                      \
         RX_OPK_CHECK_ACKS, (advance) * OSSL_TIME_MS, 0, 0, \
         0, 0, (ack_ranges), OSSL_NELEM(ack_ranges), 0      \
-    },
+    }
 
 #define RX_OP_CHECK_NO_ACKS(advance)                       \
     {                                                      \
         RX_OPK_CHECK_ACKS, (advance) * OSSL_TIME_MS, 0, 0, \
         0, 0, NULL, 0, 0                                   \
-    },
+    }
 
 #define RX_OP_TX(advance, pn, largest_acked)          \
     {                                                 \
         RX_OPK_TX, (advance) * OSSL_TIME_MS, (pn), 1, \
         0, 0, NULL, 0, (largest_acked)                \
-    },
+    }
 
 #define RX_OP_RX_ACK(advance, pn, num_pn)                        \
     {                                                            \
         RX_OPK_RX_ACK, (advance) * OSSL_TIME_MS, (pn), (num_pn), \
         0, 0, NULL, 0, 0                                         \
-    },
+    }
 
 #define RX_OP_SKIP_IF_PN_SPACE(pn_space)           \
     {                                              \
         RX_OPK_SKIP_IF_PN_SPACE, 0, (pn_space), 0, \
         0, 0, NULL, 0, 0                           \
-    },
+    }
 
 #define RX_OP_END \
     { RX_OPK_END }
@@ -707,23 +755,23 @@ static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_1a[] = {
 };
 
 static const struct rx_test_op rx_script_1[] = {
-    RX_OP_CHECK_STATE(0, 0, 0) /* no threshold yet */
-    RX_OP_CHECK_PROC(0, 0, 3)
+    RX_OP_CHECK_STATE(0, 0, 0), /* no threshold yet */
+    RX_OP_CHECK_PROC(0, 0, 3),
 
-        RX_OP_PKT(0, 0, 2) /* two packets, threshold */
-    RX_OP_CHECK_UNPROC(0, 0, 2)
-        RX_OP_CHECK_PROC(0, 2, 1)
-            RX_OP_CHECK_STATE(0, 1, 0) /* threshold met, immediate */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_1a)
+    RX_OP_PKT(0, 0, 2), /* two packets, threshold */
+    RX_OP_CHECK_UNPROC(0, 0, 2),
+    RX_OP_CHECK_PROC(0, 2, 1),
+    RX_OP_CHECK_STATE(0, 1, 0), /* threshold met, immediate */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_1a),
 
     /* At this point we would generate e.g. a packet with an ACK. */
-    RX_OP_TX(0, 0, 1) /* ACKs both */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_1a) /* not provably ACKed yet */
-    RX_OP_RX_ACK(0, 0, 1) /* TX'd packet is ACK'd */
+    RX_OP_TX(0, 0, 1), /* ACKs both */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_1a), /* not provably ACKed yet */
+    RX_OP_RX_ACK(0, 0, 1), /* TX'd packet is ACK'd */
 
-    RX_OP_CHECK_NO_ACKS(0) /* nothing more to ACK */
-    RX_OP_CHECK_UNPROC(0, 0, 2) /* still unprocessable */
-    RX_OP_CHECK_PROC(0, 2, 1) /* still processable */
+    RX_OP_CHECK_NO_ACKS(0), /* nothing more to ACK */
+    RX_OP_CHECK_UNPROC(0, 0, 2), /* still unprocessable */
+    RX_OP_CHECK_PROC(0, 2, 1), /* still processable */
 
     RX_OP_END
 };
@@ -743,42 +791,42 @@ static const struct rx_test_op rx_script_2[] = {
      * (rx_script_4) for those spaces as those spaces should not delay ACK
      * generation, so a different RX_OP_CHECK_STATE test is needed.
      */
-    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_INITIAL)
-        RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_HANDSHAKE)
+    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_INITIAL),
+    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_HANDSHAKE),
 
-            RX_OP_CHECK_STATE(0, 0, 0) /* no threshold yet */
-    RX_OP_CHECK_PROC(0, 0, 3)
+    RX_OP_CHECK_STATE(0, 0, 0), /* no threshold yet */
+    RX_OP_CHECK_PROC(0, 0, 3),
 
     /* First packet always generates an ACK so get it out of the way. */
-    RX_OP_PKT(0, 0, 1)
-        RX_OP_CHECK_UNPROC(0, 0, 1)
-            RX_OP_CHECK_PROC(0, 1, 1)
-                RX_OP_CHECK_STATE(0, 1, 0) /* first packet always causes ACK */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2a) /* clears packet counter */
-    RX_OP_CHECK_STATE(0, 0, 0) /* desired state should have been cleared */
+    RX_OP_PKT(0, 0, 1),
+    RX_OP_CHECK_UNPROC(0, 0, 1),
+    RX_OP_CHECK_PROC(0, 1, 1),
+    RX_OP_CHECK_STATE(0, 1, 0), /* first packet always causes ACK */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2a), /* clears packet counter */
+    RX_OP_CHECK_STATE(0, 0, 0), /* desired state should have been cleared */
 
     /* Second packet should not cause ACK-desired state */
-    RX_OP_PKT(0, 1, 1) /* just one packet, threshold is 2 */
-    RX_OP_CHECK_UNPROC(0, 0, 2)
-        RX_OP_CHECK_PROC(0, 2, 1)
-            RX_OP_CHECK_STATE(0, 0, 1) /* threshold not yet met, so deadline */
+    RX_OP_PKT(0, 1, 1), /* just one packet, threshold is 2 */
+    RX_OP_CHECK_UNPROC(0, 0, 2),
+    RX_OP_CHECK_PROC(0, 2, 1),
+    RX_OP_CHECK_STATE(0, 0, 1), /* threshold not yet met, so deadline */
     /* Don't check ACKs here, as it would reset our threshold counter. */
 
     /* Now receive a second packet, triggering the threshold */
-    RX_OP_PKT(0, 2, 1) /* second packet meets threshold */
-    RX_OP_CHECK_UNPROC(0, 0, 3)
-        RX_OP_CHECK_PROC(0, 3, 1)
-            RX_OP_CHECK_STATE(0, 1, 0) /* desired immediately */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2b)
+    RX_OP_PKT(0, 2, 1), /* second packet meets threshold */
+    RX_OP_CHECK_UNPROC(0, 0, 3),
+    RX_OP_CHECK_PROC(0, 3, 1),
+    RX_OP_CHECK_STATE(0, 1, 0), /* desired immediately */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2b),
 
     /* At this point we would generate e.g. a packet with an ACK. */
-    RX_OP_TX(0, 0, 2) /* ACKs all */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2b) /* not provably ACKed yet */
-    RX_OP_RX_ACK(0, 0, 1) /* TX'd packet is ACK'd */
+    RX_OP_TX(0, 0, 2), /* ACKs all */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2b), /* not provably ACKed yet */
+    RX_OP_RX_ACK(0, 0, 1), /* TX'd packet is ACK'd */
 
-    RX_OP_CHECK_NO_ACKS(0) /* nothing more to ACK */
-    RX_OP_CHECK_UNPROC(0, 0, 3) /* still unprocessable */
-    RX_OP_CHECK_PROC(0, 3, 1) /* still processable */
+    RX_OP_CHECK_NO_ACKS(0), /* nothing more to ACK */
+    RX_OP_CHECK_UNPROC(0, 0, 3), /* still unprocessable */
+    RX_OP_CHECK_PROC(0, 3, 1), /* still processable */
 
     RX_OP_END
 };
@@ -797,52 +845,52 @@ static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_3c[] = {
 };
 
 static const struct rx_test_op rx_script_3[] = {
-    RX_OP_CHECK_STATE(0, 0, 0) /* no threshold yet */
-    RX_OP_CHECK_PROC(0, 0, 11)
+    RX_OP_CHECK_STATE(0, 0, 0), /* no threshold yet */
+    RX_OP_CHECK_PROC(0, 0, 11),
 
     /* First packet always generates an ACK so get it out of the way. */
-    RX_OP_PKT(0, 0, 1)
-        RX_OP_CHECK_UNPROC(0, 0, 1)
-            RX_OP_CHECK_PROC(0, 1, 1)
-                RX_OP_CHECK_STATE(0, 1, 0) /* first packet always causes ACK */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_3a) /* clears packet counter */
-    RX_OP_CHECK_STATE(0, 0, 0) /* desired state should have been cleared */
+    RX_OP_PKT(0, 0, 1),
+    RX_OP_CHECK_UNPROC(0, 0, 1),
+    RX_OP_CHECK_PROC(0, 1, 1),
+    RX_OP_CHECK_STATE(0, 1, 0), /* first packet always causes ACK */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_3a), /* clears packet counter */
+    RX_OP_CHECK_STATE(0, 0, 0), /* desired state should have been cleared */
 
     /* Generate ten packets, exceeding the threshold. */
-    RX_OP_PKT(0, 1, 10) /* ten packets, threshold is 2 */
-    RX_OP_CHECK_UNPROC(0, 0, 11)
-        RX_OP_CHECK_PROC(0, 11, 1)
-            RX_OP_CHECK_STATE(0, 1, 0) /* threshold met, immediate */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_3b)
+    RX_OP_PKT(0, 1, 10), /* ten packets, threshold is 2 */
+    RX_OP_CHECK_UNPROC(0, 0, 11),
+    RX_OP_CHECK_PROC(0, 11, 1),
+    RX_OP_CHECK_STATE(0, 1, 0), /* threshold met, immediate */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_3b),
 
     /*
      * Test TX'ing a packet which doesn't ACK anything.
      */
-    RX_OP_TX(0, 0, QUIC_PN_INVALID)
-        RX_OP_RX_ACK(0, 0, 1)
+    RX_OP_TX(0, 0, QUIC_PN_INVALID),
+    RX_OP_RX_ACK(0, 0, 1),
 
     /*
      * At this point we would generate a packet with an ACK immediately.
      * TX a packet which when ACKed makes [0,5] provably ACKed.
      */
-    RX_OP_TX(0, 1, 5)
-        RX_OP_CHECK_ACKS(0, rx_ack_ranges_3b) /* not provably ACKed yet */
-    RX_OP_RX_ACK(0, 1, 1)
+    RX_OP_TX(0, 1, 5),
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_3b), /* not provably ACKed yet */
+    RX_OP_RX_ACK(0, 1, 1),
 
-        RX_OP_CHECK_ACKS(0, rx_ack_ranges_3c) /* provably ACKed now gone */
-    RX_OP_CHECK_UNPROC(0, 0, 11) /* still unprocessable */
-    RX_OP_CHECK_PROC(0, 11, 1) /* still processable */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_3c), /* provably ACKed now gone */
+    RX_OP_CHECK_UNPROC(0, 0, 11), /* still unprocessable */
+    RX_OP_CHECK_PROC(0, 11, 1), /* still processable */
 
     /*
      * Now TX another packet which provably ACKs the rest when ACKed.
      */
-    RX_OP_TX(0, 2, 10)
-        RX_OP_CHECK_ACKS(0, rx_ack_ranges_3c) /* not provably ACKed yet */
-    RX_OP_RX_ACK(0, 2, 1)
+    RX_OP_TX(0, 2, 10),
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_3c), /* not provably ACKed yet */
+    RX_OP_RX_ACK(0, 2, 1),
 
-        RX_OP_CHECK_NO_ACKS(0) /* provably ACKed now gone */
-    RX_OP_CHECK_UNPROC(0, 0, 11) /* still unprocessable */
-    RX_OP_CHECK_PROC(0, 11, 1) /* still processable */
+    RX_OP_CHECK_NO_ACKS(0), /* provably ACKed now gone */
+    RX_OP_CHECK_UNPROC(0, 0, 11), /* still unprocessable */
+    RX_OP_CHECK_PROC(0, 11, 1), /* still processable */
 
     RX_OP_END
 };
@@ -857,38 +905,38 @@ static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_4a[] = {
 
 static const struct rx_test_op rx_script_4[] = {
     /* The application PN space is tested in rx_script_2. */
-    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_APP)
+    RX_OP_SKIP_IF_PN_SPACE(QUIC_PN_SPACE_APP),
 
-        RX_OP_CHECK_STATE(0, 0, 0) /* no threshold yet */
-    RX_OP_CHECK_PROC(0, 0, 3)
+    RX_OP_CHECK_STATE(0, 0, 0), /* no threshold yet */
+    RX_OP_CHECK_PROC(0, 0, 3),
 
     /* First packet always generates an ACK so get it out of the way. */
-    RX_OP_PKT(0, 0, 1)
-        RX_OP_CHECK_UNPROC(0, 0, 1)
-            RX_OP_CHECK_PROC(0, 1, 1)
-                RX_OP_CHECK_STATE(0, 1, 0) /* first packet always causes ACK */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2a) /* clears packet counter */
-    RX_OP_CHECK_STATE(0, 0, 0) /* desired state should have been cleared */
+    RX_OP_PKT(0, 0, 1),
+    RX_OP_CHECK_UNPROC(0, 0, 1),
+    RX_OP_CHECK_PROC(0, 1, 1),
+    RX_OP_CHECK_STATE(0, 1, 0), /* first packet always causes ACK */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_2a), /* clears packet counter */
+    RX_OP_CHECK_STATE(0, 0, 0), /* desired state should have been cleared */
 
     /*
      * Second packet should cause ACK-desired state because we are
      * INITIAL/HANDSHAKE (RFC 9000 s. 13.2.1)
      */
-    RX_OP_PKT(0, 1, 1) /* just one packet, threshold is 2 */
-    RX_OP_CHECK_UNPROC(0, 0, 2)
-        RX_OP_CHECK_PROC(0, 2, 1)
-            RX_OP_CHECK_STATE(0, 1, 1)
-                RX_OP_CHECK_ACKS(0, rx_ack_ranges_4a)
-                    RX_OP_CHECK_STATE(0, 0, 0) /* desired state should have been cleared */
+    RX_OP_PKT(0, 1, 1), /* just one packet, threshold is 2 */
+    RX_OP_CHECK_UNPROC(0, 0, 2),
+    RX_OP_CHECK_PROC(0, 2, 1),
+    RX_OP_CHECK_STATE(0, 1, 1),
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_4a),
+    RX_OP_CHECK_STATE(0, 0, 0), /* desired state should have been cleared */
 
     /* At this point we would generate e.g. a packet with an ACK. */
-    RX_OP_TX(0, 0, 1) /* ACKs all */
-    RX_OP_CHECK_ACKS(0, rx_ack_ranges_4a) /* not provably ACKed yet */
-    RX_OP_RX_ACK(0, 0, 1) /* TX'd packet is ACK'd */
+    RX_OP_TX(0, 0, 1), /* ACKs all */
+    RX_OP_CHECK_ACKS(0, rx_ack_ranges_4a), /* not provably ACKed yet */
+    RX_OP_RX_ACK(0, 0, 1), /* TX'd packet is ACK'd */
 
-    RX_OP_CHECK_NO_ACKS(0) /* nothing more to ACK */
-    RX_OP_CHECK_UNPROC(0, 0, 2) /* still unprocessable */
-    RX_OP_CHECK_PROC(0, 2, 1) /* still processable */
+    RX_OP_CHECK_NO_ACKS(0), /* nothing more to ACK */
+    RX_OP_CHECK_UNPROC(0, 0, 2), /* still unprocessable */
+    RX_OP_CHECK_PROC(0, 2, 1), /* still processable */
 
     RX_OP_END
 };

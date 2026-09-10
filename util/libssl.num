@@ -558,7 +558,7 @@ SSL_CTX_get_security_callback           557	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set0_security_ex_data           558	4_0_0	EXIST::FUNCTION:
 SSL_CTX_get0_security_ex_data           559	4_0_0	EXIST::FUNCTION:
 OPENSSL_init_ssl                        560	4_0_0	EXIST::FUNCTION:
-SSL_test_functions                      561	4_0_0	EXIST::FUNCTION:UNIT_TEST
+SSL_test_functions                      561	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1,UNIT_TEST
 SSL_free_buffers                        562	4_0_0	EXIST::FUNCTION:
 SSL_alloc_buffers                       563	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_session_ticket_cb           564	4_0_0	EXIST::FUNCTION:

@@ -140,16 +140,18 @@ static int execute_exec_GENM_ses_test_single(CMP_SES_TEST_FIXTURE *fixture)
     ASN1_OBJECT *type = OBJ_txt2obj("1.3.6.1.5.5.7.4.2", 1);
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_create(type, NULL);
     STACK_OF(OSSL_CMP_ITAV) *itavs;
+    int ret;
 
     OSSL_CMP_CTX_push0_genm_ITAV(ctx, itav);
     itavs = OSSL_CMP_exec_GENM_ses(ctx);
     print_errors_PKIStatusInfo(ctx);
 
+    ret = TEST_int_eq(OSSL_CMP_CTX_get_status(ctx), fixture->expected)
+        && (fixture->expected == OSSL_CMP_PKISTATUS_accepted
+                ? TEST_ptr(itavs)
+                : TEST_ptr_null(itavs));
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-    return TEST_int_eq(OSSL_CMP_CTX_get_status(ctx), fixture->expected)
-            && fixture->expected == OSSL_CMP_PKISTATUS_accepted
-        ? TEST_ptr(itavs)
-        : TEST_ptr_null(itavs);
+    return ret;
 }
 
 static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
@@ -254,7 +256,9 @@ static int test_exec_REQ_ses_poll(int req_type, int check_after,
     return result;
 }
 
-static int checkAfter = 1;
+static const int checkAfter = 1;
+static const int pollCount = 3;
+
 static int test_exec_IR_ses_poll_ok(void)
 {
     return test_exec_REQ_ses_poll(OSSL_CMP_PKIBODY_IR, checkAfter, 2, 0,
@@ -272,7 +276,7 @@ static int test_exec_IR_ses_poll_no_timeout(void)
 static int test_exec_IR_ses_poll_total_timeout(void)
 {
     return test_exec_REQ_ses_poll(OSSL_CMP_PKIBODY_IR, checkAfter,
-        3 /* pollCount */, checkAfter + 4,
+        pollCount, (pollCount - 1) * checkAfter,
         OSSL_CMP_PKISTATUS_trans);
 }
 
@@ -482,7 +486,7 @@ static int test_exec_GENM_ses_poll_no_timeout(void)
 static int test_exec_GENM_ses_poll_total_timeout(void)
 {
     return test_exec_REQ_ses_poll(OSSL_CMP_PKIBODY_GENM, checkAfter,
-        3 /* pollCount */, checkAfter + 2,
+        pollCount, (pollCount - 1) * checkAfter,
         OSSL_CMP_PKISTATUS_trans);
 }
 

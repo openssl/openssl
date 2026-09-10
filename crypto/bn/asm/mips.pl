@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -111,7 +111,7 @@ $gp=$v1 if ($flavour =~ /nubi/i);
 $minus4=$v1;
 
 $code.=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 #if defined(_MIPS_ARCH_MIPS64R6)
 # define ddivu(rs,rt)

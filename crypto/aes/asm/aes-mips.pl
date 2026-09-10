@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -107,7 +107,7 @@ my ($MSB,$LSB)=(0,3);	# automatically converted to little-endian
 $output and open STDOUT,">$output";
 
 $code.=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 .text
 #if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))

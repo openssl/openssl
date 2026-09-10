@@ -7,15 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/time.h"
+#include "../ssl/ssl_local.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SOCK
+#include "internal/sockets.h"
+#endif
+
+static char *cert = NULL;
+static char *privkey = NULL;
+
+#ifndef OPENSSL_NO_SOCK
+
+#define DTLS_RECORD_EPOCH_AND_SEQ_LEN 8
 
 /* Just a ClientHello without a cookie */
 static const unsigned char clienthello_nocookie[] = {
@@ -216,6 +230,208 @@ static const unsigned char record_short[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /* Record sequence number */
 };
 
+/*
+ * DTLSv1.3 packet variants.
+ *
+ * Per RFC 9147, epoch-0 ClientHellos use the same legacy 13-byte record
+ * header as DTLS 1.2, with legacy_record_version = 0xFEFD and
+ * legacy_client_version = 0xFEFD.  DTLS 1.3 is signalled only via the
+ * supported_versions extension (type 0x002B, value 0xFEFC).
+ *
+ * Each packet below is derived from its DTLS 1.2 counterpart by replacing
+ * the empty extensions block (0x00 0x00) with a 9-byte block:
+ *   0x00 0x07               extensions_len = 7
+ *   0x00 0x2B 0x00 0x03     supported_versions ext, 3 bytes of data
+ *   0x02                    versions list len = 2
+ *   0xFE 0xFC               DTLSv1.3
+ * and adjusting record_len / msg_len / frag_len accordingly (+7).
+ * Fragments that stop before the extensions block only have msg_len updated.
+ */
+
+/* A DTLSv1.3 ClientHello without a cookie */
+static const unsigned char clienthello13_nocookie[] = {
+    0x16, /* Handshake */
+    0xFE, 0xFF, /* legacy record version = DTLSv1.0 */
+    0x00, 0x00, /* Epoch */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Record sequence number */
+    0x00, 0x41, /* Record Length (0x3A + 7) */
+    0x01, /* ClientHello */
+    0x00, 0x00, 0x35, /* Message length (0x2E + 7) */
+    0x00, 0x00, /* Message sequence */
+    0x00, 0x00, 0x00, /* Fragment offset */
+    0x00, 0x00, 0x35, /* Fragment length (0x2E + 7) */
+    0xFE, 0xFD, /* legacy_client_version = DTLSv1.2 */
+    0xCA, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
+    0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
+    0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6, /* Random */
+    0x00, /* Session id len */
+    0x00, /* Cookie len */
+    0x00, 0x04, /* Ciphersuites len */
+    0x13, 0x01, /*  TLS_AES_128_GCM_SHA256 */
+    0x13, 0x02, /* TLS_AES_256_GCM_SHA384 */
+    0x01, /* Compression methods len */
+    0x00, /* Null compression */
+    0x00, 0x07, /* Extensions len */
+    0x00, 0x2B, /* supported_versions */
+    0x00, 0x03, /* ext data len */
+    0x02, /* versions list len */
+    0xFE, 0xFC /* DTLSv1.3 */
+};
+
+/*
+ * First fragment of a DTLSv1.3 ClientHello without a cookie.
+ * Fragment stops after cookie len (before extensions); only msg_len is
+ * updated to reflect the full message size including extensions.
+ */
+static const unsigned char clienthello13_nocookie_frag[] = {
+    0x16, /* Handshake */
+    0xFE, 0xFF, /* legacy record version = DTLSv1.0 */
+    0x00, 0x00, /* Epoch */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Record sequence number */
+    0x00, 0x30, /* Record Length (unchanged - fragment content same) */
+    0x01, /* ClientHello */
+    0x00, 0x00, 0x35, /* Message length (0x2E + 7 - full message size) */
+    0x00, 0x00, /* Message sequence */
+    0x00, 0x00, 0x00, /* Fragment offset */
+    0x00, 0x00, 0x24, /* Fragment length (unchanged) */
+    0xFE, 0xFD, /* legacy_client_version = DTLSv1.2 */
+    0xCA, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
+    0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
+    0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6, /* Random */
+    0x00, /* Session id len */
+    0x00 /* Cookie len */
+};
+
+/* A DTLSv1.3 ClientHello with a good cookie */
+static const unsigned char clienthello13_cookie[] = {
+    0x16, /* Handshake */
+    0xFE, 0xFF, /* legacy record version = DTLSv1.0 */
+    0x00, 0x00, /* Epoch */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Record sequence number */
+    0x00, 0x55, /* Record Length (0x4E + 7) */
+    0x01, /* ClientHello */
+    0x00, 0x00, 0x49, /* Message length (0x42 + 7) */
+    0x00, 0x00, /* Message sequence */
+    0x00, 0x00, 0x00, /* Fragment offset */
+    0x00, 0x00, 0x49, /* Fragment length (0x42 + 7) */
+    0xFE, 0xFD, /* legacy_client_version = DTLSv1.2 */
+    0xCA, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
+    0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
+    0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6, /* Random */
+    0x00, /* Session id len */
+    0x14, /* Cookie len */
+    0x00, 0x01, 0x02, 0x03, 0x04, 005, 0x06, 007, 0x08, 0x09, 0x0A, 0x0B, 0x0C,
+    0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, /* Cookie */
+    0x00, 0x04, /* Ciphersuites len */
+    0x13, 0x01, /*  TLS_AES_128_GCM_SHA256 */
+    0x13, 0x02, /* TLS_AES_256_GCM_SHA384 */
+    0x01, /* Compression methods len */
+    0x00, /* Null compression */
+    0x00, 0x07, /* Extensions len */
+    0x00, 0x2B, /* supported_versions */
+    0x00, 0x03, /* ext data len */
+    0x02, /* versions list len */
+    0xFE, 0xFC /* DTLSv1.3 */
+};
+
+/*
+ * Second fragment of a DTLSv1.3 ClientHello without a cookie.
+ * Mirrors clienthello_2ndfrag but with the DTLSv1.3 full message length.
+ * Fragment offset 2 skips the legacy_client_version field sent in the first
+ * fragment.  Because the fragment offset is non-zero, DTLSv1_listen must
+ * drop this packet (it cannot reconstruct a complete ClientHello from it).
+ *
+ * Full DTLSv1.3 nocookie message body = 0x35 bytes (0x2E + 7 for the
+ * supported_versions extension).  Fragment skips first 2 bytes (version),
+ * so fragment length = 0x35 - 2 = 0x33.
+ * Record length = 1 + 3 + 2 + 3 + 3 + 0x33 = 0x3F.
+ */
+static const unsigned char clienthello13_2ndfrag[] = {
+    0x16, /* Handshake */
+    0xFE, 0xFF, /* legacy record version = DTLSv1.0 */
+    0x00, 0x00, /* Epoch */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Record sequence number */
+    0x00, 0x3F, /* Record Length */
+    0x01, /* ClientHello */
+    0x00, 0x00, 0x35, /* Message length (0x2E + 7 - full nocookie message) */
+    0x00, 0x00, /* Message sequence */
+    0x00, 0x00, 0x02, /* Fragment offset */
+    0x00, 0x00, 0x33, /* Fragment length (0x35 - 2 bytes skipped) */
+    /* legacy_client_version skipped - sent in first fragment */
+    0xCA, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
+    0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
+    0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6, /* Random */
+    0x00, /* Session id len */
+    0x00, /* Cookie len */
+    0x00, 0x04, /* Ciphersuites len */
+    0x13, 0x01, /* TLS_AES_128_GCM_SHA256 */
+    0x13, 0x02, /* TLS_AES_256_GCM_SHA384 */
+    0x01, /* Compression methods len */
+    0x00, /* Null compression */
+    0x00, 0x07, /* Extensions len */
+    0x00, 0x2B, /* supported_versions */
+    0x00, 0x03, /* ext data len */
+    0x02, /* versions list len */
+    0xFE, 0xFC /* DTLSv1.3 */
+};
+
+/* A DTLSv1.3 ClientHello with a bad cookie */
+static const unsigned char clienthello13_badcookie[] = {
+    0x16, /* Handshake */
+    0xFE, 0xFF, /* legacy record version = DTLSv1.0 */
+    0x00, 0x00, /* Epoch */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Record sequence number */
+    0x00, 0x55, /* Record Length (0x4E + 7) */
+    0x01, /* ClientHello */
+    0x00, 0x00, 0x49, /* Message length (0x42 + 7) */
+    0x00, 0x00, /* Message sequence */
+    0x00, 0x00, 0x00, /* Fragment offset */
+    0x00, 0x00, 0x49, /* Fragment length (0x42 + 7) */
+    0xFE, 0xFD, /* legacy_client_version = DTLSv1.2 */
+    0xCA, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
+    0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
+    0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6, /* Random */
+    0x00, /* Session id len */
+    0x14, /* Cookie len */
+    0x01, 0x01, 0x02, 0x03, 0x04, 005, 0x06, 007, 0x08, 0x09, 0x0A, 0x0B, 0x0C,
+    0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, /* Cookie (first byte wrong) */
+    0x00, 0x04, /* Ciphersuites len */
+    0x13, 0x01, /*  TLS_AES_128_GCM_SHA256 */
+    0x13, 0x02, /* TLS_AES_256_GCM_SHA384 */
+    0x01, /* Compression methods len */
+    0x00, /* Null compression */
+    0x00, 0x07, /* Extensions len */
+    0x00, 0x2B, /* supported_versions */
+    0x00, 0x03, /* ext data len */
+    0x02, /* versions list len */
+    0xFE, 0xFC /* DTLSv1.3 */
+};
+
+/*
+ * A DTLSv1.3 fragmented ClientHello with the fragment boundary mid-cookie.
+ * Fragment stops mid-cookie (before extensions); only msg_len is updated.
+ */
+static const unsigned char clienthello13_cookie_short[] = {
+    0x16, /* Handshake */
+    0xFE, 0xFF, /* legacy record version = DTLSv1.0 */
+    0x00, 0x00, /* Epoch */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Record sequence number */
+    0x00, 0x43, /* Record Length (unchanged - fragment content same) */
+    0x01, /* ClientHello */
+    0x00, 0x00, 0x49, /* Message length (0x42 + 7 - full message size) */
+    0x00, 0x00, /* Message sequence */
+    0x00, 0x00, 0x00, /* Fragment offset */
+    0x00, 0x00, 0x37, /* Fragment length (unchanged) */
+    0xFE, 0xFD, /* legacy_client_version = DTLSv1.2 */
+    0xCA, 0x18, 0x9F, 0x76, 0xEC, 0x57, 0xCE, 0xE5, 0xB3, 0xAB, 0x79, 0x90,
+    0xAD, 0xAC, 0x6E, 0xD1, 0x58, 0x35, 0x03, 0x97, 0x16, 0x10, 0x82, 0x56,
+    0xD8, 0x55, 0xFF, 0xE1, 0x8A, 0xA3, 0x2E, 0xF6, /* Random */
+    0x00, /* Session id len */
+    0x14, /* Cookie len */
+    0x00, 0x01, 0x02, 0x03, 0x04, 005, 0x06, 007, 0x08, 0x09, 0x0A, 0x0B, 0x0C,
+    0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12 /* Cookie (truncated) */
+};
+
 static const unsigned char verify[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
@@ -246,7 +462,7 @@ typedef struct {
         DROP } outtype;
 } tests;
 
-static tests testpackets[9] = {
+static tests testpackets[] = {
     { clienthello_nocookie, sizeof(clienthello_nocookie), VERIFY },
     { clienthello_nocookie_frag, sizeof(clienthello_nocookie_frag), VERIFY },
     { clienthello_nocookie_short, sizeof(clienthello_nocookie_short), DROP },
@@ -255,6 +471,18 @@ static tests testpackets[9] = {
     { clienthello_cookie_frag, sizeof(clienthello_cookie_frag), GOOD },
     { clienthello_badcookie, sizeof(clienthello_badcookie), VERIFY },
     { clienthello_cookie_short, sizeof(clienthello_cookie_short), DROP },
+    { record_short, sizeof(record_short), DROP }
+};
+
+static tests testpackets13[] = {
+    { clienthello13_nocookie, sizeof(clienthello13_nocookie), VERIFY },
+    { clienthello13_nocookie_frag, sizeof(clienthello13_nocookie_frag), VERIFY },
+    { clienthello_nocookie_short, sizeof(clienthello_nocookie_short), DROP },
+    { clienthello13_2ndfrag, sizeof(clienthello13_2ndfrag), DROP },
+    { clienthello13_cookie, sizeof(clienthello13_cookie), GOOD },
+    { clienthello_cookie_frag, sizeof(clienthello_cookie_frag), GOOD },
+    { clienthello13_badcookie, sizeof(clienthello13_badcookie), VERIFY },
+    { clienthello13_cookie_short, sizeof(clienthello13_cookie_short), DROP },
     { record_short, sizeof(record_short), DROP }
 };
 
@@ -287,6 +515,38 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
     return 1;
 }
 
+/*
+ * Combined DTLS listen test covering both DTLS 1.2 and DTLS 1.3 packet
+ * variants.
+ *
+ * Note: DTLSv1_listen() only supports the legacy HelloVerifyRequest mechanism
+ * which is not used in DTLS 1.3. When processing DTLS 1.3 ClientHello packets
+ * (tests 9-17), the server is NOT constrained to DTLS 1.3 only - instead it
+ * uses the full version range and DTLSv1_listen() clamps to DTLS 1.2. These
+ * tests verify that DTLSv1_listen() correctly handles ClientHello packets
+ * that advertise DTLS 1.3 via supported_versions extension.
+ *
+ * 0: Test that DTLS 1.2 without a cookie is accepted by DTLSv1_listen().
+ * 1: Test that a fragmented DTLS 1.2 ClientHello without a cookie is
+ *   accepted by DTLSv1_listen().
+ * 2: Test that a truncated DTLS 1.2 ClientHello without a cookie is
+ *   dropped by DTLSv1_listen().
+ * 3: Test that a second fragment of a DTLS 1.2 ClientHello without a
+ *   cookie is dropped by DTLSv1_listen() (it cannot reconstruct a full
+ *   ClientHello from it).
+ * 4: Test that a DTLS 1.2 ClientHello with a good cookie is accepted by
+ *   DTLSv1_listen().
+ * 5: Test that a fragmented DTLS 1.2 ClientHello with a good cookie is
+ *   accepted by DTLSv1_listen().
+ * 6: Test that a DTLS 1.2 ClientHello with a bad cookie is rejected by
+ *   DTLSv1_listen() with a HelloVerifyRequest.
+ * 7: Test that a DTLS 1.2 ClientHello with a truncated cookie is dropped
+ *   by DTLSv1_listen().
+ * 8: Test that a short record is dropped by DTLSv1_listen().
+ * 9-17: Same as 0-8 but with DTLS 1.3 format ClientHello packets (containing
+ *   supported_versions extension). The server is clamped to DTLS 1.2 by
+ *   DTLSv1_listen(), so these test packet parsing, not DTLS 1.3 negotiation.
+ */
 static int dtls_listen_test(int i)
 {
     SSL_CTX *ctx = NULL;
@@ -294,14 +554,26 @@ static int dtls_listen_test(int i)
     BIO *outbio = NULL;
     BIO *inbio = NULL;
     BIO_ADDR *peer = NULL;
-    tests *tp = &testpackets[i];
+    tests *tp;
+    int is_dtls13 = (i >= (int)OSSL_NELEM(testpackets));
     char *data;
     long datalen;
     int ret, success = 0;
 
+    if (is_dtls13) {
+        tp = &testpackets13[i - (int)OSSL_NELEM(testpackets)];
+#ifdef OPENSSL_NO_DTLS1_3
+        success = TEST_skip("DTLSv1.3 not usable");
+        goto err;
+#endif
+    } else {
+        tp = &testpackets[i];
+    }
+
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
         || !TEST_ptr(peer = BIO_ADDR_new()))
         goto err;
+
     SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
     SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
 
@@ -347,12 +619,335 @@ err:
     OPENSSL_free(peer);
     return success;
 }
+
+#ifndef OPENSSL_NO_DTLS1_2
+static unsigned char *create_cookie_clienthello(int *outlen,
+    unsigned char *out_seq)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc = NULL;
+    BIO *rbio = NULL, *wbio = NULL;
+    BIO *ssl_rbio = NULL, *ssl_wbio = NULL;
+    char *data = NULL;
+    long datalen;
+    unsigned char *ret = NULL;
+    int sslret;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(rbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(wbio = BIO_new(BIO_s_mem())))
+        goto err;
+
+    ssl_rbio = rbio;
+    ssl_wbio = wbio;
+    SSL_set0_rbio(ssl, rbio);
+    SSL_set0_wbio(ssl, wbio);
+    rbio = wbio = NULL;
+    SSL_set_connect_state(ssl);
+
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl)))
+        goto err;
+
+    /* Send the initial, cookie-less ClientHello: record sequence 0. */
+    if (!TEST_int_le(sslret = SSL_connect(ssl), 0)
+        || !TEST_int_eq(SSL_get_error(ssl, sslret), SSL_ERROR_WANT_READ))
+        goto err;
+
+    /*
+     * Simulate the initial ClientHello (or the server's HelloVerifyRequest)
+     * being lost in transit: force the retransmit timer to look expired and
+     * drive a genuine retransmission of the buffered ClientHello through
+     * the normal write path. This consumes record sequence 1 for real,
+     * so the retried (with-cookie) ClientHello below naturally lands on
+     * sequence 2 -- rather than the test asserting that value by fiat.
+     */
+    sc->d1->next_timeout = ossl_ms2time(1);
+    if (!TEST_long_eq(DTLSv1_handle_timeout(ssl), 1))
+        goto err;
+
+    /* Neither copy of the cookie-less ClientHello is needed -- discard both. */
+    if (!TEST_int_gt(BIO_reset(ssl_wbio), 0)
+        || !TEST_int_eq(BIO_write(ssl_rbio, verify, sizeof(verify)),
+            sizeof(verify))
+        || !TEST_int_le(sslret = SSL_connect(ssl), 0)
+        || !TEST_int_eq(SSL_get_error(ssl, sslret), SSL_ERROR_WANT_READ)
+        || !TEST_long_ge(datalen = BIO_get_mem_data(ssl_wbio, &data),
+            DTLS1_RT_HEADER_LENGTH)
+        || !TEST_long_le(datalen, INT_MAX))
+        goto err;
+
+    if (!TEST_ptr(ret = OPENSSL_memdup(data, datalen)))
+        goto err;
+
+    *outlen = (int)datalen;
+
+    /*
+     * Report back the epoch+sequence number (DTLS record header bytes
+     * 3..10) that the client's own record layer actually assigned to the
+     * first record of the retried ClientHello. The caller uses this to
+     * work out what it should expect back from the server, instead of the
+     * test dictating a fixed sequence number.
+     */
+    memcpy(out_seq, ret + 3, DTLS_RECORD_EPOCH_AND_SEQ_LEN);
+
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    BIO_free(rbio);
+    BIO_free(wbio);
+    return ret;
+}
+
+static int dtls_listen_write_seq_test(int tst)
+{
+    unsigned char actual_seq[DTLS_RECORD_EPOCH_AND_SEQ_LEN];
+    unsigned char *inbuf = NULL;
+    int inbuflen = 0;
+    SSL_CONNECTION *s = NULL;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    BIO *outbio = NULL;
+    BIO *inbio = NULL;
+    BIO_ADDR *peer = NULL;
+    char *data;
+    long datalen;
+    int ret, success = 0;
+
+    if (!TEST_ptr(inbuf = create_cookie_clienthello(&inbuflen, actual_seq)))
+        goto err;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(peer = BIO_ADDR_new()))
+        goto err;
+    SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
+    SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
+    if (!TEST_true(SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(ctx, privkey,
+            SSL_FILETYPE_PEM)))
+        goto err;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(outbio = BIO_new(BIO_s_mem())))
+        goto err;
+
+    SSL_set0_wbio(ssl, outbio);
+    if (!TEST_ptr(inbio = BIO_new_mem_buf(inbuf, inbuflen)))
+        goto err;
+
+    BIO_set_mem_eof_return(inbio, -1);
+    SSL_set0_rbio(ssl, inbio);
+    inbio = NULL;
+
+    if (!TEST_int_eq(ret = DTLSv1_listen(ssl, peer), 1))
+        goto err;
+
+    datalen = BIO_get_mem_data(outbio, &data);
+    if (!TEST_long_eq(datalen, 0))
+        goto err;
+
+    if (tst == 1) {
+        /* Drive the DTLS 1.2 write-side uint48 wrap path directly. */
+        s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+        if (!TEST_ptr(s)
+            || !TEST_true(s->rlayer.wrlmethod->set_sequence != NULL)
+            || !TEST_true(s->rlayer.wrlmethod->set_sequence(s->rlayer.wrl,
+                0xffffffffffffULL)))
+            goto err;
+    }
+
+    ret = SSL_accept(ssl);
+    if (tst == 1) {
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(ssl, ret), SSL_ERROR_SSL)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_SEQUENCE_CTR_WRAPPED))
+            goto err;
+        success = 1;
+        goto err;
+    }
+
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(ssl, ret), SSL_ERROR_WANT_READ))
+        goto err;
+
+    datalen = BIO_get_mem_data(outbio, &data);
+    if (!TEST_long_ge(datalen, DTLS1_RT_HEADER_LENGTH)
+        /* The server's response record is always DTLS1.2 once a cookie has
+         * been validated -- that's what DTLSv1_listen() negotiates down to. */
+        || !TEST_uint_eq(((unsigned char)data[1] << 8) | (unsigned char)data[2],
+            DTLS1_2_VERSION)
+        /*
+         * This is the actual regression check: the server's write sequence
+         * must continue from the epoch/sequence number of the ClientHello
+         * record DTLSv1_listen() validated the cookie against -- whatever
+         * that value turned out to be, not one the test dictates.
+         */
+        || !TEST_mem_eq(data + 3, DTLS_RECORD_EPOCH_AND_SEQ_LEN,
+            actual_seq, DTLS_RECORD_EPOCH_AND_SEQ_LEN))
+        goto err;
+
+    SSL_set0_rbio(ssl, NULL);
+    success = 1;
+
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    BIO_free(inbio);
+    OPENSSL_free(inbuf);
+    OPENSSL_free(peer);
+    return success;
+}
 #endif
+
+#ifndef OPENSSL_NO_DTLS1_3
+/*
+ * Test that DTLSv1_listen() clamps the max version to DTLS 1.2.
+ *
+ * DTLSv1_listen() only supports the legacy HelloVerifyRequest mechanism
+ * which is not used in DTLS 1.3. When called, it automatically clamps the
+ * max protocol version to DTLS 1.2 to ensure HelloVerifyRequest is used.
+ *
+ * This test verifies that when both client and server support DTLS 1.0-1.3,
+ * using DTLSv1_listen() results in a DTLS 1.2 connection (not 1.3).
+ *
+ * For DTLS 1.3 with HelloRetryRequest cookies, use SSL_new_listener() instead.
+ */
+static int test_dtls_listen_dtls13_negotiated_to_dtls12(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    const char msg[] = "Hello DTLS 1.2 via DTLSv1_listen";
+    char buf[sizeof(msg)];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    /*
+     * Both server and client support DTLS 1.0 through DTLS 1.3.
+     * DTLSv1_listen() should clamp the server's max to DTLS 1.2,
+     * resulting in a DTLS 1.2 negotiated connection.
+     */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_cookie_generate_cb(sctx, cookie_gen);
+    SSL_CTX_set_cookie_verify_cb(sctx, cookie_verify);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /*
+     * Use DTLSv1_listen() which will clamp max version to DTLS 1.2.
+     */
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 1, 1)))
+        goto end;
+
+    /*
+     * Verify DTLS 1.2 was negotiated (not 1.3) because DTLSv1_listen()
+     * clamped the max version.
+     */
+    if (!TEST_int_eq(SSL_version(serverssl), DTLS1_2_VERSION)
+        || !TEST_int_eq(SSL_version(clientssl), DTLS1_2_VERSION))
+        goto end;
+
+    /* Exchange a short application-data message to verify connection works */
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+        || !TEST_size_t_eq(readbytes, sizeof(msg))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Use SSL_stateless with DTLS if you want to send a
+ * HelloRetryRequest and then continue with the handshake.
+ * DTLSv1_listen only support HelloVerifyRequest, so a pure DTLS 1.3
+ * client is not supported with DTLSv1_listen.
+ */
+static int test_dtls13_listen_client_dtls13_only(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    /* Both server and client are restricted to DTLS 1.3 exclusively. */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_min_proto_version(cctx, DTLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_max_proto_version(cctx, DTLS1_3_VERSION)))
+        goto end;
+
+    SSL_CTX_set_cookie_generate_cb(sctx, cookie_gen);
+    SSL_CTX_set_cookie_verify_cb(sctx, cookie_verify);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /*
+     * Pass listen=1 so that create_bare_ssl_connection() calls
+     * Verify DTLSv1_listen does not work with a pure DTLS 1.3 client
+     */
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 1, 1)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#endif /* OPENSSL_NO_DTLS1_3 */
+#endif /* OPENSSL_NO_SOCK */
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    if (!TEST_ptr(cert = test_get_argument(0))
+        || !TEST_ptr(privkey = test_get_argument(1)))
+        return 0;
+
 #ifndef OPENSSL_NO_SOCK
-    ADD_ALL_TESTS(dtls_listen_test, (int)OSSL_NELEM(testpackets));
+    ADD_ALL_TESTS(dtls_listen_test,
+        (int)OSSL_NELEM(testpackets) + (int)OSSL_NELEM(testpackets13));
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_ALL_TESTS(dtls_listen_write_seq_test, 2);
+#endif
+#ifndef OPENSSL_NO_DTLS1_3
+    ADD_TEST(test_dtls_listen_dtls13_negotiated_to_dtls12);
+    ADD_TEST(test_dtls13_listen_client_dtls13_only);
+#endif
 #endif
     return 1;
 }

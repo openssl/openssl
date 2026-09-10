@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,11 +13,15 @@
 
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "internal/nelem.h"
 #include <openssl/bio.h>
 
 #include "platform.h" /* From libapps */
+
+#include "mfail.h"
+#include <time.h>
 
 #if defined(_WIN32) && !defined(__BORLANDC__)
 #define strdup _strdup
@@ -35,7 +39,8 @@ typedef struct test_info {
     /* flags */
     unsigned int subtest : 1;
     unsigned int mfail : 1;
-    unsigned int mfail_slow : 1;
+    int mfail_flags;
+    int mfail_sampled;
 } TEST_INFO;
 
 static TEST_INFO all_tests[1024];
@@ -46,7 +51,6 @@ static int single_iter = -1;
 static int level = 0;
 static int seed = 0;
 static int rand_order = 0;
-static int mfail_added = 0;
 
 /*
  * A parameterised test runs a loop of test cases.
@@ -82,17 +86,33 @@ void add_all_tests(const char *test_case_name, int (*test_fn)(int idx),
         num_test_cases += num;
 }
 
-void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int slow)
+void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int flags,
+    int sampled)
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].test_fn = test_fn;
     all_tests[num_tests].num = -1;
     all_tests[num_tests].mfail = 1;
-    all_tests[num_tests].mfail_slow = slow ? 1 : 0;
+    all_tests[num_tests].mfail_flags = flags;
+    all_tests[num_tests].mfail_sampled = sampled;
     ++num_tests;
     ++num_test_cases;
-    mfail_added = 1;
+}
+
+void add_mfail_all_tests(const char *test_case_name, int (*test_fn)(int idx),
+    int num, int flags, int sampled)
+{
+    assert(num_tests != OSSL_NELEM(all_tests));
+    all_tests[num_tests].test_case_name = test_case_name;
+    all_tests[num_tests].param_test_fn = test_fn;
+    all_tests[num_tests].num = num;
+    all_tests[num_tests].subtest = 1;
+    all_tests[num_tests].mfail = 1;
+    all_tests[num_tests].mfail_flags = flags;
+    all_tests[num_tests].mfail_sampled = sampled;
+    ++num_tests;
+    ++num_test_cases;
 }
 
 static int gcd(int a, int b)
@@ -119,14 +139,22 @@ int setup_test_framework(int argc, char *argv[])
     char *test_rand_seed = getenv("OPENSSL_TEST_RAND_SEED");
     char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
 
-    if (TAP_levels != NULL)
-        level = 4 * atoi(TAP_levels);
+    if (TAP_levels != NULL) {
+        int n;
+
+        if (test_strtoint(TAP_levels, &n) && n <= INT_MAX / 4)
+            level = 4 * n;
+    }
     test_adjust_streams_tap_level(level);
     if (test_rand_order != NULL) {
+        int n;
+
         rand_order = 1;
-        set_seed(atoi(test_rand_order));
+        set_seed(test_strtoint(test_rand_order, &n) ? n : 0);
     } else if (test_rand_seed != NULL) {
-        set_seed(atoi(test_rand_seed));
+        int n;
+
+        set_seed(test_strtoint(test_rand_seed, &n) ? n : 0);
     } else {
         set_seed(0);
     }
@@ -159,8 +187,12 @@ static int check_single_test_params(char *name, char *testname, char *itname)
                 break;
             }
         }
-        if (i >= num_tests)
-            single_test = atoi(name);
+        if (i >= num_tests) {
+            int n;
+
+            if (test_strtoint(name, &n))
+                single_test = n;
+        }
     }
 
     /* if only iteration is specified, assume we want the first test */
@@ -294,6 +326,112 @@ static void test_verdict(int verdict,
     test_flush_tapout();
 }
 
+static double mfail_elapsed_secs(clock_t start)
+{
+    return (double)(clock() - start) / CLOCKS_PER_SEC;
+}
+
+static int mfail_run_test(const TEST_INFO *t, int idx)
+{
+    int counting_ok = 1;
+    int injection_ok = 1;
+    int injections = 0;
+    int allocations = 0;
+    int no_check = (t->mfail_flags & MFAIL_TEST_NO_CHECK) != 0;
+    int sampled = (t->mfail_flags & MFAIL_TEST_SAMPLED) != 0;
+    int init_flags = no_check ? MFAIL_FLAG_NO_CHECK : 0;
+    clock_t start = clock();
+
+    if (sampled)
+        /* cap injection at mfail_sampled points (exhaustive below that) */
+        init_flags |= MFAIL_FLAG_COUNT;
+#ifdef OPENSSL_NO_CACHED_FETCH
+    else
+        /*
+         * The non-cached does too many allocations, which results in a
+         * significant slowdown of the tests. It does not provide much value,
+         * as it also requires NO_CHECK variant, so just run counting
+         * correctness check and skip the memory failure injection part.
+         */
+        init_flags |= MFAIL_FLAG_COUNT_ONLY;
+#endif
+
+    level += 4;
+    test_adjust_streams_tap_level(level);
+    test_printf_stdout("Subtest: %s[%d]\n", t->test_case_name, idx);
+    test_printf_tapout("1..2\n");
+    test_flush_stdout();
+    test_flush_tapout();
+
+    mfail_init_ex(idx, init_flags, t->mfail_sampled);
+
+    while (mfail_has_next()) {
+        int phase = mfail_get_phase();
+        int rv;
+
+        ERR_clear_error();
+        rv = t->param_test_fn != NULL ? t->param_test_fn(idx) : t->test_fn();
+
+        if (phase == MFAIL_PHASE_COUNTING) {
+            allocations = mfail_get_count();
+            if (!TEST_int_eq(rv, 1)) {
+                TEST_error("mfail test '%s': counting iteration failed",
+                    t->test_case_name);
+                counting_ok = 0;
+            }
+            test_verdict(counting_ok, "1 - counting (%d allocations)",
+                allocations);
+            if (!counting_ok || !mfail_is_installed() || mfail_env_skip_all())
+                break;
+        } else {
+            injections++;
+            if (rv == -1) {
+                TEST_error("mfail test '%s': unconditional failure at "
+                           "point %d",
+                    t->test_case_name, mfail_get_point());
+                injection_ok = 0;
+            } else if (mfail_was_triggered()) {
+                if (!no_check && !TEST_int_eq(rv, 0)) {
+                    TEST_error("mfail test '%s': allocation failure at "
+                               "point %d not handled",
+                        t->test_case_name, mfail_get_point());
+                    injection_ok = 0;
+                }
+            } else if (mfail_get_mode() == MFAIL_MODE_SINGLE) {
+                test_printf_tapout(
+                    "# point %d is beyond the last allocation point\n",
+                    mfail_get_point());
+                test_flush_tapout();
+            } else if (!TEST_int_eq(rv, 1)) {
+                TEST_error("mfail test '%s': no injection but test failed",
+                    t->test_case_name);
+                injection_ok = 0;
+            }
+        }
+    }
+
+    if (!counting_ok)
+        test_verdict(TEST_SKIP_CODE, "2 - injection (counting failed)");
+    else if (!mfail_is_installed())
+        test_verdict(TEST_SKIP_CODE, "2 - injection (mfail not installed)");
+    else if (mfail_env_skip_all())
+        test_verdict(TEST_SKIP_CODE, "2 - injection (mfail skip-all set)");
+    else if (mfail_is_count_only())
+        test_verdict(TEST_SKIP_CODE, "2 - injection (count only)");
+    else if (mfail_was_slow_skipped())
+        test_verdict(TEST_SKIP_CODE,
+            "2 - injection (%d allocations exceeds slow threshold %d)",
+            allocations, mfail_get_slow_threshold());
+    else
+        test_verdict(injection_ok, "2 - injection (%d iterations, %.3fs)",
+            injections, mfail_elapsed_secs(start));
+
+    level -= 4;
+    test_adjust_streams_tap_level(level);
+
+    return counting_ok && injection_ok;
+}
+
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
@@ -320,9 +458,6 @@ int run_tests(const char *test_prog_name)
     }
 
     test_flush_tapout();
-
-    if (mfail_added)
-        mfail_init();
 
     for (i = 0; i < num_tests; i++)
         permute[i] = i;
@@ -353,11 +488,7 @@ int run_tests(const char *test_prog_name)
             set_test_title(all_tests[i].test_case_name);
             ERR_clear_error();
             if (all_tests[i].mfail)
-                if (mfail_should_skip(all_tests[i].mfail_slow))
-                    verdict = TEST_skip("mfail test skipped");
-                else
-                    verdict = mfail_run_test(all_tests[i].test_case_name,
-                        all_tests[i].test_fn);
+                verdict = mfail_run_test(&all_tests[i], 0);
             else
                 verdict = all_tests[i].test_fn();
             finalize(verdict != 0);
@@ -394,7 +525,10 @@ int run_tests(const char *test_prog_name)
                 if (single_iter != -1 && ((jj + 1) != single_iter))
                     continue;
                 ERR_clear_error();
-                v = all_tests[i].param_test_fn(j);
+                if (all_tests[i].mfail)
+                    v = mfail_run_test(&all_tests[i], j);
+                else
+                    v = all_tests[i].param_test_fn(j);
 
                 if (v == 0) {
                     verdict = 0;

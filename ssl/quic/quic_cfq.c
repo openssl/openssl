@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/quic_channel.h"
 #include "internal/quic_cfq.h"
 #include "internal/numbers.h"
 
@@ -305,6 +306,20 @@ void ossl_quic_cfq_mark_lost(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item,
         assert(0); /* invalid state (e.g. in free state) */
         break;
     }
+}
+
+int ossl_quic_cfq_discard_unreliable(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item)
+{
+    int discarded;
+
+    if (ossl_quic_cfq_item_is_unreliable(item)) {
+        ossl_quic_cfq_release(cfq, item);
+        discarded = 1;
+    } else {
+        discarded = 0;
+    }
+
+    return discarded;
 }
 
 /*

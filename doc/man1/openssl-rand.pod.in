@@ -12,6 +12,7 @@ B<openssl rand>
 [B<-out> I<file>]
 [B<-base64>]
 [B<-hex>]
+[B<-n>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 I<num>[K|M|G|T]
@@ -55,6 +56,10 @@ Perform base64 encoding on the output.
 
 Show the output as a hex string.
 
+=item B<-n>
+
+Do not output the trailing newline.
+
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
@@ -74,7 +79,7 @@ The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
