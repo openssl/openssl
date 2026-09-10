@@ -12,7 +12,8 @@ EVP_KDF_get0_name, EVP_KDF_names_do_all, EVP_KDF_get0_description,
 EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_provided,
 EVP_KDF_get_params, EVP_KDF_gettable_params,
 EVP_KDF_gettable_ctx_params, EVP_KDF_settable_ctx_params,
-EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
+EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params,
+EVP_KDF_argon2 - EVP KDF routines
 
 =head1 SYNOPSIS
 
@@ -57,6 +58,12 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  const OSSL_PARAM *EVP_KDF_CTX_gettable_params(const EVP_KDF *kdf);
  const OSSL_PARAM *EVP_KDF_CTX_settable_params(const EVP_KDF *kdf);
  const OSSL_PROVIDER *EVP_KDF_get0_provider(const EVP_KDF *kdf);
+ int EVP_KDF_argon2(uint8_t *out, size_t outlen, int alg_type,
+                    const uint8_t *pass, size_t passlen,
+                    const uint8_t *salt, size_t saltlen,
+                    uint32_t lanes, uint32_t memorycost, uint32_t iterations,
+                    OSSL_LIB_CTX *libctx, const char *propq,
+                    const OSSL_PARAM *optionals);
 
 The following functions have been deprecated since OpenSSL 4.1,
 and can be hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable
@@ -206,9 +213,25 @@ EVP_KDF_get0_description() returns a description of the I<kdf>, meant for
 display and human consumption.  The description is at the discretion of
 the I<kdf> implementation.
 
+=head2 Helper functions
+
+These are one shot helper functions for KDF algorithms that contain typical
+parameters, but also allow less common optional parameters to be specified in a
+general form using OSSL_PARAM.
+
+EVP_KDF_argon2() uses the I<alg_type> (which is one of EVP_KDF_ARGON2ID_TYPE,
+EVP_KDF_ARGON2D_TYPE or EVP_KDF_ARGON2I_TYPE) and other parameters such as
+the password I<pass> and salt I<salt>, to derive I<outlen> bytes of key
+material into the buffer I<out>. The I<libctx> and I<propq> parameters are used
+to fetch the EVP_KDF-ARGON2 algorithm. Note that I<propq> will also be used for
+internal fetches if OSSL_KDF_PARAM_PROPERTIES is not specified as an optional
+parameter. I<pass> is allowed to be NULL, but I<salt> must be set.
+See L<EVP_KDF-ARGON2(7)/Supported parameters> for more information
+related to parameters supported by Argon2 that can be set as I<optionals>.
+
 =head1 PARAMETERS
 
-The standard parameter names are:
+The standard KDF parameter names are:
 
 =over 4
 
@@ -333,7 +356,7 @@ This functionality was added in OpenSSL 3.0.
 EVP_KDF_derive_SKEY() and EVP_KDF_CTX_set_SKEY() functions were introduced in
 OpenSSL 3.6.
 
-EVP_KDF_CTX_get0_kdf() and EVP_KDF_CTX_get1_kdf() functions were introduced
+EVP_KDF_argon2(), EVP_KDF_CTX_get0_kdf() and EVP_KDF_CTX_get1_kdf() functions were introduced
 in OpenSSL 4.1.
 
 EVP_KDF_CTX_kdf() function was deprecated in favour of EVP_KDF_CTX_get0_kdf()
