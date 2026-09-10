@@ -33,7 +33,13 @@ OpenSSL 4.1
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added SSL_listen_ex() support for DTLS listeners. A connection that has
+   already passed cookie validation can be transferred onto a caller-supplied
+   SSL object instead of being returned by SSL_accept_connection(); the two
+   functions are mutually exclusive on a given listener, whichever is called
+   first. Refer to the SSL_new_listener(3) manpage for details.
+
+   *Ryan Hooper*
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
