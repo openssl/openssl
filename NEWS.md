@@ -28,7 +28,8 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
-  * none
+  * Added support for Java keytool PKCS#12 files with symmetric keys.
+    New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 

@@ -51,6 +51,7 @@
 /include/openssl/ct.h
 /include/openssl/err.h
 /include/openssl/ess.h
+/include/openssl/evp.h
 /include/openssl/fipskey.h
 /include/openssl/lhash.h
 /include/openssl/ocsp.h

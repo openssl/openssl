@@ -182,7 +182,8 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         unsigned char *out,
         const EVP_MD *md_type,
         OSSL_LIB_CTX *libctx,
-        const char *propq))
+        const char *propq),
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     EVP_MD *md;
@@ -193,8 +194,6 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     int md_nid = NID_undef;
     const X509_ALGOR *macalg;
     const ASN1_OBJECT *macoid;
-    OSSL_LIB_CTX *libctx;
-    const char *propq;
     size_t md_sz, outlen;
 
     if (!PKCS7_type_is_data(p12->authsafes)) {
@@ -207,8 +206,6 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         return 0;
     }
 
-    libctx = p12->authsafes->ctx.libctx;
-    propq = p12->authsafes->ctx.propq;
     salt = p12->mac->salt->data;
     saltlen = p12->mac->salt->length;
     if (p12->mac->iter == NULL)
@@ -305,11 +302,11 @@ err:
 int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     unsigned char *mac, unsigned int *maclen)
 {
-    return pkcs12_gen_mac(p12, pass, passlen, mac, maclen, NID_undef, NID_undef, NULL);
+    return pkcs12_gen_mac(p12, pass, passlen, mac, maclen, NID_undef, NID_undef, NULL, p12->authsafes->ctx.libctx, p12->authsafes->ctx.propq);
 }
 
-/* Verify the mac */
-int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
+int ossl_pkcs12_verify_mac(PKCS12 *p12, const char *pass, int passlen,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char mac[EVP_MAX_MD_SIZE];
     unsigned int maclen;
@@ -337,14 +334,14 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         X509_ALGOR_get0(&hmac_oid, NULL, NULL, param->messageAuthScheme);
         md_nid = ossl_hmac2mdnid(OBJ_obj2nid(hmac_oid));
 
-        if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, md_nid, NID_undef, NULL)) {
+        if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, md_nid, NID_undef, NULL, libctx, propq)) {
             ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
             PBMAC1PARAM_free(param);
             return 0;
         }
         PBMAC1PARAM_free(param);
     } else {
-        if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, NID_undef, NID_undef, NULL)) {
+        if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, NID_undef, NID_undef, NULL, libctx, propq)) {
             ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
             return 0;
         }
@@ -355,6 +352,12 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         return 0;
 
     return 1;
+}
+
+/* Verify the mac */
+int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
+{
+    return ossl_pkcs12_verify_mac(p12, pass, passlen, p12->authsafes->ctx.libctx, p12->authsafes->ctx.propq);
 }
 
 /* Set a mac */
@@ -378,7 +381,7 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
     /*
      * Note that output mac is forced to UTF-8...
      */
-    if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, NID_undef, NID_undef, NULL)) {
+    if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, NID_undef, NID_undef, NULL, p12->authsafes->ctx.libctx, p12->authsafes->ctx.propq)) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }
@@ -542,7 +545,7 @@ int PKCS12_set_pbmac1_pbkdf2(PKCS12 *p12, const char *pass, int passlen,
      */
     if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
             EVP_MD_get_type(md_type), prf_md_nid,
-            pkcs12_pbmac1_pbkdf2_key_gen)) {
+            pkcs12_pbmac1_pbkdf2_key_gen, p12->authsafes->ctx.libctx, p12->authsafes->ctx.propq)) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
         goto err;
     }
