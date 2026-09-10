@@ -136,7 +136,7 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
 
 int i2d_DHxparams(const DH *dh, unsigned char **pp)
 {
-    int ret = 0;
+    int ret = -1;
     int_dhx942_dh dhx;
     int_dhvparams dhv = { NULL, NULL };
     ASN1_BIT_STRING seed;
@@ -155,7 +155,7 @@ int i2d_DHxparams(const DH *dh, unsigned char **pp)
         dhv.seed = &seed;
         dhv.counter = BN_new();
         if (dhv.counter == NULL)
-            return 0;
+            goto err;
         if (!BN_set_word(dhv.counter, (BN_ULONG)counter))
             goto err;
         dhx.vparams = &dhv;
