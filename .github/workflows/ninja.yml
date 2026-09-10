@@ -1,0 +1,119 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Ninja GitHub CI
+
+on: [pull_request, push]
+
+permissions:
+  contents: read
+
+env:
+  OSSL_RUN_CI_TESTS: 1
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends install ninja-build
+        sudo gem install mdl
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: prepare the build directory
+      run: mkdir _build
+    - name: config
+      working-directory: _build
+      run: BUILDFILE=build.ninja perl ../Configure --banner=Configured --strict-warnings enable-fips enable-lms
+    - name: build
+      run: ninja -C _build -j4
+    - name: test
+      env:
+        HARNESS_JOBS: 4
+      run: ninja -C _build test
+    - name: update generated sources
+      run: ninja -C _build update
+    - name: check generated sources
+      run: git diff --exit-code
+    - name: check documentation
+      run: ninja -C _build doc-nits
+    - name: check markdown
+      run: ninja -C _build md-nits
+
+  windows:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: install build tools
+      run: |
+        choco install nasm ninja
+        "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: prepare the build directory
+      run: mkdir _build
+    - name: config
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        set BUILDFILE=build.ninja
+        perl ..\Configure --banner=Configured --strict-warnings no-fips enable-demos -DOSSL_WINCTX=openssl VC-WIN64A
+        perl configdata.pm --dump
+    - name: build
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        ninja -j4
+    - name: test
+      working-directory: _build
+      shell: cmd
+      env:
+        HARNESS_JOBS: 4
+        TESTS: "-test_fuzz*"
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        ninja test
+
+  macos:
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: check build tools
+      run: |
+        perl -v
+        ninja --version
+        clang --version
+    - name: prepare the build directory
+      run: mkdir _build
+    - name: config
+      working-directory: _build
+      run: BUILDFILE=build.ninja perl ../Configure --banner=Configured --strict-warnings shared no-fips darwin64-arm64
+    - name: build
+      run: ninja -C _build -j4
+    - name: test
+      env:
+        HARNESS_JOBS: 4
+      run: ninja -C _build test
+    - name: check no-op rebuild
+      run: |
+        output="$(ninja -C _build -n)"
+        printf '%s\n' "$output"
+        printf '%s\n' "$output" | grep -F "ninja: no work to do."
