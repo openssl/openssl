@@ -377,9 +377,9 @@ static int s390x_aes_gcm_aad_update(PROV_GCM_CTX *ctx,
     unsigned int fc;
     int n, rem;
 
-    /* If already processed pt/ct then error */
+    /* If already processed pt/ct then error (out-of-order AAD) */
     if (kma->tpcl != 0)
-        return 0;
+        return -2;
 
     /* update the total aad length */
     alen = kma->taadl + len;
