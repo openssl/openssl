@@ -2304,71 +2304,6 @@ static const struct script_op script_32[] = {
     OP_END
 };
 
-static int script_32_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    int ok = 0;
-    WPACKET wpkt;
-    unsigned char frame_buf[64];
-    size_t written;
-    uint64_t type = OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN, offset, flen, i;
-
-    if (hdr->type != QUIC_PKT_TYPE_1RTT)
-        return 1;
-
-    switch (h->inject_word1) {
-    default:
-        return 0;
-    case 0:
-        return 1;
-    case 1:
-        offset = 0;
-        flen = 0;
-        break;
-    case 2:
-        offset = (((uint64_t)1) << 62) - 1;
-        flen = 5;
-        break;
-    case 3:
-        offset = 1 * 1024 * 1024 * 1024; /* 1G */
-        flen = 5;
-        break;
-    case 4:
-        offset = 0;
-        flen = 1;
-        break;
-    }
-
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
-            sizeof(frame_buf), 0)))
-        return 0;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
-            h->inject_word0 - 1))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, flen)))
-        goto err;
-
-    for (i = 0; i < flen; ++i)
-        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
-            goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        goto err;
-
-    ok = 1;
-err:
-    if (ok)
-        WPACKET_finish(&wpkt);
-    else
-        WPACKET_cleanup(&wpkt);
-    return ok;
-}
-
 /* 33. Fault injection - STREAM frame with illegal offset */
 static const struct script_op script_33[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -3075,166 +3010,32 @@ static const struct script_op script_59[] = {
 };
 
 /* 60. Connection close reason truncation */
-static char long_reason[2048];
-
-static int init_reason(struct helper *h, struct helper_local *hl)
-{
-    memset(long_reason, '~', sizeof(long_reason));
-    memcpy(long_reason, "This is a long reason string.", 29);
-    long_reason[OSSL_NELEM(long_reason) - 1] = '\0';
-    return 1;
-}
-
-static int check_shutdown_reason(struct helper *h, struct helper_local *hl)
-{
-    const QUIC_TERMINATE_CAUSE *tc = ossl_quic_tserver_get_terminate_cause(ACQUIRE_S());
-
-    if (tc == NULL) {
-        h->check_spin_again = 1;
-        return 0;
-    }
-
-    if (!TEST_size_t_ge(tc->reason_len, 50)
-        || !TEST_mem_eq(long_reason, tc->reason_len,
-            tc->reason, tc->reason_len))
-        return 0;
-
-    return 1;
-}
-
 static const struct script_op script_60[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_CHECK(init_reason, 0),
-    OP_C_SHUTDOWN_WAIT(long_reason, 0),
-    OP_CHECK(check_shutdown_reason, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
 /* 61. Fault injection - RESET_STREAM exceeding stream count FC */
-static int script_61_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    int ok = 0;
-    WPACKET wpkt;
-    unsigned char frame_buf[32];
-    size_t written;
-
-    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
-        return 1;
-
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
-            sizeof(frame_buf), 0)))
-        return 0;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word0))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
-            h->inject_word1))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 123))
-        || (h->inject_word0 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
-            && !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))) /* final size */
-        goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        goto err;
-
-    ok = 1;
-err:
-    if (ok)
-        WPACKET_finish(&wpkt);
-    else
-        WPACKET_cleanup(&wpkt);
-    return ok;
-}
-
 static const struct script_op script_61[] = {
-    OP_S_SET_INJECT_PLAIN(script_61_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "orange", 6),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "orange", 6),
-
-    OP_SET_INJECT_WORD(OSSL_QUIC_FRAME_TYPE_RESET_STREAM, S_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4)),
-    OP_S_WRITE(a, "fruit", 5),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_STREAM_LIMIT_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
 /* 62. Fault injection - STOP_SENDING with high ID */
 static const struct script_op script_62[] = {
-    OP_S_SET_INJECT_PLAIN(script_61_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "orange", 6),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "orange", 6),
-
-    OP_SET_INJECT_WORD(OSSL_QUIC_FRAME_TYPE_STOP_SENDING, C_BIDI_ID(OSSL_QUIC_VLINT_MAX / 4)),
-    OP_S_WRITE(a, "fruit", 5),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
 /* 63. Fault injection - STREAM frame exceeding stream limit */
 static const struct script_op script_63[] = {
-    OP_S_SET_INJECT_PLAIN(script_32_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(S_BIDI_ID(5000) + 1, 4),
-    OP_S_WRITE(a, "orange", 6),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_STREAM_LIMIT_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
 /* 64. Fault injection - STREAM - zero-length no-FIN is accepted */
 static const struct script_op script_64[] = {
-    OP_S_SET_INJECT_PLAIN(script_32_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_S_NEW_STREAM_UNI(a, S_UNI_ID(0)),
-    OP_S_WRITE(a, "apple", 5),
-
-    OP_C_ACCEPT_STREAM_WAIT(a),
-    OP_C_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(S_BIDI_ID(20) + 1, 1),
-    OP_S_WRITE(a, "orange", 6),
-    OP_C_READ_EXPECT(a, "orange", 6),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
