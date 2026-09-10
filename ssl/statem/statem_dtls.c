@@ -1026,14 +1026,19 @@ redo:
         goto f_err;
     }
     if (recvd_type == SSL3_RT_ACK) {
-        if (readbytes == DTLS1_HM_HEADER_LENGTH) {
+        /*
+         * An ACK has no message header: the bytes already read are body, and
+         * an ACK never spans records, so read the rest of this one. Nothing
+         * left means a malformed ACK; dtls_process_ack() rejects it.
+         */
+        if (readbytes == DTLS1_HM_HEADER_LENGTH
+            && s->rlayer.curr_rec < s->rlayer.num_recs) {
             const size_t first_readbytes = readbytes;
 
             p += DTLS1_HM_HEADER_LENGTH;
 
             i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL, p,
-                s->init_num - DTLS1_HM_HEADER_LENGTH,
-                0, &readbytes);
+                s->rlayer.tlsrecs[s->rlayer.curr_rec].length, 0, &readbytes);
             readbytes += first_readbytes;
             /*
              * This shouldn't ever fail due to NBIO because we already checked
