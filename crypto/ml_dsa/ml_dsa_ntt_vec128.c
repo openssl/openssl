@@ -310,9 +310,9 @@ static const vec_int32_t vec_q = { ML_DSA_Q, ML_DSA_Q, ML_DSA_Q, ML_DSA_Q };
 static const vec_int32_t vec_q_inv = { ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV };
 
 /*
- * @brief Reduce a in (-q, q) to a mod q in [0, q).
+ * @brief Reduce a in [-q, q) to a mod q in [0, q).
  *
- * @param a in (-q, q)
+ * @param a in [-q, q)
  * @returns a mod q in [0, q)
  */
 static ossl_inline
@@ -356,21 +356,22 @@ static ossl_inline
     vec_int32_t
     montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
 {
-    vec_uint32_t k = (vec_uint32_t)a_twist * (vec_uint32_t)b;
-    vec_uint32_t c_u = vec_mulh((vec_uint32_alias_t)k, (vec_uint32_alias_t)vec_q);
-    vec_int32_t c = (vec_int32_t)c_u;
+    vec_int32_t k = (vec_int32_t)((vec_uint32_t)a_twist * (vec_uint32_t)b);
+    vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
     vec_int32_t z_high = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
     vec_int32_t r = z_high - c;
     return reduce_twice_signed(r);
 }
 
 /*
- * @brief Reduce modulo q to an non-negative vector.
- *        Note that the constant v_scalar equals
- *        floor(2**(floor(log_2(q))-1 * 2**32/q)).
+ * @brief Reduce modulo q to a non-negative vector.
+ *        See [Seiler 2018, Algorithm 5].
  *
- * @param a in the range -2**31..2**31-1
- * @returns a mod q in the range 0..q-1
+ * @param a in the range [-9q, 9q]
+ *        (Note that we are only calling this function twice in
+ *        ossl_ml_dsa_poly_ntt_vec128 with inputs in the range [-9q, 9q],
+ *        which is inside the valid range.)
+ * @returns a mod q in the range [0, q).
  */
 static ossl_inline
     vec_int32_t
@@ -378,10 +379,15 @@ static ossl_inline
 {
     const int32_t v_scalar = 1074791296;
     const vec_int32_alias_t v = { v_scalar, v_scalar, v_scalar, v_scalar };
-    vec_int32_t t = vec_mulh((vec_int32_alias_t)a, v) >> 21;
+    vec_int32_t t = (vec_int32_t)(vec_mulh((vec_int32_alias_t)a, v) >> 21);
     t *= ML_DSA_Q;
-    vec_int32_t r = a - t; /* in [0, q] */
-    return reduce_once_signed(r);
+    /*
+     * For a in [-9q, 9q], the Barrett step produces r in [0, q].
+     * Hence r - q is in [-q, 0], and adding q iff it is negative
+     * produces the canonical representative in [0, q).
+     */
+    vec_int32_t r = a - t;
+    return reduce_once_signed(r - vec_q);
 }
 
 void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out)
