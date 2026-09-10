@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 215;
+plan tests => 218;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -142,6 +142,19 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert)], [qw(ca-name2)]),
    "fail wrong intermediate CA DN");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert)], [qw(ca-root2)]),
    "fail wrong intermediate CA issuer");
+
+# CA key rollover: the self-issued transition certificate is not
+# self-signed (regression from 792a760ac2).  It must neither break
+# chain building to the old root nor act as an anchor on its own,
+# while explicit PARTIAL_CHAIN trust in it must keep working.
+ok(verify("rollover-ee", "", ["rollover-root"], ["rollover-ca"],
+          "-attime", "1800000000"),
+   "accept rollover chain through untrusted transition cert");
+ok(!verify("rollover-ee", "", ["rollover-ca"], [], "-attime", "1800000000"),
+   "reject rollover chain when only transition cert is trusted");
+ok(verify("rollover-ee", "", ["rollover-ca"], [],
+          "-partial_chain", "-attime", "1800000000"),
+   "accept rollover transition with explicit partial-chain trust");
 ok(!verify("ee-cert", "sslserver", [], [qw(ca-cert)], "-partial_chain"),
    "fail untrusted partial chain");
 ok(verify("ee-cert", "sslserver", [qw(ca-cert)], [], "-partial_chain"),
