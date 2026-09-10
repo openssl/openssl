@@ -33,7 +33,11 @@ OpenSSL 4.1
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Enforced the per-key AEAD usage limit for TLS 1.3 and DTLS 1.3 AES-GCM
+   write keys. OpenSSL now initiates a KeyUpdate before the limit is reached,
+   or fails safely when the active transport cannot guarantee a rekey.
+
+   *Max van Amersfort*
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
