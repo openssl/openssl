@@ -19,6 +19,7 @@
 /* For SSL3_VERSION and TLS1_VERSION */
 #include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
+#include <openssl/ssl3.h>
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -34,6 +35,21 @@
 
 #define AES_CBC_HMAC_SHA_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_TLS1_MULTIBLOCK)
+
+#if !defined(OPENSSL_NO_MULTIBLOCK)
+static int aes_get_multiblock_interleave(const OSSL_PARAM *p,
+    unsigned int *interleave)
+{
+    return p != NULL
+        && OSSL_PARAM_get_uint(p, interleave)
+        && (*interleave == 4 || *interleave == 8);
+}
+
+static unsigned int tls1_aad_plaintext_len(const unsigned char *aad)
+{
+    return ((unsigned int)aad[11] << 8) | aad[12];
+}
+#endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
 
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;
@@ -112,8 +128,12 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      */
     if (p.mb_aad != NULL) {
         if (p.mb_aad->data_type != OSSL_PARAM_OCTET_STRING
-            || p.ileave == NULL
-            || !OSSL_PARAM_get_uint(p.ileave, &mb_param.interleave)) {
+            || p.mb_aad->data == NULL
+            || p.mb_aad->data_size < EVP_AEAD_TLS1_AAD_LEN
+            || !aes_get_multiblock_interleave(p.ileave, &mb_param.interleave)
+            || tls1_aad_plaintext_len(p.mb_aad->data) > SSL3_RT_MAX_PLAIN_LENGTH
+            || p.mb_aad->data_size
+                > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -134,10 +154,15 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      */
     if (p.enc != NULL) {
         if (p.enc->data_type != OSSL_PARAM_OCTET_STRING
+            || p.enc->data == NULL
             || p.enc_in == NULL
             || p.enc_in->data_type != OSSL_PARAM_OCTET_STRING
-            || p.ileave == NULL
-            || !OSSL_PARAM_get_uint(p.ileave, &mb_param.interleave)) {
+            || p.enc_in->data == NULL
+            || p.enc_in->data_size == 0
+            || p.enc->data_size != p.enc_in->data_size
+            || !aes_get_multiblock_interleave(p.ileave, &mb_param.interleave)
+            || p.enc_in->data_size
+                > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
