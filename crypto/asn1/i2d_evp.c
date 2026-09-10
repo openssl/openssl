@@ -116,7 +116,7 @@ i2d_PrivateKey_impl(const EVP_PKEY *a, unsigned char **pp, int traditional)
 
     if (a->ameth != NULL && a->ameth->priv_encode != NULL) {
         PKCS8_PRIV_KEY_INFO *p8 = EVP_PKEY2PKCS8(a);
-        int ret = 0;
+        int ret = -1;
 
         if (p8 != NULL) {
             ret = i2d_PKCS8_PRIV_KEY_INFO(p8, pp);
