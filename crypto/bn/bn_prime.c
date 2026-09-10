@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "crypto/fn_constants.h"
 #include "bn_local.h"
 
 /*
@@ -29,35 +30,19 @@ static int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
 
 #define square(x) ((BN_ULONG)(x) * (BN_ULONG)(x))
 
-#if BN_BITS2 == 64
-#define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo
-#else
-#define BN_DEF(lo, hi) lo, hi
-#endif
-
 /*
  * See SP800 89 5.3.3 (Step f)
  * The product of the set of primes ranging from 3 to 751
  * Generated using process in test/bn_internal_test.c test_bn_small_factors().
  * This includes 751 (which is not currently included in SP 800-89).
+ * The limb storage lives in crypto/fn/fn_prime_consts.c; this is the
+ * BIGNUM view over it.
  */
-static const BN_ULONG small_prime_factors[] = {
-    BN_DEF(0x3ef4e3e1, 0xc4309333), BN_DEF(0xcd2d655f, 0x71161eb6),
-    BN_DEF(0x0bf94862, 0x95e2238c), BN_DEF(0x24f7912b, 0x3eb233d3),
-    BN_DEF(0xbf26c483, 0x6b55514b), BN_DEF(0x5a144871, 0x0a84d817),
-    BN_DEF(0x9b82210a, 0x77d12fee), BN_DEF(0x97f050b3, 0xdb5b93c2),
-    BN_DEF(0x4d6c026b, 0x4acad6b9), BN_DEF(0x54aec893, 0xeb7751f3),
-    BN_DEF(0x36bc85c4, 0xdba53368), BN_DEF(0x7f5ec78e, 0xd85a1b28),
-    BN_DEF(0x6b322244, 0x2eb072d8), BN_DEF(0x5e2b3aea, 0xbba51112),
-    BN_DEF(0x0e2486bf, 0x36ed1a6c), BN_DEF(0xec0c5727, 0x5f270460),
-    (BN_ULONG)0x000017b1
-};
-
-#define BN_SMALL_PRIME_FACTORS_TOP OSSL_NELEM(small_prime_factors)
 static const BIGNUM _bignum_small_prime_factors = {
-    .d = (BN_ULONG *)small_prime_factors,
-    .top = BN_SMALL_PRIME_FACTORS_TOP,
-    .dmax = BN_SMALL_PRIME_FACTORS_TOP,
+    .data = (OSSL_FN *)&ossl_fn_static_small_prime_factors_storage.fn,
+    .d = (BN_ULONG *)ossl_fn_static_small_prime_factors_storage.fixed.d,
+    .top = (int)OSSL_NELEM(ossl_fn_static_small_prime_factors_storage.fixed.d),
+    .dmax = (int)OSSL_NELEM(ossl_fn_static_small_prime_factors_storage.fixed.d),
     .flags = BN_FLG_STATIC_DATA,
 };
 
