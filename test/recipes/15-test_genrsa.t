@@ -25,7 +25,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
     ($no_fips ? 0 : 5)          # Extra FIPS related tests
-    + 16;
+    + 17;
 
 # We want to know that an absurdly small number of bits isn't support
 is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
@@ -34,6 +34,8 @@ is(run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
            0, "genpkey 8");
 is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])),
            0, "genrsa -3 8");
+is(run(app([ 'openssl', 'genrsa', '-out', 'genrsatest.pem', '--', '-5'])),
+           0, "genrsa with a negative number of bits should fail");
 
 # Depending on the shared library, we might have different lower limits.
 # Let's find it!  This is a simple binary search
