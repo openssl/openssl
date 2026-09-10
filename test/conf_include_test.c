@@ -206,6 +206,32 @@ static int test_check_overflow(void)
     return 1;
 }
 
+static int test_load_duplicate_mfail(void)
+{
+    const char config[] = "a=1\na=2\n";
+    CONF *test_conf = NULL;
+    BIO *test_bio = NULL;
+    int ret = -1;
+
+    if (!TEST_ptr(test_conf = NCONF_new(NULL))
+        || !TEST_ptr(test_bio = BIO_new_mem_buf(config, sizeof(config) - 1)))
+        goto end;
+
+    MFAIL_start();
+    ret = NCONF_load_bio(test_conf, test_bio, NULL);
+    MFAIL_end();
+
+    if (ret > 0
+        && (!TEST_str_eq(NCONF_get_string(test_conf, "default", "a"), "2")
+            || !TEST_int_eq(sk_CONF_VALUE_num(NCONF_get_section(test_conf, "default")), 1)))
+        ret = -1;
+
+end:
+    BIO_free(test_bio);
+    NCONF_free(test_conf);
+    return ret;
+}
+
 static int test_available_providers(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -290,6 +316,7 @@ int setup_tests(void)
     ADD_TEST(test_load_config);
     ADD_TEST(test_check_null_numbers);
     ADD_TEST(test_check_overflow);
+    ADD_MFAIL_TEST(test_load_duplicate_mfail);
     if (test_providers != 0)
         ADD_TEST(test_available_providers);
 
