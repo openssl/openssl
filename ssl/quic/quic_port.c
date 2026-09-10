@@ -1294,6 +1294,7 @@ static void port_send_retry(QUIC_PORT *port,
             "port retry send failed due to network BIO I/O error");
 
 err:
+    WPACKET_cleanup(&wpkt);
     cleanup_validation_token(&token);
 }
 
@@ -1360,21 +1361,21 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
 
     if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
             &hdr, NULL))
-        return;
+        goto err;
 
     /*
      * Add the array of supported versions to the end of the packet
      */
     for (i = 0; i < OSSL_NELEM(supported_versions); i++) {
         if (!WPACKET_put_bytes_u32(&wpkt, supported_versions[i]))
-            return;
+            goto err;
     }
 
     if (!WPACKET_get_total_written(&wpkt, &msg[0].data_len))
-        return;
+        goto err;
 
     if (!WPACKET_finish(&wpkt))
-        return;
+        goto err;
 
     /*
      * Send it back to the client attempting to connect
@@ -1384,6 +1385,10 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
     if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
         ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
             "port version negotiation send failed");
+    return;
+err:
+    WPACKET_cleanup(&wpkt);
+    return;
 }
 
 /**
