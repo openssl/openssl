@@ -1298,11 +1298,12 @@ int tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     /*
      * RFC 9846 section 5.5 requires TLS 1.3 implementations to update the
      * traffic key or close the connection before the AEAD usage limit is
-     * reached. Count every record as full sized, which is conservative for
-     * shorter records.
+     * reached. RFC 9147 section 4.5.3 applies the same limit to DTLS 1.3.
+     * Count every record as full sized, which is conservative for shorter
+     * records.
      */
     if (direction == OSSL_RECORD_DIRECTION_WRITE
-        && vers == TLS1_3_VERSION && ciph != NULL
+        && (vers == TLS1_3_VERSION || vers == DTLS1_3_VERSION) && ciph != NULL
         && (EVP_CIPHER_is_a(ciph, "AES-128-GCM")
             || EVP_CIPHER_is_a(ciph, "AES-256-GCM")))
         rl->max_sequence = TLS13_AES_GCM_USAGE_LIMIT;

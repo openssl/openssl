@@ -261,10 +261,10 @@ static int tls_write_check_pending(SSL_CONNECTION *s, uint8_t type,
 }
 
 /*
- * Schedule a KeyUpdate before an application write would reach the TLS 1.3
- * AES-GCM per-key record limit. One old-key record is reserved for the
- * KeyUpdate message itself. If the active write record layer cannot safely
- * change keys, fail the write before reaching the limit instead.
+ * Schedule a KeyUpdate before an application write would reach the TLS 1.3 or
+ * DTLS 1.3 AES-GCM per-key record limit. One old-key record is reserved for
+ * the KeyUpdate message itself. If the active write record layer cannot
+ * safely change keys, fail the write before reaching the limit instead.
  */
 int ossl_tls13_maybe_key_update(SSL_CONNECTION *s, uint8_t type, size_t len)
 {
@@ -273,7 +273,8 @@ int ossl_tls13_maybe_key_update(SSL_CONNECTION *s, uint8_t type, size_t len)
     size_t fragment;
 
     if (type != SSL3_RT_APPLICATION_DATA || len == 0
-        || !SSL_CONNECTION_IS_TLS13(s) || ciph == NULL
+        || (!SSL_CONNECTION_IS_TLS13(s) && !SSL_CONNECTION_IS_DTLS13(s))
+        || ciph == NULL
         || (!EVP_CIPHER_is_a(ciph, "AES-128-GCM")
             && !EVP_CIPHER_is_a(ciph, "AES-256-GCM"))
         || s->rlayer.wrlmethod->get_sequence == NULL)

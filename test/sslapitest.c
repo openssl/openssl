@@ -8840,6 +8840,84 @@ end:
     return testresult;
 }
 
+/*
+ * Test that DTLS 1.3 applies the same AES-GCM per-key record limit as TLS
+ * 1.3. The DTLS replay window is moved close to the limit together with the
+ * sender sequence number so the boundary records can be exchanged normally.
+ */
+static int test_dtls13_aead_usage_limit(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_CONNECTION *clientsc = NULL, *serversc = NULL;
+    uint64_t sequence, write_epoch;
+    int testresult = 0;
+    int expect_update = tls13_aead_usage_limit_tests[idx].expect_update;
+    static const char mess[] = "A test message";
+    char buf[sizeof(mess)];
+
+#if defined(OSSL_NO_USABLE_DTLS1_3)
+    return TEST_skip("No usable DTLSv1.3");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, 0,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+            tls13_aead_usage_limit_tests[idx].ciphersuite))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+            tls13_aead_usage_limit_tests[idx].ciphersuite))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
+        || !TEST_ptr(serversc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_uint64_t_eq(clientsc->rlayer.wrl->max_sequence,
+            expect_update ? TLS13_AES_GCM_USAGE_LIMIT : 0))
+        goto end;
+
+    sequence = TLS13_AES_GCM_USAGE_LIMIT - (expect_update ? 2 : 1);
+    clientsc->rlayer.wrl->sequence = sequence;
+    serversc->rlayer.rrl->sequence = sequence;
+    serversc->rlayer.rrl->bitmap.max_seq_num = sequence - 1;
+    serversc->rlayer.rrl->bitmap.map = 1;
+    write_epoch = clientsc->rlayer.d->w_conn_epoch;
+
+    if (!TEST_int_eq(SSL_write(clientssl, mess, sizeof(mess)), sizeof(mess))
+        || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), sizeof(buf))
+        || !TEST_mem_eq(buf, sizeof(buf), mess, sizeof(mess))
+        || !TEST_uint64_t_eq(clientsc->rlayer.wrl->sequence,
+            TLS13_AES_GCM_USAGE_LIMIT - (expect_update ? 1 : 0)))
+        goto end;
+
+    if (expect_update) {
+        if (!TEST_int_eq(SSL_write(clientssl, mess, sizeof(mess)), -1)
+            || !TEST_uint64_t_eq(clientsc->rlayer.d->w_conn_epoch,
+                write_epoch + 1)
+            || !TEST_uint64_t_eq(clientsc->rlayer.wrl->sequence, 0))
+            goto end;
+
+        /* Process the KeyUpdate and its ACK, then retry the application write. */
+        if (!TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), -1)
+            || !TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)), -1)
+            || !TEST_int_eq(SSL_write(clientssl, mess, sizeof(mess)),
+                sizeof(mess))
+            || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), sizeof(buf))
+            || !TEST_mem_eq(buf, sizeof(buf), mess, sizeof(mess))
+            || !TEST_uint64_t_eq(clientsc->rlayer.wrl->sequence, 1))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /* Test retrying an automatic KeyUpdate after a nonblocking write stalls. */
 static int test_tls13_aead_usage_limit_retry(void)
 {
@@ -17285,6 +17363,10 @@ int setup_tests(void)
         OSSL_NELEM(tls13_aead_usage_limit_tests));
     ADD_TEST(test_tls13_aead_usage_limit_retry);
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
+#endif
+#if !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_dtls13_aead_usage_limit,
+        OSSL_NELEM(tls13_aead_usage_limit_tests));
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));

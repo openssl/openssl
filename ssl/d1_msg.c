@@ -13,11 +13,17 @@
 int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
     size_t len, size_t *written)
 {
-    int i;
+    int i, aead_limit_checked = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     if (sc == NULL)
         return -1;
+
+    if (!SSL_in_init(s)) {
+        if (!ossl_tls13_maybe_key_update(sc, type, len))
+            return -1;
+        aead_limit_checked = 1;
+    }
 
     /*
      * If we are supposed to be sending a KeyUpdate or NewSessionTicket then go
@@ -35,6 +41,11 @@ int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
             return -1;
         }
     }
+
+    /* Assess a write that entered here while another handshake was active. */
+    if (!aead_limit_checked
+        && !ossl_tls13_maybe_key_update(sc, type, len))
+        return -1;
 
     if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
         ERR_raise(ERR_LIB_SSL, SSL_R_DTLS_MESSAGE_TOO_BIG);
