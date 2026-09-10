@@ -57,7 +57,6 @@ IF[{- !$disabled{asm} -}]
   # Keep the RISC-V Zkn/Zvkned assembly fast paths, but route the generic
   # low-level AES APIs through the constant-time C implementation.
   $AESASM_riscv64=aes_core.c aes_cbc.c aes-riscv64-zkn.s aes-riscv64-zvkb-zvkned.s aes-riscv64-zvkned.s aes-riscv64-zvbb-zvkg-zvkned.s
-  $AESDEF_riscv64=OPENSSL_AES_CONST_TIME
   $AESASM_riscv32=aes_core.c aes_cbc.c aes-riscv32-zkn.s
 
   $AESASM_loongarch64=aes_core.c aes_cbc.c vpaes-loongarch64.S
@@ -73,6 +72,11 @@ IF[{- !$disabled{asm} -}]
       $AESDEF=$AESDEF $AESDEF_{- $target{asm_arch} -}_sse2
     ENDIF
   ENDIF
+ENDIF
+
+IF[{- $target{asm_arch} eq "riscv64" -}]
+  # The constant-time fallback must also be selected when asm is disabled.
+  $AESDEF=OPENSSL_AES_CONST_TIME
 ENDIF
 
 $COMMON=aes_misc.c aes_ecb.c $AESASM
