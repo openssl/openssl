@@ -444,6 +444,7 @@ ok(run(test(["pkcs12_api_test",
                  "-has-ca", 1,
                  "-ca-count", 2,
                  "-expected-cert", srctop_file(@path, "ee-cert.pem"),
+                 "-expected-key", srctop_file(@path, "ee-key.pem"),
                  "-expected-ca", $extra_certs,
                  ])), "Test PKCS12_parse cert placement with shared key");
 }
