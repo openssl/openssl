@@ -8327,8 +8327,9 @@ static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
         || !TEST_size_t_eq(params[0].return_size, gcm_ivlen)
         || !TEST_size_t_eq(params[1].return_size, gcm_ivlen)
         || !TEST_size_t_eq(params[2].return_size, sizeof(outtag)))
+        goto err;
 
-        ret = 1;
+    ret = 1;
 err:
     EVP_CIPHER_free(cipher);
     EVP_CIPHER_CTX_free(ctx);

@@ -1939,6 +1939,52 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
     return 0;
 }
 
+/*
+ * Check whether the distribution point name |idpname| of a CRL's IDP extension
+ * matches the default distribution point that RFC 5280, section 6.3.3, assumes
+ * for CRLs not specified in any of the certificate's distribution points: one
+ * whose fullName consists of the certificate issuer name and the names in the
+ * certificate's issuerAltName extension.  The assumed distribution point is
+ * constructed and matched with idp_check_dp().
+ */
+static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
+{
+    DIST_POINT_NAME dpname;
+    GENERAL_NAMES *gens;
+    GENERAL_NAME *gen = NULL;
+    X509_NAME *iname = NULL;
+    int ret = 0;
+
+    /*
+     * An undecodable issuerAltName extension is treated as an absent one;
+     * any decoding errors are not left in the error queue.
+     */
+    ERR_set_mark();
+    gens = X509_get_ext_d2i(x, NID_issuer_alt_name, NULL, NULL);
+    ERR_pop_to_mark();
+    if (gens == NULL && (gens = sk_GENERAL_NAME_new_null()) == NULL)
+        return 0;
+    if ((gen = GENERAL_NAME_new()) == NULL
+        || (iname = X509_NAME_dup(X509_get_issuer_name(x))) == NULL)
+        goto end;
+    GENERAL_NAME_set0_value(gen, GEN_DIRNAME, iname);
+    iname = NULL; /* now owned by |gen| */
+    if (!sk_GENERAL_NAME_push(gens, gen))
+        goto end;
+    gen = NULL; /* now owned by |gens| */
+
+    dpname.type = 0; /* fullName */
+    dpname.name.fullname = gens;
+    dpname.dpname = NULL;
+    ret = idp_check_dp(&dpname, idpname);
+
+end:
+    GENERAL_NAME_free(gen);
+    X509_NAME_free(iname);
+    GENERAL_NAMES_free(gens);
+    return ret;
+}
+
 /* Check CRLDP and IDP */
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
@@ -1966,8 +2012,16 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
             }
         }
     }
-    return (crl->idp == NULL || crl->idp->distpoint == NULL)
-        && (crl_score & CRL_SCORE_ISSUER_NAME) != 0;
+    /*
+     * The CRL is not specified in any distribution point of the certificate.
+     * RFC 5280, section 6.3.3, allows such a CRL if it is issued by the
+     * certificate issuer, assuming a distribution point with the reasons and
+     * cRLIssuer fields omitted and a distribution point name consisting of
+     * the certificate issuer name and any issuerAltName entries.
+     */
+    return (crl_score & CRL_SCORE_ISSUER_NAME) != 0
+        && (crl->idp == NULL || crl->idp->distpoint == NULL
+            || idp_check_issuer(crl->idp->distpoint, x));
 }
 
 /*

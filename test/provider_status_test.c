@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <stdbool.h>
 #include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
@@ -141,6 +142,44 @@ end:
     return ret;
 }
 
+struct group_capability_st {
+    int num_capabilities;
+    int num_correct_type;
+};
+
+static int tls_group_capability_cb(const OSSL_PARAM params[], void *arg)
+{
+    const OSSL_PARAM *p = OSSL_PARAM_locate_const(
+        params, OSSL_CAPABILITY_TLS_GROUP_IS_KEM);
+    struct group_capability_st *gcp = (struct group_capability_st *)arg;
+
+    gcp->num_capabilities++;
+
+    if (!TEST_ptr(p) || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER))
+        return 0;
+
+    gcp->num_correct_type++;
+    return 1;
+}
+
+static int test_tls_group_capability_type(void)
+{
+    OSSL_PROVIDER *prov = NULL;
+    struct group_capability_st gc = { 0, 0 };
+    int ret = 0;
+
+    if (!TEST_ptr(prov = OSSL_PROVIDER_load(libctx, provider_name))
+        || !TEST_true(OSSL_PROVIDER_get_capabilities(
+            prov, "TLS-GROUP", tls_group_capability_cb, &gc))
+        || !TEST_int_eq(gc.num_capabilities, gc.num_correct_type))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PROVIDER_unload(prov);
+    return ret;
+}
+
 static int test_provider_status(void)
 {
     int ret = 0;
@@ -217,6 +256,7 @@ int setup_tests(void)
 {
     OPTION_CHOICE o;
     char *config_file = NULL;
+    bool is_fips, is_default;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -234,11 +274,17 @@ int setup_tests(void)
         }
     }
 
-    libctx = OSSL_LIB_CTX_new();
-    if (libctx == NULL)
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
+        return 0;
+    if (!TEST_ptr(provider_name))
         return 0;
 
-    if (strcmp(provider_name, "fips") == 0) {
+    is_fips = strcmp(provider_name, "fips") == 0;
+    is_default = strcmp(provider_name, "default") == 0;
+
+    if (is_fips) {
+        if (!TEST_ptr(config_file))
+            return 0;
         self_test_args.count = 0;
         OSSL_SELF_TEST_set_callback(libctx, self_test_on_load, &self_test_args);
         if (!OSSL_LIB_CTX_load_config(libctx, config_file)) {
@@ -249,6 +295,10 @@ int setup_tests(void)
     } else {
         ADD_TEST(test_provider_gettable_params);
     }
+
+    if (is_default || (is_fips && fips_provider_version_ge(libctx, 4, 1, 0)))
+        ADD_TEST(test_tls_group_capability_type);
+
     return 1;
 }
 
