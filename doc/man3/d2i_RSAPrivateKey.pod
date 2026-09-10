@@ -291,8 +291,8 @@ B<I<TYPE>> structure or NULL if an error occurs.  If the "reuse" capability has
 been used with a valid structure being passed in via I<a>, then the object is
 freed in the event of error and I<*a> is set to NULL.
 
-B<i2d_I<TYPE>>() returns the number of bytes successfully encoded or a negative
-value if an error occurs.
+B<i2d_I<TYPE>>() returns the number of bytes successfully encoded or <= 0
+if an error occurs.
 
 B<i2d_I<TYPE>_bio>() and B<i2d_I<TYPE>_fp>() return 1 for success and 0 if an
 error occurs.
