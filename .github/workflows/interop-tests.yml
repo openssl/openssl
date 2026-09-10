@@ -97,7 +97,7 @@ jobs:
       - name: Run interop tests
         run: |
           cd interop
-          tmt run -av plans -n interop tests -f "tag: interop-openssl & tag: interop-$COMPONENT" provision -h local --feeling-safe execute -h tmt --interactive
+          tmt --feeling-safe run -av plans -n interop tests -f "tag: interop-openssl & tag: interop-$COMPONENT" provision -h local execute -h tmt --interactive
           openssl version
           echo "Finished - important to prevent unwanted output truncating"
   openssh_interop:
