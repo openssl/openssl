@@ -35,25 +35,6 @@
 #define OSSL_FN_LOW_HALF_MASK ((OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS / 2)) - 1)
 #define OSSL_FN_HIGH_HALF_MASK (OSSL_FN_LOW_HALF_MASK << (OSSL_FN_BITS / 2))
 
-struct ossl_fn_st {
-    /* Flag: alloced with OSSL_FN_new() or  OSSL_FN_secure_new() */
-    unsigned int is_dynamically_allocated : 1;
-    /* Flag: alloced with OSSL_FN_secure_new() */
-    unsigned int is_securely_allocated : 1;
-
-    /*
-     * The d array, with its size in number of OSSL_FN_ULONG.
-     * This stores the number itself.
-     *
-     * Note: |dsize| is an int, because it turns out that some lower level
-     * (possibly assembler) functions expect that type (especially, that
-     * type size).
-     * This deviates from the design in doc/designs/fixed-size-large-numbers.md
-     */
-    int dsize;
-    OSSL_FN_ULONG d[];
-};
-
 static ossl_inline size_t ossl_fn_totalsize(size_t limbs)
 {
     /*
