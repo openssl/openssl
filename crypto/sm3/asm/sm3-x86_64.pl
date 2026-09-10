@@ -28,7 +28,7 @@ $dir=$1;
 die "can't locate x86_64-xlate.pl";
 
 # Check Intel(R) SM3 instructions support
-if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+if (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
 	$avx2_sm3_ni = ($1>=2.22); # minimal avx2 supported version, binary translation for SM3 instructions (sub sm3op) is used
     $avx2_sm3_ni_native = ($1>=2.42); # support added at GNU asm 2.42
@@ -41,7 +41,7 @@ if (!$avx2_sm3_ni && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	$avx2_sm3_ni_native = ($major > 2) || ($major == 2 && $minor > 16) || ($major == 2 && $minor == 16 && $patch >= 2); # support added at NASM 2.16.02
 }
 
-if (!$avx2_sm3_ni && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
+if (!$avx2_sm3_ni && defined $ENV{CC} && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
 	$avx2_sm3_ni = ($2>=7.0); # minimal tested version, binary translation for SM3 instructions (sub sm3op) is used
     $avx2_sm3_ni_native = ($2>=17.0); # support added at LLVM 17.0.1
 }
