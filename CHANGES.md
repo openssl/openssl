@@ -33,7 +33,10 @@ OpenSSL 4.1
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added the `-crl_uri` option to `openssl x509` for printing URIs from a
+   certificate's CRL distribution points.
+
+   *Sai Kiran Taduri*
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
