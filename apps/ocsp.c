@@ -1055,6 +1055,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
         if (!OCSP_check_validity(thisupd, nextupd, nsec, maxage)) {
             BIO_puts(out, "WARNING: Status times invalid.\n");
             ERR_print_errors(out);
+            ret = 0;
         }
         BIO_printf(out, "%s\n"
                         "\tThis Update: ",
