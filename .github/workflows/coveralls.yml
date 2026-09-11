@@ -49,6 +49,9 @@ jobs:
               "branch": "master",
               "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-unit-tests"
             }, {
+              "branch": "openssl-4.1",
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-unit-tests"
+            }, {
               "branch": "openssl-4.0",
               "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug"
             },{
