@@ -623,6 +623,7 @@ static int dh_gen_common_set_params(struct dh_gen_ctx *gctx,
 
     if (p->type != NULL) {
         if (p->type->data_type != OSSL_PARAM_UTF8_STRING
+            || p->type->data == NULL
             || ((gen_type = dh_gen_type_name2id_w_default(p->type->data, gctx->dh_type)) == -1)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
