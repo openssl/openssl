@@ -355,8 +355,25 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     int cadesVerify = (flags & CMS_CADES) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
 
-    if (dcont == NULL && !check_content(cms))
+    if (dcont == NULL && !check_content(cms)) {
+        /*
+         * A CMS_ContentInfo can be verified more than once (e.g. retried
+         * with a different store).  If a previous call left verify_result
+         * == 1 ("so far, fine") or any of the *_verified flags set on a
+         * SignerInfo, this early failure must still be reflected there
+         * instead of silently keeping the stale "verified" state from the
+         * earlier call.
+         */
+        sinfos = CMS_get0_SignerInfos(cms);
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            si->verify_result = 0;
+            si->cert_verified = 0;
+            si->attr_verified = 0;
+            si->content_verified = 0;
+        }
         return 0;
+    }
     if (dcont != NULL && !(flags & CMS_BINARY)) {
         const ASN1_OBJECT *coid = CMS_get0_eContentType(cms);
 
@@ -468,7 +485,12 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         tmpin = (len == 0) ? dcont : BIO_new_mem_buf(ptr, len);
         if (tmpin == NULL) {
             ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
-            goto err2;
+            /*
+             * cmsbio/tmpout are still NULL here, so the err-label cleanup is
+             * safe, and this must go through the verify_result reset loop at
+             * err (ret is still 0) rather than skipping it.
+             */
+            goto err;
         }
     } else {
         tmpin = dcont;
@@ -535,9 +557,22 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     else
         ret = n == scount; /* All must be successful */
 err:
-    if (!ret)
-        for (i = 0; i < scount; i++)
-            sk_CMS_SignerInfo_value(sinfos, i)->verify_result = 0;
+    /*
+     * On failure no signature must be reported as verified.  Iterate over all
+     * SignerInfos, not just the first 'scount': when we bail out early because
+     * a signer certificate could not be found, 'scount' is smaller than the
+     * number of signers and the trailing ones would otherwise keep the
+     * verify_result = 1 ("so far, fine") set in the init loop above.
+     */
+    if (!ret) {
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            si->verify_result = 0;
+            si->cert_verified = 0;
+            si->attr_verified = 0;
+            si->content_verified = 0;
+        }
+    }
     if (!(flags & SMIME_BINARY) && dcont) {
         do_free_upto(cmsbio, tmpout);
         if (tmpin != dcont)
@@ -554,7 +589,6 @@ err:
     if (out != tmpout)
         BIO_free_all(tmpout);
 
-err2:
     if (si_chains != NULL) {
         for (i = 0; i < scount; ++i)
             OSSL_STACK_OF_X509_free(si_chains[i]);
