@@ -103,9 +103,20 @@ sub sig_bits {
     return 4 * (length($hex) - 1) + $bits_in_top;
 }
 
+# Escape a string for embedding in a C string literal
+sub c_string {
+    my ($s) = @_;
+    $s =~ s/\\/\\\\/g;
+    $s =~ s/"/\\"/g;
+    $s =~ s/\n/\\n/g;
+    $s =~ s/\t/\\t/g;
+    return $s;
+}
+
 # Emit a byte array initializer, 12 bytes per line
 sub emit_bytes {
     my ($hex) = @_;
+    die "odd number of hex digits\n" if length($hex) % 2;
     my @bytes = unpack '(H2)*', pack 'H*', $hex;
     my @lines;
     while (@bytes) {
@@ -180,6 +191,11 @@ for my $name (@canonical) {
         : 'NID_X9_62_prime_field';
     my @extra = @{ $c->{extra} // [] };
     my $nfields = 6 + scalar @extra;
+
+    for my $hex ((map { $c->{$_} } @fields), @extra) {
+        die "$name: field is not $plen bytes (padded hex expected)\n"
+            if length($hex) != 2 * $plen;
+    }
 
     $output .= "#ifndef FIPS_MODULE\n" if $guard;
     $output .= "/* $name */\n";
@@ -260,7 +276,7 @@ sub emit_table_entry {
     my $comment = $curves{$name}{comment} // '';
 
     return "    { $nid, &_EC_$csym.h, $method,\n"
-        . "        \"$comment\" },\n";
+        . "        \"" . c_string($comment) . "\" },\n";
 }
 
 $output .= "#ifdef FIPS_MODULE\n";
