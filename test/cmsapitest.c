@@ -483,7 +483,7 @@ static int test_CMS_verify_result_partial_signer_cert(void)
         || !TEST_ptr(both_certs = sk_X509_new_null()))
         goto end;
 
-    if (!TEST_ptr(pkey2 = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", 2048))
+    if (!TEST_ptr(pkey2 = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
         || !TEST_ptr(cert2 = make_self_signed_cert(pkey2, "second-signer")))
         goto end;
 
@@ -539,7 +539,8 @@ static int test_CMS_verify_result_partial_signer_cert(void)
 
     ERR_clear_error();
     if (!TEST_int_eq(CMS_verify(cms2, both_certs, store, NULL, out,
-                         CMS_BINARY | CMS_VERIFY_PARTIAL),
+                         CMS_BINARY | CMS_VERIFY_PARTIAL
+                               | CMS_NO_SIGNER_CERT_VERIFY),
             1))
         goto end;
 
@@ -557,7 +558,6 @@ static int test_CMS_verify_result_partial_signer_cert(void)
 
     ret = 1;
 end:
-    ERR_clear_error();
     CMS_ContentInfo_free(cms);
     CMS_ContentInfo_free(cms2);
     X509_STORE_free(store);

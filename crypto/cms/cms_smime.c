@@ -359,13 +359,19 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         /*
          * A CMS_ContentInfo can be verified more than once (e.g. retried
          * with a different store).  If a previous call left verify_result
-         * == 1 ("so far, fine") on any SignerInfo, this early failure must
-         * still be reflected there instead of silently keeping the stale
-         * "verified" state from the earlier call.
+         * == 1 ("so far, fine") or any of the *_verified flags set on a
+         * SignerInfo, this early failure must still be reflected there
+         * instead of silently keeping the stale "verified" state from the
+         * earlier call.
          */
         sinfos = CMS_get0_SignerInfos(cms);
-        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
-            sk_CMS_SignerInfo_value(sinfos, i)->verify_result = 0;
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            si->verify_result = 0;
+            si->cert_verified = 0;
+            si->attr_verified = 0;
+            si->content_verified = 0;
+        }
         return 0;
     }
     if (dcont != NULL && !(flags & CMS_BINARY)) {
@@ -558,9 +564,15 @@ err:
      * number of signers and the trailing ones would otherwise keep the
      * verify_result = 1 ("so far, fine") set in the init loop above.
      */
-    if (!ret)
-        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
-            sk_CMS_SignerInfo_value(sinfos, i)->verify_result = 0;
+    if (!ret) {
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            si->verify_result = 0;
+            si->cert_verified = 0;
+            si->attr_verified = 0;
+            si->content_verified = 0;
+        }
+    }
     if (!(flags & SMIME_BINARY) && dcont) {
         do_free_upto(cmsbio, tmpout);
         if (tmpin != dcont)
