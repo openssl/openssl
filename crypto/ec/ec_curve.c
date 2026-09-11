@@ -16,6 +16,8 @@
 
 #include <string.h>
 #include "ec_local.h"
+#include "../bn/bn_local.h"
+
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/objects.h>
@@ -2839,6 +2841,8 @@ static const ec_list_element curve_list[] = {
 
 #define curve_list_length OSSL_NELEM(curve_list)
 
+#include "ec_curves.inc"
+
 static const ec_list_element *ec_curve_nid2curve(int nid)
 {
     size_t i;
@@ -2860,7 +2864,10 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
     EC_GROUP *group = NULL;
     EC_POINT *P = NULL;
     BN_CTX *ctx = NULL;
-    BIGNUM *p = NULL, *a = NULL, *b = NULL, *x = NULL, *y = NULL, *order = NULL;
+    const BIGNUM *p = NULL, *a = NULL, *b = NULL, *x = NULL, *y = NULL;
+    BIGNUM *p_tmp = NULL, *a_tmp = NULL, *b_tmp = NULL, *x_tmp = NULL;
+    BIGNUM *y_tmp = NULL, *order_tmp = NULL, *cof_tmp = NULL;
+    const EC_STATIC_BIGNUM *sb = NULL;
     int ok = 0;
     int seed_len, param_len;
     const EC_METHOD *meth;
@@ -2901,11 +2908,19 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
 
     params += seed_len; /* skip seed */
 
-    if ((p = BN_bin2bn(params + 0 * param_len, param_len, NULL)) == NULL
-        || (a = BN_bin2bn(params + 1 * param_len, param_len, NULL)) == NULL
-        || (b = BN_bin2bn(params + 2 * param_len, param_len, NULL)) == NULL) {
+    if (ec_static_lookup(curve.nid, &sb)) {
+        p = sb->p;
+        a = sb->a;
+        b = sb->b;
+    } else if ((p_tmp = BN_bin2bn(params + 0 * param_len, param_len, NULL)) == NULL
+        || (a_tmp = BN_bin2bn(params + 1 * param_len, param_len, NULL)) == NULL
+        || (b_tmp = BN_bin2bn(params + 2 * param_len, param_len, NULL)) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
+    } else {
+        p = p_tmp;
+        a = a_tmp;
+        b = b_tmp;
     }
 
     if (group != NULL) {
@@ -2937,21 +2952,31 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
         goto err;
     }
 
-    if ((x = BN_bin2bn(params + 3 * param_len, param_len, NULL)) == NULL
-        || (y = BN_bin2bn(params + 4 * param_len, param_len, NULL)) == NULL) {
+    if (sb != NULL) {
+        x = sb->x;
+        y = sb->y;
+    } else if ((x_tmp = BN_bin2bn(params + 3 * param_len, param_len, NULL)) == NULL
+        || (y_tmp = BN_bin2bn(params + 4 * param_len, param_len, NULL)) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
+    } else {
+        x = x_tmp;
+        y = y_tmp;
     }
     if (!EC_POINT_set_affine_coordinates(group, P, x, y, ctx)) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }
-    if ((order = BN_bin2bn(params + 5 * param_len, param_len, NULL)) == NULL
-        || !BN_set_word(x, (BN_ULONG)data->cofactor)) {
+    if (sb != NULL) {
+        if (!EC_GROUP_set_generator(group, P, sb->order, sb->cof)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+            goto err;
+        }
+    } else if ((order_tmp = BN_bin2bn(params + 5 * param_len, param_len, NULL)) == NULL
+        || !BN_set_word(cof_tmp = BN_new(), (BN_ULONG)data->cofactor)) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
-    }
-    if (!EC_GROUP_set_generator(group, P, order, x)) {
+    } else if (!EC_GROUP_set_generator(group, P, order_tmp, cof_tmp)) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }
@@ -3006,12 +3031,13 @@ err:
     }
     EC_POINT_free(P);
     BN_CTX_free(ctx);
-    BN_free(p);
-    BN_free(a);
-    BN_free(b);
-    BN_free(order);
-    BN_free(x);
-    BN_free(y);
+    BN_free(p_tmp);
+    BN_free(a_tmp);
+    BN_free(b_tmp);
+    BN_free(order_tmp);
+    BN_free(x_tmp);
+    BN_free(y_tmp);
+    BN_free(cof_tmp);
     return group;
 }
 
