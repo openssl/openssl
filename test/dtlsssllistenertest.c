@@ -4185,7 +4185,7 @@ static int test_dtls_listener_max_dgram_size_functional(void)
 
     SSL_set_connect_state(clientssl);
     while (serverssl == NULL) {
-        if (++abortctr > 100) {
+        if (++abortctr > 200) {
             TEST_error("connection did not converge (oversized ClientHello)");
             goto end;
         }
@@ -4213,6 +4213,9 @@ static int test_dtls_listener_max_dgram_size_functional(void)
         if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
             serverssl = SSL_accept_connection(listener,
                 SSL_ACCEPT_CONNECTION_NO_BLOCK);
+
+        /* Loopback delivery can lag and a lost datagram needs a retransmit */
+        OSSL_sleep(10);
     }
 
     if (!TEST_ptr(serverssl))
@@ -5007,7 +5010,7 @@ static int test_dtls_notifier_signalled_on_accept_queue_push(void)
     poll_timeout.tv_usec = 0;
 
     SSL_set_connect_state(clientssl);
-    for (abortctr = 0; abortctr < 100; abortctr++) {
+    for (abortctr = 0; abortctr < 200; abortctr++) {
         retc = SSL_connect(clientssl);
         err_code = SSL_get_error(clientssl, retc);
         if (retc <= 0
@@ -5040,6 +5043,9 @@ static int test_dtls_notifier_signalled_on_accept_queue_push(void)
 
         if ((poll_item.revents & SSL_POLL_EVENT_IC) != 0)
             break;
+
+        /* Loopback delivery can lag and a lost datagram needs a retransmit */
+        OSSL_sleep(10);
     }
 
     if (!TEST_size_t_gt(SSL_get_accept_connection_queue_len(listener), 0))
