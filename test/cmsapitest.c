@@ -21,6 +21,8 @@ static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
 static X509 *ed448_cert = NULL;
 static EVP_PKEY *ed448_privkey = NULL;
+static X509 *ml_dsa_cert = NULL;
+static EVP_PKEY *ml_dsa_privkey = NULL;
 static char *derin = NULL;
 static char *too_long_iv_cms_in = NULL;
 static char *pwri_kek_oob_der_in = NULL;
@@ -948,7 +950,156 @@ end:
 }
 #endif
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIv ecrecip [ed448certfile ed448privkeyfile]\n")
+/*
+ * A BIO_METHOD for the content read tests below: reads deliver
+ * |content_bio_data| bytes of 'A' in chunks and then either request a read
+ * retry or report an error, depending on |content_bio_retry|.  A seek or
+ * reset rewinds it, as the CMS code re-reads the content it signs.
+ */
+static size_t content_bio_pos;
+static size_t content_bio_data;
+static int content_bio_retry;
+
+static int content_bio_read(BIO *b, char *out, int outl)
+{
+    size_t n = content_bio_data - content_bio_pos;
+
+    if (n == 0) {
+        if (content_bio_retry) {
+            BIO_set_retry_read(b);
+            return 0;
+        }
+        return -1;
+    }
+    if (n > (size_t)outl)
+        n = (size_t)outl;
+    memset(out, 'A', n);
+    content_bio_pos += n;
+    return (int)n;
+}
+
+static long content_bio_ctrl(BIO *b, int cmd, long num, void *ptr)
+{
+    switch (cmd) {
+    case BIO_C_FILE_SEEK:
+    case BIO_CTRL_RESET:
+        content_bio_pos = 0;
+        return 0;
+    case BIO_CTRL_EOF:
+        return 0;
+    }
+    return 0;
+}
+
+static BIO *content_bio_new(BIO_METHOD **meth, size_t datalen, int retry)
+{
+    BIO *bio;
+
+    *meth = BIO_meth_new(BIO_get_new_index() | BIO_TYPE_SOURCE_SINK,
+        "test content source");
+    if (*meth == NULL
+        || !BIO_meth_set_read(*meth, content_bio_read)
+        || !BIO_meth_set_ctrl(*meth, content_bio_ctrl)
+        || (bio = BIO_new(*meth)) == NULL) {
+        BIO_meth_free(*meth);
+        *meth = NULL;
+        return NULL;
+    }
+    BIO_set_init(bio, 1);
+    content_bio_pos = 0;
+    content_bio_data = datalen;
+    content_bio_retry = retry;
+    return bio;
+}
+
+/*
+ * Signing and verifying detached empty content supplied in an empty
+ * writable memory BIO must work: such a BIO reports the end of its data
+ * with a negative read result and the retry flag set, alongside EOF.
+ */
+static int test_cms_sign_verify_empty_mem_content(void)
+{
+    BIO *content = NULL, *vcontent = NULL;
+    CMS_ContentInfo *cms = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(content = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(cms = CMS_sign(ed448_cert, ed448_privkey, NULL, content,
+                         CMS_DETACHED | CMS_BINARY | CMS_NOATTR)))
+        goto end;
+    /*
+     * An empty read-only memory BIO for the verification side: the generic
+     * content copying in CMS_verify() (cms_copy_content()) predates this
+     * code in rejecting the negative read result of an empty writable
+     * memory BIO.
+     */
+    if (!TEST_ptr(vcontent = BIO_new_mem_buf("", 0))
+        || !TEST_int_eq(CMS_verify(cms, NULL, NULL, vcontent, NULL,
+                            CMS_BINARY | CMS_NO_SIGNER_CERT_VERIFY),
+            1))
+        goto end;
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(content);
+    BIO_free(vcontent);
+    return ret;
+}
+
+/*
+ * A content BIO that delivers some data and then requests a read retry has
+ * not delivered the complete content: signing must fail rather than sign
+ * the prefix that arrived before the retry.
+ */
+static int test_cms_sign_content_read_retry(void)
+{
+    BIO_METHOD *meth = NULL;
+    BIO *content = NULL;
+    CMS_ContentInfo *cms = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(content = content_bio_new(&meth, 100, 1)))
+        goto end;
+    cms = CMS_sign(ed448_cert, ed448_privkey, NULL, content,
+        CMS_DETACHED | CMS_BINARY | CMS_NOATTR);
+    if (!TEST_ptr_null(cms))
+        goto end;
+    ERR_clear_error();
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(content);
+    BIO_meth_free(meth);
+    return ret;
+}
+
+/*
+ * The same for a mid-content read error on the message update path
+ * (ML-DSA): the error must not be treated as the end of the content.
+ */
+static int test_cms_sign_content_read_error(void)
+{
+    BIO_METHOD *meth = NULL;
+    BIO *content = NULL;
+    CMS_ContentInfo *cms = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(content = content_bio_new(&meth, 2048, 0)))
+        goto end;
+    cms = CMS_sign(ml_dsa_cert, ml_dsa_privkey, NULL, content,
+        CMS_DETACHED | CMS_BINARY | CMS_NOATTR);
+    if (!TEST_ptr_null(cms))
+        goto end;
+    ERR_clear_error();
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(content);
+    BIO_meth_free(meth);
+    return ret;
+}
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIv ecrecip [ed448certfile ed448privkeyfile [mldsacertfile mldsaprivkeyfile]]\n")
 
 int setup_tests(void)
 {
@@ -982,14 +1133,27 @@ int setup_tests(void)
         ed448_certin = test_get_argument(7);
         ed448_privkeyin = test_get_argument(8);
 
-        if (!TEST_ptr(ed448_cert = load_cert_pem(ed448_certin, NULL))
-            || !TEST_ptr(ed448_privkey = load_pkey_pem(ed448_privkeyin, NULL))) {
+        if (strcmp(ed448_certin, "none") != 0
+            && (!TEST_ptr(ed448_cert = load_cert_pem(ed448_certin, NULL))
+                || !TEST_ptr(ed448_privkey = load_pkey_pem(ed448_privkeyin,
+                                 NULL)))) {
             X509_free(ed448_cert);
             ed448_cert = NULL;
             EVP_PKEY_free(ed448_privkey);
             ed448_privkey = NULL;
             return 0;
         }
+    }
+
+    if (test_get_argument_count() > 10) {
+        const char *ml_dsa_certin = test_get_argument(9);
+        const char *ml_dsa_privkeyin = test_get_argument(10);
+
+        if (strcmp(ml_dsa_certin, "none") != 0
+            && (!TEST_ptr(ml_dsa_cert = load_cert_pem(ml_dsa_certin, NULL))
+                || !TEST_ptr(ml_dsa_privkey = load_pkey_pem(ml_dsa_privkeyin,
+                                 NULL))))
+            return 0;
     }
 
     ADD_TEST(test_encrypt_decrypt_aes_cbc);
@@ -1013,7 +1177,11 @@ int setup_tests(void)
         ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs);
         ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs_md);
         ADD_TEST(test_CMS_add1_signer_ed448_noattr);
+        ADD_TEST(test_cms_sign_verify_empty_mem_content);
+        ADD_TEST(test_cms_sign_content_read_retry);
     }
+    if (ml_dsa_cert != NULL && ml_dsa_privkey != NULL)
+        ADD_TEST(test_cms_sign_content_read_error);
 
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_X963KDF)
     ADD_TEST(test_kari_wrap_pad_unwrap_overflow);
@@ -1027,4 +1195,6 @@ void cleanup_tests(void)
     EVP_PKEY_free(privkey);
     X509_free(ed448_cert);
     EVP_PKEY_free(ed448_privkey);
+    X509_free(ml_dsa_cert);
+    EVP_PKEY_free(ml_dsa_privkey);
 }
