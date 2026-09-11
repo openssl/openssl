@@ -18,6 +18,7 @@
 #include "crypto/ml_kem.h"
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
+#include "internal/usdt.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
@@ -93,7 +94,12 @@ static int ml_kem_encapsulate_init(void *vctx, void *vkey,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
-    return ml_kem_init(vctx, EVP_PKEY_OP_ENCAPSULATE, key, params);
+    if (!ml_kem_init(vctx, EVP_PKEY_OP_ENCAPSULATE, key, params))
+        return 0;
+
+    OSSL_USDT_new_context_with_data(vctx, "pk::encapsulate", { "pk::algorithm", OSSL_USDT_STRING("ML-KEM") });
+
+    return 1;
 }
 
 static int ml_kem_decapsulate_init(void *vctx, void *vkey,
@@ -105,7 +111,12 @@ static int ml_kem_decapsulate_init(void *vctx, void *vkey,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
-    return ml_kem_init(vctx, EVP_PKEY_OP_DECAPSULATE, key, params);
+    if (!ml_kem_init(vctx, EVP_PKEY_OP_DECAPSULATE, key, params))
+        return 0;
+
+    OSSL_USDT_new_context_with_data(vctx, "pk::decapsulate", { "pk::algorithm", OSSL_USDT_STRING("ML-KEM") });
+
+    return 1;
 }
 
 static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
