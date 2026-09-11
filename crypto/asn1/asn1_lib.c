@@ -63,19 +63,21 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
         p++;
         if (--max == 0)
             goto err;
-        len = 0;
-        while (*p & 0x80) {
-            len <<= 7L;
-            len |= *(p++) & 0x7f;
+        len = *p & 0x7f;
+        if (len == 0)
+            goto err;
+        while (*(p++) & 0x80) {
             if (--max == 0)
                 goto err;
             if (len > (INT_MAX >> 7L))
                 goto err;
+            len <<= 7L;
+            len |= *p & 0x7f;
         }
-        len <<= 7L;
-        len |= *(p++) & 0x7f;
         tag = (int)len;
         if (--max == 0)
+            goto err;
+        if (tag < 31)
             goto err;
     } else {
         tag = i;
@@ -129,7 +131,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
         *inf = 0;
         i = *p & 0x7f;
         if (*p++ & 0x80) {
-            if (max < i)
+            if (max < i || i == 0x7f)
                 return 0;
             /* Skip leading zeroes */
             while (i > 0 && *p == 0) {
