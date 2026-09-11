@@ -185,6 +185,7 @@ void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
     OPENSSL_free(ec->outer_hostname);
     OPENSSL_free(ec->alpn_outer);
     OPENSSL_free(ec->former_inner);
+    OPENSSL_free(ec->cover_hostname);
     OPENSSL_free(ec->transbuf);
     OPENSSL_free(ec->innerch);
     OPENSSL_free(ec->grease_suite);

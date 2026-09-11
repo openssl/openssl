@@ -517,7 +517,23 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     /*
      * Anything non-default in "s->param" should overwrite anything in the ctx.
      */
-    X509_VERIFY_PARAM_set1(param, s->param);
+    i = X509_VERIFY_PARAM_set1(param, s->param);
+#ifndef OPENSSL_NO_ECH
+    /*
+     * Authenticate ECH rejection with the cover name, without changing the
+     * application's persistent DNS constraints. Apply this after inheritance
+     * and before callbacks, including on a certificate-verification retry.
+     */
+    if (!s->server && !s->ext.ech.success && s->ext.ech.cover_hostname != NULL
+        && (!i
+            || !X509_VERIFY_PARAM_set1_host(param,
+                s->ext.ech.cover_hostname, 0))) {
+        i = 0;
+        s->verify_result = X509_V_ERR_UNSPECIFIED;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto end;
+    }
+#endif
 
     if (s->verify_callback)
         X509_STORE_CTX_set_verify_cb(ctx, s->verify_callback);
