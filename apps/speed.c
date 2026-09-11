@@ -3370,6 +3370,16 @@ int speed_main(int argc, char **argv)
             continue;
 
         st = (dsa_key = get_dsa(dsa_bits[testnum])) != NULL;
+        if (!st) {
+            /* skip only this */
+            dsa_doit[testnum] = 0;
+            if (!mr) {
+                /* space after 'Skip' is to align with 'Doing' */
+                BIO_printf(bio_err, "Skip  %s with get_dsa() failure\n",
+                    dsa_choices[testnum].name);
+            }
+            goto dsa_err_break;
+        }
 
         for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].dsa_sign_ctx[testnum] = EVP_PKEY_CTX_new(dsa_key,
@@ -3381,25 +3391,17 @@ int speed_main(int argc, char **argv)
                        loopargs[i].buf2,
                        &loopargs[i].sigsize,
                        loopargs[i].buf, 20)
-                    <= 0)
+                    <= 0) {
+                /* this failure tends to be caused by EVP_PKEY_init() not by EVP_PKEY_CTX_new() */
                 st = 0;
+            }
         }
         if (!st) {
-            /* this failure is usually caused by EVP_PKEY_*() not by get_dsa() */
-            /* skip only this */
-            dsa_doit[testnum] = 0;
-            if (!mr) {
-                /* space after 'Skip' is to align with 'Doing' */
-                BIO_printf(bio_err, "Skip  %s with invalid sign setup\n",
-                    dsa_choices[testnum].name);
-            }
-            /* to stop all the dsa's, use below instead */
-            /*
-             * BIO_puts(bio_err,
-             *     "DSA sign setup failure.  No DSA sign will be done.\n");
-             * dofail();
-             * op_count = 1;
-             */
+            /* stop all the dsa's */
+            BIO_puts(bio_err,
+                "DSA sign setup failure.  No DSA sign will be done.\n");
+            dofail();
+            op_count = 1;
             goto dsa_err_break;
         } else {
             /* the double spaces after 'sign' are to align the length with 'verify' */
