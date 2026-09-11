@@ -274,7 +274,8 @@ for my $e (@nonfips_entries) {
     for my $g (@{$block->{guards}}) {
         my $d = $g->{directive};
         push @enabled_conds, "!disabled('ec2m')" if $d =~ /ifndef OPENSSL_NO_EC2M/;
-        push @enabled_conds, "!disabled('sm2')" if $d =~ /ifndef OPENSSL_NO_SM2/;
+        push @enabled_conds, "!disabled('sm2')"
+            if $d =~ /ifndef OPENSSL_NO_SM2/ || $d =~ /!defined\(OPENSSL_NO_SM2\)/;
     }
 
     print $out "     field     => '$field',\n";
