@@ -1910,6 +1910,16 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     }
 
     /*
+     * Client-only: record that this flight's first-offered PSK has derived
+     * s->early_secret, so the early-write key install can refuse to key 0-RTT
+     * off an underived (zero) secret. early_secret aliases s->early_secret
+     * exactly for the identity that 0-RTT is keyed on (the resumption PSK, or
+     * an external PSK selected for early data via usepskfored).
+     */
+    if (!s->server && early_secret == (unsigned char *)s->early_secret)
+        s->ext.early_secret_derived = 1;
+
+    /*
      * Create the handshake hash for the binder key...the messages so far are
      * empty!
      */

@@ -1889,6 +1889,36 @@ struct ssl_connection_st {
         bool tick_age_checked;
         bool tick_age_ok;
 
+        /*
+         * Client-only. Whether the loaded resumption ticket (s->session)
+         * qualifies as an offered PSK for the ClientHello under construction.
+         * Frozen once by tls_construct_ctos_early_data() (the first consumer,
+         * which also decides 0-RTT from it) so tls_construct_ctos_psk() offers
+         * exactly the same identity 0 -- never re-evaluating the SECOP-dependent
+         * tls13_digest_offered() a second time, which could otherwise drop the
+         * ticket after early_data was already committed and leave the early
+         * secret underived.
+         */
+        bool psk_resumption_offered;
+
+        /*
+         * Client-only. Set in tls_psk_do_binder() when the first-offered PSK's
+         * binder derives s->early_secret for the current ClientHello flight;
+         * reset at the top of tls_construct_ctos_early_data(). The early-write
+         * key install (tls13_change_cipher_state()) refuses to proceed unless it
+         * is set, so 0-RTT can never be keyed off an underived (all-zero)
+         * s->early_secret even if the offer and early_data decisions somehow
+         * diverge.
+         */
+        bool early_secret_derived;
+
+        /*
+         * Records that an early exporter secret actually exists.  It may not
+         * yet be computed if the CH1 write blocks early enough.  Remains
+         * unchanged after CH2.
+         */
+        bool early_exporter_ready;
+
         /* Have we received a cookie from the client? */
         bool cookieok;
 
@@ -3306,6 +3336,7 @@ __owur int ssl_handshake_hash(SSL_CONNECTION *s,
     unsigned char *out, size_t outlen,
     size_t *hashlen);
 __owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
+__owur int ssl_cipher_get_handshake_digest_nid(const SSL_CIPHER *c);
 int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);

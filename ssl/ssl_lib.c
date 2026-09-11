@@ -595,6 +595,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->hit = 0;
     sc->shutdown = 0;
     sc->ext.early_data_suppressed = 0;
+    sc->ext.early_exporter_ready = 0;
     SSL_SESSION_free(sc->ext.early_data_session);
     sc->ext.early_data_session = NULL;
     sc->ext.tick_age_checked = 0;
