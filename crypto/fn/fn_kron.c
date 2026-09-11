@@ -8,23 +8,12 @@
  */
 
 #include <openssl/err.h>
-#include "internal/safe_math.h"
 #include "crypto/fnerr.h"
 #include "fn_local.h"
-
-OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
 /* least significant word; 0 if the operand has no limbs (i.e. is zero) */
 #define lsw(n) \
     (((n)->dsize == 0) ? (OSSL_FN_ULONG)0 : (n)->d[0])
-
-static size_t ctx_add_size(size_t a, size_t b)
-{
-    int err = 0;
-    size_t r = safe_add_size_t(a, b, &err);
-
-    return err == 0 ? r : 0;
-}
 
 /*-
  * OSSL_FN_kronecker() computes the Kronecker symbol (a/b), returning -1, 0,
@@ -203,8 +192,5 @@ size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
 
     size_t nested_size = OSSL_FN_mod_ctx_size(&t_L, &t_L, &t_L);
 
-    if (own_size == 0 || nested_size == 0)
-        return 0;
-
-    return ctx_add_size(own_size, nested_size);
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
