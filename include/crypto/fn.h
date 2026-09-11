@@ -172,6 +172,19 @@ int OSSL_FN_one(OSSL_FN *a);
 int OSSL_FN_zero(OSSL_FN *a);
 
 /**
+ * Return a read-only OSSL_FN holding the value one.
+ *
+ * @returns     A pointer to statically allocated constant storage holding
+ *              a 1-limb OSSL_FN with the value 1.  Never NULL.
+ *
+ * @note The returned OSSL_FN is a view on static constant storage; it must
+ *       not be freed, cleared, or written to.  This is a convenience
+ *       accessor for operations that need a constant 1 operand without
+ *       allocating.
+ */
+const OSSL_FN *OSSL_FN_value_one(void);
+
+/**
  * Copy the contents of one OSSL_FN instance to another.
  *
  * @param[out]  a       The destination OSSL_FN

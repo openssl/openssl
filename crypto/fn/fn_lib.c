@@ -13,6 +13,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include "internal/common.h"
+#include "crypto/fn_constants.h"
 #include "crypto/fnerr.h"
 #include "fn_local.h"
 #include "internal/constant_time.h"
@@ -152,6 +153,14 @@ int OSSL_FN_one(OSSL_FN *a)
 int OSSL_FN_zero(OSSL_FN *a)
 {
     return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(0));
+}
+
+/* The literal 1, backing OSSL_FN_value_one() */
+OSSL_FN_STATIC_DEFINE(one, 1, 1);
+
+const OSSL_FN *OSSL_FN_value_one(void)
+{
+    return &ossl_fn_static_one_storage.fn;
 }
 
 static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
