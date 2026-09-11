@@ -2238,6 +2238,1108 @@ end:
     return res;
 }
 
+/*
+ * Regression tests for ECH per-handshake state reset at SSL_clear() time
+ * (ossl_ech_conn_reset_handshake(), called from
+ * ossl_ssl_connection_reset(), which runs on explicit SSL_clear() and
+ * implicitly at handshake start).
+ */
+
+/*
+ * Minimal ClientHello capture/parse helper: records whether the outgoing
+ * ClientHello carried an ECH (or ECH-GREASE) extension of a given type and,
+ * if so, the kdf/aead/config_id/enc fields it contained.
+ */
+typedef struct ech_ch_capture_st {
+    int seen; /* an extension of the wanted type was found */
+    int parse_error; /* malformed ClientHello or extension */
+    int sni_seen;
+    int outer_alpn_seen;
+    uint16_t kdf_id;
+    uint16_t aead_id;
+    uint8_t config_id;
+    unsigned char enc[256]; /* big enough for any HPKE enc we produce */
+    size_t enc_len;
+    size_t payload_len;
+    uint16_t wanted_type; /* extension type to look for */
+} ECH_CH_CAPTURE;
+
+/*
+ * Values mirrored from ssl/ech/ech_local.h (not included here): the
+ * legacy_version length in a ClientHello and the ECHClientHelloType
+ * value for an outer CH.
+ */
+#define ECH_TEST_CLIENT_VERSION_LEN 2
+#define ECH_TEST_OUTER_CH_TYPE 0
+
+static int ech_parse_ch_for_ech(const unsigned char *buf, size_t len,
+    ECH_CH_CAPTURE *out)
+{
+    PACKET pkt, session, ciphers, compression, exts, ext_data, enc, payload;
+    unsigned int etype = 0, tmp = 0;
+
+    if (buf == NULL || out == NULL
+        || !PACKET_buf_init(&pkt, buf, len)
+        || !PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH)
+        || !PACKET_forward(&pkt, ECH_TEST_CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE)
+        || !PACKET_get_length_prefixed_1(&pkt, &session)
+        || !PACKET_get_length_prefixed_2(&pkt, &ciphers)
+        || !PACKET_get_length_prefixed_1(&pkt, &compression)
+        || !PACKET_as_length_prefixed_2(&pkt, &exts))
+        return 0;
+
+    while (PACKET_remaining(&exts) > 0) {
+        if (!PACKET_get_net_2(&exts, &etype)
+            || !PACKET_get_length_prefixed_2(&exts, &ext_data))
+            return 0;
+        if (etype == TLSEXT_TYPE_server_name)
+            out->sni_seen = 1;
+        if (etype == TLSEXT_TYPE_application_layer_protocol_negotiation) {
+            static const unsigned char alpn[] = { 0, 6, 5, 'o', 'u', 't', 'e', 'r' };
+
+            out->outer_alpn_seen = PACKET_remaining(&ext_data) == sizeof(alpn)
+                && memcmp(PACKET_data(&ext_data), alpn, sizeof(alpn)) == 0;
+        }
+        if (etype != out->wanted_type)
+            continue;
+        if (!PACKET_get_1(&ext_data, &tmp) || tmp != ECH_TEST_OUTER_CH_TYPE
+            || !PACKET_get_net_2(&ext_data, &tmp))
+            return 0;
+        out->kdf_id = tmp;
+        if (!PACKET_get_net_2(&ext_data, &tmp))
+            return 0;
+        out->aead_id = tmp;
+        if (!PACKET_get_1(&ext_data, &tmp))
+            return 0;
+        out->config_id = (uint8_t)tmp;
+        if (!PACKET_get_length_prefixed_2(&ext_data, &enc)
+            || !PACKET_get_length_prefixed_2(&ext_data, &payload)
+            || PACKET_remaining(&ext_data) != 0)
+            return 0;
+        out->enc_len = PACKET_remaining(&enc);
+        out->payload_len = PACKET_remaining(&payload);
+        if (out->enc_len > sizeof(out->enc))
+            return 0;
+        if (out->enc_len > 0
+            && !PACKET_copy_bytes(&enc, out->enc, out->enc_len))
+            return 0;
+        out->seen = 1;
+    }
+
+    /* A ClientHello without the wanted extension is valid. */
+    return 1;
+}
+
+static void ech_ch_capture_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    const unsigned char *p = buf;
+    ECH_CH_CAPTURE *cap = arg;
+
+    if (write_p != 1 || content_type != SSL3_RT_HANDSHAKE
+        || len < SSL3_HM_HEADER_LENGTH || p[0] != SSL3_MT_CLIENT_HELLO
+        || cap == NULL || cap->seen)
+        return;
+
+    if (!ech_parse_ch_for_ech(p, len, cap))
+        cap->parse_error = 1;
+}
+
+/* make a TLS 1.3 server/client ctx pair, optionally ECH-enabled via es */
+static int ech_clear_make_ctxs(SSL_CTX **sctx, SSL_CTX **cctx,
+    OSSL_ECHSTORE *es)
+{
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            sctx, cctx, cert, privkey)))
+        return 0;
+    if (es != NULL
+        && (!TEST_true(SSL_CTX_set1_echstore(*sctx, es))
+            || !TEST_true(SSL_CTX_set1_echstore(*cctx, es))))
+        return 0;
+    return 1;
+}
+
+/* make an ECH store holding one freshly generated config for public_name */
+static int ech_clear_make_store(OSSL_ECHSTORE **es, const char *public_name)
+{
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+
+    if (!TEST_ptr(*es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_new_config(*es, OSSL_ECH_CURRENT_VERSION,
+            0, public_name, hpke_suite)))
+        return 0;
+    return 1;
+}
+
+/* Count ClientHellos to distinguish HRR from a new connection. */
+static int hrr_ch_count = 0;
+static int hrr_ech_count = 0;
+static int ech_clear_hrr_cb(SSL *ssl, int *al, void *arg)
+{
+    const unsigned char *pos;
+    size_t remaining;
+
+    hrr_ch_count++;
+    if (SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_ech, &pos, &remaining))
+        hrr_ech_count++;
+    return 1;
+}
+
+static int ech_clear_callback_count;
+
+static unsigned int ech_clear_callback(SSL *ssl, const char *str)
+{
+    ech_clear_callback_count++;
+    return 1;
+}
+
+/*
+ * Reuse a client after ECH. Iteration 0 drops the store; iteration 1 starts
+ * with HRR, then resumes without HRR across explicit and implicit reset.
+ * Capture the first ClientHello's enc to check freshness across connections.
+ */
+static int test_ech_ssl_clear_client_reuse(int idx)
+{
+    int res = 0;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    ECH_CH_CAPTURE cap1, cap2, cap3;
+    char *sni = NULL, *outer = NULL;
+
+    if (!ech_clear_make_store(&es, "example.com")
+        || !ech_clear_make_ctxs(&sctx, &cctx, es)
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+
+    SSL_CTX_set_client_hello_cb(sctx, ech_clear_hrr_cb, NULL);
+    hrr_ch_count = hrr_ech_count = 0;
+    if (idx == 1
+        && (!TEST_true(SSL_set1_groups_list(serverssl, "P-384"))
+            || !TEST_true(SSL_set1_groups_list(clientssl,
+                "X25519:P-256:P-384"))
+            || !TEST_true(SSL_ech_set1_outer_server_name(clientssl, NULL, 1))
+            || !TEST_int_eq(SSL_set_alpn_protos(clientssl,
+                                (const unsigned char *)"\002h2", 3),
+                0)
+            || !TEST_true(SSL_ech_set1_outer_alpn_protos(clientssl,
+                (const unsigned char *)"\005outer", 6))))
+        goto end;
+    ech_clear_callback_count = 0;
+    SSL_ech_set_callback(clientssl, ech_clear_callback);
+
+    memset(&cap1, 0, sizeof(cap1));
+    cap1.wanted_type = TLSEXT_TYPE_ech;
+    SSL_set_msg_callback(clientssl, ech_ch_capture_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &cap1);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(cap1.seen)
+        || !TEST_false(cap1.parse_error)
+        || !TEST_size_t_ne(cap1.enc_len, 0)
+        || !TEST_int_eq(hrr_ch_count, idx + 1)
+        || !TEST_int_eq(hrr_ech_count, idx + 1)
+        || (idx == 0 && !TEST_int_eq(ech_clear_callback_count, 1))
+        || (idx == 1 && (!TEST_false(cap1.sni_seen) || !TEST_true(cap1.outer_alpn_seen))))
+        goto end;
+    SSL_set_verify_result(clientssl, X509_V_OK);
+    if (!TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_SUCCESS))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+
+    if (idx == 0) {
+        /* dropping the store must turn the next handshake into plain TLS */
+        SSL_free(serverssl);
+        serverssl = NULL;
+        memset(&cap2, 0, sizeof(cap2));
+        cap2.wanted_type = TLSEXT_TYPE_ech;
+        if (!TEST_true(SSL_clear(clientssl))
+            || !TEST_true(SSL_set1_echstore(clientssl, NULL))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                &clientssl, NULL, NULL))
+            || !TEST_true(SSL_set_tlsext_host_name(clientssl,
+                "server.example")))
+            goto end;
+        SSL_set_msg_callback_arg(clientssl, &cap2);
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_false(cap2.seen)
+            || !TEST_false(cap2.parse_error))
+            goto end;
+        res = 1;
+        goto end;
+    }
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    serverssl = NULL;
+
+    /* explicit clear, retained session; count callbacks on the new connection */
+    ech_clear_callback_count = 0;
+    memset(&cap2, 0, sizeof(cap2));
+    cap2.wanted_type = TLSEXT_TYPE_ech;
+    if (!TEST_true(SSL_clear(clientssl))
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_NOT_TRIED)
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+    SSL_set_msg_callback_arg(clientssl, &cap2);
+    hrr_ch_count = hrr_ech_count = 0;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(SSL_session_reused(clientssl))
+        || !TEST_int_eq(hrr_ch_count, 1)
+        || !TEST_int_eq(hrr_ech_count, 1)
+        || !TEST_int_eq(ech_clear_callback_count, 1)
+        || !TEST_false(cap2.sni_seen)
+        || !TEST_true(cap2.outer_alpn_seen)
+        || !TEST_true(cap2.seen)
+        || !TEST_false(cap2.parse_error)
+        || !TEST_true(cap1.enc_len != cap2.enc_len
+            || memcmp(cap1.enc, cap2.enc, cap1.enc_len) != 0))
+        goto end;
+    SSL_set_verify_result(clientssl, X509_V_OK);
+    if (!TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_SUCCESS))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    serverssl = NULL;
+
+    /* implicit clear through SSL_set_connect_state(), retained session */
+    memset(&cap3, 0, sizeof(cap3));
+    cap3.wanted_type = TLSEXT_TYPE_ech;
+    SSL_set_connect_state(clientssl);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    SSL_set_msg_callback_arg(clientssl, &cap3);
+    hrr_ch_count = hrr_ech_count = 0;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(SSL_session_reused(clientssl))
+        || !TEST_int_eq(hrr_ch_count, 1)
+        || !TEST_int_eq(hrr_ech_count, 1)
+        || !TEST_int_eq(ech_clear_callback_count, 2)
+        || !TEST_false(cap3.sni_seen)
+        || !TEST_true(cap3.outer_alpn_seen)
+        || !TEST_true(cap3.seen)
+        || !TEST_false(cap3.parse_error)
+        || !TEST_true(cap2.enc_len != cap3.enc_len
+            || memcmp(cap2.enc, cap3.enc, cap2.enc_len) != 0))
+        goto end;
+
+    res = 1;
+end:
+    OPENSSL_free(sni);
+    OPENSSL_free(outer);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/*
+ * Reuse a server after ECH with a plain/ECH client (0/1), or after GREASE
+ * with a plain client forced through HRR (2).
+ */
+static int test_ech_ssl_clear_server_reuse(int idx)
+{
+    int res = 0;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    char *sni = NULL, *outer = NULL;
+
+    if (!ech_clear_make_store(&es, "example.com")
+        || !ech_clear_make_ctxs(&sctx, &cctx, es)
+        || (idx == 2 && !TEST_true(SSL_CTX_set1_echstore(cctx, NULL)))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example"))
+        || (idx == 2 && !TEST_true(SSL_ech_set1_grease_suite(clientssl, "x25519,hkdf-sha256,aes-128-gcm")))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+    SSL_free(clientssl);
+    clientssl = NULL;
+
+    if (!TEST_true(SSL_CTX_set1_echstore(cctx, idx == 1 ? es : NULL))
+        || !TEST_true(SSL_clear(serverssl))
+        || !TEST_int_eq(SSL_ech_get1_status(serverssl, &sni, &outer),
+            SSL_ECH_STATUS_NOT_TRIED)
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+    if (idx != 0
+        && !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    SSL_CTX_set_client_hello_cb(sctx, ech_clear_hrr_cb, NULL);
+    hrr_ch_count = hrr_ech_count = 0;
+    if (idx == 2
+        && (!TEST_true(SSL_set1_groups_list(clientssl, "X25519:P-256:P-384"))
+            || !TEST_true(SSL_set1_groups_list(serverssl, "P-384"))))
+        goto end;
+    ERR_clear_error();
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_int_eq(hrr_ch_count, idx == 2 ? 2 : 1)
+        || !TEST_int_eq(hrr_ech_count, idx == 1 ? 1 : 0))
+        goto end;
+    if (idx == 1) {
+        SSL_set_verify_result(clientssl, X509_V_OK);
+        if (!TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+                SSL_ECH_STATUS_SUCCESS))
+            goto end;
+    }
+    res = 1;
+end:
+    OPENSSL_free(sni);
+    OPENSSL_free(outer);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/* Fresh per-connection ECH opt-outs must leave a plain first handshake. */
+static int test_ech_ssl_clear_fresh_config(int idx)
+{
+    int res = 0;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    ECH_CH_CAPTURE cap;
+
+    if (idx < 2 && !ech_clear_make_store(&es, "example.com"))
+        goto end;
+    if (!ech_clear_make_ctxs(&sctx, &cctx, es)
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+    if ((idx == 0 && !TEST_true(SSL_set1_echstore(clientssl, NULL)))
+        || (idx == 1
+            && !TEST_true(SSL_set1_ech_config_list(clientssl, NULL, 0)))
+        || (idx == 2
+            && !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+                "example.com", 0)))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+
+    memset(&cap, 0, sizeof(cap));
+    cap.wanted_type = TLSEXT_TYPE_ech;
+    SSL_set_msg_callback(clientssl, ech_ch_capture_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &cap);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_false(cap.seen)
+        || !TEST_false(cap.parse_error))
+        goto end;
+
+    res = 1;
+end:
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/*
+ * Application-configured GREASE settings (SSL_ech_set1_grease_suite() and
+ * SSL_ech_set_grease_type()) must survive both the implicit handshake-start
+ * reset and an explicit SSL_clear(): they are configuration, not
+ * per-handshake run-state.  The first connection below exercises the
+ * implicit reset (state_machine() calls SSL_clear() after the setters), the
+ * second exercises an explicit SSL_clear().
+ */
+static int test_ech_ssl_clear_grease_persist(void)
+{
+    int res = 0;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    ECH_CH_CAPTURE cap;
+    char *sni = NULL, *outer = NULL;
+
+    memset(&cap, 0, sizeof(cap));
+    cap.wanted_type = TLSEXT_TYPE_ech;
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_ech_set1_grease_suite(clientssl,
+            "x25519,hkdf-sha384,aes-256-gcm"))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+
+    /* connection 1: GREASE must be emitted despite the implicit reset */
+    SSL_set_msg_callback(clientssl, ech_ch_capture_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &cap);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(cap.seen)
+        || !TEST_false(cap.parse_error)
+        || !TEST_uint_eq(cap.kdf_id, OSSL_HPKE_KDF_ID_HKDF_SHA384)
+        || !TEST_uint_eq(cap.aead_id, OSSL_HPKE_AEAD_ID_AES_GCM_256)
+        || !TEST_size_t_ne(cap.enc_len, 0)
+        || !TEST_size_t_ne(cap.payload_len, 0)
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_GREASE))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+
+    /* explicit SSL_clear(), then require GREASE with the same suite again */
+    SSL_free(serverssl);
+    serverssl = NULL;
+    memset(&cap, 0, sizeof(cap));
+    cap.wanted_type = TLSEXT_TYPE_ech;
+    if (!TEST_true(SSL_clear(clientssl))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    SSL_set_msg_callback(clientssl, ech_ch_capture_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &cap);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(cap.seen)
+        || !TEST_false(cap.parse_error)
+        || !TEST_uint_eq(cap.kdf_id, OSSL_HPKE_KDF_ID_HKDF_SHA384)
+        || !TEST_uint_eq(cap.aead_id, OSSL_HPKE_AEAD_ID_AES_GCM_256)
+        || !TEST_size_t_ne(cap.enc_len, 0)
+        || !TEST_size_t_ne(cap.payload_len, 0)
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_GREASE))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+
+    /* a configured GREASE type must survive SSL_clear() too */
+    SSL_free(serverssl);
+    serverssl = NULL;
+    memset(&cap, 0, sizeof(cap));
+    cap.wanted_type = 0x0A0A; /* GREASE value per RFC 8701 */
+    if (!TEST_true(SSL_ech_set_grease_type(clientssl, 0x0A0A))
+        || !TEST_true(SSL_clear(clientssl))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    SSL_set_msg_callback(clientssl, ech_ch_capture_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &cap);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(cap.seen)
+        || !TEST_false(cap.parse_error)
+        || !TEST_uint_eq(cap.kdf_id, OSSL_HPKE_KDF_ID_HKDF_SHA384)
+        || !TEST_uint_eq(cap.aead_id, OSSL_HPKE_AEAD_ID_AES_GCM_256))
+        goto end;
+
+    /* real ECH overrides GREASE for that connection only */
+    SSL_free(serverssl);
+    serverssl = NULL;
+    if (!ech_clear_make_store(&es, "example.com")
+        || !TEST_true(SSL_CTX_set1_echstore(sctx, es))
+        || !TEST_true(SSL_set1_echstore(clientssl, es))
+        || !TEST_true(SSL_clear(clientssl))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example"))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+    SSL_set_verify_result(clientssl, X509_V_OK);
+    if (!TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_SUCCESS))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+
+    /* removing the store restores the application's GREASE configuration */
+    SSL_free(serverssl);
+    serverssl = NULL;
+    memset(&cap, 0, sizeof(cap));
+    cap.wanted_type = 0x0A0A;
+    if (!TEST_true(SSL_clear(clientssl))
+        || !TEST_true(SSL_set1_echstore(clientssl, NULL))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    SSL_set_msg_callback_arg(clientssl, &cap);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(cap.seen)
+        || !TEST_false(cap.parse_error)
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_GREASE))
+        goto end;
+
+    res = 1;
+end:
+    OPENSSL_free(sni);
+    OPENSSL_free(outer);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/* SSL_OP_ECH_GREASE is configuration too: clearing it stops GREASE. */
+static int test_ech_ssl_clear_grease_option_off(void)
+{
+    int res = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    ECH_CH_CAPTURE cap1, cap2;
+
+    if (!ech_clear_make_ctxs(&sctx, &cctx, NULL)
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_options(clientssl, SSL_OP_ECH_GREASE))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+
+    memset(&cap1, 0, sizeof(cap1));
+    cap1.wanted_type = TLSEXT_TYPE_ech;
+    SSL_set_msg_callback(clientssl, ech_ch_capture_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &cap1);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(cap1.seen)
+        || !TEST_false(cap1.parse_error))
+        goto end;
+
+    SSL_free(serverssl);
+    serverssl = NULL;
+    memset(&cap2, 0, sizeof(cap2));
+    cap2.wanted_type = TLSEXT_TYPE_ech;
+    if (!TEST_true(SSL_clear(clientssl)))
+        goto end;
+    SSL_clear_options(clientssl, SSL_OP_ECH_GREASE);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    SSL_set_msg_callback_arg(clientssl, &cap2);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_false(cap2.seen)
+        || !TEST_false(cap2.parse_error))
+        goto end;
+
+    res = 1;
+end:
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+static int ech_clear_verify_fail_count = 0;
+static int ech_clear_verify_fail_cb(int preverify_ok, X509_STORE_CTX *x509ctx)
+{
+    ech_clear_verify_fail_count++;
+    return 0;
+}
+
+/* SSL_set_verify(NULL) retains the previous callback; restore normal checks. */
+static int ech_clear_verify_ok_cb(int preverify_ok, X509_STORE_CTX *x509ctx)
+{
+    return preverify_ok;
+}
+
+static int ech_clear_identity_ok(SSL *ssl, const char *sni,
+    const char *dns1, const char *dns2)
+{
+    const char *expected[] = { dns1, dns2 };
+    int i;
+
+    if (!TEST_str_eq(SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name), sni))
+        return 0;
+    for (i = 0; i < 2; i++) {
+        const char *host = X509_VERIFY_PARAM_get0_host(SSL_get0_param(ssl), i);
+
+        if (expected[i] == NULL) {
+            if (!TEST_ptr_null(host))
+                return 0;
+        } else if (!TEST_ptr(host)
+            || !TEST_mem_eq(host, strlen(expected[i]),
+                expected[i], strlen(expected[i]))) {
+            return 0;
+        }
+    }
+    return TEST_ptr_null(X509_VERIFY_PARAM_get0_host(SSL_get0_param(ssl), 2));
+}
+
+/* Build an authenticated client whose ECH configuration will be rejected. */
+static int ech_identity_make_rejection(SSL_CTX **sctx, SSL_CTX **cctx,
+    OSSL_ECHSTORE **es, SSL **serverssl, SSL **clientssl,
+    const char *sni, const char *dns1, const char *dns2)
+{
+    if (!ech_identity_make_ctxs(sctx, cctx, es, pem_kp1)
+        || !TEST_true(create_ssl_objects(*sctx, *cctx, serverssl, clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set1_ech_config_list(*clientssl,
+            (const unsigned char *)ec_kp2, ec_kp2len))
+        || !TEST_true(SSL_set_tlsext_host_name(*clientssl, sni))
+        || !TEST_true(SSL_set1_dnsname(*clientssl, dns1)))
+        return 0;
+    if (dns2 != NULL && !TEST_true(SSL_add1_dnsname(*clientssl, dns2)))
+        return 0;
+    SSL_set_verify(*clientssl, SSL_VERIFY_PEER, NULL);
+    return 1;
+}
+
+/*
+ * Retry-config gating across SSL_clear() (RFC 9849 section 6.1.6):
+ * retry configs are only handed out when the handshake got far enough
+ * that everything except ECH worked (the retry_configs_ok flag).
+ * Connection 1 is such an authenticated ECH rejection: the client
+ * verifies the cover certificate with SSL_VERIFY_PEER, only ECH fails,
+ * and the getter returns the retry configs.  After SSL_clear(),
+ * connection 2 retries with the same wrong config but certificate
+ * verification is forced to fail this time, and the getter must then
+ * refuse: a stale retry_configs_ok flag would otherwise hand out retry
+ * configs received on a connection whose authentication failed.
+ */
+static int test_ech_ssl_clear_retry_gate(void)
+{
+    int res = 0;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    unsigned char *rc = NULL, *badrc = NULL;
+    size_t rclen = 0, badrclen = 0;
+    char *sni = NULL, *outer = NULL;
+
+    if (!ech_identity_make_rejection(&sctx, &cctx, &es, &serverssl,
+            &clientssl, "back.server.example", "back.server.example",
+            "alias.server.example"))
+        goto end;
+
+    /*
+     * Connection 1: ECH is rejected, but the cover certificate verifies
+     * against front.server.example, so authentication succeeds and the
+     * client aborts with ECH_REQUIRED; retry configs are available.
+     */
+    ERR_clear_error();
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_ECH_REQUIRED)
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_FAILED_ECH)
+        || !TEST_true(SSL_ech_get1_retry_config(clientssl, &rc, &rclen))
+        || !TEST_ptr(rc)
+        || !TEST_size_t_ne(rclen, 0))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+
+    /*
+     * Connection 2: SSL_clear() must have shut the retry-config gate.
+     * The same wrong config is retried (the store survives SSL_clear()),
+     * but certificate verification is now forced to fail, so no retry
+     * configs may be handed out even though the server sends them again.
+     */
+    SSL_free(serverssl);
+    serverssl = NULL;
+    if (!TEST_true(SSL_clear(clientssl))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl,
+            "back.server.example")))
+        goto end;
+    SSL_set_verify(clientssl, SSL_VERIFY_PEER, ech_clear_verify_fail_cb);
+    ech_clear_verify_fail_count = 0;
+    ERR_clear_error();
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_gt(ech_clear_verify_fail_count, 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_CERTIFICATE_VERIFY_FAILED)
+        || !TEST_false(SSL_ech_get1_retry_config(clientssl, &badrc,
+            &badrclen))
+        || !TEST_ptr_eq(badrc, NULL)
+        || !TEST_size_t_eq(badrclen, 0))
+        goto end;
+
+    /*
+     * Connection 3: the authenticated retry configs succeed on the reused
+     * object with no identity setter calls at all - the reset must have
+     * restored SNI and preserved the application's DNS names.
+     */
+    SSL_free(serverssl);
+    serverssl = NULL;
+    if (!TEST_true(SSL_clear(clientssl))
+        || !TEST_true(SSL_set1_ech_config_list(clientssl, rc, rclen))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+    SSL_set_verify(clientssl, SSL_VERIFY_PEER, ech_clear_verify_ok_cb);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_get_verify_result(clientssl), X509_V_OK)
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_SUCCESS)
+        || !TEST_str_eq(sni, "back.server.example"))
+        goto end;
+
+    res = 1;
+end:
+    OPENSSL_free(rc);
+    OPENSSL_free(badrc);
+    OPENSSL_free(sni);
+    OPENSSL_free(outer);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/*
+ * Preserve independent application identities after rejection. Later setters
+ * affect only their own configuration, even when a DNS update equals the cover.
+ */
+static int test_ech_ssl_clear_identity(int idx)
+{
+    int res = 0;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    X509_VERIFY_PARAM *source = NULL;
+    const char *sni = idx == 9 ? NULL : "back.server.example";
+    const char *dns1 = idx == 0 ? "one.server.example" : "back.server.example";
+    const char *dns2 = idx == 0 ? "two.server.example" : NULL;
+    const char *expected_sni = sni;
+    char *inner = NULL, *outer = NULL;
+
+    if (!ech_identity_make_rejection(&sctx, &cctx, &es, &serverssl,
+            &clientssl, sni, dns1, dns2))
+        goto end;
+    ERR_clear_error();
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl, SSL_ERROR_SSL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), SSL_R_ECH_REQUIRED)
+        || !ech_clear_identity_ok(clientssl, "front.server.example", dns1, dns2))
+        goto end;
+
+    switch (idx) {
+    case 1:
+    case 10:
+        expected_sni = idx == 1 ? "changed.server.example" : NULL;
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, expected_sni)))
+            goto end;
+        break;
+    case 2:
+    case 3:
+        expected_sni = idx == 2 ? "echinner.server.example" : NULL;
+        if (!TEST_true(SSL_ech_set1_server_names(clientssl,
+                expected_sni, NULL, 0)))
+            goto end;
+        break;
+    case 4:
+    case 5:
+        if (!TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+                idx == 4 ? "other.example" : NULL, idx == 5)))
+            goto end;
+        break;
+    case 6:
+        dns1 = "changed.server.example";
+        if (!TEST_true(SSL_set1_dnsname(clientssl, dns1)))
+            goto end;
+        break;
+    case 7:
+        dns2 = "extra.server.example";
+        if (!TEST_true(SSL_add1_dnsname(clientssl, dns2)))
+            goto end;
+        break;
+    case 8:
+    case 12:
+        dns1 = idx == 8 ? "front.server.example" : "direct.server.example";
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(SSL_get0_param(clientssl),
+                dns1, 0)))
+            goto end;
+        break;
+    case 11:
+        dns1 = "copied.server.example";
+        if (!TEST_ptr(source = X509_VERIFY_PARAM_new())
+            || !TEST_true(X509_VERIFY_PARAM_set1_host(source, dns1, 0))
+            || !TEST_true(SSL_set1_param(clientssl, source)))
+            goto end;
+        break;
+    }
+    /* Updating SNI must not discard the failed handshake's status history. */
+    if (!TEST_int_eq(SSL_ech_get1_status(clientssl, &inner, &outer),
+            SSL_ECH_STATUS_FAILED_ECH)
+        || !TEST_str_eq(inner, sni))
+        goto end;
+
+    /* Reset neither validates nor reconstructs application DNS names. */
+    ech_reject_cover_calls = 0;
+    X509_VERIFY_PARAM_set1_host_input_validation(SSL_get0_param(clientssl),
+        ech_reject_cover);
+    if (!TEST_true(SSL_clear(clientssl))
+        || !TEST_true(SSL_clear(clientssl))
+        || !TEST_int_eq(ech_reject_cover_calls, 0)
+        || !ech_clear_identity_ok(clientssl, expected_sni, dns1, dns2))
+        goto end;
+    res = 1;
+end:
+    OPENSSL_free(inner);
+    OPENSSL_free(outer);
+    X509_VERIFY_PARAM_free(source);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/*
+ * Fallback runs both on a HelloRetryRequest without an ECH extension and on
+ * the final ServerHello. The second fallback must not save the cover SNI
+ * as the application's original SNI.
+ */
+static int test_ech_ssl_clear_hrr_rejection(void)
+{
+    int res = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+
+    /* plain server without an ECH store; the client attempts real ECH */
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_load_verify_locations(cctx, rootcert, NULL))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set1_ech_config_list(clientssl,
+            (unsigned char *)ec_kp2, ec_kp2len))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl,
+            "back.server.example"))
+        || !TEST_true(SSL_set1_dnsname(clientssl, "back.server.example"))
+        || !TEST_true(SSL_add1_dnsname(clientssl, "alias.server.example"))
+        || !TEST_true(SSL_set1_groups_list(serverssl, "P-384"))
+        || !TEST_true(SSL_set1_groups_list(clientssl,
+            "X25519:P-256:P-384")))
+        goto end;
+    SSL_set_verify(clientssl, SSL_VERIFY_PEER, NULL);
+    SSL_CTX_set_client_hello_cb(sctx, ech_clear_hrr_cb, NULL);
+    hrr_ch_count = hrr_ech_count = 0;
+
+    /* fallback runs on the HRR and again on the final ServerHello */
+    ERR_clear_error();
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_ECH_REQUIRED)
+        || !TEST_int_eq(hrr_ch_count, 2) /* HRR: two ClientHellos */
+        || !ech_clear_identity_ok(clientssl, "front.server.example",
+            "back.server.example", "alias.server.example"))
+        goto end;
+
+    /* the second fallback must not have replaced the saved identity */
+    if (!TEST_true(SSL_clear(clientssl))
+        || !ech_clear_identity_ok(clientssl, "back.server.example",
+            "back.server.example", "alias.server.example"))
+        goto end;
+
+    res = 1;
+end:
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/*
+ * Negative check: the preserved origin DNS constraint must be enforced on a
+ * later reuse.  back.unique.example is not covered by echserver.pem, so an
+ * otherwise authenticated retry must fail certificate verification.
+ */
+static int test_ech_ssl_clear_identity_retry_mismatch(void)
+{
+    int res = 0;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    unsigned char *rc = NULL;
+    size_t rclen = 0;
+    char *sni = NULL, *outer = NULL;
+
+    if (!ech_identity_make_rejection(&sctx, &cctx, &es, &serverssl,
+            &clientssl, "back.server.example", "back.unique.example", NULL))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_ECH_REQUIRED)
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
+            SSL_ECH_STATUS_FAILED_ECH)
+        || !TEST_true(SSL_ech_get1_retry_config(clientssl, &rc, &rclen))
+        || !TEST_ptr(rc))
+        goto end;
+    OPENSSL_free(sni);
+    sni = NULL;
+    OPENSSL_free(outer);
+    outer = NULL;
+
+    /* reset restores SNI and preserves the uncovered origin DNS constraint */
+    SSL_free(serverssl);
+    serverssl = NULL;
+    if (!TEST_true(SSL_clear(clientssl))
+        || !ech_clear_identity_ok(clientssl, "back.server.example",
+            "back.unique.example", NULL)
+        || !TEST_true(SSL_set1_ech_config_list(clientssl, rc, rclen))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+    ERR_clear_error();
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_CERTIFICATE_VERIFY_FAILED)
+        /* the failure must be the deliberately uncovered origin name */
+        || !TEST_int_eq(SSL_get_verify_result(clientssl),
+            X509_V_ERR_HOSTNAME_MISMATCH))
+        goto end;
+
+    res = 1;
+end:
+    OPENSSL_free(rc);
+    OPENSSL_free(sni);
+    OPENSSL_free(outer);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/* Derived public names change with the store; explicit outer names survive. */
+static int test_ech_ssl_clear_public_name(void)
+{
+    static const char *expected[] = {
+        "front.server.example", "f1.server.example", "explicit.server.example"
+    };
+    int res = 0, i;
+    OSSL_ECHSTORE *es = NULL, *es_c3 = NULL;
+    BIO *in = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    char *sinner = NULL, *souter = NULL;
+
+    if (!ech_identity_make_ctxs(&sctx, &cctx, &es, pem_kp2)
+        || !TEST_ptr(es_c3 = OSSL_ECHSTORE_new(libctx, propq)))
+        goto end;
+    /* The server holds both keys; the second client configuration only kp3. */
+    for (i = 0; i < 2; i++) {
+        if (!TEST_ptr(in = BIO_new_mem_buf(pem_kp3, (int)strlen(pem_kp3)))
+            || !TEST_int_eq(OSSL_ECHSTORE_read_pem(i == 0 ? es : es_c3,
+                                in, OSSL_ECH_NO_RETRY),
+                1))
+            goto end;
+        BIO_free(in);
+        in = NULL;
+    }
+    if (!TEST_true(SSL_CTX_set1_echstore(sctx, es)))
+        goto end;
+    for (i = 0; i < 3; i++) {
+        if (i != 0) {
+            SSL_free(serverssl);
+            serverssl = NULL;
+            if (i == 2
+                && !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+                    expected[i], 0)))
+                goto end;
+            if (!TEST_true(SSL_clear(clientssl)))
+                goto end;
+        }
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                NULL, NULL)))
+            goto end;
+        if (i == 0) {
+            if (!TEST_true(SSL_set1_ech_config_list(clientssl,
+                    (const unsigned char *)ec_kp2, ec_kp2len))
+                || !TEST_true(SSL_set_tlsext_host_name(clientssl,
+                    "back.server.example"))
+                || !TEST_true(SSL_set1_dnsname(clientssl, "back.server.example")))
+                goto end;
+            SSL_set_verify(clientssl, SSL_VERIFY_PEER, NULL);
+        } else if (i == 1 && !TEST_true(SSL_set1_echstore(clientssl, es_c3))) {
+            goto end;
+        }
+        ERR_clear_error();
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+            || !TEST_int_eq(SSL_ech_get1_status(serverssl, &sinner, &souter),
+                SSL_ECH_STATUS_SUCCESS)
+            || !TEST_str_eq(souter, expected[i]))
+            goto end;
+        OPENSSL_free(sinner);
+        sinner = NULL;
+        OPENSSL_free(souter);
+        souter = NULL;
+    }
+    res = 1;
+end:
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    OSSL_ECHSTORE_free(es);
+    OSSL_ECHSTORE_free(es_c3);
+    BIO_free(in);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2288,6 +3390,16 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     ADD_ALL_TESTS(test_ech_verify_dnsname, 14);
+    ADD_ALL_TESTS(test_ech_ssl_clear_client_reuse, 2);
+    ADD_ALL_TESTS(test_ech_ssl_clear_server_reuse, 3);
+    ADD_ALL_TESTS(test_ech_ssl_clear_fresh_config, 3);
+    ADD_TEST(test_ech_ssl_clear_grease_persist);
+    ADD_TEST(test_ech_ssl_clear_grease_option_off);
+    ADD_TEST(test_ech_ssl_clear_retry_gate);
+    ADD_ALL_TESTS(test_ech_ssl_clear_identity, 13);
+    ADD_TEST(test_ech_ssl_clear_hrr_rejection);
+    ADD_TEST(test_ech_ssl_clear_identity_retry_mismatch);
+    ADD_TEST(test_ech_ssl_clear_public_name);
     return 1;
 err:
     return 0;

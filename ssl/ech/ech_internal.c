@@ -198,6 +198,118 @@ void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
     return;
 }
 
+/*
+ * Fallback can run on both HRR and the final ServerHello. Preserve the
+ * application SNI only while ECH owns its replacement, and keep a separate
+ * cover constraint for certificate verification and its retries.
+ */
+int ossl_ech_switch_to_cover_identity(SSL_CONNECTION *s)
+{
+    OSSL_ECH_CONN *ec = &s->ext.ech;
+    char *hostname = NULL;
+
+    if (ec->outer_hostname != NULL) {
+        if ((hostname = OPENSSL_strdup(ec->outer_hostname)) == NULL)
+            return 0;
+        if (ec->cover_hostname == NULL
+            && (ec->cover_hostname = OPENSSL_strdup(ec->outer_hostname)) == NULL) {
+            OPENSSL_free(hostname);
+            return 0;
+        }
+    }
+    if (!ec->sni_override) {
+        OPENSSL_free(ec->former_inner);
+        ec->former_inner = s->ext.hostname;
+    } else {
+        OPENSSL_free(s->ext.hostname);
+    }
+    s->ext.hostname = hostname;
+    ec->sni_override = 1;
+    return 1;
+}
+
+/*
+ * Clear handshake state without allocating or changing application DNS
+ * configuration. Explicit outer names and client GREASE settings survive;
+ * values derived from an ECHConfig or received from the peer do not.
+ * SSL_new() also calls this before ossl_ech_conn_init(), so it must tolerate
+ * zeroed ECH state.
+ */
+void ossl_ech_conn_reset_handshake(SSL_CONNECTION *s)
+{
+    OSSL_ECH_CONN *ec = &s->ext.ech;
+
+    if (ec->sni_override) {
+        /* restore the application SNI saved before ECH fallback */
+        OPENSSL_free(s->ext.hostname);
+        s->ext.hostname = ec->former_inner;
+        ec->former_inner = NULL;
+        ec->sni_override = 0;
+    } else {
+        OPENSSL_free(ec->former_inner);
+        ec->former_inner = NULL;
+    }
+    OPENSSL_free(ec->cover_hostname);
+    ec->cover_hostname = NULL;
+    if (ec->outer_hostname_explicit == 0) {
+        /* run-derived outer name: belongs to the previous handshake */
+        OPENSSL_free(ec->outer_hostname);
+        ec->outer_hostname = NULL;
+    }
+    OPENSSL_free(ec->transbuf);
+    ec->transbuf = NULL;
+    ec->transbuf_len = 0;
+    OPENSSL_free(ec->innerch);
+    ec->innerch = NULL;
+    ec->innerch_len = 0;
+    OPENSSL_free(ec->encoded_inner);
+    ec->encoded_inner = NULL;
+    ec->encoded_inner_len = 0;
+    OPENSSL_free(ec->sent);
+    ec->sent = NULL;
+    ec->sent_len = 0;
+    OPENSSL_free(ec->returned);
+    ec->returned = NULL;
+    ec->returned_len = 0;
+    OPENSSL_free(ec->pub);
+    ec->pub = NULL;
+    ec->pub_len = 0;
+    OSSL_HPKE_CTX_free(ec->hpke_ctx);
+    ec->hpke_ctx = NULL;
+    ech_free_stashed_key_shares(ec);
+    ec->clearlen = ec->cipherlen = ec->cipher_offset = 0;
+    ec->n_outer_only = 0;
+    ec->ext_ind = 0;
+    ec->ch_depth = 0;
+    ec->done = 0;
+    ec->backend = 0;
+    ec->tick_identity = 0;
+    ec->success = 0;
+    ec->retry_configs_ok = 0;
+    ec->inner_ech_seen_ok = 0;
+    ec->ch_offsets_done = 0;
+    ec->sessid_off = ec->exts_off = ec->ech_off = ec->sni_off = 0;
+    ec->echtype = OSSL_ECH_type_unknown;
+    ec->inner = 0;
+    ec->hrrsignal_p = NULL;
+    memset(ec->hrrsignal, 0, sizeof(ec->hrrsignal));
+    memset(ec->outer_only, 0, sizeof(ec->outer_only));
+    memset(ec->ks_group_id, 0, sizeof(ec->ks_group_id));
+    OPENSSL_cleanse(ec->client_random, sizeof(ec->client_random));
+    ec->grease = OSSL_ECH_NOT_GREASE;
+    ec->attempted_type = OSSL_ECH_type_unknown;
+    if (!s->server && ec->es == NULL && ec->grease_requested) {
+        ec->grease = OSSL_ECH_IS_GREASE;
+        if (ec->grease_type_set)
+            ec->attempted_type = ec->grease_type;
+        else
+            ec->attempted_type = TLSEXT_TYPE_ech;
+    }
+    /* re-derive attempt state the way ossl_ech_conn_init() does */
+    ec->attempted = (ec->es != NULL) ? 1 : 0;
+    ec->attempted_cid = OSSL_ECH_config_id_unset;
+}
+
 /* called from ssl/ssl_lib.c: ossl_ssl_connection_new_int */
 int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
     const SSL_METHOD *method)
@@ -1229,6 +1341,7 @@ static int ech_get_outer_sni(SSL_CONNECTION *s, char **osni_str,
         return 0;
     OPENSSL_free(s->ext.ech.outer_hostname);
     *osni_str = s->ext.ech.outer_hostname = s->ext.hostname;
+    s->ext.ech.outer_hostname_explicit = 0;
     /* clean up what the ECH-unaware parse func above left behind */
     s->ext.hostname = NULL;
     s->servername_done = 0;

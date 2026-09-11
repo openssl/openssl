@@ -183,6 +183,8 @@ typedef struct ossl_ech_conn_st {
     OSSL_ECHSTORE *es; /* ECHConfigList details */
     int no_outer; /* set to 1 if we should send no outer SNI at all */
     char *outer_hostname;
+    /* Only application-set outer names survive connection reset. */
+    int outer_hostname_explicit;
     unsigned char *alpn_outer;
     size_t alpn_outer_len;
     SSL_ech_cb_func cb; /* callback function for when ECH "done" */
@@ -192,6 +194,7 @@ typedef struct ossl_ech_conn_st {
      * the value we tried as the inner SNI for debug purposes
      */
     char *former_inner;
+    int sni_override; /* ECH still owns the temporary SNI replacement */
     /* Cover DNS constraint for this rejected handshake, not SSL configuration */
     char *cover_hostname;
     /* inner CH transcript buffer */
@@ -250,8 +253,11 @@ typedef struct ossl_ech_conn_st {
      */
     int retry_configs_ok;
     int inner_ech_seen_ok; /* set if we see inner ECH as expected */
-    int grease; /* 1 if we're GREASEing, 0 otherwise */
+    int grease; /* run-time GREASE state */
     char *grease_suite; /* HPKE suite string for GREASEing */
+    int grease_requested; /* application explicitly requested GREASE */
+    int grease_type_set;
+    uint16_t grease_type; /* configured GREASE extension type */
     unsigned char *sent; /* GREASEy ECH value sent, in case needed for re-tx */
     size_t sent_len;
     unsigned char *returned; /* binary ECHConfigList retry-configs value */
@@ -339,6 +345,8 @@ void ossl_ech_ctx_clear(OSSL_ECH_CTX *ce);
 int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
     const SSL_METHOD *method);
 void ossl_ech_conn_clear(OSSL_ECH_CONN *ec);
+void ossl_ech_conn_reset_handshake(SSL_CONNECTION *s);
+int ossl_ech_switch_to_cover_identity(SSL_CONNECTION *s);
 void ossl_echext_free(OSSL_ECHEXT *e);
 OSSL_ECHEXT *ossl_echext_dup(const OSSL_ECHEXT *src);
 #ifdef OSSL_ECH_SUPERVERBOSE

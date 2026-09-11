@@ -98,6 +98,7 @@ int SSL_ech_set1_server_names(SSL *ssl, const char *inner_name,
         return 0;
     OPENSSL_free(s->ext.hostname);
     s->ext.hostname = NULL;
+    s->ext.ech.sni_override = 0;
     if (inner_name != NULL) {
         s->ext.hostname = OPENSSL_strdup(inner_name);
         if (s->ext.hostname == NULL)
@@ -105,10 +106,12 @@ int SSL_ech_set1_server_names(SSL *ssl, const char *inner_name,
     }
     OPENSSL_free(s->ext.ech.outer_hostname);
     s->ext.ech.outer_hostname = NULL;
+    s->ext.ech.outer_hostname_explicit = 0;
     if (no_outer == 0 && outer_name != NULL && strlen(outer_name) > 0) {
         s->ext.ech.outer_hostname = OPENSSL_strdup(outer_name);
         if (s->ext.ech.outer_hostname == NULL)
             return 0;
+        s->ext.ech.outer_hostname_explicit = 1;
     }
     s->ext.ech.no_outer = no_outer;
     s->ext.ech.attempted = 1;
@@ -125,10 +128,12 @@ int SSL_ech_set1_outer_server_name(SSL *ssl, const char *outer_name,
         return 0;
     OPENSSL_free(s->ext.ech.outer_hostname);
     s->ext.ech.outer_hostname = NULL;
+    s->ext.ech.outer_hostname_explicit = 0;
     if (no_outer == 0 && outer_name != NULL && strlen(outer_name) > 0) {
         s->ext.ech.outer_hostname = OPENSSL_strdup(outer_name);
         if (s->ext.ech.outer_hostname == NULL)
             return 0;
+        s->ext.ech.outer_hostname_explicit = 1;
     }
     s->ext.ech.no_outer = no_outer;
     s->ext.ech.attempted = 1;
@@ -265,6 +270,7 @@ int SSL_ech_set1_grease_suite(SSL *ssl, const char *suite)
     s->ext.ech.grease_suite = OPENSSL_strdup(suite);
     if (s->ext.ech.grease_suite == NULL)
         return 0;
+    s->ext.ech.grease_requested = 1;
     s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     return 1;
 }
@@ -277,6 +283,9 @@ int SSL_ech_set_grease_type(SSL *ssl, uint16_t type)
     if (s == NULL)
         return 0;
     s->ext.ech.attempted_type = type;
+    s->ext.ech.grease_requested = 1;
+    s->ext.ech.grease_type_set = 1;
+    s->ext.ech.grease_type = type;
     s->ext.ech.grease = OSSL_ECH_IS_GREASE;
     return 1;
 }

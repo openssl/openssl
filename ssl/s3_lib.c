@@ -4033,6 +4033,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
             OPENSSL_free(sc->ext.hostname);
             sc->ext.hostname = NULL;
+#ifndef OPENSSL_NO_ECH
+            sc->ext.ech.sni_override = 0;
+#endif
 
             ret = 1;
             if (parg == NULL)
