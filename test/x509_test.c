@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include <openssl/crypto.h>
 #include "crypto/x509.h" /* x509_st definition */
 #include "testutil.h"
 
