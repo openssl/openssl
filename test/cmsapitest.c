@@ -21,6 +21,8 @@ static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
 static X509 *ed448_cert = NULL;
 static EVP_PKEY *ed448_privkey = NULL;
+static X509 *cert2 = NULL;
+static EVP_PKEY *privkey2 = NULL;
 static char *derin = NULL;
 static char *too_long_iv_cms_in = NULL;
 static char *pwri_kek_oob_der_in = NULL;
@@ -316,6 +318,50 @@ static int test_CMS_add_standard_smimecap_ex(void)
 end:
     sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
     return ret;
+}
+
+static int test_decrypt_with_wrong_key(void)
+{
+    int testresult = 0;
+    STACK_OF(X509) *certstack = sk_X509_new_null();
+    const char *msg = "Hello world";
+    BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
+    BIO *outmsgbio;
+    CMS_ContentInfo *content = NULL;
+    BIO *contentbio = NULL;
+    const EVP_CIPHER *cipher = EVP_aes_128_cbc();
+
+    if (!TEST_ptr(certstack) || !TEST_ptr(msgbio))
+        goto end;
+
+    if (!TEST_int_gt(sk_X509_push(certstack, cert), 0))
+        goto end;
+
+    content = CMS_encrypt(certstack, msgbio, cipher, 0);
+    if (!TEST_ptr(content))
+        goto end;
+
+    for (int i = 0; i < 1000; ++i) {
+        outmsgbio = BIO_new(BIO_s_mem());
+        if (!TEST_false(CMS_decrypt(content, privkey2, cert, NULL, outmsgbio,
+                            0)
+                == 1)) {
+            BIO_free(outmsgbio);
+            goto end;
+        }
+        BIO_free(outmsgbio);
+    }
+
+    ERR_clear_error();
+
+    testresult = 1;
+end:
+    BIO_free(contentbio);
+    sk_X509_free(certstack);
+    BIO_free(msgbio);
+    CMS_ContentInfo_free(content);
+
+    return testresult;
 }
 
 static int test_CMS_add1_cert(void)
@@ -948,12 +994,15 @@ end:
 }
 #endif
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIv ecrecip [ed448certfile ed448privkeyfile]\n")
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer"
+                       " pwriKekNoIv ecrecip certfile2 privkeyfile2"
+                       " [ed448certfile ed448privkeyfile]\n")
 
 int setup_tests(void)
 {
     char *certin = NULL, *privkeyin = NULL;
     char *ed448_certin = NULL, *ed448_privkeyin = NULL;
+    char *certin2 = NULL, *privkeyin2 = NULL;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
@@ -966,21 +1015,29 @@ int setup_tests(void)
         || !TEST_ptr(too_long_iv_cms_in = test_get_argument(3))
         || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4))
         || !TEST_ptr(pwri_kek_no_iv_in = test_get_argument(5))
-        || !TEST_ptr(ec_recip_in = test_get_argument(6)))
+        || !TEST_ptr(ec_recip_in = test_get_argument(6))
+        || !TEST_ptr(certin2 = test_get_argument(7))
+        || !TEST_ptr(privkeyin2 = test_get_argument(8)))
         return 0;
 
     if (!TEST_ptr(cert = load_cert_pem(certin, NULL))
-        || !TEST_ptr(privkey = load_pkey_pem(privkeyin, NULL))) {
+        || !TEST_ptr(privkey = load_pkey_pem(privkeyin, NULL))
+        || !TEST_ptr(cert2 = load_cert_pem(certin2, NULL))
+        || !TEST_ptr(privkey2 = load_pkey_pem(privkeyin2, NULL))) {
         X509_free(cert);
         cert = NULL;
         EVP_PKEY_free(privkey);
         privkey = NULL;
+        X509_free(cert2);
+        cert2 = NULL;
+        EVP_PKEY_free(privkey2);
+        privkey2 = NULL;
         return 0;
     }
 
-    if (test_get_argument_count() >= 9) {
-        ed448_certin = test_get_argument(7);
-        ed448_privkeyin = test_get_argument(8);
+    if (test_get_argument_count() >= 11) {
+        ed448_certin = test_get_argument(9);
+        ed448_privkeyin = test_get_argument(10);
 
         if (!TEST_ptr(ed448_cert = load_cert_pem(ed448_certin, NULL))
             || !TEST_ptr(ed448_privkey = load_pkey_pem(ed448_privkeyin, NULL))) {
@@ -1000,6 +1057,7 @@ int setup_tests(void)
     ADD_TEST(test_non_aead_on_auth_envelope_dec);
     ADD_TEST(test_short_mac_on_auth_envelope_data);
     ADD_TEST(test_CMS_add_standard_smimecap_ex);
+    ADD_TEST(test_decrypt_with_wrong_key);
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
@@ -1027,4 +1085,6 @@ void cleanup_tests(void)
     EVP_PKEY_free(privkey);
     X509_free(ed448_cert);
     EVP_PKEY_free(ed448_privkey);
+    X509_free(cert2);
+    EVP_PKEY_free(privkey2);
 }

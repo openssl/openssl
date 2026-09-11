@@ -156,6 +156,8 @@ struct CMS_EncryptedContentInfo_st {
     int debug;
     /* Set to 1 if we have no cert and need extra safety measures for MMA */
     int havenocert;
+    /* Set to 1 if key length mismatch can be reported without an MMA risk */
+    int harderr;
 };
 
 struct CMS_RecipientInfo_st {
