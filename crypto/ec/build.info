@@ -152,3 +152,8 @@ IF[{- !$disabled{'sm2'} -}]
   GENERATE[ecp_sm2p256-riscv64.S]=asm/ecp_sm2p256-riscv64.pl
   INCLUDE[ecp_sm2p256-riscv64.o]=..
 ENDIF
+
+GENERATE[ec_curves.inc]=ec_statics.pl
+DEPEND[ec_curves.inc]=ec_curves.conf ../../configdata.pm
+DEPEND[ec_curve.o]=ec_curves.inc
+INCLUDE[ec_curve.o]=.
