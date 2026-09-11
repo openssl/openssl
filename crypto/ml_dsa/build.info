@@ -40,3 +40,6 @@ ENDIF
 
 # Assembly implementations
 GENERATE[ml_dsa_ntt-x86_64.s]=asm/ml_dsa_ntt-x86_64.pl
+
+DEFINE[../../libcrypto]=$ML_DSA_DEF
+DEFINE[../../providers/libfips.a]=$ML_DSA_DEF
