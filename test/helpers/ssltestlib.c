@@ -1596,6 +1596,7 @@ int wait_until_sock_readable(int sock)
 
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error
+ * Any reused SSL objects freed on error have their caller pointers cleared.
  */
 int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
     SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio)
@@ -1648,6 +1649,10 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
     return 1;
 
 error:
+    if (serverssl == *sssl)
+        *sssl = NULL;
+    if (clientssl == *cssl)
+        *cssl = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     BIO_free(s_to_c_bio);
