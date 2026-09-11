@@ -26,6 +26,8 @@
 #include <openssl/asn1.h>
 #include <openssl/err.h>
 
+#include "internal/rcu.h"
+
 typedef struct ex_callback_st EX_CALLBACK;
 DEFINE_STACK_OF(EX_CALLBACK)
 
@@ -81,8 +83,8 @@ typedef struct ex_callbacks_st {
 } EX_CALLBACKS;
 
 typedef struct ossl_ex_data_global_st {
-    CRYPTO_RWLOCK *ex_data_lock;
-    EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
+    CRYPTO_RCU_LOCK *ex_data_lock;
+    EX_CALLBACKS *ex_data;
 } OSSL_EX_DATA_GLOBAL;
 
 /* OSSL_LIB_CTX */
