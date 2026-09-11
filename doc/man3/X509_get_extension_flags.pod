@@ -27,7 +27,7 @@ X509_get_proxy_pathlen - retrieve certificate extension data
  const GENERAL_NAMES *X509_get0_authority_issuer(const X509 *x);
  const ASN1_INTEGER *X509_get0_authority_serial(const X509 *x);
  void X509_set_proxy_flag(X509 *x);
- void X509_set_proxy_pathlen(int l);
+ void X509_set_proxy_pathlen(X509 *x, long l);
  long X509_get_proxy_pathlen(const X509 *x);
 
 =head1 DESCRIPTION
@@ -36,7 +36,12 @@ These functions retrieve information related to commonly used certificate extens
 
 X509_get_pathlen() retrieves the path length extension from a certificate.
 This extension is used to limit the length of a cert chain that may be
-issued from that CA.
+issued from that CA.  A path length constraint, whether from the basic
+constraints extension or the B<pcPathLengthConstraint> of a proxy
+certificate, must be in the range 0 to 255 inclusive.  A certificate
+carrying a value outside this range is treated as invalid, as if the
+extension could not be parsed, and the corresponding getter reports no
+constraint.
 
 X509_get_extension_flags() retrieves general information about a certificate,
 it will return one or more of the following flags ored together.
@@ -150,6 +155,9 @@ such, as OpenSSL only detects RFC3820 compliant ones.
 X509_set_proxy_pathlen() sets the proxy certificate path length for the given
 certificate B<x>.  This is for the users who need to mark non-RFC3820 proxy
 certificates as such, as OpenSSL only detects RFC3820 compliant ones.
+B<l> must be between 0 and 255 inclusive, or -1 to indicate that no
+path length constraint is set.  For any other value the path length is
+instead set to 0, permitting no further delegation.
 
 X509_get_proxy_pathlen() returns the proxy certificate path length for the
 given certificate B<x> if it is a proxy certificate.
@@ -175,7 +183,8 @@ X509_get_ext_d2i().
 =head1 RETURN VALUES
 
 X509_get_pathlen() returns the path length value, or -1 if the extension
-is not present.
+is not present, is out of range, or the certificate's extensions could
+not be parsed.
 
 X509_get_extension_flags(), X509_get_key_usage() and
 X509_get_extended_key_usage() return sets of flags corresponding to the
@@ -186,7 +195,9 @@ pointer to an B<ASN1_OCTET_STRING> structure or B<NULL> if the extension
 is absent or an error occurred during parsing.
 
 X509_get_proxy_pathlen() returns the path length value if the given
-certificate is a proxy one and has a path length set, and -1 otherwise.
+certificate is a proxy one and has a path length set, and -1 otherwise,
+including when the path length is out of range or the certificate's
+extensions could not be parsed.
 
 =head1 SEE ALSO
 
