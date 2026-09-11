@@ -122,6 +122,27 @@ Default is 0. For more info see L<CRYPTO_secure_malloc_init(3)>.
 
 This variable is not considered security-sensitive.
 
+=item B<OPENSSL_TEST_CORPUS_MAX_FILES>
+
+This test-only environment variable is recognised by the fuzz test corpus
+runner. When set to a positive integer, the runner processes at most that
+many corpus files, selected evenly spread over the sorted corpus. It is
+used by the fuzz test recipes to keep budgeted runs within their time
+budget and should generally not be set by users.
+
+This variable is not considered security-sensitive.
+
+=item B<OPENSSL_TEST_CORPUS_MAX_TIME>
+
+This test-only environment variable is recognised by the fuzz test corpus
+runner. When set to a positive number of seconds, the runner stops starting
+new corpus files and failure injection passes once that much processing
+time has elapsed and reports the number of skipped files. It is used by
+the fuzz test recipes to keep budgeted runs within their time budget and
+should generally not be set by users.
+
+This variable is not considered security-sensitive.
+
 =item B<OPENSSL_TEST_LIBCTX>
 
 This test-only environment variable, that is recognised by the L<openssl(1)>
