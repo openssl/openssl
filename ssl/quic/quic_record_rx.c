@@ -1326,7 +1326,13 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
     size_t pkt_idx = 0;
     QUIC_CONN_ID first_dcid = { 255 };
 
-    qrx->bytes_received += data_len;
+    /*
+     * A deferred datagram is processed again once decryption keys become
+     * available, so only count its bytes towards the received byte count the
+     * first time we see it.
+     */
+    if (!e->deferred)
+        qrx->bytes_received += data_len;
 
     if (!PACKET_buf_init(&pkt, data, data_len))
         return 0;

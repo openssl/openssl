@@ -33,6 +33,7 @@ static const QUIC_CONN_ID empty_conn_id = { 0, { 0 } };
 #define RX_TEST_OP_SET_INIT_KEY_PHASE 12 /* initial Key Phase bit value */
 #define RX_TEST_OP_CHECK_PKT_EPOCH 13 /* check read key epoch matches */
 #define RX_TEST_OP_ALLOW_1RTT 14 /* allow 1RTT packet processing */
+#define RX_TEST_OP_CHECK_BYTES_RECEIVED 15 /* check received byte counter */
 
 struct rx_test_op {
     unsigned char op;
@@ -84,6 +85,8 @@ struct rx_test_op {
     { RX_TEST_OP_CHECK_PKT_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), NULL }
 #define RX_OP_ALLOW_1RTT() \
     { RX_TEST_OP_ALLOW_1RTT, 0, NULL, 0, NULL, 0, 0, 0, NULL }
+#define RX_OP_CHECK_BYTES_RECEIVED(expected, clear) \
+    { RX_TEST_OP_CHECK_BYTES_RECEIVED, 0, NULL, 0, NULL, (clear), 0, (expected), NULL }
 
 #define RX_OP_INJECT_N(n) \
     RX_OP_INJECT(rx_script_##n##_in)
@@ -1875,6 +1878,38 @@ static const struct rx_test_op rx_script_9[] = {
     RX_OP_END
 };
 
+/*
+ * 10. Received Byte Counting Test
+ *
+ * The counter of received bytes used for anti-amplification credit
+ * (RFC 9000 s. 8.1) covers whole datagrams and counts each datagram exactly
+ * once, including datagrams which are deferred and processed again as keys
+ * become available.
+ */
+static const struct rx_test_op rx_script_10[] = {
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    /* the datagram is counted even though no keys are available yet */
+    RX_OP_INJECT_N(5),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_BYTES_RECEIVED(sizeof(rx_script_5_in), 0),
+    /* reprocessing the deferred datagram must not count it again */
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid),
+    RX_OP_CHECK_PKT_N(5a),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_BYTES_RECEIVED(sizeof(rx_script_5_in), 0),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, rx_script_5_handshake_secret),
+    RX_OP_CHECK_PKT_N(5b),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret),
+    RX_OP_ALLOW_1RTT(),
+    RX_OP_CHECK_PKT_N(5c),
+    RX_OP_CHECK_NO_PKT(),
+    /* clearing the counter returns the old value and resets it */
+    RX_OP_CHECK_BYTES_RECEIVED(sizeof(rx_script_5_in), 1),
+    RX_OP_CHECK_BYTES_RECEIVED(0, 0),
+
+    RX_OP_END
+};
+
 static const struct rx_test_op *rx_scripts[] = {
     rx_script_1,
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
@@ -1888,7 +1923,8 @@ static const struct rx_test_op *rx_scripts[] = {
     rx_script_7,
 #endif
     rx_script_8,
-    rx_script_9
+    rx_script_9,
+    rx_script_10
 };
 
 struct rx_state {
@@ -2098,6 +2134,16 @@ static int rx_run_script(const struct rx_test_op *script)
             s.allow_1rtt = 1;
 
             if (!TEST_true(rx_state_ensure(&s)))
+                goto err;
+
+            break;
+        case RX_TEST_OP_CHECK_BYTES_RECEIVED:
+            if (!TEST_true(rx_state_ensure(&s)))
+                goto err;
+
+            if (!TEST_uint64_t_eq(ossl_qrx_get_bytes_received(s.qrx,
+                                      (int)op->enc_level),
+                    op->largest_pn))
                 goto err;
 
             break;

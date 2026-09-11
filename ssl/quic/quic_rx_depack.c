@@ -1462,7 +1462,6 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
     PACKET pkt;
     OSSL_ACKM_RX_PKT ackm_data;
     uint32_t enc_level;
-    size_t dgram_len = qpacket->datagram_len;
 
     if (ch == NULL)
         return 0;
@@ -1491,14 +1490,14 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
      * RFC 9000 s. 8.1
      * We can consider the connection to be validated, if we receive a packet
      * from the client protected via handshake keys, meaning that the
-     * amplification limit no longer applies (i.e. we can set it as validated.
-     * Otherwise, add the size of this packet to the unvalidated credit for
-     * the connection.
+     * amplification limit no longer applies (i.e. we can set it as validated).
+     * Unvalidated credit is accounted per received datagram in ch_rx(), as
+     * RFC 9000 s. 8.1 requires counting all payload bytes of received
+     * datagrams, including bytes from packets which cannot be processed at
+     * this layer.
      */
     if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
         ossl_quic_tx_packetiser_set_validated(ch->txp);
-    else
-        ossl_quic_tx_packetiser_add_unvalidated_credit(ch->txp, dgram_len);
 
     /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
