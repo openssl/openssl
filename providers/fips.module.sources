@@ -200,6 +200,7 @@ crypto/ec/ec_lib.c
 crypto/ec/ec_local.h
 crypto/ec/ec_mult.c
 crypto/ec/ec_oct.c
+crypto/ec/ec_statics.pl
 crypto/ec/ecdh_kdf.c
 crypto/ec/ecdh_ossl.c
 crypto/ec/ecdsa_ossl.c
