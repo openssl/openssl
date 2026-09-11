@@ -1334,6 +1334,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
+            s->ext.ech.outer_hostname_explicit = 0;
         }
     }
     /* If doing real ECH and application requested GREASE too, over-ride that */
@@ -2019,24 +2020,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         } else {
             OSSL_TRACE1(TLS, "ECH falling back to public_name: %s\n",
                 s->ext.ech.outer_hostname != NULL ? s->ext.ech.outer_hostname : "NONE");
-            s->ext.ech.former_inner = s->ext.hostname;
-            s->ext.hostname = NULL;
-            if (s->ext.ech.outer_hostname != NULL) {
-                s->ext.hostname = OPENSSL_strdup(s->ext.ech.outer_hostname);
-                if (s->ext.hostname == NULL) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-                /*
-                 * Keep cover authentication local to this handshake. In
-                 * particular, do not overwrite the application's DNS names.
-                 */
-                if (s->ext.ech.cover_hostname == NULL
-                    && (s->ext.ech.cover_hostname
-                            = OPENSSL_strdup(s->ext.ech.outer_hostname)) == NULL) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
+            if (!ossl_ech_switch_to_cover_identity(s)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
             }
         }
     }
@@ -2460,7 +2446,10 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
     ERR_set_mark();
     v_ok = ssl_verify_rpk(sc, sc->session->peer_rpk);
 #ifndef OPENSSL_NO_ECH
-    /* ECH cover-name setup can fail even with SSL_VERIFY_NONE. */
+    /*
+     * Keep ECH verification setup errors fatal with SSL_VERIFY_NONE, as
+     * cover-name setup was during ServerHello processing.
+     */
     if (ossl_statem_in_error(sc)) {
         ERR_clear_last_mark();
         return WORK_ERROR;
@@ -2645,7 +2634,10 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     ERR_set_mark();
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
 #ifndef OPENSSL_NO_ECH
-    /* ECH cover-name setup can fail even with SSL_VERIFY_NONE. */
+    /*
+     * Keep ECH verification setup errors fatal with SSL_VERIFY_NONE, as
+     * cover-name setup was during ServerHello processing.
+     */
     if (ossl_statem_in_error(s)) {
         ERR_clear_last_mark();
         return WORK_ERROR;
