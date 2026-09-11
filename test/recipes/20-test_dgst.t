@@ -19,7 +19,7 @@ use Cwd qw(abs_path);
 
 setup("test_dgst");
 
-plan tests => 29;
+plan tests => 31;
 
 sub tsignverify {
     my $testtext = shift;
@@ -474,6 +474,67 @@ subtest "Colon separated output with `dgst` CLI" => sub {
     my $expected = qr/SHA2-256\(\Q$testdata\E\)= \Q$hash\E/;
     ok($cdata[0] =~ $expected,
        "-c: Check colon separated output is as expected ($cdata[0])");
+};
+
+subtest "Binary output with `dgst` CLI" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my $outfile = "dgst_binary_out.bin";
+    my $expected =
+        'd9fd1d3a7dc90526d2853450dcc63e26a311012d337fa4a192276f9824a046da';
+
+    ok(run(app(['openssl', 'dgst', '-sha256', '-binary', '-out', $outfile,
+                $testdata])),
+       "-binary: Generating binary digest");
+
+    my $binary = '';
+    if (open(my $fh, '<', $outfile)) {
+        binmode($fh);
+        local $/;
+        $binary = <$fh>;
+        close($fh);
+    }
+    ok(unpack("H*", $binary) eq $expected,
+       "-binary: Check raw digest bytes are as expected");
+    unlink($outfile);
+};
+
+subtest "Hex signature output with `dgst` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    plan tests => 3;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my $privkey = srctop_file("test", "testrsa.pem");
+    my $sigfile = "dgst_hex_sign.sig";
+
+    # Signature output defaults to binary; -hex must override that.
+    ok(run(app(['openssl', 'dgst', '-sha256', '-sign', $privkey,
+                '-out', $sigfile, $testdata])),
+       "-hex: Generating reference binary signature");
+
+    my $binsig = '';
+    if (open(my $fh, '<', $sigfile)) {
+        binmode($fh);
+        local $/;
+        $binsig = <$fh>;
+        close($fh);
+    }
+    unlink($sigfile);
+
+    my @hexdata = run(app(['openssl', 'dgst', '-sha256', '-hex',
+                           '-sign', $privkey, $testdata]), capture => 1);
+    chomp(@hexdata);
+    ok($hexdata[0] =~ /^RSA-SHA2-256\(\Q$testdata\E\)= ([0-9a-f]+)$/,
+       "-hex: Check hex signature output format ($hexdata[0])");
+    my $hexsig = $1 // '';
+    # RSA PKCS#1 v1.5 signing is deterministic, so both runs must match.
+    ok($hexsig eq unpack("H*", $binsig),
+       "-hex: Check hex signature matches the binary signature");
 };
 
 subtest "Listing supported digests with `dgst` CLI" => sub {
