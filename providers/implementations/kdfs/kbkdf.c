@@ -78,6 +78,8 @@ typedef struct {
     int use_l;
     int is_kmac;
     int use_separator;
+    /* KI was explicitly supplied, possibly with length zero. */
+    int ki_set;
     OSSL_FIPS_IND_DECLARE
 } KBKDF;
 
@@ -114,6 +116,7 @@ static void init(KBKDF *ctx)
     ctx->use_l = 1;
     ctx->use_separator = 1;
     ctx->is_kmac = 0;
+    ctx->ki_set = 0;
 }
 
 static void *kbkdf_new(void *provctx)
@@ -187,6 +190,7 @@ static void *kbkdf_dup(void *vctx)
         dest->use_l = src->use_l;
         dest->use_separator = src->use_separator;
         dest->is_kmac = src->is_kmac;
+        dest->ki_set = src->ki_set;
         OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
@@ -327,6 +331,12 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
+    /* KI may be empty, but only when it was explicitly supplied. */
+    if (ctx->is_kmac && !ctx->ki_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
+
     /* Fail if the output length is zero */
     if (keylen == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
@@ -426,6 +436,8 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             &ctx->ki_len)
         == 0)
         return 0;
+    if (p.key != NULL)
+        ctx->ki_set = 1;
 #ifdef FIPS_MODULE
     if (p.key != NULL && !fips_kbkdf_key_check_passed(ctx))
         return 0;
@@ -462,11 +474,31 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.sep != NULL && !OSSL_PARAM_get_int(p.sep, &ctx->use_separator))
         return 0;
 
-    /* Set up digest context, if we can. */
-    if (ctx->ctx_init != NULL && ctx->ki_len != 0) {
-        if ((ctx->is_kmac && !kmac_init(ctx->ctx_init, ctx->label, ctx->label_len))
-            || !EVP_MAC_init(ctx->ctx_init, ctx->ki, ctx->ki_len, NULL))
-            return 0;
+    /*
+     * Initialize the MAC PRF. KMAC-based KBKDF uses a shortcut derive path
+     * that calls EVP_MAC_update/final on ctx_init, so once Ki has been
+     * supplied the MAC must be inited even when Ki is empty (SP 800-185
+     * allows len(K) == 0).  An empty Ki must not reach EVP_MAC_init() as
+     * NULL: that means "reuse the previous key", and KMAC's encode_string
+     * would encode a NULL key as no bytes at all rather than as an empty
+     * string, so substitute "".  A Ki that was never supplied leaves the
+     * MAC uninitialized and derive will fail.
+     */
+    if (ctx->ctx_init != NULL) {
+        if (ctx->is_kmac) {
+            if (ctx->ki_set) {
+                const unsigned char *ki = ctx->ki;
+
+                if (ki == NULL)
+                    ki = (const unsigned char *)"";
+                if (!kmac_init(ctx->ctx_init, ctx->label, ctx->label_len)
+                    || !EVP_MAC_init(ctx->ctx_init, ki, ctx->ki_len, NULL))
+                    return 0;
+            }
+        } else if (ctx->ki_len != 0) {
+            if (!EVP_MAC_init(ctx->ctx_init, ctx->ki, ctx->ki_len, NULL))
+                return 0;
+        }
     }
     return 1;
 }

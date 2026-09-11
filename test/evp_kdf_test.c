@@ -1893,6 +1893,65 @@ static int test_kdf_kbkdf_kmac(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+
+/*
+ * Regression for https://github.com/openssl/openssl/issues/24410:
+ * KBKDF with KMAC and a zero-length Ki must not crash and must be stable.
+ */
+static int test_kdf_kbkdf_kmac_empty_ki(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[5], *p = params;
+    static const char empty_ki[] = "";
+    static char *mac = "KMAC256";
+    static char *digest = "SHA256";
+    unsigned char out1[32], out2[32];
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, digest, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC, mac, 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (unsigned char *)empty_ki, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname("KBKDF")))
+        return 0;
+    if (!TEST_true(EVP_KDF_CTX_set_params(kctx, params)))
+        goto end;
+    if (!TEST_int_gt(EVP_KDF_derive(kctx, out1, sizeof(out1), NULL), 0))
+        goto end;
+    if (!TEST_int_gt(EVP_KDF_derive(kctx, out2, sizeof(out2), NULL), 0))
+        goto end;
+    ret = TEST_mem_eq(out1, sizeof(out1), out2, sizeof(out2));
+end:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * A KI of length zero is only valid when it was explicitly supplied;
+ * deriving without ever setting a KI must keep failing.
+ */
+static int test_kdf_kbkdf_kmac_missing_ki(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[2], *p = params;
+    static char *mac = "KMAC256";
+    unsigned char result[32] = { 0 };
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC, mac, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    /* Negative test case - derive should fail */
+    kctx = get_kdfbyname("KBKDF");
+    ret = TEST_ptr(kctx)
+        && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+        && TEST_int_eq(EVP_KDF_derive(kctx, result, sizeof(result), NULL), 0);
+
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
 #endif /* OPENSSL_NO_KBKDF */
 
 #ifndef OPENSSL_NO_SSKDF
@@ -2431,6 +2490,11 @@ int setup_tests(void)
 #endif
     if (fips_provider_version_ge(NULL, 3, 1, 0))
         ADD_TEST(test_kdf_kbkdf_kmac);
+    /* The fix for KBKDF+KMAC with a zero-length KI first appears in 4.1.0 */
+    if (fips_provider_version_ge(NULL, 4, 1, 0)) {
+        ADD_TEST(test_kdf_kbkdf_kmac_empty_ki);
+        ADD_TEST(test_kdf_kbkdf_kmac_missing_ki);
+    }
 #endif /* OPENSSL_NO_KBKDF */
     ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_ctx_get_kdf);
