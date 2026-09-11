@@ -245,8 +245,9 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_D2I_POST:
-        if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
+        if (!X509_CRL_digest(crl, EVP_sha256(), crl->sha256_hash, NULL))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
+
         crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
         if (crl->idp == NULL && i != -1) {
             ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,

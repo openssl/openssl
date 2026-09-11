@@ -120,7 +120,7 @@ struct X509_crl_st {
     ASN1_INTEGER *base_crl_number;
     STACK_OF(GENERAL_NAMES) *issuers;
     /* hash of CRL */
-    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    unsigned char sha256_hash[SHA256_DIGEST_LENGTH];
     /* alternative method to handle this CRL */
     const X509_CRL_METHOD *meth;
     void *meth_data;
@@ -198,7 +198,7 @@ struct x509_st {
     STACK_OF(IPAddressFamily) *rfc3779_addr;
     struct ASIdentifiers_st *rfc3779_asid;
 #endif
-    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    unsigned char sha256_hash[SHA256_DIGEST_LENGTH];
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;

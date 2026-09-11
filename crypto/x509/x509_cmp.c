@@ -90,7 +90,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 
     if ((a->flags & EXFLAG_NO_FINGERPRINT) == 0
         && (b->flags & EXFLAG_NO_FINGERPRINT) == 0)
-        rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
+        rv = memcmp(a->sha256_hash, b->sha256_hash, sizeof(b->sha256_hash));
     else
         return -2;
 
@@ -162,7 +162,7 @@ int X509_cmp(const X509 *a, const X509 *b)
 
     if ((a->ex_flags & EXFLAG_NO_FINGERPRINT) == 0
         && (b->ex_flags & EXFLAG_NO_FINGERPRINT) == 0)
-        rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
+        rv = memcmp(a->sha256_hash, b->sha256_hash, sizeof(b->sha256_hash));
     if (rv != 0)
         return rv < 0 ? -1 : 1;
 
