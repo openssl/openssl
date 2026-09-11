@@ -2010,7 +2010,13 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                if (SSL_set1_dnsname(ssl, s->ext.ech.outer_hostname) != 1) {
+                /*
+                 * Keep cover authentication local to this handshake. In
+                 * particular, do not overwrite the application's DNS names.
+                 */
+                if (s->ext.ech.cover_hostname == NULL
+                    && (s->ext.ech.cover_hostname
+                            = OPENSSL_strdup(s->ext.ech.outer_hostname)) == NULL) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
@@ -2436,6 +2442,13 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
 
     ERR_set_mark();
     v_ok = ssl_verify_rpk(sc, sc->session->peer_rpk);
+#ifndef OPENSSL_NO_ECH
+    /* ECH cover-name setup can fail even with SSL_VERIFY_NONE. */
+    if (ossl_statem_in_error(sc)) {
+        ERR_clear_last_mark();
+        return WORK_ERROR;
+    }
+#endif
     if (v_ok <= 0 && sc->verify_mode != SSL_VERIFY_NONE) {
         ERR_clear_last_mark();
         SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
@@ -2614,6 +2627,13 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      */
     ERR_set_mark();
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
+#ifndef OPENSSL_NO_ECH
+    /* ECH cover-name setup can fail even with SSL_VERIFY_NONE. */
+    if (ossl_statem_in_error(s)) {
+        ERR_clear_last_mark();
+        return WORK_ERROR;
+    }
+#endif
     if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
         ERR_clear_last_mark();
         SSLfatal(s, ssl_x509err2alert(s->verify_result),

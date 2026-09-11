@@ -607,6 +607,11 @@ int ossl_ssl_connection_reset(SSL *s)
 
     ossl_statem_clear(sc);
 
+#ifndef OPENSSL_NO_ECH
+    OPENSSL_free(sc->ext.ech.cover_hostname);
+    sc->ext.ech.cover_hostname = NULL;
+#endif
+
     sc->version = s->method->version;
     sc->client_version = sc->version;
     sc->rwstate = SSL_NOTHING;

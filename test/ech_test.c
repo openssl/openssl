@@ -2025,6 +2025,219 @@ end:
     return res;
 }
 
+/* Common authenticated setup for rejection and connection-reuse tests. */
+static int ech_identity_make_ctxs(SSL_CTX **sctx, SSL_CTX **cctx,
+    OSSL_ECHSTORE **es, const char *pem)
+{
+    BIO *in = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf(pem, (int)strlen(pem)))
+        || !TEST_ptr(*es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_int_eq(OSSL_ECHSTORE_read_pem(*es, in, OSSL_ECH_FOR_RETRY), 1)
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            sctx, cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_load_verify_locations(*cctx, rootcert, NULL))
+        || !TEST_true(SSL_CTX_set1_echstore(*sctx, *es)))
+        goto end;
+    ok = 1;
+end:
+    BIO_free(in);
+    return ok;
+}
+
+static int ech_reject_cover_calls;
+
+static int ech_reject_cover(const char *name, size_t len)
+{
+    static const char cover[] = "front.server.example";
+
+    ech_reject_cover_calls++;
+    return len != sizeof(cover) - 1 || memcmp(name, cover, len) != 0;
+}
+
+/* Verify the effective constraint, including after WANT_RETRY_VERIFY. */
+static int ech_verify_retry(X509_STORE_CTX *ctx, void *arg)
+{
+    static const char cover[] = "front.server.example";
+    static const char origin[] = "back.unique.example";
+    int *calls = arg;
+    SSL *ssl = X509_STORE_CTX_get_ex_data(ctx,
+        SSL_get_ex_data_X509_STORE_CTX_idx());
+    const char *effective = X509_VERIFY_PARAM_get0_host(
+        X509_STORE_CTX_get0_param(ctx), 0);
+    const char *configured;
+
+    if (!TEST_ptr(ssl))
+        return 0;
+    configured = X509_VERIFY_PARAM_get0_host(SSL_get0_param(ssl), 0);
+    /* Compare reference identifiers using the known input lengths. */
+    if (!TEST_ptr(effective)
+        || !TEST_mem_eq(effective, sizeof(cover) - 1,
+            cover, sizeof(cover) - 1)
+        || !TEST_ptr(configured)
+        || !TEST_mem_eq(configured, sizeof(origin) - 1,
+            origin, sizeof(origin) - 1)
+        || !TEST_int_eq(X509_verify_cert(ctx), 1)) {
+        X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+        return 0;
+    }
+    if (++*calls == 1)
+        return SSL_set_retry_verify(ssl);
+    return 1;
+}
+
+/*
+ * Rejection authenticates the cover without changing configured DNS names:
+ * 0-2 single/multiple/empty lists; 3-4 context inheritance/SSL_set1_param;
+ * 5 invalid cover; 6 accepted ECH with an invalid origin; 7-8 cover setup
+ * failure with/without verification; 9 verification retry; 10 accepted ECH;
+ * 11-12 GREASE/plain controls; 13 no outer SNI.
+ */
+static int test_ech_verify_dnsname(int idx)
+{
+    int res = 0, calls = 0;
+    int reason = SSL_R_ECH_REQUIRED;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    X509_VERIFY_PARAM *source = NULL, *param;
+    const char *dns = "back.unique.example";
+    const char *dns2 = idx == 1 ? "other.unique.example" : NULL;
+    const char *host;
+    char *inner = NULL, *outer = NULL;
+    unsigned char *retry = NULL;
+    size_t retrylen = 0;
+
+    if (idx == 2)
+        dns = NULL;
+    else if (idx == 5 || idx == 10)
+        dns = "back.server.example";
+    if (!ech_identity_make_ctxs(&sctx, &cctx, &es,
+            idx == 6 || idx == 10 ? pem_kp2 : pem_kp1))
+        goto end;
+    if (idx == 3
+        && !TEST_true(X509_VERIFY_PARAM_set1_host(SSL_CTX_get0_param(cctx),
+            dns, 0)))
+        goto end;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl,
+            "back.server.example")))
+        goto end;
+    if (idx == 11) {
+        SSL_set_options(clientssl, SSL_OP_ECH_GREASE);
+    } else if (idx != 12
+        && !TEST_true(SSL_set1_ech_config_list(clientssl,
+            (const unsigned char *)ec_kp2, ec_kp2len))) {
+        goto end;
+    }
+    if (idx == 4) {
+        if (!TEST_ptr(source = X509_VERIFY_PARAM_new())
+            || !TEST_true(X509_VERIFY_PARAM_set1_host(source, dns, 0))
+            || !TEST_true(SSL_set1_param(clientssl, source)))
+            goto end;
+    } else if (idx != 3 && !TEST_true(SSL_set1_dnsname(clientssl, dns))) {
+        goto end;
+    }
+    if (dns2 != NULL && !TEST_true(SSL_add1_dnsname(clientssl, dns2)))
+        goto end;
+    param = SSL_get0_param(clientssl);
+    SSL_set_verify(clientssl, idx == 8 ? SSL_VERIFY_NONE : SSL_VERIFY_PEER,
+        NULL);
+    if (idx == 5
+        && !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+            "front.unique.example", 0)))
+        goto end;
+    if (idx == 13
+        && !TEST_true(SSL_ech_set1_outer_server_name(clientssl, NULL, 1)))
+        goto end;
+    if (idx == 5 || idx == 6 || idx == 11 || idx == 12)
+        reason = SSL_R_CERTIFICATE_VERIFY_FAILED;
+    if (idx == 7 || idx == 8) {
+        reason = ERR_R_INTERNAL_ERROR;
+        ech_reject_cover_calls = 0;
+        X509_VERIFY_PARAM_set1_host_input_validation(param, ech_reject_cover);
+    }
+    if (idx == 9) {
+        SSL_CTX_set_cert_verify_callback(cctx, ech_verify_retry, &calls);
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_WANT_RETRY_VERIFY))
+            || !TEST_int_eq(calls, 1)
+            /*
+             * Changing next-connection configuration must not change the
+             * cover constraint when this verification is retried.
+             */
+            || !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+                "front.unique.example", 0)))
+            goto end;
+    }
+    ERR_clear_error();
+    if (idx == 10) {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE)))
+            goto end;
+    } else {
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_SSL))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), reason))
+            goto end;
+        /* No retry configs were received for accepted ECH or plain TLS. */
+        if (reason != SSL_R_ECH_REQUIRED && idx != 6 && idx != 12
+            && (!TEST_false(SSL_ech_get1_retry_config(clientssl,
+                    &retry, &retrylen))
+                || !TEST_ptr_null(retry)
+                || !TEST_size_t_eq(retrylen, 0)))
+            goto end;
+    }
+    if (idx == 7 || idx == 8) {
+        if (!TEST_int_gt(ech_reject_cover_calls, 0)
+            || !TEST_long_eq(SSL_get_verify_result(clientssl),
+                X509_V_ERR_UNSPECIFIED)
+            || !TEST_int_eq(SSL_ech_get1_status(clientssl, &inner, &outer),
+                SSL_ECH_STATUS_FAILED_ECH_BAD_NAME))
+            goto end;
+    }
+    if (idx == 9 && !TEST_int_eq(calls, 2))
+        goto end;
+    if ((idx == 5 || idx == 6 || idx == 11 || idx == 12)
+        && !TEST_int_eq(SSL_get_verify_result(clientssl),
+            X509_V_ERR_HOSTNAME_MISMATCH))
+        goto end;
+    if (!TEST_ptr_eq(param, SSL_get0_param(clientssl)))
+        goto end;
+    host = X509_VERIFY_PARAM_get0_host(param, 0);
+    if (dns == NULL) {
+        if (!TEST_ptr_null(host))
+            goto end;
+    } else if (!TEST_ptr(host)
+        || !TEST_mem_eq(host, strlen(dns), dns, strlen(dns))) {
+        goto end;
+    }
+    host = X509_VERIFY_PARAM_get0_host(param, 1);
+    if (dns2 == NULL) {
+        if (!TEST_ptr_null(host))
+            goto end;
+    } else if (!TEST_ptr(host)
+        || !TEST_mem_eq(host, strlen(dns2), dns2, strlen(dns2))
+        || !TEST_ptr_null(X509_VERIFY_PARAM_get0_host(param, 2))) {
+        goto end;
+    }
+    res = 1;
+end:
+    OPENSSL_free(inner);
+    OPENSSL_free(outer);
+    OPENSSL_free(retry);
+    X509_VERIFY_PARAM_free(source);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    OSSL_ECHSTORE_free(es);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2074,6 +2287,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_in_out_test, 14);
     ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
+    ADD_ALL_TESTS(test_ech_verify_dnsname, 14);
     return 1;
 err:
     return 0;

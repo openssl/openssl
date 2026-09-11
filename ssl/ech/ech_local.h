@@ -192,6 +192,8 @@ typedef struct ossl_ech_conn_st {
      * the value we tried as the inner SNI for debug purposes
      */
     char *former_inner;
+    /* Cover DNS constraint for this rejected handshake, not SSL configuration */
+    char *cover_hostname;
     /* inner CH transcript buffer */
     unsigned char *transbuf;
     size_t transbuf_len;
