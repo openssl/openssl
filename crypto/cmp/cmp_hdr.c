@@ -84,7 +84,7 @@ int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
 
 /*
  * Set the sender name in PKIHeader.
- * when nm is NULL, sender is set to an empty string
+ * when nm is NULL, sender is set to NULL-DN
  * returns 1 on success, 0 on error
  */
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
@@ -277,13 +277,28 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
     if (!ossl_cmp_hdr_set_pvno(hdr, OSSL_CMP_PVNO))
         return 0;
 
+    /*
+     * With MAC-based protection, the CMP profile RFC 9483 section 3.1 requires
+     * that the reference value used to identify the shared secret is placed in
+     * the sender GeneralName, as the commonName in the directoryName choice.
+     * Yet this works only if the name can be suitably encoded and this
+     * encoding is between 1 and 64 bytes long, as specified in RFC 5280.
+     * Therefore we attempt to do this conversion, and if it fails, we resort to
+     * the more permissive requirements of RFC 9810 section 5.1.1., which allows
+     * to use the NULL-DN for the sender as long as the senderKID is sufficient.
+     */
     if (ref != NULL) {
         ref_name = X509_NAME_new();
-        if (ref_name == NULL
-            || X509_NAME_add_entry_by_NID(ref_name, NID_commonName, MBSTRING_UTF8,
-                   ref->data, ref->length, -1, 0)
-                != 1)
+        if (ref_name == NULL)
             goto err;
+        (void)ERR_set_mark();
+        if (X509_NAME_add_entry_by_NID(ref_name, NID_commonName, MBSTRING_UTF8,
+                ref->data, ref->length, -1, 0)
+            != 1) {
+            X509_NAME_free(ref_name);
+            ref_name = NULL; /* the NULL ref_name, if used, leads to a NULL-DN */
+        }
+        (void)ERR_pop_to_mark();
     }
     if (ctx->secretValue != NULL && ref != NULL) {
         if (!ossl_cmp_hdr_set1_sender(hdr, ref_name))

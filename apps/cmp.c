@@ -1685,10 +1685,8 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx)
             if (res == 0)
                 return 0;
         }
-        if (opt_cert != NULL || opt_key != NULL) {
-            CMP_warn("Ignoring -cert and -key since -secret option selects password-based message protection");
-            opt_cert = opt_key = NULL;
-        }
+        if (opt_cert != NULL || opt_key != NULL)
+            CMP_warn("Not using -cert and -key for protection since -secret option selects password-based message protection");
     }
     if (opt_ref != NULL
         && !OSSL_CMP_CTX_set1_referenceValue(ctx, (unsigned char *)opt_ref,

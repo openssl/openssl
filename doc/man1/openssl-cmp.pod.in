@@ -856,6 +856,11 @@ having only a commonName component with the given value.
 For signature-based protection
 this DN is used only as the ultimate fallback sender value.
 
+When using the reference string as the commonName in the sender field,
+it is assumed to be UTF8-encodable (which covers also plain ASCII strings)
+and to fit in the size constraint 1..64 specified for commonName attributes.
+If this assumption does not hold, the NULL-DN is placed in the sender field.
+
 =item B<-secret> I<arg>
 
 Provides a secret value required to use with password-based message protection.

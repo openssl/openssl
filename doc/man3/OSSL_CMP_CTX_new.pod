@@ -562,17 +562,24 @@ messages that have MAC-based protection (protectionAlg = C<MSG_MAC_ALG>).
 
 OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue I<ref> with
 length I<len> in the given I<ctx> or clears it if the I<ref> argument is NULL.
-When provided, the value is placed in senderKID when using MAC-based protection.
-When not provided, the commonName of the sender field is taken as the fallback value.
-Conversely, when provided, the value is also taken as the commonName of the sender
+If provided, the value is placed in senderKID when using MAC-based protection.
+Otherwise, the commonName of the sender field is taken as the fallback value.
+Conversely, if provided, the reference value is also taken as
+the commonName in the directoryName choice of the sender GeneralName
 field when using MAC-based protection (as specified in RFC 9483 section 3.1),
 while for signature-based protection it is just taken as the ultimate fallback value.
+
+When using the given reference string as the commonName in the sender field,
+it is assumed to be UTF8-encodable (which covers also plain ASCII strings)
+and to fit in the size constraint 1..64 specified for commonName attributes.
+If this assumption does not hold, the NULL-DN is placed in the sender field.
 According to RFC 9810 section 5.1.1, if no value for the sender field in CMP message
 headers can be determined then the sender field will contain the NULL-DN.
 This can only happen if there is no CMP signer certificate, no certificate to be
 updated, no PKCS#10 CSR is available from which the subject name could be taken,
 no subject DN is set via OSSL_CMP_CTX_set1_subjectName(),
-and no reference value is set via OSSL_CMP_CTX_set1_referenceValue().
+and no reference value is set via OSSL_CMP_CTX_set1_referenceValue()
+that can be used as a commonName attribute of a GeneralName.
 
 When signature-based protection is used the senderKID will be set to
 the subjectKeyIdentifier of the CMP signer certificate as far as present.

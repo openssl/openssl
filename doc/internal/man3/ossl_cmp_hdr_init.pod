@@ -106,8 +106,16 @@ by creating and storing a new random valuee with 128 bits length.
 ossl_cmp_hdr_init() initializes a PKIHeader structure based on the
 values in the given OSSL_CMP_CTX structure.
 This starts a new transaction in case ctx->transactionID is NULL.
-The sender name is copied from the subject of the client cert, if any,
-or else from the subject name provided for certification requests.
+With MAC-based protection, as required by the CMP profile RFC 9483 section 3.1,
+the sender field is set to the reference value string provided via
+OSSL_CMP_CTX_set1_referenceValue() placed as the commonName in the directoryName
+choice of the GeneralName as far as possible, otherwise the NULL-DN is used.
+With signature-based protection or when no protection is used,
+the sender name is copied from the subject of the client cert, if any,
+otherwise from the subject of the cert provided via OSSL_CMP_CTX_set1_oldCert(),
+from the subject of any CSR provided via OSSL_CMP_CTX_set1_p10CSR(),
+from the subject name provided for CRMF-based certification requests,
+or else from the string provided via OSSL_CMP_CTX_set1_referenceValue().
 As required by RFC 9810 section 5.1.1., if the sender name is not known
 to the client it set to the NULL-DN. In this case for identification at least
 the senderKID must be set, which we take from any referenceValue provided.

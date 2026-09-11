@@ -233,11 +233,13 @@ static int set1_pwd_senderKID(OSSL_CMP_PKIHEADER *hdr, const ASN1_OCTET_STRING *
             && (sender = gn->d.directoryName) != NULL
             && (res = X509_NAME_get_index_by_NID(sender, NID_commonName, -1)) >= 0) {
             const ASN1_STRING *astr = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(sender, res));
+            unsigned char *ustr = NULL;
+            int len = ASN1_STRING_to_UTF8(&ustr, astr);
             ASN1_OCTET_STRING *ostr = NULL;
 
-            if (!ossl_cmp_asn1_octet_string_set1_bytes(&ostr, astr->data, astr->length))
-                return 0;
-            res = ossl_cmp_hdr_set1_senderKID(hdr, ostr);
+            res = len >= 0 && ossl_cmp_asn1_octet_string_set1_bytes(&ostr, ustr, len);
+            OPENSSL_free(ustr);
+            res = res && ossl_cmp_hdr_set1_senderKID(hdr, ostr);
             ASN1_OCTET_STRING_free(ostr);
             return res;
         }
@@ -303,8 +305,12 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
         if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
             goto err;
-        /* set senderKID to cert SubjectKeyIdentifier according to RFC 9483 section 3.1 */
-        if (!ossl_cmp_hdr_set1_senderKID(msg->header, skid /* might be NULL */))
+        /*
+         * set senderKID to cert SubjectKeyIdentifier according to RFC 9483 section 3.1.
+         * Yet if there is no SKID, use any given reference value as fallback.
+         */
+        if (!ossl_cmp_hdr_set1_senderKID(msg->header,
+                skid != NULL ? skid : ctx->referenceValue /* may be NULL */))
             goto err;
 
         /*
