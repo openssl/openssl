@@ -699,6 +699,78 @@ static int test_store_ctx(void)
     return test_self_signed(bad_f, 0, 0);
 }
 
+static const struct {
+    int purpose;
+    int explicit_trust;
+    int expected_error;
+} invalid_extension_tests[] = {
+    { 0, 0, X509_V_OK },
+    { X509_PURPOSE_SSL_CLIENT, 0, X509_V_OK },
+    { X509_PURPOSE_SSL_SERVER, 0, X509_V_ERR_INVALID_PURPOSE },
+    { X509_PURPOSE_SSL_SERVER, 1, X509_V_OK },
+};
+
+/* Invalid extensions must be rejected even when the target is directly trusted. */
+static int test_invalid_extension(int idx)
+{
+    int invalid = idx % 2;
+    int test = idx / 2;
+    int strict, ret = 0;
+    int expected_error = invalid ? X509_V_ERR_INVALID_EXTENSION
+                                 : invalid_extension_tests[test].expected_error;
+    char *cert_file = NULL;
+    X509 *cert = NULL;
+    ASN1_BIT_STRING *usage = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_VERIFY_PARAM *vpm;
+
+    if (!TEST_ptr(cert_file = test_mk_file_path(certs_dir, "ee-client.pem"))
+        || !TEST_ptr(cert = load_cert_from_file(cert_file))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(ctx = X509_STORE_CTX_new()))
+        goto err;
+
+    if (invalid) {
+        /* An empty keyUsage makes extension caching fail with EXFLAG_INVALID. */
+        if (!TEST_ptr(usage = ASN1_BIT_STRING_new())
+            || !TEST_true(X509_add1_ext_i2d(cert, NID_key_usage, usage, 1,
+                X509V3_ADD_DEFAULT)))
+            goto err;
+    }
+    if (invalid_extension_tests[test].explicit_trust
+        && !TEST_true(X509_add1_trust_object(cert, OBJ_nid2obj(NID_server_auth))))
+        goto err;
+    if (!TEST_true(X509_STORE_add_cert(store, cert)))
+        goto err;
+
+    for (strict = 0; strict < 2; strict++) {
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL))
+            || (invalid_extension_tests[test].purpose != 0
+                && !TEST_true(X509_STORE_CTX_set_purpose(ctx,
+                    invalid_extension_tests[test].purpose))))
+            goto err;
+        vpm = X509_STORE_CTX_get0_param(ctx);
+        X509_VERIFY_PARAM_set_time(vpm, 1609459200); /* 2021-01-01 */
+        if (!TEST_true(X509_VERIFY_PARAM_set_flags(vpm,
+                X509_V_FLAG_PARTIAL_CHAIN
+                    | (strict ? X509_V_FLAG_X509_STRICT : 0)))
+            || !TEST_int_eq(X509_verify_cert(ctx), expected_error == X509_V_OK)
+            || !TEST_int_eq(X509_STORE_CTX_get_error(ctx), expected_error)
+            || !TEST_int_eq(X509_STORE_CTX_get_error_depth(ctx), 0))
+            goto err;
+        X509_STORE_CTX_cleanup(ctx);
+    }
+    ret = 1;
+err:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    ASN1_BIT_STRING_free(usage);
+    X509_free(cert);
+    OPENSSL_free(cert_file);
+    return ret;
+}
+
 static int do_test_purpose(int purpose, int expected)
 {
     X509 *eecert = load_cert_from_file(ee_cert); /* may result in NULL */
@@ -798,6 +870,7 @@ int setup_tests(void)
     ADD_TEST(test_purpose_ssl_client);
     ADD_TEST(test_purpose_ssl_server);
     ADD_TEST(test_purpose_any);
+    ADD_ALL_TESTS(test_invalid_extension, 2 * OSSL_NELEM(invalid_extension_tests));
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
     return 1;
