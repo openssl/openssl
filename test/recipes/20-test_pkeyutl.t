@@ -17,7 +17,7 @@ use File::Compare qw/compare_text compare/;
 
 setup("test_pkeyutl");
 
-plan tests => 33;
+plan tests => 34;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -99,6 +99,15 @@ SKIP: {
                   "Verify an Ed448 signature against a piece of data, no -rawin");
 }
 
+sub slurp {
+    my $file = shift;
+
+    open(my $fh, '<', $file) or return '';
+    my $data = do { local $/; <$fh> };
+    close($fh);
+    return $data;
+}
+
 my $sigfile;
 sub tsignverify {
     my $testtext = shift;
@@ -165,7 +174,7 @@ sub tsignverify {
 }
 
 SKIP: {
-    skip "RSA is not supported by this OpenSSL build", 3
+    skip "RSA is not supported by this OpenSSL build", 5
         if disabled("rsa");
 
     subtest "RSA CLI signature generation and verification" => sub {
@@ -227,6 +236,43 @@ SKIP: {
             });
     };
 
+    subtest "pkeyutl output formatting with -asn1parse and -hexdump" => sub {
+        plan tests => 7;
+
+        my $key = srctop_file("test", "testrsa.pem");
+        my $pub = srctop_file("test", "testrsapub.pem");
+        my $data = srctop_file("test", "data.bin");
+
+        ok(run(app(['openssl', 'pkeyutl', '-sign', '-inkey', $key,
+                    '-rawin', '-digest', 'sha256',
+                    '-in', $data, '-out', 'fmt.sig'])),
+           "Sign data for the output formatting tests");
+
+        # -verifyrecover recovers the DigestInfo blob, which is valid ASN.1
+        ok(run(app((['openssl', 'pkeyutl', '-verifyrecover', '-asn1parse',
+                     '-pubin', '-inkey', $pub, '-in', 'fmt.sig'],
+                    stdout => 'fmt_asn1.txt'))),
+           "Recover the signed DigestInfo with -asn1parse");
+        my $asn1 = slurp('fmt_asn1.txt');
+        ok($asn1 =~ /SEQUENCE/ && $asn1 =~ /:sha256/ && $asn1 =~ /OCTET STRING/,
+           "-asn1parse prints the parsed DigestInfo structure");
+
+        ok(run(app((['openssl', 'pkeyutl', '-verifyrecover', '-hexdump',
+                     '-pubin', '-inkey', $pub, '-in', 'fmt.sig'],
+                    stdout => 'fmt_hex.txt'))),
+           "Recover the signed DigestInfo with -hexdump");
+        ok(slurp('fmt_hex.txt') =~ /^0000 - 30 31 30 0d/,
+           "-hexdump prints a hex dump of the DigestInfo");
+
+        # a raw RSA signature is not valid ASN.1, but the parse error
+        # is only reported and the command still succeeds
+        ok(run(app((['openssl', 'pkeyutl', '-sign', '-asn1parse',
+                     '-inkey', $key, '-rawin', '-digest', 'sha256',
+                     '-in', $data], stdout => 'fmt_bad_asn1.txt'))),
+           "-asn1parse on output that is not valid ASN.1 still succeeds");
+        ok(slurp('fmt_bad_asn1.txt') =~ /Error in encoding/,
+           "-asn1parse reports the encoding error");
+    };
 }
 
 SKIP: {
