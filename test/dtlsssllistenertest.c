@@ -2005,39 +2005,6 @@ err:
 }
 
 /*
- * Test SSL_listen_ex for DTLS.
- * SSL_listen_ex is QUIC-only, so it should reject DTLS objects.
- */
-static int test_dtls_listen_ex_returns_error(void)
-{
-    SSL_CTX *ctx = NULL;
-    SSL *listener = NULL;
-    SSL *new_conn = NULL;
-    int success = 0;
-
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
-        goto err;
-
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
-        goto err;
-
-    if (!TEST_ptr(new_conn = SSL_new(ctx)))
-        goto err;
-
-    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), -1)
-        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
-            ERR_R_PASSED_INVALID_ARGUMENT))
-        goto err;
-
-    success = 1;
-err:
-    SSL_free(new_conn);
-    SSL_free(listener);
-    SSL_CTX_free(ctx);
-    return success;
-}
-
-/*
  * Counter to track how many times the test time callback is invoked.
  */
 static int test_now_cb_call_count = 0;
@@ -5442,6 +5409,1112 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
 }
 
 /*
+ * Test ossl_dtls_listener_test_and_set_peeloff(), the mutual-exclusion
+ * trapdoor between SSL_accept_connection() and the upcoming SSL_listen_ex()
+ * for DTLS listeners.
+ *
+ * Invalid arguments (bad mode value, non-listener SSL, NULL) must fail.
+ * Repeated calls with the same mode must keep succeeding.
+ * Once a mode is latched, a call with the other mode must fail, in both
+ * directions.
+ */
+static int test_dtls_listener_test_and_set_peeloff(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL *accept_listener = NULL, *listen_listener = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    /* A non-listener SSL must be rejected regardless of mode. */
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto err;
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(ssl, DTLS_PEELOFF_ACCEPT)))
+        goto err;
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(ssl, DTLS_PEELOFF_LISTEN)))
+        goto err;
+
+    /* NULL must be rejected. */
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(NULL, DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    if (!TEST_ptr(accept_listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    /* A mode other than DTLS_PEELOFF_LISTEN/DTLS_PEELOFF_ACCEPT must be rejected. */
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_UNSET)))
+        goto err;
+
+    /* First claim of ACCEPT succeeds. */
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    /* Repeating the same mode keeps succeeding. */
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    /* The conflicting mode must now be rejected. */
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_LISTEN)))
+        goto err;
+
+    /* Same sequence again, in the other direction, on a second listener. */
+    if (!TEST_ptr(listen_listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(listen_listener,
+            DTLS_PEELOFF_LISTEN)))
+        goto err;
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(listen_listener,
+            DTLS_PEELOFF_LISTEN)))
+        goto err;
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(listen_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(listen_listener);
+    SSL_free(accept_listener);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
+ * Test ossl_dtls_conn_is_peel_eligible(), the new_conn eligibility check
+ * for the upcoming SSL_listen_ex() support for DTLS listeners.
+ *
+ * A peel-eligible new_conn must be exactly what SSL_new(ctx) on a DTLS
+ * context produces: no handshake started, no listener association, no
+ * BIOs set. Anything else must be rejected.
+ */
+static int test_dtls_conn_is_peel_eligible(void)
+{
+    SSL_CTX *ctx = NULL, *tls_ctx = NULL;
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *fresh = NULL, *listener = NULL, *tls_ssl = NULL;
+    SSL *started = NULL, *biod = NULL;
+    SSL *acc_listener = NULL, *acc_clientssl = NULL, *acc_serverssl = NULL;
+    BIO_ADDR *acc_client_addr = NULL;
+    BIO *bio1 = NULL, *bio2 = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    /* Case 1: a bare SSL_new(ctx) on a DTLS context -- must be eligible */
+    if (!TEST_ptr(fresh = SSL_new(ctx)))
+        goto err;
+    if (!TEST_true(ossl_dtls_conn_is_peel_eligible(fresh)))
+        goto err;
+
+    /* Case 2: the listener object itself -- must be rejected */
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(listener)))
+        goto err;
+
+    /* Case 3: a non-DTLS (TLS) SSL -- must be rejected */
+    if (!TEST_ptr(tls_ctx = SSL_CTX_new(TLS_server_method())))
+        goto err;
+    if (!TEST_ptr(tls_ssl = SSL_new(tls_ctx)))
+        goto err;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(tls_ssl)))
+        goto err;
+
+    /* Case 4: handshake already started -- must be rejected */
+    if (!TEST_ptr(started = SSL_new(ctx)))
+        goto err;
+    SSL_set_accept_state(started);
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(started)))
+        goto err;
+
+    /* Case 5: BIOs already attached -- must be rejected */
+    if (!TEST_ptr(biod = SSL_new(ctx)))
+        goto err;
+    if (!TEST_true(BIO_new_bio_pair(&bio1, 0, &bio2, 0)))
+        goto err;
+    SSL_set_bio(biod, bio1, bio1); /* SSL now owns bio1 */
+    bio1 = NULL;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(biod)))
+        goto err;
+
+    /*
+     * Case 6: an SSL already handed back by SSL_accept_connection() on a
+     * listener -- must be rejected. It already has a listener association
+     * and its handshake has already been advanced past the initial state.
+     */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto err;
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &acc_listener, &acc_clientssl, &acc_client_addr)))
+        goto err;
+    if (!drive_until_connection_queued(acc_listener, acc_clientssl)
+        || !TEST_ptr(acc_serverssl = SSL_accept_connection(acc_listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto err;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(acc_serverssl)))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(acc_serverssl);
+    SSL_free(acc_clientssl);
+    SSL_free(acc_listener);
+    BIO_ADDR_free(acc_client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bio2);
+    SSL_free(biod);
+    SSL_free(started);
+    SSL_free(tls_ssl);
+    SSL_CTX_free(tls_ctx);
+    SSL_free(listener);
+    SSL_free(fresh);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
+ * Pop the next connection directly off a listener's incoming_connections,
+ * bypassing SSL_accept_connection() so no reference to the listener is
+ * taken. This mirrors exactly what ossl_dtls_listen_ex() will eventually do
+ * with the queue, which matters here because
+ * ossl_dtls_transfer_connection_state() itself takes the one reference that
+ * ownership transfer requires -- going through SSL_accept_connection()
+ * first would take that reference a second time.
+ *
+ * Returns the popped SSL, or NULL if the queue was empty.
+ */
+static SSL *pop_incoming_connection(SSL *listener)
+{
+    DTLS_LISTENER *dl = (DTLS_LISTENER *)listener;
+    SSL *conn;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    conn = sk_SSL_shift(dl->incoming_connections);
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    return conn;
+}
+
+/*
+ * Test ossl_dtls_transfer_connection_state(), the state-transfer helper
+ * behind SSL_listen_ex() for DTLS listeners.
+ *
+ * Drives a real connection up to the point SSL_accept_connection() would
+ * hand it back (cookie-validated, mid-handshake, registered in
+ * established_conns), transfers it onto a fresh SSL, and requires that the
+ * destination can actually finish the handshake and exchange data --
+ * mirroring what QUIC PR #32491 found missing from the original QUIC tests.
+ */
+static int test_dtls_transfer_connection_state_basic(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL;
+    SSL *src = NULL, *dst = NULL;
+    SSL_CONNECTION *src_sc, *dst_sc;
+    BIO_ADDR *client_addr = NULL;
+    BIO_ADDR saved_peer_addr;
+    BIO *saved_wbio;
+    OSSL_RECORD_LAYER *saved_rrl;
+    const char msg[] = "hello from the peeled connection's client";
+    const char reply[] = "hello from the peeled connection's server";
+    char buf[64];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    if (!TEST_ptr(src = pop_incoming_connection(listener)))
+        goto end;
+
+    if (!TEST_ptr(src_sc = SSL_CONNECTION_FROM_SSL_ONLY(src)))
+        goto end;
+
+    saved_peer_addr = src_sc->d1->peer_addr;
+    saved_wbio = src_sc->wbio;
+    saved_rrl = src_sc->rlayer.rrl;
+
+    if (!TEST_ptr(dst = SSL_new(sctx)))
+        goto end;
+
+    if (!TEST_true(ossl_dtls_conn_is_peel_eligible(dst)))
+        goto end;
+
+    if (!TEST_true(ossl_dtls_transfer_connection_state(src, dst)))
+        goto end;
+
+    if (!TEST_ptr(dst_sc = SSL_CONNECTION_FROM_SSL_ONLY(dst)))
+        goto end;
+
+    /* The peer address, write BIO, and live record layer all moved to dst. */
+    if (!TEST_mem_eq(&dst_sc->d1->peer_addr, sizeof(dst_sc->d1->peer_addr),
+            &saved_peer_addr, sizeof(saved_peer_addr)))
+        goto end;
+    if (!TEST_ptr_eq(dst_sc->wbio, saved_wbio))
+        goto end;
+    /*
+     * Pointer identity, not just non-NULL: this is what proves the record
+     * layer was rebound in place rather than recreated. A recreation would
+     * silently reset per-epoch state, most importantly the DTLS anti-replay
+     * bitmap, so this check stands in for actually staging a replay attack.
+     */
+    if (!TEST_ptr_eq(dst_sc->rlayer.rrl, saved_rrl))
+        goto end;
+    if (!TEST_ptr_eq(dst_sc->d1->listener, listener))
+        goto end;
+    if (!TEST_ptr_eq(dst_sc->rlayer.s, dst_sc))
+        goto end;
+
+    /*
+     * src is left in the state of a fresh, never-touched SSL_new() result:
+     * safe for the caller to free right now, normally, with no special
+     * handling and no double-free of anything dst now owns.
+     */
+    if (!TEST_true(SSL_in_before(src)))
+        goto end;
+    SSL_free(src);
+    src = NULL;
+
+    if (!TEST_true(create_ssl_connection(dst, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+    if (!TEST_true(SSL_read_ex(dst, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(dst, reply, sizeof(reply), &written))
+        || !TEST_size_t_eq(written, sizeof(reply)))
+        goto end;
+    if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, reply, sizeof(reply)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(src);
+    SSL_free(dst);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test ossl_dtls_transfer_connection_state()'s argument validation: none of
+ * these calls should touch src or dst at all.
+ */
+static int test_dtls_transfer_connection_state_invalid_args(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL;
+    SSL *src = NULL, *dst = NULL, *fresh_src = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int success = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto err;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto err;
+
+    if (!TEST_ptr(src = pop_incoming_connection(listener)))
+        goto err;
+
+    if (!TEST_ptr(dst = SSL_new(sctx)))
+        goto err;
+
+    /* NULL src or dst. */
+    if (!TEST_false(ossl_dtls_transfer_connection_state(NULL, dst)))
+        goto err;
+    if (!TEST_false(ossl_dtls_transfer_connection_state(src, NULL)))
+        goto err;
+
+    /* src with no listener association at all -- nothing to transfer from. */
+    if (!TEST_ptr(fresh_src = SSL_new(sctx)))
+        goto err;
+    if (!TEST_false(ossl_dtls_transfer_connection_state(fresh_src, dst)))
+        goto err;
+
+    /* dst not a DTLS connection (no d1) -- rejected before anything moves. */
+    if (!TEST_false(ossl_dtls_transfer_connection_state(src, listener)))
+        goto err;
+
+    /* None of the above should have disturbed src: it's still transferable. */
+    if (!TEST_true(ossl_dtls_transfer_connection_state(src, dst)))
+        goto err;
+    /* src is now an empty, fresh shell; free it like a real caller would. */
+    SSL_free(src);
+    src = NULL;
+
+    success = 1;
+err:
+    SSL_free(fresh_src);
+    SSL_free(src);
+    SSL_free(dst);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return success;
+}
+
+/*
+ * Test SSL_listen_ex() end-to-end for DTLS listeners: a real connection
+ * queued via cookie validation, peeled via SSL_listen_ex() into a
+ * pre-created new_conn, and required to actually finish its handshake and
+ * exchange data on the peeled object -- not just return a truthy value.
+ */
+static int test_dtls_listen_ex_basic(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *new_conn = NULL;
+    BIO_ADDR *client_addr = NULL;
+    const char msg[] = "hello from SSL_listen_ex's client";
+    const char reply[] = "hello from SSL_listen_ex's server";
+    char buf[64];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    if (!TEST_ptr(new_conn = SSL_new(sctx)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 1))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(new_conn, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+    if (!TEST_true(SSL_read_ex(new_conn, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(new_conn, reply, sizeof(reply), &written))
+        || !TEST_size_t_eq(written, sizeof(reply)))
+        goto end;
+    if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, reply, sizeof(reply)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test SSL_listen_ex() on a DTLS listener with nothing queued: must return
+ * 0, and only 0, not -1.
+ */
+static int test_dtls_listen_ex_no_connection(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *listener = NULL, *new_conn = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    if (!TEST_ptr(new_conn = SSL_new(ctx)))
+        goto err;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 0))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(new_conn);
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
+ * Test SSL_listen_ex() argument validation for DTLS: NULL listener/new_conn
+ * and wrong-typed or ineligible objects must return -1, never 0.
+ */
+static int test_dtls_listen_ex_invalid_args(void)
+{
+    SSL_CTX *ctx = NULL, *tls_ctx = NULL;
+    SSL *listener = NULL, *new_conn = NULL, *tls_ssl = NULL, *started = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    if (!TEST_ptr(new_conn = SSL_new(ctx)))
+        goto err;
+
+    /* NULL listener or new_conn. */
+    if (!TEST_int_eq(SSL_listen_ex(NULL, new_conn), -1))
+        goto err;
+    if (!TEST_int_eq(SSL_listen_ex(listener, NULL), -1))
+        goto err;
+
+    /* listener argument is not actually a listener. */
+    if (!TEST_int_eq(SSL_listen_ex(new_conn, new_conn), -1))
+        goto err;
+
+    /* new_conn is not DTLS. */
+    if (!TEST_ptr(tls_ctx = SSL_CTX_new(TLS_server_method())))
+        goto err;
+    if (!TEST_ptr(tls_ssl = SSL_new(tls_ctx)))
+        goto err;
+    if (!TEST_int_eq(SSL_listen_ex(listener, tls_ssl), -1))
+        goto err;
+
+    /* new_conn is DTLS but not peel-eligible (handshake role already set). */
+    if (!TEST_ptr(started = SSL_new(ctx)))
+        goto err;
+    SSL_set_accept_state(started);
+    if (!TEST_int_eq(SSL_listen_ex(listener, started), -1))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(started);
+    SSL_free(tls_ssl);
+    SSL_CTX_free(tls_ctx);
+    SSL_free(new_conn);
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
+ * Test ossl_dtls_conn_is_peel_eligible() after SSL_clear().
+ *
+ * Drive a real connection through SSL_listen_ex() to completion, then call
+ * SSL_clear() on both the client and the peeled server connection. Neither
+ * must look peel-eligible afterward.
+ */
+static int test_dtls_conn_is_peel_eligible_after_clear(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *new_conn = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    if (!TEST_ptr(new_conn = SSL_new(sctx)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 1))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(new_conn, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_clear(new_conn)))
+        goto end;
+    if (!TEST_true(SSL_clear(clientssl)))
+        goto end;
+
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(new_conn)))
+        goto end;
+    if (!TEST_false(ossl_dtls_conn_is_peel_eligible(clientssl)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test mutual exclusion between SSL_accept_connection() and SSL_listen_ex()
+ * end-to-end, in both directions, on two independent listeners.
+ */
+static int test_dtls_listen_ex_mutual_exclusion(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener_a = NULL, *clientssl_a = NULL, *serverssl_a = NULL;
+    SSL *new_conn_a = NULL;
+    SSL *listener_b = NULL, *clientssl_b = NULL, *new_conn_b = NULL;
+    BIO_ADDR *client_addr_a = NULL, *client_addr_b = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* Listener A: SSL_accept_connection() first, latching ACCEPT mode. */
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener_a, &clientssl_a, &client_addr_a)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener_a, clientssl_a))
+        goto end;
+
+    if (!TEST_ptr(serverssl_a = SSL_accept_connection(listener_a,
+                      SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    if (!TEST_ptr(new_conn_a = SSL_new(sctx)))
+        goto end;
+
+    /* SSL_listen_ex() must now be rejected: this listener committed to accept. */
+    if (!TEST_int_eq(SSL_listen_ex(listener_a, new_conn_a), -1))
+        goto end;
+
+    /* Listener B: SSL_listen_ex() first, even with nothing queued yet. */
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener_b, &clientssl_b, &client_addr_b)))
+        goto end;
+
+    if (!TEST_ptr(new_conn_b = SSL_new(sctx)))
+        goto end;
+
+    /* Nothing queued yet: returns 0, but the mode is still latched. */
+    if (!TEST_int_eq(SSL_listen_ex(listener_b, new_conn_b), 0))
+        goto end;
+
+    /* SSL_accept_connection() must now be rejected on listener_b. */
+    if (!TEST_ptr_null(SSL_accept_connection(listener_b,
+            SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn_b);
+    SSL_free(clientssl_b);
+    SSL_free(listener_b);
+    BIO_ADDR_free(client_addr_b);
+    SSL_free(new_conn_a);
+    SSL_free(serverssl_a);
+    SSL_free(clientssl_a);
+    SSL_free(listener_a);
+    BIO_ADDR_free(client_addr_a);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_DTLS1_3
+/*
+ * Test SSL_listen_ex() with a DTLS 1.3 HelloRetryRequest cookie exchange:
+ * the peeled connection must carry ext.cookieok forward and be able to
+ * complete its handshake and exchange data.
+ */
+static int test_dtls_listen_ex_with_hrr(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *new_conn = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    const char msg[] = "hello after HRR peel";
+    const char reply[] = "hello back after HRR peel";
+    char buf[64];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    if (!TEST_ptr(new_conn = SSL_new(sctx)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 1))
+        goto end;
+
+    /* The HRR cookie-ok flag must have survived the state transfer. */
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(new_conn)))
+        goto end;
+    if (!TEST_true(sc->ext.cookieok))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(new_conn, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_version(new_conn), DTLS1_3_VERSION)
+        || !TEST_int_eq(SSL_version(clientssl), DTLS1_3_VERSION))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+    if (!TEST_true(dtls_read_with_retry(new_conn, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(new_conn, reply, sizeof(reply), &written))
+        || !TEST_size_t_eq(written, sizeof(reply)))
+        goto end;
+    if (!TEST_true(dtls_read_with_retry(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, reply, sizeof(reply)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test SSL_listen_ex() with multiple concurrent connections: two clients
+ * connect to the same listener; peeling each into a distinct new_conn must
+ * correctly demultiplex by peer address, with no cross-talk between them.
+ *
+ * Uses real sockets (via create_dtls_client_bound()) rather than the
+ * in-memory dgram-pair helper, since two independently-addressed clients
+ * sharing one listener socket is exactly what needs exercising here.
+ */
+static int test_dtls_listen_ex_multiple_connections(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *client1 = NULL, *client2 = NULL;
+    SSL *new_conn1 = NULL, *new_conn2 = NULL;
+    SSL *server1 = NULL, *server2 = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO_ADDR *client1_local_addr = NULL, *client2_local_addr = NULL;
+    BIO_ADDR *peer_addr = NULL;
+    int server_fd = -1, client1_fd = -1, client2_fd = -1;
+    int peeled1 = 0, peeled2 = 0;
+    const char msg1[] = "Hello from client 1 via listen_ex";
+    const char msg2[] = "Hello from client 2 via listen_ex";
+    const char reply1[] = "Reply to client 1 via listen_ex";
+    const char reply2[] = "Reply to client 2 via listen_ex";
+    char buf[64];
+    size_t written, readbytes;
+    int testresult = 0;
+    int ret, err_code, listen_ret;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    if (!TEST_ptr(client1_local_addr = BIO_ADDR_new())
+        || !TEST_ptr(client2_local_addr = BIO_ADDR_new())
+        || !TEST_ptr(peer_addr = BIO_ADDR_new()))
+        goto end;
+
+    if (!TEST_true(create_dtls_client_bound(cctx, server_addr,
+            &client1, &client1_fd, client1_local_addr)))
+        goto end;
+    if (!TEST_true(create_dtls_client_bound(cctx, server_addr,
+            &client2, &client2_fd, client2_local_addr)))
+        goto end;
+
+    if (!TEST_ptr(new_conn1 = SSL_new(sctx)))
+        goto end;
+    if (!TEST_ptr(new_conn2 = SSL_new(sctx)))
+        goto end;
+
+    SSL_set_connect_state(client1);
+    SSL_set_connect_state(client2);
+    abortctr = 0;
+    while (!peeled1 || !peeled2) {
+        if (++abortctr > 500) {
+            TEST_error("Concurrent listen_ex loop did not converge");
+            goto end;
+        }
+
+        ret = SSL_connect(client1);
+        err_code = SSL_get_error(client1, ret);
+        if (ret <= 0 && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect (client1) failed: err=%d", err_code);
+            goto end;
+        }
+
+        ret = SSL_connect(client2);
+        err_code = SSL_get_error(client2, ret);
+        if (ret <= 0 && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect (client2) failed: err=%d", err_code);
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 100000;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout,
+                0, &poll_result)))
+            goto end;
+
+        if (poll_result == 0 || (poll_item.revents & SSL_POLL_EVENT_IC) == 0)
+            continue;
+
+        /* Drain whatever is ready right now into whichever slot is still empty. */
+        while (!peeled1 || !peeled2) {
+            listen_ret = SSL_listen_ex(listener, !peeled1 ? new_conn1 : new_conn2);
+            if (listen_ret == 0)
+                break;
+            if (!TEST_int_eq(listen_ret, 1))
+                goto end;
+            if (!peeled1)
+                peeled1 = 1;
+            else
+                peeled2 = 1;
+        }
+    }
+
+    /* Match peeled connections back to their clients by peer address. */
+    if (!TEST_true(SSL_get_peer_addr(new_conn1, peer_addr)))
+        goto end;
+    if (BIO_ADDR_rawport(peer_addr) == BIO_ADDR_rawport(client1_local_addr)) {
+        server1 = new_conn1;
+        server2 = new_conn2;
+    } else {
+        server1 = new_conn2;
+        server2 = new_conn1;
+    }
+
+    if (!TEST_true(create_ssl_connection(server1, client1, SSL_ERROR_NONE)))
+        goto end;
+    if (!TEST_true(create_ssl_connection(server2, client2, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(client1, msg1, sizeof(msg1), &written))
+        || !TEST_size_t_eq(written, sizeof(msg1)))
+        goto end;
+    if (!TEST_true(SSL_write_ex(client2, msg2, sizeof(msg2), &written))
+        || !TEST_size_t_eq(written, sizeof(msg2)))
+        goto end;
+
+    memset(buf, 0, sizeof(buf));
+    if (!TEST_true(dtls_read_with_retry(server1, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg1, sizeof(msg1)))
+        goto end;
+
+    memset(buf, 0, sizeof(buf));
+    if (!TEST_true(dtls_read_with_retry(server2, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg2, sizeof(msg2)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(server1, reply1, sizeof(reply1), &written))
+        || !TEST_size_t_eq(written, sizeof(reply1)))
+        goto end;
+    if (!TEST_true(SSL_write_ex(server2, reply2, sizeof(reply2), &written))
+        || !TEST_size_t_eq(written, sizeof(reply2)))
+        goto end;
+
+    memset(buf, 0, sizeof(buf));
+    if (!TEST_true(dtls_read_with_retry(client1, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, reply1, sizeof(reply1)))
+        goto end;
+
+    memset(buf, 0, sizeof(buf));
+    if (!TEST_true(dtls_read_with_retry(client2, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, reply2, sizeof(reply2)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn1);
+    SSL_free(new_conn2);
+    SSL_free(client1);
+    SSL_free(client2);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    BIO_ADDR_free(client1_local_addr);
+    BIO_ADDR_free(client2_local_addr);
+    BIO_ADDR_free(peer_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client1_fd >= 0)
+        BIO_closesocket(client1_fd);
+    if (client2_fd >= 0)
+        BIO_closesocket(client2_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+
+#ifndef OPENSSL_NO_DTLS1_2
+/*
+ * Test SSL_listen_ex() with a DTLS 1.2 HelloVerifyRequest cookie exchange:
+ * the peeled connection must carry d1->cookie_verified forward and be able
+ * to complete its handshake and exchange data.
+ */
+static int test_dtls_listen_ex_with_hvr(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *new_conn = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    const char msg[] = "hello after HVR peel";
+    const char reply[] = "hello back after HVR peel";
+    char buf[64];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    if (!TEST_ptr(new_conn = SSL_new(sctx)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 1))
+        goto end;
+
+    /* The HVR cookie-verified flag must have survived the state transfer. */
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(new_conn)))
+        goto end;
+    if (!TEST_true(sc->d1->cookie_verified))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(new_conn, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_version(new_conn), DTLS1_2_VERSION)
+        || !TEST_int_eq(SSL_version(clientssl), DTLS1_2_VERSION))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+    if (!TEST_true(dtls_read_with_retry(new_conn, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(new_conn, reply, sizeof(reply), &written))
+        || !TEST_size_t_eq(written, sizeof(reply)))
+        goto end;
+    if (!TEST_true(dtls_read_with_retry(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, reply, sizeof(reply)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_2 */
+
+/*
+ * Test: SSL_free(listener) while a connection sits queued in
+ * incoming_connections, on a listener already latched into
+ * DTLS_PEELOFF_LISTEN mode. Teardown must still drain any un-peeled,
+ * queued connection regardless of peeloff mode -- ossl_dtls_listen_ex()
+ * latches the trapdoor before it is known whether anything is even queued,
+ * so this is not a corner case teardown can afford to miss.
+ */
+static int test_ssl_ownership_listen_ex_incoming_conn_leak(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *new_conn = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!TEST_ptr(new_conn = SSL_new(sctx)))
+        goto end;
+
+    /* Nothing queued yet, but this latches the listener into LISTEN mode. */
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 0))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    /*
+     * Deliberately do not call SSL_listen_ex() again to peel this connection
+     * off before tearing the listener down. If teardown does not drain
+     * incoming_connections regardless of peeloff mode, ASAN will report a
+     * leak.
+     */
+    testresult = 1;
+end:
+    SSL_free(new_conn);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_listen_ex() peel followed by freeing the peeled connection
+ * before the listener -- the SSL_listen_ex() counterpart of
+ * test_ssl_ownership_accept_free_no_double_free(). The peeled connection's
+ * established_conns registration must not cause the listener to try to free
+ * it a second time.
+ */
+static int test_ssl_ownership_listen_ex_no_double_free(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *new_conn = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    if (!TEST_ptr(new_conn = SSL_new(sctx)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 1))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(new_conn, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * User owns new_conn now. Free it before freeing the listener -- this
+     * must unregister it from established_conns so the listener does not
+     * try to free it again.
+     */
+    SSL_free(new_conn);
+    new_conn = NULL;
+
+    SSL_free(listener);
+    listener = NULL;
+
+    testresult = 1;
+end:
+    SSL_free(new_conn);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * Test the blocking mode of a DTLS listener and of the connections it creates.
  *
  * Blocking is the default, as it is for QUIC: a listener which was never
@@ -5982,7 +7055,13 @@ int setup_tests(void)
     ADD_TEST(test_dtls_new_listener_null_ctx);
     ADD_TEST(test_tls_new_listener_fails);
     ADD_TEST(test_dtls_new_listener_from_returns_null);
-    ADD_TEST(test_dtls_listen_ex_returns_error);
+    /*
+     * test_dtls_listen_ex_returns_error was removed: it pinned "SSL_listen_ex
+     * always returns 0 for DTLS", which SSL_listen_ex() no longer does. Its
+     * two cases (empty queue -> 0; bad args -> -1) are now covered by
+     * test_dtls_listen_ex_no_connection and test_dtls_listen_ex_invalid_args
+     * below.
+     */
 
     /* DTLS 1.2 connection tests */
 #ifndef OPENSSL_NO_DTLS1_2
@@ -6025,6 +7104,24 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listener_pending_timeout_basic);
     ADD_TEST(test_dtls_listener_pending_timeout_invalid);
 
+    /* Peeloff mode tests */
+    ADD_TEST(test_dtls_listener_test_and_set_peeloff);
+    ADD_TEST(test_dtls_conn_is_peel_eligible);
+    ADD_TEST(test_dtls_transfer_connection_state_basic);
+    ADD_TEST(test_dtls_transfer_connection_state_invalid_args);
+    ADD_TEST(test_dtls_listen_ex_basic);
+    ADD_TEST(test_dtls_listen_ex_no_connection);
+    ADD_TEST(test_dtls_listen_ex_invalid_args);
+    ADD_TEST(test_dtls_conn_is_peel_eligible_after_clear);
+    ADD_TEST(test_dtls_listen_ex_mutual_exclusion);
+#ifndef OPENSSL_NO_DTLS1_3
+    ADD_TEST(test_dtls_listen_ex_with_hrr);
+    ADD_TEST(test_dtls_listen_ex_multiple_connections);
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_TEST(test_dtls_listen_ex_with_hvr);
+#endif
+
     /* Blocking mode tests */
     ADD_TEST(test_dtls_blocking_mode);
     ADD_TEST(test_dtls_blocking_mode_failed_set_is_inert);
@@ -6042,6 +7139,8 @@ int setup_tests(void)
     ADD_TEST(test_ssl_ownership_set_rbio_incoming_leak);
     ADD_TEST(test_ssl_ownership_multiple_pending_leak);
     ADD_TEST(test_ssl_ownership_pending_timeout_cleanup);
+    ADD_TEST(test_ssl_ownership_listen_ex_incoming_conn_leak);
+    ADD_TEST(test_ssl_ownership_listen_ex_no_double_free);
 
     /* Max number of pending connections tests */
     ADD_TEST(test_dtls_listener_max_pending_conns_api);

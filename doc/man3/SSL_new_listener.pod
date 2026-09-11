@@ -146,13 +146,16 @@ on the listener.
 
 Likewise, if a listener has accepted a connection via
 L<SSL_accept_connection(3)>, it is impermissible to accept connections via
-B<SSL_listen_ex()>. The SSL object passed in the B<new_conn> parameter must be
-a fresh standalone connection returned by L<SSL_new(3)>.
-L<OSSL_QUIC_method(3)> is intended for this use. The connection must not use
+B<SSL_listen_ex()>. For QUIC listeners, the SSL object passed in the
+B<new_conn> parameter must be a fresh standalone connection returned by
+L<SSL_new(3)> using L<OSSL_QUIC_method(3)>. The connection must not use
 thread assisted mode, have been started or shut down, have streams or network
-BIOs configured on it, or belong to another QUIC object hierarchy. The
-application must not access I<new_conn> concurrently while SSL_listen_ex() is
-executing.
+BIOs configured on it, or belong to another QUIC object hierarchy. For DTLS
+listeners, B<new_conn> must instead be a freshly created, untouched SSL
+object from L<SSL_new(3)> on a DTLS B<SSL_CTX>: no handshake role set, no
+BIOs attached, and no existing listener association; see L</DTLS LISTENER
+USAGE> below for details. The application must not access I<new_conn>
+concurrently while SSL_listen_ex() is executing.
 
 On success, I<new_conn> is adopted into the listener's object hierarchy and
 uses its shared network port and TLS configuration derived from the listener.
@@ -346,9 +349,25 @@ and can accept multiple connections concurrently.
      /* Handle the connection... */
  }
 
-Note that SSL_new_listener_from() and SSL_listen_ex() are not supported for
-DTLS listeners and will return NULL or an error if called with a DTLS SSL
-object.
+Note that SSL_new_listener_from() is not supported for DTLS listeners and
+will return NULL if called with a DTLS SSL object.
+
+SSL_listen_ex() is supported for DTLS listeners. It transfers the state of a
+connection which has already passed cookie validation onto the
+caller-supplied B<new_conn>. B<new_conn> must be freshly created via
+L<SSL_new(3)> on a DTLS B<SSL_CTX> and otherwise untouched: no handshake role
+set (via L<SSL_set_connect_state(3)> or L<SSL_set_accept_state(3)>), no BIOs
+attached (via L<SSL_set_bio(3)> or similar), and no existing listener
+association. Anything else fails with a return value of -1. As with
+SSL_accept_connection(), the handshake is B<not> complete when SSL_listen_ex()
+returns 1; the application must still call L<SSL_do_handshake(3)> or
+L<SSL_accept(3)> to complete it before sending or receiving application data.
+
+A DTLS listener enforces mutual exclusion between SSL_accept_connection() and
+SSL_listen_ex(): whichever of the two is called first on a given listener
+permanently commits that listener to that method for the remainder of its
+lifetime. Subsequent calls to the other function on the same listener fail
+(NULL from SSL_accept_connection(), -1 from SSL_listen_ex()).
 
 =head1 RETURN VALUES
 
@@ -423,6 +442,8 @@ SSL_listen_ex() was added in OpenSSL 4.0.
 DTLS listener support (including the B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION>,
 B<SSL_LISTENER_FLAG_NO_VALIDATE> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 flags) was added in OpenSSL 4.1.
+
+Support for SSL_listen_ex() with DTLS listeners was added in OpenSSL 4.1.
 
 The DTLS listener tunables B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>,
 B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> and
