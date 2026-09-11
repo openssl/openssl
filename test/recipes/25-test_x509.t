@@ -598,6 +598,30 @@ ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
             "-out", File::Spec->devnull(), "-days", "3650" , "-extensions", "ext",
             "-extfile", $invextfile])));
 
+subtest "signing output detection with -key" => sub {
+    plan tests => 5;
+
+    my $v1_cert = srctop_file("test", "testx509.pem");
+    my $with_days_cert = "x509-resigned-with-days.pem";
+    my $default_ext_cert = "x509-resigned-with-default-ext.pem";
+    my $request = "x509-to-request-with-ext.pem";
+
+    ok(!run(app(["openssl", "x509", "-in", $v1_cert, "-noout",
+                 "-days", "1"])),
+       "reject -days when no signed output is requested");
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-signkey", $in_key,
+                "-days", "1", "-out", $with_days_cert])),
+       "accept -days when re-signing with -signkey");
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-key", $in_key,
+                "-out", $default_ext_cert])),
+       "re-sign a certificate with -key");
+    has_SKID($default_ext_cert, 1);
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-x509toreq",
+                "-key", $in_key, "-extfile", $cnf,
+                "-extensions", "v3_req", "-out", $request])),
+       "accept extension options when signing a request with -key");
+};
+
 # Tests for issue #16080 (fixed in 1.1.1o)
 my $b_key = "b-key.pem";
 my $b_csr = "b-cert.csr";
