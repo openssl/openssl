@@ -37,7 +37,6 @@ const char OPT_PARAM_STR[] = "-P";
 
 /* Our state */
 static char **argv;
-static int argc;
 static int opt_index;
 static char *arg;
 static char *flag;
@@ -162,7 +161,7 @@ char *opt_getprog(void)
 char *opt_init(int ac, char **av, const OPTIONS *o)
 {
     /* Store state. */
-    argc = ac;
+    (void)ac;
     argv = av;
     opt_begin();
     opts = o;
