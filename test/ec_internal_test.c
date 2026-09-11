@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -436,6 +436,41 @@ err:
     return testresult;
 }
 
+/*
+ * Test that reusing an ECPKPARAMETERS object for a call that fails does not
+ * touch the CHOICE member that was released on entry.
+ */
+static int ecpkparams_reuse_error_test(void)
+{
+    EC_GROUP *grp = NULL;
+    ECPKPARAMETERS *params = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(grp = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1)))
+        goto err;
+
+    /* Populate the explicit parameters arm of the CHOICE. */
+    EC_GROUP_set_asn1_flag(grp, OPENSSL_EC_EXPLICIT_CURVE);
+    if (!TEST_ptr(params = EC_GROUP_get_ecpkparameters(grp, NULL)))
+        goto err;
+
+    /* Take the named curve arm and make it fail on the undefined NID. */
+    EC_GROUP_set_curve_name(grp, NID_undef);
+    EC_GROUP_set_asn1_flag(grp, OPENSSL_EC_NAMED_CURVE);
+
+    /* On failure the passed in object is consumed, so do not free it again. */
+    params = EC_GROUP_get_ecpkparameters(grp, params);
+    if (!TEST_ptr_null(params))
+        goto err;
+    testresult = 1;
+
+err:
+    ECPKPARAMETERS_free(params);
+    EC_GROUP_free(grp);
+
+    return testresult;
+}
+
 static int ecpkparams_i2d2i_test(int n)
 {
     EC_GROUP *g1 = NULL, *g2 = NULL;
@@ -556,6 +591,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(set_private_key);
     ADD_TEST(decoded_flag_test);
+    ADD_TEST(ecpkparams_reuse_error_test);
     ADD_ALL_TESTS(ecpkparams_i2d2i_test, (int)crv_len);
     ADD_TEST(named_group_creation_test);
 
