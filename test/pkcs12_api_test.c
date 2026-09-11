@@ -60,6 +60,11 @@ static const char *in_pass = "";
 static int has_key = 0;
 static int has_cert = 0;
 static int has_ca = 0;
+static int expected_ca_count = -1;
+static const char *expected_cert_file = NULL;
+static const char *expected_ca_file = NULL;
+static const char *expected_key_file = NULL;
+static int mismatched_key_pass = 0;
 
 static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca)
 {
@@ -108,6 +113,9 @@ static int pkcs12_parse_test(void)
     X509 *cert = NULL;
     STACK_OF(X509) *ca = NULL;
 
+    if (mismatched_key_pass)
+        return TEST_skip("not applicable with mismatched key password");
+
     if (in_file != NULL) {
         p12 = PKCS12_load(in_file);
         if (!TEST_ptr(p12))
@@ -132,6 +140,80 @@ err:
     X509_free(cert);
     OSSL_STACK_OF_X509_free(ca);
     return TEST_true(ret);
+}
+
+static int test_parse_combinations(int idx)
+{
+    int ret = 0;
+    PKCS12 *p12 = NULL;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+    int want_key = (idx >> 2) & 1;
+    int want_cert = (idx >> 1) & 1;
+    int want_ca = idx & 1;
+
+    if (in_file == NULL || !has_key || !has_cert)
+        return 1;
+
+    if (!TEST_int_ge(expected_ca_count, 0))
+        return TEST_skip("test_parse_combinations requires -ca-count parameter");
+
+    TEST_info("combination %d: want_key=%d want_cert=%d want_ca=%d",
+        idx, want_key, want_cert, want_ca);
+
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+    if (!TEST_true(PKCS12_parse(p12, in_pass,
+            want_key ? &key : NULL,
+            want_cert ? &cert : NULL,
+            want_ca ? &ca : NULL)))
+        goto err;
+
+    if (want_key) {
+        if (!TEST_ptr(key))
+            goto err;
+    }
+
+    if (want_cert) {
+        /*
+         * PKCS12_parse only sets *cert when the key is also requested and
+         * found, because it matches certs against *pkey.
+         */
+        if (want_key) {
+            if (!TEST_ptr(cert))
+                goto err;
+        } else {
+            if (!TEST_ptr_null(cert))
+                goto err;
+        }
+    }
+
+    if (want_ca) {
+        int actual_ca_count = ca == NULL ? 0 : sk_X509_num(ca);
+        int expected_count = expected_ca_count;
+
+        /*
+         * The matching cert is only excluded from the CA stack when both
+         * key and cert pointers are provided.  Otherwise it ends up in CA.
+         */
+        if (!want_key || !want_cert)
+            expected_count++;
+
+        if (!TEST_int_eq(actual_ca_count, expected_count))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    if (!ret)
+        TEST_info("failed combination %d: want_key=%d want_cert=%d want_ca=%d",
+            idx, want_key, want_cert, want_ca);
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    return ret;
 }
 
 /*
@@ -309,6 +391,11 @@ typedef enum OPTION_choice {
     OPT_IN_HAS_KEY,
     OPT_IN_HAS_CERT,
     OPT_IN_HAS_CA,
+    OPT_CA_COUNT,
+    OPT_EXPECTED_CERT,
+    OPT_EXPECTED_CA,
+    OPT_EXPECTED_KEY,
+    OPT_MISMATCHED_P12,
     OPT_LEGACY,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
@@ -322,6 +409,11 @@ const OPTIONS *test_get_options(void)
         { "has-key", OPT_IN_HAS_KEY, 'n', "Whether the input file does contain an user key" },
         { "has-cert", OPT_IN_HAS_CERT, 'n', "Whether the input file does contain an user certificate" },
         { "has-ca", OPT_IN_HAS_CA, 'n', "Whether the input file does contain other certificate" },
+        { "ca-count", OPT_CA_COUNT, 'n', "Expected number of CA certificates" },
+        { "expected-cert", OPT_EXPECTED_CERT, '<', "PEM file of expected main certificate" },
+        { "expected-ca", OPT_EXPECTED_CA, '<', "PEM file of expected CA certificates in order" },
+        { "expected-key", OPT_EXPECTED_KEY, '<', "PEM file of expected private key" },
+        { "mismatched-key-pass", OPT_MISMATCHED_P12, '-', "Input has key encrypted with a different password" },
         { "legacy", OPT_LEGACY, '-', "Test the legacy APIs" },
         { NULL }
     };
@@ -336,6 +428,8 @@ static int test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero(void)
     STACK_OF(X509) *ca = NULL;
     PKCS12 *p12 = NULL;
 
+    if (mismatched_key_pass)
+        return TEST_skip("not applicable with mismatched key password");
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
         return 0;
     if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
@@ -364,6 +458,8 @@ static int test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen(void)
     STACK_OF(X509) *ca = NULL;
     PKCS12 *p12 = NULL;
 
+    if (mismatched_key_pass)
+        return TEST_skip("not applicable with mismatched key password");
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
         return 0;
     if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
@@ -376,6 +472,137 @@ static int test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen(void)
         goto err;
     ret = TEST_false(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1,
         salt, -1, 0, NULL, NULL));
+err:
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    return ret;
+}
+
+static int test_parse_cert_placement(int idx)
+{
+    int ret = 0, i, pos = 0;
+    int want_key = (idx >> 2) & 1;
+    int want_cert = (idx >> 1) & 1;
+    int want_ca = idx & 1;
+    int selected = want_key && want_cert ? 1 : -1;
+    PKCS12 *p12 = NULL;
+    EVP_PKEY *key = NULL, *exp_key = NULL;
+    X509 *cert = NULL, *exp_cert = NULL;
+    X509 *ordered[3];
+    STACK_OF(X509) *ca = NULL, *exp_ca = NULL, *all = NULL;
+
+    if (expected_key_file == NULL && expected_cert_file == NULL
+        && expected_ca_file == NULL)
+        return 1;
+
+    if (!TEST_ptr(exp_key = load_pkey_pem(expected_key_file, testctx))
+        || !TEST_ptr(exp_cert = load_cert_pem(expected_cert_file, testctx))
+        || !TEST_ptr(exp_ca = load_certs_pem(expected_ca_file))
+        || !TEST_int_eq(sk_X509_num(exp_ca), 2)
+        || !TEST_int_ne(X509_cmp(exp_cert, sk_X509_value(exp_ca, 0)), 0)
+        || !TEST_ptr(all = sk_X509_new_null()))
+        goto err;
+
+    /* extra_certs.pem contains the second match, then the unrelated cert. */
+    ordered[0] = sk_X509_value(exp_ca, 1);
+    ordered[1] = exp_cert;
+    ordered[2] = sk_X509_value(exp_ca, 0);
+    for (i = 0; i < (int)OSSL_NELEM(ordered); i++) {
+        if (!TEST_int_gt(sk_X509_push(all, ordered[i]), 0))
+            goto err;
+    }
+
+    /* Passing all certificates through ca preserves the chosen order. */
+    p12 = PKCS12_create_ex("", NULL, exp_key, NULL, all,
+        NID_undef, NID_undef, 0, -1, 0, testctx, "provider=default");
+    if (!TEST_ptr(p12)
+        || !TEST_true(PKCS12_parse(p12, "",
+            want_key ? &key : NULL,
+            want_cert ? &cert : NULL,
+            want_ca ? &ca : NULL)))
+        goto err;
+
+    if (want_key
+        && (!TEST_ptr(key) || !TEST_int_eq(EVP_PKEY_eq(key, exp_key), 1)))
+        goto err;
+
+    if (want_cert) {
+        if (selected >= 0) {
+            if (!TEST_ptr(cert)
+                || !TEST_int_eq(X509_cmp(cert, exp_cert), 0))
+                goto err;
+        } else if (!TEST_ptr_null(cert)) {
+            goto err;
+        }
+    }
+
+    if (want_ca) {
+        if (!TEST_ptr(ca)
+            || !TEST_int_eq(sk_X509_num(ca), selected >= 0 ? 2 : 3))
+            goto err;
+        for (i = 0; i < (int)OSSL_NELEM(ordered); i++) {
+            if (i == selected)
+                continue;
+            if (!TEST_int_eq(X509_cmp(sk_X509_value(ca, pos), ordered[i]), 0)) {
+                TEST_info("CA cert mismatch at index %d", pos);
+                goto err;
+            }
+            pos++;
+        }
+    }
+
+    ret = 1;
+err:
+    if (!ret)
+        TEST_info("failed placement combination %d", idx);
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    EVP_PKEY_free(exp_key);
+    X509_free(cert);
+    X509_free(exp_cert);
+    OSSL_STACK_OF_X509_free(ca);
+    OSSL_STACK_OF_X509_free(exp_ca);
+    sk_X509_free(all);
+    return ret;
+}
+
+/*
+ * Load a pre-built PKCS#12 whose MAC and cert use one password but whose
+ * private key is encrypted with a different one.  Parsing without requesting
+ * the key must succeed (cert lands in the CA stack); requesting it must fail.
+ */
+static int test_parse_mismatched_key_password(void)
+{
+    int ret = 0;
+    PKCS12 *p12 = NULL;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+
+    if (in_file == NULL || !mismatched_key_pass)
+        return 1;
+
+    p12 = PKCS12_load(in_file);
+    if (!TEST_ptr(p12))
+        goto err;
+
+    /* Omitting the key pointer succeeds; cert lands in the CA stack */
+    if (!TEST_true(PKCS12_parse(p12, in_pass, NULL, NULL, &ca)))
+        goto err;
+    if (!TEST_ptr(ca) || !TEST_int_eq(sk_X509_num(ca), 1))
+        goto err;
+    OSSL_STACK_OF_X509_free(ca);
+    ca = NULL;
+
+    /* Requesting the key fails: wrong password for the shrouded key bag */
+    ERR_set_mark();
+    if (!TEST_false(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
+        goto err;
+    ERR_pop_to_mark();
+
+    ret = 1;
 err:
     PKCS12_free(p12);
     EVP_PKEY_free(key);
@@ -407,6 +634,21 @@ int setup_tests(void)
         case OPT_IN_HAS_CA:
             has_ca = opt_int_arg();
             break;
+        case OPT_CA_COUNT:
+            expected_ca_count = opt_int_arg();
+            break;
+        case OPT_EXPECTED_CERT:
+            expected_cert_file = opt_arg();
+            break;
+        case OPT_EXPECTED_CA:
+            expected_ca_file = opt_arg();
+            break;
+        case OPT_EXPECTED_KEY:
+            expected_key_file = opt_arg();
+            break;
+        case OPT_MISMATCHED_P12:
+            mismatched_key_pass = 1;
+            break;
         case OPT_TEST_CASES:
             break;
         default:
@@ -422,6 +664,9 @@ int setup_tests(void)
 
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
+    ADD_ALL_TESTS(test_parse_combinations, 8);
+    ADD_ALL_TESTS(test_parse_cert_placement, 8);
+    ADD_TEST(test_parse_mismatched_key_password);
     ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_mfail_test);
     ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_existing_ca_mfail_test);
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);

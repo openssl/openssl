@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 65 + ($no_fips ? 0 : 5);
+plan tests => 68 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -398,6 +398,7 @@ ok(run(test(["pkcs12_api_test",
              "-has-ca", 1,
              "-has-key", 1,
              "-has-cert", 1,
+             "-ca-count", 1,
              ])), "Test pkcs12_parse()");
 
 ok(run(test(["pkcs12_api_test",
@@ -411,7 +412,50 @@ ok(run(test(["pkcs12_api_test",
              "-has-ca", 1,
              "-has-key", 1,
              "-has-cert", 1,
+             "-ca-count", 1,
              ])), "Test pkcs12_parse()");
+
+# Test PKCS12_parse cert placement: two certs sharing a key + unrelated cert.
+# The cert from -in should be returned as the main cert; the other cert
+# matching the key (from -certfile) should go to the CA stack.
+{
+    my $extra_certs = "extra_certs.pem";
+    open(my $out, '>', $extra_certs) or die "Cannot create $extra_certs: $!";
+    for my $f (srctop_file(@path, "ee-cert2.pem"),
+               srctop_file(@path, "ca-cert.pem")) {
+        open(my $in, '<', $f) or die "Cannot read $f: $!";
+        print $out $_ while <$in>;
+        close $in;
+    }
+    close $out;
+
+    my $twocert_p12 = "twocert.p12";
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-inkey", srctop_file(@path, "ee-key.pem"),
+                "-in", srctop_file(@path, "ee-cert.pem"),
+                "-certfile", $extra_certs,
+                "-passout", "pass:", "-nomac", "-out", $twocert_p12])),
+       "export PKCS#12 with two certs sharing a key and unrelated cert");
+
+    ok(run(test(["pkcs12_api_test",
+                 "-in", $twocert_p12,
+                 "-has-key", 1,
+                 "-has-cert", 1,
+                 "-has-ca", 1,
+                 "-ca-count", 2,
+                 "-expected-cert", srctop_file(@path, "ee-cert.pem"),
+                 "-expected-key", srctop_file(@path, "ee-key.pem"),
+                 "-expected-ca", $extra_certs,
+                 ])), "Test PKCS12_parse cert placement with shared key");
+}
+
+# Test PKCS12_parse with a key encrypted using a different password than the MAC.
+# Omitting the key succeeds; requesting it fails.
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data",
+                                "mismatched_key_pass.p12"),
+             "-mismatched-key-pass",
+             ])), "Test PKCS12_parse with mismatched key password");
 
 # Test against CVE-2025-69421, octet parameter is expected, but
 # NULL is being received and dereferenced
