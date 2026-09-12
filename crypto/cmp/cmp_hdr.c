@@ -84,7 +84,7 @@ int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
 
 /*
  * Set the sender name in PKIHeader.
- * when nm is NULL, sender is set to an empty string
+ * when nm is NULL, sender is set to NULL-DN
  * returns 1 on success, 0 on error
  */
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
@@ -265,6 +265,8 @@ int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 /* fill in all fields of the hdr according to the info given in ctx */
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
+    const ASN1_OCTET_STRING *ref = ctx->referenceValue;
+    X509_NAME *ref_name = NULL;
     const X509_NAME *sender;
     const X509_NAME *rcp = NULL;
 
@@ -276,14 +278,45 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     /*
-     * If no protection cert nor oldCert nor CSR nor subject is given,
-     * sender name is not known to the client and thus set to NULL-DN
+     * With MAC-based protection, the CMP profile RFC 9483 section 3.1 requires
+     * that the reference value used to identify the shared secret is placed in
+     * the sender GeneralName, as the commonName in the directoryName choice.
+     * Yet this works only if the name can be suitably encoded and this
+     * encoding is between 1 and 64 bytes long, as specified in RFC 5280.
+     * Therefore we attempt to do this conversion, and if it fails, we resort to
+     * the more permissive requirements of RFC 9810 section 5.1.1., which allows
+     * to use the NULL-DN for the sender as long as the senderKID is sufficient.
      */
-    sender = ctx->cert != NULL ? X509_get_subject_name(ctx->cert) : ctx->oldCert != NULL ? X509_get_subject_name(ctx->oldCert)
-        : ctx->p10CSR != NULL                                                            ? X509_REQ_get_subject_name(ctx->p10CSR)
-                                                                                         : ctx->subjectName;
-    if (!ossl_cmp_hdr_set1_sender(hdr, sender))
-        return 0;
+    if (ref != NULL) {
+        ref_name = X509_NAME_new();
+        if (ref_name == NULL)
+            goto err;
+        (void)ERR_set_mark();
+        if (X509_NAME_add_entry_by_NID(ref_name, NID_commonName, MBSTRING_UTF8,
+                ref->data, ref->length, -1, 0)
+            != 1) {
+            X509_NAME_free(ref_name);
+            ref_name = NULL; /* the NULL ref_name, if used, leads to a NULL-DN */
+        }
+        (void)ERR_pop_to_mark();
+    }
+    if (ctx->secretValue != NULL && ref != NULL) {
+        if (!ossl_cmp_hdr_set1_sender(hdr, ref_name))
+            goto err;
+    } else {
+        /*
+         * If no protection cert nor oldCert nor CSR nor subject nor ref is given,
+         * sender name is not known to the client and thus set to NULL-DN
+         */
+        sender = ctx->cert != NULL     ? X509_get_subject_name(ctx->cert)
+            : ctx->oldCert != NULL     ? X509_get_subject_name(ctx->oldCert)
+            : ctx->p10CSR != NULL      ? X509_REQ_get_subject_name(ctx->p10CSR)
+            : ctx->subjectName != NULL ? ctx->subjectName
+                                       : ref_name;
+        if (!ossl_cmp_hdr_set1_sender(hdr, sender))
+            goto err;
+    }
+    X509_NAME_free(ref_name);
 
     /* determine recipient entry in PKIHeader */
     if (ctx->recipient != NULL)
@@ -340,4 +373,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     return 1;
+
+err:
+    X509_NAME_free(ref_name);
+    return 0;
 }
