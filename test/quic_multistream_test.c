@@ -2743,17 +2743,6 @@ static const struct script_op script_100[] = {
     OP_END
 };
 
-static int
-modify_ack_delay_exponent(struct helper *h, struct helper_local *hl)
-{
-    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
-            QUIC_MAX_ACK_DELAY_EXP + 1)))
-        return 0;
-
-    return modify_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT);
-}
-
 static int check_ack_delay_exponent(struct helper *h, struct helper_local *hl)
 {
     return check_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT);
@@ -2766,16 +2755,7 @@ static int cannot_change_ack_delay_exponent(struct helper *h, struct helper_loca
 
 /* 101. Ack delay exponent configuration */
 static const struct script_op script_101[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_CHECK(modify_ack_delay_exponent, QUIC_DEFAULT_ACK_DELAY_EXP + 1),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_ack_delay_exponent,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP),
-    OP_CHECK2(check_ack_delay_exponent,
-        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP + 1),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };

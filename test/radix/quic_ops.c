@@ -1876,6 +1876,25 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_reject_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, bad;
+
+    F_POP(bad);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            bad)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 DEF_FUNC(hf_check_value_uint)
 {
     int ok = 0;
@@ -2313,6 +2332,12 @@ err:
         OP_PUSH_U64(ssl_value),                          \
         OP_PUSH_U64(requested),                          \
         OP_FUNC(hf_modify_value_uint))
+
+#define OP_REJECT_VALUE_UINT(name, ssl_value, bad) \
+    (OP_SELECT_SSL(0, name),                       \
+        OP_PUSH_U64(ssl_value),                    \
+        OP_PUSH_U64(bad),                          \
+        OP_FUNC(hf_reject_value_uint))
 
 #define OP_CHECK_VALUE_UINT(name, ssl_value, value_class, expected) \
     (OP_SELECT_SSL(0, name),                                        \
