@@ -32,7 +32,23 @@ OpenSSL Releases
 OpenSSL 4.2
 -----------
 
-### Changes between 4.1 and 4.2 [xx XXX xxxx]
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
+
+ * Fixed allocation-failure handling in `SSL_CTX_set_ciphersuites()` and
+   `SSL_set_ciphersuites()`. If inserting a requested ciphersuite into the
+   active list fails, the setter now reports failure and preserves the
+   previous cipher lists instead of accepting an incomplete selection.
+
+   *Martin Wolf*
+
+ * Refactored remaining cipher `OSSL_PARAM` name parsing so that
+   automatically generated parsers are used instead of
+   `OSSL_PARAM_locate()` calls.  This should ensure that the list
+   of acceptable parameters better matches those which are actually
+   processed.  It should also provide a small performance improvement,
+   because repeated iteration over passed parameter arrays is avoided.
+
+   *Dr Paul Dale*
 
  * none yet
 
@@ -96,26 +112,19 @@ OpenSSL 4.1
    is now a single value on the `EC_GROUP` and round-trips
    unchanged through import and export of `EC_KEY` objects.
 
-   Freshly generated keys have their public point encoded
-   in uncompressed form.  A `point-format` supplied at key generation
-   time via `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT`
-   is validated (an invalid value is rejected) but otherwise ignored
-   on the generated key.  EC parameter generation continues
-   to honour the requested form on the group's generator;  imported
-   keys keep their form.
+ * Added provider-defined TLS 1.3 ciphersuites through the
+   `TLS-CIPHERSUITE` capability, with explicit selection and unchanged built-in
+   defaults. These sessions cannot be resumed, cached, serialised or ticketed.
+   Provider-backed external PSK and 0-RTT are unsupported, as are DTLS, QUIC and
+   kTLS. See provider-base(7) for the capability contract.
 
-   The `ec_point_formats` extension no longer affects TLS 1.2
-   X.509 certificate selection or acceptance.  OpenSSL now
-   accepts an EC certificate in any point form it can decode,
-   and sends any EC certificate it has regardless of point form.
-   TLS 1.3 disregards the extension entirely.
+   *Martin Wolf*
 
-   The [RFC 4492][RFC 4492 Section 5.1.2]/[8422 section 5.1.2][RFC 8422 Section 5.1.2]
-   requirement that the peer's point-format list contain "uncompressed" is now
-   enforced on both sides (previously client-only), and only when an ECC TLS 1.2
-   ciphersuite is negotiated—a missing "uncompressed" is ignored under TLS 1.3
-   or with a non-ECC cipher.
-   <!-- https://github.com/openssl/openssl/pull/30940 -->
+ * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
+   PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
+   ticket has aged out and an external PSK is offered in its place. The early
+   data was being encrypted with the retired ticket's secret rather than the
+   external PSK's, causing the server to reject it with a bad record MAC.
 
    *Viktor Dukhovni*
 

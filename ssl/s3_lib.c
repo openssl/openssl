@@ -4725,6 +4725,27 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
     return OBJ_bsearch_ssl_cipher_id(&c, ssl3_scsvs, SSL3_NUM_SCSVS);
 }
 
+int ossl_ssl_has_cipher_name(const char *name)
+{
+    SSL_CIPHER *tbl;
+    SSL_CIPHER *alltabs[] = { tls13_ciphers, ssl3_ciphers, ssl3_scsvs };
+    size_t i, j;
+    const size_t tblsize[] = {
+        TLS13_NUM_CIPHERS, SSL3_NUM_CIPHERS, SSL3_NUM_SCSVS
+    };
+
+    for (j = 0; j < OSSL_NELEM(alltabs); j++) {
+        for (i = 0, tbl = alltabs[j]; i < tblsize[j]; i++, tbl++) {
+            if ((tbl->name != NULL
+                    && OPENSSL_strcasecmp(name, tbl->name) == 0)
+                || (tbl->stdname != NULL
+                    && OPENSSL_strcasecmp(name, tbl->stdname) == 0))
+                return 1;
+        }
+    }
+    return 0;
+}
+
 const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname)
 {
     SSL_CIPHER *end = &tls13_ciphers[TLS13_NUM_CIPHERS];
@@ -4960,35 +4981,38 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
             if (!ok)
                 continue;
         }
-        ii = sk_SSL_CIPHER_find(allow, c);
+        ii = ossl_ssl_cipher_stack_find(allow, c);
         if (ii >= 0) {
+            const SSL_CIPHER *canonical = ossl_ssl_get0_cipher_canon_enabled(s, c);
+
+            if (canonical == NULL)
+                continue;
             /* Check security callback permits this cipher */
             if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
-                    c->strength_bits, 0, (void *)c))
+                    canonical->strength_bits, 0, (void *)canonical))
                 continue;
 
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)
                 && s->s3.is_probably_safari) {
                 if (!ret)
-                    ret = sk_SSL_CIPHER_value(allow, ii);
+                    ret = canonical;
                 continue;
             }
 
             if (prefer_sha256) {
-                const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
-                const EVP_MD *md = ssl_md(SSL_CONNECTION_GET_CTX(s),
-                    tmp->algorithm2);
+                const EVP_MD *md = ossl_ssl_cipher_get0_md(
+                    SSL_CONNECTION_GET_CTX(s), canonical);
 
                 if (md != NULL
                     && EVP_MD_is_a(md, OSSL_DIGEST_NAME_SHA2_256)) {
-                    ret = tmp;
+                    ret = canonical;
                     break;
                 }
                 if (ret == NULL)
-                    ret = tmp;
+                    ret = canonical;
                 continue;
             }
-            ret = sk_SSL_CIPHER_value(allow, ii);
+            ret = canonical;
             break;
         }
     }

@@ -218,6 +218,22 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[tls13ccstest]=../include ../apps/include
   DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
 
+  IF[{- !$disabled{tls} && !$disabled{tls1_3} -}]
+    PROGRAMS{noinst}=provider_tls_ciphersuite_test provider_tls_nonresumption_test
+    SOURCE[provider_tls_ciphersuite_test]=provider_tls_ciphersuite_test.c tls-provider.c helpers/ssltestlib.c
+    INCLUDE[provider_tls_ciphersuite_test]=../include ../apps/include ..
+    DEPEND[provider_tls_ciphersuite_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    SOURCE[provider_tls_nonresumption_test]=provider_tls_nonresumption_test.c tls-provider.c helpers/ssltestlib.c
+    INCLUDE[provider_tls_nonresumption_test]=../include ../apps/include ..
+    DEPEND[provider_tls_nonresumption_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    PROGRAMS{noinst}=provider_tls_ciphersuite_ext_test
+    SOURCE[provider_tls_ciphersuite_ext_test]=provider_tls_ciphersuite_ext_test.c tls-provider.c helpers/ssltestlib.c
+    INCLUDE[provider_tls_ciphersuite_ext_test]=../include ../apps/include ..
+    DEPEND[provider_tls_ciphersuite_ext_test]=../libcrypto.a ../libssl.a libtestutil.a
+  ENDIF
+
   IF[{- !$disabled{ecx} && !$disabled{tls} && !$disabled{tls1_3} -}]
     PROGRAMS{noinst}=tls13groupselection_test
     SOURCE[tls13groupselection_test]=tls13groupselection_test.c helpers/ssltestlib.c
@@ -287,7 +303,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[provfetchtest]=provfetchtest.c
   INCLUDE[provfetchtest]=../include ../apps/include
-  DEPEND[provfetchtest]=../libcrypto libtestutil.a
+  DEPEND[provfetchtest]=../libcrypto.a libtestutil.a
 
   SOURCE[prov_config_test]=prov_config_test.c
   INCLUDE[prov_config_test]=../include ../apps/include
@@ -1350,6 +1366,29 @@ IF[{- !$disabled{tests} -}]
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[fake-cipher]=fake-cipher.ld
       GENERATE[fake-cipher.ld]=../util/providers.num
+    ENDIF
+    IF[{- !$disabled{tls} && !$disabled{tls1_3} -}]
+      MODULES{noinst}=tls-provider
+      SOURCE[tls-provider]=tls-provider-module.c tls-provider.c
+      INCLUDE[tls-provider]=.. ../include ../apps/include
+      DEPEND[tls-provider]=../libcrypto
+      IF[{- $target{needs_c99_snprintf_compat} -}]
+        SOURCE[tls-provider]=../crypto/msvc2013_snprintf.c
+      ENDIF
+      IF[{- defined $target{shared_defflag} -}]
+        SOURCE[tls-provider]=p_test.ld
+      ENDIF
+    ENDIF
+    MODULES{noinst}=tls-provider-child
+    SOURCE[tls-provider-child]=tls-provider-module.c tls-provider.c
+    INCLUDE[tls-provider-child]=.. ../include ../apps/include
+    DEFINE[tls-provider-child]=TLS_PROVIDER_CHILD_LIBCTX
+    DEPEND[tls-provider-child]=../libcrypto
+    IF[{- $target{needs_c99_snprintf_compat} -}]
+      SOURCE[tls-provider-child]=../crypto/msvc2013_snprintf.c
+    ENDIF
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[tls-provider-child]=p_test.ld
     ENDIF
   ENDIF
   IF[{- $disabled{module} || !$target{dso_scheme} -}]

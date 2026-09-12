@@ -127,6 +127,12 @@ static unsigned char server_ats_iv[] = {
 };
 
 /* Mocked out implementations of various functions */
+int ossl_ssl_session_set1_cipher(SSL_SESSION *session, const SSL_CIPHER *cipher)
+{
+    session->cipher = cipher;
+    return 1;
+}
+
 int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
 {
     return 1;
@@ -162,6 +168,11 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     const EVP_CIPHER **enc)
 {
     return 0;
+}
+
+const EVP_MD *ossl_ssl_cipher_get0_md(SSL_CTX *ctx, const SSL_CIPHER *sslc)
+{
+    return EVP_sha256();
 }
 
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,

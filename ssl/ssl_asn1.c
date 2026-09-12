@@ -135,8 +135,13 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
     long l;
     int ret;
 
-    if ((in == NULL) || ((in->cipher == NULL) && (in->cipher_id == 0)))
+    if (in == NULL || (in->cipher == NULL && in->cipher_id == 0))
         return 0;
+    if (in->provider_cipher_seen) {
+        ERR_raise(ERR_LIB_SSL,
+            SSL_R_PROVIDER_CIPHERSUITE_SESSION_UNSUPPORTED);
+        return 0;
+    }
 
     memset(&as, 0, sizeof(as));
 
@@ -268,8 +273,11 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
     long id;
     size_t tmpl;
     const unsigned char *p = *pp;
+    const SSL_CIPHER *cipher, *saved_cipher = NULL;
+    uint32_t saved_cipher_id = 0;
     SSL_SESSION_ASN1 *as = NULL;
     SSL_SESSION *ret = NULL;
+    int reuse = a != NULL && *a != NULL, saved_cipher_valid = 0;
 
     as = d2i_SSL_SESSION_ASN1(NULL, &p, length);
     /* ASN.1 code returns suitable error */
@@ -282,6 +290,11 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
             goto err;
     } else {
         ret = *a;
+        if (!ossl_ssl_cipher_up_ref(ret->cipher))
+            goto err;
+        saved_cipher = ret->cipher;
+        saved_cipher_id = ret->cipher_id;
+        saved_cipher_valid = 1;
     }
 
     if (as->version != SSL_SESSION_ASN1_VERSION) {
@@ -308,10 +321,10 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
     id = 0x03000000L | ((unsigned long)as->cipher->data[0] << 8L)
         | (unsigned long)as->cipher->data[1];
 
-    ret->cipher_id = id;
-    ret->cipher = ssl3_get_cipher_by_id(id);
-    if (ret->cipher == NULL)
+    cipher = ssl3_get_cipher_by_id(id);
+    if (cipher == NULL || !ossl_ssl_session_set1_cipher(ret, cipher))
         goto err;
+    ret->cipher_id = id;
 
     if (!ssl_session_memcpy(ret->session_id, &ret->session_id_length,
             as->session_id, SSL3_MAX_SSL_SESSION_ID_LENGTH))
@@ -377,6 +390,7 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
         as->tlsext_tick->data = NULL;
     } else {
         ret->ext.tick = NULL;
+        ret->ext.ticklen = 0;
     }
 #ifndef OPENSSL_NO_COMP
     if (as->comp_id) {
@@ -422,6 +436,12 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
 
     M_ASN1_free_of(as, SSL_SESSION_ASN1);
 
+    /* A successful decode replaces the provider-cipher state. */
+    ret->provider_cipher_seen = 0;
+    ret->psk_external = 0;
+
+    ossl_ssl_cipher_free(saved_cipher);
+
     if ((a != NULL) && (*a == NULL))
         *a = ret;
     *pp = p;
@@ -429,6 +449,13 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
 
 err:
     M_ASN1_free_of(as, SSL_SESSION_ASN1);
+    if (reuse && ret != NULL && saved_cipher_valid) {
+        ossl_ssl_cipher_free(ret->cipher);
+        ret->cipher = saved_cipher;
+        ret->cipher_id = saved_cipher_id;
+        saved_cipher = NULL;
+    }
+    ossl_ssl_cipher_free(saved_cipher);
     if ((a == NULL) || (*a != ret))
         SSL_SESSION_free(ret);
     return NULL;

@@ -1614,9 +1614,17 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
+/**
+ * @brief Create an SSL context using a library context and property query.
+ * @see SSL_CTX_new_ex(3)
+ */
 __owur SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const SSL_METHOD *meth);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
+/**
+ * @brief Release a reference to an SSL context and its resources.
+ * @see SSL_CTX_free(3)
+ */
 void SSL_CTX_free(SSL_CTX *);
 __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
 __owur long SSL_CTX_get_timeout(const SSL_CTX *ctx);
@@ -1643,6 +1651,10 @@ __owur uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c);
 __owur uint16_t SSL_CIPHER_get_protocol_id(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
+/**
+ * @brief Get the handshake digest associated with a ciphersuite.
+ * @see SSL_CIPHER_get_handshake_digest(3)
+ */
 __owur const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
 
@@ -1650,6 +1662,10 @@ __owur int SSL_get_fd(const SSL *s);
 __owur int SSL_get_rfd(const SSL *s);
 __owur int SSL_get_wfd(const SSL *s);
 __owur const char *SSL_get_cipher_list(const SSL *s, int n);
+/**
+ * @brief Write the names of the ciphersuites shared with the peer.
+ * @see SSL_get_shared_ciphers(3)
+ */
 __owur char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size);
 __owur int SSL_get_read_ahead(const SSL *s);
 __owur int SSL_pending(const SSL *s);
@@ -1665,7 +1681,15 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 __owur BIO *SSL_get_rbio(const SSL *s);
 __owur BIO *SSL_get_wbio(const SSL *s);
 __owur int SSL_set_cipher_list(SSL *s, const char *str);
+/**
+ * @brief Set the TLS 1.3 ciphersuite list for a context.
+ * @see SSL_CTX_set_ciphersuites(3)
+ */
 __owur int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str);
+/**
+ * @brief Set the TLS 1.3 ciphersuite list for a connection.
+ * @see SSL_set_ciphersuites(3)
+ */
 __owur int SSL_set_ciphersuites(SSL *s, const char *str);
 void SSL_set_read_ahead(SSL *s, int yes);
 __owur int SSL_get_verify_mode(const SSL *s);
@@ -1765,6 +1789,10 @@ __owur int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s,
     const unsigned char *alpn,
     size_t len);
 __owur const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s);
+/**
+ * @brief Set the ciphersuite associated with a session.
+ * @see SSL_SESSION_set_cipher(3)
+ */
 __owur int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher);
 __owur int SSL_SESSION_has_ticket(const SSL_SESSION *s);
 __owur unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
@@ -1780,6 +1808,10 @@ __owur int SSL_SESSION_set1_id_context(SSL_SESSION *s,
     unsigned int sid_ctx_len);
 __owur int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
     unsigned int sid_len);
+/**
+ * @brief Check whether a session can be used for resumption.
+ * @see SSL_SESSION_is_resumable(3)
+ */
 __owur int SSL_SESSION_is_resumable(const SSL_SESSION *s);
 
 __owur SSL_SESSION *SSL_SESSION_new(void);
@@ -1795,9 +1827,25 @@ int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);
 int SSL_SESSION_print(BIO *fp, const SSL_SESSION *ses);
 int SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x);
 int SSL_SESSION_up_ref(SSL_SESSION *ses);
+/**
+ * @brief Release a reference to a session and its resources.
+ * @see SSL_SESSION_free(3)
+ */
 void SSL_SESSION_free(SSL_SESSION *ses);
+/**
+ * @brief Encode a session in DER format.
+ * @see i2d_SSL_SESSION(3)
+ */
 __owur int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp);
+/**
+ * @brief Set the session to use when establishing a connection.
+ * @see SSL_set_session(3)
+ */
 __owur int SSL_set_session(SSL *to, SSL_SESSION *session);
+/**
+ * @brief Add a session to an SSL context's internal session cache.
+ * @see SSL_CTX_add_session(3)
+ */
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *session);
 int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *session);
 __owur int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb);
@@ -1807,6 +1855,10 @@ __owur int SSL_has_matching_session_id(const SSL *s,
     unsigned int id_len);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     long length);
+/**
+ * @brief Decode a DER session using a library context and property query.
+ * @see d2i_SSL_SESSION_ex(3)
+ */
 SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
     long length, OSSL_LIB_CTX *libctx,
     const char *propq);
@@ -2065,6 +2117,10 @@ __owur size_t DTLS_get_data_mtu(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
 __owur STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s);
+/**
+ * @brief Get a newly allocated stack of supported ciphersuites.
+ * @see SSL_get1_supported_ciphers(3)
+ */
 __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
@@ -2073,6 +2129,10 @@ int SSL_get_key_update_type(const SSL *s);
 int SSL_renegotiate(SSL *s);
 int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(const SSL *s);
+/**
+ * @brief Request an additional TLS 1.3 session ticket.
+ * @see SSL_new_session_ticket(3)
+ */
 int SSL_new_session_ticket(SSL *s);
 int SSL_shutdown(SSL *s);
 __owur int SSL_verify_client_post_handshake(SSL *s);
@@ -2111,9 +2171,17 @@ __owur long SSL_get_default_timeout(const SSL *s);
 #define SSL_library_init() OPENSSL_init_ssl(0, NULL)
 #endif
 
+/**
+ * @brief Format a human-readable ciphersuite description.
+ * @see SSL_CIPHER_description(3)
+ */
 __owur char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
 __owur STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk);
 
+/**
+ * @brief Duplicate an SSL object's configuration or retain an active object.
+ * @see SSL_dup(3)
+ */
 __owur SSL *SSL_dup(SSL *ssl);
 
 __owur X509 *SSL_get_certificate(const SSL *ssl);
@@ -2254,8 +2322,20 @@ __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
 #endif
 __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
 
+/**
+ * @brief Find a ciphersuite by its two-byte wire identifier.
+ * @see SSL_CIPHER_find(3)
+ */
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
+/**
+ * @brief Get the NID of a ciphersuite's encryption algorithm.
+ * @see SSL_CIPHER_get_cipher_nid(3)
+ */
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
+/**
+ * @brief Get the NID of a ciphersuite's record MAC digest.
+ * @see SSL_CIPHER_get_digest_nid(3)
+ */
 int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
 int SSL_bytes_to_cipher_list(SSL *s, const unsigned char *bytes, size_t len,
     int isv2format, STACK_OF(SSL_CIPHER) **sk,

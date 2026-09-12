@@ -1,0 +1,69 @@
+# -*- mode: perl; -*-
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License"). You may not use
+# this file except in compliance with the License. You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+use strict;
+use warnings;
+
+package ssltests;
+
+my $sha256 = "TLS_TEST_PROVIDER_AES_128_GCM_SHA256";
+my $sha384 = "TLS_TEST_PROVIDER_AES_256_GCM_SHA384";
+
+sub endpoint {
+    my ($suite) = @_;
+    return {
+        "MinProtocol" => "TLSv1.3",
+        "MaxProtocol" => "TLSv1.3",
+        "CipherSuites" => $suite,
+    };
+}
+
+our @tests = (
+    {
+        name => "provider-sha256",
+        server => endpoint($sha256),
+        client => endpoint($sha256),
+        test => {
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "TLSv1.3",
+            "ExpectedCipher" => $sha256,
+        },
+    },
+    {
+        name => "provider-sha384",
+        server => endpoint($sha384),
+        client => endpoint($sha384),
+        test => {
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "TLSv1.3",
+            "ExpectedCipher" => $sha384,
+        },
+    },
+    {
+        name => "provider-key-update-client",
+        server => endpoint($sha256),
+        client => endpoint($sha256),
+        test => {
+            "HandshakeMode" => "KeyUpdateClient",
+            "KeyUpdateType" => "KeyUpdateRequested",
+            "ExpectedResult" => "Success",
+            "ExpectedCipher" => $sha256,
+        },
+    },
+    {
+        name => "provider-key-update-server",
+        server => endpoint($sha384),
+        client => endpoint($sha384),
+        test => {
+            "HandshakeMode" => "KeyUpdateServer",
+            "KeyUpdateType" => "KeyUpdateRequested",
+            "ExpectedResult" => "Success",
+            "ExpectedCipher" => $sha384,
+        },
+    },
+);

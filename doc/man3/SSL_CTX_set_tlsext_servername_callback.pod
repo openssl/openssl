@@ -71,6 +71,10 @@ No alerts are sent and the server will not acknowledge the requested servername.
 SSL_CTX_set_tlsext_servername_arg() sets a context-specific argument to be
 passed into the callback (via the I<arg> parameter) for this B<SSL_CTX>.
 
+Provider-defined ciphersuite wire IDs continue to resolve through the
+connection's original SSL_CTX. Switching to a context with a different library
+context or property query is outside the provider-ciphersuite contract.
+
 The behaviour of SSL_get_servername() depends on a number of different factors.
 In particular note that in TLSv1.3 the servername is negotiated in every
 handshake. In TLSv1.2 the servername is only negotiated on initial handshakes

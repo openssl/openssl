@@ -127,6 +127,164 @@ static int ssl_cipher_info_find(const ssl_cipher_table *table,
 #define ssl_cipher_info_lookup(table, x) \
     ssl_cipher_info_find(table, OSSL_NELEM(table), x)
 
+int ossl_ssl_cipher_up_ref(const SSL_CIPHER *cipher)
+{
+    SSL_CIPHER *mutable_cipher = (SSL_CIPHER *)cipher;
+    int ref = 0;
+
+    if (cipher == NULL || cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER)
+        return 1;
+
+    if (!CRYPTO_UP_REF(&mutable_cipher->references, &ref))
+        return 0;
+
+    REF_PRINT_COUNT("SSL_CIPHER", ref, cipher);
+    REF_ASSERT_ISNT(ref < 2);
+    return 1;
+}
+
+void ossl_ssl_cipher_free(const SSL_CIPHER *cipher)
+{
+    SSL_CIPHER *mutable_cipher = (SSL_CIPHER *)cipher;
+    int ref;
+
+    if (cipher == NULL || cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER)
+        return;
+
+    CRYPTO_DOWN_REF(&mutable_cipher->references, &ref);
+    REF_PRINT_COUNT("SSL_CIPHER", ref, cipher);
+    if (ref > 0)
+        return;
+    REF_ASSERT_ISNT(ref < 0);
+
+    ssl_evp_cipher_free(cipher->provider_cipher);
+    ssl_evp_md_free(cipher->provider_digest);
+    OPENSSL_free((char *)cipher->name);
+    CRYPTO_FREE_REF(&mutable_cipher->references);
+    OPENSSL_free(mutable_cipher);
+}
+
+/**
+ * @brief Compare provider profiles and their retained algorithm implementations.
+ * @param a First descriptor, or NULL.
+ * @param b Second descriptor, or NULL.
+ * @returns 1 for identical pointers or equivalent provider profiles, otherwise 0.
+ *
+ * Different EVP objects may represent the same provider algorithm when fetch
+ * caching is disabled. Matching the wire ID alone is insufficient.
+ */
+static int ssl_provider_ciphersuite_equivalent(const SSL_CIPHER *a,
+    const SSL_CIPHER *b)
+{
+    if (a == b)
+        return 1;
+    /* Other profile fields are fixed by add_provider_ciphersuite(). */
+    if (a == NULL || b == NULL
+        || a->origin != SSL_CIPHER_ORIGIN_PROVIDER
+        || b->origin != SSL_CIPHER_ORIGIN_PROVIDER
+        || a->id != b->id
+        || OPENSSL_strcasecmp(a->name, b->name) != 0
+        || a->algorithm2 != b->algorithm2
+        || a->strength_bits != b->strength_bits
+        || a->alg_bits != b->alg_bits)
+        return 0;
+
+    /* Fetching without a cache allocates distinct objects for one algorithm. */
+    return a->provider_cipher != NULL && b->provider_cipher != NULL
+        && a->provider_digest != NULL && b->provider_digest != NULL
+        && EVP_CIPHER_get0_provider(a->provider_cipher)
+        == EVP_CIPHER_get0_provider(b->provider_cipher)
+        && EVP_CIPHER_is_a(a->provider_cipher,
+            EVP_CIPHER_get0_name(b->provider_cipher))
+        && EVP_MD_get0_provider(a->provider_digest)
+        == EVP_MD_get0_provider(b->provider_digest)
+        && EVP_MD_is_a(a->provider_digest,
+            EVP_MD_get0_name(b->provider_digest));
+}
+
+const SSL_CIPHER *ossl_ssl_get0_cipher_canon(const SSL_CONNECTION *s,
+    const SSL_CIPHER *cipher)
+{
+    const SSL_CIPHER *canonical;
+
+    if (cipher == NULL || cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER)
+        return cipher;
+    if (s == NULL)
+        return NULL;
+    canonical = ossl_ssl_get0_provider_cipher_by_id(s->session_ctx, cipher->id);
+    if (!ssl_provider_ciphersuite_equivalent(canonical, cipher))
+        return NULL;
+    return canonical;
+}
+
+const SSL_CIPHER *ossl_ssl_get0_cipher_canon_enabled(const SSL_CONNECTION *s,
+    const SSL_CIPHER *cipher)
+{
+    const SSL_CIPHER *canonical = ossl_ssl_get0_cipher_canon(s, cipher);
+
+    if (canonical == NULL || canonical->origin != SSL_CIPHER_ORIGIN_PROVIDER)
+        return canonical;
+    if (s->tls13_ciphersuites == NULL
+        || ossl_ssl_cipher_stack_find(s->tls13_ciphersuites, canonical) < 0)
+        return NULL;
+    return canonical;
+}
+
+int ossl_ssl_cipher_stack_find(STACK_OF(SSL_CIPHER) *sk,
+    const SSL_CIPHER *cipher)
+{
+    int i;
+
+    if (cipher == NULL || cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER)
+        return sk_SSL_CIPHER_find(sk, cipher);
+
+    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
+        const SSL_CIPHER *candidate = sk_SSL_CIPHER_value(sk, i);
+
+        if (candidate->id == cipher->id
+            && ssl_provider_ciphersuite_equivalent(candidate, cipher))
+            return i;
+    }
+    return -1;
+}
+
+int ossl_ssl_cipher_stack_canon(const SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk)
+{
+    int i;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
+        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(sk, i);
+        const SSL_CIPHER *canonical = ossl_ssl_get0_cipher_canon(s, cipher);
+
+        if (canonical == NULL)
+            return 0;
+        (void)sk_SSL_CIPHER_set(sk, i, canonical);
+    }
+    return 1;
+}
+
+/**
+ * @brief Resolve a provider wire ID through the original session context.
+ * @param s Connection, or NULL; only stream TLS permits provider suites.
+ * @param ptr Two-byte cipher ID in network order.
+ * @returns Borrowed descriptor, or NULL if unavailable for this connection.
+ */
+static const SSL_CIPHER *ssl_provider_ciphersuite_by_char(
+    const SSL_CONNECTION *s, const unsigned char *ptr)
+{
+    uint32_t id;
+
+    if (s == NULL)
+        return NULL;
+
+    if (SSL_IS_QUIC_HANDSHAKE(s) || SSL_CONNECTION_IS_DTLS(s))
+        return NULL;
+
+    id = SSL3_CK_CIPHERSUITE_FLAG | ((uint32_t)ptr[0] << 8L)
+        | (uint32_t)ptr[1];
+    return ossl_ssl_get0_provider_cipher_by_id(s->session_ctx, id);
+}
+
 static const int default_mac_pkey_id[SSL_MD_NUM_IDX] = {
     /* MD5, SHA, GOST94, MAC89 */
     EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
@@ -404,7 +562,16 @@ int ssl_load_ciphers(SSL_CTX *ctx)
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     const EVP_CIPHER **enc)
 {
-    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher,
+    int i;
+
+    if (sslc->origin == SSL_CIPHER_ORIGIN_PROVIDER) {
+        if (!ssl_evp_cipher_up_ref(sslc->provider_cipher))
+            return 0;
+        *enc = sslc->provider_cipher;
+        return 1;
+    }
+
+    i = ssl_cipher_info_lookup(ssl_cipher_table_cipher,
         sslc->algorithm_enc);
 
     if (i == -1) {
@@ -428,6 +595,15 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
         }
     }
     return 1;
+}
+
+const EVP_MD *ossl_ssl_cipher_get0_md(SSL_CTX *ctx, const SSL_CIPHER *sslc)
+{
+    if (sslc == NULL)
+        return NULL;
+    if (sslc->origin == SSL_CIPHER_ORIGIN_PROVIDER)
+        return sslc->provider_digest;
+    return ssl_md(ctx, sslc->algorithm2);
 }
 
 int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
@@ -600,8 +776,22 @@ const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
     return ctx->ssl_digest_methods[idx];
 }
 
+int ossl_ssl_cipher_has_same_digest(const SSL_CIPHER *a, const SSL_CIPHER *b)
+{
+    uint32_t a_digest, b_digest;
+
+    if (a == NULL || b == NULL)
+        return 0;
+    a_digest = a->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
+    b_digest = b->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
+    return a_digest != 0 && a_digest == b_digest;
+}
+
 const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s)
 {
+    if (s->s3.tmp.new_cipher != NULL
+        && s->s3.tmp.new_cipher->origin == SSL_CIPHER_ORIGIN_PROVIDER)
+        return s->s3.tmp.new_cipher->provider_digest;
     return ssl_md(SSL_CONNECTION_GET_CTX(s), ssl_get_algorithm2(s));
 }
 
@@ -1272,12 +1462,17 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     return 1;
 }
 
+struct ciphersuite_cb_data_st {
+    STACK_OF(SSL_CIPHER) *ciphersuites;
+    const SSL_CTX *ctx;
+};
+
 static int ciphersuite_cb(const char *elem, int len, void *arg)
 {
-    STACK_OF(SSL_CIPHER) *ciphersuites = (STACK_OF(SSL_CIPHER) *)arg;
+    struct ciphersuite_cb_data_st *data = arg;
+    STACK_OF(SSL_CIPHER) *ciphersuites = data->ciphersuites;
     const SSL_CIPHER *cipher;
-    /* Arbitrary sized temp buffer for the cipher name. Should be big enough */
-    char name[80];
+    char name[256];
 
     /* CONF_parse_list signals empty elements with elem == NULL; skip them */
     if (elem == NULL || len == 0)
@@ -1291,6 +1486,8 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     name[len] = '\0';
 
     cipher = ssl3_get_tls13_cipher_by_std_name(name);
+    if (cipher == NULL)
+        cipher = ossl_ssl_get0_provider_cipher_by_name(data->ctx, name);
     if (cipher == NULL)
         /* Ciphersuite not found but return 1 to parse rest of the list */
         return 1;
@@ -1308,25 +1505,30 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     return 1;
 }
 
-static __owur int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const char *str)
+/**
+ * @brief Parse an explicit TLS 1.3 list using built-in and provider names.
+ * @param ctx Context whose immutable provider registry supplies descriptors.
+ * @param str Non-NULL colon-separated list; the empty string is valid.
+ * @returns A new shallow stack owned by the caller, or NULL on failure.
+ */
+static STACK_OF(SSL_CIPHER) *parse_ciphersuites(const SSL_CTX *ctx,
+    const char *str)
 {
     STACK_OF(SSL_CIPHER) *newciphers = sk_SSL_CIPHER_new_null();
+    struct ciphersuite_cb_data_st data = { newciphers, ctx };
 
     if (newciphers == NULL)
-        return 0;
+        return NULL;
 
     /* Parse the list. We explicitly allow an empty list */
     if (*str != '\0'
-        && (CONF_parse_list(str, ':', 1, ciphersuite_cb, newciphers) <= 0
+        && (CONF_parse_list(str, ':', 1, ciphersuite_cb, &data) <= 0
             || sk_SSL_CIPHER_num(newciphers) == 0)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         sk_SSL_CIPHER_free(newciphers);
-        return 0;
+        return NULL;
     }
-    sk_SSL_CIPHER_free(*currciphers);
-    *currciphers = newciphers;
-
-    return 1;
+    return newciphers;
 }
 
 static int update_cipher_list_by_id(STACK_OF(SSL_CIPHER) **cipher_list_by_id,
@@ -1386,7 +1588,10 @@ static int update_cipher_list(SSL_CTX *ctx,
                        .mask
                    & ctx->disabled_mac_mask)
                 == 0) {
-            sk_SSL_CIPHER_unshift(tmp_cipher_list, sslc);
+            if (!sk_SSL_CIPHER_unshift(tmp_cipher_list, sslc)) {
+                sk_SSL_CIPHER_free(tmp_cipher_list);
+                return 0;
+            }
         }
     }
 
@@ -1403,36 +1608,76 @@ static int update_cipher_list(SSL_CTX *ctx,
 
 int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str)
 {
-    int ret = set_ciphersuites(&(ctx->tls13_ciphersuites), str);
+    STACK_OF(SSL_CIPHER) *newciphers;
 
-    if (ret && ctx->cipher_list != NULL)
-        return update_cipher_list(ctx, &ctx->cipher_list, &ctx->cipher_list_by_id,
-            ctx->tls13_ciphersuites);
+    if (ctx == NULL || str == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    newciphers = parse_ciphersuites(ctx, str);
+    if (newciphers == NULL)
+        return 0;
+    if (ctx->cipher_list != NULL
+        && !update_cipher_list(ctx, &ctx->cipher_list,
+            &ctx->cipher_list_by_id, newciphers)) {
+        sk_SSL_CIPHER_free(newciphers);
+        return 0;
+    }
 
-    return ret;
+    sk_SSL_CIPHER_free(ctx->tls13_ciphersuites);
+    ctx->tls13_ciphersuites = newciphers;
+    return 1;
 }
 
 int SSL_set_ciphersuites(SSL *s, const char *str)
 {
-    STACK_OF(SSL_CIPHER) *cipher_list;
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-    int ret;
+    STACK_OF(SSL_CIPHER) *newciphers, *cipher_list, *inherited = NULL;
+    SSL_CONNECTION *sc;
 
+    if (s == NULL || str == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    sc = SSL_CONNECTION_FROM_SSL(s);
     if (sc == NULL)
         return 0;
 
-    ret = set_ciphersuites(&(sc->tls13_ciphersuites), str);
+    newciphers = parse_ciphersuites(sc->session_ctx, str);
+    if (newciphers == NULL)
+        return 0;
 
-    if (sc->cipher_list == NULL) {
-        if ((cipher_list = SSL_get_ciphers(s)) != NULL)
-            sc->cipher_list = sk_SSL_CIPHER_dup(cipher_list);
+    /*
+     * An SSL without its own cipher list follows the list of its current
+     * SSL_CTX, also after SSL_set_SSL_CTX().  Create the per-SSL list only
+     * now, from that context list, and canonicalise provider descriptors
+     * to the registry of the connection's session_ctx.
+     */
+    cipher_list = sc->cipher_list;
+    if (cipher_list == NULL) {
+        if ((cipher_list = SSL_get_ciphers(s)) == NULL
+            || (inherited = sk_SSL_CIPHER_dup(cipher_list)) == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
+        if (!ossl_ssl_cipher_stack_canon(sc, inherited)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_CONTEXT);
+            goto err;
+        }
+        cipher_list = inherited;
     }
-    if (ret && sc->cipher_list != NULL)
-        return update_cipher_list(s->ctx, &sc->cipher_list,
-            &sc->cipher_list_by_id,
-            sc->tls13_ciphersuites);
+    if (!update_cipher_list(s->ctx, &cipher_list, &sc->cipher_list_by_id,
+            newciphers))
+        goto err;
+    sc->cipher_list = cipher_list;
 
-    return ret;
+    sk_SSL_CIPHER_free(sc->tls13_ciphersuites);
+    sc->tls13_ciphersuites = newciphers;
+    return 1;
+
+err:
+    sk_SSL_CIPHER_free(inherited);
+    sk_SSL_CIPHER_free(newciphers);
+    return 0;
 }
 
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
@@ -1690,16 +1935,13 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
     const char *ver;
     const char *kx, *au, *enc, *mac;
+    size_t name_len, enc_len, alloc_len;
     uint32_t alg_mkey, alg_auth, alg_enc, alg_mac;
+    int allocated = 0, written;
     static const char *const format = "%-30s %-7s Kx=%-8s Au=%-5s Enc=%-22s Mac=%-4s\n";
 
-    if (buf == NULL) {
-        len = 128;
-        if ((buf = OPENSSL_malloc(len)) == NULL)
-            return NULL;
-    } else if (len < 128) {
+    if (buf != NULL && len < 128)
         return NULL;
-    }
 
     alg_mkey = cipher->algorithm_mkey;
     alg_auth = cipher->algorithm_auth;
@@ -1861,6 +2103,8 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         enc = "unknown";
         break;
     }
+    if (cipher->origin == SSL_CIPHER_ORIGIN_PROVIDER)
+        enc = EVP_CIPHER_get0_name(cipher->provider_cipher);
 
     switch (alg_mac) {
     case SSL_MD5:
@@ -1894,7 +2138,26 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     }
 
-    snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
+    if (buf == NULL) {
+        name_len = strlen(cipher->name);
+        enc_len = strlen(enc);
+        if (name_len > (size_t)INT_MAX - 128
+            || enc_len > (size_t)INT_MAX - 128 - name_len)
+            return NULL;
+        alloc_len = name_len + enc_len + 128;
+        len = (int)alloc_len;
+        buf = OPENSSL_malloc(alloc_len);
+        if (buf == NULL)
+            return NULL;
+        allocated = 1;
+    }
+
+    written = snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
+    if (written < 0 || written >= len) {
+        if (allocated)
+            OPENSSL_free(buf);
+        return NULL;
+    }
 
     return buf;
 }
@@ -2109,6 +2372,9 @@ const SSL_CIPHER *ssl_get_cipher_by_char(SSL_CONNECTION *s,
 {
     const SSL_CIPHER *c = SSL_CONNECTION_GET_SSL(s)->method->get_cipher_by_char(ptr);
 
+    if (c == NULL)
+        c = ssl_provider_ciphersuite_by_char(s, ptr);
+
     if (c == NULL || (!all && c->valid == 0))
         return NULL;
     return c;
@@ -2116,14 +2382,24 @@ const SSL_CIPHER *ssl_get_cipher_by_char(SSL_CONNECTION *s,
 
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
 {
-    return ssl->method->get_cipher_by_char(ptr);
+    const SSL_CIPHER *cipher;
+
+    if (ssl == NULL)
+        return NULL;
+    cipher = ssl->method->get_cipher_by_char(ptr);
+    if (cipher != NULL)
+        return cipher;
+    return ssl_provider_ciphersuite_by_char(SSL_CONNECTION_FROM_SSL(ssl), ptr);
 }
 
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
 {
     int i;
+
     if (c == NULL)
         return NID_undef;
+    if (c->origin == SSL_CIPHER_ORIGIN_PROVIDER)
+        return EVP_CIPHER_get_nid(c->provider_cipher);
     i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, c->algorithm_enc);
     if (i == -1)
         return NID_undef;
@@ -2132,7 +2408,11 @@ int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
 
 int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c)
 {
-    int i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
+    int i;
+
+    if (c->origin == SSL_CIPHER_ORIGIN_PROVIDER)
+        return NID_undef;
+    i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
 
     if (i == -1)
         return NID_undef;
@@ -2171,6 +2451,9 @@ int ssl_get_md_idx(int md_nid)
 const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
 {
     int idx = c->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
+
+    if (c->origin == SSL_CIPHER_ORIGIN_PROVIDER)
+        return c->provider_digest;
 
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
         return NULL;
@@ -2341,7 +2624,9 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
     for (i = 0; i < sk_SSL_CIPHER_num(sk) && totlen < maxlen; i++) {
         const SSL_CIPHER *c;
 
-        c = sk_SSL_CIPHER_value(sk, i);
+        c = ossl_ssl_get0_cipher_canon_enabled(s, sk_SSL_CIPHER_value(sk, i));
+        if (c == NULL)
+            continue;
         /* Skip disabled ciphers */
         if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
             continue;

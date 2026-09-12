@@ -21,6 +21,7 @@
 #include <openssl/bn.h>
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
+#include <openssl/sha.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/tlsgroups.h"
@@ -227,6 +228,420 @@ struct provider_ctx_data_st {
     SSL_CTX *ctx;
     OSSL_PROVIDER *provider;
 };
+
+#if !defined(OPENSSL_NO_TLS1_3)
+#define TLS_CIPHERSUITE_NAME_MAX_LEN 255
+#define TLS_CIPHERSUITE_ALGORITHM_NAME_MAX_LEN 255
+#define TLS_PROVIDER_CIPHERSUITE_MAX 128
+
+/** @brief State for one provider's capability query during context creation. */
+struct provider_ciphersuite_data_st {
+    SSL_CTX *ctx;
+    OSSL_PROVIDER *provider;
+    int callback_failed; /* Distinguishes callback failure from unsupported. */
+};
+
+/**
+ * @brief Check the printable, colon-free syntax of a provider suite name.
+ * @param name NUL-terminated string, or NULL.
+ * @returns 1 for a nonempty name within the capability limit, otherwise 0.
+ */
+static int tls_ciphersuite_name_is_valid(const char *name)
+{
+    const unsigned char *p = (const unsigned char *)name;
+
+    if (name == NULL || *name == '\0'
+        || strlen(name) > TLS_CIPHERSUITE_NAME_MAX_LEN)
+        return 0;
+
+    for (; *p != '\0'; p++) {
+        if (*p <= 0x20 || *p >= 0x7f || *p == ':')
+            return 0;
+    }
+    return 1;
+}
+
+/**
+ * @brief Copy an exact-length capability string into a terminated buffer.
+ * @param params Capability parameters.
+ * @param key Required UTF8_STRING parameter name.
+ * @param value Output buffer, cleared on failure when value_size is nonzero.
+ * @param value_size Buffer capacity including the terminating NUL.
+ * @returns 1 for a nonempty string fitting the buffer, otherwise 0.
+ *
+ * One trailing NUL is allowed; embedded NULs and trailing data are rejected.
+ * This is stricter than OSSL_PARAM_get_utf8_string().
+ */
+static int tls_ciphersuite_get_string_param(const OSSL_PARAM params[],
+    const char *key, char *value, size_t value_size)
+{
+    const OSSL_PARAM *p = OSSL_PARAM_locate_const(params, key);
+    const unsigned char *source, *nul;
+    size_t len;
+
+    if (value_size == 0)
+        return 0;
+    value[0] = '\0';
+
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING
+        || p->data == NULL || p->data_size == 0
+        || p->data_size > value_size)
+        return 0;
+
+    source = p->data;
+    nul = memchr(source, '\0', p->data_size);
+    if (nul == NULL) {
+        len = p->data_size;
+    } else {
+        len = (size_t)(nul - source);
+        if (len + 1 != p->data_size)
+            return 0;
+    }
+    if (len == 0 || len >= value_size)
+        return 0;
+
+    memcpy(value, source, len);
+    value[len] = '\0';
+    return 1;
+}
+
+/**
+ * @brief Read a required unsigned capability parameter through OSSL_PARAM.
+ * @param params Capability parameters.
+ * @param key Required UNSIGNED_INTEGER parameter name.
+ * @param value Output value on success.
+ * @returns 1 if the one-to-eight-byte value fits unsigned int, otherwise 0.
+ */
+static int tls_ciphersuite_get_uint_param(const OSSL_PARAM params[],
+    const char *key, unsigned int *value)
+{
+    const OSSL_PARAM *p = OSSL_PARAM_locate_const(params, key);
+
+    if (p == NULL || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER
+        || p->data == NULL || p->data_size == 0
+        || p->data_size > sizeof(uint64_t))
+        return 0;
+
+    return OSSL_PARAM_get_uint(p, value);
+}
+
+static int ssl_provider_ciphersuite_name_cmp(
+    const SSL_CIPHER *const *ap, const SSL_CIPHER *const *bp)
+{
+    return OPENSSL_strcasecmp((*ap)->name, (*bp)->name);
+}
+
+#endif /* !defined(OPENSSL_NO_TLS1_3) */
+
+const SSL_CIPHER *ossl_ssl_get0_provider_cipher_by_id(const SSL_CTX *ctx,
+    uint32_t id)
+{
+    SSL_CIPHER key = { 0 };
+    int i;
+
+    if (ctx == NULL || ctx->provider_ciphersuites == NULL)
+        return NULL;
+
+    key.id = id;
+    i = sk_SSL_CIPHER_find(ctx->provider_ciphersuites, &key);
+    return i < 0 ? NULL
+                 : sk_SSL_CIPHER_value(ctx->provider_ciphersuites, i);
+}
+
+const SSL_CIPHER *ossl_ssl_get0_provider_cipher_by_name(const SSL_CTX *ctx,
+    const char *name)
+{
+    SSL_CIPHER key = { 0 };
+    int i;
+
+    if (ctx == NULL || name == NULL
+        || ctx->provider_ciphersuites_by_name == NULL)
+        return NULL;
+
+    key.name = name;
+    i = sk_SSL_CIPHER_find(ctx->provider_ciphersuites_by_name, &key);
+    return i < 0 ? NULL
+                 : sk_SSL_CIPHER_value(ctx->provider_ciphersuites_by_name, i);
+}
+
+#if !defined(OPENSSL_NO_TLS1_3)
+static OSSL_CALLBACK add_provider_ciphersuite;
+/**
+ * @brief Validate a capability descriptor and retain its fetched algorithms.
+ * @param params Descriptor emitted by the provider.
+ * @param data Provider query state; receives callback_failed on fatal failure.
+ * @returns 1 if accepted or unavailable, 0 for invalid data or allocation failure.
+ *
+ * Accepted descriptors are owned by ctx's registry. A failed EVP fetch makes
+ * the descriptor unavailable; this interface cannot classify fetch failures.
+ */
+static int add_provider_ciphersuite(const OSSL_PARAM params[], void *data)
+{
+    struct provider_ciphersuite_data_st *pcd = data;
+    SSL_CTX *ctx = pcd->ctx;
+    char name[TLS_CIPHERSUITE_NAME_MAX_LEN + 1] = { 0 };
+    char aead_name[TLS_CIPHERSUITE_ALGORITHM_NAME_MAX_LEN + 1];
+    char digest_name[TLS_CIPHERSUITE_ALGORITHM_NAME_MAX_LEN + 1];
+    const char *reason = "invalid descriptor";
+    unsigned int codepoint = 0, secbits = 0, taglen = 0;
+    uint32_t id;
+    int keylen, digest_idx;
+    SSL_CIPHER *suite = NULL;
+    EVP_CIPHER *cipher = NULL;
+    EVP_MD *digest = NULL;
+
+    if (sk_SSL_CIPHER_num(ctx->provider_ciphersuites)
+        >= TLS_PROVIDER_CIPHERSUITE_MAX) {
+        reason = "too many provider ciphersuites";
+        goto invalid;
+    }
+
+    if (!tls_ciphersuite_get_string_param(params,
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_NAME, name, sizeof(name))
+        || !tls_ciphersuite_name_is_valid(name)
+        || !tls_ciphersuite_get_string_param(params,
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_AEAD, aead_name,
+            sizeof(aead_name))
+        || !tls_ciphersuite_get_string_param(params,
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_DIGEST, digest_name,
+            sizeof(digest_name))) {
+        reason = "invalid name or algorithm parameter";
+        goto invalid;
+    }
+
+    if (!tls_ciphersuite_get_uint_param(params,
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_CODE_POINT, &codepoint)
+        || codepoint == 0 || codepoint > UINT16_MAX
+        || ossl_is_grease_value((uint16_t)codepoint)) {
+        reason = "invalid code point";
+        goto invalid;
+    }
+    id = SSL3_CK_CIPHERSUITE_FLAG | codepoint;
+
+    if (!tls_ciphersuite_get_uint_param(params,
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_SECURITY_BITS, &secbits)
+        || secbits < 128 || secbits > INT_MAX) {
+        reason = "invalid security bits";
+        goto invalid;
+    }
+
+    if (!tls_ciphersuite_get_uint_param(params,
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_TAG_LENGTH, &taglen)
+        || taglen != EVP_GCM_TLS_TAG_LEN) {
+        reason = "invalid tag length";
+        goto invalid;
+    }
+
+    if (ssl3_get_cipher_by_id(id) != NULL || ossl_ssl_has_cipher_name(name)) {
+        reason = "name or code point collision";
+        goto invalid;
+    }
+
+    (void)ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(ctx->libctx, aead_name, ctx->propq);
+    if (cipher == NULL) {
+        ERR_pop_to_mark();
+        goto unavailable;
+    }
+    ERR_pop_to_mark();
+    keylen = EVP_CIPHER_get_key_length(cipher);
+    if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0
+        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
+        || EVP_CIPHER_get_block_size(cipher) != 1
+        || keylen <= 0
+        || keylen > EVP_MAX_KEY_LENGTH
+        || EVP_CIPHER_get_iv_length(cipher) != 12
+        || secbits > (unsigned int)keylen * 8U) {
+        reason = "unsupported AEAD profile";
+        goto invalid;
+    }
+
+    (void)ERR_set_mark();
+    digest = EVP_MD_fetch(ctx->libctx, digest_name, ctx->propq);
+    if (digest == NULL) {
+        ERR_pop_to_mark();
+        goto unavailable;
+    }
+    ERR_pop_to_mark();
+    if (EVP_MD_is_a(digest, OSSL_DIGEST_NAME_SHA2_256)
+        && EVP_MD_get_size(digest) == SHA256_DIGEST_LENGTH)
+        digest_idx = SSL_HANDSHAKE_MAC_SHA256;
+    else if (EVP_MD_is_a(digest, OSSL_DIGEST_NAME_SHA2_384)
+        && EVP_MD_get_size(digest) == SHA384_DIGEST_LENGTH)
+        digest_idx = SSL_HANDSHAKE_MAC_SHA384;
+    else {
+        reason = "unsupported digest";
+        goto invalid;
+    }
+
+    suite = OPENSSL_zalloc(sizeof(*suite));
+    if (suite == NULL)
+        goto err;
+    if (!CRYPTO_NEW_REF(&suite->references, 1)) {
+        OPENSSL_free(suite);
+        suite = NULL;
+        goto crypto_err;
+    }
+    suite->origin = SSL_CIPHER_ORIGIN_PROVIDER;
+    suite->name = OPENSSL_strdup(name);
+    if (suite->name == NULL)
+        goto err;
+    suite->stdname = NULL;
+    suite->valid = 1;
+    suite->id = id;
+    suite->algorithm_mkey = SSL_kANY;
+    suite->algorithm_auth = SSL_aANY;
+    suite->algorithm_mac = SSL_AEAD;
+    suite->min_tls = TLS1_3_VERSION;
+    suite->max_tls = TLS1_3_VERSION;
+    suite->min_dtls = 0;
+    suite->max_dtls = 0;
+    suite->algo_strength = SSL_HIGH | SSL_NOT_DEFAULT;
+    /* TLS 1.3 list and transcript code reads the digest index here. */
+    suite->algorithm2 = (uint32_t)digest_idx;
+    suite->strength_bits = (int32_t)secbits;
+    suite->alg_bits = (uint32_t)keylen * 8U;
+    suite->provider_cipher = cipher;
+    cipher = NULL;
+    suite->provider_digest = digest;
+    digest = NULL;
+    if (!sk_SSL_CIPHER_push(ctx->provider_ciphersuites, suite))
+        goto crypto_err;
+    suite = NULL;
+    return 1;
+
+crypto_err:
+    ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+    /* fall through */
+err:
+    pcd->callback_failed = 1;
+    EVP_CIPHER_free(cipher);
+    EVP_MD_free(digest);
+    ossl_ssl_cipher_free(suite);
+    return 0;
+invalid:
+    ERR_raise_data(ERR_LIB_SSL, SSL_R_BAD_CIPHER,
+        "provider=%s ciphersuite=%s reason=%s",
+        OSSL_PROVIDER_get0_name(pcd->provider),
+        name[0] == '\0' ? "<unnamed>" : name, reason);
+    goto err;
+unavailable:
+    OSSL_TRACE2(TLS_CIPHER,
+        "Ignoring unavailable TLS-CIPHERSUITE from provider %s: %s\n",
+        OSSL_PROVIDER_get0_name(pcd->provider),
+        name[0] == '\0' ? "<unnamed>" : name);
+    EVP_CIPHER_free(cipher);
+    EVP_MD_free(digest);
+    ossl_ssl_cipher_free(suite);
+    return 1;
+}
+
+/**
+ * @brief Query one provider, discarding partial results if unsupported.
+ * @param provider Provider being enumerated.
+ * @param vctx SSL_CTX under construction, owning accepted descriptors.
+ * @returns 0 on callback failure, otherwise 1 (also for unsupported capability).
+ *
+ * Preserve callback errors, but suppress errors from unsupported queries.
+ */
+static int discover_provider_ciphersuites(OSSL_PROVIDER *provider, void *vctx)
+{
+    struct provider_ciphersuite_data_st pcd;
+    SSL_CTX *ctx = vctx;
+    int count, ret;
+
+    memset(&pcd, 0, sizeof(pcd));
+    pcd.ctx = ctx;
+    pcd.provider = provider;
+    count = sk_SSL_CIPHER_num(ctx->provider_ciphersuites);
+    /* Existing providers also return 0 for unsupported capabilities. */
+    (void)ERR_set_mark();
+    ret = OSSL_PROVIDER_get_capabilities(provider, "TLS-CIPHERSUITE",
+        add_provider_ciphersuite, &pcd);
+
+    if (pcd.callback_failed) {
+        (void)ERR_clear_last_mark();
+        return 0;
+    }
+    if (ret == 0) {
+        while (sk_SSL_CIPHER_num(ctx->provider_ciphersuites) > count)
+            ossl_ssl_cipher_free(sk_SSL_CIPHER_pop(ctx->provider_ciphersuites));
+    }
+    (void)ERR_pop_to_mark();
+    return 1;
+}
+
+/**
+ * @brief Sort descriptors and reject duplicate IDs or case-insensitive names.
+ * @param ctx Context owning the descriptor stack and receiving a shallow index.
+ * @returns 1 on success, 0 on a collision or allocation failure.
+ */
+static int index_provider_ciphersuites(SSL_CTX *ctx)
+{
+    STACK_OF(SSL_CIPHER) *by_name = NULL;
+    const SSL_CIPHER *previous, *current;
+    int i, count = sk_SSL_CIPHER_num(ctx->provider_ciphersuites);
+
+    sk_SSL_CIPHER_sort(ctx->provider_ciphersuites);
+    for (i = 1; i < count; i++) {
+        previous = sk_SSL_CIPHER_value(ctx->provider_ciphersuites, i - 1);
+        current = sk_SSL_CIPHER_value(ctx->provider_ciphersuites, i);
+        if (previous->id == current->id) {
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_BAD_CIPHER,
+                "TLS-CIPHERSUITE code point collision: 0x%04x (%s, %s)",
+                (unsigned int)(current->id & 0xffff),
+                previous->name, current->name);
+            return 0;
+        }
+    }
+
+    if (count == 0)
+        return 1;
+
+    by_name = sk_SSL_CIPHER_dup(ctx->provider_ciphersuites);
+    if (by_name == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+    (void)sk_SSL_CIPHER_set_cmp_func(by_name,
+        ssl_provider_ciphersuite_name_cmp);
+    sk_SSL_CIPHER_sort(by_name);
+    for (i = 1; i < count; i++) {
+        previous = sk_SSL_CIPHER_value(by_name, i - 1);
+        current = sk_SSL_CIPHER_value(by_name, i);
+        if (OPENSSL_strcasecmp(previous->name, current->name) == 0) {
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_BAD_CIPHER,
+                "TLS-CIPHERSUITE name collision: %s", current->name);
+            sk_SSL_CIPHER_free(by_name);
+            return 0;
+        }
+    }
+
+    ctx->provider_ciphersuites_by_name = by_name;
+    return 1;
+}
+#endif /* !defined(OPENSSL_NO_TLS1_3) */
+
+int ossl_ssl_load_provider_ciphersuites(SSL_CTX *ctx)
+{
+    ctx->provider_ciphersuites = sk_SSL_CIPHER_new(ssl_cipher_ptr_id_cmp);
+    if (ctx->provider_ciphersuites == NULL)
+        return 0;
+
+#if defined(OPENSSL_NO_TLS1_3)
+    return 1;
+#else
+    if (SSL_CTX_IS_DTLS(ctx) || IS_QUIC_METHOD(ctx->method)
+        || (ctx->method->version != TLS_ANY_VERSION
+            && ctx->method->version < TLS1_3_VERSION))
+        return 1;
+
+    if (!OSSL_PROVIDER_do_all(ctx->libctx,
+            discover_provider_ciphersuites, ctx))
+        return 0;
+    return index_provider_ciphersuites(ctx);
+#endif /* defined(OPENSSL_NO_TLS1_3) */
+}
 
 #define TLS_GROUP_LIST_MALLOC_BLOCK_SIZE 10
 static OSSL_CALLBACK add_provider_groups;
@@ -3034,6 +3449,10 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
         || c->algorithm_auth & s->s3.tmp.mask_a)
         return 1;
     if (s->s3.tmp.max_ver == 0)
+        return 1;
+
+    if (SSL_IS_QUIC_HANDSHAKE(s)
+        && c->origin == SSL_CIPHER_ORIGIN_PROVIDER)
         return 1;
 
     if (SSL_IS_QUIC_INT_HANDSHAKE(s))

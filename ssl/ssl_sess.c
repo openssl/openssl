@@ -128,6 +128,30 @@ SSL_SESSION *SSL_SESSION_new(void)
     return ss;
 }
 
+int ossl_ssl_session_set1_cipher(SSL_SESSION *session, const SSL_CIPHER *cipher)
+{
+    if (!ossl_ssl_cipher_up_ref(cipher)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+
+    ossl_ssl_cipher_free(session->cipher);
+    session->cipher = cipher;
+    if (cipher != NULL && cipher->origin == SSL_CIPHER_ORIGIN_PROVIDER) {
+        session->provider_cipher_seen = 1;
+        session->not_resumable = 1;
+    }
+    return 1;
+}
+
+int ossl_ssl_session_is_external_psk_admissible(const SSL_SESSION *session)
+{
+    return session == NULL
+        || (!session->provider_cipher_seen
+            && (session->cipher == NULL
+                || session->cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER));
+}
+
 /*
  * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
  * ticket == 0 then no ticket information is duplicated, otherwise it is.
@@ -163,6 +187,7 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
     dest->peer_chain = NULL;
     dest->peer = NULL;
     dest->peer_rpk = NULL;
+    dest->cipher = NULL;
     dest->ticket_appdata = NULL;
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
@@ -180,6 +205,9 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
+
+    if (!ossl_ssl_session_set1_cipher(dest, src->cipher))
+        goto err;
 
     if (src->peer != NULL) {
         if (!X509_up_ref(src->peer)) {
@@ -526,6 +554,10 @@ SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
             }
         }
         CRYPTO_THREAD_unlock(s->session_ctx->lock);
+        if (ret != NULL && ret->provider_cipher_seen) {
+            SSL_SESSION_free(ret);
+            ret = NULL;
+        }
         if (ret == NULL)
             ssl_tsan_counter(s->session_ctx, &s->session_ctx->stats.sess_miss);
     }
@@ -537,7 +569,7 @@ SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
             sess_id, (int)sess_id_len, &copy);
 
         if (ret != NULL) {
-            if (ret->not_resumable) {
+            if (ret->not_resumable || ret->provider_cipher_seen) {
                 /* If its not resumable then ignore this session */
                 if (!copy)
                     SSL_SESSION_free(ret);
@@ -766,6 +798,12 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
     int ret = 0;
     SSL_SESSION *s;
 
+    if (c->provider_cipher_seen) {
+        ERR_raise(ERR_LIB_SSL,
+            SSL_R_PROVIDER_CIPHERSUITE_SESSION_UNSUPPORTED);
+        return 0;
+    }
+
     /*
      * add just 1 reference count for the SSL_CTX's session cache even though
      * it has two ways of access: each session is in a doubly linked list and
@@ -941,6 +979,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 #endif
     OPENSSL_free(ss->ext.alpn_selected);
     OPENSSL_free(ss->ticket_appdata);
+    ossl_ssl_cipher_free(ss->cipher);
     CRYPTO_FREE_REF(&ss->references);
     OPENSSL_clear_free(ss, sizeof(*ss));
 }
@@ -963,6 +1002,11 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
 
     if (sc == NULL)
         return 0;
+    if (session != NULL && session->provider_cipher_seen) {
+        ERR_raise(ERR_LIB_SSL,
+            SSL_R_PROVIDER_CIPHERSUITE_SESSION_UNSUPPORTED);
+        return 0;
+    }
 
     if (session != NULL && !SSL_SESSION_up_ref(session))
         return 0;
@@ -1084,8 +1128,12 @@ const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s)
 
 int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher)
 {
-    s->cipher = cipher;
-    return 1;
+    if (cipher != NULL && cipher->origin == SSL_CIPHER_ORIGIN_PROVIDER) {
+        ERR_raise(ERR_LIB_SSL,
+            SSL_R_PROVIDER_CIPHERSUITE_SESSION_UNSUPPORTED);
+        return 0;
+    }
+    return ossl_ssl_session_set1_cipher(s, cipher);
 }
 
 const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
@@ -1192,7 +1240,7 @@ int SSL_SESSION_is_resumable(const SSL_SESSION *s)
      * In the case of EAP-FAST, we can have a pre-shared "ticket" without a
      * session ID.
      */
-    return !s->not_resumable
+    return !s->provider_cipher_seen && !s->not_resumable
         && (s->session_id_length > 0 || s->ext.ticklen > 0);
 }
 
@@ -1320,6 +1368,8 @@ void SSL_CTX_flush_sessions_ex(SSL_CTX *s, time_t t)
 
 int ssl_clear_bad_session(SSL_CONNECTION *s)
 {
+    if (s->session != NULL && s->session->provider_cipher_seen)
+        return 1;
     if ((s->session != NULL) && !(s->shutdown & SSL_SENT_SHUTDOWN) && !(SSL_in_init(SSL_CONNECTION_GET_SSL(s)) || SSL_in_before(SSL_CONNECTION_GET_SSL(s)))) {
         SSL_CTX_remove_session(s->session_ctx, s->session);
         return 1;

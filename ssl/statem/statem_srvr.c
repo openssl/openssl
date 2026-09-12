@@ -748,6 +748,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * ssl_get_prev_session() in that configuration.
          */
         if (s->num_tickets <= s->sent_tickets
+            || s->session->provider_cipher_seen
             || ((s->options & SSL_OP_NO_TICKET) != 0
                 && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
@@ -786,7 +787,8 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * been configured for.
          */
         if ((SSL_IS_FIRST_HANDSHAKE(s) || s->ext.extra_tickets_expected <= 0)
-            && (s->hit || s->num_tickets <= s->sent_tickets)) {
+            && (s->hit || s->num_tickets <= s->sent_tickets
+                || s->session->provider_cipher_seen)) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
         }
@@ -1062,7 +1064,10 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
             break;
         /* Writes to s->session are only safe for initial handshakes */
         if (s->session->cipher == NULL) {
-            s->session->cipher = s->s3.tmp.new_cipher;
+            if (!ossl_ssl_session_set1_cipher(s->session, s->s3.tmp.new_cipher)) {
+                SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                return WORK_ERROR;
+            }
         } else if (s->session->cipher != s->s3.tmp.new_cipher) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return WORK_ERROR;
@@ -2397,7 +2402,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
                 goto err;
             }
 
-            s->session->cipher = pref_cipher;
+            if (!ossl_ssl_session_set1_cipher(s->session, pref_cipher)) {
+                SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                goto err;
+            }
             sk_SSL_CIPHER_free(s->cipher_list);
             s->cipher_list = sk_SSL_CIPHER_dup(s->peer_ciphers);
             sk_SSL_CIPHER_free(s->cipher_list_by_id);
