@@ -5101,8 +5101,46 @@ DEF_SCRIPT(script_88, "Test SSL_poll (lite, non-blocking)")
     OP_FUNC(script_88_poll_conly);
 }
 
-DEF_SCRIPT(script_89, "place holder for multistrem script_89")
+/* 89. Max udp payload size configuration */
+DEF_FUNC(check_udp_payload_size_bounds_89)
 {
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_set_feature_request_uint(ssl,
+            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+            QUIC_MIN_INITIAL_DGRAM_LEN - 1))
+        || !TEST_false(SSL_set_feature_request_uint(ssl,
+            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+            QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE + 1)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_89, "Max udp payload size configuration")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(check_udp_payload_size_bounds_89);
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE);
 }
 
 DEF_SCRIPT(script_90, "place holder for multistrem script_90")

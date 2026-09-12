@@ -2664,21 +2664,6 @@ static const struct script_op script_87[] = {
     OP_END
 };
 
-static int modify_udp_payload_size_max(struct helper *h, struct helper_local *hl)
-{
-    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
-            QUIC_MIN_INITIAL_DGRAM_LEN - 1)))
-        return 0;
-
-    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
-            QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE + 1)))
-        return 0;
-
-    return modify_static_tp(h, hl, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX);
-}
-
 static int check_udp_payload_size_max(struct helper *h, struct helper_local *hl)
 {
     return check_static_tp(h, hl, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX);
@@ -2691,17 +2676,7 @@ static int cannot_change_udp_payload_size_max(struct helper *h, struct helper_lo
 
 /* 89. Max udp payload size configuration */
 static const struct script_op script_89[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_CHECK(modify_udp_payload_size_max, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_udp_payload_size_max,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
-    OP_CHECK2(check_udp_payload_size_max,
-        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
