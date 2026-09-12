@@ -183,8 +183,8 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 /* Read side acquisition of the current qp */
 static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 {
-    uint32_t qp_idx;
-    uint32_t tmp;
+    uint32_t qp_idx = 0;
+    uint32_t tmp = 0;
     uint64_t tmp64;
 
     /* get the current qp index */
@@ -273,7 +273,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx);
     int i;
-    LONG64 ret;
+    LONG64 ret = 0;
 
     assert(data != NULL);
 
@@ -611,8 +611,7 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_write_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *val += amount;
     *ret = *val;
@@ -632,8 +631,7 @@ int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
     CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_write_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *val += op;
     *ret = *val;
@@ -652,8 +650,7 @@ int CRYPTO_atomic_and(uint64_t *val, uint64_t op, uint64_t *ret,
     CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_write_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *val &= op;
     *ret = *val;
@@ -672,8 +669,7 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
     CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_write_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
     *val |= op;
     *ret = *val;
@@ -691,8 +687,7 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_read_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *ret = *val;
     if (!CRYPTO_THREAD_unlock(lock))
@@ -708,8 +703,7 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_read_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *dst = val;
     if (!CRYPTO_THREAD_unlock(lock))
@@ -725,8 +719,7 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_read_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *ret = *val;
     if (!CRYPTO_THREAD_unlock(lock))
@@ -743,8 +736,7 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
 {
 #if (!defined(OSSL_USE_INTERLOCKEDOR64))
-    OPENSSL_assert(lock != NULL);
-    if (!CRYPTO_THREAD_read_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *dst = val;
     if (!CRYPTO_THREAD_unlock(lock))
