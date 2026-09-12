@@ -2555,33 +2555,6 @@ static const struct script_op script_80[] = {
     OP_END
 };
 
-static int modify_static_tp(struct helper *h, struct helper_local *hl, int ssl_value)
-{
-    uint64_t v = 0;
-
-    /* Test bad value is rejected. */
-    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            ssl_value,
-            OSSL_QUIC_VLINT_MAX + 1)))
-        return 0;
-
-    /* Set value. */
-    if (!TEST_true(SSL_set_feature_request_uint(h->c_conn,
-            ssl_value,
-            hl->check_op->arg2)))
-        return 0;
-
-    if (!TEST_true(SSL_get_feature_request_uint(h->c_conn,
-            ssl_value,
-            &v)))
-        return 0;
-
-    if (!TEST_uint64_t_eq(v, hl->check_op->arg2))
-        return 0;
-
-    return 1;
-}
-
 static int check_static_tp(struct helper *h, struct helper_local *hl, int ssl_value)
 {
     uint64_t v = 0;
@@ -2764,16 +2737,6 @@ static const struct script_op script_103[] = {
     OP_END
 };
 
-static int modify_ack_delay_max(struct helper *h, struct helper_local *hl)
-{
-    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_ACK_DELAY_MAX,
-            QUIC_MAX_MAX_ACK_DELAY + 1)))
-        return 0;
-
-    return modify_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_MAX);
-}
-
 static int check_ack_delay_max(struct helper *h, struct helper_local *hl)
 {
     return check_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_MAX);
@@ -2786,16 +2749,7 @@ static int cannot_change_ack_delay_max(struct helper *h, struct helper_local *hl
 
 /* 104. Max ack delay configuration */
 static const struct script_op script_104[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_CHECK(modify_ack_delay_max, QUIC_DEFAULT_MAX_ACK_DELAY / 2),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_ack_delay_max,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
-    OP_CHECK2(check_ack_delay_max,
-        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY / 2),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };
