@@ -114,46 +114,27 @@ make: *** [Makefile:3833: doc-nits] Error 1
 ```
 
 The explanation for this is that one important step is still missing,
-it needs to be done first: you need to run
+it needs to be done first: the function has to be listed for export.
 
-```console
-$ make update
-```
-
-which triggers a scan of the public headers for new API functions.
-
-All new functions will be added to either `util/libcrypto.num`
-or `util/libssl.num`.
-Those files store the information about the symbols which need
-to be exported from the shared library resp. DLL.
-Among other stuff, they contain the ordinal numbers for the
-[module definition file] of the Windows DLL, which is the
-reason for the `.num` extension.
-
-[module definition file]: https://docs.microsoft.com/en-us/cpp/build/exporting-from-a-dll-using-def-files
-
-After running `make update`, you can use `git diff` to check the outcome:
+The symbol files `util/libcrypto.sym` and `util/libssl.sym` name the
+symbols each library exports, and the build reads them to produce the
+linker script or module definition file it needs.  Add a line to the one
+for the library the function belongs to:
 
 ```diff
-diff --git a/util/libcrypto.num b/util/libcrypto.num
-index 394f454732..fc3c67313a 100644
---- a/util/libcrypto.num
-+++ b/util/libcrypto.num
-@@ -5437,3 +5437,4 @@ BN_signed_bn2native                     ? 3_1_0   EXIST::FUNCTION:
- ASYNC_set_mem_functions                 ?  3_1_0   EXIST::FUNCTION:
- ASYNC_get_mem_functions                 ?  3_1_0   EXIST::FUNCTION:
- BIO_ADDR_dup                            ?  3_1_0   EXIST::FUNCTION:SOCK
-+BIO_set_dgram_foo                       ?  3_1_0   EXIST::FUNCTION:
+--- a/util/libcrypto.sym
++++ b/util/libcrypto.sym
+@@ -5437,3 +5437,4 @@
+ ASYNC_set_mem_functions
+ ASYNC_get_mem_functions
+ BIO_ADDR_dup                            SOCK
++BIO_set_dgram_foo
 ```
 
-The changes need to be committed, ideally as a separate commit:
+Where the line goes does not matter; the format is described in
+[doc/internal/man7/sym.pod].
 
-```console
-$ git commit -a -m "make update"
-```
-
-which has the advantage that it can easily be discarded when it
-becomes necessary to rerun `make update`.
+[doc/internal/man7/sym.pod]: ../internal/man7/sym.pod
 
 Finally, we reached the point where `make doc-nits` complains about
 both symbols:
