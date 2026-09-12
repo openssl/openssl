@@ -155,6 +155,7 @@ providers/implementations/storemgmt/file_store.inc
 providers/implementations/storemgmt/winstore_store.inc
 providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc
 providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc
+providers/implementations/ciphers/cipher_aes_ecb.inc
 providers/implementations/ciphers/cipher_aes_gcm_siv.inc
 providers/implementations/ciphers/cipher_aes_ocb.inc
 providers/implementations/ciphers/cipher_aes_siv.inc

@@ -48,6 +48,7 @@ typedef struct evp_test_st {
     char *reason; /* Expected error reason string */
     void *data; /* test specific data */
     int expect_unapproved;
+    int expect_fipscallback;
     int security_category; /* NIST's security category */
     unsigned char *entropy;
     size_t entropy_len;
@@ -145,12 +146,12 @@ static int check_fips_approved(EVP_TEST *t, int approved)
      * approved should be 0 and the fips indicator callback should be triggered.
      */
     if (t->expect_unapproved) {
-        if (approved == 1 || fips_indicator_callback_unapproved_count == 0) {
+        if (approved == 1 || (t->expect_fipscallback && fips_indicator_callback_unapproved_count == 0)) {
             TEST_error("Test is not expected to be FIPS approved");
             return 0;
         }
     } else {
-        if (approved == 0 || fips_indicator_callback_unapproved_count > 0) {
+        if (approved == 0 || (t->expect_fipscallback && fips_indicator_callback_unapproved_count > 0)) {
             TEST_error("Test is expected to be FIPS approved");
             return 0;
         }
@@ -5191,6 +5192,7 @@ static void clear_test(EVP_TEST *t)
     t->skip = 0;
     t->meth = NULL;
     t->expect_unapproved = 0;
+    t->expect_fipscallback = 1;
     t->security_category = -1;
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
@@ -5619,6 +5621,8 @@ start:
             }
         } else if (strcmp(pp->key, "Unapproved") == 0) {
             t->expect_unapproved = 1;
+        } else if (strcmp(pp->key, "NoFIPSCallback") == 0) {
+            t->expect_fipscallback = 0;
         } else if (strcmp(pp->key, "Extended-Test") == 0) {
             if (!extended_tests) {
                 TEST_info("skipping extended test: %s:%d",
