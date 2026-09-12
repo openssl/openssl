@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text compare/;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file with data_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file with data_file slurp_file/;
 
 use OpenSSL::Test::Utils;
 
@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 42;
+plan tests => 43;
 
 ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");
@@ -1091,6 +1091,44 @@ subtest "CMS parse authenticatedData authAttrs and unauthAttrs\n" => sub {
        "authAttrs parsed as SET OF Attribute");
     ok($dump =~ /unauthAttrs:.*?object:.*?1\.3\.6\.1\.4\.1\.5949\.99\.2.*?UTF8STRING:unauth-attr-value/s,
        "unauthAttrs parsed as SET OF Attribute");
+};
+
+# Replace all occurrences of a DER encoded OID in a file
+sub replace_der_oid {
+    my ($file, $from_hex, $to_hex) = @_;
+    my $from = pack("H*", $from_hex);
+    my $to = pack("H*", $to_hex);
+    my $der = slurp_file($file, binary => 1);
+
+    $der =~ s/\Q$from\E/$to/g;
+    open(my $fh, ">", $file) or die "Cannot write $file: $!";
+    binmode $fh;
+    print $fh $der;
+    close($fh);
+}
+
+subtest "reject signature algorithm OID as digestAlgorithm\n" => sub {
+    plan tests => 8;
+
+    foreach my $app ("cms", "smime") {
+        foreach my $attrs ("attrs", "noattr") {
+            my @noattr = $attrs eq "noattr" ? ("-noattr") : ();
+            my $sig = "digalg-$app-$attrs.der";
+
+            ok(run(app(["openssl", $app, @defaultprov, "-sign", "-in", $smcont,
+                        "-outform", "DER", "-nodetach", "-md", "sha256",
+                        @noattr, "-signer", $smrsa1, "-out", $sig])),
+               "sign ($app, $attrs)");
+
+            # Replace the sha256 OID with sha256WithRSAEncryption
+            replace_der_oid($sig, "608648016503040201", "2a864886f70d01010b");
+
+            ok(!run(app(["openssl", $app, @defaultprov, "-verify", "-noverify",
+                         "-in", $sig, "-inform", "DER",
+                         "-out", "$sig.txt"])),
+               "must not verify with signature algorithm OID ($app, $attrs)");
+        }
+    }
 };
 
 subtest "CAdES <=> CAdES consistency tests\n" => sub {
