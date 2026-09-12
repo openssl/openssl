@@ -98,6 +98,23 @@ one branch edited a line another branch also touched.  That is caught
 when the file is read rather than by git, and the fix is to delete the
 surplus line.
 
+=head2 Assignments
+
+A symbol file says which symbols exist.  What ordinal and version each
+one is given is recorded separately, in F<util/libcrypto.release.num>
+and F<util/libssl.release.num>, one entry per line:
+
+ asn1_d2i_read_bio                       1	4_0_0
+
+The ordinal is the VMS symbol vector slot and the version is the ELF
+version node.  Both are fixed for the life of a major release, so they
+are assigned once, by C<make renumber>, which the release process runs.
+A symbol added since the last release has no entry until then.
+
+An entry is never removed.  A symbol that has been deleted from the
+symbol file keeps its line, so that its slot is not handed to anything
+else for as long as the major release lives.
+
 =head1 EXAMPLES
 
 A symbol present in every configuration:
