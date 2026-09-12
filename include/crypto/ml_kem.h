@@ -15,6 +15,28 @@
 #include <openssl/bio.h>
 #include <openssl/core_dispatch.h>
 #include <crypto/evp.h>
+#include "internal/common.h"
+
+/*
+ * VX_COMPILER_SUPPORT_VEC128 must be visible in every translation unit that
+ * includes this header on an s390x build with the VX object enabled — in
+ * particular in ml_kem.c (the dispatcher) and in ml_kem_vec128.c (the
+ * implementation).
+ *
+ * OPENSSL_ML_KEM_S390X is injected by the build system for all asm-enabled
+ * s390x targets, so it is present in both TUs.  Using it as the guard (rather
+ * than checking __VX__ here) ensures that the dispatcher in ml_kem.c sees the
+ * declarations and the dispatch block even though ml_kem.c is compiled without
+ * -march=z13/-mvx and therefore never has __VX__ defined.
+ *
+ * ml_kem_vec128.c also defines VX_COMPILER_SUPPORT_VEC128 itself (after
+ * applying #pragma GCC target / -march=z13 to enable __VX__), but that
+ * definition is redundant — it is consistent with this one because both
+ * evaluate to "defined" whenever OPENSSL_ML_KEM_S390X is set on s390x.
+ */
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__)
+#define VX_COMPILER_SUPPORT_VEC128
+#endif
 
 #define ML_KEM_DEGREE 256
 /*
@@ -24,6 +46,24 @@
  * implement efficient multiplication in the ring R_q via the "NTT" transform.
  */
 #define ML_KEM_PRIME (ML_KEM_DEGREE * 13 + 1)
+
+/*
+ * Structure of keys
+ */
+typedef struct ossl_ml_kem_scalar_st {
+    /*
+     * At every function boundary 0 <= c[i] < ML_KEM_PRIME, with one
+     * exception: ossl_ml_kem_inner_product_montgomery_vec128 leaves
+     * coefficients in inverse-Montgomery form (c[i] ≡ value * R^{-1} mod q,
+     * |c[i]| <= rank * 6007).  Callers of that function must pass the result
+     * directly to ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128.
+     */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    ALIGN16 uint16_t c[ML_KEM_DEGREE];
+#else
+    uint16_t c[ML_KEM_DEGREE];
+#endif
+} scalar;
 
 /*
  * Various ML-KEM primitives need random input, 32-bytes at a time.  Key
