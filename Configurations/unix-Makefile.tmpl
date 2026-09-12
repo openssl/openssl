@@ -1233,7 +1233,7 @@ generate: generate_apps generate_crypto_objects generate_fuzz_oids
 generate_buildinfo: generate_doc_buildinfo
 
 .PHONY: doc-nits md-nits
-doc-nits: build_generated_pods ## Evaluate OpenSSL documentation
+doc-nits: build_generated build_generated_pods ## Evaluate OpenSSL documentation
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e -i -a
 
 # This uses "mdl", the markdownlint application, which is written in ruby.
