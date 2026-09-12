@@ -481,6 +481,23 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_set_event_handling_mode)
+{
+    int ok = 0;
+    uint64_t mode;
+    SSL *ssl;
+
+    F_POP(mode);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_set_event_handling_mode(ssl, mode)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 DEF_FUNC(hf_set_incoming_stream_policy)
 {
     int ok = 0;
@@ -2044,6 +2061,11 @@ err:
     (OP_SELECT_SSL(0, name),                   \
         OP_PUSH_U64(mode),                     \
         OP_FUNC(hf_set_default_stream_mode))
+
+#define OP_SET_EVENT_HANDLING_MODE(name, mode) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(mode),                     \
+        OP_FUNC(hf_set_event_handling_mode))
 
 #define OP_SET_INCOMING_STREAM_POLICY(name, policy, error_code) \
     (OP_SELECT_SSL(0, name),                                    \

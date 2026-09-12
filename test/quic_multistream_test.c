@@ -2673,122 +2673,12 @@ static const struct script_op script_83[] = {
     OP_END
 };
 
-/* 84. Test query of available streams */
-static int check_avail_streams(struct helper *h, struct helper_local *hl)
-{
-    uint64_t v = 0;
-
-    switch (hl->check_op->arg1) {
-    case 0:
-        if (!TEST_true(SSL_get_quic_stream_bidi_local_avail(h->c_conn, &v)))
-            return 0;
-        break;
-    case 1:
-        if (!TEST_true(SSL_get_quic_stream_bidi_remote_avail(h->c_conn, &v)))
-            return 0;
-        break;
-    case 2:
-        if (!TEST_true(SSL_get_quic_stream_uni_local_avail(h->c_conn, &v)))
-            return 0;
-        break;
-    case 3:
-        if (!TEST_true(SSL_get_quic_stream_uni_remote_avail(h->c_conn, &v)))
-            return 0;
-        break;
-    default:
-        return 0;
-    }
-
-    if (!TEST_uint64_t_eq(v, hl->check_op->arg2))
-        return 0;
-
-    return 1;
-}
-
 static int set_event_handling_mode_conn(struct helper *h, struct helper_local *hl);
 static int reenable_test_event_handling(struct helper *h, struct helper_local *hl);
 
-static int check_write_buf_stat(struct helper *h, struct helper_local *hl)
-{
-    SSL *c_a;
-    uint64_t size, used, avail;
-
-    if (!TEST_ptr(c_a = helper_local_get_c_stream(hl, "a")))
-        return 0;
-
-    if (!TEST_true(SSL_get_stream_write_buf_size(c_a, &size))
-        || !TEST_true(SSL_get_stream_write_buf_used(c_a, &used))
-        || !TEST_true(SSL_get_stream_write_buf_avail(c_a, &avail))
-        || !TEST_uint64_t_ge(size, avail)
-        || !TEST_uint64_t_ge(size, used)
-        || !TEST_uint64_t_eq(avail + used, size))
-        return 0;
-
-    if (!TEST_uint64_t_eq(used, hl->check_op->arg1))
-        return 0;
-
-    return 1;
-}
-
+/* 84. Test query of available streams */
 static const struct script_op script_84[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_avail_streams, 0, 100),
-    OP_CHECK2(check_avail_streams, 1, 100),
-    OP_CHECK2(check_avail_streams, 2, 100),
-    OP_CHECK2(check_avail_streams, 3, 100),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-
-    OP_CHECK2(check_avail_streams, 0, 99),
-    OP_CHECK2(check_avail_streams, 1, 100),
-    OP_CHECK2(check_avail_streams, 2, 100),
-    OP_CHECK2(check_avail_streams, 3, 100),
-
-    OP_C_NEW_STREAM_UNI(b, C_UNI_ID(0)),
-
-    OP_CHECK2(check_avail_streams, 0, 99),
-    OP_CHECK2(check_avail_streams, 1, 100),
-    OP_CHECK2(check_avail_streams, 2, 99),
-    OP_CHECK2(check_avail_streams, 3, 100),
-
-    OP_S_NEW_STREAM_BIDI(c, S_BIDI_ID(0)),
-    OP_S_WRITE(c, "x", 1),
-
-    OP_C_ACCEPT_STREAM_WAIT(c),
-    OP_C_READ_EXPECT(c, "x", 1),
-
-    OP_CHECK2(check_avail_streams, 0, 99),
-    OP_CHECK2(check_avail_streams, 1, 99),
-    OP_CHECK2(check_avail_streams, 2, 99),
-    OP_CHECK2(check_avail_streams, 3, 100),
-
-    OP_S_NEW_STREAM_UNI(d, S_UNI_ID(0)),
-    OP_S_WRITE(d, "x", 1),
-
-    OP_C_ACCEPT_STREAM_WAIT(d),
-    OP_C_READ_EXPECT(d, "x", 1),
-
-    OP_CHECK2(check_avail_streams, 0, 99),
-    OP_CHECK2(check_avail_streams, 1, 99),
-    OP_CHECK2(check_avail_streams, 2, 99),
-    OP_CHECK2(check_avail_streams, 3, 99),
-
-    OP_CHECK2(check_write_buf_stat, 0, 0),
-    OP_CHECK(set_event_handling_mode_conn, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT),
-    OP_C_WRITE(a, "apple", 5),
-    OP_CHECK2(check_write_buf_stat, 5, 0),
-
-    OP_CHECK(reenable_test_event_handling, 0),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-    OP_S_WRITE(a, "orange", 6),
-    OP_C_READ_EXPECT(a, "orange", 6),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

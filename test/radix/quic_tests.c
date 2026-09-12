@@ -4543,8 +4543,140 @@ DEF_SCRIPT(script_83, "No late changes to idle timeout")
         SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
-DEF_SCRIPT(script_84, "place holder for multistrem script_84")
+/* 84. Test query of available streams */
+DEF_FUNC(check_avail_streams_84)
 {
+    int ok = 0;
+    SSL *ssl;
+    uint64_t kind, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(kind);
+    REQUIRE_SSL(ssl);
+
+    switch (kind) {
+    case 0:
+        if (!TEST_true(SSL_get_quic_stream_bidi_local_avail(ssl, &v)))
+            goto err;
+        break;
+    case 1:
+        if (!TEST_true(SSL_get_quic_stream_bidi_remote_avail(ssl, &v)))
+            goto err;
+        break;
+    case 2:
+        if (!TEST_true(SSL_get_quic_stream_uni_local_avail(ssl, &v)))
+            goto err;
+        break;
+    case 3:
+        if (!TEST_true(SSL_get_quic_stream_uni_remote_avail(ssl, &v)))
+            goto err;
+        break;
+    default:
+        goto err;
+    }
+
+    if (!TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(check_write_buf_stat_84)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t used, size, actual_used, avail;
+
+    F_POP(used);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_stream_write_buf_size(ssl, &size))
+        || !TEST_true(SSL_get_stream_write_buf_used(ssl, &actual_used))
+        || !TEST_true(SSL_get_stream_write_buf_avail(ssl, &avail))
+        || !TEST_uint64_t_ge(size, avail)
+        || !TEST_uint64_t_ge(size, actual_used)
+        || !TEST_uint64_t_eq(avail + actual_used, size)
+        || !TEST_uint64_t_eq(actual_used, used))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+#define CHECK_AVAIL_84(kind, expected)   \
+    do {                                 \
+        OP_PUSH_U64(kind);               \
+        OP_PUSH_U64(expected);           \
+        OP_SELECT_SSL(0, C);             \
+        OP_FUNC(check_avail_streams_84); \
+    } while (0)
+
+DEF_SCRIPT(script_84, "Test query of available streams")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    CHECK_AVAIL_84(0, 100);
+    CHECK_AVAIL_84(1, 100);
+    CHECK_AVAIL_84(2, 100);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(C, Ca, 0);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 100);
+    CHECK_AVAIL_84(2, 100);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(C, Cb, SSL_STREAM_FLAG_UNI);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 100);
+    CHECK_AVAIL_84(2, 99);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(S, Sc, 0);
+    OP_WRITE(Sc, "x", 1);
+
+    OP_ACCEPT_STREAM_WAIT(C, Cc, 0);
+    OP_READ_EXPECT(Cc, "x", 1);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 99);
+    CHECK_AVAIL_84(2, 99);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(S, Sd, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sd, "x", 1);
+
+    OP_ACCEPT_STREAM_WAIT(C, Cd, 0);
+    OP_READ_EXPECT(Cd, "x", 1);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 99);
+    CHECK_AVAIL_84(2, 99);
+    CHECK_AVAIL_84(3, 99);
+
+    OP_PUSH_U64(0);
+    OP_SELECT_SSL(0, Ca);
+    OP_FUNC(check_write_buf_stat_84);
+
+    OP_TICK_DISABLE(C);
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+    OP_WRITE(Ca, "apple", 5);
+    OP_PUSH_U64(5);
+    OP_SELECT_SSL(0, Ca);
+    OP_FUNC(check_write_buf_stat_84);
+
+    OP_TICK_ENABLE(C);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
 }
 
 DEF_SCRIPT(script_85, "place holder for multistrem script_85")
