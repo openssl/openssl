@@ -239,3 +239,35 @@ jobs:
         name: "cross-compiles-aarch64@${{ matrix.platform.capslabel }}"
         path: artifacts.tar.gz
         if-no-files-found: ignore
+
+  gcs-validation-aarch64:
+    # pull request title contains 'aarch64'
+    # pull request title contains 'arm64'
+    # pull request body contains '[aarch64 ci]'
+    # push event commit message contains '[aarch64 ci]'
+    # cron job
+    # manual dispatch
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (contains(github.event.pull_request.title, 'aarch64') || contains(github.event.pull_request.title, 'AArch64') || contains(github.event.pull_request.title, 'arm64') || contains(github.event.pull_request.body, '[aarch64 ci]') || contains(github.event.head_commit.message, '[aarch64 ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    runs-on: ubuntu-26.04-arm
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: print tool versions
+      run: |
+        gcc --version
+        ld --version
+    - name: config
+      run: |
+        CFLAGS='-mbranch-protection=standard' \
+        LDFLAGS='-Wl,-z,gcs=always -Wl,-z,gcs-report=error' \
+        ./config --strict-warnings enable-demos enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace --banner=Configured
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
