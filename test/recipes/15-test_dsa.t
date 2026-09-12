@@ -11,13 +11,13 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file app_fails/;
 use OpenSSL::Test::Utils;
 
 setup("test_dsa");
 
 plan skip_all => 'DSA is not supported in this build' if disabled('dsa');
-plan tests => 11;
+plan tests => 12;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -129,6 +129,42 @@ subtest "dsa -text prints the key in text form" => sub {
        "-text prints the expected public value for a public key");
     ok(!grep(/^priv:/, @pub),
        "-text does not print a private component for a public key");
+};
+
+subtest "dsa error cases" => sub {
+    plan tests => 16;
+
+    my $privkey = srctop_file("test", "testdsa.pem");
+
+    app_fails('dsa', "invalid input format should fail",
+              qr/Invalid format "BAD" for option -inform/,
+              '-inform', 'BAD', '-in', $privkey);
+    app_fails('dsa', "invalid output format should fail",
+              qr/Invalid format "BAD" for option -outform/,
+              '-outform', 'BAD', '-in', $privkey);
+    app_fails('dsa', "extra positional argument should fail",
+              qr/Extra option: "extra"/,
+              '-in', $privkey, 'extra');
+    app_fails('dsa', "unknown cipher option should fail",
+              qr/Unknown option or cipher: badcipher/,
+              '-badcipher', '-in', $privkey);
+    app_fails('dsa', "invalid passin argument should fail",
+              qr/Error getting passwords/,
+              '-passin', 'bad:pass', '-in', $privkey);
+    app_fails('dsa', "unsupported output format should fail",
+              qr/bad output format specified for outfile/,
+              '-in', $privkey, '-outform', 'NSS', '-out', 'dsa-nss.out');
+
+    my $garbage = "garbage.pem";
+    open(my $fh, '>', $garbage) or die "Cannot write $garbage: $!";
+    print $fh "not a valid DSA key file\n";
+    close($fh);
+    app_fails('dsa', "loading garbage key file should fail",
+              qr/unable to load Key/,
+              '-in', $garbage, '-noout');
+    app_fails('dsa', "loading a non-DSA key should fail",
+              qr/Not a DSA key/,
+              '-in', srctop_file("test", "testrsa.pem"), '-noout');
 };
 
 subtest "dsa PVK output is rejected for public key input" => sub {
