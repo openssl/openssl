@@ -4027,6 +4027,55 @@ static int test_DSA_priv_pub(void)
 
 #endif /* !OPENSSL_NO_DSA */
 
+/*
+ * EVP_PKEY_fromdata_settable() is a pure query: it must not reset the
+ * context operation state (issue #32776).
+ */
+static int test_fromdata_settable_nonmutating(void)
+{
+    static unsigned long key_numbers[] = {
+        0xbc747fc5, /* N */
+        0x10001, /* E */
+    };
+    OSSL_PARAM fromdata_params[] = {
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_N, &key_numbers[0]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_E, &key_numbers[1]),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const OSSL_PARAM *settable = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", testpropq)))
+        goto err;
+
+    /* The query must not undo EVP_PKEY_fromdata_init() */
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_ptr(settable = EVP_PKEY_fromdata_settable(ctx,
+                         EVP_PKEY_KEYPAIR))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settable, OSSL_PKEY_PARAM_RSA_N))
+        || !TEST_int_gt(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR,
+                            fromdata_params),
+            0))
+        goto err;
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+
+    /* The query must not discard key generation state or configuration */
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 512), 0)
+        || !TEST_ptr(EVP_PKEY_fromdata_settable(ctx, EVP_PKEY_KEYPAIR))
+        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
+        || !TEST_int_eq(EVP_PKEY_get_bits(pkey), 512))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
 static int test_RSA_get_set_params(void)
 {
     OSSL_PARAM_BLD *bld = NULL;
@@ -10135,6 +10184,7 @@ int setup_tests(void)
     ADD_TEST(test_DSA_get_set_params);
     ADD_TEST(test_DSA_priv_pub);
 #endif
+    ADD_TEST(test_fromdata_settable_nonmutating);
     ADD_TEST(test_RSA_get_set_params);
     ADD_TEST(test_RSA_OAEP_set_get_params);
     ADD_TEST(test_RSA_OAEP_set_null_label);
