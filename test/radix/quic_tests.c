@@ -4679,8 +4679,161 @@ DEF_SCRIPT(script_84, "Test query of available streams")
     OP_READ_EXPECT(Ca, "orange", 6);
 }
 
-DEF_SCRIPT(script_85, "place holder for multistrem script_85")
+/* 85. Test SSL_poll (lite, non-blocking) */
+DEF_FUNC(script_85_poll)
 {
+    int ok = 0, ret, expected_ret = 1;
+    static const struct timeval timeout = { 0 };
+    size_t result_count, expected_result_count = 0;
+    SSL_POLL_ITEM items[5] = { 0 }, *item = items;
+    SSL *c_a, *c_b, *c_c, *c_d, *c_conn;
+    size_t i;
+    uint64_t mode;
+    uint64_t expected_revents[5] = { 0 };
+
+    F_POP(mode);
+    REQUIRE_SSL_5(c_a, c_b, c_c, c_d, c_conn);
+
+    item->desc = SSL_as_poll_descriptor(c_a);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_b);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_c);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_d);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_conn);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    result_count = SIZE_MAX;
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        &timeout, 0,
+        &result_count);
+
+    switch (mode) {
+    case 0:
+        /* No incoming data yet */
+        expected_revents[0] = SSL_POLL_EVENT_W;
+        expected_revents[1] = SSL_POLL_EVENT_W;
+        expected_revents[2] = SSL_POLL_EVENT_W;
+        expected_revents[3] = SSL_POLL_EVENT_W;
+        expected_revents[4] = SSL_POLL_EVENT_OS;
+        expected_result_count = 5;
+        break;
+    case 1:
+        /* Expect more events */
+        expected_revents[0] = SSL_POLL_EVENT_W | SSL_POLL_EVENT_R;
+        expected_revents[1] = SSL_POLL_EVENT_W | SSL_POLL_EVENT_ER;
+        expected_revents[2] = SSL_POLL_EVENT_EW;
+        expected_revents[3] = SSL_POLL_EVENT_W;
+        expected_revents[4] = SSL_POLL_EVENT_OS | SSL_POLL_EVENT_ISB;
+        expected_result_count = 5;
+        break;
+    default:
+        goto err;
+    }
+
+    ok = 1;
+
+    if (!TEST_int_eq(ret, expected_ret)
+        || !TEST_size_t_eq(result_count, expected_result_count))
+        ok = 0;
+
+    for (i = 0; i < OSSL_NELEM(items); ++i)
+        if (!TEST_uint64_t_eq(items[i].revents, expected_revents[i])) {
+            TEST_error("mismatch at index %zu in poll results, mode %d",
+                i, (int)mode);
+            ok = 0;
+        }
+
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_85, "Test SSL_poll (lite, non-blocking)")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "flamingo", 8);
+
+    OP_NEW_STREAM(C, Cb, 0);
+    OP_WRITE(Cb, "orange", 6);
+
+    OP_NEW_STREAM(C, Cc, 0);
+    OP_WRITE(Cc, "Strawberry", 10);
+
+    OP_NEW_STREAM(C, Cd, 0);
+    OP_WRITE(Cd, "sync", 4);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sb, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sc, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sd, 0);
+
+    /* Check nothing readable yet. */
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, Cb);
+    OP_SELECT_SSL(2, Cc);
+    OP_SELECT_SSL(3, Cd);
+    OP_SELECT_SSL(4, C);
+    OP_PUSH_U64(0);
+    OP_FUNC(script_85_poll);
+
+    /* Send something that will make client sockets readable. */
+    OP_READ_EXPECT(Sa, "flamingo", 8);
+    OP_WRITE(Sa, "herringbone", 11);
+
+    /* Send something that will make 'b' reset. */
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    /* Ensure sync. */
+    OP_READ_EXPECT(Sd, "sync", 4);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(C_BIDI_ID(1) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM);
+    OP_WRITE(Sd, "x", 1);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_READ_EXPECT(Cd, "x", 1);
+
+    /* Send something that will make 'c' reset. */
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(C_BIDI_ID(2) + 1, OSSL_QUIC_FRAME_TYPE_STOP_SENDING);
+    OP_NEW_STREAM(S, Sz, 0);
+    OP_WRITE(Sz, "z", 1);
+
+    /* Ensure sync. */
+    OP_WRITE(Sd, "x", 1);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_READ_EXPECT(Cd, "x", 1);
+
+    /* Check a is now readable. */
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, Cb);
+    OP_SELECT_SSL(2, Cc);
+    OP_SELECT_SSL(3, Cd);
+    OP_SELECT_SSL(4, C);
+    OP_PUSH_U64(1);
+    OP_FUNC(script_85_poll);
 }
 
 DEF_SCRIPT(script_86, "place holder for multistrem script_86")
