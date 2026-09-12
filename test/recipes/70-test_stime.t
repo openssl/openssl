@@ -74,5 +74,8 @@ SKIP: {
 }
 
 close $srv_in;
-kill 'HUP', $srv_pid;
+# SIGKILL rather than SIGHUP: this s_server has no -naccept, so it runs
+# until it is stopped, and an ignored SIGHUP inherited from an ancestor
+# (SIG_IGN survives exec) would leave the waitpid() below hanging.
+kill 'KILL', $srv_pid;
 waitpid($srv_pid, 0);
