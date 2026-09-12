@@ -3,7 +3,11 @@ name: "Trigger docs.openssl.org deployment"
 on:
   push:
     branches:
-      - "openssl-3.[0-9]+"
+      - "openssl-3.4"
+      - "openssl-3.5"
+      - "openssl-3.6"
+      - "openssl-4.0"
+      - "openssl-4.1"
       - "master"
     paths:
       - "doc/man*/**"
