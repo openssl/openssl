@@ -5232,8 +5232,17 @@ DEF_SCRIPT(script_95, "Bidi stream window configuration")
         SSL_VALUE_CLASS_FEATURE_REQUEST, 600000);
 }
 
-DEF_SCRIPT(script_96, "place holder for multistrem script_96")
+/* 96. Negotiated default bidi stream window if not configured */
+DEF_SCRIPT(script_96, "Negotiated default bidi stream window if not configured")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024);
 }
 
 DEF_SCRIPT(script_97, "place holder for multistrem script_97")

@@ -2721,13 +2721,7 @@ static const struct script_op script_95[] = {
 
 /* 96. Negotiated default bidi stream window if not configured */
 static const struct script_op script_96[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_window_bidi_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
-    OP_CHECK2(check_window_bidi_stream, SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };
