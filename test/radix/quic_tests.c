@@ -5201,8 +5201,16 @@ DEF_SCRIPT(script_93, "Negotiated default connection window if not configured")
         SSL_VALUE_CLASS_FEATURE_REQUEST, 768 * 1024);
 }
 
-DEF_SCRIPT(script_94, "place holder for multistrem script_94")
+/* 94. No late changes to connection window */
+DEF_SCRIPT(script_94, "No late changes to connection window")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON, 768 * 1024, 800000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024);
 }
 
 DEF_SCRIPT(script_95, "place holder for multistrem script_95")
