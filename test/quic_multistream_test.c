@@ -2635,9 +2635,6 @@ static const struct script_op script_83[] = {
     OP_END
 };
 
-static int set_event_handling_mode_conn(struct helper *h, struct helper_local *hl);
-static int reenable_test_event_handling(struct helper *h, struct helper_local *hl);
-
 /* 84. Test query of available streams */
 static const struct script_op script_84[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2833,84 +2830,8 @@ static const struct script_op script_88[] = {
     OP_END
 };
 /* 86. Event Handling Mode Configuration */
-static int set_event_handling_mode_conn(struct helper *h, struct helper_local *hl)
-{
-    hl->explicit_event_handling = 1;
-    return SSL_set_event_handling_mode(h->c_conn, hl->check_op->arg2);
-}
-
-static int reenable_test_event_handling(struct helper *h, struct helper_local *hl)
-{
-    hl->explicit_event_handling = 0;
-    return 1;
-}
-
-static ossl_unused int set_event_handling_mode_stream(struct helper *h, struct helper_local *hl)
-{
-    SSL *ssl = helper_local_get_c_stream(hl, "a");
-
-    if (!TEST_ptr(ssl))
-        return 0;
-
-    return SSL_set_event_handling_mode(ssl, hl->check_op->arg2);
-}
-
 static const struct script_op script_86[] = {
-    OP_SKIP_IF_BLOCKING(23),
-
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    /* Turn on explicit handling mode. */
-    OP_CHECK(set_event_handling_mode_conn, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT),
-
-    /*
-     * Create a new stream and write data. This won't get sent
-     * to the network net because we are in explicit mode
-     * and we haven't called SSL_handle_events().
-     */
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-
-    /* Put connection back into implicit handling mode. */
-    OP_CHECK(set_event_handling_mode_conn, SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT),
-
-    /* Override at stream level. */
-    OP_CHECK(set_event_handling_mode_stream, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT),
-    OP_C_WRITE(a, "orange", 6),
-    OP_C_CONCLUDE(a),
-
-    /*
-     * Confirm the data isn't going to arrive. OP_SLEEP is always undesirable
-     * but we have no reasonable way to synchronise on something not arriving
-     * given all network traffic is essentially stopped and there are no other
-     * signals arriving from the peer which could be used for synchronisation.
-     * Slow OSes will pass this anyway (fail-open).
-     */
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-
-    OP_BEGIN_REPEAT(20),
-    OP_S_READ_FAIL(a, 1),
-    OP_SLEEP(10),
-    OP_END_REPEAT(),
-
-    /* Now let the data arrive and confirm it arrives. */
-    OP_CHECK(reenable_test_event_handling, 0),
-    OP_S_READ_EXPECT(a, "appleorange", 11),
-    OP_S_EXPECT_FIN(a),
-
-    /* Back into explicit mode. */
-    OP_CHECK(set_event_handling_mode_conn,
-        SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT),
-    OP_S_WRITE(a, "ok", 2),
-    OP_C_READ_FAIL(a),
-
-    /* Works once event handling is done. */
-    OP_CHECK(reenable_test_event_handling, 0),
-    OP_C_READ_EXPECT(a, "ok", 2),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

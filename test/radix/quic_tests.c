@@ -4836,8 +4836,61 @@ DEF_SCRIPT(script_85, "Test SSL_poll (lite, non-blocking)")
     OP_FUNC(script_85_poll);
 }
 
-DEF_SCRIPT(script_86, "place holder for multistrem script_86")
+/* 86. Event Handling Mode Configuration */
+DEF_SCRIPT(script_86, "Event Handling Mode Configuration")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /* Turn on explicit handling mode. */
+    OP_TICK_DISABLE(C);
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+
+    /*
+     * Create a new stream and write data. This won't get sent
+     * to the network net because we are in explicit mode
+     * and we haven't called SSL_handle_events().
+     */
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    /* Put connection back into implicit handling mode. */
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT);
+
+    /* Override at stream level. */
+    OP_SET_EVENT_HANDLING_MODE(Ca, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+    OP_WRITE(Ca, "orange", 6);
+    OP_CONCLUDE(Ca);
+
+    /*
+     * Confirm the data isn't going to arrive. OP_SLEEP is always undesirable
+     * but we have no reasonable way to synchronise on something not arriving
+     * given all network traffic is essentially stopped and there are no other
+     * signals arriving from the peer which could be used for synchronisation.
+     * Slow OSes will pass this anyway (fail-open).
+     */
+    for (i = 0; i < 20; ++i) {
+        OP_ACCEPT_STREAM_NONE(S, 0);
+        OP_SLEEP(10);
+    }
+
+    /* Now let the data arrive and confirm it arrives. */
+    OP_TICK_ENABLE(C);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "appleorange", 11);
+    OP_EXPECT_FIN(Sa);
+
+    /* Back into explicit mode. */
+    OP_TICK_DISABLE(C);
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+    OP_WRITE(Sa, "ok", 2);
+    OP_READ_FAIL(Ca);
+
+    /* Works once event handling is done. */
+    OP_TICK_ENABLE(C);
+    OP_READ_EXPECT(Ca, "ok", 2);
 }
 
 DEF_SCRIPT(script_87, "place holder for multistrem script_87")
