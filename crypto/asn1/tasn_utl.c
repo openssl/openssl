@@ -169,11 +169,14 @@ int ossl_asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, long inlen,
     if (enc == NULL)
         return 1;
 
+    /* A failure below leaves the item without a cached encoding */
     OPENSSL_free(enc->enc);
-    if (inlen <= 0) {
-        enc->enc = NULL;
+    enc->enc = NULL;
+    enc->len = 0;
+    enc->modified = 1;
+
+    if (inlen <= 0)
         return 0;
-    }
     if ((enc->enc = OPENSSL_malloc(inlen)) == NULL)
         return 0;
     memcpy(enc->enc, in, inlen);

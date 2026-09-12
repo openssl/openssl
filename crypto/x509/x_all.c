@@ -30,6 +30,7 @@
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
 #include "crypto/rsa.h"
+#include "crypto/siphash.h"
 #include "x509_local.h"
 
 static void *RSA_new_thunk(void)
@@ -129,14 +130,24 @@ static int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out)
 }
 #endif
 
-int X509_verify(const X509 *a, EVP_PKEY *r)
+int ossl_x509_verify_ex(const X509 *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
         return 0;
 
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
         &a->signature, &a->cert_info,
-        a->distinguishing_id, r, a->libctx, a->propq);
+        a->distinguishing_id, r, libctx, propq);
+}
+
+int X509_verify(const X509 *a, EVP_PKEY *r)
+{
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
+    ossl_x509_get0_libctx(a, &libctx, &propq);
+    return ossl_x509_verify_ex(a, r, libctx, propq);
 }
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
@@ -191,6 +202,8 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -209,9 +222,10 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * which exist below are the same.
      */
     x->cert_info.enc.modified = 1;
+    ossl_x509_get0_libctx(x, &libctx, &propq);
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
-        pkey, md, x->libctx, x->propq);
+        pkey, md, libctx, propq);
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
@@ -261,6 +275,8 @@ X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     STACK_OF(X509_EXTENSION) *exts;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
     int bad = 0;
 
     if (x == NULL) {
@@ -273,9 +289,10 @@ int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
     if (bad)
         return 0;
     x->req_info.enc.modified = 1;
+    ossl_x509_req_get0_libctx(x, &libctx, &propq);
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
         x->signature, &x->req_info, NULL,
-        pkey, md, x->libctx, x->propq);
+        pkey, md, libctx, propq);
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
@@ -407,7 +424,7 @@ PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 
     ret = ASN1_item_d2i_fp_ex(ASN1_ITEM_rptr(PKCS7), fp, p7, libctx, propq);
     if (ret != NULL)
-        ossl_pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_SignerInfos_set_ctx(ret);
     return ret;
 }
 
@@ -430,7 +447,7 @@ PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
 
     ret = ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(PKCS7), bp, p7, libctx, propq);
     if (ret != NULL)
-        ossl_pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_SignerInfos_set_ctx(ret);
     return ret;
 }
 
@@ -456,10 +473,8 @@ X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
     OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
 
-    if (req != NULL && *req != NULL) {
-        libctx = (*req)->libctx;
-        propq = (*req)->propq;
-    }
+    if (req != NULL && *req != NULL)
+        ossl_x509_req_get0_libctx(*req, &libctx, &propq);
 
     return ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(X509_REQ), bp, req, libctx, propq);
 }
@@ -643,24 +658,39 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
     return EVP_Digest(key->data, key->length, md, len, type, NULL);
 }
 
+int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
+    unsigned char *hash)
+{
+    static const unsigned char key[SIPHASH_KEY_SIZE] = { 0 };
+    SIPHASH ctx = { 0 };
+    unsigned char *der = NULL;
+    int der_len;
+
+    der_len = ASN1_item_i2d((const ASN1_VALUE *)val, &der, it);
+    if (der_len < 0)
+        return 0;
+    (void)SipHash_set_hash_size(&ctx, OSSL_X509_FINGERPRINT_SIZE);
+    (void)SipHash_Init(&ctx, key, 0, 0);
+    SipHash_Update(&ctx, der, (size_t)der_len);
+    (void)SipHash_Final(&ctx, hash, OSSL_X509_FINGERPRINT_SIZE);
+    OPENSSL_free(der);
+    return 1;
+}
+
 int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
     unsigned int *len)
 {
-    if (EVP_MD_is_a(md, SN_sha1) && (cert->ex_flags & EXFLAG_SET) != 0
-        && (cert->ex_flags & EXFLAG_NO_FINGERPRINT) == 0) {
-        /* Asking for SHA1 and we already computed it. */
-        if (len != NULL)
-            *len = sizeof(cert->sha1_hash);
-        memcpy(data, cert->sha1_hash, sizeof(cert->sha1_hash));
-        return 1;
-    }
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
+    ossl_x509_get0_libctx(cert, &libctx, &propq);
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert,
-        data, len, cert->libctx, cert->propq);
+        data, len, libctx, propq);
 }
 
-/* calculate cert digest using the same hash algorithm as in its signature */
-ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
-    EVP_MD **md_used, int *md_is_fallback)
+ASN1_OCTET_STRING *ossl_x509_digest_sig_ex(const X509 *cert,
+    EVP_MD **md_used, int *md_is_fallback,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned int len;
     unsigned char hash[EVP_MAX_MD_SIZE];
@@ -673,11 +703,6 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
         *md_used = NULL;
     if (md_is_fallback != NULL)
         *md_is_fallback = 0;
-
-    if (cert == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
 
     if (!OBJ_find_sigid_algs(X509_get_signature_nid(cert), &mdnid, &pknid)) {
         ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
@@ -701,8 +726,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
             }
             RSA_PSS_PARAMS_free(pss);
             /* Fetch explicitly and do not fallback */
-            if ((md = EVP_MD_fetch(cert->libctx, EVP_MD_get0_name(mmd),
-                     cert->propq))
+            if ((md = EVP_MD_fetch(libctx, EVP_MD_get0_name(mmd),
+                     propq))
                 == NULL)
                 /* Error code from fetch is sufficient */
                 return NULL;
@@ -719,8 +744,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
                 md_name = "SHA256";
                 break;
             }
-            if ((md = EVP_MD_fetch(cert->libctx, md_name,
-                     cert->propq))
+            if ((md = EVP_MD_fetch(libctx, md_name,
+                     propq))
                 == NULL)
                 return NULL;
             if (md_is_fallback != NULL)
@@ -730,8 +755,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
             ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
             return NULL;
         }
-    } else if ((md = EVP_MD_fetch(cert->libctx, OBJ_nid2sn(mdnid),
-                    cert->propq))
+    } else if ((md = EVP_MD_fetch(libctx, OBJ_nid2sn(mdnid),
+                    propq))
         == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
@@ -752,21 +777,31 @@ err:
     return NULL;
 }
 
+/* calculate cert digest using the same hash algorithm as in its signature */
+ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
+    EVP_MD **md_used, int *md_is_fallback)
+{
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
+    if (cert == NULL) {
+        if (md_used != NULL)
+            *md_used = NULL;
+        if (md_is_fallback != NULL)
+            *md_is_fallback = 0;
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    ossl_x509_get0_libctx(cert, &libctx, &propq);
+    return ossl_x509_digest_sig_ex(cert, md_used, md_is_fallback, libctx, propq);
+}
+
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len)
 {
     if (type == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
-    }
-    if (EVP_MD_is_a(type, SN_sha1)
-        && (data->flags & EXFLAG_SET) != 0
-        && (data->flags & EXFLAG_NO_FINGERPRINT) == 0) {
-        /* Asking for SHA1; always computed in CRL d2i. */
-        if (len != NULL)
-            *len = sizeof(data->sha1_hash);
-        memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
-        return 1;
     }
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
         md, len, data->libctx, data->propq);
@@ -775,8 +810,12 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
+    ossl_x509_req_get0_libctx(data, &libctx, &propq);
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
-        md, len, data->libctx, data->propq);
+        md, len, libctx, propq);
 }
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
