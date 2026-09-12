@@ -2619,74 +2619,8 @@ err:
     return rc;
 }
 
-static int do_mutation = 0;
-static QUIC_PKT_HDR *hdr_to_free = NULL;
-
-/*
- * Check packets to transmit, if we have an initial packet
- * Modify the version number to something incorrect
- * so that we trigger a version negotiation
- * Note, this is a use once function, it will only modify the
- * first INITIAL packet it sees, after which it needs to be
- * armed again
- */
-static int script_74_alter_version(const QUIC_PKT_HDR *hdrin,
-    const OSSL_QTX_IOVEC *iovecin, size_t numin,
-    QUIC_PKT_HDR **hdrout,
-    const OSSL_QTX_IOVEC **iovecout,
-    size_t *numout,
-    void *arg)
-{
-    *hdrout = OPENSSL_memdup(hdrin, sizeof(QUIC_PKT_HDR));
-    *iovecout = iovecin;
-    *numout = numin;
-    hdr_to_free = *hdrout;
-
-    if (do_mutation == 0)
-        return 1;
-    do_mutation = 0;
-
-    if (hdrin->type == QUIC_PKT_TYPE_INITIAL)
-        (*hdrout)->version = 0xdeadbeef;
-    return 1;
-}
-
-static void script_74_finish_mutation(void *arg)
-{
-    OPENSSL_free(hdr_to_free);
-}
-
-/*
- * Enable the packet mutator for the client channel
- * So that when we send a Initial packet
- * We modify the version to be something invalid
- * to force a version negotiation
- */
-static int script_74_arm_packet_mutator(struct helper *h,
-    struct helper_local *hl)
-{
-    QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
-
-    do_mutation = 1;
-    if (!ossl_quic_channel_set_mutator(ch, script_74_alter_version,
-            script_74_finish_mutation,
-            NULL))
-        return 0;
-    return 1;
-}
-
 static const struct script_op script_74[] = {
-    OP_CHECK(script_74_arm_packet_mutator, 0),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

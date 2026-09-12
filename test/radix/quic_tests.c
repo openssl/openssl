@@ -3998,8 +3998,86 @@ DEF_SCRIPT(script_73, "Test that APL stops handing out streams after limit reach
     OP_STREAM_LIMIT_PROBE(C, SSL_STREAM_FLAG_UNI | SSL_STREAM_FLAG_NO_BLOCK, 200, 50);
 }
 
-DEF_SCRIPT(script_74, "place holder for multistrem script_74")
+/*
+ * Check packets to transmit, if we have an initial packet
+ * Modify the version number to something incorrect
+ * so that we trigger a version negotiation
+ * Note, this is a use once function, it will only modify the
+ * first INITIAL packet it sees, after which it needs to be
+ * armed again
+ */
+static int do_mutation_74 = 0;
+static QUIC_PKT_HDR *hdr_to_free_74 = NULL;
+
+static int script_74_alter_version(const QUIC_PKT_HDR *hdrin,
+    const OSSL_QTX_IOVEC *iovecin, size_t numin,
+    QUIC_PKT_HDR **hdrout,
+    const OSSL_QTX_IOVEC **iovecout,
+    size_t *numout,
+    void *arg)
 {
+    *hdrout = OPENSSL_memdup(hdrin, sizeof(QUIC_PKT_HDR));
+    *iovecout = iovecin;
+    *numout = numin;
+    hdr_to_free_74 = *hdrout;
+
+    if (do_mutation_74 == 0)
+        return 1;
+    do_mutation_74 = 0;
+
+    if (hdrin->type == QUIC_PKT_TYPE_INITIAL)
+        (*hdrout)->version = 0xdeadbeef;
+    return 1;
+}
+
+static void script_74_finish_mutation(void *arg)
+{
+    OPENSSL_free(hdr_to_free_74);
+}
+
+/*
+ * Enable the packet mutator for the client channel
+ * So that when we send a Initial packet
+ * We modify the version to be something invalid
+ * to force a version negotiation
+ */
+DEF_FUNC(script_74_arm_packet_mutator)
+{
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+
+    do_mutation_74 = 1;
+    if (!TEST_true(ossl_quic_channel_set_mutator(ch, script_74_alter_version,
+            script_74_finish_mutation, NULL)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_74, "Version negotiation: QUIC_VERSION_1 ignored")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(script_74_arm_packet_mutator);
+
+    OP_CONNECT_WAIT(C);
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
 }
 
 DEF_SCRIPT(script_75, "place holder for multistrem script_75")
