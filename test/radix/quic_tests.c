@@ -3146,24 +3146,225 @@ DEF_SCRIPT(script_64, "place holder for multistrem script_64")
 {
 }
 
-DEF_SCRIPT(script_65, "place holder for multistrem script_65")
+static int script_65_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+
+    if (fault->word0 == 0)
+        return 1;
+
+    --fault->word0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
 }
 
-DEF_SCRIPT(script_66, "place holder for multistrem script_66")
+DEF_SCRIPT(script_65, "Fault injection - CRYPTO - zero-length is accepted")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_65_inject_plain);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
 }
 
-DEF_SCRIPT(script_67, "place holder for multistrem script_67")
+static int script_66_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[64];
+    size_t written;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, fault->word1)))
+        goto err;
+
+    if (fault->word1 == OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+                fault->word0 - 1)))
+            goto err;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_VLINT_MAX))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
 }
 
-DEF_SCRIPT(script_68, "place holder for multistrem script_68")
+DEF_SCRIPT(script_66, "Fault injection - large MAX_STREAM_DATA")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_66_inject_plain);
+
+    OP_NEW_STREAM(S, Sa, 0);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_SET_INJECT_WORD(S_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+    OP_WRITE(Ca, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
-DEF_SCRIPT(script_69, "place holder for multistrem script_69")
+DEF_SCRIPT(script_67, "Fault injection - large MAX_DATA")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_66_inject_plain);
+
+    OP_NEW_STREAM(S, Sa, 0);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_MAX_DATA);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+    OP_WRITE(Ca, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
+}
+
+static int script_68_inject_handshake(RADIX_FAULT *fault, unsigned char *msg,
+    size_t msglen)
+{
+    const unsigned char *data;
+    size_t datalen;
+    const unsigned char certreq[] = {
+        SSL3_MT_CERTIFICATE_REQUEST, /* CertificateRequest message */
+        0, 0, 12, /* Length of message */
+        1, 1, /* certificate_request_context */
+        0, 8, /* Extensions block length */
+        0, TLSEXT_TYPE_signature_algorithms, /* sig_algs extension*/
+        0, 4, /* 4 bytes of sig algs extension*/
+        0, 2, /* sigalgs list is 2 bytes long */
+        8, 4 /* rsa_pss_rsae_sha256 */
+    };
+    const unsigned char keyupdate[] = {
+        SSL3_MT_KEY_UPDATE, /* KeyUpdate message */
+        0, 0, 1, /* Length of message */
+        SSL_KEY_UPDATE_NOT_REQUESTED /* update_not_requested */
+    };
+
+    /* We transform the NewSessionTicket message into something else */
+    switch (fault->word0) {
+    case 0:
+        return 1;
+
+    case 1:
+        /* CertificateRequest message */
+        data = certreq;
+        datalen = sizeof(certreq);
+        break;
+
+    case 2:
+        /* KeyUpdate message */
+        data = keyupdate;
+        datalen = sizeof(keyupdate);
+        break;
+
+    default:
+        return 0;
+    }
+
+    if (!TEST_true(radix_fault_resize_message(fault,
+            datalen - SSL3_HM_HEADER_LENGTH)))
+        return 0;
+
+    memcpy(msg, data, datalen);
+
+    return 1;
+}
+
+DEF_SCRIPT(script_68, "Send a CertificateRequest message post-handshake")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_HANDSHAKE(S, script_68_inject_handshake);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(1, 0);
+    OP_NEW_TICKET(S);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
+}
+
+DEF_SCRIPT(script_69, "Send a TLS KeyUpdate message post-handshake")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_HANDSHAKE(S, script_68_inject_handshake);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(2, 0);
+    OP_NEW_TICKET(S);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN + SSL_AD_UNEXPECTED_MESSAGE, 0, 0);
 }
 
 DEF_SCRIPT(script_70, "place holder for multistrem script_70")
