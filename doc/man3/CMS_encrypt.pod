@@ -6,7 +6,7 @@ CMS_encrypt_ex, CMS_encrypt - create a CMS envelopedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *CMS_encrypt_ex(const STACK_OF(X509) *certs, BIO *in,
                                  const EVP_CIPHER *cipher, unsigned int flags,
@@ -103,6 +103,10 @@ L<ERR_get_error(3)>, L<CMS_decrypt(3)>
 The function CMS_encrypt_ex() was added in OpenSSL 3.0.
 
 The B<CMS_STREAM> flag was first supported in OpenSSL 1.0.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

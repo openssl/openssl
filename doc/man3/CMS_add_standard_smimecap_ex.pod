@@ -8,7 +8,7 @@ CMS_add_smimecap, CMS_add_simple_smimecap
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_add_standard_smimecap_ex(STACK_OF(X509_ALGOR) **smcap,
                                   OSSL_LIB_CTX *libctx, const char *propq);
@@ -72,6 +72,10 @@ L<CMS_add1_signer(3)>, L<CMS_sign(3)>, L<OSSL_LIB_CTX(3)>
 =head1 HISTORY
 
 CMS_add_standard_smimecap_ex() was added in OpenSSL 4.1.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

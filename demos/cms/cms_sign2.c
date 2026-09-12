@@ -9,7 +9,7 @@
 
 /* S/MIME signing example: 2 signers */
 #include <openssl/pem.h>
-#include <openssl/cms.h>
+#include <libcms/cms.h>
 #include <openssl/err.h>
 
 int main(int argc, char **argv)
