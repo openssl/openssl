@@ -2675,14 +2675,7 @@ static const struct script_op script_81[] = {
 
 /* 82. Negotiated default idle timeout if not configured */
 static const struct script_op script_82[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000),
-    OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
