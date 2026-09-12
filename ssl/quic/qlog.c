@@ -13,6 +13,7 @@
 #include "internal/json_enc.h"
 #include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/to_hex.h"
 #include "crypto/ctype.h"
 
 #define BITS_PER_WORD (sizeof(size_t) * 8)
@@ -105,47 +106,45 @@ err:
     return NULL;
 }
 
+static const char *ossl_dirsep_string(const char *path)
+{
+    if (ossl_ends_with_dirsep(path))
+        return "";
+
+#if defined(_WIN32)
+    return "\\";
+#elif defined(__VMS)
+    return ":";
+#else
+    return "/";
+#endif /* defined(_WIN32) */
+}
+
 QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
 {
     QLOG *qlog = NULL;
     const char *qlogdir = ossl_safe_getenv("QLOGDIR");
     const char *qfilter = ossl_safe_getenv("OSSL_QFILTER");
-    char qlogdir_sep, *filename = NULL;
-    size_t i, l, strl;
+    char cid_hex[QUIC_MAX_CONN_ID_LEN * 2 + 1], *filename = NULL;
+    size_t i, hexlen = 0;
 
-    if (info == NULL || qlogdir == NULL)
+    if (info == NULL || qlogdir == NULL || qlogdir[0] == '\0')
         return NULL;
 
-    l = strlen(qlogdir);
-    if (l == 0)
+    if (!ossl_assert(info->odcid.id_len <= QUIC_MAX_CONN_ID_LEN)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return NULL;
-
-    qlogdir_sep = ossl_determine_dirsep(qlogdir);
-
-    /* dir; [sep]; ODCID; _; strlen("client" / "server"); strlen(".sqlog"); NUL */
-    strl = l + 1 + info->odcid.id_len * 2 + 1 + 6 + 6 + 1;
-    filename = OPENSSL_malloc(strl);
-    if (filename == NULL)
-        return NULL;
-
-    memcpy(filename, qlogdir, l);
-    if (qlogdir_sep != '\0')
-        filename[l++] = qlogdir_sep;
-
-    for (i = 0; i < info->odcid.id_len; ++i) {
-        int n = snprintf(filename + l, strl - l, "%02x", info->odcid.id[i]);
-
-        if (n < 0 || (size_t)n >= strl - l)
-            goto err;
-        l += n;
     }
 
-    int n = snprintf(filename + l, strl - l, "_%s.sqlog",
-        info->is_server ? "server" : "client");
+    for (i = 0; i < info->odcid.id_len; ++i)
+        hexlen += ossl_to_lowerhex(cid_hex + hexlen, info->odcid.id[i]);
+    cid_hex[hexlen] = '\0';
 
-    if (n < 0 || (size_t)n >= strl - l)
-        goto err;
-    l += n;
+    if (ossl_asprintf(&filename, "%s%s%s_%s.sqlog", qlogdir,
+            ossl_dirsep_string(qlogdir), cid_hex,
+            info->is_server ? "server" : "client")
+        < 0)
+        return NULL;
 
     qlog = ossl_qlog_new(info);
     if (qlog == NULL)
