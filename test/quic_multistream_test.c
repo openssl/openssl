@@ -2555,41 +2555,6 @@ static const struct script_op script_80[] = {
     OP_END
 };
 
-static int check_static_tp(struct helper *h, struct helper_local *hl, int ssl_value)
-{
-    uint64_t v = 0;
-
-    if (!TEST_true(SSL_get_value_uint(h->c_conn, (uint32_t)hl->check_op->arg1,
-            ssl_value,
-            &v)))
-        return 0;
-
-    if (!TEST_uint64_t_eq(v, hl->check_op->arg2))
-        return 0;
-
-    return 1;
-}
-
-static int cannot_change_static_tp(struct helper *h, struct helper_local *hl, int ssl_value)
-{
-    uint64_t v = 0;
-
-    if (!TEST_true(SSL_get_feature_request_uint(h->c_conn,
-            ssl_value,
-            &v)))
-        return 0;
-
-    if (!TEST_uint64_t_eq(v, hl->check_op->arg1))
-        return 0;
-
-    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            ssl_value,
-            hl->check_op->arg2)))
-        return 0;
-
-    return 1;
-}
-
 /* 81. Idle timeout configuration */
 static const struct script_op script_81[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2737,16 +2702,6 @@ static const struct script_op script_103[] = {
     OP_END
 };
 
-static int check_ack_delay_max(struct helper *h, struct helper_local *hl)
-{
-    return check_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_MAX);
-}
-
-static int cannot_change_ack_delay_max(struct helper *h, struct helper_local *hl)
-{
-    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_MAX);
-}
-
 /* 104. Max ack delay configuration */
 static const struct script_op script_104[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2763,15 +2718,7 @@ static const struct script_op script_105[] = {
 
 /* 106. No late changes to max ack delay */
 static const struct script_op script_106[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(cannot_change_ack_delay_max, QUIC_DEFAULT_MAX_ACK_DELAY,
-        QUIC_DEFAULT_MAX_ACK_DELAY / 2),
-    OP_CHECK2(check_ack_delay_max,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };
