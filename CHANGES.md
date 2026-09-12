@@ -34,7 +34,10 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Ed25519 now uses 51-bit limbs on 64-bit platforms, making it roughly
+   twice as fast.
+
+   *Alex Gaynor*
 
 OpenSSL 4.1
 -----------
