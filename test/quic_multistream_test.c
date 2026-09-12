@@ -2743,16 +2743,6 @@ static const struct script_op script_100[] = {
     OP_END
 };
 
-static int check_ack_delay_exponent(struct helper *h, struct helper_local *hl)
-{
-    return check_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT);
-}
-
-static int cannot_change_ack_delay_exponent(struct helper *h, struct helper_local *hl)
-{
-    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT);
-}
-
 /* 101. Ack delay exponent configuration */
 static const struct script_op script_101[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2769,15 +2759,7 @@ static const struct script_op script_102[] = {
 
 /* 103. No late changes to ack delay exponent */
 static const struct script_op script_103[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(cannot_change_ack_delay_exponent, QUIC_DEFAULT_ACK_DELAY_EXP,
-        QUIC_DEFAULT_ACK_DELAY_EXP + 1),
-    OP_CHECK2(check_ack_delay_exponent,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };
