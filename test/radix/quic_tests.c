@@ -5289,8 +5289,16 @@ DEF_SCRIPT(script_99, "Negotiated default uni stream window if not configured")
         SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024);
 }
 
-DEF_SCRIPT(script_100, "place holder for multistrem script_100")
+/* 100. No late changes to uni stream window */
+DEF_SCRIPT(script_100, "No late changes to uni stream window")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR, 512 * 1024, 600000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
 }
 
 DEF_SCRIPT(script_101, "place holder for multistrem script_101")

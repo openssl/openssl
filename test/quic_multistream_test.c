@@ -2722,16 +2722,6 @@ static const struct script_op script_97[] = {
     OP_END
 };
 
-static int check_window_uni_stream(struct helper *h, struct helper_local *hl)
-{
-    return check_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWUSTR);
-}
-
-static int cannot_change_window_uni_stream(struct helper *h, struct helper_local *hl)
-{
-    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWUSTR);
-}
-
 /* 98. Uni stream window configuration */
 static const struct script_op script_98[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2748,13 +2738,7 @@ static const struct script_op script_99[] = {
 
 /* 100. No late changes to uni stream window */
 static const struct script_op script_100[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(cannot_change_window_uni_stream, 512 * 1024, 600000),
-    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };
