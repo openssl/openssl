@@ -1778,6 +1778,26 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_check_idle_timeout)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t value_class, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(value_class);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_value_uint(ssl, (uint32_t)value_class,
+            SSL_VALUE_QUIC_IDLE_TIMEOUT, &v))
+        || !TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -2142,3 +2162,9 @@ err:
         OP_PUSH_U64(count),                                      \
         OP_PUSH_U64(min_fail),                                   \
         OP_FUNC(hf_stream_limit_probe))
+
+#define OP_CHECK_IDLE_TIMEOUT(name, value_class, expected_ms) \
+    (OP_SELECT_SSL(0, name),                                  \
+        OP_PUSH_U64(value_class),                             \
+        OP_PUSH_U64(expected_ms),                             \
+        OP_FUNC(hf_check_idle_timeout))

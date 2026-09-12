@@ -4254,8 +4254,73 @@ DEF_SCRIPT(script_77, "Ensure default stream popping operates correctly")
     OP_READ_EXPECT(Cb, "xyz", 3);
 }
 
-DEF_SCRIPT(script_78, "place holder for multistrem script_78")
+static size_t new_session_count_78;
+
+static int on_new_session_78(SSL *s, SSL_SESSION *sess)
 {
+    ++new_session_count_78;
+    return 0; /* do not ref session, we aren't keeping it */
+}
+
+DEF_FUNC(setup_session_78)
+{
+    int ok = 0;
+    SSL *ssl;
+    SSL_CTX *ctx;
+
+    REQUIRE_SSL(ssl);
+    ctx = SSL_get_SSL_CTX(ssl);
+
+    SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH);
+    SSL_CTX_sess_set_new_cb(ctx, on_new_session_78);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(reset_new_session_count_78)
+{
+    new_session_count_78 = 0;
+    return 1;
+}
+
+DEF_FUNC(check_got_session_ticket_78)
+{
+    return TEST_size_t_gt(new_session_count_78, 0);
+}
+
+DEF_SCRIPT(script_78, "Post-connection session ticket handling")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(setup_session_78);
+
+    OP_CONNECT_WAIT(C);
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+
+    OP_FUNC(reset_new_session_count_78);
+    OP_NEW_TICKET(S);
+
+    OP_WRITE(Sa, "Strawberry", 10);
+    OP_READ_EXPECT(Ca, "Strawberry", 10);
+
+    OP_FUNC(check_got_session_ticket_78);
+    OP_CHECK_IDLE_TIMEOUT(C, SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
 DEF_SCRIPT(script_79, "place holder for multistrem script_79")
