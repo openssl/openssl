@@ -1715,6 +1715,26 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_set_max_early_data)
+{
+    int ok = 0;
+    uint64_t value;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    F_POP(value);
+    REQUIRE_SSL(ssl);
+
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_true(SSL_set_max_early_data(ossl_quic_channel_get0_tls(ch),
+            (uint32_t)value)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -2067,3 +2087,8 @@ err:
     (OP_SELECT_SSL(0, name),              \
         OP_PUSH_SIZE(size),               \
         OP_FUNC(hf_set_write_buf_size))
+
+#define OP_SET_MAX_EARLY_DATA(name, value) \
+    (OP_SELECT_SSL(0, name),               \
+        OP_PUSH_U64(value),                \
+        OP_FUNC(hf_set_max_early_data))
