@@ -899,6 +899,189 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_2
+static void cert_request_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    const unsigned char *msg = buf;
+    int *seen = arg;
+
+    (void)version;
+    (void)ssl;
+
+    if (seen != NULL && write_p == 1 && content_type == SSL3_RT_HANDSHAKE
+        && len >= SSL3_HM_HEADER_LENGTH
+        && msg[0] == SSL3_MT_CERTIFICATE_REQUEST)
+        *seen = 1;
+}
+
+/*
+ * TLS 1.2 server that requests a client cert: after CertificateRequest,
+ * inject a Certificate whose certificate_list is one valid entry plus
+ * trailing garbage (tst 0: stray byte; tst 1: truncated entry header).
+ * The server must reject with decode_error / SSL_R_CERT_LENGTH_MISMATCH.
+ * That is the double-free path from 95dcb1b719 dropping "x = NULL;" after
+ * sk_X509_push().  The protocol checks do not distinguish a configuration in
+ * which the UAF remains silent; memory-safety tooling and enabled refcount
+ * assertions catch it.
+ */
+static int test_malformed_client_cert_tail(int tst)
+{
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+    char *leaf = test_mk_file_path(certsdir, "leaf.pem");
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    X509 *crt = NULL;
+    unsigned char *der = NULL, *body, *cp;
+    unsigned char flight[16384];
+    unsigned char rec[4096];
+    static const unsigned char expected_alert[] = {
+        SSL3_RT_ALERT, TLS1_2_VERSION_MAJOR, TLS1_2_VERSION_MINOR,
+        0, 2, SSL3_AL_FATAL, TLS1_AD_DECODE_ERROR
+    };
+    size_t taillen = tst == 0 ? 1 : 3;
+    size_t listlen, msglen, reclen, written = 0;
+    int cert_request_seen = 0, derlen, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_2_VERSION, TLS1_2_VERSION,
+            &sctx, &cctx, NULL, NULL)))
+        goto end;
+
+    /* The server needs its own credentials and must request a client cert */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(sctx, leaf_chain), 1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, skey,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        goto end;
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+
+    SSL_set_msg_callback(serverssl, cert_request_msg_cb);
+    SSL_set_msg_callback_arg(serverssl, &cert_request_seen);
+
+    /* The client emits ClientHello; the server consumes it and replies */
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(serverssl);
+    if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Discard the server flight.  The message callback must have observed a
+     * CertificateRequest, i.e. the server is now waiting for the client
+     * Certificate that we are going to forge.  The client is never advanced
+     * again.
+     */
+    while ((ret = BIO_read(SSL_get_rbio(clientssl), flight,
+                (int)sizeof(flight)))
+        > 0)
+        continue;
+    if (!TEST_true(cert_request_seen))
+        goto end;
+
+    /* Use a real, parseable certificate as the first (valid) list entry */
+    if (!TEST_ptr(crt = load_cert_pem(leaf, libctx)))
+        goto end;
+    if (!TEST_int_gt(derlen = i2d_X509(crt, NULL), 0)
+        || !TEST_ptr(der = OPENSSL_malloc(derlen)))
+        goto end;
+    cp = der;
+    if (!TEST_int_eq(i2d_X509(crt, &cp), derlen))
+        goto end;
+
+    listlen = 3 + (size_t)derlen + taillen;
+    if (!TEST_size_t_le(SSL3_RT_HEADER_LENGTH + SSL3_HM_HEADER_LENGTH
+                + 3 + listlen,
+            sizeof(rec)))
+        goto end;
+
+    /*
+     * Craft the Certificate body:
+     *   certificate_list<3> = [ len<3> DER(cert) ] [ trailing garbage ]
+     * The garbage is inside the declared list length, so the parse loop
+     * starts a second iteration and fails its loop-top length checks.
+     */
+    /* handshake message body starts after record and handshake headers */
+    body = rec + SSL3_RT_HEADER_LENGTH + SSL3_HM_HEADER_LENGTH;
+    cp = body;
+    *cp++ = (unsigned char)(listlen >> 16);
+    *cp++ = (unsigned char)(listlen >> 8);
+    *cp++ = (unsigned char)listlen;
+    *cp++ = (unsigned char)(derlen >> 16);
+    *cp++ = (unsigned char)(derlen >> 8);
+    *cp++ = (unsigned char)derlen;
+    memcpy(cp, der, derlen);
+    cp += derlen;
+    if (tst == 0) {
+        *cp++ = 0; /* one stray byte: PACKET_get_net_3() fails */
+    } else {
+        /* truncated entry header: declares 42 bytes, provides none */
+        *cp++ = 0;
+        *cp++ = 0;
+        *cp++ = 42; /* PACKET_get_bytes() fails */
+    }
+    msglen = (size_t)(cp - body);
+
+    /* handshake header: type 11 (certificate) + uint24 length */
+    rec[SSL3_RT_HEADER_LENGTH] = SSL3_MT_CERTIFICATE;
+    rec[SSL3_RT_HEADER_LENGTH + 1] = (unsigned char)(msglen >> 16);
+    rec[SSL3_RT_HEADER_LENGTH + 2] = (unsigned char)(msglen >> 8);
+    rec[SSL3_RT_HEADER_LENGTH + 3] = (unsigned char)msglen;
+
+    /* TLSPlaintext header */
+    reclen = msglen + SSL3_HM_HEADER_LENGTH;
+    rec[0] = SSL3_RT_HANDSHAKE;
+    rec[1] = TLS1_2_VERSION_MAJOR;
+    rec[2] = TLS1_2_VERSION_MINOR;
+    rec[3] = (unsigned char)(reclen >> 8);
+    rec[4] = (unsigned char)reclen;
+    reclen += SSL3_RT_HEADER_LENGTH;
+
+    if (!TEST_true(BIO_write_ex(SSL_get_rbio(serverssl), rec, reclen,
+            &written))
+        || !TEST_size_t_eq(written, reclen))
+        goto end;
+
+    /* The protocol rejection is the same if the memory error remains silent. */
+    ERR_clear_error();
+    ret = SSL_accept(serverssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_CERT_LENGTH_MISMATCH))
+        goto end;
+    ERR_clear_error();
+
+    /* The server must have sent us a fatal decode_error alert */
+    ret = BIO_read(SSL_get_rbio(clientssl), flight, (int)sizeof(flight));
+    if (!TEST_int_eq(ret, (int)sizeof(expected_alert))
+        || !TEST_mem_eq(flight, ret, expected_alert,
+            sizeof(expected_alert)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    X509_free(crt);
+    OPENSSL_free(der);
+    OPENSSL_free(skey);
+    OPENSSL_free(leaf_chain);
+    OPENSSL_free(leaf);
+    return testresult;
+}
+#endif /* OPENSSL_NO_TLS1_2 */
+
 static int test_ssl_build_cert_chain(void)
 {
     int ret = 0;
@@ -17053,6 +17236,9 @@ int setup_tests(void)
     ADD_TEST(test_client_cert_verify_cb);
     ADD_TEST(test_server_cert_verify_cb);
     ADD_TEST(test_server_rpk_verify_cb);
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_ALL_TESTS(test_malformed_client_cert_tail, 2);
+#endif
     ADD_TEST(test_ssl_build_cert_chain);
     ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OPENSSL_NO_TLS1_2
