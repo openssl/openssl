@@ -4340,8 +4340,165 @@ DEF_SCRIPT(script_79, "Optimised FIN test")
     OP_EXPECT_FIN(C);
 }
 
-DEF_SCRIPT(script_80, "place holder for multistrem script_80")
+/* 80. Stateless reset detection test */
+static QUIC_STATELESS_RESET_TOKEN script_80_reset_token = {
+    { 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        0xde, 0xad, 0xbe, 0xef }
+};
+
+static SSL *script_80_c_ssl;
+static BIO_ADDR *script_80_s_addr;
+
+DEF_FUNC(setup_stateless_reset_80)
 {
+    int ok = 0;
+    SSL *c_ssl, *s_ssl;
+    BIO *s_bio;
+    int s_fd = -1;
+    union BIO_sock_info_u s_info;
+
+    REQUIRE_SSL_2(c_ssl, s_ssl);
+
+    script_80_c_ssl = c_ssl;
+    BIO_ADDR_free(script_80_s_addr);
+
+    if (!TEST_ptr(s_bio = SSL_get_rbio(s_ssl))
+        || !TEST_ptr(script_80_s_addr = BIO_ADDR_new())
+        || !TEST_true(BIO_get_fd(s_bio, &s_fd)) || !TEST_int_ge(s_fd, 0))
+        goto err;
+
+    s_info.addr = script_80_s_addr;
+    if (!TEST_true(BIO_sock_info(s_fd, BIO_SOCK_INFO_ADDRESS, &s_info)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(cleanup_stateless_reset_80)
+{
+    BIO_ADDR_free(script_80_s_addr);
+    script_80_s_addr = NULL;
+    script_80_c_ssl = NULL;
+    return 1;
+}
+
+/*
+ * Generate a packet in the following format:
+ * https://www.rfc-editor.org/rfc/rfc9000.html#name-stateless-reset
+ * Stateless Reset {
+ *  Fixed Bits (2): 1
+ *  Unpredictable bits (38..)
+ *  Stateless reset token (128)
+ *  }
+ */
+static int script_80_send_stateless_reset(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
+{
+    unsigned char databuf[64];
+
+    if (fault->word1 == 0)
+        return 1;
+
+    fault->word1 = 0;
+
+    fprintf(stderr, "Sending stateless reset\n");
+
+    RAND_bytes(databuf, 64);
+    databuf[0] = 0x40;
+    memcpy(&databuf[48], script_80_reset_token.token,
+        sizeof(script_80_reset_token.token));
+
+    if (!TEST_int_eq(SSL_inject_net_dgram(script_80_c_ssl, databuf, sizeof(databuf),
+                         NULL, script_80_s_addr),
+            1))
+        return 0;
+
+    return 1;
+}
+
+static int script_80_gen_new_conn_id(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
+{
+    int rc = 0;
+    size_t l;
+    unsigned char frame_buf[64];
+    WPACKET wpkt;
+    QUIC_CONN_ID new_cid = { 0 };
+    OSSL_QUIC_FRAME_NEW_CONN_ID ncid = { 0 };
+
+    if (fault->word0 == 0)
+        return 1;
+
+    fault->word0 = 0;
+
+    fprintf(stderr, "sending new conn id\n");
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    ossl_quic_channel_get_diag_local_cid(fault->ch, &new_cid);
+
+    ncid.seq_num = 2;
+    ncid.retire_prior_to = 2;
+    ncid.conn_id = new_cid;
+    memcpy(ncid.stateless_reset.token, script_80_reset_token.token,
+        sizeof(script_80_reset_token.token));
+
+    if (!TEST_true(ossl_quic_wire_encode_frame_new_conn_id(&wpkt, &ncid)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
+        goto err;
+
+    if (!radix_fault_prepend_frame(fault, frame_buf, l))
+        goto err;
+
+    rc = 1;
+err:
+    if (rc)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+
+    return rc;
+}
+
+static int script_80_inject_pkt(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
+{
+    if (fault->word1 == 1)
+        return script_80_send_stateless_reset(fault, hdr, buf, len);
+    else if (fault->word0 == 1)
+        return script_80_gen_new_conn_id(fault, hdr, buf, len);
+
+    return 1;
+}
+
+DEF_SCRIPT(script_80, "Stateless reset detection test")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SELECT_SSL(0, C);
+    OP_SELECT_SSL(1, S);
+    OP_FUNC(setup_stateless_reset_80);
+
+    OP_SET_INJECT_PLAIN(S, script_80_inject_pkt);
+
+    OP_WRITE(C, "apple", 5);
+    OP_CONCLUDE(C);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_SET_INJECT_WORD(1, 0);
+    OP_WRITE(Sa, "apple", 5);
+    OP_READ_EXPECT(C, "apple", 5);
+    OP_SET_INJECT_WORD(0, 1);
+    OP_WRITE(Sa, "apple", 5);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 0, 1);
+
+    OP_FUNC(cleanup_stateless_reset_80);
 }
 
 DEF_SCRIPT(script_81, "place holder for multistrem script_81")
