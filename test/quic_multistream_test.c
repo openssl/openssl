@@ -2533,32 +2533,9 @@ static const struct script_op script_70[] = {
     OP_END
 };
 
-static int set_max_early_data(struct helper *h, struct helper_local *hl)
-{
-
-    if (!TEST_true(ossl_quic_tserver_set_max_early_data(ACQUIRE_S(),
-            (uint32_t)hl->check_op->arg2)))
-        return 0;
-
-    return 1;
-}
-
 /* 71. Send a TLS NewSessionTicket message with valid max_early_data */
 static const struct script_op script_71[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_CHECK(set_max_early_data, 0xffffffff),
-    OP_S_NEW_TICKET(),
-    OP_S_WRITE(a, "orange", 6),
-    OP_C_READ_EXPECT(a, "orange", 6),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

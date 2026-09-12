@@ -3958,8 +3958,20 @@ DEF_SCRIPT(script_70, "Send a TLS NewSessionTicket message with invalid max_earl
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
-DEF_SCRIPT(script_71, "place holder for multistrem script_71")
+DEF_SCRIPT(script_71, "Send a TLS NewSessionTicket message with valid max_early_data")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_MAX_EARLY_DATA(S, 0xffffffff);
+    OP_NEW_TICKET(S);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
 }
 
 DEF_SCRIPT(script_72, "place holder for multistrem script_72")
