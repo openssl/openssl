@@ -2575,8 +2575,6 @@ static const struct script_op script_77[] = {
     OP_END
 };
 
-static int check_idle_timeout(struct helper *h, struct helper_local *hl);
-
 /* 78. Post-connection session ticket handling */
 static const struct script_op script_78[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2657,16 +2655,6 @@ static int cannot_change_static_tp(struct helper *h, struct helper_local *hl, in
     return 1;
 }
 
-static int check_idle_timeout(struct helper *h, struct helper_local *hl)
-{
-    return check_static_tp(h, hl, SSL_VALUE_QUIC_IDLE_TIMEOUT);
-}
-
-static int cannot_change_idle_timeout(struct helper *h, struct helper_local *hl)
-{
-    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_IDLE_TIMEOUT);
-}
-
 /* 81. Idle timeout configuration */
 static const struct script_op script_81[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2681,15 +2669,7 @@ static const struct script_op script_82[] = {
 
 /* 83. No late changes to idle timeout */
 static const struct script_op script_83[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(cannot_change_idle_timeout, 30000, 5000),
-    OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000),
-    OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

@@ -4531,8 +4531,16 @@ DEF_SCRIPT(script_82, "Negotiated default idle timeout if not configured")
         SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
-DEF_SCRIPT(script_83, "place holder for multistrem script_83")
+/* 83. No late changes to idle timeout */
+DEF_SCRIPT(script_83, "No late changes to idle timeout")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT, 30000, 5000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
 DEF_SCRIPT(script_84, "place holder for multistrem script_84")
