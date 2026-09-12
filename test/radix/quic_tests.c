@@ -4323,8 +4323,21 @@ DEF_SCRIPT(script_78, "Post-connection session ticket handling")
     OP_CHECK_IDLE_TIMEOUT(C, SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
-DEF_SCRIPT(script_79, "place holder for multistrem script_79")
+DEF_SCRIPT(script_79, "Optimised FIN test")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_WRITE_EX2(C, "apple", 5, SSL_WRITE_FLAG_CONCLUDE);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_EXPECT_FIN(Sa);
+    OP_WRITE(Sa, "orange", 6);
+    OP_CONCLUDE(Sa);
+
+    OP_READ_EXPECT(C, "orange", 6);
+    OP_EXPECT_FIN(C);
 }
 
 DEF_SCRIPT(script_80, "place holder for multistrem script_80")
