@@ -4080,8 +4080,121 @@ DEF_SCRIPT(script_74, "Version negotiation: QUIC_VERSION_1 ignored")
     OP_READ_EXPECT(Sa, "apple", 5);
 }
 
-DEF_SCRIPT(script_75, "place holder for multistrem script_75")
+/*
+ * No channel exists yet for an unaccepted connection, so the usual
+ * RADIX_FAULT channel mutator can't intercept this datagram; filter the
+ * listener's wbio directly instead.
+ */
+#define BIO_TYPE_SCRIPT_75_FILTER (0x80 | BIO_TYPE_FILTER)
+static BIO_METHOD *script_75_filter_meth;
+static uint32_t script_75_word0;
+
+static int script_75_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
 {
+    BIO *next = BIO_next(b);
+    QUIC_PKT_HDR hdr;
+    WPACKET wpkt;
+    size_t written;
+
+    if (next == NULL)
+        return 0;
+
+    if (script_75_word0 != 0 && num_msg > 0) {
+        memset(&hdr, 0, sizeof(hdr));
+        hdr.type = QUIC_PKT_TYPE_VERSION_NEG;
+        hdr.version = 0;
+        hdr.fixed = 1;
+        hdr.dst_conn_id.id_len = 0;
+        hdr.src_conn_id.id_len = 8;
+        memset(hdr.src_conn_id.id, 0x55, 8);
+
+        if (!TEST_true(WPACKET_init_static_len(&wpkt, msg[0].data,
+                msg[0].data_len, 0)))
+            return 0;
+
+        if (!TEST_true(ossl_quic_wire_encode_pkt_hdr(&wpkt, 0, &hdr, NULL))
+            || !TEST_true(WPACKET_put_bytes_u32(&wpkt,
+                script_75_word0 == 1 ? QUIC_VERSION_1 : 0x5432abcd))
+            || !TEST_true(WPACKET_get_total_written(&wpkt, &written))) {
+            WPACKET_cleanup(&wpkt);
+            return 0;
+        }
+        WPACKET_finish(&wpkt);
+
+        msg[0].data_len = written;
+        script_75_word0 = 0;
+    }
+
+    return BIO_sendmmsg(next, msg, stride, num_msg, flags, msgs_processed);
+}
+
+static long script_75_ctrl(BIO *b, int cmd, long larg, void *parg)
+{
+    BIO *next = BIO_next(b);
+
+    if (next == NULL)
+        return -1;
+
+    return BIO_ctrl(next, cmd, larg, parg);
+}
+
+DEF_FUNC(script_75_arm_version_neg)
+{
+    int ok = 0;
+    SSL *listener;
+    BIO *filter, *real_wbio;
+
+    REQUIRE_SSL(listener);
+
+    script_75_word0 = 2; /* unknown version */
+
+    if (script_75_filter_meth == NULL) {
+        if (!TEST_ptr(script_75_filter_meth = BIO_meth_new(
+                          BIO_TYPE_SCRIPT_75_FILTER, "Version Negotiation Filter")))
+            goto err;
+        if (!TEST_true(BIO_meth_set_sendmmsg(script_75_filter_meth,
+                script_75_sendmmsg))
+            || !TEST_true(BIO_meth_set_ctrl(script_75_filter_meth,
+                script_75_ctrl)))
+            goto err;
+    }
+
+    if (!TEST_ptr(real_wbio = SSL_get_wbio(listener)))
+        goto err;
+    if (!TEST_true(BIO_up_ref(real_wbio)))
+        goto err;
+
+    if (!TEST_ptr(filter = BIO_new(script_75_filter_meth))) {
+        BIO_free(real_wbio);
+        goto err;
+    }
+
+    if (!TEST_ptr(BIO_push(filter, real_wbio))) {
+        BIO_free(real_wbio);
+        BIO_free(filter);
+        goto err;
+    }
+
+    SSL_set0_wbio(listener, filter);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_75, "Version negotiation: Unknown version causes connection abort")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+
+    OP_SELECT_SSL(0, L);
+    OP_FUNC(script_75_arm_version_neg);
+
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+    OP_CONNECT_WAIT_OR_FAIL(C);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CONNECTION_REFUSED, 0, 0);
 }
 
 DEF_SCRIPT(script_76, "place holder for multistrem script_76")

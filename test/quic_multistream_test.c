@@ -2552,73 +2552,6 @@ static const struct script_op script_73[] = {
 };
 
 /* 74. Version negotiation: QUIC_VERSION_1 ignored */
-static int generate_version_neg(WPACKET *wpkt, uint32_t version)
-{
-    QUIC_PKT_HDR hdr = { 0 };
-
-    hdr.type = QUIC_PKT_TYPE_VERSION_NEG;
-    hdr.version = 0;
-    hdr.fixed = 1;
-    hdr.dst_conn_id.id_len = 0;
-    hdr.src_conn_id.id_len = 8;
-    memset(hdr.src_conn_id.id, 0x55, 8);
-
-    if (!TEST_true(ossl_quic_wire_encode_pkt_hdr(wpkt, 0, &hdr, NULL)))
-        return 0;
-
-    if (!TEST_true(WPACKET_put_bytes_u32(wpkt, version)))
-        return 0;
-
-    return 1;
-}
-
-static int server_gen_version_neg(struct helper *h, BIO_MSG *msg, size_t stride)
-{
-    int rc = 0, have_wpkt = 0;
-    size_t l;
-    WPACKET wpkt;
-    BUF_MEM *buf = NULL;
-    uint32_t version;
-
-    switch (h->inject_word0) {
-    case 0:
-        return 1;
-    case 1:
-        version = QUIC_VERSION_1;
-        break;
-    default:
-        version = 0x5432abcd;
-        break;
-    }
-
-    if (!TEST_ptr(buf = BUF_MEM_new()))
-        goto err;
-
-    if (!TEST_true(WPACKET_init(&wpkt, buf)))
-        goto err;
-
-    have_wpkt = 1;
-
-    generate_version_neg(&wpkt, version);
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
-        goto err;
-
-    if (!TEST_true(qtest_fault_resize_datagram(h->qtf, l)))
-        goto err;
-
-    memcpy(msg->data, buf->data, l);
-    h->inject_word0 = 0;
-
-    rc = 1;
-err:
-    if (have_wpkt && !WPACKET_finish(&wpkt))
-        WPACKET_cleanup(&wpkt);
-
-    BUF_MEM_free(buf);
-    return rc;
-}
-
 static const struct script_op script_74[] = {
     /* test moved to test/radix/quic_tests.c */
     OP_END
@@ -2626,14 +2559,7 @@ static const struct script_op script_74[] = {
 
 /* 75. Version negotiation: Unknown version causes connection abort */
 static const struct script_op script_75[] = {
-    OP_S_SET_INJECT_DATAGRAM(server_gen_version_neg),
-    OP_SET_INJECT_WORD(2, 0),
-
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT_OR_FAIL(),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_CONNECTION_REFUSED, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
