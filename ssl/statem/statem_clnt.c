@@ -2279,6 +2279,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         BIO_ctrl(SSL_get_wbio(ssl),
             BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
             sizeof(sctpauthkey), sctpauthkey);
+        OPENSSL_cleanse(sctpauthkey, sizeof(sctpauthkey));
     }
 #endif
 
@@ -4262,6 +4263,7 @@ int tls_client_key_exchange_post_work(SSL_CONNECTION *s)
 
         BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
             sizeof(sctpauthkey), sctpauthkey);
+        OPENSSL_cleanse(sctpauthkey, sizeof(sctpauthkey));
     }
 #endif
 

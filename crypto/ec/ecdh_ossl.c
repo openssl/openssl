@@ -55,7 +55,7 @@ int ossl_ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     const BIGNUM *priv_key;
     const EC_GROUP *group;
     int ret = 0;
-    size_t buflen, len;
+    size_t buflen = 0, len;
     unsigned char *buf = NULL;
 
     if ((ctx = BN_CTX_new_ex(ecdh->libctx)) == NULL)
@@ -142,6 +142,6 @@ err:
     EC_POINT_clear_free(tmp);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
-    OPENSSL_free(buf);
+    OPENSSL_clear_free(buf, buflen);
     return ret;
 }
