@@ -5323,8 +5323,17 @@ DEF_SCRIPT(script_101, "Ack delay exponent configuration")
         SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP + 1);
 }
 
-DEF_SCRIPT(script_102, "place holder for multistrem script_102")
+/* 102. Negotiated default ack delay exponent if not configured */
+DEF_SCRIPT(script_102, "Negotiated default ack delay exponent if not configured")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP);
 }
 
 DEF_SCRIPT(script_103, "place holder for multistrem script_103")
