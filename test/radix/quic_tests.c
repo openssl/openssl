@@ -3986,8 +3986,16 @@ DEF_SCRIPT(script_72, "Test that APL stops handing out streams after limit reach
     OP_STREAM_LIMIT_PROBE(C, SSL_STREAM_FLAG_NO_BLOCK, 200, 50);
 }
 
-DEF_SCRIPT(script_73, "place holder for multistrem script_73")
+DEF_SCRIPT(script_73, "Test that APL stops handing out streams after limit reached (uni)")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /*
+     * Request more streams than a server will initially hand out and test that
+     * they fail properly.
+     */
+    OP_STREAM_LIMIT_PROBE(C, SSL_STREAM_FLAG_UNI | SSL_STREAM_FLAG_NO_BLOCK, 200, 50);
 }
 
 DEF_SCRIPT(script_74, "place holder for multistrem script_74")

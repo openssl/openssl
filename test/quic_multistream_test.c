@@ -2540,14 +2540,6 @@ static const struct script_op script_71[] = {
 };
 
 /* 72. Test that APL stops handing out streams after limit reached (bidi) */
-static int script_72_check(struct helper *h, struct helper_local *hl)
-{
-    if (!TEST_uint64_t_ge(h->fail_count, 50))
-        return 0;
-
-    return 1;
-}
-
 static const struct script_op script_72[] = {
     /* test moved to test/radix/quic_tests.c */
     OP_END
@@ -2555,25 +2547,7 @@ static const struct script_op script_72[] = {
 
 /* 73. Test that APL stops handing out streams after limit reached (uni) */
 static const struct script_op script_73[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    /*
-     * Request more streams than a server will initially hand out and test that
-     * they fail properly.
-     */
-    OP_BEGIN_REPEAT(200),
-
-    OP_C_NEW_STREAM_UNI_EX(a, ANY_ID, ALLOW_FAIL | SSL_STREAM_FLAG_NO_BLOCK),
-    OP_C_SKIP_IF_UNBOUND(a, 2),
-    OP_C_WRITE(a, "apple", 5),
-    OP_C_FREE_STREAM(a),
-
-    OP_END_REPEAT(),
-
-    OP_CHECK(script_72_check, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
