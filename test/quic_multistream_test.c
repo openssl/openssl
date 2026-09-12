@@ -2837,20 +2837,7 @@ static const struct script_op script_86[] = {
 
 /* 87. Test stream reset functionality */
 static const struct script_op script_87[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-    OP_C_CONCLUDE(a),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-    OP_S_EXPECT_FIN(a),
-    OP_S_WRITE(a, "orange", 6),
-    OP_C_READ_EXPECT(a, "orange", 6),
-    OP_S_CONCLUDE(a),
-    OP_C_EXPECT_FIN(a),
-    OP_SLEEP(1000),
-    OP_C_STREAM_RESET_FAIL(a, 42),
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

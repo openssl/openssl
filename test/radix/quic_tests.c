@@ -4893,8 +4893,23 @@ DEF_SCRIPT(script_86, "Event Handling Mode Configuration")
     OP_READ_EXPECT(Ca, "ok", 2);
 }
 
-DEF_SCRIPT(script_87, "place holder for multistrem script_87")
+/* 87. Test stream reset functionality */
+DEF_SCRIPT(script_87, "Test stream reset functionality")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_CONCLUDE(Ca);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_EXPECT_FIN(Sa);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+    OP_CONCLUDE(Sa);
+    OP_EXPECT_FIN(Ca);
+    OP_SLEEP(1000);
+    OP_STREAM_RESET_FAIL(Ca, 42);
 }
 
 DEF_SCRIPT(script_88, "place holder for multistrem script_88")

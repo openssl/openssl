@@ -446,7 +446,7 @@ DEF_FUNC(hf_pop_err)
     return 1;
 }
 
-DEF_FUNC(hf_stream_reset)
+static int hf_stream_reset_impl(FUNC_CTX *fctx, int expect_success)
 {
     int ok = 0;
     const char *name;
@@ -456,12 +456,27 @@ DEF_FUNC(hf_stream_reset)
     F_POP2(name, args.quic_error_code);
     REQUIRE_SSL(ssl);
 
-    if (!TEST_true(SSL_stream_reset(ssl, &args, sizeof(args))))
-        goto err;
+    if (expect_success) {
+        if (!TEST_true(SSL_stream_reset(ssl, &args, sizeof(args))))
+            goto err;
+    } else {
+        if (!TEST_false(SSL_stream_reset(ssl, &args, sizeof(args))))
+            goto err;
+    }
 
     ok = 1;
 err:
     return ok;
+}
+
+DEF_FUNC(hf_stream_reset)
+{
+    return hf_stream_reset_impl(fctx, 1);
+}
+
+DEF_FUNC(hf_stream_reset_fail)
+{
+    return hf_stream_reset_impl(fctx, 0);
 }
 
 DEF_FUNC(hf_set_default_stream_mode)
@@ -2078,6 +2093,12 @@ err:
         OP_PUSH_PZ(#name),                \
         OP_PUSH_U64(error_code),          \
         OP_FUNC(hf_stream_reset))
+
+#define OP_STREAM_RESET_FAIL(name, error_code) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_PZ(#name),                     \
+        OP_PUSH_U64(error_code),               \
+        OP_FUNC(hf_stream_reset_fail))
 
 #define OP_SHUTDOWN_WAIT(name, flags, error_code, reason) \
     (OP_SELECT_SSL(0, name),                              \
