@@ -516,6 +516,22 @@ GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
 
+GENERATE[util/libcrypto.num]=util/mkordinals.pl \
+    --symbols $(SRCDIR)/util/libcrypto.sym \
+    --release $(SRCDIR)/util/libcrypto.release.num \
+    --version $(VERSION_NUMBER)
+DEPEND[util/libcrypto.num]=util/libcrypto.sym util/libcrypto.release.num
+
+GENERATE[util/libssl.num]=util/mkordinals.pl \
+    --symbols $(SRCDIR)/util/libssl.sym \
+    --release $(SRCDIR)/util/libssl.release.num \
+    --version $(VERSION_NUMBER)
+DEPEND[util/libssl.num]=util/libssl.sym util/libssl.release.num
+
+# Only the linker script generation consumes these, and only on the
+# platforms that have one, but the test recipes read them everywhere.
+DEPEND[]=util/libcrypto.num util/libssl.num
+
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
   SHARED_SOURCE[libssl]=libssl.ld
