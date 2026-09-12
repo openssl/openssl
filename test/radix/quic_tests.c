@@ -5213,8 +5213,23 @@ DEF_SCRIPT(script_94, "No late changes to connection window")
         SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024);
 }
 
-DEF_SCRIPT(script_95, "place holder for multistrem script_95")
+/* 95. Bidi stream window configuration */
+DEF_SCRIPT(script_95, "Bidi stream window configuration")
 {
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR, 600000);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 600000);
 }
 
 DEF_SCRIPT(script_96, "place holder for multistrem script_96")
