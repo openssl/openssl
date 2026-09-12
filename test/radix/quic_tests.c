@@ -4912,8 +4912,193 @@ DEF_SCRIPT(script_87, "Test stream reset functionality")
     OP_STREAM_RESET_FAIL(Ca, 42);
 }
 
-DEF_SCRIPT(script_88, "place holder for multistrem script_88")
+/* 88. Test SSL_poll (lite, non-blocking) */
+#define POLL_FMT "%s%s%s%s%s%s%s%s%s%s%s%s%s"
+#define POLL_PRINTA(_revents_)                                         \
+    (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F " : "",         \
+        (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL " : "",   \
+        (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC " : "",   \
+        (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD " : "", \
+        (_revents_) & SSL_POLL_EVENT_ER ? "SSL_POLL_EVENT_ER " : "",   \
+        (_revents_) & SSL_POLL_EVENT_EW ? "SSL_POLL_EVENT_EW " : "",   \
+        (_revents_) & SSL_POLL_EVENT_R ? "SSL_POLL_EVENT_R " : "",     \
+        (_revents_) & SSL_POLL_EVENT_W ? "SSL_POLL_EVENT_W " : "",     \
+        (_revents_) & SSL_POLL_EVENT_IC ? "SSL_POLL_EVENT_IC " : "",   \
+        (_revents_) & SSL_POLL_EVENT_ISB ? "SSL_POLL_EVENT_ISB " : "", \
+        (_revents_) & SSL_POLL_EVENT_ISU ? "SSL_POLL_EVENT_ISU " : "", \
+        (_revents_) & SSL_POLL_EVENT_OSB ? "SSL_POLL_EVENT_OSB " : "", \
+        (_revents_) & SSL_POLL_EVENT_OSU ? "SSL_POLL_EVENT_OSU " : ""
+
+/*
+ * verify SSL_poll() signals SSL_POLL_EVENT_EC event
+ * to notify client it's time to call SSL_shutdown().
+ */
+DEF_FUNC(script_88_poll)
 {
+    int ok = 0, ret, expected_ret = 1;
+    static const struct timeval timeout = { 0 };
+    size_t result_count, processed;
+    SSL_POLL_ITEM items[2] = { 0 }, *item = items;
+    SSL *c_a, *c_conn;
+    size_t i;
+    uint64_t mode;
+    uint64_t expected_revents[2] = { 0 };
+
+    F_POP(mode);
+    REQUIRE_SSL_2(c_a, c_conn);
+
+    item->desc = SSL_as_poll_descriptor(c_a);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_conn);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    result_count = SIZE_MAX;
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        &timeout, 0,
+        &result_count);
+
+    switch (mode) {
+    case 0:
+        /* No incoming data yet */
+        expected_revents[0] = SSL_POLL_EVENT_W;
+        expected_revents[1] = SSL_POLL_EVENT_OS;
+        break;
+    case 1:
+        /* Expect more events */
+        expected_revents[0] = SSL_POLL_EVENT_R;
+        expected_revents[1] = SSL_POLL_EVENT_OS;
+        break;
+    default:
+        goto err;
+    }
+
+    ok = 1;
+
+    if (!TEST_int_eq(ret, expected_ret))
+        ok = 0;
+
+    /*
+     * Unlike script 85 which always expects all objects
+     * get signaled in single call to SSL_poll() we must
+     * assume here we can get notification for only one.
+     */
+    processed = 0;
+    for (i = 0; i < OSSL_NELEM(items); ++i) {
+        if (items[i].revents == 0)
+            continue;
+
+        processed++;
+        if (!TEST_uint64_t_eq(items[i].revents, expected_revents[i])) {
+            TEST_info("wanted: " POLL_FMT " got: " POLL_FMT,
+                POLL_PRINTA(expected_revents[i]),
+                POLL_PRINTA(items[i].revents));
+            TEST_error("mismatch at index %zu in poll results, mode %d",
+                i, (int)mode);
+            ok = 0;
+        }
+    }
+
+    if (!TEST_size_t_eq(processed, result_count))
+        ok = 0;
+
+err:
+    return ok;
+}
+
+/*
+ * Unlike the mock (whose T-server is serviced by a dedicated background
+ * thread independent of script stepping), radix has no such thread here: a
+ * connection is only ticked between interpreter ops (do_per_op). So rather
+ * than busy-looping over SSL_poll()/OSSL_sleep() within a single op (which
+ * would starve the peer of any ticks for the whole loop), retry one
+ * SSL_poll()/SSL_shutdown() attempt per invocation via F_SPIN_AGAIN() so the
+ * interpreter ticks every object (including the peer) between attempts, same
+ * as any other spin-driven op.
+ */
+DEF_FUNC(script_88_poll_conly)
+{
+    int ok = 0, ret;
+    static const struct timeval timeout = { 0 };
+    size_t result_count;
+    SSL_POLL_ITEM items[1] = { 0 };
+    SSL *c_conn;
+
+    REQUIRE_SSL(c_conn);
+
+    result_count = SIZE_MAX;
+
+    items[0].desc = SSL_as_poll_descriptor(c_conn);
+    items[0].events = UINT64_MAX;
+    items[0].revents = UINT64_MAX;
+
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        &timeout, 0,
+        &result_count);
+    if (!TEST_int_eq(ret, 1))
+        goto err;
+
+    if ((items[0].revents & SSL_POLL_EVENT_EC) == SSL_POLL_EVENT_EC)
+        SSL_shutdown(c_conn);
+
+    if ((items[0].revents & SSL_POLL_EVENT_ECD) != SSL_POLL_EVENT_ECD)
+        F_SPIN_AGAIN();
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_88, "Test SSL_poll (lite, non-blocking)")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+
+    /* Check nothing readable yet. */
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, C);
+    OP_PUSH_U64(0);
+    OP_FUNC(script_88_poll);
+
+    OP_WRITE(Ca, "flamingo", 8);
+    OP_CONCLUDE(Ca);
+
+    /* Send something that will make client sockets readable. */
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "flamingo", 8);
+    OP_WRITE(Sa, "flamingo", 8);
+    OP_CONCLUDE(Sa);
+
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, C);
+    OP_PUSH_U64(1);
+    OP_FUNC(script_88_poll);
+
+    OP_READ_EXPECT(Ca, "flamingo", 8);
+
+    /*
+     * client calls non-blocking SSL_shutdown() and gives
+     * server chance to run by calling sleep.
+     */
+    OP_SHUTDOWN_ONCE(C, 0, 0, NULL);
+    OP_SLEEP(100);
+
+    /*
+     * Here we call SSL_poll() and handle SSL_POLL_EVENT_EC
+     * and SSL_POLL_EVENT_ECD on connection object. Whenever
+     * _EC event comes we call SSL_shutdown() to keep connection
+     * draining. We keep calling SSL_poll()/SSL_shutdown() until
+     * SSL_poll() signals SSL_POLL_EVENT_ECD to let us know connection
+     * has dried out and con be closed.
+     */
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(script_88_poll_conly);
 }
 
 DEF_SCRIPT(script_89, "place holder for multistrem script_89")

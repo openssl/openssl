@@ -531,7 +531,7 @@ err:
     return ok;
 }
 
-DEF_FUNC(hf_shutdown_wait)
+static int hf_shutdown_impl(FUNC_CTX *fctx, int retry)
 {
     int ok = 0, ret;
     uint64_t flags;
@@ -551,12 +551,31 @@ DEF_FUNC(hf_shutdown_wait)
     if (!TEST_int_ge(ret, 0))
         goto err;
 
-    if (ret == 0)
+    if (retry && ret == 0)
         F_SPIN_AGAIN();
 
     ok = 1;
 err:
     return ok;
+}
+
+DEF_FUNC(hf_shutdown_wait)
+{
+    return hf_shutdown_impl(fctx, 1);
+}
+
+/*
+ * Like hf_shutdown_wait, but only calls SSL_shutdown_ex() once rather than
+ * retrying until it reports the shutdown fully complete. Use only when the
+ * script itself is testing an app-managed, poll-driven shutdown sequence
+ * (e.g. a single non-blocking SSL_shutdown_ex() call followed by the script
+ * manually polling and re-driving shutdown) — hf_shutdown_wait's retry loop
+ * would otherwise drive the shutdown to completion here and there, silently
+ * bypassing the very sequence under test.
+ */
+DEF_FUNC(hf_shutdown_once)
+{
+    return hf_shutdown_impl(fctx, 0);
 }
 
 DEF_FUNC(hf_conclude)
@@ -2106,6 +2125,13 @@ err:
         OP_PUSH_U64(error_code),                          \
         OP_PUSH_PZ(reason),                               \
         OP_FUNC(hf_shutdown_wait))
+
+#define OP_SHUTDOWN_ONCE(name, flags, error_code, reason) \
+    (OP_SELECT_SSL(0, name),                              \
+        OP_PUSH_U64(flags),                               \
+        OP_PUSH_U64(error_code),                          \
+        OP_PUSH_PZ(reason),                               \
+        OP_FUNC(hf_shutdown_once))
 
 #define OP_EXPECT_FIN(name)  \
     (OP_SELECT_SSL(0, name), \
