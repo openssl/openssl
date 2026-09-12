@@ -99,7 +99,7 @@ foreach (sort keys %stlibname) {
     unless (disabled('shared')) {
         indir $bldtop => sub {
             my $mkdefpath = srctop_file("util", "mkdef.pl");
-            my $def_path = srctop_file("util", "lib$_.num");
+            my $def_path = bldtop_file("util", "lib$_.num");
             my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_ --OS linux 2> $null_device";
             @def_lines = map { s|\R$||; $_ } `$def_cmd`;
             if ($? != 0) {
