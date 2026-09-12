@@ -207,7 +207,8 @@ The caller is responsible for freeing the BIO pointer obtained.
 
 OSSL_HTTP_get() uses HTTP GET to obtain data from I<bio> if non-NULL,
 else from the server contained in the I<url>, and returns it as a BIO.
-It supports redirection via HTTP status code 301 or 302.  It is meant for
+It supports redirection via HTTP status code 301 or 302.
+Redirection from HTTPS to HTTP is not allowed.  It is meant for
 transfers with a single round trip, so does not support persistent connections.
 If I<bio> is non-NULL, any host and port components in the I<url> are not used
 for connecting but the hostname is used, as usual, for the C<Host> header.
