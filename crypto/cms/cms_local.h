@@ -441,7 +441,7 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms);
 const CMS_CTX *ossl_cms_get0_cmsctx(const CMS_ContentInfo *cms);
 OSSL_LIB_CTX *ossl_cms_ctx_get0_libctx(const CMS_CTX *ctx);
 const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx);
-void ossl_cms_resolve_libctx(CMS_ContentInfo *ci);
+void ossl_cms_infos_set_cmsctx(CMS_ContentInfo *ci);
 
 CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
