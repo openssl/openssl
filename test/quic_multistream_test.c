@@ -2682,11 +2682,6 @@ static const struct script_op script_91[] = {
     OP_END
 };
 
-static int modify_window_con(struct helper *h, struct helper_local *hl)
-{
-    return modify_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWCON);
-}
-
 static int check_window_con(struct helper *h, struct helper_local *hl)
 {
     return check_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWCON);
@@ -2699,14 +2694,7 @@ static int cannot_change_window_con(struct helper *h, struct helper_local *hl)
 
 /* 92. Connection window configuration */
 static const struct script_op script_92[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_CHECK(modify_window_con, 800000),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024),
-    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_REQUEST, 800000),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };

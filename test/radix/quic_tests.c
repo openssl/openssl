@@ -5169,8 +5169,23 @@ DEF_SCRIPT(script_91, "No late changes to max udp payload size")
         SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
 }
 
-DEF_SCRIPT(script_92, "place holder for multistrem script_92")
+/* 92. Connection window configuration */
+DEF_SCRIPT(script_92, "Connection window configuration")
 {
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON, 800000);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 800000);
 }
 
 DEF_SCRIPT(script_93, "place holder for multistrem script_93")
