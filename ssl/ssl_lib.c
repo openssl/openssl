@@ -7497,9 +7497,32 @@ int ssl_log_secret(SSL_CONNECTION *sc,
     const uint8_t *secret,
     size_t secret_len)
 {
+    const uint8_t *client_random = sc->s3.client_random;
+
+    /*
+     * If the client attempted ECH, secrets are logged against the inner
+     * ClientHello random. CLIENT_EARLY_LABEL and EARLY_EXPORTER_SECRET_LABEL
+     * are special-cased because they are logged before the server's
+     * acceptance of ECH is known, but are always derived from the inner
+     * ClientHello (see tls13_change_cipher_state()), so they use the inner
+     * random regardless of ech.success. On rejection the early secrets
+     * therefore carry the inner random while later ones carry the outer:
+     * each line is tagged with the random of the ClientHello its secret
+     * was derived from, and since a rejecting server never derives the
+     * early secrets, both peers still log identical material for every label
+     * they both log.
+     */
+#ifndef OPENSSL_NO_ECH
+    if (!sc->server && sc->ext.ech.attempted == 1
+        && (sc->ext.ech.success == 1
+            || strcmp(label, CLIENT_EARLY_LABEL) == 0
+            || strcmp(label, EARLY_EXPORTER_SECRET_LABEL) == 0))
+        client_random = sc->ext.ech.client_random;
+#endif
+
     return nss_keylog_int(label,
         sc,
-        sc->s3.client_random,
+        client_random,
         SSL3_RANDOM_SIZE,
         secret,
         secret_len);
