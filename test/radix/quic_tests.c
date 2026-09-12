@@ -4235,8 +4235,23 @@ DEF_SCRIPT(script_76, "Test peer-initiated shutdown wait")
     OP_EXPECT_CONN_CLOSE_INFO(C, 42, 1, 1);
 }
 
-DEF_SCRIPT(script_77, "place holder for multistrem script_77")
+DEF_SCRIPT(script_77, "Ensure default stream popping operates correctly")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_ACCEPT, 0);
+
+    OP_NEW_STREAM(S, Sa, 0);
+    OP_WRITE(Sa, "Strawberry", 10);
+
+    OP_READ_EXPECT(C, "Strawberry", 10);
+
+    OP_NEW_STREAM(S, Sb, 0);
+    OP_WRITE(Sb, "xyz", 3);
+
+    OP_ACCEPT_STREAM_WAIT(C, Cb, 0);
+    OP_READ_EXPECT(Cb, "xyz", 3);
 }
 
 DEF_SCRIPT(script_78, "place holder for multistrem script_78")
