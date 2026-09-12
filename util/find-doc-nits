@@ -960,13 +960,15 @@ my @history_maybe_macro_functions;
 my %macros_maybe_undocumented;
 
 # Parse libcrypto.num, etc., and return sorted list of what's there.
-sub loadnum ($;$) {
+sub loadnum ($;$$) {
     my $file = shift;
     my $type = shift;
+    my $root = shift // $config{sourcedir};
     my @symbols;
+    my $path = catfile($root, $file);
 
-    open my $IN, '<', catfile($config{sourcedir}, $file)
-        or die "Can't open $file, $!, stopped";
+    open my $IN, '<', $path
+        or die "Can't open $path, $!, stopped";
 
     while ( <$IN> ) {
         next if /^#/;
@@ -1468,8 +1470,8 @@ if ( $opt_c ) {
 }
 
 # Populate %state
-loadnum('util/libcrypto.num', 'crypto');
-loadnum('util/libssl.num', 'ssl');
+loadnum('util/libcrypto.num', 'crypto', $config{builddir});
+loadnum('util/libssl.num', 'ssl', $config{builddir});
 loadnum('util/other.syms', 'other');
 loadnum('util/other-internal.syms');
 if ( !$opt_u ) {

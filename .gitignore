@@ -434,6 +434,8 @@ providers/implementations/rands/test_rng.inc
 
 # Misc auto generated files
 /doc/man7/openssl_user_macros.pod
+/util/libcrypto.num
+/util/libssl.num
 /util/shlib_wrap.sh
 /util/wrap.pl
 /tags
