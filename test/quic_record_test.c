@@ -3914,6 +3914,49 @@ err:
     return testresult;
 }
 
+static int test_qrx_rxe_limit(void)
+{
+    int testresult = 0;
+    struct rx_state s = { 0 };
+    OSSL_QRX_PKT *pkt = NULL;
+
+    s.args.short_conn_id_len = 0;
+    s.args.max_rxe = 1;
+
+    if (!TEST_true(rx_state_ensure(&s)))
+        goto err;
+
+    s.rx_dcid = empty_conn_id;
+
+    /* Provide both secrets so the second coalesced packet would otherwise decode. */
+    if (!TEST_true(ossl_quic_provide_initial_secret(NULL, NULL,
+            &rx_script_5_c2s_init_dcid, 0, s.qrx, NULL))
+        || !TEST_true(ossl_qrx_provide_secret(s.qrx, QUIC_ENC_LEVEL_HANDSHAKE,
+            QRL_SUITE_AES128GCM, NULL, rx_script_5_handshake_secret,
+            sizeof(rx_script_5_handshake_secret))))
+        goto err;
+
+    if (!TEST_true(ossl_quic_demux_inject(s.demux, rx_script_5_in,
+            sizeof(rx_script_5_in), NULL, NULL)))
+        goto err;
+
+    /* First packet fits under the cap; the rest of the datagram is dropped. */
+    if (!TEST_true(ossl_qrx_read_pkt(s.qrx, &pkt))
+        || !TEST_ptr(pkt))
+        goto err;
+    ossl_qrx_pkt_release(pkt);
+    pkt = NULL;
+
+    if (!TEST_false(ossl_qrx_read_pkt(s.qrx, &pkt)))
+        goto err;
+
+    testresult = 1;
+err:
+    ossl_qrx_pkt_release(pkt);
+    rx_state_teardown(&s);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rx_script, OSSL_NELEM(rx_scripts));
@@ -3929,5 +3972,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_wire_pkt_hdr, NUM_WIRE_PKT_HDR_TESTS + 1);
     ADD_ALL_TESTS(test_tx_script, OSSL_NELEM(tx_scripts));
     ADD_MFAIL_NO_CHECK_TEST(test_qrx_multipkt_alloc_failure);
+    ADD_TEST(test_qrx_rxe_limit);
     return 1;
 }

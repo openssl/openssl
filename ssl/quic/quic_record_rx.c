@@ -78,6 +78,9 @@ struct ossl_qrx_st {
      */
     RXE_LIST rx_pending;
 
+    size_t num_rxe;
+    size_t max_rxe;
+
     /* Largest PN we have received and processed in a given PN space. */
     QUIC_PN largest_pn[QUIC_PN_SPACE_NUM];
 
@@ -161,6 +164,7 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
     qrx->init_key_phase_bit = args->init_key_phase_bit;
     qrx->max_deferred = args->max_deferred;
     qrx->refcount = 1;
+    qrx->max_rxe = args->max_rxe;
     return qrx;
 }
 
@@ -260,8 +264,10 @@ void ossl_qrx_inject_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
      * to get pkt. Such packet has refcount 1.
      */
     ossl_qrx_pkt_orphan(pkt);
-    if (ossl_assert(rxe->refcount == 0))
+    if (ossl_assert(rxe->refcount == 0)) {
+        ++qrx->num_rxe;
         ossl_list_rxe_insert_tail(&qrx->rx_pending, rxe);
+    }
 }
 
 /*
@@ -523,6 +529,9 @@ static RXE *qrx_pop_pending_rxe(OSSL_QRX *qrx)
     return rxe;
 }
 
+/* Above the ~13k packets the default 15MiB connection window can pin. */
+#define QRX_MAX_RXE 16384
+
 /* Allocate a new RXE. */
 static RXE *qrx_alloc_rxe(size_t alloc_len)
 {
@@ -552,14 +561,19 @@ static RXE *qrx_alloc_rxe(size_t alloc_len)
 static RXE *qrx_ensure_free_rxe(OSSL_QRX *qrx, size_t alloc_len)
 {
     RXE *rxe;
+    size_t max_rxe = qrx->max_rxe != 0 ? qrx->max_rxe : QRX_MAX_RXE;
 
     if (ossl_list_rxe_head(&qrx->rx_free) != NULL)
         return ossl_list_rxe_head(&qrx->rx_free);
+
+    if (qrx->num_rxe >= max_rxe)
+        return NULL;
 
     rxe = qrx_alloc_rxe(alloc_len);
     if (rxe == NULL)
         return NULL;
 
+    ++qrx->num_rxe;
     ossl_list_rxe_insert_tail(&qrx->rx_free, rxe);
     return rxe;
 }
