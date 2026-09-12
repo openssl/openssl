@@ -2664,16 +2664,6 @@ static const struct script_op script_87[] = {
     OP_END
 };
 
-static int check_udp_payload_size_max(struct helper *h, struct helper_local *hl)
-{
-    return check_static_tp(h, hl, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX);
-}
-
-static int cannot_change_udp_payload_size_max(struct helper *h, struct helper_local *hl)
-{
-    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX);
-}
-
 /* 89. Max udp payload size configuration */
 static const struct script_op script_89[] = {
     /* test moved to test/radix/quic_tests.c */
@@ -2688,16 +2678,7 @@ static const struct script_op script_90[] = {
 
 /* 91. No late changes to max udp payload size */
 static const struct script_op script_91[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(cannot_change_udp_payload_size_max, QUIC_MIN_INITIAL_DGRAM_LEN,
-        QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE),
-    OP_CHECK2(check_udp_payload_size_max,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
