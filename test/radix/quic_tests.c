@@ -5143,8 +5143,17 @@ DEF_SCRIPT(script_89, "Max udp payload size configuration")
         SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE);
 }
 
-DEF_SCRIPT(script_90, "place holder for multistrem script_90")
+/* 90. Negotiated default max udp payload size if not configured */
+DEF_SCRIPT(script_90, "Negotiated default max udp payload size if not configured")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
 }
 
 DEF_SCRIPT(script_91, "place holder for multistrem script_91")

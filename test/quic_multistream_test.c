@@ -2682,16 +2682,7 @@ static const struct script_op script_89[] = {
 
 /* 90. Negotiated default max udp payload size if not configured */
 static const struct script_op script_90[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_udp_payload_size_max,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
-    OP_CHECK2(check_udp_payload_size_max,
-        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
