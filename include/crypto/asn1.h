@@ -12,9 +12,22 @@
 #pragma once
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/core_dispatch.h> /* OSSL_FUNC_keymgmt_import() */
 
 /* Internal ASN1 structures and functions: not for application use */
+
+/**
+ * @def ASN1_SEQUENCE_ref_nolock(tname, cb)
+ * ASN1_SEQUENCE_ref() from <openssl/asn1t.h> for a structure with a
+ * references member but no lock member. The ASN1_AUX ref_lock offset is -1,
+ * and ossl_asn1_do_lock() allocates and frees no lock for it.
+ * @param tname the structure's type name
+ * @param cb the ASN1_aux_cb callback, or NULL
+ */
+#define ASN1_SEQUENCE_ref_nolock(tname, cb)                                                                         \
+    static const ASN1_AUX tname##_aux = { NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), -1, cb, 0, NULL }; \
+    ASN1_SEQUENCE(tname)
 
 /* ASN1 public key method structure */
 
@@ -181,10 +194,83 @@ X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 void ossl_asn1_bit_string_clear_unused_bits(ASN1_STRING *str);
 void ossl_asn1_bit_string_set_unused_bits(ASN1_STRING *str, unsigned int num);
 
+/**
+ * @brief Decode an item, taking care of IMPLICIT tagging.
+ * With borrow set, the input bytes outlive the decoded object and the
+ * decoded strings point into them (ASN1_STRING_FLAG_DATA_NOT_OWNED); the
+ * caller guarantees the lifetime. With borrow clear every string is a copy.
+ * @param pval the value to decode into, allocated if *pval is NULL
+ * @param in the input; advanced past what was decoded
+ * @param len the number of bytes available at *in
+ * @param it the item to decode
+ * @param tag the IMPLICIT tag, or -1
+ * @param aclass the tag class
+ * @param opt nonzero if the item is OPTIONAL
+ * @param ctx the tag/length cache
+ * @param depth the nesting depth reached so far
+ * @param borrow nonzero to point decoded strings into the input
+ * @param libctx the library context for the decode
+ * @param propq the property query for the decode
+ * @returns 1 on success, -1 if an OPTIONAL item is absent, 0 on error
+ */
 int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass,
-    char opt, ASN1_TLC *ctx, int depth,
+    char opt, ASN1_TLC *ctx, int depth, int borrow,
     OSSL_LIB_CTX *libctx, const char *propq);
+
+/**
+ * @brief ASN1_item_d2i_ex() for input that outlives the decoded object.
+ * The decoded strings point into the input; see asn1_item_embed_d2i(). So
+ * does a saved ASN1_ENCODING, which the caller must clear before the value
+ * is freed.
+ * @param pval the value to decode into, allocated if *pval is NULL
+ * @param in the input; advanced past what was decoded
+ * @param len the number of bytes available at *in
+ * @param it the item to decode
+ * @param libctx the library context for the decode
+ * @param propq the property query for the decode
+ * @returns the decoded value, or NULL on error
+ */
+ASN1_VALUE *ossl_asn1_item_d2i_borrow(ASN1_VALUE **pval,
+    const unsigned char **in, long len, const ASN1_ITEM *it,
+    OSSL_LIB_CTX *libctx, const char *propq);
+
+/*
+ * An ASN1_ITEM of type ASN1_ITYPE_EXTERN_INTERNAL is an EXTERN item whose
+ * funcs is an OSSL_ASN1_EXTERN_FUNCS, which carries a decode function that
+ * receives the borrow flag and the nesting depth of the enclosing decode.
+ * The ASN.1 template code handles it as ASN1_ITYPE_EXTERN in every other
+ * operation. Nothing outside crypto/asn1 dispatches on itype.
+ */
+#define ASN1_ITYPE_EXTERN_INTERNAL 0x7
+
+/**
+ * @brief The decode function of an ASN1_ITYPE_EXTERN_INTERNAL item.
+ * The parameters are those of asn1_item_embed_d2i().
+ */
+typedef int ossl_asn1_ex_d2i_borrow_fn(ASN1_VALUE **pval,
+    const unsigned char **in, long len, const ASN1_ITEM *it, int tag,
+    int aclass, char opt, ASN1_TLC *ctx, int depth, int borrow,
+    OSSL_LIB_CTX *libctx, const char *propq);
+
+/**
+ * @struct ossl_asn1_extern_funcs_st
+ * @brief The funcs of an ASN1_ITYPE_EXTERN_INTERNAL item.
+ */
+typedef struct ossl_asn1_extern_funcs_st {
+    ASN1_EXTERN_FUNCS ef; /**< The public functions, used for every operation but decode */
+    ossl_asn1_ex_d2i_borrow_fn *ex_d2i_borrow; /**< The decode function */
+} OSSL_ASN1_EXTERN_FUNCS;
+
+/**
+ * @brief Point an ASN1_STRING at data it does not own.
+ * The previous data is freed if the string owned it.
+ * @param str the string
+ * @param data the data, which outlives str
+ * @param len the number of bytes at data
+ */
+void ossl_asn1_string_set0_not_owned(ASN1_STRING *str, const unsigned char *data,
+    int len);
 
 ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
 

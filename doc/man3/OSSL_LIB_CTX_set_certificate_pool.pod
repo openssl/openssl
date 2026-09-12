@@ -1,0 +1,50 @@
+=pod
+
+=head1 NAME
+
+OSSL_LIB_CTX_set_certificate_pool
+- Enable or disable sharing the bytes of certificates
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ int OSSL_LIB_CTX_set_certificate_pool(OSSL_LIB_CTX *ctx, int enable);
+
+=head1 DESCRIPTION
+
+The certificates the library holds on an application's behalf, such as
+the chain of a TLS peer and the contents of an B<X509_STORE>, hold their
+bytes in a pool. Certificates with the same encoding share one copy of the
+encoding.
+
+OSSL_LIB_CTX_set_certificate_pool() decides whether certificates decoded
+through I<ctx> use the pool: they do if I<enable> is nonzero and do not if
+I<enable> is zero. Pooling is enabled when a library context is created.
+Disabling it affects the certificates decoded afterwards; certificates already
+in the pool stay in it.
+
+I<ctx> may be NULL for the default library context.
+
+=head1 RETURN VALUES
+
+OSSL_LIB_CTX_set_certificate_pool() returns 1 on success and 0 on error.
+
+=head1 SEE ALSO
+
+L<OSSL_LIB_CTX(3)>, L<x509(7)>
+
+=head1 HISTORY
+
+The function described on this page was added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

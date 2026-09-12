@@ -11,6 +11,7 @@
 
 #include <openssl/safestack.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
 
 #include "internal/refcount.h"
 #include "internal/hashtable.h"
@@ -68,11 +69,38 @@ struct x509_attributes_st {
     STACK_OF(ASN1_TYPE) *set;
 };
 
+/**
+ * @struct X509_extension_st
+ * @brief An X.509 extension: its OID, criticality and DER value, together
+ * with the value decoded per the X509V3_EXT_METHOD registered for the OID
+ * and the outcome of that decode.
+ * The decoded value and outcome are a function of the value bytes and of
+ * the method table at the time the value was decoded or set; they are
+ * written only when value is written.
+ */
 struct X509_extension_st {
     ASN1_OBJECT *object;
     ASN1_BOOLEAN critical;
     ASN1_OCTET_STRING value;
+    const X509V3_EXT_METHOD *method; /**< Method for object, NULL if none is registered */
+    void *decoded; /**< value decoded per method, NULL unless outcome is X509_EXT_VALUE_DECODED */
+    uint8_t outcome; /**< X509_EXT_VALUE_* outcome of decoding value; carries critical when there is no decoded value */
 };
+
+/**
+ * @brief Decode the value of an extension per the method registered for
+ * its OID and store the result in ex->decoded and ex->outcome.
+ * Any previous decoded value is freed. The outcome is X509_EXT_VALUE_UNKNOWN
+ * or X509_EXT_VALUE_UNKNOWN_CRITICAL when no method is registered for the
+ * OID, X509_EXT_VALUE_INVALID or X509_EXT_VALUE_INVALID_CRITICAL when the
+ * value does not decode, X509_EXT_VALUE_MALLOC_FAILED when the decode ran
+ * out of memory and X509_EXT_VALUE_ERROR when it failed without reporting
+ * why. The first four are successes of this function; the last two are
+ * failures.
+ * @param ex the extension whose value is decoded
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_x509_extension_decode_value(X509_EXTENSION *ex);
 
 /*
  * Method to handle CRL access. In general a CRL could be very large (several
@@ -189,6 +217,86 @@ DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 int ossl_ignored_x509_extension(const X509_EXTENSION *ex, int flags);
 int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject);
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
+/**
+ * @brief Decode and prepare the CRL distribution points of a certificate.
+ * Decodes the cRLDistributionPoints extension of x and completes each
+ * DIST_POINT with its reason mask and its full distribution point name, as
+ * the CRL matching code expects them. The caller frees *pcrldp with
+ * sk_DIST_POINT_pop_free(). *pcrldp is NULL when the extension is absent.
+ * @param x the certificate whose extension is decoded
+ * @param pcrldp receives the decoded distribution points, or NULL
+ * @returns 1 on success, 0 if the extension is invalid, -1 on an internal
+ *          error such as a memory allocation failure
+ */
+int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp);
+/**
+ * @brief Decode one extension of a certificate.
+ * An absent extension is a success with *pval set to NULL. The caller frees
+ * *pval with the free function of the extension's type.
+ * @param x the certificate whose extension is decoded
+ * @param nid the NID of the extension
+ * @param pval receives the decoded extension, or NULL if it is absent
+ * @returns 1 on success, 0 if the extension is present more than once or
+ *          cannot be decoded
+ */
+int ossl_x509_decode_ext(const X509 *x, int nid, void **pval);
+/**
+ * @brief Get a borrowed pointer to the decoded value of one extension of a
+ * certificate.
+ * An absent extension is a success with *value set to NULL.
+ * @param x the certificate
+ * @param nid the NID of the extension
+ * @param value receives the decoded value, or NULL if the extension is absent
+ * @returns 1 on success, 0 if the extension is present more than once or
+ *          its value does not decode
+ */
+int ossl_x509_get0_ext_value(const X509 *x, int nid, const void **value);
+/**
+ * @brief NAME_CONSTRAINTS_check() for a borrowed name constraints value.
+ * @param x the certificate whose names are checked
+ * @param nc the name constraints to check them against
+ * @returns X509_V_OK or an X509_V_ERR_* code, as NAME_CONSTRAINTS_check()
+ */
+int ossl_x509_name_constraints_check(const X509 *x, const NAME_CONSTRAINTS *nc);
+/**
+ * @brief NAME_CONSTRAINTS_check_CN() for a borrowed name constraints value.
+ * @param x the certificate whose commonName is checked
+ * @param nc the name constraints to check it against
+ * @returns X509_V_OK or an X509_V_ERR_* code, as NAME_CONSTRAINTS_check_CN()
+ */
+int ossl_x509_name_constraints_check_CN(const X509 *x,
+    const NAME_CONSTRAINTS *nc);
+/**
+ * @brief Discard the cached extension data of a certificate.
+ * Clears the derived extension data and what X509_set_proxy_flag() and
+ * X509_set_proxy_pathlen() set, leaving the certificate unfinalized.
+ * @param x the certificate whose cached extension data is discarded
+ */
+void ossl_x509_reset_ext_cache(X509 *x);
+/**
+ * @brief Check that a certificate may be modified.
+ * A certificate decoded by ossl_x509_parse_from_buffer() is immutable.
+ * @param x the certificate
+ * @returns 1 if it may be modified, 0 with X509_R_IMMUTABLE_CERTIFICATE raised
+ *          if not
+ */
+int ossl_x509_check_mutable(const X509 *x);
+/**
+ * @brief Mark a certificate modified: the one entry point for its setters.
+ * Discards the cached extension data as ossl_x509_reset_ext_cache() and marks
+ * the saved TBSCertificate encoding stale, leaving the certificate unfinalized.
+ * @param x the certificate being modified
+ * @returns 1, or 0 with X509_R_IMMUTABLE_CERTIFICATE raised if the certificate
+ *          may not be modified
+ */
+int ossl_x509_set_modified(X509 *x);
+/**
+ * @brief Finalize a certificate: build its cached extension data.
+ * Called when a certificate is decoded or signed. An invalid extension sets
+ * EXFLAG_INVALID; the error is raised when the cache is used.
+ * @param x the certificate to finalize; the caller owns it
+ */
+void ossl_x509_finalize(X509 *x);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);

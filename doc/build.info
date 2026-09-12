@@ -1787,6 +1787,10 @@ DEPEND[html/man3/OSSL_LIB_CTX.html]=man3/OSSL_LIB_CTX.pod
 GENERATE[html/man3/OSSL_LIB_CTX.html]=man3/OSSL_LIB_CTX.pod
 DEPEND[man/man3/OSSL_LIB_CTX.3]=man3/OSSL_LIB_CTX.pod
 GENERATE[man/man3/OSSL_LIB_CTX.3]=man3/OSSL_LIB_CTX.pod
+DEPEND[html/man3/OSSL_LIB_CTX_set_certificate_pool.html]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
+GENERATE[html/man3/OSSL_LIB_CTX_set_certificate_pool.html]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
+DEPEND[man/man3/OSSL_LIB_CTX_set_certificate_pool.3]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
+GENERATE[man/man3/OSSL_LIB_CTX_set_certificate_pool.3]=man3/OSSL_LIB_CTX_set_certificate_pool.pod
 DEPEND[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 GENERATE[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 DEPEND[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
@@ -3131,6 +3135,10 @@ DEPEND[html/man3/X509_new.html]=man3/X509_new.pod
 GENERATE[html/man3/X509_new.html]=man3/X509_new.pod
 DEPEND[man/man3/X509_new.3]=man3/X509_new.pod
 GENERATE[man/man3/X509_new.3]=man3/X509_new.pod
+DEPEND[html/man3/X509_parse_from_bytes.html]=man3/X509_parse_from_bytes.pod
+GENERATE[html/man3/X509_parse_from_bytes.html]=man3/X509_parse_from_bytes.pod
+DEPEND[man/man3/X509_parse_from_bytes.3]=man3/X509_parse_from_bytes.pod
+GENERATE[man/man3/X509_parse_from_bytes.3]=man3/X509_parse_from_bytes.pod
 DEPEND[html/man3/X509_sign.html]=man3/X509_sign.pod
 GENERATE[html/man3/X509_sign.html]=man3/X509_sign.pod
 DEPEND[man/man3/X509_sign.3]=man3/X509_sign.pod
@@ -3518,6 +3526,7 @@ html/man3/OSSL_IETF_ATTR_SYNTAX_print.html \
 html/man3/OSSL_INDICATOR_set_callback.html \
 html/man3/OSSL_ITEM.html \
 html/man3/OSSL_LIB_CTX.html \
+html/man3/OSSL_LIB_CTX_set_certificate_pool.html \
 html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html \
 html/man3/OSSL_PARAM.html \
 html/man3/OSSL_PARAM_BLD.html \
@@ -3854,6 +3863,7 @@ html/man3/X509_get_subject_name.html \
 html/man3/X509_get_version.html \
 html/man3/X509_load_http.html \
 html/man3/X509_new.html \
+html/man3/X509_parse_from_bytes.html \
 html/man3/X509_sign.html \
 html/man3/X509_verify.html \
 html/man3/X509_verify_cert.html \
@@ -4198,6 +4208,7 @@ man/man3/OSSL_IETF_ATTR_SYNTAX_print.3 \
 man/man3/OSSL_INDICATOR_set_callback.3 \
 man/man3/OSSL_ITEM.3 \
 man/man3/OSSL_LIB_CTX.3 \
+man/man3/OSSL_LIB_CTX_set_certificate_pool.3 \
 man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3 \
 man/man3/OSSL_PARAM.3 \
 man/man3/OSSL_PARAM_BLD.3 \
@@ -4534,6 +4545,7 @@ man/man3/X509_get_subject_name.3 \
 man/man3/X509_get_version.3 \
 man/man3/X509_load_http.3 \
 man/man3/X509_new.3 \
+man/man3/X509_parse_from_bytes.3 \
 man/man3/X509_sign.3 \
 man/man3/X509_verify.3 \
 man/man3/X509_verify_cert.3 \

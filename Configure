@@ -2058,8 +2058,11 @@ foreach my $what (sort keys %disabled) {
             }
         }
 
+        # siphash is used internally by libcrypto (X509 fingerprints), so
+        # no-siphash only removes the provider algorithm.
         $skipdir{"crypto/$skipdir"} = $what
-            unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http';
+            unless $what eq 'async' || $what eq 'err' || $what eq 'dso'
+                || $what eq 'http' || $what eq 'siphash';
     }
 }
 

@@ -381,6 +381,17 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
     str->length = len < 0 ? 0 : len;
 }
 
+void ossl_asn1_string_set0_not_owned(ASN1_STRING *str, const unsigned char *data,
+    int len)
+{
+    if (!(str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED))
+        OPENSSL_clear_free(str->data, str->length);
+    /* The data is not modified through str while it is not owned */
+    str->data = (unsigned char *)data;
+    str->length = len < 0 ? 0 : len;
+    str->flags |= ASN1_STRING_FLAG_DATA_NOT_OWNED;
+}
+
 int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
 {
     if (str->type == V_ASN1_BIT_STRING) {

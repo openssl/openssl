@@ -133,6 +133,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         break;
 
     case ASN1_ITYPE_EXTERN:
+    case ASN1_ITYPE_EXTERN_INTERNAL:
         /* If new style i2d it does all the work */
         ef = it->funcs;
         return ef->asn1_ex_i2d(pval, out, it, tag, aclass);
