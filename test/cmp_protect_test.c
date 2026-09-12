@@ -187,13 +187,11 @@ static int test_cmp_calc_protection_pbmac(void)
 }
 
 /*
- * Regression test for the ossl_cmp_calc_protection() protectionAlg
- * type-confusion DoS: a PKIMessage whose protectionAlg has the
- * id-PasswordBasedMAC OID but carries a BOOLEAN parameter instead of the
- * expected PBMParameter SEQUENCE. X509_ALGOR_get0() then returns the boolean's
- * union member (0xff) via ppval; the unpatched code took the non-NULL ppval as
- * a valid ASN1_STRING * and dereferenced 0xff, crashing with a near-NULL
- * access.  The fixed code must reject the malformed parameter and return NULL.
+ * ossl_cmp_calc_protection() must reject a PKIMessage whose protectionAlg has
+ * the id-PasswordBasedMAC OID but carries a BOOLEAN parameter in place of the
+ * PBMParameter SEQUENCE. For such a parameter X509_ALGOR_get0() returns the
+ * boolean's union member (0xff) via ppval, which is not an ASN1_STRING *
+ * (CVE-2026-63076).
  */
 static int test_cmp_calc_protection_pbmac_bad_alg_param(void)
 {

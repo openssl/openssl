@@ -348,10 +348,9 @@ static int provider_side_drbg_instantiate(EVP_RAND_CTX *rctx)
 }
 
 /*
- * Regression test for #25941: with strict seeding the configured seed
- * source must be instantiated on demand and used when a provider
- * requests seeding material before anything else created it, instead of
- * being silently replaced by the operating system entropy sources.
+ * With strict seeding the configured seed source must be instantiated on
+ * demand and used when a provider requests seeding material before
+ * anything else created it (#25941).
  */
 static int test_rand_seed_source_strict(void)
 {

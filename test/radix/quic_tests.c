@@ -484,16 +484,11 @@ DEF_FUNC(check_poll_abort_blocking)
 
     /*
      * C0 and Cb0 are streams of two independent client connections, and so
-     * belong to two independent QUIC_REACTORs. The bug being tested for does
-     * not actually require this: it reproduces just as well if all items
-     * share one reactor. What needs two reactors is poll_abort_test_step_cb()
-     * below, which forces Cb0 ready by ticking its reactor directly, on this
-     * thread, while C0's blocking section is still open. Doing that on C0's
-     * own (shared) reactor would deadlock: ossl_quic_reactor_tick() would see
-     * a nonzero cur_blocking_waiters left over from C0 and call
-     * rtor_notify_other_threads(), which waits on a condvar for some *other*
-     * thread to clear the notifier signal - a thread that doesn't exist here.
-     * Using Cb0's own, still-untouched reactor keeps that tick a no-op.
+     * belong to two independent QUIC_REACTORs. poll_abort_test_step_cb() below
+     * forces Cb0 ready by ticking its reactor directly, on this thread, while
+     * C0's blocking section is still open. Ticking a reactor with a nonzero
+     * cur_blocking_waiters calls rtor_notify_other_threads(), which waits for
+     * another thread to clear the notifier signal.
      */
     REQUIRE_SSL_4(C, C0, Cb0, Lb0);
 
@@ -809,7 +804,7 @@ DEF_FUNC(check_flood_stats)
     /*
      * The flood is delivered over a real socket and processed by the
      * connection's assist thread asynchronously, so give it a chance to
-     * catch up rather than failing on the first observation.
+     * catch up.
      */
     if (path_challenge_count < 16 || path_response_count < 1)
         F_SPIN_AGAIN();

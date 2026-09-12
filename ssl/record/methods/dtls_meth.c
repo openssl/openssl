@@ -327,9 +327,9 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
     }
 
     /*
-     * Take a copy of just this record's on-wire bytes (header + ciphertext)
-     * rather than the whole (much larger) read buffer. The live rl->rbuf is
-     * left untouched and continues to be used for subsequent reads.
+     * Take a copy of just this record's on-wire bytes (header + ciphertext).
+     * rl->rbuf is left untouched and continues to be used for subsequent
+     * reads.
      */
     rdata->packet_length = rl->packet_length;
     rdata->packet = OPENSSL_memdup(rl->packet, rl->packet_length);

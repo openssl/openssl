@@ -3755,15 +3755,9 @@ end:
 /*
  * Test DTLS 1.3 SSL Listener handshake message buffering.
  *
- * This test verifies that when a DTLS 1.3 SSL Listener sends handshake
- * messages, multiple records are buffered into a single datagram
- * rather than being sent as separate datagrams.
- *
- * Expected behavior with buffering:
- *   - At least one datagram contains multiple DTLS records
- *
- * Without buffering (the bug this tests for):
- *   - Each record would be in its own datagram
+ * When a DTLS 1.3 SSL Listener sends handshake messages, multiple records
+ * are buffered into a single datagram: at least one datagram must contain
+ * multiple DTLS records.
  */
 static int test_dtls13_listener_msg_buffering(void)
 {
@@ -4080,12 +4074,11 @@ static int big_ch_ext_add_cb(SSL *s, unsigned int ext_type,
 }
 
 /*
- * Helper to create a DTLS client on a *connected* UDP socket. Unlike the
- * BIO_dgram_set_peer() helpers above (which use an unconnected socket and so
- * cause DTLS to fragment the ClientHello into sub-MTU datagrams), a connected
- * socket lets DTLS discover the large loopback path MTU and send the whole
- * ClientHello in a single datagram - which is what exercises the listener demux
- * receive-buffer sizing.
+ * Helper to create a DTLS client on a connected UDP socket. A connected socket
+ * lets DTLS discover the large loopback path MTU and send the whole
+ * ClientHello in a single datagram, which exercises the listener demux
+ * receive-buffer sizing; on an unconnected socket DTLS fragments it into
+ * sub-MTU datagrams.
  */
 static int create_dtls_client_connected(SSL_CTX *cctx,
     const BIO_ADDR *server_addr, SSL **clientssl, int *client_fd)
@@ -4902,48 +4895,19 @@ static int test_new_pending_cb_alternate(void)
  * A thread waiting in SSL_poll() for SSL_POLL_EVENT_IC is blocked on the
  * listener's network socket and on its notifier. Where another thread does the
  * demuxing, that socket does not necessarily become readable on the waiter's
- * behalf, so the notifier is what has to wake it.
+ * behalf, so the notifier is what wakes it. Signalling is conditional on a
+ * registered waiter, and the demux of a ClientHello and the push of the
+ * completed connection onto the accept queue are separate steps of a tick, so
+ * a waiter which registers between them is woken only by the push.
  *
- * Most of the time the bug this covers is masked. Every connection reaching
- * the accept queue got there because a datagram was demuxed into its receive
- * queue, and the packet handler has always signalled on that injection, so the
- * waiter is woken, ticks the listener itself during its readout, and finds the
- * connection. What is not covered by that is the window in which the injection
- * and the queue push straddle a waiter registering, because signalling is
- * conditional on there being a waiter at the time.
+ * The interleaving cannot be forced from outside the library, so this drives
+ * its essential part on one thread: pumping the demux directly performs the
+ * injection, the signal it raises is cleared, and the tick which follows can
+ * only signal by way of the queue push.
  *
- * The numbered steps below are that window - the interleaving of two threads
- * which the fix exists to handle. They are not what this test does, and are
- * given only so that what it does assert makes sense; see the end of this
- * comment for how it is actually checked.
- *
- *   1. Accept thread A polls the listener for SSL_POLL_EVENT_IC. Its readout
- *      ticks the listener, finds nothing, and it decides to block. It is not
- *      a registered waiter yet.
- *   2. Worker thread B polls one of its own connections, which also ticks the
- *      listener. The pump reads a client's final ClientHello and injects it
- *      into that pending connection's queue. There are no waiters, so nothing
- *      is signalled.
- *   3. A enters the blocking section. Its re-check runs without ticking, so it
- *      sees only the accept queue, which is still empty, and it blocks.
- *   4. B's tick reaches dtls_listener_drive_pending(), which completes the
- *      connection against the buffered ClientHello and pushes it onto the
- *      accept queue.
- *
- * Without a signal at step 4, A sleeps on with a validated connection sitting
- * ready, until some unrelated datagram makes the socket readable again. B
- * consumed the only one in flight, and the client is now waiting on the
- * server, so on a quiet listener that is until the client retransmits.
- *
- * That interleaving cannot be forced from outside the library, so rather than
- * reproducing the steps above, this drives their essential part by hand and on
- * one thread: pumping the demux directly performs step 2, the signal it raises
- * is then cleared, and the tick which follows can only signal by way of step 4.
- * Asserting that it did is therefore asserting that a queue push signals.
- *
- * signalled_notifier is protected by the listener mutex in the library, which
- * has to assume concurrent access. This test is single threaded throughout, so
- * it reads the field directly without holding the mutex.
+ * signalled_notifier is protected by the listener mutex in the library. This
+ * test is single threaded throughout, so it reads the field directly without
+ * holding the mutex.
  */
 static int test_dtls_notifier_signalled_on_accept_queue_push(void)
 {
@@ -5068,60 +5032,26 @@ end:
 /*
  * Test that a blocking SSL_poll() on a listener enters a blocking section.
  *
- * Unless it does, three things follow: the notifier is not in the poll set, so
- * it cannot wake this thread; cur_blocking_waiters is never incremented, and
- * since signalling is conditional on there being a waiter, no other thread
- * even attempts to signal; and there is no re-check after registering, so
- * readiness arising between the readout and the wait is lost.
+ * The blocking section puts the notifier in the poll set, registers this
+ * thread as a waiter so other threads signal it, and re-checks readiness after
+ * registering. Several threads poll the one shared socket; a datagram wakes all
+ * of them and one takes it, and that thread's tick can complete a pending
+ * connection and push it onto the accept queue. A thread watching the socket
+ * alone then sleeps with a connection on the queue.
  *
- * Polling the socket alone is not enough, though not because a wakeup can be
- * missed outright. poll() reports whatever is currently sitting in the socket
- * buffer and returns immediately if there is any, so a thread cannot miss a
- * datagram just by being outside poll() when it arrives. What it can miss is a
- * datagram another thread has already taken. With several threads polling the
- * one shared socket that happens constantly: an arriving datagram wakes all of
- * them, only one gets it, and the rest find nothing. Any of them can be the
- * one that takes it, because SSL_read() on a connection pumps the demux and
- * SSL_poll() on a connection ticks the whole listener.
+ * Entering a blocking section has no public observable. The last waiter out of
+ * a blocking section drains a raised notifier signal, so this raises one
+ * beforehand, polls briefly with nothing ready, and checks afterwards: drained
+ * means a blocking section was entered and left.
  *
- *   1. Accept thread A polls the listener for SSL_POLL_EVENT_IC. Its readout
- *      ticks the listener, finds nothing, and it decides to block.
- *   2. A client's final ClientHello lands on the shared socket.
- *   3. Worker thread B, polling one of its own connections, ticks the listener
- *      and is the one that takes the datagram. Its tick completes the pending
- *      connection and pushes it onto the accept queue. Signalling is attempted,
- *      but A never registered as a waiter, so nothing is signalled.
- *   4. A reaches its poll, watching the socket alone. B drained it, so it is
- *      empty, and A sleeps with a validated connection sitting on the accept
- *      queue.
+ * signalled_notifier is protected by the listener mutex in the library. This
+ * test is single threaded throughout, so it reads and writes the field
+ * directly without holding the mutex.
  *
- * A's readout, back at step 1, would have found that connection had it run
- * after step 3 rather than before it. Registering as a waiter and re-checking
- * is what removes the dependency on that ordering.
- *
- * Note that the signal added for the step 3 queue push is itself conditional on
- * a registered waiter, so it does nothing for a thread polling the listener
- * until that thread registers. The two fixes are complementary.
- *
- * None of that has a public observable, and this deliberately does not time
- * the wait. Instead it relies on the last waiter out of a blocking section
- * draining a raised notifier signal: raise one beforehand, poll briefly with
- * nothing ready, and check afterwards. Drained means a blocking section was
- * entered and left, since only a leave drains it and only an enter can be left;
- * still standing means neither happened.
- *
- * signalled_notifier is protected by the listener mutex in the library, which
- * has to assume concurrent access. This test is single threaded throughout, so
- * it reads and writes the field directly without holding the mutex.
- *
- * Note what this does not cover. That the notifier is in the poll set, and so
- * can actually deliver a wakeup, is not checked: with a signal raised the poll
- * returns at once if the notifier is being watched and sleeps out its timeout
- * if it is not, and only timing separates those. A longer timeout would not
- * help, because the first iteration's leave drains the notifier and the next
- * one sleeps out the remainder either way. The re-check after registering is
- * not covered either, since readiness arriving between the readout and the
- * registration cannot be produced from a single thread.
+ * Not covered: that the notifier in the poll set delivers a wakeup (only
+ * timing separates that from sleeping out the timeout), and the re-check
+ * after registering (readiness arriving between the readout and the
+ * registration cannot be produced from a single thread).
  */
 static int test_dtls_poll_listener_enters_blocking_section(void)
 {
@@ -5326,8 +5256,7 @@ static int test_dtls_poll_conn_honours_retransmit_timer(void)
 
     /*
      * Install the short timeout before the server sends anything, so that it
-     * is picked up when the retransmission timer is first started rather than
-     * only on a later expiry.
+     * is picked up when the retransmission timer is first started.
      */
     DTLS_set_timer_cb(serverssl, short_timer_cb);
 
@@ -5673,11 +5602,8 @@ end:
  * Test that a rejected SSL_set_blocking_mode() leaves the mode alone.
  *
  * Whether blocking can be supported depends on the listener's BIO, so a
- * request can be refused now and be perfectly deliverable later. The refusal
- * must therefore not record the mode it refused to set: the effect only becomes
- * visible once a BIO which can supply a poll descriptor is in place, at which
- * point the listener would be found blocking on the strength of a call which
- * failed.
+ * request refused before a BIO which can supply a poll descriptor is in place
+ * must not be recorded, or the listener is found blocking once one is.
  */
 static int test_dtls_blocking_mode_failed_set_is_inert(void)
 {
@@ -5806,18 +5732,12 @@ static const BIO_METHOD *bio_f_failing_send_filter(void)
 
 /*
  * Test that a write on a blocking listener connection waits for the socket and
- * sends again, rather than reporting that it needs to be retried.
- *
- * A datagram which cannot be sent is normally dropped, which is reasonable for
- * an unreliable transport but is not what an application asking for blocking
- * writes expects: it gets no data sent and a WANT_WRITE it did not ask to have
- * to handle. The listener's socket is shared and always non-blocking, so there
- * is nothing for such a write to block in by itself.
+ * sends again. The listener's socket is shared and always non-blocking, so
+ * there is nothing for such a write to block in by itself.
  *
  * A loopback socket's send buffer does not fill, so a filter BIO supplies the
- * transient failure instead. Only one send is rejected: the retry then goes
- * through, and the client is read to confirm the datagram was really sent
- * rather than merely reported as sent.
+ * transient failure. Only one send is rejected: the retry then goes through,
+ * and the client is read to confirm the datagram was sent.
  *
  * The handshake runs with the listener non-blocking, so this test drives both
  * ends from the one thread as the others here do, and only the connection is
@@ -5895,12 +5815,7 @@ static int test_dtls_blocking_write(void)
         || !TEST_size_t_eq(written, 3))
         goto end;
 
-    /*
-     * The send really was rejected, and was retried rather than reported: the
-     * count proves a second attempt was made, which is the whole behaviour
-     * under test. Without it, a write which never reached the filter at all
-     * would look the same as one which was retried.
-     */
+    /* The count shows the send was rejected once and then retried. */
     if (!TEST_int_eq(data.fails_remaining, 0)
         || !TEST_int_ge(data.sends, 2))
         goto end;

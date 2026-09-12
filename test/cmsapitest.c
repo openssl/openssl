@@ -858,18 +858,16 @@ end:
 
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_X963KDF)
 /*
- * Regression test for CVE-2026-63072: an 8-byte out-of-bounds heap write
- * reachable through CMS_decrypt() when a KeyAgreeRecipientInfo names an
- * id-aesNNN-wrap-pad key-wrap OID. CMS sizes the unwrap output buffer from
- * the cipher's length query (inlen - 8), but AES-WRAP-PAD unwrap cleanses
- * inlen bytes of it on every RFC 5649 integrity-failure path.
+ * CVE-2026-63072: CMS_decrypt() with a KeyAgreeRecipientInfo naming an
+ * id-aesNNN-wrap-pad key-wrap OID. AES-WRAP-PAD unwrap cleanses inlen bytes of
+ * the output buffer on every RFC 5649 integrity-failure path, and CMS sizes
+ * that buffer from the cipher's length query.
  *
- * We build a valid ECDH KARI message (which uses non-padded id-aes256-wrap),
- * flip the single OID byte an attacker would flip on the wire to turn it into
- * id-aes256-wrap-pad (key length unchanged), and decrypt with the matching
- * private key. The unwrap must fail its integrity check without writing past
- * the CMS-allocated buffer; CMS_decrypt() must fail cleanly.  Under a
- * memory-checking build (e.g. valgrind) the overflow is flagged directly.
+ * Build a valid ECDH KARI message (non-padded id-aes256-wrap), flip the single
+ * OID byte that turns it into id-aes256-wrap-pad (key length unchanged), and
+ * decrypt with the matching private key. The unwrap must fail its integrity
+ * check without writing past the CMS-allocated buffer and CMS_decrypt() must
+ * fail cleanly. Under a memory-checking build the overflow is flagged directly.
  */
 static int test_kari_wrap_pad_unwrap_overflow(void)
 {
@@ -924,8 +922,8 @@ static int test_kari_wrap_pad_unwrap_overflow(void)
         goto end;
 
     /*
-     * The wrap-pad unwrap fails the AIV check; with the fix it does so without
-     * writing past the CMS-allocated buffer.  CMS_decrypt() must fail cleanly.
+     * The wrap-pad unwrap fails the AIV check without writing past the
+     * CMS-allocated buffer, and CMS_decrypt() must fail cleanly.
      */
     if (!TEST_ptr(outbio = BIO_new(BIO_s_mem()))
         || !TEST_false(CMS_decrypt(cms2, eckey, eccert, NULL, outbio, 0)))
