@@ -1735,6 +1735,44 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_stream_limit_probe)
+{
+    int ok = 0;
+    SSL *conn, *stream;
+    uint64_t flags, count, min_fail, fail_count = 0, i;
+    size_t written;
+
+    F_POP2(count, min_fail);
+    F_POP(flags);
+    REQUIRE_SSL(conn);
+
+    for (i = 0; i < count; ++i) {
+        stream = SSL_new_stream(conn, flags);
+        if (stream == NULL) {
+            if (!TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_peek_last_error()),
+                    (size_t)SSL_R_STREAM_COUNT_LIMITED))
+                goto err;
+
+            ++fail_count;
+            continue;
+        }
+
+        if (!TEST_true(SSL_write_ex(stream, "apple", 5, &written))) {
+            SSL_free(stream);
+            goto err;
+        }
+
+        SSL_free(stream);
+    }
+
+    if (!TEST_uint64_t_ge(fail_count, min_fail))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -2092,3 +2130,10 @@ err:
     (OP_SELECT_SSL(0, name),               \
         OP_PUSH_U64(value),                \
         OP_FUNC(hf_set_max_early_data))
+
+#define OP_STREAM_LIMIT_PROBE(conn_name, flags, count, min_fail) \
+    (OP_SELECT_SSL(0, conn_name),                                \
+        OP_PUSH_U64(flags),                                      \
+        OP_PUSH_U64(count),                                      \
+        OP_PUSH_U64(min_fail),                                   \
+        OP_FUNC(hf_stream_limit_probe))

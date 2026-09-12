@@ -3974,8 +3974,16 @@ DEF_SCRIPT(script_71, "Send a TLS NewSessionTicket message with valid max_early_
     OP_READ_EXPECT(Ca, "orange", 6);
 }
 
-DEF_SCRIPT(script_72, "place holder for multistrem script_72")
+DEF_SCRIPT(script_72, "Test that APL stops handing out streams after limit reached (bidi)")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /*
+     * Request more streams than a server will initially hand out and test that
+     * they fail properly.
+     */
+    OP_STREAM_LIMIT_PROBE(C, SSL_STREAM_FLAG_NO_BLOCK, 200, 50);
 }
 
 DEF_SCRIPT(script_73, "place holder for multistrem script_73")

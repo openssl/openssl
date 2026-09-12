@@ -2549,25 +2549,7 @@ static int script_72_check(struct helper *h, struct helper_local *hl)
 }
 
 static const struct script_op script_72[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    /*
-     * Request more streams than a server will initially hand out and test that
-     * they fail properly.
-     */
-    OP_BEGIN_REPEAT(200),
-
-    OP_C_NEW_STREAM_BIDI_EX(a, ANY_ID, ALLOW_FAIL | SSL_STREAM_FLAG_NO_BLOCK),
-    OP_C_SKIP_IF_UNBOUND(a, 2),
-    OP_C_WRITE(a, "apple", 5),
-    OP_C_FREE_STREAM(a),
-
-    OP_END_REPEAT(),
-
-    OP_CHECK(script_72_check, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
