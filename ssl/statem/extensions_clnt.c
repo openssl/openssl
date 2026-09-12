@@ -1051,6 +1051,7 @@ static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
 {
     OSSL_TIME t;
     uint32_t agesec;
+    unsigned long lifetime;
 
     if (s->ext.tick_age_checked)
         return s->ext.tick_age_ok;
@@ -1085,10 +1086,22 @@ static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
     s->ext.tick_age_ms = agesec * (uint32_t)1000;
 
     /*
-     * Ticket is too old. Ignore it. Overflow. Shouldn't happen unless this is a
-     * *really* old session. If so we just ignore it.
+     * RFC 9846 4.7.1: a ticket_lifetime of zero indicates that the ticket
+     * should be discarded immediately, and clients MUST NOT use tickets for
+     * longer than 7 days after issuance regardless of the ticket_lifetime.
+     * The hint is capped when a NewSessionTicket is parsed, but a session
+     * restored with d2i_SSL_SESSION() carries whatever value was serialised
+     * (by an external cache or an older client), so bound it here as well.
      */
-    if (s->session->ext.tick_lifetime_hint < agesec)
+    lifetime = s->session->ext.tick_lifetime_hint;
+    if (lifetime > 604800)
+        lifetime = 604800;
+
+    /*
+     * Ticket is too old or was never usable. Ignore it. Overflow. Shouldn't
+     * happen unless this is a *really* old session. If so we just ignore it.
+     */
+    if (lifetime == 0 || lifetime < agesec)
         s->ext.tick_age_ok = 0;
     else if (agesec != 0 && s->ext.tick_age_ms / (uint32_t)1000 != agesec)
         s->ext.tick_age_ok = 0;
