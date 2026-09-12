@@ -1219,9 +1219,7 @@ uninstall_image_docs:
 # Developer targets (note: these are only available on Unix) #########
 ##@ Code maintenance
 
-# It's important that generate_buildinfo comes after ordinals, as ordinals
-# is sensitive to build.info changes.
-update: generate errors ordinals generate_buildinfo ## Update errors, ordinals and build info
+update: generate errors generate_buildinfo ## Update errors and build info
 
 # $(UPTODATE) target input... succeeds when target exists and is strictly
 # newer than every input, and fails otherwise; used to skip regeneration
@@ -1444,28 +1442,17 @@ CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
 
-renumber: build_generated
-	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
-                --ordinals $(SRCDIR)/util/libcrypto.num \
-                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
-                --renumber \
-                $(CRYPTOHEADERS)
-	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
-                --ordinals $(SRCDIR)/util/libssl.num \
-                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
-                --renumber \
-                $(SSLHEADERS)
-
-.PHONY: ordinals
-ordinals: build_generated
-	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
-                --ordinals $(SRCDIR)/util/libcrypto.num \
-                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
-                $(CRYPTOHEADERS)
-	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
-                --ordinals $(SRCDIR)/util/libssl.num \
-                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
-                $(SSLHEADERS)
+renumber:
+	$(PERL) $(SRCDIR)/util/mkordinals.pl --allocate \
+                --version $(VERSION_NUMBER) \
+                --symbols $(SRCDIR)/util/libcrypto.sym \
+                --release $(SRCDIR)/util/libcrypto.release.num \
+                --out $(SRCDIR)/util/libcrypto.release.num
+	$(PERL) $(SRCDIR)/util/mkordinals.pl --allocate \
+                --version $(VERSION_NUMBER) \
+                --symbols $(SRCDIR)/util/libssl.sym \
+                --release $(SRCDIR)/util/libssl.release.num \
+                --out $(SRCDIR)/util/libssl.release.num
 
 test_ordinals:
 	"$(MAKE)" run_tests TESTS=test_ordinals
