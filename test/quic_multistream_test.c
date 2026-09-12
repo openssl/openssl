@@ -2756,15 +2756,7 @@ static const struct script_op script_104[] = {
 
 /* 105. Negotiated default max ack delay if not configured */
 static const struct script_op script_105[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_ack_delay_max,
-        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
-    OP_CHECK2(check_ack_delay_max,
-        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };

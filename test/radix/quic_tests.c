@@ -5371,8 +5371,17 @@ DEF_SCRIPT(script_104, "Max ack delay configuration")
         SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY / 2);
 }
 
-DEF_SCRIPT(script_105, "place holder for multistrem script_105")
+/* 105. Negotiated default max ack delay if not configured */
+DEF_SCRIPT(script_105, "Negotiated default max ack delay if not configured")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY);
 }
 
 DEF_SCRIPT(script_106, "place holder for multistrem script_106")
