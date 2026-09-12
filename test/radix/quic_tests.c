@@ -4197,8 +4197,42 @@ DEF_SCRIPT(script_75, "Version negotiation: Unknown version causes connection ab
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CONNECTION_REFUSED, 0, 0);
 }
 
-DEF_SCRIPT(script_76, "place holder for multistrem script_76")
+DEF_FUNC(check_peer_shutdown_wait_76)
 {
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_shutdown_ex(ssl,
+            SSL_SHUTDOWN_FLAG_WAIT_PEER | SSL_SHUTDOWN_FLAG_NO_BLOCK,
+            NULL, 0)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_76, "Test peer-initiated shutdown wait")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    /* Check a WAIT_PEER call doesn't succeed yet. */
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(check_peer_shutdown_wait_76);
+
+    OP_SHUTDOWN_WAIT(S, 0, 42, NULL);
+
+    OP_SHUTDOWN_WAIT(C, SSL_SHUTDOWN_FLAG_WAIT_PEER, 0, NULL);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 42, 1, 1);
 }
 
 DEF_SCRIPT(script_77, "place holder for multistrem script_77")

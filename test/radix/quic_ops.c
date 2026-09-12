@@ -382,6 +382,11 @@ DEF_FUNC(hf_accept_conn)
     if (conn == NULL)
         F_SPIN_AGAIN();
 
+    if (!TEST_true(SSL_set_blocking_mode(conn, 0))) {
+        SSL_free(conn);
+        goto err;
+    }
+
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), conn_name, conn))) {
         SSL_free(conn);
         goto err;

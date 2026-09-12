@@ -2564,35 +2564,8 @@ static const struct script_op script_75[] = {
 };
 
 /* 76. Test peer-initiated shutdown wait */
-static int script_76_check(struct helper *h, struct helper_local *hl)
-{
-    if (!TEST_false(SSL_shutdown_ex(h->c_conn,
-            SSL_SHUTDOWN_FLAG_WAIT_PEER
-                | SSL_SHUTDOWN_FLAG_NO_BLOCK,
-            NULL, 0)))
-        return 0;
-
-    return 1;
-}
-
 static const struct script_op script_76[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    /* Check a WAIT_PEER call doesn't succeed yet. */
-    OP_CHECK(script_76_check, 0),
-    OP_S_SHUTDOWN(42),
-
-    OP_C_SHUTDOWN_WAIT(NULL, SSL_SHUTDOWN_FLAG_WAIT_PEER),
-    OP_C_EXPECT_CONN_CLOSE_INFO(42, 1, 1),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
