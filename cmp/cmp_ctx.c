@@ -9,8 +9,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
 
+#include <stdio.h>
 #include "cmp_local.h"
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
 
@@ -70,7 +72,7 @@ DEFINE_OSSL_CMP_CTX_get0_NAME(trusted, trusted, X509_STORE)
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (!ossl_x509_add_certs_new(&untrusted, certs,
+    if (!ossl_cmp_x509_add_certs_new(&untrusted, certs,
             X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         goto err;
     OSSL_STACK_OF_X509_free(ctx->untrusted);
@@ -228,7 +230,8 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     EVP_PKEY_free(ctx->pkey);
     ASN1_OCTET_STRING_free(ctx->referenceValue);
     if (ctx->secretValue != NULL)
-        OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
+        OPENSSL_cleanse((unsigned char *)ASN1_STRING_get0_data(ctx->secretValue),
+            ASN1_STRING_get_length(ctx->secretValue));
     ASN1_OCTET_STRING_free(ctx->secretValue);
     EVP_MD_free(ctx->pbm_owf);
 
@@ -455,7 +458,8 @@ int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx,
     if (ossl_cmp_asn1_octet_string_set1_bytes(&secretValue, sec, len) != 1)
         return 0;
     if (ctx->secretValue != NULL) {
-        OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
+        OPENSSL_cleanse((unsigned char *)ASN1_STRING_get0_data(ctx->secretValue),
+            ASN1_STRING_get_length(ctx->secretValue));
         ASN1_OCTET_STRING_free(ctx->secretValue);
     }
     ctx->secretValue = secretValue;
@@ -591,7 +595,7 @@ DEFINE_OSSL_CMP_CTX_get1_certs(caPubs)
         return 1;                                                     \
     }
 
-#define X509_invalid(cert) (!ossl_x509v3_cache_extensions(cert))
+#define X509_invalid(cert) (X509_check_purpose((cert), -1, 0) != 1)
 #define EVP_PKEY_invalid(key) 0
 
 #define DEFINE_OSSL_set1_up_ref(PREFIX, FIELD, TYPE)                             \
@@ -719,7 +723,7 @@ DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, cert, X509)
         return 0;
     }
 
-    if (!ossl_x509_add_certs_new(&ctx->untrusted, candidates,
+    if (!ossl_cmp_x509_add_certs_new(&ctx->untrusted, candidates,
             X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         return 0;
 

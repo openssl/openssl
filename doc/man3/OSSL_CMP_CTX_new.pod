@@ -72,7 +72,7 @@ OSSL_CMP_CTX_set1_senderNonce
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
  void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
@@ -737,7 +737,7 @@ OSSL_CMP_CTX_get_failInfoCode() returns the error code from the failInfo field
 of the last received CertRepMessage or Revocation Response or error message,
 or -1 if no such response was received or OSSL_CMP_CTX_reinit() has been called.
 This is a bit field and the flags for it are specified in the header file
-F<< <openssl/cmp.h> >>.
+F<< <libcmp/cmp.h> >>.
 The flags start with OSSL_CMP_CTX_FAILINFO, for example:
 OSSL_CMP_CTX_FAILINFO_badAlg. Returns -1 if the failInfoCode field is unset.
 
@@ -904,6 +904,10 @@ was added in OpenSSL 3.5.
 The B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR> option was added in OpenSSL 4.0.
 
 The B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES> option was added in OpenSSL 4.1.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

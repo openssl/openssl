@@ -20,7 +20,7 @@ OSSL_CRMF_CERTID_gen
 
 =head1 SYNOPSIS
 
- #include <openssl/crmf.h>
+ #include <libcmp/crmf.h>
 
  ASN1_UTF8STRING
     *OSSL_CRMF_MSG_get0_regCtrl_regToken(const OSSL_CRMF_MSG *msg);
@@ -118,6 +118,10 @@ RFC 4211
 =head1 HISTORY
 
 The OpenSSL CRMF support was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/crmf.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

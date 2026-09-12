@@ -13,7 +13,7 @@ OSSL_CMP_ITAV_get0_certProfile
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value);
  void OSSL_CMP_ITAV_set0(OSSL_CMP_ITAV *itav, ASN1_OBJECT *type,
@@ -120,6 +120,10 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 
 OSSL_CMP_ITAV_new0_certProfile() and OSSL_CMP_ITAV_get0_certProfile()
 were added in OpenSSL 3.3.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 
