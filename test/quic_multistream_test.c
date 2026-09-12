@@ -2701,13 +2701,7 @@ static const struct script_op script_92[] = {
 
 /* 93. Negotiated default connection window if not configured */
 static const struct script_op script_93[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024),
-    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_REQUEST, 768 * 1024),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };
