@@ -2741,13 +2741,7 @@ static const struct script_op script_98[] = {
 
 /* 99. Negotiated default uni stream window if not configured */
 static const struct script_op script_99[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
-    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024),
+    /* test moved to test/radix/quic_tests.c */
 
     OP_END
 };
