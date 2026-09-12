@@ -4501,8 +4501,23 @@ DEF_SCRIPT(script_80, "Stateless reset detection test")
     OP_FUNC(cleanup_stateless_reset_80);
 }
 
-DEF_SCRIPT(script_81, "place holder for multistrem script_81")
+/* 81. Idle timeout configuration */
+DEF_SCRIPT(script_81, "Idle timeout configuration")
 {
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT, 25000);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 25000);
 }
 
 DEF_SCRIPT(script_82, "place holder for multistrem script_82")

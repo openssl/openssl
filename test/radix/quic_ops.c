@@ -1798,6 +1798,76 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_modify_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, requested, v = 0;
+
+    F_POP(requested);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    /* Test bad value is rejected. */
+    if (!TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            OSSL_QUIC_VLINT_MAX + 1)))
+        goto err;
+
+    /* Set value. */
+    if (!TEST_true(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            requested))
+        || !TEST_true(SSL_get_feature_request_uint(ssl, (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, requested))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, value_class, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(value_class);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_value_uint(ssl, (uint32_t)value_class,
+            (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_cannot_change_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, current, requested, v = 0;
+
+    F_POP(requested);
+    F_POP(current);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_feature_request_uint(ssl, (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, current)
+        || !TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            requested)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -2168,3 +2238,23 @@ err:
         OP_PUSH_U64(value_class),                             \
         OP_PUSH_U64(expected_ms),                             \
         OP_FUNC(hf_check_idle_timeout))
+
+#define OP_MODIFY_VALUE_UINT(name, ssl_value, requested) \
+    (OP_SELECT_SSL(0, name),                             \
+        OP_PUSH_U64(ssl_value),                          \
+        OP_PUSH_U64(requested),                          \
+        OP_FUNC(hf_modify_value_uint))
+
+#define OP_CHECK_VALUE_UINT(name, ssl_value, value_class, expected) \
+    (OP_SELECT_SSL(0, name),                                        \
+        OP_PUSH_U64(ssl_value),                                     \
+        OP_PUSH_U64(value_class),                                   \
+        OP_PUSH_U64(expected),                                      \
+        OP_FUNC(hf_check_value_uint))
+
+#define OP_CANNOT_CHANGE_VALUE_UINT(name, ssl_value, current, requested) \
+    (OP_SELECT_SSL(0, name),                                             \
+        OP_PUSH_U64(ssl_value),                                          \
+        OP_PUSH_U64(current),                                            \
+        OP_PUSH_U64(requested),                                          \
+        OP_FUNC(hf_cannot_change_value_uint))

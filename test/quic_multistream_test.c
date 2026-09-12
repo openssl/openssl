@@ -2657,11 +2657,6 @@ static int cannot_change_static_tp(struct helper *h, struct helper_local *hl, in
     return 1;
 }
 
-static int modify_idle_timeout(struct helper *h, struct helper_local *hl)
-{
-    return modify_static_tp(h, hl, SSL_VALUE_QUIC_IDLE_TIMEOUT);
-}
-
 static int check_idle_timeout(struct helper *h, struct helper_local *hl)
 {
     return check_static_tp(h, hl, SSL_VALUE_QUIC_IDLE_TIMEOUT);
@@ -2674,15 +2669,7 @@ static int cannot_change_idle_timeout(struct helper *h, struct helper_local *hl)
 
 /* 81. Idle timeout configuration */
 static const struct script_op script_81[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_CHECK(modify_idle_timeout, 25000),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000),
-    OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 25000),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
