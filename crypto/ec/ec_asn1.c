@@ -908,16 +908,16 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 
 int i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 {
-    int ret = 0;
+    int ret;
     ECPKPARAMETERS *tmp = EC_GROUP_get_ecpkparameters(a, NULL);
     if (tmp == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_GROUP2PKPARAMETERS_FAILURE);
-        return 0;
+        return -1;
     }
-    if ((ret = i2d_ECPKPARAMETERS(tmp, out)) == 0) {
+    if ((ret = i2d_ECPKPARAMETERS(tmp, out)) < 0) {
         ERR_raise(ERR_LIB_EC, EC_R_I2D_ECPKPARAMETERS_FAILURE);
         ECPKPARAMETERS_free(tmp);
-        return 0;
+        return ret;
     }
     ECPKPARAMETERS_free(tmp);
     return ret;
@@ -1022,7 +1022,7 @@ err:
 
 int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
 {
-    int ret = 0, ok = 0;
+    int ret = -1;
     unsigned char *priv = NULL, *pub = NULL;
     size_t privlen = 0, publen = 0;
 
@@ -1078,23 +1078,22 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
         pub = NULL;
     }
 
-    if ((ret = i2d_EC_PRIVATEKEY(priv_key, out)) == 0) {
+    if ((ret = i2d_EC_PRIVATEKEY(priv_key, out)) < 0) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }
-    ok = 1;
 err:
     OPENSSL_clear_free(priv, privlen);
     OPENSSL_free(pub);
     EC_PRIVATEKEY_free(priv_key);
-    return ok ? ret : 0;
+    return ret;
 }
 
 int i2d_ECParameters(const EC_KEY *a, unsigned char **out)
 {
     if (a == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return -1;
     }
     return i2d_ECPKParameters(a->group, out);
 }
