@@ -700,40 +700,6 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-static void detect_foreign_key(EVP_PKEY *pkey)
-{
-    switch (pkey->type) {
-    case EVP_PKEY_RSA:
-    case EVP_PKEY_RSA_PSS:
-        pkey->foreign = pkey->pkey.rsa != NULL
-            && ossl_rsa_is_foreign(pkey->pkey.rsa);
-        break;
-#ifndef OPENSSL_NO_EC
-    case EVP_PKEY_SM2:
-        break;
-    case EVP_PKEY_EC:
-        pkey->foreign = pkey->pkey.ec != NULL
-            && ossl_ec_key_is_foreign(pkey->pkey.ec);
-        break;
-#endif
-#ifndef OPENSSL_NO_DSA
-    case EVP_PKEY_DSA:
-        pkey->foreign = pkey->pkey.dsa != NULL
-            && ossl_dsa_is_foreign(pkey->pkey.dsa);
-        break;
-#endif
-#ifndef OPENSSL_NO_DH
-    case EVP_PKEY_DH:
-        pkey->foreign = pkey->pkey.dh != NULL
-            && ossl_dh_is_foreign(pkey->pkey.dh);
-        break;
-#endif
-    default:
-        pkey->foreign = 0;
-        break;
-    }
-}
-
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
 #ifndef OPENSSL_NO_EC
@@ -762,7 +728,6 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
         return 0;
 
     pkey->pkey.ptr = key;
-    detect_foreign_key(pkey);
 
     return (key != NULL);
 }
