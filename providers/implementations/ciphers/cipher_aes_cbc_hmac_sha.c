@@ -158,8 +158,10 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             || p.enc_in->data_type != OSSL_PARAM_OCTET_STRING
             || p.enc_in->data == NULL
             || p.enc_in->data_size == 0
-            || p.enc->data_size != p.enc_in->data_size
+            || ctx->multiblock_aad_packlen == 0
+            || p.enc->data_size < ctx->multiblock_aad_packlen
             || !aes_get_multiblock_interleave(p.ileave, &mb_param.interleave)
+            || mb_param.interleave != ctx->multiblock_interleave
             || p.enc_in->data_size
                 > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
