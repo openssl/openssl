@@ -1226,8 +1226,8 @@ update: generate errors generate_buildinfo ## Update errors and build info
 # of a target that is already current.
 UPTODATE=$(PERL) -e 'my $$o = shift; exit 1 unless -e $$o; -M $$o < -M $$_ or exit 1 for @ARGV'
 
-.PHONY: generate generate_apps generate_crypto_objects generate_fuzz_oids
-generate: generate_apps generate_crypto_objects generate_fuzz_oids
+.PHONY: generate generate_apps generate_crypto_objects
+generate: generate_apps generate_crypto_objects
 
 .PHONY: generate_buildinfo generate_doc_buildinfo
 generate_buildinfo: generate_doc_buildinfo
@@ -1287,14 +1287,6 @@ generate_crypto_objects:
 	  else \
 		mv crypto/objects/obj_mac.num.new crypto/objects/obj_mac.num; \
 	  fi )
-
-generate_fuzz_oids: crypto/objects/obj_dat.h
-	( b=`pwd`; cd $(SRCDIR); \
-	  $(UPTODATE) fuzz/oids.txt \
-		      $$b/crypto/objects/obj_dat.h fuzz/mkfuzzoids.pl || \
-	  $(PERL) fuzz/mkfuzzoids.pl \
-				$$b/crypto/objects/obj_dat.h \
-				> fuzz/oids.txt )
 
 generate_doc_buildinfo:
 	( $(PERL) -I$(BLDDIR) -Mconfigdata \
