@@ -696,7 +696,8 @@ static long bio_brotli_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     BIO_BROTLI_CTX *ctx;
     unsigned char *tmp;
-    int ret = 0, *ip;
+    long ret = 0;
+    int *ip;
     size_t ibs, obs;
     BIO *next = BIO_next(b);
 
@@ -764,16 +765,20 @@ static long bio_brotli_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_WPENDING:
-        if (BrotliEncoderHasMoreOutput(ctx->encode.state))
+        ret = (long)ctx->encode.count;
+        if (ret == 0 && BrotliEncoderHasMoreOutput(ctx->encode.state))
+            /* Unknown amount pending but the encoder has more output */
             ret = 1;
-        else
+        if (ret == 0)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
 
     case BIO_CTRL_PENDING:
-        if (!BrotliDecoderIsFinished(ctx->decode.state))
+        ret = (long)ctx->decode.avail_in;
+        if (ret == 0 && BrotliDecoderHasMoreOutput(ctx->decode.state))
+            /* Unknown amount pending but the decoder has more output */
             ret = 1;
-        else
+        if (ret == 0)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
 
