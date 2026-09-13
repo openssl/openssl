@@ -1539,12 +1539,15 @@ static const unsigned char sd_bad_mac[] = {
  * EtM Bad MAC: For Encrypt-then-MAC mode (CBC cipher), the MAC is appended
  * to ciphertext and verified BEFORE decryption.
  * Record structure for EtM: [header][IV][ciphertext][MAC]
+ * Sequence 65 is one past the 64 entry replay window, so if this record were
+ * ever to update the replay state the genuine follow-up record would fall
+ * outside the window and be dropped, failing the connection survival check.
  */
 static const unsigned char sd_etm_bad_mac[] = {
     SSL3_RT_APPLICATION_DATA,
     0xFE, 0xFD, /* DTLS 1.2 version */
     0x00, 0x01, /* Epoch 1 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x30, /* Sequence 48 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x41, /* Sequence 65 */
     0x00, 0x34, /* Length = 52 bytes (16 IV + 16 cipher + 20 MAC) */
     /* Explicit IV (16 bytes for AES-CBC) */
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -1783,6 +1786,26 @@ static const unsigned char fatal_unknown_record_type_dtls1[] = {
 };
 #endif
 
+typedef struct fatal_alert_capture_st {
+    int count;
+    int level;
+    int description;
+} FATAL_ALERT_CAPTURE;
+
+static void fatal_alert_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    FATAL_ALERT_CAPTURE *capture = arg;
+    const unsigned char *p = buf;
+
+    if (write_p != 1 || content_type != SSL3_RT_ALERT || len != 2)
+        return;
+
+    capture->count++;
+    capture->level = p[0];
+    capture->description = p[1];
+}
+
 static int test_dtls_fatal_record(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -1797,6 +1820,9 @@ static int test_dtls_fatal_record(int idx)
 #endif
     int min_ver = DTLS1_2_VERSION;
     int max_ver = DTLS1_2_VERSION;
+    int expected_alert = SSL_AD_UNEXPECTED_MESSAGE;
+    int expected_reason = 0;
+    FATAL_ALERT_CAPTURE capture = { 0, 0, 0 };
 
     switch (idx) {
     case FATAL_UNEXPECTED_APP_DATA:
@@ -1805,6 +1831,7 @@ static int test_dtls_fatal_record(int idx)
 #else
         record = fatal_unexpected_app_data;
         record_len = sizeof(fatal_unexpected_app_data);
+        expected_reason = SSL_R_UNEXPECTED_RECORD;
         break;
 #endif
 
@@ -1814,6 +1841,7 @@ static int test_dtls_fatal_record(int idx)
 #else
         record = fatal_malformed_alert;
         record_len = sizeof(fatal_malformed_alert);
+        expected_reason = SSL_R_INVALID_ALERT;
         break;
 #endif
 
@@ -1823,6 +1851,8 @@ static int test_dtls_fatal_record(int idx)
 #else
         record = fatal_unknown_alert_level;
         record_len = sizeof(fatal_unknown_alert_level);
+        expected_alert = SSL_AD_ILLEGAL_PARAMETER;
+        expected_reason = SSL_R_UNKNOWN_ALERT_TYPE;
         break;
 #endif
 
@@ -1830,6 +1860,7 @@ static int test_dtls_fatal_record(int idx)
 #ifdef OPENSSL_NO_DTLS1_2
         return TEST_skip("DTLS1.2 support disabled");
 #else
+        expected_reason = SSL_R_TOO_MANY_WARN_ALERTS;
         break;
 #endif
 
@@ -1839,6 +1870,7 @@ static int test_dtls_fatal_record(int idx)
 #else
         record = fatal_unknown_record_type_dtls12;
         record_len = sizeof(fatal_unknown_record_type_dtls12);
+        expected_reason = SSL_R_UNEXPECTED_RECORD;
         break;
 #endif
 
@@ -1849,6 +1881,7 @@ static int test_dtls_fatal_record(int idx)
         record = fatal_unknown_record_type_dtls1;
         record_len = sizeof(fatal_unknown_record_type_dtls1);
         min_ver = max_ver = DTLS1_VERSION;
+        expected_reason = SSL_R_UNEXPECTED_RECORD;
         break;
 #endif
 
@@ -1884,6 +1917,9 @@ static int test_dtls_fatal_record(int idx)
     if (!TEST_ptr(c_to_s_mempacket))
         goto end;
 
+    SSL_set_msg_callback(serverssl, fatal_alert_msg_cb);
+    SSL_set_msg_callback_arg(serverssl, &capture);
+
 #ifndef OPENSSL_NO_DTLS1_2
     if (idx == FATAL_TOO_MANY_WARNINGS) {
         for (i = 0; i < 7; i++) {
@@ -1902,6 +1938,12 @@ static int test_dtls_fatal_record(int idx)
 
     if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
             SSL_ERROR_SSL, 0, 0)))
+        goto end;
+
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), expected_reason)
+        || !TEST_int_eq(capture.count, 1)
+        || !TEST_int_eq(capture.level, SSL3_AL_FATAL)
+        || !TEST_int_eq(capture.description, expected_alert))
         goto end;
 
     testresult = 1;
