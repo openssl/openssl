@@ -42,12 +42,13 @@ END {
     unlink $temp if defined $temp && -e $temp;
 }
 
+my $exec = shift @ARGV;
 open my $saved, ">&", \*STDOUT
     or die "Can't save stdout, $!\n";
 open STDOUT, ">&", $out
     or die "Can't redirect stdout to $temp, $!\n";
 
-my $status = system @ARGV;
+my $status = system($exec, @ARGV);
 my $why = $!;
 
 open STDOUT, ">&", $saved
@@ -62,7 +63,7 @@ if ($status != 0) {
             :                 "exited with " . ($status >> 8);
     my $code = $status == -1 || ($status & 127) ? 1 : $status >> 8;
 
-    print STDERR "$ARGV[0] $how\n";
+    print STDERR "$exec $how\n";
     exit $code;
 }
 
