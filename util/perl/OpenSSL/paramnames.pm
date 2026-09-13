@@ -724,6 +724,16 @@ sub trie_matched {
     printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
     if (defined $dup && $dup eq 'first') {
       printf "%sbreak;\n", $indent2;
+    } elsif (defined $dup && $dup eq 'equal') {
+      printf "%sif (r->%s->data_size != p->data_size\n", $indent2, $field;
+      printf "%s    || r->%s->data_type != p->data_type\n", $indent2, $field;
+      printf "%s    || (r->%s->data == NULL && p->data != NULL)\n", $indent2, $field;
+      printf "%s    || (r->%s->data != NULL && p->data == NULL)\n", $indent2, $field;
+      printf "%s    || (p->data != NULL && memcmp(r->%s->data, p->data, p->data_size) != 0)) {\n", $indent2, $field;
+      printf "%s    ERR_raise_data(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT,\n", $indent2;
+      printf "%s                   \"repeated param %%s is inconsistent\", s);\n", $indent2;
+      printf "%s    return 0;\n", $indent2;
+      printf "%s}\n", $indent2;
     } else {
       printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
       printf "%s               \"param %%s is repeated\", s);\n", $indent2;
@@ -916,7 +926,7 @@ sub output_param_decoder {
             } elsif (substr($pnum, 0, 3) eq '#if') {
                 # Trim the `#if' from the front
                 $ifdefs{$pident} = substr($pnum, 3);
-            } elsif ($pnum =~ '^duplicate: *(first)') {
+            } elsif ($pnum =~ '^duplicate: *(equal|first)') {
                 # This provides a provision for other duplicate resolution methods
                 # even though they aren't implemented yet
                 $process_dup{$pident} = $1;
