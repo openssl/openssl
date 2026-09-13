@@ -34,17 +34,14 @@ doc/man3/BIO_set_dgram_origin.pod
 If you do use an unrelated name (like `BIO_dgram.pod`) then you'll get
 a warning about that.
 
-Next, you need to add your new file to the `doc/build.info` file.
-This command does it automatically for you:
+The build finds manual pages by looking in `doc/man*` when it is
+configured, so a new one needs a reconfigure before anything sees it:
 
 ```console
-$ make generate_doc_buildinfo
+$ make reconfigure
 ```
 
-this will update `doc/build.info`.
-You should git add the result as `generate_doc_buildinfo` is not run on every build.
-
-With these two changes, running `make doc-nits` locally should
+With that, running `make doc-nits` locally should
 now agree with you that you have documented all your new defines,
 but it might then complain:
 
