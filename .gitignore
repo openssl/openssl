@@ -23,6 +23,7 @@
 
 # Links under apps
 /apps/CA.pl
+/apps/openssl-vms.cnf
 /apps/tsget
 /apps/tsget.pl
 /apps/md4.c

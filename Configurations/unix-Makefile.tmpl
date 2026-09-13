@@ -1226,8 +1226,8 @@ update: generate errors generate_buildinfo ## Update errors and build info
 # of a target that is already current.
 UPTODATE=$(PERL) -e 'my $$o = shift; exit 1 unless -e $$o; -M $$o < -M $$_ or exit 1 for @ARGV'
 
-.PHONY: generate generate_apps generate_crypto_objects
-generate: generate_apps generate_crypto_objects
+.PHONY: generate generate_crypto_objects
+generate: generate_crypto_objects
 
 .PHONY: generate_buildinfo generate_doc_buildinfo
 generate_buildinfo: generate_doc_buildinfo
@@ -1267,13 +1267,6 @@ check-clang-format-diff-cmd:
 
 check-format: check-clang-format-diff-cmd ## Evaluate C code according to OpenSSL coding standards
 	( cd $(SRCDIR); git diff -U0 --no-prefix --no-color | $(CLANG_FORMAT_DIFF) )
-
-generate_apps:
-	( cd $(SRCDIR); \
-	  $(UPTODATE) apps/openssl-vms.cnf \
-		      apps/openssl.cnf VMS/VMSify-conf.pl || \
-	  $(PERL) VMS/VMSify-conf.pl \
-				< apps/openssl.cnf > apps/openssl-vms.cnf )
 
 generate_crypto_objects:
 	( cd $(SRCDIR); set -e; \
