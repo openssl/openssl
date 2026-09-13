@@ -41,6 +41,16 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed builds configured with `no-md5`, which previously failed to compile.
+   In such builds, the legacy (RFC 1421 style) PEM encryption routines and
+   `X509_REQ_to_X509()` now fail with an "unsupported" error, the MD5-based
+   options of `openssl passwd` (`-1`, `-apr1`, `-aixmd5`) and
+   `openssl rehash` (`-old`, `-compat`) are not available, and
+   `openssl passwd` requires an algorithm option since the MD5-based
+   default is unavailable.
+
+   *Matt Andreko*
+
  * Added support for DTLS 1.3 ([RFC 9147]).
    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
 
