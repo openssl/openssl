@@ -87,8 +87,7 @@ DEFINE_STACK_OF(BIGNUM)
  * on their respective exps and coeffs stacks
  */
 #ifndef FIPS_MODULE
-int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
-    BIGNUM *e_value,
+int ossl_rsa_multiprime_derive(RSA *rsa,
     STACK_OF(BIGNUM) *factors,
     STACK_OF(BIGNUM) *exps,
     STACK_OF(BIGNUM) *coeffs)
@@ -568,8 +567,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     }
 
     /* derive any missing exponents and coefficients */
-    if (!ossl_rsa_multiprime_derive(rsa, bits, primes, e_value,
-            factors, exps, coeffs))
+    if (!ossl_rsa_multiprime_derive(rsa, factors, exps, coeffs))
         goto err;
 
     /*

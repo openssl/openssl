@@ -146,8 +146,7 @@ struct rsa_meth_st {
 
 /* Macro to test if a pkey is for a PSS key */
 #define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
-int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
-    BIGNUM *e_value,
+int ossl_rsa_multiprime_derive(RSA *rsa,
     STACK_OF(BIGNUM) *factors, STACK_OF(BIGNUM) *exps,
     STACK_OF(BIGNUM) *coeffs);
 

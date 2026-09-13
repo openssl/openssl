@@ -170,10 +170,7 @@ int ossl_rsa_fromdata_parsed(RSA *rsa, const RSA_PARAMS *p,
                  * in the multiprime case we have to generate exps/coeffs here
                  * for each additional prime
                  */
-                if (!ossl_rsa_multiprime_derive(rsa, RSA_bits(rsa),
-                        sk_BIGNUM_num(factors),
-                        rsa->e, factors, exps,
-                        coeffs)) {
+                if (!ossl_rsa_multiprime_derive(rsa, factors, exps, coeffs)) {
                     ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
