@@ -626,10 +626,10 @@ install_ssldirs : check_INSTALLTOP
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[MISC]
         COPY/PROT=W:RE $(MISC_SCRIPTS) OSSL_DATAROOT:[MISC]
         @ ! Install configuration file
-        COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
+        COPY/PROT=W:R {- buildfile("apps", "openssl-vms.cnf") -} -
                 ossl_dataroot:[000000]openssl.cnf-dist
         IF F$SEARCH("OSSL_DATAROOT:[000000]openssl.cnf") .EQS. "" THEN -
-                COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
+                COPY/PROT=W:R {- buildfile("apps", "openssl-vms.cnf") -} -
                         ossl_dataroot:[000000]openssl.cnf
         @ ! Install CTLOG configuration file
         COPY/PROT=W:R {- sourcefile("apps", "ct_log_list.cnf") -} -
