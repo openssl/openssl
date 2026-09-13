@@ -698,7 +698,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     /* Special case: initial '.' is RHS match */
     if (*baseptr == '.') {
         ulabel[0] = '.';
-        if (ossl_a2ulabel(baseptr, ulabel + 1, size - 1) <= 0) {
+        if (ossl_a2ulabel(baseptr + 1, ulabel + 1, size - 1) <= 0) {
             ret = X509_V_ERR_UNSPECIFIED;
             goto end;
         }
