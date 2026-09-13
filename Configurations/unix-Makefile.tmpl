@@ -1219,7 +1219,7 @@ uninstall_image_docs:
 # Developer targets (note: these are only available on Unix) #########
 ##@ Code maintenance
 
-update: generate errors generate_buildinfo ## Update errors and build info
+update: generate errors ## Update OIDs and error codes
 
 # $(UPTODATE) target input... succeeds when target exists and is strictly
 # newer than every input, and fails otherwise; used to skip regeneration
@@ -1228,9 +1228,6 @@ UPTODATE=$(PERL) -e 'my $$o = shift; exit 1 unless -e $$o; -M $$o < -M $$_ or ex
 
 .PHONY: generate generate_crypto_objects
 generate: generate_crypto_objects
-
-.PHONY: generate_buildinfo generate_doc_buildinfo
-generate_buildinfo: generate_doc_buildinfo
 
 .PHONY: doc-nits md-nits
 doc-nits: build_generated build_generated_pods ## Evaluate OpenSSL documentation
@@ -1281,19 +1278,6 @@ generate_crypto_objects:
 		mv crypto/objects/obj_mac.num.new crypto/objects/obj_mac.num; \
 	  fi )
 
-generate_doc_buildinfo:
-	( $(PERL) -I$(BLDDIR) -Mconfigdata \
-                $(SRCDIR)/util/dofile.pl -o Makefile \
-                        $(SRCDIR)/doc/build.info.in \
-                        > $(SRCDIR)/doc/build.info.new; \
-          if ( test -e $(SRCDIR)/doc/build.info \
-               && cmp $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info \
-                  > /dev/null ); \
-          then \
-                rm $(SRCDIR)/doc/build.info.new; \
-          else \
-                mv $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info; \
-          fi )
 
 generate_fips_sources: providers/fips.module.sources.new
 providers/fips.module.sources.new: configdata.pm
