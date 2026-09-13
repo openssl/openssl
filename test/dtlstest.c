@@ -607,6 +607,128 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
+/*
+ * During a DTLSv1.2 session ID resumption the server still reads epoch 0
+ * while it waits for the client's ChangeCipherSpec. An out-of-sequence
+ * handshake fragment whose offset plus length exceeds the message length
+ * must fail the handshake with a fatal alert, which also removes the resumed
+ * session from the server's cache. This matches what the in-order path in
+ * dtls1_preprocess_fragment() already does.
+ */
+static int test_out_of_seq_bad_fragment_dtls1(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_SESSION *sess = NULL;
+    BIO *bio;
+    int testresult = 0, ret;
+    char rdbuf[16];
+    unsigned char buf[] = {
+        /* Record header */
+        SSL3_RT_HANDSHAKE, /* content type */
+        (DTLS1_2_VERSION >> 8) & 0xff, /* protocol version hi byte */
+        DTLS1_2_VERSION & 0xff, /* protocol version lo byte */
+        0, 0, /* epoch */
+        0, 0, 0, 0, 0, 5, /* record sequence */
+        0, DTLS1_HM_HEADER_LENGTH + 4, /* record length */
+
+        /* Message header */
+        SSL3_MT_FINISHED, /* message type */
+        0, 0, 4, /* message length */
+        0, 3, /* message sequence: ahead of the expected sequence 1 */
+        0, 0, 4, /* fragment offset */
+        0, 0, 4, /* fragment length: offset + length > message length */
+
+        /* Message body */
+        0, 0, 0, 0
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    /* Use session IDs so the server keeps the session in its cache */
+    SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
+
+    /* Get a session to resume */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(sess = SSL_get1_session(clientssl))
+        || !TEST_long_eq(SSL_CTX_sess_number(sctx), 1))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_session(clientssl, sess)))
+        goto end;
+
+    /* Send the ClientHello and let the server respond with its flight */
+    if (!TEST_int_le(ret = SSL_connect(clientssl), 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_le(ret = SSL_accept(serverssl), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ)
+        || !TEST_long_eq(SSL_CTX_sess_hits(sctx), 1))
+        goto end;
+
+    /* The server now expects the client's ChangeCipherSpec at epoch 0 */
+    bio = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(bio)
+        || !TEST_int_eq(mempacket_test_inject(bio, (char *)buf, sizeof(buf),
+                            -1, INJECT_PACKET_IGNORE_REC_SEQ),
+            sizeof(buf)))
+        goto end;
+
+    if (!TEST_int_le(ret = SSL_accept(serverssl), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_EXCESSIVE_MESSAGE_SIZE))
+        goto end;
+
+    /* The fatal alert removed the resumed session from the server cache */
+    if (!TEST_long_eq(SSL_CTX_sess_number(sctx), 0))
+        goto end;
+    ERR_clear_error();
+
+    /*
+     * The server's flight is queued ahead of the alert, so the client first
+     * completes its side of the handshake and then reads the fatal alert.
+     */
+    if (!TEST_int_eq(SSL_connect(clientssl), 1))
+        goto end;
+
+    ret = SSL_read(clientssl, rdbuf, sizeof(rdbuf));
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_AD_REASON_OFFSET + SSL_AD_ILLEGAL_PARAMETER)
+        || !TEST_true((SSL_get_shutdown(clientssl) & SSL_RECEIVED_SHUTDOWN)
+            != 0))
+        goto end;
+    ERR_clear_error();
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_2 */
+
 /*
  * Test that swapping later records before Finished or CCS still works
  * Test 0: Test receiving a handshake record early from next epoch on server side
@@ -1605,6 +1727,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
 #ifndef OPENSSL_NO_DTLS1_2
+    ADD_TEST(test_out_of_seq_bad_fragment_dtls1);
     ADD_ALL_TESTS(test_swap_records_dtls1, 4);
 #endif
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM) \

@@ -807,8 +807,10 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     }
 
     if (dtls_msg_needs_ack(!s->server, msg_hdr->type)
-        && !add_record_to_ack_list(s))
+        && !add_record_to_ack_list(s)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     return DTLS1_HM_FRAGMENT_RETRY;
 
@@ -895,8 +897,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         }
 
         if (dtls_msg_needs_ack(!s->server, msg_hdr->type)
-            && !add_record_to_ack_list(s))
+            && !add_record_to_ack_list(s)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
 
         item = pqueue_insert(&s->d1->rcvd_messages, item);
         /*
