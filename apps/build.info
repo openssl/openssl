@@ -1,5 +1,11 @@
 SUBDIRS=lib
 
+# The configuration file with its paths rewritten in VMS syntax, installed
+# in place of openssl.cnf there.
+GENERATE[openssl-vms.cnf]=../VMS/VMSify-conf.pl $(SRCDIR)/apps/openssl.cnf
+DEPEND[openssl-vms.cnf]=openssl.cnf
+DEPEND[]=openssl-vms.cnf
+
 # Program init source, that don't have direct linkage with the rest of the
 # source, and can therefore not be part of a library.
 IF[{- !$disabled{uplink} -}]
