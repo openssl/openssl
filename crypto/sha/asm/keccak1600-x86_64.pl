@@ -413,6 +413,7 @@ ___
      ($A_flat,$inp) = ("%r8","%r9");
 $code.=<<___;
 .globl	SHA3_absorb
+.hidden SHA3_absorb
 .type	SHA3_absorb,\@function,4
 .align	32
 SHA3_absorb:
@@ -508,6 +509,7 @@ ___
 
 $code.=<<___;
 .globl	SHA3_squeeze
+.hidden SHA3_squeeze
 .type	SHA3_squeeze,\@function,5
 .align	32
 SHA3_squeeze:

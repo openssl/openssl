@@ -177,6 +177,7 @@ ___
 $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 .globl	bn_GF2m_mul_2x2
+.hidden bn_GF2m_mul_2x2
 .type	bn_GF2m_mul_2x2,\@abi-omnipotent
 .align	16
 bn_GF2m_mul_2x2:

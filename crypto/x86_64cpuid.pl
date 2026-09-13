@@ -38,6 +38,7 @@ print<<___;
 .text
 
 .globl	OPENSSL_atomic_add
+.hidden OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,\@abi-omnipotent
 .align	16
 OPENSSL_atomic_add:
@@ -55,6 +56,7 @@ OPENSSL_atomic_add:
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
 .globl	OPENSSL_rdtsc
+.hidden OPENSSL_rdtsc
 .type	OPENSSL_rdtsc,\@abi-omnipotent
 .align	16
 OPENSSL_rdtsc:
@@ -68,6 +70,7 @@ OPENSSL_rdtsc:
 .size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
 
 .globl	OPENSSL_ia32_cpuid
+.hidden OPENSSL_ia32_cpuid
 .type	OPENSSL_ia32_cpuid,\@function,1
 .align	16
 OPENSSL_ia32_cpuid:
@@ -349,6 +352,7 @@ my $redzone=win64?8:-8;
 
 print<<___;
 .globl	OPENSSL_instrument_bus
+.hidden OPENSSL_instrument_bus
 .type	OPENSSL_instrument_bus,\@abi-omnipotent
 .align	16
 OPENSSL_instrument_bus:
@@ -384,6 +388,7 @@ OPENSSL_instrument_bus:
 .size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
 
 .globl	OPENSSL_instrument_bus2
+.hidden OPENSSL_instrument_bus2
 .type	OPENSSL_instrument_bus2,\@abi-omnipotent
 .align	16
 OPENSSL_instrument_bus2:
@@ -440,6 +445,7 @@ sub gen_random {
 my $rdop = shift;
 print<<___;
 .globl	OPENSSL_ia32_${rdop}_bytes
+.hidden OPENSSL_ia32_${rdop}_bytes
 .type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent
 .align	16
 OPENSSL_ia32_${rdop}_bytes:

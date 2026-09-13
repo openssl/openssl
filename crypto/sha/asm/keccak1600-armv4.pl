@@ -778,6 +778,7 @@ ___
 
 $code.=<<___;
 .global	SHA3_absorb
+.hidden SHA3_absorb
 .type	SHA3_absorb,%function
 .align	5
 SHA3_absorb:
@@ -944,6 +945,7 @@ ___
 
 $code.=<<___;
 .global	SHA3_squeeze
+.hidden SHA3_squeeze
 .type	SHA3_squeeze,%function
 .align	5
 SHA3_squeeze:
@@ -1310,6 +1312,7 @@ KeccakF1600_neon:
 .size	KeccakF1600_neon,.-KeccakF1600_neon
 
 .global	SHA3_absorb_neon
+.hidden SHA3_absorb_neon
 .type	SHA3_absorb_neon, %function
 .align	5
 SHA3_absorb_neon:
@@ -1485,6 +1488,7 @@ SHA3_absorb_neon:
 .size	SHA3_absorb_neon,.-SHA3_absorb_neon
 
 .global	SHA3_squeeze_neon
+.hidden SHA3_squeeze_neon
 .type	SHA3_squeeze_neon, %function
 .align	5
 SHA3_squeeze_neon:

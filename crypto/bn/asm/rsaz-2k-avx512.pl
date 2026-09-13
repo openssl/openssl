@@ -81,6 +81,7 @@ if ($avx512ifma>0) {{{
 $code.=<<___;
 .extern OPENSSL_ia32cap_P
 .globl  ossl_rsaz_avx512ifma_eligible
+.hidden ossl_rsaz_avx512ifma_eligible
 .type   ossl_rsaz_avx512ifma_eligible,\@abi-omnipotent
 .align  32
 ossl_rsaz_avx512ifma_eligible:
@@ -325,6 +326,7 @@ $code.=<<___;
 .text
 
 .globl  ossl_rsaz_amm52x20_x1_ifma256
+.hidden ossl_rsaz_amm52x20_x1_ifma256
 .type   ossl_rsaz_amm52x20_x1_ifma256,\@function,5
 .align 32
 ossl_rsaz_amm52x20_x1_ifma256:
@@ -430,6 +432,7 @@ $code.=<<___;
 .text
 
 .globl  ossl_rsaz_amm52x20_x2_ifma256
+.hidden ossl_rsaz_amm52x20_x2_ifma256
 .type   ossl_rsaz_amm52x20_x2_ifma256,\@function,5
 .align 32
 ossl_rsaz_amm52x20_x2_ifma256:
@@ -552,6 +555,7 @@ $code.=<<___;
 
 .align 32
 .globl  ossl_extract_multiplier_2x20_win5
+.hidden ossl_extract_multiplier_2x20_win5
 .type   ossl_extract_multiplier_2x20_win5,\@abi-omnipotent
 ossl_extract_multiplier_2x20_win5:
 .cfi_startproc
@@ -729,6 +733,7 @@ $code.=<<___;
 .text
 
 .globl  ossl_rsaz_avx512ifma_eligible
+.hidden ossl_rsaz_avx512ifma_eligible
 .type   ossl_rsaz_avx512ifma_eligible,\@abi-omnipotent
 ossl_rsaz_avx512ifma_eligible:
     xor     %eax,%eax
@@ -736,8 +741,11 @@ ossl_rsaz_avx512ifma_eligible:
 .size   ossl_rsaz_avx512ifma_eligible, .-ossl_rsaz_avx512ifma_eligible
 
 .globl  ossl_rsaz_amm52x20_x1_ifma256
+.hidden ossl_rsaz_amm52x20_x1_ifma256
 .globl  ossl_rsaz_amm52x20_x2_ifma256
+.hidden ossl_rsaz_amm52x20_x2_ifma256
 .globl  ossl_extract_multiplier_2x20_win5
+.hidden ossl_extract_multiplier_2x20_win5
 .type   ossl_rsaz_amm52x20_x1_ifma256,\@abi-omnipotent
 ossl_rsaz_amm52x20_x1_ifma256:
 ossl_rsaz_amm52x20_x2_ifma256:
