@@ -38,7 +38,7 @@ typedef struct ossl_method_construct_method_st {
     /* Unreserve the appropriate method store */
     int (*unlock_store)(void *store, void *data);
     /* Get an already existing method from a store */
-    void *(*get)(void *store, const OSSL_PROVIDER **prov, void *data);
+    void *(*get)(void *store, const OSSL_PROVIDER **prov, void *data, int req_optional);
     /* Store a method in a store */
     int (*put)(void *store, void *method, const OSSL_PROVIDER *prov,
         const char *name, const char *propdef, void *data);

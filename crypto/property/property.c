@@ -713,6 +713,8 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  *              Must be non-null.
  * @param nid (identifier) of the method to be fetched. Must be > 0
  * @param prop_query String containing the property query to match against.
+ * @param req_optional - Require optional paramters, allows for exact matching of
+ *                       property query elements.
  * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
  *                to receive the matched provider.
  * @param method Pointer to receive the fetched method. Must be non-null.
@@ -726,7 +728,7 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  * It is a unique internal identifier value.
  */
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
-    int nid, const char *prop_query,
+    int nid, const char *prop_query, int req_optional,
     const OSSL_PROVIDER **prov_rw, void **method)
 {
     OSSL_PROPERTY_LIST **plp;
@@ -820,6 +822,12 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         if (impl != NULL
             && (prov == NULL || impl->provider == prov)) {
             score = ossl_property_match_count(pq, impl->properties);
+            /*
+             * If optional parameres were requested to be required, only consider
+             * this implementation if every parameter was matched
+             */
+            if (optional && req_optional == 1 && score != ossl_property_count(pq))
+                continue;
             if (score > best) {
                 best_impl = impl;
                 best = score;

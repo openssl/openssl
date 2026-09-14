@@ -139,6 +139,10 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
     OSSL_PROVIDER *provider = provider_rw != NULL ? *provider_rw : NULL;
     struct construct_data_st cbdata;
 
+    method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data, 1);
+    if (method != NULL)
+        goto out;
+
     /*
      * We might be tempted to try to look into the method store without
      * constructing to see if we can find our method there already.
@@ -165,11 +169,11 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
     /* If there is a temporary store, try there first */
     if (cbdata.store != NULL)
         method = mcm->get(cbdata.store, (const OSSL_PROVIDER **)provider_rw,
-            mcm_data);
+            mcm_data, 0);
 
     /* If no method was found yet, try the global store */
     if (method == NULL)
-        method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data);
-
+        method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data, 0);
+out:
     return method;
 }
