@@ -2604,7 +2604,7 @@ int speed_main(int argc, char **argv)
         }
         if (lengths_single != 0 && lengths_single < MB_THRESHOLD) {
             BIO_printf(bio_err,
-                "\nError: -mb require len > %d for '-bytes len'\n",
+                "\nError: -mb requires len >= %d for '-bytes len'\n",
                 MB_THRESHOLD);
             goto end;
         }
