@@ -401,6 +401,27 @@ int ASN1_STRING_set1_string(ASN1_STRING *str, const char *c_string)
         strlen(c_string));
 }
 
+int ossl_asn1_string_set1_data(ASN1_STRING *str, const uint8_t *data,
+    size_t len_in)
+{
+    if (str->type == V_ASN1_BIT_STRING) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BITSTRING_FORMAT);
+        return 0;
+    }
+    /* This will go away once ASN1_STRING can size_t internally */
+    if (len_in > INT_MAX) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
+        return 0;
+    }
+    return ossl_asn1_string_set_internal(str, data, (int)len_in, /*add_nul_byte=*/1);
+}
+
+int ossl_asn1_string_set1_string(ASN1_STRING *str, const char *c_string)
+{
+    return ossl_asn1_string_set1_data(str, (const uint8_t *)c_string,
+        strlen(c_string));
+}
+
 ASN1_STRING *ASN1_STRING_new(void)
 {
     return ASN1_STRING_type_new(V_ASN1_OCTET_STRING);
