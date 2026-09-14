@@ -814,7 +814,12 @@ DEF_FUNC(check_flood_stats)
     if (path_challenge_count < 16 || path_response_count < 1)
         F_SPIN_AGAIN();
 
-    if (!TEST_uint64_t_eq(path_challenge_count, 16))
+    /*
+     * The 16 injected PATH_CHALLENGE frames are coalesced into a single
+     * packet, so under loss/PTO the sender may retransmit that packet,
+     * causing the receiver to see more than 16 raw PATH_CHALLENGE frames.
+     */
+    if (!TEST_uint64_t_ge(path_challenge_count, 16))
         goto err;
     if (!TEST_uint64_t_eq(path_response_count, 1))
         goto err;
