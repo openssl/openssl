@@ -588,6 +588,7 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                     OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_INFO,
                         prompt_info,
                         sizeof(prompt_info) - 1),
+                    OSSL_PARAM_uint(OSSL_PASSPHRASE_PARAM_MIN_LENGTH, 0),
                     OSSL_PARAM_END
                 };
 
