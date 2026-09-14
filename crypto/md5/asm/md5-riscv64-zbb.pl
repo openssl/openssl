@@ -239,6 +239,7 @@ $code .= <<___;
 .globl ossl_md5_block_asm_data_order@{[$isaext]}
 .type ossl_md5_block_asm_data_order@{[$isaext]},\@function
 ossl_md5_block_asm_data_order@{[$isaext]}:
+    @{[lpad 0]}
 
     addi sp, sp, -64
 

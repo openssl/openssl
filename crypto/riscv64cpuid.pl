@@ -6,6 +6,10 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use FindBin qw($Bin);
+use lib "$Bin";
+use lib "$Bin/perlasm";
+use riscv;
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
@@ -25,6 +29,7 @@ $code.=<<___;
 .globl CRYPTO_memcmp
 .type   CRYPTO_memcmp,\@function
 CRYPTO_memcmp:
+    @{[lpad 0]}
     li      $x,0
     beqz    $len,2f   # len == 0
 1:
@@ -52,6 +57,7 @@ $code.=<<___;
 .globl OPENSSL_cleanse
 .type   OPENSSL_cleanse,\@function
 OPENSSL_cleanse:
+    @{[lpad 0]}
     beqz    $len,2f         # len == 0, return
     srli    $temp1,$len,4
     bnez    $temp1,3f       # len > 15
@@ -94,6 +100,7 @@ $code .= <<___;
 .globl riscv_vlen_asm
 .type riscv_vlen_asm,\@function
 riscv_vlen_asm:
+    @{[lpad 0]}
     # 0xc22 is CSR vlenb
     csrr $ret, 0xc22
     slli $ret, $ret, 3

@@ -311,6 +311,7 @@ $code .= <<___;
 .globl rv64i_zvkned_cbc_encrypt
 .type rv64i_zvkned_cbc_encrypt,\@function
 rv64i_zvkned_cbc_encrypt:
+    @{[lpad 0]}
     # check whether the length is a multiple of 16 and >= 16
     li $T1, 16
     blt $LEN, $T1, L_end
@@ -449,6 +450,7 @@ $code .= <<___;
 .globl rv64i_zvkned_cbc_decrypt
 .type rv64i_zvkned_cbc_decrypt,\@function
 rv64i_zvkned_cbc_decrypt:
+    @{[lpad 0]}
     # check whether the length is a multiple of 16 and >= 16
     li $T1, 16
     blt $LEN, $T1, L_end
@@ -841,6 +843,7 @@ $code .= <<___;
 .globl rv64i_zvkned_ecb_encrypt
 .type rv64i_zvkned_ecb_encrypt,\@function
 rv64i_zvkned_ecb_encrypt:
+    @{[lpad 0]}
     # Make the LEN become e32 length.
     srli $LEN32, $LEN, 2
 
@@ -952,6 +955,7 @@ $code .= <<___;
 .globl rv64i_zvkned_ecb_decrypt
 .type rv64i_zvkned_ecb_decrypt,\@function
 rv64i_zvkned_ecb_decrypt:
+    @{[lpad 0]}
     # Make the LEN become e32 length.
     srli $LEN32, $LEN, 2
 
@@ -1069,6 +1073,8 @@ $code .= <<___;
 .globl rv64i_zvkned_set_encrypt_key
 .type rv64i_zvkned_set_encrypt_key,\@function
 rv64i_zvkned_set_encrypt_key:
+    @{[lpad 0]}
+
     # Get proper routine for key size
     li $T0, 256
     beq $BITS, $T0, L_set_key_256
@@ -1085,6 +1091,8 @@ $code .= <<___;
 .globl rv64i_zvkned_set_decrypt_key
 .type rv64i_zvkned_set_decrypt_key,\@function
 rv64i_zvkned_set_decrypt_key:
+    @{[lpad 0]}
+
     # Get proper routine for key size
     li $T0, 256
     beq $BITS, $T0, L_set_key_256
@@ -1237,6 +1245,7 @@ $code .= <<___;
 .globl rv64i_zvkned_encrypt
 .type rv64i_zvkned_encrypt,\@function
 rv64i_zvkned_encrypt:
+    @{[lpad 0]}
     # Load number of rounds
     lwu $ROUNDS, 240($KEYP)
 
@@ -1415,6 +1424,7 @@ $code .= <<___;
 .globl rv64i_zvkned_decrypt
 .type rv64i_zvkned_decrypt,\@function
 rv64i_zvkned_decrypt:
+    @{[lpad 0]}
     # Load number of rounds
     lwu $ROUNDS, 240($KEYP)
 

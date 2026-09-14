@@ -73,6 +73,7 @@ $code .= <<___;
 .globl gcm_init_rv64i_zvkb_zvbc
 .type gcm_init_rv64i_zvkb_zvbc,\@function
 gcm_init_rv64i_zvkb_zvbc:
+    @{[lpad 0]}
     # Load/store data in reverse order.
     # This is needed as a part of endianness swap.
     add $H, $H, 8
@@ -130,6 +131,7 @@ $code .= <<___;
 .globl gcm_gmult_rv64i_zvkb_zvbc
 .type gcm_gmult_rv64i_zvkb_zvbc,\@function
 gcm_gmult_rv64i_zvkb_zvbc:
+    @{[lpad 0]}
     ld $TMP0, ($Htable)
     ld $TMP1, 8($Htable)
     li $TMP2, 63
@@ -250,6 +252,7 @@ $code .= <<___;
 .globl gcm_ghash_rv64i_zvkb_zvbc
 .type gcm_ghash_rv64i_zvkb_zvbc,\@function
 gcm_ghash_rv64i_zvkb_zvbc:
+    @{[lpad 0]}
     ld $TMP0, ($Htable)
     ld $TMP1, 8($Htable)
     li $TMP2, 63
