@@ -140,7 +140,7 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
 
     case TLS_ST_SR_COMP_CERT:
     case TLS_ST_SR_CERT:
-        if (!received_client_cert(s)) {
+        if (st->no_cert_verify || !received_client_cert(s)) {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_SR_FINISHED;
                 return 1;
@@ -4095,7 +4095,12 @@ static void tls_clear_pending_client_identity(SSL_CONNECTION *sc)
     sc->s3.tmp.pending_peer_rpk = NULL;
 }
 
-static void tls_clear_client_verification_state(SSL_CONNECTION *sc)
+/*
+ * Clear old verification state before verifying fresh credentials, or after
+ * accepting an empty initial Certificate response. Empty PHA responses retain
+ * the previous state. Do not clear results produced by the new verification.
+ */
+static void tls_clear_client_verification_state(SSL_CONNECTION *sc, long verify_result)
 {
     OSSL_STACK_OF_X509_free(sc->verified_chain);
     sc->verified_chain = NULL;
@@ -4105,7 +4110,7 @@ static void tls_clear_client_verification_state(SSL_CONNECTION *sc)
     X509_free(sc->dane.mcert);
     sc->dane.mcert = NULL;
     sc->dane.mtlsa = NULL;
-    sc->verify_result = X509_V_OK;
+    sc->verify_result = verify_result;
 }
 
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
@@ -4120,7 +4125,8 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     /* Stash the parsed RPK; verification runs in the post-process step. */
     tls_clear_pending_client_identity(sc);
     sc->s3.tmp.pending_peer_rpk = peer_rpk;
-    peer_rpk = NULL;
+    if (peer_rpk != NULL)
+        tls_clear_client_verification_state(sc, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 }
@@ -4133,6 +4139,9 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
     SSL_SESSION *new_sess = NULL;
 
     (void)wst;
+
+    if (SSL_CONNECTION_IS_VERSION13(sc))
+        sc->statem.no_cert_verify = peer_rpk == NULL;
 
     if (peer_rpk == NULL) {
         if ((sc->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
@@ -4162,8 +4171,8 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
      * Sessions must be immutable once they go into the session cache. Otherwise
      * we can get multi-thread problems. Therefore we don't "update" sessions,
      * we replace them with a duplicate. Here, we need to do this every time
-     * a new RPK (or certificate) is received via post-handshake authentication,
-     * as the session may have already gone into the session cache.
+     * a PHA response is accepted, even if empty, because refreshed tickets
+     * will update the session's key and ID.
      */
     if (sc->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(sc->session, 0)) == NULL) {
@@ -4175,20 +4184,12 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
         sc->session = new_sess;
     }
 
-    /* Ensure there is no peer/peer_chain */
-    X509_free(sc->session->peer);
-    sc->session->peer = NULL;
-    sk_X509_pop_free(sc->session->peer_chain, X509_free);
-    sc->session->peer_chain = NULL;
-
-    EVP_PKEY_free(sc->session->peer_rpk);
-    sc->session->peer_rpk = peer_rpk;
-    sc->s3.tmp.pending_peer_rpk = NULL;
-
-    if (peer_rpk == NULL)
-        tls_clear_client_verification_state(sc);
-
-    sc->session->verify_result = sc->verify_result;
+    if (peer_rpk != NULL || sc->post_handshake_auth != SSL_PHA_REQUESTED) {
+        if (peer_rpk == NULL)
+            tls_clear_client_verification_state(sc, X509_V_OK);
+        ossl_session_set0_peer(sc->session, NULL, peer_rpk, sc->verify_result);
+        sc->s3.tmp.pending_peer_rpk = NULL;
+    }
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -4324,7 +4325,8 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      */
     tls_clear_pending_client_identity(s);
     s->s3.tmp.pending_peer_chain = sk;
-    sk = NULL;
+    if (sk_X509_num(sk) > 0)
+        tls_clear_client_verification_state(s, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 
@@ -4356,6 +4358,8 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     (void)wst;
 
     has_cert = sk != NULL && sk_X509_num(sk) > 0;
+    if (SSL_CONNECTION_IS_VERSION13(s))
+        s->statem.no_cert_verify = !has_cert;
     if (!has_cert) {
         /* Fail only if we required a certificate */
         if ((s->verify_mode & SSL_VERIFY_PEER)
@@ -4400,8 +4404,8 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
      * Sessions must be immutable once they go into the session cache. Otherwise
      * we can get multi-thread problems. Therefore we don't "update" sessions,
      * we replace them with a duplicate. Here, we need to do this every time
-     * a new certificate is received via post-handshake authentication, as the
-     * session may have already gone into the session cache.
+     * a PHA response is accepted, even if empty, because refreshed tickets
+     * will update the session's key and ID.
      */
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
@@ -4413,23 +4417,15 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
         s->session = new_sess;
     }
 
-    X509_free(s->session->peer);
-    s->session->peer = NULL;
-    OSSL_STACK_OF_X509_free(s->session->peer_chain);
-    s->session->peer_chain = NULL;
-    EVP_PKEY_free(s->session->peer_rpk);
-    s->session->peer_rpk = NULL;
-
-    if (has_cert) {
-        /* Server keeps the EE cert in session->peer; peer_chain holds issuers only. */
-        s->session->peer = sk_X509_shift(sk);
-        s->session->peer_chain = sk;
-        s->s3.tmp.pending_peer_chain = NULL;
-        s->session->verify_result = s->verify_result;
-    } else {
+    if (!has_cert) {
         tls_clear_pending_client_identity(s);
-        tls_clear_client_verification_state(s);
-        s->session->verify_result = s->verify_result;
+        sk = NULL;
+        if (s->post_handshake_auth != SSL_PHA_REQUESTED)
+            tls_clear_client_verification_state(s, X509_V_OK);
+    }
+    if (has_cert || s->post_handshake_auth != SSL_PHA_REQUESTED) {
+        ossl_session_set0_peer(s->session, sk, NULL, s->verify_result);
+        s->s3.tmp.pending_peer_chain = NULL;
     }
 
     /*
