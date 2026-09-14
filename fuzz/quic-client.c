@@ -16,9 +16,6 @@
 #include "internal/time.h"
 #include "internal/quic_ssl.h"
 
-/* unused, to avoid warning. */
-static int idx;
-
 static OSSL_TIME fake_now;
 
 static OSSL_TIME fake_now_cb(void *arg)
@@ -35,7 +32,9 @@ int FuzzerInitialize(int *argc, char ***argv)
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
-    idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    if (SSL_get_ex_data_X509_STORE_CTX_idx() == 0) {
+        /* Just suppress warning */
+    }
     comp_methods = SSL_COMP_get_compression_methods();
     if (comp_methods != NULL)
         sk_SSL_COMP_sort(comp_methods);
