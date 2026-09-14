@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
+   X509_OBJECT_up_ref_count() does not reference count the X509_OBJECT itself.
+   With X509_OBJECT being opaque there is nothing useful an application can do
+   with it.
+   <!-- https://github.com/openssl/openssl/pull/32823 -->
+
+   *Daniel Kubec*
+
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
    parameter and returns 1 for an approved operation.  The absence of an

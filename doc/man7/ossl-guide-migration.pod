@@ -18,6 +18,23 @@ L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
 For an overview of some of the key concepts introduced since OpenSSL 3.0, see
 L<crypto(7)>.
 
+=head1 OPENSSL 4.2
+
+=head2 Main Changes from OpenSSL 4.1
+
+=head3 Deprecation of X509_OBJECT_up_ref_count()
+
+This function has been deprecated in OpenSSL 4.2.  Despite its name, it does
+not increment a reference count on the B<X509_OBJECT> itself, which is not
+reference counted, but on the certificate or CRL it contains, and it does not
+return that object.  Since B<X509_OBJECT> is opaque there is nothing useful an
+application can do with it; the library maintains the reference counts of the
+contained objects internally.
+
+Applications that need their own reference to the contained object should
+retrieve it with X509_OBJECT_get0_X509() or X509_OBJECT_get0_X509_CRL() and
+call L<X509_up_ref(3)> or X509_CRL_up_ref() on the result.
+
 =head1 OPENSSL 4.1
 
 =head2 Main Changes from OpenSSL 4.0

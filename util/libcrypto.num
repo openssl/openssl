@@ -4963,7 +4963,7 @@ X509_STORE_CTX_set_depth                4960	4_0_0	EXIST::FUNCTION:
 X509_OBJECT_idx_by_subject              4961	4_0_0	EXIST::FUNCTION:
 X509_OBJECT_retrieve_by_subject         4962	4_0_0	EXIST::FUNCTION:
 X509_OBJECT_retrieve_match              4963	4_0_0	EXIST::FUNCTION:
-X509_OBJECT_up_ref_count                4964	4_0_0	EXIST::FUNCTION:
+X509_OBJECT_up_ref_count                4964	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_2
 X509_OBJECT_new                         4965	4_0_0	EXIST::FUNCTION:
 X509_OBJECT_free                        4966	4_0_0	EXIST::FUNCTION:
 X509_OBJECT_get_type                    4967	4_0_0	EXIST::FUNCTION:
