@@ -713,7 +713,7 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  *              Must be non-null.
  * @param nid (identifier) of the method to be fetched. Must be > 0
  * @param prop_query String containing the property query to match against.
- * @param req_optional - Require optional paramters, allows for exact matching of
+ * @param req_optional - Require optional parameters, allows for exact matching of
  *                       property query elements.
  * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
  *                to receive the matched provider.
