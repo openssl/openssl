@@ -1023,7 +1023,8 @@ AAD = 03f0070a79b12303672101636f328ab0
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1032,7 +1033,8 @@ AAD = 99c810afc11b77d4412cd9b97af70ad5
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 1 in tag
 
@@ -1043,7 +1045,8 @@ AAD = cfa976557c23db250f68942d98eb419f
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1052,7 +1055,8 @@ AAD = 59f5f5db9d3ba92bf1afc586572f3e78
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = 03c0e39b77bd62d32568f4c86c90bfdb
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1061,7 +1065,8 @@ AAD = 5359162097d4b81eb7e6cb03e1f553f7
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1070,7 +1075,8 @@ AAD = 3156ed845ca9b8ca81bb82ea5cdbbbce
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 7 in tag
 
@@ -1081,7 +1087,8 @@ AAD = 11305e865df4324a48b699077c39d86c
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1090,7 +1097,8 @@ AAD = bec93c483172b077b02e317e851dde66
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 8 in tag
 
@@ -1101,7 +1109,8 @@ AAD = 24190fbe5aaf71dc28fbfa81fa2ab5cd
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = 03c0e39b77bd62d32568f4c86c90bfdb
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1110,7 +1119,8 @@ AAD = c341c3c57ca93a5ec1b6719ac9c1ab61
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 31 in tag
 
@@ -1121,7 +1131,8 @@ AAD = 9a4547103c602b7162eff0ddd418eac4
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = 03c0e39b77bd62d32568f4c86c90bfdb
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 32 in tag
 
@@ -1132,7 +1143,8 @@ AAD = cedee8dfdbd2c03788bb9bc2ea878ba6
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = 03c0e39b77bd62d32568f4c86c90bfdb
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1141,7 +1153,8 @@ AAD = a9186b3edd3045a31de4849daacca427
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1150,7 +1163,8 @@ AAD = fbc2f26495e24fd7edf5af3dbcc51de2
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 56 in tag
 
@@ -1161,7 +1175,8 @@ AAD = 1a1f7bf779e3a8e27682d3a11775521c
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 63 in tag
 
@@ -1172,7 +1187,8 @@ AAD = 0b3af1bf11c433e96b1999fb61b914db
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1181,7 +1197,8 @@ AAD = eb43f1330ba8dd9e58db1eed9a922379
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 64 in tag
 
@@ -1192,7 +1209,8 @@ AAD = 7667351fcc287d928b13b0487faf25cb
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 88 in tag
 
@@ -1203,7 +1221,8 @@ AAD = 1837f7e3a8bda9ced67276df7d502660
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = 03c0e39b77bd62d32568f4c86c90bfdb
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 96 in tag
 
@@ -1214,7 +1233,8 @@ AAD = 572fe3c8f4252b406a29de54f8d647b9
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 97 in tag
 
@@ -1225,7 +1245,8 @@ AAD = 0d9a70f424c1b7bef5f2815936e1066f
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1234,7 +1255,8 @@ AAD = b4bd54fffa65f860e2dd946c5acbd1bf
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1243,7 +1265,8 @@ AAD = aa2dcf95c116899caac81ffe849db175
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 120 in tag
 
@@ -1254,7 +1277,8 @@ AAD = ebb6ae55450b6ec1729d8e665593ec6b
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1263,7 +1287,8 @@ AAD = f6d899626b78e9a2add3b84ce32616a5
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 121 in tag
 
@@ -1274,7 +1299,8 @@ AAD = 4b75706129f4a319104f855c9d669468
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1283,7 +1309,8 @@ AAD = 5a500a23cdceac75d7e09a9aa44ccbe2
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1292,7 +1319,8 @@ AAD = b0bfb9b0540f406b3f4c24645c271267
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 126 in tag
 
@@ -1303,7 +1331,8 @@ AAD = 8490a59a5b38c19f64ae118d0b365d67
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-128-gcm-siv
 Key = 00112233445566778899aabbccddeeff
@@ -1312,7 +1341,8 @@ AAD = ac6bca20c9c70424039906daa8fe89e6
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 127 in tag
 
@@ -1323,7 +1353,8 @@ AAD = 6e180bfa1433aeadce7030018bc613a5
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 0fed395814f1750a
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 0..127 in tag
 
@@ -1334,7 +1365,8 @@ AAD = edc723bedd0078696acdea005c74b841
 Tag = 00000000000000000000000000000000
 Plaintext = 63995888995b338c
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = RFC 8452
 
@@ -1871,7 +1903,8 @@ AAD = a5b997fe28ddf26fe182eb8db608bd14
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1880,7 +1913,8 @@ AAD = 5906c4d15a8dc345026d29c98e55cfcd
 Tag = 00000000000000000000000000000000
 Plaintext = 759dfbbb8a251ccc
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1889,7 +1923,8 @@ AAD = de645c9a49b8e777ca18c54048b7bde8
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 1 in tag
 
@@ -1900,7 +1935,8 @@ AAD = 3dbceccc23f7bc994c4df048e43c59fb
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1909,7 +1945,8 @@ AAD = 369e1e751ac0d45a5401775304dbe1a0
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1918,7 +1955,8 @@ AAD = 0bf63034cdfd77e90b94936583199da8
 Tag = 00000000000000000000000000000000
 Plaintext = 759dfbbb8a251ccc
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 7 in tag
 
@@ -1929,7 +1967,8 @@ AAD = 2241caabc859139436c23a274eebf0d1
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1938,7 +1977,8 @@ AAD = 9b6589f03d26c71a67ffb6c9bea6fdb5
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 8 in tag
 
@@ -1949,7 +1989,8 @@ AAD = 086f2deb0c0e871a2a38df9adc1f3e9d
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 31 in tag
 
@@ -1960,7 +2001,8 @@ AAD = 9dbcadbc6f27b088037e6f738b16c105
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1969,7 +2011,8 @@ AAD = d44919c638e293a9ce8647d00b8e58c5
 Tag = 00000000000000000000000000000000
 Plaintext = 759dfbbb8a251ccc
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1978,7 +2021,8 @@ AAD = c0537898455fa05d51f7554f12596617
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 32 in tag
 
@@ -1989,7 +2033,8 @@ AAD = 45ba6c8dd2f6364e32e43429eee15faa
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -1998,7 +2043,8 @@ AAD = 1d6b385d7eee3e166a8e2776755602fd
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2007,7 +2053,8 @@ AAD = 7a972ec263df56ebe4f001a718e47200
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 56 in tag
 
@@ -2018,7 +2065,8 @@ AAD = fd9d1ffd0dcfe6f0a1c2695477b1cd96
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2027,7 +2075,8 @@ AAD = 7e5cbe5af5820f0757072bab5758d327
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 63 in tag
 
@@ -2038,7 +2087,8 @@ AAD = 9294a1bd55de4c4f642ed5b9b2058da6
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2047,7 +2097,8 @@ AAD = a3afb9ce48b7cd22dddd8f37cd451cd8
 Tag = 00000000000000000000000000000000
 Plaintext = 759dfbbb8a251ccc
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 88 in tag
 
@@ -2058,7 +2109,8 @@ AAD = f4cf766370972a85f9b1f511e5ea693a
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2067,7 +2119,8 @@ AAD = ddb6b2168243150206fe5c513f7e6c37
 Tag = 00000000000000000000000000000000
 Plaintext = 759dfbbb8a251ccc
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2076,7 +2129,8 @@ AAD = 63d504e4e4729cb5c8a29bc08723efe4
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 96 in tag
 
@@ -2087,7 +2141,8 @@ AAD = 1fed71d3675dd386d3c65664710b3eba
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2096,7 +2151,8 @@ AAD = 454aac70fc89f9de4e045e46bcb048c0
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2105,7 +2161,8 @@ AAD = 8ecff481b5c13a653d624e3441c6573c
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 97 in tag
 
@@ -2116,7 +2173,8 @@ AAD = 0591c8849ce9f1aaee5769eb3e28d51a
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 120 in tag
 
@@ -2127,7 +2185,8 @@ AAD = c61613923b69169d512bdc788bfa62a3
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 121 in tag
 
@@ -2138,7 +2197,8 @@ AAD = e5879b6d2d5bb63b290b49a08e631f6a
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2147,7 +2207,8 @@ AAD = 00ea3f6b86feece042d68677fd378635
 Tag = 00000000000000000000000000000000
 Plaintext = 759dfbbb8a251ccc
 Ciphertext = 0000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2156,7 +2217,8 @@ AAD = 5a95d77d7e02d9b92c59b9618f276f38
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 126 in tag
 
@@ -2167,7 +2229,8 @@ AAD = 498eeebd21577b187a36c59285864cd2
 Tag = 0987e35e40981a2730c1740c7201731f
 Plaintext = 
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Cipher = aes-256-gcm-siv
 Key = 00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
@@ -2176,7 +2239,8 @@ AAD = 3305208cc80840a9b49616b1109ef788
 Tag = 13a1883272188b4c8d2727178198fe95
 Plaintext = f663044a4e7dd822aba0b7de2d869981
 Ciphertext = 00000000000000000000000000000000
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 127 in tag
 
@@ -2187,7 +2251,8 @@ AAD = 5e53ca98c89c017426e4bc07090840b0
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
 
 Title = Flipped bit 0..127 in tag
 
@@ -2198,4 +2263,5 @@ AAD = 55a2987aa94bf46ad1b6d253a44c1622
 Tag = ffffffffffffffffffffffffffffffff
 Plaintext = 49861b1fb6bcf8e4
 Ciphertext = ffffffffffffffff
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
