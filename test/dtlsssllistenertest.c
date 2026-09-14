@@ -4615,7 +4615,6 @@ static SSL_CTX *new_pending_cb_expected_ctx;
 static void *new_pending_cb_expected_arg;
 static int new_pending_cb_ctx_matched;
 static int new_pending_cb_arg_matched;
-static SSL *new_pending_cb_last_ssl;
 
 /*
  * Reset the file-scope callback state before registering the callback for
@@ -4643,13 +4642,11 @@ static void new_pending_cb_reset(SSL_CTX *ctx, void *arg, int allow_remaining)
     new_pending_cb_expected_arg = arg;
     new_pending_cb_ctx_matched = 1;
     new_pending_cb_arg_matched = 1;
-    new_pending_cb_last_ssl = NULL;
 }
 
 static int new_pending_cb_fn(SSL_CTX *ctx, SSL *new_ssl, void *arg)
 {
     new_pending_cb_call_count++;
-    new_pending_cb_last_ssl = new_ssl;
     if (ctx != new_pending_cb_expected_ctx)
         new_pending_cb_ctx_matched = 0;
     if (arg != new_pending_cb_expected_arg)
