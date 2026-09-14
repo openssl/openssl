@@ -5738,3 +5738,7 @@ i2d_IPAddrBlocks                        ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_free                       ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_new                        ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_it                         ?	4_1_0	EXIST::FUNCTION:RFC3779
+PEM_read_PKCS12                         ?	4_1_0	EXIST::FUNCTION:STDIO
+PEM_read_bio_PKCS12                     ?	4_1_0	EXIST::FUNCTION:
+PEM_write_PKCS12                        ?	4_1_0	EXIST::FUNCTION:STDIO
+PEM_write_bio_PKCS12                    ?	4_1_0	EXIST::FUNCTION:
