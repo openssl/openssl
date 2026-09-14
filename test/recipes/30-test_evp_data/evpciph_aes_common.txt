@@ -35,7 +35,7 @@ Ciphertext = 8EA2B7CA516745BFEAFC49904B496089
 
 # ECB Encryption is no longer approved
 Availablein = fips
-FIPSversion = >=4.1.0
+FIPSversion = >=4.2.0
 Cipher = AES-256-ECB
 Unapproved = 1
 NoFIPSCallback = 1
