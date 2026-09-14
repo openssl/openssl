@@ -273,7 +273,7 @@ The provider MAC interface was introduced in OpenSSL 3.0.
 The parameters "no-short-mac" and "fips-indicator" were added in OpenSSL 3.4.
 
 The function OSSL_FUNC_mac_init_skey() was introduced in OpenSSL 3.5.
-The function OSSL_FUNC_mac_cleanse() was added in OpenSSL 4.1.
+The function OSSL_FUNC_mac_cleanse() was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

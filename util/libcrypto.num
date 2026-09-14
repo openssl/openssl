@@ -5738,3 +5738,4 @@ i2d_IPAddrBlocks                        ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_free                       ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_new                        ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_it                         ?	4_1_0	EXIST::FUNCTION:RFC3779
+EVP_MAC_cleanse                         ?	4_2_0	EXIST::FUNCTION:
