@@ -167,11 +167,13 @@ static const int mb_lengths_list[] = {
 #define MB_LENGTHS_TYPE 2
 /*
  * MB_THRESHOLD is determined as follows:
- * EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,...)
- * may halt if mb_param.len < 913, leaving no error code (and exits
- * with return code 139 (Segmentation Fault) if mb_param.len < 408).
+ * EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,...)
+ * - exits with return code 139 (Segmentation Fault) if mb_param.len < 408,
+ * - may halt leaving no error code if mb_param.len < 913,
+ * - produces incorrect MACs on some SHA implementations for
+ *   913 <= mb_param.len <= 919.
  */
-#define MB_THRESHOLD 913
+#define MB_THRESHOLD 920
 static uint8_t multiblock = 0; /* multi-block option flag */
 #endif /* OPENSSL_NO_MULTIBLOCK */
 
