@@ -1656,6 +1656,104 @@ end:
 
     return testresult;
 }
+
+/*
+ * After a DTLSv1.3 handshake every record is protected, so a malformed
+ * handshake fragment can only reach dtls1_process_out_of_seq_message() from
+ * inside a record that decrypts correctly. Without a fatal error on that path
+ * read_state_machine() treats the failure as a dropped post-handshake message
+ * and returns to reading application data. The server must instead fail with
+ * a fatal alert that terminates the connection.
+ */
+static int test_out_of_seq_bad_fragment_dtls13(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    SSL_CONNECTION *ssc, *csc;
+    OSSL_RECORD_TEMPLATE tmpl;
+    unsigned int msg_seq;
+    char buf[16];
+    int ret, testresult = 0;
+    unsigned char fragment[] = {
+        SSL3_MT_KEY_UPDATE, /* message type */
+        0, 0, 1, /* message length */
+        0, 0, /* message sequence: patched below */
+        0, 0, 1, /* fragment offset */
+        0, 0, 1, /* fragment length: offset + length > message length */
+        0 /* message body */
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(do_dtls13_handshake(sssl, cssl))
+        || !TEST_true(drain_ssl(cssl))
+        || !TEST_true(drain_ssl(sssl)))
+        goto end;
+
+    if (!TEST_ptr(ssc = SSL_CONNECTION_FROM_SSL_ONLY(sssl))
+        || !TEST_ptr(csc = SSL_CONNECTION_FROM_SSL_ONLY(cssl)))
+        goto end;
+
+    /*
+     * The forged record must be protected under the application epoch or the
+     * server drops it at the record layer before the handshake code sees it.
+     */
+    if (!TEST_true(SSL_is_init_finished(sssl))
+        || !TEST_uint64_t_eq(csc->rlayer.wrl->epoch, DTLS13_APPLICATION_EPOCH))
+        goto end;
+
+    /* Any sequence other than the expected one takes the out-of-sequence path */
+    msg_seq = ssc->d1->handshake_read_seq + 1;
+    fragment[4] = (unsigned char)(msg_seq >> 8);
+    fragment[5] = (unsigned char)msg_seq;
+
+    /*
+     * SSL_write() only sends application data and do_dtls1_write() is not
+     * exported from libssl, so write the handshake record through the client's
+     * record layer directly. This protects it under the current write epoch.
+     */
+    tmpl.type = SSL3_RT_HANDSHAKE;
+    tmpl.version = DTLS1_2_VERSION;
+    tmpl.buf = fragment;
+    tmpl.buflen = sizeof(fragment);
+    if (!TEST_int_gt(csc->rlayer.wrlmethod->write_records(csc->rlayer.wrl,
+                         &tmpl, 1),
+            0))
+        goto end;
+
+    ret = SSL_read(sssl, buf, sizeof(buf));
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(sssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_EXCESSIVE_MESSAGE_SIZE)
+        || !TEST_int_eq(ssc->statem.state, MSG_FLOW_ERROR))
+        goto end;
+    ERR_clear_error();
+
+    /* The client must receive the fatal alert */
+    ret = SSL_read(cssl, buf, sizeof(buf));
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(cssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_AD_REASON_OFFSET + SSL_AD_ILLEGAL_PARAMETER)
+        || !TEST_true((SSL_get_shutdown(cssl) & SSL_RECEIVED_SHUTDOWN) != 0))
+        goto end;
+    ERR_clear_error();
+
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 /* Confirm that we can create a connections using DTLSv1_listen() */
@@ -1745,6 +1843,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert_plant, 3);
     ADD_TEST(test_dtls13_epoch0_plaintext_alert);
     ADD_TEST(test_dtls13_ccm8_not_offered);
+    ADD_TEST(test_out_of_seq_bad_fragment_dtls13);
 #endif
 
     return 1;
