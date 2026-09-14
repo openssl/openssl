@@ -772,9 +772,9 @@ Enable legacy TLS EC groups that were deprecated in RFC8422.  These are the
 Koblitz curves, B<secp160r1>, B<secp160r2>, B<secp192r1>, B<secp224r1>, and the
 binary Elliptic curves that would also be disabled by C<no-ec2m>.
 
-### enable-ec_expicit_curves
+### enable-ec_explicit_curves
 
-Enable support for explictitly specified elliptic curves not matching the
+Enable support for explicitly specified elliptic curves not matching the
 well-known ones. Until this option is on, such curves can't be instantiated
 from ASN.1 formats.
 
