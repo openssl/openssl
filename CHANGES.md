@@ -531,6 +531,16 @@ OpenSSL 4.1
    or `ASN1_STRING_set1_string()`, and `ASN1_STRING_get_length()` should be used
    in their place.  This prepares the `ASN1_STRING` type to support modern
    `size_t` length values in the future.
+
+   The data of an `ASN1_STRING` has never been guaranteed to be
+   NUL-terminated, although some operations terminated it anyway.  A future
+   release will stop doing so; the new setters above already do not add a
+   terminator.  Strings built by libcrypto itself, including decoded ones,
+   still carry one, but when OpenSSL is built with AddressSanitizer or
+   MemorySanitizer that byte is marked inaccessible, so treating the result
+   of `ASN1_STRING_get0_data()` as a C string (`strlen()`, `%s`, `strdup()`
+   and the like) is reported as an error.  All such uses must be changed to
+   honour `ASN1_STRING_get_length()`.
    <!-- https://github.com/openssl/openssl/pull/31194 -->
 
    *Bob Beck*

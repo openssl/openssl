@@ -13,6 +13,24 @@
 #include <openssl/asn1.h>
 #include "asn1_local.h"
 
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define ASN1_HAVE_ASAN 1
+#endif
+#if __has_feature(memory_sanitizer)
+#define ASN1_HAVE_MSAN 1
+#endif
+#endif /* defined(__has_feature) */
+#if defined(__SANITIZE_ADDRESS__) && !defined(ASN1_HAVE_ASAN)
+#define ASN1_HAVE_ASAN 1
+#endif
+#if defined(ASN1_HAVE_ASAN)
+#include <sanitizer/asan_interface.h>
+#endif
+#if defined(ASN1_HAVE_MSAN)
+#include <sanitizer/msan_interface.h>
+#endif
+
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
     long max);
 static void asn1_put_length(unsigned char **pp, int length);
@@ -290,6 +308,37 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     return ret;
 }
 
+/**
+ * @brief Mark the NUL terminator at p as inaccessible to memory checkers.
+ * Under AddressSanitizer and MemorySanitizer a read of the byte is reported
+ * as an error, so C-string use of ASN1_STRING data is caught while the byte
+ * stays present for builds without a sanitizer.
+ * @param p the terminator byte
+ */
+static void poison_terminator(uint8_t *p)
+{
+#if defined(ASN1_HAVE_ASAN)
+    ASAN_POISON_MEMORY_REGION(p, 1);
+#endif
+#if defined(ASN1_HAVE_MSAN)
+    __msan_poison(p, 1);
+#endif
+}
+
+/**
+ * @brief Make the byte at p accessible again before it is written.
+ * @param p the byte about to hold a NUL terminator
+ */
+static void unpoison_terminator(uint8_t *p)
+{
+#if defined(ASN1_HAVE_ASAN)
+    ASAN_UNPOISON_MEMORY_REGION(p, 1);
+#endif
+#if defined(ASN1_HAVE_MSAN)
+    __msan_unpoison(p, 1);
+#endif
+}
+
 int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
     int len_in, int add_nul_byte)
 {
@@ -348,15 +397,18 @@ int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
     /* length never includes the added \0 byte */
     str->length = (int)len;
 
-    if (data != NULL && str->data != NULL) {
+    if (data != NULL && str->data != NULL)
         memcpy(str->data, data, len);
-        if (add_nul_byte) {
-            /*
-             * Add a '\0' terminator. This should not be necessary - but we add it as
-             * a safety precaution
-             */
+    if (add_nul_byte) {
+        /*
+         * The terminator byte lies beyond str->length. It is written only
+         * when data is supplied, and is inaccessible to memory checkers
+         * either way; see poison_terminator().
+         */
+        unpoison_terminator(&str->data[len]);
+        if (data != NULL)
             str->data[len] = '\0';
-        }
+        poison_terminator(&str->data[len]);
     }
     ossl_asn1_bit_string_clear_unused_bits(str);
 
