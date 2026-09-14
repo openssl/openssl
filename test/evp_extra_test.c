@@ -8055,6 +8055,434 @@ static int test_aes_cbc_hmac_sha_large_multiblock_aad(void)
 
     return test_aes_cbc_hmac_sha_reject_multiblock_params(params);
 }
+
+/*
+ * Short-lane requests must fail; public parameter validation may reject
+ * them before the backend is called.
+ */
+static const struct {
+    const char *cipher;
+    size_t len;
+    unsigned int interleave;
+} short_mb_enc_tests[] = {
+    { "AES-128-CBC-HMAC-SHA256", 13, 4 },
+    { "AES-128-CBC-HMAC-SHA1", 13, 4 },
+    { "AES-128-CBC-HMAC-SHA256", 407, 8 }, /* issue #31819 crash size */
+    { "AES-128-CBC-HMAC-SHA1", 407, 8 },
+    { "AES-128-CBC-HMAC-SHA256", 456, 4 }, /* 4 x 114 */
+    { "AES-128-CBC-HMAC-SHA1", 456, 4 },
+    { "AES-128-CBC-HMAC-SHA256", 912, 8 }, /* 8 x 114, all-zero bulk */
+    { "AES-128-CBC-HMAC-SHA1", 912, 8 },
+    { "AES-128-CBC-HMAC-SHA256", 913, 8 }, /* 7 x 114 + 115 */
+    { "AES-128-CBC-HMAC-SHA1", 913, 8 },
+    { "AES-128-CBC-HMAC-SHA256", 919, 8 }, /* 7 x 114 + 121 */
+    { "AES-128-CBC-HMAC-SHA1", 919, 8 },
+};
+
+static int test_aes_cbc_hmac_sha_short_multiblock_enc(int idx)
+{
+    const char *name = short_mb_enc_tests[idx].cipher;
+    size_t len = short_mb_enc_tests[idx].len;
+    unsigned int interleave = short_mb_enc_tests[idx].interleave;
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[16] = { 0 };
+    unsigned char in[919] = { 0 }, out[2048] = { 0 };
+    OSSL_PARAM params[4];
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_size_t_le(len, sizeof(in)))
+        return 0;
+
+    cipher = EVP_CIPHER_fetch(testctx, name, "provider=default");
+    if (cipher == NULL) {
+        ERR_clear_error();
+        return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
+    }
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL)))
+        goto end;
+
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, out, len);
+    params[1] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, in, len);
+    params[2] = OSSL_PARAM_construct_uint(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &interleave);
+    params[3] = OSSL_PARAM_construct_end();
+
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto end;
+
+    ERR_clear_error();
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/* Check AAD layout validation at the per-lane length limits. */
+static const struct {
+    const char *cipher;
+    size_t len;
+    unsigned int interleave;
+    size_t packlen; /* 0 means the request must be rejected */
+} mb_aad_lane_tests[] = {
+    { "AES-128-CBC-HMAC-SHA256", 456, 4, 0 }, /* 4 x 114 */
+    { "AES-128-CBC-HMAC-SHA256", 457, 4, 0 }, /* 3 x 114 + 115, SHAEXT */
+    { "AES-128-CBC-HMAC-SHA256", 459, 4, 0 }, /* 3 x 114 + 117, SHAEXT */
+    { "AES-128-CBC-HMAC-SHA256", 460, 4, 724 }, /* 4 x 115 */
+    { "AES-128-CBC-HMAC-SHA256", 407, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA256", 408, 8, 0 }, /* 8 x 51 */
+    { "AES-128-CBC-HMAC-SHA256", 912, 8, 0 }, /* 8 x 114, all-zero bulk */
+    { "AES-128-CBC-HMAC-SHA256", 913, 8, 0 }, /* 7 x 114 + 115 */
+    { "AES-128-CBC-HMAC-SHA256", 919, 8, 0 }, /* 7 x 114 + 121 */
+    { "AES-128-CBC-HMAC-SHA256", 920, 8, 1448 }, /* 8 x 115 */
+    { "AES-128-CBC-HMAC-SHA256", 65535, 4, 0 }, /* last lane 16386 */
+    { "AES-128-CBC-HMAC-SHA256", 65536, 4, 65812 },
+    { "AES-128-CBC-HMAC-SHA256", 131071, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA256", 131072, 8, 131624 },
+    { "AES-128-CBC-HMAC-SHA1", 456, 4, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 457, 4, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 459, 4, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 460, 4, 660 },
+    { "AES-128-CBC-HMAC-SHA1", 407, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 408, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 912, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 913, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 919, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 920, 8, 1320 },
+    { "AES-128-CBC-HMAC-SHA1", 65535, 4, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 65536, 4, 65748 },
+    { "AES-128-CBC-HMAC-SHA1", 131071, 8, 0 },
+    { "AES-128-CBC-HMAC-SHA1", 131072, 8, 131496 },
+};
+
+static int test_aes_cbc_hmac_sha_multiblock_aad_lanes(int idx)
+{
+    const char *name = mb_aad_lane_tests[idx].cipher;
+    size_t len = mb_aad_lane_tests[idx].len;
+    unsigned int interleave = mb_aad_lane_tests[idx].interleave;
+    size_t expected = mb_aad_lane_tests[idx].packlen;
+    static unsigned char aad[131072];
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[16] = { 0 };
+    OSSL_PARAM params[3], getparams[3];
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    size_t packlen = 0;
+    unsigned int cached_il = 0;
+    int ret = 0;
+
+    if (!TEST_size_t_le(len, sizeof(aad)))
+        return 0;
+
+    cipher = EVP_CIPHER_fetch(testctx, name, "provider=default");
+    if (cipher == NULL) {
+        ERR_clear_error();
+        return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
+    }
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL)))
+        goto end;
+
+    memset(aad, 0, EVP_AEAD_TLS1_AAD_LEN);
+    aad[8] = SSL3_RT_APPLICATION_DATA;
+    aad[9] = (unsigned char)(TLS1_2_VERSION >> 8);
+    aad[10] = (unsigned char)TLS1_2_VERSION;
+    /* aad[11] = aad[12] = 0: the parameter size is the aggregate length */
+
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, aad, len);
+    params[1] = OSSL_PARAM_construct_uint(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &interleave);
+    params[2] = OSSL_PARAM_construct_end();
+
+    getparams[0] = OSSL_PARAM_construct_size_t(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN, &packlen);
+    getparams[1] = OSSL_PARAM_construct_uint(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &cached_il);
+    getparams[2] = OSSL_PARAM_construct_end();
+
+    if (expected == 0) {
+        if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+            goto end;
+
+        ERR_clear_error();
+        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, getparams))
+            || !TEST_size_t_eq(packlen, 0)
+            || !TEST_uint_eq(cached_il, 0))
+            goto end;
+        ret = 1;
+        goto end;
+    }
+
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, getparams))
+        || !TEST_size_t_eq(packlen, expected)
+        || !TEST_uint_eq(cached_il, interleave))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/* Failed AAD setup must not mix an old packlen with a new interleave. */
+static int test_aes_cbc_hmac_sha_multiblock_aad_clears_on_fail(int idx)
+{
+    static const char *names[] = {
+        "AES-128-CBC-HMAC-SHA256",
+        "AES-128-CBC-HMAC-SHA1",
+    };
+    const char *name = names[idx];
+    static unsigned char aad[460];
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[16] = { 0 };
+    unsigned int interleave = 4, cached_il = 0;
+    size_t packlen = 0;
+    OSSL_PARAM params[3], getparams[3];
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    int ret = 0;
+
+    cipher = EVP_CIPHER_fetch(testctx, name, "provider=default");
+    if (cipher == NULL) {
+        ERR_clear_error();
+        return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
+    }
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL)))
+        goto end;
+
+    memset(aad, 0, EVP_AEAD_TLS1_AAD_LEN);
+    aad[8] = SSL3_RT_APPLICATION_DATA;
+    aad[9] = (unsigned char)(TLS1_2_VERSION >> 8);
+    aad[10] = (unsigned char)TLS1_2_VERSION;
+
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, aad, sizeof(aad));
+    params[1] = OSSL_PARAM_construct_uint(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &interleave);
+    params[2] = OSSL_PARAM_construct_end();
+    getparams[0] = OSSL_PARAM_construct_size_t(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN, &packlen);
+    getparams[1] = OSSL_PARAM_construct_uint(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &cached_il);
+    getparams[2] = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, getparams))
+        || !TEST_size_t_gt(packlen, 0)
+        || !TEST_uint_eq(cached_il, 4))
+        goto end;
+
+    /* TLS 1.0 is rejected after the cache has already been cleared. */
+    aad[9] = (unsigned char)(TLS1_VERSION >> 8);
+    aad[10] = (unsigned char)TLS1_VERSION;
+    interleave = 8;
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto end;
+    ERR_clear_error();
+    packlen = 1;
+    cached_il = 1;
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, getparams))
+        || !TEST_size_t_eq(packlen, 0)
+        || !TEST_uint_eq(cached_il, 0))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/*
+ * Reject 913-byte encryption after 920-byte AAD setup, in the provider or
+ * backend. The output allocation fits both layouts.
+ */
+static int test_aes_cbc_hmac_sha_multiblock_ctrl_reject_mixed(int idx)
+{
+    static const char *names[] = {
+        "AES-128-CBC-HMAC-SHA256",
+        "AES-128-CBC-HMAC-SHA1",
+    };
+    const char *name = names[idx];
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[16] = { 0 };
+    static const unsigned char mac_key[32] = { 0 };
+    unsigned char in[913] = { 0 };
+    unsigned char aad[EVP_AEAD_TLS1_AAD_LEN] = { 0 };
+    unsigned char *out = NULL;
+    EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    int packlen, ret = 0;
+
+    cipher = EVP_CIPHER_fetch(testctx, name, "provider=default");
+    if (cipher == NULL) {
+        ERR_clear_error();
+        return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
+    }
+
+    aad[8] = SSL3_RT_APPLICATION_DATA;
+    aad[9] = (unsigned char)(TLS1_2_VERSION >> 8);
+    aad[10] = (unsigned char)TLS1_2_VERSION;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
+                            (int)sizeof(mac_key), (void *)mac_key),
+            0))
+        goto end;
+
+    mb.out = NULL;
+    mb.inp = aad;
+    mb.len = 920;
+    mb.interleave = 8;
+    packlen = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
+        sizeof(mb), &mb);
+    if (!TEST_int_gt(packlen, 0)
+        || !TEST_ptr(out = OPENSSL_zalloc((size_t)packlen)))
+        goto end;
+
+    mb.out = out;
+    mb.inp = in;
+    mb.len = sizeof(in);
+    if (!TEST_int_le(EVP_CIPHER_CTX_ctrl(ctx,
+                         EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT, sizeof(mb), &mb),
+            0))
+        goto end;
+
+    ERR_clear_error();
+    ret = 1;
+end:
+    OPENSSL_free(out);
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/* Round-trip packed records at the 115-byte per-lane minimum. */
+static const struct {
+    const char *cipher;
+    size_t len;
+    unsigned int interleave;
+} mb_ctrl_roundtrip_tests[] = {
+    { "AES-128-CBC-HMAC-SHA256", 460, 4 },
+    { "AES-128-CBC-HMAC-SHA256", 920, 8 },
+    { "AES-128-CBC-HMAC-SHA1", 460, 4 },
+    { "AES-128-CBC-HMAC-SHA1", 920, 8 },
+};
+
+static int test_aes_cbc_hmac_sha_multiblock_ctrl_roundtrip(int idx)
+{
+    const char *name = mb_ctrl_roundtrip_tests[idx].cipher;
+    size_t len = mb_ctrl_roundtrip_tests[idx].len;
+    unsigned int interleave = mb_ctrl_roundtrip_tests[idx].interleave;
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[16] = { 0 };
+    static const unsigned char mac_key[32] = { 0 };
+    unsigned char in[920], aad[EVP_AEAD_TLS1_AAD_LEN] = { 0 };
+    unsigned char *out = NULL, *plain = NULL;
+    EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *enc = NULL, *dec = NULL;
+    unsigned int frag, last, i, shift;
+    size_t off = 0;
+    int packlen, enc_len, ret = 0;
+
+    cipher = EVP_CIPHER_fetch(testctx, name, "provider=default");
+    if (cipher == NULL) {
+        ERR_clear_error();
+        return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
+    }
+
+    memset(in, 'A' + (int)idx, len);
+    aad[8] = SSL3_RT_APPLICATION_DATA;
+    aad[9] = (unsigned char)(TLS1_2_VERSION >> 8);
+    aad[10] = (unsigned char)TLS1_2_VERSION;
+
+    if (!TEST_ptr(enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex(enc, cipher, NULL, key, iv))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(enc, EVP_CTRL_AEAD_SET_MAC_KEY,
+                            (int)sizeof(mac_key), (void *)mac_key),
+            0))
+        goto end;
+
+    mb.out = NULL;
+    mb.inp = aad;
+    mb.len = len;
+    mb.interleave = interleave;
+    packlen = EVP_CIPHER_CTX_ctrl(enc, EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
+        sizeof(mb), &mb);
+    if (!TEST_int_gt(packlen, 0)
+        || !TEST_ptr(out = OPENSSL_zalloc((size_t)packlen))
+        || !TEST_ptr(plain = OPENSSL_zalloc((size_t)packlen)))
+        goto end;
+
+    mb.out = out;
+    mb.inp = in;
+    mb.len = len;
+    enc_len = EVP_CIPHER_CTX_ctrl(enc, EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+        sizeof(mb), &mb);
+    if (!TEST_int_eq(enc_len, packlen))
+        goto end;
+
+    shift = interleave / 4 + 1;
+    frag = (unsigned int)len >> shift;
+    last = (unsigned int)len + frag - (frag << shift);
+
+    if (!TEST_ptr(dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex(dec, cipher, NULL, key, iv))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(dec, EVP_CTRL_AEAD_SET_MAC_KEY,
+                            (int)sizeof(mac_key), (void *)mac_key),
+            0))
+        goto end;
+
+    for (i = 0; i < interleave; i++) {
+        unsigned int lane = (i + 1 == interleave) ? last : frag;
+        unsigned int rec_len;
+        unsigned char daad[EVP_AEAD_TLS1_AAD_LEN];
+
+        if (!TEST_size_t_le(off + 5, (size_t)packlen))
+            goto end;
+        rec_len = ((unsigned int)out[off + 3] << 8) | out[off + 4];
+        if (!TEST_size_t_le(off + 5 + rec_len, (size_t)packlen)
+            || !TEST_uint_ge(rec_len, 16 + lane))
+            goto end;
+
+        memcpy(daad, aad, sizeof(daad));
+        daad[7] = (unsigned char)i;
+        daad[11] = (unsigned char)(rec_len >> 8);
+        daad[12] = (unsigned char)rec_len;
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(dec, EVP_CTRL_AEAD_TLS1_AAD,
+                             EVP_AEAD_TLS1_AAD_LEN, daad),
+                0)
+            || !TEST_int_gt(EVP_Cipher(dec, plain, out + off + 5,
+                                (int)rec_len),
+                0)
+            || !TEST_mem_eq(plain + 16, lane, in + (size_t)i * frag, lane))
+            goto end;
+        off += 5 + rec_len;
+    }
+    if (!TEST_size_t_eq(off, (size_t)packlen))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_free(out);
+    OPENSSL_free(plain);
+    EVP_CIPHER_CTX_free(enc);
+    EVP_CIPHER_CTX_free(dec);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
 #endif
 
 #ifndef OPENSSL_NO_ECX
@@ -10210,6 +10638,14 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_MULTIBLOCK)
     ADD_TEST(test_aes_cbc_hmac_sha_short_multiblock_aad);
     ADD_TEST(test_aes_cbc_hmac_sha_large_multiblock_aad);
+    ADD_ALL_TESTS(test_aes_cbc_hmac_sha_short_multiblock_enc,
+        OSSL_NELEM(short_mb_enc_tests));
+    ADD_ALL_TESTS(test_aes_cbc_hmac_sha_multiblock_aad_lanes,
+        OSSL_NELEM(mb_aad_lane_tests));
+    ADD_ALL_TESTS(test_aes_cbc_hmac_sha_multiblock_aad_clears_on_fail, 2);
+    ADD_ALL_TESTS(test_aes_cbc_hmac_sha_multiblock_ctrl_reject_mixed, 2);
+    ADD_ALL_TESTS(test_aes_cbc_hmac_sha_multiblock_ctrl_roundtrip,
+        OSSL_NELEM(mb_ctrl_roundtrip_tests));
 #endif
 
 #ifndef OPENSSL_NO_ECX
