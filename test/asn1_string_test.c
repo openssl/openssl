@@ -72,21 +72,6 @@ static const struct abs_get_length_test abs_get_length_tests[] = {
         .unused_bits = 4,
     },
     {
-        /*
-         * XXX - the library thinks it "decodes" this but gets it
-         * quite wrong. Looks like it uses the unused bits of the
-         * first component, and the unused bits octet 04 of the
-         * second component somehow becomes part of the value.
-         */
-        .descr = "x.690, constructed encoding in example 8.6.4.2",
-        .valid = 1,
-        .der = { 0x23, 0x80, 0x03, 0x03, 0x00, 0x0A, 0x3b, 0x03, 0x05, 0x04,
-            0x5F, 0x29, 0x1c, 0xd0, 0x00, 0x00 },
-        .der_len = 16,
-        .length = 7, /* XXX - should be 6. */
-        .unused_bits = 0, /* XXX - should be 4. */
-    },
-    {
         .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0.4",
         .valid = 1,
         .der = { 0x03, 0x05, 0x00, 0x0a, 0x05, 0x00, 0x04 },

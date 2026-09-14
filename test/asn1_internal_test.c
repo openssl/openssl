@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
@@ -683,6 +684,145 @@ err:
     return ok;
 }
 
+/**********************************************************************
+ *
+ * Test that constructed BIT STRINGs are rejected rather than
+ * misinterpreted (regression test for GitHub issue #12810)
+ *
+ ***/
+
+/* A SEQUENCE with a single IMPLICIT [0] BIT STRING field, tag != 3. */
+typedef struct {
+    ASN1_BIT_STRING *tagged_bits;
+} IMPLICIT_BIT_STRING_DATA;
+
+ASN1_SEQUENCE(IMPLICIT_BIT_STRING_DATA) = {
+    ASN1_IMP(IMPLICIT_BIT_STRING_DATA, tagged_bits, ASN1_BIT_STRING, 0),
+} static_ASN1_SEQUENCE_END(IMPLICIT_BIT_STRING_DATA)
+
+/*
+ * Decodes |der| as an ASN1_BIT_STRING and checks that it is rejected
+ * specifically by the new constructed-BIT-STRING check, rather than
+ * for some unrelated reason.
+ */
+static int bit_string_decode_rejected(const unsigned char *der, long der_len)
+{
+    const unsigned char *p = der;
+    ASN1_BIT_STRING *bs;
+
+    ERR_clear_error();
+    bs = d2i_ASN1_BIT_STRING(NULL, &p, der_len);
+    if (!TEST_ptr_null(bs)) {
+        ASN1_BIT_STRING_free(bs);
+        return 0;
+    }
+    return TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_ASN1)
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            ASN1_R_ILLEGAL_BITSTRING_FORMAT);
+}
+
+static int test_constructed_bit_string(void)
+{
+    /* BIT_STRING { `00abcd` }: a plain 16-bit primitive encoding */
+    static const unsigned char primitive[] = { 0x03, 0x03, 0x00, 0xab, 0xcd };
+    /*
+     * A single-fragment BER constructed encoding of the 8-bit BIT
+     * STRING value `00ab`: [BIT_STRING CONSTRUCTED] { BIT_STRING { `00ab` } }.
+     * With only one fragment, concatenating raw content octets
+     * happens to reproduce the same bytes as the primitive encoding,
+     * so this decoded correctly before this change. It is rejected
+     * anyway, since constructed BIT STRING support is dropped
+     * entirely rather than only fixed for the multi-fragment case.
+     */
+    static const unsigned char single_fragment_constructed[] = {
+        0x23, 0x04, 0x03, 0x02, 0x00, 0xab
+    };
+    /*
+     * A valid BER constructed encoding of the 12-bit BIT STRING
+     * `04abc0`, split across two primitive fragments:
+     *   BIT_STRING { `00ab` }
+     *   BIT_STRING { `04c0` }
+     * Naive concatenation of raw content octets misreads this as a
+     * 24-bit string `ab04c0`, folding the second fragment's own
+     * "unused bits" byte (0x04) into the data.
+     */
+    static const unsigned char valid_constructed[] = {
+        0x23, 0x08, 0x03, 0x02, 0x00, 0xab, 0x03, 0x02, 0x04, 0xc0
+    };
+    /*
+     * Not valid BER at all: the second fragment, `03 01 cd`, has a
+     * content length of 1, so its single content octet is the
+     * "unused bits" count itself (0xcd = 205), which is out of the
+     * valid 0-7 range. Naive concatenation previously ignored this
+     * and accepted the input as the 16-bit value `abcd`.
+     */
+    static const unsigned char invalid_constructed[] = {
+        0x23, 0x07, 0x03, 0x02, 0x00, 0xab, 0x03, 0x01, 0xcd
+    };
+    /*
+     * X.690's own example 8.6.4.2: a valid indefinite-length BER
+     * constructed encoding of the same value as the primitive
+     * encoding in the "x.690, primitive encoding in example 8.6.4.2"
+     * case in asn1_string_test.c, split across two primitive
+     * fragments and terminated by an end-of-contents marker. This
+     * exercises the indefinite-length code path in asn1_collect(),
+     * distinct from the definite-length cases above.
+     */
+    static const unsigned char indefinite_constructed[] = {
+        0x23, 0x80, 0x03, 0x03, 0x00, 0x0a, 0x3b, 0x03, 0x05, 0x04,
+        0x5f, 0x29, 0x1c, 0xd0, 0x00, 0x00
+    };
+    /*
+     * SEQUENCE { [0] IMPLICIT BIT_STRING { `00ab` } }, using the
+     * single-fragment constructed encoding above for the [0] field
+     * (wire tag 0xa0, not universal tag 3) to confirm the check keys
+     * off the field's declared type rather than the wire tag.
+     */
+    static const unsigned char implicit_constructed[] = {
+        0x30, 0x06, 0xa0, 0x04, 0x03, 0x02, 0x00, 0xab
+    };
+    const unsigned char *p;
+    ASN1_BIT_STRING *bs = NULL;
+    IMPLICIT_BIT_STRING_DATA *idata = NULL;
+    int ok = 0;
+
+    p = primitive;
+    bs = d2i_ASN1_BIT_STRING(NULL, &p, sizeof(primitive));
+    if (!TEST_ptr(bs)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(bs), ASN1_STRING_get_length(bs),
+            "\xab\xcd", 2))
+        goto err;
+    ASN1_BIT_STRING_free(bs);
+    bs = NULL;
+
+    if (!bit_string_decode_rejected(single_fragment_constructed,
+            sizeof(single_fragment_constructed))
+        || !bit_string_decode_rejected(valid_constructed,
+            sizeof(valid_constructed))
+        || !bit_string_decode_rejected(invalid_constructed,
+            sizeof(invalid_constructed))
+        || !bit_string_decode_rejected(indefinite_constructed,
+            sizeof(indefinite_constructed)))
+        goto err;
+
+    ERR_clear_error();
+    p = implicit_constructed;
+    idata = (IMPLICIT_BIT_STRING_DATA *)
+        ASN1_item_d2i(NULL, &p, sizeof(implicit_constructed),
+            ASN1_ITEM_rptr(IMPLICIT_BIT_STRING_DATA));
+    if (!TEST_ptr_null(idata)
+        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_ASN1)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            ASN1_R_ILLEGAL_BITSTRING_FORMAT))
+        goto err;
+
+    ok = 1;
+err:
+    ASN1_BIT_STRING_free(bs);
+    ASN1_item_free((ASN1_VALUE *)idata, ASN1_ITEM_rptr(IMPLICIT_BIT_STRING_DATA));
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -698,5 +838,6 @@ int setup_tests(void)
     ADD_TEST(test_ossl_uni2utf8);
     ADD_TEST(test_empty_uni_conversions);
     ADD_TEST(test_asn1_string_to_utf8);
+    ADD_TEST(test_constructed_bit_string);
     return 1;
 }
