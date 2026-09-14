@@ -491,8 +491,8 @@ SHA3_squeeze:
 
 .Loop_squeeze:
 	ldr	x4,[x0],#8
-	cmp $len,#8
-	blo .Lsqueeze_tail
+	cmp	$len,#8
+	blo	.Lsqueeze_tail
 #ifdef	__AARCH64EB__
 	rev	x4,x4
 #endif
@@ -830,8 +830,8 @@ SHA3_squeeze_cext:
 
 .Loop_squeeze_ce:
 	ldr	x4,[x9],#8
-	cmp $len,#8
-	blo .Lsqueeze_tail_ce
+	cmp	$len,#8
+	blo	.Lsqueeze_tail_ce
 #ifdef	__AARCH64EB__
 	rev	x4,x4
 #endif
