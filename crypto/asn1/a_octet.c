@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
+#include "crypto/asn1.h"
 
 ASN1_OCTET_STRING *ASN1_OCTET_STRING_dup(const ASN1_OCTET_STRING *x)
 {
@@ -30,6 +31,6 @@ int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *x, const unsigned char *d,
         return 0;
     }
     if (len == -1)
-        return ASN1_STRING_set1_string(x, (const char *)d);
-    return ASN1_STRING_set1_data(x, d, len);
+        return ossl_asn1_string_set1_string(x, (const char *)d);
+    return ossl_asn1_string_set1_data(x, d, len);
 }

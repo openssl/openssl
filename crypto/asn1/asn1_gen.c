@@ -657,7 +657,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto bad_str;
         }
-        if (!ASN1_STRING_set1_string(atmp->value.asn1_string, str)) {
+        if (!ossl_asn1_string_set1_string(atmp->value.asn1_string, str)) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto bad_str;
         }
@@ -712,7 +712,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             atmp->value.asn1_string->length = rdlen;
             atmp->value.asn1_string->type = utype;
         } else if (format == ASN1_GEN_FORMAT_ASCII) {
-            if (!ASN1_STRING_set1_string(atmp->value.asn1_string, str)) {
+            if (!ossl_asn1_string_set1_string(atmp->value.asn1_string, str)) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
                 goto bad_str;
             }
