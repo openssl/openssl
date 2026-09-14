@@ -34,7 +34,12 @@ const PROV_CIPHER_HW_AES_HMAC_SHA *ossl_prov_cipher_hw_aes_cbc_hmac_sha256(void)
 
 #ifdef AES_CBC_HMAC_SHA_CAPABLE
 #include <openssl/aes.h>
+#include <openssl/prov_ssl.h>
 #include <openssl/sha.h>
+/* OpenSSL 3.5 and 4.0 define the record length limit in ssl3.h. */
+#ifndef SSL3_RT_MAX_PLAIN_LENGTH
+#include <openssl/ssl3.h>
+#endif
 
 typedef struct prov_aes_hmac_sha_ctx_st {
     PROV_CIPHER_CTX base;
