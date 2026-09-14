@@ -74,6 +74,7 @@ jobs:
           no-ui,
           no-integrity-only-ciphers,
           enable-weak-ssl-ciphers,
+          enable-deprecated-suiteb,
           enable-zlib,
           enable-pie,
         ]

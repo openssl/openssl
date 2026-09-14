@@ -271,6 +271,8 @@ our @tests = (
             "ExpectedResult" => $fips_3_4 ? "ClientFail" : "Success"
         },
     },
+    # Suite B is deprecated and only available with enable-deprecated-suiteb
+    (disabled("deprecated-suiteb") ? () : (
     {
         name => "Suite B P-256 Hash Algorithm Selection",
         server =>  {
@@ -309,6 +311,7 @@ our @tests = (
             "ExpectedResult" => "Success"
         },
     },
+    )),
     {
         name => "Ed25519 CipherString and Signature Algorithm Selection",
         server => $server,

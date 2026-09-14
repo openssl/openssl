@@ -1133,9 +1133,11 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(xs_ctx,
         c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS);
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
 
     i = X509_verify_cert(xs_ctx);
     if (i <= 0 && flags & SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR) {

@@ -214,6 +214,7 @@ static const unsigned char ecformats_all[] = {
     "?curveSM2 / "                                             \
     "?ffdhe2048:?ffdhe3072"
 
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
 static const uint16_t suiteb_curves[] = {
     OSSL_TLS_GROUP_ID_secp256r1,
     OSSL_TLS_GROUP_ID_secp384r1,
@@ -222,6 +223,7 @@ static const uint16_t suiteb_curves[] = {
 /* Group list string of the built-in pseudo group DEFAULT_SUITE_B */
 #define SUITE_B_GROUP_NAME "DEFAULT_SUITE_B"
 #define SUITE_B_GROUP_LIST "?secp256r1:?secp384r1",
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
 
 struct provider_ctx_data_st {
     SSL_CTX *ctx;
@@ -806,32 +808,35 @@ void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
     /* For Suite B mode only include P-256, P-384 */
     switch (tls1_suiteb(s)) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *pgroups = suiteb_curves;
         *pgroupslen = OSSL_NELEM(suiteb_curves);
-        break;
+        return;
 
     case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
         *pgroups = suiteb_curves;
         *pgroupslen = 1;
-        break;
+        return;
 
     case SSL_CERT_FLAG_SUITEB_192_LOS:
         *pgroups = suiteb_curves + 1;
         *pgroupslen = 1;
-        break;
+        return;
 
     default:
-        if (s->ext.supportedgroups == NULL) {
-            *pgroups = sctx->ext.supportedgroups;
-            *pgroupslen = sctx->ext.supportedgroups_len;
-        } else {
-            *pgroups = s->ext.supportedgroups;
-            *pgroupslen = s->ext.supportedgroups_len;
-        }
         break;
+    }
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
+
+    if (s->ext.supportedgroups == NULL) {
+        *pgroups = sctx->ext.supportedgroups;
+        *pgroupslen = sctx->ext.supportedgroups_len;
+    } else {
+        *pgroups = s->ext.supportedgroups;
+        *pgroupslen = s->ext.supportedgroups_len;
     }
 }
 
@@ -1188,7 +1193,9 @@ static const char *DEFAULT_GROUPNAME_FIRST_CHARACTER = "D";
 /* The list of all built-in pseudo-group-name structures */
 static const default_group_string_st default_group_strings[] = {
     { DEFAULT_GROUP_NAME, TLS_DEFAULT_GROUP_LIST },
-    { SUITE_B_GROUP_NAME, SUITE_B_GROUP_LIST }
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
+    { SUITE_B_GROUP_NAME, SUITE_B_GROUP_LIST },
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
 };
 
 /*
@@ -2098,10 +2105,12 @@ static const uint16_t tls12_sigalgs[] = {
 #endif
 };
 
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
 static const uint16_t suiteb_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384
 };
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     { TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name,
@@ -2661,6 +2670,7 @@ int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey)
 
 size_t tls12_get_psigalgs(SSL_CONNECTION *s, int sent, const uint16_t **psigs)
 {
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
     /*
      * If Suite B mode use Suite B sigalgs only, ignore any other
      * preferences.
@@ -2678,6 +2688,7 @@ size_t tls12_get_psigalgs(SSL_CONNECTION *s, int sent, const uint16_t **psigs)
         *psigs = suiteb_sigalgs + 1;
         return 1;
     }
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
     /*
      *  We use client_sigalgs (if not NULL) if we're a server
      *  and sending a certificate request or if we're a client and

@@ -29,7 +29,10 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
-  * none
+  * Deprecated the obsolete Suite B mode of operation (`SUITEB128`,
+    `SUITEB128ONLY`, `SUITEB192` and the related flags and options) and
+    disabled it by default.  It can be re-enabled with the
+    `enable-deprecated-suiteb` configuration option.
 
 OpenSSL 4.1
 -----------

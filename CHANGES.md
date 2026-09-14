@@ -34,7 +34,19 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Deprecated the Suite B (RFC 6460) mode of operation and disabled it by
+   default.  This covers the `SUITEB128`, `SUITEB128ONLY` and `SUITEB192`
+   cipher strings, the `DEFAULT_SUITE_B` group list, the
+   `SSL_CERT_FLAG_SUITEB_*` and `X509_V_FLAG_SUITEB_*` flags and the
+   `-suiteB_128`, `-suiteB_128_only` and `-suiteB_192` command line options,
+   which are now rejected unless the option is enabled.
+   Suite B was withdrawn by the NSA in 2018 in favour of CNSA.  The mode can
+   be re-enabled with the `enable-deprecated-suiteb` configuration option.
+   `X509_chain_check_suiteb()` and `X509_CRL_check_suiteb()` remain available
+   for ABI compatibility; without Suite B support they fail when a Suite B
+   flag is requested.
+
+   *Dimitri John Ledkov*
 
 OpenSSL 4.1
 -----------

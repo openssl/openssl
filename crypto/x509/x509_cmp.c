@@ -432,7 +432,7 @@ int ossl_x509_check_private_key(const EVP_PKEY *x, const EVP_PKEY *pkey)
  * flags field which must contain the suite B verification flags.
  */
 
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_SUITEB)
 
 static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
 {
@@ -556,18 +556,30 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 }
 
 #else
+/*
+ * Suite B support is deprecated and has been compiled out (see the
+ * enable-deprecated-suiteb configuration option), or EC support is
+ * disabled.  These functions are retained for ABI compatibility.  A request
+ * for a Suite B check cannot be honoured, so it is reported as a failure
+ * rather than silently accepted.
+ */
 int X509_chain_check_suiteb(int *perror_depth, const X509 *x, STACK_OF(X509) *chain,
     unsigned long flags)
 {
-    return 0;
+    if ((flags & X509_V_FLAG_SUITEB_128_LOS) == 0)
+        return X509_V_OK;
+    if (perror_depth != NULL)
+        *perror_depth = 0;
+    return X509_V_ERR_UNSPECIFIED;
 }
 
 int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 {
-    return 0;
+    if ((flags & X509_V_FLAG_SUITEB_128_LOS) == 0)
+        return X509_V_OK;
+    return X509_V_ERR_UNSPECIFIED;
 }
-
-#endif
+#endif /* !OPENSSL_NO_EC && !OPENSSL_NO_DEPRECATED_SUITEB */
 
 /*
  * Not strictly speaking an "up_ref" as a STACK doesn't have a reference

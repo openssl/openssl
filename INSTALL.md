@@ -781,6 +781,20 @@ Don't build and install documentation, i.e. manual pages in various forms.
 
 Don't build support for loading Dynamic Shared Objects (DSO)
 
+### enable-deprecated-suiteb
+
+Enable the deprecated Suite B (RFC 6460) mode of operation.  This covers the
+`SUITEB128`, `SUITEB128ONLY` and `SUITEB192` cipher strings, the
+`DEFAULT_SUITE_B` group list, the `SSL_CERT_FLAG_SUITEB_*` certificate flags,
+the `X509_V_FLAG_SUITEB_*` verification flags and the `-suiteB_128`,
+`-suiteB_128_only` and `-suiteB_192` command line options.
+
+Suite B was withdrawn by the NSA in 2018 in favour of the CNSA suite, so this
+mode no longer reflects any current algorithm policy.  When it is disabled
+(the default), the Suite B cipher strings are not recognised, the command line
+options are rejected, and verification with a Suite B flag set fails.  The `X509_chain_check_suiteb()`
+and `X509_CRL_check_suiteb()` functions remain available for ABI compatibility.
+
 ### enable-tls-deprecated-ec
 
 Enable legacy TLS EC groups that were deprecated in RFC8422.  These are the

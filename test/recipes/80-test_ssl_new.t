@@ -92,7 +92,8 @@ my %conf_dependent_tests = (
   "17-renegotiate.cnf" => disabled("tls1_2"),
   "18-dtls-renegotiate.cnf" => disabled("dtls1_2") || !disabled("sctp"),
   "19-mac-then-encrypt.cnf" => !$is_default_tls,
-  "20-cert-select.cnf" => !$is_default_tls || $no_dh || $no_dsa || $no_ml_dsa || $no_sm2,
+  "20-cert-select.cnf" => !$is_default_tls || $no_dh || $no_dsa || $no_ml_dsa || $no_sm2
+                          || !disabled("deprecated-suiteb"),
   "22-compression.cnf" => !$is_default_tls,
   "25-cipher.cnf" => disabled("poly1305") || disabled("chacha")
                      || disabled("sm3") || disabled("sm4")

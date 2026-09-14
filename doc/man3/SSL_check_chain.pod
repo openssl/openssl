@@ -49,7 +49,9 @@ meaningful for client authentication.
 B<CERT_PKEY_CERT_TYPE>: the certificate type is acceptable. Only meaningful
 for client authentication.
 
-B<CERT_PKEY_SUITEB>: chain is suitable for Suite B use.
+B<CERT_PKEY_SUITEB>: chain is suitable for Suite B use.  Suite B support is
+deprecated and this flag is only set if OpenSSL was configured with
+C<enable-deprecated-suiteb>.
 
 =head1 NOTES
 

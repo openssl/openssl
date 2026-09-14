@@ -1224,6 +1224,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
     return retval;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
 static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     const char **prule_str)
 {
@@ -1271,6 +1272,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     }
     return 1;
 }
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
 
 static int ciphersuite_cb(const char *elem, int len, void *arg)
 {
@@ -1456,8 +1458,10 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
     if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
         return NULL;
 
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
     if (!check_suiteb_cipher_list(ssl_method, c, &rule_str))
         return NULL;
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
 
     /*
      * To reduce the work to do we only want to process the compiled

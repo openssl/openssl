@@ -430,6 +430,9 @@ See RFC6460 for details. In particular the supported signature algorithms are
 reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
 P-256 and P-384.
 
+These options are deprecated.  Unless OpenSSL was configured with the
+C<enable-deprecated-suiteb> option they are rejected with an error.
+
 =item B<-auth_level> I<level>
 
 Set the certificate chain authentication security level to I<level>.
@@ -816,6 +819,10 @@ Since OpenSSL 1.1.0, the B<-trusted_first> option is always enabled.
 
 The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0,
 which has been partially reverted in OpenSSL 4.0.
+
+The B<-suiteB_128_only>, B<-suiteB_128> and B<-suiteB_192> options were
+deprecated in OpenSSL 4.2 and are rejected unless OpenSSL was configured
+with C<enable-deprecated-suiteb>.
 
 =head1 COPYRIGHT
 

@@ -74,10 +74,11 @@
             "check root CA self-signatures" },                                             \
         { "trusted_first", OPT_V_TRUSTED_FIRST, '-',                                       \
             "search trust store first (default)" },                                        \
-        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-', "Suite B 128-bit-only mode" },    \
+        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-',                                   \
+            "Suite B 128-bit-only mode (deprecated)" },                                    \
         { "suiteB_128", OPT_V_SUITEB_128, '-',                                             \
-            "Suite B 128-bit mode allowing 192-bit algorithms" },                          \
-        { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192-bit-only mode" },              \
+            "Suite B 128-bit mode allowing 192-bit algorithms (deprecated)" },             \
+        { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192-bit-only mode (deprecated)" }, \
         { "partial_chain", OPT_V_PARTIAL_CHAIN, '-',                                       \
             "accept chains anchored by intermediate trust-store CAs" },                    \
         { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" },                     \

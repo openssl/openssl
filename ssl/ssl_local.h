@@ -2469,7 +2469,11 @@ struct cert_pkey_st {
 #endif
 };
 /* Retrieve Suite B flags */
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
 #define tls1_suiteb(s) (s->cert->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS)
+#else
+#define tls1_suiteb(s) 0
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
 /* Uses to check strict mode: suite B modes are always strict */
 #define SSL_CERT_FLAGS_CHECK_TLS_STRICT \
     (SSL_CERT_FLAG_SUITEB_128_LOS | SSL_CERT_FLAG_TLS_STRICT)

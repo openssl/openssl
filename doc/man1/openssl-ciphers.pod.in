@@ -428,6 +428,10 @@ used and only the two suite B compliant cipher suites
 (ECDHE-ECDSA-AES128-GCM-SHA256 and ECDHE-ECDSA-AES256-GCM-SHA384) are
 permissible.
 
+Suite B support is deprecated and these cipher strings are only recognised if OpenSSL was configured
+with the C<enable-deprecated-suiteb> option.  Suite B was withdrawn in 2018 in
+favour of the CNSA suite and no longer reflects any current algorithm policy.
+
 =item B<CBC>
 
 All cipher suites using encryption algorithm in Cipher Block Chaining (CBC)
@@ -923,6 +927,10 @@ The support for TLS v1.3 integrity-only cipher suites was added in OpenSSL 3.4.
 
 The list of TLS 1.3 ciphersuites I<val> and TLS 1.2 ciphers
 I<cipherlist> were case-sensitive prior to OpenSSL 4.0.
+
+The B<SUITEB128>, B<SUITEB128ONLY> and B<SUITEB192> cipher strings were
+deprecated in OpenSSL 4.2 and are only available if OpenSSL was configured
+with C<enable-deprecated-suiteb>.
 
 =head1 COPYRIGHT
 

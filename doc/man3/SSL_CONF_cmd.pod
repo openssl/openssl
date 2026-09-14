@@ -140,8 +140,9 @@ provided).
 
 =back
 
-Suite B modes (enabled via B<SSL_CERT_FLAG_SUITEB_128_LOS> or
-B<SSL_CERT_FLAG_SUITEB_192_LOS>) always imply strict mode.
+The deprecated Suite B modes (enabled via B<SSL_CERT_FLAG_SUITEB_128_LOS> or
+B<SSL_CERT_FLAG_SUITEB_192_LOS>, and only available if OpenSSL was configured
+with C<enable-deprecated-suiteb>) always imply strict mode.
 
 =item B<-sigalgs> I<algs>
 

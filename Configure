@@ -519,6 +519,7 @@ my @disablables_features = (
     "buildtest-c++",
     "bulk",
     "cached-fetch",
+    "deprecated-suiteb",
     "dgram",
     "winstore",
     "crypto-mdebug",
@@ -622,6 +623,7 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "atexit"              => "default",
+                  "deprecated-suiteb"   => "default",
                   "fips"                => "default",
                   "fips-jitter"         => "default",
                   "asan"                => "default",
@@ -692,8 +694,9 @@ my @disable_cascades = (
     "brotli"            => [ "brotli-dynamic" ],
     "zstd"              => [ "zstd-dynamic" ],
     "des"               => [ "mdc2" ],
-    "deprecated"        => [ "tls-deprecated-ec" ],
-    "ec"                => [ qw(ec2m ec_explicit_curves sm2 gost ecx tls-deprecated-ec) ],
+    "deprecated"        => [ "tls-deprecated-ec", "deprecated-suiteb" ],
+    "ec"                => [ qw(ec2m ec_explicit_curves sm2 gost ecx tls-deprecated-ec
+                                deprecated-suiteb) ],
     "dgram"             => [ "dtls", "quic", "sctp" ],
     "sock"              => [ "dgram", "tfo" ],
     "dtls"              => [ @dtls ],
@@ -2027,7 +2030,7 @@ foreach my $what (sort keys %disabled) {
     next if $deprecated_disablables{$what};
     # The generated $disabled{"deprecated-x.y"} entries are special
     # and treated properly elsewhere
-    next if $what =~ m|^deprecated-|;
+    next if $what =~ m|^deprecated-\d+(\.\d+)+$|;
 
     $config{options} .= " no-$what";
 

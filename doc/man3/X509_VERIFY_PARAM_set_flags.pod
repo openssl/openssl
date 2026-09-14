@@ -302,6 +302,11 @@ By default, proxy certificates are not accepted.
 
 =head2 Suite B compliance
 
+The Suite B flags are deprecated.  They are only honoured if OpenSSL was
+configured with the C<enable-deprecated-suiteb> option; otherwise setting any
+of them causes verification to fail with B<X509_V_ERR_UNSPECIFIED>, since the
+requested checks cannot be performed.
+
 These flags enable enforcement of the NSA Suite B cryptographic
 profile, a now-legacy profile that restricts chain validation to a
 specific subset of elliptic-curve algorithms. Suite B has been
@@ -422,6 +427,10 @@ enabling policy checking however the implementation has never done this.
 The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
+
+The B<X509_V_FLAG_SUITEB_128_LOS_ONLY>, B<X509_V_FLAG_SUITEB_192_LOS> and
+B<X509_V_FLAG_SUITEB_128_LOS> flags were deprecated in OpenSSL 4.2 and are only
+honoured if OpenSSL was configured with C<enable-deprecated-suiteb>.
 
 =head1 COPYRIGHT
 

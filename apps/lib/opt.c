@@ -838,6 +838,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_TRUSTED_FIRST:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_TRUSTED_FIRST);
         break;
+#ifndef OPENSSL_NO_DEPRECATED_SUITEB
     case OPT_V_SUITEB_128_ONLY:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_SUITEB_128_LOS_ONLY);
         break;
@@ -847,6 +848,15 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_SUITEB_192:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_SUITEB_192_LOS);
         break;
+#else
+    case OPT_V_SUITEB_128_ONLY:
+    case OPT_V_SUITEB_128:
+    case OPT_V_SUITEB_192:
+        opt_printf_stderr("%s: Suite B support is deprecated and not compiled in;"
+                          " configure with enable-deprecated-suiteb\n",
+            opt_getprog());
+        return 0;
+#endif /* OPENSSL_NO_DEPRECATED_SUITEB */
     case OPT_V_PARTIAL_CHAIN:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_PARTIAL_CHAIN);
         break;
