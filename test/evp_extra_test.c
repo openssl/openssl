@@ -7969,6 +7969,7 @@ static int test_aes_cbc_hmac_sha_multiblock_output_size(void)
     static const unsigned char iv[16] = { 0 };
     static const unsigned char mac_key[16] = { 0 };
     static const size_t input_len = 4096;
+    static const size_t mismatched_input_len = 8192;
     unsigned char aad[EVP_AEAD_TLS1_AAD_LEN] = { 0 };
     unsigned char *in = NULL, *out = NULL;
     unsigned int interleave = 4, packlen = 0;
@@ -8010,7 +8011,7 @@ static int test_aes_cbc_hmac_sha_multiblock_output_size(void)
         ERR_clear_error();
         return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
     }
-    if (!TEST_ptr(in = OPENSSL_zalloc(input_len))
+    if (!TEST_ptr(in = OPENSSL_zalloc(mismatched_input_len))
         || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
         || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, init_params))
         || !TEST_true(EVP_CIPHER_CTX_set_params(ctx, aad_params))
@@ -8032,6 +8033,14 @@ static int test_aes_cbc_hmac_sha_multiblock_output_size(void)
 
     encrypt_params[0] = OSSL_PARAM_construct_octet_string(
         OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, out, packlen);
+    encrypt_params[1] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, in, mismatched_input_len);
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, encrypt_params)))
+        goto end;
+    ERR_clear_error();
+
+    encrypt_params[1] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, in, input_len);
     if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, encrypt_params)))
         goto end;
     get_params[0] = OSSL_PARAM_construct_size_t(
@@ -8058,6 +8067,14 @@ static int test_aes_cbc_hmac_sha_multiblock_output_size(void)
 
     mb_param.out = out;
     mb_param.inp = in;
+    mb_param.len = mismatched_input_len;
+    if (!TEST_int_le(EVP_CIPHER_CTX_ctrl(ctx,
+                         EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+                         sizeof(mb_param), &mb_param),
+            0))
+        goto end;
+    ERR_clear_error();
+
     mb_param.len = input_len;
     if (!TEST_int_eq(EVP_CIPHER_CTX_ctrl(ctx,
                          EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
