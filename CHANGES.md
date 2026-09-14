@@ -496,6 +496,16 @@ OpenSSL 4.1
 
    *Milan Brož*
 
+ * Fixed CRL scope checking for certificates without a CRL distribution
+   points extension.  A CRL having an issuing distribution point extension
+   including a name that matches the certificate issuer name or any
+   `issuerAltName` of the certificate is now accepted, as required
+   by the default distribution point rule at the end
+   of [RFC 5280 Section 6.3.3], instead of being rejected
+   with `X509_V_ERR_DIFFERENT_CRL_SCOPE`.
+
+   *Paul Grubbs*
+
  * TLS clients no longer send the TLS padding extension ([RFC 7685]).  It was
    only ever sent when `SSL_OP_TLSEXT_PADDING` was set, to work around
    a `ClientHello` length bug in F5 middleboxes;  the fix shipped long ago
@@ -584,15 +594,6 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30446 -->
 
    *Tomáš Mráz*
-
- * Fixed CRL scope checking for certificates without a CRL distribution
-   points extension. A CRL having an issuing distribution point extension
-   including a name that matches the certificate issuer name or any
-   issuerAltName of the certificate is now accepted, as required
-   by the default distribution point rule at the end of RFC 5280 section 6.3.3,
-   instead of being rejected with X509_V_ERR_DIFFERENT_CRL_SCOPE.
-
-   *Paul Grubbs*
 
 OpenSSL 4.0
 -----------
@@ -24169,6 +24170,7 @@ ndif
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
 [RFC 4492 Section 5.1.2]: https://datatracker.ietf.org/doc/html/rfc4492#section-5.1.2
 [RFC 5280]: https://datatracker.ietf.org/doc/html/rfc5280
+[RFC 5280 Section 6.3.3]: https://datatracker.ietf.org/doc/html/rfc5280#section-6.3.3
 [RFC 5297]: https://datatracker.ietf.org/doc/html/rfc5297
 [RFC 5652]: https://datatracker.ietf.org/doc/html/rfc5652
 [RFC 7250]: https://datatracker.ietf.org/doc/html/rfc7250
