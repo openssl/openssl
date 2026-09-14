@@ -374,7 +374,10 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
     if (!(str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)) {
-        OPENSSL_clear_free(str->data, str->length);
+        if (str->length > 0)
+            OPENSSL_clear_free(str->data, str->length);
+        else
+            OPENSSL_free(str->data);
     }
     str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     str->data = data;
@@ -455,7 +458,7 @@ void ossl_asn1_string_free_internal(ASN1_STRING *a, int clear, int embed)
     }
 
     if (!(a->flags & ASN1_STRING_FLAG_NDEF)) {
-        if (clear)
+        if (clear && a->length > 0)
             OPENSSL_clear_free(a->data, a->length);
         else
             OPENSSL_free(a->data);
@@ -514,7 +517,7 @@ int ASN1_STRING_length(const ASN1_STRING *x)
 
 size_t ASN1_STRING_get_length(const ASN1_STRING *x)
 {
-    return (size_t)x->length;
+    return x->length >= 0 ? (size_t)x->length : 0U;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
