@@ -4082,6 +4082,13 @@ static void tls_clear_pending_client_identity(SSL_CONNECTION *sc)
     sc->s3.tmp.pending_peer_rpk = NULL;
 }
 
+/*
+ * Called only after accepting an empty Certificate response, for which no
+ * verification callback ran. SSL_get_verify_result() specifies X509_V_OK when
+ * no peer certificate was presented; this does not establish authentication.
+ * Verification errors accepted by a callback for nonempty credentials are
+ * preserved.
+ */
 static void tls_clear_client_verification_state(SSL_CONNECTION *sc)
 {
     OSSL_STACK_OF_X509_free(sc->verified_chain);
@@ -4107,7 +4114,6 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     /* Stash the parsed RPK; verification runs in the post-process step. */
     tls_clear_pending_client_identity(sc);
     sc->s3.tmp.pending_peer_rpk = peer_rpk;
-    peer_rpk = NULL;
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 }
@@ -4310,7 +4316,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      */
     tls_clear_pending_client_identity(s);
     s->s3.tmp.pending_peer_chain = sk;
-    sk = NULL;
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 

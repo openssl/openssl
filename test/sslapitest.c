@@ -972,6 +972,7 @@ typedef struct {
     int accept;
     int candidate_ok;
     int initial_error;
+    int accepted_error; /* Result retained when the PHA callback accepts. */
     X509 *expected_cert;
     EVP_PKEY *expected_rpk;
 } PHA_VERIFY_DATA;
@@ -1007,6 +1008,8 @@ static int pha_verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
     if (!data->accept)
         X509_STORE_CTX_set_error(ctx,
             X509_V_ERR_APPLICATION_VERIFICATION);
+    else
+        X509_STORE_CTX_set_error(ctx, data->accepted_error);
     return data->accept;
 }
 
@@ -1211,7 +1214,29 @@ end:
     return ret;
 }
 
-static int test_pha_x509_pending_identity(void)
+static int check_pha_peer_identity(SSL *ssl, const PHA_VERIFY_DATA *data)
+{
+    if (data->expected_rpk != NULL)
+        return TEST_ptr_null(SSL_get0_peer_certificate(ssl))
+            && TEST_ptr(SSL_get0_peer_rpk(ssl))
+            && TEST_int_eq(EVP_PKEY_eq(SSL_get0_peer_rpk(ssl),
+                               data->expected_rpk),
+                1);
+
+    return TEST_ptr_null(SSL_get0_peer_rpk(ssl))
+        && TEST_ptr(SSL_get0_peer_certificate(ssl))
+        && TEST_int_eq(X509_cmp(SSL_get0_peer_certificate(ssl),
+                           data->expected_cert),
+            0);
+}
+
+/*
+ * Exercise X.509/RPK replacement with successful or callback-accepted error
+ * results, using stateful/stateless refreshed tickets. The retained session
+ * is cache-owned in every case. Bit 0 selects RPK, bit 1 an accepted error,
+ * and bit 2 stateless refreshed tickets.
+ */
+static int test_pha_pending_identity(int idx)
 {
     char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
     char *leaf_key = test_mk_file_path(certsdir, "leaf.key");
@@ -1223,16 +1248,33 @@ static int test_pha_x509_pending_identity(void)
     SSL_SESSION *ticket = NULL, *old_session = NULL, *fresh_ticket = NULL;
     STACK_OF(X509) *old_chain;
     X509 *old_peer;
+    EVP_PKEY *old_rpk;
+    int use_rpk = idx & 1;
+    int stateless = idx & 4;
     int testresult = 0;
 
+    verify_data.initial_error = X509_V_ERR_APPLICATION_VERIFICATION;
+    verify_data.accepted_error = (idx & 2) != 0
+        ? X509_V_ERR_CERT_REVOKED
+        : X509_V_OK;
     if (!TEST_ptr(leaf_chain) || !TEST_ptr(leaf_key)
-        || !setup_pha_resumption(&verify_data, 1, 0, &sctx, &cctx,
+        || !setup_pha_resumption(&verify_data, 1, use_rpk, &sctx, &cctx,
             &serverssl, &clientssl, &ticket)
         || !TEST_ptr(old_session = SSL_get1_session(serverssl))
         || !TEST_ptr(old_session->owner)
-        || !TEST_ptr(old_peer = old_session->peer))
+        || !TEST_long_eq(old_session->verify_result, verify_data.initial_error)
+        || !TEST_long_eq(SSL_get_verify_result(serverssl),
+            verify_data.initial_error))
         goto end;
+    old_peer = old_session->peer;
+    old_rpk = old_session->peer_rpk;
     old_chain = old_session->peer_chain;
+    if (use_rpk) {
+        if (!TEST_ptr(old_rpk) || !TEST_ptr_null(old_peer))
+            goto end;
+    } else if (!TEST_ptr(old_peer) || !TEST_ptr_null(old_rpk)) {
+        goto end;
+    }
 
     if (!TEST_int_eq(SSL_use_certificate_chain_file(clientssl,
                          leaf_chain),
@@ -1245,7 +1287,18 @@ static int test_pha_x509_pending_identity(void)
 
     verify_data.pha = 1;
     verify_data.accept = 1;
-    verify_data.expected_cert = SSL_get_certificate(clientssl);
+    if (use_rpk) {
+        verify_data.expected_rpk = X509_get0_pubkey(SSL_get_certificate(clientssl));
+        if (!TEST_ptr(verify_data.expected_rpk))
+            goto end;
+    } else {
+        verify_data.expected_cert = SSL_get_certificate(clientssl);
+    }
+    if (stateless) {
+        /* Keep the old cached session, but issue stateless tickets after PHA. */
+        SSL_CTX_clear_options(sctx, SSL_OP_NO_TICKET);
+        SSL_clear_options(serverssl, SSL_OP_NO_TICKET);
+    }
     SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
     if (!start_pha_and_pause(serverssl, clientssl))
         goto end;
@@ -1255,31 +1308,44 @@ static int test_pha_x509_pending_identity(void)
         || !TEST_true(verify_data.candidate_ok)
         || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
         || !TEST_ptr_eq(old_session->peer, old_peer)
+        || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
         || !TEST_ptr_eq(old_session->peer_chain, old_chain)
+        || !TEST_long_eq(old_session->verify_result, verify_data.initial_error)
         || !TEST_ptr_eq(SSL_get0_peer_certificate(serverssl), old_peer)
-        || !TEST_ptr_eq(SSL_get_peer_cert_chain(serverssl), old_chain)
-        || !TEST_ptr(servercon->s3.tmp.pending_peer_chain))
+        || !TEST_ptr_eq(SSL_get0_peer_rpk(serverssl), old_rpk)
+        || !TEST_ptr_eq(SSL_get_peer_cert_chain(serverssl), old_chain))
         goto end;
+    if (use_rpk) {
+        if (!TEST_ptr(servercon->s3.tmp.pending_peer_rpk)
+            || !TEST_ptr_null(servercon->s3.tmp.pending_peer_chain))
+            goto end;
+    } else if (!TEST_ptr(servercon->s3.tmp.pending_peer_chain)
+        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk)) {
+        goto end;
+    }
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE))
         || !TEST_int_eq(verify_data.calls, 2)
         || !TEST_ptr_ne(SSL_get_session(serverssl), old_session)
-        || !TEST_ptr(SSL_get0_peer_certificate(serverssl))
-        || !TEST_int_eq(X509_cmp(SSL_get0_peer_certificate(serverssl),
-                            verify_data.expected_cert),
-            0)
+        || !check_pha_peer_identity(serverssl, &verify_data)
+        || !TEST_long_eq(SSL_get_verify_result(serverssl),
+            verify_data.accepted_error)
+        || !TEST_long_eq(servercon->session->verify_result,
+            verify_data.accepted_error)
         || !TEST_ptr_null(servercon->s3.tmp.pending_peer_chain)
+        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk)
         || !TEST_ptr_eq(old_session->peer, old_peer)
+        || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
         || !TEST_ptr_eq(old_session->peer_chain, old_chain)
+        || !TEST_long_eq(old_session->verify_result, verify_data.initial_error)
         || !TEST_ptr(fresh_ticket = SSL_get1_session(clientssl))
         || !resume_pha_ticket(sctx, cctx, fresh_ticket, &resume_serverssl,
             &resume_clientssl)
-        || !TEST_ptr(SSL_get0_peer_certificate(resume_serverssl))
-        || !TEST_int_eq(X509_cmp(
-                            SSL_get0_peer_certificate(resume_serverssl),
-                            verify_data.expected_cert),
-            0))
+        || !check_pha_peer_identity(resume_serverssl, &verify_data)
+        || !TEST_long_eq(SSL_get_verify_result(resume_serverssl),
+            verify_data.accepted_error)
+        || !TEST_int_eq(verify_data.calls, 2))
         goto end;
 
     testresult = 1;
@@ -1427,6 +1493,7 @@ static int test_pha_empty_client_rpk(int required)
     long old_verify_result;
     int ret, testresult = 0;
 
+    verify_data.initial_error = X509_V_ERR_APPLICATION_VERIFICATION;
     if (!setup_pha_resumption(&verify_data, 1, 1, &sctx, &cctx,
             &serverssl, &clientssl, &ticket)
         || !TEST_ptr(old_session = SSL_get1_session(serverssl))
@@ -1436,6 +1503,9 @@ static int test_pha_empty_client_rpk(int required)
         goto end;
     old_verify_result = old_session->verify_result;
     servercon = SSL_CONNECTION_FROM_SSL(serverssl);
+    if (!TEST_long_eq(old_verify_result, X509_V_ERR_APPLICATION_VERIFICATION)
+        || !TEST_long_eq(SSL_get_verify_result(serverssl), old_verify_result))
+        goto end;
 
     SSL_set_verify(serverssl,
         SSL_VERIFY_PEER
@@ -1458,6 +1528,7 @@ static int test_pha_empty_client_rpk(int required)
             || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
             || !TEST_long_eq(old_session->verify_result,
                 old_verify_result)
+            || !TEST_long_eq(SSL_get_verify_result(serverssl), old_verify_result)
             || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk))
             goto end;
     } else {
@@ -17674,7 +17745,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_build_cert_chain);
     ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_TEST(test_pha_x509_pending_identity);
+    ADD_ALL_TESTS(test_pha_pending_identity, 8);
     ADD_ALL_TESTS(test_pha_empty_client_certificate, 2);
     ADD_ALL_TESTS(test_pha_empty_client_rpk, 2);
     ADD_TEST(test_pha_rejected_rpk_session);
