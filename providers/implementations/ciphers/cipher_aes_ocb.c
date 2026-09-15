@@ -500,7 +500,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string_or_ptr(p.tag, ctx->tag, ctx->taglen)) {
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.tag, ctx->tag, taglen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
