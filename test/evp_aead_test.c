@@ -28,9 +28,10 @@
 /* maximum AEAD tag buffer size */
 #define EVPTEST_TAG_LEN_MAX EVP_MAX_MD_SIZE
 
-/* default AEAD tag length for standard modes (GCM, CCM, OCB, etc.) */
-#define EVPTEST_TAG_LEN_DEFAULT 16
-
+/*
+ * keylen, ivlen, mode and taglen start at defaults (upper bounds)
+ * and are resolved by test_evp_aead_params()
+ */
 typedef struct {
     const EVP_CIPHER *ciph;
     const char *name;
@@ -110,10 +111,11 @@ static void collect_aead_cipher_cb(EVP_CIPHER *ciph, void *arg)
 
     info->ciph = ciph;
     info->name = name;
-    info->keylen = EVP_CIPHER_get_key_length(ciph);
-    info->ivlen = EVP_CIPHER_get_iv_length(ciph);
-    info->mode = EVP_CIPHER_get_mode(ciph);
-    info->taglen = EVPTEST_TAG_LEN_DEFAULT;
+    /* defaults, resolved later by test_evp_aead_params() */
+    info->keylen = EVP_MAX_KEY_LENGTH;
+    info->ivlen = EVP_MAX_IV_LENGTH;
+    info->mode = -1;
+    info->taglen = EVPTEST_TAG_LEN_MAX;
 
     aead_list_n++;
 }
@@ -137,7 +139,7 @@ static int setup_aead_list(void)
 
     /* Second pass actually populates aead_list. */
     EVP_CIPHER_do_all_provided(NULL, collect_aead_cipher_cb, NULL);
-    return TEST_true(aead_list_n > 0);
+    return TEST_int_eq(aead_list_n, (int)aead_list_size);
 }
 
 static void cleanup_aead_list(void)
@@ -155,6 +157,79 @@ static void cleanup_aead_list(void)
     OPENSSL_free(aead_list);
     aead_list = NULL;
     aead_list_n = 0;
+}
+
+/*
+ * Every EVP-level view of an AEAD cipher must agree with the provider:
+ * - OSSL_CIPHER_PARAM_KEYLEN / IVLEN / MODE via EVP_CIPHER_get_params()
+ *   match EVP_CIPHER_get_key_length() / get_iv_length() / get_mode()
+ * - OSSL_CIPHER_PARAM_AEAD_TAGLEN on a fresh ctx is non-zero and matches
+ *   EVP_CIPHER_CTX_get_tag_length()
+ * - all fit the fixed-size buffers used by the other tests
+ *
+ * Resolved values are written back into aead_list[idx].
+ */
+static int test_evp_aead_params(int idx)
+{
+    AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    OSSL_PARAM params[4];
+    size_t keylen = 0, ivlen = 0, taglen = 0;
+    unsigned int mode = 0;
+    int testresult = 0;
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN,
+        &keylen);
+    params[1] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN,
+        &ivlen);
+    params[2] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_MODE, &mode);
+    params[3] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_get_params((EVP_CIPHER *)info->ciph, params))
+        || !TEST_size_t_le(keylen, EVP_MAX_KEY_LENGTH)
+        || !TEST_size_t_le(ivlen, EVP_MAX_IV_LENGTH)) {
+        TEST_info("%s: cipher param query", info->name);
+        goto err;
+    }
+
+    if (!TEST_int_eq(EVP_CIPHER_get_key_length(info->ciph), (int)keylen)
+        || !TEST_int_eq(EVP_CIPHER_get_iv_length(info->ciph), (int)ivlen)
+        || !TEST_int_eq(EVP_CIPHER_get_mode(info->ciph), (int)mode)) {
+        TEST_info("%s: cipher accessors disagree with param query",
+            info->name);
+        goto err;
+    }
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, NULL, NULL,
+            NULL))) {
+        TEST_info("%s: init", info->name);
+        goto err;
+    }
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN,
+        &taglen);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_size_t_gt(taglen, 0)
+        || !TEST_size_t_le(taglen, EVPTEST_TAG_LEN_MAX)) {
+        TEST_info("%s: taglen param query", info->name);
+        goto err;
+    }
+
+    if (!TEST_int_eq(EVP_CIPHER_CTX_get_tag_length(ctx), (int)taglen)) {
+        TEST_info("%s: taglen accessor disagrees with param query",
+            info->name);
+        goto err;
+    }
+
+    info->keylen = (int)keylen;
+    info->ivlen = (int)ivlen;
+    info->mode = (int)mode;
+    info->taglen = (int)taglen;
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
 }
 
 /*
@@ -228,20 +303,6 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         || !TEST_true(prepare_ccm_no_payload(ctx_stream, info))
         || !TEST_true(EVP_EncryptFinal_ex(ctx_stream, ct, &finlen))) {
         TEST_info("stream encrypt final (reference) failed: idx=%d cipher=%s"
-                  " mode=%d keylen=%d ivlen=%d taglen=%d",
-            idx, info->name, info->mode, info->keylen, info->ivlen,
-            taglen);
-        goto err;
-    }
-
-    /* clamp to the negotiated tag length if the cipher reports one */
-    i = EVP_CIPHER_CTX_get_tag_length(ctx_stream);
-    if (i > 0)
-        taglen = i;
-
-    /* bound the memcpy, should never happen but helps static analysis */
-    if (!TEST_int_le(taglen, EVPTEST_TAG_LEN_MAX)) {
-        TEST_info("tag length exceeds buffer: idx=%d cipher=%s"
                   " mode=%d keylen=%d ivlen=%d taglen=%d",
             idx, info->name, info->mode, info->keylen, info->ivlen,
             taglen);
@@ -366,9 +427,18 @@ err:
 
 int setup_tests(void)
 {
-    if (!setup_aead_list())
+    int i = 0;
+
+    if (setup_aead_list() == 0)
         return 0;
 
+    /* resolve aead_list before registering, tests run in arbitrary order */
+    for (i = 0; i < aead_list_n; i++) {
+        if (test_evp_aead_params(i) == 0)
+            TEST_info("%s: unresolved, tests will fail", aead_list[i].name);
+    }
+
+    ADD_ALL_TESTS(test_evp_aead_params, aead_list_n);
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
     return 1;
 }
