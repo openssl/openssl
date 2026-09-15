@@ -4,10 +4,10 @@ Welcome to the OpenSSL Project
 [![openssl logo]][www.openssl.org]
 
 [![github actions ci badge]][github actions ci]
-[![Nightly OS Zoo ci badge](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml)
+[![Nightly OS Zoo ci badge](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml/badge.svg?event=schedule)](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml)
 [![Provider Compatibility](https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml)
 [![Quic Interop](https://github.com/openssl/openssl/actions/workflows/run_quic_interop.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/run_quic_interop.yml)
-[![Daily checks](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml)
+[![Daily checks](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml/badge.svg?event=schedule)](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml)
 [![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=openssl)](https://insights.linuxfoundation.org/project/openssl)
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
