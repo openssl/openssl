@@ -1458,7 +1458,7 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
 #if defined(_AIX)
     /*
      * AIX has a struct sockaddr_un definition that greatly inflates the size of the
-     * BIO_ADDR structure, two of which are used to to form a pseudo udp header in bio
+     * BIO_ADDR structure, two of which are used to form a pseudo udp header in bio
      * dgram pair BIO's.  We need to increase the size of the pair ring buffers here
      * to prevent test failures stemming from inability to transmit such large headers
      */
