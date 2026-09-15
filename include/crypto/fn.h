@@ -1473,7 +1473,7 @@ size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 
 /**
  * Convert a number to Montgomery representation: r = a * R mod N,
- * where R = 2^(length of limb in bits).
+ * where R = 2^(length of N in bits).
  *
  * @param[out]          r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1516,7 +1516,7 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 
 /**
  * Convert a number from Montgomery representation: r = a * R^(-1) mod N,
- * where R = 2^(length of limb in bits).
+ * where R = 2^(length of N in bits).
  *
  * @param[out]          r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1526,8 +1526,11 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  * @returns             1 on success, 0 on error
  *
  * @note This function requires that @p r, @p a, and @p mont->N are of
- * the same size, @p a is less than @p mont->N, @p ctx has free space for
- * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ * the same size.  @p a need not be fully reduced modulo @p mont->N; any
+ * value that fits that limb width (sometimes called "almost reduced")
+ * is accepted.  The result is fully reduced.  @p ctx must have free
+ * space for one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one
+ * frame.
  */
 int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
