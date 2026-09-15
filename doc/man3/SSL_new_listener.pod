@@ -443,7 +443,7 @@ DTLS listener support (including the B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION>,
 B<SSL_LISTENER_FLAG_NO_VALIDATE> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 flags) was added in OpenSSL 4.1.
 
-Support for SSL_listen_ex() with DTLS listeners was added in OpenSSL 4.1.
+Support for SSL_listen_ex() with DTLS listeners was added in OpenSSL 4.2.
 
 The DTLS listener tunables B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>,
 B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> and
