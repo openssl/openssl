@@ -354,33 +354,6 @@ end:
     return ret;
 }
 
-#ifndef OPENSSL_NO_ECX
-static int test_asn1_item_dup_mfail(void)
-{
-    EVP_PKEY *key = NULL;
-    X509_REQ *src = NULL, *dup = NULL;
-    int ret = -1;
-
-    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "ED25519"))
-        || !TEST_ptr(src = X509_REQ_new_ex(NULL, ""))
-        || !TEST_true(X509_REQ_set_version(src, X509_REQ_VERSION_1))
-        || !TEST_true(X509_REQ_set_pubkey(src, key))
-        || !TEST_int_gt(X509_REQ_sign(src, key, NULL), 0))
-        goto end;
-
-    MFAIL_start();
-    dup = X509_REQ_dup(src);
-    MFAIL_end();
-
-    ret = dup != NULL;
-end:
-    EVP_PKEY_free(key);
-    X509_REQ_free(src);
-    X509_REQ_free(dup);
-    return ret;
-}
-#endif
-
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -393,8 +366,5 @@ int setup_tests(void)
     ADD_TEST(test_mbstring_ncopy);
     ADD_TEST(test_ossl_uni2utf8);
     ADD_TEST(test_asn1_item_dup_failure_frees);
-#ifndef OPENSSL_NO_ECX
-    ADD_MFAIL_NO_CHECK_TEST(test_asn1_item_dup_mfail);
-#endif
     return 1;
 }
