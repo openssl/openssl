@@ -4084,10 +4084,9 @@ static void tls_clear_pending_client_identity(SSL_CONNECTION *sc)
 
 /*
  * Called only after accepting an empty Certificate response, for which no
- * verification callback ran. SSL_get_verify_result() specifies X509_V_OK when
- * no peer certificate was presented; this does not establish authentication.
- * Verification errors accepted by a callback for nonempty credentials are
- * preserved.
+ * verification callback ran. There's no peer credential to verify, so don't
+ * report X509_V_OK. The peer must remain explicitly unauthenticated.
+ * Errors retained by a callback for nonempty credentials are left intact.
  */
 static void tls_clear_client_verification_state(SSL_CONNECTION *sc)
 {
@@ -4099,7 +4098,7 @@ static void tls_clear_client_verification_state(SSL_CONNECTION *sc)
     X509_free(sc->dane.mcert);
     sc->dane.mcert = NULL;
     sc->dane.mtlsa = NULL;
-    sc->verify_result = X509_V_OK;
+    sc->verify_result = X509_V_ERR_UNSPECIFIED;
 }
 
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
@@ -4416,12 +4415,11 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
         s->session->peer = sk_X509_shift(sk);
         s->session->peer_chain = sk;
         s->s3.tmp.pending_peer_chain = NULL;
-        s->session->verify_result = s->verify_result;
     } else {
         tls_clear_pending_client_identity(s);
         tls_clear_client_verification_state(s);
-        s->session->verify_result = s->verify_result;
     }
+    s->session->verify_result = s->verify_result;
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE

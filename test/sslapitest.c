@@ -965,7 +965,79 @@ end:
     return ret;
 }
 
-#ifndef OSSL_NO_USABLE_TLS1_3
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+/* An absent credential must not invoke the verification callback. */
+static int empty_client_cert_verify_cb(X509_STORE_CTX *ctx, void *arg)
+{
+    int *calls = arg;
+
+    (*calls)++;
+    return 0;
+}
+
+/* Optional X.509/RPK authentication, plus a no-request control per version. */
+static const struct {
+    int version, use_rpk, request_cert;
+} empty_client_cert_tests[] = {
+    { TLS1_2_VERSION, 0, 1 },
+    { TLS1_2_VERSION, 1, 1 },
+    { TLS1_3_VERSION, 0, 1 },
+    { TLS1_3_VERSION, 1, 1 },
+    { TLS1_2_VERSION, 0, 0 },
+    { TLS1_3_VERSION, 0, 0 }
+};
+
+static int test_empty_client_certificate(int idx)
+{
+    static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk };
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int version = empty_client_cert_tests[idx].version;
+    int request_cert = empty_client_cert_tests[idx].request_cert;
+    long expected = request_cert ? X509_V_ERR_UNSPECIFIED : X509_V_OK;
+    int calls = 0, testresult = 0;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (version == TLS1_2_VERSION)
+        return TEST_skip("TLS 1.2 is disabled");
+#endif
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (version == TLS1_3_VERSION)
+        return TEST_skip("TLS 1.3 is disabled");
+#endif
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), version, version,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    if (request_cert)
+        SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+    SSL_CTX_set_cert_verify_callback(sctx, empty_client_cert_verify_cb, &calls);
+    if (empty_client_cert_tests[idx].use_rpk
+        && (!TEST_true(SSL_CTX_set1_client_cert_type(sctx, cert_type_rpk,
+                sizeof(cert_type_rpk)))
+            || !TEST_true(SSL_CTX_set1_client_cert_type(cctx, cert_type_rpk,
+                sizeof(cert_type_rpk)))))
+        goto end;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
+        || !TEST_ptr_null(SSL_get0_peer_rpk(serverssl))
+        || !TEST_long_eq(SSL_get_verify_result(serverssl), expected)
+        || !TEST_long_eq(SSL_get_session(serverssl)->verify_result, expected)
+        || !TEST_int_eq(calls, 0))
+        goto end;
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 typedef struct {
     int pha;
     int calls;
@@ -984,6 +1056,9 @@ static int pha_verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
     int idx = SSL_get_ex_data_X509_STORE_CTX_idx();
 
     if (!data->pha) {
+        if (X509_STORE_CTX_get0_cert(ctx) != NULL
+            && !TEST_int_eq(X509_verify_cert(ctx), 1))
+            return 0;
         X509_STORE_CTX_set_error(ctx, data->initial_error);
         return 1;
     }
@@ -1013,96 +1088,57 @@ static int pha_verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
     return data->accept;
 }
 
-static int setup_pha_resumption(PHA_VERIFY_DATA *verify_data,
-    int initial_client_cert, int use_rpk, SSL_CTX **sctx_out,
-    SSL_CTX **cctx_out, SSL **serverssl_out, SSL **clientssl_out,
-    SSL_SESSION **ticket_out)
+/* Outputs belong to the caller, including on failure. */
+static int setup_pha(PHA_VERIFY_DATA *verify_data, int initial_client_cert,
+    int use_rpk, int testdtls, SSL_CTX **sctx, SSL_CTX **cctx,
+    SSL **serverssl, SSL **clientssl)
 {
     static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk };
     static const unsigned char sid_ctx[] = { 1 };
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
-    SSL_SESSION *first_ticket = NULL, *ticket = NULL;
-    int ret = 0;
+    int version = testdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
-    /*
-     * Force cache-owned stateful TLS 1.3 tickets. The session id context is
-     * required when the tests enable peer verification; the owner assertions
-     * below prove that each session was published to the internal cache.
-     */
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
-            &sctx, &cctx, cert, privkey))
-        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 1))
-        || !TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET))
-        || !TEST_true(SSL_CTX_set_session_id_context(sctx, sid_ctx,
+    /* One stateful ticket makes the active server session cache-owned. */
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+            testdtls ? DTLS_server_method() : TLS_server_method(),
+            testdtls ? DTLS_client_method() : TLS_client_method(), version, version,
+            sctx, cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(*sctx, 1))
+        || !TEST_true(SSL_CTX_set_options(*sctx, SSL_OP_NO_TICKET))
+        || !TEST_true(SSL_CTX_set_session_id_context(*sctx, sid_ctx,
             sizeof(sid_ctx))))
-        goto end;
-
+        return 0;
     if (use_rpk
-        && (!TEST_true(SSL_CTX_set1_client_cert_type(sctx, cert_type_rpk,
+        && (!TEST_true(SSL_CTX_set1_client_cert_type(*sctx, cert_type_rpk,
                 sizeof(cert_type_rpk)))
-            || !TEST_true(SSL_CTX_set1_client_cert_type(cctx, cert_type_rpk,
+            || !TEST_true(SSL_CTX_set1_client_cert_type(*cctx, cert_type_rpk,
                 sizeof(cert_type_rpk)))))
-        goto end;
-
-    SSL_CTX_set_cert_verify_callback(sctx, pha_verify_retry_cb, verify_data);
+        return 0;
+    SSL_CTX_set_cert_verify_callback(*sctx, pha_verify_retry_cb, verify_data);
     if (initial_client_cert)
-        SSL_CTX_set_verify(sctx,
+        SSL_CTX_set_verify(*sctx,
             SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-            &clientssl, NULL, NULL)))
-        goto end;
+    if (!TEST_true(create_ssl_objects(*sctx, *cctx, serverssl, clientssl,
+            NULL, NULL)))
+        return 0;
     if (initial_client_cert
-        && (!TEST_int_eq(SSL_use_certificate_file(clientssl, cert,
+        && (!TEST_int_eq(SSL_use_certificate_file(*clientssl, cert,
                              SSL_FILETYPE_PEM),
                 1)
-            || !TEST_int_eq(SSL_use_PrivateKey_file(clientssl, privkey,
+            || !TEST_int_eq(SSL_use_PrivateKey_file(*clientssl, privkey,
                                 SSL_FILETYPE_PEM),
-                1)
-            || !TEST_int_eq(SSL_check_private_key(clientssl), 1)))
-        goto end;
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE))
-        || !TEST_ptr(first_ticket = SSL_get1_session(clientssl)))
-        goto end;
-
-    SSL_shutdown(clientssl);
-    SSL_shutdown(serverssl);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    serverssl = clientssl = NULL;
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-            &clientssl, NULL, NULL))
-        || !TEST_true(SSL_set_session(clientssl, first_ticket)))
-        goto end;
-    SSL_set_post_handshake_auth(clientssl, 1);
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE))
-        || !TEST_true(SSL_session_reused(clientssl))
-        || !TEST_ptr(ticket = SSL_get1_session(clientssl)))
-        goto end;
-
-    *sctx_out = sctx;
-    *cctx_out = cctx;
-    *serverssl_out = serverssl;
-    *clientssl_out = clientssl;
-    *ticket_out = ticket;
-    sctx = cctx = NULL;
-    serverssl = clientssl = NULL;
-    ticket = NULL;
-    ret = 1;
-
-end:
-    SSL_SESSION_free(first_ticket);
-    SSL_SESSION_free(ticket);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-    return ret;
+                1)))
+        return 0;
+    /* Populate chain and peername through verification of the initial X.509 peer. */
+    if (initial_client_cert && !use_rpk
+        && (!TEST_true(X509_STORE_add_cert(SSL_CTX_get_cert_store(*sctx),
+                SSL_get_certificate(*clientssl)))
+            || !TEST_true(SSL_set_purpose(*serverssl, X509_PURPOSE_ANY))
+            || !TEST_true(SSL_set1_dnsname(*serverssl, "server.example"))
+            || !TEST_true(X509_VERIFY_PARAM_set_flags(SSL_get0_param(*serverssl),
+                X509_V_FLAG_PARTIAL_CHAIN))))
+        return 0;
+    SSL_set_post_handshake_auth(*clientssl, 1);
+    return TEST_true(create_ssl_connection(*serverssl, *clientssl, SSL_ERROR_NONE));
 }
 
 static int start_pha_and_pause(SSL *serverssl, SSL *clientssl)
@@ -1121,97 +1157,12 @@ static int start_pha_and_pause(SSL *serverssl, SSL *clientssl)
 }
 
 static int resume_pha_ticket(SSL_CTX *sctx, SSL_CTX *cctx,
-    SSL_SESSION *ticket, SSL **serverssl_out, SSL **clientssl_out)
+    SSL_SESSION *ticket, SSL **serverssl, SSL **clientssl)
 {
-    SSL *serverssl = NULL, *clientssl = NULL;
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-            NULL, NULL))
-        || !TEST_true(SSL_set_session(clientssl, ticket))
-        || !TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE))
-        || !TEST_true(SSL_session_reused(clientssl))) {
-        SSL_free(serverssl);
-        SSL_free(clientssl);
-        return 0;
-    }
-
-    *serverssl_out = serverssl;
-    *clientssl_out = clientssl;
-    return 1;
-}
-
-/*
- * verified_chain, peername, and DANE verification results are connection-only
- * and are not restored from a resumed session. Populate them so the empty-PHA
- * cleanup assertions below have non-empty preconditions.
- */
-static int seed_pha_verification_state(SSL *serverssl)
-{
-    static const unsigned char tlsa_digest[SHA256_DIGEST_LENGTH] = { 0 };
-    SSL_CONNECTION *servercon = SSL_CONNECTION_FROM_SSL(serverssl);
-    SSL_CTX *sctx = SSL_get_SSL_CTX(serverssl);
-    X509 *peer = SSL_get0_peer_certificate(serverssl);
-    X509_STORE *store = NULL;
-    X509_STORE_CTX *store_ctx = NULL;
-    X509_VERIFY_PARAM *param;
-    STACK_OF(X509) *verified_chain = NULL;
-    int peer_ref = 0, ret = 0;
-
-    if (!TEST_ptr(servercon)
-        || !TEST_ptr(sctx)
-        || !TEST_ptr(peer)
-        || !TEST_ptr(store = X509_STORE_new())
-        || !TEST_ptr(store_ctx = X509_STORE_CTX_new_ex(libctx, NULL))
-        || !TEST_true(X509_STORE_add_cert(store, peer))
-        || !TEST_true(X509_STORE_CTX_init(store_ctx, store, peer, NULL)))
-        goto end;
-
-    param = X509_STORE_CTX_get0_param(store_ctx);
-    if (!TEST_ptr(param)
-        || !TEST_true(X509_VERIFY_PARAM_set_flags(param,
-            X509_V_FLAG_PARTIAL_CHAIN))
-        || !TEST_true(X509_VERIFY_PARAM_set1_host(param,
-            "server.example", 0))
-        || !TEST_int_eq(X509_verify_cert(store_ctx), 1)
-        || !TEST_str_eq(X509_VERIFY_PARAM_get0_peername(param),
-            "server.example")
-        || !TEST_ptr(verified_chain = sk_X509_new_null()))
-        goto end;
-    if (!TEST_true(X509_up_ref(peer)))
-        goto end;
-    peer_ref = 1;
-    if (!TEST_true(sk_X509_push(verified_chain, peer)))
-        goto end;
-    peer_ref = 0;
-
-    OSSL_STACK_OF_X509_free(servercon->verified_chain);
-    servercon->verified_chain = verified_chain;
-    verified_chain = NULL;
-    X509_VERIFY_PARAM_move_peername(servercon->param, param);
-
-    if (!TEST_int_gt(SSL_CTX_dane_enable(sctx), 0)
-        || !TEST_int_gt(SSL_dane_enable(serverssl, NULL), 0)
-        || !TEST_int_gt(SSL_dane_tlsa_add(serverssl,
-                            DANETLS_USAGE_DANE_EE, DANETLS_SELECTOR_SPKI,
-                            DANETLS_MATCHING_2256, tlsa_digest, sizeof(tlsa_digest)),
-            0)
-        || !TEST_true(X509_up_ref(peer)))
-        goto end;
-    servercon->dane.mdpth = 0;
-    servercon->dane.pdpth = 0;
-    servercon->dane.mcert = peer;
-    servercon->dane.mtlsa = sk_danetls_record_value(
-        servercon->dane.trecs, 0);
-    ret = 1;
-
-end:
-    if (peer_ref)
-        X509_free(peer);
-    OSSL_STACK_OF_X509_free(verified_chain);
-    X509_STORE_CTX_free(store_ctx);
-    X509_STORE_free(store);
-    return ret;
+    return TEST_true(create_ssl_objects(sctx, cctx, serverssl, clientssl, NULL, NULL))
+        && TEST_true(SSL_set_session(*clientssl, ticket))
+        && TEST_true(create_ssl_connection(*serverssl, *clientssl, SSL_ERROR_NONE))
+        && TEST_true(SSL_session_reused(*clientssl));
 }
 
 static int check_pha_peer_identity(SSL *ssl, const PHA_VERIFY_DATA *data)
@@ -1231,10 +1182,9 @@ static int check_pha_peer_identity(SSL *ssl, const PHA_VERIFY_DATA *data)
 }
 
 /*
- * Exercise X.509/RPK replacement with successful or callback-accepted error
- * results, using stateful/stateless refreshed tickets. The retained session
- * is cache-owned in every case. Bit 0 selects RPK, bit 1 an accepted error,
- * and bit 2 stateless refreshed tickets.
+ * Cases 0..3 accept X.509/RPK with a retained error and stateful/stateless
+ * refreshed tickets. Cases 4..5 reject X.509/RPK while another connection
+ * resumes the old session. Case 6 repeats stateful X.509 acceptance with DTLS.
  */
 static int test_pha_pending_identity(int idx)
 {
@@ -1249,17 +1199,31 @@ static int test_pha_pending_identity(int idx)
     STACK_OF(X509) *old_chain;
     X509 *old_peer;
     EVP_PKEY *old_rpk;
+    int testdtls = idx == 6;
+    int reject = idx == 4 || idx == 5;
     int use_rpk = idx & 1;
-    int stateless = idx & 4;
-    int testresult = 0;
+    int stateless = idx == 2 || idx == 3;
+    int ret, testresult = 0;
 
-    verify_data.initial_error = X509_V_ERR_APPLICATION_VERIFICATION;
-    verify_data.accepted_error = (idx & 2) != 0
-        ? X509_V_ERR_CERT_REVOKED
-        : X509_V_OK;
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (!testdtls) {
+        testresult = TEST_skip("TLS 1.3 is disabled");
+        goto end;
+    }
+#endif
+#ifdef OSSL_NO_USABLE_DTLS1_3
+    if (testdtls) {
+        testresult = TEST_skip("DTLS 1.3 is disabled");
+        goto end;
+    }
+#endif
+    verify_data.initial_error = reject ? X509_V_OK
+                                       : X509_V_ERR_APPLICATION_VERIFICATION;
+    verify_data.accepted_error = X509_V_ERR_CERT_REVOKED;
     if (!TEST_ptr(leaf_chain) || !TEST_ptr(leaf_key)
-        || !setup_pha_resumption(&verify_data, 1, use_rpk, &sctx, &cctx,
-            &serverssl, &clientssl, &ticket)
+        || !setup_pha(&verify_data, !reject, use_rpk, testdtls, &sctx, &cctx,
+            &serverssl, &clientssl)
+        || !TEST_ptr(ticket = SSL_get1_session(clientssl))
         || !TEST_ptr(old_session = SSL_get1_session(serverssl))
         || !TEST_ptr(old_session->owner)
         || !TEST_long_eq(old_session->verify_result, verify_data.initial_error)
@@ -1269,7 +1233,10 @@ static int test_pha_pending_identity(int idx)
     old_peer = old_session->peer;
     old_rpk = old_session->peer_rpk;
     old_chain = old_session->peer_chain;
-    if (use_rpk) {
+    if (reject) {
+        if (!TEST_ptr_null(old_peer) || !TEST_ptr_null(old_rpk))
+            goto end;
+    } else if (use_rpk) {
         if (!TEST_ptr(old_rpk) || !TEST_ptr_null(old_peer))
             goto end;
     } else if (!TEST_ptr(old_peer) || !TEST_ptr_null(old_rpk)) {
@@ -1286,7 +1253,7 @@ static int test_pha_pending_identity(int idx)
         goto end;
 
     verify_data.pha = 1;
-    verify_data.accept = 1;
+    verify_data.accept = !reject;
     if (use_rpk) {
         verify_data.expected_rpk = X509_get0_pubkey(SSL_get_certificate(clientssl));
         if (!TEST_ptr(verify_data.expected_rpk))
@@ -1307,47 +1274,59 @@ static int test_pha_pending_identity(int idx)
     if (!TEST_int_eq(verify_data.calls, 1)
         || !TEST_true(verify_data.candidate_ok)
         || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
-        || !TEST_ptr_eq(old_session->peer, old_peer)
-        || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
-        || !TEST_ptr_eq(old_session->peer_chain, old_chain)
         || !TEST_long_eq(old_session->verify_result, verify_data.initial_error)
         || !TEST_ptr_eq(SSL_get0_peer_certificate(serverssl), old_peer)
         || !TEST_ptr_eq(SSL_get0_peer_rpk(serverssl), old_rpk)
         || !TEST_ptr_eq(SSL_get_peer_cert_chain(serverssl), old_chain))
         goto end;
-    if (use_rpk) {
-        if (!TEST_ptr(servercon->s3.tmp.pending_peer_rpk)
-            || !TEST_ptr_null(servercon->s3.tmp.pending_peer_chain))
-            goto end;
-    } else if (!TEST_ptr(servercon->s3.tmp.pending_peer_chain)
-        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk)) {
-        goto end;
-    }
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE))
-        || !TEST_int_eq(verify_data.calls, 2)
+    if (reject) {
+        /* A second connection must not see the pending credential. */
+        if (!resume_pha_ticket(sctx, cctx, ticket, &resume_serverssl,
+                &resume_clientssl)
+            || !TEST_int_eq(verify_data.calls, 1)
+            || !TEST_ptr_null(SSL_get0_peer_certificate(resume_serverssl))
+            || !TEST_ptr_null(SSL_get0_peer_rpk(resume_serverssl))
+            || !TEST_ptr_null(SSL_get_peer_cert_chain(resume_serverssl)))
+            goto end;
+        ret = SSL_read(serverssl, NULL, 0);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_CERTIFICATE_VERIFY_FAILED)
+            || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
+            || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
+            || !TEST_ptr_null(SSL_get0_peer_rpk(serverssl))
+            || !TEST_ptr_null(SSL_get_peer_cert_chain(serverssl))
+            || !TEST_ptr_null(SSL_get0_peer_certificate(resume_serverssl))
+            || !TEST_ptr_null(SSL_get0_peer_rpk(resume_serverssl))
+            || !TEST_ptr_null(SSL_get_peer_cert_chain(resume_serverssl)))
+            goto end;
+    } else if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                   SSL_ERROR_NONE))
         || !TEST_ptr_ne(SSL_get_session(serverssl), old_session)
         || !check_pha_peer_identity(serverssl, &verify_data)
         || !TEST_long_eq(SSL_get_verify_result(serverssl),
             verify_data.accepted_error)
         || !TEST_long_eq(servercon->session->verify_result,
             verify_data.accepted_error)
-        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_chain)
-        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk)
-        || !TEST_ptr_eq(old_session->peer, old_peer)
-        || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
-        || !TEST_ptr_eq(old_session->peer_chain, old_chain)
-        || !TEST_long_eq(old_session->verify_result, verify_data.initial_error)
         || !TEST_ptr(fresh_ticket = SSL_get1_session(clientssl))
         || !resume_pha_ticket(sctx, cctx, fresh_ticket, &resume_serverssl,
             &resume_clientssl)
         || !check_pha_peer_identity(resume_serverssl, &verify_data)
         || !TEST_long_eq(SSL_get_verify_result(resume_serverssl),
-            verify_data.accepted_error)
-        || !TEST_int_eq(verify_data.calls, 2))
+            verify_data.accepted_error)) {
         goto end;
+    }
 
+    if (!TEST_int_eq(verify_data.calls, 2)
+        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_chain)
+        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk)
+        || !TEST_ptr_eq(old_session->peer, old_peer)
+        || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
+        || !TEST_ptr_eq(old_session->peer_chain, old_chain)
+        || !TEST_long_eq(old_session->verify_result, verify_data.initial_error))
+        goto end;
     testresult = 1;
 
 end:
@@ -1365,205 +1344,170 @@ end:
     return testresult;
 }
 
-static int test_pha_empty_client_certificate(int required)
+/* Seed a prior DANE match so empty-PHA cleanup must reset it. */
+static int seed_pha_dane(SSL *ssl)
+{
+    static const unsigned char digest[SHA256_DIGEST_LENGTH] = { 0 };
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    X509 *peer = SSL_get0_peer_certificate(ssl);
+
+    if (!TEST_int_gt(SSL_CTX_dane_enable(SSL_get_SSL_CTX(ssl)), 0)
+        || !TEST_int_gt(SSL_dane_enable(ssl, "server.example"), 0)
+        || !TEST_int_gt(SSL_dane_tlsa_add(ssl, DANETLS_USAGE_DANE_EE,
+                            DANETLS_SELECTOR_SPKI, DANETLS_MATCHING_2256,
+                            digest, sizeof(digest)),
+            0)
+        || !TEST_true(X509_up_ref(peer)))
+        return 0;
+    sc->dane.mdpth = sc->dane.pdpth = 0;
+    sc->dane.mcert = peer;
+    sc->dane.mtlsa = sk_danetls_record_value(sc->dane.trecs, 0);
+    return 1;
+}
+
+static int check_pha_verification_state(SSL *ssl, int populated)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    return TEST_int_eq(SSL_get0_verified_chain(ssl) != NULL, populated)
+        && TEST_str_eq(SSL_get0_peername(ssl), populated ? "server.example" : NULL)
+        && TEST_int_eq(sc->dane.mdpth, populated ? 0 : -1)
+        && TEST_int_eq(sc->dane.pdpth, populated ? 0 : -1)
+        && TEST_int_eq(sc->dane.mcert != NULL, populated)
+        && TEST_int_eq(sc->dane.mtlsa != NULL, populated)
+        && (populated || TEST_int_eq(SSL_get0_dane_authority(ssl, NULL, NULL), -1));
+}
+
+/*
+ * Cases 0..3 accept empty X.509/RPK with stateful/stateless refreshed tickets;
+ * 4..5 require a credential; 6..7 repeat optional stateful PHA with DTLS.
+ */
+static int test_pha_empty_client_certificate(int idx)
 {
     PHA_VERIFY_DATA verify_data = { 0 };
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     SSL *resume_serverssl = NULL, *resume_clientssl = NULL;
     SSL_CONNECTION *servercon;
-    SSL_SESSION *ticket = NULL, *old_session = NULL, *fresh_ticket = NULL;
+    SSL_SESSION *old_session = NULL, *fresh_ticket = NULL;
+    SSL_SESSION *previous_session = NULL;
     STACK_OF(X509) *old_chain;
     X509 *old_peer;
-    long old_verify_result;
-    int ret, testresult = 0;
-
-    verify_data.initial_error = X509_V_ERR_APPLICATION_VERIFICATION;
-    if (!setup_pha_resumption(&verify_data, 1, 0, &sctx, &cctx,
-            &serverssl, &clientssl, &ticket)
-        || !TEST_ptr(old_session = SSL_get1_session(serverssl))
-        || !TEST_ptr(old_session->owner)
-        || !TEST_ptr(old_peer = old_session->peer))
-        goto end;
-    old_chain = old_session->peer_chain;
-    old_verify_result = old_session->verify_result;
-    servercon = SSL_CONNECTION_FROM_SSL(serverssl);
-    if (!TEST_long_eq(old_verify_result,
-            X509_V_ERR_APPLICATION_VERIFICATION)
-        || !TEST_long_eq(SSL_get_verify_result(serverssl),
-            old_verify_result)
-        || !seed_pha_verification_state(serverssl)
-        || !TEST_ptr(SSL_get0_verified_chain(serverssl))
-        || !TEST_str_eq(SSL_get0_peername(serverssl), "server.example")
-        || !TEST_int_eq(servercon->dane.mdpth, 0)
-        || !TEST_int_eq(servercon->dane.pdpth, 0)
-        || !TEST_ptr(servercon->dane.mcert)
-        || !TEST_ptr(servercon->dane.mtlsa))
-        goto end;
-
-    SSL_set_verify(serverssl,
-        SSL_VERIFY_PEER
-            | (required ? SSL_VERIFY_FAIL_IF_NO_PEER_CERT : 0),
-        NULL);
-    if (!TEST_true(SSL_verify_client_post_handshake(serverssl))
-        || !TEST_int_eq(SSL_do_handshake(serverssl), 1)
-        || !TEST_int_le(SSL_read(clientssl, NULL, 0), 0))
-        goto end;
-    ret = SSL_read(serverssl, NULL, 0);
-    if (!TEST_int_le(ret, 0))
-        goto end;
-
-    if (required) {
-        if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
-            || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
-            || !TEST_ptr_eq(SSL_get0_peer_certificate(serverssl), old_peer)
-            || !TEST_ptr_eq(SSL_get_peer_cert_chain(serverssl), old_chain)
-            || !TEST_ptr_eq(old_session->peer, old_peer)
-            || !TEST_ptr_eq(old_session->peer_chain, old_chain)
-            || !TEST_long_eq(old_session->verify_result,
-                old_verify_result)
-            || !TEST_ptr(SSL_get0_verified_chain(serverssl))
-            || !TEST_long_eq(SSL_get_verify_result(serverssl),
-                old_verify_result)
-            || !TEST_str_eq(SSL_get0_peername(serverssl),
-                "server.example")
-            || !TEST_int_eq(servercon->dane.mdpth, 0)
-            || !TEST_int_eq(servercon->dane.pdpth, 0)
-            || !TEST_ptr(servercon->dane.mcert)
-            || !TEST_ptr(servercon->dane.mtlsa)
-            || !TEST_ptr_null(servercon->s3.tmp.pending_peer_chain))
-            goto end;
-    } else {
-        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                SSL_ERROR_NONE))
-            || !TEST_ptr_ne(SSL_get_session(serverssl), old_session)
-            || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
-            || !TEST_ptr_null(SSL_get_peer_cert_chain(serverssl))
-            || !TEST_ptr_null(SSL_get0_verified_chain(serverssl))
-            || !TEST_long_eq(SSL_get_verify_result(serverssl), X509_V_OK)
-            || !TEST_ptr_null(SSL_get0_peername(serverssl))
-            || !TEST_int_eq(servercon->dane.mdpth, -1)
-            || !TEST_int_eq(servercon->dane.pdpth, -1)
-            || !TEST_ptr_null(servercon->dane.mcert)
-            || !TEST_ptr_null(servercon->dane.mtlsa)
-            || !TEST_int_eq(
-                SSL_get0_dane_authority(serverssl, NULL, NULL), -1)
-            || !TEST_ptr_null(servercon->session->peer_rpk)
-            || !TEST_long_eq(servercon->session->verify_result, X509_V_OK)
-            || !TEST_ptr_eq(old_session->peer, old_peer)
-            || !TEST_ptr_eq(old_session->peer_chain, old_chain)
-            || !TEST_long_eq(old_session->verify_result,
-                old_verify_result)
-            || !TEST_ptr(fresh_ticket = SSL_get1_session(clientssl))
-            || !resume_pha_ticket(sctx, cctx, fresh_ticket,
-                &resume_serverssl, &resume_clientssl)
-            || !TEST_ptr_null(
-                SSL_get0_peer_certificate(resume_serverssl))
-            || !TEST_ptr_null(SSL_get_peer_cert_chain(resume_serverssl))
-            || !TEST_long_eq(SSL_get_verify_result(resume_serverssl),
-                X509_V_OK)
-            || !TEST_ptr_null(SSL_get0_peername(resume_serverssl)))
-            goto end;
-    }
-
-    testresult = 1;
-
-end:
-    SSL_SESSION_free(ticket);
-    SSL_SESSION_free(old_session);
-    SSL_SESSION_free(fresh_ticket);
-    SSL_free(resume_serverssl);
-    SSL_free(resume_clientssl);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-    return testresult;
-}
-
-static int test_pha_empty_client_rpk(int required)
-{
-    PHA_VERIFY_DATA verify_data = { 0 };
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
-    SSL *resume_serverssl = NULL, *resume_clientssl = NULL;
-    SSL_CONNECTION *servercon;
-    SSL_SESSION *ticket = NULL, *old_session = NULL, *fresh_ticket = NULL;
     EVP_PKEY *old_rpk;
-    long old_verify_result;
-    int ret, testresult = 0;
+    int use_rpk = idx & 1;
+    int required = idx == 4 || idx == 5;
+    int testdtls = idx >= 6;
+    int attempt, ret, testresult = 0;
 
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (!testdtls)
+        return TEST_skip("TLS 1.3 is disabled");
+#endif
+#ifdef OSSL_NO_USABLE_DTLS1_3
+    if (testdtls)
+        return TEST_skip("DTLS 1.3 is disabled");
+#endif
     verify_data.initial_error = X509_V_ERR_APPLICATION_VERIFICATION;
-    if (!setup_pha_resumption(&verify_data, 1, 1, &sctx, &cctx,
-            &serverssl, &clientssl, &ticket)
+    if (!setup_pha(&verify_data, 1, use_rpk, testdtls, &sctx, &cctx,
+            &serverssl, &clientssl)
         || !TEST_ptr(old_session = SSL_get1_session(serverssl))
-        || !TEST_ptr(old_session->owner)
-        || !TEST_ptr(old_rpk = old_session->peer_rpk)
-        || !TEST_ptr_eq(SSL_get0_peer_rpk(serverssl), old_rpk))
+        || !TEST_ptr(old_session->owner))
         goto end;
-    old_verify_result = old_session->verify_result;
+    old_peer = old_session->peer;
+    old_rpk = old_session->peer_rpk;
+    old_chain = old_session->peer_chain;
     servercon = SSL_CONNECTION_FROM_SSL(serverssl);
-    if (!TEST_long_eq(old_verify_result, X509_V_ERR_APPLICATION_VERIFICATION)
-        || !TEST_long_eq(SSL_get_verify_result(serverssl), old_verify_result))
-        goto end;
-
-    SSL_set_verify(serverssl,
-        SSL_VERIFY_PEER
-            | (required ? SSL_VERIFY_FAIL_IF_NO_PEER_CERT : 0),
-        NULL);
-    if (!TEST_true(SSL_verify_client_post_handshake(serverssl))
-        || !TEST_int_eq(SSL_do_handshake(serverssl), 1)
-        || !TEST_int_le(SSL_read(clientssl, NULL, 0), 0))
-        goto end;
-    ret = SSL_read(serverssl, NULL, 0);
-    if (!TEST_int_le(ret, 0))
-        goto end;
-
-    if (required) {
-        if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
-            || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
-            || !TEST_ptr_eq(SSL_get0_peer_rpk(serverssl), old_rpk)
-            || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
-            || !TEST_ptr_null(SSL_get_peer_cert_chain(serverssl))
-            || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
-            || !TEST_long_eq(old_session->verify_result,
-                old_verify_result)
-            || !TEST_long_eq(SSL_get_verify_result(serverssl), old_verify_result)
-            || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk))
+    if (use_rpk) {
+        if (!TEST_ptr(old_rpk) || !TEST_ptr_null(old_peer))
             goto end;
-    } else {
-        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                SSL_ERROR_NONE))
-            || !TEST_ptr_ne(SSL_get_session(serverssl), old_session)
-            || !TEST_ptr_null(SSL_get0_peer_rpk(serverssl))
+    } else if (!TEST_ptr(old_peer) || !TEST_ptr_null(old_rpk)
+        || !seed_pha_dane(serverssl)
+        || !check_pha_verification_state(serverssl, 1)) {
+        goto end;
+    }
+    SSL_certs_clear(clientssl);
+    if (idx == 2 || idx == 3) {
+        SSL_CTX_clear_options(sctx, SSL_OP_NO_TICKET);
+        SSL_clear_options(serverssl, SSL_OP_NO_TICKET);
+    }
+    verify_data.pha = 1;
+    SSL_set_verify(serverssl,
+        SSL_VERIFY_PEER | (required ? SSL_VERIFY_FAIL_IF_NO_PEER_CERT : 0),
+        NULL);
+
+    /* Repeat optional PHA with no credential and an explicitly unauthenticated result. */
+    for (attempt = 0; attempt < (required ? 1 : 2); attempt++) {
+        long previous_result = attempt == 0 ? verify_data.initial_error
+                                            : X509_V_ERR_UNSPECIFIED;
+
+        SSL_SESSION_free(previous_session);
+        previous_session = SSL_get1_session(serverssl);
+        if (!TEST_ptr(previous_session)
+            || !TEST_long_eq(previous_session->verify_result, previous_result)
+            || !TEST_long_eq(SSL_get_verify_result(serverssl), previous_result)
+            || !TEST_true(SSL_verify_client_post_handshake(serverssl))
+            || !TEST_int_eq(SSL_do_handshake(serverssl), 1)
+            || !TEST_int_le(SSL_read(clientssl, NULL, 0), 0))
+            goto end;
+        ret = SSL_read(serverssl, NULL, 0);
+        if (!TEST_int_le(ret, 0))
+            goto end;
+
+        if (required) {
+            if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
+                || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                    SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE)
+                || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
+                || !TEST_ptr_eq(SSL_get0_peer_certificate(serverssl), old_peer)
+                || !TEST_ptr_eq(SSL_get0_peer_rpk(serverssl), old_rpk)
+                || !TEST_ptr_eq(SSL_get_peer_cert_chain(serverssl), old_chain)
+                || !TEST_long_eq(SSL_get_verify_result(serverssl), previous_result))
+                goto end;
+        } else if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                       SSL_ERROR_NONE))
+            || !TEST_ptr_ne(SSL_get_session(serverssl), previous_session)
             || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
+            || !TEST_ptr_null(SSL_get0_peer_rpk(serverssl))
             || !TEST_ptr_null(SSL_get_peer_cert_chain(serverssl))
-            || !TEST_ptr_null(SSL_get0_verified_chain(serverssl))
-            || !TEST_long_eq(SSL_get_verify_result(serverssl), X509_V_OK)
-            || !TEST_ptr_null(SSL_get0_peername(serverssl))
-            || !TEST_long_eq(servercon->session->verify_result, X509_V_OK)
+            || !TEST_long_eq(SSL_get_verify_result(serverssl), X509_V_ERR_UNSPECIFIED)
+            || !TEST_long_eq(servercon->session->verify_result, X509_V_ERR_UNSPECIFIED)) {
+            goto end;
+        }
+        if ((!use_rpk || !required)
+            && !check_pha_verification_state(serverssl, required))
+            goto end;
+        if (!TEST_int_eq(verify_data.calls, 0)
+            || !TEST_ptr_null(servercon->s3.tmp.pending_peer_chain)
+            || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk)
+            || !TEST_ptr_eq(old_session->peer, old_peer)
             || !TEST_ptr_eq(old_session->peer_rpk, old_rpk)
-            || !TEST_long_eq(old_session->verify_result,
-                old_verify_result)
-            || !TEST_ptr(fresh_ticket = SSL_get1_session(clientssl))
-            || !resume_pha_ticket(sctx, cctx, fresh_ticket,
-                &resume_serverssl, &resume_clientssl)
-            || !TEST_ptr_null(SSL_get0_peer_rpk(resume_serverssl))
-            || !TEST_ptr_null(
-                SSL_get0_peer_certificate(resume_serverssl))
-            || !TEST_ptr_null(SSL_get_peer_cert_chain(resume_serverssl))
-            || !TEST_long_eq(SSL_get_verify_result(resume_serverssl),
-                X509_V_OK)
-            || !TEST_ptr_null(SSL_get0_peername(resume_serverssl)))
+            || !TEST_ptr_eq(old_session->peer_chain, old_chain)
+            || !TEST_long_eq(old_session->verify_result, verify_data.initial_error)
+            || !TEST_ptr_eq(previous_session->peer, attempt == 0 ? old_peer : NULL)
+            || !TEST_ptr_eq(previous_session->peer_rpk, attempt == 0 ? old_rpk : NULL)
+            || !TEST_ptr_eq(previous_session->peer_chain, attempt == 0 ? old_chain : NULL)
+            || !TEST_long_eq(previous_session->verify_result, previous_result))
             goto end;
     }
 
-    testresult = 1;
+    if (!required
+        && (!TEST_ptr(fresh_ticket = SSL_get1_session(clientssl))
+            || !resume_pha_ticket(sctx, cctx, fresh_ticket,
+                &resume_serverssl, &resume_clientssl)
+            || !TEST_ptr_null(SSL_get0_peer_certificate(resume_serverssl))
+            || !TEST_ptr_null(SSL_get0_peer_rpk(resume_serverssl))
+            || !TEST_ptr_null(SSL_get_peer_cert_chain(resume_serverssl))
+            || !TEST_long_eq(SSL_get_verify_result(resume_serverssl),
+                X509_V_ERR_UNSPECIFIED)
+            || !TEST_ptr_null(SSL_get0_peername(resume_serverssl))
+            || !TEST_int_eq(verify_data.calls, 0)))
+        goto end;
 
+    testresult = 1;
 end:
-    SSL_SESSION_free(ticket);
     SSL_SESSION_free(old_session);
     SSL_SESSION_free(fresh_ticket);
+    SSL_SESSION_free(previous_session);
     SSL_free(resume_serverssl);
     SSL_free(resume_clientssl);
     SSL_free(serverssl);
@@ -1573,85 +1517,6 @@ end:
     return testresult;
 }
 
-static int test_pha_rejected_rpk_session(void)
-{
-    char *leaf = test_mk_file_path(certsdir, "leaf.pem");
-    char *leaf_key = test_mk_file_path(certsdir, "leaf.key");
-    PHA_VERIFY_DATA verify_data = { 0 };
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
-    SSL *resume_serverssl = NULL, *resume_clientssl = NULL;
-    SSL_CONNECTION *servercon;
-    SSL_SESSION *ticket = NULL, *old_session = NULL;
-    int ret, testresult = 0;
-
-    if (!TEST_ptr(leaf) || !TEST_ptr(leaf_key)
-        || !setup_pha_resumption(&verify_data, 0, 1, &sctx, &cctx,
-            &serverssl, &clientssl, &ticket)
-        || !TEST_ptr(old_session = SSL_get1_session(serverssl))
-        || !TEST_ptr(old_session->owner)
-        || !TEST_ptr_null(old_session->peer_rpk)
-        || !TEST_ptr_null(SSL_get0_peer_rpk(serverssl)))
-        goto end;
-
-    if (!TEST_int_eq(SSL_use_certificate_file(clientssl, leaf,
-                         SSL_FILETYPE_PEM),
-            1)
-        || !TEST_int_eq(SSL_use_PrivateKey_file(clientssl, leaf_key,
-                            SSL_FILETYPE_PEM),
-            1)
-        || !TEST_int_eq(SSL_check_private_key(clientssl), 1))
-        goto end;
-
-    verify_data.pha = 1;
-    verify_data.expected_rpk = X509_get0_pubkey(SSL_get_certificate(clientssl));
-    SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
-    if (!TEST_ptr(verify_data.expected_rpk)
-        || !start_pha_and_pause(serverssl, clientssl))
-        goto end;
-
-    servercon = SSL_CONNECTION_FROM_SSL(serverssl);
-    /*
-     * Resume the ticket while verification is paused. The pending key must not
-     * be visible through the already-published session.
-     */
-    if (!TEST_int_eq(verify_data.calls, 1)
-        || !TEST_true(verify_data.candidate_ok)
-        || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
-        || !TEST_ptr_null(old_session->peer_rpk)
-        || !TEST_ptr_null(SSL_get0_peer_rpk(serverssl))
-        || !TEST_ptr(servercon->s3.tmp.pending_peer_rpk)
-        || !resume_pha_ticket(sctx, cctx, ticket, &resume_serverssl,
-            &resume_clientssl)
-        || !TEST_int_eq(verify_data.calls, 1)
-        || !TEST_ptr_null(SSL_get0_peer_rpk(resume_serverssl)))
-        goto end;
-
-    ret = SSL_read(serverssl, NULL, 0);
-    if (!TEST_int_le(ret, 0)
-        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL)
-        || !TEST_int_eq(verify_data.calls, 2)
-        || !TEST_ptr_eq(SSL_get_session(serverssl), old_session)
-        || !TEST_ptr_null(old_session->peer_rpk)
-        || !TEST_ptr_null(SSL_get0_peer_rpk(serverssl))
-        || !TEST_ptr_null(servercon->s3.tmp.pending_peer_rpk))
-        goto end;
-
-    testresult = 1;
-
-end:
-    SSL_SESSION_free(ticket);
-    SSL_SESSION_free(old_session);
-    SSL_free(resume_serverssl);
-    SSL_free(resume_clientssl);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-    OPENSSL_free(leaf);
-    OPENSSL_free(leaf_key);
-    return testresult;
-}
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -17744,11 +17609,12 @@ int setup_tests(void)
     ADD_TEST(test_server_rpk_verify_cb);
     ADD_TEST(test_ssl_build_cert_chain);
     ADD_TEST(test_ssl_ctx_build_cert_chain);
-#ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_ALL_TESTS(test_pha_pending_identity, 8);
-    ADD_ALL_TESTS(test_pha_empty_client_certificate, 2);
-    ADD_ALL_TESTS(test_pha_empty_client_rpk, 2);
-    ADD_TEST(test_pha_rejected_rpk_session);
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_ALL_TESTS(test_empty_client_certificate, OSSL_NELEM(empty_client_cert_tests));
+#endif
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_ALL_TESTS(test_pha_pending_identity, 7);
+    ADD_ALL_TESTS(test_pha_empty_client_certificate, 8);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_client_hello_cb);
