@@ -32,7 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 4.0.2 and 4.0.3 [xx XXX xxxx]
 
- * none yet
+ * Added the `enable-poison-asn1-string-nul` configuration option.  The data
+   of an `ASN1_STRING` has never been guaranteed to be NUL-terminated,
+   although some operations terminated it anyway.  With this option, a build
+   made with AddressSanitizer or MemorySanitizer marks that byte inaccessible,
+   so treating the result of `ASN1_STRING_get0_data()` as a C string
+   (`strlen()`, `%s`, `strdup()` and the like) is reported as an error.  All
+   such uses must be changed to honour `ASN1_STRING_length()`.
+
+   *Bob Beck*
 
 ### Changes between 4.0.1 and 4.0.2 [25 Aug 2026]
 

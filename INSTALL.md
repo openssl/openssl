@@ -937,6 +937,17 @@ linking libcrypto statically into a shared third-party library, because in this
 case the shared library will be pinned. To prevent this behaviour, you need to
 configure the static build using `no-shared` and `no-pinshared` together.
 
+### enable-poison-asn1-string-nul
+
+Mark the NUL byte that libcrypto writes after the data of an `ASN1_STRING`
+as inaccessible to AddressSanitizer and MemorySanitizer.  The byte stays in
+place, but a sanitizer build reports any code that reads it, which is what
+treating the result of `ASN1_STRING_get0_data()` as a C string does
+(`strlen()`, `%s`, `strdup()` and the like).  That data is length-delimited
+and has never been guaranteed to be NUL-terminated; use this option with
+`enable-asan` or `enable-msan` to find code that relies on the terminator.
+It has no effect in a build without a sanitizer.
+
 ### no-posix-io
 
 Don't use POSIX IO capabilities.

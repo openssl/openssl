@@ -13,6 +13,26 @@
 #include <openssl/asn1.h>
 #include "asn1_local.h"
 
+#if !defined(OPENSSL_NO_POISON_ASN1_STRING_NUL)
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define ASN1_HAVE_ASAN 1
+#endif
+#if __has_feature(memory_sanitizer)
+#define ASN1_HAVE_MSAN 1
+#endif
+#endif /* defined(__has_feature) */
+#if defined(__SANITIZE_ADDRESS__) && !defined(ASN1_HAVE_ASAN)
+#define ASN1_HAVE_ASAN 1
+#endif
+#endif /* !defined(OPENSSL_NO_POISON_ASN1_STRING_NUL) */
+#if defined(ASN1_HAVE_ASAN)
+#include <sanitizer/asan_interface.h>
+#endif
+#if defined(ASN1_HAVE_MSAN)
+#include <sanitizer/msan_interface.h>
+#endif
+
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
     long max);
 static void asn1_put_length(unsigned char **pp, int length);
@@ -283,6 +303,38 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     return ret;
 }
 
+/**
+ * @brief Mark the NUL terminator at p as inaccessible to memory checkers.
+ * With enable-poison-asn1-string-nul, under AddressSanitizer and
+ * MemorySanitizer a read of the byte is reported as an error, so C-string
+ * use of ASN1_STRING data is caught while the byte stays present for
+ * builds without a sanitizer.
+ * @param p the terminator byte
+ */
+static void poison_terminator(uint8_t *p)
+{
+#if defined(ASN1_HAVE_ASAN)
+    ASAN_POISON_MEMORY_REGION(p, 1);
+#endif
+#if defined(ASN1_HAVE_MSAN)
+    __msan_poison(p, 1);
+#endif
+}
+
+/**
+ * @brief Make the byte at p accessible again before it is written.
+ * @param p the byte about to hold a NUL terminator
+ */
+static void unpoison_terminator(uint8_t *p)
+{
+#if defined(ASN1_HAVE_ASAN)
+    ASAN_UNPOISON_MEMORY_REGION(p, 1);
+#endif
+#if defined(ASN1_HAVE_MSAN)
+    __msan_unpoison(p, 1);
+#endif
+}
+
 int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 {
     unsigned char *c;
@@ -328,9 +380,12 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 #else
         /*
          * Add a NUL terminator. This should not be necessary - but we add it as
-         * a safety precaution
+         * a safety precaution. The byte lies beyond str->length and is
+         * inaccessible to memory checkers; see poison_terminator().
          */
+        unpoison_terminator(&str->data[len]);
         str->data[len] = '\0';
+        poison_terminator(&str->data[len]);
 #endif
     }
     return 1;
