@@ -547,10 +547,11 @@ OpenSSL 4.1
    release will stop doing so; the new setters above already do not add a
    terminator.  Strings built by libcrypto itself, including decoded ones,
    still carry one, but when OpenSSL is built with AddressSanitizer or
-   MemorySanitizer that byte is marked inaccessible, so treating the result
-   of `ASN1_STRING_get0_data()` as a C string (`strlen()`, `%s`, `strdup()`
-   and the like) is reported as an error.  All such uses must be changed to
-   honour `ASN1_STRING_get_length()`.
+   MemorySanitizer, or is run under Valgrind having been built where the
+   Valgrind headers are installed, that byte is marked inaccessible, so
+   treating the result of `ASN1_STRING_get0_data()` as a C string
+   (`strlen()`, `%s`, `strdup()` and the like) is reported as an error.  All
+   such uses must be changed to honour `ASN1_STRING_get_length()`.
    <!-- https://github.com/openssl/openssl/pull/31194 -->
 
    *Bob Beck*

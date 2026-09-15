@@ -30,6 +30,14 @@
 #if defined(ASN1_HAVE_MSAN)
 #include <sanitizer/msan_interface.h>
 #endif
+#if defined __has_include
+/* Any compiler you're going to run valgrind on has this */
+#if __has_include(<valgrind/memcheck.h>)
+#include <valgrind/memcheck.h>
+#include "internal/thread_once.h"
+#define ASN1_HAVE_VALGRIND 1
+#endif
+#endif /* defined(__has_include) */
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
     long max);
@@ -308,11 +316,31 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     return ret;
 }
 
+#if defined(ASN1_HAVE_VALGRIND)
+static CRYPTO_ONCE valgrind_once = CRYPTO_ONCE_STATIC_INIT;
+static int valgrind_present = 0;
+
+DEFINE_RUN_ONCE_STATIC(detect_valgrind)
+{
+    valgrind_present = RUNNING_ON_VALGRIND != 0;
+    return 1;
+}
+
+static int under_valgrind(void)
+{
+    return RUN_ONCE(&valgrind_once, detect_valgrind) && valgrind_present;
+}
+#endif /* defined(ASN1_HAVE_VALGRIND) */
+
 /**
  * @brief Mark the NUL terminator at p as inaccessible to memory checkers.
- * Under AddressSanitizer and MemorySanitizer a read of the byte is reported
- * as an error, so C-string use of ASN1_STRING data is caught while the byte
- * stays present for builds without a sanitizer.
+ * Under AddressSanitizer, MemorySanitizer and Valgrind memcheck a read of
+ * the byte is reported as an error, so C-string use of ASN1_STRING data is
+ * caught while the byte stays present for builds without a checker. The
+ * Valgrind client requests are compiled in wherever its header is found and
+ * are issued only when the process is running under Valgrind.
+ * A poisoned byte needs no unpoisoning before free(): every checker marks
+ * the whole block on free without regard to its previous state.
  * @param p the terminator byte
  */
 static void poison_terminator(uint8_t *p)
@@ -322,6 +350,10 @@ static void poison_terminator(uint8_t *p)
 #endif
 #if defined(ASN1_HAVE_MSAN)
     __msan_poison(p, 1);
+#endif
+#if defined(ASN1_HAVE_VALGRIND)
+    if (under_valgrind())
+        VALGRIND_MAKE_MEM_NOACCESS(p, 1);
 #endif
 }
 
@@ -336,6 +368,18 @@ static void unpoison_terminator(uint8_t *p)
 #endif
 #if defined(ASN1_HAVE_MSAN)
     __msan_unpoison(p, 1);
+#endif
+#if defined(ASN1_HAVE_VALGRIND)
+    if (under_valgrind())
+        VALGRIND_MAKE_MEM_UNDEFINED(p, 1);
+#endif
+}
+
+static void unpoison_buffer(uint8_t *buf, size_t buf_len)
+{
+#if defined(ASN1_HAVE_VALGRIND)
+    if (under_valgrind())
+        VALGRIND_MAKE_MEM_UNDEFINED(buf, buf_len);
 #endif
 }
 
@@ -393,6 +437,7 @@ int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
         if (c == NULL)
             return 0;
         str->data = c;
+        unpoison_buffer(str->data, alloc_len);
     }
     /* length never includes the added \0 byte */
     str->length = (int)len;
