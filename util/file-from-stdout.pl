@@ -63,7 +63,7 @@ if ($status != 0) {
             :                 "exited with " . ($status >> 8);
     my $code = $status == -1 || ($status & 127) ? 1 : $status >> 8;
 
-    print STDERR "$ARGV[0] $how\n";
+    print STDERR "$exec $how\n";
     exit $code;
 }
 
