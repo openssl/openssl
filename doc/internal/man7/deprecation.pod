@@ -101,6 +101,16 @@ removal:
  /* ... */
  # endif
 
+=head2 Symbol files
+
+The guard decides whether the symbol exists, so add the same feature to
+the symbol's entry in F<util/libcrypto.sym>, or F<util/libssl.sym> for a
+symbol in F<libssl>, with the B<OPENSSL_NO_> prefix removed:
+
+ RSA_new_method                          DEPRECATED_3_0
+
+See L<sym(7)> for the format.
+
 =head2 Implementations to be removed
 
 For a deprecated function that we plan to remove in the future, for example

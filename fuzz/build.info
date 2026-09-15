@@ -8,6 +8,12 @@
    ""
 -}
 
+# A libFuzzer dictionary of the OIDs the library knows.  Nothing in the
+# build reads it; it is passed to a fuzzer with -dict.
+GENERATE[oids.txt]=mkfuzzoids.pl $(BLDDIR)/crypto/objects/obj_dat.h
+DEPEND[oids.txt]=../crypto/objects/obj_dat.h
+DEPEND[]=oids.txt
+
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server smime
   PROGRAMS{noinst}=pkcs7_verify
