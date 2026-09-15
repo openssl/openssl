@@ -1500,8 +1500,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 continue;
             }
 
-            age = ossl_time_subtract(ossl_ms2time(ticket_agel),
-                ossl_ms2time(sess->ext.tick_age_add));
+            /* Undo ticket age obfuscation modulo 2^32 (RFC 9846, 4.3.11.1). */
+            age = ossl_ms2time((uint32_t)(ticket_agel - sess->ext.tick_age_add));
             t = ossl_time_subtract(ossl_time_now(), sess->time);
 
             /*
