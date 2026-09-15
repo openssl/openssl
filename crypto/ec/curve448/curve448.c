@@ -18,6 +18,14 @@
 #include "crypto/ecx.h"
 #include "curve448_local.h"
 
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+#include "arch/riscv_arch.h"
+#define CURVE448_ASM_RV64I
+
+void curve448_lookup_v(void *out, const void *table, size_t rowsize,
+    size_t numrows, size_t idx);
+#endif
+
 #define COFACTOR 4
 
 #define C448_WNAF_FIXED_TABLE_BITS 5
@@ -221,6 +229,13 @@ static ossl_inline void constant_time_lookup_niels(niels_s *RESTRICT ni,
     const niels_t *table,
     int nelts, int idx)
 {
+#ifdef CURVE448_ASM_RV64I
+    if (RISCV_HAS_V() && riscv_vlen() >= 128) {
+        curve448_lookup_v(ni, table, sizeof(niels_s),
+            (size_t)nelts, (size_t)idx);
+        return;
+    }
+#endif
     constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
 }
 
