@@ -516,7 +516,11 @@ static void hashtable_mt_free(HT_VALUE *v)
     int pending_delete;
     int ret;
 
-    CRYPTO_atomic_load_int(&m->pending_delete, &pending_delete, worker_lock);
+    if (!TEST_true(CRYPTO_atomic_load_int(&m->pending_delete, &pending_delete,
+            worker_lock))) {
+        free_failure = 1;
+        return;
+    }
 
     if (shutting_down == 1)
         return;
