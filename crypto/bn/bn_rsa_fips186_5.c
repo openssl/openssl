@@ -26,24 +26,14 @@
 #include <openssl/bn.h>
 #include "bn_local.h"
 #include "crypto/bn.h"
+#include "crypto/fn_constants.h"
 #include "internal/nelem.h"
 
-#if BN_BITS2 == 64
-#define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo
-#else
-#define BN_DEF(lo, hi) lo, hi
-#endif
-
-/* 1 / sqrt(2) * 2^256, rounded up */
-static const BN_ULONG inv_sqrt_2_val[] = {
-    BN_DEF(0x83339916UL, 0xED17AC85UL), BN_DEF(0x893BA84CUL, 0x1D6F60BAUL),
-    BN_DEF(0x754ABE9FUL, 0x597D89B3UL), BN_DEF(0xF9DE6484UL, 0xB504F333UL)
-};
-
 const BIGNUM ossl_bn_inv_sqrt_2 = {
-    .d = (BN_ULONG *)inv_sqrt_2_val,
-    .top = OSSL_NELEM(inv_sqrt_2_val),
-    .dmax = OSSL_NELEM(inv_sqrt_2_val),
+    .data = (OSSL_FN *)&ossl_fn_static_inv_sqrt_2_storage.fn,
+    .d = (BN_ULONG *)ossl_fn_static_inv_sqrt_2_storage.fixed.d,
+    .top = (int)OSSL_NELEM(ossl_fn_static_inv_sqrt_2_storage.fixed.d),
+    .dmax = (int)OSSL_NELEM(ossl_fn_static_inv_sqrt_2_storage.fixed.d),
     .flags = BN_FLG_STATIC_DATA,
 };
 
