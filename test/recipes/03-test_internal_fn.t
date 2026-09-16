@@ -16,4 +16,10 @@ setup("test_internal_fn");
 plan skip_all => "This test is unsupported in a shared library build on Windows"
     if $^O eq 'MSWin32' && !disabled("shared");
 
-simple_test("test_internal_fn", "fn_internal_test");
+{
+    # fn_internal_test installs its own memory hooks in global_init();
+    # disable mfail so its hooks and those don't fight
+    local $ENV{"OPENSSL_TEST_MFAIL_DISABLE"} = 1;
+
+    simple_test("test_internal_fn", "fn_internal_test");
+}
