@@ -301,6 +301,7 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
     }
 
 end:
+    BN_free(bn);
     return ok == -1 ? 0 : 1;
 }
 #endif /* FIPS_MODULE */
