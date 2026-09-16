@@ -169,7 +169,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     qtx_args.get_qlog_cb = ch_get_qlog_cb;
     qtx_args.get_qlog_cb_arg = ch;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
-    ch->rx_max_udp_payload_size = qtx_args.mdpl;
+    ch->rx_max_udp_payload_size = QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE;
 
     ch->ping_deadline = ossl_time_infinite();
 
