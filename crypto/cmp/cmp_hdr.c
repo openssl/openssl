@@ -305,8 +305,12 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
             goto err;
     } else {
         /*
-         * If no protection cert nor oldCert nor CSR nor subject nor ref is given,
-         * sender name is not known to the client and thus set to NULL-DN
+         * Following RFC 9483 section 3.1 and RFC 9810 section 5.1.1,
+         * the usual source of the sender field value is the subject DN
+         * of the certificate used with signature-based message protection.
+         * If not available, we use as a fallback the subject DN in any given
+         * oldCert or PKCS#10 CSR, or any given CRMF subject or reference value.
+         * If none of these is available, we use the NULL-DN as the last resort.
          */
         sender = ctx->cert != NULL     ? X509_get_subject_name(ctx->cert)
             : ctx->oldCert != NULL     ? X509_get_subject_name(ctx->oldCert)
