@@ -44,11 +44,12 @@ my $proxy = TLSProxy::Proxy->new_dtls(
     have_IPv6()
 );
 
-my $testcount = 3;
+my $testcount = 4;
 
 plan tests => $testcount;
 (undef, my $session) = tempfile();
 my $found_first_client_finish_msg = 0;
+my $truncated_ack = 0;
 
 #Test 1: Check that records are acked during an uninterrupted handshake
 $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
@@ -106,6 +107,23 @@ SKIP: {
 
     ok($missing_count == 0 && $expected_count == 5,
         "Check that all record numbers are acked");
+
+    # Test 4: An ACK body of exactly DTLS1_HM_HEADER_LENGTH bytes fills the
+    # read that looks for a message header and exhausts its record doing so.
+    # The record that follows it in the same datagram must not then be read
+    # as the rest of the ACK.
+    $proxy->clear();
+    $proxy->filter(\&short_ack_filter);
+    $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+    $proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
+    TLSProxy::Message->successondata(1);
+    $proxy->start();
+
+    ok(TLSProxy::Message->fail()
+        && defined(TLSProxy::Message->alert())
+        && TLSProxy::Message->alert()->description()
+           == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
+        "Check a short ACK does not consume the record after it");
 }
 
 unlink $session;
@@ -205,5 +223,57 @@ sub drop_first_client_finish_filter
                 last;
             }
         }
+    }
+}
+
+# Truncate the server's ACK to a 12 byte body and follow it with a copy of the
+# original in the same datagram. The truncated body claims a record number list
+# of 16 bytes but carries 10, so it fills the initial DTLS1_HM_HEADER_LENGTH
+# read, leaves its record empty, and cannot be parsed from that record alone. A
+# peer that reads the rest of the body from the record behind it gets a list it
+# can parse, and loses that record.
+sub short_ack_filter
+{
+    my $inproxy = shift;
+    my $records = $inproxy->record_list;
+    my $idx = 0;
+
+    return if $truncated_ack;
+
+    foreach my $record (@{$records}) {
+        if (!$record->{sent} && $record->serverissender && $record->encrypted
+                && $record->content_type == TLSProxy::Record::RT_ACK) {
+            # The copy needs a sequence number of its own, or it is a replay
+            my $copy = TLSProxy::Record->new_dtls(
+                1,
+                $record->flight,
+                $record->outer_content_type,
+                $record->version,
+                $record->epoch,
+                $record->seq + 5,
+                $record->len,
+                $record->len_real,
+                $record->decrypt_len,
+                $record->data,
+                $record->decrypt_data);
+
+            $copy->encrypted(1);
+            $copy->content_type(TLSProxy::Record::RT_ACK);
+
+            # The p_ossltest cipher is a no-op, so the record body is the
+            # inner plaintext, its content type, and a zero tag
+            my $body = pack("n", 16).("\0" x 10);
+            my $data = $body.pack("C", TLSProxy::Record::RT_ACK).("\0" x 16);
+
+            $record->data($data);
+            $record->len(length $data);
+            $record->decrypt_data($body);
+            $record->decrypt_len(length $body);
+
+            splice @{$records}, $idx + 1, 0, $copy;
+            $truncated_ack = 1;
+            return;
+        }
+        $idx++;
     }
 }
