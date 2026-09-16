@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: [edge, latest]
+        tag: [latest]
         cc: [gcc, clang]
     runs-on: ubuntu-latest
     container:
