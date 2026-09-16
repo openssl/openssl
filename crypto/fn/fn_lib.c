@@ -490,3 +490,33 @@ int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
 
     return over == 0;
 }
+
+/*-
+ * Keep the low |n| bits of |a| and clear every bit at position |n| and above,
+ * in place and in constant time.  |n| must be below |a|'s width.  The
+ * counterpart of ossl_bn_mask_bits_fixed_top().
+ *
+ * Constant-time profile: which bits are cleared depends only on |n| and |a|'s
+ * public width, never on its value.
+ */
+int OSSL_FN_mask_bits(OSSL_FN *a, int n)
+{
+    int w, b, i;
+
+    if (ossl_unlikely(a == NULL) || n < 0)
+        return 0;
+
+    w = n / OSSL_FN_BITS;
+    b = n % OSSL_FN_BITS;
+    if (w >= a->dsize)
+        return 0;
+
+    if (b != 0) {
+        a->d[w] &= ((OSSL_FN_ULONG)1 << b) - 1;
+        w++;
+    }
+    for (i = w; i < a->dsize; i++)
+        a->d[i] = 0;
+
+    return 1;
+}
