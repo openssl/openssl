@@ -34,7 +34,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added public API for `IPAddrBlocks` ([RFC 3779]), mirroring the existing
+   `ASIdentifiers` API: `IPAddrBlocks_new()`, `IPAddrBlocks_free()`,
+   `d2i_IPAddrBlocks()`, `i2d_IPAddrBlocks()`, and the exported
+   `IPAddrBlocks_it` ASN.1 item for use in custom ASN.1 templates
+   (e.g. RPKI Signed Checklist).
+   <!-- https://github.com/openssl/openssl/pull/30430 -->
+
+   *John Claus*
 
 OpenSSL 4.1
 -----------
@@ -466,14 +473,6 @@ OpenSSL 4.1
 
    *Adam Tabak*
 
- * Added public API for IPAddrBlocks (RFC 3779), mirroring the existing
-   ASIdentifiers API: `IPAddrBlocks_new()`, `IPAddrBlocks_free()`,
-   `d2i_IPAddrBlocks()`, `i2d_IPAddrBlocks()`, and the exported
-   `IPAddrBlocks_it` ASN.1 item for use in custom ASN.1 templates
-   (e.g. RPKI Signed Checklist).  Fixes issue #18528.
-
-   *John Claus*
-
  * Fixed X.509 verification of certificate chains that use DSA signatures
    with SHA-384 or SHA-512 by registering `dsa_with_SHA384` and
    `dsa_with_SHA512` in the signature-algorithm cross-reference table.
@@ -486,6 +485,16 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30559 -->
 
    *Milan Brož*
+
+ * Fixed CRL scope checking for certificates without a CRL distribution
+   points extension.  A CRL having an issuing distribution point extension
+   including a name that matches the certificate issuer name or any
+   `issuerAltName` of the certificate is now accepted, as required
+   by the default distribution point rule at the end
+   of [RFC 5280 Section 6.3.3], instead of being rejected
+   with `X509_V_ERR_DIFFERENT_CRL_SCOPE`.
+
+   *Paul Grubbs*
 
  * TLS clients no longer send the TLS padding extension ([RFC 7685]).  It was
    only ever sent when `SSL_OP_TLSEXT_PADDING` was set, to work around
@@ -584,15 +593,6 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30446 -->
 
    *Tomáš Mráz*
-
- * Fixed CRL scope checking for certificates without a CRL distribution
-   points extension. A CRL having an issuing distribution point extension
-   including a name that matches the certificate issuer name or any
-   issuerAltName of the certificate is now accepted, as required
-   by the default distribution point rule at the end of RFC 5280 section 6.3.3,
-   instead of being rejected with X509_V_ERR_DIFFERENT_CRL_SCOPE.
-
-   *Paul Grubbs*
 
 OpenSSL 4.0
 -----------
@@ -24167,8 +24167,10 @@ ndif
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
+[RFC 3779]: https://datatracker.ietf.org/doc/html/rfc3779
 [RFC 4492 Section 5.1.2]: https://datatracker.ietf.org/doc/html/rfc4492#section-5.1.2
 [RFC 5280]: https://datatracker.ietf.org/doc/html/rfc5280
+[RFC 5280 Section 6.3.3]: https://datatracker.ietf.org/doc/html/rfc5280#section-6.3.3
 [RFC 5297]: https://datatracker.ietf.org/doc/html/rfc5297
 [RFC 7250]: https://datatracker.ietf.org/doc/html/rfc7250
 [RFC 7685]: https://datatracker.ietf.org/doc/html/rfc7685
