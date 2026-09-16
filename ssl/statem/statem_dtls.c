@@ -1267,7 +1267,7 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 {
     PACKET record_numbers;
 
-    if (!PACKET_get_length_prefixed_2(pkt, &record_numbers)) {
+    if (!PACKET_as_length_prefixed_2(pkt, &record_numbers)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_TOO_LONG);
         return MSG_PROCESS_ERROR;
     }
