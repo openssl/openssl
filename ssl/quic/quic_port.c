@@ -1122,7 +1122,7 @@ static void port_send_retry(QUIC_PORT *port,
      */
     unsigned char buffer[512];
     unsigned char ct_buf[ENCRYPTED_TOKEN_MAX_LEN];
-    WPACKET wpkt;
+    WPACKET wpkt = { 0 };
     size_t written, token_buf_len, ct_len;
     QUIC_PKT_HDR hdr = { 0 };
     QUIC_VALIDATION_TOKEN token = { 0 };
