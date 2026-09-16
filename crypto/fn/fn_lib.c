@@ -379,3 +379,40 @@ int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
 
     return over == 0;
 }
+
+/*-
+ * Load |len| big-endian bytes from |in| into |r|, in constant time.
+ *
+ * The bytes are read most-significant first and placed in |r|'s fixed width; a
+ * shorter input is zero-extended.  The value must fit in |r|: it is an error
+ * (return 0) for any input byte beyond |r|'s width to be non-zero, mirroring
+ * OSSL_FN_to_bytes_be(), of which this is the counterpart (as BN_bin2bn() is of
+ * BN_bn2binpad()).
+ *
+ * Constant-time profile: the byte layout depends only on |len| and |r|'s
+ * public width, never on the bytes' values.
+ */
+int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
+{
+    size_t rbytes, i;
+    unsigned char over = 0;
+
+    if (ossl_unlikely(r == NULL || in == NULL))
+        return 0;
+
+    rbytes = ossl_fn_get_dsize(r) * OSSL_FN_BYTES;
+
+    for (i = 0; i < rbytes; i++) {
+        size_t limb = i / OSSL_FN_BYTES;
+        unsigned char b = i < len ? in[len - 1 - i] : 0;
+
+        if (i % OSSL_FN_BYTES == 0)
+            r->d[limb] = 0;
+        r->d[limb] |= (OSSL_FN_ULONG)b << (8 * (i % OSSL_FN_BYTES));
+    }
+    /* Every input byte beyond |r|'s width must be zero for the value to fit. */
+    for (; i < len; i++)
+        over |= in[len - 1 - i];
+
+    return over == 0;
+}

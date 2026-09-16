@@ -215,6 +215,24 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
  */
 int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len);
 
+/**
+ * Load @p len big-endian bytes from @p in into @p r, in constant time.
+ *
+ * The bytes are read most-significant first and placed in @p r's fixed width; a
+ * shorter input is zero-extended.  The value must fit: any input byte beyond
+ * @p r's width must be zero, else the call fails, mirroring OSSL_FN_to_bytes_be().
+ *
+ * @param[out]  r       The destination, filled to its full width
+ * @param[in]   in      Buffer of @p len bytes
+ * @param[in]   len     Number of bytes to read
+ * @returns     1 on success, 0 if the value does not fit in @p r or on a NULL
+ *              argument
+ *
+ * @note Constant-time: the layout depends only on @p len and @p r's public
+ *       width, not on the bytes' values.
+ */
+int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len);
+
 /*
  * Sentinel return value for the OSSL_FN_*_ctx_size() family, meaning "this
  * operation needs no context"; the caller may skip the OSSL_FN_CTX
