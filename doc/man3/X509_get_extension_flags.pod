@@ -86,8 +86,9 @@ ASN1 object itself.
 
 =item B<EXFLAG_NO_FINGERPRINT>
 
-Failed to compute the internal SHA1 hash value of the certificate or CRL.
-This may be due to malloc failure or because no SHA1 implementation was found.
+Failed to compute the internal fingerprint of the certificate or CRL,
+because it could not be DER encoded (for instance a certificate still under
+construction) or on memory allocation failure.
 
 =item B<EXFLAG_INVALID_POLICY>
 

@@ -518,8 +518,8 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
 /*
  * Cache info on various X.509v3 extensions and further derived information,
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
- * x->sha1_hash is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
- * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
+ * x->fingerprint is filled in, or else EXFLAG_NO_FINGERPRINT is set in
+ * x->ex_flags.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  *
  * This is usually called by side-effect on objects, and forces us to keep
@@ -537,7 +537,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     int i;
     int res;
     uint32_t tmp_ex_flags;
-    unsigned char tmp_sha1_hash[SHA_DIGEST_LENGTH];
+    unsigned char tmp_fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     long tmp_ex_pathlen;
     long tmp_ex_pcpathlen;
     uint32_t tmp_ex_kusage;
@@ -548,7 +548,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     STACK_OF(GENERAL_NAME) *tmp_altname;
     NAME_CONSTRAINTS *tmp_nc;
     STACK_OF(DIST_POINT) *tmp_crldp = NULL;
-    X509_SIG_INFO tmp_siginf;
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
@@ -570,8 +569,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
     ERR_set_mark();
 
-    /* Cache the SHA1 digest of the cert */
-    if (!X509_digest(const_x, EVP_sha1(), tmp_sha1_hash, NULL))
+    if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509), const_x,
+            tmp_fingerprint))
         tmp_ex_flags |= EXFLAG_NO_FINGERPRINT;
 
     /* V1 should mean no extensions ... */
@@ -751,9 +750,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
     scan_ext_flags(const_x, &tmp_ex_flags);
 
-    /* Set x->siginf, ignoring errors due to unsupported algos */
-    (void)ossl_x509_init_sig_info(const_x, &tmp_siginf);
-
     tmp_ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
     ERR_pop_to_mark();
 
@@ -768,7 +764,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->ex_pathlen = tmp_ex_pathlen;
     ((X509 *)const_x)->ex_pcpathlen = tmp_ex_pcpathlen;
     if (!(tmp_ex_flags & EXFLAG_NO_FINGERPRINT))
-        memcpy(((X509 *)const_x)->sha1_hash, tmp_sha1_hash, SHA_DIGEST_LENGTH);
+        memcpy(((X509 *)const_x)->fingerprint, tmp_fingerprint,
+            sizeof(tmp_fingerprint));
     if (tmp_ex_flags & EXFLAG_KUSAGE)
         ((X509 *)const_x)->ex_kusage = tmp_ex_kusage;
     ((X509 *)const_x)->ex_xkusage = tmp_ex_xkusage;
@@ -790,7 +787,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ASIdentifiers_free(((X509 *)const_x)->rfc3779_asid);
     ((X509 *)const_x)->rfc3779_asid = tmp_rfc3779_asid;
 #endif
-    ((X509 *)const_x)->siginf = tmp_siginf;
 
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
