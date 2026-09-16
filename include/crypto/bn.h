@@ -63,7 +63,7 @@ void bn_release(BIGNUM *b, int limbs);
  * @returns     the OSSL_FN instance of the BIGNUM, or NULL if it has none
  * @pre         bn must not be NULL
  */
-OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn);
+const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn);
 
 /*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
