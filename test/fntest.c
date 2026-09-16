@@ -102,8 +102,8 @@ static int limbs(const BIGNUM *bn)
     return ret > 0 ? ret : 1;
 }
 
-static int set_result_addsub(OSSL_FN *r, OSSL_FN *a, int a_neg,
-    OSSL_FN *b, int b_neg, int *neg)
+static int set_result_addsub(OSSL_FN *r, const OSSL_FN *a, int a_neg,
+    const OSSL_FN *b, int b_neg, int *neg)
 {
     int cmp;
 
@@ -126,7 +126,8 @@ static int set_result_addsub(OSSL_FN *r, OSSL_FN *a, int a_neg,
 static int file_sum(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *sum = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *bf = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL, *bf = NULL;
+    OSSL_FN *rf = NULL;
     int a_neg = 0, b_neg = 0, r_neg = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -169,7 +170,8 @@ err:
 static int file_product(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *product = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *bf = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL, *bf = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     int a_neg = 0, b_neg = 0, r_neg = 0, st = 0;
     int r_acq = 0;
@@ -218,7 +220,8 @@ err:
 static int file_square(STANZA *s)
 {
     BIGNUM *a = NULL, *square = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     int st = 0;
     int r_acq = 0;
@@ -262,7 +265,8 @@ static int file_quotient(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *quotient = NULL, *remainder = NULL;
     BIGNUM *qret = NULL, *rret = NULL, *mret = NULL;
-    OSSL_FN *af = NULL, *bf = NULL, *qf = NULL, *rf = NULL, *mf = NULL;
+    const OSSL_FN *af = NULL, *bf = NULL;
+    OSSL_FN *qf = NULL, *rf = NULL, *mf = NULL;
     OSSL_FN_CTX *ctx = NULL, *mod_ctx = NULL;
     int a_neg = 0, b_neg = 0, q_neg = 0, r_neg = 0, st = 0;
     int q_acq = 0, r_acq = 0, m_acq = 0;
@@ -347,7 +351,8 @@ err:
 static int file_lshift1(STANZA *s)
 {
     BIGNUM *a = NULL, *lshift1 = NULL, *two = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *lf = NULL, *tf = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL, *lf = NULL, *tf = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     int a_neg = 0, st = 0;
     int r_acq = 0;
@@ -463,7 +468,8 @@ err:
 static int file_lshift(STANZA *s)
 {
     BIGNUM *a = NULL, *lshift = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *lf = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL, *lf = NULL;
+    OSSL_FN *rf = NULL;
     int a_neg = 0, n = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -516,7 +522,8 @@ err:
 static int file_rshift(STANZA *s)
 {
     BIGNUM *a = NULL, *rshift = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL;
+    OSSL_FN *rf = NULL;
     int a_neg = 0, n = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -570,7 +577,8 @@ err:
 static int file_modmul(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *m = NULL, *mod_mul = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *bf = NULL, *rf = NULL, *mf = NULL;
+    const OSSL_FN *af = NULL, *bf = NULL, *mf = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     OSSL_FN_MONT_CTX *mont = NULL;
     const void *token = NULL;
@@ -690,7 +698,8 @@ err:
 static int file_modsqr(STANZA *s)
 {
     BIGNUM *a = NULL, *m = NULL, *mod_sqr = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *rf = NULL, *mf = NULL;
+    const OSSL_FN *af = NULL, *mf = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     OSSL_FN_MONT_CTX *mont = NULL;
     const void *token = NULL;
@@ -785,7 +794,8 @@ err:
 static int file_gcd(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *gcd = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *bf = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL, *bf = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     int st = 0;
     int r_acq = 0;
@@ -831,7 +841,8 @@ err:
 static int file_modinv(STANZA *s)
 {
     BIGNUM *a = NULL, *m = NULL, *ainv_check = NULL, *ret = NULL, *prod = NULL;
-    OSSL_FN *af = NULL, *rf = NULL, *mf = NULL, *pf = NULL;
+    const OSSL_FN *af = NULL, *mf = NULL;
+    OSSL_FN *rf = NULL, *pf = NULL;
     OSSL_FN_CTX *ctx = NULL, *mul_ctx = NULL;
     int a_neg = 0, st = 0;
     int r_acq = 0, p_acq = 0;
@@ -930,7 +941,8 @@ err:
 static int file_modexp(STANZA *s)
 {
     BIGNUM *a = NULL, *e = NULL, *m = NULL, *mod_exp = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *ef = NULL, *rf = NULL, *mf = NULL;
+    const OSSL_FN *af = NULL, *ef = NULL, *mf = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     int a_neg = 0, e_odd = 0, st = 0;
     int r_acq = 0;
@@ -994,7 +1006,8 @@ err:
 static int file_modsqrt(STANZA *s)
 {
     BIGNUM *a = NULL, *p = NULL, *mod_sqrt = NULL, *ret = NULL, *ret2 = NULL;
-    OSSL_FN *af = NULL, *pf = NULL, *rf = NULL, *r2f = NULL;
+    const OSSL_FN *af = NULL, *pf = NULL;
+    OSSL_FN *rf = NULL, *r2f = NULL;
     OSSL_FN_CTX *ctx = NULL;
     BN_CTX *bnctx = NULL;
     int r_acq = 0, r2_acq = 0;
@@ -1184,7 +1197,8 @@ OPT_TEST_DECLARE_USAGE("file...\n")
 static int test_mod_inverse(void)
 {
     BIGNUM *a = NULL, *n = NULL, *r = NULL, *expected = NULL;
-    OSSL_FN *af = NULL, *nf = NULL, *rf = NULL;
+    const OSSL_FN *af = NULL, *nf = NULL;
+    OSSL_FN *rf = NULL;
     OSSL_FN_CTX *ctx = NULL;
     int r_acq = 0, n_acq = 0, a_acq = 0;
     int nlimbs = 0;
