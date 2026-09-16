@@ -302,6 +302,7 @@ static ossl_unused ossl_inline int ERR_COMMON_ERROR(unsigned long errcode)
 #define ERR_R_CMP_LIB (ERR_LIB_CMP /* 58 */ | ERR_RFLAG_COMMON)
 #define ERR_R_OSSL_ENCODER_LIB (ERR_LIB_OSSL_ENCODER /* 59 */ | ERR_RFLAG_COMMON)
 #define ERR_R_OSSL_DECODER_LIB (ERR_LIB_OSSL_DECODER /* 60 */ | ERR_RFLAG_COMMON)
+#define ERR_R_OSSL_FN_LIB (ERR_LIB_OSSL_FN /* 62 */ | ERR_RFLAG_COMMON)
 
 /* Other common error codes, range 256..2^ERR_RFLAGS_OFFSET-1 */
 #define ERR_R_FATAL (ERR_RFLAG_FATAL | ERR_RFLAG_COMMON)
