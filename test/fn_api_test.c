@@ -5377,6 +5377,41 @@ err:
     return ret;
 }
 
+static int test_mask_bits(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL, *exp = NULL;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(exp = OSSL_FN_new_limbs(2)))
+        goto err;
+
+    /* Masking to a whole-limb boundary clears the high limb. */
+    if (!TEST_true(ossl_fn_set_words(a, num2, LIMBSOF(num2)))
+        || !TEST_true(OSSL_FN_mask_bits(a, OSSL_FN_BITS))
+        || !TEST_true(ossl_fn_set_words(exp, num2, 1))
+        || !TEST_int_eq(OSSL_FN_cmp(a, exp), 0))
+        goto err;
+
+    /* Masking below a limb keeps only the low bits. */
+    if (!TEST_true(ossl_fn_set_words(a, num2, LIMBSOF(num2)))
+        || !TEST_true(OSSL_FN_mask_bits(a, 5))
+        || !TEST_size_t_le(OSSL_FN_num_bits(a), 5))
+        goto err;
+
+    /* A negative count, or one at or beyond the width, is rejected. */
+    if (!TEST_false(OSSL_FN_mask_bits(a, -1))
+        || !TEST_false(OSSL_FN_mask_bits(a, 2 * OSSL_FN_BITS))
+        || !TEST_false(OSSL_FN_mask_bits(NULL, OSSL_FN_BITS)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(exp);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -5398,6 +5433,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rshift_alias, 4);
     ADD_TEST(test_rshift_invalid_shift);
     ADD_TEST(test_from_bytes_be);
+    ADD_TEST(test_mask_bits);
     ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
     ADD_ALL_TESTS(test_gcd_alias, 4);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
