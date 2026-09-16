@@ -2,6 +2,8 @@
 
 # Primary root: root-cert
 ./mkcert.sh genroot "Root CA" root-key root-cert
+# Created RFC 9925 unsigned cert
+python3 unsigned.py <root-cert.pem > root-cert-unsigned.pem
 # root cert variants: CA:false, key2, DN2, expired
 ./mkcert.sh genss "Root CA" root-key root-nonca
 ./mkcert.sh genroot "Root CA" root-key2 root-cert2
@@ -79,6 +81,8 @@ openssl x509 -in sroot-cert.pem -trustout \
 
 # Primary intermediate ca: ca-cert
 ./mkcert.sh genca "CA" ca-key ca-cert root-key root-cert
+# Created RFC 9925 unsigned cert
+python3 unsigned.py <ca-cert.pem > ca-cert-unsigned.pem
 # ca variants: CA:false, no bc, key2, DN2, issuer2, expired
 ./mkcert.sh genee "CA" ca-key ca-nonca root-key root-cert
 ./mkcert.sh gen_nonbc_ca "CA" ca-key ca-nonbc root-key root-cert

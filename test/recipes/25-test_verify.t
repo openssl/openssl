@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 227;
+plan tests => 230;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -93,6 +93,14 @@ SKIP: {
 }
 ok(verify("ee-cert1", "sslserver", ["root-cert"]),
    "accept 2-level chain");
+
+# RFC 9925 unsigned root-cert
+ok(verify("ee-cert", "sslserver", ["root-cert-unsigned"], ["ca-cert"]),
+   "accept RFC 9925 unsigned root cert");
+ok(!verify("ee-cert", "sslserver", ["root-cert-unsigned"], ["ca-cert"], ["-check_ss_sig"]),
+   "fail RFC 9925 unsigned root cert with check_ss_sig");
+ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert-unsigned"]),
+   "fail RFC 9925 unsigned intermediate-ca");
 
 # Root CA variants
 ok(!verify("ee-cert", "sslserver", [qw(root-nonca)], [qw(ca-cert)]),

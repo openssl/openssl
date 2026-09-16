@@ -29,7 +29,9 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
-  * none
+  * RFC 9925 Unsigned X.509 certificates are now accepted as trusted
+    for X.509 certificate chain verification, without need to specify
+    partial_chain option.
 
 OpenSSL 4.1
 -----------
