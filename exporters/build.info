@@ -18,6 +18,12 @@ DEPEND[openssl.pc]=libcrypto.pc libssl.pc
 
 DEPEND[""]=openssl.pc
 
+IF[{- !$disabled{cms} -}]
+  GENERATE[libcms.pc]{exporter=pkg-config}=pkg-config/libcms.pc.in
+  DEPEND[libcms.pc]=../installdata.pm
+  DEPEND[""]=libcms.pc
+ENDIF
+
 GENERATE[../installdata.pm]=../util/mkinstallvars.pl \
     COMMENT="This file provides configuration information for OpenSSL" \
     "PREFIX=$(INSTALLTOP)" BINDIR=bin "LIBDIR=$(LIBDIR)" "libdir=$(libdir)" \

@@ -7,7 +7,7 @@ CMS_digest_create_ex, CMS_digest_create
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *CMS_digest_create_ex(BIO *in, const EVP_MD *md,
                                        unsigned int flags, OSSL_LIB_CTX *ctx,
@@ -45,6 +45,10 @@ L<ERR_get_error(3)>, L<CMS_final(3)>>
 =head1 HISTORY
 
 The CMS_digest_create_ex() method was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

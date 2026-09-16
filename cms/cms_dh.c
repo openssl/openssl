@@ -7,14 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <assert.h>
 #include <openssl/cms.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
-#include "internal/sizes.h"
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "cms_local.h"
 
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
@@ -97,7 +96,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     const ASN1_OBJECT *aoid;
     const void *parameter = NULL;
     int ptype = 0;
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         goto err;
@@ -134,7 +133,8 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     if (OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0) <= 0)
         goto err;
 
-    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
+    kekcipher = EVP_CIPHER_fetch(EVP_PKEY_CTX_get0_libctx(pctx), name,
+        EVP_PKEY_CTX_get0_propq(pctx));
     if (kekcipher == NULL
         || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
@@ -248,9 +248,9 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         ASN1_INTEGER_free(pubk);
         if (penclen <= 0)
             goto err;
-        ASN1_STRING_set0(pubkey, penc, penclen);
-        ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
-
+        if (!ASN1_BIT_STRING_set1(pubkey, penc, penclen, 0))
+            goto err;
+        OPENSSL_free(penc);
         penc = NULL;
         (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_dhpublicnumber),
             V_ASN1_UNDEF, NULL); /* cannot fail */

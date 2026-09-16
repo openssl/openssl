@@ -85,7 +85,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[cms]=cms.c driver.c
   INCLUDE[cms]=../include {- $ex_inc -}
-  DEPEND[cms]=../libcrypto {- $ex_lib -}
+  DEPEND[cms]=../libcms ../libcrypto {- $ex_lib -}
 
   SOURCE[cms_verify]=cms_verify.c driver.c
   INCLUDE[cms_verify]=../include {- $ex_inc -}
@@ -288,7 +288,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[cms-test]=cms.c $FUZZTESTSRC
   INCLUDE[cms-test]=../include ../test/mfail
-  DEPEND[cms-test]=../libcrypto.a
+  DEPEND[cms-test]=../libcms.a ../libcrypto.a
 
   SOURCE[cms_verify-test]=cms_verify.c $FUZZTESTSRC
   INCLUDE[cms_verify-test]=../include ../test/mfail

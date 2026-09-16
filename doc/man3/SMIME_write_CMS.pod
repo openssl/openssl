@@ -6,7 +6,7 @@ SMIME_write_CMS - convert CMS structure to S/MIME format
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int SMIME_write_CMS(BIO *out, CMS_ContentInfo *cms, BIO *data, int flags);
 
@@ -56,6 +56,12 @@ SMIME_write_CMS() returns 1 for success or 0 for failure.
 L<ERR_get_error(3)>, L<CMS_sign(3)>,
 L<CMS_verify(3)>, L<CMS_encrypt(3)>
 L<CMS_decrypt(3)>
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

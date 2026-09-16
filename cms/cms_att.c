@@ -7,13 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include "internal/nelem.h"
-#include "crypto/x509.h"
 #include "cms_local.h"
 
 /*-
@@ -81,7 +81,7 @@ X509_ATTRIBUTE *CMS_signed_delete_attr(CMS_SignerInfo *si, int loc)
 
 int CMS_signed_add1_attr(CMS_SignerInfo *si, X509_ATTRIBUTE *attr)
 {
-    if (ossl_x509at_add1_attr(&si->signedAttrs, attr))
+    if (X509at_add1_attr(&si->signedAttrs, attr))
         return 1;
     return 0;
 }
@@ -90,7 +90,7 @@ int CMS_signed_add1_attr_by_OBJ(CMS_SignerInfo *si,
     const ASN1_OBJECT *obj, int type,
     const void *bytes, int len)
 {
-    if (ossl_x509at_add1_attr_by_OBJ(&si->signedAttrs, obj, type, bytes, len))
+    if (X509at_add1_attr_by_OBJ(&si->signedAttrs, obj, type, bytes, len))
         return 1;
     return 0;
 }
@@ -98,7 +98,7 @@ int CMS_signed_add1_attr_by_OBJ(CMS_SignerInfo *si,
 int CMS_signed_add1_attr_by_NID(CMS_SignerInfo *si,
     int nid, int type, const void *bytes, int len)
 {
-    if (ossl_x509at_add1_attr_by_NID(&si->signedAttrs, nid, type, bytes, len))
+    if (X509at_add1_attr_by_NID(&si->signedAttrs, nid, type, bytes, len))
         return 1;
     return 0;
 }
@@ -107,7 +107,7 @@ int CMS_signed_add1_attr_by_txt(CMS_SignerInfo *si,
     const char *attrname, int type,
     const void *bytes, int len)
 {
-    if (ossl_x509at_add1_attr_by_txt(&si->signedAttrs, attrname, type, bytes,
+    if (X509at_add1_attr_by_txt(&si->signedAttrs, attrname, type, bytes,
             len))
         return 1;
     return 0;
@@ -149,7 +149,7 @@ X509_ATTRIBUTE *CMS_unsigned_delete_attr(CMS_SignerInfo *si, int loc)
 
 int CMS_unsigned_add1_attr(CMS_SignerInfo *si, X509_ATTRIBUTE *attr)
 {
-    if (ossl_x509at_add1_attr(&si->unsignedAttrs, attr))
+    if (X509at_add1_attr(&si->unsignedAttrs, attr))
         return 1;
     return 0;
 }
@@ -158,7 +158,7 @@ int CMS_unsigned_add1_attr_by_OBJ(CMS_SignerInfo *si,
     const ASN1_OBJECT *obj, int type,
     const void *bytes, int len)
 {
-    if (ossl_x509at_add1_attr_by_OBJ(&si->unsignedAttrs, obj, type, bytes, len))
+    if (X509at_add1_attr_by_OBJ(&si->unsignedAttrs, obj, type, bytes, len))
         return 1;
     return 0;
 }
@@ -167,7 +167,7 @@ int CMS_unsigned_add1_attr_by_NID(CMS_SignerInfo *si,
     int nid, int type,
     const void *bytes, int len)
 {
-    if (ossl_x509at_add1_attr_by_NID(&si->unsignedAttrs, nid, type, bytes, len))
+    if (X509at_add1_attr_by_NID(&si->unsignedAttrs, nid, type, bytes, len))
         return 1;
     return 0;
 }
@@ -176,7 +176,7 @@ int CMS_unsigned_add1_attr_by_txt(CMS_SignerInfo *si,
     const char *attrname, int type,
     const void *bytes, int len)
 {
-    if (ossl_x509at_add1_attr_by_txt(&si->unsignedAttrs, attrname,
+    if (X509at_add1_attr_by_txt(&si->unsignedAttrs, attrname,
             type, bytes, len))
         return 1;
     return 0;
@@ -257,7 +257,9 @@ int ossl_cms_si_check_attributes(const CMS_SignerInfo *si)
     int have_signed_attrs = (CMS_signed_get_attr_count(si) > 0);
     int have_unsigned_attrs = (CMS_unsigned_get_attr_count(si) > 0);
 
-    for (i = 0; i < (int)OSSL_NELEM(cms_attribute_properties); ++i) {
+    for (i = 0; i < (int)(sizeof(cms_attribute_properties)
+                    / sizeof(cms_attribute_properties[0]));
+        ++i) {
         int nid = cms_attribute_properties[i].nid;
         int flags = cms_attribute_properties[i].flags;
 

@@ -7,7 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
@@ -15,8 +16,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "crypto/ess.h"
-#include "crypto/x509.h"
 #include "cms_local.h"
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
@@ -128,17 +127,18 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
         ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
         goto err;
     }
-    if (id)
+    if (id != NULL) {
         ASN1_STRING_set0(rr->signedContentIdentifier, id, idlen);
-    else {
-        if (!ASN1_STRING_set1_data(rr->signedContentIdentifier, NULL, 32)) {
+    } else {
+        unsigned char cid[32];
+
+        if (RAND_bytes_ex(libctx, cid, sizeof(cid), 0) <= 0)
+            goto err;
+        if (!ASN1_STRING_set1_data(rr->signedContentIdentifier, cid,
+                sizeof(cid))) {
             ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
             goto err;
         }
-        if (RAND_bytes_ex(libctx, rr->signedContentIdentifier->data, 32,
-                0)
-            <= 0)
-            goto err;
     }
 
     sk_GENERAL_NAMES_pop_free(rr->receiptsTo, GENERAL_NAMES_free);
@@ -221,15 +221,23 @@ static int cms_msgSigDigest(CMS_SignerInfo *si,
     unsigned char *dig, unsigned int *diglen)
 {
     const EVP_MD *md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
+    EVP_MD *fetched_md = NULL;
+    unsigned char *str = NULL;
+    int derlen, ret = 0;
 
     if (md == NULL)
         return 0;
-    if (!ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
-            si->signedAttrs, dig, diglen,
-            ossl_cms_ctx_get0_libctx(si->cms_ctx),
-            ossl_cms_ctx_get0_propq(si->cms_ctx)))
+    derlen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &str,
+        ASN1_ITEM_rptr(CMS_Attributes_Verify));
+    if (derlen < 0 || str == NULL)
         return 0;
-    return 1;
+    fetched_md = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(si->cms_ctx),
+        EVP_MD_get0_name(md), ossl_cms_ctx_get0_propq(si->cms_ctx));
+    if (fetched_md != NULL)
+        ret = EVP_Digest(str, derlen, dig, diglen, fetched_md, NULL);
+    EVP_MD_free(fetched_md);
+    OPENSSL_free(str);
+    return ret;
 }
 
 /* Add a msgSigDigest attribute to a SignerInfo */
@@ -328,12 +336,12 @@ int ossl_cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
         goto err;
     }
 
-    if (diglen != (unsigned int)msig->length) {
+    if (diglen != ASN1_STRING_get_length(msig)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MSGSIGDIGEST_WRONG_LENGTH);
         goto err;
     }
 
-    if (memcmp(dig, msig->data, diglen)) {
+    if (memcmp(dig, ASN1_STRING_get0_data(msig), diglen)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE);
         goto err;
     }

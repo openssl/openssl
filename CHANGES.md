@@ -34,7 +34,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * The CMS API in libcrypto is deprecated.  The same API, without
+   deprecation, is now provided by the new libcms library, reached through
+   the `<libcms/cms.h>` header.  Note that switching to it requires both
+   using this header and linking with libcms, since libcms exports the API
+   under its own symbol names.  libcrypto keeps exporting the deprecated
+   symbols for ABI compatibility until removed in a future major release.
+
+   *Bob Beck*
 
 OpenSSL 4.1
 -----------

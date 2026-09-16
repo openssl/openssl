@@ -31,10 +31,20 @@ sub staticname  { return __base($_[1], '.a') } # Name of static lib
 # of a file or directory name.  By default, we consider it acceptable as is.
 sub shlib_version_as_filename { return $config{shlib_version} }
 
+# The shlib version for a specific library.  This is the library's
+# shlib_version attribute from build.info if present, otherwise the
+# configured global shlib version.
+sub shlib_version {
+    my $v = defined $_[1]
+        ? $unified_info{attributes}->{libraries}->{$_[1]}->{shlib_version}
+        : undef;
+    return $v // $config{shlib_version};
+}
+
 # Convenience functions to convert the possible extension of an input file name
 sub bin         { return $_[0]->binname($_[1]) . $_[0]->binext() }
 sub dso         { return $_[0]->dsoname($_[1]) . $_[0]->dsoext() }
-sub sharedlib   { return __concat($_[0]->sharedname($_[1]), $_[0]->shlibext()) }
+sub sharedlib   { return __concat($_[0]->sharedname($_[1]), $_[0]->shlibext($_[1])) }
 sub staticlib   { return $_[0]->staticname($_[1]) . $_[0]->libext() }
 
 # More convenience functions for intermediary files

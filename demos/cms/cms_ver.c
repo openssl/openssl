@@ -9,7 +9,7 @@
 
 /* Simple S/MIME verification example */
 #include <openssl/pem.h>
-#include <openssl/cms.h>
+#include <libcms/cms.h>
 #include <openssl/err.h>
 
 /*

@@ -6,7 +6,7 @@ CMS_uncompress - uncompress a CMS CompressedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out, unsigned int flags);
 
@@ -46,6 +46,12 @@ mentioned in CMS_verify() also applies to CMS_decompress().
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<CMS_compress(3)>
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

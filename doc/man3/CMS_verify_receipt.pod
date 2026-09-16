@@ -6,7 +6,7 @@ CMS_verify_receipt - verify a CMS signed receipt
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
                         const STACK_OF(X509) *certs, X509_STORE *store,
@@ -41,6 +41,12 @@ The error can be obtained from L<ERR_get_error(3)>
 L<ERR_get_error(3)>,
 L<CMS_sign_receipt(3)>,
 L<CMS_verify(3)>,
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

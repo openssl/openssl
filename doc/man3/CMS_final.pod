@@ -7,7 +7,7 @@ CMS_final, CMS_final_digest, CMS_dataFinal, CMS_dataFinal_ex
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags);
  int CMS_final_digest(CMS_ContentInfo *cms, const unsigned char *md,
@@ -63,6 +63,10 @@ L<CMS_encrypt(3)>
 =head1 HISTORY
 
 CMS_final_digest() was added in OpenSSL 3.2.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

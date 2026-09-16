@@ -82,7 +82,10 @@ ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
    "Running d2i_test bad-int-padminus1.der INTEGER");
 
 SKIP: {
-  skip "No CMS support in this configuration", 1 if disabled("cms");
+  # The CMS items are in the ASN.1 item table only where the CMS API is,
+  # so they cannot be looked up by name in a no-deprecated configuration.
+  skip "No CMS support in this configuration", 1
+      if disabled("cms") || disabled("deprecated-4.1");
 
   # Invalid CMS structure with decode error in CHOICE value.
   # Test for CVE-2016-7053

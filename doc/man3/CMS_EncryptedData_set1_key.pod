@@ -7,7 +7,7 @@ CMS EncryptedData
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
                                 const unsigned char *key, size_t keylen);
@@ -26,6 +26,12 @@ returns 1.
 =head1 SEE ALSO
 
 L<CMS_EncryptedData_encrypt(3)>, L<CMS_EncryptedData_decrypt(3)>
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

@@ -79,7 +79,8 @@ X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc)
     return sk_X509_ATTRIBUTE_delete(x, loc);
 }
 
-STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
+/* Attribute addition functions not checking for duplicate attributes */
+static STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
     const X509_ATTRIBUTE *attr)
 {
     X509_ATTRIBUTE *new_attr = NULL;
@@ -131,7 +132,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
     return ossl_x509at_add1_attr(x, attr);
 }
 
-STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
+static STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
     const ASN1_OBJECT *obj,
     int type,
     const unsigned char *bytes,
@@ -168,7 +169,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE)
     return ossl_x509at_add1_attr_by_OBJ(x, obj, type, bytes, len);
 }
 
-STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
+static STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
     int nid, int type,
     const unsigned char *bytes,
     int len)
@@ -201,23 +202,6 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE)
     }
 
     return ossl_x509at_add1_attr_by_NID(x, nid, type, bytes, len);
-}
-
-STACK_OF(X509_ATTRIBUTE) *ossl_x509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
-    const char *attrname,
-    int type,
-    const unsigned char *bytes,
-    int len)
-{
-    X509_ATTRIBUTE *attr;
-    STACK_OF(X509_ATTRIBUTE) *ret;
-
-    attr = X509_ATTRIBUTE_create_by_txt(NULL, attrname, type, bytes, len);
-    if (attr == NULL)
-        return 0;
-    ret = ossl_x509at_add1_attr(x, attr);
-    X509_ATTRIBUTE_free(attr);
-    return ret;
 }
 
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE)
