@@ -419,9 +419,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                 bioread = urxe_data_read;
                 ret = OSSL_RECORD_RETURN_SUCCESS;
 
-                /* Release packet back via callback */
-                if (rl->release_urxe_packet != NULL)
-                    rl->release_urxe_packet(rl->cbarg, pkt_handle);
+                rl->packet_handle = pkt_handle;
             } else {
                 /* No packets available */
                 ret = OSSL_RECORD_RETURN_RETRY;
@@ -1153,10 +1151,19 @@ int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length)
 
     rl->num_released++;
 
-    if (rl->curr_rec == rl->num_released
-        && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0
-        && TLS_BUFFER_get_left(&rl->rbuf) == 0)
-        tls_release_read_buffer(rl);
+    if (rl->curr_rec == rl->num_released) {
+        if ((rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0
+            && TLS_BUFFER_get_left(&rl->rbuf) == 0)
+            tls_release_read_buffer(rl);
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+        /* Release packet back via callback */
+        if (rl->packet_handle != NULL) {
+            rl->release_urxe_packet(rl->cbarg, rl->packet_handle);
+            rl->packet_handle = NULL;
+        }
+#endif
+    }
 
     return OSSL_RECORD_RETURN_SUCCESS;
 }
@@ -1470,6 +1477,14 @@ int tls_free(OSSL_RECORD_LAYER *rl)
          */
         ret = BIO_write_ex(rl->next, rbuf->buf + rbuf->offset, left, &written);
     }
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    /* Release packet back via callback */
+    if (rl->packet_handle != NULL) {
+        rl->release_urxe_packet(rl->cbarg, rl->packet_handle);
+        rl->packet_handle = NULL;
+    }
+#endif
     tls_int_free(rl);
 
     return ret;
