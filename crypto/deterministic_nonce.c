@@ -11,9 +11,13 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/kdf.h>
 #include "internal/deterministic_nonce.h"
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
+#include "crypto/fnerr.h"
 
 /*
  * Convert a Bit String to an Integer (See RFC 6979 Section 2.3.2)
@@ -236,5 +240,109 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
 end:
     EVP_KDF_CTX_free(kdfctx);
     OPENSSL_clear_free(T, allocsz);
+    return ret;
+}
+
+/*
+ * The OSSL_FN counterpart of bits2int_consttime() (See RFC 6979 Section 2.3.2).
+ *
+ * |rbits| holds the |rlen| bytes produced by the KDF.  Unlike the BIGNUM
+ * version there is no sizeof(BN_ULONG) 0xff prefix to mask off:
+ * OSSL_FN_from_bytes_be() is already constant-time, so it loads the |rlen|-byte
+ * (|rlen| * 8 bit) value directly, which is then shifted right to |qlen_bits|.
+ */
+static int fn_bits2int_consttime(OSSL_FN *out, int qlen_bits,
+    const unsigned char *rbits, int rlen)
+{
+    int shift = rlen * 8 - qlen_bits;
+
+    if (!OSSL_FN_from_bytes_be(out, rbits, (size_t)rlen))
+        return 0;
+    if (shift > 0)
+        return OSSL_FN_rshift(out, out, shift);
+    return 1;
+}
+
+/*
+ * The OSSL_FN analogue of ossl_gen_deterministic_nonce_rfc6979(): it returns
+ * the deterministic nonce 'k' in constant-width OSSL_FN form so that DSA and
+ * ECDSA never have to hold it (or the private key it is derived from) in a
+ * BIGNUM.  |q| and the message |hm| are public, so they stay a BIGNUM and a
+ * byte string and the public helpers bits2octets() and kdf_setup() are shared
+ * with the BIGNUM version; only |priv| and |out| become OSSL_FN.
+ *
+ * |out| must be sized to hold at least num_bits(|q|) bits; a narrower
+ * destination is rejected with OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ */
+int ossl_fn_gen_deterministic_nonce_rfc6979(OSSL_FN *out, const BIGNUM *q,
+    const OSSL_FN *priv,
+    const unsigned char *hm, size_t hmlen,
+    const char *digestname,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_KDF_CTX *kdfctx = NULL;
+    const OSSL_FN *q_fn = NULL;
+    int ret = 0, rlen = 0, qlen_bits = 0;
+    unsigned char *entropyx = NULL, *nonceh = NULL, *rbits = NULL, *buf = NULL;
+    size_t allocsz = 0;
+
+    if (out == NULL || q == NULL || priv == NULL)
+        return 0;
+
+    qlen_bits = BN_num_bits(q);
+    if (qlen_bits == 0) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_RANGE);
+        return 0;
+    }
+
+    /*
+     * |out| must be wide enough both to hold the reduced nonce (qlen_bits bits)
+     * and to take the intermediate rlen-byte load before it is shifted down; a
+     * qlen_bits-bit destination covers both (see OSSL_FN_gen_dsa_nonce() for the
+     * width argument).
+     */
+    if (ossl_fn_get_dsize(out) * OSSL_FN_BITS < (size_t)qlen_bits) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        return 0;
+    }
+    if ((q_fn = bn_get_ossl_fn(q)) == NULL)
+        return 0;
+
+    /* Note rlen used here is in bytes since the input values are byte arrays */
+    rlen = (qlen_bits + 7) / 8;
+    allocsz = 3 * (size_t)rlen;
+
+    /* Use a single alloc for the buffers rbits, nonceh and entropyx */
+    buf = OPENSSL_zalloc(allocsz);
+    if (buf == NULL)
+        return 0;
+    rbits = buf;
+    nonceh = rbits + rlen;
+    entropyx = nonceh + rlen;
+
+    /* entropy = int2octets(priv); the private key is kept in OSSL_FN form. */
+    if (!OSSL_FN_to_bytes_be(priv, entropyx, (size_t)rlen)) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_OVERFLOW);
+        goto end;
+    }
+    if (!bits2octets(nonceh, q, qlen_bits, rlen, hm, hmlen))
+        goto end;
+
+    kdfctx = kdf_setup(digestname, entropyx, rlen, nonceh, rlen, libctx, propq);
+    if (kdfctx == NULL)
+        goto end;
+
+    do {
+        if (!EVP_KDF_derive(kdfctx, rbits, rlen, NULL)
+            || !fn_bits2int_consttime(out, qlen_bits, rbits, rlen))
+            goto end;
+    } while (OSSL_FN_is_zero(out)
+        || OSSL_FN_is_one(out)
+        || OSSL_FN_cmp(out, q_fn) >= 0);
+    ret = 1;
+
+end:
+    EVP_KDF_CTX_free(kdfctx);
+    OPENSSL_clear_free(buf, allocsz);
     return ret;
 }

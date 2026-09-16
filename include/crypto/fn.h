@@ -211,6 +211,43 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
  */
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
 
+/**
+ * Serialise @p a as @p len big-endian bytes into @p out, in constant time.
+ *
+ * The output width @p len is chosen by the caller (e.g. a field-element or
+ * scalar byte length); the low @p len bytes of @p a are written most-
+ * significant first.
+ *
+ * @param[in]   a       The number to serialise
+ * @param[out]  out     Buffer of at least @p len bytes
+ * @param[in]   len     Number of bytes to write
+ * @returns     1 on success, 0 if @p a does not fit in @p len bytes or on a
+ *              NULL argument
+ *
+ * @note Constant-time: the byte layout depends only on @p len and @p a's
+ *       public width, not on its value.  The counterpart of BN_bn2binpad().
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len);
+
+/**
+ * Load @p len big-endian bytes from @p in into @p r, in constant time.
+ *
+ * The bytes are read most-significant first and placed in @p r's fixed width; a
+ * shorter input is zero-extended.  The value must fit: any input byte beyond
+ * @p r's width must be zero, else the call fails, mirroring OSSL_FN_to_bytes_be().
+ *
+ * @param[out]  r       The destination, filled to its full width
+ * @param[in]   in      Buffer of @p len bytes
+ * @param[in]   len     Number of bytes to read
+ * @returns     1 on success, 0 if the value does not fit in @p r or on a NULL
+ *              argument
+ *
+ * @note Constant-time: the layout depends only on @p len and @p r's public
+ *       width, not on the bytes' values.  The counterpart of OSSL_FN_to_bytes_be()
+ *       and of BN_bin2bn() into a fixed-width number.
+ */
+int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len);
+
 /*
  * Sentinel return value for the OSSL_FN_*_ctx_size() family, meaning "this
  * operation needs no context"; the caller may skip the OSSL_FN_CTX
@@ -571,6 +608,26 @@ int OSSL_FN_priv_rand_range(OSSL_FN *r, const OSSL_FN *range,
     size_t strength, OSSL_LIB_CTX *libctx);
 
 /**
+ * Generate a DSA/ECDSA nonce 0 <= out < range, hedged against RNG failure.
+ *
+ * The nonce mixes in |priv| and |message| in addition to fresh random bytes,
+ * so that an RNG weakness is not fatal as long as |priv| stays secret.  This
+ * is the OSSL_FN analogue of ossl_bn_gen_dsa_nonce_fixed_top().
+ *
+ * @param[out]          out         The OSSL_FN for the nonce; must be sized to
+ *                                  hold at least num_bits(@p range) bits
+ * @param[in]           range       The exclusive upper bound (the group order)
+ * @param[in]           priv        The private key to mix in
+ * @param[in]           message     The message (digest) to mix in
+ * @param[in]           message_len The length of @p message in bytes
+ * @param[in]           libctx      The library context (digest fetch, DRBG)
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_gen_dsa_nonce(OSSL_FN *out, const OSSL_FN *range,
+    const OSSL_FN *priv, const unsigned char *message,
+    size_t message_len, OSSL_LIB_CTX *libctx);
+
+/**
  * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -607,6 +664,22 @@ int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
  * @returns             1 on success, 0 on error
  */
 int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
+
+/**
+ * Keep the low @p n bits of @p a and clear every bit at position @p n and
+ * above, in place and in constant time.
+ *
+ * @param[in,out]       a       The number to mask
+ * @param[in]           n       Number of low bits to keep; must be below @p a's
+ *                              width
+ * @returns             1 on success, 0 if @p n is negative, at or beyond @p a's
+ *                              width, or on a NULL argument
+ *
+ * @note Constant-time: the masking depends only on @p n and @p a's public
+ *       width, not on its value.  The counterpart of
+ *       ossl_bn_mask_bits_fixed_top().
+ */
+int OSSL_FN_mask_bits(OSSL_FN *a, int n);
 
 /**
  * Calculate the greatest common divisor of two OSSL_FN numbers.  Truncates
