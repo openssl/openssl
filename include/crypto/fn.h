@@ -614,6 +614,22 @@ int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
 int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
 
 /**
+ * Keep the low @p n bits of @p a and clear every bit at position @p n and
+ * above, in place and in constant time.
+ *
+ * @param[in,out]       a       The number to mask
+ * @param[in]           n       Number of low bits to keep; must be below @p a's
+ *                              width
+ * @returns             1 on success, 0 if @p n is negative, at or beyond @p a's
+ *                              width, or on a NULL argument
+ *
+ * @note Constant-time: the masking depends only on @p n and @p a's public
+ *       width, not on its value.  The counterpart of
+ *       ossl_bn_mask_bits_fixed_top().
+ */
+int OSSL_FN_mask_bits(OSSL_FN *a, int n);
+
+/**
  * Calculate the greatest common divisor of two OSSL_FN numbers.  Truncates
  * the result to fit in r.
  *
