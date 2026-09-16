@@ -379,6 +379,18 @@ struct ossl_record_layer_st {
     void *packet_handle;
 
     /*
+     * For DTLS listener URXE-backed reads: pointer to the next unclaimed
+     * byte in the currently held URXE datagram, and how many bytes remain
+     * from there to the end of the datagram. A single datagram can carry
+     * more than one DTLS record, and rl->packet_length gets reset to 0
+     * between records (including internally, when a record is discarded
+     * before ever reaching the app), so these are tracked separately
+     * rather than derived from it.
+     */
+    unsigned char *urxe_next;
+    size_t urxe_left;
+
+    /*
      * Whether we are currently in a handshake or not. Only maintained for DTLS
      */
     int in_init;

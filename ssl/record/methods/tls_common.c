@@ -278,6 +278,76 @@ static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+/*
+ * Read path for DTLS listener-created connections, which pull datagrams
+ * from a per-connection URXE queue instead of a BIO. A whole datagram
+ * always arrives contiguously in a single recvfrom(), so rl->packet points
+ * directly at the URXE's own buffer -- there is no landing buffer to copy
+ * into and no capacity to run out of.
+ *
+ * rl->urxe_next/rl->urxe_left track the still-unclaimed remainder of the
+ * held datagram across records (see the comment on those fields), separate
+ * from rl->packet/rl->packet_length which the caller may reset per record.
+ */
+static int tls_default_read_n_urxe(OSSL_RECORD_LAYER *rl, size_t n, int extend,
+    size_t *readbytes)
+{
+    if (!extend) {
+        if (rl->packet_handle != NULL && rl->urxe_left == 0) {
+            /*
+             * Nothing left in this datagram - hand it back before moving
+             * on.
+             */
+            rl->release_urxe_packet(rl->cbarg, rl->packet_handle);
+            rl->packet_handle = NULL;
+        }
+
+        if (rl->packet_handle == NULL) {
+            unsigned char *pkt_data = NULL;
+            size_t pkt_len = 0;
+            void *pkt_handle = NULL;
+
+            if (!rl->get_urxe_packet(rl->cbarg, &pkt_data, &pkt_len, &pkt_handle)) {
+                /* No packets available */
+                return OSSL_RECORD_RETURN_RETRY;
+            }
+
+            rl->packet_handle = pkt_handle;
+            rl->urxe_next = pkt_data;
+            rl->urxe_left = pkt_len;
+        }
+
+        rl->packet = rl->urxe_next;
+        rl->packet_length = 0;
+    }
+
+    if (!ossl_assert(rl->packet != NULL)) {
+        /* does not happen */
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
+    }
+
+    /*
+     * For DTLS/UDP reads should not span multiple packets because the read
+     * operation returns the whole packet at once. A record with a header
+     * but no body data will get dumped by the caller.
+     */
+    if (rl->urxe_left == 0 && extend)
+        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+
+    if (n > rl->urxe_left)
+        n = rl->urxe_left;
+
+    /* The bytes are already sitting contiguously in the URXE - no copy */
+    rl->packet_length += n;
+    rl->urxe_next += n;
+    rl->urxe_left -= n;
+    *readbytes = n;
+    return OSSL_RECORD_RETURN_SUCCESS;
+}
+#endif
+
 /*
  * Return values are as per SSL_read()
  */
@@ -292,6 +362,9 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
      * rl->packet_length bytes if extend == 1].) if clearold == 1, move the
      * packet to the start of the buffer; if clearold == 0 then leave any old
      * packets where they were
+     *
+     * Exception: for DTLS listener connections reading from a URXE queue,
+     * none of the above applies -- see tls_default_read_n_urxe().
      */
     size_t len, left, align = 0;
     unsigned char *pkt;
@@ -299,6 +372,12 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 
     if (n == 0)
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (rl->isdtls && rl->use_urxe && rl->prev == NULL
+        && rl->get_urxe_packet != NULL)
+        return tls_default_read_n_urxe(rl, n, extend, readbytes);
+#endif
 
     rb = &rl->rbuf;
     left = rb->left;
@@ -394,39 +473,11 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         clear_sys_error();
 
         /*
-         * For listener-based connections, read from the packet queue instead
-         * of the BIO. These connections are identified by having peer set and
-         * a get_packet callback.
-         *
-         * However, we must first check rl->prev for buffered records from
-         * a previous epoch's record layer.
+         * DTLS listener connections reading from a URXE queue never reach
+         * here -- tls_default_read_n() returns via
+         * tls_default_read_n_urxe() before this loop exists.
          */
-#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-        if (rl->isdtls && rl->use_urxe
-            && rl->prev == NULL && rl->get_urxe_packet != NULL) {
-            unsigned char *pkt_data = NULL;
-            size_t pkt_len = 0;
-            void *pkt_handle = NULL;
-
-            if (rl->get_urxe_packet(rl->cbarg, &pkt_data, &pkt_len, &pkt_handle)) {
-                size_t urxe_data_read = pkt_len;
-
-                if (urxe_data_read > max - left)
-                    urxe_data_read = max - left;
-
-                /* TODO: DTLS1.3 QUIC avoids the copy can we avoid the copy here */
-                memcpy(pkt + len + left, pkt_data, urxe_data_read);
-                bioread = urxe_data_read;
-                ret = OSSL_RECORD_RETURN_SUCCESS;
-
-                rl->packet_handle = pkt_handle;
-            } else {
-                /* No packets available */
-                ret = OSSL_RECORD_RETURN_RETRY;
-            }
-        } else
-#endif
-            if (bio != NULL) {
+        if (bio != NULL) {
             ret = BIO_read(bio, pkt + len + left, (int)(max - left));
             if (ret > 0) {
                 bioread = ret;
@@ -439,6 +490,38 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                      */
                     BIO_free(rl->prev);
                     rl->prev = NULL;
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+                    if (rl->isdtls && rl->use_urxe
+                        && rl->get_urxe_packet != NULL) {
+                        /*
+                         * Hand off to the URXE read path for the rest of
+                         * this request, rather than falling through to a
+                         * direct BIO_read() on rl->bio below. This is
+                         * always a fresh start (we just finished draining
+                         * rl->prev), so any already-set packet_handle is
+                         * stale and must not be reused -- release it first
+                         * so tls_default_read_n_urxe() doesn't mistake it
+                         * for an in-progress datagram.
+                         */
+                        if (rl->packet_handle != NULL) {
+                            rl->release_urxe_packet(rl->cbarg,
+                                rl->packet_handle);
+                            rl->packet_handle = NULL;
+                        }
+                        /*
+                         * Reset alongside packet_handle: if extend == 1
+                         * here (the header came from the now-exhausted
+                         * rl->prev but the body didn't -- a truncated
+                         * forwarded chunk), tls_default_read_n_urxe()'s
+                         * fetch logic won't run for a body request, so
+                         * urxe_left must already read 0 to correctly dump
+                         * this record instead of using stale state.
+                         */
+                        rl->urxe_left = 0;
+                        return tls_default_read_n_urxe(rl, n, extend,
+                            readbytes);
+                    }
+#endif
                     continue;
                 }
                 ret = OSSL_RECORD_RETURN_RETRY;
@@ -1157,8 +1240,14 @@ int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length)
             tls_release_read_buffer(rl);
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-        /* Release packet back via callback */
-        if (rl->packet_handle != NULL) {
+        /*
+         * Release the URXE back via callback, but only once the whole
+         * datagram backing it has been consumed -- a single datagram can
+         * hold more than one DTLS record, and earlier records in it may
+         * still be relying on rl->urxe_left > 0 to know there's more to
+         * come.
+         */
+        if (rl->packet_handle != NULL && rl->urxe_left == 0) {
             rl->release_urxe_packet(rl->cbarg, rl->packet_handle);
             rl->packet_handle = NULL;
         }
@@ -1479,8 +1568,22 @@ int tls_free(OSSL_RECORD_LAYER *rl)
     }
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    /* Release packet back via callback */
     if (rl->packet_handle != NULL) {
+        if (rl->urxe_left > 0) {
+            /*
+             * As above: this record layer is closing but the held URXE
+             * still has bytes this epoch's record layer never got a chance
+             * to examine (e.g. it stopped reading once it had what it
+             * needed for the current epoch). They may belong to the next
+             * epoch, so forward them the same way leftover rl->rbuf bytes
+             * are forwarded above, rather than silently dropping them --
+             * dropping them here would just make the peer retransmit.
+             */
+            if (!BIO_write_ex(rl->next, rl->urxe_next, rl->urxe_left, &written))
+                ret = 0;
+        }
+
+        /* Release packet back via callback */
         rl->release_urxe_packet(rl->cbarg, rl->packet_handle);
         rl->packet_handle = NULL;
     }
