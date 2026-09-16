@@ -5,8 +5,8 @@
 X509_EXTENSION_set_object, X509_EXTENSION_set_critical,
 X509_EXTENSION_set_data, X509_EXTENSION_create_by_NID,
 X509_EXTENSION_create_by_OBJ, X509_EXTENSION_get_object,
-X509_EXTENSION_get_critical, X509_EXTENSION_get_data - extension utility
-functions
+X509_EXTENSION_get_critical, X509_EXTENSION_get_data,
+X509_EXTENSION_get0_value - extension utility functions
 
 =head1 SYNOPSIS
 
@@ -24,6 +24,8 @@ functions
  const ASN1_OBJECT *X509_EXTENSION_get_object(const X509_EXTENSION *ex);
  int X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
  const ASN1_OCTET_STRING *X509_EXTENSION_get_data(const X509_EXTENSION *ne);
+ int X509_EXTENSION_get0_value(const X509_EXTENSION *ex, const void **value,
+                               int *outcome);
 
 =head1 DESCRIPTION
 
@@ -31,7 +33,8 @@ X509_EXTENSION_set_object() sets the extension type of B<ex> to B<obj>. The
 B<obj> pointer is duplicated internally so B<obj> should be freed up after use.
 
 X509_EXTENSION_set_critical() sets the criticality of B<ex> to B<crit>. If
-B<crit> is zero the extension in non-critical otherwise it is critical.
+B<crit> is zero the extension in non-critical otherwise it is critical. The
+outcome reported by X509_EXTENSION_get0_value() follows the criticality.
 
 X509_EXTENSION_set_data() sets the data in extension B<ex> to B<data>. The
 B<data> pointer is duplicated internally.
@@ -54,6 +57,40 @@ returns B<1> for critical and B<0> for non-critical.
 
 X509_EXTENSION_get_data() returns the data of extension B<ex>. The returned
 pointer is an internal value which must not be freed up.
+
+X509_EXTENSION_get0_value() gets the value of extension B<ex> as decoded,
+into the extension specific structure for its type, when the extension was
+parsed or set. If B<value> is not NULL, B<*value> is set to a borrowed pointer
+to that structure, or to NULL if there is none. If B<outcome> is not NULL,
+B<*outcome> is set to one of:
+
+=over 4
+
+=item B<X509_EXT_VALUE_DECODED>
+
+B<*value> points to the decoded structure.
+
+=item B<X509_EXT_VALUE_UNKNOWN>, B<X509_EXT_VALUE_UNKNOWN_CRITICAL>
+
+No B<X509V3_EXT_METHOD> is registered for the type of B<ex>. The second form
+is reported when B<ex> is critical. RFC 5280 requires a certificate with a
+critical extension the user does not recognise to be rejected, and permits a
+non-critical one to be ignored.
+
+=item B<X509_EXT_VALUE_INVALID>, B<X509_EXT_VALUE_INVALID_CRITICAL>
+
+The registered method rejected the data. The second form is reported when
+B<ex> is critical.
+
+=item B<X509_EXT_VALUE_MALLOC_FAILED>
+
+Decoding the data ran out of memory.
+
+=item B<X509_EXT_VALUE_ERROR>
+
+Decoding the data failed for a reason the decoder did not report.
+
+=back
 
 =head1 NOTES
 
@@ -80,9 +117,16 @@ critical.
 
 X509_EXTENSION_get_data() returns an B<ASN1_OCTET_STRING> pointer.
 
+X509_EXTENSION_get0_value() returns 1 if B<*outcome> is
+B<X509_EXT_VALUE_DECODED> and 0 otherwise.
+
 =head1 SEE ALSO
 
 L<X509V3_get_d2i(3)>
+
+=head1 HISTORY
+
+X509_EXTENSION_get0_value() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

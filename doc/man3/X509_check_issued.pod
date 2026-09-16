@@ -60,6 +60,8 @@ the first such name equals the C<issuer> field of the I<issuer> certificate.
 X509_check_issued() and X509_check_akid()
 return B<X509_V_OK> if all checks are successful
 or some B<X509_V_ERR*> constant indicating why the issuer does not match.
+X509_check_issued() returns B<X509_V_ERR_UNSPECIFIED> if either certificate
+is not finalized (see L<x509(7)>) or has an invalid extension.
 
 =head1 SEE ALSO
 

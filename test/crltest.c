@@ -1031,6 +1031,43 @@ static const char *kCrlIndirectNoChain[] = {
 };
 
 /*
+ * An indirect CRL issued by kRoot whose entries are encoded in an order that
+ * differs from their serial number order:
+ *
+ *   serial 100, certificateIssuer kIndirectCRLIssuer
+ *   serial 1,   no certificateIssuer, takes kIndirectCRLIssuer
+ *   serial 50,  certificateIssuer kRoot2
+ *   serial 2,   no certificateIssuer, takes kRoot2
+ *
+ * Used by test_crl_indirect_issuer_inheritance.
+ */
+static const char *kCrlIndirectSortOrder[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIIDoTCCAokCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowggGtMIHIAgFkFw0yNjAzMDkxMjAwMDBaMIGzMIGwBgNVHR0B\n",
+    "Af8EgaUwgaKkgZ8wgZwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlh\n",
+    "MRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAx\n",
+    "HjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEpMCcGA1UEAwwgRXhhbXBs\n",
+    "ZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1ZXIwEgIBARcNMjYwMzA5MTIwMDAwWjCB\n",
+    "twIBMhcNMjYwMzA5MTIwMDAwWjCBojCBnwYDVR0dAQH/BIGUMIGRpIGOMIGLMQsw\n",
+    "CQYDVQQGEwJVUzEPMA0GA1UECAwGTmV2YWRhMQ0wCwYDVQQHDARSZW5vMRkwFwYD\n",
+    "VQQKDBBFeGFtcGxlIEFsdCBDb3JwMR4wHAYDVQQLDBVDZXJ0aWZpY2F0ZSBBdXRo\n",
+    "b3JpdHkxITAfBgNVBAMMGEV4YW1wbGUgQWx0IENvcnAgUm9vdCBDQTASAgECFw0y\n",
+    "NjAzMDkxMjAwMDBaoBMwETAPBgNVHRwBAf8EBTADhAH/MA0GCSqGSIb3DQEBCwUA\n",
+    "A4IBAQCzxs1g8/+sETOHLbKq3VPjkN7D0YyfaHn5DAXYOTiDcsxukRTBzxqe6MUj\n",
+    "5fzkxW+xPduJaoCA/1n75k5lFtB9iD+SQ9MFMCJUmuuGudjbk11m6euK1ylL5IBa\n",
+    "ertf6pO17kNFZ2B5jy1v3QPX1fkpajl7Aze3/GIFyMme7cEEy4/OyMEZb10YaG0k\n",
+    "yTQV6X699YSLs9QTGUbMjo8KG5dG0z33XIWRQsj8ZMSwd0Pv1yId748NSbp0BBVw\n",
+    "9Wd4OuvdWDFce9D6IqXZVFn7M9rh+dyI8FfOxnmgip/zJrx/MK5I5TMgZC/r+zjC\n",
+    "sXDFgE3dDmq3Qvv+u+SPpBFCZXVY\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/*
  * A well-formed CRL issued by kRoot (sha256WithRSAEncryption, inner and
  * outer signatureAlgorithm identical), used as the positive test case in
  * test_crl_sigalg_mismatch.
@@ -1898,6 +1935,64 @@ static int test_crl_indirect_no_chain(void)
     return test;
 }
 
+/* A certificate carrying only the issuer name and serial number of interest */
+static X509 *cert_for_lookup(const X509_NAME *issuer, long serial)
+{
+    X509 *cert = X509_new();
+    ASN1_INTEGER *num = ASN1_INTEGER_new();
+
+    if (cert == NULL || num == NULL
+        || !ASN1_INTEGER_set(num, serial)
+        || !X509_set_issuer_name(cert, issuer)
+        || !X509_set_serialNumber(cert, num)) {
+        X509_free(cert);
+        cert = NULL;
+    }
+    ASN1_INTEGER_free(num);
+    return cert;
+}
+
+/*
+ * An entry of an indirect CRL with no certificateIssuer extension takes the
+ * issuer of the entry that precedes it in the encoding, whatever order the
+ * serial numbers are in.
+ */
+static int test_crl_indirect_issuer_inheritance(void)
+{
+    X509_CRL *crl = NULL;
+    X509 *issuer_a = NULL;
+    X509 *issuer_b = NULL;
+    X509 *inherits_a = NULL;
+    X509 *inherits_b = NULL;
+    X509 *wrong_issuer = NULL;
+    X509_REVOKED *rev = NULL;
+    int test;
+
+    test = TEST_ptr(crl = CRL_from_strings(kCrlIndirectSortOrder))
+        && TEST_ptr(issuer_a = X509_from_strings(kIndirectCRLIssuer))
+        && TEST_ptr(issuer_b = X509_from_strings(kRoot2))
+        /* Serial 1 follows serial 100 in the encoding */
+        && TEST_ptr(inherits_a = cert_for_lookup(
+                        X509_get_subject_name(issuer_a), 1))
+        && TEST_int_eq(X509_CRL_get0_by_cert(crl, &rev, inherits_a), 1)
+        /* Serial 2 follows serial 50 in the encoding */
+        && TEST_ptr(inherits_b = cert_for_lookup(
+                        X509_get_subject_name(issuer_b), 2))
+        && TEST_int_eq(X509_CRL_get0_by_cert(crl, &rev, inherits_b), 1)
+        /* Neither entry belongs to the issuer of the CRL */
+        && TEST_ptr(wrong_issuer = cert_for_lookup(
+                        X509_CRL_get_issuer(crl), 1))
+        && TEST_int_eq(X509_CRL_get0_by_cert(crl, &rev, wrong_issuer), 0);
+
+    X509_free(wrong_issuer);
+    X509_free(inherits_b);
+    X509_free(inherits_a);
+    X509_free(issuer_b);
+    X509_free(issuer_a);
+    X509_CRL_free(crl);
+    return test;
+}
+
 static int test_crl_diff_mfail(void)
 {
     X509_CRL *base_crl = NULL, *newer_crl = NULL, *delta = NULL;
@@ -2031,6 +2126,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_indirect_revoked);
     ADD_TEST(test_crl_indirect_wrong_ta);
     ADD_TEST(test_crl_indirect_no_chain);
+    ADD_TEST(test_crl_indirect_issuer_inheritance);
     ADD_ALL_TESTS(test_reuse_crl, 6);
     ADD_MFAIL_TEST(test_crl_diff_mfail);
     ADD_TEST(test_crl_sigalg_mismatch);

@@ -108,7 +108,8 @@ This is safe despite the I<x> argument's type change to I<const X509 *> as of Op
 
 =head1 RETURN VALUES
 
-X509_check_purpose() returns the following values.
+X509_check_purpose() returns -1 if I<x> is not finalized (see L<x509(7)>) or
+has an invalid extension. Otherwise it returns the following values.
 For non-CA checks
 
 =over 4

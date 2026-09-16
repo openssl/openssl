@@ -50,7 +50,7 @@ CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
         ERR_set_mark();
-        ossl_cms_resolve_libctx(ci);
+        ossl_cms_infos_set_cmsctx(ci);
         ERR_pop_to_mark();
     }
     return ci;
@@ -116,7 +116,7 @@ CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont,
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
         ERR_set_mark();
-        ossl_cms_resolve_libctx(ci);
+        ossl_cms_infos_set_cmsctx(ci);
         ERR_pop_to_mark();
     }
     return ci;
