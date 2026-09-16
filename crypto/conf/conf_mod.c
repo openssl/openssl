@@ -695,6 +695,10 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
         ERR_raise(ERR_LIB_CONF, CONF_R_LIST_CANNOT_BE_NULL);
         return 0;
     }
+    if (sep == 0) {
+        ERR_raise(ERR_LIB_CONF, CONF_R_INVALID_SEPARATOR);
+        return 0;
+    }
 
     lstart = list_;
     for (;;) {
