@@ -110,7 +110,8 @@ This starts a new transaction in case ctx->transactionID is NULL.
 With MAC-based protection, as required by the CMP profile RFC 9483 section 3.1,
 the sender field is set to the reference value string provided via
 OSSL_CMP_CTX_set1_referenceValue() placed as the commonName in the directoryName
-choice of the GeneralName as far as possible, otherwise the NULL-DN is used.
+choice of the GeneralName as far as possible, otherwise we use as a fallback
+the strategy desribed next for signature-based protection.
 
 With signature-based protection or when no message protection is used,
 the sender name is copied from the subject of the protection cert, if any,

@@ -862,7 +862,8 @@ When using (with MAC-based protection)
 the reference string as the commonName in the sender field,
 it is assumed to be UTF8-encodable (which covers also plain ASCII strings)
 and to fit in the size constraint 1..64 specified for commonName attributes.
-If this assumption does not hold, the NULL-DN is placed in the sender field.
+If this assumption does not hold, the usual regular and fallback sources of
+sender field values apply (namely, those used for signature-based protection).
 
 Regardless of any message protecton,
 as a last resort the NULL-DN is placed in the sender field.

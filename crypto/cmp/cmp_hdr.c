@@ -283,9 +283,9 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
      * the sender GeneralName, as the commonName in the directoryName choice.
      * Yet this works only if the name can be suitably encoded and this
      * encoding is between 1 and 64 bytes long, as specified in RFC 5280.
-     * Therefore we attempt to do this conversion, and if it fails, we resort to
-     * the more permissive requirements of RFC 9810 section 5.1.1., which allows
-     * to use the NULL-DN for the sender as long as the senderKID is sufficient.
+     * Therefore we attempt to do this conversion, and if this fails, we resort
+     * to fulfilling the more permissive requirements of RFC 9810 section 5.1.1,
+     * as described in the comment below.
      */
     if (ref != NULL) {
         ref_name = X509_NAME_new();
@@ -300,7 +300,7 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         }
         (void)ERR_pop_to_mark();
     }
-    if (ctx->secretValue != NULL && ref != NULL) {
+    if (ctx->secretValue != NULL && ref_name != NULL) {
         if (!ossl_cmp_hdr_set1_sender(hdr, ref_name))
             goto err;
     } else {
