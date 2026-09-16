@@ -18,6 +18,8 @@
 #include <openssl/obj_mac.h>
 #include <openssl/rand.h>
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h" /* ossl_fn_gen_dsa_nonce() */
 #include "ec_local.h"
 #include "internal/deterministic_nonce.h"
 
@@ -31,6 +33,16 @@
 #define MAX_ECDSA_SIGN_RETRIES 8
 
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
+    BIGNUM **kinvp, BIGNUM **rp,
+    const unsigned char *dgst, int dlen,
+    unsigned int nonce_type, const char *digestname,
+    OSSL_LIB_CTX *libctx, const char *propq);
+static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
+    BIGNUM **kinvp, BIGNUM **rp,
+    const unsigned char *dgst, int dlen,
+    unsigned int nonce_type, const char *digestname,
+    OSSL_LIB_CTX *libctx, const char *propq);
+static int ecdsa_sign_setup_bignum(EC_KEY *eckey, BN_CTX *ctx_in,
     BIGNUM **kinvp, BIGNUM **rp,
     const unsigned char *dgst, int dlen,
     unsigned int nonce_type, const char *digestname,
@@ -129,7 +141,7 @@ end:
     return ret;
 }
 
-static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
+static int ecdsa_sign_setup_bignum(EC_KEY *eckey, BN_CTX *ctx_in,
     BIGNUM **kinvp, BIGNUM **rp,
     const unsigned char *dgst, int dlen,
     unsigned int nonce_type, const char *digestname,
@@ -256,6 +268,225 @@ err:
     EC_POINT_free(tmp_point);
     BN_clear_free(X);
     return ret;
+}
+
+static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
+    BIGNUM **kinvp, BIGNUM **rp,
+    const unsigned char *dgst, int dlen,
+    unsigned int nonce_type, const char *digestname,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    BN_CTX *ctx = NULL;
+    BIGNUM *r = NULL, *X = NULL, *kinv = NULL;
+    const BIGNUM *order;
+    EC_POINT *tmp_point = NULL;
+    const EC_GROUP *group;
+    int ret = 0;
+    int order_bits, nlimbs;
+    const BIGNUM *priv_key;
+    OSSL_FN_CTX *fnctx = NULL;
+    const void *token = NULL;
+    const OSSL_FN *order_fn, *priv_fn = NULL;
+    OSSL_FN *kf = NULL, *kinvf = NULL;
+    size_t need = 0;
+
+    if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if ((priv_key = EC_KEY_get0_private_key(eckey)) == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PRIVATE_KEY);
+        return 0;
+    }
+
+    if (!EC_KEY_can_sign(eckey)) {
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        return 0;
+    }
+
+    if ((ctx = ctx_in) == NULL) {
+        if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            return 0;
+        }
+    }
+
+    r = BN_new(); /* this value is later returned in *rp */
+    X = BN_new();
+    kinv = BN_secure_new(); /* this value is later returned in *kinvp */
+    if (r == NULL || X == NULL || kinv == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+    if ((tmp_point = EC_POINT_new(group)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    if ((order = EC_GROUP_get0_order(group)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    order_bits = BN_num_bits(order);
+    /* Check the number of bits here so that an infinite loop is not possible */
+    if (order_bits < MIN_ECDSA_SIGN_ORDERBITS)
+        goto err;
+
+    /*
+     * The order is public; the secret-scalar work below needs only its
+     * read-only OSSL_FN view.
+     */
+    nlimbs = bn_get_top(order);
+    if ((order_fn = bn_get_ossl_fn(order)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        goto err;
+    }
+
+    /*
+     * The deterministic (RFC6979) and hedged nonce generators derive k from the
+     * private key; they take its read-only OSSL_FN view and write straight into
+     * the OSSL_FN nonce, so no BIGNUM nonce is ever materialised.  The random
+     * path (dgst == NULL) draws straight into the OSSL_FN too.
+     */
+    if (dgst != NULL && (priv_fn = bn_get_ossl_fn(priv_key)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        goto err;
+    }
+
+    /*
+     * Secure arena holding the secret nonce k, plus the scratch that nests on
+     * top of it: the k*G ladder and the inverse below.  order_fn is at least
+     * nlimbs wide, so sizing both against it is an upper bound.  Creating the
+     * arena with eckey->libctx (rather than letting EC_POINT_mul_fn() allocate
+     * its own against the possibly-NULL group->libctx) is what lets the
+     * ladder's coordinate blinding draw entropy from the caller's context.
+     */
+    need = ossl_fn_ctx_max_size(
+        OSSL_FN_mod_inverse_ctx_size(order_fn, order_fn, order_fn),
+        EC_POINT_mul_fn_ctx_size(group, tmp_point, order_fn, NULL));
+    /* ... plus the outer frame holding the nonce k itself. */
+    need = ossl_fn_ctx_add_size(need, OSSL_FN_CTX_size(1, 1, (size_t)nlimbs));
+    if (need == 0) {
+        ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need);
+    if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
+        goto err;
+    if ((kf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+        goto err;
+
+    do {
+        /* get random or deterministic value of k */
+        do {
+            if (dgst != NULL) {
+                int res;
+
+                if (nonce_type == 1)
+                    res = ossl_fn_gen_deterministic_nonce_rfc6979(kf, order,
+                        priv_fn, dgst, dlen, digestname, libctx, propq);
+                else
+                    res = ossl_fn_gen_dsa_nonce(kf, order_fn, priv_fn,
+                        dgst, dlen, eckey->libctx);
+                if (!res) {
+                    ERR_raise(ERR_LIB_EC,
+                        EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                    goto err;
+                }
+            } else if (!OSSL_FN_priv_rand_range(kf, order_fn, 0,
+                           eckey->libctx)) {
+                ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                goto err;
+            }
+        } while (OSSL_FN_is_zero(kf));
+
+        /*
+         * Compute r, the x-coordinate of k*G reduced mod the order.  k is the
+         * secret nonce, so the multiplication goes through EC_POINT_mul_fn();
+         * the x-coordinate, and hence r, is public.
+         */
+        if (!EC_POINT_mul_fn(group, tmp_point, kf, NULL, fnctx)
+            || !EC_POINT_get_affine_coordinates(group, tmp_point, X, NULL,
+                ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+            goto err;
+        }
+
+        if (!BN_nnmod(r, X, order, ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            goto err;
+        }
+    } while (BN_is_zero(r));
+
+    /*
+     * Compute the inverse of k straight into the OSSL_FN of the returned
+     * BIGNUM, so the secret nonce is never handed over as a BIGNUM of ours.
+     *
+     * TODO(FIXNUM): OSSL_FN_mod_inverse() is not constant-time - by its own
+     * account in crypto/fn/fn_mod_inv.c the iteration count reveals the
+     * operand's magnitude, and the operand here is the secret nonce.  The
+     * BIGNUM version reached ossl_ec_group_do_inverse_ord(), which avoids that
+     * with Fermat's little theorem.  To be revisited once crypto/fn grows a
+     * constant-time inverse.
+     */
+    if ((kinvf = bn_acquire_ossl_fn(kinv, nlimbs)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        goto err;
+    }
+    if (!OSSL_FN_mod_inverse(kinvf, kf, order_fn, fnctx)) {
+        bn_release(kinv, nlimbs);
+        kinvf = NULL;
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        goto err;
+    }
+    bn_release(kinv, nlimbs);
+    kinvf = NULL;
+
+    /* clear old values if necessary */
+    BN_clear_free(*rp);
+    BN_clear_free(*kinvp);
+    /* save the pre-computed values  */
+    *rp = r;
+    *kinvp = kinv;
+    ret = 1;
+err:
+    if (!ret) {
+        BN_clear_free(kinv);
+        BN_clear_free(r);
+    }
+    if (token != NULL)
+        OSSL_FN_CTX_end(fnctx, token);
+    OSSL_FN_CTX_free(fnctx);
+    if (ctx != ctx_in)
+        BN_CTX_free(ctx);
+    EC_POINT_free(tmp_point);
+    BN_clear_free(X);
+    return ret;
+}
+
+static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
+    BIGNUM **kinvp, BIGNUM **rp,
+    const unsigned char *dgst, int dlen,
+    unsigned int nonce_type, const char *digestname,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    const EC_GROUP *group;
+
+    /*
+     * Prime-field (GF(p)) groups take the constant-time OSSL_FN secret-scalar
+     * path; GF(2^m) has no EC_POINT_mul_fn() and keeps the BIGNUM computation.
+     * A NULL eckey/group is left to the BIGNUM path, which reports it.
+     */
+    if (eckey != NULL
+        && (group = EC_KEY_get0_group(eckey)) != NULL
+        && group->meth->field_type == NID_X9_62_prime_field)
+        return ecdsa_sign_setup_fn(eckey, ctx_in, kinvp, rp, dgst, dlen,
+            nonce_type, digestname, libctx, propq);
+
+    return ecdsa_sign_setup_bignum(eckey, ctx_in, kinvp, rp, dgst, dlen,
+        nonce_type, digestname, libctx, propq);
 }
 
 int ossl_ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
