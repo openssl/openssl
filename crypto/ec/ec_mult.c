@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -13,14 +13,19 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/safe_math.h"
 
 #include <string.h>
 #include <openssl/err.h>
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h" /* ossl_fn_get_dsize() */
 #include "ec_local.h"
 #include "internal/refcount.h"
+
+OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
 /*
  * This file implements the wNAF-based interleaving multi-exponentiation method
@@ -379,7 +384,774 @@ err:
     return ret;
 }
 
+/*-
+ * The OSSL_FN Montgomery ladder below works in whatever representation the
+ * group stores its coordinates in: Montgomery for methods with a field
+ * Montgomery context (group->fn_mont_ctx), plain residues mod the field
+ * otherwise (e.g. the nist method).  Only three field operations depend on that
+ * choice - the multiplication, encoding a plain value into the representation,
+ * and the modular inverse; the additive steps (mod_add/sub/lshift) are
+ * identical in both.  These helpers hide the choice, keeping the ladder bodies
+ * representation-agnostic.
+ */
+static ossl_inline int ec_fn_fmul(const EC_GROUP *group, OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
+{
+    return group->fn_mont_ctx != NULL
+        ? OSSL_FN_mul_mont_quick(r, a, b, group->fn_mont_ctx, ctx)
+        : OSSL_FN_mod_mul(r, a, b, bn_get_ossl_fn(group->field), ctx);
+}
+
+/*
+ * Copy a BIGNUM field element into 'dst' at fixed width.  bn_get_ossl_fn()
+ * hands back the BIGNUM's OSSL_FN backing store, which is allocated lazily: the
+ * value zero needs no limbs, so it keeps a NULL store.  That is how the curve
+ * coefficient a is held on curves with a == 0 (e.g. secp256k1), so read a NULL
+ * store as the value zero rather than dereferencing it.  The store is never
+ * NULL for a non-zero value here (that only happens for BN_FLG_STATIC_DATA
+ * bignums, which these field elements are not), so NULL unambiguously means 0.
+ */
+static int ec_fn_read(OSSL_FN *dst, const BIGNUM *src)
+{
+    const OSSL_FN *s = bn_get_ossl_fn(src);
+
+    return s != NULL ? OSSL_FN_copy_truncate(dst, s) != NULL
+                     : OSSL_FN_set_word(dst, 0);
+}
+
+/* Arena sizes for the helpers (0 on error, per the _ctx_size contract). */
+static size_t ec_fn_fmul_ctx_size(const EC_GROUP *group)
+{
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+
+    return group->fn_mont_ctx != NULL
+        ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
+        : OSSL_FN_mod_mul_ctx_size(p_fn, p_fn, p_fn, p_fn);
+}
+
+/* Field squaring; Montgomery has no dedicated square, so it reuses the mul. */
+static ossl_inline int ec_fn_fsqr(const EC_GROUP *group, OSSL_FN *r,
+    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+{
+    return group->fn_mont_ctx != NULL
+        ? OSSL_FN_mul_mont_quick(r, a, a, group->fn_mont_ctx, ctx)
+        : OSSL_FN_mod_sqr(r, a, bn_get_ossl_fn(group->field), ctx);
+}
+
+static size_t ec_fn_fsqr_ctx_size(const EC_GROUP *group)
+{
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+
+    return group->fn_mont_ctx != NULL
+        ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
+        : OSSL_FN_mod_sqr_ctx_size(p_fn, p_fn, p_fn);
+}
+
+/* Encode a plain, reduced value in place into the coordinate representation. */
+static ossl_inline int ec_fn_encode(const EC_GROUP *group, OSSL_FN *r,
+    OSSL_FN_CTX *ctx)
+{
+    return group->fn_mont_ctx != NULL
+        ? OSSL_FN_to_mont(r, r, group->fn_mont_ctx, ctx)
+        : 1; /* plain representation: nothing to encode */
+}
+
+static size_t ec_fn_encode_ctx_size(const EC_GROUP *group)
+{
+    return group->fn_mont_ctx != NULL
+        ? OSSL_FN_to_mont_ctx_size(NULL, bn_get_ossl_fn(group->field),
+              group->fn_mont_ctx)
+        : OSSL_FN_CTX_SIZE_NONE; /* plain: no arena needed */
+}
+
+/*
+ * r := a^-1 in the coordinate representation.  A Montgomery-form operand is
+ * decoded, inverted, and re-encoded; a plain one is inverted directly.
+ *
+ * TODO(FIXNUM): OSSL_FN_mod_inverse() is not yet constant-time (see
+ * crypto/fn/fn_mod_inv.c), so this leaks about the secret operand until it is
+ * hardened.  The dedicated inverse is used deliberately - it is the single
+ * place slated to become constant-time - rather than open-coding an FLT
+ * exponentiation here; this ladder becomes constant-time once it does.
+ */
+static ossl_inline int ec_fn_finv(const EC_GROUP *group, OSSL_FN *r,
+    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+{
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+
+    if (group->fn_mont_ctx != NULL)
+        return OSSL_FN_from_mont(r, a, group->fn_mont_ctx, ctx)
+            && OSSL_FN_mod_inverse(r, r, p_fn, ctx)
+            && OSSL_FN_to_mont(r, r, group->fn_mont_ctx, ctx);
+    return OSSL_FN_mod_inverse(r, a, p_fn, ctx);
+}
+
+static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
+{
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+    size_t frm, inv, tom, m;
+
+    if (group->fn_mont_ctx == NULL)
+        return OSSL_FN_mod_inverse_ctx_size(p_fn, p_fn, p_fn);
+
+    frm = OSSL_FN_from_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
+    inv = OSSL_FN_mod_inverse_ctx_size(p_fn, p_fn, p_fn);
+    tom = OSSL_FN_to_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
+    if (frm == 0 || inv == 0 || tom == 0)
+        return 0;
+    m = frm;
+    if (inv > m)
+        m = inv;
+    if (tom > m)
+        m = tom;
+    return m;
+}
+
+/*-
+ * OSSL_FN x-only (differential) Montgomery-ladder step; see the banner in
+ * ec_local.h.  Mirrors ossl_ec_GFp_simple_ladder_step() operation for
+ * operation, with the field arithmetic on the coordinates' OSSL_FN view.  The
+ * BIGNUM original is already branchless, so this port is genuinely
+ * constant-time: no value-dependent control flow.
+ */
+int ossl_ec_point_ladder_step_fn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx)
+{
+    const void *token = NULL;
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+    OSSL_FN *t0, *t1, *t2, *t3, *t4, *t5, *t6, *ca, *cb, *px;
+    OSSL_FN *rx = NULL, *rz = NULL, *sx = NULL, *sz = NULL;
+    int w = (int)ossl_fn_get_dsize(p_fn);
+    int ret = 0;
+
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        return 0;
+
+    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t1 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t2 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t3 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t4 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t5 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t6 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (ca = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (cb = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (px = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL)
+        goto err;
+
+    /* r, s, p are distinct; acquire r/s coords, then copy p->X, a and b to w. */
+    if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
+        || (rz = bn_acquire_ossl_fn(r->Z, w)) == NULL
+        || (sx = bn_acquire_ossl_fn(s->X, w)) == NULL
+        || (sz = bn_acquire_ossl_fn(s->Z, w)) == NULL)
+        goto err;
+    if (!ec_fn_read(px, p->X)
+        || !ec_fn_read(ca, group->a)
+        || !ec_fn_read(cb, group->b))
+        goto err;
+
+#define MUL(R, A, B) ec_fn_fmul(group, (R), (A), (B), ctx)
+#define SQR(R, A) ec_fn_fsqr(group, (R), (A), ctx)
+    if (!MUL(t6, rx, sx)
+        || !MUL(t0, rz, sz)
+        || !MUL(t4, rx, sz)
+        || !MUL(t3, rz, sx)
+        || !MUL(t5, ca, t0)
+        || !OSSL_FN_mod_add_quick(t5, t6, t5, p_fn)
+        || !OSSL_FN_mod_add_quick(t6, t3, t4, p_fn)
+        || !MUL(t5, t6, t5)
+        || !SQR(t0, t0)
+        || !OSSL_FN_mod_lshift_quick(t2, cb, 2, p_fn)
+        || !MUL(t0, t2, t0)
+        || !OSSL_FN_mod_lshift1_quick(t5, t5, p_fn)
+        || !OSSL_FN_mod_sub_quick(t3, t4, t3, p_fn)
+        /* s->Z output */
+        || !SQR(sz, t3)
+        || !MUL(t4, sz, px)
+        || !OSSL_FN_mod_add_quick(t0, t0, t5, p_fn)
+        /* s->X output */
+        || !OSSL_FN_mod_sub_quick(sx, t0, t4, p_fn)
+        || !SQR(t4, rx)
+        || !SQR(t5, rz)
+        || !MUL(t6, t5, ca)
+        || !OSSL_FN_mod_add_quick(t1, rx, rz, p_fn)
+        || !SQR(t1, t1)
+        || !OSSL_FN_mod_sub_quick(t1, t1, t4, p_fn)
+        || !OSSL_FN_mod_sub_quick(t1, t1, t5, p_fn)
+        || !OSSL_FN_mod_sub_quick(t3, t4, t6, p_fn)
+        || !SQR(t3, t3)
+        || !MUL(t0, t5, t1)
+        || !MUL(t0, t2, t0)
+        /* r->X output */
+        || !OSSL_FN_mod_sub_quick(rx, t3, t0, p_fn)
+        || !OSSL_FN_mod_add_quick(t3, t4, t6, p_fn)
+        || !SQR(t4, t5)
+        || !MUL(t4, t4, t2)
+        || !MUL(t1, t1, t3)
+        || !OSSL_FN_mod_lshift1_quick(t1, t1, p_fn)
+        /* r->Z output */
+        || !OSSL_FN_mod_add_quick(rz, t4, t1, p_fn))
+        goto err;
+#undef MUL
+#undef SQR
+
+    ret = 1;
+
+err:
+    if (rx != NULL)
+        bn_release(r->X, w);
+    if (rz != NULL)
+        bn_release(r->Z, w);
+    if (sx != NULL)
+        bn_release(s->X, w);
+    if (sz != NULL)
+        bn_release(s->Z, w);
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+size_t ossl_ec_point_ladder_step_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, EC_POINT *s, EC_POINT *p)
+{
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+    size_t w = ossl_fn_get_dsize(p_fn);
+    size_t own = OSSL_FN_CTX_size(1, 10, 10 * w); /* t0..t6, ca, cb, px */
+    size_t mul = ec_fn_fmul_ctx_size(group);
+    size_t sqr = ec_fn_fsqr_ctx_size(group);
+    int err = 0;
+    size_t ret;
+
+    if (own == 0 || mul == 0 || sqr == 0)
+        return 0;
+    if (sqr > mul)
+        mul = sqr;
+    ret = safe_add_size_t(own, mul, &err);
+    return err == 0 ? ret : 0;
+}
+
+/*-
+ * OSSL_FN x-only ladder setup; see the banner in ec_local.h.  Mirrors
+ * ossl_ec_GFp_simple_ladder_pre() operation for operation: r := 2p and s := p
+ * in projective x-only coordinates, followed by independent coordinate
+ * blinding.  Like the original it reuses the output-point coordinates as
+ * scratch.  The only branch is on the public p->Z_is_one.
+ */
+int ossl_ec_point_ladder_pre_fn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx)
+{
+    const void *token = NULL;
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+    OSSL_FN *ca, *cb, *px;
+    OSSL_FN *rx = NULL, *rz = NULL, *ry = NULL;
+    OSSL_FN *sx = NULL, *sz = NULL, *sy = NULL;
+    int w = (int)ossl_fn_get_dsize(p_fn);
+    int ret = 0;
+
+    if (!p->Z_is_one) /* the ladder always passes p in affine form */
+        return 0;
+
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        return 0;
+
+    if ((ca = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (cb = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (px = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL)
+        goto err;
+
+    if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
+        || (rz = bn_acquire_ossl_fn(r->Z, w)) == NULL
+        || (ry = bn_acquire_ossl_fn(r->Y, w)) == NULL
+        || (sx = bn_acquire_ossl_fn(s->X, w)) == NULL
+        || (sz = bn_acquire_ossl_fn(s->Z, w)) == NULL
+        || (sy = bn_acquire_ossl_fn(s->Y, w)) == NULL)
+        goto err;
+    if (!ec_fn_read(px, p->X)
+        || !ec_fn_read(ca, group->a)
+        || !ec_fn_read(cb, group->b))
+        goto err;
+
+#define MUL(R, A, B) ec_fn_fmul(group, (R), (A), (B), ctx)
+#define SQR(R, A) ec_fn_fsqr(group, (R), (A), ctx)
+    /*
+     * r := 2p, x-only.  Scratch layout matches the BIGNUM original:
+     * t1=s->Z, t2=r->Z, t3=s->X, t4=r->X, t5=s->Y.
+     */
+    if (!SQR(sx, px) /* t3 = p->X^2 */
+        || !OSSL_FN_mod_sub_quick(rx, sx, ca, p_fn) /* t4 = t3 - a */
+        || !SQR(rx, rx) /* t4 = t4^2 */
+        || !MUL(sy, px, cb) /* t5 = p->X * b */
+        || !OSSL_FN_mod_lshift_quick(sy, sy, 3, p_fn) /* t5 <<= 3 */
+        || !OSSL_FN_mod_sub_quick(rx, rx, sy, p_fn) /* r->X = t4 - t5 */
+        || !OSSL_FN_mod_add_quick(sz, sx, ca, p_fn) /* t1 = t3 + a */
+        || !MUL(rz, px, sz) /* t2 = p->X * t1 */
+        || !OSSL_FN_mod_add_quick(rz, cb, rz, p_fn) /* t2 = b + t2 */
+        || !OSSL_FN_mod_lshift_quick(rz, rz, 2, p_fn)) /* r->Z = t2 << 2 */
+        goto err;
+
+    /* lambda_r (r->Y) and lambda_s (s->Z): nonzero blinding factors */
+    do {
+        if (!OSSL_FN_priv_rand_range(ry, p_fn, 0, group->libctx))
+            goto err;
+    } while (OSSL_FN_is_zero(ry));
+    do {
+        if (!OSSL_FN_priv_rand_range(sz, p_fn, 0, group->libctx))
+            goto err;
+    } while (OSSL_FN_is_zero(sz));
+
+    /* encode the blinding factors into the coordinate representation, then blind */
+    if (!ec_fn_encode(group, ry, ctx)
+        || !ec_fn_encode(group, sz, ctx)
+        || !MUL(rz, rz, ry)
+        || !MUL(rx, rx, ry)
+        || !MUL(sx, px, sz)) /* s := p (blinded) */
+        goto err;
+#undef MUL
+#undef SQR
+
+    if (rx != NULL)
+        bn_release(r->X, w);
+    if (rz != NULL)
+        bn_release(r->Z, w);
+    if (ry != NULL)
+        bn_release(r->Y, w);
+    if (sx != NULL)
+        bn_release(s->X, w);
+    if (sz != NULL)
+        bn_release(s->Z, w);
+    if (sy != NULL)
+        bn_release(s->Y, w);
+    r->Z_is_one = 0;
+    s->Z_is_one = 0;
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+size_t ossl_ec_point_ladder_pre_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, EC_POINT *s, EC_POINT *p)
+{
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+    size_t w = ossl_fn_get_dsize(p_fn);
+    size_t own = OSSL_FN_CTX_size(1, 3, 3 * w); /* ca, cb, px */
+    size_t mul = ec_fn_fmul_ctx_size(group);
+    size_t sqr = ec_fn_fsqr_ctx_size(group);
+    /*
+     * The blinding factors handed to the encode step are w-wide and reduced
+     * (< field), so the encode context is a safe upper bound.  For a plain
+     * representation the encode is a no-op (OSSL_FN_CTX_SIZE_NONE).
+     */
+    size_t enc = ec_fn_encode_ctx_size(group);
+    size_t nested, ret;
+    int err = 0;
+
+    if (own == 0 || mul == 0 || sqr == 0 || enc == 0)
+        return 0;
+    nested = mul;
+    if (sqr > nested)
+        nested = sqr;
+    if (enc != OSSL_FN_CTX_SIZE_NONE && enc > nested)
+        nested = enc;
+    ret = safe_add_size_t(own, nested, &err);
+    return err == 0 ? ret : 0;
+}
+
+/*-
+ * OSSL_FN Y-recovery and back-conversion to affine; see the banner in
+ * ec_local.h.  Mirrors ossl_ec_GFp_simple_ladder_post() operation for
+ * operation, working on the coordinates' OSSL_FN view.  The two early returns
+ * and the FLT inversion match the original's constant-time profile.
+ */
+int ossl_ec_point_ladder_post_fn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx)
+{
+    const void *token = NULL;
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+    const OSSL_FN *sx, *sz;
+    OSSL_FN *t0, *t1, *t2, *t3, *t4, *t5, *t6, *ca, *cb, *px, *py;
+    OSSL_FN *rx = NULL, *ry = NULL, *rz = NULL;
+    int w = (int)ossl_fn_get_dsize(p_fn);
+    int ret = 0;
+
+    /* Edge cases, branching on the public result -- as the BIGNUM original. */
+    if (BN_is_zero(r->Z))
+        return EC_POINT_set_to_infinity(group, r);
+    if (BN_is_zero(s->Z)) {
+        if (!EC_POINT_copy(r, p) || !EC_POINT_invert(group, r, NULL))
+            return 0;
+        return 1;
+    }
+
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        return 0;
+
+    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t1 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t2 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t3 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t4 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t5 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (t6 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (ca = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (cb = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (px = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
+        || (py = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL)
+        goto err;
+
+    if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
+        || (ry = bn_acquire_ossl_fn(r->Y, w)) == NULL
+        || (rz = bn_acquire_ossl_fn(r->Z, w)) == NULL)
+        goto err;
+    sx = bn_get_ossl_fn(s->X);
+    sz = bn_get_ossl_fn(s->Z);
+    if (!ec_fn_read(px, p->X)
+        || !ec_fn_read(py, p->Y)
+        || !ec_fn_read(ca, group->a)
+        || !ec_fn_read(cb, group->b))
+        goto err;
+
+#define MUL(R, A, B) ec_fn_fmul(group, (R), (A), (B), ctx)
+#define SQR(R, A) ec_fn_fsqr(group, (R), (A), ctx)
+    if (!OSSL_FN_mod_lshift1_quick(t4, py, p_fn) /* t4 = 2*p->Y */
+        || !MUL(t6, rx, t4)
+        || !MUL(t6, sz, t6)
+        || !MUL(t5, rz, t6)
+        || !OSSL_FN_mod_lshift1_quick(t1, cb, p_fn) /* t1 = 2*b */
+        || !MUL(t1, sz, t1)
+        || !SQR(t3, rz)
+        || !MUL(t2, t3, t1)
+        || !MUL(t6, rz, ca)
+        || !MUL(t1, px, rx)
+        || !OSSL_FN_mod_add_quick(t1, t1, t6, p_fn)
+        || !MUL(t1, sz, t1)
+        || !MUL(t0, px, rz)
+        || !OSSL_FN_mod_add_quick(t6, rx, t0, p_fn)
+        || !MUL(t6, t6, t1)
+        || !OSSL_FN_mod_add_quick(t6, t6, t2, p_fn)
+        || !OSSL_FN_mod_sub_quick(t0, t0, rx, p_fn)
+        || !SQR(t0, t0)
+        || !MUL(t0, t0, sx)
+        || !OSSL_FN_mod_sub_quick(t0, t6, t0, p_fn)
+        || !MUL(t1, sz, t4)
+        || !MUL(t1, t3, t1)
+        /* t1 := t1^-1 in the coordinate representation */
+        || !ec_fn_finv(group, t1, t1, ctx)
+        /* r->X, r->Y outputs */
+        || !MUL(rx, t5, t1)
+        || !MUL(ry, t0, t1)
+        /* r->Z := representation of 1 */
+        || !OSSL_FN_set_word(rz, 1)
+        || !ec_fn_encode(group, rz, ctx))
+        goto err;
+#undef MUL
+#undef SQR
+
+    if (rx != NULL)
+        bn_release(r->X, w);
+    if (ry != NULL)
+        bn_release(r->Y, w);
+    if (rz != NULL)
+        bn_release(r->Z, w);
+    r->Z_is_one = 1;
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+size_t ossl_ec_point_ladder_post_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, EC_POINT *s, EC_POINT *p)
+{
+    const OSSL_FN *p_fn = bn_get_ossl_fn(group->field);
+    size_t w = ossl_fn_get_dsize(p_fn);
+    size_t own = OSSL_FN_CTX_size(1, 11, 11 * w); /* t0..t6, ca, cb, px, py */
+    size_t mul = ec_fn_fmul_ctx_size(group);
+    size_t sqr = ec_fn_fsqr_ctx_size(group);
+    size_t inv = ec_fn_finv_ctx_size(group);
+    size_t nested, ret;
+    int err = 0;
+
+    if (own == 0 || mul == 0 || sqr == 0 || inv == 0)
+        return 0;
+    nested = mul;
+    if (sqr > nested)
+        nested = sqr;
+    if (inv > nested)
+        nested = inv;
+    ret = safe_add_size_t(own, nested, &err);
+    return err == 0 ? ret : 0;
+}
+
+/*-
+ * The OSSL_FN counterpart of ossl_ec_scalar_mul_ladder(), above.  Same
+ * ladder, same conditional swaps, same timing-attack defenses; the only
+ * difference is that the secret scalar arrives as an OSSL_FN and is never
+ * materialised as a BIGNUM.  The Montgomery-ladder point arithmetic runs
+ * directly on the coordinates' OSSL_FN views (ossl_ec_point_ladder_*_fn), which
+ * dispatch the field multiplication by the group's coordinate representation,
+ * so this path serves any prime-field (GF(p)) group (Montgomery or plain).
+ *
+ * The point coordinates stay BIGNUMs and the point half of the algorithm is
+ * untouched.  Nothing is lost by that: the scalar and the coordinates never
+ * meet in a single arithmetic operation.  The scalar is only ever added to
+ * the (public) cardinality and read a bit at a time to steer the swaps.
+ *
+ * Two contortions of the BIGNUM version fall away here.  It has to cope with
+ * a negative scalar, which an unsigned OSSL_FN cannot present; and it expands
+ * k and lambda to group_top + 2 words up front, because otherwise a carry
+ * could provoke a reallocation whose timing would leak.  OSSL_FN is
+ * fixed-width, so there is no reallocation to hide, and group_top + 1 words
+ * are provably enough: k starts below the cardinality, and the two additions
+ * of the cardinality can carry it up by less than two bits, which one extra
+ * limb absorbs.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point,
+    OSSL_FN_CTX *fnctx)
+{
+    int i, cardinality_bits, group_top, kbit, pbit, Z_is_one;
+    EC_POINT *p = NULL;
+    EC_POINT *s = NULL;
+    const OSSL_FN *cardinality_fn = NULL;
+    OSSL_FN *k = NULL;
+    OSSL_FN *lambda = NULL;
+    const void *token = NULL;
+    size_t width;
+    int ret = 0;
+
+    /* early exit if the input point is the point at infinity */
+    if (point != NULL && EC_POINT_is_at_infinity(group, point))
+        return EC_POINT_set_to_infinity(group, r);
+
+    if (BN_is_zero(group->order)) {
+        ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_ORDER);
+        return 0;
+    }
+    if (BN_is_zero(group->cofactor)) {
+        ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_COFACTOR);
+        return 0;
+    }
+    /*
+     * The OSSL_FN ladder point arithmetic serves any prime-field (GF(p)) group,
+     * dispatching the field multiplication by the group's coordinate
+     * representation (Montgomery when fn_mont_ctx is present, plain otherwise).
+     * There is no BIGNUM fallback on the secret path, so refuse non-prime-field
+     * groups (e.g. GF(2^m)).
+     */
+    if (group->meth->field_type != NID_X9_62_prime_field) {
+        ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
+        return 0;
+    }
+    /* The scratch arena is caller-owned; EC_POINT_mul_fn() sizes/allocates it. */
+    if (fnctx == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (((p = EC_POINT_new(group)) == NULL)
+        || ((s = EC_POINT_new(group)) == NULL)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    if (point == NULL) {
+        if (!EC_POINT_copy(p, group->generator)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+            goto err;
+        }
+    } else {
+        if (!EC_POINT_copy(p, point)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+            goto err;
+        }
+    }
+
+    EC_POINT_BN_set_flags(p, BN_FLG_CONSTTIME);
+    EC_POINT_BN_set_flags(r, BN_FLG_CONSTTIME);
+    EC_POINT_BN_set_flags(s, BN_FLG_CONSTTIME);
+
+    /*
+     * The cardinality (order * cofactor) is a public, immutable group
+     * attribute, precomputed by EC_GROUP_set_generator(); use its OSSL_FN view
+     * directly (no BN_mul(), no allocation, no release).
+     */
+    if ((cardinality_fn = bn_get_ossl_fn(group->cardinality)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    cardinality_bits = BN_num_bits(group->cardinality);
+    width = (size_t)bn_get_top(group->cardinality) + 1;
+
+    /*
+     * |k| and |lambda| are secret-derived; they live in the outer frame of the
+     * caller-provided arena for the whole ladder, while the ladder helpers push
+     * their own nested frames on top for their scratch.  The arena is sized for
+     * both by ossl_ec_scalar_mul_ladder_fn_ctx_size().  The reduction on the
+     * unusual-input path is rare and gets its own short-lived OSSL_FN_CTX rather
+     * than bloating this arena.
+     *
+     * The OSSL_FN calls from here on raise their own errors, so failures are
+     * not re-raised under ERR_LIB_EC - there is no ERR_R_*_LIB code for the
+     * OSSL_FN library to tag them with.
+     */
+    if ((token = OSSL_FN_CTX_start(fnctx)) == NULL)
+        goto err;
+
+    if ((k = OSSL_FN_CTX_get_limbs(fnctx, width)) == NULL
+        || (lambda = OSSL_FN_CTX_get_limbs(fnctx, width)) == NULL)
+        goto err;
+
+    if (ossl_unlikely(OSSL_FN_num_bits(scalar) > (size_t)cardinality_bits)) {
+        /*-
+         * This is an unusual input, and we don't guarantee constant-timeness.
+         * The reduction is the only step that needs scratch, so it gets a
+         * short-lived OSSL_FN_CTX of its own, sized by the library rather
+         * than by hand, instead of widening the arena above for a rare path.
+         */
+        OSSL_FN_CTX *modctx = OSSL_FN_CTX_secure_new_size(group->libctx,
+            OSSL_FN_mod_ctx_size(k, scalar, cardinality_fn));
+        int ok;
+
+        if (modctx == NULL)
+            goto err;
+        ok = OSSL_FN_mod(k, scalar, cardinality_fn, modctx);
+        OSSL_FN_CTX_free(modctx);
+        if (!ok)
+            goto err;
+    } else if (OSSL_FN_copy_truncate(k, scalar) == NULL) {
+        /* No significant limb is dropped: the test above just ruled that out. */
+        goto err;
+    }
+
+    if (!OSSL_FN_add(lambda, k, cardinality_fn)
+        || !OSSL_FN_add(k, lambda, cardinality_fn))
+        goto err;
+    /*
+     * lambda := scalar + cardinality
+     * k := scalar + 2*cardinality
+     */
+    kbit = OSSL_FN_is_bit_set(lambda, cardinality_bits);
+    if (!OSSL_FN_consttime_swap(kbit, k, lambda))
+        goto err;
+
+    /*
+     * Ensure the input point is affine.  On the ladder path make_affine is
+     * always ossl_ec_GFp_simple_make_affine (every GF(p) method uses it), which
+     * allocates its own BN_CTX when passed NULL - so no BN_CTX is threaded here.
+     */
+    if (!p->Z_is_one
+        && (group->meth->make_affine == NULL
+            || !group->meth->make_affine(group, p, NULL))) {
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    /*
+     * The coordinate CSWAPs below run at the field width; capture it for the
+     * swap width.  The _fn ladder helpers copy the public base point's
+     * coordinates into field-width temporaries themselves and widen r/s in
+     * place, so nothing about p or r/s needs preparing here.
+     */
+    group_top = (int)ossl_fn_get_dsize(bn_get_ossl_fn(group->field));
+
+    /* Initialize the Montgomery ladder */
+    if (!ossl_ec_point_ladder_pre_fn(group, r, s, p, fnctx)) {
+        ERR_raise(ERR_LIB_EC, EC_R_LADDER_PRE_FAILURE);
+        goto err;
+    }
+
+    /* top bit is a 1, in a fixed pos */
+    pbit = 1;
+
+#define EC_POINT_CSWAP(c, a, b, w, t)              \
+    do {                                           \
+        BN_consttime_swap(c, (a)->X, (b)->X, w);   \
+        BN_consttime_swap(c, (a)->Y, (b)->Y, w);   \
+        BN_consttime_swap(c, (a)->Z, (b)->Z, w);   \
+        t = ((a)->Z_is_one ^ (b)->Z_is_one) & (c); \
+        (a)->Z_is_one ^= (t);                      \
+        (b)->Z_is_one ^= (t);                      \
+    } while (0)
+
+    /* The ladder logic is spelled out in ossl_ec_scalar_mul_ladder(), above. */
+    for (i = cardinality_bits - 1; i >= 0; i--) {
+        kbit = OSSL_FN_is_bit_set(k, i) ^ pbit;
+        EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one);
+
+        /* Perform a single step of the Montgomery ladder */
+        if (!ossl_ec_point_ladder_step_fn(group, r, s, p, fnctx)) {
+            ERR_raise(ERR_LIB_EC, EC_R_LADDER_STEP_FAILURE);
+            goto err;
+        }
+        /*
+         * pbit logic merges this cswap with that of the
+         * next iteration
+         */
+        pbit ^= kbit;
+    }
+    /* one final cswap to move the right value into r */
+    EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one);
+#undef EC_POINT_CSWAP
+
+    /* Finalize ladder (and recover full point coordinates) */
+    if (!ossl_ec_point_ladder_post_fn(group, r, s, p, fnctx)) {
+        ERR_raise(ERR_LIB_EC, EC_R_LADDER_POST_FAILURE);
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    /*
+     * Pop our outer frame if we started one (an early error may jump here
+     * before that); the caller retains ownership of the arena either way.
+     */
+    if (token != NULL)
+        OSSL_FN_CTX_end(fnctx, token);
+    EC_POINT_free(p);
+    EC_POINT_clear_free(s);
+
+    return ret;
+}
+
 #undef EC_POINT_BN_set_flags
+
+/*
+ * Arena size ossl_ec_scalar_mul_ladder_fn() needs: an outer frame holding k and
+ * lambda (cardinality-top + 1 limbs each), plus the largest of the pre/step/post
+ * helper arenas, which push nested frames on top of that outer frame.
+ */
+size_t ossl_ec_scalar_mul_ladder_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+{
+    size_t width, klam, pre_sz, step_sz, post_sz, max_sz, ret;
+    int err = 0;
+
+    if (group->meth->field_type != NID_X9_62_prime_field
+        || group->cardinality == NULL)
+        return 0;
+
+    width = (size_t)bn_get_top(group->cardinality) + 1;
+    klam = OSSL_FN_CTX_size(1, 2, 2 * width);
+    pre_sz = ossl_ec_point_ladder_pre_fn_ctx_size(group, r, NULL, NULL);
+    step_sz = ossl_ec_point_ladder_step_fn_ctx_size(group, r, NULL, NULL);
+    post_sz = ossl_ec_point_ladder_post_fn_ctx_size(group, r, NULL, NULL);
+    if (klam == 0 || pre_sz == 0 || step_sz == 0 || post_sz == 0)
+        return 0;
+
+    max_sz = pre_sz;
+    if (step_sz > max_sz)
+        max_sz = step_sz;
+    if (post_sz > max_sz)
+        max_sz = post_sz;
+    ret = safe_add_size_t(klam, max_sz, &err);
+    return err == 0 ? ret : 0;
+}
 
 /*
  * Table could be optimised for the wNAF-based implementation,

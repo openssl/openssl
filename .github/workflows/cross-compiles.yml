@@ -114,7 +114,8 @@ jobs:
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
             target: linux64-s390x,
-            fips: no
+            fips: no,
+            qemucpu: max
           }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
