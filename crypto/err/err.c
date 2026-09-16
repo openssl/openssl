@@ -103,6 +103,7 @@ static const ERR_STRING_DATA ERR_str_reasons[] = {
     { ERR_R_ECDSA_LIB, "ECDSA lib" },
     { ERR_R_OSSL_STORE_LIB, "OSSL_STORE lib" },
     { ERR_R_OSSL_DECODER_LIB, "OSSL_DECODER lib" },
+    { ERR_R_OSSL_FN_LIB, "OSSL_FN lib" },
 
     { ERR_R_FATAL, "fatal" },
     { ERR_R_MALLOC_FAILURE, "malloc failure" },
