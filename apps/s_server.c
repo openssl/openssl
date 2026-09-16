@@ -134,8 +134,10 @@ static int keymatexportlen = 20;
 
 static int async = 0;
 
-static int use_sendfile = 0;
-static int use_zc_sendfile = 0;
+#ifndef OPENSSL_NO_KTLS
+static int use_sendfile;
+static int use_zc_sendfile;
+#endif
 
 static const char *session_id_prefix = NULL;
 
@@ -1778,8 +1780,10 @@ int s_server_main(int argc, char *argv[])
     s_quiet = 0;
     s_brief = 0;
     async = 0;
+#ifndef OPENSSL_NO_KTLS
     use_sendfile = 0;
     use_zc_sendfile = 0;
+#endif
 
     port = OPENSSL_strdup(PORT);
     cctx = SSL_CONF_CTX_new();
