@@ -37,6 +37,7 @@ static OSSL_FUNC_mac_set_ctx_params_fn siphash_set_params;
 static OSSL_FUNC_mac_init_fn siphash_init;
 static OSSL_FUNC_mac_update_fn siphash_update;
 static OSSL_FUNC_mac_final_fn siphash_final;
+static OSSL_FUNC_mac_cleanse_fn siphash_cleanse;
 
 struct siphash_data_st {
     void *provctx;
@@ -205,6 +206,14 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
     return 1;
 }
 
+static void siphash_cleanse(void *vmacctx)
+{
+    struct siphash_data_st *macctx = vmacctx;
+
+    OPENSSL_cleanse(&macctx->siphash, sizeof(macctx->siphash));
+    OPENSSL_cleanse(&macctx->sipcopy, sizeof(macctx->siphash));
+}
+
 const OSSL_DISPATCH ossl_siphash_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))siphash_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))siphash_dup },
@@ -212,6 +221,7 @@ const OSSL_DISPATCH ossl_siphash_functions[] = {
     { OSSL_FUNC_MAC_INIT, (void (*)(void))siphash_init },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))siphash_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))siphash_final },
+    { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))siphash_cleanse },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
         (void (*)(void))siphash_gettable_ctx_params },
     { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))siphash_get_ctx_params },

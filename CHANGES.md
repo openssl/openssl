@@ -34,7 +34,10 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added EVP_MAC_cleanse() API. This allows sensitive data to be cleared if the
+   user intends to reuse (pool) EVP_MAC_CTX() objects.
+
+   *Shane Lontis*
 
 OpenSSL 4.1
 -----------

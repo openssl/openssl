@@ -38,6 +38,7 @@ static OSSL_FUNC_mac_set_ctx_params_fn gmac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn gmac_init;
 static OSSL_FUNC_mac_update_fn gmac_update;
 static OSSL_FUNC_mac_final_fn gmac_final;
+static OSSL_FUNC_mac_cleanse_fn gmac_cleanse;
 
 /* local GMAC pkey structure */
 
@@ -240,6 +241,14 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
+static void gmac_cleanse(void *vmacctx)
+{
+    struct gmac_data_st *gctx = vmacctx;
+
+    if (gctx != NULL && gctx->ctx != NULL)
+        EVP_CIPHER_CTX_reset(gctx->ctx);
+}
+
 const OSSL_DISPATCH ossl_gmac_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))gmac_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))gmac_dup },
@@ -247,6 +256,7 @@ const OSSL_DISPATCH ossl_gmac_functions[] = {
     { OSSL_FUNC_MAC_INIT, (void (*)(void))gmac_init },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))gmac_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))gmac_final },
+    { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))gmac_cleanse },
     { OSSL_FUNC_MAC_GETTABLE_PARAMS, (void (*)(void))gmac_gettable_params },
     { OSSL_FUNC_MAC_GET_PARAMS, (void (*)(void))gmac_get_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
