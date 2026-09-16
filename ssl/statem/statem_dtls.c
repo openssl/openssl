@@ -1028,8 +1028,9 @@ redo:
     if (recvd_type == SSL3_RT_ACK) {
         /*
          * An ACK has no message header: the bytes already read are body, and
-         * an ACK never spans records, so read the rest of this one. Nothing
-         * left means a malformed ACK; dtls_process_ack() rejects it.
+         * an ACK never spans records, so read the rest of this one. If that
+         * first read already exhausted the record there is no more body to
+         * read, and asking would fetch an unrelated record.
          */
         if (readbytes == DTLS1_HM_HEADER_LENGTH
             && s->rlayer.curr_rec < s->rlayer.num_recs) {
