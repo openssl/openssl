@@ -364,12 +364,91 @@ err:
     return testresult;
 }
 
+/*-
+ * Pairwise consistency of the two documented ways to read the tag from an
+ * encrypt context after EVP_EncryptFinal_ex():
+ * - EVP_CIPHER_CTX_ctrl(EVP_CTRL_AEAD_GET_TAG)
+ * - EVP_CIPHER_CTX_get_params(OSSL_CIPHER_PARAM_AEAD_TAG)
+ * Both are read-only per the manual, so on the same context each must succeed
+ * and return the same bytes.
+ */
+static int test_evp_aead_get_tag_pairwise(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    OSSL_PARAM get_tagparams[2];
+    static const unsigned char aad[] = "get tag pairwise";
+    static const unsigned char pt[] = "ctrl and params must agree";
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char ct[sizeof(pt) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char tag_ctrl[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_params[EVPTEST_TAG_LEN_MAX] = { 0 };
+    int taglen = info->taglen;
+    int i = 0, outlen = 0, finlen = 0, testresult = 0;
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        /* ccm must be told the payload length before aad or payload */
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen, NULL,
+                (int)sizeof(pt) - 1)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen, aad,
+            (int)sizeof(aad) - 1))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct, &outlen, pt,
+            (int)sizeof(pt) - 1))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct + outlen, &finlen)))
+        goto err;
+
+    /* clamp to the negotiated tag length if the cipher reports one */
+    i = EVP_CIPHER_CTX_get_tag_length(ctx);
+    if (i > 0)
+        taglen = i;
+    if (!TEST_int_le(taglen, EVPTEST_TAG_LEN_MAX))
+        goto err;
+
+    /* read via ctrl */
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
+            tag_ctrl))) {
+        TEST_info("ctrl tag read failed: cipher=%s taglen=%d",
+            info->name, taglen);
+        goto err;
+    }
+
+    /* read via params, same context */
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_AEAD_TAG, tag_params, taglen);
+    get_tagparams[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, get_tagparams))) {
+        TEST_info("params tag read failed: cipher=%s taglen=%d",
+            info->name, taglen);
+        goto err;
+    }
+
+    if (!TEST_mem_eq(tag_ctrl, taglen, tag_params, taglen)) {
+        TEST_info("ctrl and params tags differ: cipher=%s taglen=%d",
+            info->name, taglen);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!setup_aead_list())
         return 0;
 
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
     return 1;
 }
 
