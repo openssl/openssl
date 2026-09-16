@@ -5393,6 +5393,59 @@ err:
     return ret;
 }
 
+static int test_from_bytes_be(void)
+{
+    const size_t w = OSSL_FN_BYTES;
+    int ret = 0;
+    OSSL_FN *r1 = NULL, *r2 = NULL;
+    unsigned char *in = NULL, *out = NULL, *over = NULL;
+
+    if (!TEST_ptr(r1 = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(r2 = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(in = OPENSSL_malloc(w))
+        || !TEST_ptr(out = OPENSSL_malloc(w))
+        || !TEST_ptr(over = OPENSSL_malloc(w + 1)))
+        goto err;
+
+    /* A w-byte value round-trips through to_bytes_be() into one limb. */
+    memset(in, 0xA5, w);
+    if (!TEST_true(OSSL_FN_from_bytes_be(r1, in, w))
+        || !TEST_true(OSSL_FN_to_bytes_be(r1, out, w))
+        || !TEST_mem_eq(out, w, in, w))
+        goto err;
+
+    /* Zero-extension: the loaded value is the same in a wider destination. */
+    if (!TEST_true(OSSL_FN_from_bytes_be(r2, in, w))
+        || !TEST_int_eq(OSSL_FN_cmp(r1, r2), 0))
+        goto err;
+
+    /* A non-zero byte beyond the destination width does not fit. */
+    over[0] = 0x01;
+    memset(over + 1, 0x00, w);
+    if (!TEST_false(OSSL_FN_from_bytes_be(r1, over, w + 1)))
+        goto err;
+
+    /* The same width with a zero top byte does fit. */
+    over[0] = 0x00;
+    memset(over + 1, 0x5A, w);
+    if (!TEST_true(OSSL_FN_from_bytes_be(r1, over, w + 1)))
+        goto err;
+
+    /* NULL arguments are rejected. */
+    if (!TEST_false(OSSL_FN_from_bytes_be(NULL, in, w))
+        || !TEST_false(OSSL_FN_from_bytes_be(r1, NULL, w)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(in);
+    OPENSSL_free(out);
+    OPENSSL_free(over);
+    OSSL_FN_free(r1);
+    OSSL_FN_free(r2);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -5414,6 +5467,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rshift_alias, 4);
     ADD_TEST(test_rshift_invalid_shift);
     ADD_TEST(test_to_bytes_be);
+    ADD_TEST(test_from_bytes_be);
     ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
     ADD_ALL_TESTS(test_gcd_alias, 4);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
