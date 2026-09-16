@@ -1238,11 +1238,13 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt)
 
         recnumnext = ossl_list_record_number_next(recnum);
 
-        if (recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
+        if (!SSL_IS_FIRST_HANDSHAKE(s)
+            || recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
             /*
              * rfc9147:
              * During the handshake, ACK records MUST be sent with an epoch which
-             * is equal to or higher than the record which is being acknowledged
+             * is equal to or higher than the record which is being acknowledged.
+             * After the handshake, the sending and receiving epochs can differ.
              */
             if (!WPACKET_put_bytes_u64(pkt, recnum->epoch)
                 || !WPACKET_put_bytes_u64(pkt, recnum->seqnum)) {
@@ -1310,6 +1312,10 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             }
         }
     }
+
+    /* Keep the retransmit timer running until the whole flight is ACKed. */
+    if (dtls_any_sent_messages_are_missing_acknowledge(s))
+        return MSG_PROCESS_CONTINUE_READING;
 
     return MSG_PROCESS_FINISHED_READING;
 }

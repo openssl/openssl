@@ -9182,6 +9182,11 @@ static int test_key_update_peer_in_read(int idx)
             SSL_ERROR_NONE)))
         goto end;
 
+    /* Process the session ticket ACKs before starting a KeyUpdate. */
+    if (testdtls
+        && !TEST_int_eq(SSL_read(serverssl, prbuf, sizeof(prbuf)), -1))
+        goto end;
+
     local = idx == 0 ? clientssl : serverssl;
     peer = idx == 0 ? serverssl : clientssl;
 
@@ -9319,8 +9324,7 @@ static int test_key_update_local_in_write(int idx)
         cmeth = DTLS_client_method();
         vermin = TLS1_3_VERSION;
         idx -= 2;
-        if (idx == 0)
-            expected_do_handshake_result = -1;
+        expected_do_handshake_result = -1;
 #if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;

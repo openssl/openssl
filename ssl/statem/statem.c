@@ -588,6 +588,7 @@ static void init_read_state_machine(SSL_CONNECTION *s)
 static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
+    OSSL_HANDSHAKE_STATE prev_hand_state = st->hand_state;
     int ret, mt;
     size_t len = 0, headerlen;
     int (*transition)(SSL_CONNECTION *s, int mt);
@@ -664,6 +665,7 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
              * Validate that we are allowed to move to the new state and move
              * to that state if so
              */
+            prev_hand_state = st->hand_state;
             if (!transition(s, mt))
                 return SUB_STATE_ERROR;
 
@@ -731,6 +733,10 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
                 break;
 
             default:
+                /* A partial ACK must not change the message we are awaiting. */
+                if (SSL_CONNECTION_IS_DTLS13(s)
+                    && s->s3.tmp.message_type == DTLS13_MT_ACK)
+                    st->hand_state = prev_hand_state;
                 st->read_state = READ_STATE_HEADER;
                 break;
             }

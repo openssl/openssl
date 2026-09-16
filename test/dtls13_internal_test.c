@@ -230,6 +230,119 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/* Exercise ACK coverage for the client's final flight and the server's tickets. */
+static int test_dtls13_ack_coverage(int server)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL, *sender, *peer;
+    SSL_CONNECTION *sc, *psc;
+    dtls_sent_msg *msg = NULL;
+    DTLS1_RECORD_NUMBER *recnum;
+    pitem *item;
+    piterator iter;
+    unsigned char ack[18] = { 0 }, *p, buf;
+    uint64_t epoch, seqnum;
+    size_t acklen, written;
+    OSSL_TIME timeout;
+    int i, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* An empty client Certificate and Finished give us two messages to ACK. */
+    if (!server)
+        SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_CTX_set_num_tickets(sctx, server ? 2 : 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(serverssl);
+    if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    if (server && !TEST_int_eq(SSL_accept(serverssl), 1))
+        goto end;
+
+    sender = server ? serverssl : clientssl;
+    peer = server ? clientssl : serverssl;
+    sc = SSL_CONNECTION_FROM_SSL(sender);
+    psc = SSL_CONNECTION_FROM_SSL(peer);
+    if (!TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 2)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* ACK the last message first, keeping the earlier message outstanding. */
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    while ((item = pqueue_next(&iter)) != NULL)
+        msg = item->data;
+    if (!TEST_ptr(msg)
+        || !TEST_ptr(recnum = ossl_list_record_number_head(&msg->rec_nums)))
+        goto end;
+    epoch = recnum->epoch;
+    seqnum = recnum->seqnum;
+
+    /* Avoid timer expiry while inspecting ACK processing. */
+    timeout = sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+
+    for (i = 0; i < 5; i++) {
+        int complete = i == 4;
+        int appdata = server || complete;
+
+        /* Empty, nonmatching, partial, duplicate, then the remaining record. */
+        if (complete) {
+            msg = pqueue_peek(&sc->d1->sent_messages)->data;
+            if (!TEST_ptr(recnum = ossl_list_record_number_head(&msg->rec_nums)))
+                goto end;
+            epoch = recnum->epoch;
+            seqnum = recnum->seqnum;
+        }
+        acklen = i == 0 ? 2 : sizeof(ack);
+        ack[1] = (unsigned char)(acklen - 2);
+        p = ack + 2;
+        l2n8(epoch, p);
+        l2n8(i == 1 ? seqnum + 1000 : seqnum, p);
+        if (!TEST_int_eq(dtls1_write_bytes(psc, SSL3_RT_ACK,
+                             ack, acklen, &written),
+                1)
+            || !TEST_size_t_eq(written, acklen)
+            || !TEST_int_eq(dtls1_write_bytes(psc, SSL3_RT_APPLICATION_DATA,
+                                (const unsigned char *)"x", 1, &written),
+                1)
+            || !TEST_int_gt(BIO_flush(psc->wbio), 0))
+            goto end;
+
+        /* Application data is buffered until the client's final ACK arrives. */
+        ret = SSL_read(sender, &buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(sender, ret),
+                appdata ? SSL_ERROR_NONE : SSL_ERROR_WANT_READ)
+            || (appdata && !TEST_uchar_eq(buf, 'x'))
+            || !TEST_int_eq(SSL_get_state(sender), appdata ? TLS_ST_OK : TLS_ST_CW_FINISHED)
+            || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), complete ? 0 : 2)
+            || !TEST_int_eq(ossl_time_compare(sc->d1->next_timeout,
+                                complete ? ossl_time_zero() : timeout),
+                0)
+            || (!appdata && !TEST_size_t_eq(pqueue_size(sc->rlayer.d->buffered_app_data), i + 1))
+            || (!complete && !TEST_int_eq(ossl_list_record_number_is_empty(&msg->rec_nums), i >= 2)))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -242,6 +355,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_seq_num_reconstruction, OSSL_NELEM(seq_num_tests));
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_dtls13_increment_epoch_max);
+    ADD_ALL_TESTS(test_dtls13_ack_coverage, 2);
 #endif
     return 1;
 }
