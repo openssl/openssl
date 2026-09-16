@@ -252,7 +252,8 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
         if (bagnid == NID_pkcs7_data) {
             bags = PKCS12_unpack_p7data(p7);
         } else if (bagnid == NID_pkcs7_encrypted) {
-            bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
+            bags = ossl_pkcs12_unpack_p7encdata_ex(p7, pass, passlen,
+                libctx, propq);
         } else
             continue;
         if (!bags) {

@@ -149,8 +149,9 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
         iter, bags, NULL, NULL);
 }
 
-STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
-    int passlen)
+STACK_OF(PKCS12_SAFEBAG) *ossl_pkcs12_unpack_p7encdata_ex(PKCS7 *p7,
+    const char *pass, int passlen,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (!PKCS7_type_is_encrypted(p7))
         return NULL;
@@ -164,6 +165,13 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
         ASN1_ITEM_rptr(PKCS12_SAFEBAGS),
         pass, passlen,
         p7->d.encrypted->enc_data->enc_data, 1,
+        libctx, propq);
+}
+
+STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
+    int passlen)
+{
+    return ossl_pkcs12_unpack_p7encdata_ex(p7, pass, passlen,
         p7->ctx.libctx, p7->ctx.propq);
 }
 

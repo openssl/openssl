@@ -384,6 +384,58 @@ err:
     return TEST_true(ret);
 }
 
+static int test_parse_ex_libctx(int idx)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+    PKCS12 *p12 = NULL;
+    PKCS12_PARSE_CTX *ctx = NULL;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    int prebound = (idx == 0);
+
+    if (in_file == NULL || !has_key || !has_cert || mismatched_key_pass)
+        return 1;
+
+    TEST_info("libctx propagation: %s decode", prebound ? "prebound" : "ordinary");
+
+    bio = BIO_new_file(in_file, "rb");
+    if (!TEST_ptr(bio))
+        goto err;
+
+    if (prebound) {
+        p12 = PKCS12_init_ex(NID_pkcs7_data, testctx, "provider=default");
+        if (!TEST_ptr(p12))
+            goto err;
+    }
+    if (!TEST_ptr(d2i_PKCS12_bio(bio, &p12)))
+        goto err;
+    BIO_free(bio);
+    bio = NULL;
+
+    if (!TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
+        goto err;
+    PKCS12_PARSE_CTX_set_pkey(ctx, &key);
+    PKCS12_PARSE_CTX_set_cert(ctx, &cert);
+
+    if (!TEST_true(PKCS12_parse_ex(p12, in_pass, ctx,
+            testctx, "provider=default")))
+        goto err;
+
+    if (!TEST_ptr(key) || !TEST_ptr(cert))
+        goto err;
+
+    ret = 1;
+
+err:
+    BIO_free(bio);
+    PKCS12_PARSE_CTX_free(ctx);
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    return ret;
+}
+
 static int test_parse_ex_skey(void)
 {
     PKCS12 *p12 = NULL;
@@ -765,6 +817,7 @@ int setup_tests(void)
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
     ADD_TEST(test_parse_ex_skey);
+    ADD_ALL_TESTS(test_parse_ex_libctx, 2);
     return 1;
 }
 

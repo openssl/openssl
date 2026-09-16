@@ -63,5 +63,8 @@ int ossl_pkcs12_verify_mac(PKCS12 *p12, const char *pass, int passlen,
     OSSL_LIB_CTX *libctx, const char *propq);
 STACK_OF(PKCS7) *ossl_pkcs12_unpack_authsafes_ex(const PKCS12 *p12,
     OSSL_LIB_CTX *libctx, const char *propq);
+STACK_OF(PKCS12_SAFEBAG) *ossl_pkcs12_unpack_p7encdata_ex(PKCS7 *p7,
+    const char *pass, int passlen,
+    OSSL_LIB_CTX *libctx, const char *propq);
 
 #endif /* !defined(OSSL_LIBCRYPTO_PKCS12_P12_LOCAL_H) */
