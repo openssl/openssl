@@ -114,19 +114,12 @@ X509_CRL *PKCS12_SAFEBAG_get1_crl(const PKCS12_SAFEBAG *bag)
 X509 *PKCS12_SAFEBAG_get1_cert_ex(const PKCS12_SAFEBAG *bag,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    X509 *ret = NULL;
-
     if (PKCS12_SAFEBAG_get_nid(bag) != NID_certBag)
         return NULL;
     if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Certificate)
         return NULL;
-    ret = ASN1_item_unpack_ex(bag->value.bag->value.octet,
+    return ASN1_item_unpack_ex(bag->value.bag->value.octet,
         ASN1_ITEM_rptr(X509), libctx, propq);
-    if (!ossl_x509_set0_libctx(ret, libctx, propq)) {
-        X509_free(ret);
-        return NULL;
-    }
-    return ret;
 }
 
 X509_CRL *PKCS12_SAFEBAG_get1_crl_ex(const PKCS12_SAFEBAG *bag,

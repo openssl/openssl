@@ -15,6 +15,7 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 #include <openssl/x509v3.h>
+#include "x509_local.h"
 
 int X509_CRL_get_ext_count(const X509_CRL *x)
 {
@@ -59,12 +60,20 @@ void *X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit, int *idx)
 int X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
     unsigned long flags)
 {
+    /*
+     * Assume modified, sadly the underlying function does not tell us whether
+     * changes were made, or not.
+     */
+    x->crl.enc.modified = 1;
     return X509V3_add1_i2d(&x->crl.extensions, nid, value, crit, flags);
 }
 
 int X509_CRL_add_ext(X509_CRL *x, const X509_EXTENSION *ex, int loc)
 {
-    return (X509v3_add_ext(&(x->crl.extensions), ex, loc) != NULL);
+    if (X509v3_add_ext(&x->crl.extensions, ex, loc) == NULL)
+        return 0;
+    x->crl.enc.modified = 1;
+    return 1;
 }
 
 int X509_get_ext_count(const X509 *x)
@@ -97,8 +106,10 @@ X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
     X509_EXTENSION *ret;
 
     ret = X509v3_delete_extension(&x->cert_info.extensions, loc);
-    if (ret != NULL)
+    if (ret != NULL) {
         x->cert_info.enc.modified = 1;
+        ossl_x509_reset_ext_cache(x);
+    }
     return ret;
 }
 
@@ -106,6 +117,7 @@ int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
 {
     STACK_OF(X509_EXTENSION) **exts = &x->cert_info.extensions;
 
+    ossl_x509_reset_ext_cache(x);
     /* x->cert_info.extensions might initially be NULL */
     if (X509v3_add_ext(exts, ex, loc) == NULL)
         return 0;
@@ -136,6 +148,7 @@ int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
      * changes were made, or not.
      */
     x->cert_info.enc.modified = 1;
+    ossl_x509_reset_ext_cache(x);
     return X509V3_add1_i2d(&x->cert_info.extensions, nid, value, crit,
         flags);
 }
