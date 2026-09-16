@@ -14,8 +14,10 @@
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
 #include "internal/endian.h"
+#include "internal/nelem.h"
 #include "internal/constant_time.h"
 #include "crypto/fn.h"
+#include "crypto/fn_constants.h"
 #include "bn_local.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
@@ -84,11 +86,11 @@ int BN_get_params(int which)
 
 const BIGNUM *BN_value_one(void)
 {
-    static const BN_ULONG data_one = 1L;
     static const BIGNUM const_one = {
-        .d = (BN_ULONG *)&data_one,
-        .top = 1,
-        .dmax = 1,
+        .data = (OSSL_FN *)&ossl_fn_static_one_storage.fn,
+        .d = (BN_ULONG *)ossl_fn_static_one_storage.fixed.d,
+        .top = (int)OSSL_NELEM(ossl_fn_static_one_storage.fixed.d),
+        .dmax = (int)OSSL_NELEM(ossl_fn_static_one_storage.fixed.d),
         .flags = BN_FLG_STATIC_DATA,
     };
 
@@ -360,7 +362,7 @@ void bn_release(BIGNUM *b, int limbs)
     bn_correct_top(b);
 }
 
-OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn)
+const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn)
 {
     if (ossl_unlikely(bn == NULL))
         return NULL;
