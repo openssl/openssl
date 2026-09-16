@@ -2876,6 +2876,22 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
         return -1;
     }
 
+    if (sc->rlayer.wpend_tot == 0
+        && !ossl_tls13_maybe_key_update(sc, SSL3_RT_APPLICATION_DATA, size)) {
+        ssl_update_error_state(sc);
+        return -1;
+    }
+    if (sc->key_update != SSL_KEY_UPDATE_NONE)
+        ossl_statem_set_in_init(sc, 1);
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(sc)) {
+        ret = sc->handshake_func(s);
+        ssl_update_error_state(sc);
+        if (ret < 0)
+            return ret;
+        if (ret == 0)
+            return -1;
+    }
+
     /* If we have an alert to send, lets send it */
     if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
         ret = (ossl_ssize_t)s->method->ssl_dispatch_alert(s);
@@ -2906,6 +2922,11 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
     return -1;
 #else
     ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, &sbytes, flags);
+    if (sbytes > 0
+        && !ossl_tls_record_add_write_bytes(sc, (size_t)sbytes)) {
+        ssl_update_error_state(sc);
+        return -1;
+    }
     ssl_update_error_state(sc);
     BIO_clear_retry_flags(sc->wbio);
     if (ret < 0) {

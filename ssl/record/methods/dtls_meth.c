@@ -1098,8 +1098,7 @@ static int dtls_get_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t *sequence)
 
 static int dtls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence)
 {
-    rl->sequence = sequence;
-    return 1;
+    return tls_set_sequence_number(rl, sequence);
 }
 
 static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint64_t *epoch)

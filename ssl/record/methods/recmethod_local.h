@@ -276,6 +276,9 @@ struct ossl_record_layer_st {
     /* Sequence number for the next record */
     uint64_t sequence;
 
+    /* Maximum number of records permitted for the write key, or 0 if unset */
+    uint64_t max_sequence;
+
     /* Alert code to be used if an error occurs */
     int alert;
 
@@ -435,6 +438,8 @@ int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
     const EVP_MD *md);
 
 int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl);
+int tls_get_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t *sequence);
+int tls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence);
 int tls_alloc_buffers(OSSL_RECORD_LAYER *rl);
 int tls_free_buffers(OSSL_RECORD_LAYER *rl);
 
