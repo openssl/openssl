@@ -134,6 +134,7 @@ void ossl_statem_clear(SSL_CONNECTION *s)
     s->statem.error_state = ERROR_STATE_NOERROR;
     ossl_statem_set_in_init(s, 1);
     s->statem.no_cert_verify = 0;
+    s->statem.ack_for_retransmit = 0;
 }
 
 /*
@@ -620,6 +621,16 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
     while (1) {
         switch (st->read_state) {
         case READ_STATE_HEADER:
+            /*
+             * Restore the state after an incomplete ACK before reading again:
+             * the DTLS record layer uses it to handle application data.
+             */
+            if (SSL_CONNECTION_IS_DTLS13(s)
+                && (st->hand_state == TLS_ST_CR_ACK
+                    || st->hand_state == TLS_ST_SR_ACK)
+                && !transition(s, SSL3_MT_DUMMY))
+                return SUB_STATE_ERROR;
+
             /* Get the state the peer wants to move to */
             if (SSL_CONNECTION_IS_DTLS(s)) {
                 /*
@@ -631,6 +642,10 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
             }
 
             if (ret == 0) {
+                /* Re-ACK a retransmission without completing our own flight. */
+                if (st->ack_for_retransmit)
+                    return SUB_STATE_FINISHED;
+
                 /*
                  * If we're in DTLSv1.3 and in state TLS_ST_OK, then we must
                  * have received a post-handshake message. If we subsequently
