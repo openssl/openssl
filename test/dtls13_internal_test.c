@@ -9,10 +9,12 @@
 
 #include "../ssl/record/methods/recmethod_local.h"
 #include "../ssl/ssl_local.h"
+#include "../ssl/statem/statem_local.h"
 #include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 
@@ -166,6 +168,48 @@ static int test_seq_num_reconstruction(int idx)
 }
 
 #ifndef OPENSSL_NO_DTLS1_3
+/* Empty and single-entry ACK vectors, with and without trailing data. */
+static int test_dtls13_ack_length(int idx)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc;
+    BIO *wbio;
+    unsigned char ack[2 + 16 + 1] = { 0 };
+    size_t len = idx < 2 ? 2 : 18;
+    int trailing = idx % 2;
+    PACKET pkt;
+    int testresult = 0;
+
+    ack[1] = (unsigned char)(len - 2);
+    ack[len] = 0xff;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(ssl))
+        || !TEST_true(PACKET_buf_init(&pkt, ack, len + trailing))
+        || !TEST_ptr(wbio = BIO_new(BIO_s_mem())))
+        goto end;
+
+    SSL_set0_wbio(ssl, wbio);
+
+    if (!TEST_int_eq(dtls_process_ack(sc, &pkt),
+            trailing ? MSG_PROCESS_ERROR : MSG_PROCESS_FINISHED_READING))
+        goto end;
+
+    if (trailing
+        && !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_LENGTH_TOO_LONG))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    ERR_clear_error();
+    return testresult;
+}
+
 /*
  * Test that dtls1_increment_epoch() enforces the RFC 9147 Section 8 limit
  * on the write (sending) epoch for DTLS 1.3: "sending implementations MUST
@@ -241,6 +285,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls_crypt_sequence_number, OSSL_NELEM(cipher_names));
     ADD_ALL_TESTS(test_seq_num_reconstruction, OSSL_NELEM(seq_num_tests));
 #ifndef OPENSSL_NO_DTLS1_3
+    ADD_ALL_TESTS(test_dtls13_ack_length, 4);
     ADD_TEST(test_dtls13_increment_epoch_max);
 #endif
     return 1;
