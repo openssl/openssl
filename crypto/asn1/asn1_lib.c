@@ -30,7 +30,7 @@
 #if defined(ASN1_HAVE_MSAN)
 #include <sanitizer/msan_interface.h>
 #endif
-#if defined __has_include
+#if !defined OPENSSL_NO_VALGRIND_CHECK && defined __has_include
 /* Any compiler you're going to run valgrind on has this */
 #if __has_include(<valgrind/memcheck.h>)
 #include <valgrind/memcheck.h>
