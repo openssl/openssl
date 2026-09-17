@@ -781,7 +781,7 @@ int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_R
     void *initial;
 
     if (lock_failed != NULL)
-        lock_failed = 0;
+        *lock_failed = 0;
 
     /* Load the current pointer value */
     initial = InterlockedCompareExchangePointer(ptr, desire, *expect);
