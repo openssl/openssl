@@ -191,7 +191,7 @@ struct quic_rcidm_st {
     uint64_t retire_prior_to;
 
     /* (SORT BY seq_num ASC) -> (RCID *) */
-    PRIORITY_QUEUE_OF(RCID) * rcids;
+    PRIORITY_QUEUE_OF(RCID) *rcids;
 
     /*
      * Current RCID object we are using. This may differ from the first item in
@@ -314,8 +314,8 @@ void ossl_quic_rcidm_free(QUIC_RCIDM *rcidm)
     while ((rcid = ossl_pqueue_RCID_pop(rcidm->rcids)) != NULL)
         OPENSSL_free(rcid);
 
-    OSSL_LIST_FOREACH_DELSAFE(rcid, rnext, retiring, &rcidm->retiring_list)
-    OPENSSL_free(rcid);
+    OSSL_LIST_FOREACH_DELSAFE (rcid, rnext, retiring, &rcidm->retiring_list)
+        OPENSSL_free(rcid);
 
     ossl_pqueue_RCID_free(rcidm->rcids);
     OPENSSL_free(rcidm);

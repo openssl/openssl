@@ -102,7 +102,7 @@ struct net_sim {
     uint64_t latency; /* ms */
 
     uint64_t spare_capacity;
-    PRIORITY_QUEUE_OF(NET_PKT) * pkts;
+    PRIORITY_QUEUE_OF(NET_PKT) *pkts;
 
     uint64_t total_acked, total_lost; /* bytes */
 };
