@@ -6,9 +6,46 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include <string.h>
+
 #include "internal/packet.h"
+#include "internal/quic_record_rx.h"
 #include "internal/quic_stream.h"
+#include "../ssl/quic/quic_record_rx_local.h"
+#include "../ssl/quic/quic_channel_local.h"
+#include "internal/nelem.h"
 #include "testutil.h"
+
+/*
+ * A received packet as the stream code sees it, without a QRX behind it.
+ * The reference the caller keeps is never released by the stream code, so
+ * the reference count never reaches zero and the packet is never recycled
+ * through the QRX it does not have. It is freed with pkt_test_free() once
+ * the test is done with it.
+ */
+static OSSL_QRX_PKT *pkt_test_new(size_t datagram_len)
+{
+    RXE *rxe = OPENSSL_zalloc(sizeof(*rxe));
+
+    if (rxe == NULL)
+        return NULL;
+
+    rxe->refcount = 1;
+    rxe->datagram_len = datagram_len;
+    rxe->pkt.datagram_len = datagram_len;
+    return &rxe->pkt;
+}
+
+/* The number of references held on a packet, including the caller's own. */
+static size_t pkt_test_refcount(const OSSL_QRX_PKT *pkt)
+{
+    return ((const RXE *)pkt)->refcount;
+}
+
+static void pkt_test_free(OSSL_QRX_PKT *pkt)
+{
+    OPENSSL_free((RXE *)pkt);
+}
 
 static int compare_iov(const unsigned char *ref, size_t ref_len,
     const OSSL_QTX_IOVEC *iov, size_t iov_len)
@@ -372,26 +409,44 @@ static int test_single_copy_read(QUIC_RSTREAM *qrs,
 
 static const unsigned char simple_data[] = "Hello world! And thank you for all the fish!";
 
+/*
+ * Walks the basic sequential contract of the receive stream: a gap at
+ * the head reads zero bytes without signalling the end of stream even
+ * when FIN is already known, duplicate FIN frames with a matching final
+ * size are accepted, available() reports the final size together with
+ * FIN, partial reads flip the FIN flag exactly with the last byte and
+ * reading at the end of stream stays successful. Runs once with the
+ * plain read and once with the single copy record path.
+ */
 static int test_rstream_simple(int idx)
 {
     QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt[8] = { NULL };
     int ret = 0;
     unsigned char buf[sizeof(simple_data)];
-    size_t readbytes = 0, avail = 0;
+    size_t readbytes = 0, avail = 0, i;
     int fin = 0;
-    int use_rbuf = idx > 1;
-    int use_sc = idx % 2;
+    int use_sc = (idx & 1) != 0;
     int (*read_fn)(QUIC_RSTREAM *, unsigned char *, size_t, size_t *,
         int *)
         = use_sc ? test_single_copy_read
                  : ossl_quic_rstream_read;
 
-    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+    /* every frame arrives in a packet, as it does in production */
+    for (i = 0; i < OSSL_NELEM(pkt); ++i)
+        if (!TEST_ptr(pkt[i] = pkt_test_new(1200)))
+            goto err;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
         goto err;
 
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 5,
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[0], 5,
             simple_data + 5, 10, 0))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[1],
             sizeof(simple_data) - 1,
             simple_data + sizeof(simple_data) - 1,
             1, 1))
@@ -399,26 +454,21 @@ static int test_rstream_simple(int idx)
             &readbytes, &fin))
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 0)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[2],
             sizeof(simple_data) - 10,
             simple_data + sizeof(simple_data) - 10,
             10, 1))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[3], 0,
             simple_data, 1, 0))
         || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
             &readbytes, &fin))
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 1)
         || !TEST_mem_eq(buf, 1, simple_data, 1)
-        || (use_rbuf && !TEST_false(ossl_quic_rstream_move_to_rbuf(rstream)))
-        || (use_rbuf
-            && !TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                sizeof(simple_data))))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[4],
             0, simple_data,
             10, 0))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[5],
             sizeof(simple_data),
             NULL,
             0, 1))
@@ -427,7 +477,7 @@ static int test_rstream_simple(int idx)
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 15)
         || !TEST_mem_eq(buf, 15, simple_data, 15)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[6],
             15,
             simple_data + 15,
             sizeof(simple_data) - 15, 1))
@@ -442,14 +492,10 @@ static int test_rstream_simple(int idx)
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 12)
         || !TEST_mem_eq(buf + 2, 12, simple_data + 2, 12)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[7],
             sizeof(simple_data),
             NULL,
             0, 1))
-        || (use_rbuf
-            && !TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                2 * sizeof(simple_data))))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(read_fn(rstream, buf + 14, 5, &readbytes, &fin))
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 5)
@@ -459,16 +505,27 @@ static int test_rstream_simple(int idx)
         || !TEST_true(fin)
         || !TEST_size_t_eq(readbytes, sizeof(buf) - 14 - 5)
         || !TEST_mem_eq(buf, sizeof(buf), simple_data, sizeof(simple_data))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(read_fn(rstream, buf, sizeof(buf), &readbytes, &fin))
         || !TEST_true(fin)
         || !TEST_size_t_eq(readbytes, 0))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
         goto err;
 
     ret = 1;
 
 err:
     ossl_quic_rstream_free(rstream);
+    /* All the references held by the stream must have been released */
+    for (i = 0; i < OSSL_NELEM(pkt); ++i) {
+        if (pkt[i] != NULL
+            && !TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            ret = 0;
+        pkt_test_free(pkt[i]);
+    }
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
     return ret;
 }
 
@@ -477,15 +534,23 @@ static int test_rstream_random(int idx)
     unsigned char *bulk_data = NULL;
     unsigned char *read_buf = NULL;
     QUIC_RSTREAM *rstream = NULL;
-    size_t i, read_off, queued_min, queued_max;
+    QUIC_CHANNEL *ch = NULL;
+    OSSL_QRX_PKT **pkts = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    size_t i, read_off, queued_min, queued_max, num_pkts = 0;
     const size_t data_size = 10000;
+    /* At most two frames are queued per each of the 100 * 10 iterations */
+    const size_t max_pkts = 100 * 10 * 2;
     int r, s, fin = 0, fin_set = 0;
     int ret = 0;
     size_t readbytes = 0;
 
     if (!TEST_ptr(bulk_data = OPENSSL_malloc(data_size))
         || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        || !TEST_ptr(pkts = OPENSSL_zalloc(sizeof(*pkts) * max_pkts))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
         goto err;
 
     if (idx % 3 == 0)
@@ -498,6 +563,7 @@ static int test_rstream_random(int idx)
     for (r = 0; r < 100; ++r) {
         for (s = 0; s < 10; ++s) {
             size_t off = (r * 10 + s) * 10, size = 10;
+            OSSL_QRX_PKT *pkt = NULL;
 
             if (test_random() % 10 == 0)
                 /* drop packet */
@@ -506,7 +572,12 @@ static int test_rstream_random(int idx)
             if (off <= queued_min && off + size > queued_min)
                 queued_min = off + size;
 
-            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, off,
+            /* each frame arrives in its own packet */
+            if (!TEST_ptr(pkt = pkt_test_new(1200)))
+                goto err;
+            pkts[num_pkts++] = pkt;
+
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off,
                     bulk_data + off,
                     size, 0)))
                 goto err;
@@ -526,7 +597,12 @@ static int test_rstream_random(int idx)
             if (off <= queued_min && off + size > queued_min)
                 queued_min = off + size;
 
-            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, off,
+            /* a retransmit arrives in its own packet */
+            if (!TEST_ptr(pkt = pkt_test_new(1200)))
+                goto err;
+            pkts[num_pkts++] = pkt;
+
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off,
                     bulk_data + off,
                     size, 0)))
                 goto err;
@@ -550,11 +626,6 @@ static int test_rstream_random(int idx)
             goto err;
         read_off += readbytes;
         queued_min = read_off;
-        if (test_random() % 50 == 0)
-            if (!TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                    queued_max - read_off + 1))
-                || !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
-                goto err;
         if (!fin_set && queued_max >= data_size - test_random() % 200) {
             fin_set = 1;
             /* Queue empty fin frame */
@@ -586,20 +657,2043 @@ static int test_rstream_random(int idx)
             goto err;
     }
 
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
     ret = 1;
 
 err:
     ossl_quic_rstream_free(rstream);
+    if (pkts != NULL) {
+        /* All the references held by the stream must have been released */
+        for (i = 0; i < num_pkts; ++i) {
+            if (!TEST_size_t_eq(pkt_test_refcount(pkts[i]), 1))
+                ret = 0;
+            pkt_test_free(pkts[i]);
+        }
+        OPENSSL_free(pkts);
+    }
+    ossl_quic_rstream_qparm_destroy(rsqp);
     OPENSSL_free(bulk_data);
     OPENSSL_free(read_buf);
+    ossl_quic_channel_free(ch);
     return ret;
+}
+
+/*
+ * Verify the reference counting of packets pinned by buffered stream
+ * chunks and the cleansing of packet backed chunks.
+ */
+static int test_rstream_pkt(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt_a = NULL, *pkt_b = NULL, *pkt_c = NULL;
+    unsigned char pdata[64], cbuf[64], buf[64];
+    size_t readbytes = 0, avail = 0, i;
+    int fin = 0;
+    int ret = 0;
+
+    for (i = 0; i < sizeof(pdata); ++i)
+        pdata[i] = (unsigned char)(0x40 + i);
+
+    if (!TEST_ptr(pkt_a = pkt_test_new(1200))
+        || !TEST_ptr(pkt_b = pkt_test_new(1200))
+        || !TEST_ptr(pkt_c = pkt_test_new(1200))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    /* A buffered frame holds a reference to its packet */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_a, 0,
+            pdata, 10, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 2))
+        goto err;
+
+    /* Two frames from the same packet hold two references */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_a, 20,
+            pdata + 20, 10, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 3))
+        goto err;
+
+    /* A frame contained in already buffered data takes no reference */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_b, 2,
+            pdata + 2, 6, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_b), 1))
+        goto err;
+
+    /*
+     * An overlapping frame drops the frames it covers and releases
+     * their references
+     */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_c, 0,
+            pdata, 15, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 3)
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_c), 2))
+        goto err;
+
+    /* Reading past a frame releases its reference */
+    if (!TEST_true(ossl_quic_rstream_available(rstream, &avail, &fin))
+        || !TEST_size_t_eq(avail, 15)
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 15)
+        || !TEST_mem_eq(buf, 15, pdata, 15)
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_c), 1)
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 2))
+        goto err;
+
+    /* Moving frames to the ring buffer releases their references */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_b, 15,
+            pdata + 15, 5, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_b), 2)
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 2))
+        goto err;
+
+    /* The moved data is still readable from the ring buffer */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 15)
+        || !TEST_mem_eq(buf, 15, pdata + 15, 15))
+        goto err;
+
+    /* Freeing the stream releases the references of buffered frames */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_c, 30,
+            pdata + 30, 10, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_c), 2))
+        goto err;
+    ossl_quic_rstream_free(rstream);
+    rstream = NULL;
+    if (!TEST_size_t_eq(pkt_test_refcount(pkt_c), 1))
+        goto err;
+
+    /*
+     * Cleansing a consumed packet backed chunk wipes exactly the chunk
+     * data, leaving the surrounding bytes intact.
+     */
+    memset(cbuf, 0xAA, sizeof(cbuf));
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+    ossl_quic_rstream_set_cleanse(rstream, 1);
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_a, 0,
+            cbuf + 8, 48, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 2)
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, 48,
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 48)
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 1))
+        goto err;
+    for (i = 0; i < sizeof(cbuf); ++i)
+        if (!TEST_uchar_eq(cbuf[i], i >= 8 && i < 56 ? 0 : 0xAA))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    pkt_test_free(pkt_a);
+    pkt_test_free(pkt_b);
+    pkt_test_free(pkt_c);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+/*
+ * Many small contiguous frames, each pinning its own packet while the reader
+ * lags behind, so a large number of packets are held at once and released only
+ * as the data is finally consumed. Every byte must still read back in order and
+ * every packet reference must end up released.
+ */
+static int test_rstream_pkt_overhead(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    OSSL_QRX_PKT **pkt = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    unsigned char *data = NULL, *buf = NULL;
+    const size_t framesz = 8;
+    const size_t nframes = 4096; /* far past a 64 KiB overhead limit */
+    const size_t total = framesz * nframes;
+    const size_t read_lag = 200; /* read only after this many arrive */
+    size_t i, got = 0, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(total))
+        || !TEST_ptr(buf = OPENSSL_malloc(total))
+        || !TEST_ptr(pkt = OPENSSL_zalloc(nframes * sizeof(*pkt)))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    for (i = 0; i < total; ++i)
+        data[i] = (unsigned char)(i & 0xff);
+
+    for (i = 0; i < nframes; ++i) {
+        if (!TEST_ptr(pkt[i] = pkt_test_new(1200)))
+            goto err;
+
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                i * framesz, data + i * framesz, framesz,
+                i == nframes - 1)))
+            goto err;
+
+        /* let the reader fall behind, then drain what has become available */
+        if (i % read_lag == read_lag - 1)
+            while (got < total
+                && TEST_true(ossl_quic_rstream_read(rstream, buf + got,
+                    total - got, &readbytes, &fin))
+                && readbytes > 0)
+                got += readbytes;
+    }
+
+    /* drain whatever is left and check every byte survived in order */
+    while (got < total
+        && TEST_true(ossl_quic_rstream_read(rstream, buf + got, total - got,
+            &readbytes, &fin))
+        && readbytes > 0)
+        got += readbytes;
+
+    if (!TEST_size_t_eq(got, total)
+        || !TEST_true(fin)
+        || !TEST_mem_eq(buf, got, data, total))
+        goto err;
+
+    /* every consumed frame has released the reference it held on its packet */
+    for (i = 0; i < nframes; ++i)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    if (pkt != NULL)
+        for (i = 0; i < nframes; ++i)
+            pkt_test_free(pkt[i]);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    OPENSSL_free(pkt);
+    OPENSSL_free(data);
+    OPENSSL_free(buf);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+/*
+ * Reassemble a buffer delivered as small frames in a random order with
+ * overlapping retransmits, each frame carrying its own copy of its bytes on
+ * its own packet as a real one would. The random order drives insertion at the
+ * head, the tail and the middle of the reassembly, and the frame size is swept
+ * across the boundary where a design may switch how it stores a chunk, so short
+ * frames and their overlaps are merged in every combination. The read back must
+ * match what was sent whether or not the data is cleansed, since each frame's
+ * own copy is what gets wiped, never the reference.
+ */
+static int test_rstream_reorder(int idx)
+{
+    unsigned char *data = NULL, *buf = NULL, *arena = NULL, *ap;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    OSSL_QRX_PKT **pkts = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    const size_t data_size = 4096;
+    const size_t framesz = 1 + (size_t)(idx % 17);
+    const int cleanse = (idx & 1);
+    const size_t nframes = (data_size + framesz - 1) / framesz;
+    size_t *order = NULL;
+    size_t i, num_pkts = 0, got = 0, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(buf = OPENSSL_malloc(data_size))
+        || !TEST_ptr(arena = OPENSSL_malloc(3 * data_size))
+        || !TEST_ptr(order = OPENSSL_malloc(nframes * sizeof(*order)))
+        || !TEST_ptr(pkts = OPENSSL_zalloc(2 * nframes * sizeof(*pkts)))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    if (cleanse)
+        ossl_quic_rstream_set_cleanse(rstream, 1);
+
+    for (i = 0; i < data_size; ++i)
+        data[i] = (unsigned char)(test_random() & 0xFF);
+
+    for (i = 0; i < nframes; ++i)
+        order[i] = i;
+    for (i = nframes; i > 1; --i) {
+        size_t j = (size_t)(test_random() % i);
+        size_t tmp = order[i - 1];
+
+        order[i - 1] = order[j];
+        order[j] = tmp;
+    }
+
+    ap = arena;
+    for (i = 0; i < nframes; ++i) {
+        size_t off = order[i] * framesz;
+        size_t size = off + framesz > data_size ? data_size - off : framesz;
+        OSSL_QRX_PKT *pkt;
+
+        if (!TEST_ptr(pkt = pkt_test_new(1200)))
+            goto err;
+        pkts[num_pkts++] = pkt;
+        memcpy(ap, data + off, size);
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off, ap,
+                size, 0)))
+            goto err;
+        ap += size;
+
+        /* an overlapping retransmit straddling this frame and the next */
+        if (off + framesz + framesz / 2 <= data_size
+            && test_random() % 3 == 0) {
+            size_t roff = off + framesz / 2;
+            OSSL_QRX_PKT *rpkt;
+
+            if (!TEST_ptr(rpkt = pkt_test_new(1200)))
+                goto err;
+            pkts[num_pkts++] = rpkt;
+            memcpy(ap, data + roff, framesz);
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, rpkt, roff, ap,
+                    framesz, 0)))
+                goto err;
+            ap += framesz;
+        }
+    }
+
+    /* final empty fin frame past the last byte */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, data_size, NULL,
+            0, 1)))
+        goto err;
+
+    while (got < data_size) {
+        if (!TEST_true(ossl_quic_rstream_read(rstream, buf + got,
+                data_size - got, &readbytes, &fin)))
+            goto err;
+        if (readbytes == 0)
+            break;
+        got += readbytes;
+    }
+
+    if (!TEST_size_t_eq(got, data_size)
+        || !TEST_mem_eq(buf, got, data, data_size))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    if (pkts != NULL) {
+        for (i = 0; i < num_pkts; ++i) {
+            if (!TEST_size_t_eq(pkt_test_refcount(pkts[i]), 1))
+                ret = 0;
+            pkt_test_free(pkts[i]);
+        }
+        OPENSSL_free(pkts);
+    }
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    OPENSSL_free(order);
+    OPENSSL_free(arena);
+    OPENSSL_free(data);
+    OPENSSL_free(buf);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+/*
+ * A zero length read is a successful no-op returning zero read bytes,
+ * and releasing a record without consuming any bytes succeeds likewise.
+ * Neither may fail once at least one byte has been consumed, otherwise
+ * quic_read_actual() turns the failed read into a fatal SSL error for
+ * SSL_read_ex() called with a zero length buffer.
+ */
+static int test_rstream_zero_length_read(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt = NULL;
+    unsigned char pdata[10], buf[10];
+    const unsigned char *record = NULL;
+    size_t readbytes = 0, rec_len = 0, i;
+    int fin = 0;
+    int ret = 0;
+
+    for (i = 0; i < sizeof(pdata); ++i)
+        pdata[i] = (unsigned char)(0x40 + i);
+
+    if (!TEST_ptr(pkt = pkt_test_new(1200))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, 0,
+            pdata, sizeof(pdata), 0)))
+        goto err;
+
+    /* a zero length read before anything is consumed */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 0, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 0))
+        goto err;
+
+    /* consume some bytes so the stream offset is not zero */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 5, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 5)
+        || !TEST_mem_eq(buf, 5, pdata, 5))
+        goto err;
+
+    /* a zero length read with data pending at a nonzero offset */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 0, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 0))
+        goto err;
+
+    /* releasing a record without consuming anything succeeds too */
+    if (!TEST_true(ossl_quic_rstream_get_record(rstream, &record, &rec_len,
+            &fin))
+        || !TEST_size_t_eq(rec_len, 5)
+        || !TEST_true(ossl_quic_rstream_release_record(rstream, 0)))
+        goto err;
+
+    /* the remaining bytes are intact and still readable */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 5)
+        || !TEST_mem_eq(buf, 5, pdata + 5, 5))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    pkt_test_free(pkt);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+/*
+ * A short retransmit which starts below an existing range and ends past its
+ * direct storage tail chunk is small enough to slip past the full overlap
+ * guard in try_dstorage(), whose append path then treats every byte below
+ * the tail chunk end as duplicate. The genuinely new bytes below the range
+ * start must not be dropped when the insert reports success, otherwise the
+ * frame is acked, never retransmitted and the gap in the stream is permanent.
+ */
+static int test_rstream_dstorage_two_sided_overlap(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkts[59] = { NULL };
+    unsigned char pdata[64], buf[64], fill = 0xFF;
+    size_t num_pkts = 0, readbytes = 0, avail = 0, i;
+    int fin = 0;
+    int ret = 0;
+
+    for (i = 0; i < sizeof(pdata); ++i)
+        pdata[i] = (unsigned char)(0x40 + i);
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(pkts); ++i)
+        if (!TEST_ptr(pkts[num_pkts++] = pkt_test_new(1200)))
+            goto err;
+
+    /* a packet backed chunk [10, 11) while below the overhead limit */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[0], 10,
+            pdata + 10, 1, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[0]), 2))
+        goto err;
+
+    /*
+     * disjoint 1-byte frames on 1200 byte datagrams, each accounting
+     * 1199 bytes of overhead, take the stream past the 64kB overhead
+     * limit so that short chunks switch to direct storage
+     */
+    for (i = 0; i < 55; ++i)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[1 + i],
+                100 + 2 * i, &fill, 1, 0)))
+            goto err;
+
+    /*
+     * [11, 12) goes to the direct storage of a new tail chunk appended
+     * to the range, holding no reference to its packet
+     */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[56], 11,
+            pdata + 11, 1, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[56]), 1))
+        goto err;
+
+    /*
+     * a 6 byte retransmit [8, 14) starts below the range [10, 12) and
+     * ends past its direct storage tail chunk, the bytes [8, 10) are
+     * new and must be kept
+     */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[57], 8,
+            pdata + 8, 6, 0)))
+        goto err;
+
+    /* deliver the head [0, 8) so everything up to 14 is contiguous */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[58], 0,
+            pdata, 8, 0)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_available(rstream, &avail, &fin))
+        || !TEST_size_t_eq(avail, 14)
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 14)
+        || !TEST_mem_eq(buf, readbytes, pdata, 14))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    for (i = 0; i < num_pkts; ++i)
+        pkt_test_free(pkts[i]);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+/*
+ * A FIN must be rejected as a final size error when data is already
+ * buffered past its offset, or when the application has consumed more
+ * bytes than the final size claims. Otherwise the frames beyond the FIN
+ * offset stay pinned unreadable until the stream is torn down, and a
+ * FIN below the consumed offset is recorded but can never signal the
+ * end of the stream to the application.
+ */
+static int test_rstream_fin_final_size(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt_a = NULL, *pkt_b = NULL;
+    unsigned char pdata[16], buf[16];
+    size_t readbytes = 0, i;
+    int fin = 0;
+    int ret = 0;
+
+    for (i = 0; i < sizeof(pdata); ++i)
+        pdata[i] = (unsigned char)(0x40 + i);
+
+    /* a FIN below data which is already buffered in a higher range */
+    if (!TEST_ptr(pkt_a = pkt_test_new(1200))
+        || !TEST_ptr(pkt_b = pkt_test_new(1200))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_a, 0,
+            pdata, 10, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_b, 100,
+            pdata, 10, 0)))
+        goto err;
+
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, 50, NULL,
+            0, 1))
+        || !TEST_int_eq(ch->protocol_error, 1))
+        goto err;
+
+    ossl_quic_rstream_free(rstream);
+    rstream = NULL;
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    rsqp = NULL;
+    ossl_quic_channel_free(ch);
+    ch = NULL;
+
+    /* a FIN below the offset the application has consumed already */
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_a, 0,
+            pdata, 10, 0))
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 10))
+        goto err;
+
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, 3, NULL,
+            0, 1))
+        || !TEST_int_eq(ch->protocol_error, 1))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    pkt_test_free(pkt_a);
+    pkt_test_free(pkt_b);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+static int cleanse_buf_check(const unsigned char *buf, size_t size,
+    size_t data_start, size_t data_end)
+{
+    size_t i;
+
+    for (i = 0; i < size; ++i)
+        if (!TEST_uchar_eq(buf[i],
+                i >= data_start && i < data_end ? 0x00 : 0xAA)) {
+            TEST_info("byte %zu", i);
+            return 0;
+        }
+
+    return 1;
+}
+
+/*
+ * With cleansing enabled, every dropped duplicate byte of an incoming
+ * frame must be wiped in its packet buffer: a retransmit reaching below
+ * the consumed offset, a retransmit consumed entirely, a duplicate
+ * contained in an existing range and the tail trimmed away when a short
+ * frame is prepended to a direct storage chunk. Otherwise the plaintext
+ * stays in the recycled packet buffer which nothing else cleanses.
+ */
+static int test_rstream_cleanse_dropped_bytes(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkts[60] = { NULL };
+    unsigned char src_a[16], src_b[16], src_c[16], src_d[16], src_e[16];
+    unsigned char buf[16], fill = 0xFF;
+    size_t num_pkts = 0, readbytes = 0, i;
+    int fin = 0;
+    int ret = 0;
+
+    memset(src_a, 0xAA, sizeof(src_a));
+    memset(src_b, 0xAA, sizeof(src_b));
+    memset(src_c, 0xAA, sizeof(src_c));
+    memset(src_d, 0xAA, sizeof(src_d));
+    memset(src_e, 0xAA, sizeof(src_e));
+    for (i = 0; i < 10; ++i)
+        src_a[3 + i] = (unsigned char)(0x40 + i);
+
+    for (i = 0; i < OSSL_NELEM(pkts); ++i)
+        if (!TEST_ptr(pkts[num_pkts++] = pkt_test_new(1200)))
+            goto err;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+    ossl_quic_rstream_set_cleanse(rstream, 1);
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[0], 0,
+            src_a + 3, 10, 0))
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, 5, &readbytes,
+            &fin))
+        || !TEST_size_t_eq(readbytes, 5))
+        goto err;
+
+    /* a retransmit reaching below the consumed offset is wiped whole */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[1], 0,
+            src_b + 3, 10, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[1]), 1)
+        || !cleanse_buf_check(src_b, sizeof(src_b), 3, 13))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 5, &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 5))
+        goto err;
+
+    /* a fully consumed retransmit is wiped whole */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[2], 0,
+            src_c + 3, 10, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[2]), 1)
+        || !cleanse_buf_check(src_c, sizeof(src_c), 3, 13))
+        goto err;
+
+    /*
+     * disjoint 1-byte frames on 1200 byte datagrams take the stream
+     * past the overhead limit so short chunks use direct storage
+     */
+    for (i = 0; i < 55; ++i)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[3 + i],
+                100 + 2 * i, &fill, 1, 0)))
+            goto err;
+
+    /* the copied direct storage chunk has its source wiped already */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[58], 20,
+            src_d + 3, 2, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[58]), 1)
+        || !cleanse_buf_check(src_d, sizeof(src_d), 3, 5))
+        goto err;
+
+    /*
+     * [18, 21) prepends [18, 20) to the direct storage chunk [20, 22)
+     * and drops the duplicate byte [20, 21), all three source bytes
+     * must be wiped
+     */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[59], 18,
+            src_e + 3, 3, 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkts[59]), 1)
+        || !cleanse_buf_check(src_e, sizeof(src_e), 3, 6))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    for (i = 0; i < num_pkts; ++i)
+        pkt_test_free(pkts[i]);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+#define FILL_PATTERN "abcdefghijklmnopqrstuvwxyz0123456789" \
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+typedef struct test_stream_chunk {
+    const unsigned char *tsc_data;
+    uint64_t tsc_off; /* start == offset */
+    uint64_t tsc_len; /* end = offset + len */
+    int tsc_fin;
+    size_t tsc_chunks_exp;
+    size_t tsc_ranges_exp;
+} TEST_STREAM_CHUNK_T;
+
+static int test_rstream_chunk_partial_overlap(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[7];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    size_t readbytes;
+    unsigned int i;
+    unsigned int send_order[OSSL_NELEM(tsc_buf)];
+    int fin = 0;
+    int ok = 0;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * 1 range, (0, 120) with 5 stream chunks. there is a partial overlap
+     * between chunks.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 32;
+    tsc->tsc_chunks_exp = 5;
+    tsc->tsc_ranges_exp = 1;
+    send_order[6] = 0;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[24];
+    tsc->tsc_off = 24;
+    tsc->tsc_len = 48;
+    tsc->tsc_chunks_exp = 5;
+    tsc->tsc_ranges_exp = 1;
+    send_order[4] = 1;
+
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[44];
+    tsc->tsc_off = 44;
+    tsc->tsc_len = 20;
+    tsc->tsc_chunks_exp = 4;
+    tsc->tsc_ranges_exp = 1;
+    send_order[3] = 2;
+
+    tsc = &tsc_buf[3];
+    tsc->tsc_data = &data[55];
+    tsc->tsc_off = 55;
+    tsc->tsc_len = 50;
+    tsc->tsc_chunks_exp = 1;
+    tsc->tsc_ranges_exp = 1;
+    send_order[0] = 3;
+
+    tsc = &tsc_buf[4];
+    tsc->tsc_data = &data[100];
+    tsc->tsc_off = 100;
+    tsc->tsc_len = 19;
+    tsc->tsc_chunks_exp = 3;
+    tsc->tsc_ranges_exp = 1;
+    send_order[2] = 4;
+
+    tsc = &tsc_buf[5];
+    tsc->tsc_data = &data[119];
+    tsc->tsc_off = 119;
+    tsc->tsc_len = 1;
+    tsc->tsc_fin = 1;
+    tsc->tsc_chunks_exp = 2;
+    tsc->tsc_ranges_exp = 2;
+    send_order[1] = 5;
+
+    /*
+     * add duplicate chunk, the chunk range 48, 64 exists already
+     * in the range, thus no additional stream chunk will be created.
+     */
+    tsc = &tsc_buf[6];
+    tsc->tsc_data = &data[49];
+    tsc->tsc_off = 48;
+    tsc->tsc_len = 16;
+    tsc->tsc_chunks_exp = 5;
+    tsc->tsc_ranges_exp = 1;
+    send_order[5] = 6;
+
+    /*
+     * send everything except offset 0.
+     */
+    assert(OSSL_NELEM(tsc_buf) == OSSL_NELEM(pkt));
+    for (i = 0; i < OSSL_NELEM(tsc_buf) - 1; i++) {
+        pkt[i] = pkt_test_new(1200);
+        if (!TEST_ptr(pkt[i]))
+            goto err;
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin))) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        /*
+         * the offset 0 chunk is not transmitted in loop here,
+         * make sure the stream does not become readable.
+         */
+        if (!TEST_true(ossl_quic_rstream_peek(rstream, read_buf,
+                sizeof(read_buf), &readbytes, &fin))) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_false(fin)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(readbytes, 0)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
+
+    /*
+     * although 6 chunks were inserted, we expect to find only 5 chunks
+     * in range, the last chunk was duplicate.
+     */
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 5))
+        goto err;
+
+    /*
+     * send offset 0 chunk, and try to read from stream.
+     */
+    pkt[i] = pkt_test_new(1200);
+    if (!TEST_ptr(pkt[i]))
+        goto err;
+    tsc = &tsc_buf[0];
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+        goto err;
+
+    /*
+     * writing chunk offset 0 makes stream readable
+     */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    /*
+     * we expect to read 120 bytes
+     */
+    if (!TEST_uint64_t_eq(readbytes, 120))
+        goto err;
+
+    /*
+     * the fin written by loop should be signaled too.
+     */
+    if (!TEST_true(fin))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
+/*
+ * use 64kB as datagram size to force QUIC stack
+ * to rach overhead threshold for all packets used
+ * by test. So all data will be moved to stream buffers
+ */
+#define MOVE_TRESHOLD 65535 * 2
+
+static int test_rstream_chunk_full_overlap(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[5];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    size_t readbytes;
+    unsigned int i;
+    unsigned int send_order[OSSL_NELEM(tsc_buf)];
+    int fin;
+    int ok = 0;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * 1 range, (0, 256) with 5 stream chunks. 5 chunks overlap
+     * partially, The last chunk we insert overlaps the whole range.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 256;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[4] = 0;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[24];
+    tsc->tsc_off = 24;
+    tsc->tsc_len = 48;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 4;
+    send_order[3] = 1;
+
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[44];
+    tsc->tsc_off = 44;
+    tsc->tsc_len = 20;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 3;
+    send_order[2] = 2;
+
+    tsc = &tsc_buf[3];
+    tsc->tsc_data = &data[55];
+    tsc->tsc_off = 55;
+    tsc->tsc_len = 50;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[0] = 3;
+
+    tsc = &tsc_buf[4];
+    tsc->tsc_data = &data[100];
+    tsc->tsc_off = 100;
+    tsc->tsc_len = 20;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
+    send_order[1] = 4;
+
+    assert(OSSL_NELEM(tsc_buf) == OSSL_NELEM(pkt));
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        pkt[i] = pkt_test_new(MOVE_TRESHOLD);
+        if (!TEST_ptr(pkt[i]))
+            goto err;
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    /*
+     * we expect to read 256 bytes
+     */
+    if (!TEST_uint64_t_eq(readbytes, 256))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
+static int test_rstream_range_overlap(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[9];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    size_t readbytes;
+    unsigned int i;
+    int fin;
+    int ok = 0;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * start with 5 ranges,
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[128];
+    tsc->tsc_off = 128;
+    tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 2;
+    tsc->tsc_chunks_exp = 2;
+
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[256];
+    tsc->tsc_off = 256;
+    tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 3;
+    tsc->tsc_chunks_exp = 3;
+
+    tsc = &tsc_buf[3];
+    tsc->tsc_data = &data[384];
+    tsc->tsc_off = 384;
+    tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 4;
+    tsc->tsc_chunks_exp = 4;
+
+    tsc = &tsc_buf[4];
+    tsc->tsc_data = &data[512];
+    tsc->tsc_off = 512;
+    tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 5;
+    tsc->tsc_chunks_exp = 5;
+
+    /*
+     * chunk 6 appends data to last range
+     */
+    tsc = &tsc_buf[5];
+    tsc->tsc_data = &data[548];
+    tsc->tsc_off = 548;
+    tsc->tsc_len = 220;
+    tsc->tsc_ranges_exp = 5;
+    tsc->tsc_chunks_exp = 6;
+
+    /*
+     * chunk 7 prepends data to last range
+     */
+    tsc = &tsc_buf[6];
+    tsc->tsc_data = &data[480];
+    tsc->tsc_off = 480;
+    tsc->tsc_len = 64;
+    tsc->tsc_chunks_exp = 7;
+    tsc->tsc_ranges_exp = 5;
+
+    /*
+     * chunk 8 fully covers range 4 and partially
+     * overlaps with 5
+     */
+    tsc = &tsc_buf[7];
+    tsc->tsc_data = &data[364];
+    tsc->tsc_off = 364;
+    tsc->tsc_len = 500;
+    /*
+     * note the expected number of chunks actually decreases!!!
+     * here is what happened:
+     * chunk [ 364, 864 ] is going to be inserted into range number 4
+     * which spans over [ 384, 448 ]. After chunk is inserted the
+     * 4th range looks as follows:
+     *   [ 364, 864 ], it contains 3 chunks:
+     *      [ 364, 384 ]
+     *      [ 384, 448 ]
+     *      [ 448, 864 ]
+     *
+     * however the 4th range now overlaps with 5th range [ 480, 768 ].
+     * the fifth range also contains 3 chunks:
+     *   [ 480, 768 ]
+     *      [ 480, 512 ]
+     *      [ 512, 576 ]
+     *      [ 576, 768 ]
+     * as you can see there is a full overlap. The new range is going
+     * to look as:
+     *   [ 364, 864 ]
+     *      [ 364, 384 ]
+     *      [ 384, 448 ]
+     *      [ 448, 864 ]
+     * the 5th range is gone with all its ranges. the ranges 1, 2 and 3
+     * where not touched so far, each of them contain one range, this
+     * makes total 6 ranges.
+     */
+    tsc->tsc_chunks_exp = 4;
+    tsc->tsc_ranges_exp = 4;
+
+    /*
+     * chunk 9 partially overlaps with the first and
+     * the last range,
+     */
+    tsc = &tsc_buf[8];
+    tsc->tsc_data = &data[32];
+    tsc->tsc_off = 32;
+    tsc->tsc_len = 500;
+    tsc->tsc_chunks_exp = 3;
+    tsc->tsc_ranges_exp = 1;
+
+    assert(OSSL_NELEM(tsc_buf) == OSSL_NELEM(pkt));
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        pkt[i] = pkt_test_new(1200);
+        if (!TEST_ptr(pkt[i]))
+            goto err;
+        tsc = &tsc_buf[i];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    /*
+     * we expect to read 864 bytes
+     */
+    if (!TEST_uint64_t_eq(readbytes, 864))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
+static int test_rstream_prepend_byte_chunks(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[6];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    size_t readbytes;
+    unsigned int i;
+    unsigned int send_order[OSSL_NELEM(tsc_buf)];
+    int fin;
+    int ok = 0;
+
+    if (sizeof(void *) != 8) {
+        TEST_info("%s is implemented for 64-bit platforms only", OPENSSL_FUNC);
+        return 1;
+    }
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * here we test one byte stream chunks. this test verifies
+     * more short stream chunks are stored in single chunk buffer.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 1;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[4] = 0;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[1];
+    tsc->tsc_off = 1;
+    tsc->tsc_len = 2;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[3] = 1;
+
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[3];
+    tsc->tsc_off = 3;
+    tsc->tsc_len = 5;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[2] = 2;
+
+    tsc = &tsc_buf[3];
+    tsc->tsc_data = &data[8];
+    tsc->tsc_off = 8;
+    tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[1] = 3;
+
+    tsc = &tsc_buf[4];
+    tsc->tsc_data = &data[12];
+    tsc->tsc_off = 12;
+    tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[0] = 4;
+
+    tsc = &tsc_buf[5];
+    tsc->tsc_data = &data[12];
+    tsc->tsc_off = 12;
+    tsc->tsc_len = 12;
+    tsc->tsc_ranges_exp = 1;
+    /*
+     * this chunk partially overlaps. It does not fit to stream chunk buffer
+     * created earlier, therefore a new stream chunk will be created.
+     */
+    tsc->tsc_chunks_exp = 2;
+    send_order[5] = 5;
+
+    assert(OSSL_NELEM(tsc_buf) == OSSL_NELEM(pkt));
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        pkt[i] = pkt_test_new(MOVE_TRESHOLD);
+        if (!TEST_ptr(pkt[i]))
+            goto err;
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    /*
+     * we expect to read 24 bytes
+     */
+    if (!TEST_uint64_t_eq(readbytes, 24))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
+static int test_rstream_append_byte_chunks(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[6];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    size_t readbytes;
+    unsigned int i;
+    unsigned int send_order[OSSL_NELEM(tsc_buf)];
+    int fin;
+    int ok = 0;
+
+    if (sizeof(void *) != 8) {
+        TEST_info("%s is implemented for 64-bit platforms only", OPENSSL_FUNC);
+        return 1;
+    }
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * here we test one byte stream chunks. this test verifies
+     * more short stream chunks are stored in single chunk buffer.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 1;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[0] = 0;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[1];
+    tsc->tsc_off = 1;
+    tsc->tsc_len = 2;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[1] = 1;
+
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[3];
+    tsc->tsc_off = 3;
+    tsc->tsc_len = 5;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[2] = 2;
+
+    tsc = &tsc_buf[3];
+    tsc->tsc_data = &data[8];
+    tsc->tsc_off = 8;
+    tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[3] = 3;
+
+    tsc = &tsc_buf[4];
+    tsc->tsc_data = &data[12];
+    tsc->tsc_off = 12;
+    tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[4] = 4;
+
+    tsc = &tsc_buf[5];
+    tsc->tsc_data = &data[12];
+    tsc->tsc_off = 12;
+    tsc->tsc_len = 12;
+    /*
+     * this chunk partially overlaps. It does not fit to stream chunk buffer
+     * created by for() loop above, therefore a new stream chunk will be created.
+     */
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
+    send_order[5] = 5;
+
+    assert(OSSL_NELEM(tsc_buf) == OSSL_NELEM(pkt));
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        pkt[i] = pkt_test_new(MOVE_TRESHOLD);
+        if (!TEST_ptr(pkt[i]))
+            goto err;
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    /*
+     * we expect to read 24 bytes
+     */
+    if (!TEST_uint64_t_eq(readbytes, 24))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
+static int test_rstream_mix_chunks(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[7];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    size_t readbytes;
+    unsigned int i;
+    unsigned int send_order[OSSL_NELEM(tsc_buf)];
+    int fin;
+    int ok = 0;
+
+    if (sizeof(void *) != 8) {
+        TEST_info("%s is implemented for 64-bit platforms only", OPENSSL_FUNC);
+        return 1;
+    }
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * we start with 4-byte nibble which at offset 8.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[8];
+    tsc->tsc_off = 8;
+    tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[0] = 0;
+
+    /*
+     * the next 3 byte nibble partially overlaps with
+     * earlier one. it adds 1 byte. it is prepended
+     */
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[7];
+    tsc->tsc_off = 7;
+    tsc->tsc_len = 3;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[1] = 1;
+
+    /*
+     * the next 3 byte nibble partially overlaps with
+     * range. it effectively adds 1 byte to end.
+     */
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[10];
+    tsc->tsc_off = 10;
+    tsc->tsc_len = 3;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[2] = 2;
+
+    /*
+     * append nibble that fully overlaps with range
+     * (the new nibble is superset of existing range)
+     * it effectively adds two bytes
+     */
+    tsc = &tsc_buf[3];
+    tsc->tsc_data = &data[6];
+    tsc->tsc_off = 6;
+    tsc->tsc_len = 8;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[3] = 3;
+
+    /*
+     * prepend the nibble which starts yet another range.
+     */
+    tsc = &tsc_buf[4];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 1;
+    tsc->tsc_ranges_exp = 2;
+    tsc->tsc_chunks_exp = 2;
+    send_order[4] = 4;
+
+    /*
+     * nibble here appends bytes to right range. the range count and chunk
+     * count must not change as new data still fit to dstorage.
+     */
+    tsc = &tsc_buf[5];
+    tsc->tsc_data = &data[14];
+    tsc->tsc_off = 14;
+    tsc->tsc_len = 3;
+    tsc->tsc_ranges_exp = 2;
+    tsc->tsc_chunks_exp = 2;
+    send_order[5] = 5;
+
+    /*
+     * send chunk that overlaps everything
+     */
+    tsc = &tsc_buf[6];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 24;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
+    send_order[6] = 6;
+
+    /*
+     * all nibbles we've sent so far must fit to single range.
+     */
+    assert(OSSL_NELEM(tsc_buf) == OSSL_NELEM(pkt));
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        pkt[i] = pkt_test_new(MOVE_TRESHOLD);
+        if (!TEST_ptr(pkt[i]))
+            goto err;
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_uint64_t_eq(readbytes, 24))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
+static int test_final_size_violation_fin_first(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[3];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    unsigned int i;
+    unsigned int send_order[OSSL_NELEM(tsc_buf)];
+    int ok = 0;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * we start with 4-byte nibble which at offset 8.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[10];
+    tsc->tsc_off = 10;
+    tsc->tsc_len = 10;
+    tsc->tsc_fin = 1;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+    send_order[0] = 0;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[5];
+    tsc->tsc_off = 5;
+    tsc->tsc_len = 5;
+    tsc->tsc_fin = 0;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
+    send_order[1] = 1;
+
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[50];
+    tsc->tsc_off = 20;
+    tsc->tsc_len = 10;
+    tsc->tsc_fin = 0;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
+    send_order[2] = 2;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf) - 1; i++) {
+        pkt[i] = pkt_test_new(1200);
+        if (!TEST_ptr(pkt[i]))
+            goto err;
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
+
+    pkt[i] = pkt_test_new(1200);
+    if (!TEST_ptr(pkt[i]))
+        goto err;
+    tsc = &tsc_buf[send_order[i]];
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, pkt[i],
+            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+        goto err;
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            tsc->tsc_ranges_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+            tsc->tsc_chunks_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf) - 1; i++)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 2))
+            goto err;
+
+    if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 1))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
+static int test_final_size_violation_data_first(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    TEST_STREAM_CHUNK_T tsc_buf[3];
+    OSSL_QRX_PKT *pkt[OSSL_NELEM(tsc_buf)] = { 0 };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    unsigned int i;
+    int ok = 0;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    /*
+     * we start with 4-byte nibble which at offset 8.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[10];
+    tsc->tsc_off = 10;
+    tsc->tsc_len = 10;
+    tsc->tsc_fin = 0;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[5];
+    tsc->tsc_off = 5;
+    tsc->tsc_len = 5;
+    tsc->tsc_fin = 1;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
+
+    pkt[0] = pkt_test_new(1200);
+    if (!TEST_ptr(pkt[0]))
+        goto err;
+    tsc = &tsc_buf[0];
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[0],
+            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+        goto err;
+
+    /*
+     * check our assumptions about about reassemble process internals.
+     */
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            tsc->tsc_ranges_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+            tsc->tsc_chunks_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    pkt[1] = pkt_test_new(1200);
+    if (!TEST_ptr(pkt[1]))
+        goto err;
+    tsc = &tsc_buf[1];
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, pkt[1],
+            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+        goto err;
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            tsc->tsc_ranges_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+            tsc->tsc_chunks_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    if (!TEST_size_t_eq(pkt_test_refcount(pkt[0]), 2))
+        goto err;
+
+    if (!TEST_size_t_eq(pkt_test_refcount(pkt[1]), 1))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 1))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
 }
 
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
-    ADD_ALL_TESTS(test_rstream_simple, 4);
+    ADD_ALL_TESTS(test_rstream_simple, 2);
     ADD_ALL_TESTS(test_rstream_random, 100);
+    ADD_TEST(test_rstream_pkt);
+    ADD_TEST(test_rstream_pkt_overhead);
+    ADD_ALL_TESTS(test_rstream_reorder, 40);
+    ADD_TEST(test_rstream_dstorage_two_sided_overlap);
+    ADD_TEST(test_rstream_zero_length_read);
+    ADD_TEST(test_rstream_fin_final_size);
+    ADD_TEST(test_rstream_cleanse_dropped_bytes);
+    ADD_TEST(test_rstream_chunk_partial_overlap);
+    ADD_TEST(test_rstream_chunk_full_overlap);
+    ADD_TEST(test_rstream_range_overlap);
+    ADD_TEST(test_rstream_prepend_byte_chunks);
+    ADD_TEST(test_rstream_append_byte_chunks);
+    ADD_TEST(test_rstream_mix_chunks);
+    ADD_TEST(test_final_size_violation_fin_first);
+    ADD_TEST(test_final_size_violation_data_first);
+
     return 1;
 }
