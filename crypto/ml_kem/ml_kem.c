@@ -1560,6 +1560,7 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
         secret[i] = constant_time_select_8(mask, Kr[i], failure_key[i]);
     ret = 1;
 end:
+    mask = 0;
     OPENSSL_cleanse(buf, DECAP_BUFFER_SZ);
     return ret;
 }
