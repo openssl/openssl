@@ -623,8 +623,15 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
          * we could afford doing the (accurate) actual self-signature check, but
          * decided against it for efficiency reasons and according to RFC 5280,
          * CA certs MUST have an SKID and non-root certs MUST have an AKID.
+         *
+         * The cached const_x->skid is not populated until the write-lock
+         * publication below, so the keyid comparison is done directly
+         * against tmp_skid.  X509_check_akid() is retained for its serial
+         * number and issuer name checks.
          */
-        if (X509_check_akid(const_x, tmp_akid) == X509_V_OK
+        if ((tmp_akid == NULL || tmp_akid->keyid == NULL || tmp_skid == NULL
+                || ASN1_OCTET_STRING_cmp(tmp_akid->keyid, tmp_skid) == 0)
+            && X509_check_akid(const_x, tmp_akid) == X509_V_OK
             && check_sig_alg_match(X509_get0_pubkey(const_x), const_x) == X509_V_OK) {
             /*
              * Assume self-signed if the signature alg matches the pkey alg and
