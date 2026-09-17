@@ -813,11 +813,21 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     ee->config_id = config_id;
     ee->keyshare = privp;
     privp = NULL; /* don't free twice */
-    /* "steal" the encoding from the memory */
-    ee->encoded = (unsigned char *)epkt_mem->data;
-    ee->encoded_len = bblen;
-    epkt_mem->data = NULL;
-    epkt_mem->length = 0;
+    /*
+     * ee->encoded must hold one serialised ECHConfig: that is what RFC 9849
+     * sections 6.1 and 7.2 require as the tail of the HPKE info parameter,
+     * and what ech_decode_one_entry() stores.  Skip the two octet
+     * ECHConfigList length prefix written above.
+     */
+    if (bblen < 2) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    ee->encoded_len = bblen - 2;
+    ee->encoded = OPENSSL_memdup((unsigned char *)epkt_mem->data + 2,
+        ee->encoded_len);
+    if (ee->encoded == NULL)
+        goto err;
     ee->loadtime = time(0);
     if (ech_final_config_checks(ee) != 1) /* check our work */
         goto err;
@@ -886,8 +896,19 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        /* wrap the single ECHConfig in an ECHConfigList */
+        if ((epkt_mem = BUF_MEM_new()) == NULL
+            || !BUF_MEM_grow(epkt_mem, OSSL_ECH_MAX_ECHCONFIG_LEN)
+            || !WPACKET_init(&epkt, epkt_mem)
+            || !WPACKET_start_sub_packet_u16(&epkt)
+            || !WPACKET_memcpy(&epkt, ee->encoded, ee->encoded_len)
+            || !WPACKET_close(&epkt)
+            || !WPACKET_get_total_written(&epkt, &allencoded_len)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
-                ee->encoded, (long)ee->encoded_len)
+                (unsigned char *)epkt_mem->data, (long)allencoded_len)
             <= 0) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;

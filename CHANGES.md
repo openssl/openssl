@@ -34,7 +34,17 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Fixed an Encrypted ClientHello (ECH) key handling mismatch that made a
+   server whose ECH key was created with `OSSL_ECHSTORE_new_config()` reject
+   every conformant ECH ClientHello as GREASE and silently fall back to the
+   public name.  `OSSL_ECHSTORE_new_config()` stored a whole `ECHConfigList` in
+   the entry byte string that is later fed to the HPKE `info` parameter, where
+   RFC 9849 requires a single `ECHConfig`.  It now stores the `ECHConfig`, and
+   `OSSL_ECHSTORE_write_pem()` wraps it in an `ECHConfigList` for both the
+   single-index and `OSSL_ECHSTORE_ALL` output modes so that both remain
+   readable by `OSSL_ECHSTORE_read_pem()`.
+
+   *Nguyen Anh Binh and Ngo Tung Son*
 
 OpenSSL 4.1
 -----------
