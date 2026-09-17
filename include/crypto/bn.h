@@ -63,7 +63,7 @@ void bn_release(BIGNUM *b, int limbs);
  * @returns     the OSSL_FN instance of the BIGNUM, or NULL if it has none
  * @pre         bn must not be NULL
  */
-OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn);
+const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn);
 
 /*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
@@ -180,6 +180,9 @@ extern const BIGNUM ossl_bn_inv_sqrt_2;
 
 int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+/* Hardware acceleration only, no software fallback */
+int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m);
 int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
     const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp);
 
