@@ -246,6 +246,19 @@ OpenSSL 4.1
 
    *Bob Beck*
 
+ * Added `ASN1_STRING_set1_data()`, `ASN1_STRING_set1_string()`,
+   and `ASN1_STRING_get_length()` API functions, deprecated
+   `ASN1_STRING_set()` and `ASN1_STRING_length()`, and converted the internal
+   usage from the latter functions to the newer ones.  The new functions
+   (along with updated undocumented `ASN1_STRING_copy()`) do not append
+   a terminating NUL byte to the newly allocated strings, contrary
+   to historic `ASN1_STRING_set()`'s behaviour, so `ASN1_STRING_get0_data()`
+   may return data not followed by an out-of-`ASN1_STRING_get_length()` bounds
+   NUL byte in more cases than it used to before.
+   <!-- https://github.com/openssl/openssl/pull/31194 -->
+
+   *Bob Beck*
+
  * Added `CMS_add_standard_smimecap_ex()` API function, which populates
    an `SMIMECapabilities` list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()`
    so that only algorithms available in the active providers are advertised.
@@ -535,15 +548,6 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30335 -->
 
    *Shane Lontis*
-
- * Deprecated `ASN1_STRING_set()` and `ASN1_STRING_length()` functions.
-   The replacement functions `ASN1_STRING_set1_data()`
-   or `ASN1_STRING_set1_string()`, and `ASN1_STRING_get_length()` should be used
-   in their place.  This prepares the `ASN1_STRING` type to support modern
-   `size_t` length values in the future.
-   <!-- https://github.com/openssl/openssl/pull/31194 -->
-
-   *Bob Beck*
 
  * Deprecated `ASN1_BIT_STRING_name_print()`, `ASN1_BIT_STRING_num_asc()`,
    and `ASN1_BIT_STRING_set_asc()` functions. Refer to the manual
