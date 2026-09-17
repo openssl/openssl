@@ -2313,6 +2313,10 @@ DEFINE_STACK_OF(SSL)
  */
 #define DTLS_LISTENER_MAX_DGRAM_SIZE 65535
 
+#define DTLS_PEELOFF_LISTEN -1
+#define DTLS_PEELOFF_ACCEPT 1
+#define DTLS_PEELOFF_UNSET 0
+
 /*
  * DTLS listener SSL object type. This implements the API personality
  * layer for DTLS listener objects, providing server-side connection
@@ -2416,6 +2420,13 @@ typedef struct dtls_listener_st {
      * Count of threads currently blocked waiting in poll().
      */
     size_t cur_blocking_waiters;
+
+    /*
+     * DTLS Peeloff mode, as a DTLS_PEELOFF_MODE.  This is used to control whether
+     * the listener will peel off connections to be handled by the caller, or
+     * whether it will handle them itself.
+     */
+    int peeloff_mode;
 
     /*
      * Blocking mode requested for this listener, as a DTLS_BLOCKING_MODE.
@@ -3077,6 +3088,10 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio);
 void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio);
 BIO *ossl_dtls_listener_get_net_rbio(const SSL *s);
 BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
+int ossl_dtls_listener_test_and_set_peeloff(SSL *ssl, int using_peeloff);
+int ossl_dtls_conn_is_peel_eligible(SSL *ssl);
+int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst);
+int ossl_dtls_listen_ex(SSL *listener, SSL *new_conn);
 
 /* Established connections API - these handle their own locking */
 SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,

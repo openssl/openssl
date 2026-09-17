@@ -1367,6 +1367,22 @@ err:
     return OSSL_RECORD_RETURN_FATAL;
 }
 
+/*
+ * Rebind an existing record layer's callback argument. rl->cbarg is set once,
+ * permanently, when the record layer is created, and is handed back verbatim
+ * to every OSSL_FUNC_rlayer_* callback (e.g. the DTLS URXE packet pump). If
+ * the SSL_CONNECTION that owns this record layer changes identity, cbarg
+ * has to be rebound to the new owner or those callbacks keep calling back
+ * into the old, soon-to-be-freed connection.
+ */
+void ossl_record_layer_set_cbarg(OSSL_RECORD_LAYER *rl, void *cbarg)
+{
+    if (rl == NULL)
+        return;
+
+    rl->cbarg = cbarg;
+}
+
 static int
 tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int role, int direction, int level, uint64_t epoch,

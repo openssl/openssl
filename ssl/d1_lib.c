@@ -1910,6 +1910,8 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
         dl->have_notifier = 1;
     }
 
+    dl->peeloff_mode = DTLS_PEELOFF_UNSET;
+
     return &dl->ssl;
 
 err:
@@ -2017,6 +2019,281 @@ int ossl_dtls_listen(SSL *ssl)
         return 1;
 
     tsan_store(&dl->listening, 1);
+    return 1;
+}
+
+/*
+ * ossl_dtls_listener_test_and_set_peeloff - set peeloff mode for listener.
+ */
+int ossl_dtls_listener_test_and_set_peeloff(SSL *ssl, int using_peeloff)
+{
+    DTLS_LISTENER *dl;
+
+    /*
+     * Peeloff state must be one of DTLS_PEELOFF_LISTEN or DTLS_PEELOFF_ACCEPT
+     */
+    if (using_peeloff != DTLS_PEELOFF_LISTEN && using_peeloff != DTLS_PEELOFF_ACCEPT) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    if (!IS_DTLS_LISTENER(ssl)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    dl = (DTLS_LISTENER *)ssl;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    if (dl->peeloff_mode != DTLS_PEELOFF_UNSET && dl->peeloff_mode != using_peeloff) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ossl_crypto_mutex_unlock(dl->mutex);
+        return 0;
+    }
+    dl->peeloff_mode = using_peeloff;
+    ossl_crypto_mutex_unlock(dl->mutex);
+    return 1;
+}
+
+/*
+ * ossl_dtls_conn_is_peel_eligible - is ssl a valid target for SSL_listen_ex()?
+ *
+ * A peel-eligible new_conn is exactly what SSL_new(ctx) on a DTLS SSL_CTX
+ * produces: no handshake started, no listener association, no BIOs set.
+ * Nothing else may be done to it before it is passed to SSL_listen_ex().
+ */
+int ossl_dtls_conn_is_peel_eligible(SSL *ssl)
+{
+    SSL_CONNECTION *sc;
+
+    if (!IS_DTLS(ssl) || IS_DTLS_LISTENER(ssl))
+        return 0;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    if (sc == NULL || sc->d1 == NULL)
+        return 0;
+
+    /*
+     * SSL_in_before() alone is not enough: SSL_set_accept_state() and
+     * SSL_set_connect_state() both call ossl_statem_clear(), which resets
+     * the state machine back to MSG_FLOW_UNINITED/TLS_ST_BEFORE, so
+     * SSL_in_before() stays true even once one of those has been called.
+     * handshake_func is what those functions actually set, and is the only
+     * reliable signal that connect/accept state has been chosen.
+     */
+    if (!SSL_in_before(ssl) || sc->handshake_func != NULL)
+        return 0;
+
+    if (SSL_get0_listener(ssl) != NULL || sc->d1->listener != NULL)
+        return 0;
+
+    if (SSL_get_rbio(ssl) != NULL || SSL_get_wbio(ssl) != NULL)
+        return 0;
+
+    return 1;
+}
+
+/*
+ * dtls_swap_connection_bodies - exchange the entire connection state of a
+ * and b, other than each side's own identity (SSL_CTX, reference count,
+ * lock, ex_data), which stays put.
+ *
+ * Self-inverse: calling this a second time with the same two arguments
+ * restores both a and b to exactly what they held before the first call.
+ * ossl_dtls_transfer_connection_state() relies on this to roll back cleanly
+ * if it can't make the swap visible via established_conns afterward.
+ */
+static void dtls_swap_connection_bodies(SSL_CONNECTION *a, SSL_CONNECTION *b)
+{
+    SSL_CONNECTION tmp;
+    SSL_CTX *a_ctx, *b_ctx;
+    CRYPTO_REF_COUNT a_references, b_references;
+    CRYPTO_RWLOCK *a_lock, *b_lock;
+    CRYPTO_EX_DATA a_ex_data, b_ex_data;
+
+    a_ctx = a->ssl.ctx;
+    a_references = a->ssl.references;
+    a_lock = a->ssl.lock;
+    a_ex_data = a->ssl.ex_data;
+
+    b_ctx = b->ssl.ctx;
+    b_references = b->ssl.references;
+    b_lock = b->ssl.lock;
+    b_ex_data = b->ssl.ex_data;
+
+    tmp = *a;
+    *a = *b;
+    *b = tmp;
+
+    a->ssl.ctx = a_ctx;
+    a->ssl.references = a_references;
+    a->ssl.lock = a_lock;
+    a->ssl.ex_data = a_ex_data;
+    a->user_ssl = SSL_CONNECTION_GET_SSL(a);
+
+    b->ssl.ctx = b_ctx;
+    b->ssl.references = b_references;
+    b->ssl.lock = b_lock;
+    b->ssl.ex_data = b_ex_data;
+    b->user_ssl = SSL_CONNECTION_GET_SSL(b);
+
+    /* rlayer.s is a back-pointer to the owning SSL_CONNECTION on each side. */
+    a->rlayer.s = a;
+    b->rlayer.s = b;
+
+    /*
+     * Whichever of a/b now holds a live rrl/wrl (there may be one on either
+     * side, depending on which direction this call is undoing) still thinks
+     * its owner is the other side. Rebind rather than recreate the record
+     * layer, which would reset per-epoch protocol state that cannot be
+     * rederived -- most importantly the DTLS anti-replay bitmap.
+     */
+    ossl_record_layer_set_cbarg(a->rlayer.rrl, a);
+    ossl_record_layer_set_cbarg(a->rlayer.wrl, a);
+    ossl_record_layer_set_cbarg(b->rlayer.rrl, b);
+    ossl_record_layer_set_cbarg(b->rlayer.wrl, b);
+}
+
+/*
+ * ossl_dtls_transfer_connection_state - transplant src's connection state
+ * onto dst, for SSL_listen_ex().
+ *
+ * src must already have been popped off its listener's incoming_connections
+ * by the caller (this is naturally true of any src the caller could have a
+ * pointer to at all -- sk_SSL_shift() is how one is obtained in the first
+ * place) but must still be registered in that listener's established_conns
+ * table, i.e. mid-handshake, not fresh. This function does not touch
+ * incoming_connections itself. dst must have already passed
+ * ossl_dtls_conn_is_peel_eligible(): a bare, untouched SSL_new() result on a
+ * DTLS SSL_CTX.
+ *
+ * On success (1), dst becomes, in every respect but its own identity
+ * (SSL_CTX, reference count, lock, ex_data), the connection src was: same
+ * peer address, same in-flight handshake state, same live record layer
+ * (including its DTLS anti-replay bitmap) now addressed to dst instead of
+ * src. src ends up in the state of a just-created, never-touched SSL_new()
+ * result, safe to SSL_free() normally -- the caller still owns that
+ * reference and is expected to free it.
+ *
+ * On failure (0), neither src nor dst is modified.
+ *
+ * dl->mutex is held for the entire operation, not just the
+ * established_conns calls at either end of it: dst must never become
+ * reachable through established_conns before its body has actually been
+ * swapped in (another thread could find it and drive a half-migrated
+ * connection), and src must never be unreachable while it's still the only
+ * side holding valid state. Holding the lock across the swap itself is
+ * cheap -- it's a handful of struct assignments, nothing fallible -- so
+ * there's no reason to split the critical section and reopen that window.
+ */
+int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst)
+{
+    SSL_CONNECTION *src_sc, *dst_sc;
+    SSL *listener;
+    DTLS_LISTENER *dl;
+    BIO_ADDR peer_addr;
+
+    src_sc = SSL_CONNECTION_FROM_SSL_ONLY(src);
+    dst_sc = SSL_CONNECTION_FROM_SSL_ONLY(dst);
+
+    if (src_sc == NULL || dst_sc == NULL
+        || src_sc->d1 == NULL || dst_sc->d1 == NULL
+        || src_sc->d1->listener == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    listener = src_sc->d1->listener;
+    dl = (DTLS_LISTENER *)listener;
+    /* src_sc->d1 gets overwritten by the swap below; take a copy now. */
+    peer_addr = src_sc->d1->peer_addr;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+
+    /*
+     * src holds no reference on the listener while queued (avoids a
+     * listener->src->listener cycle); dst is about to become the
+     * externally-owned side and needs its own, kept until dst is freed.
+     */
+    if (!SSL_up_ref(listener)) {
+        ossl_crypto_mutex_unlock(dl->mutex);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    ossl_dgram_conn_lookup_unregister(dl->established_conns, &peer_addr);
+
+    /*
+     * Swap the two connections' bodies wholesale: dst takes on src's
+     * mid-handshake state (including the version/method the handshake has
+     * negotiated so far), and src takes on dst's original, never-touched
+     * state. Only now, with dst fully populated, is it safe to make it
+     * visible via established_conns.
+     */
+    dtls_swap_connection_bodies(dst_sc, src_sc);
+
+    if (!ossl_dgram_conn_lookup_register_addr(dl->established_conns, &peer_addr, dst)) {
+        /* Undo the swap -- self-inverse -- and put src back as it was. */
+        dtls_swap_connection_bodies(dst_sc, src_sc);
+        ossl_dgram_conn_lookup_register_addr(dl->established_conns, &peer_addr, src);
+        SSL_free(listener);
+        ossl_crypto_mutex_unlock(dl->mutex);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    return 1;
+}
+
+/*
+ * ossl_dtls_listen_ex - DTLS backend for SSL_listen_ex().
+ *
+ * Pulls the next already-cookie-validated connection off listener's
+ * incoming_connections (the same queue SSL_accept_connection() drains) and
+ * transplants its state onto new_conn.
+ *
+ * Return value: 1 on success; 0 strictly means "nothing ready yet" -- the
+ * only path that returns 0 is an empty queue; -1 covers everything else
+ */
+int ossl_dtls_listen_ex(SSL *listener, SSL *new_conn)
+{
+    DTLS_LISTENER *dl;
+    SSL *src;
+
+    if (!IS_DTLS_LISTENER(listener) || !ossl_dtls_conn_is_peel_eligible(new_conn)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
+
+    dl = (DTLS_LISTENER *)listener;
+
+    /* Latches this listener to peeloff mode even if the queue below is empty. */
+    if (!ossl_dtls_listener_test_and_set_peeloff(listener, DTLS_PEELOFF_LISTEN))
+        return -1;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    src = sk_SSL_shift(dl->incoming_connections);
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    if (src == NULL)
+        return 0;
+
+    if (!ossl_dtls_transfer_connection_state(src, new_conn)) {
+        SSL_CONNECTION *src_sc = SSL_CONNECTION_FROM_SSL_ONLY(src);
+
+        /* src is unchanged and still registered; unregister before freeing. */
+        if (src_sc != NULL && src_sc->d1 != NULL)
+            ossl_dtls_listener_unregister_established_conn(listener, &src_sc->d1->peer_addr);
+        dtls_listener_connection_free(src);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    /* src is now an empty, fresh shell -- ordinary SSL_free() applies. */
+    SSL_free(src);
+
     return 1;
 }
 
@@ -2457,6 +2734,11 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
 
     if (!ossl_dtls_listen(ssl))
         return NULL;
+
+    if (!ossl_dtls_listener_test_and_set_peeloff(ssl, DTLS_PEELOFF_ACCEPT)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
 
     /* If a previous tick produced a fatal BIO error, do not try again. */
     ossl_crypto_mutex_lock(dl->mutex);
