@@ -1032,28 +1032,33 @@ redo:
     }
     if (recvd_type == SSL3_RT_ACK) {
         /*
-         * An ACK has no message header: the bytes already read are body, and
-         * an ACK never spans records, so read the rest of this one. If that
-         * first read already exhausted the record there is no more body to
-         * read, and asking would fetch an unrelated record.
+         * An ACK has no handshake message header: the bytes already read
+         * are body, and an ACK never spans records (RFC 9147 section 4),
+         * so the rest of the body - if any - is whatever is left in the
+         * current record. Take it directly to avoid re-entering the
+         * timeout path while assembling the ACK.
          */
         if (readbytes == DTLS1_HM_HEADER_LENGTH
             && s->rlayer.curr_rec < s->rlayer.num_recs) {
-            const size_t first_readbytes = readbytes;
+            TLS_RECORD *rr = &s->rlayer.tlsrecs[s->rlayer.curr_rec];
 
-            p += DTLS1_HM_HEADER_LENGTH;
-
-            i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL, p,
-                s->rlayer.tlsrecs[s->rlayer.curr_rec].length, 0, &readbytes);
-            readbytes += first_readbytes;
             /*
-             * This shouldn't ever fail due to NBIO because we already checked
-             * that we have enough data in the record
+             * DTLS currently processes one record at a time, so an exhausted
+             * record is excluded above. Keep these checks to avoid consuming
+             * a following record if pipelining is added.
              */
-            if (i <= 0) {
-                s->rwstate = SSL_READING;
-                *len = 0;
-                return 0;
+            if (rr->off > 0 && rr->length > 0) {
+                /*
+                 * init_buf has capacity for a full plaintext record, whose size
+                 * has already been checked by the record layer.
+                 */
+                memcpy(p + DTLS1_HM_HEADER_LENGTH, rr->data + rr->off,
+                    rr->length);
+                readbytes += rr->length;
+                if (!ssl_release_record(s, rr, rr->length)) {
+                    /* SSLfatal() already called */
+                    goto f_err;
+                }
             }
         }
         s->init_num = readbytes;
