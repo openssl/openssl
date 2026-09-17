@@ -5036,10 +5036,13 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     if (lengths_single) {
         mblengths = &lengths_single;
         num = 1;
+        inp = app_malloc(mblengths[0], "multiblock input buffer");
+        out = app_malloc(mblengths[0] + 1024, "multiblock output buffer");
+    } else {
+        inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
+        out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
     }
 
-    inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
-    out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
         app_bail_out("failed to allocate cipher context\n");
     if (!EVP_EncryptInit_ex(ctx, evp_cipher, NULL, NULL, no_iv))
