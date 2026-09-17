@@ -18,9 +18,12 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/bn.h>
+#include <openssl/provider.h>
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
 #include "crypto/fnerr.h"
+#include "crypto/bn.h"
 #include "testutil.h"
 
 /*
@@ -5665,6 +5668,168 @@ err:
     return ret;
 }
 
+/* A fake RNG that returns the same fixed bytes on every draw. */
+static int fixed_rand_cb(unsigned char *out, size_t outlen,
+    const char *name, EVP_RAND_CTX *ctx)
+{
+    size_t i;
+
+    for (i = 0; i < outlen; i++)
+        out[i] = (unsigned char)(0x5a + i);
+    return 1;
+}
+
+/*
+ * Drive ossl_fn_gen_dsa_nonce() and its BIGNUM counterpart
+ * ossl_bn_gen_dsa_nonce_fixed_top() from the same fixed RNG output and check
+ * that they return the identical nonce.  Fed the same random bytes the two
+ * hash identical octets, so byte-for-byte agreement is guaranteed; any
+ * divergence (endianness, prefix handling, masking) would break it.
+ */
+static int gen_dsa_nonce_case(OSSL_LIB_CTX *libctx,
+    const unsigned char *order, size_t orderlen,
+    const unsigned char *priv, size_t privlen,
+    const unsigned char *msg, size_t msglen)
+{
+    const size_t nl = (orderlen + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    int ret = 0;
+    BN_CTX *ctx = NULL;
+    BIGNUM *q_bn = NULL, *priv_bn = NULL, *k_bn = NULL;
+    const OSSL_FN *q_fn = NULL, *priv_fn = NULL, *k_bn_fn = NULL;
+    OSSL_FN *k_fn = NULL;
+
+    /*
+     * The FN inputs are just the read-only OSSL_FN views of the BIGNUMs; only
+     * the output nonce k_fn needs its own storage.
+     */
+    if (!TEST_ptr(ctx = BN_CTX_new_ex(libctx))
+        || !TEST_ptr(q_bn = BN_bin2bn(order, (int)orderlen, NULL))
+        || !TEST_ptr(priv_bn = BN_bin2bn(priv, (int)privlen, NULL))
+        || !TEST_ptr(k_bn = BN_new())
+        || !TEST_ptr(k_fn = OSSL_FN_new_limbs(nl))
+        || !TEST_ptr(q_fn = bn_get_ossl_fn(q_bn))
+        || !TEST_ptr(priv_fn = bn_get_ossl_fn(priv_bn)))
+        goto err;
+
+    /*
+     * The fake RNG returns the same fixed bytes on every draw, so both
+     * generators hash identical octets and must return the identical nonce.
+     */
+    if (!TEST_true(ossl_bn_gen_dsa_nonce_fixed_top(k_bn, q_bn, priv_bn,
+            msg, msglen, ctx)))
+        goto err;
+
+    if (!TEST_true(ossl_fn_gen_dsa_nonce(k_fn, q_fn, priv_fn,
+            msg, msglen, libctx)))
+        goto err;
+
+    /* The two nonces must be identical, and below the order. */
+    if (!TEST_ptr(k_bn_fn = bn_get_ossl_fn(k_bn))
+        || !TEST_int_eq(OSSL_FN_cmp(k_bn_fn, k_fn), 0)
+        || !TEST_int_lt(OSSL_FN_cmp(k_fn, q_fn), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(k_fn);
+    BN_free(q_bn);
+    BN_free(priv_bn);
+    BN_free(k_bn);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+static int test_fn_gen_dsa_nonce(void)
+{
+    /* A 256-bit order: byte-aligned, so the mask step is skipped. */
+    static const unsigned char order_aligned[32] = {
+        0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xbc, 0xe6, 0xfa, 0xad, 0xa7, 0x17, 0x9e, 0x84,
+        0xf3, 0xb9, 0xca, 0xc2, 0xfc, 0x63, 0x25, 0x51
+    };
+    /*
+     * A 249-bit order (top byte 0x01): the 32-byte load carries 7 surplus bits
+     * above the order's width that must be masked off.  With the fixed RNG the
+     * derived value has some of those bits set, so a broken mask would leave
+     * the value >= order and the (deterministic) rejection loop would fail
+     * outright -- this genuinely exercises the masking path.  A 255-bit order
+     * would not: only bit 255 is surplus and it happens to be clear for this
+     * fixed input.
+     */
+    static const unsigned char order_unaligned[32] = {
+        0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    };
+    static const unsigned char priv[32] = {
+        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
+        0x0f, 0xed, 0xcb, 0xa9, 0x87, 0x65, 0x43, 0x21,
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+        0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x01
+    };
+    static const unsigned char msg[] = "OSSL_FN DSA nonce equivalence";
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *defp = NULL, *rp = NULL;
+    int ret = 0;
+
+    /*
+     * Use a private library context so we can install the deterministic fake
+     * RNG: its DRBG type can only be set before the RNG is first drawn from,
+     * and the shared default context has already been used by earlier tests.
+     */
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(defp = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(rp = fake_rand_start(libctx)))
+        goto err;
+    fake_rand_set_public_private_callbacks(libctx, fixed_rand_cb);
+
+    if (!gen_dsa_nonce_case(libctx, order_aligned, sizeof(order_aligned),
+            priv, sizeof(priv), msg, sizeof(msg) - 1)
+        || !gen_dsa_nonce_case(libctx, order_unaligned, sizeof(order_unaligned),
+            priv, sizeof(priv), msg, sizeof(msg) - 1))
+        goto err;
+
+    /*
+     * A destination too narrow to hold the order is rejected up front, with
+     * OSSL_FN_R_RESULT_ARG_TOO_SMALL -- proving the width check fired before
+     * any bytes were drawn, rather than a later incidental failure.
+     */
+    {
+        const size_t nl = (sizeof(order_aligned) + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+        BIGNUM *q_bn = NULL;
+        const OSSL_FN *q_fn = NULL;
+        OSSL_FN *narrow = NULL;
+        unsigned long e;
+        int ok;
+
+        ERR_clear_error();
+        ok = TEST_ptr(q_bn = BN_bin2bn(order_aligned, sizeof(order_aligned),
+                          NULL))
+            && TEST_ptr(q_fn = bn_get_ossl_fn(q_bn))
+            && TEST_ptr(narrow = OSSL_FN_new_limbs(nl - 1))
+            && TEST_false(ossl_fn_gen_dsa_nonce(narrow, q_fn, q_fn,
+                msg, sizeof(msg) - 1, libctx));
+        e = ERR_peek_last_error();
+        ok = ok
+            && TEST_int_eq(ERR_GET_LIB(e), ERR_LIB_OSSL_FN)
+            && TEST_int_eq(ERR_GET_REASON(e), OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+
+        OSSL_FN_free(narrow);
+        BN_free(q_bn);
+        if (!ok)
+            goto err;
+    }
+
+    ret = 1;
+err:
+    fake_rand_finish(rp);
+    OSSL_PROVIDER_unload(defp);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -5689,6 +5854,7 @@ int setup_tests(void)
     ADD_TEST(test_to_bytes_be);
     ADD_TEST(test_from_bytes_be);
     ADD_TEST(test_mask_bits);
+    ADD_TEST(test_fn_gen_dsa_nonce);
     ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
     ADD_ALL_TESTS(test_gcd_alias, 4);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
