@@ -15,6 +15,8 @@
 #define BN_CTX_POOL_SIZE 16
 /* The stack frame info is resizing, set a first-time expansion size; */
 #define BN_CTX_START_FRAMES 32
+/* Initial stack buffer to avoid heap allocation for common cases */
+#define BN_CTX_STACK_BUFFER_SIZE 64
 
 /***********/
 /* BN_POOL */
@@ -47,8 +49,12 @@ static void BN_POOL_release(BN_POOL *, unsigned int);
 typedef struct bignum_ctx_stack {
     /* Array of indexes into the bignum stack */
     unsigned int *indexes;
+    /* Static buffer for small allocations to avoid heap pressure */
+    unsigned int static_buf[BN_CTX_STACK_BUFFER_SIZE];
     /* Number of stack frames, and the size of the allocated array */
     unsigned int depth, size;
+    /* Flag: whether we're using the static buffer or heap */
+    int using_static_buf;
 } BN_STACK;
 static void BN_STACK_init(BN_STACK *);
 static void BN_STACK_finish(BN_STACK *);
@@ -253,13 +259,17 @@ OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
 
 static void BN_STACK_init(BN_STACK *st)
 {
-    st->indexes = NULL;
-    st->depth = st->size = 0;
+    st->indexes = st->static_buf;
+    st->depth = 0;
+    st->size = BN_CTX_STACK_BUFFER_SIZE;
+    st->using_static_buf = 1;
 }
 
 static void BN_STACK_finish(BN_STACK *st)
 {
-    OPENSSL_free(st->indexes);
+    /* Only free if we allocated from heap, not the static buffer */
+    if (!st->using_static_buf)
+        OPENSSL_free(st->indexes);
     st->indexes = NULL;
 }
 
@@ -274,9 +284,14 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
             return 0;
         if (st->depth)
             memcpy(newitems, st->indexes, sizeof(*newitems) * st->depth);
-        OPENSSL_free(st->indexes);
+        
+        /* Only free if we previously allocated from heap */
+        if (!st->using_static_buf)
+            OPENSSL_free(st->indexes);
+        
         st->indexes = newitems;
         st->size = newsize;
+        st->using_static_buf = 0;
     }
     st->indexes[(st->depth)++] = idx;
     return 1;
