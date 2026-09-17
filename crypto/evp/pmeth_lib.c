@@ -817,6 +817,11 @@ static int evp_pkey_ctx_add1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
     if (os_params[0].return_size == OSSL_PARAM_UNMODIFIED)
         return 0;
 
+    /* Prevent overflowed value landing in variable info_alloc */
+    if (os_params[0].return_size > (SIZE_MAX - datalen)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
+        return 0;
+    }
     info_alloc = os_params[0].return_size + datalen;
     if (info_alloc == 0)
         return 0;
