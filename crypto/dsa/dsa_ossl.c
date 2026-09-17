@@ -468,6 +468,7 @@ static int dsa_init(DSA *dsa)
 static int dsa_finish(DSA *dsa)
 {
     BN_MONT_CTX_free(dsa->method_mont_p);
+    dsa->method_mont_p = NULL;
     return 1;
 }
 
