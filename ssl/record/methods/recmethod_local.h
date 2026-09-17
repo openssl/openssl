@@ -25,7 +25,6 @@ typedef struct dtls_bitmap_st {
 
 typedef struct ssl_mac_buf_st {
     unsigned char *mac;
-    int alloced;
 } SSL_MAC_BUF;
 
 typedef struct tls_buffer_st {
