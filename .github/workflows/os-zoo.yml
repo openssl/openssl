@@ -299,7 +299,7 @@ jobs:
       shell: cmd
       run: |
         call "%VCVARS%"
-        perl ..\Configure VC-WIN64-ARM --banner=Configured --strict-warnings no-makedepend no-md4 enable-fips
+        perl ..\Configure VC-WIN64-ARM --banner=Configured --strict-warnings no-makedepend enable-fips
         perl configdata.pm --dump
     - name: build
       working-directory: _build
