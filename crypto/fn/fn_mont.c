@@ -350,34 +350,19 @@ size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     int len = mont->N->dsize;
     /* a and b each get a canonicalisation budget; see above. */
     size_t num = 2;
-    size_t ret = 0, tmp;
-    int err = 0;
-
-    if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
-        return 0;
-    if (tmp > ret)
-        ret = tmp;
-
-    if ((tmp = OSSL_FN_mod_ctx_size(NULL, b, mont->N)) == 0)
-        return 0;
-    if (tmp > ret)
-        ret = tmp;
+    size_t own_size, nested_size;
 
     if (r != NULL && r->dsize != len)
         num++;
 
-    if (ossl_unlikely((size_t)len > SIZE_MAX / num))
-        return 0;
+    own_size = OSSL_FN_CTX_size(1, num, num * (size_t)len);
+    nested_size = ossl_fn_ctx_max_size(
+        ossl_fn_ctx_max_size(
+            OSSL_FN_mod_ctx_size(NULL, a, mont->N),
+            OSSL_FN_mod_ctx_size(NULL, b, mont->N)),
+        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
 
-    if ((tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont)) == 0)
-        return 0;
-    if (tmp > ret)
-        ret = tmp;
-
-    ret = safe_add_size_t(ret, OSSL_FN_CTX_size(1, num, num * (size_t)len),
-        &err);
-
-    return err == 0 ? ret : 0;
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
 /*
@@ -479,29 +464,17 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     int len = mont->N->dsize;
     /* a gets a canonicalisation budget; see above. */
     size_t num = 1;
-    size_t ret = 0, tmp;
-    int err = 0;
-
-    if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
-        return 0;
-    if (tmp > ret)
-        ret = tmp;
+    size_t own_size, nested_size;
 
     if (r != NULL && r->dsize != len)
         num++;
 
-    if (ossl_unlikely((size_t)len > SIZE_MAX / num))
-        return 0;
+    own_size = OSSL_FN_CTX_size(1, num, num * (size_t)len);
+    nested_size = ossl_fn_ctx_max_size(
+        OSSL_FN_mod_ctx_size(NULL, a, mont->N),
+        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
 
-    if ((tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont)) == 0)
-        return 0;
-    if (tmp > ret)
-        ret = tmp;
-
-    ret = safe_add_size_t(ret, OSSL_FN_CTX_size(1, num, num * (size_t)len),
-        &err);
-
-    return err == 0 ? ret : 0;
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
 /*
