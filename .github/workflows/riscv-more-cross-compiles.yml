@@ -51,17 +51,17 @@ jobs:
       check_run_id: ${{ inputs.check_run_id }}
 
   cross-compilation-riscv:
-    needs: [validate-dispatch-inputs]
-    if: >-
-      (contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     # pull request title contains 'riscv'
     # pull request title contains 'RISC-V'
     # pull request body contains '[riscv ci]'
     # push event commit message contains '[riscv ci]'
     # cron job
     # manual dispatch
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
