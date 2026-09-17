@@ -1507,6 +1507,9 @@ struct ssl_connection_st {
             const struct sigalg_lookup_st *sigalg;
             /* Pointer to certificate we use */
             CERT_PKEY *cert;
+            /* Client identity awaiting verification */
+            STACK_OF(X509) *pending_peer_chain;
+            EVP_PKEY *pending_peer_rpk;
             /*
              * signature algorithms peer reports: e.g. supported signature
              * algorithms extension for server or as part of a certificate
@@ -2864,6 +2867,8 @@ __owur SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
     size_t sess_id_len);
 __owur int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello);
 __owur SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket);
+void ossl_session_set0_peer(SSL_SESSION *sess, STACK_OF(X509) *peer_chain,
+    EVP_PKEY *peer_rpk, long verify_result);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
