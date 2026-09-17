@@ -40,6 +40,9 @@ typedef struct ossl_qrx_args_st {
      */
     size_t max_deferred;
 
+    /* Maximum number of RXEs to allocate, or 0 for the default. */
+    size_t max_rxe;
+
     /* Initial reference PN used for RX. */
     QUIC_PN init_largest_pn[QUIC_PN_SPACE_NUM];
 
