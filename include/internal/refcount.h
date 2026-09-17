@@ -103,6 +103,7 @@ static __inline__ int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 }
 
 #elif defined(__ICL) && defined(_WIN32)
+#include <intrin.h>
 #define HAVE_ATOMICS 1
 
 typedef struct {
