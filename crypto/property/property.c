@@ -64,7 +64,7 @@ typedef struct {
 
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
-    SPARSE_ARRAY_OF(ALGORITHM) * algs;
+    SPARSE_ARRAY_OF(ALGORITHM) *algs;
     /*
      * Lock to protect the |algs| array from concurrent writing, when
      * individual implementations or queries are inserted.  This is used
