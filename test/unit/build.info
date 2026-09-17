@@ -62,6 +62,12 @@ IF[{- $config{target} =~ /^(?:linux|BSD)/ -}]
   WRAP[crypto/bio/test_bss_sock]=read write BIO_closesocket
   INCLUDE[crypto/bio/test_bss_sock]=../../include ../../crypto/bio
   DEPEND[crypto/bio/test_bss_sock]=../../libcrypto.a
+
+  PROGRAMS{noinst}=ssl/test_ssl_sess
+  SOURCE[ssl/test_ssl_sess]=ssl/test_ssl_sess.c
+  INCLUDE[ssl/test_ssl_sess]=../../include ../../ssl
+  DEPEND[ssl/test_ssl_sess]=../../libssl.a ../../libcrypto.a
+  WRAP[ssl/test_ssl_sess]=CRYPTO_THREAD_read_lock
 ENDIF
 
 IF[{- $config{target} =~ /^VC-/ -}]
