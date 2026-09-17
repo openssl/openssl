@@ -17,6 +17,14 @@ PointerAlignment: Right
 # per STYLE.md
 CommentPragmas:  '(^ IWYU pragma:|^\*$|^-$)'
 ForEachMacros:
+  - "OSSL_LIST_FOREACH"
+  - "OSSL_LIST_FOREACH_FROM"
+  - "OSSL_LIST_FOREACH_REV"
+  - "OSSL_LIST_FOREACH_REV_FROM"
+  - "OSSL_LIST_FOREACH_DELSAFE"
+  - "OSSL_LIST_FOREACH_DELSAFE_FROM"
+  - "OSSL_LIST_FOREACH_REV_DELSAFE"
+  - "OSSL_LIST_FOREACH_REV_DELSAFE_FROM"
   - "OSSL_RBT_FOREACH"
   - "OSSL_RBT_FOREACH_SAFE"
   - "OSSL_RBT_FOREACH_REVERSE"
@@ -1134,7 +1142,14 @@ TypeNames:
   - "HASH_LONG"
   - "MD32_REG_T"
 # OpenSSL uses macros extensively. Tell clang-format about them.
-TypenameMacros: ['LHASH_OF', "OSSL_RBT_ENTRY", "OSSL_RBT_HEAD", 'STACK_OF']
+TypenameMacros:
+  - "LHASH_OF"
+  - "OSSL_LIST"
+  - "OSSL_RBT_ENTRY"
+  - "OSSL_RBT_HEAD"
+  - "PRIORITY_QUEUE_OF"
+  - "SPARSE_ARRAY_OF"
+  - "STACK_OF"
 StatementMacros:
   - "BLOCK_CIPHER_aead"
   - "BLOCK_CIPHER_generic"

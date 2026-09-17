@@ -73,7 +73,7 @@ typedef struct {
 } ALGORITHM;
 
 typedef struct {
-    SPARSE_ARRAY_OF(ALGORITHM) * algs;
+    SPARSE_ARRAY_OF(ALGORITHM) *algs;
 
     /*
      * Lock to protect each shard of |algs| from concurrent writing,
