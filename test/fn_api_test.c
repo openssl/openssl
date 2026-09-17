@@ -18,11 +18,13 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#include <openssl/kdf.h>
 #include <openssl/provider.h>
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
 #include "crypto/fnerr.h"
 #include "crypto/bn.h"
+#include "internal/deterministic_nonce.h"
 #include "testutil.h"
 
 /*
@@ -5638,6 +5640,101 @@ err:
     return ret;
 }
 
+/*
+ * RFC 6979 nonces are deterministic (no RNG), so the OSSL_FN generator and its
+ * BIGNUM counterpart, given the same q/priv/message/digest, must return the
+ * identical nonce.  Any divergence in the shared entropy/nonce derivation or in
+ * the FN bits2int/rejection would break it.
+ */
+static int deterministic_nonce_case(const unsigned char *order, size_t orderlen,
+    const unsigned char *priv, size_t privlen,
+    const unsigned char *hm, size_t hmlen,
+    const char *digestname)
+{
+    const size_t nl = (orderlen + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    int ret = 0;
+    BIGNUM *q_bn = NULL, *priv_bn = NULL, *k_bn = NULL;
+    const OSSL_FN *q_fn = NULL, *priv_fn = NULL, *k_bn_fn = NULL;
+    OSSL_FN *k_fn = NULL;
+
+    if (!TEST_ptr(q_bn = BN_bin2bn(order, (int)orderlen, NULL))
+        || !TEST_ptr(priv_bn = BN_bin2bn(priv, (int)privlen, NULL))
+        || !TEST_ptr(k_bn = BN_new())
+        || !TEST_ptr(k_fn = OSSL_FN_new_limbs(nl))
+        || !TEST_ptr(q_fn = bn_get_ossl_fn(q_bn))
+        || !TEST_ptr(priv_fn = bn_get_ossl_fn(priv_bn)))
+        goto err;
+
+    if (!TEST_true(ossl_gen_deterministic_nonce_rfc6979(k_bn, q_bn, priv_bn,
+            hm, hmlen, digestname, NULL, NULL)))
+        goto err;
+
+    if (!TEST_true(ossl_fn_gen_deterministic_nonce_rfc6979(k_fn, q_bn, priv_fn,
+            hm, hmlen, digestname, NULL, NULL)))
+        goto err;
+
+    /* The two nonces must be identical, and below the order. */
+    if (!TEST_ptr(k_bn_fn = bn_get_ossl_fn(k_bn))
+        || !TEST_int_eq(OSSL_FN_cmp(k_bn_fn, k_fn), 0)
+        || !TEST_int_lt(OSSL_FN_cmp(k_fn, q_fn), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(k_fn);
+    BN_free(q_bn);
+    BN_free(priv_bn);
+    BN_free(k_bn);
+    return ret;
+}
+
+static int test_fn_deterministic_nonce(void)
+{
+    /* A 256-bit order: byte-aligned, so bits2int shifts by zero. */
+    static const unsigned char order_aligned[32] = {
+        0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xbc, 0xe6, 0xfa, 0xad, 0xa7, 0x17, 0x9e, 0x84,
+        0xf3, 0xb9, 0xca, 0xc2, 0xfc, 0x63, 0x25, 0x51
+    };
+    /* A 255-bit order: not byte-aligned, so bits2int shifts by one. */
+    static const unsigned char order_unaligned[32] = {
+        0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    };
+    static const unsigned char priv[32] = {
+        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
+        0x0f, 0xed, 0xcb, 0xa9, 0x87, 0x65, 0x43, 0x21,
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+        0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x01
+    };
+    /* A stand-in 32-byte message digest. */
+    static const unsigned char hm[32] = {
+        0xde, 0xad, 0xbe, 0xef, 0xfe, 0xed, 0xfa, 0xce,
+        0xca, 0xfe, 0xba, 0xbe, 0x00, 0x11, 0x22, 0x33,
+        0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+        0xcc, 0xdd, 0xee, 0xff, 0x13, 0x37, 0xc0, 0xde
+    };
+    EVP_KDF *kdf;
+
+    /*
+     * RFC 6979 relies on HMAC-DRBG-KDF, which a no-bulk (minimal) build omits;
+     * skip rather than fail where the generators cannot run at all.
+     */
+    if ((kdf = EVP_KDF_fetch(NULL, "HMAC-DRBG-KDF", NULL)) == NULL)
+        return TEST_skip("HMAC-DRBG-KDF is not available in this build");
+    EVP_KDF_free(kdf);
+
+    return deterministic_nonce_case(order_aligned, sizeof(order_aligned),
+               priv, sizeof(priv), hm, sizeof(hm), "SHA256")
+        && deterministic_nonce_case(order_unaligned, sizeof(order_unaligned),
+            priv, sizeof(priv), hm, sizeof(hm), "SHA256")
+        && deterministic_nonce_case(order_aligned, sizeof(order_aligned),
+            priv, sizeof(priv), hm, sizeof(hm), "SHA512");
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -5662,6 +5759,7 @@ int setup_tests(void)
     ADD_TEST(test_from_bytes_be);
     ADD_TEST(test_mask_bits);
     ADD_TEST(test_fn_gen_dsa_nonce);
+    ADD_TEST(test_fn_deterministic_nonce);
     ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
     ADD_ALL_TESTS(test_gcd_alias, 4);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
