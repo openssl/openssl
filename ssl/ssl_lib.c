@@ -572,12 +572,35 @@ int SSL_clear(SSL *s)
     return s->method->ssl_reset(s);
 }
 
+static void ssl_connection_clear_tls13_secrets(SSL_CONNECTION *sc)
+{
+    OPENSSL_cleanse(sc->early_secret, sizeof(sc->early_secret));
+    OPENSSL_cleanse(sc->handshake_secret, sizeof(sc->handshake_secret));
+    OPENSSL_cleanse(sc->master_secret, sizeof(sc->master_secret));
+    OPENSSL_cleanse(sc->resumption_master_secret,
+        sizeof(sc->resumption_master_secret));
+    OPENSSL_cleanse(sc->client_finished_secret,
+        sizeof(sc->client_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_secret,
+        sizeof(sc->server_finished_secret));
+    OPENSSL_cleanse(sc->client_app_traffic_secret,
+        sizeof(sc->client_app_traffic_secret));
+    OPENSSL_cleanse(sc->server_app_traffic_secret,
+        sizeof(sc->server_app_traffic_secret));
+    OPENSSL_cleanse(sc->exporter_master_secret,
+        sizeof(sc->exporter_master_secret));
+    OPENSSL_cleanse(sc->early_exporter_master_secret,
+        sizeof(sc->early_exporter_master_secret));
+}
+
 int ossl_ssl_connection_reset(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return 0;
+
+    ssl_connection_clear_tls13_secrets(sc);
 
     if (ssl_clear_bad_session(sc)) {
         SSL_SESSION_free(sc->session);
@@ -1681,6 +1704,8 @@ void ossl_ssl_connection_free(SSL *ssl)
 #ifndef OPENSSL_NO_ECH
     ossl_ech_conn_clear(&s->ext.ech);
 #endif
+
+    ssl_connection_clear_tls13_secrets(s);
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
