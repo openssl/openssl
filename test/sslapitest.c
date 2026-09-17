@@ -12091,6 +12091,85 @@ end:
 
     return testresult;
 }
+
+/* Exercise short-fragment fallback and the 115-byte multiblock boundary. */
+static int test_multiblock_short_split(int idx)
+{
+    static const struct {
+        unsigned int split;
+        unsigned int records;
+    } cases[] = {
+        { 32, 4 },
+        { 114, 4 },
+        { 114, 8 },
+        { 115, 4 },
+        { 115, 8 },
+    };
+    unsigned int split = cases[idx].split;
+    size_t wrlen = (size_t)split * cases[idx].records;
+    const SSL_METHOD *smeth = TLS_server_method();
+    const SSL_METHOD *cmeth = TLS_client_method();
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    EVP_CIPHER *ciph = NULL;
+    unsigned char *msg = NULL, *buf = NULL, *p;
+    size_t readbytes, written, len;
+    int testresult = 0;
+
+    ciph = EVP_CIPHER_fetch(libctx, "AES-128-CBC-HMAC-SHA256", "");
+    if (ciph == NULL) {
+        TEST_skip("Multiblock cipher is not available");
+        return 1;
+    }
+    EVP_CIPHER_free(ciph);
+
+    if (!TEST_ptr(msg = OPENSSL_malloc(wrlen))
+        || !TEST_ptr(buf = OPENSSL_zalloc(wrlen)))
+        goto end;
+    memset(msg, 'A', wrlen);
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, TLS1_VERSION,
+            TLS1_2_VERSION, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA256"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA256"))
+        || !TEST_true(SSL_CTX_set_split_send_fragment(sctx, split)))
+        goto end;
+    SSL_CTX_set_options(sctx, SSL_OP_NO_ENCRYPT_THEN_MAC);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(serverssl, msg, wrlen, &written))
+        || !TEST_size_t_eq(written, wrlen))
+        goto end;
+
+    len = written;
+    p = buf;
+    while (len > 0) {
+        if (!TEST_true(SSL_read_ex(clientssl, p, len, &readbytes)))
+            goto end;
+        p += readbytes;
+        len -= readbytes;
+    }
+    if (!TEST_mem_eq(msg, wrlen, buf, wrlen))
+        goto end;
+
+    testresult = 1;
+end:
+    OPENSSL_free(msg);
+    OPENSSL_free(buf);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_TLS1_2 */
 
 static int test_session_timeout(int test)
@@ -17374,6 +17453,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ca_names, 3);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_multiblock_write, OSSL_NELEM(multiblock_cipherlist_data));
+    ADD_ALL_TESTS(test_multiblock_short_split, 5);
 #endif
     ADD_ALL_TESTS(test_servername, 10);
     ADD_TEST(test_unknown_sigalgs_groups);
