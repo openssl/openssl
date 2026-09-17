@@ -4195,8 +4195,9 @@ err:
  * OSSL_FN_mod_exp
  *
  * Tests use an independent reference oracle (plain left-to-right binary
- * square-and-multiply, distinct from the sliding-window implementation under
- * test) plus a handful of known-answer cases that anchor both.  The reference
+ * square-and-multiply, distinct from both the sliding-window and the
+ * fixed-window implementations under test) plus a handful of known-answer
+ * cases that anchor both.  The reference
  * is built on OSSL_FN_mod_mul, which has its own tests; a few KATs guard both
  * the reference and the implementation against a shared mod_mul bug.
  */
@@ -4220,14 +4221,25 @@ static const OSSL_FN_ULONG exp_a3[] = { OSSL_FN_ULONG_C(3) };
 static const OSSL_FN_ULONG exp_a5[] = { OSSL_FN_ULONG_C(5) };
 static const OSSL_FN_ULONG exp_a7[] = { OSSL_FN_ULONG_C(7) };
 static const OSSL_FN_ULONG exp_p0[] = { OSSL_FN_ULONG_C(0) };
+/* Zero-valued exponent in a multi-limb container. */
+static const OSSL_FN_ULONG exp_p0_wide[] = { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(0) };
 static const OSSL_FN_ULONG exp_p1[] = { OSSL_FN_ULONG_C(1) };
 static const OSSL_FN_ULONG exp_p5[] = { OSSL_FN_ULONG_C(5) };
 static const OSSL_FN_ULONG exp_p10[] = { OSSL_FN_ULONG_C(10) };
 static const OSSL_FN_ULONG exp_p16[] = { OSSL_FN_ULONG_C(16) };
-/* 30-bit exponent => sliding window size 3. */
+/* 30-bit exponent => window size 3. */
 static const OSSL_FN_ULONG exp_p30[] = { OSSL_FN_ULONG_C(0x3FFFFFFF) };
-/* 256-bit exponent (all-ones) => sliding window size 5. */
+/* 256-bit exponent (all-ones) => fixed window size 4. */
 static const OSSL_FN_ULONG exp_p256[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+};
+/* 384-bit exponent (all-ones) => fixed window size 5. */
+static const OSSL_FN_ULONG exp_p384[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
     OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
     OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
     OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
@@ -4240,6 +4252,17 @@ static const OSSL_FN_ULONG exp_m7[] = { OSSL_FN_ULONG_C(7) };
 static const OSSL_FN_ULONG exp_m6[] = { OSSL_FN_ULONG_C(6) }; /* even */
 static const OSSL_FN_ULONG exp_m1000[] = { OSSL_FN_ULONG_C(1000) }; /* even */
 static const OSSL_FN_ULONG exp_m65521[] = { OSSL_FN_ULONG_C(65521) };
+/* 512-bit odd modulus (all-ones), a whole multiple of 8 limbs at any limb width. */
+static const OSSL_FN_ULONG exp_m512[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+};
 
 /* Known answers. */
 static const OSSL_FN_ULONG ex_2_10_m1000[] = { OSSL_FN_ULONG_C(24) }; /* 1024 mod 1000 */
@@ -4259,6 +4282,9 @@ static struct mod_exp_test_st test_mod_exp_cases[] = {
     { exp_a2, LIMBSOF(exp_a2), exp_p16, LIMBSOF(exp_p16),
         exp_m65521, LIMBSOF(exp_m65521), ex_2_16_m65521, LIMBSOF(ex_2_16_m65521) },
     { exp_a5, LIMBSOF(exp_a5), exp_p0, LIMBSOF(exp_p0),
+        exp_m7, LIMBSOF(exp_m7), ex_5_0_m7, LIMBSOF(ex_5_0_m7) },
+    /* Known-answer: zero-valued exponent in a multi-limb container. */
+    { exp_a5, LIMBSOF(exp_a5), exp_p0_wide, LIMBSOF(exp_p0_wide),
         exp_m7, LIMBSOF(exp_m7), ex_5_0_m7, LIMBSOF(ex_5_0_m7) },
     { exp_a5, LIMBSOF(exp_a5), exp_p0, LIMBSOF(exp_p0),
         exp_m1, LIMBSOF(exp_m1), ex_5_0_m1, LIMBSOF(ex_5_0_m1) },
@@ -4280,18 +4306,34 @@ static struct mod_exp_test_st test_mod_exp_cases[] = {
     /* Reference-checked: base >= modulus (forces initial reduction). */
     { exp_m7, LIMBSOF(exp_m7), exp_p5, LIMBSOF(exp_p5),
         exp_m5, LIMBSOF(exp_m5), NULL, 0 },
-    /* Reference-checked: wide operands under secp128r1 prime, window 5. */
+    /* Reference-checked: exponent much wider than the modulus. */
+    { exp_a5, LIMBSOF(exp_a5), exp_p256, LIMBSOF(exp_p256),
+        exp_m7, LIMBSOF(exp_m7), NULL, 0 },
+    /* Reference-checked: exponent much narrower than the modulus. */
+    { exp_a5, LIMBSOF(exp_a5), exp_p5, LIMBSOF(exp_p5),
+        mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), NULL, 0 },
+    /* Reference-checked: wide operands under secp128r1 prime, window 4. */
     { num5, LIMBSOF(num5), exp_p256, LIMBSOF(exp_p256),
         mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), NULL, 0 },
     { num2, LIMBSOF(num2), num8, LIMBSOF(num8),
         mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), NULL, 0 },
     { mod_secp128r1_x2, LIMBSOF(mod_secp128r1_x2), exp_p256, LIMBSOF(exp_p256),
         mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), NULL, 0 },
+    /*
+     * Reference-checked: 384-bit exponent => fixed window size 5, which
+     * also selects the accelerated gather path where available.
+     */
+    { num5, LIMBSOF(num5), exp_p384, LIMBSOF(exp_p384),
+        mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), NULL, 0 },
+    /* Same, with a modulus a whole multiple of 8 limbs wide. */
+    { num5, LIMBSOF(num5), exp_p384, LIMBSOF(exp_p384),
+        exp_m512, LIMBSOF(exp_m512), NULL, 0 },
 };
 
 /*
  * Independent reference: plain left-to-right binary square-and-multiply.
- * Distinct from the sliding-window implementation under test.
+ * Distinct from the implementations under test (sliding-window and
+ * fixed-window).
  */
 static int mod_exp_reference(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     const OSSL_FN *m, OSSL_FN_CTX *ctx)
@@ -4587,7 +4629,7 @@ err:
  */
 static int test_mod_exp_result_size(int i)
 {
-    /* Wide case: num5 ^ exp_p256 mod secp128r1 prime, window 5. */
+    /* Wide case: num5 ^ exp_p256 mod secp128r1 prime, window 4. */
     size_t a_size = LIMBSOF(num5);
     size_t p_size = LIMBSOF(exp_p256);
     size_t m_size = LIMBSOF(mod_secp128r1_p);
@@ -4682,7 +4724,9 @@ static int test_mod_exp_ctx_size(void)
     if (!TEST_true(OSSL_FN_mod_exp(r, fa, fp, fm, ctx)))
         goto err;
     OSSL_FN_CTX_peak_usage(ctx, &peak_frames, &peak_numbers, &peak_limbs);
-    if (!TEST_size_t_gt(peak_frames, 0))
+    if (!TEST_size_t_gt(peak_frames, 0)
+        || !TEST_size_t_gt(peak_numbers, 0)
+        || !TEST_size_t_gt(peak_limbs, 0))
         goto err;
 
     /* Cross-check against the reference oracle. */
@@ -4713,7 +4757,7 @@ err:
  */
 static int test_mod_exp_mont_in_mont(void)
 {
-    /* num5 ^ exp_p256 mod secp128r1 prime, window 5. */
+    /* num5 ^ exp_p256 mod secp128r1 prime, window 4. */
     size_t a_size = LIMBSOF(num5);
     size_t p_size = LIMBSOF(exp_p256);
     size_t m_size = LIMBSOF(mod_secp128r1_p);
@@ -4863,7 +4907,7 @@ err:
  */
 static int test_mod_exp_mont_ctx_size(void)
 {
-    /* num5 ^ exp_p256 mod secp128r1 prime, window 5. */
+    /* num5 ^ exp_p256 mod secp128r1 prime, window 4. */
     size_t a_size = LIMBSOF(num5);
     size_t p_size = LIMBSOF(exp_p256);
     size_t m_size = LIMBSOF(mod_secp128r1_p);
