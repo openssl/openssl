@@ -7,8 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 #include "crypto/fnerr.h"
 #include "fn_local.h"
 
@@ -180,8 +183,8 @@ static int ossl_fn_rand_range(enum ossl_fn_rand_flag flag, OSSL_FN *r,
 
     if (n == 1) {
         return OSSL_FN_zero(r);
-    } else if (!OSSL_FN_is_bit_set(range, (int)(n - 2))
-        && !OSSL_FN_is_bit_set(range, (int)(n - 3))
+    } else if (!OSSL_FN_is_bit_set(range, n - 2)
+        && !OSSL_FN_is_bit_set(range, n - 3)
         && n < (size_t)r->dsize * OSSL_FN_BITS) {
         /*
          * range = 100..._2, so 3*range (= 11..._2) is exactly one bit longer
@@ -243,4 +246,140 @@ int OSSL_FN_priv_rand_range(OSSL_FN *r, const OSSL_FN *range,
     size_t strength, OSSL_LIB_CTX *libctx)
 {
     return ossl_fn_rand_range(PRIVATE, r, range, strength, libctx);
+}
+
+/*-
+ * OSSL_FN_gen_dsa_nonce() is the OSSL_FN analogue of
+ * ossl_bn_gen_dsa_nonce_fixed_top(): it derives a nonce 0 <= out < range that
+ * also mixes in |priv| and |message|, so that an RNG failure is not fatal as
+ * long as |priv| remains secret.  DSA and ECDSA need it to keep the nonce,
+ * which is derived from the private key, in constant-width OSSL_FN form.
+ *
+ * |libctx| is taken directly (the BIGNUM version only used its BN_CTX to derive
+ * one) and is used for fetching the digest and for RNG access.  Unlike the
+ * BIGNUM version there is no 0xff prefix byte: OSSL_FN_from_bytes_be() is
+ * already constant-time, so it needs no set top byte to guard against.
+ *
+ * |out| must be sized to hold at least |num_bits(range)| bits; a narrower
+ * destination is rejected with OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ */
+int OSSL_FN_gen_dsa_nonce(OSSL_FN *out, const OSSL_FN *range,
+    const OSSL_FN *priv, const unsigned char *message,
+    size_t message_len, OSSL_LIB_CTX *libctx)
+{
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    /*
+     * We use 512 bits of random data per iteration to ensure that we have at
+     * least |range| bits of randomness.
+     */
+    unsigned char random_bytes[64];
+    unsigned char digest[SHA512_DIGEST_LENGTH];
+    unsigned done, todo;
+    /* The number of hash bytes that span |range|. */
+    const int range_bits = (int)OSSL_FN_num_bits(range);
+    const unsigned num_k_bytes = (range_bits + 7) / 8;
+    unsigned char private_bytes[96];
+    unsigned char *k_bytes = NULL;
+    const int max_n = 64; /* Number of iterations until giving up */
+    int n;
+    int ret = 0;
+    EVP_MD *md = NULL;
+
+    if (mdctx == NULL)
+        goto end;
+
+    if (range_bits == 0) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_RANGE);
+        goto end;
+    }
+
+    /*
+     * |out| must be wide enough to hold every value below |range|, i.e. at
+     * least |range_bits| bits.  A narrower destination cannot represent the
+     * nonce: OSSL_FN_from_bytes_be() would reject all but the improbable draws
+     * whose surplus high bits are zero, and even those would be biased by the
+     * forced-zero high bits rather than uniform in [0, range).
+     */
+    if (ossl_fn_get_dsize(out) * OSSL_FN_BITS < (size_t)range_bits) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        goto end;
+    }
+
+    k_bytes = OPENSSL_malloc(num_k_bytes);
+    if (k_bytes == NULL)
+        goto end;
+
+    /* We copy |priv| into a local buffer to avoid exposing its length. */
+    if (!OSSL_FN_to_bytes_be(priv, private_bytes, sizeof(private_bytes))) {
+        /*
+         * No reasonable DSA or ECDSA key should have a private key this
+         * large and we don't handle this case in order to avoid leaking the
+         * length of the private key.
+         */
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_OVERFLOW);
+        goto end;
+    }
+
+    md = EVP_MD_fetch(libctx, "SHA512", NULL);
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_FETCH_FAILED);
+        goto end;
+    }
+    for (n = 0; n < max_n; n++) {
+        unsigned char i = 0;
+
+        for (done = 0; done < num_k_bytes;) {
+            if (RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes),
+                    0)
+                <= 0)
+                goto end;
+
+            if (!EVP_DigestInit_ex(mdctx, md, NULL)
+                || !EVP_DigestUpdate(mdctx, &i, sizeof(i))
+                || !EVP_DigestUpdate(mdctx, private_bytes,
+                    sizeof(private_bytes))
+                || !EVP_DigestUpdate(mdctx, message, message_len)
+                || !EVP_DigestUpdate(mdctx, random_bytes,
+                    sizeof(random_bytes))
+                || !EVP_DigestFinal_ex(mdctx, digest, NULL))
+                goto end;
+
+            todo = num_k_bytes - done;
+            if (todo > SHA512_DIGEST_LENGTH)
+                todo = SHA512_DIGEST_LENGTH;
+            memcpy(k_bytes + done, digest, todo);
+            done += todo;
+            ++i;
+        }
+
+        if (!OSSL_FN_from_bytes_be(out, k_bytes, num_k_bytes))
+            goto end;
+
+        /*
+         * Rejection-filter into range, clearing the surplus bits first. When
+         * |range|'s bit length is not a multiple of 8, the last loaded byte
+         * carries high bits above it that must be masked off. When it is
+         * byte-aligned the loaded value already has exactly that width, so
+         * there is nothing to clear -- and masking to out's full width would be
+         * a no-op that OSSL_FN_mask_bits() rejects anyway.
+         */
+        if (range_bits % 8 != 0 && !OSSL_FN_mask_bits(out, range_bits))
+            goto end;
+
+        if (OSSL_FN_cmp(out, range) < 0) {
+            ret = 1;
+            goto end;
+        }
+    }
+    /* Failed to generate anything */
+    ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_TOO_MANY_ITERATIONS);
+
+end:
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_free(md);
+    OPENSSL_clear_free(k_bytes, num_k_bytes);
+    OPENSSL_cleanse(digest, sizeof(digest));
+    OPENSSL_cleanse(random_bytes, sizeof(random_bytes));
+    OPENSSL_cleanse(private_bytes, sizeof(private_bytes));
+    return ret;
 }

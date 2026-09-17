@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <openssl/opensslconf.h>
 #include <openssl/bn_limbs.h>
+#include <openssl/crypto.h>
 #include <openssl/types.h>
 #include "crypto/types.h"
 
@@ -176,6 +177,19 @@ int OSSL_FN_one(OSSL_FN *a);
 int OSSL_FN_zero(OSSL_FN *a);
 
 /**
+ * Return a read-only OSSL_FN holding the value one.
+ *
+ * @returns     A pointer to statically allocated constant storage holding
+ *              a 1-limb OSSL_FN with the value 1.  Never NULL.
+ *
+ * @note The returned OSSL_FN is a view on static constant storage; it must
+ *       not be freed, cleared, or written to.  This is a convenience
+ *       accessor for operations that need a constant 1 operand without
+ *       allocating.
+ */
+const OSSL_FN *OSSL_FN_value_one(void);
+
+/**
  * Copy the contents of one OSSL_FN instance to another.
  *
  * @param[out]  a       The destination OSSL_FN
@@ -196,6 +210,43 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
  * @returns     the destination.
  */
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Serialise @p a as @p len big-endian bytes into @p out, in constant time.
+ *
+ * The output width @p len is chosen by the caller (e.g. a field-element or
+ * scalar byte length); the low @p len bytes of @p a are written most-
+ * significant first.
+ *
+ * @param[in]   a       The number to serialise
+ * @param[out]  out     Buffer of at least @p len bytes
+ * @param[in]   len     Number of bytes to write
+ * @returns     1 on success, 0 if @p a does not fit in @p len bytes or on a
+ *              NULL argument
+ *
+ * @note Constant-time: the byte layout depends only on @p len and @p a's
+ *       public width, not on its value.  The counterpart of BN_bn2binpad().
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len);
+
+/**
+ * Load @p len big-endian bytes from @p in into @p r, in constant time.
+ *
+ * The bytes are read most-significant first and placed in @p r's fixed width; a
+ * shorter input is zero-extended.  The value must fit: any input byte beyond
+ * @p r's width must be zero, else the call fails, mirroring OSSL_FN_to_bytes_be().
+ *
+ * @param[out]  r       The destination, filled to its full width
+ * @param[in]   in      Buffer of @p len bytes
+ * @param[in]   len     Number of bytes to read
+ * @returns     1 on success, 0 if the value does not fit in @p r or on a NULL
+ *              argument
+ *
+ * @note Constant-time: the layout depends only on @p len and @p r's public
+ *       width, not on the bytes' values.  The counterpart of OSSL_FN_to_bytes_be()
+ *       and of BN_bin2bn() into a fixed-width number.
+ */
+int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len);
 
 /*
  * Sentinel return value for the OSSL_FN_*_ctx_size() family, meaning "this
@@ -385,12 +436,29 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
  * @param[in]           n       The bit index (0 = least significant)
  * @returns             1 if bit @p n of @p a is set, 0 otherwise.
  *
- * @note An out-of-range index (n < 0 or n >= the operand's width in bits)
- *       reads as 0.  The only control flow branches on the operand's public
- *       width (its dsize), not on limb values; the returned value is the bit
+ * @note An out-of-range index (n >= the operand's width in bits) reads as
+ *       0.  The only control flow branches on the operand's public width
+ *       (its dsize), not on limb values; the returned value is the bit
  *       itself, which is the information the caller asked for.
  */
-int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
+int OSSL_FN_is_bit_set(const OSSL_FN *a, size_t n);
+
+/**
+ * Clear bit @p n of @p a.
+ *
+ * @param[in,out]       a       The operand
+ * @param[in]           n       The bit index (0 = least significant)
+ * @returns             1 on success, 0 on error
+ *
+ * @note An out-of-range index (n >= the operand's width in bits) leaves
+ *       @p a unchanged and fails with
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL (OSSL_FN is fixed-size, so the
+ *       operand cannot be grown to reach @p n).  The only control flow
+ *       branches on the operand's public width (its dsize) and on the
+ *       caller-chosen index @p n, not on limb values; whether the bit was
+ *       previously set is not revealed.
+ */
+int OSSL_FN_clear_bit(OSSL_FN *a, size_t n);
 
 /**
  * Test whether the unsigned value of @p a equals the single-limb word @p w.
@@ -540,6 +608,26 @@ int OSSL_FN_priv_rand_range(OSSL_FN *r, const OSSL_FN *range,
     size_t strength, OSSL_LIB_CTX *libctx);
 
 /**
+ * Generate a DSA/ECDSA nonce 0 <= out < range, hedged against RNG failure.
+ *
+ * The nonce mixes in |priv| and |message| in addition to fresh random bytes,
+ * so that an RNG weakness is not fatal as long as |priv| stays secret.  This
+ * is the OSSL_FN analogue of ossl_bn_gen_dsa_nonce_fixed_top().
+ *
+ * @param[out]          out         The OSSL_FN for the nonce; must be sized to
+ *                                  hold at least num_bits(@p range) bits
+ * @param[in]           range       The exclusive upper bound (the group order)
+ * @param[in]           priv        The private key to mix in
+ * @param[in]           message     The message (digest) to mix in
+ * @param[in]           message_len The length of @p message in bytes
+ * @param[in]           libctx      The library context (digest fetch, DRBG)
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_gen_dsa_nonce(OSSL_FN *out, const OSSL_FN *range,
+    const OSSL_FN *priv, const unsigned char *message,
+    size_t message_len, OSSL_LIB_CTX *libctx);
+
+/**
  * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -576,6 +664,22 @@ int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
  * @returns             1 on success, 0 on error
  */
 int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
+
+/**
+ * Keep the low @p n bits of @p a and clear every bit at position @p n and
+ * above, in place and in constant time.
+ *
+ * @param[in,out]       a       The number to mask
+ * @param[in]           n       Number of low bits to keep; must be below @p a's
+ *                              width
+ * @returns             1 on success, 0 if @p n is negative, at or beyond @p a's
+ *                              width, or on a NULL argument
+ *
+ * @note Constant-time: the masking depends only on @p n and @p a's public
+ *       width, not on its value.  The counterpart of
+ *       ossl_bn_mask_bits_fixed_top().
+ */
+int OSSL_FN_mask_bits(OSSL_FN *a, int n);
 
 /**
  * Calculate the greatest common divisor of two OSSL_FN numbers.  Truncates
@@ -1282,6 +1386,27 @@ size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
  * @returns             An allocated OSSL_FN_MONT_CTX, or NULL on error.
  */
 OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod);
+
+/**
+ * Thread-safe lazy initialization of a shared Montgomery context cache.
+ *
+ * @param[in,out]       pmont   The cache slot to read / fill
+ * @param[in]           lock    A read/write lock guarding @p pmont
+ * @param[in]           mod     The modulus
+ * @returns             The cached Montgomery context for @p mod, or NULL on
+ *                      error.  The returned pointer remains owned by
+ *                      @p pmont; the caller must not free it.
+ *
+ * @note If @p pmont already holds a context, it is returned unchanged;
+ *       whether it was initialized for @p mod is the caller's
+ *       responsibility.  Otherwise a context is built for @p mod outside
+ *       the lock (so concurrent lazy inits on the same slot duplicate the
+ *       work rather than serialize on it) and published under a write
+ *       lock; the loser of the race discards its work and returns the
+ *       winner's context.  Leak profile as for OSSL_FN_MONT_CTX_new().
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_set_locked(OSSL_FN_MONT_CTX **pmont,
+    CRYPTO_RWLOCK *lock, const OSSL_FN *mod);
 
 /**
  * Free a Montgomery context.

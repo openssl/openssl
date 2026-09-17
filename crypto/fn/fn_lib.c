@@ -13,6 +13,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include "internal/common.h"
+#include "crypto/fn_constants.h"
 #include "crypto/fnerr.h"
 #include "fn_local.h"
 #include "internal/constant_time.h"
@@ -154,6 +155,14 @@ int OSSL_FN_zero(OSSL_FN *a)
     return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(0));
 }
 
+/* The literal 1, backing OSSL_FN_value_one() */
+OSSL_FN_STATIC_DEFINE(one, 1, 1);
+
+const OSSL_FN *OSSL_FN_value_one(void)
+{
+    return &ossl_fn_static_one_storage.fn;
+}
+
 static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
 {
     OSSL_FN_ULONG x, mask;
@@ -233,22 +242,42 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
 }
 
 /*-
- * Returns bit |n| of |a|.  An out-of-range index (n < 0 or n >= the
- * operand's width in bits) reads as 0.  The only control flow branches on
- * the operand's public width (dsize); the returned value is the bit itself,
- * which is the information the caller asked for.
+ * Returns bit |n| of |a|.  An out-of-range index (n >= the operand's width
+ * in bits) reads as 0.  The only control flow branches on the operand's
+ * public width (dsize); the returned value is the bit itself, which is the
+ * information the caller asked for.
  */
-int OSSL_FN_is_bit_set(const OSSL_FN *a, int n)
+int OSSL_FN_is_bit_set(const OSSL_FN *a, size_t n)
 {
     size_t limb, off;
 
-    if (n < 0)
-        return 0;
-    limb = (size_t)n / OSSL_FN_BITS;
-    off = (size_t)n % OSSL_FN_BITS;
+    limb = n / OSSL_FN_BITS;
+    off = n % OSSL_FN_BITS;
     if (limb >= (size_t)a->dsize)
         return 0;
     return (a->d[limb] >> off) & OSSL_FN_ULONG_C(1);
+}
+
+/*-
+ * Clears bit |n| of |a|.  An out-of-range index (n >= the operand's width
+ * in bits) leaves |a| unchanged and fails with OSSL_FN_R_RESULT_ARG_TOO_SMALL;
+ * OSSL_FN is fixed-size, so the operand cannot be grown to reach |n|.  The
+ * only control flow branches on the operand's public width (dsize) and on
+ * the caller-chosen index |n|, not on limb values; whether the bit was
+ * previously set is not revealed.
+ */
+int OSSL_FN_clear_bit(OSSL_FN *a, size_t n)
+{
+    size_t limb, off;
+
+    limb = n / OSSL_FN_BITS;
+    off = n % OSSL_FN_BITS;
+    if (limb >= (size_t)a->dsize) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        return 0;
+    }
+    a->d[limb] &= ~(OSSL_FN_ULONG_C(1) << off);
+    return 1;
 }
 
 /*-
@@ -343,4 +372,106 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
     }
 
     return a;
+}
+
+/*-
+ * Serialise |a| as |len| big-endian bytes into |out|, in constant time.
+ *
+ * The low |len| bytes of |a| are written most-significant first; |a|'s value
+ * must fit in |len| bytes.  Returns 1 on success, 0 if |a| has a byte set
+ * beyond |len| (i.e. does not fit) or on a NULL argument.
+ *
+ * Constant-time profile: the byte layout depends only on |len| and |a|'s
+ * public width, never on its value.
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
+{
+    size_t dsize, nbytes, i;
+    unsigned char over = 0;
+
+    if (ossl_unlikely(a == NULL || out == NULL))
+        return 0;
+
+    dsize = ossl_fn_get_dsize(a);
+    nbytes = dsize * OSSL_FN_BYTES;
+
+    for (i = 0; i < len; i++) {
+        size_t limb = i / OSSL_FN_BYTES;
+
+        out[len - 1 - i] = limb < dsize
+            ? (unsigned char)(a->d[limb] >> (8 * (i % OSSL_FN_BYTES)))
+            : 0;
+    }
+    /* Every byte of |a| beyond |len| must be zero for the value to fit. */
+    for (; i < nbytes; i++)
+        over |= (unsigned char)(a->d[i / OSSL_FN_BYTES] >> (8 * (i % OSSL_FN_BYTES)));
+
+    return over == 0;
+}
+
+/*-
+ * Load |len| big-endian bytes from |in| into |r|, in constant time.
+ *
+ * The bytes are read most-significant first and placed in |r|'s fixed width; a
+ * shorter input is zero-extended.  The value must fit in |r|: it is an error
+ * (return 0) for any input byte beyond |r|'s width to be non-zero, mirroring
+ * OSSL_FN_to_bytes_be(), of which this is the counterpart (as BN_bin2bn() is of
+ * BN_bn2binpad()).
+ *
+ * Constant-time profile: the byte layout depends only on |len| and |r|'s
+ * public width, never on the bytes' values.
+ */
+int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
+{
+    size_t rbytes, i;
+    unsigned char over = 0;
+
+    if (ossl_unlikely(r == NULL || in == NULL))
+        return 0;
+
+    rbytes = ossl_fn_get_dsize(r) * OSSL_FN_BYTES;
+
+    for (i = 0; i < rbytes; i++) {
+        size_t limb = i / OSSL_FN_BYTES;
+        unsigned char b = i < len ? in[len - 1 - i] : 0;
+
+        if (i % OSSL_FN_BYTES == 0)
+            r->d[limb] = 0;
+        r->d[limb] |= (OSSL_FN_ULONG)b << (8 * (i % OSSL_FN_BYTES));
+    }
+    /* Every input byte beyond |r|'s width must be zero for the value to fit. */
+    for (; i < len; i++)
+        over |= in[len - 1 - i];
+
+    return over == 0;
+}
+
+/*-
+ * Keep the low |n| bits of |a| and clear every bit at position |n| and above,
+ * in place and in constant time.  |n| must be below |a|'s width.  The
+ * counterpart of ossl_bn_mask_bits_fixed_top().
+ *
+ * Constant-time profile: which bits are cleared depends only on |n| and |a|'s
+ * public width, never on its value.
+ */
+int OSSL_FN_mask_bits(OSSL_FN *a, int n)
+{
+    int w, b, i;
+
+    if (ossl_unlikely(a == NULL) || n < 0)
+        return 0;
+
+    w = n / OSSL_FN_BITS;
+    b = n % OSSL_FN_BITS;
+    if (w >= a->dsize)
+        return 0;
+
+    if (b != 0) {
+        a->d[w] &= ((OSSL_FN_ULONG)1 << b) - 1;
+        w++;
+    }
+    for (i = w; i < a->dsize; i++)
+        a->d[i] = 0;
+
+    return 1;
 }
