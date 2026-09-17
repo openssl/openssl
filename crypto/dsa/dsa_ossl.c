@@ -38,7 +38,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     DSA_SIG *sig, DSA *dsa);
 static int dsa_init(DSA *dsa);
 static int dsa_finish(DSA *dsa);
-static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
+static BIGNUM *dsa_mod_inverse_fermat(const OSSL_FN *k, const BIGNUM *q,
     BN_CTX *ctx);
 
 static const DSA_METHOD openssl_dsa_meth = {
@@ -315,10 +315,12 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     BN_CTX *ctx = NULL;
-    BIGNUM *k, *kinv = NULL, *r = *rp;
-    BIGNUM *l;
+    BIGNUM *k = NULL, *kinv = NULL, *r = *rp;
+    BIGNUM *l = NULL;
+    OSSL_FN *fn_k = NULL;
+    const OSSL_FN *fn_q = NULL, *fn_priv = NULL;
     int ret = 0;
-    int q_bits, q_words;
+    int q_bits, q_words, qlimbs;
 
     if (!dsa->params.p || !dsa->params.q || !dsa->params.g) {
         ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PARAMETERS);
@@ -339,11 +341,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
         ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PRIVATE_KEY);
         return 0;
     }
-    k = BN_new();
-    l = BN_new();
-    if (k == NULL || l == NULL)
-        goto err;
-
     if (ctx_in == NULL) {
         /* if you don't pass in ctx_in you get a default libctx */
         if ((ctx = BN_CTX_new_ex(NULL)) == NULL)
@@ -351,21 +348,29 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     } else
         ctx = ctx_in;
 
-    /* Preallocate space */
     q_bits = BN_num_bits(dsa->params.q);
     q_words = bn_get_top(dsa->params.q);
-    if (q_bits < MIN_DSA_SIGN_QBITS
-        || !bn_wexpand(k, q_words + 2)
-        || !bn_wexpand(l, q_words + 2))
+    if (q_bits < MIN_DSA_SIGN_QBITS)
         goto err;
 
-    /* Get random k */
+    if ((fn_q = bn_get_ossl_fn(dsa->params.q)) == NULL
+        || (fn_priv = bn_get_ossl_fn(dsa->priv_key)) == NULL)
+        goto err;
+    qlimbs = (int)ossl_fn_get_dsize(fn_q);
+
+    if ((fn_k = OSSL_FN_secure_new_limbs(qlimbs)) == NULL)
+        goto err;
+
+    /*
+     * Get random k, fixed-width from the start, so there is no BIGNUM
+     * top whose length could leak.
+     */
     do {
         if (dgst != NULL) {
             if (nonce_type == 1) {
 #ifndef FIPS_MODULE
-                if (!ossl_gen_deterministic_nonce_rfc6979(k, dsa->params.q,
-                        dsa->priv_key,
+                if (!ossl_fn_gen_deterministic_nonce_rfc6979(fn_k,
+                        dsa->params.q, fn_priv,
                         dgst, dlen,
                         digestname,
                         libctx, propq))
@@ -375,46 +380,70 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
                 /*
                  * We calculate k from SHA512(private_key + H(message) + random).
                  * This protects the private key from a weak PRNG.
+                 *
+                 * TODO(FIXNUM): OSSL_FN_gen_dsa_nonce() is expected to be
+                 * renamed; adjust this call when that happens.
                  */
-                if (!ossl_bn_gen_dsa_nonce_fixed_top(k, dsa->params.q,
-                        dsa->priv_key, dgst,
-                        dlen, ctx))
+                if (!OSSL_FN_gen_dsa_nonce(fn_k, fn_q, fn_priv, dgst, dlen,
+                        ossl_bn_get_libctx(ctx)))
                     goto err;
             }
-        } else if (!ossl_bn_priv_rand_range_fixed_top(k, dsa->params.q, 0, ctx))
+        } else if (!OSSL_FN_priv_rand_range(fn_k, fn_q, 0,
+                       ossl_bn_get_libctx(ctx)))
             goto err;
-    } while (ossl_bn_is_word_fixed_top(k, 0));
-
-    BN_set_flags(k, BN_FLG_CONSTTIME);
-    BN_set_flags(l, BN_FLG_CONSTTIME);
+    } while (OSSL_FN_is_zero(fn_k));
 
     /* Compute r = (g^k mod p) mod q */
 
-    /*
-     * We do not want timing information to leak the length of k, so we
-     * compute G^k using an equivalent scalar of fixed bit-length.
-     *
-     * We unconditionally perform both of these additions to prevent a
-     * small timing information leakage.  We then choose the sum that is
-     * one bit longer than the modulus.
-     *
-     * There are some concerns about the efficacy of doing this.  More
-     * specifically refer to the discussion starting with:
-     *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
-     * The fix is to rework BN so these gymnastics aren't required.
-     */
-    if (!BN_add(l, k, dsa->params.q)
-        || !BN_add(k, l, dsa->params.q))
-        goto err;
-
-    BN_consttime_swap(BN_is_bit_set(l, q_bits), k, l, q_words + 2);
-
     if ((dsa)->meth->bn_mod_exp != NULL) {
+        OSSL_FN *fn_kbn;
+        int fn_bits;
+
+        /*
+         * The override receives BIGNUMs, so k is materialized, and gets
+         * the fixed-length gymnastics: we do not want timing information
+         * to leak the length of k, so we compute G^k using an equivalent
+         * scalar of fixed bit-length.
+         *
+         * We unconditionally perform both of these additions to prevent a
+         * small timing information leakage.  We then choose the sum that
+         * is one bit longer than the modulus.
+         *
+         * There are some concerns about the efficacy of doing this.  More
+         * specifically refer to the discussion starting with:
+         *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
+         * The fix is to rework BN so these gymnastics aren't required.
+         *
+         * The OSSL_FN path needs no such gymnastics: a fixed-width
+         * exponent has no top that could leak its length.
+         */
+        k = BN_new();
+        l = BN_new();
+        if (k == NULL || l == NULL)
+            goto err;
+        BN_set_flags(k, BN_FLG_CONSTTIME);
+        BN_set_flags(l, BN_FLG_CONSTTIME);
+        if (!bn_wexpand(k, q_words + 2)
+            || !bn_wexpand(l, q_words + 2))
+            goto err;
+
+        if ((fn_kbn = bn_acquire_ossl_fn(k, qlimbs)) == NULL
+            || OSSL_FN_copy_truncate(fn_kbn, fn_k) == NULL)
+            goto err;
+        fn_bits = (int)OSSL_FN_num_bits(fn_kbn);
+        bn_release(k, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+
+        if (!BN_add(l, k, dsa->params.q)
+            || !BN_add(k, l, dsa->params.q))
+            goto err;
+
+        BN_consttime_swap(BN_is_bit_set(l, q_bits), k, l, q_words + 2);
+
         if (!dsa->meth->bn_mod_exp(dsa, r, dsa->params.g, k, dsa->params.p,
                 ctx, NULL))
             goto err;
     } else {
-        if (!ossl_dsa_fn_mod_exp(dsa, r, dsa->params.g, k, dsa->params.p))
+        if (!ossl_dsa_fn_mod_exp(dsa, r, dsa->params.g, fn_k, dsa->params.p))
             goto err;
     }
 
@@ -422,7 +451,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
         goto err;
 
     /* Compute part of 's = inv(k) (m + xr) mod q' */
-    if ((kinv = dsa_mod_inverse_fermat(k, dsa->params.q, ctx)) == NULL)
+    if ((kinv = dsa_mod_inverse_fermat(fn_k, dsa->params.q, ctx)) == NULL)
         goto err;
 
     BN_clear_free(*kinvp);
@@ -436,6 +465,7 @@ err:
         BN_CTX_free(ctx);
     BN_clear_free(k);
     BN_clear_free(l);
+    OSSL_FN_clear_free(fn_k);
     return ret;
 }
 
@@ -563,27 +593,26 @@ static int dsa_finish(DSA *dsa)
 
 /*
  * The OSSL_FN modular exponentiation backing the default DSA_METHOD's
- * private-key calculations.  This is where the BIGNUM -> OSSL_FN
- * conversion happens: read-only operands are passed as views, the
- * writable result is acquired at the modulus width before OSSL_FN_CTX
- * sizing, and the OSSL_FN_CTX arena is explicitly sized from the
- * operation's sizing companion.
+ * private-key calculations.  The exponent arrives in OSSL_FN form; the
+ * remaining BIGNUM operands are passed as views, the writable result is
+ * acquired at the modulus width before OSSL_FN_CTX sizing, and the
+ * OSSL_FN_CTX arena is explicitly sized from the operation's sizing
+ * companion.
  */
 int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
-    const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *a, const OSSL_FN *p,
     const BIGNUM *m)
 {
     int ret = 0;
     OSSL_FN_CTX *fn_ctx = NULL;
     OSSL_FN_MONT_CTX *fn_mont = NULL;
     OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL, *fn_p = NULL, *fn_m = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_p = p, *fn_m = NULL;
     const void *token = NULL;
     int limbs, fn_bits;
     size_t fn_size;
 
     fn_a = bn_get_ossl_fn(a);
-    fn_p = bn_get_ossl_fn(p);
     fn_m = bn_get_ossl_fn(m);
     if (fn_a == NULL || fn_p == NULL || fn_m == NULL)
         return 0;
@@ -645,14 +674,14 @@ err:
  * so a mod-exp that doesn't leak the base is sufficient.  A newly allocated
  * BIGNUM is returned which the caller must free.
  */
-static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
+static BIGNUM *dsa_mod_inverse_fermat(const OSSL_FN *k, const BIGNUM *q,
     BN_CTX *ctx)
 {
     BIGNUM *res = NULL;
     BIGNUM *r = NULL, *e;
     OSSL_FN_CTX *fn_ctx = NULL;
     OSSL_FN_MONT_CTX *fn_mont = NULL;
-    const OSSL_FN *fn_k = NULL, *fn_q = NULL;
+    const OSSL_FN *fn_q = NULL;
     OSSL_FN *fn_r = NULL, *fn_e = NULL;
     const void *token = NULL;
     size_t fn_size;
@@ -674,8 +703,7 @@ static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
      * writable results before the OSSL_FN_CTX sizing, which derives from
      * their allocated widths.
      */
-    if ((fn_k = bn_get_ossl_fn(k)) == NULL
-        || (fn_r = bn_acquire_ossl_fn(r, qlimbs)) == NULL
+    if ((fn_r = bn_acquire_ossl_fn(r, qlimbs)) == NULL
         || (fn_e = bn_acquire_ossl_fn(e, qlimbs)) == NULL)
         goto err;
 
@@ -690,7 +718,7 @@ static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
     if ((fn_mont = OSSL_FN_MONT_CTX_new(fn_q)) == NULL)
         goto err;
 
-    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, fn_k, fn_e, fn_q, fn_mont);
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, k, fn_e, fn_q, fn_mont);
     if (fn_size == 0)
         goto err;
 
@@ -700,7 +728,7 @@ static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
     if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
         goto err;
 
-    if (OSSL_FN_mod_exp_mont(fn_r, fn_k, fn_e, fn_q, fn_ctx, fn_mont)) {
+    if (OSSL_FN_mod_exp_mont(fn_r, k, fn_e, fn_q, fn_ctx, fn_mont)) {
         fn_bits = (int)OSSL_FN_num_bits(fn_r);
         bn_release(r, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
         res = r;
