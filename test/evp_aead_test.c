@@ -364,12 +364,102 @@ err:
     return testresult;
 }
 
+/*
+ * After Final, a further Update on the same context must be rejected, both
+ * encrypting and decrypting.
+ *
+ * TODO: also check the error reason (PROV_R_CIPHER_OPERATION_FAILED, as GCM
+ * and CCM report); SIV, GCM-SIV and ChaCha20-Poly1305 currently reject
+ * without raising one.
+ */
+static int test_evp_aead_finished_ctx(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_enc = NULL;
+    EVP_CIPHER_CTX *ctx_dec = NULL;
+
+    OSSL_PARAM tagparams[2];
+
+    int taglen = info->taglen;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    static const unsigned char msg[] = "finished context regression";
+    unsigned char ct[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char pt[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    int i = 0, len = 0, testresult = 0;
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    /* encrypt: Init, (CCM len), Update, Final */
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))
+        || !TEST_true(info->mode != EVP_CIPH_CCM_MODE
+            || EVP_EncryptUpdate(ctx_enc, NULL, &len, NULL, sizeof(msg)))
+        || !TEST_true(EVP_EncryptUpdate(ctx_enc, ct, &len, msg, sizeof(msg)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_enc, ct + len, &len))) {
+        TEST_info("%s: encrypt", info->name);
+        goto err;
+    }
+
+    /* TODO: drop once AEAD_DATA.taglen is resolved from the cipher */
+    i = EVP_CIPHER_CTX_get_tag_length(ctx_enc);
+    if (i > 0)
+        taglen = i;
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_enc, tagparams))) {
+        TEST_info("%s: encrypt get tag", info->name);
+        goto err;
+    }
+
+    /* the finished encrypt context must reject another Update */
+    if (!TEST_false(EVP_EncryptUpdate(ctx_enc, pt, &len, msg, sizeof(msg)))) {
+        TEST_info("%s: encrypt Update after Final", info->name);
+        goto err;
+    }
+
+    /* decrypt: Init, set tag, (CCM len), Update, Final, compare */
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))
+        || !TEST_true(info->mode != EVP_CIPH_CCM_MODE
+            || EVP_DecryptUpdate(ctx_dec, NULL, &len, NULL, sizeof(msg)))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, pt, &len, ct, sizeof(msg)))
+        || !TEST_true(EVP_DecryptFinal_ex(ctx_dec, pt + len, &len))
+        || !TEST_mem_eq(pt, sizeof(msg), msg, sizeof(msg))) {
+        TEST_info("%s: decrypt", info->name);
+        goto err;
+    }
+
+    /* the finished decrypt context must reject another Update */
+    if (!TEST_false(EVP_DecryptUpdate(ctx_dec, pt, &len, ct, sizeof(msg)))) {
+        TEST_info("%s: decrypt Update after Final", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!setup_aead_list())
         return 0;
 
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
     return 1;
 }
 
