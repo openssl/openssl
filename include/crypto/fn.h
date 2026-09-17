@@ -577,6 +577,26 @@ int OSSL_FN_priv_rand_range(OSSL_FN *r, const OSSL_FN *range,
     size_t strength, OSSL_LIB_CTX *libctx);
 
 /**
+ * Generate a DSA/ECDSA nonce 0 <= out < range, hedged against RNG failure.
+ *
+ * The nonce mixes in |priv| and |message| in addition to fresh random bytes,
+ * so that an RNG weakness is not fatal as long as |priv| stays secret.  This
+ * is the OSSL_FN analogue of ossl_bn_gen_dsa_nonce_fixed_top().
+ *
+ * @param[out]          out         The OSSL_FN for the nonce; must be sized to
+ *                                  hold at least num_bits(@p range) bits
+ * @param[in]           range       The exclusive upper bound (the group order)
+ * @param[in]           priv        The private key to mix in
+ * @param[in]           message     The message (digest) to mix in
+ * @param[in]           message_len The length of @p message in bytes
+ * @param[in]           libctx      The library context (digest fetch, DRBG)
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_gen_dsa_nonce(OSSL_FN *out, const OSSL_FN *range,
+    const OSSL_FN *priv, const unsigned char *message,
+    size_t message_len, OSSL_LIB_CTX *libctx);
+
+/**
  * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
