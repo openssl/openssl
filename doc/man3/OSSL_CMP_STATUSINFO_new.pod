@@ -9,7 +9,7 @@ OSSL_CMP_CTX_snprint_PKIStatus
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  OSSL_CMP_PKISI *OSSL_CMP_STATUSINFO_new(int status, int fail_info,
                                          const char *text);
@@ -53,6 +53,10 @@ return a copy of the buffer pointer containing the string or NULL on error.
 =head1 HISTORY
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

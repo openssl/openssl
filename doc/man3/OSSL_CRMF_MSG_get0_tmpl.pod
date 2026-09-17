@@ -21,7 +21,7 @@ OSSL_CRMF_MSG_centralkeygen_requested
 
 =head1 SYNOPSIS
 
- #include <openssl/crmf.h>
+ #include <libcmp/crmf.h>
 
  OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
  X509_PUBKEY
@@ -155,6 +155,10 @@ OSSL_CRMF_CERTTEMPLATE_get0_publicKey() was added in OpenSSL 3.2.
 OSSL_CRMF_ENCRYPTEDKEY_get1_encCert(), OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(),
 OSSL_CRMF_ENCRYPTEDKEY_init_envdata(), OSSL_CRMF_ENCRYPTEDVALUE_decrypt()
 and OSSL_CRMF_MSG_centralkeygen_requested() were added in OpenSSL 3.5.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/crmf.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

@@ -22,7 +22,7 @@ OSSL_CMP_get1_certReqTemplate
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
                              const OSSL_CRMF_MSG *crm);
@@ -252,6 +252,10 @@ was added in OpenSSL 3.3.
 
 OSSL_CMP_get1_crlUpdate() and OSSL_CMP_get1_certReqTemplate()
 were added in OpenSSL 3.4.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

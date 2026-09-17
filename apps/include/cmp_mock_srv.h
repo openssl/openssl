@@ -14,7 +14,7 @@
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_CMP
 
-#include <openssl/cmp.h>
+#include <libcmp/cmp.h>
 
 OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx,
     const char *propq);

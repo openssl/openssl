@@ -10,6 +10,7 @@
  */
 
 #include "helpers/cmp_testlib.h"
+#include "crypto/asn1.h"
 
 #include <openssl/x509_vfy.h>
 

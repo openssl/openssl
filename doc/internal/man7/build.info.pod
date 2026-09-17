@@ -655,6 +655,14 @@ therefore depending on either of them, but not both at the same time:
     DEPEND[program2]=libmandatory.a lib2.a
     DEPEND[libmandatory]{weak}=lib1.a lib2.a
 
+=item B<shlib_version>
+
+This is used with B<LIBS>, to give an installed shared library a
+shared library version of its own instead of the configured default
+(B<SHLIB_VERSION> from F<VERSION.dat>):
+
+    LIBS{shlib_version=1}=libwhatever
+
 =back
 
 =head1 GLOSSARY
