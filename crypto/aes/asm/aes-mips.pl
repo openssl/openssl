@@ -110,6 +110,12 @@ $code.=<<___;
 #include "arch/mips_arch.h"
 
 .text
+.local	_mips_AES_encrypt
+.local	_mips_AES_decrypt
+.local	_mips_AES_set_encrypt_key
+.local	AES_Te
+.local	AES_Td
+.local	AES_Te4
 #if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2
 #endif
