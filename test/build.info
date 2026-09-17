@@ -1051,7 +1051,8 @@ IF[{- !$disabled{tests} -}]
       PROGRAMS{noinst}=tls13ticket_test
       SOURCE[tls13ticket_test]=tls13tickettest.c helpers/ssltestlib.c
       INCLUDE[tls13ticket_test]=../include ../apps/include ..
-      DEPEND[tls13ticket_test]=../libcrypto ../libssl libtestutil.a
+      # Static libraries: the tests feed crafted messages to internal parsers
+      DEPEND[tls13ticket_test]=../libssl.a ../libcrypto.a libtestutil.a
     ENDIF
 
     IF[{- !$disabled{psk} && !$disabled{tls1_2} -}]

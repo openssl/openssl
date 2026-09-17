@@ -12,7 +12,9 @@
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h>
 #include "ssl/ssl_local.h"
+#include "ssl/statem/statem_local.h"
 #include "internal/packet.h"
+#include "internal/ssl_unwrap.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 
@@ -1690,6 +1692,216 @@ static int test_tls13_external_psk_sid_ctx_not_shared(void)
     return test;
 }
 
+/*
+ * Encode a session with i2d_SSL_SESSION() and decode it again, as an
+ * application backed by an external session cache would.
+ */
+static SSL_SESSION *session_der_roundtrip(SSL_SESSION *in)
+{
+    unsigned char *der = NULL, *p;
+    const unsigned char *q;
+    SSL_SESSION *out = NULL;
+    int len = i2d_SSL_SESSION(in, NULL);
+
+    if (len <= 0 || (der = OPENSSL_malloc(len)) == NULL)
+        return NULL;
+    p = der;
+    if (i2d_SSL_SESSION(in, &p) == len) {
+        q = der;
+        out = d2i_SSL_SESSION(NULL, &q, len);
+    }
+    OPENSSL_free(der);
+    return out;
+}
+
+/*
+ * Feed a NewSessionTicket message body with the given ticket_lifetime to the
+ * client side of a connected channel, emulating a server that OpenSSL cannot
+ * be configured to be (a lifetime above 7 days, or a stateless ticket with a
+ * lifetime of zero).
+ */
+static int inject_new_session_ticket(SSL *ssl, uint32_t lifetime)
+{
+    SSL_CONNECTION *sc = NULL;
+    unsigned char body[64], nonce[8], tick[32];
+    WPACKET wpkt;
+    PACKET pkt;
+    size_t written = 0;
+
+    memset(nonce, 0xff, sizeof(nonce));
+    memset(tick, 0xaa, sizeof(tick));
+
+    return TEST_true(WPACKET_init_static_len(&wpkt, body, sizeof(body), 0))
+        && TEST_true(WPACKET_put_bytes_u32(&wpkt, lifetime))
+        && TEST_true(WPACKET_put_bytes_u32(&wpkt, 0))
+        && TEST_true(WPACKET_sub_memcpy_u8(&wpkt, nonce, sizeof(nonce)))
+        && TEST_true(WPACKET_sub_memcpy_u16(&wpkt, tick, sizeof(tick)))
+        && TEST_true(WPACKET_put_bytes_u16(&wpkt, 0))
+        && TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        && TEST_true(WPACKET_finish(&wpkt))
+        && TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(ssl))
+        && TEST_true(PACKET_buf_init(&pkt, body, written))
+        && TEST_int_eq(tls_process_new_session_ticket(sc, &pkt),
+            MSG_PROCESS_FINISHED_READING);
+}
+
+#define ONE_WEEK_SEC (7 * 24 * 60 * 60)
+
+/*
+ * RFC 9846 4.7.1: Servers MUST NOT use any value greater than 604800 seconds
+ * (7 days). Clients MUST NOT use tickets for longer than 7 days after
+ * issuance, regardless of the ticket_lifetime.
+ *
+ * A lifetime one hour beyond 7 days received from the wire is capped in the
+ * stored session, and the capped value survives a DER round trip.
+ */
+static int test_tls13_ticket_lifetime_cap(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel ch = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL, *rt = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(tls_channel_init(c, s, &ch))
+        && TEST_true(create_ssl_connection(ch.s.ssl, ch.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(inject_new_session_ticket(ch.c.ssl, ONE_WEEK_SEC + 3600))
+        && TEST_ptr(sess = SSL_get1_session(ch.c.ssl))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess), ONE_WEEK_SEC)
+        && TEST_ptr(rt = session_der_roundtrip(sess))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(rt), ONE_WEEK_SEC);
+
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(rt);
+    tls_channel_fini(&ch);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * The cap applied when a NewSessionTicket is parsed does not reach sessions
+ * that enter the process through d2i_SSL_SESSION(): an external cache, or a
+ * client built before the cap existed, can hand back a session whose stored
+ * lifetime exceeds 7 days. The 7 day limit therefore has to be enforced when
+ * deciding whether to offer the ticket as well.
+ *
+ * Emulate such a session by overwriting the stored lifetime hint before the
+ * DER round trip and by backdating the decoded session, then check that a
+ * ticket aged beyond 7 days is not offered (idx 0) while the same ticket aged
+ * a little less than 7 days still is (idx 1).
+ */
+static int test_tls13_ticket_lifetime_bound_offer(int idx)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL, *rt = NULL;
+    const unsigned long hint = ONE_WEEK_SEC + 3600;
+    const time_t age = idx == 0 ? ONE_WEEK_SEC + 1800 : ONE_WEEK_SEC - 3600;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        /* The server side must not be the one refusing the old ticket */
+        && TEST_long_gt(SSL_CTX_set_timeout(s, 2 * ONE_WEEK_SEC), 0)
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl));
+    if (!test)
+        goto end;
+
+    /* What an external cache written without the cap would hand back */
+    sess->ext.tick_lifetime_hint = hint;
+
+    test = TEST_ptr(rt = session_der_roundtrip(sess))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(rt), hint)
+        && TEST_time_t_gt(SSL_SESSION_set_time_ex(rt, time(NULL) - age), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, rt))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, idx == 0 ? 0 : 1)
+        && TEST_int_eq(SSL_session_reused(resumed.c.ssl), idx == 0 ? 0 : 1)
+        && TEST_int_eq(SSL_session_reused(resumed.s.ssl), idx == 0 ? 0 : 1);
+
+end:
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(rt);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/* Ticket generation callback that makes the server advertise a zero lifetime */
+static int zero_lifetime_gen_cb(SSL *ssl, void *arg)
+{
+    SSL_SESSION *sess = SSL_get_session(ssl);
+
+    return sess != NULL && SSL_SESSION_set_timeout(sess, 0) == 1;
+}
+
+/*
+ * RFC 9846 4.7.1: The value of zero indicates that the ticket should be
+ * discarded immediately.
+ *
+ * A ticket received with a zero lifetime must not be offered on a subsequent
+ * connection, whether it came from a real (stateful) server whose session
+ * timeout is zero (idx 0) or from a NewSessionTicket message injected into
+ * the client (idx 1). The connection that would have resumed completes as a
+ * full handshake instead.
+ */
+static int test_tls13_ticket_zero_lifetime(int idx)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(c));
+    if (test && idx == 0) {
+        SSL_CTX_set_options(s, SSL_OP_NO_TICKET);
+        SSL_CTX_set_session_cache_mode(s, SSL_SESS_CACHE_SERVER);
+        test = TEST_true(SSL_CTX_set_session_ticket_cb(s, zero_lifetime_gen_cb,
+            NULL, NULL));
+    } else if (test) {
+        test = TEST_true(ticket_enable(s));
+    }
+    test = test
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && (idx == 0 || TEST_true(inject_new_session_ticket(initial.c.ssl, 0)))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 0)
+        && TEST_false(SSL_session_reused(resumed.c.ssl))
+        && TEST_false(SSL_session_reused(resumed.s.ssl));
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -1718,6 +1930,9 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_server_age_mismatch_reject_early_data);
     ADD_TEST(test_tls13_aged_ticket_external_psk_early_data);
     ADD_TEST(test_tls13_external_psk_sid_ctx_not_shared);
+    ADD_TEST(test_tls13_ticket_lifetime_cap);
+    ADD_ALL_TESTS(test_tls13_ticket_lifetime_bound_offer, 2);
+    ADD_ALL_TESTS(test_tls13_ticket_zero_lifetime, 2);
 
     return 1;
 }
