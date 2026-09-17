@@ -184,12 +184,22 @@ beforehand in order to display diagnostics for the running self tests.
 OSSL_PROVIDER_query_operation() calls the provider's I<query_operation>
 function (see L<provider(7)>), if the provider has one. It returns an
 array of I<OSSL_ALGORITHM> for the given I<operation_id> terminated by an all
-NULL OSSL_ALGORITHM entry. This is considered a low-level function that most
-applications should not need to call.
+NULL OSSL_ALGORITHM entry.  The provider sets I<*no_cache> to 0 if references
+to the array and its associated data may be retained, or to 1 otherwise.  If
+I<*no_cache> is 0, that data must remain valid until provider teardown.  If
+I<*no_cache> is 1, callers must treat the data as short-lived and must not
+access it after the corresponding OSSL_PROVIDER_unquery_operation() call.
+This is considered a low-level function that most applications should not
+need to call.
 
 OSSL_PROVIDER_unquery_operation() calls the provider's I<unquery_operation>
-function (see L<provider(7)>), if the provider has one.  This is considered a
-low-level function that most applications should not need to call.
+function (see L<provider(7)>), if the provider has one.  It informs the
+provider that the current direct use of I<algs> is complete.  For a result
+returned with I<*no_cache> set to 1, the provider may release the array and
+its associated data in this call.  For a result returned with I<*no_cache>
+set to 0, this call does not shorten their required lifetime.  This is
+considered a low-level function that most applications should not need to
+call.
 
 OSSL_PROVIDER_get0_provider_ctx() returns the provider context for the given
 provider. The provider context is an opaque handle set by the provider itself
@@ -198,10 +208,6 @@ and is passed back to the provider by libcrypto in various function calls.
 OSSL_PROVIDER_get0_dispatch() returns the provider's dispatch table as it was
 returned in the I<out> parameter from the provider's init function. See
 L<provider-base(7)>.
-
-If it is permissible to cache references to this array then I<*no_store> is set
-to 0 or 1 otherwise. If the array is not cacheable then it is assumed to
-have a short lifetime.
 
 OSSL_PROVIDER_get0_name() returns the name of the given provider.
 
