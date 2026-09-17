@@ -33,19 +33,24 @@ these errors may no longer be available.
 The verification result is part of the established session and is restored
 when a session is reused.
 
-When a server accepts an empty client Certificate message, the result is
-X509_V_ERR_UNSPECIFIED. This applies to X.509 certificates and raw public
-keys, during the initial handshake as well as subsequent requests for
-client authentication. No credential verification is performed for an empty
-response. The handshake can still complete if client authentication is optional.
+When a server accepts an empty client Certificate message during the initial
+handshake, the result is X509_V_ERR_UNSPECIFIED. This applies to both X.509
+certificates and raw public keys. The handshake can still complete if client
+authentication is optional.
+
+An empty response to an optional post-handshake authentication request leaves
+the previous peer identity and verification result unchanged. No certificate
+or raw public key verification is performed for an empty response.
 
 =head1 BUGS
 
-In other cases where no peer credential was presented, the returned result
-can still be X509_V_OK, for example when a server did not request a client
-certificate during the initial handshake. This means that no verification
-error was recorded, not that the peer was authenticated.
-SSL_get_verify_result() is only useful in connection with
+In other cases where no peer certificate or raw public key was presented, the
+returned result can still be X509_V_OK, for example when a server did not request
+a client certificate during the initial handshake. X509_V_OK alone does not establish
+how or whether the peer was authenticated. A suitably provisioned external PSK
+can authenticate a peer without a certificate or raw public key.
+When certificate or raw public key authentication is expected, applications
+must also check that the expected credential is present using
 L<SSL_get_peer_certificate(3)> or L<SSL_get0_peer_rpk(3)>.
 
 =head1 RETURN VALUES
@@ -56,13 +61,13 @@ The following return values can currently occur:
 
 =item X509_V_OK
 
-No verification error was recorded. A peer credential might not have been
-presented; see L</BUGS>.
+No verification error was recorded. A peer certificate or raw public key might
+not have been presented; see L</BUGS>.
 
 =item X509_V_ERR_UNSPECIFIED
 
 An unspecified verification error occurred, or the server accepted an empty
-client Certificate message.
+client Certificate message during the initial handshake.
 
 =item Any other value
 
@@ -80,8 +85,8 @@ L<openssl-verify(1)>
 =head1 HISTORY
 
 Reporting X509_V_ERR_UNSPECIFIED for accepted empty client Certificate
-responses was introduced in OpenSSL 4.1. Previously, accepting such a response
-during an initial handshake returned X509_V_OK.
+responses during the initial handshake was introduced in OpenSSL 4.1.
+Previously, accepting such a response returned X509_V_OK.
 
 =head1 COPYRIGHT
 
