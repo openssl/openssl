@@ -298,8 +298,10 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             if (c->bio_chain != NULL) {
                 if ((dbio = BIO_dup_chain(c->bio_chain)) == NULL)
                     goto exit_loop;
-                if (!BIO_push(dbio, bio))
+                if (!BIO_push(dbio, bio)) {
+                    BIO_free_all(dbio);
                     goto exit_loop;
+                }
                 bio = dbio;
             }
             if (BIO_push(b, bio) == NULL)
@@ -328,7 +330,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
 
 exit_loop:
     if (bio != NULL)
-        BIO_free(bio);
+        BIO_free_all(bio);
     else if (s >= 0)
         BIO_closesocket(s);
 end:
