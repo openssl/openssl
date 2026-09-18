@@ -343,23 +343,24 @@ jobs:
           ./util/opensslwrap.sh info -cpusettings | \
           grep -qE "${{ matrix.platform.capscheck }}"
 
-    # A dispatched run takes the push tier, not the pull_request one below: it exists to run
-    # pre-merge what currently only runs post-merge, and evp-only is the weaker signal. Legs
-    # setting `tests: none` stay build-only on every trigger, by design.
+    # A dispatched run, and a pull request that opts in with `[riscv ci]` in its body, take the
+    # push tier: both exist to run pre-merge what otherwise only runs post-merge, and evp-only
+    # is the weaker signal. A pull request that only matches on its title keeps the evp tier.
+    # Legs setting `tests: none` stay build-only on every trigger, by design.
     - name: make all tests
-      if: (github.event_name == 'push' || inputs.pr != '') && matrix.platform.tests == ''
+      if: (github.event_name == 'push' || inputs.pr != '' || contains(github.event.pull_request.body, '[riscv ci]')) && matrix.platform.tests == ''
       run: |
         .github/workflows/make-test \
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: (github.event_name == 'push' || inputs.pr != '') && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: (github.event_name == 'push' || inputs.pr != '' || contains(github.event.pull_request.body, '[riscv ci]')) && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+      if: github.event_name == 'pull_request' && !contains(github.event.pull_request.body, '[riscv ci]') && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
                   TESTS="test_evp*" \
