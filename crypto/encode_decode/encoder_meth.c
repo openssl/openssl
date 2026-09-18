@@ -150,7 +150,7 @@ static int unreserve_encoder_store(void *store, void *data)
 
 /* Get encoder methods from a store, or put one in */
 static void *get_encoder_from_store(void *store, const OSSL_PROVIDER **prov,
-    void *data)
+    void *data, int req_optional)
 {
     struct encoder_data_st *methdata = data;
     void *method = NULL;
@@ -179,7 +179,7 @@ static void *get_encoder_from_store(void *store, const OSSL_PROVIDER **prov,
         && (store = get_encoder_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, id, methdata->propquery, prov, &method))
+    if (!ossl_method_store_fetch(store, id, methdata->propquery, 0, prov, &method))
         return NULL;
     return method;
 }

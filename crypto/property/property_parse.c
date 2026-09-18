@@ -464,6 +464,11 @@ err:
     return res;
 }
 
+int ossl_property_count(const OSSL_PROPERTY_LIST *query)
+{
+    return query->num_properties;
+}
+
 /*
  * Compare a query against a definition.
  * Return the number of clauses matched or -1 if a mandatory clause is false.

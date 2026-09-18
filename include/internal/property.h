@@ -32,6 +32,7 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OSSL_LIB_CTX *ctx, const char *defn);
 /* Property query parser */
 OSSL_PROPERTY_LIST *ossl_parse_query(OSSL_LIB_CTX *ctx, const char *s,
     int create_values);
+int ossl_property_count(const OSSL_PROPERTY_LIST *query);
 /* Property checker of query vs definition */
 int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
     const OSSL_PROPERTY_LIST *defn);
@@ -66,7 +67,7 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
     void (*fn)(int id, void *method, void *fnarg),
     void *fnarg);
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
-    int nid, const char *prop_query,
+    int nid, const char *prop_query, int req_optional,
     const OSSL_PROVIDER **prov, void **method);
 int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     const OSSL_PROVIDER *prov);
