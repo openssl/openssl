@@ -436,6 +436,8 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
 
 again:
     if (!dtls_get_reassembled_message(s, &errtype, &tmplen)) {
+        if (s->statem.ack_for_retransmit)
+            return 0;
         if (errtype == DTLS1_HM_BAD_FRAGMENT
             || errtype == DTLS1_HM_FRAGMENT_RETRY) {
             /* bad fragment received */
@@ -846,6 +848,18 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
                 goto err;
             frag_len -= readbytes;
         }
+        /*
+         * A lost ACK can cause an already processed post-handshake message to
+         * be retransmitted in a new record. ACK it without processing it again.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && s->s3.tmp.record_epoch >= 3
+            && msg_hdr->seq < s->d1->handshake_read_seq
+            && dtls_msg_needs_ack(!s->server, msg_hdr->type)) {
+            if (!add_record_to_ack_list(s))
+                goto err;
+            s->statem.ack_for_retransmit = 1;
+        }
     } else {
         if (frag_len != msg_hdr->msg_len) {
             return dtls1_reassemble_fragment(s, msg_hdr);
@@ -1241,11 +1255,13 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt)
 
         recnumnext = ossl_list_record_number_next(recnum);
 
-        if (recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
+        if (!SSL_IS_FIRST_HANDSHAKE(s)
+            || recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
             /*
              * rfc9147:
              * During the handshake, ACK records MUST be sent with an epoch which
-             * is equal to or higher than the record which is being acknowledged
+             * is equal to or higher than the record which is being acknowledged.
+             * After the handshake, the sending and receiving epochs can differ.
              */
             if (!WPACKET_put_bytes_u64(pkt, recnum->epoch)
                 || !WPACKET_put_bytes_u64(pkt, recnum->seqnum)) {
@@ -1313,6 +1329,10 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             }
         }
     }
+
+    /* Keep the retransmit timer running until the whole flight is ACKed. */
+    if (dtls_any_sent_messages_are_missing_acknowledge(s))
+        return MSG_PROCESS_CONTINUE_READING;
 
     return MSG_PROCESS_FINISHED_READING;
 }

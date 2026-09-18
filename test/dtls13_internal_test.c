@@ -230,6 +230,356 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/* Exercise ACK coverage for the client's final flight and the server's tickets. */
+static int test_dtls13_ack_coverage(int server)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL, *sender, *peer;
+    SSL_CONNECTION *sc, *psc;
+    dtls_sent_msg *msg = NULL;
+    DTLS1_RECORD_NUMBER *recnum;
+    pitem *item;
+    piterator iter;
+    unsigned char ack[18], buf, discard[2048];
+    WPACKET pkt;
+    uint64_t epoch, seqnum;
+    size_t acklen, written;
+    OSSL_TIME timeout;
+    int i, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* An empty client Certificate and Finished give us two messages to ACK. */
+    if (!server)
+        SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_CTX_set_num_tickets(sctx, server ? 2 : 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(serverssl);
+    if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    if (!TEST_int_eq(SSL_accept(serverssl), 1))
+        goto end;
+    /* SSL_write() must not finish the peer's handshake and ACK our test flight. */
+    if (!server
+        && (!TEST_int_gt(BIO_read(SSL_get_rbio(clientssl), discard, sizeof(discard)), 0)
+            || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(clientssl)), 0)))
+        goto end;
+
+    sender = server ? serverssl : clientssl;
+    peer = server ? clientssl : serverssl;
+    sc = SSL_CONNECTION_FROM_SSL(sender);
+    psc = SSL_CONNECTION_FROM_SSL(peer);
+    if (!TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 2)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* ACK the last message first, keeping the earlier message outstanding. */
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    while ((item = pqueue_next(&iter)) != NULL)
+        msg = item->data;
+    if (!TEST_ptr(msg)
+        || !TEST_ptr(recnum = ossl_list_record_number_head(&msg->rec_nums)))
+        goto end;
+    epoch = recnum->epoch;
+    seqnum = recnum->seqnum;
+
+    /* Avoid timer expiry while inspecting ACK processing. */
+    timeout = sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+
+    for (i = 0; i < 5; i++) {
+        int complete = i == 4;
+        int appdata = server || complete;
+
+        /* Empty, nonmatching, partial, duplicate, then the remaining record. */
+        if (complete) {
+            dtls_sent_msg *unacked = pqueue_peek(&sc->d1->sent_messages)->data;
+            uint64_t oldseq;
+
+            if (!TEST_ptr(recnum = ossl_list_record_number_head(&unacked->rec_nums)))
+                goto end;
+            oldseq = recnum->seqnum;
+            sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+            if (!TEST_int_gt(DTLSv1_handle_timeout(sender), 0)
+                || !TEST_true(ossl_list_record_number_is_empty(&msg->rec_nums))
+                || !TEST_ptr(recnum = ossl_list_record_number_head(&unacked->rec_nums))
+                || !TEST_uint64_t_gt(recnum->seqnum, oldseq))
+                goto end;
+            sc->d1->next_timeout = timeout;
+            /* Only the unacknowledged message should have been retransmitted. */
+            msg = pqueue_peek(&sc->d1->sent_messages)->data;
+            if (!TEST_ptr(recnum = ossl_list_record_number_head(&msg->rec_nums)))
+                goto end;
+            epoch = recnum->epoch;
+            seqnum = recnum->seqnum;
+        }
+        if (!TEST_true(WPACKET_init_static_len(&pkt, ack, sizeof(ack), 2)))
+            goto end;
+        if ((i != 0
+                && (!TEST_true(WPACKET_put_bytes_u64(&pkt, epoch))
+                    || !TEST_true(WPACKET_put_bytes_u64(&pkt,
+                        i == 1 ? seqnum + 1000 : seqnum))))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &acklen))) {
+            WPACKET_cleanup(&pkt);
+            goto end;
+        }
+        WPACKET_cleanup(&pkt);
+        if (!TEST_int_eq(dtls1_write_bytes(psc, SSL3_RT_ACK,
+                             ack, acklen, &written),
+                1)
+            || !TEST_size_t_eq(written, acklen)
+            || !TEST_int_eq(SSL_write(peer, "x", 1), 1)
+            || !TEST_int_gt(BIO_flush(psc->wbio), 0))
+            goto end;
+
+        /* Application data is buffered until the client's final ACK arrives. */
+        ret = SSL_read(sender, &buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(sender, ret),
+                appdata ? SSL_ERROR_NONE : SSL_ERROR_WANT_READ)
+            || (appdata && !TEST_uchar_eq(buf, 'x'))
+            || !TEST_int_eq(SSL_get_state(sender), appdata ? TLS_ST_OK : TLS_ST_CW_FINISHED)
+            || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), complete ? 0 : 2)
+            || !TEST_int_eq(ossl_time_compare(sc->d1->next_timeout,
+                                complete ? ossl_time_zero() : timeout),
+                0)
+            || (!appdata && !TEST_size_t_eq(pqueue_size(sc->rlayer.d->buffered_app_data), i + 1))
+            || (!complete && !TEST_int_eq(ossl_list_record_number_is_empty(&msg->rec_nums), i >= 2)))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int ticket_count;
+
+static int count_ticket(SSL *ssl, SSL_SESSION *session)
+{
+    ticket_count++;
+    return 0;
+}
+
+/*
+ * Replace lost ticket ACKs after another loss or WANT_WRITE, with whole or
+ * fragmented retransmissions, and with or without an outstanding local flight.
+ */
+static int test_dtls13_ticket_ack_retransmit(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    BIO *retry = NULL;
+    piterator iter;
+    pitem *item;
+    unsigned char buf[2048];
+    unsigned int readseq, writeseq;
+    OSSL_TIME client_timeout = ossl_time_zero();
+    int i, ret, dropped, testresult = 0;
+    int pending_key_update = idx / 4;
+    int fragmented = (idx / 2) % 2;
+    int retry_write = idx % 2;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+    readseq = cc->d1->handshake_read_seq;
+    writeseq = cc->d1->next_handshake_write_seq;
+    if (!TEST_int_eq(ticket_count, 2)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 2))
+        goto end;
+
+    if (pending_key_update) {
+        if (!TEST_true(SSL_key_update(client, SSL_KEY_UPDATE_NOT_REQUESTED)))
+            goto end;
+        ret = SSL_do_handshake(client);
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+            || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 1))
+            goto end;
+        client_timeout = cc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+        writeseq = cc->d1->next_handshake_write_seq;
+    }
+
+    if (fragmented) {
+        /* Refragment the tickets on retransmission, after processing them whole. */
+        SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+        if (!TEST_long_gt(SSL_set_mtu(server, 256), 0))
+            goto end;
+    }
+    if (retry_write) {
+        if (!TEST_ptr(retry = BIO_new(bio_s_maybe_retry()))
+            || !TEST_true(BIO_up_ref(SSL_get_wbio(client))))
+            goto end;
+        SSL_set0_wbio(client, BIO_push(retry, SSL_get_wbio(client)));
+        retry = NULL;
+    }
+
+    for (i = 0; i < 2; i++) {
+        /*
+         * Lose the initial ACKs, then also lose the first replacement ACKs.
+         * In the pending-flight cases, discard the KeyUpdate too: the server
+         * must not process it or send an ACK for the client's local flight.
+         */
+        dropped = 0;
+        while (BIO_read(SSL_get_rbio(server), buf, sizeof(buf)) > 0)
+            dropped++;
+        if (!TEST_int_gt(dropped, 0))
+            goto end;
+        sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+        if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+            goto end;
+        iter = pqueue_iterator(&sc->d1->sent_messages);
+        while ((item = pqueue_next(&iter)) != NULL) {
+            dtls_sent_msg *msg = item->data;
+            size_t records = ossl_list_record_number_num(&msg->rec_nums);
+
+            if (fragmented ? !TEST_size_t_gt(records, 1) : !TEST_size_t_eq(records, 1))
+                goto end;
+        }
+
+        if (retry_write) {
+            if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(client),
+                                  MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 0, NULL),
+                    1))
+                goto end;
+            ret = SSL_read(client, buf, 1);
+            if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_WRITE))
+                goto end;
+            ret = SSL_read(client, buf, 1);
+            if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_WRITE)
+                || !TEST_long_eq(BIO_ctrl(SSL_get_wbio(client),
+                                     MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 100, NULL),
+                    1))
+                goto end;
+        }
+        ret = SSL_read(client, buf, 1);
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(SSL_get_state(client), pending_key_update ? TLS_ST_CW_KEY_UPDATE : TLS_ST_OK)
+            || !TEST_int_eq(ticket_count, 2)
+            || !TEST_uint_eq(cc->d1->handshake_read_seq, readseq)
+            || !TEST_uint_eq(cc->d1->next_handshake_write_seq, writeseq)
+            || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(server)), 0)
+            || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 2)
+            || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout))
+            || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), pending_key_update ? 1 : 0)
+            || !TEST_int_eq(ossl_time_compare(cc->d1->next_timeout, client_timeout), 0))
+            goto end;
+    }
+
+    /* The deliberately lost KeyUpdate must still be waiting for its own ACK. */
+    if (pending_key_update) {
+        testresult = 1;
+        goto end;
+    }
+
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout))
+        || !TEST_int_eq(DTLSv1_handle_timeout(server), 0)
+        || !TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free(retry);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int test_dtls13_pha_ack_retransmit(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    unsigned char buf, discard[2048];
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+    SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+    ret = SSL_read(client, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 2))
+        goto end;
+
+    /* Drop the ACK for the PHA response and let the client retransmit. */
+    if (!TEST_int_gt(BIO_read(SSL_get_rbio(client), discard, sizeof(discard)), 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+    cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+        goto end;
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+    ret = SSL_read(client, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_is_init_finished(server))
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(cc->d1->next_timeout))
+        || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED))
+        goto end;
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -242,6 +592,14 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_seq_num_reconstruction, OSSL_NELEM(seq_num_tests));
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_dtls13_increment_epoch_max);
+    ADD_ALL_TESTS(test_dtls13_ack_coverage, 2);
+    ADD_ALL_TESTS(test_dtls13_ticket_ack_retransmit, 8);
+    ADD_TEST(test_dtls13_pha_ack_retransmit);
 #endif
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    bio_s_maybe_retry_free();
 }

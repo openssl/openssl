@@ -95,6 +95,12 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
+    if (st->hand_state == TLS_ST_CR_ACK) {
+        st->hand_state = st->pre_ack_hand_state;
+        if (mt == SSL3_MT_DUMMY)
+            return 1;
+    }
+
     /*
      * Note: There is no case for TLS_ST_CW_CLNT_HELLO, because we haven't
      * yet negotiated TLSv1.3 at that point so that is handled by
@@ -179,9 +185,9 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
 
     case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CW_FINISHED:
-    case TLS_ST_CR_ACK:
     case TLS_ST_OK:
         if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
             st->hand_state = TLS_ST_CR_ACK;
             return 1;
         }
@@ -419,6 +425,12 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
 
+    if (st->ack_for_retransmit && st->hand_state != TLS_ST_CW_ACK) {
+        st->deferred_ack_state = st->hand_state;
+        st->hand_state = TLS_ST_CW_ACK;
+        return WRITE_TRAN_CONTINUE;
+    }
+
     /*
      * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
      * TLSv1.3 yet at that point. They are handled by
@@ -531,6 +543,11 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_ACK:
+        if (st->ack_for_retransmit) {
+            st->hand_state = st->deferred_ack_state;
+            st->ack_for_retransmit = 0;
+            return WRITE_TRAN_FINISHED;
+        }
         st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
