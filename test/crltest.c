@@ -1901,15 +1901,29 @@ static int test_crl_indirect_no_chain(void)
     return test;
 }
 
+static int sign_crl(X509_CRL *crl, EVP_PKEY *pkey, int use_ctx)
+{
+    EVP_MD_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!use_ctx)
+        return X509_CRL_sign(crl, pkey, EVP_sha256());
+    if (TEST_ptr(ctx = EVP_MD_CTX_new())
+        && TEST_int_gt(EVP_DigestSignInit(ctx, NULL, EVP_sha256(), NULL, pkey), 0))
+        ret = X509_CRL_sign_ctx(crl, ctx);
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
 /* An in-memory delta returned by X509_CRL_diff() must not act as a full CRL. */
-static int test_crl_diff_in_memory(void)
+static int test_crl_diff_in_memory(int use_ctx)
 {
     X509 *root = X509_from_strings(kRoot);
     X509 *leaf = X509_from_strings(kLeaf);
     EVP_PKEY *pkey = PKEY_from_strings(kRootPrivateKey);
     X509_CRL *base = CRL_from_strings(kCrlDeltaValid);
     X509_CRL *newer = NULL, *delta = NULL, *unsigned_delta = NULL;
-    X509_CRL *decoded = NULL;
+    X509_CRL *unexpected = NULL, *decoded = NULL;
     X509_EXTENSION *ext = NULL;
     ASN1_INTEGER *number = NULL;
     ASN1_TIME *last_update = NULL;
@@ -1921,20 +1935,15 @@ static int test_crl_diff_in_memory(void)
 
     /*
      * Turn the existing delta fixture into a full CRL that revokes |leaf|.
-     * X509_CRL_diff() reads cached fields from its inputs, so duplicate after
-     * each mutation to run the normal post-decode initialization.
+     * Signing must discard the cached delta indicator without a DER copy.
      */
     idx = X509_CRL_get_ext_by_NID(base, NID_delta_crl, -1);
     if (!TEST_int_ge(idx, 0)
         || !TEST_ptr(ext = X509_CRL_delete_ext(base, idx))
-        || !TEST_int_gt(X509_CRL_sign(base, pkey, EVP_sha256()), 0)
-        || !TEST_ptr(decoded = X509_CRL_dup(base)))
+        || !TEST_int_gt(sign_crl(base, pkey, use_ctx), 0))
         goto end;
     X509_EXTENSION_free(ext);
     ext = NULL;
-    X509_CRL_free(base);
-    base = decoded;
-    decoded = NULL;
 
     /* The newer full CRL still revokes |leaf|. */
     if (!TEST_ptr(newer = X509_CRL_dup(base))
@@ -1945,12 +1954,8 @@ static int test_crl_diff_in_memory(void)
             0)
         || !TEST_ptr(last_update = ASN1_TIME_set(NULL, kVerify - 86400))
         || !TEST_true(X509_CRL_set1_lastUpdate(newer, last_update))
-        || !TEST_int_gt(X509_CRL_sign(newer, pkey, EVP_sha256()), 0)
-        || !TEST_ptr(decoded = X509_CRL_dup(newer)))
+        || !TEST_int_gt(sign_crl(newer, pkey, use_ctx), 0))
         goto end;
-    X509_CRL_free(newer);
-    newer = decoded;
-    decoded = NULL;
 
     /* The delta omits |leaf| because it is already present in |base|. */
     if (!TEST_ptr(delta = X509_CRL_diff(base, newer, pkey, EVP_sha256(), 0))
@@ -1964,11 +1969,24 @@ static int test_crl_diff_in_memory(void)
         || !TEST_ulong_eq(ERR_peek_error(), 0))
         goto end;
 
+    /* The unsigned result must already be recognized as a delta. */
+    if (!TEST_ptr_null(unexpected = X509_CRL_diff(unsigned_delta, newer,
+                           NULL, NULL, 0))
+        || !TEST_err_r(ERR_LIB_X509, X509_R_CRL_ALREADY_DELTA))
+        goto end;
+
+    /* Signing it later must also replace the missing fingerprint. */
+    if (!TEST_int_gt(sign_crl(unsigned_delta, pkey, use_ctx), 0)
+        || !TEST_ptr(decoded = X509_CRL_dup(unsigned_delta))
+        || !TEST_int_eq(X509_CRL_match(unsigned_delta, decoded), 0))
+        goto end;
+
     test = 1;
 end:
     ASN1_TIME_free(last_update);
     ASN1_INTEGER_free(number);
     X509_EXTENSION_free(ext);
+    X509_CRL_free(unexpected);
     X509_CRL_free(decoded);
     X509_CRL_free(unsigned_delta);
     X509_CRL_free(delta);
@@ -1978,6 +1996,86 @@ end:
     X509_free(leaf);
     X509_free(root);
     return test;
+}
+
+/* Both signing APIs, with a fresh CRL or an entry appended after decoding. */
+static int test_crl_sign_entry_cache(int idx)
+{
+    int use_ctx = idx & 1, indirect = (idx & 2) != 0;
+    int fresh = (idx & 4) != 0, i, ret = 0;
+    X509 *cert = X509_from_strings(indirect ? kIndirectLeaf : kLeaf);
+    EVP_PKEY *pkey = PKEY_from_strings(kRootPrivateKey);
+    X509_CRL *fixture = CRL_from_strings(indirect ? kCrlIndirectRevoked : kCrlDeltaValid);
+    X509_CRL *crl = NULL, *decoded = NULL;
+    X509_REVOKED *entry = NULL, *rev = NULL;
+    ASN1_INTEGER *serial = NULL;
+    ASN1_ENUMERATED *reason = NULL;
+
+    if (!TEST_ptr(cert) || !TEST_ptr(pkey) || !TEST_ptr(fixture)
+        || !TEST_int_eq(X509_CRL_get0_by_cert(fixture, &entry, cert), 1)
+        || !TEST_ptr(rev = X509_REVOKED_dup(entry))
+        || !TEST_ptr(serial = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(serial, 2))
+        || !TEST_true(X509_set_serialNumber(cert, serial))
+        || !TEST_true(X509_REVOKED_set_serialNumber(rev, serial)))
+        goto end;
+
+    if (fresh) {
+        /* Copy only the encoded fields, leaving all caches uninitialized. */
+        if (!TEST_ptr(crl = X509_CRL_new())
+            || !TEST_true(X509_CRL_set_version(crl, X509_CRL_VERSION_2))
+            || !TEST_true(X509_CRL_set_issuer_name(crl, X509_CRL_get_issuer(fixture)))
+            || !TEST_true(X509_CRL_set1_lastUpdate(crl, X509_CRL_get0_lastUpdate(fixture)))
+            || !TEST_true(X509_CRL_set1_nextUpdate(crl, X509_CRL_get0_nextUpdate(fixture))))
+            goto end;
+        for (i = 0; i < X509_CRL_get_ext_count(fixture); i++) {
+            if (!TEST_true(X509_CRL_add_ext(crl, X509_CRL_get_ext(fixture, i), -1)))
+                goto end;
+        }
+    } else {
+        crl = fixture;
+        fixture = NULL;
+    }
+
+    /* The indirect fixture already has an explicit certificateIssuer. */
+    if (!indirect) {
+        if (!TEST_ptr(reason = ASN1_ENUMERATED_new())
+            || !TEST_true(ASN1_ENUMERATED_set(reason, CRL_REASON_REMOVE_FROM_CRL))
+            || !TEST_int_gt(X509_REVOKED_add1_ext_i2d(rev, NID_crl_reason,
+                                reason, 0, 0),
+                0))
+            goto end;
+    }
+    if (!TEST_true(X509_CRL_add0_revoked(crl, rev)))
+        goto end;
+    rev = NULL;
+    if (!TEST_int_gt(sign_crl(crl, pkey, use_ctx), 0)
+        || !TEST_ptr(decoded = X509_CRL_dup(crl))
+        || !TEST_int_eq(X509_CRL_match(crl, decoded), 0))
+        goto end;
+
+    if (indirect) {
+        if (!TEST_int_eq(X509_CRL_get0_by_cert(crl, NULL, cert), 1)
+            || !TEST_int_eq(X509_CRL_get0_by_cert(decoded, NULL, cert), 1)
+            || !TEST_true(X509_set_issuer_name(cert, X509_CRL_get_issuer(crl)))
+            || !TEST_int_eq(X509_CRL_get0_by_cert(crl, NULL, cert), 0)
+            || !TEST_int_eq(X509_CRL_get0_by_cert(decoded, NULL, cert), 0))
+            goto end;
+    } else if (!TEST_int_eq(X509_CRL_get0_by_serial(crl, NULL, serial), 2)
+        || !TEST_int_eq(X509_CRL_get0_by_serial(decoded, NULL, serial), 2)) {
+        goto end;
+    }
+    ret = 1;
+end:
+    ASN1_ENUMERATED_free(reason);
+    ASN1_INTEGER_free(serial);
+    X509_REVOKED_free(rev);
+    X509_CRL_free(decoded);
+    X509_CRL_free(crl);
+    X509_CRL_free(fixture);
+    EVP_PKEY_free(pkey);
+    X509_free(cert);
+    return ret;
 }
 
 static int test_crl_diff_mfail(void)
@@ -2114,7 +2212,8 @@ int setup_tests(void)
     ADD_TEST(test_crl_indirect_wrong_ta);
     ADD_TEST(test_crl_indirect_no_chain);
     ADD_ALL_TESTS(test_reuse_crl, 6);
-    ADD_TEST(test_crl_diff_in_memory);
+    ADD_ALL_TESTS(test_crl_diff_in_memory, 2);
+    ADD_ALL_TESTS(test_crl_sign_entry_cache, 8);
     ADD_MFAIL_TEST(test_crl_diff_mfail);
     ADD_TEST(test_crl_sigalg_mismatch);
     return 1;
