@@ -96,7 +96,7 @@ static SSL_CTX *create_context(bool isServer)
  * invoked for each handshake flight to choose the next retransmit interval.
  * timer_us holds the previous interval (0 on the first call). We start at 1s
  * and double, but cap the backoff so a stalled handshake is abandoned in a
- * reasonable time rather than the library default of nearly 8 minutes.
+ * reasonable time.
  */
 static unsigned int dtls_timer_cb(SSL *s, unsigned int timer_us)
 {
@@ -255,8 +255,8 @@ static void handle_connection(struct connection_thread_args *conn_args)
         }
 
         /*
-         * Wait for the socket to become ready rather than busy-looping. Size
-         * the wait to the DTLS retransmit timer so we wake when a flight is
+         * Wait for the socket to become ready. Size the wait to the DTLS
+         * retransmit timer so the loop wakes when a flight is
          * due for retransmission; fall back to a fixed interval if no timer is
          * armed.
          */

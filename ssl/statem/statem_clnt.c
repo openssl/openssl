@@ -3357,17 +3357,11 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
     s->session->not_resumable = 0;
 
     /*
-     * Refresh the session's recollection of the negotiated ALPN protocol to
-     * match this connection, rather than leaving it as whatever the session
-     * (or the session it was duplicated from, on a resumption) previously
-     * carried. Without this, a connection that resumes a session but
-     * negotiates no ALPN (or a different one) leaves the stale protocol
-     * name in place, and a later 0-RTT attempt against this ticket can
-     * incorrectly trip the "inconsistent early data alpn" check -- or, if
-     * the client happens to offer that same stale protocol again by
-     * coincidence, incorrectly appear consistent. This mirrors, on the
-     * client, the server-side fix for issue #11197 in
-     * tls_construct_new_session_ticket().
+     * The session's ALPN protocol must match what this connection
+     * negotiated, including none. A resumed session carries the protocol
+     * from the handshake that created it, and a later 0-RTT attempt checks
+     * that ALPN is consistent with the session (GitHub issue #11197). The
+     * server side is in tls_construct_new_session_ticket().
      */
     OPENSSL_free(s->session->ext.alpn_selected);
     if (s->s3.alpn_selected != NULL) {

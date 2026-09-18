@@ -972,37 +972,25 @@ static int test_tls13_ticket_early_data_accepted(void)
  *
  * A session that negotiated ALPN is resumed on a connection that negotiates no
  * ALPN at all (the client advertises none). The NewSessionTicket issued for the
- * resumed session must not retain the ALPN protocol from the original session;
- * otherwise a later 0-RTT attempt using that ticket would incorrectly assume
- * that protocol had been negotiated.
+ * resumed session must not carry the ALPN protocol from the original session
+ * (GitHub issue #11197).
  *
- * Regression test for GitHub issue #11197: tls_construct_new_session_ticket()
- * copied s->s3.alpn_selected into the session only when an ALPN protocol was
- * negotiated, but failed to clear s->session->ext.alpn_selected when it wasn't.
+ * A third connection resumes the ALPN-cleared ticket and negotiates
+ * "goodalpn", the original session's protocol. The ticket carries no ALPN, so
+ * 0-RTT must be rejected: the client's SSL_write_early_data() succeeds (the
+ * data is sent before the server's response is known) and
+ * SSL_get_early_data_status() reports that the server did not accept it.
  *
- * A third connection then resumes the now-ALPN-cleared ticket and negotiates
- * "goodalpn" again -- the same, non-empty protocol as the original session,
- * coincidentally. Since the ticket being resumed carries no ALPN, 0-RTT must
- * still be rejected: the client's SSL_write_early_data() appears to succeed
- * (the data is sent before the server's response is known), but a post hoc
- * SSL_get_early_data_status() check confirms the server never accepted it.
+ * A fourth connection resumes the same ticket again (anti-replay is disabled
+ * for this test) advertising no ALPN, consistent with the ticket, and 0-RTT
+ * must be accepted. This shows the rejection in connection 3 is specific to
+ * the ALPN mismatch.
  *
- * A fourth connection resumes that same ALPN-cleared ticket a second time --
- * anti-replay is disabled for this test, so reusing it twice is not itself a
- * reason for rejection -- but this time advertises no ALPN, consistent with
- * what the ticket actually recorded. 0-RTT must now be accepted. Without this
- * case, the rejection asserted for connection 3 would be unfalsifiable: it
- * would look identical if early data were simply never being accepted here
- * for any reason at all.
- *
- * The fourth connection resumes from an independent SSL_SESSION_dup() copy
- * of the ticket (taken before connection 3 uses the original), rather than
- * the original SSL_SESSION object itself: completing a handshake from a
- * resumed session marks that SSL_SESSION object not-resumable on the client
- * side as a single-use safeguard, independent of (and in addition to) the
- * server's SSL_OP_NO_ANTI_REPLAY setting. Resuming the literal object a
- * second time would therefore quietly fall back to a full, non-PSK
- * handshake instead of testing the intended 0-RTT path.
+ * The fourth connection resumes from an SSL_SESSION_dup() copy taken before
+ * connection 3 uses the original. Completing a handshake from a resumed
+ * session marks that SSL_SESSION object not-resumable on the client side,
+ * independent of the server's SSL_OP_NO_ANTI_REPLAY setting, and resuming it
+ * again falls back to a full handshake.
  */
 static int test_tls13_ticket_alpn_cleared(void)
 {
@@ -1052,7 +1040,7 @@ static int test_tls13_ticket_alpn_cleared(void)
          * Connection 2: resume the session, but the client advertises no ALPN
          * this time so nothing is negotiated. The server issues a fresh
          * NewSessionTicket for the resumed session; its stored ALPN must be
-         * cleared rather than inheriting "goodalpn" from the original session.
+         * empty.
          */
         && TEST_true(tls_channel_init(c, s, &resumed))
         && TEST_true(SSL_set_session(resumed.c.ssl, sess))
@@ -1080,14 +1068,8 @@ static int test_tls13_ticket_alpn_cleared(void)
         && TEST_true(tls_shutdown(&resumed))
         && TEST_ptr(sess2 = SSL_get1_session(resumed.c.ssl))
         /*
-         * Connection 3 is about to resume sess2 and, since 0-RTT is attempted
-         * on it, the client will mark sess2 not-resumable once that attempt
-         * completes (this happens on any full handshake completed from a
-         * resumed session, independent of the server's anti-replay setting --
-         * it is a client-side single-use restriction on the SSL_SESSION
-         * object itself). Take an independent copy now, while sess2 is still
-         * untouched, so connection 4 below has its own unconsumed ticket to
-         * resume from.
+         * Connection 3 resumes sess2, after which the client marks sess2
+         * not-resumable. Connection 4 resumes from this copy.
          */
         && TEST_ptr(sess2b = SSL_SESSION_dup(sess2))
         /*
@@ -1119,13 +1101,9 @@ static int test_tls13_ticket_alpn_cleared(void)
             SSL_EARLY_DATA_REJECTED)
         && TEST_true(tls_shutdown(&resumed2))
         /*
-         * Connection 4: resume the same ticket from connection 2 again, via
-         * the untouched copy (sess2b) taken before connection 3 consumed
-         * sess2 -- anti-replay is off, so a second use of that ticket is not
-         * itself rejected -- but this time advertise no ALPN, matching what
-         * the ticket recorded. 0-RTT must be accepted, proving connection 3
-         * was rejected for the ALPN mismatch specifically, not because early
-         * data never works.
+         * Connection 4: resume the same ticket again via the copy (sess2b),
+         * anti-replay being off, advertising no ALPN, matching the ticket.
+         * 0-RTT must be accepted.
          */
         && TEST_true(tls_channel_init(c, s, &resumed3))
         && TEST_true(SSL_set_session(resumed3.c.ssl, sess2b))

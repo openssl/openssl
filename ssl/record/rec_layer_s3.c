@@ -1178,11 +1178,9 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
 
     /*
      * Still nothing. In blocking mode this is where the caller waits: the
-     * connection has no BIO of its own to block in, so returning here would
-     * report SSL_ERROR_WANT_READ instead of blocking. Waiting inside this
-     * callback keeps that out of the record layer and the state machine, which
-     * see only a read which took a while, exactly as a blocking BIO would give
-     * them.
+     * connection has no BIO of its own to block in. The record layer and the
+     * state machine see only a read which took a while, as with a blocking
+     * BIO.
      */
     if (urxe == NULL && s->d1->listener != NULL
         && ossl_dtls_blocking(SSL_CONNECTION_GET_SSL(s))
@@ -1616,9 +1614,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
      * For DTLS listener-created connections the peer address must be applied
      * to every record layer as it is created (including the encrypted layers
      * built during the handshake). SSL_set1_initial_peer_addr() only updates
-     * the record layers that exist when it is called, so writes on a later
-     * layer would otherwise fall back to BIO_write() on the shared listener
-     * BIO instead of BIO_sendmmsg() to the peer.
+     * the record layers that exist when it is called. A layer without a peer
+     * address writes with BIO_write() on the shared listener BIO.
      */
 #ifndef OPENSSL_NO_SOCK
     if (SSL_CONNECTION_IS_DTLS(s)
