@@ -194,7 +194,25 @@ void gcm_ghash_v8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp, siz
 #define VAES512_ELIGIBLE 0
 #endif
 
+/*
+ * An MSVC build of the VAES-512 CTR kernel returns a wrong keystream for
+ * AES-192 and AES-256 on a CPU that really has AVX-512 + VAES, for every
+ * payload whose block count leaves a 4-block (single-zmm) step.  That also
+ * corrupts the AES-256-CTR based CTR-DRBG, so the damage is not confined to
+ * CTR callers.
+ *
+ * The same C is correct on VAES hardware under gcc, so this looks like code
+ * generation rather than a logic error.  MSVC 14.51 is the toolset that fails;
+ * 14.41 does not reproduce it.  Keep the CTR hook off for MSVC until that is
+ * understood.  AES-CBC decryption stays enabled: it passed on the same host
+ * and compiler that exposed the CTR failure.
+ * See https://github.com/openssl/openssl/issues/32873.
+ */
+#if defined(_MSC_VER) && !defined(__clang__)
+#define VAES_CTR_ELIGIBLE 0
+#else
 #define VAES_CTR_ELIGIBLE VAES512_ELIGIBLE
+#endif
 #define VAES_CBC_ELIGIBLE VAES512_ELIGIBLE
 
 #if VAES_CTR_ELIGIBLE
