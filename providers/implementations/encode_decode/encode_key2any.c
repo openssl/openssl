@@ -41,7 +41,7 @@
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
-#include "prov/xwing_codecs.h"
+#include "prov/mlx_codecs.h"
 #include "prov/lms_codecs.h"
 #include "providers/implementations/encode_decode/encode_key2any.inc"
 
@@ -912,13 +912,13 @@ static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
 static int xwing_spki_pub_to_der(const void *vkey, unsigned char **pder,
     ossl_unused void *ctx)
 {
-    return ossl_xwing_i2d_pubkey(vkey, pder);
+    return ossl_mlx_i2d_pubkey(vkey, pder);
 }
 
 static int xwing_pki_priv_to_der(const void *vkey, unsigned char **pder,
     ossl_unused void *ctx)
 {
-    return ossl_xwing_i2d_prvkey(vkey, pder);
+    return ossl_mlx_i2d_prvkey(vkey, pder);
 }
 
 #define xwing_epki_priv_to_der xwing_pki_priv_to_der

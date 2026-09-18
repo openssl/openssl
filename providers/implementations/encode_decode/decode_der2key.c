@@ -44,7 +44,7 @@
 #include "internal/nelem.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
-#include "prov/xwing_codecs.h"
+#include "prov/mlx_codecs.h"
 #include "prov/lms_codecs.h"
 #include "providers/implementations/encode_decode/decode_der2key.inc"
 
@@ -669,7 +669,7 @@ static void ml_kem_free_key(void *key)
 static void *xwing_d2i_PKCS8(const unsigned char **der, long der_len,
     struct der2key_ctx_st *ctx)
 {
-    MLX_KEY *key = ossl_xwing_d2i_PKCS8(*der, der_len,
+    MLX_KEY *key = ossl_mlx_d2i_PKCS8(*der, der_len, MLX_VARIANT_XWING,
         ctx->provctx, ctx->propq);
 
     if (key != NULL)
@@ -680,7 +680,7 @@ static void *xwing_d2i_PKCS8(const unsigned char **der, long der_len,
 static void *xwing_d2i_PUBKEY(const unsigned char **der, long der_len,
     struct der2key_ctx_st *ctx)
 {
-    MLX_KEY *key = ossl_xwing_d2i_PUBKEY(*der, der_len,
+    MLX_KEY *key = ossl_mlx_d2i_PUBKEY(*der, der_len, MLX_VARIANT_XWING,
         ctx->provctx, ctx->propq);
 
     if (key != NULL)

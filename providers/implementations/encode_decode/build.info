@@ -30,7 +30,7 @@ ENDIF
 IF[{- !$disabled{'ml-kem'} -}]
   SOURCE[$DECODER_GOAL]=ml_kem_codecs.c
   IF[{- !$disabled{'ecx'} -}]
-    SOURCE[$DECODER_GOAL]=xwing_codecs.c
+    SOURCE[$DECODER_GOAL]=mlx_codecs.c
   ENDIF
 ENDIF
 
