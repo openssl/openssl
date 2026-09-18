@@ -941,7 +941,7 @@ int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
         return 0;
     }
     if (ikmelen == 0
-        || ikmelen > (ctx->kem_info->one_stage_kdf
+        || ikmelen > (size_t)(ctx->kem_info->one_stage_kdf
                    ? OSSL_HPKE_MAX_PQIKMLEN
                    : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -1335,7 +1335,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     }
     if ((ikmlen > 0 && ikm == NULL)
         || (ikmlen == 0 && ikm != NULL)
-        || ikmlen > (kem_info->one_stage_kdf
+        || ikmlen > (size_t)(kem_info->one_stage_kdf
                    ? OSSL_HPKE_MAX_PQIKMLEN
                    : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
