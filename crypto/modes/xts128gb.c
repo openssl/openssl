@@ -97,7 +97,7 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
             tweak.u[0] = lo;
             tweak.u[1] = hi;
         } else {
-            uint8_t carry, res;
+            uint8_t carry, res = 0;
             carry = 0;
             for (i = 0; i < 16; ++i) {
                 res = (tweak.c[i] << 7) & 0x80;
@@ -155,7 +155,7 @@ int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
             tweak1.u[0] = lo;
             tweak1.u[1] = hi;
         } else {
-            uint8_t carry, res;
+            uint8_t carry, res = 0;
             carry = 0;
             for (i = 0; i < 16; ++i) {
                 res = (tweak.c[i] << 7) & 0x80;
