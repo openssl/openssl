@@ -383,7 +383,7 @@ err:
 static int test_evp_aead_provided(void)
 {
     size_t i, unknown = 0;
-    int testresult = 1;
+    int testresult = 0;
 
     EVP_CIPHER_do_all_provided(NULL, collect_aead_cipher_cb, &unknown);
 
@@ -391,11 +391,16 @@ static int test_evp_aead_provided(void)
         if (!TEST_true(aead_list[i].found)) {
             TEST_info("test_evp_aead_provided: %s NOT dynamically discovered",
                 aead_list[i].name);
-            testresult = 0;
+            goto err;
         }
     }
 
-    return testresult && TEST_size_t_eq(unknown, 0);
+    if (!TEST_size_t_eq(unknown, 0))
+        goto err;
+
+    testresult = 1;
+err:
+    return testresult;
 }
 
 int setup_tests(void)
