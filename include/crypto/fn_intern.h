@@ -88,6 +88,18 @@ OSSL_FN_ULONG ossl_fn_sub_words(OSSL_FN_ULONG *r, size_t rl,
     const OSSL_FN_ULONG *a, size_t al,
     const OSSL_FN_ULONG *b, size_t bl);
 
+/*
+ * Generate a DSA/ECDSA nonce 0 <= out < range, hedged against RNG failure.
+ * The nonce mixes in |priv| and |message| alongside fresh random bytes, so an
+ * RNG weakness is not fatal as long as |priv| stays secret.  This is the
+ * OSSL_FN analogue of ossl_bn_gen_dsa_nonce_fixed_top(); |out| must be sized to
+ * hold at least num_bits(|range|) bits.  |libctx| is used to fetch the digest
+ * and for RNG access.  Returns 1 on success, 0 on error.
+ */
+int ossl_fn_gen_dsa_nonce(OSSL_FN *out, const OSSL_FN *range,
+    const OSSL_FN *priv, const unsigned char *message,
+    size_t message_len, OSSL_LIB_CTX *libctx);
+
 #ifdef __cplusplus
 }
 #endif
