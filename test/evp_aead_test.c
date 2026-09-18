@@ -13,17 +13,48 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
-/*
- * Dynamically discover all applicable AEAD ciphers and verify their
- * behavior at the EVP interface level. This test should require zero
- * maintenance when new AEAD ciphers are added, as the discovery loop
- * handles them.
- *
- * This is a copy of the cipher_list discovery mechanism in
- * evp_extra_test.c, narrowed to AEAD ciphers only. Unlike that file,
- * EVP_CIPH_SIV_MODE is deliberately NOT excluded here -- SIV mode is
- * an AEAD mode and belongs in this table.
- */
+/* golden list of AEAD ciphers that should end up in aead_list */
+static const char *const aead_algs[] = {
+    /* always present: no-aes / no-gcm / no-ccm do not exist */
+    "AES-128-GCM",
+    "AES-192-GCM",
+    "AES-256-GCM",
+    "AES-128-CCM",
+    "AES-192-CCM",
+    "AES-256-CCM",
+#ifndef OPENSSL_NO_OCB
+    "AES-128-OCB",
+    "AES-192-OCB",
+    "AES-256-OCB",
+#endif
+#ifndef OPENSSL_NO_SIV
+    /* plain SIV and GCM-SIV share one guard: defltprov.c, build.info */
+    "AES-128-SIV",
+    "AES-192-SIV",
+    "AES-256-SIV",
+    "AES-128-GCM-SIV",
+    "AES-192-GCM-SIV",
+    "AES-256-GCM-SIV",
+#endif
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    "ChaCha20-Poly1305",
+#endif
+#ifndef OPENSSL_NO_ARIA
+    "ARIA-128-GCM",
+    "ARIA-192-GCM",
+    "ARIA-256-GCM",
+    "ARIA-128-CCM",
+    "ARIA-192-CCM",
+    "ARIA-256-CCM",
+#endif
+#ifndef OPENSSL_NO_SM4
+    "SM4-GCM",
+    "SM4-CCM", /* SM4 is 128-bit key only */
+#endif
+#ifndef OPENSSL_NO_ASCON128
+    "ASCON-AEAD128",
+#endif
+};
 
 /* maximum AEAD tag buffer size */
 #define EVPTEST_TAG_LEN_MAX EVP_MAX_MD_SIZE
@@ -38,31 +69,18 @@ typedef struct {
     int ivlen;
     int mode;
     int taglen;
+    unsigned int found : 1;
 } AEAD_DATA;
 
-static AEAD_DATA *aead_list = NULL;
-static int aead_list_n = 0;
-
-static int seen_name(const char *name)
-{
-    int i = 0;
-
-    if (name == NULL) {
-        return 1;
-    }
-    for (i = 0; i < aead_list_n; i++) {
-        if (OPENSSL_strcasecmp(aead_list[i].name, name) == 0)
-            return 1;
-    }
-    return 0;
-}
+/* populated from aead_algs[] by setup_aead_list(); same indices */
+static AEAD_DATA aead_list[OSSL_NELEM(aead_algs)];
 
 static void collect_aead_cipher_cb(EVP_CIPHER *ciph, void *arg)
 {
-    AEAD_DATA *info = NULL;
     const char *name = NULL;
+    size_t i = 0;
 
-    size_t *allocated = arg;
+    size_t *unknown = arg;
 
     if (ciph == NULL
         /*
@@ -92,69 +110,57 @@ static void collect_aead_cipher_cb(EVP_CIPHER *ciph, void *arg)
         || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA1-ETM")
         || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA256-ETM")
         || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA512-ETM")
-        /* fetch name and skip potential dupes */
-        || (name = EVP_CIPHER_get0_name(ciph)) == NULL
-        || seen_name(name) == 1)
+        /* fetch name */
+        || (name = EVP_CIPHER_get0_name(ciph)) == NULL)
         return;
 
-    /* First pass only counts ciphers to allocate memory. */
-    if (allocated != NULL) {
-        (*allocated)++;
-        return;
+    for (i = 0; i < OSSL_NELEM(aead_list); i++) {
+        if (ciph == aead_list[i].ciph) {
+            aead_list[i].found = 1;
+            return;
+        }
     }
 
-    info = &aead_list[aead_list_n];
-
-    if (!EVP_CIPHER_up_ref(ciph))
-        return;
-
-    info->ciph = ciph;
-    info->name = name;
-    info->keylen = EVP_CIPHER_get_key_length(ciph);
-    info->ivlen = EVP_CIPHER_get_iv_length(ciph);
-    info->mode = EVP_CIPHER_get_mode(ciph);
-    info->taglen = EVPTEST_TAG_LEN_DEFAULT;
-
-    aead_list_n++;
+    /* an AEAD the golden list does not know about */
+    TEST_info("collect_aead_cipher_cb: %s discovered at runtime but not in"
+              " aead_algs[]",
+        name);
+    (*unknown)++;
 }
 
+/*
+ * Populate aead_list from aead_algs[]. If anything fails here, we abort
+ * since tests expect a correctly populated list rather than a partial one.
+ */
 static int setup_aead_list(void)
 {
-    size_t aead_list_size = 0;
+    AEAD_DATA *info = NULL;
+    size_t i;
 
-    aead_list = NULL;
-    aead_list_n = 0;
+    for (i = 0; i < OSSL_NELEM(aead_algs); i++) {
+        info = &aead_list[i];
 
-    /* First pass counts only, to know how much to allocate. */
-    EVP_CIPHER_do_all_provided(NULL, collect_aead_cipher_cb, &aead_list_size);
+        if (!TEST_ptr(info->ciph = EVP_CIPHER_fetch(NULL, aead_algs[i], NULL))) {
+            TEST_info("setup_aead_list: %s failed to fetch", aead_algs[i]);
+            return 0;
+        }
 
-    if (!TEST_size_t_gt(aead_list_size, 0))
-        return 0;
+        info->name = aead_algs[i];
+        info->keylen = EVP_CIPHER_get_key_length(info->ciph);
+        info->ivlen = EVP_CIPHER_get_iv_length(info->ciph);
+        info->mode = EVP_CIPHER_get_mode(info->ciph);
+        info->taglen = EVPTEST_TAG_LEN_DEFAULT;
+    }
 
-    aead_list = OPENSSL_malloc(aead_list_size * sizeof(*aead_list));
-    if (!TEST_ptr(aead_list))
-        return 0;
-
-    /* Second pass actually populates aead_list. */
-    EVP_CIPHER_do_all_provided(NULL, collect_aead_cipher_cb, NULL);
-    return TEST_true(aead_list_n > 0);
+    return 1;
 }
 
 static void cleanup_aead_list(void)
 {
-    int i;
+    size_t i;
 
-    if (aead_list == NULL)
-        return;
-
-    for (i = 0; i < aead_list_n; i++) {
-        if (aead_list[i].ciph != NULL)
-            EVP_CIPHER_free((EVP_CIPHER *)aead_list[i].ciph);
-    }
-
-    OPENSSL_free(aead_list);
-    aead_list = NULL;
-    aead_list_n = 0;
+    for (i = 0; i < OSSL_NELEM(aead_list); i++)
+        EVP_CIPHER_free((EVP_CIPHER *)aead_list[i].ciph);
 }
 
 /*
@@ -364,12 +370,41 @@ err:
     return testresult;
 }
 
+/*
+ * Regression test for EVP_CIPHER_do_all_provided(),
+ * combined with a sanity check for expected AEAD algs in the static list.
+ * - every cipher in aead_algs[] must be discovered (tracked by found)
+ * - every discovered cipher must be in aead_algs[] (tracked by unknown)
+ * Meant to catch:
+ * - ciphers falling out of dynamic discovery for unexpected reasons
+ * - ciphers discovered dynamically for unexpected reasons
+ * Could happen for reasons like build system errors, flags shifting, etc.
+ */
+static int test_evp_aead_provided(void)
+{
+    size_t i, unknown = 0;
+    int testresult = 1;
+
+    EVP_CIPHER_do_all_provided(NULL, collect_aead_cipher_cb, &unknown);
+
+    for (i = 0; i < OSSL_NELEM(aead_list); i++) {
+        if (!TEST_true(aead_list[i].found)) {
+            TEST_info("test_evp_aead_provided: %s NOT dynamically discovered",
+                aead_list[i].name);
+            testresult = 0;
+        }
+    }
+
+    return testresult && TEST_size_t_eq(unknown, 0);
+}
+
 int setup_tests(void)
 {
     if (!setup_aead_list())
         return 0;
 
-    ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
+    ADD_TEST(test_evp_aead_provided);
+    ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, OSSL_NELEM(aead_list));
     return 1;
 }
 
