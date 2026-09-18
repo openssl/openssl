@@ -6,9 +6,6 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use OpenSSL::Test;
 use OpenSSL::Test::Simple;
 
-setup("test_xwing");
-
-simple_test("test_xwing", "xwing_test");
+simple_test("test_xwing", "xwing_test", "ml-kem", "ecx");
