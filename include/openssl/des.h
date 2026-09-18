@@ -26,6 +26,7 @@ extern "C" {
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef unsigned int DES_LONG;
+typedef char unsigned_int_must_be_4_bytes[sizeof(unsigned int) == 4 ? 1 : -1];
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #undef OPENSSL_EXTERN
