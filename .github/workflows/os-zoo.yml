@@ -24,6 +24,7 @@ on:
         description: 'Internal: openssl-ci-bot check-run ID. Leave empty for a normal manual run.'
         required: false
         type: string
+  pull_request:
 
 # Keep in sync with openssl-ci-bot's run-name parser, and with the Actions statistics
 # collector that attributes CI load by parsing this same string. Both break silently.
@@ -58,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: [edge, latest]
+        tag: [3.24, 3.23, 3.22, 3.21]
         cc: [gcc, clang]
     runs-on: ubuntu-latest
     container:
@@ -68,7 +69,7 @@ jobs:
       # for the reason why -Wno-sign-compare is needed with clang
       # -Wno-stringop-overflow is needed to silence a bogus
       # warning on new fortify-headers with gcc
-      EXTRA_CFLAGS: ${{ matrix.cc == 'clang' && '-Wno-sign-compare' || matrix.tag == 'edge' && '-Wno-stringop-overflow' || '' }}
+      EXTRA_CFLAGS: ${{ matrix.cc == 'clang' && '-Wno-sign-compare' || matrix.tag > '3.24' && '-Wno-stringop-overflow' || '' }}
       CC: ${{ matrix.cc }}
     steps:
     - name: install packages
@@ -113,7 +114,7 @@ jobs:
               apt-get install -y gcc make perl
           - image: docker.io/library/debian:12
             install: apt-get update && apt-get install -y gcc make perl
-          - image: docker.io/library/debian:trixie
+          - image: docker.io/library/debian:13
             install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/ubuntu:20.04
             install: apt-get update && apt-get install -y gcc make perl
@@ -121,18 +122,26 @@ jobs:
             install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/ubuntu:24.04
             install: apt-get update && apt-get install -y gcc make perl
-          - image: docker.io/library/fedora:41
-            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/ubuntu:26.04
+            install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/fedora:42
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/fedora:43
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/fedora:44
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/library/fedora:45
             install: dnf install -y gcc make perl-core
           - image: docker.io/library/centos:8
             install: |
               sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
               sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
               dnf install -y gcc make perl-core
-          - image: docker.io/library/rockylinux:8
+          - image: docker.io/rockylinux/rockylinux:8
             install: dnf install -y gcc make perl-core
-          - image: docker.io/library/rockylinux:9
+          - image: docker.io/rockylinux/rockylinux:9
+            install: dnf install -y gcc make perl-core
+          - image: docker.io/rockylinux/rockylinux:10
             install: dnf install -y gcc make perl-core
     runs-on: ubuntu-latest
     container: ${{ matrix.zoo.image }}
