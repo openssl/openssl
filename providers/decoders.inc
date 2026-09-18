@@ -80,6 +80,10 @@ DECODER_w_structure("ML-KEM-512", der, PrivateKeyInfo, ml_kem_512, yes, "PKItoML
 DECODER_w_structure("ML-KEM-512", der, SubjectPublicKeyInfo, ml_kem_512, yes, "SPKItoML-KEM-512-DER"),
 DECODER_w_structure("ML-KEM-768", der, PrivateKeyInfo, ml_kem_768, yes, "PKItoML-KEM-768-DER"),
 DECODER_w_structure("ML-KEM-768", der, SubjectPublicKeyInfo, ml_kem_768, yes, "SPKItoML-KEM-768-DER"),
+# ifndef OPENSSL_NO_ECX
+DECODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", der, PrivateKeyInfo, xwing, no, "PKItoX-Wing-DER"),
+DECODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", der, SubjectPublicKeyInfo, xwing, no, "SPKItoX-Wing-DER"),
+# endif
 DECODER_w_structure("ML-KEM-1024", der, PrivateKeyInfo, ml_kem_1024, yes, "PKItoML-KEM-1024-DER"),
 DECODER_w_structure("ML-KEM-1024", der, SubjectPublicKeyInfo, ml_kem_1024, yes, "SPKItoML-KEM-1024-DER"),
 #endif
