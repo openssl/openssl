@@ -130,6 +130,7 @@ providers/implementations/kdfs/x963kdf.inc
 providers/implementations/kem/ec_kem.inc
 providers/implementations/kem/ecx_kem.inc
 providers/implementations/kem/ml_kem_kem.inc
+providers/implementations/kem/mlx_kem.inc
 providers/implementations/kem/rsa_kem.inc
 providers/implementations/signature/dsa_sig.inc
 providers/implementations/signature/ecdsa_sig.inc
@@ -562,4 +563,3 @@ compile_commands.json
 lcov.info
 run_tests
 depend
-

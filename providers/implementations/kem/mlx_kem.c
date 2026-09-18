@@ -19,6 +19,7 @@
 #include "prov/mlx_kem.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/kem/mlx_kem.inc"
 
 static OSSL_FUNC_kem_newctx_fn mlx_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn mlx_kem_freectx;
@@ -100,38 +101,34 @@ mlx_kem_decapsulate_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 static const OSSL_PARAM *mlx_kem_settable_ctx_params(ossl_unused void *vctx,
     ossl_unused void *provctx)
 {
-    static const OSSL_PARAM params[] = {
-        OSSL_PARAM_octet_string(OSSL_KEM_PARAM_IKME, NULL, 0),
-        OSSL_PARAM_END
-    };
-
-    return params;
+    return mlx_kem_set_ctx_params_list;
 }
 
 static int
 mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_MLX_KEM_CTX *ctx = vctx;
-    const OSSL_PARAM *p;
-    void *dst;
-    size_t len = 0;
+    struct mlx_kem_set_ctx_params_st p;
 
-    if (ctx == NULL || params == NULL)
-        return ctx != NULL;
-    p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_IKME);
-    if (p == NULL)
-        return 1;
-    if (ctx->op != EVP_PKEY_OP_ENCAPSULATE || ctx->key == NULL
-        || ctx->key->xinfo->combiner != MLX_COMBINER_C2PRI
-        || ctx->key->xinfo->encap_seed_bytes == 0)
+    if (ctx == NULL || !mlx_kem_set_ctx_params_decoder(params, &p))
         return 0;
-    dst = ctx->entropy;
-    if (!OSSL_PARAM_get_octet_string(p, &dst, sizeof(ctx->entropy), &len)
-        || len != ctx->key->xinfo->encap_seed_bytes) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
-        return 0;
+
+    if (p.ikme != NULL) {
+        void *dst = ctx->entropy;
+        size_t len = 0;
+
+        if (ctx->op != EVP_PKEY_OP_ENCAPSULATE || ctx->key == NULL
+            || ctx->key->xinfo->combiner != MLX_COMBINER_C2PRI
+            || ctx->key->xinfo->encap_seed_bytes == 0)
+            return 0;
+        if (!OSSL_PARAM_get_octet_string(p.ikme, &dst, sizeof(ctx->entropy),
+                &len)
+            || len != ctx->key->xinfo->encap_seed_bytes) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
+            return 0;
+        }
+        ctx->entropy_len = len;
     }
-    ctx->entropy_len = len;
     return 1;
 }
 
