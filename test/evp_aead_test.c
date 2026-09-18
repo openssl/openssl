@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
+#include <openssl/provider.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -113,6 +114,10 @@ static void collect_aead_cipher_cb(EVP_CIPHER *ciph, void *arg)
         /* fetch name */
         || (name = EVP_CIPHER_get0_name(ciph)) == NULL)
         return;
+
+    /* TODO: debug for CI-only failure, remove */
+    TEST_info("collect_aead_cipher_cb: discovered %s from provider %s", name,
+        OSSL_PROVIDER_get0_name(EVP_CIPHER_get0_provider(ciph)));
 
     for (i = 0; i < OSSL_NELEM(aead_list); i++) {
         if (ciph == aead_list[i].ciph) {
@@ -386,6 +391,10 @@ static int test_evp_aead_provided(void)
     int testresult = 0;
 
     EVP_CIPHER_do_all_provided(NULL, collect_aead_cipher_cb, &unknown);
+
+    /* TODO: debug for CI-only failure, remove */
+    TEST_info("test_evp_aead_provided: %zu golden, %zu unknown",
+        OSSL_NELEM(aead_list), unknown);
 
     for (i = 0; i < OSSL_NELEM(aead_list); i++) {
         if (!TEST_true(aead_list[i].found)) {
