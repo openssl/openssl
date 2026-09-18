@@ -59,8 +59,12 @@ IF[{- !$disabled{asm} -}]
 
   $ECASM_c64xplus=
 
+  IF[{- !$disabled{'ecx'} -}]
+    $ECASM_riscv64=curve448-riscv64.S
+  ENDIF
+
   IF[{- !$disabled{'sm2'} -}]
-    $ECASM_riscv64=ecp_sm2p256.c  ecp_sm2p256-riscv64.S
+    $ECASM_riscv64=$ECASM_riscv64 ecp_sm2p256.c ecp_sm2p256-riscv64.S
     IF[{- !$disabled{'sm2-precomp'} -}]
       $ECASM_riscv64=$ECASM_riscv64 ecp_sm2p256_table.c
     ENDIF
@@ -151,4 +155,9 @@ ENDIF
 IF[{- !$disabled{'sm2'} -}]
   GENERATE[ecp_sm2p256-riscv64.S]=asm/ecp_sm2p256-riscv64.pl
   INCLUDE[ecp_sm2p256-riscv64.o]=..
+ENDIF
+
+IF[{- !$disabled{'ecx'} -}]
+  GENERATE[curve448-riscv64.S]=asm/curve448-riscv64.pl
+  INCLUDE[curve448-riscv64.o]=..
 ENDIF
