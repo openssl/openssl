@@ -153,7 +153,8 @@ static int mlx_c2pri_combine(unsigned char *out, const MLX_KEY *key,
     pk_t = OPENSSL_malloc(pk_t_len);
     if (pk_t == NULL
         || EVP_PKEY_get_octet_string_param(key->xkey,
-            OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, pk_t, pk_t_len, &pk_t_len) <= 0
+               OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, pk_t, pk_t_len, &pk_t_len)
+            <= 0
         || pk_t_len != key->xinfo->pubkey_bytes)
         goto end;
     md = EVP_MD_fetch(key->libctx, key->xinfo->kdf_name, key->propq);
@@ -365,8 +366,7 @@ end:
     mlxctx->entropy_len = 0;
     /* Erase any partial shared secret on failure */
     if (ret == 0)
-        OPENSSL_cleanse(shsec, c2pri ? key->xinfo->hybrid_shsec_bytes
-                                    : combined_slen);
+        OPENSSL_cleanse(shsec, c2pri ? key->xinfo->hybrid_shsec_bytes : combined_slen);
     EVP_PKEY_free(xkey);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -472,8 +472,7 @@ end:
     OPENSSL_cleanse(ss_tmp, sizeof(ss_tmp));
     /* Erase any partial shared secret on failure */
     if (ret == 0)
-        OPENSSL_cleanse(shsec, c2pri ? key->xinfo->hybrid_shsec_bytes
-                                    : combined_slen);
+        OPENSSL_cleanse(shsec, c2pri ? key->xinfo->hybrid_shsec_bytes : combined_slen);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(xkey);
     return ret;

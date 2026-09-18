@@ -1358,10 +1358,10 @@ MAKE_DECODER("ML-KEM-768", ml_kem_768, ml_kem_768, PrivateKeyInfo);
 MAKE_DECODER("ML-KEM-768", ml_kem_768, ml_kem_768, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-KEM-1024", ml_kem_1024, ml_kem_1024, PrivateKeyInfo);
 MAKE_DECODER("ML-KEM-1024", ml_kem_1024, ml_kem_1024, SubjectPublicKeyInfo);
-# ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECX
 MAKE_DECODER("X-Wing", xwing, xwing, PrivateKeyInfo);
 MAKE_DECODER("X-Wing", xwing, xwing, SubjectPublicKeyInfo);
-# endif
+#endif
 #endif
 #ifndef OPENSSL_NO_SLH_DSA
 MAKE_DECODER("SLH-DSA-SHA2-128s", slh_dsa_sha2_128s, slh_dsa, PrivateKeyInfo);

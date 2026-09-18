@@ -342,25 +342,25 @@ static int test_xwing_hpke(void)
 
     if (!TEST_true(OSSL_HPKE_suite_check(suite))
         || !TEST_size_t_eq(OSSL_HPKE_get_public_encap_size(suite),
-                sizeof(expected_ciphertext))
+            sizeof(expected_ciphertext))
         || !TEST_true(OSSL_HPKE_keygen(suite, pub, &publen, &recipient,
-                ikm, sizeof(ikm), NULL, NULL))
+            ikm, sizeof(ikm), NULL, NULL))
         || !TEST_size_t_eq(publen, sizeof(expected_pk))
         || !TEST_ptr(sender = OSSL_HPKE_CTX_new(OSSL_HPKE_MODE_BASE, suite,
-                OSSL_HPKE_ROLE_SENDER, NULL, NULL))
+                         OSSL_HPKE_ROLE_SENDER, NULL, NULL))
         || !TEST_true(OSSL_HPKE_encap(sender, enc, &enclen,
-                pub, publen, info, sizeof(info) - 1))
+            pub, publen, info, sizeof(info) - 1))
         || !TEST_size_t_eq(enclen, sizeof(expected_ciphertext))
         || !TEST_true(OSSL_HPKE_seal(sender, ciphertext, &ciphertext_len,
-                aad, sizeof(aad) - 1, plaintext, sizeof(plaintext)))
+            aad, sizeof(aad) - 1, plaintext, sizeof(plaintext)))
         || !TEST_ptr(receiver = OSSL_HPKE_CTX_new(OSSL_HPKE_MODE_BASE, suite,
-                OSSL_HPKE_ROLE_RECEIVER, NULL, NULL))
+                         OSSL_HPKE_ROLE_RECEIVER, NULL, NULL))
         || !TEST_true(OSSL_HPKE_decap(receiver, enc, enclen, recipient,
-                info, sizeof(info) - 1))
+            info, sizeof(info) - 1))
         || !TEST_true(OSSL_HPKE_open(receiver, recovered, &recovered_len,
-                aad, sizeof(aad) - 1, ciphertext, ciphertext_len))
+            aad, sizeof(aad) - 1, ciphertext, ciphertext_len))
         || !TEST_mem_eq(recovered, recovered_len,
-                plaintext, sizeof(plaintext)))
+            plaintext, sizeof(plaintext)))
         goto end;
 
     ret = 1;

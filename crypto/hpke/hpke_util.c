@@ -48,8 +48,7 @@ typedef struct {
 static const char LABEL_HPKEV1[] = "\x48\x50\x4B\x45\x2D\x76\x31";
 /* ASCII: "KEM" and "DeriveKeyPair", in hex for EBCDIC compatibility. */
 static const char LABEL_KEM[] = "\x4b\x45\x4d";
-static const char LABEL_DERIVE_KEY_PAIR[] =
-    "\x44\x65\x72\x69\x76\x65\x4b\x65\x79\x50\x61\x69\x72";
+static const char LABEL_DERIVE_KEY_PAIR[] = "\x44\x65\x72\x69\x76\x65\x4b\x65\x79\x50\x61\x69\x72";
 
 /*
  * Note that if additions are made to the set of IANA codepoints

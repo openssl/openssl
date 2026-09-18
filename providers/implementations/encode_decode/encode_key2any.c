@@ -1731,14 +1731,14 @@ MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, der);
 MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, pem);
 MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, pem);
-# ifndef OPENSSL_NO_ECX
+#ifndef OPENSSL_NO_ECX
 MAKE_ENCODER(xwing, xwing, EncryptedPrivateKeyInfo, der);
 MAKE_ENCODER(xwing, xwing, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(xwing, xwing, PrivateKeyInfo, der);
 MAKE_ENCODER(xwing, xwing, PrivateKeyInfo, pem);
 MAKE_ENCODER(xwing, xwing, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(xwing, xwing, SubjectPublicKeyInfo, pem);
-# endif
+#endif
 #endif
 
 /*

@@ -913,7 +913,8 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (mlx_kem_uses_hybrid_seed(key)) {
         if (gctx->seedlen == 0) {
             if (RAND_priv_bytes_ex(key->libctx, gctx->seed,
-                    key->xinfo->seed_bytes, 0) <= 0)
+                    key->xinfo->seed_bytes, 0)
+                <= 0)
                 goto err;
             gctx->seedlen = key->xinfo->seed_bytes;
         }

@@ -72,8 +72,8 @@ static const unsigned char xwing_spki_prefix[] = {
 /* Add future MLX hybrid encodings here. */
 static const MLX_CODEC mlx_codecs[] = {
     { MLX_VARIANT_XWING, NID_X_Wing, "X-Wing",
-      xwing_spki_prefix, sizeof(xwing_spki_prefix),
-      mlx_seed_d2i_private, mlx_seed_i2d_private, "seed:" }
+        xwing_spki_prefix, sizeof(xwing_spki_prefix),
+        mlx_seed_d2i_private, mlx_seed_i2d_private, "seed:" }
 };
 
 static const MLX_CODEC *mlx_get_codec(unsigned int variant)
