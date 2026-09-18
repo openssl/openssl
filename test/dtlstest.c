@@ -1579,6 +1579,105 @@ end:
 }
 #endif /* OPENSSL_NO_DTLS1_2 */
 
+#ifndef OPENSSL_NO_DTLS1_3
+/* Expire the retransmission timer as the queued ACK is read from the BIO. */
+static long ack_read_timeout_cb(BIO *b, int oper, const char *argp,
+    size_t len, int argi, long argl, int ret, size_t *processed)
+{
+    SSL_CONNECTION *sc = (SSL_CONNECTION *)BIO_get_callback_arg(b);
+
+    if (sc != NULL && oper == (BIO_CB_READ | BIO_CB_RETURN)
+        && ret > 0 && processed != NULL && *processed > 0) {
+        /* A nonzero deadline in the past makes the next timeout check fire. */
+        sc->d1->next_timeout = ossl_ticks2time(1);
+        BIO_set_callback_arg(b, NULL);
+    }
+    return ret;
+}
+
+/*
+ * Drive a DTLS 1.3 handshake until the server has completed. At that point
+ * the client has sent its Finished flight with the retransmission timer
+ * armed, and the server's ACK is queued for the client, unread.
+ */
+static int drive_until_server_finished(SSL *sssl, SSL *cssl)
+{
+    int i, rc, rs, e;
+
+    for (i = 0; i < 64 && !SSL_is_init_finished(sssl); i++) {
+        if (!SSL_is_init_finished(cssl)) {
+            rc = SSL_connect(cssl);
+            if (rc <= 0) {
+                e = SSL_get_error(cssl, rc);
+                if (!TEST_true(e == SSL_ERROR_WANT_READ
+                        || e == SSL_ERROR_WANT_WRITE))
+                    return 0;
+            }
+        }
+        rs = SSL_accept(sssl);
+        if (rs <= 0) {
+            e = SSL_get_error(sssl, rs);
+            if (!TEST_true(e == SSL_ERROR_WANT_READ || e == SSL_ERROR_WANT_WRITE))
+                return 0;
+        }
+    }
+    return SSL_is_init_finished(sssl);
+}
+
+/*
+ * Expire the timer after the initial timeout check, while receiving the ACK.
+ * Reading the rest of the ACK must not retransmit and overwrite its prefix.
+ */
+static int test_dtls13_ack_read_timeout(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    SSL_CONNECTION *sc;
+    BIO *rbio = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    /* Leave only the ACK queued for the client. */
+    if (!TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(drive_until_server_finished(sssl, cssl)))
+        goto end;
+
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(cssl))
+        || !TEST_false(SSL_is_init_finished(cssl))
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* Prevent expiry before the BIO callback, independently of elapsed time. */
+    sc->d1->next_timeout = ossl_time_infinite();
+    rbio = SSL_get_rbio(cssl);
+    BIO_set_callback_arg(rbio, (char *)sc);
+    BIO_set_callback_ex(rbio, ack_read_timeout_cb);
+
+    if (!TEST_int_eq(SSL_connect(cssl), 1)
+        || !TEST_ptr_null(BIO_get_callback_arg(rbio))
+        || !TEST_true(SSL_is_init_finished(cssl))
+        || !TEST_true(SSL_is_init_finished(sssl)))
+        goto end;
+
+    testresult = 1;
+end:
+    if (rbio != NULL) {
+        BIO_set_callback_ex(rbio, NULL);
+        BIO_set_callback_arg(rbio, NULL);
+    }
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -1622,6 +1721,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert_plant, 3);
     ADD_TEST(test_dtls13_epoch0_plaintext_alert);
     ADD_TEST(test_dtls13_ccm8_not_offered);
+    ADD_TEST(test_dtls13_ack_read_timeout);
 #endif
 
     return 1;
