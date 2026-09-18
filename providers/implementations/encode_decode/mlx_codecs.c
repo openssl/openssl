@@ -12,13 +12,45 @@
 #include "internal/nelem.h"
 #include "prov/mlx_codecs.h"
 
+typedef int (*mlx_d2i_private_fn)(MLX_KEY *key,
+    const unsigned char *in, size_t inlen);
+typedef int (*mlx_i2d_private_fn)(const MLX_KEY *key, unsigned char **out);
+
 typedef struct mlx_codec_st {
     unsigned int variant;
     int evp_type;
     const char *algorithm_name;
     const unsigned char *spki_prefix;
     size_t spki_prefix_len;
+    mlx_d2i_private_fn d2i_private;
+    mlx_i2d_private_fn i2d_private;
 } MLX_CODEC;
+
+static int mlx_seed_d2i_private(MLX_KEY *key,
+    const unsigned char *in, size_t inlen)
+{
+    return key != NULL && in != NULL
+        && inlen == key->xinfo->seed_bytes
+        && ossl_mlx_set_seed(key, in, inlen);
+}
+
+static int mlx_seed_i2d_private(const MLX_KEY *key, unsigned char **out)
+{
+    unsigned char *buf;
+    size_t len;
+
+    if (key == NULL || out == NULL)
+        return 0;
+    len = key->xinfo->seed_bytes;
+    if (len > INT_MAX || (buf = OPENSSL_malloc(len)) == NULL)
+        return 0;
+    if (!ossl_mlx_encode_seed(key, buf, len)) {
+        OPENSSL_clear_free(buf, len);
+        return 0;
+    }
+    *out = buf;
+    return (int)len;
+}
 
 /*-
  * X-Wing:
@@ -38,7 +70,8 @@ static const unsigned char xwing_spki_prefix[] = {
 /* Add future MLX hybrid encodings here. */
 static const MLX_CODEC mlx_codecs[] = {
     { MLX_VARIANT_XWING, NID_X_Wing, "X-Wing",
-      xwing_spki_prefix, sizeof(xwing_spki_prefix) }
+      xwing_spki_prefix, sizeof(xwing_spki_prefix),
+      mlx_seed_d2i_private, mlx_seed_i2d_private }
 };
 
 static const MLX_CODEC *mlx_get_codec(unsigned int variant)
@@ -95,16 +128,16 @@ MLX_KEY *ossl_mlx_d2i_PKCS8(const unsigned char *der, long derlen,
     unsigned int variant, PROV_CTX *provctx, const char *propq)
 {
     const MLX_CODEC *codec = mlx_get_codec(variant);
-    const unsigned char *p = der, *seed = NULL;
+    const unsigned char *p = der, *private_data = NULL;
     const X509_ALGOR *alg = NULL;
     PKCS8_PRIV_KEY_INFO *p8 = NULL;
     MLX_KEY *key = NULL;
-    int seedlen = 0;
+    int private_len = 0;
 
     if (der == NULL || derlen <= 0 || codec == NULL
         || (p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, derlen)) == NULL
         || p != der + derlen
-        || !PKCS8_pkey_get0(NULL, &seed, &seedlen, &alg, p8)
+        || !PKCS8_pkey_get0(NULL, &private_data, &private_len, &alg, p8)
         || !mlx_algor_ok(alg, codec->evp_type)) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
             "invalid %s PrivateKeyInfo",
@@ -112,10 +145,10 @@ MLX_KEY *ossl_mlx_d2i_PKCS8(const unsigned char *der, long derlen,
         goto end;
     }
     key = ossl_mlx_key_new(provctx, variant, propq);
-    if (key == NULL || seedlen != (long)key->xinfo->seed_bytes
-        || !ossl_mlx_set_seed(key, seed, (size_t)seedlen)) {
+    if (key == NULL || private_len < 0 || codec->d2i_private == NULL
+        || !codec->d2i_private(key, private_data, (size_t)private_len)) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-            "invalid %s seed length or key material", codec->algorithm_name);
+            "invalid %s private key material", codec->algorithm_name);
         ossl_mlx_key_free(key);
         key = NULL;
     }
@@ -144,18 +177,12 @@ int ossl_mlx_i2d_pubkey(const MLX_KEY *key, unsigned char **out)
 
 int ossl_mlx_i2d_prvkey(const MLX_KEY *key, unsigned char **out)
 {
-    unsigned char *buf;
-    size_t len;
+    const MLX_CODEC *codec;
 
     if (key == NULL || out == NULL)
         return 0;
-    len = key->xinfo->seed_bytes;
-    if (len > INT_MAX || (buf = OPENSSL_malloc(len)) == NULL)
+    codec = mlx_get_codec(key->variant);
+    if (codec == NULL || codec->i2d_private == NULL)
         return 0;
-    if (!ossl_mlx_encode_seed(key, buf, len)) {
-        OPENSSL_clear_free(buf, len);
-        return 0;
-    }
-    *out = buf;
-    return (int)len;
+    return codec->i2d_private(key, out);
 }

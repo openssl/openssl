@@ -52,17 +52,17 @@ static const unsigned char xwing_label[] = {
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
     { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768,
-        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_LEGACY_TLS,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
         NULL, 0, NULL, NULL, 0, 0, 0, 64 },
     { "EC", "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024,
-        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_LEGACY_TLS,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
         NULL, 0, NULL, NULL, 0, 0, 0, 80 },
 #if !defined(OPENSSL_NO_ECX)
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768,
-        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_LEGACY_TLS,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
         NULL, 0, NULL, NULL, 0, 0, 0, 64 },
     { "X448", NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024,
-        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_LEGACY_TLS,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
         NULL, 0, NULL, NULL, 0, 0, 0, 88 },
 #else
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
@@ -70,7 +70,7 @@ static const ECDH_VINFO hybrid_vtable[] = {
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
     { "curveSM2", "SM2", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768,
-        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_LEGACY_TLS,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
         NULL, 0, NULL, NULL, 0, 0, 0, 64 },
 #else
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
@@ -126,6 +126,7 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
     key->minfo = ossl_ml_kem_get_vinfo(ml_kem_variant);
     key->xinfo = &hybrid_vtable[v];
     key->xkey = key->mkey = NULL;
+    key->variant = v;
     key->state = MLX_HAVE_NOKEYS;
     key->propq = propq;
     return key;
@@ -309,7 +310,7 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
         return 0;
     }
     publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
-    prvlen = key->xinfo->combiner == MLX_COMBINER_C2PRI
+    prvlen = mlx_kem_uses_hybrid_seed(key)
         ? key->xinfo->seed_bytes
         : key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
     memset(&sub_arg, 0, sizeof(sub_arg));
@@ -337,7 +338,7 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
         goto err;
 
     /* Extract sub-component key material, or the canonical hybrid seed. */
-    if (key->xinfo->combiner == MLX_COMBINER_C2PRI) {
+    if (mlx_kem_uses_hybrid_seed(key)) {
         if (sub_arg.pubenc != NULL) {
             if (!ossl_mlx_encode_public_key(key, sub_arg.pubenc, publen))
                 goto err;
@@ -479,7 +480,7 @@ int ossl_mlx_set_seed(MLX_KEY *key, const unsigned char *seed,
     size_t expanded_len;
     int ret = 0;
 
-    if (key == NULL || key->xinfo->combiner != MLX_COMBINER_C2PRI
+    if (key == NULL || !mlx_kem_uses_hybrid_seed(key)
         || seed == NULL || seedlen != key->xinfo->seed_bytes
         || key->xinfo->traditional_seed_bytes > MLX_MAX_SEED_BYTES
         || mlx_kem_have_pubkey(key))
@@ -548,7 +549,7 @@ end:
 int ossl_mlx_set_public_key(MLX_KEY *key, const unsigned char *pub,
     size_t publen)
 {
-    if (key == NULL || key->xinfo->combiner != MLX_COMBINER_C2PRI
+    if (key == NULL
         || publen != key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes)
         return 0;
     return load_keys(key, pub, publen, NULL, 0);
@@ -605,7 +606,7 @@ static int mlx_kem_key_fromdata(MLX_KEY *key,
         && OSSL_PARAM_get_octet_string_ptr(p.privkey, &prvenc, &prvlen) != 1)
         return 0;
 
-    if (key->xinfo->combiner == MLX_COMBINER_C2PRI) {
+    if (mlx_kem_uses_hybrid_seed(key)) {
         if (publen != 0
             && publen != key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
@@ -724,7 +725,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     }
     if (mlx_kem_have_prvkey(key)) {
         if ((prv = p.priv) != NULL) {
-            size_t prvlen = key->xinfo->combiner == MLX_COMBINER_C2PRI
+            size_t prvlen = mlx_kem_uses_hybrid_seed(key)
                 ? key->xinfo->seed_bytes
                 : key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
 
@@ -747,7 +748,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     if (pub == NULL && prv == NULL)
         return 1;
 
-    if (key->xinfo->combiner == MLX_COMBINER_C2PRI) {
+    if (mlx_kem_uses_hybrid_seed(key)) {
         if (sub_arg.pubenc != NULL
             && !ossl_mlx_encode_public_key(key, sub_arg.pubenc,
                 key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes))
@@ -848,7 +849,7 @@ static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
         size_t len = 0;
 
         if (gctx->evp_type >= OSSL_NELEM(hybrid_vtable)
-            || hybrid_vtable[gctx->evp_type].combiner != MLX_COMBINER_C2PRI
+            || hybrid_vtable[gctx->evp_type].framework != MLX_FRAMEWORK_CG
             || !OSSL_PARAM_get_octet_string(p.seed, &dst,
                 sizeof(gctx->seed), &len)
             || len != hybrid_vtable[gctx->evp_type].seed_bytes) {
@@ -909,7 +910,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    if (key->xinfo->combiner == MLX_COMBINER_C2PRI) {
+    if (mlx_kem_uses_hybrid_seed(key)) {
         if (gctx->seedlen == 0) {
             if (RAND_priv_bytes_ex(key->libctx, gctx->seed,
                     key->xinfo->seed_bytes, 0) <= 0)

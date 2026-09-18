@@ -23,13 +23,26 @@
 #define MLX_MAX_COMBINED_SHARED_SECRET_BYTES 128
 #define MLX_C2PRI_SHA3_256_BYTES 32
 
+/*
+ * Internal combiner selector.  CONCAT denotes the direct component-secret
+ * concatenation used by the TLS hybrid groups (RFC 10024, Section 4.3).
+ * C2PRI denotes C2PRICombiner from Section 5.1.3 of
+ * draft-irtf-cfrg-hybrid-kems, as instantiated by X-Wing.
+ */
 typedef enum {
     MLX_COMBINER_CONCAT = 0,
     MLX_COMBINER_C2PRI
 } MLX_COMBINER;
 
+/*
+ * CG and CK are the framework names from draft-irtf-cfrg-hybrid-kems:
+ * Section 5.5 defines CG as the C2PRI combiner with a nominal group, and
+ * Section 5.6 defines CK as the C2PRI combiner with a traditional KEM.
+ * TLS_CONCAT is an internal name for the TLS hybrid groups that concatenate
+ * their component secrets before passing them to the TLS key schedule.
+ */
 typedef enum {
-    MLX_FRAMEWORK_LEGACY_TLS = 0,
+    MLX_FRAMEWORK_TLS_CONCAT = 0,
     MLX_FRAMEWORK_CG,
     MLX_FRAMEWORK_CK
 } MLX_FRAMEWORK;
@@ -61,6 +74,7 @@ typedef struct mlx_key_st {
     const ECDH_VINFO *xinfo;
     EVP_PKEY *mkey;
     EVP_PKEY *xkey;
+    unsigned int variant;
     unsigned int state;
     unsigned char seed[MLX_MAX_SEED_BYTES];
     unsigned int has_seed : 1;
@@ -76,6 +90,8 @@ typedef struct mlx_key_st {
 /* Both key parts have whatever the ML-KEM component has */
 #define mlx_kem_have_pubkey(key) ((key)->state > 0)
 #define mlx_kem_have_prvkey(key) ((key)->state > 1)
+#define mlx_kem_uses_hybrid_seed(key) \
+    ((key)->xinfo->framework == MLX_FRAMEWORK_CG)
 
 /* Helpers shared with the X-Wing encoder/decoder implementation. */
 MLX_KEY *ossl_mlx_key_new(PROV_CTX *provctx, unsigned int variant,
