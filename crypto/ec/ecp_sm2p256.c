@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,8 @@
 #include <string.h>
 #include <openssl/err.h>
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h" /* ossl_fn_get_words(), ossl_fn_get_dsize() */
 #include "ec_local.h"
 #include "internal/common.h"
 #include "internal/constant_time.h"
@@ -166,8 +168,19 @@ static ossl_inline int is_greater(const BN_ULONG *a, const BN_ULONG *b)
 
 /* Modular inverse |out| = |in|^(-1) mod |p|. */
 static ossl_inline void ecp_sm2p256_mod_inverse(BN_ULONG *out,
-    const BN_ULONG *in)
+    const BN_ULONG *in, int secret)
 {
+    /*
+     * TODO(FIXNUM): 'secret' marks an inverse over private data - a secret
+     * point's Z, reached from the point_get_affine_coords_bytes() extraction
+     * path.  BN_MOD_INV below is a binary-GCD inverse whose iteration count and
+     * branches depend on the operand, so for secret != 0 it is NOT
+     * constant-time and must be replaced by a timing-attack-resistant inverse
+     * The existing callers invert the input point of a scalar multiplication,
+     * which is public, and pass secret == 0, for which the variable-time
+     * inverse is acceptable.
+     */
+    (void)secret;
     BN_MOD_INV(out, in, ecp_sm2p256_div_by_2, ecp_sm2p256_sub, def_p);
 }
 
@@ -412,7 +425,7 @@ static void ecp_sm2p256_point_P_mul_by_scalar(P256_POINT *R, const BN_ULONG *k,
 
 /* Get affine point */
 static void ecp_sm2p256_point_get_affine(P256_POINT_AFFINE *R,
-    const P256_POINT *P)
+    const P256_POINT *P, int secret)
 {
     ALIGN32 BN_ULONG z_inv3[P256_LIMBS] = { 0 };
     ALIGN32 BN_ULONG z_inv2[P256_LIMBS] = { 0 };
@@ -423,7 +436,7 @@ static void ecp_sm2p256_point_get_affine(P256_POINT_AFFINE *R,
         return;
     }
 
-    ecp_sm2p256_mod_inverse(z_inv3, P->Z);
+    ecp_sm2p256_mod_inverse(z_inv3, P->Z, secret);
     ecp_sm2p256_sqr(z_inv2, z_inv3);
     ecp_sm2p256_mul(R->X, P->X, z_inv2);
     ecp_sm2p256_mul(z_inv3, z_inv3, z_inv2);
@@ -492,7 +505,7 @@ static int ecp_sm2p256_windowed_mul(const EC_GROUP *group,
             goto err;
         }
 
-        ecp_sm2p256_point_get_affine(&t.a, &p.p);
+        ecp_sm2p256_point_get_affine(&t.a, &p.p, 0);
         ecp_sm2p256_point_P_mul_by_scalar(&kP, k, t.a);
         ecp_sm2p256_point_add(r, r, &kP);
     }
@@ -500,6 +513,164 @@ static int ecp_sm2p256_windowed_mul(const EC_GROUP *group,
     ret = 1;
 err:
     OPENSSL_free(scalars);
+    return ret;
+}
+
+/*
+ * Single secret-scalar multiplication shared by the BIGNUM and OSSL_FN entry
+ * points: out = k*point, or k*generator when point is NULL.  The scalar is
+ * supplied as the P256 fixed-width limb array; the point coordinates stay
+ * BIGNUMs.  This is the only place the generator-precomputation / variable-point
+ * dispatch lives.
+ */
+static int ecp_sm2p256_mul_one(const EC_GROUP *group, P256_POINT *out,
+    const BN_ULONG *k, const EC_POINT *point)
+{
+    ALIGN32 union {
+        P256_POINT p;
+        P256_POINT_AFFINE a;
+    } t, p;
+
+    if (point == NULL) {
+        const EC_POINT *generator = EC_GROUP_get0_generator(group);
+
+        if (generator == NULL) {
+            ECerr(ERR_LIB_EC, EC_R_UNDEFINED_GENERATOR);
+            return 0;
+        }
+#if !defined(OPENSSL_NO_SM2_PRECOMP)
+        if (ecp_sm2p256_is_affine_G(generator)) {
+            ecp_sm2p256_point_G_mul_by_scalar(out, k);
+            return 1;
+        }
+#endif
+        point = generator;
+    }
+
+    /* no precomputed table, or a variable point */
+    if (ecp_sm2p256_bignum_field_elem(p.p.X, point->X) <= 0
+        || ecp_sm2p256_bignum_field_elem(p.p.Y, point->Y) <= 0
+        || ecp_sm2p256_bignum_field_elem(p.p.Z, point->Z) <= 0) {
+        ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        return 0;
+    }
+    ecp_sm2p256_point_get_affine(&t.a, &p.p, 0);
+    ecp_sm2p256_point_P_mul_by_scalar(out, k, t.a);
+    return 1;
+}
+
+/*
+ * Write a P256_POINT result into r.  The result may be secret (an ECDH shared
+ * point), so store the coordinates through the fixed-width OSSL_FN
+ * representation: bn_release() normalises 'top' in constant time, unlike
+ * bn_set_words(), which leaks the leading-zero-limb count via timing.
+ */
+static int ecp_sm2p256_set_result(EC_POINT *r, const P256_POINT *p)
+{
+    OSSL_FN *rx = NULL, *ry = NULL, *rz = NULL;
+    int ok;
+
+    ok = (rx = bn_acquire_ossl_fn(r->X, P256_LIMBS)) != NULL
+        && (ry = bn_acquire_ossl_fn(r->Y, P256_LIMBS)) != NULL
+        && (rz = bn_acquire_ossl_fn(r->Z, P256_LIMBS)) != NULL
+        && ossl_fn_set_words(rx, p->X, P256_LIMBS)
+        && ossl_fn_set_words(ry, p->Y, P256_LIMBS)
+        && ossl_fn_set_words(rz, p->Z, P256_LIMBS);
+    r->Z_is_one = OSSL_FN_is_one(rz);
+    if (rx != NULL)
+        bn_release(r->X, P256_LIMBS);
+    if (ry != NULL)
+        bn_release(r->Y, P256_LIMBS);
+    if (rz != NULL)
+        bn_release(r->Z, P256_LIMBS);
+    if (!ok)
+        return 0;
+    return 1;
+}
+
+/*
+ * Read a coordinate BIGNUM into P256 limbs at fixed width, in constant time.
+ * Unlike ecp_sm2p256_bignum_field_elem() (bn_copy_words(), which copies only
+ * 'top' limbs and so leaks the coordinate's magnitude) this reads the full
+ * width through the BIGNUM's OSSL_FN view - needed because the point being
+ * read here is secret.  Returns 0 if the BIGNUM has no OSSL_FN view or holds a
+ * value wider than P256 (checked by folding the excess limbs in constant time).
+ */
+static int ecp_sm2p256_secret_coord(BN_ULONG out[P256_LIMBS], const BIGNUM *in)
+{
+    const OSSL_FN *fn = bn_get_ossl_fn(in);
+    const OSSL_FN_ULONG *w;
+    size_t dsize, i;
+    OSSL_FN_ULONG hi = 0;
+
+    if (fn == NULL)
+        return 0;
+    w = ossl_fn_get_words(fn);
+    dsize = ossl_fn_get_dsize(fn);
+    for (i = 0; i < P256_LIMBS; i++)
+        out[i] = i < dsize ? w[i] : 0;
+    for (; i < dsize; i++)
+        hi |= w[i];
+    return hi == 0;
+}
+
+/*
+ * Serialise a P256 field element (little-endian limbs, reduced mod p) into
+ * 'len' big-endian bytes, in constant time.  'len' is the field width, i.e.
+ * P256_LIMBS limbs, so every byte of 'in' is consumed.
+ */
+static ossl_inline void ecp_sm2p256_felem_to_be(unsigned char *out, size_t len,
+    const BN_ULONG *in)
+{
+    size_t i;
+
+    for (i = 0; i < len; i++)
+        out[len - 1 - i] = (unsigned char)(in[i / sizeof(BN_ULONG)]
+            >> (8 * (i % sizeof(BN_ULONG))));
+}
+
+/*
+ * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
+ * method's point_get_affine_coords_bytes slot.  'point' may be secret (an SM2
+ * kP, an ECDH shared point), so its coordinates are read at fixed width and
+ * converted through ecp_sm2p256_point_get_affine(), which works entirely on
+ * fixed-width limbs, never through a variable-width BIGNUM.  See
+ * EC_POINT_get_affine_coords_bytes().
+ *
+ * The affine conversion's field inverse is not yet constant-time; see the
+ * TODO(FIXNUM) in ecp_sm2p256_mod_inverse().
+ */
+static int ecp_sm2p256_point_get_affine_coords_bytes(const EC_GROUP *group,
+    const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len)
+{
+    int ret = 0;
+    ALIGN32 P256_POINT jp;
+    ALIGN32 P256_POINT_AFFINE aff;
+
+    if (len != P256_LIMBS * sizeof(BN_ULONG)) {
+        ECerr(ERR_LIB_EC, EC_R_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (EC_POINT_is_at_infinity(group, point))
+        return 0;
+
+    if (!ecp_sm2p256_secret_coord(jp.X, point->X)
+        || !ecp_sm2p256_secret_coord(jp.Y, point->Y)
+        || !ecp_sm2p256_secret_coord(jp.Z, point->Z)) {
+        ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    ecp_sm2p256_point_get_affine(&aff, &jp, 1);
+    if (x != NULL)
+        ecp_sm2p256_felem_to_be(x, len, aff.X);
+    if (y != NULL)
+        ecp_sm2p256_felem_to_be(y, len, aff.Y);
+    ret = 1;
+
+err:
+    OPENSSL_cleanse(&jp, sizeof(jp));
+    OPENSSL_cleanse(&aff, sizeof(aff));
     return ret;
 }
 
@@ -512,7 +683,6 @@ static int ecp_sm2p256_points_mul(const EC_GROUP *group,
     const BIGNUM *scalars[], BN_CTX *ctx)
 {
     int ret = 0, p_is_infinity = 0;
-    const EC_POINT *generator = NULL;
     ALIGN32 BN_ULONG k[P256_LIMBS] = { 0 };
     ALIGN32 union {
         P256_POINT p;
@@ -527,35 +697,12 @@ static int ecp_sm2p256_points_mul(const EC_GROUP *group,
     BN_CTX_start(ctx);
 
     if (scalar) {
-        generator = EC_GROUP_get0_generator(group);
-        if (generator == NULL) {
-            ECerr(ERR_LIB_EC, EC_R_UNDEFINED_GENERATOR);
-            goto err;
-        }
-
         if (!ecp_sm2p256_bignum_field_elem(k, scalar)) {
             ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
             goto err;
         }
-#if !defined(OPENSSL_NO_SM2_PRECOMP)
-        if (ecp_sm2p256_is_affine_G(generator)) {
-            ecp_sm2p256_point_G_mul_by_scalar(&p.p, k);
-        } else
-#endif
-        {
-            /* if no precomputed table */
-            const EC_POINT *new_generator[1];
-            const BIGNUM *g_scalars[1];
-
-            new_generator[0] = generator;
-            g_scalars[0] = scalar;
-
-            if (!ecp_sm2p256_windowed_mul(group, &p.p, g_scalars, new_generator,
-                    (new_generator[0] != NULL
-                        && g_scalars[0] != NULL),
-                    ctx))
-                goto err;
-        }
+        if (!ecp_sm2p256_mul_one(group, &p.p, k, NULL))
+            goto err;
     } else {
         p_is_infinity = 1;
     }
@@ -572,17 +719,73 @@ static int ecp_sm2p256_points_mul(const EC_GROUP *group,
             ecp_sm2p256_point_add(&p.p, &p.p, out);
     }
 
-    /* Not constant-time, but we're only operating on the public output. */
-    if (!bn_set_words(r->X, p.p.X, P256_LIMBS)
-        || !bn_set_words(r->Y, p.p.Y, P256_LIMBS)
-        || !bn_set_words(r->Z, p.p.Z, P256_LIMBS))
-        goto err;
-    r->Z_is_one = is_equal(bn_get_words(r->Z), ONE) & 1;
+    ret = ecp_sm2p256_set_result(r, &p.p);
 
-    ret = 1;
 err:
     BN_CTX_end(ctx);
     return ret;
+}
+
+/*-
+ * OSSL_FN counterpart of ecp_sm2p256_points_mul() and the 'mul_fn' slot of this
+ * method, reached from EC_POINT_mul_fn() when the scalar is secret.  It covers
+ * the single-scalar cases, which is all a secret scalar needs; the multi-scalar
+ * sum is verification-only and has no secret to protect.
+ *
+ * The scalar's limbs are already the P256 working array's format, so they are
+ * used straight out of the OSSL_FN when it is at least field-wide (no copy, no
+ * BIGNUM); a wider value is rejected, a narrower one is zero-extended.  The
+ * point coordinates and the result stay BIGNUMs, as in the BIGNUM version.
+ */
+static int ecp_sm2p256_points_mul_fn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point, OSSL_FN_CTX *ctx)
+{
+    int ret = 0;
+    const OSSL_FN_ULONG *w;
+    size_t dsize, i;
+    const BN_ULONG *k;
+    ALIGN32 BN_ULONG kbuf[P256_LIMBS] = { 0 };
+    ALIGN32 P256_POINT p;
+
+    (void)ctx; /* fixed-width vectors; no OSSL_FN scratch context needed */
+
+    if (scalar == NULL) {
+        ECerr(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (point != NULL && EC_POINT_is_at_infinity(group, point))
+        return EC_POINT_set_to_infinity(group, r);
+
+    w = ossl_fn_get_words(scalar);
+    dsize = ossl_fn_get_dsize(scalar);
+    for (i = P256_LIMBS; i < dsize; i++) {
+        if (w[i] != 0) {
+            ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+            goto err;
+        }
+    }
+    if (dsize >= P256_LIMBS) {
+        k = w;
+    } else {
+        for (i = 0; i < P256_LIMBS; i++)
+            kbuf[i] = i < dsize ? w[i] : 0;
+        k = kbuf;
+    }
+
+    if (!ecp_sm2p256_mul_one(group, &p, k, point))
+        goto err;
+    ret = ecp_sm2p256_set_result(r, &p);
+
+err:
+    OPENSSL_cleanse(kbuf, sizeof(kbuf));
+    return ret;
+}
+
+/* This method needs no scratch context; see ecp_sm2p256_points_mul_fn(). */
+static size_t ecp_sm2p256_points_mul_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+{
+    return OSSL_FN_CTX_SIZE_NONE;
 }
 
 static int ecp_sm2p256_field_mul(const EC_GROUP *group, BIGNUM *r,
@@ -687,7 +890,11 @@ const EC_METHOD *EC_GFp_sm2p256_method(void)
         0, /* blind_coordinates */
         0, /* ladder_pre */
         0, /* ladder_step */
-        0 /* ladder_post */
+        0, /* ladder_post */
+        0, /* group_full_init */
+        ecp_sm2p256_points_mul_fn, /* mul_fn */
+        ecp_sm2p256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
+        ecp_sm2p256_point_get_affine_coords_bytes /* point_get_affine_coords_bytes */
     };
 
     return &ret;

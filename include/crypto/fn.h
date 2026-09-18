@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -197,6 +197,42 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
  */
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
 
+/**
+ * Serialise @p a as @p len big-endian bytes into @p out, in constant time.
+ *
+ * The output width @p len is chosen by the caller (e.g. a field-element or
+ * scalar byte length); the low @p len bytes of @p a are written most-
+ * significant first.
+ *
+ * @param[in]   a       The number to serialise
+ * @param[out]  out     Buffer of at least @p len bytes
+ * @param[in]   len     Number of bytes to write
+ * @returns     1 on success, 0 if @p a does not fit in @p len bytes or on a
+ *              NULL argument
+ *
+ * @note Constant-time: the byte layout depends only on @p len and @p a's
+ *       public width, not on its value.
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len);
+
+/**
+ * Load @p len big-endian bytes from @p in into @p r, in constant time.
+ *
+ * The bytes are read most-significant first and placed in @p r's fixed width; a
+ * shorter input is zero-extended.  The value must fit: any input byte beyond
+ * @p r's width must be zero, else the call fails, mirroring OSSL_FN_to_bytes_be().
+ *
+ * @param[out]  r       The destination, filled to its full width
+ * @param[in]   in      Buffer of @p len bytes
+ * @param[in]   len     Number of bytes to read
+ * @returns     1 on success, 0 if the value does not fit in @p r or on a NULL
+ *              argument
+ *
+ * @note Constant-time: the layout depends only on @p len and @p r's public
+ *       width, not on the bytes' values.
+ */
+int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len);
+
 /*
  * Sentinel return value for the OSSL_FN_*_ctx_size() family, meaning "this
  * operation needs no context"; the caller may skip the OSSL_FN_CTX
@@ -205,6 +241,22 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
  * is smaller than any possible real size.
  */
 #define OSSL_FN_CTX_SIZE_NONE ((size_t)1)
+
+/**
+ * Conditionally swap two OSSL_FN numbers of equal width.
+ *
+ * @param[in]           condition       Swap if non-zero, leave alone if zero
+ * @param[in,out]       a               The first operand
+ * @param[in,out]       b               The second operand
+ * @returns             1 on success, 0 on error
+ *
+ * @note Both operands must have the same width; a mismatch is reported as
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ *
+ * @note Constant-time in both @p condition and the limb values.
+ *       The only control flow branches on the operands' public width.
+ */
+int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b);
 
 /**
  * Calculate the arena payload size for an OSSL_FN_CTX.
