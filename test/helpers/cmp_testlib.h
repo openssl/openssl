@@ -20,7 +20,7 @@
 #include "../testutil.h"
 
 #ifndef OPENSSL_NO_CMP
-#define CMP_TEST_REFVALUE_LENGTH 15 /* arbitrary value */
+#define CMP_TEST_REFVALUE "test-UTF8-Caf\xc3\xa9" /* arbitrary value: Café */
 OSSL_CMP_MSG *load_pkimsg(const char *file, OSSL_LIB_CTX *libctx);
 int valid_asn1_encoding(const OSSL_CMP_MSG *msg);
 int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2);
