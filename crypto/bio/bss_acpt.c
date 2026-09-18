@@ -209,6 +209,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
+            ERR_clear_last_mark();
             c->accept_sock = s;
             b->num = s;
             c->state = BIO_ACPT_S_LISTEN;
