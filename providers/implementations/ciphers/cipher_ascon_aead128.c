@@ -337,6 +337,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
             ciphertext, tag, tag_len);
         *outl = ret;
         ctx->is_tag_set = 1;
+        ctx->is_ongoing = 0; /* finished: no further update/final on this IV */
 
         return 1;
     } else if (ctx->direction == DECRYPTION) {
@@ -352,6 +353,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
                 plaintext, &is_tag_valid,
                 expected_tag,
                 expected_tag_len);
+            ctx->is_ongoing = 0; /* finished, whatever the verdict */
 
             if (is_tag_valid) {
                 *outl = ret;
