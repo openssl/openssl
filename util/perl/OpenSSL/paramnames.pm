@@ -445,6 +445,7 @@ my %params = (
 
 # EC, X25519 and X448 Key generation parameters
     'OSSL_PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
+    'OSSL_PKEY_PARAM_SEED' =>             "seed",
 
 # ML-KEM parameters
     'OSSL_PKEY_PARAM_ML_KEM_SEED' => "seed",

@@ -16,6 +16,7 @@
 #include <openssl/hpke.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/byteorder.h>
 #include "crypto/ecx.h"
 #include "crypto/rand.h"
 #include "internal/hpke_util.h"
@@ -45,6 +46,10 @@ typedef struct {
 /* Define HPKE labels from RFC9180 in hex for EBCDIC compatibility */
 /* ASCII: "HPKE-v1", in hex for EBCDIC compatibility */
 static const char LABEL_HPKEV1[] = "\x48\x50\x4B\x45\x2D\x76\x31";
+/* ASCII: "KEM" and "DeriveKeyPair", in hex for EBCDIC compatibility. */
+static const char LABEL_KEM[] = "\x4b\x45\x4d";
+static const char LABEL_DERIVE_KEY_PAIR[] =
+    "\x44\x65\x72\x69\x76\x65\x4b\x65\x79\x50\x61\x69\x72";
 
 /*
  * Note that if additions are made to the set of IANA codepoints
@@ -61,23 +66,27 @@ static const char LABEL_HPKEV1[] = "\x48\x50\x4B\x45\x2D\x76\x31";
  * See RFC9180 Section 7.1 "Table 2 KEM IDs"
  */
 static const OSSL_HPKE_KEM_INFO hpke_kem_tab[] = {
+#if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
+    { OSSL_HPKE_KEM_ID_XWING, OSSL_HPKE_KEMSTR_XWING, NULL,
+        LN_sha256, SHA256_DIGEST_LENGTH, 1120, 1216, 32, 0x00, 0, 1 },
+#endif
 #ifndef OPENSSL_NO_EC
     { OSSL_HPKE_KEM_ID_P256, "EC", OSSL_HPKE_KEMSTR_P256,
-        LN_sha256, SHA256_DIGEST_LENGTH, 65, 65, 32, 0xFF },
+        LN_sha256, SHA256_DIGEST_LENGTH, 65, 65, 32, 0xFF, 1, 0 },
     { OSSL_HPKE_KEM_ID_P384, "EC", OSSL_HPKE_KEMSTR_P384,
-        LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0xFF },
+        LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0xFF, 1, 0 },
     { OSSL_HPKE_KEM_ID_P521, "EC", OSSL_HPKE_KEMSTR_P521,
-        LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0x01 },
+        LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0x01, 1, 0 },
 #ifndef OPENSSL_NO_ECX
     { OSSL_HPKE_KEM_ID_X25519, OSSL_HPKE_KEMSTR_X25519, NULL,
         LN_sha256, SHA256_DIGEST_LENGTH,
-        X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0x00 },
+        X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0x00, 1, 0 },
     { OSSL_HPKE_KEM_ID_X448, OSSL_HPKE_KEMSTR_X448, NULL,
         LN_sha512, SHA512_DIGEST_LENGTH,
-        X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0x00 }
+        X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0x00, 1, 0 }
 #endif
 #else
-    { OSSL_HPKE_KEM_ID_RESERVED, NULL, NULL, NULL, 0, 0, 0, 0, 0x00 }
+    { OSSL_HPKE_KEM_ID_RESERVED, NULL, NULL, NULL, 0, 0, 0, 0, 0x00, 0, 0 }
 #endif
 };
 
@@ -130,7 +139,11 @@ static const synonymttab_t kemstrtab[] = {
     { OSSL_HPKE_KEM_ID_X25519,
         { OSSL_HPKE_KEMSTR_X25519, "0x20", "0x20", "32" } },
     { OSSL_HPKE_KEM_ID_X448,
-        { OSSL_HPKE_KEMSTR_X448, "0x21", "0x21", "33" } }
+        { OSSL_HPKE_KEMSTR_X448, "0x21", "0x21", "33" } },
+#if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
+    { OSSL_HPKE_KEM_ID_XWING,
+        { OSSL_HPKE_KEMSTR_XWING, "0x647a", "0x647A", "25722" } }
+#endif
 #endif
 };
 static const synonymttab_t kdfstrtab[] = {
@@ -336,6 +349,41 @@ end:
     WPACKET_cleanup(&pkt);
     OPENSSL_cleanse(labeled_ikm, labeled_ikmlen);
     OPENSSL_free(labeled_ikm);
+    return ret;
+}
+
+/* One-stage KDF DeriveKeyPair from draft-ietf-hpke-pq. */
+int ossl_hpke_keypair_derive_xof(unsigned char *out, size_t outlen,
+    EVP_MD *md_xof, uint16_t kemid,
+    const unsigned char *ikm, size_t ikmlen)
+{
+    EVP_MD_CTX *mctx = NULL;
+    unsigned char kemidbuf[2], labellenbuf[2], outlenbuf[2];
+    size_t labellen = strlen(LABEL_DERIVE_KEY_PAIR);
+    int ret = 0;
+
+    if (out == NULL || md_xof == NULL || outlen > UINT16_MAX
+        || labellen > UINT16_MAX)
+        return 0;
+
+    OPENSSL_store_u16_be(kemidbuf, kemid);
+    OPENSSL_store_u16_be(labellenbuf, (uint16_t)labellen);
+    OPENSSL_store_u16_be(outlenbuf, (uint16_t)outlen);
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL)
+        return 0;
+
+    /* ikm || "HPKE-v1" || "KEM" || kem_id || len(label) || label || L */
+    ret = EVP_DigestInit_ex2(mctx, md_xof, NULL)
+        && EVP_DigestUpdate(mctx, ikm, ikmlen)
+        && EVP_DigestUpdate(mctx, LABEL_HPKEV1, strlen(LABEL_HPKEV1))
+        && EVP_DigestUpdate(mctx, LABEL_KEM, strlen(LABEL_KEM))
+        && EVP_DigestUpdate(mctx, kemidbuf, sizeof(kemidbuf))
+        && EVP_DigestUpdate(mctx, labellenbuf, sizeof(labellenbuf))
+        && EVP_DigestUpdate(mctx, LABEL_DERIVE_KEY_PAIR, labellen)
+        && EVP_DigestUpdate(mctx, outlenbuf, sizeof(outlenbuf))
+        && EVP_DigestFinalXOF(mctx, out, outlen);
+    EVP_MD_CTX_free(mctx);
     return ret;
 }
 

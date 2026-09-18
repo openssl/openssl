@@ -41,6 +41,7 @@
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/xwing_codecs.h"
 #include "prov/lms_codecs.h"
 #include "providers/implementations/encode_decode/encode_key2any.inc"
 
@@ -907,6 +908,28 @@ static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
 
 /* ---------------------------------------------------------------------- */
 
+#if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
+static int xwing_spki_pub_to_der(const void *vkey, unsigned char **pder,
+    ossl_unused void *ctx)
+{
+    return ossl_xwing_i2d_pubkey(vkey, pder);
+}
+
+static int xwing_pki_priv_to_der(const void *vkey, unsigned char **pder,
+    ossl_unused void *ctx)
+{
+    return ossl_xwing_i2d_prvkey(vkey, pder);
+}
+
+#define xwing_epki_priv_to_der xwing_pki_priv_to_der
+#define prepare_xwing_params NULL
+#define xwing_check_key_type NULL
+#define xwing_evp_type NID_X_Wing
+#define xwing_pem_type "X-WING"
+#endif
+
+/* ---------------------------------------------------------------------- */
+
 /*
  * Helper functions to prepare RSA-PSS params for encoding.  We would
  * have simply written the whole AlgorithmIdentifier, but existing libcrypto
@@ -1708,6 +1731,14 @@ MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, der);
 MAKE_ENCODER(ml_kem_1024, ml_kem, PrivateKeyInfo, pem);
 MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ml_kem_1024, ml_kem, SubjectPublicKeyInfo, pem);
+# ifndef OPENSSL_NO_ECX
+MAKE_ENCODER(xwing, xwing, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(xwing, xwing, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(xwing, xwing, PrivateKeyInfo, der);
+MAKE_ENCODER(xwing, xwing, PrivateKeyInfo, pem);
+MAKE_ENCODER(xwing, xwing, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(xwing, xwing, SubjectPublicKeyInfo, pem);
+# endif
 #endif
 
 /*

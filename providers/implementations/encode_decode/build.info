@@ -29,6 +29,9 @@ ENDIF
 
 IF[{- !$disabled{'ml-kem'} -}]
   SOURCE[$DECODER_GOAL]=ml_kem_codecs.c
+  IF[{- !$disabled{'ecx'} -}]
+    SOURCE[$DECODER_GOAL]=xwing_codecs.c
+  ENDIF
 ENDIF
 
 IF[{- !$disabled{'ml-dsa'} || !$disabled{'ml-kem'} -}]

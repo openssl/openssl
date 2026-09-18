@@ -44,6 +44,7 @@
 #include "internal/nelem.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/xwing_codecs.h"
 #include "prov/lms_codecs.h"
 #include "providers/implementations/encode_decode/decode_der2key.inc"
 
@@ -662,6 +663,38 @@ static void ml_kem_free_key(void *key)
 #define ml_kem_1024_check NULL
 #define ml_kem_1024_adjust NULL
 
+#endif
+
+#if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
+static void *xwing_d2i_PKCS8(const unsigned char **der, long der_len,
+    struct der2key_ctx_st *ctx)
+{
+    MLX_KEY *key = ossl_xwing_d2i_PKCS8(*der, der_len,
+        ctx->provctx, ctx->propq);
+
+    if (key != NULL)
+        *der += der_len;
+    return key;
+}
+
+static void *xwing_d2i_PUBKEY(const unsigned char **der, long der_len,
+    struct der2key_ctx_st *ctx)
+{
+    MLX_KEY *key = ossl_xwing_d2i_PUBKEY(*der, der_len,
+        ctx->provctx, ctx->propq);
+
+    if (key != NULL)
+        *der += der_len;
+    return key;
+}
+
+#define xwing_evp_type NID_X_Wing
+#define xwing_d2i_private_key NULL
+#define xwing_d2i_public_key NULL
+#define xwing_d2i_key_params NULL
+#define xwing_free ossl_mlx_key_free
+#define xwing_check NULL
+#define xwing_adjust NULL
 #endif
 
 #ifndef OPENSSL_NO_SLH_DSA
@@ -1325,6 +1358,10 @@ MAKE_DECODER("ML-KEM-768", ml_kem_768, ml_kem_768, PrivateKeyInfo);
 MAKE_DECODER("ML-KEM-768", ml_kem_768, ml_kem_768, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-KEM-1024", ml_kem_1024, ml_kem_1024, PrivateKeyInfo);
 MAKE_DECODER("ML-KEM-1024", ml_kem_1024, ml_kem_1024, SubjectPublicKeyInfo);
+# ifndef OPENSSL_NO_ECX
+MAKE_DECODER("X-Wing", xwing, xwing, PrivateKeyInfo);
+MAKE_DECODER("X-Wing", xwing, xwing, SubjectPublicKeyInfo);
+# endif
 #endif
 #ifndef OPENSSL_NO_SLH_DSA
 MAKE_DECODER("SLH-DSA-SHA2-128s", slh_dsa_sha2_128s, slh_dsa, PrivateKeyInfo);

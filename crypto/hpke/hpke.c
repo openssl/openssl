@@ -22,7 +22,7 @@
 #include "internal/common.h"
 
 /* default buffer size for keys and internal buffers we use */
-#define OSSL_HPKE_MAXSIZE 512
+#define OSSL_HPKE_MAXSIZE 2048
 
 /* Define HPKE labels from RFC9180 in hex for EBCDIC compatibility */
 /* "HPKE" - "suite_id" label for section 5.1 */
@@ -824,6 +824,14 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite, int role,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
+    if (!kem_info->auth
+        && (mode == OSSL_HPKE_MODE_AUTH
+            || mode == OSSL_HPKE_MODE_PSKAUTH)) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "%s does not support authenticated HPKE modes",
+            kem_info->keytype);
+        return NULL;
+    }
     if (role != OSSL_HPKE_ROLE_SENDER && role != OSSL_HPKE_ROLE_RECEIVER) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -932,7 +940,10 @@ int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (ikmelen == 0 || ikmelen > OSSL_HPKE_MAX_PARMLEN) {
+    if (ikmelen == 0
+        || ikmelen > (ctx->kem_info->one_stage_kdf
+                           ? OSSL_HPKE_MAX_PQIKMLEN
+                           : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1311,6 +1322,8 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     EVP_PKEY *skR = NULL;
     const OSSL_HPKE_KEM_INFO *kem_info = NULL;
     OSSL_PARAM params[3], *p = params;
+    unsigned char seed[32];
+    EVP_MD *shake = NULL;
 
     if (pub == NULL || publen == NULL || *publen == 0 || priv == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -1322,7 +1335,9 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     }
     if ((ikmlen > 0 && ikm == NULL)
         || (ikmlen == 0 && ikm != NULL)
-        || ikmlen > OSSL_HPKE_MAX_PARMLEN) {
+        || ikmlen > (kem_info->one_stage_kdf
+                          ? OSSL_HPKE_MAX_PQIKMLEN
+                          : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1339,9 +1354,22 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (ikm != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-            (char *)ikm, ikmlen);
+    if (ikm != NULL) {
+        if (kem_info->one_stage_kdf) {
+            shake = EVP_MD_fetch(libctx, "SHAKE-256", propq);
+            if (shake == NULL
+                || !ossl_hpke_keypair_derive_xof(seed, sizeof(seed), shake,
+                    suite.kem_id, ikm, ikmlen)) {
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            *p++ = OSSL_PARAM_construct_octet_string(
+                OSSL_PKEY_PARAM_SEED, seed, sizeof(seed));
+        } else {
+            *p++ = OSSL_PARAM_construct_octet_string(
+                OSSL_PKEY_PARAM_DHKEM_IKM, (char *)ikm, ikmlen);
+        }
+    }
     *p = OSSL_PARAM_construct_end();
     if (EVP_PKEY_CTX_set_params(pctx, params) <= 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
@@ -1363,6 +1391,8 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     erv = 1;
 
 err:
+    OPENSSL_cleanse(seed, sizeof(seed));
+    EVP_MD_free(shake);
     if (erv != 1)
         EVP_PKEY_free(skR);
     EVP_PKEY_CTX_free(pctx);

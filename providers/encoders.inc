@@ -343,6 +343,14 @@ ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, der, PrivateKeyInfo),
 ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, pem, PrivateKeyInfo),
 ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ML-KEM-768", ml_kem_768, yes, pem, SubjectPublicKeyInfo),
+# ifndef OPENSSL_NO_ECX
+ENCODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", xwing, no, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", xwing, no, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", xwing, no, der, PrivateKeyInfo),
+ENCODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", xwing, no, pem, PrivateKeyInfo),
+ENCODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", xwing, no, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("X-Wing:XWING:1.3.6.1.4.1.62253.25722", xwing, no, pem, SubjectPublicKeyInfo),
+# endif
 
 ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, der, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("ML-KEM-1024", ml_kem_1024, yes, pem, EncryptedPrivateKeyInfo),
