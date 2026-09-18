@@ -26,6 +26,7 @@
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
+#include "internal/property.h"
 #include "internal/refcount.h"
 #include "internal/bio.h"
 #include "internal/core.h"
@@ -245,6 +246,63 @@ static void provider_deactivate_free(OSSL_PROVIDER *prov)
 static void ossl_provider_child_cb_free(OSSL_PROVIDER_CHILD_CB *cb)
 {
     OPENSSL_free(cb);
+}
+
+/**
+ * @brief Drop parent method-store references to a child-context owner.
+ * @param prov Provider in a library context being destroyed with no users left.
+ *
+ * All parent stores must remain alive until the provider's child contexts have
+ * released methods borrowed from them.
+ */
+static void provider_store_purge_child_owner_methods(OSSL_PROVIDER *prov)
+{
+    OSSL_LIB_CTX *libctx = prov->libctx;
+
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX),
+        prov);
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_STORE_INDEX),
+        prov);
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_ENCODER_STORE_INDEX),
+        prov);
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX),
+        prov);
+}
+
+void ossl_provider_store_free_child_owners(void *vstore)
+{
+    struct provider_store_st *store = vstore;
+    OSSL_PROVIDER_CHILD_CB *child_cb;
+    OSSL_PROVIDER *prov;
+    int i;
+
+    if (store == NULL)
+        return;
+
+    /* Child contexts may hold methods borrowed from this parent context. */
+    while ((child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, 0))
+        != NULL) {
+        prov = child_cb->prov;
+
+        for (i = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs) - 1;
+            i >= 0; i--) {
+            child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
+            if (child_cb->prov == prov) {
+                sk_OSSL_PROVIDER_CHILD_CB_delete(store->child_cbs, i);
+                ossl_provider_child_cb_free(child_cb);
+            }
+        }
+
+        if (sk_OSSL_PROVIDER_delete_ptr(store->providers, prov) == NULL)
+            continue;
+
+        provider_store_purge_child_owner_methods(prov);
+        provider_deactivate_free(prov);
+    }
 }
 #endif
 
