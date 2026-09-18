@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -307,6 +307,51 @@ int OSSL_FN_is_odd(const OSSL_FN *a)
     return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
 }
 
+/*-
+ * Conditionally swap |a| and |b| if |condition| is non-zero.
+ * Both operands must be the same width.
+ *
+ * Constant-time profile: |condition| is folded into an all-ones or all-zeros
+ * mask, and every limb of both operands is written unconditionally, so
+ * neither the condition nor the limb values steer control flow.  The only
+ * branches are on the operands' public width.
+ */
+int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
+{
+    size_t i, dsize;
+    OSSL_FN_ULONG mask;
+
+    if (ossl_unlikely(a == b))
+        return 1;
+
+    /*
+     * Swapping only the limbs the two have in common would leave the wider
+     * operand holding a mix of both values, so a width mismatch is an error
+     * rather than a partial swap.
+     */
+    if (ossl_unlikely(a->dsize != b->dsize)) {
+        ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL,
+            "Both operands must be the same width, but they are %zu bytes "
+            "and %zu bytes",
+            (size_t)a->dsize * sizeof(OSSL_FN_ULONG),
+            (size_t)b->dsize * sizeof(OSSL_FN_ULONG));
+        return 0;
+    }
+
+    /* All ones when condition is non-zero, all zeros when it is zero. */
+    mask = ~constant_time_is_zero_bn((OSSL_FN_ULONG)condition);
+    dsize = (size_t)a->dsize;
+
+    for (i = 0; i < dsize; i++) {
+        OSSL_FN_ULONG t = (a->d[i] ^ b->d[i]) & mask;
+
+        a->d[i] ^= t;
+        b->d[i] ^= t;
+    }
+
+    return 1;
+}
+
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
 {
     if (ossl_unlikely(a == b))
@@ -343,4 +388,76 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
     }
 
     return a;
+}
+
+/*-
+ * Serialise |a| as |len| big-endian bytes into |out|, in constant time.
+ *
+ * The low |len| bytes of |a| are written most-significant first; |a|'s value
+ * must fit in |len| bytes.  Returns 1 on success, 0 if |a| has a byte set
+ * beyond |len| (i.e. does not fit) or on a NULL argument.
+ *
+ * Constant-time profile: the byte layout depends only on |len| and |a|'s
+ * public width, never on its value.
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
+{
+    size_t dsize, nbytes, i;
+    unsigned char over = 0;
+
+    if (ossl_unlikely(a == NULL || out == NULL))
+        return 0;
+
+    dsize = ossl_fn_get_dsize(a);
+    nbytes = dsize * OSSL_FN_BYTES;
+
+    for (i = 0; i < len; i++) {
+        size_t limb = i / OSSL_FN_BYTES;
+
+        out[len - 1 - i] = limb < dsize
+            ? (unsigned char)(a->d[limb] >> (8 * (i % OSSL_FN_BYTES)))
+            : 0;
+    }
+    /* Every byte of |a| beyond |len| must be zero for the value to fit. */
+    for (; i < nbytes; i++)
+        over |= (unsigned char)(a->d[i / OSSL_FN_BYTES] >> (8 * (i % OSSL_FN_BYTES)));
+
+    return over == 0;
+}
+
+/*-
+ * Load |len| big-endian bytes from |in| into |r|, in constant time.
+ *
+ * The bytes are read most-significant first and placed in |r|'s fixed width; a
+ * shorter input is zero-extended.  The value must fit in |r|: it is an error
+ * (return 0) for any input byte beyond |r|'s width to be non-zero, mirroring
+ * OSSL_FN_to_bytes_be(), of which this is the counterpart (as BN_bin2bn() is of
+ * BN_bn2binpad()).
+ *
+ * Constant-time profile: the byte layout depends only on |len| and |r|'s
+ * public width, never on the bytes' values.
+ */
+int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
+{
+    size_t rbytes, i;
+    unsigned char over = 0;
+
+    if (ossl_unlikely(r == NULL || in == NULL))
+        return 0;
+
+    rbytes = ossl_fn_get_dsize(r) * OSSL_FN_BYTES;
+
+    for (i = 0; i < rbytes; i++) {
+        size_t limb = i / OSSL_FN_BYTES;
+        unsigned char b = i < len ? in[len - 1 - i] : 0;
+
+        if (i % OSSL_FN_BYTES == 0)
+            r->d[limb] = 0;
+        r->d[limb] |= (OSSL_FN_ULONG)b << (8 * (i % OSSL_FN_BYTES));
+    }
+    /* Every input byte beyond |r|'s width must be zero for the value to fit. */
+    for (; i < len; i++)
+        over |= in[len - 1 - i];
+
+    return over == 0;
 }

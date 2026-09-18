@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1115,6 +1115,67 @@ static int test_zero(void)
     ret = 1;
 err:
     OSSL_FN_free(a);
+    return ret;
+}
+
+/*-
+ * Any non-zero condition must swap and zero must not, so the conditions
+ * cover 1, a value with the low bit clear, a value with several bits set,
+ * and a negative one (the argument is a plain int, so -1 is all-bits-set
+ * once folded into the mask).
+ */
+static const int consttime_swap_conditions[] = { 0, 1, 2, 42, -1 };
+
+static int test_consttime_swap(int i)
+{
+    int ret = 0;
+    const int condition = consttime_swap_conditions[i];
+    const int swapped = consttime_swap_conditions[i] != 0;
+    OSSL_FN *a = NULL, *b = NULL, *ref_a = NULL, *ref_b = NULL, *narrow = NULL;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(b = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ref_a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ref_b = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(narrow = OSSL_FN_new_limbs(1))
+        || !TEST_true(ossl_fn_set_words(a, num2, LIMBSOF(num2)))
+        || !TEST_true(ossl_fn_set_words(b, num3, LIMBSOF(num3)))
+        || !TEST_true(ossl_fn_set_words(ref_a, num2, LIMBSOF(num2)))
+        || !TEST_true(ossl_fn_set_words(ref_b, num3, LIMBSOF(num3))))
+        goto err;
+
+    /* On a swap each operand takes the other's value; otherwise both stand. */
+    if (!TEST_true(OSSL_FN_consttime_swap(condition, a, b))
+        || !TEST_int_eq(OSSL_FN_cmp(a, swapped ? ref_b : ref_a), 0)
+        || !TEST_int_eq(OSSL_FN_cmp(b, swapped ? ref_a : ref_b), 0))
+        goto err;
+
+    /* Swapping again on the same condition restores the originals. */
+    if (!TEST_true(OSSL_FN_consttime_swap(condition, a, b))
+        || !TEST_int_eq(OSSL_FN_cmp(a, ref_a), 0)
+        || !TEST_int_eq(OSSL_FN_cmp(b, ref_b), 0))
+        goto err;
+
+    /* Aliased operands are a no-op, not a self-cancelling xor. */
+    if (!TEST_true(OSSL_FN_consttime_swap(condition, a, a))
+        || !TEST_int_eq(OSSL_FN_cmp(a, ref_a), 0))
+        goto err;
+
+    /* A width mismatch is refused outright, leaving both operands untouched. */
+    if (!TEST_false(OSSL_FN_consttime_swap(condition, a, narrow))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_RESULT_ARG_TOO_SMALL)
+        || !TEST_int_eq(OSSL_FN_cmp(a, ref_a), 0)
+        || !TEST_true(OSSL_FN_is_zero(narrow)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(b);
+    OSSL_FN_free(ref_a);
+    OSSL_FN_free(ref_b);
+    OSSL_FN_free(narrow);
     return ret;
 }
 
@@ -5324,6 +5385,128 @@ err:
     return ret;
 }
 
+static int test_to_bytes_be(void)
+{
+    const size_t w = OSSL_FN_BYTES;
+    static const OSSL_FN_ULONG low_word[] = { 0x12 }; /* value 0x12 */
+    static const OSSL_FN_ULONG high_word[] = { 0, 0x12 }; /* 0x12 << OSSL_FN_BITS */
+    int ret = 0;
+    OSSL_FN *a = NULL, *zero = NULL;
+    unsigned char *out = NULL, *zeros = NULL;
+
+    /* Values are set through their limbs, so this exercises to_bytes_be alone. */
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(zero = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(out = OPENSSL_malloc(2 * w))
+        || !TEST_ptr(zeros = OPENSSL_zalloc(2 * w)))
+        goto err;
+
+    /* A small value serialises big-endian: low byte last, higher bytes zero. */
+    if (!TEST_true(ossl_fn_set_words(a, low_word, OSSL_NELEM(low_word)))
+        || !TEST_true(OSSL_FN_to_bytes_be(a, out, 2 * w))
+        || !TEST_mem_eq(out, 2 * w - 1, zeros, 2 * w - 1)
+        || !TEST_uchar_eq(out[2 * w - 1], 0x12))
+        goto err;
+
+    /* It fits in a single byte (the higher bytes being zero). */
+    out[0] = 0xCC;
+    if (!TEST_true(OSSL_FN_to_bytes_be(a, out, 1))
+        || !TEST_uchar_eq(out[0], 0x12))
+        goto err;
+
+    /*
+     * A value whose only non-zero byte sits in the second limb: written into a
+     * full-width buffer it lands at the second limb's low byte with every other
+     * byte zero.
+     */
+    if (!TEST_true(ossl_fn_set_words(a, high_word, OSSL_NELEM(high_word))))
+        goto err;
+    memset(out, 0xCC, 2 * w);
+    if (!TEST_true(OSSL_FN_to_bytes_be(a, out, 2 * w))
+        || !TEST_uchar_eq(out[w - 1], 0x12))
+        goto err;
+    out[w - 1] = 0;
+    if (!TEST_mem_eq(out, 2 * w, zeros, 2 * w)) /* nothing else was written */
+        goto err;
+
+    /* A destination too narrow to reach that byte reports it does not fit. */
+    if (!TEST_false(OSSL_FN_to_bytes_be(a, out, w)))
+        goto err;
+
+    /* Zero fits in any width - including zero bytes - and writes all zeros. */
+    memset(out, 0xCC, 2 * w);
+    if (!TEST_true(OSSL_FN_to_bytes_be(zero, out, 2 * w))
+        || !TEST_mem_eq(out, 2 * w, zeros, 2 * w)
+        || !TEST_true(OSSL_FN_to_bytes_be(zero, out, 0)))
+        goto err;
+
+    /* NULL arguments are rejected. */
+    if (!TEST_false(OSSL_FN_to_bytes_be(NULL, out, w))
+        || !TEST_false(OSSL_FN_to_bytes_be(a, NULL, w)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(out);
+    OPENSSL_free(zeros);
+    OSSL_FN_free(a);
+    OSSL_FN_free(zero);
+    return ret;
+}
+
+static int test_from_bytes_be(void)
+{
+    const size_t w = OSSL_FN_BYTES;
+    int ret = 0;
+    OSSL_FN *r1 = NULL, *r2 = NULL;
+    unsigned char *in = NULL, *out = NULL, *over = NULL;
+
+    if (!TEST_ptr(r1 = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(r2 = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(in = OPENSSL_malloc(w))
+        || !TEST_ptr(out = OPENSSL_malloc(w))
+        || !TEST_ptr(over = OPENSSL_malloc(w + 1)))
+        goto err;
+
+    /* A w-byte value round-trips through to_bytes_be() into one limb. */
+    memset(in, 0xA5, w);
+    if (!TEST_true(OSSL_FN_from_bytes_be(r1, in, w))
+        || !TEST_true(OSSL_FN_to_bytes_be(r1, out, w))
+        || !TEST_mem_eq(out, w, in, w))
+        goto err;
+
+    /* Zero-extension: the loaded value is the same in a wider destination. */
+    if (!TEST_true(OSSL_FN_from_bytes_be(r2, in, w))
+        || !TEST_int_eq(OSSL_FN_cmp(r1, r2), 0))
+        goto err;
+
+    /* A non-zero byte beyond the destination width does not fit. */
+    over[0] = 0x01;
+    memset(over + 1, 0x00, w);
+    if (!TEST_false(OSSL_FN_from_bytes_be(r1, over, w + 1)))
+        goto err;
+
+    /* The same width with a zero top byte does fit. */
+    over[0] = 0x00;
+    memset(over + 1, 0x5A, w);
+    if (!TEST_true(OSSL_FN_from_bytes_be(r1, over, w + 1)))
+        goto err;
+
+    /* NULL arguments are rejected. */
+    if (!TEST_false(OSSL_FN_from_bytes_be(NULL, in, w))
+        || !TEST_false(OSSL_FN_from_bytes_be(r1, NULL, w)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(in);
+    OPENSSL_free(out);
+    OPENSSL_free(over);
+    OSSL_FN_free(r1);
+    OSSL_FN_free(r2);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -5338,12 +5521,15 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
     ADD_TEST(test_one);
     ADD_TEST(test_zero);
+    ADD_ALL_TESTS(test_consttime_swap, OSSL_NELEM(consttime_swap_conditions));
     ADD_ALL_TESTS(test_lshift1, 2);
     ADD_ALL_TESTS(test_lshift, 6);
     ADD_ALL_TESTS(test_rshift1, 2);
     ADD_ALL_TESTS(test_rshift, 9);
     ADD_ALL_TESTS(test_rshift_alias, 4);
     ADD_TEST(test_rshift_invalid_shift);
+    ADD_TEST(test_to_bytes_be);
+    ADD_TEST(test_from_bytes_be);
     ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
     ADD_ALL_TESTS(test_gcd_alias, 4);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
