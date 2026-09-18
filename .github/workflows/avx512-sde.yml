@@ -107,6 +107,9 @@ jobs:
       - name: sha3_x4_internal_test (AVX512 via SDE)
         run: sde64 -icx -- ./test/sha3_x4_internal_test
 
+      - name: evp_extra_test (AVX512 via SDE)
+        run: sde64 -icx -- ./test/evp_extra_test
+
       - name: fipsinstall (FIPS KAT via SDE)
         run: sde64 -icx -- ./apps/openssl fipsinstall -module ./providers/fips.so -out /tmp/fipsmodule.cnf -provider_name fips
 
@@ -201,6 +204,11 @@ jobs:
         working-directory: _build
         shell: cmd
         run: sde -icx -- test\sha3_x4_internal_test.exe
+
+      - name: evp_extra_test (AVX512 via SDE)
+        working-directory: _build
+        shell: cmd
+        run: sde -icx -- test\evp_extra_test.exe
 
       - name: fipsinstall (FIPS KAT via SDE)
         working-directory: _build
