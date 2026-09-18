@@ -120,7 +120,7 @@ static void collect_aead_cipher_cb(EVP_CIPHER *ciph, void *arg)
         OSSL_PROVIDER_get0_name(EVP_CIPHER_get0_provider(ciph)));
 
     for (i = 0; i < OSSL_NELEM(aead_list); i++) {
-        if (ciph == aead_list[i].ciph) {
+        if (OPENSSL_strcasecmp(aead_list[i].name, name) == 0) {
             aead_list[i].found = 1;
             return;
         }
