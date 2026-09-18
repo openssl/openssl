@@ -114,8 +114,10 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 0;
     }
 
+    /* tag_len == 0 means no tag set yet, report the default */
     if (p.taglen != NULL
-        && !OSSL_PARAM_set_size_t(p.taglen, ctx->tag_len)) {
+        && !OSSL_PARAM_set_size_t(p.taglen,
+            ctx->tag_len == 0 ? POLY1305_BLOCK_SIZE : ctx->tag_len)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
