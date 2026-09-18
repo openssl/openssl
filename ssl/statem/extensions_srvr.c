@@ -1365,6 +1365,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         PACKET identity;
         unsigned long ticket_agel;
         size_t idlen;
+        int stateful = 0;
 
         if (!PACKET_get_length_prefixed_2(&identities, &identity)
             || !PACKET_get_net_4(&identities, &ticket_agel)) {
@@ -1382,6 +1383,10 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 &sess)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
             return 0;
+        }
+        if (!ossl_ssl_session_is_external_psk_admissible(sess)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_PSK);
+            goto err;
         }
 
 #ifndef OPENSSL_NO_PSK
@@ -1471,12 +1476,14 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              */
             if ((s->options & SSL_OP_NO_TICKET) != 0
                 || (s->max_early_data > 0
-                    && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0))
+                    && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0)) {
+                stateful = 1;
                 ret = tls_get_stateful_ticket(s, &identity, &sess);
-            else
+            } else {
                 ret = tls_decrypt_ticket(s, PACKET_data(&identity),
                     PACKET_remaining(&identity), NULL, 0,
                     &sess);
+            }
 
             if (ret == SSL_TICKET_EMPTY) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1498,6 +1505,18 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 SSL_SESSION_free(sess);
                 sess = NULL;
                 continue;
+            }
+
+            if (stateful
+                && s->s3.tmp.new_cipher->origin == SSL_CIPHER_ORIGIN_PROVIDER) {
+                SSL_SESSION *sesstmp = ssl_session_dup(sess, 1);
+
+                if (sesstmp == NULL) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                SSL_SESSION_free(sess);
+                sess = sesstmp;
             }
 
             age = ossl_time_subtract(ossl_ms2time(ticket_agel),
@@ -1531,14 +1550,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             ext = 0;
         }
 
-        md = ssl_md(sctx, sess->cipher->algorithm2);
-        if (md == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        if (!EVP_MD_is_a(md,
-                EVP_MD_get0_name(ssl_md(sctx,
-                    s->s3.tmp.new_cipher->algorithm2)))) {
+        if (!ossl_ssl_cipher_has_same_digest(sess->cipher,
+                s->s3.tmp.new_cipher)) {
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
             sess = NULL;
@@ -1550,6 +1563,11 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              */
             s->ext.ticket_expected = 1;
             continue;
+        }
+        md = ossl_ssl_cipher_get0_md(sctx, sess->cipher);
+        if (md == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
         }
         /*
          * Same-hash ciphersuite changes are allowed for TLSv1.3 PSK

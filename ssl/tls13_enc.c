@@ -379,7 +379,16 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
     int mac_type = NID_undef;
     size_t mac_secret_size = 0;
 
-    s->session->cipher = s->s3.tmp.new_cipher;
+    if (s->s3.tmp.new_cipher->origin == SSL_CIPHER_ORIGIN_PROVIDER
+        && (SSL_CONNECTION_IS_DTLS(s) || SSL_IS_QUIC_HANDSHAKE(s))) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
+        return 0;
+    }
+
+    if (!ossl_ssl_session_set1_cipher(s->session, s->s3.tmp.new_cipher)) {
+        SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+        return 0;
+    }
     if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, p_snc, &c,
             &hash, &mac_type, &mac_secret_size, NULL, 0)) {
         /* Error is already recorded */
@@ -652,7 +661,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                 goto err;
             }
 
-            md = ssl_md(sctx, sslcipher->algorithm2);
+            md = ossl_ssl_cipher_get0_md(sctx, sslcipher);
             if (md == NULL || !EVP_DigestInit_ex(mdctx, md, NULL)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 EVP_MD_CTX_free(mdctx);
@@ -1047,7 +1056,7 @@ int tls13_export_keying_material_early(SSL_CONNECTION *s,
     else
         sslcipher = SSL_SESSION_get0_cipher(s->session);
 
-    md = ssl_md(SSL_CONNECTION_GET_CTX(s), sslcipher->algorithm2);
+    md = ossl_ssl_cipher_get0_md(SSL_CONNECTION_GET_CTX(s), sslcipher);
 
     /*
      * Calculate the hash value and store it in |data|. The reason why

@@ -899,7 +899,10 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_ERROR;
             break;
         }
-        s->session->cipher = s->s3.tmp.new_cipher;
+        if (!ossl_ssl_session_set1_cipher(s->session, s->s3.tmp.new_cipher)) {
+            SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+            return WORK_ERROR;
+        }
 #ifdef OPENSSL_NO_COMP
         s->session->compress_meth = 0;
 #else
@@ -1738,6 +1741,11 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CIPHER_RETURNED);
         return 0;
     }
+    c = ossl_ssl_get0_cipher_canon_enabled(s, c);
+    if (c == NULL) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CIPHER_RETURNED);
+        return 0;
+    }
     /*
      * If it is a disabled cipher we either didn't send it in client hello,
      * or it's not allowed for the selected protocol. So we return an error.
@@ -1748,7 +1756,7 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
     }
 
     sk = ssl_get_ciphers_by_id(s);
-    i = sk_SSL_CIPHER_find(sk, c);
+    i = ossl_ssl_cipher_stack_find(sk, c);
     if (i < 0) {
         /* we did not say we would use this cipher */
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CIPHER_RETURNED);
@@ -1763,6 +1771,23 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
     }
 
     /*
+     * Isolate a shared ticket before a provider suite changes its cipher and
+     * resumption policy. External PSKs already have a private, ticketless copy
+     * from tls_parse_stoc_psk(). Leave ordinary built-in resumption unchanged.
+     */
+    if (s->hit && c->origin == SSL_CIPHER_ORIGIN_PROVIDER
+        && s->session->ext.tick != NULL) {
+        SSL_SESSION *sesstmp = ssl_session_dup(s->session, 0);
+
+        if (sesstmp == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        SSL_SESSION_free(s->session);
+        s->session = sesstmp;
+    }
+
+    /*
      * Depending on the session caching (internal/external), the cipher
      * and/or cipher_id values may not be set. Make sure that cipher_id is
      * set and use it for comparison.
@@ -1771,18 +1796,20 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
         s->session->cipher_id = s->session->cipher->id;
     if (s->hit && (s->session->cipher_id != c->id)) {
         if (SSL_CONNECTION_IS_VERSION13(s)) {
-            const EVP_MD *md = ssl_md(sctx, c->algorithm2);
+            const EVP_MD *md = ossl_ssl_cipher_get0_md(sctx, c);
+            const EVP_MD *session_md;
 
             if (!ossl_assert(s->session->cipher != NULL)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
+            session_md = ossl_ssl_cipher_get0_md(sctx, s->session->cipher);
             /*
              * In TLSv1.3 it is valid for the server to select a different
              * ciphersuite as long as the hash is the same.
              */
-            if (md == NULL
-                || md != ssl_md(sctx, s->session->cipher->algorithm2)) {
+            if (md == NULL || session_md == NULL
+                || !ossl_ssl_cipher_has_same_digest(c, s->session->cipher)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                     SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED);
                 return 0;
@@ -2127,7 +2154,14 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                     s->ext.session_secret_cb_arg)
                 && master_key_length > 0) {
                 s->session->master_key_length = master_key_length;
-                s->session->cipher = pref_cipher ? pref_cipher : ssl_get_cipher_by_char(s, cipherchars, 0);
+                if (!ossl_ssl_session_set1_cipher(
+                        s->session,
+                        pref_cipher != NULL
+                            ? pref_cipher
+                            : ssl_get_cipher_by_char(s, cipherchars, 0))) {
+                    SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                    goto err;
+                }
             } else {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
@@ -3240,6 +3274,35 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
                                            : PACKET_remaining(pkt) != ticklen)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
+    }
+
+    if (s->session->provider_cipher_seen) {
+        PACKET extpkt;
+        uint32_t max_early_data = s->session->ext.max_early_data;
+
+        /*
+         * Validate discarded tickets too, without adopting their early-data
+         * policy into a session that cannot be resumed.
+         */
+        if (!PACKET_forward(pkt, ticklen)
+            || (SSL_CONNECTION_IS_VERSION13(s)
+                && (!PACKET_as_length_prefixed_2(pkt, &extpkt)
+                    || PACKET_remaining(pkt) != 0))) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+        if (SSL_CONNECTION_IS_VERSION13(s)
+            && (!tls_collect_extensions(s, &extpkt,
+                    SSL_EXT_TLS1_3_NEW_SESSION_TICKET, &exts, NULL, 1)
+                || !tls_parse_all_extensions(s,
+                    SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
+                    exts, NULL, 0, 1))) {
+            s->session->ext.max_early_data = max_early_data;
+            goto err;
+        }
+        s->session->ext.max_early_data = max_early_data;
+        OPENSSL_free(exts);
+        return MSG_PROCESS_FINISHED_READING;
     }
 
     /*

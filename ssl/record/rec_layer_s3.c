@@ -1246,6 +1246,10 @@ static const OSSL_RECORD_METHOD *ssl_select_next_record_layer(SSL_CONNECTION *s,
     int direction,
     int level)
 {
+#if !defined(OPENSSL_NO_KTLS)
+    const SSL_CIPHER *cipher = s->s3.tmp.new_cipher;
+#endif /* !defined(OPENSSL_NO_KTLS) */
+
     if (s->rlayer.custom_rlmethod != NULL)
         return s->rlayer.custom_rlmethod;
 
@@ -1257,9 +1261,13 @@ static const OSSL_RECORD_METHOD *ssl_select_next_record_layer(SSL_CONNECTION *s,
     }
 
 #ifndef OPENSSL_NO_KTLS
+    if (cipher == NULL && s->session != NULL)
+        cipher = s->session->cipher;
+
     /* KTLS does not support renegotiation */
     if (level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION
         && (s->options & SSL_OP_ENABLE_KTLS) != 0
+        && (cipher == NULL || cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER)
         && (SSL_CONNECTION_IS_TLS13(s) || SSL_IS_FIRST_HANDSHAKE(s)))
         return &ossl_ktls_record_method;
 #endif
