@@ -100,6 +100,11 @@ static int ossl_aes_gcm_siv_init(void *vctx, const unsigned char *key, size_t ke
 
     ctx->enc = enc;
 
+    /* Each message starts with no AAD. */
+    OPENSSL_clear_free(ctx->aad, ctx->aad_len);
+    ctx->aad = NULL;
+    ctx->aad_len = 0;
+
     if (key != NULL) {
         if (keylen != ctx->key_len) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);

@@ -115,13 +115,9 @@ static int aes_gcm_siv_aad(PROV_AES_GCM_SIV_CTX *ctx,
     uint8_t *ptr;
     uint64_t len64;
 
-    /* length of 0 resets the AAD */
-    if (len == 0) {
-        OPENSSL_free(ctx->aad);
-        ctx->aad = NULL;
-        ctx->aad_len = 0;
+    /* A zero-length AAD update is a no-op. */
+    if (len == 0)
         return 1;
-    }
     to_alloc = UP16(ctx->aad_len + len);
     /* need to check the size of the AAD per RFC8452 */
     len64 = to_alloc;
