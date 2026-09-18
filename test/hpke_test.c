@@ -14,7 +14,7 @@
 #include "testutil.h"
 
 /* a size to use for stack buffers */
-#define OSSL_HPKE_TSTSIZE 512
+#define OSSL_HPKE_TSTSIZE 2048
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
@@ -1625,7 +1625,7 @@ static int test_hpke_random_suites(void)
     OSSL_HPKE_SUITE def_suite = OSSL_HPKE_SUITE_DEFAULT;
     OSSL_HPKE_SUITE suite = OSSL_HPKE_SUITE_DEFAULT;
     OSSL_HPKE_SUITE suite2 = { 0xff01, 0xff02, 0xff03 };
-    unsigned char enc[200];
+    unsigned char enc[OSSL_HPKE_TSTSIZE];
     size_t enclen = sizeof(enc);
     unsigned char ct[500];
     size_t ctlen = sizeof(ct);

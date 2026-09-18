@@ -26,6 +26,7 @@
  * Appendix A.6.1 with a 66 octet IKM so we'll allow that.
  */
 #define OSSL_HPKE_MAX_PARMLEN 66
+#define OSSL_HPKE_MAX_PQIKMLEN 160
 #define OSSL_HPKE_MIN_PSKLEN 32
 #define OSSL_HPKE_MAX_INFOLEN 1024
 
@@ -40,6 +41,7 @@
 #define OSSL_HPKE_KEM_ID_P521 0x0012 /* NIST P-521 */
 #define OSSL_HPKE_KEM_ID_X25519 0x0020 /* Curve25519 */
 #define OSSL_HPKE_KEM_ID_X448 0x0021 /* Curve448 */
+#define OSSL_HPKE_KEM_ID_XWING 0x647A /* ML-KEM-768 + X25519 */
 
 #define OSSL_HPKE_KDF_ID_RESERVED 0x0000 /* not used */
 #define OSSL_HPKE_KDF_ID_HKDF_SHA256 0x0001 /* HKDF-SHA256 */
@@ -58,6 +60,7 @@
 #define OSSL_HPKE_KEMSTR_P521 "P-521" /* KEM id 0x12 */
 #define OSSL_HPKE_KEMSTR_X25519 "X25519" /* KEM id 0x20 */
 #define OSSL_HPKE_KEMSTR_X448 "X448" /* KEM id 0x21 */
+#define OSSL_HPKE_KEMSTR_XWING "X-Wing" /* KEM id 0x647A */
 #define OSSL_HPKE_KDFSTR_256 "hkdf-sha256" /* KDF id 1 */
 #define OSSL_HPKE_KDFSTR_384 "hkdf-sha384" /* KDF id 2 */
 #define OSSL_HPKE_KDFSTR_512 "hkdf-sha512" /* KDF id 3 */

@@ -15,6 +15,37 @@
 #include <openssl/ml_kem.h>
 #include <crypto/ml_kem.h>
 #include <crypto/ecx.h>
+#include "prov/provider_ctx.h"
+
+#define MLX_DEFAULT_SEED_BYTES 32
+#define MLX_MAX_SEED_BYTES 64
+#define MLX_MAX_ENCAP_SEED_BYTES 160
+#define MLX_MAX_COMBINED_SHARED_SECRET_BYTES 128
+#define MLX_C2PRI_SHA3_256_BYTES 32
+
+/*
+ * Internal combiner selector.  CONCAT denotes the direct component-secret
+ * concatenation used by the TLS hybrid groups (RFC 10024, Section 4.3).
+ * C2PRI denotes C2PRICombiner from Section 5.1.3 of
+ * draft-irtf-cfrg-hybrid-kems, as instantiated by X-Wing.
+ */
+typedef enum {
+    MLX_COMBINER_CONCAT = 0,
+    MLX_COMBINER_C2PRI
+} MLX_COMBINER;
+
+/*
+ * CG and CK are the framework names from draft-irtf-cfrg-hybrid-kems:
+ * Section 5.5 defines CG as the C2PRI combiner with a nominal group, and
+ * Section 5.6 defines CK as the C2PRI combiner with a traditional KEM.
+ * TLS_CONCAT is an internal name for the TLS hybrid groups that concatenate
+ * their component secrets before passing them to the TLS key schedule.
+ */
+typedef enum {
+    MLX_FRAMEWORK_TLS_CONCAT = 0,
+    MLX_FRAMEWORK_CG,
+    MLX_FRAMEWORK_CK
+} MLX_FRAMEWORK;
 
 typedef struct ecdh_vinfo_st {
     const char *algorithm_name;
@@ -24,6 +55,16 @@ typedef struct ecdh_vinfo_st {
     size_t shsec_bytes;
     int ml_kem_slot;
     int ml_kem_variant;
+    MLX_COMBINER combiner;
+    MLX_FRAMEWORK framework;
+    const unsigned char *label;
+    size_t label_len;
+    const char *kdf_name;
+    const char *prg_name;
+    size_t seed_bytes;
+    size_t traditional_seed_bytes;
+    size_t encap_seed_bytes;
+    size_t hybrid_shsec_bytes;
 } ECDH_VINFO;
 
 typedef struct mlx_key_st {
@@ -33,15 +74,36 @@ typedef struct mlx_key_st {
     const ECDH_VINFO *xinfo;
     EVP_PKEY *mkey;
     EVP_PKEY *xkey;
+    unsigned int variant;
     unsigned int state;
+    unsigned char seed[MLX_MAX_SEED_BYTES];
+    unsigned int has_seed : 1;
 } MLX_KEY;
 
 #define MLX_HAVE_NOKEYS 0
 #define MLX_HAVE_PUBKEY 1
 #define MLX_HAVE_PRVKEY 2
 
+/* Indices in the MLX variant table. */
+#define MLX_VARIANT_XWING 5
+
 /* Both key parts have whatever the ML-KEM component has */
 #define mlx_kem_have_pubkey(key) ((key)->state > 0)
 #define mlx_kem_have_prvkey(key) ((key)->state > 1)
+#define mlx_kem_uses_hybrid_seed(key) \
+    ((key)->xinfo->framework == MLX_FRAMEWORK_CG)
+
+/* Helpers shared with the X-Wing encoder/decoder implementation. */
+MLX_KEY *ossl_mlx_key_new(PROV_CTX *provctx, unsigned int variant,
+    const char *propq);
+void ossl_mlx_key_free(void *vkey);
+int ossl_mlx_set_seed(MLX_KEY *key, const unsigned char *seed,
+    size_t seedlen);
+int ossl_mlx_set_public_key(MLX_KEY *key, const unsigned char *pub,
+    size_t publen);
+int ossl_mlx_encode_public_key(const MLX_KEY *key, unsigned char *out,
+    size_t outlen);
+int ossl_mlx_encode_seed(const MLX_KEY *key, unsigned char *out,
+    size_t outlen);
 
 #endif

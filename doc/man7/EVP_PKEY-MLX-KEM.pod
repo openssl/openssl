@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY-MLX-KEM, EVP_KEYMGMT-MLX-KEM - Hybrid ML-KEM key support for TLS 1.3
+EVP_PKEY-MLX-KEM, EVP_KEYMGMT-MLX-KEM - Hybrid ML-KEM key support
 
 =head1 DESCRIPTION
 
@@ -11,10 +11,10 @@ ECDH (classical) algorithm (such as X25519, or P-256) and a post-quantum
 algorithm (ML_KEM), ensuring that key agreement remains secure unless both
 schemes are broken.
 
-The algorithms supported here are specifically for use in TLS 1.3 and are not
-suitable for other purposes. There is no encoder/decoder support, and
-EVP_PKEY_CTX_new_id() is also not supported as there are no associated EVP_PKEY
-type identifiers.
+The named-group algorithms are specifically for use in TLS 1.3 and are not
+suitable for other purposes. B<X-Wing> is a general-purpose KEM and is also
+available to HPKE. EVP_PKEY_CTX_new_id() is not supported as there are no
+associated EVP_PKEY type identifiers.
 
 The following names can be used by EVP_PKEY_CTX_new_from_name() using OpenSSL's
 default and FIPS providers.
@@ -57,6 +57,12 @@ The following name is supported only in OpenSSL's default provider.
 The shared secret is the concatenation of a 32 byte L<EVP_PKEY-SM2(7)> shared
 secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
 
+=item B<X-Wing>
+
+X-Wing combines ML-KEM-768 and X25519 using the C2PRI combiner.  It has a
+1216 byte public key, a 32 byte private seed, a 1120 byte ciphertext and a
+32 byte shared secret.
+
 =back
 
 =head2 Keygen Parameters
@@ -71,6 +77,12 @@ L<EVP_PKEY_keygen_init(3)>.
 
 Sets properties to be used when fetching algorithm implementations used for
 the B<ML-KEM>, B<ECDH> or B<SM2> algorithms.
+
+=item "seed" (B<OSSL_PKEY_PARAM_SEED>) <octet string>
+
+Sets the 32 byte private seed when generating an B<X-Wing> key.  The
+ML-KEM-768 and X25519 component private keys are deterministically expanded
+from this seed.
 
 =back
 
@@ -130,6 +142,10 @@ A 1568 byte ML-KEM-1024 public key followed by a 56 byte X448 public key.
 
 A 65 byte SM2 public key followed by a 1184 byte ML-KEM-768 public key.
 
+=item B<X-Wing>
+
+A 1184 byte ML-KEM-768 public key followed by a 32 byte X25519 public key.
+
 =back
 
 =item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
@@ -142,7 +158,9 @@ The public key format is the same as "encoded-pub-key".
 
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
-The private key value which is the concatenation of 2 internal private keys.
+For the TLS named-group algorithms, the private key value is the concatenation
+of two internal private keys.  For B<X-Wing>, it is the canonical 32 byte
+private seed.
 
 This parameter can be used when importing or exporting the private key value
 using the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
@@ -172,9 +190,21 @@ The format of the private keys for the different algorithms is:
 
 32 byte SM2 private key followed by a 2400 byte ML-KEM-768 private key.
 
+=item B<X-Wing>
+
+A 32 byte private seed.
+
 =back
 
 =back
+
+=head2 X-Wing key encoding
+
+B<X-Wing> SubjectPublicKeyInfo and PrivateKeyInfo encodings use the object
+identifier 1.3.6.1.4.1.62253.25722 and omit AlgorithmIdentifier parameters.
+The SubjectPublicKeyInfo BIT STRING contains the raw 1216 byte public key.
+The PrivateKeyInfo privateKey OCTET STRING contains the raw 32 byte seed,
+without an additional nested OCTET STRING.
 
 =head1 CONFORMING TO
 
@@ -193,6 +223,10 @@ X25519 and X448 are not FIPS approved algorithms.
 Even though they are not FIPS approved the hybrid combination is still allowed
 since MLKEM is FIPS approved.
 
+=item L<https://datatracker.ietf.org/doc/draft-connolly-cfrg-xwing-kem/>
+
+=item L<https://datatracker.ietf.org/doc/draft-ietf-hpke-pq/>
+
 =back
 
 =head1 SEE ALSO
@@ -208,6 +242,9 @@ L<provider-keymgmt(7)>
 This functionality was added in OpenSSL 3.5.
 
 Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
+
+Support for B<X-Wing>, including HPKE and key encoding, was added in
+OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

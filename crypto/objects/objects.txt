@@ -2069,3 +2069,6 @@ tcg-tr-category 37 : tcg-tr-cat-PublicKey 								: Public Key Trait Category
 nistKems 1 : id-alg-ml-kem-512  : ML-KEM-512
 nistKems 2 : id-alg-ml-kem-768  : ML-KEM-768
 nistKems 3 : id-alg-ml-kem-1024 : ML-KEM-1024
+
+# X-Wing / MLKEM768-X25519 (draft-irtf-cfrg-concrete-hybrid-kems-04)
+1 3 6 1 4 1 62253 25722 : XWING : X-Wing
