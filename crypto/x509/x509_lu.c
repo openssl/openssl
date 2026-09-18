@@ -906,16 +906,25 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
     sk = sk_X509_new_null();
     if (idx < 0 || sk == NULL)
         goto end;
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
+    for (i = idx; cnt > 0 && i < sk_X509_OBJECT_num(objs); i++) {
         obj = sk_X509_OBJECT_value(objs, i);
-        x = obj->data.x509;
         if (obj->type != X509_LU_X509)
+            continue;
+        x = obj->data.x509;
+        /*
+         * x509_object_idx_cnt() returns the exact number of matches, but they
+         * need not be contiguous when |objs| is unsorted.  Hash collisions
+         * can likewise mix several names into one hash-table stack. Re-check
+         * the subject name and stop once all |cnt| matches have been added.
+         */
+        if (X509_NAME_cmp(X509_get_subject_name(x), nm) != 0)
             continue;
         if (X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF) == 0) {
             X509_STORE_unlock(store);
             OSSL_STACK_OF_X509_free(sk);
             return NULL;
         }
+        cnt--;
     }
 
 end:
@@ -956,10 +965,13 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
     if (idx < 0)
         goto end;
 
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
+    for (i = idx; cnt > 0 && i < sk_X509_OBJECT_num(objs); i++) {
         obj = sk_X509_OBJECT_value(objs, i);
-        x = obj->data.crl;
         if (obj->type != X509_LU_CRL)
+            continue;
+        x = obj->data.crl;
+        /* See the comment in X509_STORE_CTX_get1_certs() */
+        if (X509_NAME_cmp(X509_CRL_get_issuer(x), nm) != 0)
             continue;
         if (!X509_CRL_up_ref(x)) {
             X509_STORE_unlock(store);
@@ -972,6 +984,7 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
             sk_X509_CRL_pop_free(sk, X509_CRL_free);
             return NULL;
         }
+        cnt--;
     }
 end:
     X509_STORE_unlock(store);
