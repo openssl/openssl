@@ -827,6 +827,7 @@ extern const OSSL_DISPATCH ossl_xwing_to_PrivateKeyInfo_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_xwing_to_PrivateKeyInfo_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_xwing_to_SubjectPublicKeyInfo_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_xwing_to_SubjectPublicKeyInfo_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_text_encoder_functions[];
 
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_ml_kem_1024_decoder_functions[];
 extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ml_kem_1024_decoder_functions[];

@@ -71,6 +71,9 @@ ENCODER_TEXT("SM2", sm2, no),
 ENCODER_TEXT("ML-KEM-512", ml_kem_512, yes),
 ENCODER_TEXT("ML-KEM-768", ml_kem_768, yes),
 ENCODER_TEXT("ML-KEM-1024", ml_kem_1024, yes),
+# ifndef OPENSSL_NO_ECX
+ENCODER_TEXT("X-Wing:XWING:1.3.6.1.4.1.62253.25722", xwing, no),
+# endif
 #endif
 #ifndef OPENSSL_NO_ML_DSA
 ENCODER_TEXT("ML-DSA-44", ml_dsa_44, yes),

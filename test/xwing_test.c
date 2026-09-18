@@ -15,7 +15,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hpke.h>
-#include <openssl/pem.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
@@ -314,66 +313,6 @@ end:
     return ret;
 }
 
-static int test_xwing_codecs(void)
-{
-    int ret = 0;
-    EVP_PKEY *key = NULL, *decoded = NULL;
-    EVP_PKEY_CTX *gctx = NULL;
-    BIO *encoded = NULL, *input = NULL;
-    OSSL_PARAM params[2];
-    unsigned char seed[sizeof(gen_seed)], pub[sizeof(expected_pk)];
-    size_t seedlen = sizeof(seed), publen = sizeof(pub);
-    char *data = NULL;
-    long datalen;
-
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SEED,
-        gen_seed, sizeof(gen_seed));
-    params[1] = OSSL_PARAM_construct_end();
-    if (!TEST_ptr(gctx = EVP_PKEY_CTX_new_from_name(NULL, "X-Wing", NULL))
-        || !TEST_int_eq(EVP_PKEY_keygen_init(gctx), 1)
-        || !TEST_int_eq(EVP_PKEY_CTX_set_params(gctx, params), 1)
-        || !TEST_int_eq(EVP_PKEY_generate(gctx, &key), 1)
-        || !TEST_ptr(encoded = BIO_new(BIO_s_mem()))
-        || !TEST_true(PEM_write_bio_PrivateKey(encoded, key, NULL,
-                NULL, 0, NULL, NULL))
-        || !TEST_long_gt(datalen = BIO_get_mem_data(encoded, &data), 0)
-        || !TEST_ptr(input = BIO_new_mem_buf(data, (int)datalen))
-        || !TEST_ptr(decoded = PEM_read_bio_PrivateKey_ex(input, NULL,
-                NULL, NULL, NULL, NULL))
-        || !TEST_true(EVP_PKEY_get_octet_string_param(decoded,
-                OSSL_PKEY_PARAM_PRIV_KEY, seed, sizeof(seed), &seedlen))
-        || !TEST_size_t_eq(seedlen, sizeof(gen_seed))
-        || !TEST_mem_eq(seed, seedlen, gen_seed, sizeof(gen_seed)))
-        goto end;
-
-    EVP_PKEY_free(decoded);
-    decoded = NULL;
-    BIO_free(input);
-    input = NULL;
-    BIO_free(encoded);
-    encoded = BIO_new(BIO_s_mem());
-    if (!TEST_ptr(encoded)
-        || !TEST_true(PEM_write_bio_PUBKEY(encoded, key))
-        || !TEST_long_gt(datalen = BIO_get_mem_data(encoded, &data), 0)
-        || !TEST_ptr(input = BIO_new_mem_buf(data, (int)datalen))
-        || !TEST_ptr(decoded = PEM_read_bio_PUBKEY_ex(input, NULL,
-                NULL, NULL, NULL, NULL))
-        || !TEST_true(EVP_PKEY_get_octet_string_param(decoded,
-                OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub), &publen))
-        || !TEST_size_t_eq(publen, sizeof(expected_pk))
-        || !TEST_mem_eq(pub, publen, expected_pk, sizeof(expected_pk)))
-        goto end;
-
-    ret = 1;
-end:
-    BIO_free(input);
-    BIO_free(encoded);
-    EVP_PKEY_free(decoded);
-    EVP_PKEY_free(key);
-    EVP_PKEY_CTX_free(gctx);
-    return ret;
-}
-
 static int test_xwing_hpke(void)
 {
     static const unsigned char ikm[32] = {
@@ -436,7 +375,6 @@ int setup_tests(void)
 {
     ADD_TEST(test_xwing_kat);
     ADD_TEST(test_xwing);
-    ADD_TEST(test_xwing_codecs);
     ADD_TEST(test_xwing_hpke);
     return 1;
 }

@@ -33,6 +33,7 @@
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/mlx_codecs.h"
 #include "prov/lms_codecs.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
@@ -446,6 +447,13 @@ static int ml_kem_to_text(BIO *out, const void *vkey, int selection)
 {
     return ossl_ml_kem_key_to_text(out, (const ML_KEM_KEY *)vkey, selection);
 }
+
+# ifndef OPENSSL_NO_ECX
+static int mlx_to_text(BIO *out, const void *vkey, int selection)
+{
+    return ossl_mlx_key_to_text(out, (const MLX_KEY *)vkey, selection);
+}
+# endif
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -728,6 +736,9 @@ MAKE_TEXT_ENCODER(x448, ecx);
 MAKE_TEXT_ENCODER(ml_kem_512, ml_kem);
 MAKE_TEXT_ENCODER(ml_kem_768, ml_kem);
 MAKE_TEXT_ENCODER(ml_kem_1024, ml_kem);
+# ifndef OPENSSL_NO_ECX
+MAKE_TEXT_ENCODER(xwing, mlx);
+# endif
 #endif
 MAKE_TEXT_ENCODER(rsa, rsa);
 MAKE_TEXT_ENCODER(rsapss, rsa);
