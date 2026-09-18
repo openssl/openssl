@@ -436,6 +436,8 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
 
 again:
     if (!dtls_get_reassembled_message(s, &errtype, &tmplen)) {
+        if (s->statem.ack_for_retransmit)
+            return 0;
         if (errtype == DTLS1_HM_BAD_FRAGMENT
             || errtype == DTLS1_HM_FRAGMENT_RETRY) {
             /* bad fragment received */
@@ -845,6 +847,18 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             if (i <= 0)
                 goto err;
             frag_len -= readbytes;
+        }
+        /*
+         * A lost ACK can cause an already processed post-handshake message to
+         * be retransmitted in a new record. ACK it without processing it again.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && s->s3.tmp.record_epoch >= 3
+            && msg_hdr->seq < s->d1->handshake_read_seq
+            && dtls_msg_needs_ack(!s->server, msg_hdr->type)) {
+            if (!add_record_to_ack_list(s))
+                goto err;
+            s->statem.ack_for_retransmit = 1;
         }
     } else {
         if (frag_len != msg_hdr->msg_len) {

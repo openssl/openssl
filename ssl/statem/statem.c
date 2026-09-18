@@ -134,6 +134,7 @@ void ossl_statem_clear(SSL_CONNECTION *s)
     s->statem.error_state = ERROR_STATE_NOERROR;
     ossl_statem_set_in_init(s, 1);
     s->statem.no_cert_verify = 0;
+    s->statem.ack_for_retransmit = 0;
 }
 
 /*
@@ -588,7 +589,6 @@ static void init_read_state_machine(SSL_CONNECTION *s)
 static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
-    OSSL_HANDSHAKE_STATE prev_hand_state = st->hand_state;
     int ret, mt;
     size_t len = 0, headerlen;
     int (*transition)(SSL_CONNECTION *s, int mt);
@@ -621,6 +621,16 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
     while (1) {
         switch (st->read_state) {
         case READ_STATE_HEADER:
+            /*
+             * Restore the state after an incomplete ACK before reading again:
+             * the DTLS record layer uses it to handle application data.
+             */
+            if (SSL_CONNECTION_IS_DTLS13(s)
+                && (st->hand_state == TLS_ST_CR_ACK
+                    || st->hand_state == TLS_ST_SR_ACK)
+                && !transition(s, SSL3_MT_DUMMY))
+                return SUB_STATE_ERROR;
+
             /* Get the state the peer wants to move to */
             if (SSL_CONNECTION_IS_DTLS(s)) {
                 /*
@@ -632,6 +642,10 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
             }
 
             if (ret == 0) {
+                /* Re-ACK a retransmission without completing our own flight. */
+                if (st->ack_for_retransmit)
+                    return SUB_STATE_FINISHED;
+
                 /*
                  * If we're in DTLSv1.3 and in state TLS_ST_OK, then we must
                  * have received a post-handshake message. If we subsequently
@@ -665,7 +679,6 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
              * Validate that we are allowed to move to the new state and move
              * to that state if so
              */
-            prev_hand_state = st->hand_state;
             if (!transition(s, mt))
                 return SUB_STATE_ERROR;
 
@@ -733,10 +746,6 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
                 break;
 
             default:
-                /* A partial ACK must not change the message we are awaiting. */
-                if (SSL_CONNECTION_IS_DTLS13(s)
-                    && s->s3.tmp.message_type == DTLS13_MT_ACK)
-                    st->hand_state = prev_hand_state;
                 st->read_state = READ_STATE_HEADER;
                 break;
             }

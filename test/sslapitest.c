@@ -9317,14 +9317,13 @@ static int test_key_update_local_in_write(int idx)
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 2;
-    int expected_do_handshake_result = 1;
+    int expected_do_handshake_result = testdtls ? -1 : 1;
 
     if (testdtls) {
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         vermin = TLS1_3_VERSION;
         idx -= 2;
-        expected_do_handshake_result = -1;
 #if defined(OSSL_NO_USABLE_DTLS1_3)
         testresult = TEST_skip("No usable DTLSv1.3");
         goto end;
@@ -9386,7 +9385,8 @@ static int test_key_update_local_in_write(int idx)
 
     /* SSL_key_update will succeed because there is no pending write data */
     if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED))
-        || !TEST_int_eq(SSL_do_handshake(local), expected_do_handshake_result))
+        || !TEST_int_eq(SSL_do_handshake(local), expected_do_handshake_result)
+        || (testdtls && !TEST_int_eq(SSL_get_error(local, -1), SSL_ERROR_WANT_READ)))
         goto end;
 
     if (testdtls) {
