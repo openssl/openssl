@@ -1501,3 +1501,13 @@ id_smime_ori_kem		1500
 id_alg_hss_lms_hashsig		1501
 id_rdna_unsigned		1502
 id_alg_unsigned		1503
+id_ct_privateKeyInfo		1504
+id_ct_encrPrivateKeyInfo		1505
+id_ct_rpkiCanonicalCacheRepresentation		1506
+id_ct_rpkiErikIndex		1507
+id_ct_rpkiErikPartition		1508
+id_ct_prefixlenCSVwithCRLF		1509
+id_ct_CDR		1510
+id_ct_rpkiErikSegmentIndex		1511
+stirTNList		1512
+communityDefinition		1513
