@@ -52,7 +52,7 @@ static int is_fips = 0;
  */
 static int test_quic_write_read(int idx)
 {
-    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *cctx = NULL;
     SSL_CTX *sctx = NULL;
     SSL *clientquic = NULL;
     QUIC_TSERVER *qtserv = NULL;
@@ -68,6 +68,7 @@ static int test_quic_write_read(int idx)
     if (idx >= 1 && !qtest_supports_blocking())
         return TEST_skip("Blocking tests not supported in this build");
 
+    cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
     for (k = 0; k < 2; k++) {
         if (!TEST_ptr(cctx)
             || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
@@ -214,7 +215,7 @@ end:
  */
 static int test_fin_only_blocking(void)
 {
-    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *cctx = NULL;
     SSL_CTX *sctx = NULL;
     SSL *clientquic = NULL;
     QUIC_TSERVER *qtserv = NULL;
@@ -228,6 +229,7 @@ static int test_fin_only_blocking(void)
     if (!qtest_supports_blocking())
         return TEST_skip("Blocking tests not supported in this build");
 
+    cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
     if (!TEST_ptr(cctx)
         || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx,
             cert, privkey,
