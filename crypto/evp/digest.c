@@ -848,6 +848,15 @@ static void *evp_md_from_algorithm(int name_id,
         md->flags |= EVP_MD_FLAG_NO_STORE;
 
 #ifndef FIPS_MODULE
+    /*
+     * set_legacy_nid() looks up names in the legacy method database, so
+     * that must be populated first.
+     */
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     md->type = NID_undef;
     if (!evp_names_do_all(prov, name_id, set_legacy_nid, &md->type)
         || md->type == -1) {
