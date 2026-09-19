@@ -67,6 +67,10 @@ IF[{- !$disabled{asm} -}]
     $ECDEF_riscv64=ECP_SM2P256_ASM
   ENDIF
 
+  IF[{- !$disabled{'ecx'} -}]
+    $ECASM_riscv64=$ECASM_riscv64 curve448-riscv64.S
+  ENDIF
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$ECASM_{- $target{asm_arch} -}]
@@ -151,4 +155,8 @@ ENDIF
 IF[{- !$disabled{'sm2'} -}]
   GENERATE[ecp_sm2p256-riscv64.S]=asm/ecp_sm2p256-riscv64.pl
   INCLUDE[ecp_sm2p256-riscv64.o]=..
+ENDIF
+
+IF[{- !$disabled{'ecx'} -}]
+  GENERATE[curve448-riscv64.S]=asm/curve448-riscv64.pl
 ENDIF
