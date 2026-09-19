@@ -36,6 +36,40 @@ typedef struct gf_s {
     word_t limb[NLIMBS];
 } ALIGNED gf_s, gf[1];
 
+/*
+ * Vectorized field helpers, see crypto/ec/asm/curve448-riscv64.pl.  A gf_s is
+ * NLIMBS == 8 limbs of 64 bits.  Each helper handles all 8 limbs in a single
+ * pass, using e64/m2 when VLMAX(e64, m2) >= 8 (VLEN >= 256) and e64/m4
+ * otherwise; the width is picked on entry with a vsetvli probe, so the caller
+ * does not have to know VLEN.
+ *
+ * They are reached only when the compiler is told the minimum VLEN is 128.
+ * At VLEN >= 256 the whole field element already fits in e64/m2, which is also
+ * the width the compiler picks for the scalar loops below, and it inlines that
+ * code into its callers.  Replacing it with an out-of-line call to one of these
+ * helpers is a regression there: measured on SpacemiT X100 (VLEN=256) the
+ * vector path costs 7.5% of x448 cycles, or 13% when forced to e64/m4.  At
+ * VLEN == 128 the probe selects e64/m4, which is the configuration that
+ * measured a gain on SG2044.
+ *
+ * The test is deliberately compile-time.  These helpers are ossl_inline and
+ * expand at ~30 sites inside the 448-round ladder in ossl_x448_int, so a
+ * runtime riscv_vlen() test would execute ~13400 times per ossl_x448() call,
+ * costing more than the vector path saves.  __riscv_v_min_vlen is what GCC
+ * uses to choose the LMUL when it auto-vectorizes the loops below, so keying
+ * on it makes the two paths mutually exclusive: whichever one GCC is already
+ * going to generate for this build is the one we keep.
+ */
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+#if defined(__riscv_vector) && __riscv_v_min_vlen <= 128
+void ossl_gf_sub_RAW_rvv(gf_s *out, const gf a, const gf b);
+void ossl_gf_weak_reduce_rvv(gf_s *a);
+void ossl_gf_cond_swap_rvv(gf_s *x, gf_s *y, mask_t swap);
+
+#define GF_HAVE_RVV_HELPERS
+#endif /* defined(__riscv_vector) && __riscv_v_min_vlen <= 128 */
+#endif /* defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64 */
+
 /* RFC 7748 support */
 #define X_PUBLIC_BYTES X_SER_BYTES
 #define X_PRIVATE_BYTES X_PUBLIC_BYTES
@@ -143,6 +177,11 @@ void gf_sub_RAW(gf out, const gf a, const gf b)
     uint64_t co1 = ((1ULL << 56) - 1) * 2, co2 = co1 - 2;
     unsigned int i;
 
+#ifdef GF_HAVE_RVV_HELPERS
+    ossl_gf_sub_RAW_rvv(out, a, b);
+    return;
+#endif
+
     for (i = 0; i < NLIMBS; i++)
         out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
 
@@ -158,6 +197,11 @@ void gf_weak_reduce(gf a)
     uint64_t mask = (1ULL << 56) - 1;
     uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
     unsigned int i;
+
+#ifdef GF_HAVE_RVV_HELPERS
+    ossl_gf_weak_reduce_rvv(a);
+    return;
+#endif
 
     a->limb[NLIMBS / 2] += tmp;
     for (i = NLIMBS - 1; i > 0; i--)
@@ -251,6 +295,11 @@ static ossl_inline void gf_cond_neg(gf x, mask_t neg)
 static ossl_inline void gf_cond_swap(gf x, gf_s *RESTRICT y, mask_t swap)
 {
     size_t i;
+
+#ifdef GF_HAVE_RVV_HELPERS
+    ossl_gf_cond_swap_rvv(x, y, swap);
+    return;
+#endif
 
     for (i = 0; i < NLIMBS; i++) {
 #if ARCH_WORD_BITS == 32
