@@ -13,6 +13,8 @@
 #include <openssl/cms.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
+#include <openssl/rsa.h>
+#include <openssl/provider.h>
 #include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
 
 #include "testutil.h"
@@ -362,6 +364,113 @@ end:
     CMS_ContentInfo_free(content);
 
     return testresult;
+}
+
+/* Exercise the key-length filter through both decryption API sequences. */
+static int test_decrypt_key_length(int idx)
+{
+    static const char msg[] = "CMS content key length check";
+    static const unsigned char wrongkey[17] = { 0 };
+    const EVP_CIPHER *cipher = EVP_aes_128_gcm();
+    OSSL_PROVIDER *legacy = NULL;
+    STACK_OF(X509) *recips = NULL;
+    CMS_ContentInfo *cms = NULL, *decoded = NULL;
+    CMS_RecipientInfo *ri;
+    EVP_PKEY_CTX *pctx = NULL;
+    X509 *second = NULL;
+    BIO *in = NULL, *out = NULL;
+    unsigned char *ek = NULL;
+    size_t eklen = 0;
+    char *plaintext;
+    long plaintextlen;
+    int ret = 0, run, staged = idx % 2;
+
+    if (idx / 2 != 0) {
+        if (idx / 2 == 3) {
+#ifndef OPENSSL_NO_RC4
+            cipher = EVP_rc4_40();
+#else
+            return TEST_skip("RC4 is disabled");
+#endif
+        } else {
+#ifndef OPENSSL_NO_RC2
+            cipher = idx / 2 == 1 ? EVP_rc2_40_cbc() : EVP_rc2_64_cbc();
+#else
+            return TEST_skip("RC2 is disabled");
+#endif
+        }
+        legacy = OSSL_PROVIDER_try_load(NULL, "legacy", 1);
+        if (legacy == NULL) {
+            ERR_clear_error();
+            return TEST_skip("The legacy provider is unavailable");
+        }
+    }
+
+    if (!TEST_ptr(recips = sk_X509_new_null())
+        || !TEST_int_gt(sk_X509_push(recips, cert), 0)
+        || !TEST_ptr(in = BIO_new_mem_buf(msg, sizeof(msg) - 1))
+        || !TEST_ptr(cms = CMS_encrypt(recips, in, cipher, CMS_BINARY)))
+        goto end;
+
+    if (idx / 2 == 0) {
+        /* Keep the valid AES key when a later recipient has the wrong length. */
+        if (!TEST_ptr(second = X509_dup(cert))
+            || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(second),
+                ASN1_INTEGER_get(X509_get0_serialNumber(cert)) + 1))
+            || !TEST_ptr(ri = CMS_add1_recipient_cert(cms, second, 0))
+            || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL,
+                             X509_get0_pubkey(cert), NULL))
+            || !TEST_int_gt(EVP_PKEY_encrypt_init(pctx), 0)
+            || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PADDING), 0)
+            || !TEST_int_gt(EVP_PKEY_encrypt(pctx, NULL, &eklen,
+                                wrongkey, sizeof(wrongkey)),
+                0)
+            || !TEST_ptr(ek = OPENSSL_malloc(eklen))
+            || !TEST_int_gt(EVP_PKEY_encrypt(pctx, ek, &eklen,
+                                wrongkey, sizeof(wrongkey)),
+                0)
+            || !TEST_true(ASN1_OCTET_STRING_set(ri->d.ktri->encryptedKey,
+                ek, (int)eklen)))
+            goto end;
+    }
+
+    /* Start from a decoded object, with the genuine recipient ordered first. */
+    if (!TEST_ptr(decoded = ASN1_item_dup(ASN1_ITEM_rptr(CMS_ContentInfo), cms)))
+        goto end;
+    ri = sk_CMS_RecipientInfo_value(CMS_get0_RecipientInfos(decoded), 0);
+    if (!TEST_int_eq(CMS_RecipientInfo_ktri_cert_cmp(ri, cert), 0))
+        goto end;
+
+    for (run = 0; run < 2; run++) {
+        if (!TEST_ptr(out = BIO_new(BIO_s_mem())))
+            goto end;
+        if (staged) {
+            if (!TEST_true(CMS_decrypt_set1_pkey(decoded, privkey, NULL))
+                || !TEST_true(CMS_decrypt(decoded, NULL, NULL, NULL,
+                    out, CMS_BINARY)))
+                goto end;
+        } else if (!TEST_true(CMS_decrypt(decoded, privkey, NULL, NULL,
+                       out, CMS_BINARY))) {
+            goto end;
+        }
+        plaintextlen = BIO_get_mem_data(out, &plaintext);
+        if (!TEST_mem_eq(plaintext, plaintextlen, msg, sizeof(msg) - 1))
+            goto end;
+        BIO_free(out);
+        out = NULL;
+    }
+    ret = 1;
+end:
+    BIO_free(in);
+    BIO_free(out);
+    CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(decoded);
+    sk_X509_free(recips);
+    X509_free(second);
+    EVP_PKEY_CTX_free(pctx);
+    OPENSSL_free(ek);
+    OSSL_PROVIDER_unload(legacy);
+    return ret;
 }
 
 static int test_CMS_add1_cert(void)
@@ -1092,6 +1201,7 @@ int setup_tests(void)
     ADD_TEST(test_short_mac_on_auth_envelope_data);
     ADD_TEST(test_CMS_add_standard_smimecap_ex);
     ADD_TEST(test_decrypt_with_wrong_key);
+    ADD_ALL_TESTS(test_decrypt_key_length, 8);
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_CMS_SignerInfo_verify_sigalg_oid);
     ADD_TEST(test_d2i_CMS_bio_NULL);
