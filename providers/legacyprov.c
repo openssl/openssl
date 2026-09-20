@@ -242,6 +242,10 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     }
 #endif
 
+#ifndef STATIC_LEGACY
+    OPENSSL_init_crypto(OPENSSL_INIT_NO_ATEXIT, NULL);
+#endif
+
     if ((*provctx = ossl_prov_ctx_new()) == NULL
         || (libctx = OSSL_LIB_CTX_new_child(handle, in)) == NULL) {
         OSSL_LIB_CTX_free(libctx);
