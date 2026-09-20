@@ -411,6 +411,17 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      */
     rxe->hdr.data = dst;
     rxe->hdr.len = dec_len;
+    /*
+     * The second header decode above re-parsed the token from the
+     * URXE-backed PACKET, clobbering the pointer which qrx_relocate_buffer()
+     * previously fixed up to point into the RXE. Restore it, as the URXE is
+     * recycled once this function returns. The relocated copy lives at the
+     * start of the RXE data buffer (offset 0, length i); this fixup must
+     * come after the final qrx_reserve_rxe() above, which may have moved
+     * the RXE.
+     */
+    if (rxe->hdr.token_len > 0)
+        rxe->hdr.token = rxe_data(rxe);
     rxe->data_len = dec_len;
     rxe->datagram_len = datagram_len;
     rxe->key_epoch = rx_key_epoch;
@@ -1251,6 +1262,18 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      */
     rxe->hdr.data = dst;
     rxe->hdr.len = dec_len;
+    /*
+     * The second header decode above (after header protection removal)
+     * re-parsed the token from the URXE-backed PACKET, clobbering the
+     * pointer which qrx_relocate_buffer() previously fixed up to point
+     * into the RXE. Restore it, as qrx_process_one_urxe() releases the
+     * URXE for reuse once this function returns. The relocated copy lives
+     * at the start of the RXE data buffer (offset 0, length i); this
+     * fixup must come after the final qrx_reserve_rxe() above, which may
+     * have reallocated (moved) the RXE.
+     */
+    if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL && rxe->hdr.token_len > 0)
+        rxe->hdr.token = rxe_data(rxe);
     rxe->data_len = dec_len;
     rxe->datagram_len = datagram_len;
     rxe->key_epoch = rx_key_epoch;
