@@ -285,12 +285,18 @@ static void x25519_scalar_mulx(uint8_t out[32], const uint8_t scalar[32],
  * subtrahend must never be a difference. fe51_mul, fe51_sq and
  * fe51_mul121666, in C as well as in assembly, accept any input with
  * limbs below 2^54: the largest 128-bit accumulator then stays below
- * 77 * 2^108 < 2^115, and the carry out of the top limb, which gets
- * multiplied by 19 in 64-bit arithmetic, stays below 2^60. The X25519
- * ladder and the Ed25519 group operations never add more than three
- * products together, nor subtract from more than the sum of a product
- * and a difference, so every input to fe51_mul and fe51_sq is below
- * 2^53 + 3 * 2^51 + 2^15 < 2^54.
+ * 77 * 2^108 < 2^115, the carry out of the top limb, including the carry
+ * coming into it from the limb below, stays below 6 * 2^57, and folding
+ * it into the bottom limb in 64-bit arithmetic stays below
+ * 2^51 + 19 * 6 * 2^57 = 2^51 + 114 * 2^57 < 2^64. The X25519 ladder and
+ * the Ed25519 group operations never add more than three products
+ * together, nor subtract from more than the sum of a product and a
+ * difference, so every input to fe51_mul and fe51_sq is below
+ * 2^53 + 3 * 2^51 + 2^15 < 2^54. fe51_tobytes accepts limbs below 2^55.
+ *
+ * The Ed25519 constants and precomputed tables in this representation
+ * were converted from the base 2^25.5 ones by util/curve25519-fe51-tables.py,
+ * which also checks both against an independent implementation.
  */
 #define BASE_2_51_IMPLEMENTED
 
@@ -351,6 +357,10 @@ static void fe51_frombytes(fe51 h, const uint8_t *s)
     h[4] = h4;
 }
 
+/*
+ * Preconditions:
+ *    every limb of h below 2^55 (all callers stay below 2^54, see above)
+ */
 static void fe51_tobytes(uint8_t *s, const fe51 h)
 {
     uint64_t h0 = h[0];
@@ -362,10 +372,10 @@ static void fe51_tobytes(uint8_t *s, const fe51 h)
 
     /*
      * Propagate carries so that every limb is below 2^51, bar h0 which may
-     * exceed it by a small multiple of 19. The comparison to the modulus
-     * below relies on the value being below 2 * modulus, which holds for
-     * outputs of fe51_mul and fe51_sq as they are, but not for outputs of
-     * fe51_add, fe51_sub and fe51_neg.
+     * exceed it by a small multiple of 19 (below 19 * 2^4 for limbs below
+     * 2^55). The comparison to the modulus below relies on the value being
+     * below 2 * modulus, which holds for outputs of fe51_mul and fe51_sq as
+     * they are, but not for outputs of fe51_add, fe51_sub and fe51_neg.
      */
     h1 += h0 >> 51;
     h0 &= MASK51;
@@ -1753,6 +1763,7 @@ static void fe_cmov(fe f, const fe g, unsigned b)
  *
  * Preconditions:
  *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+ *    or, with the base 2^51 representation, every limb below 2^55
  */
 static int fe_isnonzero(const fe f)
 {
@@ -1770,6 +1781,7 @@ static int fe_isnonzero(const fe f)
  *
  * Preconditions:
  *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+ *    or, with the base 2^51 representation, every limb below 2^55
  */
 static int fe_isnegative(const fe f)
 {
@@ -2345,7 +2357,12 @@ static void cmov(ge_precomp *t, const ge_precomp *u, uint8_t b)
 }
 
 #if defined(BASE_2_51_IMPLEMENTED)
-/* k25519Precomp[i][j] = (j+1)*256^i*B */
+/*
+ * k25519Precomp[i][j] = (j+1)*256^i*B
+ *
+ * Converted from the base 2^25.5 table below with
+ * util/curve25519-fe51-tables.py.
+ */
 static const ge_precomp k25519Precomp[32][8] = {
     {
         {

@@ -40,8 +40,8 @@ OpenSSL 4.2
 
    *Madan Mohan Manokar*
 
- * Ed25519 now uses 51-bit limbs on 64-bit platforms, making it roughly
-   twice as fast.
+ * Ed25519 now uses base 2^51 arithmetic on supported platforms, making it
+   roughly twice as fast.
    <!-- https://github.com/openssl/openssl/pull/32777 -->
 
    *Alex Gaynor*
