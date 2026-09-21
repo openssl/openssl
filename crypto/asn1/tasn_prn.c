@@ -129,6 +129,19 @@ int ASN1_item_print(BIO *out, const ASN1_VALUE *ifld, int indent,
     return asn1_item_print_ctx(out, &ifld, indent, it, NULL, sname, 0, pctx);
 }
 
+/*
+ * LONG and ZLONG store a long directly in the field rather than a pointer,
+ * so the field must not be dereferenced as an ASN1_VALUE pointer.
+ */
+static int asn1_item_is_embedded_long(const ASN1_ITEM *it)
+{
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    return it == ASN1_ITEM_rptr(LONG) || it == ASN1_ITEM_rptr(ZLONG);
+#else
+    return 0;
+#endif
+}
+
 static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
     const ASN1_ITEM *it,
     const char *fname, const char *sname,
@@ -147,7 +160,8 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
     }
 
     if (((it->itype != ASN1_ITYPE_PRIMITIVE)
-            || (it->utype != V_ASN1_BOOLEAN))
+            || (it->utype != V_ASN1_BOOLEAN
+                && !asn1_item_is_embedded_long(it)))
         && *fld == NULL) {
         if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT) {
             if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))

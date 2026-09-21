@@ -840,6 +840,38 @@ static int test_long_64bit(void)
 {
     return test_intern(&long_test_package_64bit);
 }
+
+/*
+ * LONG and ZLONG fields hold the value itself, not a pointer, so printing
+ * must not treat a zero value as an absent field.
+ */
+static int test_long_print(void)
+{
+    ASN1_LONG_DATA data = { 0xff, 0, 0 };
+    BIO *bio = NULL;
+    char *mem = NULL, *out = NULL;
+    long len;
+    int ret = 0;
+
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(ASN1_item_print(bio, (const ASN1_VALUE *)&data, 0,
+                            ASN1_ITEM_rptr(ASN1_LONG_DATA), NULL),
+            1))
+        goto err;
+    len = BIO_get_mem_data(bio, &mem);
+    if (!TEST_long_gt(len, 0)
+        || !TEST_ptr(out = OPENSSL_strndup(mem, (size_t)len))
+        || !TEST_ptr(strstr(out, "test_long: 0\n"))
+        || !TEST_ptr(strstr(out, "test_zlong: 0\n")))
+        goto err;
+    ret = 1;
+err:
+    if (ret == 0 && out != NULL)
+        TEST_info("ASN1_item_print output:\n%s", out);
+    OPENSSL_free(out);
+    BIO_free(bio);
+    return ret;
+}
 #endif
 
 static int test_int32(void)
@@ -898,6 +930,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_long_32bit);
     ADD_TEST(test_long_64bit);
+    ADD_TEST(test_long_print);
 #endif
     ADD_TEST(test_int32);
     ADD_TEST(test_uint32);
