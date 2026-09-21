@@ -1360,6 +1360,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         goto err;
     }
 
+    binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
+    if (!PACKET_get_length_prefixed_2(pkt, &binders)
+        || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+
     s->ext.ticket_expected = 0;
     for (id = 0; PACKET_remaining(&identities) != 0 && id < MAX_PRE_SHARED_KEYS; id++) {
         PACKET identity;
@@ -1580,15 +1587,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         goto err;
     }
 
-    binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
     hashsize = EVP_MD_get_size(md);
     if (hashsize <= 0)
         goto err;
-
-    if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        goto err;
-    }
 
     for (i = 0; i <= id; i++) {
         if (!PACKET_get_length_prefixed_1(&binders, &binder)) {

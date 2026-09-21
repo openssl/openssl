@@ -30,14 +30,15 @@ plan skip_all => "$test_name needs elliptic curves or diffie-hellman enabled"
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
-my $testcount = 7;
+my $testcount = 8;
 
 plan tests => 2 * $testcount;
 
 use constant {
     PSK_LAST_FIRST_CH => 0,
     ILLEGAL_EXT_SECOND_CH => 1,
-    TOO_MANY_PSKS => 2
+    TOO_MANY_PSKS => 2,
+    PSK_TRAILING_DATA => 3
 };
 
 SKIP: {
@@ -169,6 +170,17 @@ sub run_tests
     $proxy->start();
     ok(TLSProxy::Message->success(), "Too many PSKs");
 
+    #Test 7: Attempt a resume with trailing data after the PreSharedKeyExtension
+    #        structure. Should fail with a decode_error alert.
+    $proxy->clear();
+    $proxy->clientflags($groups_list . " -sess_in " . $session);
+    $proxy->serverflags($groups_list);
+    $proxy->filter(\&modify_psk_filter);
+    $testtype = PSK_TRAILING_DATA;
+    $proxy->start();
+    ok(is_server_alert(TLSProxy::Message::AL_DESC_DECODE_ERROR),
+       "PSK extension with trailing data");
+
     my $proxy2;
     if ($run_test_as_dtls == 1) {
         $proxy2 = TLSProxy::Proxy->new_dtls(
@@ -189,7 +201,7 @@ sub run_tests
         );
     }
 
-    #Test 7: Attempt an invalid resume, with a server that can only do PSK.
+    #Test 8: Attempt an invalid resume, with a server that can only do PSK.
     #        Should be treated the same as an invalid binder (decrypt_error)
     #        as per RFC8446 Appendix E.6
     $proxy2->clear();
@@ -199,23 +211,26 @@ sub run_tests
         $proxy2->start();
         # For DTLS, the proxy may return 0 even when we got the expected alert,
         # because UDP doesn't have connection close semantics and the proxy times out.
-        # The actual validation happens in is_decode_error_server_alert() below.
+        # The actual validation happens in is_server_alert() below.
     } else {
         $proxy2->start() or die "Failed to start proxy2";
     }
-    ok(is_decode_error_server_alert(), "Bad PSK with no handshake fallback");
+    ok(is_server_alert(TLSProxy::Message::AL_DESC_DECRYPT_ERROR),
+       "Bad PSK with no handshake fallback");
 
     unlink $session;
 }
 
-sub is_decode_error_server_alert
+sub is_server_alert
 {
+    my $desc = shift;
+
     return 0 unless TLSProxy::Message->fail();
 
     my $alert = TLSProxy::Message->alert();
-    return 1 if $alert->server()
-                && $alert->description()
-                   == TLSProxy::Message::AL_DESC_DECRYPT_ERROR;
+    return 1 if defined $alert
+                && $alert->server()
+                && $alert->description() == $desc;
     return 0;
 }
 
@@ -245,6 +260,12 @@ sub modify_psk_filter
 
     if ($testtype == PSK_LAST_FIRST_CH) {
         $message->set_extension(TLSProxy::Message::EXT_FORCE_LAST, "");
+    } elsif ($testtype == PSK_TRAILING_DATA) {
+        #Append a trailing byte after the binders
+        my $pskext = ${$message->extension_data}{TLSProxy::Message::EXT_PSK};
+        return if !defined $pskext;
+        $message->set_extension(TLSProxy::Message::EXT_PSK,
+                                $pskext . pack("C", 0x00));
     } elsif ($testtype == ILLEGAL_EXT_SECOND_CH) {
         #Deliberately break the connection
         $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_GROUPS, "");
