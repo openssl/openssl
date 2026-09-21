@@ -420,7 +420,6 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
             }
             s->init_off += written;
             s->init_num -= written;
-            written -= DTLS1_HM_HEADER_LENGTH;
         }
     }
     return 0;
