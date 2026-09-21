@@ -316,6 +316,11 @@ struct bio_dgram_peer_st {
      * indexed one per direction.
      */
     struct rbuf_map_st map[2];
+#ifndef OPENSSL_NO_PCAP
+    FILE *tcpdump_f;
+    CRYPTO_MUTEX *pcap_mutex;
+    uint16_t ip_id;
+#endif
 };
 
 struct bio_dgram_pair_st {
@@ -341,12 +346,6 @@ struct bio_dgram_pair_st {
     unsigned int local_addr_enable : 1; /* Can use BIO_MSG->local? */
     unsigned int role : 1; /* Determines lock order */
     unsigned int grows_on_write : 1; /* Set for BIO_s_dgram_mem only */
-#ifndef OPENSSL_NO_PCAP
-    FILE *tcpdump_f;
-    CRYPTO_MUTEX *pcap_mutex;
-    int owner;
-    uint64_t packet_num;
-#endif
 };
 
 /*
@@ -482,10 +481,6 @@ static int dgram_pair_free(BIO *bio)
     ring_buf_destroy(&b->rbuf);
     BIO_ADDR_free(b->local_addr);
     CRYPTO_THREAD_lock_free(b->lock);
-#ifndef OPENSSL_NO_PCAP
-    if (b->tcpdump_f != NULL)
-        fclose(b->tcpdump_f);
-#endif
     OPENSSL_free(b);
     return 1;
 }
@@ -608,7 +603,7 @@ static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
 
 #ifndef OPENSSL_NO_PCAP
 #define LINKTYPE_IPV4 0x00e4 /* IANA type */
-    struct bio_dgram_pair_st *b1, *b2;
+    struct bio_dgram_pair_st *bp;
     char *filename = (char *)ptr;
     static struct {
         uint32_t pcap_magic;
@@ -628,30 +623,23 @@ static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
         .pcap_ltype = LINKTYPE_IPV4,
     };
 
-    b1 = (struct bio_dgram_pair_st *)bio->ptr;
-    if (b1 == NULL)
+    bp = (struct bio_dgram_pair_st *)bio->ptr;
+    if (bp == NULL)
         return 0;
 
-    if (b1->peer == NULL)
-        return 0;
-
-    b2 = (struct bio_dgram_pair_st *)b1->peer->ptr;
-    if (b2 == NULL)
+    if (bp->pair == NULL || bp->pair->peer_state == PEER_STATE_ORPHANED)
         return 0;
 
     if (filename != NULL) {
-        if (b1->tcpdump_f == NULL) {
-            b1->pcap_mutex = ossl_crypto_mutex_new();
-            if (b1->pcap_mutex != NULL) {
-                b1->tcpdump_f = fopen(filename, "wb");
-                if (b1->tcpdump_f != NULL) {
-                    b1->owner = 1;
-                    b2->tcpdump_f = b1->tcpdump_f;
-                    b2->pcap_mutex = b1->pcap_mutex;
+        if (bp->pair->tcpdump_f == NULL) {
+            bp->pair->pcap_mutex = ossl_crypto_mutex_new();
+            if (bp->pair->pcap_mutex != NULL) {
+                bp->pair->tcpdump_f = fopen(filename, "wb");
+                if (bp->pair->tcpdump_f != NULL) {
                     ret = fwrite(&pcap_f_header, sizeof(pcap_f_header), 1,
-                        b1->tcpdump_f);
+                        bp->pair->tcpdump_f);
                 } else {
-                    ossl_crypto_mutex_free(&b1->pcap_mutex);
+                    ossl_crypto_mutex_free(&bp->pair->pcap_mutex);
                 }
             }
         }
@@ -692,26 +680,19 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
          * The last half of the pair is leaving, clean up the
          * shared data
          */
-#ifndef OPENSSL_NO_PCAP
-        if (b1->tcpdump_f != NULL || b2->tcpdump_f != NULL) {
-            if (b1->owner && b1->tcpdump_f) {
-                fclose(b1->tcpdump_f);
-                ossl_crypto_mutex_free(&b1->pcap_mutex);
-            }
-            if (b2->owner && b2->tcpdump_f) {
-                fclose(b2->tcpdump_f);
-                ossl_crypto_mutex_free(&b2->pcap_mutex);
-            }
-            b1->tcpdump_f = NULL;
-            b2->tcpdump_f = NULL;
-        }
-#endif
         CRYPTO_FREE_REF(&b1->pair->ref_cnt);
         CRYPTO_THREAD_lock_free(b1->pair->map[0].lock);
         CRYPTO_THREAD_lock_free(b1->pair->map[1].lock);
         CRYPTO_THREAD_lock_free(b1->pair->peerlock);
         ring_buf_destroy(&b1->pair->map[0].rbuf);
         ring_buf_destroy(&b1->pair->map[1].rbuf);
+#ifndef OPENSSL_NO_PCAP
+        if (b1->pair->tcpdump_f != NULL) {
+            fclose(b1->pair->tcpdump_f);
+            ossl_crypto_mutex_free(&b1->pair->pcap_mutex);
+            b1->pair->tcpdump_f = NULL;
+        }
+#endif
         OPENSSL_free(b1->pair);
     }
     /*
@@ -1578,7 +1559,7 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     OSSL_TIME now;
     struct bio_dgram_pair_st *peer;
 
-    if (b->tcpdump_f == NULL || sz == 0)
+    if (b->pair->tcpdump_f == NULL || sz == 0)
         return;
 
     if ((sz + sizeof(ip_hdr) + sizeof(udp_hdr)) > 65535)
@@ -1595,15 +1576,21 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     ip_hdr.ip_hv = 0x45;
     ip_hdr.ip_tos = 0;
     ip_hdr.ip_len = htons(len);
-    RAND_bytes((unsigned char *)&ip_hdr.ip_id, 2);
+    ip_hdr.ip_id = b->pair->ip_id++;
     ip_hdr.ip_frag = 0x40; /* don't fragment */
     ip_hdr.ip_foff = 0;
     ip_hdr.ip_ttl = 64;
     ip_hdr.ip_proto = 17;
     ip_hdr.ip_csum = 0; /* wireshark will complain with ?chksum offload? */
-    ip_hdr.ip_src = (b->local_addr == NULL) ? htonl(0x7f000001) : b->local_addr->s_in.sin_addr.s_addr;
-    peer = (struct bio_dgram_pair_st *)b->peer->ptr;
-    ip_hdr.ip_dst = (peer == NULL || peer->local_addr == NULL) ? htonl(0x7f000001) : peer->local_addr->s_in.sin_addr.s_addr;
+    ip_hdr.ip_src = (b->local_addr == NULL) ? htonl(0x7f000001)
+        : b->local_addr->s_in.sin_addr.s_addr;
+    if (b->pair->map[0].self == b) {
+        peer = b->pair->map[1].self;
+    } else {
+        peer = b->pair->map[0].self;
+    }
+    ip_hdr.ip_dst = (peer == NULL || peer->local_addr == NULL) ? htonl(0x7f000001)
+        : peer->local_addr->s_in.sin_addr.s_addr;
 
     /*
      * use some fake port numbers
@@ -1612,12 +1599,12 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     udp_hdr.uh_dport = (peer == NULL || peer->local_addr == NULL) ? htons(4040) : peer->local_addr->s_in.sin_port;
     udp_hdr.uh_csum = 0;
     udp_hdr.uh_len = htons((uint16_t)(sz + sizeof(udp_hdr)));
-    ossl_crypto_mutex_lock(b->pcap_mutex);
-    fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, b->tcpdump_f);
-    fwrite(&ip_hdr, sizeof(ip_hdr), 1, b->tcpdump_f);
-    fwrite(&udp_hdr, sizeof(udp_hdr), 1, b->tcpdump_f);
-    fwrite(buf, sz, 1, b->tcpdump_f);
-    ossl_crypto_mutex_unlock(b->pcap_mutex);
+    ossl_crypto_mutex_lock(b->pair->pcap_mutex);
+    fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, b->pair->tcpdump_f);
+    fwrite(&ip_hdr, sizeof(ip_hdr), 1, b->pair->tcpdump_f);
+    fwrite(&udp_hdr, sizeof(udp_hdr), 1, b->pair->tcpdump_f);
+    fwrite(buf, sz, 1, b->pair->tcpdump_f);
+    ossl_crypto_mutex_unlock(b->pair->pcap_mutex);
 }
 #endif
 
