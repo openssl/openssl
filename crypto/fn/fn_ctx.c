@@ -88,8 +88,10 @@ OSSL_FN_CTX *OSSL_FN_CTX_new_size(OSSL_LIB_CTX *libctx, size_t size)
 
     ctx = OPENSSL_zalloc(total_size);
 
-    if (ctx != NULL)
+    if (ctx != NULL) {
         ctx->msize = size;
+        ctx->libctx = libctx;
+    }
 
     return ctx;
 }
@@ -120,6 +122,7 @@ OSSL_FN_CTX *OSSL_FN_CTX_secure_new_size(OSSL_LIB_CTX *libctx, size_t size)
 
     if (ctx != NULL) {
         ctx->msize = size;
+        ctx->libctx = libctx;
         ctx->is_securely_allocated = 1;
     }
 
@@ -144,6 +147,11 @@ void OSSL_FN_CTX_peak_usage(const OSSL_FN_CTX *ctx, size_t *peak_n_frames,
         *peak_n_numbers = ctx->peak_n_numbers;
     if (peak_n_limbs != NULL)
         *peak_n_limbs = ctx->peak_n_limbs;
+}
+
+OSSL_LIB_CTX *OSSL_FN_CTX_get0_libctx(const OSSL_FN_CTX *ctx)
+{
+    return ctx == NULL ? NULL : ctx->libctx;
 }
 
 void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx)
