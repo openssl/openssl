@@ -17075,6 +17075,29 @@ end:
     return testresult;
 }
 
+static int test_ssl_get0_group_name_no_session(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    int testresult = 0;
+
+    /*
+     * Calling SSL_get0_group_name() before a session/handshake is
+     * established should return NULL instead of segfaulting.
+     */
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method())))
+        goto end;
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto end;
+    if (!TEST_ptr_null(SSL_get0_group_name(ssl)))
+        goto end;
+    testresult = 1;
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -17455,6 +17478,7 @@ int setup_tests(void)
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_grease);
 #endif
+    ADD_TEST(test_ssl_get0_group_name_no_session);
     return 1;
 
 err:

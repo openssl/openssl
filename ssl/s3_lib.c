@@ -5671,6 +5671,8 @@ const char *SSL_get0_group_name(SSL *s)
 
     if (SSL_CONNECTION_IS_VERSION13(sc) && sc->s3.did_kex)
         id = sc->s3.group_id;
+    else if (sc->session == NULL)
+        return NULL;
     else
         id = sc->session->kex_group;
 
