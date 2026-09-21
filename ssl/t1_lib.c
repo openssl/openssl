@@ -4096,7 +4096,7 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
      * advertised as being supported in the "signature_algorithms"
      * extension.
      */
-    if (default_nid == -1 || X509_self_signed(x, 0))
+    if (default_nid == -1 || X509_self_signed(x, 0) > 0)
         return 1;
     sig_nid = X509_get_signature_nid(x);
     if (default_nid)

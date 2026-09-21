@@ -196,6 +196,8 @@ openssl x509 -in sca-cert.pem -trustout \
 ./mkcert.sh genee server.example ee-key ee-name2 ca-key ca-name2
 ./mkcert.sh genee server.example ee-key ee-pathlen ca-key ca-cert \
     -extfile <(echo "basicConstraints=CA:false,pathlen:0") # bash needed here
+# ee variant: invalid (empty) keyUsage, rejected by X509_check_purpose()
+./mkcert.sh genee -k "DER:03:01:00" server.example ee-key ee-ku-empty ca-key ca-cert
 # ee variant: issued directly by root CA (2-level chain)
 ./mkcert.sh genee server.example1 ee-key ee-cert1 root-key root-cert
 # purpose variants: clientAuth

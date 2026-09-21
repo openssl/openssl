@@ -26,6 +26,8 @@ static char *req_f = NULL;
 static char *sroot_cert = NULL;
 static char *ca_cert = NULL;
 static char *ee_cert = NULL;
+static char *ee_ku_empty = NULL;
+static char *root_cert = NULL;
 
 #define load_cert_from_file(file) load_cert_pem(file, NULL)
 
@@ -766,6 +768,104 @@ static int test_purpose_any(void)
     return do_test_purpose(X509_PURPOSE_ANY, 1);
 }
 
+static int ignore_all_errors_cb(int ok, X509_STORE_CTX *ctx)
+{
+    return 1;
+}
+
+/*
+ * A leaf with invalid extensions must not be accepted when the verify callback
+ * ignores the (non-fatal) chain building errors: failure to cache its
+ * extensions is a hard error.
+ */
+static int test_invalid_ee_cb_ignores_errors(void)
+{
+    X509 *eecert = load_cert_from_file(ee_ku_empty);
+    X509 *untrcert = load_cert_from_file(ca_cert);
+    X509 *trcert = load_cert_from_file(root_cert);
+    STACK_OF(X509) *trusted = sk_X509_new_null();
+    STACK_OF(X509) *untrusted = sk_X509_new_null();
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    int testresult = 0;
+
+    if (!TEST_ptr(eecert)
+        || !TEST_ptr(untrcert)
+        || !TEST_ptr(trcert)
+        || !TEST_ptr(trusted)
+        || !TEST_ptr(untrusted)
+        || !TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_true(sk_X509_push(trusted, trcert)))
+        goto err;
+    trcert = NULL;
+    if (!TEST_true(sk_X509_push(untrusted, untrcert)))
+        goto err;
+    untrcert = NULL;
+
+    if (!TEST_true(X509_STORE_CTX_init(ctx, NULL, eecert, untrusted)))
+        goto err;
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+    X509_STORE_CTX_set_verify_cb(ctx, ignore_all_errors_cb);
+
+    if (!TEST_int_le(X509_verify_cert(ctx), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    OSSL_STACK_OF_X509_free(trusted);
+    OSSL_STACK_OF_X509_free(untrusted);
+    X509_STORE_CTX_free(ctx);
+    X509_free(eecert);
+    X509_free(untrcert);
+    X509_free(trcert);
+    ERR_clear_error();
+    return testresult;
+}
+
+/* X509_policy_check() must fail on a chain with an invalid certificate */
+static int test_policy_check_invalid_ee(void)
+{
+    X509 *eecert = load_cert_from_file(ee_ku_empty);
+    X509 *cacert = load_cert_from_file(ca_cert);
+    X509 *rootcert = load_cert_from_file(root_cert);
+    STACK_OF(X509) *chain = sk_X509_new_null();
+    X509_POLICY_TREE *tree = NULL;
+    int explicit_policy = 0;
+    int testresult = 0;
+
+    if (!TEST_ptr(eecert)
+        || !TEST_ptr(cacert)
+        || !TEST_ptr(rootcert)
+        || !TEST_ptr(chain))
+        goto err;
+
+    if (!TEST_true(sk_X509_push(chain, eecert)))
+        goto err;
+    eecert = NULL;
+    if (!TEST_true(sk_X509_push(chain, cacert)))
+        goto err;
+    cacert = NULL;
+    if (!TEST_true(sk_X509_push(chain, rootcert)))
+        goto err;
+    rootcert = NULL;
+
+    if (!TEST_int_eq(X509_policy_check(&tree, &explicit_policy, chain, NULL,
+                         X509_V_FLAG_POLICY_CHECK),
+            X509_PCY_TREE_INTERNAL))
+        goto err;
+
+    testresult = 1;
+err:
+    X509_policy_tree_free(tree);
+    OSSL_STACK_OF_X509_free(chain);
+    X509_free(eecert);
+    X509_free(cacert);
+    X509_free(rootcert);
+    ERR_clear_error();
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -785,7 +885,9 @@ int setup_tests(void)
         || !TEST_ptr(req_f = test_mk_file_path(certs_dir, "sm2-csr.pem"))
         || !TEST_ptr(sroot_cert = test_mk_file_path(certs_dir, "sroot-cert.pem"))
         || !TEST_ptr(ca_cert = test_mk_file_path(certs_dir, "ca-cert.pem"))
-        || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem")))
+        || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem"))
+        || !TEST_ptr(ee_ku_empty = test_mk_file_path(certs_dir, "ee-ku-empty.pem"))
+        || !TEST_ptr(root_cert = test_mk_file_path(certs_dir, "root-cert.pem")))
         goto err;
 
     ADD_TEST(test_alt_chains_cert_forgery);
@@ -798,6 +900,8 @@ int setup_tests(void)
     ADD_TEST(test_purpose_ssl_client);
     ADD_TEST(test_purpose_ssl_server);
     ADD_TEST(test_purpose_any);
+    ADD_TEST(test_invalid_ee_cb_ignores_errors);
+    ADD_TEST(test_policy_check_invalid_ee);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
     return 1;
@@ -816,4 +920,6 @@ void cleanup_tests(void)
     OPENSSL_free(sroot_cert);
     OPENSSL_free(ca_cert);
     OPENSSL_free(ee_cert);
+    OPENSSL_free(ee_ku_empty);
+    OPENSSL_free(root_cert);
 }

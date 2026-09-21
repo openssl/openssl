@@ -126,7 +126,8 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         X509 *x = sk_X509_value(certs, i);
 
         /* Call for side-effect of computing hash and caching extensions */
-        X509_check_purpose(x, -1, 0);
+        if (X509_check_purpose(x, -1, 0) != 1)
+            return X509_PCY_TREE_INTERNAL;
 
         /* If cache is NULL, likely ENOMEM: return immediately */
         if (ossl_policy_cache_set(x) == NULL)
