@@ -6,7 +6,7 @@
 
 #if defined(__clang__)
 #define HAVE_AVX2_INTRINSICS 1
-#elif defined(__GNUC__) && (__GNUC__ >= 8)
+#elif defined(__GNUC__) && (__GNUC__ >= 8) && !defined(__MINGW32__)
 #define HAVE_AVX2_INTRINSICS 1
 #elif defined(_MSC_VER) && (_MSC_VER >= 1920) /* MSVC 2019 */
 #define HAVE_AVX2_INTRINSICS 1
