@@ -500,14 +500,19 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r,
     EC_KEY *eckey)
 {
-    int ok = 0, i;
+    int ok = 0, i, nlimbs;
     int retries = 0;
-    BIGNUM *kinv = NULL, *s, *m = NULL;
+    BIGNUM *kinv = NULL, *m = NULL;
     const BIGNUM *order, *ckinv;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
     ECDSA_SIG *ret;
     const BIGNUM *priv_key;
+    OSSL_FN_CTX *fnctx = NULL;
+    const void *token = NULL;
+    const OSSL_FN *order_fn, *priv_fn, *m_fn;
+    OSSL_FN *t = NULL, *sf = NULL;
+    size_t need = 0;
 
     group = EC_KEY_get0_group(eckey);
     priv_key = EC_KEY_get0_private_key(eckey);
@@ -537,7 +542,6 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
-    s = ret->s;
 
     if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL
         || (m = BN_new()) == NULL) {
@@ -565,7 +569,27 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
+
+    /*
+     * s = kinv * (r * d + m) mod order.  The private key d and the nonce
+     * inverse kinv are secret, so the modular arithmetic runs through their
+     * read-only OSSL_FN views in a secure OSSL_FN arena; r, m and the resulting
+     * s are public.  m == 0 keeps a NULL view (no limbs) and simply drops the
+     * add.
+     */
+    nlimbs = bn_get_top(order);
+    order_fn = bn_get_ossl_fn(order);
+    priv_fn = bn_get_ossl_fn(priv_key);
+    m_fn = bn_get_ossl_fn(m);
+    if (order_fn == NULL || priv_fn == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        goto err;
+    }
+
     do {
+        const OSSL_FN *r_fn, *kinv_fn;
+        size_t iter_need;
+
         if (in_kinv == NULL || in_r == NULL) {
             if (!ecdsa_sign_setup(eckey, ctx, &kinv, &ret->r, dgst, dgst_len,
                     0, NULL, NULL, NULL)) {
@@ -582,32 +606,61 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
         }
 
         /*
-         * With only one multiplicant being in Montgomery domain
-         * multiplication yields real result without post-conversion.
-         * Also note that all operations but last are performed with
-         * zero-padded vectors. Last operation, BN_mod_mul_montgomery
-         * below, returns user-visible value with removed zero padding.
+         * r and kinv change on every retry, so re-read their OSSL_FN views
+         * (r public, kinv secret).  Then t = kinv * (r * d + m) mod order,
+         * computed in place; the intermediate r * d + m is secret, so it stays
+         * in the secure arena.
          */
-        if (!bn_to_mont_fixed_top(s, ret->r, group->mont_data, ctx)
-            || !bn_mul_mont_fixed_top(s, s, priv_key, group->mont_data, ctx)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-            goto err;
-        }
-        if (!bn_mod_add_fixed_top(s, s, m, order)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-            goto err;
-        }
-        /*
-         * |s| can still be larger than modulus, because |m| can be. In
-         * such case we count on Montgomery reduction to tie it up.
-         */
-        if (!bn_to_mont_fixed_top(s, s, group->mont_data, ctx)
-            || !BN_mod_mul_montgomery(s, s, ckinv, group->mont_data, ctx)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        r_fn = bn_get_ossl_fn(ret->r);
+        kinv_fn = bn_get_ossl_fn(ckinv);
+        if (r_fn == NULL || kinv_fn == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
             goto err;
         }
 
-        if (BN_is_zero(s)) {
+        /*
+         * Size the secure arena from the operands actually in play.  r, kinv
+         * and the private key are all reduced mod order, but a fixed-top
+         * representation may carry a leading zero limb, so an operand can be
+         * one limb wider than the order and it is the operand widths, not the
+         * order's, that drive the requirement.  These widths are effectively
+         * curve-fixed, so in practice the arena is allocated once and simply
+         * reused across any retries; it only ever grows.
+         */
+        iter_need = ossl_fn_ctx_max_size(
+            OSSL_FN_mod_mul_ctx_size(order_fn, r_fn, priv_fn, order_fn),
+            OSSL_FN_mod_mul_ctx_size(order_fn, order_fn, kinv_fn, order_fn));
+        if (m_fn != NULL)
+            iter_need = ossl_fn_ctx_max_size(iter_need,
+                OSSL_FN_mod_add_ctx_size(order_fn, order_fn, m_fn, order_fn));
+        iter_need = ossl_fn_ctx_add_size(iter_need,
+            OSSL_FN_CTX_size(1, 1, (size_t)nlimbs));
+        if (iter_need == 0) {
+            ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        if (iter_need > need) {
+            if (token != NULL) {
+                OSSL_FN_CTX_end(fnctx, token);
+                token = NULL;
+            }
+            OSSL_FN_CTX_free(fnctx);
+            need = iter_need;
+            if ((fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need)) == NULL
+                || (token = OSSL_FN_CTX_start(fnctx)) == NULL
+                || (t = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+                goto err;
+        }
+
+        if (!OSSL_FN_mod_mul(t, r_fn, priv_fn, order_fn, fnctx)
+            || (m_fn != NULL
+                && !OSSL_FN_mod_add(t, t, m_fn, order_fn, fnctx))
+            || !OSSL_FN_mod_mul(t, t, kinv_fn, order_fn, fnctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+            goto err;
+        }
+
+        if (OSSL_FN_is_zero(t)) {
             /*
              * if kinv and r have been supplied by the caller, don't
              * generate new kinv and r values
@@ -627,12 +680,27 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
         }
     } while (1);
 
+    /* Move the public result s into the returned BIGNUM. */
+    if ((sf = bn_acquire_ossl_fn(ret->s, nlimbs)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        goto err;
+    }
+    if (OSSL_FN_copy_truncate(sf, t) == NULL) {
+        bn_release(ret->s, nlimbs);
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        goto err;
+    }
+    bn_release(ret->s, nlimbs);
+
     ok = 1;
 err:
     if (!ok) {
         ECDSA_SIG_free(ret);
         ret = NULL;
     }
+    if (token != NULL)
+        OSSL_FN_CTX_end(fnctx, token);
+    OSSL_FN_CTX_free(fnctx);
     BN_CTX_free(ctx);
     BN_clear_free(m);
     BN_clear_free(kinv);
