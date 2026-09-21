@@ -128,6 +128,13 @@ struct ossl_fn_ctx_st {
     unsigned int is_securely_allocated : 1;
 
     /*
+     * Library context this arena was created with, carried so that operations
+     * needing randomness (e.g. the EC ladder's coordinate blinding) can draw
+     * from the caller's context rather than the global default.
+     */
+    OSSL_LIB_CTX *libctx;
+
+    /*
      * Current and peak usage tracking, by allocation components.
      * The |n_*| fields hold the currently active counts; the |peak_n_*|
      * fields hold the maximum each count has ever reached simultaneously.
