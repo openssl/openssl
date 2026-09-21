@@ -296,7 +296,8 @@ size_t OSSL_FN_CTX_size(size_t max_n_frames, size_t max_n_numbers,
 /**
  * Allocate a new OSSL_FN_CTX, given a set of input numbers.
  *
- * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   libctx          OpenSSL library context, retained and returned
+ *                              by OSSL_FN_CTX_get0_libctx()
  * @param[in]   max_n_frames    Maximum number of simultaneously active frames.
  *                              This indicates the expected depth of call stack
  *                              that the resulting OSSL_FN_CTX will be used in.
@@ -311,7 +312,8 @@ OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
 /**
  * Allocate a new OSSL_FN_CTX with a given arena payload size.
  *
- * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   libctx          OpenSSL library context, retained and returned
+ *                              by OSSL_FN_CTX_get0_libctx()
  * @param[in]   size            Arena payload size in bytes, typically from
  *                              OSSL_FN_CTX_size().  A size of 0 is the error
  *                              return of OSSL_FN_CTX_size() and is treated as
@@ -331,7 +333,8 @@ OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
 /**
  * Allocate a new OSSL_FN_CTX in secure memory with a given arena payload size.
  *
- * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   libctx          OpenSSL library context, retained and returned
+ *                              by OSSL_FN_CTX_get0_libctx()
  * @param[in]   size            Arena payload size in bytes, typically from
  *                              OSSL_FN_CTX_size().  A size of 0 is treated as
  *                              an error, as in OSSL_FN_CTX_new_size().
@@ -355,6 +358,16 @@ OSSL_FN_CTX *OSSL_FN_CTX_secure_new_size(OSSL_LIB_CTX *libctx, size_t size);
  */
 void OSSL_FN_CTX_peak_usage(const OSSL_FN_CTX *ctx, size_t *peak_n_frames,
     size_t *peak_n_numbers, size_t *peak_n_limbs);
+
+/**
+ * Return the library context the OSSL_FN_CTX was created with.
+ *
+ * @param[in]   ctx     The OSSL_FN_CTX to query.  This may be NULL.
+ * @returns             The library context, or NULL (which denotes the
+ *                      global default) if @p ctx is NULL or was created
+ *                      without one.
+ */
+OSSL_LIB_CTX *OSSL_FN_CTX_get0_libctx(const OSSL_FN_CTX *ctx);
 
 /**
  * Free an OSSL_FN_CTX.
