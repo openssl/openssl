@@ -1631,7 +1631,12 @@ static EXT_RETURN tls_construct_certificate_authorities(SSL_CONNECTION *s,
 {
     const STACK_OF(X509_NAME) *ca_sk = get_ca_names(s);
 
-    if (ca_sk == NULL || sk_X509_NAME_num(ca_sk) == 0)
+    /*
+     * RFC 8446 requires at least one entry in the authorities list, so skip
+     * the extension if we have nothing to send.
+     */
+    if (ca_sk == NULL || sk_X509_NAME_num(ca_sk) == 0
+        || (s->options & SSL_OP_DISABLE_TLSEXT_CA_NAMES) != 0)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_certificate_authorities)
@@ -1659,7 +1664,12 @@ static int tls_parse_certificate_authorities(SSL_CONNECTION *s, PACKET *pkt,
 {
     if (!parse_ca_names(s, pkt))
         return 0;
-    if (PACKET_remaining(pkt) != 0) {
+    /*
+     * Unlike the TLS 1.2 CertificateRequest, RFC 8446 does not allow an empty
+     * authorities list in this extension.
+     */
+    if (PACKET_remaining(pkt) != 0
+        || sk_X509_NAME_num(s->s3.tmp.peer_ca_names) <= 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
