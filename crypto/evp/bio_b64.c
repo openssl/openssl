@@ -177,6 +177,7 @@ static int b64_read(BIO *b, char *out, int outl)
      */
     while (outl > 0) {
         int again = ctx->cont;
+        int eof = 0;
 
         if (again <= 0)
             break;
@@ -196,6 +197,7 @@ static int b64_read(BIO *b, char *out, int outl)
                     EVP_DecodeInit(ctx->base64);
                 }
                 ctx->cont = ret_code;
+                eof = 1;
             }
             if (ctx->tmp_len == 0)
                 break;
@@ -218,7 +220,11 @@ static int b64_read(BIO *b, char *out, int outl)
             q = p = ctx->tmp;
             num = 0;
             for (j = 0; j < i; j++) {
-                if (*(q++) != '\n')
+                /*
+                 * At EOF, a final line without a trailing newline is also a
+                 * candidate for the start of the base64 content.
+                 */
+                if (*(q++) != '\n' && !(eof && j == i - 1))
                     continue;
 
                 /*

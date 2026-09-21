@@ -467,6 +467,58 @@ done:
     return ok;
 }
 
+/*
+ * A single line of base64 input without a trailing newline must be decoded
+ * (https://github.com/openssl/openssl/issues/29595).
+ */
+static const struct {
+    const char *in;
+    const char *out; /* NULL if a decoding error is expected */
+} unterminated_tests[] = {
+    { "QUJD", "ABC" },
+    { "QUJDRA==", "ABCD" },
+    { "QUJDREVGR0hJ", "ABCDEFGHI" },
+    { "#junk\nQUJD", "ABC" },
+    { "#junk\n#more junk", "" },
+    { "QUJ", NULL },
+};
+
+static int test_bio_base64_unterminated(int idx)
+{
+    int retry = idx % 2;
+    const char *in = unterminated_tests[idx / 2].in;
+    const char *exp = unterminated_tests[idx / 2].out;
+    BIO *mem = NULL, *b64 = NULL;
+    char out[64];
+    int n = 0, r, ok = 0;
+
+    if (!TEST_ptr(mem = BIO_new_mem_buf(in, -1))
+        || !TEST_ptr(b64 = BIO_new(BIO_f_base64())))
+        goto done;
+    BIO_set_mem_eof_return(mem, retry ? EOF_RETURN : 0);
+    BIO_push(b64, mem);
+
+    if (retry) {
+        /* No complete line is available yet, so nothing can be decoded */
+        if (!TEST_int_le(BIO_read(b64, out, sizeof(out)), 0))
+            goto done;
+        BIO_set_mem_eof_return(mem, 0);
+    }
+
+    while ((r = BIO_read(b64, out + n, sizeof(out) - n)) > 0)
+        n += r;
+
+    if (exp == NULL)
+        ok = TEST_int_lt(r, 0);
+    else
+        ok = TEST_int_eq(r, 0) && TEST_mem_eq(out, n, exp, strlen(exp));
+
+done:
+    BIO_free(b64);
+    BIO_free(mem);
+    return ok;
+}
+
 int setup_tests(void)
 {
     int numidx;
@@ -523,5 +575,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_bio_base64_corner_case_bug, numidx);
 
     ADD_TEST(test_bio_base64_no_nl);
+    ADD_ALL_TESTS(test_bio_base64_unterminated,
+        OSSL_NELEM(unterminated_tests) * 2);
     return 1;
 }
