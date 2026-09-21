@@ -1582,14 +1582,16 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     ip_hdr.ip_ttl = 64;
     ip_hdr.ip_proto = 17;
     ip_hdr.ip_csum = 0; /* wireshark will complain with ?chksum offload? */
-    ip_hdr.ip_src = (b->local_addr == NULL) ? htonl(0x7f000001)
+    ip_hdr.ip_src = (b->local_addr == NULL)
+        ? htonl(0x7f000001)
         : b->local_addr->s_in.sin_addr.s_addr;
     if (b->pair->map[0].self == b) {
         peer = b->pair->map[1].self;
     } else {
         peer = b->pair->map[0].self;
     }
-    ip_hdr.ip_dst = (peer == NULL || peer->local_addr == NULL) ? htonl(0x7f000001)
+    ip_hdr.ip_dst = (peer == NULL || peer->local_addr == NULL)
+        ? htonl(0x7f000001)
         : peer->local_addr->s_in.sin_addr.s_addr;
 
     /*
