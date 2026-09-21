@@ -223,6 +223,31 @@ DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
     return 1;
 }
 
+/*
+ * Run do_err_strings_init() once, with this thread's error state shelved.
+ *
+ * If an allocation fails during the initialisation, reporting that failure
+ * could create this thread's error state, which in turn requests the loading
+ * of the crypto error strings and so recursively enters the |err_string_init|
+ * RUN_ONCE, deadlocking.  With the error state shelved no error is recorded,
+ * so that cannot happen.
+ *
+ * Shelving itself may allocate (the thread local storage of this thread) and
+ * report a failure, which is why it must be done before entering the RUN_ONCE
+ * rather than from within do_err_strings_init().
+ */
+static int err_strings_init(void)
+{
+    void *err;
+    int ret;
+
+    if (!err_shelve_state(&err))
+        return 0;
+    ret = RUN_ONCE(&err_string_init, do_err_strings_init);
+    err_unshelve_state(err);
+    return ret;
+}
+
 void err_cleanup(void)
 {
     CRYPTO_THREAD_lock_free(err_string_lock);
@@ -263,7 +288,7 @@ static int err_load_strings(const ERR_STRING_DATA *str)
 int ossl_err_load_ERR_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+    if (!err_strings_init())
         return 0;
 
     err_load_strings(ERR_str_libraries);
@@ -299,7 +324,7 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str)
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
 #ifndef OPENSSL_NO_ERR
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+    if (!err_strings_init())
         return 0;
 
     if (!CRYPTO_THREAD_write_lock(err_string_lock))
@@ -580,7 +605,7 @@ const char *ERR_lib_error_string(unsigned long e)
     ERR_STRING_DATA d, *p;
     unsigned long l;
 
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+    if (!err_strings_init()) {
         return NULL;
     }
 
@@ -606,7 +631,7 @@ const char *ERR_reason_error_string(unsigned long e)
     ERR_STRING_DATA d, *p = NULL;
     unsigned long l, r;
 
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+    if (!err_strings_init()) {
         return NULL;
     }
 
@@ -739,7 +764,7 @@ int ERR_get_next_error_library(void)
 {
     int ret;
 
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+    if (!err_strings_init())
         return 0;
 
     if (!CRYPTO_THREAD_write_lock(err_string_lock))
