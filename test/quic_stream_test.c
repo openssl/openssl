@@ -2673,6 +2673,197 @@ err:
     return ok;
 }
 
+#define FILLERS 56
+
+static int test_trim_right(void)
+{
+    unsigned char data[4096];
+    unsigned char read_buf[4096];
+    size_t readbytes;
+    TEST_STREAM_CHUNK_T tsc_buf[4];
+    OSSL_QRX_PKT *pkt[FILLERS + OSSL_NELEM(tsc_buf)] = { 0 };
+    unsigned char fill = 0xFF;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    TEST_STREAM_CHUNK_T *tsc;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    int fin;
+    unsigned int i, pktnum;
+    int ok = 0;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    memset(tsc_buf, 0, sizeof(tsc_buf));
+    memset(read_buf, 0, sizeof(read_buf));
+
+    pktnum = 0;
+    for (i = 0; i < FILLERS; i++) {
+        pkt[pktnum] = pkt_test_new(1200);
+        if (!TEST_ptr(pkt[pktnum]))
+            goto err;
+
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[pktnum],
+                1024 + 2 * i, &fill, 1, 0)))
+            goto err;
+
+        pktnum++;
+    }
+
+    /*
+     * send three chunks. each 64 bytes long,
+     * chunks create three ranges.
+     */
+    tsc = &tsc_buf[0];
+    tsc->tsc_data = &data[0];
+    tsc->tsc_off = 0;
+    tsc->tsc_len = 64;
+    tsc->tsc_fin = 0;
+    tsc->tsc_ranges_exp = FILLERS + 1;
+    tsc->tsc_chunks_exp = FILLERS + 1;
+
+    tsc = &tsc_buf[1];
+    tsc->tsc_data = &data[128];
+    tsc->tsc_off = 128;
+    tsc->tsc_len = 64;
+    tsc->tsc_fin = 0;
+    tsc->tsc_ranges_exp = FILLERS + 2;
+    tsc->tsc_chunks_exp = FILLERS + 2;
+
+    tsc = &tsc_buf[2];
+    tsc->tsc_data = &data[256];
+    tsc->tsc_off = 256;
+    tsc->tsc_len = 64;
+    tsc->tsc_fin = 0;
+    tsc->tsc_ranges_exp = FILLERS + 3;
+    tsc->tsc_chunks_exp = FILLERS + 3;
+
+    for (i = 0; i < OSSL_NELEM(tsc_buf) - 1; i++) {
+        pkt[pktnum] = pkt_test_new(1200);
+        if (!TEST_ptr(pkt[pktnum]))
+            goto err;
+        tsc = &tsc_buf[i];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[pktnum],
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        /*
+         * the packet reference should stay at 1, because _rstream_queue_data()
+         * copies data to stream buffer instead of grabbing a reference to
+         * packet (advancing the packet's ref counter)
+         */
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[pktnum]), 1))
+            goto err;
+        pktnum++;
+    }
+
+    /*
+     * do a partial read of 16 bytes.
+     */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            16, &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_uint64_t_eq(readbytes, 16))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
+        goto err;
+
+    /*
+     * send chunk that glues three ranges together.
+     */
+    tsc = &tsc_buf[3];
+    tsc->tsc_data = &data[63];
+    tsc->tsc_off = 63;
+    tsc->tsc_len = 160;
+    tsc->tsc_fin = 0;
+    tsc->tsc_ranges_exp = FILLERS + 2;
+    tsc->tsc_chunks_exp = FILLERS + 3;
+
+    pkt[pktnum] = pkt_test_new(1200);
+    if (!TEST_ptr(pkt[pktnum]))
+        goto err;
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[pktnum],
+            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+        goto err;
+
+    /*
+     * check our assumptions about about reassemble process internals.
+     */
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            tsc->tsc_ranges_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+            tsc->tsc_chunks_exp)) {
+        TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+        goto err;
+    }
+
+    if (!TEST_size_t_eq(pkt_test_refcount(pkt[pktnum]), 1))
+        goto err;
+    pktnum++;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+            4096, &readbytes, &fin)))
+        goto err;
+
+    /*
+     * the ranges are still dis-joint, only 207 bytes can be read
+     */
+    if (!TEST_uint64_t_eq(readbytes, 207))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    if (!TEST_mem_eq(read_buf, readbytes, &data[16], readbytes))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(pkt); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
@@ -2694,6 +2885,7 @@ int setup_tests(void)
     ADD_TEST(test_rstream_mix_chunks);
     ADD_TEST(test_final_size_violation_fin_first);
     ADD_TEST(test_final_size_violation_data_first);
+    ADD_TEST(test_trim_right);
 
     return 1;
 }
