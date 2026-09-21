@@ -12,17 +12,6 @@
 
 #include <openssl/evp.h>
 
-/* tls_pad.c */
-
-int tls1_cbc_remove_padding_and_mac(size_t *reclen,
-    size_t origreclen,
-    unsigned char *recdata,
-    unsigned char **mac,
-    int *alloced,
-    size_t block_size, size_t mac_size,
-    int aead,
-    OSSL_LIB_CTX *libctx);
-
 /* ssl3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
 __owur int ssl3_cbc_digest_record(const EVP_MD *md,

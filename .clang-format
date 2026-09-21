@@ -990,7 +990,6 @@ TypeNames:
   - "SSL_EARLY_DATA_STATE"
   - "SSL_EXCERT"
   - "SSL_HMAC"
-  - "SSL_MAC_BUF"
   - "SSL_METHOD"
   - "SSL_new_pending_conn_cb_fn"
   - "SSL_PHA_STATE"
