@@ -242,6 +242,8 @@ BIO_dgram_set_mtu(), BIO_dgram_set_no_trunc() were added in OpenSSL 3.2.
 
 BIO_dgram_set0_local_addr() was added in OpenSSL 3.5.
 
+BIO_dgram_pair_set0_pcap_file() was added in OpenSSL 4.2
+
 =head1 COPYRIGHT
 
 Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
