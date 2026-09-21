@@ -359,7 +359,7 @@ static void fe51_frombytes(fe51 h, const uint8_t *s)
 
 /*
  * Preconditions:
- *    every limb of h below 2^55 (all callers stay below 2^54, see above)
+ *    every limb of h below 2^55
  */
 static void fe51_tobytes(uint8_t *s, const fe51 h)
 {
