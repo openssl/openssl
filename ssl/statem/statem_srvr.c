@@ -2117,9 +2117,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             int verify_ret = 0;
 
 #if !defined(OPENSSL_NO_DTLS)
-            DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
-                ? (DTLS_LISTENER *)s->d1->listener
-                : NULL;
+            DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
             if (dl != NULL && dl->require_hvr_cookie && sctx->app_verify_cookie_cb == NULL) {
                 verify_ret = ossl_dtls_listener_verify_cookie_cb(ussl,
