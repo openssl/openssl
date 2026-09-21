@@ -456,28 +456,22 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     if (i == -1) {
         *enc = NULL;
     } else {
-        if (i == SSL_ENC_NULL_IDX) {
-            /*
-             * We assume we don't care about this coming from an ENGINE so
-             * just do a normal EVP_CIPHER_fetch instead of
-             * ssl_evp_cipher_fetch()
-             */
-            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
-        } else {
-            int ecbnid = NID_undef;
+        const char *sn = NULL;
 
-            *enc = NULL;
+        *enc = NULL;
 
-            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0)
-                ecbnid = NID_aes_128_ecb;
-            else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0)
-                ecbnid = NID_aes_256_ecb;
-            else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0))
-                ecbnid = NID_chacha20;
+        if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0)
+            sn = OBJ_nid2sn(NID_aes_128_ecb);
+        else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0)
+            sn = OBJ_nid2sn(NID_aes_256_ecb);
+        else if (sslc->algorithm_enc == SSL_eNULL)
+            sn = "NULL";
+        else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0))
+            sn = OBJ_nid2sn(NID_chacha20);
+        else
+            return 0;
 
-            if (ecbnid != NID_undef)
-                *enc = ssl_evp_cipher_fetch(ctx->libctx, OBJ_nid2sn(ecbnid), ctx->propq);
-        }
+        *enc = EVP_CIPHER_fetch(ctx->libctx, sn, ctx->propq);
 
         if (*enc == NULL)
             return 0;
