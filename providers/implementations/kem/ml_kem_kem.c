@@ -265,5 +265,11 @@ const OSSL_DISPATCH ossl_ml_kem_asym_kem_functions[] = {
     { OSSL_FUNC_KEM_FREECTX, (OSSL_FUNC)ml_kem_freectx },
     { OSSL_FUNC_KEM_SET_CTX_PARAMS, (OSSL_FUNC)ml_kem_set_ctx_params },
     { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS, (OSSL_FUNC)ml_kem_settable_ctx_params },
+#ifdef FIPS_MODULE
+    { OSSL_FUNC_KEM_GET_CTX_PARAMS,
+        (OSSL_FUNC)ossl_FIPS_IND_get_ctx_param_approved },
+    { OSSL_FUNC_KEM_GETTABLE_CTX_PARAMS,
+        (OSSL_FUNC)ossl_FIPS_IND_gettable_ctx_params },
+#endif
     OSSL_DISPATCH_END
 };
