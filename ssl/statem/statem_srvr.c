@@ -33,6 +33,7 @@
 #include <openssl/comp.h>
 #include "internal/comp.h"
 #include <openssl/ocsp.h>
+#include "internal/usdt.h"
 
 #define TICKET_NONCE_SIZE 8
 
@@ -2123,6 +2124,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         goto err;
     }
 
+    OSSL_USDT_data(s, { "tls::protocol_version", OSSL_USDT_WORD(s->version) });
+
     /* TLSv1.3 specifies that a ClientHello must end on a record boundary */
     if (SSL_CONNECTION_IS_VERSION13(s)
         && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
@@ -2218,6 +2221,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             goto err;
         }
         s->s3.tmp.new_cipher = cipher;
+
+        OSSL_USDT_data(s, { "tls::ciphersuite", OSSL_USDT_WORD(SSL_CIPHER_get_protocol_id(s->s3.tmp.new_cipher)) });
     }
 
     /* We need to do this before getting the session */
@@ -2730,6 +2735,8 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                     goto err;
                 }
                 s->s3.tmp.new_cipher = cipher;
+
+                OSSL_USDT_data(s, { "tls::ciphersuite", OSSL_USDT_WORD(SSL_CIPHER_get_protocol_id(s->s3.tmp.new_cipher)) });
             }
             if (!s->hit) {
                 if (!tls_choose_sigalg(s, 1)) {
@@ -2749,6 +2756,8 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
         } else {
             /* Session-id reuse */
             s->s3.tmp.new_cipher = s->session->cipher;
+
+            OSSL_USDT_data(s, { "tls::ciphersuite", OSSL_USDT_WORD(SSL_CIPHER_get_protocol_id(s->s3.tmp.new_cipher)) });
         }
 
         /*
@@ -4339,6 +4348,9 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     } else {
         if (s->rwstate == SSL_RETRY_VERIFY)
             s->rwstate = SSL_NOTHING;
+
+        OSSL_USDT_new_context(s, "tls::verify_cert_chain");
+
         i = ssl_verify_cert_chain(s, sk);
         if (i > 0 && s->rwstate == SSL_RETRY_VERIFY) {
             /*
