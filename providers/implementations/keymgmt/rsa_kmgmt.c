@@ -27,6 +27,7 @@
 #include "crypto/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
 
 static OSSL_FUNC_keymgmt_new_fn rsa_newdata;
 static OSSL_FUNC_keymgmt_new_fn rsapss_newdata;
@@ -713,7 +714,7 @@ const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    OSSL_DISPATCH_END
+    OSSL_KEYMGMT_FIPS_APPROVED_GEN_DISPATCH_END
 };
 
 const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
@@ -738,5 +739,5 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
         (void (*)(void))rsa_query_operation_name },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    OSSL_DISPATCH_END
+    OSSL_KEYMGMT_FIPS_APPROVED_GEN_DISPATCH_END
 };

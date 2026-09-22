@@ -81,6 +81,20 @@ instead. This value is ignored if "test-entropy" is set.
 
 See L<EVP_PKEY-SLH-DSA(7)> for information related to B<SLH-DSA> keys.
 
+=head2 FIPS indicator
+
+The following parameter can be retrieved using
+L<EVP_PKEY_CTX_get_params(3)>:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+The OpenSSL FIPS provider returns 1 if the operation is FIPS approved, or 0
+otherwise.  See L<fips_module(7)/FIPS indicators> for more information.
+
+=back
+
 =head1 NOTES
 
 For backwards compatibility reasons EVP_DigestSignInit_ex(), EVP_DigestSign(),
