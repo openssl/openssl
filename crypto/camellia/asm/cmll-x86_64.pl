@@ -123,6 +123,7 @@ $code=<<___;
 
 # V1.x API
 .globl	Camellia_EncryptBlock
+.hidden Camellia_EncryptBlock
 .type	Camellia_EncryptBlock,\@abi-omnipotent
 .align	16
 Camellia_EncryptBlock:
@@ -136,6 +137,7 @@ Camellia_EncryptBlock:
 .size	Camellia_EncryptBlock,.-Camellia_EncryptBlock
 # V2
 .globl	Camellia_EncryptBlock_Rounds
+.hidden Camellia_EncryptBlock_Rounds
 .type	Camellia_EncryptBlock_Rounds,\@function,4
 .align	16
 .Lenc_rounds:
@@ -250,6 +252,7 @@ $code.=<<___;
 
 # V1.x API
 .globl	Camellia_DecryptBlock
+.hidden Camellia_DecryptBlock
 .type	Camellia_DecryptBlock,\@abi-omnipotent
 .align	16
 Camellia_DecryptBlock:
@@ -263,6 +266,7 @@ Camellia_DecryptBlock:
 .size	Camellia_DecryptBlock,.-Camellia_DecryptBlock
 # V2
 .globl	Camellia_DecryptBlock_Rounds
+.hidden Camellia_DecryptBlock_Rounds
 .type	Camellia_DecryptBlock_Rounds,\@function,4
 .align	16
 .Ldec_rounds:
@@ -441,6 +445,7 @@ ___
 
 $code.=<<___;
 .globl	Camellia_Ekeygen
+.hidden Camellia_Ekeygen
 .type	Camellia_Ekeygen,\@function,3
 .align	16
 Camellia_Ekeygen:

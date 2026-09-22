@@ -29,6 +29,7 @@ $code.=<<___;
 
 .align	5
 .globl	_armv7_neon_probe
+.hidden _armv7_neon_probe
 .type	_armv7_neon_probe,%function
 _armv7_neon_probe:
 	AARCH64_VALID_CALL_TARGET
@@ -37,6 +38,7 @@ _armv7_neon_probe:
 .size	_armv7_neon_probe,.-_armv7_neon_probe
 
 .globl	_armv7_tick
+.hidden _armv7_tick
 .type	_armv7_tick,%function
 _armv7_tick:
 	AARCH64_VALID_CALL_TARGET
@@ -49,6 +51,7 @@ _armv7_tick:
 .size	_armv7_tick,.-_armv7_tick
 
 .globl	_armv8_aes_probe
+.hidden _armv8_aes_probe
 .type	_armv8_aes_probe,%function
 _armv8_aes_probe:
 	AARCH64_VALID_CALL_TARGET
@@ -57,6 +60,7 @@ _armv8_aes_probe:
 .size	_armv8_aes_probe,.-_armv8_aes_probe
 
 .globl	_armv8_sha1_probe
+.hidden _armv8_sha1_probe
 .type	_armv8_sha1_probe,%function
 _armv8_sha1_probe:
 	AARCH64_VALID_CALL_TARGET
@@ -65,6 +69,7 @@ _armv8_sha1_probe:
 .size	_armv8_sha1_probe,.-_armv8_sha1_probe
 
 .globl	_armv8_sha256_probe
+.hidden _armv8_sha256_probe
 .type	_armv8_sha256_probe,%function
 _armv8_sha256_probe:
 	AARCH64_VALID_CALL_TARGET
@@ -73,6 +78,7 @@ _armv8_sha256_probe:
 .size	_armv8_sha256_probe,.-_armv8_sha256_probe
 
 .globl	_armv8_pmull_probe
+.hidden _armv8_pmull_probe
 .type	_armv8_pmull_probe,%function
 _armv8_pmull_probe:
 	AARCH64_VALID_CALL_TARGET
@@ -89,6 +95,7 @@ _armv8_sm4_probe:
 .size	_armv8_sm4_probe,.-_armv8_sm4_probe
 
 .globl	_armv8_sha512_probe
+.hidden _armv8_sha512_probe
 .type	_armv8_sha512_probe,%function
 _armv8_sha512_probe:
 	AARCH64_VALID_CALL_TARGET
@@ -129,6 +136,7 @@ _armv8_sve_get_vl_bytes:
 .size	_armv8_sve_get_vl_bytes,.-_armv8_sve_get_vl_bytes
 
 .globl	_armv8_cpuid_probe
+.hidden _armv8_cpuid_probe
 .type	_armv8_cpuid_probe,%function
 _armv8_cpuid_probe:
 	AARCH64_VALID_CALL_TARGET

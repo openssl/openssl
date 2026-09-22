@@ -199,6 +199,7 @@ $code.=<<___;
 .text
 
 .globl	$func
+.hidden $func
 .type	$func,%function
 .align	6
 $func:
@@ -636,6 +637,7 @@ sub body_00_15 () {
 $code.=<<___;
 #ifdef	__KERNEL__
 .globl	sha256_block_neon
+.hidden sha256_block_neon
 #endif
 .type	sha256_block_neon,%function
 .align	4

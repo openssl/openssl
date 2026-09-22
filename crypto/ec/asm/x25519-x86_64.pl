@@ -108,6 +108,7 @@ $code.=<<___;
 .text
 
 .globl	x25519_fe51_mul
+.hidden x25519_fe51_mul
 .type	x25519_fe51_mul,\@function,3
 .align	32
 x25519_fe51_mul:
@@ -259,6 +260,7 @@ x25519_fe51_mul:
 .size	x25519_fe51_mul,.-x25519_fe51_mul
 
 .globl	x25519_fe51_sqr
+.hidden x25519_fe51_sqr
 .type	x25519_fe51_sqr,\@function,2
 .align	32
 x25519_fe51_sqr:
@@ -439,6 +441,7 @@ x25519_fe51_sqr:
 .size	x25519_fe51_sqr,.-x25519_fe51_sqr
 
 .globl	x25519_fe51_mul121666
+.hidden x25519_fe51_mul121666
 .type	x25519_fe51_mul121666,\@function,2
 .align	32
 x25519_fe51_mul121666:
@@ -494,6 +497,7 @@ my ($acc0,$acc1,$acc2,$acc3,$acc4,$acc5,$acc6,$acc7) = map("%r$_",(8..15));
 $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 .globl	x25519_fe64_eligible
+.hidden x25519_fe64_eligible
 .type	x25519_fe64_eligible,\@abi-omnipotent
 .align	32
 x25519_fe64_eligible:
@@ -508,6 +512,7 @@ x25519_fe64_eligible:
 .size	x25519_fe64_eligible,.-x25519_fe64_eligible
 
 .globl	x25519_fe64_mul
+.hidden x25519_fe64_mul
 .type	x25519_fe64_mul,\@function,3
 .align	32
 x25519_fe64_mul:
@@ -600,6 +605,7 @@ x25519_fe64_mul:
 .size	x25519_fe64_mul,.-x25519_fe64_mul
 
 .globl	x25519_fe64_sqr
+.hidden x25519_fe64_sqr
 .type	x25519_fe64_sqr,\@function,2
 .align	32
 x25519_fe64_sqr:
@@ -729,6 +735,7 @@ x25519_fe64_sqr:
 .size	x25519_fe64_sqr,.-x25519_fe64_sqr
 
 .globl	x25519_fe64_mul121666
+.hidden x25519_fe64_mul121666
 .type	x25519_fe64_mul121666,\@function,2
 .align	32
 x25519_fe64_mul121666:
@@ -766,6 +773,7 @@ x25519_fe64_mul121666:
 .size	x25519_fe64_mul121666,.-x25519_fe64_mul121666
 
 .globl	x25519_fe64_add
+.hidden x25519_fe64_add
 .type	x25519_fe64_add,\@function,3
 .align	32
 x25519_fe64_add:
@@ -803,6 +811,7 @@ x25519_fe64_add:
 .size	x25519_fe64_add,.-x25519_fe64_add
 
 .globl	x25519_fe64_sub
+.hidden x25519_fe64_sub
 .type	x25519_fe64_sub,\@function,3
 .align	32
 x25519_fe64_sub:
@@ -840,6 +849,7 @@ x25519_fe64_sub:
 .size	x25519_fe64_sub,.-x25519_fe64_sub
 
 .globl	x25519_fe64_tobytes
+.hidden x25519_fe64_tobytes
 .type	x25519_fe64_tobytes,\@function,2
 .align	32
 x25519_fe64_tobytes:
@@ -886,6 +896,7 @@ ___
 } else {
 $code.=<<___;
 .globl	x25519_fe64_eligible
+.hidden x25519_fe64_eligible
 .type	x25519_fe64_eligible,\@abi-omnipotent
 .align	32
 x25519_fe64_eligible:
@@ -896,12 +907,18 @@ x25519_fe64_eligible:
 .size	x25519_fe64_eligible,.-x25519_fe64_eligible
 
 .globl	x25519_fe64_mul
+.hidden x25519_fe64_mul
 .type	x25519_fe64_mul,\@abi-omnipotent
 .globl	x25519_fe64_sqr
+.hidden x25519_fe64_sqr
 .globl	x25519_fe64_mul121666
+.hidden x25519_fe64_mul121666
 .globl	x25519_fe64_add
+.hidden x25519_fe64_add
 .globl	x25519_fe64_sub
+.hidden x25519_fe64_sub
 .globl	x25519_fe64_tobytes
+.hidden x25519_fe64_tobytes
 x25519_fe64_mul:
 x25519_fe64_sqr:
 x25519_fe64_mul121666:
