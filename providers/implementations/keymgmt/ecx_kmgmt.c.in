@@ -31,6 +31,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/provider_ctx.h"
 #include "prov/ecx.h"
 #include "prov/securitycheck.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
 #ifdef S390X_EC_ASM
 #include "s390x_arch.h"
 #include <openssl/sha.h> /* For SHA512_DIGEST_LENGTH */
@@ -107,6 +108,21 @@ static ossl_inline int ecx_key_type_is_ed(ECX_KEY_TYPE type)
 {
     return type == ECX_KEY_TYPE_ED25519 || type == ECX_KEY_TYPE_ED448;
 }
+
+#ifdef FIPS_MODULE
+static int ecx_gen_get_params(void *genctx, OSSL_PARAM params[])
+{
+    struct ecx_gen_ctx *gctx = genctx;
+    struct keymgmt_fips_gen_get_params_st p;
+
+    if (gctx == NULL || !keymgmt_fips_gen_get_params_decoder(params, &p))
+        return 0;
+    if (p.ind != NULL
+        && !OSSL_PARAM_set_int(p.ind, ecx_key_type_is_ed(gctx->type)))
+        return 0;
+    return 1;
+}
+#endif
 
 static void *x25519_new_key(void *provctx)
 {
@@ -1071,7 +1087,7 @@ static void ecx_free_key(void *keydata)
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ecx_gen_cleanup },           \
         { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ecx_load },                         \
         { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ecx_dup },                           \
-        OSSL_DISPATCH_END                                                             \
+        OSSL_KEYMGMT_FIPS_GEN_DISPATCH_END(ecx_gen_get_params)                        \
     };
 
 MAKE_KEYMGMT_FUNCTIONS(x25519)

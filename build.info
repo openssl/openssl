@@ -77,8 +77,10 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kem/ec_kem.c \
          providers/implementations/kem/ecx_kem.c \
          providers/implementations/kem/ml_kem_kem.c \
+         providers/implementations/kem/mlx_kem.inc \
          providers/implementations/kem/rsa_kem.c \
          providers/implementations/keymgmt/ecx_kmgmt.c \
+         providers/implementations/keymgmt/keymgmtcommon.inc \
          providers/implementations/keymgmt/lms_kmgmt.c \
          providers/implementations/keymgmt/ml_dsa_kmgmt.c \
          providers/implementations/keymgmt/ml_kem_kmgmt.c \
@@ -88,6 +90,8 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/signature/dsa_sig.c \
          providers/implementations/signature/ecdsa_sig.c \
          providers/implementations/signature/eddsa_sig.c \
+         providers/implementations/signature/lms_signature.inc \
+         providers/implementations/signature/mac_legacy_sig.inc \
          providers/implementations/signature/ml_dsa_sig.c \
          providers/implementations/signature/rsa_sig.c \
          providers/implementations/signature/slh_dsa_sig.c \
@@ -180,8 +184,10 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/kem/ec_kem.c \
        providers/implementations/kem/ecx_kem.c \
        providers/implementations/kem/ml_kem_kem.c \
+       providers/implementations/kem/mlx_kem.inc \
        providers/implementations/kem/rsa_kem.c \
        providers/implementations/keymgmt/ecx_kmgmt.c \
+       providers/implementations/keymgmt/keymgmtcommon.inc \
        providers/implementations/keymgmt/lms_kmgmt.c \
        providers/implementations/keymgmt/ml_dsa_kmgmt.c \
        providers/implementations/keymgmt/ml_kem_kmgmt.c \
@@ -191,6 +197,8 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.c \
        providers/implementations/signature/dsa_sig.c \
        providers/implementations/signature/ecdsa_sig.c \
        providers/implementations/signature/eddsa_sig.c \
+       providers/implementations/signature/lms_signature.inc \
+       providers/implementations/signature/mac_legacy_sig.inc \
        providers/implementations/signature/ml_dsa_sig.c \
        providers/implementations/signature/rsa_sig.c \
        providers/implementations/signature/slh_dsa_sig.c \
@@ -279,10 +287,14 @@ GENERATE[providers/implementations/kem/ecx_kem.c]=\
     providers/implementations/kem/ecx_kem.c.in
 GENERATE[providers/implementations/kem/ml_kem_kem.c]=\
     providers/implementations/kem/ml_kem_kem.c.in
+GENERATE[providers/implementations/kem/mlx_kem.inc]=\
+    providers/implementations/kem/mlx_kem.inc.in
 GENERATE[providers/implementations/kem/rsa_kem.c]=\
     providers/implementations/kem/rsa_kem.c.in
 GENERATE[providers/implementations/keymgmt/ecx_kmgmt.c]=\
     providers/implementations/keymgmt/ecx_kmgmt.c.in
+GENERATE[providers/implementations/keymgmt/keymgmtcommon.inc]=\
+    providers/implementations/keymgmt/keymgmtcommon.inc.in
 GENERATE[providers/implementations/keymgmt/lms_kmgmt.c]=\
     providers/implementations/keymgmt/lms_kmgmt.c.in
 GENERATE[providers/implementations/keymgmt/ml_dsa_kmgmt.c]=\
@@ -301,6 +313,10 @@ GENERATE[providers/implementations/signature/ecdsa_sig.c]=\
     providers/implementations/signature/ecdsa_sig.c.in
 GENERATE[providers/implementations/signature/eddsa_sig.c]=\
     providers/implementations/signature/eddsa_sig.c.in
+GENERATE[providers/implementations/signature/lms_signature.inc]=\
+    providers/implementations/signature/lms_signature.inc.in
+GENERATE[providers/implementations/signature/mac_legacy_sig.inc]=\
+    providers/implementations/signature/mac_legacy_sig.inc.in
 GENERATE[providers/implementations/signature/ml_dsa_sig.c]=\
     providers/implementations/signature/ml_dsa_sig.c.in
 GENERATE[providers/implementations/signature/rsa_sig.c]=\

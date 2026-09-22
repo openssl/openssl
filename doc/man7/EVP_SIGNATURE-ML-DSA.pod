@@ -85,6 +85,22 @@ Algorithm 3 step 5 are omitted when this setting is 1.
 
 See L<EVP_PKEY-ML-DSA(7)> for information related to B<ML-DSA> keys.
 
+=head2 FIPS indicator
+
+The following parameter can be retrieved using
+L<EVP_PKEY_CTX_get_params(3)>:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+The OpenSSL FIPS provider returns 1 if the operation is FIPS approved, or 0
+otherwise.  See L<fips_module(7)/FIPS indicators> for more information.
+Supplying "test-entropy", or setting the test-only "message-encoding"
+parameter to 0, causes this indicator to return 0.
+
+=back
+
 =head1 NOTES
 
 For backwards compatibility reasons EVP_DigestSignInit_ex(), EVP_DigestSign(),

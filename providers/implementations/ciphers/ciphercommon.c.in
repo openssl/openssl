@@ -119,6 +119,8 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                           ['OSSL_CIPHER_PARAM_IV',         'iv',     'octet_string' ],
                           ['OSSL_CIPHER_PARAM_UPDATED_IV', 'updiv',  'octet_string' ],
                           ['OSSL_CIPHER_PARAM_TLS_MAC',    'tlsmac', 'octet_string' ],
+                          ['OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR',
+                           'fips indicator', 'int'],
                          )); -}
 /* clang-format on */
 
