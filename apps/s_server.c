@@ -1149,7 +1149,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
         BIO_write(bio_s_out, "\n", 1);
     }
 
-    if (SSL_select_next_proto((unsigned char **)out, outlen, alpn_ctx->data,
+    if (SSL_select_next_proto(out, outlen, alpn_ctx->data,
             (unsigned int)alpn_ctx->len, in, inlen)
         != OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
