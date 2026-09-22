@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_d2i");
 
-plan tests => 14;
+plan tests => 20;
 
 ok(run(test(["d2i_test", "X509", "decode",
              srctop_file('test','d2i-tests','bad_cert.der')])),
@@ -26,7 +26,7 @@ ok(run(test(["d2i_test", "GENERAL_NAME", "decode",
              srctop_file('test','d2i-tests','bad_generalname.der')])),
    "Running d2i_test bad_generalname.der");
 
-ok(run(test(["d2i_test", "ASN1_ANY", "BIO",
+ok(run(test(["d2i_test", "ASN1_ANY", "decode",
              srctop_file('test','d2i-tests','bad_bio.der')])),
    "Running d2i_test bad_bio.der");
 # This test checks CVE-2016-2108. The data consists of an tag 258 and
@@ -70,6 +70,30 @@ ok(run(test(["d2i_test", "ASN1_ANY", "OK",
 ok(run(test(["d2i_test", "ASN1_ANY", "OK",
              srctop_file('test','d2i-tests','intminus1.der')])),
    "Running d2i_test intminus1.der ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "compare",
+             srctop_file('test','d2i-tests','valid.ber')])),
+   "Running d2i_test valid.ber ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "compare",
+             srctop_file('test','d2i-tests','valid1.ber')])),
+   "Running d2i_test valid1.ber ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "compare",
+             srctop_file('test','d2i-tests','valid2.ber')])),
+   "Running d2i_test valid2.ber ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "decode",
+             srctop_file('test','d2i-tests','invalid.ber')])),
+   "Running d2i_test invalid.ber ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "decode",
+             srctop_file('test','d2i-tests','invalid1.ber')])),
+   "Running d2i_test invalid1.ber ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "decode",
+             srctop_file('test','d2i-tests','invalid2.ber')])),
+   "Running d2i_test invalid2.ber ANY");
 
 # Integers with illegal additional padding.
 
