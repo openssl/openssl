@@ -373,8 +373,7 @@ size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * OSSL_FN_mod_exp() dispatches to for even moduli.
  *
  * Not constant-time: branches on the exponent's bits; do not use for secret
- * exponents (see the leak note in OSSL_FN_mod_exp() and TODO(FIXNUM) in
- * OSSL_FN_mod_exp_mont()).  Fixed-width:
+ * exponents (see the leak note in OSSL_FN_mod_exp()).  Fixed-width:
  * runs in an ml-limb accumulator |rr|, copy-truncated to |r| at the end, so
  * |r == p| is safe and |r == m| is rejected; |a| is reduced into [0, m) first.
  * OSSL_FN is unsigned.
