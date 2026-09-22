@@ -73,8 +73,10 @@ static int vaes_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv,
     gcmctx->mres = 0;
 
     /* IV is limited by 2^64 bits, thus 2^61 bytes */
+#if SIZE_MAX > 0xFFFFFFFFu
     if (ivlen > (U64(1) << 61))
         return 0;
+#endif
 
     ossl_aes_gcm_setiv_avx512(gcmctx->key, gcmctx, iv, ivlen);
 
