@@ -19,6 +19,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
 #include "providers/implementations/keymgmt/slh_dsa_kmgmt.inc"
 
 #ifdef FIPS_MODULE
@@ -462,7 +463,7 @@ static void slh_dsa_gen_cleanup(void *genctx)
             (void (*)(void))slh_dsa_gen_set_params },                                   \
         { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                                        \
             (void (*)(void))slh_dsa_gen_settable_params },                              \
-        OSSL_DISPATCH_END                                                               \
+        OSSL_KEYMGMT_FIPS_APPROVED_GEN_DISPATCH_END                                     \
     }
 
 MAKE_KEYMGMT_FUNCTIONS("SLH-DSA-SHA2-128s", sha2_128s);

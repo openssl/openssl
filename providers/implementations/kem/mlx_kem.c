@@ -16,9 +16,11 @@
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "prov/implementations.h"
+#include "prov/names.h"
 #include "prov/mlx_kem.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/kem/mlx_kem.inc"
 
 static OSSL_FUNC_kem_newctx_fn mlx_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn mlx_kem_freectx;
@@ -28,6 +30,10 @@ static OSSL_FUNC_kem_decapsulate_init_fn mlx_kem_decapsulate_init;
 static OSSL_FUNC_kem_decapsulate_fn mlx_kem_decapsulate;
 static OSSL_FUNC_kem_set_ctx_params_fn mlx_kem_set_ctx_params;
 static OSSL_FUNC_kem_settable_ctx_params_fn mlx_kem_settable_ctx_params;
+#ifdef FIPS_MODULE
+static OSSL_FUNC_kem_get_ctx_params_fn mlx_kem_get_ctx_params;
+static OSSL_FUNC_kem_gettable_ctx_params_fn mlx_kem_gettable_ctx_params;
+#endif
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
@@ -102,6 +108,33 @@ mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     return 1;
 }
+
+#ifdef FIPS_MODULE
+static const OSSL_PARAM *mlx_kem_gettable_ctx_params(ossl_unused void *vctx,
+    ossl_unused void *provctx)
+{
+    return mlx_kem_get_ctx_params_list;
+}
+
+static int mlx_kem_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    PROV_MLX_KEM_CTX *ctx = vctx;
+    struct mlx_kem_get_ctx_params_st p;
+    int approved;
+
+    if (ctx == NULL || !mlx_kem_get_ctx_params_decoder(params, &p))
+        return 0;
+
+    if (p.ind != NULL) {
+        if (ctx->key == NULL || ctx->key->xinfo == NULL)
+            return 0;
+        approved = strcmp(ctx->key->xinfo->algorithm_name, PROV_NAMES_X448) != 0;
+        if (!OSSL_PARAM_set_int(p.ind, approved))
+            return 0;
+    }
+    return 1;
+}
+#endif
 
 static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     unsigned char *shsec, size_t *slen)
@@ -346,5 +379,10 @@ const OSSL_DISPATCH ossl_mlx_kem_asym_kem_functions[] = {
     { OSSL_FUNC_KEM_FREECTX, (OSSL_FUNC)mlx_kem_freectx },
     { OSSL_FUNC_KEM_SET_CTX_PARAMS, (OSSL_FUNC)mlx_kem_set_ctx_params },
     { OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS, (OSSL_FUNC)mlx_kem_settable_ctx_params },
+#ifdef FIPS_MODULE
+    { OSSL_FUNC_KEM_GET_CTX_PARAMS, (OSSL_FUNC)mlx_kem_get_ctx_params },
+    { OSSL_FUNC_KEM_GETTABLE_CTX_PARAMS,
+        (OSSL_FUNC)mlx_kem_gettable_ctx_params },
+#endif
     OSSL_DISPATCH_END
 };
