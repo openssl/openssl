@@ -48,7 +48,7 @@ $xmm=$ymm=0;
 for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 $ymm=1 if ($xmm &&
-		`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 			=~ /GNU assembler version ([0-9]+)\.([0-9]+)/ &&
 		($gasver = $1 + $2/100.0) >= 2.19);	# first version supporting AVX
 
@@ -61,11 +61,11 @@ $ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32" &&
 		$1>=10);	# first version supporting AVX
 
 $ymm=1 if ($xmm && !$ymm &&
-		`$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|based on LLVM) ([0-9]+\.[0-9]+)/ &&
+		defined $ENV{CC} && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|based on LLVM) ([0-9]+\.[0-9]+)/ &&
 		$2>=3.0);	# first version supporting AVX
 
 $ymm=1 if ($xmm && !$ymm &&
-		`$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__` =~ /#define __clang_major__.([0-9]+)/ &&
+		defined $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__` =~ /#define __clang_major__.([0-9]+)/ &&
 		$1>=11); #icx started with clang 11
 
 $a="eax";

@@ -105,17 +105,17 @@ elsif (!$gas)
     $decor="\$L\$";
 }
 # Find out if we're using GNU as
-elsif (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+elsif (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/)
 {
     $gnuas=1;
 }
-elsif (`$ENV{CC} --version 2>/dev/null`
+elsif (defined $ENV{CC} && `$ENV{CC} --version 2>/dev/null`
 		=~ /(clang .*|Intel.*oneAPI .*)/)
 {
     $gnuas=1;
 }
-elsif (`$ENV{CC} -V 2>/dev/null`
+elsif (defined $ENV{CC} && `$ENV{CC} -V 2>/dev/null`
 		=~ /nvc .*/)
 {
     $gnuas=1;
