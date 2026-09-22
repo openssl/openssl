@@ -144,7 +144,7 @@ OSSL_default_cipher_list() and OSSL_default_ciphersites() are new in 3.0.
 
 Cipher names were case-sensitive prior to OpenSSL 4.0.
 
-Provider-defined TLSv1.3 ciphersuites were added in OpenSSL 4.1.
+Provider-defined TLSv1.3 ciphersuites were added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

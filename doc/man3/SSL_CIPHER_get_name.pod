@@ -212,7 +212,7 @@ required to enable this function.
 The OPENSSL_cipher_name() function was added in OpenSSL 1.1.1.
 
 Provider-defined TLS 1.3 ciphersuites became visible through these functions
-in OpenSSL 4.1.
+in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
