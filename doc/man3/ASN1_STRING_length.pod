@@ -3,6 +3,7 @@
 =head1 NAME
 
 ASN1_STRING_get0_data,
+ASN1_STRING_copy,
 ASN1_STRING_dup,
 ASN1_STRING_cmp,
 ASN1_STRING_type,
@@ -19,6 +20,8 @@ ASN1_STRING_length
  #include <openssl/asn1.h>
 
  const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
+
+ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
 
  ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *a);
 
@@ -51,6 +54,9 @@ ASN1_STRING_length() returns the length of the content of I<x>. I<x> B<MUST NOT>
 ASN1_STRING_get0_data() returns an internal pointer to the data of I<x>.
 Since this is an internal pointer it should B<not> be freed or
 modified in any way. I<x> B<MUST NOT> be NULL.
+
+ASN1_STRING_copy() copies the string type and content (along with the relevant
+internal attributes) from I<str> to I<dst>.
 
 ASN1_STRING_dup() returns a copy of the structure I<a>.
 
@@ -127,6 +133,10 @@ ASN1_STRING_length() returns the length of the content of I<x>.
 
 ASN1_STRING_get0_data() returns an internal pointer to
 the data of I<x>.
+
+ASN1_STRING_copy() returns 1 on success, or 0 on error or failure.
+If the call was not successful, I<dst> may be left in an inconsistent state,
+and can no longer be used.
 
 ASN1_STRING_dup() returns a valid B<ASN1_STRING> structure or NULL if an
 error occurred.
