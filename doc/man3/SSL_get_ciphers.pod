@@ -104,6 +104,9 @@ of that owner's list.
 Built-in cipher descriptors have static lifetime. Provider-defined descriptors
 belong to their originating SSL_CTX registry. Unlike the stack, such a
 descriptor remains valid across list changes while that SSL_CTX is alive.
+Neither a borrowed descriptor nor a session reference extends the lifetime of
+the originating OSSL_LIB_CTX. Applications must free dependent SSL, SSL_CTX and
+SSL_SESSION objects before freeing that library context.
 
 The stack returned by SSL_get1_supported_ciphers() should be freed using
 sk_SSL_CIPHER_free(). Its elements are borrowed and must not be freed. A

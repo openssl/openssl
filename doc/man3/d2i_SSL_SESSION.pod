@@ -50,7 +50,7 @@ L<d2i_X509(3)>
 The function d2i_SSL_SESSION_ex() was added in OpenSSL 3.2.
 
 Provider-defined TLS 1.3 ciphersuite sessions became non-serialisable in
-OpenSSL 4.1.
+OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

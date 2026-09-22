@@ -633,7 +633,10 @@ Unsigned integer parameters must use between 1 and 8 data bytes.
 
 The AEAD and digest are fetched using the SSL_CTX library context and property
 query. They need not be implemented by the provider advertising the
-ciphersuite. The fetched objects are retained by the descriptor.
+ciphersuite. The fetched objects are retained by the descriptor for the
+lifetime of that library context. They do not keep the OSSL_LIB_CTX alive;
+provider-defined descriptors and sessions that reference them must be freed
+before the originating OSSL_LIB_CTX.
 
 Discovery occurs at SSL_CTX creation; the registry is then immutable.
 Existing providers return 0 both for unsupported capabilities and for errors.

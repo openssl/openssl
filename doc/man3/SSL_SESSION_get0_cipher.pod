@@ -21,7 +21,10 @@ connection when the session was created, or NULL if it cannot be determined.
 The value returned is a pointer to an object maintained within B<s> and
 should not be released. It remains valid until B<s> is freed, its cipher is
 replaced, or an in-place session decode succeeds. A provider-defined cipher
-remains valid after the connection and SSL_CTX are freed.
+remains valid after the connection and SSL_CTX are freed, provided that the
+OSSL_LIB_CTX from which the SSL_CTX was created remains alive. The originating
+OSSL_LIB_CTX must outlive B<s> because provider algorithm implementations are
+owned by that library context.
 
 SSL_SESSION_set_cipher() can be used to set the ciphersuite associated with the
 SSL_SESSION B<s> to B<cipher>. For example, this could be used to set up a
@@ -59,7 +62,7 @@ The SSL_SESSION_get0_cipher() function was added in OpenSSL 1.1.0.
 The SSL_SESSION_set_cipher() function was added in OpenSSL 1.1.1.
 
 The provider-defined ciphersuite lifetime and non-resumption behaviour were
-added in OpenSSL 4.1.
+added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
