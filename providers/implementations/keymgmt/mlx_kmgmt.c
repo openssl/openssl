@@ -43,19 +43,45 @@ static OSSL_FUNC_keymgmt_dup_fn mlx_kem_dup;
 static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
     | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ECX)
+static const unsigned char xwing_label[] = {
+    0x5c, 0x2e, 0x2f, 0x2f, 0x5e, 0x5c
+};
+#endif
+
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
-    { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768 },
-    { "EC", "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024 },
+    { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
+        NULL, 0, NULL, NULL, 0, 0, 0, 64 },
+    { "EC", "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
+        NULL, 0, NULL, NULL, 0, 0, 0, 80 },
 #if !defined(OPENSSL_NO_ECX)
-    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768 },
-    { "X448", NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024 },
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
+        NULL, 0, NULL, NULL, 0, 0, 0, 64 },
+    { "X448", NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
+        NULL, 0, NULL, NULL, 0, 0, 0, 88 },
 #else
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
-    { "curveSM2", "SM2", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768 },
+    { "curveSM2", "SM2", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
+        NULL, 0, NULL, NULL, 0, 0, 0, 64 },
+#else
+    { NULL, NULL, 0, 0, 0, 0, NID_undef },
+#endif
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ECX)
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768,
+        MLX_COMBINER_C2PRI, MLX_FRAMEWORK_CG,
+        xwing_label, sizeof(xwing_label), "SHA3-256", "SHAKE-256",
+        MLX_DEFAULT_SEED_BYTES, X25519_KEYLEN,
+        ML_KEM_RANDOM_BYTES + X25519_KEYLEN,
+        MLX_C2PRI_SHA3_256_BYTES },
 #else
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
 #endif
@@ -66,9 +92,11 @@ typedef struct mlx_kem_gen_ctx_st {
     char *propq;
     int selection;
     unsigned int evp_type;
+    unsigned char seed[MLX_MAX_SEED_BYTES];
+    size_t seedlen;
 } PROV_ML_KEM_GEN_CTX;
 
-static void mlx_kem_key_free(void *vkey)
+void ossl_mlx_key_free(void *vkey)
 {
     MLX_KEY *key = vkey;
 
@@ -77,6 +105,7 @@ static void mlx_kem_key_free(void *vkey)
     OPENSSL_free(key->propq);
     EVP_PKEY_free(key->mkey);
     EVP_PKEY_free(key->xkey);
+    OPENSSL_cleanse(key->seed, sizeof(key->seed));
     OPENSSL_free(key);
 }
 
@@ -89,7 +118,7 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
 
     if (!ossl_prov_is_running()
         || v >= OSSL_NELEM(hybrid_vtable)
-        || (key = OPENSSL_malloc(sizeof(*key))) == NULL)
+        || (key = OPENSSL_zalloc(sizeof(*key))) == NULL)
         goto err;
 
     ml_kem_variant = hybrid_vtable[v].ml_kem_variant;
@@ -97,6 +126,7 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
     key->minfo = ossl_ml_kem_get_vinfo(ml_kem_variant);
     key->xinfo = &hybrid_vtable[v];
     key->xkey = key->mkey = NULL;
+    key->variant = v;
     key->state = MLX_HAVE_NOKEYS;
     key->propq = propq;
     return key;
@@ -104,6 +134,16 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
 err:
     OPENSSL_free(propq);
     return NULL;
+}
+
+MLX_KEY *ossl_mlx_key_new(PROV_CTX *provctx, unsigned int variant,
+    const char *propq)
+{
+    char *copy = propq == NULL ? NULL : OPENSSL_strdup(propq);
+
+    if (propq != NULL && copy == NULL)
+        return NULL;
+    return mlx_kem_key_new(variant, PROV_LIBCTX_OF(provctx), copy);
 }
 
 static int mlx_kem_has(const void *vkey, int selection)
@@ -270,7 +310,9 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
         return 0;
     }
     publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
-    prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
+    prvlen = mlx_kem_uses_hybrid_seed(key)
+        ? key->xinfo->seed_bytes
+        : key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
     memset(&sub_arg, 0, sizeof(sub_arg));
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
@@ -295,9 +337,21 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
     if (tmpl == NULL)
         goto err;
 
-    /* Extract sub-component key material */
-    if (!export_sub(&sub_arg, selection, key))
+    /* Extract sub-component key material, or the canonical hybrid seed. */
+    if (mlx_kem_uses_hybrid_seed(key)) {
+        if (sub_arg.pubenc != NULL) {
+            if (!ossl_mlx_encode_public_key(key, sub_arg.pubenc, publen))
+                goto err;
+            sub_arg.pubcount = 2;
+        }
+        if (sub_arg.prvenc != NULL) {
+            if (!ossl_mlx_encode_seed(key, sub_arg.prvenc, prvlen))
+                goto err;
+            sub_arg.prvcount = 2;
+        }
+    } else if (!export_sub(&sub_arg, selection, key)) {
         goto err;
+    }
 
     if (sub_arg.pubenc != NULL && sub_arg.pubcount == 2
         && !ossl_param_build_set_octet_string(
@@ -411,6 +465,121 @@ err:
     return 0;
 }
 
+int ossl_mlx_set_seed(MLX_KEY *key, const unsigned char *seed,
+    size_t seedlen)
+{
+#ifdef FIPS_MODULE
+    return 0;
+#else
+    unsigned char expanded[ML_KEM_SEED_BYTES + MLX_MAX_SEED_BYTES];
+    EVP_MD *shake = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    EVP_PKEY_CTX *mctx = NULL, *xctx = NULL;
+    EVP_PKEY *mkey = NULL, *xkey = NULL;
+    OSSL_PARAM params[3], xparams[3], *xp = xparams;
+    size_t expanded_len;
+    int ret = 0;
+
+    if (key == NULL || !mlx_kem_uses_hybrid_seed(key)
+        || seed == NULL || seedlen != key->xinfo->seed_bytes
+        || key->xinfo->traditional_seed_bytes > MLX_MAX_SEED_BYTES
+        || mlx_kem_have_pubkey(key))
+        return 0;
+    expanded_len = ML_KEM_SEED_BYTES + key->xinfo->traditional_seed_bytes;
+
+    shake = EVP_MD_fetch(key->libctx, key->xinfo->prg_name, key->propq);
+    mdctx = EVP_MD_CTX_new();
+    if (shake == NULL || mdctx == NULL
+        || !EVP_DigestInit_ex2(mdctx, shake, NULL)
+        || !EVP_DigestUpdate(mdctx, seed, seedlen)
+        || !EVP_DigestFinalXOF(mdctx, expanded, expanded_len))
+        goto end;
+
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_ML_KEM_SEED, expanded, ML_KEM_SEED_BYTES);
+    params[1] = OSSL_PARAM_construct_end();
+    mctx = EVP_PKEY_CTX_new_from_name(key->libctx,
+        key->minfo->algorithm_name, key->propq);
+    if (mctx == NULL || EVP_PKEY_keygen_init(mctx) <= 0
+        || EVP_PKEY_CTX_set_params(mctx, params) <= 0
+        || EVP_PKEY_generate(mctx, &mkey) <= 0)
+        goto end;
+
+    if (key->xinfo->group_name == NULL) {
+        xkey = EVP_PKEY_new_raw_private_key_ex(key->libctx,
+            key->xinfo->algorithm_name, key->propq,
+            expanded + ML_KEM_SEED_BYTES,
+            key->xinfo->traditional_seed_bytes);
+    } else {
+        *xp++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+            (char *)key->xinfo->group_name, 0);
+        *xp++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
+            expanded + ML_KEM_SEED_BYTES,
+            key->xinfo->traditional_seed_bytes);
+        *xp = OSSL_PARAM_construct_end();
+        xctx = EVP_PKEY_CTX_new_from_name(key->libctx,
+            key->xinfo->algorithm_name, key->propq);
+        if (xctx == NULL || EVP_PKEY_keygen_init(xctx) <= 0
+            || EVP_PKEY_CTX_set_params(xctx, xparams) <= 0
+            || EVP_PKEY_generate(xctx, &xkey) <= 0)
+            goto end;
+    }
+    if (xkey == NULL)
+        goto end;
+
+    key->mkey = mkey;
+    key->xkey = xkey;
+    mkey = xkey = NULL;
+    memcpy(key->seed, seed, seedlen);
+    key->has_seed = 1;
+    key->state = MLX_HAVE_PRVKEY;
+    ret = 1;
+end:
+    OPENSSL_cleanse(expanded, sizeof(expanded));
+    EVP_PKEY_free(mkey);
+    EVP_PKEY_free(xkey);
+    EVP_PKEY_CTX_free(mctx);
+    EVP_PKEY_CTX_free(xctx);
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_free(shake);
+    return ret;
+#endif
+}
+
+int ossl_mlx_set_public_key(MLX_KEY *key, const unsigned char *pub,
+    size_t publen)
+{
+    if (key == NULL
+        || publen != key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes)
+        return 0;
+    return load_keys(key, pub, publen, NULL, 0);
+}
+
+int ossl_mlx_encode_public_key(const MLX_KEY *key, unsigned char *out,
+    size_t outlen)
+{
+    EXPORT_CB_ARG sub_arg;
+
+    if (key == NULL || !mlx_kem_have_pubkey(key) || out == NULL
+        || outlen != key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes)
+        return 0;
+    memset(&sub_arg, 0, sizeof(sub_arg));
+    sub_arg.pubenc = out;
+    return export_sub(&sub_arg, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+               (MLX_KEY *)key)
+        && sub_arg.pubcount == 2;
+}
+
+int ossl_mlx_encode_seed(const MLX_KEY *key, unsigned char *out,
+    size_t outlen)
+{
+    if (key == NULL || !key->has_seed || out == NULL
+        || outlen != key->xinfo->seed_bytes)
+        return 0;
+    memcpy(out, key->seed, key->xinfo->seed_bytes);
+    return 1;
+}
+
 static int mlx_kem_key_fromdata(MLX_KEY *key,
     const OSSL_PARAM params[],
     int include_private)
@@ -436,6 +605,23 @@ static int mlx_kem_key_fromdata(MLX_KEY *key,
         && p.privkey != NULL
         && OSSL_PARAM_get_octet_string_ptr(p.privkey, &prvenc, &prvlen) != 1)
         return 0;
+
+    if (mlx_kem_uses_hybrid_seed(key)) {
+        if (publen != 0
+            && publen != key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+        if (prvlen != 0) {
+            if (prvlen != key->xinfo->seed_bytes) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+                return 0;
+            }
+            return ossl_mlx_set_seed(key, prvenc, prvlen);
+        }
+        if (publen != 0)
+            return ossl_mlx_set_public_key(key, pubenc, publen);
+    }
 
     /* The caller MUST specify at least one of the public or private keys. */
     if (publen == 0 && prvlen == 0) {
@@ -518,7 +704,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
         return 1;
 
     memset(&sub_arg, 0, sizeof(sub_arg));
-    if ((pub = p.pub) != NULL) {
+    pub = p.encpub != NULL ? p.encpub : p.pub;
+    if (pub != NULL) {
         size_t publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
 
         if (pub->data_type != OSSL_PARAM_OCTET_STRING)
@@ -538,7 +725,9 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     }
     if (mlx_kem_have_prvkey(key)) {
         if ((prv = p.priv) != NULL) {
-            size_t prvlen = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
+            size_t prvlen = mlx_kem_uses_hybrid_seed(key)
+                ? key->xinfo->seed_bytes
+                : key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
 
             if (prv->data_type != OSSL_PARAM_OCTET_STRING)
                 return 0;
@@ -558,6 +747,21 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     }
     if (pub == NULL && prv == NULL)
         return 1;
+
+    if (mlx_kem_uses_hybrid_seed(key)) {
+        if (sub_arg.pubenc != NULL
+            && !ossl_mlx_encode_public_key(key, sub_arg.pubenc,
+                key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes))
+            return 0;
+        if (sub_arg.prvenc != NULL
+            && !ossl_mlx_encode_seed(key, sub_arg.prvenc,
+                key->xinfo->seed_bytes))
+            return 0;
+        if (p.encpub != NULL && p.pub != NULL)
+            return OSSL_PARAM_set_octet_string(p.pub, p.encpub->data,
+                p.encpub->return_size);
+        return 1;
+    }
 
     selection = prv == NULL ? 0 : OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     selection |= pub == NULL ? 0 : OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
@@ -640,6 +844,20 @@ static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
         if ((gctx->propq = OPENSSL_strdup(p.propq->data)) == NULL)
             return 0;
     }
+    if (p.seed != NULL) {
+        void *dst = gctx->seed;
+        size_t len = 0;
+
+        if (gctx->evp_type >= OSSL_NELEM(hybrid_vtable)
+            || hybrid_vtable[gctx->evp_type].framework != MLX_FRAMEWORK_CG
+            || !OSSL_PARAM_get_octet_string(p.seed, &dst,
+                sizeof(gctx->seed), &len)
+            || len != hybrid_vtable[gctx->evp_type].seed_bytes) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+            return 0;
+        }
+        gctx->seedlen = len;
+    }
     return 1;
 }
 
@@ -692,6 +910,19 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
+    if (mlx_kem_uses_hybrid_seed(key)) {
+        if (gctx->seedlen == 0) {
+            if (RAND_priv_bytes_ex(key->libctx, gctx->seed,
+                    key->xinfo->seed_bytes, 0)
+                <= 0)
+                goto err;
+            gctx->seedlen = key->xinfo->seed_bytes;
+        }
+        if (ossl_mlx_set_seed(key, gctx->seed, gctx->seedlen))
+            return key;
+        goto err;
+    }
+
     /* For now, using the same "propq" for all components */
     key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
         key->minfo->algorithm_name);
@@ -703,7 +934,8 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return key;
     }
 
-    mlx_kem_key_free(key);
+err:
+    ossl_mlx_key_free(key);
     return NULL;
 }
 
@@ -713,6 +945,7 @@ static void mlx_kem_gen_cleanup(void *vgctx)
 
     if (gctx == NULL)
         return;
+    OPENSSL_cleanse(gctx->seed, sizeof(gctx->seed));
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }
@@ -760,7 +993,19 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         break;
     }
 
-    mlx_kem_key_free(ret);
+    ossl_mlx_key_free(ret);
+    return NULL;
+}
+
+static void *mlx_kem_load(const void *reference, size_t reference_sz)
+{
+    MLX_KEY *key = NULL;
+
+    if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
+        key = *(MLX_KEY **)reference;
+        *(MLX_KEY **)reference = NULL;
+        return key;
+    }
     return NULL;
 }
 
@@ -784,7 +1029,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
     }                                                                                      \
     const OSSL_DISPATCH ossl_mlx_##name##_kem_kmgmt_functions[] = {                        \
         { OSSL_FUNC_KEYMGMT_NEW, (OSSL_FUNC)mlx_##name##_kem_new },                        \
-        { OSSL_FUNC_KEYMGMT_FREE, (OSSL_FUNC)mlx_kem_key_free },                           \
+        { OSSL_FUNC_KEYMGMT_FREE, (OSSL_FUNC)ossl_mlx_key_free },                          \
         { OSSL_FUNC_KEYMGMT_GET_PARAMS, (OSSL_FUNC)mlx_kem_get_params },                   \
         { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (OSSL_FUNC)mlx_kem_gettable_params },         \
         { OSSL_FUNC_KEYMGMT_SET_PARAMS, (OSSL_FUNC)mlx_kem_set_params },                   \
@@ -796,6 +1041,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (OSSL_FUNC)mlx_kem_gen_settable_params }, \
         { OSSL_FUNC_KEYMGMT_GEN, (OSSL_FUNC)mlx_kem_gen },                                 \
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (OSSL_FUNC)mlx_kem_gen_cleanup },                 \
+        { OSSL_FUNC_KEYMGMT_LOAD, (OSSL_FUNC)mlx_kem_load },                               \
         { OSSL_FUNC_KEYMGMT_DUP, (OSSL_FUNC)mlx_kem_dup },                                 \
         { OSSL_FUNC_KEYMGMT_IMPORT, (OSSL_FUNC)mlx_kem_import },                           \
         { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC)mlx_kem_imexport_types },             \
@@ -812,4 +1058,7 @@ DECLARE_DISPATCH(x448, 3);
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
 DECLARE_DISPATCH(curve_sm2, 4);
+#endif
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ECX)
+DECLARE_DISPATCH(xwing, 5);
 #endif

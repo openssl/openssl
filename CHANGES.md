@@ -34,6 +34,10 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added X-Wing KEM support to the default provider.
+
+   *Shane Lontis*
+
  * Added AVX-512 and VAES optimizations for AES-CTR mode. Performance for
    large inputs (1024 bytes or more) improved by 2.9x to 3.9x.
    <!-- https://github.com/openssl/openssl/pull/30755 -->

@@ -259,6 +259,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[hpke_test]=../include ../apps/include
   DEPEND[hpke_test]=../libcrypto libtestutil.a
 
+  IF[{- !$disabled{ml-kem} && !$disabled{ecx} -}]
+    PROGRAMS{noinst}=xwing_test
+    SOURCE[xwing_test]=xwing_test.c
+    INCLUDE[xwing_test]=../include ../apps/include
+    DEPEND[xwing_test]=../libcrypto.a libtestutil.a
+  ENDIF
+
   IF[{- !$disabled{'lms'} -}]
     PROGRAMS{noinst}=lms_test
     SOURCE[lms_test]=lms_test.c

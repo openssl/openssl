@@ -364,6 +364,8 @@ extern const OSSL_DISPATCH ossl_ml_kem_1024_keymgmt_functions[];
 #ifndef OPENSSL_NO_ECX
 extern const OSSL_DISPATCH ossl_mlx_x25519_kem_kmgmt_functions[];
 extern const OSSL_DISPATCH ossl_mlx_x448_kem_kmgmt_functions[];
+extern const OSSL_DISPATCH ossl_mlx_xwing_kem_kmgmt_functions[];
+#define ossl_xwing_keymgmt_functions ossl_mlx_xwing_kem_kmgmt_functions
 #endif
 extern const OSSL_DISPATCH ossl_mlx_p256_kem_kmgmt_functions[];
 extern const OSSL_DISPATCH ossl_mlx_p384_kem_kmgmt_functions[];
@@ -817,6 +819,15 @@ extern const OSSL_DISPATCH ossl_ml_kem_768_to_PrivateKeyInfo_pem_encoder_functio
 extern const OSSL_DISPATCH ossl_ml_kem_768_to_SubjectPublicKeyInfo_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ml_kem_768_to_SubjectPublicKeyInfo_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ml_kem_768_to_text_encoder_functions[];
+extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_xwing_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_xwing_decoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_EncryptedPrivateKeyInfo_der_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_EncryptedPrivateKeyInfo_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_PrivateKeyInfo_der_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_PrivateKeyInfo_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_SubjectPublicKeyInfo_der_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_SubjectPublicKeyInfo_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_xwing_to_text_encoder_functions[];
 
 extern const OSSL_DISPATCH ossl_PrivateKeyInfo_der_to_ml_kem_1024_decoder_functions[];
 extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ml_kem_1024_decoder_functions[];
