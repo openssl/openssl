@@ -28,6 +28,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 #include "prov/ml_kem.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
+#define ml_kem_export_params_st
+#define ml_kem_export_params_decoder
 #include "providers/implementations/keymgmt/ml_kem_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_new_fn ml_kem_512_new;
@@ -858,7 +861,7 @@ static void ml_kem_free_key(void *keydata)
         { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC)ml_kem_imexport_types },             \
         { OSSL_FUNC_KEYMGMT_EXPORT, (OSSL_FUNC)ml_kem_export },                           \
         { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (OSSL_FUNC)ml_kem_imexport_types },             \
-        OSSL_DISPATCH_END                                                                 \
+        OSSL_KEYMGMT_FIPS_APPROVED_GEN_DISPATCH_END                                       \
     }
 DECLARE_VARIANT(512);
 DECLARE_VARIANT(768);

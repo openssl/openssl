@@ -18,7 +18,9 @@
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
+#include "prov/names.h"
 #include "prov/mlx_kem.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
@@ -671,6 +673,25 @@ static const OSSL_PARAM *mlx_kem_gen_settable_params(ossl_unused void *vgctx,
     return mlx_gen_set_params_list;
 }
 
+#ifdef FIPS_MODULE
+static int mlx_kem_gen_get_params(void *vgctx, OSSL_PARAM params[])
+{
+    PROV_ML_KEM_GEN_CTX *gctx = vgctx;
+    struct keymgmt_fips_gen_get_params_st p;
+    int approved;
+
+    if (gctx == NULL || gctx->evp_type >= OSSL_NELEM(hybrid_vtable)
+        || !keymgmt_fips_gen_get_params_decoder(params, &p))
+        return 0;
+    approved = strcmp(hybrid_vtable[gctx->evp_type].algorithm_name,
+                   PROV_NAMES_X448)
+        != 0;
+    if (p.ind != NULL && !OSSL_PARAM_set_int(p.ind, approved))
+        return 0;
+    return 1;
+}
+#endif
+
 static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
@@ -799,7 +820,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC)mlx_kem_imexport_types },             \
         { OSSL_FUNC_KEYMGMT_EXPORT, (OSSL_FUNC)mlx_kem_export },                           \
         { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (OSSL_FUNC)mlx_kem_imexport_types },             \
-        OSSL_DISPATCH_END                                                                  \
+        OSSL_KEYMGMT_FIPS_GEN_DISPATCH_END(mlx_kem_gen_get_params)                         \
     }
 /* See |hybrid_vtable| above */
 DECLARE_DISPATCH(p256, 0);
