@@ -33,6 +33,10 @@ static OSSL_FUNC_mac_dupctx_fn gmac_dup;
 static OSSL_FUNC_mac_freectx_fn gmac_free;
 static OSSL_FUNC_mac_gettable_params_fn gmac_gettable_params;
 static OSSL_FUNC_mac_get_params_fn gmac_get_params;
+#ifdef FIPS_MODULE
+static OSSL_FUNC_mac_gettable_ctx_params_fn gmac_gettable_ctx_params;
+static OSSL_FUNC_mac_get_ctx_params_fn gmac_get_ctx_params;
+#endif
 static OSSL_FUNC_mac_settable_ctx_params_fn gmac_settable_ctx_params;
 static OSSL_FUNC_mac_set_ctx_params_fn gmac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn gmac_init;
@@ -186,6 +190,25 @@ static int gmac_get_params(OSSL_PARAM params[])
     return 1;
 }
 
+#ifdef FIPS_MODULE
+static const OSSL_PARAM *gmac_gettable_ctx_params(ossl_unused void *ctx,
+    ossl_unused void *provctx)
+{
+    return gmac_get_ctx_params_list;
+}
+
+static int gmac_get_ctx_params(ossl_unused void *ctx, OSSL_PARAM params[])
+{
+    struct gmac_get_ctx_params_st p;
+
+    if (!gmac_get_ctx_params_decoder(params, &p))
+        return 0;
+    if (p.size != NULL && !OSSL_PARAM_set_size_t(p.size, gmac_size()))
+        return 0;
+    return 1;
+}
+#endif
+
 static const OSSL_PARAM *gmac_settable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
@@ -249,6 +272,11 @@ const OSSL_DISPATCH ossl_gmac_functions[] = {
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))gmac_final },
     { OSSL_FUNC_MAC_GETTABLE_PARAMS, (void (*)(void))gmac_gettable_params },
     { OSSL_FUNC_MAC_GET_PARAMS, (void (*)(void))gmac_get_params },
+#ifdef FIPS_MODULE
+    { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
+        (void (*)(void))gmac_gettable_ctx_params },
+    { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))gmac_get_ctx_params },
+#endif
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
         (void (*)(void))gmac_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))gmac_set_ctx_params },

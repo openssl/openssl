@@ -20,6 +20,10 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/ml_dsa.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
+
+#define ml_dsa_export_params
+#define ml_dsa_export_params_decoder
 #include "providers/implementations/keymgmt/ml_dsa_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_free_fn ml_dsa_free_key;
@@ -583,7 +587,7 @@ static void ml_dsa_gen_cleanup(void *genctx)
         { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                                              \
             (void (*)(void))ml_dsa_gen_settable_params },                                     \
         { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ml_dsa_dup_key },                            \
-        OSSL_DISPATCH_END                                                                     \
+        OSSL_KEYMGMT_FIPS_APPROVED_GEN_DISPATCH_END                                           \
     }
 
 MAKE_KEYMGMT_FUNCTIONS(44);

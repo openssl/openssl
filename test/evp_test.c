@@ -48,6 +48,7 @@ typedef struct evp_test_st {
     char *reason; /* Expected error reason string */
     void *data; /* test specific data */
     int expect_unapproved;
+    int expect_unapproved_callback;
     int security_category; /* NIST's security category */
     unsigned char *entropy;
     size_t entropy_len;
@@ -89,6 +90,7 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static int fips_indicator_callback_unapproved_count = 0;
+static int fips_indicator_default_approved = 0;
 static int extended_tests = 0;
 
 /* List of public and private keys */
@@ -138,22 +140,31 @@ static int fips_indicator_cb(const char *type, const char *desc,
 
 static int check_fips_approved(EVP_TEST *t, int approved)
 {
-    /*
-     * If the expected result is approved
-     * then it is expected that approved will be 1
-     * and the fips indicator callback has not been triggered, otherwise
-     * approved should be 0 and the fips indicator callback should be triggered.
-     */
+    int callback_received = fips_indicator_callback_unapproved_count > 0;
+
+    if (!OSSL_PROVIDER_available(libctx, "fips")) {
+        if (approved != 0) {
+            TEST_error("A non-FIPS provider reported a FIPS approved operation");
+            return 0;
+        }
+        return 1;
+    }
+
+    /* The callback is checked only when UnapprovedCallback was specified. */
     if (t->expect_unapproved) {
-        if (approved == 1 || fips_indicator_callback_unapproved_count == 0) {
+        if (approved != 0) {
             TEST_error("Test is not expected to be FIPS approved");
             return 0;
         }
     } else {
-        if (approved == 0 || fips_indicator_callback_unapproved_count > 0) {
+        if (approved == 0) {
             TEST_error("Test is expected to be FIPS approved");
             return 0;
         }
+    }
+    if (t->expect_unapproved_callback && !callback_received) {
+        TEST_error("Expected an unapproved callback");
+        return 0;
     }
     return 1;
 }
@@ -161,18 +172,19 @@ static int check_fips_approved(EVP_TEST *t, int approved)
 static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    /*
-     * For any getters that do not handle the FIPS indicator assume a default
-     * value of approved.
-     */
-    int approved = 1;
+    int approved = fips_indicator_default_approved;
+    const OSSL_PARAM *gettables = EVP_MAC_CTX_gettable_params(ctx);
 
-    if (EVP_MAC_CTX_gettable_params(ctx) == NULL)
-        return 1;
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
 
     params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_MAC_CTX_get_params(ctx, params))
+    if (!EVP_MAC_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -180,26 +192,19 @@ static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
 static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    /*
-     * For any getters that do not handle the FIPS indicator assume a default
-     * value of approved.
-     */
-    int approved = 1;
+    int approved = fips_indicator_default_approved;
     const OSSL_PARAM *gettables = EVP_PKEY_CTX_gettable_params(ctx);
 
     if (gettables == NULL
         || OSSL_PARAM_locate_const(gettables,
-               OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR)
+               OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR)
             == NULL)
-        return 1;
+        return check_fips_approved(t, approved);
 
-    /* Older providers dont have a gettable */
-    if (EVP_PKEY_CTX_gettable_params(ctx) == NULL)
-        return 1;
-
-    params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR,
+    params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_PKEY_CTX_get_params(ctx, params))
+    if (!EVP_PKEY_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -207,18 +212,39 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    /*
-     * For any getters that do not handle the FIPS indicator assume a default
-     * value of approved.
-     */
-    int approved = 1;
+    int approved = fips_indicator_default_approved;
+    const OSSL_PARAM *gettables = EVP_RAND_CTX_gettable_params(ctx);
 
-    if (EVP_RAND_CTX_gettable_params(ctx) == NULL)
-        return 1;
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR,
+    params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_RAND_CTX_get_params(ctx, params))
+    if (!EVP_RAND_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
+        return 0;
+    return check_fips_approved(t, approved);
+}
+
+static int digest_check_fips_approved(EVP_MD_CTX *ctx, EVP_TEST *t)
+{
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    int approved = fips_indicator_default_approved;
+    const OSSL_PARAM *gettables = EVP_MD_CTX_gettable_params(ctx);
+
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR,
+        &approved);
+    if (!EVP_MD_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -347,25 +373,41 @@ static void ctrl2params_free(OSSL_PARAM params[],
 static int kdf_check_fips_approved(EVP_KDF_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 1;
+    int approved = fips_indicator_default_approved;
+    const OSSL_PARAM *gettables = EVP_KDF_CTX_gettable_params(ctx);
+
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
 
     params[0] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_KDF_CTX_get_params(ctx, params))
+    if (!EVP_KDF_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
 
-static int cipher_check_fips_approved(EVP_CIPHER_CTX *ctx, EVP_TEST *t)
+static int cipher_get_fips_approved(EVP_CIPHER_CTX *ctx, int *approved)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 1;
+    const OSSL_PARAM *gettables = EVP_CIPHER_CTX_gettable_params(ctx);
+
+    *approved = fips_indicator_default_approved;
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return 1;
 
     params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR,
-        &approved);
-    if (!EVP_CIPHER_CTX_get_params(ctx, params))
+        approved);
+    if (!EVP_CIPHER_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
-    return check_fips_approved(t, approved);
+    return 1;
 }
 
 /*
@@ -881,7 +923,7 @@ static int digest_test_run(EVP_TEST *t)
             goto err;
         }
     } else {
-        if (!EVP_DigestFinal(mctx, got, &got_len)) {
+        if (!EVP_DigestFinal_ex(mctx, got, &got_len)) {
             t->err = "DIGESTFINAL_ERROR";
             goto err;
         }
@@ -894,6 +936,10 @@ static int digest_test_run(EVP_TEST *t)
             expected->output, expected->output_len,
             got, got_len))
         goto err;
+    if (!digest_check_fips_approved(mctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
+        goto err;
+    }
 
     t->err = NULL;
 
@@ -1143,7 +1189,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
 
 static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     size_t inp_misalign, int frag, int in_place,
-    const OSSL_PARAM initparams[])
+    const OSSL_PARAM initparams[], int *fips_approved)
 {
     CIPHER_DATA *expected = t->data;
     unsigned char *in, *expected_out, *tmp = NULL;
@@ -1487,7 +1533,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         t->err = "CIPHERFINAL_ERROR";
         goto err;
     }
-    if (!cipher_check_fips_approved(ctx, t)) {
+    if (!cipher_get_fips_approved(ctx, fips_approved)) {
         t->err = "FIPSAPPROVED_ERROR";
         goto err;
     }
@@ -1606,7 +1652,8 @@ err:
 static int cipher_test_run(EVP_TEST *t)
 {
     CIPHER_DATA *cdat = t->data;
-    int rv, frag, fragmax, in_place;
+    int rv = 0, frag, fragmax, in_place;
+    int enc_approved = 0, dec_approved = 0, approved;
     size_t out_misalign, inp_misalign;
     OSSL_PARAM initparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     size_t params_n = 0;
@@ -1665,15 +1712,30 @@ static int cipher_test_run(EVP_TEST *t)
                     }
                     if (cdat->enc) {
                         rv = cipher_test_enc(t, 1, out_misalign, inp_misalign,
-                            frag, in_place, initparams);
+                            frag, in_place, initparams, &enc_approved);
                         if (rv != 1)
                             goto end;
                     }
                     if (cdat->enc != 1) {
                         rv = cipher_test_enc(t, 0, out_misalign, inp_misalign,
-                            frag, in_place, initparams);
+                            frag, in_place, initparams, &dec_approved);
                         if (rv != 1)
                             goto end;
+                    }
+                    if (cdat->enc < 0) {
+                        /*
+                         * A legacy stanza tests both directions. Treat it as
+                         * unapproved if either direction is unapproved; the
+                         * explicit single-operation tests check exact results.
+                         */
+                        approved = enc_approved && dec_approved;
+                        t->expect_unapproved = !approved;
+                    } else {
+                        approved = cdat->enc ? enc_approved : dec_approved;
+                    }
+                    if (!check_fips_approved(t, approved)) {
+                        t->err = "FIPSAPPROVED_ERROR";
+                        goto end;
                     }
                 }
             }
@@ -1729,6 +1791,7 @@ typedef struct mac_data_st {
     int no_reinit;
     /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *controls;
+    STACK_OF(OPENSSL_STRING) *init_controls;
     /* Output size */
     int output_size;
     /* Block size */
@@ -1771,6 +1834,15 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
             return 0;
     }
 
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+    /* The EVP_PKEY CMAC bridge requires the deprecated CMAC key constructor. */
+    if (type == EVP_PKEY_CMAC) {
+        TEST_info("skipping, PKEY CMAC is disabled");
+        t->skip = 1;
+        return 1;
+    }
+#endif
+
     if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
         return 0;
 
@@ -1781,7 +1853,9 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
     }
 
     mdat->mac = mac;
-    if (!TEST_ptr(mdat->controls = sk_OPENSSL_STRING_new_null())) {
+    if (!TEST_ptr(mdat->controls = sk_OPENSSL_STRING_new_null())
+        || !TEST_ptr(mdat->init_controls = sk_OPENSSL_STRING_new_null())) {
+        sk_OPENSSL_STRING_free(mdat->controls);
         OPENSSL_free(mdat->mac_name);
         OPENSSL_free(mdat);
         return 0;
@@ -1799,6 +1873,7 @@ static void mac_test_cleanup(EVP_TEST *t)
     EVP_MAC_free(mdat->mac);
     OPENSSL_free(mdat->mac_name);
     sk_OPENSSL_STRING_pop_free(mdat->controls, openssl_free);
+    sk_OPENSSL_STRING_pop_free(mdat->init_controls, openssl_free);
     OPENSSL_free(mdat->alg);
     OPENSSL_free(mdat->key);
     OPENSSL_free(mdat->iv);
@@ -1837,6 +1912,8 @@ static int mac_test_parse(EVP_TEST *t,
         return mdata->no_reinit = 1;
     if (strcmp(keyword, "Ctrl") == 0)
         return ctrladd(mdata->controls, value);
+    if (strcmp(keyword, "CtrlInit") == 0)
+        return ctrladd(mdata->init_controls, value);
     if (strcmp(keyword, "OutputSize") == 0) {
         mdata->output_size = atoi(value);
         if (mdata->output_size < 0)
@@ -1887,6 +1964,9 @@ static int mac_test_run_pkey(EVP_TEST *t)
     size_t got_len;
     int i;
     size_t input_len, donelen;
+    OSSL_PARAM params[5];
+    OSSL_PARAM *p = NULL;
+    size_t params_n = 0;
 
     /* We don't do XOF mode via PKEY */
     if (expected->xof)
@@ -1945,7 +2025,13 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key, NULL)) {
+    if (sk_OPENSSL_STRING_num(expected->init_controls) > 0) {
+        if (!ctrl2params(t, expected->init_controls, NULL,
+                params, OSSL_NELEM(params), &params_n))
+            goto err;
+        p = params;
+    }
+    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key, p)) {
         t->err = "DIGESTSIGNINIT_ERROR";
         goto err;
     }
@@ -1986,8 +2072,13 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "TEST_MAC_ERR";
         goto err;
     }
+    if (!pkey_check_fips_approved(pctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
+        goto err;
+    }
     t->err = NULL;
 err:
+    ctrl2params_free(params, params_n, 0);
     EVP_CIPHER_free(cipher);
     EVP_MD_CTX_free(mctx);
     OPENSSL_free(got);
@@ -2471,6 +2562,8 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
         t->err = "TEST_DECAPSULATE_ERROR";
         goto err;
     }
+    if (!pkey_check_fips_approved(ctx, t))
+        goto err;
     if (!TEST_mem_eq(out, outlen, expected, expectedlen)) {
         t->err = "TEST_SECRET_MISMATCH";
         goto ok;
@@ -5001,6 +5094,11 @@ static int digestsign_test_run(EVP_TEST *t)
             got, got_len))
         goto err;
 
+    if (!pkey_check_fips_approved(expected->pctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
+        goto err;
+    }
+
     t->err = NULL;
 err:
     OPENSSL_free(got);
@@ -5042,6 +5140,8 @@ static int digestverify_test_run(EVP_TEST *t)
             mdata->output_len)
         <= 0)
         t->err = "VERIFY_ERROR";
+    else if (!pkey_check_fips_approved(mdata->pctx, t))
+        return 0;
     return 1;
 }
 
@@ -5087,6 +5187,11 @@ static int oneshot_digestsign_test_run(EVP_TEST *t)
             got, got_len))
         goto err;
 
+    if (!pkey_check_fips_approved(expected->pctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
+        goto err;
+    }
+
     t->err = NULL;
 err:
     OPENSSL_free(got);
@@ -5117,6 +5222,8 @@ static int oneshot_digestverify_test_run(EVP_TEST *t)
             mdata->osin, mdata->osin_len)
         <= 0)
         t->err = "VERIFY_ERROR";
+    else if (!pkey_check_fips_approved(mdata->pctx, t))
+        return 0;
     return 1;
 }
 
@@ -5194,6 +5301,7 @@ static void clear_test(EVP_TEST *t)
     t->skip = 0;
     t->meth = NULL;
     t->expect_unapproved = 0;
+    t->expect_unapproved_callback = 0;
     t->security_category = -1;
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
@@ -5619,6 +5727,8 @@ start:
             }
         } else if (strcmp(pp->key, "Unapproved") == 0) {
             t->expect_unapproved = 1;
+        } else if (strcmp(pp->key, "UnapprovedCallback") == 0) {
+            t->expect_unapproved_callback = 1;
         } else if (strcmp(pp->key, "Extended-Test") == 0) {
             if (!extended_tests) {
                 TEST_info("skipping extended test: %s:%d",
@@ -5763,6 +5873,10 @@ int setup_tests(void)
         provider_name = "default";
     if (!test_get_libctx(&libctx, &prov_null, config_file, &libprov, provider_name))
         return 0;
+
+    /* Before 3.5, the absence of an indicator implied approval. */
+    if (OSSL_PROVIDER_available(libctx, "fips"))
+        fips_indicator_default_approved = fips_provider_version_lt(libctx, 3, 5, 0);
 
     n = test_get_argument_count();
     if (n == 0)

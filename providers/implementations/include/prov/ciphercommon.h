@@ -380,6 +380,9 @@ PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_ofb128;
     }
 
 struct ossl_cipher_get_ctx_param_list_st {
+#ifdef FIPS_MODULE
+    OSSL_PARAM *ind; /* FIPS indicator */
+#endif
     OSSL_PARAM *keylen; /* all ciphers */
     OSSL_PARAM *ivlen; /* all ciphers */
     OSSL_PARAM *pad; /* all ciphers */

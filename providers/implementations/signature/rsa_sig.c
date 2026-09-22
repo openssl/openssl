@@ -1509,7 +1509,8 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
         return 0;
 #endif
 
-    if (!OSSL_FIPS_IND_GET_CTX_FROM_PARAM(prsactx, p.ind))
+    if (!OSSL_FIPS_IND_GET_CTX_FROM_PARAM_CONDITIONAL(prsactx, p.ind,
+            prsactx->verify_message))
         return 0;
     return 1;
 }

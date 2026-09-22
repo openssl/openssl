@@ -4,6 +4,13 @@ OpenSSL FIPS Indicators
 The following document refers to behaviour required by the OpenSSL FIPS provider,
 the changes should not affect the default provider.
 
+Every algorithm implementation advertised with `fips=yes` by the FIPS provider
+must advertise `OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR` as a gettable context
+parameter and its getter must return 1 for an approved operation.  Missing
+indicator support is not an implicit indication of approval.  Implementations
+advertised with `fips=no` return 0 when they expose the indicator.  The default
+provider may omit the parameter; if it exposes the parameter, it returns 0.
+
 References
 ----------
 
@@ -102,6 +109,11 @@ remain in this state.
 This initially has a value of 1, and may be set to 0 if the algorithm is
 unapproved. The getter allows you to access the indicator value after the
 operation has completed (e.g. Final or Derive related functions)
+
+An implementation that is always approved still supplies the gettable
+parameter and getter.  Such a getter returns 1 without requiring an approval
+flag in its context.  This makes approval explicit instead of relying on the
+absence of an indicator.
 
 - Example Algorithm Check
 
