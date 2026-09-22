@@ -495,8 +495,19 @@ can be queried using an algorithm context getter to retrieve the indicator
 An example of an algorithm context setter is "key-check"
 in L<EVP_KDF-HKDF(7)/Supported parameters>.
 
-The following algorithms use "fips-indicator" to query if the algorithm
-is approved:
+Every algorithm implementation advertised with the property C<fips=yes> by
+the OpenSSL FIPS provider exposes "fips-indicator" as a gettable context
+parameter.  The getter returns 1 when the operation is approved.  An absent
+indicator must not be interpreted as approval.
+
+Algorithms advertised with C<fips=no> are unapproved.  When such an
+implementation exposes "fips-indicator", its getter returns 0.  Providers
+other than the OpenSSL FIPS provider are not required to expose this parameter;
+an absent indicator, or an indicator value of 0, does not assert FIPS approval.
+
+Some algorithms can change from approved to unapproved as a result of their
+parameters or the operation performed.  The following algorithms perform such
+additional checks:
 
 =over 4
 
@@ -569,6 +580,11 @@ The indicator callback is NOT triggered for this algorithm since it is used
 internally for non security purposes.
 
 =item X25519 and X448 Key Generation and Key Exchange
+
+=item X448MLKEM1024 Key Generation and Key Encapsulation
+
+The other hybrid ML-KEM algorithms supplied by the FIPS provider are approved,
+including X25519MLKEM768, SecP256r1MLKEM768 and SecP384r1MLKEM1024.
 
 =back
 
