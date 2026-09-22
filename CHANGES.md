@@ -30,7 +30,14 @@ OpenSSL 3.5
 
 ### Changes between 3.5.8 and 3.5.9 [xx XXX xxxx]
 
- * none yet
+ * Changed the OpenSSL FIPS provider so that every algorithm advertised with
+   `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
+   parameter and returns 1 for an approved operation.  The absence of an
+   indicator is no longer interpreted as approval.  Algorithms advertised
+   with `fips=no`, including X448MLKEM1024, remain unapproved and return 0 when
+   they expose the indicator.
+
+   *Shane Lontis*
 
 ### Changes between 3.5.7 and 3.5.8 [25 Aug 2026]
 

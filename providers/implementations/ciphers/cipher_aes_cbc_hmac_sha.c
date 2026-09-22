@@ -23,6 +23,7 @@
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "fips/fipsindicator.h"
 
 #ifndef AES_CBC_HMAC_SHA_CAPABLE
 #define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags) \
@@ -306,7 +307,7 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    return 1;
+    return OSSL_FIPS_IND_GET_CTX_PARAM_APPROVED(ctx, params);
 }
 
 static const OSSL_PARAM cipher_aes_known_gettable_ctx_params[] = {
@@ -321,7 +322,8 @@ static const OSSL_PARAM cipher_aes_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
-    OSSL_PARAM_END
+    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
+        OSSL_PARAM_END
 };
 const OSSL_PARAM *aes_gettable_ctx_params(ossl_unused void *cctx,
     ossl_unused void *provctx)

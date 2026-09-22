@@ -65,6 +65,7 @@ my @files = qw(
                 evpmd_sha.txt
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt
+                evppkey_kdf_tls1_prf_fips.txt
                 evppkey_rsa.txt
                 evppkey_rsa_common.txt
                 evppkey_rsa_kem.txt
@@ -80,6 +81,7 @@ push @files, qw(
                 evpmac_cmac_des.txt
                ) unless $no_des;
 push @files, qw(
+                evppkey_slh_dsa_keygen.txt
                 evppkey_slh_dsa_siggen.txt
                 evppkey_slh_dsa_sigver.txt
                ) unless $no_slh_dsa;
@@ -124,6 +126,8 @@ push @files, qw(
                 evppkey_ml_kem_keygen.txt
                 evppkey_ml_kem_encap_decap.txt
                ) unless $no_ml_kem;
+push @files, qw(evppkey_mlx_kem_ecx.txt) unless ($no_ml_kem || $no_ecx);
+push @files, qw(evppkey_mlx_kem_ec.txt) unless ($no_ml_kem || $no_ec);
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)

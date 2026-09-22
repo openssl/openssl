@@ -18,6 +18,13 @@
 #include "internal/cryptlib.h"
 #include "crypto/modes.h"
 
+#ifdef FIPS_MODULE
+#define CIPHER_FIPS_IND_GETTABLE_CTX_PARAM() \
+    OSSL_PARAM_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR, NULL),
+#else
+#define CIPHER_FIPS_IND_GETTABLE_CTX_PARAM()
+#endif
+
 #define MAXCHUNK ((size_t)1 << 30)
 #define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))
 
@@ -330,14 +337,15 @@ PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_ofb128;
         dst->ks = &dctx->ks.ks;                                        \
     }
 
-#define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(name)             \
-    static const OSSL_PARAM name##_known_gettable_ctx_params[] = { \
-        OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),         \
-        OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),          \
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),          \
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),              \
-        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),    \
-        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
+#define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(name)                  \
+    static const OSSL_PARAM name##_known_gettable_ctx_params[] = {      \
+        OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),              \
+        OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),               \
+        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),               \
+        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),                   \
+        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),         \
+        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0), \
+        CIPHER_FIPS_IND_GETTABLE_CTX_PARAM()
 
 #define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(name)                     \
     OSSL_PARAM_END                                                       \

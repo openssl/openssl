@@ -165,3 +165,9 @@ Availablein = default
 Derive=ALICE_dh2048
 PeerKeyValidate=BOB_dh2048_badpub_toosmall
 Result = DERIVE_SET_PEER_ERROR
+
+Title = DHX key generation FIPS indicator coverage
+
+KeyGen = DHX
+KeyName = dhx-indicator-key
+Ctrl = group:ffdhe2048
