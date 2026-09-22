@@ -321,6 +321,22 @@ static int test_dsa_default_paramgen_validate(int i)
     return ret;
 }
 
+static unsigned char out_priv[] = {
+    0x17, 0x00, 0xb2, 0x8d, 0xcb, 0x24, 0xc9, 0x98,
+    0xd0, 0x7f, 0x1f, 0x83, 0x1a, 0xa1, 0xc4, 0xa4,
+    0xf8, 0x0f, 0x7f, 0x12
+};
+static unsigned char out_pub[] = {
+    0x04, 0x72, 0xee, 0x8d, 0xaa, 0x4d, 0x89, 0x60,
+    0x0e, 0xb2, 0xd4, 0x38, 0x84, 0xa2, 0x2a, 0x60,
+    0x5f, 0x67, 0xd7, 0x9e, 0x24, 0xdd, 0xe8, 0x50,
+    0xf2, 0x23, 0x71, 0x55, 0x53, 0x94, 0x0d, 0x6b,
+    0x2e, 0xcd, 0x30, 0xda, 0x6f, 0x1e, 0x2c, 0xcf,
+    0x59, 0xbe, 0x05, 0x6c, 0x07, 0x0e, 0xc6, 0x38,
+    0x05, 0xcb, 0x0c, 0x44, 0x0a, 0x08, 0x13, 0xb6,
+    0x0f, 0x14, 0xde, 0x4a, 0xf6, 0xed, 0x4e, 0xc3
+};
+
 static int test_dsa_sig_infinite_loop(void)
 {
     int ret = 0;
@@ -332,21 +348,6 @@ static int test_dsa_sig_infinite_loop(void)
     unsigned int signature_len;
     unsigned char signature[64];
 
-    static unsigned char out_priv[] = {
-        0x17, 0x00, 0xb2, 0x8d, 0xcb, 0x24, 0xc9, 0x98,
-        0xd0, 0x7f, 0x1f, 0x83, 0x1a, 0xa1, 0xc4, 0xa4,
-        0xf8, 0x0f, 0x7f, 0x12
-    };
-    static unsigned char out_pub[] = {
-        0x04, 0x72, 0xee, 0x8d, 0xaa, 0x4d, 0x89, 0x60,
-        0x0e, 0xb2, 0xd4, 0x38, 0x84, 0xa2, 0x2a, 0x60,
-        0x5f, 0x67, 0xd7, 0x9e, 0x24, 0xdd, 0xe8, 0x50,
-        0xf2, 0x23, 0x71, 0x55, 0x53, 0x94, 0x0d, 0x6b,
-        0x2e, 0xcd, 0x30, 0xda, 0x6f, 0x1e, 0x2c, 0xcf,
-        0x59, 0xbe, 0x05, 0x6c, 0x07, 0x0e, 0xc6, 0x38,
-        0x05, 0xcb, 0x0c, 0x44, 0x0a, 0x08, 0x13, 0xb6,
-        0x0f, 0x14, 0xde, 0x4a, 0xf6, 0xed, 0x4e, 0xc3
-    };
     if (!TEST_ptr(p = BN_bin2bn(out_p, sizeof(out_p), NULL))
         || !TEST_ptr(q = BN_bin2bn(out_q, sizeof(out_q), NULL))
         || !TEST_ptr(g = BN_bin2bn(out_g, sizeof(out_g), NULL))
@@ -412,6 +413,91 @@ err:
     return ret;
 }
 
+static int bn_mod_exp_hits = 0;
+
+static int tst_bn_mod_exp(DSA *dsa, BIGNUM *r, const BIGNUM *a,
+    const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
+{
+    const BIGNUM *q = NULL;
+
+    bn_mod_exp_hits++;
+    /* The nonce scalar must keep BN_FLG_CONSTTIME through this hook */
+    if (!TEST_true(BN_get_flags(p, BN_FLG_CONSTTIME) != 0))
+        return 0;
+    /*
+     * The scalar's normalized top must be constant, exactly q_bits + 1
+     * significant bits, regardless of the nonce's magnitude.
+     */
+    DSA_get0_pqg(dsa, NULL, &q, NULL);
+    if (!TEST_int_eq(BN_num_bits(p), BN_num_bits(q) + 1))
+        return 0;
+    /* The warmed BN Montgomery cache must be passed through */
+    if (!TEST_ptr(m_ctx))
+        return 0;
+    return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
+}
+
+/*
+ * The default method's sign_setup operation must keep routing modular
+ * exponentiation through the DSA_METHOD::bn_mod_exp hook, so surgical
+ * DSA_meth_set_bn_mod_exp() overrides keep being honored.
+ */
+static int dsa_bn_mod_exp_override_test(void)
+{
+    int ret = 0;
+    DSA *dsa = NULL;
+    DSA_METHOD *method = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *priv = NULL, *pub = NULL;
+    const unsigned char msg[] = { 0x00 };
+    unsigned char signature[64];
+    unsigned int signature_len;
+
+    if (!TEST_ptr(p = BN_bin2bn(out_p, sizeof(out_p), NULL))
+        || !TEST_ptr(q = BN_bin2bn(out_q, sizeof(out_q), NULL))
+        || !TEST_ptr(g = BN_bin2bn(out_g, sizeof(out_g), NULL))
+        || !TEST_ptr(pub = BN_bin2bn(out_pub, sizeof(out_pub), NULL))
+        || !TEST_ptr(priv = BN_bin2bn(out_priv, sizeof(out_priv), NULL))
+        || !TEST_ptr(dsa = DSA_new()))
+        goto err;
+
+    if (!TEST_true(DSA_set0_pqg(dsa, p, q, g)))
+        goto err;
+    p = q = g = NULL;
+
+    if (!TEST_true(DSA_set0_key(dsa, pub, priv)))
+        goto err;
+    pub = priv = NULL;
+
+    /* The hook asserts that the warmed Montgomery cache is passed */
+    DSA_set_flags(dsa, DSA_FLAG_CACHE_MONT_P);
+
+    if (!TEST_ptr(method = DSA_meth_dup(DSA_get_default_method()))
+        || !TEST_true(DSA_meth_set_bn_mod_exp(method, tst_bn_mod_exp))
+        || !TEST_true(DSA_set_method(dsa, method)))
+        goto err;
+
+    /* r = g^k mod p must go through the bn_mod_exp hook */
+    bn_mod_exp_hits = 0;
+    if (!TEST_int_le(DSA_size(dsa), sizeof(signature))
+        || !TEST_true(DSA_sign(0, msg, sizeof(msg), signature,
+            &signature_len, dsa))
+        || !TEST_int_eq(bn_mod_exp_hits, 1)
+        || !TEST_true(DSA_verify(0, msg, sizeof(msg), signature,
+            signature_len, dsa)))
+        goto err;
+
+    ret = 1;
+err:
+    BN_free(pub);
+    BN_free(priv);
+    BN_free(g);
+    BN_free(q);
+    BN_free(p);
+    DSA_free(dsa);
+    DSA_meth_free(method);
+    return ret;
+}
+
 static int test_dsa_sig_neg_param(void)
 {
     int ret = 0, setpqg = 0;
@@ -421,21 +507,6 @@ static int test_dsa_sig_neg_param(void)
     unsigned int signature_len;
     unsigned char signature[64];
 
-    static unsigned char out_priv[] = {
-        0x17, 0x00, 0xb2, 0x8d, 0xcb, 0x24, 0xc9, 0x98,
-        0xd0, 0x7f, 0x1f, 0x83, 0x1a, 0xa1, 0xc4, 0xa4,
-        0xf8, 0x0f, 0x7f, 0x12
-    };
-    static unsigned char out_pub[] = {
-        0x04, 0x72, 0xee, 0x8d, 0xaa, 0x4d, 0x89, 0x60,
-        0x0e, 0xb2, 0xd4, 0x38, 0x84, 0xa2, 0x2a, 0x60,
-        0x5f, 0x67, 0xd7, 0x9e, 0x24, 0xdd, 0xe8, 0x50,
-        0xf2, 0x23, 0x71, 0x55, 0x53, 0x94, 0x0d, 0x6b,
-        0x2e, 0xcd, 0x30, 0xda, 0x6f, 0x1e, 0x2c, 0xcf,
-        0x59, 0xbe, 0x05, 0x6c, 0x07, 0x0e, 0xc6, 0x38,
-        0x05, 0xcb, 0x0c, 0x44, 0x0a, 0x08, 0x13, 0xb6,
-        0x0f, 0x14, 0xde, 0x4a, 0xf6, 0xed, 0x4e, 0xc3
-    };
     if (!TEST_ptr(p = BN_bin2bn(out_p, sizeof(out_p), NULL))
         || !TEST_ptr(q = BN_bin2bn(out_q, sizeof(out_q), NULL))
         || !TEST_ptr(g = BN_bin2bn(out_g, sizeof(out_g), NULL))
@@ -494,6 +565,7 @@ int setup_tests(void)
     ADD_TEST(dsa_test);
     ADD_TEST(dsa_keygen_test);
     ADD_TEST(test_dsa_sig_infinite_loop);
+    ADD_TEST(dsa_bn_mod_exp_override_test);
     ADD_TEST(test_dsa_sig_neg_param);
     ADD_ALL_TESTS(test_dsa_default_paramgen_validate, 2);
 #endif
