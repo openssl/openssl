@@ -548,6 +548,31 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
     dtls1_clear_sent_buffer(s, 0);
 }
 
+/*
+ * Retire the timer and the retransmit buffer now that we have finished
+ * reading a flight.
+ *
+ * rfc9147: section 5.8.4. Each category of post-handshake message has its own
+ * reliability state machine. A KeyUpdate or NewSessionTicket from the peer
+ * acknowledges nothing of ours, so if our own post-handshake flight is still
+ * missing an ACK we must keep it buffered and leave its retransmit timer
+ * running. Fully acknowledged messages are still released.
+ */
+void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
+{
+    if (SSL_CONNECTION_IS_DTLS13(s)
+        && (s->statem.hand_state == TLS_ST_SR_KEY_UPDATE
+            || s->statem.hand_state == TLS_ST_CR_KEY_UPDATE
+            || s->statem.hand_state == TLS_ST_CR_SESSION_TICKET
+            || s->statem.hand_state == TLS_ST_CR_CERT_REQ)
+        && dtls_any_sent_messages_are_missing_acknowledge(s)) {
+        dtls1_clear_sent_buffer(s, 1);
+        return;
+    }
+
+    dtls1_stop_timer(s);
+}
+
 int dtls1_check_timeout_num(SSL_CONNECTION *s)
 {
     size_t mtu;
