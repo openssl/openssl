@@ -481,7 +481,8 @@ Build-file programming with the "unified" build system
 ======================================================
 
 "Build files" are called `Makefile` on Unix-like operating systems,
-`descrip.mms` for MMS on VMS, `makefile` for `nmake` on Windows, etc.
+`descrip.mms` for MMS on VMS, `makefile` for `nmake` on Windows,
+`build.ninja` for Ninja, etc.
 
 To use the "unified" build system, the target configuration needs to
 set the three items `build_scheme`, `build_file` and `build_command`.
@@ -497,6 +498,9 @@ example, if `build_file` is set to `Makefile`, the template could be
 `Configurations/Makefile.tmpl` or `Configurations/unix-Makefile.tmpl`.
 In case both `Configurations/unix-Makefile.tmpl` and
 `Configurations/Makefile.tmpl` are present, the former takes precedence.
+The same lookup rules apply to `build.ninja`, whose generic template is
+`Configurations/build.ninja.tmpl`.  Native Windows targets use the
+platform-specific `Configurations/windows-build.ninja.tmpl` template.
 
 The build-file template is processed with the perl module
 Text::Template, using `{-` and `-}` as delimiters that enclose the
