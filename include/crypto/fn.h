@@ -1112,9 +1112,9 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *n);
 
 /**
- * Calculate  a^p mod m  (modular exponentiation) with a sliding-window
- * algorithm.  Odd moduli use the Montgomery sliding-window path; even
- * moduli fall through to the simple sliding-window path.  See the
+ * Calculate  a^p mod m  (modular exponentiation).  Odd moduli use the
+ * Montgomery fixed-window path; even moduli fall through to the simple
+ * sliding-window path.  See the
  * implementation in crypto/fn/fn_exp.c for the constant-time profile and
  * the dispatcher scaffold (even-modulus reciprocal remaindering is not
  * wired in yet).
