@@ -113,6 +113,14 @@ static int fips_indicator_cb(const char *type, const char *desc,
 
 static int check_fips_approved(EVP_TEST *t, int approved)
 {
+    if (!OSSL_PROVIDER_available(libctx, "fips")) {
+        if (approved != 0) {
+            TEST_error("A non-FIPS provider reported a FIPS approved operation");
+            return 0;
+        }
+        return 1;
+    }
+
     /*
      * If the expected result is approved
      * then it is expected that approved will be 1
@@ -136,18 +144,19 @@ static int check_fips_approved(EVP_TEST *t, int approved)
 static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    /*
-     * For any getters that do not handle the FIPS indicator assume a default
-     * value of approved.
-     */
-    int approved = 1;
+    int approved = 0;
+    const OSSL_PARAM *gettables = EVP_MAC_CTX_gettable_params(ctx);
 
-    if (EVP_MAC_CTX_gettable_params(ctx) == NULL)
-        return 1;
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
 
     params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_MAC_CTX_get_params(ctx, params))
+    if (!EVP_MAC_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -155,26 +164,19 @@ static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
 static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    /*
-     * For any getters that do not handle the FIPS indicator assume a default
-     * value of approved.
-     */
-    int approved = 1;
+    int approved = 0;
     const OSSL_PARAM *gettables = EVP_PKEY_CTX_gettable_params(ctx);
 
     if (gettables == NULL
         || OSSL_PARAM_locate_const(gettables,
-               OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR)
+               OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR)
             == NULL)
-        return 1;
+        return check_fips_approved(t, approved);
 
-    /* Older providers dont have a gettable */
-    if (EVP_PKEY_CTX_gettable_params(ctx) == NULL)
-        return 1;
-
-    params[0] = OSSL_PARAM_construct_int(OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR,
+    params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_PKEY_CTX_get_params(ctx, params))
+    if (!EVP_PKEY_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -182,18 +184,39 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    /*
-     * For any getters that do not handle the FIPS indicator assume a default
-     * value of approved.
-     */
-    int approved = 1;
+    int approved = 0;
+    const OSSL_PARAM *gettables = EVP_RAND_CTX_gettable_params(ctx);
 
-    if (EVP_RAND_CTX_gettable_params(ctx) == NULL)
-        return 1;
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_FIPS_APPROVED_INDICATOR,
+    params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_RAND_CTX_get_params(ctx, params))
+    if (!EVP_RAND_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
+        return 0;
+    return check_fips_approved(t, approved);
+}
+
+static int digest_check_fips_approved(EVP_MD_CTX *ctx, EVP_TEST *t)
+{
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    int approved = 0;
+    const OSSL_PARAM *gettables = EVP_MD_CTX_gettable_params(ctx);
+
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR,
+        &approved);
+    if (!EVP_MD_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -296,11 +319,19 @@ static void ctrl2params_free(OSSL_PARAM params[],
 static int kdf_check_fips_approved(EVP_KDF_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 1;
+    int approved = 0;
+    const OSSL_PARAM *gettables = EVP_KDF_CTX_gettable_params(ctx);
+
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
 
     params[0] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_KDF_CTX_get_params(ctx, params))
+    if (!EVP_KDF_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -308,11 +339,19 @@ static int kdf_check_fips_approved(EVP_KDF_CTX *ctx, EVP_TEST *t)
 static int cipher_check_fips_approved(EVP_CIPHER_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 1;
+    int approved = 0;
+    const OSSL_PARAM *gettables = EVP_CIPHER_CTX_gettable_params(ctx);
+
+    if (gettables == NULL
+        || OSSL_PARAM_locate_const(gettables,
+               OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR)
+            == NULL)
+        return check_fips_approved(t, approved);
 
     params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR,
         &approved);
-    if (!EVP_CIPHER_CTX_get_params(ctx, params))
+    if (!EVP_CIPHER_CTX_get_params(ctx, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return check_fips_approved(t, approved);
 }
@@ -821,7 +860,7 @@ static int digest_test_run(EVP_TEST *t)
             goto err;
         }
     } else {
-        if (!EVP_DigestFinal(mctx, got, &got_len)) {
+        if (!EVP_DigestFinal_ex(mctx, got, &got_len)) {
             t->err = "DIGESTFINAL_ERROR";
             goto err;
         }
@@ -834,6 +873,10 @@ static int digest_test_run(EVP_TEST *t)
             expected->output, expected->output_len,
             got, got_len))
         goto err;
+    if (!digest_check_fips_approved(mctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
+        goto err;
+    }
 
     t->err = NULL;
 
