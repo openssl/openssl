@@ -1332,7 +1332,7 @@ IF[{- !$disabled{tests} -}]
     SOURCE[p_ossltest]=p_ossltest.c ../providers/prov_running.c
     INCLUDE[p_test]=../include
     INCLUDE[p_ossltest]=../include ../crypto ../providers/common/include ../providers/implementations/include ../providers/implementations
-    DEPEND[p_ossltest]=../providers/libcommon.a ../libcrypto
+    DEPEND[p_ossltest]=../providers/libdefault.a ../libcrypto
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_test]=p_test.ld
       SOURCE[p_ossltest]=p_test.ld

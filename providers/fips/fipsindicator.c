@@ -102,6 +102,14 @@ int ossl_FIPS_IND_get_ctx_param(const OSSL_FIPS_IND *ind, OSSL_PARAM *p)
     return p == NULL || OSSL_PARAM_set_int(p, ind->approved);
 }
 
+int ossl_FIPS_IND_get_ctx_param_conditional(const OSSL_FIPS_IND *ind,
+    OSSL_PARAM *p, int condition)
+{
+    return p == NULL
+        || OSSL_PARAM_set_int(p,
+            condition && (ind == NULL || ind->approved));
+}
+
 int ossl_FIPS_IND_get_ctx_param_locate(const OSSL_FIPS_IND *ind,
     OSSL_PARAM params[])
 {
