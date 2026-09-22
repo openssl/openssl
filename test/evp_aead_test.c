@@ -365,7 +365,6 @@ err:
     return testresult;
 }
 
-
 /*
  * With AEAD ciphers, a tag is an input for decryption (the value to verify)
  * and an output of encryption (the generated value). Therefore:
@@ -373,21 +372,9 @@ err:
  *   - reading a tag while decrypting must fail
  *   - error codes should be consistent across all AEADs
  */
-typedef struct {
-    const EVP_CIPHER *ciph;
-    const char *name;
-    int keylen;
-    int ivlen;
-    int mode;
-    int taglen;
-} EVP_CIPHER_TEST_INFO;
-
-static EVP_CIPHER_TEST_INFO *cipher_list = NULL;
-
-
 static int test_evp_aead_tag_direction(int idx)
 {
-    const EVP_CIPHER_TEST_INFO *info = &cipher_list[idx];
+    const AEAD_DATA  *info = &aead_list[idx];
     EVP_CIPHER_CTX *ctx_enc = NULL; /* set tag while encrypting: must fail */
     EVP_CIPHER_CTX *ctx_dec = NULL; /* get tag while decrypting: must fail */
 
@@ -509,6 +496,7 @@ int setup_tests(void)
         return 0;
 
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_tag_direction, aead_list_n);
     return 1;
 }
 
