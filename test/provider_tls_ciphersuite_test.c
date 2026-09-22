@@ -311,7 +311,12 @@ static void count_server_hellos_cb(int write_p, int version, int content_type,
         (*count)++;
 }
 
-#if !defined(OPENSSL_NO_TLS1_2)
+/**
+ * @brief Require a failed handshake with a no-shared-cipher error.
+ * @param serverssl Server connection, owned by the caller.
+ * @param clientssl Client connection, owned by the caller.
+ * @returns 1 if the expected failure is observed, or 0 otherwise.
+ */
 static int expect_no_shared_cipher(SSL *serverssl, SSL *clientssl)
 {
     unsigned long error;
@@ -329,7 +334,6 @@ static int expect_no_shared_cipher(SSL *serverssl, SSL *clientssl)
         || ERR_GET_REASON(error) != SSL_R_NO_SHARED_CIPHER);
     return 1;
 }
-#endif /* !defined(OPENSSL_NO_TLS1_2) */
 
 typedef struct {
     SSL_CTX *first;
@@ -1035,6 +1039,120 @@ end:
     SSL_CTX_free(cctx);
     SSL_CTX_free(data.first);
     SSL_CTX_free(data.second);
+    ERR_clear_error();
+    return ret;
+}
+
+/** @brief Borrowed virtual-host policy and invocation count for the callback. */
+typedef struct client_hello_policy_data_st {
+    SSL_CTX *ctx; /**< Selected virtual-host context. */
+    const char *ciphersuites; /**< Explicit per-connection TLS 1.3 policy. */
+    int calls; /**< Includes the second ClientHello when HRR is requested. */
+} CLIENT_HELLO_POLICY_DATA;
+
+/**
+ * @brief Apply the fixture's selected virtual-host policy before cipher selection.
+ * @param ssl Server connection being configured.
+ * @param alert Receives the fatal alert on configuration failure.
+ * @param arg Borrowed CLIENT_HELLO_POLICY_DATA, retained through the handshake.
+ * @returns SSL_CLIENT_HELLO_SUCCESS, or SSL_CLIENT_HELLO_ERROR on failure.
+ */
+static int client_hello_policy_cb(SSL *ssl, int *alert, void *arg)
+{
+    CLIENT_HELLO_POLICY_DATA *data = arg;
+
+    data->calls++;
+    if (SSL_set_SSL_CTX(ssl, data->ctx) == NULL
+        || !SSL_set_ciphersuites(ssl, data->ciphersuites)) {
+        *alert = SSL_AD_INTERNAL_ERROR;
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+    return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+/**
+ * @brief Check early TLS 1.3 policy changes for provider and built-in suites.
+ * @param idx Even cases use a provider suite, odd cases a built-in suite;
+ *            0-1 permit it, 2-3 reject it, and 4-5 permit it through HRR.
+ * @returns 1 on success or a configuration skip, or 0 on failure.
+ */
+static int test_client_hello_cipher_policy(int idx)
+{
+    const char *offered = idx % 2 == 0
+        ? TLS_TEST_SHA256_NAME
+        : "TLS_AES_128_GCM_SHA256";
+    const char *excluded = "TLS_AES_256_GCM_SHA384";
+    int allowed = idx < 2 || idx >= 4;
+    int retry = idx >= 4;
+    SSL_CTX *sctx = NULL, *cctx = NULL, *target = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    CLIENT_HELLO_POLICY_DATA data = { 0 };
+    int server_hellos = 0, ret = 0;
+
+#if defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_DH)
+    if (retry)
+        return TEST_skip("EC and DH are disabled");
+#endif /* defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_DH) */
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &target, NULL, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(target, 0))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+            allowed ? excluded : offered))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, offered))
+        || !TEST_true(SSL_CTX_set_ciphersuites(target,
+            allowed ? offered : excluded)))
+        goto end;
+
+    data.ctx = target;
+    data.ciphersuites = allowed ? offered : excluded;
+    SSL_CTX_set_client_hello_cb(sctx, client_hello_policy_cb, &data);
+    SSL_CTX_set_client_hello_cb(target, client_hello_policy_cb, &data);
+    if (retry) {
+#if !defined(OPENSSL_NO_EC)
+        if (!TEST_true(SSL_CTX_set1_groups_list(cctx, "P-384:P-256"))
+            || !TEST_true(SSL_CTX_set1_groups_list(sctx, "P-256")))
+            goto end;
+#elif !defined(OPENSSL_NO_DH)
+        if (!TEST_true(SSL_CTX_set1_groups_list(cctx, "ffdhe3072:ffdhe2048"))
+            || !TEST_true(SSL_CTX_set1_groups_list(sctx, "ffdhe2048")))
+            goto end;
+#endif /* !defined(OPENSSL_NO_EC) */
+    }
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        /* The callback must replace an explicit per-SSL policy as well. */
+        || !TEST_true(SSL_set_ciphersuites(serverssl,
+            allowed ? excluded : offered))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "policy.example")))
+        goto end;
+    SSL_set_msg_callback_arg(clientssl, &server_hellos);
+    SSL_set_msg_callback(clientssl, count_server_hellos_cb);
+
+    if (allowed) {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_str_eq(SSL_CIPHER_get_name(
+                                SSL_get_current_cipher(serverssl)),
+                offered)
+            || !TEST_int_eq(server_hellos, retry ? 2 : 1))
+            goto end;
+    } else if (!TEST_true(expect_no_shared_cipher(serverssl, clientssl))) {
+        goto end;
+    }
+    if (!TEST_ptr_eq(SSL_get_SSL_CTX(serverssl), target)
+        || !TEST_int_eq(data.calls, retry ? 2 : 1))
+        goto end;
+    ret = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(target);
     ERR_clear_error();
     return ret;
 }
@@ -1885,6 +2003,7 @@ int setup_tests(void)
     ADD_MFAIL_SAMPLED_ALL_NO_CHECK_TESTS(test_ssl_ciphersuites_mfail, 6, 64);
     ADD_TEST(test_provider_hrr);
     ADD_ALL_TESTS(test_sni_context_switch, 4);
+    ADD_ALL_TESTS(test_client_hello_cipher_policy, 6);
     ADD_TEST(test_switched_context_supported_ciphers);
     ADD_ALL_TESTS(test_context_switch_saved_tls13_list, 2);
     ADD_ALL_TESTS(test_sni_switch_cipher_list_policy, 2);

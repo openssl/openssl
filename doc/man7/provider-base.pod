@@ -657,6 +657,12 @@ SSL_CTX's TLS 1.3 list. Provider descriptors continue to resolve through the
 connection's original SSL_CTX. Switching to a context with a different library
 context or property query is outside this capability's contract.
 
+TLS 1.3 selects its ciphersuite before the servername callback runs. Applications
+with server-name-specific ciphersuite policies should apply them before selection,
+using the ClientHello callback described in L<SSL_CTX_set_client_hello_cb(3)> and
+SSL_set_ciphersuites(). Changing the list in the servername callback does not
+retroactively change the selected ciphersuite.
+
 Provider-defined ciphersuites are restricted to TLS 1.3 and are not available
 for DTLS or QUIC.
 DTLS 1.3 record-number encryption and QUIC header protection require a
@@ -678,6 +684,9 @@ This capability supports the existing stream TLS 1.3 record profile: a
 12-byte IV, 16-byte tag, and SHA-256 or SHA-384 transcript digest. Discovery
 validates metadata only. Successful context creation does not guarantee that
 record setup or the first record operation will succeed.
+The application must trust the providers supplying the capability and the
+fetched algorithms. The declared security bits are not an independent assessment
+of the algorithms or their implementations.
 
 A provider AEAD must refuse encryption at its algorithm-specific per-key
 limit; cipher failure is fatal to the record layer. This capability does not

@@ -30,6 +30,8 @@ session based PSK (see L<SSL_CTX_set_psk_use_session_callback(3)>).
 SSL_SESSION_set_cipher() rejects provider-defined ciphersuites. Sessions that
 libssl creates after a provider-defined ciphersuite handshake are permanently
 non-resumable, non-cacheable and non-serialisable and cannot issue tickets.
+Replacing the cipher with a built-in ciphersuite does not remove these
+restrictions: the setter changes the descriptor, not the session's provenance.
 External-PSK callbacks reject such a session; provider-backed external PSK and
 0-RTT are not supported. A successful in-place d2i_SSL_SESSION() call clears
 the provider-cipher marker but preserves an existing non-resumable state.
