@@ -5733,8 +5733,8 @@ ASN1_STRING_set1_string                 5730	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_get_length                  5731	4_1_0	EXIST::FUNCTION:
 CMS_add_standard_smimecap_ex            5732	4_1_0	EXIST::FUNCTION:CMS
 BIO_socket_ready                        5733	4_1_0	EXIST::FUNCTION:SOCK
-d2i_IPAddrBlocks                        ?	4_1_0	EXIST::FUNCTION:RFC3779
-i2d_IPAddrBlocks                        ?	4_1_0	EXIST::FUNCTION:RFC3779
-IPAddrBlocks_free                       ?	4_1_0	EXIST::FUNCTION:RFC3779
-IPAddrBlocks_new                        ?	4_1_0	EXIST::FUNCTION:RFC3779
-IPAddrBlocks_it                         ?	4_1_0	EXIST::FUNCTION:RFC3779
+d2i_IPAddrBlocks                        ?	4_2_0	EXIST::FUNCTION:RFC3779
+i2d_IPAddrBlocks                        ?	4_2_0	EXIST::FUNCTION:RFC3779
+IPAddrBlocks_free                       ?	4_2_0	EXIST::FUNCTION:RFC3779
+IPAddrBlocks_new                        ?	4_2_0	EXIST::FUNCTION:RFC3779
+IPAddrBlocks_it                         ?	4_2_0	EXIST::FUNCTION:RFC3779
