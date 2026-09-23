@@ -498,6 +498,63 @@ err:
     return ret;
 }
 
+/*
+ * Signing with the default method warms the method_mont_fn_p cache.
+ * DSA_set_method() calls the old method's finish slot, and DSA_free()
+ * calls it again; without dsa_finish() NULLing the freed caches, the
+ * second call double-frees them and this test aborts.
+ */
+static int dsa_finish_double_free_test(void)
+{
+    int ret = 0;
+    DSA *dsa = NULL;
+    DSA_METHOD *method = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *priv = NULL, *pub = NULL;
+    const unsigned char msg[] = { 0x00 };
+    unsigned char signature[64];
+    unsigned int signature_len;
+
+    if (!TEST_ptr(p = BN_bin2bn(out_p, sizeof(out_p), NULL))
+        || !TEST_ptr(q = BN_bin2bn(out_q, sizeof(out_q), NULL))
+        || !TEST_ptr(g = BN_bin2bn(out_g, sizeof(out_g), NULL))
+        || !TEST_ptr(pub = BN_bin2bn(out_pub, sizeof(out_pub), NULL))
+        || !TEST_ptr(priv = BN_bin2bn(out_priv, sizeof(out_priv), NULL))
+        || !TEST_ptr(dsa = DSA_new()))
+        goto err;
+
+    if (!TEST_true(DSA_set0_pqg(dsa, p, q, g)))
+        goto err;
+    p = q = g = NULL;
+
+    if (!TEST_true(DSA_set0_key(dsa, pub, priv)))
+        goto err;
+    pub = priv = NULL;
+
+    /* Sign on the default method, warming the OSSL_FN mont cache */
+    if (!TEST_int_le(DSA_size(dsa), sizeof(signature))
+        || !TEST_true(DSA_sign(0, msg, sizeof(msg), signature,
+            &signature_len, dsa)))
+        goto err;
+
+    /* finish #1 frees the warmed caches; DSA_free() below is finish #2 */
+    if (!TEST_ptr(method = DSA_meth_dup(DSA_get_default_method()))
+        || !TEST_true(DSA_set_method(dsa, method)))
+        goto err;
+
+    DSA_free(dsa);
+    dsa = NULL;
+    ret = 1;
+err:
+    BN_free(pub);
+    BN_free(priv);
+    BN_free(g);
+    BN_free(q);
+    BN_free(p);
+    DSA_free(dsa);
+    DSA_meth_free(method);
+    return ret;
+}
+
 static int test_dsa_sig_neg_param(void)
 {
     int ret = 0, setpqg = 0;
@@ -566,6 +623,7 @@ int setup_tests(void)
     ADD_TEST(dsa_keygen_test);
     ADD_TEST(test_dsa_sig_infinite_loop);
     ADD_TEST(dsa_bn_mod_exp_override_test);
+    ADD_TEST(dsa_finish_double_free_test);
     ADD_TEST(test_dsa_sig_neg_param);
     ADD_ALL_TESTS(test_dsa_default_paramgen_validate, 2);
 #endif
