@@ -101,9 +101,8 @@ static ossl_inline int ktls_send_ctrl_message(int fd,
     unsigned char record_type, const void *data, size_t length, int flags)
 {
     struct msghdr msg = { 0 };
-    int cmsg_len = sizeof(record_type);
     struct cmsghdr *cmsg;
-    char buf[CMSG_SPACE(cmsg_len)];
+    char buf[CMSG_SPACE(sizeof(record_type))];
     struct iovec msg_iov; /* Vector of data to send/receive into */
 
     msg.msg_control = buf;
@@ -111,7 +110,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd,
     cmsg = CMSG_FIRSTHDR(&msg);
     cmsg->cmsg_level = IPPROTO_TCP;
     cmsg->cmsg_type = TLS_SET_RECORD_TYPE;
-    cmsg->cmsg_len = CMSG_LEN(cmsg_len);
+    cmsg->cmsg_len = CMSG_LEN(sizeof(record_type));
     *((unsigned char *)CMSG_DATA(cmsg)) = record_type;
     msg.msg_controllen = cmsg->cmsg_len;
 
@@ -142,10 +141,9 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 {
     struct msghdr msg = { 0 };
-    int cmsg_len = sizeof(struct tls_get_record);
     struct tls_get_record *tgr;
     struct cmsghdr *cmsg;
-    char buf[CMSG_SPACE(cmsg_len)];
+    char buf[CMSG_SPACE(sizeof(struct tls_get_record))];
     struct iovec msg_iov; /* Vector of data to send/receive into */
     int ret;
     unsigned char *p = data;
@@ -180,7 +178,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 
     cmsg = CMSG_FIRSTHDR(&msg);
     if (cmsg->cmsg_level != IPPROTO_TCP || cmsg->cmsg_type != TLS_GET_RECORD
-        || cmsg->cmsg_len != CMSG_LEN(cmsg_len)) {
+        || cmsg->cmsg_len != CMSG_LEN(sizeof(struct tls_get_record))) {
         errno = EBADMSG;
         return -1;
     }
@@ -338,7 +336,6 @@ static ossl_inline int ktls_send_ctrl_message(int fd,
     unsigned char record_type, const void *data, size_t length, int flags)
 {
     struct msghdr msg;
-    int cmsg_len = sizeof(record_type);
     struct cmsghdr *cmsg;
     union {
         struct cmsghdr hdr;
@@ -352,7 +349,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd,
     cmsg = CMSG_FIRSTHDR(&msg);
     cmsg->cmsg_level = SOL_TLS;
     cmsg->cmsg_type = TLS_SET_RECORD_TYPE;
-    cmsg->cmsg_len = CMSG_LEN(cmsg_len);
+    cmsg->cmsg_len = CMSG_LEN(sizeof(record_type));
     *((unsigned char *)CMSG_DATA(cmsg)) = record_type;
     msg.msg_controllen = cmsg->cmsg_len;
 
