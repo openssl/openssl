@@ -1584,8 +1584,22 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
      * case the record layer is still referenced by those buffered messages for
      * potential retransmit. Only when those buffered messages get freed do we
      * free the record layer object (see dtls1_hm_fragment_free)
+     *
+     * For a DTLS 1.3 read layer, hand the old one to the new one for
+     * retention instead of freeing it: a retransmission of the message that
+     * caused this epoch bump may still arrive at the old epoch if the ACK we
+     * sent for it was lost, and it needs the old epoch's keys and replay
+     * window to be authenticated (see dtls_get_more_records()).
      */
-    if (!SSL_CONNECTION_IS_DTLS(s)
+    if (SSL_CONNECTION_IS_DTLS13(s)
+        && direction == OSSL_RECORD_DIRECTION_READ
+        && *thismethod != NULL
+        && meth->set_prev_epoch_rl != NULL) {
+        if (!meth->set_prev_epoch_rl(newrl, *thisrl)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    } else if (!SSL_CONNECTION_IS_DTLS(s)
         || direction == OSSL_RECORD_DIRECTION_READ
         || pqueue_peek(&s->d1->sent_messages) == NULL) {
         if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {

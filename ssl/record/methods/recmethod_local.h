@@ -353,6 +353,15 @@ struct ossl_record_layer_st {
     /* records being received in the current epoch */
     DTLS_BITMAP bitmap;
 
+    /*
+     * DTLS 1.3 read layers only. The immediately preceding read epoch's
+     * record layer, retained (instead of freed) across an epoch bump so a
+     * retransmission of the message that caused the bump can still be
+     * authenticated with its own now-superseded keys and bitmap, if the
+     * ACK we sent for it was lost.
+     */
+    OSSL_RECORD_LAYER *prev_epoch_rl;
+
     /* DTLS curr mtu size */
     size_t curr_mtu;
 

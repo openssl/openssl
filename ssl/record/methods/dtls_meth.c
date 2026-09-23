@@ -474,6 +474,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     size_t rechdrlen = 0;
     size_t recseqnumoffs = 0;
     int buffered_record = 0;
+    OSSL_RECORD_LAYER *crypto_rl;
 
     rl->num_recs = 0;
     rl->curr_rec = 0;
@@ -489,6 +490,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
 
 again:
+    crypto_rl = rl;
     memset(recseqnum, 0, sizeof(recseqnum));
 
     /* get something from the wire */
@@ -607,6 +609,18 @@ again:
                  */
                 if (eebits == 2 && (epoch64 == 1 || epoch64 == 0)) {
                     epoch64 = 2;
+                } else if (rl->prev_epoch_rl != NULL
+                    && (rl->prev_epoch_rl->epoch
+                           & DTLS13_UNI_HDR_EPOCH_BITS_MASK)
+                        == eebits) {
+                    /*
+                     * This may be a retransmission at the epoch we have just
+                     * moved on from, sent because the ACK we gave it was
+                     * lost. Authenticate it with that epoch's own retained
+                     * keys and replay window instead of dropping it.
+                     */
+                    epoch64 = rl->prev_epoch_rl->epoch;
+                    crypto_rl = rl->prev_epoch_rl;
                 } else {
                     rr->length = 0;
                     rl->packet_length = 0;
@@ -726,9 +740,9 @@ again:
         && rl->version == DTLS1_3_VERSION
         && !(rl->in_init && rl->epoch == 0)
         && ((rl->packet_length < rechdrlen + DTLS13_CIPHERTEXT_MINSIZE)
-            || (rl->sn_enc_ctx == NULL && rl->mac_ctx == NULL)
-            || (rl->sn_enc_ctx != NULL
-                && !dtls_crypt_sequence_number(rl->sn_enc_ctx,
+            || (crypto_rl->sn_enc_ctx == NULL && crypto_rl->mac_ctx == NULL)
+            || (crypto_rl->sn_enc_ctx != NULL
+                && !dtls_crypt_sequence_number(crypto_rl->sn_enc_ctx,
                     recseqnum + recseqnumoffs,
                     recseqnumlen,
                     rl->packet + rechdrlen)))) {
@@ -738,7 +752,7 @@ again:
         goto again;
     }
 
-    if (rl->version == DTLS1_3_VERSION && rr->epoch == rl->epoch
+    if (rl->version == DTLS1_3_VERSION && rr->epoch == crypto_rl->epoch
         && DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)) {
         /* Reconstruct current-epoch unified records using its replay window. */
         uint64_t truncated = 0;
@@ -753,7 +767,7 @@ again:
         for (i = 0; i < recseqnumlen; i++)
             truncated = (truncated << 8) | recseqnum[recseqnumoffs + i];
 
-        rl->sequence = dtls13_reconstruct_seq_num(rl->bitmap.max_seq_num,
+        crypto_rl->sequence = dtls13_reconstruct_seq_num(crypto_rl->bitmap.max_seq_num,
             truncated, recseqnumlen);
     } else {
         /*
@@ -770,7 +784,7 @@ again:
     }
 
     /* match epochs.  NULL means the packet is dropped on the floor */
-    bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
+    bitmap = dtls_get_bitmap(crypto_rl, rr, &is_next_epoch);
     if (bitmap == NULL && !is_next_epoch) {
         rr->length = 0;
         rl->packet_length = 0; /* dump this record */
@@ -823,12 +837,24 @@ again:
         goto again;
     }
 
+    /*
+     * dtls_record_replay_check() and dtls_process_record() read and write
+     * whichever OSSL_RECORD_LAYER they are passed, not rr. When crypto_rl is
+     * the retained previous epoch, seed its record slot from rr so they
+     * have this record's data to work with; a no-op when crypto_rl == rl.
+     */
+    if (crypto_rl != rl) {
+        crypto_rl->packet = rl->packet;
+        crypto_rl->packet_length = rl->packet_length;
+        crypto_rl->rrec[0] = *rr;
+    }
+
 #ifndef OPENSSL_NO_SCTP
     /* Only do replay check if no SCTP bio (also check for NULL bio) */
     if (rl->bio == NULL || !BIO_dgram_is_sctp(rl->bio)) {
 #endif
         /* Check whether this is a repeat, or aged record. */
-        if (!dtls_record_replay_check(rl, bitmap)) {
+        if (!dtls_record_replay_check(crypto_rl, bitmap)) {
             rr->length = 0;
             rl->packet_length = 0; /* dump this record */
             goto again; /* get another record */
@@ -841,14 +867,20 @@ again:
     if (rr->length == 0)
         goto again;
 
-    if (!dtls_process_record(rl, bitmap)) {
-        if (rl->alert != SSL_AD_NO_ALERT) {
+    if (!dtls_process_record(crypto_rl, bitmap)) {
+        if (crypto_rl->alert != SSL_AD_NO_ALERT) {
             /* dtls_process_record() called RLAYERfatal */
+            rl->alert = crypto_rl->alert;
             return OSSL_RECORD_RETURN_FATAL;
         }
         rr->length = 0;
         rl->packet_length = 0; /* dump this record */
         goto again; /* get another record */
+    }
+
+    if (crypto_rl != rl) {
+        *rr = crypto_rl->rrec[0];
+        rl->packet_length = 0;
     }
 
     if (rl->funcs->post_process_record && !rl->funcs->post_process_record(rl, rr)) {
@@ -866,22 +898,23 @@ again:
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
-static int dtls_free(OSSL_RECORD_LAYER *rl)
+/*
+ * Push any unread buffered bytes and any records already buffered in
+ * unprocessed_rcds (see is_next_epoch in dtls_get_more_records()) forward
+ * into rl->next, so a pending handshake epoch transition still completes.
+ * Must run when rl stops being the active read layer, not deferred until
+ * it is eventually freed -- see dtls_free() and dtls_set_prev_epoch_rl().
+ */
+static int dtls_forward_pending_records(OSSL_RECORD_LAYER *rl)
 {
-    TLS_BUFFER *rbuf;
+    TLS_BUFFER *rbuf = &rl->rbuf;
     size_t left, written;
     pitem *item;
     DTLS_RLAYER_RECORD_DATA *rdata;
     int ret = 1;
 
-    rbuf = &rl->rbuf;
-
     left = rbuf->left;
     if (left > 0) {
-        /*
-         * This record layer is closing but we still have data left in our
-         * buffer. It must be destined for the next epoch - so push it there.
-         */
         ret = BIO_write_ex(rl->next, rbuf->buf + rbuf->offset, left, &written);
         rbuf->left = 0;
     }
@@ -889,7 +922,6 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
     while ((item = pqueue_pop(&rl->unprocessed_rcds)) != NULL) {
         rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
 
-        /* Push to the next record layer */
         ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
             &written);
         OPENSSL_free(rdata->packet);
@@ -897,7 +929,35 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         pitem_free(item);
     }
 
+    return ret;
+}
+
+static int dtls_free(OSSL_RECORD_LAYER *rl)
+{
+    int ret = dtls_forward_pending_records(rl);
+
+    if (rl->prev_epoch_rl != NULL) {
+        ret &= dtls_free(rl->prev_epoch_rl);
+        rl->prev_epoch_rl = NULL;
+    }
+
     return tls_free(rl) && ret;
+}
+
+/*
+ * Take ownership of the previous record layer, just superseded by the
+ * record layer, instead of the caller freeing it.
+ */
+static int dtls_set_prev_epoch_rl(OSSL_RECORD_LAYER *rl, OSSL_RECORD_LAYER *prev)
+{
+    int ret = dtls_forward_pending_records(prev);
+
+    if (prev->prev_epoch_rl != NULL) {
+        ret &= dtls_free(prev->prev_epoch_rl);
+        prev->prev_epoch_rl = NULL;
+    }
+    rl->prev_epoch_rl = prev;
+    return ret;
 }
 
 static int
@@ -1155,5 +1215,6 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_set_curr_mtu,
     dtls_unprocessed_records,
     tls_alloc_buffers,
-    tls_free_buffers
+    tls_free_buffers,
+    dtls_set_prev_epoch_rl
 };
