@@ -12,7 +12,8 @@ ASN1_STRING_set1_data,
 ASN1_STRING_set1_string,
 ASN1_STRING_get_length,
 ASN1_STRING_set,
-ASN1_STRING_length
+ASN1_STRING_length,
+ASN1_STRING_length_set
 - ASN1_STRING utility functions
 
 =head1 SYNOPSIS
@@ -44,6 +45,12 @@ see L<openssl_user_macros(7)>:
  int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
 
  int ASN1_STRING_length(ASN1_STRING *x);
+
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 
 =head1 DESCRIPTION
 
@@ -93,6 +100,9 @@ include the terminating NUL. The length of
 I<out> is returned or a negative error code. The buffer I<*out>
 should be freed using OPENSSL_free(). See L</WARNINGS> below.
 
+ASN1_STRING_length_set() allows setting the length of I<x> to an arbitrary value
+provided in I<n>.
+
 =head1 NOTES
 
 Almost all ASN1 types in OpenSSL are represented as an B<ASN1_STRING>
@@ -116,6 +126,13 @@ format, and for a UTF8String it will be in UTF8 format.
 Similar care should be taken to ensure the data is in the correct
 format when calling ASN1_STRING_set(), ASN1_STRING_set1_data(), or
 ASN1_STRING_set1_string().
+
+ASN1_STRING_length_set() updates only the length attribute of a string
+and does not affect the stored data, which may lead to buffer overruns
+and invalid memory accesses, if an incorrect length value is supplied.
+It also does not perform any sanity checks and stores any supplied value
+as-is, including a negative one.
+For these reasons (and due to limited usefulness), this function is deprecated.
 
 =head1 WARNINGS
 
@@ -152,11 +169,15 @@ ASN1_STRING_type() returns the type of I<x>.
 ASN1_STRING_to_UTF8() returns the number of bytes in output string I<out> or a
 negative value if an error occurred.
 
+ASN1_STRING_length_set() does not return a value.
+
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
 
 =head1 HISTORY
+
+ASN1_STRING_length_set() was deprecated in OpenSSL 3.0.
 
 ASN1_STRING_set1_data(), ASN1_STRING_set1_string(), and ASN1_STRING_get_length()
 were added in OpenSSL 4.1.
