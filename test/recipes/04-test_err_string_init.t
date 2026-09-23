@@ -27,19 +27,7 @@ my @fail_at = (0 .. 7);
 plan tests => scalar @fail_at;
 
 local $ENV{OPENSSL_TEST_MFAIL_DISABLE} = 1;
-
-# Leak checking is turned off for this test.
-#
-# Failing an allocation made while the thread local storage of this thread is
-# being created leaves the error state that is created in order to report that
-# very failure unreachable:  CRYPTO_THREAD_set_local_ex() reports the failed
-# allocation of its own sparse array, reporting enters ossl_err_get_state_int(),
-# which creates both the sparse array and an ERR_STATE, and the outer call then
-# overwrites the slot again.  That is a pre-existing re-entrancy problem in the
-# allocation failure reporting path, independent of the error string
-# initialisation fixed here, so this test does not try to assert anything about
-# it.
-local $ENV{ASAN_OPTIONS} = "allocator_may_return_null=true:detect_leaks=0";
+local $ENV{ASAN_OPTIONS} = "allocator_may_return_null=true";
 local $ENV{MSAN_OPTIONS} = "allocator_may_return_null=true";
 
 foreach my $n (@fail_at) {
