@@ -849,11 +849,17 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             frag_len -= readbytes;
         }
         /*
-         * A lost ACK can cause an already processed post-handshake message to
-         * be retransmitted in a new record. ACK it without processing it again.
+         * A lost ACK can cause an already processed message to be
+         * retransmitted in a new record. ACK it without processing it
+         * again. Epoch 2 is included alongside the post-handshake epochs
+         * (3+) so that a client's Finished, retransmitted after the server
+         * has already moved on to epoch 3, still gets ACKed instead of
+         * silently dropped (see dtls_get_more_records()'s retained
+         * prev_epoch_rl handling, which is what let this record
+         * authenticate at all).
          */
         if (SSL_CONNECTION_IS_DTLS13(s)
-            && s->s3.tmp.record_epoch >= 3
+            && s->s3.tmp.record_epoch >= 2
             && msg_hdr->seq < s->d1->handshake_read_seq
             && dtls_msg_needs_ack(!s->server, msg_hdr->type)) {
             if (!add_record_to_ack_list(s))
