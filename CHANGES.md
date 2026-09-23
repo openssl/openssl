@@ -254,6 +254,8 @@ OpenSSL 4.1
    must be changed to honour `ASN1_STRING_get_length()`. The Valgrind
    check may be disabled by building with `-DOPENSSL_NO_VALGRIND_CHECK`.
    <!-- https://github.com/openssl/openssl/pull/31194 -->
+   <!-- https://github.com/openssl/openssl/pull/32829 -->
+   <!-- https://github.com/openssl/openssl/pull/32837 -->
 
    *Bob Beck*
 
@@ -482,6 +484,12 @@ OpenSSL 4.1
 
    *John Claus*
 
+ * Fixed `CMS_SignerInfo_verify()` to no longer accept signature algorithm
+   identifiers as valid `digestAlgorithms`, in violation of [RFC 5652].
+   <!-- https://github.com/openssl/openssl/pull/32702 -->
+
+   *Jakub Zelenka*
+
  * Fixed reading of binary data (for example, certificates in DER format)
    by `openssl` command from `stdin` on Windows.
    <!-- https://github.com/openssl/openssl/pull/30559 -->
@@ -546,10 +554,10 @@ OpenSSL 4.1
 
    *Norbert Pócs*
 
- * Deprecated `CMS_stream()` and `PKCS7_stream()` functions.  These are internal
-   plumbing that leaked into the public API, and no longer return a streaming
-   boundary.  Use `BIO_new_CMS()` or `BIO_new_PKCS7()` to stream CMS and PKCS#7
-   content.
+ * Deprecated `CMS_stream()` and `PKCS7_stream()` API functions.  These
+   are internal plumbing that was unintentionally exposed as the public API,
+   and they no longer return a streaming boundary.  Use `BIO_new_CMS()`
+   or `BIO_new_PKCS7()` to stream CMS and PKCS#7 content.
    <!-- https://github.com/openssl/openssl/pull/32242 -->
 
    *Bob Beck*
@@ -24162,6 +24170,7 @@ ndif
 [RFC 4492 Section 5.1.2]: https://datatracker.ietf.org/doc/html/rfc4492#section-5.1.2
 [RFC 5280]: https://datatracker.ietf.org/doc/html/rfc5280
 [RFC 5297]: https://datatracker.ietf.org/doc/html/rfc5297
+[RFC 5652]: https://datatracker.ietf.org/doc/html/rfc5652
 [RFC 7250]: https://datatracker.ietf.org/doc/html/rfc7250
 [RFC 7685]: https://datatracker.ietf.org/doc/html/rfc7685
 [RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
