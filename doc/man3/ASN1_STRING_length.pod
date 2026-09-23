@@ -10,6 +10,7 @@ ASN1_STRING_type,
 ASN1_STRING_to_UTF8,
 ASN1_STRING_set1_data,
 ASN1_STRING_set1_string,
+ASN1_STRING_set0,
 ASN1_STRING_get_length,
 ASN1_STRING_set,
 ASN1_STRING_length,
@@ -35,6 +36,8 @@ ASN1_STRING_length_set
  int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len);
 
  int ASN1_STRING_set1_string(ASN1_STRING *str, const char *data);
+
+ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
 
  size_t ASN1_STRING_get_length(const ASN1_STRING *x);
 
@@ -89,6 +92,14 @@ must point to a valid NUL-terminated C string, and must not be
 NULL. The terminating NUL byte is not included in the data copied into
 I<str>.  It is an error to use this function on a string of type
 B<ASN1_BIT_STRING>.
+
+ASN1_STRING_set0() sets the content of the string I<str> to I<data>
+of I<len> bytes in size;  the ownership of I<data> is assumed
+by the string (so, I<data> has to be allocated using OPENSSL_malloc()
+or a similar function, and the caller should not attempt to free I<data>
+after the call).  The previously held content (in case they were owned
+by the string) is freed using OPENSSL_clear_free(), provided the length
+of the content is positive.
 
 ASN1_STRING_type() returns the type of I<x>, using standard constants
 such as B<V_ASN1_OCTET_STRING>.
@@ -169,7 +180,7 @@ ASN1_STRING_type() returns the type of I<x>.
 ASN1_STRING_to_UTF8() returns the number of bytes in output string I<out> or a
 negative value if an error occurred.
 
-ASN1_STRING_length_set() does not return a value.
+ASN1_STRING_set0() and ASN1_STRING_length_set() do not return a value.
 
 =head1 SEE ALSO
 
@@ -181,6 +192,9 @@ ASN1_STRING_length_set() was deprecated in OpenSSL 3.0.
 
 ASN1_STRING_set1_data(), ASN1_STRING_set1_string(), and ASN1_STRING_get_length()
 were added in OpenSSL 4.1.
+
+Before OpenSSL 4.1, ASN1_STRING_set0() used OPENSSL_free()
+instead of OPENSSL_clean_free() to free previously held string content.
 
 =head1 COPYRIGHT
 
