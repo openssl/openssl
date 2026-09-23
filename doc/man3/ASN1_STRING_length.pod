@@ -59,7 +59,13 @@ see L<openssl_user_macros(7)>:
 
 These functions allow an B<ASN1_STRING> structure to be manipulated.
 
-ASN1_STRING_length() returns the length of the content of I<x>. I<x> B<MUST NOT> be NULL.
+ASN1_STRING_length() returns the length of the content of I<x>.
+I<x> B<MUST NOT> be NULL.
+
+ASN1_STRING_get_length() returns the length of the content of I<x>.
+I<x> B<MUST NOT> be NULL.  If the current length of the content of I<x>
+cannot be represented by a value of type B<size_t> (for example, after
+an ASN1_STRING_length_set() call with a negative I<n> argument), 0 is returned.
 
 ASN1_STRING_get0_data() returns an internal pointer to the data of I<x>.
 Since this is an internal pointer it should B<not> be freed or
@@ -158,6 +164,9 @@ length and not rely on NUL termination.
 =head1 RETURN VALUES
 
 ASN1_STRING_length() returns the length of the content of I<x>.
+
+ASN1_STRING_get_length() returns the length of the content of I<x> or 0,
+if it cannot be represented as a value of type B<size_t>.
 
 ASN1_STRING_get0_data() returns an internal pointer to
 the data of I<x>.
