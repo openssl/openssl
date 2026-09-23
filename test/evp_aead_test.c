@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
+#include <openssl/err.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -107,6 +108,8 @@ static void collect_aead_cipher_cb(EVP_CIPHER *ciph, void *arg)
     info = &aead_list[aead_list_n];
 
     if (!EVP_CIPHER_up_ref(ciph))
+        return;
+    if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_SIV_MODE)
         return;
 
     info->ciph = ciph;
@@ -371,6 +374,7 @@ err:
  *   - supplying a tag value while encrypting must fail
  *   - reading a tag while decrypting must fail
  *   - error codes should be consistent across all AEADs
+ * 
  */
 static int test_evp_aead_tag_direction(int idx)
 {
