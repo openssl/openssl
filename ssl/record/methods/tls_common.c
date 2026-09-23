@@ -264,15 +264,18 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
-static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
+int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     TLS_BUFFER *b;
 
     b = &rl->rbuf;
+    if (b->buf == NULL)
+        return 1;
     if ((rl->options & SSL_OP_CLEANSE_PLAINTEXT) != 0)
         OPENSSL_cleanse(b->buf, b->len);
     OPENSSL_free(b->buf);
     b->buf = NULL;
+    b->len = 0;
     rl->packet = NULL;
     rl->packet_length = 0;
     return 1;
@@ -2326,5 +2329,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     NULL,
     NULL,
     tls_alloc_buffers,
-    tls_free_buffers
+    tls_free_buffers,
+    NULL /* set_prev_epoch_rl: DTLS only */
 };

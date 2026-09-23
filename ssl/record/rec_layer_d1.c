@@ -374,7 +374,8 @@ start:
         return 0;
     }
 
-    if (rr->type == SSL3_RT_HANDSHAKE && SSL_CONNECTION_IS_DTLS13(sc)) {
+    if ((rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)
+        && SSL_CONNECTION_IS_DTLS13(sc)) {
         sc->s3.tmp.record_epoch = rr->epoch;
         sc->s3.tmp.record_seq_num = rr->seq_num;
     }
@@ -570,9 +571,25 @@ start:
 
         /*
          * This may just be a stale retransmit. Also sanity check that we have
-         * at least enough record bytes for a message header
+         * at least enough record bytes for a message header.
+         *
+         * For DTLS 1.3, a record at exactly the previous read epoch is not
+         * necessarily stale: it authenticated (see dtls_get_more_records()'s
+         * retained prev_epoch_rl handling), but that alone doesn't prove it's
+         * a retransmission. Let it through to the normal handshake-message
+         * path below instead of discarding it here -- the sequence and epoch
+         * checks there (dtls_record_from_retained_epoch(),
+         * dtls_prev_epoch_allows_type()) are what actually decide whether it
+         * can be acknowledged. This retained-epoch exception is for handshake
+         * records only (rr->type == SSL3_RT_HANDSHAKE above); an ACK record
+         * still has to be tied to the epoch that authenticated it before it
+         * can touch d1->sent_messages, which dtls_process_ack() enforces
+         * separately.
          */
-        if (rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
+        if ((rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
+                && !(SSL_CONNECTION_IS_DTLS13(sc)
+                    && dtls1_get_epoch(sc, SSL3_CC_READ) > 0
+                    && rr->epoch == dtls1_get_epoch(sc, SSL3_CC_READ) - 1))
             || rr->length < DTLS1_HM_HEADER_LENGTH) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
@@ -584,8 +601,16 @@ start:
         /*
          * If we are server, we may have a repeated FINISHED of the client
          * here, then retransmit our CCS and FINISHED.
+         *
+         * DTLS 1.3 has proper ACK records, so this DTLS 1.2-only fallback
+         * (which infers loss from a bare repeated Finished and reacts by
+         * blindly retransmitting our own flight) is skipped for it. A
+         * repeated DTLS 1.3 Finished instead falls through to the normal
+         * handshake-message path below, which ACKs a message it has
+         * already fully processed without reprocessing it (see the
+         * record_epoch check in statem_dtls.c).
          */
-        if (msg_type == SSL3_MT_FINISHED) {
+        if (!SSL_CONNECTION_IS_DTLS13(sc) && msg_type == SSL3_MT_FINISHED) {
             if (dtls1_check_timeout_num(sc) < 0) {
                 /* SSLfatal) already called */
                 return -1;
