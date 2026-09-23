@@ -182,6 +182,40 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch)
     }
 }
 
+/*
+ * Returns true if some other entry in queue1 or queue2 still holds wrl.
+ * Multiple dtls_sent_msg entries can share the identical
+ * saved_retransmit_state.wrl: every message written at a given epoch captures
+ * the same write record layer, and more than one can still be queued
+ * by the time dtls1_clear_sent_buffer() removes any one of them. wrl must
+ * not be freed while another queued entry is still going to use it for a
+ * retransmit.
+ */
+static int dtls1_wrl_has_other_owner(const OSSL_RECORD_LAYER *wrl,
+    pqueue *queue1, pqueue *queue2)
+{
+    piterator iter;
+    pitem *item;
+
+    iter = pqueue_iterator(queue1);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->saved_retransmit_state.wrl == wrl)
+            return 1;
+    }
+
+    iter = pqueue_iterator(queue2);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->saved_retransmit_state.wrl == wrl)
+            return 1;
+    }
+
+    return 0;
+}
+
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 {
     pitem *item = NULL;
@@ -206,7 +240,9 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
                         || msg_type == SSL3_MT_SERVER_HELLO
                         || msg_type == SSL3_MT_KEY_UPDATE)))
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
-            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
+            && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
+                sent_messages, remaining_sent_messages)) {
             /*
              * If we're freeing the CCS then we're done with the old wrl and it
              * can bee freed
