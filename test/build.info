@@ -963,7 +963,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[x509_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[rsa_test]=rsa_test.c
-    INCLUDE[rsa_test]=../include ../apps/include
+    INCLUDE[rsa_test]=.. ../include ../crypto/rsa ../apps/include
     DEPEND[rsa_test]=../libcrypto.a libtestutil.a
 
     SOURCE[rsa_mp_test]=rsa_mp_test.c
