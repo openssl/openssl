@@ -299,6 +299,22 @@ int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
     return 0;
 }
 
+int dtls_has_unacked_key_update(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE
+            && !ossl_list_record_number_is_empty(&msg->rec_nums))
+            return 1;
+    }
+
+    return 0;
+}
+
 void dtls1_free(SSL *ssl)
 {
     SSL_CONNECTION *s;

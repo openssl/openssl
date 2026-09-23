@@ -2154,6 +2154,7 @@ typedef struct dtls_sent_msg_st {
 } dtls_sent_msg;
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
+int dtls_has_unacked_key_update(SSL_CONNECTION *s);
 
 static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype)
 {

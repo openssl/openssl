@@ -3172,6 +3172,15 @@ int SSL_key_update(SSL *s, int updatetype)
         return 0;
     }
 
+    /*
+     * RFC 9147 section 5.8.4: implementations MUST NOT send a KeyUpdate if
+     * an earlier one has not yet been acknowledged.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && dtls_has_unacked_key_update(sc)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
+        return 0;
+    }
+
     ossl_statem_set_in_init(sc, 1);
     sc->key_update = updatetype;
     return 1;
