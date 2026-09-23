@@ -262,6 +262,47 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 }
 
 /*
+ * Retire every queued CertificateRequest regardless of acknowledgment
+ * status, and report whether any was found. A CertificateRequest never
+ * receives an explicit ACK (rfc9147 5.8.1: receiving the next flight, not
+ * just an ACK, ends WAITING) -- the client's Finished is that next flight,
+ * and completes it implicitly. Entries of any other type are left
+ * untouched.
+ */
+static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
+{
+    pitem *item = NULL;
+    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue *sent_messages = &s->d1->sent_messages;
+    int retired = 0;
+
+    while ((item = pqueue_pop(sent_messages)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+
+        if (sent_msg->msg_info.msg_type != SSL3_MT_CERTIFICATE_REQUEST) {
+            pqueue_insert(remaining_sent_messages, item);
+            continue;
+        }
+
+        if (sent_msg->saved_retransmit_state.wrlmethod != NULL
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
+            && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
+                sent_messages, remaining_sent_messages))
+            sent_msg->saved_retransmit_state.wrlmethod->free(sent_msg->saved_retransmit_state.wrl);
+
+        dtls1_sent_msg_free(sent_msg);
+        pitem_free(item);
+        retired = 1;
+    }
+
+    while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
+        pqueue_insert(sent_messages, item);
+
+    pqueue_free(remaining_sent_messages);
+    return retired;
+}
+
+/*
  * Before RECORD_LAYER_clear() frees s->rlayer.wrl, null out any
  * saved_retransmit_state.wrl pointers in the sent_messages queue that
  * reference it.  This transfers ownership of that free exclusively to
@@ -601,17 +642,25 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
 }
 
 /*
- * Retire the timer and the retransmit buffer now that we have finished
- * reading a flight.
- *
- * rfc9147: section 5.8.4. Each category of post-handshake message has its own
- * reliability state machine. A KeyUpdate or NewSessionTicket from the peer
- * acknowledges nothing of ours, so if our own post-handshake flight is still
- * missing an ACK we must keep it buffered and leave its retransmit timer
- * running. Fully acknowledged messages are still released.
+ * Retire the timer and retransmit buffer now that a flight has finished
+ * reading. Post-handshake message categories acknowledge nothing of each
+ * other (rfc9147 5.8.4), so an unrelated message must not discard our own
+ * still-unacknowledged flight. A CertificateRequest is retired here
+ * explicitly, since it completes via the next flight rather than an ACK
+ * (rfc9147 5.8.1); every other occurrence of TLS_ST_SR_FINISHED, including
+ * ordinary handshake completion, still falls through to the unconditional
+ * clear below.
  */
 void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
 {
+    if (SSL_CONNECTION_IS_DTLS13(s)
+        && s->statem.hand_state == TLS_ST_SR_FINISHED
+        && dtls1_retire_sent_certificate_request_messages(s)
+        && dtls_any_sent_messages_are_missing_acknowledge(s)) {
+        dtls1_clear_sent_buffer(s, 1);
+        return;
+    }
+
     if (SSL_CONNECTION_IS_DTLS13(s)
         && (s->statem.hand_state == TLS_ST_SR_KEY_UPDATE
             || s->statem.hand_state == TLS_ST_CR_KEY_UPDATE

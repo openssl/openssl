@@ -1175,6 +1175,107 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * If the server sends a CertificateRequest followed by a ticket that gets
+ * lost, the client's next flight -- Certificate and Finished -- implicitly
+ * acks only the request. Processing that flight must retire the request,
+ * but must not also discard the unrelated, still unacknowledged ticket or
+ * stop its retransmission.
+ */
+static int test_dtls13_cert_req_finished_preserves_ticket(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    dtls_sent_msg *msg;
+    piterator iter;
+    pitem *item;
+    unsigned char buf[2048];
+    int ret, dropped, found, testresult = 0;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    /* Request PHA first; the client answers it before the ticket exists. */
+    SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+
+    /* The client answers the CertificateRequest with Certificate+Finished. */
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Now send a ticket -- sequenced after the CertificateRequest -- and
+     * lose it before the client ever sees it.
+     */
+    if (!TEST_true(SSL_new_session_ticket(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 2))
+        goto end;
+    dropped = 0;
+    while (BIO_read(SSL_get_rbio(client), buf, sizeof(buf)) > 0)
+        dropped++;
+    if (!TEST_int_gt(dropped, 0))
+        goto end;
+
+    /*
+     * The server processes the client's response. This must retire the
+     * CertificateRequest, but must not touch the still-unacknowledged,
+     * unrelated ticket.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+    found = 0;
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        msg = item->data;
+
+        if (msg->msg_info.msg_type == SSL3_MT_NEWSESSION_TICKET)
+            found++;
+    }
+    if (!TEST_int_eq(found, 1))
+        goto end;
+
+    /*
+     * Confirm the surviving entry is a genuinely live retransmit, not just
+     * an uncollected leftover: force it and let the client process it.
+     */
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+        goto end;
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(ticket_count, 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -1194,6 +1295,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_keyupdate_preserves_flight, 2);
     ADD_TEST(test_dtls13_cert_req_preserves_flight);
     ADD_ALL_TESTS(test_dtls13_pha_keyupdate_shared_wrl, 2);
+    ADD_TEST(test_dtls13_cert_req_finished_preserves_ticket);
 #endif
     return 1;
 }
