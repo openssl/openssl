@@ -207,6 +207,8 @@ ASN1_STRING_length_set() was deprecated in OpenSSL 3.0.
 ASN1_STRING_set1_data(), ASN1_STRING_set1_string(), and ASN1_STRING_get_length()
 were added in OpenSSL 4.1.
 
+ASN1_STRING_length() and ASN1_STRING_set() were deprecated in OpenSSL 4.1.
+
 Before OpenSSL 4.1, ASN1_STRING_set0() used OPENSSL_free()
 instead of OPENSSL_clean_free() to free previously held string content.
 
