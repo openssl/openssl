@@ -2418,6 +2418,54 @@ static int test_cleanse_plaintext(void)
     return 1;
 }
 
+#if !defined(OSSL_NO_USABLE_DTLS1_3)
+/*
+ * Test that a DTLS 1.3 read epoch bump does not crash when
+ * SSL_MODE_RELEASE_BUFFERS and SSL_OP_CLEANSE_PLAINTEXT are both set: the old
+ * epoch's read buffer may already have been released by
+ * tls_release_record(), and dtls_set_prev_epoch_rl() must not release it
+ * again.
+ */
+static int test_dtls13_release_buffers_cleanse(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+            DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION,
+            DTLS1_3_VERSION,
+            &sctx, &cctx, cert,
+            privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_mode(serverssl, SSL_MODE_RELEASE_BUFFERS))
+        || !TEST_true(SSL_set_options(serverssl, SSL_OP_CLEANSE_PLAINTEXT))
+        || !TEST_true(SSL_set_mode(clientssl, SSL_MODE_RELEASE_BUFFERS))
+        || !TEST_true(SSL_set_options(clientssl, SSL_OP_CLEANSE_PLAINTEXT)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
+
 #ifndef OPENSSL_NO_OCSP
 static OCSP_RESPONSE *create_ocsp_resp(X509 *ssl_cert, X509 *issuer, int status,
     const char *signer_key_files, const char *signer_cert_files)
@@ -18072,6 +18120,9 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_large_app_data, 28);
     ADD_TEST(test_cleanse_plaintext);
+#if !defined(OSSL_NO_USABLE_DTLS1_3)
+    ADD_TEST(test_dtls13_release_buffers_cleanse);
+#endif
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_tlsext_status_type);
 #ifndef OSSL_NO_USABLE_TLS1_3
