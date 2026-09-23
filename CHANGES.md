@@ -246,6 +246,29 @@ OpenSSL 4.1
 
    *Bob Beck*
 
+ * Added `ASN1_STRING_set1_data()`, `ASN1_STRING_set1_string()`,
+   and `ASN1_STRING_get_length()` API functions, and deprecated
+   `ASN1_STRING_set()` and `ASN1_STRING_length()`.
+
+   The new setter functions do not append a terminating NUL byte to the newly
+   allocated strings, contrary to historic `ASN1_STRING_set()`'s behaviour,
+   so `ASN1_STRING_get0_data()` may return data not followed
+   by an out-of-`ASN1_STRING_get_length()` bounds NUL byte (whose presence
+   has never been guaranteed there by API contract) in more cases
+   than it used to before.  A future release will switch to the usage
+   of the new APIs internally.
+
+   When OpenSSL is built with `AddressSanitizer` or `MemorySanitizer` support,
+   or is run under Valgrind having been built where the Valgrind headers
+   are installed, the added NUL byte is marked inaccessible, so treating
+   the result of `ASN1_STRING_get0_data()` as a C string (`strlen()`, `%s`,
+   `strdup()` and the like) is reported as an error.  All such uses
+   must be changed to honour `ASN1_STRING_get_length()`. The Valgrind
+   check may be disabled by building with `-DOPENSSL_NO_VALGRIND_CHECK`.
+   <!-- https://github.com/openssl/openssl/pull/31194 -->
+
+   *Bob Beck*
+
  * Added `CMS_add_standard_smimecap_ex()` API function, which populates
    an `SMIMECapabilities` list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()`
    so that only algorithms available in the active providers are advertised.
@@ -535,27 +558,6 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30335 -->
 
    *Shane Lontis*
-
- * Deprecated `ASN1_STRING_set()` and `ASN1_STRING_length()` functions.
-   The replacement functions `ASN1_STRING_set1_data()`
-   or `ASN1_STRING_set1_string()`, and `ASN1_STRING_get_length()` should be used
-   in their place.  This prepares the `ASN1_STRING` type to support modern
-   `size_t` length values in the future.
-
-   The data of an `ASN1_STRING` has never been guaranteed to be
-   NUL-terminated, although some operations terminated it anyway.  A
-   future release will stop doing so; the new setters above already do
-   not add a terminator. When OpenSSL is built with AddressSanitizer
-   or MemorySanitizer, or is run under Valgrind having been built
-   where the Valgrind headers are installed, the added nul byte is
-   marked inaccessible, so treating the result of
-   `ASN1_STRING_get0_data()` as a C string (`strlen()`, `%s`,
-   `strdup()` and the like) is reported as an error.  All such uses
-   must be changed to honour `ASN1_STRING_get_length()`. The Valgrind
-   check may be disabled by building with OPENSSL_NO_VALGRIND_CHECK.
-   <!-- https://github.com/openssl/openssl/pull/31194 -->
-
-   *Bob Beck*
 
  * Deprecated `ASN1_BIT_STRING_name_print()`, `ASN1_BIT_STRING_num_asc()`,
    and `ASN1_BIT_STRING_set_asc()` functions. Refer to the manual
