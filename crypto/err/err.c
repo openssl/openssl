@@ -312,6 +312,10 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
+    /* The error string table may already have been cleaned up. */
+    if (err_string_lock == NULL)
+        return 1;
+
     if (!CRYPTO_THREAD_write_lock(err_string_lock))
         return 0;
     /*
