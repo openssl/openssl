@@ -137,12 +137,13 @@ These functions should B<not> be used to examine or modify B<ASN1_INTEGER>
 or B<ASN1_ENUMERATED> types: the relevant B<INTEGER> or B<ENUMERATED>
 utility functions should be used instead.
 
-In general it cannot be assumed that the data returned by
-ASN1_STRING_get0_data() is null terminated or does not contain
-embedded nulls. The actual format of the data will depend on the
-actual string type itself: for example for an IA5String the data will
-be ASCII, for a BMPString two bytes per character in big endian
-format, and for a UTF8String it will be in UTF8 format.
+In general, it cannot be assumed that the data returned
+by ASN1_STRING_get0_data() is NUL-terminated or does not contain
+embedded NUL bytes.  The actual format of the data will depend
+on the actual string type itself: for example, for an B<IA5String>, the data
+will be ASCII; for a B<BMPString>, it will be two bytes per character
+in big endian format without BOM; and for a B<UTF8String>, it will be encoded
+in UTF-8.
 
 Similar care should be taken to ensure the data is in the correct
 format when calling ASN1_STRING_set(), ASN1_STRING_set1_data(), or
