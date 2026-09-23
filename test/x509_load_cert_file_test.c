@@ -180,21 +180,35 @@ static int check_store_get1_by_name(X509_STORE_CTX *ctx, const X509_NAME *name1,
 }
 
 /* Check exact lookup results in hash table and flat store representations. */
-static int test_load_same_cn_certs(void)
+static int test_load_certs_by_name(int idx)
 {
     X509 *cert1 = NULL, *cert2 = NULL, *certA = NULL;
     X509_CRL *crl1 = NULL, *crl2 = NULL, *crlA = NULL;
     X509_STORE *store = NULL;
     X509_STORE_CTX *ctx = NULL;
-    const X509_NAME *name1;
-    X509_NAME *nameA = NULL;
+    X509_NAME *name1 = NULL, *nameA = NULL;
     int ret = 0;
 
     if (!TEST_ptr(cert1 = X509_from_strings(cn_cert1))
         || !TEST_ptr(cert2 = X509_from_strings(cn_cert2))
         || !TEST_ptr(crl1 = CRL_from_strings(cn_crl2))
-        || !TEST_ptr(name1 = X509_get_subject_name(cert1))
-        || !TEST_ptr(nameA = X509_NAME_new())
+        || !TEST_ptr(name1 = X509_NAME_new()))
+        goto err;
+
+    if (idx == 0) {
+        /* Look up a separately encoded but equivalent name. */
+        if (!TEST_true(X509_NAME_add_entry_by_txt(name1, "CN", MBSTRING_ASC,
+                (unsigned char *)" WWW.EXAMPLE.TEST ", -1, -1, 0)))
+            goto err;
+    } else {
+        /* Empty names have a null canonical encoding with length zero. */
+        if (!TEST_true(X509_set_subject_name(cert1, name1))
+            || !TEST_true(X509_set_subject_name(cert2, name1))
+            || !TEST_true(X509_CRL_set_issuer_name(crl1, name1)))
+            goto err;
+    }
+
+    if (!TEST_ptr(nameA = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(nameA, "CN", MBSTRING_ASC,
             (unsigned char *)"alpha.test", -1, -1, 0))
         || !TEST_ptr(certA = X509_dup(cert1))
@@ -212,6 +226,9 @@ static int test_load_same_cn_certs(void)
         || !TEST_true(X509_STORE_add_crl(store, crl2))
         || !TEST_true(X509_STORE_add_cert(store, certA))
         || !TEST_true(X509_STORE_add_crl(store, crlA))
+        /* An object of the other type precedes each existing duplicate. */
+        || !TEST_true(X509_STORE_add_cert(store, cert2))
+        || !TEST_true(X509_STORE_add_crl(store, crl2))
         || !check_store_get1_by_name(ctx, name1, nameA, cert1, cert2, certA,
             crl1, crl2, crlA))
         goto err;
@@ -219,6 +236,8 @@ static int test_load_same_cn_certs(void)
 #ifndef OPENSSL_NO_DEPRECATED_4_0
     /* Exercise conversion of an already populated store. */
     if (!TEST_ptr(X509_STORE_get0_objects(store))
+        || !TEST_true(X509_STORE_add_cert(store, cert2))
+        || !TEST_true(X509_STORE_add_crl(store, crl2))
         || !check_store_get1_by_name(ctx, name1, nameA, cert1, cert2, certA,
             crl1, crl2, crlA))
         goto err;
@@ -240,6 +259,9 @@ static int test_load_same_cn_certs(void)
         || !TEST_true(X509_STORE_add_crl(store, crl1))
         || !TEST_true(X509_STORE_add_crl(store, crlA))
         || !TEST_true(X509_STORE_add_crl(store, crl2))
+        /* Here the intervening objects have a different name. */
+        || !TEST_true(X509_STORE_add_cert(store, cert2))
+        || !TEST_true(X509_STORE_add_crl(store, crl2))
         || !check_store_get1_by_name(ctx, name1, nameA, cert1, cert2, certA,
             crl1, crl2, crlA))
         goto err;
@@ -248,6 +270,7 @@ static int test_load_same_cn_certs(void)
     ret = 1;
 
 err:
+    X509_NAME_free(name1);
     X509_NAME_free(nameA);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
@@ -332,6 +355,11 @@ static int test_x509_pem_read_mfail(void)
 }
 
 OPT_TEST_DECLARE_USAGE("cert.pem [crl.pem]\n")
+
+static int test_load_same_cn_certs(void)
+{
+    return test_load_certs_by_name(0) && test_load_certs_by_name(1);
+}
 
 int setup_tests(void)
 {
