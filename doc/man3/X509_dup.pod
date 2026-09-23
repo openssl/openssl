@@ -608,7 +608,7 @@ OSSL_CRMF_ENCRYPTEDKEY_it() and OSSL_CRMF_ENCRYPTEDKEY_new()
 were added in OpenSSL 3.5.
 
 IPAddrBlocks_free(), IPAddrBlocks_it() and IPAddrBlocks_new()
-were added in OpenSSL 4.1.
+were added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
