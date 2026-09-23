@@ -16,6 +16,8 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
+#include "internal/list.h"
+
 /*
  * A received packet as the stream code sees it, without a QRX behind it.
  * The reference the caller keeps is never released by the stream code, so
@@ -2864,6 +2866,543 @@ err:
     return ok;
 }
 
+static CRYPTO_malloc_fn malloc_save;
+static CRYPTO_realloc_fn realloc_save;
+static CRYPTO_free_fn free_save;
+
+typedef struct tdc_alloc_hdr_st {
+    size_t size;
+    OSSL_LIST_MEMBER(tdc, struct tdc_alloc_hdr_st);
+} TDC_ALLOC_HDR;
+
+DEFINE_LIST_OF(tdc, TDC_ALLOC_HDR);
+
+#define TDC_EXPECTED8_SZ 8
+#define TDC_EXPECTED16_SZ 16
+
+static int tdc_watch_free;
+static const unsigned char tdc_expected8[TDC_EXPECTED8_SZ + 1] = "IJKLMNOP";
+static int tdc_saw_remnant_on_free;
+static int tdc_watch_free;
+
+static OSSL_LIST(tdc)
+    tdc_alloc_list;
+
+static void *tdc_malloc(size_t sz, const char *file, int line)
+{
+    TDC_ALLOC_HDR *h;
+
+    if (sz == 0)
+        return NULL;
+    h = malloc_save(sizeof(*h) + sz, file, line);
+    if (h == NULL)
+        return NULL;
+    h->size = sz;
+    ossl_list_tdc_init_elem(h);
+    ossl_list_tdc_insert_head(&tdc_alloc_list, h);
+    memset(&h[1], 0, sz);
+
+    return &h[1];
+}
+
+static int tdc_find_pattern(const unsigned char *pat, size_t plen,
+    unsigned char *window, size_t win)
+{
+    TDC_ALLOC_HDR *h;
+
+    OSSL_LIST_FOREACH(h, tdc, &tdc_alloc_list)
+    {
+        unsigned char *p = (unsigned char *)&h[1];
+        size_t i;
+
+        for (i = 0; i + plen <= h->size; ++i) {
+            if (memcmp(p + i, pat, plen) == 0) {
+                if (window != NULL && win > 0) {
+                    size_t n = h->size - i;
+
+                    if (n > win)
+                        n = win;
+                    memcpy(window, p + i, n);
+                }
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+static void tdc_inspect_before_free(void *ptr, size_t size)
+{
+    const unsigned char *p = ptr;
+    size_t i;
+
+    if (size < sizeof(tdc_expected8))
+        return;
+
+    for (i = 0; i + sizeof(tdc_expected8) <= size; ++i) {
+        if (memcmp(p + i, tdc_expected8, sizeof(tdc_expected8)) == 0) {
+            tdc_saw_remnant_on_free = 1;
+            return;
+        }
+    }
+}
+
+static void tdc_free(void *ptr, const char *file, int line)
+{
+    TDC_ALLOC_HDR *h = (TDC_ALLOC_HDR *)ptr;
+
+    if (ptr == NULL)
+        return;
+    h = &h[-1];
+    if (tdc_watch_free)
+        tdc_inspect_before_free(ptr, h->size);
+
+    ossl_list_tdc_remove(&tdc_alloc_list, h);
+
+    free_save(h, file, line);
+}
+
+static void *tdc_realloc(void *ptr, size_t sz, const char *file, int line)
+{
+    TDC_ALLOC_HDR *h, *nh;
+
+    if (ptr == NULL)
+        return tdc_malloc(sz, file, line);
+
+    if (sz == 0) {
+        tdc_free(ptr, file, line);
+        return NULL;
+    }
+
+    h = (TDC_ALLOC_HDR *)ptr;
+    h = &h[-1];
+
+    ossl_list_tdc_remove(&tdc_alloc_list, h);
+    nh = realloc(h, sizeof(*nh) + sz);
+    if (nh == NULL) {
+        ossl_list_tdc_insert_head(&tdc_alloc_list, h);
+        return NULL;
+    }
+    ossl_list_tdc_insert_head(&tdc_alloc_list, nh);
+
+    if (sz > nh->size)
+        memset((unsigned char *)&nh[1] + nh->size, 0, sz - nh->size);
+    nh->size = sz;
+
+    return &nh[1];
+}
+
+static int test_dstorage_cleanse(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    OSSL_QRX_PKT *pkts[FILLERS + 2];
+    unsigned char fill = 0xFF;
+    unsigned char src[TDC_EXPECTED16_SZ];
+    unsigned char buf[TDC_EXPECTED16_SZ];
+    unsigned char zero_buf[TDC_EXPECTED16_SZ] = { 0 };
+    const unsigned char expected16[TDC_EXPECTED16_SZ + 1] = "ABCDEFGHIJKLMNOP";
+    const unsigned char doubled[TDC_EXPECTED16_SZ + 1] = "IJKLMNOPIJKLMNOP";
+    unsigned char window[TDC_EXPECTED16_SZ * 2];
+    size_t i, npkts = 0, readbytes = 0;
+    int fin = 0, ok = 0;
+    int found_after_insert = 0, found_after_partial = 0;
+
+    if (sizeof(void *) != 8) {
+        TEST_info("%s is implemented for 64-bit platforms only", OPENSSL_FUNC);
+        return 1;
+    }
+
+    malloc_save = NULL;
+    free_save = NULL;
+    realloc_save = NULL;
+    CRYPTO_get_mem_functions(&malloc_save, &realloc_save, &free_save);
+    ok = CRYPTO_set_mem_functions(tdc_malloc, tdc_realloc, tdc_free);
+    if (!TEST_true(ok))
+        goto err;
+    ok = 0;
+
+    memcpy(src, expected16, sizeof(src));
+
+    ossl_list_tdc_init(&tdc_alloc_list);
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL))))
+        return 0;
+
+    if (!TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch)))
+        goto err;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    ossl_quic_rstream_set_cleanse(rstream, 1);
+
+    for (i = 0; i < FILLERS + 2; i++) {
+        pkts[i] = pkt_test_new(1200);
+        if (!TEST_ptr(pkts[i]))
+            goto err;
+        npkts++;
+    }
+
+    /*
+     * Disjoint 1-byte frames on 1200-byte datagrams push packet overhead
+     * past 64 KiB so the subsequent 16-byte frame takes ST_TYPE_DIRECT.
+     * Offsets 100, 102, ... keep them away from the [0, 16) range.
+     */
+    for (i = 0; i < FILLERS; i++) {
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[i],
+                100 + 2 * i, &fill, 1, 0)))
+            goto err;
+    }
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            FILLERS))
+        goto err;
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+            FILLERS))
+        goto err;
+
+    /*
+     * write 16 bytes to offset zero. those bytes are going to be
+     * copied to direct storage.
+     */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[FILLERS],
+            0, src, 16, 0)))
+        goto err;
+
+    /*
+     * reference to packet must not increase to 2 when data are moved to stream
+     * buffer/direct storage.
+     */
+    if (!TEST_size_t_eq(pkt_test_refcount(pkts[FILLERS]), 1))
+        goto err;
+
+    memset(window, 0, sizeof(window));
+    found_after_insert = tdc_find_pattern(expected16, TDC_EXPECTED16_SZ,
+        window, sizeof(window));
+    if (!TEST_true(found_after_insert))
+        goto err;
+
+    /*
+     * source buffer must be zeroed after chunk is added to stream.
+     */
+    if (!TEST_mem_eq(src, TDC_EXPECTED16_SZ, zero_buf, TDC_EXPECTED16_SZ))
+        goto err;
+
+    /*
+     * read first 8 bytes, those will be overwritten by 0.
+     * memmove() should overwrite ABCDEFGH, by IJKLMNOP.
+     */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 8, &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_size_t_eq(readbytes, 8))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    if (!TEST_mem_eq(buf, 8, expected16, 8))
+        goto err;
+
+    /*
+     * check the pattern was moved, there is nothing like
+     * IJKLMNOPIJKLMNOP
+     */
+    memset(window, 0, sizeof(window));
+    found_after_partial = tdc_find_pattern(doubled, sizeof(doubled),
+        window, sizeof(window));
+    if (!TEST_false(found_after_partial))
+        goto err;
+
+    /*
+     * read next 8 bytes, and check it got zeroed.
+     */
+    tdc_watch_free = 1;
+    tdc_saw_remnant_on_free = 0;
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, 8, &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_size_t_eq(readbytes, 8))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    if (!TEST_mem_eq(buf, TDC_EXPECTED8_SZ, tdc_expected8, TDC_EXPECTED8_SZ))
+        goto err;
+    tdc_watch_free = 0;
+
+    if (!TEST_false(found_after_partial || tdc_saw_remnant_on_free))
+        goto err;
+
+    ok = 1;
+err:
+    tdc_watch_free = 0;
+
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+
+    for (i = 0; i < npkts; ++i)
+        pkt_test_free(pkts[i]);
+
+    ossl_quic_channel_free(ch);
+
+    CRYPTO_set_mem_functions(malloc_save, realloc_save, free_save);
+
+    return ok;
+}
+
+typedef struct tho_alloc_hdr_st {
+    size_t size;
+    const char *file;
+    int from_reas;
+    OSSL_LIST_MEMBER(tho, struct tho_alloc_hdr_st);
+} THO_ALLOC_HDR;
+
+DEFINE_LIST_OF(tho, THO_ALLOC_HDR);
+
+#define THO_FRAME_LEN 1024
+#define THO_N_SLIDES 256
+
+static size_t tho_reas_live, tho_reas_peak;
+static size_t tho_heap1024_live, tho_heap1024_peak, tho_heap1024_total;
+static int tho_tracking;
+
+static OSSL_LIST(tho)
+    tho_alloc_list;
+
+static int tho_from_reas_file(const char *file)
+{
+    return file != NULL && strstr(file, "quic_strm_reas.c") != NULL;
+}
+
+static void *tho_malloc(size_t sz, const char *file, int line)
+{
+    THO_ALLOC_HDR *h;
+    void *p;
+
+    if (sz == 0)
+        return NULL;
+
+    h = malloc_save(sizeof(*h) + sz, file, line);
+    if (h == NULL)
+        return NULL;
+
+    h->size = sz;
+    h->file = file;
+    h->from_reas = tho_tracking && tho_from_reas_file(file);
+    ossl_list_tho_init_elem(h);
+
+    p = &h[1];
+    memset(p, 0, sz);
+
+    if (h->from_reas) {
+        ossl_list_tho_insert_head(&tho_alloc_list, h);
+        tho_reas_live += sz;
+        if (tho_reas_live > tho_reas_peak)
+            tho_reas_peak = tho_reas_live;
+        if (sz == THO_FRAME_LEN) {
+            tho_heap1024_live++;
+            tho_heap1024_total++;
+            if (tho_heap1024_live > tho_heap1024_peak)
+                tho_heap1024_peak = tho_heap1024_live;
+        }
+    }
+
+    return p;
+}
+
+static void tho_free(void *ptr, const char *file, int line)
+{
+    THO_ALLOC_HDR *h = (THO_ALLOC_HDR *)ptr;
+
+    if (ptr == NULL)
+        return;
+
+    h = &h[-1];
+    if (h->from_reas) {
+        ossl_list_tho_remove(&tho_alloc_list, h);
+        tho_reas_live -= h->size;
+        if (h->size == THO_FRAME_LEN && tho_heap1024_live > 0)
+            tho_heap1024_live--;
+    }
+
+    free_save(h, file, line);
+}
+
+static void *tho_realloc(void *ptr, size_t sz, const char *file, int line)
+{
+    THO_ALLOC_HDR *h, *nh;
+    size_t old_sz;
+    void *p;
+
+    if (ptr == NULL)
+        return tho_malloc(sz, file, line);
+
+    if (sz == 0) {
+        tho_free(ptr, file, line);
+        return NULL;
+    }
+
+    h = (THO_ALLOC_HDR *)ptr;
+    h = &h[-1];
+    old_sz = h->size;
+
+    if (h->from_reas)
+        ossl_list_tho_remove(&tho_alloc_list, h);
+
+    nh = realloc_save(h, sizeof(*nh) + sz, file, line);
+    if (nh == NULL) {
+        if (h->from_reas)
+            ossl_list_tho_insert_head(&tho_alloc_list, h);
+        return NULL;
+    }
+
+    if (nh->from_reas) {
+        ossl_list_tho_insert_head(&tho_alloc_list, nh);
+        tho_reas_live -= old_sz;
+        tho_reas_live += sz;
+        if (tho_reas_live > tho_reas_peak)
+            tho_reas_peak = tho_reas_live;
+        if (old_sz == THO_FRAME_LEN && tho_heap1024_live > 0)
+            tho_heap1024_live--;
+        if (sz == THO_FRAME_LEN) {
+            tho_heap1024_live++;
+            if (tho_heap1024_live > tho_heap1024_peak)
+                tho_heap1024_peak = tho_heap1024_live;
+        }
+    }
+
+    p = &nh[1];
+    if (sz > old_sz)
+        memset((unsigned char *)p + old_sz, 0, sz - old_sz);
+
+    return p;
+}
+
+static int test_heap_overlap(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    unsigned char *data = NULL, *buf = NULL;
+    OSSL_QRX_PKT *pkts[THO_N_SLIDES + 1] = { 0 };
+    OSSL_QRX_PKT *gap = NULL;
+    /* byte 0, then [1, 1025), last slide ends at 1 + FRAME_LEN + N_SLIDES */
+    const size_t data_span = 1 + THO_FRAME_LEN + THO_N_SLIDES;
+    size_t i, npkts = 0, readbytes = 0;
+    int fin = 0, ok = 0;
+    size_t first_heap_at = 0;
+
+    malloc_save = NULL;
+    free_save = NULL;
+    realloc_save = NULL;
+    CRYPTO_get_mem_functions(&malloc_save, &realloc_save, &free_save);
+    if (!CRYPTO_set_mem_functions(tho_malloc, tho_realloc, tho_free)) {
+        return 0;
+    }
+
+    ossl_list_tho_init(&tho_alloc_list);
+
+    data = OPENSSL_malloc(data_span);
+    if (!TEST_ptr(data))
+        goto err;
+
+    buf = OPENSSL_malloc(data_span);
+    if (!TEST_ptr(buf))
+        goto err;
+
+    ch = OPENSSL_zalloc(sizeof(*ch));
+    if (!TEST_ptr(ch))
+        goto err;
+
+    rsqp = ossl_quic_rstream_qparm_new(ch);
+    if (!TEST_ptr(rsqp))
+        goto err;
+
+    tho_tracking = 1;
+
+    rstream = ossl_quic_rstream_new(NULL, NULL, rsqp);
+    if (!TEST_ptr(rstream))
+        goto err;
+
+    pkts[npkts] = pkt_test_new(1200);
+    if (!TEST_ptr(pkts[npkts]))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[npkts], 1,
+            &data[1], THO_FRAME_LEN, 0)))
+        goto err;
+    npkts++;
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
+        goto err;
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 1))
+        goto err;
+
+    for (i = 0; i < THO_N_SLIDES; i++) {
+        uint64_t off = 2 + i;
+
+        pkts[npkts] = pkt_test_new(1200);
+        if (!TEST_ptr(pkts[npkts]))
+            goto err;
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkts[npkts], off,
+                data + off, THO_FRAME_LEN, 0)))
+            goto err;
+        npkts++;
+
+        if (first_heap_at == 0 && tho_heap1024_live > 0)
+            first_heap_at = i + 1;
+    }
+
+    if (!TEST_size_t_lt(tho_heap1024_peak, 8)
+        || !TEST_size_t_le(tho_heap1024_live * THO_FRAME_LEN,
+            (THO_FRAME_LEN + THO_N_SLIDES) * 4))
+        goto err;
+
+    gap = pkt_test_new(1200);
+    if (!TEST_ptr(gap))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, gap, 0, data, 1, 0)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, data_span, &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_size_t_eq(readbytes, data_span))
+        goto err;
+
+    if (!TEST_false(fin))
+        goto err;
+
+    if (!TEST_mem_eq(buf, readbytes, data, data_span))
+        goto err;
+
+    ok = 1;
+err:
+
+    pkt_test_free(gap);
+
+    for (i = 0; i < npkts; i++)
+        pkt_test_free(pkts[i]);
+
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+    OPENSSL_free(buf);
+    OPENSSL_free(data);
+    CRYPTO_set_mem_functions(malloc_save, realloc_save, free_save);
+
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
@@ -2886,6 +3425,8 @@ int setup_tests(void)
     ADD_TEST(test_final_size_violation_fin_first);
     ADD_TEST(test_final_size_violation_data_first);
     ADD_TEST(test_trim_right);
+    ADD_TEST(test_dstorage_cleanse);
+    ADD_TEST(test_heap_overlap);
 
     return 1;
 }
