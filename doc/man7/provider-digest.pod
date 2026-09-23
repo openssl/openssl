@@ -325,7 +325,7 @@ L<life_cycle-digest(7)>, L<EVP_DigestInit(3)>
 
 The provider DIGEST interface was introduced in OpenSSL 3.0.
 OSSL_FUNC_digest_copyctx() was added in 3.5 version.
-The "fips-indicator" context parameter was added in OpenSSL 4.2.
+The "fips-indicator" context parameter was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
