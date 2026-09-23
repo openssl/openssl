@@ -5525,24 +5525,25 @@ static int test_dtls_blocking_mode(void)
         goto end;
 
     /*
-     * being_driven has to survive a clear as well, for a different reason: it
-     * records that the listener is driving this connection's handshake, and is
-     * what stops a concurrent tick collecting the same connection a second
-     * time. The listener can reach SSL_clear() from inside the very
-     * SSL_accept() it is driving, so losing it there would admit a second
-     * thread to the state machine for this connection.
+     * The listener drive flags have to survive a clear as well. They record
+     * that the listener is driving this connection's handshake and that it
+     * must not block. The listener can reach SSL_clear() from inside the very
+     * SSL_accept() it is driving, so losing them there would admit a second
+     * thread to the state machine or stall the listener.
      *
-     * It has to be set by hand, being held only for the duration of a call
+     * They have to be set by hand, being held only for the duration of a call
      * inside the listener's tick, which is not observable from out here.
      */
     if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl)))
         goto end;
-    sc->d1->being_driven = 1;
+    sc->listener_being_driven = 1;
+    sc->listener_force_nonblocking = 1;
 
     if (!TEST_true(SSL_clear(serverssl))
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
         || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_int_eq(sc->d1->being_driven, 1))
+        || !TEST_int_eq(sc->listener_being_driven, 1)
+        || !TEST_int_eq(sc->listener_force_nonblocking, 1))
         goto end;
 
     /*
@@ -5554,10 +5555,12 @@ static int test_dtls_blocking_mode(void)
     if (!TEST_true(SSL_clear(serverssl))
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
         || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_int_eq(sc->d1->being_driven, 1))
+        || !TEST_int_eq(sc->listener_being_driven, 1)
+        || !TEST_int_eq(sc->listener_force_nonblocking, 1))
         goto end;
 
-    sc->d1->being_driven = 0;
+    sc->listener_being_driven = 0;
+    sc->listener_force_nonblocking = 0;
 
     /* And back the other way round. */
     if (!TEST_true(SSL_set_blocking_mode(listener, 1))
