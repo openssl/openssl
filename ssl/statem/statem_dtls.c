@@ -193,8 +193,8 @@ static int dtls1_write_hm_header(unsigned char *msgheaderstart,
 }
 
 /*
- * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
- * SSL3_RT_CHANGE_CIPHER_SPEC)
+ * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE,
+ * SSL3_RT_CHANGE_CIPHER_SPEC or SSL3_RT_ACK)
  *
  * When sending a fragmented handshake message this function will re-use
  * s->init_buf->data but overwrite previously sent data to fill out the handshake
@@ -221,6 +221,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
     const size_t msg_len = s->d1->w_msg.msg_body_len;
     const unsigned short msg_seq = s->d1->w_msg.msg_seq;
     const unsigned char msg_type = s->d1->w_msg.msg_type;
+    const size_t min_len = recordtype == SSL3_RT_ACK ? 18 : DTLS1_HM_HEADER_LENGTH + 1;
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -272,7 +273,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
         else
             curr_mtu = 0;
 
-        if (curr_mtu <= DTLS1_HM_HEADER_LENGTH) {
+        if (curr_mtu < min_len) {
             /*
              * grr.. we could get an error if MTU picked was wrong
              */
@@ -281,7 +282,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                 s->rwstate = SSL_WRITING;
                 return ret;
             }
-            if (s->d1->mtu > overhead + DTLS1_HM_HEADER_LENGTH) {
+            if (s->d1->mtu >= overhead + min_len) {
                 curr_mtu = s->d1->mtu - overhead;
             } else {
                 /* Shouldn't happen */
@@ -305,6 +306,15 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
             s->rlayer.wrlmethod->set_curr_mtu(s->rlayer.wrl, curr_mtu);
 
         msgstart = (unsigned char *)&s->init_buf->data[s->init_off];
+
+        if (recordtype == SSL3_RT_ACK) {
+            /* Each record needs a complete vector of 16-byte record numbers. */
+            if (!ossl_assert(len >= 2))
+                return -1;
+            len = 2 + ((len - 2) / 16) * 16;
+            msgstart[0] = (unsigned char)((len - 2) >> 8);
+            msgstart[1] = (unsigned char)(len - 2);
+        }
 
         if (recordtype == SSL3_RT_HANDSHAKE) {
             const size_t fragoff = s->init_off;
@@ -407,8 +417,12 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                     if (!ssl3_finish_mac(s, msgstart, xlen))
                         return -1;
             }
+            if (recordtype == SSL3_RT_ACK && s->msg_callback != NULL)
+                s->msg_callback(1, s->version, recordtype, msgstart, written,
+                    ussl, s->msg_callback_arg);
+
             if (written == s->init_num) {
-                if (s->msg_callback)
+                if (s->msg_callback && recordtype != SSL3_RT_ACK)
                     s->msg_callback(1, s->version, recordtype, s->init_buf->data,
                         s->init_off + s->init_num, ussl,
                         s->msg_callback_arg);
@@ -418,6 +432,9 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
 
                 return 1;
             }
+            /* Reuse the last two sent bytes for the next ACK vector length. */
+            if (recordtype == SSL3_RT_ACK)
+                written -= 2;
             s->init_off += written;
             s->init_num -= written;
             written -= DTLS1_HM_HEADER_LENGTH;
@@ -569,6 +586,15 @@ static int add_record_to_ack_list(SSL_CONNECTION *sc)
     DTLS1_RECORD_NUMBER *recnum;
     uint64_t epoch = sc->s3.tmp.record_epoch;
     uint64_t sequence = sc->s3.tmp.record_seq_num;
+
+    /*
+     * Retain at most one maximum-sized ACK record's worth of record numbers.
+     * Check before the duplicate scan to bound the work once the list is full.
+     * Excess records may be omitted from ACKs (RFC 9147, section 7.1).
+     */
+    if (ossl_list_record_number_num(&sc->d1->ack_rec_num)
+        >= (SSL3_RT_MAX_PLAIN_LENGTH - 2) / 16)
+        return 1;
 
     for (recnum = ossl_list_record_number_head(&sc->d1->ack_rec_num);
         recnum != NULL;
