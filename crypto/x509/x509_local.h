@@ -127,10 +127,9 @@ struct x509_lookup_st {
     X509_STORE *store_ctx; /* who owns us */
 };
 
-HT_START_KEY_DEFN(objs_key)
-HT_DEF_KEY_FIELD(xn_canon, unsigned char *)
-HT_DEF_KEY_FIELD(xn_canon_enclen, int)
-HT_END_KEY_DEFN(OBJS_KEY)
+typedef struct {
+    HT_KEY key_header;
+} OBJS_KEY;
 
 /*
  * This is used to hold everything.  It is used for all certificate
