@@ -13,7 +13,6 @@
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "internal/constant_time.h"
-#include "internal/ssl3_cbc.h"
 #include "ciphercommon_local.h"
 
 /*-
