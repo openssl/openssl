@@ -432,6 +432,19 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
     }
 
     /*
+     * Resume a write we held back because our own KeyUpdate was still
+     * unacknowledged (see the TLS_ST_CR_SESSION_TICKET/TLS_ST_CR_KEY_UPDATE/
+     * TLS_ST_CR_CERT_REQ cases below). Once that ACK has arrived, fall
+     * through into the switch below as if we were still at the deferred
+     * read state, so it can now proceed to construct that response.
+     */
+    if (st->deferred_key_update_state != TLS_ST_BEFORE
+        && !dtls_has_unacked_key_update(s)) {
+        st->hand_state = st->deferred_key_update_state;
+        st->deferred_key_update_state = TLS_ST_BEFORE;
+    }
+
+    /*
      * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
      * TLSv1.3 yet at that point. They are handled by
      * ossl_statem_client_write_transition().
@@ -444,6 +457,16 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_CR_CERT_REQ:
         if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
+            if (SSL_CONNECTION_IS_DTLS13(s) && dtls_has_unacked_key_update(s)) {
+                /*
+                 * RFC 9147 section 8: our own KeyUpdate's new keys must not
+                 * be used for anything else until it is acknowledged. Hold
+                 * this response back rather than send it now.
+                 */
+                st->deferred_key_update_state = st->hand_state;
+                st->hand_state = TLS_ST_CW_KEY_UPDATE;
+                return WRITE_TRAN_FINISHED;
+            }
             if (do_compressed_cert(s))
                 st->hand_state = TLS_ST_CW_COMP_CERT;
             else
@@ -520,6 +543,16 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
     case TLS_ST_CR_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
         if (SSL_CONNECTION_IS_DTLS13(s)) {
+            if (dtls_has_unacked_key_update(s)) {
+                /*
+                 * RFC 9147 section 8: our own KeyUpdate's new keys must not
+                 * be used for anything else until it is acknowledged. Hold
+                 * this ACK back rather than send it now.
+                 */
+                st->deferred_key_update_state = st->hand_state;
+                st->hand_state = TLS_ST_CW_KEY_UPDATE;
+                return WRITE_TRAN_FINISHED;
+            }
             st->hand_state = TLS_ST_CW_ACK;
             return WRITE_TRAN_CONTINUE;
         }
