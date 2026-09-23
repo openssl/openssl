@@ -86,6 +86,7 @@ static OSSL_PROVIDER *prov_null = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
 static int fips_indicator_callback_unapproved_count = 0;
+static int missing_fips_indicator_is_approved = 0;
 static int extended_tests = 0;
 
 /* List of public and private keys */
@@ -144,7 +145,7 @@ static int check_fips_approved(EVP_TEST *t, int approved)
 static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 0;
+    int approved = missing_fips_indicator_is_approved;
     const OSSL_PARAM *gettables = EVP_MAC_CTX_gettable_params(ctx);
 
     if (gettables == NULL
@@ -164,7 +165,7 @@ static int mac_check_fips_approved(EVP_MAC_CTX *ctx, EVP_TEST *t)
 static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 0;
+    int approved = missing_fips_indicator_is_approved;
     const OSSL_PARAM *gettables = EVP_PKEY_CTX_gettable_params(ctx);
 
     if (gettables == NULL
@@ -184,7 +185,7 @@ static int pkey_check_fips_approved(EVP_PKEY_CTX *ctx, EVP_TEST *t)
 static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 0;
+    int approved = missing_fips_indicator_is_approved;
     const OSSL_PARAM *gettables = EVP_RAND_CTX_gettable_params(ctx);
 
     if (gettables == NULL
@@ -204,7 +205,7 @@ static int rand_check_fips_approved(EVP_RAND_CTX *ctx, EVP_TEST *t)
 static int digest_check_fips_approved(EVP_MD_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 0;
+    int approved = missing_fips_indicator_is_approved;
     const OSSL_PARAM *gettables = EVP_MD_CTX_gettable_params(ctx);
 
     if (gettables == NULL
@@ -319,7 +320,7 @@ static void ctrl2params_free(OSSL_PARAM params[],
 static int kdf_check_fips_approved(EVP_KDF_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 0;
+    int approved = missing_fips_indicator_is_approved;
     const OSSL_PARAM *gettables = EVP_KDF_CTX_gettable_params(ctx);
 
     if (gettables == NULL
@@ -339,7 +340,7 @@ static int kdf_check_fips_approved(EVP_KDF_CTX *ctx, EVP_TEST *t)
 static int cipher_check_fips_approved(EVP_CIPHER_CTX *ctx, EVP_TEST *t)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 0;
+    int approved = missing_fips_indicator_is_approved;
     const OSSL_PARAM *gettables = EVP_CIPHER_CTX_gettable_params(ctx);
 
     if (gettables == NULL
@@ -5475,6 +5476,10 @@ int setup_tests(void)
         provider_name = "default";
     if (!test_get_libctx(&libctx, &prov_null, config_file, &libprov, provider_name))
         return 0;
+
+    /* FIPS providers before 3.5 treated a missing indicator as approved. */
+    missing_fips_indicator_is_approved = OSSL_PROVIDER_available(libctx, "fips")
+        && fips_provider_version_lt(libctx, 3, 5, 0);
 
     n = test_get_argument_count();
     if (n == 0)
