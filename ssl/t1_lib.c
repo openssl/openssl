@@ -1808,13 +1808,8 @@ int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
 void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     size_t *num_formats)
 {
-    /*
-     * If we have a custom point format list use it otherwise use default
-     */
-    if (s->ext.ecpointformats) {
-        *pformats = s->ext.ecpointformats;
-        *num_formats = s->ext.ecpointformats_len;
-    } else if ((s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) != 0) {
+    /* Advertise only uncompressed unless legacy formats are enabled */
+    if ((s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) != 0) {
         *pformats = ecformats_all;
         /* For Suite B we don't support char2 fields */
         if (tls1_suiteb(s))
