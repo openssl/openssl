@@ -23,9 +23,9 @@
  * The even-modulus reciprocal remaindering (RECP_MUL_MOD) is a placeholder,
  * left for future implementations.
  *
- * Both the runtime dispatcher (OSSL_FN_mod_exp) and the sizing dispatcher
- * (OSSL_FN_mod_exp_ctx_size) guard against these, so the two always agree on
- * which path a given modulus selects.
+ * The runtime dispatcher (OSSL_FN_mod_exp) guards against these; the sizing
+ * companion (OSSL_FN_mod_exp_ctx_size) budgets the largest implemented path
+ * instead, so it stays width-only.
  */
 #define MONT_MUL_MOD
 #undef RECP_MUL_MOD
@@ -342,8 +342,17 @@ static size_t ossl_fn_mod_exp_recp_ctx_size(const OSSL_FN *r,
 
 /*-
  * OSSL_FN_mod_exp_ctx_size() -- arena sizing for OSSL_FN_mod_exp().
- * Dispatches on the modulus parity, exactly like OSSL_FN_mod_exp(), so the
- * two always agree on which path a given modulus selects.
+ * Budgets the largest implemented path rather than reading the modulus'
+ * parity, keeping this companion width-only (see include/crypto/fn.h);
+ * the runtime dispatcher still picks the path.  When another path is
+ * wired in, add its ctx_size to the max() below.
+ *
+ * The over-budget is modest; limbs budgeted per path, 2048-bit modulus
+ * and exponent, 64-bit limbs (ml = 32):
+ *
+ *      mont, asm5 (window 5)      ~1128
+ *      mont, non-asm (window 6)   ~2120
+ *      simple                     ~1088
  */
 size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m)
@@ -352,18 +361,10 @@ size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
         return 0;
 
 #ifdef MONT_MUL_MOD
-    if (m->dsize > 0 && (m->d[0] & OSSL_FN_ULONG_C(1)))
-        return OSSL_FN_mod_exp_mont_ctx_size(r, a, p, m, NULL);
-    else
-#endif
-#ifdef RECP_MUL_MOD
-    {
-        return ossl_fn_mod_exp_recp_ctx_size(r, a, p, m);
-    }
+    return ossl_fn_ctx_max_size(OSSL_FN_mod_exp_mont_ctx_size(r, a, p, m, NULL),
+        OSSL_FN_mod_exp_simple_ctx_size(r, a, p, m));
 #else
-    {
-        return OSSL_FN_mod_exp_simple_ctx_size(r, a, p, m);
-    }
+    return OSSL_FN_mod_exp_simple_ctx_size(r, a, p, m);
 #endif
 }
 
