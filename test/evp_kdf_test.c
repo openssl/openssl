@@ -1988,6 +1988,35 @@ static int test_kdf_ss_kmac(void)
 }
 #endif /* OPENSSL_NO_SSKDF */
 
+#ifndef OPENSSL_NO_SRTPKDF
+static int test_kdf_srtpkdf_size(void)
+{
+    int ret = 0;
+    size_t size = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM get_params[2], set_params[2];
+
+    get_params[0] = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &size);
+    get_params[1] = OSSL_PARAM_construct_end();
+    set_params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        "AES-128-CTR", 0);
+    set_params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SRTPKDF))
+        || !TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 0)
+        || !TEST_false(EVP_KDF_CTX_get_params(kctx, get_params))
+        || !TEST_true(EVP_KDF_CTX_set_params(kctx, set_params))
+        || !TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 16))
+        goto err;
+
+    EVP_KDF_CTX_reset(kctx);
+    ret = TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 0);
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_SRTPKDF */
+
 #ifndef OPENSSL_NO_SSHKDF
 static int test_kdf_sshkdf(void)
 {
@@ -2476,6 +2505,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ss_hash);
     ADD_TEST(test_kdf_ss_hmac);
     ADD_TEST(test_kdf_ss_kmac);
+#endif
+#ifndef OPENSSL_NO_SRTPKDF
+    ADD_TEST(test_kdf_srtpkdf_size);
 #endif
 #ifndef OPENSSL_NO_SSHKDF
     ADD_TEST(test_kdf_sshkdf);
