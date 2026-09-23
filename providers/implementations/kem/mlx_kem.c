@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
@@ -16,11 +17,14 @@
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "prov/implementations.h"
-#include "prov/names.h"
 #include "prov/mlx_kem.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#ifdef FIPS_MODULE
+#include "internal/cryptlib.h"
+#include "prov/names.h"
 #include "providers/implementations/kem/mlx_kem.inc"
+#endif
 
 static OSSL_FUNC_kem_newctx_fn mlx_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn mlx_kem_freectx;
