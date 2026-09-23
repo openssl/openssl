@@ -121,6 +121,8 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE deferred_ack_state;
     /* The handshake state before receiving an ACK */
     OSSL_HANDSHAKE_STATE pre_ack_hand_state;
+    /* The handshake state to resume once our own KeyUpdate is acknowledged */
+    OSSL_HANDSHAKE_STATE deferred_key_update_state;
     ERROR_STATE error_state;
     int in_init;
     int read_state_first_init;
