@@ -82,14 +82,17 @@ are identical. The string types and content are compared.
 ASN1_STRING_set() allocates memory for string I<str> to hold I<len>
 bytes of data. Any previously allocated memory owned by I<str> will be
 freed or re-used.  If I<data> is not NULL, I<len> bytes are copied
-from the memory pointed to by I<data> to I<str>. If I<len> is -1 then
-the length is determined by strlen(data).
+from the memory pointed to by I<data> to I<str>. If I<len> is -1,
+then the length is determined by strlen(data).  As an implementation detail,
+ASN1_STRING_set() appends a NUL byte after the data copied into I<str>.
 
 ASN1_STRING_set1_data() allocates memory for string I<str> to hold
 I<len> bytes of data. Any previously allocated memory owned by I<str>
 will be freed or re-used.  If I<data> is not NULL, I<len> bytes are
 copied from the memory pointed to by I<data> to I<str>. It is an error
 to use this function on a string of type B<ASN1_BIT_STRING>.
+Contrary to ASN1_STRING_set(), ASN1_STRING_set1_data() does not append a NUL
+byte to the data copied into I<str>.
 
 ASN1_STRING_set1_string() allocates memory for the string I<str> and makes
 a copy of the characters from I<cstring>. Any previously
@@ -97,7 +100,8 @@ allocated memory owned by I<str> will be freed or re-used.  I<cstring>
 must point to a valid NUL-terminated C string, and must not be
 NULL. The terminating NUL byte is not included in the data copied into
 I<str>.  It is an error to use this function on a string of type
-B<ASN1_BIT_STRING>.
+B<ASN1_BIT_STRING>.  ASN1_STRING_set1_string() does not append a NUL
+byte to the data copied into I<str>.
 
 ASN1_STRING_set0() sets the content of the string I<str> to I<data>
 of I<len> bytes in size;  the ownership of I<data> is assumed
