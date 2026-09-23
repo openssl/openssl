@@ -16,6 +16,13 @@
 #include "internal/refcount.h"
 #include "crypto/ecx.h"
 
+/* Wrap output includes a full block after rounding up the input. */
+static ossl_inline size_t ossl_cipher_wrap_output_size(size_t inlen,
+    size_t blocksize)
+{
+    return ((inlen + blocksize - 1) / blocksize + 1) * blocksize;
+}
+
 /*
  * Default PKCS5 PBE KDF salt lengths
  * In RFC 8018, PBE1 uses 8 bytes (64 bits) for its salt length.
