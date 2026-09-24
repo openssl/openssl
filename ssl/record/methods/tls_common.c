@@ -2326,5 +2326,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     NULL,
     NULL,
     tls_alloc_buffers,
-    tls_free_buffers
+    tls_free_buffers,
+    NULL /* set_prev_epoch_rl: DTLS only */
 };
