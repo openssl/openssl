@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -37,13 +37,16 @@ PrivPubKeyPair = P-256:P-256-PUBLIC
 
 Title = ECDSA tests
 
+FIPSversion = >=3.5.0
 Verify = P-256-PUBLIC
+Unapproved = 1
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Output = 3045022100b1d1cb1a577035bccdd5a86c6148c2cc7c633cd42b7234139b593076d041e15202201898cdd52b41ca502098184b409cf83a21bc945006746e3b7cea52234e043ec8
 
 FIPSversion = >=3.6.0
 Verify = P-256-PUBLIC
+Unapproved = 1
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Output = 3045022100b1d1cb1a577035bccdd5a86c6148c2cc7c633cd42b7234139b593076d041e15202201898cdd52b41ca502098184b409cf83a21bc945006746e3b7cea52234e043ec8
@@ -92,7 +95,9 @@ Input = "0123456789ABCDEF1234"
 Output = 3080022100b1d1cb1a577035bccdd5a86c6148c2cc7c633cd42b7234139b593076d041e15202201898cdd52b41ca502098184b409cf83a21bc945006746e3b7cea52234e043ec80000
 Result = VERIFY_ERROR
 
+FIPSversion = >=3.5.0
 Verify = P-256-PUBLIC
+Unapproved = 1
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Output = 3045022100b1d1cb1a577035bccdd5a86c6148c2cc7c633cd42b7234139b593076d041e15202201898cdd52b41ca502098184b409cf83a21bc945006746e3b7cea52234e043ec8
