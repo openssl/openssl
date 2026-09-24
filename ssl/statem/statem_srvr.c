@@ -770,7 +770,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
                      * now; deferred_ack_state above still says where to go
                      * once it is finally sent.
                      */
-                    st->deferred_key_update_state = TLS_ST_SW_ACK;
+                    st->deferred_key_update_state = st->hand_state;
                     st->hand_state = TLS_ST_SW_KEY_UPDATE;
                     return WRITE_TRAN_FINISHED;
                 }
@@ -829,7 +829,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
                  * this ACK back rather than send it now; deferred_ack_state
                  * above still says where to go once it is finally sent.
                  */
-                st->deferred_key_update_state = TLS_ST_SW_ACK;
+                st->deferred_key_update_state = st->hand_state;
                 st->hand_state = TLS_ST_SW_KEY_UPDATE;
                 return WRITE_TRAN_FINISHED;
             }
