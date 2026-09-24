@@ -147,7 +147,7 @@ redo:
         OSSL_FN *fn_blind = NULL, *fn_blindm = NULL, *fn_tmp = NULL;
         OSSL_FN_CTX *fn_ctx = NULL;
         const void *token = NULL;
-        size_t fn_size, mod_mul_size, mod_exp_size;
+        size_t fn_size, mod_mul_size, mod_inv_size;
         int qbits, qlimbs, fn_bits;
         int fn_ok = 0;
         /* bn_release() widths; full width until success is known */
@@ -181,11 +181,11 @@ redo:
          * largest single operation.  All operands are q-wide.
          */
         mod_mul_size = OSSL_FN_mod_mul_ctx_size(fn_tmp, fn_tmp, fn_r, fn_q);
-        mod_exp_size = OSSL_FN_mod_exp_mont_ctx_size(fn_blindm, fn_blind,
-            fn_tmp, fn_q, NULL);
-        if (mod_mul_size == 0 || mod_exp_size == 0)
+        mod_inv_size = OSSL_FN_mod_inverse_prime_ctx_size(fn_blindm,
+            fn_blind, fn_q, NULL);
+        if (mod_mul_size == 0 || mod_inv_size == 0)
             goto release;
-        fn_size = ((mod_mul_size > mod_exp_size) ? mod_mul_size : mod_exp_size)
+        fn_size = ((mod_mul_size > mod_inv_size) ? mod_mul_size : mod_inv_size)
             /* the body's own outer frame */
             + OSSL_FN_CTX_size(1, 0, 0);
         if (fn_size == 0)
@@ -227,18 +227,13 @@ redo:
             goto release;
 
         /*
-         * blindm := blind^-1 = blind^(q-2) mod q, via Fermat's little
-         * theorem and the constant-time modexp: q is prime and the
-         * exponent is public, while OSSL_FN_mod_inverse() is not
-         * constant-time w.r.t. its operand.  fn_tmp and fn_blindm are
-         * both dead after the addition above, so fn_tmp serves as the
-         * exponent scratch and fn_blindm as the result.
+         * blindm := blind^-1 mod q.  q is prime, so the constant-time
+         * Fermat inverse applies, with the public exponent derived from
+         * q internally; OSSL_FN_mod_inverse() is not constant-time
+         * w.r.t. its operand.
          */
-        if (OSSL_FN_copy_truncate(fn_tmp, fn_q) == NULL
-            || !OSSL_FN_sub_word(fn_tmp, 2))
-            goto release;
-        if (!OSSL_FN_mod_exp_mont(fn_blindm, fn_blind, fn_tmp, fn_q,
-                fn_ctx, NULL))
+        if (!OSSL_FN_mod_inverse_prime(fn_blindm, fn_blind, fn_q, fn_ctx,
+                NULL))
             goto release;
 
         /* s := s * blind^-1 mod q */
@@ -702,59 +697,41 @@ err:
 
 /*
  * Compute the inverse of k modulo q.
- * Since q is prime, Fermat's Little Theorem applies, which reduces this to
- * mod-exp operation.  Both the exponent and modulus are public information
- * so a mod-exp that doesn't leak the base is sufficient.  A newly allocated
- * BIGNUM is returned which the caller must free.
+ * Since q is prime, Fermat's Little Theorem applies, which
+ * OSSL_FN_mod_inverse_prime() exploits: the exponent it derives from q
+ * is public, so a mod-exp that doesn't leak the base is sufficient.
+ * A newly allocated BIGNUM is returned which the caller must free.
  */
 static BIGNUM *dsa_mod_inverse_fermat(const OSSL_FN *k, const BIGNUM *q,
     BN_CTX *ctx)
 {
     BIGNUM *res = NULL;
-    BIGNUM *r = NULL, *e;
+    BIGNUM *r = NULL;
     OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN_MONT_CTX *fn_mont = NULL;
     const OSSL_FN *fn_q = NULL;
-    OSSL_FN *fn_r = NULL, *fn_e = NULL;
+    OSSL_FN *fn_r = NULL;
     size_t fn_size;
     int qlimbs, fn_bits;
     int ok = 0;
-    /* bn_release() widths; full width until success is known */
-    int r_sz, e_sz;
+    /* bn_release() width; full width until success is known */
+    int r_sz;
 
     if ((fn_q = bn_get_ossl_fn(q)) == NULL)
         return NULL;
     qlimbs = (int)ossl_fn_get_dsize(fn_q);
-    r_sz = e_sz = qlimbs;
+    r_sz = qlimbs;
 
     if ((r = BN_new()) == NULL)
         return NULL;
 
-    BN_CTX_start(ctx);
-    if ((e = BN_CTX_get(ctx)) == NULL)
-        goto err;
-
     /*
-     * The exponent e = q - 2 is public; the base k is secret.  Acquire the
-     * writable results before the OSSL_FN_CTX sizing, which derives from
-     * their allocated widths.
+     * The base k is secret.  Acquire the writable result before the
+     * OSSL_FN_CTX sizing, which derives from its allocated width.
      */
-    if ((fn_r = bn_acquire_ossl_fn(r, qlimbs)) == NULL
-        || (fn_e = bn_acquire_ossl_fn(e, qlimbs)) == NULL)
+    if ((fn_r = bn_acquire_ossl_fn(r, qlimbs)) == NULL)
         goto err;
 
-    if (OSSL_FN_copy_truncate(fn_e, fn_q) == NULL
-        || !OSSL_FN_sub_word(fn_e, 2))
-        goto err;
-
-    /*
-     * The Montgomery context for q is local to this function, never the
-     * key's cached context for p.
-     */
-    if ((fn_mont = OSSL_FN_MONT_CTX_new(fn_q)) == NULL)
-        goto err;
-
-    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, k, fn_e, fn_q, fn_mont);
+    fn_size = OSSL_FN_mod_inverse_prime_ctx_size(fn_r, k, fn_q, NULL);
     if (fn_size == 0)
         goto err;
 
@@ -762,26 +739,17 @@ static BIGNUM *dsa_mod_inverse_fermat(const OSSL_FN *k, const BIGNUM *q,
     if (fn_ctx == NULL)
         goto err;
     /*
-     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_exp_mont_ctx_size()
+     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_inverse_prime_ctx_size()
      * budgets the callee's frames, not a caller frame.
      */
-    if (OSSL_FN_mod_exp_mont(fn_r, k, fn_e, fn_q, fn_ctx, fn_mont)) {
+    if (OSSL_FN_mod_inverse_prime(fn_r, k, fn_q, fn_ctx, NULL)) {
         fn_bits = (int)OSSL_FN_num_bits(fn_r);
         r_sz = fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1;
         ok = 1;
     }
 err:
-    /*
-     * e is a BN_CTX pool member, so its top must be restored on all
-     * paths before BN_CTX_end() returns it to the pool.  bn_release()
-     * is NULL-safe in the BIGNUM and its backing store, so acquisitions
-     * that never happened need no guards.
-     */
     bn_release(r, r_sz);
-    bn_release(e, e_sz);
     OSSL_FN_CTX_free(fn_ctx);
-    OSSL_FN_MONT_CTX_free(fn_mont);
-    BN_CTX_end(ctx);
     if (ok)
         res = r;
     else
