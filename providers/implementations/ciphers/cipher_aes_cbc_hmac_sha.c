@@ -48,6 +48,7 @@ static unsigned int tls1_aad_plaintext_len(const unsigned char *aad)
 {
     return ((unsigned int)aad[11] << 8) | aad[12];
 }
+
 #endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
 
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
@@ -134,19 +135,35 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        multiblock_aad_plaintext_len = tls1_aad_plaintext_len(p.mb_aad->data);
-        if (multiblock_aad_plaintext_len > SSL3_RT_MAX_PLAIN_LENGTH
-            || p.mb_aad->data_size
-                > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
+        if (p.mb_aadlen == NULL) {
+            /* Retain the original parameter interface. */
+            multiblock_aad_plaintext_len = tls1_aad_plaintext_len(p.mb_aad->data);
+            if (multiblock_aad_plaintext_len > SSL3_RT_MAX_PLAIN_LENGTH
+                || p.mb_aad->data_size
+                    > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+                return 0;
+            }
+            if (multiblock_aad_plaintext_len == 0)
+                multiblock_aad_plaintext_len = p.mb_aad->data_size;
+            mb_param.len = p.mb_aad->data_size;
+        } else {
+            if (p.mb_aad->data_size != EVP_AEAD_TLS1_AAD_LEN
+                || ((const unsigned char *)p.mb_aad->data)[11] != 0
+                || ((const unsigned char *)p.mb_aad->data)[12] != 0
+                || !OSSL_PARAM_get_size_t(p.mb_aadlen,
+                    &multiblock_aad_plaintext_len)
+                || multiblock_aad_plaintext_len == 0
+                || multiblock_aad_plaintext_len
+                    > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+                return 0;
+            }
+            mb_param.len = multiblock_aad_plaintext_len;
         }
         mb_param.inp = p.mb_aad->data;
-        mb_param.len = p.mb_aad->data_size;
         if (hw->tls1_multiblock_aad(vctx, &mb_param) <= 0)
             return 0;
-        if (multiblock_aad_plaintext_len == 0)
-            multiblock_aad_plaintext_len = p.mb_aad->data_size;
         ctx->multiblock_aad_plaintext_len = multiblock_aad_plaintext_len;
     }
 

@@ -160,6 +160,7 @@ my %params = (
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE' =>        "tls1multi_maxbufsz",  # size_t
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE' =>         "tls1multi_interleave",# uint
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD' =>                "tls1multi_aad",       # octet_string
+    'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_LEN' =>            "tls1multi_aadlen",    # size_t
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN' =>        "tls1multi_aadpacklen",# uint
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC' =>                "tls1multi_enc",       # octet_string
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN' =>             "tls1multi_encin",     # octet_string
