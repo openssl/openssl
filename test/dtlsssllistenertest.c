@@ -5457,6 +5457,7 @@ static int test_dtls_blocking_mode(void)
     SSL *memlistener = NULL, *memclient = NULL, *plainssl = NULL;
     BIO_ADDR *server_addr = NULL, *client_addr = NULL;
     SSL_CONNECTION *sc;
+    DTLS_RX *listener_rx;
     int server_fd = -1, client_fd = -1;
     int testresult = 0;
 
@@ -5537,12 +5538,17 @@ static int test_dtls_blocking_mode(void)
      */
     if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl)))
         goto end;
-    sc->d1->being_driven = 1;
+    listener_rx = sc->listener_rx;
+    if (!TEST_ptr(listener_rx) || !TEST_ptr_eq(listener_rx, sc->d1->rx))
+        goto end;
+    sc->listener_being_driven = 1;
 
     if (!TEST_true(SSL_clear(serverssl))
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
         || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_int_eq(sc->d1->being_driven, 1))
+        || !TEST_ptr_eq(sc->listener_rx, listener_rx)
+        || !TEST_ptr_eq(sc->d1->rx, listener_rx)
+        || !TEST_int_eq(sc->listener_being_driven, 1))
         goto end;
 
     /*
@@ -5554,10 +5560,12 @@ static int test_dtls_blocking_mode(void)
     if (!TEST_true(SSL_clear(serverssl))
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
         || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_int_eq(sc->d1->being_driven, 1))
+        || !TEST_ptr_eq(sc->listener_rx, listener_rx)
+        || !TEST_ptr_eq(sc->d1->rx, listener_rx)
+        || !TEST_int_eq(sc->listener_being_driven, 1))
         goto end;
 
-    sc->d1->being_driven = 0;
+    sc->listener_being_driven = 0;
 
     /* And back the other way round. */
     if (!TEST_true(SSL_set_blocking_mode(listener, 1))
