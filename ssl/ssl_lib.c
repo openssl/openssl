@@ -657,8 +657,6 @@ int ossl_ssl_connection_reset(SSL *s)
         SSL *saved_listener = NULL;
         OSSL_TIME saved_created_at = ossl_time_zero();
         unsigned int saved_req_blocking_mode = DTLS_BLOCKING_MODE_INHERIT;
-        unsigned int saved_force_nonblocking = 0;
-        unsigned int saved_being_driven = 0;
         int is_dtls_listener_conn = 0;
 
         if (SSL_CONNECTION_IS_DTLS(sc) && sc->d1 != NULL
@@ -669,8 +667,6 @@ int ossl_ssl_connection_reset(SSL *s)
             saved_listener = sc->d1->listener;
             saved_created_at = sc->d1->created_at;
             saved_req_blocking_mode = sc->d1->req_blocking_mode;
-            saved_force_nonblocking = sc->d1->force_nonblocking;
-            saved_being_driven = sc->d1->being_driven;
             /*
              * Prevent dtls1_free from freeing rx and releasing the listener
              * reference - we'll restore them after ssl_init.
@@ -685,6 +681,11 @@ int ossl_ssl_connection_reset(SSL *s)
         if (!s->method->ssl_init(s)) {
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
             if (is_dtls_listener_conn) {
+                DTLS_LISTENER *dl = (DTLS_LISTENER *)saved_listener;
+
+                ossl_crypto_mutex_lock(dl->mutex);
+                sc->listener_rx = NULL;
+                ossl_crypto_mutex_unlock(dl->mutex);
                 ossl_dtls_rx_free(saved_rx);
                 SSL_free(saved_listener);
             }
@@ -704,14 +705,6 @@ int ossl_ssl_connection_reset(SSL *s)
              * connection, not handshake state, so it survives a clear.
              */
             sc->d1->req_blocking_mode = saved_req_blocking_mode;
-            /*
-             * Both of these say something about the call this SSL_clear() may
-             * be nested inside: that the listener is driving the handshake and
-             * that it must not block while doing so. dtls1_clear() carries them
-             * over for the same reason.
-             */
-            sc->d1->force_nonblocking = saved_force_nonblocking;
-            sc->d1->being_driven = saved_being_driven;
         }
 #endif
     } else {

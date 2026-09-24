@@ -1596,6 +1596,24 @@ struct ssl_connection_st {
     } s3;
 
     struct dtls1_state_st *d1; /* DTLSv1 variables */
+#ifndef OPENSSL_NO_DTLS
+    /* Stable alias for d1->rx while SSL_clear() resets or replaces d1. */
+    DTLS_RX *listener_rx;
+    /*
+     * Set when this connection is being driven by dtls_listener_drive_pending().
+     * Used to prevent multiple threads from driving the same connection
+     * concurrently and to allow the demux pump to be called without holding
+     * the listener mutex.
+     */
+    unsigned int listener_being_driven;
+    /*
+     * Set while the listener itself is driving this connection's handshake, to
+     * stop it blocking. The listener drives pending connections from inside its
+     * own tick, so a connection which blocked there would stop the listener
+     * making any further progress, including the progress being waited for.
+     */
+    unsigned int listener_force_nonblocking;
+#endif
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback)(int write_p, int version, int content_type,
         const void *buf, size_t len, SSL *ssl, void *arg);
@@ -2279,26 +2297,10 @@ typedef struct dtls1_state_st {
     OSSL_TIME created_at;
 
     /*
-     * Set when this connection is being driven by dtls_listener_drive_pending().
-     * Used to prevent multiple threads from driving the same connection
-     * concurrently and to allow the demux pump to be called without holding
-     * the listener mutex.
-     */
-    unsigned int being_driven : 1;
-
-    /*
      * Blocking mode requested for this connection, as a DTLS_BLOCKING_MODE.
      * Defaults to inheriting from the listener it came from.
      */
     unsigned int req_blocking_mode : 2;
-
-    /*
-     * Set while the listener itself is driving this connection's handshake, to
-     * stop it blocking. The listener drives pending connections from inside its
-     * own tick, so a connection which blocked there would stop the listener
-     * making any further progress, including the progress being waited for.
-     */
-    unsigned int force_nonblocking : 1;
 #endif
 
 } DTLS1_STATE;
