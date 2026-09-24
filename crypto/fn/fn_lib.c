@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -336,6 +336,51 @@ int OSSL_FN_is_odd(const OSSL_FN *a)
     return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
 }
 
+/*-
+ * Conditionally swap |a| and |b| if |condition| is non-zero.
+ * Both operands must be the same width.
+ *
+ * Constant-time profile: |condition| is folded into an all-ones or all-zeros
+ * mask, and every limb of both operands is written unconditionally, so
+ * neither the condition nor the limb values steer control flow.  The only
+ * branches are on the operands' public width.
+ */
+int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
+{
+    size_t i, dsize;
+    OSSL_FN_ULONG mask;
+
+    if (ossl_unlikely(a == b))
+        return 1;
+
+    /*
+     * Swapping only the limbs the two have in common would leave the wider
+     * operand holding a mix of both values, so a width mismatch is an error
+     * rather than a partial swap.
+     */
+    if (ossl_unlikely(a->dsize != b->dsize)) {
+        ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_MISMATCHED_WIDTHS,
+            "Both operands must be the same width, but they are %zu bytes "
+            "and %zu bytes",
+            (size_t)a->dsize * sizeof(OSSL_FN_ULONG),
+            (size_t)b->dsize * sizeof(OSSL_FN_ULONG));
+        return 0;
+    }
+
+    /* All ones when condition is non-zero, all zeros when it is zero. */
+    mask = ~constant_time_is_zero_bn((OSSL_FN_ULONG)condition);
+    dsize = (size_t)a->dsize;
+
+    for (i = 0; i < dsize; i++) {
+        OSSL_FN_ULONG t = a->d[i];
+
+        a->d[i] = constant_time_select_bn(mask, b->d[i], t);
+        b->d[i] = constant_time_select_bn(mask, t, b->d[i]);
+    }
+
+    return 1;
+}
+
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
 {
     if (ossl_unlikely(a == b))
@@ -444,4 +489,34 @@ int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
         over |= in[len - 1 - i];
 
     return over == 0;
+}
+
+/*-
+ * Keep the low |n| bits of |a| and clear every bit at position |n| and above,
+ * in place and in constant time.  |n| must be below |a|'s width.  The
+ * counterpart of ossl_bn_mask_bits_fixed_top().
+ *
+ * Constant-time profile: which bits are cleared depends only on |n| and |a|'s
+ * public width, never on its value.
+ */
+int OSSL_FN_mask_bits(OSSL_FN *a, int n)
+{
+    int w, b, i;
+
+    if (ossl_unlikely(a == NULL) || n < 0)
+        return 0;
+
+    w = n / OSSL_FN_BITS;
+    b = n % OSSL_FN_BITS;
+    if (w >= a->dsize)
+        return 0;
+
+    if (b != 0) {
+        a->d[w] &= ((OSSL_FN_ULONG)1 << b) - 1;
+        w++;
+    }
+    for (i = w; i < a->dsize; i++)
+        a->d[i] = 0;
+
+    return 1;
 }

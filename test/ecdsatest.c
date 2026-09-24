@@ -23,14 +23,53 @@
 #include <openssl/ec.h>
 #include <openssl/rand.h>
 #include "internal/nelem.h"
+#include "internal/endian.h"
 #include "ecdsatest.h"
 
 static fake_random_generate_cb fbytes;
 
 static const char *numbers[2];
+/* Set when the curve under test draws the nonce with OSSL_FN (prime fields). */
+static int nonce_is_fn = 0;
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
 static OSSL_PROVIDER *fake_rand = NULL;
+
+/*
+ * Re-lay a big-endian byte string into the host image that
+ * OSSL_FN_priv_rand_range() reads back (it draws straight into the number's
+ * limb array - see ossl_fn_rand() in crypto/fn/fn_rand.c - rather than
+ * big-endian): on a little-endian host reverse the whole buffer; on a
+ * big-endian host reverse the order of the BN_ULONG-sized limb groups only
+ * (within a limb a big-endian host already stores the most-significant byte
+ * first).  |num| is the width OSSL_FN draws, a whole number of limbs.
+ */
+static void fbytes_to_fn_order(unsigned char *buf, size_t num)
+{
+    DECLARE_IS_ENDIAN;
+    const size_t w = sizeof(BN_ULONG);
+    size_t i, j;
+
+    if (IS_LITTLE_ENDIAN) {
+        for (i = 0; i < num / 2; i++) {
+            unsigned char t = buf[i];
+
+            buf[i] = buf[num - 1 - i];
+            buf[num - 1 - i] = t;
+        }
+    } else if (w != 0 && num % w == 0) {
+        size_t ng = num / w;
+
+        for (i = 0; i < ng / 2; i++) {
+            for (j = 0; j < w; j++) {
+                unsigned char t = buf[i * w + j];
+
+                buf[i * w + j] = buf[(ng - 1 - i) * w + j];
+                buf[(ng - 1 - i) * w + j] = t;
+            }
+        }
+    }
+}
 
 static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
     EVP_RAND_CTX *ctx)
@@ -48,6 +87,16 @@ static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
         || !TEST_int_le(BN_num_bytes(tmp), (int)num)
         || !TEST_int_gt(BN_bn2binpad(tmp, buf, (int)num), 0))
         goto err;
+
+    /*
+     * numbers[1] is the ECDSA nonce.  On a prime-field curve the sign path
+     * draws it with OSSL_FN_priv_rand_range(), which reads the stream in host
+     * limb order, so re-lay the big-endian bytes just written to match.
+     * numbers[0] is the private key, still drawn big-endian by BIGNUM key
+     * generation, so leave it as is.
+     */
+    if (fbytes_counter == 1 && nonce_is_fn)
+        fbytes_to_fn_order(buf, num);
 
     fbytes_counter = (fbytes_counter + 1) % OSSL_NELEM(numbers);
     ret = 1;
@@ -125,6 +174,8 @@ static int x9_62_tests(int n)
         goto err;
 
     /* create the signature via ECDSA_sign_setup to avoid use of ECDSA nonces */
+    nonce_is_fn = EC_GROUP_get_field_type(EC_KEY_get0_group(key))
+        == NID_X9_62_prime_field;
     fake_rand_set_callback(RAND_get0_private(NULL), &fbytes);
     if (!TEST_true(ECDSA_sign_setup(key, NULL, &kinv, &rp))
         || !TEST_ptr(signature = ECDSA_do_sign_ex(digest, dgst_len,
