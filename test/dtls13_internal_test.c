@@ -1347,54 +1347,38 @@ static int test_dtls13_server_keyupdate_preserves_ack(void)
         goto end;
 
     /*
-     * The server processes the client's KeyUpdate. Its own KeyUpdate is
-     * still unacknowledged and its new write keys are still not installed,
-     * so it must still refuse to start a second KeyUpdate of its own -- but
-     * it immediately acknowledges the client's KeyUpdate under its current,
-     * still-valid keys rather than holding it back.
+     * The server processes the client's KeyUpdate and immediately
+     * acknowledges it under its current, still-valid keys rather than
+     * holding it back. In the same call, it also receives the client's
+     * acknowledgment of the server's own KeyUpdate -- sent by the client
+     * back in the previous step, at the client's own still-current epoch,
+     * and only decryptable here because the server retains its previous
+     * read epoch's keys (see the retained-previous-read-epoch fix this PR
+     * is stacked on: it lets an old-epoch ACK that arrives after the read
+     * epoch has already moved on still authenticate, rather than being
+     * silently dropped). That completes the server's own KeyUpdate too:
+     * both sides are now fully resolved, with no deadlock, in just this
+     * one call.
      */
     ret = SSL_read(server, buf, 1);
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
         || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0)
-        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
-        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), s_wepoch)
-        || !TEST_false(SSL_key_update(server, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), s_wepoch + 1))
         goto end;
 
     /*
-     * The client processes the server's KeyUpdate first, acknowledging it
-     * immediately for the same reason. Its own KeyUpdate is still
-     * unacknowledged at this point -- the server's acknowledgment of it,
-     * though already sent, is a separate already-queued item that this
-     * call does not also reach.
-     */
-    ret = SSL_read(client, buf, 1);
-    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
-        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 1)
-        || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_WRITE), c_wepoch)
-        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(server)), 0))
-        goto end;
-
-    /*
-     * The client now processes the server's acknowledgment of its own
-     * KeyUpdate. That completes the client's KeyUpdate: its new write
-     * keys are installed and its retransmit entry is retired.
+     * The client processes the server's KeyUpdate, acknowledging it
+     * immediately for the same reason, and in the same call also
+     * processes the server's acknowledgment of the client's own
+     * KeyUpdate (sent by the server just above). That completes the
+     * client's KeyUpdate too: its new write keys are installed and its
+     * retransmit entry is retired.
      */
     ret = SSL_read(client, buf, 1);
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
         || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 0)
         || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_WRITE), c_wepoch + 1))
-        goto end;
-
-    /*
-     * The server processes the client's acknowledgment of its own
-     * KeyUpdate. That completes the server's KeyUpdate too: both sides are
-     * now fully resolved, with no deadlock.
-     */
-    ret = SSL_read(server, buf, 1);
-    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
-        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
-        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), s_wepoch + 1))
         goto end;
 
     /* Confirm both newly installed write keys actually work. */
