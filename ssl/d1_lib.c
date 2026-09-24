@@ -242,7 +242,6 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
-        unsigned char msg_type = sent_msg->msg_info.msg_type;
         unsigned char record_type = sent_msg->msg_info.record_type;
 
         if (SSL_CONNECTION_IS_DTLS13(s)
@@ -252,20 +251,15 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
             continue;
         }
 
-        if (((!SSL_CONNECTION_IS_DTLS13(s) && record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
-                || (SSL_CONNECTION_IS_DTLS13(s)
-                    && (msg_type == SSL3_MT_FINISHED
-                        || msg_type == SSL3_MT_SERVER_HELLO
-                        || msg_type == SSL3_MT_KEY_UPDATE))
-                /*
-                 * A ClientHello followed by early data. SSL3_MT_CLIENT_HELLO
-                 * has the same value as SSL3_MT_CCS, which is recorded as the
-                 * message type of a CCS, so the record type has to be checked
-                 * as well to tell the two apart. The other message types
-                 * above do not clash with anything.
-                 */
-                || (record_type == SSL3_RT_HANDSHAKE
-                    && msg_type == SSL3_MT_CLIENT_HELLO))
+        /*
+         * Free the captured write layer once this is its last reference,
+         * regardless of this message's own type: any queued message can
+         * end up the final owner of a retired layer, not just the ones
+         * that originally triggered the epoch change.
+         */
+        if ((SSL_CONNECTION_IS_DTLS13(s)
+                || record_type == SSL3_RT_CHANGE_CIPHER_SPEC
+                || record_type == SSL3_RT_HANDSHAKE)
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
             && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
@@ -290,16 +284,20 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 
 /*
  * Retire every queued CertificateRequest regardless of acknowledgment
- * status, and report whether any was found. A CertificateRequest never
- * receives an explicit ACK (rfc9147 5.8.1: receiving the next flight, not
- * just an ACK, ends WAITING) -- the client's Finished is that next flight,
- * and completes it implicitly. Entries of any other type are left
- * untouched.
+ * status, and report whether any was found. Finding none is not an error:
+ * rfc9147 section 7.1 lets the client ACK a CertificateRequest explicitly
+ * if it cannot produce its response right away, in which case ACK
+ * processing already removed it before Finished arrived. Either way, the
+ * client's Finished completes it implicitly (rfc9147 5.8.1: receiving the
+ * next flight, not just an ACK, ends WAITING), so it must not still be
+ * queued by the time Finished is processed. Entries of any other type are
+ * left untouched.
  */
 static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
-    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue remaining_sent_messages_buf = { NULL, 0 };
+    pqueue *remaining_sent_messages = &remaining_sent_messages_buf;
     pqueue *sent_messages = &s->d1->sent_messages;
     int retired = 0;
 
@@ -311,6 +309,8 @@ static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
             continue;
         }
 
+        /* Same ownership rule as dtls1_clear_sent_buffer(): free the
+         * captured write layer only once this is its last reference. */
         if (sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
             && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
@@ -325,7 +325,6 @@ static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
     while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
         pqueue_insert(sent_messages, item);
 
-    pqueue_free(remaining_sent_messages);
     return retired;
 }
 
@@ -679,33 +678,63 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
  * Retire the timer and retransmit buffer now that a flight has finished
  * reading. Post-handshake message categories acknowledge nothing of each
  * other (rfc9147 5.8.4), so an unrelated message must not discard our own
- * still-unacknowledged flight. A CertificateRequest is retired here
- * explicitly, since it completes via the next flight rather than an ACK
- * (rfc9147 5.8.1); every other occurrence of TLS_ST_SR_FINISHED, including
- * ordinary handshake completion, still falls through to the unconditional
- * clear below.
+ * still-unacknowledged flight. A post-handshake-auth CertificateRequest is
+ * retired here explicitly, since it completes via the next flight rather
+ * than an ACK (rfc9147 5.8.1); that check is scoped to SSL_PHA_REQUESTED so
+ * it can't also fire for the CertificateRequest an ordinary mTLS initial
+ * handshake sends, which has no such special case and still falls through
+ * to the unconditional clear below.
+ *
+ * Whether a CertificateRequest was actually found there is not itself a
+ * precondition for preserving anything else that is still outstanding:
+ * rfc9147 section 7.1 lets the client ACK the CertificateRequest explicitly
+ * if it cannot produce its response right away, in which case ACK
+ * processing already removed it before Finished arrived. Either way, by
+ * the time Finished is processed it must not still be queued, so retiring
+ * it here is idempotent -- the decision to preserve or discard everything
+ * else is made separately, from whether anything else remains unacked.
+ *
+ * This can also be what finally unblocks a deferred write-key install, with
+ * no ACK record involved at all. dtls1_check_deferred_write_key() normally
+ * runs from dtls_process_ack() as ACK records arrive, but a
+ * CertificateRequest retired above -- or anything else cleared below -- can
+ * be the last thing our own KeyUpdate was waiting on. If so, nothing else
+ * is ever going to call it, so it has to be checked here instead, at every
+ * point this function can return, using the state left by whatever
+ * clearing just happened.
+ *
+ * Returns 0 only on a fatal error installing the deferred write key
+ * (SSLfatal() already called, via dtls1_check_deferred_write_key()); 1
+ * otherwise. The caller must check this and stop driving the connection
+ * forward rather than treat reaching the end of this function as success --
+ * SSLfatal() only records the failure in s->statem.state, it has no other
+ * way to halt execution on its own.
  */
-void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
+int dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
 {
     if (SSL_CONNECTION_IS_DTLS13(s)
         && s->statem.hand_state == TLS_ST_SR_FINISHED
-        && dtls1_retire_sent_certificate_request_messages(s)
-        && dtls_any_sent_messages_are_missing_acknowledge(s)) {
-        dtls1_clear_sent_buffer(s, 1);
-        return;
+        && s->post_handshake_auth == SSL_PHA_REQUESTED) {
+        dtls1_retire_sent_certificate_request_messages(s);
+        if (dtls_any_sent_messages_are_missing_acknowledge(s)) {
+            dtls1_clear_sent_buffer(s, 1);
+            return dtls1_check_deferred_write_key(s);
+        }
     }
 
     if (SSL_CONNECTION_IS_DTLS13(s)
         && (s->statem.hand_state == TLS_ST_SR_KEY_UPDATE
             || s->statem.hand_state == TLS_ST_CR_KEY_UPDATE
             || s->statem.hand_state == TLS_ST_CR_SESSION_TICKET
-            || s->statem.hand_state == TLS_ST_CR_CERT_REQ)
+            || (s->statem.hand_state == TLS_ST_CR_CERT_REQ
+                && s->post_handshake_auth == SSL_PHA_REQUESTED))
         && dtls_any_sent_messages_are_missing_acknowledge(s)) {
         dtls1_clear_sent_buffer(s, 1);
-        return;
+        return dtls1_check_deferred_write_key(s);
     }
 
     dtls1_stop_timer(s);
+    return dtls1_check_deferred_write_key(s);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)
