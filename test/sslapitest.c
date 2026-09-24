@@ -12912,6 +12912,92 @@ end:
 }
 #endif
 
+#if !defined(OPENSSL_NO_TLS1_3) \
+    && !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
+static int cipher_list_has_name(const SSL_CTX *ctx, const char *name)
+{
+    STACK_OF(SSL_CIPHER) *ciphers = SSL_CTX_get_ciphers(ctx);
+    int i;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
+
+        if (strcmp(SSL_CIPHER_get_name(cipher), name) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+/*
+ * Test 0: NULL is available, so eNULL and the integrity-only ciphersuites
+ *         are available.
+ * Test 1: NULL is unavailable, so eNULL and the integrity-only ciphersuites
+ *         are unavailable, while an ordinary AES ciphersuite remains usable.
+ */
+static int test_null_cipher_availability(int idx)
+{
+    /*
+     * SSL_CTX needs AES-256-CBC for ticket encryption. The forwarded
+     * CTR-DRBG also needs AES-256-CTR and AES-256-ECB.
+     */
+    static const char *cipher_filters[] = {
+        "AES-256-CBC:AES-256-CTR:AES-256-ECB:AES-128-GCM:NULL",
+        "AES-256-CBC:AES-256-CTR:AES-256-ECB:AES-128-GCM"
+    };
+    OSSL_LIB_CTX *tmpctx = NULL;
+    OSSL_PROVIDER *filterprov = NULL;
+    SSL_CTX *ctx = NULL;
+    int null_available = idx == 0;
+    int testresult = 0;
+
+    ERR_clear_error();
+
+    /* Check that the test index is valid */
+    if (!TEST_int_ge(idx, 0)
+        || !TEST_int_lt(idx, (int)OSSL_NELEM(cipher_filters)))
+        goto end;
+
+    /* Load the filter provider to simulate availability of the "NULL" cipher */
+    if (!TEST_ptr(tmpctx = OSSL_LIB_CTX_new())
+        || !TEST_true(OSSL_PROVIDER_add_builtin(tmpctx, "filter",
+                filter_provider_init))
+        || !TEST_ptr(filterprov = OSSL_PROVIDER_load(tmpctx, "filter"))
+        || !TEST_true(filter_provider_set_filter(OSSL_OP_CIPHER,
+                cipher_filters[idx]))
+        || !TEST_ptr(ctx = SSL_CTX_new_ex(tmpctx, NULL, TLS_method()))
+        || !TEST_ulong_eq(ERR_peek_error(), 0)
+        || !TEST_int_eq(SSL_CTX_set_cipher_list(ctx, "eNULL"),
+            null_available))
+        goto end;
+
+    if (!null_available)
+        ERR_clear_error();
+
+    /*
+     * Even though the NULL cipher is not available the ciphersuites exists,
+     * hence SSL_CTX_set_ciphersuites() will succeed.
+     * However when the cipher suite list is loaded integrity only ciphersuites
+     * will not appear in the list.
+     */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,
+            "TLS_SHA256_SHA256:TLS_SHA384_SHA384:TLS_AES_128_GCM_SHA256"))
+        || !TEST_int_eq(cipher_list_has_name(ctx, "TLS_SHA256_SHA256"),
+            null_available)
+        || !TEST_int_eq(cipher_list_has_name(ctx, "TLS_SHA384_SHA384"),
+            null_available)
+        || !TEST_true(cipher_list_has_name(ctx, "TLS_AES_128_GCM_SHA256")))
+        goto end;
+
+    testresult = filter_provider_check_clean_finish();
+
+end:
+    SSL_CTX_free(ctx);
+    OSSL_PROVIDER_unload(filterprov);
+    OSSL_LIB_CTX_free(tmpctx);
+    return testresult;
+}
+#endif
+
 #if !defined(OPENSSL_NO_EC)                                            \
     && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
         || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2))
@@ -17655,6 +17741,10 @@ int setup_tests(void)
     ADD_TEST(test_unknown_sigalgs_groups);
 #if (!defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)) || !defined(OPENSSL_NO_ML_KEM)
     ADD_TEST(test_configuration_of_groups);
+#endif
+#if !defined(OPENSSL_NO_TLS1_3) \
+    && !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
+    ADD_ALL_TESTS(test_null_cipher_availability, 2);
 #endif
 #if !defined(OPENSSL_NO_EC)                                            \
     && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
