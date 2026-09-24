@@ -296,7 +296,11 @@ void dtls1_free(SSL *ssl)
 
 #ifndef OPENSSL_NO_DTLS
     if (s->d1 != NULL) {
-        ossl_dtls_rx_free(s->d1->rx);
+        DTLS_RX *rx = s->d1->rx;
+
+        if (s->listener_rx == rx)
+            s->listener_rx = NULL;
+        ossl_dtls_rx_free(rx);
 
         if (s->d1->listener != NULL)
             SSL_free(s->d1->listener);
@@ -337,8 +341,6 @@ int dtls1_clear(SSL *ssl)
         SSL *listener = s->d1->listener;
         OSSL_TIME created_at = s->d1->created_at;
         unsigned int req_blocking_mode = s->d1->req_blocking_mode;
-        unsigned int force_nonblocking = s->d1->force_nonblocking;
-        unsigned int being_driven = s->d1->being_driven;
 #endif
 
         mtu = s->d1->mtu;
@@ -369,19 +371,6 @@ int dtls1_clear(SSL *ssl)
          * configured it, not of the handshake, so it survives a clear.
          */
         s->d1->req_blocking_mode = req_blocking_mode;
-        /*
-         * SSL_clear() can be called from inside the very SSL_accept() the
-         * listener is driving, so losing this would let the connection block
-         * there and stall the listener.
-         */
-        s->d1->force_nonblocking = force_nonblocking;
-        /*
-         * being_driven says the listener is driving this connection's
-         * handshake, and is what keeps a concurrent tick from collecting it a
-         * second time. Losing it would let two threads into the state machine
-         * for one connection.
-         */
-        s->d1->being_driven = being_driven;
         s->d1->created_at = created_at;
 #endif
 
@@ -1316,6 +1305,7 @@ static SSL *dtls_listener_create_conn_ssl(DTLS_LISTENER *dl,
     sc->d1->rx = ossl_dtls_rx_new(dl->demux);
     if (sc->d1->rx == NULL)
         goto err;
+    sc->listener_rx = sc->d1->rx;
 
     /*
      * Update the read record layer to use the URXE queue if it already exists.
@@ -1476,7 +1466,7 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
              * Mark the connection being_driven while the mutex is dropped for
              * the callback. This keeps the tick loop away from this connection.
              */
-            sc->d1->being_driven = 1;
+            sc->listener_being_driven = 1;
             ossl_crypto_mutex_unlock(dl->mutex);
             keep = dl->ssl.ctx->new_pending_conn_cb(dl->ssl.ctx, conn_ssl,
                 dl->ssl.ctx->new_pending_conn_arg);
@@ -1497,16 +1487,16 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
                 goto release;
             }
 
-            sc->d1->being_driven = 0;
+            sc->listener_being_driven = 0;
         }
     }
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
-    if (sc == NULL || sc->d1 == NULL || sc->d1->rx == NULL)
+    if (sc == NULL || sc->listener_rx == NULL)
         goto release;
 
     /* Inject packet into connection's URXE queue */
-    ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
+    ossl_dtls_rx_inject_urxe(sc->listener_rx, urxe);
 
     /* Signal notifier if needed */
     dtls_listener_signal_notifier(dl);
@@ -2133,13 +2123,13 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
     if (sc == NULL)
         return;
 
-    if (sc->d1 == NULL || sc->d1->rx == NULL)
-        return;
-
     /*
      * Skip if already being driven by another thread.
      */
-    if (sc->d1->being_driven)
+    if (sc->listener_being_driven)
+        return;
+
+    if (sc->listener_rx == NULL || sc->d1 == NULL)
         return;
 
     /*
@@ -2171,7 +2161,7 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
              * in pending_conns and is simply retried on the next tick.
              */
             if (ctx->failed_conns != NULL && sk_SSL_push(ctx->failed_conns, ssl) > 0) {
-                sc->d1->being_driven = 1;
+                sc->listener_being_driven = 1;
                 ctx->error_count++;
             }
             return;
@@ -2191,7 +2181,7 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
         return;
     }
 
-    sc->d1->being_driven = 1;
+    sc->listener_being_driven = 1;
 }
 
 /*
@@ -2225,9 +2215,9 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
      * else can make progress while it does, including whatever it would be
      * waiting for.
      */
-    sc->d1->force_nonblocking = 1;
+    sc->listener_force_nonblocking = 1;
     ret = SSL_accept(ssl);
-    sc->d1->force_nonblocking = 0;
+    sc->listener_force_nonblocking = 0;
 
     /*
      * Always clear the stateless flag after SSL_accept() completes.
@@ -2332,8 +2322,8 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         ssl = sk_SSL_value(ctx.to_drive, i);
         sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
-        if (sc != NULL && sc->d1 != NULL)
-            sc->d1->being_driven = 0;
+        if (sc != NULL)
+            sc->listener_being_driven = 0;
 
         SSL_free(ssl); /* Release reference from phase 1 */
     }
@@ -3036,7 +3026,7 @@ static int ossl_dtls_desires_blocking(const SSL *s)
 
     if (sc != NULL && sc->d1 != NULL) {
         /* The listener is driving this connection; it must not block. */
-        if (sc->d1->force_nonblocking)
+        if (sc->listener_force_nonblocking)
             return 0;
 
         if (sc->d1->req_blocking_mode != DTLS_BLOCKING_MODE_INHERIT)
