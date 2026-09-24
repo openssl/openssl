@@ -48,6 +48,7 @@ typedef struct evp_test_st {
     char *reason; /* Expected error reason string */
     void *data; /* test specific data */
     int expect_unapproved;
+    int expect_unapproved_callback;
     int security_category; /* NIST's security category */
     unsigned char *entropy;
     size_t entropy_len;
@@ -139,6 +140,8 @@ static int fips_indicator_cb(const char *type, const char *desc,
 
 static int check_fips_approved(EVP_TEST *t, int approved)
 {
+    int callback_received = fips_indicator_callback_unapproved_count > 0;
+
     if (!OSSL_PROVIDER_available(libctx, "fips")) {
         if (approved != 0) {
             TEST_error("A non-FIPS provider reported a FIPS approved operation");
@@ -159,7 +162,8 @@ static int check_fips_approved(EVP_TEST *t, int approved)
             return 0;
         }
     } else {
-        if (approved == 0 || fips_indicator_callback_unapproved_count > 0) {
+        if (approved == 0
+            || callback_received != t->expect_unapproved_callback) {
             TEST_error("Test is expected to be FIPS approved");
             return 0;
         }
@@ -1809,6 +1813,15 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
             return 0;
     }
 
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+    /* The EVP_PKEY CMAC bridge requires the deprecated CMAC key constructor. */
+    if (type == EVP_PKEY_CMAC) {
+        TEST_info("skipping, PKEY CMAC is disabled");
+        t->skip = 1;
+        return 1;
+    }
+#endif
+
     if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
         return 0;
 
@@ -2024,6 +2037,8 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "TEST_MAC_ERR";
         goto err;
     }
+    if (!pkey_check_fips_approved(pctx, t))
+        goto err;
     t->err = NULL;
 err:
     EVP_CIPHER_free(cipher);
@@ -2509,6 +2524,8 @@ static int decapsulate(EVP_TEST *t, EVP_PKEY_CTX *ctx, const char *op,
         t->err = "TEST_DECAPSULATE_ERROR";
         goto err;
     }
+    if (!pkey_check_fips_approved(ctx, t))
+        goto err;
     if (!TEST_mem_eq(out, outlen, expected, expectedlen)) {
         t->err = "TEST_SECRET_MISMATCH";
         goto ok;
@@ -4897,6 +4914,9 @@ static int digestsign_test_run(EVP_TEST *t)
             got, got_len))
         goto err;
 
+    if (!pkey_check_fips_approved(expected->pctx, t))
+        goto err;
+
     t->err = NULL;
 err:
     OPENSSL_free(got);
@@ -4938,6 +4958,8 @@ static int digestverify_test_run(EVP_TEST *t)
             mdata->output_len)
         <= 0)
         t->err = "VERIFY_ERROR";
+    else if (!pkey_check_fips_approved(mdata->pctx, t))
+        return 0;
     return 1;
 }
 
@@ -4983,6 +5005,9 @@ static int oneshot_digestsign_test_run(EVP_TEST *t)
             got, got_len))
         goto err;
 
+    if (!pkey_check_fips_approved(expected->pctx, t))
+        goto err;
+
     t->err = NULL;
 err:
     OPENSSL_free(got);
@@ -5013,6 +5038,8 @@ static int oneshot_digestverify_test_run(EVP_TEST *t)
             mdata->osin, mdata->osin_len)
         <= 0)
         t->err = "VERIFY_ERROR";
+    else if (!pkey_check_fips_approved(mdata->pctx, t))
+        return 0;
     return 1;
 }
 
@@ -5090,6 +5117,7 @@ static void clear_test(EVP_TEST *t)
     t->skip = 0;
     t->meth = NULL;
     t->expect_unapproved = 0;
+    t->expect_unapproved_callback = 0;
     t->security_category = -1;
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
@@ -5507,6 +5535,8 @@ start:
             }
         } else if (strcmp(pp->key, "Unapproved") == 0) {
             t->expect_unapproved = 1;
+        } else if (strcmp(pp->key, "UnapprovedCallback") == 0) {
+            t->expect_unapproved_callback = 1;
         } else if (strcmp(pp->key, "Extended-Test") == 0) {
             if (!extended_tests) {
                 TEST_info("skipping extended test: %s:%d",
