@@ -268,7 +268,7 @@ err:
  * route on parity, which is a limb read this companion must not perform.
  */
 size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m)
+    const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont)
 {
     if (r == NULL || a == NULL || m == NULL)
         return 0;
@@ -283,10 +283,11 @@ size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
 
     /*
      * The nested OSSL_FN_mod_exp_mont() call: base |a|, an m-wide
-     * exponent (modelled by |m|), modulus |m|, and a function-owned
-     * Montgomery context (NULL in_mont).
+     * exponent (modelled by |m|), modulus |m|.  |in_mont| is passed
+     * through; the nested sizing is the same whether it is NULL or a
+     * reused context.
      */
-    size_t nested_size = OSSL_FN_mod_exp_mont_ctx_size(r, a, m, m, NULL);
+    size_t nested_size = OSSL_FN_mod_exp_mont_ctx_size(r, a, m, m, in_mont);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
@@ -311,11 +312,12 @@ size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  *     prime 2 and zero are diagnosed, while m == 1 (odd, not prime) yields
  *     0 through that function's early exit.
  * a == 0 (mod m) yields 0, which is not an inverse; callers are expected
- * to handle that case, typically with a retry / reject loop.  |a| need not
- * be reduced mod m.
+ * to handle that case, typically with a retry / reject loop.  The
+ * constant-time profile above requires |a| reduced mod m and m-wide; an
+ * unreduced |a| is still handled correctly, but not in constant time.
  */
 int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
-    OSSL_FN_CTX *ctx)
+    OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont)
 {
     const void *token = OSSL_FN_CTX_start(ctx);
     OSSL_FN *e = NULL;
@@ -339,7 +341,7 @@ int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     if (!OSSL_FN_sub(e, m, &ossl_fn_static_const_2_storage.fn))
         goto err;
 
-    ret = OSSL_FN_mod_exp_mont(r, a, e, m, ctx, NULL);
+    ret = OSSL_FN_mod_exp_mont(r, a, e, m, ctx, in_mont);
 
 err:
     OSSL_FN_CTX_end(ctx, token);

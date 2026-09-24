@@ -1175,10 +1175,11 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  *
  * |m| must be an odd prime.  An even modulus (including 0 and the
  * prime 2) is rejected; a composite odd modulus makes the result
- * garbage, not an error; m == 1 yields 0.  |a| need not be reduced
- * mod m; a == 0 (mod m) yields 0, which is not an inverse -- callers
- * are expected to handle that case, typically with a retry / reject
- * loop.
+ * garbage, not an error; m == 1 yields 0.  a == 0 (mod m) yields 0,
+ * which is not an inverse -- callers are expected to handle that
+ * case, typically with a retry / reject loop.  The constant-time
+ * property requires |a| reduced mod m and m-wide; an unreduced |a|
+ * is still handled correctly, but not in constant time.
  *
  * @param[out]          r       The OSSL_FN for the result.  Truncates high
  *                              limbs if too small, zero-pads if too large.
@@ -1188,6 +1189,10 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from, sized per
  *                              OSSL_FN_mod_inverse_prime_ctx_size().
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to have this function build and free its own.
+ *                              When non-NULL it is borrowed (used as-is, never
+ *                              freed here) and its modulus must be |m|.
  * @returns             1 on success, 0 on error.
  *
  * @note This function currently requires that the OSSL_FN_CTX has free
@@ -1195,7 +1200,7 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * plus the requirements of OSSL_FN_mod_exp_mont().
  */
 int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
-    OSSL_FN_CTX *ctx);
+    OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont);
 
 /**
  * Calculate the arena payload size that OSSL_FN_mod_inverse_prime() needs.
@@ -1203,14 +1208,19 @@ int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The operand
  * @param[in]           m       The modulus
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to model the function-owned context
+ *                              OSSL_FN_mod_inverse_prime() builds when called
+ *                              with in_mont == NULL.
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  *
  * The returned size includes any frame budget needed by
- * OSSL_FN_mod_inverse_prime().
+ * OSSL_FN_mod_inverse_prime(), and is the same whether |in_mont| is NULL
+ * or a reused context.
  */
 size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m);
+    const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
 
 /**
  * Calculate  a^p mod m  (modular exponentiation) with a sliding-window
