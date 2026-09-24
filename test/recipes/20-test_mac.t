@@ -10,7 +10,7 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test;
+use OpenSSL::Test qw(:DEFAULT data_file srctop_file);
 use OpenSSL::Test::Utils;
 use Storable qw(dclone);
 
