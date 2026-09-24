@@ -963,3 +963,11 @@ FIPSversion = >=3.4.0
 KeyGen = X448
 KeyName = x448_gen_key
 Unapproved = 1
+
+Title = EdDSA key generation FIPS indicator coverage
+
+KeyGen = ED25519
+KeyName = ed25519-indicator-key
+
+KeyGen = ED448
+KeyName = ed448-indicator-key
