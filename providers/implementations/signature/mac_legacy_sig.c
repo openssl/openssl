@@ -312,6 +312,20 @@ static int mac_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.ind != NULL) {
         int approved = OSSL_FIPS_IND_GET(ctx)->approved;
 
+        /* Internal HMAC delegates its indicator checks to this wrapper. */
+        if (!ctx->hmac_keysize_check) {
+            int mac_approved = 0;
+            OSSL_PARAM mac_params[2];
+
+            mac_params[0] = OSSL_PARAM_construct_int(
+                OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR, &mac_approved);
+            mac_params[1] = OSSL_PARAM_construct_end();
+
+            if (!EVP_MAC_CTX_get_params(ctx->macctx, mac_params)
+                || !OSSL_PARAM_modified(mac_params))
+                return 0;
+            approved &= mac_approved;
+        }
         if (!OSSL_PARAM_set_int(p.ind, approved))
             return 0;
     }
