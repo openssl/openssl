@@ -337,7 +337,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     OSSL_LIB_CTX *ctx, void *data)
 {
     MASTER_KEY_ENTRY *mkey;
-    SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) *ctx_table;
+    SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) * ctx_table;
 
     ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
     /*
