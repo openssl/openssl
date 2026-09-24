@@ -10,6 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
+#include <openssl/obj_mac.h>
 #include <openssl/param_build.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
@@ -704,7 +705,7 @@ static int mlx_kem_gen_get_params(void *vgctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR);
     if (p != NULL) {
         approved = strcmp(hybrid_vtable[gctx->evp_type].algorithm_name,
-                       "X448")
+                       SN_X448)
             != 0;
         if (!OSSL_PARAM_set_int(p, approved))
             return 0;
