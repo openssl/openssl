@@ -522,38 +522,49 @@ static const COMPOSITE_ALG_INFO *composite_ctx_alg_info(PROV_COMPOSITE_CTX *ctx)
 }
 
 /*
- * Lazily start (on the first update) a streaming digest of the message for
- * PH(M), using the algorithm's prehash digest (e.g. SHA-512).
+ * Start (idempotently) the streaming digest of the message for PH(M), using
+ * the algorithm's prehash digest (e.g. SHA-512).  Called eagerly from the
+ * *_MESSAGE_INIT() functions so that *_MESSAGE_FINAL() can hash an empty
+ * message even if *_MESSAGE_UPDATE() is never called.
  */
+static int composite_start_prehash(PROV_COMPOSITE_CTX *ctx)
+{
+    const COMPOSITE_ALG_INFO *info;
+    EVP_MD *md;
+
+    if (ctx->prehash_ctx != NULL)
+        return 1;
+
+    info = composite_ctx_alg_info(ctx);
+    if (info == NULL)
+        return 0;
+
+    md = EVP_MD_fetch(ctx->libctx, info->prehash_alg, NULL);
+    if (md == NULL)
+        return 0;
+
+    ctx->prehash_ctx = EVP_MD_CTX_new();
+    if (ctx->prehash_ctx == NULL || !EVP_DigestInit_ex2(ctx->prehash_ctx, md, NULL)) {
+        EVP_MD_CTX_free(ctx->prehash_ctx);
+        ctx->prehash_ctx = NULL;
+        EVP_MD_free(md);
+        return 0;
+    }
+    EVP_MD_free(md);
+    return 1;
+}
+
 static int composite_signverify_msg_update(void *vctx,
     const unsigned char *data,
     size_t datalen)
 {
     PROV_COMPOSITE_CTX *ctx = (PROV_COMPOSITE_CTX *)vctx;
-    const COMPOSITE_ALG_INFO *info;
-    EVP_MD *md;
 
     if (ctx == NULL || !ossl_prov_is_running())
         return 0;
 
-    if (ctx->prehash_ctx == NULL) {
-        info = composite_ctx_alg_info(ctx);
-        if (info == NULL)
-            return 0;
-
-        md = EVP_MD_fetch(ctx->libctx, info->prehash_alg, NULL);
-        if (md == NULL)
-            return 0;
-
-        ctx->prehash_ctx = EVP_MD_CTX_new();
-        if (ctx->prehash_ctx == NULL || !EVP_DigestInit_ex2(ctx->prehash_ctx, md, NULL)) {
-            EVP_MD_CTX_free(ctx->prehash_ctx);
-            ctx->prehash_ctx = NULL;
-            EVP_MD_free(md);
-            return 0;
-        }
-        EVP_MD_free(md);
-    }
+    if (!composite_start_prehash(ctx))
+        return 0;
 
     return EVP_DigestUpdate(ctx->prehash_ctx, data, datalen);
 }
@@ -561,7 +572,10 @@ static int composite_signverify_msg_update(void *vctx,
 static int composite_sign_msg_init(void *vctx, void *vkey,
     const OSSL_PARAM params[])
 {
-    return composite_sign_init(vctx, vkey, params);
+    PROV_COMPOSITE_CTX *ctx = (PROV_COMPOSITE_CTX *)vctx;
+
+    return composite_sign_init(vctx, vkey, params)
+        && composite_start_prehash(ctx);
 }
 
 static int composite_sign_msg_final(void *vctx, unsigned char *sig,
@@ -585,7 +599,7 @@ static int composite_sign_msg_final(void *vctx, unsigned char *sig,
         return composite_sign_ph(ctx, info, sig, siglen, sigsize, NULL, 0);
 
     if (ctx->prehash_ctx == NULL)
-        return 0; /* no data was ever fed via msg_update() */
+        return 0; /* msg_init() was never called */
 
     if (!EVP_DigestFinal_ex(ctx->prehash_ctx, ph, &ph_len))
         return 0;
@@ -598,7 +612,10 @@ static int composite_sign_msg_final(void *vctx, unsigned char *sig,
 static int composite_verify_msg_init(void *vctx, void *vkey,
     const OSSL_PARAM params[])
 {
-    return composite_verify_init(vctx, vkey, params);
+    PROV_COMPOSITE_CTX *ctx = (PROV_COMPOSITE_CTX *)vctx;
+
+    return composite_verify_init(vctx, vkey, params)
+        && composite_start_prehash(ctx);
 }
 
 /*
@@ -617,7 +634,7 @@ static int composite_verify_msg_final(void *vctx)
         return 0;
 
     if (ctx->sig == NULL || ctx->prehash_ctx == NULL)
-        return 0;
+        return 0; /* msg_init() was never called, or no signature was set */
 
     info = composite_ctx_alg_info(ctx);
     if (info == NULL) {

@@ -7,9 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/rand.h>
 #include "testutil.h"
 #include "composite_sig.inc"
 
@@ -433,6 +438,264 @@ err:
     return ret;
 }
 
+/*
+ * Encode the classic (RSA or EC) component of a key to its raw "type-specific"
+ * wire format (RSAPublicKey/RSAPrivateKey DER, or ECPrivateKey DER), i.e. the
+ * same on-the-wire encoding the composite provider itself produces/expects.
+ */
+static int encode_classic_component(EVP_PKEY *pkey, int selection,
+    unsigned char **out, size_t *out_len)
+{
+    OSSL_ENCODER_CTX *ectx;
+    int ok;
+
+    *out = NULL;
+    *out_len = 0;
+    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "DER",
+        "type-specific", NULL);
+    if (ectx == NULL)
+        return 0;
+    ok = OSSL_ENCODER_to_data(ectx, out, out_len);
+    OSSL_ENCODER_CTX_free(ectx);
+    return ok;
+}
+
+/*
+ * Importing an ML-DSA-65-RSA3072-PKCS15-SHA512 public key whose embedded RSA
+ * component is not actually 3072 bits must be rejected: modulus-size
+ * downgrade / algorithm-confusion must be caught by the keymgmt import path.
+ */
+static int composite_rsa_size_downgrade_test(void)
+{
+    int ret = 0;
+    const char *alg = "ML-DSA-65-RSA3072-PKCS15-SHA512";
+    EVP_PKEY_CTX *kctx = NULL;
+    EVP_PKEY *mldsa_key = NULL, *rsa_key = NULL, *bad_key = NULL;
+    unsigned char *mldsa_pk = NULL, *rsa_pub = NULL, *blob = NULL;
+    size_t mldsa_pk_len = 0, rsa_pub_len = 0, blob_len;
+    unsigned int rsa_bits = 2048; /* wrong: this variant requires 3072 */
+    OSSL_PARAM rsa_params[2], import_params[2];
+
+    /* Real ML-DSA-65 public key bytes, to use as the (valid) PQ component */
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "ML-DSA-65", NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(kctx), 1)
+        || !TEST_int_eq(EVP_PKEY_generate(kctx, &mldsa_key), 1)
+        || !TEST_int_eq(EVP_PKEY_get_octet_string_param(mldsa_key,
+                            OSSL_PKEY_PARAM_PUB_KEY, NULL, 0, &mldsa_pk_len),
+            1)
+        || !TEST_ptr(mldsa_pk = OPENSSL_malloc(mldsa_pk_len))
+        || !TEST_int_eq(EVP_PKEY_get_octet_string_param(mldsa_key,
+                            OSSL_PKEY_PARAM_PUB_KEY, mldsa_pk, mldsa_pk_len,
+                            &mldsa_pk_len),
+            1))
+        goto err;
+    EVP_PKEY_CTX_free(kctx);
+    kctx = NULL;
+
+    /* A real, but wrong-sized (2048-bit), RSA public key */
+    rsa_params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_RSA_BITS, &rsa_bits);
+    rsa_params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "RSA", NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(kctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_params(kctx, rsa_params), 1)
+        || !TEST_int_eq(EVP_PKEY_generate(kctx, &rsa_key), 1)
+        || !TEST_true(encode_classic_component(rsa_key,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, &rsa_pub, &rsa_pub_len)))
+        goto err;
+    EVP_PKEY_CTX_free(kctx);
+    kctx = NULL;
+
+    /* mldsaPK(pk_len) || tradPK(raw) -- composite public key wire format */
+    blob_len = mldsa_pk_len + rsa_pub_len;
+    if (!TEST_ptr(blob = OPENSSL_malloc(blob_len)))
+        goto err;
+    memcpy(blob, mldsa_pk, mldsa_pk_len);
+    memcpy(blob + mldsa_pk_len, rsa_pub, rsa_pub_len);
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+        blob, blob_len);
+    import_params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(kctx), 1))
+        goto err;
+
+    /* Must be rejected: the embedded RSA key is 2048 bits, not 3072 */
+    if (!TEST_int_eq(EVP_PKEY_fromdata(kctx, &bad_key,
+                         OSSL_KEYMGMT_SELECT_PUBLIC_KEY, import_params),
+            0)
+        || !TEST_ptr_null(bad_key))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_free(mldsa_key);
+    EVP_PKEY_free(rsa_key);
+    EVP_PKEY_free(bad_key);
+    OPENSSL_free(mldsa_pk);
+    OPENSSL_free(rsa_pub);
+    OPENSSL_free(blob);
+    return ret;
+}
+
+/*
+ * Importing an ML-DSA-65-ECDSA-P256-SHA512 private key whose embedded EC
+ * component is on a different curve (P-384, not P-256) must be rejected:
+ * curve confusion / downgrade must be caught by the keymgmt import path.
+ */
+static int composite_ec_curve_downgrade_test(void)
+{
+    int ret = 0;
+    const char *alg = "ML-DSA-65-ECDSA-P256-SHA512";
+    EVP_PKEY_CTX *kctx = NULL;
+    EVP_PKEY *ec_key = NULL, *bad_key = NULL;
+    unsigned char seed[32];
+    unsigned char *ec_priv = NULL, *blob = NULL;
+    size_t ec_priv_len = 0, blob_len;
+    OSSL_PARAM import_params[2];
+
+#ifdef OPENSSL_NO_EC
+    TEST_note("Skipping composite_ec_curve_downgrade_test - requires EC");
+    return 1;
+#endif
+
+    if (!TEST_int_eq(RAND_bytes_ex(lib_ctx, seed, sizeof(seed), 0), 1))
+        goto err;
+
+    /* A real EC private key, but on the wrong curve (P-384, not P-256) */
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "EC", NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(kctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_group_name(kctx, "P-384"), 1)
+        || !TEST_int_eq(EVP_PKEY_generate(kctx, &ec_key), 1)
+        || !TEST_true(encode_classic_component(ec_key,
+            OSSL_KEYMGMT_SELECT_PRIVATE_KEY, &ec_priv, &ec_priv_len)))
+        goto err;
+    EVP_PKEY_CTX_free(kctx);
+    kctx = NULL;
+
+    /* mldsaSeed(32) || tradSK(raw) -- composite private key wire format */
+    blob_len = sizeof(seed) + ec_priv_len;
+    if (!TEST_ptr(blob = OPENSSL_malloc(blob_len)))
+        goto err;
+    memcpy(blob, seed, sizeof(seed));
+    memcpy(blob + sizeof(seed), ec_priv, ec_priv_len);
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+        blob, blob_len);
+    import_params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(kctx), 1))
+        goto err;
+
+    /* Must be rejected: the embedded EC key is on P-384, not P-256 */
+    if (!TEST_int_eq(EVP_PKEY_fromdata(kctx, &bad_key,
+                         OSSL_KEYMGMT_SELECT_PRIVATE_KEY, import_params),
+            0)
+        || !TEST_ptr_null(bad_key))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_free(ec_key);
+    EVP_PKEY_free(bad_key);
+    OPENSSL_free(ec_priv);
+    OPENSSL_free(blob);
+    return ret;
+}
+
+/* Locate |needle| (|needle_len| bytes) within |hay| (|hay_len| bytes); -1 if absent. */
+static long find_bytes(const unsigned char *hay, long hay_len,
+    const unsigned char *needle, long needle_len)
+{
+    long i;
+
+    for (i = 0; i + needle_len <= hay_len; i++) {
+        if (memcmp(hay + i, needle, needle_len) == 0)
+            return i;
+    }
+    return -1;
+}
+
+/*
+ * A SubjectPublicKeyInfo whose BIT STRING has a non-zero "unused bits" byte
+ * is invalid DER for key material.  The hand-rolled composite SPKI parser
+ * (composite_spki_bitstring_body()) must reject it rather than silently
+ * accept it and shift the decoded key material by one byte.
+ */
+static int composite_spki_bad_unused_bits_test(void)
+{
+    int ret = 0;
+    const char *alg = "ML-DSA-65-RSA3072-PKCS15-SHA512";
+    EVP_PKEY *key = NULL, *decoded = NULL;
+    OSSL_ENCODER_CTX *ectx = NULL;
+    OSSL_DECODER_CTX *dctx = NULL;
+    unsigned char *der = NULL, *pub = NULL;
+    const unsigned char *derp;
+    size_t der_len = 0, pub_len = 0, len;
+    long anchor;
+#define ANCHOR_LEN 16
+
+    if (!TEST_ptr(key = do_gen_key(alg))
+        || !TEST_int_eq(EVP_PKEY_get_octet_string_param(key,
+                            OSSL_PKEY_PARAM_PUB_KEY, NULL, 0, &pub_len),
+            1)
+        || !TEST_ptr(pub = OPENSSL_malloc(pub_len))
+        || !TEST_int_eq(EVP_PKEY_get_octet_string_param(key,
+                            OSSL_PKEY_PARAM_PUB_KEY, pub, pub_len, &pub_len),
+            1))
+        goto err;
+
+    if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key,
+                      OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                      "DER", "SubjectPublicKeyInfo", NULL))
+        || !TEST_true(OSSL_ENCODER_to_data(ectx, &der, &der_len)))
+        goto err;
+
+    /* Locate the start of the ML-DSA public key within the encoded BIT STRING */
+    anchor = find_bytes(der, (long)der_len, pub, ANCHOR_LEN);
+    if (!TEST_int_ge(anchor, 1)
+        || !TEST_uchar_eq(der[anchor - 1], 0)) /* unused-bits byte must be 0 */
+        goto err;
+
+    /* Sanity: the unmodified DER must decode successfully */
+    derp = der;
+    len = der_len;
+    if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_for_pkey(&decoded, "DER",
+                      "SubjectPublicKeyInfo", alg,
+                      OSSL_KEYMGMT_SELECT_PUBLIC_KEY, lib_ctx, NULL))
+        || !TEST_true(OSSL_DECODER_from_data(dctx, &derp, &len)))
+        goto err;
+    EVP_PKEY_free(decoded);
+    decoded = NULL;
+    OSSL_DECODER_CTX_free(dctx);
+    dctx = NULL;
+
+    /* Corrupt the unused-bits byte; decode must now fail */
+    der[anchor - 1] = 0x01;
+    derp = der;
+    len = der_len;
+    if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_for_pkey(&decoded, "DER",
+                      "SubjectPublicKeyInfo", alg,
+                      OSSL_KEYMGMT_SELECT_PUBLIC_KEY, lib_ctx, NULL))
+        || !TEST_false(OSSL_DECODER_from_data(dctx, &derp, &len))
+        || !TEST_ptr_null(decoded))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(key);
+    EVP_PKEY_free(decoded);
+    OSSL_ENCODER_CTX_free(ectx);
+    OSSL_DECODER_CTX_free(dctx);
+    OPENSSL_free(der);
+    OPENSSL_free(pub);
+    return ret;
+#undef ANCHOR_LEN
+}
+
 /* =========================================================================
  * Streaming (sign/verify_message_update) tests
  * ========================================================================= */
@@ -702,6 +965,9 @@ int setup_tests(void)
     /* Negative tests */
     ADD_TEST(composite_cross_alg_mismatch_test);
     ADD_ALL_TESTS(composite_tampered_sig_test, NUM_COMPOSITE_ALGS);
+    ADD_TEST(composite_rsa_size_downgrade_test);
+    ADD_TEST(composite_ec_curve_downgrade_test);
+    ADD_TEST(composite_spki_bad_unused_bits_test);
 
     /* Streaming (sign/verify_message_update) tests */
     ADD_ALL_TESTS(composite_streaming_sign_verify_test, NUM_COMPOSITE_ALGS);

@@ -46,6 +46,7 @@ __owur int ossl_composite_key_to_text(BIO *out, const COMPOSITE_KEY *key,
  *   from SubjectPublicKeyInfo).
  * |ml_dsa_evp_type|: EVP_PKEY_ML_DSA_44/65/87 selecting the ML-DSA variant.
  * |classic_alg|: "RSA", "EC", "ED25519", or "ED448".
+ * |classic_bits|: expected classic key size in bits, checked for RSA only.
  * |ec_curve|: curve name for EC (e.g. "P-256"), NULL for non-EC.
  * |provctx|: provider context for library context and propq.
  * |propq|: property query string (may be NULL).
@@ -55,6 +56,7 @@ __owur COMPOSITE_KEY *ossl_composite_d2i_pubkey(const unsigned char *pk,
     int pk_len,
     int ml_dsa_evp_type,
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve,
     PROV_CTX *provctx,
     const char *propq);
@@ -69,6 +71,7 @@ __owur COMPOSITE_KEY *ossl_composite_d2i_prvkey(const unsigned char *priv,
     int priv_len,
     int ml_dsa_evp_type,
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve,
     PROV_CTX *provctx,
     const char *propq);

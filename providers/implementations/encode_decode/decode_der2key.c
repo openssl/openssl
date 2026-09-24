@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <openssl/byteorder.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -1068,27 +1069,40 @@ composite_spki_bitstring_body(const unsigned char *der, long der_len,
     int *out_len)
 {
     const unsigned char *p = der;
+    const unsigned char *end;
     long outer_len, algo_len, bs_len;
     int tag, xclass, inf;
 
-    /* Outer SEQUENCE */
-    inf = ASN1_get_object(&p, &outer_len, &tag, &xclass, der_len);
-    if ((inf & 0x80) || tag != V_ASN1_SEQUENCE || (size_t)(p + outer_len) > (size_t)(der + der_len))
+    if (der_len <= 0)
         return NULL;
 
+    /* Outer SEQUENCE; ASN1_get_object() itself bounds-checks outer_len against der_len */
+    inf = ASN1_get_object(&p, &outer_len, &tag, &xclass, der_len);
+    if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_SEQUENCE)
+        return NULL;
+    end = p + outer_len; /* safe: outer_len was checked to fit within der_len above */
+
     /* AlgorithmIdentifier (SEQUENCE) — skip it */
-    {
-        const unsigned char *save = p;
-        inf = ASN1_get_object(&p, &algo_len, &tag, &xclass, outer_len);
-        if ((inf & 0x80) || tag != V_ASN1_SEQUENCE)
-            return NULL;
-        p += algo_len; /* skip AlgorithmIdentifier body */
-        outer_len -= (long)(p - save);
-    }
+    inf = ASN1_get_object(&p, &algo_len, &tag, &xclass, end - p);
+    if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_SEQUENCE)
+        return NULL;
+    p += algo_len; /* skip AlgorithmIdentifier body; bounds already checked */
 
     /* BIT STRING */
-    inf = ASN1_get_object(&p, &bs_len, &tag, &xclass, outer_len);
-    if ((inf & 0x80) || tag != V_ASN1_BIT_STRING || bs_len < 1)
+    inf = ASN1_get_object(&p, &bs_len, &tag, &xclass, end - p);
+    if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_BIT_STRING
+        || bs_len < 1)
+        return NULL;
+
+    /* the BIT STRING must exactly fill the SEQUENCE with no trailing junk */
+    if (p + bs_len != end)
+        return NULL;
+
+    /* unused-bits byte must be 0 for DER-encoded key material */
+    if (p[0] != 0)
+        return NULL;
+
+    if (bs_len - 1 > INT_MAX)
         return NULL;
 
     /* First byte is the unused-bits count; payload starts at p+1 */
@@ -1099,7 +1113,7 @@ composite_spki_bitstring_body(const unsigned char *der, long der_len,
 static COMPOSITE_KEY *
 composite_d2i_pubkey_common(const unsigned char *der, long der_len,
     int ml_dsa_evp_type,
-    const char *classic_alg, const char *ec_curve,
+    const char *classic_alg, int classic_bits, const char *ec_curve,
     struct der2key_ctx_st *ctx)
 {
     const unsigned char *pk;
@@ -1139,14 +1153,14 @@ composite_d2i_pubkey_common(const unsigned char *der, long der_len,
         return NULL;
 
     return ossl_composite_d2i_pubkey(pk, pk_len, ml_dsa_evp_type,
-        classic_alg, ec_curve,
+        classic_alg, classic_bits, ec_curve,
         ctx->provctx, ctx->propq);
 }
 
 static COMPOSITE_KEY *
 composite_d2i_prvkey_common(const unsigned char *der, long der_len,
     int ml_dsa_evp_type,
-    const char *classic_alg, const char *ec_curve,
+    const char *classic_alg, int classic_bits, const char *ec_curve,
     struct der2key_ctx_st *ctx)
 {
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
@@ -1168,7 +1182,7 @@ composite_d2i_prvkey_common(const unsigned char *der, long der_len,
         goto done;
 
     key = ossl_composite_d2i_prvkey(privbytes, privlen, ml_dsa_evp_type,
-        classic_alg, ec_curve,
+        classic_alg, classic_bits, ec_curve,
         ctx->provctx, ctx->propq);
 done:
     PKCS8_PRIV_KEY_INFO_free(p8inf);
@@ -1179,13 +1193,13 @@ done:
  * MAKE_COMPOSITE_D2I: per-algorithm d2i_PUBKEY, d2i_PKCS8, and the
  * supporting #defines consumed by MAKE_DECODER.
  */
-#define MAKE_COMPOSITE_D2I(alg, ml_dsa_evp_type_, classic_alg_, ec_curve_)                \
+#define MAKE_COMPOSITE_D2I(alg, ml_dsa_evp_type_, classic_alg_, classic_bits_, ec_curve_) \
     static void *                                                                         \
     alg##_d2i_PUBKEY(const unsigned char **der, long der_len,                             \
         struct der2key_ctx_st *ctx)                                                       \
     {                                                                                     \
         COMPOSITE_KEY *key = composite_d2i_pubkey_common(*der, der_len, ml_dsa_evp_type_, \
-            classic_alg_, ec_curve_, ctx);                                                \
+            classic_alg_, classic_bits_, ec_curve_, ctx);                                 \
         if (key != NULL)                                                                  \
             *der += der_len;                                                              \
         return key;                                                                       \
@@ -1195,14 +1209,14 @@ done:
         struct der2key_ctx_st *ctx)                                                       \
     {                                                                                     \
         COMPOSITE_KEY *key = composite_d2i_prvkey_common(*der, der_len, ml_dsa_evp_type_, \
-            classic_alg_, ec_curve_, ctx);                                                \
+            classic_alg_, classic_bits_, ec_curve_, ctx);                                 \
         if (key != NULL)                                                                  \
             *der += der_len;                                                              \
         return key;                                                                       \
     }
 
-MAKE_COMPOSITE_D2I(mldsa65_rsa3072_pkcs15_sha512, EVP_PKEY_ML_DSA_65, "RSA", NULL)
-MAKE_COMPOSITE_D2I(mldsa65_ecdsa_p256_sha512, EVP_PKEY_ML_DSA_65, "EC", "P-256")
+MAKE_COMPOSITE_D2I(mldsa65_rsa3072_pkcs15_sha512, EVP_PKEY_ML_DSA_65, "RSA", 3072, NULL)
+MAKE_COMPOSITE_D2I(mldsa65_ecdsa_p256_sha512, EVP_PKEY_ML_DSA_65, "EC", 0, "P-256")
 
 /* Supporting #defines consumed by DO_SubjectPublicKeyInfo / DO_PrivateKeyInfo macros */
 #define mldsa65_rsa3072_pkcs15_sha512_evp_type NID_ML_DSA_65_RSA3072_PKCS15_SHA512

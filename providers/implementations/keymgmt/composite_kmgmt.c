@@ -9,7 +9,9 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/ec.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/param_build.h>
 #include <openssl/proverr.h>
 #include <openssl/decoder.h>
@@ -139,12 +141,23 @@ static int ossl_composite_key_get_max_size(const COMPOSITE_KEY *key)
     return (int)ml_dsa_sig + (classic_sig > 0 ? classic_sig : 0);
 }
 
+/* Compares EC group names, resolving NIST aliases (e.g. "P-256") to their canonical NID. */
+static int composite_ec_curve_matches(const char *grp, const char *ec_curve)
+{
+    int actual_nid = OBJ_txt2nid(grp);
+    int expected_nid = EC_curve_nist2nid(ec_curve);
+
+    if (expected_nid == NID_undef)
+        expected_nid = OBJ_txt2nid(ec_curve);
+    return actual_nid != NID_undef && actual_nid == expected_nid;
+}
+
 /* Forward declarations for helpers defined later in this file */
 static int composite_encode_classic_key(const EVP_PKEY *pkey, int include_priv,
     unsigned char **out, size_t *out_len);
 static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
-    const char *classic_alg, const char *ec_curve, int include_priv,
-    const unsigned char *buf, size_t buf_len);
+    const char *classic_alg, int classic_bits, const char *ec_curve,
+    int include_priv, const unsigned char *buf, size_t buf_len);
 
 COMPOSITE_KEY *ossl_prov_composite_new(PROV_CTX *ctx, const char *propq,
     int ml_dsa_evp_type)
@@ -272,7 +285,7 @@ static void *composite_gen(void *genctx, int evp_type,
             goto err;
         }
         key->classic_key = composite_decode_classic_key(
-            PROV_LIBCTX_OF(gctx->provctx), classic_alg, ec_curve, 1,
+            PROV_LIBCTX_OF(gctx->provctx), classic_alg, classic_bits, ec_curve, 1,
             gctx->priv_seed + ML_DSA_SEED_BYTES,
             gctx->priv_seed_len - ML_DSA_SEED_BYTES);
         if (key->classic_key == NULL)
@@ -518,6 +531,7 @@ static const unsigned char *rfc5915_extract_privkey(const unsigned char *buf,
 
 static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve,
     int include_priv,
     const unsigned char *buf,
@@ -634,6 +648,29 @@ static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
         }
     }
 
+    if (pkey == NULL)
+        return NULL;
+
+    /* Bind the decoded classic component's actual parameters to the composite variant */
+    if (strcmp(classic_alg, "RSA") == 0
+        && EVP_PKEY_get_bits(pkey) != classic_bits) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        EVP_PKEY_free(pkey);
+        return NULL;
+    }
+    if (strcmp(classic_alg, "EC") == 0) {
+        char grp[80];
+        size_t grplen = 0;
+
+        if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
+                grp, sizeof(grp), &grplen)
+            || !composite_ec_curve_matches(grp, ec_curve)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
+            EVP_PKEY_free(pkey);
+            return NULL;
+        }
+    }
+
     return pkey;
 }
 
@@ -650,6 +687,7 @@ static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
 static int composite_import_internal(void *keydata, int selection,
     const OSSL_PARAM params[],
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve)
 {
     COMPOSITE_KEY *key = keydata;
@@ -720,7 +758,7 @@ static int composite_import_internal(void *keydata, int selection,
 
     /* 3. Decode the classic portion from its raw wire format */
     key->classic_key = composite_decode_classic_key(libctx,
-        classic_alg, ec_curve,
+        classic_alg, classic_bits, ec_curve,
         include_priv,
         buf + ml_dsa_len,
         buf_len - ml_dsa_len);
@@ -992,7 +1030,7 @@ err:
         const OSSL_PARAM params[])                                                                \
     {                                                                                             \
         return composite_import_internal(keydata, selection, params,                              \
-            classic_alg_, ec_curve_);                                                             \
+            classic_alg_, classic_bits_, ec_curve_);                                              \
     }                                                                                             \
     const OSSL_DISPATCH ossl_##alg##_keymgmt_functions[] = {                                      \
         { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))composite_##alg##_new_key },                     \

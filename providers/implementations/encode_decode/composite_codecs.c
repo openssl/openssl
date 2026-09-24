@@ -10,9 +10,11 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/ec.h>
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
 #include <openssl/core_names.h>
+#include <openssl/objects.h>
 #include <openssl/proverr.h>
 #include "crypto/ml_dsa.h"
 #include "prov/composite_codecs.h"
@@ -276,12 +278,47 @@ int ossl_composite_key_to_text(BIO *out, const COMPOSITE_KEY *key,
     return 1;
 }
 
+/* Compares EC group names, resolving NIST aliases (e.g. "P-256") to their canonical NID. */
+static int composite_ec_curve_matches(const char *grp, const char *ec_curve)
+{
+    int actual_nid = OBJ_txt2nid(grp);
+    int expected_nid = EC_curve_nist2nid(ec_curve);
+
+    if (expected_nid == NID_undef)
+        expected_nid = OBJ_txt2nid(ec_curve);
+    return actual_nid != NID_undef && actual_nid == expected_nid;
+}
+
+/* Bind the decoded classic component's actual parameters to the composite variant */
+static int composite_codecs_check_classic_params(EVP_PKEY *pkey,
+    const char *classic_alg, int classic_bits, const char *ec_curve)
+{
+    if (strcmp(classic_alg, "RSA") == 0) {
+        if (EVP_PKEY_get_bits(pkey) != classic_bits) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    } else if (strcmp(classic_alg, "EC") == 0) {
+        char grp[80];
+        size_t grplen = 0;
+
+        if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
+                grp, sizeof(grp), &grplen)
+            || !composite_ec_curve_matches(grp, ec_curve)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /*
  * Decode the classic sub-key from its raw wire format.
  * Used by ossl_composite_d2i_pubkey() and ossl_composite_d2i_prvkey().
  */
 static EVP_PKEY *composite_codecs_decode_classic_pub(OSSL_LIB_CTX *libctx,
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve,
     const unsigned char *buf,
     size_t buf_len)
@@ -318,11 +355,18 @@ static EVP_PKEY *composite_codecs_decode_classic_pub(OSSL_LIB_CTX *libctx,
             pkey = NULL;
         EVP_PKEY_CTX_free(pctx);
     }
+    if (pkey != NULL
+        && !composite_codecs_check_classic_params(pkey, classic_alg,
+            classic_bits, ec_curve)) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
     return pkey;
 }
 
 static EVP_PKEY *composite_codecs_decode_classic_priv(OSSL_LIB_CTX *libctx,
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve,
     const unsigned char *buf,
     size_t buf_len)
@@ -351,6 +395,12 @@ static EVP_PKEY *composite_codecs_decode_classic_priv(OSSL_LIB_CTX *libctx,
             pkey = NULL;
         OSSL_DECODER_CTX_free(dctx);
     }
+    if (pkey != NULL
+        && !composite_codecs_check_classic_params(pkey, classic_alg,
+            classic_bits, ec_curve)) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
     return pkey;
 }
 
@@ -358,6 +408,7 @@ COMPOSITE_KEY *ossl_composite_d2i_pubkey(const unsigned char *pk,
     int pk_len,
     int ml_dsa_evp_type,
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve,
     PROV_CTX *provctx,
     const char *propq)
@@ -388,7 +439,7 @@ COMPOSITE_KEY *ossl_composite_d2i_pubkey(const unsigned char *pk,
     }
 
     key->classic_key = composite_codecs_decode_classic_pub(
-        libctx, classic_alg, ec_curve,
+        libctx, classic_alg, classic_bits, ec_curve,
         pk + ml_dsa_len, (size_t)pk_len - ml_dsa_len);
     if (key->classic_key == NULL)
         goto err;
@@ -404,6 +455,7 @@ COMPOSITE_KEY *ossl_composite_d2i_prvkey(const unsigned char *priv,
     int priv_len,
     int ml_dsa_evp_type,
     const char *classic_alg,
+    int classic_bits,
     const char *ec_curve,
     PROV_CTX *provctx,
     const char *propq)
@@ -430,7 +482,7 @@ COMPOSITE_KEY *ossl_composite_d2i_prvkey(const unsigned char *priv,
     }
 
     key->classic_key = composite_codecs_decode_classic_priv(
-        libctx, classic_alg, ec_curve,
+        libctx, classic_alg, classic_bits, ec_curve,
         priv + ML_DSA_SEED_BYTES,
         (size_t)priv_len - ML_DSA_SEED_BYTES);
     if (key->classic_key == NULL)
