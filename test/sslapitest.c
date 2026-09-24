@@ -6330,6 +6330,7 @@ end:
 #endif
 }
 
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 /*
  * A security callback that keeps TLS_AES_128_GCM_SHA256 off the wire, while
  * leaving it in the configured ciphersuite list.
@@ -6356,7 +6357,6 @@ static int no_aes128gcm_supported_cb(const SSL *ssl, const SSL_CTX *ctx,
  */
 static int test_early_data_psk_cipher_off_wire(void)
 {
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
@@ -6431,10 +6431,8 @@ end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
-#else
-    return 1;
-#endif
 }
+#endif
 
 #ifndef OPENSSL_NO_EC
 /* A raw external PSK bound to |suite_id|'s ciphersuite, master key all 0x01. */
@@ -17566,7 +17564,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_not_expected, 6);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_early_data_psk_cipher_mismatch);
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_early_data_psk_cipher_off_wire);
+#endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_hrr_psk_no_ch2_add);
 #endif
