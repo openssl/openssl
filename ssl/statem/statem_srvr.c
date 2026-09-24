@@ -167,6 +167,32 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             st->hand_state = TLS_ST_SR_ACK;
             return 1;
         }
+        /*
+         * DTLS 1.3 only. Our own KeyUpdate being outstanding does not stop
+         * the peer from independently sending a KeyUpdate of its own, or
+         * answering a CertificateRequest we already sent: these are
+         * separate reliability state machines (rfc9147 5.8.4) and must be
+         * accepted the same as if we were at TLS_ST_OK.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && st->hand_state == TLS_ST_SW_KEY_UPDATE) {
+            if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
+                if (mt == SSL3_MT_CERTIFICATE) {
+                    st->hand_state = TLS_ST_SR_CERT;
+                    return 1;
+                }
+#ifndef OPENSSL_NO_COMP_ALG
+                if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
+                    && s->ext.compress_certificate_sent) {
+                    st->hand_state = TLS_ST_SR_COMP_CERT;
+                    return 1;
+                }
+#endif
+            }
+            if (mt == SSL3_MT_KEY_UPDATE) {
+                st->hand_state = TLS_ST_SR_KEY_UPDATE;
+                return 1;
+            }
+        }
         break;
 
     case TLS_ST_OK:
@@ -621,6 +647,18 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
     }
 
     /*
+     * Resume a write we held back because our own KeyUpdate was still
+     * unacknowledged. Once that ACK has arrived, fall through into the
+     * switch below as if we were still at the deferred state, so it can
+     * now proceed.
+     */
+    if (st->deferred_key_update_state != TLS_ST_BEFORE
+        && !dtls_has_unacked_key_update(s)) {
+        st->hand_state = st->deferred_key_update_state;
+        st->deferred_key_update_state = TLS_ST_BEFORE;
+    }
+
+    /*
      * No case for TLS_ST_BEFORE, because at that stage we have not negotiated
      * TLSv1.3 yet, so that is handled by ossl_statem_server_write_transition()
      */
@@ -724,6 +762,18 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
              */
             if (SSL_CONNECTION_IS_DTLS13(s)) {
                 st->deferred_ack_state = TLS_ST_OK;
+                if (dtls_has_unacked_key_update(s)) {
+                    /*
+                     * RFC 9147 section 8: our own KeyUpdate's new keys must
+                     * not be used for anything else until it is
+                     * acknowledged. Hold this ACK back rather than send it
+                     * now; deferred_ack_state above still says where to go
+                     * once it is finally sent.
+                     */
+                    st->deferred_key_update_state = TLS_ST_SW_ACK;
+                    st->hand_state = TLS_ST_SW_KEY_UPDATE;
+                    return WRITE_TRAN_FINISHED;
+                }
                 st->hand_state = TLS_ST_SW_ACK;
             } else {
                 st->hand_state = TLS_ST_OK;
@@ -772,6 +822,17 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
             st->deferred_ack_state = next_state;
+            if (dtls_has_unacked_key_update(s)) {
+                /*
+                 * RFC 9147 section 8: our own KeyUpdate's new keys must not
+                 * be used for anything else until it is acknowledged. Hold
+                 * this ACK back rather than send it now; deferred_ack_state
+                 * above still says where to go once it is finally sent.
+                 */
+                st->deferred_key_update_state = TLS_ST_SW_ACK;
+                st->hand_state = TLS_ST_SW_KEY_UPDATE;
+                return WRITE_TRAN_FINISHED;
+            }
             st->hand_state = TLS_ST_SW_ACK;
         } else {
             st->hand_state = next_state;
@@ -780,7 +841,19 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_SR_KEY_UPDATE:
         if (SSL_CONNECTION_IS_DTLS13(s)) {
-            st->deferred_ack_state = TLS_ST_OK;
+            /*
+             * RFC 9147 section 8's restriction is on using the new
+             * epoch's keys, not on sending at all. Our own KeyUpdate's
+             * write keys are not installed until its ACK arrives (see
+             * dtls_process_ack()), so this ACK can safely go out under
+             * our current, still-valid keys even while our own
+             * KeyUpdate is outstanding. If it is, go back to waiting
+             * for its ACK afterward rather than reporting the
+             * connection idle.
+             */
+            st->deferred_ack_state = dtls_has_unacked_key_update(s)
+                ? TLS_ST_SW_KEY_UPDATE
+                : TLS_ST_OK;
             st->hand_state = TLS_ST_SW_ACK;
             return WRITE_TRAN_CONTINUE;
         }
@@ -818,6 +891,15 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         st->hand_state = st->deferred_ack_state;
         if (st->ack_for_retransmit) {
             st->ack_for_retransmit = 0;
+            return WRITE_TRAN_FINISHED;
+        }
+        if (st->hand_state == TLS_ST_SW_KEY_UPDATE) {
+            /*
+             * We are only here to resume waiting for our own KeyUpdate's
+             * ACK (see the TLS_ST_SR_KEY_UPDATE and TLS_ST_SR_FINISHED
+             * cases above) -- it was already sent, so this must not
+             * trigger constructing another one.
+             */
             return WRITE_TRAN_FINISHED;
         }
 
@@ -1334,7 +1416,15 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
     case TLS_ST_SW_KEY_UPDATE:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
-        if (!tls13_update_key(s, 1)) {
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            /*
+             * RFC 9147 section 8: don't switch to the new write keys
+             * until this KeyUpdate has been acknowledged; keep using
+             * the current, still-valid keys until then. Installed from
+             * dtls_process_ack() once the ACK arrives.
+             */
+            s->d1->key_update_write_pending = 1;
+        } else if (!tls13_update_key(s, 1)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
         }
