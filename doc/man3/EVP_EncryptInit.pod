@@ -1526,6 +1526,10 @@ EVP_CipherUpdate() call in a single operation.
 
 =head2 GCM and OCB Modes
 
+In GCM mode all AAD must be supplied before any plaintext or ciphertext is
+processed. An AAD update made after payload data fails and reports
+B<PROV_R_UPDATE_CALL_OUT_OF_ORDER>.
+
 The following I<ctrl>s are supported in GCM and OCB modes.
 
 =over 4
