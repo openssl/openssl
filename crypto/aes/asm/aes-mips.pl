@@ -731,6 +731,132 @@ $code.=<<___;
 .end	AES_encrypt
 ___
 
+my $CTR32_FRAMESIZE=24*$SZREG;
+my $CTR32_BLOCK_OFFSET=6*$SZREG;
+my $CTR32_COUNT_OFFSET=10*$SZREG;
+my $CTR32_IVEC_OFFSET=$CTR32_FRAMESIZE+4*$SZREG;
+
+$code.=<<___ if ($flavour =~ /o32/i);
+.align	5
+.globl	AES_ctr32_encrypt
+.ent	AES_ctr32_encrypt
+AES_ctr32_encrypt:
+	.frame	$sp,$CTR32_FRAMESIZE,$ra
+	.mask	$SAVED_REGS_MASK,-$SZREG
+	.set	noreorder
+	.cpload	$pf
+	$PTR_SUB $sp,$CTR32_FRAMESIZE
+	$REG_S	$ra,$CTR32_FRAMESIZE-1*$SZREG($sp)
+	$REG_S	$fp,$CTR32_FRAMESIZE-2*$SZREG($sp)
+	$REG_S	$s11,$CTR32_FRAMESIZE-3*$SZREG($sp)
+	$REG_S	$s10,$CTR32_FRAMESIZE-4*$SZREG($sp)
+	$REG_S	$s9,$CTR32_FRAMESIZE-5*$SZREG($sp)
+	$REG_S	$s8,$CTR32_FRAMESIZE-6*$SZREG($sp)
+	$REG_S	$s7,$CTR32_FRAMESIZE-7*$SZREG($sp)
+	$REG_S	$s6,$CTR32_FRAMESIZE-8*$SZREG($sp)
+	$REG_S	$s5,$CTR32_FRAMESIZE-9*$SZREG($sp)
+	$REG_S	$s4,$CTR32_FRAMESIZE-10*$SZREG($sp)
+	.set	reorder
+
+	# O32 passes ivec as the fifth argument on the caller's stack.
+	$REG_L	$t0,$CTR32_IVEC_OFFSET($sp)
+	$REG_S	$key,$CTR32_COUNT_OFFSET($sp) # preserve the block count
+	move	$key,$Tbl                      # key schedule for the inner core
+	$PTR_LA	$Tbl,AES_Te
+
+	# Keep the counter above the O32 outgoing argument-save area.
+	lwl	$s0,0+$MSB($t0)
+	lwl	$s1,4+$MSB($t0)
+	lwl	$s2,8+$MSB($t0)
+	lwl	$s3,12+$MSB($t0)
+	lwr	$s0,0+$LSB($t0)
+	lwr	$s1,4+$LSB($t0)
+	lwr	$s2,8+$LSB($t0)
+	lwr	$s3,12+$LSB($t0)
+	$REG_S	$s0,$CTR32_BLOCK_OFFSET+0($sp)
+	$REG_S	$s1,$CTR32_BLOCK_OFFSET+4($sp)
+	$REG_S	$s2,$CTR32_BLOCK_OFFSET+8($sp)
+	$REG_S	$s3,$CTR32_BLOCK_OFFSET+12($sp)
+
+	$REG_L	$t0,$CTR32_COUNT_OFFSET($sp)
+	beqz	$t0,.Lctr32_done
+
+.Loop_ctr32_enc:
+	$REG_L	$s0,$CTR32_BLOCK_OFFSET+0($sp)
+	$REG_L	$s1,$CTR32_BLOCK_OFFSET+4($sp)
+	$REG_L	$s2,$CTR32_BLOCK_OFFSET+8($sp)
+	$REG_L	$s3,$CTR32_BLOCK_OFFSET+12($sp)
+
+	bal	_mips_AES_encrypt
+
+	# Load plaintext before storing, so in-place operation is safe.
+	lwl	$t0,0+$MSB($inp)
+	lwl	$t1,4+$MSB($inp)
+	lwl	$t2,8+$MSB($inp)
+	lwl	$t3,12+$MSB($inp)
+	lwr	$t0,0+$LSB($inp)
+	lwr	$t1,4+$LSB($inp)
+	lwr	$t2,8+$LSB($inp)
+	lwr	$t3,12+$LSB($inp)
+	xor	$s0,$t0
+	xor	$s1,$t1
+	xor	$s2,$t2
+	xor	$s3,$t3
+
+	swr	$s0,0+$LSB($out)
+	swr	$s1,4+$LSB($out)
+	swr	$s2,8+$LSB($out)
+	swr	$s3,12+$LSB($out)
+	swl	$s0,0+$MSB($out)
+	swl	$s1,4+$MSB($out)
+	swl	$s2,8+$MSB($out)
+	swl	$s3,12+$MSB($out)
+
+	# Increment the low 32-bit counter in big-endian byte order.
+	lbu	$t0,$CTR32_BLOCK_OFFSET+15($sp)
+	addiu	$t0,1
+	andi	$t0,0xff
+	sb	$t0,$CTR32_BLOCK_OFFSET+15($sp)
+	bnez	$t0,.Lctr32_no_carry
+	lbu	$t0,$CTR32_BLOCK_OFFSET+14($sp)
+	addiu	$t0,1
+	andi	$t0,0xff
+	sb	$t0,$CTR32_BLOCK_OFFSET+14($sp)
+	bnez	$t0,.Lctr32_no_carry
+	lbu	$t0,$CTR32_BLOCK_OFFSET+13($sp)
+	addiu	$t0,1
+	andi	$t0,0xff
+	sb	$t0,$CTR32_BLOCK_OFFSET+13($sp)
+	bnez	$t0,.Lctr32_no_carry
+	lbu	$t0,$CTR32_BLOCK_OFFSET+12($sp)
+	addiu	$t0,1
+	andi	$t0,0xff
+	sb	$t0,$CTR32_BLOCK_OFFSET+12($sp)
+
+.Lctr32_no_carry:
+	$PTR_ADD $inp,16
+	$PTR_ADD $out,16
+	$REG_L	$t0,$CTR32_COUNT_OFFSET($sp)
+	addiu	$t0,-1
+	$REG_S	$t0,$CTR32_COUNT_OFFSET($sp)
+	bnez	$t0,.Loop_ctr32_enc
+
+.Lctr32_done:
+	.set	noreorder
+	$REG_L	$ra,$CTR32_FRAMESIZE-1*$SZREG($sp)
+	$REG_L	$fp,$CTR32_FRAMESIZE-2*$SZREG($sp)
+	$REG_L	$s11,$CTR32_FRAMESIZE-3*$SZREG($sp)
+	$REG_L	$s10,$CTR32_FRAMESIZE-4*$SZREG($sp)
+	$REG_L	$s9,$CTR32_FRAMESIZE-5*$SZREG($sp)
+	$REG_L	$s8,$CTR32_FRAMESIZE-6*$SZREG($sp)
+	$REG_L	$s7,$CTR32_FRAMESIZE-7*$SZREG($sp)
+	$REG_L	$s6,$CTR32_FRAMESIZE-8*$SZREG($sp)
+	$REG_L	$s5,$CTR32_FRAMESIZE-9*$SZREG($sp)
+	$REG_L	$s4,$CTR32_FRAMESIZE-10*$SZREG($sp)
+	jr	$ra
+	$PTR_ADD $sp,$CTR32_FRAMESIZE
+.end	AES_ctr32_encrypt
+___
 $code.=<<___;
 .align	5
 .ent	_mips_AES_decrypt

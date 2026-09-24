@@ -21,9 +21,9 @@ IF[{- !$disabled{asm} -}]
   $AESDEF_sparcv9=AES_ASM
 
   $AESASM_mips32=aes_cbc.c aes-mips.S
-  $AESDEF_mips32=AES_ASM
+  $AESDEF_mips32=AES_ASM AES_CTR_ASM
   $AESASM_mips64=$AESASM_mips32
-  $AESDEF_mips64=$AESDEF_mips32
+  $AESDEF_mips64=AES_ASM
 
   $AESASM_s390x=aes-s390x.S
   # aes-390x.S implements AES_ctr32_encrypt and AES_xts_[en|de]crypt
