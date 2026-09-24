@@ -3,7 +3,9 @@
 # ====================================================================
 # Written by Andy Polyakov, @dot-asm, initially for use with OpenSSL.
 # ====================================================================
-#
+# Ported, adapted, and further optimized for use in OpenSSL by Julian Zhu.
+# Copyright (c) 2026, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
+# ====================================================================
 # Poly1305 hash for RISC-V.
 #
 # February 2019
@@ -21,6 +23,11 @@
 # units, but doesn't utilize more than 2048 bits. Spacemit X60 has
 # 256-bit unit and achieves 1.2 cpb for aligned data.
 #
+# September 2026.
+# Adapted into OpenSSL's risc-v perlasm framework.
+# Use 'tu' while initializing the accumulator to avoid replacing unnecessary
+# vector registers.
+# Use 'lwu' for loading two top-most powers to avoid potential misalignment issue.
 ######################################################################
 #
 ($zero,$ra,$sp,$gp,$tp)=map("x$_",(0..4));
@@ -630,7 +637,7 @@ poly1305_blocks_vx:
 
 	slli	$padbit, $padbit, 24	# $padbit is always 1 here
 
-	@{[vsetvli $zero, $vlen, "e32", "mf2", "ta", "ma"]}
+	@{[vsetvli $zero, $vlen, "e32", "mf2", "tu", "ma"]}
 
 	@{[vxor_vv $H0, $H0, $H0]}
 	@{[vxor_vv $H1, $H1, $H1]}
@@ -645,12 +652,17 @@ poly1305_blocks_vx:
 	@{[vmv_s_x $H4, $s4]}
 
 	slli		$t0, $vlen, 5		# chunk size
-	ld		$r8_0, 0*28($pwrs)	# load two top-most powers
-	ld		$r8_1, 1*28($pwrs)
+	lwu		$r8_0, 0*28($pwrs)	# load two top-most powers
+	lwu		$r8_1, 1*28($pwrs)
 	neg		$t1, $t0
-	ld		$r8_2, 2*28($pwrs)
-	ld		$r8_3, 3*28($pwrs)
-	ld		$r8_4, 4*28($pwrs)
+	lwu		$r8_2, 2*28($pwrs)
+	lwu		$r8_3, 3*28($pwrs)
+	lwu		$r8_4, 4*28($pwrs)
+	lwu		$r4_0, 4+0*28($pwrs)
+	lwu		$r4_1, 4+1*28($pwrs)
+	lwu		$r4_2, 4+2*28($pwrs)
+	lwu		$r4_3, 4+3*28($pwrs)
+	lwu		$r4_4, 4+4*28($pwrs)
 	caddi		$pwrs, $pwrs, 4
 	cadd		$sp, $sp, $t1		# allocate alignment buffer
 	andi		$t1, $inp, 3
@@ -658,19 +670,18 @@ poly1305_blocks_vx:
 	slli		$r8_2x5, $r8_2, 2
 	slli		$r8_3x5, $r8_3, 2
 	slli		$r8_4x5, $r8_4, 2
+	slli		$r4_1x5, $r4_1, 2
+	slli		$r4_2x5, $r4_2, 2
+	slli		$r4_3x5, $r4_3, 2
+	slli		$r4_4x5, $r4_4, 2
 	add		$r8_1x5, $r8_1x5, $r8_1
 	add		$r8_2x5, $r8_2x5, $r8_2
 	add		$r8_3x5, $r8_3x5, $r8_3
 	add		$r8_4x5, $r8_4x5, $r8_4
-	srli		$r4_0,   $r8_0, 32
-	srli		$r4_1,   $r8_1, 32
-	srli		$r4_2,   $r8_2, 32
-	srli		$r4_3,   $r8_3, 32
-	srli		$r4_4,   $r8_4, 32
-	srli		$r4_1x5, $r8_1x5, 32
-	srli		$r4_2x5, $r8_2x5, 32
-	srli		$r4_3x5, $r8_3x5, 32
-	srli		$r4_4x5, $r8_4x5, 32
+	add		$r4_1x5, $r4_1x5, $r4_1
+	add		$r4_2x5, $r4_2x5, $r4_2
+	add		$r4_3x5, $r4_3x5, $r4_3
+	add		$r4_4x5, $r4_4x5, $r4_4
 
 	beqz		$t1, .Laligned_vx
 
