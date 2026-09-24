@@ -27,6 +27,7 @@
 #include "crypto/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "fips/fipsindicator.h"
 #include "providers/implementations/keymgmt/keymgmtcommon.inc"
 
 static OSSL_FUNC_keymgmt_new_fn rsa_newdata;
@@ -36,6 +37,9 @@ static OSSL_FUNC_keymgmt_gen_init_fn rsapss_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_params_fn rsa_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn rsa_gen_settable_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn rsapss_gen_settable_params;
+#ifdef FIPS_MODULE
+static OSSL_FUNC_keymgmt_gen_get_params_fn rsa_gen_get_params;
+#endif
 static OSSL_FUNC_keymgmt_gen_fn rsa_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn rsa_gen_cleanup;
 static OSSL_FUNC_keymgmt_load_fn rsa_load;
@@ -573,6 +577,24 @@ static const OSSL_PARAM *rsapss_gen_settable_params(ossl_unused void *genctx,
     return settable;
 }
 
+#ifdef FIPS_MODULE
+static int rsa_gen_get_params(void *genctx, OSSL_PARAM params[])
+{
+    struct rsa_gen_ctx *gctx = genctx;
+    struct keymgmt_fips_gen_get_params_st p;
+    int approved = 1;
+
+    if (gctx == NULL || !keymgmt_fips_gen_get_params_decoder(params, &p))
+        return 0;
+#ifndef OPENSSL_NO_ACVP_TESTS
+    approved = gctx->acvp_test_params == NULL;
+#endif
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind, approved))
+        return 0;
+    return 1;
+}
+#endif
+
 static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct rsa_gen_ctx *gctx = genctx;
@@ -714,7 +736,7 @@ const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    OSSL_KEYMGMT_FIPS_APPROVED_GEN_DISPATCH_END
+    OSSL_KEYMGMT_FIPS_GEN_DISPATCH_END(rsa_gen_get_params)
 };
 
 const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
@@ -739,5 +761,5 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
         (void (*)(void))rsa_query_operation_name },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    OSSL_KEYMGMT_FIPS_APPROVED_GEN_DISPATCH_END
+    OSSL_KEYMGMT_FIPS_GEN_DISPATCH_END(rsa_gen_get_params)
 };

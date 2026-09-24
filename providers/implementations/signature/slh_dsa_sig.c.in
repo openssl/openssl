@@ -344,6 +344,10 @@ static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
             ctx->aid_len))
         return 0;
 
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind,
+            ctx->add_random_len == 0))
+        return 0;
+
     return 1;
 }
 
