@@ -1536,17 +1536,15 @@ static int test_crl_number(void)
 
 /*
  * Build a v2 CRL for |issuer|, signed with |pkey|, with cRLNumber set to
- * |crl_number|. Re-decodes the result so cached extension fields are filled.
+ * |crl_number|.  Returns the in-memory object without a DER round-trip so
+ * cached crl_number fields may be unset (public API construction path).
  */
 static X509_CRL *make_signed_crl_with_number(X509 *issuer, EVP_PKEY *pkey,
-    long crl_number)
+                                             long crl_number)
 {
-    X509_CRL *crl = NULL, *decoded = NULL;
+    X509_CRL *crl = NULL;
     ASN1_TIME *last = NULL, *next = NULL;
     ASN1_INTEGER *num = NULL;
-    unsigned char *der = NULL;
-    const unsigned char *p;
-    int derlen;
 
     if (!TEST_ptr(crl = X509_CRL_new())
         || !TEST_true(X509_CRL_set_version(crl, X509_CRL_VERSION_2))
@@ -1559,38 +1557,83 @@ static X509_CRL *make_signed_crl_with_number(X509 *issuer, EVP_PKEY *pkey,
         || !TEST_ptr(num = ASN1_INTEGER_new())
         || !TEST_true(ASN1_INTEGER_set(num, crl_number))
         || !TEST_int_gt(X509_CRL_add1_ext_i2d(crl, NID_crl_number, num, 0, 0), 0)
-        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
-        || !TEST_int_gt(derlen = i2d_X509_CRL(crl, &der), 0))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0))
         goto err;
 
-    p = der;
-    if (!TEST_ptr(decoded = d2i_X509_CRL(NULL, &p, derlen)))
-        goto err;
+    ASN1_INTEGER_free(num);
+    ASN1_TIME_free(last);
+    ASN1_TIME_free(next);
+    return crl;
 
 err:
-    OPENSSL_free(der);
     ASN1_INTEGER_free(num);
     ASN1_TIME_free(last);
     ASN1_TIME_free(next);
     X509_CRL_free(crl);
+    return NULL;
+}
+
+/* DER round-trip so decode-time caches (crl_number etc.) are filled. */
+static X509_CRL *crl_redecode(X509_CRL *crl)
+{
+    X509_CRL *decoded = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int derlen;
+
+    if (!TEST_int_gt(derlen = i2d_X509_CRL(crl, &der), 0))
+        return NULL;
+    p = der;
+    decoded = d2i_X509_CRL(NULL, &p, derlen);
+    OPENSSL_free(der);
+    if (!TEST_ptr(decoded))
+        return NULL;
     return decoded;
 }
 
 /*
- * Build a delta CRL compatible with |base|: same issuer/AKID/IDP, with the
- * given cRLNumber and BaseCRLNumber (deltaCRLIndicator). Re-decodes so
- * crl->base_crl_number is populated.
+ * Replace the cRLNumber extension on |crl| with |crl_number| and re-sign.
+ * Does not re-decode; cached fields may become stale.
+ */
+static int replace_crl_number_and_resign(X509_CRL *crl, EVP_PKEY *pkey,
+                                         long crl_number)
+{
+    ASN1_INTEGER *num = NULL;
+    X509_EXTENSION *old;
+    int idx, ok = 0;
+
+    idx = X509_CRL_get_ext_by_NID(crl, NID_crl_number, -1);
+    if (idx >= 0) {
+        old = X509_CRL_delete_ext(crl, idx);
+        X509_EXTENSION_free(old);
+    }
+
+    if (!TEST_ptr(num = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(num, crl_number))
+        || !TEST_int_gt(X509_CRL_add1_ext_i2d(crl, NID_crl_number, num, 0, 0), 0)
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0))
+        goto err;
+    ok = 1;
+
+err:
+    ASN1_INTEGER_free(num);
+    return ok;
+}
+
+/*
+ * Build a delta CRL compatible with |base|: same issuer/AKID, with the given
+ * cRLNumber and BaseCRLNumber (deltaCRLIndicator).  Re-decodes so selection
+ * helpers that still use cached fields (check_delta_base) can see the numbers.
  */
 static X509_CRL *make_signed_delta_crl(X509 *issuer, EVP_PKEY *pkey,
-    X509_CRL *base, long crl_number, long base_number)
+                                       X509_CRL *base, long crl_number,
+                                       long base_number)
 {
     X509_CRL *crl = NULL, *decoded = NULL;
     ASN1_TIME *last = NULL, *next = NULL;
     ASN1_INTEGER *num = NULL, *base_num = NULL;
     const X509_EXTENSION *akid_ext = NULL;
-    unsigned char *der = NULL;
-    const unsigned char *p;
-    int derlen, idx;
+    int idx;
 
     /*
      * Copy the base AKID extension verbatim. check_delta_base() compares the
@@ -1619,26 +1662,30 @@ static X509_CRL *make_signed_delta_crl(X509 *issuer, EVP_PKEY *pkey,
         || !TEST_int_gt(X509_CRL_add1_ext_i2d(crl, NID_delta_crl, base_num, 1, 0),
                         0)
         || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
-        || !TEST_int_gt(derlen = i2d_X509_CRL(crl, &der), 0))
+        || !TEST_ptr(decoded = crl_redecode(crl)))
         goto err;
 
-    p = der;
-    if (!TEST_ptr(decoded = d2i_X509_CRL(NULL, &p, derlen)))
-        goto err;
-
-err:
-    OPENSSL_free(der);
     ASN1_INTEGER_free(num);
     ASN1_INTEGER_free(base_num);
     ASN1_TIME_free(last);
     ASN1_TIME_free(next);
     X509_CRL_free(crl);
     return decoded;
+
+err:
+    ASN1_INTEGER_free(num);
+    ASN1_INTEGER_free(base_num);
+    ASN1_TIME_free(last);
+    ASN1_TIME_free(next);
+    X509_CRL_free(crl);
+    X509_CRL_free(decoded);
+    return NULL;
 }
 
 /*
- * Negative cRLNumber values are rejected during certificate verification when
- * X509_V_FLAG_X509_STRICT is set.
+ * Negative cRLNumber values are rejected during CRL checking when
+ * X509_V_FLAG_X509_STRICT is set.  Uses CRLs constructed via public APIs
+ * without a DER round-trip.
  */
 static int test_crl_negative_number(void)
 {
@@ -1681,6 +1728,53 @@ static int test_crl_negative_number(void)
 }
 
 /*
+ * Mutate cRLNumber via public APIs after decode/re-sign.  The STRICT check
+ * must follow the live extension, not a stale decode-time cache.
+ */
+static int test_crl_negative_number_mutation(void)
+{
+    X509 *root = NULL;
+    X509 *leaf = NULL;
+    EVP_PKEY *root_pkey = NULL;
+    X509_CRL *built = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned long strict = X509_V_FLAG_CRL_CHECK | X509_V_FLAG_X509_STRICT;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr(root_pkey = PKEY_from_strings(kRootPrivateKey))
+        /* Positive → decode → replace with negative → re-sign → reject. */
+        && TEST_ptr(built = make_signed_crl_with_number(root, root_pkey, 1))
+        && TEST_ptr(crl = crl_redecode(built))
+        && TEST_true(replace_crl_number_and_resign(crl, root_pkey, -36))
+        && TEST_ptr(crls = make_CRL_stack(crl, NULL))
+        && TEST_int_eq(verify(leaf, root, crls, strict, kVerify),
+                       X509_V_ERR_NEGATIVE_CRL_NUMBER);
+
+    X509_CRL_free(built);
+    X509_CRL_free(crl);
+    built = NULL;
+    crl = NULL;
+
+    test = test
+        /* Negative → decode → replace with positive → re-sign → accept. */
+        && TEST_ptr(built = make_signed_crl_with_number(root, root_pkey, -36))
+        && TEST_ptr(crl = crl_redecode(built))
+        && TEST_true(replace_crl_number_and_resign(crl, root_pkey, 1))
+        && TEST_ptr(crls = make_CRL_stack(crl, NULL))
+        && TEST_int_eq(verify(leaf, root, crls, strict, kVerify), X509_V_OK);
+
+    X509_CRL_free(built);
+    X509_CRL_free(crl);
+    EVP_PKEY_free(root_pkey);
+    X509_free(root);
+    X509_free(leaf);
+    return test;
+}
+
+/*
  * Same strictness check for Base CRL Number (deltaCRLIndicator). A lone delta
  * never reaches check_crl(); it is only considered after a freshest-capable
  * base CRL is selected under X509_V_FLAG_USE_DELTAS (see get_delta_sk()).
@@ -1709,11 +1803,48 @@ static int test_crl_negative_base_number(void)
         /* Without X509_STRICT, a negative Base CRL Number is accepted. */
         && TEST_ptr(crls = make_CRL_stack(base, delta))
         && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), X509_V_OK)
-        /* With X509_STRICT, reject via the base_crl_number branch. */
+        /* With X509_STRICT, reject via the BaseCRLNumber extension. */
         && TEST_ptr(crls = make_CRL_stack(base, delta))
         && TEST_int_eq(verify(leaf, root, crls,
                               flags | X509_V_FLAG_X509_STRICT, kVerify),
                        X509_V_ERR_NEGATIVE_CRL_NUMBER);
+
+    X509_CRL_free(delta);
+    X509_CRL_free(base);
+    EVP_PKEY_free(root_pkey);
+    X509_free(root);
+    X509_free(leaf);
+    return test;
+}
+
+/*
+ * A delta with a negative cRLNumber is filtered by check_delta_base() when the
+ * base CRL number is non-negative, so check_crl() never reports
+ * X509_V_ERR_NEGATIVE_CRL_NUMBER for that delta.  Verification uses the base
+ * alone and succeeds under X509_STRICT.
+ */
+static int test_crl_negative_delta_number_filtered(void)
+{
+    X509 *root = NULL;
+    X509 *leaf = NULL;
+    EVP_PKEY *root_pkey = NULL;
+    X509_CRL *base = NULL;
+    X509_CRL *delta = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned long flags = X509_V_FLAG_CRL_CHECK
+        | X509_V_FLAG_EXTENDED_CRL_SUPPORT | X509_V_FLAG_USE_DELTAS
+        | X509_V_FLAG_X509_STRICT;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr(root_pkey = PKEY_from_strings(kRootPrivateKey))
+        && TEST_ptr(base = CRL_from_strings(kCrlDeltaBase))
+        /* cRLNumber -36 cannot exceed base 4096, so the delta is ignored. */
+        && TEST_ptr(delta = make_signed_delta_crl(root, root_pkey, base, -36,
+                                                  4096))
+        && TEST_ptr(crls = make_CRL_stack(base, delta))
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), X509_V_OK);
 
     X509_CRL_free(delta);
     X509_CRL_free(base);
@@ -2207,7 +2338,9 @@ int setup_tests(void)
     ADD_TEST(test_crl_delta_valid);
     ADD_TEST(test_crl_number);
     ADD_TEST(test_crl_negative_number);
+    ADD_TEST(test_crl_negative_number_mutation);
     ADD_TEST(test_crl_negative_base_number);
+    ADD_TEST(test_crl_negative_delta_number_filtered);
     ADD_TEST(test_crl_idp_asn1_wrong_tag);
     ADD_TEST(test_crl_idp_asn1_wrong_tag2);
     ADD_TEST(test_crl_idp_onlyca_onlyattr);

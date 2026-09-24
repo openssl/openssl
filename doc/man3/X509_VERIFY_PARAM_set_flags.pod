@@ -296,8 +296,11 @@ verification callback.
 The B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some
 broken certificates and makes verification strictly apply B<X509>
 rules.
-Among other checks, a negative CRL Number or Base CRL Number is rejected with
-B<X509_V_ERR_NEGATIVE_CRL_NUMBER>.
+When CRL checking is also enabled, a negative CRL Number or Base CRL Number
+on a CRL that is selected for revocation checking is rejected with
+B<X509_V_ERR_NEGATIVE_CRL_NUMBER>.  CRLs that are present in the store or
+stack but not selected, and delta CRLs filtered out during selection, do not
+raise this error.
 
 B<X509_V_FLAG_ALLOW_PROXY_CERTS> enables proxy certificate verification.
 By default, proxy certificates are not accepted.
