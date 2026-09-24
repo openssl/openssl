@@ -559,6 +559,7 @@ my @disablables_features = (
     "pinshared",
     "posix-io",
     "unstable-qlog",
+    "pcap",
     "rdrand",
     "rfc3779",
     "secure-memory",
@@ -584,7 +585,6 @@ my @disablables_features = (
     "weak-ssl-ciphers",
     "zlib-dynamic",
     "zstd-dynamic",
-
 );
 
 my @disablables = sort (@disablables_protocols,@disablables_algorithms,@disablables_features);
@@ -649,6 +649,7 @@ our %disabled = ( # "what"         => "comment"
                   "md2"                 => "default",
                   "msan"                => "default",
                   "rc5"                 => "default",
+                  "pcap"                => "default",
                   "sctp"                => "default",
                   "sslkeylog"           => "default",
                   "static-vcruntime"    => "default",
