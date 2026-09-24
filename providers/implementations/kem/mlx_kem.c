@@ -12,6 +12,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/obj_mac.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
@@ -128,7 +129,7 @@ static int mlx_kem_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.ind != NULL) {
         if (ctx->key == NULL || ctx->key->xinfo == NULL)
             return 0;
-        approved = strcmp(ctx->key->xinfo->algorithm_name, PROV_NAMES_X448) != 0;
+        approved = strcmp(ctx->key->xinfo->algorithm_name, SN_X448) != 0;
         if (!OSSL_PARAM_set_int(p.ind, approved))
             return 0;
     }

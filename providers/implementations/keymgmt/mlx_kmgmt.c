@@ -10,6 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
+#include <openssl/obj_mac.h>
 #include <openssl/param_build.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
@@ -688,9 +689,7 @@ static int mlx_kem_gen_get_params(void *vgctx, OSSL_PARAM params[])
     if (gctx == NULL || gctx->evp_type >= OSSL_NELEM(hybrid_vtable)
         || !keymgmt_fips_gen_get_params_decoder(params, &p))
         return 0;
-    approved = strcmp(hybrid_vtable[gctx->evp_type].algorithm_name,
-                   PROV_NAMES_X448)
-        != 0;
+    approved = strcmp(hybrid_vtable[gctx->evp_type].algorithm_name, SN_X448) != 0;
     if (p.ind != NULL && !OSSL_PARAM_set_int(p.ind, approved))
         return 0;
     return 1;
