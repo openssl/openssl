@@ -364,12 +364,117 @@ err:
     return testresult;
 }
 
+/*
+ * Re-initialising a context for a new message must give the same result
+ * as a fresh context: nothing from the previous message may carry over.
+ */
+static int test_evp_aead_reinit_matches_fresh(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_reuse = NULL;
+    EVP_CIPHER_CTX *ctx_fresh = NULL;
+    static const unsigned char aad1[] = "first message AAD";
+    static const unsigned char aad2[] = "second message AAD";
+    static const unsigned char pt[] = "AEAD context reuse regression payload";
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char ct_reuse[sizeof(pt) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char ct_fresh[sizeof(pt) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char tag_reuse[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_fresh[EVPTEST_TAG_LEN_MAX] = { 0 };
+    OSSL_PARAM params_reuse[2];
+    OSSL_PARAM params_fresh[2];
+    const int ptlen = (int)sizeof(pt) - 1;
+    const int aad1len = (int)sizeof(aad1) - 1;
+    const int aad2len = (int)sizeof(aad2) - 1;
+    int i, outlen = 0, len_reuse = 0, len_fresh = 0, taglen;
+    int testresult = 0;
+
+    for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(0xC0 + i);
+    for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xD0 + i);
+
+    /* First message on the reused context. */
+    if (!TEST_ptr(ctx_reuse = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_reuse, info->ciph, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx_reuse, NULL, &outlen,
+                NULL, ptlen)))
+        || !TEST_true(EVP_EncryptUpdate(ctx_reuse, NULL, &outlen, aad1, aad1len))
+        || !TEST_true(EVP_EncryptUpdate(ctx_reuse, ct_reuse, &outlen, pt, ptlen))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_reuse, ct_reuse + outlen, &outlen))) {
+        TEST_info("first message failed: idx=%d cipher=%s", idx, info->name);
+        goto err;
+    }
+
+    /* Second message on the same context, re-initialised. */
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx_reuse, NULL, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx_reuse, NULL, &outlen,
+                NULL, ptlen)))
+        || !TEST_true(EVP_EncryptUpdate(ctx_reuse, NULL, &outlen, aad2, aad2len))
+        || !TEST_true(EVP_EncryptUpdate(ctx_reuse, ct_reuse, &len_reuse, pt,
+            ptlen))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_reuse, ct_reuse + len_reuse,
+            &outlen))) {
+        TEST_info("second message on reused context failed: idx=%d cipher=%s",
+            idx, info->name);
+        goto err;
+    }
+    len_reuse += outlen;
+
+    /* The same second message on a fresh context. */
+    if (!TEST_ptr(ctx_fresh = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_fresh, info->ciph, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx_fresh, NULL, &outlen,
+                NULL, ptlen)))
+        || !TEST_true(EVP_EncryptUpdate(ctx_fresh, NULL, &outlen, aad2, aad2len))
+        || !TEST_true(EVP_EncryptUpdate(ctx_fresh, ct_fresh, &len_fresh, pt,
+            ptlen))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_fresh, ct_fresh + len_fresh,
+            &outlen))) {
+        TEST_info("fresh context failed: idx=%d cipher=%s", idx, info->name);
+        goto err;
+    }
+    len_fresh += outlen;
+
+    taglen = EVP_CIPHER_CTX_get_tag_length(ctx_fresh);
+    if (taglen <= 0)
+        taglen = info->taglen;
+    params_reuse[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_reuse, taglen);
+    params_reuse[1] = OSSL_PARAM_construct_end();
+    params_fresh[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_fresh, taglen);
+    params_fresh[1] = OSSL_PARAM_construct_end();
+
+    /* The reused context must match the fresh one. */
+    if (!TEST_int_le(taglen, EVPTEST_TAG_LEN_MAX)
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx_reuse, params_reuse))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx_fresh, params_fresh))
+        || !TEST_mem_eq(ct_reuse, len_reuse, ct_fresh, len_fresh)
+        || !TEST_mem_eq(tag_reuse, taglen, tag_fresh, taglen)) {
+        TEST_info("reused context differs from fresh: idx=%d cipher=%s",
+            idx, info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx_reuse);
+    EVP_CIPHER_CTX_free(ctx_fresh);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!setup_aead_list())
         return 0;
 
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_reinit_matches_fresh, aead_list_n);
     return 1;
 }
 
