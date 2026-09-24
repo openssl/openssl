@@ -20,6 +20,7 @@
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
 #include "internal/fips.h"
+#include "fips/fipsindicator.h"
 #include "providers/implementations/signature/slh_dsa_sig.inc"
 
 #define SLH_DSA_MAX_ADD_RANDOM_LEN 32
@@ -338,6 +339,10 @@ static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         && !OSSL_PARAM_set_octet_string(p.algid,
             ctx->aid_len == 0 ? NULL : ctx->aid_buf,
             ctx->aid_len))
+        return 0;
+
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind,
+            ctx->add_random_len == 0))
         return 0;
 
     return 1;

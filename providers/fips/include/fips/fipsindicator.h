@@ -77,6 +77,8 @@ int ossl_FIPS_IND_set_ctx_param_locate(OSSL_FIPS_IND *ind, int id,
     const char *name);
 int ossl_FIPS_IND_get_ctx_param(const OSSL_FIPS_IND *ind,
     OSSL_PARAM *p);
+int ossl_FIPS_IND_get_ctx_param_conditional(const OSSL_FIPS_IND *ind,
+    OSSL_PARAM *p, int condition);
 int ossl_FIPS_IND_get_ctx_param_locate(const OSSL_FIPS_IND *ind,
     OSSL_PARAM params[]);
 void ossl_FIPS_IND_copy(OSSL_FIPS_IND *dst, const OSSL_FIPS_IND *src);
@@ -127,6 +129,13 @@ void ossl_FIPS_IND_copy(OSSL_FIPS_IND *dst, const OSSL_FIPS_IND *src);
 #define OSSL_FIPS_IND_GET_CTX_FROM_PARAM(ctx, p) \
     ossl_FIPS_IND_get_ctx_param(&((ctx)->indicator), p)
 
+#define OSSL_FIPS_IND_GET_CTX_FROM_PARAM_CONDITIONAL(ctx, p, condition) \
+    ossl_FIPS_IND_get_ctx_param_conditional(                            \
+        &((ctx)->indicator), p, condition)
+
+#define OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p, condition) \
+    ossl_FIPS_IND_get_ctx_param_conditional(NULL, p, condition)
+
 #define OSSL_FIPS_IND_GET(ctx) (&((ctx)->indicator))
 
 #define OSSL_FIPS_IND_GET_PARAM(ctx, p, settable, id, name)          \
@@ -161,6 +170,8 @@ int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
 #define OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
 #define OSSL_FIPS_IND_GET_CTX_PARAM(ctx, params) 1
 #define OSSL_FIPS_IND_GET_CTX_FROM_PARAM(ctx, params) 1
+#define OSSL_FIPS_IND_GET_CTX_FROM_PARAM_CONDITIONAL(ctx, p, condition) 1
+#define OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p, condition) 1
 #define OSSL_FIPS_IND_COPY(dst, src)
 
 #endif

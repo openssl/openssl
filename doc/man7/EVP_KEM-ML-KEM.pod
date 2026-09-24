@@ -32,6 +32,7 @@ This parameter is only settable.
 
 The OpenSSL FIPS provider returns 1 if the operation is FIPS approved, or 0
 otherwise.  See L<fips_module(7)/FIPS indicators> for more information.
+Supplying the test-only "ikme" parameter causes this indicator to return 0.
 
 =back
 
