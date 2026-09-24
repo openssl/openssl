@@ -66,6 +66,11 @@ provider, these include the gettable "fips-indicator"
 (B<OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>), which returns 1 if the
 operation is FIPS approved, or 0 otherwise.  See
 L<fips_module(7)/FIPS indicators> for more information.
+For AES-GCM encryption, an externally supplied IV makes the operation
+non-approved, so this indicator returns 0.  See
+L<EVP_EncryptInit(3)/PARAMETERS> for the related "iv-generated" parameter.
+AES-GCM tag lengths are approved only when they are 4, 8, or 12 through 16
+bytes.
 
 =head1 NOTES
 

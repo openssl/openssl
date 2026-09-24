@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1073,22 +1073,40 @@ static int aes_gcm_enc_dec(const char *alg,
     }
 
     {
-        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
+        };
         OSSL_PARAM *p = params;
+        OSSL_PARAM *indicator_param = NULL;
         unsigned int iv_generated = -1;
+        int indicator = -1;
         const OSSL_PARAM *gettables = EVP_CIPHER_CTX_gettable_params(ctx);
         const char *ivgenkey = OSSL_CIPHER_PARAM_AEAD_IV_GENERATED;
         int ivgen = (OSSL_PARAM_locate_const(gettables, ivgenkey) != NULL);
+        int has_indicator = enc && iv == NULL
+            && fips_provider_version_ge(libctx, 3, 5, 0)
+            && OSSL_PARAM_locate_const(gettables,
+                   OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR)
+                != NULL;
 
         if (ivgen != 0)
             *p++ = OSSL_PARAM_construct_uint(ivgenkey, &iv_generated);
+        if (has_indicator) {
+            indicator_param = p;
+            *p++ = OSSL_PARAM_construct_int(
+                OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR, &indicator);
+        }
         if (outiv != NULL)
-            *p = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
+            *p++ = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
                 outiv, iv_len);
         if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params)))
             goto err;
         if (ivgen != 0
             && !TEST_uint_eq(iv_generated, (enc == 0 || iv != NULL ? 0 : 1)))
+            goto err;
+        if (has_indicator
+            && (!TEST_true(OSSL_PARAM_modified(indicator_param))
+                || !TEST_int_eq(indicator, 1)))
             goto err;
     }
     if (out_len != NULL)
@@ -1308,6 +1326,7 @@ err:
 static int rsa_keygen_test(int id)
 {
     int ret = 0;
+    int approved = -1;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
     BIGNUM *e_bn = NULL;
@@ -1321,6 +1340,7 @@ static int rsa_keygen_test(int id)
     size_t q_len = 0, q1_len = 0, q2_len = 0;
     OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL;
+    OSSL_PARAM indicator_params[2];
     const struct rsa_keygen_st *tst = &rsa_keygen_data[id];
 
     /*
@@ -1365,8 +1385,19 @@ static int rsa_keygen_test(int id)
         || !TEST_int_gt(EVP_PKEY_CTX_set_params(ctx, params), 0)
         || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, tst->mod), 0)
         || !TEST_int_gt(EVP_PKEY_CTX_set1_rsa_keygen_pubexp(ctx, e_bn), 0)
-        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
-        || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_TEST_P1,
+        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0))
+        goto err;
+
+    indicator_params[0] = OSSL_PARAM_construct_int(
+        OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR, &approved);
+    indicator_params[1] = OSSL_PARAM_construct_end();
+    if (fips_provider_version_ge(libctx, 3, 5, 0)
+        && (!TEST_true(EVP_PKEY_CTX_get_params(ctx, indicator_params))
+            || !TEST_true(OSSL_PARAM_modified(indicator_params))
+            || !TEST_int_eq(approved, 0)))
+        goto err;
+
+    if (!TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_TEST_P1,
             &p1, &p1_len))
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_TEST_P2,
             &p2, &p2_len))

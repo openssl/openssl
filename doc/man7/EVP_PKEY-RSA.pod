@@ -186,6 +186,8 @@ L<EVP_PKEY_CTX_get_params(3)> from the OpenSSL FIPS provider:
 
 Returns 1 if the operation is FIPS approved, or 0 otherwise.
 See L<fips_module(7)/FIPS indicators> for more information.
+Using any of the FIPS module testing parameters described below causes this
+indicator to return 0.
 
 =back
 
@@ -323,7 +325,7 @@ The RSA key generation parameters "a" and "b" were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
