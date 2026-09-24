@@ -30,8 +30,8 @@
 #include "internal/common.h"
 
 #ifndef FIPS_MODULE
-# define mac_legacy_get_ctx_params_decoder
-# define mac_legacy_set_ctx_params_decoder
+#define mac_legacy_get_ctx_params_decoder
+#define mac_legacy_set_ctx_params_decoder
 #endif
 #include "providers/implementations/signature/mac_legacy_sig.inc"
 
