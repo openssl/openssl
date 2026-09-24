@@ -1787,6 +1787,7 @@ typedef struct mac_data_st {
     int no_reinit;
     /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *controls;
+    STACK_OF(OPENSSL_STRING) *init_controls;
     /* Output size */
     int output_size;
     /* Block size */
@@ -1848,7 +1849,9 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
     }
 
     mdat->mac = mac;
-    if (!TEST_ptr(mdat->controls = sk_OPENSSL_STRING_new_null())) {
+    if (!TEST_ptr(mdat->controls = sk_OPENSSL_STRING_new_null())
+        || !TEST_ptr(mdat->init_controls = sk_OPENSSL_STRING_new_null())) {
+        sk_OPENSSL_STRING_free(mdat->controls);
         OPENSSL_free(mdat->mac_name);
         OPENSSL_free(mdat);
         return 0;
@@ -1866,6 +1869,7 @@ static void mac_test_cleanup(EVP_TEST *t)
     EVP_MAC_free(mdat->mac);
     OPENSSL_free(mdat->mac_name);
     sk_OPENSSL_STRING_pop_free(mdat->controls, openssl_free);
+    sk_OPENSSL_STRING_pop_free(mdat->init_controls, openssl_free);
     OPENSSL_free(mdat->alg);
     OPENSSL_free(mdat->key);
     OPENSSL_free(mdat->iv);
@@ -1904,6 +1908,8 @@ static int mac_test_parse(EVP_TEST *t,
         return mdata->no_reinit = 1;
     if (strcmp(keyword, "Ctrl") == 0)
         return ctrladd(mdata->controls, value);
+    if (strcmp(keyword, "CtrlInit") == 0)
+        return ctrladd(mdata->init_controls, value);
     if (strcmp(keyword, "OutputSize") == 0) {
         if (!test_strtoint(value, &mdata->output_size))
             return -1;
@@ -1952,6 +1958,9 @@ static int mac_test_run_pkey(EVP_TEST *t)
     size_t got_len;
     int i;
     size_t input_len, donelen;
+    OSSL_PARAM params[5];
+    OSSL_PARAM *p = NULL;
+    size_t params_n = 0;
 
     /* We don't do XOF mode via PKEY */
     if (expected->xof)
@@ -2010,7 +2019,13 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key, NULL)) {
+    if (sk_OPENSSL_STRING_num(expected->init_controls) > 0) {
+        if (!ctrl2params(t, expected->init_controls, NULL,
+                params, OSSL_NELEM(params), &params_n))
+            goto err;
+        p = params;
+    }
+    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key, p)) {
         t->err = "DIGESTSIGNINIT_ERROR";
         goto err;
     }
@@ -2051,10 +2066,13 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "TEST_MAC_ERR";
         goto err;
     }
-    if (!pkey_check_fips_approved(pctx, t))
+    if (!pkey_check_fips_approved(pctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
         goto err;
+    }
     t->err = NULL;
 err:
+    ctrl2params_free(params, params_n, 0);
     EVP_CIPHER_free(cipher);
     EVP_MD_CTX_free(mctx);
     OPENSSL_free(got);
@@ -5073,8 +5091,10 @@ static int digestsign_test_run(EVP_TEST *t)
             got, got_len))
         goto err;
 
-    if (!pkey_check_fips_approved(expected->pctx, t))
+    if (!pkey_check_fips_approved(expected->pctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
         goto err;
+    }
 
     t->err = NULL;
 err:
@@ -5164,8 +5184,10 @@ static int oneshot_digestsign_test_run(EVP_TEST *t)
             got, got_len))
         goto err;
 
-    if (!pkey_check_fips_approved(expected->pctx, t))
+    if (!pkey_check_fips_approved(expected->pctx, t)) {
+        t->err = "FIPS_INDICATOR_ERROR";
         goto err;
+    }
 
     t->err = NULL;
 err:
