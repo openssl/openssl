@@ -39,6 +39,18 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests => 8;
 
+sub compare_pem {
+    my ($file1, $file2) = @_;
+
+    return compare_text($file1, $file2, sub {
+        my $in1 = $_[0];
+        my $in2 = $_[1];
+        $in1 =~ s/\r\n/\n/g;
+        $in2 =~ s/\r\n/\n/g;
+        $in1 ne $in2;
+    });
+}
+
 sub checkcompare {
     my $files = shift; # List of files
     my $app = shift;   # Which application
@@ -47,12 +59,8 @@ sub checkcompare {
         my $testout = "$app.tst";
 
         ok(run(app(['openssl', $app, '-out', $testout, '-in', $_])));
-        ok(!compare_text($_, $testout, sub {
-            my $in1 = $_[0];
-            my $in2 = $_[1];
-            $in1 =~ s/\r\n/\n/g;
-            $in2 =~ s/\r\n/\n/g;
-            $in1 ne $in2}), "Original file $_ is the same as new one");
+        ok(!compare_pem($_, $testout),
+           "Original file $_ is the same as new one");
     }
 }
 
@@ -149,18 +157,18 @@ subtest "Check loading of fips and non-fips params" => sub {
 subtest "Check ecparam -param_enc converts between named and explicit" => sub {
     plan tests => 3;
 
-    # The encodings are canonical, so re-encoding a named curve as explicit
-    # (and vice versa) must reproduce the matching reference file byte for byte.
+    # The encodings are canonical, so converting between named and explicit
+    # parameters must reproduce the reference file, apart from line endings.
     my $to_explicit = 'param-explicit.tst';
     ok(run(app(['openssl', 'ecparam', '-in', $named, '-param_enc', 'explicit',
                 '-out', $to_explicit]))
-       && !compare($to_explicit, $explicit),
+       && !compare_pem($to_explicit, $explicit),
        "named_curve params re-encoded as explicit match the reference file");
 
     my $to_named = 'param-named.tst';
     ok(run(app(['openssl', 'ecparam', '-in', $explicit, '-param_enc',
                 'named_curve', '-out', $to_named]))
-       && !compare($to_named, $named),
+       && !compare_pem($to_named, $named),
        "explicit params re-encoded as named_curve match the reference file");
 
     ok(!run(app(['openssl', 'ecparam', '-in', $named, '-noout',
@@ -178,7 +186,7 @@ subtest "Check ecparam -inform and -outform handling" => sub {
     my $pem = 'param-der.pem';
     ok(run(app(['openssl', 'ecparam', '-inform', 'DER', '-in', $der,
                 '-out', $pem]))
-       && !compare($pem, $named),
+       && !compare_pem($pem, $named),
        "parameters survive a PEM -> DER -> PEM roundtrip");
 
     ok(!run(app(['openssl', 'ecparam', '-in', $der, '-noout'])),
@@ -204,13 +212,13 @@ subtest "Check ecparam -conv_form selects the generator point encoding" => sub {
     my $back = 'param-unc.pem';
     ok(run(app(['openssl', 'ecparam', '-in', $comp, '-conv_form',
                 'uncompressed', '-out', $back]))
-       && !compare($back, $explicit),
+       && !compare_pem($back, $explicit),
        "converting back to uncompressed matches the reference file");
 
     my $namedout = 'param-named-conv.pem';
     ok(run(app(['openssl', 'ecparam', '-in', $named, '-conv_form',
                 'compressed', '-out', $namedout]))
-       && !compare($namedout, $named),
+       && !compare_pem($namedout, $named),
        "-conv_form does not change named curve parameters");
 
     ok(!run(app(['openssl', 'ecparam', '-in', $named, '-noout',
