@@ -1161,6 +1161,58 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *n);
 
 /**
+ * Calculate the modular multiplicative inverse of |a| modulo the prime
+ * |m|, i.e. a value |r| such that  r * a == 1  (mod m), computed as
+ * a^(m-2) mod m with the Montgomery fixed-window exponentiation
+ * OSSL_FN_mod_exp_mont().
+ *
+ * Where OSSL_FN_mod_inverse() reveals the operands' magnitudes through
+ * its iteration count, this function is constant-time with respect to
+ * |a|: the exponent m - 2 derives from the modulus alone and is public
+ * in all intended uses, and what may leak is limited to the operand
+ * widths and the modulus.  It is suitable for inverting secrets when
+ * the modulus is known to be prime.
+ *
+ * |m| must be an odd prime.  An even modulus (including 0 and the
+ * prime 2) is rejected; a composite odd modulus makes the result
+ * garbage, not an error; m == 1 yields 0.  |a| need not be reduced
+ * mod m; a == 0 (mod m) yields 0, which is not an inverse -- callers
+ * are expected to handle that case, typically with a retry / reject
+ * loop.
+ *
+ * @param[out]          r       The OSSL_FN for the result.  Truncates high
+ *                              limbs if too small, zero-pads if too large.
+ *                              May alias |a|, must not alias |m|.
+ * @param[in]           a       The operand.
+ * @param[in]           m       The modulus.  Must be an odd prime.
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from, sized per
+ *                              OSSL_FN_mod_inverse_prime_ctx_size().
+ * @returns             1 on success, 0 on error.
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with m->dsize limbs, plus one frame,
+ * plus the requirements of OSSL_FN_mod_exp_mont().
+ */
+int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_inverse_prime() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by
+ * OSSL_FN_mod_inverse_prime().
+ */
+size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *m);
+
+/**
  * Calculate  a^p mod m  (modular exponentiation) with a sliding-window
  * algorithm.  Odd moduli use the Montgomery sliding-window path; even
  * moduli fall through to the simple sliding-window path.  See the

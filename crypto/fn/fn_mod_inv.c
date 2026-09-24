@@ -9,6 +9,7 @@
 
 #include "internal/cryptlib.h"
 #include "crypto/fnerr.h"
+#include "crypto/fn_constants.h"
 #include "fn_local.h"
 
 /*-
@@ -249,6 +250,96 @@ int OSSL_FN_mod_inverse(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n,
     }
 
     ret = 1;
+
+err:
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+/*-
+ * OSSL_FN_mod_inverse_prime_ctx_size() -- arena sizing for
+ * OSSL_FN_mod_inverse_prime().
+ *
+ * This companion reads operand widths only, so it can nest.  The exponent
+ * e = m - 2 the operator computes internally is exactly m-wide, so the
+ * caller's |m| stands in for it in the nested OSSL_FN_mod_exp_mont_ctx_size()
+ * call.  Sizing must go directly to the Montgomery companion: the general
+ * dispatcher OSSL_FN_mod_exp_ctx_size() reads the modulus' lowest limb to
+ * route on parity, which is a limb read this companion must not perform.
+ */
+size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *m)
+{
+    if (r == NULL || a == NULL || m == NULL)
+        return 0;
+
+    size_t ml = (size_t)m->dsize;
+    /* A zero-limb modulus is invalid; OSSL_FN_mod_inverse_prime() rejects it. */
+    if (ml == 0 || ossl_fn_totalsize(ml) == 0)
+        return 0;
+
+    /* One frame holding the m-wide exponent scratch e = m - 2. */
+    size_t own_size = OSSL_FN_CTX_size(1, 1, ml);
+
+    /*
+     * The nested OSSL_FN_mod_exp_mont() call: base |a|, an m-wide
+     * exponent (modelled by |m|), modulus |m|, and a function-owned
+     * Montgomery context (NULL in_mont).
+     */
+    size_t nested_size = OSSL_FN_mod_exp_mont_ctx_size(r, a, m, m, NULL);
+    return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+/*-
+ * OSSL_FN_mod_inverse_prime() computes the modular multiplicative inverse
+ * of |a| modulo the prime |m| as  a^(m-2) mod m,  a Montgomery fixed-window
+ * exponentiation via OSSL_FN_mod_exp_mont().
+ *
+ * Constant-time profile:
+ *   - The exponent e = m - 2 derives from the modulus alone, so it is
+ *     public in all intended uses; the fixed-window loop iterates over the
+ *     exponent's full allocated width, so the base may be secret: nothing
+ *     branches on its value.  What may leak is limited to the operand
+ *     widths and the modulus.
+ *   - |m| is public: OSSL_FN_mod_exp_mont() branches on it (the oddness
+ *     check, the m == 1 early exit, the R mod N special case).
+ *
+ * Preconditions (unchecked beyond what OSSL_FN_mod_exp_mont() enforces):
+ *   - |m| must be prime.  A composite modulus makes the result garbage,
+ *     not an error: the Fermat relation simply does not hold.
+ *   - |m| must be odd; OSSL_FN_mod_exp_mont() rejects even moduli, so the
+ *     prime 2 and zero are diagnosed, while m == 1 (odd, not prime) yields
+ *     0 through that function's early exit.
+ * a == 0 (mod m) yields 0, which is not an inverse; callers are expected
+ * to handle that case, typically with a retry / reject loop.  |a| need not
+ * be reduced mod m.
+ */
+int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
+    OSSL_FN_CTX *ctx)
+{
+    const void *token = OSSL_FN_CTX_start(ctx);
+    OSSL_FN *e = NULL;
+    int ret = 0;
+
+    if (token == NULL)
+        return 0;
+    if (r == NULL || a == NULL || m == NULL) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+    /* OSSL_FN_mod_exp_mont() validates the modulus further (odd, m != 1). */
+    if (m->dsize <= 0) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+
+    /* e = m - 2, exactly m-wide; 2 is the shared static constant. */
+    if ((e = OSSL_FN_CTX_get_limbs(ctx, (size_t)m->dsize)) == NULL)
+        goto err;
+    if (!OSSL_FN_sub(e, m, &ossl_fn_static_const_2_storage.fn))
+        goto err;
+
+    ret = OSSL_FN_mod_exp_mont(r, a, e, m, ctx, NULL);
 
 err:
     OSSL_FN_CTX_end(ctx, token);
