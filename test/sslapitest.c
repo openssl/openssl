@@ -7100,6 +7100,10 @@ static int test_key_exchange(int idx)
         && ((idx >= 12 && idx <= 20) || idx == 23))
         return TEST_skip("ML-KEM not supported in this version of fips provider");
 
+    if (is_fips && fips_provider_version_lt(libctx, 4, 2, 0)
+        && (idx == 16 || idx == 18))
+        return TEST_skip("ML-KEM-512 hybrids not supported in this version of fips provider");
+
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
             TLS_client_method(), TLS1_VERSION,
             max_version, &sctx, &cctx, cert,
