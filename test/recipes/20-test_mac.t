@@ -181,8 +181,8 @@ SKIP: {
 
     my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 
-    # This is valid starting with OpenSSL 4.0.
-    run(test(["fips_version_test", "-config", $fipsconf, ">=4.0.0"]),
+    # This is valid starting with OpenSSL 3.5.
+    run(test(["fips_version_test", "-config", $fipsconf, ">=3.5.0"]),
              capture => 1, statusvar => \my $exit);
     skip "FIPS provider version is too old for this test", 2
         if !$exit;
