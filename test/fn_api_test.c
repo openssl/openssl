@@ -4325,7 +4325,7 @@ err:
  * defining property  r * a == 1 (mod m)  is one oracle, and
  * OSSL_FN_mod_inverse() (extended Euclid, an independent algorithm) is
  * another, valid here because the moduli are prime.  The operation's own
- * ctx is sized exactly by OSSL_FN_mod_inverse_prime_ctx_size(), which
+ * ctx is sized exactly by OSSL_FN_mod_inverse_prime_ctx_size(, NULL), which
  * doubles as a budget proof; the oracles use a separately, generously
  * sized ctx.
  */
@@ -4374,14 +4374,14 @@ static int test_mod_inverse_prime(int i)
         goto err;
 
     /* Size the ctx from the actual operands via the helper. */
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn);
+    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx)))
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, NULL)))
         goto err;
 
     /*
@@ -4440,14 +4440,14 @@ static int test_mod_inverse_prime_zero(void)
     if (!TEST_true(pollute(r, 0, n_size)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn);
+    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx)))
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, NULL)))
         goto err;
     if (!TEST_true(check_limbs_value(r, 0, n_size, 0)))
         goto err;
@@ -4480,14 +4480,14 @@ static int test_mod_inverse_prime_even_modulus(void)
         || !TEST_true(ossl_fn_set_words(fn, inv_n4, LIMBSOF(inv_n4))))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn);
+    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_false(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx)))
+    if (!TEST_false(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, NULL)))
         goto err;
 
     ret = 1;
@@ -4528,7 +4528,7 @@ static int test_mod_inverse_prime_alias_a(void)
         || !TEST_true(ossl_fn_set_words(check, inv_a3, LIMBSOF(inv_a3))))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(fa, fa, fn);
+    size = OSSL_FN_mod_inverse_prime_ctx_size(fa, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -4536,7 +4536,7 @@ static int test_mod_inverse_prime_alias_a(void)
         goto err;
 
     /* 3^-1 mod 7, written in place over a */
-    if (!TEST_true(OSSL_FN_mod_inverse_prime(fa, fa, fn, ctx)))
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(fa, fa, fn, ctx, NULL)))
         goto err;
 
     /* Defining property: r * a == 1 (mod m), with the saved a. */
@@ -4595,14 +4595,14 @@ static int test_mod_inverse_prime_result_size(int i)
     if (!TEST_true(pollute(r, 0, r_size)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn);
+    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx)))
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, NULL)))
         goto err;
 
     check_ctx = OSSL_FN_CTX_new(NULL, 8, 16, 16 * L + 16);
@@ -4637,7 +4637,7 @@ err:
 
 /*
  * Asymmetric operand widths: dsize(a) != dsize(m), both directions, with
- * the ctx sized exactly by OSSL_FN_mod_inverse_prime_ctx_size().  The
+ * the ctx sized exactly by OSSL_FN_mod_inverse_prime_ctx_size(, NULL).  The
  * defining property  r * a == 1 (mod m)  is the oracle.
  */
 static int test_mod_inverse_prime_asym(int i)
@@ -4673,14 +4673,14 @@ static int test_mod_inverse_prime_asym(int i)
     if (!TEST_true(pollute(r, 0, m_size)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fm);
+    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fm, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fm, ctx)))
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fm, ctx, NULL)))
         goto err;
 
     /* Defining property: r * a == 1 (mod m). */
@@ -4709,7 +4709,7 @@ err:
 }
 
 /*
- * Validate OSSL_FN_mod_inverse_prime_ctx_size(): allocate the ctx from the
+ * Validate OSSL_FN_mod_inverse_prime_ctx_size(, NULL): allocate the ctx from the
  * helper and confirm the operation succeeds within that budget (an
  * under-estimate would make the operation fail).  Peak usage is recorded
  * as instrumentation and must show that at least one frame was actually
@@ -4743,14 +4743,14 @@ static int test_mod_inverse_prime_ctx_size(void)
         || !TEST_true(ossl_fn_set_words(one, &one_word, 1)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn);
+    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx)))
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, NULL)))
         goto err;
 
     /* The operation succeeding is the budget check; record the peak too. */
@@ -4775,6 +4775,107 @@ err:
     OSSL_FN_free(fa);
     OSSL_FN_free(fn);
     OSSL_FN_free(r);
+    OSSL_FN_free(one);
+    OSSL_FN_free(one_mod);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
+/*
+ * OSSL_FN_mod_inverse_prime() with a caller-supplied, reused
+ * OSSL_FN_MONT_CTX: the borrowed context must give the same result as the
+ * function-owned one (NULL in_mont), and a context built for a different
+ * modulus must be rejected.
+ */
+static int test_mod_inverse_prime_in_mont(void)
+{
+    size_t a_size = LIMBSOF(num5);
+    size_t n_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > n_size ? a_size : n_size;
+    OSSL_FN_CTX *ctx = NULL, *check_ctx = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL, *mont_bad = NULL;
+    OSSL_FN *fa = NULL, *fn = NULL, *fm7 = NULL, *r = NULL, *r_first = NULL;
+    OSSL_FN *one = NULL, *one_mod = NULL, *tmp = NULL;
+    OSSL_FN_ULONG one_word = 1;
+    size_t size;
+    int ret = 0;
+
+    fa = OSSL_FN_new_limbs(L);
+    fn = OSSL_FN_new_limbs(n_size);
+    fm7 = OSSL_FN_new_limbs(1);
+    r = OSSL_FN_new_limbs(n_size);
+    r_first = OSSL_FN_new_limbs(n_size);
+    one = OSSL_FN_new_limbs(n_size);
+    one_mod = OSSL_FN_new_limbs(n_size);
+    tmp = OSSL_FN_new_limbs(n_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fn) || !TEST_ptr(fm7) || !TEST_ptr(r)
+        || !TEST_ptr(r_first) || !TEST_ptr(one) || !TEST_ptr(one_mod)
+        || !TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fn, mod_secp128r1_p, n_size))
+        || !TEST_true(ossl_fn_set_words(fm7, inv_n7, LIMBSOF(inv_n7)))
+        || !TEST_true(ossl_fn_set_words(one, &one_word, 1)))
+        goto err;
+
+    /* Reusable Montgomery contexts: one for fn, one for a foreign modulus. */
+    if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fn))
+        || !TEST_ptr(mont_bad = OSSL_FN_MONT_CTX_new(fm7)))
+        goto err;
+
+    /* The reused-context and NULL-in_mont sizes are the same. */
+    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, mont);
+    if (!TEST_size_t_ne(size, 0))
+        goto err;
+    ctx = OSSL_FN_CTX_new_size(NULL, size);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    /* First call with the borrowed context; keep the result. */
+    if (!TEST_true(pollute(r, 0, n_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, mont)))
+        goto err;
+    if (OSSL_FN_copy_truncate(r_first, r) == NULL)
+        goto err;
+
+    /* Second call with NULL: the function-owned path must agree. */
+    if (!TEST_true(pollute(r, 0, n_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, NULL)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(r), n_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_first), n_size * OSSL_FN_BYTES))
+        goto err;
+
+    /* A context built for a different modulus must be rejected. */
+    if (!TEST_false(OSSL_FN_mod_inverse_prime(r, fa, fn, ctx, mont_bad)))
+        goto err;
+
+    /* Defining property on the borrowed-context result: r * a == 1 (mod m). */
+    check_ctx = OSSL_FN_CTX_new(NULL, 8, 16, 16 * L + 16);
+    if (!TEST_ptr(check_ctx))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod(one_mod, one, fn, check_ctx))
+        || !TEST_true(OSSL_FN_mod_mul(tmp, r_first, fa, fn, check_ctx)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(tmp), n_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(one_mod), n_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_MONT_CTX_free(mont_bad);
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_CTX_free(check_ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(fm7);
+    OSSL_FN_free(r);
+    OSSL_FN_free(r_first);
     OSSL_FN_free(one);
     OSSL_FN_free(one_mod);
     OSSL_FN_free(tmp);
@@ -6526,6 +6627,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_mod_inverse_prime_result_size, 3);
     ADD_ALL_TESTS(test_mod_inverse_prime_asym, 2);
     ADD_TEST(test_mod_inverse_prime_ctx_size);
+    ADD_TEST(test_mod_inverse_prime_in_mont);
     ADD_ALL_TESTS(test_mod_exp, OSSL_NELEM(test_mod_exp_cases));
     ADD_TEST(test_mod_exp_alias_a);
     ADD_TEST(test_mod_exp_alias_p);
