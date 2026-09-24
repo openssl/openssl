@@ -10,6 +10,7 @@
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include "internal/mem_alloc_utils.h"
+#include "internal/tsan_assist.h"
 #include "crypto/cryptlib.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +26,6 @@ static CRYPTO_realloc_fn realloc_impl = CRYPTO_realloc;
 static CRYPTO_free_fn free_impl = CRYPTO_free;
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
-#include "internal/tsan_assist.h"
-
 #ifdef TSAN_REQUIRES_LOCKING
 #define INCREMENT(x) /* empty */
 #define LOAD(x) 0
@@ -202,6 +201,34 @@ void ossl_malloc_setup_failures(void)
 }
 #endif
 
+/*
+ * Reporting an allocation failure can allocate memory itself, for example to
+ * create the error state of a thread on its first error, and a failure of
+ * such an allocation is reported in turn.  If allocations keep failing, that
+ * recursion only ends when the stack is exhausted.  Allow a single nested
+ * report, so that a failure while reporting a failure is still recorded, and
+ * drop any deeper ones.
+ *
+ * The depth is tracked process wide rather than per thread, because thread
+ * local storage for it would itself need to be allocated.  A report from
+ * another thread may therefore be dropped while two reports are in progress,
+ * which is acceptable for this last resort.
+ */
+#ifndef TSAN_REQUIRES_LOCKING
+static TSAN_QUALIFIER int alloc_err_report_depth;
+#endif
+
+static void report_alloc_err(const char *file, int line)
+{
+#ifndef TSAN_REQUIRES_LOCKING
+    if (tsan_counter(&alloc_err_report_depth) < 2)
+        ossl_report_alloc_err(file, line);
+    tsan_decr(&alloc_err_report_depth);
+#else
+    ossl_report_alloc_err(file, line);
+#endif
+}
+
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ptr;
@@ -231,7 +258,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     if (ossl_likely(ptr != NULL))
         return ptr;
 err:
-    ossl_report_alloc_err(file, line);
+    report_alloc_err(file, line);
     return NULL;
 }
 
@@ -304,7 +331,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 
 err:
     if (num != 0 && ret == NULL)
-        ossl_report_alloc_err(file, line);
+        report_alloc_err(file, line);
 
     return ret;
 }

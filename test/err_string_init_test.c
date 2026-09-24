@@ -22,6 +22,10 @@
  * allocation to fail, counted from the start of the call to
  * ERR_reason_error_string(), is taken from the ERR_STRING_INIT_FAIL_AT
  * environment variable; the recipe runs this program once per index.
+ *
+ * If ERR_STRING_INIT_FAIL_PERSIST is set, that allocation and all later ones
+ * fail.  Reporting each failure then fails to allocate as well, which used to
+ * recurse until the stack was exhausted.
  */
 
 #include <stdlib.h>
@@ -41,15 +45,19 @@
 
 static int armed = 0;
 static int fail_at = -1;
+static int persist = 0;
 static int alloc_count = 0;
 static int injected = 0;
 static int scenario_done = 0;
 
 static int should_fail(void)
 {
+    int n;
+
     if (!armed)
         return 0;
-    if (alloc_count++ == fail_at) {
+    n = alloc_count++;
+    if (n == fail_at || (persist && fail_at >= 0 && n > fail_at)) {
         injected = 1;
         return 1;
     }
@@ -79,8 +87,8 @@ static int test_err_string_init_alloc_failure(void)
 {
     if (!TEST_true(scenario_done))
         return 0;
-    TEST_info("allocation %d of %d %s", fail_at, alloc_count,
-        injected ? "failed" : "not reached");
+    TEST_info("allocation %d%s of %d %s", fail_at, persist ? " onwards" : "",
+        alloc_count, injected ? "failed" : "not reached");
 
     /* Error reporting must still work afterwards */
     ERR_clear_error();
@@ -103,6 +111,8 @@ int global_init(void)
 
     if (e != NULL && *e != '\0')
         fail_at = atoi(e);
+    e = getenv("ERR_STRING_INIT_FAIL_PERSIST");
+    persist = e != NULL && *e != '\0';
 
     if (!CRYPTO_set_mem_functions(test_malloc, test_realloc, test_free))
         return 0;
