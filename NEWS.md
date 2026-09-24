@@ -48,7 +48,7 @@ changes:
     that are present in MSVC 2013.
 
   * Added optimized ML-DSA and ML-KEM NTT operations on `ppc64le`;
-    optimized ML-DSA operations on `s390x`, and `x86_64`;
+    optimized ML-DSA operations on `x86_64`;
     AVX-512-optimized SHAKE x4 operations for ML-DSA on `x86_64`;
     AVX-512 and VAES optimizations for AES-CBC decryption on `x86_64`.
 
