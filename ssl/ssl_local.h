@@ -2207,6 +2207,14 @@ typedef struct dtls1_state_st {
 
     unsigned int retransmitting;
     unsigned int has_change_cipher_spec;
+    /*
+     * Set when our own KeyUpdate has been sent but not yet acknowledged.
+     * The new write keys are not installed until the ACK arrives
+     * per RFC 9147 section 8: the restriction is on using the new
+     * epoch's keys, not on sending altogether, so we keep using the current
+     * keys in the meantime.
+     */
+    unsigned int key_update_write_pending;
 #ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 #endif
