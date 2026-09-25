@@ -927,8 +927,6 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
         /*
          * Make sure retransmitted chunk does not reintroduce
          * bytes which were consumed already.
-         * Make sure retransmitted chunk does not reintroduce
-         * bytes which were consumed already.
          */
         DEBUG_PRINT(stderr, "%s [ %llu, %llu ] -> [ %llu, %llu ]\n", OPENSSL_FUNC,
             r->start, r->end, fs->offset, r->end);
