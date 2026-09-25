@@ -358,8 +358,15 @@ static int test_dtls13_ack_coverage(int server)
             sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
             if (!TEST_int_gt(DTLSv1_handle_timeout(sender), 0)
                 || !TEST_true(ossl_list_record_number_is_empty(&msg->rec_nums))
-                || !TEST_ptr(recnum = ossl_list_record_number_head(&unacked->rec_nums))
-                || !TEST_uint64_t_gt(recnum->seqnum, oldseq))
+                /*
+                 * The retransmit no longer wipes rec_nums -- it accumulates
+                 * -- so the new, higher-numbered record is now at the tail,
+                 * not the head (the original entry is still there too).
+                 */
+                || !TEST_ptr(recnum = ossl_list_record_number_tail(&unacked->rec_nums))
+                || !TEST_uint64_t_gt(recnum->seqnum, oldseq)
+                /* Both the original and the retransmitted record number are present. */
+                || !TEST_size_t_eq(ossl_list_record_number_num(&unacked->rec_nums), 2))
                 goto end;
             sc->d1->next_timeout = timeout;
             /* Only the unacknowledged message should have been retransmitted. */
@@ -503,7 +510,14 @@ static int test_dtls13_ticket_ack_retransmit(int idx)
             dtls_sent_msg *msg = item->data;
             size_t records = ossl_list_record_number_num(&msg->rec_nums);
 
-            if (fragmented ? !TEST_size_t_gt(records, 1) : !TEST_size_t_eq(records, 1))
+            /*
+             * No ACK ever actually lands in this test (every one gets
+             * dropped), so record numbers accumulate across every round
+             * instead of being reset by each retransmit: 1 from the
+             * original send plus one more per retransmit so far.
+             */
+            if (fragmented ? !TEST_size_t_gt(records, 1)
+                           : !TEST_size_t_eq(records, (size_t)(i + 2)))
                 goto end;
         }
 
@@ -781,6 +795,716 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * A late ACK for the *original* copy of a retransmitted message must still
+ * retire it. RFC 9147 section 7.2: "Implementations MUST treat a record as
+ * having been acknowledged if it appears in any ACK." dtls1_retransmit_message()
+ * clears a message's rec_nums right before resending it, so today an ACK
+ * that matches the original record (R0) has nothing left to match once a
+ * retransmission (R1) has happened -- the message never retires and its
+ * retransmit timer never stops, even though the peer genuinely has it.
+ *
+ * Uses KeyUpdate: the smallest, single-record message, matching the issue's
+ * most severe reported case (a hang, not just wasted retransmissions).
+ *
+ * idx 0: a single retransmission before the held ACK is delivered -- the
+ *        core bug (issue's primary scenario).
+ * idx 1: three retransmissions before the held ACK is delivered -- the
+ *        pathological case (e.g. a custom DTLS_set_timer_cb() whose
+ *        interval is shorter than the real round trip, so *every* ACK is
+ *        always "late" relative to the next retransmit). Proves the fix
+ *        accumulates history across the *entire* retransmission run, not
+ *        just one generation back -- a fix that only kept the previous
+ *        round's numbers would pass idx 0 but fail here.
+ */
+static int test_dtls13_keyupdate_ack_history(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    dtls_sent_msg *msg;
+    unsigned char buf[2048];
+    int ret, testresult = 0;
+    int retransmits = idx == 0 ? 1 : 3;
+    int i;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    /*
+     * Let the handshake ticket ACKs through first, so the server has no
+     * outstanding flight of its own -- isolates this test from #32854/#32878.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(ticket_count, 2)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0))
+        goto end;
+
+    /* Client sends a KeyUpdate: this is R0. */
+    if (!TEST_true(SSL_key_update(client, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 1))
+        goto end;
+
+    msg = pqueue_peek(&cc->d1->sent_messages)->data;
+    if (!TEST_size_t_eq(ossl_list_record_number_num(&msg->rec_nums), 1))
+        goto end;
+
+    /*
+     * Server receives R0 and queues its ACK for it -- but deliberately don't
+     * deliver that ACK to the client yet. It just sits in the client's rbio
+     * (a mempacket queue) until something reads it; nothing reads it out
+     * from under us just by calling other functions below.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+
+    /*
+     * Force the client to retransmit R0 as R1..R(retransmits): today, each
+     * retransmit wipes whatever record numbers were there before it.
+     */
+    for (i = 0; i < retransmits; i++) {
+        cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+        if (!TEST_true(SSL_handle_events(client)))
+            goto end;
+    }
+
+    /*
+     * Record numbers accumulate across every round instead of being wiped
+     * by each retransmit: the original R0 plus one more per retransmit.
+     */
+    if (!TEST_size_t_eq(ossl_list_record_number_num(&msg->rec_nums),
+            (size_t)(retransmits + 1)))
+        goto end;
+
+    /* *Now* deliver the ACK that was actually for R0, held since before the retransmit(s). */
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Assertions that fail today: R0's ack matched nothing (its record
+     * number was wiped by the retransmit), so the message never retires.
+     */
+    if (!TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(cc->d1->next_timeout))
+        || !TEST_false(dtls_any_sent_messages_are_missing_acknowledge(cc)))
+        goto end;
+
+    /* Prove it's not just harmlessly stuck: the KeyUpdate completed and app data flows. */
+    if (!TEST_int_eq(SSL_get_state(client), TLS_ST_OK)
+        || !TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * The same late-ACK-after-retransmit history bug, but for the client's
+ * Finished -- the issue's other reported "severe" case (a hang), alongside
+ * KeyUpdate. Finished is sent during the handshake rather than
+ * post-handshake, but dtls1_retransmit_message()/dtls_process_ack() don't
+ * distinguish between the two: both just operate on a generic dtls_sent_msg,
+ * so this proves the fix isn't specific to post-handshake messages.
+ *
+ * idx 0: a single retransmission before the held ACK is delivered.
+ * idx 1: three retransmissions before the held ACK is delivered.
+ */
+static int test_dtls13_finished_ack_history(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *cc;
+    dtls_sent_msg *msg;
+    unsigned char buf[2048];
+    int ret, testresult = 0;
+    int retransmits = idx == 0 ? 1 : 3;
+    int i;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    /* Sends the client's Finished: this is R0. */
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Server processes Finished, completes, and queues its ACK -- but
+     * deliberately don't deliver that ACK to the client yet.
+     */
+    if (!TEST_int_eq(SSL_accept(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 1)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+
+    msg = pqueue_peek(&cc->d1->sent_messages)->data;
+    if (!TEST_size_t_eq(ossl_list_record_number_num(&msg->rec_nums), 1))
+        goto end;
+
+    /* Force the client to retransmit R0 as R1..R(retransmits). */
+    for (i = 0; i < retransmits; i++) {
+        cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+        if (!TEST_true(SSL_handle_events(client)))
+            goto end;
+    }
+
+    /* Record numbers accumulate across every round instead of being wiped. */
+    if (!TEST_size_t_eq(ossl_list_record_number_num(&msg->rec_nums),
+            (size_t)(retransmits + 1)))
+        goto end;
+
+    /* *Now* deliver the ACK that was actually for R0, held since before the retransmit(s). */
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Assertions that fail today: R0's ack matched nothing (its record
+     * number was wiped by the retransmit), so the message never retires.
+     */
+    if (!TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(cc->d1->next_timeout))
+        || !TEST_false(dtls_any_sent_messages_are_missing_acknowledge(cc))
+        || !TEST_int_eq(SSL_get_state(client), TLS_ST_OK))
+        goto end;
+
+    /* Prove it's not just harmlessly stuck: app data flows both ways. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A message that fragments into K>1 records in a single transmission round
+ * must not retire on a single matching ACK. RFC 9147 section 7.2 is a
+ * per-record rule, but completeness is per-message: the peer needs *every*
+ * fragment, from any combination of rounds, not just any one of them.
+ *
+ * Also proves coverage aggregates *across* rounds: deliver a different
+ * fragment from two separate, individually-incomplete retransmission
+ * rounds, and confirm the message retires once their union covers the
+ * whole message. "Per-round accumulate" (also rejected) would never notice
+ * this and would retransmit forever.
+ *
+ * idx == 0: the client already has the whole (originally unfragmented)
+ * ticket before either round below runs -- this exercises only the
+ * *sender's* ACK/coverage bookkeeping.
+ *
+ * idx == 1: companion case. The MTU is lowered *before* the ticket is ever
+ * sent, so round 1 *is* the original transmission, already fragmented; the
+ * client is deliberately left holding only one of its fragments, so it
+ * cannot reassemble the message until round 2 supplies the rest. This
+ * exercises the *receive*-side reassembly across rounds instead, asserting
+ * ticket_count moves from 0 to 1 exactly once, on round 2, not before.
+ */
+static int test_dtls13_ticket_ack_history_fragmented(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    BIO *bio;
+    dtls_sent_msg *msg;
+    unsigned char buf[2048];
+    unsigned char frag[8][1024];
+    int fraglen[8];
+    int nfrags, ret, dropped, i, j, testresult = 0;
+    size_t round1_frag0_len, round2_frag0_len;
+    DTLS1_RECORD_NUMBER *r;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 1)))
+        goto end;
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL)))
+        goto end;
+
+    if (idx == 1) {
+        /*
+         * Lower the MTU before the connection is even established, so the
+         * ticket's very first transmission is already fragmented, and use
+         * the bare handshake primitive instead of create_ssl_connection():
+         * the latter forces two SSL_read_ex() calls on the client purely to
+         * deliver NewSessionTicket messages, which would reassemble and
+         * deliver this ticket before we get a chance to intercept it.
+         */
+        SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+        if (!TEST_long_gt(SSL_set_mtu(server, 257), 0)
+            || !TEST_true(create_bare_ssl_connection_ex(server, client,
+                SSL_ERROR_NONE, 1, 0, NULL, NULL)))
+            goto end;
+    } else if (!TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE))) {
+        goto end;
+    }
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    bio = SSL_get_rbio(client);
+
+    if (!TEST_int_eq(ticket_count, idx == 0 ? 1 : 0)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+
+    if (idx == 0) {
+        /*
+         * Drop the ticket's original ACK. The ticket flows server -> client
+         * (that direction is `bio`, used below for the fragments); the
+         * client's ACK for it flows the other way, client -> server, i.e.
+         * the server's rbio.
+         */
+        dropped = 0;
+        while (BIO_read(SSL_get_rbio(server), buf, sizeof(buf)) > 0)
+            dropped++;
+        if (!TEST_int_gt(dropped, 0))
+            goto end;
+
+        /* Lower the MTU so a retransmission fragments the ticket. */
+        SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+        if (!TEST_long_gt(SSL_set_mtu(server, 257), 0))
+            goto end;
+
+        /* Round 1: force a retransmit. The ticket now fragments into K records. */
+        sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+        if (!TEST_true(SSL_handle_events(server)))
+            goto end;
+    }
+
+    /*
+     * Capture every fragment of round 1, delivering none of them yet.
+     * idx == 0: round 1 is the retransmit just forced above.
+     * idx == 1: round 1 is the original transmission itself, already
+     * fragmented because the MTU was lowered before it was ever sent.
+     */
+    nfrags = 0;
+    while ((ret = BIO_read(bio, frag[nfrags], sizeof(frag[0]))) > 0) {
+        fraglen[nfrags] = ret;
+        nfrags++;
+        if (!TEST_int_lt(nfrags, (int)OSSL_NELEM(frag)))
+            goto end;
+    }
+    if (!TEST_int_gt(nfrags, 1))
+        goto end;
+
+    /*
+     * idx == 0: record numbers accumulate across rounds instead of being
+     * wiped -- the original (non-fragmented) send plus every fragment of
+     * round 1.
+     * idx == 1: there is no separate, earlier non-fragmented send -- round 1
+     * *is* the original send, so it's just round 1's own fragments.
+     */
+    msg = pqueue_peek(&sc->d1->sent_messages)->data;
+    if (!TEST_size_t_eq(ossl_list_record_number_num(&msg->rec_nums),
+            (size_t)(idx == 0 ? nfrags + 1 : nfrags)))
+        goto end;
+
+    /*
+     * Record round 1's fragment 0 length now, before round 2 changes the MTU
+     * and appends its own entries: round 1's fragment 0 is the first entry
+     * inserted for round 1, i.e. the head (idx == 1) or the entry right
+     * after the original whole-message entry (idx == 0).
+     */
+    r = ossl_list_record_number_head(&msg->rec_nums);
+    if (idx == 0)
+        r = ossl_list_record_number_next(r);
+    if (!TEST_ptr(r))
+        goto end;
+    round1_frag0_len = r->frag_len;
+
+    /* Deliver only fragment 0 of round 1 back to the client. */
+    if (!TEST_int_eq(mempacket_test_inject(bio, (const char *)frag[0], fraglen[0],
+                         -1, INJECT_PACKET_IGNORE_REC_SEQ),
+            fraglen[0]))
+        goto end;
+
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The client generated an ACK for fragment 0, but it's just sitting in
+     * the server's rbio until the server actually reads it -- dtls_process_ack()
+     * runs on the server side, since the server is the one waiting on this
+     * ticket's acknowledgment.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * A single fragment's ACK must not retire the ticket, and (idx == 1)
+     * one fragment out of K is not enough for the client to reassemble and
+     * deliver it either.
+     */
+    if (!TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
+        || !TEST_int_eq(ticket_count, idx == 0 ? 1 : 0))
+        goto end;
+
+    /*
+     * Round 2: lower the MTU further and force another retransmit, so this
+     * round splits the ticket at *different* offsets than round 1 did.
+     * Round 1's larger MTU (257) makes its fragment 0 longer than round 2's
+     * (256), so the two rounds' covered ranges overlap by a byte instead of
+     * landing on identical boundaries -- proving coverage is tracked by
+     * actual byte range, not by an index into an assumed-stable fragment
+     * layout (the "per-round accumulate" design rejected in section 3 of
+     * the design notes would have no way to notice this either).
+     */
+    if (!TEST_long_gt(SSL_set_mtu(server, 256), 0))
+        goto end;
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_true(SSL_handle_events(server)))
+        goto end;
+
+    /* Capture round 2's fragments, delivering everything *except* fragment 0. */
+    nfrags = 0;
+    while ((ret = BIO_read(bio, frag[nfrags], sizeof(frag[0]))) > 0) {
+        fraglen[nfrags] = ret;
+        nfrags++;
+        if (!TEST_int_lt(nfrags, (int)OSSL_NELEM(frag)))
+            goto end;
+    }
+    if (!TEST_int_gt(nfrags, 1))
+        goto end;
+
+    /*
+     * Confirm the MTU change actually moved the fragment boundary: round 2's
+     * fragment 0 (the entry nfrags - 1 positions back from the tail, since
+     * round 2 just appended nfrags fresh entries there) must be shorter than
+     * round 1's, so the two rounds' covered ranges overlap rather than
+     * landing on the same split point or leaving a gap between them.
+     */
+    r = ossl_list_record_number_tail(&msg->rec_nums);
+    for (j = 0; j < nfrags - 1; j++)
+        r = ossl_list_record_number_prev(r);
+    if (!TEST_ptr(r))
+        goto end;
+    round2_frag0_len = r->frag_len;
+    if (!TEST_size_t_gt(round1_frag0_len, round2_frag0_len))
+        goto end;
+
+    for (i = 1; i < nfrags; i++) {
+        if (!TEST_int_eq(mempacket_test_inject(bio, (const char *)frag[i],
+                             fraglen[i], -1, INJECT_PACKET_IGNORE_REC_SEQ),
+                fraglen[i]))
+            goto end;
+    }
+
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Let the server actually process the ACK(s) for round 2's fragments. */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Round 1's fragment 0 plus round 2's remaining fragments between them
+     * cover the whole ticket, even though neither round was ever
+     * individually complete, on both sides of the connection: the sender's
+     * bookkeeping retires the message (idx == 0 and idx == 1 alike), and
+     * (idx == 1) the client reassembles and delivers it for the first time
+     * here -- not on round 1's partial delivery above, and only once.
+     */
+    if (!TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout))
+        || !TEST_int_eq(ticket_count, 1))
+        goto end;
+
+    /* Prove it's not just harmlessly stuck. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Drive the server's unacknowledged NewSessionTicket through an interrupted
+ * fragmented retransmission followed by a full restart:
+ *
+ *   round 1: retransmit at a lowered MTU; the write of the second fragment
+ *            fails with a retryable error leaving s->init_off nonzero;
+ *   round 2: retransmit again with writes enabled. Before the init_off reset
+ *            in dtls1_retransmit_message(), this restarted fragmentation
+ *            from round 1's stale offset against the freshly-reloaded full
+ *            message, recording byte ranges past msg_body_len -- ranges
+ *            dtls_process_ack() then used directly as bitmask indices.
+ */
+static int interrupted_ticket_retransmit_setup(SSL_CTX **sctx_out, SSL_CTX **cctx_out,
+    SSL **server_out, SSL **client_out,
+    SSL_CONNECTION **sc_out,
+    dtls_sent_msg **msg_out)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    BIO *retry = NULL;
+    unsigned char buf[2048];
+    int dropped;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 1)))
+        goto end;
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    if (!TEST_int_eq(ticket_count, 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+    *msg_out = pqueue_peek(&sc->d1->sent_messages)->data;
+    if (!TEST_ptr(*msg_out)
+        /*
+         * Needs at least two ~223-byte fragments at the MTU set below, so a
+         * mid-round write can be failed after one fragment has gone out.
+         */
+        || !TEST_size_t_gt((*msg_out)->msg_info.msg_body_len, 223))
+        goto end;
+
+    /* Drop the ticket's original ACK so it stays retransmittable. */
+    dropped = 0;
+    while (BIO_read(SSL_get_rbio(server), buf, sizeof(buf)) > 0)
+        dropped++;
+    if (!TEST_int_gt(dropped, 0))
+        goto end;
+
+    /* Lower the MTU so a retransmission fragments the ticket. */
+    SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_long_gt(SSL_set_mtu(server, 257), 0))
+        goto end;
+
+    /* Fail the write following the next successful one. */
+    if (!TEST_ptr(retry = BIO_new(bio_s_maybe_retry()))
+        || !TEST_true(BIO_up_ref(SSL_get_wbio(server))))
+        goto end;
+    SSL_set0_wbio(server, BIO_push(retry, SSL_get_wbio(server)));
+    retry = NULL;
+    if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(server),
+                          MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 1, NULL),
+            1))
+        goto end;
+
+    /*
+     * Round 1: the first fragment's record write succeeds; the second
+     * fragment's write fails, aborting the retransmission mid-message.
+     */
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_false(SSL_handle_events(server))
+        || !TEST_size_t_gt(sc->init_off, 0))
+        goto end;
+
+    /* Round 2: retransmit again, this time letting every write through. */
+    if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(server),
+                          MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 10000, NULL),
+            1))
+        goto end;
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_true(SSL_handle_events(server)))
+        goto end;
+
+    /* The client already has the ticket; discard round 2's retransmission. */
+    while (BIO_read(SSL_get_rbio(client), buf, sizeof(buf)) > 0)
+        ;
+
+    *sctx_out = sctx;
+    *cctx_out = cctx;
+    *server_out = server;
+    *client_out = client;
+    *sc_out = sc;
+    return 1;
+
+end:
+    BIO_free(retry);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return 0;
+}
+
+/*
+ * Every byte range recorded across the ticket's retransmissions must fit
+ * within msg_body_len: dtls_process_ack() uses these ranges directly as
+ * indices into a bitmask of only ceil(msg_body_len / 8) bytes.
+ */
+static int test_dtls13_interrupted_retransmit_range(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc = NULL;
+    dtls_sent_msg *msg = NULL;
+    DTLS1_RECORD_NUMBER *recnum;
+    size_t body_len;
+    int testresult = 0;
+
+    if (!interrupted_ticket_retransmit_setup(&sctx, &cctx, &server, &client,
+            &sc, &msg))
+        goto end;
+
+    /* The retransmissions must actually have fragmented the ticket. */
+    if (!TEST_size_t_ge(ossl_list_record_number_num(&msg->rec_nums), 3))
+        goto end;
+
+    body_len = msg->msg_info.msg_body_len;
+    for (recnum = ossl_list_record_number_head(&msg->rec_nums);
+        recnum != NULL; recnum = ossl_list_record_number_next(recnum)) {
+        if (!TEST_size_t_le(recnum->frag_off, body_len)
+            || !TEST_size_t_le(recnum->frag_len, body_len - recnum->frag_off))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * ACK the record number with the largest recorded byte range, through the
+ * client's real write path, and process the ACK on the server. Before the
+ * range check backstop in dtls_process_ack(), a corrupt recorded range here
+ * would index past msg->covered's trailing bitmask allocation.
+ */
+static int test_dtls13_ack_bitmap_oob(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc = NULL, *cc;
+    dtls_sent_msg *msg = NULL;
+    DTLS1_RECORD_NUMBER *recnum, *pick = NULL;
+    unsigned char ack[18], buf[2048];
+    WPACKET pkt;
+    size_t acklen, written, worst = 0;
+    int ret, testresult = 0;
+
+    if (!interrupted_ticket_retransmit_setup(&sctx, &cctx, &server, &client,
+            &sc, &msg))
+        goto end;
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    if (!TEST_size_t_ge(ossl_list_record_number_num(&msg->rec_nums), 3))
+        goto end;
+
+    for (recnum = ossl_list_record_number_head(&msg->rec_nums);
+        recnum != NULL; recnum = ossl_list_record_number_next(recnum))
+        if (recnum->frag_off + recnum->frag_len > worst) {
+            worst = recnum->frag_off + recnum->frag_len;
+            pick = recnum;
+        }
+    if (!TEST_ptr(pick))
+        goto end;
+
+    /* Keep the retransmit timer out of the way while the ACK is processed. */
+    sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+
+    /* One RecordNumber entry: epoch and sequence_number, u16 length-prefixed. */
+    if (!TEST_true(WPACKET_init_static_len(&pkt, ack, sizeof(ack), 2))
+        || !TEST_true(WPACKET_put_bytes_u64(&pkt, pick->epoch))
+        || !TEST_true(WPACKET_put_bytes_u64(&pkt, pick->seqnum))
+        || !TEST_true(WPACKET_finish(&pkt))
+        || !TEST_true(WPACKET_get_total_written(&pkt, &acklen))) {
+        WPACKET_cleanup(&pkt);
+        goto end;
+    }
+    WPACKET_cleanup(&pkt);
+
+    if (!TEST_int_eq(dtls1_write_bytes(cc, SSL3_RT_ACK, ack, acklen, &written), 1)
+        || !TEST_size_t_eq(written, acklen)
+        || !TEST_int_gt(BIO_flush(SSL_get_wbio(client)), 0))
+        goto end;
+
+    /* dtls_process_ack() marks the coverage bitmap for the picked record. */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* The connection must survive processing the ACK. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -799,6 +1523,11 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_pha_ack_retransmit);
     ADD_TEST(test_dtls13_ack_list_bound);
     ADD_ALL_TESTS(test_dtls13_ack_records, 3);
+    ADD_ALL_TESTS(test_dtls13_keyupdate_ack_history, 2);
+    ADD_ALL_TESTS(test_dtls13_finished_ack_history, 2);
+    ADD_ALL_TESTS(test_dtls13_ticket_ack_history_fragmented, 2);
+    ADD_TEST(test_dtls13_interrupted_retransmit_range);
+    ADD_TEST(test_dtls13_ack_bitmap_oob);
 #endif
     return 1;
 }

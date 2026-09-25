@@ -811,7 +811,8 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
             return ret;
 
         sent_msg = (dtls_sent_msg *)item->data;
-        rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number);
+        rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number,
+            sc->d1->w_frag_off, sc->d1->w_frag_len);
 
         if (rec_num == NULL)
             return -1;
