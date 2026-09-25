@@ -92,6 +92,8 @@ L<EVP_PKEY_CTX_get_params(3)>:
 
 The OpenSSL FIPS provider returns 1 if the operation is FIPS approved, or 0
 otherwise.  See L<fips_module(7)/FIPS indicators> for more information.
+Supplying the test-only "test-entropy" parameter causes this indicator to
+return 0.
 
 =back
 
