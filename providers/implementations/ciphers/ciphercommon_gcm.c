@@ -247,10 +247,14 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
                 return 0;
         }
     }
+#ifdef FIPS_MODULE
     /* Externally supplied IVs are permitted but not approved for encryption. */
     return ossl_FIPS_IND_get_ctx_param_conditional(NULL, params,
         (!ctx->enc || ctx->iv_gen_rand)
             && gcm_fips_taglen_approved(ctx->taglen));
+#else
+    return 1;
+#endif
 }
 
 int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
