@@ -53,6 +53,7 @@ struct ossl_lib_ctx_st {
 
     int ischild;
     int conf_diagnostics;
+    int new_provider_loaded[OSSL_OP__HIGHEST + 1];
 };
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
@@ -118,6 +119,7 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx);
 static int context_init(OSSL_LIB_CTX *ctx)
 {
     int exdata_done = 0;
+    int i;
 
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
@@ -127,6 +129,11 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (!ossl_do_ex_data_init(ctx))
         goto err;
     exdata_done = 1;
+
+    for (i = 0; i < OSSL_OP__HIGHEST; i++) {
+        if (!CRYPTO_atomic_store_int(&ctx->new_provider_loaded[i], 1, ctx->lock))
+            goto err;
+    }
 
     /* P2. We want evp_method_store to be cleaned up before the provider store */
     ctx->evp_method_store = ossl_method_store_new(ctx);
@@ -678,6 +685,44 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
     default:
         return NULL;
     }
+}
+
+int ossl_lib_ctx_get_new_providers_loaded(OSSL_LIB_CTX *ctx, int op)
+{
+    int ret = 0;
+
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    /*
+     * if the atomic read operation fails here, return 1 to pretend like new
+     * providers are loaded, it ensures that we behave as though there are
+     * new providers loaded if we fail.
+     */
+    if (!CRYPTO_atomic_load_int(&ctx->new_provider_loaded[op], &ret, ctx->lock))
+        return 1;
+    return ret;
+}
+
+int ossl_lib_ctx_set_new_providers_loaded(OSSL_LIB_CTX *ctx)
+{
+    int i;
+
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    for (i = 0; i < OSSL_OP__HIGHEST; i++) {
+        if (!CRYPTO_atomic_store_int(&ctx->new_provider_loaded[i], 1, ctx->lock))
+            return 0;
+    }
+    return 1;
+}
+
+int ossl_lib_ctx_clear_new_providers_loaded(OSSL_LIB_CTX *ctx, int op)
+{
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    if (!CRYPTO_atomic_store_int(&ctx->new_provider_loaded[op], 0, ctx->lock))
+        return 0;
+    return 1;
 }
 
 void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index)

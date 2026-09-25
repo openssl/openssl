@@ -1405,6 +1405,7 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 
     if (prov == NULL)
         return 0;
+    ossl_lib_ctx_set_new_providers_loaded(prov->libctx);
 #ifndef FIPS_MODULE
     /*
      * If aschild is true, then we only actually do the activation if the
