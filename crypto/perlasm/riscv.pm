@@ -478,6 +478,16 @@ sub vrgather_vv {
     return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
 }
 
+sub vand_vx {
+    # vand.vx vd, vs2, rs1, vm
+    my $template = 0b001001_0_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vadd_vx {
     # vadd.vx vd, vs2, rs1, vm
     my $template = 0b000000_0_00000_00000_100_00000_1010111;
