@@ -16,7 +16,9 @@ use strict;
 use warnings;
 use FindBin;
 use lib '.';                    # for configdata.pm
+use lib "$FindBin::Bin/../../util/perl";
 use configdata;
+use OpenSSL::copyright;
 
 # Helper for the enabled coderefs in ec_curves.conf
 sub disabled {
@@ -133,9 +135,17 @@ sub emit_bytes {
 my @enabled = grep { is_enabled($_) } @order;
 my @canonical = grep { !exists $curves{$_}{alias_of} } @enabled;
 
-my $output = <<'HEADER';
+# Set up copyright year range
+my $FIRST = 2026;
+my $YEAR =  OpenSSL::copyright::latest(($0, "$FindBin::Bin/ec_curves.conf"));
+my $C_RANGE = $YEAR > $FIRST ? "$FIRST-$YEAR" : "$YEAR";
+
+my $output = <<"HEADER";
 /*
- * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright $C_RANGE The OpenSSL Project Authors. All Rights Reserved.
+HEADER
+
+$output .= <<'HEADER';
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
