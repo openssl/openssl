@@ -119,7 +119,7 @@ static int ml_kem_decapsulate_init(void *vctx, void *vkey,
 
 {- produce_param_decoder('ml_kem_get_ctx_params',
                          (['OSSL_KEM_PARAM_FIPS_APPROVED_INDICATOR',
-                           'fips indicator', 'int'],
+                           'ind', 'int', 'fips'],
                          )); -}
 /* clang-format on */
 
