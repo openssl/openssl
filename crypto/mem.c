@@ -215,7 +215,7 @@ void ossl_malloc_setup_failures(void)
  * which is acceptable for this last resort.
  */
 #ifndef TSAN_REQUIRES_LOCKING
-static TSAN_QUALIFIER int alloc_err_report_depth;
+static TSAN_QUALIFIER int alloc_err_report_depth = 0;
 #endif
 
 static void report_alloc_err(const char *file, int line)
