@@ -347,7 +347,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
         }
         /* Check nextUpdate is not more than nsec in the past */
         if (next_time < t_now - nsec) {
-            ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_NOT_YET_VALID);
+            ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_EXPIRED);
             goto err;
         }
         /* Also don't allow nextUpdate to precede thisUpdate */

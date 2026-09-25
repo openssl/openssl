@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -55,6 +55,9 @@ my %obj;
 my %objd;
 open(IN, "$ARGV[0]") || die "Can't open input file $ARGV[0], $!";
 while (<IN>) {
+    # The compatibility aliases appended after the include guard's
+    # closing #endif carry no object data; read only the guarded body.
+    last if m@^#endif\s+/\* OPENSSL_OBJ_MAC_H \*/@;
     next unless /^\#define\s+(\S+)\s+(.*)$/;
     my $v = $1;
     my $d = $2;

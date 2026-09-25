@@ -457,8 +457,47 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 1;
 }
 
+int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+    const EVP_CIPHER **enc)
+{
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
+
+    if (i == -1) {
+        *enc = NULL;
+    } else {
+        if (i == SSL_ENC_NULL_IDX) {
+            /*
+             * We assume we don't care about this coming from an ENGINE so
+             * just do a normal EVP_CIPHER_fetch instead of
+             * ssl_evp_cipher_fetch()
+             */
+            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
+        } else {
+            int ecbnid = NID_undef;
+
+            *enc = NULL;
+
+            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0)
+                ecbnid = NID_aes_128_ecb;
+            else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0)
+                ecbnid = NID_aes_256_ecb;
+            else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0))
+                ecbnid = NID_chacha20;
+
+            if (ecbnid != NID_undef)
+                *enc = ssl_evp_cipher_fetch(ctx->libctx, OBJ_nid2sn(ecbnid), ctx->propq);
+        }
+
+        if (*enc == NULL)
+            return 0;
+    }
+    return 1;
+}
+
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
-    const EVP_CIPHER **enc, const EVP_MD **md,
+    const EVP_CIPHER **snenc,
+    const EVP_CIPHER **enc,
+    const EVP_MD **md,
     int *mac_pkey_type, size_t *mac_secret_size,
     SSL_COMP **comp, int use_etm)
 {
@@ -488,12 +527,18 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if ((enc == NULL) || (md == NULL))
         return 0;
 
-    if (!ssl_cipher_get_evp_cipher(ctx, c, enc))
+    if (!ssl_cipher_get_evp_cipher(ctx, c, enc)
+        || (snenc != NULL
+            && !ssl_cipher_get_evp_cipher_sn(ctx, c, snenc)))
         return 0;
 
     if (!ssl_cipher_get_evp_md_mac(ctx, c, md, mac_pkey_type,
             mac_secret_size)) {
         ssl_evp_cipher_free(*enc);
+
+        if (snenc != NULL)
+            ssl_evp_cipher_free(*snenc);
+
         return 0;
     }
 
@@ -1314,15 +1359,23 @@ static int update_cipher_list(SSL_CTX *ctx,
         return 0;
 
     /*
-     * Delete any existing TLSv1.3 ciphersuites. These are always first in the
+     * Delete any existing (D)TLSv1.3 ciphersuites. These are always first in the
      * list.
      */
-    while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0
-        && sk_SSL_CIPHER_value(tmp_cipher_list, 0)->min_tls
-            == TLS1_3_VERSION)
-        (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
 
-    /* Insert the new TLSv1.3 ciphersuites */
+    while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0) {
+        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(tmp_cipher_list, 0);
+        const int version1_3 = SSL_CTX_IS_DTLS(ctx) ? DTLS1_3_VERSION
+                                                    : TLS1_3_VERSION;
+        const int minversion = SSL_CTX_IS_DTLS(ctx) ? cipher->min_dtls
+                                                    : cipher->min_tls;
+
+        if (minversion != version1_3)
+            break;
+        (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
+    }
+
+    /* Insert the new (D)TLSv1.3 ciphersuites */
     for (i = sk_SSL_CIPHER_num(tls13_ciphersuites) - 1; i >= 0; i--) {
         const SSL_CIPHER *sslc = sk_SSL_CIPHER_value(tls13_ciphersuites, i);
 
@@ -1841,7 +1894,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     }
 
-    BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
+    snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
 
     return buf;
 }
@@ -2115,13 +2168,22 @@ int ssl_get_md_idx(int md_nid)
     return -1;
 }
 
-const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
+int ssl_cipher_get_handshake_digest_nid(const SSL_CIPHER *c)
 {
     int idx = c->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
 
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
+        return NID_undef;
+    return ssl_cipher_table_mac[idx].nid;
+}
+
+const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
+{
+    int nid = ssl_cipher_get_handshake_digest_nid(c);
+
+    if (nid == NID_undef)
         return NULL;
-    return EVP_get_digestbynid(ssl_cipher_table_mac[idx].nid);
+    return EVP_get_digestbynid(nid);
 }
 
 int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
@@ -2129,20 +2191,29 @@ int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
     return (c->algorithm_mac & SSL_AEAD) ? 1 : 0;
 }
 
-int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
-    size_t *int_overhead, size_t *blocksize,
-    size_t *ext_overhead)
+int ssl_cipher_get_overhead(const SSL_CIPHER *c, int version,
+    size_t *mac_overhead, size_t *int_overhead,
+    size_t *blocksize, size_t *ext_overhead)
 {
     int mac = 0, in = 0, blk = 0, out = 0;
 
     /* Some hard-coded numbers for the CCM/Poly1305 MAC overhead
      * because there are no handy #defines for those. */
     if (c->algorithm_enc & (SSL_AESGCM | SSL_ARIAGCM)) {
-        out = EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+        out = EVP_GCM_TLS_TAG_LEN;
+        /* DTLS 1.3 uses an implicit nonce, so no explicit IV on the wire. */
+        if (version != DTLS1_3_VERSION)
+            out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
     } else if (c->algorithm_enc & (SSL_AES128CCM | SSL_AES256CCM)) {
-        out = EVP_CCM_TLS_EXPLICIT_IV_LEN + 16;
+        out = 16;
+        /* DTLS 1.3 uses an implicit nonce, so no explicit IV on the wire. */
+        if (version != DTLS1_3_VERSION)
+            out += EVP_CCM_TLS_EXPLICIT_IV_LEN;
     } else if (c->algorithm_enc & (SSL_AES128CCM8 | SSL_AES256CCM8)) {
-        out = EVP_CCM_TLS_EXPLICIT_IV_LEN + 8;
+        out = 8;
+        /* DTLS 1.3 uses an implicit nonce, so no explicit IV on the wire. */
+        if (version != DTLS1_3_VERSION)
+            out += EVP_CCM_TLS_EXPLICIT_IV_LEN;
     } else if (c->algorithm_enc & SSL_CHACHA20POLY1305) {
         out = 16;
     } else if (c->algorithm_mac & SSL_AEAD) {

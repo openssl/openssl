@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,5 +62,6 @@ struct conf_imodule_st {
 int ossl_config_int(const OPENSSL_INIT_SETTINGS *);
 void ossl_no_config_int(void);
 void ossl_config_modules_free(void);
+int ossl_conf_parse_bool(const char *value, int *result);
 
 #endif

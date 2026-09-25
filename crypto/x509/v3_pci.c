@@ -166,6 +166,13 @@ static int process_pci_value(CONF_VALUE *val,
         } else if (CHECK_AND_SKIP_PREFIX(valp, "file:")) {
             unsigned char buf[2048];
             int n;
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+            /*
+             * Prevent fuzzer from mutating input to reading random files.
+             */
+            valp = NULL;
+#endif
             BIO *b = BIO_new_file(valp, "r");
             if (!b) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_BIO_LIB);

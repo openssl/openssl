@@ -99,6 +99,9 @@ organizationalUnitName	= optional
 commonName		= supplied
 emailAddress		= optional
 
+[ crl_ext ]
+authorityKeyIdentifier	= keyid:always
+
 [ v3_ca ]
 subjectKeyIdentifier	= hash
 authorityKeyIdentifier	= keyid:nonss,issuer:nonss

@@ -325,9 +325,12 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
         return 0;
     }
 
-    if (st == NULL
-        || st->module_checksum_data == NULL) {
+    if (st == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
+        goto end;
+    }
+    if (st->module_checksum_data == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_MISSING_CHECKSUM);
         goto end;
     }
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -366,7 +366,7 @@ $code.=<<___;
 .type .Lord_div_2,\@object
 .Lord_div_2:
 .dword	0xa9ddfa049ceaa092,0xb901efb590e30295,0xffffffffffffffff,0x7fffffff7fffffff
-
+.previous
 
 // void bn_rshift1(BN_ULONG *a);
 .globl	bn_rshift1

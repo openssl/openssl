@@ -18,7 +18,7 @@
 #ifndef OPENSSL_NO_DEPRECATED_4_1
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
-    return ASN1_STRING_set(x, d, len);
+    return ossl_asn1_string_set_internal(x, d, len, /*add_nul_byte=*/0);
 }
 #endif
 
@@ -32,7 +32,7 @@ int ossl_i2c_ASN1_BIT_STRING(const ASN1_BIT_STRING *a, unsigned char **pp)
 
     len = a->length;
 
-    if (len > INT_MAX - 1)
+    if (len > INT_MAX - 1 || len < 0)
         goto err;
 
     if ((len > 0) && (a->flags & ASN1_STRING_FLAG_BITS_LEFT))
@@ -224,7 +224,7 @@ int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *out_length,
     if (abs == NULL || abs->type != V_ASN1_BIT_STRING)
         return 0;
 
-    if (out_length == NULL || out_unused_bits == NULL)
+    if (out_length == NULL || out_unused_bits == NULL || abs->length < 0)
         return 0;
 
     length = abs->length;
@@ -263,8 +263,9 @@ int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data, size_t lengt
     if (length > 0 && (data[length - 1] & ((1 << unused_bits) - 1)) != 0)
         return 0;
 
-    if (!ASN1_STRING_set(abs, data, (int)length))
+    if (!ossl_asn1_string_set_internal(abs, data, (int)length, /*add_nul_byte=*/0))
         return 0;
+
     abs->type = V_ASN1_BIT_STRING;
 
     ossl_asn1_bit_string_set_unused_bits(abs, unused_bits);

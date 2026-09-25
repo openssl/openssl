@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -110,8 +110,7 @@ int ossl_mac_key_up_ref(MAC_KEY *mackey)
     if (!ossl_prov_is_running())
         return 0;
 
-    CRYPTO_UP_REF(&mackey->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&mackey->refcnt, &ref);
 }
 
 static void *mac_new(void *provctx)

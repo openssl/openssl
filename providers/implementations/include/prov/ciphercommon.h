@@ -106,6 +106,8 @@ struct prov_cipher_hw_st {
 };
 
 void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx);
+int ossl_cipher_generic_dupctx_tlsmac(PROV_CIPHER_CTX *dst,
+    const PROV_CIPHER_CTX *src);
 OSSL_FUNC_cipher_encrypt_init_fn ossl_cipher_generic_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_cipher_generic_dinit;
 OSSL_FUNC_cipher_update_fn ossl_cipher_generic_block_update;
@@ -346,38 +348,18 @@ PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_ofb128;
         dst->ks = &dctx->ks.ks;                                        \
     }
 
-#define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(name)             \
-    static const OSSL_PARAM name##_known_gettable_ctx_params[] = { \
-        OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),         \
-        OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),          \
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),          \
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),              \
-        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),    \
-        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
-
-#define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(name)                     \
-    OSSL_PARAM_END                                                       \
-    }                                                                    \
-    ;                                                                    \
-    const OSSL_PARAM *name##_gettable_ctx_params(ossl_unused void *cctx, \
-        ossl_unused void *provctx)                                       \
-    {                                                                    \
-        return name##_known_gettable_ctx_params;                         \
-    }
-
-#define CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(name)             \
-    static const OSSL_PARAM name##_known_settable_ctx_params[] = { \
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),          \
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),
-#define CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(name)                     \
-    OSSL_PARAM_END                                                       \
-    }                                                                    \
-    ;                                                                    \
-    const OSSL_PARAM *name##_settable_ctx_params(ossl_unused void *cctx, \
-        ossl_unused void *provctx)                                       \
-    {                                                                    \
-        return name##_known_settable_ctx_params;                         \
-    }
+struct ossl_cipher_get_param_list_st {
+    OSSL_PARAM *mode;
+    OSSL_PARAM *keylen;
+    OSSL_PARAM *ivlen;
+    OSSL_PARAM *bsize;
+    OSSL_PARAM *aead;
+    OSSL_PARAM *custiv;
+    OSSL_PARAM *cts;
+    OSSL_PARAM *mb;
+    OSSL_PARAM *rand;
+    OSSL_PARAM *etm;
+};
 
 struct ossl_cipher_get_ctx_param_list_st {
     OSSL_PARAM *keylen; /* all ciphers */
@@ -398,8 +380,13 @@ struct ossl_cipher_set_ctx_param_list_st {
     OSSL_PARAM *keylen; /* variable key length ciphers */
 };
 
-int ossl_cipher_common_get_ctx_params(PROV_CIPHER_CTX *ctx, const struct ossl_cipher_get_ctx_param_list_st *p);
-int ossl_cipher_common_set_ctx_params(PROV_CIPHER_CTX *ctx, const struct ossl_cipher_set_ctx_param_list_st *p);
+int ossl_cipher_common_get_params(const struct ossl_cipher_get_param_list_st *p,
+    unsigned int md, uint64_t flags, size_t kbits, size_t blkbits,
+    size_t ivbits);
+int ossl_cipher_common_get_ctx_params(PROV_CIPHER_CTX *ctx,
+    const struct ossl_cipher_get_ctx_param_list_st *p);
+int ossl_cipher_common_set_ctx_params(PROV_CIPHER_CTX *ctx,
+    const struct ossl_cipher_set_ctx_param_list_st *p);
 
 int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
     size_t ivlen);

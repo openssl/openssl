@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,7 +22,7 @@ static int up_ref_loader(void *method)
     int ref = 0;
 
     if (loader->prov != NULL)
-        CRYPTO_UP_REF(&loader->refcnt, &ref);
+        return CRYPTO_UP_REF(&loader->refcnt, &ref);
     return 1;
 }
 

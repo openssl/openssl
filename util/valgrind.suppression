@@ -121,6 +121,17 @@
    fun:malloc
    ...
    fun:OSSL_provider_init
+   fun:provider_init
+   fun:provider_activate
+   ...
+}
+{
+   provider_activate_strdup_without_provider_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   ...
+   fun:OSSL_provider_init
    fun:provider_activate
    ...
 }
@@ -142,4 +153,10 @@
    Memcheck:Cond
    fun:gcm_cipher_internal
    ...
+}
+{
+   asn1_string_poison_test_intentional_terminator_read
+   Memcheck:Addr1
+   fun:strlen
+   obj:*/asn1_string_poison_test
 }

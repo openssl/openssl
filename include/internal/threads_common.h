@@ -14,7 +14,9 @@
 
 #if defined(__clang__) && defined(__has_feature)
 #if __has_feature(thread_sanitizer)
+#if !defined(__SANITIZE_THREAD__)
 #define __SANITIZE_THREAD__
+#endif
 #endif
 #endif
 
@@ -38,6 +40,7 @@ typedef enum {
     CRYPTO_THREAD_LOCAL_TEVENT_KEY,
     CRYPTO_THREAD_LOCAL_TANDEM_ID_KEY,
     CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
+    CRYPTO_THREAD_LOCAL_RAND_SEED_KEY,
     CRYPTO_THREAD_LOCAL_KEY_MAX
 } CRYPTO_THREAD_LOCAL_KEY_ID;
 

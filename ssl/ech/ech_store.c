@@ -254,6 +254,10 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
     char *lastlabel = NULL;
     size_t lllen;
 
+    if (vpm == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     /* check local support for some suite */
     for (ind = 0; ind != (int)ee->nsuites; ind++) {
         /*

@@ -410,13 +410,13 @@ asn1_string_new_not_owned_test(void)
     if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
         goto err;
 
-    if (!TEST_true(ASN1_STRING_set(tmp, "muppet", (int)strlen("muppet"))))
+    if (!TEST_true(ASN1_STRING_set1_string(tmp, "muppet")))
         goto err;
 
     if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
         goto err;
 
-    if (!TEST_int_eq(ASN1_STRING_length(tmp), (int)strlen("muppet")))
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(tmp), strlen("muppet")))
         goto err;
 
     if (!TEST_mem_eq(ASN1_STRING_get0_data(tmp), strlen("muppet"), "muppet", strlen("muppet")))
@@ -436,13 +436,13 @@ asn1_string_new_not_owned_test(void)
     if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
         goto err;
 
-    if (!TEST_int_eq(ASN1_STRING_length(tmp), 4))
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(tmp), 4))
         goto err;
 
     if (!TEST_mem_eq(ASN1_STRING_get0_data(tmp), strlen("puppet"), "puppet", strlen("puppet")))
         goto err;
 
-    memset((uint8_t *)ASN1_STRING_get0_data(tmp), 'z', ASN1_STRING_length(tmp));
+    memset((uint8_t *)ASN1_STRING_get0_data(tmp), 'z', ASN1_STRING_get_length(tmp));
 
     if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
         goto err;
@@ -474,10 +474,196 @@ err:
     return success;
 }
 
+static int
+asn1_string_set_data_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    const uint8_t *data;
+
+    if (!TEST_ptr(str = ASN1_STRING_new()))
+        goto err;
+
+    if (!TEST_false(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", -1)))
+        goto err;
+
+    if (!TEST_false(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", (size_t)INT_MAX + 1)))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, NULL, 10)))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", strlen("hoobla"))))
+        goto err;
+
+    data = ASN1_STRING_get0_data(str);
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 6))
+        goto err;
+
+    if (!TEST_int_eq(memcmp("hoobla", data, strlen("hoobla")), 0))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", strlen("hoobla") + 1)))
+        goto err;
+
+    data = ASN1_STRING_get0_data(str);
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 7))
+        goto err;
+
+    if (!TEST_int_eq(strcmp("hoobla", (char *)data), 0))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_free(str);
+    return success;
+}
+
+static int
+asn1_string_set_string_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+
+    if (!TEST_ptr(str = ASN1_STRING_new()))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_string(str, "foo")))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 3))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_string(str, "hoob\0la")))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 4))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_free(str);
+    return success;
+}
+
+static int
+asn1_string_set0_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    uint8_t *data = NULL;
+
+    if (!TEST_ptr(str = ASN1_STRING_new()))
+        goto err;
+
+    if (!TEST_ptr(data = (uint8_t *)OPENSSL_strdup("hoobla")))
+        goto err;
+
+    /* A negative length can never be valid and is treated as empty */
+    ASN1_STRING_set0(str, data, -1);
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 0))
+        goto err;
+
+    /* The string takes ownership of the data even so */
+    if (!TEST_ptr_eq(ASN1_STRING_get0_data(str), data))
+        goto err;
+
+    data = NULL;
+
+    if (!TEST_ptr(data = (uint8_t *)OPENSSL_strdup("hoobla")))
+        goto err;
+
+    ASN1_STRING_set0(str, data, (int)strlen("hoobla"));
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 6))
+        goto err;
+
+    if (!TEST_ptr_eq(ASN1_STRING_get0_data(str), data))
+        goto err;
+
+    data = NULL;
+
+    success = 1;
+
+err:
+    OPENSSL_free(data);
+    ASN1_STRING_free(str);
+    return success;
+}
+
+static int
+asn1_universalstring_to_string_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    static const uint8_t abc[] = { 0, 0, 0, 'A', 0, 0, 0, 'B', 0, 0, 0, 'C' };
+
+    /*
+     * An empty UniversalString, as decoded from an empty string, has
+     * data == NULL and length == 0. Conversion succeeds and leaves it
+     * empty, with the type rewritten like any successful conversion.
+     */
+    if (!TEST_ptr(str = ASN1_STRING_type_new(V_ASN1_UNIVERSALSTRING)))
+        goto err;
+
+    if (!TEST_true(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 0))
+        goto err;
+
+    if (!TEST_ptr_null(ASN1_STRING_get0_data(str)))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_type(str), V_ASN1_PRINTABLESTRING))
+        goto err;
+
+    /* The type is no longer UniversalString, so a second conversion fails. */
+    if (!TEST_false(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    ASN1_STRING_free(str);
+    str = NULL;
+
+    /* A non-empty UniversalString converts to its compacted form. */
+    if (!TEST_ptr(str = ASN1_STRING_type_new(V_ASN1_UNIVERSALSTRING)))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, abc, sizeof(abc))))
+        goto err;
+
+    if (!TEST_true(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 3))
+        goto err;
+
+    if (!TEST_mem_eq(ASN1_STRING_get0_data(str), 3, "ABC", 3))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_type(str), V_ASN1_PRINTABLESTRING))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_free(str);
+    return success;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(asn1_bit_string_get_length_test, OSSL_NELEM(abs_get_length_tests));
     ADD_ALL_TESTS(asn1_bit_string_set1_test, OSSL_NELEM(abs_set1_tests));
     ADD_TEST(asn1_string_new_not_owned_test);
+    ADD_TEST(asn1_string_set_data_test);
+    ADD_TEST(asn1_string_set_string_test);
+    ADD_TEST(asn1_string_set0_test);
+    ADD_TEST(asn1_universalstring_to_string_test);
     return 1;
 }

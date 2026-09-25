@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -47,8 +47,7 @@ static int ossl_decoder_up_ref(void *data)
     OSSL_DECODER *decoder = (OSSL_DECODER *)data;
     int ref = 0;
 
-    CRYPTO_UP_REF(&decoder->base.refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&decoder->base.refcnt, &ref);
 }
 
 /* Simple method structure constructor and destructor */
@@ -416,7 +415,10 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
                  * lives beyond the freeing of that tmp_store
                  */
 #ifndef OPENSSL_NO_CACHED_FETCH
-                OSSL_DECODER_up_ref((OSSL_DECODER *)method);
+                if (!OSSL_DECODER_up_ref((OSSL_DECODER *)method)) {
+                    ossl_decoder_free(method);
+                    method = NULL;
+                }
 #endif
             }
         }

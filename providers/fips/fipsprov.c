@@ -101,7 +101,7 @@ typedef struct fips_global_st {
 
 } FIPS_GLOBAL;
 
-static inline FIPS_PARAMS *get_fips_params(FIPS_GLOBAL *fgbl)
+static ossl_inline FIPS_PARAMS *get_fips_params(FIPS_GLOBAL *fgbl)
 {
     return &fgbl->fips_params;
 }
@@ -585,10 +585,12 @@ static const OSSL_ALGORITHM fips_asym_kem[] = {
     { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
     { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
 #if !defined(OPENSSL_NO_ECX)
+    { PROV_NAMES_MLKEM512X25519, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
     { PROV_NAMES_X25519MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
     { PROV_NAMES_X448MLKEM1024, FIPS_UNAPPROVED_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
 #endif
 #if !defined(OPENSSL_NO_EC)
+    { PROV_NAMES_SecP256r1MLKEM512, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
     { PROV_NAMES_SecP256r1MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
     { PROV_NAMES_SecP384r1MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
 #endif
@@ -655,12 +657,16 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_1024_keymgmt_functions,
         PROV_DESCS_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
+    { PROV_NAMES_MLKEM512X25519, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x25519_512_kem_kmgmt_functions,
+        PROV_DESCS_MLKEM512X25519 },
     { PROV_NAMES_X25519MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x25519_kem_kmgmt_functions,
         PROV_DESCS_X25519MLKEM768 },
-    { PROV_NAMES_X448MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x448_kem_kmgmt_functions,
+    { PROV_NAMES_X448MLKEM1024, FIPS_UNAPPROVED_PROPERTIES, ossl_mlx_x448_kem_kmgmt_functions,
         PROV_DESCS_X448MLKEM1024 },
 #endif
 #if !defined(OPENSSL_NO_EC)
+    { PROV_NAMES_SecP256r1MLKEM512, FIPS_DEFAULT_PROPERTIES, ossl_mlx_p256_512_kem_kmgmt_functions,
+        PROV_DESCS_SecP256r1MLKEM512 },
     { PROV_NAMES_SecP256r1MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_p256_kem_kmgmt_functions,
         PROV_DESCS_SecP256r1MLKEM768 },
     { PROV_NAMES_SecP384r1MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_p384_kem_kmgmt_functions,
@@ -1189,6 +1195,17 @@ void *CRYPTO_aligned_alloc(size_t num, size_t align, void **freeptr,
 {
     return ossl_malloc_align(num, align, freeptr, file, line);
 }
+
+/*
+ * The public BIO_snprintf() prototype is hidden when the public headers
+ * are built with OPENSSL_NO_DEPRECATED_4_1, but the FIPS module still
+ * defines and exports the symbol for callers compiled into the module.
+ * Provide a local prototype in that configuration so the definition is
+ * well-formed.
+ */
+#ifdef OPENSSL_NO_DEPRECATED_4_1
+int BIO_snprintf(char *buf, size_t n, const char *format, ...);
+#endif
 
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 {

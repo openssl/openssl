@@ -15,6 +15,7 @@
 #include "internal/quic_record_tx.h"
 #include "internal/quic_wire.h"
 #include "internal/quic_predef.h"
+#include "internal/quic_demux.h"
 #include "internal/qlog.h"
 #include "internal/time.h"
 #include "internal/thread.h"
@@ -330,8 +331,8 @@ OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch);
 /* Gets the TLS handshake layer used with the channel. */
 SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch);
 
-/* Sets the TLS handshake layer used for the channel */
-void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl);
+/* Attaches the TLS layer to a deferred channel. */
+int ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl);
 
 /* Gets the channels short header connection id length */
 size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch);

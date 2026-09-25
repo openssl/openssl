@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -583,6 +583,7 @@ static int encoder_process(struct encoder_process_data_st *data)
         data->prev_encoder_inst = new_data.prev_encoder_inst;
         data->running_output = new_data.running_output;
         data->running_output_length = new_data.running_output_length;
+        data->data_type = new_data.data_type;
 
         /*
          * ok == -1     means that the recursion call above gave no further

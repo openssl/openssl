@@ -427,6 +427,52 @@ err:
     return ret;
 }
 
+/*
+ * Regression test for reading multiple ASN1_INTEGERs written
+ * into a memory BIO. ASN1_item_d2i_bio() must consume exactly the
+ * bytes belonging to each object, since ASN.1 integer uses only 3 bytes.
+ */
+static int test_d2i_bio_concatenated_integers(void)
+{
+    ASN1_INTEGER *int0 = NULL, *int1 = NULL, *int2 = NULL;
+    BIO *writer = NULL, *reader = NULL;
+    char *buf;
+    long len;
+    int ret = 0;
+
+    if (!TEST_ptr(int0 = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(int0, 1)))
+        goto err;
+
+    if (!TEST_ptr(writer = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(ASN1_item_i2d_bio(ASN1_INTEGER_it(), writer, int0), 1)
+        || !TEST_int_eq(ASN1_item_i2d_bio(ASN1_INTEGER_it(), writer, int0), 1))
+        goto err;
+
+    if (!TEST_int_gt(len = BIO_get_mem_data(writer, &buf), 0)
+        || !TEST_ptr(reader = BIO_new_mem_buf(buf, len)))
+        goto err;
+
+    if (!TEST_ptr(int1 = (ASN1_INTEGER *)ASN1_item_d2i_bio(ASN1_INTEGER_it(),
+                      reader, NULL))
+        || !TEST_int_eq(ASN1_INTEGER_cmp(int0, int1), 0))
+        goto err;
+
+    if (!TEST_ptr(int2 = (ASN1_INTEGER *)ASN1_item_d2i_bio(ASN1_INTEGER_it(),
+                      reader, NULL))
+        || !TEST_int_eq(ASN1_INTEGER_cmp(int0, int2), 0))
+        goto err;
+
+    ret = 1;
+err:
+    ASN1_INTEGER_free(int0);
+    ASN1_INTEGER_free(int1);
+    ASN1_INTEGER_free(int2);
+    BIO_free(reader);
+    BIO_free(writer);
+    return ret;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -444,5 +490,6 @@ int setup_tests(void)
     ADD_TEST(test_d2i_read_bio_truncated);
     ADD_TEST(test_d2i_read_bio_indefinite_truncated);
     ADD_TEST(test_d2i_read_bio_partial_header);
+    ADD_TEST(test_d2i_bio_concatenated_integers);
     return 1;
 }

@@ -280,14 +280,17 @@ static int ml_dsa_sign_msg_final(void *vctx, unsigned char *sig,
                 return 0;
         }
 
-        if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu)))
+        if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu))) {
+            OPENSSL_cleanse(mu, sizeof(mu));
             return 0;
+        }
     }
 
     ret = ossl_ml_dsa_sign(ctx->key, 1, mu, sizeof(mu), NULL, 0, rnd,
         sizeof(rand_tmp), 0, sig, siglen, sigsize);
     if (rnd != ctx->test_entropy)
         OPENSSL_cleanse(rand_tmp, sizeof(rand_tmp));
+    OPENSSL_cleanse(mu, sizeof(mu));
     return ret;
 }
 
@@ -338,6 +341,7 @@ static int ml_dsa_verify_msg_final(void *vctx)
 {
     PROV_ML_DSA_CTX *ctx = (PROV_ML_DSA_CTX *)vctx;
     uint8_t mu[ML_DSA_MU_BYTES];
+    int ret = 0;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -345,11 +349,12 @@ static int ml_dsa_verify_msg_final(void *vctx)
     if (ctx->md_ctx == NULL)
         return 0;
 
-    if (!ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu)))
-        return 0;
+    if (ossl_ml_dsa_mu_finalize(ctx->md_ctx, mu, sizeof(mu)))
+        ret = ossl_ml_dsa_verify(ctx->key, 1, mu, sizeof(mu), NULL, 0, 0,
+            ctx->sig, ctx->siglen);
 
-    return ossl_ml_dsa_verify(ctx->key, 1, mu, sizeof(mu), NULL, 0, 0,
-        ctx->sig, ctx->siglen);
+    OPENSSL_cleanse(mu, sizeof(mu));
+    return ret;
 }
 
 static int ml_dsa_verify(void *vctx, const uint8_t *sig, size_t siglen,

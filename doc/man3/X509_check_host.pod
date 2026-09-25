@@ -24,13 +24,14 @@ The validity of the certificate and its trust level has to be checked by
 other means.
 
 X509_check_host() checks if the certificate Subject Alternative
-Name (SAN) or Subject CommonName (CN) matches the specified hostname,
-which must be encoded in the preferred name syntax described
-in section 3.5 of RFC 1034.  By default, wildcards are supported
+Name (SAN) matches the specified hostname, and, when
+B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> is set, the Subject CommonName
+(CN) as well.  The hostname must be encoded in the preferred name syntax
+described in section 3.5 of RFC 1034.  By default, wildcards are supported
 and they match  only in the left-most label; but they may match
 part of that label with an explicit prefix or suffix.  For example,
 by default, the host B<name> "www.example.com" would match a
-certificate with a SAN or CN value of "*.example.com", "w*.example.com"
+certificate with a SAN value of "*.example.com", "w*.example.com"
 or "*w.example.com".
 
 Per section 6.4.2 of RFC 6125, B<name> values representing international
@@ -87,20 +88,19 @@ flags:
 
 =back
 
-The B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag causes the function
-to consider the subject DN even if the certificate contains at least
-one subject alternative name of the right type (DNS name or email
-address as appropriate); the default is to ignore the subject DN
-when at least one corresponding subject alternative names is present.
+By default the subject distinguished name is not consulted; matching is
+performed only against the subject alternative name extension.
 
-The B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> flag causes the function to never
-consider the subject DN even if the certificate contains no subject alternative
-names of the right type (DNS name or email address as appropriate); the default
-is to use the subject DN when no corresponding subject alternative names are
-present.
-If both B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> and
-B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> are specified, the latter takes
-precedence and the subject DN is not checked for matching names.
+The B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag causes the function to
+also match against the subject DN (the B<commonName> attribute for DNS
+names, the B<emailAddress> attribute for email addresses), whether or not
+the certificate contains a subject alternative name of the corresponding
+type.
+
+The B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> flag suppresses matching against
+the subject DN. As that is already the default, this flag has an effect
+only in combination with B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT>, over
+which it takes precedence.
 
 If set, B<X509_CHECK_FLAG_NO_WILDCARDS> disables wildcard
 expansion; this only applies to B<X509_check_host>.

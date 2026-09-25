@@ -279,8 +279,16 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *sess = ssl_session_dup_intern(src, ticket);
 
-    if (sess != NULL)
+    if (sess != NULL) {
         sess->not_resumable = 0;
+        /*
+         * A duplicated session can land in the stateful session cache, and is
+         * not necessarily a live session just built for an external PSK.  The
+         * caller must explicitly set this field non-zero after duplication as
+         * needed.
+         */
+        sess->psk_external = 0;
+    }
 
     return sess;
 }
@@ -358,6 +366,7 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     case DTLS1_BAD_VER:
     case DTLS1_VERSION:
     case DTLS1_2_VERSION:
+    case DTLS1_3_VERSION:
         ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         break;
     default:
@@ -386,8 +395,10 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     }
 
     /* Choose which callback will set the session ID */
-    if (!CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_SSL(s)->lock))
+    if (!CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_SSL(s)->lock)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
     if (!CRYPTO_THREAD_read_lock(s->session_ctx->lock)) {
         CRYPTO_THREAD_unlock(ssl->lock);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -452,7 +463,7 @@ int ssl_get_new_session(SSL_CONNECTION *s, int session)
     s->session = NULL;
 
     if (session) {
-        if (SSL_CONNECTION_IS_TLS13(s)) {
+        if (SSL_CONNECTION_IS_VERSION13(s)) {
             /*
              * We generate the session id while constructing the
              * NewSessionTicket in TLSv1.3.
@@ -589,7 +600,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
     int try_session_cache = 0;
     SSL_TICKET_STATUS r;
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         SSL_SESSION_free(s->session);
         s->session = NULL;
         /*
@@ -648,7 +659,13 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err; /* treat like cache miss */
     }
 
-    if ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
+    /*
+     * sid_ctx exists to keep multiple services that happen to share one
+     * session cache from resuming each other's sessions.  This check is not
+     * relevant to external PSK sessions that are not restored from a cache.
+     */
+    if (!ret->psk_external
+        && (s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
         /*
          * We can't be sure if this session is being used out of context,
          * which is especially important for SSL_VERIFY_PEER. The application
@@ -687,8 +704,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    if (!SSL_CONNECTION_IS_TLS13(s)) {
-        /* We already did this for TLS1.3 */
+    if (!SSL_CONNECTION_IS_VERSION13(s)) {
+        /* We already did this for (D)TLS1.3 */
         SSL_SESSION_free(s->session);
         s->session = ret;
     }
@@ -712,7 +729,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
      * Refusing resumption and falling back to a full handshake is the correct
      * response.
      */
-    if (!SSL_CONNECTION_IS_TLS13(s) && hello->session_id_len > 0
+    if (!SSL_CONNECTION_IS_VERSION13(s) && hello->session_id_len > 0
         && (s->session->session_id_length != hello->session_id_len
             || memcmp(s->session->session_id, hello->session_id,
                    hello->session_id_len)
@@ -726,8 +743,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
 err:
     if (ret != NULL) {
         SSL_SESSION_free(ret);
-        /* In TLSv1.3 s->session was already set to ret, so we NULL it out */
-        if (SSL_CONNECTION_IS_TLS13(s))
+        /* In (D)TLSv1.3 s->session was already set to ret, so we NULL it out */
+        if (SSL_CONNECTION_IS_VERSION13(s))
             s->session = NULL;
 
         if (!try_session_cache) {
@@ -932,7 +949,7 @@ int SSL_SESSION_up_ref(SSL_SESSION *ss)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&ss->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&ss->references, &i))
         return 0;
 
     REF_PRINT_COUNT("SSL_SESSION", i, ss);

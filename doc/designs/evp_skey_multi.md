@@ -27,7 +27,7 @@ As all the objects are derived in one transaction, we can store a single opaque
 pointer keeping all the keys inside in the EVP_KDF_CTX object, and provide the
 API for access to a particular object.
 
-To derive the opaque keys and and bytes buffers, we use the function
+To derive the opaque keys and bytes buffers, we use the function
 
 ```C
 int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,

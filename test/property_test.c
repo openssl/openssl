@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -157,6 +157,13 @@ static const struct {
     { "groan=blue", "?groan=yellow", 0 },
     { "groan=blue", "groan!=yellow", 1 },
     { "groan=blue", "?groan!=yellow", 1 },
+    { "sky='BLUE'", "sky='BLUE'", 1 },
+    { "sky=BLUE", "sky=blue", 1 },
+    { "sky='BLUE'", "sky=BLUE", -1 },
+    { "sky=BlUe", "sky=BLUE", 1 },
+    { "sky='BlUe'", "sky='BLUE'", -1 },
+    { "sky=\"BLUE\"", "sky=\"BLUE\"", 1 },
+    { "sky=BLUE", "sky=\"BLUE\"", -1 },
     { "today=monday, tomorrow=3", "today!=2", 1 },
     { "today=monday, tomorrow=3", "today!='monday'", -1 },
     { "today=monday, tomorrow=3", "tomorrow=3", 1 },
@@ -615,7 +622,7 @@ static int test_query_cache_stochastic(void)
 
     for (i = 1; i <= max; i++) {
         v[i] = 2 * i;
-        BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
+        snprintf(buf, sizeof(buf), "n=%d\n", i);
         if (!TEST_true(ossl_method_store_add(store, &prov, i, buf, "abc",
                 &up_ref, &down_ref))
             || !TEST_true(ossl_method_store_cache_set(store, &prov, i,
@@ -629,7 +636,7 @@ static int test_query_cache_stochastic(void)
         }
     }
     for (i = 1; i <= max; i++) {
-        BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
+        snprintf(buf, sizeof(buf), "n=%d\n", i);
         if (!ossl_method_store_cache_get(store, NULL, i, buf, &result)
             || result != v + i)
             errors++;

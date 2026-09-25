@@ -33,7 +33,7 @@ typedef struct tls_group_constants_st {
     int maxtls; /* Maximum TLS version (or 0 for undefined) */
     int mindtls; /* Minimum DTLS version, -1 unsupported */
     int maxdtls; /* Maximum DTLS version (or 0 for undefined) */
-    int is_kem; /* Indicates utility as KEM */
+    unsigned int is_kem; /* Indicates utility as KEM */
 } TLS_GROUP_CONSTANTS;
 
 /*
@@ -78,22 +78,24 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
     /* 27 */ { OSSL_TLS_GROUP_ID_brainpoolP512r1, 256, TLS1_VERSION, TLS1_2_VERSION, DTLS1_VERSION, DTLS1_2_VERSION, 0 },
     /* 28 */ { OSSL_TLS_GROUP_ID_x25519, 128, TLS1_VERSION, 0, DTLS1_VERSION, 0, 0 },
     /* 29 */ { OSSL_TLS_GROUP_ID_x448, 224, TLS1_VERSION, 0, DTLS1_VERSION, 0, 0 },
-    /* 30 */ { OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 31 */ { OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13, 192, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 32 */ { OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13, 256, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 33 */ { OSSL_TLS_GROUP_ID_ffdhe2048, 112, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 34 */ { OSSL_TLS_GROUP_ID_ffdhe3072, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 35 */ { OSSL_TLS_GROUP_ID_ffdhe4096, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 36 */ { OSSL_TLS_GROUP_ID_ffdhe6144, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 37 */ { OSSL_TLS_GROUP_ID_ffdhe8192, 192, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 38 */ { OSSL_TLS_GROUP_ID_mlkem512, ML_KEM_512_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
-    /* 39 */ { OSSL_TLS_GROUP_ID_mlkem768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
-    /* 40 */ { OSSL_TLS_GROUP_ID_mlkem1024, ML_KEM_1024_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
-    /* 41 */ { OSSL_TLS_GROUP_ID_X25519MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
-    /* 42 */ { OSSL_TLS_GROUP_ID_SecP256r1MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
-    /* 43 */ { OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024, ML_KEM_1024_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
-    /* 44 */ { OSSL_TLS_GROUP_ID_curveSM2, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
-    /* 45 */ { OSSL_TLS_GROUP_ID_curveSM2MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
+    /* 30 */ { OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 31 */ { OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 32 */ { OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 33 */ { OSSL_TLS_GROUP_ID_ffdhe2048, 112, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 34 */ { OSSL_TLS_GROUP_ID_ffdhe3072, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 35 */ { OSSL_TLS_GROUP_ID_ffdhe4096, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 36 */ { OSSL_TLS_GROUP_ID_ffdhe6144, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 37 */ { OSSL_TLS_GROUP_ID_ffdhe8192, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 38 */ { OSSL_TLS_GROUP_ID_mlkem512, ML_KEM_512_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 39 */ { OSSL_TLS_GROUP_ID_mlkem768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 40 */ { OSSL_TLS_GROUP_ID_mlkem1024, ML_KEM_1024_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 41 */ { OSSL_TLS_GROUP_ID_X25519MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 42 */ { OSSL_TLS_GROUP_ID_SecP256r1MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 43 */ { OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024, ML_KEM_1024_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 44 */ { OSSL_TLS_GROUP_ID_curveSM2, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
+    /* 45 */ { OSSL_TLS_GROUP_ID_curveSM2MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 46 */ { OSSL_TLS_GROUP_ID_MLKEM512X25519, ML_KEM_512_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 47 */ { OSSL_TLS_GROUP_ID_SecP256r1MLKEM512, ML_KEM_512_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
 };
 
 #define TLS_GROUP_ENTRY(tlsname, realname, algorithm, idx)              \
@@ -112,14 +114,14 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
         OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,        \
             (unsigned int *)&group_list[idx].secbits),                  \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_TLS,               \
-            (unsigned int *)&group_list[idx].mintls),                   \
+            (int *)&group_list[idx].mintls),                            \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS,               \
-            (unsigned int *)&group_list[idx].maxtls),                   \
+            (int *)&group_list[idx].maxtls),                            \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS,              \
-            (unsigned int *)&group_list[idx].mindtls),                  \
+            (int *)&group_list[idx].mindtls),                           \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS,              \
-            (unsigned int *)&group_list[idx].maxdtls),                  \
-        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_IS_KEM,                \
+            (int *)&group_list[idx].maxdtls),                           \
+        OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_IS_KEM,               \
             (unsigned int *)&group_list[idx].is_kem),                   \
         OSSL_PARAM_END                                                  \
     }
@@ -157,6 +159,7 @@ static const OSSL_PARAM param_group_list[][11] = {
 #ifndef OPENSSL_NO_EC
 #if !defined(OPENSSL_NO_ML_KEM)
 #if !defined(OPENSSL_NO_ECX)
+    TLS_GROUP_ENTRY("MLKEM512X25519", "", "MLKEM512X25519", 46),
     TLS_GROUP_ENTRY("X25519MLKEM768", "", "X25519MLKEM768", 41),
 #endif
 #endif
@@ -198,6 +201,7 @@ static const OSSL_PARAM param_group_list[][11] = {
 #endif
 #endif
 #ifndef OPENSSL_NO_ML_KEM
+    TLS_GROUP_ENTRY("SecP256r1MLKEM512", "", "SecP256r1MLKEM512", 47),
     TLS_GROUP_ENTRY("SecP256r1MLKEM768", "", "SecP256r1MLKEM768", 42),
     TLS_GROUP_ENTRY("SecP384r1MLKEM1024", "", "SecP384r1MLKEM1024", 43),
 #endif
@@ -294,22 +298,22 @@ typedef struct tls_sigalg_constants_st {
 } TLS_SIGALG_CONSTANTS;
 
 static const TLS_SIGALG_CONSTANTS sigalg_constants_list[] = {
-    { TLSEXT_SIGALG_mldsa44, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_mldsa65, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_mldsa87, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_128s, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_128f, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_192s, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_192f, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_256s, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_sha2_256f, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_128s, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_128f, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_192s, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_192f, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_256s, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_slhdsa_shake_256f, 256, TLS1_3_VERSION, 0, -1, -1 },
-    { TLSEXT_SIGALG_sm2sig_sm3, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_mldsa44, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_mldsa65, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_mldsa87, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_128s, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_128f, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_192s, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_192f, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_256s, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_sha2_256f, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_128s, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_128f, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_192s, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_192f, 192, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_256s, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_slhdsa_shake_256f, 256, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
+    { TLSEXT_SIGALG_sm2sig_sm3, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0 },
 };
 
 #define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)               \
@@ -325,13 +329,13 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[] = {
         OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,    \
             (unsigned int *)&sigalg_constants_list[idx].sec_bits),   \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS,           \
-            (unsigned int *)&sigalg_constants_list[idx].min_tls),    \
+            (int *)&sigalg_constants_list[idx].min_tls),             \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,           \
-            (unsigned int *)&sigalg_constants_list[idx].max_tls),    \
+            (int *)&sigalg_constants_list[idx].max_tls),             \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,          \
-            (unsigned int *)&sigalg_constants_list[idx].min_dtls),   \
+            (int *)&sigalg_constants_list[idx].min_dtls),            \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,          \
-            (unsigned int *)&sigalg_constants_list[idx].max_dtls),   \
+            (int *)&sigalg_constants_list[idx].max_dtls),            \
         OSSL_PARAM_END                                               \
     }
 

@@ -8,7 +8,7 @@ ossl_list_TYPE_is_empty, ossl_list_TYPE_num,
 ossl_list_TYPE_head, ossl_list_TYPE_tail,
 ossl_list_TYPE_next, ossl_list_TYPE_prev,
 ossl_list_TYPE_remove, ossl_list_TYPE_insert_head, ossl_list_TYPE_insert_tail,
-ossl_list_TYPE_insert_before, ossl_list_TYPE_after
+ossl_list_TYPE_insert_before, ossl_list_TYPE_after, ossl_list_TYPE_join
 - doubly linked list
 
 =head1 SYNOPSIS
@@ -38,6 +38,7 @@ ossl_list_TYPE_insert_before, ossl_list_TYPE_after
  void ossl_list_TYPE_insert_before(OSSL_LIST(name) *list, type *existing,
                                    type *elem);
  void ossl_list_TYPE_insert_after(OSSL_LIST(name) *list, type *existing, type *elem);
+ void ossl_list_TYPE_join(OSSL_LIST(name) *lh, OSSL_LIST(name) *lt);
 
 =head1 DESCRIPTION
 
@@ -90,6 +91,10 @@ B<ossl_list_I<TYPE>_insert_after>() inserts the element I<elem>,
 which must not be in the list, into the I<list> immediately after the
 I<existing> element.
 
+B<ossl_list_I<TYPE>_join<()> joins list B<lt> with list B<lh>.
+List B<lt> is appended to list B<lh>. The list B<lt> becomes empty,
+as all its members are part of B<lh> after the function returns.
+
 =head1 RETURN VALUES
 
 B<ossl_list_I<TYPE>_is_empty>() returns nonzero if the list is empty and zero
@@ -124,11 +129,13 @@ the specified element in the list.
 
 =head1 HISTORY
 
-The functions described here were all added in OpenSSL 3.2.
+ossl_list_TYPE_join() was added in OpenSSL 4.1, 4.0.2, 3.6.4, 3.5.8, and 3.4.7.
+
+The rest of the functions described here was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

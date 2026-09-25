@@ -39,8 +39,7 @@ static int evp_keymgmt_up_ref(void *data)
     EVP_KEYMGMT *keymgmt = (EVP_KEYMGMT *)data;
     int ref = 0;
 
-    CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
 }
 
 static void *keymgmt_new(void)

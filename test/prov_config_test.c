@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <openssl/evp.h>
 #include <openssl/conf.h>
+#include "crypto/dso_conf.h"
 #include "testutil.h"
 
 static char *configfile = NULL;
@@ -67,7 +68,7 @@ err:
     return testresult;
 }
 
-#define P_TEST_PATH "/../test/p_test.so"
+#define P_TEST_PATH "/../test/p_test" DSO_EXTENSION
 static int test_path_config(void)
 {
     OSSL_LIB_CTX *ctx = NULL;

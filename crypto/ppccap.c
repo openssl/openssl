@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2009-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -160,11 +160,16 @@ void OPENSSL_cpuid_setup(void)
 
     if (sizeof(size_t) == 4) {
         struct utsname uts;
+        long major;
+        char *end;
 #if defined(_SC_AIX_KERNEL_BITMODE)
         if (sysconf(_SC_AIX_KERNEL_BITMODE) != 64)
             return;
 #endif
-        if (uname(&uts) != 0 || atoi(uts.version) < 6)
+        if (uname(&uts) != 0
+            || !ossl_strtol(uts.version, &end, 10, &major)
+            || (*end != '\0' && *end != '.')
+            || major < 6)
             return;
     }
 

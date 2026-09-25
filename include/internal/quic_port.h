@@ -95,6 +95,9 @@ QUIC_CHANNEL *ossl_quic_port_create_incoming(QUIC_PORT *port, SSL *tls);
  */
 QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port);
 
+/* Returns the first incoming channel without removing it, or NULL. */
+QUIC_CHANNEL *ossl_quic_port_peek_incoming(QUIC_PORT *port);
+
 /* Returns 1 if there is at least one connection incoming. */
 int ossl_quic_port_have_incoming(QUIC_PORT *port);
 
@@ -240,6 +243,10 @@ uint64_t ossl_quic_port_get_net_bio_epoch(const QUIC_PORT *port);
  */
 void ossl_quic_port_raise_net_error(QUIC_PORT *port,
     QUIC_CHANNEL *triggering_ch);
+
+uint64_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port);
+
+void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, uint64_t max_pending_channels);
 
 #endif
 

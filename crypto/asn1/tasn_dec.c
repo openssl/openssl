@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -983,7 +983,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, long len,
             ASN1_STRING_set0(stmp, (unsigned char *)cont /* UGLY CAST! */, ilen);
             *free_cont = 0;
         } else {
-            if (!ASN1_STRING_set(stmp, cont, ilen)) {
+            if (!ossl_asn1_string_set1_data(stmp, cont, len)) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
                 ASN1_STRING_free(stmp);
                 *pval = NULL;

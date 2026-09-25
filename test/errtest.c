@@ -83,11 +83,11 @@ static int test_print_error_format(void)
     reason = strerror(syserr);
 #else
     lib = "lib(2)";
-    BIO_snprintf(reasonbuf, sizeof(reasonbuf), "reason(%lu)", reasoncode);
+    snprintf(reasonbuf, sizeof(reasonbuf), "reason(%lu)", reasoncode);
     reason = reasonbuf;
 #endif
 
-    BIO_snprintf(expected, sizeof(expected), expected_format,
+    snprintf(expected, sizeof(expected), expected_format,
         errorcode, lib, func, reason, file, line);
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))

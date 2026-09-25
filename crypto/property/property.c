@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -72,7 +72,7 @@ typedef struct {
 } ALGORITHM;
 
 typedef struct {
-    SPARSE_ARRAY_OF(ALGORITHM) * algs;
+    SPARSE_ARRAY_OF(ALGORITHM) *algs;
 
     QUERY *cache_lists[MAX_CACHE_LINES];
     QUERY *archive;

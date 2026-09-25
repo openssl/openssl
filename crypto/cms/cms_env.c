@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,8 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
 #include "crypto/asn1.h"
@@ -278,11 +280,16 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
     CMS_ContentInfo *ci;
     BIO *bio = NULL;
     int res = 0;
+    size_t secret_len = 0;
 
     if (env == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
+
+    if (secret != NULL
+        && (secret_len = ASN1_STRING_get_length(secret)) > INT_MAX)
+        return NULL;
 
     if ((ci = CMS_ContentInfo_new_ex(libctx, propq)) == NULL
         || (bio = BIO_new(BIO_s_mem())) == NULL)
@@ -291,7 +298,7 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
     ci->d.envelopedData = env;
     if (secret != NULL
         && CMS_decrypt_set1_password(ci, (unsigned char *)ASN1_STRING_get0_data(secret),
-               ASN1_STRING_length(secret))
+               (int)secret_len)
             != 1)
         goto end;
     res = CMS_decrypt(ci, secret == NULL ? pkey : NULL,
@@ -586,6 +593,35 @@ err:
 
 /* Decrypt content key from KTRI */
 
+/* Check whether reporting a key length mismatch cannot act as an MMA oracle */
+static int cms_ktri_harderr_ok(EVP_PKEY_CTX *pctx, EVP_PKEY *pkey)
+{
+    int pad_mode;
+    unsigned int implicit_rejection = 0;
+    OSSL_PARAM params[2];
+
+    if (!EVP_PKEY_is_a(pkey, "RSA")
+        || EVP_PKEY_CTX_get_rsa_padding(pctx, &pad_mode) <= 0)
+        return 0;
+
+    /* An RSA-OAEP decryption failure is safe to reveal */
+    if (pad_mode == RSA_PKCS1_OAEP_PADDING)
+        return 1;
+    if (pad_mode != RSA_PKCS1_PADDING)
+        return 0;
+
+    /* For PKCS#1 v1.5 it is only safe with implicit rejection in effect */
+    params[0] = OSSL_PARAM_construct_uint(
+        OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION,
+        &implicit_rejection);
+    params[1] = OSSL_PARAM_construct_end();
+    if (EVP_PKEY_CTX_get_params(pctx, params) <= 0
+        || !OSSL_PARAM_modified(&params[0]))
+        return 0;
+
+    return implicit_rejection != 0;
+}
+
 static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     CMS_RecipientInfo *ri)
 {
@@ -643,6 +679,17 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
     if (!ossl_cms_env_asn1_ctrl(ri, 1))
         goto err;
+
+    /*
+     * Check whether a decryption failure or a key length mismatch can be
+     * reported without MMA risk.  This must be determined before the
+     * decryption is attempted so a failure of the decryption itself (only
+     * possible for a publicly invalid ciphertext when implicit rejection
+     * is in effect, or a padding check failure with RSA-OAEP) is reported
+     * as well.
+     */
+    if (!ec->havenocert && !ec->debug)
+        ec->harderr = cms_ktri_harderr_ok(ktri->pctx, pkey);
 
     if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, fixlen,
             ktri->encryptedKey->data,
@@ -953,6 +1000,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
     CMS_EncryptedContentInfo *ec;
     CMS_KEKRecipientInfo *kekri;
     unsigned char *ukey = NULL;
+    size_t ukey_alloc_len = 0;
     int ukeylen;
     int r = 0, wrap_nid;
     EVP_CIPHER *cipher = NULL;
@@ -990,7 +1038,8 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
         goto err;
     }
 
-    ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
+    ukey_alloc_len = (size_t)kekri->encryptedKey->length - 8;
+    ukey = OPENSSL_malloc(ukey_alloc_len);
     if (ukey == NULL)
         goto err;
 
@@ -1019,7 +1068,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 err:
     EVP_CIPHER_free(cipher);
     if (!r)
-        OPENSSL_free(ukey);
+        OPENSSL_clear_free(ukey, ukey_alloc_len);
     EVP_CIPHER_CTX_free(ctx);
 
     return r;

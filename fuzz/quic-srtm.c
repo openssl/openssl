@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 continue; /* just stop */
 
             if (ossl_quic_srtm_remove(srtm, (void *)(uintptr_t)arg_opaque,
-                    arg_seq_num))
+                    arg_seq_num, NULL))
                 ossl_quic_srtm_check(srtm);
             break;
 

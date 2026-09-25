@@ -23,7 +23,8 @@ $VERSION = "1.0";
                                          srctop_dir srctop_file
                                          data_file data_dir
                                          result_file result_dir
-                                         pipe with cmdstr
+                                         pipe with cmdstr app_fails
+                                         slurp_file
                                          openssl_versions
                                          ok_nofips is_nofips isnt_nofips));
 
@@ -333,7 +334,7 @@ sub app {
             $idx=$idx+1;
             my $resultdir = result_dir();
             my $srcdir = srctop_dir();
-            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
+            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx.%p", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
                        exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
         } else {
             return cmd([ @prog, @cmdargs ],
@@ -363,7 +364,7 @@ sub test {
            $idx=$idx+1;
            my $resultdir = result_dir();
            my $srcdir = srctop_dir();
-           return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
+           return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx.%p", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
                    exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
         } elsif (defined $ENV{OSSL_VALGRIND_CT}) {
            # Constant-time validation mode: mark secret data as undefined and
@@ -510,6 +511,10 @@ sub run {
     local $_;
 
     open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
+    # Read line by line, even if a recipe played with $/ (slurp or
+    # paragraph mode).  Otherwise, a bare prefix (or only the first
+    # line of a multi-line read) would hit the TAP stream unguarded.
+    local $/ = "\n";
     while(<$pipe>) {
         my $l = ($opts{prefix} // $default_prefix) . $_;
         if ($opts{capture}) {
@@ -829,6 +834,72 @@ sub with {
     foreach (keys %saved_hooks) {
         $hooks{$_} = $saved_hooks{$_};
     }
+}
+
+=over 4
+
+=item B<slurp_file FILENAME, OPTS>
+
+C<slurp_file> reads back the whole file FILENAME, usually an output
+captured with the C<stdout> or C<stderr> option of C<cmd> and its
+derivatives, and returns its content as a single string.  If the file
+cannot be opened, an empty string is returned.
+
+The following options OPTS are available:
+
+=over 4
+
+=item B<binary =E<gt> 0|1>
+
+When set to 1, the file is read in binary mode, for example to read
+back a DER encoded output.  The default is 0, reading in text mode.
+
+=back
+
+=back
+
+=cut
+
+sub slurp_file {
+    my ($file, %opts) = @_;
+    my $content = '';
+
+    if (open(my $fh, '<', $file)) {
+        binmode $fh if $opts{binary};
+        $content = do { local $/; <$fh> };
+        close($fh);
+    }
+    return $content;
+}
+
+=over 4
+
+=item B<app_fails APPNAME, TEST_NAME, REGEXP, LIST>
+
+C<app_fails> runs the C<openssl> sub-command B<APPNAME> with the command
+line arguments in LIST, expecting a non-zero (failure) exit status, as a
+test named B<TEST_NAME>.  If REGEXP is defined, it additionally checks, as
+a second test, that the stderr output of the command matches it.
+
+=back
+
+=cut
+
+sub app_fails {
+    my ($appname, $testtext, $re, @args) = @_;
+
+    my $stderr_file = "app_fails_stderr.txt";
+
+    with({ exit_checker => sub { return shift != 0; } },
+        sub {
+            ok(run(app(['openssl', $appname, @args], stderr => $stderr_file)),
+               $testtext);
+        });
+
+    if (defined $re) {
+        ok(slurp_file($stderr_file) =~ $re, "$testtext: stderr matches");
+    }
+    unlink($stderr_file) if -f $stderr_file;
 }
 
 =over 4
@@ -1325,11 +1396,13 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    # VMS program output escapes TAP::Parser
-    if ($^O eq 'VMS') {
-        $stderr=" 2> ".$null
-            unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
-    }
+    # Under a non-verbose harness nothing drains the command's stderr, so a
+    # chatty command can fill the pipe buffer and then block forever waiting
+    # for a reader that never comes.  Send it to the null device unless the
+    # recipe asked for a specific redirection.  On VMS this also keeps
+    # program output from escaping TAP::Parser.
+    $stderr=" 2> ".$null
+        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
     $cmdstr .= "$stdin$stdout$stderr";
 

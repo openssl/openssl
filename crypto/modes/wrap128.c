@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -288,7 +288,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
         padded_len = inlen - 8;
         ret = crypto_128_unwrap_raw(key, aiv, out, in, inlen, block);
         if (padded_len != ret) {
-            OPENSSL_cleanse(out, inlen);
+            OPENSSL_cleanse(out, padded_len);
             return 0;
         }
     }
@@ -300,7 +300,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
      */
     if ((!icv && CRYPTO_memcmp(aiv, default_aiv, 4))
         || (icv && CRYPTO_memcmp(aiv, icv, 4))) {
-        OPENSSL_cleanse(out, inlen);
+        OPENSSL_cleanse(out, padded_len);
         return 0;
     }
 
@@ -314,7 +314,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
         | ((unsigned int)aiv[6] << 8)
         | (unsigned int)aiv[7];
     if (8 * (n - 1) >= ptext_len || ptext_len > 8 * n) {
-        OPENSSL_cleanse(out, inlen);
+        OPENSSL_cleanse(out, padded_len);
         return 0;
     }
 
@@ -324,7 +324,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
      */
     padding_len = padded_len - ptext_len;
     if (CRYPTO_memcmp(out + ptext_len, zeros, padding_len) != 0) {
-        OPENSSL_cleanse(out, inlen);
+        OPENSSL_cleanse(out, padded_len);
         return 0;
     }
 

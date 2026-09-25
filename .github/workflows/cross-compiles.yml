@@ -7,7 +7,26 @@
 
 name: Cross Compile
 
-on: [pull_request, push]
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
 
 permissions:
   contents: read
@@ -78,7 +97,7 @@ jobs:
             # with -O2 on this platform, reduce optimization to -01
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
-            target: -static -O1 linux-generic32,
+            target: -static -O1 -mlong-calls linux-generic32,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
@@ -111,6 +130,10 @@ jobs:
             fips: no
           }, {
             arch: riscv64-linux-gnu,
+            # Pin the vector spec version, otherwise qemu-user emits a
+            # "vector version is not specified" warning on stderr at every
+            # process start, which upsets tests that parse or check stderr.
+            qemucpu: "rv64,v=true,vext_spec=v1.0",
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no
@@ -206,8 +229,8 @@ jobs:
 
     - name: Set OpenSSL caps environment
       if: matrix.platform.opensslcapsname != ''
-      run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
-                 ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
+      run: |
+        echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=${{ matrix.platform.opensslcaps }}" >> "$GITHUB_ENV"
 
     - name: get cpu info
       if: matrix.platform.tests != 'none'

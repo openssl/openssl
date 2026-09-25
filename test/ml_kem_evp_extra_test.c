@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -425,6 +425,7 @@ static int test_ml_kem_from_data_propq(void)
 #ifndef OPENSSL_NO_EC
 static const char *mlx_kem_algs[] = {
 #ifndef OPENSSL_NO_ECX
+    "MLKEM512X25519",
     "X25519MLKEM768",
 #endif
     "SecP256r1MLKEM768",

@@ -67,6 +67,10 @@ SOURCE[$LIBFIPS]=$LIBCOMMON
 DEPEND[$LIBLEGACY]=$LIBCOMMON
 DEPEND[$LIBDEFAULT]=$LIBCOMMON
 
+IF[{- $target{needs_c99_snprintf_compat} -}]
+  SOURCE[$LIBFIPS]=../crypto/msvc2013_snprintf.c
+ENDIF
+
 #
 # Default provider stuff
 #

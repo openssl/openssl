@@ -18,6 +18,8 @@ my $target;
 my @extra_includes;
 my $output_file;
 my $mode = 'both';
+my $cc;
+my $use_system = 1;
 my $verbose = 0;
 my $help = 0;
 
@@ -26,9 +28,13 @@ GetOptions('build-info=s' => \$build_info_file,
            'include=s'    => \@extra_includes,
            'output=s'     => \$output_file,
            'mode=s'       => \$mode,
+           'cc=s'         => \$cc,
+           'system!'      => \$use_system,
            'verbose'      => \$verbose,
            'help'         => \$help)
     or die "Error in command line arguments\n";
+
+$cc = $ENV{CC} || 'cc' unless defined $cc;
 
 sub help
 {
@@ -48,6 +54,14 @@ Options:
     --mode MODE        What to emit: 'wraps', 'expects' or 'both'.
                        Defaults to 'both'.
 
+    --cc NAME          C compiler used to discover the default system
+                       include search paths.  Defaults to \$CC or 'cc'.
+
+    --no-system        Do not fall back to the compiler's default system
+                       include directories.  By default, functions not
+                       found in the project headers (typically libc/POSIX
+                       functions) are looked up there.
+
     --verbose          Print progress to stderr.
 
     --help             Show this help text.
@@ -59,6 +73,12 @@ extra --include directories.  The search recurses into subdirectories,
 mirroring how the compiler resolves <subdir/header.h> via -I flags.
 The first header containing a matching declaration provides the
 prototype.
+
+Functions not found in those directories (typically system functions
+such as read() or socket()) are then looked up under the compiler's
+default include search paths, as reported by the C compiler.  System
+prototypes are emitted with angle-bracket #include directives.  Use
+--no-system to disable this fallback.
 
 The output is meant as a stub for further editing.  Custom logic
 (out-parameters, variadic forwarding, side effects on globals) still
@@ -120,18 +140,20 @@ print STDERR "Search dirs:\n  ", join("\n  ", @search_dirs), "\n" if $verbose;
 
 # Walk all search directories and get them in the order that level ones are
 # first followed by subdirs so if there are nested includes, we get the
-# shortest ones first searched.
+# shortest ones first searched.  Each base is a [dir, is_system] pair and the
+# is_system flag is carried onto every header found beneath it, so that system
+# prototypes can later be emitted with angle-bracket includes.
 sub find_headers
 {
     my (@bases) = @_;
     my @found;
-    my @queue = map { [$_, ''] } @bases;
+    my @queue = map { [$_->[0], '', $_->[1]] } @bases;
 
     while (@queue) {
         my @next;
         my @level_files;
         foreach my $entry (@queue) {
-            my ($dir, $rel) = @$entry;
+            my ($dir, $rel, $sys) = @$entry;
             next unless -d $dir;
             opendir(my $dh, $dir) or next;
             foreach my $name (readdir $dh) {
@@ -139,9 +161,9 @@ sub find_headers
                 my $full = catfile($dir, $name);
                 my $newrel = $rel eq '' ? $name : "$rel/$name";
                 if (-d $full) {
-                    push @next, [$full, $newrel];
+                    push @next, [$full, $newrel, $sys];
                 } elsif (-f $full && $name =~ /\.h$/) {
-                    push @level_files, [$full, $newrel];
+                    push @level_files, [$full, $newrel, $sys];
                 }
             }
             closedir $dh;
@@ -153,7 +175,45 @@ sub find_headers
     return @found;
 }
 
-my @search_files = find_headers(@search_dirs);
+# Ask the C compiler for its default "#include <...>" search paths.  Returns
+# the list of existing directories, in search order.  Empty on failure.
+sub system_include_dirs
+{
+    my ($compiler) = @_;
+    my $out = `$compiler -xc -E -v /dev/null 2>&1`;
+    return () unless defined $out
+        && $out =~ /search starts here:(.*?)End of search list\./s;
+    my @dirs;
+    foreach my $line (split /\n/, $1) {
+        $line =~ s/^\s+//;
+        $line =~ s/\s+$//;
+        # clang annotates framework directories; skip those.
+        next if $line eq '' || $line =~ /\(framework directory\)$/;
+        push @dirs, $line if -d $line;
+    }
+    return @dirs;
+}
+
+# Project headers are searched first (with is_system = 0) so that a project
+# declaration always wins over a colliding system one.  The system headers are
+# appended lazily, only if some function is not found in the project headers.
+my @search_files = find_headers(map { [$_, 0] } @search_dirs);
+my $system_loaded = 0;
+
+sub load_system_headers
+{
+    return if $system_loaded;
+    $system_loaded = 1;
+    return unless $use_system;
+    my @sys_dirs = system_include_dirs($cc);
+    unless (@sys_dirs) {
+        warn "WARNING: could not determine system include dirs from '$cc'\n";
+        return;
+    }
+    print STDERR "System include dirs:\n  ", join("\n  ", @sys_dirs), "\n"
+        if $verbose;
+    push @search_files, find_headers(map { [$_, 1] } @sys_dirs);
+}
 
 my %file_cache;
 
@@ -184,12 +244,41 @@ sub strip_attribute_macros
     return $s;
 }
 
+# Consume reserved-namespace decorations between a declaration's closing
+# parenthesis and its semicolon, e.g. glibc's __THROW, __wur or
+# __attr_access ((...)).  Only __-prefixed tokens (with an optional balanced
+# argument list) are eaten, so a genuine following declaration is left alone.
+sub skip_trailing_attributes
+{
+    my $s = shift;
+    while (1) {
+        $s =~ s/^\s+//;
+        last unless $s =~ /^(__\w+)/;
+        $s = substr($s, length($1));
+        $s =~ s/^\s+//;
+        if ($s =~ /^\(/) {
+            my $depth = 0;
+            my $i = 0;
+            while ($i < length($s)) {
+                my $c = substr($s, $i, 1);
+                $depth++ if $c eq '(';
+                $depth-- if $c eq ')';
+                $i++;
+                last if $depth == 0;
+            }
+            return $s if $depth != 0;
+            $s = substr($s, $i);
+        }
+    }
+    return $s;
+}
+
 sub find_function_decl
 {
     my ($funcname) = @_;
 
     foreach my $entry (@search_files) {
-        my ($file, $relpath) = @$entry;
+        my ($file, $relpath, $is_system) = @$entry;
         unless (exists $file_cache{$file}) {
             my $text = '';
             if (open(my $fh, '<', $file)) {
@@ -218,9 +307,10 @@ sub find_function_decl
             my $params_str =
                 substr($text, $paren_start, $cursor - $paren_start - 1);
 
-            # What follows must be ; for this to be a declaration.
+            # What follows must be ; for this to be a declaration, possibly
+            # after trailing attribute macros (__THROW, __wur, ...).
             my $after = substr($text, $cursor);
-            $after =~ s/^\s+//;
+            $after = skip_trailing_attributes($after);
             next unless $after =~ /^;/;
 
             # Anything since the previous statement terminator is the return
@@ -239,7 +329,8 @@ sub find_function_decl
                      rettype      => $rettype,
                      params       => $params_str,
                      file         => $file,
-                     include_path => $include_path };
+                     include_path => $include_path,
+                     system       => $is_system };
         }
     }
     return undef;
@@ -282,6 +373,9 @@ sub parse_param
     return { type => '', name => '', is_variadic => 1, is_ptr => 0 }
         if $param eq '...';
 
+    # Drop the restrict qualifier; it plays no role in a mock signature.
+    $param =~ s/\b(?:__restrict(?:__)?|restrict)\b//g;
+
     # Reduce TYPE NAME[size] to TYPE * NAME for our purposes.
     my $is_array = 0;
     $is_array = 1 if $param =~ s/\[\s*[^\]]*\s*\]\s*$//;
@@ -295,6 +389,10 @@ sub parse_param
         $type = $param;
         $name = '';
     }
+
+    # System headers name parameters in the reserved __ namespace; strip the
+    # leading underscores so the generated wrap uses ordinary local names.
+    $name =~ s/^_+//;
 
     return { type        => $type,
              name        => $name,
@@ -320,6 +418,11 @@ my @found_includes;
 my %seen_include;
 foreach my $func (@wraps) {
     my $info = find_function_decl($func);
+    if (!defined $info && !$system_loaded) {
+        # Not in the project headers: pull in the system ones and retry.
+        load_system_headers();
+        $info = find_function_decl($func);
+    }
     unless (defined $info) {
         warn "WARNING: $func: declaration not found in any include dir\n";
         next;
@@ -340,7 +443,8 @@ foreach my $func (@wraps) {
 
     unless ($seen_include{$info->{include_path}}) {
         $seen_include{$info->{include_path}} = 1;
-        push @found_includes, $info->{include_path};
+        push @found_includes, { path   => $info->{include_path},
+                                system => $info->{system} };
     }
     print STDERR "  found $func in $info->{file}\n" if $verbose;
 }
@@ -369,19 +473,19 @@ EOF
 print $out_fh "#include <cmocka.h>\n";
 print $out_fh "\n";
 if (@found_includes) {
-    my @system;
+    my @angle;
     my @local;
-    foreach my $inc (sort @found_includes) {
-        if ($inc =~ m|^openssl/|) {
-            push @system, $inc;
+    foreach my $inc (sort { $a->{path} cmp $b->{path} } @found_includes) {
+        if ($inc->{system} || $inc->{path} =~ m|^openssl/|) {
+            push @angle, $inc->{path};
         } else {
-            push @local, $inc;
+            push @local, $inc->{path};
         }
     }
-    foreach my $inc (@system) {
+    foreach my $inc (@angle) {
         print $out_fh "#include <$inc>\n";
     }
-    print $out_fh "\n" if @system && @local;
+    print $out_fh "\n" if @angle && @local;
     foreach my $inc (@local) {
         print $out_fh "#include \"$inc\"\n";
     }

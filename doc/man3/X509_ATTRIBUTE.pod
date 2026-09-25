@@ -152,6 +152,9 @@ ASN1_STRING_set_by_NID(), and the passed in I<data> must be in the format
 required for that object type or an error will occur.
 If I<len> is not -1 then internally ASN1_STRING_type_new() is
 used with the passed in I<attrtype>.
+If I<attrtype> is B<V_ASN1_BIT_STRING> and I<len> is not -1, I<data> is
+taken as complete octets of the bit string, so the resulting
+B<ASN1_BIT_STRING> is created with zero unused bits.
 If I<attrtype> is 0 the call does nothing except return 1.
 
 X509_ATTRIBUTE_create() creates a new B<X509_ATTRIBUTE> using the I<nid>

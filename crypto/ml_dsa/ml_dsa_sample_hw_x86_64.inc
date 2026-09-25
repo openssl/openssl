@@ -199,13 +199,20 @@ static int matrix_expand_A_mb(EVP_MD_CTX *g_ctx, const EVP_MD *md,
     POLY *polys[ML_DSA_SHAKE_X4_BATCH_SIZE];
     POLY *poly = out->m_poly;
 
+    /*
+     * The seeds derived below and the sampling buffers in rej_ntt_poly_mb()
+     * are not cleansed: per FIPS 204 section 3.6.3 the matrix A is easily
+     * computed from the public key and does not require any special
+     * protections.
+     */
+
     for (b = 0; b < ML_DSA_SHAKE_X4_BATCH_SIZE; b++) {
         memcpy(derived_seeds[b], rho, ML_DSA_RHO_BYTES);
         seeds[b] = derived_seeds[b];
     }
 
     for (idx = 0; (idx + ML_DSA_SHAKE_X4_BATCH_SIZE - 1) < (out->k * out->l);
-         idx += ML_DSA_SHAKE_X4_BATCH_SIZE) {
+        idx += ML_DSA_SHAKE_X4_BATCH_SIZE) {
         for (b = 0; b < ML_DSA_SHAKE_X4_BATCH_SIZE; b++) {
             const size_t row = (idx + b) / out->l;
             const size_t col = (idx + b) % out->l;

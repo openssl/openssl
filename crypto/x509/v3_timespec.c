@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -142,7 +142,11 @@ static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
             return 0;
         if (!ossl_asn1_time_print_ex(out, time->startTime, 0))
             return 0;
-        if (BIO_printf(out, "%.*s", time->startTime->length, time->startTime->data) <= 0)
+        if (BIO_printf(out, "%.*s", time->startTime->length,
+                time->startTime->length
+                    ? time->startTime->data
+                    : (const unsigned char *)"")
+            <= 0)
             return 0;
     } else if (time->endTime != NULL) {
         if (!BIO_puts(out, "Any time until "))

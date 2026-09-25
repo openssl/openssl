@@ -5,7 +5,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64) || defined(__e2k__)
 #if !defined(_M_ARM64EC)
 #if defined(HAVE_AVX2_INTRINSICS)
 #define STRINGIFY_IMPLEMENTATION_(a) #a

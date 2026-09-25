@@ -8,13 +8,13 @@
  */
 
 #include <openssl/ocsp.h>
+#include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/tlsgroups.h"
 #include "statem_local.h"
 #ifndef OPENSSL_NO_ECH
-#include <openssl/rand.h>
 #include "internal/ech_helpers.h"
 #endif
 
@@ -30,16 +30,15 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
     size_t chainidx)
 {
     if (!s->renegotiate) {
+        const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                         : TLS1_3_VERSION;
+
         /* If not renegotiating, send an empty RI extension to indicate support */
-
-#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
-#error Internal DTLS version error
-#endif
-
-        if (!SSL_CONNECTION_IS_DTLS(s)
-            && (s->min_proto_version >= TLS1_3_VERSION
-                || (ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
-                    && s->min_proto_version <= TLS1_VERSION))) {
+        if ((s->min_proto_version != 0
+                && ssl_version_cmp(s, s->min_proto_version, version1_3) >= 0)
+            || (!SSL_CONNECTION_IS_DTLS(s)
+                && ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
+                && s->min_proto_version <= TLS1_VERSION)) {
             /*
              * For TLS <= 1.0 SCSV is used instead, and for TLS 1.3 this
              * extension isn't used at all.
@@ -309,6 +308,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     const uint16_t *pgroups = NULL;
     size_t num_groups = 0, i, tls13added = 0, added = 0;
     int min_version, max_version, reason;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
     int dtls = SSL_CONNECTION_IS_DTLS(s);
     int use_ecdhe, use_ffdhe;
 
@@ -374,7 +374,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
-        if (okfortls13 && max_version == TLS1_3_VERSION)
+        if (okfortls13 && max_version == version1_3)
             tls13added++;
         added++;
     }
@@ -387,7 +387,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    if (tls13added == 0 && max_version == TLS1_3_VERSION) {
+    if (tls13added == 0 && max_version == version1_3) {
         SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_GROUPS,
             "No groups enabled for max supported SSL/TLS version");
         return EXT_RETURN_FAIL;
@@ -401,6 +401,7 @@ EXT_RETURN tls_construct_ctos_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
     size_t chainidx)
 {
     size_t ticklen;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (!tls_use_ticket(s))
         return EXT_RETURN_NOT_SENT;
@@ -410,7 +411,7 @@ EXT_RETURN tls_construct_ctos_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
 
     if (!s->new_session && s->session != NULL
         && s->session->ext.tick != NULL
-        && s->session->ssl_version != TLS1_3_VERSION) {
+        && s->session->ssl_version != version1_3) {
         ticklen = s->session->ext.ticklen;
     } else if (s->session && s->ext.session_ticket != NULL
         && s->ext.session_ticket->data != NULL) {
@@ -748,6 +749,8 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     size_t chainidx)
 {
     int currv, min_version, max_version, reason;
+    const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
@@ -756,10 +759,9 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     }
 
     /*
-     * Don't include this if we can't negotiate TLSv1.3. We can do a straight
-     * comparison here because we will never be called in DTLS.
+     * Don't include this if we can't negotiate (D)TLSv1.3.
      */
-    if (max_version < TLS1_3_VERSION)
+    if (ssl_version_cmp(s, max_version, version1_3) < 0)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
     ECH_SAME_EXT(s, context, pkt)
@@ -780,7 +782,8 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
             return EXT_RETURN_FAIL;
         }
     }
-    for (currv = max_version; currv >= min_version; currv--) {
+    for (currv = max_version; ssl_version_cmp(s, currv, min_version) >= 0;
+        isdtls ? currv++ : currv--) {
         if (!WPACKET_put_bytes_u16(pkt, currv)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
@@ -801,7 +804,7 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     int nodhe = s->options & SSL_OP_ALLOW_NO_DHE_KEX;
 
 #ifndef OPENSSL_NO_ECH
@@ -827,7 +830,7 @@ EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL_CONNECTION *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
 static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id, size_t loop_num)
 {
     unsigned char *encoded_pubkey = NULL;
@@ -835,13 +838,15 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int group_id,
     size_t encodedlen;
 
     if (loop_num < s->s3.tmp.num_ks_pkey) {
-        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)
+        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING
+                || s->d1->hello_verify_request == SSL_HVR_RECEIVED)
             || !ossl_assert(s->s3.tmp.ks_pkey[loop_num] != NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         /*
-         * Could happen if we got an HRR that wasn't requesting a new key_share
+         * Could happen if we got a HRR that wasn't requesting a new key_share
+         * or if we got a HelloVerifyRequest
          */
         key_share_key = s->s3.tmp.ks_pkey[loop_num];
     } else {
@@ -892,7 +897,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     size_t i, num_groups = 0;
     const uint16_t *pgroups = NULL;
     uint16_t group_id = 0;
@@ -913,8 +918,14 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    /* RFC 8701: prepend a GREASE key share entry (1 byte of 0x00) */
-    if ((s->options & SSL_OP_GREASE) && !s->server) {
+    /*
+     * RFC 8701: prepend a GREASE key share entry (1 byte of 0x00). After an
+     * HRR requesting a new key share, RFC 9846 requires the requested entry
+     * to be the only one in the second ClientHello.
+     */
+    if ((s->options & SSL_OP_GREASE) && !s->server
+        && !(s->hello_retry_request == SSL_HRR_PENDING
+            && s->s3.group_id != 0 && s->s3.tmp.pkey == NULL)) {
         uint16_t grease_group = ossl_grease_value(s, OSSL_GREASE_GROUP);
 
         if (!WPACKET_put_bytes_u16(pkt, grease_group)
@@ -954,9 +965,13 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
             add_only_one = 1;
 
         for (i = 0; i < num_groups; i++) {
+            const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                             : TLS1_3_VERSION;
+
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
-            if (!tls_valid_group(s, pgroups[i], TLS1_3_VERSION, TLS1_3_VERSION,
+
+            if (!tls_valid_group(s, pgroups[i], version1_3, version1_3,
                     NULL, NULL))
                 continue;
 
@@ -1032,6 +1047,167 @@ end:
     return ret;
 }
 
+static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
+{
+    OSSL_TIME t;
+    uint32_t agesec;
+
+    if (s->ext.tick_age_checked)
+        return s->ext.tick_age_ok;
+    s->ext.tick_age_ok = 1;
+
+    /*
+     * Technically the C standard just says time() returns a time_t and says
+     * nothing about the encoding of that type. In practice most
+     * implementations follow POSIX which holds it as an integral type in
+     * seconds since epoch. We've already made the assumption that we can do
+     * this in multiple places in the code, so portability shouldn't be an
+     * issue.
+     */
+    t = ossl_time_subtract(ossl_time_now(), s->session->time);
+    agesec = (uint32_t)ossl_time2seconds(t);
+
+    /*
+     * We calculate the age in seconds but the server may work in ms. Due to
+     * rounding errors we could overestimate the age by up to 1s. It is
+     * better to underestimate it. Otherwise, if the RTT is very short, when
+     * the server calculates the age reported by the client it could be
+     * bigger than the age calculated on the server - which should never
+     * happen.
+     */
+    if (agesec > 0)
+        agesec--;
+
+    /*
+     * Calculate age in ms. We're just doing it to nearest second. Should be
+     * good enough.
+     */
+    s->ext.tick_age_ms = agesec * (uint32_t)1000;
+
+    /*
+     * Ticket is too old. Ignore it. Overflow. Shouldn't happen unless this is a
+     * *really* old session. If so we just ignore it.
+     */
+    if (s->session->ext.tick_lifetime_hint < agesec)
+        s->ext.tick_age_ok = 0;
+    else if (agesec != 0 && s->ext.tick_age_ms / (uint32_t)1000 != agesec)
+        s->ext.tick_age_ok = 0;
+
+    s->ext.tick_age_checked = 1;
+    return s->ext.tick_age_ok;
+}
+
+/*
+ * True if a TLS 1.3 ciphersuite carrying the same handshake digest as |cipher|
+ * is being offered on this handshake. |cipher| must itself be a TLS 1.3 cipher:
+ * the algorithm2 handshake-MAC bits read here mean something else in a TLS 1.2
+ * suite, so a non-TLS-1.3 cipher (e.g. from a bogus callback PSK) is never viable.
+ */
+static int tls13_digest_offered(SSL_CONNECTION *s, const SSL_CIPHER *cipher)
+{
+    STACK_OF(SSL_CIPHER) *ciphers;
+    int i, n, want;
+
+    if (cipher == NULL || cipher->min_tls <= TLS1_2_VERSION)
+        return 0;
+    want = ssl_cipher_get_handshake_digest_nid(cipher);
+    if (want == NID_undef)
+        return 0;
+    ciphers = ssl_get_ciphers_by_id(s);
+    n = sk_SSL_CIPHER_num(ciphers);
+    for (i = 0; i < n; i++) {
+        const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+
+        /*
+         * SSL_SECOP_CIPHER_SUPPORTED matches the ssl_cipher_list_to_bytes()
+         * ciphersuite filter.
+         */
+        if (c->min_tls > TLS1_2_VERSION
+            && ssl_cipher_get_handshake_digest_nid(c) == want
+            && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
+            return 1;
+    }
+    return 0;
+}
+
+/*
+ * Mirrors the ticket-resumption gating checks in tls_construct_ctos_psk() so
+ * that early_data is only advertised when the resumption PSK will actually
+ * be sent.
+ */
+static int tls13_check_resumption_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const EVP_MD *mdres;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
+    if (s->session == NULL
+        || s->session->ssl_version != version1_3
+        || s->session->ext.ticklen == 0
+        || s->session->cipher == NULL)
+        return 0;
+
+    mdres = ssl_md(sctx, s->session->cipher->algorithm2);
+    if (mdres == NULL)
+        return 0;
+    if (s->hello_retry_request == SSL_HRR_PENDING && mdres != handmd)
+        return 0;
+    /* An offered TLS 1.3 ciphersuite must carry the ticket's digest. */
+    if (!tls13_digest_offered(s, s->session->cipher))
+        return 0;
+    if (tls13_check_tick_lifetime_hint(s) == 0)
+        return 0;
+
+    return 1;
+}
+
+/*
+ * 0-RTT early data is protected with the PSK's own cipher, and per RFC 9846
+ * section 4.3.10 the server accepts it only if it negotiates that exact
+ * cipher. So if we are not even offering that cipher on this handshake, 0-RTT
+ * cannot be accepted and early data must be suppressed -- the client-side
+ * mirror of the server's cipher-commitment check. The PSK is still offered for
+ * 1-RTT resumption, which needs only a digest-compatible cipher.
+ */
+static int tls13_early_cipher_offered(SSL_CONNECTION *s, const SSL_SESSION *sess)
+{
+    const SSL_CIPHER *c = sess->cipher;
+
+    /*
+     * SSL_SECOP_CIPHER_SUPPORTED matches the ssl_cipher_list_to_bytes()
+     * ciphersuite filter.
+     */
+    return c != NULL
+        && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED)
+        && sk_SSL_CIPHER_find(ssl_get_ciphers_by_id(s), c) >= 0;
+}
+
+/*
+ * 0-RTT is bound to the session's ALPN protocol, and the server accepts
+ * it only if it negotiates that protocol. So early data is viable only if that
+ * protocol is among the ones we offer -- we cannot know which the server will
+ * pick, so being present in our list is enough. A session with no ALPN imposes
+ * no constraint; a session with one while we offer none cannot match. ALPN
+ * affects 0-RTT only: resumption itself permits an ALPN change after the
+ * transition.
+ */
+static int tls13_early_alpn_offered(SSL_CONNECTION *s, const SSL_SESSION *sess)
+{
+    PACKET prots, alpnpkt;
+
+    if (sess->ext.alpn_selected == NULL)
+        return 1;
+    if (s->ext.alpn == NULL
+        || !PACKET_buf_init(&prots, s->ext.alpn, s->ext.alpn_len))
+        return 0;
+    while (PACKET_get_length_prefixed_1(&prots, &alpnpkt)) {
+        if (PACKET_equal(&alpnpkt, sess->ext.alpn_selected,
+                sess->ext.alpn_selected_len))
+            return 1;
+    }
+    return 0;
+}
+
 EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
@@ -1045,6 +1221,9 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
+    s->ext.tick_age_checked = 0;
 
 #ifndef OPENSSL_NO_ECH
     /*
@@ -1073,13 +1252,22 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         }
     }
 #endif
+
+    /*
+     * Reset the early-secret-derived marker here, past the ECH outer-CH no-op
+     * above, so the outer pass preserves the value the inner pass's binder set
+     * (the outer CH derives no early secret of its own).
+     */
+    s->ext.early_secret_derived = 0;
+
     if (s->hello_retry_request == SSL_HRR_PENDING)
         handmd = ssl_handshake_md(s);
 
     if (s->psk_use_session_cb != NULL
         && (!s->psk_use_session_cb(ussl, handmd, &id, &idlen, &psksess)
             || (psksess != NULL
-                && psksess->ssl_version != TLS1_3_VERSION))) {
+                && (psksess->ssl_version != version1_3
+                    || psksess->master_key_length == 0)))) {
         SSL_SESSION_free(psksess);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
         return EXT_RETURN_FAIL;
@@ -1111,7 +1299,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
 
             /*
              * We found a PSK using an old style callback. We don't know
-             * the digest so we default to SHA256 as per the TLSv1.3 spec
+             * the digest so we default to SHA256 as per the (D)TLSv1.3 spec
              */
             cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
                 tls13_aes128gcmsha256_id);
@@ -1121,10 +1309,11 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             }
 
             psksess = SSL_SESSION_new();
+
             if (psksess == NULL
                 || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
                 || !SSL_SESSION_set_cipher(psksess, cipher)
-                || !SSL_SESSION_set_protocol_version(psksess, TLS1_3_VERSION)) {
+                || !SSL_SESSION_set_protocol_version(psksess, version1_3)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 OPENSSL_cleanse(psk, psklen);
                 return EXT_RETURN_FAIL;
@@ -1133,6 +1322,17 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         }
     }
 #endif /* OPENSSL_NO_PSK */
+
+    /*
+     * If no offered ciphersuite carries the callback PSK's digest -- or its
+     * cipher isn't a TLS 1.3 cipher -- it can never be used, so drop it here and
+     * proceed as if the callback had returned no PSK. Every later s->psksession
+     * check then handles it for free.
+     */
+    if (psksess != NULL && !tls13_digest_offered(s, psksess->cipher)) {
+        SSL_SESSION_free(psksess);
+        psksess = NULL;
+    }
 
     SSL_SESSION_free(s->psksession);
     s->psksession = psksess;
@@ -1147,14 +1347,68 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         s->psksession_id_len = idlen;
     }
 
+    /*
+     * Suppress early_data unless a PSK is available and will be sent.
+     *
+     * RFC 9846 4.3.10: When a PSK is used and early data is allowed for that
+     * PSK, the client can send Application Data in its first flight of
+     * messages. If the client opts to do so, it MUST supply both the
+     * "pre_shared_key" and "early_data" extensions.
+     *
+     * The PSK used to encrypt the early data MUST be the first PSK listed in
+     * the client's "pre_shared_key" extension.
+     */
+    /*
+     * The first PSK identity we offer is the only one that can key 0-RTT: the
+     * resumption session when we are offering it, else the external psksession.
+     * Offer early_data only when that first PSK is itself 0-RTT-capable; never
+     * key it off a PSK offered later.
+     */
+    /*
+     * Freeze the resumption-ticket offer decision here, at the first consumer,
+     * so tls_construct_ctos_psk() offers the very same identity 0 and its binder
+     * derives s->early_secret for whatever session early_data is keyed on. See
+     * s->ext.psk_resumption_offered.
+     */
+    s->ext.psk_resumption_offered = tls13_check_resumption_psk(s, handmd);
+    edsess = s->ext.psk_resumption_offered ? s->session : psksess;
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
-        || (s->session->ext.max_early_data == 0
-            && (psksess == NULL || psksess->ext.max_early_data == 0))) {
+        || edsess == NULL
+        || edsess->ext.max_early_data == 0
+        || !tls13_early_cipher_offered(s, edsess)
+        || !tls13_early_alpn_offered(s, edsess)) {
         s->max_early_data = 0;
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
+            s->ext.early_data_suppressed = 1;
+            /*
+             * We report REJECTED rather than NOT_SENT, so that suppressing
+             * 0-RTT locally looks to the application just like a server that
+             * declined it.
+             *
+             * The early exporter is a separate question: no early secret is
+             * derived on this path, so s->ext.early_exporter_ready stays clear
+             * and SSL_export_keying_material_early() remains unavailable.
+             */
+            s->ext.early_data = SSL_EARLY_DATA_REJECTED;
+        }
+        s->early_data_state = SSL_EARLY_DATA_NONE;
         return EXT_RETURN_NOT_SENT;
     }
-    edsess = s->session->ext.max_early_data != 0 ? s->session : psksess;
     s->max_early_data = edsess->ext.max_early_data;
+    /*
+     * Record the first-offered PSK so the binder, the early-key derivation, the
+     * early exporter, the byte-budget lookup and the post-ServerHello fixup all
+     * key off it rather than guessing the source from
+     * s->session->ext.max_early_data. Held (up-ref'd) so it stays valid across
+     * the swap that later folds a selected psksession into s->session.
+     */
+    SSL_SESSION_free(s->ext.early_data_session);
+    s->ext.early_data_session = edsess;
+    if (!SSL_SESSION_up_ref(edsess)) {
+        s->ext.early_data_session = NULL;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
 
     if (edsess->ext.hostname != NULL) {
         if (s->ext.hostname == NULL
@@ -1162,37 +1416,6 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
                 && strcmp(s->ext.hostname, edsess->ext.hostname) != 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                 SSL_R_INCONSISTENT_EARLY_DATA_SNI);
-            return EXT_RETURN_FAIL;
-        }
-    }
-
-    if ((s->ext.alpn == NULL && edsess->ext.alpn_selected != NULL)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_INCONSISTENT_EARLY_DATA_ALPN);
-        return EXT_RETURN_FAIL;
-    }
-
-    /*
-     * Verify that we are offering an ALPN protocol consistent with the early
-     * data.
-     */
-    if (edsess->ext.alpn_selected != NULL) {
-        PACKET prots, alpnpkt;
-        int found = 0;
-
-        if (!PACKET_buf_init(&prots, s->ext.alpn, s->ext.alpn_len)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        while (PACKET_get_length_prefixed_1(&prots, &alpnpkt)) {
-            if (PACKET_equal(&alpnpkt, edsess->ext.alpn_selected,
-                    edsess->ext.alpn_selected_len)) {
-                found = 1;
-                break;
-            }
-        }
-        if (!found) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                SSL_R_INCONSISTENT_EARLY_DATA_ALPN);
             return EXT_RETURN_FAIL;
         }
     }
@@ -1214,97 +1437,6 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-#define F5_WORKAROUND_MIN_MSG_LEN 0xff
-#define F5_WORKAROUND_MAX_MSG_LEN 0x200
-
-/*
- * PSK pre binder overhead =
- *  2 bytes for TLSEXT_TYPE_psk
- *  2 bytes for extension length
- *  2 bytes for identities list length
- *  2 bytes for identity length
- *  4 bytes for obfuscated_ticket_age
- *  2 bytes for binder list length
- *  1 byte for binder length
- * The above excludes the number of bytes for the identity itself and the
- * subsequent binder bytes
- */
-#define PSK_PRE_BINDER_OVERHEAD (2 + 2 + 2 + 2 + 4 + 2 + 1)
-
-EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
-    unsigned int context, X509 *x,
-    size_t chainidx)
-{
-    unsigned char *padbytes;
-    size_t hlen;
-
-    if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
-        return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt);
-#endif
-
-    /*
-     * Add padding to workaround bugs in F5 terminators. See RFC7685.
-     * This code calculates the length of all extensions added so far but
-     * excludes the PSK extension (because that MUST be written last). Therefore
-     * this extension MUST always appear second to last.
-     */
-    if (!WPACKET_get_total_written(pkt, &hlen)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    /*
-     * If we're going to send a PSK then that will be written out after this
-     * extension, so we need to calculate how long it is going to be.
-     */
-    if (s->session->ssl_version == TLS1_3_VERSION
-        && s->session->ext.ticklen != 0
-        && s->session->cipher != NULL) {
-        const EVP_MD *md = ssl_md(SSL_CONNECTION_GET_CTX(s),
-            s->session->cipher->algorithm2);
-
-        if (md != NULL) {
-            /*
-             * Add the fixed PSK overhead, the identity length and the binder
-             * length.
-             */
-            int md_size = EVP_MD_get_size(md);
-
-            if (md_size <= 0)
-                return EXT_RETURN_FAIL;
-            hlen += PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
-                + md_size;
-        }
-    }
-
-    if (hlen > F5_WORKAROUND_MIN_MSG_LEN && hlen < F5_WORKAROUND_MAX_MSG_LEN) {
-        /* Calculate the amount of padding we need to add */
-        hlen = F5_WORKAROUND_MAX_MSG_LEN - hlen;
-
-        /*
-         * Take off the size of extension header itself (2 bytes for type and
-         * 2 bytes for length bytes), but ensure that the extension is at least
-         * 1 byte long so as not to have an empty extension last (WebSphere 7.x,
-         * 8.x are intolerant of that condition)
-         */
-        if (hlen > 4)
-            hlen -= 4;
-        else
-            hlen = 1;
-
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
-            || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        memset(padbytes, 0, hlen);
-    }
-
-    return EXT_RETURN_SENT;
-}
-
 /*
  * Construct the pre_shared_key extension
  */
@@ -1312,30 +1444,38 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
-    uint32_t agesec, agems = 0;
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
+    uint32_t agems = 0;
     size_t binderoffset, msglen;
     int reshashsize = 0, pskhashsize = 0;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    OSSL_TIME t;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     s->ext.tick_identity = 0;
-
-    /*
-     * Note: At this stage of the code we only support adding a single
-     * resumption PSK. If we add support for multiple PSKs then the length
-     * calculations in the padding extension will need to be adjusted.
-     */
 
     /*
      * If this is an incompatible or new session then we have nothing to resume
      * so don't add this extension.
      */
-    if (s->session->ssl_version != TLS1_3_VERSION
+    if (s->session->ssl_version != version1_3
         || (s->session->ext.ticklen == 0 && s->psksession == NULL))
+        return EXT_RETURN_NOT_SENT;
+
+    /*
+     * After a HelloRetryRequest, do not introduce a pre_shared_key extension
+     * that the first ClientHello (CH1) did not carry. RFC 9846 4.2.2 lets CH2
+     * update or drop PSKs, but not add one -- let alone add the whole
+     * extension. This could otherwise happen if a psk_use_session callback
+     * only yields a digest-compatible PSK once the retry has settled the
+     * ciphersuite.  While a misbehaving callback could still introduce a
+     * novel PSK only after HRR, that's an application bug, expected rare and
+     * likely harmless if it occurs.
+     */
+    if (s->hello_retry_request == SSL_HRR_PENDING
+        && (s->ext.extflags[TLSEXT_IDX_psk] & SSL_EXT_FLAG_SENT) == 0)
         return EXT_RETURN_NOT_SENT;
 
     if (s->hello_retry_request == SSL_HRR_PENDING)
@@ -1378,45 +1518,18 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
 #endif
 
         /*
-         * Technically the C standard just says time() returns a time_t and says
-         * nothing about the encoding of that type. In practice most
-         * implementations follow POSIX which holds it as an integral type in
-         * seconds since epoch. We've already made the assumption that we can do
-         * this in multiple places in the code, so portability shouldn't be an
-         * issue.
+         * Consume the offer decision frozen by tls_construct_ctos_early_data()
+         * rather than re-running the SECOP-dependent tls13_digest_offered() a
+         * second time: an answer that flipped between the two calls would drop
+         * the ticket after early_data was already committed, leaving
+         * s->early_secret underived and 0-RTT keyed off a zero secret.
          */
-        t = ossl_time_subtract(ossl_time_now(), s->session->time);
-        agesec = (uint32_t)ossl_time2seconds(t);
-
-        /*
-         * We calculate the age in seconds but the server may work in ms. Due to
-         * rounding errors we could overestimate the age by up to 1s. It is
-         * better to underestimate it. Otherwise, if the RTT is very short, when
-         * the server calculates the age reported by the client it could be
-         * bigger than the age calculated on the server - which should never
-         * happen.
-         */
-        if (agesec > 0)
-            agesec--;
-
-        if (s->session->ext.tick_lifetime_hint < agesec) {
-            /* Ticket is too old. Ignore it. */
+        if (!s->ext.psk_resumption_offered)
             goto dopsksess;
-        }
-
-        /*
-         * Calculate age in ms. We're just doing it to nearest second. Should be
-         * good enough.
-         */
-        agems = agesec * (uint32_t)1000;
-
-        if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
-            /*
-             * Overflow. Shouldn't happen unless this is a *really* old session.
-             * If so we just ignore it.
-             */
+        if (tls13_check_tick_lifetime_hint(s) == 0)
             goto dopsksess;
-        }
+        /* tls13_check_tick_lifetime_hint() updates the tick_age_ms value. */
+        agems = s->ext.tick_age_ms;
 
         /*
          * Obfuscate the age. Overflow here is fine, this addition is supposed
@@ -1581,10 +1694,7 @@ dopsksess:
 
     msgstart = WPACKET_get_curr(pkt) - msglen;
 
-    if (dores
-        && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
-               resbinder, s->session, 1, 0)
-            != 1) {
+    if (dores && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL, resbinder, s->session, 1, 0) != 1) {
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }
@@ -1608,7 +1718,7 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
     ossl_unused X509 *x,
     ossl_unused size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     if (!s->pha_enabled)
         return EXT_RETURN_NOT_SENT;
 #ifndef OPENSSL_NO_ECH
@@ -1800,18 +1910,18 @@ int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
 
     /*
      * MUST only be sent if we've requested a status
-     * request message. In TLS <= 1.2 it must also be empty.
+     * request message. In (D)TLS <= 1.2 it must also be empty.
      */
     if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp) {
         SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    if (!SSL_CONNECTION_IS_TLS13(s) && PACKET_remaining(pkt) > 0) {
+    if (!SSL_CONNECTION_IS_VERSION13(s) && PACKET_remaining(pkt) > 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         /* SSLfatal() already called */
         return tls_process_cert_status_body(s, chainidx, pkt);
     }
@@ -2076,7 +2186,7 @@ int tls_parse_stoc_use_srtp(SSL_CONNECTION *s, PACKET *pkt,
     /* Throw an error if the server gave us an unsolicited extension */
     clnt = SSL_get_srtp_profiles(SSL_CONNECTION_GET_SSL(s));
     if (clnt == NULL) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_SRTP_PROFILES);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SRTP_PROFILES);
         return 0;
     }
 
@@ -2093,7 +2203,7 @@ int tls_parse_stoc_use_srtp(SSL_CONNECTION *s, PACKET *pkt,
         }
     }
 
-    SSLfatal(s, SSL_AD_DECODE_ERROR,
+    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
         SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
     return 0;
 }
@@ -2132,6 +2242,7 @@ int tls_parse_stoc_supported_versions(SSL_CONNECTION *s, PACKET *pkt,
     X509 *x, size_t chainidx)
 {
     unsigned int version;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (!PACKET_get_net_2(pkt, &version)
         || PACKET_remaining(pkt) != 0) {
@@ -2141,9 +2252,9 @@ int tls_parse_stoc_supported_versions(SSL_CONNECTION *s, PACKET *pkt,
 
     /*
      * The only protocol version we support which is valid in this extension in
-     * a ServerHello is TLSv1.3 therefore we shouldn't be getting anything else.
+     * a ServerHello is (D)TLSv1.3 therefore we shouldn't be getting anything else.
      */
-    if (version != TLS1_3_VERSION) {
+    if ((int)version != version1_3) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
             SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
         return 0;
@@ -2167,7 +2278,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned int group_id;
     PACKET encoded_pt;
     EVP_PKEY *ckey = s->s3.tmp.pkey, *skey = NULL;
@@ -2196,6 +2307,8 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
         size_t num_groups;
+        const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION
+                                                         : TLS1_3_VERSION;
 
         if (PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -2219,10 +2332,10 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
             if (group_id == pgroups[i])
                 break;
         }
+
         if (i >= num_groups
             || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
-            || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
-                NULL, NULL)) {
+            || !tls_valid_group(s, group_id, version1_3, version1_3, NULL, NULL)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
             return 0;
         }
@@ -2414,7 +2527,8 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-#ifndef OPENSSL_NO_TLS1_3
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
+    SSL_SESSION *sesstmp;
     unsigned int identity;
 
     if (!PACKET_get_net_2(pkt, &identity) || PACKET_remaining(pkt) != 0) {
@@ -2452,9 +2566,27 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
      */
     if ((s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING)
-        || s->session->ext.max_early_data > 0
-        || s->psksession->ext.max_early_data == 0)
+        || s->ext.early_data_session != s->psksession)
         memcpy(s->early_secret, s->psksession->early_secret, EVP_MAX_MD_SIZE);
+
+    /*
+     * The psk_use_session_cb()/psk_client_callback() may reuse
+     * the session across connections we can't mutate it directly.
+     */
+    if ((sesstmp = ssl_session_dup(s->psksession, 0)) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    SSL_SESSION_free(s->psksession);
+    s->psksession = sesstmp;
+
+    /*
+     * s->psksession (now our private copy) was built by the callback, not via
+     * ssl_get_new_session(), so it was never stamped with our own sid_ctx. Do
+     * so now, to avoid rejection of the PSK session in tls_process_server_hello().
+     */
+    memcpy(s->psksession->sid_ctx, s->sid_ctx, s->sid_ctx_length);
+    s->psksession->sid_ctx_length = s->sid_ctx_length;
 
     SSL_SESSION_free(s->session);
     s->session = s->psksession;
@@ -2617,7 +2749,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
             s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
         if (ossl_ech_send_grease(s, pkt) != 1) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_NOT_SENT;
+            return EXT_RETURN_FAIL;
         }
         return EXT_RETURN_SENT;
     }

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,24 +26,67 @@ plan skip_all => "$test_name needs the module feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLS1.3 enabled"
-    if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
+plan skip_all => "$test_name needs elliptic curves or diffie-hellman enabled"
+    if disabled("ec") && disabled("dh");
 
-my $proxy = TLSProxy::Proxy->new(
-    undef,
-    cmdstr(app(["openssl"]), display => 1),
-    srctop_file("apps", "server.pem"),
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
-    have_IPv6()
-);
+my $testcount = 1;
 
-#Test 1: We test that a server can handle an unencrypted alert when normally the
-#        next message is encrypted
-$proxy->filter(\&alert_filter);
-$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 1;
-my $alert = TLSProxy::Message->alert();
-ok(TLSProxy::Message->fail() && !$alert->server() && !$alert->encrypted(), "Client sends an unencrypted alert");
+plan tests => 2 * $testcount;
+
+SKIP: {
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
+    # Run tests with TLS
+    run_tests(0);
+}
+
+SKIP: {
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
+    run_tests(1);
+}
+
+sub run_tests
+{
+    my $run_test_as_dtls = shift;
+    my $proxy_start_success = 0;
+
+    my $proxy;
+    if ($run_test_as_dtls == 1) {
+        $proxy = TLSProxy::Proxy->new_dtls(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
+        );
+    }
+    else {
+        $proxy = TLSProxy::Proxy->new(
+            undef,
+            cmdstr(app(["openssl"]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
+        );
+    }
+
+    #Test 1: We test that a server can handle an unencrypted alert when normally the
+    #        next message is encrypted
+    $proxy->clear();
+    $proxy->filter(\&alert_filter);
+    if ($run_test_as_dtls == 1) {
+        if (disabled("ec")) {
+            $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
+        } else {
+            $proxy->clientflags("-groups P-256:P-384");
+        }
+    }
+    $proxy_start_success = $proxy->start();
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
+
+    my $alert = TLSProxy::Message->alert();
+    ok(TLSProxy::Message->fail() && !$alert->server() && !$alert->encrypted(), "Client sends an unencrypted alert");
+}
 
 sub alert_filter
 {

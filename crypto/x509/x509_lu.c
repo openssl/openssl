@@ -287,7 +287,7 @@ int X509_STORE_up_ref(X509_STORE *xs)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&xs->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&xs->references, &i))
         return 0;
 
     REF_PRINT_COUNT("X509_STORE", i, xs);

@@ -421,7 +421,7 @@ one that is not either
     process it safely).
 
 This should be called for a packet before attempting to process its contents.
-Failure to do so may may result in processing a duplicated packet in violation
+Failure to do so may result in processing a duplicated packet in violation
 of the RFC.
 
 The return value of this function transitions from 1 to 0 for a given PN once

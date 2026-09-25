@@ -76,10 +76,18 @@ static void rc4_hmac_md5_freectx(void *vctx)
 static void *rc4_hmac_md5_dupctx(void *vctx)
 {
     PROV_RC4_HMAC_MD5_CTX *ctx = vctx;
+    PROV_RC4_HMAC_MD5_CTX *dctx;
 
     if (ctx == NULL)
         return NULL;
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base, &ctx->base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 static int rc4_hmac_md5_einit(void *ctx, const unsigned char *key,

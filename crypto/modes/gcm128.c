@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -422,6 +422,12 @@ void gcm_init_rv64i_zvkg_zvkb(u128 Htable[16], const uint64_t Xi[2]);
 void gcm_gmult_rv64i_zvkg(uint64_t Xi[2], const u128 Htable[16]);
 void gcm_ghash_rv64i_zvkg(uint64_t Xi[2], const u128 Htable[16],
     const uint8_t *inp, size_t len);
+#elif defined(__e2k__) && (__iset__ >= 6)
+#define GHASH_ASM_E2KV6
+void gcm_init_e2kv6_clmul(u128 Htable[16], const uint64_t Xi[2]);
+void gcm_gmult_e2kv6_clmul(uint64_t Xi[2], const u128 Htable[16]);
+void gcm_ghash_e2kv6_clmul(uint64_t Xi[2], const u128 Htable[16],
+    const uint8_t *inp, size_t len);
 #endif
 #endif
 
@@ -551,6 +557,11 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
             ctx->ghash = gcm_ghash_rv64i_zbc;
         }
     }
+    return;
+#elif defined(GHASH_ASM_E2KV6)
+    ctx->ginit = gcm_init_e2kv6_clmul;
+    ctx->gmult = gcm_gmult_e2kv6_clmul;
+    ctx->ghash = gcm_ghash_e2kv6_clmul;
     return;
 #elif defined(GHASH_ASM)
     /* all other architectures use the generic names */
@@ -1540,6 +1551,13 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 #endif
 }
 
+/*
+ * Calculate the tag and verify it against the supplied tag.
+ * Returns:
+ * -1: invalid tag length
+ *  0: tag verified
+ * >0: tag mismatch
+ */
 int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
     size_t len)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "crypto/ctype.h"
 #include "openssl/configuration.h"
 
 #include "internal/e_os.h" /* ossl_inline in many files */
@@ -69,6 +70,13 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
     (HAS_CASE_PREFIX(str, pre) ? ((str) += sizeof(pre) - 1, 1) : 0)
 /* Check if the string literal |suffix| is a case-insensitive suffix of |str| */
 #define HAS_CASE_SUFFIX(str, suffix) (strlen(str) < sizeof(suffix) - 1 ? 0 : OPENSSL_strcasecmp(str + strlen(str) - sizeof(suffix) + 1, suffix "") == 0)
+/* Advance string pointer past scheme acc to RFC 3986: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
+#define OSSL_SKIP_SCHEME(s)                                                             \
+    do {                                                                                \
+        if (ossl_isalpha(*(s)))                                                         \
+            while (*(s) != '\0' && (ossl_isalnum(*(s)) || strchr("+-.", *(s)) != NULL)) \
+                (s)++;                                                                  \
+    } while (0)
 
 /*
  * Use this inside a union with the field that needs to be aligned to a
@@ -276,6 +284,10 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                         (c)[1] = (unsigned char)(((l) >> 8) & 0xff), \
                         (c)[2] = (unsigned char)(((l)) & 0xff)),     \
     (c) += 3)
+
+#define l3n2(c, l) (l = ((uint64_t)(*((c)++))) << 16, \
+    l |= ((uint64_t)(*((c)++))) << 8,                 \
+    l |= ((uint64_t)(*((c)++))))
 
 static ossl_inline int ossl_ends_with_dirsep(const char *path)
 {

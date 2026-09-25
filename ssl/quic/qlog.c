@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 #include "internal/qlog.h"
 #include "internal/json_enc.h"
 #include "internal/common.h"
@@ -131,11 +132,20 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
     if (qlogdir_sep != '\0')
         filename[l++] = qlogdir_sep;
 
-    for (i = 0; i < info->odcid.id_len; ++i)
-        l += BIO_snprintf(filename + l, strl - l, "%02x", info->odcid.id[i]);
+    for (i = 0; i < info->odcid.id_len; ++i) {
+        int n = snprintf(filename + l, strl - l, "%02x", info->odcid.id[i]);
 
-    l += BIO_snprintf(filename + l, strl - l, "_%s.sqlog",
+        if (n < 0 || (size_t)n >= strl - l)
+            goto err;
+        l += n;
+    }
+
+    int n = snprintf(filename + l, strl - l, "_%s.sqlog",
         info->is_server ? "server" : "client");
+
+    if (n < 0 || (size_t)n >= strl - l)
+        goto err;
+    l += n;
 
     qlog = ossl_qlog_new(info);
     if (qlog == NULL)
@@ -340,7 +350,7 @@ static void qlog_event_seq_header(QLOG *qlog)
                 if (qlog->info.override_impl_name != NULL) {
                     p = qlog->info.override_impl_name;
                 } else {
-                    BIO_snprintf(buf, sizeof(buf), "OpenSSL/%s (%s)",
+                    snprintf(buf, sizeof(buf), "OpenSSL/%s (%s)",
                         OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
                         OpenSSL_version(OPENSSL_PLATFORM) + 10);
                 }

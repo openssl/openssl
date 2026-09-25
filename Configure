@@ -27,7 +27,7 @@ use OpenSSL::config;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<feature> ...] [enable-<feature> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] [--help] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<feature> ...] [enable-<feature> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] [--manpage-format={roff,mdoc}] [--help] os/compiler[:flags]\n";
 
 my $banner = <<"EOF";
 
@@ -295,6 +295,7 @@ my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
 my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
 
+$config{manpage_format} = "roff";
 $config{sourcedir} = abs2rel($srcdir, $blddir);
 $config{builddir} = abs2rel($blddir, $blddir);
 # echo -n 'holy hand grenade of antioch' | openssl sha256
@@ -421,7 +422,7 @@ my $default_ranlib;
 
 # Known TLS and DTLS protocols
 my @tls = qw(tls1 tls1_1 tls1_2 tls1_3);
-my @dtls = qw(dtls1 dtls1_2);
+my @dtls = qw(dtls1 dtls1_2 dtls1_3);
 
 # Explicitly known options that are possible to disable.  They can
 # be regexps, and will be used like this: /^no-${option}$/
@@ -444,12 +445,13 @@ my @disablables_protocols = (
 foreach my $proto ((@tls, @dtls))
         {
         push(@disablables_protocols, $proto);
-        push(@disablables_protocols, "$proto-method") unless $proto eq "tls1_3";
+        push(@disablables_protocols, "$proto-method") unless $proto eq "tls1_3" || $proto eq "dtls1_3";
         }
 
 my @disablables_algorithms = (
     "argon2",
     "aria",
+    "ascon128",
     "bf",
     "blake2",
     "brotli",
@@ -668,7 +670,7 @@ our %disabled = ( # "what"         => "comment"
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
     "bulk"              => [ "shared", "dso",
-                             "argon2", "aria", "async", "autoload-config",
+                             "argon2", "aria", "ascon128", "async", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
@@ -1046,6 +1048,10 @@ while (@argvcopy)
                 {
                 $config{build_type} = "release";
                 }
+        elsif (/^--manpage-format=(mdoc|roff)$/)
+		{
+		$config{manpage_format}="$1";
+		}
         elsif (/^--pgo$/)
                 {
                 $config{build_type} = "pgo";
@@ -1415,7 +1421,8 @@ application.
 
 Instead of manually seeding, a different random generator can be set
 at runtime in openssl.cnf or configured at build time with
--DOPENSSL_DEFAULT_SEED_SRC.
+-DOPENSSL_DEFAULT_SEED_SRC.  The property query used to fetch it can
+be set with -DOPENSSL_DEFAULT_SEED_PROPQ if needed.
 
 Please read the 'Note on random number generation' section in the
 INSTALL.md instructions for more details.
@@ -2036,6 +2043,7 @@ foreach my $what (sort keys %disabled) {
         # fix-up crypto/directory name(s)
         $skipdir = "ripemd" if $what eq "rmd160";
         $skipdir = "whrlpool" if $what eq "whirlpool";
+        $skipdir = "ascon" if $what eq "ascon128";
 
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
         push @{$config{openssl_feature_defines}}, $macro;
@@ -2054,8 +2062,11 @@ foreach my $what (sort keys %disabled) {
             }
         }
 
+        # siphash is used internally by libcrypto (X509 fingerprints), so
+        # no-siphash only removes the provider algorithm.
         $skipdir{"crypto/$skipdir"} = $what
-            unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http';
+            unless $what eq 'async' || $what eq 'err' || $what eq 'dso'
+                || $what eq 'http' || $what eq 'siphash';
     }
 }
 

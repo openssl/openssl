@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -468,6 +468,7 @@ static int dsa_init(DSA *dsa)
 static int dsa_finish(DSA *dsa)
 {
     BN_MONT_CTX_free(dsa->method_mont_p);
+    dsa->method_mont_p = NULL;
     return 1;
 }
 

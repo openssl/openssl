@@ -302,6 +302,10 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
+    /* The error string table may already have been cleaned up. */
+    if (err_string_lock == NULL)
+        return 1;
+
     if (!CRYPTO_THREAD_write_lock(err_string_lock))
         return 0;
     /*
@@ -516,6 +520,7 @@ void ossl_err_string_int(unsigned long e, const char *func,
     char lsbuf[64], rsbuf[256];
     const char *ls, *rs = NULL;
     unsigned long l, r;
+    int n;
 
     if (len == 0)
         return;
@@ -523,7 +528,7 @@ void ossl_err_string_int(unsigned long e, const char *func,
     l = ERR_GET_LIB(e);
     ls = ERR_lib_error_string(e);
     if (ls == NULL) {
-        BIO_snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
+        snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
         ls = lsbuf;
     }
 
@@ -543,16 +548,15 @@ void ossl_err_string_int(unsigned long e, const char *func,
     }
 #endif
     if (rs == NULL) {
-        BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)",
+        snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)",
             r & ~(ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET));
         rs = rsbuf;
     }
 
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, func, rs);
-    if (strlen(buf) == len - 1) {
+    n = snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, func, rs);
+    if (n < 0 || (size_t)n >= len)
         /* Didn't fit; use a minimal format. */
-        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, 0L, r);
-    }
+        snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, 0L, r);
 }
 
 void ERR_error_string_n(unsigned long e, char *buf, size_t len)

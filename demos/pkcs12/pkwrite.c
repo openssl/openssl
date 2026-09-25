@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,8 +25,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "Usage: pkwrite infile password name p12file\n");
         exit(EXIT_FAILURE);
     }
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
     if ((fp = fopen(argv[1], "r")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);
         exit(EXIT_FAILURE);

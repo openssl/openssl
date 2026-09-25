@@ -28,13 +28,9 @@
  * 8 - 256 == 8192
  */
 static int bn_limit_bits = 0;
-static int bn_limit_num = 8; /* (1<<bn_limit_bits) */
 static int bn_limit_bits_low = 0;
-static int bn_limit_num_low = 8; /* (1<<bn_limit_bits_low) */
 static int bn_limit_bits_high = 0;
-static int bn_limit_num_high = 8; /* (1<<bn_limit_bits_high) */
 static int bn_limit_bits_mont = 0;
-static int bn_limit_num_mont = 8; /* (1<<bn_limit_bits_mont) */
 
 void BN_set_params(int mult, int high, int low, int mont)
 {
@@ -42,25 +38,21 @@ void BN_set_params(int mult, int high, int low, int mont)
         if (mult > (int)(sizeof(int) * 8) - 1)
             mult = sizeof(int) * 8 - 1;
         bn_limit_bits = mult;
-        bn_limit_num = 1 << mult;
     }
     if (high >= 0) {
         if (high > (int)(sizeof(int) * 8) - 1)
             high = sizeof(int) * 8 - 1;
         bn_limit_bits_high = high;
-        bn_limit_num_high = 1 << high;
     }
     if (low >= 0) {
         if (low > (int)(sizeof(int) * 8) - 1)
             low = sizeof(int) * 8 - 1;
         bn_limit_bits_low = low;
-        bn_limit_num_low = 1 << low;
     }
     if (mont >= 0) {
         if (mont > (int)(sizeof(int) * 8) - 1)
             mont = sizeof(int) * 8 - 1;
         bn_limit_bits_mont = mont;
-        bn_limit_num_mont = 1 << mont;
     }
 }
 
@@ -89,6 +81,7 @@ const BIGNUM *BN_value_one(void)
     return &const_one;
 }
 
+#ifndef __e2k__
 int BN_num_bits_word(BN_ULONG l)
 {
     BN_ULONG x, mask;
@@ -133,6 +126,20 @@ int BN_num_bits_word(BN_ULONG l)
 
     return bits;
 }
+#else /* __e2k__ */
+#include <x86gprintrin.h>
+int BN_num_bits_word(BN_ULONG l)
+{
+    /* clz(0) is well-defined on e2k, hence no if (l == 0) return 0;
+     * is required here.
+     */
+#if BN_BITS2 > 32
+    return 64 - __builtin_clzll(l);
+#else
+    return 32 - __builtin_clz(l);
+#endif
+}
+#endif /* __e2k__ */
 
 /*
  * This function still leaks `a->dmax`: it's caller's responsibility to
@@ -955,21 +962,24 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
     condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
 
-    t = (a->top ^ b->top) & condition;
+    t = (a->top ^ b->top) & value_barrier_bn(condition);
     a->top ^= t;
     b->top ^= t;
 
-    t = (a->neg ^ b->neg) & condition;
+    t = (a->neg ^ b->neg) & value_barrier_bn(condition);
     a->neg ^= t;
     b->neg ^= t;
 
     /*-
-     * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
-     * is actually to treat it as it's read-only data, and some (if not most)
-     * of it does reside in read-only segment. In other words observation of
-     * BN_FLG_STATIC_DATA in BN_consttime_swap should be treated as fatal
-     * condition. It would either cause SEGV or effectively cause data
-     * corruption.
+     * BN_FLG_STATIC_DATA: indicates that d points to a buffer that this
+     * BIGNUM does not own, so it must never be reallocated or freed through
+     * the BIGNUM. The flag by itself does not forbid writing to the words,
+     * but much of the data marked this way is compiled-in and does reside in
+     * a read-only segment. Since BN_consttime_swap writes to d, observing
+     * BN_FLG_STATIC_DATA here should be treated as a fatal condition: it
+     * would either cause SEGV or effectively cause data corruption. The flag
+     * is therefore never swapped, as it describes the storage of each d
+     * buffer, which is not exchanged.
      *
      * BN_FLG_MALLOCED: refers to BN structure itself, and hence must be
      * preserved.
@@ -987,13 +997,13 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
 #define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
 
-    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition;
+    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & value_barrier_bn(condition);
     a->flags ^= t;
     b->flags ^= t;
 
     /* conditionally swap the data */
     for (i = 0; i < nwords; i++) {
-        t = (a->d[i] ^ b->d[i]) & condition;
+        t = (a->d[i] ^ b->d[i]) & value_barrier_bn(condition);
         a->d[i] ^= t;
         b->d[i] ^= t;
     }

@@ -12,13 +12,14 @@ use warnings;
 
 use File::Spec;
 use File::Basename;
+use File::Copy;
 use OpenSSL::Test qw/:DEFAULT with srctop_file srctop_dir data_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use Cwd qw(abs_path);
 
 setup("test_dgst");
 
-plan tests => 26;
+plan tests => 31;
 
 sub tsignverify {
     my $testtext = shift;
@@ -424,6 +425,118 @@ subtest "signing with xoflen is not supported `dgst` CLI" => sub {
                  "Generating signature with xoflen should fail");
 };
 
+subtest "Coreutils format output with `dgst` CLI" => sub {
+    my $testdata = srctop_file('test', 'data.bin');
+    my $expected =
+        'd9fd1d3a7dc90526d2853450dcc63e26a311012d337fa4a192276f9824a046da';
+
+    # A newline in a filename is not possible everywhere, so that part of
+    # the test is conditional on actually being able to create such a file.
+    my $nlfile = "dgst_r_newline\nname.bin";
+    my $have_nl = $^O ne 'MSWin32' && $^O ne 'VMS' && copy($testdata, $nlfile);
+
+    plan tests => $have_nl ? 3 : 2;
+
+    my @rdata = run(app(['openssl', 'dgst', '-sha256', '-r', $testdata]),
+                    capture => 1);
+    chomp(@rdata);
+    ok($rdata[0] eq "$expected *$testdata",
+       "-r: Check coreutils style output is as expected ($rdata[0])");
+
+    # Without a file argument the input is stdin, reported as "stdin"
+    my @stdindata = run(app(['openssl', 'dgst', '-sha256', '-r'],
+                            stdin => $testdata), capture => 1);
+    chomp(@stdindata);
+    ok($stdindata[0] eq "$expected *stdin",
+       "-r: Check coreutils style output for stdin ($stdindata[0])");
+
+    if ($have_nl) {
+        # A newline in the filename is escaped as "\n" and the whole line
+        # is prefixed with a backslash, the way the '*sum' programs do it.
+        my @nldata = run(app(['openssl', 'dgst', '-sha256', '-r', $nlfile]),
+                         capture => 1);
+        chomp(@nldata);
+        ok($nldata[0] eq "\\$expected *dgst_r_newline\\nname.bin",
+           "-r: Check newline in filename is escaped ($nldata[0])");
+        unlink($nlfile);
+    }
+};
+
+subtest "Colon separated output with `dgst` CLI" => sub {
+    plan tests => 1;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my @cdata = run(app(['openssl', 'dgst', '-sha256', '-c', $testdata]),
+                    capture => 1);
+    chomp(@cdata);
+    my $hash = 'd9:fd:1d:3a:7d:c9:05:26:d2:85:34:50:dc:c6:3e:26:'
+               . 'a3:11:01:2d:33:7f:a4:a1:92:27:6f:98:24:a0:46:da';
+    my $expected = qr/SHA2-256\(\Q$testdata\E\)= \Q$hash\E/;
+    ok($cdata[0] =~ $expected,
+       "-c: Check colon separated output is as expected ($cdata[0])");
+};
+
+subtest "Binary output with `dgst` CLI" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my $outfile = "dgst_binary_out.bin";
+    my $expected =
+        'd9fd1d3a7dc90526d2853450dcc63e26a311012d337fa4a192276f9824a046da';
+
+    ok(run(app(['openssl', 'dgst', '-sha256', '-binary', '-out', $outfile,
+                $testdata])),
+       "-binary: Generating binary digest");
+
+    my $binary = '';
+    if (open(my $fh, '<', $outfile)) {
+        binmode($fh);
+        local $/;
+        $binary = <$fh>;
+        close($fh);
+    }
+    ok(unpack("H*", $binary) eq $expected,
+       "-binary: Check raw digest bytes are as expected");
+    unlink($outfile);
+};
+
+subtest "Hex signature output with `dgst` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    plan tests => 3;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my $privkey = srctop_file("test", "testrsa.pem");
+    my $sigfile = "dgst_hex_sign.sig";
+
+    # Signature output defaults to binary; -hex must override that.
+    ok(run(app(['openssl', 'dgst', '-sha256', '-sign', $privkey,
+                '-out', $sigfile, $testdata])),
+       "-hex: Generating reference binary signature");
+
+    my $binsig = '';
+    if (open(my $fh, '<', $sigfile)) {
+        binmode($fh);
+        local $/;
+        $binsig = <$fh>;
+        close($fh);
+    }
+    unlink($sigfile);
+
+    my @hexdata = run(app(['openssl', 'dgst', '-sha256', '-hex',
+                           '-sign', $privkey, $testdata]), capture => 1);
+    chomp(@hexdata);
+    ok($hexdata[0] =~ /^RSA-SHA2-256\(\Q$testdata\E\)= ([0-9a-f]+)$/,
+       "-hex: Check hex signature output format ($hexdata[0])");
+    my $hexsig = $1 // '';
+    # RSA PKCS#1 v1.5 signing is deterministic, so both runs must match.
+    ok($hexsig eq unpack("H*", $binsig),
+       "-hex: Check hex signature matches the binary signature");
+};
+
 subtest "Listing supported digests with `dgst` CLI" => sub {
     plan tests => 3;
 
@@ -435,6 +548,40 @@ subtest "Listing supported digests with `dgst` CLI" => sub {
     # Only check digests that are always present, each printed as "-<name>"
     ok($listing =~ /-sha256\b/, "LIST: Check sha256 is listed");
     ok($listing =~ /-sha512\b/, "LIST: Check sha512 is listed");
+};
+
+subtest "signing and verifying with DER `-keyform` `dgst` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    plan tests => 4;
+
+    my $data_to_sign = srctop_file('test', 'data.bin');
+    my $privkey_pem = srctop_file("test", "testrsa.pem");
+    my $pubkey_pem = srctop_file("test", "testrsapub.pem");
+    my $privkey_der = "testrsa-keyform.der";
+    my $pubkey_der = "testrsapub-keyform.der";
+    my $sigfile = "testrsa-keyform.sig";
+
+    # Convert the keys to DER so the `-keyform DER` code path can be exercised.
+    ok(run(app(['openssl', 'pkey', '-in', $privkey_pem,
+                '-outform', 'DER', '-out', $privkey_der])),
+       "Convert private key to DER");
+    ok(run(app(['openssl', 'pkey', '-in', $pubkey_pem, '-pubin',
+                '-outform', 'DER', '-pubout', '-out', $pubkey_der])),
+       "Convert public key to DER");
+
+    ok(run(app(['openssl', 'dgst', '-sign', $privkey_der, '-keyform', 'DER',
+                '-out', $sigfile,
+                $data_to_sign])),
+       "Generating signature with DER private key via -keyform");
+
+    ok(run(app(['openssl', 'dgst', '-verify', $pubkey_der, '-keyform', 'DER',
+                '-signature', $sigfile,
+                $data_to_sign])),
+       "Verify signature with DER public key via -keyform");
 };
 
 subtest "signing using the nonce-type sigopt" => sub {

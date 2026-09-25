@@ -9,6 +9,7 @@
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
+#include <stdio.h>
 #include <string.h>
 #include "internal/e_os.h" /* for stat() */
 #include <sys/stat.h> /* for struct stat */
@@ -368,7 +369,7 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         hash = X509_NAME_hash_ex(x509_name,
             ossl_prov_ctx_get0_libctx(ctx->provctx), NULL,
             &ok);
-        BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
+        snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
             "%08lx", hash);
     end:
         X509_NAME_free(x509_name);
@@ -586,7 +587,8 @@ static int file_load_file(struct file_ctx_st *ctx,
 
     data.object_cb = object_cb;
     data.object_cbarg = object_cbarg;
-    OSSL_DECODER_CTX_set_construct_data(ctx->_.file.decoderctx, &data);
+    if (!OSSL_DECODER_CTX_set_construct_data(ctx->_.file.decoderctx, &data))
+        return 0;
     OSSL_DECODER_CTX_set_passphrase_cb(ctx->_.file.decoderctx, pw_cb, pw_cbarg);
 
     /* Launch */

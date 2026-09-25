@@ -232,6 +232,10 @@ struct evp_skeymgmt_st {
     /* Key identifier */
     OSSL_FUNC_skeymgmt_get_key_id_fn *get_key_id;
 
+    /* Key metadata accessors */
+    OSSL_FUNC_skeymgmt_get_local_keyid_fn *get_local_keyid;
+    OSSL_FUNC_skeymgmt_get_algorithm_id_fn *get_algorithm_id;
+
     /* destructor */
     OSSL_FUNC_skeymgmt_free_fn *free;
 } /* EVP_SKEYMGMT */;

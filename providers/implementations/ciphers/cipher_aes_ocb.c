@@ -68,7 +68,14 @@ static ossl_inline int aes_generic_ocb_gettag(PROV_AES_OCB_CTX *ctx,
 
 static ossl_inline int aes_generic_ocb_final(PROV_AES_OCB_CTX *ctx)
 {
-    return (CRYPTO_ocb128_finish(&ctx->ocb, ctx->tag, ctx->taglen) == 0);
+    int ret = CRYPTO_ocb128_finish(&ctx->ocb, ctx->tag, ctx->taglen);
+
+    /* ret: -1 = bad tag length, 0 = tag verified, otherwise = tag mismatch */
+    if (ret == -1)
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+    else if (ret != 0)
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+    return ret == 0;
 }
 
 static ossl_inline void aes_generic_ocb_cleanup(PROV_AES_OCB_CTX *ctx)
@@ -496,6 +503,14 @@ static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
+
+    /*
+     * EVP_Cipher() MUST CHECK THE TAG
+     * in == NULL indicates finalize, so hand it to the finalize path
+     * (which checks the tag on decrypt / produces it on encrypt)
+     */
+    if (in == NULL)
+        return aes_ocb_block_final(vctx, out, outl, outsize);
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);

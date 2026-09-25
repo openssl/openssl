@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,7 @@ setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 19;
+plan tests => 21;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -152,6 +152,31 @@ subtest 'EC parameter encoding (-param_enc)' => sub {
        "an invalid parameter encoding is rejected");
 };
 
+subtest 'ec -no_public excludes the public key from the private key' => sub {
+    plan tests => 5;
+
+    my $key = srctop_file("test", "testec-p256.pem");
+
+    ok(run(app(['openssl', 'ec', '-in', $key,
+                '-outform', 'DER', '-out', 'ec-priv-default.der'])),
+       "writing private key with the public key included by default");
+    ok(run(app(['openssl', 'ec', '-in', $key, '-no_public',
+                '-outform', 'DER', '-out', 'ec-priv-nopub.der'])),
+       "writing private key with -no_public");
+    ok((-s 'ec-priv-nopub.der') < (-s 'ec-priv-default.der'),
+       "-no_public encoding is smaller than the default one");
+    # The encoding is deterministic for a fixed key, so compare it
+    # against the checked-in reference file.
+    is(compare('ec-priv-nopub.der', data_file('ec-priv-nopub.der')), 0,
+       "-no_public encoding matches the reference file");
+    # The public key is recomputed from the private scalar on load, so
+    # it must match the reference public key encoding.
+    ok(run(app(['openssl', 'ec', '-inform', 'DER', '-in', 'ec-priv-nopub.der',
+                '-pubout', '-outform', 'DER', '-out', 'ec-nopub-pub.der']))
+       && compare('ec-nopub-pub.der', data_file('ec-conv-unc.der')) == 0,
+       "the public key is recovered from a key written with -no_public");
+};
+
 subtest 'ec -text prints the key in text form' => sub {
     plan tests => 7;
 
@@ -199,6 +224,30 @@ subtest 'ec -text prints the key in text form' => sub {
        "ec -text prints the expected public value for a public key");
     ok(!grep(/^priv:/, @pub),
        "ec -text does not print a private component for a public key");
+};
+
+subtest 'ec -check reports the key consistency' => sub {
+    plan tests => 4;
+
+    # ec -check prints the verdict on stderr and always exits successfully,
+    # so check the printed message instead of the exit status.
+    my $valid_err = 'ec-check-valid.err';
+    ok(run(app(['openssl', 'ec', '-check', '-noout',
+                '-in', srctop_file("test", "testec-p256.pem")],
+               stderr => $valid_err)),
+       "ec -check runs on a valid key");
+    test_file_contains("ec -check of a valid key", $valid_err,
+                       "EC Key valid");
+
+    # The invalid key is testec-p256.pem with the group generator as the
+    # public key, which is on the curve but fails the pairwise check.
+    my $invalid_err = 'ec-check-invalid.err';
+    ok(run(app(['openssl', 'ec', '-check', '-noout',
+                '-in', data_file('ec-check-invalid.pem')],
+               stderr => $invalid_err)),
+       "ec -check runs on an invalid key");
+    test_file_contains("ec -check of an invalid key", $invalid_err,
+                       "EC Key Invalid");
 };
 
 subtest 'Check loading of fips and non-fips keys' => sub {

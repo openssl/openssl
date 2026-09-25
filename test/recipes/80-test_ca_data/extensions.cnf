@@ -1,0 +1,10 @@
+extensions = default_ext
+
+[ default_ext ]
+basicConstraints = CA:false
+subjectKeyIdentifier = hash
+keyUsage = digitalSignature
+
+[ alt_ext ]
+basicConstraints = CA:false
+keyUsage = keyEncipherment

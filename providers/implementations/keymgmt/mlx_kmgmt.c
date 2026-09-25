@@ -45,12 +45,15 @@ static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
+    { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_512 },
     { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768 },
     { "EC", "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_512 },
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768 },
     { "X448", NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024 },
 #else
+    { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
 #endif
@@ -200,9 +203,8 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
             return 0;
         if (len != sub_arg->prvlen) {
             ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
-                "Unexpected %s private key length %lu != %lu",
-                sub_arg->algorithm_name, (unsigned long)len,
-                (unsigned long)sub_arg->publen);
+                "Unexpected %s private key length %zu != %zu",
+                sub_arg->algorithm_name, len, sub_arg->prvlen);
             return 0;
         }
         ++sub_arg->prvcount;
@@ -320,7 +322,7 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
 err:
     OSSL_PARAM_BLD_free(tmpl);
     OPENSSL_secure_clear_free(sub_arg.prvenc, prvlen);
-    OPENSSL_free(sub_arg.pubenc);
+    OPENSSL_clear_free(sub_arg.pubenc, publen);
     return ret;
 }
 
@@ -393,7 +395,9 @@ load_keys(MLX_KEY *key,
         } else if (publen) {
             /* Absent private key data, import public keys */
             if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PUB_KEY,
-                    minimal_selection, key, slot, pubenc,
+                    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+                        | OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                    key, slot, pubenc,
                     (int)key->minfo->pubkey_bytes,
                     (int)key->xinfo->pubkey_bytes))
                 goto err;
@@ -564,12 +568,18 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
         selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
 
     /* Extract sub-component key material */
-    if (!export_sub(&sub_arg, selection, key))
+    if (!export_sub(&sub_arg, selection, key)
+        || (pub != NULL && sub_arg.pubcount != 2)
+        || (prv != NULL && sub_arg.prvcount != 2)) {
+        /* Erase any partial key material on failure */
+        if (sub_arg.pubenc != NULL)
+            OPENSSL_cleanse(sub_arg.pubenc,
+                key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes);
+        if (sub_arg.prvenc != NULL)
+            OPENSSL_cleanse(sub_arg.prvenc,
+                key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes);
         return 0;
-
-    if ((pub != NULL && sub_arg.pubcount != 2)
-        || (prv != NULL && sub_arg.prvcount != 2))
-        return 0;
+    }
 
     return 1;
 }
@@ -797,12 +807,14 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         OSSL_DISPATCH_END                                                                  \
     }
 /* See |hybrid_vtable| above */
-DECLARE_DISPATCH(p256, 0);
-DECLARE_DISPATCH(p384, 1);
+DECLARE_DISPATCH(p256_512, 0);
+DECLARE_DISPATCH(p256, 1);
+DECLARE_DISPATCH(p384, 2);
 #if !defined(OPENSSL_NO_ECX)
-DECLARE_DISPATCH(x25519, 2);
-DECLARE_DISPATCH(x448, 3);
+DECLARE_DISPATCH(x25519_512, 3);
+DECLARE_DISPATCH(x25519, 4);
+DECLARE_DISPATCH(x448, 5);
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
-DECLARE_DISPATCH(curve_sm2, 4);
+DECLARE_DISPATCH(curve_sm2, 6);
 #endif

@@ -71,6 +71,28 @@ commonName_value		= Eric Young
 emailAddress			= email field
 emailAddress_value		= eay@mincom.oz.au
 
+# Request section with prompt-style attributes
+[ req_attrs ]
+distinguished_name	= req_distinguished_name
+attributes		= req_attributes
+
+[ req_attributes ]
+challengePassword		= A challenge password
+challengePassword_value		= SecretPass123
+challengePassword_min		= 4
+challengePassword_max		= 20
+unstructuredName		= An unstructured name
+unstructuredName_value		= An Example Company
+
+# Request section with attributes without prompting
+[ req_attrs_noprompt ]
+prompt			= no
+distinguished_name	= dirname_sec
+attributes		= req_attributes_noprompt
+
+[ req_attributes_noprompt ]
+challengePassword	= NopromptSecret456
+
 [ dirname_sec ]
 C  = UK
 O  = My Organization

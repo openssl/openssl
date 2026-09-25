@@ -85,13 +85,10 @@ echo "Running tests"
 echo "------------------------------------------------------------------"
 
 # For maintenance reasons and simplicity we only run test with kryoptic token
-meson test -C $PKCS11_PROVIDER_BUILDDIR --suite=kryoptic
+meson test -C $PKCS11_PROVIDER_BUILDDIR --print-errorlogs --suite=kryoptic
 
-if [ $? -ne 0 ]; then
-    cat $PKCS11_PROVIDER_BUILDDIR/meson-logs/testlog.txt
-    exit 1
-fi
+RESULT=$?
 
 rm -rf $PKCS11_PROVIDER_BUILDDIR
 
-exit 0
+exit $RESULT

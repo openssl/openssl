@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,7 +25,7 @@
 
 #define STRICT_ALIGNMENT 1
 #ifndef PEDANTIC
-#if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || defined(__aarch64__) || defined(__s390__) || defined(__s390x__)
+#if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || defined(__aarch64__) || defined(__s390__) || defined(__s390x__) || defined(__e2k__)
 #undef STRICT_ALIGNMENT
 #endif
 #endif
@@ -72,6 +72,9 @@
 #define BSWAP4(x) ({ uint32_t ret_=(x);                   \
                         asm ("rev8 %0,%0; srli %0,%0,32"\
                         : "+&r"(ret_));  ret_; })
+#elif defined(__e2k__)
+#define BSWAP8(x) __builtin_bswap64(x)
+#define BSWAP4(x) __builtin_bswap32(x)
 #endif
 #elif defined(_MSC_VER)
 #if _MSC_VER >= 1300

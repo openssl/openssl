@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -78,7 +78,8 @@ static int execute_HDR_get0_senderNonce_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(sender))
         goto err;
 
-    X509_NAME_ADD(sender, "CN", "A common sender name");
+    if (!TEST_true(X509_NAME_ADD(sender, "CN", "A common sender name")))
+        goto err;
     if (!TEST_int_eq(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx, sender),
             1))
         goto err;
@@ -113,7 +114,8 @@ static int execute_HDR_set1_sender_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(x509name))
         goto err;
 
-    X509_NAME_ADD(x509name, "CN", "A common sender name");
+    if (!TEST_true(X509_NAME_ADD(x509name, "CN", "A common sender name")))
+        goto err;
     if (!TEST_int_eq(ossl_cmp_hdr_set1_sender(fixture->hdr, x509name), 1))
         goto err;
 
@@ -148,7 +150,8 @@ static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(x509name))
         goto err;
 
-    X509_NAME_ADD(x509name, "CN", "A common recipient name");
+    if (!TEST_true(X509_NAME_ADD(x509name, "CN", "A common recipient name")))
+        goto err;
     if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1))
         goto err;
 
@@ -252,7 +255,7 @@ static int execute_HDR_push0_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(text))
         return 0;
 
-    if (!ASN1_STRING_set(text, "A free text", -1))
+    if (!ASN1_STRING_set1_string(text, "A free text"))
         goto err;
 
     if (!TEST_int_eq(ossl_cmp_hdr_push0_freeText(fixture->hdr, text), 1))
@@ -279,13 +282,14 @@ static int test_HDR_push0_freeText(void)
 static int execute_HDR_push1_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     ASN1_UTF8STRING *text = ASN1_UTF8STRING_new();
+    ASN1_UTF8STRING *empty = ASN1_UTF8STRING_new();
     ASN1_UTF8STRING *pushed_text;
     int res = 0;
 
-    if (!TEST_ptr(text))
+    if (!TEST_ptr(text) || !TEST_ptr(empty))
         goto err;
 
-    if (!ASN1_STRING_set(text, "A free text", -1))
+    if (!ASN1_STRING_set1_string(text, "A free text"))
         goto err;
 
     if (!TEST_int_eq(ossl_cmp_hdr_push1_freeText(fixture->hdr, text), 1))
@@ -295,9 +299,23 @@ static int execute_HDR_push1_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_int_eq(ASN1_STRING_cmp(text, pushed_text), 0))
         goto err;
 
+    /*
+     * An empty ASN1_UTF8STRING, as decoded from an empty UTF8String, has
+     * data == NULL and length == 0 and must still push successfully.
+     */
+    if (!TEST_int_eq(ossl_cmp_hdr_push1_freeText(fixture->hdr, empty), 1))
+        goto err;
+
+    if (!TEST_ptr(pushed_text = sk_ASN1_UTF8STRING_value(fixture->hdr->freeText, 1)))
+        goto err;
+
+    if (!TEST_int_eq(pushed_text->length, 0))
+        goto err;
+
     res = 1;
 err:
     ASN1_UTF8STRING_free(text);
+    ASN1_UTF8STRING_free(empty);
 
     return res;
 }

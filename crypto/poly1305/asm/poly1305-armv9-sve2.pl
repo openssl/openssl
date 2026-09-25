@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -304,6 +304,7 @@ poly1305_lazy_reduce_sve2:
 //  a VLA risc-v implementation in https://github.com/dot-asm/cryptogams.
 //
 .globl	poly1305_blocks_sve2
+.hidden	poly1305_blocks_sve2
 .type	poly1305_blocks_sve2,%function
 .align	5
 poly1305_blocks_sve2:

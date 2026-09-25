@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1576,8 +1576,8 @@ NISTP384_PRE_COMP *ossl_ec_nistp384_pre_comp_dup(NISTP384_PRE_COMP *p)
 {
     int i;
 
-    if (p != NULL)
-        CRYPTO_UP_REF(&p->references, &i);
+    if (p == NULL || !CRYPTO_UP_REF(&p->references, &i))
+        return NULL;
     return p;
 }
 

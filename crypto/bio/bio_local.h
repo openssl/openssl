@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -97,6 +97,9 @@ typedef struct bio_f_buffer_ctx_struct {
     char *obuf; /* the char array */
     int obuf_len; /* how many bytes are in it */
     int obuf_off; /* write/read offset */
+#ifndef OPENSSL_NO_SOCK
+    BIO_ADDR *peer;
+#endif
 } BIO_F_BUFFER_CTX;
 
 struct bio_st {

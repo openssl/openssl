@@ -31,10 +31,10 @@ X509_NAME_ENTRY_create_by_OBJ - X509_NAME_ENTRY utility functions
 =head1 DESCRIPTION
 
 X509_NAME_ENTRY_get_object() retrieves the field name of B<ne> in
-and B<ASN1_OBJECT> structure.
+an B<ASN1_OBJECT> structure.
 
 X509_NAME_ENTRY_get_data() retrieves the field value of B<ne> in
-and B<ASN1_STRING> structure.
+an B<ASN1_STRING> structure.
 
 X509_NAME_ENTRY_set_object() sets the field name of B<ne> to B<obj>.
 
@@ -66,11 +66,11 @@ set first so the relevant field information can be looked up internally.
 
 =head1 RETURN VALUES
 
-X509_NAME_ENTRY_get_object() returns a valid B<ASN1_OBJECT> structure if it is
-set or NULL if an error occurred.
+X509_NAME_ENTRY_get_object() returns an internal pointer to a valid
+B<ASN1_OBJECT> structure if it is set, or NULL if an error occurred.
 
-X509_NAME_ENTRY_get_data() returns a valid B<ASN1_STRING> structure if it is set
-or NULL if an error occurred.
+X509_NAME_ENTRY_get_data() returns an internal pointer to a valid
+B<ASN1_STRING> structure if it is set, or NULL if an error occurred.
 
 X509_NAME_ENTRY_set_object() and X509_NAME_ENTRY_set_data() return 1 on success
 or 0 on error.

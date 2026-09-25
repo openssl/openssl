@@ -8,13 +8,16 @@
  */
 
 /*
- * Direct tests for tls_construct_client_hello(): prime a client SSL_CONNECTION
- * enough to call the construct function without a full handshake, then check
- * the result structurally and by round-tripping it through the server parser.
- * OOM branches are covered with mfail tests.
+ * Direct tests for the client state-machine construct functions in
+ * statem_clnt.c: prime a client SSL_CONNECTION enough to call a construct
+ * function without a full handshake, then check the result structurally and,
+ * where useful, by round-tripping it through the server parser.  OOM branches
+ * are covered with mfail tests.
  */
 
+#include <stdio.h>
 #include <openssl/ssl.h>
+#include <openssl/ec.h>
 #ifndef OPENSSL_NO_ECH
 #include <openssl/ech.h>
 #include <openssl/hpke.h>
@@ -41,8 +44,8 @@
 #endif
 
 /*
- * Helpers down to prime_ssl() are generic and reusable by tests for any
- * statem_clnt construct function; the ClientHello-specific code follows.
+ * Helpers down to finish_msg() are generic and reusable by tests for any
+ * statem_clnt construct function; the per-message code follows.
  */
 
 /* Connection configuration shared by the construct tests. */
@@ -88,10 +91,11 @@ static SSL_CTX *new_ctx(const CH_CONFIG *cfg, const SSL_METHOD *meth)
 /*
  * Set up the init_buf and handshake state the write state machine would have
  * established before calling a construct function.  For the client a WPACKET
- * with the handshake header is emitted into init_buf.  initbuf_len of 0 means
- * full size; a small value exercises WPACKET failures.
+ * with the handshake header for message type mt is emitted into init_buf.
+ * initbuf_len of 0 means full size; a small value exercises WPACKET failures.
  */
-static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt)
+static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt,
+    int mt)
 {
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -115,10 +119,25 @@ static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt)
 
     if (pkt != NULL
         && (!TEST_true(WPACKET_init(pkt, s->init_buf))
-            || !TEST_true(ssl_set_handshake_header(s, pkt,
-                SSL3_MT_CLIENT_HELLO))))
+            || !TEST_true(ssl_set_handshake_header(s, pkt, mt))))
         return 0;
 
+    return 1;
+}
+
+/* Finalize a constructed message and return its bytes (header + body). */
+static int finish_msg(SSL *ssl, WPACKET *pkt, int mt, unsigned char **msg,
+    size_t *msglen)
+{
+    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (!TEST_ptr(s)
+        || !TEST_true(ssl_close_construct_packet(s, pkt, mt))
+        || !TEST_true(WPACKET_get_total_written(pkt, msglen))
+        || !TEST_true(WPACKET_finish(pkt)))
+        return 0;
+
+    *msg = (unsigned char *)s->init_buf->data;
     return 1;
 }
 
@@ -127,21 +146,6 @@ static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt)
  * tls_construct_client_hello
  * ===========================================================================
  */
-
-/* Finalize the constructed message and return its bytes (header + body). */
-static int finish_ch(SSL *ssl, WPACKET *pkt, unsigned char **msg,
-    size_t *msglen)
-{
-    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
-
-    if (!TEST_true(ssl_close_construct_packet(s, pkt, SSL3_MT_CLIENT_HELLO))
-        || !TEST_true(WPACKET_get_total_written(pkt, msglen))
-        || !TEST_true(WPACKET_finish(pkt)))
-        return 0;
-
-    *msg = (unsigned char *)s->init_buf->data;
-    return 1;
-}
 
 /* Recover the session_id length, the main branching difference in construct. */
 static int get_ch_sessid_len(const CH_CONFIG *cfg, const unsigned char *msg,
@@ -190,7 +194,7 @@ static int roundtrip_process_ch(const CH_CONFIG *cfg, const unsigned char *msg,
         || !TEST_ptr(ssl = SSL_new(sctx)))
         goto err;
 
-    if (!prime_ssl(ssl, 0, 0, NULL))
+    if (!prime_ssl(ssl, 0, 0, NULL, SSL3_MT_CLIENT_HELLO))
         goto err;
     s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -233,7 +237,7 @@ static int do_construct_ch(const CH_CONFIG *cfg,
     if (cfg->clear_midbox)
         SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
 
-    if (!prime_ssl(ssl, 1, 0, &pkt))
+    if (!prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -246,7 +250,7 @@ static int do_construct_ch(const CH_CONFIG *cfg,
         WPACKET_cleanup(&pkt);
         goto err;
     }
-    if (!finish_ch(ssl, &pkt, &msg, &msglen))
+    if (!finish_msg(ssl, &pkt, SSL3_MT_CLIENT_HELLO, &msg, &msglen))
         goto err;
 
     if (!get_ch_sessid_len(cfg, msg, msglen, &sidlen)
@@ -294,7 +298,7 @@ static int do_construct_ch_expect_fail(const CH_CONFIG *cfg,
         (void)r2;
     }
 
-    if (!prime_ssl(ssl, 1, initbuf_len, &pkt))
+    if (!prime_ssl(ssl, 1, initbuf_len, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     have_pkt = 1;
     s = SSL_CONNECTION_FROM_SSL(ssl);
@@ -534,7 +538,7 @@ static int mfail_construct_ch_common(const CH_CONFIG *cfg,
     if (cfg->clear_midbox)
         SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
 
-    if (!prime_ssl(ssl, 1, 0, &pkt))
+    if (!prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -625,14 +629,14 @@ static int test_construct_ch_ech(void)
     if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
         || !TEST_ptr(cssl = SSL_new(cctx))
         || !TEST_true(SSL_set1_echstore(cssl, es))
-        || !prime_ssl(cssl, 1, 0, &pkt))
+        || !prime_ssl(cssl, 1, 0, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     cs = SSL_CONNECTION_FROM_SSL(cssl);
     if (!TEST_int_eq(tls_construct_client_hello(cs, &pkt), CON_FUNC_SUCCESS)) {
         WPACKET_cleanup(&pkt);
         goto err;
     }
-    if (!finish_ch(cssl, &pkt, &msg, &msglen)
+    if (!finish_msg(cssl, &pkt, SSL3_MT_CLIENT_HELLO, &msg, &msglen)
         || !get_ch_sessid_len(&cfg, msg, msglen, &sidlen)
         || !TEST_size_t_eq(sidlen, SSL_MAX_SSL_SESSION_ID_LENGTH))
         goto err;
@@ -641,7 +645,7 @@ static int test_construct_ch_ech(void)
     if (!TEST_ptr(sctx = new_ctx(&cfg, server_method(&cfg)))
         || !TEST_ptr(sssl = SSL_new(sctx))
         || !TEST_true(SSL_set1_echstore(sssl, es))
-        || !prime_ssl(sssl, 0, 0, NULL))
+        || !prime_ssl(sssl, 0, 0, NULL, SSL3_MT_CLIENT_HELLO))
         goto err;
     ss = SSL_CONNECTION_FROM_SSL(sssl);
     if (!TEST_true(PACKET_buf_init(&rpkt, msg + hdr_len(&cfg),
@@ -678,6 +682,848 @@ static int mfail_construct_ch_ech(void)
 }
 #endif /* OSSL_NO_USABLE_ECH */
 
+/*
+ * ===========================================================================
+ * tls_construct_end_of_early_data
+ * ===========================================================================
+ */
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * EndOfEarlyData carries no body and only advances early_data_state; it is
+ * valid only from the WRITE_RETRY/FINISHED_WRITING states.
+ */
+static int do_construct_eoed(int state, CON_FUNC_RETURN expect)
+{
+    CH_CONFIG cfg = { 0, TLS1_3_VERSION, TLS1_3_VERSION, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    unsigned char *msg = NULL;
+    size_t msglen = 0;
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_END_OF_EARLY_DATA))
+        goto err;
+    have_pkt = 1;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    s->early_data_state = state;
+
+    if (!TEST_int_eq(tls_construct_end_of_early_data(s, &pkt), expect))
+        goto err;
+
+    if (expect == CON_FUNC_SUCCESS) {
+        /* State advances and the body is empty (only the header is written). */
+        if (!TEST_int_eq(s->early_data_state, SSL_EARLY_DATA_FINISHED_WRITING)
+            || !finish_msg(ssl, &pkt, SSL3_MT_END_OF_EARLY_DATA, &msg, &msglen))
+            goto err;
+        have_pkt = 0;
+        if (!TEST_size_t_eq(msglen, hdr_len(&cfg)))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+static int test_construct_eoed(void)
+{
+    return do_construct_eoed(SSL_EARLY_DATA_WRITE_RETRY, CON_FUNC_SUCCESS);
+}
+
+static int test_construct_eoed_bad_state(void)
+{
+    /* Called from an unexpected state: CON_FUNC_ERROR, nothing written. */
+    return do_construct_eoed(SSL_EARLY_DATA_NONE, CON_FUNC_ERROR);
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
+/*
+ * ===========================================================================
+ * tls_construct_client_certificate
+ * ===========================================================================
+ */
+
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+/* Self-signed client cert + signing-capable key; regenerate with the
+ * statem_clnt_construct_test ossl-test-tools subcommand. */
+static const char *kClientCert[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIDvzCCAqegAwIBAgICAQAwDQYJKoZIhvcNAQELBQAwgYExCzAJBgNVBAYTAlVT\n",
+    "MRAwDgYDVQQIDAdXeW9taW5nMREwDwYDVQQHDAhDaGV5ZW5uZTEVMBMGA1UECgwM\n",
+    "T3BlblNTTCBUZXN0MRQwEgYDVQQLDAtzdGF0ZW1fY2xudDEgMB4GA1UEAwwXc3Rh\n",
+    "dGVtX2NsbnQgdGVzdCBjbGllbnQwHhcNMjYwMTAxMDAwMDAwWhcNNDYwMTAxMDAw\n",
+    "MDAwWjCBgTELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB1d5b21pbmcxETAPBgNVBAcM\n",
+    "CENoZXllbm5lMRUwEwYDVQQKDAxPcGVuU1NMIFRlc3QxFDASBgNVBAsMC3N0YXRl\n",
+    "bV9jbG50MSAwHgYDVQQDDBdzdGF0ZW1fY2xudCB0ZXN0IGNsaWVudDCCASIwDQYJ\n",
+    "KoZIhvcNAQEBBQADggEPADCCAQoCggEBAMnUvJvluB2ZUoQNQlW4wgv0qceITB5X\n",
+    "cHQe60H1CMTapaRi32dpwEzoEMnMjULcrZshcTAkdke6J1ubJ6qviGp7n1kVYH18\n",
+    "rGYYk6VT+GPb/SZnjMX3+e5WEpH+53UEGVvBPHl/med0AzklOOf/0hDlMFzMBejA\n",
+    "z+T++88QIT19BoIwfilcMDZxE0uXbq3QLpugADGd93zLSCwM1vxd9Vi0EwyMpy7Q\n",
+    "Ot9eIR/+ML0HESXZ1AvVcLjvuhqm+xkNiR9qil68zqgJk+dUpK5hCpLBi7cfBpk7\n",
+    "jLultF09up6G3Y5KiXd8wS9upwJZXA9+9OKHTf05w4xWAA/kpp9gt0MCAwEAAaM/\n",
+    "MD0wDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCB4AwHQYDVR0OBBYEFM9Nespo\n",
+    "NSyfQO8jPjRl4JfH5kOsMA0GCSqGSIb3DQEBCwUAA4IBAQBtTgy5ePCHR+iu3Ign\n",
+    "wlJzL5+zkWOkQsbAzJsbWrvzqwx2shXr1adM7OJy7tCkmDgwHsXjTTO2qAZrlmYQ\n",
+    "ktGA/UAtttIqgiiYcyGdrZas2vXUWLUps5YzMm4YdY8YNTvqQl3LCziUhO5YREDP\n",
+    "teXy4FF6ijGUDe84CYsmKvtbIn34LtZ2Vo3gsiRHvdiaxHavH30UqED9k4NjKnFx\n",
+    "XM6eMw+bs0Yl1vi/Dz5tHPRaAnsGvnKcEveSAdAoSWmodw8n8W5t8ZvPoPCoKz88\n",
+    "DOGzUvLma/kVL+3HLiSn6XFiQ2NLfO9ceUgDsSzcRo76XZHJnfGsK6Iewgje3NrB\n",
+    "WnZs\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kClientKey[] = {
+    "-----BEGIN RSA PRIVATE KEY-----\n",
+    "MIIEowIBAAKCAQEAydS8m+W4HZlShA1CVbjCC/Spx4hMHldwdB7rQfUIxNqlpGLf\n",
+    "Z2nATOgQycyNQtytmyFxMCR2R7onW5snqq+IanufWRVgfXysZhiTpVP4Y9v9JmeM\n",
+    "xff57lYSkf7ndQQZW8E8eX+Z53QDOSU45//SEOUwXMwF6MDP5P77zxAhPX0GgjB+\n",
+    "KVwwNnETS5durdAum6AAMZ33fMtILAzW/F31WLQTDIynLtA6314hH/4wvQcRJdnU\n",
+    "C9VwuO+6Gqb7GQ2JH2qKXrzOqAmT51SkrmEKksGLtx8GmTuMu6W0XT26nobdjkqJ\n",
+    "d3zBL26nAllcD3704odN/TnDjFYAD+Smn2C3QwIDAQABAoIBAGAjkzIJczG6MmmP\n",
+    "bU0q5FfQk7zlaii7yuetQK/a2fH3GpbauALpBz46/qA5bQJv3sw52lIt1B+nhw7m\n",
+    "MbdmxKrANy+2dI9hvzckttO2U2exxvyvr4kvbWB/pHnhu3vsV23y9m0DgJqVEuH6\n",
+    "Hoi4PWZp3aceUiRED+NLKERCMSs5lPSSWR7sUkzHku4x5fZXZppcQW4leo+Z/kNC\n",
+    "I36CGF4pI9FJXwcuRhbv3NsFMVl/Ng4hWgzgu7zwJEPw2OSKyhdwHV53qGQWyMnJ\n",
+    "7SawyQfyspKlMZnjWxplFZ5tgaV6O63zZZPEOC2mZNeiZKWC9Lut/wyriLs+W4w7\n",
+    "9BBX3q0CgYEA94sgemr3rGY2R+9kiPV/TC08IUflMJ7kt0epDDRnojWqobinJzQG\n",
+    "Nq25i5vZHbjn9g7l2hNmOcHVZZmCYZitmjwWr4ibthftU7+H6WkvcBvH6b6EmHQm\n",
+    "5IGtOxYPmtf2Ghnj1uQmsBe9vRYcqx7B8/anqRi3lQhebykkII0MLR8CgYEA0LnV\n",
+    "vXaFAwLOta4Kn43mXC6sVRRMt316d70zRpVRsSQ64TdhtwArmKq3RUmLH2r3ysRL\n",
+    "6+mxEGJriL7JERH3Jlm0YGsUUQvQWxCddccuTQRc16+UVt7+xzfhzJZNTD4+t0aA\n",
+    "jsVLpPQHzXI8Yqzh1p83oC4XV4hCYZNLlfleTV0CgYBWIG/yZ9k4gG+OY7pk9JWP\n",
+    "2YU8Rxl06zPEmQg2GN2d0HJHxklSGIW47ITMEDNgZf8+2zwZvfopSkmHCfwVHNv5\n",
+    "98Ik3LDgkD6gjtko2tIIfYH2z7SunmsRwhSVpD1VsKINvshI8iSLzBbV/SWIXDE7\n",
+    "Qqxe5xyom7rPjk7ljG2aHQKBgB36oxV8YWxmSdRUdBgopG6XEY+Cw+YS8rUiCqxX\n",
+    "pA0iXAafErzbHGfoFTyxbHcNwRtxiEoRHapxyGoypOR7xRjQB5VVq+xcGwgJYeRZ\n",
+    "wG+1cbRU9qRnkQaCIz9kUyPhSNbAHJTlB5Fgr4I1pzCxDhrqcW3jUNz0qDwlkNSw\n",
+    "pXfNAoGBAKlFbbPEzFonlkHVtdUuk6Chsi5k/ddrWsGxwUw5F5BSu0UaseolVls5\n",
+    "TyDVa8FEfDnUZRxl8HSfC/Qp/kAdveGKyhNaex22L5G8m20rXjsQBMFHMOy2Mho1\n",
+    "hgs0/emKuVyCs+wnYOqJlWZ8Vf/qGcUtDF3r4aEZ1JUDhUBAVEpo\n",
+    "-----END RSA PRIVATE KEY-----\n",
+    NULL
+};
+
+static int load_cert_and_key(SSL *ssl)
+{
+    X509 *cert = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cert = X509_from_strings(kClientCert))
+        || !TEST_ptr(pkey = PKEY_from_strings(kClientKey))
+        || !TEST_int_eq(SSL_use_certificate(ssl, cert), 1)
+        || !TEST_int_eq(SSL_use_PrivateKey(ssl, pkey), 1))
+        goto err;
+    ret = 1;
+err:
+    X509_free(cert);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/*
+ * Run tls_construct_client_certificate() under mfail; prep installs the cert
+ * material.  For TLS 1.3 the method is swapped in (IS_TLS13 keys off it) and
+ * middlebox compat cleared to skip the write-key change.
+ */
+static int mfail_construct_cert(int is_tls13, int (*prep)(SSL_CONNECTION *s))
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    int ok = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx)))
+        goto err;
+    if (is_tls13)
+        SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    if (!prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CERTIFICATE))
+        goto err;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    if (is_tls13)
+        ssl->method = tlsv1_3_client_method();
+#endif
+
+    if (prep != NULL && !prep(s)) {
+        WPACKET_cleanup(&pkt);
+        goto err;
+    }
+
+    MFAIL_start();
+    ok = (tls_construct_client_certificate(s, &pkt) == CON_FUNC_SUCCESS);
+    MFAIL_end();
+
+    WPACKET_cleanup(&pkt);
+
+    ret = ok ? 1 : 0;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+#endif /* TLS 1.2 or usable TLS 1.3 */
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/* x509 over TLS 1.3; NO_AUTO_CHAIN avoids best-effort verify swallowing OOM. */
+static int prep_cert_x509(SSL_CONNECTION *s)
+{
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    SSL_set_mode(ssl, SSL_MODE_NO_AUTO_CHAIN);
+    return load_cert_and_key(ssl);
+}
+
+static int mfail_construct_cert_x509(void)
+{
+    return mfail_construct_cert(1, prep_cert_x509);
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
+#ifndef OPENSSL_NO_TLS1_2
+/* RPK derived from the certificate public key over TLS 1.2 (tls_output_rpk). */
+static int prep_cert_rpk(SSL_CONNECTION *s)
+{
+    if (!load_cert_and_key(SSL_CONNECTION_GET_SSL(s)))
+        return 0;
+    s->ext.client_cert_type = TLSEXT_cert_type_rpk;
+    return 1;
+}
+
+static int mfail_construct_cert_rpk(void)
+{
+    return mfail_construct_cert(0, prep_cert_rpk);
+}
+#endif /* OPENSSL_NO_TLS1_2 */
+
+/* Deterministic error branches that mfail (allocation-only) cannot reach. */
+
+/* An unrecognized certificate type is rejected. */
+static int test_construct_cert_bad_type(void)
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CERTIFICATE))
+        goto err;
+    have_pkt = 1;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    s->ext.client_cert_type = 0xff;
+
+    if (!TEST_int_eq(tls_construct_client_certificate(s, &pkt), CON_FUNC_ERROR))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * With middlebox compat on, the TLS 1.3 path changes the write keys; without a
+ * negotiated cipher that fails rather than succeeding.
+ */
+static int test_construct_cert_change_cipher_fail(void)
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CERTIFICATE))
+        goto err;
+    have_pkt = 1;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    ssl->method = tlsv1_3_client_method();
+
+    if (!TEST_int_eq(tls_construct_client_certificate(s, &pkt), CON_FUNC_ERROR))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+/*
+ * A WPACKET failure while writing the TLS 1.3 certificate_request_context
+ * yields CON_FUNC_ERROR.  with_pha exercises the non-empty-context branch.
+ */
+static int do_construct_cert_ctx_small_buf(int with_pha)
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    unsigned char buf[16];
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx)))
+        goto err;
+    SSL_set_connect_state(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    if (!TEST_ptr(s)
+        || !TEST_ptr(s->init_buf = BUF_MEM_new())
+        || !TEST_true(BUF_MEM_grow(s->init_buf, SSL3_RT_MAX_PLAIN_LENGTH))
+        || !TEST_true(tls_setup_handshake(s)))
+        goto err;
+    ssl->method = tlsv1_3_client_method();
+
+    if (with_pha) {
+        if (!TEST_ptr(s->pha_context = OPENSSL_malloc(4)))
+            goto err;
+        s->pha_context_len = 4;
+    }
+
+    /* Only the handshake header fits, so the context write overflows. */
+    if (!TEST_true(WPACKET_init_static_len(&pkt, buf, hdr_len(&cfg), 0)))
+        goto err;
+    have_pkt = 1;
+    if (!TEST_true(ssl_set_handshake_header(s, &pkt, SSL3_MT_CERTIFICATE)))
+        goto err;
+
+    if (!TEST_int_eq(tls_construct_client_certificate(s, &pkt), CON_FUNC_ERROR))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+static int test_construct_cert_ctx_small_buf(void)
+{
+    return do_construct_cert_ctx_small_buf(0);
+}
+
+static int test_construct_cert_pha_ctx_small_buf(void)
+{
+    return do_construct_cert_ctx_small_buf(1);
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
+/*
+ * ===========================================================================
+ * tls_construct_client_key_exchange
+ * ===========================================================================
+ */
+
+#ifndef OPENSSL_NO_TLS1_2
+/*
+ * The CKE constructors read s->session (peer certificate, PSK identity hint,
+ * SRP username), which the real state machine creates while processing the
+ * ServerHello; install a minimal TLS 1.2 session in its place.
+ */
+static SSL_SESSION *install_session(SSL_CONNECTION *s)
+{
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL_SESSION *sess = SSL_SESSION_new();
+
+    if (!TEST_ptr(sess))
+        return NULL;
+    sess->ssl_version = TLS1_2_VERSION;
+    if (!TEST_true(SSL_set_session(ssl, sess))) {
+        SSL_SESSION_free(sess);
+        return NULL;
+    }
+    SSL_SESSION_free(sess);
+    return s->session;
+}
+
+/*
+ * Set the negotiated cipher: the configured list still has the TLS 1.3
+ * ciphersuites in front, so find the named TLS 1.2 cipher rather than
+ * taking the head of the list.
+ */
+static int set_new_cipher(SSL *ssl, const char *name)
+{
+    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
+    STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(ssl);
+    int i;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+        const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+
+        if (strcmp(SSL_CIPHER_get_name(c), name) == 0) {
+            s->s3.tmp.new_cipher = c;
+            return 1;
+        }
+    }
+    TEST_error("cipher %s not found", name);
+    return 0;
+}
+
+/*
+ * Construct a ClientKeyExchange for the cipher named by cipher (NULL
+ * leaves s->s3.tmp.new_cipher for prep to set).  prep injects the state the
+ * chosen key exchange needs; on success check() inspects the message body.
+ */
+static int do_construct_cke(const char *cipher,
+    int (*prep)(SSL_CONNECTION *s), CON_FUNC_RETURN expect,
+    int (*check)(SSL_CONNECTION *s, const unsigned char *body, size_t bodylen))
+{
+    CH_CONFIG cfg = { 0, TLS1_2_VERSION, TLS1_2_VERSION, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    unsigned char *msg = NULL;
+    size_t msglen = 0;
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx)))
+        goto err;
+    if (cipher != NULL && !TEST_true(SSL_set_cipher_list(ssl, cipher)))
+        goto err;
+    if (!prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CLIENT_KEY_EXCHANGE))
+        goto err;
+    have_pkt = 1;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    if (cipher != NULL && !set_new_cipher(ssl, cipher))
+        goto err;
+
+    if (prep != NULL && !prep(s))
+        goto err;
+
+    if (!TEST_int_eq(tls_construct_client_key_exchange(s, &pkt), expect))
+        goto err;
+
+    if (expect == CON_FUNC_SUCCESS) {
+        if (!finish_msg(ssl, &pkt, SSL3_MT_CLIENT_KEY_EXCHANGE, &msg, &msglen))
+            goto err;
+        have_pkt = 0;
+        if (check != NULL
+            && !check(s, msg + hdr_len(&cfg), msglen - hdr_len(&cfg)))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+/* Run tls_construct_client_key_exchange() under mfail; prep as above. */
+static int mfail_construct_cke_common(const char *cipher,
+    int (*prep)(SSL_CONNECTION *s))
+{
+    CH_CONFIG cfg = { 0, TLS1_2_VERSION, TLS1_2_VERSION, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    int ok = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !TEST_true(SSL_set_cipher_list(ssl, cipher))
+        || !prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CLIENT_KEY_EXCHANGE))
+        goto err;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    if (!set_new_cipher(ssl, cipher) || (prep != NULL && !prep(s))) {
+        WPACKET_cleanup(&pkt);
+        goto err;
+    }
+
+    MFAIL_start();
+    ok = (tls_construct_client_key_exchange(s, &pkt) == CON_FUNC_SUCCESS);
+    MFAIL_end();
+
+    WPACKET_cleanup(&pkt);
+
+    /* 1 on clean success, 0 on an injected allocation failure. */
+    ret = ok ? 1 : 0;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+/* kRSA: reuse the test certificate as the received server certificate. */
+static int prep_cke_rsa(SSL_CONNECTION *s)
+{
+    SSL_SESSION *sess = install_session(s);
+
+    if (sess == NULL)
+        return 0;
+    return TEST_ptr(sess->peer = X509_from_strings(kClientCert));
+}
+
+static int check_cke_rsa(SSL_CONNECTION *s, const unsigned char *body,
+    size_t bodylen)
+{
+    PACKET pkt = { 0 }, enc = { 0 };
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    unsigned char pms[256];
+    size_t pmslen = sizeof(pms);
+    int ret = 0;
+
+    /* The 2048-bit server key gives a 256-byte encrypted premaster secret. */
+    if (!TEST_true(PACKET_buf_init(&pkt, body, bodylen))
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &enc))
+        || !TEST_size_t_eq(PACKET_remaining(&pkt), 0)
+        || !TEST_size_t_eq(PACKET_remaining(&enc), 256))
+        return 0;
+
+    /* Decrypt with the server key: must match the saved premaster secret. */
+    if (!TEST_ptr(pkey = PKEY_from_strings(kClientKey))
+        || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_decrypt_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_decrypt(pctx, pms, &pmslen,
+                            PACKET_data(&enc), PACKET_remaining(&enc)),
+            0)
+        || !TEST_ptr(s->s3.tmp.pms)
+        || !TEST_mem_eq(pms, pmslen, s->s3.tmp.pms, s->s3.tmp.pmslen))
+        goto err;
+
+    /* The premaster secret starts with the client version. */
+    if (!TEST_size_t_eq(pmslen, SSL_MAX_MASTER_KEY_LENGTH)
+        || !TEST_int_eq(pms[0], (s->client_version >> 8) & 0xff)
+        || !TEST_int_eq(pms[1], s->client_version & 0xff))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int test_construct_cke_rsa(void)
+{
+    return do_construct_cke("AES128-GCM-SHA256", prep_cke_rsa,
+        CON_FUNC_SUCCESS, check_cke_rsa);
+}
+
+/* kRSA without a received server certificate fails. */
+static int prep_cke_rsa_no_cert(SSL_CONNECTION *s)
+{
+    return install_session(s) != NULL;
+}
+
+static int test_construct_cke_rsa_no_cert(void)
+{
+    return do_construct_cke("AES128-GCM-SHA256", prep_cke_rsa_no_cert,
+        CON_FUNC_ERROR, NULL);
+}
+
+static int mfail_construct_cke_rsa(void)
+{
+    return mfail_construct_cke_common("AES128-GCM-SHA256", prep_cke_rsa);
+}
+
+#ifndef OPENSSL_NO_EC
+/* kECDHE: the server's ephemeral key would come from ServerKeyExchange. */
+static int prep_cke_ecdhe(SSL_CONNECTION *s)
+{
+    return TEST_ptr(s->s3.peer_tmp = EVP_PKEY_Q_keygen(NULL, NULL, "EC",
+                        "P-256"));
+}
+
+static int check_cke_ecdhe(SSL_CONNECTION *s, const unsigned char *body,
+    size_t bodylen)
+{
+    PACKET pkt = { 0 }, point = { 0 };
+
+    /* An uncompressed P-256 point: format byte plus two 32-byte coords. */
+    if (!TEST_true(PACKET_buf_init(&pkt, body, bodylen))
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &point))
+        || !TEST_size_t_eq(PACKET_remaining(&pkt), 0)
+        || !TEST_size_t_eq(PACKET_remaining(&point), 65)
+        || !TEST_int_eq(PACKET_data(&point)[0], POINT_CONVERSION_UNCOMPRESSED))
+        return 0;
+    /* ssl_derive saved the x-coordinate as the premaster secret. */
+    return TEST_ptr(s->s3.tmp.pms) && TEST_size_t_eq(s->s3.tmp.pmslen, 32);
+}
+
+static int test_construct_cke_ecdhe(void)
+{
+    return do_construct_cke("ECDHE-RSA-AES128-GCM-SHA256", prep_cke_ecdhe,
+        CON_FUNC_SUCCESS, check_cke_ecdhe);
+}
+
+/* Without the server's ephemeral key (s->s3.peer_tmp) the construct fails. */
+static int test_construct_cke_ecdhe_no_key(void)
+{
+    return do_construct_cke("ECDHE-RSA-AES128-GCM-SHA256", NULL,
+        CON_FUNC_ERROR, NULL);
+}
+
+/* A WPACKET overflow while writing the key share yields CON_FUNC_ERROR. */
+static int test_construct_cke_small_buf(void)
+{
+    CH_CONFIG cfg = { 0, TLS1_2_VERSION, TLS1_2_VERSION, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    unsigned char buf[16];
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !TEST_true(SSL_set_cipher_list(ssl, "ECDHE-RSA-AES128-GCM-SHA256"))
+        || !prime_ssl(ssl, 1, 0, NULL, SSL3_MT_CLIENT_KEY_EXCHANGE))
+        goto err;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    if (!set_new_cipher(ssl, "ECDHE-RSA-AES128-GCM-SHA256")
+        || !prep_cke_ecdhe(s))
+        goto err;
+
+    /* Too small for the 65-byte P-256 point: the point write overflows. */
+    if (!TEST_true(WPACKET_init_static_len(&pkt, buf, sizeof(buf), 0)))
+        goto err;
+    have_pkt = 1;
+    if (!TEST_true(ssl_set_handshake_header(s, &pkt,
+            SSL3_MT_CLIENT_KEY_EXCHANGE)))
+        goto err;
+
+    if (!TEST_int_eq(tls_construct_client_key_exchange(s, &pkt),
+            CON_FUNC_ERROR))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+/*
+ * X25519 keygen when possible: without ECX we fall back to EC keygen, which
+ * makes a best-effort param-cache allocation whose failure does not propagate
+ * (as for mfail_construct_ch_tls13), so only crash/leak checking applies.
+ */
+static int prep_cke_ecdhe_mfail(SSL_CONNECTION *s)
+{
+#ifndef OPENSSL_NO_ECX
+    return TEST_ptr(s->s3.peer_tmp = EVP_PKEY_Q_keygen(NULL, NULL, "X25519"));
+#else
+    return prep_cke_ecdhe(s);
+#endif
+}
+
+static int mfail_construct_cke_ecdhe(void)
+{
+    return mfail_construct_cke_common("ECDHE-RSA-AES128-GCM-SHA256",
+        prep_cke_ecdhe_mfail);
+}
+#endif /* OPENSSL_NO_EC */
+
+#ifndef OPENSSL_NO_DH
+/* kDHE: the server's ephemeral key would come from ServerKeyExchange. */
+static int prep_cke_dhe(SSL_CONNECTION *s)
+{
+    EVP_PKEY_CTX *pctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_group_name(pctx, "ffdhe2048"), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(pctx, &s->s3.peer_tmp), 0))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+
+/* The public key is zero-padded to the prime length (256 for ffdhe2048). */
+static int check_cke_dhe(SSL_CONNECTION *s, const unsigned char *body,
+    size_t bodylen)
+{
+    PACKET pkt = { 0 }, pub = { 0 };
+
+    if (!TEST_true(PACKET_buf_init(&pkt, body, bodylen))
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &pub))
+        || !TEST_size_t_eq(PACKET_remaining(&pkt), 0)
+        || !TEST_size_t_eq(PACKET_remaining(&pub), 256))
+        return 0;
+    /* ssl_derive saved the premaster secret. */
+    return TEST_ptr(s->s3.tmp.pms) && TEST_size_t_gt(s->s3.tmp.pmslen, 0);
+}
+
+static int test_construct_cke_dhe(void)
+{
+    return do_construct_cke("DHE-RSA-AES128-GCM-SHA256", prep_cke_dhe,
+        CON_FUNC_SUCCESS, check_cke_dhe);
+}
+#endif /* OPENSSL_NO_DH */
+
+#ifndef OPENSSL_NO_PSK
+#define CKE_PSK_IDENTITY "statem-clnt-psk-identity"
+
+static const unsigned char cke_psk[16] = {
+    0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7,
+    0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf
+};
+
+static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
+    unsigned int max_identity_len, unsigned char *psk,
+    unsigned int max_psk_len)
+{
+    if (snprintf(identity, max_identity_len, "%s", CKE_PSK_IDENTITY) <= 0
+        || max_psk_len < sizeof(cke_psk))
+        return 0;
+    memcpy(psk, cke_psk, sizeof(cke_psk));
+    return sizeof(cke_psk);
+}
+
+static int prep_cke_psk(SSL_CONNECTION *s)
+{
+    if (install_session(s) == NULL)
+        return 0;
+    SSL_set_psk_client_callback(SSL_CONNECTION_GET_SSL(s), psk_client_cb);
+    return 1;
+}
+
+/* kPSK sends only the identity; the PSK itself is stashed for the secret. */
+static int check_cke_psk(SSL_CONNECTION *s, const unsigned char *body,
+    size_t bodylen)
+{
+    PACKET pkt = { 0 }, identity = { 0 };
+
+    if (!TEST_true(PACKET_buf_init(&pkt, body, bodylen))
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &identity))
+        || !TEST_size_t_eq(PACKET_remaining(&pkt), 0)
+        || !TEST_mem_eq(PACKET_data(&identity), PACKET_remaining(&identity),
+            CKE_PSK_IDENTITY, strlen(CKE_PSK_IDENTITY)))
+        return 0;
+    return TEST_mem_eq(s->s3.tmp.psk, s->s3.tmp.psklen, cke_psk,
+               sizeof(cke_psk))
+        && TEST_str_eq(s->session->psk_identity, CKE_PSK_IDENTITY);
+}
+
+static int test_construct_cke_psk(void)
+{
+    return do_construct_cke("PSK-AES128-GCM-SHA256", prep_cke_psk,
+        CON_FUNC_SUCCESS, check_cke_psk);
+}
+
+/* No PSK client callback set: fails before the session is even looked at. */
+static int test_construct_cke_psk_no_cb(void)
+{
+    return do_construct_cke("PSK-AES128-GCM-SHA256", NULL, CON_FUNC_ERROR,
+        NULL);
+}
+
+/* A callback returning no PSK is treated as identity-not-found. */
+static unsigned int psk_client_cb_empty(SSL *ssl, const char *hint,
+    char *identity, unsigned int max_identity_len, unsigned char *psk,
+    unsigned int max_psk_len)
+{
+    return 0;
+}
+
+static int prep_cke_psk_not_found(SSL_CONNECTION *s)
+{
+    if (install_session(s) == NULL)
+        return 0;
+    SSL_set_psk_client_callback(SSL_CONNECTION_GET_SSL(s),
+        psk_client_cb_empty);
+    return 1;
+}
+
+static int test_construct_cke_psk_not_found(void)
+{
+    return do_construct_cke("PSK-AES128-GCM-SHA256", prep_cke_psk_not_found,
+        CON_FUNC_ERROR, NULL);
+}
+
+/* A callback claiming more than PSK_MAX_PSK_LEN is rejected. */
+static unsigned int psk_client_cb_oversize(SSL *ssl, const char *hint,
+    char *identity, unsigned int max_identity_len, unsigned char *psk,
+    unsigned int max_psk_len)
+{
+    return PSK_MAX_PSK_LEN + 1;
+}
+
+static int prep_cke_psk_oversize(SSL_CONNECTION *s)
+{
+    if (install_session(s) == NULL)
+        return 0;
+    SSL_set_psk_client_callback(SSL_CONNECTION_GET_SSL(s),
+        psk_client_cb_oversize);
+    return 1;
+}
+
+static int test_construct_cke_psk_oversize(void)
+{
+    return do_construct_cke("PSK-AES128-GCM-SHA256", prep_cke_psk_oversize,
+        CON_FUNC_ERROR, NULL);
+}
+
+static int mfail_construct_cke_psk(void)
+{
+    return mfail_construct_cke_common("PSK-AES128-GCM-SHA256", prep_cke_psk);
+}
+#endif /* OPENSSL_NO_PSK */
+
+/* A cipher whose key exchange matches no branch hits the final SSLfatal. */
+static int prep_cke_bad_kex(SSL_CONNECTION *s)
+{
+    static const SSL_CIPHER no_kex_cipher = { 0 };
+
+    s->s3.tmp.new_cipher = &no_kex_cipher;
+    return 1;
+}
+
+static int test_construct_cke_bad_kex(void)
+{
+    return do_construct_cke(NULL, prep_cke_bad_kex, CON_FUNC_ERROR, NULL);
+}
+#endif /* OPENSSL_NO_TLS1_2 */
+
 int setup_tests(void)
 {
     ADD_TEST(test_construct_ch_small_buf);
@@ -693,10 +1539,8 @@ int setup_tests(void)
     ADD_TEST(test_construct_ch_tls13);
     ADD_TEST(test_construct_ch_tls13_no_middlebox);
     ADD_TEST(test_construct_ch_hrr);
-    /*
-     * The non-cached mfail run takes too long and does not test too much extra
-     * so better to skip it.
-     */
+    ADD_TEST(test_construct_eoed);
+    ADD_TEST(test_construct_eoed_bad_state);
 #if defined(OPENSSL_NO_ECX)
     /*
      * Without ECX the key_share falls back to EC keygen, which makes a
@@ -724,5 +1568,48 @@ int setup_tests(void)
 #endif
     ADD_MFAIL_TEST(mfail_construct_ch_ech);
 #endif /* OSSL_NO_USABLE_ECH */
+
+    /* tls_construct_client_certificate: OOM coverage of the output functions. */
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_MFAIL_TEST(mfail_construct_cert_x509);
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_MFAIL_TEST(mfail_construct_cert_rpk);
+#endif
+    ADD_TEST(test_construct_cert_bad_type);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_TEST(test_construct_cert_change_cipher_fail);
+    ADD_TEST(test_construct_cert_ctx_small_buf);
+    ADD_TEST(test_construct_cert_pha_ctx_small_buf);
+#endif
+
+    /* tls_construct_client_key_exchange */
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_TEST(test_construct_cke_rsa);
+    ADD_TEST(test_construct_cke_rsa_no_cert);
+    ADD_TEST(test_construct_cke_bad_kex);
+    ADD_MFAIL_TEST(mfail_construct_cke_rsa);
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_construct_cke_ecdhe);
+    ADD_TEST(test_construct_cke_ecdhe_no_key);
+    ADD_TEST(test_construct_cke_small_buf);
+#if defined(OPENSSL_NO_ECX)
+    /* EC keygen: see the mfail_construct_ch_tls13 comment above. */
+    ADD_MFAIL_NO_CHECK_TEST(mfail_construct_cke_ecdhe);
+#else
+    ADD_MFAIL_TEST(mfail_construct_cke_ecdhe);
+#endif
+#endif /* OPENSSL_NO_EC */
+#ifndef OPENSSL_NO_DH
+    ADD_TEST(test_construct_cke_dhe);
+#endif
+#ifndef OPENSSL_NO_PSK
+    ADD_TEST(test_construct_cke_psk);
+    ADD_TEST(test_construct_cke_psk_no_cb);
+    ADD_TEST(test_construct_cke_psk_not_found);
+    ADD_TEST(test_construct_cke_psk_oversize);
+    ADD_MFAIL_TEST(mfail_construct_cke_psk);
+#endif
+#endif /* OPENSSL_NO_TLS1_2 */
     return 1;
 }

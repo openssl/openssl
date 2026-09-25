@@ -39,8 +39,7 @@ static int evp_kem_up_ref(void *data)
     EVP_KEM *kem = (EVP_KEM *)data;
     int ref = 0;
 
-    CRYPTO_UP_REF(&kem->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&kem->refcnt, &ref);
 }
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,

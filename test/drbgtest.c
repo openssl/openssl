@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -415,7 +415,7 @@ static int test_rand_reseed_on_fork(EVP_RAND_CTX *primary,
 
         presult[0].pindex = presult[1].pindex = i;
 
-        BIO_snprintf(presult[0].name, sizeof(presult[0].name), "child %d", i);
+        snprintf(presult[0].name, sizeof(presult[0].name), "child %d", i);
         strcpy(presult[1].name, presult[0].name);
 
         /* collect the random output of the children */

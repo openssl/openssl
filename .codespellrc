@@ -258,6 +258,7 @@ ignore-words-list =
     requestor,
     Requestor,
     requestors,
+    REQUIREDs,
     rewinded,
     roperties,
     sav,

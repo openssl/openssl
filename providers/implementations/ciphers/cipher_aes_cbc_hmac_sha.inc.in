@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the \"License\").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT',
                            'maxfrag',  'size_t',       "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
                           ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD',
-                           'mb_aad',   'size_t',       "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
+                           'mb_aad',   'octet_string', "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
                           ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE',
                            'ileave',   'uint',         "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
                           ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC',

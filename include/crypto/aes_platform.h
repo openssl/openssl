@@ -184,6 +184,51 @@ void gcm_ghash_v8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp, siz
 #endif
 #endif
 
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
+    && !defined(OPENSSL_NO_ASM)                                                        \
+    && ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8))                  \
+        || (defined(__clang__) && (__clang_major__ >= 7))                              \
+        || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
+#define VAES512_ELIGIBLE 1
+#else
+#define VAES512_ELIGIBLE 0
+#endif
+
+/*
+ * An MSVC build of the VAES-512 CTR kernel returns a wrong keystream for
+ * AES-192 and AES-256 on a CPU that really has AVX-512 + VAES, for every
+ * payload whose block count leaves a 4-block (single-zmm) step.  That also
+ * corrupts the AES-256-CTR based CTR-DRBG, so the damage is not confined to
+ * CTR callers.
+ *
+ * The same C is correct on VAES hardware under gcc, so this looks like code
+ * generation rather than a logic error.  MSVC 14.51 is the toolset that fails;
+ * 14.41 does not reproduce it.  Keep the CTR hook off for MSVC until that is
+ * understood.  AES-CBC decryption stays enabled: it passed on the same host
+ * and compiler that exposed the CTR failure.
+ * See https://github.com/openssl/openssl/issues/32873.
+ */
+#if defined(_MSC_VER) && !defined(__clang__)
+#define VAES_CTR_ELIGIBLE 0
+#else
+#define VAES_CTR_ELIGIBLE VAES512_ELIGIBLE
+#endif
+#define VAES_CBC_ELIGIBLE VAES512_ELIGIBLE
+
+#if VAES_CTR_ELIGIBLE
+void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key,
+    unsigned char *counter,
+    unsigned char *ecount_buf, unsigned int *num);
+int ossl_aes_ctr_vaes_eligible(void);
+#endif
+
+#if VAES_CBC_ELIGIBLE
+void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key, unsigned char ivec[16], int enc);
+int ossl_aes_cbc_vaes_eligible(void);
+#endif
+
 #if defined(AES_ASM) && !defined(I386_ONLY) && (((defined(__i386) || defined(__i386__) || defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2)) || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 
 /* AES-NI section */
@@ -210,6 +255,7 @@ void ossl_aes_cfb128_vaes_enc(const unsigned char *in, unsigned char *out,
 void ossl_aes_cfb128_vaes_dec(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *ks,
     const unsigned char ivec[16], ossl_ssize_t *num);
+
 int ossl_aes_cfb128_vaes_eligible(void);
 
 void aesni_encrypt(const unsigned char *in, unsigned char *out,

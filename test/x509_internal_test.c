@@ -16,8 +16,11 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include "testutil.h"
+#include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "crypto/x509.h"
+#include "crypto/evp.h"
+#include "../crypto/asn1/asn1_local.h"
 
 /**********************************************************************
  *
@@ -152,7 +155,7 @@ static int test_a2i_ipaddress(int idx)
 {
     int good = 1;
     ASN1_OCTET_STRING *ip;
-    int len = a2i_ipaddress_tests[idx].length;
+    size_t len = a2i_ipaddress_tests[idx].length;
 
     ip = a2i_IPADDRESS(a2i_ipaddress_tests[idx].ipasc);
     if (len == 0) {
@@ -162,7 +165,7 @@ static int test_a2i_ipaddress(int idx)
         }
     } else {
         if (!TEST_ptr(ip)
-            || !TEST_int_eq(ASN1_STRING_length(ip), len)
+            || !TEST_size_t_eq(ASN1_STRING_get_length(ip), len)
             || !TEST_mem_eq(ASN1_STRING_get0_data(ip), len,
                 a2i_ipaddress_tests[idx].data, len)) {
             good = 0;
@@ -170,6 +173,172 @@ static int test_a2i_ipaddress(int idx)
     }
     ASN1_OCTET_STRING_free(ip);
     return good;
+}
+
+/**
+ * @struct ip_asc_testdata_st
+ * @brief One ossl_ipaddr_to_asc() case: input bytes and expected output.
+ */
+typedef struct ip_asc_testdata_st {
+    const char *data; /**< The address bytes to convert */
+    int length; /**< The number of bytes at data */
+    const char *expected; /**< The string the conversion should produce */
+} IP_ASC_TESTDATA;
+
+/*-
+ * ossl_ipaddr_to_asc() is not the inverse of a2i_IPADDRESS(): it neither
+ * elides a run of zero groups as "::" nor emits lowercase hex, so the
+ * expected strings below are not the RFC 5952 canonical presentation
+ * forms of these addresses.
+ */
+static IP_ASC_TESTDATA ipaddr_to_asc_tests[] = {
+    { "\x7f\x00\x00\x01", 4, "127.0.0.1" },
+    { "\x01\x02\x03\x04", 4, "1.2.3.4" },
+    { "\xff\xff\xff\xff", 4, "255.255.255.255" },
+
+    { "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16,
+        "0:0:0:0:0:0:0:0" },
+    { "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", 16,
+        "0:0:0:0:0:0:0:1" },
+    { "\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\xff\x00\x00\x42\x83\x29", 16,
+        "2001:DB8:0:0:0:FF00:42:8329" },
+
+    /*
+     * The longest output ossl_ipaddr_to_asc() can produce: 39 characters
+     * and a nul exactly fill its 40-byte buffer, so the last group is
+     * written with no room to spare.  A truncation guard that is off by
+     * one drops that group.
+     */
+    { "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", 16,
+        "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF" },
+
+    /* Only 4 and 16 are addresses; every other length is reported back. */
+    { "", 0, "<invalid length=0>" },
+    { "\x01\x02\x03", 3, "<invalid length=3>" },
+    { "\x01\x02\x03\x04\x05", 5, "<invalid length=5>" },
+};
+
+/**
+ * @brief Check ossl_ipaddr_to_asc() against one ipaddr_to_asc_tests entry.
+ * @param idx index into ipaddr_to_asc_tests of the case to run
+ * @returns 1 if the conversion produced the expected string, 0 otherwise
+ */
+static int test_ipaddr_to_asc(int idx)
+{
+    const IP_ASC_TESTDATA *t = &ipaddr_to_asc_tests[idx];
+    char *asc = ossl_ipaddr_to_asc((const unsigned char *)t->data, t->length);
+    int good = TEST_ptr(asc) && TEST_str_eq(asc, t->expected);
+
+    OPENSSL_free(asc);
+    return good;
+}
+
+/* Adding an extension to a CRL marks its cached encoding stale */
+static int test_crl_add_ext_modifies(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    X509_CRL *crl = NULL, *copy = NULL;
+    ASN1_TIME *tm = NULL;
+    ASN1_INTEGER *num = NULL;
+    X509_EXTENSION *ext = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"crl ext test", -1, -1, 0))
+        || !TEST_ptr(tm = ASN1_TIME_set(NULL, 0))
+        || !TEST_ptr(num = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(num, 1))
+        || !TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, tm))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0))
+        goto err;
+
+    /* X509_CRL_add1_ext_i2d() on a decoded copy */
+    if (!TEST_ptr(copy = X509_CRL_dup(crl))
+        || !TEST_false(copy->crl.enc.modified)
+        || !TEST_true(X509_CRL_add1_ext_i2d(copy, NID_crl_number, num, 0, 0))
+        || !TEST_true(copy->crl.enc.modified))
+        goto err;
+    X509_CRL_free(copy);
+    copy = NULL;
+
+    /* X509_CRL_add_ext() on a decoded copy */
+    if (!TEST_ptr(ext = X509V3_EXT_i2d(NID_crl_number, 0, num))
+        || !TEST_ptr(copy = X509_CRL_dup(crl))
+        || !TEST_false(copy->crl.enc.modified)
+        || !TEST_true(X509_CRL_add_ext(copy, ext, -1))
+        || !TEST_true(copy->crl.enc.modified))
+        goto err;
+
+    ret = 1;
+err:
+    X509_EXTENSION_free(ext);
+    X509_CRL_free(copy);
+    X509_CRL_free(crl);
+    ASN1_INTEGER_free(num);
+    ASN1_TIME_free(tm);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/*
+ * A failed encoding save discards the cached encoding, and the item is
+ * encoded from its fields afterwards.
+ */
+static int test_enc_save_failure(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    X509_CRL *crl = NULL, *copy = NULL;
+    X509_CRL_INFO *info = NULL;
+    ASN1_TIME *tm = NULL;
+    unsigned char *der = NULL, *der_copy = NULL;
+    unsigned char buf[1] = { 0 };
+    int len, len_copy, ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"enc save test", -1, -1, 0))
+        || !TEST_ptr(tm = ASN1_TIME_set(NULL, 0))
+        || !TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, tm))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
+        || !TEST_ptr(copy = X509_CRL_dup(crl))
+        || !TEST_false(copy->crl.enc.modified)
+        || !TEST_ptr(copy->crl.enc.enc))
+        goto err;
+
+    /* A zero input length is a failure */
+    info = &copy->crl;
+    if (!TEST_false(ossl_asn1_enc_save((ASN1_VALUE **)&info, buf, 0,
+            ASN1_ITEM_rptr(X509_CRL_INFO)))
+        || !TEST_ptr_null(copy->crl.enc.enc)
+        || !TEST_int_eq(copy->crl.enc.len, 0)
+        || !TEST_true(copy->crl.enc.modified))
+        goto err;
+
+    if (!TEST_int_gt(len = i2d_X509_CRL(crl, &der), 0)
+        || !TEST_int_gt(len_copy = i2d_X509_CRL(copy, &der_copy), 0)
+        || !TEST_mem_eq(der, (size_t)len, der_copy, (size_t)len_copy))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(der_copy);
+    OPENSSL_free(der);
+    X509_CRL_free(copy);
+    X509_CRL_free(crl);
+    ASN1_TIME_free(tm);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
 }
 
 static int ck_purp(ossl_unused const X509_PURPOSE *purpose,
@@ -688,6 +857,142 @@ err:
     return test;
 }
 
+static int test_X509_ALGOR_set_md_null(void)
+{
+    X509_ALGOR *alg = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+
+    if (!TEST_false(X509_ALGOR_set_md(alg, NULL)))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
+/**********************************************************************
+ *
+ * Tests for X509_ALGOR_set_md null pointer fix
+ * (see crypto/asn1/x_algor.c)
+ *
+ ***/
+
+static int test_X509_ALGOR_set_md_sha1(void)
+{
+    X509_ALGOR *alg = NULL;
+    const ASN1_OBJECT *aobj = NULL;
+    int ptype = V_ASN1_EOC;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /* SHA-1 has EVP_MD_FLAG_DIGALGID_ABSENT, so parameter type is V_ASN1_UNDEF */
+    if (!TEST_true(X509_ALGOR_set_md(alg, EVP_sha1())))
+        goto err;
+    X509_ALGOR_get0(&aobj, &ptype, NULL, alg);
+    if (!TEST_int_eq(OBJ_obj2nid(aobj), NID_sha1))
+        goto err;
+    if (!TEST_int_eq(ptype, V_ASN1_UNDEF))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_MD5
+static int test_X509_ALGOR_set_md_md5(void)
+{
+    X509_ALGOR *alg = NULL;
+    const ASN1_OBJECT *aobj = NULL;
+    int ptype = V_ASN1_EOC;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /* MD5 does not have EVP_MD_FLAG_DIGALGID_ABSENT, so parameter type is V_ASN1_NULL */
+    if (!TEST_true(X509_ALGOR_set_md(alg, EVP_md5())))
+        goto err;
+    X509_ALGOR_get0(&aobj, &ptype, NULL, alg);
+    if (!TEST_int_eq(OBJ_obj2nid(aobj), NID_md5))
+        goto err;
+    if (!TEST_int_eq(ptype, V_ASN1_NULL))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+#endif /* OPENSSL_NO_MD5 */
+
+/*
+ * An EVP_MD with NID_undef type but a name that OBJ_txt2obj() can resolve.
+ * This exercises the OBJ_txt2obj() branch in X509_ALGOR_set_md.
+ */
+static const EVP_MD custom_md_known_oid = {
+    .type = NID_undef,
+    .pkey_type = NID_undef,
+    .type_name = "SHA256", /* OBJ_txt2obj() resolves this via OBJ_sn2nid() */
+};
+
+static int test_X509_ALGOR_set_md_nid_undef_known_name(void)
+{
+    X509_ALGOR *alg = NULL;
+    const ASN1_OBJECT *aobj = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /*
+     * NID_undef forces the OBJ_txt2obj() path; name "SHA256" resolves
+     * to the SHA-256 OID so the call must succeed and set the algorithm.
+     */
+    if (!TEST_true(X509_ALGOR_set_md(alg, &custom_md_known_oid)))
+        goto err;
+    X509_ALGOR_get0(&aobj, NULL, NULL, alg);
+    if (!TEST_int_eq(OBJ_obj2nid(aobj), NID_sha256))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
+/*
+ * An EVP_MD with NID_undef type and a name that OBJ_txt2obj() cannot resolve.
+ * Before the null-pointer fix, X509_ALGOR_set0 was called with a NULL obj,
+ * causing undefined behaviour.  After the fix, X509_ALGOR_set_md returns 0.
+ */
+static const EVP_MD custom_md_unknown_oid = {
+    .type = NID_undef,
+    .pkey_type = NID_undef,
+    .type_name = "not-a-known-oid-name",
+};
+
+static int test_X509_ALGOR_set_md_null_obj(void)
+{
+    X509_ALGOR *alg = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /*
+     * OBJ_txt2obj("not-a-known-oid-name", 0) returns NULL, so
+     * X509_ALGOR_set_md must return 0 rather than crash.
+     */
+    if (!TEST_false(X509_ALGOR_set_md(alg, &custom_md_unknown_oid)))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
 /* https://github.com/openssl/openssl/issues/26325 */
 static const char *kRootExtensionDuplicity[] = {
     "-----BEGIN CERTIFICATE-----\n",
@@ -939,18 +1244,208 @@ err:
     return test;
 }
 
+/*
+ * X509_ATTRIBUTE_create_by_NID() must accept a BIT STRING value supplied as
+ * raw bytes plus an explicit length, as PKCS8_add_keyusage() does for
+ * 'openssl pkcs12 -export -keyex' (0x10) and '-keysig' (0x80).
+ * Regression test for https://github.com/openssl/openssl/issues/32234
+ */
+static int test_x509_attribute_bit_string(int idx)
+{
+    unsigned char usage = idx == 0 ? 0x10 : 0x80;
+    X509_ATTRIBUTE *attr = NULL;
+    const ASN1_BIT_STRING *bs;
+    size_t length = 0;
+    int unused_bits = -1, ret = 0;
+
+    if (!TEST_ptr(attr = X509_ATTRIBUTE_create_by_NID(NULL, NID_key_usage,
+                      V_ASN1_BIT_STRING, &usage, 1))
+        || !TEST_ptr(bs = X509_ATTRIBUTE_get0_data(attr, 0, V_ASN1_BIT_STRING,
+                         NULL))
+        || !TEST_true(ASN1_BIT_STRING_get_length(bs, &length, &unused_bits))
+        || !TEST_size_t_eq(length, 1)
+        || !TEST_int_eq(unused_bits, 0)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(bs), 1, &usage, 1))
+        goto err;
+    ret = 1;
+err:
+    X509_ATTRIBUTE_free(attr);
+    return ret;
+}
+
+/*
+ * Signing leaves the cached encoding of the signed part current and equal
+ * to the decoded one; modifying the object afterwards marks it stale.
+ */
+static int test_sign_caches_encoding(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    X509 *cert = NULL, *cert_copy = NULL;
+    X509_CRL *crl = NULL, *crl_copy = NULL;
+    X509_REQ *req = NULL, *req_copy = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"sign test", -1, -1, 0)))
+        goto err;
+
+    /* Certificate */
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_true(cert->cert_info.enc.modified)
+        || !TEST_true(X509_set_subject_name(cert, name))
+        || !TEST_true(X509_set_issuer_name(cert, name))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert), 3600))
+        || !TEST_true(X509_set_pubkey(cert, pkey))
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_false(cert->cert_info.enc.modified)
+        || !TEST_ptr(cert_copy = X509_dup(cert))
+        || !TEST_false(cert_copy->cert_info.enc.modified)
+        || !TEST_mem_eq(cert->cert_info.enc.enc,
+            (size_t)cert->cert_info.enc.len,
+            cert_copy->cert_info.enc.enc,
+            (size_t)cert_copy->cert_info.enc.len)
+        || !TEST_int_eq(X509_cmp(cert, cert_copy), 0)
+        || !TEST_true(X509_set_version(cert, X509_VERSION_2))
+        || !TEST_true(cert->cert_info.enc.modified)
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_false(cert->cert_info.enc.modified)
+        || !TEST_int_ne(X509_cmp(cert, cert_copy), 0))
+        goto err;
+
+    /* CRL */
+    if (!TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(crl->crl.enc.modified)
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, X509_getm_notBefore(cert)))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
+        || !TEST_false(crl->crl.enc.modified)
+        || !TEST_ptr(crl_copy = X509_CRL_dup(crl))
+        || !TEST_false(crl_copy->crl.enc.modified)
+        || !TEST_mem_eq(crl->crl.enc.enc, (size_t)crl->crl.enc.len,
+            crl_copy->crl.enc.enc, (size_t)crl_copy->crl.enc.len))
+        goto err;
+
+    /* Request */
+    if (!TEST_ptr(req = X509_REQ_new())
+        || !TEST_true(req->req_info.enc.modified)
+        || !TEST_true(X509_REQ_set_subject_name(req, name))
+        || !TEST_true(X509_REQ_set_pubkey(req, pkey))
+        || !TEST_int_gt(X509_REQ_sign(req, pkey, EVP_sha256()), 0)
+        || !TEST_false(req->req_info.enc.modified)
+        || !TEST_ptr(req_copy = X509_REQ_dup(req))
+        || !TEST_false(req_copy->req_info.enc.modified)
+        || !TEST_mem_eq(req->req_info.enc.enc, (size_t)req->req_info.enc.len,
+            req_copy->req_info.enc.enc, (size_t)req_copy->req_info.enc.len))
+        goto err;
+
+    ret = 1;
+err:
+    X509_REQ_free(req_copy);
+    X509_REQ_free(req);
+    X509_CRL_free(crl_copy);
+    X509_CRL_free(crl);
+    X509_free(cert_copy);
+    X509_free(cert);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/* A modified, unsigned certificate or CRL is equal only to itself */
+static int test_cmp_modified(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    X509 *cert = NULL, *copy = NULL;
+    X509_CRL *crl = NULL, *crl_copy = NULL;
+    ASN1_INTEGER *serial = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"cmp test", -1, -1, 0))
+        || !TEST_ptr(serial = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(serial, 2)))
+        goto err;
+
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_true(X509_set_subject_name(cert, name))
+        || !TEST_true(X509_set_issuer_name(cert, name))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert), 3600))
+        || !TEST_true(X509_set_pubkey(cert, pkey))
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_ptr(copy = X509_dup(cert))
+        || !TEST_int_eq(X509_cmp(cert, copy), 0)
+        || !TEST_int_eq(X509_cmp(cert, cert), 0)
+        /* The copy is modified but still equal to itself */
+        || !TEST_true(X509_set_serialNumber(copy, serial))
+        || !TEST_int_eq(X509_cmp(copy, copy), 0)
+        || !TEST_int_eq(X509_cmp(cert, copy), -1)
+        || !TEST_int_eq(X509_cmp(copy, cert), 1)
+        /* Both modified: unequal */
+        || !TEST_true(X509_set_serialNumber(cert, serial))
+        || !TEST_int_ne(X509_cmp(cert, copy), 0)
+        /* Signing again makes them comparable and equal */
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
+        || !TEST_int_gt(X509_sign(copy, pkey, EVP_sha256()), 0)
+        || !TEST_int_eq(X509_cmp(cert, copy), 0))
+        goto err;
+
+    if (!TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, X509_getm_notBefore(cert)))
+        || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
+        || !TEST_ptr(crl_copy = X509_CRL_dup(crl))
+        || !TEST_int_eq(X509_CRL_match(crl, crl), 0)
+        || !TEST_true(X509_CRL_set_version(crl_copy, X509_CRL_VERSION_2))
+        || !TEST_int_eq(X509_CRL_match(crl_copy, crl_copy), 0)
+        || !TEST_int_eq(X509_CRL_match(crl, crl_copy), -1)
+        || !TEST_int_eq(X509_CRL_match(crl_copy, crl), 1))
+        goto err;
+
+    ret = 1;
+err:
+    X509_CRL_free(crl_copy);
+    X509_CRL_free(crl);
+    X509_free(copy);
+    X509_free(cert);
+    ASN1_INTEGER_free(serial);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_sign_caches_encoding);
+    ADD_TEST(test_cmp_modified);
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
+    ADD_ALL_TESTS(test_ipaddr_to_asc, OSSL_NELEM(ipaddr_to_asc_tests));
+    ADD_TEST(test_crl_add_ext_modifies);
+    ADD_TEST(test_enc_save_failure);
     ADD_TEST(tests_X509_PURPOSE);
     ADD_TEST(tests_X509_check_time);
     ADD_TEST(tests_X509_check_crypto);
     ADD_TEST(tests_x509_check_dpn);
     ADD_TEST(tests_x509_check_akid);
+    ADD_TEST(test_X509_ALGOR_set_md_null);
     ADD_TEST(tests_x509_check_ext_duplicity);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
+    ADD_ALL_TESTS(test_x509_attribute_bit_string, 2);
 
+    ADD_TEST(test_X509_ALGOR_set_md_sha1);
+#ifndef OPENSSL_NO_MD5
+    ADD_TEST(test_X509_ALGOR_set_md_md5);
+#endif
+    ADD_TEST(test_X509_ALGOR_set_md_nid_undef_known_name);
+    ADD_TEST(test_X509_ALGOR_set_md_null_obj);
     return 1;
 }

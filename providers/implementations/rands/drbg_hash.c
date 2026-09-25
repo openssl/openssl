@@ -525,18 +525,21 @@ static const OSSL_PARAM *drbg_hash_gettable_ctx_params(ossl_unused void *vctx,
 
 static int drbg_fetch_digest_from_prov(const struct drbg_set_ctx_params_st *p,
     OSSL_LIB_CTX *libctx,
-    EVP_MD **digest)
+    EVP_MD **digest,
+    const char *propq)
 {
-    OSSL_PROVIDER *prov = NULL;
     EVP_MD *md = NULL;
     int ret = 0;
+    const char *propquery = NULL;
+
+#ifndef FIPS_MODULE
+    if (propq == NULL)
+        propquery = "provider=default";
+    else
+        propquery = propq;
+#endif
 
     if (digest == NULL)
-        return 0;
-
-    if (p->prov == NULL || p->prov->data_type != OSSL_PARAM_UTF8_STRING)
-        return 0;
-    if ((prov = ossl_provider_find(libctx, (const char *)p->prov->data, 1)) == NULL)
         return 0;
 
     if (p->digest == NULL) {
@@ -547,15 +550,13 @@ static int drbg_fetch_digest_from_prov(const struct drbg_set_ctx_params_st *p,
     if (p->digest->data_type != OSSL_PARAM_UTF8_STRING)
         goto done;
 
-    md = evp_digest_fetch_from_prov(prov, (const char *)p->digest->data, NULL);
+    md = EVP_MD_fetch(libctx, p->digest->data, propquery);
     if (md) {
         EVP_MD_free(*digest);
         *digest = md;
         ret = 1;
     }
-
 done:
-    ossl_provider_free(prov);
     return ret;
 }
 
@@ -572,7 +573,8 @@ static int drbg_hash_set_ctx_params_locked(PROV_DRBG *ctx, const struct drbg_set
 
     /* try to fetch digest from provider */
     (void)ERR_set_mark();
-    if (!drbg_fetch_digest_from_prov(p, libctx, &prov_md)) {
+    if (!drbg_fetch_digest_from_prov(p, libctx, &prov_md,
+            (p->propq != NULL && p->propq->data_type == OSSL_PARAM_UTF8_STRING) ? p->propq->data : NULL)) {
         (void)ERR_pop_to_mark();
         /* fall back to full implementation search */
         if (!ossl_prov_digest_load(&hash->digest, p->digest, p->propq, libctx))

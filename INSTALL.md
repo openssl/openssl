@@ -787,9 +787,9 @@ Enable legacy TLS EC groups that were deprecated in RFC8422.  These are the
 Koblitz curves, B<secp160r1>, B<secp160r2>, B<secp192r1>, B<secp224r1>, and the
 binary Elliptic curves that would also be disabled by C<no-ec2m>.
 
-### enable-ec_expicit_curves
+### enable-ec_explicit_curves
 
-Enable support for explictitly specified elliptic curves not matching the
+Enable support for explicitly specified elliptic curves not matching the
 well-known ones. Until this option is on, such curves can't be instantiated
 from ASN.1 formats.
 
@@ -1228,6 +1228,8 @@ schemes combining `ml-dsa` with `rsa` or `ec`) are automatically disabled
 when `ml-dsa` is disabled.
 
 ### Compiler-specific options
+Compiler-specific options
+-------------------------
 
     -Dxxx, -Ixxx, -Wp, -lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
 
@@ -1258,7 +1260,17 @@ encoding.
 Take note of the [Environment Variables](#environment-variables) documentation
 below and how these flags interact with those variables.
 
-### Environment Variables
+Miscellaneous options
+---------------------
+
+### --manpage-format
+
+Specify a specific output manpage format. The supported output types are mandoc
+and *roff. The *roff output format is the default for legacy and portability
+reasons.
+
+Environment Variables
+---------------------
 
     VAR=value
 
@@ -1335,10 +1347,18 @@ If `CC` is set, it is advisable to also set `CXX` to ensure both the C and C++
 compiler are in the same "family".  This becomes relevant with
 `enable-external-tests` and `enable-buildtest-c++`.
 
-### Reconfigure
+Reconfigure
+-----------
 
-    reconf
-    reconfigure
+### Make targets
+
+    `$ make reconf`
+
+or
+
+    `$ make reconfigure`
+
+### Description
 
 Reconfigure from earlier data.
 

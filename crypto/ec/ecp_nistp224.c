@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1234,8 +1234,8 @@ static NISTP224_PRE_COMP *nistp224_pre_comp_new(void)
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *p)
 {
     int i;
-    if (p != NULL)
-        CRYPTO_UP_REF(&p->references, &i);
+    if (p == NULL || !CRYPTO_UP_REF(&p->references, &i))
+        return NULL;
     return p;
 }
 

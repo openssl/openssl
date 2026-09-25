@@ -833,6 +833,10 @@ DEPEND[html/man3/CMS_add1_signer.html]=man3/CMS_add1_signer.pod
 GENERATE[html/man3/CMS_add1_signer.html]=man3/CMS_add1_signer.pod
 DEPEND[man/man3/CMS_add1_signer.3]=man3/CMS_add1_signer.pod
 GENERATE[man/man3/CMS_add1_signer.3]=man3/CMS_add1_signer.pod
+DEPEND[html/man3/CMS_add_standard_smimecap_ex.html]=man3/CMS_add_standard_smimecap_ex.pod
+GENERATE[html/man3/CMS_add_standard_smimecap_ex.html]=man3/CMS_add_standard_smimecap_ex.pod
+DEPEND[man/man3/CMS_add_standard_smimecap_ex.3]=man3/CMS_add_standard_smimecap_ex.pod
+GENERATE[man/man3/CMS_add_standard_smimecap_ex.3]=man3/CMS_add_standard_smimecap_ex.pod
 DEPEND[html/man3/CMS_compress.html]=man3/CMS_compress.pod
 GENERATE[html/man3/CMS_compress.html]=man3/CMS_compress.pod
 DEPEND[man/man3/CMS_compress.3]=man3/CMS_compress.pod
@@ -1557,6 +1561,10 @@ DEPEND[html/man3/OPENSSL_LH_stats.html]=man3/OPENSSL_LH_stats.pod
 GENERATE[html/man3/OPENSSL_LH_stats.html]=man3/OPENSSL_LH_stats.pod
 DEPEND[man/man3/OPENSSL_LH_stats.3]=man3/OPENSSL_LH_stats.pod
 GENERATE[man/man3/OPENSSL_LH_stats.3]=man3/OPENSSL_LH_stats.pod
+DEPEND[html/man3/OPENSSL_armcap.html]=man3/OPENSSL_armcap.pod
+GENERATE[html/man3/OPENSSL_armcap.html]=man3/OPENSSL_armcap.pod
+DEPEND[man/man3/OPENSSL_armcap.3]=man3/OPENSSL_armcap.pod
+GENERATE[man/man3/OPENSSL_armcap.3]=man3/OPENSSL_armcap.pod
 DEPEND[html/man3/OPENSSL_config.html]=man3/OPENSSL_config.pod
 GENERATE[html/man3/OPENSSL_config.html]=man3/OPENSSL_config.pod
 DEPEND[man/man3/OPENSSL_config.3]=man3/OPENSSL_config.pod
@@ -1961,6 +1969,10 @@ DEPEND[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 GENERATE[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 DEPEND[man/man3/PKCS12_create.3]=man3/PKCS12_create.pod
 GENERATE[man/man3/PKCS12_create.3]=man3/PKCS12_create.pod
+DEPEND[html/man3/PKCS12_decrypt_secretbag.html]=man3/PKCS12_decrypt_secretbag.pod
+GENERATE[html/man3/PKCS12_decrypt_secretbag.html]=man3/PKCS12_decrypt_secretbag.pod
+DEPEND[man/man3/PKCS12_decrypt_secretbag.3]=man3/PKCS12_decrypt_secretbag.pod
+GENERATE[man/man3/PKCS12_decrypt_secretbag.3]=man3/PKCS12_decrypt_secretbag.pod
 DEPEND[html/man3/PKCS12_decrypt_skey.html]=man3/PKCS12_decrypt_skey.pod
 GENERATE[html/man3/PKCS12_decrypt_skey.html]=man3/PKCS12_decrypt_skey.pod
 DEPEND[man/man3/PKCS12_decrypt_skey.3]=man3/PKCS12_decrypt_skey.pod
@@ -2897,6 +2909,10 @@ DEPEND[html/man3/UI_new.html]=man3/UI_new.pod
 GENERATE[html/man3/UI_new.html]=man3/UI_new.pod
 DEPEND[man/man3/UI_new.3]=man3/UI_new.pod
 GENERATE[man/man3/UI_new.3]=man3/UI_new.pod
+DEPEND[html/man3/X509V3_EXT_nconf_nid.html]=man3/X509V3_EXT_nconf_nid.pod
+GENERATE[html/man3/X509V3_EXT_nconf_nid.html]=man3/X509V3_EXT_nconf_nid.pod
+DEPEND[man/man3/X509V3_EXT_nconf_nid.3]=man3/X509V3_EXT_nconf_nid.pod
+GENERATE[man/man3/X509V3_EXT_nconf_nid.3]=man3/X509V3_EXT_nconf_nid.pod
 DEPEND[html/man3/X509V3_EXT_print.html]=man3/X509V3_EXT_print.pod
 GENERATE[html/man3/X509V3_EXT_print.html]=man3/X509V3_EXT_print.pod
 DEPEND[man/man3/X509V3_EXT_print.3]=man3/X509V3_EXT_print.pod
@@ -3025,10 +3041,18 @@ DEPEND[html/man3/X509_STORE_set_verify_cb_func.html]=man3/X509_STORE_set_verify_
 GENERATE[html/man3/X509_STORE_set_verify_cb_func.html]=man3/X509_STORE_set_verify_cb_func.pod
 DEPEND[man/man3/X509_STORE_set_verify_cb_func.3]=man3/X509_STORE_set_verify_cb_func.pod
 GENERATE[man/man3/X509_STORE_set_verify_cb_func.3]=man3/X509_STORE_set_verify_cb_func.pod
+DEPEND[html/man3/X509_VERIFY_PARAM_set1_host.html]=man3/X509_VERIFY_PARAM_set1_host.pod
+GENERATE[html/man3/X509_VERIFY_PARAM_set1_host.html]=man3/X509_VERIFY_PARAM_set1_host.pod
+DEPEND[man/man3/X509_VERIFY_PARAM_set1_host.3]=man3/X509_VERIFY_PARAM_set1_host.pod
+GENERATE[man/man3/X509_VERIFY_PARAM_set1_host.3]=man3/X509_VERIFY_PARAM_set1_host.pod
 DEPEND[html/man3/X509_VERIFY_PARAM_set_flags.html]=man3/X509_VERIFY_PARAM_set_flags.pod
 GENERATE[html/man3/X509_VERIFY_PARAM_set_flags.html]=man3/X509_VERIFY_PARAM_set_flags.pod
 DEPEND[man/man3/X509_VERIFY_PARAM_set_flags.3]=man3/X509_VERIFY_PARAM_set_flags.pod
 GENERATE[man/man3/X509_VERIFY_PARAM_set_flags.3]=man3/X509_VERIFY_PARAM_set_flags.pod
+DEPEND[html/man3/X509_VERIFY_PARAM_set_hostflags.html]=man3/X509_VERIFY_PARAM_set_hostflags.pod
+GENERATE[html/man3/X509_VERIFY_PARAM_set_hostflags.html]=man3/X509_VERIFY_PARAM_set_hostflags.pod
+DEPEND[man/man3/X509_VERIFY_PARAM_set_hostflags.3]=man3/X509_VERIFY_PARAM_set_hostflags.pod
+GENERATE[man/man3/X509_VERIFY_PARAM_set_hostflags.3]=man3/X509_VERIFY_PARAM_set_hostflags.pod
 DEPEND[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 GENERATE[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 DEPEND[man/man3/X509_add_cert.3]=man3/X509_add_cert.pod
@@ -3157,14 +3181,10 @@ DEPEND[html/man3/d2i_X509.html]=man3/d2i_X509.pod
 GENERATE[html/man3/d2i_X509.html]=man3/d2i_X509.pod
 DEPEND[man/man3/d2i_X509.3]=man3/d2i_X509.pod
 GENERATE[man/man3/d2i_X509.3]=man3/d2i_X509.pod
-DEPEND[html/man3/i2d_CMS_bio_stream.html]=man3/i2d_CMS_bio_stream.pod
-GENERATE[html/man3/i2d_CMS_bio_stream.html]=man3/i2d_CMS_bio_stream.pod
-DEPEND[man/man3/i2d_CMS_bio_stream.3]=man3/i2d_CMS_bio_stream.pod
-GENERATE[man/man3/i2d_CMS_bio_stream.3]=man3/i2d_CMS_bio_stream.pod
-DEPEND[html/man3/i2d_PKCS7_bio_stream.html]=man3/i2d_PKCS7_bio_stream.pod
-GENERATE[html/man3/i2d_PKCS7_bio_stream.html]=man3/i2d_PKCS7_bio_stream.pod
-DEPEND[man/man3/i2d_PKCS7_bio_stream.3]=man3/i2d_PKCS7_bio_stream.pod
-GENERATE[man/man3/i2d_PKCS7_bio_stream.3]=man3/i2d_PKCS7_bio_stream.pod
+DEPEND[html/man3/i2d_ASN1_bio_stream.html]=man3/i2d_ASN1_bio_stream.pod
+GENERATE[html/man3/i2d_ASN1_bio_stream.html]=man3/i2d_ASN1_bio_stream.pod
+DEPEND[man/man3/i2d_ASN1_bio_stream.3]=man3/i2d_ASN1_bio_stream.pod
+GENERATE[man/man3/i2d_ASN1_bio_stream.3]=man3/i2d_ASN1_bio_stream.pod
 DEPEND[html/man3/i2d_re_X509_tbs.html]=man3/i2d_re_X509_tbs.pod
 GENERATE[html/man3/i2d_re_X509_tbs.html]=man3/i2d_re_X509_tbs.pod
 DEPEND[man/man3/i2d_re_X509_tbs.3]=man3/i2d_re_X509_tbs.pod
@@ -3268,6 +3288,7 @@ html/man3/CMS_EnvelopedData_create.html \
 html/man3/CMS_add0_cert.html \
 html/man3/CMS_add1_recipient_cert.html \
 html/man3/CMS_add1_signer.html \
+html/man3/CMS_add_standard_smimecap_ex.html \
 html/man3/CMS_compress.html \
 html/man3/CMS_data_create.html \
 html/man3/CMS_decrypt.html \
@@ -3449,6 +3470,7 @@ html/man3/OPENSSL_Applink.html \
 html/man3/OPENSSL_FILE.html \
 html/man3/OPENSSL_LH_COMPFUNC.html \
 html/man3/OPENSSL_LH_stats.html \
+html/man3/OPENSSL_armcap.html \
 html/man3/OPENSSL_config.html \
 html/man3/OPENSSL_fork_prepare.html \
 html/man3/OPENSSL_gmtime.html \
@@ -3550,6 +3572,7 @@ html/man3/PKCS12_add_friendlyname_asc.html \
 html/man3/PKCS12_add_localkeyid.html \
 html/man3/PKCS12_add_safe.html \
 html/man3/PKCS12_create.html \
+html/man3/PKCS12_decrypt_secretbag.html \
 html/man3/PKCS12_decrypt_skey.html \
 html/man3/PKCS12_gen_mac.html \
 html/man3/PKCS12_get_friendlyname.html \
@@ -3784,6 +3807,7 @@ html/man3/UI_STRING.html \
 html/man3/UI_UTIL_read_pw.html \
 html/man3/UI_create_method.html \
 html/man3/UI_new.html \
+html/man3/X509V3_EXT_nconf_nid.html \
 html/man3/X509V3_EXT_print.html \
 html/man3/X509V3_get_d2i.html \
 html/man3/X509V3_set_ctx.html \
@@ -3816,7 +3840,9 @@ html/man3/X509_STORE_add_cert.html \
 html/man3/X509_STORE_get0_param.html \
 html/man3/X509_STORE_new.html \
 html/man3/X509_STORE_set_verify_cb_func.html \
+html/man3/X509_VERIFY_PARAM_set1_host.html \
 html/man3/X509_VERIFY_PARAM_set_flags.html \
+html/man3/X509_VERIFY_PARAM_set_hostflags.html \
 html/man3/X509_add_cert.html \
 html/man3/X509_check_ca.html \
 html/man3/X509_check_certificate_times.html \
@@ -3849,8 +3875,7 @@ html/man3/d2i_PrivateKey.html \
 html/man3/d2i_RSAPrivateKey.html \
 html/man3/d2i_SSL_SESSION.html \
 html/man3/d2i_X509.html \
-html/man3/i2d_CMS_bio_stream.html \
-html/man3/i2d_PKCS7_bio_stream.html \
+html/man3/i2d_ASN1_bio_stream.html \
 html/man3/i2d_re_X509_tbs.html \
 html/man3/o2i_SCT_LIST.html \
 html/man3/s2i_ASN1_IA5STRING.html
@@ -3944,6 +3969,7 @@ man/man3/CMS_EnvelopedData_create.3 \
 man/man3/CMS_add0_cert.3 \
 man/man3/CMS_add1_recipient_cert.3 \
 man/man3/CMS_add1_signer.3 \
+man/man3/CMS_add_standard_smimecap_ex.3 \
 man/man3/CMS_compress.3 \
 man/man3/CMS_data_create.3 \
 man/man3/CMS_decrypt.3 \
@@ -4125,6 +4151,7 @@ man/man3/OPENSSL_Applink.3 \
 man/man3/OPENSSL_FILE.3 \
 man/man3/OPENSSL_LH_COMPFUNC.3 \
 man/man3/OPENSSL_LH_stats.3 \
+man/man3/OPENSSL_armcap.3 \
 man/man3/OPENSSL_config.3 \
 man/man3/OPENSSL_fork_prepare.3 \
 man/man3/OPENSSL_gmtime.3 \
@@ -4226,6 +4253,7 @@ man/man3/PKCS12_add_friendlyname_asc.3 \
 man/man3/PKCS12_add_localkeyid.3 \
 man/man3/PKCS12_add_safe.3 \
 man/man3/PKCS12_create.3 \
+man/man3/PKCS12_decrypt_secretbag.3 \
 man/man3/PKCS12_decrypt_skey.3 \
 man/man3/PKCS12_gen_mac.3 \
 man/man3/PKCS12_get_friendlyname.3 \
@@ -4460,6 +4488,7 @@ man/man3/UI_STRING.3 \
 man/man3/UI_UTIL_read_pw.3 \
 man/man3/UI_create_method.3 \
 man/man3/UI_new.3 \
+man/man3/X509V3_EXT_nconf_nid.3 \
 man/man3/X509V3_EXT_print.3 \
 man/man3/X509V3_get_d2i.3 \
 man/man3/X509V3_set_ctx.3 \
@@ -4492,7 +4521,9 @@ man/man3/X509_STORE_add_cert.3 \
 man/man3/X509_STORE_get0_param.3 \
 man/man3/X509_STORE_new.3 \
 man/man3/X509_STORE_set_verify_cb_func.3 \
+man/man3/X509_VERIFY_PARAM_set1_host.3 \
 man/man3/X509_VERIFY_PARAM_set_flags.3 \
+man/man3/X509_VERIFY_PARAM_set_hostflags.3 \
 man/man3/X509_add_cert.3 \
 man/man3/X509_check_ca.3 \
 man/man3/X509_check_certificate_times.3 \
@@ -4525,8 +4556,7 @@ man/man3/d2i_PrivateKey.3 \
 man/man3/d2i_RSAPrivateKey.3 \
 man/man3/d2i_SSL_SESSION.3 \
 man/man3/d2i_X509.3 \
-man/man3/i2d_CMS_bio_stream.3 \
-man/man3/i2d_PKCS7_bio_stream.3 \
+man/man3/i2d_ASN1_bio_stream.3 \
 man/man3/i2d_re_X509_tbs.3 \
 man/man3/o2i_SCT_LIST.3 \
 man/man3/s2i_ASN1_IA5STRING.3
@@ -4565,6 +4595,10 @@ DEPEND[html/man7/EVP_CIPHER-ARIA.html]=man7/EVP_CIPHER-ARIA.pod
 GENERATE[html/man7/EVP_CIPHER-ARIA.html]=man7/EVP_CIPHER-ARIA.pod
 DEPEND[man/man7/EVP_CIPHER-ARIA.7]=man7/EVP_CIPHER-ARIA.pod
 GENERATE[man/man7/EVP_CIPHER-ARIA.7]=man7/EVP_CIPHER-ARIA.pod
+DEPEND[html/man7/EVP_CIPHER-ASCON-AEAD128.html]=man7/EVP_CIPHER-ASCON-AEAD128.pod
+GENERATE[html/man7/EVP_CIPHER-ASCON-AEAD128.html]=man7/EVP_CIPHER-ASCON-AEAD128.pod
+DEPEND[man/man7/EVP_CIPHER-ASCON-AEAD128.7]=man7/EVP_CIPHER-ASCON-AEAD128.pod
+GENERATE[man/man7/EVP_CIPHER-ASCON-AEAD128.7]=man7/EVP_CIPHER-ASCON-AEAD128.pod
 DEPEND[html/man7/EVP_CIPHER-BLOWFISH.html]=man7/EVP_CIPHER-BLOWFISH.pod
 GENERATE[html/man7/EVP_CIPHER-BLOWFISH.html]=man7/EVP_CIPHER-BLOWFISH.pod
 DEPEND[man/man7/EVP_CIPHER-BLOWFISH.7]=man7/EVP_CIPHER-BLOWFISH.pod
@@ -5067,6 +5101,10 @@ DEPEND[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 GENERATE[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 DEPEND[man7/openssl_user_macros.pod]{pod}=man7/openssl_user_macros.pod.in
 GENERATE[man7/openssl_user_macros.pod]=man7/openssl_user_macros.pod.in
+DEPEND[html/man7/ossl-guide-dtlsv13.html]=man7/ossl-guide-dtlsv13.pod
+GENERATE[html/man7/ossl-guide-dtlsv13.html]=man7/ossl-guide-dtlsv13.pod
+DEPEND[man/man7/ossl-guide-dtlsv13.7]=man7/ossl-guide-dtlsv13.pod
+GENERATE[man/man7/ossl-guide-dtlsv13.7]=man7/ossl-guide-dtlsv13.pod
 DEPEND[html/man7/ossl-guide-introduction.html]=man7/ossl-guide-introduction.pod
 GENERATE[html/man7/ossl-guide-introduction.html]=man7/ossl-guide-introduction.pod
 DEPEND[man/man7/ossl-guide-introduction.7]=man7/ossl-guide-introduction.pod
@@ -5233,6 +5271,7 @@ HTMLDOCS[man7]=html/man7/EVP_ASYM_CIPHER-RSA.html \
 html/man7/EVP_ASYM_CIPHER-SM2.html \
 html/man7/EVP_CIPHER-AES.html \
 html/man7/EVP_CIPHER-ARIA.html \
+html/man7/EVP_CIPHER-ASCON-AEAD128.html \
 html/man7/EVP_CIPHER-BLOWFISH.html \
 html/man7/EVP_CIPHER-CAMELLIA.html \
 html/man7/EVP_CIPHER-CAST.html \
@@ -5358,6 +5397,7 @@ html/man7/openssl-quic-concurrency.html \
 html/man7/openssl-quic.html \
 html/man7/openssl-threads.html \
 html/man7/openssl_user_macros.html \
+html/man7/ossl-guide-dtlsv13.html \
 html/man7/ossl-guide-introduction.html \
 html/man7/ossl-guide-libcrypto-introduction.html \
 html/man7/ossl-guide-libraries-introduction.html \
@@ -5401,6 +5441,7 @@ MANDOCS[man7]=man/man7/EVP_ASYM_CIPHER-RSA.7 \
 man/man7/EVP_ASYM_CIPHER-SM2.7 \
 man/man7/EVP_CIPHER-AES.7 \
 man/man7/EVP_CIPHER-ARIA.7 \
+man/man7/EVP_CIPHER-ASCON-AEAD128.7 \
 man/man7/EVP_CIPHER-BLOWFISH.7 \
 man/man7/EVP_CIPHER-CAMELLIA.7 \
 man/man7/EVP_CIPHER-CAST.7 \
@@ -5526,6 +5567,7 @@ man/man7/openssl-quic-concurrency.7 \
 man/man7/openssl-quic.7 \
 man/man7/openssl-threads.7 \
 man/man7/openssl_user_macros.7 \
+man/man7/ossl-guide-dtlsv13.7 \
 man/man7/ossl-guide-introduction.7 \
 man/man7/ossl-guide-libcrypto-introduction.7 \
 man/man7/ossl-guide-libraries-introduction.7 \

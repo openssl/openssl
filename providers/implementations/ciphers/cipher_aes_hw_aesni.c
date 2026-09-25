@@ -68,6 +68,35 @@ static const PROV_CIPHER_HW aesni_cbc = {
     ossl_cipher_aes_copyctx
 };
 
+#if VAES_CBC_ELIGIBLE
+/*
+ * CBC decryption is fully parallel, so VAES accelerates it; CBC encryption is
+ * inherently serial and stays on the aesni_cbc_encrypt assembly routine.  VAES
+ * is only worthwhile once the payload is large enough to amortize the per-call
+ * key broadcast, so small buffers also fall back to the assembly routine.
+ */
+static int aes_cbc_vaes_wrapper(
+    PROV_CIPHER_CTX *ctx,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
+{
+    if (!ctx->enc && len >= 256) {
+        ossl_aes_cbc_vaes_decrypt(in, out, len, ctx->ks, ctx->iv, ctx->enc);
+        return 1;
+    }
+
+    aesni_cbc_encrypt(in, out, len, ctx->ks, ctx->iv, ctx->enc);
+    return 1;
+}
+
+static const PROV_CIPHER_HW aesni_vaes_cbc = {
+    cipher_hw_aesni_initkey,
+    aes_cbc_vaes_wrapper,
+    ossl_cipher_aes_copyctx
+};
+#endif /* VAES_CBC_ELIGIBLE */
+
 #if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 /* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
 #define VAES_CFB128_ELIGIBLE 1
@@ -133,6 +162,35 @@ static const PROV_CIPHER_HW aesni_ofb128 = {
     ossl_cipher_aes_copyctx
 };
 
+#if VAES_CTR_ELIGIBLE
+/*
+ * VAES accelerates CTR once the payload is large enough to amortize the
+ * per-call counter setup; small buffers fall back to the generic driver,
+ * which also preserves the partial-block state in ctx->buf/ctx->num.
+ */
+static int aes_ctr_vaes_wrapper(PROV_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t len)
+{
+    const AES_KEY *key = (const AES_KEY *)ctx->ks;
+    unsigned int num;
+
+    if (len >= 64) {
+        num = ctx->num;
+        ossl_aes_ctr_vaes(in, out, len, key, ctx->iv, ctx->buf, &num);
+        ctx->num = num;
+        return 1;
+    }
+
+    return ossl_cipher_hw_generic_ctr(ctx, out, in, len);
+}
+
+static const PROV_CIPHER_HW aesni_vaes_ctr = {
+    cipher_hw_aesni_initkey,
+    aes_ctr_vaes_wrapper,
+    ossl_cipher_aes_copyctx
+};
+#endif /* VAES_CTR_ELIGIBLE */
+
 static const PROV_CIPHER_HW aesni_ctr = {
     cipher_hw_aesni_initkey,
     ossl_cipher_hw_generic_ctr,
@@ -146,6 +204,10 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode)
         case AES_MODE_ECB:
             return &aesni_ecb;
         case AES_MODE_CBC:
+#if VAES_CBC_ELIGIBLE
+            if (ossl_aes_cbc_vaes_eligible())
+                return &aesni_vaes_cbc;
+#endif
             return &aesni_cbc;
         case AES_MODE_CFB128:
 #if VAES_CFB128_ELIGIBLE
@@ -160,6 +222,10 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode)
         case AES_MODE_OFB128:
             return &aesni_ofb128;
         case AES_MODE_CTR:
+#if VAES_CTR_ELIGIBLE
+            if (ossl_aes_ctr_vaes_eligible())
+                return &aesni_vaes_ctr;
+#endif
             return &aesni_ctr;
         default:
             return NULL;

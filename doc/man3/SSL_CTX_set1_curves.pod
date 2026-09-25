@@ -402,6 +402,10 @@ SSL_set1_groups_list() was added in OpenSSL 3.3.
 
 Support for B<ML-KEM> was added in OpenSSL 3.5.
 
+OpenSSL 3.5 also introduced support for group tuples, the C<*> keyshare
+prediction prefix, the C</> tuple separator, the C<DEFAULT> pseudo-group,
+and the C<-> prefix.
+
 OpenSSL 3.5 also introduced support for three I<hybrid> ECDH PQ key exchange
 TLS groups: B<X25519MLKEM768>, B<SecP256r1MLKEM768> and
 B<SecP384r1MLKEM1024>.
@@ -416,6 +420,9 @@ roughly 1200 bytes for the first two groups.
 OpenSSL 4.0 introduced the B<curveSM2> (also known as C<ECDHE over SM2>) key
 exchange group as specified in RFC8998, and B<curveSM2MLKEM768>, which is a
 hybrid of the B<curveSM2> group with B<ML-KEM-768>.
+
+OpenSSL 4.2 introduced support for two additional B<hybrid> ECDH PQ key
+exchange groups: B<MLKEM512X25519> and B<SecP256r1MLKEM512>.
 
 As of OpenSSL 3.5 key exchange group names are case-insensitive.
 

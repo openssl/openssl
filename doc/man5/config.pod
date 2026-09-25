@@ -416,6 +416,18 @@ to access the same randomness sources from outside the validated boundary.
 
 This sets the property query used when fetching the randomness source.
 
+=item B<seed_strict>
+
+This enables strict seeding.  The randomness source is then instantiated
+on first use, even for a provider entropy or nonce request arriving before
+the DRBG setup, and an unusable randomness source is an error instead of
+a silent fallback to the operating system entropy sources.  Recognised
+values are B<yes>, B<on>, B<true>, B<1> to enable and B<no>, B<off>,
+B<false>, B<0> to disable, in lower or uppercase.  The default is B<no>,
+except for the B<JITTER> randomness source, which seeds strictly unless
+this option disables it.  Builds configured with B<enable-fips-jitter>
+always seed strictly.
+
 =item B<random_provider>
 
 This sets the provider to use for the L<RAND_bytes(3)> calls instead of the built-in

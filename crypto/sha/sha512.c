@@ -60,7 +60,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/sha.h"
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || defined(__s390__) || defined(__s390x__) || defined(__aarch64__) || defined(SHA512_ASM)
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || defined(__s390__) || defined(__s390x__) || defined(__aarch64__) || defined(__e2k__) || defined(SHA512_ASM)
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
 #endif
 
@@ -405,6 +405,11 @@ static const SHA_LONG64 K512[80] = {
                         asm ("rev8 %0, %1"  \
                         : "=r"(ret)         \
                         : "r"(x)); ret; })
+#elif defined(__e2k__)
+#include <x86gprintrin.h>
+#define PULL64(x) __builtin_bswap64(x)
+#define ROTR(x, s) ((s) > 48 ? __rolq((x), 64 - (s)) \
+                             : __rorq((x), (s)))
 #endif
 #if defined(__riscv_zknh) && __riscv_xlen == 32
 #define Sigma0(x) ({ SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));    \
@@ -487,6 +492,9 @@ static const SHA_LONG64 K512[80] = {
                         asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
                         : "=r"(ret)                                 \
                         : "r"(x^z), "r"(y), "r"(x)); ret; })
+#elif defined(__e2k__) && __iset__ >= 5
+#define sigma0(x) (__builtin_e2k_plog(0x96, ROTR((x), 1), ROTR((x), 8), ((x) >> 7)))
+#define sigma1(x) (__builtin_e2k_plog(0x96, ROTR((x), 19), ROTR((x), 61), ((x) >> 6)))
 #endif
 #elif defined(_MSC_VER)
 #if defined(_WIN64) /* applies to both IA-64 and AMD64 */

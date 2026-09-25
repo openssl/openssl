@@ -12,6 +12,7 @@
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
 #include "internal/unicode.h"
+#include "internal/safe_math.h"
 #include "crypto/asn1.h"
 #include <openssl/byteorder.h>
 #include <openssl/crypto.h>
@@ -30,6 +31,8 @@
 #define CHARTYPE_BS_ESC (ASN1_STRFLGS_ESC_2253 | CHARTYPE_FIRST_ESC_2253 | CHARTYPE_LAST_ESC_2253)
 
 #define ESC_FLAGS (ASN1_STRFLGS_ESC_2253 | ASN1_STRFLGS_ESC_2254 | ASN1_STRFLGS_ESC_QUOTE | ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB)
+
+OSSL_SAFE_MATH_SIGNED(int, int)
 
 /*
  * Three IO functions for sending data to memory, a BIO and a FILE
@@ -73,13 +76,13 @@ static int do_esc_char(uint32_t c, unsigned short flags, char *do_quotes,
     if (c > UNICODE_MAX)
         return -1;
     if (c > 0xffff) {
-        BIO_snprintf(tmphex, sizeof(tmphex), "\\W%08" PRIX32, c);
+        snprintf(tmphex, sizeof(tmphex), "\\W%08" PRIX32, c);
         if (!io_ch(arg, tmphex, 10))
             return -1;
         return 10;
     }
     if (c > 0xff) {
-        BIO_snprintf(tmphex, sizeof(tmphex), "\\U%04" PRIX32, c);
+        snprintf(tmphex, sizeof(tmphex), "\\U%04" PRIX32, c);
         if (!io_ch(arg, tmphex, 6))
             return -1;
         return 6;
@@ -105,7 +108,7 @@ static int do_esc_char(uint32_t c, unsigned short flags, char *do_quotes,
         return 2;
     }
     if (chflgs & (ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB | ASN1_STRFLGS_ESC_2254)) {
-        BIO_snprintf(tmphex, 11, "\\%02X", chtmp);
+        snprintf(tmphex, 11, "\\%02X", chtmp);
         if (!io_ch(arg, tmphex, 3))
             return -1;
         return 3;
@@ -142,6 +145,10 @@ static int do_buf(const unsigned char *buf, int buflen,
     const unsigned char *p, *q;
     uint32_t c;
 
+    if (buflen < 0)
+        return -1;
+    if (buflen == 0)
+        return 0;
     p = buf;
     q = buf + buflen;
     outlen = 0;
@@ -236,6 +243,10 @@ static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf,
     unsigned char *p, *q;
     char hextmp[2];
 
+    if (buflen < 0)
+        return -1;
+    if (buflen == 0)
+        return 0;
     if (arg) {
         p = buf;
         q = buf + buflen;
@@ -430,6 +441,7 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
     char objtmp[80];
     const char *objbuf;
     int outlen, len;
+    int err = 0;
     char *sep_dn, *sep_mv, *sep_eq;
     int sep_dn_len, sep_mv_len, sep_eq_len;
     if (indent < 0)
@@ -493,14 +505,20 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
             if (prev == X509_NAME_ENTRY_set(ent)) {
                 if (!io_ch(arg, sep_mv, sep_mv_len))
                     return -1;
-                outlen += sep_mv_len;
+                outlen = safe_add_int(outlen, sep_mv_len, &err);
+                if (err != 0)
+                    return -1;
             } else {
                 if (!io_ch(arg, sep_dn, sep_dn_len))
                     return -1;
-                outlen += sep_dn_len;
+                outlen = safe_add_int(outlen, sep_dn_len, &err);
+                if (err != 0)
+                    return -1;
                 if (!do_indent(io_ch, arg, indent))
                     return -1;
-                outlen += indent;
+                outlen = safe_add_int(outlen, indent, &err);
+                if (err != 0)
+                    return -1;
             }
         }
         prev = X509_NAME_ENTRY_set(ent);
@@ -531,11 +549,18 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
             if ((objlen < fld_len) && (flags & XN_FLAG_FN_ALIGN)) {
                 if (!do_indent(io_ch, arg, fld_len - objlen))
                     return -1;
-                outlen += fld_len - objlen;
+                outlen = safe_add_int(outlen, fld_len - objlen, &err);
+                if (err != 0)
+                    return -1;
             }
             if (!io_ch(arg, sep_eq, sep_eq_len))
                 return -1;
-            outlen += objlen + sep_eq_len;
+            outlen = safe_add_int(outlen, objlen, &err);
+            if (err != 0)
+                return -1;
+            outlen = safe_add_int(outlen, sep_eq_len, &err);
+            if (err != 0)
+                return -1;
         }
         /*
          * If the field name is unknown then fix up the DER dump flag. We
@@ -550,7 +575,9 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
         len = do_print_ex(io_ch, arg, flags | orflags, val);
         if (len < 0)
             return -1;
-        outlen += len;
+        outlen = safe_add_int(outlen, len, &err);
+        if (err != 0)
+            return -1;
     }
     return outlen;
 }
@@ -620,6 +647,7 @@ int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
         B_ASN1_UTF8STRING);
     if (ret < 0)
         return ret;
+    /* ASN1_mbstring_copy() guarantees the data it produced is NUL terminated */
     *out = stmp.data;
     return stmp.length;
 }

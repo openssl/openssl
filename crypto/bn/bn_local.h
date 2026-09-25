@@ -443,6 +443,8 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
              : "r"(a), "r"(b));         \
         ret; })
 #endif
+#elif defined(__e2k__) && __iset__ >= 5
+#define BN_UMULT_HIGH(a, b) __builtin_e2k_umulhd(a, b)
 #endif /* cpu */
 #endif /* OPENSSL_NO_ASM */
 

@@ -117,6 +117,10 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE hand_state;
     /* The handshake state requested by an API call (e.g. HelloRequest) */
     OSSL_HANDSHAKE_STATE request_state;
+    /* The handshake state to resume after sending an ACK */
+    OSSL_HANDSHAKE_STATE deferred_ack_state;
+    /* The handshake state before receiving an ACK */
+    OSSL_HANDSHAKE_STATE pre_ack_hand_state;
     ERROR_STATE error_state;
     int in_init;
     int read_state_first_init;
@@ -136,6 +140,8 @@ struct ossl_statem_st {
     ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb;
     void *mutatearg;
     unsigned int write_in_progress : 1;
+    /* Send an ACK for an already processed post-handshake message */
+    unsigned int ack_for_retransmit : 1;
 };
 typedef struct ossl_statem_st OSSL_STATEM;
 

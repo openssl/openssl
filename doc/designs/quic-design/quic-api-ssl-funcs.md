@@ -876,7 +876,6 @@ The following options must be explicitly forbidden:
 - `SSL_OP_ENABLE_MIDDLEBOX_COMPAT` — forbidden by QUIC RFCs
 - `SSL_OP_ENABLE_KTLS` — not currently supported for QUIC
 - `SSL_OP_SAFARI_ECDHE_ECDSA_BUG`
-- `SSL_OP_TLSEXT_PADDING`
 - `SSL_OP_TLS_ROLLBACK_BUG`
 - `SSL_OP_IGNORE_UNEXPECTED_EOF`
 - `SSL_OP_ALLOW_NO_DHE_KEX`

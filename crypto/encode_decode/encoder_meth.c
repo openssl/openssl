@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,8 +48,7 @@ static int ossl_encoder_up_ref(void *data)
     OSSL_ENCODER *encoder = (OSSL_ENCODER *)data;
     int ref = 0;
 
-    CRYPTO_UP_REF(&encoder->base.refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&encoder->base.refcnt, &ref);
 }
 
 /* Simple method structure constructor and destructor */

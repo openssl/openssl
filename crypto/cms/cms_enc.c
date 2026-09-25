@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@
 #include "crypto/evp.h"
 #include "crypto/asn1.h"
 #include "cms_local.h"
+#include "internal/sizes.h"
 
 /* CMS EncryptedData Utilities */
 
@@ -65,9 +66,13 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     if (cipher != NULL) {
         fetched_ciph = EVP_CIPHER_fetch(libctx, EVP_CIPHER_get0_name(cipher),
             propq);
-        if (fetched_ciph != NULL)
-            cipher = fetched_ciph;
+    } else {
+        char txtoid[OSSL_MAX_NAME_SIZE];
+        if (OBJ_obj2txt(txtoid, sizeof(txtoid), calg->algorithm, 1) > 0)
+            fetched_ciph = EVP_CIPHER_fetch(libctx, txtoid, propq);
     }
+    if (fetched_ciph != NULL)
+        cipher = fetched_ciph;
     if (cipher == NULL) {
         (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);
@@ -81,8 +86,14 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
 
     if (enc) {
+        (void)ERR_set_mark();
         calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_get_type(ctx));
-        if (calg->algorithm == NULL || calg->algorithm->nid == NID_undef) {
+        (void)ERR_pop_to_mark();
+
+        if (calg->algorithm == NULL || calg->algorithm->nid == NID_undef)
+            calg->algorithm = OBJ_txt2obj(EVP_CIPHER_get0_name(cipher), 0);
+
+        if (calg->algorithm == NULL || OBJ_length(calg->algorithm) == 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
             goto err;
         }
@@ -140,25 +151,19 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             ERR_clear_error();
     }
 
-    if (ec->keylen != tkeylen) {
-        /* If necessary set key length */
-        if (EVP_CIPHER_CTX_set_key_length(ctx, (int)ec->keylen) <= 0) {
-            /*
-             * Only reveal failure if debugging so we don't leak information
-             * which may be useful in MMA.
-             */
-            if (enc || ec->debug) {
-                ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
-                goto err;
-            } else {
-                /* Use random key */
-                OPENSSL_clear_free(ec->key, ec->keylen);
-                ec->key = tkey;
-                ec->keylen = tkeylen;
-                tkey = NULL;
-                ERR_clear_error();
-            }
+    if (ec->keylen != tkeylen
+        && EVP_CIPHER_CTX_set_key_length(ctx, (int)ec->keylen) <= 0) {
+        /* Fail only when this cannot act as an MMA oracle or debug enabled */
+        if (enc || ec->debug || ec->harderr) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
+            goto err;
         }
+        /* Use random key */
+        OPENSSL_clear_free(ec->key, ec->keylen);
+        ec->key = tkey;
+        ec->keylen = tkeylen;
+        tkey = NULL;
+        ERR_clear_error();
     }
 
     if (EVP_CipherInit_ex(ctx, NULL, NULL, ec->key, piv, enc) <= 0) {

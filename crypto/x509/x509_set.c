@@ -49,8 +49,8 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
     if (x == NULL)
         return 0;
     in = &x->cert_info.serialNumber;
-    if (in != serial)
-        return ASN1_STRING_copy(in, serial);
+    if (in != serial && !ASN1_STRING_copy(in, serial))
+        return 0;
     x->cert_info.enc.modified = 1;
     return 1;
 }
@@ -117,7 +117,7 @@ int X509_up_ref(X509 *x)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&x->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&x->references, &i))
         return 0;
 
     REF_PRINT_COUNT("X509", i, x);
@@ -200,13 +200,6 @@ void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
     siginf->pknid = pknid;
     siginf->secbits = secbits;
     siginf->flags = flags;
-}
-
-int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
-    uint32_t *flags)
-{
-    X509_check_purpose(x, -1, -1);
-    return X509_SIG_INFO_get(&x->siginf, mdnid, pknid, secbits, flags);
 }
 
 /* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
@@ -312,9 +305,18 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     return 1;
 }
 
-/* Returns 1 on success, 0 on failure */
-int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info)
+int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
+    uint32_t *flags)
 {
-    return x509_sig_info_init(info, &x->sig_alg, &x->signature,
+    X509_SIG_INFO siginf;
+
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    ERR_set_mark();
+    (void)x509_sig_info_init(&siginf, &x->sig_alg, &x->signature,
         X509_PUBKEY_get0(x->cert_info.key), x->libctx, x->propq);
+    ERR_pop_to_mark();
+    return X509_SIG_INFO_get(&siginf, mdnid, pknid, secbits, flags);
 }

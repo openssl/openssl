@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright Nokia 2007-2019
 # Copyright Siemens AG 2015-2019
 #
@@ -20,16 +20,21 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_ec = disabled('ec');
 
 plan skip_all => "This test is not supported in a no-cmp build"
     if disabled("cmp");
 
-plan tests => 2 + ($no_fips ? 0 : 1); #fips test
+plan tests => 2 + ($no_fips ? 0 : 1) + ($no_ec ? 0 : 1); #fips test and ec test
 
 my @basic_cmd = ("cmp_msg_test",
                  data_file("new.key"),
                  data_file("server.crt"),
                  data_file("pkcs10.der"));
+
+unless ($no_ec) {
+    ok(run(test(["cmp_extracerts_dos_test"])));
+}
 
 ok(run(test([@basic_cmd, "none"])));
 
