@@ -105,7 +105,7 @@ jobs:
             # RV64GC with bitmanip and scalar crypto extensions
             #   crypto/aes/asm/aes-riscv64-zkn.pl
             #   crypto/modes/gcm128.c
-            # The following paths only use ZBB
+            # The following paths use ZBB
             #   crypto/sha/asm/sha256-riscv64-zbb.pl
             #   crypto/sha/asm/sha512-riscv64-zbb.pl
             #   crypto/sm3/asm/sm3-riscv64-zbb.pl
@@ -127,6 +127,16 @@ jobs:
             qemucpu: "rv64,zbc=true,zbb=true,zbkb=false",
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_zbc_zbb"
+          }, {
+            # RV64GC ZBKB, but without ZBB or vectors
+            # Exercise ChaCha20 scalar rotations using ZBKB alone.
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,v=false,zbb=false,zbkb=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zbkb"
           }, {
             # RV64GC ZBC, but without ZBB/ZBKB
             #   crypto/modes/gcm128.c
@@ -344,10 +354,9 @@ jobs:
           ./util/opensslwrap.sh info -cpusettings | \
           grep -qE "${{ matrix.platform.capscheck }}"
 
-    # A dispatched run, and a pull request that opts in with `[riscv ci]` in its body, take the
-    # push tier: both exist to run pre-merge what otherwise only runs post-merge, and evp-only
-    # is the weaker signal. A pull request that only matches on its title keeps the evp tier.
-    # Legs setting `tests: none` stay build-only on every trigger, by design.
+    # A dispatched run, and a pull request with `[riscv ci]` in its body, use the
+    # same test selection as a push. Other pull requests run EVP and internal ChaCha tests.
+    # Legs setting `tests: none` stay build only on every trigger.
     - name: make all tests
       if: (github.event_name == 'push' || inputs.pr != '' || contains(github.event.pull_request.body, '[riscv ci]')) && matrix.platform.tests == ''
       run: |
@@ -360,11 +369,11 @@ jobs:
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
-    - name: make evp tests
+    - name: make evp and chacha tests
       if: github.event_name == 'pull_request' && !contains(github.event.pull_request.body, '[riscv ci]') && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
-                  TESTS="test_evp*" \
+                  TESTS="test_evp* test_internal_chacha" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: save artifacts
       if: success() || failure()
