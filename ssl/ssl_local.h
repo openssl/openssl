@@ -2184,6 +2184,7 @@ typedef struct dtls_sent_msg_st {
 } dtls_sent_msg;
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
+int dtls_has_unacked_key_update(SSL_CONNECTION *s);
 
 static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype)
 {
@@ -2236,6 +2237,14 @@ typedef struct dtls1_state_st {
 
     unsigned int retransmitting;
     unsigned int has_change_cipher_spec;
+    /*
+     * Set when our own KeyUpdate has been sent but not yet acknowledged.
+     * The new write keys are not installed until the ACK arrives
+     * per RFC 9147 section 8: the restriction is on using the new
+     * epoch's keys, not on sending altogether, so we keep using the current
+     * keys in the meantime.
+     */
+    unsigned int key_update_write_pending;
 #ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 #endif
@@ -3088,6 +3097,7 @@ __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);
 __owur int dtls1_handle_timeout(SSL_CONNECTION *s);
 void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
+void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,

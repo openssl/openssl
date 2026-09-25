@@ -182,6 +182,40 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch)
     }
 }
 
+/*
+ * Returns true if some other entry in queue1 or queue2 still holds wrl.
+ * Multiple dtls_sent_msg entries can share the identical
+ * saved_retransmit_state.wrl: every message written at a given epoch captures
+ * the same write record layer, and more than one can still be queued
+ * by the time dtls1_clear_sent_buffer() removes any one of them. wrl must
+ * not be freed while another queued entry is still going to use it for a
+ * retransmit.
+ */
+static int dtls1_wrl_has_other_owner(const OSSL_RECORD_LAYER *wrl,
+    pqueue *queue1, pqueue *queue2)
+{
+    piterator iter;
+    pitem *item;
+
+    iter = pqueue_iterator(queue1);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->saved_retransmit_state.wrl == wrl)
+            return 1;
+    }
+
+    iter = pqueue_iterator(queue2);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->saved_retransmit_state.wrl == wrl)
+            return 1;
+    }
+
+    return 0;
+}
+
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 {
     pitem *item = NULL;
@@ -206,7 +240,9 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
                         || msg_type == SSL3_MT_SERVER_HELLO
                         || msg_type == SSL3_MT_KEY_UPDATE)))
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
-            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
+            && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
+                sent_messages, remaining_sent_messages)) {
             /*
              * If we're freeing the CCS then we're done with the old wrl and it
              * can bee freed
@@ -223,6 +259,47 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
             pqueue_insert(&s->d1->sent_messages, item);
 
     pqueue_free(remaining_sent_messages);
+}
+
+/*
+ * Retire every queued CertificateRequest regardless of acknowledgment
+ * status, and report whether any was found. A CertificateRequest never
+ * receives an explicit ACK (rfc9147 5.8.1: receiving the next flight, not
+ * just an ACK, ends WAITING) -- the client's Finished is that next flight,
+ * and completes it implicitly. Entries of any other type are left
+ * untouched.
+ */
+static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
+{
+    pitem *item = NULL;
+    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue *sent_messages = &s->d1->sent_messages;
+    int retired = 0;
+
+    while ((item = pqueue_pop(sent_messages)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+
+        if (sent_msg->msg_info.msg_type != SSL3_MT_CERTIFICATE_REQUEST) {
+            pqueue_insert(remaining_sent_messages, item);
+            continue;
+        }
+
+        if (sent_msg->saved_retransmit_state.wrlmethod != NULL
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
+            && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
+                sent_messages, remaining_sent_messages))
+            sent_msg->saved_retransmit_state.wrlmethod->free(sent_msg->saved_retransmit_state.wrl);
+
+        dtls1_sent_msg_free(sent_msg);
+        pitem_free(item);
+        retired = 1;
+    }
+
+    while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
+        pqueue_insert(sent_messages, item);
+
+    pqueue_free(remaining_sent_messages);
+    return retired;
 }
 
 /*
@@ -257,6 +334,22 @@ int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
         dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
 
         if (!ossl_list_record_number_is_empty(&msg->rec_nums))
+            return 1;
+    }
+
+    return 0;
+}
+
+int dtls_has_unacked_key_update(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE
+            && !ossl_list_record_number_is_empty(&msg->rec_nums))
             return 1;
     }
 
@@ -546,6 +639,39 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
     dtls1_bio_set_next_timeout(s->rbio, s->d1);
     /* Clear retransmission buffer */
     dtls1_clear_sent_buffer(s, 0);
+}
+
+/*
+ * Retire the timer and retransmit buffer now that a flight has finished
+ * reading. Post-handshake message categories acknowledge nothing of each
+ * other (rfc9147 5.8.4), so an unrelated message must not discard our own
+ * still-unacknowledged flight. A CertificateRequest is retired here
+ * explicitly, since it completes via the next flight rather than an ACK
+ * (rfc9147 5.8.1); every other occurrence of TLS_ST_SR_FINISHED, including
+ * ordinary handshake completion, still falls through to the unconditional
+ * clear below.
+ */
+void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
+{
+    if (SSL_CONNECTION_IS_DTLS13(s)
+        && s->statem.hand_state == TLS_ST_SR_FINISHED
+        && dtls1_retire_sent_certificate_request_messages(s)
+        && dtls_any_sent_messages_are_missing_acknowledge(s)) {
+        dtls1_clear_sent_buffer(s, 1);
+        return;
+    }
+
+    if (SSL_CONNECTION_IS_DTLS13(s)
+        && (s->statem.hand_state == TLS_ST_SR_KEY_UPDATE
+            || s->statem.hand_state == TLS_ST_CR_KEY_UPDATE
+            || s->statem.hand_state == TLS_ST_CR_SESSION_TICKET
+            || s->statem.hand_state == TLS_ST_CR_CERT_REQ)
+        && dtls_any_sent_messages_are_missing_acknowledge(s)) {
+        dtls1_clear_sent_buffer(s, 1);
+        return;
+    }
+
+    dtls1_stop_timer(s);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)

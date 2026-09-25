@@ -849,11 +849,17 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             frag_len -= readbytes;
         }
         /*
-         * A lost ACK can cause an already processed post-handshake message to
-         * be retransmitted in a new record. ACK it without processing it again.
+         * A lost ACK can cause an already processed message to be
+         * retransmitted in a new record. ACK it without processing it
+         * again. Epoch 2 is included alongside the post-handshake epochs
+         * (3+) so that a client's Finished, retransmitted after the server
+         * has already moved on to epoch 3, still gets ACKed instead of
+         * silently dropped (see dtls_get_more_records()'s retained
+         * prev_epoch_rl handling, which is what let this record
+         * authenticate at all).
          */
         if (SSL_CONNECTION_IS_DTLS13(s)
-            && s->s3.tmp.record_epoch >= 3
+            && s->s3.tmp.record_epoch >= 2
             && msg_hdr->seq < s->d1->handshake_read_seq
             && dtls_msg_needs_ack(!s->server, msg_hdr->type)) {
             if (!add_record_to_ack_list(s))
@@ -1337,6 +1343,33 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
                     ossl_list_record_number_remove(&msg->rec_nums, recnum);
                     OPENSSL_free(recnum);
                 }
+            }
+        }
+    }
+
+    /*
+     * If our own KeyUpdate is still awaiting installation of its new write
+     * keys, check whether this ACK is what it was waiting for. This is
+     * checked per-message rather than via
+     * dtls_any_sent_messages_are_missing_acknowledge(), since some other,
+     * unrelated buffered message (e.g. a ticket) may still be outstanding
+     * even once our KeyUpdate specifically has been fully acknowledged.
+     */
+    if (s->d1->key_update_write_pending) {
+        pitem *item;
+        piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+        while ((item = pqueue_next(&iter)) != NULL) {
+            dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+            if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE
+                && ossl_list_record_number_is_empty(&msg->rec_nums)) {
+                s->d1->key_update_write_pending = 0;
+                if (!tls13_update_key(s, 1)) {
+                    /* SSLfatal() already called */
+                    return MSG_PROCESS_ERROR;
+                }
+                break;
             }
         }
     }
