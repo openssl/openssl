@@ -27,6 +27,14 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     size_t *padlen, const unsigned char *in,
     size_t len);
 
+#ifdef FIPS_MODULE
+static int gcm_fips_taglen_approved(size_t taglen)
+{
+    return taglen == UNINITIALISED_SIZET || taglen == 4 || taglen == 8
+        || (taglen >= 12 && taglen <= GCM_TAG_MAX_SIZE);
+}
+#endif
+
 /*
  * Called from EVP_CipherInit when there is currently no context via
  * the new_ctx() function
@@ -239,7 +247,10 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
                 return 0;
         }
     }
-    return OSSL_FIPS_IND_GET_CTX_PARAM_APPROVED(ctx, params);
+    /* Externally supplied IVs are permitted but not approved for encryption. */
+    return OSSL_FIPS_IND_GET_CTX_PARAM_CONDITIONAL(ctx, params,
+        (!ctx->enc || ctx->iv_gen_rand)
+            && gcm_fips_taglen_approved(ctx->taglen));
 }
 
 int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
