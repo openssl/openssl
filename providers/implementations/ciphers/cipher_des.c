@@ -131,7 +131,7 @@ CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(des)
 OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
     CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(des)
 
-        static int des_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int des_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;

@@ -1379,6 +1379,7 @@ StatementMacros:
   # This isn't quite right, but it causes clang-format to do a slightly better
   # job formatting this macro.
   - "ASN1_EX_TEMPLATE_TYPE"
+  - "CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END"
   - "LAZY"
 #
 # Include sorting should be disabled until post 4.0

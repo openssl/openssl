@@ -132,7 +132,7 @@ CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_tdes)
 OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
     CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(ossl_tdes)
 
-        static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
+static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 {
     DES_cblock *deskey = ptr;
     size_t kl = ctx->keylen;
