@@ -85,9 +85,22 @@ static ossl_inline ossl_unused size_t ossl_fn_ctx_max_size(size_t a, size_t b)
  * append a fixed-size array).  Using the same macro for both guarantees
  * the header layouts stay in lockstep.
  */
-#define OSSL_FN_HEADER_FIELDS                  \
-    unsigned int is_dynamically_allocated : 1; \
-    unsigned int is_securely_allocated : 1;    \
+#define OSSL_FN_HEADER_FIELDS                                      \
+    /* Flag: alloced with OSSL_FN_new() or OSSL_FN_secure_new() */ \
+    unsigned int is_dynamically_allocated : 1;                     \
+    /* Flag: alloced with OSSL_FN_secure_new() */                  \
+    unsigned int is_securely_allocated : 1;                        \
+                                                                   \
+    /*                                                             \
+     * The size of the d array that follows, in number of          \
+     * OSSL_FN_ULONG.  The d array stores the number itself.       \
+     *                                                             \
+     * Note: |dsize| is an int, because it turns out that some     \
+     * lower level (possibly assembler) functions expect that type \
+     * (especially, that type size).                               \
+     * This deviates from the design in                            \
+     * doc/designs/fixed-size-large-numbers.md                     \
+     */                                                            \
     int dsize
 
 struct ossl_fn_st {
