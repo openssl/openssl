@@ -340,10 +340,15 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
 
 const OSSL_PARAM *EVP_PKEY_fromdata_settable(EVP_PKEY_CTX *ctx, int selection)
 {
-    /* We call fromdata_init to get ctx->keymgmt populated */
-    if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED) == 1)
-        return evp_keymgmt_import_types(ctx->keymgmt, selection);
-    return NULL;
+    /*
+     * Query the existing keymgmt without resetting the context or freeing
+     * active operation state.
+     */
+    if (ctx == NULL || ctx->keytype == NULL || ctx->keymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return NULL;
+    }
+    return evp_keymgmt_import_types(ctx->keymgmt, selection);
 }
 
 static OSSL_CALLBACK ossl_pkey_todata_cb;

@@ -55,6 +55,11 @@ rendering as a man-page while still getting proper links in HTML
 EVP_PKEY_fromdata_settable() gets a constant L<OSSL_PARAM(3)> array that describes
 the settable parameters that can be used with EVP_PKEY_fromdata().
 I<selection> is described in L</Selections>.
+This function does not initialize the context or alter its current operation
+or operation-specific configuration.  It may be called before or after
+EVP_PKEY_fromdata_init(), or on a context initialized for another operation.
+The returned array is owned by the key management implementation and must
+not be freed by the caller.
 
 Parameters in the I<params> array that are not among the settable parameters
 for the given I<selection> are ignored.
@@ -96,6 +101,10 @@ To enable, specify the B<enable-lms> build configuration option.
 EVP_PKEY_fromdata_init() and EVP_PKEY_fromdata() return 1 for success and 0 or
 a negative value for failure.  In particular a return value of -2 indicates the
 operation is not supported by the public key algorithm.
+
+EVP_PKEY_fromdata_settable() returns a constant array of L<OSSL_PARAM(3)>
+descriptors, or NULL if no descriptor array is available for the key
+management implementation and I<selection>.
 
 =head1 EXAMPLES
 
