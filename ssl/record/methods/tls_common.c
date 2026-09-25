@@ -578,7 +578,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     int imac_size;
     size_t num_recs = 0, max_recs, j;
     PACKET pkt;
-    SSL_MAC_BUF *macbufs = NULL;
+    unsigned char **macbufs = NULL;
     int ret = OSSL_RECORD_RETURN_FATAL;
 
     rr = rl->rrec;
@@ -849,18 +849,18 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
         && !rl->use_etm
         && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
         for (j = 0; j < num_recs; j++) {
-            SSL_MAC_BUF *thismb = &macbufs[j];
+            unsigned char *thismb = macbufs[j];
 
             thisrr = &rr[j];
 
             i = rl->funcs->mac(rl, thisrr, md, 0 /* not send */);
-            if (i == 0 || thismb == NULL || thismb->mac == NULL
-                || CRYPTO_memcmp(md, thismb->mac, (size_t)mac_size) != 0)
+            if (i == 0 || thismb == NULL
+                || CRYPTO_memcmp(md, thismb, (size_t)mac_size) != 0)
                 enc_err = 0;
             if (thisrr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
                 enc_err = 0;
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-            if (enc_err == 0 && mac_size > 0 && thismb != NULL && thismb->mac != NULL && (md[0] ^ thismb->mac[0]) != 0xFF) {
+            if (enc_err == 0 && mac_size > 0 && thismb != NULL && (md[0] ^ thismb[0]) != 0xFF) {
                 enc_err = 1;
             }
 #endif
@@ -943,13 +943,9 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     rl->num_released = 0;
     ret = OSSL_RECORD_RETURN_SUCCESS;
 end:
-    if (macbufs != NULL) {
-        for (j = 0; j < num_recs; j++) {
-            if (macbufs[j].alloced)
-                OPENSSL_free(macbufs[j].mac);
-        }
+    if (macbufs != NULL)
         OPENSSL_free(macbufs);
-    }
+
     return ret;
 }
 

@@ -206,7 +206,7 @@ static int setup_record_header(const OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec,
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
 static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
-    size_t n_recs, int sending, SSL_MAC_BUF *macs,
+    size_t n_recs, int sending, unsigned char **mac,
     size_t macsize)
 {
     EVP_CIPHER_CTX *ds;
@@ -398,15 +398,12 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         }
 
         /* Now get a pointer to the MAC (if applicable) */
-        if (macs != NULL) {
+        if (mac != NULL) {
             OSSL_PARAM params[2], *p = params;
 
             /* Get the MAC */
-            macs[0].alloced = 0;
-
             *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
-                (void **)&macs[0].mac,
-                macsize);
+                (void **)mac, macsize);
             *p = OSSL_PARAM_construct_end();
 
             if (!EVP_CIPHER_CTX_get_params(ds, params)) {
