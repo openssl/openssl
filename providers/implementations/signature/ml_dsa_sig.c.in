@@ -26,8 +26,10 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/der_ml_dsa.h"
 #include "crypto/ml_dsa.h"
 #include "internal/common.h"
+#include "internal/fips.h"
 #include "internal/packet.h"
 #include "internal/sizes.h"
+#include "fips/fipsindicator.h"
 
 #define ML_DSA_MESSAGE_ENCODE_RAW 0
 #define ML_DSA_MESSAGE_ENCODE_PURE 1

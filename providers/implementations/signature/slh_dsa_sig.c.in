@@ -22,7 +22,9 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/der_slh_dsa.h"
 #include "crypto/slh_dsa.h"
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/sizes.h"
+#include "fips/fipsindicator.h"
 
 #define SLH_DSA_MAX_ADD_RANDOM_LEN 32
 
