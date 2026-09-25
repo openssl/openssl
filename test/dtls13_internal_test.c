@@ -820,6 +820,69 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * SSL_free_buffers() must also release the retained previous-epoch read
+ * layer's buffer, not just the active layer's. dtls_get_more_records()
+ * never uses the retained layer's own read buffer after retention -- it
+ * reuses the active layer's packet buffer to authenticate a
+ * previous-epoch record -- so leaving it allocated after SSL_free_buffers()
+ * reports success is a pure leak until the whole layer chain is torn down.
+ */
+static int test_dtls13_prev_epoch_rl_buffer_freed(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    OSSL_RECORD_LAYER *rrl;
+    unsigned char buf;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    rrl = sc->rlayer.rrl;
+
+    /* The server's epoch-2 read layer must have been retained. */
+    if (!TEST_ptr(rrl->prev_epoch_rl))
+        goto end;
+
+    /* Exchange and consume application data both ways. */
+    if (!TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c')
+        || !TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's'))
+        goto end;
+
+    if (!TEST_true(SSL_free_buffers(server)))
+        goto end;
+
+    if (!TEST_ptr_null(rrl->rbuf.buf))
+        goto end;
+
+    /*
+     * Without releasing the retained previous-epoch layer's buffer in
+     * dtls_set_prev_epoch_rl(), this would stay allocated even though
+     * SSL_free_buffers() reported success above.
+     */
+    if (!TEST_ptr_null(rrl->prev_epoch_rl->rbuf.buf))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -838,6 +901,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_pha_ack_retransmit);
     ADD_TEST(test_dtls13_finished_ack_loss_recovers);
     ADD_ALL_TESTS(test_dtls13_keyupdate_ack_loss_recovers, 2);
+    ADD_TEST(test_dtls13_prev_epoch_rl_buffer_freed);
 #endif
     return 1;
 }
