@@ -1522,7 +1522,7 @@ err:
 static int cipher_test_run(EVP_TEST *t)
 {
     CIPHER_DATA *cdat = t->data;
-    int rv, frag, fragmax, in_place;
+    int rv = 0, frag, fragmax, in_place;
     size_t out_misalign, inp_misalign;
     OSSL_PARAM initparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     size_t params_n = 0;
