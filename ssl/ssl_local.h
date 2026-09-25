@@ -3149,6 +3149,8 @@ int ossl_dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
 int ossl_dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
     const unsigned char *cookie,
     size_t cookie_len);
+int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
+    unsigned char *hmac_out);
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 __owur int tls1_new(SSL *s);

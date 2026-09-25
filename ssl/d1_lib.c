@@ -1589,7 +1589,7 @@ static OSSL_TIME dtls_listener_get_time_direct(DTLS_LISTENER *dl)
  *
  * Returns 1 on success, 0 on failure.
  */
-static int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
+int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
     unsigned char *hmac_out)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
@@ -1597,8 +1597,8 @@ static int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
     EVP_MAC_CTX *mctx = NULL;
     OSSL_PARAM params[2];
     /* 8 (timestamp) + 2 (port) + max address size */
-    unsigned char data[8 + sizeof(uint16_t) + 64];
-    unsigned char addr_buf[64];
+    unsigned char data[DTLS_LISTENER_COOKIE_TIMESTAMP_LEN + sizeof(uint16_t) + sizeof(BIO_ADDR)];
+    unsigned char addr_buf[sizeof(BIO_ADDR)];
     size_t data_len = 0;
     size_t addr_len = 0;
     size_t hmac_len = DTLS_LISTENER_COOKIE_HMAC_LEN;
