@@ -327,9 +327,13 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
             ctx->aid_len))
         return 0;
 
+#ifdef FIPS_MODULE
     return ossl_FIPS_IND_get_ctx_param_conditional(NULL, params,
         ctx->test_entropy_len == 0
             && ctx->msg_encode == ML_DSA_MESSAGE_ENCODE_PURE);
+#else
+    return 1;
+#endif
 }
 
 #define MAKE_SIGNATURE_FUNCTIONS(alg)                                          \
