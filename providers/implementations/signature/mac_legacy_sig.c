@@ -300,13 +300,14 @@ static const OSSL_PARAM *mac_gettable_ctx_params(ossl_unused void *vctx,
 static int mac_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_MAC_CTX *ctx = vctx;
+#ifdef FIPS_MODULE
+    struct mac_legacy_get_ctx_params_st p;
+#endif
 
     if (ctx == NULL)
         return 0;
 
 #ifdef FIPS_MODULE
-    struct mac_legacy_get_ctx_params_st p;
-
     if (!mac_legacy_get_ctx_params_decoder(params, &p))
         return 0;
     if (p.ind != NULL) {
