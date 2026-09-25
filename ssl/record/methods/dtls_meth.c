@@ -956,6 +956,16 @@ static int dtls_set_prev_epoch_rl(OSSL_RECORD_LAYER *rl, OSSL_RECORD_LAYER *prev
         ret &= dtls_free(prev->prev_epoch_rl);
         prev->prev_epoch_rl = NULL;
     }
+
+    /*
+     * prev's own read buffer is never used again: authenticating a
+     * retransmission at this epoch reuses the active layer's packet buffer
+     * (see the crypto_rl handling in dtls_get_more_records()). Release it
+     * now instead of leaving it allocated until the whole layer chain is
+     * torn down or the caller happens to call SSL_free_buffers().
+     */
+    ret &= tls_release_read_buffer(prev);
+
     rl->prev_epoch_rl = prev;
     return ret;
 }
