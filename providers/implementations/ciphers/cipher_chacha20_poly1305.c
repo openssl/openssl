@@ -19,7 +19,7 @@
 #define CHACHA20_POLY1305_KEYLEN CHACHA_KEY_SIZE
 #define CHACHA20_POLY1305_BLKLEN 1
 #define CHACHA20_POLY1305_MAX_IVLEN 12
-#define CHACHA20_POLY1305_MODE 0
+#define CHACHA20_POLY1305_MODE EVP_CIPH_STREAM_CIPHER
 #define CHACHA20_POLY1305_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_CUSTOM_IV)
 
@@ -88,7 +88,8 @@ static void chacha20_poly1305_freectx(void *vctx)
 
 static int chacha20_poly1305_get_params(OSSL_PARAM params[])
 {
-    return ossl_cipher_generic_get_params(params, 0, CHACHA20_POLY1305_FLAGS,
+    return ossl_cipher_generic_get_params(params,
+        CHACHA20_POLY1305_MODE, CHACHA20_POLY1305_FLAGS,
         CHACHA20_POLY1305_KEYLEN * 8,
         CHACHA20_POLY1305_BLKLEN * 8,
         CHACHA20_POLY1305_IVLEN * 8);
