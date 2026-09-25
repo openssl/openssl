@@ -504,6 +504,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     /* Special case: -1 length restores whole IV */
     if (len == (size_t)-1) {
         memcpy(ctx->iv, iv, ctx->ivlen);
+        ctx->iv_gen_rand = 0;
         ctx->iv_gen = 1;
         ctx->iv_state = IV_STATE_BUFFERED;
         return 1;
