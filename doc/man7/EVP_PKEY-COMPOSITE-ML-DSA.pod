@@ -1,0 +1,242 @@
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+EVP_PKEY-COMPOSITE-ML-DSA, EVP_KEYMGMT-COMPOSITE-ML-DSA,
+EVP_PKEY-ML-DSA-65-RSA3072-PKCS15-SHA512,
+EVP_PKEY-ML-DSA-65-ECDSA-P256-SHA512
+- EVP_PKEY composite ML-DSA keytype and algorithm support
+
+=head1 DESCRIPTION
+
+The composite keytypes combine an B<ML-DSA-65> post-quantum key with a
+traditional (classical) key, RSA or EC, into a single key pair, as described
+in
+L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>.
+The intent is to provide protection against attacks on either component
+algorithm: an attacker must break both the post-quantum and the classical
+component to forge a signature or recover a private key.
+
+Two composite algorithms are currently implemented in OpenSSL's default
+provider (they are not available in the FIPS or base providers):
+
+=over 4
+
+=item B<ML-DSA-65-RSA3072-PKCS15-SHA512>
+
+Combines B<ML-DSA-65> with a 3072-bit B<RSA> key, using RSASSA-PKCS1-v1_5
+with SHA-256 for the classical component.
+The corresponding OID is C<1.3.6.1.5.5.7.6.42>
+(C<id-mldsa65-rsa3072-pkcs15-sha512>).
+
+=item B<ML-DSA-65-ECDSA-P256-SHA512>
+
+Combines B<ML-DSA-65> with an B<EC> key on the B<P-256> (C<prime256v1>)
+curve, using ECDSA with SHA-256 for the classical component.
+The corresponding OID is C<1.3.6.1.5.5.7.6.45>
+(C<id-mldsa65-ecdsa-p256-sha512>).
+
+=back
+
+For both algorithms, the ML-DSA component uses B<SHA-512> to compute PH(M),
+the pre-hash of the message that both component signatures are ultimately
+computed over (see L<EVP_SIGNATURE-COMPOSITE-ML-DSA(7)>).
+
+Support for a given composite algorithm requires the classical component's
+algorithm (B<RSA> or B<EC>) to also be enabled at build time; see
+L</CONFORMING TO> and L<openssl(1)/Configuration Options> for related
+B<no-rsa>, B<no-ec> and B<no-composite> build options.
+
+=head2 Keygen Parameters
+
+=over 4
+
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
+
+This is the same "priv" parameter described under L</Common composite
+ML-DSA parameters> below, but set here, before key generation, to request
+deterministic key generation from a fixed seed instead of letting both
+components be generated randomly using a DRBG.
+The value supplied must be the concatenation of a 32-byte ML-DSA seed
+followed by the DER encoding of the classical private key (see L</Wire
+Format> below); the classical component is imported directly rather than
+generated.
+
+=item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
+
+Sets properties to be used when fetching the algorithm implementations
+needed for the ML-DSA and classical component operations.
+
+=back
+
+Use L<EVP_PKEY_CTX_set_params(3)> after calling L<EVP_PKEY_keygen_init(3)>.
+
+=head2 Common composite ML-DSA parameters
+
+In addition to the common parameters that all keytypes should support (see
+L<provider-keymgmt(7)/Common Information Parameters>), the implementation of
+these key types support the parameters listed below.
+These are gettable using L<EVP_PKEY_get_octet_string_param(3)> or
+L<EVP_PKEY_get_params(3)>. They can be initialised via L<EVP_PKEY_fromdata(3)>,
+and are returned by L<EVP_PKEY_todata(3)> given a suitable I<selection>.
+
+=over 4
+
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
+
+The encoded public key, being the concatenation of the fixed-size 1952-byte
+B<ML-DSA-65> public key and the raw-encoded classical public key (see
+L</Wire Format> below).
+
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
+
+The encoded private key, being the concatenation of the 32-byte B<ML-DSA-65>
+seed and the raw-encoded classical private key (see L</Wire Format> below).
+This same parameter name can also be set as a L</Keygen Parameters> value,
+before key generation, to request deterministic key generation from a fixed
+seed.
+Unlike B<ML-DSA> (see L<EVP_PKEY-ML-DSA(7)>), composite keys have no
+seedless private key representation: the B<ML-DSA> seed must always be
+known in order to export, encode, or serialise a composite private key.
+If the seed was not retained (for example after loading a public-key-only
+component), private key export operations fail.
+
+=item "bits" (B<OSSL_PKEY_PARAM_BITS>) <integer>
+
+An approximation of the combined public key size in bits, useful only for
+reporting; it is not the exact DER/point-encoded size and must not be used
+for buffer sizing.
+
+=item "security-bits" (B<OSSL_PKEY_PARAM_SECURITY_BITS>) <integer>
+
+The security strength of the composite key in bits, computed as the
+minimum of the B<ML-DSA-65> collision strength (192 bits) and the security
+strength of the classical component. For both algorithms currently defined,
+this evaluates to 128 bits, the security strength of the classical
+component.
+
+=item "max-size" (B<OSSL_PKEY_PARAM_MAX_SIZE>) <integer>
+
+An upper bound on the size, in bytes, of a signature produced by this key,
+being the fixed B<ML-DSA-65> signature length plus the classical
+component's maximum signature size. This value may be larger than the size
+of any given signature actually produced; use this only to size the output
+buffer prior to signing.
+
+=item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
+
+Can be used when importing raw keys using L<EVP_PKEY_fromdata(3)>, to fetch
+internal algorithm implementations used for the ML-DSA and classical
+component operations.
+
+=back
+
+=head2 Wire Format
+
+The wire format used for the "pub" and "priv" parameters above, and for the
+raw content of the encoded B<SubjectPublicKeyInfo> and B<PrivateKeyInfo>
+structures, follows
+L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>:
+
+=over 4
+
+=item Public key: I<mldsaPK> || I<tradPK>
+
+I<mldsaPK> is the fixed-size 1952-byte B<ML-DSA-65> public key.
+I<tradPK> is the classical public key, encoded as:
+
+=over 4
+
+=item * B<RSA>: the DER encoding of B<RSAPublicKey> (PKCS#1).
+
+=item * B<EC>: the uncompressed B<X9.62> point, C<0x04 || x || y>.
+
+=back
+
+=item Private key: I<mldsaSeed> || I<tradSK>
+
+I<mldsaSeed> is the 32-byte B<ML-DSA-65> seed.
+I<tradSK> is the classical private key, encoded as:
+
+=over 4
+
+=item * B<RSA>: the DER encoding of B<RSAPrivateKey> (PKCS#1).
+
+=item * B<EC>: the DER encoding of B<ECPrivateKey> (RFC 5915) with a
+C<NamedCurve> parameter, but without the optional C<publicKey> field.
+
+=back
+
+=back
+
+On import (via L<EVP_PKEY_fromdata(3)>, or when decoding B<PKCS#8> or
+B<SubjectPublicKeyInfo> structures), the classical component's actual
+parameters are verified against those required by the composite algorithm
+name: an B<RSA> component must be exactly 3072 bits for
+B<ML-DSA-65-RSA3072-PKCS15-SHA512>, and an B<EC> component must be on the
+B<P-256> curve for B<ML-DSA-65-ECDSA-P256-SHA512>. Keys whose classical
+component does not match are rejected.
+
+=head1 CONFORMING TO
+
+=over 4
+
+=item L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>
+
+=item FIPS 204 (for the B<ML-DSA-65> component)
+
+=back
+
+=head1 EXAMPLES
+
+An B<EVP_PKEY> context can be obtained by calling:
+
+    EVP_PKEY_CTX *pctx =
+        EVP_PKEY_CTX_new_from_name(NULL, "ML-DSA-65-RSA3072-PKCS15-SHA512", NULL);
+
+A composite key can be generated like this:
+
+    pkey = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-65-ECDSA-P256-SHA512");
+
+The encoded public key can be extracted from a key by calling:
+
+    unsigned char *pub = NULL;
+    size_t pub_len = 0;
+
+    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                     NULL, 0, &pub_len);
+    pub = OPENSSL_malloc(pub_len);
+    EVP_PKEY_get_octet_string_param(pkey, OSSL_PKEY_PARAM_PUB_KEY,
+                                     pub, pub_len, &pub_len);
+
+To generate an B<ML-DSA-65-RSA3072-PKCS15-SHA512> key and write it out in
+B<PKCS#8> form, you can run:
+
+    $ openssl genpkey -algorithm ML-DSA-65-RSA3072-PKCS15-SHA512 -out priv.pem
+
+=head1 SEE ALSO
+
+L<EVP_KEYMGMT(3)>,
+L<EVP_PKEY(3)>,
+L<provider-keymgmt(7)>,
+L<EVP_PKEY-ML-DSA(7)>,
+L<EVP_PKEY-RSA(7)>,
+L<EVP_PKEY-EC(7)>,
+L<EVP_SIGNATURE-COMPOSITE-ML-DSA(7)>
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

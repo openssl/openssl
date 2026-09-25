@@ -231,6 +231,10 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item ML-DSA-87, see L<EVP_SIGNATURE-ML-DSA(7)>
 
+=item ML-DSA-65-RSA3072-PKCS15-SHA512, see L<EVP_SIGNATURE-COMPOSITE-ML-DSA(7)>
+
+=item ML-DSA-65-ECDSA-P256-SHA512, see L<EVP_SIGNATURE-COMPOSITE-ML-DSA(7)>
+
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item SIPHASH, see L<EVP_SIGNATURE-Siphash(7)>
@@ -326,6 +330,10 @@ The OpenSSL default provider supports these operations and algorithms:
 =item ML-DSA-65, see L<EVP_KEYMGMT-ML-DSA(7)>
 
 =item ML-DSA-87, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item ML-DSA-65-RSA3072-PKCS15-SHA512, see L<EVP_KEYMGMT-COMPOSITE-ML-DSA(7)>
+
+=item ML-DSA-65-ECDSA-P256-SHA512, see L<EVP_KEYMGMT-COMPOSITE-ML-DSA(7)>
 
 =item MK-KEM-512, see L<EVP_KEYMGMT-ML-KEM-512(7)>
 
@@ -436,6 +444,10 @@ are also available in the base provider.
 
 =item ML-DSA-87
 
+=item ML-DSA-65-RSA3072-PKCS15-SHA512
+
+=item ML-DSA-65-ECDSA-P256-SHA512
+
 =item ML-KEM-512
 
 =item ML-KEM-768
@@ -507,6 +519,10 @@ combination with the FIPS provider.
 =item ML-DSA-65
 
 =item ML-DSA-87
+
+=item ML-DSA-65-RSA3072-PKCS15-SHA512
+
+=item ML-DSA-65-ECDSA-P256-SHA512
 
 =item ML-KEM-512
 
@@ -583,6 +599,10 @@ was added in OpenSSL 4.0.
 Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
 
 Support for CSHAKE-128 and CSHAKE-256 was added in OpenSSL 4.0.
+
+Support for the B<ML-DSA-65-RSA3072-PKCS15-SHA512> and
+B<ML-DSA-65-ECDSA-P256-SHA512> composite signature algorithms was added in
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -100,6 +100,10 @@ DEPEND[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 GENERATE[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 DEPEND[man1/openssl-enc.pod]{pod}=man1/openssl-enc.pod.in
 GENERATE[man1/openssl-enc.pod]=man1/openssl-enc.pod.in
+DEPEND[html/man1/openssl-engine.html]=man1/openssl-engine.pod
+GENERATE[html/man1/openssl-engine.html]=man1/openssl-engine.pod
+DEPEND[man/man1/openssl-engine.1]=man1/openssl-engine.pod
+GENERATE[man/man1/openssl-engine.1]=man1/openssl-engine.pod
 DEPEND[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 GENERATE[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 DEPEND[man/man1/openssl-errstr.1]=man1/openssl-errstr.pod
@@ -361,6 +365,7 @@ html/man1/openssl-ec.html \
 html/man1/openssl-ech.html \
 html/man1/openssl-ecparam.html \
 html/man1/openssl-enc.html \
+html/man1/openssl-engine.html \
 html/man1/openssl-errstr.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
@@ -423,6 +428,7 @@ man/man1/openssl-ec.1 \
 man/man1/openssl-ech.1 \
 man/man1/openssl-ecparam.1 \
 man/man1/openssl-enc.1 \
+man/man1/openssl-engine.1 \
 man/man1/openssl-errstr.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
@@ -4811,6 +4817,10 @@ DEPEND[html/man7/EVP_MD-common.html]=man7/EVP_MD-common.pod
 GENERATE[html/man7/EVP_MD-common.html]=man7/EVP_MD-common.pod
 DEPEND[man/man7/EVP_MD-common.7]=man7/EVP_MD-common.pod
 GENERATE[man/man7/EVP_MD-common.7]=man7/EVP_MD-common.pod
+DEPEND[html/man7/EVP_PKEY-COMPOSITE-ML-DSA.html]=man7/EVP_PKEY-COMPOSITE-ML-DSA.pod
+GENERATE[html/man7/EVP_PKEY-COMPOSITE-ML-DSA.html]=man7/EVP_PKEY-COMPOSITE-ML-DSA.pod
+DEPEND[man/man7/EVP_PKEY-COMPOSITE-ML-DSA.7]=man7/EVP_PKEY-COMPOSITE-ML-DSA.pod
+GENERATE[man/man7/EVP_PKEY-COMPOSITE-ML-DSA.7]=man7/EVP_PKEY-COMPOSITE-ML-DSA.pod
 DEPEND[html/man7/EVP_PKEY-DH.html]=man7/EVP_PKEY-DH.pod
 GENERATE[html/man7/EVP_PKEY-DH.html]=man7/EVP_PKEY-DH.pod
 DEPEND[man/man7/EVP_PKEY-DH.7]=man7/EVP_PKEY-DH.pod
@@ -4895,6 +4905,10 @@ DEPEND[html/man7/EVP_RAND.html]=man7/EVP_RAND.pod
 GENERATE[html/man7/EVP_RAND.html]=man7/EVP_RAND.pod
 DEPEND[man/man7/EVP_RAND.7]=man7/EVP_RAND.pod
 GENERATE[man/man7/EVP_RAND.7]=man7/EVP_RAND.pod
+DEPEND[html/man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.html]=man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.pod
+GENERATE[html/man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.html]=man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.pod
+DEPEND[man/man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.7]=man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.pod
+GENERATE[man/man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.7]=man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.pod
 DEPEND[html/man7/EVP_SIGNATURE-DSA.html]=man7/EVP_SIGNATURE-DSA.pod
 GENERATE[html/man7/EVP_SIGNATURE-DSA.html]=man7/EVP_SIGNATURE-DSA.pod
 DEPEND[man/man7/EVP_SIGNATURE-DSA.7]=man7/EVP_SIGNATURE-DSA.pod
@@ -5282,6 +5296,7 @@ html/man7/EVP_MD-SHAKE.html \
 html/man7/EVP_MD-SM3.html \
 html/man7/EVP_MD-WHIRLPOOL.html \
 html/man7/EVP_MD-common.html \
+html/man7/EVP_PKEY-COMPOSITE-ML-DSA.html \
 html/man7/EVP_PKEY-DH.html \
 html/man7/EVP_PKEY-DSA.html \
 html/man7/EVP_PKEY-EC.html \
@@ -5303,6 +5318,7 @@ html/man7/EVP_RAND-JITTER.html \
 html/man7/EVP_RAND-SEED-SRC.html \
 html/man7/EVP_RAND-TEST-RAND.html \
 html/man7/EVP_RAND.html \
+html/man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.html \
 html/man7/EVP_SIGNATURE-DSA.html \
 html/man7/EVP_SIGNATURE-ECDSA.html \
 html/man7/EVP_SIGNATURE-ED25519.html \
@@ -5448,6 +5464,7 @@ man/man7/EVP_MD-SHAKE.7 \
 man/man7/EVP_MD-SM3.7 \
 man/man7/EVP_MD-WHIRLPOOL.7 \
 man/man7/EVP_MD-common.7 \
+man/man7/EVP_PKEY-COMPOSITE-ML-DSA.7 \
 man/man7/EVP_PKEY-DH.7 \
 man/man7/EVP_PKEY-DSA.7 \
 man/man7/EVP_PKEY-EC.7 \
@@ -5469,6 +5486,7 @@ man/man7/EVP_RAND-JITTER.7 \
 man/man7/EVP_RAND-SEED-SRC.7 \
 man/man7/EVP_RAND-TEST-RAND.7 \
 man/man7/EVP_RAND.7 \
+man/man7/EVP_SIGNATURE-COMPOSITE-ML-DSA.7 \
 man/man7/EVP_SIGNATURE-DSA.7 \
 man/man7/EVP_SIGNATURE-ECDSA.7 \
 man/man7/EVP_SIGNATURE-ED25519.7 \

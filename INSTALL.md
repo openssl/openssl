@@ -1214,7 +1214,7 @@ The `lms` algorithm support is currently limited to verification only as per
         des|dh|dsa|
         ec|ec2m|ecdh|ecdsa|hmac-drbg-kdf|idea|ikev2kdf|kbkdf|krb5kdf|
         md4|mdc2|
-        ml-dsa|ml-kem|
+        ml-dsa|ml-kem|composite|
         ocb|poly1305|pvkkdf|rc2|rc4|rmd160|scrypt|
         seed|siphash|siv|slh-dsa|sm2|sm3|sm4|snmpkdf|srtpkdf|sshkdf|sskdf|
         x942kdf|x963kdf|whirlpool}
@@ -1222,6 +1222,10 @@ The `lms` algorithm support is currently limited to verification only as per
 Build without support for the specified algorithm.
 
 The `ripemd` algorithm is deprecated and if used is synonymous with `rmd160`.
+
+The `composite` algorithms (composite post-quantum/classical signature
+schemes combining `ml-dsa` with `rsa` or `ec`) are automatically disabled
+when `ml-dsa` is disabled.
 
 ### Compiler-specific options
 

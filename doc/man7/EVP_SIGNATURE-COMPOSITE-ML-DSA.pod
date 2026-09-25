@@ -1,0 +1,210 @@
+=pod
+
+=head1 NAME
+
+EVP_SIGNATURE-COMPOSITE-ML-DSA,
+EVP_SIGNATURE-ML-DSA-65-RSA3072-PKCS15-SHA512,
+EVP_SIGNATURE-ML-DSA-65-ECDSA-P256-SHA512
+- The EVP_PKEY composite B<ML-DSA> signature implementations
+
+=head1 DESCRIPTION
+
+The B<ML-DSA-65-RSA3072-PKCS15-SHA512> and B<ML-DSA-65-ECDSA-P256-SHA512>
+EVP_PKEY implementations support one-shot and streaming (message) sign and
+verify, combining an B<ML-DSA-65> signature with a classical (RSA or ECDSA)
+signature, as described in
+L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>.
+See L<EVP_PKEY-COMPOSITE-ML-DSA(7)> for information related to the
+composite key types.
+
+L<EVP_SIGNATURE_fetch(3)> can be used to explicitly fetch one of these
+algorithms, which can then be used with L<EVP_PKEY_sign_message_init(3)>,
+L<EVP_PKEY_sign(3)>, L<EVP_PKEY_verify_message_init(3)>, and
+L<EVP_PKEY_verify(3)> to perform one-shot message signing or signature
+verification. The streaming equivalents
+L<EVP_PKEY_sign_message_update(3)>/L<EVP_PKEY_sign_message_final(3)> and
+L<EVP_PKEY_verify_message_update(3)>/L<EVP_PKEY_verify_message_final(3)>
+are also supported, and produce signatures identical to the one-shot API
+for the same message.
+
+=head2 Signing process
+
+Signing and verification proceed as follows:
+
+=over 4
+
+=item 1.
+
+A pre-hash B<PH(M)> of the message is computed using B<SHA-512>.
+
+=item 2.
+
+A value B<M'> is built as
+C<Prefix(32) || Label || uint8(ctx_len) || ctx || PH(M)>, where I<Prefix>
+is a fixed 32-byte domain separator, I<Label> is an algorithm-specific
+ASCII string, and I<ctx> is the optional "context-string" parameter
+described below.
+
+=item 3.
+
+B<M'> is signed with the B<ML-DSA-65> component, using I<Label> as the
+ML-DSA context string, producing a fixed-size ML-DSA signature.
+
+=item 4.
+
+B<M'> is signed with the classical component (B<RSASSA-PKCS1-v1_5> with
+SHA-256 for the B<RSA> variant, B<ECDSA> with SHA-256 for the B<EC>
+variant), producing the classical signature.
+
+=back
+
+The wire format of the composite signature is the flat concatenation of the
+B<ML-DSA> signature and the classical signature, in that order.
+
+A caller may instead compute B<PH(M)> itself (for example on another
+machine) and pass it directly in place of the raw message, by setting the
+"composite-prehash" parameter described below.
+
+=head2 Composite Signature Parameters
+
+The following parameter can be used for both signing and verification. It
+may be set by passing an B<OSSL_PARAM> array to
+L<EVP_PKEY_sign_message_init(3)> or L<EVP_PKEY_verify_message_init(3)>.
+
+=over 4
+
+=item "context-string" (B<OSSL_SIGNATURE_PARAM_CONTEXT_STRING>) <octet string>
+
+A string of octets with length at most 255. By default it is the empty
+string.
+
+=item "composite-prehash" (B<OSSL_SIGNATURE_PARAM_COMPOSITE_PREHASH>) <integer>
+
+The default value of 0 causes sign and verify operations to compute
+B<PH(M)> internally from a raw message using B<SHA-512>. Setting this to a
+nonzero value causes those operations to assume the input passed to
+L<EVP_PKEY_sign(3)>/L<EVP_PKEY_verify(3)> (or fed via the streaming
+message-update calls) is already the pre-computed 64-byte B<PH(M)> value,
+skipping the internal hashing step.
+
+=back
+
+The following parameter can be used when signing. It can be set by passing
+an B<OSSL_PARAM> array to L<EVP_PKEY_sign_message_init(3)>.
+
+=over 4
+
+=item "test-entropy" (B<OSSL_SIGNATURE_PARAM_TEST_ENTROPY>) <octet string>
+
+Used for testing to pass a fixed 32-byte per-message random value for the
+B<ML-DSA> component, in place of one drawn from a DRBG. If set, the size
+must be 32 bytes. This parameter is intended for producing deterministic
+test vectors only, and must not be used to sign real messages, since a
+reused or predictable value makes the resulting signatures reproducible.
+
+=back
+
+The following parameter can be used when verifying. It can be set by
+passing an B<OSSL_PARAM> array to L<EVP_PKEY_verify_message_init(3)>.
+
+=over 4
+
+=item "signature" (B<OSSL_SIGNATURE_PARAM_SIGNATURE>) <octet string>
+
+The signature to verify against, required by
+L<EVP_PKEY_verify_message_final(3)> since that function takes no signature
+argument of its own.
+
+=back
+
+The following parameter is gettable via L<EVP_PKEY_CTX_get_params(3)>.
+
+=over 4
+
+=item "algorithm-id" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID>) <octet string>
+
+The DER encoding of the B<AlgorithmIdentifier> B<SEQUENCE> containing the
+composite algorithm's OID, suitable for embedding in a B<X.509>
+B<SignatureAlgorithm> or B<TBSCertificate> field.
+
+=back
+
+See L<EVP_PKEY-COMPOSITE-ML-DSA(7)> for information related to composite
+B<ML-DSA> keys.
+
+=head1 NOTES
+
+For backwards compatibility reasons EVP_DigestSignInit_ex(), EVP_DigestSign(),
+EVP_DigestVerifyInit_ex() and EVP_DigestVerify() may also be used, but the
+digest passed in I<mdname> must be NULL.
+
+=head1 EXAMPLES
+
+To sign a message using a composite B<EVP_PKEY> structure:
+
+    void do_sign(EVP_PKEY *pkey, const unsigned char *msg, size_t msg_len)
+    {
+        size_t sig_len;
+        unsigned char *sig = NULL;
+        EVP_PKEY_CTX *sctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+        EVP_SIGNATURE *sig_alg =
+            EVP_SIGNATURE_fetch(NULL, "ML-DSA-65-ECDSA-P256-SHA512", NULL);
+
+        EVP_PKEY_sign_message_init(sctx, sig_alg, NULL);
+        /* Calculate the required size for the signature by passing a NULL buffer. */
+        EVP_PKEY_sign(sctx, NULL, &sig_len, msg, msg_len);
+        sig = OPENSSL_zalloc(sig_len);
+        EVP_PKEY_sign(sctx, sig, &sig_len, msg, msg_len);
+        ...
+        OPENSSL_free(sig);
+        EVP_SIGNATURE_free(sig_alg);
+        EVP_PKEY_CTX_free(sctx);
+    }
+
+To verify that same signature using the streaming API, feeding the message
+in two chunks:
+
+    int do_verify(EVP_PKEY *pkey, const unsigned char *sig, size_t sig_len,
+                   const unsigned char *msg, size_t msg_len)
+    {
+        int ret;
+        EVP_PKEY_CTX *vctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+        EVP_SIGNATURE *sig_alg =
+            EVP_SIGNATURE_fetch(NULL, "ML-DSA-65-ECDSA-P256-SHA512", NULL);
+
+        EVP_PKEY_verify_message_init(vctx, sig_alg, NULL);
+        EVP_PKEY_CTX_set_signature(vctx, sig, sig_len);
+        EVP_PKEY_verify_message_update(vctx, msg, msg_len / 2);
+        EVP_PKEY_verify_message_update(vctx, msg + msg_len / 2,
+                                        msg_len - msg_len / 2);
+        ret = EVP_PKEY_verify_message_final(vctx);
+
+        EVP_SIGNATURE_free(sig_alg);
+        EVP_PKEY_CTX_free(vctx);
+        return ret;
+    }
+
+=head1 SEE ALSO
+
+L<EVP_PKEY-COMPOSITE-ML-DSA(7)>,
+L<EVP_PKEY-ML-DSA(7)>,
+L<EVP_SIGNATURE-ML-DSA(7)>,
+L<provider-signature(7)>,
+L<EVP_PKEY_sign(3)>,
+L<EVP_PKEY_verify(3)>,
+L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
