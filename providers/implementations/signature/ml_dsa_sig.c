@@ -327,7 +327,7 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
             ctx->aid_len))
         return 0;
 
-    return OSSL_FIPS_IND_GET_CTX_PARAM_CONDITIONAL(ctx, params,
+    return ossl_FIPS_IND_get_ctx_param_conditional(NULL, params,
         ctx->test_entropy_len == 0
             && ctx->msg_encode == ML_DSA_MESSAGE_ENCODE_PURE);
 }
