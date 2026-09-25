@@ -2069,6 +2069,25 @@ done:
     return 0;
 }
 
+/*
+ * Return 1 if extension |nid| is present on |crl| and holds a negative
+ * INTEGER.  Read from the live extensions rather than crl->crl_number /
+ * crl->base_crl_number: those caches are filled only on decode and are not
+ * refreshed by X509_CRL_add*_ext / X509_CRL_delete_ext / re-sign.
+ */
+static int crl_ext_integer_is_negative(const X509_CRL *crl, int nid)
+{
+    ASN1_INTEGER *num;
+    int neg;
+
+    num = X509_CRL_get_ext_d2i(crl, nid, NULL, NULL);
+    if (num == NULL)
+        return 0;
+    neg = (num->type == V_ASN1_NEG_INTEGER);
+    ASN1_INTEGER_free(num);
+    return neg;
+}
+
 /* Check CRL validity */
 static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 {
@@ -2078,6 +2097,17 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     int chnum = sk_X509_num(ctx->chain) - 1;
 
     ctx->current_crl = crl;
+
+    /*
+     * Reject negative CRLNumber / BaseCRLNumber under X509_V_FLAG_X509_STRICT.
+     * Only CRLs selected for revocation checking reach here; deltas filtered
+     * during selection never report this error.
+     */
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
+        && (crl_ext_integer_is_negative(crl, NID_crl_number)
+            || crl_ext_integer_is_negative(crl, NID_delta_crl))
+        && !verify_cb_crl(ctx, X509_V_ERR_NEGATIVE_CRL_NUMBER))
+        return 0;
 
     /* If we have an alternative CRL issuer cert use that */
     if (ctx->current_issuer != NULL) {
