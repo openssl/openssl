@@ -1147,6 +1147,61 @@ static int aes_gcm_gen_iv_internal_test(void)
             !enc, pass, out, NULL, NULL);
 }
 
+/* Replacing a generated GCM IV with a full external IV must be unapproved. */
+static int aes_gcm_replace_generated_iv_test(void)
+{
+    const struct cipher_gcm_st *tst = &aes_gcm_enc_data[0];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char out[1024];
+    unsigned int iv_generated = 0;
+    int ret = 0, len, out_len, approved = -1;
+    OSSL_PARAM generated_params[] = {
+        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &iv_generated),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM indicator_params[] = {
+        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &iv_generated),
+        OSSL_PARAM_int(OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR, &approved),
+        OSSL_PARAM_END
+    };
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, tst->alg, ""))
+        || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, 1))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                            (int)tst->iv_len, NULL),
+            0)
+        || !TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, tst->key, NULL, 1))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+                            EVP_GCM_TLS_FIXED_IV_LEN, (void *)tst->iv),
+            0)
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, generated_params))
+        || !TEST_uint_eq(iv_generated, 1)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED, -1,
+                            (void *)tst->iv),
+            0)
+        || !TEST_true(EVP_CipherUpdate(ctx, NULL, &len,
+            tst->aad, (int)tst->aad_len))
+        || !TEST_true(EVP_CipherUpdate(ctx, out, &len,
+            tst->pt, (int)tst->pt_len))
+        || !TEST_true(EVP_CipherFinal_ex(ctx, out + len, &out_len)))
+        goto err;
+
+    iv_generated = 1;
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, indicator_params))
+        || !TEST_true(OSSL_PARAM_modified(&indicator_params[1]))
+        || !TEST_uint_eq(iv_generated, 0)
+        || !TEST_int_eq(approved, 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
 #ifndef OPENSSL_NO_DH
 static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
     const unsigned char *pub, size_t pub_len,
@@ -1733,6 +1788,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(aes_gcm_enc_dec_test, OSSL_NELEM(aes_gcm_enc_data));
     if (fips_provider_version_ge(libctx, 3, 4, 0))
         ADD_TEST(aes_gcm_gen_iv_internal_test);
+    if (fips_provider_version_ge(libctx, 3, 5, 0))
+        ADD_TEST(aes_gcm_replace_generated_iv_test);
 
     pass_sig_gen_params = fips_provider_version_ge(libctx, 3, 4, 0);
     rsa_sign_x931_pad_allowed = fips_provider_version_lt(libctx, 3, 4, 0);
