@@ -73,6 +73,47 @@ static int test_rand(void)
     return 1;
 }
 
+#ifndef OPENSSL_NO_FIPS_JITTER
+static int test_jitter_fips_indicator(void)
+{
+    EVP_RAND *rand = NULL;
+    EVP_RAND_CTX *ctx = NULL;
+    const OSSL_PROVIDER *prov;
+    const OSSL_PARAM *gettables;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    int indicator = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(rand = EVP_RAND_fetch(NULL, "JITTER", NULL)))
+        goto err;
+
+    prov = EVP_RAND_get0_provider(rand);
+    if (prov == NULL || strcmp(OSSL_PROVIDER_get0_name(prov), "fips") != 0) {
+        ret = 1;
+        goto err;
+    }
+
+    if (!TEST_ptr(ctx = EVP_RAND_CTX_new(rand, NULL))
+        || !TEST_ptr(gettables = EVP_RAND_CTX_gettable_params(ctx))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettables,
+            OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR)))
+        goto err;
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_FIPS_APPROVED_INDICATOR,
+        &indicator);
+    if (!TEST_true(EVP_RAND_CTX_get_params(ctx, params))
+        || !TEST_true(OSSL_PARAM_modified(params))
+        || !TEST_int_eq(indicator, 1))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_RAND_CTX_free(ctx);
+    EVP_RAND_free(rand);
+    return ret;
+}
+#endif
+
 static int test_rand_uniform(void)
 {
     uint32_t x, i, j;
@@ -290,6 +331,9 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_rand);
+#ifndef OPENSSL_NO_FIPS_JITTER
+    ADD_TEST(test_jitter_fips_indicator);
+#endif
     ADD_TEST(test_rand_uniform);
 
     if (OSSL_PROVIDER_available(NULL, "fips")
