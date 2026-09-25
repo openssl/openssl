@@ -36,6 +36,9 @@ static OSSL_FUNC_keymgmt_gen_init_fn rsapss_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_params_fn rsa_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn rsa_gen_settable_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn rsapss_gen_settable_params;
+#ifdef FIPS_MODULE
+static OSSL_FUNC_keymgmt_gen_get_params_fn rsa_gen_get_params;
+#endif
 static OSSL_FUNC_keymgmt_gen_fn rsa_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn rsa_gen_cleanup;
 static OSSL_FUNC_keymgmt_load_fn rsa_load;
@@ -569,6 +572,21 @@ static const OSSL_PARAM *rsapss_gen_settable_params(ossl_unused void *genctx,
     return settable;
 }
 
+#ifdef FIPS_MODULE
+static int rsa_gen_get_params(void *genctx, OSSL_PARAM params[])
+{
+    struct rsa_gen_ctx *gctx = genctx;
+    int approved = 1;
+
+    if (gctx == NULL)
+        return 0;
+#ifndef OPENSSL_NO_ACVP_TESTS
+    approved = gctx->acvp_test_params == NULL;
+#endif
+    return ossl_FIPS_IND_get_ctx_param_conditional(NULL, params, approved);
+}
+#endif
+
 static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct rsa_gen_ctx *gctx = genctx;
@@ -710,8 +728,8 @@ const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    OSSL_FIPS_IND_APPROVED_DISPATCH(OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS,
-        OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS)
+    OSSL_FIPS_IND_DISPATCH(OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS,
+        OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS, rsa_gen_get_params)
         OSSL_DISPATCH_END
 };
 
@@ -737,7 +755,7 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
         (void (*)(void))rsa_query_operation_name },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
-    OSSL_FIPS_IND_APPROVED_DISPATCH(OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS,
-        OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS)
+    OSSL_FIPS_IND_DISPATCH(OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS,
+        OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS, rsa_gen_get_params)
         OSSL_DISPATCH_END
 };

@@ -104,7 +104,7 @@ int ossl_FIPS_IND_get_ctx_param_conditional(const OSSL_FIPS_IND *ind,
     OSSL_PARAM *p = OSSL_PARAM_locate(params,
         OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR);
 
-    return p == NULL || OSSL_PARAM_set_int(p, condition && ind->approved);
+    return p == NULL || OSSL_PARAM_set_int(p, condition && (ind == NULL || ind->approved));
 }
 
 const OSSL_PARAM *ossl_FIPS_IND_gettable_ctx_params(ossl_unused void *ctx,
