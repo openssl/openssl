@@ -641,7 +641,7 @@ id-alg 2		: id-alg-noSignature
 id-alg 3		: id-alg-dh-sig-hmac-sha1
 id-alg 4		: id-alg-dh-pop
 
-# Composite signature algorithms (draft-ietf-lamps-pq-composite-sigs)
+# ML DSA Composite signature algorithms (draft-ietf-lamps-pq-composite-sigs)
 id-alg 42	: id-mldsa65-rsa3072-pkcs15-sha512		: ML-DSA-65-RSA3072-PKCS15-SHA512
 id-alg 45	: id-mldsa65-ecdsa-p256-sha512			: ML-DSA-65-ECDSA-P256-SHA512
 

@@ -9,12 +9,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "prov/composite.h"
+#include "prov/ml_dsa_composite.h"
 
 /* Well known OIDs precompiled */
 /* clang-format off */
 {-
-    $OUT = oids_to_c::process_leaves('providers/common/der/composite.asn1',
+    $OUT = oids_to_c::process_leaves('providers/common/der/ml_dsa_composite.asn1',
                                      { dir => $config{sourcedir},
                                        filter => \&oids_to_c::filter_to_C });
 -}

@@ -126,12 +126,12 @@ DECODER_w_structure("ML-DSA-65", der, SubjectPublicKeyInfo, ml_dsa_65, yes, "SPK
 DECODER_w_structure("ML-DSA-87", der, SubjectPublicKeyInfo, ml_dsa_87, yes, "SPKItoML-DSA-87-DER"),
 #endif /* OPENSSL_NO_ML_DSA */
 
-#ifndef OPENSSL_NO_COMPOSITE
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
 DECODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512",        der, PrivateKeyInfo,       mldsa65_rsa3072_pkcs15_sha512,      no, "PKItoMLDSA65-RSA3072-PKCS15-SHA512-DER"),
 DECODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512",        der, SubjectPublicKeyInfo, mldsa65_rsa3072_pkcs15_sha512,      no, "SPKItoMLDSA65-RSA3072-PKCS15-SHA512-DER"),
 DECODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512",            der, PrivateKeyInfo,       mldsa65_ecdsa_p256_sha512,          no, "PKItoMLDSA65-ECDSA-P256-SHA512-DER"),
 DECODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512",            der, SubjectPublicKeyInfo, mldsa65_ecdsa_p256_sha512,          no, "SPKItoMLDSA65-ECDSA-P256-SHA512-DER"),
-#endif /* OPENSSL_NO_COMPOSITE */
+#endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
 
 #ifndef OPENSSL_NO_LMS
 DECODER("LMS", xdr, lms, yes, "XDRtoLMS"),

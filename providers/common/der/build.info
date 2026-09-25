@@ -86,17 +86,17 @@ IF[{- !$disabled{'ml-dsa'} -}]
   DEPEND[$DER_ML_DSA_H]=oids_to_c.pm ML_DSA.asn1
 ENDIF
 
-#----- composite
+#----- ML-DSA composite
 IF[{- !$disabled{'ml-dsa'} -}]
-  $COMPOSITE_H=$INCDIR/composite.h
-  $DER_COMPOSITE_GEN=der_composite_gen.c
+  $ML_DSA_COMPOSITE_H=$INCDIR/ml_dsa_composite.h
+  $DER_ML_DSA_COMPOSITE_GEN=der_ml_dsa_composite_gen.c
 
-  GENERATE[$COMPOSITE_H]=$INCDIR/composite.h.in
-  DEPEND[$COMPOSITE_H]=oids_to_c.pm composite.asn1
+  GENERATE[$ML_DSA_COMPOSITE_H]=$INCDIR/ml_dsa_composite.h.in
+  DEPEND[$ML_DSA_COMPOSITE_H]=oids_to_c.pm ml_dsa_composite.asn1
 
-  GENERATE[$DER_COMPOSITE_GEN]=der_composite_gen.c.in
-  DEPEND[$DER_COMPOSITE_GEN]=oids_to_c.pm composite.asn1
-  DEPEND[${DER_COMPOSITE_GEN/.c/.o}]=$COMPOSITE_H
+  GENERATE[$DER_ML_DSA_COMPOSITE_GEN]=der_ml_dsa_composite_gen.c.in
+  DEPEND[$DER_ML_DSA_COMPOSITE_GEN]=oids_to_c.pm ml_dsa_composite.asn1
+  DEPEND[${DER_ML_DSA_COMPOSITE_GEN/.c/.o}]=$ML_DSA_COMPOSITE_H
 ENDIF
 
 #----- KEY WRAP
@@ -179,7 +179,7 @@ IF[{- !$disabled{'slh-dsa'} -}]
 ENDIF
 
 IF[{- !$disabled{'ml-dsa'} -}]
-  $COMMON = $COMMON $DER_COMPOSITE_GEN
+  $COMMON = $COMMON $DER_ML_DSA_COMPOSITE_GEN
 ENDIF
 
 SOURCE[../../libcommon.a]= $COMMON

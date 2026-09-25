@@ -12,12 +12,12 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
 /*
- * composite_import_params: only the list and struct are needed.
- * Params are parsed manually in composite_import_internal() via
+ * ml_dsa_composite_import_params: only the list and struct are needed.
+ * Params are parsed manually in ml_dsa_composite_import_internal() via
  * OSSL_PARAM_locate_const(), so the generated decoder is omitted.
  */
-#ifndef composite_import_params_list
-static const OSSL_PARAM composite_import_params_list[] = {
+#ifndef ml_dsa_composite_import_params_list
+static const OSSL_PARAM ml_dsa_composite_import_params_list[] = {
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
@@ -26,19 +26,19 @@ static const OSSL_PARAM composite_import_params_list[] = {
 #endif
 
 /*
- * composite_export_params: only the list is needed.
- * Params are assembled manually in composite_export(), so the generated
+ * ml_dsa_composite_export_params: only the list is needed.
+ * Params are assembled manually in ml_dsa_composite_export(), so the generated
  * decoder is omitted.
  */
-#ifndef composite_export_params_list
-static const OSSL_PARAM composite_export_params_list[] = {
+#ifndef ml_dsa_composite_export_params_list
+static const OSSL_PARAM ml_dsa_composite_export_params_list[] = {
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
     OSSL_PARAM_END
 };
 #endif
 
-{- produce_param_decoder('composite_get_params',
+{- produce_param_decoder('ml_dsa_composite_get_params',
                          (['OSSL_PKEY_PARAM_BITS',          'bits',    'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_BITS', 'secbits', 'int'],
                           ['OSSL_PKEY_PARAM_MAX_SIZE',      'maxsize', 'int'],
@@ -46,7 +46,7 @@ static const OSSL_PARAM composite_export_params_list[] = {
                           ['OSSL_PKEY_PARAM_PRIV_KEY',      'privkey', 'octet_string'],
                          )); -}
 
-{- produce_param_decoder('composite_gen_set_params',
+{- produce_param_decoder('ml_dsa_composite_gen_set_params',
                          (['OSSL_PKEY_PARAM_PROPERTIES', 'propq', 'utf8_string'],
                           ['OSSL_PKEY_PARAM_PRIV_KEY',   'privkey', 'octet_string'],
                          )); -}

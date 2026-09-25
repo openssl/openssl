@@ -34,8 +34,8 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
-#ifndef OPENSSL_NO_COMPOSITE
-#include "prov/composite_codecs.h"
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+#include "prov/ml_dsa_composite_codecs.h"
 #endif
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
@@ -633,13 +633,13 @@ static int lms_to_text(BIO *out, const void *key, int selection)
 }
 #endif /* OPENSSL_NO_LMS */
 
-#ifndef OPENSSL_NO_COMPOSITE
-static int composite_to_text(BIO *out, const void *key, int selection)
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+static int ml_dsa_composite_to_text(BIO *out, const void *key, int selection)
 {
-    return ossl_composite_key_to_text(out, (const COMPOSITE_KEY *)key,
+    return ossl_ml_dsa_composite_key_to_text(out, (const ML_DSA_COMPOSITE_KEY *)key,
         selection);
 }
-#endif /* OPENSSL_NO_COMPOSITE */
+#endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
 
 /* ---------------------------------------------------------------------- */
 
@@ -768,7 +768,7 @@ MAKE_TEXT_ENCODER(slh_dsa_shake_256f, slh_dsa);
 MAKE_TEXT_ENCODER(lms, lms);
 #endif
 
-#ifndef OPENSSL_NO_COMPOSITE
-MAKE_TEXT_ENCODER(mldsa65_rsa3072_pkcs15_sha512, composite);
-MAKE_TEXT_ENCODER(mldsa65_ecdsa_p256_sha512, composite);
-#endif /* OPENSSL_NO_COMPOSITE */
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+MAKE_TEXT_ENCODER(mldsa65_rsa3072_pkcs15_sha512, ml_dsa_composite);
+MAKE_TEXT_ENCODER(mldsa65_ecdsa_p256_sha512, ml_dsa_composite);
+#endif /* OPENSSL_NO_ML_DSA_COMPOSITE */

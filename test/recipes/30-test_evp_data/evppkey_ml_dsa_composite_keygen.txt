@@ -5,10 +5,10 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Composite key generation test vectors.
+# ML DSA Composite key generation test vectors.
 # Source: https://github.com/lamps-wg/draft-composite-sigs/blob/main/src/testvectors.json
 #
-# Each stanza derives the composite key pair from the IETF sk bytes
+# Each stanza derives the ml dsa composite key pair from the IETF sk bytes
 # (mldsaSeed || tradSK) and verifies that the resulting pub/priv match.
 
 # --- ML-DSA-65-RSA3072-PKCS15-SHA512 ---

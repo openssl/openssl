@@ -24,49 +24,49 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/ml_dsa.h"
-#include "prov/composite.h"
-#include "providers/implementations/keymgmt/composite_kmgmt.inc"
+#include "prov/ml_dsa_composite.h"
+#include "providers/implementations/keymgmt/ml_dsa_composite_kmgmt.inc"
 
 /*
  * Per-algorithm generation context.
- * Allocated in composite_gen_init(), freed in composite_gen_cleanup().
+ * Allocated in ml_dsa_composite_gen_init(), freed in ml_dsa_composite_gen_cleanup().
  */
 typedef struct {
     PROV_CTX *provctx; /* full provider context (not just libctx) */
     char *propq;
-    /* Algorithm-specific constants are passed directly to composite_gen()
+    /* Algorithm-specific constants are passed directly to ml_dsa_composite_gen()
      * from the per-algorithm wrapper in MAKE_KEYMGMT_FUNCTIONS; they are
      * compile-time literals and do not need to live in the context. */
     uint8_t *priv_seed; /* optional: mldsaSeed||tradSK for deterministic gen */
     size_t priv_seed_len;
-} COMPOSITE_GEN_CTX;
+} ML_DSA_COMPOSITE_GEN_CTX;
 
 /* Forward declarations of all static keymgmt functions */
-static OSSL_FUNC_keymgmt_free_fn composite_free_key;
-static OSSL_FUNC_keymgmt_has_fn composite_has;
-static OSSL_FUNC_keymgmt_match_fn composite_match;
-static OSSL_FUNC_keymgmt_dup_fn composite_dup_key;
-static OSSL_FUNC_keymgmt_validate_fn composite_validate;
-static OSSL_FUNC_keymgmt_export_fn composite_export;
-static OSSL_FUNC_keymgmt_import_types_fn composite_import_types;
-static OSSL_FUNC_keymgmt_export_types_fn composite_export_types;
-static OSSL_FUNC_keymgmt_gettable_params_fn composite_gettable_params;
-static OSSL_FUNC_keymgmt_get_params_fn composite_get_params;
-static OSSL_FUNC_keymgmt_load_fn composite_load;
-static OSSL_FUNC_keymgmt_gen_init_fn composite_gen_init;
-static OSSL_FUNC_keymgmt_gen_cleanup_fn composite_gen_cleanup;
-static OSSL_FUNC_keymgmt_gen_set_params_fn composite_gen_set_params;
-static OSSL_FUNC_keymgmt_gen_settable_params_fn composite_gen_settable_params;
+static OSSL_FUNC_keymgmt_free_fn ml_dsa_composite_free_key;
+static OSSL_FUNC_keymgmt_has_fn ml_dsa_composite_has;
+static OSSL_FUNC_keymgmt_match_fn ml_dsa_composite_match;
+static OSSL_FUNC_keymgmt_dup_fn ml_dsa_composite_dup_key;
+static OSSL_FUNC_keymgmt_validate_fn ml_dsa_composite_validate;
+static OSSL_FUNC_keymgmt_export_fn ml_dsa_composite_export;
+static OSSL_FUNC_keymgmt_import_types_fn ml_dsa_composite_import_types;
+static OSSL_FUNC_keymgmt_export_types_fn ml_dsa_composite_export_types;
+static OSSL_FUNC_keymgmt_gettable_params_fn ml_dsa_composite_gettable_params;
+static OSSL_FUNC_keymgmt_get_params_fn ml_dsa_composite_get_params;
+static OSSL_FUNC_keymgmt_load_fn ml_dsa_composite_load;
+static OSSL_FUNC_keymgmt_gen_init_fn ml_dsa_composite_gen_init;
+static OSSL_FUNC_keymgmt_gen_cleanup_fn ml_dsa_composite_gen_cleanup;
+static OSSL_FUNC_keymgmt_gen_set_params_fn ml_dsa_composite_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn ml_dsa_composite_gen_settable_params;
 
 /* =========================================================================
  * Key management helpers
  * ========================================================================= */
 
-static COMPOSITE_KEY *ossl_composite_key_new(OSSL_LIB_CTX *libctx,
+static ML_DSA_COMPOSITE_KEY *ossl_ml_dsa_composite_key_new(OSSL_LIB_CTX *libctx,
     const char *propq,
     int ml_dsa_evp_type)
 {
-    COMPOSITE_KEY *key = OPENSSL_zalloc(sizeof(*key));
+    ML_DSA_COMPOSITE_KEY *key = OPENSSL_zalloc(sizeof(*key));
 
     if (key == NULL)
         return NULL;
@@ -78,7 +78,7 @@ static COMPOSITE_KEY *ossl_composite_key_new(OSSL_LIB_CTX *libctx,
     return key;
 }
 
-void ossl_composite_key_free(COMPOSITE_KEY *key)
+void ossl_ml_dsa_composite_key_free(ML_DSA_COMPOSITE_KEY *key)
 {
     if (key == NULL)
         return;
@@ -88,7 +88,7 @@ void ossl_composite_key_free(COMPOSITE_KEY *key)
 }
 
 /* True only if the ML-DSA half satisfies selection AND the classic half is present. */
-static int ossl_composite_key_has(const COMPOSITE_KEY *key, int selection)
+static int ossl_ml_dsa_composite_key_has(const ML_DSA_COMPOSITE_KEY *key, int selection)
 {
     if (!ossl_ml_dsa_key_has(key->ml_dsa_key, selection))
         return 0;
@@ -102,7 +102,7 @@ static int ossl_composite_key_has(const COMPOSITE_KEY *key, int selection)
  * ceil(classic bits / 8)).  Not the exact DER/point-encoded size — only
  * valid for reporting OSSL_PKEY_PARAM_BITS, never for buffer sizing.
  */
-static size_t ossl_composite_key_get_pub_len(const COMPOSITE_KEY *key)
+static size_t ossl_ml_dsa_composite_key_get_pub_len(const ML_DSA_COMPOSITE_KEY *key)
 {
     size_t ml_dsa_len = ossl_ml_dsa_key_get_pub_len(key->ml_dsa_key);
 
@@ -115,7 +115,7 @@ static size_t ossl_composite_key_get_pub_len(const COMPOSITE_KEY *key)
  * Security bits of the composite = minimum of ML-DSA collision strength and
  * the classic component's security bits.
  */
-static int ossl_composite_key_get_security_bits(const COMPOSITE_KEY *key)
+static int ossl_ml_dsa_composite_key_get_security_bits(const ML_DSA_COMPOSITE_KEY *key)
 {
     size_t ml_dsa_sec = ossl_ml_dsa_key_get_collision_strength_bits(key->ml_dsa_key);
     int classic_sec = (key->classic_key != NULL)
@@ -131,7 +131,7 @@ static int ossl_composite_key_get_security_bits(const COMPOSITE_KEY *key)
  * Maximum composite signature size: ML-DSA fixed sig_len plus the classic
  * component's maximum signature size.
  */
-static int ossl_composite_key_get_max_size(const COMPOSITE_KEY *key)
+static int ossl_ml_dsa_composite_key_get_max_size(const ML_DSA_COMPOSITE_KEY *key)
 {
     size_t ml_dsa_sig = ossl_ml_dsa_key_get_sig_len(key->ml_dsa_key);
     int classic_sig = (key->classic_key != NULL)
@@ -142,7 +142,7 @@ static int ossl_composite_key_get_max_size(const COMPOSITE_KEY *key)
 }
 
 /* Compares EC group names, resolving NIST aliases (e.g. "P-256") to their canonical NID. */
-static int composite_ec_curve_matches(const char *grp, const char *ec_curve)
+static int ml_dsa_composite_ec_curve_matches(const char *grp, const char *ec_curve)
 {
     int actual_nid = OBJ_txt2nid(grp);
     int expected_nid = EC_curve_nist2nid(ec_curve);
@@ -153,49 +153,49 @@ static int composite_ec_curve_matches(const char *grp, const char *ec_curve)
 }
 
 /* Forward declarations for helpers defined later in this file */
-static int composite_encode_classic_key(const EVP_PKEY *pkey, int include_priv,
+static int ml_dsa_composite_encode_classic_key(const EVP_PKEY *pkey, int include_priv,
     unsigned char **out, size_t *out_len);
-static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
+static EVP_PKEY *ml_dsa_composite_decode_classic_key(OSSL_LIB_CTX *libctx,
     const char *classic_alg, int classic_bits, const char *ec_curve,
     int include_priv, const unsigned char *buf, size_t buf_len);
 
-COMPOSITE_KEY *ossl_prov_composite_new(PROV_CTX *ctx, const char *propq,
+ML_DSA_COMPOSITE_KEY *ossl_prov_ml_dsa_composite_new(PROV_CTX *ctx, const char *propq,
     int ml_dsa_evp_type)
 {
     if (!ossl_prov_is_running())
         return NULL;
 
-    return ossl_composite_key_new(PROV_LIBCTX_OF(ctx), propq, ml_dsa_evp_type);
+    return ossl_ml_dsa_composite_key_new(PROV_LIBCTX_OF(ctx), propq, ml_dsa_evp_type);
 }
 
-static void composite_free_key(void *keydata)
+static void ml_dsa_composite_free_key(void *keydata)
 {
-    ossl_composite_key_free((COMPOSITE_KEY *)keydata);
+    ossl_ml_dsa_composite_key_free((ML_DSA_COMPOSITE_KEY *)keydata);
 }
 
-static int composite_has(const void *keydata, int selection)
+static int ml_dsa_composite_has(const void *keydata, int selection)
 {
-    const COMPOSITE_KEY *key = keydata;
+    const ML_DSA_COMPOSITE_KEY *key = keydata;
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 1; /* the selection is not missing */
 
-    return ossl_composite_key_has(key, selection);
+    return ossl_ml_dsa_composite_key_has(key, selection);
 }
 
-static void *composite_gen_init(void *provctx, int selection,
+static void *ml_dsa_composite_gen_init(void *provctx, int selection,
     const OSSL_PARAM params[])
 {
-    COMPOSITE_GEN_CTX *gctx = NULL;
+    ML_DSA_COMPOSITE_GEN_CTX *gctx = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
 
     if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
         gctx->provctx = provctx;
-        if (!composite_gen_set_params(gctx, params)) {
+        if (!ml_dsa_composite_gen_set_params(gctx, params)) {
             OPENSSL_free(gctx);
             gctx = NULL;
         }
@@ -204,9 +204,9 @@ static void *composite_gen_init(void *provctx, int selection,
     return gctx;
 }
 
-static void composite_gen_cleanup(void *genctx)
+static void ml_dsa_composite_gen_cleanup(void *genctx)
 {
-    COMPOSITE_GEN_CTX *gctx = genctx;
+    ML_DSA_COMPOSITE_GEN_CTX *gctx = genctx;
 
     if (gctx == NULL)
         return;
@@ -216,18 +216,18 @@ static void composite_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-static const OSSL_PARAM *composite_gen_settable_params(void *genctx,
+static const OSSL_PARAM *ml_dsa_composite_gen_settable_params(void *genctx,
     void *provctx)
 {
-    return composite_gen_set_params_list;
+    return ml_dsa_composite_gen_set_params_list;
 }
 
-static int composite_gen_set_params(void *genctx, const OSSL_PARAM params[])
+static int ml_dsa_composite_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
-    COMPOSITE_GEN_CTX *gctx = genctx;
-    struct composite_gen_set_params_st p;
+    ML_DSA_COMPOSITE_GEN_CTX *gctx = genctx;
+    struct ml_dsa_composite_gen_set_params_st p;
 
-    if (gctx == NULL || !composite_gen_set_params_decoder(params, &p))
+    if (gctx == NULL || !ml_dsa_composite_gen_set_params_decoder(params, &p))
         return 0;
 
     if (p.privkey != NULL) {
@@ -253,18 +253,18 @@ static int composite_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static void *composite_gen(void *genctx, int evp_type,
+static void *ml_dsa_composite_gen(void *genctx, int evp_type,
     const char *classic_alg, int classic_bits,
     const char *ec_curve)
 {
-    COMPOSITE_GEN_CTX *gctx = genctx;
-    COMPOSITE_KEY *key = NULL;
+    ML_DSA_COMPOSITE_GEN_CTX *gctx = genctx;
+    ML_DSA_COMPOSITE_KEY *key = NULL;
     EVP_PKEY_CTX *ctx = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    key = ossl_prov_composite_new(gctx->provctx, gctx->propq, evp_type);
+    key = ossl_prov_ml_dsa_composite_new(gctx->provctx, gctx->propq, evp_type);
     if (key == NULL)
         return NULL;
 
@@ -284,7 +284,7 @@ static void *composite_gen(void *genctx, int evp_type,
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
             goto err;
         }
-        key->classic_key = composite_decode_classic_key(
+        key->classic_key = ml_dsa_composite_decode_classic_key(
             PROV_LIBCTX_OF(gctx->provctx), classic_alg, classic_bits, ec_curve, 1,
             gctx->priv_seed + ML_DSA_SEED_BYTES,
             gctx->priv_seed_len - ML_DSA_SEED_BYTES);
@@ -344,30 +344,30 @@ static void *composite_gen(void *genctx, int evp_type,
     return key;
 err:
     EVP_PKEY_CTX_free(ctx);
-    ossl_composite_key_free(key);
+    ossl_ml_dsa_composite_key_free(key);
     return NULL;
 }
 
-static const OSSL_PARAM *composite_gettable_params(void *provctx)
+static const OSSL_PARAM *ml_dsa_composite_gettable_params(void *provctx)
 {
-    return composite_get_params_list;
+    return ml_dsa_composite_get_params_list;
 }
 
-static int composite_get_params(void *keydata, OSSL_PARAM params[])
+static int ml_dsa_composite_get_params(void *keydata, OSSL_PARAM params[])
 {
-    COMPOSITE_KEY *key = keydata;
-    struct composite_get_params_st p;
+    ML_DSA_COMPOSITE_KEY *key = keydata;
+    struct ml_dsa_composite_get_params_st p;
 
-    if (key == NULL || !composite_get_params_decoder(params, &p))
+    if (key == NULL || !ml_dsa_composite_get_params_decoder(params, &p))
         return 0;
 
-    if (p.bits != NULL && !OSSL_PARAM_set_int(p.bits, (int)(8 * ossl_composite_key_get_pub_len(key))))
+    if (p.bits != NULL && !OSSL_PARAM_set_int(p.bits, (int)(8 * ossl_ml_dsa_composite_key_get_pub_len(key))))
         return 0;
 
-    if (p.secbits != NULL && !OSSL_PARAM_set_int(p.secbits, ossl_composite_key_get_security_bits(key)))
+    if (p.secbits != NULL && !OSSL_PARAM_set_int(p.secbits, ossl_ml_dsa_composite_key_get_security_bits(key)))
         return 0;
 
-    if (p.maxsize != NULL && !OSSL_PARAM_set_int(p.maxsize, ossl_composite_key_get_max_size(key)))
+    if (p.maxsize != NULL && !OSSL_PARAM_set_int(p.maxsize, ossl_ml_dsa_composite_key_get_max_size(key)))
         return 0;
 
     if (p.privkey != NULL) {
@@ -381,7 +381,7 @@ static int composite_get_params(void *keydata, OSSL_PARAM params[])
 
         if (ml_dsa_seed == NULL || key->classic_key == NULL)
             return 0;
-        if (!composite_encode_classic_key(key->classic_key, 1,
+        if (!ml_dsa_composite_encode_classic_key(key->classic_key, 1,
                 &classic_priv, &classic_priv_len))
             return 0;
         priv_len = ML_DSA_SEED_BYTES + classic_priv_len;
@@ -409,7 +409,7 @@ static int composite_get_params(void *keydata, OSSL_PARAM params[])
 
         if (ml_dsa_pub == NULL || key->classic_key == NULL)
             return 0;
-        if (!composite_encode_classic_key(key->classic_key, 0,
+        if (!ml_dsa_composite_encode_classic_key(key->classic_key, 0,
                 &classic_pub, &classic_pub_len))
             return 0;
         pub_len = kp->pk_len + classic_pub_len;
@@ -432,12 +432,12 @@ static int composite_get_params(void *keydata, OSSL_PARAM params[])
  * Validates the key material itself (pairwise pub/priv consistency for
  * both sub-keys).
  */
-static int composite_validate(const void *keydata, int selection,
+static int ml_dsa_composite_validate(const void *keydata, int selection,
     int check_type)
 {
-    const COMPOSITE_KEY *key = keydata;
+    const ML_DSA_COMPOSITE_KEY *key = keydata;
 
-    if (!composite_has(keydata, selection))
+    if (!ml_dsa_composite_has(keydata, selection))
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_KEYPAIR) {
@@ -453,18 +453,18 @@ static int composite_validate(const void *keydata, int selection,
     return 1;
 }
 
-static const OSSL_PARAM *composite_import_types(int selection)
+static const OSSL_PARAM *ml_dsa_composite_import_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return NULL;
-    return composite_import_params_list;
+    return ml_dsa_composite_import_params_list;
 }
 
-static const OSSL_PARAM *composite_export_types(int selection)
+static const OSSL_PARAM *ml_dsa_composite_export_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return NULL;
-    return composite_export_params_list;
+    return ml_dsa_composite_export_params_list;
 }
 
 /*
@@ -529,7 +529,7 @@ static const unsigned char *rfc5915_extract_privkey(const unsigned char *buf,
     return p;
 }
 
-static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
+static EVP_PKEY *ml_dsa_composite_decode_classic_key(OSSL_LIB_CTX *libctx,
     const char *classic_alg,
     int classic_bits,
     const char *ec_curve,
@@ -664,7 +664,7 @@ static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
 
         if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
                 grp, sizeof(grp), &grplen)
-            || !composite_ec_curve_matches(grp, ec_curve)) {
+            || !ml_dsa_composite_ec_curve_matches(grp, ec_curve)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
             EVP_PKEY_free(pkey);
             return NULL;
@@ -675,7 +675,7 @@ static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
 }
 
 /*
- * Reconstruct a COMPOSITE_KEY from raw bytes in params[], using the wire
+ * Reconstruct a ML_DSA_COMPOSITE_KEY from raw bytes in params[], using the wire
  * format defined in draft-ietf-lamps-pq-composite-sigs:
  *
  *   Public key:  mldsaPK(fixed size) || tradPK(raw)
@@ -684,13 +684,13 @@ static EVP_PKEY *composite_decode_classic_key(OSSL_LIB_CTX *libctx,
  * classic_alg: "RSA" or "EC"
  * ec_curve:    curve name for EC (e.g. "P-256")
  */
-static int composite_import_internal(void *keydata, int selection,
+static int ml_dsa_composite_import_internal(void *keydata, int selection,
     const OSSL_PARAM params[],
     const char *classic_alg,
     int classic_bits,
     const char *ec_curve)
 {
-    COMPOSITE_KEY *key = keydata;
+    ML_DSA_COMPOSITE_KEY *key = keydata;
     const ML_DSA_PARAMS *kp;
     const uint8_t *buf;
     size_t buf_len, ml_dsa_len;
@@ -757,7 +757,7 @@ static int composite_import_internal(void *keydata, int selection,
     }
 
     /* 3. Decode the classic portion from its raw wire format */
-    key->classic_key = composite_decode_classic_key(libctx,
+    key->classic_key = ml_dsa_composite_decode_classic_key(libctx,
         classic_alg, classic_bits, ec_curve,
         include_priv,
         buf + ml_dsa_len,
@@ -776,7 +776,7 @@ static int composite_import_internal(void *keydata, int selection,
  * On success, *out points to a newly-allocated buffer and *out_len holds its
  * length.  The caller must OPENSSL_free(*out) (or OPENSSL_clear_free for priv).
  */
-static int composite_encode_classic_key(const EVP_PKEY *pkey,
+static int ml_dsa_composite_encode_classic_key(const EVP_PKEY *pkey,
     int include_priv,
     unsigned char **out,
     size_t *out_len)
@@ -838,16 +838,16 @@ static int composite_encode_classic_key(const EVP_PKEY *pkey,
 }
 
 /*
- * composite_export:
+ * ml_dsa_composite_export:
  * Serialize both sub-keys into the caller's OSSL_PARAM array.
  * Wire format per draft-ietf-lamps-pq-composite-sigs:
  *   Public key:  mldsaPK(pk_len bytes) || tradPK(raw)
  *   Private key: mldsaSeed(32 bytes)   || tradSK(raw)
  */
-static int composite_export(void *keydata, int selection,
+static int ml_dsa_composite_export(void *keydata, int selection,
     OSSL_CALLBACK *param_cb, void *cbarg)
 {
-    COMPOSITE_KEY *key = keydata;
+    ML_DSA_COMPOSITE_KEY *key = keydata;
     const ML_DSA_PARAMS *kp;
     const uint8_t *ml_dsa_bytes;
     unsigned char *priv_buf = NULL, *pub_buf = NULL;
@@ -861,7 +861,7 @@ static int composite_export(void *keydata, int selection,
         return 0;
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
-    if (!composite_has(keydata, selection))
+    if (!ml_dsa_composite_has(keydata, selection))
         return 0;
 
     kp = ossl_ml_dsa_key_params(key->ml_dsa_key);
@@ -872,7 +872,7 @@ static int composite_export(void *keydata, int selection,
         ml_dsa_bytes = ossl_ml_dsa_key_get_seed(key->ml_dsa_key);
         if (ml_dsa_bytes == NULL)
             goto done; /* seed required; key was not loaded from seed */
-        if (!composite_encode_classic_key(key->classic_key, 1,
+        if (!ml_dsa_composite_encode_classic_key(key->classic_key, 1,
                 &classic_priv, &classic_priv_len))
             goto done;
         priv_len = ML_DSA_SEED_BYTES + classic_priv_len;
@@ -890,7 +890,7 @@ static int composite_export(void *keydata, int selection,
         ml_dsa_bytes = ossl_ml_dsa_key_get_pub(key->ml_dsa_key);
         if (ml_dsa_bytes == NULL)
             goto done;
-        if (!composite_encode_classic_key(key->classic_key, 0,
+        if (!ml_dsa_composite_encode_classic_key(key->classic_key, 0,
                 &classic_pub, &classic_pub_len))
             goto done;
         pub_len = kp->pk_len + classic_pub_len;
@@ -918,10 +918,10 @@ done:
     return ret;
 }
 
-static void *composite_dup_key(const void *keydata_from, int selection)
+static void *ml_dsa_composite_dup_key(const void *keydata_from, int selection)
 {
-    const COMPOSITE_KEY *src = keydata_from;
-    COMPOSITE_KEY *key;
+    const ML_DSA_COMPOSITE_KEY *src = keydata_from;
+    ML_DSA_COMPOSITE_KEY *key;
 
     if (!ossl_prov_is_running() || src == NULL)
         return NULL;
@@ -945,11 +945,11 @@ err:
     return NULL;
 }
 
-static int composite_match(const void *keydata1, const void *keydata2,
+static int ml_dsa_composite_match(const void *keydata1, const void *keydata2,
     int selection)
 {
-    const COMPOSITE_KEY *key1 = keydata1;
-    const COMPOSITE_KEY *key2 = keydata2;
+    const ML_DSA_COMPOSITE_KEY *key1 = keydata1;
+    const ML_DSA_COMPOSITE_KEY *key2 = keydata2;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -962,9 +962,9 @@ static int composite_match(const void *keydata1, const void *keydata2,
     return 1;
 }
 
-static void *composite_load(const void *reference, size_t reference_sz)
+static void *ml_dsa_composite_load(const void *reference, size_t reference_sz)
 {
-    COMPOSITE_KEY *key = NULL;
+    ML_DSA_COMPOSITE_KEY *key = NULL;
     const uint8_t *seed;
 
     if (!ossl_prov_is_running() || reference == NULL
@@ -972,9 +972,9 @@ static void *composite_load(const void *reference, size_t reference_sz)
         return NULL;
 
     /* The contents of the reference is the address to our object */
-    key = *(COMPOSITE_KEY **)reference;
+    key = *(ML_DSA_COMPOSITE_KEY **)reference;
     /* We grabbed, so we detach it */
-    *(COMPOSITE_KEY **)reference = NULL;
+    *(ML_DSA_COMPOSITE_KEY **)reference = NULL;
 
     if (key == NULL)
         return NULL;
@@ -1012,46 +1012,46 @@ err:
     return NULL;
 }
 
-#define MAKE_KEYMGMT_FUNCTIONS(alg, ml_dsa_evp_type, classic_alg_, classic_bits_, ec_curve_)      \
-    static OSSL_FUNC_keymgmt_new_fn composite_##alg##_new_key;                                    \
-    static OSSL_FUNC_keymgmt_gen_fn composite_##alg##_gen;                                        \
-    static OSSL_FUNC_keymgmt_import_fn composite_##alg##_import;                                  \
-    static void *composite_##alg##_new_key(void *provctx)                                         \
-    {                                                                                             \
-        return ossl_prov_composite_new(provctx, NULL, ml_dsa_evp_type);                           \
-    }                                                                                             \
-    static void *composite_##alg##_gen(void *genctx,                                              \
-        OSSL_CALLBACK *osslcb, void *cbarg)                                                       \
-    {                                                                                             \
-        return composite_gen(genctx, ml_dsa_evp_type,                                             \
-            classic_alg_, classic_bits_, ec_curve_);                                              \
-    }                                                                                             \
-    static int composite_##alg##_import(void *keydata, int selection,                             \
-        const OSSL_PARAM params[])                                                                \
-    {                                                                                             \
-        return composite_import_internal(keydata, selection, params,                              \
-            classic_alg_, classic_bits_, ec_curve_);                                              \
-    }                                                                                             \
-    const OSSL_DISPATCH ossl_##alg##_keymgmt_functions[] = {                                      \
-        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))composite_##alg##_new_key },                     \
-        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))composite_free_key },                           \
-        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))composite_has },                                 \
-        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))composite_match },                             \
-        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))composite_##alg##_import },                   \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))composite_import_types },               \
-        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))composite_export },                           \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))composite_export_types },               \
-        { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))composite_load },                               \
-        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))composite_get_params },                   \
-        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))composite_gettable_params },         \
-        { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))composite_validate },                       \
-        { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))composite_gen_init },                       \
-        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))composite_##alg##_gen },                         \
-        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))composite_gen_cleanup },                 \
-        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))composite_gen_set_params },           \
-        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (void (*)(void))composite_gen_settable_params }, \
-        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))composite_dup_key },                             \
-        OSSL_DISPATCH_END                                                                         \
+#define MAKE_KEYMGMT_FUNCTIONS(alg, ml_dsa_evp_type, classic_alg_, classic_bits_, ec_curve_)             \
+    static OSSL_FUNC_keymgmt_new_fn ml_dsa_composite_##alg##_new_key;                                    \
+    static OSSL_FUNC_keymgmt_gen_fn ml_dsa_composite_##alg##_gen;                                        \
+    static OSSL_FUNC_keymgmt_import_fn ml_dsa_composite_##alg##_import;                                  \
+    static void *ml_dsa_composite_##alg##_new_key(void *provctx)                                         \
+    {                                                                                                    \
+        return ossl_prov_ml_dsa_composite_new(provctx, NULL, ml_dsa_evp_type);                           \
+    }                                                                                                    \
+    static void *ml_dsa_composite_##alg##_gen(void *genctx,                                              \
+        OSSL_CALLBACK *osslcb, void *cbarg)                                                              \
+    {                                                                                                    \
+        return ml_dsa_composite_gen(genctx, ml_dsa_evp_type,                                             \
+            classic_alg_, classic_bits_, ec_curve_);                                                     \
+    }                                                                                                    \
+    static int ml_dsa_composite_##alg##_import(void *keydata, int selection,                             \
+        const OSSL_PARAM params[])                                                                       \
+    {                                                                                                    \
+        return ml_dsa_composite_import_internal(keydata, selection, params,                              \
+            classic_alg_, classic_bits_, ec_curve_);                                                     \
+    }                                                                                                    \
+    const OSSL_DISPATCH ossl_##alg##_keymgmt_functions[] = {                                             \
+        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ml_dsa_composite_##alg##_new_key },                     \
+        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ml_dsa_composite_free_key },                           \
+        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ml_dsa_composite_has },                                 \
+        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ml_dsa_composite_match },                             \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ml_dsa_composite_##alg##_import },                   \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ml_dsa_composite_import_types },               \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ml_dsa_composite_export },                           \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ml_dsa_composite_export_types },               \
+        { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ml_dsa_composite_load },                               \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))ml_dsa_composite_get_params },                   \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))ml_dsa_composite_gettable_params },         \
+        { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))ml_dsa_composite_validate },                       \
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ml_dsa_composite_gen_init },                       \
+        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ml_dsa_composite_##alg##_gen },                         \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ml_dsa_composite_gen_cleanup },                 \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ml_dsa_composite_gen_set_params },           \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, (void (*)(void))ml_dsa_composite_gen_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ml_dsa_composite_dup_key },                             \
+        OSSL_DISPATCH_END                                                                                \
     }
 
 /* alg                                  ml_dsa_evp_type    classic_alg  bits  ec_curve          */

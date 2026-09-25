@@ -36,9 +36,9 @@ IF[{- !$disabled{'ml-dsa'} || !$disabled{'ml-kem'} -}]
 ENDIF
 
 IF[{- !$disabled{'ml-dsa'} -}]
-  SOURCE[$DECODER_GOAL]=composite_codecs.c
-  DEPEND[composite_codecs.o]=../../common/include/prov/composite.h
-  DEPEND[decode_der2key.o]=../../common/include/prov/composite.h
-  DEPEND[encode_key2any.o]=../../common/include/prov/composite.h
-  DEPEND[encode_key2text.o]=../../common/include/prov/composite.h
+  SOURCE[$DECODER_GOAL]=ml_dsa_composite_codecs.c
+  DEPEND[ml_dsa_composite_codecs.o]=../../common/include/prov/ml_dsa_composite.h
+  DEPEND[decode_der2key.o]=../../common/include/prov/ml_dsa_composite.h
+  DEPEND[encode_key2any.o]=../../common/include/prov/ml_dsa_composite.h
+  DEPEND[encode_key2text.o]=../../common/include/prov/ml_dsa_composite.h
 ENDIF

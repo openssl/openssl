@@ -16,7 +16,7 @@
 #include <openssl/params.h>
 #include <openssl/rand.h>
 #include "testutil.h"
-#include "composite_sig.inc"
+#include "ml_dsa_composite_sig.inc"
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -34,7 +34,7 @@ static OSSL_PROVIDER *lib_prov = NULL;
  * ========================================================================= */
 
 /*
- * Generate a composite keypair using DRBG (no fixed seed).
+ * Generate a ml dsa composite keypair using DRBG (no fixed seed).
  */
 static EVP_PKEY *do_gen_key(const char *alg)
 {
@@ -51,12 +51,12 @@ static EVP_PKEY *do_gen_key(const char *alg)
 }
 
 /*
- * Load a composite private key from raw DER bytes via EVP_PKEY_fromdata.
+ * Load a ml dsa composite private key from raw DER bytes via EVP_PKEY_fromdata.
  * |priv| is the concatenated composite private key blob as exported by the
  * keymgmt (OSSL_PKEY_PARAM_PRIV_KEY).
  */
-#if COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
-static EVP_PKEY *composite_key_from_priv(const char *alg,
+#if ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
+static EVP_PKEY *ml_dsa_composite_key_from_priv(const char *alg,
     const uint8_t *priv, size_t priv_len)
 {
     EVP_PKEY *pkey = NULL;
@@ -78,13 +78,13 @@ static EVP_PKEY *composite_key_from_priv(const char *alg,
     EVP_PKEY_CTX_free(ctx);
     return pkey;
 }
-#endif /* COMPOSITE_SIGGEN_TESTDATA_COUNT > 0 */
+#endif /* ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0 */
 
 /*
- * Load a composite public key from raw DER bytes via EVP_PKEY_fromdata.
+ * Load a ml dsa composite public key from raw DER bytes via EVP_PKEY_fromdata.
  */
-#if COMPOSITE_SIGVER_TESTDATA_COUNT > 0
-static EVP_PKEY *composite_key_from_pub(const char *alg,
+#if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
+static EVP_PKEY *ml_dsa_composite_key_from_pub(const char *alg,
     const uint8_t *pub, size_t pub_len)
 {
     EVP_PKEY *pkey = NULL;
@@ -106,7 +106,7 @@ static EVP_PKEY *composite_key_from_pub(const char *alg,
     EVP_PKEY_CTX_free(ctx);
     return pkey;
 }
-#endif /* COMPOSITE_SIGVER_TESTDATA_COUNT > 0 */
+#endif /* ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0 */
 
 /* =========================================================================
  *  DRBG round-trip tests (keygen → sign → verify)
@@ -158,23 +158,23 @@ err:
     return ret;
 }
 
-/* Table of composite algorithm names */
-static const char *composite_alg_names[] = {
+/* Table of ml dsa composite algorithm names */
+static const char *ml_dsa_composite_alg_names[] = {
     "ML-DSA-65-RSA3072-PKCS15-SHA512",
     "ML-DSA-65-ECDSA-P256-SHA512",
 };
-#define NUM_COMPOSITE_ALGS (int)(sizeof(composite_alg_names) / sizeof(composite_alg_names[0]))
+#define NUM_ML_DSA_COMPOSITE_ALGS (int)(sizeof(ml_dsa_composite_alg_names) / sizeof(ml_dsa_composite_alg_names[0]))
 
-static uint8_t test_msg[] = "OpenSSL composite signature test message";
+static uint8_t test_msg[] = "OpenSSL ml dsa composite signature test message";
 
 /*
  * DRBG keygen + sign + verify for each of the 18 algorithms.
  * Parameterised by tst_id (0..17).
  */
-static int composite_drbg_sign_verify_test(int tst_id)
+static int ml_dsa_composite_drbg_sign_verify_test(int tst_id)
 {
     int ret = 0;
-    const char *alg = composite_alg_names[tst_id];
+    const char *alg = ml_dsa_composite_alg_names[tst_id];
     EVP_PKEY *key = NULL;
 
 #ifdef OPENSSL_NO_EC
@@ -200,7 +200,7 @@ err:
  * Two keys of different algorithms must return -1 (incompatible types).
  * Checks EVP_PKEY_eq() and EVP_PKEY_dup() round-trips.
  */
-static int composite_keygen_drbg_test(void)
+static int ml_dsa_composite_keygen_drbg_test(void)
 {
     int ret = 0;
     EVP_PKEY *k1 = NULL, *k2 = NULL, *k3 = NULL, *k1_dup = NULL;
@@ -231,7 +231,7 @@ err:
 }
 
 /* =========================================================================
- * Deterministic vector tests (composite_sig.inc)
+ * Deterministic vector tests (ml_dsa_composite_sig.inc)
  * ========================================================================= */
 
 /*
@@ -240,11 +240,11 @@ err:
  * (Same SHA-256-of-sig trick used by ml_dsa_siggen_test to keep the .inc
  * file small while still providing a complete bit-exact check.)
  */
-#if COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
-static int composite_siggen_test(int tst_id)
+#if ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
+static int ml_dsa_composite_siggen_test(int tst_id)
 {
     int ret = 0;
-    const COMPOSITE_SIG_GEN_TEST_DATA *td = &composite_siggen_testdata[tst_id];
+    const ML_DSA_COMPOSITE_SIG_GEN_TEST_DATA *td = &ml_dsa_composite_siggen_testdata[tst_id];
     EVP_PKEY_CTX *sctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -260,7 +260,7 @@ static int composite_siggen_test(int tst_id)
             (void *)td->add_random, td->add_random_len);
     *p = OSSL_PARAM_construct_end();
 
-    if (!TEST_ptr(pkey = composite_key_from_priv(td->alg, td->priv, td->priv_len)))
+    if (!TEST_ptr(pkey = ml_dsa_composite_key_from_priv(td->alg, td->priv, td->priv_len)))
         goto err;
 
     if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
@@ -289,22 +289,22 @@ err:
     OPENSSL_free(psig);
     return ret;
 }
-#endif /* COMPOSITE_SIGGEN_TESTDATA_COUNT > 0 */
+#endif /* ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0 */
 
 /*
  * sigver: load public key from vector, verify the stored signature.
  * td->expected == 1 for valid, 0 for deliberately invalid vectors.
  */
-#if COMPOSITE_SIGVER_TESTDATA_COUNT > 0
-static int composite_sigver_test(int tst_id)
+#if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
+static int ml_dsa_composite_sigver_test(int tst_id)
 {
     int ret = 0;
-    const COMPOSITE_SIG_VER_TEST_DATA *td = &composite_sigver_testdata[tst_id];
+    const ML_DSA_COMPOSITE_SIG_VER_TEST_DATA *td = &ml_dsa_composite_sigver_testdata[tst_id];
     EVP_PKEY_CTX *vctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
 
-    if (!TEST_ptr(pkey = composite_key_from_pub(td->alg, td->pub, td->pub_len)))
+    if (!TEST_ptr(pkey = ml_dsa_composite_key_from_pub(td->alg, td->pub, td->pub_len)))
         goto err;
 
     if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
@@ -322,18 +322,18 @@ err:
     EVP_PKEY_CTX_free(vctx);
     return ret;
 }
-#endif /* COMPOSITE_SIGVER_TESTDATA_COUNT > 0 */
+#endif /* ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0 */
 
 /* =========================================================================
  * Negative tests
  * ========================================================================= */
 
 /*
- * A signature produced by one composite algorithm must not verify under a
- * different composite algorithm that happens to share the same ML-DSA level
+ * A signature produced by one ml dsa composite algorithm must not verify under a
+ * different ml dsa composite algorithm that happens to share the same ML-DSA level
  * (cross-algorithm mismatch).
  */
-static int composite_cross_alg_mismatch_test(void)
+static int ml_dsa_composite_cross_alg_mismatch_test(void)
 {
     int ret = 0;
     EVP_PKEY *key_a = NULL, *key_b = NULL;
@@ -345,7 +345,7 @@ static int composite_cross_alg_mismatch_test(void)
     const char *alg_b = "ML-DSA-65-ECDSA-P256-SHA512";
 
 #ifdef OPENSSL_NO_EC
-    TEST_note("Skipping composite_cross_alg_mismatch_test - requires EC (ECDSA-P256)");
+    TEST_note("Skipping ml_dsa_composite_cross_alg_mismatch_test - requires EC (ECDSA-P256)");
     return 1;
 #endif
     if (!TEST_ptr(key_a = do_gen_key(alg_a))
@@ -389,10 +389,10 @@ err:
 /*
  * A tampered signature (single bit flip) must not verify.
  */
-static int composite_tampered_sig_test(int tst_id)
+static int ml_dsa_composite_tampered_sig_test(int tst_id)
 {
     int ret = 0;
-    const char *alg = composite_alg_names[tst_id];
+    const char *alg = ml_dsa_composite_alg_names[tst_id];
     EVP_PKEY *key = NULL;
     EVP_PKEY_CTX *sctx = NULL, *vctx = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -465,7 +465,7 @@ static int encode_classic_component(EVP_PKEY *pkey, int selection,
  * component is not actually 3072 bits must be rejected: modulus-size
  * downgrade / algorithm-confusion must be caught by the keymgmt import path.
  */
-static int composite_rsa_size_downgrade_test(void)
+static int ml_dsa_composite_rsa_size_downgrade_test(void)
 {
     int ret = 0;
     const char *alg = "ML-DSA-65-RSA3072-PKCS15-SHA512";
@@ -505,7 +505,7 @@ static int composite_rsa_size_downgrade_test(void)
     EVP_PKEY_CTX_free(kctx);
     kctx = NULL;
 
-    /* mldsaPK(pk_len) || tradPK(raw) -- composite public key wire format */
+    /* mldsaPK(pk_len) || tradPK(raw) -- ml dsa composite public key wire format */
     blob_len = mldsa_pk_len + rsa_pub_len;
     if (!TEST_ptr(blob = OPENSSL_malloc(blob_len)))
         goto err;
@@ -544,7 +544,7 @@ err:
  * component is on a different curve (P-384, not P-256) must be rejected:
  * curve confusion / downgrade must be caught by the keymgmt import path.
  */
-static int composite_ec_curve_downgrade_test(void)
+static int ml_dsa_composite_ec_curve_downgrade_test(void)
 {
     int ret = 0;
     const char *alg = "ML-DSA-65-ECDSA-P256-SHA512";
@@ -556,7 +556,7 @@ static int composite_ec_curve_downgrade_test(void)
     OSSL_PARAM import_params[2];
 
 #ifdef OPENSSL_NO_EC
-    TEST_note("Skipping composite_ec_curve_downgrade_test - requires EC");
+    TEST_note("Skipping ml_dsa_composite_ec_curve_downgrade_test - requires EC");
     return 1;
 #endif
 
@@ -574,7 +574,7 @@ static int composite_ec_curve_downgrade_test(void)
     EVP_PKEY_CTX_free(kctx);
     kctx = NULL;
 
-    /* mldsaSeed(32) || tradSK(raw) -- composite private key wire format */
+    /* mldsaSeed(32) || tradSK(raw) -- ml dsa composite private key wire format */
     blob_len = sizeof(seed) + ec_priv_len;
     if (!TEST_ptr(blob = OPENSSL_malloc(blob_len)))
         goto err;
@@ -622,10 +622,10 @@ static long find_bytes(const unsigned char *hay, long hay_len,
 /*
  * A SubjectPublicKeyInfo whose BIT STRING has a non-zero "unused bits" byte
  * is invalid DER for key material.  The hand-rolled composite SPKI parser
- * (composite_spki_bitstring_body()) must reject it rather than silently
+ * (ml_dsa_composite_spki_bitstring_body()) must reject it rather than silently
  * accept it and shift the decoded key material by one byte.
  */
-static int composite_spki_bad_unused_bits_test(void)
+static int ml_dsa_composite_spki_bad_unused_bits_test(void)
 {
     int ret = 0;
     const char *alg = "ML-DSA-65-RSA3072-PKCS15-SHA512";
@@ -706,10 +706,10 @@ err:
  * verify_message_update()/_final()) and via the one-shot API, to confirm
  * both paths agree.
  */
-static int composite_streaming_sign_verify_test(int tst_id)
+static int ml_dsa_composite_streaming_sign_verify_test(int tst_id)
 {
     int ret = 0;
-    const char *alg = composite_alg_names[tst_id];
+    const char *alg = ml_dsa_composite_alg_names[tst_id];
     EVP_PKEY *key = NULL;
     EVP_PKEY_CTX *sctx = NULL, *vctx = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -770,10 +770,10 @@ err:
 /*
  * A tampered signature must not verify via the streaming API either.
  */
-static int composite_streaming_tampered_sig_test(int tst_id)
+static int ml_dsa_composite_streaming_tampered_sig_test(int tst_id)
 {
     int ret = 0;
-    const char *alg = composite_alg_names[tst_id];
+    const char *alg = ml_dsa_composite_alg_names[tst_id];
     EVP_PKEY *key = NULL;
     EVP_PKEY_CTX *sctx = NULL, *vctx = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -821,22 +821,22 @@ err:
 }
 
 /* =========================================================================
- * Externally pre-computed PH(M) tests (OSSL_SIGNATURE_PARAM_COMPOSITE_PREHASH)
+ * Externally pre-computed PH(M) tests (OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH)
  * ========================================================================= */
 
 /*
  * A caller may compute PH(M) itself (e.g. on another machine) and hand it
  * to sign()/verify() in place of the raw message, by setting
- * OSSL_SIGNATURE_PARAM_COMPOSITE_PREHASH.  Every composite algorithm
+ * OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH.  Every ml dsa composite algorithm
  * currently defined uses SHA-512 for PH(M).  This must produce a signature
  * that verifies both via the same flag and via a normal, independently
  * computed PH(M); it must also be interchangeable with a signature made the
  * ordinary way (raw message, no flag).
  */
-static int composite_external_prehash_test(int tst_id)
+static int ml_dsa_composite_external_prehash_test(int tst_id)
 {
     int ret = 0;
-    const char *alg = composite_alg_names[tst_id];
+    const char *alg = ml_dsa_composite_alg_names[tst_id];
     EVP_PKEY *key = NULL;
     EVP_PKEY_CTX *sctx = NULL, *vctx = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -854,7 +854,7 @@ static int composite_external_prehash_test(int tst_id)
     }
 #endif
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_COMPOSITE_PREHASH,
+    params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH,
         &have_prehash);
     params[1] = OSSL_PARAM_construct_end();
 
@@ -951,30 +951,30 @@ int setup_tests(void)
         return 0;
 
     /* Strategy 1: DRBG round-trips for all 18 algorithms */
-    ADD_ALL_TESTS(composite_drbg_sign_verify_test, NUM_COMPOSITE_ALGS);
-    ADD_TEST(composite_keygen_drbg_test);
+    ADD_ALL_TESTS(ml_dsa_composite_drbg_sign_verify_test, NUM_ML_DSA_COMPOSITE_ALGS);
+    ADD_TEST(ml_dsa_composite_keygen_drbg_test);
 
-    /* Strategy 2: deterministic vector tests from composite_sig.inc */
-#if COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
-    ADD_ALL_TESTS(composite_siggen_test, COMPOSITE_SIGGEN_TESTDATA_COUNT);
+    /* Strategy 2: deterministic vector tests from ml_dsa_composite_sig.inc */
+#if ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
+    ADD_ALL_TESTS(ml_dsa_composite_siggen_test, ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT);
 #endif
-#if COMPOSITE_SIGVER_TESTDATA_COUNT > 0
-    ADD_ALL_TESTS(composite_sigver_test, COMPOSITE_SIGVER_TESTDATA_COUNT);
+#if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
+    ADD_ALL_TESTS(ml_dsa_composite_sigver_test, ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT);
 #endif
 
     /* Negative tests */
-    ADD_TEST(composite_cross_alg_mismatch_test);
-    ADD_ALL_TESTS(composite_tampered_sig_test, NUM_COMPOSITE_ALGS);
-    ADD_TEST(composite_rsa_size_downgrade_test);
-    ADD_TEST(composite_ec_curve_downgrade_test);
-    ADD_TEST(composite_spki_bad_unused_bits_test);
+    ADD_TEST(ml_dsa_composite_cross_alg_mismatch_test);
+    ADD_ALL_TESTS(ml_dsa_composite_tampered_sig_test, NUM_ML_DSA_COMPOSITE_ALGS);
+    ADD_TEST(ml_dsa_composite_rsa_size_downgrade_test);
+    ADD_TEST(ml_dsa_composite_ec_curve_downgrade_test);
+    ADD_TEST(ml_dsa_composite_spki_bad_unused_bits_test);
 
     /* Streaming (sign/verify_message_update) tests */
-    ADD_ALL_TESTS(composite_streaming_sign_verify_test, NUM_COMPOSITE_ALGS);
-    ADD_ALL_TESTS(composite_streaming_tampered_sig_test, NUM_COMPOSITE_ALGS);
+    ADD_ALL_TESTS(ml_dsa_composite_streaming_sign_verify_test, NUM_ML_DSA_COMPOSITE_ALGS);
+    ADD_ALL_TESTS(ml_dsa_composite_streaming_tampered_sig_test, NUM_ML_DSA_COMPOSITE_ALGS);
 
     /* Externally pre-computed PH(M) tests */
-    ADD_ALL_TESTS(composite_external_prehash_test, NUM_COMPOSITE_ALGS);
+    ADD_ALL_TESTS(ml_dsa_composite_external_prehash_test, NUM_ML_DSA_COMPOSITE_ALGS);
 
     return 1;
 }

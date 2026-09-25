@@ -17,11 +17,11 @@
 #include <openssl/objects.h>
 #include <openssl/proverr.h>
 #include "crypto/ml_dsa.h"
-#include "prov/composite_codecs.h"
+#include "prov/ml_dsa_composite_codecs.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/provider_ctx.h"
 
-#ifndef OPENSSL_NO_COMPOSITE
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
 
 /*
  * Encode the classic sub-key public component to its raw wire format
@@ -33,7 +33,7 @@
  * On success, *out is a newly-allocated buffer of *out_len bytes.
  * Caller must OPENSSL_free(*out).
  */
-static int composite_encode_classic_pub(const EVP_PKEY *pkey,
+static int ml_dsa_composite_encode_classic_pub(const EVP_PKEY *pkey,
     unsigned char **out,
     size_t *out_len)
 {
@@ -84,7 +84,7 @@ static int composite_encode_classic_pub(const EVP_PKEY *pkey,
  * On success, *out is a newly-allocated buffer of *out_len bytes.
  * Caller must OPENSSL_clear_free(*out, *out_len).
  */
-static int composite_encode_classic_priv(const EVP_PKEY *pkey,
+static int ml_dsa_composite_encode_classic_priv(const EVP_PKEY *pkey,
     unsigned char **out,
     size_t *out_len)
 {
@@ -148,7 +148,7 @@ static int composite_encode_classic_priv(const EVP_PKEY *pkey,
  * Returns total byte length (>0) on success, 0 on error.
  * If |out| is NULL, only the length is computed (no allocation).
  */
-int ossl_composite_i2d_pubkey(const COMPOSITE_KEY *key, unsigned char **out)
+int ossl_ml_dsa_composite_i2d_pubkey(const ML_DSA_COMPOSITE_KEY *key, unsigned char **out)
 {
     const ML_DSA_PARAMS *kp;
     const uint8_t *ml_dsa_pub;
@@ -168,7 +168,7 @@ int ossl_composite_i2d_pubkey(const COMPOSITE_KEY *key, unsigned char **out)
         return 0;
     }
 
-    if (!composite_encode_classic_pub(key->classic_key,
+    if (!ml_dsa_composite_encode_classic_pub(key->classic_key,
             &classic_pub, &classic_pub_len))
         return 0;
 
@@ -193,7 +193,7 @@ done:
  * Returns total byte length (>0) on success, 0 on error.
  * If |out| is NULL, only the length is computed (no allocation).
  */
-int ossl_composite_i2d_prvkey(const COMPOSITE_KEY *key, unsigned char **out)
+int ossl_ml_dsa_composite_i2d_prvkey(const ML_DSA_COMPOSITE_KEY *key, unsigned char **out)
 {
     const uint8_t *seed;
     unsigned char *classic_priv = NULL;
@@ -211,7 +211,7 @@ int ossl_composite_i2d_prvkey(const COMPOSITE_KEY *key, unsigned char **out)
         return 0;
     }
 
-    if (!composite_encode_classic_priv(key->classic_key,
+    if (!ml_dsa_composite_encode_classic_priv(key->classic_key,
             &classic_priv, &classic_priv_len))
         return 0;
 
@@ -234,7 +234,7 @@ done:
 /*
  * Print a human-readable description of a composite key to |out|.
  */
-int ossl_composite_key_to_text(BIO *out, const COMPOSITE_KEY *key,
+int ossl_ml_dsa_composite_key_to_text(BIO *out, const ML_DSA_COMPOSITE_KEY *key,
     int selection)
 {
     const ML_DSA_PARAMS *kp;
@@ -279,7 +279,7 @@ int ossl_composite_key_to_text(BIO *out, const COMPOSITE_KEY *key,
 }
 
 /* Compares EC group names, resolving NIST aliases (e.g. "P-256") to their canonical NID. */
-static int composite_ec_curve_matches(const char *grp, const char *ec_curve)
+static int ml_dsa_composite_ec_curve_matches(const char *grp, const char *ec_curve)
 {
     int actual_nid = OBJ_txt2nid(grp);
     int expected_nid = EC_curve_nist2nid(ec_curve);
@@ -290,7 +290,7 @@ static int composite_ec_curve_matches(const char *grp, const char *ec_curve)
 }
 
 /* Bind the decoded classic component's actual parameters to the composite variant */
-static int composite_codecs_check_classic_params(EVP_PKEY *pkey,
+static int ml_dsa_composite_codecs_check_classic_params(EVP_PKEY *pkey,
     const char *classic_alg, int classic_bits, const char *ec_curve)
 {
     if (strcmp(classic_alg, "RSA") == 0) {
@@ -304,7 +304,7 @@ static int composite_codecs_check_classic_params(EVP_PKEY *pkey,
 
         if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
                 grp, sizeof(grp), &grplen)
-            || !composite_ec_curve_matches(grp, ec_curve)) {
+            || !ml_dsa_composite_ec_curve_matches(grp, ec_curve)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
             return 0;
         }
@@ -314,9 +314,9 @@ static int composite_codecs_check_classic_params(EVP_PKEY *pkey,
 
 /*
  * Decode the classic sub-key from its raw wire format.
- * Used by ossl_composite_d2i_pubkey() and ossl_composite_d2i_prvkey().
+ * Used by ossl_ml_dsa_composite_d2i_pubkey() and ossl_ml_dsa_composite_d2i_prvkey().
  */
-static EVP_PKEY *composite_codecs_decode_classic_pub(OSSL_LIB_CTX *libctx,
+static EVP_PKEY *ml_dsa_composite_codecs_decode_classic_pub(OSSL_LIB_CTX *libctx,
     const char *classic_alg,
     int classic_bits,
     const char *ec_curve,
@@ -356,7 +356,7 @@ static EVP_PKEY *composite_codecs_decode_classic_pub(OSSL_LIB_CTX *libctx,
         EVP_PKEY_CTX_free(pctx);
     }
     if (pkey != NULL
-        && !composite_codecs_check_classic_params(pkey, classic_alg,
+        && !ml_dsa_composite_codecs_check_classic_params(pkey, classic_alg,
             classic_bits, ec_curve)) {
         EVP_PKEY_free(pkey);
         pkey = NULL;
@@ -364,7 +364,7 @@ static EVP_PKEY *composite_codecs_decode_classic_pub(OSSL_LIB_CTX *libctx,
     return pkey;
 }
 
-static EVP_PKEY *composite_codecs_decode_classic_priv(OSSL_LIB_CTX *libctx,
+static EVP_PKEY *ml_dsa_composite_codecs_decode_classic_priv(OSSL_LIB_CTX *libctx,
     const char *classic_alg,
     int classic_bits,
     const char *ec_curve,
@@ -396,7 +396,7 @@ static EVP_PKEY *composite_codecs_decode_classic_priv(OSSL_LIB_CTX *libctx,
         OSSL_DECODER_CTX_free(dctx);
     }
     if (pkey != NULL
-        && !composite_codecs_check_classic_params(pkey, classic_alg,
+        && !ml_dsa_composite_codecs_check_classic_params(pkey, classic_alg,
             classic_bits, ec_curve)) {
         EVP_PKEY_free(pkey);
         pkey = NULL;
@@ -404,7 +404,7 @@ static EVP_PKEY *composite_codecs_decode_classic_priv(OSSL_LIB_CTX *libctx,
     return pkey;
 }
 
-COMPOSITE_KEY *ossl_composite_d2i_pubkey(const unsigned char *pk,
+ML_DSA_COMPOSITE_KEY *ossl_ml_dsa_composite_d2i_pubkey(const unsigned char *pk,
     int pk_len,
     int ml_dsa_evp_type,
     const char *classic_alg,
@@ -415,13 +415,13 @@ COMPOSITE_KEY *ossl_composite_d2i_pubkey(const unsigned char *pk,
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     const ML_DSA_PARAMS *kp;
-    COMPOSITE_KEY *key;
+    ML_DSA_COMPOSITE_KEY *key;
     size_t ml_dsa_len;
 
     if (pk == NULL || pk_len <= 0 || classic_alg == NULL)
         return NULL;
 
-    key = ossl_prov_composite_new(provctx, propq, ml_dsa_evp_type);
+    key = ossl_prov_ml_dsa_composite_new(provctx, propq, ml_dsa_evp_type);
     if (key == NULL)
         return NULL;
 
@@ -438,7 +438,7 @@ COMPOSITE_KEY *ossl_composite_d2i_pubkey(const unsigned char *pk,
         goto err;
     }
 
-    key->classic_key = composite_codecs_decode_classic_pub(
+    key->classic_key = ml_dsa_composite_codecs_decode_classic_pub(
         libctx, classic_alg, classic_bits, ec_curve,
         pk + ml_dsa_len, (size_t)pk_len - ml_dsa_len);
     if (key->classic_key == NULL)
@@ -447,11 +447,11 @@ COMPOSITE_KEY *ossl_composite_d2i_pubkey(const unsigned char *pk,
     return key;
 
 err:
-    ossl_composite_key_free(key);
+    ossl_ml_dsa_composite_key_free(key);
     return NULL;
 }
 
-COMPOSITE_KEY *ossl_composite_d2i_prvkey(const unsigned char *priv,
+ML_DSA_COMPOSITE_KEY *ossl_ml_dsa_composite_d2i_prvkey(const unsigned char *priv,
     int priv_len,
     int ml_dsa_evp_type,
     const char *classic_alg,
@@ -461,12 +461,12 @@ COMPOSITE_KEY *ossl_composite_d2i_prvkey(const unsigned char *priv,
     const char *propq)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    COMPOSITE_KEY *key;
+    ML_DSA_COMPOSITE_KEY *key;
 
     if (priv == NULL || priv_len <= ML_DSA_SEED_BYTES || classic_alg == NULL)
         return NULL;
 
-    key = ossl_prov_composite_new(provctx, propq, ml_dsa_evp_type);
+    key = ossl_prov_ml_dsa_composite_new(provctx, propq, ml_dsa_evp_type);
     if (key == NULL)
         return NULL;
 
@@ -481,7 +481,7 @@ COMPOSITE_KEY *ossl_composite_d2i_prvkey(const unsigned char *priv,
         goto err;
     }
 
-    key->classic_key = composite_codecs_decode_classic_priv(
+    key->classic_key = ml_dsa_composite_codecs_decode_classic_priv(
         libctx, classic_alg, classic_bits, ec_curve,
         priv + ML_DSA_SEED_BYTES,
         (size_t)priv_len - ML_DSA_SEED_BYTES);
@@ -491,8 +491,8 @@ COMPOSITE_KEY *ossl_composite_d2i_prvkey(const unsigned char *priv,
     return key;
 
 err:
-    ossl_composite_key_free(key);
+    ossl_ml_dsa_composite_key_free(key);
     return NULL;
 }
 
-#endif /* OPENSSL_NO_COMPOSITE */
+#endif /* OPENSSL_NO_ML_DSA_COMPOSITE */

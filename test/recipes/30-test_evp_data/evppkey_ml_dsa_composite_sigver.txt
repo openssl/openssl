@@ -5,7 +5,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Composite signature verification test vectors.
+# ML DSA Composite signature verification test vectors.
 # Source: https://github.com/lamps-wg/draft-composite-sigs/blob/main/src/testvectors.json
 # Message: "The quick brown fox jumps over the lazy dog."
 # Context: empty (no context string)

@@ -46,7 +46,7 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
-#include "prov/composite_codecs.h"
+#include "prov/ml_dsa_composite_codecs.h"
 #include "providers/implementations/encode_decode/decode_der2key.inc"
 
 #ifndef OPENSSL_NO_SLH_DSA
@@ -1044,7 +1044,7 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 
 /* ---------------------------------------------------------------------- */
 
-#ifndef OPENSSL_NO_COMPOSITE
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
 /*
  * Composite SPKI/PKCS8 decoder helpers.
  * The d2i_PUBKEY callback receives the full SubjectPublicKeyInfo DER.
@@ -1065,7 +1065,7 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
  * payload and sets |*out_len|.  Returns NULL on parse failure.
  */
 static const unsigned char *
-composite_spki_bitstring_body(const unsigned char *der, long der_len,
+ml_dsa_composite_spki_bitstring_body(const unsigned char *der, long der_len,
     int *out_len)
 {
     const unsigned char *p = der;
@@ -1110,8 +1110,8 @@ composite_spki_bitstring_body(const unsigned char *der, long der_len,
     return p + 1;
 }
 
-static COMPOSITE_KEY *
-composite_d2i_pubkey_common(const unsigned char *der, long der_len,
+static ML_DSA_COMPOSITE_KEY *
+ml_dsa_composite_d2i_pubkey_common(const unsigned char *der, long der_len,
     int ml_dsa_evp_type,
     const char *classic_alg, int classic_bits, const char *ec_curve,
     struct der2key_ctx_st *ctx)
@@ -1148,24 +1148,24 @@ composite_d2i_pubkey_common(const unsigned char *der, long der_len,
     }
     ASN1_OBJECT_free(oid);
 
-    pk = composite_spki_bitstring_body(der, der_len, &pk_len);
+    pk = ml_dsa_composite_spki_bitstring_body(der, der_len, &pk_len);
     if (pk == NULL)
         return NULL;
 
-    return ossl_composite_d2i_pubkey(pk, pk_len, ml_dsa_evp_type,
+    return ossl_ml_dsa_composite_d2i_pubkey(pk, pk_len, ml_dsa_evp_type,
         classic_alg, classic_bits, ec_curve,
         ctx->provctx, ctx->propq);
 }
 
-static COMPOSITE_KEY *
-composite_d2i_prvkey_common(const unsigned char *der, long der_len,
+static ML_DSA_COMPOSITE_KEY *
+ml_dsa_composite_d2i_prvkey_common(const unsigned char *der, long der_len,
     int ml_dsa_evp_type,
     const char *classic_alg, int classic_bits, const char *ec_curve,
     struct der2key_ctx_st *ctx)
 {
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     const unsigned char *ptr = der;
-    COMPOSITE_KEY *key = NULL;
+    ML_DSA_COMPOSITE_KEY *key = NULL;
     const unsigned char *privbytes;
     const X509_ALGOR *alg = NULL;
     int privlen;
@@ -1181,7 +1181,7 @@ composite_d2i_prvkey_common(const unsigned char *der, long der_len,
     if (alg == NULL || OBJ_obj2nid(alg->algorithm) != ctx->desc->evp_type)
         goto done;
 
-    key = ossl_composite_d2i_prvkey(privbytes, privlen, ml_dsa_evp_type,
+    key = ossl_ml_dsa_composite_d2i_prvkey(privbytes, privlen, ml_dsa_evp_type,
         classic_alg, classic_bits, ec_curve,
         ctx->provctx, ctx->propq);
 done:
@@ -1190,33 +1190,33 @@ done:
 }
 
 /*
- * MAKE_COMPOSITE_D2I: per-algorithm d2i_PUBKEY, d2i_PKCS8, and the
+ * MAKE_ML_DSA_COMPOSITE_D2I: per-algorithm d2i_PUBKEY, d2i_PKCS8, and the
  * supporting #defines consumed by MAKE_DECODER.
  */
-#define MAKE_COMPOSITE_D2I(alg, ml_dsa_evp_type_, classic_alg_, classic_bits_, ec_curve_) \
-    static void *                                                                         \
-    alg##_d2i_PUBKEY(const unsigned char **der, long der_len,                             \
-        struct der2key_ctx_st *ctx)                                                       \
-    {                                                                                     \
-        COMPOSITE_KEY *key = composite_d2i_pubkey_common(*der, der_len, ml_dsa_evp_type_, \
-            classic_alg_, classic_bits_, ec_curve_, ctx);                                 \
-        if (key != NULL)                                                                  \
-            *der += der_len;                                                              \
-        return key;                                                                       \
-    }                                                                                     \
-    static void *                                                                         \
-    alg##_d2i_PKCS8(const unsigned char **der, long der_len,                              \
-        struct der2key_ctx_st *ctx)                                                       \
-    {                                                                                     \
-        COMPOSITE_KEY *key = composite_d2i_prvkey_common(*der, der_len, ml_dsa_evp_type_, \
-            classic_alg_, classic_bits_, ec_curve_, ctx);                                 \
-        if (key != NULL)                                                                  \
-            *der += der_len;                                                              \
-        return key;                                                                       \
+#define MAKE_ML_DSA_COMPOSITE_D2I(alg, ml_dsa_evp_type_, classic_alg_, classic_bits_, ec_curve_)        \
+    static void *                                                                                       \
+    alg##_d2i_PUBKEY(const unsigned char **der, long der_len,                                           \
+        struct der2key_ctx_st *ctx)                                                                     \
+    {                                                                                                   \
+        ML_DSA_COMPOSITE_KEY *key = ml_dsa_composite_d2i_pubkey_common(*der, der_len, ml_dsa_evp_type_, \
+            classic_alg_, classic_bits_, ec_curve_, ctx);                                               \
+        if (key != NULL)                                                                                \
+            *der += der_len;                                                                            \
+        return key;                                                                                     \
+    }                                                                                                   \
+    static void *                                                                                       \
+    alg##_d2i_PKCS8(const unsigned char **der, long der_len,                                            \
+        struct der2key_ctx_st *ctx)                                                                     \
+    {                                                                                                   \
+        ML_DSA_COMPOSITE_KEY *key = ml_dsa_composite_d2i_prvkey_common(*der, der_len, ml_dsa_evp_type_, \
+            classic_alg_, classic_bits_, ec_curve_, ctx);                                               \
+        if (key != NULL)                                                                                \
+            *der += der_len;                                                                            \
+        return key;                                                                                     \
     }
 
-MAKE_COMPOSITE_D2I(mldsa65_rsa3072_pkcs15_sha512, EVP_PKEY_ML_DSA_65, "RSA", 3072, NULL)
-MAKE_COMPOSITE_D2I(mldsa65_ecdsa_p256_sha512, EVP_PKEY_ML_DSA_65, "EC", 0, "P-256")
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa65_rsa3072_pkcs15_sha512, EVP_PKEY_ML_DSA_65, "RSA", 3072, NULL)
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa65_ecdsa_p256_sha512, EVP_PKEY_ML_DSA_65, "EC", 0, "P-256")
 
 /* Supporting #defines consumed by DO_SubjectPublicKeyInfo / DO_PrivateKeyInfo macros */
 #define mldsa65_rsa3072_pkcs15_sha512_evp_type NID_ML_DSA_65_RSA3072_PKCS15_SHA512
@@ -1225,7 +1225,7 @@ MAKE_COMPOSITE_D2I(mldsa65_ecdsa_p256_sha512, EVP_PKEY_ML_DSA_65, "EC", 0, "P-25
 #define mldsa65_rsa3072_pkcs15_sha512_d2i_key_params NULL
 #define mldsa65_rsa3072_pkcs15_sha512_check NULL
 #define mldsa65_rsa3072_pkcs15_sha512_adjust NULL
-#define mldsa65_rsa3072_pkcs15_sha512_free (free_key_fn *)ossl_composite_key_free
+#define mldsa65_rsa3072_pkcs15_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
 
 #define mldsa65_ecdsa_p256_sha512_evp_type NID_ML_DSA_65_ECDSA_P256_SHA512
 #define mldsa65_ecdsa_p256_sha512_d2i_private_key NULL
@@ -1233,9 +1233,9 @@ MAKE_COMPOSITE_D2I(mldsa65_ecdsa_p256_sha512, EVP_PKEY_ML_DSA_65, "EC", 0, "P-25
 #define mldsa65_ecdsa_p256_sha512_d2i_key_params NULL
 #define mldsa65_ecdsa_p256_sha512_check NULL
 #define mldsa65_ecdsa_p256_sha512_adjust NULL
-#define mldsa65_ecdsa_p256_sha512_free (free_key_fn *)ossl_composite_key_free
+#define mldsa65_ecdsa_p256_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
 
-#endif /* OPENSSL_NO_COMPOSITE */
+#endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
 
 /* ---------------------------------------------------------------------- */
 
@@ -1566,7 +1566,7 @@ MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, SubjectPublicKeyInfo);
 #endif
 
-#ifndef OPENSSL_NO_COMPOSITE
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
 MAKE_DECODER("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, mldsa65_rsa3072_pkcs15_sha512, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, mldsa65_rsa3072_pkcs15_sha512, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, mldsa65_ecdsa_p256_sha512, PrivateKeyInfo);

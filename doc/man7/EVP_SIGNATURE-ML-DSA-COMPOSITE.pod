@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_SIGNATURE-COMPOSITE-ML-DSA,
+EVP_SIGNATURE-ML-DSA-COMPOSITE,
 EVP_SIGNATURE-ML-DSA-65-RSA3072-PKCS15-SHA512,
 EVP_SIGNATURE-ML-DSA-65-ECDSA-P256-SHA512
 - The EVP_PKEY composite B<ML-DSA> signature implementations
@@ -14,7 +14,7 @@ EVP_PKEY implementations support one-shot and streaming (message) sign and
 verify, combining an B<ML-DSA-65> signature with a classical (RSA or ECDSA)
 signature, as described in
 L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>.
-See L<EVP_PKEY-COMPOSITE-ML-DSA(7)> for information related to the
+See L<EVP_PKEY-ML-DSA-COMPOSITE(7)> for information related to the
 composite key types.
 
 L<EVP_SIGNATURE_fetch(3)> can be used to explicitly fetch one of these
@@ -63,7 +63,7 @@ B<ML-DSA> signature and the classical signature, in that order.
 
 A caller may instead compute B<PH(M)> itself (for example on another
 machine) and pass it directly in place of the raw message, by setting the
-"composite-prehash" parameter described below.
+"ml-dsa-composite-prehash" parameter described below.
 
 =head2 Composite Signature Parameters
 
@@ -78,7 +78,7 @@ L<EVP_PKEY_sign_message_init(3)> or L<EVP_PKEY_verify_message_init(3)>.
 A string of octets with length at most 255. By default it is the empty
 string.
 
-=item "composite-prehash" (B<OSSL_SIGNATURE_PARAM_COMPOSITE_PREHASH>) <integer>
+=item "ml-dsa-composite-prehash" (B<OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH>) <integer>
 
 The default value of 0 causes sign and verify operations to compute
 B<PH(M)> internally from a raw message using B<SHA-512>. Setting this to a
@@ -129,7 +129,7 @@ B<SignatureAlgorithm> or B<TBSCertificate> field.
 
 =back
 
-See L<EVP_PKEY-COMPOSITE-ML-DSA(7)> for information related to composite
+See L<EVP_PKEY-ML-DSA-COMPOSITE(7)> for information related to composite
 B<ML-DSA> keys.
 
 =head1 NOTES
@@ -186,7 +186,7 @@ in two chunks:
 
 =head1 SEE ALSO
 
-L<EVP_PKEY-COMPOSITE-ML-DSA(7)>,
+L<EVP_PKEY-ML-DSA-COMPOSITE(7)>,
 L<EVP_PKEY-ML-DSA(7)>,
 L<EVP_SIGNATURE-ML-DSA(7)>,
 L<provider-signature(7)>,

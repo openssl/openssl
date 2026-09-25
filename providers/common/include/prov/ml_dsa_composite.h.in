@@ -9,19 +9,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef PROV_COMPOSITE_H
-#define PROV_COMPOSITE_H
+#ifndef PROV_ML_DSA_COMPOSITE_H
+#define PROV_ML_DSA_COMPOSITE_H
 
 #include "internal/der.h"
 #include "crypto/ml_dsa.h"
 #include "prov/provider_ctx.h"
 
-#define COMPOSITE_PREFIX "436F6D706F73697465416C676F726974686D5369676E61747572657332303235"
+#define ML_DSA_COMPOSITE_PREFIX "436F6D706F73697465416C676F726974686D5369676E61747572657332303235"
 
 /* Well known OIDs precompiled */
 /* clang-format off */
 {-
-    $OUT = oids_to_c::process_leaves('providers/common/der/composite.asn1',
+    $OUT = oids_to_c::process_leaves('providers/common/der/ml_dsa_composite.asn1',
                                      { dir => $config{sourcedir},
                                        filter => \&oids_to_c::filter_to_H });
 -}
@@ -30,7 +30,7 @@
 typedef struct {
     ML_DSA_KEY *ml_dsa_key;
     EVP_PKEY *classic_key;
-} COMPOSITE_KEY;
+} ML_DSA_COMPOSITE_KEY;
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
@@ -53,21 +53,21 @@ typedef struct {
     /* CLASSIC */
     EVP_PKEY_CTX *classic_ctx;
 
-    COMPOSITE_KEY *key;
+    ML_DSA_COMPOSITE_KEY *key;
 
     /* sign vs verify, drives which ctx params (e.g. "signature") apply */
     int operation;
-    /* 1 if the caller supplies PH(M) directly via OSSL_SIGNATURE_PARAM_COMPOSITE_PREHASH */
+    /* 1 if the caller supplies PH(M) directly via OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH */
     int have_prehash;
     /* streaming digest for PH(M); lazily created on the first msg_update() */
     EVP_MD_CTX *prehash_ctx;
     /* signature to check against, set via "signature" for verify_message_final() */
     unsigned char *sig;
     size_t siglen;
-} PROV_COMPOSITE_CTX;
+} PROV_ML_DSA_COMPOSITE_CTX;
 
-COMPOSITE_KEY *ossl_prov_composite_new(PROV_CTX *ctx, const char *propq,
+ML_DSA_COMPOSITE_KEY *ossl_prov_ml_dsa_composite_new(PROV_CTX *ctx, const char *propq,
     int ml_dsa_evp_type);
-void ossl_composite_key_free(COMPOSITE_KEY *key);
+void ossl_ml_dsa_composite_key_free(ML_DSA_COMPOSITE_KEY *key);
 
-#endif /* PROV_COMPOSITE_H */
+#endif /* PROV_ML_DSA_COMPOSITE_H */
