@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/hashtable.h"
-#include "internal/hashfunc.h"
 #include "internal/refcount.h"
 #include <openssl/x509.h>
 #include "crypto/x509.h"
@@ -190,11 +189,12 @@ static void objs_ht_free(HT_VALUE *v)
     sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
 }
 
-static uint64_t obj_ht_hash(HT_KEY *key)
+static void objs_ht_init_key(OBJS_KEY *key, const X509_NAME *xn)
 {
-    OBJS_KEY *k = (OBJS_KEY *)key;
-
-    return ossl_fnv1a_hash(k->keyfields.xn_canon, k->keyfields.xn_canon_enclen);
+    /* Empty names have no canonical buffer, but the hash table copies the key. */
+    HT_INIT_KEY(key);
+    key->key_header.keybuf = xn->canon_enc != NULL ? xn->canon_enc : (unsigned char *)"";
+    key->key_header.keysize = xn->canon_enclen;
 }
 
 X509_STORE *X509_STORE_new(void)
@@ -202,7 +202,7 @@ X509_STORE *X509_STORE_new(void)
     X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
     HT_CONFIG htconf = {
         .ht_free_fn = objs_ht_free,
-        .ht_hash_fn = obj_ht_hash,
+        .collision_check = 1,
         .init_neighborhoods = X509_OBJS_HT_BUCKETS,
         .no_rcu = 1,
     };
@@ -353,9 +353,7 @@ STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
             return NULL;
     }
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_FIELD(&key, xn_canon, xn->canon_enc);
-    HT_SET_KEY_FIELD(&key, xn_canon_enclen, xn->canon_enclen);
+    objs_ht_init_key(&key, xn);
     v = ossl_ht_get(store->objs_ht, TO_HT_KEY(&key));
     if (v == NULL)
         return NULL;
@@ -392,9 +390,7 @@ static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn
         return 0;
     }
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_FIELD(&key, xn_canon, xn->canon_enc);
-    HT_SET_KEY_FIELD(&key, xn_canon_enclen, xn->canon_enclen);
+    objs_ht_init_key(&key, xn);
     val.value = (void *)objs;
     ret = ossl_ht_insert(store->objs_ht, TO_HT_KEY(&key), &val, NULL);
     if (ret != 1) {
@@ -906,16 +902,24 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
     sk = sk_X509_new_null();
     if (idx < 0 || sk == NULL)
         goto end;
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
+    for (i = idx; cnt > 0 && i < sk_X509_OBJECT_num(objs); i++) {
         obj = sk_X509_OBJECT_value(objs, i);
-        x = obj->data.x509;
         if (obj->type != X509_LU_X509)
+            continue;
+        x = obj->data.x509;
+        /*
+         * x509_object_idx_cnt() returns the exact number of matches, but they
+         * need not be contiguous in the unsorted flat store. Check the
+         * subject name and stop once all |cnt| matches have been added.
+         */
+        if (X509_NAME_cmp(X509_get_subject_name(x), nm) != 0)
             continue;
         if (X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF) == 0) {
             X509_STORE_unlock(store);
             OSSL_STACK_OF_X509_free(sk);
             return NULL;
         }
+        cnt--;
     }
 
 end:
@@ -956,10 +960,13 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
     if (idx < 0)
         goto end;
 
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
+    for (i = idx; cnt > 0 && i < sk_X509_OBJECT_num(objs); i++) {
         obj = sk_X509_OBJECT_value(objs, i);
-        x = obj->data.crl;
         if (obj->type != X509_LU_CRL)
+            continue;
+        x = obj->data.crl;
+        /* See the comment in X509_STORE_CTX_get1_certs() */
+        if (X509_NAME_cmp(X509_CRL_get_issuer(x), nm) != 0)
             continue;
         if (!X509_CRL_up_ref(x)) {
             X509_STORE_unlock(store);
@@ -972,6 +979,7 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
             sk_X509_CRL_pop_free(sk, X509_CRL_free);
             return NULL;
         }
+        cnt--;
     }
 end:
     X509_STORE_unlock(store);
@@ -993,7 +1001,7 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
         obj = sk_X509_OBJECT_value(h, i);
         if (x509_object_cmp((const X509_OBJECT **)&obj,
                 (const X509_OBJECT **)&x))
-            return NULL;
+            continue;
         if (x->type == X509_LU_X509) {
             if (!X509_cmp(obj->data.x509, x->data.x509))
                 return obj;
