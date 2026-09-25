@@ -30,7 +30,7 @@ OSSL_FN_STATIC_DECLARE(one, 1);
  */
 OSSL_FN_STATIC_DECLARE(inv_sqrt_2, OSSL_FN_LIMBS_N(256));
 
-/* The literal 2, used as a small DH generator in some groups */
+/* The literal 2 */
 OSSL_FN_STATIC_DECLARE(const_2, 1);
 
 /*
