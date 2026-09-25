@@ -2387,7 +2387,7 @@ static int test_ech_padding_length(int idx)
         goto end;
     entry.max_name_length = padding_tests[idx].max_name_length;
     ret = TEST_size_t_eq(ossl_ech_calc_padding(sc, &entry,
-                            padding_tests[idx].encoded_len),
+                             padding_tests[idx].encoded_len),
         padding_tests[idx].expected_len);
 end:
     SSL_free(ssl);
