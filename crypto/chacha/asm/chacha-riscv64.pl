@@ -3,6 +3,9 @@
 # ====================================================================
 # Written by Andy Polyakov, @dot-asm, initially for use with OpenSSL.
 # ====================================================================
+# Ported, adapted for use in OpenSSL by Julian Zhu.
+# Copyright (c) 2026, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
+# ====================================================================
 #
 # ChaCha20 for RISC-V.
 #

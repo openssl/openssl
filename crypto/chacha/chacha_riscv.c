@@ -68,7 +68,7 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp, size_t len,
         } else {
             ChaCha20_ctr32_v_zbb(out, inp, len, key, counter);
         }
-    } else if (RISCV_HAS_ZBB()) {
+    } else if (RISCV_HAS_ZBB() || RISCV_HAS_ZBKB()) {
         ChaCha20_ctr32_riscv64_zbb(out, inp, len, key, counter);
     } else {
         ChaCha20_ctr32_riscv64(out, inp, len, key, counter);
