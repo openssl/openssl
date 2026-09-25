@@ -111,8 +111,20 @@ static int aes_siv_cipher(void *vctx, unsigned char *out,
     SIV128_CONTEXT *sctx = &ctx->siv;
 
     /* EncryptFinal or DecryptFinal */
-    if (in == NULL)
+    if (in == NULL) {
+        /*
+         * no payload update was seen: the EVP layer never forwards a
+         * zero-length update, so run the single crypto operation on an
+         * empty payload here -- RFC 5297 permits an empty plaintext
+         */
+        if (sctx->final_ret == -1 && sctx->crypto_ok == 1) {
+            if (ctx->enc)
+                ossl_siv128_encrypt(sctx, NULL, out, 0);
+            else
+                ossl_siv128_decrypt(sctx, NULL, out, 0);
+        }
         return ossl_siv128_finish(sctx) == 0;
+    }
 
     /* Deal with associated data */
     if (out == NULL)
