@@ -154,3 +154,9 @@
    fun:gcm_cipher_internal
    ...
 }
+{
+   asn1_string_poison_test_intentional_terminator_read
+   Memcheck:Addr1
+   fun:strlen
+   obj:*/asn1_string_poison_test
+}
