@@ -883,6 +883,160 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * Epoch 2 is always the fixed DTLS 1.3 handshake epoch: no compliant peer
+ * ever sends application data there. A record that only authenticates
+ * because of that epoch's retained keys must never be delivered as
+ * application data -- but a retained *application* epoch (3+, from
+ * KeyUpdate recovery) must be left alone, since it can legitimately carry
+ * reordered application traffic.
+ */
+static int test_dtls_prev_epoch_allows_type(void)
+{
+    OSSL_RECORD_LAYER rl;
+    int testresult = 0;
+
+    memset(&rl, 0, sizeof(rl));
+
+    rl.epoch = 2;
+    if (!TEST_false(dtls_prev_epoch_allows_type(&rl, SSL3_RT_APPLICATION_DATA))
+        || !TEST_true(dtls_prev_epoch_allows_type(&rl, SSL3_RT_HANDSHAKE)))
+        goto end;
+
+    rl.epoch = 3;
+    if (!TEST_true(dtls_prev_epoch_allows_type(&rl, SSL3_RT_APPLICATION_DATA)))
+        goto end;
+
+    testresult = 1;
+end:
+    return testresult;
+}
+
+/*
+ * dtls_record_from_retained_epoch() is what statem_dtls.c's dispatch and
+ * discard/buffer decisions OR into their existing conditions to recognize a
+ * record that only authenticated via the retained previous read epoch, so
+ * it never gets treated as content that genuinely arrived at the currently
+ * active epoch.
+ */
+static int test_dtls_record_from_retained_epoch(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, dtlsv1_3_server_method(),
+            dtlsv1_3_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    sc->rlayer.d->r_conn_epoch = 3;
+
+    /* Record actually arrived at the currently active epoch. */
+    sc->s3.tmp.record_epoch = 3;
+    if (!TEST_false(dtls_record_from_retained_epoch(sc)))
+        goto end;
+
+    /* Record only authenticated via the retained previous epoch. */
+    sc->s3.tmp.record_epoch = 2;
+    if (!TEST_true(dtls_record_from_retained_epoch(sc)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * dtls1_process_out_of_seq_message() must never let a record that only
+ * authenticated via a retained previous epoch get buffered for future
+ * reassembly -- which would eventually process it as new content -- and
+ * must only ACK it when it genuinely corresponds to something already
+ * fully processed (seq strictly before the next expected one).
+ *
+ * idx 0: already fully processed (seq < expected). The legitimate
+ *        retransmission-recovery case from the earlier review round: ACK,
+ *        don't buffer.
+ * idx 1: "expected next" seq (seq == expected). Proves this function is
+ *        safe on the exact input dtls_get_reassembled_message() must now
+ *        route here instead of treating as fresh (see
+ *        test_dtls_record_from_retained_epoch() above for that routing
+ *        condition) -- must not be buffered or ACKed.
+ * idx 2: looks like a future message (seq > expected). Must not be
+ *        buffered for later processing as new content, and must not be
+ *        ACKed either.
+ */
+static int test_dtls13_out_of_seq_retained_epoch(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    struct hm_header_st msg_hdr;
+    int testresult = 0;
+    int expect_ack;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, dtlsv1_3_server_method(),
+            dtlsv1_3_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    sc->rlayer.d->r_conn_epoch = 3;
+    sc->s3.tmp.record_epoch = 2;
+    sc->d1->handshake_read_seq = 5;
+
+    memset(&msg_hdr, 0, sizeof(msg_hdr));
+    msg_hdr.type = SSL3_MT_KEY_UPDATE;
+
+    switch (idx) {
+    case 0:
+        msg_hdr.seq = 4;
+        expect_ack = 1;
+        break;
+    case 1:
+        msg_hdr.seq = 5;
+        expect_ack = 0;
+        break;
+    case 2:
+        msg_hdr.seq = 6;
+        expect_ack = 0;
+        break;
+    default:
+        goto end;
+    }
+
+    if (!TEST_int_eq(dtls1_process_out_of_seq_message(sc, &msg_hdr),
+            DTLS1_HM_FRAGMENT_RETRY))
+        goto end;
+
+    /* Never buffered for future reassembly/processing as new content. */
+    if (!TEST_size_t_eq(pqueue_size(&sc->d1->rcvd_messages), 0))
+        goto end;
+
+    if (expect_ack) {
+        if (!TEST_ptr(ossl_list_record_number_head(&sc->d1->ack_rec_num)))
+            goto end;
+    } else if (!TEST_ptr_null(ossl_list_record_number_head(&sc->d1->ack_rec_num))) {
+        goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -902,6 +1056,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_finished_ack_loss_recovers);
     ADD_ALL_TESTS(test_dtls13_keyupdate_ack_loss_recovers, 2);
     ADD_TEST(test_dtls13_prev_epoch_rl_buffer_freed);
+    ADD_TEST(test_dtls_prev_epoch_allows_type);
+    ADD_TEST(test_dtls_record_from_retained_epoch);
+    ADD_ALL_TESTS(test_dtls13_out_of_seq_retained_epoch, 3);
 #endif
     return 1;
 }

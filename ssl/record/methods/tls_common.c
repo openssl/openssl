@@ -264,7 +264,7 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
-static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
+int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     TLS_BUFFER *b;
 

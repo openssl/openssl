@@ -453,6 +453,19 @@ uint64_t dtls13_reconstruct_seq_num(uint64_t max_seq_num, uint64_t truncated,
     return best;
 }
 
+/*
+ * Epoch 2 is always the fixed DTLS 1.3 handshake epoch: no compliant peer
+ * ever sends application data there (unlike epoch 1's early data). A record
+ * that only authenticates because of that epoch's retained keys must never
+ * be delivered as application data -- retained *application* epochs (3+,
+ * from KeyUpdate recovery) are unaffected, since they can legitimately
+ * carry reordered application traffic.
+ */
+int dtls_prev_epoch_allows_type(const OSSL_RECORD_LAYER *crypto_rl, int type)
+{
+    return !(crypto_rl->epoch == 2 && type == SSL3_RT_APPLICATION_DATA);
+}
+
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -881,6 +894,11 @@ again:
     if (crypto_rl != rl) {
         *rr = crypto_rl->rrec[0];
         rl->packet_length = 0;
+
+        if (!dtls_prev_epoch_allows_type(crypto_rl, rr->type)) {
+            rr->length = 0;
+            goto again;
+        }
     }
 
     if (rl->funcs->post_process_record && !rl->funcs->post_process_record(rl, rr)) {

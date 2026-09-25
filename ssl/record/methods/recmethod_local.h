@@ -478,6 +478,7 @@ size_t dtls_get_rec_header_size(uint8_t hdr_first_byte);
 int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
     unsigned char *rec_data);
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
+int dtls_prev_epoch_allows_type(const OSSL_RECORD_LAYER *crypto_rl, int type);
 
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
     WPACKET *thispkt,
