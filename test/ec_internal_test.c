@@ -614,10 +614,6 @@ static int test_ladder_step_fn(int idx)
     }
 
     w = (int)ossl_fn_get_dsize(group->field_fn);
-    if (!TEST_true(pollute_above_field(group->field, w))
-        || !TEST_true(pollute_above_field(group->a, w))
-        || !TEST_true(pollute_above_field(group->b, w)))
-        goto err;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
         || !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL,
@@ -645,8 +641,20 @@ static int test_ladder_step_fn(int idx)
         || !TEST_true(clean_point(P, w)))
         goto err;
 
-    if (!TEST_true(ossl_ec_GFp_simple_ladder_step(group, r1, s1, P, ctx))
-        || !TEST_true(ossl_ec_point_ladder_step_fn(group, r2, s2, P, fnctx)))
+    if (!TEST_true(ossl_ec_GFp_simple_ladder_step(group, r1, s1, P, ctx)))
+        goto err;
+
+    /*
+     * Pollute only now that all BIGNUM-path reference work is done: those
+     * functions trip bn_check_top on the polluted limbs in BN_DEBUG builds.
+     * The OSSL_FN side is the pollution's only target.
+     */
+    if (!TEST_true(pollute_above_field(group->field, w))
+        || !TEST_true(pollute_above_field(group->a, w))
+        || !TEST_true(pollute_above_field(group->b, w)))
+        goto err;
+
+    if (!TEST_true(ossl_ec_point_ladder_step_fn(group, r2, s2, P, fnctx)))
         goto err;
 
     /* x-only step: compare the X and Z coordinates of both r and s. */
@@ -695,10 +703,6 @@ static int test_ladder_pre_fn(int idx)
     }
 
     w = (int)ossl_fn_get_dsize(group->field_fn);
-    if (!TEST_true(pollute_above_field(group->field, w))
-        || !TEST_true(pollute_above_field(group->a, w))
-        || !TEST_true(pollute_above_field(group->b, w)))
-        goto err;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
         || !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL,
@@ -720,7 +724,23 @@ static int test_ladder_pre_fn(int idx)
     if (!TEST_true(clean_point(P, w)))
         goto err;
 
+    /*
+     * Pollute only now that all BIGNUM-path reference work is done: those
+     * functions trip bn_check_top on the polluted limbs in BN_DEBUG builds.
+     * The OSSL_FN side is the pollution's only target.
+     */
+    if (!TEST_true(pollute_above_field(group->field, w))
+        || !TEST_true(pollute_above_field(group->a, w))
+        || !TEST_true(pollute_above_field(group->b, w)))
+        goto err;
+
     if (!TEST_true(ossl_ec_point_ladder_pre_fn(group, r, s, P, fnctx)))
+        goto err;
+
+    /* Re-clean for the BIGNUM-path verification below. */
+    if (!TEST_true(clean_above_top(group->field, w))
+        || !TEST_true(clean_above_top(group->a, w))
+        || !TEST_true(clean_above_top(group->b, w)))
         goto err;
 
     /*
@@ -789,10 +809,6 @@ static int test_ladder_post_fn(int idx)
     }
 
     w = (int)ossl_fn_get_dsize(group->field_fn);
-    if (!TEST_true(pollute_above_field(group->field, w))
-        || !TEST_true(pollute_above_field(group->a, w))
-        || !TEST_true(pollute_above_field(group->b, w)))
-        goto err;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
         || !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL,
@@ -821,8 +837,26 @@ static int test_ladder_post_fn(int idx)
         || !TEST_true(clean_point(P, w)))
         goto err;
 
-    if (!TEST_true(ossl_ec_GFp_simple_ladder_post(group, r1, s1, P, ctx))
-        || !TEST_true(ossl_ec_point_ladder_post_fn(group, r2, s2, P, fnctx)))
+    if (!TEST_true(ossl_ec_GFp_simple_ladder_post(group, r1, s1, P, ctx)))
+        goto err;
+
+    /*
+     * Pollute only now that all BIGNUM-path reference work is done: those
+     * functions trip bn_check_top on the polluted limbs in BN_DEBUG builds.
+     * The OSSL_FN side is the pollution's only target.
+     */
+    if (!TEST_true(pollute_above_field(group->field, w))
+        || !TEST_true(pollute_above_field(group->a, w))
+        || !TEST_true(pollute_above_field(group->b, w)))
+        goto err;
+
+    if (!TEST_true(ossl_ec_point_ladder_post_fn(group, r2, s2, P, fnctx)))
+        goto err;
+
+    /* Re-clean for the BIGNUM-path EC_POINT_cmp() below. */
+    if (!TEST_true(clean_above_top(group->field, w))
+        || !TEST_true(clean_above_top(group->a, w))
+        || !TEST_true(clean_above_top(group->b, w)))
         goto err;
 
     if (!TEST_int_eq(EC_POINT_cmp(group, r1, r2, ctx), 0))
