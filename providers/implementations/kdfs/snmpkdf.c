@@ -138,7 +138,9 @@ static int kdf_snmpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_EID);
         return 0;
     }
-    if (ctx->password == NULL) {
+    if (ctx->password == NULL
+        || ctx->password_len < KDF_SNMP_MIN_PASSWORD_LEN
+        || ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_PASS);
         return 0;
     }
@@ -163,6 +165,11 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !snmp_set_ctx_params_decoder(params, &p))
         return 0;
 
+    if (p.pw != NULL
+        && (p.pw->data_size < KDF_SNMP_MIN_PASSWORD_LEN
+            || p.pw->data_size > KDF_SNMP_PASSWORD_HASH_AMOUNT))
+        return 0;
+
     libctx = PROV_LIBCTX_OF(ctx->provctx);
     if (p.digest != NULL) {
         if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, libctx))
@@ -180,8 +187,6 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (p.pw != NULL) {
         if (!snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p.pw))
-            return 0;
-        if ((ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT) || (ctx->password_len < KDF_SNMP_MIN_PASSWORD_LEN))
             return 0;
     }
 
