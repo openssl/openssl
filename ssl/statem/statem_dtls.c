@@ -1376,8 +1376,8 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             if (matched && msg->covered != NULL) {
                 int is_complete;
 
-                RSMBLY_BITMASK_IS_COMPLETE(msg->covered, msg->msg_info.msg_body_len,
-                    is_complete);
+                RSMBLY_BITMASK_IS_COMPLETE(msg->covered,
+                    (long)msg->msg_info.msg_body_len, is_complete);
                 if (is_complete)
                     ossl_list_record_number_elem_free(&msg->rec_nums);
             }
