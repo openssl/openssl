@@ -458,6 +458,16 @@ sub minu {
 
 # Vector instructions
 
+sub vand_vx {
+    # vand.vx vd, vs2, rs1, vm
+    my $template = 0b001001_0_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vadd_vv {
     # vadd.vv vd, vs2, vs1, vm
     my $template = 0b000000_0_00000_00000_000_00000_1010111;
@@ -793,6 +803,16 @@ sub vslidedown_vi {
 sub vslidedown_vx {
     # vslidedown.vx vd, vs2, rs1
     my $template = 0b0011111_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
+sub vslide1up_vx {
+    # vslide1up.vx vd, vs2, rs1
+    # The instruction is not maskable, so the vm bit (bit 25) is fixed to 1.
+    my $template = 0b0011101_00000_00000_110_00000_1010111;
     my $vd = read_vreg shift;
     my $vs2 = read_vreg shift;
     my $rs1 = read_reg shift;
