@@ -240,6 +240,7 @@ static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size,
 #endif
 #endif
 
+#include <sys/socket.h>
 #include <sys/sendfile.h>
 #include <netinet/tcp.h>
 #include <linux/socket.h>
