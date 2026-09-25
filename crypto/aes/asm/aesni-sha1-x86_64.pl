@@ -139,6 +139,7 @@ $code.=<<___;
 .align	32
 aesni_cbc_sha1_enc:
 .cfi_startproc
+.cfi_endprolog
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11
@@ -221,18 +222,29 @@ aesni_cbc_sha1_enc_ssse3:
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,96+0(%rsp)
+.cfi_sp_offset	%xmm6,96+0
 	movaps	%xmm7,96+16(%rsp)
+.cfi_sp_offset	%xmm7,96+16
 	movaps	%xmm8,96+32(%rsp)
+.cfi_sp_offset	%xmm8,96+32
 	movaps	%xmm9,96+48(%rsp)
+.cfi_sp_offset	%xmm9,96+48
 	movaps	%xmm10,96+64(%rsp)
+.cfi_sp_offset	%xmm10,96+64
 	movaps	%xmm11,96+80(%rsp)
+.cfi_sp_offset	%xmm11,96+80
 	movaps	%xmm12,96+96(%rsp)
+.cfi_sp_offset	%xmm12,96+96
 	movaps	%xmm13,96+112(%rsp)
+.cfi_sp_offset	%xmm13,96+112
 	movaps	%xmm14,96+128(%rsp)
+.cfi_sp_offset	%xmm14,96+128
 	movaps	%xmm15,96+144(%rsp)
-.Lprologue_ssse3:
+.cfi_sp_offset	%xmm15,96+144
+.Lprologue_ssse3:               		# debugging artefact
 ___
 $code.=<<___;
+.cfi_endprolog
 	mov	$in0,%r12			# reassign arguments
 	mov	$out,%r13
 	mov	$len,%r14
@@ -756,7 +768,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	48(%rsi),%rsp
 .cfi_def_cfa	%rsp,8
-.Lepilogue_ssse3:
 	ret
 .cfi_endproc
 .size	aesni_cbc_sha1_enc_ssse3,.-aesni_cbc_sha1_enc_ssse3
@@ -848,6 +859,7 @@ $code.=<<___;
 .align	32
 aesni256_cbc_sha1_dec:
 .cfi_startproc
+.cfi_endprolog
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11d
@@ -887,18 +899,28 @@ aesni256_cbc_sha1_dec_ssse3:
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,96+0(%rsp)
+.cfi_sp_offset	%xmm6,96+0
 	movaps	%xmm7,96+16(%rsp)
+.cfi_sp_offset	%xmm7,96+16
 	movaps	%xmm8,96+32(%rsp)
+.cfi_sp_offset	%xmm8,96+32
 	movaps	%xmm9,96+48(%rsp)
+.cfi_sp_offset	%xmm9,96+48
 	movaps	%xmm10,96+64(%rsp)
+.cfi_sp_offset	%xmm10,96+64
 	movaps	%xmm11,96+80(%rsp)
+.cfi_sp_offset	%xmm11,96+80
 	movaps	%xmm12,96+96(%rsp)
+.cfi_sp_offset	%xmm12,96+96
 	movaps	%xmm13,96+112(%rsp)
+.cfi_sp_offset	%xmm13,96+112
 	movaps	%xmm14,96+128(%rsp)
+.cfi_sp_offset	%xmm14,96+128
 	movaps	%xmm15,96+144(%rsp)
-.Lprologue_dec_ssse3:
+.cfi_sp_offset	%xmm15,96+144
 ___
 $code.=<<___;
+.cfi_endprolog
 	mov	$in0,%r12			# reassign arguments
 	mov	$out,%r13
 	mov	$len,%r14
@@ -1046,7 +1068,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	48(%rsi),%rsp
 .cfi_cfa_def	%rsp,8
-.Lepilogue_dec_ssse3:
 	ret
 .cfi_endproc
 .size	aesni256_cbc_sha1_dec_ssse3,.-aesni256_cbc_sha1_dec_ssse3
@@ -1097,18 +1118,29 @@ aesni_cbc_sha1_enc_avx:
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,96+0(%rsp)
+.cfi_sp_offset	%xmm6,96+0
 	movaps	%xmm7,96+16(%rsp)
+.cfi_sp_offset	%xmm7,96+16
 	movaps	%xmm8,96+32(%rsp)
+.cfi_sp_offset	%xmm8,96+32
 	movaps	%xmm9,96+48(%rsp)
+.cfi_sp_offset	%xmm9,96+48
 	movaps	%xmm10,96+64(%rsp)
+.cfi_sp_offset	%xmm10,96+64
 	movaps	%xmm11,96+80(%rsp)
+.cfi_sp_offset	%xmm11,96+80
 	movaps	%xmm12,96+96(%rsp)
+.cfi_sp_offset	%xmm12,96+96
 	movaps	%xmm13,96+112(%rsp)
+.cfi_sp_offset	%xmm13,96+112
 	movaps	%xmm14,96+128(%rsp)
+.cfi_sp_offset	%xmm14,96+128
 	movaps	%xmm15,96+144(%rsp)
-.Lprologue_avx:
+.cfi_sp_offset	%xmm15,96+144
+.Lprologue_avx:                 		# debugging artefact
 ___
 $code.=<<___;
+.cfi_endprolog
 	vzeroall
 	mov	$in0,%r12			# reassign arguments
 	mov	$out,%r13
@@ -1505,7 +1537,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	48(%rsi),%rsp
 .cfi_def_cfa	%rsp,8
-.Lepilogue_avx:
 	ret
 .cfi_endproc
 .size	aesni_cbc_sha1_enc_avx,.-aesni_cbc_sha1_enc_avx
@@ -1575,18 +1606,28 @@ aesni256_cbc_sha1_dec_avx:
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,96+0(%rsp)
+.cfi_sp_offset	%xmm6,96+0
 	movaps	%xmm7,96+16(%rsp)
+.cfi_sp_offset	%xmm7,96+16
 	movaps	%xmm8,96+32(%rsp)
+.cfi_sp_offset	%xmm8,96+32
 	movaps	%xmm9,96+48(%rsp)
+.cfi_sp_offset	%xmm9,96+48
 	movaps	%xmm10,96+64(%rsp)
+.cfi_sp_offset	%xmm10,96+64
 	movaps	%xmm11,96+80(%rsp)
+.cfi_sp_offset	%xmm11,96+80
 	movaps	%xmm12,96+96(%rsp)
+.cfi_sp_offset	%xmm12,96+96
 	movaps	%xmm13,96+112(%rsp)
+.cfi_sp_offset	%xmm13,96+112
 	movaps	%xmm14,96+128(%rsp)
+.cfi_sp_offset	%xmm14,96+128
 	movaps	%xmm15,96+144(%rsp)
-.Lprologue_dec_avx:
+.cfi_sp_offset	%xmm15,96+144
 ___
 $code.=<<___;
+.cfi_endprolog
 	vzeroall
 	mov	$in0,%r12			# reassign arguments
 	mov	$out,%r13
@@ -1733,7 +1774,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	48(%rsi),%rsp
 .cfi_def_cfa	%rsp,8
-.Lepilogue_dec_avx:
 	ret
 .cfi_endproc
 .size	aesni256_cbc_sha1_dec_avx,.-aesni256_cbc_sha1_dec_avx
@@ -1774,21 +1814,32 @@ aesni_cbc_sha1_enc_shaext:
 .cfi_startproc
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 ___
-$code.=<<___ if ($win64);
+$code.=<<___ if ($win64); # (%rax is set by automatic win64 abi conversion prolog)
 	lea	`-8-10*16`(%rsp),%rsp
+.cfi_stackalloc	`+8+10*16`
 	movaps	%xmm6,-8-10*16(%rax)
+.cfi_offset	%xmm6,-8-10*16-8
 	movaps	%xmm7,-8-9*16(%rax)
+.cfi_offset	%xmm7,-8-9*16-8
 	movaps	%xmm8,-8-8*16(%rax)
+.cfi_offset	%xmm8,-8-8*16-8
 	movaps	%xmm9,-8-7*16(%rax)
+.cfi_offset	%xmm9,-8-7*16-8
 	movaps	%xmm10,-8-6*16(%rax)
+.cfi_offset	%xmm10,-8-6*16-8
 	movaps	%xmm11,-8-5*16(%rax)
+.cfi_offset	%xmm11,-8-5*16-8
 	movaps	%xmm12,-8-4*16(%rax)
+.cfi_offset	%xmm12,-8-4*16-8
 	movaps	%xmm13,-8-3*16(%rax)
+.cfi_offset	%xmm13,-8-3*16-8
 	movaps	%xmm14,-8-2*16(%rax)
+.cfi_offset	%xmm14,-8-2*16-8
 	movaps	%xmm15,-8-1*16(%rax)
-.Lprologue_shaext:
+.cfi_offset	%xmm15,-8-1*16-8
 ___
 $code.=<<___;
+.cfi_endprolog
 	movdqu	($ctx),$ABCD
 	movd	16($ctx),$E
 	movdqa	K_XX_XX+0x50(%rip),$BSWAP	# byte-n-word swap
@@ -1919,7 +1970,6 @@ $code.=<<___ if ($win64);
 	movaps	-8-2*16(%rax),%xmm14
 	movaps	-8-1*16(%rax),%xmm15
 	mov	%rax,%rsp
-.Lepilogue_shaext:
 ___
 $code.=<<___;
 	ret
@@ -1927,159 +1977,6 @@ $code.=<<___;
 .size	aesni_cbc_sha1_enc_shaext,.-aesni_cbc_sha1_enc_shaext
 ___
 						}}}
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	ssse3_handler,\@abi-omnipotent
-.align	16
-ssse3_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-___
-$code.=<<___ if ($shaext);
-	lea	aesni_cbc_sha1_enc_shaext(%rip),%r10
-	cmp	%r10,%rbx
-	jb	.Lseh_no_shaext
-
-	lea	(%rax),%rsi
-	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$20,%ecx
-	.long	0xa548f3fc		# cld; rep movsq
-	lea	168(%rax),%rax		# adjust stack pointer
-	jmp	.Lcommon_seh_tail
-.Lseh_no_shaext:
-___
-$code.=<<___;
-	lea	96(%rax),%rsi
-	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$20,%ecx
-	.long	0xa548f3fc		# cld; rep movsq
-	lea	`104+10*16`(%rax),%rax	# adjust stack pointer
-
-	mov	0(%rax),%r15
-	mov	8(%rax),%r14
-	mov	16(%rax),%r13
-	mov	24(%rax),%r12
-	mov	32(%rax),%rbp
-	mov	40(%rax),%rbx
-	lea	48(%rax),%rax
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	ssse3_handler,.-ssse3_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_aesni_cbc_sha1_enc_ssse3
-	.rva	.LSEH_end_aesni_cbc_sha1_enc_ssse3
-	.rva	.LSEH_info_aesni_cbc_sha1_enc_ssse3
-___
-$code.=<<___ if ($avx);
-	.rva	.LSEH_begin_aesni_cbc_sha1_enc_avx
-	.rva	.LSEH_end_aesni_cbc_sha1_enc_avx
-	.rva	.LSEH_info_aesni_cbc_sha1_enc_avx
-___
-$code.=<<___ if ($shaext);
-	.rva	.LSEH_begin_aesni_cbc_sha1_enc_shaext
-	.rva	.LSEH_end_aesni_cbc_sha1_enc_shaext
-	.rva	.LSEH_info_aesni_cbc_sha1_enc_shaext
-___
-$code.=<<___;
-.section	.xdata
-.align	8
-.LSEH_info_aesni_cbc_sha1_enc_ssse3:
-	.byte	9,0,0,0
-	.rva	ssse3_handler
-	.rva	.Lprologue_ssse3,.Lepilogue_ssse3	# HandlerData[]
-___
-$code.=<<___ if ($avx);
-.LSEH_info_aesni_cbc_sha1_enc_avx:
-	.byte	9,0,0,0
-	.rva	ssse3_handler
-	.rva	.Lprologue_avx,.Lepilogue_avx		# HandlerData[]
-___
-$code.=<<___ if ($shaext);
-.LSEH_info_aesni_cbc_sha1_enc_shaext:
-	.byte	9,0,0,0
-	.rva	ssse3_handler
-	.rva	.Lprologue_shaext,.Lepilogue_shaext	# HandlerData[]
-___
-}
 
 ####################################################################
 sub rex {

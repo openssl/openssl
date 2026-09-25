@@ -87,6 +87,7 @@ $code.=<<___;
 .align	32
 __KeccakF1600:
 .cfi_startproc
+.cfi_endprolog
 	mov	$A[4][0](%rdi),@C[0]
 	mov	$A[4][1](%rdi),@C[1]
 	mov	$A[4][2](%rdi),@C[2]
@@ -368,6 +369,7 @@ KeccakF1600:
 	lea	100(%rdi),%rdi		# size optimization
 	sub	\$200,%rsp
 .cfi_adjust_cfa_offset	200
+.cfi_endprolog
 
 	notq	$A[0][1](%rdi)
 	notq	$A[0][2](%rdi)
@@ -433,6 +435,7 @@ SHA3_absorb:
 	lea	100(%rdi),%rdi		# size optimization
 	sub	\$232,%rsp
 .cfi_adjust_cfa_offset	232
+.cfi_endprolog
 
 	mov	%rsi,$inp
 	lea	100(%rsp),%rsi		# size optimization
@@ -518,6 +521,7 @@ SHA3_squeeze:
 .cfi_push	%r13
 	push	%r14
 .cfi_push	%r14
+.cfi_endprolog
 
 	shr	\$3,%rcx
 	mov	$A_flat,%r9
