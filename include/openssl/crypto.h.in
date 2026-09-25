@@ -364,10 +364,10 @@ OSSL_CRYPTO_ALLOC void *CRYPTO_malloc_array(size_t num, size_t size,
     const char *file, int line);
 OSSL_CRYPTO_ALLOC void *CRYPTO_calloc(size_t num, size_t size,
     const char *file, int line);
-OSSL_CRYPTO_ALLOC void *CRYPTO_aligned_alloc(size_t num, size_t align,
+void *CRYPTO_aligned_alloc(size_t num, size_t align,
     void **freeptr, const char *file,
     int line);
-OSSL_CRYPTO_ALLOC void *CRYPTO_aligned_alloc_array(size_t num, size_t size,
+void *CRYPTO_aligned_alloc_array(size_t num, size_t size,
     size_t align, void **freeptr,
     const char *file, int line);
 void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
