@@ -5491,9 +5491,9 @@ err:
 
 /*
  * OSSL_FN_mod_exp_mont_ctx_size(): the mont-only size must be positive, must
- * equal the dispatcher size or be smaller (dispatcher also budgets the
- * simple-path loop mul), and must not depend on whether in_mont is NULL or a
- * real reused context (the operand modelling makes them the same).
+ * not exceed the dispatcher size (the dispatcher budgets the larger of the
+ * mont and simple paths), and must not depend on whether in_mont is NULL or
+ * a real reused context (the operand modelling makes them the same).
  */
 static int test_mod_exp_mont_ctx_size(void)
 {
@@ -5504,7 +5504,7 @@ static int test_mod_exp_mont_ctx_size(void)
     size_t L = a_size > m_size ? a_size : m_size;
     OSSL_FN_MONT_CTX *mont = NULL;
     OSSL_FN *fa = NULL, *fp = NULL, *fm = NULL, *r = NULL;
-    size_t sz_null, sz_mont, sz_disp;
+    size_t sz_null, sz_mont, sz_disp, sz_simple;
     int ret = 0;
 
     fa = OSSL_FN_new_limbs(L);
@@ -5531,8 +5531,11 @@ static int test_mod_exp_mont_ctx_size(void)
     /* NULL and real in_mont produce the same arena size. */
     if (!TEST_size_t_eq(sz_null, sz_mont))
         goto err;
-    /* For an odd modulus the dispatcher returns the mont size verbatim. */
-    if (!TEST_size_t_eq(sz_disp, sz_mont))
+    /* The dispatcher budgets the larger of the mont and simple paths. */
+    sz_simple = OSSL_FN_mod_exp_simple_ctx_size(r, fa, fp, fm);
+    if (!TEST_size_t_ne(sz_simple, 0)
+        || !TEST_size_t_eq(sz_disp,
+            sz_mont > sz_simple ? sz_mont : sz_simple))
         goto err;
 
     ret = 1;
