@@ -41,7 +41,7 @@ The OpenSSL toolkit includes:
 
 - **libssl**
   an implementation of all TLS protocol versions up to TLSv1.3 ([RFC 8446]),
-  DTLS protocol versions up to DTLSv1.2 ([RFC 6347]) and
+  DTLS protocol versions up to DTLSv1.3 ([RFC 9147]) and
   the QUIC version 1 protocol ([RFC 9000]).
 
 - **libcrypto**
