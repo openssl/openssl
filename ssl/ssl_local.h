@@ -2130,6 +2130,14 @@ typedef struct dtls_msg_info_st {
     unsigned short msg_seq;
 } dtls_msg_info;
 
+/* RFC 9147, section 4: a 64-bit epoch and a 64-bit sequence number. */
+#define DTLS13_RECORD_NUMBER_LEN 16
+/* RFC 9147, section 7: the ACK vector's two-byte length prefix. */
+#define DTLS13_ACK_HEADER_LEN 2
+/* A nonempty ACK contains the prefix and at least one record number. */
+#define DTLS13_ACK_MIN_NONEMPTY_LEN \
+    (DTLS13_ACK_HEADER_LEN + DTLS13_RECORD_NUMBER_LEN)
+
 /* rfc9147, section 4 */
 typedef struct dtls1_record_number_st DTLS1_RECORD_NUMBER;
 

@@ -221,7 +221,9 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
     const size_t msg_len = s->d1->w_msg.msg_body_len;
     const unsigned short msg_seq = s->d1->w_msg.msg_seq;
     const unsigned char msg_type = s->d1->w_msg.msg_type;
-    const size_t min_len = recordtype == SSL3_RT_ACK ? 18 : DTLS1_HM_HEADER_LENGTH + 1;
+    const size_t min_len = recordtype == SSL3_RT_ACK
+        ? DTLS13_ACK_MIN_NONEMPTY_LEN
+        : DTLS1_HM_HEADER_LENGTH + 1;
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -308,12 +310,14 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
         msgstart = (unsigned char *)&s->init_buf->data[s->init_off];
 
         if (recordtype == SSL3_RT_ACK) {
-            /* Each record needs a complete vector of 16-byte record numbers. */
-            if (!ossl_assert(len >= 2))
+            /* Each record needs a complete vector of record numbers. */
+            if (!ossl_assert(len >= DTLS13_ACK_HEADER_LEN))
                 return -1;
-            len = 2 + ((len - 2) / 16) * 16;
-            msgstart[0] = (unsigned char)((len - 2) >> 8);
-            msgstart[1] = (unsigned char)(len - 2);
+            len = DTLS13_ACK_HEADER_LEN
+                + ((len - DTLS13_ACK_HEADER_LEN) / DTLS13_RECORD_NUMBER_LEN)
+                    * DTLS13_RECORD_NUMBER_LEN;
+            msgstart[0] = (unsigned char)((len - DTLS13_ACK_HEADER_LEN) >> 8);
+            msgstart[1] = (unsigned char)(len - DTLS13_ACK_HEADER_LEN);
         }
 
         if (recordtype == SSL3_RT_HANDSHAKE) {
@@ -434,7 +438,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
             }
             /* Reuse the last two sent bytes for the next ACK vector length. */
             if (recordtype == SSL3_RT_ACK)
-                written -= 2;
+                written -= DTLS13_ACK_HEADER_LEN;
             s->init_off += written;
             s->init_num -= written;
             written -= DTLS1_HM_HEADER_LENGTH;
@@ -593,7 +597,7 @@ static int add_record_to_ack_list(SSL_CONNECTION *sc)
      * Excess records may be omitted from ACKs (RFC 9147, section 7.1).
      */
     if (ossl_list_record_number_num(&sc->d1->ack_rec_num)
-        >= (SSL3_RT_MAX_PLAIN_LENGTH - 2) / 16)
+        >= (SSL3_RT_MAX_PLAIN_LENGTH - DTLS13_ACK_HEADER_LEN) / DTLS13_RECORD_NUMBER_LEN)
         return 1;
 
     for (recnum = ossl_list_record_number_head(&sc->d1->ack_rec_num);

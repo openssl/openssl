@@ -634,7 +634,8 @@ static int test_dtls13_ack_list_bound(void)
         SSL3_MT_KEY_UPDATE, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0
     };
     unsigned char buf;
-    const size_t max_records = (SSL3_RT_MAX_PLAIN_LENGTH - 2) / 16;
+    const size_t max_records = (SSL3_RT_MAX_PLAIN_LENGTH - DTLS13_ACK_HEADER_LEN)
+        / DTLS13_RECORD_NUMBER_LEN;
     size_t i, written;
     int ret, testresult = 0;
 
@@ -726,7 +727,9 @@ static int test_dtls13_ack_records(int idx)
     /* The ticket must require more ACK entries than fit in one record. */
     msg = item->data;
     limit = idx == 1 ? 512 : DTLS_get_data_mtu(client);
-    if (!TEST_size_t_gt(2 + 16 * ossl_list_record_number_num(&msg->rec_nums), limit))
+    if (!TEST_size_t_gt(DTLS13_ACK_HEADER_LEN
+                + DTLS13_RECORD_NUMBER_LEN * ossl_list_record_number_num(&msg->rec_nums),
+            limit))
         goto end;
     sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
 
