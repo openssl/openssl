@@ -809,7 +809,21 @@ err:
     return -1;
 }
 
-static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
+/*
+ * True if the message currently being processed only authenticated because
+ * the read record layer retained a previous epoch's keys for retransmission
+ * recovery -- i.e. it did not actually arrive at the currently active
+ * read epoch. Such a message must never be treated as new content: it may
+ * only, at most, trigger a replacement ACK for something already fully
+ * processed.
+ */
+int dtls_record_from_retained_epoch(SSL_CONNECTION *s)
+{
+    return SSL_CONNECTION_IS_DTLS13(s)
+        && s->s3.tmp.record_epoch != dtls1_get_epoch(s, SSL3_CC_READ);
+}
+
+int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr)
 {
     int i = -1;
@@ -834,10 +848,17 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
 
     /*
      * Discard the message if sequence number was already there, is too far
-     * in the future, already in the queue or if we received a FINISHED
-     * before the SERVER_HELLO, which then must be a stale retransmit.
+     * in the future, already in the queue, if we received a FINISHED
+     * before the SERVER_HELLO (which then must be a stale retransmit), or
+     * if it only authenticated via a retained previous epoch: such a
+     * message must never be buffered for future reassembly and eventually
+     * processed as new content, no matter what sequence number it claims.
      */
-    if (msg_hdr->seq <= s->d1->handshake_read_seq || msg_hdr->seq > s->d1->handshake_read_seq + 10 || item != NULL || (s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED)) {
+    if (msg_hdr->seq <= s->d1->handshake_read_seq
+        || msg_hdr->seq > s->d1->handshake_read_seq + 10
+        || item != NULL
+        || (s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED)
+        || dtls_record_from_retained_epoch(s)) {
         unsigned char devnull[256];
 
         while (frag_len) {
@@ -849,11 +870,17 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             frag_len -= readbytes;
         }
         /*
-         * A lost ACK can cause an already processed post-handshake message to
-         * be retransmitted in a new record. ACK it without processing it again.
+         * A lost ACK can cause an already processed message to be
+         * retransmitted in a new record. ACK it without processing it
+         * again. Epoch 2 is included alongside the post-handshake epochs
+         * (3+) so that a client's Finished, retransmitted after the server
+         * has already moved on to epoch 3, still gets ACKed instead of
+         * silently dropped (see dtls_get_more_records()'s retained
+         * prev_epoch_rl handling, which is what let this record
+         * authenticate at all).
          */
         if (SSL_CONNECTION_IS_DTLS13(s)
-            && s->s3.tmp.record_epoch >= 3
+            && s->s3.tmp.record_epoch >= 2
             && msg_hdr->seq < s->d1->handshake_read_seq
             && dtls_msg_needs_ack(!s->server, msg_hdr->type)) {
             if (!add_record_to_ack_list(s))
@@ -1109,8 +1136,14 @@ redo:
      * (or dropped)--no further processing at this time
      * While listening, we accept seq 1 (ClientHello with cookie)
      * although we're still expecting seq 0 (ClientHello)
+     *
+     * A message that only authenticated via a retained previous epoch must
+     * always be routed to dtls1_process_out_of_seq_message(), even when its
+     * claimed sequence number happens to match the next expected one: that
+     * match does not mean this content is actually new.
      */
-    if (msg_hdr.seq != s->d1->handshake_read_seq) {
+    if (msg_hdr.seq != s->d1->handshake_read_seq
+        || dtls_record_from_retained_epoch(s)) {
         if (!s->server
             || msg_hdr.seq != 0
             || s->d1->handshake_read_seq != 1

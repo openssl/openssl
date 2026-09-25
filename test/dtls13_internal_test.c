@@ -624,6 +624,419 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * Recover from a lost ACK for the client's Finished: the server must still
+ * accept a retransmission of Finished at its original (now superseded) read
+ * epoch and replace the lost ACK, rather than silently discarding it.
+ */
+static int test_dtls13_finished_ack_loss_recovers(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *cc;
+    unsigned char buf, discard[2048];
+    int ret, dropped, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    /* Sends the client's Finished. */
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    /* Server processes Finished, completes, and queues its ACK. */
+    if (!TEST_int_eq(SSL_accept(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 1))
+        goto end;
+
+    /* Drop the server's ACK for the client's Finished. */
+    dropped = 0;
+    while (BIO_read(SSL_get_rbio(client), discard, sizeof(discard)) > 0)
+        dropped++;
+    if (!TEST_int_gt(dropped, 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+
+    /* Force the client to retransmit Finished at its original epoch. */
+    cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
+        ossl_seconds2time(1));
+    if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+        goto end;
+
+    /*
+     * The server has already moved to the next read epoch and discarded the
+     * old one, so it cannot authenticate this retransmission and never
+     * produces a replacement ACK. This is the assertion that must flip once
+     * the previous read epoch is retained: a fresh ACK should appear here.
+     */
+    ret = SSL_read(server, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+
+    /* The client picks up the replacement ACK and completes. */
+    ret = SSL_read(client, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(client), TLS_ST_OK)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(cc->d1->next_timeout)))
+        goto end;
+
+    /* Application data flows both ways. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Recover from a lost ACK for a KeyUpdate: the receiver must still accept a
+ * retransmission of the KeyUpdate at its original (now superseded) read
+ * epoch and replace the lost ACK, rather than silently discarding it and
+ * leaving the initiator retransmitting forever. idx == 0 is the server
+ * initiating (the issue's reported case); idx == 1 is the client initiating
+ * (noted in the issue as sharing the same problem but untested there).
+ */
+static int test_dtls13_keyupdate_ack_loss_recovers(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL, *sender, *receiver;
+    SSL_CONNECTION *sc, *cc, *sender_c;
+    unsigned char buf, discard[2048];
+    int ret, dropped, testresult = 0;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    /*
+     * Let the handshake ticket ACKs through, so neither side has a pending
+     * flight of its own and anything observed below is unambiguously this
+     * bug, not #32878's separate flight-cancellation problem.
+     */
+    ret = SSL_read(server, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(ticket_count, 2)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    sender = idx ? client : server;
+    receiver = idx ? server : client;
+    sender_c = idx ? cc : sc;
+
+    if (!TEST_true(SSL_key_update(sender, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(sender);
+    if (!TEST_int_eq(SSL_get_error(sender, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sender_c->d1->sent_messages), 1))
+        goto end;
+
+    /* Receiver processes the KeyUpdate, bumps its read epoch, and ACKs it. */
+    ret = SSL_read(receiver, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Drop that ACK. */
+    dropped = 0;
+    while (BIO_read(SSL_get_rbio(sender), discard, sizeof(discard)) > 0)
+        dropped++;
+    if (!TEST_int_gt(dropped, 0)
+        || !TEST_size_t_eq(pqueue_size(&sender_c->d1->sent_messages), 1))
+        goto end;
+
+    /* Force the sender to retransmit the KeyUpdate at its original epoch. */
+    sender_c->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
+        ossl_seconds2time(1));
+    if (!TEST_int_gt(DTLSv1_handle_timeout(sender), 0))
+        goto end;
+
+    /*
+     * The receiver has already moved to the next read epoch and discarded
+     * the old one, so it cannot authenticate this retransmission and never
+     * produces a replacement ACK. This is the assertion that must flip once
+     * the previous read epoch is retained: a fresh ACK should appear here.
+     */
+    ret = SSL_read(receiver, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(sender)), 0))
+        goto end;
+
+    /* The sender picks up the replacement ACK and completes. */
+    ret = SSL_read(sender, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(sender, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(sender), TLS_ST_OK)
+        || !TEST_size_t_eq(pqueue_size(&sender_c->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(sender_c->d1->next_timeout)))
+        goto end;
+
+    /* Application data flows both ways. */
+    if (!TEST_int_eq(SSL_write(sender, "x", 1), 1)
+        || !TEST_int_eq(SSL_read(receiver, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'x')
+        || !TEST_int_eq(SSL_write(receiver, "y", 1), 1)
+        || !TEST_int_eq(SSL_read(sender, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'y'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * SSL_free_buffers() must also release the retained previous-epoch read
+ * layer's buffer, not just the active layer's. dtls_get_more_records()
+ * never uses the retained layer's own read buffer after retention -- it
+ * reuses the active layer's packet buffer to authenticate a
+ * previous-epoch record -- so leaving it allocated after SSL_free_buffers()
+ * reports success is a pure leak until the whole layer chain is torn down.
+ */
+static int test_dtls13_prev_epoch_rl_buffer_freed(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    OSSL_RECORD_LAYER *rrl;
+    unsigned char buf;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    rrl = sc->rlayer.rrl;
+
+    /* The server's epoch-2 read layer must have been retained. */
+    if (!TEST_ptr(rrl->prev_epoch_rl))
+        goto end;
+
+    /* Exchange and consume application data both ways. */
+    if (!TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c')
+        || !TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's'))
+        goto end;
+
+    if (!TEST_true(SSL_free_buffers(server)))
+        goto end;
+
+    if (!TEST_ptr_null(rrl->rbuf.buf))
+        goto end;
+
+    /*
+     * Without releasing the retained previous-epoch layer's buffer in
+     * dtls_set_prev_epoch_rl(), this would stay allocated even though
+     * SSL_free_buffers() reported success above.
+     */
+    if (!TEST_ptr_null(rrl->prev_epoch_rl->rbuf.buf))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Epoch 2 is always the fixed DTLS 1.3 handshake epoch: no compliant peer
+ * ever sends application data there. A record that only authenticates
+ * because of that epoch's retained keys must never be delivered as
+ * application data -- but a retained *application* epoch (3+, from
+ * KeyUpdate recovery) must be left alone, since it can legitimately carry
+ * reordered application traffic.
+ */
+static int test_dtls_prev_epoch_allows_type(void)
+{
+    OSSL_RECORD_LAYER rl;
+    int testresult = 0;
+
+    memset(&rl, 0, sizeof(rl));
+
+    rl.epoch = 2;
+    if (!TEST_false(dtls_prev_epoch_allows_type(&rl, SSL3_RT_APPLICATION_DATA))
+        || !TEST_true(dtls_prev_epoch_allows_type(&rl, SSL3_RT_HANDSHAKE)))
+        goto end;
+
+    rl.epoch = 3;
+    if (!TEST_true(dtls_prev_epoch_allows_type(&rl, SSL3_RT_APPLICATION_DATA)))
+        goto end;
+
+    testresult = 1;
+end:
+    return testresult;
+}
+
+/*
+ * dtls_record_from_retained_epoch() is what statem_dtls.c's dispatch and
+ * discard/buffer decisions OR into their existing conditions to recognize a
+ * record that only authenticated via the retained previous read epoch, so
+ * it never gets treated as content that genuinely arrived at the currently
+ * active epoch.
+ */
+static int test_dtls_record_from_retained_epoch(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, dtlsv1_3_server_method(),
+            dtlsv1_3_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    sc->rlayer.d->r_conn_epoch = 3;
+
+    /* Record actually arrived at the currently active epoch. */
+    sc->s3.tmp.record_epoch = 3;
+    if (!TEST_false(dtls_record_from_retained_epoch(sc)))
+        goto end;
+
+    /* Record only authenticated via the retained previous epoch. */
+    sc->s3.tmp.record_epoch = 2;
+    if (!TEST_true(dtls_record_from_retained_epoch(sc)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * dtls1_process_out_of_seq_message() must never let a record that only
+ * authenticated via a retained previous epoch get buffered for future
+ * reassembly -- which would eventually process it as new content -- and
+ * must only ACK it when it genuinely corresponds to something already
+ * fully processed (seq strictly before the next expected one).
+ *
+ * idx 0: already fully processed (seq < expected). The legitimate
+ *        retransmission-recovery case from the earlier review round: ACK,
+ *        don't buffer.
+ * idx 1: "expected next" seq (seq == expected). Proves this function is
+ *        safe on the exact input dtls_get_reassembled_message() must now
+ *        route here instead of treating as fresh (see
+ *        test_dtls_record_from_retained_epoch() above for that routing
+ *        condition) -- must not be buffered or ACKed.
+ * idx 2: looks like a future message (seq > expected). Must not be
+ *        buffered for later processing as new content, and must not be
+ *        ACKed either.
+ */
+static int test_dtls13_out_of_seq_retained_epoch(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    struct hm_header_st msg_hdr;
+    int testresult = 0;
+    int expect_ack;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, dtlsv1_3_server_method(),
+            dtlsv1_3_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    sc->rlayer.d->r_conn_epoch = 3;
+    sc->s3.tmp.record_epoch = 2;
+    sc->d1->handshake_read_seq = 5;
+
+    memset(&msg_hdr, 0, sizeof(msg_hdr));
+    msg_hdr.type = SSL3_MT_KEY_UPDATE;
+
+    switch (idx) {
+    case 0:
+        msg_hdr.seq = 4;
+        expect_ack = 1;
+        break;
+    case 1:
+        msg_hdr.seq = 5;
+        expect_ack = 0;
+        break;
+    case 2:
+        msg_hdr.seq = 6;
+        expect_ack = 0;
+        break;
+    default:
+        goto end;
+    }
+
+    if (!TEST_int_eq(dtls1_process_out_of_seq_message(sc, &msg_hdr),
+            DTLS1_HM_FRAGMENT_RETRY))
+        goto end;
+
+    /* Never buffered for future reassembly/processing as new content. */
+    if (!TEST_size_t_eq(pqueue_size(&sc->d1->rcvd_messages), 0))
+        goto end;
+
+    if (expect_ack) {
+        if (!TEST_ptr(ossl_list_record_number_head(&sc->d1->ack_rec_num)))
+            goto end;
+    } else if (!TEST_ptr_null(ossl_list_record_number_head(&sc->d1->ack_rec_num))) {
+        goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -640,6 +1053,12 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_ack_coverage, 2);
     ADD_ALL_TESTS(test_dtls13_ticket_ack_retransmit, 8);
     ADD_TEST(test_dtls13_pha_ack_retransmit);
+    ADD_TEST(test_dtls13_finished_ack_loss_recovers);
+    ADD_ALL_TESTS(test_dtls13_keyupdate_ack_loss_recovers, 2);
+    ADD_TEST(test_dtls13_prev_epoch_rl_buffer_freed);
+    ADD_TEST(test_dtls_prev_epoch_allows_type);
+    ADD_TEST(test_dtls_record_from_retained_epoch);
+    ADD_ALL_TESTS(test_dtls13_out_of_seq_retained_epoch, 3);
 #endif
     return 1;
 }
