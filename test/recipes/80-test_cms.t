@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 43;
+plan tests => 44;
 
 ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");
@@ -1924,4 +1924,14 @@ subtest "sign and verify with multiple keys and -verify_partial" => sub {
                 ])),
        "verify both signature signatures with root");
     is(compare($smcont, $out2), 0, "compare original message with verified message");
+};
+
+subtest "CMS refuses signer certificate with invalid extensions\n" => sub {
+    plan tests => 1;
+
+    ok(!run(app(["openssl", "cms", @defaultprov, "-sign", "-in", $smcont,
+                 "-signer", srctop_file("test", "certs", "ee-ku-empty.pem"),
+                 "-inkey", srctop_file("test", "certs", "ee-key.pem"),
+                 "-out", "ku-empty-sig.pem"])),
+       "must not sign with a certificate that has an invalid keyUsage");
 };

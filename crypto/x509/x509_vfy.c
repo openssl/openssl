@@ -585,6 +585,9 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
             return 1;
         case 0:
             break;
+        case -1:
+            /* Error, e.g. invalid extensions: never acceptable */
+            break;
         default:
             if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
                 return 1;
@@ -3979,11 +3982,15 @@ static int build_chain(X509_STORE_CTX *ctx)
          * Try to extend chain with peer-provided untrusted certificate
          */
         if ((search & S_DOUNTRUSTED) != 0) {
+            int self_signed;
+
             num = sk_X509_num(ctx->chain);
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (X509_self_signed(curr, 0) > 0 || num > max_depth) ? NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
+            if ((self_signed = X509_self_signed(curr, 0)) < 0)
+                goto int_err;
+            issuer = (self_signed > 0 || num > max_depth) ? NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
                  * Once we have reached a self-signed cert or num > max_depth
