@@ -340,7 +340,8 @@ static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
             ctx->aid_len))
         return 0;
 
-    return OSSL_FIPS_IND_GET_CTX_PARAM_APPROVED(ctx, params);
+    return OSSL_FIPS_IND_GET_CTX_PARAM_CONDITIONAL(ctx, params,
+        ctx->add_random_len == 0);
 }
 
 #define MAKE_SIGNATURE_FUNCTIONS(alg, fn)                                               \
