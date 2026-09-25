@@ -4710,6 +4710,42 @@ err:
 }
 #endif /* !OPENSSL_NO_DH */
 
+#ifndef OPENSSL_NO_ECX
+/*
+ * Setting a peer key of a different type than the private key must fail
+ * with EVP_R_DIFFERENT_KEY_TYPES rather than an internal error (or an
+ * assertion failure in debug builds).
+ */
+static int test_derive_set_peer_different_key_types(void)
+{
+    EVP_PKEY *priv = NULL, *peer = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(priv = EVP_PKEY_Q_keygen(testctx, NULL, "X448"))
+        || !TEST_ptr(peer = EVP_PKEY_Q_keygen(testctx, NULL, "X25519"))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, priv, NULL))
+        || !TEST_int_gt(EVP_PKEY_derive_init(ctx), 0))
+        goto err;
+
+    ERR_set_mark();
+    if (!TEST_int_le(EVP_PKEY_derive_set_peer(ctx, peer), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            EVP_R_DIFFERENT_KEY_TYPES)) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(priv);
+    EVP_PKEY_free(peer);
+    return ret;
+}
+#endif
+
 /*
  * We test what happens with an empty template.  For the sake of this test,
  * the template must be ignored, and we know that's the case for RSA keys
@@ -10295,6 +10331,9 @@ int setup_tests(void)
     ADD_TEST(test_EVP_PKEY_set1_DH);
 #endif
     ADD_TEST(test_dhx_derive_rejects_bad_peer_q);
+#endif
+#ifndef OPENSSL_NO_ECX
+    ADD_TEST(test_derive_set_peer_different_key_types);
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EC_priv_pub);
