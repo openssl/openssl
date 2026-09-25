@@ -950,16 +950,30 @@ Ctrl = instance:Ed448ph
 Ctrl = hexcontext-string:666f6f
 Output = c32299d46ec8ff02b54540982814dce9a05812f81962b649d528095916a2aa481065b1580423ef927ecf0af5888f90da0f6a9a85ad5dc3f280d91224ba9911a3653d00e484e2ce232521481c8658df304bb7745a73514cdb9bf3e15784ab71284f8d0704a608c54a6b62d97beb511d132100
 
-# Test that X25519 KeyGen is not FIPS approved
+# Before 3.5, X25519 KeyGen only reported its unapproved status via callback
 Availablein = fips
 FIPSversion = >=3.4.0
+FIPSversion = <3.5.0
+KeyGen = X25519
+KeyName = x25519_gen_key
+
+# Test that X25519 KeyGen is not FIPS approved
+Availablein = fips
+FIPSversion = >=3.5.0
 KeyGen = X25519
 KeyName = x25519_gen_key
 Unapproved = 1
 
-# Test that X448 KeyGen is not FIPS approved
+# Before 3.5, X448 KeyGen only reported its unapproved status via callback
 Availablein = fips
 FIPSversion = >=3.4.0
+FIPSversion = <3.5.0
+KeyGen = X448
+KeyName = x448_gen_key
+
+# Test that X448 KeyGen is not FIPS approved
+Availablein = fips
+FIPSversion = >=3.5.0
 KeyGen = X448
 KeyName = x448_gen_key
 Unapproved = 1
