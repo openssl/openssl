@@ -1156,15 +1156,17 @@ static int aes_gcm_replace_generated_iv_test(void)
     unsigned char out[1024];
     unsigned int iv_generated = 0;
     int ret = 0, len, out_len, approved = -1;
-    OSSL_PARAM generated_params[] = {
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &iv_generated),
-        OSSL_PARAM_END
-    };
-    OSSL_PARAM indicator_params[] = {
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &iv_generated),
-        OSSL_PARAM_int(OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR, &approved),
-        OSSL_PARAM_END
-    };
+    OSSL_PARAM generated_params[2];
+    OSSL_PARAM indicator_params[3];
+
+    generated_params[0] = OSSL_PARAM_construct_uint(
+        OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &iv_generated);
+    generated_params[1] = OSSL_PARAM_construct_end();
+    indicator_params[0] = OSSL_PARAM_construct_uint(
+        OSSL_CIPHER_PARAM_AEAD_IV_GENERATED, &iv_generated);
+    indicator_params[1] = OSSL_PARAM_construct_int(
+        OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR, &approved);
+    indicator_params[2] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
         || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, tst->alg, ""))
