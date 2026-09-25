@@ -81,7 +81,7 @@ static int ml_kem_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     if (ctx == NULL)
         return 0;
-    return OSSL_FIPS_IND_GET_CTX_PARAM_CONDITIONAL(ctx, params,
+    return ossl_FIPS_IND_get_ctx_param_conditional(NULL, params,
         !ctx->test_entropy_used);
 }
 #endif
