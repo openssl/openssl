@@ -1041,8 +1041,6 @@ static int extract_symmetric_key(BIO *out, const PKCS12_SAFEBAG *bag,
 {
     PKCS8_PRIV_KEY_INFO *p8;
     EVP_SKEY *skey = NULL;
-    const unsigned char *kdata = NULL;
-    size_t klen = 0;
 
     if (options & NOKEYS)
         return 1;
@@ -1056,22 +1054,23 @@ static int extract_symmetric_key(BIO *out, const PKCS12_SAFEBAG *bag,
     PKCS8_PRIV_KEY_INFO_free(p8);
     if (skey == NULL)
         return 0;
-    if (enc == NULL && EVP_SKEY_get0_raw_key(skey, &kdata, &klen) == 1) {
-        if (kdata != NULL && klen > 0) {
-            size_t i;
+    if (enc == NULL) {
+        const unsigned char *kdata = NULL;
+        size_t klen = 0;
 
+        EVP_SKEY_get0_raw_key(skey, &kdata, &klen);
+
+        if (kdata != NULL && klen > 0) {
             BIO_puts(bio_err, "Bag Value: ");
             BIO_puts(out, "\n    Key Data: ");
-            for (i = 0; i < klen; i++) {
-                BIO_printf(out, "%02X ", kdata[i]);
-                if ((i + 1) % 32 == 0)
-                    BIO_puts(out, "\n");
-            }
-            if (klen % 32 != 0)
-                BIO_puts(out, "\n");
+            hex_print(out, kdata, (int)klen);
 
             BIO_printf(bio_err, "    Key management: %s\n", EVP_SKEY_get0_skeymgmt_name(skey));
             BIO_printf(bio_err, "    Key Length: %zu bytes\n", klen);
+        } else {
+            BIO_printf(bio_err, "Error obtaining key bytes\n");
+            EVP_SKEY_free(skey);
+            return 0;
         }
     } else {
         BIO_puts(bio_err, "Bag Value: ");
