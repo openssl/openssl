@@ -512,6 +512,11 @@ static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (in == NULL)
         return aes_ocb_block_final(vctx, out, outl, outsize);
 
+    if (out == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NULL_OUTPUT_BUFFER);
+        return 0;
+    }
+
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
@@ -528,6 +533,11 @@ static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (!ctx->key_set || !update_iv(ctx)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
+    }
+
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
     }
 
     if (!aes_generic_ocb_cipher(ctx, in, out, inl)) {
