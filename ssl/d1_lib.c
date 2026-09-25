@@ -149,13 +149,16 @@ void ossl_list_record_number_elem_free(OSSL_LIST(record_number) * p_list)
     }
 }
 
-DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum)
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum,
+    size_t frag_off, size_t frag_len)
 {
     DTLS1_RECORD_NUMBER *recnum = OPENSSL_zalloc(sizeof(*recnum));
 
     if (recnum != NULL) {
         recnum->epoch = epoch;
         recnum->seqnum = seqnum;
+        recnum->frag_off = frag_off;
+        recnum->frag_len = frag_len;
     }
 
     return recnum;
