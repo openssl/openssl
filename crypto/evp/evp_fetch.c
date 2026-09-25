@@ -764,8 +764,20 @@ int evp_is_a(OSSL_PROVIDER *prov, int number,
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
-    if (prov == NULL)
+    if (prov == NULL) {
+        /*
+         * When a legacy implementation is compared with its own name,
+         * it's trivially "a".  This must remain true when the namemap
+         * has no information yet.
+         */
+        if (name != NULL && legacy_name != NULL
+            && OPENSSL_strcasecmp(legacy_name, name) == 0)
+            return 1;
         number = ossl_namemap_name2num(namemap, legacy_name);
+        /* An unresolved legacy name can never make a positive match */
+        if (number == 0)
+            return 0;
+    }
     return ossl_namemap_name2num(namemap, name) == number;
 }
 
