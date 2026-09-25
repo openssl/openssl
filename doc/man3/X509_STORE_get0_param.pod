@@ -35,9 +35,11 @@ issues associated with X509_STORE_get0_objects(). The
 X509_STORE_get0_objects() returns an internal pointer to the
 store's cache of X509 and X509_CRL objects. This pointer
 references internal data structures and must not be freed by the
-application. Since the returned pointer exposes shared internal state, its use in
-multithreaded contexts is inherently unsafe without external
-synchronisation. When a store is shared across threads, callers are
+application. The returned stack must also not be modified in any way,
+e.g. by inserting, removing or reordering its elements; doing so
+corrupts the store's internal state. Since the returned pointer exposes shared
+internal state, its use in multithreaded contexts is inherently unsafe without
+external synchronisation. When a store is shared across threads, callers are
 required to acquire the store lock via X509_STORE_lock() before
 invoking X509_STORE_get0_objects().
 
