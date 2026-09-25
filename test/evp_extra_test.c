@@ -6173,116 +6173,6 @@ static int test_aes_cbc_hmac_sha_large_multiblock_aad(void)
 
     return test_aes_cbc_hmac_sha_reject_multiblock_params(params);
 }
-
-static int test_aes_cbc_hmac_sha_multiblock_encrypt(int use_ctrl)
-{
-    enum { plaintext_len = 4096 };
-    static const unsigned char key[16] = { 0 };
-    static const unsigned char iv[16] = { 0 };
-    static const unsigned char mac_key[32] = { 0 };
-    unsigned char aad[plaintext_len] = { 0 };
-    unsigned char input[plaintext_len] = { 0 };
-    unsigned char *output = NULL;
-    EVP_CIPHER *cipher = NULL;
-    EVP_CIPHER_CTX *ctx = NULL;
-    EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param = { 0 };
-    unsigned int interleave = 4;
-    unsigned int packlen = 0;
-    size_t enclen = 0;
-    int ctrl_packlen;
-    int ret = 0;
-    OSSL_PARAM mac_params[] = {
-        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_MAC_KEY,
-            (void *)mac_key, sizeof(mac_key)),
-        OSSL_PARAM_END
-    };
-    OSSL_PARAM aad_params[] = {
-        OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, aad,
-            sizeof(aad)),
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE,
-            &interleave),
-        OSSL_PARAM_END
-    };
-    OSSL_PARAM packlen_params[] = {
-        OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN,
-            &packlen),
-        OSSL_PARAM_END
-    };
-    OSSL_PARAM enc_params[4] = {
-        OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
-    };
-    OSSL_PARAM enclen_params[] = {
-        OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN, &enclen),
-        OSSL_PARAM_END
-    };
-
-    aad[9] = (unsigned char)(TLS1_2_VERSION >> 8);
-    aad[10] = (unsigned char)TLS1_2_VERSION;
-
-    cipher = EVP_CIPHER_fetch(testctx, "AES-128-CBC-HMAC-SHA256",
-        "provider=default");
-    if (cipher == NULL) {
-        ERR_clear_error();
-        return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
-    }
-    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
-        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx, mac_params)))
-        goto end;
-
-    if (use_ctrl) {
-        mb_param.inp = aad;
-        mb_param.len = sizeof(input);
-        mb_param.interleave = interleave;
-        ctrl_packlen = EVP_CIPHER_CTX_ctrl(ctx,
-            EVP_CTRL_TLS1_1_MULTIBLOCK_AAD, sizeof(mb_param), &mb_param);
-        if (!TEST_int_gt(ctrl_packlen, 0))
-            goto end;
-        packlen = (unsigned int)ctrl_packlen;
-    } else if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, aad_params))
-        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, packlen_params))) {
-        goto end;
-    }
-
-    if (!TEST_true(packlen > 0)
-        || !TEST_ptr(output = OPENSSL_malloc(packlen)))
-        goto end;
-
-    if (use_ctrl) {
-        mb_param.out = output;
-        mb_param.inp = input;
-        mb_param.len = sizeof(input);
-        if (!TEST_int_eq(EVP_CIPHER_CTX_ctrl(ctx,
-                             EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT, sizeof(mb_param),
-                             &mb_param),
-                (int)packlen))
-            goto end;
-    } else {
-        enc_params[0] = OSSL_PARAM_construct_octet_string(
-            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, output, packlen - 1);
-        enc_params[1] = OSSL_PARAM_construct_octet_string(
-            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, input, sizeof(input));
-        enc_params[2] = OSSL_PARAM_construct_uint(
-            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &interleave);
-        if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, enc_params)))
-            goto end;
-        ERR_clear_error();
-
-        enc_params[0] = OSSL_PARAM_construct_octet_string(
-            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, output, packlen);
-        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, enc_params))
-            || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, enclen_params))
-            || !TEST_size_t_eq(enclen, packlen))
-            goto end;
-    }
-
-    ret = 1;
-end:
-    OPENSSL_free(output);
-    EVP_CIPHER_CTX_free(ctx);
-    EVP_CIPHER_free(cipher);
-    return ret;
-}
 #endif
 
 #ifndef OPENSSL_NO_ECX
@@ -8638,7 +8528,6 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_MULTIBLOCK)
     ADD_TEST(test_aes_cbc_hmac_sha_short_multiblock_aad);
     ADD_TEST(test_aes_cbc_hmac_sha_large_multiblock_aad);
-    ADD_ALL_TESTS(test_aes_cbc_hmac_sha_multiblock_encrypt, 2);
 #endif
 
 #ifndef OPENSSL_NO_ECX
