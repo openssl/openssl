@@ -1083,13 +1083,13 @@ ml_dsa_composite_spki_bitstring_body(const unsigned char *der, long der_len,
     end = p + outer_len; /* safe: outer_len was checked to fit within der_len above */
 
     /* AlgorithmIdentifier (SEQUENCE) — skip it */
-    inf = ASN1_get_object(&p, &algo_len, &tag, &xclass, end - p);
+    inf = ASN1_get_object(&p, &algo_len, &tag, &xclass, (long)(end - p));
     if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_SEQUENCE)
         return NULL;
     p += algo_len; /* skip AlgorithmIdentifier body; bounds already checked */
 
     /* BIT STRING */
-    inf = ASN1_get_object(&p, &bs_len, &tag, &xclass, end - p);
+    inf = ASN1_get_object(&p, &bs_len, &tag, &xclass, (long)(end - p));
     if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_BIT_STRING
         || bs_len < 1)
         return NULL;
