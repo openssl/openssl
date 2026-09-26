@@ -474,4 +474,14 @@
 #define PROV_DESCS_SLH_DSA_SHAKE_256S "OpenSSL SLH-DSA-SHAKE-256s implementation"
 #define PROV_DESCS_SLH_DSA_SHAKE_256F "OpenSSL SLH-DSA-SHAKE-256f implementation"
 
+/* ML DSA Composite signature algorithms (draft-ietf-lamps-pq-composite-sigs) */
+#define PROV_NAMES_MLDSA65_RSA3072_PKCS15_SHA512 \
+    "ML-DSA-65-RSA3072-PKCS15-SHA512:id-mldsa65-rsa3072-pkcs15-sha512:1.3.6.1.5.5.7.6.42"
+#define PROV_DESCS_MLDSA65_RSA3072_PKCS15_SHA512 \
+    "OpenSSL ML-DSA-65-RSA3072-PKCS15-SHA512 ML DSA composite implementation"
+#define PROV_NAMES_MLDSA65_ECDSA_P256_SHA512 \
+    "ML-DSA-65-ECDSA-P256-SHA512:id-mldsa65-ecdsa-p256-sha512:1.3.6.1.5.5.7.6.45"
+#define PROV_DESCS_MLDSA65_ECDSA_P256_SHA512 \
+    "OpenSSL ML-DSA-65-ECDSA-P256-SHA512 ML DSA composite implementation"
+
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_NAMES_H) */

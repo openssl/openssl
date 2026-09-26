@@ -516,6 +516,7 @@ my %params = (
     'OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING' =>   "message-encoding",
     'OSSL_SIGNATURE_PARAM_DETERMINISTIC' =>      "deterministic",
     'OSSL_SIGNATURE_PARAM_MU' =>                 "mu", # int
+    'OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH' =>  "ml-dsa-composite-prehash", # int
     'OSSL_SIGNATURE_PARAM_TEST_ENTROPY' =>       "test-entropy",
     'OSSL_SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",
     'OSSL_SIGNATURE_PARAM_TLS_VERSION' =>        "tls-version",

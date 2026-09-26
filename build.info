@@ -119,6 +119,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/keymgmt/ecx_kmgmt.inc \
          providers/implementations/keymgmt/lms_kmgmt.inc \
          providers/implementations/keymgmt/mac_legacy_kmgmt.inc \
+         providers/implementations/keymgmt/ml_dsa_composite_kmgmt.inc \
          providers/implementations/keymgmt/ml_dsa_kmgmt.inc \
          providers/implementations/keymgmt/ml_kem_kmgmt.inc \
          providers/implementations/keymgmt/mlx_kmgmt.inc \
@@ -129,6 +130,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/signature/eddsa_sig.inc \
          providers/implementations/signature/mac_legacy_sig.inc \
          providers/implementations/signature/ml_dsa_sig.inc \
+         providers/implementations/signature/ml_dsa_composite_sig.inc \
          providers/implementations/signature/rsa_sig.inc \
          providers/implementations/signature/slh_dsa_sig.inc \
          providers/implementations/signature/sm2_sig.inc \
@@ -257,6 +259,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/keymgmt/ecx_kmgmt.inc \
        providers/implementations/keymgmt/lms_kmgmt.inc \
        providers/implementations/keymgmt/mac_legacy_kmgmt.inc \
+       providers/implementations/keymgmt/ml_dsa_composite_kmgmt.inc \
        providers/implementations/keymgmt/ml_dsa_kmgmt.inc \
        providers/implementations/keymgmt/ml_kem_kmgmt.inc \
        providers/implementations/keymgmt/mlx_kmgmt.inc \
@@ -267,6 +270,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/signature/eddsa_sig.inc \
        providers/implementations/signature/mac_legacy_sig.inc \
        providers/implementations/signature/ml_dsa_sig.inc \
+       providers/implementations/signature/ml_dsa_composite_sig.inc \
        providers/implementations/signature/rsa_sig.inc \
        providers/implementations/signature/slh_dsa_sig.inc \
        providers/implementations/signature/sm2_sig.inc \
@@ -402,6 +406,8 @@ GENERATE[providers/implementations/keymgmt/lms_kmgmt.inc]=\
     providers/implementations/keymgmt/lms_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/mac_legacy_kmgmt.inc]=\
     providers/implementations/keymgmt/mac_legacy_kmgmt.inc.in
+GENERATE[providers/implementations/keymgmt/ml_dsa_composite_kmgmt.inc]=\
+    providers/implementations/keymgmt/ml_dsa_composite_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/ml_dsa_kmgmt.inc]=\
     providers/implementations/keymgmt/ml_dsa_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/ml_kem_kmgmt.inc]=\
@@ -422,6 +428,8 @@ GENERATE[providers/implementations/signature/mac_legacy_sig.inc]=\
     providers/implementations/signature/mac_legacy_sig.inc.in
 GENERATE[providers/implementations/signature/ml_dsa_sig.inc]=\
     providers/implementations/signature/ml_dsa_sig.inc.in
+GENERATE[providers/implementations/signature/ml_dsa_composite_sig.inc]=\
+    providers/implementations/signature/ml_dsa_composite_sig.inc.in
 GENERATE[providers/implementations/signature/rsa_sig.inc]=\
     providers/implementations/signature/rsa_sig.inc.in
 GENERATE[providers/implementations/signature/slh_dsa_sig.inc]=\
