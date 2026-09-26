@@ -1454,6 +1454,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[mem_alloc_custom_fns_test]=../include ../apps/include
   DEPEND[mem_alloc_custom_fns_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=err_string_init_test
+  SOURCE[err_string_init_test]=err_string_init_test.c
+  INCLUDE[err_string_init_test]=../include ../apps/include
+  DEPEND[err_string_init_test]=../libcrypto libtestutil.a
+
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=pem_read_depr_test
     SOURCE[pem_read_depr_test]=pem_read_depr_test.c
