@@ -1,0 +1,22 @@
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = providers
+ssl_conf = ssl_configuration
+
+[providers]
+default = default_provider
+tls-provider = tls_provider
+
+[default_provider]
+activate = 1
+
+[tls_provider]
+activate = 1
+tls-ciphersuite-mode = valid-both
+
+[ssl_configuration]
+system_default = system_default
+
+[system_default]
+Ciphersuites = TLS_TEST_PROVIDER_AES_128_GCM_SHA256

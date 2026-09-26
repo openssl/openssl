@@ -575,6 +575,14 @@ my %params = (
 
 # Capabilities
 
+# TLS-CIPHERSUITE Capability
+    'OSSL_CAPABILITY_TLS_CIPHERSUITE_NAME' =>          "tls-ciphersuite-name",
+    'OSSL_CAPABILITY_TLS_CIPHERSUITE_CODE_POINT' =>    "tls-ciphersuite-code-point",
+    'OSSL_CAPABILITY_TLS_CIPHERSUITE_AEAD' =>          "tls-ciphersuite-aead-name",
+    'OSSL_CAPABILITY_TLS_CIPHERSUITE_DIGEST' =>        "tls-ciphersuite-digest-name",
+    'OSSL_CAPABILITY_TLS_CIPHERSUITE_SECURITY_BITS' => "tls-ciphersuite-security-bits",
+    'OSSL_CAPABILITY_TLS_CIPHERSUITE_TAG_LENGTH' =>    "tls-ciphersuite-tag-length",
+
 # TLS-GROUP Capability
     'OSSL_CAPABILITY_TLS_GROUP_NAME' =>              "tls-group-name",
     'OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL' =>     "tls-group-name-internal",
