@@ -1227,7 +1227,6 @@ The `ml-dsa-composite` algorithms (composite post-quantum/classical signature
 schemes combining `ml-dsa` with `rsa` or `ec`) are automatically disabled
 when `ml-dsa` is disabled.
 
-### Compiler-specific options
 Compiler-specific options
 -------------------------
 

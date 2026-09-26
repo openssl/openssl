@@ -82,7 +82,7 @@ OpenSSL 4.1
    These algorithms are available in the default provider only.
 
    *Felipe Ventura*
-   
+
  * Added AVX512 optimized SHAKE x4 operations for ML-DSA on x86_64.
  * Added support for DTLS 1.3 ([RFC 9147]).
    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
