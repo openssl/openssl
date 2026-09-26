@@ -26,8 +26,10 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/der_ml_dsa.h"
 #include "crypto/ml_dsa.h"
 #include "internal/common.h"
+#include "internal/fips.h"
 #include "internal/packet.h"
 #include "internal/sizes.h"
+#include "fips/fipsindicator.h"
 
 #define ML_DSA_MESSAGE_ENCODE_RAW 0
 #define ML_DSA_MESSAGE_ENCODE_PURE 1
@@ -463,6 +465,8 @@ static const OSSL_PARAM *ml_dsa_settable_ctx_params(void *vctx,
 /* clang-format off */
 {- produce_param_decoder('ml_dsa_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'id', 'octet_string'],
+                          ['OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR',
+                           'ind', 'int', 'fips'],
                          )); -}
 /* clang-format on */
 
@@ -484,6 +488,11 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         && !OSSL_PARAM_set_octet_string(p.id,
             ctx->aid_len == 0 ? NULL : ctx->aid_buf,
             ctx->aid_len))
+        return 0;
+
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind,
+            ctx->test_entropy_len == 0
+                && ctx->msg_encode == ML_DSA_MESSAGE_ENCODE_PURE))
         return 0;
 
     return 1;

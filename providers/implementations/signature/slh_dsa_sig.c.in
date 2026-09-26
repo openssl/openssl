@@ -22,7 +22,9 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "prov/der_slh_dsa.h"
 #include "crypto/slh_dsa.h"
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/sizes.h"
+#include "fips/fipsindicator.h"
 
 #define SLH_DSA_MAX_ADD_RANDOM_LEN 32
 
@@ -319,6 +321,8 @@ static const OSSL_PARAM *slh_dsa_settable_ctx_params(void *vctx,
 /* clang-format off */
 {- produce_param_decoder('slh_dsa_get_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_ALGORITHM_ID', 'algid', 'octet_string'],
+                          ['OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR',
+                           'ind', 'int', 'fips'],
                          )); -}
 /* clang-format on */
 
@@ -340,6 +344,10 @@ static int slh_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         && !OSSL_PARAM_set_octet_string(p.algid,
             ctx->aid_len == 0 ? NULL : ctx->aid_buf,
             ctx->aid_len))
+        return 0;
+
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind,
+            ctx->add_random_len == 0))
         return 0;
 
     return 1;

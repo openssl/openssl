@@ -45,7 +45,10 @@ rather than other FIPS capable providers.
 
 Algorithms that are fetched using "fips=yes" may still be unapproved if certain
 conditions are not met. See L<fips_module(7)/FIPS indicators> for additional
-information.
+information.  Every C<fips=yes> algorithm implementation supplied by this
+provider exposes a gettable "fips-indicator" context parameter and returns 1
+when the operation is approved.  Applications must not treat a missing
+indicator as an assertion of FIPS approval.
 
 =head2 Provider parameters
 
