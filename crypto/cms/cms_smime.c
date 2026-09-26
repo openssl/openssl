@@ -793,6 +793,8 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         ec->key = NULL;
         ec->keylen = 0;
         ec->harderr = 0;
+        /* Select the mode before processing recipients in the staged API. */
+        ec->havenocert = cert == NULL;
     }
 
     if (ris != NULL && ec != NULL)
