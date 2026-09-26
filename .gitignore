@@ -86,7 +86,7 @@ providers/common/der/der_rsa_gen.c
 providers/common/der/der_wrap_gen.c
 providers/common/der/der_sm2_gen.c
 providers/common/der/der_ml_dsa_gen.c
-providers/common/der/der_composite_gen.c
+providers/common/der/der_ml_dsa_composite_gen.c
 providers/common/der/der_hkdf_gen.c
 providers/common/include/prov/der_slh_dsa.h
 providers/common/include/prov/der_dsa.h
@@ -98,6 +98,7 @@ providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
+providers/common/include/prov/ml_dsa_composite.h
 providers/fips/fipsparams.inc
 providers/implementations/asymciphers/rsa_enc.inc
 providers/implementations/asymciphers/sm2_enc.inc
@@ -144,9 +145,9 @@ providers/implementations/keymgmt/ml_dsa_kmgmt.inc
 providers/implementations/keymgmt/ml_kem_kmgmt.inc
 providers/implementations/keymgmt/mlx_kmgmt.inc
 providers/implementations/keymgmt/slh_dsa_kmgmt.inc
-providers/implementations/keymgmt/composite_kmgmt.inc
+providers/implementations/keymgmt/ml_dsa_composite_kmgmt.inc
 providers/implementations/keymgmt/template_kmgmt.inc
-providers/implementations/signature/composite_sig.inc
+providers/implementations/signature/ml_dsa_composite_sig.inc
 providers/implementations/signature/eddsa_sig.inc
 providers/implementations/signature/mac_legacy_sig.inc
 providers/implementations/signature/ml_dsa_sig.inc
