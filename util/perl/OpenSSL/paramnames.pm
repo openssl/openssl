@@ -169,6 +169,7 @@ my %params = (
     'DIGEST_PARAM_SIZE' =>         "size",         # size_t
     'DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
+    'DIGEST_PARAM_FIPS_APPROVED_INDICATOR' => '*ALG_PARAM_FIPS_APPROVED_INDICATOR',
 
 # MAC parameters
     'MAC_PARAM_KEY' =>            "key",           # octet string
