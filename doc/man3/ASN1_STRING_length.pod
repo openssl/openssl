@@ -2,16 +2,28 @@
 
 =head1 NAME
 
-ASN1_STRING_set1_data, ASN1_STRING_set1_string, ASN1_STRING_get_length,
-ASN1_STRING_dup, ASN1_STRING_cmp, ASN1_STRING_set, ASN1_STRING_length,
-ASN1_STRING_type, ASN1_STRING_get0_data,
-ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
+ASN1_STRING_get0_data,
+ASN1_STRING_copy,
+ASN1_STRING_dup,
+ASN1_STRING_cmp,
+ASN1_STRING_type,
+ASN1_STRING_to_UTF8,
+ASN1_STRING_set1_data,
+ASN1_STRING_set1_string,
+ASN1_STRING_set0,
+ASN1_STRING_get_length,
+ASN1_STRING_set,
+ASN1_STRING_length,
+ASN1_STRING_length_set
+- ASN1_STRING utility functions
 
 =head1 SYNOPSIS
 
  #include <openssl/asn1.h>
 
  const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
+
+ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
 
  ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *a);
 
@@ -25,6 +37,8 @@ ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
 
  int ASN1_STRING_set1_string(ASN1_STRING *str, const char *data);
 
+ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
+
  size_t ASN1_STRING_get_length(const ASN1_STRING *x);
 
 The following functions have been deprecated since OpenSSL 4.1, and can be
@@ -35,15 +49,30 @@ see L<openssl_user_macros(7)>:
 
  int ASN1_STRING_length(ASN1_STRING *x);
 
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ void ASN1_STRING_length_set(ASN1_STRING *x, int n);
+
 =head1 DESCRIPTION
 
 These functions allow an B<ASN1_STRING> structure to be manipulated.
 
-ASN1_STRING_length() returns the length of the content of I<x>. I<x> B<MUST NOT> be NULL.
+ASN1_STRING_length() returns the length of the content of I<x>.
+I<x> B<MUST NOT> be NULL.
+
+ASN1_STRING_get_length() returns the length of the content of I<x>.
+I<x> B<MUST NOT> be NULL.  If the current length of the content of I<x>
+cannot be represented by a value of type B<size_t> (for example, after
+an ASN1_STRING_length_set() call with a negative I<n> argument), 0 is returned.
 
 ASN1_STRING_get0_data() returns an internal pointer to the data of I<x>.
 Since this is an internal pointer it should B<not> be freed or
 modified in any way. I<x> B<MUST NOT> be NULL.
+
+ASN1_STRING_copy() copies the string type and content (along with the relevant
+internal attributes) from I<str> to I<dst>.
 
 ASN1_STRING_dup() returns a copy of the structure I<a>.
 
@@ -53,14 +82,17 @@ are identical. The string types and content are compared.
 ASN1_STRING_set() allocates memory for string I<str> to hold I<len>
 bytes of data. Any previously allocated memory owned by I<str> will be
 freed or re-used.  If I<data> is not NULL, I<len> bytes are copied
-from the memory pointed to by I<data> to I<str>. If I<len> is -1 then
-the length is determined by strlen(data).
+from the memory pointed to by I<data> to I<str>. If I<len> is -1,
+then the length is determined by strlen(data).  As an implementation detail,
+ASN1_STRING_set() appends a NUL byte after the data copied into I<str>.
 
 ASN1_STRING_set1_data() allocates memory for string I<str> to hold
 I<len> bytes of data. Any previously allocated memory owned by I<str>
 will be freed or re-used.  If I<data> is not NULL, I<len> bytes are
 copied from the memory pointed to by I<data> to I<str>. It is an error
 to use this function on a string of type B<ASN1_BIT_STRING>.
+Contrary to ASN1_STRING_set(), ASN1_STRING_set1_data() does not append a NUL
+byte to the data copied into I<str>.
 
 ASN1_STRING_set1_string() allocates memory for the string I<str> and makes
 a copy of the characters from I<cstring>. Any previously
@@ -68,7 +100,16 @@ allocated memory owned by I<str> will be freed or re-used.  I<cstring>
 must point to a valid NUL-terminated C string, and must not be
 NULL. The terminating NUL byte is not included in the data copied into
 I<str>.  It is an error to use this function on a string of type
-B<ASN1_BIT_STRING>.
+B<ASN1_BIT_STRING>.  ASN1_STRING_set1_string() does not append a NUL
+byte to the data copied into I<str>.
+
+ASN1_STRING_set0() sets the content of the string I<str> to I<data>
+of I<len> bytes in size;  the ownership of I<data> is assumed
+by the string (so, I<data> has to be allocated using OPENSSL_malloc()
+or a similar function, and the caller should not attempt to free I<data>
+after the call).  The previously held content (in case they were owned
+by the string) is freed using OPENSSL_clear_free(), provided the length
+of the content is positive.
 
 ASN1_STRING_type() returns the type of I<x>, using standard constants
 such as B<V_ASN1_OCTET_STRING>.
@@ -80,9 +121,12 @@ include the terminating NUL. The length of
 I<out> is returned or a negative error code. The buffer I<*out>
 should be freed using OPENSSL_free(). See L</WARNINGS> below.
 
+ASN1_STRING_length_set() allows setting the length of I<x> to an arbitrary value
+provided in I<n>.
+
 =head1 NOTES
 
-Almost all ASN1 types in OpenSSL are represented as an B<ASN1_STRING>
+Almost all ASN.1 types in OpenSSL are represented as an B<ASN1_STRING>
 structure. Other types such as B<ASN1_OCTET_STRING> are simply typedef'ed
 to B<ASN1_STRING> and the functions call the B<ASN1_STRING> equivalents.
 B<ASN1_STRING> is also used for some B<CHOICE> types which consist
@@ -93,16 +137,24 @@ These functions should B<not> be used to examine or modify B<ASN1_INTEGER>
 or B<ASN1_ENUMERATED> types: the relevant B<INTEGER> or B<ENUMERATED>
 utility functions should be used instead.
 
-In general it cannot be assumed that the data returned by
-ASN1_STRING_get0_data() is null terminated or does not contain
-embedded nulls. The actual format of the data will depend on the
-actual string type itself: for example for an IA5String the data will
-be ASCII, for a BMPString two bytes per character in big endian
-format, and for a UTF8String it will be in UTF8 format.
+In general, it cannot be assumed that the data returned
+by ASN1_STRING_get0_data() is NUL-terminated or does not contain
+embedded NUL bytes.  The actual format of the data will depend
+on the actual string type itself: for example, for an B<IA5String>, the data
+will be ASCII; for a B<BMPString>, it will be two bytes per character
+in big endian format without BOM; and for a B<UTF8String>, it will be encoded
+in UTF-8.
 
 Similar care should be taken to ensure the data is in the correct
 format when calling ASN1_STRING_set(), ASN1_STRING_set1_data(), or
 ASN1_STRING_set1_string().
+
+ASN1_STRING_length_set() updates only the length attribute of a string
+and does not affect the stored data, which may lead to buffer overruns
+and invalid memory accesses, if an incorrect length value is supplied.
+It also does not perform any sanity checks and stores any supplied value
+as-is, including a negative one.
+For these reasons (and due to limited usefulness), this function is deprecated.
 
 =head1 WARNINGS
 
@@ -118,8 +170,15 @@ length and not rely on NUL termination.
 
 ASN1_STRING_length() returns the length of the content of I<x>.
 
+ASN1_STRING_get_length() returns the length of the content of I<x> or 0,
+if it cannot be represented as a value of type B<size_t>.
+
 ASN1_STRING_get0_data() returns an internal pointer to
 the data of I<x>.
+
+ASN1_STRING_copy() returns 1 on success, or 0 on error or failure.
+If the call was not successful, I<dst> may be left in an inconsistent state,
+and can no longer be used.
 
 ASN1_STRING_dup() returns a valid B<ASN1_STRING> structure or NULL if an
 error occurred.
@@ -135,14 +194,23 @@ ASN1_STRING_type() returns the type of I<x>.
 ASN1_STRING_to_UTF8() returns the number of bytes in output string I<out> or a
 negative value if an error occurred.
 
+ASN1_STRING_set0() and ASN1_STRING_length_set() do not return a value.
+
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
 
 =head1 HISTORY
 
+ASN1_STRING_length_set() was deprecated in OpenSSL 3.0.
+
 ASN1_STRING_set1_data(), ASN1_STRING_set1_string(), and ASN1_STRING_get_length()
 were added in OpenSSL 4.1.
+
+ASN1_STRING_length() and ASN1_STRING_set() were deprecated in OpenSSL 4.1.
+
+Before OpenSSL 4.1, ASN1_STRING_set0() used OPENSSL_free()
+instead of OPENSSL_clean_free() to free previously held string content.
 
 =head1 COPYRIGHT
 
