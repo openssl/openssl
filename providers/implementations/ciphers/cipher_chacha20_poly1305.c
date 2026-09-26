@@ -283,10 +283,22 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    PROV_CHACHA20_POLY1305_CTX *cctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
 
     if (!ossl_prov_is_running())
         return 0;
+
+    /*
+     * An empty non-final call must not pad pending AAD: len.text would remain
+     * zero, allowing further AAD updates after the padding. TLS record mode
+     * still requires the full record, including the tag.
+     */
+    if (cctx->tls_payload_length == NO_TLS_PAYLOAD_LENGTH
+        && in != NULL && inl == 0) {
+        *outl = 0;
+        return 1;
+    }
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
