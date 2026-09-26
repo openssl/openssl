@@ -145,8 +145,11 @@ static int ossl_ml_dsa_composite_key_get_max_size(const ML_DSA_COMPOSITE_KEY *ke
 static int ml_dsa_composite_ec_curve_matches(const char *grp, const char *ec_curve)
 {
     int actual_nid = OBJ_txt2nid(grp);
-    int expected_nid = EC_curve_nist2nid(ec_curve);
+    int expected_nid = NID_undef;
 
+#ifndef OPENSSL_NO_EC
+    expected_nid = EC_curve_nist2nid(ec_curve);
+#endif
     if (expected_nid == NID_undef)
         expected_nid = OBJ_txt2nid(ec_curve);
     return actual_nid != NID_undef && actual_nid == expected_nid;
