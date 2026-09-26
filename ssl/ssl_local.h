@@ -2166,12 +2166,20 @@ typedef struct dtls1_record_number_st DTLS1_RECORD_NUMBER;
 struct dtls1_record_number_st {
     uint64_t epoch;
     uint64_t seqnum;
+    /*
+     * Byte range within the message this record number's transmission
+     * covered. Only meaningful for entries on a dtls_sent_msg's rec_nums;
+     * unused (left 0) for entries on the incoming ack_rec_num list.
+     */
+    size_t frag_off;
+    size_t frag_len;
     OSSL_LIST_MEMBER(record_number, DTLS1_RECORD_NUMBER);
 };
 
 DEFINE_LIST_OF(record_number, DTLS1_RECORD_NUMBER);
 
-DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum);
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum,
+    size_t frag_off, size_t frag_len);
 
 void ossl_list_record_number_elem_free(OSSL_LIST(record_number) * p_list);
 
@@ -2180,6 +2188,15 @@ typedef struct dtls_sent_msg_st {
     OSSL_LIST(record_number)
     rec_nums;
     unsigned char *msg_buf;
+    /*
+     * Bitmask of msg_info.msg_body_len bytes, one bit per byte, tracking
+     * which byte ranges of the message have been acknowledged so far --
+     * across every transmission round, not just the most recent one. A
+     * trailing allocation off the end of this struct (see
+     * dtls1_sent_msg_new()), mirroring how hm_fragment tracks receive-side
+     * reassembly. NULL when msg_info.msg_body_len == 0 (nothing to cover).
+     */
+    unsigned char *covered;
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
 
@@ -2224,6 +2241,13 @@ typedef struct dtls1_state_st {
     size_t link_mtu; /* max on-the-wire DTLS packet size */
     size_t mtu; /* max DTLS packet size */
     dtls_msg_info w_msg;
+    /*
+     * Byte range of the handshake fragment currently being written by
+     * dtls1_do_write(), read back by do_dtls1_write() (rec_layer_d1.c) when
+     * recording this write's record number on the buffered sent message.
+     */
+    size_t w_frag_off;
+    size_t w_frag_len;
     unsigned short r_msg_seq;
     /* Number of alerts received so far */
     unsigned int timeout_num_alerts;

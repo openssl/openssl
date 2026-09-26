@@ -111,9 +111,10 @@ static int dtls_ccs_expected(SSL_CONNECTION *s)
     }
 }
 
-static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len)
+static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len, size_t body_len)
 {
-    dtls_sent_msg *msg = OPENSSL_malloc(sizeof(*msg) + msg_len);
+    const size_t bitmask_len = (body_len > 0 ? RSMBLY_BITMASK_SIZE(body_len) : 0);
+    dtls_sent_msg *msg = OPENSSL_malloc(sizeof(*msg) + msg_len + bitmask_len);
 
     if (msg == NULL)
         return NULL;
@@ -123,6 +124,15 @@ static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len)
     /* zero length msg gets msg->msg_buf == NULL */
     if (msg_len > 0)
         msg->msg_buf = (unsigned char *)(msg + 1);
+
+    /*
+     * body_len > 0 implies msg_len > 0 (msg_len == body_len + headerlen, and
+     * headerlen is never 0), so msg->msg_buf is already set here.
+     */
+    if (body_len > 0) {
+        msg->covered = msg->msg_buf + msg_len;
+        memset(msg->covered, 0, bitmask_len);
+    }
 
     return msg;
 }
@@ -326,6 +336,13 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                  * so fail
                  */
                 return -1;
+
+            /*
+             * Recorded so do_dtls1_write() (rec_layer_d1.c) can tag this
+             * fragment's record number with the byte range it covers.
+             */
+            s->d1->w_frag_off = fragoff;
+            s->d1->w_frag_len = fraglen;
         }
 
         ret = dtls1_write_bytes(s, recordtype, msgstart, len,
@@ -578,7 +595,7 @@ static int add_record_to_ack_list(SSL_CONNECTION *sc)
             return 1;
     }
 
-    recnum = dtls1_record_number_new(epoch, sequence);
+    recnum = dtls1_record_number_new(epoch, sequence, 0, 0);
 
     if (recnum == NULL)
         return 0;
@@ -1329,14 +1346,45 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
             DTLS1_RECORD_NUMBER *recnum;
             DTLS1_RECORD_NUMBER *recnum_next = ossl_list_record_number_head(&msg->rec_nums);
+            int matched = 0;
 
             while ((recnum = recnum_next) != NULL) {
                 recnum_next = ossl_list_record_number_next(recnum_next);
 
                 if (recnum->epoch == epoch && recnum->seqnum == sequence_number) {
+                    /*
+                     * Mark this record's byte range covered *before*
+                     * freeing it -- coverage tracks the message as a whole
+                     * across every transmission round, not just whether
+                     * this one specific record number was ever matched.
+                     */
+                    if (msg->covered != NULL)
+                        RSMBLY_BITMASK_MARK(msg->covered, (long)recnum->frag_off,
+                            (long)(recnum->frag_off + recnum->frag_len));
                     ossl_list_record_number_remove(&msg->rec_nums, recnum);
                     OPENSSL_free(recnum);
+                    matched = 1;
                 }
+            }
+
+            /*
+             * RFC 9147 section 7.2 is a per-record rule, but completeness is
+             * per-message: the peer needs every byte of the message, from
+             * any combination of rounds, not just any one matching record.
+             * Once this ACK completes coverage of the whole message, fully
+             * drain rec_nums -- not just the node that matched -- so every
+             * other consumer that keys off list emptiness
+             * (dtls_any_sent_messages_are_missing_acknowledge(),
+             * dtls1_clear_sent_buffer(), ...) sees it retire, even though
+             * other rounds' record numbers may still be sitting unmatched.
+             */
+            if (matched && msg->covered != NULL) {
+                int is_complete;
+
+                RSMBLY_BITMASK_IS_COMPLETE(msg->covered,
+                    (long)msg->msg_info.msg_body_len, is_complete);
+                if (is_complete)
+                    ossl_list_record_number_elem_free(&msg->rec_nums);
             }
         }
     }
@@ -1469,7 +1517,7 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
     if (!ossl_assert(s->init_off == 0))
         return 0;
 
-    sent_msg = dtls1_sent_msg_new(s->init_num);
+    sent_msg = dtls1_sent_msg_new(s->init_num, s->d1->w_msg.msg_body_len);
     if (sent_msg == NULL)
         return 0;
 
@@ -1519,8 +1567,14 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
     else
         header_length = DTLS1_HM_HEADER_LENGTH;
 
-    /* Clear the record number list to be acked for retransmitted messages */
-    ossl_list_record_number_elem_free(&sent_msg->rec_nums);
+    /*
+     * Deliberately not clearing rec_nums here: RFC 9147 section 7.2 requires
+     * treating a record as acknowledged if it appears in *any* ACK, so a
+     * late ACK matching an earlier round's record number must still be able
+     * to match something. rec_nums accumulates across every retransmission
+     * round instead; dtls_process_ack() retires entries by tracking byte
+     * range coverage, not by this list ever being reset per round.
+     */
 
     memcpy(s->init_buf->data, sent_msg->msg_buf,
         sent_msg->msg_info.msg_body_len + header_length);
