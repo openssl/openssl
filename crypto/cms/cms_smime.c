@@ -357,6 +357,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
 
     if (dcont == NULL && !check_content(cms))
         return 0;
+    /* Set a mark so that we can clear any new errors on success. */
+    (void)ERR_set_mark();
     if (dcont != NULL && !(flags & CMS_BINARY)) {
         const ASN1_OBJECT *coid = CMS_get0_eContentType(cms);
 
@@ -562,6 +564,15 @@ err2:
     }
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+
+    /*
+     * On error, keep internal errors for inspection by the caller. Otherwise
+     * clear any new errors queued since the mark.
+     */
+    if (!ret)
+        ERR_clear_last_mark();
+    else
+        ERR_pop_to_mark();
 
     return ret;
 }
