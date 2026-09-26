@@ -57,7 +57,7 @@ static uint8_t *consume_size_t(const uint8_t *buf, size_t *len, size_t *val)
 {
     if (*len < sizeof(size_t))
         return NULL;
-    *val = *buf;
+    memcpy(val, buf, sizeof(*val));
     *len -= sizeof(size_t);
     return (uint8_t *)buf + sizeof(size_t);
 }
@@ -89,11 +89,10 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
      * Note: We don't really care about endianness here, we just want a random
      * 16 bit value
      */
+    if (*len < sizeof(uint16_t))
+        return 0;
     *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
     *len -= sizeof(uint16_t);
-
-    if (*buf == NULL)
-        return 0;
 
     /*
      * If `only_valid` is set, select only ML-DSA-44, ML-DSA-65, and ML-DSA-87.
@@ -127,6 +126,8 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
         break;
     case 4:
         /* Select valid alg, but bogus size */
+        if (*len < sizeof(uint16_t))
+            return 0;
         *keytype = "ML-DSA-87";
         *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
         *len -= sizeof(uint16_t);
@@ -316,7 +317,7 @@ static void ml_dsa_sign_verify(uint8_t **buf, size_t *len, void *key1,
         OSSL_PARAM_END
     };
 
-    if (!consume_size_t(*buf, len, &tbslen)) {
+    if ((*buf = consume_size_t(*buf, len, &tbslen)) == NULL) {
         fprintf(stderr, "Failed to set tbslen");
         goto err;
     }
@@ -393,7 +394,7 @@ static void ml_dsa_digest_sign_verify(uint8_t **buf, size_t *len, void *key1,
         OSSL_PARAM_END
     };
 
-    if (!consume_size_t(*buf, len, &tbslen)) {
+    if ((*buf = consume_size_t(*buf, len, &tbslen)) == NULL) {
         fprintf(stderr, "Failed to set tbslen");
         goto err;
     }

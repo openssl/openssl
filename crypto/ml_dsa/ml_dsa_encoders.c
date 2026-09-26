@@ -753,7 +753,7 @@ err:
 
 /*
  * @brief The reverse of ossl_ml_dsa_sk_encode().
- * See FIPS 204, Algorithm 24, skDecode().
+ * See FIPS 204, Algorithm 25, skDecode().
  *
  * @param in An encoded private key.
  * @param in_len The size of |in|
