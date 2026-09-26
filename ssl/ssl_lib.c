@@ -5409,6 +5409,8 @@ void SSL_set_accept_state(SSL *s)
     }
 #endif
 
+    if (sc == NULL)
+        return;
     sc->server = 1;
     sc->shutdown = 0;
     ossl_statem_clear(sc);
@@ -5429,6 +5431,8 @@ void SSL_set_connect_state(SSL *s)
     }
 #endif
 
+    if (sc == NULL)
+        return;
     sc->server = 0;
     sc->shutdown = 0;
     ossl_statem_clear(sc);
