@@ -319,7 +319,7 @@ static int mu_final(void *vctx, uint8_t *out, size_t *outl, size_t outsz)
         if (outsz < len)
             return 0;
 
-        if (ctx->remaining != 0)
+        if (ctx->remaining != 0 || !check_init(ctx))
             return 0;
         if (!ossl_ml_dsa_mu_finalize(ctx->mdctx, out, len))
             return 0;
