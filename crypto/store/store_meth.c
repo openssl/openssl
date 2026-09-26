@@ -148,7 +148,7 @@ static int unreserve_loader_store(void *store, void *data)
 
 /* Get loader methods from a store, or put one in */
 static void *get_loader_from_store(void *store, const OSSL_PROVIDER **prov,
-    void *data)
+    void *data, int req_optional)
 {
     struct loader_data_st *methdata = data;
     void *method = NULL;
@@ -164,7 +164,7 @@ static void *get_loader_from_store(void *store, const OSSL_PROVIDER **prov,
         && (store = get_loader_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, id, methdata->propquery, prov, &method))
+    if (!ossl_method_store_fetch(store, id, methdata->propquery, 0, prov, &method))
         return NULL;
     return method;
 }

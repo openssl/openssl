@@ -157,7 +157,7 @@ static int unreserve_decoder_store(void *store, void *data)
 
 /* Get decoder methods from a store, or put one in */
 static void *get_decoder_from_store(void *store, const OSSL_PROVIDER **prov,
-    void *data)
+    void *data, int req_optional)
 {
     struct decoder_data_st *methdata = data;
     void *method = NULL;
@@ -186,7 +186,7 @@ static void *get_decoder_from_store(void *store, const OSSL_PROVIDER **prov,
         && (store = get_decoder_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, id, methdata->propquery, prov, &method))
+    if (!ossl_method_store_fetch(store, id, methdata->propquery, 0, prov, &method))
         return NULL;
     return method;
 }

@@ -125,7 +125,7 @@ static uint32_t evp_method_id(int name_id, unsigned int operation_id)
 }
 
 static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER **prov,
-    void *data)
+    void *data, int req_optional)
 {
     struct evp_method_data_st *methdata = data;
     void *method = NULL;
@@ -156,7 +156,7 @@ static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER **prov,
         && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery, prov,
+    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery, req_optional, prov,
             &method))
         return NULL;
     return method;
@@ -372,7 +372,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                      * If the method doesn't exist in the tmp_store, either the tmp_store doesn't exist
                      * or the algorithm doesn't exist there, in either case, this is a cacheable entry
                      */
-                    if (!ossl_method_store_fetch(methdata->tmp_store, meth_id, propq, &tmp_prov, &tmp_method)) {
+                    if (!ossl_method_store_fetch(methdata->tmp_store, meth_id, propq, 0, &tmp_prov, &tmp_method)) {
                         set_in_cache = 1;
                     } else {
                         /*

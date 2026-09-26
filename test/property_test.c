@@ -522,7 +522,7 @@ static int test_property(void)
         OSSL_PROPERTY_LIST *pq = NULL;
 
         if (!TEST_true(ossl_method_store_fetch(store,
-                queries[i].nid, queries[i].prop,
+                queries[i].nid, queries[i].prop, 0,
                 &nullprov, &result))
             || !TEST_str_eq((char *)result, queries[i].expected)) {
             TEST_note("iteration %zd", i + 1);
@@ -541,7 +541,7 @@ static int test_property(void)
         if (queries[i].prov == &fake_prov1) {
             if (!TEST_true(ossl_method_store_fetch(store,
                     queries[i].nid,
-                    queries[i].prop,
+                    queries[i].prop, 0,
                     &fake_prov1, &result))
                 || !TEST_ptr_eq(fake_prov1, &fake_provider1)
                 || !TEST_str_eq((char *)result, queries[i].expected)) {
@@ -552,7 +552,7 @@ static int test_property(void)
         } else {
             if (!TEST_false(ossl_method_store_fetch(store,
                     queries[i].nid,
-                    queries[i].prop,
+                    queries[i].prop, 0,
                     &fake_prov1, &result))
                 || !TEST_ptr_eq(fake_prov1, &fake_provider1)
                 || !TEST_ptr_null(result)) {
@@ -573,7 +573,7 @@ static int test_property(void)
         if (queries[i].prov == &fake_prov2) {
             if (!TEST_true(ossl_method_store_fetch(store,
                     queries[i].nid,
-                    queries[i].prop,
+                    queries[i].prop, 0,
                     &fake_prov2, &result))
                 || !TEST_ptr_eq(fake_prov2, &fake_provider2)
                 || !TEST_str_eq((char *)result, queries[i].expected)) {
@@ -584,7 +584,7 @@ static int test_property(void)
         } else {
             if (!TEST_false(ossl_method_store_fetch(store,
                     queries[i].nid,
-                    queries[i].prop,
+                    queries[i].prop, 0,
                     &fake_prov2, &result))
                 || !TEST_ptr_eq(fake_prov2, &fake_provider2)
                 || !TEST_ptr_null(result)) {
