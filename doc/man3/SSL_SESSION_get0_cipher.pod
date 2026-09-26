@@ -24,6 +24,9 @@ should not be released.
 SSL_SESSION_set_cipher() can be used to set the ciphersuite associated with the
 SSL_SESSION B<s> to B<cipher>. For example, this could be used to set up a
 session based PSK (see L<SSL_CTX_set_psk_use_session_callback(3)>).
+For a PSK the cipher pins the handshake digest and, when the PSK is used for
+early data (0-RTT), the ciphersuite that protects that early data; see
+L<SSL_read_early_data(3)>.
 
 =head1 RETURN VALUES
 
@@ -39,7 +42,8 @@ L<d2i_SSL_SESSION(3)>,
 L<SSL_SESSION_get_time(3)>,
 L<SSL_SESSION_get0_hostname(3)>,
 L<SSL_SESSION_free(3)>,
-L<SSL_CTX_set_psk_use_session_callback(3)>
+L<SSL_CTX_set_psk_use_session_callback(3)>,
+L<SSL_read_early_data(3)>
 
 =head1 HISTORY
 

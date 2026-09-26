@@ -65,6 +65,8 @@ the following fields set:
 =item The master key
 
 This can be set via a call to L<SSL_SESSION_set1_master_key(3)>.
+The master key must not be empty: a session whose master key has zero length is
+rejected with B<SSL_R_BAD_PSK>.
 
 =item A ciphersuite
 
@@ -72,9 +74,18 @@ Only the handshake digest associated with the ciphersuite is relevant for the
 PSK (the server may go on to negotiate any ciphersuite which is compatible with
 the digest). The application can use any TLSv1.3 ciphersuite. If B<md> is
 not NULL the handshake digest for the ciphersuite should be the same.
-The ciphersuite can be set via a call to <SSL_SESSION_set_cipher(3)>. The
-handshake digest of an SSL_CIPHER object can be checked using
-<SSL_CIPHER_get_handshake_digest(3)>.
+The ciphersuite can be set via a call to L<SSL_SESSION_set_cipher(3)>.
+The handshake digest of an SSL_CIPHER object can be checked using
+L<SSL_CIPHER_get_handshake_digest(3)>.
+
+While only the digest matters for the handshake, early data (0-RTT) is protected
+with the exact ciphersuite recorded on the session, and the associated ALPN
+protocol, if any.
+To send early data with this PSK the application must therefore offer that
+ciphersuite (not merely a digest-compatible one) and, where applicable, at
+least that ALPN protocol on the connection; otherwise the client completes the
+handshake without sending early data.
+See L<SSL_write_early_data(3)>.
 
 =item The protocol version
 
@@ -85,7 +96,8 @@ be TLS1_3_VERSION.
 
 Additionally the maximum early data value should be set via a call to
 L<SSL_SESSION_set_max_early_data(3)> if the PSK will be used for sending early
-data.
+data; see L<SSL_write_early_data(3)> for the conditions under which early data is
+actually sent.
 
 Alternatively an SSL_SESSION created from a previous non-PSK handshake may also
 be used as the basis for a PSK.
@@ -168,7 +180,8 @@ failure. In the event of failure the connection setup fails.
 
 L<ssl(7)>,
 L<SSL_CTX_set_psk_find_session_callback(3)>,
-L<SSL_set_psk_find_session_callback(3)>
+L<SSL_set_psk_find_session_callback(3)>,
+L<SSL_write_early_data(3)>
 
 =head1 HISTORY
 

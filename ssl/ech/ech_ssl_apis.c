@@ -217,7 +217,14 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
         && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
         long vr = X509_V_OK;
 
-        vr = SSL_get_verify_result(ssl);
+        /*
+         * The SUCCESS vs BAD_NAME distinction reflects whether the peer's
+         * certificate verified against the (inner) SNI -- a client-side verdict.
+         * On the server SSL_get_verify_result() is the client certificate's
+         * result, unrelated to ECH, so it is not consulted here.
+         */
+        if (s->server == 0)
+            vr = SSL_get_verify_result(ssl);
         if (sinner != NULL
             && (*inner_sni = OPENSSL_strdup(sinner)) == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
