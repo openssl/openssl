@@ -1126,13 +1126,24 @@ The length of the "tls1multi_maxsndfrag" parameter should not exceed that of a B
 =item "tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) <octet string>
 
 Sets the authenticated additional data used by a TLS1 multiblock cipher operation.
-The supplied data consists of 13 bytes of record data containing:
+The supplied data starts with 13 bytes of record data containing:
 Bytes 0-7: The sequence number of the first record
 Byte 8: The record type
 Byte 9-10: The protocol version
 Byte 11-12: Input length (Always 0)
 
+For AES-CBC-HMAC ciphers, the optional "tls1multi_aadlen" parameter
+specifies the total input length.
+
 "tls1multi_interleave" must also be set for this operation.
+
+=item "tls1multi_aadlen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_LEN>) <unsigned integer>
+
+Sets the total input length for an AES-CBC-HMAC TLS1 multiblock cipher operation.
+It must be set with "tls1multi_aad". If it is not set, the cipher uses the
+legacy "tls1multi_aad" length convention: when bytes 11-12 are zero, the
+octet string size is the total input length. This parameter is only supported
+by AES-CBC-HMAC ciphers.
 
 =item "xts_standard" (B<OSSL_CIPHER_PARAM_XTS_STANDARD>) <UTF8 string>
 
@@ -1285,7 +1296,8 @@ followed by EVP_CIPHER_CTX_get_params() with a key of
 
 When used with a fetched B<EVP_CIPHER>, EVP_CIPHER_CTX_set_params() gets called
 with L<OSSL_PARAM(3)> items with the keys
-"tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) and
+"tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>),
+"tls1multi_aadlen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_LEN>) and
 "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>)
 followed by EVP_CIPHER_CTX_get_params() with keys of
 "tls1multi_aadpacklen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN>) and
