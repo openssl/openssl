@@ -338,13 +338,31 @@ static int public_from_private(const ML_DSA_KEY *key, EVP_MD_CTX *md_ctx,
     const ML_DSA_PARAMS *params = key->params;
     uint32_t k = (uint32_t)params->k, l = (uint32_t)params->l;
     POLY *polys;
+    void *polys_freeptr;
     MATRIX a_ntt;
     VECTOR s1_ntt;
     VECTOR t;
+#if defined(OPENSSL_ML_DSA_S390X)
+#define POLY_ALIGN 16
+    size_t polys_bytes = (k + l + (size_t)k * l) * sizeof(*polys)
+        + sizeof(void *) + (POLY_ALIGN - 1);
+    uint8_t *raw = OPENSSL_malloc(polys_bytes);
+    uintptr_t addr;
 
-    polys = OPENSSL_malloc_array(k + l + k * l, sizeof(*polys));
+    if (raw == NULL)
+        return 0;
+    addr = ((uintptr_t)raw + sizeof(void *) + (POLY_ALIGN - 1))
+        & ~(uintptr_t)(POLY_ALIGN - 1);
+    *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
+    polys = (POLY *)(void *)addr;
+    polys_freeptr = raw;
+#undef POLY_ALIGN
+#else
+    polys = OPENSSL_malloc_array(k + l + (size_t)k * l, sizeof(*polys));
+    polys_freeptr = polys;
     if (polys == NULL)
         return 0;
+#endif
 
     vector_init(&t, polys, k);
     vector_init(&s1_ntt, t.poly + k, l);
@@ -374,7 +392,7 @@ err:
      * require any special protections.
      */
     OPENSSL_cleanse(polys, (k + l) * sizeof(*polys));
-    OPENSSL_free(polys);
+    OPENSSL_free(polys_freeptr);
     return ret;
 }
 
@@ -407,15 +425,37 @@ int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
     const OSSL_ML_DSA_SAMPLE_OPS *sample_ops = ossl_ml_dsa_sample_ops();
     VECTOR t1, t0;
     POLY *polys = NULL;
+    void *polys_freeptr = NULL;
     uint32_t k = (uint32_t)key->params->k;
     EVP_MD_CTX *md_ctx = NULL;
 
     if (key->pub_encoding == NULL || key->priv_encoding == 0)
         return 0;
 
+#if defined(OPENSSL_ML_DSA_S390X)
+#define POLY_ALIGN 16
+    {
+        size_t bytes = 2 * (size_t)k * sizeof(*polys)
+            + sizeof(void *) + (POLY_ALIGN - 1);
+        uint8_t *raw = OPENSSL_malloc(bytes);
+        uintptr_t addr;
+
+        if (raw == NULL)
+            return 0;
+        addr = ((uintptr_t)raw + sizeof(void *) + (POLY_ALIGN - 1))
+            & ~(uintptr_t)(POLY_ALIGN - 1);
+        *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
+        polys = (POLY *)(void *)addr;
+        polys_freeptr = raw;
+    }
+#undef POLY_ALIGN
+#else
     polys = OPENSSL_malloc_array(2 * k, sizeof(*polys));
+    polys_freeptr = polys;
     if (polys == NULL)
         return 0;
+#endif
+
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL)
         goto err;
@@ -428,7 +468,8 @@ int ossl_ml_dsa_key_pairwise_check(const ML_DSA_KEY *key)
     ret = vector_equal(&t1, &key->t1) && vector_equal(&t0, &key->t0);
 err:
     EVP_MD_CTX_free(md_ctx);
-    OPENSSL_clear_free(polys, 2 * k * sizeof(*polys));
+    OPENSSL_cleanse(polys, 2 * k * sizeof(*polys));
+    OPENSSL_free(polys_freeptr);
     return ret;
 }
 
