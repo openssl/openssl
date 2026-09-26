@@ -23,6 +23,7 @@
 #include <openssl/trace.h>
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
+#include "internal/cryptlib.h" /* for ossl_asprintf() */
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
@@ -1500,25 +1501,19 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
     /* Support for basic (base64) proxy authentication */
     if (proxyuser != NULL) {
-        size_t len = strlen(proxyuser) + 1;
-        char *proxyauth, *proxyauthenc = NULL;
+        char *proxyauth = NULL, *proxyauthenc = NULL;
+        int len;
 
-        if (proxypass != NULL)
-            len += strlen(proxypass);
-        proxyauth = OPENSSL_malloc(len + 1);
-        if (proxyauth == NULL)
+        len = ossl_asprintf(&proxyauth, "%s:%s", proxyuser,
+            proxypass != NULL ? proxypass : "");
+        if (len < 0)
             goto end;
-        if (snprintf(proxyauth, len + 1, "%s:%s", proxyuser,
-                proxypass != NULL ? proxypass : "")
-            != (int)len)
-            goto proxy_end;
-        proxyauthenc = base64encode(proxyauth, len);
+        proxyauthenc = base64encode(proxyauth, (size_t)len);
         if (proxyauthenc != NULL) {
             BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc);
             OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
         }
-    proxy_end:
-        OPENSSL_clear_free(proxyauth, len);
+        OPENSSL_clear_free(proxyauth, (size_t)len);
         if (proxyauthenc == NULL)
             goto end;
     }
