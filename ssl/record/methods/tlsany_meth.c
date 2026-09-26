@@ -48,7 +48,7 @@ static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
     const int version1_3 = rl->isdtls ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (rl->version == TLS_ANY_VERSION) {
-        if ((rec->rec_version >> 8) != SSL3_VERSION_MAJOR) {
+        if ((rec->rec_version >> 8) != TLS1_VERSION_MAJOR) {
             if (rl->is_first_record) {
                 unsigned char *p;
 
