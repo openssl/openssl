@@ -1309,6 +1309,42 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
     return X509_V_OK;
 }
 
+int ossl_x509_mldsa_key_usage_invalid(const X509 *x)
+{
+    const X509_PUBKEY *pubkey;
+    ASN1_OBJECT *alg = NULL;
+    ASN1_BIT_STRING *usage = NULL;
+    uint32_t bits = 0;
+    int i, nid;
+    const uint32_t forbidden = KU_KEY_ENCIPHERMENT | KU_DATA_ENCIPHERMENT
+        | KU_KEY_AGREEMENT | KU_ENCIPHER_ONLY | KU_DECIPHER_ONLY;
+
+    if (x == NULL
+        || (pubkey = X509_get_X509_PUBKEY(x)) == NULL
+        || !X509_PUBKEY_get0_param(&alg, NULL, NULL, NULL, pubkey)
+        || alg == NULL)
+        return 0;
+
+    nid = OBJ_obj2nid(alg);
+    if (nid != NID_ML_DSA_44 && nid != NID_ML_DSA_65 && nid != NID_ML_DSA_87)
+        return 0;
+
+    ERR_set_mark();
+    usage = X509_get_ext_d2i(x, NID_key_usage, &i, NULL);
+    ERR_pop_to_mark();
+    if (usage == NULL)
+        return 0;
+
+    if (usage->length > 0) {
+        bits = usage->data[0];
+        if (usage->length > 1)
+            bits |= (uint32_t)usage->data[1] << 8;
+    }
+    ASN1_BIT_STRING_free(usage);
+
+    return (bits & forbidden) != 0;
+}
+
 uint32_t X509_get_extension_flags(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
