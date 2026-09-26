@@ -624,6 +624,155 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+static int test_dtls13_ack_list_bound(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    unsigned char frag[] = {
+        SSL3_MT_KEY_UPDATE, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0
+    };
+    unsigned char buf;
+    const size_t max_records = (SSL3_RT_MAX_PLAIN_LENGTH - DTLS13_ACK_HEADER_LEN)
+        / DTLS13_RECORD_NUMBER_LEN;
+    size_t i, written;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    if (!TEST_size_t_eq(ossl_list_record_number_num(&sc->d1->ack_rec_num), 0))
+        goto end;
+
+    /*
+     * Repeat the first byte of a two-byte message in fresh records, leaving
+     * reassembly incomplete. Consume each record before sending the next.
+     */
+    frag[4] = (unsigned char)(cc->d1->next_handshake_write_seq >> 8);
+    frag[5] = (unsigned char)cc->d1->next_handshake_write_seq;
+    for (i = 0; i < 2 * max_records; i++) {
+        if (!TEST_int_eq(dtls1_write_bytes(cc, SSL3_RT_HANDSHAKE, frag,
+                             sizeof(frag), &written),
+                1)
+            || !TEST_size_t_eq(written, sizeof(frag))
+            || !TEST_int_gt(BIO_flush(SSL_get_wbio(client)), 0))
+            goto end;
+        ret = SSL_read(server, &buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+            || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(server)), 0)
+            || !TEST_size_t_eq(ossl_list_record_number_num(&sc->d1->ack_rec_num),
+                i < max_records ? i + 1 : max_records))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+static int large_ticket_cb(SSL *ssl, void *arg)
+{
+    static const unsigned char appdata[8192] = { 0 };
+
+    return SSL_SESSION_set1_ticket_appdata(SSL_get_session(ssl), appdata,
+        sizeof(appdata));
+}
+
+/* Split ACKs at the MTU or fragment limit, including a retry between records. */
+static int test_dtls13_ack_records(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    BIO *retry = NULL;
+    pitem *item;
+    dtls_sent_msg *msg;
+    unsigned char buf;
+    size_t limit;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(SSL_CTX_set_session_ticket_cb(sctx, large_ticket_cb, NULL, NULL))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+    SSL_set_options(client, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_long_gt(SSL_set_mtu(server, 256), 0)
+        || !TEST_long_gt(SSL_set_mtu(client, idx == 1 ? 1500 : 256), 0)
+        || !TEST_true(SSL_set_max_send_fragment(client, 512))
+        || !TEST_true(SSL_new_session_ticket(server))
+        || !TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_ptr(item = pqueue_peek(&sc->d1->sent_messages)))
+        goto end;
+
+    /* The ticket must require more ACK entries than fit in one record. */
+    msg = item->data;
+    limit = idx == 1 ? 512 : DTLS_get_data_mtu(client);
+    if (!TEST_size_t_gt(DTLS13_ACK_HEADER_LEN
+                + DTLS13_RECORD_NUMBER_LEN * ossl_list_record_number_num(&msg->rec_nums),
+            limit))
+        goto end;
+    sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+
+    if (idx == 2) {
+        if (!TEST_ptr(retry = BIO_new(bio_s_maybe_retry()))
+            || !TEST_true(BIO_up_ref(SSL_get_wbio(client))))
+            goto end;
+        SSL_set0_wbio(client, BIO_push(retry, SSL_get_wbio(client)));
+        retry = NULL;
+        if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(client),
+                              MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 1, NULL),
+                1))
+            goto end;
+        ret = SSL_read(client, &buf, 1);
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_WRITE)
+            || !TEST_size_t_gt(cc->init_off, 0)
+            || !TEST_long_eq(BIO_ctrl(SSL_get_wbio(client),
+                                 MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 100, NULL),
+                1))
+            goto end;
+    }
+
+    if (!TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's'))
+        goto end;
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout))
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free(retry);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -640,6 +789,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_ack_coverage, 2);
     ADD_ALL_TESTS(test_dtls13_ticket_ack_retransmit, 8);
     ADD_TEST(test_dtls13_pha_ack_retransmit);
+    ADD_TEST(test_dtls13_ack_list_bound);
+    ADD_ALL_TESTS(test_dtls13_ack_records, 3);
 #endif
     return 1;
 }
