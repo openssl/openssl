@@ -488,11 +488,9 @@ static unsigned int blocking_accept_thread(void *arg)
  * readiness rather than for a datagram, which is what this exercises - a
  * client is only created once the accepting thread is already in the call.
  *
- * Note that this cannot distinguish waiting from spinning: the accept returns
- * the connection either way, and the difference is CPU consumed rather than
- * anything observable through the API. It is a test that the blocking path
- * works at all, which was previously only covered for the failure case of
- * having no BIO set.
+ * This cannot distinguish waiting from spinning: the accept returns the
+ * connection either way, and the difference is not observable through the
+ * API.
  */
 static int test_dtls_blocking_accept(void)
 {
@@ -513,10 +511,7 @@ static int test_dtls_blocking_accept(void)
     if (!TEST_true(create_listener(sctx, &listener, &server_addr, &server_fd)))
         goto err;
 
-    /*
-     * This test needs the blocking accept, so ask for it rather than relying
-     * on the default.
-     */
+    /* This test needs the blocking accept. */
     if (!TEST_true(SSL_set_blocking_mode(listener, 1)))
         goto err;
 
@@ -680,10 +675,8 @@ static unsigned int blocking_read_thread(void *arg)
  * assertion rather than as a hang.
  *
  * idx 0 blocks in the handshake as well as in the read. idx 1 handshakes in
- * non-blocking mode and only then switches the connection to blocking, which
- * leaves the read as the sole assertion the emulation has to satisfy - without
- * it, idx 0 fails at SSL_accept() and never reaches the read, so on its own it
- * would not tell us the read path works.
+ * non-blocking mode and only then switches the connection to blocking, so
+ * the read is the only thing relying on the emulation.
  *
  * Only the client is driven from this thread: the accepting thread ticks the
  * listener itself, which is what lets a blocked connection make progress at

@@ -28,8 +28,8 @@ my $server_key   = srctop_file("test", "certs", "serverkey.pem");
 my $resultdir    = result_dir();
 
 # Each case exercises the s_client message callback (-msg) over a different
-# protocol version. Every record must be decoded; before the DTLSv1.2 fix such
-# records were logged as "Not TLS data or unknown version".
+# protocol version. Every record must be decoded; none may be logged as
+# "Not TLS data or unknown version".
 my @cases = (
     { name => "TLSv1.2",  flag => "-tls1_2",  disabled => "tls1_2" },
     { name => "TLSv1.3",  flag => "-tls1_3",  disabled => "tls1_3" },
