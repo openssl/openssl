@@ -4784,6 +4784,127 @@ static int check_early_data_timeout(OSSL_TIME timer)
     return res;
 }
 
+typedef struct {
+    time_t server_time;
+    uint32_t age_add;
+} TICKET_AGE_TEST_DATA;
+
+static int ticket_age_gen_cb(SSL *ssl, void *arg)
+{
+    TICKET_AGE_TEST_DATA *data = arg;
+    SSL_SESSION *sess = SSL_get0_session(ssl);
+
+    if (!TEST_ptr(sess))
+        return 0;
+    sess->ext.tick_age_add = data->age_add;
+    return TEST_time_t_ne(SSL_SESSION_set_time_ex(sess, data->server_time), 0);
+}
+
+static int test_early_data_ticket_age(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *sess = NULL;
+    TICKET_AGE_TEST_DATA data;
+    time_t now = time(NULL);
+    OSSL_TIME timer, setup_timer = ossl_time_now();
+    unsigned char buf[20];
+    size_t readbytes, written;
+    /* Bits select rejection, wraparound, stateless tickets, and DTLS. */
+    int accept = (idx & 1) == 0;
+    int wrapped = (idx & 2) != 0;
+    int stateless = (idx & 4) != 0;
+    int testdtls = (idx & 8) != 0;
+    int ret, testresult = 0;
+
+    if (testdtls) {
+#if defined(OSSL_NO_USABLE_DTLS1_3)
+        return TEST_skip("No usable DTLSv1.3");
+#endif
+    } else {
+#if defined(OSSL_NO_USABLE_TLS1_3)
+        return TEST_skip("No usable TLSv1.3");
+#endif
+    }
+
+    data.age_add = wrapped ? UINT32_MAX - 10000 : 1000000;
+    data.server_time = accept ? now - 20 : now;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+            testdtls ? DTLS_server_method() : TLS_server_method(),
+            testdtls ? DTLS_client_method() : TLS_client_method(),
+            testdtls ? DTLS1_3_VERSION : TLS1_3_VERSION, 0,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_session_ticket_cb(sctx, ticket_age_gen_cb,
+            NULL, &data)))
+        goto end;
+
+    if (stateless)
+        SSL_CTX_set_options(sctx, SSL_OP_NO_ANTI_REPLAY);
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl,
+            &sess, 0, SHA256_DIGEST_LENGTH, testdtls))
+        || !TEST_ptr(sess)
+        || !TEST_time_t_ne(SSL_SESSION_set_time_ex(sess, now - 20), 0))
+        goto end;
+
+    /* Match the stored offset; the callback doesn't change the wire value. */
+    sess->ext.tick_age_add = data.age_add;
+
+    timer = ossl_time_now();
+    if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1), &written))
+        || !TEST_size_t_eq(written, strlen(MSG1)))
+        goto end;
+
+    ret = SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes);
+    /*
+     * A long setup could make the unfixed code reject wrapped early data for
+     * the wrong reason, so do not count that as regression coverage.
+     */
+    if (!accept && wrapped
+        && (testresult = check_early_data_timeout(setup_timer)) != 0)
+        goto end;
+    if (!TEST_int_eq(ret, accept ? SSL_READ_EARLY_DATA_SUCCESS : SSL_READ_EARLY_DATA_FINISH)) {
+        testresult = check_early_data_timeout(timer);
+        goto end;
+    }
+
+    if (!TEST_true(SSL_session_reused(serverssl))
+        || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+            accept ? SSL_EARLY_DATA_ACCEPTED : SSL_EARLY_DATA_REJECTED))
+        goto end;
+
+    if (accept) {
+        if (!TEST_mem_eq(buf, readbytes, MSG1, strlen(MSG1)))
+            goto end;
+    } else {
+        /* Rejecting early data must still allow session resumption. */
+        if (!TEST_size_t_eq(readbytes, 0)
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl))
+            || !TEST_true(SSL_session_reused(serverssl))
+            || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+                SSL_EARLY_DATA_REJECTED)
+            || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                SSL_EARLY_DATA_REJECTED)
+            || !TEST_true(SSL_write_ex(clientssl, MSG2, strlen(MSG2), &written))
+            || !TEST_size_t_eq(written, strlen(MSG2))
+            || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+            || !TEST_mem_eq(buf, readbytes, MSG2, strlen(MSG2)))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static int test_early_data_read_write(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -17553,6 +17674,7 @@ int setup_tests(void)
 #endif
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
     ADD_ALL_TESTS(test_early_data_read_write, 12);
+    ADD_ALL_TESTS(test_early_data_ticket_age, 16);
     /*
      * We don't do replay tests for external PSK. Replay protection isn't used
      * in that scenario.
