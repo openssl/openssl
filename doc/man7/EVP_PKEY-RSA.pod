@@ -143,6 +143,22 @@ OSSL_KEYMGMT_SELECT_PRIVATE_KEY is not set in the selection parameter.
 
 =back
 
+=head2 RSA key generation FIPS indicator
+
+The following key generation parameter can be retrieved with
+L<EVP_PKEY_CTX_get_params(3)> from the OpenSSL FIPS provider:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+Returns 1 if the operation is FIPS approved, or 0 otherwise.
+See L<fips_module(7)/FIPS indicators> for more information.
+Using any of the FIPS module testing parameters described below causes this
+indicator to return 0.
+
+=back
+
 =head2 RSA key generation parameters for FIPS module testing
 
 When generating RSA keys, the following additional key generation parameters may
@@ -273,7 +289,7 @@ L<EVP_RSA_gen(3)>, L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
