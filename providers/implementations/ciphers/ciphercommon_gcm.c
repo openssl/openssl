@@ -15,6 +15,7 @@
 #include "prov/ciphercommon_gcm.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "fips/fipsindicator.h"
 
 #include "providers/implementations/ciphers/ciphercommon_gcm.inc"
 
@@ -27,6 +28,14 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     size_t *padlen, const unsigned char *in,
     size_t len);
 static int on_preupdate_generate_iv(PROV_GCM_CTX *ctx);
+
+#ifdef FIPS_MODULE
+static int gcm_fips_taglen_approved(size_t taglen)
+{
+    return taglen == UNINITIALISED_SIZET || taglen == 4 || taglen == 8
+        || (taglen >= 12 && taglen <= GCM_TAG_MAX_SIZE);
+}
+#endif
 
 /*
  * Called from EVP_CipherInit when there is currently no context via
@@ -241,6 +250,17 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
 
     if (p.gen != NULL && !OSSL_PARAM_set_uint(p.gen, ctx->iv_gen_rand))
+        return 0;
+
+    /*
+     * Externally supplied IVs are permitted but not approved for encryption.
+     * Approved tag lengths are 4, 8, and 12 through 16 bytes.
+     * For encryption, requesting only a prefix of the generated tag does not
+     * change the tag length used by the operation.
+     */
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind,
+            (!ctx->enc || ctx->iv_gen_rand)
+                && gcm_fips_taglen_approved(ctx->taglen)))
         return 0;
 
     return 1;
@@ -521,6 +541,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     /* Special case: -1 length restores whole IV */
     if (len == (size_t)-1) {
         memcpy(ctx->iv, iv, ctx->ivlen);
+        ctx->iv_gen_rand = 0;
         ctx->iv_gen = 1;
         ctx->iv_state = IV_STATE_BUFFERED;
         return 1;

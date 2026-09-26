@@ -77,13 +77,27 @@ This value can also be retrieved with L<EVP_MD_get_flags(3)>.
 
 =back
 
+=head2 FIPS indicator
+
+Digest implementations in the OpenSSL FIPS provider make the following
+parameter available with L<EVP_MD_CTX_get_params(3)>:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+Returns 1 if the operation is FIPS approved, or 0 otherwise.
+See L<fips_module(7)/FIPS indicators> for more information.
+
+=back
+
 =head1 SEE ALSO
 
 L<EVP_DigestInit(3)/PARAMETERS>, L<EVP_MD_get_params(3)>, L<provider-digest(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
