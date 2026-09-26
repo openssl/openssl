@@ -92,12 +92,12 @@ gen_server_credentials() {
     $mkcert_sh genroot "Root CA" newWithNew-key newWithNew-cert
 
     $OPENSSL pkey -in newWithNew-key.pem -out newWithNew-pubkey.pem -outform PEM -pubout
-    $OPENSSL x509 -new -subj "/CN=Root CA" -CA server_root-cert.pem -CAkey server_root-key.pem \
+    $OPENSSL x509 -new -subj "/CN=Root CA" -days $DAYS -CA server_root-cert.pem -CAkey server_root-key.pem \
         -out newWithOld.pem -force_pubkey newWithNew-pubkey.pem \
         -extfile <(printf "basicConstraints=critical,CA:true")
 
     $OPENSSL pkey -in server_root-key.pem -out server_root-pubkey.pem -outform PEM -pubout
-    $OPENSSL x509 -new -subj "/CN=Root CA" -CA newWithNew-cert.pem -CAkey newWithNew-key.pem \
+    $OPENSSL x509 -new -subj "/CN=Root CA" -days $DAYS -CA newWithNew-cert.pem -CAkey newWithNew-key.pem \
         -out oldWithNew.pem -force_pubkey server_root-pubkey.pem \
         -extfile <(printf "basicConstraints=critical,CA:true")
 
@@ -139,10 +139,10 @@ genee_kem() {
     local ca=$1; shift
     echo "Generating KEM certificate"
     $OPENSSL genpkey -algorithm "$OPENSSL_KEYALG" -out ${key}.pem -outpubkey ${cn}-pubkey.pem
-    $OPENSSL x509 -new -subj "/CN=${cn}" -CA ${ca}.pem -CAkey ${cakey}.pem \
+    $OPENSSL x509 -new -subj "/CN=${cn}" -days $DAYS -CA ${ca}.pem -CAkey ${cakey}.pem \
         -out ${cert}.pem -force_pubkey ${cn}-pubkey.pem \
         -extfile <(printf "basicConstraints=critical,CA:false\nkeyUsage=critical,keyEncipherment")
-    $OPENSSL x509 -new -subj "/CN=${cn}-noSKID" -CA ${ca}.pem -CAkey ${cakey}.pem \
+    $OPENSSL x509 -new -subj "/CN=${cn}-noSKID" -days $DAYS -CA ${ca}.pem -CAkey ${cakey}.pem \
         -out ${cert}-noSKID.pem -force_pubkey ${cn}-pubkey.pem \
         -extfile <(printf "basicConstraints=critical,CA:false\nkeyUsage=critical,keyEncipherment\nsubjectKeyIdentifier=none")
     rm -f ${cn}-pubkey.pem
