@@ -15,6 +15,9 @@
 
 #ifndef OPENSSL_NO_ECH
 
+#include "internal/ssl_unwrap.h"
+#include "../ssl/ssl_local.h"
+
 #define DEF_CERTS_DIR "test/certs"
 
 static OSSL_LIB_CTX *libctx = NULL;
@@ -2341,6 +2344,57 @@ end:
     return res;
 }
 
+static const struct {
+    uint8_t max_name_length;
+    const char *hostname;
+    size_t encoded_len;
+    size_t expected_len;
+} padding_tests[] = {
+    /* RFC 9849, Section 6.1.3: pad the name, not the whole SNI extension. */
+    { 20, "example.com", 128, 160 },
+    { 19, "example.com", 128, 160 },
+    { 12, "example.com", 128, 160 },
+    { 11, "example.com", 128, 128 },
+    { 10, "example.com", 128, 128 },
+    { 0, "example.com", 128, 128 },
+    /* After SNI padding, just below, at, and above a 32-byte boundary. */
+    { 20, "example.com", 150, 160 },
+    { 20, "example.com", 151, 160 },
+    { 20, "example.com", 152, 192 },
+    { 255, "example.com", 141, 416 },
+    /* Without SNI, include the nine bytes of extension overhead. */
+    { 20, NULL, 130, 160 },
+    { 20, NULL, 131, 160 },
+    { 20, NULL, 132, 192 },
+    /* Preserve the existing minimum padded length. */
+    { 20, "example.com", 80, 128 },
+};
+
+static int test_ech_padding_length(int idx)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc;
+    OSSL_ECHSTORE_ENTRY entry = { 0 };
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, propq, TLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(ssl)))
+        goto end;
+    if (padding_tests[idx].hostname != NULL
+        && !TEST_true(SSL_set_tlsext_host_name(ssl, padding_tests[idx].hostname)))
+        goto end;
+    entry.max_name_length = padding_tests[idx].max_name_length;
+    ret = TEST_size_t_eq(ossl_ech_calc_padding(sc, &entry,
+                             padding_tests[idx].encoded_len),
+        padding_tests[idx].expected_len);
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return ret;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2391,6 +2445,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     ADD_ALL_TESTS(test_ech_keylog_random, 4);
+    ADD_ALL_TESTS(test_ech_padding_length, OSSL_NELEM(padding_tests));
     return 1;
 err:
     return 0;
