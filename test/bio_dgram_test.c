@@ -17,6 +17,56 @@
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 
+#if defined(SO_RCVTIMEO)
+static int test_bio_dgram_recv_timeout(void)
+{
+    int testresult = 0, fd = -1;
+    BIO *bio = NULL;
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina;
+    struct timeval timeout = { 0, 100000 };
+    union BIO_sock_info_u info;
+    char buf;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_ptr(addr = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina), 0))
+        || !TEST_int_ge(fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0), 0)
+        || !TEST_int_gt(BIO_bind(fd, addr, 0), 0)
+        || !TEST_ptr(bio = BIO_new_dgram(fd, BIO_NOCLOSE))
+        || !TEST_int_eq(BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT,
+                            0, &timeout),
+            0))
+        goto err;
+
+    /* A receive timeout must leave the BIO ready to retry. */
+    if (!TEST_int_eq(BIO_read(bio, &buf, sizeof(buf)), -1)
+        || !TEST_true(BIO_should_retry(bio))
+        || !TEST_true(BIO_should_read(bio))
+        || !TEST_int_eq(BIO_dgram_recv_timedout(bio), 1)
+        || !TEST_int_eq(BIO_dgram_recv_timedout(bio), 0))
+        goto err;
+
+    /* The same socket must still be usable after the timeout. */
+    info.addr = addr;
+    if (!TEST_int_gt(BIO_sock_info(fd, BIO_SOCK_INFO_ADDRESS, &info), 0)
+        || !TEST_int_gt(BIO_dgram_set_peer(bio, addr), 0)
+        || !TEST_int_eq(BIO_write(bio, "x", 1), 1)
+        || !TEST_int_eq(BIO_read(bio, &buf, sizeof(buf)), 1)
+        || !TEST_int_eq(buf, 'x')
+        || !TEST_false(BIO_should_retry(bio)))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(bio);
+    BIO_ADDR_free(addr);
+    if (fd >= 0)
+        BIO_closesocket(fd);
+    return testresult;
+}
+#endif
+
 static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
 {
     struct in_addr xa, xb;
@@ -1013,6 +1063,9 @@ int setup_tests(void)
     }
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+#if defined(SO_RCVTIMEO)
+    ADD_TEST(test_bio_dgram_recv_timeout);
+#endif
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
 #if !defined(OPENSSL_NO_CHACHA)
     ADD_ALL_TESTS(test_bio_dgram_pair, 3);
