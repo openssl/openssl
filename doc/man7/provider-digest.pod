@@ -276,6 +276,17 @@ values associated with the give provider side digest context I<dctx>
 and stores them in I<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
+The OpenSSL FIPS provider supports the following gettable context parameter:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+Returns 1 if the operation is FIPS approved, or 0 otherwise.
+See L<fips_module(7)/FIPS indicators> for more information.
+
+=back
+
 =head1 RETURN VALUES
 
 OSSL_FUNC_digest_newctx() and OSSL_FUNC_digest_dupctx() should return the newly created
@@ -314,6 +325,7 @@ L<life_cycle-digest(7)>, L<EVP_DigestInit(3)>
 
 The provider DIGEST interface was introduced in OpenSSL 3.0.
 OSSL_FUNC_digest_copyctx() was added in 3.5 version.
+The "fips-indicator" context parameter was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

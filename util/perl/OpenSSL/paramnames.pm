@@ -21,6 +21,7 @@ our $headers_included = 0;
 my $case_sensitive = 1;
 my $need_break = 0;
 my $invalid_param = "invalid param";
+my $default_indicator = "fips indicator";
 
 my %params = (
 # Well known parameter names that core passes to providers
@@ -176,6 +177,7 @@ my %params = (
     'OSSL_DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
     'OSSL_DIGEST_PARAM_FUNCTION_NAME' =>    "function-name", # utf8 string
     'OSSL_DIGEST_PARAM_CUSTOMIZATION' =>    "customization", # utf8 string
+    'OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR' => '*OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR',
     'OSSL_DIGEST_PARAM_PROPERTIES' => '*OSSL_ALG_PARAM_PROPERTIES',# utf8 string
 
 # external mu digest parameters
@@ -712,6 +714,9 @@ sub trie_matched {
     printf "%sERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,\n", $indent1;
     printf "%s               \"param %%s is unsupported\", s);\n", $indent1;
     printf "%sreturn 0;\n", $indent1;
+  } elsif ($field eq $default_indicator) {
+    printf "%sif (!OSSL_PARAM_set_int((OSSL_PARAM *)p, 1))\n", $indent1;
+    printf "%sreturn 0;\n", $indent2;
   } elsif (defined($num)) {
     printf "%sif (ossl_unlikely(r->num_%s >= %s)) {\n", $indent1, $field, $num;
     printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_TOO_MANY_RECORDS,\n", $indent2;
@@ -904,6 +909,9 @@ sub output_param_decoder {
         if ($pident eq $invalid_param) {
             # Skip error cases in parameter list
             next;
+        } elsif ($pident eq $default_indicator) {
+            # These are only relevant for the FIPS provider
+            $ifdefs{$pident} = ' defined(FIPS_MODULE)';
         }
         if (defined $pnum) {
             if ($pnum eq 'hidden') {
@@ -938,13 +946,15 @@ sub output_param_decoder {
     printf "#ifndef %s_st\n", $decoder_name_base;
     printf "struct %s_st {\n", $decoder_name_base;
     my %done_prms = ();
+    my $have_struct_field = 0;
     foreach my $pident (sort values %prms) {
-        if ($pident eq $invalid_param) {
-            # Skip error cases in structure
+        if ($pident eq $invalid_param || $pident eq $default_indicator) {
+            # Skip error cases and default indicators in structure
             next;
         }
         if (not defined $done_prms{$pident}) {
             $done_prms{$pident} = 1;
+            $have_struct_field = 1;
             output_ifdef($ifdefs{$pident});
             if (defined($concat_num{$pident})) {
                 printf "    OSSL_PARAM *%s[%s];\n", $pident, $concat_num{$pident};
@@ -960,6 +970,7 @@ sub output_param_decoder {
             output_endifdef($ifdefs{$pident});
         }
     }
+    print "    int dummy; /* unused */\n" unless $have_struct_field;
     print "};\n#endif\n\n";
 
     # Output param decoder
