@@ -630,8 +630,16 @@ static int test_dtls13_ack_list_bound(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *server = NULL, *client = NULL;
     SSL_CONNECTION *sc, *cc;
+    /*
+     * Declare two body bytes but supply only one, keeping reassembly incomplete.
+     */
     unsigned char frag[] = {
-        SSL3_MT_KEY_UPDATE, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0
+        SSL3_MT_KEY_UPDATE, /* msg_type */
+        0, 0, 2, /* msg_body_len */
+        0, 0, /* msg_seq */
+        0, 0, 0, /* fragment_offset */
+        0, 0, 1, /* fragment_length */
+        0 /* fragment data */
     };
     unsigned char buf;
     const size_t max_records = (SSL3_RT_MAX_PLAIN_LENGTH - DTLS13_ACK_HEADER_LEN)
