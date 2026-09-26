@@ -2806,6 +2806,9 @@ int BIO_dgram_non_fatal_error(int err)
 {
     switch (err) {
 #if defined(OPENSSL_SYS_WINDOWS)
+#if defined(WSAETIMEDOUT)
+    case WSAETIMEDOUT:
+#endif
 #if defined(WSAEWOULDBLOCK)
     case WSAEWOULDBLOCK:
 #endif
