@@ -26,6 +26,11 @@ size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
 
 int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
 {
+    if (ossl_unlikely(r == NULL || a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     size_t al = (size_t)a->dsize;
     size_t bl = (size_t)b->dsize;
     size_t rl = (size_t)r->dsize;
