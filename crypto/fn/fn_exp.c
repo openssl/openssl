@@ -382,6 +382,11 @@ size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
 int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_CTX *ctx)
 {
+    if (ossl_unlikely(r == NULL || a == NULL || p == NULL || m == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     const void *token = OSSL_FN_CTX_start(ctx);
     int i, j;
     int ret = 0;
@@ -542,6 +547,11 @@ err:
 int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     const OSSL_FN *m, OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont)
 {
+    if (ossl_unlikely(r == NULL || a == NULL || p == NULL || m == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     const void *token = OSSL_FN_CTX_start(ctx);
     OSSL_FN_MONT_CTX *mont = NULL;
     OSSL_FN *powerfn = NULL;
@@ -871,6 +881,11 @@ static int ossl_fn_mod_exp_recp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
 int OSSL_FN_mod_exp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     const OSSL_FN *m, OSSL_FN_CTX *ctx)
 {
+    if (ossl_unlikely(r == NULL || a == NULL || p == NULL || m == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
 #ifdef MONT_MUL_MOD
     if (m->dsize > 0 && (m->d[0] & OSSL_FN_ULONG_C(1))) {
         return OSSL_FN_mod_exp_mont(r, a, p, m, ctx, NULL);
