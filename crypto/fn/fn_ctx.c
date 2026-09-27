@@ -9,8 +9,10 @@
 
 #include <assert.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include "internal/safe_math.h"
 #include "crypto/fn.h"
+#include "crypto/fnerr.h"
 #include "fn_local.h"
 
 OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
@@ -169,8 +171,10 @@ void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx)
 
 const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
 {
-    if (!ossl_assert(ctx != NULL))
+    if (ossl_unlikely(ctx == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
 
     struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
     size_t used = (last_frame == NULL) ? 0 : last_frame->free_memory - ctx->memory;
@@ -200,13 +204,20 @@ const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
 
 int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token)
 {
-    if (!ossl_assert(ctx != NULL) || !ossl_assert(ctx->last_frame != NULL))
+    if (ctx == NULL || token == NULL)
         return 0;
 
     struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
 
-    if (last_frame != token)
+    if (ossl_unlikely(last_frame == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
+    }
+
+    if (last_frame != token) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     ctx->n_numbers -= last_frame->n_numbers;
     ctx->n_limbs -= last_frame->n_limbs;
@@ -218,13 +229,17 @@ int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token)
 
 OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs)
 {
-    if (!ossl_assert(ctx != NULL))
+    if (ossl_unlikely(ctx == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
 
     struct ossl_fn_ctx_frame_st *frame = ctx->last_frame;
 
-    if (!ossl_assert(frame != NULL))
+    if (ossl_unlikely(frame == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return NULL;
+    }
 
     size_t totalsize = ossl_fn_totalsize(limbs);
     size_t used = frame->free_memory - frame->memory;

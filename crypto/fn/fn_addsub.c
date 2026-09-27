@@ -157,6 +157,11 @@ OSSL_FN_ULONG ossl_fn_add_words(OSSL_FN_ULONG *r, size_t rl,
 
 int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
 {
+    if (ossl_unlikely(r == NULL || a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     (void)ossl_fn_add_words(r->d, r->dsize, a->d, a->dsize, b->d, b->dsize);
     return 1;
 }
@@ -173,6 +178,11 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
  */
 int OSSL_FN_add_word(OSSL_FN *a, OSSL_FN_ULONG w)
 {
+    if (ossl_unlikely(a == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     size_t i;
     size_t dsize = (size_t)a->dsize;
 
@@ -306,6 +316,11 @@ OSSL_FN_ULONG ossl_fn_sub_words(OSSL_FN_ULONG *r, size_t rl,
 
 int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
 {
+    if (ossl_unlikely(r == NULL || a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     (void)ossl_fn_sub_words(r->d, r->dsize, a->d, a->dsize, b->d, b->dsize);
     return 1;
 }
@@ -324,6 +339,11 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
  */
 int OSSL_FN_sub_word(OSSL_FN *a, OSSL_FN_ULONG w)
 {
+    if (ossl_unlikely(a == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     size_t i;
     size_t dsize = (size_t)a->dsize;
 

@@ -245,6 +245,11 @@ size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
 /* Trivia: this function implements Knuth's algorithm D */
 int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL_FN_CTX *ctx)
 {
+    if (ossl_unlikely(n == NULL || d == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     const void *token = OSSL_FN_CTX_start(ctx);
     if (token == NULL)
         return 0;

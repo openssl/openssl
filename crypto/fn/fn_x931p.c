@@ -63,6 +63,10 @@ err:
 int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
     OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx)
 {
+    if (ossl_unlikely(Xp == NULL || Xq == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     /* 512+128s shape check, sized as the sum of both Xp and Xq */
     if ((nbits < 1024) || (nbits & 0xff)) {
         ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_RANGE);
@@ -192,6 +196,11 @@ int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
     OSSL_FN *p1p2, *t, *pm1;
     int ret = 0;
 
+    if (ossl_unlikely(p == NULL || Xp == NULL || Xp1 == NULL || Xp2 == NULL
+            || e == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     /* Only odd e supported */
     if (!OSSL_FN_is_odd(e))
         return 0;
@@ -281,6 +290,11 @@ int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
 {
     const void *token;
     int ret = 0;
+
+    if (ossl_unlikely(p == NULL || Xp == NULL || e == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
