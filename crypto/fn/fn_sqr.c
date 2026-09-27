@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <openssl/err.h>
 #include "internal/safe_math.h"
 #include "crypto/cryptlib.h"
@@ -35,6 +34,11 @@ size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a)
 
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 {
+    if (ossl_unlikely(r == NULL || a == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     const void *token = OSSL_FN_CTX_start(ctx);
     if (token == NULL)
         return 0;

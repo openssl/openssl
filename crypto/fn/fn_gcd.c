@@ -143,6 +143,11 @@ size_t OSSL_FN_gcd_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
 int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx)
 {
+    if (ossl_unlikely(r == NULL || a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     const void *token = OSSL_FN_CTX_start(ctx);
     if (token == NULL)
         return 0;

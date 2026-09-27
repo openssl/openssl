@@ -53,7 +53,7 @@ static int ossl_fn_rand(enum ossl_fn_rand_flag flag, OSSL_FN *rnd, size_t bits,
 {
     size_t limbs_needed, top_limb, i;
 
-    if (rnd == NULL) {
+    if (ossl_unlikely(rnd == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -162,7 +162,7 @@ static int ossl_fn_rand_range(enum ossl_fn_rand_flag flag, OSSL_FN *r,
     size_t n;
     int count = 100;
 
-    if (r == NULL) {
+    if (ossl_unlikely(r == NULL || range == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }

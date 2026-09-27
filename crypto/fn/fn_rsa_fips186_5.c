@@ -474,8 +474,10 @@ int ossl_fn_rsa_fips186_5_gen_prob_primes(OSSL_FN *p, OSSL_FN *Xpout,
     /* 1 when the values are ours to clear, 0 when returned */
     int clear_mask = 0;
 
-    if (p == NULL || Xpout == NULL)
+    if (ossl_unlikely(p == NULL || Xpout == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
