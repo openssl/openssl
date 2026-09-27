@@ -267,7 +267,7 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx)
 size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, OSSL_FN_MONT_CTX *mont)
 {
-    if (!ossl_assert(mont != NULL)) {
+    if (ossl_unlikely(mont == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -388,8 +388,7 @@ end:
 size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont)
 {
-    if (!ossl_assert(a != NULL) || !ossl_assert(b != NULL)
-        || !ossl_assert(mont != NULL)) {
+    if (ossl_unlikely(mont == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -503,7 +502,7 @@ end:
 size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
-    if (!ossl_assert(a != NULL) || !ossl_assert(mont != NULL)) {
+    if (ossl_unlikely(mont == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -564,7 +563,7 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
 size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
-    if (!ossl_assert(mont != NULL)) {
+    if (ossl_unlikely(mont == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
