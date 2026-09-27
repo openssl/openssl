@@ -939,7 +939,7 @@ static int test_evp_stale_key_reinit(int idx)
 
 err:
     if (errmsg != NULL) {
-        TEST_info("evp_stale_key_integrity_test %d, %s: %s",
+        TEST_info("evp_stale_key_reinit_test %d, %s: %s",
             idx, errmsg, info->name);
         testresult = 0;
     }
