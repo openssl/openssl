@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <openssl/err.h>
 #include "crypto/cryptlib.h"
 #include "crypto/fnerr.h"
@@ -19,9 +18,7 @@ size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
 {
     size_t limbs = 0;
 
-    if (r == NULL || a == NULL || b == NULL)
-        return 0;
-    if (r == a || r == b)
+    if (r != NULL && (r == a || r == b))
         limbs = r->dsize;
 
     return OSSL_FN_CTX_size(1, limbs == 0 ? 0 : 1, limbs);
