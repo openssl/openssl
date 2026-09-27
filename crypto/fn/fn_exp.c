@@ -305,7 +305,7 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
 size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r,
     const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
 {
-    if (r == NULL || a == NULL || p == NULL || m == NULL)
+    if (m == NULL)
         return 0;
 
     size_t ml = (size_t)m->dsize;
@@ -348,7 +348,7 @@ static size_t ossl_fn_mod_exp_recp_ctx_size(const OSSL_FN *r,
 size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m)
 {
-    if (r == NULL || a == NULL || p == NULL || m == NULL)
+    if (m == NULL)
         return 0;
 
 #ifdef MONT_MUL_MOD
