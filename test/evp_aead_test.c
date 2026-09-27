@@ -802,10 +802,11 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     ct_len += ct_fin_len;
-    /* removed info->taglen > 0 if conditional */
+
     int tl = EVP_CIPHER_CTX_get_tag_length(ctx_reinit);
 
-    if (tl > 0) taglen = tl;
+    if (tl > 0)
+        taglen = tl;
 
     get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, tag, taglen);
     get_tagparams[1] = OSSL_PARAM_construct_end();
@@ -907,14 +908,14 @@ static int test_evp_stale_key_reinit(int idx)
         OSSL_CIPHER_PARAM_AEAD_TAG, tag_onestep, taglen);
 
     if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_onestep,
-                                                get_tagparams))) {
+            get_tagparams))) {
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
     /* Compare single-call vs key->iv */
     if (!TEST_int_eq(ct_reinit_len, ct_onestep_len)
         || !TEST_mem_eq(ct_reinit, ct_reinit_len,
-                        ct_onestep, ct_onestep_len)) {
+            ct_onestep, ct_onestep_len)) {
         errmsg = "CT_MISMATCH_SINGLE_vs_REINIT";
         goto err;
     }
