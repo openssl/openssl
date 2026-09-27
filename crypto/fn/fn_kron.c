@@ -36,6 +36,11 @@
  */
 int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
 {
+    if (ossl_unlikely(a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return -2;
+    }
+
     int i;
     int ret = -2; /* avoid 'uninitialized' warning */
     int err = 0;
