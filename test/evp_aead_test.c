@@ -731,7 +731,7 @@ static int test_evp_stale_key_reinit(int idx)
     unsigned char tag_reinit[EVPTEST_TAG_LEN_MAX] = { 0 };
     unsigned char tag_onestep[EVPTEST_TAG_LEN_MAX] = { 0 };
 
-    int blocksz = 0, tmplen = 0, testresult = 1, i = 0;
+    int blocksz = 0, tmplen = 0, testresult = 0, i = 0;
     char *errmsg = NULL;
 
     ivparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IVLEN, &ivlen);
@@ -923,6 +923,8 @@ static int test_evp_stale_key_reinit(int idx)
         errmsg = "TAG_MISMATCH_SINGLE_vs_REINIT";
         goto err;
     }
+
+    testresult = 1;
 
 err:
     if (errmsg != NULL) {
