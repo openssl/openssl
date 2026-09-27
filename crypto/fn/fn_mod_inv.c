@@ -46,7 +46,7 @@
 size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *n)
 {
-    if (r == NULL || a == NULL || n == NULL)
+    if (a == NULL || n == NULL)
         return 0;
 
     size_t al = (size_t)a->dsize;
