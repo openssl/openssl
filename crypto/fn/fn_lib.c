@@ -103,6 +103,9 @@ void OSSL_FN_clear_free(OSSL_FN *f)
 
 void OSSL_FN_clear(OSSL_FN *f)
 {
+    if (ossl_unlikely(f == NULL))
+        return;
+
     size_t limbssize = f->dsize * sizeof(OSSL_FN_ULONG);
 
     OPENSSL_cleanse(f->d, limbssize);
@@ -121,6 +124,11 @@ void OSSL_FN_clear(OSSL_FN *f)
  */
 int OSSL_FN_set_word(OSSL_FN *a, OSSL_FN_ULONG w)
 {
+    if (ossl_unlikely(a == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     size_t dsize = (size_t)a->dsize;
 
     if (ossl_unlikely(dsize < 1)) {
@@ -213,6 +221,9 @@ static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
 
 size_t OSSL_FN_num_bits(const OSSL_FN *a)
 {
+    if (ossl_unlikely(a == NULL))
+        return 0;
+
     size_t i;
     size_t dsize = (size_t)a->dsize;
     size_t ret = 0;
@@ -230,6 +241,9 @@ size_t OSSL_FN_num_bits(const OSSL_FN *a)
 
 int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
 {
+    if (ossl_unlikely(a == NULL || b == NULL))
+        return (b != NULL) - (a != NULL);
+
     size_t i;
     size_t asize = (size_t)a->dsize;
     size_t bsize = (size_t)b->dsize;
@@ -257,6 +271,9 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
  */
 int OSSL_FN_is_bit_set(const OSSL_FN *a, size_t n)
 {
+    if (ossl_unlikely(a == NULL))
+        return 0;
+
     size_t limb, off;
 
     limb = n / OSSL_FN_BITS;
@@ -276,6 +293,11 @@ int OSSL_FN_is_bit_set(const OSSL_FN *a, size_t n)
  */
 int OSSL_FN_clear_bit(OSSL_FN *a, size_t n)
 {
+    if (ossl_unlikely(a == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     size_t limb, off;
 
     limb = n / OSSL_FN_BITS;
@@ -297,6 +319,9 @@ int OSSL_FN_clear_bit(OSSL_FN *a, size_t n)
  */
 int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w)
 {
+    if (ossl_unlikely(a == NULL))
+        return 0;
+
     size_t i;
     size_t dsize = (size_t)a->dsize;
     int res;
@@ -339,6 +364,9 @@ int OSSL_FN_is_one(const OSSL_FN *a)
  */
 int OSSL_FN_is_odd(const OSSL_FN *a)
 {
+    if (ossl_unlikely(a == NULL))
+        return 0;
+
     if (a->dsize <= 0)
         return 0;
     return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
@@ -357,6 +385,11 @@ int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
 {
     size_t i, dsize;
     OSSL_FN_ULONG mask;
+
+    if (ossl_unlikely(a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     if (ossl_unlikely(a == b))
         return 1;
@@ -396,6 +429,8 @@ int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
  */
 OSSL_FN_ULONG OSSL_FN_get_word(const OSSL_FN *a)
 {
+    if (ossl_unlikely(a == NULL))
+        return 0;
     if (a->dsize <= 0)
         return 0;
     return a->d[0];
@@ -412,6 +447,10 @@ int OSSL_FN_set_bit(OSSL_FN *a, size_t pos)
     size_t limb = pos / OSSL_FN_BITS;
     size_t off = pos % OSSL_FN_BITS;
 
+    if (ossl_unlikely(a == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (limb >= (size_t)a->dsize) {
         ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
         return 0;
@@ -432,6 +471,10 @@ OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w)
 {
     size_t i;
 
+    if (ossl_unlikely(a == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return (OSSL_FN_ULONG)-1;
+    }
     if (w == 0)
         return (OSSL_FN_ULONG)-1;
 
@@ -490,6 +533,11 @@ OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w)
 
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
 {
+    if (ossl_unlikely(a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
     if (ossl_unlikely(a == b))
         return a;
 
@@ -500,7 +548,7 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
         ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL,
             "Needs to be at least %zu bytes, but is only %zu bytes",
             bl * sizeof(OSSL_FN_ULONG), al * sizeof(OSSL_FN_ULONG));
-        return 0;
+        return NULL;
     }
 
     memcpy(a->d, b->d, bl * sizeof(OSSL_FN_ULONG));
@@ -510,6 +558,11 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
 
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
 {
+    if (ossl_unlikely(a == NULL || b == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
     if (ossl_unlikely(a == b))
         return a;
 
@@ -541,8 +594,10 @@ int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
     size_t dsize, nbytes, i;
     unsigned char over = 0;
 
-    if (ossl_unlikely(a == NULL || out == NULL))
+    if (ossl_unlikely(a == NULL || out == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     dsize = ossl_fn_get_dsize(a);
     nbytes = dsize * OSSL_FN_BYTES;
@@ -578,8 +633,10 @@ int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
     size_t rbytes, i;
     unsigned char over = 0;
 
-    if (ossl_unlikely(r == NULL || in == NULL))
+    if (ossl_unlikely(r == NULL || in == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     rbytes = ossl_fn_get_dsize(r) * OSSL_FN_BYTES;
 

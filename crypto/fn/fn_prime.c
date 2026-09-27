@@ -546,6 +546,10 @@ int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
     size_t limbs = bits / OSSL_FN_BITS + (bits % OSSL_FN_BITS != 0);
     const void *token = NULL;
 
+    if (ossl_unlikely(ret == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (bits < 2) {
         /* There are no prime numbers this small. */
         ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_BITS_TOO_SMALL);
