@@ -362,6 +362,9 @@ struct ossl_cipher_get_param_list_st {
 };
 
 struct ossl_cipher_get_ctx_param_list_st {
+#ifdef FIPS_MODULE
+    OSSL_PARAM *ind; /* FIPS indicator */
+#endif
     OSSL_PARAM *keylen; /* all ciphers */
     OSSL_PARAM *ivlen; /* all ciphers */
     OSSL_PARAM *pad; /* all ciphers */

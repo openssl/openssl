@@ -78,7 +78,8 @@ static int execute_HDR_get0_senderNonce_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(sender))
         goto err;
 
-    X509_NAME_ADD(sender, "CN", "A common sender name");
+    if (!TEST_true(X509_NAME_ADD(sender, "CN", "A common sender name")))
+        goto err;
     if (!TEST_int_eq(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx, sender),
             1))
         goto err;
@@ -113,7 +114,8 @@ static int execute_HDR_set1_sender_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(x509name))
         goto err;
 
-    X509_NAME_ADD(x509name, "CN", "A common sender name");
+    if (!TEST_true(X509_NAME_ADD(x509name, "CN", "A common sender name")))
+        goto err;
     if (!TEST_int_eq(ossl_cmp_hdr_set1_sender(fixture->hdr, x509name), 1))
         goto err;
 
@@ -148,7 +150,8 @@ static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(x509name))
         goto err;
 
-    X509_NAME_ADD(x509name, "CN", "A common recipient name");
+    if (!TEST_true(X509_NAME_ADD(x509name, "CN", "A common recipient name")))
+        goto err;
     if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1))
         goto err;
 

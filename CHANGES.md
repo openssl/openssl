@@ -33,6 +33,15 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Changed the OpenSSL FIPS provider so that every algorithm advertised with
+   `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
+   parameter and returns 1 for an approved operation.  The absence of an
+   indicator is no longer interpreted as approval.  Algorithms advertised
+   with `fips=no`, including X448MLKEM1024, remain unapproved and return 0 when
+   they expose the indicator.
+
+   *Shane Lontis and Paul Dale*
+
  * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
    newly assigned IANA codepoints per [draft-rosomakho-tls-ecdhe-mlkem512-00].
 
