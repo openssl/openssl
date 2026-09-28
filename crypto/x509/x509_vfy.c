@@ -30,6 +30,7 @@
 #include "internal/dane.h"
 #include "crypto/x509.h"
 #include "crypto/mtc_verify.h"
+#include "crypto/proof.h"
 #include "x509_local.h"
 
 /* CRL score values */
@@ -1123,6 +1124,8 @@ int ossl_x509_verify_mtc(X509_STORE_CTX *ctx, size_t quorum)
         goto err;
     if (!ossl_x509_mtc_leaf_checks(ctx))
         goto err;
+    if (!ossl_proof_check_revocation(ctx, ctx->cert, ossl_mtc_ca_cosigner_pkey(ca)))
+        goto err;
     /*
      * The verified chain is the certificate itself: an MTC is its own path,
      * proved to the CA rather than issued by a certificate above it.  Callers
@@ -2159,6 +2162,13 @@ end:
 }
 
 /* Check CRLDP and IDP */
+int ossl_x509_crl_covers(X509 *x, X509_CRL *crl)
+{
+    unsigned int reasons;
+
+    return crl_crldp_check(x, crl, CRL_SCORE_ISSUER_NAME, &reasons);
+}
+
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
 {

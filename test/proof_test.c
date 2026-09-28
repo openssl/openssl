@@ -21,6 +21,7 @@
 #include <openssl/evp.h>
 #include <openssl/mtc.h>
 #include <openssl/params.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
 
@@ -80,6 +81,17 @@ static const uint8_t subtree_hash[] = {
  */
 static const int64_t valid_time = 1609459200; /* 2021-01-01T00:00:00Z */
 static const int64_t expired_time = 2082758400; /* 2036-01-01T00:00:00Z */
+
+/*
+ * The CRL fixtures (mtc-crl-*.pem) were issued on 2026-09-28;
+ * mtc-crl-expired.pem runs one day from then, the others ten years.  Both
+ * leaves are valid until 2030-12-31, so revocation_time lies within the
+ * leaves and the ten-year CRLs, after the one-day CRL, and valid_time before
+ * every CRL.  mtc-crl-indirect.pem and mtc-crl-shard.pem list the entry as
+ * revoked, the first as an indirect CRL and the second as a partitioned CRL
+ * naming a distribution point the leaves do not.
+ */
+static const int64_t revocation_time = 1798761600; /* 2027-01-01T00:00:00Z */
 
 /* Derive the ML-DSA-44 cosigner key from a 32-byte seed. */
 static EVP_PKEY *cosigner_key(const uint8_t *seed, size_t seed_len)
@@ -151,16 +163,21 @@ static OSSL_MTC_COSIGNER *make_cosigner(const uint8_t *id, size_t id_len,
 static STACK_OF(OSSL_MTC_COSIGNER) *trusted_cosigners;
 
 /*
- * Build a trust configuration trusting ca (NULL ca leaves it with no store) and,
- * when with_cosigners is set, the cosigners 32473.0 and 32473.2.  A trusted
- * store only borrows ca (see X509_STORE_trust_mtc_ca(3)), so the caller retains
- * ca and must keep it alive until after the trust is freed.
+ * Build a trust configuration trusting ca (NULL ca leaves it with no store),
+ * holding the PEM CRL crl_name if given, and, when with_cosigners is set,
+ * trusting the cosigners 32473.0 and 32473.2.  A trusted store only borrows ca
+ * (see X509_STORE_trust_mtc_ca(3)), so the caller retains ca and must keep it
+ * alive until after the trust is freed.
  */
-static OSSL_PROOF_TRUST *build_trust(OSSL_MTC_CA *ca, int with_cosigners)
+static OSSL_PROOF_TRUST *build_trust(OSSL_MTC_CA *ca, const char *crl_name,
+    int with_cosigners)
 {
     X509_STORE *store = NULL;
     OSSL_PROOF_TRUST *trust = NULL;
     OSSL_MTC_COSIGNER *cosigner;
+    char *path = NULL;
+    BIO *in = NULL;
+    X509_CRL *crl = NULL;
 
     if (!TEST_ptr(trust = OSSL_PROOF_TRUST_new(libctx, propq)))
         goto err;
@@ -169,6 +186,19 @@ static OSSL_PROOF_TRUST *build_trust(OSSL_MTC_CA *ca, int with_cosigners)
             || !TEST_int_eq(X509_STORE_trust_mtc_ca(store, ca), 1)
             || !TEST_int_eq(OSSL_PROOF_TRUST_set1_x509_store(trust, store), 1))
             goto err;
+    }
+    if (crl_name != NULL) {
+        if (!TEST_ptr(path = test_mk_file_path(certs_dir, crl_name))
+            || !TEST_ptr(in = BIO_new_file(path, "r"))
+            || !TEST_ptr(crl = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL))
+            || !TEST_int_eq(X509_STORE_add_crl(store, crl), 1))
+            goto err;
+        X509_CRL_free(crl); /* the store holds its own reference */
+        crl = NULL;
+        BIO_free(in);
+        in = NULL;
+        OPENSSL_free(path);
+        path = NULL;
     }
     if (with_cosigners) {
         if (!TEST_ptr(cosigner = make_cosigner(cosigner0_id, sizeof(cosigner0_id),
@@ -184,6 +214,9 @@ static OSSL_PROOF_TRUST *build_trust(OSSL_MTC_CA *ca, int with_cosigners)
     X509_STORE_free(store); /* the trust holds its own reference */
     return trust;
 err:
+    X509_CRL_free(crl);
+    BIO_free(in);
+    OPENSSL_free(path);
     X509_STORE_free(store);
     OSSL_PROOF_TRUST_free(trust);
     return NULL;
@@ -272,7 +305,7 @@ static int check(const char *cert_name, OSSL_MTC_CA *ca, int with_cosigners,
     const char *host, int64_t vtime, size_t quorum, int expect_ret,
     int expect_error, const char *expect_peername)
 {
-    OSSL_PROOF_TRUST *trust = build_trust(ca, with_cosigners);
+    OSSL_PROOF_TRUST *trust = build_trust(ca, NULL, with_cosigners);
     OSSL_PROOF_PARAMS *params = build_params(host, vtime, quorum);
     char *path = NULL;
     X509 *cert = NULL;
@@ -297,6 +330,48 @@ err:
     OPENSSL_free(path);
     OSSL_PROOF_PARAMS_free(params);
     OSSL_PROOF_TRUST_free(trust); /* free the trust (and its store) before the CA */
+    OSSL_MTC_CA_free(ca);
+    return ret;
+}
+
+/*
+ * Verify cert_name (with_subtree as for make_ca()) at vtime with the
+ * verification flags set, against a store holding the CRL crl_name (which may
+ * be NULL), and confirm OSSL_PROOF_verify() returns expect_ret with
+ * expect_error in its output.
+ */
+static int check_revocation(const char *cert_name, int with_subtree,
+    int64_t vtime, unsigned long flags, const char *crl_name, int expect_ret,
+    int expect_error)
+{
+    OSSL_MTC_CA *ca = make_ca(ca_id, sizeof(ca_id), with_subtree);
+    OSSL_PROOF_TRUST *trust = build_trust(ca, crl_name, 0);
+    OSSL_PROOF_PARAMS *params = build_params(NULL, vtime, 0);
+    char *path = NULL;
+    X509 *cert = NULL;
+    OSSL_PROOF *proof = NULL;
+    OSSL_PROOF_OUTPUT *output = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(trust) || !TEST_ptr(params)
+        || !TEST_true(X509_VERIFY_PARAM_set_flags(
+            OSSL_PROOF_PARAMS_get0_x509_param(params), flags))
+        || !TEST_ptr(path = test_mk_file_path(certs_dir, cert_name))
+        || !TEST_ptr(cert = load_cert_pem(path, NULL))
+        || !TEST_ptr(proof = OSSL_PROOF_new_mtc(cert)))
+        goto err;
+    if (!TEST_int_eq(OSSL_PROOF_verify(trust, proof, params, &output), expect_ret)
+        || !TEST_ptr(output)
+        || !check_output(output, cert, expect_ret, expect_error, NULL))
+        goto err;
+    ret = 1;
+err:
+    OSSL_PROOF_OUTPUT_free(output);
+    OSSL_PROOF_free(proof);
+    X509_free(cert);
+    OPENSSL_free(path);
+    OSSL_PROOF_PARAMS_free(params);
+    OSSL_PROOF_TRUST_free(trust);
     OSSL_MTC_CA_free(ca);
     return ret;
 }
@@ -373,11 +448,112 @@ static int test_quorum_short(void)
         X509_V_ERR_MTC_COSIGNER_QUORUM, NULL);
 }
 
+/* CRL checking: a store CRL from the CA that does not list the entry passes it. */
+static int test_crl_good_standalone(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, revocation_time, X509_V_FLAG_CRL_CHECK,
+        "mtc-crl-good.pem", 1, X509_V_OK);
+}
+
+static int test_crl_good_landmark(void)
+{
+    return check_revocation("mtc-landmark.pem", 1, revocation_time, X509_V_FLAG_CRL_CHECK,
+        "mtc-crl-good.pem", 1, X509_V_OK);
+}
+
+/* A CRL listing the entry revokes every proof of it. */
+static int test_crl_revoked_standalone(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, revocation_time, X509_V_FLAG_CRL_CHECK,
+        "mtc-crl-revoked.pem", 0, X509_V_ERR_CERT_REVOKED);
+}
+
+static int test_crl_revoked_landmark(void)
+{
+    return check_revocation("mtc-landmark.pem", 1, revocation_time, X509_V_FLAG_CRL_CHECK,
+        "mtc-crl-revoked.pem", 0, X509_V_ERR_CERT_REVOKED);
+}
+
+/* CRL checking with no CRL available fails. */
+static int test_crl_missing(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, revocation_time, X509_V_FLAG_CRL_CHECK,
+        NULL, 0, X509_V_ERR_UNABLE_TO_GET_CRL);
+}
+
+/* A CRL whose validity has not begun at the verification time is rejected. */
+static int test_crl_not_yet_valid(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, valid_time,
+        X509_V_FLAG_CRL_CHECK, "mtc-crl-good.pem", 0,
+        X509_V_ERR_CRL_NOT_YET_VALID);
+}
+
+/* A CRL whose validity has ended at the verification time is rejected. */
+static int test_crl_expired(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, revocation_time,
+        X509_V_FLAG_CRL_CHECK, "mtc-crl-expired.pem", 0,
+        X509_V_ERR_CRL_HAS_EXPIRED);
+}
+
+/* An indirect CRL in the store is not used, though it lists the entry. */
+static int test_crl_indirect_not_used(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, revocation_time,
+        X509_V_FLAG_CRL_CHECK, "mtc-crl-indirect.pem", 0,
+        X509_V_ERR_UNABLE_TO_GET_CRL);
+}
+
+/*
+ * A partitioned CRL applies only through a distribution point the certificate
+ * names; these leaves name none, so it is not used, and with no other CRL the
+ * check fails for want of one.
+ */
+static int test_crl_shard_not_covering(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, revocation_time,
+        X509_V_FLAG_CRL_CHECK, "mtc-crl-shard.pem", 0,
+        X509_V_ERR_UNABLE_TO_GET_CRL);
+}
+
+/* Parameters requesting OCSP checking are refused: no verification, no output. */
+static int test_ocsp_flag_refused(void)
+{
+    OSSL_MTC_CA *ca = make_ca(ca_id, sizeof(ca_id), 0);
+    OSSL_PROOF_TRUST *trust = build_trust(ca, NULL, 0);
+    OSSL_PROOF_PARAMS *params = build_params(NULL, valid_time, 0);
+    OSSL_PROOF *proof = load_proof("mtc-leaf-standalone.pem");
+    OSSL_PROOF_OUTPUT *output = NULL;
+    int ret = 0;
+
+    if (TEST_ptr(trust) && TEST_ptr(params) && TEST_ptr(proof)
+        && TEST_true(X509_VERIFY_PARAM_set_flags(
+            OSSL_PROOF_PARAMS_get0_x509_param(params),
+            X509_V_FLAG_OCSP_RESP_CHECK))
+        && TEST_int_eq(OSSL_PROOF_verify(trust, proof, params, &output), 0)
+        && TEST_ptr_null(output))
+        ret = 1;
+    OSSL_PROOF_OUTPUT_free(output);
+    OSSL_PROOF_free(proof);
+    OSSL_PROOF_PARAMS_free(params);
+    OSSL_PROOF_TRUST_free(trust);
+    OSSL_MTC_CA_free(ca);
+    return ret;
+}
+
+/* A store CRL is not consulted without CRL checking enabled. */
+static int test_crl_not_checked(void)
+{
+    return check_revocation("mtc-leaf-standalone.pem", 0, revocation_time, 0,
+        "mtc-crl-revoked.pem", 1, X509_V_OK);
+}
+
 /* OSSL_PROOF_verify() tolerates a NULL output out-parameter. */
 static int test_null_output_out(void)
 {
     OSSL_MTC_CA *ca = make_ca(ca_id, sizeof(ca_id), 0);
-    OSSL_PROOF_TRUST *trust = build_trust(ca, 0);
+    OSSL_PROOF_TRUST *trust = build_trust(ca, NULL, 0);
     OSSL_PROOF_PARAMS *params = build_params(NULL, valid_time, 0);
     OSSL_PROOF *proof = load_proof("mtc-leaf.pem");
     int ret = 0;
@@ -394,7 +570,7 @@ static int test_null_output_out(void)
 /* A NULL proof is a hard error: verify fails and returns no output. */
 static int test_null_proof(void)
 {
-    OSSL_PROOF_TRUST *trust = build_trust(NULL, 0);
+    OSSL_PROOF_TRUST *trust = build_trust(NULL, NULL, 0);
     OSSL_PROOF_OUTPUT *output = NULL;
     int ret = 0;
 
@@ -442,6 +618,17 @@ int setup_tests(void)
     ADD_TEST(test_expired);
     ADD_TEST(test_quorum_met);
     ADD_TEST(test_quorum_short);
+    ADD_TEST(test_crl_good_standalone);
+    ADD_TEST(test_crl_good_landmark);
+    ADD_TEST(test_crl_revoked_standalone);
+    ADD_TEST(test_crl_revoked_landmark);
+    ADD_TEST(test_crl_missing);
+    ADD_TEST(test_crl_not_yet_valid);
+    ADD_TEST(test_crl_expired);
+    ADD_TEST(test_crl_indirect_not_used);
+    ADD_TEST(test_crl_shard_not_covering);
+    ADD_TEST(test_crl_not_checked);
+    ADD_TEST(test_ocsp_flag_refused);
     ADD_TEST(test_null_output_out);
     ADD_TEST(test_null_proof);
     ADD_TEST(test_null_trust);

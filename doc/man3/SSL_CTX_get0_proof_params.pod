@@ -15,20 +15,11 @@ get proof verification parameters
 =head1 DESCRIPTION
 
 SSL_CTX_get0_proof_params() and SSL_get0_proof_params() retrieve an internal
-pointer to the proof verification parameters (see L<OSSL_PROOF_verify(3)>) of
-I<ctx> or I<ssl> respectively. The returned pointer must not be freed by the
-calling application.
-
-When a peer presents a proof, such as a Merkle Tree Certificate, in place of a
-certificate chain, it is verified with L<OSSL_PROOF_verify(3)> against the
-verification store and the X.509 verification parameters of the connection
-(see L<SSL_CTX_get0_param(3)>), with the settings that apply only to proofs
-taken from these parameters; for a Merkle Tree Certificate that is the cosigner
-quorum set with L<OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(3)>. The
-verification callback is not consulted for a proof.
-
-An B<SSL> takes a copy of the proof-specific settings of its B<SSL_CTX> when it
-is created.
+pointer to the proof verification parameters of I<ctx> or I<ssl> respectively:
+the B<OSSL_PROOF_PARAMS> passed to L<OSSL_PROOF_verify(3)> when the peer's
+certificate is verified as a proof. The returned pointer must not be freed by
+the calling application. An B<SSL> takes a copy of its B<SSL_CTX>'s proof
+verification parameters when it is created.
 
 =head1 RETURN VALUES
 
