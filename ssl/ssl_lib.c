@@ -3800,6 +3800,48 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
     return buf;
 }
 
+/*
+ * Check that the NUL-terminated |name| is acceptable as the HostName of a
+ * server_name extension: RFC 6066, section 3, requires an ASCII DNS hostname
+ * without a trailing dot and forbids IP address literals.  The name must be
+ * 1 to TLSEXT_MAXLEN_host_name characters long.  Labels are separated by
+ * dots, are 1 to 63 characters long and consist of ASCII letters, digits,
+ * hyphens and, as a commonly encountered deviation from RFC 1123,
+ * underscores.  The top-level label must not be all-numeric (RFC 1123,
+ * section 2.1), which excludes dotted-decimal IPv4 literals; IPv6 literals
+ * fail on the colons.
+ */
+int ossl_ssl_is_valid_sni_hostname(const char *name)
+{
+    size_t i, len = strlen(name), label_len = 0;
+    int label_numeric = 1;
+
+    if (len == 0 || len > TLSEXT_MAXLEN_host_name)
+        return 0;
+    for (i = 0; i < len; i++) {
+        char c = name[i];
+
+        if (c == '.') {
+            /* An empty label: a leading dot or two consecutive dots */
+            if (label_len == 0)
+                return 0;
+            label_len = 0;
+            label_numeric = 1;
+            continue;
+        }
+        if (c < '0' || c > '9') {
+            if ((c < 'a' || c > 'z') && (c < 'A' || c > 'Z')
+                && c != '-' && c != '_')
+                return 0;
+            label_numeric = 0;
+        }
+        if (++label_len > 63)
+            return 0;
+    }
+    /* label_len == 0 here means the name ends with a dot */
+    return label_len > 0 && !label_numeric;
+}
+
 /**
  * Return the requested servername (SNI) value. Note that the behaviour varies
  * depending on:

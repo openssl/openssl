@@ -88,6 +88,19 @@ OSSL_ECHSTORE *SSL_get1_echstore(const SSL *ssl)
     return dup;
 }
 
+/*
+ * An outer name is only used if |no_outer| is 0 and it is non-empty: NULL or
+ * "" select the public_name of the ECHConfig instead.  As with
+ * SSL_set_tlsext_host_name(), the previously set names are cleared before the
+ * new ones are validated, so a rejected call leaves no stale name behind (a
+ * cleared outer name means the public_name is used).
+ */
+static int ech_outer_name_ok(const char *outer_name, int no_outer)
+{
+    return no_outer != 0 || outer_name == NULL || outer_name[0] == '\0'
+        || ossl_ssl_is_valid_sni_hostname(outer_name);
+}
+
 int SSL_ech_set1_server_names(SSL *ssl, const char *inner_name,
     const char *outer_name, int no_outer)
 {
@@ -98,13 +111,18 @@ int SSL_ech_set1_server_names(SSL *ssl, const char *inner_name,
         return 0;
     OPENSSL_free(s->ext.hostname);
     s->ext.hostname = NULL;
+    OPENSSL_free(s->ext.ech.outer_hostname);
+    s->ext.ech.outer_hostname = NULL;
+    if ((inner_name != NULL && !ossl_ssl_is_valid_sni_hostname(inner_name))
+        || !ech_outer_name_ok(outer_name, no_outer)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME);
+        return 0;
+    }
     if (inner_name != NULL) {
         s->ext.hostname = OPENSSL_strdup(inner_name);
         if (s->ext.hostname == NULL)
             return 0;
     }
-    OPENSSL_free(s->ext.ech.outer_hostname);
-    s->ext.ech.outer_hostname = NULL;
     if (no_outer == 0 && outer_name != NULL && strlen(outer_name) > 0) {
         s->ext.ech.outer_hostname = OPENSSL_strdup(outer_name);
         if (s->ext.ech.outer_hostname == NULL)
@@ -125,6 +143,10 @@ int SSL_ech_set1_outer_server_name(SSL *ssl, const char *outer_name,
         return 0;
     OPENSSL_free(s->ext.ech.outer_hostname);
     s->ext.ech.outer_hostname = NULL;
+    if (!ech_outer_name_ok(outer_name, no_outer)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME);
+        return 0;
+    }
     if (no_outer == 0 && outer_name != NULL && strlen(outer_name) > 0) {
         s->ext.ech.outer_hostname = OPENSSL_strdup(outer_name);
         if (s->ext.ech.outer_hostname == NULL)
