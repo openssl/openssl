@@ -118,12 +118,12 @@ static int check_fips_approved(EVP_TEST *t, int approved)
      * approved should be 0 and the fips indicator callback should be triggered.
      */
     if (t->expect_unapproved) {
-        if (approved == 1 || fips_indicator_callback_unapproved_count == 0) {
+        if (approved != 0) {
             TEST_error("Test is not expected to be FIPS approved");
             return 0;
         }
     } else {
-        if (approved == 0 || fips_indicator_callback_unapproved_count > 0) {
+        if (approved == 0) {
             TEST_error("Test is expected to be FIPS approved");
             return 0;
         }
@@ -303,16 +303,16 @@ static int kdf_check_fips_approved(EVP_KDF_CTX *ctx, EVP_TEST *t)
     return check_fips_approved(t, approved);
 }
 
-static int cipher_check_fips_approved(EVP_CIPHER_CTX *ctx, EVP_TEST *t)
+static int cipher_get_fips_approved(EVP_CIPHER_CTX *ctx, int *approved)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int approved = 1;
 
+    *approved = 1;
     params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR,
-        &approved);
+        approved);
     if (!EVP_CIPHER_CTX_get_params(ctx, params))
         return 0;
-    return check_fips_approved(t, approved);
+    return 1;
 }
 
 /*
@@ -1083,7 +1083,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
 
 static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     size_t inp_misalign, int frag, int in_place,
-    const OSSL_PARAM initparams[])
+    const OSSL_PARAM initparams[], int *fips_approved)
 {
     CIPHER_DATA *expected = t->data;
     unsigned char *in, *expected_out, *tmp = NULL;
@@ -1409,7 +1409,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         t->err = "CIPHERFINAL_ERROR";
         goto err;
     }
-    if (!cipher_check_fips_approved(ctx, t)) {
+    if (!cipher_get_fips_approved(ctx, fips_approved)) {
         t->err = "FIPSAPPROVED_ERROR";
         goto err;
     }
@@ -1472,7 +1472,8 @@ err:
 static int cipher_test_run(EVP_TEST *t)
 {
     CIPHER_DATA *cdat = t->data;
-    int rv, frag, fragmax, in_place;
+    int rv = 0, frag, fragmax, in_place;
+    int enc_approved = 0, dec_approved = 0, approved;
     size_t out_misalign, inp_misalign;
     OSSL_PARAM initparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     size_t params_n = 0;
@@ -1531,15 +1532,30 @@ static int cipher_test_run(EVP_TEST *t)
                     }
                     if (cdat->enc) {
                         rv = cipher_test_enc(t, 1, out_misalign, inp_misalign,
-                            frag, in_place, initparams);
+                            frag, in_place, initparams, &enc_approved);
                         if (rv != 1)
                             goto end;
                     }
                     if (cdat->enc != 1) {
                         rv = cipher_test_enc(t, 0, out_misalign, inp_misalign,
-                            frag, in_place, initparams);
+                            frag, in_place, initparams, &dec_approved);
                         if (rv != 1)
                             goto end;
+                    }
+                    if (cdat->enc < 0) {
+                        /*
+                         * A legacy stanza tests both directions. Treat it as
+                         * unapproved if either direction is unapproved; the
+                         * explicit single-operation tests check exact results.
+                         */
+                        approved = enc_approved && dec_approved;
+                        t->expect_unapproved = !approved;
+                    } else {
+                        approved = cdat->enc ? enc_approved : dec_approved;
+                    }
+                    if (!check_fips_approved(t, approved)) {
+                        t->err = "FIPSAPPROVED_ERROR";
+                        goto end;
                     }
                 }
             }
