@@ -79,11 +79,6 @@ OpenSSL 4.2
 
    *Dominic Cunningham, Billy Bob Brumley*
 
-OpenSSL 4.1
------------
-
-### Changes between 4.0 and 4.1 [xx XXX xxxx]
-
  * The TLS 1.3 server now enforces the RFC 8446 section 9.2 requirement that
    a ClientHello containing a supported_groups extension also contains a
    key_share extension and vice versa, aborting the handshake with a
@@ -92,6 +87,11 @@ OpenSSL 4.1
    accepted when the server allowed non-DHE PSK key exchange.
 
    *Paul Grubbs*
+
+OpenSSL 4.1
+-----------
+
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
  * Added support for DTLS 1.3 ([RFC 9147]).
    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
