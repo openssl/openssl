@@ -486,8 +486,6 @@ err:
     return ret;
 }
 
-#endif /* OPENSSL_NO_DSA */
-
 /*
  * EVP_PKEY_CTX_set_dsa_paramgen_type() builds a UTF8 string OSSL_PARAM from
  * its |name| argument; a NULL name used to crash the provider, which
@@ -518,6 +516,8 @@ err:
     EVP_PKEY_CTX_free(paramgen_ctx);
     return ok;
 }
+
+#endif /* OPENSSL_NO_DSA */
 
 int setup_tests(void)
 {
