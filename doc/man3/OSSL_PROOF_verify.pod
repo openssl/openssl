@@ -115,6 +115,19 @@ must not free them.
 OSSL_PROOF_PARAMS_set1_x509_param() copies the settings of I<param> into
 I<params>.
 
+Revocation checking of an X.509-based proof is by CRL, using the CRLs held
+by the trust store (see L<X509_STORE_add_crl(3)>).  A CRL is used when it is
+issued under the certificate's issuer name, is a complete CRL (not a delta
+CRL, not indirect, not scoped to reason codes), and covers the certificate.
+The issuer's complete CRL covers every certificate it issued; a partitioned
+CRL covers a certificate whose CRL distribution points name its issuing
+distribution point.
+
+OCSP is not supported.  Verification parameters with
+B<X509_V_FLAG_OCSP_RESP_CHECK>, B<X509_V_FLAG_OCSP_RESP_CHECK_ALL> or
+B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> set are an invalid argument to
+OSSL_PROOF_verify().
+
 =head2 Merkle Tree Certificate proofs
 
 OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum() sets to I<quorum> the number of
@@ -264,6 +277,17 @@ is set.
 
 =back
 
+When the verification parameters have B<X509_V_FLAG_CRL_CHECK> set, the
+certificate is checked against a CRL from the trust store (see
+L</X.509-based proofs>).  The CRL is signed by the CA cosigner key held by the
+trusted B<OSSL_MTC_CA> (section 5.4 of the draft).  Verification fails if
+there is no CRL for the certificate, setting the X.509 error code
+B<X509_V_ERR_UNABLE_TO_GET_CRL>; if the CRL's signature does not verify,
+setting B<X509_V_ERR_CRL_SIGNATURE_FAILURE>; if the CRL is not currently valid,
+setting B<X509_V_ERR_CRL_NOT_YET_VALID> or B<X509_V_ERR_CRL_HAS_EXPIRED>; or if
+the CRL lists the certificate's serial number, setting
+B<X509_V_ERR_CERT_REVOKED>.
+
 On success the verified chain returned by OSSL_PROOF_OUTPUT_get0_x509_chain()
 holds the certificate alone: a Merkle Tree Certificate is its own path, proved
 to the CA, with no certificate above it.  No policy tree is produced.
@@ -298,8 +322,9 @@ the requested object, or NULL.
 
 OSSL_PROOF_verify() returns 1 if I<proof> is verified and 0 otherwise.  Unless
 I<out_output> is NULL, I<*out_output> holds an B<OSSL_PROOF_OUTPUT> in either
-case; on an error before verification could start, such as a NULL I<proof> or a
-failed allocation, it is set to NULL.
+case.  On an error before verification could start, it is set to NULL; such
+errors are a NULL I<proof>, invalid verification parameters, and a failed
+allocation.
 
 OSSL_PROOF_OUTPUT_get_x509_error() and OSSL_PROOF_OUTPUT_get_x509_error_depth()
 return 1 and store the value when I<output> is from an X.509-based proof, and 0

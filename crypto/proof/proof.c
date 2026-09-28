@@ -317,6 +317,12 @@ X509_POLICY_TREE *OSSL_PROOF_OUTPUT_get0_x509_policy_tree(const OSSL_PROOF_OUTPU
     return output->x509_policy_tree;
 }
 
+/* The verification callback of a proof verification: no check is waived. */
+static int proof_verify_cb(int ok, X509_STORE_CTX *ctx)
+{
+    return ok;
+}
+
 /*
  * Verify an MTC proof: the section 7.2 proof plus the X.509 leaf checks,
  * against a transient X509_STORE_CTX carrying the trust store and parameters.
@@ -344,6 +350,7 @@ static int proof_verify_mtc(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
         && !X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(ctx),
             params->x509_param))
         goto err;
+    X509_STORE_CTX_set_verify_cb(ctx, proof_verify_cb);
     ret = ossl_x509_verify_mtc(ctx,
         params != NULL ? params->mtc_cosigner_quorum : 0);
     if (!proof_output_set_x509(output, ctx, ret)) {
@@ -355,6 +362,15 @@ err:
     return ret;
 }
 
+/*
+ * The X.509 verification flags that request a revocation check an X.509-based
+ * proof verification does not perform: OCSP, and CRLs beyond the complete CRL
+ * of the issuer.
+ */
+#define PROOF_X509_FLAGS_UNSUPPORTED                               \
+    (X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL \
+        | X509_V_FLAG_EXTENDED_CRL_SUPPORT)
+
 int OSSL_PROOF_verify(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
     const OSSL_PROOF_PARAMS *params, OSSL_PROOF_OUTPUT **out_output)
 {
@@ -365,6 +381,13 @@ int OSSL_PROOF_verify(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
         *out_output = NULL;
     if (proof == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (params != NULL && proof_type_is_x509(proof->type)
+        && (X509_VERIFY_PARAM_get_flags(params->x509_param)
+               & PROOF_X509_FLAGS_UNSUPPORTED)
+            != 0) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     if ((output = proof_output_new(proof->type)) == NULL)
