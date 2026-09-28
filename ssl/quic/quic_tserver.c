@@ -66,7 +66,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
         alpnlen = srv->args.alpnlen;
     }
 
-    if (SSL_select_next_proto((unsigned char **)out, outlen, alpn,
+    if (SSL_select_next_proto(out, outlen, alpn,
             (unsigned int)alpnlen,
             in, inlen)
         != OPENSSL_NPN_NEGOTIATED)
