@@ -7188,6 +7188,427 @@ err:
     return ret;
 }
 
+/*
+ * Smoke test for NULL parameters across the whole OSSL_FN public API.
+ *
+ * For every function, and for every pointer parameter it takes, we make one
+ * call with NULL in that position while every other argument is valid.  The
+ * test asserts nothing about the outcome: a NULL may be a legitimate value the
+ * function handles normally, or an error it rejects -- that distinction is
+ * verified elsewhere.  The only thing checked here is that the library never
+ * crashes; reaching the end of the function is the whole point.  Passing NULL
+ * in one position at a time (rather than everywhere at once) makes sure every
+ * parameter's own NULL path is actually exercised.
+ */
+#define CHECK_NO_CRASH(call)      \
+    do {                          \
+        sink = (uintptr_t)(call); \
+        ERR_clear_error();        \
+    } while (0)
+
+static int test_null_params(void)
+{
+    int ok = 1;
+    volatile uintptr_t sink = 0;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *a = NULL, *b = NULL, *r = NULL, *m = NULL, *range = NULL;
+    OSSL_FN *even = NULL, *xseed = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL, *slot = NULL;
+    const void *token = NULL;
+    size_t pf = 0, pn = 0, pl = 0;
+    unsigned char buf[32];
+
+    memset(buf, 0xFF, sizeof(buf)); /* a full-width odd Montgomery modulus */
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 64, 1024))
+        || !TEST_ptr(a = OSSL_FN_new_bytes(sizeof(buf)))
+        || !TEST_ptr(b = OSSL_FN_new_bytes(sizeof(buf)))
+        || !TEST_ptr(r = OSSL_FN_new_bytes(sizeof(buf)))
+        || !TEST_ptr(m = OSSL_FN_new_bytes(sizeof(buf)))
+        || !TEST_ptr(range = OSSL_FN_new_bytes(sizeof(buf)))
+        || !TEST_ptr(even = OSSL_FN_new_bytes(sizeof(buf)))
+        || !TEST_ptr(xseed = OSSL_FN_new_bytes(sizeof(buf)))
+        || !TEST_true(OSSL_FN_set_word(a, 1))
+        || !TEST_true(OSSL_FN_set_word(b, 1))
+        || !TEST_true(OSSL_FN_set_word(range, 5))
+        || !TEST_true(OSSL_FN_set_word(even, 2))
+        || !TEST_true(OSSL_FN_from_bytes_be(m, buf, sizeof(buf)))
+        || !TEST_true(OSSL_FN_from_bytes_be(xseed, buf, sizeof(buf)))
+        || !TEST_ptr(mont = OSSL_FN_MONT_CTX_new(m))) {
+        ok = 0;
+        goto err;
+    }
+    ERR_clear_error();
+
+    /* fn_lib.c */
+    CHECK_NO_CRASH(OSSL_FN_set_word(NULL, 0));
+    CHECK_NO_CRASH(OSSL_FN_one(NULL));
+    CHECK_NO_CRASH(OSSL_FN_zero(NULL));
+    CHECK_NO_CRASH(OSSL_FN_copy(NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_copy(a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_copy_truncate(NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_copy_truncate(a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_to_bytes_be(NULL, buf, sizeof(buf)));
+    CHECK_NO_CRASH(OSSL_FN_to_bytes_be(a, NULL, sizeof(buf)));
+    CHECK_NO_CRASH(OSSL_FN_from_bytes_be(NULL, buf, sizeof(buf)));
+    CHECK_NO_CRASH(OSSL_FN_from_bytes_be(r, NULL, sizeof(buf)));
+    CHECK_NO_CRASH(OSSL_FN_consttime_swap(0, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_consttime_swap(0, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_num_bits(NULL));
+    CHECK_NO_CRASH(OSSL_FN_cmp(NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_cmp(a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_is_bit_set(NULL, 0));
+    CHECK_NO_CRASH(OSSL_FN_clear_bit(NULL, 0));
+    CHECK_NO_CRASH(OSSL_FN_is_word(NULL, 0));
+    CHECK_NO_CRASH(OSSL_FN_is_zero(NULL));
+    CHECK_NO_CRASH(OSSL_FN_is_one(NULL));
+    CHECK_NO_CRASH(OSSL_FN_is_odd(NULL));
+    CHECK_NO_CRASH(OSSL_FN_mask_bits(NULL, 0));
+
+    /* fn_addsub.c */
+    CHECK_NO_CRASH(OSSL_FN_add(NULL, a, b));
+    CHECK_NO_CRASH(OSSL_FN_add(r, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_add(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_add_word(NULL, 0));
+    CHECK_NO_CRASH(OSSL_FN_sub(NULL, a, b));
+    CHECK_NO_CRASH(OSSL_FN_sub(r, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_sub(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_sub_word(NULL, 0));
+
+    /* fn_shift.c */
+    CHECK_NO_CRASH(OSSL_FN_lshift(NULL, a, 1));
+    CHECK_NO_CRASH(OSSL_FN_lshift(r, NULL, 1));
+    CHECK_NO_CRASH(OSSL_FN_lshift1(NULL, a));
+    CHECK_NO_CRASH(OSSL_FN_lshift1(r, NULL));
+    CHECK_NO_CRASH(OSSL_FN_rshift(NULL, a, 1));
+    CHECK_NO_CRASH(OSSL_FN_rshift(r, NULL, 1));
+    CHECK_NO_CRASH(OSSL_FN_rshift1(NULL, a));
+    CHECK_NO_CRASH(OSSL_FN_rshift1(r, NULL));
+
+    /* fn_mul.c / fn_sqr.c / fn_div.c and the OSSL_FN_mod() wrappers */
+    CHECK_NO_CRASH(OSSL_FN_mul(NULL, a, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul(r, NULL, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size(NULL, a, b));
+    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size(r, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_sqr(NULL, a, ctx));
+    CHECK_NO_CRASH(OSSL_FN_sqr(r, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_sqr(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_sqr_ctx_size(NULL, a));
+    CHECK_NO_CRASH(OSSL_FN_sqr_ctx_size(r, NULL));
+    CHECK_NO_CRASH(OSSL_FN_div(NULL, r, a, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_div(r, NULL, a, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_div(b, r, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_div(b, r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_div(b, r, a, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(NULL, r, a, m));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(b, NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(b, r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(b, r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod(NULL, a, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod(r, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod(r, a, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size(r, a, NULL));
+
+    /* fn_mod.c */
+    CHECK_NO_CRASH(OSSL_FN_mod_add(NULL, a, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_add(r, NULL, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_add(r, a, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_add(r, a, b, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_add(r, a, b, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_quick(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_quick(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_quick(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_quick(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub(NULL, a, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub(r, NULL, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub(r, a, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub(r, a, b, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub(r, a, b, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_quick(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_quick(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_quick(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_quick(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul(NULL, a, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul(r, NULL, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul(r, a, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul(r, a, b, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul(r, a, b, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr(NULL, a, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr(r, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr(r, a, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1(NULL, a, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1(r, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1(r, a, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_quick(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_quick(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_quick(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift(NULL, a, 1, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift(r, NULL, 1, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift(r, a, 1, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift(r, a, 1, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size(NULL, a, 1, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size(r, NULL, 1, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size(r, a, 1, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_quick(NULL, a, 1, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_quick(r, NULL, 1, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_quick(r, a, 1, NULL));
+
+    /* fn_mod_inv.c */
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse(NULL, a, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse(r, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse(r, a, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size(r, a, NULL));
+
+    /* fn_exp.c */
+    CHECK_NO_CRASH(OSSL_FN_mod_exp(NULL, a, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp(r, NULL, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp(r, a, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp(r, a, b, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp(r, a, b, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(NULL, a, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, NULL, b, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, a, NULL, m, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, a, b, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, a, b, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(NULL, a, b, m, ctx, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, NULL, b, m, ctx, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, NULL, m, ctx, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, b, NULL, ctx, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, b, m, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, b, m, ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(NULL, a, b, m, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, NULL, b, m, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, a, NULL, m, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, a, b, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, a, b, m, NULL));
+
+    /* fn_sqrt.c */
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt(NULL, a, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt(r, NULL, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size(NULL, a, b));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size(r, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size(r, a, NULL));
+
+    /* fn_gcd.c */
+    CHECK_NO_CRASH(OSSL_FN_gcd(NULL, a, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_gcd(r, NULL, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_gcd(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_gcd(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_gcd_ctx_size(NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_gcd_ctx_size(a, NULL));
+
+    /* fn_kron.c */
+    CHECK_NO_CRASH(OSSL_FN_kronecker(NULL, b, ctx));
+    CHECK_NO_CRASH(OSSL_FN_kronecker(a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_kronecker(a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_kronecker_ctx_size(NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_kronecker_ctx_size(a, NULL));
+
+    /* fn_rand.c */
+    CHECK_NO_CRASH(OSSL_FN_rand(NULL, 0, 0, 0, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_rand(r, 8, OSSL_FN_RAND_TOP_ANY,
+        OSSL_FN_RAND_BOTTOM_ANY, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_priv_rand(NULL, 0, 0, 0, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_priv_rand(r, 8, OSSL_FN_RAND_TOP_ANY,
+        OSSL_FN_RAND_BOTTOM_ANY, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_rand_range(NULL, range, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_rand_range(r, NULL, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_rand_range(r, range, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_priv_rand_range(NULL, range, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_priv_rand_range(r, NULL, 0, NULL));
+    CHECK_NO_CRASH(OSSL_FN_priv_rand_range(r, range, 0, NULL));
+
+    /* fn_mont.c */
+    CHECK_NO_CRASH(OSSL_FN_MONT_CTX_new(NULL));
+    CHECK_NO_CRASH(OSSL_FN_MONT_CTX_set_locked(NULL, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_MONT_CTX_set_locked(&slot, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_MONT_CTX_set_locked(&slot, NULL, m));
+    OSSL_FN_MONT_CTX_free(slot);
+    slot = NULL;
+    CHECK_NO_CRASH(OSSL_FN_MONT_CTX_dup(NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont(NULL, a, b, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont(r, NULL, b, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont(r, a, NULL, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont(r, a, b, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont(r, a, b, mont, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(NULL, a, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(r, NULL, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(r, a, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(NULL, a, b, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, NULL, b, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, a, NULL, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, a, b, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, a, b, mont, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(NULL, a, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(r, NULL, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(r, a, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_to_mont(NULL, a, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_to_mont(r, NULL, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_to_mont(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_to_mont(r, a, mont, NULL));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_from_mont(NULL, a, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_from_mont(r, NULL, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_from_mont(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_from_mont(r, a, mont, NULL));
+    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, a, NULL));
+
+    /* fn_lib.c word accessors */
+    CHECK_NO_CRASH(OSSL_FN_get_word(NULL));
+    CHECK_NO_CRASH(OSSL_FN_set_bit(NULL, 0));
+    CHECK_NO_CRASH(OSSL_FN_mod_word(NULL, 1));
+
+    /* fn_mod_inv.c: OSSL_FN_mod_inverse_prime (in_mont optional) */
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(NULL, a, m, ctx, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(r, NULL, m, ctx, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(r, a, NULL, ctx, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(r, a, m, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(r, a, m, ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(NULL, a, m, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(r, NULL, m, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(r, a, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(r, a, m, NULL));
+
+    /*
+     * fn_prime.c / fn_x931p.c: this is only a crash smoke test, so none of the
+     * generators must run an actual prime search.  OSSL_FN_generate_prime()
+     * bails on bits == 0; the X9.31 generate/derive routines reject an even
+     * public exponent before searching, so they are passed the even value
+     * 'even' as e.  A NULL mandatory input or a NULL ctx also fails fast.
+     *
+     * OSSL_FN_X931_generate_prime() writes random values into its Xp1 and Xp2
+     * arguments (via OSSL_FN_priv_rand()) before the even-e rejection, so those
+     * positions use the throwaway 'xseed' rather than shared operands like m or
+     * range, which later calls still rely on.
+     */
+    CHECK_NO_CRASH(OSSL_FN_generate_prime(NULL, 0, 0, a, b, NULL, ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime(r, 0, 0, NULL, b, NULL, ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime(r, 0, 0, a, NULL, NULL, ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime(r, 0, 0, a, b, NULL, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size(NULL, 0, 0, a, b));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size(r, 0, 0, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size(r, 0, 0, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq(NULL, b, 0, ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq(r, NULL, 0, ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq(r, b, 0, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq_ctx_size(NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(NULL, b, a, xseed, xseed, xseed, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, NULL, a, xseed, xseed, xseed, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, NULL, xseed, xseed, xseed, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, NULL, xseed, xseed, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, xseed, NULL, xseed, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, xseed, xseed, NULL, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, xseed, xseed, xseed, NULL, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, xseed, xseed, xseed, even, NULL, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(NULL, b, a, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, NULL, a, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, b, NULL, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, b, a, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, b, a, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(NULL, b, a, m, range, m, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, NULL, a, m, range, m, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, NULL, m, range, m, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, NULL, range, m, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, m, NULL, m, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, m, range, NULL, even, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, m, range, m, NULL, ctx, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, m, range, m, even, NULL, NULL, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(NULL, b, a, m, range, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, NULL, a, m, range, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, NULL, m, range, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, NULL, range, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, m, NULL, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, m, range, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, m, range, m, NULL));
+
+    /* fn_ctx.c */
+    CHECK_NO_CRASH(token = OSSL_FN_CTX_start(NULL));
+    CHECK_NO_CRASH(OSSL_FN_CTX_end(NULL, token));
+    CHECK_NO_CRASH(OSSL_FN_CTX_end(ctx, NULL));
+    CHECK_NO_CRASH(OSSL_FN_CTX_get_limbs(NULL, 1));
+    CHECK_NO_CRASH(OSSL_FN_CTX_get_bytes(NULL, 1));
+    CHECK_NO_CRASH(OSSL_FN_CTX_get_bits(NULL, 1));
+    OSSL_FN_CTX_peak_usage(ctx, NULL, NULL, NULL);
+
+    /* CTX constructors: libctx may be NULL (the default library context). */
+    OSSL_FN_CTX_free(OSSL_FN_CTX_new_size(NULL, OSSL_FN_CTX_size(1, 1, 8)));
+    OSSL_FN_CTX_free(OSSL_FN_CTX_secure_new(NULL, 1, 1, 8));
+    OSSL_FN_CTX_free(OSSL_FN_CTX_secure_new_size(NULL, OSSL_FN_CTX_size(1, 1, 8)));
+
+    /* NULL-tolerant by design. */
+    OSSL_FN_free(NULL);
+    OSSL_FN_clear_free(NULL);
+    OSSL_FN_clear(NULL);
+    OSSL_FN_CTX_free(NULL);
+    OSSL_FN_MONT_CTX_free(NULL);
+    OSSL_FN_CTX_peak_usage(NULL, &pf, &pn, &pl);
+    CHECK_NO_CRASH(OSSL_FN_CTX_get0_libctx(NULL));
+
+err:
+    (void)sink; /* the return values are irrelevant; we only test for crashes */
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_MONT_CTX_free(slot);
+    if (token != NULL)
+        OSSL_FN_CTX_end(ctx, token);
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(a);
+    OSSL_FN_free(b);
+    OSSL_FN_free(r);
+    OSSL_FN_free(m);
+    OSSL_FN_free(range);
+    OSSL_FN_free(even);
+    OSSL_FN_free(xseed);
+    ERR_clear_error();
+    return ok;
+}
+
+#undef CHECK_NO_CRASH
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -7291,6 +7712,7 @@ int setup_tests(void)
     ADD_TEST(test_x931_generate_Xpq);
     ADD_TEST(test_x931_derive_prime);
     ADD_TEST(test_x931_generate_prime);
+    ADD_TEST(test_null_params);
 
     return 1;
 }
