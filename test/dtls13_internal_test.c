@@ -1554,7 +1554,7 @@ static int test_dtls13_finished_ack_loss_recovers(void)
     /* Force the client to retransmit Finished at its original epoch. */
     cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
         ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+    if (!TEST_true(SSL_handle_events(client)))
         goto end;
 
     /*
@@ -1662,7 +1662,7 @@ static int test_dtls13_keyupdate_ack_loss_recovers(int idx)
     /* Force the sender to retransmit the KeyUpdate at its original epoch. */
     sender_c->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
         ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(sender), 0))
+    if (!TEST_true(SSL_handle_events(sender)))
         goto end;
 
     /*
