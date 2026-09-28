@@ -88,6 +88,21 @@ int OSSL_PROOF_PARAMS_set1_x509_param(OSSL_PROOF_PARAMS *params,
     const X509_VERIFY_PARAM *param);
 
 /**
+ * @brief Set how many trusted cosigners, besides the CA cosigner, must have
+ *        cosigned a standalone Merkle Tree Certificate's subtree.
+ * @see OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(3), X509_STORE_trust_mtc_cosigner(3)
+ */
+int OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(OSSL_PROOF_PARAMS *params,
+    size_t quorum);
+
+/**
+ * @brief Get the cosigner quorum a standalone Merkle Tree Certificate must
+ *        meet.
+ * @see OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(3), OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(3)
+ */
+size_t OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(const OSSL_PROOF_PARAMS *params);
+
+/**
  * @brief Verify a proof against the trust configuration and parameters; the
  *        outcome is returned through out_output unless it is NULL.
  * @see OSSL_PROOF_verify(3), OSSL_PROOF_new_mtc(3), OSSL_PROOF_OUTPUT_free(3)

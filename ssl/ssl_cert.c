@@ -495,7 +495,9 @@ static int ssl_verify_mtc(SSL_CONNECTION *s, X509 *cert, X509_STORE *store,
         || (trust = OSSL_PROOF_TRUST_new(sctx->libctx, sctx->propq)) == NULL
         || !OSSL_PROOF_TRUST_set1_x509_store(trust, store)
         || (params = OSSL_PROOF_PARAMS_new()) == NULL
-        || !OSSL_PROOF_PARAMS_set1_x509_param(params, param)) {
+        || !OSSL_PROOF_PARAMS_set1_x509_param(params, param)
+        || !OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(params,
+            OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(s->proof_params))) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto end;
     }

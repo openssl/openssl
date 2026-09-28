@@ -14,10 +14,12 @@
  * Not for application use.
  *
  * This is the identity core of the CA configuration: the CA identifier, its
- * issuance-log hash algorithm, and the CA cosigner (section 5.4).  The wider
- * relying-party configuration -- additional cosigners and cosigner policy
- * (section 7.3), trusted subtrees (section 7.4), and revoked serial ranges
- * (section 7.5) -- is layered onto this object separately.
+ * issuance-log hash algorithm, and the CA cosigner (section 5.4).  Trusted
+ * subtrees (section 7.4) and revoked serial ranges (section 7.5) are layered
+ * onto this object separately.  The additional cosigners a relying party
+ * trusts, and the cosigner policy (section 7.3), are not per CA: they are
+ * held by the X509_STORE (see include/crypto/mtc_cosigner.h) and by the
+ * X509_VERIFY_PARAM.
  *
  * The CA record is built from its configured fields rather than parsed from a
  * section 5.5 CA certificate: section 7.1 makes that certificate only an
@@ -42,24 +44,6 @@
 #include <openssl/types.h>
 
 #include "internal/packet.h"
-
-/**
- * @struct ossl_mtc_cosigner_st
- * @brief A configured cosigner: a (cosigner ID, public key) pair with its
- * signature algorithm (sections 5.3 and 7.1).
- *
- * This is a cosigner the relying party is configured to recognise, distinct
- * from an OSSL_MTC_COSIGNATURE (a signature parsed from an MTCProof).  Owns its
- * storage: id and sig_name are copies and a reference is held on pkey.
- *
- * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
- */
-typedef struct ossl_mtc_cosigner_st {
-    uint8_t *id; /**< cosigner ID: a TrustAnchorID, i.e. relative-OID bytes (5.3) */
-    size_t id_len;
-    char *sig_name; /**< cosigner signature algorithm name (5.3.3) */
-    EVP_PKEY *pkey; /**< cosigner public key (5.3) */
-} OSSL_MTC_COSIGNER;
 
 /**
  * @struct ossl_mtc_serial_range_st
@@ -127,12 +111,10 @@ DEFINE_STACK_OF(OSSL_MTC_LOG)
 
 /**
  * @struct ossl_mtc_ca_st
- * @brief The identity core of a trusted Merkle Tree CA (section 7.1), plus the
- * additional cosigners the relying party recognises.
+ * @brief The identity core of a trusted Merkle Tree CA (section 7.1).
  *
- * Owns its storage: ca_id is a copy, a reference is held on cosigner_pkey, and
- * the cosigners list is owned.  The CA cosigner (section 5.4) is the identity
- * core here (its ID is ca_id); cosigners holds the other recognised cosigners.
+ * Owns its storage: ca_id is a copy and a reference is held on cosigner_pkey.
+ * The CA cosigner (section 5.4) is the identity core here (its ID is ca_id).
  *
  * A CRYPTO_RWLOCK (lock) guards concurrent access to the CA's mutable
  * configuration: callers reading the CA take a read lock and callers modifying
@@ -148,8 +130,6 @@ struct ossl_mtc_ca_st {
     uint64_t max_serial; /**< highest accepted serial; implies revoked (max, 2^64) (7.5) */
     EVP_PKEY *cosigner_pkey; /**< CA cosigner public key (5.4) */
     CRYPTO_RWLOCK *lock; /**< guards concurrent access to the CA's mutable state */
-    OSSL_MTC_COSIGNER *cosigners; /**< additional recognised cosigners (7.1) */
-    size_t cosigner_count;
     OSSL_MTC_SERIAL_RANGE *revoked; /**< revoked serial ranges (7.5) */
     size_t revoked_count;
     STACK_OF(OSSL_MTC_LOG) *logs; /**< issuance logs, sorted by log number (5.2) */
@@ -187,25 +167,6 @@ OSSL_MTC_CA *ossl_mtc_ca_new(const uint8_t *ca_id, size_t ca_id_len,
  * @param ca the CA to free
  */
 void ossl_mtc_ca_free(OSSL_MTC_CA *ca);
-
-/**
- * @brief Add a recognised cosigner to a CA (sections 5.3, 7.1).
- *
- * The id bytes are copied and a reference is taken on pkey; the caller retains
- * ownership of both inputs.  Cosigner IDs must be distinct (section 5.3), so
- * this fails if id duplicates an already-added cosigner or the CA's own ID (the
- * CA cosigner's ID, section 5.4).
- *
- * @param ca the CA to add to
- * @param id the cosigner ID (TrustAnchorID relative-OID bytes)
- * @param id_len the length of id
- * @param sig_name the cosigner signature algorithm name (for example "ML-DSA-44")
- * @param pkey the cosigner public key
- * @returns 1 on success, 0 on error or duplicate ID.
- * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
- */
-int ossl_mtc_ca_add_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
-    const char *sig_name, EVP_PKEY *pkey);
 
 /**
  * @brief Add a revoked range of serial numbers to a CA (section 7.5).
@@ -364,6 +325,56 @@ const EVP_MD *ossl_mtc_ca_hash(const OSSL_MTC_CA *ca);
  * @returns the cosigner's public key, owned by ca.
  */
 EVP_PKEY *ossl_mtc_ca_cosigner_pkey(const OSSL_MTC_CA *ca);
+
+/**
+ * @brief Report whether a certificate represents a Merkle Tree CA (section
+ * 5.5): whether it carries the id-pe-mtcCertificationAuthority-SHA256
+ * extension.
+ *
+ * A certificate representing a trusted cosigner has the same trust anchor
+ * ID subject and no such extension.
+ *
+ * @param cert the certificate
+ * @returns 1 if the extension is present, 0 otherwise.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_cert_is_ca(const X509 *cert);
+
+/**
+ * @brief Read PEM certificates from a BIO and hand each to a callback.
+ *
+ * Reads PEM blocks until the input ends.  Each CERTIFICATE block is decoded
+ * with libctx and propq and passed to cb, which owns nothing of it; any other
+ * block, an undecodable certificate, or a callback failure stops the read.
+ * The caller is responsible for undoing whatever cb did before a failure.
+ *
+ * @param libctx the library context the certificates are decoded in
+ * @param propq the property query used with libctx
+ * @param in the PEM input
+ * @param cb called with each decoded certificate and arg
+ * @param arg passed through to cb
+ * @returns 1 when the input is exhausted, 0 on any failure.
+ */
+int ossl_mtc_parse_pem_certificates(OSSL_LIB_CTX *libctx, const char *propq,
+    BIO *in, int (*cb)(OSSL_LIB_CTX *libctx, const char *propq, X509 *cert, void *arg),
+    void *arg);
+
+/**
+ * @brief Order two trust anchor IDs: shorter first, then lexicographic.
+ *
+ * This is the order of a sorted stack of trusted CAs and of a sorted stack of
+ * trusted cosigners, and the order of cosigner_id values in an MTCProof
+ * (section 6.2).
+ *
+ * @param a the first ID
+ * @param alen the length of a
+ * @param b the second ID
+ * @param blen the length of b
+ * @returns a negative value, zero, or a positive value as a sorts before, with,
+ *          or after b.
+ */
+int ossl_mtc_id_order(const uint8_t *a, size_t alen, const uint8_t *b,
+    size_t blen);
 
 /*-
  * A set of trusted MTC CAs is a STACK_OF(OSSL_MTC_CA) kept sorted by CA ID for
