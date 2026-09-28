@@ -38,6 +38,20 @@ static const uint8_t ca_id[] = { 0x81, 0xfd, 0x59, 0x01 };
 /* A CA ID that does not match the certificate issuer. */
 static const uint8_t other_id[] = { 0x81, 0xfd, 0x59, 0x02 };
 
+/* The additional cosigners 32473.0 and 32473.2 (config seeds) that cosign. */
+static const uint8_t cosigner0_id[] = { 0x81, 0xfd, 0x59, 0x00 };
+static const uint8_t cosigner0_seed[] = {
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xa1, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+    0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11
+};
+static const uint8_t cosigner2_id[] = { 0x81, 0xfd, 0x59, 0x02 };
+static const uint8_t cosigner2_seed[] = {
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0xaa, 0xaa, 0xaa, 0xaa, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+    0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22
+};
+
 /* The CA cosigner seed (config 32473.1); its ML-DSA-44 key signs the subtree. */
 static const uint8_t ca_seed[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
@@ -117,15 +131,36 @@ static OSSL_MTC_CA *make_ca(const uint8_t *id, size_t id_len, int with_subtree)
     return ca;
 }
 
+/* Build a trusted cosigner with the given ID and ML-DSA-44 key seed. */
+static OSSL_MTC_COSIGNER *make_cosigner(const uint8_t *id, size_t id_len,
+    const uint8_t *seed, size_t seed_len)
+{
+    EVP_PKEY *pkey = cosigner_key(seed, seed_len);
+    OSSL_MTC_COSIGNER *cosigner = NULL;
+
+    if (pkey != NULL)
+        cosigner = OSSL_MTC_COSIGNER_new(id, id_len, pkey);
+    EVP_PKEY_free(pkey); /* the cosigner holds its own reference */
+    return cosigner;
+}
+
 /*
- * Build a trust configuration trusting ca (NULL ca leaves it with no store).  A
- * trusted store only borrows ca (see X509_STORE_trust_mtc_ca(3)), so the caller
- * retains ca and must keep it alive until after the trust is freed.
+ * The trusted cosigners of a trust configuration: kept for the test's lifetime,
+ * as a store only borrows them (see X509_STORE_trust_mtc_cosigner(3)).
  */
-static OSSL_PROOF_TRUST *build_trust(OSSL_MTC_CA *ca)
+static STACK_OF(OSSL_MTC_COSIGNER) *trusted_cosigners;
+
+/*
+ * Build a trust configuration trusting ca (NULL ca leaves it with no store) and,
+ * when with_cosigners is set, the cosigners 32473.0 and 32473.2.  A trusted
+ * store only borrows ca (see X509_STORE_trust_mtc_ca(3)), so the caller retains
+ * ca and must keep it alive until after the trust is freed.
+ */
+static OSSL_PROOF_TRUST *build_trust(OSSL_MTC_CA *ca, int with_cosigners)
 {
     X509_STORE *store = NULL;
     OSSL_PROOF_TRUST *trust = NULL;
+    OSSL_MTC_COSIGNER *cosigner;
 
     if (!TEST_ptr(trust = OSSL_PROOF_TRUST_new(libctx, propq)))
         goto err;
@@ -133,6 +168,17 @@ static OSSL_PROOF_TRUST *build_trust(OSSL_MTC_CA *ca)
         if (!TEST_ptr(store = X509_STORE_new())
             || !TEST_int_eq(X509_STORE_trust_mtc_ca(store, ca), 1)
             || !TEST_int_eq(OSSL_PROOF_TRUST_set1_x509_store(trust, store), 1))
+            goto err;
+    }
+    if (with_cosigners) {
+        if (!TEST_ptr(cosigner = make_cosigner(cosigner0_id, sizeof(cosigner0_id),
+                          cosigner0_seed, sizeof(cosigner0_seed)))
+            || !TEST_true(sk_OSSL_MTC_COSIGNER_push(trusted_cosigners, cosigner))
+            || !TEST_int_eq(X509_STORE_trust_mtc_cosigner(store, cosigner), 1)
+            || !TEST_ptr(cosigner = make_cosigner(cosigner2_id, sizeof(cosigner2_id),
+                             cosigner2_seed, sizeof(cosigner2_seed)))
+            || !TEST_true(sk_OSSL_MTC_COSIGNER_push(trusted_cosigners, cosigner))
+            || !TEST_int_eq(X509_STORE_trust_mtc_cosigner(store, cosigner), 1))
             goto err;
     }
     X509_STORE_free(store); /* the trust holds its own reference */
@@ -143,8 +189,12 @@ err:
     return NULL;
 }
 
-/* Build per-verification parameters with the optional host and time. */
-static OSSL_PROOF_PARAMS *build_params(const char *host, int64_t vtime)
+/*
+ * Build per-verification parameters with the optional host, time and cosigner
+ * quorum.
+ */
+static OSSL_PROOF_PARAMS *build_params(const char *host, int64_t vtime,
+    size_t quorum)
 {
     OSSL_PROOF_PARAMS *params = NULL;
     X509_VERIFY_PARAM *param;
@@ -154,8 +204,11 @@ static OSSL_PROOF_PARAMS *build_params(const char *host, int64_t vtime)
     param = OSSL_PROOF_PARAMS_get0_x509_param(params);
     if (vtime != 0)
         X509_VERIFY_PARAM_set_time(param, (time_t)vtime);
-    if (host != NULL
-        && !TEST_int_eq(X509_VERIFY_PARAM_set1_host(param, host, 0), 1)) {
+    if (!TEST_int_eq(OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(params, quorum), 1)
+        || !TEST_size_t_eq(OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(params),
+            quorum)
+        || (host != NULL
+            && !TEST_int_eq(X509_VERIFY_PARAM_set1_host(param, host, 0), 1))) {
         OSSL_PROOF_PARAMS_free(params);
         return NULL;
     }
@@ -209,16 +262,18 @@ static int check_output(const OSSL_PROOF_OUTPUT *output, X509 *cert, int verifie
 }
 
 /*
- * Verify cert_name against a trust configuration trusting ca and parameters
- * with the optional host and time, and confirm OSSL_PROOF_verify() returns
+ * Verify cert_name against a trust configuration trusting ca (and, when
+ * with_cosigners is set, the two trusted cosigners) and parameters with the
+ * optional host, time and quorum, and confirm OSSL_PROOF_verify() returns
  * expect_ret and its output carries expect_error and expect_peername.  ca is
  * consumed.
  */
-static int check(const char *cert_name, OSSL_MTC_CA *ca, const char *host,
-    int64_t vtime, int expect_ret, int expect_error, const char *expect_peername)
+static int check(const char *cert_name, OSSL_MTC_CA *ca, int with_cosigners,
+    const char *host, int64_t vtime, size_t quorum, int expect_ret,
+    int expect_error, const char *expect_peername)
 {
-    OSSL_PROOF_TRUST *trust = build_trust(ca);
-    OSSL_PROOF_PARAMS *params = build_params(host, vtime);
+    OSSL_PROOF_TRUST *trust = build_trust(ca, with_cosigners);
+    OSSL_PROOF_PARAMS *params = build_params(host, vtime, quorum);
     char *path = NULL;
     X509 *cert = NULL;
     OSSL_PROOF *proof = NULL;
@@ -249,65 +304,81 @@ err:
 /* A signatureless MTC verifies via a matching trusted subtree. */
 static int test_verify_trusted_subtree(void)
 {
-    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1), NULL,
-        valid_time, 1, X509_V_OK, NULL);
+    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1), 0, NULL,
+        valid_time, 0, 1, X509_V_OK, NULL);
 }
 
 /* A standalone MTC verifies via the CA cosignature. */
 static int test_verify_cosignature(void)
 {
-    return check("mtc-leaf-standalone.pem", make_ca(ca_id, sizeof(ca_id), 0), NULL,
-        valid_time, 1, X509_V_OK, NULL);
+    return check("mtc-leaf-standalone.pem", make_ca(ca_id, sizeof(ca_id), 0), 0,
+        NULL, valid_time, 0, 1, X509_V_OK, NULL);
 }
 
 /* A signatureless MTC with no trusted subtree is not trusted. */
 static int test_not_trusted(void)
 {
-    return check("mtc-leaf.pem", make_ca(ca_id, sizeof(ca_id), 0), NULL, valid_time,
-        0, X509_V_ERR_MTC_NOT_TRUSTED, NULL);
+    return check("mtc-leaf.pem", make_ca(ca_id, sizeof(ca_id), 0), 0, NULL,
+        valid_time, 0, 0, X509_V_ERR_MTC_NOT_TRUSTED, NULL);
 }
 
 /* A CA whose ID does not match the certificate issuer is not consulted. */
 static int test_untrusted_ca(void)
 {
-    return check("mtc-leaf.pem", make_ca(other_id, sizeof(other_id), 0), NULL,
-        valid_time, 0, X509_V_ERR_MTC_UNTRUSTED_CA, NULL);
+    return check("mtc-leaf.pem", make_ca(other_id, sizeof(other_id), 0), 0, NULL,
+        valid_time, 0, 0, X509_V_ERR_MTC_UNTRUSTED_CA, NULL);
 }
 
 /* A trust configuration with no store cannot trust the issuing CA. */
 static int test_no_store(void)
 {
-    return check("mtc-leaf.pem", NULL, NULL, valid_time, 0,
+    return check("mtc-leaf.pem", NULL, 0, NULL, valid_time, 0, 0,
         X509_V_ERR_MTC_UNTRUSTED_CA, NULL);
 }
 
 /* The leaf checks run once the proof verifies: a matching host is reported. */
 static int test_host_match(void)
 {
-    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1), "a.example",
-        valid_time, 1, X509_V_OK, "a.example");
+    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1), 0,
+        "a.example", valid_time, 0, 1, X509_V_OK, "a.example");
 }
 
 /* A non-matching host is rejected. */
 static int test_host_mismatch(void)
 {
-    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1),
-        "other.example", valid_time, 0, X509_V_ERR_HOSTNAME_MISMATCH, NULL);
+    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1), 0,
+        "other.example", valid_time, 0, 0, X509_V_ERR_HOSTNAME_MISMATCH, NULL);
 }
 
 /* A verification time past notAfter is rejected. */
 static int test_expired(void)
 {
-    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1), NULL,
-        expired_time, 0, X509_V_ERR_CERT_HAS_EXPIRED, NULL);
+    return check("mtc-landmark.pem", make_ca(ca_id, sizeof(ca_id), 1), 0, NULL,
+        expired_time, 0, 0, X509_V_ERR_CERT_HAS_EXPIRED, NULL);
+}
+
+/* Both trusted cosigners cosigned, so a quorum of two is met. */
+static int test_quorum_met(void)
+{
+    return check("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), 0), 1, NULL, valid_time, 2, 1, X509_V_OK,
+        NULL);
+}
+
+/* A quorum of three exceeds the two trusted cosigners that cosigned. */
+static int test_quorum_short(void)
+{
+    return check("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), 0), 1, NULL, valid_time, 3, 0,
+        X509_V_ERR_MTC_COSIGNER_QUORUM, NULL);
 }
 
 /* OSSL_PROOF_verify() tolerates a NULL output out-parameter. */
 static int test_null_output_out(void)
 {
     OSSL_MTC_CA *ca = make_ca(ca_id, sizeof(ca_id), 0);
-    OSSL_PROOF_TRUST *trust = build_trust(ca);
-    OSSL_PROOF_PARAMS *params = build_params(NULL, valid_time);
+    OSSL_PROOF_TRUST *trust = build_trust(ca, 0);
+    OSSL_PROOF_PARAMS *params = build_params(NULL, valid_time, 0);
     OSSL_PROOF *proof = load_proof("mtc-leaf.pem");
     int ret = 0;
 
@@ -323,7 +394,7 @@ static int test_null_output_out(void)
 /* A NULL proof is a hard error: verify fails and returns no output. */
 static int test_null_proof(void)
 {
-    OSSL_PROOF_TRUST *trust = build_trust(NULL);
+    OSSL_PROOF_TRUST *trust = build_trust(NULL, 0);
     OSSL_PROOF_OUTPUT *output = NULL;
     int ret = 0;
 
@@ -358,6 +429,8 @@ int setup_tests(void)
 {
     if (!TEST_ptr(certs_dir = test_get_argument(0)))
         return 0;
+    if (!TEST_ptr(trusted_cosigners = sk_OSSL_MTC_COSIGNER_new_null()))
+        return 0;
 
     ADD_TEST(test_verify_trusted_subtree);
     ADD_TEST(test_verify_cosignature);
@@ -367,8 +440,15 @@ int setup_tests(void)
     ADD_TEST(test_host_match);
     ADD_TEST(test_host_mismatch);
     ADD_TEST(test_expired);
+    ADD_TEST(test_quorum_met);
+    ADD_TEST(test_quorum_short);
     ADD_TEST(test_null_output_out);
     ADD_TEST(test_null_proof);
     ADD_TEST(test_null_trust);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    sk_OSSL_MTC_COSIGNER_pop_free(trusted_cosigners, OSSL_MTC_COSIGNER_free);
 }

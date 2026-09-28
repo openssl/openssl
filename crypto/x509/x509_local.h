@@ -17,6 +17,7 @@
 
 #include <crypto/asn1.h>
 #include <crypto/mtc_ca.h>
+#include <crypto/mtc_cosigner.h>
 #include <crypto/x509.h>
 
 #define X509V3_conf_add_error_name_value(val) \
@@ -183,6 +184,7 @@ struct x509_store_st {
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(OSSL_MTC_CA) *mtc_cas;
+    STACK_OF(OSSL_MTC_COSIGNER) *mtc_cosigners; /* trusted cosigners other than CA cosigners, sorted by ID */
 };
 
 typedef struct lookup_dir_hashes_st BY_DIR_HASH;
