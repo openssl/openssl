@@ -13,6 +13,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 {- produce_param_decoder('chacha20_poly1305_get_ctx_params',
                          (['OSSL_CIPHER_PARAM_KEYLEN',            'keylen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IV',                'iv',    'octet_string'],
                           ['OSSL_CIPHER_PARAM_IVLEN',             'ivlen',  'size_t'],
                           ['OSSL_CIPHER_PARAM_AEAD_TAGLEN',       'taglen', 'size_t'],
                           ['OSSL_CIPHER_PARAM_AEAD_TAG',          'tag',    'octet_string'],
