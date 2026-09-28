@@ -30,6 +30,7 @@
 #include "internal/dane.h"
 #include "crypto/x509.h"
 #include "crypto/mtc_verify.h"
+#include "crypto/proof.h"
 #include "x509_local.h"
 
 /* CRL score values */
@@ -70,6 +71,7 @@ static int auth_level_min_bits(const X509_STORE_CTX *ctx);
 static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert);
 static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey);
 static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
+static int check_md_level(X509_STORE_CTX *ctx, const EVP_MD *md);
 static int check_curve(X509 *cert);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
@@ -987,7 +989,6 @@ int ossl_x509_mtc_leaf_checks(X509_STORE_CTX *ctx)
     }
     if (!X509_check_certificate_times(ctx->param, cert, &ctx->error))
         goto err;
-    /* The leaf key is the only key auth_level can rate on an MTC. */
     if (!check_cert_key_level(ctx, cert)) {
         ctx->error = X509_V_ERR_EE_KEY_TOO_SMALL;
         goto err;
@@ -1124,6 +1125,19 @@ int ossl_x509_verify_mtc(X509_STORE_CTX *ctx, size_t quorum)
             &ctx->error))
         goto err;
     if (!ossl_x509_mtc_leaf_checks(ctx))
+        goto err;
+    /* The Merkle tree hash stands where an issuer's signature digest does. */
+    if (!check_md_level(ctx, ossl_mtc_ca_hash(ca))) {
+        ctx->error = X509_V_ERR_CA_MD_TOO_WEAK;
+        goto err;
+    }
+    /* A CRL is verified with the CA cosigner key, which is rated for it. */
+    if ((ctx->param->flags & X509_V_FLAG_CRL_CHECK) != 0
+        && !check_key_level(ctx, ossl_mtc_ca_cosigner_pkey(ca))) {
+        ctx->error = X509_V_ERR_CA_KEY_TOO_SMALL;
+        goto err;
+    }
+    if (!ossl_proof_check_revocation(ctx, ctx->cert, ossl_mtc_ca_cosigner_pkey(ca)))
         goto err;
     /*
      * The verified chain is the certificate itself: an MTC is its own path,
@@ -2161,6 +2175,13 @@ end:
 }
 
 /* Check CRLDP and IDP */
+int ossl_x509_crl_covers(X509 *x, X509_CRL *crl)
+{
+    unsigned int reasons;
+
+    return crl_crldp_check(x, crl, CRL_SCORE_ISSUER_NAME, &reasons);
+}
+
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
 {
@@ -4396,4 +4417,21 @@ static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
         return 0;
 
     return secbits >= minbits_table[level - 1];
+}
+
+/*-
+ * Check whether the digest algorithm `md` meets the security level of `ctx`.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+static int check_md_level(X509_STORE_CTX *ctx, const EVP_MD *md)
+{
+    int level = ctx->param->auth_level;
+
+    if (level <= 0)
+        return 1;
+    if (level > NUM_AUTH_LEVELS)
+        level = NUM_AUTH_LEVELS;
+
+    return EVP_MD_get_size(md) * 4 >= minbits_table[level - 1];
 }
