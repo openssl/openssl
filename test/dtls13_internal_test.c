@@ -2077,6 +2077,70 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * Epoch 2 is always the fixed DTLS 1.3 handshake epoch: no compliant peer
+ * ever sends application data there. A record that only authenticates via
+ * those retained keys must never be delivered as application data, unlike a
+ * retained *application* epoch (3+), which can legitimately carry reordered
+ * application traffic -- see test_dtls_prev_epoch_allows_type() above for
+ * that distinction in isolation.
+ */
+static int test_dtls13_retained_epoch_app_data_rejected(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    OSSL_RECORD_LAYER *prev;
+    unsigned char body[1] = { 'P' };
+    unsigned char buf = 0;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    prev = sc->rlayer.rrl->prev_epoch_rl;
+
+    /* The server's epoch-2 (Finished-recovery) read layer must be retained. */
+    if (!TEST_ptr(prev) || !TEST_uint64_t_eq(prev->epoch, 2))
+        goto end;
+
+    if (!TEST_true(inject_at_retained_epoch(server, SSL3_RT_APPLICATION_DATA,
+            body, sizeof(body))))
+        goto end;
+
+    /*
+     * The record authenticates, but dtls_prev_epoch_allows_type() must
+     * discard it once decoded rather than deliver it -- it must never reach
+     * here as readable application data.
+     */
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_uchar_eq(buf, 0))
+        goto end;
+
+    /* Prove it's not just harmlessly stuck. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -2107,6 +2171,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_record_from_retained_epoch);
     ADD_ALL_TESTS(test_dtls13_out_of_seq_retained_epoch, 3);
     ADD_TEST(test_dtls13_retained_epoch_seq_match);
+    ADD_TEST(test_dtls13_retained_epoch_app_data_rejected);
 #endif
     return 1;
 }
