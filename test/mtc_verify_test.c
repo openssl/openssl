@@ -633,9 +633,10 @@ static int test_shim_purpose_mismatch(void)
 }
 
 /*
- * auth_level rates the leaf key, the only key an MTC has: the fixture's P-256
- * key meets level 3 (128 bits) and not level 4 (192 bits).  A build without
- * EC cannot decode that key, so it has nothing to rate.
+ * auth_level rates the leaf key, then the Merkle tree hash: the fixture's
+ * P-256 key meets level 3 (128 bits) and not level 4 (192 bits), and SHA-256
+ * meets level 3.  A build without EC cannot decode that key, so it has nothing
+ * to rate.
  */
 static int test_shim_auth_level_ok(void)
 {
