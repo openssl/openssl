@@ -1710,6 +1710,8 @@ struct ssl_connection_st {
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;
     long verify_result;
+    /* Peer certificate "name" bytes that matched a configured host, or NULL */
+    char *peername;
     /*
      * What we put in certificate_authorities extension for TLS 1.3
      * (ClientHello and CertificateRequest) or just client cert requests for

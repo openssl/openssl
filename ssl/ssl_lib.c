@@ -636,7 +636,8 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->dane.mtlsa = NULL;
 
     /* Clear the verification result peername */
-    X509_VERIFY_PARAM_move_peername(sc->param, NULL);
+    OPENSSL_free(sc->peername);
+    sc->peername = NULL;
 
     /* Clear any shared connection state */
     OPENSSL_free(sc->shared_sigalgs);
@@ -1332,7 +1333,7 @@ const char *SSL_get0_peername(SSL *s)
     if (sc == NULL)
         return NULL;
 
-    return X509_VERIFY_PARAM_get0_peername(sc->param);
+    return sc->peername;
 }
 
 int SSL_CTX_dane_enable(SSL_CTX *ctx)
@@ -1660,6 +1661,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->server_cert_type);
 
     OSSL_STACK_OF_X509_free(s->verified_chain);
+    OPENSSL_free(s->peername);
 
     if (ssl->method != NULL)
         ssl->method->ssl_deinit(ssl);
