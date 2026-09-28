@@ -724,7 +724,7 @@ static int test_dtls13_keyupdate_ack_history(int idx)
      */
     for (i = 0; i < retransmits; i++) {
         cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-        if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+        if (!TEST_true(SSL_handle_events(client)))
             goto end;
     }
 
@@ -827,7 +827,7 @@ static int test_dtls13_finished_ack_history(int idx)
     /* Force the client to retransmit R0 as R1..R(retransmits). */
     for (i = 0; i < retransmits; i++) {
         cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-        if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+        if (!TEST_true(SSL_handle_events(client)))
             goto end;
     }
 
@@ -961,7 +961,7 @@ static int test_dtls13_ticket_ack_history_fragmented(int idx)
 
         /* Round 1: force a retransmit. The ticket now fragments into K records. */
         sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-        if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+        if (!TEST_true(SSL_handle_events(server)))
             goto end;
     }
 
@@ -1048,7 +1048,7 @@ static int test_dtls13_ticket_ack_history_fragmented(int idx)
     if (!TEST_long_gt(SSL_set_mtu(server, 256), 0))
         goto end;
     sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+    if (!TEST_true(SSL_handle_events(server)))
         goto end;
 
     /* Capture round 2's fragments, delivering everything *except* fragment 0. */
@@ -1202,7 +1202,7 @@ static int interrupted_ticket_retransmit_setup(SSL_CTX **sctx_out, SSL_CTX **cct
      * fragment's write fails, aborting the retransmission mid-message.
      */
     sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-    if (!TEST_int_lt(DTLSv1_handle_timeout(server), 0)
+    if (!TEST_false(SSL_handle_events(server))
         || !TEST_size_t_gt(sc->init_off, 0))
         goto end;
 
@@ -1212,7 +1212,7 @@ static int interrupted_ticket_retransmit_setup(SSL_CTX **sctx_out, SSL_CTX **cct
             1))
         goto end;
     sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+    if (!TEST_true(SSL_handle_events(server)))
         goto end;
 
     /* The client already has the ticket; discard round 2's retransmission. */
