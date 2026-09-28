@@ -574,11 +574,12 @@ start:
          *
          * For DTLS 1.3, a record at exactly the previous read epoch is not
          * necessarily stale: it authenticated (see dtls_get_more_records()'s
-         * retained prev_epoch_rl handling), which is only possible if it is
-         * a genuine retransmission of the message that caused the epoch to
-         * move on, sent because the ACK we gave it was lost. Let it through
-         * to the normal handshake-message path below rather than discarding
-         * it here, so that path can ACK it.
+         * retained prev_epoch_rl handling), but that alone doesn't prove it's
+         * a retransmission. Let it through to the normal handshake-message
+         * path below instead of discarding it here -- the sequence and epoch
+         * checks there (dtls_record_from_retained_epoch(),
+         * dtls_prev_epoch_allows_type()) are what actually decide whether it
+         * can be acknowledged.
          */
         if ((rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
                 && !(SSL_CONNECTION_IS_DTLS13(sc)

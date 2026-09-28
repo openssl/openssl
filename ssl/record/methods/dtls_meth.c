@@ -894,16 +894,17 @@ again:
     if (crypto_rl != rl) {
         *rr = crypto_rl->rrec[0];
         rl->packet_length = 0;
-
-        if (!dtls_prev_epoch_allows_type(crypto_rl, rr->type)) {
-            rr->length = 0;
-            goto again;
-        }
     }
 
     if (rl->funcs->post_process_record && !rl->funcs->post_process_record(rl, rr)) {
         /* RLAYERfatal already called */
         return OSSL_RECORD_RETURN_FATAL;
+    }
+
+    /* rr->type is only decoded after post_process_record() above. */
+    if (crypto_rl != rl && !dtls_prev_epoch_allows_type(crypto_rl, rr->type)) {
+        rr->length = 0;
+        goto again;
     }
 
     if (rr->length == 0) {

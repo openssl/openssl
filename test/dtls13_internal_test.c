@@ -1918,6 +1918,165 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * Encrypt a handshake message under a retained (stale) epoch's own real
+ * cipher context and inject it straight into the receiver's rbio, exactly
+ * as tls13_cipher() builds a unified-header DTLS 1.3 record. No separate key
+ * material or network write is needed: the retained read layer already
+ * holds the real traffic keys for that epoch, so running its own cipher
+ * context in the encrypt direction for one record produces ciphertext the
+ * same layer's decrypt path will accept.
+ *
+ * Ported from Mounir Idrassi's inject_previous() in his
+ * repro_prev_epoch_delivery.c reproducer for this issue.
+ */
+static int inject_at_retained_epoch(SSL *receiver, unsigned char inner_type,
+    const unsigned char *body, size_t body_len)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(receiver);
+    OSSL_RECORD_LAYER *prev = sc->rlayer.rrl->prev_epoch_rl;
+    unsigned char plain[64], cipher[64], header[5], nonce[EVP_MAX_IV_LENGTH];
+    unsigned char seq[SEQ_NUM_SIZE], *pseq = seq;
+    uint64_t sequence, truncated;
+    size_t ivlen, offset, i, pktlen;
+    int outl = 0, finl = 0;
+
+    if (prev == NULL || prev->enc_ctx == NULL || prev->iv == NULL
+        || prev->taglen == 0 || body_len + 1 > sizeof(plain)
+        || body_len + 1 + prev->taglen + 5 > sizeof(cipher))
+        return 0;
+
+    sequence = prev->bitmap.max_seq_num + 1;
+    truncated = sequence & 0xffff;
+    memcpy(plain, body, body_len);
+    plain[body_len] = inner_type;
+
+    l2n8(sequence, pseq);
+    ivlen = (size_t)EVP_CIPHER_CTX_get_iv_length(prev->enc_ctx);
+    if (ivlen < SEQ_NUM_SIZE || ivlen > sizeof(nonce))
+        return 0;
+    offset = ivlen - SEQ_NUM_SIZE;
+    memcpy(nonce, prev->iv, offset);
+    for (i = 0; i < SEQ_NUM_SIZE; i++)
+        nonce[offset + i] = prev->iv[offset + i] ^ seq[i];
+
+    header[0] = (unsigned char)(DTLS13_UNI_HDR_FIX_BITS | DTLS13_UNI_HDR_SEQ_BIT
+        | DTLS13_UNI_HDR_LEN_BIT | (prev->epoch & DTLS13_UNI_HDR_EPOCH_BITS_MASK));
+    header[1] = (unsigned char)(truncated >> 8);
+    header[2] = (unsigned char)truncated;
+    header[3] = (unsigned char)((body_len + 1 + prev->taglen) >> 8);
+    header[4] = (unsigned char)(body_len + 1 + prev->taglen);
+
+    if (EVP_CipherInit_ex(prev->enc_ctx, NULL, NULL, NULL, nonce, 1) <= 0
+        || EVP_CipherUpdate(prev->enc_ctx, NULL, &outl, header, sizeof(header)) <= 0
+        || EVP_CipherUpdate(prev->enc_ctx, cipher + 5, &outl, plain,
+               (int)(body_len + 1))
+            <= 0
+        || EVP_CipherFinal_ex(prev->enc_ctx, cipher + 5 + outl, &finl) <= 0
+        || (size_t)outl + (size_t)finl != body_len + 1
+        || EVP_CIPHER_CTX_ctrl(prev->enc_ctx, EVP_CTRL_AEAD_GET_TAG,
+               (int)prev->taglen, cipher + 5 + body_len + 1)
+            <= 0)
+        return 0;
+
+    memcpy(cipher, header, sizeof(header));
+    pktlen = 5 + body_len + 1 + prev->taglen;
+
+    /*
+     * Mask the 16-bit sequence number exactly as a transmitted record does.
+     * dtls_crypt_sequence_number() is reversible, so the receiver recovers
+     * the value selected above.
+     */
+    if (prev->sn_enc_ctx != NULL
+        && !dtls_crypt_sequence_number(prev->sn_enc_ctx, cipher + 1, 2,
+            cipher + 5))
+        return 0;
+
+    return mempacket_test_inject(SSL_get_rbio(receiver), (const char *)cipher,
+               (int)pktlen, -1, INJECT_PACKET_IGNORE_REC_SEQ)
+        == (int)pktlen;
+}
+
+/*
+ * A record that authenticates only via the retained epoch-2
+ * read layer, but whose handshake sequence number matches exactly
+ * what the server is still waiting for, must not be treated as fresh
+ * content: dtls_get_reassembled_message() must still route it to
+ * dtls1_process_out_of_seq_message() via dtls_record_from_retained_epoch(),
+ * even though the plain "seq != expected" check alone would not catch it.
+ *
+ * Unlike test_dtls13_out_of_seq_retained_epoch() above, which calls
+ * dtls1_process_out_of_seq_message() directly, this goes through the real
+ * receive path, so it actually exercises the routing decision
+ * in dtls_get_reassembled_message() instead of assuming it already
+ * happened.
+ */
+static int test_dtls13_retained_epoch_seq_match(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    OSSL_RECORD_LAYER *active, *prev;
+    unsigned char message[DTLS1_HM_HEADER_LENGTH + 1];
+    unsigned char buf;
+    unsigned short expected;
+    uint64_t epoch_before;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    active = sc->rlayer.rrl;
+    prev = active->prev_epoch_rl;
+
+    /* The server's epoch-2 (Finished-recovery) read layer must be retained. */
+    if (!TEST_ptr(prev) || !TEST_uint64_t_eq(prev->epoch, 2))
+        goto end;
+
+    epoch_before = active->epoch;
+    expected = sc->d1->handshake_read_seq;
+
+    /* A KeyUpdate claiming exactly the sequence number the server still
+     * expects next. */
+    memset(message, 0, sizeof(message));
+    message[0] = SSL3_MT_KEY_UPDATE;
+    message[3] = 1;
+    message[4] = (unsigned char)(expected >> 8);
+    message[5] = (unsigned char)expected;
+    message[11] = 1;
+    message[DTLS1_HM_HEADER_LENGTH] = SSL_KEY_UPDATE_NOT_REQUESTED;
+
+    if (!TEST_true(inject_at_retained_epoch(server, SSL3_RT_HANDSHAKE,
+            message, sizeof(message))))
+        goto end;
+
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Must not have been processed as fresh content: a genuine KeyUpdate
+     * would install a new read epoch, and the server must not have
+     * re-entered handshake processing.
+     */
+    if (!TEST_uint64_t_eq(active->epoch, epoch_before)
+        || !TEST_false(SSL_in_init(server)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -1947,6 +2106,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_prev_epoch_allows_type);
     ADD_TEST(test_dtls_record_from_retained_epoch);
     ADD_ALL_TESTS(test_dtls13_out_of_seq_retained_epoch, 3);
+    ADD_TEST(test_dtls13_retained_epoch_seq_match);
 #endif
     return 1;
 }
