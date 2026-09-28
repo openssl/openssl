@@ -12,8 +12,8 @@
 
 #include "internal/cryptlib.h" /* OPENSSL_ia32cap_P */
 
-#if defined(__clang__)                      \
-    || (defined(__GNUC__) && __GNUC__ >= 8) \
+#if defined(__clang__)                                               \
+    || (defined(__GNUC__) && __GNUC__ >= 8 && !defined(__MINGW32__)) \
     || (defined(_MSC_VER) && _MSC_VER >= 1920) /* MSVC 2019 */
 #if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) \
     || defined(_M_X64) || defined(__e2k__))                        \
