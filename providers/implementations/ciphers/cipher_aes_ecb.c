@@ -63,8 +63,7 @@ static OSSL_FUNC_cipher_get_ctx_params_fn aes_ecb_get_ctx_params;
 #ifdef FIPS_MODULE
 static int aes_ecb_encrypt_check_approved(PROV_AES_ECB_CTX *ctx, int enc)
 {
-    if (enc)
-        ctx->operation_allowed = 0;
+    ctx->operation_allowed = (enc == 0);
     return 1;
 }
 #endif
@@ -109,6 +108,10 @@ static void *aes_ecb_dupctx(void *ctx)
     ret->operation_allowed = in->operation_allowed;
 #endif
     in->aesbase.base.hw->copyctx(&ret->aesbase.base, &in->aesbase.base);
+    if (!ossl_cipher_generic_dupctx_tlsmac(&ret->aesbase.base, &in->aesbase.base)) {
+        OPENSSL_clear_free(ret, sizeof(*ret));
+        return NULL;
+    }
     return ret;
 }
 
