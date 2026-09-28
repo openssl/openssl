@@ -178,6 +178,9 @@ int load_tai_credentials(SSL_CTX *ssl_ctx, const char *chains_path,
 /* Trust the Merkle Tree Certificate CAs in a file; the caller frees them. */
 STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file);
 
+/* Trust the Merkle Tree Certificate cosigners in a file; the caller frees them. */
+STACK_OF(OSSL_MTC_COSIGNER) *load_mtc_cosigners(SSL_CTX *ctx, const char *file);
+
 /* Set one log's active landmarks, given as "id:log:file". */
 int load_mtc_landmarks(STACK_OF(OSSL_MTC_CA) *cas, const char *spec,
     const X509_VERIFY_PARAM *vpm);

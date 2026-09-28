@@ -1501,6 +1501,93 @@ err:
     return ret;
 }
 
+/* Trust anchor identifier 32473.2, in relative-OID bytes. */
+static const uint8_t mtc_cosigner_id2[] = { 0x81, 0xfd, 0x59, 0x02 };
+
+/*
+ * Trusting an MTC cosigner in an X509_STORE stores it (borrowed) by ID: a
+ * duplicate ID, an ID already trusted as a CA, and NULL arguments are
+ * rejected, a CA whose ID is a trusted cosigner's is rejected in turn, and
+ * freeing the store frees the container but leaves the borrowed cosigners
+ * intact.
+ */
+static int test_x509_store_trust_mtc_cosigner(void)
+{
+    EVP_PKEY *key = NULL;
+    OSSL_MTC_CA *ca0 = NULL, *ca2 = NULL;
+    OSSL_MTC_COSIGNER *c1 = NULL, *c2 = NULL, *dup = NULL, *as_ca = NULL;
+    X509_STORE *store = NULL;
+    const uint8_t *id = NULL;
+    size_t id_len = 0;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_ML_DSA)
+    return TEST_skip("ML-DSA is disabled");
+#endif /* defined(OPENSSL_NO_ML_DSA) */
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44"))
+        || !TEST_ptr(ca0 = OSSL_MTC_CA_new(mtc_ca_id0, sizeof(mtc_ca_id0),
+                         EVP_sha256(), 0, key))
+        || !TEST_ptr(ca2 = OSSL_MTC_CA_new(mtc_cosigner_id2,
+                         sizeof(mtc_cosigner_id2), EVP_sha256(), 0, key))
+        || !TEST_ptr(c1 = OSSL_MTC_COSIGNER_new(mtc_ca_id1, sizeof(mtc_ca_id1),
+                         key))
+        || !TEST_ptr(c2 = OSSL_MTC_COSIGNER_new(mtc_cosigner_id2,
+                         sizeof(mtc_cosigner_id2), key))
+        || !TEST_ptr(dup = OSSL_MTC_COSIGNER_new(mtc_ca_id1, sizeof(mtc_ca_id1),
+                         key))
+        || !TEST_ptr(as_ca = OSSL_MTC_COSIGNER_new(mtc_ca_id0,
+                         sizeof(mtc_ca_id0), key))
+        || !TEST_ptr(store = X509_STORE_new()))
+        goto err;
+
+    /* NULL arguments are rejected. */
+    if (!TEST_false(X509_STORE_trust_mtc_cosigner(NULL, c1))
+        || !TEST_false(X509_STORE_trust_mtc_cosigner(store, NULL)))
+        goto err;
+
+    /*
+     * With CA 32473.0 trusted: cosigners 32473.1 and 32473.2 are trusted, a
+     * duplicate cosigner ID is rejected, a cosigner with the CA's ID is
+     * rejected, and a CA with cosigner 32473.2's ID is rejected.
+     */
+    if (!TEST_true(X509_STORE_trust_mtc_ca(store, ca0))
+        || !TEST_true(X509_STORE_trust_mtc_cosigner(store, c1))
+        || !TEST_true(X509_STORE_trust_mtc_cosigner(store, c2))
+        || !TEST_false(X509_STORE_trust_mtc_cosigner(store, dup))
+        || !TEST_false(X509_STORE_trust_mtc_cosigner(store, as_ca))
+        || !TEST_false(X509_STORE_trust_mtc_ca(store, ca2)))
+        goto err;
+
+    /* Both cosigners are in the store, found by ID as the borrowed pointers. */
+    if (!TEST_ptr_eq(ossl_mtc_cosigner_stack_lookup(store->mtc_cosigners,
+                         mtc_ca_id1, sizeof(mtc_ca_id1)),
+            c1)
+        || !TEST_ptr_eq(ossl_mtc_cosigner_stack_lookup(store->mtc_cosigners,
+                            mtc_cosigner_id2, sizeof(mtc_cosigner_id2)),
+            c2))
+        goto err;
+
+    /* Freeing the store leaves the borrowed cosigners usable. */
+    X509_STORE_free(store);
+    store = NULL;
+    if (!TEST_true(OSSL_MTC_COSIGNER_get0_id(c1, &id, &id_len))
+        || !TEST_mem_eq(id, id_len, mtc_ca_id1, sizeof(mtc_ca_id1)))
+        goto err;
+
+    ret = 1;
+err:
+    X509_STORE_free(store);
+    OSSL_MTC_COSIGNER_free(c1);
+    OSSL_MTC_COSIGNER_free(c2);
+    OSSL_MTC_COSIGNER_free(dup);
+    OSSL_MTC_COSIGNER_free(as_ca);
+    OSSL_MTC_CA_free(ca0);
+    OSSL_MTC_CA_free(ca2);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 /*
  * A certificate's CertificatePropertyList round-trips through the accessors,
  * and a CERTIFICATE PROPERTIES block accompanying a certificate in a PEM file
@@ -1614,6 +1701,7 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
     ADD_ALL_TESTS(test_x509_attribute_bit_string, 2);
     ADD_TEST(test_x509_store_trust_mtc_ca);
+    ADD_TEST(test_x509_store_trust_mtc_cosigner);
     ADD_TEST(test_x509_cert_properties);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);

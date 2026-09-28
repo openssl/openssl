@@ -15,6 +15,7 @@
 #include <openssl/x509.h>
 
 #include "crypto/mtc_ca.h"
+#include "crypto/mtc_cosigner.h"
 #include "testutil.h"
 
 /* A CA ID: the TrustAnchorID 32473.1 in relative-OID bytes. */
@@ -91,82 +92,87 @@ err:
 }
 
 /*
- * Add two distinct cosigners and confirm each is stored with its ID copied
- * (not aliased) and its key shared by reference.
+ * Construct a trusted cosigner and confirm its ID is a copy and its key
+ * survives the caller dropping its own reference.  A NULL key and an empty ID
+ * are rejected.
  */
-static int test_ca_add_cosigners(void)
+static int test_cosigner_roundtrip(void)
 {
-    EVP_PKEY *ca_key = NULL, *k0 = NULL, *k2 = NULL;
-    OSSL_MTC_CA *ca = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_MTC_COSIGNER *cosigner = NULL;
+    const uint8_t *got_id = NULL;
+    size_t got_len = 0;
     int ret = 0;
 
-    if (!TEST_ptr(ca_key = gen_cosigner_key())
-        || !TEST_ptr(k0 = gen_cosigner_key())
-        || !TEST_ptr(k2 = gen_cosigner_key()))
+    if (!TEST_ptr(pkey = gen_cosigner_key())
+        || !TEST_ptr_null(OSSL_MTC_COSIGNER_new(cosigner0_id,
+            sizeof(cosigner0_id), NULL))
+        || !TEST_ptr_null(OSSL_MTC_COSIGNER_new(cosigner0_id, 0, pkey))
+        || !TEST_ptr(cosigner = OSSL_MTC_COSIGNER_new(cosigner0_id,
+                         sizeof(cosigner0_id), pkey)))
         goto err;
 
-    if (!TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
-                      ca_key)))
-        goto err;
+    /* The cosigner holds its own reference; the caller's is released here. */
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
 
-    if (!TEST_true(OSSL_MTC_CA_add1_cosigner(ca, cosigner0_id,
-            sizeof(cosigner0_id), "ML-DSA-44", k0))
-        || !TEST_true(OSSL_MTC_CA_add1_cosigner(ca, cosigner2_id,
-            sizeof(cosigner2_id), "ML-DSA-44", k2))
-        || !TEST_size_t_eq(ca->cosigner_count, 2))
-        goto err;
-
-    if (!TEST_mem_eq(ca->cosigners[0].id, ca->cosigners[0].id_len,
-            cosigner0_id, sizeof(cosigner0_id))
-        || !TEST_ptr_ne(ca->cosigners[0].id, cosigner0_id)
-        || !TEST_str_eq(ca->cosigners[0].sig_name, "ML-DSA-44")
-        || !TEST_ptr_eq(ca->cosigners[0].pkey, k0)
-        || !TEST_mem_eq(ca->cosigners[1].id, ca->cosigners[1].id_len,
-            cosigner2_id, sizeof(cosigner2_id))
-        || !TEST_ptr_eq(ca->cosigners[1].pkey, k2))
+    if (!TEST_true(OSSL_MTC_COSIGNER_get0_id(cosigner, &got_id, &got_len))
+        || !TEST_mem_eq(got_id, got_len, cosigner0_id, sizeof(cosigner0_id))
+        || !TEST_ptr_ne(got_id, cosigner0_id)
+        || !TEST_true(EVP_PKEY_is_a(ossl_mtc_cosigner_pkey(cosigner),
+            "ML-DSA-44")))
         goto err;
 
     ret = 1;
 err:
-    OSSL_MTC_CA_free(ca);
-    EVP_PKEY_free(ca_key);
-    EVP_PKEY_free(k0);
-    EVP_PKEY_free(k2);
+    OSSL_MTC_COSIGNER_free(cosigner);
+    EVP_PKEY_free(pkey);
     return ret;
 }
 
 /*
- * Cosigner IDs must be distinct (section 5.3): a repeated ID and the CA's own
- * ID (the CA cosigner) are both rejected, leaving the list unchanged.
+ * A stack of trusted cosigners is kept sorted by ID, rejects a duplicate ID,
+ * and is searched by ID.
  */
-static int test_ca_add_cosigner_duplicate(void)
+static int test_cosigner_stack(void)
 {
-    EVP_PKEY *ca_key = NULL, *k0 = NULL;
-    OSSL_MTC_CA *ca = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_MTC_COSIGNER *c0 = NULL, *c2 = NULL, *dup = NULL;
+    STACK_OF(OSSL_MTC_COSIGNER) *cosigners = NULL;
     int ret = 0;
 
-    if (!TEST_ptr(ca_key = gen_cosigner_key())
-        || !TEST_ptr(k0 = gen_cosigner_key()))
+    if (!TEST_ptr(pkey = gen_cosigner_key())
+        || !TEST_ptr(c0 = OSSL_MTC_COSIGNER_new(cosigner0_id,
+                         sizeof(cosigner0_id), pkey))
+        || !TEST_ptr(c2 = OSSL_MTC_COSIGNER_new(cosigner2_id,
+                         sizeof(cosigner2_id), pkey))
+        || !TEST_ptr(dup = OSSL_MTC_COSIGNER_new(cosigner0_id,
+                         sizeof(cosigner0_id), pkey))
+        || !TEST_ptr(cosigners = sk_OSSL_MTC_COSIGNER_new(OSSL_MTC_COSIGNER_cmp)))
         goto err;
 
-    if (!TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
-                      ca_key)))
-        goto err;
-
-    if (!TEST_true(OSSL_MTC_CA_add1_cosigner(ca, cosigner0_id,
-            sizeof(cosigner0_id), "ML-DSA-44", k0))
-        || !TEST_false(OSSL_MTC_CA_add1_cosigner(ca, cosigner0_id,
-            sizeof(cosigner0_id), "ML-DSA-44", k0))
-        || !TEST_false(OSSL_MTC_CA_add1_cosigner(ca, ca_id, sizeof(ca_id),
-            "ML-DSA-44", k0))
-        || !TEST_size_t_eq(ca->cosigner_count, 1))
+    if (!TEST_true(ossl_mtc_cosigner_stack_add(cosigners, c2))
+        || !TEST_true(ossl_mtc_cosigner_stack_add(cosigners, c0))
+        || !TEST_false(ossl_mtc_cosigner_stack_add(cosigners, dup))
+        || !TEST_int_eq(sk_OSSL_MTC_COSIGNER_num(cosigners), 2)
+        || !TEST_ptr_eq(sk_OSSL_MTC_COSIGNER_value(cosigners, 0), c0)
+        || !TEST_ptr_eq(sk_OSSL_MTC_COSIGNER_value(cosigners, 1), c2)
+        || !TEST_ptr_eq(ossl_mtc_cosigner_stack_lookup(cosigners, cosigner2_id,
+                            sizeof(cosigner2_id)),
+            c2)
+        || !TEST_ptr_null(ossl_mtc_cosigner_stack_lookup(cosigners, ca_id,
+            sizeof(ca_id)))
+        || !TEST_ptr_null(ossl_mtc_cosigner_stack_lookup(NULL, cosigner0_id,
+            sizeof(cosigner0_id))))
         goto err;
 
     ret = 1;
 err:
-    OSSL_MTC_CA_free(ca);
-    EVP_PKEY_free(ca_key);
-    EVP_PKEY_free(k0);
+    sk_OSSL_MTC_COSIGNER_free(cosigners);
+    OSSL_MTC_COSIGNER_free(c0);
+    OSSL_MTC_COSIGNER_free(c2);
+    OSSL_MTC_COSIGNER_free(dup);
+    EVP_PKEY_free(pkey);
     return ret;
 }
 
@@ -893,9 +899,11 @@ static const uint8_t truncated_ca_id[] = { 0x81, 0xfd, 0x59, 0x81 };
 #define TEST_ASN1_RELATIVE_OID 13
 
 /*
- * Write to a new memory BIO a certificate representing an MTC CA whose
- * subject is the single trustAnchorID attribute (id, id_len) of the given
- * type, carrying the extension ext, marked critical when critical is set.
+ * Write to a new memory BIO a certificate whose subject is the single
+ * trustAnchorID attribute (id, id_len) of the given type.  With ext non-NULL
+ * it carries that id-pe-mtcCertificationAuthority-SHA256 extension value,
+ * marked critical when critical is set, and represents an MTC CA; with ext
+ * NULL it represents a cosigner.
  */
 static BIO *ca_cert_bio(int type, const uint8_t *id, size_t id_len,
     const uint8_t *ext, size_t ext_len, int critical)
@@ -922,13 +930,15 @@ static BIO *ca_cert_bio(int type, const uint8_t *id, size_t id_len,
         || !TEST_true(X509_set_issuer_name(cert, name)))
         goto err;
 
-    if (!TEST_ptr(ext_obj = OBJ_txt2obj("1.3.6.1.4.1.44363.47.4", 1))
-        || !TEST_ptr(ext_data = ASN1_OCTET_STRING_new())
-        || !TEST_true(ASN1_OCTET_STRING_set(ext_data, ext, (int)ext_len))
-        || !TEST_ptr(x509_ext = X509_EXTENSION_create_by_OBJ(NULL, ext_obj,
-                         critical, ext_data))
-        || !TEST_true(X509_add_ext(cert, x509_ext, -1))
-        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0))
+    if (ext != NULL
+        && (!TEST_ptr(ext_obj = OBJ_txt2obj("1.3.6.1.4.1.44363.47.4", 1))
+            || !TEST_ptr(ext_data = ASN1_OCTET_STRING_new())
+            || !TEST_true(ASN1_OCTET_STRING_set(ext_data, ext, (int)ext_len))
+            || !TEST_ptr(x509_ext = X509_EXTENSION_create_by_OBJ(NULL, ext_obj,
+                             critical, ext_data))
+            || !TEST_true(X509_add_ext(cert, x509_ext, -1))))
+        goto err;
+    if (!TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0))
         goto err;
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
@@ -951,7 +961,8 @@ err:
  * Build a certificate representing an MTC CA and parse it back; then check
  * that certificates with serial bounds below mtcMinSerial or inverted, a CA
  * extension that is not critical or has trailing bytes, a CA ID attribute
- * that is not a RELATIVE-OID, or a malformed CA ID are rejected.
+ * that is not a RELATIVE-OID, a malformed CA ID, or no CA extension (a
+ * cosigner certificate) are rejected.
  */
 static int test_ca_parse_certificate(void)
 {
@@ -980,7 +991,9 @@ static int test_ca_parse_certificate(void)
         { "non-minimal CA ID", TEST_ASN1_RELATIVE_OID, nonminimal_ca_id,
             sizeof(nonminimal_ca_id), ca_ext_der, sizeof(ca_ext_der), 1 },
         { "truncated CA ID", TEST_ASN1_RELATIVE_OID, truncated_ca_id,
-            sizeof(truncated_ca_id), ca_ext_der, sizeof(ca_ext_der), 1 }
+            sizeof(truncated_ca_id), ca_ext_der, sizeof(ca_ext_der), 1 },
+        { "cosigner certificate", TEST_ASN1_RELATIVE_OID, expect_ca_id,
+            sizeof(expect_ca_id), NULL, 0, 1 }
     };
     BIO *bio = NULL;
     STACK_OF(OSSL_MTC_CA) *cas = NULL;
@@ -1025,12 +1038,85 @@ err:
     return ret;
 }
 
+/*
+ * Build a certificate representing a cosigner and parse it back; then check
+ * that a CA certificate, a cosigner ID attribute that is not a RELATIVE-OID,
+ * and a malformed cosigner ID are rejected, leaving the stack as it was.
+ */
+static int test_cosigner_parse_certificate(void)
+{
+    static const struct {
+        const char *desc;
+        int type;
+        const uint8_t *id;
+        size_t id_len;
+        const uint8_t *ext;
+        size_t ext_len;
+        int critical;
+    } bad[] = {
+        { "CA certificate", TEST_ASN1_RELATIVE_OID, cosigner0_id,
+            sizeof(cosigner0_id), ca_ext_der, sizeof(ca_ext_der), 1 },
+        { "non-critical CA certificate", TEST_ASN1_RELATIVE_OID, cosigner0_id,
+            sizeof(cosigner0_id), ca_ext_der, sizeof(ca_ext_der), 0 },
+        { "UTF8String cosigner ID", V_ASN1_UTF8STRING,
+            (const uint8_t *)"32473.0", 7, NULL, 0, 0 },
+        { "non-minimal cosigner ID", TEST_ASN1_RELATIVE_OID, nonminimal_ca_id,
+            sizeof(nonminimal_ca_id), NULL, 0, 0 },
+        { "truncated cosigner ID", TEST_ASN1_RELATIVE_OID, truncated_ca_id,
+            sizeof(truncated_ca_id), NULL, 0, 0 }
+    };
+    BIO *bio = NULL;
+    STACK_OF(OSSL_MTC_COSIGNER) *cosigners = NULL;
+    OSSL_MTC_COSIGNER *cosigner;
+    const uint8_t *id;
+    size_t id_len, i;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC)
+    return TEST_skip("EC is disabled");
+#endif /* defined(OPENSSL_NO_EC) */
+
+    if (!TEST_ptr(bio = ca_cert_bio(TEST_ASN1_RELATIVE_OID, cosigner0_id,
+                      sizeof(cosigner0_id), NULL, 0, 0))
+        || !TEST_ptr(cosigners = sk_OSSL_MTC_COSIGNER_new_null()))
+        goto err;
+
+    if (!TEST_true(OSSL_MTC_COSIGNER_parse_certificates(NULL, NULL, bio,
+            cosigners))
+        || !TEST_int_eq(sk_OSSL_MTC_COSIGNER_num(cosigners), 1))
+        goto err;
+    cosigner = sk_OSSL_MTC_COSIGNER_value(cosigners, 0);
+    if (!TEST_true(OSSL_MTC_COSIGNER_get0_id(cosigner, &id, &id_len))
+        || !TEST_mem_eq(id, id_len, cosigner0_id, sizeof(cosigner0_id))
+        || !TEST_true(EVP_PKEY_is_a(ossl_mtc_cosigner_pkey(cosigner), "EC")))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(bad); i++) {
+        BIO_free(bio);
+        if (!TEST_ptr(bio = ca_cert_bio(bad[i].type, bad[i].id,
+                          bad[i].id_len, bad[i].ext, bad[i].ext_len,
+                          bad[i].critical)))
+            goto err;
+        if (!TEST_false(OSSL_MTC_COSIGNER_parse_certificates(NULL, NULL, bio,
+                cosigners))
+            || !TEST_int_eq(sk_OSSL_MTC_COSIGNER_num(cosigners), 1)) {
+            TEST_info("case: %s", bad[i].desc);
+            goto err;
+        }
+    }
+    ret = 1;
+err:
+    sk_OSSL_MTC_COSIGNER_pop_free(cosigners, OSSL_MTC_COSIGNER_free);
+    BIO_free(bio);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_ca_roundtrip);
     ADD_TEST(test_ca_null_hash);
-    ADD_TEST(test_ca_add_cosigners);
-    ADD_TEST(test_ca_add_cosigner_duplicate);
+    ADD_TEST(test_cosigner_roundtrip);
+    ADD_TEST(test_cosigner_stack);
     ADD_TEST(test_ca_revoked_ranges);
     ADD_TEST(test_ca_find);
     ADD_TEST(test_ca_find_ordering);
@@ -1040,6 +1126,7 @@ int setup_tests(void)
     ADD_TEST(test_ca_load_landmarks_bad);
     ADD_TEST(test_ca_stack);
     ADD_TEST(test_ca_parse_certificate);
+    ADD_TEST(test_cosigner_parse_certificate);
     ADD_TEST(test_ca_free_null);
     return 1;
 }

@@ -62,3 +62,17 @@ because the signatureValue is opaque, with no signature over the TBS).
 
 - `mtc-leaf-standalone-trailing.pem` — an extra trailing byte after the proof.
 - `mtc-leaf-standalone-truncated.pem` — the proof's final byte removed.
+
+Cosigner certificates (derived)
+-------------------------------
+
+Certificates representing the additional cosigners 32473.0 and 32473.2 of the
+generated log, for `OSSL_MTC_COSIGNER_parse_certificates()` and the
+`-mtc_cosigners` option of `s_client` and `s_server`.  Each is the CA
+certificate's shape (unsigned, RFC 9925) with the cosigner's ID as the
+`1.3.6.1.4.1.44363.47.3` subject attribute and the cosigner's ML-DSA-44 public
+key, and without the `1.3.6.1.4.1.44363.47.4` CA extension.  The keys are those
+of the demo configuration's cosigners.
+
+- `mtc-cosigner-32473.0.pem`, `mtc-cosigner-32473.2.pem` — one cosigner each.
+- `mtc-cosigners.pem` — both, concatenated.

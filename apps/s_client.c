@@ -45,6 +45,7 @@ typedef unsigned int u_int;
 #include <openssl/trace.h>
 #include <openssl/async.h>
 #include <openssl/mtc.h>
+#include <openssl/proof.h>
 #ifndef OPENSSL_NO_CT
 #include <openssl/ct.h>
 #endif
@@ -583,6 +584,8 @@ typedef enum OPTION_choice {
     OPT_MTC_CAS,
     OPT_MTC_LANDMARKS,
     OPT_MTC_SUBTREES,
+    OPT_MTC_COSIGNERS,
+    OPT_MTC_COSIGNER_QUORUM,
     OPT_TAI_CHAINS,
     OPT_TAI_KEYS,
     OPT_SERVERINFO,
@@ -707,6 +710,11 @@ const OPTIONS s_client_options[] = {
     { "mtc_subtrees", OPT_MTC_SUBTREES, '<',
         "File of vetted subtree hashes for the -mtc_landmarks logs"
         " (landmark-relative MTC)" },
+    { "mtc_cosigners", OPT_MTC_COSIGNERS, '<',
+        "File of Merkle Tree Certificate cosigner certs to trust for the"
+        " -mtc_cosigner_quorum" },
+    { "mtc_cosigner_quorum", OPT_MTC_COSIGNER_QUORUM, 'N',
+        "Trusted cosigners a standalone Merkle Tree Certificate must carry" },
     { "tai_chains", OPT_TAI_CHAINS, 's',
         "PEM file, or directory of PEM files, of trust anchor decorated"
         " certificate chains sent when a server requests their trust anchor" },
@@ -1031,9 +1039,12 @@ int s_client_main(int argc, char **argv)
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
     const char *mtc_cas_file = NULL, *mtc_subtrees_file = NULL;
+    const char *mtc_cosigners_file = NULL;
+    int mtc_cosigner_quorum = 0;
     const char *tai_chains_file = NULL, *tai_keys_file = NULL;
     STACK_OF(OPENSSL_STRING) *mtc_landmarks = NULL;
     STACK_OF(OSSL_MTC_CA) *mtc_cas = NULL;
+    STACK_OF(OSSL_MTC_COSIGNER) *mtc_cosigners = NULL;
     char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
     char *proxystr = NULL, *proxyuser = NULL;
     char *proxypassarg = NULL, *proxypass = NULL;
@@ -1648,6 +1659,14 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_MTC_SUBTREES:
             mtc_subtrees_file = opt_arg();
+            break;
+        case OPT_MTC_COSIGNERS:
+            mtc_cosigners_file = opt_arg();
+            break;
+        case OPT_MTC_COSIGNER_QUORUM:
+            mtc_cosigner_quorum = opt_int_arg();
+            if (mtc_cosigner_quorum < 0)
+                goto opthelp;
             break;
         case OPT_TAI_CHAINS:
             tai_chains_file = opt_arg();
@@ -2323,6 +2342,18 @@ int s_client_main(int argc, char **argv)
         if (!load_mtc_subtrees(mtc_cas, mtc_subtrees_file))
             goto end;
     }
+
+    /*
+     * Trust the Merkle Tree Certificate cosigners from -mtc_cosigners; they
+     * count toward -mtc_cosigner_quorum.  The store borrows them, so
+     * mtc_cosigners is kept alive until after the SSL_CTX is freed.
+     */
+    if (mtc_cosigners_file != NULL
+        && (mtc_cosigners = load_mtc_cosigners(ctx, mtc_cosigners_file)) == NULL)
+        goto end;
+    if (!OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(SSL_CTX_get0_proof_params(ctx),
+            (size_t)mtc_cosigner_quorum))
+        goto end;
 
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
@@ -3701,6 +3732,7 @@ end:
     /* Freed after the store that borrowed them. */
     sk_OPENSSL_STRING_free(mtc_landmarks);
     sk_OSSL_MTC_CA_pop_free(mtc_cas, OSSL_MTC_CA_free);
+    sk_OSSL_MTC_COSIGNER_pop_free(mtc_cosigners, OSSL_MTC_COSIGNER_free);
     set_keylog_file(NULL, NULL);
     X509_free(cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);

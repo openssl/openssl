@@ -241,6 +241,8 @@ typedef struct ossl_self_test_st OSSL_SELF_TEST;
 
 /* opaque type for a trusted Merkle Tree Certificate CA */
 typedef struct ossl_mtc_ca_st OSSL_MTC_CA;
+/* opaque type for a recognised Merkle Tree Certificate cosigner */
+typedef struct ossl_mtc_cosigner_st OSSL_MTC_COSIGNER;
 
 /* opaque proof, its trust configuration, parameters and verification output */
 typedef struct ossl_proof_st OSSL_PROOF;

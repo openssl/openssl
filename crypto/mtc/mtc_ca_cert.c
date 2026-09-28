@@ -14,6 +14,9 @@
  * The experimental OIDs are used: the CA ID is a RELATIVE-OID subject
  * attribute (1.3.6.1.4.1.44363.47.3) and the parameters are carried in the
  * id-pe-mtcCertificationAuthority-SHA256 extension (1.3.6.1.4.1.44363.47.4).
+ * The PEM reader is shared with the cosigner certificate parser
+ * (mtc_cosigner.c), which reads the same subject attribute from a certificate
+ * without the extension.
  */
 
 #include <openssl/asn1t.h>
@@ -24,6 +27,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include "crypto/mtc_ca.h"
 #include "crypto/mtc_verify.h"
 
 /* mtcMinSerial, the smallest serial number an MTC CA may issue (5.5). */
@@ -44,24 +48,40 @@ ASN1_SEQUENCE(MTC_CERTIFICATION_AUTHORITY) = {
 } ASN1_SEQUENCE_END(MTC_CERTIFICATION_AUTHORITY)
 
 /*
+ * The index of the id-pe-mtcCertificationAuthority-SHA256 extension in cert,
+ * or -1 if absent.
+ */
+static int ca_ext_index(const X509 *cert)
+{
+    ASN1_OBJECT *ext_oid = OBJ_txt2obj("1.3.6.1.4.1.44363.47.4", 1);
+    int idx;
+
+    if (ext_oid == NULL)
+        return -1;
+    idx = X509_get_ext_by_OBJ(cert, ext_oid, -1);
+    ASN1_OBJECT_free(ext_oid);
+    return idx;
+}
+
+int ossl_mtc_cert_is_ca(const X509 *cert)
+{
+    return ca_ext_index(cert) >= 0;
+}
+
+/*
  * Decode the id-pe-mtcCertificationAuthority-SHA256 extension, or NULL if
  * absent, not marked critical (section 5.5), or not exactly one
  * MTCCertificationAuthority.
  */
 static MTC_CERTIFICATION_AUTHORITY *ca_params_from_cert(X509 *cert)
 {
-    ASN1_OBJECT *ext_oid = OBJ_txt2obj("1.3.6.1.4.1.44363.47.4", 1);
     MTC_CERTIFICATION_AUTHORITY *params = NULL;
     const ASN1_OCTET_STRING *data;
     const unsigned char *p;
     const X509_EXTENSION *ext;
     long len;
-    int idx;
+    int idx = ca_ext_index(cert);
 
-    if (ext_oid == NULL)
-        return NULL;
-    idx = X509_get_ext_by_OBJ(cert, ext_oid, -1);
-    ASN1_OBJECT_free(ext_oid);
     if (idx < 0)
         return NULL;
     ext = X509_get_ext(cert, idx);
@@ -129,18 +149,11 @@ err:
     return ca;
 }
 
-int OSSL_MTC_CA_parse_certificates(OSSL_LIB_CTX *libctx, const char *propq,
-    BIO *in, STACK_OF(OSSL_MTC_CA) *out_cas)
+int ossl_mtc_parse_pem_certificates(OSSL_LIB_CTX *libctx, const char *propq,
+    BIO *in, int (*cb)(OSSL_LIB_CTX *libctx, const char *propq, X509 *cert, void *arg),
+    void *arg)
 {
-    int start, ret = 0, block = 0;
-
-    if (in == NULL || out_cas == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    /* Remember the starting size so a failure leaves out_cas unchanged. */
-    start = sk_OSSL_MTC_CA_num(out_cas);
+    int block = 0;
 
     for (;;) {
         char *name = NULL, *header = NULL;
@@ -152,24 +165,19 @@ int OSSL_MTC_CA_parse_certificates(OSSL_LIB_CTX *libctx, const char *propq,
             /* A missing start line at this point simply means end of input. */
             if (ERR_GET_REASON(ERR_peek_last_error()) == PEM_R_NO_START_LINE) {
                 ERR_clear_error();
-                break;
+                return 1;
             }
-            goto err;
+            return 0;
         }
         block++;
 
         if (strcmp(name, "CERTIFICATE") == 0) {
             const unsigned char *p = data;
             X509 *cert = X509_new_ex(libctx, propq);
-            OSSL_MTC_CA *ca = NULL;
 
-            if (cert != NULL && d2i_X509(&cert, &p, len) != NULL)
-                ca = ca_from_cert(libctx, propq, cert);
+            ok = cert != NULL && d2i_X509(&cert, &p, len) != NULL
+                && cb(libctx, propq, cert, arg);
             X509_free(cert);
-            if (ca == NULL || sk_OSSL_MTC_CA_push(out_cas, ca) <= 0) {
-                OSSL_MTC_CA_free(ca);
-                ok = 0;
-            }
         } else {
             ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
                 "PEM block %d", block);
@@ -180,15 +188,39 @@ int OSSL_MTC_CA_parse_certificates(OSSL_LIB_CTX *libctx, const char *propq,
         OPENSSL_free(header);
         OPENSSL_free(data);
         if (!ok)
-            goto err;
+            return 0;
+    }
+}
+
+/* Build a CA from one certificate and push it onto the stack in arg. */
+static int push_ca(OSSL_LIB_CTX *libctx, const char *propq, X509 *cert,
+    void *arg)
+{
+    STACK_OF(OSSL_MTC_CA) *out_cas = arg;
+    OSSL_MTC_CA *ca = ca_from_cert(libctx, propq, cert);
+
+    if (ca == NULL || sk_OSSL_MTC_CA_push(out_cas, ca) <= 0) {
+        OSSL_MTC_CA_free(ca);
+        return 0;
+    }
+    return 1;
+}
+
+int OSSL_MTC_CA_parse_certificates(OSSL_LIB_CTX *libctx, const char *propq,
+    BIO *in, STACK_OF(OSSL_MTC_CA) *out_cas)
+{
+    int start;
+
+    if (in == NULL || out_cas == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
     }
 
-    ret = 1;
-err:
-    /* On failure, drop anything this call added to out_cas. */
-    if (!ret) {
-        while (sk_OSSL_MTC_CA_num(out_cas) > start)
-            OSSL_MTC_CA_free(sk_OSSL_MTC_CA_pop(out_cas));
-    }
-    return ret;
+    /* Remember the starting size so a failure leaves out_cas unchanged. */
+    start = sk_OSSL_MTC_CA_num(out_cas);
+    if (ossl_mtc_parse_pem_certificates(libctx, propq, in, push_ca, out_cas))
+        return 1;
+    while (sk_OSSL_MTC_CA_num(out_cas) > start)
+        OSSL_MTC_CA_free(sk_OSSL_MTC_CA_pop(out_cas));
+    return 0;
 }

@@ -15,6 +15,7 @@
 
 #include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/proof.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
@@ -883,6 +884,10 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     if (s->param == NULL)
         goto asn1err;
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
+    if ((s->proof_params = OSSL_PROOF_PARAMS_new()) == NULL
+        || !OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(s->proof_params,
+            OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(ctx->proof_params)))
+        goto err;
     s->quiet_shutdown = IS_QUIC_CTX(ctx) ? 0 : ctx->quiet_shutdown;
 
     if (!IS_QUIC_CTX(ctx))
@@ -1543,6 +1548,21 @@ X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl)
     return sc->param;
 }
 
+OSSL_PROOF_PARAMS *SSL_CTX_get0_proof_params(SSL_CTX *ctx)
+{
+    return ctx->proof_params;
+}
+
+OSSL_PROOF_PARAMS *SSL_get0_proof_params(SSL *ssl)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return NULL;
+
+    return sc->proof_params;
+}
+
 void SSL_certs_clear(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -1603,6 +1623,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     RECORD_LAYER_clear(&s->rlayer);
 
     X509_VERIFY_PARAM_free(s->param);
+    OSSL_PROOF_PARAMS_free(s->proof_params);
     dane_final(&s->dane);
 
     BUF_MEM_free(s->init_buf);
@@ -4601,6 +4622,10 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
+    if ((ret->proof_params = OSSL_PROOF_PARAMS_new()) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
 
     if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -4829,6 +4854,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     X509_VERIFY_PARAM_free(a->param);
+    OSSL_PROOF_PARAMS_free(a->proof_params);
     dane_ctx_final(&a->dane);
 
     /*

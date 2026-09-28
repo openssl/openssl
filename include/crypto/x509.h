@@ -485,11 +485,13 @@ int ossl_x509_get0_tbs(const X509 *x, const uint8_t **tbs, size_t *tbs_len);
 /**
  * @brief Verify cert as a Merkle Tree Certificate: the proof (section 7.2) and
  *        the generic X.509 leaf checks.
- * @param ctx the verification context (the certificate, the trusted MTC CAs on
- *        its store, and the verification parameters)
+ * @param ctx the verification context (the certificate, the trusted MTC CAs
+ *        and cosigners on its store, and the verification parameters)
+ * @param quorum how many of the store's trusted cosigners, besides the CA
+ *        cosigner, must have cosigned a standalone certificate's subtree
  * @returns 1 if verified, 0 otherwise, with the reason in ctx->error.
  */
-int ossl_x509_verify_mtc(X509_STORE_CTX *ctx);
+int ossl_x509_verify_mtc(X509_STORE_CTX *ctx, size_t quorum);
 /**
  * @brief Apply the generic X.509 leaf checks a Merkle Tree Certificate is
  *        subject to: validity times, the identity and purpose the caller asked

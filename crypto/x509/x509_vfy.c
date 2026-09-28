@@ -1044,7 +1044,25 @@ err:
     return ret;
 }
 
-int ossl_x509_verify_mtc(X509_STORE_CTX *ctx)
+/*
+ * Look up a trusted cosigner in the X509_STORE arg by ID, under the store read
+ * lock: X509_STORE_trust_mtc_cosigner() mutates the cosigner stack under the
+ * write lock.  The cosigner is borrowed but stable (never evicted).
+ */
+static OSSL_MTC_COSIGNER *store_cosigner_lookup(const uint8_t *id,
+    size_t id_len, void *arg)
+{
+    X509_STORE *store = arg;
+    OSSL_MTC_COSIGNER *cosigner;
+
+    if (!ossl_x509_store_read_lock(store))
+        return NULL;
+    cosigner = ossl_mtc_cosigner_stack_lookup(store->mtc_cosigners, id, id_len);
+    X509_STORE_unlock(store);
+    return cosigner;
+}
+
+int ossl_x509_verify_mtc(X509_STORE_CTX *ctx, size_t quorum)
 {
     OSSL_MTC_CA *ca;
     const ASN1_BIT_STRING *sig;
@@ -1073,7 +1091,8 @@ int ossl_x509_verify_mtc(X509_STORE_CTX *ctx)
      * X509_STORE_trust_mtc_ca() mutates under the store write lock.  Resolve the
      * issuing CA under the store read lock; the resolved CA is borrowed but
      * stable (never evicted) and self-locking, so the proof is then verified
-     * without holding the store lock.
+     * without holding the store lock.  Trusted cosigners are looked up the
+     * same way, one at a time, by store_cosigner_lookup().
      */
     if (!ossl_x509_store_read_lock(ctx->store)) {
         ctx->error = X509_V_ERR_UNSPECIFIED;
@@ -1098,8 +1117,9 @@ int ossl_x509_verify_mtc(X509_STORE_CTX *ctx)
         ctx->error = X509_V_ERR_MTC_BAD_PROOF;
         goto err;
     }
-    if (!ossl_mtc_verify(ca, tbs, tbs_len, ASN1_STRING_get0_data(sig),
-            ASN1_STRING_get_length(sig), &ctx->error))
+    if (!ossl_mtc_verify(ca, store_cosigner_lookup, ctx->store, quorum, tbs,
+            tbs_len, ASN1_STRING_get0_data(sig), ASN1_STRING_get_length(sig),
+            &ctx->error))
         goto err;
     if (!ossl_x509_mtc_leaf_checks(ctx))
         goto err;

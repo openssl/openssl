@@ -279,6 +279,7 @@ void X509_STORE_free(X509_STORE *xs)
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, xs, &xs->ex_data);
     X509_VERIFY_PARAM_free(xs->param);
     sk_OSSL_MTC_CA_free(xs->mtc_cas); /* borrowed CAs: free the container */
+    sk_OSSL_MTC_COSIGNER_free(xs->mtc_cosigners); /* borrowed likewise */
     OPENSSL_free(xs->trust_anchor_ids);
     CRYPTO_THREAD_lock_free(xs->lock);
     CRYPTO_FREE_REF(&xs->references);
@@ -694,8 +695,15 @@ int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x)
     return 1;
 }
 
+/*
+ * A trust anchor ID names either a CA (5.4: the CA cosigner's ID is the CA ID)
+ * or another cosigner, never both, so a store rejects an ID that is already
+ * held by the other kind.
+ */
 int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca)
 {
+    const uint8_t *id;
+    size_t id_len;
     int ret = 0;
 
     if (store == NULL || ca == NULL) {
@@ -704,10 +712,40 @@ int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca)
     }
     if (!X509_STORE_lock(store))
         return 0;
+    id = ossl_mtc_ca_id(ca, &id_len);
+    if (ossl_mtc_cosigner_stack_lookup(store->mtc_cosigners, id, id_len)
+        != NULL)
+        goto out;
     if (store->mtc_cas == NULL
         && (store->mtc_cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)) == NULL)
         goto out;
     ret = ossl_mtc_ca_stack_add(store->mtc_cas, ca);
+out:
+    X509_STORE_unlock(store);
+    return ret;
+}
+
+int X509_STORE_trust_mtc_cosigner(X509_STORE *store, OSSL_MTC_COSIGNER *cosigner)
+{
+    const uint8_t *id;
+    size_t id_len;
+    int ret = 0;
+
+    if (store == NULL || cosigner == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509_STORE_lock(store))
+        return 0;
+    id = ossl_mtc_cosigner_id(cosigner, &id_len);
+    if (store->mtc_cas != NULL
+        && ossl_mtc_ca_stack_lookup(store->mtc_cas, id, id_len) != NULL)
+        goto out;
+    if (store->mtc_cosigners == NULL
+        && (store->mtc_cosigners = sk_OSSL_MTC_COSIGNER_new(OSSL_MTC_COSIGNER_cmp))
+            == NULL)
+        goto out;
+    ret = ossl_mtc_cosigner_stack_add(store->mtc_cosigners, cosigner);
 out:
     X509_STORE_unlock(store);
     return ret;

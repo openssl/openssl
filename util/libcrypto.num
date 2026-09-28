@@ -5749,7 +5749,6 @@ PKCS12_PARSE_CTX_set_skeys              ?	4_2_0	EXIST::FUNCTION:
 PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_new                         ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_free                        ?	4_2_0	EXIST::FUNCTION:
-OSSL_MTC_CA_add1_cosigner               ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_add_revoked_range           ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_get0_id                     ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_serial                         ?	4_2_0	EXIST::FUNCTION:
@@ -5778,3 +5777,11 @@ OSSL_MTC_CA_set_max_serial              ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_parse_certificates          ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_cmp                         ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_find                        ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_COSIGNER_new                   ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_COSIGNER_parse_certificates    ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_COSIGNER_free                  ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_COSIGNER_get0_id               ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_COSIGNER_cmp                   ?	4_2_0	EXIST::FUNCTION:
+X509_STORE_trust_mtc_cosigner           ?	4_2_0	EXIST::FUNCTION:
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum ?	4_2_0	EXIST::FUNCTION:
+OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum ?	4_2_0	EXIST::FUNCTION:

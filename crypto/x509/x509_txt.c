@@ -241,6 +241,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Merkle Tree Certificate inclusion proof did not evaluate";
     case X509_V_ERR_MTC_NOT_TRUSTED:
         return "Merkle Tree Certificate subtree is not trusted";
+    case X509_V_ERR_MTC_COSIGNER_QUORUM:
+        return "Merkle Tree Certificate lacks the required cosignatures";
 
         /*
          * Entries must be kept consistent with include/openssl/x509_vfy.h.in

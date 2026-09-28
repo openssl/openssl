@@ -29,6 +29,8 @@ B<openssl> B<s_server>
 [B<-mtc_cas> I<filename>]
 [B<-mtc_landmarks> I<id>:I<log>:I<filename>]
 [B<-mtc_subtrees> I<filename>]
+[B<-mtc_cosigners> I<filename>]
+[B<-mtc_cosigner_quorum> I<count>]
 [B<-build_chain>]
 [B<-serverinfo> I<val>]
 [B<-key> I<filename>|I<uri>]
@@ -267,6 +269,19 @@ described for L<openssl-s_client(1)>. This option may be given more than once.
 A file of vetted subtree hashes for the B<-mtc_landmarks> logs, in the format
 described for L<openssl-s_client(1)>, needed to verify landmark-relative
 (signatureless) Merkle Tree Certificates.
+
+=item B<-mtc_cosigners> I<filename>
+
+A file in PEM format of Merkle Tree Certificate cosigner certificates, as
+described for L<openssl-s_client(1)>, trusted for every B<-mtc_cas> CA when
+verifying a standalone Merkle Tree Certificate the client sends.
+
+=item B<-mtc_cosigner_quorum> I<count>
+
+Require the subtree of a standalone Merkle Tree Certificate the client sends to
+carry valid signatures from at least I<count> of the B<-mtc_cosigners>, in
+addition to the issuing CA's cosignature. The default is 0, so the CA
+cosignature alone suffices.
 
 =item B<-build_chain>
 

@@ -28,6 +28,7 @@
 #include <crypto/mtc.h>
 #include <crypto/mtc_ca.h>
 #include <crypto/mtc_cert.h>
+#include <crypto/mtc_cosigner.h>
 #include <crypto/mtc_verify.h>
 
 /* Experimental id-alg-mtcProof (6.2): 1.3.6.1.4.1.44363.47.0. */
@@ -461,14 +462,59 @@ err:
 }
 
 /**
- * @brief Verify the CA cosignature over a subtree (section 7.2 step 12, 7.3).
+ * @brief Verify one cosignature over a subtree (section 5.3.1).
  *
- * First-cut cosigner policy: require a valid signature from the CA cosigner
- * (authenticity).  The reference implementation likewise only checks the CA
- * cosignature at present (an additional-cosigner quorum is a TODO); unrecognised
- * cosigners are ignored.
+ * @param pkey the cosigner's public key
+ * @param sig the cosignature, giving the cosigner ID and signature value
+ * @param log_id_text the log ID as a dotted-decimal string
+ * @param start the subtree start
+ * @param end the subtree end
+ * @param subtree_hash the subtree hash
+ * @param subtree_hash_len the length of subtree_hash
+ * @returns 1 if the signature verifies, 0 otherwise.
+ */
+static int mtc_verify_cosignature(EVP_PKEY *pkey,
+    const OSSL_MTC_COSIGNATURE *sig, const char *log_id_text, uint64_t start,
+    uint64_t end, const uint8_t *subtree_hash, size_t subtree_hash_len)
+{
+    EVP_MD_CTX *mdctx = NULL;
+    uint8_t *msg = NULL;
+    size_t msg_len;
+    int ok = 0;
+
+    if (!mtc_build_cosigned_message(sig->cosigner_id, sig->cosigner_id_len,
+            log_id_text, start, end, subtree_hash, subtree_hash_len, &msg,
+            &msg_len))
+        goto err;
+    if ((mdctx = EVP_MD_CTX_new()) == NULL)
+        goto err;
+    /* ML-DSA and friends verify directly (no pre-hash): md == NULL. */
+    ok = EVP_DigestVerifyInit_ex(mdctx, NULL, NULL, NULL, NULL, pkey, NULL)
+        && EVP_DigestVerify(mdctx, sig->signature, sig->signature_len, msg,
+               msg_len)
+            == 1;
+err:
+    EVP_MD_CTX_free(mdctx);
+    OPENSSL_free(msg);
+    return ok;
+}
+
+/**
+ * @brief Check a subtree's cosignatures against the cosigner policy (section
+ * 7.2 step 12, 7.3).
  *
- * @param ca the issuing CA, providing the cosigner key and ID
+ * The policy is a valid signature from the CA cosigner (authenticity) plus
+ * valid signatures from at least quorum of the trusted cosigners
+ * (transparency).  A cosignature whose cosigner is neither the CA cosigner nor
+ * a trusted cosigner is ignored (7.2 step 12); so is one from a trusted
+ * cosigner that does not verify, which then does not count toward the quorum.
+ * Each cosigner appears at most once in a well-formed list (6.2), so a
+ * cosigner counts at most once.
+ *
+ * @param ca the issuing CA, providing the CA cosigner key and ID
+ * @param lookup resolves a cosigner ID to a trusted cosigner; NULL when none
+ * @param lookup_arg passed through to lookup
+ * @param quorum the number of trusted cosigners that must have signed
  * @param log_number the issuance log number
  * @param proof the parsed MTCProof, providing the cosignatures
  * @param start the subtree start
@@ -476,22 +522,22 @@ err:
  * @param subtree_hash the evaluated subtree hash
  * @param subtree_hash_len the length of subtree_hash
  * @param error set to X509_V_ERR_MTC_BAD_PROOF for a malformed cosignature list,
- *        or X509_V_ERR_MTC_NOT_TRUSTED otherwise
- * @returns 1 if a valid CA cosignature is present, 0 otherwise.
+ *        X509_V_ERR_MTC_NOT_TRUSTED without a valid CA cosignature, or
+ *        X509_V_ERR_MTC_COSIGNER_QUORUM with too few trusted cosignatures
+ * @returns 1 if the policy is met, 0 otherwise.
  */
-static int mtc_verify_cosignatures(const OSSL_MTC_CA *ca, uint16_t log_number,
-    const OSSL_MTC_PROOF *proof, uint64_t start, uint64_t end,
-    const uint8_t *subtree_hash, size_t subtree_hash_len, int *error)
+static int mtc_verify_cosignatures(const OSSL_MTC_CA *ca,
+    ossl_mtc_cosigner_lookup_fn lookup, void *lookup_arg, size_t quorum,
+    uint16_t log_number, const OSSL_MTC_PROOF *proof, uint64_t start,
+    uint64_t end, const uint8_t *subtree_hash, size_t subtree_hash_len,
+    int *error)
 {
     OSSL_MTC_COSIGNATURE *sigs = NULL;
-    uint8_t *msg = NULL;
     const uint8_t *ca_id;
     char *ca_id_text = NULL, *log_id_text = NULL;
-    EVP_PKEY *ca_pkey = ossl_mtc_ca_cosigner_pkey(ca);
-    EVP_MD_CTX *mdctx = NULL;
     PACKET idp;
-    size_t count = 0, msg_len, ca_id_len, i, need;
-    int ok = 0;
+    size_t count = 0, ca_id_len, i, need, additional = 0;
+    int ca_ok = 0, ok = 0;
 
     *error = X509_V_ERR_MTC_NOT_TRUSTED;
     ca_id = ossl_mtc_ca_id(ca, &ca_id_len);
@@ -520,28 +566,40 @@ static int mtc_verify_cosignatures(const OSSL_MTC_CA *ca, uint16_t log_number,
         goto err;
     }
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count && !(ca_ok && additional >= quorum); i++) {
+        const OSSL_MTC_COSIGNER *cosigner;
+        EVP_PKEY *pkey;
+        int is_ca;
+
         /* The CA cosigner is identified by ca_id (5.4). */
-        if (sigs[i].cosigner_id_len != ca_id_len
-            || memcmp(sigs[i].cosigner_id, ca_id, ca_id_len) != 0)
-            continue; /* unrecognised cosigner - ignore */
-        if (!mtc_build_cosigned_message(sigs[i].cosigner_id,
-                sigs[i].cosigner_id_len, log_id_text, start, end, subtree_hash,
-                subtree_hash_len, &msg, &msg_len))
-            goto err;
-        if ((mdctx = EVP_MD_CTX_new()) == NULL)
-            goto err;
-        /* ML-DSA and friends verify directly (no pre-hash): md == NULL. */
-        if (EVP_DigestVerifyInit_ex(mdctx, NULL, NULL, NULL, NULL, ca_pkey, NULL)
-            && EVP_DigestVerify(mdctx, sigs[i].signature, sigs[i].signature_len,
-                   msg, msg_len)
-                == 1)
-            ok = 1;
-        break; /* only the CA cosigner is checked in this cut */
+        is_ca = sigs[i].cosigner_id_len == ca_id_len
+            && memcmp(sigs[i].cosigner_id, ca_id, ca_id_len) == 0;
+        if (is_ca) {
+            pkey = ossl_mtc_ca_cosigner_pkey(ca);
+        } else {
+            cosigner = lookup == NULL ? NULL
+                                      : lookup(sigs[i].cosigner_id,
+                                            sigs[i].cosigner_id_len, lookup_arg);
+            if (cosigner == NULL)
+                continue; /* unrecognised cosigner - ignore */
+            pkey = ossl_mtc_cosigner_pkey(cosigner);
+        }
+        if (!mtc_verify_cosignature(pkey, &sigs[i], log_id_text, start, end,
+                subtree_hash, subtree_hash_len))
+            continue;
+        if (is_ca)
+            ca_ok = 1;
+        else
+            additional++;
     }
+    if (!ca_ok)
+        goto err;
+    if (additional < quorum) {
+        *error = X509_V_ERR_MTC_COSIGNER_QUORUM;
+        goto err;
+    }
+    ok = 1;
 err:
-    EVP_MD_CTX_free(mdctx);
-    OPENSSL_free(msg);
     OPENSSL_free(sigs);
     OPENSSL_free(ca_id_text);
     OPENSSL_free(log_id_text);
@@ -579,7 +637,8 @@ OSSL_MTC_CA *ossl_mtc_ca_for_cert(const STACK_OF(OSSL_MTC_CA) *cas,
     return ca;
 }
 
-int ossl_mtc_verify(OSSL_MTC_CA *ca, const uint8_t *tbs, size_t tbs_len,
+int ossl_mtc_verify(OSSL_MTC_CA *ca, ossl_mtc_cosigner_lookup_fn lookup,
+    void *lookup_arg, size_t quorum, const uint8_t *tbs, size_t tbs_len,
     const uint8_t *proof, size_t proof_len, int *error)
 {
     const EVP_MD *md = ossl_mtc_ca_hash(ca);
@@ -626,8 +685,9 @@ int ossl_mtc_verify(OSSL_MTC_CA *ca, const uint8_t *tbs, size_t tbs_len,
             err = X509_V_ERR_MTC_NOT_TRUSTED;
             goto err;
         }
-        if (!mtc_verify_cosignatures(ca, log_number, &parsed, parsed.start,
-                parsed.end, subtree_root, entry_hash_len, &err))
+        if (!mtc_verify_cosignatures(ca, lookup, lookup_arg, quorum,
+                log_number, &parsed, parsed.start, parsed.end, subtree_root,
+                entry_hash_len, &err))
             goto err;
     }
     err = X509_V_OK;

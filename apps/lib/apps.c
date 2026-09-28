@@ -854,6 +854,43 @@ STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file)
 }
 
 /*
+ * Trust the Merkle Tree Certificate cosigners in file, adding each to ctx's
+ * verify store, where they count toward the cosigner quorum of a standalone
+ * Merkle Tree Certificate.  The store borrows the cosigners, so the returned
+ * stack must outlive ctx; free it with
+ * sk_OSSL_MTC_COSIGNER_pop_free(stack, OSSL_MTC_COSIGNER_free).  Returns NULL
+ * on failure.
+ */
+STACK_OF(OSSL_MTC_COSIGNER) *load_mtc_cosigners(SSL_CTX *ctx, const char *file)
+{
+    STACK_OF(OSSL_MTC_COSIGNER) *cosigners = NULL;
+    X509_STORE *store = SSL_CTX_get_cert_store(ctx);
+    BIO *in = BIO_new_file(file, "r");
+    int i, ok = 0;
+
+    if (in != NULL
+        && (cosigners = sk_OSSL_MTC_COSIGNER_new(OSSL_MTC_COSIGNER_cmp)) != NULL
+        && OSSL_MTC_COSIGNER_parse_certificates(app_get0_libctx(),
+            app_get0_propq(), in, cosigners)) {
+        ok = 1;
+        for (i = 0; i < sk_OSSL_MTC_COSIGNER_num(cosigners); i++) {
+            if (!X509_STORE_trust_mtc_cosigner(store,
+                    sk_OSSL_MTC_COSIGNER_value(cosigners, i))) {
+                ok = 0;
+                break;
+            }
+        }
+    }
+    BIO_free(in);
+    if (!ok) {
+        BIO_printf(bio_err, "Error loading MTC cosigners from %s\n", file);
+        sk_OSSL_MTC_COSIGNER_pop_free(cosigners, OSSL_MTC_COSIGNER_free);
+        return NULL;
+    }
+    return cosigners;
+}
+
+/*
  * Load one MTC log's active landmarks from "id:log:file", where id is the CA's
  * trust anchor ID in dotted text, log is the decimal log number, and file holds
  * the landmark description the CA publishes for that log (section 6.4.3 of

@@ -82,16 +82,8 @@ OSSL_MTC_CA *ossl_mtc_ca_new(const uint8_t *ca_id, size_t ca_id_len,
 
 void ossl_mtc_ca_free(OSSL_MTC_CA *ca)
 {
-    size_t i;
-
     if (ca == NULL)
         return;
-    for (i = 0; i < ca->cosigner_count; i++) {
-        OPENSSL_free(ca->cosigners[i].id);
-        OPENSSL_free(ca->cosigners[i].sig_name);
-        EVP_PKEY_free(ca->cosigners[i].pkey);
-    }
-    OPENSSL_free(ca->cosigners);
     OPENSSL_free(ca->revoked);
     sk_OSSL_MTC_LOG_pop_free(ca->logs, log_free);
     OPENSSL_free(ca->advertised_ids);
@@ -100,60 +92,6 @@ void ossl_mtc_ca_free(OSSL_MTC_CA *ca)
     EVP_PKEY_free(ca->cosigner_pkey);
     CRYPTO_THREAD_lock_free(ca->lock);
     OPENSSL_free(ca);
-}
-
-int ossl_mtc_ca_add_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
-    const char *sig_name, EVP_PKEY *pkey)
-{
-    OSSL_MTC_COSIGNER *tmp, *entry;
-    uint8_t *id_copy = NULL;
-    char *sig_copy = NULL;
-    size_t i;
-    int ret = 0;
-
-    if (!CRYPTO_THREAD_write_lock(ca->lock))
-        return 0;
-
-    /* Cosigner IDs must be distinct (5.3): reject the CA ID and duplicates. */
-    if (id_len == ca->ca_id_len && memcmp(id, ca->ca_id, id_len) == 0)
-        goto out;
-    for (i = 0; i < ca->cosigner_count; i++) {
-        if (ca->cosigners[i].id_len == id_len
-            && memcmp(ca->cosigners[i].id, id, id_len) == 0)
-            goto out;
-    }
-
-    id_copy = OPENSSL_memdup(id, id_len);
-    if (id_copy == NULL)
-        goto out;
-
-    sig_copy = OPENSSL_strdup(sig_name);
-    if (sig_copy == NULL)
-        goto out;
-
-    tmp = OPENSSL_realloc_array(ca->cosigners, ca->cosigner_count + 1,
-        sizeof(*ca->cosigners));
-    if (tmp == NULL)
-        goto out;
-    ca->cosigners = tmp;
-
-    if (!EVP_PKEY_up_ref(pkey))
-        goto out;
-
-    entry = &ca->cosigners[ca->cosigner_count];
-    entry->id = id_copy;
-    entry->id_len = id_len;
-    entry->sig_name = sig_copy;
-    entry->pkey = pkey;
-    ca->cosigner_count++;
-    id_copy = NULL;
-    sig_copy = NULL;
-    ret = 1;
-out:
-    OPENSSL_free(id_copy);
-    OPENSSL_free(sig_copy);
-    CRYPTO_THREAD_unlock(ca->lock);
-    return ret;
 }
 
 int ossl_mtc_ca_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end)
@@ -715,8 +653,7 @@ int ossl_mtc_ca_trusted_subtree_matches(const OSSL_MTC_CA *ca,
     return ret;
 }
 
-/* Order trusted CAs ascending by CA ID: shorter first, then lexicographic. */
-static int ca_id_order(const uint8_t *a, size_t alen, const uint8_t *b,
+int ossl_mtc_id_order(const uint8_t *a, size_t alen, const uint8_t *b,
     size_t blen)
 {
     if (alen != blen)
@@ -730,7 +667,7 @@ int OSSL_MTC_CA_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b)
     const uint8_t *aid = ossl_mtc_ca_id(*a, &alen);
     const uint8_t *bid = ossl_mtc_ca_id(*b, &blen);
 
-    return ca_id_order(aid, alen, bid, blen);
+    return ossl_mtc_id_order(aid, alen, bid, blen);
 }
 
 int ossl_mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, OSSL_MTC_CA *ca)
@@ -745,7 +682,7 @@ int ossl_mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, OSSL_MTC_CA *ca)
         idx = sk_OSSL_MTC_CA_find_ex(cas, ca);
         aid = ossl_mtc_ca_id(sk_OSSL_MTC_CA_value(cas, idx), &alen);
         bid = ossl_mtc_ca_id(ca, &blen);
-        c = ca_id_order(aid, alen, bid, blen);
+        c = ossl_mtc_id_order(aid, alen, bid, blen);
         if (c == 0)
             return 0; /* duplicate CA ID */
         if (c < 0)
@@ -782,16 +719,6 @@ OSSL_MTC_CA *OSSL_MTC_CA_new(const uint8_t *ca_id, size_t ca_id_len,
 void OSSL_MTC_CA_free(OSSL_MTC_CA *ca)
 {
     ossl_mtc_ca_free(ca);
-}
-
-int OSSL_MTC_CA_add1_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
-    const char *sig_name, EVP_PKEY *pkey)
-{
-    if (ca == NULL || id == NULL || sig_name == NULL || pkey == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    return ossl_mtc_ca_add_cosigner(ca, id, id_len, sig_name, pkey);
 }
 
 int OSSL_MTC_CA_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end)

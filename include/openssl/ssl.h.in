@@ -1920,6 +1920,18 @@ __owur int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 __owur X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
 __owur X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
 
+/**
+ * @brief Get the proof verification parameters of an SSL_CTX, applied when a
+ *        peer presents a proof such as a Merkle Tree Certificate.
+ * @see SSL_CTX_get0_proof_params(3), OSSL_PROOF_verify(3)
+ */
+__owur OSSL_PROOF_PARAMS *SSL_CTX_get0_proof_params(SSL_CTX *ctx);
+/**
+ * @brief Get the proof verification parameters of an SSL connection.
+ * @see SSL_get0_proof_params(3), SSL_CTX_get0_proof_params(3)
+ */
+__owur OSSL_PROOF_PARAMS *SSL_get0_proof_params(SSL *ssl);
+
 #ifndef OPENSSL_NO_SRP
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name);

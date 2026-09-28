@@ -1053,6 +1053,8 @@ struct ssl_ctx_st {
     GEN_SESSION_CB generate_session_id;
 
     X509_VERIFY_PARAM *param;
+    /* Proof verification parameters, for the forms OSSL_PROOF_verify() takes */
+    OSSL_PROOF_PARAMS *proof_params;
 
     int quiet_shutdown;
 
@@ -1620,6 +1622,8 @@ struct ssl_connection_st {
     void *msg_callback_arg;
     int hit; /* reusing a previous session */
     X509_VERIFY_PARAM *param;
+    /* Proof verification parameters, for the forms OSSL_PROOF_verify() takes */
+    OSSL_PROOF_PARAMS *proof_params;
     /* Per connection DANE state */
     SSL_DANE dane;
     /* crypto */

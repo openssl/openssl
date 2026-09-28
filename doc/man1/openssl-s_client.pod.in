@@ -30,6 +30,8 @@ B<openssl> B<s_client>
 [B<-mtc_cas> I<filename>]
 [B<-mtc_landmarks> I<id>:I<log>:I<filename>]
 [B<-mtc_subtrees> I<filename>]
+[B<-mtc_cosigners> I<filename>]
+[B<-mtc_cosigner_quorum> I<count>]
 [B<-tai_chains> I<path>]
 [B<-tai_keys> I<path>]
 [B<-verifyCAfile> I<filename>]
@@ -378,6 +380,22 @@ subtree active in that log's window; and I<hash> is the base64 SHA-256 hash of
 the subtree. Lines beginning with C<#> are ignored. Obtaining and validating
 these hashes is an out-of-band process (see section 7.4 of the draft); this
 option only installs already-vetted values.
+
+=item B<-mtc_cosigners> I<filename>
+
+A file in PEM format containing one or more Merkle Tree Certificate cosigner
+certificates: certificates whose subject carries the cosigner's trust anchor
+identifier and whose public key is the cosigner's, without the CA extension of
+a B<-mtc_cas> certificate. The cosigners are trusted for every B<-mtc_cas> CA.
+A standalone Merkle Tree Certificate must carry valid signatures from at least
+B<-mtc_cosigner_quorum> of them, in addition to the CA cosignature, to verify.
+
+=item B<-mtc_cosigner_quorum> I<count>
+
+Require the subtree of a standalone Merkle Tree Certificate to carry valid
+signatures from at least I<count> of the B<-mtc_cosigners>, in addition to the
+issuing CA's cosignature. The default is 0, so the CA cosignature alone
+suffices.
 
 =item B<-tai_chains> I<path>
 

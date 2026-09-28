@@ -25,6 +25,7 @@
 #include <openssl/mtc.h>
 
 #include "crypto/mtc_ca.h"
+#include "crypto/mtc_cosigner.h"
 #include "crypto/mtc_verify.h"
 #include "crypto/x509.h"
 #include "testutil.h"
@@ -43,6 +44,20 @@ static const uint8_t ca_seed[] = {
 
 /* A different seed, so the derived cosigner key does not match the proof. */
 static const uint8_t wrong_seed[32] = { 0x00 };
+
+/* The additional cosigners 32473.0 and 32473.2 (config seeds) that cosign. */
+static const uint8_t cosigner0_id[] = { 0x81, 0xfd, 0x59, 0x00 };
+static const uint8_t cosigner0_seed[] = {
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xa1, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
+    0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11
+};
+static const uint8_t cosigner2_id[] = { 0x81, 0xfd, 0x59, 0x02 };
+static const uint8_t cosigner2_seed[] = {
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0xaa, 0xaa, 0xaa, 0xaa, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
+    0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22
+};
 
 /*
  * The mtc-landmark.pem fixture's landmark state: log 1 has one active landmark,
@@ -138,11 +153,33 @@ static OSSL_MTC_CA *make_ca_unhashed(void)
     return ca;
 }
 
+/* The cosigner lookup for ossl_mtc_verify(): a plain sorted stack. */
+static OSSL_MTC_COSIGNER *stack_lookup(const uint8_t *id, size_t id_len,
+    void *arg)
+{
+    return ossl_mtc_cosigner_stack_lookup(arg, id, id_len);
+}
+
+/* Build a trusted cosigner with the given ID and ML-DSA-44 key seed. */
+static OSSL_MTC_COSIGNER *make_cosigner(const uint8_t *id, size_t id_len,
+    const uint8_t *seed, size_t seed_len)
+{
+    EVP_PKEY *pkey = cosigner_key(seed, seed_len);
+    OSSL_MTC_COSIGNER *cosigner = NULL;
+
+    if (pkey != NULL)
+        cosigner = OSSL_MTC_COSIGNER_new(id, id_len, pkey);
+    EVP_PKEY_free(pkey); /* the cosigner holds its own reference */
+    return cosigner;
+}
+
 /*
- * Load cert_name, trust ca, resolve the issuing CA and verify its proof, and
- * confirm the outcome is expect_ret with expect_error recorded.  ca is consumed.
+ * Load cert_name, trust ca, resolve the issuing CA and verify its proof
+ * against the trusted cosigners and quorum, and confirm the outcome is
+ * expect_ret with expect_error recorded.  ca and cosigners are consumed.
  */
-static int check(const char *cert_name, OSSL_MTC_CA *ca, int expect_ret,
+static int check_policy(const char *cert_name, OSSL_MTC_CA *ca,
+    STACK_OF(OSSL_MTC_COSIGNER) *cosigners, size_t quorum, int expect_ret,
     int expect_error)
 {
     char *path = NULL;
@@ -164,18 +201,57 @@ static int check(const char *cert_name, OSSL_MTC_CA *ca, int expect_ret,
     X509_get0_signature(&sig, &alg, cert); /* the MTCProof is the signatureValue */
     found = ossl_mtc_ca_for_cert(cas, cert, &error);
     if (found != NULL)
-        verified = ossl_mtc_verify(found, tbs, (size_t)tbs_len,
-            ASN1_STRING_get0_data(sig), ASN1_STRING_get_length(sig), &error);
+        verified = ossl_mtc_verify(found, stack_lookup, cosigners, quorum,
+            tbs, (size_t)tbs_len, ASN1_STRING_get0_data(sig),
+            ASN1_STRING_get_length(sig), &error);
     if (!TEST_int_eq(verified, expect_ret) || !TEST_int_eq(error, expect_error))
         goto err;
     ret = 1;
 err:
     sk_OSSL_MTC_CA_free(cas);
     OSSL_MTC_CA_free(ca);
+    sk_OSSL_MTC_COSIGNER_pop_free(cosigners, OSSL_MTC_COSIGNER_free);
     OPENSSL_free(tbs);
     X509_free(cert);
     OPENSSL_free(path);
     return ret;
+}
+
+/* check_policy() with no trusted cosigners and no quorum. */
+static int check(const char *cert_name, OSSL_MTC_CA *ca, int expect_ret,
+    int expect_error)
+{
+    return check_policy(cert_name, ca, NULL, 0, expect_ret, expect_error);
+}
+
+/*
+ * A sorted stack of the trusted cosigners among 32473.0 (keyed from seed0) and
+ * 32473.2 (keyed from seed2); a NULL seed leaves that cosigner out.
+ */
+static STACK_OF(OSSL_MTC_COSIGNER) *make_cosigners(const uint8_t *seed0,
+    const uint8_t *seed2)
+{
+    STACK_OF(OSSL_MTC_COSIGNER) *cosigners;
+    OSSL_MTC_COSIGNER *cosigner;
+
+    if (!TEST_ptr(cosigners = sk_OSSL_MTC_COSIGNER_new(OSSL_MTC_COSIGNER_cmp)))
+        return NULL;
+    if (seed0 != NULL) {
+        if (!TEST_ptr(cosigner = make_cosigner(cosigner0_id,
+                          sizeof(cosigner0_id), seed0, 32))
+            || !TEST_true(ossl_mtc_cosigner_stack_add(cosigners, cosigner)))
+            goto err;
+    }
+    if (seed2 != NULL) {
+        if (!TEST_ptr(cosigner = make_cosigner(cosigner2_id,
+                          sizeof(cosigner2_id), seed2, 32))
+            || !TEST_true(ossl_mtc_cosigner_stack_add(cosigners, cosigner)))
+            goto err;
+    }
+    return cosigners;
+err:
+    sk_OSSL_MTC_COSIGNER_pop_free(cosigners, OSSL_MTC_COSIGNER_free);
+    return NULL;
 }
 
 /* A signatureless MTC verifies via a matching trusted subtree. */
@@ -290,6 +366,84 @@ static int test_cosigner_wrong_order(void)
         0, X509_V_ERR_MTC_BAD_PROOF);
 }
 
+/* Both trusted cosigners cosigned, so a quorum of two is met. */
+static int test_quorum_met(void)
+{
+    return check_policy("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(cosigner0_seed, cosigner2_seed), 2, 1, X509_V_OK);
+}
+
+/* One trusted cosigner cosigned; a quorum of one is met, two is not. */
+static int test_quorum_one_of_one(void)
+{
+    return check_policy("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(cosigner0_seed, NULL), 1, 1, X509_V_OK);
+}
+
+static int test_quorum_short(void)
+{
+    return check_policy("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(cosigner0_seed, NULL), 2, 0,
+        X509_V_ERR_MTC_COSIGNER_QUORUM);
+}
+
+/* Cosignatures from cosigners that are not trusted do not count. */
+static int test_quorum_untrusted_cosigners(void)
+{
+    return check_policy("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(NULL, NULL), 1, 0, X509_V_ERR_MTC_COSIGNER_QUORUM);
+}
+
+/*
+ * A trusted cosigner's cosignature that does not verify neither counts nor
+ * fails the certificate on its own: the other trusted cosigner still meets a
+ * quorum of one, and a quorum of two is short.
+ */
+static int test_quorum_bad_cosignature(void)
+{
+    return check_policy("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(wrong_seed, cosigner2_seed), 1, 1, X509_V_OK);
+}
+
+static int test_quorum_bad_cosignature_short(void)
+{
+    return check_policy("mtc-leaf-standalone-3cosigners.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(wrong_seed, cosigner2_seed), 2, 0,
+        X509_V_ERR_MTC_COSIGNER_QUORUM);
+}
+
+/* A standalone MTC with only the CA cosignature is short of any quorum. */
+static int test_quorum_ca_only(void)
+{
+    return check_policy("mtc-leaf-standalone.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(cosigner0_seed, cosigner2_seed), 1, 0,
+        X509_V_ERR_MTC_COSIGNER_QUORUM);
+}
+
+/* Trusted cosignatures never stand in for the missing CA cosignature. */
+static int test_quorum_no_ca_signer(void)
+{
+    return check_policy("mtc-leaf-standalone-no_ca_signer.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), NULL),
+        make_cosigners(cosigner0_seed, cosigner2_seed), 1, 0,
+        X509_V_ERR_MTC_NOT_TRUSTED);
+}
+
+/* A landmark-relative MTC verifies via its trusted subtree, whatever the quorum. */
+static int test_quorum_landmark(void)
+{
+    return check_policy("mtc-landmark.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), subtree_hash),
+        make_cosigners(NULL, NULL), 5, 1, X509_V_OK);
+}
+
 /* A CA whose ID does not match the certificate issuer is not consulted. */
 static int test_untrusted_ca(void)
 {
@@ -343,7 +497,7 @@ static int shim_verify(const char *cert_name, OSSL_MTC_CA *ca, const char *host,
     if (auth_level >= 0)
         X509_VERIFY_PARAM_set_auth_level(param, auth_level);
 
-    ret = ossl_x509_verify_mtc(ctx);
+    ret = ossl_x509_verify_mtc(ctx, 0);
     *error = X509_STORE_CTX_get_error(ctx);
 err:
     X509_STORE_CTX_free(ctx);
@@ -770,7 +924,7 @@ static int test_shim_nonoctet_signature(void)
         || !TEST_int_eq(X509_STORE_CTX_init(ctx, store, mangled, NULL), 1))
         goto err;
 
-    testresult = TEST_int_eq(ossl_x509_verify_mtc(ctx), 0)
+    testresult = TEST_int_eq(ossl_x509_verify_mtc(ctx, 0), 0)
         && TEST_int_eq(X509_STORE_CTX_get_error(ctx), X509_V_ERR_MTC_BAD_PROOF);
 err:
     X509_STORE_CTX_free(ctx);
@@ -827,6 +981,15 @@ int setup_tests(void)
     ADD_TEST(test_no_ca_signer);
     ADD_TEST(test_duplicate_ca_signer);
     ADD_TEST(test_cosigner_wrong_order);
+    ADD_TEST(test_quorum_met);
+    ADD_TEST(test_quorum_one_of_one);
+    ADD_TEST(test_quorum_short);
+    ADD_TEST(test_quorum_untrusted_cosigners);
+    ADD_TEST(test_quorum_bad_cosignature);
+    ADD_TEST(test_quorum_bad_cosignature_short);
+    ADD_TEST(test_quorum_ca_only);
+    ADD_TEST(test_quorum_no_ca_signer);
+    ADD_TEST(test_quorum_landmark);
     ADD_TEST(test_untrusted_ca);
     ADD_TEST(test_shim_basic);
     ADD_TEST(test_shim_host_match);
