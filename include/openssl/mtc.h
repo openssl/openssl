@@ -48,13 +48,6 @@ int OSSL_MTC_CA_parse_certificates(OSSL_LIB_CTX *libctx, const char *propq,
 void OSSL_MTC_CA_free(OSSL_MTC_CA *ca);
 
 /**
- * @brief Add a recognised cosigner to a trusted MTC CA.
- * @see OSSL_MTC_CA_add1_cosigner(3)
- */
-int OSSL_MTC_CA_add1_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
-    const char *sig_name, EVP_PKEY *pkey);
-
-/**
  * @brief Add a revoked serial-number range to a trusted MTC CA.
  * @see OSSL_MTC_CA_add_revoked_range(3)
  */
@@ -107,6 +100,51 @@ int OSSL_MTC_CA_get0_id(const OSSL_MTC_CA *ca, const uint8_t **out_id,
  * @see OSSL_MTC_serial(3)
  */
 uint64_t OSSL_MTC_serial(uint16_t log_number, uint64_t index);
+
+/*-
+ * A Merkle Tree Certificate cosigner a relying party trusts in addition to the
+ * CA cosigner (sections 5.3 and 7.3 of the draft).  Cosigners are trusted in
+ * an X509_STORE; see X509_STORE_trust_mtc_cosigner(3).
+ */
+
+DEFINE_STACK_OF(OSSL_MTC_COSIGNER)
+
+/**
+ * @brief Create a trusted Merkle Tree Certificate cosigner from its cosigner
+ * ID and public key.
+ * @see OSSL_MTC_COSIGNER_new(3), OSSL_MTC_COSIGNER_free(3)
+ */
+OSSL_MTC_COSIGNER *OSSL_MTC_COSIGNER_new(const uint8_t *id, size_t id_len,
+    EVP_PKEY *pkey);
+
+/**
+ * @brief Parse PEM certificates representing Merkle Tree Certificate cosigners
+ * into cosigner objects.
+ * @see OSSL_MTC_COSIGNER_parse_certificates(3)
+ */
+int OSSL_MTC_COSIGNER_parse_certificates(OSSL_LIB_CTX *libctx,
+    const char *propq, BIO *in, STACK_OF(OSSL_MTC_COSIGNER) *out_cosigners);
+
+/**
+ * @brief Free a trusted Merkle Tree Certificate cosigner.
+ * @see OSSL_MTC_COSIGNER_free(3), OSSL_MTC_COSIGNER_new(3)
+ */
+void OSSL_MTC_COSIGNER_free(OSSL_MTC_COSIGNER *cosigner);
+
+/**
+ * @brief Get a cosigner's identifier (a TrustAnchorID).
+ * @see OSSL_MTC_COSIGNER_get0_id(3)
+ */
+int OSSL_MTC_COSIGNER_get0_id(const OSSL_MTC_COSIGNER *cosigner,
+    const uint8_t **out_id, size_t *out_id_len);
+
+/**
+ * @brief Order two cosigners by cosigner ID; the comparison function for a
+ * sorted stack of them.
+ * @see OSSL_MTC_COSIGNER_cmp(3)
+ */
+int OSSL_MTC_COSIGNER_cmp(const OSSL_MTC_COSIGNER *const *a,
+    const OSSL_MTC_COSIGNER *const *b);
 
 #if defined(__cplusplus)
 }

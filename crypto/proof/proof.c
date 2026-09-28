@@ -46,6 +46,7 @@ struct ossl_proof_trust_st {
 
 struct ossl_proof_params_st {
     X509_VERIFY_PARAM *x509_param; /**< X.509 verification parameters */
+    size_t mtc_cosigner_quorum; /**< MTC: trusted cosigners a standalone certificate needs */
 };
 
 /*
@@ -174,6 +175,26 @@ int OSSL_PROOF_PARAMS_set1_x509_param(OSSL_PROOF_PARAMS *params,
         return 0;
     }
     return X509_VERIFY_PARAM_set1(params->x509_param, param);
+}
+
+int OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(OSSL_PROOF_PARAMS *params,
+    size_t quorum)
+{
+    if (params == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    params->mtc_cosigner_quorum = quorum;
+    return 1;
+}
+
+size_t OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(const OSSL_PROOF_PARAMS *params)
+{
+    if (params == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return params->mtc_cosigner_quorum;
 }
 
 void OSSL_PROOF_OUTPUT_free(OSSL_PROOF_OUTPUT *output)
@@ -323,7 +344,8 @@ static int proof_verify_mtc(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
         && !X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(ctx),
             params->x509_param))
         goto err;
-    ret = ossl_x509_verify_mtc(ctx);
+    ret = ossl_x509_verify_mtc(ctx,
+        params != NULL ? params->mtc_cosigner_quorum : 0);
     if (!proof_output_set_x509(output, ctx, ret)) {
         output->x509_error = X509_V_ERR_OUT_OF_MEM;
         ret = 0;

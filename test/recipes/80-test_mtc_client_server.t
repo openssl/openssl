@@ -27,7 +27,20 @@ plan skip_all => "$test_name requires ML-DSA enabled" if disabled("ml-dsa");
 plan skip_all => "$test_name is not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 2;
+# The client cases: extra s_client options and the verify return code each
+# yields.  mtc-server.pem carries the CA cosignature only, so trusting the
+# additional cosigners changes nothing until a quorum of them is required, and
+# then the certificate is short of it (X509_V_ERR_MTC_COSIGNER_QUORUM, 111).
+my $mtc_cosigners = srctop_file("test", "mtc", "mtc-cosigners.pem");
+my @cases = (
+    [ [], 0, "MTC certificate served and validated end to end" ],
+    [ [ "-mtc_cosigners", $mtc_cosigners, "-mtc_cosigner_quorum", "0" ], 0,
+      "trusted cosigners with no quorum leave the CA cosignature sufficient" ],
+    [ [ "-mtc_cosigners", $mtc_cosigners, "-mtc_cosigner_quorum", "1" ], 111,
+      "a quorum of one is not met by the CA cosignature alone" ],
+);
+
+plan tests => 2 * scalar @cases;
 
 my $shlib_wrap   = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -45,56 +58,58 @@ my $mtc_cred = srctop_file("test", "mtc", "mtc-server.pem");
 my $mtc_key  = srctop_file("test", "mtc", "mtc-server-key.pem");
 my $mtc_ca   = srctop_file("test", "mtc", "mtc-ca-cert.pem");
 
-my $port = "0";
-my $out = "";
+foreach my $case (@cases) {
+    my ($copts, $code, $desc) = @$case;
+    my $port = "0";
+    my $out = "";
 
-eval {
-    local $SIG{ALRM} = sub { die "timeout\n" };
-    alarm 60;
+    eval {
+        local $SIG{ALRM} = sub { die "timeout\n" };
+        alarm 60;
 
-    my @scmd = ("s_server", "-accept", "0", "-naccept", "1",
-        "-cert", $srvcert, "-key", $srvkey,
-        "-tai_chains", $mtc_cred, "-tai_keys", $mtc_key,
-        "-tls1_3");
-    print("s_server @scmd\n");
-    my $spid = open3(my $si, my $so, my $se,
-        $shlib_wrap, $apps_openssl, @scmd);
-    while (<$so>) {
-        print($_);
-        if (/^ACCEPT 0.0.0.0:(\d+)/ || /^ACCEPT \[::\]:(\d+)/) {
-            $port = $1;
-            last;
+        my @scmd = ("s_server", "-accept", "0", "-naccept", "1",
+            "-cert", $srvcert, "-key", $srvkey,
+            "-tai_chains", $mtc_cred, "-tai_keys", $mtc_key,
+            "-tls1_3");
+        print("s_server @scmd\n");
+        my $spid = open3(my $si, my $so, my $se,
+            $shlib_wrap, $apps_openssl, @scmd);
+        while (<$so>) {
+            print($_);
+            if (/^ACCEPT 0.0.0.0:(\d+)/ || /^ACCEPT \[::\]:(\d+)/) {
+                $port = $1;
+                last;
+            }
         }
-    }
 
-    # The client trusts only the MTC CA (no X.509 trust anchors), so a clean
-    # verify can only come from validating the served MTC certificate.  -attime
-    # pins verification to a fixed instant inside the fixtures' validity, so the
-    # test does not expire when the certificates do.
-    my @ccmd = ("s_client", "-connect", "localhost:$port",
-        "-mtc_cas", $mtc_ca,
-        "-no-CAfile", "-no-CApath", "-no-CAstore",
-        "-attime", "1735689600",
-        "-tls1_3", "-nameopt", "RFC2253");
-    print("s_client @ccmd\n");
-    local (*sc_in);
-    my $cpid = open3(*sc_in, my $co, my $ce,
-        $shlib_wrap, $apps_openssl, @ccmd);
-    print sc_in "Q\n";
-    close(sc_in);
-    {
-        local $/;
-        $out = <$co>;
-    }
-    waitpid($cpid, 0);
-    kill 'HUP', $spid if kill(0, $spid);
-    waitpid($spid, 0);
-    print("s_client output:\n$out\n");
+        # The client trusts only the MTC CA (no X.509 trust anchors), so a clean
+        # verify can only come from validating the served MTC certificate.
+        # -attime pins verification to a fixed instant inside the fixtures'
+        # validity, so the test does not expire when the certificates do.
+        my @ccmd = ("s_client", "-connect", "localhost:$port",
+            "-mtc_cas", $mtc_ca, @$copts,
+            "-no-CAfile", "-no-CApath", "-no-CAstore",
+            "-attime", "1735689600",
+            "-tls1_3", "-nameopt", "RFC2253");
+        print("s_client @ccmd\n");
+        local (*sc_in);
+        my $cpid = open3(*sc_in, my $co, my $ce,
+            $shlib_wrap, $apps_openssl, @ccmd);
+        print sc_in "Q\n";
+        close(sc_in);
+        {
+            local $/;
+            $out = <$co>;
+        }
+        waitpid($cpid, 0);
+        kill 'HUP', $spid if kill(0, $spid);
+        waitpid($spid, 0);
+        print("s_client output:\n$out\n");
 
-    alarm 0;
-};
-print("test error: $@") if $@;
+        alarm 0;
+    };
+    print("test error: $@") if $@;
 
-ok($port ne "0", "s_server started");
-ok($out =~ /Verify return code: 0 \(ok\)/,
-    "MTC certificate served and validated end to end");
+    ok($port ne "0", "s_server started");
+    ok($out =~ /Verify return code: $code \(/, $desc);
+}
