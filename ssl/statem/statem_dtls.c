@@ -111,9 +111,10 @@ static int dtls_ccs_expected(SSL_CONNECTION *s)
     }
 }
 
-static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len, size_t body_len)
+static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len, size_t body_len,
+    int track_coverage)
 {
-    const size_t bitmask_len = (body_len > 0 ? RSMBLY_BITMASK_SIZE(body_len) : 0);
+    const size_t bitmask_len = (track_coverage && body_len > 0 ? RSMBLY_BITMASK_SIZE(body_len) : 0);
     dtls_sent_msg *msg = OPENSSL_malloc(sizeof(*msg) + msg_len + bitmask_len);
 
     if (msg == NULL)
@@ -127,9 +128,12 @@ static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len, size_t body_len)
 
     /*
      * body_len > 0 implies msg_len > 0 (msg_len == body_len + headerlen, and
-     * headerlen is never 0), so msg->msg_buf is already set here.
+     * headerlen is never 0), so msg->msg_buf is already set here. Coverage
+     * tracking only means anything for DTLS 1.3, the only version that ever
+     * processes an ACK; older versions never read msg->covered, so don't pay
+     * for the allocation on their behalf.
      */
-    if (body_len > 0) {
+    if (track_coverage && body_len > 0) {
         msg->covered = msg->msg_buf + msg_len;
         memset(msg->covered, 0, bitmask_len);
     }
@@ -1357,8 +1361,14 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
                      * freeing it -- coverage tracks the message as a whole
                      * across every transmission round, not just whether
                      * this one specific record number was ever matched.
+                     *
+                     * The range check guards against a corrupt recorded
+                     * range
                      */
-                    if (msg->covered != NULL)
+                    if (msg->covered != NULL
+                        && recnum->frag_off <= msg->msg_info.msg_body_len
+                        && recnum->frag_len
+                            <= msg->msg_info.msg_body_len - recnum->frag_off)
                         RSMBLY_BITMASK_MARK(msg->covered, (long)recnum->frag_off,
                             (long)(recnum->frag_off + recnum->frag_len));
                     ossl_list_record_number_remove(&msg->rec_nums, recnum);
@@ -1517,7 +1527,8 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
     if (!ossl_assert(s->init_off == 0))
         return 0;
 
-    sent_msg = dtls1_sent_msg_new(s->init_num, s->d1->w_msg.msg_body_len);
+    sent_msg = dtls1_sent_msg_new(s->init_num, s->d1->w_msg.msg_body_len,
+        SSL_CONNECTION_IS_DTLS13(s));
     if (sent_msg == NULL)
         return 0;
 
