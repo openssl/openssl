@@ -545,8 +545,14 @@ The Merkle Tree Certificate inclusion proof did not evaluate.
 
 =item B<X509_V_ERR_MTC_NOT_TRUSTED: Merkle Tree Certificate subtree not trusted>
 
-The proof's subtree is neither a trusted subtree nor cosigned by a sufficient
-set of cosigners.
+The proof's subtree is neither a trusted subtree nor cosigned by the issuing
+CA's cosigner.
+
+=item B<X509_V_ERR_MTC_COSIGNER_QUORUM: Merkle Tree Certificate lacks the required cosignatures>
+
+The proof's subtree is cosigned by the issuing CA's cosigner but by fewer of the
+trusted cosigners than the cosigner quorum requires (see
+L<OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(3)>).
 
 =back
 
