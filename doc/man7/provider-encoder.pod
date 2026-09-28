@@ -295,6 +295,11 @@ A string of information that will become part of the pass phrase
 prompt.  This could be used to give the user information on what kind
 of object it's being prompted for.
 
+=item "min-length" (B<OSSL_PASSPHRASE_PARAM_MIN_LENGTH>) <unsigned integer>
+
+The minimum acceptable length of the passphrase. The callback can use this
+to restrict the entry of weak passphrases.
+
 =back
 
 =head1 RETURN VALUES
