@@ -71,15 +71,6 @@ OpenSSL 4.2
 
    *Dr Paul Dale*
 
- * Changed the OpenSSL FIPS provider so that every algorithm advertised with
-   `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
-   parameter and returns 1 for an approved operation.  The absence of an
-   indicator is no longer interpreted as approval.  Algorithms advertised
-   with `fips=no`, including X448MLKEM1024, remain unapproved and return 0 when
-   they expose the indicator.
-
-   *Dr Paul Dale*
-
  * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
    newly assigned IANA codepoints per [draft-rosomakho-tls-ecdhe-mlkem512-00].
 
@@ -771,7 +762,7 @@ OpenSSL 4.0
 
    Severity: Low
 
-   Issue summary: The OpenSSL QUIC server, when configured to not perform
+   Issue summary: The OpenSSL QUIC server, when configured to not preform
    address validation, can be forced to count incoming packets multiple times
    in its unvalidated credit computation, leading to a violation
    of the [RFC 9000] unvalidated connection amplification limit of 3 times
@@ -809,8 +800,7 @@ OpenSSL 4.0
 
    *Alexandr Nedvědický*
 
- * Fixed a timing side-channel leak in generic elliptic curve scalar
-   multiplication.
+ * Fixed a timing side-channel in scalar multiplication for mon-NIST EC curves.
 
    Severity: Low
 
@@ -903,7 +893,7 @@ OpenSSL 4.0
    flow control for streams to make the QUIC stack receive ~100 MiB of memory
    instead of 768 KiB (default flow control window size).
 
-   Reported by: Moltenbit, Bhabani Sankar Das, Saiyowa Security Team, mzfr.
+   Reportedby: Moltenbit, Bhabani Sankar Das, Saiyowa Security Team, mzfr.
 
    ([CVE-2026-75804])
 
@@ -988,7 +978,7 @@ OpenSSL 4.0
    *Alexandr Nedvědický*
 
  * Fixed a bug where `EVP_DecryptFinal()` incorrectly reported a stale success
-   on AES-SIV authentication failure after a previously successful message
+   on AES-SIV authentication failure after a preciously successful message
    decryption.
    <!-- https://github.com/openssl/openssl/pull/31610 -->
 
