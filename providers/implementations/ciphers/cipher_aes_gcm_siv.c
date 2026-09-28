@@ -228,8 +228,10 @@ static int ossl_aes_gcm_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[]
             return 0;
         }
         if (!ctx->enc) {
-            memcpy(ctx->user_tag, p.tag->data, sizeof(ctx->tag));
-            ctx->have_user_tag = 1;
+            if (p.tag->data != NULL) {
+                memcpy(ctx->user_tag, p.tag->data, sizeof(ctx->tag));
+                ctx->have_user_tag = 1;
+            }
         } else if (p.tag->data != NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
             return 0;
