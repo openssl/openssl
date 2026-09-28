@@ -450,6 +450,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     X509_STORE *verify_store;
     X509_STORE_CTX *ctx = NULL;
     X509_VERIFY_PARAM *param;
+    const char *peername;
     SSL_CTX *sctx;
 #ifndef OPENSSL_NO_OCSP
     SSL *ssl;
@@ -562,8 +563,14 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
         }
     }
 
-    /* Move peername from the store context params to the SSL handle's */
-    X509_VERIFY_PARAM_move_peername(s->param, param);
+    /* Record the certificate name the host check matched, if any. */
+    OPENSSL_free(s->peername);
+    s->peername = NULL;
+    peername = X509_VERIFY_PARAM_get0_peername(param);
+    if (peername != NULL && (s->peername = OPENSSL_strdup(peername)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        i = 0;
+    }
 
 end:
     X509_STORE_CTX_free(ctx);
