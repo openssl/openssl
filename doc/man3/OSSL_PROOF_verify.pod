@@ -7,6 +7,7 @@ OSSL_PROOF_TRUST_new, OSSL_PROOF_TRUST_free,
 OSSL_PROOF_TRUST_set1_x509_store, OSSL_PROOF_TRUST_get0_x509_store,
 OSSL_PROOF_PARAMS_new, OSSL_PROOF_PARAMS_free,
 OSSL_PROOF_PARAMS_set1_x509_param, OSSL_PROOF_PARAMS_get0_x509_param,
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum, OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum,
 OSSL_PROOF_verify, OSSL_PROOF_OUTPUT_free,
 OSSL_PROOF_OUTPUT_get_x509_error, OSSL_PROOF_OUTPUT_get_x509_error_depth,
 OSSL_PROOF_OUTPUT_get0_x509_error_cert, OSSL_PROOF_OUTPUT_get0_x509_chain,
@@ -30,6 +31,9 @@ OSSL_PROOF_OUTPUT_get0_x509_peername, OSSL_PROOF_OUTPUT_get0_x509_policy_tree
  int OSSL_PROOF_PARAMS_set1_x509_param(OSSL_PROOF_PARAMS *params,
                                       const X509_VERIFY_PARAM *param);
  X509_VERIFY_PARAM *OSSL_PROOF_PARAMS_get0_x509_param(const OSSL_PROOF_PARAMS *params);
+ int OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(OSSL_PROOF_PARAMS *params,
+                                              size_t quorum);
+ size_t OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(const OSSL_PROOF_PARAMS *params);
 
  int OSSL_PROOF_verify(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
                       const OSSL_PROOF_PARAMS *params,
@@ -109,6 +113,19 @@ X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_set_purpose()); the caller
 must not free them.
 
 OSSL_PROOF_PARAMS_set1_x509_param() copies the settings of I<param> into
+I<params>.
+
+=head2 Merkle Tree Certificate proofs
+
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum() sets to I<quorum> the number of
+trusted cosigners, in addition to the issuing CA's cosigner, whose valid
+signatures the subtree of a standalone Merkle Tree Certificate must carry
+(section 7.3 of the draft).  The trusted cosigners are those added to the
+B<X509_STORE> with L<X509_STORE_trust_mtc_cosigner(3)>; a signature from any
+other cosigner is ignored.  The default is 0: a valid CA cosignature alone
+suffices.
+
+OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum() returns the cosigner quorum of
 I<params>.
 
 OSSL_PROOF_OUTPUT_get_x509_error() stores in I<*out_code> the X.509 error code
@@ -191,10 +208,14 @@ B<X509_V_ERR_MTC_INCLUSION_FAILED>.
 
 B<Acceptance.> The subtree is accepted either because it matches a trusted
 subtree of the CA (section 7.4) with the expected hash, or because the MTCProof
-carries a sufficient set of valid cosignatures - at present a signature from the
-CA cosigner (sections 5.3.1 and 7.3).  Verification fails if neither holds,
-setting the X.509 error code B<X509_V_ERR_MTC_NOT_TRUSTED>, or if the cosignature
-list is malformed, setting B<X509_V_ERR_MTC_BAD_PROOF>.
+carries a sufficient set of valid cosignatures (sections 5.3.1 and 7.3): one
+from the CA cosigner, plus valid ones from at least as many of the store's
+trusted cosigners as the quorum set with
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(), which is zero by default.
+Verification fails if neither holds, setting the
+X.509 error code B<X509_V_ERR_MTC_NOT_TRUSTED>, or if the CA cosignature is
+valid but the quorum is not met, setting B<X509_V_ERR_MTC_COSIGNER_QUORUM>, or
+if the cosignature list is malformed, setting B<X509_V_ERR_MTC_BAD_PROOF>.
 
 =back
 
@@ -266,8 +287,11 @@ parameters.  An B<OSSL_PROOF_OUTPUT> belongs to the caller that received it.
 OSSL_PROOF_new_mtc(), OSSL_PROOF_TRUST_new() and OSSL_PROOF_PARAMS_new() return a
 new object, or NULL on error.
 
-OSSL_PROOF_TRUST_set1_x509_store() and OSSL_PROOF_PARAMS_set1_x509_param() return 1
-on success and 0 on error.
+OSSL_PROOF_TRUST_set1_x509_store(), OSSL_PROOF_PARAMS_set1_x509_param() and
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum() return 1 on success and 0 on error.
+
+OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum() returns the quorum, or 0 if
+I<params> is NULL.
 
 OSSL_PROOF_TRUST_get0_x509_store() and OSSL_PROOF_PARAMS_get0_x509_param() return
 the requested object, or NULL.
@@ -322,6 +346,7 @@ match a hostname:
 =head1 SEE ALSO
 
 L<OSSL_MTC_CA_new(3)>, L<X509_STORE_trust_mtc_ca(3)>,
+L<X509_STORE_trust_mtc_cosigner(3)>, L<SSL_CTX_get0_proof_params(3)>,
 L<X509_VERIFY_PARAM_set1_host(3)>, L<X509_check_certificate_times(3)>,
 L<X509_STORE_CTX_get_error(3)>, L<OSSL_LIB_CTX(3)>
 
