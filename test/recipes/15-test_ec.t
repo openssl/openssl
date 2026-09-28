@@ -19,7 +19,7 @@ setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 21;
+plan tests => 22;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
