@@ -173,7 +173,7 @@ L<X509_VERIFY_PARAM_set1_host(3)>, L<X509_VERIFY_PARAM_add1_host(3)>
 =head1 HISTORY
 
 SSL_set_tlsext_host_name() validates I<name> as a DNS hostname since
-OpenSSL 4.1. Previously any string of at most 255 characters was accepted.
+OpenSSL 4.2. Previously any string of at most 255 characters was accepted.
 
 SSL_get_servername() historically provided some unexpected results in certain
 corner cases. This has been fixed from OpenSSL 1.1.1e.
