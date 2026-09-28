@@ -3729,7 +3729,7 @@ static int test_dtls13_keyupdate_preserves_flight(int idx)
         /* The preserved tickets must still be retransmittable, and be ACKed. */
         sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
             ossl_seconds2time(1));
-        if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+        if (!TEST_true(SSL_handle_events(server)))
             goto end;
         ret = SSL_read(client, buf, 1);
         if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
@@ -3743,7 +3743,7 @@ static int test_dtls13_keyupdate_preserves_flight(int idx)
         if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
             || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
             || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout))
-            || !TEST_int_eq(DTLSv1_handle_timeout(server), 0))
+            || !TEST_true(SSL_handle_events(server)))
             goto end;
 
         /* Application data must still flow in both directions. */
@@ -3967,7 +3967,7 @@ static int test_dtls13_cert_req_preserves_flight(void)
      * authenticates normally, producing a genuine, fresh ACK.
      */
     cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+    if (!TEST_true(SSL_handle_events(client)))
         goto end;
     ret = SSL_read(server, buf, 1);
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
@@ -4080,7 +4080,7 @@ static int test_dtls13_pha_keyupdate_shared_wrl(int idx)
      * test -- it just needs to still be unread when the epoch moves on.
      */
     cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+    if (!TEST_true(SSL_handle_events(client)))
         goto end;
     ret = SSL_read(server, buf, 1);
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
@@ -4174,7 +4174,7 @@ static int test_dtls13_pha_keyupdate_shared_wrl(int idx)
          * correctly by continuing to use it afterward.
          */
         cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-        if (!TEST_int_gt(DTLSv1_handle_timeout(client), 0))
+        if (!TEST_true(SSL_handle_events(client)))
             goto end;
         ret = SSL_read(server, buf, 1);
         if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
@@ -4275,7 +4275,7 @@ static int test_dtls13_cert_req_finished_preserves_ticket(void)
      * an uncollected leftover: force it and let the client process it.
      */
     sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+    if (!TEST_true(SSL_handle_events(server)))
         goto end;
     ret = SSL_read(client, buf, 1);
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
@@ -4496,7 +4496,7 @@ static int test_dtls13_server_keyupdate_preserves_pha(void)
      * retransmission rather than reprocessed.
      */
     sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
-    if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0))
+    if (!TEST_true(SSL_handle_events(server)))
         goto end;
     ret = SSL_read(client, buf, 1);
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
