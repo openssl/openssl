@@ -367,6 +367,9 @@ const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn)
     if (ossl_unlikely(bn == NULL))
         return NULL;
 
+    /* A zero BIGNUM may have no limb array at all, and is still a valid zero */
+    if (bn->d == NULL)
+        return &ossl_fn_static_zero_storage.fn;
     return bn->data;
 }
 

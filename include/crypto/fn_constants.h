@@ -22,6 +22,9 @@
 
 #include "crypto/fn_intern.h"
 
+/* The literal 0.  Note that while the .d array is 1 limb, its dsize says 0 */
+OSSL_FN_STATIC_DECLARE(zero, 1);
+
 /* The literal 1 */
 OSSL_FN_STATIC_DECLARE(one, 1);
 
