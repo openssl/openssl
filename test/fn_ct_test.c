@@ -34,13 +34,13 @@ static const char *moduli[] = {
     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 };
 
-/* Operand values, all less than m; PATTERN is a fixed value reduced mod m */
+/* Operand values, all less than m; OP_PATTERN is a fixed value mod m */
 enum operand {
-    ZERO,
-    ONE,
-    M_MINUS_1,
-    HALF,
-    PATTERN
+    OP_ZERO,
+    OP_ONE,
+    OP_M_MINUS_1,
+    OP_HALF,
+    OP_PATTERN
 };
 
 /*
@@ -51,17 +51,17 @@ static const struct {
     enum operand a, b;
 } pairs[] = {
     /* add: largest sum that does not wrap; sub: borrow */
-    { ZERO, M_MINUS_1 },
+    { OP_ZERO, OP_M_MINUS_1 },
     /* add: no wrap; sub: borrow */
-    { ONE, HALF },
+    { OP_ONE, OP_HALF },
     /* add: wraps to exactly 0, with no carry out of the top limb */
-    { M_MINUS_1, ONE },
+    { OP_M_MINUS_1, OP_ONE },
     /* add: wraps, with a carry out of the top limb for P-384 */
-    { M_MINUS_1, PATTERN },
+    { OP_M_MINUS_1, OP_PATTERN },
     /* add: a + a without wrapping; sub: result 0 */
-    { HALF, HALF },
+    { OP_HALF, OP_HALF },
     /* b == 0 */
-    { PATTERN, ZERO },
+    { OP_PATTERN, OP_ZERO },
 };
 
 static const int shifts[] = { 0, 1, 2, 3, 7, 64, 130 };
@@ -70,16 +70,16 @@ static int set_operand(BIGNUM *a, const BIGNUM *m, enum operand k,
     BN_CTX *ctx)
 {
     switch (k) {
-    case ZERO:
+    case OP_ZERO:
         BN_zero(a);
         return 1;
-    case ONE:
+    case OP_ONE:
         return BN_one(a);
-    case M_MINUS_1:
+    case OP_M_MINUS_1:
         return BN_copy(a, m) != NULL && BN_sub_word(a, 1);
-    case HALF:
+    case OP_HALF:
         return BN_copy(a, m) != NULL && BN_sub_word(a, 1) && BN_rshift1(a, a);
-    case PATTERN:
+    case OP_PATTERN:
     default:
         return BN_hex2bn(&a, "a5a5a5a5c3c3c3c3f0f0f0f00ff00ff0"
                              "123456789abcdef0fedcba9876543210"
