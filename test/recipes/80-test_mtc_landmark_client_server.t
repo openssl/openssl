@@ -36,7 +36,7 @@ plan skip_all => "$test_name requires ML-DSA enabled" if disabled("ml-dsa");
 plan skip_all => "$test_name is not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 44;
+plan tests => 46;
 
 my $shlib_wrap   = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -265,6 +265,13 @@ my $behind = server_file("behind.pem",
     (map { landmark_cert($_) } 2, 1), $sa_cred);
 my $only_5 = server_file("only-5.pem", landmark_cert(5), $sa_cred);
 
+# Landmark 1's certificate with the IANA-assigned id-alg-mtcProof as its
+# signature algorithm; the log entry omits the signature algorithm, so its
+# proof is landmark 1's.
+my $iana_alg_cred = srctop_file("test", "mtc", "mtc-landmark-1-iana-alg.pem");
+my $iana_alg = server_file("iana-alg.pem", $iana_alg_cred, $sa_cred);
+my $iana_alg_body = cert_body(slurp($iana_alg_cred));
+
 # Landmark 1's state, but with another landmark's hash recorded for [0, 4).
 # It is a real hash of the right length, just not this subtree's, so the case
 # fails only if the hash is compared and not merely present.
@@ -323,6 +330,10 @@ foreach my $case (
     # Client has: (5, 1).  Server has: landmark 5, standalone.
     [ $only_5, [ client_state(5, 1) ], $body{5}, 0,
       "a client holding one landmark verifies a certificate from it" ],
+    # Client has: (1, 2).  Server has: landmark 1 with the IANA-assigned
+    # id-alg-mtcProof, standalone.
+    [ $iana_alg, [ client_state(1, 2) ], $iana_alg_body, 0,
+      "a landmark certificate with the IANA-assigned id-alg-mtcProof" ],
 
     # The landmark cutoff: each client below has let the landmark it is sent
     # expire, so it no longer trusts that landmark's subtrees.

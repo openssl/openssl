@@ -43,6 +43,13 @@ the enclosing DER.  The CERTIFICATE PROPERTIES block is `mtc-landmark.pem`'s.
   a landmark 1 subtree, so it verifies either via that subtree's hash or, when
   the subtree is active but has no hash, via its cosignature.
 
+IANA-assigned id-alg-mtcProof (derived)
+---------------------------------------
+
+- `mtc-landmark-1-iana-alg.pem` — `mtc-landmark-1.pem` with the IANA-assigned
+  id-alg-mtcProof (`1.3.6.1.5.5.7.6.67`) in both signature algorithm fields.
+  The log entry omits the signature algorithm, so the proof is unaffected.
+
 Malformed cosignature lists (generated)
 ---------------------------------------
 

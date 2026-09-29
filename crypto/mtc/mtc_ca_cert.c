@@ -60,6 +60,9 @@ static int ca_ext_index(const X509 *cert)
         return -1;
     idx = X509_get_ext_by_OBJ(cert, ext_oid, -1);
     ASN1_OBJECT_free(ext_oid);
+    if (idx < 0)
+        idx = X509_get_ext_by_NID(cert,
+            NID_id_pe_mtcCertificationAuthority_SHA256, -1);
     return idx;
 }
 
