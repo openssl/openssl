@@ -22,6 +22,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <openssl/proof.h>
 #include "internal/refcount.h"
 #include "ssl_local.h"
 #include "ssl_cert_table.h"
@@ -437,6 +438,93 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg)
 }
 
 /*
+ * The id-alg-mtcProof signatureAlgorithm, 1.3.6.1.4.1.44363.47.0, of a Merkle
+ * Tree Certificate (section 6.2 of
+ * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+ */
+static const uint8_t mtc_proof_alg_oid[] = {
+    0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0xda, 0x4b, 0x2f, 0x00
+};
+
+/**
+ * @brief Whether cert is a Merkle Tree Certificate, by its signatureAlgorithm.
+ * @param cert the certificate to inspect
+ * @returns 1 if cert's signatureAlgorithm is id-alg-mtcProof, 0 otherwise.
+ */
+static int cert_is_mtc(const X509 *cert)
+{
+    const X509_ALGOR *alg;
+
+    X509_get0_signature(NULL, &alg, cert);
+    return (size_t)OBJ_length(alg->algorithm) == sizeof(mtc_proof_alg_oid)
+        && memcmp(OBJ_get0_data(alg->algorithm), mtc_proof_alg_oid,
+               sizeof(mtc_proof_alg_oid))
+        == 0;
+}
+
+/**
+ * @brief Verify a Merkle Tree Certificate peer certificate with
+ *        OSSL_PROOF_verify().
+ * The verification consults no verification callback.  The verification
+ * result, the verified chain and the matched certificate name are recorded on
+ * s, replacing any earlier ones.
+ * @param s the connection the peer certificate was received on
+ * @param cert the Merkle Tree Certificate to verify
+ * @param store the trust store holding the trusted MTC CAs
+ * @param param the verification parameters
+ * @returns 1 if cert verified, 0 otherwise.
+ */
+static int ssl_verify_mtc(SSL_CONNECTION *s, X509 *cert, X509_STORE *store,
+    const X509_VERIFY_PARAM *param)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PROOF *proof = NULL;
+    OSSL_PROOF_TRUST *trust = NULL;
+    OSSL_PROOF_PARAMS *params = NULL;
+    OSSL_PROOF_OUTPUT *output = NULL;
+    STACK_OF(X509) *chain;
+    const char *peername;
+    int ret = 0, error = X509_V_ERR_UNSPECIFIED;
+
+    OSSL_STACK_OF_X509_free(s->verified_chain);
+    s->verified_chain = NULL;
+    OPENSSL_free(s->peername);
+    s->peername = NULL;
+
+    if ((proof = OSSL_PROOF_new_mtc(cert)) == NULL
+        || (trust = OSSL_PROOF_TRUST_new(sctx->libctx, sctx->propq)) == NULL
+        || !OSSL_PROOF_TRUST_set1_x509_store(trust, store)
+        || (params = OSSL_PROOF_PARAMS_new()) == NULL
+        || !OSSL_PROOF_PARAMS_set1_x509_param(params, param)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto end;
+    }
+    ret = OSSL_PROOF_verify(trust, proof, params, &output);
+    if (output == NULL || !OSSL_PROOF_OUTPUT_get_x509_error(output, &error)) {
+        error = X509_V_ERR_UNSPECIFIED;
+        ret = 0;
+        goto end;
+    }
+    if ((chain = OSSL_PROOF_OUTPUT_get0_x509_chain(output)) != NULL
+        && (s->verified_chain = X509_chain_up_ref(chain)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        ret = 0;
+    }
+    if ((peername = OSSL_PROOF_OUTPUT_get0_x509_peername(output)) != NULL
+        && (s->peername = OPENSSL_strdup(peername)) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        ret = 0;
+    }
+end:
+    s->verify_result = error;
+    OSSL_PROOF_OUTPUT_free(output);
+    OSSL_PROOF_PARAMS_free(params);
+    OSSL_PROOF_TRUST_free(trust);
+    OSSL_PROOF_free(proof);
+    return ret;
+}
+
+/*
  * Verify a certificate chain/raw public key
  * Return codes:
  *  1: Verify success
@@ -445,7 +533,7 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg)
  */
 static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *rpk)
 {
-    X509 *x;
+    X509 *x = NULL;
     int i = 0;
     X509_STORE *verify_store;
     X509_STORE_CTX *ctx = NULL;
@@ -541,6 +629,12 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
 
     if (s->verify_callback)
         X509_STORE_CTX_set_verify_cb(ctx, s->verify_callback);
+
+    /* A Merkle Tree Certificate is a proof, verified as one. */
+    if (sk != NULL && cert_is_mtc(x)) {
+        i = ssl_verify_mtc(s, x, verify_store, param);
+        goto end;
+    }
 
     if (sctx->app_verify_callback != NULL) {
         i = sctx->app_verify_callback(ctx, sctx->app_verify_arg);
