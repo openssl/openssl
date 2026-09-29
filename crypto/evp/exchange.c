@@ -185,6 +185,8 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
 
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 {
+    if (exchange == NULL)
+        return 0;
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_keyexch_up_ref(exchange);
 #else
@@ -196,7 +198,7 @@ int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 
 OSSL_PROVIDER *EVP_KEYEXCH_get0_provider(const EVP_KEYEXCH *exchange)
 {
-    return exchange->prov;
+    return exchange != NULL ? exchange->prov : NULL;
 }
 
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -400,7 +402,8 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
         return -2;
     }
 
-    if (ctx->op.kex.exchange->set_peer == NULL) {
+    if (ctx->op.kex.exchange == NULL
+            || ctx->op.kex.exchange->set_peer == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
@@ -479,6 +482,12 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return -2;
     }
 
+    if (ctx->op.kex.exchange == NULL
+            || ctx->op.kex.exchange->derive == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
     ret = ctx->op.kex.exchange->derive(ctx->op.kex.algctx, key, pkeylen,
         key != NULL ? *pkeylen : 0);
 
@@ -503,7 +512,7 @@ EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
         return NULL;
     }
 
-    if (ctx->op.kex.algctx == NULL) {
+    if (ctx->op.kex.algctx == NULL || ctx->op.kex.exchange == NULL) {
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return NULL;
     }
@@ -585,17 +594,17 @@ cleanup:
 
 int evp_keyexch_get_number(const EVP_KEYEXCH *keyexch)
 {
-    return keyexch->name_id;
+    return keyexch != NULL ? keyexch->name_id : 0;
 }
 
 const char *EVP_KEYEXCH_get0_name(const EVP_KEYEXCH *keyexch)
 {
-    return keyexch->type_name;
+    return keyexch != NULL ? keyexch->type_name : NULL;
 }
 
 const char *EVP_KEYEXCH_get0_description(const EVP_KEYEXCH *keyexch)
 {
-    return keyexch->description;
+    return keyexch != NULL ? keyexch->description : NULL;
 }
 
 int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *keyexch, const char *name)
@@ -623,6 +632,9 @@ int EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
     void (*fn)(const char *name, void *data),
     void *data)
 {
+    if (keyexch == NULL)
+        return 0;
+
     if (keyexch->prov != NULL)
         return evp_names_do_all(keyexch->prov, keyexch->name_id, fn, data);
 
