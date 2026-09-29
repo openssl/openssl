@@ -2063,10 +2063,16 @@ static int test_dtls13_retained_epoch_seq_match(void)
     /*
      * Must not have been processed as fresh content: a genuine KeyUpdate
      * would install a new read epoch, and the server must not have
-     * re-entered handshake processing.
+     * re-entered handshake processing. Check the connection's *current*
+     * read layer (sc->rlayer.rrl), not "active" -- that pointer was saved
+     * before the read, and a real epoch bump replaces sc->rlayer.rrl with
+     * a new OSSL_RECORD_LAYER while retaining the old one as its
+     * prev_epoch_rl, so active->epoch would still read as unchanged
+     * either way.
      */
-    if (!TEST_uint64_t_eq(active->epoch, epoch_before)
-        || !TEST_false(SSL_in_init(server)))
+    if (!TEST_uint64_t_eq(sc->rlayer.rrl->epoch, epoch_before)
+        || !TEST_false(SSL_in_init(server))
+        || !TEST_int_eq(sc->d1->handshake_read_seq, expected))
         goto end;
 
     testresult = 1;
