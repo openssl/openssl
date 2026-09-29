@@ -241,14 +241,14 @@ the L<openssl(1)> program also transcodes the command-line parameters
 from the current code page to UTF-8.
 This environment variable is only checked on Microsoft Windows platforms.
 
-=item B<OPENSSL_armcap>, B<OPENSSL_ia32cap>, B<OPENSSL_ppccap>, B<OPENSSL_riscvcap>, B<OPENSSL_s390xcap>, B<OPENSSL_sparcv9cap>
+=item B<OPENSSL_armcap>, B<OPENSSL_ia32cap>, B<OPENSSL_loongarch_hwcap>, B<OPENSSL_ppccap>, B<OPENSSL_riscvcap>, B<OPENSSL_s390xcap>, B<OPENSSL_sparcv9cap>
 
 OpenSSL supports a number of different algorithm implementations for
 various machines and, by default, it determines which to use based on the
 processor capabilities and run time feature enquiry.  These environment
 variables can be used to exert more control over this selection process.
-See L<OPENSSL_armcap(3)>, L<OPENSSL_ia32cap(3)>, L<OPENSSL_ppccap(3)>,
-L<OPENSSL_riscvcap(3)> and L<OPENSSL_s390xcap(3)>.
+See L<OPENSSL_armcap(3)>, L<OPENSSL_ia32cap(3)>, L<OPENSSL_loongarch_hwcap(3)>,
+L<OPENSSL_ppccap(3)>, L<OPENSSL_riscvcap(3)> and L<OPENSSL_s390xcap(3)>.
 
 These variables are not considered security-sensitive.
 
