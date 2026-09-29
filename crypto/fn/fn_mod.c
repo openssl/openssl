@@ -412,25 +412,57 @@ err:
     return ret;
 }
 
+/*
+ * r = a * 2^n mod m, for a less than m, as n modular doublings in the style
+ * of OSSL_FN_mod_add_quick(): double, subtract m, and select by mask.  The
+ * control flow and memory accesses depend only on n and the widths.
+ */
+static int mod_lshift_quick(OSSL_FN *r, const OSSL_FN *a, size_t n,
+    const OSSL_FN *m)
+{
+    size_t al = a->dsize;
+    size_t rl = r->dsize;
+    size_t ml = m->dsize;
+    OSSL_FN_ULONG storage[3 * 1024 / OSSL_FN_BITS];
+    OSSL_FN_ULONG *tp = storage, *dp, *sp;
+    OSSL_FN_ULONG carry, borrow, mask;
+    size_t i;
+
+    if (3 * ml > OSSL_NELEM(storage)) {
+        tp = OPENSSL_malloc_array(3 * ml, sizeof(OSSL_FN_ULONG));
+        if (tp == NULL)
+            return 0;
+    }
+    dp = tp + ml;
+    sp = dp + ml;
+
+    for (i = 0; i < ml; i++)
+        tp[i] = i < al ? a->d[i] : 0;
+
+    while (n-- > 0) {
+        /* tp < m, so 2 * tp < 2m: see OSSL_FN_mod_add_quick() */
+        carry = ossl_fn_add_words(dp, ml, tp, ml, tp, ml);
+        borrow = ossl_fn_sub_words(sp, ml, dp, ml, m->d, ml);
+        mask = carry - borrow;
+        for (i = 0; i < ml; i++)
+            tp[i] = (mask & dp[i]) | (~mask & sp[i]);
+    }
+
+    for (i = 0; i < rl; i++)
+        r->d[i] = i < ml ? tp[i] : 0;
+
+    if (tp != storage)
+        OPENSSL_clear_free(tp, 3 * ml * sizeof(OSSL_FN_ULONG));
+    else
+        OPENSSL_cleanse(storage, 3 * ml * sizeof(OSSL_FN_ULONG));
+
+    return 1;
+}
+
 /* OSSL_FN_mod_lshift1 variant that may be used if a is less than m */
 int OSSL_FN_mod_lshift1_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m)
 {
-    OSSL_FN *t = OSSL_FN_new_limbs((size_t)(m->dsize + 1));
-    int ret = 0;
-
-    if (t == NULL)
-        return 0;
-    if (!OSSL_FN_lshift1(t, a))
-        goto err;
-    if (OSSL_FN_cmp(t, m) >= 0) {
-        if (!OSSL_FN_sub(t, t, m))
-            goto err;
-    }
-    OSSL_FN_copy_truncate(r, t);
-    ret = 1;
-err:
-    OSSL_FN_free(t);
-    return ret;
+    return mod_lshift_quick(r, a, 1, m);
 }
 
 size_t OSSL_FN_mod_lshift_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
@@ -477,57 +509,9 @@ err:
 int OSSL_FN_mod_lshift_quick(OSSL_FN *r, const OSSL_FN *a, int n,
     const OSSL_FN *m)
 {
-    OSSL_FN *t = NULL;
-    int ret = 0;
-
-    if (n <= 0)
-        return n == 0 ? (OSSL_FN_copy_truncate(r, a) != NULL) : 0;
-
-    t = OSSL_FN_new_limbs((size_t)(m->dsize + 1));
-    if (t == NULL)
-        goto err;
-
-    if (OSSL_FN_copy_truncate(t, a) == NULL)
-        goto err;
-
-    while (n > 0) {
-        size_t m_bits = OSSL_FN_num_bits(m);
-        size_t t_bits = OSSL_FN_num_bits(t);
-        size_t max_shift;
-
-        /* 0 <= t < m */
-        if (m_bits < t_bits) {
-            ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INPUT_NOT_REDUCED);
-            goto err;
-        }
-        max_shift = m_bits - t_bits;
-
-        if (max_shift > (size_t)n)
-            max_shift = (size_t)n;
-
-        if (max_shift) {
-            int shift = (int)max_shift;
-
-            if (!OSSL_FN_lshift(t, t, shift))
-                goto err;
-            n -= shift;
-        } else {
-            if (!OSSL_FN_lshift1(t, t))
-                goto err;
-            n--;
-        }
-
-        if (OSSL_FN_cmp(t, m) >= 0) {
-            if (!OSSL_FN_sub(t, t, m))
-                goto err;
-        }
+    if (n < 0) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
     }
-
-    if (OSSL_FN_copy_truncate(r, t) == NULL)
-        goto err;
-    ret = 1;
-
-err:
-    OSSL_FN_free(t);
-    return ret;
+    return mod_lshift_quick(r, a, (size_t)n, m);
 }

@@ -1076,6 +1076,8 @@ size_t OSSL_FN_mod_lshift1_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           a       The operand
  * @param[in]           m       The modulus
  * @returns             1 on success, 0 on error
+ *
+ * @note Constant-time: nothing depends on @p a's value, only on the widths.
  */
 int OSSL_FN_mod_lshift1_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m);
 
@@ -1121,6 +1123,9 @@ size_t OSSL_FN_mod_lshift_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           n       The number of bits to shift
  * @param[in]           m       The modulus
  * @returns             1 on success, 0 on error
+ *
+ * @note Constant-time: nothing depends on @p a's value, only on @p n and the
+ *       widths.
  */
 int OSSL_FN_mod_lshift_quick(OSSL_FN *r, const OSSL_FN *a, int n,
     const OSSL_FN *m);
