@@ -137,7 +137,7 @@ int generic_export(void *keydata, int selection,
     OSSL_CALLBACK *param_callback, void *cbarg)
 {
     PROV_SKEY *gen = keydata;
-    OSSL_PARAM params[6];
+    OSSL_PARAM params[7];
     int idx = 0;
 
     if (!ossl_prov_is_running() || gen == NULL || selection == 0)
@@ -149,6 +149,9 @@ int generic_export(void *keydata, int selection,
             gen->data, gen->length);
 
     if ((selection & OSSL_SKEYMGMT_SELECT_PARAMETERS) != 0) {
+        params[idx++] = OSSL_PARAM_construct_size_t(OSSL_SKEY_PARAM_KEY_LENGTH,
+            &gen->length);
+
         if (gen->alias != NULL)
             params[idx++] = OSSL_PARAM_construct_utf8_string(
                 OSSL_SKEY_PARAM_ALIAS, gen->alias, 0);
