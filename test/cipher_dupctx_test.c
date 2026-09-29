@@ -25,7 +25,7 @@
  * Test that duplicating a cipher context with a heap-allocated tlsmac
  * buffer does not cause a double-free when both contexts are freed.
  *
- * The tlsmac buffer is allocated during TLS CBC/ECB encryption via
+ * The tlsmac buffer is allocated during TLS CBC decryption via
  * ossl_cipher_tlsunpadblock -> ssl3_cbc_copy_mac -> OPENSSL_malloc.
  * Without the fix, the shallow copy in dupctx causes both the original
  * and duplicated context to share the same pointer, leading to a

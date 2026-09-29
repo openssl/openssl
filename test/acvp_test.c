@@ -964,8 +964,6 @@ err:
     return ret;
 }
 
-
-
 static int aes_ccm_enc_dec(const char *alg,
     const unsigned char *pt, size_t pt_len,
     const unsigned char *key, size_t key_len,
