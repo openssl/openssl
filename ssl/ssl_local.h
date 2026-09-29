@@ -2181,7 +2181,7 @@ DEFINE_LIST_OF(record_number, DTLS1_RECORD_NUMBER);
 DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum,
     size_t frag_off, size_t frag_len);
 
-void ossl_list_record_number_elem_free(OSSL_LIST(record_number) * p_list);
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list);
 
 typedef struct dtls_sent_msg_st {
     dtls_msg_info msg_info;
