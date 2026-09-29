@@ -28,7 +28,7 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
-### Changes between 3.5.8 and 3.5.9 [xx XXX xxxx]
+### Changes between 3.5.8 and 3.5.9 [29 Sep 2026]
 
  * Fixed DTLS retransmissions of handshake messages from a stale buffer offset.
 
