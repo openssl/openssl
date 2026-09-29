@@ -306,9 +306,11 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_C_SET_BUFF_READ_DATA:
+        if (num < 0 || num > INT_MAX)
+            return 0;
         if (num > ctx->ibuf_size) {
-            if (num <= 0)
-                return 0;
+            if (num == 0)
+               return 0;
             p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)
                 return 0;
@@ -417,6 +419,8 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = 0;
         break;
     case BIO_CTRL_PEEK:
+        if (num < 0)
+            return 0;
         /* Ensure there's stuff in the input buffer */
         {
             char fake_buf[1];
