@@ -431,6 +431,9 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 #if defined(_ARCH_PPC64)
 #include "arch/ppc_arch.h"
 #endif
+#if defined(MLKEM_NTT_ARMV8_ASM)
+#include "arch/arm_arch.h"
+#endif
 
 /*
  * Function pointer types for NTT dispatch.
@@ -519,6 +522,21 @@ static void scalar_ntt_ppc(scalar *s)
 static void scalar_inverse_ntt_ppc(scalar *s)
 {
     mlkem_inverse_ntt_ppc(s->c);
+}
+#endif
+
+#if defined(MLKEM_NTT_ARMV8_ASM)
+void ossl_ml_kem_ntt_armv8(uint16_t *c);
+void ossl_ml_kem_intt_armv8(uint16_t *c);
+
+static void scalar_ntt_armv8(scalar *s)
+{
+    ossl_ml_kem_ntt_armv8(s->c);
+}
+
+static void scalar_inverse_ntt_armv8(scalar *s)
+{
+    ossl_ml_kem_intt_armv8(s->c);
 }
 #endif
 
@@ -630,6 +648,12 @@ static void ml_kem_ntt_init(void)
         inner_product_montgomery = inner_product_avx2;
         matrix_mult_intt = matrix_mult_intt_avx2;
         matrix_mult_transpose_add = matrix_mult_transpose_add_avx2;
+    }
+#if defined(MLKEM_NTT_ARMV8_ASM)
+    if (OPENSSL_armcap_P & ARMV7_NEON) {
+        scalar_ntt = scalar_ntt_armv8;
+        scalar_inverse_ntt = scalar_inverse_ntt_armv8;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_armv8;
     }
 #endif
 
