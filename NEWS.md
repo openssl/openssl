@@ -22,6 +22,10 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
+### Major changes between OpenSSL 3.4.8 and OpenSSL 3.4.9 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.4.7 and OpenSSL 3.4.8 [29 Sep 2026]
 
 OpenSSL 3.4.8 is a security patch release.  The most severe CVE fixed

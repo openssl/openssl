@@ -27,6 +27,10 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
+### Changes between 3.4.8 and 3.4.9 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.4.7 and 3.4.8 [29 Sep 2026]
 
  * Fixed DTLS retransmissions of handshake messages from a stale buffer offset.
