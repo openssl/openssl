@@ -128,7 +128,7 @@ static int siv_cipher(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     if (outl != NULL)
-        *outl = inl;
+        *outl = in != NULL ? inl : 0;
     return 1;
 }
 

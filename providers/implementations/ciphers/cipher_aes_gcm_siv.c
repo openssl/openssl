@@ -153,7 +153,7 @@ static int ossl_aes_gcm_siv_cipher(void *vctx, unsigned char *out, size_t *outl,
     error |= !ctx->hw->cipher(ctx, out, in, inl);
 
     if (outl != NULL && !error)
-        *outl = inl;
+        *outl = in != NULL ? inl : 0;
     return !error;
 }
 
