@@ -33,6 +33,16 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
+   the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
+   key parameter without exporting the key, so it is also available for keys
+   that cannot be exported, provided the key management reports it.  The
+   built-in key managements now include this parameter when exporting key
+   parameters.
+   <!-- https://github.com/openssl/openssl/pull/33035 -->
+
+   *Iva Marinova*
+
  * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
    X509_OBJECT_up_ref_count() does not reference count the X509_OBJECT itself.
    With X509_OBJECT being opaque there is nothing useful an application can do
