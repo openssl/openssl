@@ -55,10 +55,10 @@ but needs to be.
 - A user defined callback similar to OSSL_SELF_TEST will be added. This callback will be triggered whenever an approved mode test fails for items that
 have been disabled via configuration.
 
-There are some algorithms operations that do not trigger the callback as they 
-depend on the usage at to whether they are unapproved or not. This includes
-iv_generation for AES_GCM, and AES_ECB encryption. In these cases it is the
-users responsibility to test the indicator.
+Some algorithms operations do not trigger the callback because their approval
+depends on how they are used. This includes IV generation for AES_GCM,
+and AES_ECB encryption. In these cases it is the user's responsibility to query
+the indicator.
 
 It may be set up by the user using
 

@@ -40,7 +40,12 @@ struct aes_ecb_get_ctx_param_list_st {
 #endif
 };
 
+struct aes_ecb_set_ctx_param_list_st {
+    struct ossl_cipher_set_ctx_param_list_st common;
+};
+
 #define aes_ecb_get_ctx_params_st aes_ecb_get_ctx_param_list_st
+#define aes_ecb_set_ctx_params_st aes_ecb_set_ctx_param_list_st
 
 #include "providers/implementations/ciphers/cipher_aes_ecb.inc"
 
@@ -52,7 +57,8 @@ static OSSL_FUNC_cipher_encrypt_skey_init_fn aes_ecb_skey_einit;
 static OSSL_FUNC_cipher_decrypt_skey_init_fn aes_ecb_skey_dinit;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_ecb_gettable_ctx_params;
 static OSSL_FUNC_cipher_get_ctx_params_fn aes_ecb_get_ctx_params;
-
+static OSSL_FUNC_cipher_settable_ctx_params_fn aes_ecb_settable_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn aes_ecb_set_ctx_params;
 /*
  * AES-ECB encryption is no longer approved in SP800-131A r3 for
  * confidential operations.
@@ -108,10 +114,6 @@ static void *aes_ecb_dupctx(void *ctx)
     ret->operation_allowed = in->operation_allowed;
 #endif
     in->aesbase.base.hw->copyctx(&ret->aesbase.base, &in->aesbase.base);
-    if (!ossl_cipher_generic_dupctx_tlsmac(&ret->aesbase.base, &in->aesbase.base)) {
-        OPENSSL_clear_free(ret, sizeof(*ret));
-        return NULL;
-    }
     return ret;
 }
 
@@ -188,6 +190,22 @@ static int aes_ecb_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
+static const OSSL_PARAM *aes_ecb_settable_ctx_params(ossl_unused void *cctx,
+    ossl_unused void *provctx)
+{
+    return aes_ecb_set_ctx_params_list;
+}
+
+static int aes_ecb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    struct aes_ecb_set_ctx_param_list_st p;
+
+    if (ctx == NULL || !aes_ecb_set_ctx_params_decoder(params, &p))
+        return 0;
+    return ossl_cipher_common_set_ctx_params(ctx, &p.common);
+}
+
 #define IMPLEMENT_AES_ECB(name, bits)                                                  \
     static OSSL_FUNC_cipher_newctx_fn aes_##bits##_##name##_newctx;                    \
     static OSSL_FUNC_cipher_get_params_fn aes_##bits##_##name##_get_params;            \
@@ -221,9 +239,9 @@ static int aes_ecb_get_ctx_params(void *vctx, OSSL_PARAM params[])
         { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                             \
             (void (*)(void))aes_ecb_get_ctx_params },                                  \
         { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                             \
-            (void (*)(void))ossl_cipher_generic_set_ctx_params },                      \
+            (void (*)(void))aes_ecb_set_ctx_params },                                  \
         { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                        \
-            (void (*)(void))ossl_cipher_generic_settable_ctx_params },                 \
+            (void (*)(void))aes_ecb_settable_ctx_params },                             \
         OSSL_DISPATCH_END                                                              \
     }
 

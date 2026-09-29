@@ -19,15 +19,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/prov_ssl.h>
-#include "internal/nelem.h"
 #include "testutil.h"
-
-static const char *cipher_names[] = {
-    "AES-128-CBC",
-    "AES-256-CBC",
-    "AES-128-ECB",
-    "AES-256-ECB"
-};
 
 /*
  * Test that duplicating a cipher context with a heap-allocated tlsmac
@@ -41,6 +33,10 @@ static const char *cipher_names[] = {
  */
 static int test_dupctx_tlsmac(int idx)
 {
+    static const char *cipher_names[] = {
+        "AES-128-CBC",
+        "AES-256-CBC"
+    };
     const char *name = cipher_names[idx];
     EVP_CIPHER_CTX *ctx = NULL, *dupctx = NULL;
     EVP_CIPHER *cipher = NULL;
@@ -117,6 +113,6 @@ err:
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_dupctx_tlsmac, OSSL_NELEM(cipher_names));
+    ADD_ALL_TESTS(test_dupctx_tlsmac, 2);
     return 1;
 }
