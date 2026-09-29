@@ -4845,7 +4845,8 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x,
  * strict mode or Suite B mode, which check the chain in the legacy slots, so
  * a credential is never used in those modes.  None is when the leaf
  * certificate's signature does not satisfy the peer's
- * signature_algorithms_cert.
+ * signature_algorithms_cert.  The signatureAlgorithm of a Merkle Tree
+ * Certificate leaf identifies a proof, and is not checked against it.
  */
 static const SIGALG_LOOKUP *find_sig_alg_for_credential(SSL_CONNECTION *s,
     const SSL_CREDENTIAL *cred)
@@ -4861,7 +4862,8 @@ static const SIGALG_LOOKUP *find_sig_alg_for_credential(SSL_CONNECTION *s,
     if (pkey == NULL
         || ssl_cert_lookup_by_pkey(pkey, &idx, sctx) == NULL)
         return NULL;
-    if (!peer_cert_sigalgs_allow(s, cred->leaf_sig_mdnid,
+    if (!cred->leaf_is_mtc
+        && !peer_cert_sigalgs_allow(s, cred->leaf_sig_mdnid,
             cred->leaf_sig_pknid))
         return NULL;
 
