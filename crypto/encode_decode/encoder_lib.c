@@ -240,11 +240,6 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
     if ((encoder_inst = OPENSSL_zalloc(sizeof(*encoder_inst))) == NULL)
         return 0;
 
-    if (!OSSL_ENCODER_up_ref(encoder)) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
     prov = OSSL_ENCODER_get0_provider(encoder);
     libctx = ossl_provider_libctx(prov);
     props = ossl_encoder_parsed_properties(encoder);
@@ -273,6 +268,10 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
         encoder_inst->output_structure
             = ossl_property_get_string_value(libctx, prop);
 
+    if (!OSSL_ENCODER_up_ref(encoder)) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     encoder_inst->encoder = encoder;
     encoder_inst->encoderctx = encoderctx;
     return encoder_inst;

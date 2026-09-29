@@ -874,9 +874,9 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
  * NOTE: The nid parameter here is _not_ a NID in the sense of the NID_* macros.
  * It is a unique internal identifier value.
  */
-int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+static int method_store_fetch(OSSL_METHOD_STORE *store,
     int nid, const char *prop_query,
-    const OSSL_PROVIDER **prov_rw, void **method)
+    const OSSL_PROVIDER **prov_rw, void **method, int up_ref)
 {
     OSSL_PROPERTY_LIST **plp;
     ALGORITHM *alg;
@@ -984,13 +984,14 @@ fin:
         if (prov_rw != NULL)
             *prov_rw = best_impl->provider;
 #ifdef OPENSSL_NO_CACHED_FETCH
-        if (!ossl_method_up_ref(&best_impl->method)) {
+        up_ref = 1;
+#endif
+        if (up_ref && !ossl_method_up_ref(&best_impl->method)) {
             ret = 0;
             *method = NULL;
             if (prov_rw != NULL)
                 *prov_rw = NULL;
         }
-#endif
     } else {
         ret = 0;
     }
@@ -1013,6 +1014,20 @@ fin:
     ossl_property_unlock(sa);
     ossl_property_free(p2);
     return ret;
+}
+
+int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+    int nid, const char *prop_query,
+    const OSSL_PROVIDER **prov_rw, void **method)
+{
+    return method_store_fetch(store, nid, prop_query, prov_rw, method, 0);
+}
+
+int ossl_method_store_fetch_ref(OSSL_METHOD_STORE *store,
+    int nid, const char *prop_query,
+    const OSSL_PROVIDER **prov_rw, void **method)
+{
+    return method_store_fetch(store, nid, prop_query, prov_rw, method, 1);
 }
 
 static void ossl_method_cache_flush_alg(STORED_ALGORITHMS *sa,
@@ -1088,7 +1103,8 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 }
 
 static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, STORED_ALGORITHMS *sa, void **method)
+    int nid, const char *prop_query, STORED_ALGORITHMS *sa, void **method,
+    int up_ref)
 {
     QUERY *r = NULL;
     int res = 0;
@@ -1099,11 +1115,12 @@ static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *sto
         *method = r->method.method;
         res = 1;
 #ifdef OPENSSL_NO_CACHED_FETCH
-        if (!ossl_method_up_ref(&r->method)) {
+        up_ref = 1;
+#endif
+        if (up_ref && !ossl_method_up_ref(&r->method)) {
             *method = NULL;
             res = 0;
         }
-#endif
     }
 
     return res;
@@ -1124,9 +1141,22 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
      * Do an atomic linked list walk to search for our entry
      */
     ret = ossl_method_store_cache_get_atomic(store, prov, nid, prop_query, sa,
-        method);
+        method, 0);
 
     return ret;
+}
+
+int ossl_method_store_cache_get_ref(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, void **method)
+{
+    STORED_ALGORITHMS *sa;
+
+    if (nid <= 0 || store == NULL || prop_query == NULL)
+        return 0;
+
+    sa = stored_algs_shard(store, nid);
+    return ossl_method_store_cache_get_atomic(store, prov, nid, prop_query, sa,
+        method, 1);
 }
 
 static int ossl_method_store_atomic_archive(STORED_ALGORITHMS *sa, QUERY *old)

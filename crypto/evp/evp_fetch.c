@@ -156,8 +156,12 @@ static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER **prov,
         && (store = get_evp_method_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery, prov,
-            &method))
+    if (methdata->operation_id == OSSL_OP_KEYMGMT) {
+        if (!ossl_method_store_fetch_ref(store, meth_id, methdata->propquery,
+                prov, &method))
+            return NULL;
+    } else if (!ossl_method_store_fetch(store, meth_id, methdata->propquery,
+                   prov, &method))
         return NULL;
     return method;
 }
@@ -273,10 +277,15 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
 #endif /* FIPS_MODULE */
     uint32_t meth_id = 0;
     void *method = NULL;
-    int unsupported, name_id;
+    int unsupported, name_id, cache_hit = 0;
+    int use_refcounts = operation_id == OSSL_OP_KEYMGMT;
     int set_in_cache = 1;
     void *tmp_method;
     const OSSL_PROVIDER *tmp_prov = prov;
+
+#ifdef OPENSSL_NO_CACHED_FETCH
+    use_refcounts = 1;
+#endif
 
     if (store == NULL || namemap == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -314,8 +323,15 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
      */
     unsupported = name_id == 0;
 
-    if (meth_id == 0
-        || !ossl_method_store_cache_get(store, prov, meth_id, propq, &method)) {
+    if (meth_id != 0) {
+        if (use_refcounts)
+            cache_hit = ossl_method_store_cache_get_ref(store, prov, meth_id,
+                propq, &method);
+        else
+            cache_hit = ossl_method_store_cache_get(store, prov, meth_id,
+                propq, &method);
+    }
+    if (!cache_hit) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             get_tmp_evp_method_store,
             reserve_evp_method_store,
@@ -355,9 +371,8 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
             if (name_id == 0) {
                 ERR_raise_data(ERR_LIB_EVP, ERR_R_FETCH_FAILED,
                     "Algorithm %s cannot be found", name != NULL ? name : "<null>");
-#ifdef OPENSSL_NO_CACHED_FETCH
-                free_method(method);
-#endif
+                if (use_refcounts)
+                    free_method(method);
                 method = NULL;
             } else {
                 meth_id = evp_method_id(name_id, operation_id);
@@ -436,7 +451,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                         EVP_RAND_up_ref((EVP_RAND *)method);
                         break;
                     case OSSL_OP_KEYMGMT:
-                        EVP_KEYMGMT_up_ref((EVP_KEYMGMT *)method);
+                        /* The store lookup already returned an owned reference. */
                         break;
                     case OSSL_OP_KEYEXCH:
                         EVP_KEYEXCH_up_ref((EVP_KEYEXCH *)method);

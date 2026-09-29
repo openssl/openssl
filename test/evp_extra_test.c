@@ -40,6 +40,8 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "../crypto/evp/evp_local.h"
+#include "../crypto/encode_decode/encoder_local.h"
 #include "fake_rsaprov.h"
 #include "fake_pipelineprov.h"
 
@@ -60,6 +62,67 @@ static char *testpropq = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *deflprov = NULL;
 static OSSL_PROVIDER *lgcyprov = NULL;
+
+/* Guard references keep these model objects alive throughout the checks. */
+static int test_endecode_method_refs(int idx)
+{
+    union {
+        OSSL_DECODER decoder;
+        OSSL_ENCODER encoder;
+        EVP_KEYMGMT keymgmt;
+    } method = { 0 };
+    CRYPTO_REF_COUNT *refcnt;
+    int ret = 0, up_ref;
+
+    switch (idx % 3) {
+    case 0:
+        method.decoder.base.id = 1;
+        method.decoder.base.no_store = idx / 3;
+        refcnt = &method.decoder.base.refcnt;
+        break;
+    case 1:
+        method.encoder.base.id = 1;
+        method.encoder.base.no_store = idx / 3;
+        refcnt = &method.encoder.base.refcnt;
+        break;
+    default:
+        method.keymgmt.no_store = idx / 3;
+        refcnt = &method.keymgmt.refcnt;
+        break;
+    }
+    if (!TEST_true(CRYPTO_NEW_REF(refcnt, 2)))
+        return 0;
+
+    switch (idx % 3) {
+    case 0:
+        up_ref = OSSL_DECODER_up_ref(&method.decoder);
+        break;
+    case 1:
+        up_ref = OSSL_ENCODER_up_ref(&method.encoder);
+        break;
+    default:
+        up_ref = EVP_KEYMGMT_up_ref(&method.keymgmt);
+        break;
+    }
+    if (!TEST_true(up_ref) || !TEST_int_eq(refcnt->val, 3))
+        goto end;
+
+    switch (idx % 3) {
+    case 0:
+        OSSL_DECODER_free(&method.decoder);
+        break;
+    case 1:
+        OSSL_ENCODER_free(&method.encoder);
+        break;
+    default:
+        EVP_KEYMGMT_free(&method.keymgmt);
+        break;
+    }
+    ret = TEST_int_eq(refcnt->val, 2);
+end:
+    CRYPTO_FREE_REF(refcnt);
+    return ret;
+}
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
@@ -10070,6 +10133,7 @@ int setup_tests(void)
 #endif
 
     ADD_TEST(test_names_do_all);
+    ADD_ALL_TESTS(test_endecode_method_refs, 6);
 
     setup_cipher_list();
     ADD_ALL_TESTS(test_evp_diff_order_init, cipher_list_n);

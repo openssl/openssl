@@ -68,6 +68,10 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     int nid, const char *prop_query,
     const OSSL_PROVIDER **prov, void **method);
+/* These variants always return an owned reference, including with cached fetch. */
+int ossl_method_store_fetch_ref(OSSL_METHOD_STORE *store,
+    int nid, const char *prop_query,
+    const OSSL_PROVIDER **prov, void **method);
 int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     const OSSL_PROVIDER *prov);
 
@@ -77,6 +81,8 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,
 
 /* property query cache functions */
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, void **result);
+int ossl_method_store_cache_get_ref(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **result);
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void *result,

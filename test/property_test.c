@@ -502,6 +502,52 @@ static void store_test_method_visit(int nid, void *arg, ossl_unused void *unused
     method->visits++;
 }
 
+static int test_method_store_fetch_ref(int cached)
+{
+    OSSL_METHOD_STORE *store = NULL;
+    OSSL_PROVIDER provider = { 1 };
+    const OSSL_PROVIDER *prov = &provider;
+    STORE_TEST_METHOD method = { 0 };
+    void *fetched = NULL;
+    int ret = 0, refs;
+
+    method.refs = 1;
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !TEST_true(ossl_method_store_add(store, &provider, 1, "", &method,
+            store_test_method_up_ref, store_test_method_free)))
+        goto end;
+    if (cached
+        && !TEST_true(ossl_method_store_cache_set(store, &provider, 1, "",
+            &method, store_test_method_up_ref, store_test_method_free)))
+        goto end;
+
+    refs = method.refs;
+    if (!TEST_true(cached
+                ? ossl_method_store_cache_get_ref(store, &provider, 1, "", &fetched)
+                : ossl_method_store_fetch_ref(store, 1, "", &prov, &fetched))
+        || !TEST_ptr_eq(fetched, &method)
+        || !TEST_int_eq(method.refs, refs + 1))
+        goto end;
+    store_test_method_free(fetched);
+    fetched = NULL;
+    if (!TEST_int_eq(method.refs, refs))
+        goto end;
+
+    method.fail_ref = 1;
+    if (!TEST_false(cached
+                ? ossl_method_store_cache_get_ref(store, &provider, 1, "", &fetched)
+                : ossl_method_store_fetch_ref(store, 1, "", &prov, &fetched))
+        || !TEST_ptr_null(fetched)
+        || !TEST_int_eq(method.refs, refs))
+        goto end;
+    ret = 1;
+end:
+    if (fetched != NULL)
+        store_test_method_free(fetched);
+    ossl_method_store_free(store);
+    return TEST_int_eq(method.refs, 1) && ret;
+}
+
 /*
  * Model method ownership without freeing the test objects. Check successful
  * enumeration and failures before or after acquiring snapshot references.
@@ -1334,6 +1380,7 @@ int setup_tests(void)
     ADD_TEST(test_property_defn_cache);
     ADD_ALL_TESTS(test_definition_compares, OSSL_NELEM(definition_tests));
     ADD_TEST(test_register_deregister);
+    ADD_ALL_TESTS(test_method_store_fetch_ref, 2);
     ADD_ALL_TESTS(test_method_store_do_all, 3);
     ADD_ALL_TESTS(test_method_store_snapshot_cache, 2);
     ADD_TEST(test_method_store_snapshot_in_use);

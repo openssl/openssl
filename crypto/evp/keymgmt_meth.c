@@ -310,23 +310,12 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
-#ifdef OPENSSL_NO_CACHED_FETCH
     return evp_keymgmt_up_ref(keymgmt);
-#else
-    if (keymgmt->no_store != 0)
-        return evp_keymgmt_up_ref(keymgmt);
-    return 1;
-#endif
 }
 
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 {
-#ifdef OPENSSL_NO_CACHED_FETCH
     evp_keymgmt_free(keymgmt);
-#else
-    if (keymgmt != NULL && (keymgmt->no_store != 0))
-        evp_keymgmt_free(keymgmt);
-#endif
 }
 
 const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt)
