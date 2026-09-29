@@ -510,6 +510,8 @@ include/openssl/aes.h
 include/openssl/asn1.h.in
 include/openssl/asn1err.h
 include/openssl/asn1t.h.in
+include/openssl/async.h
+include/openssl/asyncerr.h
 include/openssl/bio.h.in
 include/openssl/bioerr.h
 include/openssl/bn.h
@@ -518,6 +520,8 @@ include/openssl/buffer.h
 include/openssl/buffererr.h
 include/openssl/byteorder.h
 include/openssl/cmac.h
+include/openssl/comp.h.in
+include/openssl/comperr.h
 include/openssl/conf.h.in
 include/openssl/conferr.h
 include/openssl/configuration.h.in
@@ -528,6 +532,8 @@ include/openssl/core_names.h.in
 include/openssl/crypto.h.in
 include/openssl/cryptoerr.h
 include/openssl/cryptoerr_legacy.h
+include/openssl/ct.h.in
+include/openssl/cterr.h
 include/openssl/decoder.h
 include/openssl/decodererr.h
 include/openssl/des.h
@@ -535,7 +541,9 @@ include/openssl/dh.h
 include/openssl/dherr.h
 include/openssl/dsa.h
 include/openssl/dsaerr.h
+include/openssl/dtls1.h
 include/openssl/e_os2.h
+include/openssl/e_ostime.h
 include/openssl/ebcdic.h
 include/openssl/ec.h
 include/openssl/ecerr.h
@@ -570,6 +578,7 @@ include/openssl/pkcs7err.h
 include/openssl/prov_ssl.h
 include/openssl/proverr.h
 include/openssl/provider.h
+include/openssl/quic.h
 include/openssl/rand.h
 include/openssl/randerr.h
 include/openssl/rsa.h
@@ -577,9 +586,16 @@ include/openssl/rsaerr.h
 include/openssl/safestack.h.in
 include/openssl/self_test.h
 include/openssl/sha.h
+include/openssl/srtp.h
+include/openssl/ssl.h.in
+include/openssl/ssl2.h
+include/openssl/ssl3.h
+include/openssl/sslerr.h
+include/openssl/sslerr_legacy.h
 include/openssl/stack.h
 include/openssl/symhacks.h
 include/openssl/thread.h
+include/openssl/tls1.h
 include/openssl/trace.h
 include/openssl/types.h
 include/openssl/ui.h.in
@@ -718,6 +734,7 @@ providers/implementations/kdfs/tls1_prf.c.in
 providers/implementations/kdfs/x942kdf.c.in
 providers/implementations/kem/ml_kem_kem.c.in
 providers/implementations/kem/mlx_kem.c
+providers/implementations/kem/mlx_kem.inc.in
 providers/implementations/kem/rsa_kem.c.in
 providers/implementations/keymgmt/dh_kmgmt.c
 providers/implementations/keymgmt/dsa_kmgmt.c
@@ -725,6 +742,7 @@ providers/implementations/keymgmt/ec_kmgmt.c
 providers/implementations/keymgmt/ec_kmgmt_imexport.inc
 providers/implementations/keymgmt/ecx_kmgmt.c.in
 providers/implementations/keymgmt/kdf_legacy_kmgmt.c
+providers/implementations/keymgmt/keymgmtcommon.inc.in
 providers/implementations/keymgmt/mac_legacy_kmgmt.c
 providers/implementations/keymgmt/ml_dsa_kmgmt.c.in
 providers/implementations/keymgmt/ml_kem_kmgmt.c.in
@@ -745,6 +763,7 @@ providers/implementations/signature/dsa_sig.c.in
 providers/implementations/signature/ecdsa_sig.c.in
 providers/implementations/signature/eddsa_sig.c.in
 providers/implementations/signature/mac_legacy_sig.c
+providers/implementations/signature/mac_legacy_sig.inc.in
 providers/implementations/signature/ml_dsa_sig.c.in
 providers/implementations/signature/rsa_sig.c.in
 providers/implementations/signature/slh_dsa_sig.c.in
