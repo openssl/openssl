@@ -238,7 +238,7 @@ my $apitable = {
 # From 3.0 and on, we internalise the given version number in decimal
 # as MAJOR * 10000 + MINOR * 100 + 0
 my @post30_versions = ([3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], [3, 6],
-                       [4, 0], [4, 1],
+                       [4, 0], [4, 1], [4, 2],
                        );
 
 # The numbering used changes from 3.0 and on because we updated
