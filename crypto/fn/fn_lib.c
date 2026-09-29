@@ -156,6 +156,8 @@ int OSSL_FN_zero(OSSL_FN *a)
     return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(0));
 }
 
+/* The literal 0, backing bn_get_ossl_fn() */
+OSSL_FN_STATIC_DEFINE(zero, 0, 0);
 /* The literal 1, backing OSSL_FN_value_one() */
 OSSL_FN_STATIC_DEFINE(one, 1, 1);
 
