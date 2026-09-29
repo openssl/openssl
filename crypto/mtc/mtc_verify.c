@@ -221,8 +221,10 @@ int ossl_mtc_ca_id_from_name(const X509_NAME *name, uint8_t **out,
         return 0;
     ne = X509_NAME_get_entry(name, 0);
     val = X509_NAME_ENTRY_get_data(ne);
-    if (!mtc_obj_is(X509_NAME_ENTRY_get_object(ne), mtc_taid_attr_oid,
-            sizeof(mtc_taid_attr_oid))
+    if (!(mtc_obj_is(X509_NAME_ENTRY_get_object(ne), mtc_taid_attr_oid,
+              sizeof(mtc_taid_attr_oid))
+            || OBJ_obj2nid(X509_NAME_ENTRY_get_object(ne))
+                == NID_id_rdna_trustAnchorID)
         || ASN1_STRING_type(val) != MTC_ASN1_RELATIVE_OID)
         return 0;
     data = ASN1_STRING_get0_data(val);
@@ -615,7 +617,8 @@ int ossl_mtc_is_mtc(const X509 *cert)
         return 0;
     X509_get0_signature(&sig, &alg, cert);
     return mtc_obj_is(alg->algorithm, mtc_proof_alg_oid,
-        sizeof(mtc_proof_alg_oid));
+               sizeof(mtc_proof_alg_oid))
+        || OBJ_obj2nid(alg->algorithm) == NID_id_alg_mtcProof;
 }
 
 OSSL_MTC_CA *ossl_mtc_ca_for_cert(const STACK_OF(OSSL_MTC_CA) *cas,
