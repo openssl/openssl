@@ -451,10 +451,11 @@ int ossl_ssl_cert_is_mtc(const X509 *cert)
     const X509_ALGOR *alg;
 
     X509_get0_signature(NULL, &alg, cert);
-    return (size_t)OBJ_length(alg->algorithm) == sizeof(mtc_proof_alg_oid)
-        && memcmp(OBJ_get0_data(alg->algorithm), mtc_proof_alg_oid,
-               sizeof(mtc_proof_alg_oid))
-        == 0;
+    return ((size_t)OBJ_length(alg->algorithm) == sizeof(mtc_proof_alg_oid)
+               && memcmp(OBJ_get0_data(alg->algorithm), mtc_proof_alg_oid,
+                      sizeof(mtc_proof_alg_oid))
+                   == 0)
+        || OBJ_obj2nid(alg->algorithm) == NID_id_alg_mtcProof;
 }
 
 /**
