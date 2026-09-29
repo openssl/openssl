@@ -51,7 +51,7 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
 {
     EVP_MAC_CTX *dst;
 
-    if (src->algctx == NULL)
+    if (src == NULL || src->algctx == NULL || src->meth == NULL)
         return NULL;
 
     dst = OPENSSL_malloc(sizeof(*dst));
@@ -76,6 +76,8 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
 
 EVP_MAC *EVP_MAC_CTX_get0_mac(EVP_MAC_CTX *ctx)
 {
+    if (ctx == NULL)
+        return NULL;
     return ctx->meth;
 }
 
@@ -83,7 +85,7 @@ static size_t get_size_t_ctx_param(EVP_MAC_CTX *ctx, const char *name)
 {
     size_t sz = 0;
 
-    if (ctx->algctx != NULL) {
+    if (ctx != NULL && ctx->meth != NULL && ctx->algctx != NULL) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
         params[0] = OSSL_PARAM_construct_size_t(name, &sz);
@@ -115,6 +117,10 @@ size_t EVP_MAC_CTX_get_block_size(EVP_MAC_CTX *ctx)
 int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
     const OSSL_PARAM params[])
 {
+    if (ctx == NULL || ctx->meth == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
     if (ctx->meth->init == NULL) {
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;
@@ -124,9 +130,13 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
 
 int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[])
 {
+    if (ctx == NULL || ctx->meth == NULL || skey == NULL
+        || skey->skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     if (ctx->meth->init_skey == NULL
-        || skey->skeymgmt->prov != ctx->meth->prov
-        || ctx->meth->init_skey == NULL) {
+        || skey->skeymgmt->prov != ctx->meth->prov) {
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;
     }
@@ -135,6 +145,20 @@ int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 {
+    if (ctx == NULL || ctx->meth == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+    if (datalen == 0)
+        return 1;
+    if (data == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ctx->meth->update == NULL) {
+        ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
+        return 0;
+    }
     return ctx->meth->update(ctx->algctx, data, datalen);
 }
 
@@ -209,6 +233,8 @@ int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[])
 
 int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 {
+    if (ctx == NULL || ctx->meth == NULL)
+        return 0;
     if (ctx->meth->get_ctx_params != NULL)
         return ctx->meth->get_ctx_params(ctx->algctx, params);
     return 1;
@@ -216,6 +242,8 @@ int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 
 int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 {
+    if (ctx == NULL || ctx->meth == NULL)
+        return 0;
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->algctx, params);
     return 1;
@@ -223,16 +251,22 @@ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 
 int evp_mac_get_number(const EVP_MAC *mac)
 {
+    if (mac == NULL)
+        return 0;
     return mac->name_id;
 }
 
 const char *EVP_MAC_get0_name(const EVP_MAC *mac)
 {
+    if (mac == NULL)
+        return NULL;
     return mac->type_name;
 }
 
 const char *EVP_MAC_get0_description(const EVP_MAC *mac)
 {
+    if (mac == NULL)
+        return NULL;
     return mac->description;
 }
 
@@ -245,6 +279,8 @@ int EVP_MAC_names_do_all(const EVP_MAC *mac,
     void (*fn)(const char *name, void *data),
     void *data)
 {
+    if (mac == NULL)
+        return 0;
     if (mac->prov != NULL)
         return evp_names_do_all(mac->prov, mac->name_id, fn, data);
 
