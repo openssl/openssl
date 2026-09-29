@@ -359,6 +359,11 @@ int ossl_gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
         return 1;
     }
 
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;

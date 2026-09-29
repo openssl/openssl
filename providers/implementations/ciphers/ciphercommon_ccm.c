@@ -267,6 +267,12 @@ int ossl_ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
 
+    /* A NULL input is only valid as the message length, with no output. */
+    if (in == NULL && out != NULL && inl != 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
