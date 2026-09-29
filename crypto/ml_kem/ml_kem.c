@@ -448,7 +448,7 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
  *  scalar_inverse_ntt_demontgomerize
  *      Inverse NTT whose input may still carry an inverse-Montgomery factor
  *      R^-1 from a preceding inner_product_montgomery call.  On the generic
- *      and PPC paths the two pointers are identical (both point at the same
+ *      PPC, and AVX2 paths the two pointers are identical (both point at the same
  *      fully-reduced implementation), because the generic inner_product
  *      already produces fully-reduced outputs via Barrett reduction.  On the
  *      s390x/vec128 path the two are distinct:
@@ -482,11 +482,27 @@ static ml_kem_scalar_ntt_fn scalar_ntt = ossl_ml_kem_scalar_ntt_generic;
 static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_generic;
 /*
  * scalar_inverse_ntt_demontgomerize: used after inner_product_montgomery.  On
- * generic/PPC this is the same function as scalar_inverse_ntt.  On s390x it is
+ * generic/PPC/AVX2 this is the same function as scalar_inverse_ntt.  On s390x it is
  * a specialised variant that also removes the inverse-Montgomery factor R^-1
  * left by inner_product_montgomery_vec128.
  */
 static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_generic;
+
+#if defined(MLKEM_NTT_X86_64_ASM)
+int mlkem_ntt_avx2_capable(void);
+void mlkem_ntt_avx2(uint16_t *c);
+void mlkem_inverse_ntt_avx2(uint16_t *c);
+
+static void scalar_ntt_avx2(scalar *s)
+{
+    mlkem_ntt_avx2(s->c);
+}
+
+static void scalar_inverse_ntt_avx2(scalar *s)
+{
+    mlkem_inverse_ntt_avx2(s->c);
+}
+#endif
 
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 /*
@@ -569,6 +585,14 @@ static ml_kem_matrix_mult_intt_fn matrix_mult_intt = matrix_mult_intt_generic;
 
 static void ml_kem_ntt_init(void)
 {
+#if defined(MLKEM_NTT_X86_64_ASM)
+    if (mlkem_ntt_avx2_capable()) {
+        scalar_ntt = scalar_ntt_avx2;
+        scalar_inverse_ntt = scalar_inverse_ntt_avx2;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_avx2;
+    }
+#endif
+
 /*
  * Initialize NTT function pointers to PPC64le implementations if available.
  * Scalar implementations are used by default.
