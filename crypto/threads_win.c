@@ -718,7 +718,12 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
-#if (!defined(OSSL_USE_INTERLOCKEDOR64))
+#ifdef _MSVC_VER
+    volatile int *valptr = (volatile int *)val;
+
+    *ret = *valptr;
+    return 1;
+#elif (!defined(OSSL_USE_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *ret = *val;
@@ -735,7 +740,12 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
 {
-#if (!defined(OSSL_USE_INTERLOCKEDOR64))
+#ifdef _MSVC_VER
+    volatile int *dstptr = (volatile int *)dst;
+
+    *dstptr = val;
+    return 1;
+#elif (!defined(OSSL_USE_INTERLOCKEDOR64))
     if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *dst = val;
