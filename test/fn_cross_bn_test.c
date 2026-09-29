@@ -29,6 +29,21 @@
 #include "crypto/fn_intern.h"
 #include "testutil.h"
 
+static int test_check_zero_bn(void)
+{
+    BIGNUM *bn = BN_new();
+    const OSSL_FN *fn = bn_get_ossl_fn(bn);
+    int ok = 1; /* Hope for the best */
+
+    if (!TEST_true(OSSL_FN_is_zero(fn))
+        || !TEST_true(BN_is_zero(bn))
+        || !TEST_ptr_null(bn_get_words(bn)))
+        ok = 0;
+
+    BN_free(bn);
+    return ok;
+}
+
 /*-
  * Cross-check ossl_fn_check_prime() against BN_check_prime() on multi-limb
  * values: the two must agree on the verdict for the same number.
@@ -358,6 +373,7 @@ err:
 
 int setup_tests(void)
 {
+    ADD_TEST(test_check_zero_bn);
     ADD_TEST(test_check_prime_cross_bn);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_x931_derive_prime_cross_bn);
