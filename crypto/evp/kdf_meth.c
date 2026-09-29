@@ -177,6 +177,8 @@ EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_KDF_up_ref(EVP_KDF *kdf)
 {
+    if (kdf == NULL)
+        return 0;
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_kdf_up_ref(kdf);
 #else
@@ -198,7 +200,7 @@ void EVP_KDF_free(EVP_KDF *kdf)
 
 const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf)
 {
-    if (kdf->gettable_params == NULL)
+    if (kdf == NULL || kdf->gettable_params == NULL)
         return NULL;
     return kdf->gettable_params(ossl_provider_ctx(EVP_KDF_get0_provider(kdf)));
 }
@@ -207,7 +209,7 @@ const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf)
 {
     void *alg;
 
-    if (kdf->gettable_ctx_params == NULL)
+    if (kdf == NULL || kdf->gettable_ctx_params == NULL)
         return NULL;
     alg = ossl_provider_ctx(EVP_KDF_get0_provider(kdf));
     return kdf->gettable_ctx_params(NULL, alg);
@@ -217,7 +219,7 @@ const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf)
 {
     void *alg;
 
-    if (kdf->settable_ctx_params == NULL)
+    if (kdf == NULL || kdf->settable_ctx_params == NULL)
         return NULL;
     alg = ossl_provider_ctx(EVP_KDF_get0_provider(kdf));
     return kdf->settable_ctx_params(NULL, alg);
@@ -227,7 +229,8 @@ const OSSL_PARAM *EVP_KDF_CTX_gettable_params(EVP_KDF_CTX *ctx)
 {
     void *alg;
 
-    if (ctx->meth->gettable_ctx_params == NULL)
+    if (ctx == NULL || ctx->meth == NULL
+        || ctx->meth->gettable_ctx_params == NULL)
         return NULL;
     alg = ossl_provider_ctx(EVP_KDF_get0_provider(ctx->meth));
     return ctx->meth->gettable_ctx_params(ctx->algctx, alg);
@@ -237,7 +240,8 @@ const OSSL_PARAM *EVP_KDF_CTX_settable_params(EVP_KDF_CTX *ctx)
 {
     void *alg;
 
-    if (ctx->meth->settable_ctx_params == NULL)
+    if (ctx == NULL || ctx->meth == NULL
+        || ctx->meth->settable_ctx_params == NULL)
         return NULL;
     alg = ossl_provider_ctx(EVP_KDF_get0_provider(ctx->meth));
     return ctx->meth->settable_ctx_params(ctx->algctx, alg);
