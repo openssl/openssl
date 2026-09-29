@@ -412,8 +412,10 @@ err:
 static int do_compressed_cert(SSL_CONNECTION *sc)
 {
     /* If we negotiated RPK, we won't try to compress it */
+    /* A negotiated credential is sent uncompressed. */
     return sc->ext.client_cert_type == TLSEXT_cert_type_x509
-        && sc->ext.compress_certificate_from_peer[0] != TLSEXT_comp_cert_none;
+        && sc->ext.compress_certificate_from_peer[0] != TLSEXT_comp_cert_none
+        && sc->s3.tmp.credential == NULL;
 }
 
 /*
@@ -4406,24 +4408,35 @@ CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
             return CON_FUNC_ERROR;
         }
     }
-    if (s->s3.tmp.cert_req != 2)
-        cpk = s->cert->key;
-    switch (s->ext.client_cert_type) {
-    case TLSEXT_cert_type_rpk:
-        if (!tls_output_rpk(s, pkt, cpk)) {
+    /*
+     * A credential selected for the trust anchors the server asked for is sent
+     * as configured, in place of a certificate from the legacy slots.
+     */
+    if (s->s3.tmp.credential != NULL) {
+        if (!ssl3_output_cred_chain(s, pkt, s->s3.tmp.credential)) {
             /* SSLfatal() already called */
             return CON_FUNC_ERROR;
         }
-        break;
-    case TLSEXT_cert_type_x509:
-        if (!ssl3_output_cert_chain(s, pkt, cpk, 0)) {
-            /* SSLfatal() already called */
+    } else {
+        if (s->s3.tmp.cert_req != 2)
+            cpk = s->cert->key;
+        switch (s->ext.client_cert_type) {
+        case TLSEXT_cert_type_rpk:
+            if (!tls_output_rpk(s, pkt, cpk)) {
+                /* SSLfatal() already called */
+                return CON_FUNC_ERROR;
+            }
+            break;
+        case TLSEXT_cert_type_x509:
+            if (!ssl3_output_cert_chain(s, pkt, cpk, 0)) {
+                /* SSLfatal() already called */
+                return CON_FUNC_ERROR;
+            }
+            break;
+        default:
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return CON_FUNC_ERROR;
         }
-        break;
-    default:
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return CON_FUNC_ERROR;
     }
 
     /*

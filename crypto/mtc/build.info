@@ -1,0 +1,4 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=merkle_tree.c mtc_cert.c mtc_ca.c mtc_verify.c \
+        mtc_ca_cert.c mtc_cosigner.c
+SOURCE[../../libcrypto]=mtc_ca_adv.c

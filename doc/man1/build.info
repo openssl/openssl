@@ -22,6 +22,7 @@ DEPEND[openssl-enc.pod]=../perlvars.pm
 DEPEND[openssl-errstr.pod]=../perlvars.pm
 DEPEND[openssl-fipsinstall.pod]=../perlvars.pm
 DEPEND[openssl-gendsa.pod]=../perlvars.pm
+DEPEND[openssl-generate_tai_chain.pod]=../perlvars.pm
 DEPEND[openssl-genpkey.pod]=../perlvars.pm
 DEPEND[openssl-genrsa.pod]=../perlvars.pm
 DEPEND[openssl-info.pod]=../perlvars.pm

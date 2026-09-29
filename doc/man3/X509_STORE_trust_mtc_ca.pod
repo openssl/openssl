@@ -1,0 +1,70 @@
+=pod
+
+=head1 NAME
+
+X509_STORE_trust_mtc_ca,
+X509_STORE_trust_mtc_cosigner
+- trust a Merkle Tree Certificate CA or cosigner in an X509_STORE
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509_vfy.h>
+
+ int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca);
+ int X509_STORE_trust_mtc_cosigner(X509_STORE *store,
+                                   OSSL_MTC_COSIGNER *cosigner);
+
+=head1 DESCRIPTION
+
+X509_STORE_trust_mtc_ca() adds I<ca> to I<store> as a trusted Merkle Tree
+Certificate CA
+(L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>).
+A Merkle Tree Certificate
+is accepted by L<OSSL_PROOF_verify(3)> if it is issued by one of the store's
+trusted MTC CAs; the store's MTC CAs are consulted through the X509_STORE of
+the verifying B<OSSL_PROOF_TRUST>.
+
+X509_STORE_trust_mtc_cosigner() adds I<cosigner> to I<store> as a trusted
+Merkle Tree Certificate cosigner, in addition to the CA cosigner of each
+trusted MTC CA. A standalone Merkle Tree Certificate is accepted during
+verification if its subtree is cosigned by the issuing CA's cosigner and by at
+least the number of the store's trusted cosigners set with
+L<OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(3)>; the trusted cosigners apply
+to every MTC CA the store trusts, and are consulted through the X509_STORE in
+the same way.
+
+I<ca> and I<cosigner> are stored as borrowed references: the store neither
+copies nor frees them, so the caller retains ownership and must keep them valid
+for as long as the store references them. A CA or cosigner whose identifier
+matches one already trusted by I<store>, whether as a CA or as a cosigner, is
+rejected.
+
+=head1 RETURN VALUES
+
+X509_STORE_trust_mtc_ca() and X509_STORE_trust_mtc_cosigner() return 1 on
+success and 0 on error, including when the identifier duplicates a CA or
+cosigner already trusted by I<store>.
+
+=head1 SEE ALSO
+
+L<OSSL_MTC_CA_new(3)>, L<OSSL_MTC_COSIGNER_new(3)>,
+L<OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(3)>, L<OSSL_PROOF_verify(3)>,
+L<X509_STORE_new(3)>
+
+The Merkle Tree Certificates draft:
+L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 4.2.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

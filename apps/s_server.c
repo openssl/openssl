@@ -84,6 +84,8 @@ typedef unsigned int u_int;
 #include "internal/statem.h"
 #include "ssl/ssl_local.h"
 
+#include <openssl/mtc.h>
+#include <openssl/proof.h>
 #ifndef OPENSSL_NO_ECH
 /* needed for X509_check_host in some CI builds "no-http" */
 #include <openssl/x509v3.h>
@@ -1191,6 +1193,13 @@ typedef enum OPTION_choice {
     OPT_KEYFORM,
     OPT_PASS,
     OPT_CERT_CHAIN,
+    OPT_TAI_CHAINS,
+    OPT_TAI_KEYS,
+    OPT_MTC_CAS,
+    OPT_MTC_LANDMARKS,
+    OPT_MTC_SUBTREES,
+    OPT_MTC_COSIGNERS,
+    OPT_MTC_COSIGNER_QUORUM,
     OPT_DHPARAM,
     OPT_DCERTFORM,
     OPT_DCERT,
@@ -1361,6 +1370,25 @@ const OPTIONS s_server_options[] = {
         "Server certificate file format (PEM/DER/P12); has no effect" },
     { "cert_chain", OPT_CERT_CHAIN, '<',
         "Server certificate chain file in PEM format" },
+    { "tai_chains", OPT_TAI_CHAINS, 's',
+        "PEM file, or directory of PEM files, of trust anchor decorated"
+        " certificate chains served when a client requests their trust anchor" },
+    { "tai_keys", OPT_TAI_KEYS, 's',
+        "PEM file, or directory of PEM files, of further private keys for"
+        " -tai_chains certificates" },
+    { "mtc_cas", OPT_MTC_CAS, '<',
+        "File of Merkle Tree Certificate CA certs to trust and request" },
+    { "mtc_landmarks", OPT_MTC_LANDMARKS, 's',
+        "Active landmarks of one -mtc_cas log, as id:log:file, where file holds"
+        " the CA's published landmark description (may be given more than once)" },
+    { "mtc_subtrees", OPT_MTC_SUBTREES, '<',
+        "File of vetted subtree hashes for the -mtc_landmarks logs"
+        " (landmark-relative MTC)" },
+    { "mtc_cosigners", OPT_MTC_COSIGNERS, '<',
+        "File of Merkle Tree Certificate cosigner certs to trust for the"
+        " -mtc_cosigner_quorum" },
+    { "mtc_cosigner_quorum", OPT_MTC_COSIGNER_QUORUM, 'N',
+        "Trusted cosigners a standalone Merkle Tree Certificate must carry" },
     { "build_chain", OPT_BUILD_CHAIN, '-', "Build server certificate chain" },
     { "serverinfo", OPT_SERVERINFO, 's',
         "PEM serverinfo file for certificate" },
@@ -1694,7 +1722,7 @@ int s_server_main(int argc, char *argv[])
     int vpmtouched = 0, build_chain = 0, no_cache = 0, ext_cache = 0;
     char *dhfile = NULL;
     int no_dhe = 0;
-    int nocert = 0, ret = 1;
+    int i, nocert = 0, ret = 1;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int s_cert_format = FORMAT_UNDEF, s_key_format = FORMAT_UNDEF;
     int s_dcert_format = FORMAT_UNDEF, s_dkey_format = FORMAT_UNDEF;
@@ -1736,6 +1764,13 @@ int s_server_main(int argc, char *argv[])
     int s_server_session_id_context = 1; /* anything will do */
     const char *s_cert_file = TEST_CERT, *s_key_file = NULL, *s_chain_file = NULL;
     const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
+    const char *tai_chains_file = NULL, *tai_keys_file = NULL;
+    const char *mtc_cas_file = NULL, *mtc_subtrees_file = NULL;
+    const char *mtc_cosigners_file = NULL;
+    int mtc_cosigner_quorum = 0;
+    STACK_OF(OPENSSL_STRING) *mtc_landmarks = NULL;
+    STACK_OF(OSSL_MTC_CA) *mtc_cas = NULL;
+    STACK_OF(OSSL_MTC_COSIGNER) *mtc_cosigners = NULL;
     char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
 #ifndef OPENSSL_NO_OCSP
     int s_tlsextstatus = 0;
@@ -1946,6 +1981,33 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_CERT_CHAIN:
             s_chain_file = opt_arg();
+            break;
+        case OPT_TAI_CHAINS:
+            tai_chains_file = opt_arg();
+            break;
+        case OPT_TAI_KEYS:
+            tai_keys_file = opt_arg();
+            break;
+        case OPT_MTC_CAS:
+            mtc_cas_file = opt_arg();
+            break;
+        case OPT_MTC_LANDMARKS:
+            if (mtc_landmarks == NULL
+                && (mtc_landmarks = sk_OPENSSL_STRING_new_null()) == NULL)
+                goto end;
+            if (!sk_OPENSSL_STRING_push(mtc_landmarks, opt_arg()))
+                goto end;
+            break;
+        case OPT_MTC_SUBTREES:
+            mtc_subtrees_file = opt_arg();
+            break;
+        case OPT_MTC_COSIGNERS:
+            mtc_cosigners_file = opt_arg();
+            break;
+        case OPT_MTC_COSIGNER_QUORUM:
+            mtc_cosigner_quorum = opt_int_arg();
+            if (mtc_cosigner_quorum < 0)
+                goto opthelp;
             break;
         case OPT_DHPARAM:
             dhfile = opt_arg();
@@ -2965,6 +3027,55 @@ int s_server_main(int argc, char *argv[])
     if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
         goto end;
 
+    if (tai_chains_file != NULL
+        && !load_tai_credentials(ctx, tai_chains_file, tai_keys_file))
+        goto end;
+
+    /*
+     * Trust the Merkle Tree Certificate CAs from -mtc_cas.  Adding them to the
+     * verify store both lets a client certificate issued by them be verified
+     * and puts their trust anchor IDs in what we ask a client for.  The store
+     * borrows the CAs, so mtc_cas is kept alive until after the SSL_CTX is
+     * freed.  The landmark windows come before the subtree hashes: a hash is
+     * accepted only for a subtree that is active.
+     */
+    if (mtc_cas_file != NULL
+        && (mtc_cas = load_mtc_cas(ctx, mtc_cas_file)) == NULL)
+        goto end;
+
+    if (mtc_landmarks != NULL) {
+        if (mtc_cas == NULL) {
+            BIO_printf(bio_err, "-mtc_landmarks requires -mtc_cas\n");
+            goto end;
+        }
+        for (i = 0; i < sk_OPENSSL_STRING_num(mtc_landmarks); i++) {
+            if (!load_mtc_landmarks(mtc_cas,
+                    sk_OPENSSL_STRING_value(mtc_landmarks, i), vpm))
+                goto end;
+        }
+    }
+
+    if (mtc_subtrees_file != NULL) {
+        if (mtc_cas == NULL) {
+            BIO_printf(bio_err, "-mtc_subtrees requires -mtc_cas\n");
+            goto end;
+        }
+        if (!load_mtc_subtrees(mtc_cas, mtc_subtrees_file))
+            goto end;
+    }
+
+    /*
+     * Trust the Merkle Tree Certificate cosigners from -mtc_cosigners; they
+     * count toward -mtc_cosigner_quorum.  The store borrows them, so
+     * mtc_cosigners is kept alive until after the SSL_CTX is freed.
+     */
+    if (mtc_cosigners_file != NULL
+        && (mtc_cosigners = load_mtc_cosigners(ctx, mtc_cosigners_file)) == NULL)
+        goto end;
+    if (!OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(SSL_CTX_get0_proof_params(ctx),
+            (size_t)mtc_cosigner_quorum))
+        goto end;
+
     if (s_serverinfo_file != NULL
         && !SSL_CTX_use_serverinfo_file(ctx, s_serverinfo_file)) {
         ERR_print_errors(bio_err);
@@ -3158,6 +3269,9 @@ int s_server_main(int argc, char *argv[])
     ret = 0;
 end:
     SSL_CTX_free(ctx);
+    sk_OPENSSL_STRING_free(mtc_landmarks);
+    sk_OSSL_MTC_CA_pop_free(mtc_cas, OSSL_MTC_CA_free);
+    sk_OSSL_MTC_COSIGNER_pop_free(mtc_cosigners, OSSL_MTC_COSIGNER_free);
 #ifndef OPENSSL_NO_SRP
     cleanup_srp(&srp_callback_parm);
 #endif

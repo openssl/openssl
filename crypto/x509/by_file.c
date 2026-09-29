@@ -18,6 +18,7 @@
 #include "x509_local.h"
 
 #include <crypto/asn1.h>
+#include <crypto/x509.h>
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
     long argl, char **ret);
@@ -115,41 +116,82 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
     }
 
     if (type == X509_FILETYPE_PEM) {
+        /*
+         * A pending CertificatePropertyList from a "CERTIFICATE PROPERTIES"
+         * block, to attach to the certificate that follows it (section 7 of
+         * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).
+         * Read blocks generically rather than via PEM_read_bio_X509_AUX(), so a
+         * properties block is seen rather than silently skipped.
+         */
+        ASN1_OCTET_STRING *props = NULL;
+
         for (;;) {
+            char *pnm = NULL, *phdr = NULL;
+            unsigned char *pdata = NULL;
+            long plen = 0;
+            int fail = 0;
+
             ERR_set_mark();
-            if (PEM_read_bio_X509_AUX(in, &x, NULL, "") == NULL) {
-                if ((ERR_GET_REASON(ERR_peek_last_error()) == PEM_R_NO_START_LINE) && (count > 0)) {
+            if (!PEM_read_bio(in, &pnm, &phdr, &pdata, &plen)) {
+                if (ERR_GET_REASON(ERR_peek_last_error()) == PEM_R_NO_START_LINE
+                    && count > 0 && props == NULL) {
                     ERR_pop_to_mark();
                     break;
-                } else {
-                    ERR_clear_last_mark();
-                    if (count == 0) {
-                        ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);
-                    } else {
-                        ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
-                        count = 0;
-                    }
-                    goto err;
                 }
+                ERR_clear_last_mark();
+                ERR_raise(ERR_LIB_X509, count == 0 ? X509_R_NO_CERTIFICATE_FOUND : ERR_R_PEM_LIB);
+                count = 0;
+                ASN1_OCTET_STRING_free(props);
+                goto err;
             }
             ERR_clear_last_mark();
-            if (!X509_STORE_add_cert(ctx->store_ctx, x)) {
+
+            if (strcmp(pnm, "CERTIFICATE PROPERTIES") == 0) {
+                /* Only one property list may precede a certificate. */
+                if (props != NULL
+                    || (props = ASN1_OCTET_STRING_new()) == NULL
+                    || !ASN1_OCTET_STRING_set(props, pdata, (int)plen))
+                    fail = 1;
+            } else if (strcmp(pnm, PEM_STRING_X509) == 0
+                || strcmp(pnm, PEM_STRING_X509_OLD) == 0
+                || strcmp(pnm, PEM_STRING_X509_TRUSTED) == 0) {
+                const unsigned char *p = pdata;
+
+                if (d2i_X509_AUX(&x, &p, plen) == NULL
+                    || (props != NULL
+                        && !ossl_x509_set1_certificate_properties(x,
+                            ASN1_STRING_get0_data(props),
+                            ASN1_STRING_get_length(props)))
+                    || !X509_STORE_add_cert(ctx->store_ctx, x)) {
+                    fail = 1;
+                } else {
+                    ASN1_OCTET_STRING_free(props);
+                    props = NULL;
+                    /*
+                     * X509_STORE_add_cert() added a reference rather than a
+                     * copy, so we need a fresh X509 object.
+                     */
+                    X509_free(x);
+                    if ((x = X509_new_ex(libctx, propq)) == NULL)
+                        fail = 1;
+                    else
+                        count++;
+                }
+            }
+            /* Any other block type is skipped, as before. */
+
+            OPENSSL_free(pnm);
+            OPENSSL_free(phdr);
+            OPENSSL_free(pdata);
+
+            if (fail) {
+                ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
                 count = 0;
+                ASN1_OCTET_STRING_free(props);
                 goto err;
             }
-            /*
-             * X509_STORE_add_cert() added a reference rather than a copy,
-             * so we need a fresh X509 object.
-             */
-            X509_free(x);
-            x = X509_new_ex(libctx, propq);
-            if (x == NULL) {
-                ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
-                count = 0;
-                goto err;
-            }
-            count++;
         }
+        ASN1_OCTET_STRING_free(props);
     } else if (type == X509_FILETYPE_ASN1) {
         if (d2i_X509_bio(in, &x) == NULL) {
             ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);

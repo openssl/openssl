@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/packet.h"
 #include "internal/hashtable.h"
 #include "internal/hashfunc.h"
 #include "internal/refcount.h"
@@ -277,6 +278,9 @@ void X509_STORE_free(X509_STORE *xs)
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, xs, &xs->ex_data);
     X509_VERIFY_PARAM_free(xs->param);
+    sk_OSSL_MTC_CA_free(xs->mtc_cas); /* borrowed CAs: free the container */
+    sk_OSSL_MTC_COSIGNER_free(xs->mtc_cosigners); /* borrowed likewise */
+    OPENSSL_free(xs->trust_anchor_ids);
     CRYPTO_THREAD_lock_free(xs->lock);
     CRYPTO_FREE_REF(&xs->references);
     ossl_ht_free(xs->objs_ht);
@@ -582,12 +586,103 @@ static int x509_store_add_crl(X509_STORE *store, X509_CRL *crl)
     return x509_store_add_obj(store, obj);
 }
 
+/*
+ * Find the trust_anchor_id (property type 0) in an encoded
+ * CertificatePropertyList; see
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+ * Returns 1 and points id and id_len into cpl on success, 0 if the list is
+ * malformed or carries no trust anchor ID.
+ */
+static int cpl_get0_trust_anchor_id(const uint8_t *cpl, size_t cpl_len,
+    const uint8_t **id, size_t *id_len)
+{
+    PACKET pkt, list, data;
+    int have_last = 0;
+    unsigned int last_type = 0;
+
+    if (!PACKET_buf_init(&pkt, cpl, cpl_len)
+        || !PACKET_get_length_prefixed_2(&pkt, &list)
+        || PACKET_remaining(&pkt) != 0)
+        return 0;
+    while (PACKET_remaining(&list) > 0) {
+        unsigned int type;
+
+        if (!PACKET_get_net_2(&list, &type)
+            || !PACKET_get_length_prefixed_2(&list, &data)
+            || (have_last && type <= last_type))
+            return 0;
+        have_last = 1;
+        last_type = type;
+        if (type == 0) {
+            if (PACKET_remaining(&data) == 0)
+                return 0;
+            *id = PACKET_data(&data);
+            *id_len = PACKET_remaining(&data);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
+ * If certificate x carries a CertificatePropertyList with a trust anchor ID,
+ * append that ID to the store's wire-format RequestedTrustAnchorList contents,
+ * unless already present.  Returns 0 only on allocation failure.
+ */
+static int x509_store_note_trust_anchor_id(X509_STORE *store, const X509 *x)
+{
+    const uint8_t *cpl, *id;
+    size_t cpl_len, id_len, pos;
+    uint8_t *tmp;
+    int ret = 0;
+
+    if (!ossl_x509_get0_certificate_properties(x, &cpl, &cpl_len)
+        || !cpl_get0_trust_anchor_id(cpl, cpl_len, &id, &id_len)
+        || id_len == 0 || id_len > 0xff)
+        return 1; /* nothing to record, or not representable on the wire */
+
+    if (!X509_STORE_lock(store))
+        return 0;
+
+    for (pos = 0; pos < store->trust_anchor_ids_len;
+        pos += 1 + store->trust_anchor_ids[pos]) {
+        if (store->trust_anchor_ids[pos] == id_len
+            && memcmp(store->trust_anchor_ids + pos + 1, id, id_len) == 0) {
+            ret = 1; /* already present */
+            goto out;
+        }
+    }
+
+    tmp = OPENSSL_realloc(store->trust_anchor_ids,
+        store->trust_anchor_ids_len + 1 + id_len);
+    if (tmp == NULL)
+        goto out;
+    store->trust_anchor_ids = tmp;
+    tmp[store->trust_anchor_ids_len] = (uint8_t)id_len;
+    memcpy(tmp + store->trust_anchor_ids_len + 1, id, id_len);
+    store->trust_anchor_ids_len += 1 + id_len;
+    ret = 1;
+out:
+    X509_STORE_unlock(store);
+    return ret;
+}
+
 int X509_STORE_add_cert(X509_STORE *xs, const X509 *x)
 {
     if (!x509_store_add_x509(xs, x)) {
         ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         return 0;
     }
+    /*
+     * Record any trust anchor ID the certificate carries.  This is a best
+     * effort: a failure here does not undo the trusted certificate, so discard
+     * its error and keep the successful add.
+     */
+    ERR_set_mark();
+    if (!x509_store_note_trust_anchor_id(xs, x))
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
     return 1;
 }
 
@@ -598,6 +693,62 @@ int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x)
         return 0;
     }
     return 1;
+}
+
+/*
+ * A trust anchor ID names either a CA (5.4: the CA cosigner's ID is the CA ID)
+ * or another cosigner, never both, so a store rejects an ID that is already
+ * held by the other kind.
+ */
+int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca)
+{
+    const uint8_t *id;
+    size_t id_len;
+    int ret = 0;
+
+    if (store == NULL || ca == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509_STORE_lock(store))
+        return 0;
+    id = ossl_mtc_ca_id(ca, &id_len);
+    if (ossl_mtc_cosigner_stack_lookup(store->mtc_cosigners, id, id_len)
+        != NULL)
+        goto out;
+    if (store->mtc_cas == NULL
+        && (store->mtc_cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)) == NULL)
+        goto out;
+    ret = ossl_mtc_ca_stack_add(store->mtc_cas, ca);
+out:
+    X509_STORE_unlock(store);
+    return ret;
+}
+
+int X509_STORE_trust_mtc_cosigner(X509_STORE *store, OSSL_MTC_COSIGNER *cosigner)
+{
+    const uint8_t *id;
+    size_t id_len;
+    int ret = 0;
+
+    if (store == NULL || cosigner == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509_STORE_lock(store))
+        return 0;
+    id = ossl_mtc_cosigner_id(cosigner, &id_len);
+    if (store->mtc_cas != NULL
+        && ossl_mtc_ca_stack_lookup(store->mtc_cas, id, id_len) != NULL)
+        goto out;
+    if (store->mtc_cosigners == NULL
+        && (store->mtc_cosigners = sk_OSSL_MTC_COSIGNER_new(OSSL_MTC_COSIGNER_cmp))
+            == NULL)
+        goto out;
+    ret = ossl_mtc_cosigner_stack_add(store->mtc_cosigners, cosigner);
+out:
+    X509_STORE_unlock(store);
+    return ret;
 }
 
 int X509_OBJECT_up_ref_count(X509_OBJECT *a)

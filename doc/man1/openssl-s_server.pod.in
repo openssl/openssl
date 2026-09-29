@@ -24,6 +24,13 @@ B<openssl> B<s_server>
 [B<-cert2> I<infile>]
 [B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-cert_chain> I<infile>]
+[B<-tai_chains> I<path>]
+[B<-tai_keys> I<path>]
+[B<-mtc_cas> I<filename>]
+[B<-mtc_landmarks> I<id>:I<log>:I<filename>]
+[B<-mtc_subtrees> I<filename>]
+[B<-mtc_cosigners> I<filename>]
+[B<-mtc_cosigner_quorum> I<count>]
 [B<-build_chain>]
 [B<-serverinfo> I<val>]
 [B<-key> I<filename>|I<uri>]
@@ -226,6 +233,55 @@ certificate chain related to the certificate specified via the B<-cert> option.
 These untrusted certificates are sent to clients and used for generating
 certificate status (aka OCSP stapling) requests.
 The input can be in PEM, DER, or PKCS#12 format.
+
+=item B<-tai_chains> I<path>
+
+A PEM file, or a directory of PEM files, of trust anchor decorated certificate
+chains. Each chain is a B<CERTIFICATE PROPERTIES> block carrying a trust anchor
+ID (see L<openssl-generate_tai_chain(1)>) followed by the chain's certificates,
+leaf first. Each is installed as a credential the server serves only when the
+client requests that trust anchor in the B<trust_anchors> extension. From a
+file, the chains keep their file order, which is their preference order; from a
+directory, they are used in ascending on-the-wire size, so the smallest chain
+is preferred.
+
+=item B<-tai_keys> I<path>
+
+A PEM file, or a directory of PEM files, of private keys for the B<-tai_chains>
+certificates. Each chain's key is matched by its public key among these keys
+and any in the chain's own file.
+
+=item B<-mtc_cas> I<filename>
+
+A file in PEM format containing one or more Merkle Tree Certificate CA
+certificates (draft-ietf-plants-merkle-tree-certs) to trust. Their trust anchor
+identifiers are requested of the client in the B<trust_anchors> extension of the
+CertificateRequest, and they are trusted when verifying a Merkle Tree
+Certificate the client sends.
+
+=item B<-mtc_landmarks> I<id>:I<log>:I<filename>
+
+The active landmarks of one issuance log of one B<-mtc_cas> CA, in the format
+described for L<openssl-s_client(1)>. This option may be given more than once.
+
+=item B<-mtc_subtrees> I<filename>
+
+A file of vetted subtree hashes for the B<-mtc_landmarks> logs, in the format
+described for L<openssl-s_client(1)>, needed to verify landmark-relative
+(signatureless) Merkle Tree Certificates.
+
+=item B<-mtc_cosigners> I<filename>
+
+A file in PEM format of Merkle Tree Certificate cosigner certificates, as
+described for L<openssl-s_client(1)>, trusted for every B<-mtc_cas> CA when
+verifying a standalone Merkle Tree Certificate the client sends.
+
+=item B<-mtc_cosigner_quorum> I<count>
+
+Require the subtree of a standalone Merkle Tree Certificate the client sends to
+carry valid signatures from at least I<count> of the B<-mtc_cosigners>, in
+addition to the issuing CA's cosignature. The default is 0, so the CA
+cosignature alone suffices.
 
 =item B<-build_chain>
 

@@ -23,6 +23,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include "crypto/evp.h"
+#include "crypto/x509.h"
 
 typedef enum {
     PEM_INFO_NONE,
@@ -72,6 +73,8 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
     STACK_OF(X509_INFO) *ret = NULL;
     unsigned int i, raw, ptype;
     pem_info_type itype = PEM_INFO_NONE;
+    unsigned char *cpl = NULL; /* a pending CertificatePropertyList */
+    long cpl_len = 0;
 
     if (sk == NULL) {
         if ((ret = sk_X509_INFO_new_null()) == NULL) {
@@ -154,6 +157,14 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
             if ((int)strlen(header) > 10 /* assume encrypted */
                 || strcmp(name, PEM_STRING_PKCS8) == 0)
                 raw = 1;
+        } else if (strcmp(name, "CERTIFICATE PROPERTIES") == 0) {
+            /* Hold the property list for the certificate that follows it. */
+            OPENSSL_free(cpl);
+            cpl = data;
+            cpl_len = len;
+            data = NULL;
+            itype = PEM_INFO_NONE;
+            pp = NULL;
         } else { /* unknown */
             itype = PEM_INFO_NONE;
             pp = NULL;
@@ -199,6 +210,16 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
                         ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
                         goto err;
                     }
+                    /* Attach any pending property list to this certificate. */
+                    if (cpl != NULL
+                        && (itype == PEM_INFO_X509
+                            || itype == PEM_INFO_X509_AUX)) {
+                        if (!ossl_x509_set1_certificate_properties(
+                                *(X509 **)pp, cpl, (size_t)cpl_len))
+                            goto err;
+                        OPENSSL_free(cpl);
+                        cpl = NULL;
+                    }
                 }
             } else { /* encrypted key data */
                 if (!PEM_get_EVP_CIPHER_INFO(header, &xi->enc_cipher))
@@ -227,6 +248,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
     }
     ok = 1;
 err:
+    OPENSSL_free(cpl);
     X509_INFO_free(xi);
     if (!ok) {
         for (i = 0; ((int)i) < sk_X509_INFO_num(ret); i++) {

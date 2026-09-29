@@ -29,6 +29,8 @@
 #include <openssl/core_names.h>
 #include "internal/dane.h"
 #include "crypto/x509.h"
+#include "crypto/mtc_verify.h"
+#include "crypto/proof.h"
 #include "x509_local.h"
 
 /* CRL score values */
@@ -964,6 +966,180 @@ static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
             return 1;
     }
     return n <= 0;
+}
+
+/*
+ * The generic X.509 leaf checks a Merkle Tree Certificate still needs once its
+ * proof has verified: validity, key strength, identity and purpose, and then
+ * the ways a single certificate can be malformed in its own right.  Each
+ * honours its X509_VERIFY_PARAM opt-out and records its X509_V_ERR_* in
+ * ctx->error.  The verification callback is not used.
+ */
+int ossl_x509_mtc_leaf_checks(X509_STORE_CTX *ctx)
+{
+    X509 *cert = ctx->cert;
+    int ret = 0;
+
+    /* Cache ex_flags before the unhandled-critical-extension test. */
+    if (X509_check_purpose(cert, -1, 0) != 1) {
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        goto err;
+    }
+    if (!X509_check_certificate_times(ctx->param, cert, &ctx->error))
+        goto err;
+    /* The leaf key is the only key auth_level can rate on an MTC. */
+    if (!check_cert_key_level(ctx, cert)) {
+        ctx->error = X509_V_ERR_EE_KEY_TOO_SMALL;
+        goto err;
+    }
+    if (ctx->param->hosts != NULL && check_hosts(cert, ctx->param) <= 0) {
+        ctx->error = X509_V_ERR_HOSTNAME_MISMATCH;
+        goto err;
+    }
+    if (!check_email(cert, ctx->param)) {
+        ctx->error = X509_V_ERR_EMAIL_MISMATCH;
+        goto err;
+    }
+    if (ctx->param->ips != NULL && check_ips(cert, ctx->param) <= 0) {
+        ctx->error = X509_V_ERR_IP_ADDRESS_MISMATCH;
+        goto err;
+    }
+    if (ctx->param->purpose >= X509_PURPOSE_MIN
+        && X509_check_purpose(cert, ctx->param->purpose, 0) != 1) {
+        ctx->error = X509_V_ERR_INVALID_PURPOSE;
+        goto err;
+    }
+    if ((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
+        && (cert->ex_flags & EXFLAG_CRITICAL) != 0) {
+        ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
+        goto err;
+    }
+    if ((cert->ex_flags & EXFLAG_DUPLICATE) != 0) {
+        ctx->error = X509_V_ERR_DUPLICATE_EXTENSION;
+        goto err;
+    }
+    if ((ctx->param->flags & X509_V_FLAG_ALLOW_PROXY_CERTS) == 0
+        && (cert->ex_flags & EXFLAG_PROXY) != 0) {
+        ctx->error = X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED;
+        goto err;
+    }
+    /*
+     * A subject alternative name is where an MTC carries the identity it is
+     * matched on, its subject being empty, so an empty one names nothing.
+     */
+    if (cert->altname != NULL && sk_GENERAL_NAME_num(cert->altname) <= 0) {
+        ctx->error = X509_V_ERR_EMPTY_SUBJECT_ALT_NAME;
+        goto err;
+    }
+    /*
+     * The signature algorithm outside the TBSCertificate is what makes this an
+     * MTC, and the copy inside it is not covered by the proof, so a sender may
+     * write anything there.  Require the two to agree, as RFC 5280 does.
+     */
+    if (X509_ALGOR_cmp(&cert->sig_alg, &cert->cert_info.signature) != 0) {
+        ctx->error = X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY;
+        goto err;
+    }
+    ret = 1;
+err:
+    return ret;
+}
+
+/*
+ * Look up a trusted cosigner in the X509_STORE arg by ID, under the store read
+ * lock: X509_STORE_trust_mtc_cosigner() mutates the cosigner stack under the
+ * write lock.  The cosigner is borrowed but stable (never evicted).
+ */
+static OSSL_MTC_COSIGNER *store_cosigner_lookup(const uint8_t *id,
+    size_t id_len, void *arg)
+{
+    X509_STORE *store = arg;
+    OSSL_MTC_COSIGNER *cosigner;
+
+    if (!ossl_x509_store_read_lock(store))
+        return NULL;
+    cosigner = ossl_mtc_cosigner_stack_lookup(store->mtc_cosigners, id, id_len);
+    X509_STORE_unlock(store);
+    return cosigner;
+}
+
+int ossl_x509_verify_mtc(X509_STORE_CTX *ctx, size_t quorum)
+{
+    OSSL_MTC_CA *ca;
+    const ASN1_BIT_STRING *sig;
+    const X509_ALGOR *alg;
+    const uint8_t *tbs;
+    size_t tbs_len;
+    int ret = 0;
+
+    if (ctx->store == NULL) {
+        ctx->error = X509_V_ERR_MTC_UNTRUSTED_CA;
+        goto err;
+    }
+    if (ctx->chain != NULL) {
+        /* This X509_STORE_CTX has already verified a certificate. */
+        ERR_raise(ERR_LIB_X509, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ctx->error = X509_V_ERR_INVALID_CALL;
+        goto err;
+    }
+    /* The signatureAlgorithm identifies a Merkle Tree Certificate (6.2). */
+    if (!ossl_mtc_is_mtc(ctx->cert)) {
+        ctx->error = X509_V_ERR_MTC_NOT_MTC;
+        goto err;
+    }
+    /*
+     * The trusted MTC CAs live in the store's stack, which
+     * X509_STORE_trust_mtc_ca() mutates under the store write lock.  Resolve the
+     * issuing CA under the store read lock; the resolved CA is borrowed but
+     * stable (never evicted) and self-locking, so the proof is then verified
+     * without holding the store lock.  Trusted cosigners are looked up the
+     * same way, one at a time, by store_cosigner_lookup().
+     */
+    if (!ossl_x509_store_read_lock(ctx->store)) {
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        goto err;
+    }
+    ca = ossl_mtc_ca_for_cert(ctx->store->mtc_cas, ctx->cert, &ctx->error);
+    X509_STORE_unlock(ctx->store);
+    if (ca == NULL)
+        goto err;
+    /*
+     * ossl_mtc_verify() works from the certificate's encodings, not the object:
+     * its cached TBS and its signatureValue (the MTCProof), both read without
+     * modifying the certificate.
+     */
+    if (!ossl_x509_get0_tbs(ctx->cert, &tbs, &tbs_len)) {
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        goto err;
+    }
+    X509_get0_signature(&sig, &alg, ctx->cert);
+    /* The signatureValue must be a whole number of octets (section 7.2). */
+    if ((sig->flags & 0x07) != 0) {
+        ctx->error = X509_V_ERR_MTC_BAD_PROOF;
+        goto err;
+    }
+    if (!ossl_mtc_verify(ca, store_cosigner_lookup, ctx->store, quorum, tbs,
+            tbs_len, ASN1_STRING_get0_data(sig), ASN1_STRING_get_length(sig),
+            &ctx->error))
+        goto err;
+    if (!ossl_x509_mtc_leaf_checks(ctx))
+        goto err;
+    if (!ossl_proof_check_revocation(ctx, ctx->cert, ossl_mtc_ca_cosigner_pkey(ca)))
+        goto err;
+    /*
+     * The verified chain is the certificate itself: an MTC is its own path,
+     * proved to the CA rather than issued by a certificate above it.  Callers
+     * read it with X509_STORE_CTX_get0_chain() and SSL_get0_verified_chain().
+     */
+    if (!ossl_x509_add_cert_new(&ctx->chain, ctx->cert, X509_ADD_FLAG_UP_REF)) {
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
+        goto err;
+    }
+    ret = 1;
+err:
+    ctx->current_cert = ctx->cert;
+    ctx->error_depth = 0;
+    return ret;
 }
 
 static int check_id(X509_STORE_CTX *ctx)
@@ -1986,6 +2162,13 @@ end:
 }
 
 /* Check CRLDP and IDP */
+int ossl_x509_crl_covers(X509 *x, X509_CRL *crl)
+{
+    unsigned int reasons;
+
+    return crl_crldp_check(x, crl, CRL_SCORE_ISSUER_NAME, &reasons);
+}
+
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
 {

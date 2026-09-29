@@ -522,6 +522,38 @@ Authority Key Identifier issuer and serial number must be paired.
 
 Certificate includes more than one instance of a particular extension.
 
+=item B<X509_V_ERR_MTC_NOT_MTC: not a Merkle Tree Certificate>
+
+The certificate is not a Merkle Tree Certificate: its signature algorithm is
+not id-alg-mtcProof, or its issuer is not a Merkle Tree Certificate CA.
+
+=item B<X509_V_ERR_MTC_BAD_PROOF: malformed Merkle Tree Certificate proof>
+
+The Merkle Tree Certificate proof or serial number could not be decoded.
+
+=item B<X509_V_ERR_MTC_UNTRUSTED_CA: no trusted Merkle Tree Certificate CA>
+
+No trusted Merkle Tree Certificate CA matches the certificate's issuer.
+
+=item B<X509_V_ERR_MTC_REVOKED: Merkle Tree Certificate serial revoked>
+
+The certificate's serial number falls in a revoked range.
+
+=item B<X509_V_ERR_MTC_INCLUSION_FAILED: inclusion proof did not evaluate>
+
+The Merkle Tree Certificate inclusion proof did not evaluate.
+
+=item B<X509_V_ERR_MTC_NOT_TRUSTED: Merkle Tree Certificate subtree not trusted>
+
+The proof's subtree is neither a trusted subtree nor cosigned by the issuing
+CA's cosigner.
+
+=item B<X509_V_ERR_MTC_COSIGNER_QUORUM: Merkle Tree Certificate lacks the required cosignatures>
+
+The proof's subtree is cosigned by the issuing CA's cosigner but by fewer of the
+trusted cosigners than the cosigner quorum requires (see
+L<OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(3)>).
+
 =back
 
 =head1 NOTES

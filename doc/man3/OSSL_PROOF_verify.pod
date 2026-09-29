@@ -1,0 +1,394 @@
+=pod
+
+=head1 NAME
+
+OSSL_PROOF_new_mtc, OSSL_PROOF_free,
+OSSL_PROOF_TRUST_new, OSSL_PROOF_TRUST_free,
+OSSL_PROOF_TRUST_set1_x509_store, OSSL_PROOF_TRUST_get0_x509_store,
+OSSL_PROOF_PARAMS_new, OSSL_PROOF_PARAMS_free,
+OSSL_PROOF_PARAMS_set1_x509_param, OSSL_PROOF_PARAMS_get0_x509_param,
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum, OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum,
+OSSL_PROOF_verify, OSSL_PROOF_OUTPUT_free,
+OSSL_PROOF_OUTPUT_get_x509_error, OSSL_PROOF_OUTPUT_get_x509_error_depth,
+OSSL_PROOF_OUTPUT_get0_x509_error_cert, OSSL_PROOF_OUTPUT_get0_x509_chain,
+OSSL_PROOF_OUTPUT_get0_x509_peername, OSSL_PROOF_OUTPUT_get0_x509_policy_tree
+- verify proofs presented by authenticating parties to relying parties
+
+=head1 SYNOPSIS
+
+ #include <openssl/proof.h>
+
+ OSSL_PROOF *OSSL_PROOF_new_mtc(const X509 *cert);
+ void OSSL_PROOF_free(OSSL_PROOF *proof);
+
+ OSSL_PROOF_TRUST *OSSL_PROOF_TRUST_new(OSSL_LIB_CTX *libctx, const char *propq);
+ void OSSL_PROOF_TRUST_free(OSSL_PROOF_TRUST *trust);
+ int OSSL_PROOF_TRUST_set1_x509_store(OSSL_PROOF_TRUST *trust, X509_STORE *store);
+ X509_STORE *OSSL_PROOF_TRUST_get0_x509_store(const OSSL_PROOF_TRUST *trust);
+
+ OSSL_PROOF_PARAMS *OSSL_PROOF_PARAMS_new(void);
+ void OSSL_PROOF_PARAMS_free(OSSL_PROOF_PARAMS *params);
+ int OSSL_PROOF_PARAMS_set1_x509_param(OSSL_PROOF_PARAMS *params,
+                                      const X509_VERIFY_PARAM *param);
+ X509_VERIFY_PARAM *OSSL_PROOF_PARAMS_get0_x509_param(const OSSL_PROOF_PARAMS *params);
+ int OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(OSSL_PROOF_PARAMS *params,
+                                              size_t quorum);
+ size_t OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(const OSSL_PROOF_PARAMS *params);
+
+ int OSSL_PROOF_verify(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
+                      const OSSL_PROOF_PARAMS *params,
+                      OSSL_PROOF_OUTPUT **out_output);
+ void OSSL_PROOF_OUTPUT_free(OSSL_PROOF_OUTPUT *output);
+ int OSSL_PROOF_OUTPUT_get_x509_error(const OSSL_PROOF_OUTPUT *output,
+                                     int *out_code);
+ int OSSL_PROOF_OUTPUT_get_x509_error_depth(const OSSL_PROOF_OUTPUT *output,
+                                           int *out_depth);
+ X509 *OSSL_PROOF_OUTPUT_get0_x509_error_cert(const OSSL_PROOF_OUTPUT *output);
+ STACK_OF(X509) *OSSL_PROOF_OUTPUT_get0_x509_chain(const OSSL_PROOF_OUTPUT *output);
+ const char *OSSL_PROOF_OUTPUT_get0_x509_peername(const OSSL_PROOF_OUTPUT *output);
+ X509_POLICY_TREE *OSSL_PROOF_OUTPUT_get0_x509_policy_tree(const OSSL_PROOF_OUTPUT *output);
+
+=head1 DESCRIPTION
+
+An B<OSSL_PROOF> is a proof presented for verification, sent by an
+authenticating party to a relying party.  A proof has one of several
+forms, each created by its own constructor.  Forms are grouped into
+categories that share how a proof is configured for verification and
+what a verification produces; one such category is X.509-based (see
+L</X.509-based proofs>).  An B<OSSL_PROOF_TRUST> holds the trust
+anchors a proof is verified against, and an B<OSSL_PROOF_PARAMS> the
+per-verification parameters.  An B<OSSL_PROOF_OUTPUT> holds what a
+verification produced, on success and on failure; its contents depend on the
+proof's form.
+
+OSSL_PROOF_new_mtc() creates an X.509-based proof from the Merkle Tree
+Certificate I<cert> (see
+L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>).
+It takes a reference on I<cert> and only reads it, so the caller may free
+I<cert> independently but must not modify it while the proof holds it.
+
+OSSL_PROOF_free() frees I<proof>; if I<proof> is NULL it does nothing.
+
+OSSL_PROOF_TRUST_new() creates an empty trust configuration.  Verifications
+against it run in the library context I<libctx> with the property query
+I<propq>, which select the algorithm implementations used; either may be NULL
+for the defaults (see L<OSSL_LIB_CTX(3)>).
+
+OSSL_PROOF_TRUST_free() frees I<trust>; if I<trust> is NULL it does nothing.
+
+OSSL_PROOF_PARAMS_new() creates a set of verification parameters.
+
+OSSL_PROOF_PARAMS_free() frees I<params>; if I<params> is NULL it does nothing.
+
+OSSL_PROOF_verify() verifies I<proof> against the trust anchors of I<trust> and
+the parameters of I<params>; I<params> may be NULL to use defaults.  The checks
+performed depend on the proof's form, and are described in the per-form
+sections below.  Unless I<out_output> is NULL, an B<OSSL_PROOF_OUTPUT> holding
+what the verification produced is stored in I<*out_output>, on success and on
+failure, for the caller to free with OSSL_PROOF_OUTPUT_free().  The trust
+configuration, proof and parameters are only read.
+
+OSSL_PROOF_OUTPUT_free() frees a verification output; if I<output> is NULL it
+does nothing.
+
+=head2 X.509-based proofs
+
+For an X.509-based proof the trust anchors live in an X.509 trust store on
+the B<OSSL_PROOF_TRUST>, and the verification parameters in an B<X509_VERIFY_PARAM>
+on the B<OSSL_PROOF_PARAMS>.  The B<OSSL_PROOF_OUTPUT> of verifying such a proof
+carries the X.509 outputs read by the OSSL_PROOF_OUTPUT_*_x509_*() functions
+below, which fail, or return NULL, for an output from a proof of any other
+category.  The caller acts on the success or failure of the verification; the
+X.509 error code is for diagnostics only.
+
+OSSL_PROOF_TRUST_set1_x509_store() sets the X.509 trust store I<trust> verifies
+against, taking its own reference on I<store>; the caller retains ownership.
+
+OSSL_PROOF_TRUST_get0_x509_store() returns the store held by I<trust>, or NULL if
+none has been set; the caller must not free it.
+
+OSSL_PROOF_PARAMS_get0_x509_param() returns the X.509 verification parameters of
+I<params> for the caller to configure in place (for example with
+X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_set_purpose()); the caller
+must not free them.
+
+OSSL_PROOF_PARAMS_set1_x509_param() copies the settings of I<param> into
+I<params>.
+
+Revocation checking of an X.509-based proof is by CRL, using the CRLs held
+by the trust store (see L<X509_STORE_add_crl(3)>).  A CRL is used when it is
+issued under the certificate's issuer name, is a complete CRL (not a delta
+CRL, not indirect, not scoped to reason codes), and covers the certificate.
+The issuer's complete CRL covers every certificate it issued; a partitioned
+CRL covers a certificate whose CRL distribution points name its issuing
+distribution point.
+
+OCSP is not supported.  Verification parameters with
+B<X509_V_FLAG_OCSP_RESP_CHECK>, B<X509_V_FLAG_OCSP_RESP_CHECK_ALL> or
+B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> set are an invalid argument to
+OSSL_PROOF_verify().
+
+=head2 Merkle Tree Certificate proofs
+
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum() sets to I<quorum> the number of
+trusted cosigners, in addition to the issuing CA's cosigner, whose valid
+signatures the subtree of a standalone Merkle Tree Certificate must carry
+(section 7.3 of the draft).  The trusted cosigners are those added to the
+B<X509_STORE> with L<X509_STORE_trust_mtc_cosigner(3)>; a signature from any
+other cosigner is ignored.  The default is 0: a valid CA cosignature alone
+suffices.
+
+OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum() returns the cosigner quorum of
+I<params>.
+
+OSSL_PROOF_OUTPUT_get_x509_error() stores in I<*out_code> the X.509 error code
+(a B<X509_V_ERR_*> value) the verification ended with: B<X509_V_OK> on success,
+otherwise the code named by the failing check in the per-form sections below.
+
+OSSL_PROOF_OUTPUT_get_x509_error_depth() stores in I<*out_depth> the depth in
+the verified chain of the certificate the error code refers to; the leaf is at
+depth 0.
+
+OSSL_PROOF_OUTPUT_get0_x509_error_cert() returns the certificate the error code
+refers to, or NULL if there is none.
+
+OSSL_PROOF_OUTPUT_get0_x509_chain() returns the verified chain, from the leaf
+up, or NULL if the verification failed.
+
+OSSL_PROOF_OUTPUT_get0_x509_peername() returns the DNS subject alternative name
+or subject common name of the certificate that matched a host configured on
+the parameters (see L<X509_VERIFY_PARAM_set1_host(3)>), as the bytes appear in
+the certificate, or NULL if no host was configured, none matched, or the
+verification failed.
+
+OSSL_PROOF_OUTPUT_get0_x509_policy_tree() returns the policy tree of a
+successful verification with B<X509_V_FLAG_POLICY_CHECK> set, or NULL if there
+is none (see L<X509_STORE_CTX_get0_policy_tree(3)>).
+
+The objects returned by the OSSL_PROOF_OUTPUT_get0_*() functions belong to
+I<output> and are freed with it; the caller must not free them.
+
+=head1 VERIFYING A MERKLE TREE CERTIFICATE
+
+When I<proof> is a Merkle Tree Certificate, OSSL_PROOF_verify() performs the
+following steps in order, following section 7.2 of
+L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>.
+OSSL_PROOF_verify() fails at the first step that does not pass, and the returned
+B<OSSL_PROOF_OUTPUT> carries the X.509 error code named below (read out with
+OSSL_PROOF_OUTPUT_get_x509_error()), at depth 0, referring to the certificate.
+
+=over 4
+
+=item 1.
+
+B<Proof decoding.> The certificate's signatureAlgorithm must be id-alg-mtcProof,
+and its signatureValue is decoded as an MTCProof (section 6.2).  Verification
+fails if the signatureAlgorithm is not id-alg-mtcProof, setting the X.509 error
+code B<X509_V_ERR_MTC_NOT_MTC>, or if the signatureValue does not decode as an
+MTCProof, setting B<X509_V_ERR_MTC_BAD_PROOF>.
+
+=item 2.
+
+B<Serial decomposition.> The certificate serial number is split into an issuance
+log number and an entry index.  Verification fails if the serial is out of range
+or names log number zero, setting the X.509 error code B<X509_V_ERR_MTC_BAD_PROOF>.
+
+=item 3.
+
+B<Revocation.> The serial must not fall in any of the CA's revoked ranges
+(section 7.5).  Verification fails if it does, setting the X.509 error code
+B<X509_V_ERR_MTC_REVOKED>.
+
+=item 4.
+
+B<CA identification.> The issuing CA is taken from the certificate issuer, which
+carries the CA's trust anchor ID (section 5.1), and looked up among the trusted
+Merkle Tree Certificate CAs of the store.  Verification fails if the issuer does
+not carry a trust anchor ID, setting the X.509 error code
+B<X509_V_ERR_MTC_NOT_MTC>, or if no trusted CA matches, setting
+B<X509_V_ERR_MTC_UNTRUSTED_CA>.
+
+=item 5.
+
+B<Entry hashing and inclusion.> The log entry is reconstructed (section 5.2.1)
+and hashed as an RFC 9162 leaf, then the MTCProof's inclusion proof is evaluated
+to the hash of the claimed subtree (section 4.3).  Verification fails if the
+entry cannot be hashed, setting the X.509 error code B<X509_V_ERR_MTC_BAD_PROOF>,
+or if the inclusion proof does not verify, setting
+B<X509_V_ERR_MTC_INCLUSION_FAILED>.
+
+=item 6.
+
+B<Acceptance.> The subtree is accepted either because it matches a trusted
+subtree of the CA (section 7.4) with the expected hash, or because the MTCProof
+carries a sufficient set of valid cosignatures (sections 5.3.1 and 7.3): one
+from the CA cosigner, plus valid ones from at least as many of the store's
+trusted cosigners as the quorum set with
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(), which is zero by default.
+Verification fails if neither holds, setting the
+X.509 error code B<X509_V_ERR_MTC_NOT_TRUSTED>, or if the CA cosignature is
+valid but the quorum is not met, setting B<X509_V_ERR_MTC_COSIGNER_QUORUM>, or
+if the cosignature list is malformed, setting B<X509_V_ERR_MTC_BAD_PROOF>.
+
+=back
+
+Once the proof is verified, the certificate is subjected to the X.509 leaf
+checks selected by the verification parameters.  As above, OSSL_PROOF_verify()
+fails at the first check that does not pass, setting the X.509 error code
+named:
+
+=over 4
+
+=item *
+
+B<Validity.> The certificate's validity period is checked by calling
+L<X509_check_certificate_times(3)> with the verification parameters; verification
+fails if the certificate is not currently valid, setting the X.509 error code
+that function reports.
+
+=item *
+
+B<Key strength.> When an authentication level is set on the parameters (see
+L<X509_VERIFY_PARAM_set_auth_level(3)>), verification fails if the
+certificate's public key does not meet it, setting the X.509 error code
+B<X509_V_ERR_EE_KEY_TOO_SMALL>. The key is the only element of a Merkle Tree
+Certificate the level applies to: there is no certificate chain, and the
+proof carries no signature algorithm in the X.509 sense.
+
+=item *
+
+B<Identity.> When a host, email address or IP address is configured on the
+parameters, verification fails if the certificate does not match it, setting the
+X.509 error code B<X509_V_ERR_HOSTNAME_MISMATCH>, B<X509_V_ERR_EMAIL_MISMATCH> or
+B<X509_V_ERR_IP_ADDRESS_MISMATCH> respectively.
+
+=item *
+
+B<Purpose.> When a purpose is set on the parameters, verification fails if the
+certificate's key usage and extended key usage do not permit it, setting the
+X.509 error code B<X509_V_ERR_INVALID_PURPOSE>.
+
+=item *
+
+B<Critical extensions.> Verification fails if the certificate carries an
+unhandled critical extension, setting the X.509 error code
+B<X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION>, unless B<X509_V_FLAG_IGNORE_CRITICAL>
+is set.
+
+=back
+
+When the verification parameters have B<X509_V_FLAG_CRL_CHECK> set, the
+certificate is checked against a CRL from the trust store (see
+L</X.509-based proofs>).  The CRL is signed by the CA cosigner key held by the
+trusted B<OSSL_MTC_CA> (section 5.4 of the draft).  Verification fails if
+there is no CRL for the certificate, setting the X.509 error code
+B<X509_V_ERR_UNABLE_TO_GET_CRL>; if the CRL's signature does not verify,
+setting B<X509_V_ERR_CRL_SIGNATURE_FAILURE>; if the CRL is not currently valid,
+setting B<X509_V_ERR_CRL_NOT_YET_VALID> or B<X509_V_ERR_CRL_HAS_EXPIRED>; or if
+the CRL lists the certificate's serial number, setting
+B<X509_V_ERR_CERT_REVOKED>.
+
+On success the verified chain returned by OSSL_PROOF_OUTPUT_get0_x509_chain()
+holds the certificate alone: a Merkle Tree Certificate is its own path, proved
+to the CA, with no certificate above it.  No policy tree is produced.
+
+=head1 NOTES
+
+OSSL_PROOF_verify() neither invokes nor consults a verification callback
+(L<X509_STORE_CTX_set_verify_cb(3)>): a failing check aborts verification and
+cannot be waived.
+
+Once fully configured, an B<OSSL_PROOF_TRUST>, an B<OSSL_PROOF> and an
+B<OSSL_PROOF_PARAMS> may be shared between threads and used concurrently by
+OSSL_PROOF_verify(), which only reads them.  None of them may be reconfigured
+while another thread may be using it.  A trust configuration is typically
+long-lived and shared, whereas parameters are per-verification; a distinct
+B<OSSL_PROOF_PARAMS> is needed only where verifications require different
+parameters.  An B<OSSL_PROOF_OUTPUT> belongs to the caller that received it.
+
+=head1 RETURN VALUES
+
+OSSL_PROOF_new_mtc(), OSSL_PROOF_TRUST_new() and OSSL_PROOF_PARAMS_new() return a
+new object, or NULL on error.
+
+OSSL_PROOF_TRUST_set1_x509_store(), OSSL_PROOF_PARAMS_set1_x509_param() and
+OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum() return 1 on success and 0 on error.
+
+OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum() returns the quorum, or 0 if
+I<params> is NULL.
+
+OSSL_PROOF_TRUST_get0_x509_store() and OSSL_PROOF_PARAMS_get0_x509_param() return
+the requested object, or NULL.
+
+OSSL_PROOF_verify() returns 1 if I<proof> is verified and 0 otherwise.  Unless
+I<out_output> is NULL, I<*out_output> holds an B<OSSL_PROOF_OUTPUT> in either
+case.  On an error before verification could start, it is set to NULL; such
+errors are a NULL I<proof>, invalid verification parameters, and a failed
+allocation.
+
+OSSL_PROOF_OUTPUT_get_x509_error() and OSSL_PROOF_OUTPUT_get_x509_error_depth()
+return 1 and store the value when I<output> is from an X.509-based proof, and 0
+otherwise.
+
+OSSL_PROOF_OUTPUT_get0_x509_error_cert(), OSSL_PROOF_OUTPUT_get0_x509_chain(),
+OSSL_PROOF_OUTPUT_get0_x509_peername() and
+OSSL_PROOF_OUTPUT_get0_x509_policy_tree() return the requested object, or NULL
+if there is none or I<output> is not from an X.509-based proof.
+
+=head1 EXAMPLES
+
+Verify a Merkle Tree Certificate against a store already holding the trusted
+Merkle Tree Certificate CAs (see L<X509_STORE_trust_mtc_ca(3)>), requiring it to
+match a hostname:
+
+ /* We have determined that "cert" contains an MTC. */
+ OSSL_PROOF *proof = OSSL_PROOF_new_mtc(cert);
+ OSSL_PROOF_TRUST *trust = OSSL_PROOF_TRUST_new(NULL, NULL);
+ OSSL_PROOF_PARAMS *params = OSSL_PROOF_PARAMS_new();
+ OSSL_PROOF_OUTPUT *output = NULL;
+ X509_VERIFY_PARAM *param;
+ int code;
+
+ OSSL_PROOF_TRUST_set1_x509_store(trust, store);
+ param = OSSL_PROOF_PARAMS_get0_x509_param(params);
+ X509_VERIFY_PARAM_set1_host(param, "www.example.com", 0);
+
+ if (OSSL_PROOF_verify(trust, proof, params, &output) == 1) {
+     printf("verification succeeded, matched %s\n",
+            OSSL_PROOF_OUTPUT_get0_x509_peername(output));
+ } else {
+     fprintf(stderr, "verification failed\n");
+     /* The X.509 error code, if any, is informative. */
+     if (OSSL_PROOF_OUTPUT_get_x509_error(output, &code))
+         fprintf(stderr, "reason: %s\n", X509_verify_cert_error_string(code));
+ }
+
+ OSSL_PROOF_OUTPUT_free(output);
+ OSSL_PROOF_PARAMS_free(params);
+ OSSL_PROOF_TRUST_free(trust);
+ OSSL_PROOF_free(proof);
+
+=head1 SEE ALSO
+
+L<OSSL_MTC_CA_new(3)>, L<X509_STORE_trust_mtc_ca(3)>,
+L<X509_STORE_trust_mtc_cosigner(3)>, L<SSL_CTX_get0_proof_params(3)>,
+L<X509_VERIFY_PARAM_set1_host(3)>, L<X509_check_certificate_times(3)>,
+L<X509_STORE_CTX_get_error(3)>, L<OSSL_LIB_CTX(3)>
+
+The Merkle Tree Certificates draft:
+L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

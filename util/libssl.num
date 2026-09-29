@@ -626,3 +626,15 @@ SSL_CTX_ech_set1_outer_alpn_protos      625	4_0_0	EXIST::FUNCTION:ECH
 SSL_set1_ech_config_list                626	4_0_0	EXIST::FUNCTION:ECH
 SSL_get0_sigalg                         627	4_0_0	EXIST::FUNCTION:
 SSL_get0_shared_sigalg                  628	4_0_0	EXIST::FUNCTION:
+SSL_CREDENTIAL_free                     ?	4_1_0	EXIST::FUNCTION:
+SSL_CREDENTIAL_up_ref                   ?	4_1_0	EXIST::FUNCTION:
+SSL_CTX_add1_credential                 ?	4_1_0	EXIST::FUNCTION:
+SSL_parse_certificates_with_properties  ?	4_1_0	EXIST::FUNCTION:
+SSL_CREDENTIAL_size_cmp                 ?	4_1_0	EXIST::FUNCTION:
+SSL_parse_private_keys                  ?	4_1_0	EXIST::FUNCTION:
+SSL_CTX_set1_requested_trust_anchors    ?	4_1_0	EXIST::FUNCTION:
+SSL_set1_requested_trust_anchors        ?	4_1_0	EXIST::FUNCTION:
+SSL_get0_peer_available_trust_anchors   ?	4_1_0	EXIST::FUNCTION:
+SSL_peer_matched_trust_anchor           ?	4_1_0	EXIST::FUNCTION:
+SSL_CTX_get0_proof_params               ?	4_2_0	EXIST::FUNCTION:
+SSL_get0_proof_params                   ?	4_2_0	EXIST::FUNCTION:

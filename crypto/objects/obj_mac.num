@@ -1502,3 +1502,9 @@ id_alg_hss_lms_hashsig		1501
 id_rdna_unsigned		1502
 id_alg_unsigned		1503
 id_aes		1504
+id_rdna_trustAnchorID		1505
+id_pe_mtcCertificationAuthority_SHA256		1506
+id_alg_mtcProof		1507
+mtcProof_draft_experimental		1508
+trustAnchorID_draft_experimental		1509
+mtcCA_draft_experimental		1510

@@ -20,6 +20,8 @@ SOURCE[../../libcrypto]=\
         v3_usernotice.c v3_battcons.c v3_audit_id.c v3_iobo.c v3_authattid.c \
         v3_rolespec.c v3_attrdesc.c v3_timespec.c v3_attrmap.c v3_aaa.c
 
+SOURCE[../../libcrypto]=x509_tai.c
+
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=x509type.c
 ENDIF
