@@ -320,6 +320,11 @@ static int chacha20_poly1305_update(void *vctx, unsigned char *out,
         return 1;
     }
 
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     return chacha20_poly1305_cipher(vctx, out, outl, outsize, in, inl);
 }
 
