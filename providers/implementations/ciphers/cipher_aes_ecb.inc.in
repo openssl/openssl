@@ -22,5 +22,5 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          )); -}
 
 {- produce_param_decoder('aes_ecb_set_ctx_params',
-                         (['OSSL_CIPHER_PARAM_PADDING',    'common.pad',    'uint'],
+                         (['OSSL_CIPHER_PARAM_PADDING',    'pad',    'uint'],
                          )); -}

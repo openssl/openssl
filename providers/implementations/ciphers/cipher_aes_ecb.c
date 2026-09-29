@@ -40,9 +40,7 @@ struct aes_ecb_get_ctx_param_list_st {
 #endif
 };
 
-struct aes_ecb_set_ctx_param_list_st {
-    struct ossl_cipher_set_ctx_param_list_st common;
-};
+#define aes_ecb_set_ctx_param_list_st ossl_cipher_set_ctx_param_list_st
 
 #define aes_ecb_get_ctx_params_st aes_ecb_get_ctx_param_list_st
 #define aes_ecb_set_ctx_params_st aes_ecb_set_ctx_param_list_st
@@ -203,7 +201,7 @@ static int aes_ecb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx == NULL || !aes_ecb_set_ctx_params_decoder(params, &p))
         return 0;
-    return ossl_cipher_common_set_ctx_params(ctx, &p.common);
+    return ossl_cipher_common_set_ctx_params(ctx, &p);
 }
 
 #define IMPLEMENT_AES_ECB(name, bits)                                                  \
