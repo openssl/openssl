@@ -240,6 +240,14 @@ OpenSSL 4.2
 
    *Timo Keller*
 
+ * Deprecated ERR_add_error_data() and ERR_add_error_vdata(). Their `num`
+   argument counts the strings that follow it, nothing verifies that the
+   count is right, and a value larger than the number of arguments actually
+   passed reads beyond them. Use ERR_add_error_txt() to append a single
+   string, or ERR_raise_data() to raise an error carrying formatted text.
+
+   *Bob Beck*
+
  * Ed25519 now uses base 2^51 arithmetic on supported platforms, making it
    roughly twice as fast.
    <!-- https://github.com/openssl/openssl/pull/32777 -->
@@ -425,14 +433,6 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/31939 -->
 
    *Jakub Zelenka*
-
- * Deprecated ERR_add_error_data() and ERR_add_error_vdata(). Their `num`
-   argument counts the strings that follow it, nothing verifies that the
-   count is right, and a value larger than the number of arguments actually
-   passed reads beyond them. Use ERR_add_error_txt() to append a single
-   string, or ERR_raise_data() to raise an error carrying formatted text.
-
-   *Bob Beck*
 
  * Added IKEV2 KDF (`EVP_KDF-IKEV2KDF`) to `EVP_KDF`.
    <!-- https://github.com/openssl/openssl/pull/30121 -->

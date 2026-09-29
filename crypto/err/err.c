@@ -787,7 +787,7 @@ void ERR_set_error_data(char *data, int flags)
     err_set_error_data_int(data, strlen(data) + 1, flags, 1);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_4_1
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 OSSL_BEGIN_ALLOW_DEPRECATED
 
 void ERR_add_error_data(int num, ...)
@@ -860,7 +860,7 @@ void ERR_add_error_vdata(int num, va_list args)
 }
 
 OSSL_END_ALLOW_DEPRECATED
-#endif /* OPENSSL_NO_DEPRECATED_4_1 */
+#endif /* OPENSSL_NO_DEPRECATED_4_2 */
 
 void ossl_err_add_error_fmt(const char *fmt, ...)
 {

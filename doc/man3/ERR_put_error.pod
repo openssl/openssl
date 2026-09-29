@@ -19,7 +19,7 @@ ERR_add_error_txt, ERR_add_error_mem_bio
  void ERR_add_error_txt(const char *sep, const char *txt);
  void ERR_add_error_mem_bio(const char *sep, BIO *bio);
 
-The following functions have been deprecated since OpenSSL 4.1, and can be
+The following functions have been deprecated since OpenSSL 4.2, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
 see L<openssl_user_macros(7)>:
 
@@ -182,7 +182,7 @@ ERR_raise, ERR_raise_data, ERR_add_error_txt() and ERR_add_error_mem_bio()
 were added in OpenSSL 3.0.
 
 ERR_add_error_data() and ERR_add_error_vdata() were deprecated in OpenSSL
-4.1.  Their B<num> argument counts the strings that follow it, and nothing
+4.2.  Their B<num> argument counts the strings that follow it, and nothing
 verifies that the count is right; a value larger than the number of
 arguments actually passed reads beyond them.  Use ERR_add_error_txt() to
 append a single string, or ERR_raise_data() to raise an error carrying
