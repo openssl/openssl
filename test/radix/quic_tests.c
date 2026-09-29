@@ -3915,7 +3915,7 @@ static int inject_new_cids(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
         retire_prior_to++;
 
         for (j = 0; j < new_cid.id_len && i < OSSL_NELEM(new_cid.id); ++j)
-            if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id[i])))
+            if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id[j])))
                 goto err;
 
         for (; j < new_cid.id_len; ++j)
