@@ -1343,6 +1343,117 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
     return 1;
 }
 
+/*
+ * Read a coordinate BIGNUM into P256 limbs at fixed width, in constant time.
+ * Unlike ecp_nistz256_bignum_to_field_elem() (bn_copy_words(), which copies only
+ * the significant limbs and so leaks the coordinate's magnitude) this reads the
+ * full width through the BIGNUM's OSSL_FN view - needed because the point read
+ * here is secret.  Returns 0 if the BIGNUM has no OSSL_FN view or holds a value
+ * wider than P256 (checked by folding the excess limbs in constant time).
+ */
+static int ecp_nistz256_secret_coord(BN_ULONG out[P256_LIMBS], const BIGNUM *in)
+{
+    const OSSL_FN *fn = bn_get_ossl_fn(in);
+    const OSSL_FN_ULONG *w;
+    size_t dsize, i;
+    OSSL_FN_ULONG hi = 0;
+
+    if (fn == NULL)
+        return 0;
+    w = ossl_fn_get_words(fn);
+    dsize = ossl_fn_get_dsize(fn);
+    for (i = 0; i < P256_LIMBS; i++)
+        out[i] = i < dsize ? w[i] : 0;
+    for (; i < dsize; i++)
+        hi |= w[i];
+    return hi == 0;
+}
+
+/*
+ * Serialise a P256 field element (little-endian limbs, reduced mod p) into
+ * 'len' big-endian bytes, in constant time.
+ */
+static ossl_inline void ecp_nistz256_felem_to_be(unsigned char *out, size_t len,
+    const BN_ULONG *in)
+{
+    size_t i;
+
+    for (i = 0; i < len; i++)
+        out[len - 1 - i] = (unsigned char)(in[i / sizeof(BN_ULONG)]
+            >> (8 * (i % sizeof(BN_ULONG))));
+}
+
+/*
+ * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
+ * method's point_get_affine_coords_bytes slot.  'point' may be secret (an ECDH
+ * shared point), so its coordinates are read through their fixed-width OSSL_FN
+ * views (never a variable-width BIGNUM) and the field inverse is nistz256's
+ * constant-time assembly FLT inverse - the same math as
+ * ecp_nistz256_get_affine().  See EC_POINT_get_affine_coords_bytes().
+ */
+__owur static int ecp_nistz256_point_get_affine_coords_bytes(
+    const EC_GROUP *group, const EC_POINT *point,
+    unsigned char *x, unsigned char *y, size_t len)
+{
+    BN_ULONG z_inv2[P256_LIMBS];
+    BN_ULONG z_inv3[P256_LIMBS];
+    BN_ULONG point_x[P256_LIMBS], point_y[P256_LIMBS], point_z[P256_LIMBS];
+    BN_ULONG x_ret[P256_LIMBS], y_ret[P256_LIMBS];
+    int ret = 0;
+
+    if (len != P256_LIMBS * sizeof(BN_ULONG)) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (EC_POINT_is_at_infinity(group, point)) {
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
+        return 0;
+    }
+
+    if (!ecp_nistz256_secret_coord(point_x, point->X)
+        || !ecp_nistz256_secret_coord(point_y, point->Y)
+        || !ecp_nistz256_secret_coord(point_z, point->Z)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    /*
+     * If Z_is_one the point is already in affine coordinates, so skip the
+     * (constant-time assembly) field inverse and Montgomery conversions.
+     */
+    if (!point->Z_is_one) {
+        ecp_nistz256_mod_inverse(z_inv3, point_z);
+        ecp_nistz256_sqr_mont(z_inv2, z_inv3);
+        if (x != NULL)
+            ecp_nistz256_mul_mont(point_x, point_x, z_inv2);
+        if (y != NULL) {
+            ecp_nistz256_mul_mont(z_inv3, z_inv3, z_inv2);
+            ecp_nistz256_mul_mont(point_y, point_y, z_inv3);
+        }
+    }
+
+    /* point_x, point_y now hold the affine coordinates (Montgomery form). */
+    if (x != NULL) {
+        ecp_nistz256_from_mont(x_ret, point_x);
+        ecp_nistz256_felem_to_be(x, len, x_ret);
+    }
+    if (y != NULL) {
+        ecp_nistz256_from_mont(y_ret, point_y);
+        ecp_nistz256_felem_to_be(y, len, y_ret);
+    }
+    ret = 1;
+
+err:
+    OPENSSL_cleanse(z_inv2, sizeof(z_inv2));
+    OPENSSL_cleanse(z_inv3, sizeof(z_inv3));
+    OPENSSL_cleanse(point_x, sizeof(point_x));
+    OPENSSL_cleanse(point_y, sizeof(point_y));
+    OPENSSL_cleanse(point_z, sizeof(point_z));
+    OPENSSL_cleanse(x_ret, sizeof(x_ret));
+    OPENSSL_cleanse(y_ret, sizeof(y_ret));
+    return ret;
+}
+
 static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 {
     NISTZ256_PRE_COMP *ret = NULL;
@@ -1784,7 +1895,7 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         ecp_nistz256group_full_init,
         ecp_nistz256_points_mul_fn, /* mul_fn */
         ecp_nistz256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
-        ossl_ec_GFp_simple_point_get_affine_coords_bytes
+        ecp_nistz256_point_get_affine_coords_bytes
     };
 
     return &ret;
