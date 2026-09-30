@@ -1817,6 +1817,19 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
     group->mont_data = ordmont;
     ordmont = NULL;
 
+    /*
+     * Cache the order in OSSL_FN Montgomery form too (this fast initialiser
+     * bypasses ec_precompute_mont_data()), so the constant-time ECDSA nonce
+     * inverse reuses it instead of rebuilding one per signature.
+     */
+    {
+        const OSSL_FN *order_fn = bn_get_ossl_fn(group->order);
+
+        if (order_fn != NULL
+            && (group->fn_mont_ctx_ord = OSSL_FN_MONT_CTX_new(order_fn)) == NULL)
+            goto err;
+    }
+
     ok = 1;
 
 err:
