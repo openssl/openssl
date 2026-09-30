@@ -332,6 +332,15 @@ struct ec_group_st {
     OSSL_FN *field_fn;
     /* data for ECDSA inverse */
     BN_MONT_CTX *mont_data;
+    /*
+     * Montgomery context for the group order, in OSSL_FN form: the OSSL_FN
+     * counterpart of mont_data.  Built alongside mont_data (in
+     * ec_precompute_mont_data() and the nistz256 full initialiser) and passed
+     * to OSSL_FN_mod_inverse_prime() so the constant-time ECDSA nonce inverse
+     * reuses one cached context instead of rebuilding it per signature.  NULL
+     * when the order is absent or has no OSSL_FN view.
+     */
+    OSSL_FN_MONT_CTX *fn_mont_ctx_ord;
 
     /*
      * Precomputed values for speed. The PCT_xxx names match the

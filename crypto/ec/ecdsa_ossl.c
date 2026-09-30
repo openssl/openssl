@@ -363,7 +363,8 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
      * ladder's coordinate blinding draw entropy from the caller's context.
      */
     need = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_inverse_prime_ctx_size(order_fn, order_fn, order_fn, NULL),
+        OSSL_FN_mod_inverse_prime_ctx_size(order_fn, order_fn, order_fn,
+            group->fn_mont_ctx_ord),
         EC_POINT_mul_fn_ctx_size(group, tmp_point, order_fn, NULL));
     /* ... plus the outer frame holding the nonce k itself. */
     need = ossl_fn_ctx_add_size(need, OSSL_FN_CTX_size(1, 1, (size_t)nlimbs));
@@ -428,7 +429,8 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
         ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
         goto err;
     }
-    if (!OSSL_FN_mod_inverse_prime(kinvf, kf, order_fn, fnctx, NULL)) {
+    if (!OSSL_FN_mod_inverse_prime(kinvf, kf, order_fn, fnctx,
+            group->fn_mont_ctx_ord)) {
         bn_release(kinv, nlimbs);
         kinvf = NULL;
         ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
