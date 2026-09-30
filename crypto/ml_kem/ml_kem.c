@@ -488,13 +488,15 @@ static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inve
  */
 static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_generic;
 
-<<<<<<< HEAD
+
 #if defined(MLKEM_AVX2_X86_64_ASM)
 int mlkem_avx2_capable(void);
-=======
+#endif
 #if defined(MLKEM_NTT_X86_64_ASM)
 int mlkem_ntt_avx2_capable(void);
->>>>>>> 4e93588340 (ml_kem: add AVX2 NTT and inverse NTT)
+#endif
+#if defined(MLKEM_AVX2_X86_64_ASM)
+int mlkem_avx2_capable(void);
 void mlkem_ntt_avx2(uint16_t *c);
 void mlkem_inverse_ntt_avx2(uint16_t *c);
 
@@ -627,7 +629,6 @@ static ml_kem_matrix_mult_transpose_add_fn matrix_mult_transpose_add = matrix_mu
 
 static void ml_kem_ntt_init(void)
 {
-<<<<<<< HEAD
 #if defined(MLKEM_AVX2_X86_64_ASM)
     if (mlkem_avx2_capable()) {
         scalar_ntt = scalar_ntt_avx2;
@@ -636,13 +637,23 @@ static void ml_kem_ntt_init(void)
         inner_product_montgomery = inner_product_avx2;
         matrix_mult_intt = matrix_mult_intt_avx2;
         matrix_mult_transpose_add = matrix_mult_transpose_add_avx2;
-=======
+    }
+#endif
 #if defined(MLKEM_NTT_X86_64_ASM)
     if (mlkem_ntt_avx2_capable()) {
         scalar_ntt = scalar_ntt_avx2;
         scalar_inverse_ntt = scalar_inverse_ntt_avx2;
         scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_avx2;
->>>>>>> 4e93588340 (ml_kem: add AVX2 NTT and inverse NTT)
+    }
+#endif
+#if defined(MLKEM_AVX2_X86_64_ASM)
+    if (mlkem_avx2_capable()) {
+        scalar_ntt = scalar_ntt_avx2;
+        scalar_inverse_ntt = scalar_inverse_ntt_avx2;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_avx2;
+        inner_product_montgomery = inner_product_avx2;
+        matrix_mult_intt = matrix_mult_intt_avx2;
+        matrix_mult_transpose_add = matrix_mult_transpose_add_avx2;
     }
 #endif
 
