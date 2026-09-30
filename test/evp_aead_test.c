@@ -399,8 +399,9 @@ static int test_evp_aead_finished_ctx(int idx)
     /* encrypt: Init, (CCM len), Update, Final */
     if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
         || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))
-        || !TEST_true(info->mode != EVP_CIPH_CCM_MODE
-            || EVP_EncryptUpdate(ctx_enc, NULL, &len, NULL, sizeof(msg)))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx_enc, NULL, &len, NULL,
+                sizeof(msg))))
         || !TEST_true(EVP_EncryptUpdate(ctx_enc, ct, &len, msg, sizeof(msg)))
         || !TEST_true(EVP_EncryptFinal_ex(ctx_enc, ct + len, &len))) {
         TEST_info("%s: encrypt", info->name);
@@ -430,8 +431,9 @@ static int test_evp_aead_finished_ctx(int idx)
     if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
         || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
         || !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))
-        || !TEST_true(info->mode != EVP_CIPH_CCM_MODE
-            || EVP_DecryptUpdate(ctx_dec, NULL, &len, NULL, sizeof(msg)))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, NULL,
+                sizeof(msg))))
         || !TEST_true(EVP_DecryptUpdate(ctx_dec, pt, &len, ct, sizeof(msg)))
         || !TEST_true(EVP_DecryptFinal_ex(ctx_dec, pt + len, &len))
         || !TEST_mem_eq(pt, sizeof(msg), msg, sizeof(msg))) {
