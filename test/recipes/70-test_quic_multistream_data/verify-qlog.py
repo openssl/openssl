@@ -8,7 +8,7 @@
 # https://www.openssl.org/source/license.html
 import sys, os, os.path, glob, json, re
 
-re_version = re.compile(r'''^OpenSSL/[0-9]+\.[0-9]\.[0-9](-[^ ]+)? ([^)]+)''')
+re_version = re.compile(r'''^OpenSSL/[0-9]+\.[0-9]+\.[0-9]+(-[^ ]+)? ([^)]+)''')
 
 class Unexpected(Exception):
     def __init__(self, filename, msg):
