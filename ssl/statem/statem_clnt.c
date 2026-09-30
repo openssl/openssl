@@ -541,30 +541,20 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_KEY_UPDATE:
+    case TLS_ST_CR_SESSION_TICKET:
         if (SSL_CONNECTION_IS_DTLS13(s)) {
             /*
              * RFC 9147 section 8's restriction is on using the new
              * epoch's keys, not on sending at all. Our own KeyUpdate's
-             * write keys are not installed until its ACK arrives
-             * so this ACK can safely go out under our current,
-             * still-valid keys even while our own KeyUpdate is outstanding.
+             * write keys are not installed until its ACK arrives, so
+             * this ACK -- for a received KeyUpdate or NewSessionTicket
+             * alike -- can safely go out under our current, still-valid
+             * keys even while our own KeyUpdate is outstanding. Unlike
+             * the TLS_ST_CR_CERT_REQ case below, this is only ever an
+             * ACK, never new post-handshake content, so it never needs
+             * to share deferred_key_update_state with a genuinely held
+             * back authentication response.
              */
-            st->hand_state = TLS_ST_CW_ACK;
-            return WRITE_TRAN_CONTINUE;
-        }
-        /* Fall-through */
-    case TLS_ST_CR_SESSION_TICKET:
-        if (SSL_CONNECTION_IS_DTLS13(s)) {
-            if (dtls_has_unacked_key_update(s)) {
-                /*
-                 * RFC 9147 section 8: our own KeyUpdate's new keys must not
-                 * be used for anything else until it is acknowledged. Hold
-                 * this ACK back rather than send it now.
-                 */
-                st->deferred_key_update_state = st->hand_state;
-                st->hand_state = TLS_ST_CW_KEY_UPDATE;
-                return WRITE_TRAN_FINISHED;
-            }
             st->hand_state = TLS_ST_CW_ACK;
             return WRITE_TRAN_CONTINUE;
         }
