@@ -135,6 +135,7 @@ void ossl_statem_clear(SSL_CONNECTION *s)
     ossl_statem_set_in_init(s, 1);
     s->statem.no_cert_verify = 0;
     s->statem.ack_for_retransmit = 0;
+    s->statem.deferred_key_update_state = TLS_ST_BEFORE;
 }
 
 /*
