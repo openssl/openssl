@@ -637,16 +637,18 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
  * Retire the timer and retransmit buffer now that a flight has finished
  * reading. Post-handshake message categories acknowledge nothing of each
  * other (rfc9147 5.8.4), so an unrelated message must not discard our own
- * still-unacknowledged flight. A CertificateRequest is retired here
- * explicitly, since it completes via the next flight rather than an ACK
- * (rfc9147 5.8.1); every other occurrence of TLS_ST_SR_FINISHED, including
- * ordinary handshake completion, still falls through to the unconditional
- * clear below.
+ * still-unacknowledged flight. A post-handshake-auth CertificateRequest is
+ * retired here explicitly, since it completes via the next flight rather
+ * than an ACK (rfc9147 5.8.1); that check is scoped to SSL_PHA_REQUESTED so
+ * it can't also fire for the CertificateRequest an ordinary mTLS initial
+ * handshake sends, which has no such special case and still falls through
+ * to the unconditional clear below.
  */
 void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
 {
     if (SSL_CONNECTION_IS_DTLS13(s)
         && s->statem.hand_state == TLS_ST_SR_FINISHED
+        && s->post_handshake_auth == SSL_PHA_REQUESTED
         && dtls1_retire_sent_certificate_request_messages(s)
         && dtls_any_sent_messages_are_missing_acknowledge(s)) {
         dtls1_clear_sent_buffer(s, 1);
@@ -657,7 +659,8 @@ void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
         && (s->statem.hand_state == TLS_ST_SR_KEY_UPDATE
             || s->statem.hand_state == TLS_ST_CR_KEY_UPDATE
             || s->statem.hand_state == TLS_ST_CR_SESSION_TICKET
-            || s->statem.hand_state == TLS_ST_CR_CERT_REQ)
+            || (s->statem.hand_state == TLS_ST_CR_CERT_REQ
+                && s->post_handshake_auth == SSL_PHA_REQUESTED))
         && dtls_any_sent_messages_are_missing_acknowledge(s)) {
         dtls1_clear_sent_buffer(s, 1);
         return;

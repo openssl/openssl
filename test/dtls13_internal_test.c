@@ -330,6 +330,19 @@ static int test_dtls13_ack_coverage(int server)
         || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
         goto end;
 
+    /*
+     * When the sender is the client, mTLS is turned on above, so the
+     * peer (the server) sent its own CertificateRequest as part of the
+     * initial handshake, not PHA. Once the client's response -- the
+     * next flight -- arrives, that CertificateRequest and the rest of
+     * the server's flight must be fully retired, not preserved by the
+     * PHA-specific handling.
+     */
+    if (!server
+        && (!TEST_size_t_eq(pqueue_size(&psc->d1->sent_messages), 0)
+            || !TEST_true(ossl_time_is_zero(psc->d1->next_timeout))))
+        goto end;
+
     /* ACK the last message first, keeping the earlier message outstanding. */
     iter = pqueue_iterator(&sc->d1->sent_messages);
     while ((item = pqueue_next(&iter)) != NULL)
