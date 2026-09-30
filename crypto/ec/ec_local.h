@@ -244,6 +244,17 @@ struct ec_method_st {
      */
     int (*point_get_affine_coords_bytes)(const EC_GROUP *group,
         const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len);
+    /*-
+     * Inverse modulo the order for OSSL_FN operands: the OSSL_FN counterpart of
+     * field_inverse_mod_ord.  Used by the constant-time ECDSA nonce inverse so
+     * the secret operand never becomes a BIGNUM.  A method with a dedicated
+     * constant-time order inverse (e.g. nistz256's assembly addition chain)
+     * sets this; the rest leave it NULL and ossl_ec_group_do_inverse_ord_fn()
+     * falls back to OSSL_FN_mod_inverse_prime() with the group's cached order
+     * Montgomery context.
+     */
+    int (*field_inverse_mod_ord_fn)(const EC_GROUP *group, OSSL_FN *r,
+        const OSSL_FN *a, OSSL_FN_CTX *ctx);
 };
 
 /*
