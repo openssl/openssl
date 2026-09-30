@@ -1526,8 +1526,15 @@ void ecp_nistz256_ord_sqr_mont(BN_ULONG res[P256_LIMBS],
     const BN_ULONG a[P256_LIMBS],
     BN_ULONG rep);
 
-static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
-    const BIGNUM *x, BN_CTX *ctx)
+/*
+ * Core constant-time order inverse shared by the BIGNUM and OSSL_FN entry
+ * points: out = in^-1 mod ord(p256), with in and out plain
+ * BN_ULONG[P256_LIMBS] field elements and in reduced (< ord).  It is Fermat's
+ * little theorem, in^(ord-2), via an addition chain in the order's Montgomery
+ * domain.
+ */
+static void ecp_nistz256_inv_mod_ord_fe(BN_ULONG out[P256_LIMBS],
+    const BN_ULONG in[P256_LIMBS])
 {
     /* RR = 2^512 mod ord(p256) */
     static const BN_ULONG RR[P256_LIMBS] = {
@@ -1543,8 +1550,7 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
      * with -1 offset.
      */
     BN_ULONG table[15][P256_LIMBS];
-    BN_ULONG out[P256_LIMBS], t[P256_LIMBS];
-    int i, ret = 0;
+    int i;
     enum {
         i_1 = 0,
         i_10,
@@ -1562,32 +1568,9 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
         i_x32
     };
 
-    /*
-     * Catch allocation failure early.
-     */
-    if (bn_wexpand(r, P256_LIMBS) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-        goto err;
-    }
-
-    if ((BN_num_bits(x) > 256) || BN_is_negative(x)) {
-        BIGNUM *tmp;
-
-        if ((tmp = BN_CTX_get(ctx)) == NULL
-            || !BN_nnmod(tmp, x, group->order, ctx)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-            goto err;
-        }
-        x = tmp;
-    }
-
-    if (!ecp_nistz256_bignum_to_field_elem(t, x)) {
-        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
-        goto err;
-    }
-
-    ecp_nistz256_ord_mul_mont(table[0], t, RR);
+    ecp_nistz256_ord_mul_mont(table[0], in, RR);
 #if 0
+    BN_ULONG t[P256_LIMBS];
     /*
      * Original sparse-then-fixed-window algorithm, retained for reference.
      */
@@ -1694,10 +1677,39 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     }
 #endif
     ecp_nistz256_ord_mul_mont(out, out, one);
+}
 
-    /*
-     * Can't fail, but check return code to be consistent anyway.
-     */
+static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
+    const BIGNUM *x, BN_CTX *ctx)
+{
+    BN_ULONG in[P256_LIMBS], out[P256_LIMBS];
+    int ret = 0;
+
+    /* Catch allocation failure early. */
+    if (bn_wexpand(r, P256_LIMBS) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    if ((BN_num_bits(x) > 256) || BN_is_negative(x)) {
+        BIGNUM *tmp;
+
+        if ((tmp = BN_CTX_get(ctx)) == NULL
+            || !BN_nnmod(tmp, x, group->order, ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            goto err;
+        }
+        x = tmp;
+    }
+
+    if (!ecp_nistz256_bignum_to_field_elem(in, x)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    ecp_nistz256_inv_mod_ord_fe(out, in);
+
+    /* Can't fail, but check return code to be consistent anyway. */
     if (!bn_set_words(r, out, P256_LIMBS))
         goto err;
 
@@ -1705,8 +1717,51 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
 err:
     return ret;
 }
+
+/*
+ * OSSL_FN entry point for the order inverse (the field_inverse_mod_ord_fn
+ * method slot): r = a^-1 mod ord(p256), reading the secret operand a through
+ * its fixed-width OSSL_FN view, never as a BIGNUM.  a is the ECDSA nonce,
+ * already reduced mod the order (< 2^256).  See
+ * ossl_ec_group_do_inverse_ord_fn().
+ */
+static int ecp_nistz256_inv_mod_ord_fn(const EC_GROUP *group, OSSL_FN *r,
+    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+{
+    BN_ULONG in[P256_LIMBS], out[P256_LIMBS];
+    unsigned char buf[P256_LIMBS * sizeof(BN_ULONG)];
+    const OSSL_FN_ULONG *w = ossl_fn_get_words(a);
+    size_t dsize = ossl_fn_get_dsize(a), i;
+    OSSL_FN_ULONG hi = 0;
+    int ret = 0;
+
+    /* Read a at fixed P256 width; it is already reduced mod the order. */
+    for (i = 0; i < P256_LIMBS; i++)
+        in[i] = i < dsize ? w[i] : 0;
+    for (; i < dsize; i++)
+        hi |= w[i];
+    if (hi != 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    ecp_nistz256_inv_mod_ord_fe(out, in);
+
+    /* out is a plain reduced field element; write it into r big-endian. */
+    ecp_nistz256_felem_to_be(buf, sizeof(buf), out);
+    if (!OSSL_FN_from_bytes_be(r, buf, sizeof(buf)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_cleanse(in, sizeof(in));
+    OPENSSL_cleanse(out, sizeof(out));
+    OPENSSL_cleanse(buf, sizeof(buf));
+    return ret;
+}
 #else
 #define ecp_nistz256_inv_mod_ord NULL
+#define ecp_nistz256_inv_mod_ord_fn NULL
 #endif
 
 static int ecp_nistz256group_full_init(EC_GROUP *group,
@@ -1908,7 +1963,8 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         ecp_nistz256group_full_init,
         ecp_nistz256_points_mul_fn, /* mul_fn */
         ecp_nistz256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
-        ecp_nistz256_point_get_affine_coords_bytes
+        ecp_nistz256_point_get_affine_coords_bytes,
+        ecp_nistz256_inv_mod_ord_fn /* field_inverse_mod_ord_fn, may be NULL */
     };
 
     return &ret;
