@@ -68,6 +68,8 @@ my @roots = map { powmod(17, bitreverse7($_), 3329) } 0..127;
 my @shoup = map { int($_ * 65536 / 3329) } @roots;
 my @invroots = (0, map { 3329 - $roots[128 - $_] } 1..127);
 my @invshoup = map { int($_ * 65536 / 3329) } @invroots;
+my @modroots = map { powmod(17, 2 * bitreverse7($_) + 1, 3329) } 0..127;
+my @modshoup = map { int($_ * 65536 / 3329) } @modroots;
 my $code = "";
 # Windows preserves XMM6..XMM15, so clear only the volatile vector registers.
 # Unix has no nonvolatile vector registers and can clear all of them at once.
@@ -80,15 +82,15 @@ if ($avx2) {
     $code .= <<___;
 .text
 .extern OPENSSL_ia32cap_P
-.globl mlkem_ntt_avx2_capable
-.type mlkem_ntt_avx2_capable,\@abi-omnipotent
+.globl mlkem_avx2_capable
+.type mlkem_avx2_capable,\@abi-omnipotent
 .align 16
-mlkem_ntt_avx2_capable:
+mlkem_avx2_capable:
     mov OPENSSL_ia32cap_P+8(%rip), %eax
     and \$32, %eax
     ret
-.Lmlkem_ntt_avx2_capable_end:
-.size mlkem_ntt_avx2_capable, .-mlkem_ntt_avx2_capable
+.Lmlkem_avx2_capable_end:
+.size mlkem_avx2_capable, .-mlkem_avx2_capable
 
 .globl mlkem_ntt_avx2
 .type mlkem_ntt_avx2,\@abi-omnipotent
@@ -343,6 +345,122 @@ ___
     ret
 .Lmlkem_inverse_ntt_avx2_end:
 .size mlkem_inverse_ntt_avx2, .-mlkem_inverse_ntt_avx2
+___
+
+    # Each AVX2 vector holds eight quadratic NTT elements. Shoup-scale the
+    # odd left coefficients by their known roots, then VPMADDWD computes the
+    # two 32-bit coefficients. Four products still fit a signed 32-bit lane.
+    # Montgomery reduction followed by multiplication by R mod q gives the
+    # canonical, unscaled result required at the C function boundary.
+    # The transpose-add form strides over the matrix and adds the existing
+    # error polynomial in the output, without copying a matrix column.
+    for my $variant (['mlkem_basemul_acc_avx2', 0],
+                     ['mlkem_basemul_acc_transpose_add_avx2', 1]) {
+        my ($name, $transpose_add) = @$variant;
+        $code .= ".globl $name\n.type $name,\@abi-omnipotent\n.align 32\n$name:\n";
+        if ($win64) {
+            $code .= "    mov %rcx, %r10\n    mov %rdx, %r11\n";
+        } else {
+            $code .= "    mov %rdi, %r10\n    mov %rsi, %r11\n"
+                . "    mov %rdx, %r8\n";
+            $code .= "    mov %ecx, %r9d\n";
+        }
+        $code .= "    mov %r9d, %r9d\n    shl \$9, %r9\n"
+            if $transpose_add;
+        my $rank_load = $transpose_add
+            ? "    mov %r9, %rcx\n    shr \$9, %rcx"
+            : "    mov %r9d, %ecx";
+        my $lhs_advance = $transpose_add
+            ? "    add %r9, %r11" : "    add \$512, %r11";
+        my $rewind = $transpose_add
+            ? "    mov %r9, %rcx\n    shr \$9, %rcx\n"
+              . "    imulq %r9, %rcx\n    sub %rcx, %r11\n"
+              . "    sub %r9, %r8"
+            : "    mov %r9d, %ecx\n    shl \$9, %rcx\n"
+              . "    sub %rcx, %r11\n    sub %rcx, %r8";
+        my $body = <<'___';
+    lea .Lmlkem_modroots(%rip), %rdx
+    xor %eax, %eax
+.L@NAME@_block:
+    vpxor %ymm0, %ymm0, %ymm0
+    vpxor %ymm1, %ymm1, %ymm1
+@RANK_LOAD@
+.L@NAME@_rank:
+    vmovdqu (%r11,%rax), %ymm2
+    vmovdqu (%r8,%rax), %ymm3
+    vmovdqu (%rdx,%rax,2), %ymm4
+    vpmullw %ymm2, %ymm4, %ymm4
+    vmovdqu 32(%rdx,%rax,2), %ymm5
+    vpmulhuw %ymm2, %ymm5, %ymm5
+    vpmullw .Lmlkem_vec_q(%rip), %ymm5, %ymm5
+    vpsubw %ymm5, %ymm4, %ymm4
+    vpmaddwd %ymm3, %ymm4, %ymm5
+    vpaddd %ymm5, %ymm0, %ymm0
+    vpshufb .Lmlkem_swap_pairs(%rip), %ymm3, %ymm5
+    vpmaddwd %ymm5, %ymm2, %ymm5
+    vpaddd %ymm5, %ymm1, %ymm1
+@LHS_ADVANCE@
+    add $512, %r8
+    dec %ecx
+    jnz .L@NAME@_rank
+@REWIND@
+
+    vpmulld .Lmlkem_vec_qinv(%rip), %ymm0, %ymm4
+    vpand .Lmlkem_vec_mask16(%rip), %ymm4, %ymm4
+    vpmulld .Lmlkem_vec_q32(%rip), %ymm4, %ymm4
+    vpaddd %ymm4, %ymm0, %ymm0
+    vpsrld $16, %ymm0, %ymm0
+    vpsubd .Lmlkem_vec_q32(%rip), %ymm0, %ymm4
+    vpminud %ymm4, %ymm0, %ymm0
+
+    vpmulld .Lmlkem_vec_qinv(%rip), %ymm1, %ymm4
+    vpand .Lmlkem_vec_mask16(%rip), %ymm4, %ymm4
+    vpmulld .Lmlkem_vec_q32(%rip), %ymm4, %ymm4
+    vpaddd %ymm4, %ymm1, %ymm1
+    vpsrld $16, %ymm1, %ymm1
+    vpsubd .Lmlkem_vec_q32(%rip), %ymm1, %ymm4
+    vpminud %ymm4, %ymm1, %ymm1
+
+    vpackusdw %ymm1, %ymm0, %ymm2
+    vpshufb .Lmlkem_interleave(%rip), %ymm2, %ymm2
+    vpmulhuw .Lmlkem_vec_r_shoup(%rip), %ymm2, %ymm3
+    vpmullw .Lmlkem_vec_r(%rip), %ymm2, %ymm2
+    vpmullw .Lmlkem_vec_q(%rip), %ymm3, %ymm3
+    vpsubw %ymm3, %ymm2, %ymm2
+    vpsubw .Lmlkem_vec_q(%rip), %ymm2, %ymm3
+    vpminuw %ymm3, %ymm2, %ymm2
+___
+        $body =~ s/\@NAME\@/$name/g;
+        $body =~ s/\@RANK_LOAD\@/$rank_load/;
+        $body =~ s/\@LHS_ADVANCE\@/$lhs_advance/;
+        $body =~ s/\@REWIND\@/$rewind/;
+        $code .= $body;
+        if ($transpose_add) {
+            $code .= <<'___';
+    vmovdqu (%r10,%rax), %ymm3
+    vpaddw %ymm3, %ymm2, %ymm2
+    vpsubw .Lmlkem_vec_q(%rip), %ymm2, %ymm3
+    vpminuw %ymm3, %ymm2, %ymm2
+___
+        }
+        $code .= <<'___';
+    vmovdqu %ymm2, (%r10,%rax)
+    add $32, %rax
+    cmp $512, %rax
+___
+        $code .= "    jb .L" . $name . "_block\n";
+        $code .= <<'___';
+    xor %r8, %r8
+    xor %r10, %r10
+    xor %r11, %r11
+    xor %rdx, %rdx
+___
+        $code .= "    xor %rdi, %rdi\n    xor %rsi, %rsi\n" unless $win64;
+        $code .= $clear_vectors;
+        $code .= "    ret\n.L" . $name . "_end:\n.size $name, .-$name\n";
+    }
+
+    $code .= <<'___';
 
 .section .rodata
 .align 32
@@ -411,16 +529,51 @@ ___
             }
         }
     }
+    my $packed16 = sub {
+        my ($value) = @_;
+        return $value + ($value << 16);
+    };
+    if (!$win64) {
+        $code .= ".align 32\n.Lmlkem_vec_q:\n    .long "
+            . join(", ", ($packed16->(3329)) x 8) . "\n";
+    }
+    $code .= ".align 32\n.Lmlkem_vec_r:\n    .long "
+        . join(", ", ($packed16->(65536 % 3329)) x 8) . "\n";
+    $code .= ".Lmlkem_vec_r_shoup:\n    .long "
+        . join(", ", ($packed16->(int((65536 % 3329) * 65536 / 3329))) x 8) . "\n";
+    for my $constant (['q32', 3329], ['qinv', 3327],
+                      ['mask16', 65535]) {
+        $code .= ".Lmlkem_vec_" . $constant->[0] . ":\n    .long "
+            . join(", ", ($constant->[1]) x 8) . "\n";
+    }
+    my @swap = (2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13);
+    my @interleave = (0,1,8,9,2,3,10,11,4,5,12,13,6,7,14,15);
+    $code .= ".Lmlkem_swap_pairs:\n    .byte "
+        . join(", ", (@swap, @swap)) . "\n";
+    $code .= ".Lmlkem_interleave:\n    .byte "
+        . join(", ", (@interleave, @interleave)) . "\n";
+    $code .= ".align 32\n.Lmlkem_modroots:\n";
+    for my $block (0..15) {
+        for my $kind (0, 1) {
+            my @words = map { ($_ & 1)
+                ? ($kind ? $modshoup[8 * $block + ($_ >> 1)]
+                         : $modroots[8 * $block + ($_ >> 1)])
+                : ($kind ? 0 : 1) } 0..15;
+            my @packed = map { $words[2 * $_]
+                + ($words[2 * $_ + 1] << 16) } 0..7;
+            $code .= "    .long " . join(", ", @packed) . "\n";
+        }
+    }
 } else {
     $code .= <<'___';
 .text
-.globl mlkem_ntt_avx2_capable
-.type mlkem_ntt_avx2_capable,@abi-omnipotent
-mlkem_ntt_avx2_capable:
+.globl mlkem_avx2_capable
+.type mlkem_avx2_capable,@abi-omnipotent
+mlkem_avx2_capable:
     xor %eax, %eax
     ret
-.Lmlkem_ntt_avx2_capable_end:
-.size mlkem_ntt_avx2_capable, .-mlkem_ntt_avx2_capable
+.Lmlkem_avx2_capable_end:
+.size mlkem_avx2_capable, .-mlkem_avx2_capable
 .globl mlkem_ntt_avx2
 .type mlkem_ntt_avx2,@abi-omnipotent
 mlkem_ntt_avx2:
@@ -433,32 +586,56 @@ mlkem_inverse_ntt_avx2:
     .byte 0x0f,0x0b
 .Lmlkem_inverse_ntt_avx2_end:
 .size mlkem_inverse_ntt_avx2, .-mlkem_inverse_ntt_avx2
+.globl mlkem_basemul_acc_avx2
+.type mlkem_basemul_acc_avx2,@abi-omnipotent
+mlkem_basemul_acc_avx2:
+    .byte 0x0f,0x0b
+.Lmlkem_basemul_acc_avx2_end:
+.size mlkem_basemul_acc_avx2, .-mlkem_basemul_acc_avx2
+.globl mlkem_basemul_acc_transpose_add_avx2
+.type mlkem_basemul_acc_transpose_add_avx2,@abi-omnipotent
+mlkem_basemul_acc_transpose_add_avx2:
+    .byte 0x0f,0x0b
+.Lmlkem_basemul_acc_transpose_add_avx2_end:
+.size mlkem_basemul_acc_transpose_add_avx2, .-mlkem_basemul_acc_transpose_add_avx2
 ___
 }
 
 if ($win64) {
-    # All three routines are leaf functions. They do not change RSP or any
-    # nonvolatile register, so a zero-code UNWIND_INFO describes each one.
+    # Win64 uses only volatile GPRs and YMM0..YMM5. The preserved halves of
+    # XMM6..XMM15 and all nonvolatile GPRs stay unchanged, so no register
+    # save/restore is needed. These leaf functions leave RSP unchanged;
+    # zero-code UNWIND_INFO describes each one.
     $code .= <<'___';
 .section .pdata
 .align 4
-    .rva mlkem_ntt_avx2_capable
-    .rva .Lmlkem_ntt_avx2_capable_end
-    .rva .Lmlkem_ntt_avx2_capable_unwind
+    .rva mlkem_avx2_capable
+    .rva .Lmlkem_avx2_capable_end
+    .rva .Lmlkem_avx2_capable_unwind
     .rva mlkem_ntt_avx2
     .rva .Lmlkem_ntt_avx2_end
     .rva .Lmlkem_ntt_avx2_unwind
     .rva mlkem_inverse_ntt_avx2
     .rva .Lmlkem_inverse_ntt_avx2_end
     .rva .Lmlkem_inverse_ntt_avx2_unwind
+    .rva mlkem_basemul_acc_avx2
+    .rva .Lmlkem_basemul_acc_avx2_end
+    .rva .Lmlkem_basemul_acc_avx2_unwind
+    .rva mlkem_basemul_acc_transpose_add_avx2
+    .rva .Lmlkem_basemul_acc_transpose_add_avx2_end
+    .rva .Lmlkem_basemul_acc_transpose_add_avx2_unwind
 
 .section .xdata
 .align 4
-.Lmlkem_ntt_avx2_capable_unwind:
+.Lmlkem_avx2_capable_unwind:
     .byte 1,0,0,0
 .Lmlkem_ntt_avx2_unwind:
     .byte 1,0,0,0
 .Lmlkem_inverse_ntt_avx2_unwind:
+    .byte 1,0,0,0
+.Lmlkem_basemul_acc_avx2_unwind:
+    .byte 1,0,0,0
+.Lmlkem_basemul_acc_transpose_add_avx2_unwind:
     .byte 1,0,0,0
 ___
 }
