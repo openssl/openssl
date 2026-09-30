@@ -242,7 +242,6 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
-        unsigned char msg_type = sent_msg->msg_info.msg_type;
         unsigned char record_type = sent_msg->msg_info.record_type;
 
         if (SSL_CONNECTION_IS_DTLS13(s)
@@ -252,20 +251,13 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
             continue;
         }
 
-        if (((!SSL_CONNECTION_IS_DTLS13(s) && record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
-                || (SSL_CONNECTION_IS_DTLS13(s)
-                    && (msg_type == SSL3_MT_FINISHED
-                        || msg_type == SSL3_MT_SERVER_HELLO
-                        || msg_type == SSL3_MT_KEY_UPDATE))
-                /*
-                 * A ClientHello followed by early data. SSL3_MT_CLIENT_HELLO
-                 * has the same value as SSL3_MT_CCS, which is recorded as the
-                 * message type of a CCS, so the record type has to be checked
-                 * as well to tell the two apart. The other message types
-                 * above do not clash with anything.
-                 */
-                || (record_type == SSL3_RT_HANDSHAKE
-                    && msg_type == SSL3_MT_CLIENT_HELLO))
+        /*
+         * Free the captured write layer once this is its last reference,
+         * regardless of this message's own type: any queued message can
+         * end up the final owner of a retired layer, not just the ones
+         * that originally triggered the epoch change.
+         */
+        if ((SSL_CONNECTION_IS_DTLS13(s) || record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
             && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
@@ -311,6 +303,8 @@ static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
             continue;
         }
 
+        /* Same ownership rule as dtls1_clear_sent_buffer(): free the
+         * captured write layer only once this is its last reference. */
         if (sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
             && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
