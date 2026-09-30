@@ -38,6 +38,11 @@ OpenSSL 4.1
 
    *Timo Keller*
 
+ * Added optimized ML-KEM implementation for x86 platforms that support the
+   AVX2 vector instruction set.
+
+   *Dr Paul Dale*
+
 ### Changes between 4.0 and 4.1.0 [23 Oct 2026]
 
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
