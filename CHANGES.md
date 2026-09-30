@@ -66,6 +66,11 @@ OpenSSL 4.2
 
    *Daniel Kubec*
 
+ * Added optimized ML-KEM implementation for x86 platforms that support the
+   AVX2 vector instruction set.
+
+   *Dr Paul Dale*
+
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
    parameter and returns 1 for an approved operation.  The absence of an
