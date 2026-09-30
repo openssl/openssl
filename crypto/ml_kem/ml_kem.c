@@ -488,8 +488,8 @@ static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inve
  */
 static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_generic;
 
-#if defined(MLKEM_NTT_X86_64_ASM)
-int mlkem_ntt_avx2_capable(void);
+#if defined(MLKEM_AVX2_X86_64_ASM)
+int mlkem_avx2_capable(void);
 void mlkem_ntt_avx2(uint16_t *c);
 void mlkem_inverse_ntt_avx2(uint16_t *c);
 
@@ -565,12 +565,48 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 typedef void (*ml_kem_scalar_mult_add_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
 typedef void (*ml_kem_inner_product_montgomery_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 typedef void (*ml_kem_matrix_mult_intt_fn)(scalar *out, const scalar *m, const scalar *a, int rank);
+typedef void (*ml_kem_matrix_mult_transpose_add_fn)(scalar *out, const scalar *m, const scalar *a, int rank);
 
 /* Forward declarations */
 static void scalar_mult_generic(scalar *out, const scalar *lhs, const scalar *rhs);
 static void scalar_mult_add_generic(scalar *out, const scalar *lhs, const scalar *rhs);
 static void inner_product_generic(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar *a, int rank);
+static void matrix_mult_transpose_add_generic(scalar *out, const scalar *m, const scalar *a, int rank);
+
+#if defined(MLKEM_AVX2_X86_64_ASM)
+void mlkem_basemul_acc_avx2(uint16_t *out, const uint16_t *lhs,
+    const uint16_t *rhs, int rank);
+void mlkem_basemul_acc_transpose_add_avx2(uint16_t *out, const uint16_t *lhs,
+    const uint16_t *rhs, int rank);
+
+static void inner_product_avx2(scalar *out, const scalar *lhs,
+    const scalar *rhs, int rank)
+{
+    mlkem_basemul_acc_avx2(out->c, lhs->c, rhs->c, rank);
+}
+
+static void matrix_mult_intt_avx2(scalar *out, const scalar *m,
+    const scalar *a, int rank)
+{
+    int i;
+
+    for (i = 0; i < rank; i++, out++, m += rank) {
+        mlkem_basemul_acc_avx2(out->c, m->c, a->c, rank);
+        scalar_inverse_ntt(out);
+    }
+}
+
+static void matrix_mult_transpose_add_avx2(scalar *out, const scalar *m,
+    const scalar *a, int rank)
+{
+    int i;
+
+    for (i = 0; i < rank; i++)
+        mlkem_basemul_acc_transpose_add_avx2(out[i].c, m[i].c, a[0].c, rank);
+}
+
+#endif
 
 /* Function pointers for dispatch */
 static ml_kem_scalar_mult_add_fn scalar_mult_add = scalar_mult_add_generic;
@@ -582,14 +618,18 @@ static ml_kem_scalar_mult_add_fn scalar_mult_add = scalar_mult_add_generic;
  */
 static ml_kem_inner_product_montgomery_fn inner_product_montgomery = inner_product_generic;
 static ml_kem_matrix_mult_intt_fn matrix_mult_intt = matrix_mult_intt_generic;
+static ml_kem_matrix_mult_transpose_add_fn matrix_mult_transpose_add = matrix_mult_transpose_add_generic;
 
 static void ml_kem_ntt_init(void)
 {
-#if defined(MLKEM_NTT_X86_64_ASM)
-    if (mlkem_ntt_avx2_capable()) {
+#if defined(MLKEM_AVX2_X86_64_ASM)
+    if (mlkem_avx2_capable()) {
         scalar_ntt = scalar_ntt_avx2;
         scalar_inverse_ntt = scalar_inverse_ntt_avx2;
         scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_avx2;
+        inner_product_montgomery = inner_product_avx2;
+        matrix_mult_intt = matrix_mult_intt_avx2;
+        matrix_mult_transpose_add = matrix_mult_transpose_add_avx2;
     }
 #endif
 
@@ -1157,7 +1197,7 @@ static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar 
 
 /* Here, the output vector must not overlap with the inputs */
 static void
-matrix_mult_transpose_add(scalar *out, const scalar *m, const scalar *a, int rank)
+matrix_mult_transpose_add_generic(scalar *out, const scalar *m, const scalar *a, int rank)
 {
     const scalar *mc = m, *mr, *ar;
     int i, j;
