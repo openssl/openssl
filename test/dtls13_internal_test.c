@@ -2147,6 +2147,177 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * An ACK record that only authenticated via the retained epoch-2 read layer
+ * must not be processed beyond the Finished-recovery window: once the
+ * handshake is over, records protected with the retained handshake keys
+ * must not modify the post-handshake retransmission state (d1->sent_messages)
+ * or cancel its retransmission timer.
+ *
+ * The same connection rejects application data authenticated with those
+ * same retained keys (see test_dtls13_retained_epoch_app_data_rejected()
+ * above), but the ACK branch of dtls_get_reassembled_message() returns
+ * before the retained-epoch restriction is applied, dtls1_read_bytes()
+ * records the authenticating epoch for handshake records only, and
+ * dtls_process_ack() removes matching entries from the retransmission queue
+ * without checking which epoch authenticated the ACK. This test fails until
+ * the ACK path enforces the handshake/application protection boundary.
+ */
+static int test_dtls13_retained_epoch_ack_authority(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    OSSL_RECORD_LAYER *prev;
+    piterator iter;
+    pitem *item;
+    dtls_sent_msg *msg;
+    DTLS1_RECORD_NUMBER *recnum;
+    unsigned char body[2 + 16], discard[2048], buf = 0;
+    uint64_t epoch = 0, seqnum = 0, active_epoch, bitmap_before;
+    size_t off;
+    int ret, dropped, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        /*
+         * Pin an AEAD whose per-record plaintext length needs no extra
+         * declaration, so inject_at_retained_epoch()'s assumptions hold
+         * regardless of suite priority changes (AES-CCM would need more).
+         */
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    prev = sc->rlayer.rrl->prev_epoch_rl;
+
+    /* The server's epoch-2 (Finished-recovery) read layer must be retained. */
+    if (!TEST_ptr(prev) || !TEST_uint64_t_eq(prev->epoch, 2))
+        goto end;
+
+    /* Let any pending flight ACKs through so the baseline is settled. */
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* Arm a post-handshake flight: a server KeyUpdate awaiting its ACK. */
+    if (!TEST_true(SSL_key_update(server, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* The client processes it and ACKs; drop that ACK. */
+    ret = SSL_read(client, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    dropped = 0;
+    while (BIO_read(SSL_get_rbio(server), discard, sizeof(discard)) > 0)
+        dropped++;
+    if (!TEST_int_gt(dropped, 0)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /*
+     * Forge an ACK record at the retained epoch claiming the outstanding
+     * record. The claimed (epoch, sequence) pair is copied from the
+     * server's own retransmission queue; it belongs to the currently active
+     * read epoch, while the record itself only authenticates via epoch 2.
+     */
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    item = pqueue_next(&iter);
+    if (!TEST_ptr(item))
+        goto end;
+    msg = (dtls_sent_msg *)item->data;
+    recnum = ossl_list_record_number_head(&msg->rec_nums);
+    if (!TEST_ptr(recnum))
+        goto end;
+    epoch = recnum->epoch;
+    seqnum = recnum->seqnum;
+    active_epoch = sc->rlayer.rrl->epoch;
+    if (!TEST_uint64_t_eq(epoch, active_epoch))
+        goto end;
+
+    body[0] = 0;
+    body[1] = 16;
+    for (off = 0; off < 8; off++) {
+        body[2 + off] = (unsigned char)(epoch >> (8 * (7 - off)));
+        body[10 + off] = (unsigned char)(seqnum >> (8 * (7 - off)));
+    }
+    bitmap_before = prev->bitmap.max_seq_num;
+    if (!TEST_true(inject_at_retained_epoch(server, SSL3_RT_ACK, body,
+            sizeof(body))))
+        goto end;
+
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The record only authenticated via the retained handshake epoch, so it
+     * must not complete the outstanding application-epoch flight nor stop
+     * its retransmission timer. It did pass the retained layer's own replay
+     * window (only updated after successful decryption) and must not have
+     * moved the active read epoch.
+     */
+    if (!TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout))
+        || !TEST_uint64_t_eq(prev->bitmap.max_seq_num, bitmap_before + 1)
+        || !TEST_uint64_t_eq(sc->rlayer.rrl->epoch, active_epoch))
+        goto end;
+
+    /*
+     * The legitimate recovery must still work afterwards: force the
+     * retransmission timer, let the client re-ACK the retransmitted
+     * KeyUpdate, and let the server complete on the replacement ACK.
+     * (The genuine ACK was deliberately dropped above, so the server is
+     * still waiting for it and a bare SSL_write() would first drive the
+     * unfinished handshake and fail with SSL_ERROR_WANT_READ.)
+     */
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
+        ossl_seconds2time(1));
+    if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+
+    ret = SSL_read(client, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    ret = SSL_read(server, &buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* With the flight settled, bidirectional application data flows. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -2178,6 +2349,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_out_of_seq_retained_epoch, 3);
     ADD_TEST(test_dtls13_retained_epoch_seq_match);
     ADD_TEST(test_dtls13_retained_epoch_app_data_rejected);
+    ADD_TEST(test_dtls13_retained_epoch_ack_authority);
 #endif
     return 1;
 }

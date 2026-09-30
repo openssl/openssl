@@ -1406,6 +1406,22 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             return MSG_PROCESS_ERROR;
         }
 
+        /*
+         * Epoch 2 is the fixed handshake epoch and is never used again once
+         * epoch 3 (the first application epoch) is installed. An ACK that
+         * only authenticated via a retained epoch-2 layer must not be
+         * trusted to cancel retransmission of a post-handshake (epoch 3+)
+         * flight. Retained epochs 3+ are unrestricted: unlike epoch 2, which
+         * is never reissued, each of those epochs was freshly minted by an
+         * SSL_key_update() call and gets superseded by the next one, so a
+         * legitimate delayed ACK can authenticate behind a message's own
+         * recorded epoch with no protocol violation.
+         */
+        if (dtls_record_from_retained_epoch(s)
+            && s->s3.tmp.record_epoch == 2
+            && epoch > 2)
+            continue;
+
         iter = pqueue_iterator(&s->d1->sent_messages);
 
         while ((item = pqueue_next(&iter)) != NULL) {

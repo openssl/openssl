@@ -374,7 +374,8 @@ start:
         return 0;
     }
 
-    if (rr->type == SSL3_RT_HANDSHAKE && SSL_CONNECTION_IS_DTLS13(sc)) {
+    if ((rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)
+        && SSL_CONNECTION_IS_DTLS13(sc)) {
         sc->s3.tmp.record_epoch = rr->epoch;
         sc->s3.tmp.record_seq_num = rr->seq_num;
     }
@@ -579,7 +580,11 @@ start:
          * path below instead of discarding it here -- the sequence and epoch
          * checks there (dtls_record_from_retained_epoch(),
          * dtls_prev_epoch_allows_type()) are what actually decide whether it
-         * can be acknowledged.
+         * can be acknowledged. This retained-epoch exception is for handshake
+         * records only (rr->type == SSL3_RT_HANDSHAKE above); an ACK record
+         * still has to be tied to the epoch that authenticated it before it
+         * can touch d1->sent_messages, which dtls_process_ack() enforces
+         * separately.
          */
         if ((rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
                 && !(SSL_CONNECTION_IS_DTLS13(sc)
