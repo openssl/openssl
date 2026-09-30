@@ -51,6 +51,19 @@ __owur int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
     const BIGNUM *x, BN_CTX *ctx);
 
 /*-
+ * The OSSL_FN counterpart of ossl_ec_group_do_inverse_ord(): computes
+ * res := a^-1 mod order, entirely in OSSL_FN form so a secret operand (the
+ * ECDSA nonce) never becomes a BIGNUM.  Dispatches to the method's
+ * field_inverse_mod_ord_fn when set (a dedicated constant-time inverse such as
+ * nistz256's assembly addition chain), otherwise uses OSSL_FN_mod_inverse_prime()
+ * with the group's cached order Montgomery context.
+ *
+ * Returns 1 on success, 0 on error.
+ */
+__owur int ossl_ec_group_do_inverse_ord_fn(const EC_GROUP *group, OSSL_FN *res,
+    const OSSL_FN *a, OSSL_FN_CTX *ctx);
+
+/*-
  * Computes  r := scalar * point,  or  r := scalar * generator  when @p point
  * is NULL, with a secret scalar.
  *
