@@ -391,6 +391,41 @@ static __owur int kdf(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
         && EVP_DigestFinalXOF(mdctx, out, ML_KEM_SHARED_SECRET_BYTES);
 }
 
+/*-
+ * Rejection-sample one SHAKE128 block. |*pcurr| points at the next
+ * coefficient to fill. |endout| is one past the last coefficient.
+ * |buflen| is a positive multiple of three, as SCALAR_SAMPLING_BUFSIZE
+ * is.
+ *
+ * Once |*pcurr| reaches |endout|, the rest of this block is left
+ * unused. The following squeeze begins at the next block.
+ */
+static void sample_rejection_block(uint16_t **pcurr, const uint16_t *endout,
+    const uint8_t *buf, size_t buflen)
+{
+    uint16_t *curr = *pcurr;
+    const uint8_t *in = buf;
+    const uint8_t *endin = buf + buflen;
+    uint16_t d;
+    uint8_t b1, b2, b3;
+
+    do {
+        b1 = *in++;
+        b2 = *in++;
+        b3 = *in++;
+
+        if (curr >= endout)
+            break;
+        if ((d = ((b2 & 0x0f) << 8) + b1) < kPrime)
+            *curr++ = d;
+        if (curr >= endout)
+            break;
+        if ((d = (b3 << 4) + (b2 >> 4)) < kPrime)
+            *curr++ = d;
+    } while (in < endin);
+    *pcurr = curr;
+}
+
 /*
  * FIPS 203, Section 4.2.2, Algorithm 7: "SampleNTT" (steps 3-17, steps 1, 2
  * are performed by the caller). Rejection-samples a Keccak stream to get
@@ -400,30 +435,24 @@ static __owur int kdf(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
 static __owur int sample_scalar(scalar *out, EVP_MD_CTX *mdctx)
 {
     uint16_t *curr = out->c, *endout = curr + DEGREE;
-    uint8_t buf[SCALAR_SAMPLING_BUFSIZE], *in;
-    uint8_t *endin = buf + sizeof(buf);
-    uint16_t d;
-    uint8_t b1, b2, b3;
+    uint8_t buf[SCALAR_SAMPLING_BUFSIZE];
 
     do {
-        if (!EVP_DigestSqueeze(mdctx, in = buf, sizeof(buf)))
+        if (!EVP_DigestSqueeze(mdctx, buf, sizeof(buf)))
             return 0;
-        do {
-            b1 = *in++;
-            b2 = *in++;
-            b3 = *in++;
-
-            if (curr >= endout)
-                break;
-            if ((d = ((b2 & 0x0f) << 8) + b1) < kPrime)
-                *curr++ = d;
-            if (curr >= endout)
-                break;
-            if ((d = (b3 << 4) + (b2 >> 4)) < kPrime)
-                *curr++ = d;
-        } while (in < endin);
+        sample_rejection_block(&curr, endout, buf, sizeof(buf));
     } while (curr < endout);
     return 1;
+}
+
+/* Sample one matrix-A polynomial with the fetched SHAKE128 EVP_MD. */
+static __owur int sample_poly_scalar(scalar *out,
+    const uint8_t seed[ML_KEM_RANDOM_BYTES + 2],
+    EVP_MD_CTX *mdctx, const ML_KEM_KEY *key)
+{
+    return EVP_DigestInit_ex(mdctx, key->shake128_md, NULL)
+        && EVP_DigestUpdate(mdctx, seed, ML_KEM_RANDOM_BYTES + 2)
+        && sample_scalar(out, mdctx);
 }
 
 static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
@@ -1209,6 +1238,12 @@ matrix_mult_transpose_add_generic(scalar *out, const scalar *m, const scalar *a,
     }
 }
 
+#if defined(KECCAK1600_ASM)                                                               \
+    && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
+    && !defined(OPENSSL_NO_ASM)
+#include "ml_kem_sample_hw_x86_64.inc"
+#endif
+
 /*-
  * Expands the matrix from a seed for key generation and for encaps-CPA.
  * NOTE: FIPS 203 matrix "A" is the transpose of this matrix, computed
@@ -1223,6 +1258,18 @@ static __owur int matrix_expand(EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
     int rank = key->vinfo->rank;
     int i, j;
 
+#if defined(KECCAK1600_ASM)                                                               \
+    && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
+    && !defined(OPENSSL_NO_ASM)
+    /*-
+     * SHA3_avx512vl_capable() requires AVX512F, AVX512DQ, AVX512BW, and
+     * AVX512VL. Groups of 2, 3, or 4 polynomials use the x4 Keccak API.
+     * One leftover polynomial uses the fetched SHAKE128 EVP_MD.
+     */
+    if (SHA3_avx512vl_capable())
+        return matrix_expand_x4(mdctx, key);
+#endif
+
     /*
      * The seeds derived below and the sampling buffers in sample_scalar()
      * are not cleansed: per FIPS 203 section 3.3 the matrix A is easily
@@ -1234,9 +1281,7 @@ static __owur int matrix_expand(EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
         for (j = 0; j < rank; j++) {
             input[ML_KEM_RANDOM_BYTES] = i;
             input[ML_KEM_RANDOM_BYTES + 1] = j;
-            if (!EVP_DigestInit_ex(mdctx, key->shake128_md, NULL)
-                || !EVP_DigestUpdate(mdctx, input, sizeof(input))
-                || !sample_scalar(out++, mdctx))
+            if (!sample_poly_scalar(out++, input, mdctx, key))
                 return 0;
         }
     }
