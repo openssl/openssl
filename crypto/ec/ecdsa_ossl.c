@@ -429,8 +429,7 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
         ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
         goto err;
     }
-    if (!OSSL_FN_mod_inverse_prime(kinvf, kf, order_fn, fnctx,
-            group->fn_mont_ctx_ord)) {
+    if (!ossl_ec_group_do_inverse_ord_fn(group, kinvf, kf, fnctx)) {
         bn_release(kinv, nlimbs);
         kinvf = NULL;
         ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
