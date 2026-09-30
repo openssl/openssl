@@ -1927,11 +1927,23 @@ int main(void) { vec_i16 v = probe(1, 2, 0); return (int)v[0]; }
 END_PROBE
     close($fh);
 
-    # The vec128 TUs are always compiled with -march=z13 -mvx regardless of
-    # the global baseline march.  The probe must use the same target flags so
-    # that the result is valid for those TUs.  With an older baseline (e.g.
-    # -march=z10) Clang rejects <vecintrin.h> even with -fzvector unless the
-    # target already includes z13/VX.
+    # Determine the effective architecture flags for the probe and for the
+    # per-TU compile rule emitted by the Makefile template.
+    #
+    # If the user supplied a -march= in CFLAGS (e.g. -march=native,
+    # -march=z17, or even -march=z10), honour it:
+    #   - The probe uses only "-mvx"; the user's -march= is already in
+    #     $flagstr, so the probe tests exactly the architecture the user
+    #     requested.
+    #   - If that architecture does not support VX (e.g. z10), the probe
+    #     fails and s390x_vector_cflags stays undef, cleanly disabling the
+    #     vec128 back-end rather than silently overriding the user's march.
+    #   - If it succeeds, the Makefile emits only "-mvx" for those TUs; the
+    #     user's -march= flows through $(CFLAGS) unobstructed.
+    #
+    # If the user supplied no -march=, fall back to "-march=z13 -mvx" as the
+    # minimum floor that guarantees VX availability.  This is identical to
+    # the previous behaviour.
     #
     # First try without -fzvector (GCC works without it).
     # If that fails, retry with -fzvector (Clang needs it for <vecintrin.h>).
@@ -1940,8 +1952,13 @@ END_PROBE
     # If both attempts fail the compiler lacks the required support; disable
     # the s390x vec128 back-end so the build can still complete using the
     # generic implementation.
+    #
+    # s390x_vec_march_flags holds the effective -march=/-mvx string to be
+    # emitted by the Makefile for the vec128 TUs.  It is only set when
+    # s390x_vector_cflags is defined (probe succeeded).
+    my $user_has_march = grep { /^-march=/ } @{$config{CFLAGS} // []};
+    my $vec_target = $user_has_march ? "-mvx" : "-march=z13 -mvx";
     $config{s390x_vector_cflags} = undef;   # undef == probe failed / disabled
-    my $vec_target = "-march=z13 -mvx";
     my $rc = system("$cc $flagstr $vec_target -c -o $obj $tf 2>/dev/null");
     if ($rc != 0) {
         $rc = system("$cc $flagstr $vec_target -fzvector -c -o $obj $tf 2>/dev/null");
@@ -1951,6 +1968,9 @@ END_PROBE
         # else: both attempts failed — leave s390x_vector_cflags as undef
     } else {
         $config{s390x_vector_cflags} = "";
+    }
+    if (defined $config{s390x_vector_cflags}) {
+        $config{s390x_vec_march_flags} = $vec_target;
     }
     unlink($tf, $obj);
 }
