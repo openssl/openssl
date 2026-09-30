@@ -1578,6 +1578,22 @@ int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
         return ec_field_inverse_mod_ord(group, res, x, ctx);
 }
 
+int ossl_ec_group_do_inverse_ord_fn(const EC_GROUP *group, OSSL_FN *res,
+    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+{
+    const OSSL_FN *order_fn;
+
+    if (group->meth->field_inverse_mod_ord_fn != NULL)
+        return group->meth->field_inverse_mod_ord_fn(group, res, a, ctx);
+
+    if ((order_fn = bn_get_ossl_fn(group->order)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        return 0;
+    }
+    return OSSL_FN_mod_inverse_prime(res, a, order_fn, ctx,
+        group->fn_mont_ctx_ord);
+}
+
 /*-
  * Coordinate blinding for EC_POINT.
  *
