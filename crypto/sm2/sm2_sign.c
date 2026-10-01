@@ -18,6 +18,7 @@
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h" /* ossl_fn_ctx_{max,add}_size() */
 #include "internal/numbers.h"
+#include "internal/constant_time.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
@@ -242,6 +243,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     BIGNUM *x1 = NULL;
     OSSL_FN_CTX *fnctx = NULL;
     const void *token = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
     const OSSL_FN *order_fn = NULL;
     OSSL_FN *k = NULL;
     OSSL_FN *rk = NULL;
@@ -290,27 +292,28 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     /*
-     * The order is public and stays a BIGNUM; only its OSSL_FN view is
-     * needed, which is read-only and so needs no bn_release().
+     * The secret arithmetic below is done in the order's Montgomery domain,
+     * never by division.  Its operands must be exactly as wide as the
+     * modulus of the cached order context, so that modulus is order_fn and
+     * its width is nlimbs throughout.
      */
-    nlimbs = bn_get_top(order);
-    if ((order_fn = bn_get_ossl_fn(order)) == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
+    if ((mont = ossl_ec_group_get0_fn_mont_ord(group)) == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
+    order_fn = OSSL_FN_MONT_CTX_get0_modulus(mont);
+    nlimbs = (int)ossl_fn_get_dsize(order_fn);
 
     /*
      * Size the arena for the temporaries below plus the widest of the nested
-     * modular operations.  Every operand handed to those is exactly nlimbs
-     * wide, and order_fn is at least that wide (a BIGNUM's dmax is never
-     * below its top), so modelling them all as order_fn is an upper bound.
+     * operations.  Every operand handed to those is exactly nlimbs wide.
      */
     need = ossl_fn_ctx_max_size(
         ossl_fn_ctx_max_size(
             OSSL_FN_mod_inverse_prime_ctx_size(order_fn, order_fn, order_fn,
-                NULL),
-            OSSL_FN_mod_mul_ctx_size(order_fn, order_fn, order_fn, order_fn)),
-        OSSL_FN_mod_sub_ctx_size(order_fn, order_fn, order_fn, order_fn));
+                mont),
+            OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont)),
+        ossl_ec_group_fn_reduce_ord_ctx_size(group));
     /*
      * Seven temporaries; rk is one limb wider, see below.
      * The order of the SM2 curve group is fixed, so we don't have to worry
@@ -342,12 +345,11 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         goto done;
 
     /*
-     * dA is below the order, so nlimbs holds it and the truncating copy drops
-     * nothing.  Copying it into an arena temporary rather than using the
-     * private key BIGNUM's own OSSL_FN view keeps every operand exactly
-     * nlimbs wide, which is what the sizing above relies on.
+     * Reduce dA into an nlimbs-wide arena temporary, in constant time: the
+     * private key BIGNUM may be wider than the order, and is not guaranteed
+     * to be reduced.
      */
-    if (OSSL_FN_copy_truncate(dAf, bn_get_ossl_fn(dA)) == NULL
+    if (!ossl_ec_group_fn_reduce_ord(group, dAf, dA, fnctx)
         || !OSSL_FN_one(one))
         goto done;
 
@@ -400,21 +402,24 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
          * operand does not leak.
          */
         if (!OSSL_FN_add(sf, dAf, one)
-            || !OSSL_FN_mod_inverse_prime(sf, sf, order_fn, fnctx, NULL)
-            || !OSSL_FN_mod_mul(tmp, dAf, rf, order_fn, fnctx)
-            || !OSSL_FN_mod_sub(tmp, k, tmp, order_fn, fnctx))
+            || !OSSL_FN_mod_inverse_prime(sf, sf, order_fn, fnctx, mont)
+            || !OSSL_FN_to_mont_quick(tmp, rf, mont, fnctx)
+            || !OSSL_FN_mul_mont_quick(tmp, tmp, dAf, mont, fnctx)
+            || !OSSL_FN_mod_sub_quick(tmp, k, tmp, order_fn)
+            || !OSSL_FN_to_mont_quick(tmp, tmp, mont, fnctx)
+            || !OSSL_FN_mul_mont_quick(rf, tmp, sf, mont, fnctx))
             goto done;
 
         /*
-         * s is the other half of the signature and so is public from here
-         * on.  It is computed straight into the OSSL_FN of its BIGNUM, so
-         * the secret factors never have to be handed over as a BIGNUM.
+         * rf now holds s, the other half of the signature, which is public
+         * from here on; move it into its BIGNUM.
          */
+        CONSTTIME_DECLASSIFY(ossl_fn_get_words(rf), nlimbs * OSSL_FN_BYTES);
         if ((s_acq = bn_acquire_ossl_fn(s, nlimbs)) == NULL) {
             ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
             goto done;
         }
-        if (!OSSL_FN_mod_mul(s_acq, sf, tmp, order_fn, fnctx)) {
+        if (OSSL_FN_copy_truncate(s_acq, rf) == NULL) {
             bn_release(s, nlimbs);
             s_acq = NULL;
             goto done;
