@@ -593,6 +593,7 @@ int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
 {
     size_t dsize, nbytes, i;
     unsigned char over = 0;
+    int fits;
 
     if (ossl_unlikely(a == NULL || out == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
@@ -613,7 +614,10 @@ int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
     for (; i < nbytes; i++)
         over |= (unsigned char)(a->d[i / OSSL_FN_BYTES] >> (8 * (i % OSSL_FN_BYTES)));
 
-    return over == 0;
+    /* Whether the value fits is a validity condition, not a secret */
+    fits = constant_time_is_zero_8(over) & 1;
+    CONSTTIME_DECLASSIFY(&fits, sizeof(fits));
+    return fits;
 }
 
 /*-
