@@ -1103,7 +1103,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[ec_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[ec_ct_test]=ec_ct_test.c
-    INCLUDE[ec_ct_test]=../include ../apps/include
+    INCLUDE[ec_ct_test]=../include ../crypto/ec ../apps/include
     DEPEND[ec_ct_test]=../libcrypto.a libtestutil.a
 
     IF[{- !$disabled{ecx} -}]

@@ -383,18 +383,23 @@ err:
 
 /*-
  * The OSSL_FN Montgomery ladder below works in whatever representation the
- * group stores its coordinates in: Montgomery for methods with a field
- * Montgomery context (group->fn_mont_ctx), plain residues mod the field
- * otherwise (e.g. the nist method).  Only three field operations depend on that
- * choice - the multiplication, encoding a plain value into the representation,
- * and the modular inverse; the additive steps (mod_add/sub/lshift) are
- * identical in both.  These helpers hide the choice, keeping the ladder bodies
+ * group stores its coordinates in: Montgomery for methods that encode them
+ * (meth->field_encode != NULL), plain residues mod the field otherwise (e.g.
+ * the nist method).  Only three field operations depend on that choice - the
+ * multiplication, encoding a plain value into the representation, and the
+ * modular inverse; the additive steps (mod_add/sub/lshift) are identical in
+ * both.  These helpers hide the choice, keeping the ladder bodies
  * representation-agnostic.
  */
+static ossl_inline int ec_fn_is_mont(const EC_GROUP *group)
+{
+    return group->meth->field_encode != NULL;
+}
+
 static ossl_inline int ec_fn_fmul(const EC_GROUP *group, OSSL_FN *r,
     const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
 {
-    return group->fn_mont_ctx != NULL
+    return ec_fn_is_mont(group)
         ? OSSL_FN_mul_mont_quick(r, a, b, group->fn_mont_ctx, ctx)
         : OSSL_FN_mod_mul(r, a, b, group->field_fn, ctx);
 }
@@ -413,7 +418,7 @@ static size_t ec_fn_fmul_ctx_size(const EC_GROUP *group)
 {
     const OSSL_FN *p_fn = group->field_fn;
 
-    return group->fn_mont_ctx != NULL
+    return ec_fn_is_mont(group)
         ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
         : OSSL_FN_mod_mul_ctx_size(p_fn, p_fn, p_fn, p_fn);
 }
@@ -422,7 +427,7 @@ static size_t ec_fn_fmul_ctx_size(const EC_GROUP *group)
 static ossl_inline int ec_fn_fsqr(const EC_GROUP *group, OSSL_FN *r,
     const OSSL_FN *a, OSSL_FN_CTX *ctx)
 {
-    return group->fn_mont_ctx != NULL
+    return ec_fn_is_mont(group)
         ? OSSL_FN_mul_mont_quick(r, a, a, group->fn_mont_ctx, ctx)
         : OSSL_FN_mod_sqr(r, a, group->field_fn, ctx);
 }
@@ -431,7 +436,7 @@ static size_t ec_fn_fsqr_ctx_size(const EC_GROUP *group)
 {
     const OSSL_FN *p_fn = group->field_fn;
 
-    return group->fn_mont_ctx != NULL
+    return ec_fn_is_mont(group)
         ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
         : OSSL_FN_mod_sqr_ctx_size(p_fn, p_fn, p_fn);
 }
@@ -440,14 +445,14 @@ static size_t ec_fn_fsqr_ctx_size(const EC_GROUP *group)
 static ossl_inline int ec_fn_encode(const EC_GROUP *group, OSSL_FN *r,
     OSSL_FN_CTX *ctx)
 {
-    return group->fn_mont_ctx != NULL
+    return ec_fn_is_mont(group)
         ? OSSL_FN_to_mont(r, r, group->fn_mont_ctx, ctx)
         : 1; /* plain representation: nothing to encode */
 }
 
 static size_t ec_fn_encode_ctx_size(const EC_GROUP *group)
 {
-    return group->fn_mont_ctx != NULL
+    return ec_fn_is_mont(group)
         ? OSSL_FN_to_mont_ctx_size(NULL, group->field_fn,
               group->fn_mont_ctx)
         : OSSL_FN_CTX_SIZE_NONE; /* plain: no arena needed */
@@ -465,7 +470,7 @@ static ossl_inline int ec_fn_finv(const EC_GROUP *group, OSSL_FN *r,
 {
     const OSSL_FN *p_fn = group->field_fn;
 
-    if (group->fn_mont_ctx != NULL)
+    if (ec_fn_is_mont(group))
         return OSSL_FN_from_mont(r, a, group->fn_mont_ctx, ctx)
             && OSSL_FN_mod_inverse_prime(r, r, p_fn, ctx, group->fn_mont_ctx)
             && OSSL_FN_to_mont(r, r, group->fn_mont_ctx, ctx);
@@ -477,7 +482,7 @@ static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
     const OSSL_FN *p_fn = group->field_fn;
     size_t frm, inv, tom, m;
 
-    if (group->fn_mont_ctx == NULL)
+    if (!ec_fn_is_mont(group))
         return OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, NULL);
 
     frm = OSSL_FN_from_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
@@ -894,7 +899,8 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
     /*
      * The OSSL_FN ladder point arithmetic serves any prime-field (GF(p)) group,
      * dispatching the field multiplication by the group's coordinate
-     * representation (Montgomery when fn_mont_ctx is present, plain otherwise).
+     * representation (Montgomery when the method encodes coordinates, plain
+     * otherwise).
      * There is no BIGNUM fallback on the secret path, so refuse non-prime-field
      * groups (e.g. GF(2^m)).
      */
