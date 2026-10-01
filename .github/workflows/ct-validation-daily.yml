@@ -142,7 +142,7 @@ jobs:
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
         # - SM2/EC: test_ec
-        # - OSSL_FN quick modular helpers: test_fn_ct
+        # - OSSL_FN quick modular helpers and mod_exp_mont: test_fn_ct
         #
         # Also covered:
         # - test_ct_validation_helpers: The Valgrind-based constant-time
