@@ -325,7 +325,9 @@ struct ec_group_st {
      * EC_GROUP_set_curve() for prime-field (GF(p)) groups and shared by the
      * constant-time OSSL_FN point arithmetic; NULL for GF(2^m) groups.  Unlike
      * the method-specific field_data1 (a BN_MONT_CTX used by the BIGNUM field
-     * ops) this is generic and owned by the EC layer.
+     * ops) this is generic and owned by the EC layer.  It is built whatever
+     * the coordinate representation, so whether coordinates are in Montgomery
+     * form is told by meth->field_encode, not by this being set.
      */
     OSSL_FN_MONT_CTX *fn_mont_ctx;
     /*

@@ -9,7 +9,8 @@
 
 /*
  * Constant-time tests for the EC private-key arithmetic that runs outside
- * the scalar multiplication: ECDSA and SM2 signing.
+ * the scalar multiplication: ECDSA and SM2 signing, and the conversion of a
+ * secret projective point (an ECDH shared point, an SM2 kP) to bytes.
  *
  * When built with enable-ct-validation, CONSTTIME_SECRET marks the secrets
  * as undefined for Valgrind's memcheck, so any branch or memory index derived
@@ -24,7 +25,9 @@
 #include <openssl/evp.h>
 #include <openssl/obj_mac.h>
 #include "crypto/bn.h"
+#include "crypto/ec.h"
 #include "crypto/sm2.h"
+#include "ec_local.h"
 #include "internal/constant_time.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -91,6 +94,71 @@ err:
     return ret;
 }
 
+/* The affine conversion is done by each GF(p) method; cover each kind */
+static const int prime_curves[] = {
+    NID_secp224r1,
+    NID_X9_62_prime256v1,
+    NID_secp384r1,
+    NID_secp521r1,
+    NID_secp256k1,
+#ifndef OPENSSL_NO_SM2
+    NID_sm2,
+#endif
+};
+
+static int test_point_to_bytes(int idx)
+{
+    EC_GROUP *group = NULL;
+    EC_POINT *P = NULL;
+    BIGNUM *k = NULL, *x = NULL, *y = NULL;
+    unsigned char rx[66], ry[66], gx[66], gy[66];
+    size_t flen = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(prime_curves[idx]))
+        || !TEST_ptr(P = EC_POINT_new(group))
+        || !TEST_ptr(k = BN_new())
+        || !TEST_ptr(x = BN_new())
+        || !TEST_ptr(y = BN_new()))
+        goto err;
+    flen = (size_t)((EC_GROUP_get_degree(group) + 7) / 8);
+
+    /* A random point, doubled to obtain a projective (Z != 1) one */
+    if (!TEST_size_t_le(flen, sizeof(rx))
+        || !TEST_true(BN_rand_range(k, EC_GROUP_get0_order(group)))
+        || !TEST_true(EC_POINT_mul(group, P, k, NULL, NULL, NULL))
+        || !TEST_true(EC_POINT_dbl(group, P, P, NULL))
+        || !TEST_int_eq(P->Z_is_one, 0)
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, NULL))
+        || !TEST_int_ge(BN_bn2binpad(x, rx, (int)flen), 0)
+        || !TEST_int_ge(BN_bn2binpad(y, ry, (int)flen), 0))
+        goto err;
+
+    bn_secret(P->X);
+    bn_secret(P->Y);
+    bn_secret(P->Z);
+    ret = EC_POINT_get_affine_coords_bytes(group, P, gx, gy, flen);
+    bn_declassify(P->X);
+    bn_declassify(P->Y);
+    bn_declassify(P->Z);
+    CONSTTIME_DECLASSIFY(gx, flen);
+    CONSTTIME_DECLASSIFY(gy, flen);
+
+    if (!TEST_true(ret)
+        || !TEST_mem_eq(gx, flen, rx, flen)
+        || !TEST_mem_eq(gy, flen, ry, flen))
+        ret = 0;
+err:
+    if (!ret)
+        TEST_info("curve %s", OBJ_nid2sn(prime_curves[idx]));
+    BN_free(k);
+    BN_free(x);
+    BN_free(y);
+    EC_POINT_free(P);
+    EC_GROUP_free(group);
+    return ret;
+}
+
 #ifndef OPENSSL_NO_SM2
 /* SM2 s = (1 + dA)^-1 * (k - r * dA) mod n, on the secret dA */
 static int test_sm2_sign(void)
@@ -129,6 +197,7 @@ err:
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_ecdsa_sign_sig, (int)OSSL_NELEM(curves));
+    ADD_ALL_TESTS(test_point_to_bytes, (int)OSSL_NELEM(prime_curves));
 #ifndef OPENSSL_NO_SM2
     ADD_TEST(test_sm2_sign);
 #endif

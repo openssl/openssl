@@ -643,7 +643,8 @@ static int test_ladder_step_fn(int idx)
 
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
         return 0;
-    if (group->fn_mont_ctx == NULL) { /* not a Montgomery-representation method */
+    /* Skip methods that don't keep coordinates in Montgomery form */
+    if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
@@ -732,7 +733,7 @@ static int test_ladder_pre_fn(int idx)
 
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
         return 0;
-    if (group->fn_mont_ctx == NULL) {
+    if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
@@ -838,7 +839,7 @@ static int test_ladder_post_fn(int idx)
 
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
         return 0;
-    if (group->fn_mont_ctx == NULL) {
+    if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
