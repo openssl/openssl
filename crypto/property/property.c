@@ -645,19 +645,31 @@ static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
     void (*fn)(int id, void *method, void *fnarg),
     void *fnarg)
 {
-    if (impl->archived == 0)
-        fn(alg->nid, impl->method.method, fnarg);
+    fn(alg->nid, impl->method.method, fnarg);
 }
 
 static void alg_copy(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
     STACK_OF(ALGORITHM) *newalg = arg;
+    int i;
+    IMPLEMENTATION *impl;
 
     alg = OPENSSL_memdup(alg, sizeof(ALGORITHM));
     if (alg == NULL)
         return;
 
     alg->impls = sk_IMPLEMENTATION_dup(alg->impls);
+
+    /*
+     * Remove any archived items while we're under lock
+     * note we don't have to free the implementation here
+     * as its still tracked in the alg struct we're cloning from
+     */
+    for (i = sk_IMPLEMENTATION_num(alg->impls); i-- > 0;) {
+        impl = sk_IMPLEMENTATION_value(alg->impls, i);
+        if (impl->archived == 1)
+            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
+    }
 
     (void)sk_ALGORITHM_push(newalg, alg);
 }
