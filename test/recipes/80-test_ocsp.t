@@ -99,7 +99,11 @@ subtest "=== INVALID OCSP RESPONSE TIMES ===" => sub {
                           "ND1.ors", "ND1_Issuer_ICA.pem", "", 1, 0, undef,
                           "ND1_Cert_EE.pem");
     like($output, qr/Response verify OK/, "response signature verified");
-    like($output, qr/status expired/, "response status expired");
+    SKIP: {
+        skip "Error strings disabled", 1
+            if disabled("err") || disabled("autoerrinit");
+        like($output, qr/status expired/, "response status expired");
+    }
 };
 
 subtest "=== INVALID SIGNATURE on the OCSP RESPONSE ===" => sub {
