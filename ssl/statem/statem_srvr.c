@@ -674,14 +674,21 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     /*
      * Resume a write we held back because our own KeyUpdate was still
-     * unacknowledged. Once that ACK has arrived, fall through into the
-     * switch below as if we were still at the deferred state, so it can
-     * now proceed.
+     * unacknowledged. deferred_key_update_state holds the real
+     * continuation (e.g. TLS_ST_SW_SESSION_TICKET or TLS_ST_OK), not
+     * TLS_ST_SW_ACK itself, and is copied into deferred_ack_state only
+     * here, right before the TLS_ST_SW_ACK case below consumes it --
+     * deferred_ack_state is also used by the ack_for_retransmit handling
+     * above, which can fire any number of times while this wait is still
+     * in progress, so the continuation is kept in the field that handling
+     * never touches until the moment it's actually needed.
      */
     if (st->deferred_key_update_state != TLS_ST_BEFORE
         && !dtls_has_unacked_key_update(s)) {
-        st->hand_state = st->deferred_key_update_state;
+        st->deferred_ack_state = st->deferred_key_update_state;
         st->deferred_key_update_state = TLS_ST_BEFORE;
+        st->hand_state = TLS_ST_SW_ACK;
+        return WRITE_TRAN_CONTINUE;
     }
 
     /*
@@ -793,15 +800,13 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
                      * RFC 9147 section 8: our own KeyUpdate's new keys must
                      * not be used for anything else until it is
                      * acknowledged. Hold this ACK back rather than send it
-                     * now; deferred_ack_state above still says where to go
-                     * once it is finally sent. Defer to TLS_ST_SW_ACK itself,
-                     * not this TLS_ST_SR_FINISHED state: resuming by
-                     * re-entering TLS_ST_SR_FINISHED would rerun this whole
-                     * case, including the post_handshake_auth/ticket_expected
-                     * checks above, against state that may no longer reflect
-                     * why we got here.
+                     * now. The continuation (TLS_ST_OK) is saved in
+                     * deferred_key_update_state, not this TLS_ST_SR_FINISHED
+                     * state: re-entering TLS_ST_SR_FINISHED on resume would
+                     * rerun this whole case against post_handshake_auth/
+                     * ticket_expected state that may have since changed.
                      */
-                    st->deferred_key_update_state = TLS_ST_SW_ACK;
+                    st->deferred_key_update_state = TLS_ST_OK;
                     st->hand_state = TLS_ST_SW_KEY_UPDATE;
                     return WRITE_TRAN_FINISHED;
                 }
@@ -857,17 +862,16 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
                 /*
                  * RFC 9147 section 8: our own KeyUpdate's new keys must not
                  * be used for anything else until it is acknowledged. Hold
-                 * this ACK back rather than send it now; deferred_ack_state
-                 * above still says where to go once it is finally sent.
-                 * Defer to TLS_ST_SW_ACK itself, not this TLS_ST_SR_FINISHED
-                 * state: resuming by re-entering TLS_ST_SR_FINISHED would
-                 * rerun this whole case. post_handshake_auth has already
-                 * moved past SSL_PHA_REQUESTED by the time we resume, so the
-                 * ticket-suppressing branch above would run instead and
-                 * overwrite deferred_ack_state, dropping the tickets this
-                 * visit decided to issue.
+                 * this ACK back rather than send it now. The real
+                 * continuation (next_state) is saved in
+                 * deferred_key_update_state, not this TLS_ST_SR_FINISHED
+                 * state: re-entering TLS_ST_SR_FINISHED on resume would
+                 * rerun this whole case, and post_handshake_auth has by
+                 * then moved past SSL_PHA_REQUESTED, so the
+                 * ticket-suppressing branch above would compute the wrong
+                 * continuation.
                  */
-                st->deferred_key_update_state = TLS_ST_SW_ACK;
+                st->deferred_key_update_state = next_state;
                 st->hand_state = TLS_ST_SW_KEY_UPDATE;
                 return WRITE_TRAN_FINISHED;
             }
