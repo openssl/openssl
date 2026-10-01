@@ -460,11 +460,71 @@ err:
     return ret;
 }
 
+/*
+ * The Fermat inverse a^(m-2) mod m with a secret a, as used for ECDSA, DSA
+ * and SM2 nonces and keys and for projective EC coordinates.
+ */
+static int test_mod_inverse_prime(int idx)
+{
+    size_t mi = idx / OSSL_NELEM(pairs), pi = idx % OSSL_NELEM(pairs);
+    BN_CTX *bnctx = BN_CTX_new();
+    BIGNUM *m = NULL, *a = BN_new(), *e = BN_new();
+    OSSL_FN *fm = NULL, *fa = NULL, *r = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t len = 0, limbs = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(bnctx) || !TEST_ptr(a) || !TEST_ptr(e)
+        || !TEST_true(BN_hex2bn(&m, moduli[mi]))
+        || !TEST_true(set_operand(a, m, pairs[pi].a, bnctx)))
+        goto err;
+    /* Zero has no inverse */
+    if (BN_is_zero(a)) {
+        ret = 1;
+        goto err;
+    }
+
+    len = (size_t)BN_num_bytes(m);
+    limbs = (len + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    if (!TEST_ptr(fm = fn_from_bn(m, limbs, len))
+        || !TEST_ptr(fa = fn_from_bn(a, limbs, len))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fm, mont))))
+        goto err;
+
+    fn_secret(fa, limbs);
+
+    if (!TEST_true(OSSL_FN_mod_inverse_prime(r, fa, fm, ctx, mont))
+        || !TEST_ptr(BN_mod_inverse(e, a, m, bnctx))
+        || !check("mod_inverse_prime", r, limbs, e, len))
+        goto err;
+
+    ret = 1;
+err:
+    if (fa != NULL)
+        fn_declassify(fa, limbs);
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(r);
+    BN_free(m);
+    BN_free(a);
+    BN_free(e);
+    BN_CTX_free(bnctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_quick_ops, (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
     ADD_ALL_TESTS(test_mont_ops, (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
     ADD_ALL_TESTS(test_mont_reduce, (int)(2 * OSSL_NELEM(moduli)));
     ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(exp_limbs));
+    ADD_ALL_TESTS(test_mod_inverse_prime,
+        (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
     return 1;
 }
