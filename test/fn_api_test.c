@@ -7505,6 +7505,13 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(NULL, a, mont));
     CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, NULL, mont));
     CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(NULL, a, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, NULL, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, a, mont, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(r, a, NULL));
 
     /* fn_lib.c word accessors */
     CHECK_NO_CRASH(OSSL_FN_get_word(NULL));
