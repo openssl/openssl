@@ -274,7 +274,7 @@ jobs:
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: windows-11-arm
     env:
-      VCVARS: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsarm64.bat
+      VCVARS: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsarm64.bat
     steps:
     - uses: actions/checkout@v6
       with:
