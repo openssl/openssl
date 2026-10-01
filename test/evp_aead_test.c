@@ -2009,6 +2009,124 @@ err:
     return testresult;
 }
 
+/*
+ * AAD split across several Update() calls must give the same ciphertext and
+ * tag as the same AAD in one call. CCM takes the AAD in one call, so it must
+ * reject a split instead.
+ */
+static int test_evp_aead_chunked_aad(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_ref = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    static const unsigned char pt[] = "AEAD chunked AAD regression payload";
+    unsigned char aad[37];
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char ct_ref[sizeof(pt) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char ct[sizeof(pt) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char tag_ref[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+    OSSL_PARAM params_ref[2];
+    OSSL_PARAM params[2];
+    const int ptlen = (int)sizeof(pt) - 1;
+    const int aadlen = (int)sizeof(aad);
+    int i, off, sz, stride, outlen = 0, len_ref = 0, len = 0, taglen;
+    int testresult = 0;
+
+    /* AES-SIV takes each AAD call as a separate input, by design */
+    if (info->mode == EVP_CIPH_SIV_MODE)
+        return 1;
+
+    for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(0xC0 + i);
+    for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xD0 + i);
+    for (i = 0; i < aadlen; i++)
+        aad[i] = (unsigned char)(0x30 + i);
+
+    if (info->mode == EVP_CIPH_CCM_MODE) {
+        /* a second AAD call must be rejected, not replace the first */
+        ERR_clear_error();
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+            || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen, NULL, ptlen))
+            || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen, aad, 1))
+            || !TEST_false(EVP_EncryptUpdate(ctx, NULL, &outlen, aad + 1,
+                aadlen - 1))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+            TEST_info("split AAD not rejected: idx=%d cipher=%s",
+                idx, info->name);
+            goto err;
+        }
+        testresult = 1;
+        goto err;
+
+        // Create a sanity check
+        // Where AAD is passed in with the length in one go instead of chunked
+    }
+
+    /* Reference: all AAD in one call. */
+    if (!TEST_ptr(ctx_ref = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_ref, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx_ref, NULL, &outlen, aad, aadlen))
+        || !TEST_true(EVP_EncryptUpdate(ctx_ref, ct_ref, &len_ref, pt, ptlen))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_ref, ct_ref + len_ref, &outlen))) {
+        TEST_info("reference encrypt failed: idx=%d cipher=%s", idx, info->name);
+        goto err;
+    }
+    len_ref += outlen;
+
+    taglen = EVP_CIPHER_CTX_get_tag_length(ctx_ref);
+    if (taglen <= 0)
+        taglen = info->taglen;
+    params_ref[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_ref, taglen);
+    params_ref[1] = OSSL_PARAM_construct_end();
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, taglen);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_le(taglen, EVPTEST_TAG_LEN_MAX)
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx_ref, params_ref))) {
+        TEST_info("reference tag failed: idx=%d cipher=%s", idx, info->name);
+        goto err;
+    }
+
+    /* The same AAD split into chunks of every size. */
+    for (stride = 1; stride < aadlen; stride++) {
+        EVP_CIPHER_CTX_free(ctx);
+        len = 0;
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL)))
+            goto err;
+        for (off = 0; off < aadlen; off += sz) {
+            sz = aadlen - off < stride ? aadlen - off : stride;
+            if (!TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen, aad + off,
+                    sz))) {
+                TEST_info("split AAD rejected: idx=%d cipher=%s stride=%d",
+                    idx, info->name, stride);
+                goto err;
+            }
+        }
+        if (!TEST_true(EVP_EncryptUpdate(ctx, ct, &len, pt, ptlen))
+            || !TEST_true(EVP_EncryptFinal_ex(ctx, ct + len, &outlen))
+            || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+            || !TEST_mem_eq(ct, len + outlen, ct_ref, len_ref)
+            || !TEST_mem_eq(tag, taglen, tag_ref, taglen)) {
+            TEST_info("split AAD differs: idx=%d cipher=%s stride=%d",
+                idx, info->name, stride);
+            goto err;
+        }
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx_ref);
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     size_t i = 0;
@@ -2038,6 +2156,7 @@ int setup_tests(void)
     ADD_TEST(test_aes_gcm_ivlen_change_cve_2023_5363);
     ADD_ALL_TESTS(test_evp_aead_tag_reject, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
+    ADD_ALL_TESTS(test_evp_aead_chunked_aad, OSSL_NELEM(aead_list));
     return 1;
 }
 
