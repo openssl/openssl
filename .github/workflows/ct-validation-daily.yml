@@ -143,7 +143,7 @@ jobs:
         # - ML-DSA: test_internal_ml_dsa
         # - SM2/EC: test_ec
         # - OSSL_FN quick modular helpers and mod_exp_mont: test_fn_ct
-        # - ECDSA signing arithmetic: test_ec_ct
+        # - ECDSA and SM2 signing arithmetic: test_ec_ct
         #
         # Also covered:
         # - test_ct_validation_helpers: The Valgrind-based constant-time

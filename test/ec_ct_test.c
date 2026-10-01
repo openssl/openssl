@@ -9,7 +9,7 @@
 
 /*
  * Constant-time tests for the EC private-key arithmetic that runs outside
- * the scalar multiplication.
+ * the scalar multiplication: ECDSA and SM2 signing.
  *
  * When built with enable-ct-validation, CONSTTIME_SECRET marks the secrets
  * as undefined for Valgrind's memcheck, so any branch or memory index derived
@@ -21,8 +21,10 @@
 #include "internal/deprecated.h"
 
 #include <openssl/ec.h>
+#include <openssl/evp.h>
 #include <openssl/obj_mac.h>
 #include "crypto/bn.h"
+#include "crypto/sm2.h"
 #include "internal/constant_time.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -89,8 +91,46 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_SM2
+/* SM2 s = (1 + dA)^-1 * (k - r * dA) mod n, on the secret dA */
+static int test_sm2_sign(void)
+{
+    static const uint8_t id[] = "alice@example.com";
+    static const uint8_t msg[] = "message digest";
+    EC_KEY *key = NULL;
+    ECDSA_SIG *sig = NULL;
+    const BIGNUM *priv;
+    int ret = 0;
+
+    if (!TEST_ptr(key = EC_KEY_new_by_curve_name(NID_sm2))
+        || !TEST_true(EC_KEY_generate_key(key))
+        || !TEST_ptr(priv = EC_KEY_get0_private_key(key)))
+        goto err;
+
+    bn_secret(priv);
+    sig = ossl_sm2_do_sign(key, EVP_sm3(), id, sizeof(id) - 1, msg,
+        sizeof(msg) - 1);
+    bn_declassify(priv);
+
+    if (!TEST_ptr(sig)
+        || !TEST_int_eq(ossl_sm2_do_verify(key, EVP_sm3(), sig, id,
+                            sizeof(id) - 1, msg, sizeof(msg) - 1),
+            1))
+        goto err;
+
+    ret = 1;
+err:
+    ECDSA_SIG_free(sig);
+    EC_KEY_free(key);
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_ecdsa_sign_sig, (int)OSSL_NELEM(curves));
+#ifndef OPENSSL_NO_SM2
+    ADD_TEST(test_sm2_sign);
+#endif
     return 1;
 }
