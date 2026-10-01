@@ -85,7 +85,7 @@ int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     size_t bw = bl < ml ? bl : ml;
     OSSL_FN_ULONG storage[2 * 1024 / OSSL_FN_BITS];
     OSSL_FN_ULONG *tp = storage;
-    OSSL_FN_ULONG *mp = storage + ml;
+    OSSL_FN_ULONG *mp;
     OSSL_FN_ULONG carry, borrow;
     size_t i;
 
@@ -93,8 +93,8 @@ int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
         tp = OPENSSL_malloc_array(2 * ml, sizeof(OSSL_FN_ULONG));
         if (tp == NULL)
             return 0;
-        mp = tp + ml;
     }
+    mp = tp + ml;
 
     /* tp = a + b mod 2^(ml*bits) */
     carry = ossl_fn_add_words(tp, ml, a->d, aw, b->d, bw);
