@@ -501,6 +501,105 @@ static const unsigned char dtls_transcript_hash[] = {
     0x39, 0x01, 0x13, 0x51, 0x3c, 0xf6, 0x97, 0x3c
 };
 
+static int test_tls13_secret_clear(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    static const unsigned char zero_secret[EVP_MAX_MD_SIZE] = { 0 };
+    int ret = 0;
+
+    ctx = SSL_CTX_new(TLS_method());
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    ssl = SSL_new(ctx);
+    if (!TEST_ptr(ssl))
+        goto err;
+
+    s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    if (!TEST_ptr(s))
+        goto err;
+
+    memset(s->early_secret, 0xA5, sizeof(s->early_secret));
+    memset(s->handshake_secret, 0xA5, sizeof(s->handshake_secret));
+    memset(s->master_secret, 0xA5, sizeof(s->master_secret));
+    memset(s->resumption_master_secret, 0xA5,
+           sizeof(s->resumption_master_secret));
+    memset(s->client_finished_secret, 0xA5,
+           sizeof(s->client_finished_secret));
+    memset(s->server_finished_secret, 0xA5,
+           sizeof(s->server_finished_secret));
+    memset(s->server_finished_hash, 0xA5,
+           sizeof(s->server_finished_hash));
+    memset(s->handshake_traffic_hash, 0xA5,
+           sizeof(s->handshake_traffic_hash));
+    memset(s->client_app_traffic_secret, 0xA5,
+           sizeof(s->client_app_traffic_secret));
+    memset(s->server_app_traffic_secret, 0xA5,
+           sizeof(s->server_app_traffic_secret));
+    memset(s->exporter_master_secret, 0xA5,
+           sizeof(s->exporter_master_secret));
+    memset(s->early_exporter_master_secret, 0xA5,
+           sizeof(s->early_exporter_master_secret));
+
+    if (!TEST_true(SSL_clear(ssl)))
+        goto err;
+
+    if (!TEST_mem_eq(s->early_secret, sizeof(s->early_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->handshake_secret, sizeof(s->handshake_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->master_secret, sizeof(s->master_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->resumption_master_secret,
+                     sizeof(s->resumption_master_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->client_finished_secret,
+                     sizeof(s->client_finished_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->server_finished_secret,
+                     sizeof(s->server_finished_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->server_finished_hash,
+                     sizeof(s->server_finished_hash),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->handshake_traffic_hash,
+                     sizeof(s->handshake_traffic_hash),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->client_app_traffic_secret,
+                     sizeof(s->client_app_traffic_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->server_app_traffic_secret,
+                     sizeof(s->server_app_traffic_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->exporter_master_secret,
+                     sizeof(s->exporter_master_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+    if (!TEST_mem_eq(s->early_exporter_master_secret,
+                     sizeof(s->early_exporter_master_secret),
+                     zero_secret, sizeof(zero_secret)))
+        goto err;
+
+    ret = 1;
+
+ err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return ret;
+}
+
 /*
  * Known-answer test for dtls13_transcript_hash_update (RFC 9147 §5.2).
  * Wraps the helper with EVP_DigestInit/Final to verify the stripped hash
@@ -535,6 +634,7 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(test_handshake_secrets);
+    ADD_TEST(test_tls13_secret_clear);
     ADD_TEST(test_dtls13_transcript_hash);
     return 1;
 }
