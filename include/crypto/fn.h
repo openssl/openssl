@@ -1724,12 +1724,14 @@ size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  *                              instances from.
  * @returns             1 on success, 0 on error
  *
- * @note This function requires that @p r, @p a, and @p mont->N are of
- * the same size.  @p a need not be fully reduced modulo @p mont->N; any
- * value that fits that limb width (sometimes called "almost reduced")
- * is accepted.  The result is fully reduced.  @p ctx must have free
- * space for one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one
- * frame.
+ * @note This function requires that @p r and @p mont->N are of the same
+ * size.  @p a may be the same size, in which case it need not be fully
+ * reduced modulo @p mont->N; any value that fits that limb width (sometimes
+ * called "almost reduced") is accepted.  @p a may also be up to twice that
+ * size, provided its value is less than @p mont->N * R.  The result is fully
+ * reduced.  @p ctx must have free space for one temporary OSSL_FN with
+ * mont->N->dsize+2 limbs, or 2*mont->N->dsize limbs if @p a is wider than
+ * @p mont->N, plus one frame.
  */
 int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
