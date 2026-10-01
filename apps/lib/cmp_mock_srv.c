@@ -274,8 +274,11 @@ static int refcert_cmp(const X509 *refcert,
         return 1;
     ref_issuer = X509_get_issuer_name(refcert);
     ref_serial = X509_get0_serialNumber(refcert);
-    return (ref_issuer == NULL || X509_NAME_cmp(issuer, ref_issuer) == 0)
-        && (ref_serial == NULL || ASN1_INTEGER_cmp(serial, ref_serial) == 0);
+    if (ref_issuer != NULL
+        && (issuer == NULL || X509_NAME_cmp(issuer, ref_issuer) != 0))
+        return 0;
+    return ref_serial == NULL
+        || (serial != NULL && ASN1_INTEGER_cmp(serial, ref_serial) == 0);
 }
 
 /* reset the state that belongs to a transaction */
