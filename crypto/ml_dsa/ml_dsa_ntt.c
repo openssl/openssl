@@ -21,12 +21,12 @@ void ml_dsa_poly_ntt_mult_avx2(const uint32_t *a, const uint32_t *b, uint32_t *o
 #endif
 
 #if defined(OPENSSL_ML_DSA_AARCH64)
-# include "arch/arm_arch.h"
+#include "arch/arm_arch.h"
 
 void ossl_ml_dsa_poly_ntt_armv8(uint32_t *p_coeff,
-                                const uint32_t *p_zetas);
+    const uint32_t *p_zetas);
 void ossl_ml_dsa_poly_ntt_inverse_armv8(uint32_t *p_coeff,
-                                        const uint32_t *p_zetas);
+    const uint32_t *p_zetas);
 #endif
 
 /*
