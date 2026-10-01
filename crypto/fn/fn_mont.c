@@ -264,6 +264,15 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx)
     return ret;
 }
 
+const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont)
+{
+    if (ossl_unlikely(mont == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    return mont->N;
+}
+
 /*
  * Arena payload size needed by OSSL_FN_mul_mont_quick().
  *
@@ -548,6 +557,39 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
         return 0;
     }
     return OSSL_FN_mul_mont(r, a, mont->RR, mont, ctx);
+}
+
+/*
+ * Arena payload size needed by OSSL_FN_to_mont_quick().
+ *
+ * Constant-time profile:
+ *   - This function is constant-time; it depends on the public modulus
+ *     width only.
+ */
+size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont)
+{
+    return OSSL_FN_mul_mont_quick_ctx_size(r, a, NULL, mont);
+}
+
+/*
+ * Convert a into Montgomery form: r = a * R mod N, as
+ * OSSL_FN_mul_mont_quick(a, RR).  r and a must have the width of N, and a
+ * must be less than N.
+ *
+ * Constant-time profile:
+ *   - What leaks: only public widths.  Unlike OSSL_FN_to_mont() there is no
+ *     canonicalisation test on a; the profile is that of
+ *     OSSL_FN_mul_mont_quick().
+ */
+int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx)
+{
+    if (ossl_unlikely(r == NULL || a == NULL || mont == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return OSSL_FN_mul_mont_quick(r, a, mont->RR, mont, ctx);
 }
 
 /*

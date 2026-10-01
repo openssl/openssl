@@ -205,6 +205,76 @@ err:
 }
 
 /*
+ * Montgomery arithmetic as used for constant-time modular multiplication:
+ * mul_mont_quick(to_mont_quick(a), b) gives a * b mod m directly, and
+ * from_mont undoes to_mont_quick.
+ */
+static int test_mont_ops(int idx)
+{
+    size_t mi = idx / OSSL_NELEM(pairs), pi = idx % OSSL_NELEM(pairs);
+    BN_CTX *bnctx = BN_CTX_new();
+    BIGNUM *m = NULL, *a = BN_new(), *b = BN_new(), *e = BN_new();
+    OSSL_FN *fm = NULL, *fa = NULL, *fb = NULL, *am = NULL, *r = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t len = 0, limbs = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(bnctx) || !TEST_ptr(a) || !TEST_ptr(b) || !TEST_ptr(e)
+        || !TEST_true(BN_hex2bn(&m, moduli[mi]))
+        || !TEST_true(set_operand(a, m, pairs[pi].a, bnctx))
+        || !TEST_true(set_operand(b, m, pairs[pi].b, bnctx)))
+        goto err;
+
+    len = (size_t)BN_num_bytes(m);
+    limbs = (len + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    if (!TEST_ptr(fm = fn_from_bn(m, limbs, len))
+        || !TEST_ptr(fa = fn_from_bn(a, limbs, len))
+        || !TEST_ptr(fb = fn_from_bn(b, limbs, len))
+        || !TEST_ptr(am = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm))
+        || !TEST_ptr(OSSL_FN_MONT_CTX_get0_modulus(mont))
+        || !TEST_int_eq(OSSL_FN_MONT_CTX_get0_modulus(mont)->dsize, (int)limbs)
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         OSSL_FN_mul_mont_quick_ctx_size(r, am, fb, mont))))
+        goto err;
+
+    fn_secret(fa, limbs);
+    fn_secret(fb, limbs);
+
+    if (!TEST_true(OSSL_FN_to_mont_quick(am, fa, mont, ctx))
+        || !TEST_true(OSSL_FN_mul_mont_quick(r, am, fb, mont, ctx))
+        || !TEST_true(BN_mod_mul(e, a, b, m, bnctx))
+        || !check("to_mont_quick + mul_mont_quick", r, limbs, e, len))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_from_mont(r, am, mont, ctx))
+        || !check("from_mont(to_mont_quick)", r, limbs, a, len))
+        goto err;
+
+    ret = 1;
+err:
+    if (fa != NULL)
+        fn_declassify(fa, limbs);
+    if (fb != NULL)
+        fn_declassify(fb, limbs);
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_free(am);
+    OSSL_FN_free(r);
+    BN_free(m);
+    BN_free(a);
+    BN_free(b);
+    BN_free(e);
+    BN_CTX_free(bnctx);
+    return ret;
+}
+
+/*
  * Exponent widths in limbs.  They select fixed windows of 3, 4 and 5 bits:
  * window 3 uses the one-mask-per-entry gather and windows 4 and 5 the
  * four-way split one in mod_exp_ctime_copy_from_prebuf().
@@ -274,6 +344,7 @@ err:
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_quick_ops, (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
+    ADD_ALL_TESTS(test_mont_ops, (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
     ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(exp_limbs));
     return 1;
 }
