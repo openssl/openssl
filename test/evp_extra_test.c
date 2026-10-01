@@ -3562,6 +3562,31 @@ done:
     return ret;
 }
 
+static int test_EVP_PKEY_null_guards(void)
+{
+    unsigned char *out = NULL;
+    size_t outlen = 0;
+
+    if (!TEST_int_eq(EVP_PKEY_check(NULL), -1)
+        || !TEST_int_eq(EVP_PKEY_public_check(NULL), -1)
+        || !TEST_int_eq(EVP_PKEY_public_check_quick(NULL), -1)
+        || !TEST_int_eq(EVP_PKEY_param_check(NULL), -1)
+        || !TEST_int_eq(EVP_PKEY_param_check_quick(NULL), -1)
+        || !TEST_int_eq(EVP_PKEY_private_check(NULL), -1)
+        || !TEST_int_eq(EVP_PKEY_pairwise_check(NULL), -1)
+        || !TEST_ptr_null(EVP_PKEY_CTX_dup(NULL))
+        || !TEST_int_eq(EVP_PKEY_up_ref(NULL), 0)
+        || !TEST_int_eq(EVP_PKEY_derive_set_peer_ex(NULL, NULL, 0), -1)
+        || !TEST_int_eq(EVP_PKEY_encapsulate(NULL, NULL, NULL, NULL, NULL), 0)
+        || !TEST_int_eq(EVP_PKEY_decapsulate(NULL, NULL, NULL, NULL, 0), 0)
+        || !TEST_int_eq(evp_pkey_decrypt_alloc(NULL, NULL, NULL, 0, NULL, 0), -1)
+        || !TEST_int_eq(evp_pkey_decrypt_alloc(NULL, &out, NULL, 0, NULL, 0), -1)
+        || !TEST_int_eq(evp_pkey_decrypt_alloc(NULL, NULL, &outlen, 0, NULL, 0), -1))
+        return 0;
+
+    return 1;
+}
+
 #ifndef OPENSSL_NO_CMAC
 static int get_cmac_val(EVP_PKEY *pkey, unsigned char *mac)
 {
@@ -9874,6 +9899,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
     ADD_MFAIL_ALL_TESTS(test_set_get_raw_keys_mfail, OSSL_NELEM(keys));
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
+    ADD_TEST(test_EVP_PKEY_null_guards);
 #ifndef OPENSSL_NO_CMAC
     ADD_TEST(test_CMAC_keygen);
 #endif

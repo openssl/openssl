@@ -228,8 +228,10 @@ err:
 int EVP_PKEY_auth_encapsulate_init(EVP_PKEY_CTX *ctx, EVP_PKEY *authpriv,
     const OSSL_PARAM params[])
 {
-    if (authpriv == NULL)
+    if (authpriv == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
     return evp_kem_init(ctx, EVP_PKEY_OP_ENCAPSULATE, params, authpriv);
 }
 
@@ -242,8 +244,10 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
     unsigned char *out, size_t *outlen,
     unsigned char *secret, size_t *secretlen)
 {
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     if (ctx->operation != EVP_PKEY_OP_ENCAPSULATE) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
@@ -270,8 +274,10 @@ int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 int EVP_PKEY_auth_decapsulate_init(EVP_PKEY_CTX *ctx, EVP_PKEY *authpub,
     const OSSL_PARAM params[])
 {
-    if (authpub == NULL)
+    if (authpub == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
     return evp_kem_init(ctx, EVP_PKEY_OP_DECAPSULATE, params, authpub);
 }
 
@@ -279,8 +285,12 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
     unsigned char *secret, size_t *secretlen,
     const unsigned char *in, size_t inlen)
 {
-    if (ctx == NULL
-        || (in == NULL || inlen == 0)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if ((in == NULL || inlen == 0)
         || (secret == NULL && secretlen == NULL))
         return 0;
 
@@ -293,6 +303,13 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
+
+    if (ctx->op.encap.kem == NULL
+            || ctx->op.encap.kem->decapsulate == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
     return ctx->op.encap.kem->decapsulate(ctx->op.encap.algctx,
         secret, secretlen, in, inlen);
 }

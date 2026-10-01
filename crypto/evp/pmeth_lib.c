@@ -270,6 +270,11 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 {
     EVP_PKEY_CTX *rctx;
 
+    if (pctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
     rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL)
         return NULL;

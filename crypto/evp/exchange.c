@@ -390,7 +390,7 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
     EVP_PKEY_CTX *check_ctx = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL, *tmp_keymgmt_tofree = NULL;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || peer == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
@@ -400,7 +400,8 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
         return -2;
     }
 
-    if (ctx->op.kex.exchange->set_peer == NULL) {
+    if (ctx->op.kex.exchange == NULL
+            || ctx->op.kex.exchange->set_peer == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
