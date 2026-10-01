@@ -663,6 +663,7 @@ void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx)
         sk_OSSL_DECODER_INSTANCE_pop_free(ctx->decoder_insts,
             ossl_decoder_instance_free);
         ossl_pw_clear_passphrase_data(&ctx->pwdata);
+        ossl_decoder_cache_entry_free(ctx->cache_entry);
         OPENSSL_free(ctx);
     }
 }

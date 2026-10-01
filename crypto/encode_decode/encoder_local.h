@@ -120,9 +120,12 @@ struct ossl_decoder_instance_st {
     int score; /* For ordering decoders wrt proqs */
 
     unsigned int flag_input_structure_was_set : 1;
+    unsigned int flag_decoder_borrowed : 1;
 };
 
 DEFINE_STACK_OF(OSSL_DECODER_INSTANCE)
+
+struct decoder_cache_entry_st;
 
 struct ossl_decoder_ctx_st {
     /*
@@ -157,6 +160,9 @@ struct ossl_decoder_ctx_st {
      */
     STACK_OF(OSSL_DECODER_INSTANCE) *decoder_insts;
 
+    /* Keeps the immutable template's methods alive for a cloned context. */
+    struct decoder_cache_entry_st *cache_entry;
+
     /*
      * The constructors of a decoding, and its caller argument.
      */
@@ -181,5 +187,7 @@ ossl_encoder_parsed_properties(const OSSL_ENCODER *encoder);
 
 int ossl_decoder_fast_is_a(OSSL_DECODER *decoder,
     const char *name, int *id_cache);
+
+void ossl_decoder_cache_entry_free(struct decoder_cache_entry_st *entry);
 
 #endif /* !defined(OSSL_LIBCRYPTO_ENCODE_DECODE_ENCODER_LOCAL_H) */

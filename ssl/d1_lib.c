@@ -134,7 +134,7 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     s->d1->has_change_cipher_spec = 0;
 }
 
-void ossl_list_record_number_elem_free(OSSL_LIST(record_number) * p_list)
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list)
 {
     DTLS1_RECORD_NUMBER *p_elem;
     DTLS1_RECORD_NUMBER *p_elem_next = NULL;

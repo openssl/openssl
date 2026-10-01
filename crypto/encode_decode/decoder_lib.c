@@ -323,13 +323,15 @@ void ossl_decoder_instance_free(OSSL_DECODER_INSTANCE *decoder_inst)
         if (decoder_inst->decoder != NULL)
             decoder_inst->decoder->freectx(decoder_inst->decoderctx);
         decoder_inst->decoderctx = NULL;
-        OSSL_DECODER_free(decoder_inst->decoder);
+        if (!decoder_inst->flag_decoder_borrowed)
+            OSSL_DECODER_free(decoder_inst->decoder);
         decoder_inst->decoder = NULL;
         OPENSSL_free(decoder_inst);
     }
 }
 
-OSSL_DECODER_INSTANCE *ossl_decoder_instance_dup(const OSSL_DECODER_INSTANCE *src)
+/* The caller must retain the cache entry that owns src->decoder. */
+OSSL_DECODER_INSTANCE *ossl_decoder_instance_dup_borrowed(const OSSL_DECODER_INSTANCE *src)
 {
     OSSL_DECODER_INSTANCE *dest;
     const OSSL_PROVIDER *prov;
@@ -339,17 +341,13 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_dup(const OSSL_DECODER_INSTANCE *sr
         return NULL;
 
     *dest = *src;
-    if (!OSSL_DECODER_up_ref(dest->decoder)) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
+    dest->flag_decoder_borrowed = 1;
     prov = OSSL_DECODER_get0_provider(dest->decoder);
     provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     dest->decoderctx = dest->decoder->newctx(provctx);
     if (dest->decoderctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR);
-        OSSL_DECODER_free(dest->decoder);
         goto err;
     }
 

@@ -66,6 +66,8 @@ struct decoder_pkey_data_st {
     char *object_type; /* recorded object data type, may be NULL */
     void **object; /* Where the result should end up */
     OSSL_DECODER_CTX *ctx; /* The parent decoder context */
+    /* propq and keymgmts belong to the retained cache entry's template. */
+    unsigned int borrowed : 1;
 };
 
 static int decoder_construct_pkey(OSSL_DECODER_INSTANCE *decoder_inst,
@@ -206,8 +208,10 @@ static void decoder_clean_pkey_construct_arg(void *construct_data)
     struct decoder_pkey_data_st *data = construct_data;
 
     if (data != NULL) {
-        sk_EVP_KEYMGMT_pop_free(data->keymgmts, EVP_KEYMGMT_free);
-        OPENSSL_free(data->propq);
+        if (!data->borrowed) {
+            sk_EVP_KEYMGMT_pop_free(data->keymgmts, EVP_KEYMGMT_free);
+            OPENSSL_free(data->propq);
+        }
         OPENSSL_free(data->object_type);
         OPENSSL_free(data);
     }
@@ -565,37 +569,45 @@ err:
     return ok;
 }
 
-/* Only const here because deep_copy requires it */
-static EVP_KEYMGMT *keymgmt_dup(const EVP_KEYMGMT *keymgmt)
-{
-    if (!EVP_KEYMGMT_up_ref((EVP_KEYMGMT *)keymgmt))
-        return NULL;
-
-    return (EVP_KEYMGMT *)keymgmt;
-}
+typedef struct decoder_cache_entry_st {
+    char *input_type;
+    char *input_structure;
+    char *keytype;
+    int selection;
+    char *propquery;
+    OSSL_DECODER_CTX *template;
+    CRYPTO_REF_COUNT refcnt;
+} DECODER_CACHE_ENTRY;
 
 /*
  * Duplicates a template OSSL_DECODER_CTX that has been setup for an EVP_PKEY
  * operation and sets up the duplicate for a new operation.
  * It does not duplicate the pwdata on the assumption that this does not form
  * part of the template. That is set up later.
+ * Each duplicate retains the cache entry, allowing it to borrow the template's
+ * immutable method lists even after that entry is removed from the cache.
  */
 static OSSL_DECODER_CTX *
-ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
+ossl_decoder_ctx_for_pkey_dup(DECODER_CACHE_ENTRY *entry,
     EVP_PKEY **pkey,
     const char *input_type,
     const char *input_structure)
 {
-    OSSL_DECODER_CTX *dest;
+    OSSL_DECODER_CTX *dest, *src = entry->template;
     struct decoder_pkey_data_st *process_data_src, *process_data_dest = NULL;
-
-    if (src == NULL)
-        return NULL;
+    int ref;
 
     if ((dest = OSSL_DECODER_CTX_new()) == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
         return NULL;
     }
+
+    /* The cache lock protects entry until this reference is acquired. */
+    if (!CRYPTO_UP_REF(&entry->refcnt, &ref)) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    dest->cache_entry = entry;
 
     if (!OSSL_DECODER_CTX_set_input_type(dest, input_type)
         || !OSSL_DECODER_CTX_set_input_structure(dest, input_structure)) {
@@ -607,7 +619,7 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
     if (src->decoder_insts != NULL) {
         dest->decoder_insts
             = sk_OSSL_DECODER_INSTANCE_deep_copy(src->decoder_insts,
-                ossl_decoder_instance_dup,
+                ossl_decoder_instance_dup_borrowed,
                 ossl_decoder_instance_free);
         if (dest->decoder_insts == NULL) {
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
@@ -628,24 +640,9 @@ ossl_decoder_ctx_for_pkey_dup(OSSL_DECODER_CTX *src,
             ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
             goto err;
         }
-        if (process_data_src->propq != NULL) {
-            process_data_dest->propq = OPENSSL_strdup(process_data_src->propq);
-            if (process_data_dest->propq == NULL) {
-                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
-                goto err;
-            }
-        }
-
-        if (process_data_src->keymgmts != NULL) {
-            process_data_dest->keymgmts
-                = sk_EVP_KEYMGMT_deep_copy(process_data_src->keymgmts,
-                    keymgmt_dup,
-                    EVP_KEYMGMT_free);
-            if (process_data_dest->keymgmts == NULL) {
-                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_EVP_LIB);
-                goto err;
-            }
-        }
+        process_data_dest->borrowed = 1;
+        process_data_dest->propq = process_data_src->propq;
+        process_data_dest->keymgmts = process_data_src->keymgmts;
 
         process_data_dest->object = (void **)pkey;
         process_data_dest->libctx = process_data_src->libctx;
@@ -672,15 +669,6 @@ err:
     return NULL;
 }
 
-typedef struct {
-    char *input_type;
-    char *input_structure;
-    char *keytype;
-    int selection;
-    char *propquery;
-    OSSL_DECODER_CTX *template;
-} DECODER_CACHE_ENTRY;
-
 DEFINE_LHASH_OF_EX(DECODER_CACHE_ENTRY);
 
 typedef struct {
@@ -688,15 +676,23 @@ typedef struct {
     LHASH_OF(DECODER_CACHE_ENTRY) *hashtable;
 } DECODER_CACHE;
 
-static void decoder_cache_entry_free(DECODER_CACHE_ENTRY *entry)
+void ossl_decoder_cache_entry_free(DECODER_CACHE_ENTRY *entry)
 {
+    int ref;
+
     if (entry == NULL)
         return;
+    CRYPTO_DOWN_REF(&entry->refcnt, &ref);
+    if (ref > 0)
+        return;
+    REF_ASSERT_ISNT(ref < 0);
+
     OPENSSL_free(entry->input_type);
     OPENSSL_free(entry->input_structure);
     OPENSSL_free(entry->keytype);
     OPENSSL_free(entry->propquery);
     OSSL_DECODER_CTX_free(entry->template);
+    CRYPTO_FREE_REF(&entry->refcnt);
     OPENSSL_free(entry);
 }
 
@@ -797,7 +793,7 @@ void ossl_decoder_cache_free(void *vcache)
 {
     DECODER_CACHE *cache = (DECODER_CACHE *)vcache;
 
-    lh_DECODER_CACHE_ENTRY_doall(cache->hashtable, decoder_cache_entry_free);
+    lh_DECODER_CACHE_ENTRY_doall(cache->hashtable, ossl_decoder_cache_entry_free);
     lh_DECODER_CACHE_ENTRY_free(cache->hashtable);
     CRYPTO_THREAD_lock_free(cache->lock);
     OPENSSL_free(cache);
@@ -820,7 +816,7 @@ int ossl_decoder_cache_flush(OSSL_LIB_CTX *libctx)
         return 0;
     }
 
-    lh_DECODER_CACHE_ENTRY_doall(cache->hashtable, decoder_cache_entry_free);
+    lh_DECODER_CACHE_ENTRY_doall(cache->hashtable, ossl_decoder_cache_entry_free);
     lh_DECODER_CACHE_ENTRY_flush(cache->hashtable);
 
     CRYPTO_THREAD_unlock(cache->lock);
@@ -919,6 +915,11 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
             OSSL_DECODER_CTX_free(ctx);
             return NULL;
         }
+        if (!CRYPTO_NEW_REF(&newcache->refcnt, 1)) {
+            OPENSSL_free(newcache);
+            OSSL_DECODER_CTX_free(ctx);
+            return NULL;
+        }
 
         if (input_type != NULL) {
             newcache->input_type = OPENSSL_strdup(input_type);
@@ -957,24 +958,22 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
                 ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
                 goto err;
             }
+            res = newcache;
         } else {
             /*
              * We raced with another thread to construct this and lost. Free
              * what we just created and use the entry from the hashtable instead
              */
-            decoder_cache_entry_free(newcache);
-            ctx = res->template;
+            ossl_decoder_cache_entry_free(newcache);
         }
-    } else {
-        ctx = res->template;
     }
 
-    ctx = ossl_decoder_ctx_for_pkey_dup(ctx, pkey, input_type, input_structure);
+    ctx = ossl_decoder_ctx_for_pkey_dup(res, pkey, input_type, input_structure);
     CRYPTO_THREAD_unlock(cache->lock);
 
     return ctx;
 err:
-    decoder_cache_entry_free(newcache);
+    ossl_decoder_cache_entry_free(newcache);
     OSSL_DECODER_CTX_free(ctx);
     return NULL;
 }
