@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -40,6 +40,8 @@ sub test_ocsp {
     my $opt_untrusted = shift // "-verify_other";
     my $certfile = shift;
     my $outputfile = basename($inputfile, '.ors') . '.dat';
+    my %appopts = defined($certfile)
+        ? (stdout => "$outputfile.out", stderr => "$outputfile.err") : ();
 
     run(app(["openssl", "base64", "-d",
              "-in", catfile($ocspdir,$inputfile),
@@ -56,8 +58,17 @@ sub test_ocsp {
                            "-CAfile", catfile($ocspdir, $CAfile),
                            @certopt,
                            "-no-CApath", "-no-CAstore",
-                           $nochecks ? "-no_cert_checks" : ()])),
+                           $nochecks ? "-no_cert_checks" : ()], %appopts)),
                   $title); });
+
+    return unless defined($certfile);
+    my $output = '';
+    foreach my $suffix (qw(out err)) {
+        open my $fh, '<', "$outputfile.$suffix"
+            or die "Cannot open $outputfile.$suffix: $!";
+        $output .= join('', <$fh>);
+    }
+    return $output;
 }
 
 plan tests => 16;
@@ -82,11 +93,13 @@ subtest "=== VALID OCSP RESPONSES ===" => sub {
 };
 
 subtest "=== INVALID OCSP RESPONSE TIMES ===" => sub {
-    plan tests => 1;
+    plan tests => 3;
 
-    test_ocsp("NON-DELEGATED; expired response",
-              "ND1.ors", "ND1_Issuer_ICA.pem", "", 1, 0, undef,
-              "ND1_Cert_EE.pem");
+    my $output = test_ocsp("NON-DELEGATED; expired response",
+                          "ND1.ors", "ND1_Issuer_ICA.pem", "", 1, 0, undef,
+                          "ND1_Cert_EE.pem");
+    like($output, qr/Response verify OK/, "response signature verified");
+    like($output, qr/status expired/, "response status expired");
 };
 
 subtest "=== INVALID SIGNATURE on the OCSP RESPONSE ===" => sub {
