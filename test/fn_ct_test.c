@@ -10,7 +10,8 @@
 /*
  * Functional and constant-time tests for the OSSL_FN "quick" modular
  * helpers, which the constant-time EC point arithmetic applies to secret
- * coordinates.  Only the widths and the modulus are public.
+ * coordinates, and for OSSL_FN_mod_exp_mont() with a secret exponent.  Only
+ * the widths and the modulus are public.
  *
  * When built with enable-ct-validation, CONSTTIME_SECRET marks the operands
  * as undefined for Valgrind's memcheck, so any branch or memory index derived
@@ -203,8 +204,76 @@ err:
     return ret;
 }
 
+/*
+ * Exponent widths in limbs.  They select fixed windows of 3, 4 and 5 bits:
+ * window 3 uses the one-mask-per-entry gather and windows 4 and 5 the
+ * four-way split one in mod_exp_ctime_copy_from_prebuf().
+ */
+static const size_t exp_limbs[] = { 1, 4, 6 };
+
+static int test_mod_exp(int idx)
+{
+    BN_CTX *bnctx = BN_CTX_new();
+    BIGNUM *m = NULL, *a = BN_new(), *p = BN_new(), *e = BN_new();
+    OSSL_FN *fm = NULL, *fa = NULL, *fp = NULL, *r = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    unsigned char pbuf[6 * OSSL_FN_BYTES];
+    size_t len = 0, limbs = 0, plen = exp_limbs[idx] * OSSL_FN_BYTES, i;
+    int ret = 0, secret = 0;
+
+    /*
+     * Constants chosen so that every table index occurs in the exponent, for
+     * each exponent width and for both 32-bit and 64-bit limbs
+     */
+    for (i = 0; i < plen; i++)
+        pbuf[i] = (unsigned char)(i * 0x2f + 0x18);
+
+    if (!TEST_ptr(bnctx) || !TEST_ptr(a) || !TEST_ptr(p) || !TEST_ptr(e)
+        || !TEST_true(BN_hex2bn(&m, moduli[0]))
+        || !TEST_true(set_operand(a, m, OP_PATTERN, bnctx))
+        || !TEST_ptr(BN_bin2bn(pbuf, (int)plen, p)))
+        goto err;
+
+    len = (size_t)BN_num_bytes(m);
+    limbs = (len + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    if (!TEST_ptr(fm = fn_from_bn(m, limbs, len))
+        || !TEST_ptr(fa = fn_from_bn(a, limbs, len))
+        || !TEST_ptr(fp = fn_from_bn(p, exp_limbs[idx], plen))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, NULL))))
+        goto err;
+
+    fn_secret(fp, exp_limbs[idx]);
+    secret = 1;
+
+    if (!TEST_true(OSSL_FN_mod_exp_mont(r, fa, fp, fm, ctx, NULL))
+        || !TEST_true(BN_mod_exp(e, a, p, m, bnctx))
+        || !check("mod_exp_mont", r, limbs, e, len)) {
+        TEST_info("exponent limbs = %zu", exp_limbs[idx]);
+        goto err;
+    }
+
+    ret = 1;
+err:
+    if (secret)
+        fn_declassify(fp, exp_limbs[idx]);
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(r);
+    BN_free(m);
+    BN_free(a);
+    BN_free(p);
+    BN_free(e);
+    BN_CTX_free(bnctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_quick_ops, (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
+    ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(exp_limbs));
     return 1;
 }
