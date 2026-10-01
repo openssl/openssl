@@ -849,6 +849,7 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     OSSL_FN *sp = NULL, *sq = NULL;
     OSSL_FN *f_n = NULL, *f_p = NULL, *f_q = NULL;
     OSSL_FN *f_dmp1 = NULL, *f_dmq1 = NULL, *f_iqmp = NULL, *f_d = NULL;
+    OSSL_FN *f_I = NULL;
     OSSL_FN_MONT_CTX *mont_p = NULL, *mont_q = NULL, *mont_n = NULL;
     const void *token = NULL;
     size_t nl, pl, ql;
@@ -916,10 +917,12 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     f_iqmp = OSSL_FN_CTX_get_limbs(ctx, pl);
     if (fn_d != NULL)
         f_d = OSSL_FN_CTX_get_limbs(ctx, nl);
+    f_I = OSSL_FN_CTX_get_limbs(ctx, nl);
     if (r1 == NULL || m1 == NULL || vrfy == NULL || t == NULL
         || sp == NULL || sq == NULL || f_n == NULL || f_p == NULL
         || f_q == NULL || f_dmp1 == NULL || f_dmq1 == NULL
-        || f_iqmp == NULL || (fn_d != NULL && f_d == NULL))
+        || f_iqmp == NULL || (fn_d != NULL && f_d == NULL)
+        || f_I == NULL)
         goto err;
     if (!OSSL_FN_copy_truncate(f_n, fn_n)
         || !OSSL_FN_copy_truncate(f_p, fn_p)
@@ -929,6 +932,20 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
         || !OSSL_FN_copy_truncate(f_iqmp, fn_iqmp)
         || (fn_d != NULL && !OSSL_FN_copy_truncate(f_d, fn_d)))
         goto err;
+
+    /*
+     * The code below needs I < n at n's width.  Our own callers ensure
+     * that, but a direct caller of the method's rsa_mod_exp may pass any
+     * value at any allocation.  The range check is constant time; the
+     * division by n that follows for an I >= n is not, but constant time
+     * is not guaranteed for such an input anyway.
+     */
+    if (OSSL_FN_cmp(I, f_n) < 0) {
+        if (OSSL_FN_copy_truncate(f_I, I) == NULL)
+            goto err;
+    } else if (!OSSL_FN_mod(f_I, I, f_n, ctx)) {
+        goto err;
+    }
 
     if (rsa->flags & RSA_FLAG_CACHE_PRIVATE) {
         mont_p = OSSL_FN_MONT_CTX_set_locked(&rsa->_method_mod_fn_p,
@@ -971,12 +988,15 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
          * The strict-width Montgomery operations cannot take the
          * full-width input I directly, so it is first reduced into the
          * prime-width scratch (sq / sp); the exponentiation engine
-         * takes a normal-domain base and converts it internally.
+         * takes a normal-domain base and converts it internally.  The
+         * reduction is by Montgomery reductions, not division, which
+         * would leak the secret primes: I < n < q * R, and n is no wider
+         * than p and q together.
          */
         if (/* sq = I mod q (reduce the full-width I into q's width) */
-            !OSSL_FN_mod(sq, I, f_q, ctx)
+            !OSSL_FN_mont_reduce(sq, f_I, mont_q, ctx)
             /* sp = I mod p, likewise */
-            || !OSSL_FN_mod(sp, I, f_p, ctx)
+            || !OSSL_FN_mont_reduce(sp, f_I, mont_p, ctx)
             /*
              * Two sequential exponentiations:
              *    m1 = sq^dmq1 mod q
@@ -995,10 +1015,12 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
 
             /*
              * r1 = sp * iqmp mod p.  mul_mont with a Montgomery-domain
-             * and a plain operand yields a plain result.
+             * and a plain operand yields a plain result.  The quick
+             * variants test neither operand: sp < p, and iqmp only has to
+             * fit p's width for the product to come out reduced.
              */
-            || !OSSL_FN_to_mont(sp, sp, mont_p, ctx)
-            || !OSSL_FN_mul_mont(sp, sp, f_iqmp, mont_p, ctx)
+            || !OSSL_FN_to_mont_quick(sp, sp, mont_p, ctx)
+            || !OSSL_FN_mul_mont_quick(sp, sp, f_iqmp, mont_p, ctx)
             /*
              * r0 = r1 * q + m1.  Widen the p-wide r1 and q-wide m1 into
              * the full-width result.  t holds the full-width product,
@@ -1015,12 +1037,12 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     }
 
     /* m1 = I^dmq1 mod q */
-    if (!OSSL_FN_mod(m1, I, f_q, ctx)
+    if (!OSSL_FN_mod(m1, f_I, f_q, ctx)
         || !rsa->meth->ossl_fn_mod_exp(m1, m1, f_dmq1, f_q, ctx, mont_q))
         goto err;
 
     /* r1 = I^dmp1 mod p */
-    if (!OSSL_FN_mod(r1, I, f_p, ctx)
+    if (!OSSL_FN_mod(r1, f_I, f_p, ctx)
         || !rsa->meth->ossl_fn_mod_exp(r1, r1, f_dmp1, f_p, ctx, mont_p))
         goto err;
 
@@ -1052,7 +1074,7 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
             goto err;
 
         /* m1 = I^d_i mod r_i */
-        if (!OSSL_FN_mod(m1, I, fn_r, ctx)
+        if (!OSSL_FN_mod(m1, f_I, fn_r, ctx)
             || !rsa->meth->ossl_fn_mod_exp(m1, m1, fn_di, fn_r, ctx,
                 pinfo->m_fn))
             goto err;
@@ -1083,7 +1105,7 @@ tail:
         if (!OSSL_FN_is_zero(vrfy)) {
             if (f_d == NULL)
                 goto err;
-            if (!rsa->meth->ossl_fn_mod_exp(r0, I, f_d, f_n, ctx, mont_n))
+            if (!rsa->meth->ossl_fn_mod_exp(r0, f_I, f_d, f_n, ctx, mont_n))
                 goto err;
         }
     }
@@ -1158,6 +1180,10 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
                 bn_get_ossl_fn(rsa->dmq1),
                 bn_get_ossl_fn(rsa->q), NULL)),
         OSSL_FN_CTX_size(8, 48, 24 * nl + 16));
+    /* Bringing I below n: f_I, and a reduction */
+    fn_size = ossl_fn_ctx_add_size(fn_size,
+        ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, nl),
+            OSSL_FN_mod_ctx_size(fn_n, fn_I, fn_n)));
     if (fn_size == 0)
         goto err;
 
