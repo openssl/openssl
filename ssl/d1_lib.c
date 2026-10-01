@@ -222,7 +222,8 @@ static int dtls1_wrl_has_other_owner(const OSSL_RECORD_LAYER *wrl,
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 {
     pitem *item = NULL;
-    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue remaining_sent_messages_buf = { NULL, 0 };
+    pqueue *remaining_sent_messages = &remaining_sent_messages_buf;
     pqueue *sent_messages = &s->d1->sent_messages;
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
@@ -257,8 +258,6 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
     if (SSL_CONNECTION_IS_DTLS13(s))
         while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
             pqueue_insert(&s->d1->sent_messages, item);
-
-    pqueue_free(remaining_sent_messages);
 }
 
 /*
@@ -272,7 +271,8 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
-    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue remaining_sent_messages_buf = { NULL, 0 };
+    pqueue *remaining_sent_messages = &remaining_sent_messages_buf;
     pqueue *sent_messages = &s->d1->sent_messages;
     int retired = 0;
 
@@ -300,7 +300,6 @@ static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
     while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
         pqueue_insert(sent_messages, item);
 
-    pqueue_free(remaining_sent_messages);
     return retired;
 }
 
