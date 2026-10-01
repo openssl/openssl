@@ -3012,6 +3012,164 @@ end:
 }
 
 /*
+ * rfc9147 section 7.1 lets the client ACK a CertificateRequest explicitly
+ * if it cannot produce its response right away, rather than only ever
+ * completing it implicitly by eventually answering with Certificate and
+ * Finished. If that explicit ACK happens before Finished arrives,
+ * dtls1_retire_sent_certificate_request_messages() finds nothing left to
+ * retire when Finished is later processed -- that must not stop a
+ * different, still-unacknowledged ticket from being preserved.
+ */
+static int test_dtls13_cert_req_explicit_ack_preserves_ticket(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    dtls_sent_msg *msg;
+    DTLS1_RECORD_NUMBER *recnum;
+    piterator iter;
+    pitem *item;
+    unsigned char buf[2048], ack[18];
+    WPACKET pkt;
+    uint64_t epoch, seqnum;
+    size_t acklen, written;
+    int ret, dropped, found, testresult = 0;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    /* Request PHA; this sends just the CertificateRequest. */
+    SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+
+    /*
+     * The client ACKs the CertificateRequest explicitly instead of
+     * answering it yet, modelling the rfc9147 7.1 case. Construct that
+     * ACK directly against the CertificateRequest's own record number,
+     * the same way test_dtls13_ack_coverage() constructs synthetic ACKs.
+     */
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    if (!TEST_ptr(item = pqueue_next(&iter)))
+        goto end;
+    msg = item->data;
+    if (!TEST_ptr(recnum = ossl_list_record_number_head(&msg->rec_nums)))
+        goto end;
+    epoch = recnum->epoch;
+    seqnum = recnum->seqnum;
+    if (!TEST_true(WPACKET_init_static_len(&pkt, ack, sizeof(ack), 2))
+        || !TEST_true(WPACKET_put_bytes_u64(&pkt, epoch))
+        || !TEST_true(WPACKET_put_bytes_u64(&pkt, seqnum))
+        || !TEST_true(WPACKET_finish(&pkt))
+        || !TEST_true(WPACKET_get_total_written(&pkt, &acklen))) {
+        WPACKET_cleanup(&pkt);
+        goto end;
+    }
+    WPACKET_cleanup(&pkt);
+    if (!TEST_int_eq(dtls1_write_bytes(cc, SSL3_RT_ACK, ack, acklen, &written), 1)
+        || !TEST_size_t_eq(written, acklen)
+        || !TEST_int_gt(BIO_flush(cc->wbio), 0))
+        goto end;
+
+    /*
+     * The server processes that explicit ACK. The CertificateRequest is
+     * now gone via ordinary ACK processing, not via the Finished-triggered
+     * retire exercised below.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0))
+        goto end;
+
+    /*
+     * The client, which never saw the explicit ACK above (it was
+     * constructed directly against the server's view of what it sent),
+     * still answers the CertificateRequest itself with Certificate and
+     * Finished. This must happen before the ticket below is sent and
+     * dropped: the CertificateRequest datagram is otherwise still
+     * sitting unread in the client's rbio, and draining the rbio for the
+     * ticket would discard it too, along with this response.
+     */
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Now send a ticket -- sequenced after the CertificateRequest -- and
+     * lose it before the client ever sees it. The client's response above
+     * is already sitting unprocessed in the server's rbio at this point.
+     */
+    if (!TEST_true(SSL_new_session_ticket(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+    dropped = 0;
+    while (BIO_read(SSL_get_rbio(client), buf, sizeof(buf)) > 0)
+        dropped++;
+    if (!TEST_int_gt(dropped, 0))
+        goto end;
+
+    /*
+     * The server processes the client's response, reaching
+     * TLS_ST_SR_FINISHED.
+     * dtls1_retire_sent_certificate_request_messages() finds nothing to
+     * retire here -- the CertificateRequest is already gone, from the
+     * explicit ACK above -- which must not stop the still-unacknowledged,
+     * unrelated ticket from being preserved.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+    found = 0;
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        msg = item->data;
+
+        if (msg->msg_info.msg_type == SSL3_MT_NEWSESSION_TICKET)
+            found++;
+    }
+    if (!TEST_int_eq(found, 1))
+        goto end;
+
+    /*
+     * Confirm the surviving entry is a genuinely live retransmit, not just
+     * an uncollected leftover: force it and let the client process it.
+     */
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_true(SSL_handle_events(server)))
+        goto end;
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(ticket_count, 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * The same protections apply symmetrically when the server is the one with
  * an outstanding KeyUpdate: its new write keys are not installed until its
  * own KeyUpdate is acknowledged (see the deferred-install logic in
@@ -3451,6 +3609,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_cert_req_preserves_flight);
     ADD_ALL_TESTS(test_dtls13_pha_keyupdate_shared_wrl, 2);
     ADD_TEST(test_dtls13_cert_req_finished_preserves_ticket);
+    ADD_TEST(test_dtls13_cert_req_explicit_ack_preserves_ticket);
     ADD_TEST(test_dtls13_server_keyupdate_preserves_ack);
     ADD_TEST(test_dtls13_server_keyupdate_preserves_pha);
     ADD_TEST(test_dtls13_server_keyupdate_preserves_pha_ticket);
