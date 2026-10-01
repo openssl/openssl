@@ -64,6 +64,19 @@ __owur int ossl_ec_group_do_inverse_ord_fn(const EC_GROUP *group, OSSL_FN *res,
     const OSSL_FN *a, OSSL_FN_CTX *ctx);
 
 /*-
+ * Computes res := a mod order in constant time, with Montgomery reductions
+ * rather than division, so that secret operands can be brought into the
+ * group's order Montgomery domain.  |res| must be as wide as the modulus of
+ * that context (group->fn_mont_ctx_ord, see OSSL_FN_MONT_CTX_get0_modulus()).
+ * ossl_ec_group_fn_reduce_ord_ctx_size() gives the arena it needs.
+ *
+ * Returns 1 on success, 0 on error.
+ */
+__owur int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
+    const BIGNUM *a, OSSL_FN_CTX *ctx);
+size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group);
+
+/*-
  * Computes  r := scalar * point,  or  r := scalar * generator  when @p point
  * is NULL, with a secret scalar.
  *
