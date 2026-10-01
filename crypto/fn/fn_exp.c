@@ -246,15 +246,18 @@ static size_t mod_exp_mont_nested(const OSSL_FN *a, const OSSL_FN *m,
         in_mont = &mont_model;
 
     /*
-     * to_mont / loop mul_mont_quick / from_mont, via their ctx_size
+     * Base conversion / loop mul_mont_quick / from_mont, via their ctx_size
      * companions in fn_mont.c; only one is live at a time, so take the max.
-     * to_mont() performs the initial reduction of a internally (via the
-     * reducing OSSL_FN_mul_mont), so no separate OSSL_FN_mod() frame is
-     * sized.  The fixed-window loop multiplies only already-reduced
-     * Montgomery-domain values, so it uses the non-reducing
+     * A base no wider than m is reduced with OSSL_FN_mont_reduce(), a wider
+     * one by to_mont() (via the reducing OSSL_FN_mul_mont), so no separate
+     * OSSL_FN_mod() frame is sized.  The fixed-window loop multiplies only
+     * already-reduced Montgomery-domain values, so it uses the non-reducing
      * OSSL_FN_mul_mont_quick() and its smaller ctx_size.
      */
-    mont_size = ossl_fn_ctx_max_size(OSSL_FN_to_mont_ctx_size(NULL, a, in_mont),
+    mont_size = a->dsize <= m->dsize
+        ? OSSL_FN_mont_reduce_ctx_size(NULL, a, in_mont)
+        : OSSL_FN_to_mont_ctx_size(NULL, a, in_mont);
+    mont_size = ossl_fn_ctx_max_size(mont_size,
         ossl_fn_ctx_max_size(OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, in_mont),
             OSSL_FN_from_mont_ctx_size(NULL, NULL, in_mont)));
 
@@ -668,18 +671,24 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
         /* ml > 0 is guaranteed, so OSSL_FN_one() cannot fail. */
         if (!ossl_assert(OSSL_FN_one(am)))
             goto err;
-        if (!OSSL_FN_to_mont(tmp, am, mont, ctx))
+        if (!OSSL_FN_to_mont_quick(tmp, am, mont, ctx))
             goto err;
     }
 
     /*
-     * a^1 in Montgomery domain.  to_mont() reduces a modulo m internally
-     * when a is not already reduced, so no separate OSSL_FN_mod() is
-     * needed.  When a == 0 (mod m), mont(a) == 0 and the fixed-window loop
-     * yields 0 for any non-zero exponent.
+     * a^1 in Montgomery domain.  A base no wider than m is below R, so
+     * OSSL_FN_mont_reduce() reduces it without testing its value; a wider
+     * one is left to to_mont(), which reduces it by division.  The choice
+     * depends on the widths alone.  When a == 0 (mod m), mont(a) == 0 and
+     * the fixed-window loop yields 0 for any non-zero exponent.
      */
-    if (!OSSL_FN_to_mont(am, a, mont, ctx))
+    if (a->dsize <= m->dsize) {
+        if (!OSSL_FN_mont_reduce(am, a, mont, ctx)
+            || !OSSL_FN_to_mont_quick(am, am, mont, ctx))
+            goto err;
+    } else if (!OSSL_FN_to_mont(am, a, mont, ctx)) {
         goto err;
+    }
 
     size_t window0, wmask, wvalue;
 
