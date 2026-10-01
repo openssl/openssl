@@ -1503,12 +1503,13 @@ static void test_obj_create_worker(void)
     }
 }
 
+#if defined(OPENSSL_THREADS)
 static thread_t do_all_thread;
 static thread_t load_unload_thread;
 static OSSL_LIB_CTX *do_all_ctx = NULL;
-OSSL_PROVIDER *defprov = NULL;
-int load_unload_err = 0;
-int do_all_err = 0;
+static OSSL_PROVIDER *defprov = NULL;
+static int load_unload_err = 0;
+static int do_all_err = 0;
 
 static void do_all_fn(void)
 {
@@ -1520,8 +1521,8 @@ static void do_all_fn(void)
 
     for (;;) {
         dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, "RSA",
-                                             EVP_PKEY_KEYPAIR,
-                                             do_all_ctx, ""); 
+            EVP_PKEY_KEYPAIR,
+            do_all_ctx, "");
         EVP_PKEY_free(pkey);
         OSSL_DECODER_CTX_free(dctx);
         t2 = ossl_time_now();
@@ -1573,7 +1574,7 @@ static int test_do_all_stress(void)
         || !TEST_true(run_thread(&do_all_thread, do_all_fn))
         || !TEST_true(wait_for_thread(load_unload_thread))
         || !TEST_true(wait_for_thread(do_all_thread)))
-            goto err;
+        goto err;
 
     if (!TEST_int_eq(load_unload_err, 0))
         goto err;
@@ -1586,6 +1587,7 @@ err:
     OSSL_LIB_CTX_free(do_all_ctx);
     return ret;
 }
+#endif
 
 static int test_obj_stress(void)
 {
@@ -1662,6 +1664,7 @@ int setup_tests(void)
     ADD_TEST(torture_rcu_low);
     ADD_TEST(torture_rcu_high);
     ADD_TEST(torture_rcu_high2);
+    ADD_TEST(test_do_all_stress);
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
@@ -1685,7 +1688,6 @@ int setup_tests(void)
     ADD_TEST(test_x509_store);
     ADD_TEST(test_x509_self_signed);
     ADD_TEST(test_obj_stress);
-    ADD_TEST(test_do_all_stress);
     return 1;
 }
 
