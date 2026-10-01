@@ -7,6 +7,8 @@ $COMMON=ml_dsa_encoders.c ml_dsa_key_compress.c ml_dsa_key.c \
 $ML_DSA_ASM=
 IF[{- !$disabled{asm} -}]
   $ML_DSA_ASM_x86_64=ml_dsa_ntt-x86_64.s
+  $ML_DSA_ASM_aarch64=asm/ml_dsa_ntt-armv8.S
+  $ML_DSA_DEF_aarch64=OPENSSL_ML_DSA_AARCH64
 
   IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
     $ML_DSA_ASM_ppc64=asm/mldsa_ntt_ppc64le.S asm/mldsa_intt_ppc64le.S
@@ -16,6 +18,7 @@ IF[{- !$disabled{asm} -}]
   # appropriate one, and define the appropriate macros
   IF[$ML_DSA_ASM_{- $target{asm_arch} -}]
     $ML_DSA_ASM=$ML_DSA_ASM_{- $target{asm_arch} -}
+    $ML_DSA_DEF=$ML_DSA_DEF_{- $target{asm_arch} -}
   ENDIF
 ENDIF
 
@@ -40,6 +43,7 @@ ENDIF
 
 # Assembly implementations
 GENERATE[ml_dsa_ntt-x86_64.s]=asm/ml_dsa_ntt-x86_64.pl
+GENERATE[asm/ml_dsa_ntt-armv8.S]=asm/ml_dsa_ntt-armv8.pl
 
 DEFINE[../../libcrypto]=$ML_DSA_DEF
 DEFINE[../../providers/libfips.a]=$ML_DSA_DEF
