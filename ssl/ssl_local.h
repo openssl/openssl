@@ -1596,6 +1596,24 @@ struct ssl_connection_st {
     } s3;
 
     struct dtls1_state_st *d1; /* DTLSv1 variables */
+#ifndef OPENSSL_NO_DTLS
+    /* Stable alias for d1->rx while SSL_clear() resets or replaces d1. */
+    DTLS_RX *listener_rx;
+    /*
+     * Set when this connection is being driven by dtls_listener_drive_pending().
+     * Used to prevent multiple threads from driving the same connection
+     * concurrently and to allow the demux pump to be called without holding
+     * the listener mutex.
+     */
+    unsigned int listener_being_driven;
+    /*
+     * Set while the listener itself is driving this connection's handshake, to
+     * stop it blocking. The listener drives pending connections from inside its
+     * own tick, so a connection which blocked there would stop the listener
+     * making any further progress, including the progress being waited for.
+     */
+    unsigned int listener_force_nonblocking;
+#endif
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback)(int write_p, int version, int content_type,
         const void *buf, size_t len, SSL *ssl, void *arg);
@@ -2160,6 +2178,14 @@ typedef struct dtls_msg_info_st {
     unsigned short msg_seq;
 } dtls_msg_info;
 
+/* RFC 9147, section 4: a 64-bit epoch and a 64-bit sequence number. */
+#define DTLS13_RECORD_NUMBER_LEN 16
+/* RFC 9147, section 7: the ACK vector's two-byte length prefix. */
+#define DTLS13_ACK_HEADER_LEN 2
+/* A nonempty ACK contains the prefix and at least one record number. */
+#define DTLS13_ACK_MIN_NONEMPTY_LEN \
+    (DTLS13_ACK_HEADER_LEN + DTLS13_RECORD_NUMBER_LEN)
+
 /* rfc9147, section 4 */
 typedef struct dtls1_record_number_st DTLS1_RECORD_NUMBER;
 
@@ -2279,26 +2305,10 @@ typedef struct dtls1_state_st {
     OSSL_TIME created_at;
 
     /*
-     * Set when this connection is being driven by dtls_listener_drive_pending().
-     * Used to prevent multiple threads from driving the same connection
-     * concurrently and to allow the demux pump to be called without holding
-     * the listener mutex.
-     */
-    unsigned int being_driven : 1;
-
-    /*
      * Blocking mode requested for this connection, as a DTLS_BLOCKING_MODE.
      * Defaults to inheriting from the listener it came from.
      */
     unsigned int req_blocking_mode : 2;
-
-    /*
-     * Set while the listener itself is driving this connection's handshake, to
-     * stop it blocking. The listener drives pending connections from inside its
-     * own tick, so a connection which blocked there would stop the listener
-     * making any further progress, including the progress being waited for.
-     */
-    unsigned int force_nonblocking : 1;
 #endif
 
 } DTLS1_STATE;
@@ -3149,6 +3159,8 @@ int ossl_dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
 int ossl_dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
     const unsigned char *cookie,
     size_t cookie_len);
+int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
+    unsigned char *hmac_out);
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 __owur int tls1_new(SSL *s);

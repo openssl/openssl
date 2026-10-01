@@ -170,7 +170,8 @@ static unsigned int client_conn_thread(void *arg)
 /*
  * Helper: create DTLS listener with real UDP socket
  */
-static int create_listener(SSL_CTX *ctx, SSL **listener, BIO_ADDR **addr, int *fd)
+static int create_listener_ex(SSL_CTX *ctx, uint64_t flags, SSL **listener,
+    BIO_ADDR **addr, int *fd)
 {
     BIO *bio = NULL;
     struct in_addr ina;
@@ -206,7 +207,7 @@ static int create_listener(SSL_CTX *ctx, SSL **listener, BIO_ADDR **addr, int *f
     if (!TEST_ptr(bio = BIO_new_dgram(*fd, BIO_NOCLOSE)))
         goto err;
 
-    if (!TEST_ptr(*listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(*listener = SSL_new_listener(ctx, flags)))
         goto err;
 
     SSL_set_bio(*listener, bio, bio);
@@ -229,6 +230,12 @@ err:
         *fd = -1;
     }
     return ret;
+}
+
+static int create_listener(SSL_CTX *ctx, SSL **listener, BIO_ADDR **addr,
+    int *fd)
+{
+    return create_listener_ex(ctx, 0, listener, addr, fd);
 }
 
 /*
@@ -324,6 +331,242 @@ static int do_handshake(SSL *client, SSL *listener, SSL **server_conn)
         return 0;
 
     return 1;
+}
+
+#define NUM_LISTENER_THREADS 2
+#define LISTENER_RACE_ITERATIONS 1000
+#define CLIENT_TRAFFIC_ITERATIONS 25
+#define CLEAR_REPLACE_CYCLES 3
+
+struct listener_thread_args {
+    SSL *listener;
+    CRYPTO_THREAD *thread;
+    int result;
+};
+
+static unsigned int listener_thread(void *arg)
+{
+    struct listener_thread_args *ta = arg;
+    SSL_POLL_ITEM item;
+    struct timeval timeout;
+    size_t result_count;
+    int i;
+
+    ta->result = 0;
+    item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    item.desc.value.ssl = ta->listener;
+    item.events = SSL_POLL_EVENT_IC;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 1000;
+
+    for (i = 0; i < LISTENER_RACE_ITERATIONS; i++) {
+        item.revents = 0;
+        if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count))
+            return 0;
+        OSSL_sleep(1);
+    }
+
+    ta->result = 1;
+    return 0;
+}
+
+struct client_traffic_thread_args {
+    SSL *client;
+    CRYPTO_THREAD *thread;
+    int result;
+};
+
+static unsigned int client_traffic_thread(void *arg)
+{
+    struct client_traffic_thread_args *ta = arg;
+    size_t written;
+    int i, ret, err;
+
+    ta->result = 0;
+    for (i = 0; i < CLIENT_TRAFFIC_ITERATIONS; i++) {
+        ret = SSL_write_ex(ta->client, CLIENT_TO_SERVER_MSG,
+            strlen(CLIENT_TO_SERVER_MSG), &written);
+        if (ret <= 0) {
+            err = SSL_get_error(ta->client, ret);
+            if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
+                return 0;
+        }
+        OSSL_sleep(1);
+    }
+
+    ta->result = 1;
+    return 0;
+}
+
+/*
+ * Exercise concurrent listener polling while pending connections enter their
+ * first SSL_accept(), which calls SSL_clear(). This covers listener state that
+ * must remain stable while d1 is reset or replaced. ThreadSanitizer verifies
+ * that the listener threads do not race on that state.
+ */
+static int test_dtls_listener_clear_race(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[NUM_CLIENTS] = { NULL };
+    SSL *server_conns[NUM_CLIENTS] = { NULL };
+    struct listener_thread_args thread_args[NUM_LISTENER_THREADS];
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1;
+    int client_fds[NUM_CLIENTS] = { -1, -1, -1 };
+    int testresult = 0;
+    int i;
+
+    memset(thread_args, 0, sizeof(thread_args));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_listener_ex(sctx, SSL_LISTENER_FLAG_NO_VALIDATE,
+            &listener, &server_addr, &server_fd))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0)))
+        goto err;
+
+    for (i = 0; i < NUM_CLIENTS; i++) {
+        if (!TEST_true(create_client(cctx, server_addr, &clients[i],
+                &client_fds[i])))
+            goto err;
+    }
+
+    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
+        thread_args[i].listener = listener;
+        thread_args[i].thread = ossl_crypto_thread_native_start(
+            listener_thread, &thread_args[i], 1);
+        if (!TEST_ptr(thread_args[i].thread))
+            goto err;
+    }
+
+    for (i = 0; i < NUM_CLIENTS; i++)
+        if (!TEST_true(do_handshake(clients[i], listener, &server_conns[i])))
+            goto err;
+
+    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
+        ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
+        ossl_crypto_thread_native_clean(thread_args[i].thread);
+        thread_args[i].thread = NULL;
+        if (!TEST_int_eq(thread_args[i].result, 1))
+            goto err;
+    }
+
+    testresult = 1;
+err:
+    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
+        if (thread_args[i].thread != NULL) {
+            ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
+            ossl_crypto_thread_native_clean(thread_args[i].thread);
+        }
+    }
+    for (i = 0; i < NUM_CLIENTS; i++) {
+        SSL_free(clients[i]);
+        SSL_free(server_conns[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/* Exercise the SSL_clear() path which replaces d1 after a handshake. */
+static int test_dtls_listener_clear_replace_race(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client = NULL, *server_conn = NULL;
+    struct listener_thread_args thread_args[NUM_LISTENER_THREADS];
+    struct client_traffic_thread_args traffic_args;
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1, client_fd = -1;
+    int testresult = 0;
+    int i;
+
+    memset(thread_args, 0, sizeof(thread_args));
+    memset(&traffic_args, 0, sizeof(traffic_args));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_listener_ex(sctx, SSL_LISTENER_FLAG_NO_VALIDATE,
+            &listener, &server_addr, &server_fd))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !TEST_true(create_client(cctx, server_addr, &client, &client_fd))
+        || !TEST_true(do_handshake(client, listener, &server_conn)))
+        goto err;
+
+    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
+        thread_args[i].listener = listener;
+        thread_args[i].thread = ossl_crypto_thread_native_start(
+            listener_thread, &thread_args[i], 1);
+        if (!TEST_ptr(thread_args[i].thread))
+            goto err;
+    }
+
+    for (i = 0; i < CLEAR_REPLACE_CYCLES; i++) {
+        traffic_args.client = client;
+        traffic_args.result = 0;
+        traffic_args.thread = ossl_crypto_thread_native_start(
+            client_traffic_thread, &traffic_args, 1);
+        if (!TEST_ptr(traffic_args.thread))
+            goto err;
+
+        OSSL_sleep(2);
+        if (!TEST_true(SSL_clear(server_conn)))
+            goto err;
+
+        /* Let the listener threads route client datagrams through the reset. */
+        OSSL_sleep(5);
+
+        ossl_crypto_thread_native_join(traffic_args.thread, NULL);
+        ossl_crypto_thread_native_clean(traffic_args.thread);
+        traffic_args.thread = NULL;
+        if (!TEST_int_eq(traffic_args.result, 1)
+            || !TEST_true(SSL_clear(client)))
+            goto err;
+
+        SSL_set_accept_state(server_conn);
+        SSL_set_connect_state(client);
+        if (!TEST_true(create_ssl_connection(server_conn, client,
+                SSL_ERROR_NONE)))
+            goto err;
+    }
+
+    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
+        ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
+        ossl_crypto_thread_native_clean(thread_args[i].thread);
+        thread_args[i].thread = NULL;
+        if (!TEST_int_eq(thread_args[i].result, 1))
+            goto err;
+    }
+
+    testresult = 1;
+err:
+    if (traffic_args.thread != NULL) {
+        ossl_crypto_thread_native_join(traffic_args.thread, NULL);
+        ossl_crypto_thread_native_clean(traffic_args.thread);
+    }
+    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
+        if (thread_args[i].thread != NULL) {
+            ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
+            ossl_crypto_thread_native_clean(thread_args[i].thread);
+        }
+    }
+    SSL_free(client);
+    SSL_free(server_conn);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
 }
 
 /*
@@ -796,6 +1039,8 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_dtls_multithread);
+    ADD_TEST(test_dtls_listener_clear_race);
+    ADD_TEST(test_dtls_listener_clear_replace_race);
     ADD_TEST(test_dtls_blocking_accept);
     ADD_ALL_TESTS(test_dtls_blocking_read, 2);
     return 1;

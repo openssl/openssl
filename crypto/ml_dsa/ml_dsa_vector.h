@@ -37,6 +37,87 @@ static ossl_inline ossl_unused void vector_init(VECTOR *v, POLY *polys, size_t n
     v->num_poly = num_polys;
 }
 
+/*
+ * Aligned allocation helpers for POLY arrays.
+ *
+ * On s390x with VX support the POLY type carries ALIGN16, but both
+ * OPENSSL_malloc and OPENSSL_secure_malloc may return only 8-byte-aligned
+ * storage on that platform.  A self-describing header-word technique is used
+ * to guarantee 16-byte alignment without adding a freeptr field to VECTOR:
+ *
+ *   - Over-allocate by sizeof(void *) + (POLY_ALIGN - 1) bytes.
+ *   - Advance the base pointer to the next POLY_ALIGN boundary that is at
+ *     least sizeof(void *) bytes past the raw allocation, so there is always
+ *     room for a void * header even when raw is already aligned.
+ *   - Store the original raw pointer in the sizeof(void *) slack bytes
+ *     immediately before the aligned pointer.
+ *   - To free: read back the raw pointer from that header slot.
+ *
+ * This is safe because sizeof(void *) <= 8 <= POLY_ALIGN = 16 on all
+ * supported platforms.  No raw-pointer field is needed in VECTOR, so the
+ * struct layout is identical regardless of whether VX support is compiled in.
+ *
+ * On non-s390x builds POLY_ALIGN is 4 (sizeof(uint32_t)), which is always
+ * satisfied by the platform allocator, so the plain malloc/free path is used.
+ */
+#if defined(OPENSSL_ML_DSA_S390X)
+#define POLY_ALIGN 16
+
+static ossl_inline ossl_unused int vector_alloc(VECTOR *v, size_t num_polys)
+{
+    size_t bytes = num_polys * sizeof(POLY) + sizeof(void *) + (POLY_ALIGN - 1);
+    uint8_t *raw = OPENSSL_malloc(bytes);
+    uintptr_t addr;
+
+    if (raw == NULL)
+        return 0;
+    addr = ((uintptr_t)raw + sizeof(void *) + (POLY_ALIGN - 1))
+        & ~(uintptr_t)(POLY_ALIGN - 1);
+    *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
+    v->poly = (POLY *)(void *)addr;
+    v->num_poly = num_polys;
+    return 1;
+}
+
+static ossl_inline ossl_unused int vector_secure_alloc(VECTOR *v, size_t num_polys)
+{
+    size_t bytes = num_polys * sizeof(POLY) + sizeof(void *) + (POLY_ALIGN - 1);
+    uint8_t *raw = OPENSSL_secure_malloc(bytes);
+    uintptr_t addr;
+
+    if (raw == NULL)
+        return 0;
+    addr = ((uintptr_t)raw + sizeof(void *) + (POLY_ALIGN - 1))
+        & ~(uintptr_t)(POLY_ALIGN - 1);
+    *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
+    v->poly = (POLY *)(void *)addr;
+    v->num_poly = num_polys;
+    return 1;
+}
+
+static ossl_inline ossl_unused void vector_free(VECTOR *v)
+{
+    if (v->poly != NULL)
+        OPENSSL_free(*(void **)((uint8_t *)v->poly - sizeof(void *)));
+    v->poly = NULL;
+    v->num_poly = 0;
+}
+
+static ossl_inline ossl_unused void vector_secure_free(VECTOR *v, size_t rank)
+{
+    size_t bytes = rank * sizeof(POLY) + sizeof(void *) + (POLY_ALIGN - 1);
+
+    if (v->poly != NULL)
+        OPENSSL_secure_clear_free(*(void **)((uint8_t *)v->poly - sizeof(void *)),
+            bytes);
+    v->poly = NULL;
+    v->num_poly = 0;
+}
+
+#undef POLY_ALIGN
+
+#else /* !OPENSSL_ML_DSA_S390X */
+
 static ossl_inline ossl_unused int vector_alloc(VECTOR *v, size_t num_polys)
 {
     v->poly = OPENSSL_malloc_array(num_polys, sizeof(POLY));
@@ -68,6 +149,8 @@ static ossl_inline ossl_unused void vector_secure_free(VECTOR *v, size_t rank)
     v->poly = NULL;
     v->num_poly = 0;
 }
+
+#endif /* OPENSSL_ML_DSA_S390X */
 
 /* @brief zeroize a vectors polynomial coefficients */
 static ossl_inline ossl_unused void vector_zero(VECTOR *va)

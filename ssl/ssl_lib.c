@@ -657,8 +657,6 @@ int ossl_ssl_connection_reset(SSL *s)
         SSL *saved_listener = NULL;
         OSSL_TIME saved_created_at = ossl_time_zero();
         unsigned int saved_req_blocking_mode = DTLS_BLOCKING_MODE_INHERIT;
-        unsigned int saved_force_nonblocking = 0;
-        unsigned int saved_being_driven = 0;
         int is_dtls_listener_conn = 0;
 
         if (SSL_CONNECTION_IS_DTLS(sc) && sc->d1 != NULL
@@ -669,8 +667,6 @@ int ossl_ssl_connection_reset(SSL *s)
             saved_listener = sc->d1->listener;
             saved_created_at = sc->d1->created_at;
             saved_req_blocking_mode = sc->d1->req_blocking_mode;
-            saved_force_nonblocking = sc->d1->force_nonblocking;
-            saved_being_driven = sc->d1->being_driven;
             /*
              * Prevent dtls1_free from freeing rx and releasing the listener
              * reference - we'll restore them after ssl_init.
@@ -685,6 +681,11 @@ int ossl_ssl_connection_reset(SSL *s)
         if (!s->method->ssl_init(s)) {
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
             if (is_dtls_listener_conn) {
+                DTLS_LISTENER *dl = (DTLS_LISTENER *)saved_listener;
+
+                ossl_crypto_mutex_lock(dl->mutex);
+                sc->listener_rx = NULL;
+                ossl_crypto_mutex_unlock(dl->mutex);
                 ossl_dtls_rx_free(saved_rx);
                 SSL_free(saved_listener);
             }
@@ -704,14 +705,6 @@ int ossl_ssl_connection_reset(SSL *s)
              * connection, not handshake state, so it survives a clear.
              */
             sc->d1->req_blocking_mode = saved_req_blocking_mode;
-            /*
-             * Both of these say something about the call this SSL_clear() may
-             * be nested inside: that the listener is driving the handshake and
-             * that it must not block while doing so. dtls1_clear() carries them
-             * over for the same reason.
-             */
-            sc->d1->force_nonblocking = saved_force_nonblocking;
-            sc->d1->being_driven = saved_being_driven;
         }
 #endif
     } else {
@@ -5409,6 +5402,8 @@ void SSL_set_accept_state(SSL *s)
     }
 #endif
 
+    if (sc == NULL)
+        return;
     sc->server = 1;
     sc->shutdown = 0;
     ossl_statem_clear(sc);
@@ -5429,6 +5424,8 @@ void SSL_set_connect_state(SSL *s)
     }
 #endif
 
+    if (sc == NULL)
+        return;
     sc->server = 0;
     sc->shutdown = 0;
     ossl_statem_clear(sc);
@@ -5914,6 +5911,7 @@ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 {
     CERT *new_cert;
+    uint32_t *new_valid_flags = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     /* TODO(QUIC FUTURE): Add support for QUIC */
@@ -5938,6 +5936,34 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
      */
     if (!ossl_assert(sc->sid_ctx_length <= sizeof(sc->sid_ctx)))
         goto err;
+
+    /*
+     * |valid_flags| is sized from the number of signature algorithm slots of
+     * the SSL_CTX the connection was created from, so it must be resized for
+     * the replacement context.
+     *
+     * The built-in slots are indexed by the fixed SSL_PKEY_* constants and so
+     * mean the same thing in either context. They are preserved because they
+     * may already hold peer signature algorithm state which does not depend
+     * on the SSL_CTX. A provider slot index is instead a position in one
+     * context's provider list, so the same index denotes a different
+     * algorithm here and the old value cannot be carried over. They are reset
+     * rather than recomputed: recomputing them means recomputing the shared
+     * signature algorithms against the replacement context, which would let
+     * its preferences take effect on an established connection.
+     */
+    if (sc->s3.tmp.valid_flags != NULL) {
+        /* Should never happen: ssl_cert_new() enforces this */
+        if (!ossl_assert(new_cert->ssl_pkey_num >= SSL_PKEY_NUM))
+            goto err;
+        new_valid_flags = OPENSSL_calloc(new_cert->ssl_pkey_num,
+            sizeof(*new_valid_flags));
+        if (new_valid_flags == NULL)
+            goto err;
+        memcpy(new_valid_flags, sc->s3.tmp.valid_flags,
+            SSL_PKEY_NUM * sizeof(*new_valid_flags));
+    }
+
     if (!SSL_CTX_up_ref(ctx))
         goto err;
 
@@ -5954,12 +5980,18 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 
     ssl_cert_free(sc->cert);
     sc->cert = new_cert;
+    sc->ssl_pkey_num = new_cert->ssl_pkey_num;
+    if (new_valid_flags != NULL) {
+        OPENSSL_free(sc->s3.tmp.valid_flags);
+        sc->s3.tmp.valid_flags = new_valid_flags;
+    }
     SSL_CTX_free(ssl->ctx); /* decrement reference count */
     ssl->ctx = ctx;
 
     return ssl->ctx;
 
 err:
+    OPENSSL_free(new_valid_flags);
     ssl_cert_free(new_cert);
     return NULL;
 }

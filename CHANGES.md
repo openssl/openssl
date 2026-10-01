@@ -408,12 +408,6 @@ OpenSSL 4.1
 
    *Danny Tsen*
 
- * Added optimized ML-DSA NTT operations on `s390x`
-   (or other architectures with 128 bit vector registers).
-   <!-- https://github.com/openssl/openssl/pull/30812 -->
-
-   *Timo Keller*
-
  * Added AVX2-optimized ML-DSA NTT operations on `x86_64`.
    <!-- https://github.com/openssl/openssl/pull/30160 -->
 
@@ -651,6 +645,11 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30446 -->
 
    *Tomáš Mráz*
+
+ * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
+   (with potential reuse for other architectures with 128 bit vector registers).
+
+   *Timo Keller*
 
 OpenSSL 4.0
 -----------

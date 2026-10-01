@@ -1928,6 +1928,59 @@ err:
     return success;
 }
 
+#if !defined(OPENSSL_NO_UNIX_SOCK) && !defined(OPENSSL_NO_DTLS1_3)
+/*
+ * dtls_listener_cookie_hmac() used to size its address scratch buffers with
+ * a hardcoded 64 bytes instead of sizeof(BIO_ADDR). An AF_UNIX peer address,
+ * whose sun_path can be much longer than 64 bytes, overflowed those stack
+ * buffers. Exercise it with a peer_addr set to a long AF_UNIX path.
+ */
+static int test_dtls_listener_cookie_hmac_long_addr(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_CONNECTION *sc = NULL;
+    /* One byte short of sun_path's capacity: longer than the old 64-byte
+     * addr_buf/data buffers in dtls_listener_cookie_hmac(). */
+    char long_path[UNIX_PATH_MAX - 1];
+    unsigned char hmac_out[EVP_MAX_MD_SIZE];
+    int testresult = 0;
+
+    memset(long_path, 'a', sizeof(long_path) - 1);
+    long_path[sizeof(long_path) - 1] = '\0';
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(serverssl)))
+        goto end;
+
+    if (!TEST_true(BIO_ADDR_rawmake(&sc->d1->peer_addr, AF_UNIX,
+            long_path, strlen(long_path), 0)))
+        goto end;
+
+    if (!TEST_true(dtls_listener_cookie_hmac(serverssl, 0, hmac_out)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* !OPENSSL_NO_UNIX_SOCK && !OPENSSL_NO_DTLS1_3 */
+
 /*
  * Test SSL_new_listener with NULL context.
  * Should return NULL and not crash.
@@ -5457,6 +5510,7 @@ static int test_dtls_blocking_mode(void)
     SSL *memlistener = NULL, *memclient = NULL, *plainssl = NULL;
     BIO_ADDR *server_addr = NULL, *client_addr = NULL;
     SSL_CONNECTION *sc;
+    DTLS_RX *listener_rx;
     int server_fd = -1, client_fd = -1;
     int testresult = 0;
 
@@ -5537,12 +5591,17 @@ static int test_dtls_blocking_mode(void)
      */
     if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl)))
         goto end;
-    sc->d1->being_driven = 1;
+    listener_rx = sc->listener_rx;
+    if (!TEST_ptr(listener_rx) || !TEST_ptr_eq(listener_rx, sc->d1->rx))
+        goto end;
+    sc->listener_being_driven = 1;
 
     if (!TEST_true(SSL_clear(serverssl))
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
         || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_int_eq(sc->d1->being_driven, 1))
+        || !TEST_ptr_eq(sc->listener_rx, listener_rx)
+        || !TEST_ptr_eq(sc->d1->rx, listener_rx)
+        || !TEST_int_eq(sc->listener_being_driven, 1))
         goto end;
 
     /*
@@ -5554,10 +5613,12 @@ static int test_dtls_blocking_mode(void)
     if (!TEST_true(SSL_clear(serverssl))
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
         || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_int_eq(sc->d1->being_driven, 1))
+        || !TEST_ptr_eq(sc->listener_rx, listener_rx)
+        || !TEST_ptr_eq(sc->d1->rx, listener_rx)
+        || !TEST_int_eq(sc->listener_being_driven, 1))
         goto end;
 
-    sc->d1->being_driven = 0;
+    sc->listener_being_driven = 0;
 
     /* And back the other way round. */
     if (!TEST_true(SSL_set_blocking_mode(listener, 1))
@@ -5974,6 +6035,9 @@ int setup_tests(void)
     /* Peer address tests */
     ADD_TEST(test_dtls_get_peer_addr_no_peer);
     ADD_TEST(test_dtls_get_peer_addr_listener);
+#if !defined(OPENSSL_NO_UNIX_SOCK) && !defined(OPENSSL_NO_DTLS1_3)
+    ADD_TEST(test_dtls_listener_cookie_hmac_long_addr);
+#endif
 
     /* Error handling and edge case tests */
     ADD_TEST(test_dtls_new_listener_null_ctx);
