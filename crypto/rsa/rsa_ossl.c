@@ -971,12 +971,15 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
          * The strict-width Montgomery operations cannot take the
          * full-width input I directly, so it is first reduced into the
          * prime-width scratch (sq / sp); the exponentiation engine
-         * takes a normal-domain base and converts it internally.
+         * takes a normal-domain base and converts it internally.  The
+         * reduction is by Montgomery reductions, not division, which
+         * would leak the secret primes: I < n < q * R, and n is no wider
+         * than p and q together.
          */
         if (/* sq = I mod q (reduce the full-width I into q's width) */
-            !OSSL_FN_mod(sq, I, f_q, ctx)
+            !OSSL_FN_mont_reduce(sq, I, mont_q, ctx)
             /* sp = I mod p, likewise */
-            || !OSSL_FN_mod(sp, I, f_p, ctx)
+            || !OSSL_FN_mont_reduce(sp, I, mont_p, ctx)
             /*
              * Two sequential exponentiations:
              *    m1 = sq^dmq1 mod q
@@ -995,10 +998,12 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
 
             /*
              * r1 = sp * iqmp mod p.  mul_mont with a Montgomery-domain
-             * and a plain operand yields a plain result.
+             * and a plain operand yields a plain result.  The quick
+             * variants test neither operand: sp < p, and iqmp only has to
+             * fit p's width for the product to come out reduced.
              */
-            || !OSSL_FN_to_mont(sp, sp, mont_p, ctx)
-            || !OSSL_FN_mul_mont(sp, sp, f_iqmp, mont_p, ctx)
+            || !OSSL_FN_to_mont_quick(sp, sp, mont_p, ctx)
+            || !OSSL_FN_mul_mont_quick(sp, sp, f_iqmp, mont_p, ctx)
             /*
              * r0 = r1 * q + m1.  Widen the p-wide r1 and q-wide m1 into
              * the full-width result.  t holds the full-width product,
