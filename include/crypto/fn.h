@@ -1561,6 +1561,16 @@ void OSSL_FN_MONT_CTX_free(OSSL_FN_MONT_CTX *ctx);
 OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx);
 
 /**
+ * Get the modulus of a Montgomery context.  Its width is the width that the
+ * strict-width Montgomery functions require of their operands.
+ *
+ * @param[in]           mont    The Montgomery context
+ * @returns             The modulus, owned by @p mont, or NULL if @p mont is
+ *                      NULL.
+ */
+const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont);
+
+/**
  * Fulfil the Montgomery multiplication.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -1671,6 +1681,36 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
  * size as the modulus.
  */
 size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Convert a number to Montgomery representation: r = a * R mod N.  This is
+ * a quick, constant-time variant of OSSL_FN_to_mont() that may be used if
+ * @p r, @p a, and @p mont->N are of the same size, and @p a is less than
+ * @p mont->N.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note The arena requirement is that of OSSL_FN_mul_mont_quick().
+ */
+int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_to_mont_quick().
+ *
+ * @param[in]           r       The OSSL_FN for the result (can be NULL)
+ * @param[in]           a       The operand (can be NULL)
+ * @param[in]           mont    The Montgomery context
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
 
 /**
