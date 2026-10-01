@@ -119,7 +119,9 @@ sub page_of
     return ("$opt_o/man$section/$name.html", $name);
 }
 
-my @pods = @ARGV;
+my $stdindata = <STDIN>;
+chomp($stdindata);
+my @pods = split(' ', $stdindata);
 
 exit 0 unless @pods;
 

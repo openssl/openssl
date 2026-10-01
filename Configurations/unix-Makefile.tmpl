@@ -600,9 +600,8 @@ doc/man/.mandocs.stamp: {- $config{manpage_format} eq "roff"
                            : '$(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)' -}
 {- $config{manpage_format} eq "roff"
    ? "\t" . '@$(ECHO) "Formatting the manual pages"'
-     . "\n\t" . '@$(PERL) $(SRCDIR)/util/mkpod2man.pl -o doc/man \\'
+     . "\n\t" . '@$(ECHO) $(MANPODS) | $(PERL) $(SRCDIR)/util/mkpod2man.pl -o doc/man \\'
      . "\n\t\t" . '-m "$(MANSUFFIX)" -d "$(RELEASE_DATE)" -r "$(VERSION)" \\'
-     . "\n\t\t" . '$(MANPODS)'
      . "\n\t" . '@touch $@'
    : "\t" . '@touch $@' -}
 
@@ -615,8 +614,8 @@ build_html_docs: doc/html/.htmldocs.stamp ## Create HTML documentation
 # and the per-page rules below stay available for one page by name.
 doc/html/.htmldocs.stamp: $(HTMLPODS)
 	@$(ECHO) "Converting the manual pages to HTML"
-	@$(PERL) $(SRCDIR)/util/mkpod2html.pl -o doc/html \
-		-r "$(SRCDIR)/doc" $(HTMLPODS)
+	@$(ECHO) $(HTMLPODS) | $(PERL) $(SRCDIR)/util/mkpod2html.pl -o doc/html \
+		-r "$(SRCDIR)/doc"
 	@touch $@
 
 build_generated: $(GENERATED_MANDATORY)

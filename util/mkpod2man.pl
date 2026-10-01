@@ -88,7 +88,9 @@ sub format_page
         or die "Can't set the mode of $out, $!\n";
 }
 
-my @pods = @ARGV;
+my $stdindata = <STDIN>;
+chomp($stdindata);
+my @pods = split(' ', $stdindata);
 
 exit 0 unless @pods;
 
