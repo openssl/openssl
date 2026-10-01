@@ -663,14 +663,17 @@ static const char *ml_dsa_mu_empty_message_digest[] = {
 
 static int ml_dsa_mu_empty_message_final_test(int tst)
 {
-    const char *digestname = ml_dsa_mu_empty_message_digest[tst];
+    const char *digestname = ml_dsa_mu_empty_message_digest[tst / 2];
+    int zero_length_update = tst % 2;
     int expected = (digestname == NULL);
     int ret = 0;
     EVP_PKEY *key = NULL;
-    EVP_MD *md = NULL;
-    EVP_MD_CTX *mdctx = NULL;
+    EVP_MD *md = NULL, *shake = NULL;
+    EVP_MD_CTX *mdctx = NULL, *refctx = NULL;
     uint8_t pub[ML_DSA_44_PUB_LEN];
-    uint8_t mu[ML_DSA_MU_BYTES];
+    uint8_t mu[ML_DSA_MU_BYTES], expected_mu[ML_DSA_MU_BYTES];
+    uint8_t tr[64];
+    static const uint8_t prefix[] = { 0, 0 };
     size_t publen = 0;
     OSSL_PARAM params[3], *p = params;
 
@@ -691,11 +694,32 @@ static int ml_dsa_mu_empty_message_final_test(int tst)
         || !TEST_true(EVP_DigestInit_ex2(mdctx, md, params)))
         goto err;
 
+    /* EVP returns early for a zero-length update without calling mu_update. */
+    if (zero_length_update && !TEST_true(EVP_DigestUpdate(mdctx, NULL, 0)))
+        goto err;
+
     if (!TEST_int_eq(EVP_DigestFinalXOF(mdctx, mu, sizeof(mu)), expected))
         goto err;
 
+    if (expected) {
+        /* Pure ML-DSA: mu = SHAKE256(SHAKE256(pub, 64) || 0 || 0, 64). */
+        if (!TEST_ptr(shake = EVP_MD_fetch(lib_ctx, "SHAKE256", NULL))
+            || !TEST_ptr(refctx = EVP_MD_CTX_new())
+            || !TEST_true(EVP_DigestInit_ex2(refctx, shake, NULL))
+            || !TEST_true(EVP_DigestUpdate(refctx, pub, publen))
+            || !TEST_true(EVP_DigestFinalXOF(refctx, tr, sizeof(tr)))
+            || !TEST_true(EVP_DigestInit_ex2(refctx, shake, NULL))
+            || !TEST_true(EVP_DigestUpdate(refctx, tr, sizeof(tr)))
+            || !TEST_true(EVP_DigestUpdate(refctx, prefix, sizeof(prefix)))
+            || !TEST_true(EVP_DigestFinalXOF(refctx, expected_mu, sizeof(expected_mu)))
+            || !TEST_mem_eq(mu, sizeof(mu), expected_mu, sizeof(expected_mu)))
+            goto err;
+    }
+
     ret = 1;
 err:
+    EVP_MD_CTX_free(refctx);
+    EVP_MD_free(shake);
     EVP_MD_CTX_free(mdctx);
     EVP_MD_free(md);
     EVP_PKEY_free(key);
@@ -892,9 +916,9 @@ int setup_tests(void)
      * message, so this test crashes against a FIPS provider that predates
      * the fix.  Only run it where the provider has it.
      */
-    if (fips_provider_version_ge(lib_ctx, 4, 1, 0)) {
+    if (fips_provider_version_ge(lib_ctx, 4, 2, 0)) {
         ADD_ALL_TESTS(ml_dsa_mu_empty_message_final_test,
-            OSSL_NELEM(ml_dsa_mu_empty_message_digest));
+            2 * OSSL_NELEM(ml_dsa_mu_empty_message_digest));
     }
 
     /*
