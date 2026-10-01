@@ -361,7 +361,7 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
     SLH_DSA_KEY *key = NULL;
     SLH_DSA_HASH_CTX *ctx = NULL;
 
-    if (!ossl_prov_is_running())
+    if (!slh_dsa_self_check(gctx->libctx))
         return NULL;
     key = ossl_slh_dsa_key_new(gctx->libctx, gctx->propq, alg);
     if (key == NULL)
