@@ -79,6 +79,14 @@ OpenSSL 4.2
 
    *Dominic Cunningham, Billy Bob Brumley*
 
+ * CMS_verify() with the CMS_CADES flag, and `openssl cms -verify -cades`, now
+   reject a SignerInfo that has no signed attributes. CAdES requires the ESS
+   signing-certificate signed attribute, but a SignerInfo without any signed
+   attributes (as produced by `openssl cms -sign -noattr`) skipped that check
+   and was wrongly accepted.
+
+   *Jeffrey Kintscher*
+
 OpenSSL 4.1
 -----------
 
