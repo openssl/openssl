@@ -1594,6 +1594,60 @@ int ossl_ec_group_do_inverse_ord_fn(const EC_GROUP *group, OSSL_FN *res,
         group->fn_mont_ctx_ord);
 }
 
+/*
+ * res := a mod order, in constant time and without division, using the
+ * group's cached order Montgomery context.  |res| must be as wide as that
+ * context's modulus.  |a| is read through its OSSL_FN view; a view wider than
+ * OSSL_FN_mont_reduce() accepts is narrowed, which only drops limbs above the
+ * BIGNUM's top.
+ */
+int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
+    const BIGNUM *a, OSSL_FN_CTX *ctx)
+{
+    OSSL_FN_MONT_CTX *mont = group->fn_mont_ctx_ord;
+    const OSSL_FN *src;
+    const void *token;
+    OSSL_FN *t;
+    size_t w;
+    int ret = 0;
+
+    if (mont == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
+        return 0;
+    }
+    if ((src = bn_get_ossl_fn(a)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        return 0;
+    }
+    w = ossl_fn_get_dsize(OSSL_FN_MONT_CTX_get0_modulus(mont));
+    if (ossl_fn_get_dsize(src) <= 2 * w)
+        return OSSL_FN_mont_reduce(res, src, mont, ctx);
+
+    if ((size_t)bn_get_top(a) > 2 * w) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        return 0;
+    ret = (t = OSSL_FN_CTX_get_limbs(ctx, 2 * w)) != NULL
+        && OSSL_FN_copy_truncate(t, src) != NULL
+        && OSSL_FN_mont_reduce(res, t, mont, ctx);
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group)
+{
+    OSSL_FN_MONT_CTX *mont = group->fn_mont_ctx_ord;
+    size_t w;
+
+    if (mont == NULL)
+        return 0;
+    w = ossl_fn_get_dsize(OSSL_FN_MONT_CTX_get0_modulus(mont));
+    return ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, 2 * w),
+        OSSL_FN_mont_reduce_ctx_size(NULL, NULL, mont));
+}
+
 /*-
  * Coordinate blinding for EC_POINT.
  *
