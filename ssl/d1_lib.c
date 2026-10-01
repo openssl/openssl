@@ -262,11 +262,14 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 
 /*
  * Retire every queued CertificateRequest regardless of acknowledgment
- * status, and report whether any was found. A CertificateRequest never
- * receives an explicit ACK (rfc9147 5.8.1: receiving the next flight, not
- * just an ACK, ends WAITING) -- the client's Finished is that next flight,
- * and completes it implicitly. Entries of any other type are left
- * untouched.
+ * status, and report whether any was found. Finding none is not an error:
+ * rfc9147 section 7.1 lets the client ACK a CertificateRequest explicitly
+ * if it cannot produce its response right away, in which case ACK
+ * processing already removed it before Finished arrived. Either way, the
+ * client's Finished completes it implicitly (rfc9147 5.8.1: receiving the
+ * next flight, not just an ACK, ends WAITING), so it must not still be
+ * queued by the time Finished is processed. Entries of any other type are
+ * left untouched.
  */
 static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
 {
@@ -641,16 +644,26 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
  * it can't also fire for the CertificateRequest an ordinary mTLS initial
  * handshake sends, which has no such special case and still falls through
  * to the unconditional clear below.
+ *
+ * Whether a CertificateRequest was actually found there is not itself a
+ * precondition for preserving anything else that is still outstanding:
+ * rfc9147 section 7.1 lets the client ACK the CertificateRequest explicitly
+ * if it cannot produce its response right away, in which case ACK
+ * processing already removed it before Finished arrived. Either way, by
+ * the time Finished is processed it must not still be queued, so retiring
+ * it here is idempotent -- the decision to preserve or discard everything
+ * else is made separately, from whether anything else remains unacked.
  */
 void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
 {
     if (SSL_CONNECTION_IS_DTLS13(s)
         && s->statem.hand_state == TLS_ST_SR_FINISHED
-        && s->post_handshake_auth == SSL_PHA_REQUESTED
-        && dtls1_retire_sent_certificate_request_messages(s)
-        && dtls_any_sent_messages_are_missing_acknowledge(s)) {
-        dtls1_clear_sent_buffer(s, 1);
-        return;
+        && s->post_handshake_auth == SSL_PHA_REQUESTED) {
+        dtls1_retire_sent_certificate_request_messages(s);
+        if (dtls_any_sent_messages_are_missing_acknowledge(s)) {
+            dtls1_clear_sent_buffer(s, 1);
+            return;
+        }
     }
 
     if (SSL_CONNECTION_IS_DTLS13(s)
