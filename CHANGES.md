@@ -79,6 +79,13 @@ OpenSSL 4.2
 
    *Dominic Cunningham, Billy Bob Brumley*
 
+ * The EC PKCS#8 decoder now rejects a PrivateKeyInfo whose privateKeyAlgorithm
+   parameters specify a different curve than the parameters carried inside the
+   ECPrivateKey structure. Previously the inner parameters silently took
+   precedence over the AlgorithmIdentifier.
+
+   *Paul Grubbs*
+
 OpenSSL 4.1
 -----------
 
