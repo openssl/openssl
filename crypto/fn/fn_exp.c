@@ -189,7 +189,7 @@ static void mod_exp_ctime_copy_from_prebuf(OSSL_FN *b,
 
             for (j = 0; j < width; j++) {
                 acc |= table[j]
-                    & ((OSSL_FN_ULONG)0
+                    & value_barrier_bn((OSSL_FN_ULONG)0
                         - (constant_time_eq_int((int)j, (int)idx) & 1));
             }
             b->d[i] = acc;
@@ -210,11 +210,11 @@ static void mod_exp_ctime_copy_from_prebuf(OSSL_FN *b,
             OSSL_FN_ULONG acc = 0;
 
             for (j = 0; j < xstride; j++) {
-                acc |= ((table[j + 0 * xstride] & y0)
-                           | (table[j + 1 * xstride] & y1)
-                           | (table[j + 2 * xstride] & y2)
-                           | (table[j + 3 * xstride] & y3))
-                    & ((OSSL_FN_ULONG)0
+                acc |= ((table[j + 0 * xstride] & value_barrier_bn(y0))
+                           | (table[j + 1 * xstride] & value_barrier_bn(y1))
+                           | (table[j + 2 * xstride] & value_barrier_bn(y2))
+                           | (table[j + 3 * xstride] & value_barrier_bn(y3)))
+                    & value_barrier_bn((OSSL_FN_ULONG)0
                         - (constant_time_eq_int((int)j, (int)idx) & 1));
             }
             b->d[i] = acc;
