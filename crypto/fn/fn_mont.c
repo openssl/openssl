@@ -758,3 +758,71 @@ end:
     OSSL_FN_CTX_end(ctx, token);
     return ret;
 }
+
+/*
+ * Arena payload size needed by OSSL_FN_mont_reduce().
+ *
+ * Constant-time profile:
+ *   - This function is constant-time; it depends on public widths only.
+ */
+size_t OSSL_FN_mont_reduce_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont)
+{
+    size_t own_size, nested_size;
+
+    if (mont == NULL)
+        return 0;
+
+    /* A NULL |a| is budgeted as the widest operand accepted */
+    OSSL_FN narrow = { .dsize = mont->N->dsize };
+    OSSL_FN widest = { .dsize = 2 * mont->N->dsize };
+    const OSSL_FN *src = a;
+
+    if (a == NULL)
+        src = &widest;
+    else if (a->dsize < mont->N->dsize)
+        src = &narrow;
+
+    own_size = OSSL_FN_CTX_size(1, 1, (size_t)mont->N->dsize);
+    nested_size = ossl_fn_ctx_max_size(
+        OSSL_FN_from_mont_ctx_size(r, src, mont),
+        OSSL_FN_to_mont_quick_ctx_size(r, NULL, mont));
+    return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+/*
+ * r = a mod N, as to_mont_quick(from_mont(a)).  r must have the width of N.
+ * a may be narrower than N, or up to twice as wide provided a < N * R.
+ *
+ * Constant-time profile:
+ *   - What leaks: only public widths.  Both steps are Montgomery reductions
+ *     with masked final subtractions; no division takes place.
+ */
+int OSSL_FN_mont_reduce(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx)
+{
+    if (ossl_unlikely(r == NULL || a == NULL || mont == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    const OSSL_FN *src = a;
+    int ret = 0;
+
+    const void *token = OSSL_FN_CTX_start(ctx);
+    if (token == NULL)
+        return 0;
+
+    if (a->dsize < mont->N->dsize) {
+        OSSL_FN *t = OSSL_FN_CTX_get_limbs(ctx, (size_t)mont->N->dsize);
+
+        if (t == NULL || OSSL_FN_copy(t, a) == NULL)
+            goto end;
+        src = t;
+    }
+    ret = OSSL_FN_from_mont(r, src, mont, ctx)
+        && OSSL_FN_to_mont_quick(r, r, mont, ctx);
+end:
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}

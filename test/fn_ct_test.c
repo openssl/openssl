@@ -24,6 +24,7 @@
 #include "crypto/fn_intern.h"
 #include "internal/constant_time.h"
 #include "internal/nelem.h"
+#include "fn_local.h"
 #include "testutil.h"
 
 /* The P-384 and P-521 field primes: a full and a partial top limb */
@@ -304,6 +305,94 @@ err:
     return ret;
 }
 
+static void mont_secret(OSSL_FN_MONT_CTX *mont, int on)
+{
+    size_t limbs = (size_t)mont->N->dsize;
+
+    if (on) {
+        fn_secret(mont->N, limbs);
+        fn_secret(mont->RR, limbs);
+        CONSTTIME_SECRET(mont->n0, sizeof(mont->n0));
+    } else {
+        fn_declassify(mont->N, limbs);
+        fn_declassify(mont->RR, limbs);
+        CONSTTIME_DECLASSIFY(mont->n0, sizeof(mont->n0));
+    }
+}
+
+/*
+ * OSSL_FN_mont_reduce() of a double-width product and of a narrower value.
+ * Odd indices also make the modulus secret, as an RSA prime is.
+ */
+static int test_mont_reduce(int idx)
+{
+    int secret_mod = idx & 1;
+    BN_CTX *bnctx = BN_CTX_new();
+    BIGNUM *m = NULL, *a = BN_new(), *b = BN_new(), *e = BN_new();
+    OSSL_FN *fm = NULL, *wide = NULL, *narrow = NULL, *r = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t len = 0, limbs = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(bnctx) || !TEST_ptr(a) || !TEST_ptr(b) || !TEST_ptr(e)
+        || !TEST_true(BN_hex2bn(&m, moduli[idx / 2]))
+        || !TEST_true(set_operand(a, m, OP_PATTERN, bnctx))
+        || !TEST_true(set_operand(b, m, OP_M_MINUS_1, bnctx))
+        || !TEST_true(BN_mul(e, a, b, bnctx)))
+        goto err;
+
+    len = (size_t)BN_num_bytes(m);
+    limbs = (len + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    if (!TEST_ptr(fm = fn_from_bn(m, limbs, len))
+        || !TEST_ptr(wide = fn_from_bn(e, 2 * limbs, 2 * limbs * OSSL_FN_BYTES))
+        || !TEST_true(BN_rshift(a, a, OSSL_FN_BITS))
+        || !TEST_ptr(narrow = fn_from_bn(a, limbs - 1,
+                         (limbs - 1) * OSSL_FN_BYTES))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         ossl_fn_ctx_max_size(
+                             OSSL_FN_mont_reduce_ctx_size(r, wide, mont),
+                             OSSL_FN_mont_reduce_ctx_size(r, narrow, mont)))))
+        goto err;
+
+    fn_secret(wide, 2 * limbs);
+    fn_secret(narrow, limbs - 1);
+    if (secret_mod)
+        mont_secret(mont, 1);
+
+    if (!TEST_true(OSSL_FN_mont_reduce(r, wide, mont, ctx))
+        || !TEST_true(BN_nnmod(e, e, m, bnctx))
+        || !check("mont_reduce(a * b)", r, limbs, e, len))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mont_reduce(r, narrow, mont, ctx))
+        || !check("mont_reduce(narrower)", r, limbs, a, len))
+        goto err;
+
+    ret = 1;
+err:
+    if (mont != NULL && secret_mod)
+        mont_secret(mont, 0);
+    if (wide != NULL)
+        fn_declassify(wide, 2 * limbs);
+    if (narrow != NULL)
+        fn_declassify(narrow, limbs - 1);
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(wide);
+    OSSL_FN_free(narrow);
+    OSSL_FN_free(r);
+    BN_free(m);
+    BN_free(a);
+    BN_free(b);
+    BN_free(e);
+    BN_CTX_free(bnctx);
+    return ret;
+}
+
 /*
  * Exponent widths in limbs.  They select fixed windows of 3, 4 and 5 bits:
  * window 3 uses the one-mask-per-entry gather and windows 4 and 5 the
@@ -375,6 +464,7 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_quick_ops, (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
     ADD_ALL_TESTS(test_mont_ops, (int)(OSSL_NELEM(moduli) * OSSL_NELEM(pairs)));
+    ADD_ALL_TESTS(test_mont_reduce, (int)(2 * OSSL_NELEM(moduli)));
     ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(exp_limbs));
     return 1;
 }
