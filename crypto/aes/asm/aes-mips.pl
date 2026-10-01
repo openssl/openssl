@@ -765,6 +765,12 @@ AES_ctr32_encrypt:
 	$PTR_LA	$Tbl,AES_Te
 
 	# Keep the counter above the O32 outgoing argument-save area.
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$s0,0($t0)
+	lw	$s1,4($t0)
+	lw	$s2,8($t0)
+	lw	$s3,12($t0)
+#else
 	lwl	$s0,0+$MSB($t0)
 	lwl	$s1,4+$MSB($t0)
 	lwl	$s2,8+$MSB($t0)
@@ -773,6 +779,7 @@ AES_ctr32_encrypt:
 	lwr	$s1,4+$LSB($t0)
 	lwr	$s2,8+$LSB($t0)
 	lwr	$s3,12+$LSB($t0)
+#endif
 	$REG_S	$s0,$CTR32_BLOCK_OFFSET+0($sp)
 	$REG_S	$s1,$CTR32_BLOCK_OFFSET+4($sp)
 	$REG_S	$s2,$CTR32_BLOCK_OFFSET+8($sp)
@@ -790,6 +797,12 @@ AES_ctr32_encrypt:
 	bal	_mips_AES_encrypt
 
 	# Load plaintext before storing, so in-place operation is safe.
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$t0,0($inp)
+	lw	$t1,4($inp)
+	lw	$t2,8($inp)
+	lw	$t3,12($inp)
+#else
 	lwl	$t0,0+$MSB($inp)
 	lwl	$t1,4+$MSB($inp)
 	lwl	$t2,8+$MSB($inp)
@@ -798,11 +811,18 @@ AES_ctr32_encrypt:
 	lwr	$t1,4+$LSB($inp)
 	lwr	$t2,8+$LSB($inp)
 	lwr	$t3,12+$LSB($inp)
+#endif
 	xor	$s0,$t0
 	xor	$s1,$t1
 	xor	$s2,$t2
 	xor	$s3,$t3
 
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	sw	$s0,0($out)
+	sw	$s1,4($out)
+	sw	$s2,8($out)
+	sw	$s3,12($out)
+#else
 	swr	$s0,0+$LSB($out)
 	swr	$s1,4+$LSB($out)
 	swr	$s2,8+$LSB($out)
@@ -811,6 +831,7 @@ AES_ctr32_encrypt:
 	swl	$s1,4+$MSB($out)
 	swl	$s2,8+$MSB($out)
 	swl	$s3,12+$MSB($out)
+#endif
 
 	# Increment the low 32-bit counter in big-endian byte order.
 	lbu	$t0,$CTR32_BLOCK_OFFSET+15($sp)
