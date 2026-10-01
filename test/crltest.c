@@ -1031,6 +1031,56 @@ static const char *kCrlIndirectNoChain[] = {
 };
 
 /*
+ * kCrlBadEntryExtThenCritical is issued by kRoot and revokes serials 0x2001
+ * and 0x2002 (neither is kLeaf).  The first entry carries a non-critical
+ * reasonCode extension whose extnValue is a NULL (undecodable as an
+ * ENUMERATED); the second entry carries a holdInstructionCode extension
+ * marked critical.  The CRL must be rejected because of the unhandled
+ * critical entry extension irrespective of the order of the entries.
+ */
+static const char *kCrlBadEntryExtThenCritical[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICXDCCAUQCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowTjAgAgIgARcNMjYwMzA5MDgwMDAwWjALMAkGA1UdFQQCBQAw\n",
+    "KgICIAIXDTI2MDMwOTA4MDAwMFowFTATBgNVHRcBAf8ECQYHKoZIzjgCAqAvMC0w\n",
+    "HwYDVR0jBBgwFoAU/hQOExsJZ8tKDUvaT/PvkLVD2zMwCgYDVR0UBAMCARQwDQYJ\n",
+    "KoZIhvcNAQELBQADggEBACWCR/fLsbFGa8Q5qEki6k8KcJHaNLLow2+R5vXnjJNU\n",
+    "zDOiDOcFyO4jGQH57qv4X426MysjI/w7HVzr0IXqU1uTeUFTePx44DhInF0tBlRw\n",
+    "v3HA+OvgZRr5iAIMmLt05KFECA2a6dCyVAFbA3EG5xwESUKQ8Fe06GaaeSeNb+MW\n",
+    "sNEFGjYMMR10jCqhXHNXhDMpi/FwCtIlgSgjOic9Dl+DblBpsMyKtzce0fIqk3Wv\n",
+    "YxtTmPL/ApnYxwS7bMuB0GEoJY8FkTblzrI5g3dJMMXMjmnDjpNl51bpabLVbEP/\n",
+    "ax8SSa45mqfU91qgxhAF/ioU6iJdhEbn1m6dtPbcLcE=\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/*
+ * kCrlCriticalThenBadEntryExt is kCrlBadEntryExtThenCritical with the two
+ * entries in the opposite order (and CRL number 21 instead of 20).
+ */
+static const char *kCrlCriticalThenBadEntryExt[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICXDCCAUQCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowTjAqAgIgARcNMjYwMzA5MDgwMDAwWjAVMBMGA1UdFwEB/wQJ\n",
+    "BgcqhkjOOAICMCACAiACFw0yNjAzMDkwODAwMDBaMAswCQYDVR0VBAIFAKAvMC0w\n",
+    "HwYDVR0jBBgwFoAU/hQOExsJZ8tKDUvaT/PvkLVD2zMwCgYDVR0UBAMCARUwDQYJ\n",
+    "KoZIhvcNAQELBQADggEBAGmwTI/yvJleHEdABJ4Al6A5nbSbVVepcLQQrQO1G5n2\n",
+    "deP3jpKlhY95uC1PMm4l+dGAMDBAzWbErYwjiNNM6w8wgwjGq/3nry2ODQW+YiAV\n",
+    "MO2e8CEttvsIfa/xXs32AR7rlNgGNbAxyoMKrsNpKmfOBzdYyWWolhrb0xPOHH7c\n",
+    "qT2Agm88A9zRWBwDurerUUl5/iliTm77+Z8o/6PFSufo4j1FvhRrXympKdPjnKNa\n",
+    "K47XR2Cm6pXF0gjn2kAdLxeJ26APt5I+aFXagGgSDRT/zvWFFPTMfjUK8cKwR3VX\n",
+    "W01kNw/zS5Yb/f//BvM8iNhzcgijC9O2WgZMeLY7LFY=\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/*
  * A well-formed CRL issued by kRoot (sha256WithRSAEncryption, inner and
  * outer signatureAlgorithm identical), used as the positive test case in
  * test_crl_sigalg_mismatch.
@@ -1748,6 +1798,37 @@ static int test_crl_extension_duplicate_entry(void)
     return test;
 }
 
+/*
+ * An undecodable entry extension must not stop the scan for critical CRL
+ * entry extensions on the remaining entries.
+ */
+static int test_crl_bad_entry_ext_critical(void)
+{
+    X509 *root = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl1 = NULL;
+    X509_CRL *crl2 = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned int flags = X509_V_FLAG_CRL_CHECK;
+    unsigned int expect = X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr((crl1 = CRL_from_strings(kCrlBadEntryExtThenCritical)))
+        && TEST_ptr((crls = make_CRL_stack(crl1, NULL)))
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect)
+        && TEST_ptr((crl2 = CRL_from_strings(kCrlCriticalThenBadEntryExt)))
+        && TEST_ptr((crls = make_CRL_stack(crl2, NULL)))
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect);
+
+    X509_CRL_free(crl1);
+    X509_CRL_free(crl2);
+    X509_free(root);
+    X509_free(leaf);
+    return test;
+}
+
 static int test_crl_extension_duplicate_serial(void)
 {
     X509 *root = NULL;
@@ -2027,6 +2108,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_extension_duplicate);
     ADD_TEST(test_crl_extension_duplicate_entry);
     ADD_TEST(test_crl_extension_duplicate_serial);
+    ADD_TEST(test_crl_bad_entry_ext_critical);
     ADD_MFAIL_NO_CHECK_TEST(test_crl_indirect_mfail);
     ADD_TEST(test_crl_indirect_revoked);
     ADD_TEST(test_crl_indirect_wrong_ta);

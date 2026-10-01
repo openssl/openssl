@@ -126,11 +126,15 @@ static int crl_set_issuers(X509_CRL *crl)
             return 0;
         }
 
+        /*
+         * A present but undecodable (or duplicated) entry extension makes
+         * the CRL invalid, but must not stop the processing of this and the
+         * remaining entries: in particular the scan for critical entry
+         * extensions below has to run for every entry.
+         */
         gtmp = X509_REVOKED_get_ext_d2i(rev, NID_certificate_issuer, &j, NULL);
-        if (gtmp == NULL && j != -1) {
+        if (gtmp == NULL && j != -1)
             crl->flags |= EXFLAG_INVALID;
-            return 1;
-        }
 
         if (gtmp != NULL) {
             /*
@@ -163,10 +167,8 @@ static int crl_set_issuers(X509_CRL *crl)
         rev->issuer = most_recent_issuer;
 
         reason = X509_REVOKED_get_ext_d2i(rev, NID_crl_reason, &j, NULL);
-        if (reason == NULL && j != -1) {
+        if (reason == NULL && j != -1)
             crl->flags |= EXFLAG_INVALID;
-            return 1;
-        }
 
         if (reason != NULL) {
             rev->reason = ASN1_ENUMERATED_get(reason);
