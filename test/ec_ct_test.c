@@ -106,17 +106,21 @@ static const int prime_curves[] = {
 #endif
 };
 
-static int test_point_to_bytes(int idx)
+/*
+ * Mark the projective coordinates of a random point on @group secret, extract
+ * its affine coordinates as fixed-width bytes, and check them against the
+ * reference.  Under ct-validation Valgrind fails on any branch or memory index
+ * derived from a coordinate.
+ */
+static int check_point_to_bytes(EC_GROUP *group)
 {
-    EC_GROUP *group = NULL;
     EC_POINT *P = NULL;
     BIGNUM *k = NULL, *x = NULL, *y = NULL;
     unsigned char rx[66], ry[66], gx[66], gy[66];
     size_t flen = 0;
     int ret = 0;
 
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(prime_curves[idx]))
-        || !TEST_ptr(P = EC_POINT_new(group))
+    if (!TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(k = BN_new())
         || !TEST_ptr(x = BN_new())
         || !TEST_ptr(y = BN_new()))
@@ -149,15 +153,89 @@ static int test_point_to_bytes(int idx)
         || !TEST_mem_eq(gy, flen, ry, flen))
         ret = 0;
 err:
-    if (!ret)
-        TEST_info("curve %s", OBJ_nid2sn(prime_curves[idx]));
     BN_free(k);
     BN_free(x);
     BN_free(y);
     EC_POINT_free(P);
+    return ret;
+}
+
+static int test_point_to_bytes(int idx)
+{
+    EC_GROUP *group = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(prime_curves[idx])))
+        goto err;
+    ret = check_point_to_bytes(group);
+err:
+    if (!ret)
+        TEST_info("curve %s", OBJ_nid2sn(prime_curves[idx]));
     EC_GROUP_free(group);
     return ret;
 }
+
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+/* Rebuild a built-in curve's group with a specific method. */
+static EC_GROUP *clone_group_with_method(int nid, const EC_METHOD *meth)
+{
+    EC_GROUP *src = NULL, *dst = NULL, *ret = NULL;
+    BN_CTX *ctx = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL, *gx = NULL, *gy = NULL;
+    const BIGNUM *order, *cofactor;
+    const EC_POINT *g;
+    EC_POINT *gpt = NULL;
+
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(src = EC_GROUP_new_by_curve_name(nid))
+        || !TEST_ptr(p = BN_new()) || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(b = BN_new()) || !TEST_ptr(gx = BN_new())
+        || !TEST_ptr(gy = BN_new())
+        || !TEST_true(EC_GROUP_get_curve(src, p, a, b, ctx))
+        || !TEST_ptr(order = EC_GROUP_get0_order(src))
+        || !TEST_ptr(cofactor = EC_GROUP_get0_cofactor(src))
+        || !TEST_ptr(g = EC_GROUP_get0_generator(src))
+        || !TEST_true(EC_POINT_get_affine_coordinates(src, g, gx, gy, ctx))
+        || !TEST_ptr(dst = EC_GROUP_new(meth))
+        || !TEST_true(EC_GROUP_set_curve(dst, p, a, b, ctx))
+        || !TEST_ptr(gpt = EC_POINT_new(dst))
+        || !TEST_true(EC_POINT_set_affine_coordinates(dst, gpt, gx, gy, ctx))
+        || !TEST_true(EC_GROUP_set_generator(dst, gpt, order, cofactor)))
+        goto err;
+    ret = dst;
+    dst = NULL;
+err:
+    EC_POINT_free(gpt);
+    EC_GROUP_free(dst);
+    EC_GROUP_free(src);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(gx);
+    BN_free(gy);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * When nistz256 is present prime256v1 uses it, so the nistp256 method is not
+ * reached through any curve name on an assembly build (only the no-asm matrix
+ * entries reach it, through prime256v1).  Force it so its field inverse is
+ * ct-validated regardless of the build.
+ */
+static int test_point_to_bytes_nistp256(void)
+{
+    EC_GROUP *group = clone_group_with_method(NID_X9_62_prime256v1,
+        EC_GFp_nistp256_method());
+    int ret;
+
+    if (group == NULL)
+        return 0;
+    ret = check_point_to_bytes(group);
+    EC_GROUP_free(group);
+    return ret;
+}
+#endif /* OPENSSL_NO_EC_NISTP_64_GCC_128 */
 
 #ifndef OPENSSL_NO_SM2
 /* SM2 s = (1 + dA)^-1 * (k - r * dA) mod n, on the secret dA */
@@ -198,6 +276,9 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_ecdsa_sign_sig, (int)OSSL_NELEM(curves));
     ADD_ALL_TESTS(test_point_to_bytes, (int)OSSL_NELEM(prime_curves));
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    ADD_TEST(test_point_to_bytes_nistp256);
+#endif
 #ifndef OPENSSL_NO_SM2
     ADD_TEST(test_sm2_sign);
 #endif
