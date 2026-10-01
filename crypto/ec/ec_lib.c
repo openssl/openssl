@@ -1636,6 +1636,11 @@ int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
     return ret;
 }
 
+OSSL_FN_MONT_CTX *ossl_ec_group_get0_fn_mont_ord(const EC_GROUP *group)
+{
+    return group->fn_mont_ctx_ord;
+}
+
 size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group)
 {
     OSSL_FN_MONT_CTX *mont = group->fn_mont_ctx_ord;

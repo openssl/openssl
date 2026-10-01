@@ -76,6 +76,9 @@ __owur int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
     const BIGNUM *a, OSSL_FN_CTX *ctx);
 size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group);
 
+/* The group's cached order Montgomery context, or NULL if it has none */
+OSSL_FN_MONT_CTX *ossl_ec_group_get0_fn_mont_ord(const EC_GROUP *group);
+
 /*-
  * Computes  r := scalar * point,  or  r := scalar * generator  when @p point
  * is NULL, with a secret scalar.
