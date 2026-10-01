@@ -1515,6 +1515,19 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
     if (dtls_any_sent_messages_are_missing_acknowledge(s))
         return MSG_PROCESS_CONTINUE_READING;
 
+    /*
+     * This ACK interrupted a server still reading the rest of a PHA
+     * response. That flight isn't finished just because this ACK
+     * is: Certificate and/or CertificateVerify may already be read,
+     * but Finished is still outstanding. Finishing the read
+     * sub-state-machine here would let write_transition() move
+     * straight to TLS_ST_OK and skip it.
+     */
+    if (s->statem.pre_ack_hand_state == TLS_ST_SR_CERT
+        || s->statem.pre_ack_hand_state == TLS_ST_SR_COMP_CERT
+        || s->statem.pre_ack_hand_state == TLS_ST_SR_CERT_VRFY)
+        return MSG_PROCESS_CONTINUE_READING;
+
     return MSG_PROCESS_FINISHED_READING;
 }
 

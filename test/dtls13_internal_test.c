@@ -3274,6 +3274,147 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * The server's own KeyUpdate being deferred-resumed after a post-handshake
+ * authentication exchange must resume by actually sending the held-back
+ * ACK, not by reprocessing TLS_ST_SR_FINISHED from scratch. The latter sees
+ * post_handshake_auth already advanced past SSL_PHA_REQUESTED on this
+ * second pass, takes the ordinary "no ticket" branch, and overwrites
+ * deferred_ack_state -- silently dropping a NewSessionTicket that the first,
+ * PHA pass had already decided to issue.
+ */
+static int test_dtls13_server_keyupdate_preserves_pha_ticket(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    unsigned char buf[2048];
+    size_t sent_tickets, new_quota;
+    int i, ret, testresult = 0;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    /*
+     * create_ssl_connection() only has the client read (and thus ACK) the
+     * initial handshake's NewSessionTicket messages; the server never reads
+     * those ACKs. Drain them here so sent_messages starts out empty, rather
+     * than carrying two leftover, unacked ticket entries into the scenario
+     * below.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0))
+        goto end;
+
+    /* The initial handshake already issued its configured ticket quota. */
+    sent_tickets = sc->sent_tickets;
+    if (!TEST_size_t_gt(sent_tickets, 0)
+        || !TEST_int_eq(ticket_count, (int)sent_tickets))
+        goto end;
+
+    /*
+     * Raise the ticket quota. tls_post_process_client_certificate() is
+     * going to reset sc->sent_tickets to 0 once it processes the PHA
+     * response's Certificate below ("resend session tickets" on
+     * re-authentication), so this is not "one extra ticket" -- it is the
+     * quota the server will fully reissue from scratch, since num_tickets
+     * > sent_tickets(==0) again once that reset happens.
+     */
+    new_quota = sent_tickets + 1;
+    if (!TEST_true(SSL_set_num_tickets(server, new_quota)))
+        goto end;
+
+    /*
+     * Request PHA first, and let the client answer it. The ticket-issuing
+     * branch under test (ossl_statem_server13_write_transition()'s
+     * TLS_ST_SR_FINISHED case) skips issuing a ticket outright whenever
+     * SSL_VERIFY_PEER is set with no sid_ctx configured -- unrelated to the
+     * KeyUpdate defer/resume logic under test, but SSL_VERIFY_PEER is
+     * required to make the server actually request a client certificate
+     * for PHA, so a sid_ctx must be set too.
+     */
+    SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_set_session_id_context(server,
+            (const unsigned char *)"pha_ticket_test", 15)))
+        goto end;
+    if (!TEST_true(SSL_verify_client_post_handshake(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Send the server's own KeyUpdate. Processing it also reads the
+     * client's already-waiting PHA response in the same call, deciding to
+     * reissue the ticket quota -- but holding both that and the PHA
+     * response's own ACK back behind the still-unacknowledged KeyUpdate.
+     */
+    if (!TEST_true(SSL_key_update(server, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+
+    /* The client reads the server's KeyUpdate and acknowledges it. */
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The server processes that ACK. Its own KeyUpdate is now fully
+     * acknowledged, so both the held-back PHA-response ACK and the full
+     * reissued ticket quota decided above must now actually be sent.
+     * TLS_ST_SW_SESSION_TICKET's write_transition case keeps constructing
+     * tickets, once resumed, until sent_tickets reaches num_tickets again
+     * (SSL_IS_FIRST_HANDSHAKE() stays true throughout this connection) --
+     * i.e. sc->sent_tickets ends at new_quota, not at 1.
+     */
+    ret = SSL_read(server, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(server), TLS_ST_OK)
+        || !TEST_size_t_eq(sc->sent_tickets, new_quota)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+
+    /*
+     * Confirm these are genuine, processable tickets, not just bytes.
+     * Mirror create_ssl_connection_ex()'s pattern for the initial
+     * handshake's own tickets: one SSL_read() per ticket, not a single call
+     * draining all of them.
+     */
+    for (i = 0; i < (int)new_quota; i++) {
+        ret = SSL_read(client, buf, 1);
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+            goto end;
+    }
+    if (!TEST_int_eq(ticket_count, (int)(sent_tickets + new_quota)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -3312,6 +3453,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_cert_req_finished_preserves_ticket);
     ADD_TEST(test_dtls13_server_keyupdate_preserves_ack);
     ADD_TEST(test_dtls13_server_keyupdate_preserves_pha);
+    ADD_TEST(test_dtls13_server_keyupdate_preserves_pha_ticket);
 #endif
     return 1;
 }

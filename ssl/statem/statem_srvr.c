@@ -140,6 +140,19 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
 
     case TLS_ST_SR_COMP_CERT:
     case TLS_ST_SR_CERT:
+        /*
+         * DTLS 1.3 only. A PHA response being read here can straddle our
+         * own still-unacknowledged KeyUpdate: datagram reordering can
+         * deliver that KeyUpdate's ACK in between the client's Certificate
+         * and its Finished. Accept it and resume this same read afterward,
+         * restored by the TLS_ST_SR_ACK handling at the top of this
+         * function.
+         */
+        if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
         if (!received_client_cert(s)) {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_SR_FINISHED;
@@ -154,6 +167,19 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
         break;
 
     case TLS_ST_SR_CERT_VRFY:
+        /*
+         * DTLS 1.3 only. A PHA response being read here can straddle our
+         * own still-unacknowledged KeyUpdate: datagram reordering can
+         * deliver that KeyUpdate's ACK in between the client's
+         * CertificateVerify and its Finished. Accept it and resume this
+         * same read afterward, restored by the TLS_ST_SR_ACK handling at
+         * the top of this function.
+         */
+        if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
         if (mt == SSL3_MT_FINISHED) {
             st->hand_state = TLS_ST_SR_FINISHED;
             return 1;
@@ -768,9 +794,14 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
                      * not be used for anything else until it is
                      * acknowledged. Hold this ACK back rather than send it
                      * now; deferred_ack_state above still says where to go
-                     * once it is finally sent.
+                     * once it is finally sent. Defer to TLS_ST_SW_ACK itself,
+                     * not this TLS_ST_SR_FINISHED state: resuming by
+                     * re-entering TLS_ST_SR_FINISHED would rerun this whole
+                     * case, including the post_handshake_auth/ticket_expected
+                     * checks above, against state that may no longer reflect
+                     * why we got here.
                      */
-                    st->deferred_key_update_state = st->hand_state;
+                    st->deferred_key_update_state = TLS_ST_SW_ACK;
                     st->hand_state = TLS_ST_SW_KEY_UPDATE;
                     return WRITE_TRAN_FINISHED;
                 }
@@ -828,8 +859,15 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
                  * be used for anything else until it is acknowledged. Hold
                  * this ACK back rather than send it now; deferred_ack_state
                  * above still says where to go once it is finally sent.
+                 * Defer to TLS_ST_SW_ACK itself, not this TLS_ST_SR_FINISHED
+                 * state: resuming by re-entering TLS_ST_SR_FINISHED would
+                 * rerun this whole case. post_handshake_auth has already
+                 * moved past SSL_PHA_REQUESTED by the time we resume, so the
+                 * ticket-suppressing branch above would run instead and
+                 * overwrite deferred_ack_state, dropping the tickets this
+                 * visit decided to issue.
                  */
-                st->deferred_key_update_state = st->hand_state;
+                st->deferred_key_update_state = TLS_ST_SW_ACK;
                 st->hand_state = TLS_ST_SW_KEY_UPDATE;
                 return WRITE_TRAN_FINISHED;
             }
