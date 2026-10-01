@@ -9,6 +9,7 @@
 
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_SIV_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_SIV_H
+#define TAG_SIZE 16
 
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
@@ -34,6 +35,10 @@ typedef struct prov_siv_ctx_st {
     EVP_CIPHER *cbc;
     const PROV_CIPHER_HW_AES_SIV *hw;
     OSSL_LIB_CTX *libctx;
+    uint8_t tag[TAG_SIZE]; /* generated tag, given to user or compared to user */
+    uint8_t user_tag[TAG_SIZE]; /* from user */
+    unsigned int have_user_tag : 1;
+    unsigned int generated_tag : 1;
 } PROV_AES_SIV_CTX;
 
 const PROV_CIPHER_HW_AES_SIV *ossl_prov_cipher_hw_aes_siv(size_t keybits);

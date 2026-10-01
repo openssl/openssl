@@ -159,12 +159,14 @@ static int aes_siv_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     sctx = &ctx->siv;
 
-    if (p.tag != NULL) {
-        if (!ctx->enc
-            || p.tag->data_type != OSSL_PARAM_OCTET_STRING
-            || p.tag->data_size != ctx->taglen
-            || !OSSL_PARAM_set_octet_string(p.tag, &sctx->tag.byte,
-                ctx->taglen)) {
+    if (p.tag != NULL && p.tag->data_type == OSSL_PARAM_OCTET_STRING) {
+        if (!ctx->enc || !ctx->generated_tag) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
+            return 0;
+        }
+        if (p.tag->data_size != sizeof(ctx->tag)
+            || !OSSL_PARAM_set_octet_string(p.tag, ctx->tag,
+                sizeof(ctx->tag))) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -198,15 +200,20 @@ static int aes_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !aes_siv_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.tag != NULL) {
-        if (ctx->enc)
-            return 1;
-        if (p.tag->data_type != OSSL_PARAM_OCTET_STRING
-            || !ctx->hw->settag(ctx, p.tag->data, p.tag->data_size)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
+        if (p.tag != NULL) {
+            if (p.tag->data_type != OSSL_PARAM_OCTET_STRING
+                || p.tag->data_size != sizeof(ctx->user_tag)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+                return 0;
+            }
+            if (!ctx->enc) {
+                memcpy(ctx->user_tag, p.tag->data, sizeof(ctx->tag));
+                ctx->have_user_tag = 1;
+            } else if (p.tag->data != NULL) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
+                return 0;
+            }
         }
-    }
 
     if (p.speed != NULL) {
         if (!OSSL_PARAM_get_uint(p.speed, &speed)) {
