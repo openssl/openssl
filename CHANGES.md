@@ -33,6 +33,10 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Removed `X509_STORE_get0_objects()`, which was deprecated in OpenSSL 4.0.
+   Applications should use `X509_STORE_get1_objects()` instead and free the
+   returned snapshot with `sk_X509_OBJECT_pop_free(sk, X509_OBJECT_free)`.
+
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
    parameter and returns 1 for an approved operation.  The absence of an

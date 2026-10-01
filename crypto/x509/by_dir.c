@@ -363,10 +363,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
             if (ossl_x509_store_read_lock(xl->store_ctx) == 0)
                 goto finish;
-            if (xl->store_ctx->objs_ht)
-                objs = ossl_x509_store_ht_get_by_name(xl->store_ctx, name);
-            else
-                objs = xl->store_ctx->objs;
+            objs = ossl_x509_store_ht_get_by_name(xl->store_ctx, name);
             if (objs != NULL) {
                 j = sk_X509_OBJECT_find(objs, &stmp);
                 tmp = sk_X509_OBJECT_value(objs, j);

@@ -5,8 +5,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/x509_vfy.h>
@@ -87,10 +85,6 @@ static int test_load_cert_file(void)
         || !TEST_true(X509_load_cert_file(lookup, chain, X509_FILETYPE_PEM))
         || !TEST_ptr(certs = X509_STORE_get1_all_certs(store))
         || !TEST_int_eq(sk_X509_num(certs), 4)
-#ifndef OPENSSL_NO_DEPRECATED_4_0
-        || !TEST_ptr(objs = X509_STORE_get0_objects(store))
-        || !TEST_int_eq(sk_X509_OBJECT_num(objs), 4)
-#endif
         || !TEST_ptr(objs = X509_STORE_get1_objects(store))
         || !TEST_int_eq(sk_X509_OBJECT_num(objs), 4))
         goto err;
@@ -124,9 +118,7 @@ static int test_load_same_cn_certs(void)
     int ret = 0;
     X509_STORE *store = NULL;
     X509_STORE_CTX *s_ctx = NULL;
-#ifndef OPENSSL_NO_DEPRECATED_4_0
     STACK_OF(X509_OBJECT) *objs = NULL;
-#endif
     STACK_OF(X509_CRL) *sk_x509_crl = NULL;
     STACK_OF(X509) *sk_x509 = NULL;
     X509_NAME *nm = NULL;
@@ -146,11 +138,8 @@ static int test_load_same_cn_certs(void)
         || !TEST_true(X509_STORE_add_cert(store, cert1))
         || !TEST_true(X509_STORE_add_crl(store, crl2))
         || !TEST_true(X509_STORE_add_cert(store, cert2))
-    /* deliberately not taking lock in a single thread */
-#ifndef OPENSSL_NO_DEPRECATED_4_0
-        || !TEST_ptr(objs = X509_STORE_get0_objects(store))
+        || !TEST_ptr(objs = X509_STORE_get1_objects(store))
         || !TEST_int_eq(sk_X509_OBJECT_num(objs), 3)
-#endif
         || !TEST_ptr(sk_x509 = X509_STORE_CTX_get1_certs(s_ctx, nm))
         || !TEST_int_eq(sk_X509_num(sk_x509), 2)
         || !TEST_ptr(sk_x509_crl = X509_STORE_CTX_get1_crls(s_ctx, nm))
@@ -161,6 +150,7 @@ static int test_load_same_cn_certs(void)
 
 err:
     X509_NAME_free(nm);
+    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
     OSSL_STACK_OF_X509_free(sk_x509);
     sk_X509_CRL_pop_free(sk_x509_crl, X509_CRL_free);
     X509_STORE_free(store);

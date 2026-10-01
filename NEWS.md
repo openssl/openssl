@@ -29,6 +29,8 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
+  * Removed the deprecated `X509_STORE_get0_objects()` API.
+
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
