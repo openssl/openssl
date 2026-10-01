@@ -91,7 +91,7 @@ static int set_operand(BIGNUM *a, const BIGNUM *m, enum operand k,
 
 static OSSL_FN *fn_from_bn(const BIGNUM *bn, size_t limbs, size_t len)
 {
-    unsigned char buf[128];
+    unsigned char buf[256];
     OSSL_FN *f = OSSL_FN_new_limbs(limbs);
 
     if (f == NULL
@@ -207,7 +207,8 @@ err:
 /*
  * Montgomery arithmetic as used for constant-time modular multiplication:
  * mul_mont_quick(to_mont_quick(a), b) gives a * b mod m directly, and
- * from_mont undoes to_mont_quick.
+ * from_mont undoes to_mont_quick.  from_mont also reduces wider inputs:
+ * to_mont_quick of the result gives the input mod m.
  */
 static int test_mont_ops(int idx)
 {
@@ -215,6 +216,7 @@ static int test_mont_ops(int idx)
     BN_CTX *bnctx = BN_CTX_new();
     BIGNUM *m = NULL, *a = BN_new(), *b = BN_new(), *e = BN_new();
     OSSL_FN *fm = NULL, *fa = NULL, *fb = NULL, *am = NULL, *r = NULL;
+    OSSL_FN *wide = NULL, *wider = NULL;
     OSSL_FN_MONT_CTX *mont = NULL;
     OSSL_FN_CTX *ctx = NULL;
     size_t len = 0, limbs = 0;
@@ -236,12 +238,18 @@ static int test_mont_ops(int idx)
         || !TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm))
         || !TEST_ptr(OSSL_FN_MONT_CTX_get0_modulus(mont))
         || !TEST_int_eq(OSSL_FN_MONT_CTX_get0_modulus(mont)->dsize, (int)limbs)
+        || !TEST_true(BN_mul(e, a, b, bnctx))
+        || !TEST_ptr(wide = fn_from_bn(e, 2 * limbs, 2 * limbs * OSSL_FN_BYTES))
+        || !TEST_ptr(wider = fn_from_bn(a, limbs + 1,
+                         (limbs + 1) * OSSL_FN_BYTES))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_mul_mont_quick_ctx_size(r, am, fb, mont))))
+                         OSSL_FN_from_mont_ctx_size(r, wide, mont))))
         goto err;
 
     fn_secret(fa, limbs);
     fn_secret(fb, limbs);
+    fn_secret(wide, 2 * limbs);
+    fn_secret(wider, limbs + 1);
 
     if (!TEST_true(OSSL_FN_to_mont_quick(am, fa, mont, ctx))
         || !TEST_true(OSSL_FN_mul_mont_quick(r, am, fb, mont, ctx))
@@ -253,12 +261,32 @@ static int test_mont_ops(int idx)
         || !check("from_mont(to_mont_quick)", r, limbs, a, len))
         goto err;
 
+    /*
+     * from_mont multiplies by R^-1 and to_mont_quick by R, so together they
+     * reduce a double-width value mod m without division.
+     */
+    if (!TEST_true(OSSL_FN_from_mont(am, wide, mont, ctx))
+        || !TEST_true(OSSL_FN_to_mont_quick(r, am, mont, ctx))
+        || !TEST_true(BN_mod_mul(e, a, b, m, bnctx))
+        || !check("to_mont_quick(from_mont(a * b))", r, limbs, e, len))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_from_mont(am, wider, mont, ctx))
+        || !TEST_true(OSSL_FN_to_mont_quick(r, am, mont, ctx))
+        || !check("to_mont_quick(from_mont(a, one limb wider))", r, limbs,
+            a, len))
+        goto err;
+
     ret = 1;
 err:
     if (fa != NULL)
         fn_declassify(fa, limbs);
     if (fb != NULL)
         fn_declassify(fb, limbs);
+    if (wide != NULL)
+        fn_declassify(wide, 2 * limbs);
+    if (wider != NULL)
+        fn_declassify(wider, limbs + 1);
     OSSL_FN_CTX_free(ctx);
     OSSL_FN_MONT_CTX_free(mont);
     OSSL_FN_free(fm);
@@ -266,6 +294,8 @@ err:
     OSSL_FN_free(fb);
     OSSL_FN_free(am);
     OSSL_FN_free(r);
+    OSSL_FN_free(wide);
+    OSSL_FN_free(wider);
     BN_free(m);
     BN_free(a);
     BN_free(b);
