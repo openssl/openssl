@@ -26,15 +26,17 @@ use Pod::Man;
 # becomes OUTDIR/man3/BIO_s_mem.3.
 our ($opt_o);    # -o OUTDIR, the directory holding the man1..man7 dirs
 our ($opt_m);    # -m MANSUFFIX, appended to the section inside the page
+our ($opt_f);    # -f MANDOCS, read pod file names from this file
 our ($opt_d);    # -d DATE
 our ($opt_r);    # -r RELEASE
 our ($opt_j);    # -j JOBS
 
-getopts('o:m:d:r:j:');
+getopts('o:m:d:r:f:j:');
 die "-o flag missing" unless defined $opt_o;
 $opt_m = '' unless defined $opt_m;
 $opt_d = '' unless defined $opt_d;
 $opt_r = '' unless defined $opt_r;
+$opt_f = '' unless defined $opt_f;
 
 sub cpu_count
 {
@@ -88,7 +90,11 @@ sub format_page
         or die "Can't set the mode of $out, $!\n";
 }
 
-my @pods = @ARGV;
+open(my $fh, '<', $opt_f) or die "Could not open '$opt_f': $!\n";
+my $podline = <$fh>;
+chomp($podline);
+my @pods = split(' ', $podline);
+close($fh);
 
 exit 0 unless @pods;
 

@@ -598,13 +598,14 @@ build_man_docs: doc/man/.mandocs.stamp ## Create manpages
 doc/man/.mandocs.stamp: {- $config{manpage_format} eq "roff"
                            ? '$(MANPODS)'
                            : '$(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)' -}
+	$(eval TMPFILE := $(shell TF=$$(mktemp); for pod in $(MANPODS); do echo -n "$$pod " >> $$TF; done; echo $$TF))
 {- $config{manpage_format} eq "roff"
    ? "\t" . '@$(ECHO) "Formatting the manual pages"'
      . "\n\t" . '@$(PERL) $(SRCDIR)/util/mkpod2man.pl -o doc/man \\'
-     . "\n\t\t" . '-m "$(MANSUFFIX)" -d "$(RELEASE_DATE)" -r "$(VERSION)" \\'
-     . "\n\t\t" . '$(MANPODS)'
+     . "\n\t\t" . '-f $(TMPFILE) -m "$(MANSUFFIX)" -d "$(RELEASE_DATE)" -r "$(VERSION)" \\'
      . "\n\t" . '@touch $@'
    : "\t" . '@touch $@' -}
+	@rm -f $(TMPFILE)
 
 build_html_docs: doc/html/.htmldocs.stamp ## Create HTML documentation
 
@@ -614,10 +615,12 @@ build_html_docs: doc/html/.htmldocs.stamp ## Create HTML documentation
 # recipe takes them as arguments -- so a stamp is enough to order the work,
 # and the per-page rules below stay available for one page by name.
 doc/html/.htmldocs.stamp: $(HTMLPODS)
+	$(eval HTMPFILE := $(shell TF=$$(mktemp); for pod in $(HTMLPODS); do echo -n "$$pod " >> $$TF; done; echo $$TF))
 	@$(ECHO) "Converting the manual pages to HTML"
 	@$(PERL) $(SRCDIR)/util/mkpod2html.pl -o doc/html \
-		-r "$(SRCDIR)/doc" $(HTMLPODS)
+		-f $(HTMPFILE) -r "$(SRCDIR)/doc"
 	@touch $@
+	@rm -f $(HTMPFILE)
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
