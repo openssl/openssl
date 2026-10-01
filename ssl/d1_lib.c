@@ -291,7 +291,8 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
 {
     pitem *item = NULL;
-    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue remaining_sent_messages_buf = { NULL, 0 };
+    pqueue *remaining_sent_messages = &remaining_sent_messages_buf;
     pqueue *sent_messages = &s->d1->sent_messages;
     int retired = 0;
 
@@ -319,7 +320,6 @@ static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
     while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
         pqueue_insert(sent_messages, item);
 
-    pqueue_free(remaining_sent_messages);
     return retired;
 }
 
