@@ -24,6 +24,7 @@ on:
         description: 'Internal: openssl-ci-bot check-run ID. Leave empty for a normal manual run.'
         required: false
         type: string
+  pull_request:
 
 # Keep in sync with openssl-ci-bot's run-name parser, and with the Actions statistics
 # collector that attributes CI load by parsing this same string. Both break silently.
