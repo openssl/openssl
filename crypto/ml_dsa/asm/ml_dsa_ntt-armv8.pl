@@ -377,6 +377,8 @@ $outer:
 $inner:
 ___
     if ($paired) {
+        # NTT layers 1-5 reach this branch: butterfly distances 128, 64, 32,
+        # 16, and 8.  Each iteration handles two vectors from each half.
         $code .= <<___;
         ldp     $even0_q, $even1_q, [$even_ptr]
         ldp     $odd0_q, $odd1_q, [$odd_ptr]
@@ -389,6 +391,8 @@ ___
         stp     $odd0_q, $odd1_q, [$odd_ptr], #32
 ___
     } else {
+        # NTT layer 6 reaches this branch: butterfly distance 4.  Each half
+        # contains one vector, so a paired load would cross the group boundary.
         $code .= <<___;
         ldr     $coeff0_q, [$even_ptr]
         ldr     $coeff1_q, [$odd_ptr]
@@ -601,6 +605,8 @@ $outer:
 $inner:
 ___
     if ($paired) {
+        # iNTT layers 4-8 reach this branch: butterfly distances 8, 16, 32,
+        # 64, and 128.  Each iteration handles two vectors from each half.
         $code .= <<___;
         ldp     $even0_q, $even1_q, [$even_ptr]
         ldp     $odd0_q, $odd1_q, [$odd_ptr]
@@ -621,6 +627,8 @@ ___
         stp     $odd0_q, $odd1_q, [$odd_ptr], #32
 ___
     } else {
+        # iNTT layer 3 reaches this branch: butterfly distance 4.  Each half
+        # contains one vector, so a paired load would cross the group boundary.
         $code .= <<___;
         ldr     $coeff0_q, [$even_ptr]
         ldr     $coeff1_q, [$odd_ptr]
