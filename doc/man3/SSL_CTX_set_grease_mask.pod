@@ -104,6 +104,11 @@ SSL_CTX_get_grease_mask() and SSL_get_grease_mask() return the configured mask.
 
 =head1 ERRORS
 
+SSL_CTX_set_grease_mask() and SSL_set_grease_mask() raise
+B<ERR_R_PASSED_INVALID_ARGUMENT> and return 0 if B<mask> contains unknown
+bits or enables B<SSL_GREASE_KEY_SHARE> without B<SSL_GREASE_SUPPORTED_GROUPS>.
+The previous mask is unchanged.
+
 SSL_set_grease_mask() and SSL_get_grease_mask() raise
 B<ERR_R_PASSED_INVALID_ARGUMENT> and return 0 if B<ssl> is NULL or does not
 refer to a TLS, DTLS or QUIC connection. A successful SSL_get_grease_mask()

@@ -530,10 +530,11 @@ err:
     return testresult;
 }
 
-/*
- * Test that a QUIC handshake completes when the client sends GREASE values.
+/**
+ * @brief Check that a QUIC handshake completes with GREASE enabled.
  * The ClientHello contents are checked by test_grease_mask_quic_wire() in
  * sslapitest.c.
+ * @returns 1 on success, otherwise 0
  */
 static int test_quic_grease(void)
 {
