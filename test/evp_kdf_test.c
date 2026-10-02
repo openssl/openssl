@@ -1988,6 +1988,39 @@ static int test_kdf_ss_kmac(void)
 }
 #endif /* OPENSSL_NO_SSKDF */
 
+#ifndef OPENSSL_NO_SNMPKDF
+static int test_kdf_snmpkdf_rejected_password(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[4], rejected[2];
+    unsigned char password[] = "password";
+    unsigned char eid[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    unsigned char dummy = 0;
+    unsigned char expected[32], out[sizeof(expected)];
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+        password, sizeof(password) - 1);
+    params[2] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SNMPKDF_EID,
+        eid, sizeof(eid));
+    params[3] = OSSL_PARAM_construct_end();
+    rejected[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+        &dummy, 0);
+    rejected[1] = OSSL_PARAM_construct_end();
+
+    ret = TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
+        && TEST_true(EVP_KDF_derive(kctx, expected, sizeof(expected), params))
+        && TEST_false(EVP_KDF_CTX_set_params(kctx, rejected))
+        && TEST_true(EVP_KDF_derive(kctx, out, sizeof(out), NULL))
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_SNMPKDF */
+
 #ifndef OPENSSL_NO_SSHKDF
 static int test_kdf_sshkdf(void)
 {
@@ -2476,6 +2509,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ss_hash);
     ADD_TEST(test_kdf_ss_hmac);
     ADD_TEST(test_kdf_ss_kmac);
+#endif
+#ifndef OPENSSL_NO_SNMPKDF
+    ADD_TEST(test_kdf_snmpkdf_rejected_password);
 #endif
 #ifndef OPENSSL_NO_SSHKDF
     ADD_TEST(test_kdf_sshkdf);
