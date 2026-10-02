@@ -90,6 +90,88 @@ to return 0.
 
 =back
 
+=head2 Multi-key derivation parameters
+
+The TLS1-PRF implementation supports simultaneous derivation of multiple keys
+and IVs via EVP_KDF_derive_SKEYs(). The following additional parameters control
+the key block layout:
+
+=over 4
+
+=item "mac_key_len" (B<OSSL_KDF_PARAM_MAC_KEY_LEN>) <unsigned integer>
+
+The length in bytes of each MAC key. Set to 0 for cipher suites that do not
+use separate MAC keys (e.g., AEAD ciphers).
+
+=item "cipher_key_len" (B<OSSL_KDF_PARAM_CIPHER_KEY_LEN>) <unsigned integer>
+
+The length in bytes of each cipher key.
+
+=item "iv_len" (B<OSSL_KDF_PARAM_IV_LEN>) <unsigned integer>
+
+The length in bytes of each IV.
+
+=item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
+
+The cipher the derived keys are for, for example "AES-128-CBC". This is not
+used by the PRF itself; it tells the provider how large a cipher key to derive
+and which kind of key to produce. Given this, "cipher_key_len" is unnecessary,
+and if it is given anyway the two must agree: naming "AES-128-CBC" with a
+"cipher_key_len" of 10 is an error and is reported by EVP_KDF_derive_SKEYs().
+
+=item "mac" (B<OSSL_KDF_PARAM_MAC>) <UTF8 string>
+
+The MAC the derived MAC keys are for. Unlike a cipher, a MAC does not
+determine its own key length -- for HMAC that is a property of the TLS
+ciphersuite rather than of the algorithm -- so "mac_key_len" is still
+required.
+
+Unlike "cipher" above, this name is not fetched: it is passed to the provider
+to interpret, so the vocabulary is the provider's own. The default provider
+has no MAC-specific key type and ignores it entirely, producing generic
+secrets whatever it says. A provider backed by a token is the reason the
+parameter exists, and may well want a digest-qualified name such as
+"HMAC-SHA2-256", since PKCS#11 types an HMAC key by its digest -- a bare
+"HMAC" does not say whether a B<CKK_SHA256_HMAC> or a B<CKK_SHA384_HMAC> key
+is wanted.
+
+=back
+
+The key type each kind of key is produced as is decided by the provider from
+these names, and is reported by EVP_SKEY_get0_skeymgmt_name() on the key that
+comes back. The default provider produces B<OSSL_SKEY_TYPE_AES> keys for AES
+ciphers and B<OSSL_SKEY_TYPE_GENERIC> otherwise; a provider holding its keys
+on a token may use types of its own. Naming neither algorithm derives generic
+secrets of the requested lengths.
+
+The algorithms are given per kind of key rather than per purpose, since the
+client and server side of a connection always agree on them.
+
+The total key block size is 2 * (mac_key_len + cipher_key_len + iv_len).
+After calling EVP_KDF_derive_SKEYs(), individual keys are retrieved via
+EVP_KDF_CTX_get1_SKEY() and IVs via EVP_KDF_CTX_get0_IV() using the
+following purpose strings:
+
+=over 4
+
+=item "client_MAC_key" (B<OSSL_KDF_PURPOSE_CLIENT_MAC_KEY>)
+
+=item "server_MAC_key" (B<OSSL_KDF_PURPOSE_SERVER_MAC_KEY>)
+
+=item "client_cipher_key" (B<OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY>)
+
+=item "server_cipher_key" (B<OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY>)
+
+=item "client_iv" (B<OSSL_KDF_PURPOSE_CLIENT_IV>)
+
+=item "server_iv" (B<OSSL_KDF_PURPOSE_SERVER_IV>)
+
+=back
+
+A purpose whose length was set to 0 is not derived, and retrieving it fails.
+For an AEAD ciphersuite, where "mac_key_len" is 0, that is the case for
+"client_MAC_key" and "server_MAC_key".
+
 =head1 NOTES
 
 A context for the TLS PRF can be obtained by calling:
