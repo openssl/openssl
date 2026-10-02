@@ -94,7 +94,7 @@ my $code = <<___;
 ___
 
 ##
-# @brief Generate four parallel multiplications by constant twiddle z.
+# @brief Lazy twiddle multiplication.
 # @param[out] dst Destination vector register.
 # @param[in] a Source vector register containing values in [0,2^8q).
 # @param[in] z Vector register containing the centred twiddles.
@@ -102,27 +102,24 @@ ___
 # @return Generated code leaves each dst lane congruent to a*z modulo q in
 # [0,2q).
 # @note Uses $quotient as scratch.
+# @details Let z be the centred twiddle and define
+#
+#     c = floor(2^31*z/q),  k = floor(a*c/2^31).
+#
+# The variables obey:
+#
+#     0 <= a < 2^8q < 2^31
+#     -q/2 < z < q/2
+#     -2^30 < c < 2^30
+#      0 <= 2^31*z/q - c < 1
+#
+# SQDMULH computes k.  Because a/2^31 < 1, k is either floor(a*z/q) or one
+# less.  MUL/MLS then forms r = low32(a*z-k*q), where 0 <= r < 2q.  This bound
+# makes the low-32-bit arithmetic the exact integer r, not merely a value
+# modulo 2^32.  Computing k before MUL permits dst to alias a during final
+# iNTT scaling.
 sub mul_z_lazy {
     my ($dst, $a, $z, $c) = @_;
-
-    # Let z be the centred representative of the constant twiddle and define
-    #
-    #     c = floor(2^31*z/q),  k = floor(a*c/2^31).
-    #
-    # The variables obey:
-    #
-    #     0 <= a < 2^8q < 2^31
-    #     -q/2 < z < q/2
-    #     -2^30 < c < 2^30
-    #      0 <= 2^31*z/q - c < 1
-    #
-    # SQDMULH computes k.  Because a/2^31 < 1, k is either floor(a*z/q)
-    # or one less.  The MUL/MLS pair forms r = low32(a*z-k*q), and therefore
-    # 0 <= r < 2q.  This small nonnegative bound means that the low-32-bit
-    # arithmetic is the exact integer r, not merely a value modulo 2^32.
-    # Compute k before MUL so that dst is permitted to alias a.  This is used
-    # by the final iNTT scaling, while the butterfly calls use distinct
-    # source and destination registers.
     $code .= <<___;
         sqdmulh $quotient.4s,$a.4s,$c.4s
         mul     $dst.4s,$a.4s,$z.4s
@@ -131,19 +128,19 @@ ___
 }
 
 ##
-# @brief Generate four twiddle multiplications and canonical reductions.
+# @brief Canonical twiddle multiplication.
 # @param[out] dst Destination vector register.
 # @param[in] a Source vector register containing values in [0,2^8q).
 # @param[in] z Vector register containing the centred twiddles.
 # @param[in] c Vector register containing each z's reduction constant.
 # @return Generated code leaves each dst lane equal to a*z modulo q in [0,q).
 # @note Uses $quotient as scratch.
+# @details The lazy result is in [0,2q), so one unsigned conditional
+# subtraction produces its canonical representative in [0,q).
 sub mul_z_canonical {
     my ($dst, $a, $z, $c) = @_;
 
     mul_z_lazy($dst, $a, $z, $c);
-    # The unreduced result is in [0,2q); one unsigned conditional subtraction
-    # produces the canonical representative in [0,q).
     $code .= <<___;
         sub     $quotient.4s,$dst.4s,$q_vector.4s
         umin    $dst.4s,$dst.4s,$quotient.4s
@@ -151,7 +148,7 @@ ___
 }
 
 ##
-# @brief Generate two vectors of lazy multiplications by twiddle z.
+# @brief Paired lazy twiddle multiplication.
 # @param[out] dst0 First destination vector register.
 # @param[in] a0 First source vector register.
 # @param[out] dst1 Second destination vector register.
@@ -160,13 +157,12 @@ ___
 # @param[in] c Shared vector register containing each z's reduction constant.
 # @return Generated code leaves both destination vectors in [0,2q).
 # @note Uses $quotient and $quotient2 as scratch.
+# @details Interleaving two independent products exposes both instruction
+# chains to the processor.  Computing both quotients first also preserves a0
+# and a1 when either destination aliases its source during iNTT normalization.
 sub mul_z_pair_lazy {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
-    # Interleave two independent constant products.  Besides exposing two
-    # independent instruction chains to the processor, calculating both
-    # quotients first preserves a0 and a1 when either destination aliases its
-    # source during iNTT normalization.
     $code .= <<___;
         sqdmulh $quotient.4s,$a0.4s,$c.4s
         sqdmulh $quotient2.4s,$a1.4s,$c.4s
@@ -178,7 +174,7 @@ ___
 }
 
 ##
-# @brief Generate two vectors of canonical multiplications by twiddle z.
+# @brief Paired canonical twiddle multiplication.
 # @param[out] dst0 First destination vector register.
 # @param[in] a0 First source vector register.
 # @param[out] dst1 Second destination vector register.
@@ -200,7 +196,7 @@ ___
 }
 
 ##
-# @brief Generate one four-lane Cooley-Tukey NTT butterfly.
+# @brief Cooley-Tukey NTT butterfly.
 # @param[in,out] even Vector register containing the even coefficients.
 # @param[in,out] odd Vector register containing the odd coefficients.
 # @param[in] z Vector register containing the NTT twiddles.
@@ -228,7 +224,7 @@ ___
 }
 
 ##
-# @brief Generate one four-lane Gentleman-Sande iNTT butterfly.
+# @brief Gentleman-Sande iNTT butterfly.
 # @param[in,out] even Vector register containing the even coefficients.
 # @param[in,out] odd Vector register containing the odd coefficients.
 # @param[in] z Vector register containing the iNTT twiddles.
@@ -256,7 +252,7 @@ ___
 }
 
 ##
-# @brief Generate two independent four-lane Cooley-Tukey NTT butterflies.
+# @brief Paired Cooley-Tukey NTT butterflies.
 # @param[in,out] even0 First even-coefficient vector register.
 # @param[in,out] odd0 First odd-coefficient vector register.
 # @param[in,out] even1 Second even-coefficient vector register.
@@ -281,7 +277,7 @@ ___
 }
 
 ##
-# @brief Generate two independent four-lane Gentleman-Sande iNTT butterflies.
+# @brief Paired Gentleman-Sande iNTT butterflies.
 # @param[in,out] even0 First even-coefficient vector register.
 # @param[in,out] odd0 First odd-coefficient vector register.
 # @param[in,out] even1 Second even-coefficient vector register.
@@ -306,7 +302,7 @@ ___
 }
 
 ##
-# @brief Generate instructions that load the ML-DSA modulus.
+# @brief Load q.
 # @return Generated code loads q into $q_word and [q,q,q,q] into $q_vector.
 sub load_modulus {
     $code .= <<___;
@@ -317,7 +313,7 @@ ___
 }
 
 ##
-# @brief Generate an NTT layer with directly loadable partner vectors.
+# @brief Wide-offset NTT layer.
 # @param[in] step Number of coefficient groups in the layer.
 # @param[in] offset Coefficient separation between butterfly partners.
 # @return Generated code updates all 256 coefficients in place.
@@ -388,7 +384,7 @@ ___
 }
 
 ##
-# @brief Generate the offset-two NTT layer.
+# @brief Offset-two NTT layer.
 # @return Generated code updates all 256 coefficients in place.
 # @details Each pair of adjacent 128-bit loads contains interleaved butterfly
 # halves.  ZIP on 64-bit elements places partners in matching lanes.
@@ -426,7 +422,7 @@ ___
 }
 
 ##
-# @brief Generate the offset-one NTT layer.
+# @brief Offset-one NTT layer.
 # @return Generated code updates all 256 coefficients in place.
 # @details UZP separates even and odd coefficients into two vectors; ZIP
 # restores the original memory order after the butterflies.
@@ -462,7 +458,7 @@ ___
 }
 
 ##
-# @brief Generate the offset-one iNTT layer.
+# @brief Offset-one iNTT layer.
 # @return Generated code updates all 256 coefficients in place using bias q.
 # @details The first iNTT layer begins undoing the lane permutations used by
 # the final two NTT layers.
@@ -500,7 +496,7 @@ ___
 }
 
 ##
-# @brief Generate the offset-two iNTT layer.
+# @brief Offset-two iNTT layer.
 # @return Generated code updates all 256 coefficients in place using bias 2q.
 # @details Uses 64-bit ZIP operations to undo the corresponding NTT lane
 # permutation.
@@ -540,7 +536,7 @@ ___
 }
 
 ##
-# @brief Generate an iNTT layer with directly loadable partner vectors.
+# @brief Wide-offset iNTT layer.
 # @param[in] step Number of coefficient groups in the layer.
 # @param[in] offset Coefficient separation between butterfly partners.
 # @param[in] bias_shift Selects q << bias_shift as the subtraction bias.
@@ -628,25 +624,23 @@ ___
 }
 
 ##
-# @brief Generate the final canonical reduction of all NTT coefficients.
+# @brief Canonicalize NTT coefficients.
 # @return Generated code reduces all 256 coefficients from [0,33q) to [0,q).
 # @details The generated loop reads and writes the polynomial through
-# $coefficients.
+# $coefficients.  Starting in [0,q), every NTT layer can add 4q to the upper
+# bound, so after eight layers every lane is in [0,33q).  For such x,
+# t = floor(x/2^23) is at most 32 and
+#
+#     r = x - t*q < q + 33*(2^23-q) < 2q.
+#
+# USHR/MLS forms r and one SUB/UMIN makes it canonical.  Processing vector
+# pairs reduces fixed loop overhead while retaining paired loads and stores.
 sub ntt_reduce_coefficients {
     my $loop = ".Lml_dsa_ntt_${label_index}_canonical";
     my $pairs_per_iteration = 2;
     my $iterations = 32 / $pairs_per_iteration;
     $label_index++;
 
-    # Starting in [0,q), every NTT layer can add 4q to the upper bound,
-    # so after all eight layers every lane is in [0,33q).  For such x,
-    # t=floor(x/2^23) is at most 32 and
-    #
-    #   r = x - t*q < q + 33*(2^23-q) < 2q.
-    #
-    # USHR/MLS forms r and one SUB/UMIN makes it canonical.  The pass is
-    # unrolled in vector pairs to reduce fixed loop overhead while retaining
-    # paired loads and stores.
     $code .= <<___;
         mov     $group_ptr,$coefficients
         mov     $group_count,#$iterations
