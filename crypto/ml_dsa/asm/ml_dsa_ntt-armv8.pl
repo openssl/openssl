@@ -91,6 +91,13 @@ my ($z_word, $c_word, $q_word) =
 #   q7/v7 = odd_coefficients1  = next four odd-side coefficients
 my ($coeff_vector0, $coeff_vector1, $z, $product,
     $butterfly_even, $butterfly_odd) = map("v$_", (0..5));
+# These aliases name the loaded table layout before its values are broadcast
+# into the arithmetic vectors $z and $c.  A single record shares v2/d2 as
+# [z,c]; the final two layers load separate pairs or vectors of z and c values.
+my $zc = "v2";
+my $zc_d = "d2";
+my ($z_d, $c_d) = map("d$_", (2, 27));
+my ($z_q, $c_q) = map("q$_", (2, 27));
 my ($even_coefficients0, $odd_coefficients0,
     $even_coefficients1, $odd_coefficients1) = map("v$_", (0, 1, 6, 7));
 my ($even_coefficients0_q, $odd_coefficients0_q,
@@ -360,9 +367,9 @@ sub ntt_wide_layer {
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$groups
 $outer:
-        ldr     d2, [$zc_ptr], #8
-        dup     $c.4s, $z.s[1]
-        dup     $z.4s, $z.s[0]
+        ldr     $zc_d, [$zc_ptr], #8
+        dup     $c.4s, $zc.s[1]
+        dup     $z.4s, $zc.s[0]
         mov     $even_ptr, $group_ptr
         add     $odd_ptr, $group_ptr, #$butterfly_distance_bytes
         mov     $vector_count, #$iterations
@@ -419,7 +426,7 @@ sub ntt_offset2_layer {
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
-        ldp     d2, d27, [$zc_ptr], #16
+        ldp     $z_d, $c_d, [$zc_ptr], #16
         zip1    $z.4s, $z.4s, $z.4s
         zip1    $c.4s, $c.4s, $c.4s
         ldr     q0, [$group_ptr]
@@ -457,7 +464,7 @@ sub ntt_offset1_layer {
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
-        ldp     q2, q27, [$zc_ptr], #32
+        ldp     $z_q, $c_q, [$zc_ptr], #32
         ldr     q0, [$group_ptr]
         ldr     q1, [$group_ptr, #16]
         uzp1    $butterfly_even.4s, $coeff_vector0.4s, $coeff_vector1.4s
@@ -495,7 +502,7 @@ sub intt_offset1_layer {
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
-        ldp     q2, q27, [$zc_ptr], #32
+        ldp     $z_q, $c_q, [$zc_ptr], #32
         ldr     q0, [$group_ptr]
         ldr     q1, [$group_ptr, #16]
         uzp1    $butterfly_even.4s, $coeff_vector0.4s, $coeff_vector1.4s
@@ -533,7 +540,7 @@ sub intt_offset2_layer {
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
-        ldp     d2, d27, [$zc_ptr], #16
+        ldp     $z_d, $c_d, [$zc_ptr], #16
         zip1    $z.4s, $z.4s, $z.4s
         zip1    $c.4s, $c.4s, $c.4s
         ldr     q0, [$group_ptr]
@@ -584,9 +591,9 @@ sub intt_wide_layer {
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$groups
 $outer:
-        ldr     d2, [$zc_ptr], #8
-        dup     $c.4s, $z.s[1]
-        dup     $z.4s, $z.s[0]
+        ldr     $zc_d, [$zc_ptr], #8
+        dup     $c.4s, $zc.s[1]
+        dup     $z.4s, $zc.s[0]
         mov     $even_ptr, $group_ptr
         add     $odd_ptr, $group_ptr, #$butterfly_distance_bytes
         mov     $vector_count, #$iterations
