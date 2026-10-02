@@ -23,14 +23,11 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT = *OUT;
 
-# This file is a Perl generator: its helper functions append AArch64 assembly
-# to $code; they are not functions called by the generated code at run time.
-#
 # The transform follows the standard FIPS 204 layer order used by
 # ml_dsa_ntt.c.  Each Neon register holds four 32-bit coefficients, so four
 # butterflies are evaluated in parallel.  Layers with offsets of at least four
-# can load their even and odd halves directly.  The final offset-2 and offset-1
-# layers use ZIP/UZP permutations to put butterfly partners in matching lanes.
+# can load their even and odd halves directly.  Layers 7 and 8 use ZIP/UZP
+# permutations to put butterfly partners in matching lanes.
 #
 # Constant products are left in [0,2q), and additions and subtractions are
 # reduced lazily.  An NTT butterfly uses a public 2q bias; every layer can
@@ -120,7 +117,6 @@ my $q_bias_v = "v26";
 my $c_v = "v27";
 my ($scale_c_v, $scale_z_v, $q_vector) = map("v$_", (28..30));
 # load_q() broadcasts q into q_vector as [q, q, q, q].
-my $label_index = 0;
 my $code = <<___;
 #include "arch/arm_arch.h"
 
@@ -377,16 +373,14 @@ sub ntt_wide_layer {
     my $layer = $args{layer};
     my $groups = $args{groups};
     my $butterfly_distance = $args{butterfly_distance};
-    my $outer = ".Lml_dsa_ntt_${label_index}_outer";
-    my $inner = ".Lml_dsa_ntt_${label_index}_inner";
+    my $outer = ".Lml_dsa_ntt_layer${layer}_outer";
+    my $inner = ".Lml_dsa_ntt_layer${layer}_inner";
     my $butterfly_distance_bytes =
         $coefficient_bytes * $butterfly_distance;
     my $group_bytes = 2 * $butterfly_distance_bytes;
     my $vectors = $butterfly_distance / $vector_lanes;
     my $paired = $vectors >= 2;
     my $iterations = $paired ? $vectors / 2 : $vectors;
-    $label_index++;
-
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$groups
@@ -447,8 +441,7 @@ ___
 #       (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 #       store_two_vectors(unzip_64_bit_halves(even, odd))
 sub ntt_layer7 {
-    my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
-    $label_index++;
+    my $loop = ".Lml_dsa_ntt_layer7_loop";
 
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
@@ -485,8 +478,7 @@ ___
 #       (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 #       store_two_vectors(interleave_lanes(even, odd))
 sub ntt_layer8 {
-    my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
-    $label_index++;
+    my $loop = ".Lml_dsa_ntt_layer8_loop";
 
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
@@ -522,8 +514,7 @@ ___
 #       (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #       store_two_vectors(interleave_lanes(even, odd))
 sub intt_layer1 {
-    my $loop = ".Lml_dsa_intt_${label_index}_offset1";
-    $label_index++;
+    my $loop = ".Lml_dsa_intt_layer1_loop";
 
     $code .= <<___;
         mov     $q_bias_v.16b, $q_vector.16b
@@ -560,8 +551,7 @@ ___
 #       (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #       store_two_vectors(unzip_64_bit_halves(even, odd))
 sub intt_layer2 {
-    my $loop = ".Lml_dsa_intt_${label_index}_offset2";
-    $label_index++;
+    my $loop = ".Lml_dsa_intt_layer2_loop";
 
     $code .= <<___;
         shl     $q_bias_v.4s, $q_vector.4s, #1
@@ -612,16 +602,14 @@ sub intt_wide_layer {
     my $butterfly_distance = $args{butterfly_distance};
     my $bias_shift = $args{bias_shift};
     my $normalize_after_layer = $args{normalize_after_layer};
-    my $outer = ".Lml_dsa_intt_${label_index}_outer";
-    my $inner = ".Lml_dsa_intt_${label_index}_inner";
+    my $outer = ".Lml_dsa_intt_layer${layer}_outer";
+    my $inner = ".Lml_dsa_intt_layer${layer}_inner";
     my $butterfly_distance_bytes =
         $coefficient_bytes * $butterfly_distance;
     my $group_bytes = 2 * $butterfly_distance_bytes;
     my $vectors = $butterfly_distance / $vector_lanes;
     my $paired = $vectors >= 2;
     my $iterations = $paired ? $vectors / 2 : $vectors;
-    $label_index++;
-
     $code .= <<___;
         shl     $q_bias_v.4s, $q_vector.4s, #$bias_shift
         mov     $group_ptr, $inout_coefficients
