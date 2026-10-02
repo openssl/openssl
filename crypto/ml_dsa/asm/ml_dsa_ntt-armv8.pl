@@ -655,28 +655,18 @@ ___
 }
 
 ##
-# @brief Canonicalize NTT coefficients.
-# @return Generated code reduces all 256 coefficients from [0,33q) to [0,q).
-# @details The generated loop reads and writes the polynomial through
-# $inout_coefficients.  Starting in [0,q), every NTT layer can add 4q to the
-# upper bound, so after eight layers every lane is in [0,33q).  For such x,
-# t = floor(x/2^23) is at most 32 and
+# @brief Reduce eight NTT coefficients into [0,q).
+# @pre $group_ptr addresses eight coefficients in [0,33q).
+# @return Generated code reduces two coefficient vectors and advances
+# $group_ptr by 32 bytes.
 #
-#     r = x - t*q < q + 33*(2^23-q) < 2q.
-#
-# USHR/MLS forms r and one SUB/UMIN makes it canonical.  Processing vector
-# pairs reduces fixed loop overhead while retaining paired loads and stores.
-sub ntt_reduce_coefficients {
-    my $pairs_per_iteration = 2;
-    my $iterations = 32 / $pairs_per_iteration;
-
+# @par Pseudocode
+#   for each vector x:
+#       approximate_quotient = x >> 23
+#       remainder = x - approximate_quotient*q
+#       x = min_unsigned(remainder, remainder-q)
+sub ntt_reduce_vector_pair {
     $code .= <<___;
-        mov     $group_ptr, $inout_coefficients
-        mov     $group_count, #$iterations
-.Lml_dsa_ntt_reduce_coefficients_loop:
-___
-    for (1 .. $pairs_per_iteration) {
-        $code .= <<___;
         ldp     $coeff0_q, $coeff1_q, [$group_ptr]
         ushr    $quotient.4s, $coeff0_v.4s, #23
         ushr    $quotient2.4s, $coeff1_v.4s, #23
@@ -688,7 +678,28 @@ ___
         umin    $coeff1_v.4s, $coeff1_v.4s, $quotient2.4s
         stp     $coeff0_q, $coeff1_q, [$group_ptr], #32
 ___
-    }
+}
+
+##
+# @brief Canonicalize NTT coefficients.
+# @return Generated code reduces all 256 coefficients from [0,33q) to [0,q).
+# @details The generated loop reads and writes the polynomial through
+# $inout_coefficients.  Starting in [0,q), every NTT layer can add 4q to the
+# upper bound, so after eight layers every lane is in [0,33q).  For such x,
+# t = floor(x/2^23) is at most 32 and
+#
+#     r = x - t*q < q + 33*(2^23-q) < 2q.
+#
+# USHR/MLS forms r and one SUB/UMIN makes it canonical.  Each iteration
+# reduces 16 coefficients as two independent eight-coefficient vector pairs.
+sub ntt_reduce_coefficients {
+    $code .= <<___;
+        mov     $group_ptr, $inout_coefficients
+        mov     $group_count, #16
+.Lml_dsa_ntt_reduce_coefficients_loop:
+___
+    ntt_reduce_vector_pair();
+    ntt_reduce_vector_pair();
     $code .= <<___;
         subs    $group_count, $group_count, #1
         b.ne    .Lml_dsa_ntt_reduce_coefficients_loop
