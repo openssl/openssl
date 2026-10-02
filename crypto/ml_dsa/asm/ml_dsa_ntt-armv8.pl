@@ -290,7 +290,7 @@ ___
 # Each iNTT layer sets bias to the current coefficient bound.  The bias is
 # a multiple of q and keeps difference nonnegative without changing it mod q.
 # Inputs: registers containing four even coefficients, four odd coefficients,
-# four inverse twiddles z, and their quotient constants c; q_bias contains the
+# four iNTT twiddles z, and their quotient constants c; q_bias contains the
 # layer's bias.  Runtime outputs: even and odd are updated in place.  Perl
 # output: none; appends instructions to $code.
 sub intt_butterfly {
@@ -325,9 +325,9 @@ ___
 }
 
 # Generate two independent four-lane Gentleman-Sande iNTT butterflies.
-# Inputs: two even/odd register pairs and shared inverse-twiddle-z and
-# quotient-c registers; q_bias contains the layer's bias.  Runtime outputs:
-# all four coefficient registers are updated in place.  Perl output: none;
+# Inputs: two even/odd register pairs and shared iNTT twiddle z and quotient
+# constant c registers; q_bias contains the layer's bias.  Runtime outputs: all
+# four coefficient registers are updated in place.  Perl output: none;
 # appends instructions to $code.
 sub intt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
@@ -506,7 +506,7 @@ ___
 # the lane permutations used by the final two NTT stages.
 # Input: none.  Runtime output: the offset-one iNTT stage updates all 256
 # coefficients in place using q as its nonnegative bias.  Perl output: none;
-# appends 128 inverse twiddles and their quotient constants to
+# appends 128 iNTT twiddles and their quotient constants to
 # @intt_twiddle_records and appends instructions to $code.
 sub intt_offset1_stage {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
@@ -545,7 +545,7 @@ ___
 # Generate the offset-two iNTT stage, undoing the corresponding NTT lane
 # permutation with 64-bit ZIP operations.  Input: none.  Runtime output: all
 # 256 coefficients are updated in place using 2q as the nonnegative bias.
-# Perl output: none; appends 64 inverse twiddles and their quotient constants
+# Perl output: none; appends 64 iNTT twiddles and their quotient constants
 # to @intt_twiddle_records and appends instructions to $code.
 sub intt_offset2_stage {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
@@ -588,7 +588,7 @@ ___
 # bias_shift selects q << bias_shift for the layer's nonnegative difference;
 # final requests canonical iNTT scaling after the last butterflies.  Runtime
 # output: the selected stage updates all 256 coefficients in place.  Perl
-# output: none; appends its inverse-twiddle records to @intt_twiddle_records
+# output: none; appends its iNTT twiddle records to @intt_twiddle_records
 # and its instructions to $code.
 sub intt_wide_stage {
     my ($step, $offset, $bias_shift, $final) = @_;
@@ -784,7 +784,7 @@ ___
 $code .= <<___;
 .rodata
 .align  4
-# Each forward table record contains the signed ordinary-domain root or roots
+# Each NTT table record contains the signed ordinary-domain root or roots
 # consumed by one loop group, immediately followed by their c values for
 # SQDMULH.  The generator derives both halves from root 1753 and the bit-
 # reversed layer index; no precomputed transform table is copied here.
@@ -797,9 +797,9 @@ for my $record (@ntt_twiddle_records) {
 }
 $code .= <<___;
 .align  4
-# The inverse records have the same root/reciprocal layout, in the reverse
+# The iNTT records have the same root/reciprocal layout, in the reverse
 # layer order consumed by the Gentleman-Sande loops.  Their roots are the
-# signed additive inverses of the corresponding forward roots.
+# signed additive inverses of the corresponding NTT roots.
 .Lml_dsa_intt_constants:
 ___
 for my $record (@intt_twiddle_records) {
