@@ -659,6 +659,11 @@ ___
 # @pre $group_ptr addresses eight coefficients in [0,33q).
 # @return Generated code reduces two coefficient vectors and advances
 # $group_ptr by 32 bytes.
+# @details For each coefficient x, t = floor(x/2^23) is at most 32 and
+#
+#     r = x - t*q < q + 33*(2^23-q) < 2q.
+#
+# USHR/MLS forms r, then one SUB/UMIN reduces r from [0,2q) to [0,q).
 #
 # @par Pseudocode
 #   for each vector x:
@@ -685,13 +690,8 @@ ___
 # @return Generated code reduces all 256 coefficients from [0,33q) to [0,q).
 # @details The generated loop reads and writes the polynomial through
 # $inout_coefficients.  Starting in [0,q), every NTT layer can add 4q to the
-# upper bound, so after eight layers every lane is in [0,33q).  For such x,
-# t = floor(x/2^23) is at most 32 and
-#
-#     r = x - t*q < q + 33*(2^23-q) < 2q.
-#
-# USHR/MLS forms r and one SUB/UMIN makes it canonical.  Each iteration
-# reduces 16 coefficients as two independent eight-coefficient vector pairs.
+# upper bound, so after eight layers every lane is in [0,33q).  Each iteration
+# reduces 16 coefficients using two independent eight-coefficient vector pairs.
 sub ntt_reduce_coefficients {
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
