@@ -14,6 +14,8 @@ B<openssl kdf>
 [B<-mac>]
 [B<-kdfopt> I<nm>:I<v>]
 [B<-keylen> I<num>]
+[B<-multi>]
+[B<-purpose> I<string>]
 [B<-out> I<filename>]
 [B<-binary>]
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -34,7 +36,30 @@ Print a usage message.
 
 =item B<-keylen> I<num>
 
-The output size of the derived key. This field is required.
+The output size of the derived key. This field is required unless B<-multi> is used.
+
+=item B<-multi>
+
+Use multi-key derivation mode. Instead of deriving a single key buffer via
+EVP_KDF_derive(), this calls EVP_KDF_derive_SKEYs() to derive multiple keys
+and IVs simultaneously. The B<-purpose> option must be specified to select
+which derived key or IV to output.
+
+The KDF-specific size parameters (e.g., B<mac_key_len>, B<cipher_key_len>,
+B<iv_len> for TLS1-PRF) should be passed via B<-kdfopt>.
+
+=item B<-purpose> I<string>
+
+Specifies which key or IV to retrieve from a multi-key derivation.
+Must be used together with B<-multi>.
+The available purpose strings depend on the KDF algorithm; for example,
+TLS1-PRF supports B<client_MAC_key>, B<server_MAC_key>, B<client_cipher_key>,
+B<server_cipher_key>, B<client_IV>, and B<server_IV>.
+See the documentation of the specific KDF for the supported purpose strings.
+
+If the purpose identifies a key, it is retrieved via EVP_KDF_CTX_get1_SKEY()
+and its raw bytes are output. If it identifies an IV, it is retrieved via
+EVP_KDF_CTX_get0_IV().
 
 =item B<-out> I<filename>
 
@@ -151,6 +176,14 @@ Use TLS1-PRF to create a hex-encoded derived key from a secret key and seed:
 
     openssl kdf -keylen 16 -kdfopt digest:SHA2-256 -kdfopt key:secret \
                 -kdfopt seed:seed TLS1-PRF
+
+Use TLS1-PRF multi-key derivation to extract the client cipher key from a
+TLS 1.2 key block (with 10-byte MAC keys, 16-byte cipher keys, and 6-byte IVs):
+
+    openssl kdf -multi -kdfopt digest:SHA2-256 -kdfopt secret:secret \
+                -kdfopt seed:seed -kdfopt mac_key_len:10 \
+                -kdfopt cipher_key_len:16 -kdfopt iv_len:6 \
+                -purpose client_cipher_key TLS1-PRF
 
 Use HKDF to create a hex-encoded derived key from a secret key, salt and info:
 

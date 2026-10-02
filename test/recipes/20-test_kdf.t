@@ -88,6 +88,31 @@ my @krb5kdf_tests = (
       desc => 'KRB5KDF AES-128-CBC'},
 );
 
+my @multi_common = (qw{openssl kdf -multi -digest SHA256
+    -kdfopt secret:secret -kdfopt seed:seed
+    -kdfopt mac_key_len:10 -kdfopt cipher_key_len:16 -kdfopt iv_len:6});
+
+my @kdf_multi_tests = (
+    { cmd => [@multi_common, '-purpose', 'client_MAC_key', 'TLS1-PRF'],
+      expected => '8E:4D:93:25:30:D7:65:A0:AA:E9',
+      desc => 'TLS1-PRF multi-derive client_MAC_key' },
+    { cmd => [@multi_common, '-purpose', 'server_MAC_key', 'TLS1-PRF'],
+      expected => '74:C3:04:73:5E:CC:12:02:A8:19',
+      desc => 'TLS1-PRF multi-derive server_MAC_key' },
+    { cmd => [@multi_common, '-purpose', 'client_cipher_key', 'TLS1-PRF'],
+      expected => 'F8:0A:DB:D5:AD:09:C1:A3:4F:C0:69:18:E3:D0:77:95',
+      desc => 'TLS1-PRF multi-derive client_cipher_key' },
+    { cmd => [@multi_common, '-purpose', 'server_cipher_key', 'TLS1-PRF'],
+      expected => '21:4D:94:C6:A1:97:6C:AE:A5:A0:B6:44:C5:B0:4D:1A',
+      desc => 'TLS1-PRF multi-derive server_cipher_key' },
+    { cmd => [@multi_common, '-purpose', 'client_iv', 'TLS1-PRF'],
+      expected => 'D3:E0:9C:61:11:C3',
+      desc => 'TLS1-PRF multi-derive client_iv' },
+    { cmd => [@multi_common, '-purpose', 'server_iv', 'TLS1-PRF'],
+      expected => '7A:FC:00:DF:0B:6D',
+      desc => 'TLS1-PRF multi-derive server_iv' },
+);
+
 my @kdf_bin_tests = (
     { cmd => [qw{openssl kdf -keylen 10 -binary -out hkdf-sha256.bin -kdfopt digest:SHA256 -kdfopt key:secret -kdfopt salt:salt -kdfopt info:label HKDF}],
       outfile => 'hkdf-sha256.bin',
@@ -106,9 +131,13 @@ push @kdf_tests, @scrypt_tests unless disabled("scrypt");
 push @kdf_tests, @sshkdf_tests unless disabled("sshkdf");
 push @kdf_tests, @sskdf_tests unless disabled("sskdf");
 
-plan tests => scalar @kdf_tests + scalar @kdf_bin_tests;
+plan tests => scalar @kdf_tests + scalar @kdf_multi_tests + scalar @kdf_bin_tests;
 
 foreach (@kdf_tests) {
+    ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
+}
+
+foreach (@kdf_multi_tests) {
     ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
 }
 
