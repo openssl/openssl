@@ -1029,6 +1029,7 @@ struct ssl_ctx_st {
 
     uint64_t options;
     uint32_t mode;
+    uint32_t grease_mask;
     int min_proto_version;
     int max_proto_version;
     size_t max_cert_list;
@@ -1722,6 +1723,7 @@ struct ssl_connection_st {
     uint64_t options;
     /* API behaviour */
     uint32_t mode;
+    uint32_t grease_mask;
     int min_proto_version;
     int max_proto_version;
     size_t max_cert_list;
@@ -3010,6 +3012,19 @@ static ossl_inline int ossl_is_grease_value(uint16_t val)
 {
     return (val & 0x0f0f) == 0x0a0a && (val >> 8) == (val & 0xff);
 }
+
+/**
+ * @brief Report whether GREASE is enabled for a ClientHello injection point.
+ * @param s connection whose ClientHello is being constructed
+ * @param mask one SSL_GREASE_* injection-point bit
+ * @returns 1 when the injection point is enabled, otherwise 0
+ */
+static ossl_inline int ossl_grease_enabled(const SSL_CONNECTION *s,
+    uint32_t mask)
+{
+    return s != NULL && (s->options & SSL_OP_GREASE) != 0 && !s->server
+        && (s->grease_mask & mask) != 0;
+}
 __owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
 int ssl_load_sigalgs(SSL_CTX *ctx);
@@ -3541,7 +3556,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 
 /* Total mask of connection-level options permitted or ignored under QUIC. */
 #define OSSL_QUIC_PERMITTED_OPTIONS_CONN \
-    (OSSL_LEGACY_SSL_OPTIONS | OSSL_TLS1_2_OPTIONS | SSL_OP_SERVER_PREFERENCE | SSL_OP_DISABLE_TLSEXT_CA_NAMES | SSL_OP_NO_TX_CERTIFICATE_COMPRESSION | SSL_OP_NO_RX_CERTIFICATE_COMPRESSION | SSL_OP_PRIORITIZE_CHACHA | SSL_OP_NO_QUERY_MTU | SSL_OP_NO_TICKET | SSL_OP_NO_ANTI_REPLAY)
+    (OSSL_LEGACY_SSL_OPTIONS | OSSL_TLS1_2_OPTIONS | SSL_OP_SERVER_PREFERENCE | SSL_OP_DISABLE_TLSEXT_CA_NAMES | SSL_OP_NO_TX_CERTIFICATE_COMPRESSION | SSL_OP_NO_RX_CERTIFICATE_COMPRESSION | SSL_OP_PRIORITIZE_CHACHA | SSL_OP_NO_QUERY_MTU | SSL_OP_NO_TICKET | SSL_OP_NO_ANTI_REPLAY | SSL_OP_GREASE)
 
 /* Total mask of stream-level options permitted or ignored under QUIC. */
 #define OSSL_QUIC_PERMITTED_OPTIONS_STREAM \

@@ -33,6 +33,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added SSL_CTX_set_grease_mask() and SSL_set_grease_mask() to choose which
+   ClientHello fields carry RFC 8701 GREASE values. SSL_OP_GREASE still turns
+   GREASE on, and the default mask covers every field, so existing output is
+   unchanged. SSL_OP_GREASE is now also honoured by QUIC clients.
+
+   *F1xGOD*
+
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
    parameter and returns 1 for an approved operation.  The absence of an

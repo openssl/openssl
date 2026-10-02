@@ -424,6 +424,8 @@ ensuring servers and middleboxes tolerate unknown values. The injected values
 are consistent across HelloRetryRequest replays within the same connection.
 If a HelloRetryRequest asks for a new key share, the second ClientHello omits
 the GREASE key share so that the requested key share is the only entry.
+The injection points can be selected with
+L<SSL_CTX_set_grease_mask(3)>; all injection points are enabled by default.
 
 =back
 
@@ -534,6 +536,8 @@ These options apply to SSL objects referencing a QUIC connection:
 =over 4
 
 =item SSL_OP_ALLOW_NO_DHE_KEX
+
+=item SSL_OP_GREASE
 
 =item SSL_OP_NO_TX_CERTIFICATE_COMPRESSION
 
