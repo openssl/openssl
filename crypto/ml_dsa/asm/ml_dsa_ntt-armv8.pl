@@ -352,13 +352,13 @@ sub load_modulus {
 ___
 }
 
-# Generate one NTT stage whose butterfly partners are at least one full
+# Generate one NTT layer whose butterfly partners are at least one full
 # vector apart.  Inputs: step is the number of groups and offset is the
 # coefficient separation within each butterfly, matching the scalar FIPS 204
-# loop structure.  Runtime output: the selected stage updates all 256
+# loop structure.  Runtime output: the selected layer updates all 256
 # coefficients in place.  Perl output: none; appends its z/c records to
 # @ntt_zc_records and its instructions to $code.
-sub ntt_wide_stage {
+sub ntt_wide_layer {
     my ($step, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
     my $inner = ".Lml_dsa_ntt_${label_index}_inner";
@@ -423,10 +423,10 @@ ___
 
 # At offset two, each pair of adjacent 128-bit loads contains interleaved
 # butterfly halves.  ZIP on 64-bit elements places partners in matching lanes.
-# Input: none.  Runtime output: the offset-two NTT stage updates all 256
+# Input: none.  Runtime output: the offset-two NTT layer updates all 256
 # coefficients in place.  Perl output: none; appends 64 z/c pairs to
 # @ntt_zc_records and appends instructions to $code.
-sub ntt_offset2_stage {
+sub ntt_offset2_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
     $label_index++;
 
@@ -461,10 +461,10 @@ ___
 
 # At offset one, UZP separates even and odd coefficients into two vectors;
 # ZIP restores the original memory order after the butterflies.
-# Input: none.  Runtime output: the offset-one NTT stage updates all 256
+# Input: none.  Runtime output: the offset-one NTT layer updates all 256
 # coefficients in place.  Perl output: none; appends 128 z/c pairs to
 # @ntt_zc_records and appends instructions to $code.
-sub ntt_offset1_stage {
+sub ntt_offset1_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
     $label_index++;
 
@@ -497,11 +497,11 @@ ___
 
 # The iNTT consumes stages in the opposite order.  Its first two stages undo
 # the lane permutations used by the final two NTT stages.
-# Input: none.  Runtime output: the offset-one iNTT stage updates all 256
+# Input: none.  Runtime output: the offset-one iNTT layer updates all 256
 # coefficients in place using q as its nonnegative bias.  Perl output: none;
 # appends 128 iNTT z/c pairs to @intt_zc_records and appends instructions to
 # $code.
-sub intt_offset1_stage {
+sub intt_offset1_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
     $label_index++;
 
@@ -534,12 +534,12 @@ ___
 ___
 }
 
-# Generate the offset-two iNTT stage, undoing the corresponding NTT lane
+# Generate the offset-two iNTT layer, undoing the corresponding NTT lane
 # permutation with 64-bit ZIP operations.  Input: none.  Runtime output: all
 # 256 coefficients are updated in place using 2q as the nonnegative bias.
 # Perl output: none; appends 64 iNTT z/c pairs to @intt_zc_records and appends
 # instructions to $code.
-sub intt_offset2_stage {
+sub intt_offset2_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
     $label_index++;
 
@@ -574,14 +574,14 @@ ___
 ___
 }
 
-# Generate an iNTT stage with directly loadable even and odd vectors.
+# Generate an iNTT layer with directly loadable even and odd vectors.
 # Inputs: step is the number of groups; offset is the coefficient separation;
 # bias_shift selects q << bias_shift for the layer's nonnegative difference;
 # final requests canonical iNTT scaling after the last butterflies.  Runtime
-# output: the selected stage updates all 256 coefficients in place.  Perl
+# output: the selected layer updates all 256 coefficients in place.  Perl
 # output: none; appends its iNTT z/c records to @intt_zc_records
 # and its instructions to $code.
-sub intt_wide_stage {
+sub intt_wide_layer {
     my ($step, $offset, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
     my $inner = ".Lml_dsa_intt_${label_index}_inner";
@@ -716,14 +716,14 @@ $code .= <<___;
         add     $zc_ptr,$zc_ptr,#:lo12:.Lml_dsa_ntt_constants
         shl     $q_bias.4s,$q_vector.4s,#1
 ___
-ntt_wide_stage(1, 128);
-ntt_wide_stage(2, 64);
-ntt_wide_stage(4, 32);
-ntt_wide_stage(8, 16);
-ntt_wide_stage(16, 8);
-ntt_wide_stage(32, 4);
-ntt_offset2_stage();
-ntt_offset1_stage();
+ntt_wide_layer(1, 128);
+ntt_wide_layer(2, 64);
+ntt_wide_layer(4, 32);
+ntt_wide_layer(8, 16);
+ntt_wide_layer(16, 8);
+ntt_wide_layer(32, 4);
+ntt_offset2_layer();
+ntt_offset1_layer();
 ntt_reduce_coefficients();
 $code .= <<___;
         ret
@@ -756,14 +756,14 @@ $code .= <<___;
         movk    $c_word,#@{[($normalization_c_bits >> 16) & 0xffff]},lsl#16
         dup     $scale_c.4s,$c_word
 ___
-intt_offset1_stage();                    # bias = q
-intt_offset2_stage();                    # bias = 2q
-intt_wide_stage(32, 4,   2, 0);          # bias = 4q
-intt_wide_stage(16, 8,   3, 0);          # bias = 8q
-intt_wide_stage(8,  16,  4, 0);          # bias = 16q
-intt_wide_stage(4,  32,  5, 0);          # bias = 32q
-intt_wide_stage(2,  64,  6, 0);          # bias = 64q
-intt_wide_stage(1,  128, 7, 1);          # bias = 128q; scale final layer
+intt_offset1_layer();                    # bias = q
+intt_offset2_layer();                    # bias = 2q
+intt_wide_layer(32, 4,   2, 0);          # bias = 4q
+intt_wide_layer(16, 8,   3, 0);          # bias = 8q
+intt_wide_layer(8,  16,  4, 0);          # bias = 16q
+intt_wide_layer(4,  32,  5, 0);          # bias = 32q
+intt_wide_layer(2,  64,  6, 0);          # bias = 64q
+intt_wide_layer(1,  128, 7, 1);          # bias = 128q; scale final layer
 $code .= <<___;
         ret
 .size   ossl_ml_dsa_poly_ntt_inverse_armv8,.-ossl_ml_dsa_poly_ntt_inverse_armv8
