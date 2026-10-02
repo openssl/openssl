@@ -84,90 +84,13 @@ my ($quotient, $quotient2) = map("v$_", (18, 23));
 my $q_bias = "v26";
 my $c = "v27";
 my ($scale_c, $scale_z, $q_vector) = map("v$_", (28..30));
-my $q = 8380417;
 # load_modulus() broadcasts q into q_vector as [q, q, q, q].
-my $fixed_point_bits = 31;
-my (@ntt_zc_records, @intt_zc_records);
 my $label_index = 0;
 my $code = <<___;
 #include "arch/arm_arch.h"
 
 .text
 ___
-
-# Reverse the low eight bits of an integer.
-# Input: value in [0,256).  Output: its eight-bit bit-reversal in [0,256).
-sub bitrev8 {
-    my ($value) = @_;
-    my $result = 0;
-
-    for (1 .. 8) {
-        $result = ($result << 1) | ($value & 1);
-        $value >>= 1;
-    }
-    return $result;
-}
-
-# Raise base to exponent modulo the ML-DSA modulus q.
-# Inputs: integer base and nonnegative integer exponent.  Output: base^exponent
-# modulo q in [0,q).
-sub powmod {
-    my ($base, $exponent) = @_;
-    my $result = 1;
-
-    while ($exponent != 0) {
-        $result = ($result * $base) % $q if ($exponent & 1) != 0;
-        $base = ($base * $base) % $q;
-        $exponent >>= 1;
-    }
-    return $result;
-}
-
-# Calculate z, the twiddle selected by a bit-reversed table index.
-# Inputs: index in [0,256) and intt, which selects the additive inverse used
-# by the iNTT.  Output: the centred twiddle z in (-q/2,q/2).
-sub centered_z {
-    my ($index, $intt) = @_;
-    my $root = powmod(1753, bitrev8($index));
-
-    # iNTT layers use the additive inverse of the corresponding NTT twiddle.
-    # Centre either representative in [-floor(q/2), floor(q/2)] so both it and
-    # its fixed-point quotient constant have small signed bounds.
-    $root = $q - $root if $intt;
-    return $root > int($q / 2) ? $root - $q : $root;
-}
-
-# Perform mathematical floor division rather than Perl's truncation toward
-# zero.  Inputs: integer numerator and positive integer denominator.  Output:
-# floor(numerator/denominator), including for a negative numerator.
-sub floor_div {
-    my ($numerator, $denominator) = @_;
-
-    return $numerator >= 0
-        ? int($numerator / $denominator)
-        : -int((-$numerator + $denominator - 1) / $denominator);
-}
-
-# Calculate c, the fixed-point constant paired with twiddle z.
-# Input: centred twiddle z.  Output: c = floor(2^31*z/q), with
-# -2^30 < c < 2^30.
-sub c_for_z {
-    my ($z) = @_;
-
-    return floor_div($z * (1 << $fixed_point_bits), $q);
-}
-
-# Append the table record consumed by one loop group.
-# Inputs: a reference to the NTT or iNTT record array, followed by one or more
-# centred twiddles z.  Output: none; appends a record whose first half contains
-# the z values and whose second half contains c = floor(2^31*z/q) for each z.
-# Each z/c pair is inseparable: z is the twiddle and c enables its reduction.
-sub append_zc_record {
-    my ($records, @z_values) = @_;
-    my @c_values = map { c_for_z($_) } @z_values;
-
-    push @$records, [[@z_values], [@c_values]];
-}
 
 # Generate four parallel multiplications by z, the constant twiddle.
 # Inputs: destination and source vector-register names, plus registers holding
@@ -356,8 +279,7 @@ ___
 # vector apart.  Inputs: step is the number of groups and offset is the
 # coefficient separation within each butterfly, matching the scalar FIPS 204
 # loop structure.  Runtime output: the selected layer updates all 256
-# coefficients in place.  Perl output: none; appends its z/c records to
-# @ntt_zc_records and its instructions to $code.
+# coefficients in place.  Perl output: none; appends its instructions to $code.
 sub ntt_wide_layer {
     my ($step, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
@@ -369,11 +291,6 @@ sub ntt_wide_layer {
     my $pair_unroll = 1;
     my $iterations = $paired ? $vectors / (2 * $pair_unroll) : $vectors;
     $label_index++;
-
-    for my $i (0 .. $step - 1) {
-        my $z = centered_z($step + $i, 0);
-        append_zc_record(\@ntt_zc_records, $z);
-    }
 
     $code .= <<___;
         mov     $group_ptr,$coefficients
@@ -424,17 +341,10 @@ ___
 # At offset two, each pair of adjacent 128-bit loads contains interleaved
 # butterfly halves.  ZIP on 64-bit elements places partners in matching lanes.
 # Input: none.  Runtime output: the offset-two NTT layer updates all 256
-# coefficients in place.  Perl output: none; appends 64 z/c pairs to
-# @ntt_zc_records and appends instructions to $code.
+# coefficients in place.  Perl output: none; appends instructions to $code.
 sub ntt_offset2_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
     $label_index++;
-
-    for my $group_index (0 .. 31) {
-        my @z_values = map { centered_z($_, 0) }
-                       (64 + 2 * $group_index .. 65 + 2 * $group_index);
-        append_zc_record(\@ntt_zc_records, @z_values);
-    }
 
     $code .= <<___;
         mov     $group_ptr,$coefficients
@@ -462,17 +372,10 @@ ___
 # At offset one, UZP separates even and odd coefficients into two vectors;
 # ZIP restores the original memory order after the butterflies.
 # Input: none.  Runtime output: the offset-one NTT layer updates all 256
-# coefficients in place.  Perl output: none; appends 128 z/c pairs to
-# @ntt_zc_records and appends instructions to $code.
+# coefficients in place.  Perl output: none; appends instructions to $code.
 sub ntt_offset1_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
     $label_index++;
-
-    for my $group_index (0 .. 31) {
-        my @z_values = map { centered_z($_, 0) }
-                       (128 + 4 * $group_index .. 131 + 4 * $group_index);
-        append_zc_record(\@ntt_zc_records, @z_values);
-    }
 
     $code .= <<___;
         mov     $group_ptr,$coefficients
@@ -499,18 +402,10 @@ ___
 # the lane permutations used by the final two NTT stages.
 # Input: none.  Runtime output: the offset-one iNTT layer updates all 256
 # coefficients in place using q as its nonnegative bias.  Perl output: none;
-# appends 128 iNTT z/c pairs to @intt_zc_records and appends instructions to
-# $code.
+# appends instructions to $code.
 sub intt_offset1_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
     $label_index++;
-
-    for my $group_index (0 .. 31) {
-        my @z_values = map { centered_z($_, 1) }
-                       reverse(252 - 4 * $group_index
-                               .. 255 - 4 * $group_index);
-        append_zc_record(\@intt_zc_records, @z_values);
-    }
 
     $code .= <<___;
         mov     $q_bias.16b,$q_vector.16b
@@ -537,18 +432,10 @@ ___
 # Generate the offset-two iNTT layer, undoing the corresponding NTT lane
 # permutation with 64-bit ZIP operations.  Input: none.  Runtime output: all
 # 256 coefficients are updated in place using 2q as the nonnegative bias.
-# Perl output: none; appends 64 iNTT z/c pairs to @intt_zc_records and appends
-# instructions to $code.
+# Perl output: none; appends instructions to $code.
 sub intt_offset2_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
     $label_index++;
-
-    for my $group_index (0 .. 31) {
-        my @z_values = map { centered_z($_, 1) }
-                       reverse(126 - 2 * $group_index
-                               .. 127 - 2 * $group_index);
-        append_zc_record(\@intt_zc_records, @z_values);
-    }
 
     $code .= <<___;
         shl     $q_bias.4s,$q_vector.4s,#1
@@ -579,8 +466,7 @@ ___
 # bias_shift selects q << bias_shift for the layer's nonnegative difference;
 # final requests canonical iNTT scaling after the last butterflies.  Runtime
 # output: the selected layer updates all 256 coefficients in place.  Perl
-# output: none; appends its iNTT z/c records to @intt_zc_records
-# and its instructions to $code.
+# output: none; appends its instructions to $code.
 sub intt_wide_layer {
     my ($step, $offset, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
@@ -592,11 +478,6 @@ sub intt_wide_layer {
     my $pair_unroll = 1;
     my $iterations = $paired ? $vectors / (2 * $pair_unroll) : $vectors;
     $label_index++;
-
-    for my $i (0 .. $step - 1) {
-        my $z = centered_z(2 * $step - 1 - $i, 1);
-        append_zc_record(\@intt_zc_records, $z);
-    }
 
     $code .= <<___;
         shl     $q_bias.4s,$q_vector.4s,#$bias_shift
@@ -735,25 +616,20 @@ $code .= <<___;
 ossl_ml_dsa_poly_ntt_inverse_armv8:
         AARCH64_VALID_CALL_TARGET
 ___
-# The scalar C iNTT finishes with Montgomery multiplication by
-# 41978.  This routine uses ordinary-domain twiddle multiplication, so its
-# equivalent embedded scale is 41978*R^-1 mod q, where R = 2^32 mod q.
+# The scalar C iNTT finishes with Montgomery multiplication by 41978.  For
+# ordinary-domain multiplication the equivalent fixed pair is z = 16382 and
+# c = floor(2^31*z/q) = 4197891.
 load_modulus();
-my $r_mod_q = (1 << 32) % $q;
-my $r_inverse = powmod($r_mod_q, $q - 2);
-my $normalization_z = (41978 * $r_inverse) % $q;
-$normalization_z -= $q if $normalization_z > int($q / 2);
-my $normalization_c = c_for_z($normalization_z);
-my $normalization_z_bits = $normalization_z & 0xffffffff;
-my $normalization_c_bits = $normalization_c & 0xffffffff;
+my $normalization_z = 16382;
+my $normalization_c = 4197891;
 $code .= <<___;
         adrp    $zc_ptr,.Lml_dsa_intt_constants
         add     $zc_ptr,$zc_ptr,#:lo12:.Lml_dsa_intt_constants
-        mov     $z_word,#@{[$normalization_z_bits & 0xffff]}
-        movk    $z_word,#@{[($normalization_z_bits >> 16) & 0xffff]},lsl#16
+        mov     $z_word,#@{[$normalization_z & 0xffff]}
+        movk    $z_word,#@{[($normalization_z >> 16) & 0xffff]},lsl#16
         dup     $scale_z.4s,$z_word
-        mov     $c_word,#@{[$normalization_c_bits & 0xffff]}
-        movk    $c_word,#@{[($normalization_c_bits >> 16) & 0xffff]},lsl#16
+        mov     $c_word,#@{[$normalization_c & 0xffff]}
+        movk    $c_word,#@{[($normalization_c >> 16) & 0xffff]},lsl#16
         dup     $scale_c.4s,$c_word
 ___
 intt_offset1_layer();                    # bias = q
@@ -772,29 +648,524 @@ ___
 $code .= <<___;
 .rodata
 .align  4
-# Each NTT table record contains the signed ordinary-domain root or roots
-# consumed by one loop group, immediately followed by their c values for
-# SQDMULH.  The generator derives both halves from root 1753 and the bit-
-# reversed layer index; no precomputed transform table is copied here.
+# Fixed NTT table.  Each record contains one or more centred twiddles z,
+# followed by the matching c = floor(2^31*z/q) values used by SQDMULH.
+# Records appear in the load order required by the NTT layer loops.
 .Lml_dsa_ntt_constants:
-___
-for my $record (@ntt_zc_records) {
-    my ($z_values, $c_values) = @$record;
-    $code .= "        .word   " . join(',', @$z_values) . "\n";
-    $code .= "        .word   " . join(',', @$c_values) . "\n";
-}
-$code .= <<___;
+.word	-3572223
+.word	-915382908
+.word	3765607
+.word	964937598
+.word	3761513
+.word	963888510
+.word	-3201494
+.word	-820383522
+.word	-2883726
+.word	-738955405
+.word	-3145678
+.word	-806080661
+.word	-3201430
+.word	-820367122
+.word	-601683
+.word	-154181398
+.word	3542485
+.word	907762538
+.word	2682288
+.word	687336873
+.word	2129892
+.word	545785280
+.word	3764867
+.word	964747973
+.word	-1005239
+.word	-257592709
+.word	557458
+.word	142848731
+.word	-1221177
+.word	-312926868
+.word	-3370349
+.word	-863652652
+.word	-4063053
+.word	-1041158200
+.word	2663378
+.word	682491181
+.word	-1674615
+.word	-429120452
+.word	-3524442
+.word	-903139017
+.word	-434125
+.word	-111244625
+.word	676590
+.word	173376332
+.word	-1335936
+.word	-342333886
+.word	-3227876
+.word	-827143916
+.word	1714295
+.word	439288460
+.word	2453983
+.word	628833668
+.word	1460718
+.word	374309299
+.word	-642628
+.word	-164673563
+.word	-3585098
+.word	-918682130
+.word	2815639
+.word	721508095
+.word	2283733
+.word	585207069
+.word	3602218
+.word	923069132
+.word	3182878
+.word	815613168
+.word	2740543
+.word	702264729
+.word	-3586446
+.word	-919027555
+.word	-3110818
+.word	-797147778
+.word	2101410
+.word	538486761
+.word	3704823
+.word	949361685
+.word	1159875
+.word	297218216
+.word	394148
+.word	101000509
+.word	928749
+.word	237992129
+.word	1095468
+.word	280713909
+.word	-3506380
+.word	-898510625
+.word	2071829
+.word	530906624
+.word	-4018989
+.word	-1029866791
+.word	3241972
+.word	830756018
+.word	2156050
+.word	552488273
+.word	3415069
+.word	875112161
+.word	1759347
+.word	450833044
+.word	-817536
+.word	-209493775
+.word	-3574466
+.word	-915957677
+.word	3756790
+.word	962678240
+.word	-1935799
+.word	-496048908
+.word	-1716988
+.word	-439978543
+.word	-3950053
+.word	-1012201926
+.word	-2897314
+.word	-742437332
+.word	3192354
+.word	818041395
+.word	556856
+.word	142694469
+.word	3870317
+.word	991769558
+.word	2917338
+.word	747568486
+.word	1853806
+.word	475038183
+.word	3345963
+.word	857403734
+.word	1858416
+.word	476219497
+.word	3073009,1277625
+.word	787459213,327391679
+.word	-2635473,3852015
+.word	-675340520,987079667
+.word	4183372,-3222807
+.word	1071989969,-825844983
+.word	-3121440,-274060
+.word	-799869668,-70227934
+.word	2508980,2028118
+.word	642926661,519705671
+.word	1937570,-3815725
+.word	496502726,-977780348
+.word	2811291,-2983781
+.word	720393919,-764594520
+.word	-1109516,4158088
+.word	-284313713,1065510939
+.word	1528066,482649
+.word	391567239,123678909
+.word	1148858,-2962264
+.word	294395108,-759080784
+.word	-565603,169688
+.word	-144935890,43482586
+.word	2462444,-3334383
+.word	631001801,-854436357
+.word	-4166425,-3488383
+.word	-1067647298,-893898890
+.word	1987814,-3197248
+.word	509377762,-819295484
+.word	1736313,235407
+.word	444930577,60323094
+.word	-3250154,3258457
+.word	-832852658,834980302
+.word	-2579253,1787943
+.word	-660934133,458160776
+.word	-2391089,-2254727
+.word	-612717068,-577774276
+.word	3482206,-4182915
+.word	892316032,-1071872864
+.word	-1300016,-2362063
+.word	-333129378,-605279149
+.word	-1317678,2461387
+.word	-337655270,630730944
+.word	3035980,621164
+.word	777970524,159173407
+.word	3901472,-1226661
+.word	999753034,-314332144
+.word	2925816,3374250
+.word	749740975,864652283
+.word	1356448,-2775755
+.word	347590090,-711287813
+.word	2683270,-2778788
+.word	687588511,-712065020
+.word	-3467665,2312838
+.word	-888589898,592665231
+.word	-653275,-459163
+.word	-167401859,-117660617
+.word	348812,-327848
+.word	89383149,-84011121
+.word	1011223,-2354215
+.word	259126109,-603268098
+.word	-3818627,-1922253
+.word	-978523986,-492577743
+.word	-2236726,1744507
+.word	-573161516,447030291
+.word	1753,-1935420,-2659525,-1455890
+.word	449206,-495951789,-681503850,-373072124
+.word	2660408,-1780227,-59148,2772600
+.word	681730118,-456183550,-15156688,710479342
+.word	1182243,87208,636927,-3965306
+.word	302950021,22347068,163212679,-1016110511
+.word	-3956745,-2296397,-3284915,-3716946
+.word	-1013916753,-588452223,-841760172,-952468208
+.word	-27812,822541,1009365,-2454145
+.word	-7126831,210776307,258649997,-628875181
+.word	-1979497,1596822,-3956944,-3759465
+.word	-507246530,409185978,-1013967747,-963363711
+.word	-1685153,-3410568,2678278,-3768948
+.word	-431820817,-873958780,686309310,-965793731
+.word	-3551006,635956,-250446,-2455377
+.word	-909946047,162963860,-64176842,-629190882
+.word	-4146264,-1772588,2192938,-1727088
+.word	-1062481037,-454226054,561940831,-442566670
+.word	2387513,-3611750,-268456,-3180456
+.word	611800716,-925511710,-68791908,-814992530
+.word	3747250,2296099,1239911,-3838479
+.word	960233613,588375859,317727458,-983611065
+.word	3195676,2642980,1254190,-12417
+.word	818892658,677264190,321386455,-3181859
+.word	2998219,141835,-89301,2513018
+.word	768294259,36345249,-22883401,643961399
+.word	-1354892,613238,-1310261,-2218467
+.word	-347191365,157142368,-335754662,-568482644
+.word	-458740,-1921994,4040196,-3472069
+.word	-117552224,-492511374,1035301088,-889718424
+.word	2039144,-1879878,-818761,-2178965
+.word	522531085,-481719140,-209807682,-558360248
+.word	-1623354,2105286,-2374402,-2033807
+.word	-415984810,539479987,-608441021,-521163479
+.word	586241,-1179613,527981,-2743411
+.word	150224381,-302276084,135295244,-702999656
+.word	-1476985,1994046,2491325,-1393159
+.word	-378477723,510974713,638402563,-356997292
+.word	507927,-1187885,-724804,-1834526
+.word	130156402,-304395786,-185731180,-470097680
+.word	-3033742,-338420,2647994,3009748
+.word	-777397037,-86720198,678549028,771248568
+.word	-2612853,4148469,749577,-4022750
+.word	-669544140,1063046068,192079266,-1030830548
+.word	3980599,2569011,-1615530,1723229
+.word	1020029344,658309618,-413979908,441577799
+.word	1665318,2028038,1163598,-3369273
+.word	426738093,519685171,298172236,-863376927
+.word	3994671,-11879,-1370517,3020393
+.word	1023635297,-3043997,-351195275,773976352
+.word	3363542,214880,545376,-770441
+.word	861908356,55063045,139752716,-197425671
+.word	3105558,-1103344,508145,-553718
+.word	795799901,-282732136,130212264,-141890356
+.word	860144,3430436,140244,-1514152
+.word	220412083,879049958,35937554,-388001774
+.word	-2185084,3123762,2358373,-2193087
+.word	-559928243,800464680,604333585,-561979013
+.word	-3014420,-1716814,2926054,-392707
+.word	-772445770,-439933955,749801963,-100631253
+.word	-303005,3531229,-3974485,-3773731
+.word	-77645097,904878186,-1018462632,-967019376
+.word	1900052,-781875,1054478,-731434
+.word	486888731,-200355636,270210212,-187430119
 .align  4
-# The iNTT records have the same root/reciprocal layout, in the reverse
-# layer order consumed by the Gentleman-Sande loops.  Their roots are the
-# signed additive inverses of the corresponding NTT roots.
+# Fixed iNTT table.  It has the same z-then-c record layout in the reverse
+# layer order required by the Gentleman-Sande loops.  Each z is the signed
+# additive inverse of the corresponding NTT twiddle.
 .Lml_dsa_intt_constants:
+.word	731434,-1054478,781875,-1900052
+.word	187430118,-270210213,200355635,-486888732
+.word	3773731,3974485,-3531229,303005
+.word	967019375,1018462631,-904878187,77645096
+.word	392707,-2926054,1716814,3014420
+.word	100631252,-749801964,439933954,772445769
+.word	2193087,-2358373,-3123762,2185084
+.word	561979012,-604333586,-800464681,559928242
+.word	1514152,-140244,-3430436,-860144
+.word	388001773,-35937555,-879049959,-220412084
+.word	553718,-508145,1103344,-3105558
+.word	141890355,-130212265,282732135,-795799902
+.word	770441,-545376,-214880,-3363542
+.word	197425670,-139752717,-55063046,-861908357
+.word	-3020393,1370517,11879,-3994671
+.word	-773976353,351195274,3043996,-1023635298
+.word	3369273,-1163598,-2028038,-1665318
+.word	863376926,-298172237,-519685172,-426738094
+.word	-1723229,1615530,-2569011,-3980599
+.word	-441577800,413979907,-658309619,-1020029345
+.word	4022750,-749577,-4148469,2612853
+.word	1030830547,-192079267,-1063046069,669544139
+.word	-3009748,-2647994,338420,3033742
+.word	-771248569,-678549029,86720197,777397036
+.word	1834526,724804,1187885,-507927
+.word	470097679,185731179,304395785,-130156403
+.word	1393159,-2491325,-1994046,1476985
+.word	356997291,-638402564,-510974714,378477722
+.word	2743411,-527981,1179613,-586241
+.word	702999655,-135295245,302276083,-150224382
+.word	2033807,2374402,-2105286,1623354
+.word	521163478,608441020,-539479988,415984809
+.word	2178965,818761,1879878,-2039144
+.word	558360247,209807681,481719139,-522531086
+.word	3472069,-4040196,1921994,458740
+.word	889718423,-1035301089,492511373,117552223
+.word	2218467,1310261,-613238,1354892
+.word	568482643,335754661,-157142369,347191364
+.word	-2513018,89301,-141835,-2998219
+.word	-643961400,22883400,-36345250,-768294260
+.word	12417,-1254190,-2642980,-3195676
+.word	3181858,-321386456,-677264191,-818892659
+.word	3838479,-1239911,-2296099,-3747250
+.word	983611064,-317727459,-588375860,-960233614
+.word	3180456,268456,3611750,-2387513
+.word	814992529,68791907,925511709,-611800717
+.word	1727088,-2192938,1772588,4146264
+.word	442566669,-561940832,454226053,1062481036
+.word	2455377,250446,-635956,3551006
+.word	629190881,64176841,-162963861,909946046
+.word	3768948,-2678278,3410568,1685153
+.word	965793730,-686309311,873958779,431820816
+.word	3759465,3956944,-1596822,1979497
+.word	963363710,1013967746,-409185979,507246529
+.word	2454145,-1009365,-822541,27812
+.word	628875180,-258649998,-210776308,7126830
+.word	3716946,3284915,2296397,3956745
+.word	952468207,841760171,588452222,1013916752
+.word	3965306,-636927,-87208,-1182243
+.word	1016110510,-163212680,-22347069,-302950022
+.word	-2772600,59148,1780227,-2660408
+.word	-710479343,15156687,456183549,-681730119
+.word	1455890,2659525,1935420,-1753
+.word	373072123,681503849,495951788,-449207
+.word	-1744507,2236726
+.word	-447030292,573161515
+.word	1922253,3818627
+.word	492577742,978523985
+.word	2354215,-1011223
+.word	603268097,-259126110
+.word	327848,-348812
+.word	84011120,-89383150
+.word	459163,653275
+.word	117660616,167401858
+.word	-2312838,3467665
+.word	-592665232,888589897
+.word	2778788,-2683270
+.word	712065019,-687588512
+.word	2775755,-1356448
+.word	711287812,-347590091
+.word	-3374250,-2925816
+.word	-864652284,-749740976
+.word	1226661,-3901472
+.word	314332143,-999753035
+.word	-621164,-3035980
+.word	-159173408,-777970525
+.word	-2461387,1317678
+.word	-630730945,337655269
+.word	2362063,1300016
+.word	605279148,333129377
+.word	4182915,-3482206
+.word	1071872863,-892316033
+.word	2254727,2391089
+.word	577774275,612717067
+.word	-1787943,2579253
+.word	-458160777,660934132
+.word	-3258457,3250154
+.word	-834980303,832852657
+.word	-235407,-1736313
+.word	-60323095,-444930578
+.word	3197248,-1987814
+.word	819295483,-509377763
+.word	3488383,4166425
+.word	893898889,1067647297
+.word	3334383,-2462444
+.word	854436356,-631001802
+.word	-169688,565603
+.word	-43482587,144935889
+.word	2962264,-1148858
+.word	759080783,-294395109
+.word	-482649,-1528066
+.word	-123678910,-391567240
+.word	-4158088,1109516
+.word	-1065510940,284313712
+.word	2983781,-2811291
+.word	764594519,-720393920
+.word	3815725,-1937570
+.word	977780347,-496502727
+.word	-2028118,-2508980
+.word	-519705672,-642926662
+.word	274060,3121440
+.word	70227933,799869667
+.word	3222807,-4183372
+.word	825844982,-1071989970
+.word	-3852015,2635473
+.word	-987079668,675340519
+.word	-1277625,-3073009
+.word	-327391680,-787459214
+.word	-1858416
+.word	-476219498
+.word	-3345963
+.word	-857403735
+.word	-1853806
+.word	-475038184
+.word	-2917338
+.word	-747568487
+.word	-3870317
+.word	-991769559
+.word	-556856
+.word	-142694470
+.word	-3192354
+.word	-818041396
+.word	2897314
+.word	742437331
+.word	3950053
+.word	1012201925
+.word	1716988
+.word	439978542
+.word	1935799
+.word	496048907
+.word	-3756790
+.word	-962678241
+.word	3574466
+.word	915957676
+.word	817536
+.word	209493774
+.word	-1759347
+.word	-450833045
+.word	-3415069
+.word	-875112162
+.word	-2156050
+.word	-552488274
+.word	-3241972
+.word	-830756019
+.word	4018989
+.word	1029866790
+.word	-2071829
+.word	-530906625
+.word	3506380
+.word	898510624
+.word	-1095468
+.word	-280713910
+.word	-928749
+.word	-237992130
+.word	-394148
+.word	-101000510
+.word	-1159875
+.word	-297218217
+.word	-3704823
+.word	-949361686
+.word	-2101410
+.word	-538486762
+.word	3110818
+.word	797147777
+.word	3586446
+.word	919027554
+.word	-2740543
+.word	-702264730
+.word	-3182878
+.word	-815613169
+.word	-3602218
+.word	-923069133
+.word	-2283733
+.word	-585207070
+.word	-2815639
+.word	-721508096
+.word	3585098
+.word	918682129
+.word	642628
+.word	164673562
+.word	-1460718
+.word	-374309300
+.word	-2453983
+.word	-628833669
+.word	-1714295
+.word	-439288461
+.word	3227876
+.word	827143915
+.word	1335936
+.word	342333885
+.word	-676590
+.word	-173376333
+.word	434125
+.word	111244624
+.word	3524442
+.word	903139016
+.word	1674615
+.word	429120451
+.word	-2663378
+.word	-682491182
+.word	4063053
+.word	1041158199
+.word	3370349
+.word	863652651
+.word	1221177
+.word	312926867
+.word	-557458
+.word	-142848732
+.word	1005239
+.word	257592708
+.word	-3764867
+.word	-964747974
+.word	-2129892
+.word	-545785281
+.word	-2682288
+.word	-687336874
+.word	-3542485
+.word	-907762539
+.word	601683
+.word	154181397
+.word	3201430
+.word	820367121
+.word	3145678
+.word	806080660
+.word	2883726
+.word	738955404
+.word	3201494
+.word	820383521
+.word	-3761513
+.word	-963888511
+.word	-3765607
+.word	-964937599
+.word	3572223
+.word	915382907
 ___
-for my $record (@intt_zc_records) {
-    my ($z_values, $c_values) = @$record;
-    $code .= "        .word   " . join(',', @$z_values) . "\n";
-    $code .= "        .word   " . join(',', @$c_values) . "\n";
-}
 
 print $code;
 close STDOUT or die "error closing output: $!";
