@@ -90,6 +90,50 @@ to return 0.
 
 =back
 
+=head2 Multi-key derivation parameters
+
+The TLS1-PRF implementation supports simultaneous derivation of multiple keys
+and IVs via EVP_KDF_derive_SKEYs(). The following additional parameters control
+the key block layout:
+
+=over 4
+
+=item "mac_key_len" (B<OSSL_KDF_PARAM_MAC_KEY_LEN>) <unsigned integer>
+
+The length in bytes of each MAC key. Set to 0 for cipher suites that do not
+use separate MAC keys (e.g., AEAD ciphers).
+
+=item "cipher_key_len" (B<OSSL_KDF_PARAM_CIPHER_KEY_LEN>) <unsigned integer>
+
+The length in bytes of each cipher key.
+
+=item "iv_len" (B<OSSL_KDF_PARAM_IV_LEN>) <unsigned integer>
+
+The length in bytes of each IV.
+
+=back
+
+The total key block size is 2 * (mac_key_len + cipher_key_len + iv_len).
+After calling EVP_KDF_derive_SKEYs(), individual keys are retrieved via
+EVP_KDF_CTX_get1_SKEY() and IVs via EVP_KDF_CTX_get0_IV() using the
+following purpose strings:
+
+=over 4
+
+=item "client_MAC_key" (B<OSSL_KDF_PURPOSE_CLIENT_MAC_KEY>)
+
+=item "server_MAC_key" (B<OSSL_KDF_PURPOSE_SERVER_MAC_KEY>)
+
+=item "client_cipher_key" (B<OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY>)
+
+=item "server_cipher_key" (B<OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY>)
+
+=item "client_iv" (B<OSSL_KDF_PURPOSE_CLIENT_IV>)
+
+=item "server_iv" (B<OSSL_KDF_PURPOSE_SERVER_IV>)
+
+=back
+
 =head1 NOTES
 
 A context for the TLS PRF can be obtained by calling:
