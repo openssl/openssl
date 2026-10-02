@@ -339,6 +339,10 @@ static int ccm_set_iv(PROV_CCM_CTX *ctx, size_t mlen)
     if (!hw->setiv(ctx, ctx->iv, ccm_get_ivlen(ctx), mlen))
         return 0;
     ctx->len_set = 1;
+
+    /* a new message starts here: no tag yet when encrypting */
+    if (ctx->enc)
+        ctx->tag_set = 0;
     return 1;
 }
 
@@ -415,10 +419,16 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
         if (in == NULL) {
             if (!ccm_set_iv(ctx, len))
                 goto err;
-        } else {
-            /* If we have AAD, we need a message length */
-            if (!ctx->len_set && len)
+        } else if (len > 0) {
+            /* If we have AAD, we need the message length */
+            if (!ctx->len_set)
                 goto err;
+            /* the AAD is taken in one call, before the payload */
+            if ((ctx->ccm_ctx.nonce.c[0] & 0x40) != 0
+                || (ctx->enc && ctx->tag_set)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+                goto err;
+            }
             if (!hw->setaad(ctx, in, len))
                 goto err;
         }
@@ -428,6 +438,11 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
             goto err;
 
         if (ctx->enc) {
+            /* the payload is taken in one call */
+            if (ctx->tag_set) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+                goto err;
+            }
             if (!hw->auth_encrypt(ctx, in, out, len, NULL, 0))
                 goto err;
             /* Finished - tag stays readable, but reset other flags */
