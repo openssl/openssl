@@ -37,7 +37,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # increase the upper bound by 4q, so the eight layers end below 33q.  One fixed
 # final pass reduces this to [0,q).  In the iNTT, layer n uses a
 # public 2^(n-1)*q bias and produces sums below 2^n*q; products remain below
-# 2q.  The final layer is therefore below 256q = 2145386752 < 2^31, and the
+# 2q.  The final layer is therefore below 256q (2145386752) < 2^31, and the
 # final scaling multiplication returns canonical coefficients.  In summary:
 #
 #                       input         after eight layers
@@ -45,22 +45,23 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 #   iNTT                [0,q)         [0,256q)
 #   twiddle product     [0,256q)      [0,2q)
 #
-# Since 256q = 2145386752 < 2^31, every coefficient operand supplied to
+# Since 256q (2145386752) < 2^31, every coefficient operand supplied to
 # SQDMULH remains a nonnegative signed 32-bit value.  Its other operand, c,
 # uses the signed centred range shown below.
 #
 # Fixed-point twiddle-multiplication bounds (q = 8380417):
 #
-#   a   input coefficient          0 <= a < 256q = 2145386752 < 2^31
-#   z   centred twiddle           -4190208 <= z <= 4190208
+#   a   input coefficient          0 <= a < 256q (2145386752) < 2^31
+#   z   centred twiddle            -q/2 < z < q/2
+#                                  (-4190208 <= z <= 4190208)
 #   c   floor(2^31*z/q)           -1073741696 <= c <= 1073741695
 #   k   floor(a*c/2^31)           -2^30 <= k < 2^30
-#   r   a*z - k*q                  0 <= r < 2q = 16760834
+#   r   a*z - k*q                  0 <= r < 2q (16760834)
 #
 # z and c are signed 32-bit values.  a is nonnegative and remains below the
 # signed limit.  MUL and MLS retain only the low 32 bits, but this is exact for
 # the final r because the mathematical difference a*z-k*q lies in [0,2q).
-# The iNTT bias ranges from q through 128q = 1072693376, also below 2^30.
+# The iNTT bias ranges from q through 128q (1072693376), also below 2^30.
 #
 # Only caller-saved GPRs and vector registers are used, so both entry points
 # are leaf functions and require no stack frame.
