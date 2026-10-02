@@ -196,7 +196,7 @@ ___
 }
 
 ##
-# @brief Cooley-Tukey NTT butterfly.
+# @brief Four-way Cooley-Tukey NTT butterfly.
 # @param[in,out] even Vector register containing the even coefficients.
 # @param[in,out] odd Vector register containing the odd coefficients.
 # @param[in] z Vector register containing the NTT twiddles.
@@ -213,7 +213,7 @@ ___
 #
 # The 2q bias prevents the subtraction from becoming negative.  It is a
 # multiple of q, so it does not change either result modulo q.
-sub ntt_butterfly {
+sub ntt_butterfly_4way {
     my ($even, $odd, $z, $c) = @_;
 
     barrett_multiply_lazy($product, $odd, $z, $c);
@@ -225,7 +225,7 @@ ___
 }
 
 ##
-# @brief Gentleman-Sande iNTT butterfly.
+# @brief Four-way Gentleman-Sande iNTT butterfly.
 # @param[in,out] even Vector register containing the even coefficients.
 # @param[in,out] odd Vector register containing the odd coefficients.
 # @param[in] z Vector register containing the iNTT twiddles.
@@ -241,7 +241,7 @@ ___
 #
 # Each iNTT layer sets bias to the current coefficient bound.  The bias is
 # a multiple of q and keeps difference nonnegative without changing it mod q.
-sub intt_butterfly {
+sub intt_butterfly_4way {
     my ($even, $odd, $z, $c) = @_;
 
     $code .= <<___;
@@ -253,7 +253,7 @@ ___
 }
 
 ##
-# @brief Paired Cooley-Tukey NTT butterflies.
+# @brief Eight-way Cooley-Tukey NTT butterfly.
 # @param[in,out] even0 First even-coefficient vector register.
 # @param[in,out] odd0 First odd-coefficient vector register.
 # @param[in,out] even1 Second even-coefficient vector register.
@@ -263,7 +263,7 @@ ___
 # @pre Each input lane is in [0,B), and $q_bias contains 2q.
 # @return Generated code leaves even0 and even1 in [2q,B+4q), and odd0 and
 # odd1 in [0,B+2q).  Thus, every output lane is in [0,B+4q).
-sub ntt_butterfly_pair {
+sub ntt_butterfly_8way {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
 
@@ -279,7 +279,7 @@ ___
 }
 
 ##
-# @brief Paired Gentleman-Sande iNTT butterflies.
+# @brief Eight-way Gentleman-Sande iNTT butterfly.
 # @param[in,out] even0 First even-coefficient vector register.
 # @param[in,out] odd0 First odd-coefficient vector register.
 # @param[in,out] even1 Second even-coefficient vector register.
@@ -288,7 +288,7 @@ ___
 # @param[in] c Shared vector register containing each z's reduction constant.
 # @pre $q_bias contains the current layer's multiple of q.
 # @return Generated code leaves all four registers containing butterfly results.
-sub intt_butterfly_pair {
+sub intt_butterfly_8way {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
 
@@ -326,7 +326,7 @@ ___
 #   for each group in the layer:
 #       (z, c) = next table record
 #       for each vector of partners separated by offset:
-#           (even, odd) = ntt_butterfly(even, odd, z, c)
+#           (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 sub ntt_wide_layer {
     my ($step, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
@@ -357,7 +357,7 @@ ___
         ldp     q0,q6,[$even_ptr]
         ldp     q1,q7,[$odd_ptr]
 ___
-            ntt_butterfly_pair($coeff_vector0, $coeff_vector1,
+            ntt_butterfly_8way($coeff_vector0, $coeff_vector1,
                                $even_vector2, $odd_vector2,
                                $z, $c);
             $code .= <<___;
@@ -370,7 +370,7 @@ ___
         ldr     q0,[$even_ptr]
         ldr     q1,[$odd_ptr]
 ___
-        ntt_butterfly($coeff_vector0, $coeff_vector1, $z, $c);
+        ntt_butterfly_4way($coeff_vector0, $coeff_vector1, $z, $c);
         $code .= <<___;
         str     q0,[$even_ptr],#16
         str     q1,[$odd_ptr],#16
@@ -394,7 +394,7 @@ ___
 # @par Pseudocode
 #   for each pair of adjacent vectors:
 #       (even, odd) = zip_64_bit_halves(load_two_vectors())
-#       (even, odd) = ntt_butterfly(even, odd, z, c)
+#       (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 #       store_two_vectors(unzip_64_bit_halves(even, odd))
 sub ntt_offset2_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
@@ -412,7 +412,7 @@ $loop:
         zip1    $butterfly_even.2d,$coeff_vector0.2d,$coeff_vector1.2d
         zip2    $butterfly_odd.2d,$coeff_vector0.2d,$coeff_vector1.2d
 ___
-    ntt_butterfly($butterfly_even, $butterfly_odd, $z, $c);
+    ntt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
         zip1    $coeff_vector0.2d,$butterfly_even.2d,$butterfly_odd.2d
         zip2    $coeff_vector1.2d,$butterfly_even.2d,$butterfly_odd.2d
@@ -432,7 +432,7 @@ ___
 # @par Pseudocode
 #   for each pair of adjacent vectors:
 #       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
-#       (even, odd) = ntt_butterfly(even, odd, z, c)
+#       (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 #       store_two_vectors(interleave_lanes(even, odd))
 sub ntt_offset1_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
@@ -448,7 +448,7 @@ $loop:
         uzp1    $butterfly_even.4s,$coeff_vector0.4s,$coeff_vector1.4s
         uzp2    $butterfly_odd.4s,$coeff_vector0.4s,$coeff_vector1.4s
 ___
-    ntt_butterfly($butterfly_even, $butterfly_odd, $z, $c);
+    ntt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
         zip1    $coeff_vector0.4s,$butterfly_even.4s,$butterfly_odd.4s
         zip2    $coeff_vector1.4s,$butterfly_even.4s,$butterfly_odd.4s
@@ -469,7 +469,7 @@ ___
 #   bias = q
 #   for each pair of adjacent vectors:
 #       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
-#       (even, odd) = intt_butterfly(even, odd, z, c, bias)
+#       (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #       store_two_vectors(interleave_lanes(even, odd))
 sub intt_offset1_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
@@ -486,7 +486,7 @@ $loop:
         uzp1    $butterfly_even.4s,$coeff_vector0.4s,$coeff_vector1.4s
         uzp2    $butterfly_odd.4s,$coeff_vector0.4s,$coeff_vector1.4s
 ___
-    intt_butterfly($butterfly_even, $butterfly_odd, $z, $c);
+    intt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
         zip1    $coeff_vector0.4s,$butterfly_even.4s,$butterfly_odd.4s
         zip2    $coeff_vector1.4s,$butterfly_even.4s,$butterfly_odd.4s
@@ -507,7 +507,7 @@ ___
 #   bias = 2q
 #   for each pair of adjacent vectors:
 #       (even, odd) = zip_64_bit_halves(load_two_vectors())
-#       (even, odd) = intt_butterfly(even, odd, z, c, bias)
+#       (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #       store_two_vectors(unzip_64_bit_halves(even, odd))
 sub intt_offset2_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
@@ -526,7 +526,7 @@ $loop:
         zip1    $butterfly_even.2d,$coeff_vector0.2d,$coeff_vector1.2d
         zip2    $butterfly_odd.2d,$coeff_vector0.2d,$coeff_vector1.2d
 ___
-    intt_butterfly($butterfly_even, $butterfly_odd, $z, $c);
+    intt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
         zip1    $coeff_vector0.2d,$butterfly_even.2d,$butterfly_odd.2d
         zip2    $coeff_vector1.2d,$butterfly_even.2d,$butterfly_odd.2d
@@ -550,7 +550,7 @@ ___
 #   for each group in the layer:
 #       (z, c) = next table record
 #       for each vector of partners separated by offset:
-#           (even, odd) = intt_butterfly(even, odd, z, c, bias)
+#           (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #           if final: reduce even and odd to [0,q)
 sub intt_wide_layer {
     my ($step, $offset, $bias_shift, $final) = @_;
@@ -583,7 +583,7 @@ ___
         ldp     q0,q6,[$even_ptr]
         ldp     q1,q7,[$odd_ptr]
 ___
-            intt_butterfly_pair($coeff_vector0, $coeff_vector1,
+            intt_butterfly_8way($coeff_vector0, $coeff_vector1,
                                 $even_vector2, $odd_vector2,
                                 $z, $c);
             if ($final) {
@@ -604,7 +604,7 @@ ___
         ldr     q0,[$even_ptr]
         ldr     q1,[$odd_ptr]
 ___
-        intt_butterfly($coeff_vector0, $coeff_vector1, $z, $c);
+        intt_butterfly_4way($coeff_vector0, $coeff_vector1, $z, $c);
         if ($final) {
             barrett_multiply($coeff_vector0, $coeff_vector0, $scale_z,
                             $scale_c);
