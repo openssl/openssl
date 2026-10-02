@@ -29,6 +29,7 @@ const PROV_CIPHER_HW_AES_HMAC_SHA *ossl_prov_cipher_hw_aes_cbc_hmac_sha1(void)
 #else
 
 #include <openssl/rand.h>
+#include <openssl/prov_ssl.h>
 #include "crypto/evp.h"
 #include "internal/constant_time.h"
 
@@ -135,16 +136,16 @@ static size_t tls1_multi_block_encrypt(void *vctx,
     } blocks[8];
     SHA1_MB_CTX *mctx;
     unsigned int frag, last, packlen, i;
-    unsigned int x4 = 4 * n4x, minblocks, processed = 0;
+    unsigned int x4, minblocks, processed = 0;
     size_t ret = 0;
     uint8_t *IVs;
 #if defined(BSWAP8)
     uint64_t seqnum;
 #endif
 
-    /* ask for IVs in bulk */
-    if (RAND_bytes_ex(ctx->base.libctx, (IVs = blocks[0].c), 16 * x4, 0) <= 0)
+    if (n4x < 1 || n4x > 2)
         return 0;
+    x4 = 4 * (unsigned int)n4x;
 
     mctx = (SHA1_MB_CTX *)(storage + 32 - ((size_t)storage % 32)); /* align */
 
@@ -154,6 +155,19 @@ static size_t tls1_multi_block_encrypt(void *vctx,
         frag++;
         last -= x4 - 1;
     }
+
+    /*
+     * Each lane needs 64-13 payload bytes for the first SHA block plus one
+     * bulk block; zero bulk counts can hang or skip hashing on some paths.
+     */
+    if (frag < 64 - 13 + 64 || last < 64 - 13 + 64
+        || frag > SSL3_RT_MAX_PLAIN_LENGTH
+        || last > SSL3_RT_MAX_PLAIN_LENGTH)
+        return 0;
+
+    /* ask for IVs in bulk */
+    if (RAND_bytes_ex(ctx->base.libctx, (IVs = blocks[0].c), 16 * x4, 0) <= 0)
+        return 0;
 
     packlen = 5 + 16 + ((frag + 20 + 16) & -16);
 
@@ -713,9 +727,12 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_aad(
     unsigned int frag, last, packlen, inp_len;
 
     inp_len = param->inp[11] << 8 | param->inp[12];
-    ctx->multiblock_interleave = param->interleave;
 
     if (ctx->base.enc) {
+        /* Prevent stale packlen/interleave pairs on backend failure. */
+        ctx->multiblock_interleave = 0;
+        ctx->multiblock_aad_packlen = 0;
+
         if ((param->inp[9] << 8 | param->inp[10]) < TLS1_1_VERSION)
             return -1;
 
@@ -730,9 +747,6 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_aad(
         else
             return -1;
 
-        sctx->md = sctx->head;
-        sha1_update(&sctx->md, param->inp, 13);
-
         x4 = 4 * n4x;
         n4x += 1;
 
@@ -742,6 +756,15 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_aad(
             frag++;
             last -= x4 - 1;
         }
+
+        /* Match tls1_multi_block_encrypt() before caching the layout. */
+        if (frag < 64 - 13 + 64 || last < 64 - 13 + 64
+            || frag > SSL3_RT_MAX_PLAIN_LENGTH
+            || last > SSL3_RT_MAX_PLAIN_LENGTH)
+            return 0;
+
+        sctx->md = sctx->head;
+        sha1_update(&sctx->md, param->inp, 13);
 
         packlen = 5 + 16 + ((frag + 20 + 16) & -16);
         packlen = (packlen << n4x) - packlen;

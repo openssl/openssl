@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_speed");
 
-plan tests => 25;
+plan tests => 39;
 
 ok(run(app(['openssl', 'speed', '-testmode'])),
        "Simple test of all speed algorithms");
@@ -39,7 +39,7 @@ ok(run(app(['openssl', 'speed', '-testmode', '-misalign', 1])),
        "Test the misalign option");
 
 SKIP: {
-    skip "Multiblock is not supported by this OpenSSL build", 1
+    skip "Multiblock is not supported by this OpenSSL build", 15
         if disabled("multiblock")
            # The AES-128-CBC-HMAC-SHA1 cipher isn't available on all platforms
            # We test its availability without the "-mb" option. We only do the
@@ -50,6 +50,60 @@ SKIP: {
     ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-evp',
                 'AES-128-CBC-HMAC-SHA1'])),
         "Test the EVP and mb options");
+    # Small payloads exercise the single-record fallback.  A memory checker
+    # can detect insufficient input buffer headroom.
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '1',
+                '-evp', 'AES-128-CBC-HMAC-SHA1'])),
+        "Test -mb single-record fallback with -bytes 1");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '12',
+                '-evp', 'AES-128-CBC-HMAC-SHA1'])),
+        "Test -mb single-record fallback with -bytes 12");
+    # Issue #31819: 407 crashes, 408 and 912 hung on AVX2-without-SHAEXT
+    # (8 x 51 and 8 x 114).  920 is 8 x 115, the first accepted 8-lane size.
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '407',
+                '-evp', 'AES-128-CBC-HMAC-SHA1'])),
+        "Test multiblock with -bytes 407 (below per-lane minimum)");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '408',
+                '-evp', 'AES-128-CBC-HMAC-SHA1'])),
+        "Test multiblock with -bytes 408 (8 x 51, zero bulk blocks)");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '912',
+                '-evp', 'AES-128-CBC-HMAC-SHA1'])),
+        "Test multiblock with -bytes 912 (8 x 114, zero bulk blocks)");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '920',
+                '-evp', 'AES-128-CBC-HMAC-SHA1'])),
+        "Test multiblock with -bytes 920 (8 x 115, one bulk block)");
+    # The last lane exceeds the TLS limit; fallback cannot fit the aggregate.
+    ok(!run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '131071',
+                 '-evp', 'AES-128-CBC-HMAC-SHA1'])),
+        "Test multiblock with -bytes 131071 (unsupported aggregate)");
+    # The original report used AES-256-CBC-HMAC-SHA256.
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '407',
+                '-evp', 'AES-256-CBC-HMAC-SHA256'])),
+        "Test SHA256 multiblock with -bytes 407");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '408',
+                '-evp', 'AES-256-CBC-HMAC-SHA256'])),
+        "Test SHA256 multiblock with -bytes 408");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '912',
+                '-evp', 'AES-256-CBC-HMAC-SHA256'])),
+        "Test SHA256 multiblock with -bytes 912");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '913',
+                '-evp', 'AES-256-CBC-HMAC-SHA256'])),
+        "Test SHA256 -mb fallback for rejected 913-byte layout");
+    ok(run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '920',
+                '-evp', 'AES-256-CBC-HMAC-SHA256'])),
+        "Test SHA256 multiblock with -bytes 920");
+    ok(!run(app(['openssl', 'speed', '-testmode', '-mb', '-bytes', '131071',
+                 '-evp', 'AES-256-CBC-HMAC-SHA256'])),
+        "Test SHA256 multiblock with -bytes 131071 (unsupported aggregate)");
+    SKIP: {
+        skip "Multi option is not supported by this OpenSSL build", 1
+            if $^O =~ /^(VMS|MSWin32)$/;
+
+        ok(!run(app(['openssl', 'speed', '-testmode', '-multi', '2', '-mb',
+                     '-bytes', '131071', '-evp',
+                     'AES-128-CBC-HMAC-SHA1'])),
+            "Test -multi propagates a multiblock child failure");
+    }
 }
 
 ok(run(app(['openssl', 'speed', '-testmode', '-kem-algorithms'])),
