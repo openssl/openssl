@@ -37,22 +37,22 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # increase the upper bound by 4q, so the eight layers end below 33q.  One fixed
 # final pass reduces this to [0,q).  In the iNTT, layer n uses a
 # public 2^(n-1)q bias and produces sums below 2^nq; products remain below
-# 2q.  The final layer is therefore below 2^8q (256q; 2145386752) < 2^31,
+# 2q.  The final layer is therefore below 256q (2145386752) < 2^31,
 # and the final scaling multiplication returns canonical coefficients.
 # In summary:
 #
 #                       input         after eight layers
 #   NTT                 [0,q)         [0,33q)
-#   iNTT                [0,q)         [0,2^8q)
-#   twiddle product     [0,2^8q)      [0,2q)
+#   iNTT                [0,q)         [0,256q)
+#   twiddle product     [0,256q)      [0,2q)
 #
-# Since 2^8q (256q; 2145386752) < 2^31, every coefficient operand supplied to
+# Since 256q (2145386752) < 2^31, every coefficient operand supplied to
 # SQDMULH remains a nonnegative signed 32-bit value.  Its other operand, c,
 # uses the signed centred range shown below.
 #
 # Fixed-point twiddle-multiplication bounds (q = 8380417):
 #
-#   a   input coefficient          0 <= a < 2^8q (256q; 2145386752) < 2^31
+#   a   input coefficient          0 <= a < 256q (2145386752) < 2^31
 #   z   centred twiddle            -q/2 < z < q/2
 #                                  (-4190208 <= z <= 4190208)
 #   c   floor(2^31*z/q)           -1073741696 <= c <= 1073741695
@@ -62,7 +62,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # z and c are signed 32-bit values.  a is nonnegative and remains below the
 # signed limit.  MUL and MLS retain only the low 32 bits, but this is exact for
 # the final r because the mathematical difference a*z-k*q lies in [0,2q).
-# The iNTT bias ranges from q through 2^7q (128q; 1072693376), below 2^30.
+# The iNTT bias ranges from q through 128q (1072693376), below 2^30.
 #
 # Only caller-saved GPRs and vector registers are used, so both entry points
 # are leaf functions and require no stack frame.
@@ -96,7 +96,7 @@ ___
 ##
 # @brief Set dst = a*z mod q with dst in [0,2q).
 # @param[out] dst Destination vector register.
-# @param[in] a Source vector register containing values in [0,2^8q).
+# @param[in] a Source vector register containing values in [0,256q).
 # @param[in] z Vector register containing the centred twiddles.
 # @param[in] c Vector register containing each z's reduction constant.
 # @return Generated code leaves each dst lane congruent to a*z modulo q in
@@ -108,7 +108,7 @@ ___
 #
 # The variables obey:
 #
-#     0 <= a < 2^8q < 2^31
+#     0 <= a < 256q < 2^31
 #     -q/2 < z < q/2
 #     -2^30 < c < 2^30
 #      0 <= 2^31*z/q - c < 1
@@ -130,7 +130,7 @@ ___
 ##
 # @brief Set dst = a*z mod q with dst in [0,q).
 # @param[out] dst Destination vector register.
-# @param[in] a Source vector register containing values in [0,2^8q).
+# @param[in] a Source vector register containing values in [0,256q).
 # @param[in] z Vector register containing the centred twiddles.
 # @param[in] c Vector register containing each z's reduction constant.
 # @return Generated code leaves each dst lane equal to a*z modulo q in [0,q).
