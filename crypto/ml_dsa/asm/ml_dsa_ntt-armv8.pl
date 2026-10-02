@@ -70,6 +70,10 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # The public ABI supplies a zeta-table pointer in x1.  It is intentionally
 # unused: this implementation embeds each z (the twiddle) next to its
 # c = floor(2^31*z/q), as required by the Neon multiplication sequence.
+my $q = 8380417;
+my $q_low_halfword = sprintf("0x%x", $q & 0xffff);
+my $q_high_halfword = sprintf("0x%x", ($q >> 16) & 0xffff);
+
 my ($coefficients, $unused_zetas, $group_ptr, $even_ptr, $odd_ptr,
     $group_count, $vector_count, $zc_ptr) = map("x$_", (0..7));
 my ($z_word, $c_word, $q_word) =
@@ -85,7 +89,7 @@ my ($quotient, $quotient2) = map("v$_", (18, 23));
 my $q_bias = "v26";
 my $c = "v27";
 my ($scale_c, $scale_z, $q_vector) = map("v$_", (28..30));
-# load_modulus() broadcasts q into q_vector as [q, q, q, q].
+# load_q() broadcasts q into q_vector as [q, q, q, q].
 my $label_index = 0;
 my $code = <<___;
 #include "arch/arm_arch.h"
@@ -306,10 +310,11 @@ ___
 ##
 # @brief Load q.
 # @return Generated code loads q into $q_word and [q,q,q,q] into $q_vector.
-sub load_modulus {
+# @details MOV and MOVK load the low and high 16-bit halfwords of q.
+sub load_q {
     $code .= <<___;
-        mov     $q_word,#0xe001
-        movk    $q_word,#0x7f,lsl#16
+        mov     $q_word,#$q_low_halfword
+        movk    $q_word,#$q_high_halfword,lsl#16
         dup     $q_vector.4s,$q_word
 ___
 }
@@ -675,7 +680,7 @@ $code .= <<___;
 ossl_ml_dsa_poly_ntt_armv8:
         AARCH64_VALID_CALL_TARGET
 ___
-load_modulus();
+load_q();
 $code .= <<___;
         adrp    $zc_ptr,.Lml_dsa_ntt_constants
         add     $zc_ptr,$zc_ptr,#:lo12:.Lml_dsa_ntt_constants
@@ -703,7 +708,7 @@ ___
 # The scalar C iNTT finishes with Montgomery multiplication by 41978.  For
 # ordinary-domain multiplication the equivalent fixed pair is z = 16382 and
 # c = floor(2^31*z/q) = 4197891.
-load_modulus();
+load_q();
 my $normalization_z = 16382;
 my $normalization_c = 4197891;
 $code .= <<___;
