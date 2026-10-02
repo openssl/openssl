@@ -228,7 +228,7 @@ static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
         if (!ossl_x509_store_read_lock(store))
             return 0;
         if (store->objs_ht != NULL)
-            store_objects = ossl_x509_store_ht_get_by_name(store, name);
+            store_objects = ossl_x509_store_name_objs_get(store, name);
         else
             store_objects = store->objs;
         if (store_objects != NULL)

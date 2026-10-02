@@ -192,7 +192,7 @@ int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
-STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
+STACK_OF(X509_OBJECT) *ossl_x509_store_name_objs_get(const X509_STORE *store,
     const X509_NAME *xn);
 int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
