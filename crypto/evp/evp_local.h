@@ -75,6 +75,12 @@ struct evp_mac_ctx_st {
      * OSSL_FUNC_mac_newctx()
      */
     void *algctx;
+    /*
+     * Set by EVP_MAC_final() and EVP_MAC_finalXOF(), cleared by a successful
+     * EVP_MAC_init() or EVP_MAC_init_SKEY().  While set, further calls to
+     * EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF() are rejected.
+     */
+    int finalised;
 } /* EVP_MAC_CTX */;
 
 struct evp_kdf_ctx_st {
