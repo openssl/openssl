@@ -148,7 +148,35 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
      * ossl_method_construct_postcondition() make sure that the
      * ossl_algorithm_do_all() does very little when methods from
      * a provider have already been constructed.
+     * We can however, check to see if no new providers have been loaded
+     * since the last time we entered this function.  If no new providers have
+     * been loaded then either:
+     * a) It should be in the store, and we can fetch it
+     * or
+     * b) It won't be there (indicating it was non-cachable, and we have to do the
+     * fetch still
      */
+
+    if (!ossl_lib_ctx_get_new_providers_loaded(libctx, operation_id)) {
+        /*
+         * We've already gone through the full construction path for this
+         * operation type since last we modified our providers list.  Lets
+         * Try get it from the store
+         */
+        method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data);
+        if (method != NULL)
+            return method;
+        /*
+         * If we didn't find a method, this must be a non-cachable alg, and
+         * we have to take the very slow path below
+         */
+    } else {
+        /*
+         * We're about to run the full construction for this operation type
+         * Mark us has having done that in the libctx
+         */
+        ossl_lib_ctx_clear_new_providers_loaded(libctx, operation_id);
+    }
 
     cbdata.store = NULL;
     cbdata.force_store = force_store;
