@@ -33,6 +33,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added SSL_CTX_set_grease_mask() and SSL_set_grease_mask() to choose which
+   ClientHello fields carry RFC 8701 GREASE values. SSL_OP_GREASE still turns
+   GREASE on, and the default mask covers every field, so existing output is
+   unchanged.
+
+   *F1xGOD*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
@@ -65,6 +72,7 @@ OpenSSL 4.2
    <!-- https://github.com/openssl/openssl/pull/32823 -->
 
    *Daniel Kubec*
+
 
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
