@@ -73,6 +73,10 @@ my ($coefficients, $unused_zetas, $group_ptr, $even_ptr, $odd_ptr,
     $group_count, $vector_count, $twiddle_ptr) = map("x$_", (0..7));
 my ($twiddle_word, $quotient_constant_word, $q_word) =
     map("w$_", (8..10));
+
+# Every Neon register alias below holds four 32-bit lanes during arithmetic.
+# A few zip and mov instructions view the same 128 bits as two 64-bit lanes
+# (.2d) or sixteen bytes (.16b) only to rearrange or copy the four values.
 my ($coeff_vector0, $coeff_vector1, $twiddle, $product,
     $butterfly_even, $butterfly_odd) = map("v$_", (0..5));
 my ($even_vector2, $odd_vector2, $product2) = map("v$_", (6, 7, 17));
@@ -81,6 +85,7 @@ my $q_bias = "v26";
 my $quotient_constant = "v27";
 my ($scale_quotient_constant, $scale, $q_vector) = map("v$_", (28..30));
 my $q = 8380417;
+# load_modulus() broadcasts q into q_vector as [q, q, q, q].
 my $fixed_point_bits = 31;
 my (@ntt_twiddle_records, @intt_twiddle_records);
 my $label_index = 0;
