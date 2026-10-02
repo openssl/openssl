@@ -26,7 +26,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # This file is a Perl generator: its helper functions append AArch64 assembly
 # to $code; they are not functions called by the generated code at run time.
 #
-# The transform follows the canonical FIPS 204 layer order used by
+# The transform follows the standard FIPS 204 layer order used by
 # ml_dsa_ntt.c.  Each Neon register holds four 32-bit coefficients, so four
 # butterflies are evaluated in parallel.  Layers with offsets of at least four
 # can load their even and odd halves directly.  The final offset-2 and offset-1
@@ -38,7 +38,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # final pass reduces this to [0,q).  In the iNTT, layer n uses a
 # public 2^(n-1)q bias and produces sums below 2^nq; products remain below
 # 2q.  The final layer is therefore below 256q (2145386752) < 2^31,
-# and the final scaling multiplication returns canonical coefficients.
+# and the final scaling multiplication reduces coefficients into [0,q).
 # In summary:
 #
 #                       input         after eight layers
@@ -170,7 +170,7 @@ ___
 # @return Generated code leaves each dst lane equal to a*z modulo q in [0,q).
 # @note Uses $quotient_v as scratch.
 # @details The lazy result is in [0,2q), so one unsigned conditional
-# subtraction produces its canonical representative in [0,q).
+# subtraction reduces it into [0,q).
 sub barrett_multiply {
     my ($dst, $a, $z, $c) = @_;
 
@@ -594,8 +594,8 @@ ___
 # @param[in] butterfly_distance Coefficient separation between butterfly
 # partners.
 # @param[in] bias_shift Selects q << bias_shift as the subtraction bias.
-# @param[in] normalize_after_layer Whether to apply canonical iNTT scaling
-# after the layer.
+# @param[in] normalize_after_layer Whether to apply iNTT normalization and
+# reduce the result into [0,q) after the layer.
 # @return Generated code updates all 256 coefficients in place.
 #
 # @par Pseudocode
@@ -717,7 +717,7 @@ ___
 }
 
 ##
-# @brief Canonicalize NTT coefficients.
+# @brief Reduce NTT coefficients into [0,q).
 # @return Generated code reduces all 256 coefficients from [0,33q) to [0,q).
 # @details The generated loop reads and writes the polynomial through
 # $inout_coefficients.  Starting in [0,q), every NTT layer can add 4q to the
@@ -743,7 +743,7 @@ ___
 # [0,q) and leave in [0,q).
 # @param[in] unused_zetas x1 contains the ABI-provided zeta-table pointer; this
 # implementation uses its embedded z and c table instead.
-# @return Generated code returns the canonical NTT coefficients in the input
+# @return Generated code returns the reduced NTT coefficients in the input
 # polynomial.
 $code .= <<___;
 .globl  ossl_ml_dsa_poly_ntt_armv8
@@ -787,7 +787,7 @@ ___
 # [0,q) and leave in [0,q).
 # @param[in] unused_zetas x1 contains the ABI-provided zeta-table pointer; this
 # implementation uses its embedded z and c table instead.
-# @return Generated code returns the canonical polynomial coefficients in the
+# @return Generated code returns the reduced polynomial coefficients in the
 # input polynomial.
 $code .= <<___;
 .globl  ossl_ml_dsa_poly_ntt_inverse_armv8
