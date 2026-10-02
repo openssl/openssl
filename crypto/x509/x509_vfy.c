@@ -938,6 +938,82 @@ static int check_id(X509_STORE_CTX *ctx)
     return 1;
 }
 
+/*
+ * Returns 1 if an ASN1 time is valid for an RFC5280 certificate, 0 otherwise
+ */
+static int validate_certifiate_time(const ASN1_TIME *ctm)
+{
+    static const size_t utctime_length = sizeof("YYMMDDHHMMSSZ") - 1;
+    static const size_t generalizedtime_length = sizeof("YYYYMMDDHHMMSSZ") - 1;
+    int i;
+#ifdef CHARSET_EBCDIC
+    const char upper_z = 0x5A;
+#else
+    const char upper_z = 'Z';
+#endif
+
+    /*-
+     * Note that ASN.1 allows much more slack in the time format than RFC5280.
+     * In RFC5280, the representation is fixed:
+     * UTCTime: YYMMDDHHMMSSZ
+     * GeneralizedTime: YYYYMMDDHHMMSSZ
+     *
+     * We do NOT currently enforce the following RFC 5280 requirement:
+     * "CAs conforming to this profile MUST always encode certificate
+     *  validity dates through the year 2049 as UTCTime; certificate
+     *  validity dates in 2050 or later MUST be encoded as GeneralizedTime."
+     */
+    switch (ctm->type) {
+    case V_ASN1_UTCTIME:
+        if (ctm->length != (int)(utctime_length))
+            return 0;
+        break;
+    case V_ASN1_GENERALIZEDTIME:
+        if (ctm->length != (int)(generalizedtime_length))
+            return 0;
+        break;
+    default:
+        return 0;
+    }
+
+    /**
+     * Verify the format: the ASN.1 functions we use below allow a more
+     * flexible format than what's mandated by RFC 5280.
+     * Digit and date ranges will be verified in the conversion methods.
+     */
+    for (i = 0; i < ctm->length - 1; i++) {
+        if (!ossl_ascii_isdigit(ctm->data[i]))
+            return 0;
+    }
+    if (ctm->data[ctm->length - 1] != upper_z)
+        return 0;
+
+    return 1;
+}
+
+/*
+ *  Compare a certificate time to a time_t.
+ *  returns 0 if either the certificate time or time_t were invalid on not
+ *  representable. Otherwise returns 1 and stores the comparison result
+ *  (-1, 0, or 1) in *out_comparison.
+ */
+static int x509_cmp_time_internal(const ASN1_TIME *ctm, const time_t *cmp_time,
+                                  int *out_comparison)
+{
+    time_t t = cmp_time == NULL ? time(NULL) : *cmp_time;
+    int comparison;
+
+    if (!validate_certifiate_time(ctm))
+        return 0;
+
+    if ((comparison = ASN1_TIME_cmp_time_t(ctm, t)) == -2)
+        return 0;
+
+    *out_comparison = comparison;
+    return 1;
+}
+
+
 /* Returns -1 on internal error */
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
 {
@@ -1923,7 +1999,7 @@ memerr:
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
     time_t *ptime;
-    int i;
+    int i, comparison;
 
     if ((ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
         ptime = &ctx->param->check_time;
@@ -1932,17 +2008,23 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     else
         ptime = NULL;
 
-    i = X509_cmp_time(X509_get0_notBefore(x), ptime);
-    if (i >= 0 && depth < 0)
+    i = x509_cmp_time_internal(X509_get0_notBefore(x), ptime, &comparison);
+    if (i == 0 && depth < 0)
+        return 0;
+    if (comparison > 0 && depth < 0)
         return 0;
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD);
-    CB_FAIL_IF(i > 0, ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID);
+    CB_FAIL_IF(comparison > 0, ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID);
 
-    i = X509_cmp_time(X509_get0_notAfter(x), ptime);
-    if (i <= 0 && depth < 0)
+    i = x509_cmp_time_internal(X509_get0_notAfter(x), ptime, &comparison);
+    if (i == 0 && depth < 0)
+        return 0;
+    if (comparison < 0 && depth < 0)
         return 0;
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
-    CB_FAIL_IF(i < 0, ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED);
+    /* RFC 5280: the validity period runs through notAfter, inclusive */
+    CB_FAIL_IF(comparison < 0, ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED);
+
     return 1;
 }
 
