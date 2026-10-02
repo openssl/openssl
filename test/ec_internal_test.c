@@ -13,6 +13,7 @@
 #include "internal/deprecated.h"
 
 #include "internal/nelem.h"
+#include "internal/constant_time.h"
 #include "testutil.h"
 #include <openssl/ec.h>
 #include "ec_local.h"
@@ -1098,6 +1099,31 @@ static int test_scalar_mul_fn_nistp256(void)
 #endif /* OPENSSL_NO_EC_NISTP_64_GCC_128 */
 
 /*
+ * Mark / unmark a point coordinate as secret for Valgrind memcheck under
+ * enable-ct-validation, so the extraction is verified not to branch on it;
+ * no-ops in a non-CT build.
+ */
+static void coord_secret(const BIGNUM *bn)
+{
+    const OSSL_FN *fn = bn_get_ossl_fn(bn);
+
+    if (fn != NULL) {
+        CONSTTIME_SECRET((void *)ossl_fn_get_words(fn),
+            ossl_fn_get_dsize(fn) * OSSL_FN_BYTES);
+    }
+}
+
+static void coord_declassify(const BIGNUM *bn)
+{
+    const OSSL_FN *fn = bn_get_ossl_fn(bn);
+
+    if (fn != NULL) {
+        CONSTTIME_DECLASSIFY((void *)ossl_fn_get_words(fn),
+            ossl_fn_get_dsize(fn) * OSSL_FN_BYTES);
+    }
+}
+
+/*
  * EC_POINT_get_affine_coords_bytes() must yield the point's affine coordinates
  * as fixed-width big-endian bytes, matching EC_POINT_get_affine_coordinates(),
  * for both a projective input (Z_is_one == 0, the conversion runs) and an
@@ -1105,7 +1131,7 @@ static int test_scalar_mul_fn_nistp256(void)
  */
 static int fn_check_get_affine_coords_bytes(EC_GROUP *group)
 {
-    int ret = 0;
+    int ret = 0, cb_ok;
     BN_CTX *ctx = NULL;
     EC_POINT *P = NULL;
     BIGNUM *k = NULL, *xref = NULL, *yref = NULL;
@@ -1143,9 +1169,24 @@ static int fn_check_get_affine_coords_bytes(EC_GROUP *group)
         || !TEST_int_ge(BN_bn2binpad(yref, ry, (int)flen), 0))
         goto err;
 
-    /* Projective input (Z_is_one == 0): the conversion path runs. */
-    if (!TEST_int_eq(P->Z_is_one, 0)
-        || !TEST_true(EC_POINT_get_affine_coords_bytes(group, P, gx, gy, flen))
+    /*
+     * Projective input (Z_is_one == 0): the conversion path runs.  Mark the
+     * coordinates secret so a CT-validation build (Valgrind) proves the
+     * extraction does not branch on them, then declassify the point and the
+     * output byte strings for the functional comparison.
+     */
+    if (!TEST_int_eq(P->Z_is_one, 0))
+        goto err;
+    coord_secret(P->X);
+    coord_secret(P->Y);
+    coord_secret(P->Z);
+    cb_ok = EC_POINT_get_affine_coords_bytes(group, P, gx, gy, flen);
+    coord_declassify(P->X);
+    coord_declassify(P->Y);
+    coord_declassify(P->Z);
+    CONSTTIME_DECLASSIFY(gx, flen);
+    CONSTTIME_DECLASSIFY(gy, flen);
+    if (!TEST_true(cb_ok)
         || !TEST_mem_eq(gx, flen, rx, flen)
         || !TEST_mem_eq(gy, flen, ry, flen))
         goto err;
@@ -1191,6 +1232,27 @@ static int test_get_affine_coords_bytes(int idx)
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+/*
+ * prime256v1 selects the nistz256 assembly method whenever it is built, so the
+ * nistp256 point_get_affine_coords_bytes is never reached through a built-in
+ * curve.  Exercise it on a P-256 group built explicitly with the nistp256
+ * method, mirroring test_scalar_mul_fn_nistp256().
+ */
+static int test_get_affine_coords_bytes_nistp256(void)
+{
+    int ret;
+    EC_GROUP *group = fn_clone_group_with_method(NID_X9_62_prime256v1,
+        EC_GFp_nistp256_method());
+
+    if (group == NULL)
+        return 0;
+    ret = fn_check_get_affine_coords_bytes(group);
+    EC_GROUP_free(group);
+    return ret;
+}
+#endif /* OPENSSL_NO_EC_NISTP_64_GCC_128 */
+
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
@@ -1221,6 +1283,9 @@ int setup_tests(void)
     ADD_TEST(test_scalar_mul_fn_nistp256);
 #endif
     ADD_ALL_TESTS(test_get_affine_coords_bytes, OSSL_NELEM(fn_ladder_curves));
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    ADD_TEST(test_get_affine_coords_bytes_nistp256);
+#endif
 
     return 1;
 }

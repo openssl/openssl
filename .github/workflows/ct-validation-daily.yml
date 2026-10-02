@@ -88,7 +88,7 @@ jobs:
 
       - name: Configure with CT validation enabled
         run: |
-          ./Configure enable-ct-validation ${{ matrix.config_extra }}
+          ./Configure enable-ct-validation enable-ec_nistp_64_gcc_128 ${{ matrix.config_extra }}
           ./configdata.pm --dump
 
       - name: Build
@@ -105,7 +105,10 @@ jobs:
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
         # - OSSL_FN quick modular helpers: test_fn_ct
+        # - EC secret-point affine byte extraction, i.e.
+        #   EC_POINT_get_affine_coords_bytes() for the nistz256 and nistp*
+        #   curves: test_internal_ec (needs enable-ec_nistp_64_gcc_128 above)
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_fn_ct" \
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_fn_ct test_internal_ec" \
                OSSL_VALGRIND_CT=yes \
                test

@@ -42,7 +42,8 @@
 #include <string.h>
 #include <openssl/err.h>
 #include "ec_local.h"
-#include "crypto/fn.h" /* OSSL_FN_CTX_SIZE_NONE */
+#include "crypto/bn.h" /* bn_get_ossl_fn() */
+#include "crypto/fn.h" /* OSSL_FN_CTX_SIZE_NONE, OSSL_FN_to_bytes_be() */
 
 #include "internal/numbers.h"
 
@@ -1587,6 +1588,8 @@ static int ossl_ec_GFp_nistp521_points_mul_fn(const EC_GROUP *group,
     OSSL_FN_CTX *fnctx);
 static size_t ossl_ec_GFp_nistp521_points_mul_fn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point);
+static int ecp_nistp521_point_get_affine_coords_bytes(const EC_GROUP *group,
+    const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len);
 
 const EC_METHOD *EC_GFp_nistp521_method(void)
 {
@@ -1650,7 +1653,7 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         0, /* group_full_init */
         ossl_ec_GFp_nistp521_points_mul_fn, /* mul_fn */
         ossl_ec_GFp_nistp521_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
-        ossl_ec_GFp_simple_point_get_affine_coords_bytes
+        ecp_nistp521_point_get_affine_coords_bytes
     };
 
     return &ret;
@@ -1793,6 +1796,112 @@ int ossl_ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
         }
     }
     return 1;
+}
+
+/*
+ * Read a (possibly secret) coordinate BIGNUM into a felem at fixed width, in
+ * constant time.  OSSL_FN_to_bytes_be() serialises the coordinate's fixed-width
+ * OSSL_FN view (unlike BN_to_felem()'s BN_bn2lebinpad(), which leaks the
+ * coordinate's magnitude); the bytes are reversed to little-endian for
+ * bin66_to_felem().  Returns 0 if the BIGNUM has no OSSL_FN view or is wider
+ * than the field.
+ */
+static int coord_to_felem(felem out, const BIGNUM *in)
+{
+    const OSSL_FN *fn = bn_get_ossl_fn(in);
+    uint8_t be[66], le[66];
+    unsigned i;
+    int ok = 0;
+
+    if (fn == NULL || !OSSL_FN_to_bytes_be(fn, be, sizeof(be)))
+        goto end;
+    for (i = 0; i < sizeof(be); i++)
+        le[i] = be[sizeof(be) - 1 - i];
+    bin66_to_felem(out, le);
+    ok = 1;
+end:
+    OPENSSL_cleanse(be, sizeof(be));
+    OPENSSL_cleanse(le, sizeof(le));
+    return ok;
+}
+
+/* Serialise a contracted felem as 66 big-endian bytes. */
+static void felem_to_be66(uint8_t out[66], const felem in)
+{
+    uint8_t le[66];
+    unsigned i;
+
+    felem_to_bin66(le, in);
+    for (i = 0; i < 66; i++)
+        out[i] = le[66 - 1 - i];
+    OPENSSL_cleanse(le, sizeof(le));
+}
+
+/*
+ * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
+ * method's point_get_affine_coords_bytes slot.  'point' may be secret (an ECDH
+ * shared point), so its coordinates are read through their fixed-width OSSL_FN
+ * views - never a BIGNUM - and the field inverse is nistp521's constant-time
+ * felem_inv().
+ * Same math as ossl_ec_GFp_nistp521_point_get_affine_coordinates().
+ */
+static int ecp_nistp521_point_get_affine_coords_bytes(const EC_GROUP *group,
+    const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len)
+{
+    felem z2, z3, x_in, y_in, x_out, y_out;
+    largefelem tmp;
+    int ret = 0;
+
+    if (len != 66) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (EC_POINT_is_at_infinity(group, point)) {
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
+        return 0;
+    }
+    if (!coord_to_felem(x_in, point->X)
+        || !coord_to_felem(y_in, point->Y)
+        || !coord_to_felem(z2, point->Z)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    /* (x, y) = (X/Z^2, Y/Z^3) */
+    if (!point->Z_is_one) {
+        felem_inv(z3, z2); /* z3 = z^-1 */
+        felem_square(tmp, z3);
+        felem_reduce(z2, tmp); /* z2 = z^-2 */
+        if (x != NULL) {
+            felem_mul(tmp, x_in, z2);
+            felem_reduce(x_in, tmp);
+        }
+        if (y != NULL) {
+            felem_mul(tmp, z2, z3);
+            felem_reduce(z3, tmp); /* z3 = z^-3 */
+            felem_mul(tmp, y_in, z3);
+            felem_reduce(y_in, tmp);
+        }
+    }
+    if (x != NULL) {
+        felem_contract(x_out, x_in);
+        felem_to_be66(x, x_out);
+    }
+    if (y != NULL) {
+        felem_contract(y_out, y_in);
+        felem_to_be66(y, y_out);
+    }
+    ret = 1;
+
+err:
+    OPENSSL_cleanse(z2, sizeof(z2));
+    OPENSSL_cleanse(z3, sizeof(z3));
+    OPENSSL_cleanse(x_in, sizeof(x_in));
+    OPENSSL_cleanse(y_in, sizeof(y_in));
+    OPENSSL_cleanse(x_out, sizeof(x_out));
+    OPENSSL_cleanse(y_out, sizeof(y_out));
+    OPENSSL_cleanse(tmp, sizeof(tmp));
+    return ret;
 }
 
 /* points below is of size |num|, and tmp_felems is of size |num+1/ */
