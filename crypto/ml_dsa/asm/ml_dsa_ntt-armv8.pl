@@ -74,7 +74,7 @@ my $q = 8380417;
 my $q_low_halfword = sprintf("0x%x", $q & 0xffff);
 my $q_high_halfword = sprintf("0x%x", ($q >> 16) & 0xffff);
 
-my ($coefficients, $unused_zetas, $group_ptr, $even_ptr, $odd_ptr,
+my ($inout_coefficients, $unused_zetas, $group_ptr, $even_ptr, $odd_ptr,
     $group_count, $vector_count, $zc_ptr) = map("x$_", (0..7));
 my ($z_word, $c_word, $q_word) =
     map("w$_", (8..10));
@@ -345,7 +345,7 @@ sub ntt_wide_layer {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr, $coefficients
+        mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$groups
 $outer:
         ldr     d2, [$zc_ptr], #8
@@ -404,7 +404,7 @@ sub ntt_offset2_layer {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr, $coefficients
+        mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
         ldp     d2, d27, [$zc_ptr], #16
@@ -442,7 +442,7 @@ sub ntt_offset1_layer {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr, $coefficients
+        mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
         ldp     q2, q27, [$zc_ptr], #32
@@ -480,7 +480,7 @@ sub intt_offset1_layer {
 
     $code .= <<___;
         mov     $q_bias.16b, $q_vector.16b
-        mov     $group_ptr, $coefficients
+        mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
         ldp     q2, q27, [$zc_ptr], #32
@@ -518,7 +518,7 @@ sub intt_offset2_layer {
 
     $code .= <<___;
         shl     $q_bias.4s, $q_vector.4s, #1
-        mov     $group_ptr, $coefficients
+        mov     $group_ptr, $inout_coefficients
         mov     $group_count, #32
 $loop:
         ldp     d2, d27, [$zc_ptr], #16
@@ -569,7 +569,7 @@ sub intt_wide_layer {
 
     $code .= <<___;
         shl     $q_bias.4s, $q_vector.4s, #$bias_shift
-        mov     $group_ptr, $coefficients
+        mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$groups
 $outer:
         ldr     d2, [$zc_ptr], #8
@@ -630,8 +630,8 @@ ___
 # @brief Canonicalize NTT coefficients.
 # @return Generated code reduces all 256 coefficients from [0,33q) to [0,q).
 # @details The generated loop reads and writes the polynomial through
-# $coefficients.  Starting in [0,q), every NTT layer can add 4q to the upper
-# bound, so after eight layers every lane is in [0,33q).  For such x,
+# $inout_coefficients.  Starting in [0,q), every NTT layer can add 4q to the
+# upper bound, so after eight layers every lane is in [0,33q).  For such x,
 # t = floor(x/2^23) is at most 32 and
 #
 #     r = x - t*q < q + 33*(2^23-q) < 2q.
@@ -645,7 +645,7 @@ sub ntt_reduce_coefficients {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr, $coefficients
+        mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$iterations
 $loop:
 ___
