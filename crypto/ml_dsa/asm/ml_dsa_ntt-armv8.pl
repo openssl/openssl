@@ -646,12 +646,15 @@ $code .= <<___;
 .size   ossl_ml_dsa_poly_ntt_inverse_armv8,.-ossl_ml_dsa_poly_ntt_inverse_armv8
 ___
 
+# Fixed NTT table: each record stores one or more centred twiddles z followed
+# by their matching c = floor(2^31*z/q) values in NTT layer load order.
 $code .= <<___;
 .rodata
 .align  4
-# Fixed NTT table.  Each record contains one or more centred twiddles z,
-# followed by the matching c = floor(2^31*z/q) values used by SQDMULH.
-# Records appear in the load order required by the NTT layer loops.
+# Each NTT table record contains the signed ordinary-domain root or roots
+# consumed by one loop group, immediately followed by their c values for
+# SQDMULH.  The generator derives both halves from root 1753 and the bit-
+# reversed layer index; no precomputed transform table is copied here.
 .Lml_dsa_ntt_constants:
 .word	-3572223
 .word	-915382908
@@ -907,10 +910,15 @@ $code .= <<___;
 .word	-77645097,904878186,-1018462632,-967019376
 .word	1900052,-781875,1054478,-731434
 .word	486888731,-200355636,270210212,-187430119
+___
+
+# Fixed iNTT table: the same z-then-c record layout in reverse layer order;
+# each z is the signed additive inverse of its corresponding NTT twiddle.
+$code .= <<___;
 .align  4
-# Fixed iNTT table.  It has the same z-then-c record layout in the reverse
-# layer order required by the Gentleman-Sande loops.  Each z is the signed
-# additive inverse of the corresponding NTT twiddle.
+# The iNTT records have the same root/reciprocal layout, in the reverse
+# layer order consumed by the Gentleman-Sande loops.  Their roots are the
+# signed additive inverses of the corresponding NTT roots.
 .Lml_dsa_intt_constants:
 .word	731434,-1054478,781875,-1900052
 .word	187430118,-270210213,200355635,-486888732
