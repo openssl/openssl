@@ -23,11 +23,6 @@ typedef struct dtls_bitmap_st {
     uint64_t max_seq_num;
 } DTLS_BITMAP;
 
-typedef struct ssl_mac_buf_st {
-    unsigned char *mac;
-    int alloced;
-} SSL_MAC_BUF;
-
 typedef struct tls_buffer_st {
     /* at least SSL3_RT_MAX_PACKET_SIZE bytes */
     unsigned char *buf;
@@ -118,7 +113,7 @@ struct record_functions_st {
      *    1: Success or MtE decryption failed (MAC will be randomised)
      */
     int (*cipher)(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs, size_t n_recs,
-        int sending, SSL_MAC_BUF *macs, size_t macsize);
+        int sending, unsigned char **macs, size_t macsize);
     /* Returns 1 for success or 0 for error */
     int (*mac)(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
         int sending);
