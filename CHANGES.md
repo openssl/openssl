@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * `EVP_MAC_update()`, `EVP_MAC_final()` and `EVP_MAC_finalXOF()` now fail
+   with an error when called on an `EVP_MAC_CTX` that has already been
+   finalised by `EVP_MAC_final()` or `EVP_MAC_finalXOF()` and not been
+   re-initialised since.
+   <!-- https://github.com/openssl/openssl/pull/33084-->
+
+   *Daniel Kubec*
+
  * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
    X509_OBJECT_up_ref_count() does not reference count the X509_OBJECT itself.
    With X509_OBJECT being opaque there is nothing useful an application can do

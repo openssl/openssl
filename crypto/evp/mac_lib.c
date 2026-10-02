@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -119,7 +119,10 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;
     }
-    return ctx->meth->init(ctx->algctx, key, keylen, params);
+    if (!ctx->meth->init(ctx->algctx, key, keylen, params))
+        return 0;
+    ctx->finalised = 0;
+    return 1;
 }
 
 int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[])
@@ -130,11 +133,18 @@ int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;
     }
-    return ctx->meth->init_skey(ctx->algctx, skey->keydata, params);
+    if (!ctx->meth->init_skey(ctx->algctx, skey->keydata, params))
+        return 0;
+    ctx->finalised = 0;
+    return 1;
 }
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 {
+    if (ctx->finalised) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
     return ctx->meth->update(ctx->algctx, data, datalen);
 }
 
@@ -164,6 +174,10 @@ static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
         *outl = macsize;
         return 1;
     }
+    if (ctx->finalised) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
     if (outsize < macsize) {
         ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL);
         return 0;
@@ -178,6 +192,7 @@ static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
         }
     }
     res = ctx->meth->final(ctx->algctx, out, &l, outsize);
+    ctx->finalised = 1;
     if (outl != NULL)
         *outl = l;
     return res;
