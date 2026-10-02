@@ -160,15 +160,36 @@ static int get_secret_key(const OSSL_PARAM params[], void *arg)
     return 0;
 }
 
+static int get_key_length(const OSSL_PARAM params[], void *arg)
+{
+    const OSSL_PARAM *p = NULL;
+    size_t *len = arg;
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_SKEY_PARAM_KEY_LENGTH)) != NULL)
+        return OSSL_PARAM_get_size_t(p, len);
+
+    return 0;
+}
+
 int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
     size_t *len)
 {
     struct raw_key_details_st raw_key;
 
-    if (skey == NULL || key == NULL || len == NULL) {
+    if (skey == NULL || len == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
+    /*
+     * Only the length is requested, so get it from the key parameters
+     * instead of exporting the secret key.  This way the length is also
+     * available for non-exportable keys if the key management reports it.
+     */
+    if (key == NULL)
+        return evp_skeymgmt_export(skey->skeymgmt, skey->keydata,
+            OSSL_SKEYMGMT_SELECT_PARAMETERS,
+            get_key_length, len);
 
     raw_key.key = (const void **)key;
     raw_key.len = len;

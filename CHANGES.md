@@ -33,6 +33,16 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
+   the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
+   key parameter without exporting the key, so it is also available for keys
+   that cannot be exported, provided the key management reports it.  The
+   built-in key managements now include this parameter when exporting key
+   parameters.
+   <!-- https://github.com/openssl/openssl/pull/33035 -->
+
+   *Iva Marinova*
+
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
    parameter and returns 1 for an approved operation.  The absence of an
