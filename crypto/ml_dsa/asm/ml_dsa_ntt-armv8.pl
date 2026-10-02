@@ -71,7 +71,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # quotient constant needed by the Neon multiplication sequence.
 my ($coefficients, $unused_zetas, $group_ptr, $even_ptr, $odd_ptr,
     $group_count, $vector_count, $twiddle_ptr) = map("x$_", (0..7));
-my ($twiddle_word, $quotient_constant_word, $modulus_word) =
+my ($twiddle_word, $quotient_constant_word, $q_word) =
     map("w$_", (8..10));
 my ($coeff_vector0, $coeff_vector1, $twiddle, $product,
     $butterfly_even, $butterfly_odd) = map("v$_", (0..5));
@@ -79,8 +79,8 @@ my ($even_vector2, $odd_vector2, $product2) = map("v$_", (6, 7, 17));
 my ($quotient, $quotient2) = map("v$_", (18, 23));
 my $q_bias = "v26";
 my $quotient_constant = "v27";
-my ($scale_quotient_constant, $scale, $q) = map("v$_", (28..30));
-my $modulus = 8380417;
+my ($scale_quotient_constant, $scale, $q_vector) = map("v$_", (28..30));
+my $q = 8380417;
 my $fixed_point_bits = 31;
 my (@ntt_twiddle_records, @intt_twiddle_records);
 my $label_index = 0;
@@ -106,8 +106,8 @@ sub powmod {
     my $result = 1;
 
     while ($exponent != 0) {
-        $result = ($result * $base) % $modulus if ($exponent & 1) != 0;
-        $base = ($base * $base) % $modulus;
+        $result = ($result * $base) % $q if ($exponent & 1) != 0;
+        $base = ($base * $base) % $q;
         $exponent >>= 1;
     }
     return $result;
@@ -120,8 +120,8 @@ sub centered_twiddle {
     # iNTT layers use the additive inverse of the corresponding NTT twiddle.
     # Centre either representative in [-floor(q/2), floor(q/2)] so both it and
     # its fixed-point quotient constant have small signed bounds.
-    $root = $modulus - $root if $intt;
-    return $root > int($modulus / 2) ? $root - $modulus : $root;
+    $root = $q - $root if $intt;
+    return $root > int($q / 2) ? $root - $q : $root;
 }
 
 # Perl's int() truncates toward zero.  Spell out mathematical floor division
@@ -137,7 +137,7 @@ sub floor_div {
 sub quotient_constant_for_twiddle {
     my ($twiddle) = @_;
 
-    return floor_div($twiddle * (1 << $fixed_point_bits), $modulus);
+    return floor_div($twiddle * (1 << $fixed_point_bits), $q);
 }
 
 # Append the table record consumed by one loop group.  Its first half contains
@@ -175,7 +175,7 @@ sub mul_twiddle_lazy {
     $code .= <<___;
         sqdmulh $quotient.4s,$a.4s,$quotient_constant.4s
         mul     $dst.4s,$a.4s,$twiddle.4s
-        mls     $dst.4s,$quotient.4s,$q.4s
+        mls     $dst.4s,$quotient.4s,$q_vector.4s
 ___
 }
 
@@ -186,7 +186,7 @@ sub mul_twiddle_canonical {
     # The unreduced result is in [0,2q); one unsigned conditional subtraction
     # produces the canonical representative in [0,q).
     $code .= <<___;
-        sub     $quotient.4s,$dst.4s,$q.4s
+        sub     $quotient.4s,$dst.4s,$q_vector.4s
         umin    $dst.4s,$dst.4s,$quotient.4s
 ___
 }
@@ -203,8 +203,8 @@ sub mul_twiddle_pair_lazy {
         sqdmulh $quotient2.4s,$a1.4s,$quotient_constant.4s
         mul     $dst0.4s,$a0.4s,$twiddle.4s
         mul     $dst1.4s,$a1.4s,$twiddle.4s
-        mls     $dst0.4s,$quotient.4s,$q.4s
-        mls     $dst1.4s,$quotient2.4s,$q.4s
+        mls     $dst0.4s,$quotient.4s,$q_vector.4s
+        mls     $dst1.4s,$quotient2.4s,$q_vector.4s
 ___
 }
 
@@ -214,8 +214,8 @@ sub mul_twiddle_pair_canonical {
     mul_twiddle_pair_lazy($dst0, $a0, $dst1, $a1,
                           $twiddle, $quotient_constant);
     $code .= <<___;
-        sub     $quotient.4s,$dst0.4s,$q.4s
-        sub     $quotient2.4s,$dst1.4s,$q.4s
+        sub     $quotient.4s,$dst0.4s,$q_vector.4s
+        sub     $quotient2.4s,$dst1.4s,$q_vector.4s
         umin    $dst0.4s,$dst0.4s,$quotient.4s
         umin    $dst1.4s,$dst1.4s,$quotient2.4s
 ___
@@ -293,9 +293,9 @@ ___
 
 sub load_modulus {
     $code .= <<___;
-        mov     $modulus_word,#0xe001
-        movk    $modulus_word,#0x7f,lsl#16
-        dup     $q.4s,$modulus_word
+        mov     $q_word,#0xe001
+        movk    $q_word,#0x7f,lsl#16
+        dup     $q_vector.4s,$q_word
 ___
 }
 
@@ -450,7 +450,7 @@ sub intt_offset1_stage {
     }
 
     $code .= <<___;
-        mov     $q_bias.16b,$q.16b
+        mov     $q_bias.16b,$q_vector.16b
         mov     $group_ptr,$coefficients
         mov     $group_count,#32
 $loop:
@@ -484,7 +484,7 @@ sub intt_offset2_stage {
     }
 
     $code .= <<___;
-        shl     $q_bias.4s,$q.4s,#1
+        shl     $q_bias.4s,$q_vector.4s,#1
         mov     $group_ptr,$coefficients
         mov     $group_count,#32
 $loop:
@@ -529,7 +529,7 @@ sub intt_wide_stage {
     }
 
     $code .= <<___;
-        shl     $q_bias.4s,$q.4s,#$bias_shift
+        shl     $q_bias.4s,$q_vector.4s,#$bias_shift
         mov     $group_ptr,$coefficients
         mov     $group_count,#$step
 $outer:
@@ -618,10 +618,10 @@ ___
         ldp     q0,q1,[$group_ptr]
         ushr    $quotient.4s,$coeff_vector0.4s,#23
         ushr    $quotient2.4s,$coeff_vector1.4s,#23
-        mls     $coeff_vector0.4s,$quotient.4s,$q.4s
-        mls     $coeff_vector1.4s,$quotient2.4s,$q.4s
-        sub     $quotient.4s,$coeff_vector0.4s,$q.4s
-        sub     $quotient2.4s,$coeff_vector1.4s,$q.4s
+        mls     $coeff_vector0.4s,$quotient.4s,$q_vector.4s
+        mls     $coeff_vector1.4s,$quotient2.4s,$q_vector.4s
+        sub     $quotient.4s,$coeff_vector0.4s,$q_vector.4s
+        sub     $quotient2.4s,$coeff_vector1.4s,$q_vector.4s
         umin    $coeff_vector0.4s,$coeff_vector0.4s,$quotient.4s
         umin    $coeff_vector1.4s,$coeff_vector1.4s,$quotient2.4s
         stp     q0,q1,[$group_ptr],#32
@@ -644,7 +644,7 @@ load_modulus();
 $code .= <<___;
         adrp    $twiddle_ptr,.Lml_dsa_ntt_constants
         add     $twiddle_ptr,$twiddle_ptr,#:lo12:.Lml_dsa_ntt_constants
-        shl     $q_bias.4s,$q.4s,#1
+        shl     $q_bias.4s,$q_vector.4s,#1
 ___
 ntt_wide_stage(1, 128);
 ntt_wide_stage(2, 64);
@@ -669,10 +669,10 @@ ___
 # 41978.  This routine uses ordinary-domain twiddle multiplication, so its
 # equivalent embedded scale is 41978*R^-1 mod q, where R = 2^32 mod q.
 load_modulus();
-my $r_mod_q = (1 << 32) % $modulus;
-my $r_inverse = powmod($r_mod_q, $modulus - 2);
-my $scale_twiddle = (41978 * $r_inverse) % $modulus;
-$scale_twiddle -= $modulus if $scale_twiddle > int($modulus / 2);
+my $r_mod_q = (1 << 32) % $q;
+my $r_inverse = powmod($r_mod_q, $q - 2);
+my $scale_twiddle = (41978 * $r_inverse) % $q;
+$scale_twiddle -= $q if $scale_twiddle > int($q / 2);
 my $scale_constant = quotient_constant_for_twiddle($scale_twiddle);
 my $scale_twiddle_bits = $scale_twiddle & 0xffffffff;
 my $scale_constant_bits = $scale_constant & 0xffffffff;
