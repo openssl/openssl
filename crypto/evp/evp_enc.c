@@ -653,7 +653,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
     int ret;
-    size_t soutl, inl_ = (size_t)inl;
+    size_t outsize, soutl, inl_ = (size_t)inl;
     int blocksize;
 
     if (inl < 0) {
@@ -689,9 +689,13 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         return 0;
     }
 
-    ret = ctx->cipher->cupdate(ctx->algctx, out, &soutl,
-        inl_ + (size_t)(blocksize == 1 ? 0 : blocksize),
-        in, inl_);
+    if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
+        outsize = ((inl_ + (size_t)blocksize - 1) / (size_t)blocksize + 1)
+            * (size_t)blocksize;
+    else
+        outsize = inl_ + (size_t)(blocksize == 1 ? 0 : blocksize);
+
+    ret = ctx->cipher->cupdate(ctx->algctx, out, &soutl, outsize, in, inl_);
 
     if (ossl_likely(ret)) {
         if (ossl_unlikely(soutl > INT_MAX)) {

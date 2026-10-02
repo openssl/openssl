@@ -27,7 +27,8 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
     unsigned char *out = NULL;
     int outlen, i;
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    int max_out_len, mac_len = 0;
+    size_t max_out_len;
+    int mac_len = 0;
     int block_size;
 
     if (ctx == NULL) {
@@ -53,7 +54,18 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
         goto err;
     }
 
-    max_out_len = inlen + block_size;
+    if (inlen < 0) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+
+    if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
+        max_out_len = (((size_t)inlen + (size_t)block_size - 1)
+                              / (size_t)block_size
+                          + 1)
+            * (size_t)block_size;
+    else
+        max_out_len = (size_t)inlen + (size_t)block_size;
     if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
             & EVP_CIPH_FLAG_CIPHER_WITH_MAC)
         != 0) {
@@ -64,7 +76,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
         }
 
         if (EVP_CIPHER_CTX_is_encrypting(ctx)) {
-            max_out_len += mac_len;
+            max_out_len += (size_t)mac_len;
         } else {
             if (inlen < mac_len) {
                 ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNSUPPORTED_PKCS12_MODE);
