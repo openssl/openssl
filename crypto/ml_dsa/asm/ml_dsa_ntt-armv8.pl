@@ -201,8 +201,9 @@ ___
 # @param[in,out] odd Vector register containing the odd coefficients.
 # @param[in] z Vector register containing the NTT twiddles.
 # @param[in] c Vector register containing each z's reduction constant.
-# @pre $q_bias contains 2q.
-# @return Generated code leaves even and odd containing the butterfly results.
+# @pre Each input lane is in [0,B), and $q_bias contains 2q.
+# @return Generated code leaves even in [2q,B+4q) and odd in [0,B+2q).
+# Thus, every output lane is in [0,B+4q).
 #
 # @par Pseudocode
 #
@@ -259,8 +260,9 @@ ___
 # @param[in,out] odd1 Second odd-coefficient vector register.
 # @param[in] z Shared vector register containing the NTT twiddles.
 # @param[in] c Shared vector register containing each z's reduction constant.
-# @pre $q_bias contains 2q.
-# @return Generated code leaves all four registers containing butterfly results.
+# @pre Each input lane is in [0,B), and $q_bias contains 2q.
+# @return Generated code leaves even0 and even1 in [2q,B+4q), and odd0 and
+# odd1 in [0,B+2q).  Thus, every output lane is in [0,B+4q).
 sub ntt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
