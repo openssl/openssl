@@ -82,6 +82,13 @@ my ($z_word, $c_word, $q_word) =
 # Every Neon register alias below holds four 32-bit lanes during arithmetic.
 # A few zip and mov instructions view the same 128 bits as two 64-bit lanes
 # (.2d) or sixteen bytes (.16b) only to rearrange or copy the four values.
+# qN and vN are two names for the same 128-bit register.  In the paired wide
+# path, the loads and butterfly arguments therefore map as follows:
+#
+#   q0/v0 = coeff_vector0 = first four even-side coefficients
+#   q6/v6 = even_vector2  = next four even-side coefficients
+#   q1/v1 = coeff_vector1 = first four odd-side coefficients
+#   q7/v7 = odd_vector2   = next four odd-side coefficients
 my ($coeff_vector0, $coeff_vector1, $z, $product,
     $butterfly_even, $butterfly_odd) = map("v$_", (0..5));
 my ($even_vector2, $odd_vector2, $product2) = map("v$_", (6, 7, 17));
@@ -357,6 +364,8 @@ $outer:
 $inner:
 ___
     if ($paired) {
+        # q0/v0 and q6/v6 are the two even vectors; q1/v1 and q7/v7 are the
+        # corresponding odd vectors passed to ntt_butterfly_8way() below.
         $code .= <<___;
         ldp     q0, q6, [$even_ptr]
         ldp     q1, q7, [$odd_ptr]
@@ -581,6 +590,8 @@ $outer:
 $inner:
 ___
     if ($paired) {
+        # q0/v0 and q6/v6 are the two even vectors; q1/v1 and q7/v7 are the
+        # corresponding odd vectors passed to intt_butterfly_8way() below.
         $code .= <<___;
         ldp     q0, q6, [$even_ptr]
         ldp     q1, q7, [$odd_ptr]
