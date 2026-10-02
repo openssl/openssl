@@ -79,6 +79,14 @@ OpenSSL 4.2
 
    *Dominic Cunningham, Billy Bob Brumley*
 
+ * The ML-DSA, SLH-DSA and EdDSA signature algorithms and the ML-DSA-MU
+   digest now accept a context string parameter given as an octet string with
+   a NULL data pointer and a length of 0, treating it as an empty context
+   string. Previously such a parameter was rejected, while an empty context
+   string with a non-NULL data pointer was accepted.
+
+   *Paul Grubbs*
+
 OpenSSL 4.1
 -----------
 
