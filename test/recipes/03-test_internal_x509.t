@@ -13,4 +13,6 @@ use OpenSSL::Test::Utils;
 
 setup("test_internal_x509");
 
-simple_test("test_internal_x509", "x509_internal_test");
+simple_test("test_internal_x509", "x509_internal_test",
+    srctop_file("test", "certs", "root-cert.pem"),
+    srctop_file("test", "certs", "root-key.pem"));
