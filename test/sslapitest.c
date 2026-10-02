@@ -18216,6 +18216,11 @@ err:
 }
 #endif
 
+/**
+ * @brief Check GREASE mask defaults, inheritance, overrides and validation.
+ * @param idx 0 for TLS, 1 for QUIC
+ * @returns 1 on success, 0 on failure, or TEST_SKIP_CODE when QUIC is disabled
+ */
 static int test_grease_mask_api(int idx)
 {
     SSL_CTX *ctx = NULL;
@@ -18318,6 +18323,10 @@ end:
 }
 
 #ifndef OPENSSL_NO_QUIC
+/**
+ * @brief Check that GREASE mask accessors reject QUIC stream objects.
+ * @returns 1 on success, otherwise 0
+ */
 static int test_grease_mask_quic_stream(void)
 {
     SSL_CTX *ctx = NULL;
@@ -18407,10 +18416,13 @@ static void grease_msg_cb(int write_p, int version, int content_type,
     capture->count++;
 }
 
-/*
- * Parse a captured ClientHello (starting from handshake header) and check its
- * GREASE injection points against expected_mask.
- * Returns 1 on success, 0 on failure.
+/**
+ * @brief Check the GREASE fields in a captured ClientHello.
+ * @param buf ClientHello beginning with its handshake header
+ * @param len number of bytes in buf
+ * @param expected_mask SSL_GREASE_* fields expected in this ClientHello
+ * @param expect_single_keyshare require exactly one key share when nonzero
+ * @returns 1 when parsing and all field checks succeed, otherwise 0
  */
 static int check_grease_in_client_hello(const unsigned char *buf, size_t len,
     uint32_t expected_mask, int expect_single_keyshare)
@@ -18552,6 +18564,10 @@ static int check_grease_in_client_hello(const unsigned char *buf, size_t len,
     return 1;
 }
 
+/**
+ * @brief Check GREASE after selected-group and cookie-only HelloRetryRequests.
+ * @returns 1 when both handshakes and ClientHello checks succeed, otherwise 0
+ */
 static int test_grease(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -18642,11 +18658,13 @@ end:
     return testresult;
 }
 
+/** @brief Client configuration for a GREASE wire test. */
 typedef struct grease_mask_case_st {
-    uint32_t mask;
-    int enable_option;
+    uint32_t mask; /**< SSL_GREASE_* injection points to configure. */
+    int enable_option; /**< Whether to set SSL_OP_GREASE. */
 } GREASE_MASK_CASE;
 
+/** @brief Disabled, individual and combined GREASE configurations to test. */
 static const GREASE_MASK_CASE grease_mask_cases[] = {
     { SSL_GREASE_ALL, 0 },
     { 0, 1 },
@@ -18659,6 +18677,11 @@ static const GREASE_MASK_CASE grease_mask_cases[] = {
     { SSL_GREASE_ALL & ~SSL_GREASE_SIGNATURE_ALGORITHMS, 1 },
 };
 
+/**
+ * @brief Check that a TLS ClientHello contains only the enabled GREASE fields.
+ * @param idx index into grease_mask_cases
+ * @returns 1 when the handshake and ClientHello checks succeed, otherwise 0
+ */
 static int test_grease_mask_wire(int idx)
 {
     const GREASE_MASK_CASE *testcase = &grease_mask_cases[idx];
@@ -18704,6 +18727,12 @@ end:
 }
 
 #ifndef OPENSSL_NO_QUIC
+/**
+ * @brief Check GREASE fields in the first QUIC ClientHello.
+ * @param idx case index, with context settings first and connection overrides
+ *            in the second pass through grease_mask_cases
+ * @returns 1 when the ClientHello matches the configuration, otherwise 0
+ */
 static int test_grease_mask_quic_wire(int idx)
 {
     const GREASE_MASK_CASE *testcase
