@@ -889,6 +889,15 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         return tls_finish_handshake(s, wst, 0, 1);
 
     case TLS_ST_OK:
+        /*
+         * A message that arrived out of order may already be sitting fully
+         * received in the reassembly buffer, waiting on something earlier
+         * that we just finished processing in this same call. Loop back
+         * into reading instead of going idle, rather than stranding it
+         * until some unrelated new record happens to arrive later.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && dtls1_has_buffered_ready_message(s))
+            return WORK_FINISHED_SWAP;
         /* Calls SSLfatal() as required */
         return tls_finish_handshake(s, wst, 1, 1);
     }
