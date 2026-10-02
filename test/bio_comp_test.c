@@ -126,6 +126,105 @@ static int test_zstd(int n)
 {
     return do_bio_comp(BIO_f_zstd(), n);
 }
+
+static int test_zstd_wpending(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bmem = NULL;
+    unsigned char buf[512];
+    int ret = 0;
+
+    memset(buf, 'A', sizeof(buf));
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf))
+        || !TEST_true(BIO_flush(bcomp)))
+        goto err;
+    /* Once everything has been flushed nothing must be left pending */
+    if (!TEST_int_eq(BIO_wpending(bcomp), 0))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bmem);
+    return ret;
+}
+
+static int test_zstd_wpending_nonzero(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bpair = NULL;
+    BIO *bpeer = NULL;
+    unsigned char buf[4096];
+    int ret = 0;
+
+    if (!TEST_int_gt(RAND_bytes(buf, sizeof(buf)), 0))
+        goto err;
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_true(BIO_new_bio_pair(&bpair, 16, &bpeer, sizeof(buf))))
+        goto err;
+    BIO_push(bcomp, bpair);
+    /* The small pair buffer cannot drain the output, so it stays pending */
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf)))
+        goto err;
+    if (!TEST_int_gt(BIO_wpending(bcomp), 1))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bpair);
+    BIO_free(bpeer);
+    return ret;
+}
+
+static int test_zstd_pending(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bdec = NULL;
+    BIO *bmem = NULL;
+    unsigned char buf[512];
+    unsigned char slice[16];
+    int i;
+    int ret = 0;
+
+    memset(buf, 'A', sizeof(buf));
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    /* Write several separate frames so the input buffer holds more than one */
+    for (i = 0; i < 20; i++)
+        if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)),
+                (int)sizeof(buf)))
+            goto err;
+    if (!TEST_true(BIO_flush(bcomp)))
+        goto err;
+    BIO_free(bcomp);
+    bcomp = NULL;
+
+    if (!TEST_ptr(bdec = BIO_new(BIO_f_zstd())))
+        goto err;
+    BIO_push(bdec, bmem);
+    /* Read a little, leaving most of the compressed input buffered */
+    if (!TEST_int_gt(BIO_read(bdec, slice, (int)sizeof(slice)), 0))
+        goto err;
+    /* BIO_pending must report the buffered byte count, not the boolean 1 */
+    if (!TEST_int_gt(BIO_pending(bdec), 1))
+        goto err;
+    /* Drain everything; with nothing buffered pending falls back to zero */
+    while (BIO_read(bdec, slice, (int)sizeof(slice)) > 0)
+        continue;
+    if (!TEST_int_eq(BIO_pending(bdec), 0))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bdec);
+    BIO_free(bmem);
+    return ret;
+}
 #endif
 #ifndef OPENSSL_NO_BROTLI
 static int test_brotli(int n)
@@ -150,6 +249,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_ZSTD
     ADD_ALL_TESTS(test_zstd, NUM_SIZES * 4);
+    ADD_TEST(test_zstd_wpending);
+    ADD_TEST(test_zstd_wpending_nonzero);
+    ADD_TEST(test_zstd_pending);
 #endif
     return 1;
 }
