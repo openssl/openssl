@@ -28,7 +28,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 #
 # The transform follows the canonical FIPS 204 layer order used by
 # ml_dsa_ntt.c.  Each Neon register holds four 32-bit coefficients, so four
-# butterflies are evaluated in parallel.  Stages with offsets of at least four
+# butterflies are evaluated in parallel.  Layers with offsets of at least four
 # can load their even and odd halves directly.  The final offset-2 and offset-1
 # layers use ZIP/UZP permutations to put butterfly partners in matching lanes.
 #
@@ -73,6 +73,16 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 my $q = 8380417;
 my $q_low_halfword = sprintf("0x%x", $q & 0xffff);
 my $q_high_halfword = sprintf("0x%x", ($q >> 16) & 0xffff);
+my $polynomial_coefficients = 256;
+my $coefficient_bytes = 4;
+my $vector_lanes = 4;
+my $vector_bytes = $vector_lanes * $coefficient_bytes;
+my $vector_pair_bytes = 2 * $vector_bytes;
+my $vector_pair_count = $polynomial_coefficients / (2 * $vector_lanes);
+my $ntt_reduction_shift = 23;
+my $ntt_reduction_coefficients_per_iteration = 4 * $vector_lanes;
+my $ntt_reduction_iterations =
+    $polynomial_coefficients / $ntt_reduction_coefficients_per_iteration;
 
 my ($inout_coefficients, $unused_zetas, $group_ptr, $even_ptr, $odd_ptr,
     $group_count, $vector_count, $zc_ptr) = map("x$_", (0..7));
@@ -89,7 +99,7 @@ my ($z_word, $c_word, $q_word) =
 #   q6/v6 = $even1_q/$even1_v = next four even-side coefficients
 #   q1/v1 = $odd0_q/$odd0_v   = first four odd-side coefficients
 #   q7/v7 = $odd1_q/$odd1_v   = next four odd-side coefficients
-my ($coeff0_v, $coeff1_v, $z_v, $product,
+my ($coeff0_v, $coeff1_v, $z_v, $product_v,
     $butterfly_even, $butterfly_odd) = map("v$_", (0..5));
 my ($coeff0_q, $coeff1_q) = map("q$_", (0, 1));
 # These aliases name the loaded table layout before its values are broadcast
@@ -104,11 +114,11 @@ my ($even0_v, $odd0_v,
 my ($even0_q, $odd0_q,
     $even1_q, $odd1_q) =
     map("q$_", (0, 1, 6, 7));
-my $product2 = "v17";
-my ($quotient, $quotient2) = map("v$_", (18, 23));
-my $q_bias = "v26";
+my $product2_v = "v17";
+my ($quotient_v, $quotient2_v) = map("v$_", (18, 23));
+my $q_bias_v = "v26";
 my $c_v = "v27";
-my ($scale_c, $scale_z, $q_vector) = map("v$_", (28..30));
+my ($scale_c_v, $scale_z_v, $q_vector) = map("v$_", (28..30));
 # load_q() broadcasts q into q_vector as [q, q, q, q].
 my $label_index = 0;
 my $code = <<___;
@@ -125,7 +135,7 @@ ___
 # @param[in] c Vector register containing each z's reduction constant.
 # @return Generated code leaves each dst lane congruent to a*z modulo q in
 # [0,2q).
-# @note Uses $quotient as scratch.
+# @note Uses $quotient_v as scratch.
 # @details Let z be the centred twiddle and define
 #
 #     c = floor(2^31*z/q),  k = floor(a*c/2^31).
@@ -145,9 +155,9 @@ ___
 sub barrett_multiply_lazy {
     my ($dst, $a, $z, $c) = @_;
     $code .= <<___;
-        sqdmulh $quotient.4s, $a.4s, $c.4s
+        sqdmulh $quotient_v.4s, $a.4s, $c.4s
         mul     $dst.4s, $a.4s, $z.4s
-        mls     $dst.4s, $quotient.4s, $q_vector.4s
+        mls     $dst.4s, $quotient_v.4s, $q_vector.4s
 ___
 }
 
@@ -158,7 +168,7 @@ ___
 # @param[in] z Vector register containing the centred twiddles.
 # @param[in] c Vector register containing each z's reduction constant.
 # @return Generated code leaves each dst lane equal to a*z modulo q in [0,q).
-# @note Uses $quotient as scratch.
+# @note Uses $quotient_v as scratch.
 # @details The lazy result is in [0,2q), so one unsigned conditional
 # subtraction produces its canonical representative in [0,q).
 sub barrett_multiply {
@@ -166,8 +176,8 @@ sub barrett_multiply {
 
     barrett_multiply_lazy($dst, $a, $z, $c);
     $code .= <<___;
-        sub     $quotient.4s, $dst.4s, $q_vector.4s
-        umin    $dst.4s, $dst.4s, $quotient.4s
+        sub     $quotient_v.4s, $dst.4s, $q_vector.4s
+        umin    $dst.4s, $dst.4s, $quotient_v.4s
 ___
 }
 
@@ -180,7 +190,7 @@ ___
 # @param[in] z Shared vector register containing the centred twiddles.
 # @param[in] c Shared vector register containing each z's reduction constant.
 # @return Generated code leaves both destination vectors in [0,2q).
-# @note Uses $quotient and $quotient2 as scratch.
+# @note Uses $quotient_v and $quotient2_v as scratch.
 # @details Interleaving two independent products exposes both instruction
 # chains to the processor.  Computing both quotients first also preserves a0
 # and a1 when either destination aliases its source during iNTT normalization.
@@ -188,12 +198,12 @@ sub barrett_multiply_pair_lazy {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
     $code .= <<___;
-        sqdmulh $quotient.4s, $a0.4s, $c.4s
-        sqdmulh $quotient2.4s, $a1.4s, $c.4s
+        sqdmulh $quotient_v.4s, $a0.4s, $c.4s
+        sqdmulh $quotient2_v.4s, $a1.4s, $c.4s
         mul     $dst0.4s, $a0.4s, $z.4s
         mul     $dst1.4s, $a1.4s, $z.4s
-        mls     $dst0.4s, $quotient.4s, $q_vector.4s
-        mls     $dst1.4s, $quotient2.4s, $q_vector.4s
+        mls     $dst0.4s, $quotient_v.4s, $q_vector.4s
+        mls     $dst1.4s, $quotient2_v.4s, $q_vector.4s
 ___
 }
 
@@ -212,10 +222,10 @@ sub barrett_multiply_pair {
 
     barrett_multiply_pair_lazy($dst0, $a0, $dst1, $a1, $z, $c);
     $code .= <<___;
-        sub     $quotient.4s, $dst0.4s, $q_vector.4s
-        sub     $quotient2.4s, $dst1.4s, $q_vector.4s
-        umin    $dst0.4s, $dst0.4s, $quotient.4s
-        umin    $dst1.4s, $dst1.4s, $quotient2.4s
+        sub     $quotient_v.4s, $dst0.4s, $q_vector.4s
+        sub     $quotient2_v.4s, $dst1.4s, $q_vector.4s
+        umin    $dst0.4s, $dst0.4s, $quotient_v.4s
+        umin    $dst1.4s, $dst1.4s, $quotient2_v.4s
 ___
 }
 
@@ -225,7 +235,7 @@ ___
 # @param[in,out] odd Vector register containing the odd coefficients.
 # @param[in] z Vector register containing the NTT twiddles.
 # @param[in] c Vector register containing each z's reduction constant.
-# @pre Each input lane is in [0,B), and $q_bias contains 2q.
+# @pre Each input lane is in [0,B), and $q_bias_v contains 2q.
 # @return Generated code leaves even in [2q,B+4q) and odd in [0,B+2q).
 # Thus, every output lane is in [0,B+4q).
 #
@@ -240,11 +250,12 @@ ___
 sub ntt_butterfly_4way {
     my ($even, $odd, $z, $c) = @_;
 
-    barrett_multiply_lazy($product, $odd, $z, $c);
+    barrett_multiply_lazy($product_v, $odd, $z, $c);
+    # Reuse odd as the biased-even value from which both outputs are formed.
     $code .= <<___;
-        add     $odd.4s, $even.4s, $q_bias.4s
-        add     $even.4s, $odd.4s, $product.4s
-        sub     $odd.4s, $odd.4s, $product.4s
+        add     $odd.4s, $even.4s, $q_bias_v.4s
+        add     $even.4s, $odd.4s, $product_v.4s
+        sub     $odd.4s, $odd.4s, $product_v.4s
 ___
 }
 
@@ -254,8 +265,8 @@ ___
 # @param[in,out] odd Vector register containing the odd coefficients.
 # @param[in] z Vector register containing the iNTT twiddles.
 # @param[in] c Vector register containing each z's reduction constant.
-# @pre $q_bias contains the current layer's multiple of q.
-# @return Generated code leaves even and odd containing the butterfly results.
+# @pre Each input lane is in [0,B), and $q_bias_v contains B, a multiple of q.
+# @return Generated code leaves even in [0,2B) and odd in [0,2q).
 #
 # @par Pseudocode
 #
@@ -268,12 +279,14 @@ ___
 sub intt_butterfly_4way {
     my ($even, $odd, $z, $c) = @_;
 
+    # Reuse product as the nonnegative biased difference consumed by the
+    # twiddle multiplication.
     $code .= <<___;
-        add     $product.4s, $even.4s, $q_bias.4s
-        sub     $product.4s, $product.4s, $odd.4s
+        add     $product_v.4s, $even.4s, $q_bias_v.4s
+        sub     $product_v.4s, $product_v.4s, $odd.4s
         add     $even.4s, $even.4s, $odd.4s
 ___
-    barrett_multiply_lazy($odd, $product, $z, $c);
+    barrett_multiply_lazy($odd, $product_v, $z, $c);
 }
 
 ##
@@ -284,21 +297,23 @@ ___
 # @param[in,out] odd1 Second odd-coefficient vector register.
 # @param[in] z Shared vector register containing the NTT twiddles.
 # @param[in] c Shared vector register containing each z's reduction constant.
-# @pre Each input lane is in [0,B), and $q_bias contains 2q.
+# @pre Each input lane is in [0,B), and $q_bias_v contains 2q.
 # @return Generated code leaves even0 and even1 in [2q,B+4q), and odd0 and
 # odd1 in [0,B+2q).  Thus, every output lane is in [0,B+4q).
 sub ntt_butterfly_8way {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
 
-    barrett_multiply_pair_lazy($product, $odd0, $product2, $odd1, $z, $c);
+    barrett_multiply_pair_lazy($product_v, $odd0, $product2_v, $odd1, $z, $c);
+    # Reuse each odd register as the biased-even value from which its two
+    # outputs are formed.
     $code .= <<___;
-        add     $odd0.4s, $even0.4s, $q_bias.4s
-        add     $odd1.4s, $even1.4s, $q_bias.4s
-        add     $even0.4s, $odd0.4s, $product.4s
-        add     $even1.4s, $odd1.4s, $product2.4s
-        sub     $odd0.4s, $odd0.4s, $product.4s
-        sub     $odd1.4s, $odd1.4s, $product2.4s
+        add     $odd0.4s, $even0.4s, $q_bias_v.4s
+        add     $odd1.4s, $even1.4s, $q_bias_v.4s
+        add     $even0.4s, $odd0.4s, $product_v.4s
+        add     $even1.4s, $odd1.4s, $product2_v.4s
+        sub     $odd0.4s, $odd0.4s, $product_v.4s
+        sub     $odd1.4s, $odd1.4s, $product2_v.4s
 ___
 }
 
@@ -310,21 +325,24 @@ ___
 # @param[in,out] odd1 Second odd-coefficient vector register.
 # @param[in] z Shared vector register containing the iNTT twiddles.
 # @param[in] c Shared vector register containing each z's reduction constant.
-# @pre $q_bias contains the current layer's multiple of q.
-# @return Generated code leaves all four registers containing butterfly results.
+# @pre Each input lane is in [0,B), and $q_bias_v contains B, a multiple of q.
+# @return Generated code leaves even0 and even1 in [0,2B), and odd0 and odd1
+# in [0,2q).
 sub intt_butterfly_8way {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
 
+    # Reuse the product registers as the nonnegative biased differences
+    # consumed by the twiddle multiplications.
     $code .= <<___;
-        add     $product.4s, $even0.4s, $q_bias.4s
-        add     $product2.4s, $even1.4s, $q_bias.4s
-        sub     $product.4s, $product.4s, $odd0.4s
-        sub     $product2.4s, $product2.4s, $odd1.4s
+        add     $product_v.4s, $even0.4s, $q_bias_v.4s
+        add     $product2_v.4s, $even1.4s, $q_bias_v.4s
+        sub     $product_v.4s, $product_v.4s, $odd0.4s
+        sub     $product2_v.4s, $product2_v.4s, $odd1.4s
         add     $even0.4s, $even0.4s, $odd0.4s
         add     $even1.4s, $even1.4s, $odd1.4s
 ___
-    barrett_multiply_pair_lazy($odd0, $product, $odd1, $product2, $z, $c);
+    barrett_multiply_pair_lazy($odd0, $product_v, $odd1, $product2_v, $z, $c);
 }
 
 ##
@@ -341,6 +359,7 @@ ___
 
 ##
 # @brief Wide-offset NTT layer.
+# @param[in] layer NTT layer number.
 # @param[in] groups Number of coefficient groups in the layer.
 # @param[in] butterfly_distance Coefficient separation between butterfly
 # partners.
@@ -354,12 +373,16 @@ ___
 #       for each vector of partners separated by butterfly_distance:
 #           (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 sub ntt_wide_layer {
-    my ($groups, $butterfly_distance) = @_;
+    my %args = @_;
+    my $layer = $args{layer};
+    my $groups = $args{groups};
+    my $butterfly_distance = $args{butterfly_distance};
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
     my $inner = ".Lml_dsa_ntt_${label_index}_inner";
-    my $butterfly_distance_bytes = 4 * $butterfly_distance;
+    my $butterfly_distance_bytes =
+        $coefficient_bytes * $butterfly_distance;
     my $group_bytes = 2 * $butterfly_distance_bytes;
-    my $vectors = $butterfly_distance / 4;
+    my $vectors = $butterfly_distance / $vector_lanes;
     my $paired = $vectors >= 2;
     my $iterations = $paired ? $vectors / 2 : $vectors;
     $label_index++;
@@ -387,8 +410,8 @@ ___
                            $even1_v, $odd1_v,
                            $z_v, $c_v);
         $code .= <<___;
-        stp     $even0_q, $even1_q, [$even_ptr], #32
-        stp     $odd0_q, $odd1_q, [$odd_ptr], #32
+        stp     $even0_q, $even1_q, [$even_ptr], #$vector_pair_bytes
+        stp     $odd0_q, $odd1_q, [$odd_ptr], #$vector_pair_bytes
 ___
     } else {
         # NTT layer 6 reaches this branch: butterfly distance 4.  Each half
@@ -399,8 +422,8 @@ ___
 ___
         ntt_butterfly_4way($coeff0_v, $coeff1_v, $z_v, $c_v);
         $code .= <<___;
-        str     $coeff0_q, [$even_ptr], #16
-        str     $coeff1_q, [$odd_ptr], #16
+        str     $coeff0_q, [$even_ptr], #$vector_bytes
+        str     $coeff1_q, [$odd_ptr], #$vector_bytes
 ___
     }
     $code .= <<___;
@@ -429,13 +452,13 @@ sub ntt_layer7 {
 
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
-        mov     $group_count, #32
+        mov     $group_count, #$vector_pair_count
 $loop:
         ldp     $z_d, $c_d, [$zc_ptr], #16
         zip1    $z_v.4s, $z_v.4s, $z_v.4s
         zip1    $c_v.4s, $c_v.4s, $c_v.4s
         ldr     $coeff0_q, [$group_ptr]
-        ldr     $coeff1_q, [$group_ptr, #16]
+        ldr     $coeff1_q, [$group_ptr, #$vector_bytes]
         zip1    $butterfly_even.2d, $coeff0_v.2d, $coeff1_v.2d
         zip2    $butterfly_odd.2d, $coeff0_v.2d, $coeff1_v.2d
 ___
@@ -443,8 +466,8 @@ ___
     $code .= <<___;
         zip1    $coeff0_v.2d, $butterfly_even.2d, $butterfly_odd.2d
         zip2    $coeff1_v.2d, $butterfly_even.2d, $butterfly_odd.2d
-        str     $coeff0_q, [$group_ptr], #16
-        str     $coeff1_q, [$group_ptr], #16
+        str     $coeff0_q, [$group_ptr], #$vector_bytes
+        str     $coeff1_q, [$group_ptr], #$vector_bytes
         sub     $group_count, $group_count, #1
         cbnz    $group_count, $loop
 ___
@@ -467,11 +490,11 @@ sub ntt_layer8 {
 
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
-        mov     $group_count, #32
+        mov     $group_count, #$vector_pair_count
 $loop:
         ldp     $z_q, $c_q, [$zc_ptr], #32
         ldr     $coeff0_q, [$group_ptr]
-        ldr     $coeff1_q, [$group_ptr, #16]
+        ldr     $coeff1_q, [$group_ptr, #$vector_bytes]
         uzp1    $butterfly_even.4s, $coeff0_v.4s, $coeff1_v.4s
         uzp2    $butterfly_odd.4s, $coeff0_v.4s, $coeff1_v.4s
 ___
@@ -479,8 +502,8 @@ ___
     $code .= <<___;
         zip1    $coeff0_v.4s, $butterfly_even.4s, $butterfly_odd.4s
         zip2    $coeff1_v.4s, $butterfly_even.4s, $butterfly_odd.4s
-        str     $coeff0_q, [$group_ptr], #16
-        str     $coeff1_q, [$group_ptr], #16
+        str     $coeff0_q, [$group_ptr], #$vector_bytes
+        str     $coeff1_q, [$group_ptr], #$vector_bytes
         sub     $group_count, $group_count, #1
         cbnz    $group_count, $loop
 ___
@@ -503,13 +526,13 @@ sub intt_layer1 {
     $label_index++;
 
     $code .= <<___;
-        mov     $q_bias.16b, $q_vector.16b
+        mov     $q_bias_v.16b, $q_vector.16b
         mov     $group_ptr, $inout_coefficients
-        mov     $group_count, #32
+        mov     $group_count, #$vector_pair_count
 $loop:
         ldp     $z_q, $c_q, [$zc_ptr], #32
         ldr     $coeff0_q, [$group_ptr]
-        ldr     $coeff1_q, [$group_ptr, #16]
+        ldr     $coeff1_q, [$group_ptr, #$vector_bytes]
         uzp1    $butterfly_even.4s, $coeff0_v.4s, $coeff1_v.4s
         uzp2    $butterfly_odd.4s, $coeff0_v.4s, $coeff1_v.4s
 ___
@@ -517,8 +540,8 @@ ___
     $code .= <<___;
         zip1    $coeff0_v.4s, $butterfly_even.4s, $butterfly_odd.4s
         zip2    $coeff1_v.4s, $butterfly_even.4s, $butterfly_odd.4s
-        str     $coeff0_q, [$group_ptr], #16
-        str     $coeff1_q, [$group_ptr], #16
+        str     $coeff0_q, [$group_ptr], #$vector_bytes
+        str     $coeff1_q, [$group_ptr], #$vector_bytes
         sub     $group_count, $group_count, #1
         cbnz    $group_count, $loop
 ___
@@ -541,15 +564,15 @@ sub intt_layer2 {
     $label_index++;
 
     $code .= <<___;
-        shl     $q_bias.4s, $q_vector.4s, #1
+        shl     $q_bias_v.4s, $q_vector.4s, #1
         mov     $group_ptr, $inout_coefficients
-        mov     $group_count, #32
+        mov     $group_count, #$vector_pair_count
 $loop:
         ldp     $z_d, $c_d, [$zc_ptr], #16
         zip1    $z_v.4s, $z_v.4s, $z_v.4s
         zip1    $c_v.4s, $c_v.4s, $c_v.4s
         ldr     $coeff0_q, [$group_ptr]
-        ldr     $coeff1_q, [$group_ptr, #16]
+        ldr     $coeff1_q, [$group_ptr, #$vector_bytes]
         zip1    $butterfly_even.2d, $coeff0_v.2d, $coeff1_v.2d
         zip2    $butterfly_odd.2d, $coeff0_v.2d, $coeff1_v.2d
 ___
@@ -557,8 +580,8 @@ ___
     $code .= <<___;
         zip1    $coeff0_v.2d, $butterfly_even.2d, $butterfly_odd.2d
         zip2    $coeff1_v.2d, $butterfly_even.2d, $butterfly_odd.2d
-        str     $coeff0_q, [$group_ptr], #16
-        str     $coeff1_q, [$group_ptr], #16
+        str     $coeff0_q, [$group_ptr], #$vector_bytes
+        str     $coeff1_q, [$group_ptr], #$vector_bytes
         sub     $group_count, $group_count, #1
         cbnz    $group_count, $loop
 ___
@@ -566,11 +589,13 @@ ___
 
 ##
 # @brief Wide-offset iNTT layer.
+# @param[in] layer iNTT layer number.
 # @param[in] groups Number of coefficient groups in the layer.
 # @param[in] butterfly_distance Coefficient separation between butterfly
 # partners.
 # @param[in] bias_shift Selects q << bias_shift as the subtraction bias.
-# @param[in] final Whether to apply canonical iNTT scaling after the layer.
+# @param[in] normalize_after_layer Whether to apply canonical iNTT scaling
+# after the layer.
 # @return Generated code updates all 256 coefficients in place.
 #
 # @par Pseudocode
@@ -579,20 +604,26 @@ ___
 #       (z, c) = next table record
 #       for each vector of partners separated by butterfly_distance:
 #           (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
-#           if final: reduce even and odd to [0,q)
+#           if normalize_after_layer: reduce even and odd to [0,q)
 sub intt_wide_layer {
-    my ($groups, $butterfly_distance, $bias_shift, $final) = @_;
+    my %args = @_;
+    my $layer = $args{layer};
+    my $groups = $args{groups};
+    my $butterfly_distance = $args{butterfly_distance};
+    my $bias_shift = $args{bias_shift};
+    my $normalize_after_layer = $args{normalize_after_layer};
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
     my $inner = ".Lml_dsa_intt_${label_index}_inner";
-    my $butterfly_distance_bytes = 4 * $butterfly_distance;
+    my $butterfly_distance_bytes =
+        $coefficient_bytes * $butterfly_distance;
     my $group_bytes = 2 * $butterfly_distance_bytes;
-    my $vectors = $butterfly_distance / 4;
+    my $vectors = $butterfly_distance / $vector_lanes;
     my $paired = $vectors >= 2;
     my $iterations = $paired ? $vectors / 2 : $vectors;
     $label_index++;
 
     $code .= <<___;
-        shl     $q_bias.4s, $q_vector.4s, #$bias_shift
+        shl     $q_bias_v.4s, $q_vector.4s, #$bias_shift
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$groups
 $outer:
@@ -614,17 +645,17 @@ ___
         intt_butterfly_8way($even0_v, $odd0_v,
                             $even1_v, $odd1_v,
                             $z_v, $c_v);
-        if ($final) {
+        if ($normalize_after_layer) {
             barrett_multiply_pair($even0_v, $even0_v,
                                   $even1_v, $even1_v,
-                                  $scale_z, $scale_c);
+                                  $scale_z_v, $scale_c_v);
             barrett_multiply_pair($odd0_v, $odd0_v,
                                   $odd1_v, $odd1_v,
-                                  $scale_z, $scale_c);
+                                  $scale_z_v, $scale_c_v);
         }
         $code .= <<___;
-        stp     $even0_q, $even1_q, [$even_ptr], #32
-        stp     $odd0_q, $odd1_q, [$odd_ptr], #32
+        stp     $even0_q, $even1_q, [$even_ptr], #$vector_pair_bytes
+        stp     $odd0_q, $odd1_q, [$odd_ptr], #$vector_pair_bytes
 ___
     } else {
         # iNTT layer 3 reaches this branch: butterfly distance 4.  Each half
@@ -634,15 +665,15 @@ ___
         ldr     $coeff1_q, [$odd_ptr]
 ___
         intt_butterfly_4way($coeff0_v, $coeff1_v, $z_v, $c_v);
-        if ($final) {
-            barrett_multiply($coeff0_v, $coeff0_v, $scale_z,
-                            $scale_c);
-            barrett_multiply($coeff1_v, $coeff1_v, $scale_z,
-                            $scale_c);
+        if ($normalize_after_layer) {
+            barrett_multiply($coeff0_v, $coeff0_v, $scale_z_v,
+                            $scale_c_v);
+            barrett_multiply($coeff1_v, $coeff1_v, $scale_z_v,
+                            $scale_c_v);
         }
         $code .= <<___;
-        str     $coeff0_q, [$even_ptr], #16
-        str     $coeff1_q, [$odd_ptr], #16
+        str     $coeff0_q, [$even_ptr], #$vector_bytes
+        str     $coeff1_q, [$odd_ptr], #$vector_bytes
 ___
     }
     $code .= <<___;
@@ -673,15 +704,15 @@ ___
 sub ntt_reduce_vector_pair {
     $code .= <<___;
         ldp     $coeff0_q, $coeff1_q, [$group_ptr]
-        ushr    $quotient.4s, $coeff0_v.4s, #23
-        ushr    $quotient2.4s, $coeff1_v.4s, #23
-        mls     $coeff0_v.4s, $quotient.4s, $q_vector.4s
-        mls     $coeff1_v.4s, $quotient2.4s, $q_vector.4s
-        sub     $quotient.4s, $coeff0_v.4s, $q_vector.4s
-        sub     $quotient2.4s, $coeff1_v.4s, $q_vector.4s
-        umin    $coeff0_v.4s, $coeff0_v.4s, $quotient.4s
-        umin    $coeff1_v.4s, $coeff1_v.4s, $quotient2.4s
-        stp     $coeff0_q, $coeff1_q, [$group_ptr], #32
+        ushr    $quotient_v.4s, $coeff0_v.4s, #$ntt_reduction_shift
+        ushr    $quotient2_v.4s, $coeff1_v.4s, #$ntt_reduction_shift
+        mls     $coeff0_v.4s, $quotient_v.4s, $q_vector.4s
+        mls     $coeff1_v.4s, $quotient2_v.4s, $q_vector.4s
+        sub     $quotient_v.4s, $coeff0_v.4s, $q_vector.4s
+        sub     $quotient2_v.4s, $coeff1_v.4s, $q_vector.4s
+        umin    $coeff0_v.4s, $coeff0_v.4s, $quotient_v.4s
+        umin    $coeff1_v.4s, $coeff1_v.4s, $quotient2_v.4s
+        stp     $coeff0_q, $coeff1_q, [$group_ptr], #$vector_pair_bytes
 ___
 }
 
@@ -695,7 +726,7 @@ ___
 sub ntt_reduce_coefficients {
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
-        mov     $group_count, #16
+        mov     $group_count, #$ntt_reduction_iterations
 .Lml_dsa_ntt_reduce_coefficients_loop:
 ___
     ntt_reduce_vector_pair();
@@ -706,6 +737,14 @@ ___
 ___
 }
 
+##
+# @brief Compute the 256-coefficient NTT in place.
+# @param[in,out] inout_coefficients x0 points to coefficients that enter in
+# [0,q) and leave in [0,q).
+# @param[in] unused_zetas x1 contains the ABI-provided zeta-table pointer; this
+# implementation uses its embedded z and c table instead.
+# @return Generated code returns the canonical NTT coefficients in the input
+# polynomial.
 $code .= <<___;
 .globl  ossl_ml_dsa_poly_ntt_armv8
 .type   ossl_ml_dsa_poly_ntt_armv8,%function
@@ -717,14 +756,23 @@ load_q();
 $code .= <<___;
         adrp    $zc_ptr, .Lml_dsa_ntt_constants
         add     $zc_ptr, $zc_ptr, #:lo12:.Lml_dsa_ntt_constants
-        shl     $q_bias.4s, $q_vector.4s, #1
+        shl     $q_bias_v.4s, $q_vector.4s, #1
 ___
-ntt_wide_layer(1, 128);
-ntt_wide_layer(2, 64);
-ntt_wide_layer(4, 32);
-ntt_wide_layer(8, 16);
-ntt_wide_layer(16, 8);
-ntt_wide_layer(32, 4);
+# Layer  Distance  Groups  Implementation
+#   1       128       1    paired vectors
+#   2        64       2    paired vectors
+#   3        32       4    paired vectors
+#   4        16       8    paired vectors
+#   5         8      16    paired vectors
+#   6         4      32    single vectors
+#   7         2      32    64-bit ZIP permutation
+#   8         1      32    32-bit UZP permutation
+ntt_wide_layer(layer => 1, groups => 1,  butterfly_distance => 128);
+ntt_wide_layer(layer => 2, groups => 2,  butterfly_distance => 64);
+ntt_wide_layer(layer => 3, groups => 4,  butterfly_distance => 32);
+ntt_wide_layer(layer => 4, groups => 8,  butterfly_distance => 16);
+ntt_wide_layer(layer => 5, groups => 16, butterfly_distance => 8);
+ntt_wide_layer(layer => 6, groups => 32, butterfly_distance => 4);
 ntt_layer7();
 ntt_layer8();
 ntt_reduce_coefficients();
@@ -732,6 +780,16 @@ $code .= <<___;
         ret
 .size   ossl_ml_dsa_poly_ntt_armv8,.-ossl_ml_dsa_poly_ntt_armv8
 
+___
+##
+# @brief Compute the 256-coefficient iNTT in place.
+# @param[in,out] inout_coefficients x0 points to coefficients that enter in
+# [0,q) and leave in [0,q).
+# @param[in] unused_zetas x1 contains the ABI-provided zeta-table pointer; this
+# implementation uses its embedded z and c table instead.
+# @return Generated code returns the canonical polynomial coefficients in the
+# input polynomial.
+$code .= <<___;
 .globl  ossl_ml_dsa_poly_ntt_inverse_armv8
 .type   ossl_ml_dsa_poly_ntt_inverse_armv8,%function
 .p2align 4
@@ -749,19 +807,34 @@ $code .= <<___;
         add     $zc_ptr, $zc_ptr, #:lo12:.Lml_dsa_intt_constants
         mov     $z_word, #@{[$normalization_z & 0xffff]}
         movk    $z_word, #@{[($normalization_z >> 16) & 0xffff]}, lsl #16
-        dup     $scale_z.4s, $z_word
+        dup     $scale_z_v.4s, $z_word
         mov     $c_word, #@{[$normalization_c & 0xffff]}
         movk    $c_word, #@{[($normalization_c >> 16) & 0xffff]}, lsl #16
-        dup     $scale_c.4s, $c_word
+        dup     $scale_c_v.4s, $c_word
 ___
+# Layer  Distance  Groups  Bias    Implementation
+#   1         1      32      q    32-bit UZP permutation
+#   2         2      32     2q    64-bit ZIP permutation
+#   3         4      32     4q    single vectors
+#   4         8      16     8q    paired vectors
+#   5        16       8    16q    paired vectors
+#   6        32       4    32q    paired vectors
+#   7        64       2    64q    paired vectors
+#   8       128       1   128q    paired vectors, then normalize
 intt_layer1();                           # bias = q
 intt_layer2();                           # bias = 2q
-intt_wide_layer(32, 4,   2, 0);          # bias = 4q
-intt_wide_layer(16, 8,   3, 0);          # bias = 8q
-intt_wide_layer(8,  16,  4, 0);          # bias = 16q
-intt_wide_layer(4,  32,  5, 0);          # bias = 32q
-intt_wide_layer(2,  64,  6, 0);          # bias = 64q
-intt_wide_layer(1,  128, 7, 1);          # bias = 128q; scale final layer
+intt_wide_layer(layer => 3, groups => 32, butterfly_distance => 4,
+                bias_shift => 2, normalize_after_layer => 0);
+intt_wide_layer(layer => 4, groups => 16, butterfly_distance => 8,
+                bias_shift => 3, normalize_after_layer => 0);
+intt_wide_layer(layer => 5, groups => 8, butterfly_distance => 16,
+                bias_shift => 4, normalize_after_layer => 0);
+intt_wide_layer(layer => 6, groups => 4, butterfly_distance => 32,
+                bias_shift => 5, normalize_after_layer => 0);
+intt_wide_layer(layer => 7, groups => 2, butterfly_distance => 64,
+                bias_shift => 6, normalize_after_layer => 0);
+intt_wide_layer(layer => 8, groups => 1, butterfly_distance => 128,
+                bias_shift => 7, normalize_after_layer => 1);
 $code .= <<___;
         ret
 .size   ossl_ml_dsa_poly_ntt_inverse_armv8,.-ossl_ml_dsa_poly_ntt_inverse_armv8
