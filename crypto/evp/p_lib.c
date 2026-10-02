@@ -1595,6 +1595,9 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
     int i;
 
+    if (pkey == NULL)
+        return 0;
+
     if (!CRYPTO_UP_REF(&pkey->references, &i))
         return 0;
 

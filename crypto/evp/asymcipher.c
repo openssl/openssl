@@ -307,6 +307,13 @@ int evp_pkey_decrypt_alloc(EVP_PKEY_CTX *ctx, unsigned char **outp,
     size_t *outlenp, size_t expected_outlen,
     const unsigned char *in, size_t inlen)
 {
+    if (outp == NULL || outlenp == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    *outp = NULL;
+    *outlenp = 0;
+
     if (EVP_PKEY_decrypt(ctx, NULL, outlenp, in, inlen) <= 0
         || (*outp = OPENSSL_malloc(*outlenp)) == NULL)
         return -1;
