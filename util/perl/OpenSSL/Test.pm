@@ -1290,13 +1290,11 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    # Under a non-verbose harness nothing drains the command's stderr, so a
-    # chatty command can fill the pipe buffer and then block forever waiting
-    # for a reader that never comes.  Send it to the null device unless the
-    # recipe asked for a specific redirection.  On VMS this also keeps
-    # program output from escaping TAP::Parser.
-    $stderr=" 2> ".$null
-        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    # VMS program output escapes TAP::Parser
+    if ($^O eq 'VMS') {
+        $stderr=" 2> ".$null
+            unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    }
 
     $cmdstr .= "$stdin$stdout$stderr";
 
