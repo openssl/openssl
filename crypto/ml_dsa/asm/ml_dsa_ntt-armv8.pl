@@ -118,7 +118,7 @@ ___
 # makes the low-32-bit arithmetic the exact integer r, not merely a value
 # modulo 2^32.  Computing k before MUL permits dst to alias a during final
 # iNTT scaling.
-sub mul_z_lazy {
+sub barrett_multiply_lazy {
     my ($dst, $a, $z, $c) = @_;
     $code .= <<___;
         sqdmulh $quotient.4s,$a.4s,$c.4s
@@ -140,7 +140,7 @@ ___
 sub mul_z_canonical {
     my ($dst, $a, $z, $c) = @_;
 
-    mul_z_lazy($dst, $a, $z, $c);
+    barrett_multiply_lazy($dst, $a, $z, $c);
     $code .= <<___;
         sub     $quotient.4s,$dst.4s,$q_vector.4s
         umin    $dst.4s,$dst.4s,$quotient.4s
@@ -160,7 +160,7 @@ ___
 # @details Interleaving two independent products exposes both instruction
 # chains to the processor.  Computing both quotients first also preserves a0
 # and a1 when either destination aliases its source during iNTT normalization.
-sub mul_z_pair_lazy {
+sub barrett_multiply_pair_lazy {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
     $code .= <<___;
@@ -186,7 +186,7 @@ ___
 sub mul_z_pair_canonical {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
-    mul_z_pair_lazy($dst0, $a0, $dst1, $a1, $z, $c);
+    barrett_multiply_pair_lazy($dst0, $a0, $dst1, $a1, $z, $c);
     $code .= <<___;
         sub     $quotient.4s,$dst0.4s,$q_vector.4s
         sub     $quotient2.4s,$dst1.4s,$q_vector.4s
@@ -215,7 +215,7 @@ ___
 sub ntt_butterfly {
     my ($even, $odd, $z, $c) = @_;
 
-    mul_z_lazy($product, $odd, $z, $c);
+    barrett_multiply_lazy($product, $odd, $z, $c);
     $code .= <<___;
         add     $odd.4s,$even.4s,$q_bias.4s
         add     $even.4s,$odd.4s,$product.4s
@@ -248,7 +248,7 @@ sub intt_butterfly {
         sub     $product.4s,$product.4s,$odd.4s
         add     $even.4s,$even.4s,$odd.4s
 ___
-    mul_z_lazy($odd, $product, $z, $c);
+    barrett_multiply_lazy($odd, $product, $z, $c);
 }
 
 ##
@@ -265,7 +265,7 @@ sub ntt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
 
-    mul_z_pair_lazy($product, $odd0, $product2, $odd1, $z, $c);
+    barrett_multiply_pair_lazy($product, $odd0, $product2, $odd1, $z, $c);
     $code .= <<___;
         add     $odd0.4s,$even0.4s,$q_bias.4s
         add     $odd1.4s,$even1.4s,$q_bias.4s
@@ -298,7 +298,7 @@ sub intt_butterfly_pair {
         add     $even0.4s,$even0.4s,$odd0.4s
         add     $even1.4s,$even1.4s,$odd1.4s
 ___
-    mul_z_pair_lazy($odd0, $product, $odd1, $product2, $z, $c);
+    barrett_multiply_pair_lazy($odd0, $product, $odd1, $product2, $z, $c);
 }
 
 ##
