@@ -322,7 +322,8 @@ ___
 ##
 # @brief Wide-offset NTT layer.
 # @param[in] groups Number of coefficient groups in the layer.
-# @param[in] offset Coefficient separation between butterfly partners.
+# @param[in] butterfly_distance Coefficient separation between butterfly
+# partners.
 # @return Generated code updates all 256 coefficients in place.
 # @details Applies when partners are at least one vector apart.  The parameters
 # match the scalar FIPS 204 loop structure.
@@ -330,15 +331,15 @@ ___
 # @par Pseudocode
 #   for each group in the layer:
 #       (z, c) = next table record
-#       for each vector of partners separated by offset:
+#       for each vector of partners separated by butterfly_distance:
 #           (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 sub ntt_wide_layer {
-    my ($groups, $offset) = @_;
+    my ($groups, $butterfly_distance) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
     my $inner = ".Lml_dsa_ntt_${label_index}_inner";
-    my $offset_bytes = 4 * $offset;
-    my $group_bytes = 2 * $offset_bytes;
-    my $vectors = $offset / 4;
+    my $butterfly_distance_bytes = 4 * $butterfly_distance;
+    my $group_bytes = 2 * $butterfly_distance_bytes;
+    my $vectors = $butterfly_distance / 4;
     my $paired = $vectors >= 2;
     my $iterations = $paired ? $vectors / 2 : $vectors;
     $label_index++;
@@ -351,7 +352,7 @@ $outer:
         dup     $c.4s, $z.s[1]
         dup     $z.4s, $z.s[0]
         mov     $even_ptr, $group_ptr
-        add     $odd_ptr, $group_ptr, #$offset_bytes
+        add     $odd_ptr, $group_ptr, #$butterfly_distance_bytes
         mov     $vector_count, #$iterations
 $inner:
 ___
@@ -542,7 +543,8 @@ ___
 ##
 # @brief Wide-offset iNTT layer.
 # @param[in] groups Number of coefficient groups in the layer.
-# @param[in] offset Coefficient separation between butterfly partners.
+# @param[in] butterfly_distance Coefficient separation between butterfly
+# partners.
 # @param[in] bias_shift Selects q << bias_shift as the subtraction bias.
 # @param[in] final Whether to apply canonical iNTT scaling after the layer.
 # @return Generated code updates all 256 coefficients in place.
@@ -551,16 +553,16 @@ ___
 #   bias = q << bias_shift
 #   for each group in the layer:
 #       (z, c) = next table record
-#       for each vector of partners separated by offset:
+#       for each vector of partners separated by butterfly_distance:
 #           (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #           if final: reduce even and odd to [0,q)
 sub intt_wide_layer {
-    my ($groups, $offset, $bias_shift, $final) = @_;
+    my ($groups, $butterfly_distance, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
     my $inner = ".Lml_dsa_intt_${label_index}_inner";
-    my $offset_bytes = 4 * $offset;
-    my $group_bytes = 2 * $offset_bytes;
-    my $vectors = $offset / 4;
+    my $butterfly_distance_bytes = 4 * $butterfly_distance;
+    my $group_bytes = 2 * $butterfly_distance_bytes;
+    my $vectors = $butterfly_distance / 4;
     my $paired = $vectors >= 2;
     my $iterations = $paired ? $vectors / 2 : $vectors;
     $label_index++;
@@ -574,7 +576,7 @@ $outer:
         dup     $c.4s, $z.s[1]
         dup     $z.4s, $z.s[0]
         mov     $even_ptr, $group_ptr
-        add     $odd_ptr, $group_ptr, #$offset_bytes
+        add     $odd_ptr, $group_ptr, #$butterfly_distance_bytes
         mov     $vector_count, #$iterations
 $inner:
 ___
