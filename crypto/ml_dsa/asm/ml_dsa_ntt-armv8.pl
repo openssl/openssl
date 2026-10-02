@@ -413,7 +413,7 @@ ___
 }
 
 ##
-# @brief Offset-two NTT layer.
+# @brief NTT layer 7.
 # @return Generated code updates all 256 coefficients in place.
 # @details Each pair of adjacent 128-bit loads contains interleaved butterfly
 # halves.  ZIP on 64-bit elements places partners in matching lanes.
@@ -423,7 +423,7 @@ ___
 #       (even, odd) = zip_64_bit_halves(load_two_vectors())
 #       (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 #       store_two_vectors(unzip_64_bit_halves(even, odd))
-sub ntt_offset2_layer {
+sub ntt_layer7 {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
     $label_index++;
 
@@ -451,7 +451,7 @@ ___
 }
 
 ##
-# @brief Offset-one NTT layer.
+# @brief NTT layer 8.
 # @return Generated code updates all 256 coefficients in place.
 # @details UZP separates even and odd coefficients into two vectors; ZIP
 # restores the original memory order after the butterflies.
@@ -461,7 +461,7 @@ ___
 #       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
 #       (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 #       store_two_vectors(interleave_lanes(even, odd))
-sub ntt_offset1_layer {
+sub ntt_layer8 {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
     $label_index++;
 
@@ -487,7 +487,7 @@ ___
 }
 
 ##
-# @brief Offset-one iNTT layer.
+# @brief iNTT layer 1.
 # @return Generated code updates all 256 coefficients in place using bias q.
 # @details The first iNTT layer begins undoing the lane permutations used by
 # the final two NTT layers.
@@ -498,7 +498,7 @@ ___
 #       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
 #       (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #       store_two_vectors(interleave_lanes(even, odd))
-sub intt_offset1_layer {
+sub intt_layer1 {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
     $label_index++;
 
@@ -525,7 +525,7 @@ ___
 }
 
 ##
-# @brief Offset-two iNTT layer.
+# @brief iNTT layer 2.
 # @return Generated code updates all 256 coefficients in place using bias 2q.
 # @details Uses 64-bit ZIP operations to undo the corresponding NTT lane
 # permutation.
@@ -536,7 +536,7 @@ ___
 #       (even, odd) = zip_64_bit_halves(load_two_vectors())
 #       (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #       store_two_vectors(unzip_64_bit_halves(even, odd))
-sub intt_offset2_layer {
+sub intt_layer2 {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
     $label_index++;
 
@@ -716,8 +716,8 @@ ntt_wide_layer(4, 32);
 ntt_wide_layer(8, 16);
 ntt_wide_layer(16, 8);
 ntt_wide_layer(32, 4);
-ntt_offset2_layer();
-ntt_offset1_layer();
+ntt_layer7();
+ntt_layer8();
 ntt_reduce_coefficients();
 $code .= <<___;
         ret
@@ -745,8 +745,8 @@ $code .= <<___;
         movk    $c_word, #@{[($normalization_c >> 16) & 0xffff]}, lsl #16
         dup     $scale_c.4s, $c_word
 ___
-intt_offset1_layer();                    # bias = q
-intt_offset2_layer();                    # bias = 2q
+intt_layer1();                           # bias = q
+intt_layer2();                           # bias = 2q
 intt_wide_layer(32, 4,   2, 0);          # bias = 4q
 intt_wide_layer(16, 8,   3, 0);          # bias = 8q
 intt_wide_layer(8,  16,  4, 0);          # bias = 16q
