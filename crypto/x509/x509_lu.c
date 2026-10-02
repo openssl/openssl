@@ -213,10 +213,6 @@ X509_STORE *X509_STORE_new(void)
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
-    if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
-        goto err;
-    }
     ret->cache = 1;
     if ((ret->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
@@ -244,7 +240,6 @@ X509_STORE *X509_STORE_new(void)
 
 err:
     X509_VERIFY_PARAM_free(ret->param);
-    sk_X509_OBJECT_free(ret->objs);
     sk_X509_LOOKUP_free(ret->get_cert_methods);
     ossl_ht_free(ret->objs_ht);
     CRYPTO_THREAD_lock_free(ret->lock);
@@ -273,7 +268,6 @@ void X509_STORE_free(X509_STORE *xs)
         X509_LOOKUP_free(lu);
     }
     sk_X509_LOOKUP_free(sk);
-    sk_X509_OBJECT_pop_free(xs->objs, X509_OBJECT_free);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, xs, &xs->ex_data);
     X509_VERIFY_PARAM_free(xs->param);
@@ -324,7 +318,7 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *xs, X509_LOOKUP_METHOD *m)
     return NULL;
 }
 
-/* Also fill the cache (ctx->store->objs) with all matching certificates. */
+/* Also fill the store cache with all matching certificates. */
 X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
     X509_LOOKUP_TYPE type,
     const X509_NAME *name)
@@ -429,7 +423,7 @@ static int obj_ht_foreach_certs(HT_VALUE *v, void *arg)
 
 /*
  * May be called with |ret| == NULL just for the side effect of
- * caching all certs matching the given subject DN in |ctx->store->objs|.
+ * caching all certs matching the given subject DN in |ctx->store|.
  * Returns 1 if successful,
  * 0 if not found or X509_LOOKUP_by_subject_ex() returns an error,
  * -1 on failure
@@ -451,13 +445,9 @@ int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TY
 
     if (!ossl_x509_store_read_lock(store))
         return 0;
-    if (store->objs_ht != NULL) {
-        objs = ossl_x509_store_ht_get_by_name(store, name);
-        if (objs != NULL)
-            tmp = X509_OBJECT_retrieve_by_subject(objs, type, name);
-    } else {
-        tmp = X509_OBJECT_retrieve_by_subject(store->objs, type, name);
-    }
+    objs = ossl_x509_store_ht_get_by_name(store, name);
+    if (objs != NULL)
+        tmp = X509_OBJECT_retrieve_by_subject(objs, type, name);
     X509_STORE_unlock(store);
 
     if (tmp == NULL || type == X509_LU_CRL) {
@@ -487,7 +477,7 @@ int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TY
     return 1;
 }
 
-/* Also fill the cache |ctx->store->objs| with all matching certificates. */
+/* Also fill the store cache with all matching certificates. */
 int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
     X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret)
@@ -522,21 +512,12 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
         return 0;
     }
 
-    if (store->objs_ht != NULL) {
-        objs = ossl_x509_store_ht_get_by_name(store, xn);
-        if (objs != NULL && X509_OBJECT_retrieve_match(objs, obj)) {
-            ret = 1;
-        } else {
-            added = x509_name_objs_ht_insert(store, xn, objs, obj);
-            ret = added != 0;
-        }
+    objs = ossl_x509_store_ht_get_by_name(store, xn);
+    if (objs != NULL && X509_OBJECT_retrieve_match(objs, obj)) {
+        ret = 1;
     } else {
-        if (X509_OBJECT_retrieve_match(store->objs, obj)) {
-            ret = 1;
-        } else {
-            added = sk_X509_OBJECT_push(store->objs, obj);
-            ret = added != 0;
-        }
+        added = x509_name_objs_ht_insert(store, xn, objs, obj);
+        ret = added != 0;
     }
     X509_STORE_unlock(store);
 
@@ -776,21 +757,6 @@ err:
     return 0;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_4_0
-STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
-{
-    X509_STORE *store = (X509_STORE *)xs;
-
-    if (xs->objs_ht != NULL) {
-        ossl_ht_foreach_until(xs->objs_ht, obj_ht_foreach_object, &store->objs);
-        ossl_ht_free(xs->objs_ht);
-        store->objs_ht = NULL;
-    }
-
-    return xs->objs;
-}
-#endif
-
 STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
 {
     STACK_OF(X509_OBJECT) *objs;
@@ -803,16 +769,11 @@ STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
     if (!ossl_x509_store_read_lock(store))
         return NULL;
 
-    if (store->objs_ht != NULL) {
-        if ((objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
-            X509_STORE_unlock(store);
-            return NULL;
-        }
-        ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_object, &objs);
-    } else {
-        objs = sk_X509_OBJECT_deep_copy(store->objs, x509_object_dup,
-            X509_OBJECT_free);
+    if ((objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
+        X509_STORE_unlock(store);
+        return NULL;
     }
+    ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_object, &objs);
     X509_STORE_unlock(store);
 
     return objs;
@@ -832,23 +793,11 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
     if (!ossl_x509_store_read_lock(store))
         goto out_free;
 
-    if (store->objs_ht != NULL) {
-        ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_certs, &sk);
-    } else {
-        for (int i = 0; i < sk_X509_OBJECT_num(store->objs); i++) {
-            X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(store->objs, i));
-
-            if (cert != NULL
-                && !X509_add_cert(sk, cert, X509_ADD_FLAG_UP_REF))
-                goto err;
-        }
-    }
+    ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_certs, &sk);
     X509_STORE_unlock(store);
 
     return sk;
 
-err:
-    X509_STORE_unlock(store);
 out_free:
     OSSL_STACK_OF_X509_free(sk);
     return NULL;
@@ -874,14 +823,9 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
     if (!ossl_x509_store_read_lock(store))
         return NULL;
 
-    if (store->objs_ht != NULL) {
-        objs = ossl_x509_store_ht_get_by_name(store, nm);
-        if (objs != NULL)
-            idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
-    } else {
-        objs = store->objs;
+    objs = ossl_x509_store_ht_get_by_name(store, nm);
+    if (objs != NULL)
         idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
-    }
     if (idx < 0 || objs == NULL) {
         /*
          * Nothing found in cache: do lookup to possibly add new objects to
@@ -893,13 +837,9 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
             return i < 0 ? NULL : sk_X509_new_null();
         if (!ossl_x509_store_read_lock(store))
             return NULL;
-        if (store->objs_ht != NULL) {
-            objs = ossl_x509_store_ht_get_by_name(store, nm);
-            if (objs == NULL)
-                goto end;
-        } else {
-            objs = store->objs;
-        }
+        objs = ossl_x509_store_ht_get_by_name(store, nm);
+        if (objs == NULL)
+            goto end;
         idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
     }
 
@@ -945,13 +885,9 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
         sk_X509_CRL_free(sk);
         return NULL;
     }
-    if (store->objs_ht) {
-        objs = ossl_x509_store_ht_get_by_name(store, nm);
-        if (objs == NULL)
-            goto end;
-    } else {
-        objs = store->objs;
-    }
+    objs = ossl_x509_store_ht_get_by_name(store, nm);
+    if (objs == NULL)
+        goto end;
     idx = x509_object_idx_cnt(objs, X509_LU_CRL, nm, &cnt);
     if (idx < 0)
         goto end;

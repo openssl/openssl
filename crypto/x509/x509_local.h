@@ -142,11 +142,6 @@ struct x509_store_st {
     int cache; /* if true, stash any hits */
     /* Maps X509_NAME -> STACK_OF(X509_OBJECT) */
     HT *objs_ht;
-    /*
-     * Deprecated. Used only in the X509_STORE_get0_objects() for backward
-     * compatibility.
-     */
-    STACK_OF(X509_OBJECT) *objs;
     /* These are external lookup methods */
     STACK_OF(X509_LOOKUP) *get_cert_methods;
     X509_VERIFY_PARAM *param;

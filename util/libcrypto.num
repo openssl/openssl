@@ -4976,7 +4976,6 @@ X509_STORE_free                         4973	4_0_0	EXIST::FUNCTION:
 X509_STORE_lock                         4974	4_0_0	EXIST::FUNCTION:
 X509_STORE_unlock                       4975	4_0_0	EXIST::FUNCTION:
 X509_STORE_up_ref                       4976	4_0_0	EXIST::FUNCTION:
-X509_STORE_get0_objects                 4977	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
 X509_STORE_get1_objects                 4978	4_0_0	EXIST::FUNCTION:
 X509_STORE_get1_all_certs               4979	4_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_get1_certs               4980	4_0_0	EXIST::FUNCTION:
