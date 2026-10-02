@@ -321,6 +321,12 @@ B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 9810.
 
+=item B<OSSL_CMP_OPT_REQUIRE_ENVELOPED_DATA>
+
+Require centrally generated private keys to be returned using EnvelopedData
+and reject the deprecated EncryptedValue alternative. The default is 0, which
+accepts both encodings for backward compatibility.
+
 =item B<OSSL_CMP_OPT_UNPROTECTED_SEND>
 
 Send request or response messages without CMP-level protection.
@@ -904,6 +910,8 @@ was added in OpenSSL 3.5.
 The B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR> option was added in OpenSSL 4.0.
 
 The B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES> option was added in OpenSSL 4.1.
+
+The B<OSSL_CMP_OPT_REQUIRE_ENVELOPED_DATA> option was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

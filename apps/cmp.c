@@ -128,6 +128,7 @@ static char *opt_profile = NULL;
 static char *opt_newkey = NULL;
 static char *opt_newkeypass = NULL;
 static int opt_centralkeygen = 0;
+static int opt_require_enveloped_data = 0;
 static char *opt_newkeyout = NULL;
 static char *opt_subject = NULL;
 static int opt_days = 0;
@@ -245,6 +246,7 @@ typedef enum OPTION_choice {
     OPT_NEWKEY,
     OPT_NEWKEYPASS,
     OPT_CENTRALKEYGEN,
+    OPT_REQUIRE_ENVELOPED_DATA,
     OPT_NEWKEYOUT,
     OPT_SUBJECT,
     OPT_DAYS,
@@ -407,6 +409,8 @@ const OPTIONS cmp_options[] = {
     { "newkeypass", OPT_NEWKEYPASS, 's', "New private key pass phrase source" },
     { "centralkeygen", OPT_CENTRALKEYGEN, '-',
         "Request central (server-side) key generation. Default is local generation" },
+    { "require_enveloped_data", OPT_REQUIRE_ENVELOPED_DATA, '-',
+        "Require EnvelopedData for centrally generated keys" },
     { "newkeyout", OPT_NEWKEYOUT, 's',
         "File to save centrally generated key, in PEM format" },
     { "subject", OPT_SUBJECT, 's',
@@ -721,6 +725,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     { &opt_template }, { &opt_keyspec },
 
     { &opt_newkey }, { &opt_newkeypass }, { (char **)&opt_centralkeygen },
+    { (char **)&opt_require_enveloped_data },
     { &opt_newkeyout }, { &opt_subject }, { (char **)&opt_days }, { &opt_reqexts },
     { &opt_sans }, { (char **)&opt_san_nodefault },
     { &opt_policies }, { &opt_policy_oids }, { (char **)&opt_policy_oids_critical },
@@ -1484,6 +1489,10 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
 
     if (opt_implicit_confirm)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM, 1);
+
+    if (opt_require_enveloped_data)
+        (void)OSSL_CMP_CTX_set_option(ctx,
+            OSSL_CMP_OPT_REQUIRE_ENVELOPED_DATA, 1);
 
     return 1;
 }
@@ -3099,6 +3108,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_CENTRALKEYGEN:
             opt_centralkeygen = 1;
+            break;
+        case OPT_REQUIRE_ENVELOPED_DATA:
+            opt_require_enveloped_data = 1;
             break;
         case OPT_NEWKEYOUT:
             opt_newkeyout = opt_str();

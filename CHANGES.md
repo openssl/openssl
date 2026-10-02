@@ -33,6 +33,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added an opt-in CMP client option to require `EnvelopedData` when receiving
+   centrally generated private keys. This allows clients to reject the
+   deprecated `EncryptedValue` alternative and enforce authenticated key
+   delivery as required by the Lightweight CMP Profile (RFC 9483).
+
+   *quickroom*
+
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
    parameter and returns 1 for an approved operation.  The absence of an
