@@ -628,9 +628,10 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     CMS_KeyTransRecipientInfo *ktri = ri->d.ktri;
     EVP_PKEY *pkey = ktri->pkey;
     unsigned char *ek = NULL;
-    size_t eklen;
+    size_t eklen = 0;
     int ret = 0;
-    size_t fixlen = 0;
+    EVP_CIPHER_CTX *cctx = NULL;
+    evp_cipher_aead_asn1_params aparams;
     const EVP_CIPHER *cipher = NULL;
     EVP_CIPHER *fetched_cipher = NULL;
     CMS_EncryptedContentInfo *ec;
@@ -650,7 +651,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
         char name[OSSL_MAX_NAME_SIZE];
 
-        OBJ_obj2txt(name, sizeof(name), calg->algorithm, 0);
+        OBJ_obj2txt(name, sizeof(name), calg->algorithm, 1);
 
         (void)ERR_set_mark();
         fetched_cipher = EVP_CIPHER_fetch(libctx, name, propq);
@@ -666,8 +667,13 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         }
         (void)ERR_pop_to_mark();
 
-        fixlen = EVP_CIPHER_get_key_length(cipher);
-        EVP_CIPHER_free(fetched_cipher);
+        cctx = EVP_CIPHER_CTX_new();
+        if (cctx == NULL
+            || EVP_DecryptInit_ex(cctx, cipher, NULL, NULL, NULL) <= 0
+            || evp_cipher_asn1_to_param_ex(cctx, calg->parameter, &aparams) <= 0) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+            goto err;
+        }
     }
 
     ktri->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
@@ -691,10 +697,16 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     if (!ec->havenocert && !ec->debug)
         ec->harderr = cms_ktri_harderr_ok(ktri->pctx, pkey);
 
-    if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, fixlen,
+    if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, 0,
             ktri->encryptedKey->data,
             ktri->encryptedKey->length)
         <= 0)
+        goto err;
+
+    /* Use the same accepted key lengths as content initialization. */
+    if (cctx != NULL
+        && (eklen > INT_MAX
+            || EVP_CIPHER_CTX_set_key_length(cctx, (int)eklen) <= 0))
         goto err;
 
     ret = 1;
@@ -704,10 +716,12 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     ec->keylen = eklen;
 
 err:
+    EVP_CIPHER_CTX_free(cctx);
+    EVP_CIPHER_free(fetched_cipher);
     EVP_PKEY_CTX_free(ktri->pctx);
     ktri->pctx = NULL;
     if (!ret)
-        OPENSSL_free(ek);
+        OPENSSL_clear_free(ek, eklen);
 
     return ret;
 }
