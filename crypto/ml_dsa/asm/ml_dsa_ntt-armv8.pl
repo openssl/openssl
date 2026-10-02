@@ -137,7 +137,7 @@ ___
 # @note Uses $quotient as scratch.
 # @details The lazy result is in [0,2q), so one unsigned conditional
 # subtraction produces its canonical representative in [0,q).
-sub mul_z_canonical {
+sub barrett_multiply {
     my ($dst, $a, $z, $c) = @_;
 
     barrett_multiply_lazy($dst, $a, $z, $c);
@@ -183,7 +183,7 @@ ___
 # @param[in] c Shared vector register containing each z's reduction constant.
 # @return Generated code leaves both destination vectors in [0,q).
 # @note Uses both quotient vectors as scratch.
-sub mul_z_pair_canonical {
+sub barrett_multiply_pair {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
     barrett_multiply_pair_lazy($dst0, $a0, $dst1, $a1, $z, $c);
@@ -585,10 +585,10 @@ ___
                                 $even_vector2, $odd_vector2,
                                 $z, $c);
             if ($final) {
-                mul_z_pair_canonical($coeff_vector0, $coeff_vector0,
+                barrett_multiply_pair($coeff_vector0, $coeff_vector0,
                                      $even_vector2, $even_vector2,
                                      $scale_z, $scale_c);
-                mul_z_pair_canonical($coeff_vector1, $coeff_vector1,
+                barrett_multiply_pair($coeff_vector1, $coeff_vector1,
                                      $odd_vector2, $odd_vector2,
                                      $scale_z, $scale_c);
             }
@@ -604,9 +604,9 @@ ___
 ___
         intt_butterfly($coeff_vector0, $coeff_vector1, $z, $c);
         if ($final) {
-            mul_z_canonical($coeff_vector0, $coeff_vector0, $scale_z,
+            barrett_multiply($coeff_vector0, $coeff_vector0, $scale_z,
                             $scale_c);
-            mul_z_canonical($coeff_vector1, $coeff_vector1, $scale_z,
+            barrett_multiply($coeff_vector1, $coeff_vector1, $scale_z,
                             $scale_c);
         }
         $code .= <<___;
