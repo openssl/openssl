@@ -20,6 +20,7 @@
 
 #include "dso_local.h"
 #include "internal/e_os.h"
+#include "crypto/err.h"
 
 #ifdef DSO_DLFCN
 
@@ -428,7 +429,8 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
         return len;
     }
 
-    ERR_add_error_data(2, "dlfcn_pathbyaddr(): ", dlerror());
+    ossl_err_add_error_fmt("dlfcn_pathbyaddr(): %s",
+        ossl_string_or_null(dlerror()));
 #endif
     return -1;
 }

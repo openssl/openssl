@@ -13,6 +13,7 @@
 
 #include "crmf_local.h"
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
+#include "crypto/err.h"
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 #include <openssl/err.h>
 
@@ -219,7 +220,7 @@ err:
         char buf[128];
 
         if (OBJ_obj2txt(buf, sizeof(buf), pbmp->mac->algorithm, 0))
-            ERR_add_error_data(1, buf);
+            ossl_err_add_error_fmt("%s", buf);
     }
     return 0;
 }

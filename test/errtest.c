@@ -127,14 +127,14 @@ static int preserves_system_error(void)
 #endif
 }
 
-/* Test that calls to ERR_add_error_[v]data append */
-static int vdata_appends(void)
+/* Test that calls to ERR_add_error_txt() append */
+static int txt_appends(void)
 {
     const char *data;
 
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
-    ERR_add_error_data(1, "hello ");
-    ERR_add_error_data(1, "world");
+    ERR_add_error_txt(NULL, "hello ");
+    ERR_add_error_txt(NULL, "world");
     ERR_peek_error_data(&data, NULL);
     return TEST_str_eq(data, "hello world");
 }
@@ -453,7 +453,7 @@ static int test_error_string(void)
 int setup_tests(void)
 {
     ADD_TEST(preserves_system_error);
-    ADD_TEST(vdata_appends);
+    ADD_TEST(txt_appends);
     ADD_TEST(raised_error);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_print_error_format);
