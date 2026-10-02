@@ -292,6 +292,15 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ds))
                 & EVP_CIPH_FLAG_AEAD_CIPHER)
             != 0) {
+            /*
+             * Publicly invalid: the record is shorter than the mandatory
+             * AEAD overhead (explicit IV plus authentication tag). Leave
+             * alert handling to the caller so TLS reports bad_record_mac
+             * and DTLS silently discards the record.
+             */
+            if (!sending && reclen[ctr] < rl->eivlen + rl->taglen)
+                return 0;
+
             if (!setup_record_header(rl, &recs[ctr], buf[ctr], sizeof(buf[ctr]))) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -402,8 +411,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             OSSL_PARAM params[2], *p = params;
 
             /* Get the MAC */
-            macs[0].alloced = 0;
-
             *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
                 (void **)&macs[0].mac,
                 macsize);

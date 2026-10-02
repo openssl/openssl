@@ -2134,9 +2134,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             int verify_ret = 0;
 
 #if !defined(OPENSSL_NO_DTLS)
-            DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
-                ? (DTLS_LISTENER *)s->d1->listener
-                : NULL;
+            DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
             if (dl != NULL && dl->require_hvr_cookie && sctx->app_verify_cookie_cb == NULL) {
                 verify_ret = ossl_dtls_listener_verify_cookie_cb(ussl,
@@ -4859,12 +4857,11 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
         } else {
             /*
-             * No ALPN was negotiated on this handshake. If we resumed a
-             * session that had previously negotiated ALPN, the stale value
-             * must be cleared from the (copied) session before it is stored
-             * in the new ticket. Otherwise a subsequent 0-RTT attempt using
-             * that ticket would incorrectly assume an ALPN protocol had been
-             * negotiated. See tls_handle_alpn().
+             * No ALPN was negotiated on this handshake. A resumed session
+             * carries the protocol from the handshake that created it, and
+             * a 0-RTT attempt using the new ticket checks that ALPN is
+             * consistent with the session, so clear it. See
+             * tls_handle_alpn().
              */
             OPENSSL_free(s->session->ext.alpn_selected);
             s->session->ext.alpn_selected = NULL;

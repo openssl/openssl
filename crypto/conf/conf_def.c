@@ -466,18 +466,16 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     goto err;
 
                 if (include_dir != NULL && !ossl_is_absolute_path(include)) {
-                    size_t newlen = strlen(include_dir) + strlen(include) + 2;
+                    const char *fmt = ossl_ends_with_dirsep(include_dir)
+                        ? "%s%s"
+                        : "%s/%s";
 
-                    include_path = OPENSSL_malloc(newlen);
-                    if (include_path == NULL) {
+                    if (ossl_asprintf(&include_path, fmt,
+                            include_dir, include)
+                        < 0) {
                         OPENSSL_free(include);
                         goto err;
                     }
-
-                    OPENSSL_strlcpy(include_path, include_dir, newlen);
-                    if (!ossl_ends_with_dirsep(include_path))
-                        OPENSSL_strlcat(include_path, "/", newlen);
-                    OPENSSL_strlcat(include_path, include, newlen);
                     OPENSSL_free(include);
                 } else {
                     include_path = include;
@@ -833,9 +831,7 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
 static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
 {
     const char *filename;
-    size_t pathlen;
 
-    pathlen = strlen(path);
     while ((filename = OPENSSL_DIR_read(dirctx, path)) != NULL) {
         size_t namelen;
 
@@ -845,31 +841,25 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
                 && OPENSSL_strcasecmp(filename + namelen - 5, ".conf") == 0)
             || (namelen > 4
                 && OPENSSL_strcasecmp(filename + namelen - 4, ".cnf") == 0)) {
-            size_t newlen;
+            const char *fmt = "%s/%s";
             char *newpath;
             BIO *bio;
 
-            newlen = pathlen + namelen + 2;
-            newpath = OPENSSL_zalloc(newlen);
-            if (newpath == NULL)
-                break;
 #ifdef OPENSSL_SYS_VMS
+            size_t pathlen = strlen(path);
+
             /*
              * If the given path isn't clear VMS syntax,
              * we treat it as on Unix.
              */
             if (path[pathlen - 1] == ']'
                 || path[pathlen - 1] == '>'
-                || path[pathlen - 1] == ':') {
-                /* Clear VMS directory syntax, just copy as is */
-                OPENSSL_strlcpy(newpath, path, newlen);
-            }
+                || path[pathlen - 1] == ':')
+                /* Clear VMS directory syntax, no separator is needed */
+                fmt = "%s%s";
 #endif
-            if (newpath[0] == '\0') {
-                OPENSSL_strlcpy(newpath, path, newlen);
-                OPENSSL_strlcat(newpath, "/", newlen);
-            }
-            OPENSSL_strlcat(newpath, filename, newlen);
+            if (ossl_asprintf(&newpath, fmt, path, filename) < 0)
+                break;
 
             bio = BIO_new_file(newpath, "r");
             OPENSSL_free(newpath);

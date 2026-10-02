@@ -1596,6 +1596,24 @@ struct ssl_connection_st {
     } s3;
 
     struct dtls1_state_st *d1; /* DTLSv1 variables */
+#ifndef OPENSSL_NO_DTLS
+    /* Stable alias for d1->rx while SSL_clear() resets or replaces d1. */
+    DTLS_RX *listener_rx;
+    /*
+     * Set when this connection is being driven by dtls_listener_drive_pending().
+     * Used to prevent multiple threads from driving the same connection
+     * concurrently and to allow the demux pump to be called without holding
+     * the listener mutex.
+     */
+    unsigned int listener_being_driven;
+    /*
+     * Set while the listener itself is driving this connection's handshake, to
+     * stop it blocking. The listener drives pending connections from inside its
+     * own tick, so a connection which blocked there would stop the listener
+     * making any further progress, including the progress being waited for.
+     */
+    unsigned int listener_force_nonblocking;
+#endif
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback)(int write_p, int version, int content_type,
         const void *buf, size_t len, SSL *ssl, void *arg);
@@ -2160,18 +2178,34 @@ typedef struct dtls_msg_info_st {
     unsigned short msg_seq;
 } dtls_msg_info;
 
+/* RFC 9147, section 4: a 64-bit epoch and a 64-bit sequence number. */
+#define DTLS13_RECORD_NUMBER_LEN 16
+/* RFC 9147, section 7: the ACK vector's two-byte length prefix. */
+#define DTLS13_ACK_HEADER_LEN 2
+/* A nonempty ACK contains the prefix and at least one record number. */
+#define DTLS13_ACK_MIN_NONEMPTY_LEN \
+    (DTLS13_ACK_HEADER_LEN + DTLS13_RECORD_NUMBER_LEN)
+
 /* rfc9147, section 4 */
 typedef struct dtls1_record_number_st DTLS1_RECORD_NUMBER;
 
 struct dtls1_record_number_st {
     uint64_t epoch;
     uint64_t seqnum;
+    /*
+     * Byte range within the message this record number's transmission
+     * covered. Only meaningful for entries on a dtls_sent_msg's rec_nums;
+     * unused (left 0) for entries on the incoming ack_rec_num list.
+     */
+    size_t frag_off;
+    size_t frag_len;
     OSSL_LIST_MEMBER(record_number, DTLS1_RECORD_NUMBER);
 };
 
 DEFINE_LIST_OF(record_number, DTLS1_RECORD_NUMBER);
 
-DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum);
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum,
+    size_t frag_off, size_t frag_len);
 
 void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list);
 
@@ -2180,6 +2214,15 @@ typedef struct dtls_sent_msg_st {
     OSSL_LIST(record_number)
     rec_nums;
     unsigned char *msg_buf;
+    /*
+     * Bitmask of msg_info.msg_body_len bytes, one bit per byte, tracking
+     * which byte ranges of the message have been acknowledged so far --
+     * across every transmission round, not just the most recent one. A
+     * trailing allocation off the end of this struct (see
+     * dtls1_sent_msg_new()), mirroring how hm_fragment tracks receive-side
+     * reassembly. NULL when msg_info.msg_body_len == 0 (nothing to cover).
+     */
+    unsigned char *covered;
     struct dtls1_retransmit_state saved_retransmit_state;
 } dtls_sent_msg;
 
@@ -2224,6 +2267,13 @@ typedef struct dtls1_state_st {
     size_t link_mtu; /* max on-the-wire DTLS packet size */
     size_t mtu; /* max DTLS packet size */
     dtls_msg_info w_msg;
+    /*
+     * Byte range of the handshake fragment currently being written by
+     * dtls1_do_write(), read back by do_dtls1_write() (rec_layer_d1.c) when
+     * recording this write's record number on the buffered sent message.
+     */
+    size_t w_frag_off;
+    size_t w_frag_len;
     unsigned short r_msg_seq;
     /* Number of alerts received so far */
     unsigned int timeout_num_alerts;
@@ -2279,26 +2329,10 @@ typedef struct dtls1_state_st {
     OSSL_TIME created_at;
 
     /*
-     * Set when this connection is being driven by dtls_listener_drive_pending().
-     * Used to prevent multiple threads from driving the same connection
-     * concurrently and to allow the demux pump to be called without holding
-     * the listener mutex.
-     */
-    unsigned int being_driven : 1;
-
-    /*
      * Blocking mode requested for this connection, as a DTLS_BLOCKING_MODE.
      * Defaults to inheriting from the listener it came from.
      */
     unsigned int req_blocking_mode : 2;
-
-    /*
-     * Set while the listener itself is driving this connection's handshake, to
-     * stop it blocking. The listener drives pending connections from inside its
-     * own tick, so a connection which blocked there would stop the listener
-     * making any further progress, including the progress being waited for.
-     */
-    unsigned int force_nonblocking : 1;
 #endif
 
 } DTLS1_STATE;
@@ -3149,6 +3183,8 @@ int ossl_dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
 int ossl_dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
     const unsigned char *cookie,
     size_t cookie_len);
+int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
+    unsigned char *hmac_out);
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 __owur int tls1_new(SSL *s);

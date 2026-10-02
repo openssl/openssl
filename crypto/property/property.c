@@ -1243,10 +1243,8 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
          *
          * Only insert it if no NULL-provider entry exists yet for this nid and
          * property query.  The first provider to cache this nid owns that
-         * entry, which matches the provider ossl_method_store_fetch would pick
-         * by implementation order.  Without this check, a later cache_set from
-         * a different provider would overwrite it and change which provider an
-         * "any provider" lookup resolves to.
+         * entry, which is the provider ossl_method_store_fetch picks by
+         * implementation order.
          */
         if (ossl_method_store_atomic_find_in_list(sa, nid, NULL, prop_query) == NULL) {
             p = QUERY_new(strlen(prop_query));

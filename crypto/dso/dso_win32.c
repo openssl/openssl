@@ -401,21 +401,15 @@ static char *win32_merger(DSO *dso, const char *filespec1,
 
 static char *win32_name_converter(DSO *dso, const char *filename)
 {
-    char *translated;
-    int len, transform;
+    char *translated = NULL;
+    int transform;
 
     transform = ((strstr(filename, "/") == NULL) && (strstr(filename, "\\") == NULL) && (strstr(filename, ":") == NULL));
     /* If transform != 0, then we convert to %s.dll, else just dupe filename */
 
-    len = (int)strlen(filename) + 1;
-    if (transform)
-        len += (int)strlen(".dll");
-    translated = OPENSSL_malloc(len);
-    if (translated == NULL) {
+    (void)ossl_asprintf(&translated, transform ? "%s.dll" : "%s", filename);
+    if (translated == NULL)
         ERR_raise(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED);
-        return NULL;
-    }
-    snprintf(translated, len, "%s%s", filename, transform ? ".dll" : "");
     return translated;
 }
 

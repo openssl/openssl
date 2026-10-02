@@ -947,7 +947,7 @@ err:
 #ifndef OSSL_NO_USABLE_TLS1_3
 /*
  * With middlebox compat on, the TLS 1.3 path changes the write keys; without a
- * negotiated cipher that fails rather than succeeding.
+ * negotiated cipher that fails.
  */
 static int test_construct_cert_change_cipher_fail(void)
 {
@@ -1080,6 +1080,9 @@ static int set_new_cipher(SSL *ssl, const char *name)
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
     STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(ssl);
     int i;
+
+    if (s == NULL)
+        return 0;
 
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);

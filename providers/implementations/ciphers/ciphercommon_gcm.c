@@ -15,6 +15,7 @@
 #include "prov/ciphercommon_gcm.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "fips/fipsindicator.h"
 
 #include "providers/implementations/ciphers/ciphercommon_gcm.inc"
 
@@ -27,6 +28,14 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     size_t *padlen, const unsigned char *in,
     size_t len);
 static int on_preupdate_generate_iv(PROV_GCM_CTX *ctx);
+
+#ifdef FIPS_MODULE
+static int gcm_fips_taglen_approved(size_t taglen)
+{
+    return taglen == UNINITIALISED_SIZET || taglen == 4 || taglen == 8
+        || (taglen >= 12 && taglen <= GCM_TAG_MAX_SIZE);
+}
+#endif
 
 /*
  * Called from EVP_CipherInit when there is currently no context via
@@ -243,6 +252,17 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.gen != NULL && !OSSL_PARAM_set_uint(p.gen, ctx->iv_gen_rand))
         return 0;
 
+    /*
+     * Externally supplied IVs are permitted but not approved for encryption.
+     * Approved tag lengths are 4, 8, and 12 through 16 bytes.
+     * For encryption, requesting only a prefix of the generated tag does not
+     * change the tag length used by the operation.
+     */
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind,
+            (!ctx->enc || ctx->iv_gen_rand)
+                && gcm_fips_taglen_approved(ctx->taglen)))
+        return 0;
+
     return 1;
 }
 
@@ -344,10 +364,8 @@ int ossl_gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     }
 
-    if (gcm_cipher_internal(ctx, out, outl, in, inl) <= 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+    if (gcm_cipher_internal(ctx, out, outl, in, inl) <= 0)
         return 0;
-    }
     return 1;
 }
 
@@ -428,6 +446,7 @@ static int on_preupdate_generate_iv(PROV_GCM_CTX *ctx)
     return 1;
 }
 
+/* returns 1 on success, 0 on failure with a reason on the error queue */
 static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     size_t *padlen, const unsigned char *in,
     size_t len)
@@ -439,8 +458,10 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     if (ctx->tls_aad_len != UNINITIALISED_SIZET)
         return gcm_tls_cipher(ctx, out, padlen, in, len);
 
-    if (!ctx->key_set || ctx->iv_state == IV_STATE_FINISHED)
+    if (ctx->key_set == 0 || ctx->iv_state == IV_STATE_FINISHED) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         goto err;
+    }
 
     /*
      * FIPS requires generation of AES-GCM IV's inside the FIPS module.
@@ -449,25 +470,39 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
      * where setting the IV externally is the only option available.
      */
     if (ctx->iv_state == IV_STATE_UNINITIALISED) {
-        if (!ctx->enc || !gcm_iv_generate(ctx, 0))
+        if (ctx->enc == 0 || gcm_iv_generate(ctx, 0) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             goto err;
+        }
     }
 
     if (ctx->iv_state == IV_STATE_BUFFERED) {
-        if (!hw->setiv(ctx, ctx->iv, ctx->ivlen))
+        if (hw->setiv(ctx, ctx->iv, ctx->ivlen) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             goto err;
+        }
         ctx->iv_state = IV_STATE_COPIED;
     }
 
     if (in != NULL) {
         /*  The input is AAD if out is NULL */
         if (out == NULL) {
-            if (!hw->aadupdate(ctx, in, len))
+            int rv_aad = hw->aadupdate(ctx, in, len);
+
+            if (rv_aad == -2) { /* AAD after payload */
+                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
                 goto err;
+            }
+            if (rv_aad <= 0) { /* AAD length overflow or other failure */
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+                goto err;
+            }
         } else {
             /* The input is ciphertext OR plaintext */
-            if (!hw->cipherupdate(ctx, in, len, out))
+            if (hw->cipherupdate(ctx, in, len, out) == 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
                 goto err;
+            }
         }
     } else {
         /* The tag must be set before actually decrypting data */
@@ -478,6 +513,8 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
         if (hw->cipherfinal(ctx, ctx->buf) == 0) {
             if (ctx->enc == 0)
                 ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+            else
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             goto err;
         }
         ctx->iv_state = IV_STATE_FINISHED; /* Don't reuse the IV */
@@ -528,6 +565,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     /* Special case: -1 length restores whole IV */
     if (len == (size_t)-1) {
         memcpy(ctx->iv, iv, ctx->ivlen);
+        ctx->iv_gen_rand = 0;
         ctx->iv_gen = 1;
         ctx->iv_state = IV_STATE_BUFFERED;
         return 1;
@@ -563,12 +601,16 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
     size_t plen = 0;
     unsigned char *tag = NULL;
 
-    if (!ossl_prov_is_running() || !ctx->key_set)
+    if (ossl_prov_is_running() == 0 || ctx->key_set == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         goto err;
+    }
 
     /* Encrypt/decrypt must be performed in place */
-    if (out != in || len < (EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN))
+    if (out != in || len < (EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         goto err;
+    }
 
     /*
      * Check for too many keys as per FIPS 140-2 IG A.5 "Key/IV Pair Uniqueness
@@ -586,11 +628,15 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
      * buffer.
      */
     if (ctx->enc) {
-        if (!getivgen(ctx, out, arg))
+        if (getivgen(ctx, out, arg) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             goto err;
+        }
     } else {
-        if (!setivinv(ctx, out, arg))
+        if (setivinv(ctx, out, arg) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             goto err;
+        }
     }
 
     /* Fix buffer and length to point to payload */
@@ -603,6 +649,7 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
             EVP_GCM_TLS_TAG_LEN)) {
         if (!ctx->enc)
             OPENSSL_cleanse(out, len);
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         goto err;
     }
     if (ctx->enc)

@@ -14,6 +14,7 @@
 #include "internal/refcount.h"
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/conf.h>
 #include "crypto/types.h"
@@ -362,6 +363,9 @@ int ossl_x509v3_cache_extensions(const X509 *x);
  */
 int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
     unsigned char *hash);
+
+X509_NAME *ossl_dist_point_name_full(const struct DIST_POINT_NAME_st *dpn,
+    const X509_NAME *iname);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,

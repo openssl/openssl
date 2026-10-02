@@ -1036,6 +1036,51 @@ int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
     return 1;
 }
 
+static int extract_symmetric_key(BIO *out, const PKCS12_SAFEBAG *bag,
+    const char *pass, int passlen, int options, const EVP_CIPHER *enc)
+{
+    PKCS8_PRIV_KEY_INFO *p8;
+    EVP_SKEY *skey = NULL;
+
+    if (options & NOKEYS)
+        return 1;
+
+    p8 = PKCS12_decrypt_secretbag(bag, pass, passlen,
+        app_get0_libctx(), app_get0_propq());
+    if (p8 == NULL)
+        return 0;
+    skey = PKCS8_PRIV_KEY_INFO_get1_skey(p8, app_get0_libctx(),
+        app_get0_propq(), NULL, 0);
+    PKCS8_PRIV_KEY_INFO_free(p8);
+    if (skey == NULL)
+        return 0;
+    if (enc == NULL) {
+        const unsigned char *kdata = NULL;
+        size_t klen = 0;
+
+        EVP_SKEY_get0_raw_key(skey, &kdata, &klen);
+
+        if (kdata != NULL && klen > 0) {
+            BIO_puts(bio_err, "Bag Value: ");
+            BIO_puts(out, "\n    Key Data: ");
+            hex_print(out, kdata, (int)klen);
+
+            BIO_printf(bio_err, "    Key management: %s\n", EVP_SKEY_get0_skeymgmt_name(skey));
+            BIO_printf(bio_err, "    Key Length: %zu bytes\n", klen);
+        } else {
+            BIO_printf(bio_err, "Error obtaining key bytes\n");
+            EVP_SKEY_free(skey);
+            return 0;
+        }
+    } else {
+        BIO_puts(bio_err, "Bag Value: ");
+        print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
+    }
+
+    EVP_SKEY_free(skey);
+    return 1;
+}
+
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
     const char *pass, int passlen, int options,
     char *pempass, const EVP_CIPHER *enc)
@@ -1115,8 +1160,12 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         print_attribs(out, attrs, "Bag Attributes");
         BIO_puts(bio_err, "Bag Type: ");
         i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_bag_type(bag));
-        BIO_puts(bio_err, "\nBag Value: ");
-        print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
+        BIO_puts(bio_err, "\n");
+
+        if (PKCS12_SAFEBAG_get_bag_nid(bag) == NID_pkcs8ShroudedKeyBag)
+            return extract_symmetric_key(out, bag, pass, passlen, options, enc);
+        else
+            print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
         return 1;
 
     case NID_safeContentsBag:

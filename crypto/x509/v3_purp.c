@@ -346,12 +346,19 @@ int X509_supported_extension(const X509_EXTENSION *ex)
     return 0;
 }
 
-/* Returns 1 on success, 0 if x is invalid, -1 on (internal) error. */
-static int setup_dp(const X509 *x, DIST_POINT *dp)
+/*
+ * Returns 1 on success, 0 if x is invalid.
+ *
+ * The full name of a nameRelativeToCRLIssuer distribution point is not
+ * computed here.  Doing so for every parsed certificate cost an
+ * X509_NAME_dup() of the issuer name per relative distribution point,
+ * which a certificate with many such entries could turn into hundreds of
+ * megabytes of heap on a plain TLS handshake, while the result is only
+ * needed when a CRL is actually being matched against the certificate.
+ * That name is now built on demand in the CRL checking code instead.
+ */
+static int setup_dp(DIST_POINT *dp)
 {
-    const X509_NAME *iname = NULL;
-    int i;
-
     if (dp->distpoint == NULL && sk_GENERAL_NAME_num(dp->CRLissuer) <= 0) {
         ERR_raise(ERR_LIB_X509, X509_R_INVALID_DISTPOINT);
         return 0;
@@ -365,30 +372,10 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
     } else {
         dp->dp_reasons = CRLDP_ALL_REASONS;
     }
-    if (dp->distpoint == NULL || dp->distpoint->type != 1)
-        return 1;
-
-    /* Handle name fragment given by nameRelativeToCRLIssuer */
-    /*
-     * Note that the below way of determining iname is not really compliant
-     * with https://tools.ietf.org/html/rfc5280#section-4.2.1.13
-     * According to it, sk_GENERAL_NAME_num(dp->CRLissuer) MUST be <= 1
-     * and any CRLissuer could be of type different to GEN_DIRNAME.
-     */
-    for (i = 0; i < sk_GENERAL_NAME_num(dp->CRLissuer); i++) {
-        GENERAL_NAME *gen = sk_GENERAL_NAME_value(dp->CRLissuer, i);
-
-        if (gen->type == GEN_DIRNAME) {
-            iname = gen->d.directoryName;
-            break;
-        }
-    }
-    if (iname == NULL)
-        iname = X509_get_issuer_name(x);
-    return DIST_POINT_set_dpname(dp->distpoint, iname) ? 1 : -1;
+    return 1;
 }
 
-/* Return 1 on success, 0 if x is invalid, -1 on (internal) error. */
+/* Return 1 on success, 0 if x is invalid. */
 static int setup_crldp(const X509 *x, STACK_OF(DIST_POINT) **tmp_crldp)
 {
     int i;
@@ -398,10 +385,8 @@ static int setup_crldp(const X509 *x, STACK_OF(DIST_POINT) **tmp_crldp)
         return 0;
 
     for (i = 0; i < sk_DIST_POINT_num(*tmp_crldp); i++) {
-        int res = setup_dp(x, sk_DIST_POINT_value(*tmp_crldp, i));
-
-        if (res < 1)
-            return res;
+        if (!setup_dp(sk_DIST_POINT_value(*tmp_crldp, i)))
+            return 0;
     }
     return 1;
 }
@@ -543,20 +528,27 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     uint32_t tmp_ex_kusage;
     uint32_t tmp_ex_xkusage;
     uint32_t tmp_ex_nscert;
-    ASN1_OCTET_STRING *tmp_skid;
-    AUTHORITY_KEYID *tmp_akid;
-    STACK_OF(GENERAL_NAME) *tmp_altname;
-    NAME_CONSTRAINTS *tmp_nc;
+    ASN1_OCTET_STRING *tmp_skid = NULL;
+    AUTHORITY_KEYID *tmp_akid = NULL;
+    STACK_OF(GENERAL_NAME) *tmp_altname = NULL;
+    NAME_CONSTRAINTS *tmp_nc = NULL;
     STACK_OF(DIST_POINT) *tmp_crldp = NULL;
+#ifndef OPENSSL_NO_RFC3779
+    STACK_OF(IPAddressFamily) *tmp_rfc3779_addr = NULL;
+    struct ASIdentifiers_st *tmp_rfc3779_asid = NULL;
+#endif
+    int ret = 0;
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
-    if (tsan_ld_acq((TSAN_QUALIFIER int *)&const_x->ex_cached))
-        return (const_x->ex_flags & EXFLAG_INVALID) == 0;
+    if (tsan_ld_acq((TSAN_QUALIFIER int *)&const_x->ex_cached)) {
+        ret = (const_x->ex_flags & EXFLAG_INVALID) == 0;
+        goto done;
+    }
 #endif
 
     if (!CRYPTO_THREAD_read_lock(const_x->lock))
-        return 0;
+        goto done;
     tmp_ex_flags = const_x->ex_flags;
     tmp_ex_pcpathlen = const_x->ex_pcpathlen;
     tmp_ex_kusage = const_x->ex_kusage;
@@ -564,7 +556,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
     if ((tmp_ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
         CRYPTO_THREAD_unlock(const_x->lock);
-        return (tmp_ex_flags & EXFLAG_INVALID) == 0;
+        ret = (tmp_ex_flags & EXFLAG_INVALID) == 0;
+        goto done;
     }
 
     ERR_set_mark();
@@ -744,13 +737,11 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         tmp_ex_flags |= EXFLAG_INVALID;
 
 #ifndef OPENSSL_NO_RFC3779
-    STACK_OF(IPAddressFamily) *tmp_rfc3779_addr
-        = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
+    tmp_rfc3779_addr = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
     if (tmp_rfc3779_addr == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    struct ASIdentifiers_st *tmp_rfc3779_asid
-        = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
+    tmp_rfc3779_asid = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
     if (tmp_rfc3779_asid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 #endif
@@ -766,7 +757,16 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
      * do all the updating under a write lock
      */
     if (!CRYPTO_THREAD_write_lock(const_x->lock))
-        return 0;
+        goto done;
+
+    /* See if another thread updated this certificate before we got the write lock. */
+    if ((const_x->ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
+        CRYPTO_THREAD_unlock(const_x->lock);
+        ret = (const_x->ex_flags & EXFLAG_INVALID) == 0;
+        goto done;
+    }
+
+    /* Otherwise, we have the lock, set the cached fields in the cert. */
     ((X509 *)const_x)->ex_flags = tmp_ex_flags;
     ((X509 *)const_x)->ex_pathlen = tmp_ex_pathlen;
     ((X509 *)const_x)->ex_pcpathlen = tmp_ex_pcpathlen;
@@ -780,19 +780,26 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         ((X509 *)const_x)->ex_nscert = tmp_ex_nscert;
     ASN1_OCTET_STRING_free(((X509 *)const_x)->skid);
     ((X509 *)const_x)->skid = tmp_skid;
+    tmp_skid = NULL;
     AUTHORITY_KEYID_free(((X509 *)const_x)->akid);
     ((X509 *)const_x)->akid = tmp_akid;
+    tmp_akid = NULL;
     sk_GENERAL_NAME_pop_free(((X509 *)const_x)->altname, GENERAL_NAME_free);
     ((X509 *)const_x)->altname = tmp_altname;
+    tmp_altname = NULL;
     NAME_CONSTRAINTS_free(((X509 *)const_x)->nc);
     ((X509 *)const_x)->nc = tmp_nc;
+    tmp_nc = NULL;
     sk_DIST_POINT_pop_free(((X509 *)const_x)->crldp, DIST_POINT_free);
     ((X509 *)const_x)->crldp = tmp_crldp;
+    tmp_crldp = NULL;
 #ifndef OPENSSL_NO_RFC3779
     sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
     ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
+    tmp_rfc3779_addr = NULL;
     ASIdentifiers_free(((X509 *)const_x)->rfc3779_asid);
     ((X509 *)const_x)->rfc3779_asid = tmp_rfc3779_asid;
+    tmp_rfc3779_asid = NULL;
 #endif
 
 #ifdef tsan_st_rel
@@ -806,9 +813,22 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     CRYPTO_THREAD_unlock(const_x->lock);
     if (tmp_ex_flags & EXFLAG_INVALID) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
-        return 0;
+        goto done;
     }
-    return 1;
+
+    ret = 1;
+
+done:
+    ASN1_OCTET_STRING_free(tmp_skid);
+    AUTHORITY_KEYID_free(tmp_akid);
+    sk_GENERAL_NAME_pop_free(tmp_altname, GENERAL_NAME_free);
+    NAME_CONSTRAINTS_free(tmp_nc);
+    sk_DIST_POINT_pop_free(tmp_crldp, DIST_POINT_free);
+#ifndef OPENSSL_NO_RFC3779
+    sk_IPAddressFamily_pop_free(tmp_rfc3779_addr, IPAddressFamily_free);
+    ASIdentifiers_free(tmp_rfc3779_asid);
+#endif
+    return ret;
 }
 
 /*-
