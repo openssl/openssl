@@ -88,6 +88,65 @@ my @krb5kdf_tests = (
       desc => 'KRB5KDF AES-128-CBC'},
 );
 
+my @multi_common = (qw{openssl kdf -multi -digest SHA256
+    -kdfopt secret:secret -kdfopt seed:seed
+    -kdfopt mac_key_len:10 -kdfopt cipher_key_len:16 -kdfopt iv_len:6});
+
+my @kdf_multi_tests = (
+    { cmd => [@multi_common, '-purpose', 'client_MAC_key', 'TLS1-PRF'],
+      expected => '8E:4D:93:25:30:D7:65:A0:AA:E9',
+      desc => 'TLS1-PRF multi-derive client_MAC_key' },
+    { cmd => [@multi_common, '-purpose', 'server_MAC_key', 'TLS1-PRF'],
+      expected => '74:C3:04:73:5E:CC:12:02:A8:19',
+      desc => 'TLS1-PRF multi-derive server_MAC_key' },
+    { cmd => [@multi_common, '-purpose', 'client_cipher_key', 'TLS1-PRF'],
+      expected => 'F8:0A:DB:D5:AD:09:C1:A3:4F:C0:69:18:E3:D0:77:95',
+      desc => 'TLS1-PRF multi-derive client_cipher_key' },
+    { cmd => [@multi_common, '-purpose', 'server_cipher_key', 'TLS1-PRF'],
+      expected => '21:4D:94:C6:A1:97:6C:AE:A5:A0:B6:44:C5:B0:4D:1A',
+      desc => 'TLS1-PRF multi-derive server_cipher_key' },
+    { cmd => [@multi_common, '-purpose', 'client_iv', 'TLS1-PRF'],
+      expected => 'D3:E0:9C:61:11:C3',
+      desc => 'TLS1-PRF multi-derive client_iv' },
+    { cmd => [@multi_common, '-purpose', 'server_iv', 'TLS1-PRF'],
+      expected => '7A:FC:00:DF:0B:6D',
+      desc => 'TLS1-PRF multi-derive server_iv' },
+);
+
+# Naming the cipher the keys are for tells the provider how long the cipher
+# key is, so cipher_key_len need not be given.  A MAC does not determine its
+# own key length, so mac_key_len is still required.
+my @alg_common = (qw{openssl kdf -multi -digest SHA256
+    -kdfopt secret:secret -kdfopt seed:seed
+    -kdfopt mac_key_len:10 -kdfopt iv_len:6});
+
+my @kdf_multi_alg_tests = (
+    # Same value as the cipher_key_len:16 test above, reached via the cipher name
+    { cmd => [@alg_common, qw{-cipher AES-128-CBC -purpose client_cipher_key TLS1-PRF}],
+      expected => 'F8:0A:DB:D5:AD:09:C1:A3:4F:C0:69:18:E3:D0:77:95',
+      desc => 'TLS1-PRF multi-derive takes the key length from AES-128-CBC' },
+    { cmd => [@alg_common, qw{-cipher AES-256-CBC -purpose client_cipher_key TLS1-PRF}],
+      expected => 'F8:0A:DB:D5:AD:09:C1:A3:4F:C0:69:18:E3:D0:77:95:'
+                  . '21:4D:94:C6:A1:97:6C:AE:A5:A0:B6:44:C5:B0:4D:1A',
+      desc => 'TLS1-PRF multi-derive takes the key length from AES-256-CBC' },
+    { cmd => [@alg_common, qw{-cipher AES-128-CBC -mac HMAC
+                              -purpose client_MAC_key TLS1-PRF}],
+      expected => '8E:4D:93:25:30:D7:65:A0:AA:E9',
+      desc => 'TLS1-PRF multi-derive MAC key length still comes from mac_key_len' },
+    # A longer cipher key moves the IVs further down the key block
+    { cmd => [@alg_common, qw{-cipher AES-256-CBC -purpose server_iv TLS1-PRF}],
+      expected => '6E:5D:B1:41:53:72',
+      desc => 'TLS1-PRF multi-derive IV placement follows the cipher key length' },
+);
+
+my @kdf_multi_fail_tests = (
+    { cmd => [@alg_common, qw{-cipher AES-128-CBC -kdfopt cipher_key_len:10
+                              -purpose client_cipher_key TLS1-PRF}],
+      desc => 'TLS1-PRF multi-derive rejects a length the named cipher cannot take' },
+    { cmd => [@alg_common, qw{-cipher AES-128-CBC -purpose nonexistent TLS1-PRF}],
+      desc => 'TLS1-PRF multi-derive rejects an unknown purpose' },
+);
+
 my @kdf_bin_tests = (
     { cmd => [qw{openssl kdf -keylen 10 -binary -out hkdf-sha256.bin -kdfopt digest:SHA256 -kdfopt key:secret -kdfopt salt:salt -kdfopt info:label HKDF}],
       outfile => 'hkdf-sha256.bin',
@@ -106,10 +165,24 @@ push @kdf_tests, @scrypt_tests unless disabled("scrypt");
 push @kdf_tests, @sshkdf_tests unless disabled("sshkdf");
 push @kdf_tests, @sskdf_tests unless disabled("sskdf");
 
-plan tests => scalar @kdf_tests + scalar @kdf_bin_tests;
+plan tests => scalar @kdf_tests + scalar @kdf_multi_tests
+    + scalar @kdf_multi_alg_tests + scalar @kdf_multi_fail_tests
+    + scalar @kdf_bin_tests;
 
 foreach (@kdf_tests) {
     ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
+}
+
+foreach (@kdf_multi_tests) {
+    ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
+}
+
+foreach (@kdf_multi_alg_tests) {
+    ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
+}
+
+foreach (@kdf_multi_fail_tests) {
+    ok(checkfail($_->{cmd}), $_->{desc});
 }
 
 foreach (@kdf_bin_tests) {
@@ -135,6 +208,15 @@ sub compareline {
         }
     }
     return 0;
+}
+
+# Check that the command fails rather than producing output.
+sub checkfail {
+    my ($cmdarray) = @_;
+    my $status = 1;
+
+    run(app($cmdarray), capture => 1, statusvar => \$status);
+    return !$status;
 }
 
 # Check that the binary output file matches the expected value.
