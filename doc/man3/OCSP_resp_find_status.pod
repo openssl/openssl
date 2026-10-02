@@ -176,8 +176,9 @@ values and the current time + I<sec> is not before I<thisupd> and,
 if I<maxsec> >= 0, the current time - I<maxsec> is not past I<nextupd>.
 Otherwise it returns 0 to indicate an error.
 
-OCSP_basic_verify() returns 1 on success, 0 on verification not successful,
-or -1 on a fatal error such as malloc failure.
+OCSP_basic_verify() returns 1 on success, 2 if the signer certificate was
+found in I<*certs*> and B<**OCSP_NOSIGS**> is set, 0 on verification not
+successful, or -1 on a fatal error such as malloc failure.
 
 =head1 NOTES
 
