@@ -17460,6 +17460,69 @@ err:
 }
 #endif
 
+static int test_grease_mask_api(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL, *future_ssl = NULL, *dup_ssl = NULL;
+    const uint32_t selective_mask
+        = SSL_GREASE_ALL & ~SSL_GREASE_SIGNATURE_ALGORITHMS;
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method()))
+        || !TEST_uint_eq(SSL_CTX_get_grease_mask(ctx), SSL_GREASE_ALL)
+        || !TEST_false(SSL_CTX_set_grease_mask(ctx, 1U << 31))
+        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT)
+        || !TEST_uint_eq(SSL_CTX_get_grease_mask(ctx), SSL_GREASE_ALL))
+        goto end;
+    ERR_clear_error();
+
+    if (!TEST_false(SSL_CTX_set_grease_mask(ctx, SSL_GREASE_KEY_SHARE))
+        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT)
+        || !TEST_uint_eq(SSL_CTX_get_grease_mask(ctx), SSL_GREASE_ALL))
+        goto end;
+    ERR_clear_error();
+
+    if (!TEST_true(SSL_CTX_set_grease_mask(ctx, selective_mask))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_uint_eq(SSL_get_grease_mask(ssl), selective_mask)
+        || !TEST_true(SSL_CTX_set_grease_mask(ctx, SSL_GREASE_EXTENSIONS))
+        || !TEST_uint_eq(SSL_get_grease_mask(ssl), selective_mask)
+        || !TEST_ptr(future_ssl = SSL_new(ctx))
+        || !TEST_uint_eq(SSL_get_grease_mask(future_ssl),
+            SSL_GREASE_EXTENSIONS)
+        || !TEST_true(SSL_set_grease_mask(ssl,
+            SSL_GREASE_SUPPORTED_GROUPS))
+        || !TEST_uint_eq(SSL_get_grease_mask(ssl),
+            SSL_GREASE_SUPPORTED_GROUPS)
+        || !TEST_ptr(dup_ssl = SSL_dup(ssl))
+        || !TEST_uint_eq(SSL_get_grease_mask(dup_ssl),
+            SSL_GREASE_SUPPORTED_GROUPS)
+        || !TEST_true(SSL_clear(ssl))
+        || !TEST_uint_eq(SSL_get_grease_mask(ssl),
+            SSL_GREASE_SUPPORTED_GROUPS)
+        || !TEST_false(SSL_set_grease_mask(ssl, SSL_GREASE_KEY_SHARE))
+        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT)
+        || !TEST_uint_eq(SSL_get_grease_mask(ssl),
+            SSL_GREASE_SUPPORTED_GROUPS))
+        goto end;
+    ERR_clear_error();
+
+    testresult = 1;
+
+end:
+    SSL_free(dup_ssl);
+    SSL_free(future_ssl);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 #if !defined(OSSL_NO_USABLE_TLS1_3)
 /*
  * RFC 8701 GREASE test helpers.
@@ -17516,13 +17579,12 @@ static void grease_msg_cb(int write_p, int version, int content_type,
 }
 
 /*
- * Parse a captured ClientHello (starting from handshake header) and check
- * that it contains GREASE values in cipher suites, extensions, supported
- * groups, key shares, and signature algorithms.
+ * Parse a captured ClientHello (starting from handshake header) and check its
+ * GREASE injection points against expected_mask.
  * Returns 1 on success, 0 on failure.
  */
 static int check_grease_in_client_hello(const unsigned char *buf, size_t len,
-    int expect_grease_keyshare)
+    uint32_t expected_mask, int expect_single_keyshare)
 {
     PACKET pkt, ciphers, session, compression, exts, ext_data;
     PACKET inner;
@@ -17637,19 +17699,25 @@ static int check_grease_in_client_hello(const unsigned char *buf, size_t len,
         }
     }
 
-    if (!TEST_true(found_grease_cipher))
+    if (!TEST_int_eq(found_grease_cipher,
+            (expected_mask & SSL_GREASE_CIPHER_SUITES) != 0))
         return 0;
-    if (!TEST_int_eq(found_grease_ext, 2))
+    if (!TEST_int_eq(found_grease_ext,
+            (expected_mask & SSL_GREASE_EXTENSIONS) != 0 ? 2 : 0))
         return 0;
-    if (!TEST_true(found_grease_version))
+    if (!TEST_int_eq(found_grease_version,
+            (expected_mask & SSL_GREASE_SUPPORTED_VERSIONS) != 0))
         return 0;
-    if (!TEST_true(found_grease_group))
+    if (!TEST_int_eq(found_grease_group,
+            (expected_mask & SSL_GREASE_SUPPORTED_GROUPS) != 0))
         return 0;
-    if (!TEST_int_eq(found_grease_kshare, expect_grease_keyshare))
+    if (!TEST_int_eq(found_grease_kshare,
+            (expected_mask & SSL_GREASE_KEY_SHARE) != 0))
         return 0;
-    if (!TEST_true(found_grease_sigalg))
+    if (!TEST_int_eq(found_grease_sigalg,
+            (expected_mask & SSL_GREASE_SIGNATURE_ALGORITHMS) != 0))
         return 0;
-    if (!expect_grease_keyshare && !TEST_size_t_eq(keyshare_count, 1))
+    if (expect_single_keyshare && !TEST_size_t_eq(keyshare_count, 1))
         return 0;
 
     return 1;
@@ -17660,6 +17728,8 @@ static int test_grease(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     GREASE_CAPTURE capture = { 0 };
+    const uint32_t cookie_retry_mask
+        = SSL_GREASE_ALL & ~SSL_GREASE_SIGNATURE_ALGORITHMS;
     int testresult = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -17693,23 +17763,25 @@ static int test_grease(void)
 
     if (!TEST_size_t_eq(capture.count, 2)
         || !TEST_true(check_grease_in_client_hello(capture.buf[0],
-            capture.len[0], 1))
+            capture.len[0], SSL_GREASE_ALL, 0))
         || !TEST_true(check_grease_in_client_hello(capture.buf[1],
-            capture.len[1], 0)))
+            capture.len[1], SSL_GREASE_ALL & ~SSL_GREASE_KEY_SHARE, 1)))
         goto end;
 
     shutdown_ssl_connection(serverssl, clientssl);
     serverssl = clientssl = NULL;
     grease_capture_reset(&capture);
 
-    /* A cookie-only retry must retain the original GREASE key share. */
+    /* A cookie-only retry must retain the configured GREASE fields. */
     SSL_CTX_clear_options(cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
     SSL_CTX_set_stateless_cookie_generate_cb(sctx,
         generate_stateless_cookie_callback);
     SSL_CTX_set_stateless_cookie_verify_cb(sctx,
         verify_stateless_cookie_callback);
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-            &clientssl, NULL, NULL)))
+            &clientssl, NULL, NULL))
+        || !TEST_true(SSL_set_grease_mask(clientssl,
+            cookie_retry_mask)))
         goto end;
 
     SSL_set_msg_callback(clientssl, grease_msg_cb);
@@ -17724,9 +17796,9 @@ static int test_grease(void)
             SSL_ERROR_NONE))
         || !TEST_size_t_eq(capture.count, 2)
         || !TEST_true(check_grease_in_client_hello(capture.buf[0],
-            capture.len[0], 1))
+            capture.len[0], cookie_retry_mask, 0))
         || !TEST_true(check_grease_in_client_hello(capture.buf[1],
-            capture.len[1], 1)))
+            capture.len[1], cookie_retry_mask, 0)))
         goto end;
 
     testresult = 1;
@@ -17738,6 +17810,67 @@ end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
+    return testresult;
+}
+
+typedef struct grease_mask_case_st {
+    uint32_t mask;
+    int enable_option;
+} GREASE_MASK_CASE;
+
+static const GREASE_MASK_CASE grease_mask_cases[] = {
+    { SSL_GREASE_ALL, 0 },
+    { 0, 1 },
+    { SSL_GREASE_CIPHER_SUITES, 1 },
+    { SSL_GREASE_SUPPORTED_GROUPS, 1 },
+    { SSL_GREASE_SUPPORTED_GROUPS | SSL_GREASE_KEY_SHARE, 1 },
+    { SSL_GREASE_SUPPORTED_VERSIONS, 1 },
+    { SSL_GREASE_SIGNATURE_ALGORITHMS, 1 },
+    { SSL_GREASE_EXTENSIONS, 1 },
+    { SSL_GREASE_ALL & ~SSL_GREASE_SIGNATURE_ALGORITHMS, 1 },
+};
+
+static int test_grease_mask_wire(int idx)
+{
+    const GREASE_MASK_CASE *testcase = &grease_mask_cases[idx];
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    GREASE_CAPTURE capture = { 0 };
+    uint32_t expected_mask = testcase->enable_option ? testcase->mask : 0;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_grease_mask(cctx, testcase->mask)))
+        goto end;
+
+    if (testcase->enable_option)
+        SSL_CTX_set_options(cctx, SSL_OP_GREASE);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+
+    SSL_set_msg_callback(clientssl, grease_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &capture);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_size_t_eq(capture.count, 1)
+        || !TEST_true(check_grease_in_client_hello(capture.buf[0],
+            capture.len[0], expected_mask, 0)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    grease_capture_reset(&capture);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
     return testresult;
 }
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
@@ -18303,9 +18436,11 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
     ADD_TEST(test_ssl_conf_flags);
+    ADD_TEST(test_grease_mask_api);
     ADD_ALL_TESTS(test_http_verbs, 3);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_grease);
+    ADD_ALL_TESTS(test_grease_mask_wire, OSSL_NELEM(grease_mask_cases));
 #endif
     return 1;
 

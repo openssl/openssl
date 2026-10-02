@@ -909,3 +909,10 @@ OPENSSL_store_u64_be                    inline
 OPENSSL_store_u64_le                    inline
 OSSL_BEGIN_ALLOW_DEPRECATED             define
 OSSL_END_ALLOW_DEPRECATED               define
+SSL_GREASE_ALL                          define
+SSL_GREASE_CIPHER_SUITES                define
+SSL_GREASE_EXTENSIONS                   define
+SSL_GREASE_KEY_SHARE                    define
+SSL_GREASE_SIGNATURE_ALGORITHMS         define
+SSL_GREASE_SUPPORTED_GROUPS             define
+SSL_GREASE_SUPPORTED_VERSIONS           define

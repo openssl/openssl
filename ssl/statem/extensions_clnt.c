@@ -349,7 +349,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
     /* RFC 8701: prepend a GREASE group value */
-    if ((s->options & SSL_OP_GREASE) && !s->server) {
+    if (ossl_grease_enabled(s, SSL_GREASE_SUPPORTED_GROUPS)) {
         if (!WPACKET_put_bytes_u16(pkt,
                 ossl_grease_value(s, OSSL_GREASE_GROUP))) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -479,7 +479,7 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
     /* RFC 8701: append a GREASE signature algorithm value */
-    if ((s->options & SSL_OP_GREASE) && !s->server) {
+    if (ossl_grease_enabled(s, SSL_GREASE_SIGNATURE_ALGORITHMS)) {
         if (!WPACKET_put_bytes_u16(pkt,
                 ossl_grease_value(s, OSSL_GREASE_SIGALG))) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -775,7 +775,7 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     }
 
     /* RFC 8701: prepend a GREASE version value */
-    if ((s->options & SSL_OP_GREASE) && !s->server) {
+    if (ossl_grease_enabled(s, SSL_GREASE_SUPPORTED_VERSIONS)) {
         if (!WPACKET_put_bytes_u16(pkt,
                 ossl_grease_value(s, OSSL_GREASE_VERSION))) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -923,7 +923,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
      * HRR requesting a new key share, RFC 9846 requires the requested entry
      * to be the only one in the second ClientHello.
      */
-    if ((s->options & SSL_OP_GREASE) && !s->server
+    if (ossl_grease_enabled(s, SSL_GREASE_KEY_SHARE)
         && !(s->hello_retry_request == SSL_HRR_PENDING
             && s->s3.group_id != 0 && s->s3.tmp.pkey == NULL)) {
         uint16_t grease_group = ossl_grease_value(s, OSSL_GREASE_GROUP);
@@ -2981,7 +2981,7 @@ EXT_RETURN tls_construct_ctos_grease1(SSL_CONNECTION *s, WPACKET *pkt,
 {
     uint16_t grease_type;
 
-    if (!(s->options & SSL_OP_GREASE) || s->server)
+    if (!ossl_grease_enabled(s, SSL_GREASE_EXTENSIONS))
         return EXT_RETURN_NOT_SENT;
 
     grease_type = ossl_grease_value(s, OSSL_GREASE_EXT1);
@@ -3001,7 +3001,7 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
 {
     uint16_t grease_type;
 
-    if (!(s->options & SSL_OP_GREASE) || s->server)
+    if (!ossl_grease_enabled(s, SSL_GREASE_EXTENSIONS))
         return EXT_RETURN_NOT_SENT;
 
     grease_type = ossl_grease_value(s, OSSL_GREASE_EXT2);

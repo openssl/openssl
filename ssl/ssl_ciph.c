@@ -2337,7 +2337,7 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
         maxlen -= 2;
 
     /* RFC 8701: prepend a GREASE cipher suite value */
-    if ((s->options & SSL_OP_GREASE) && !s->server) {
+    if (ossl_grease_enabled(s, SSL_GREASE_CIPHER_SUITES)) {
         uint16_t grease_cs = ossl_grease_value(s, OSSL_GREASE_CIPHER);
 
         if (!WPACKET_put_bytes_u16(pkt, grease_cs)) {
