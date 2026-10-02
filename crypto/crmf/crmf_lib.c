@@ -659,6 +659,12 @@ end:
 }
 #endif /* OPENSSL_NO_CMS */
 
+int ossl_crmf_encryptedkey_is_enveloped_data(const OSSL_CRMF_ENCRYPTEDKEY *key)
+{
+    return key != NULL
+        && key->type == OSSL_CRMF_ENCRYPTEDKEY_ENVELOPEDDATA;
+}
+
 EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encryptedKey,
     X509_STORE *ts, STACK_OF(X509) *extra, EVP_PKEY *pkey,
     X509 *cert, ASN1_OCTET_STRING *secret,

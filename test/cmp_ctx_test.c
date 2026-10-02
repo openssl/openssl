@@ -749,6 +749,9 @@ void cleanup_tests(void)
 DEFINE_SET_GET_ARG_FN(set, get, option, 35, int) /* OPT_IGNORE_KEYUSAGE */
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_35, int, -1, IS_0,
     1 /* true */, DROP)
+DEFINE_SET_GET_ARG_FN(set, get, option, 28, int) /* OPT_REQUIRE_ENVELOPED_DATA */
+DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_28, int, -1, IS_0,
+    1 /* true */, DROP)
 
 DEFINE_SET_CB_TEST(log_cb)
 
@@ -828,6 +831,7 @@ int setup_tests(void)
 
     /* various CMP options: */
     ADD_TEST(test_CTX_set_get_option_35);
+    ADD_TEST(test_CTX_set_get_option_28);
     /* CMP-specific callback for logging and outputting the error queue: */
     ADD_TEST(test_CTX_set_get_log_cb);
     /*
