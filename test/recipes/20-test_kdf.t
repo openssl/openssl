@@ -147,6 +147,27 @@ my @kdf_multi_fail_tests = (
       desc => 'TLS1-PRF multi-derive rejects an unknown purpose' },
 );
 
+my @tls13_multi_common = (qw{openssl kdf -multi -kdfopt mode:EXPAND_ONLY -kdfopt digest:SHA256},
+    '-kdfopt', 'hexkey:c80583a90e995c489600492a5da642e6b1f679ba674828792df087b939636171',
+    '-kdfopt', 'hexdata:7c92f68bd5bf3638ea338a6494722e1b44127e1b7e8aad535f2322a644ff22b3',
+    '-kdfopt', 'hexprefix:746c73313320',
+    qw{-kdfopt cipher_key_len:16 -kdfopt iv_len:12});
+
+my @kdf_tls13_multi_tests = (
+    { cmd => [@tls13_multi_common, '-purpose', 'client_key', 'TLS13-KDF'],
+      expected => '37:06:C9:0F:B4:7B:1E:1E:F5:E0:19:BC:BD:22:67:34',
+      desc => 'TLS13-KDF multi-derive client_key' },
+    { cmd => [@tls13_multi_common, '-purpose', 'server_key', 'TLS13-KDF'],
+      expected => '37:06:C9:0F:B4:7B:1E:1E:F5:E0:19:BC:BD:22:67:34',
+      desc => 'TLS13-KDF multi-derive server_key' },
+    { cmd => [@tls13_multi_common, '-purpose', 'client_iv', 'TLS13-KDF'],
+      expected => '82:65:EC:2B:D2:B2:7C:F3:1E:B3:DD:F7',
+      desc => 'TLS13-KDF multi-derive client_iv' },
+    { cmd => [@tls13_multi_common, '-purpose', 'server_iv', 'TLS13-KDF'],
+      expected => '82:65:EC:2B:D2:B2:7C:F3:1E:B3:DD:F7',
+      desc => 'TLS13-KDF multi-derive server_iv' },
+);
+
 my @kdf_bin_tests = (
     { cmd => [qw{openssl kdf -keylen 10 -binary -out hkdf-sha256.bin -kdfopt digest:SHA256 -kdfopt key:secret -kdfopt salt:salt -kdfopt info:label HKDF}],
       outfile => 'hkdf-sha256.bin',
@@ -167,7 +188,7 @@ push @kdf_tests, @sskdf_tests unless disabled("sskdf");
 
 plan tests => scalar @kdf_tests + scalar @kdf_multi_tests
     + scalar @kdf_multi_alg_tests + scalar @kdf_multi_fail_tests
-    + scalar @kdf_bin_tests;
+    + scalar @kdf_tls13_multi_tests + scalar @kdf_bin_tests;
 
 foreach (@kdf_tests) {
     ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
@@ -183,6 +204,10 @@ foreach (@kdf_multi_alg_tests) {
 
 foreach (@kdf_multi_fail_tests) {
     ok(checkfail($_->{cmd}), $_->{desc});
+}
+
+foreach (@kdf_tls13_multi_tests) {
+    ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
 }
 
 foreach (@kdf_bin_tests) {
