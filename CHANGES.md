@@ -33,6 +33,17 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The EVP layer now enforces the MAC life-cycle described in
+   life_cycle-mac(7).  `EVP_MAC_update()`, `EVP_MAC_final()` and
+   `EVP_MAC_finalXOF()` fail with an error when called on an `EVP_MAC_CTX`
+   that has not been initialised with `EVP_MAC_init()` or
+   `EVP_MAC_init_SKEY()`, including one whose key was only supplied through
+   `EVP_MAC_CTX_set_params()`, or that has already been finalised and not
+   been re-initialised since.
+   <!-- https://github.com/openssl/openssl/pull/33084-->
+
+   *Daniel Kubec*
+
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys

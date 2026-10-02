@@ -170,6 +170,15 @@ call with I<out> pointing at the allocated space.
 EVP_MAC_finalXOF() does the final computation for an XOF based MAC and stores
 the result in the memory pointed at by I<out> of size I<outsize>.
 
+EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF() require I<ctx> to
+have been initialised with EVP_MAC_init() or EVP_MAC_init_SKEY() and fail
+otherwise.  Once EVP_MAC_final() or EVP_MAC_finalXOF() has been called,
+I<ctx> is finalised and these three functions fail again until it is
+re-initialised.  Calling EVP_MAC_final() with I<out> set to NULL to query
+the output length is possible in any state, and a copy made with
+EVP_MAC_CTX_dup() is in the same state as the original.
+Supplying a key with EVP_MAC_CTX_set_params() does not initialise I<ctx>.
+
 EVP_MAC_get_params() retrieves details about the implementation
 I<mac>.
 The set of parameters given with I<params> determine exactly what
@@ -344,9 +353,8 @@ Anything else may give undefined results.
 
 =head1 NOTES
 
-The MAC life-cycle is described in L<life_cycle-mac(7)>.  In the future,
-the transitions described there will be enforced.  When this is done, it will
-not be considered a breaking change to the API.
+The MAC life-cycle is described in L<life_cycle-mac(7)>.  Since OpenSSL 4.2,
+the transitions described there are enforced as described above.
 
 The usage of the parameter names "custom", "iv" and "salt" correspond to
 the names used in the standard where the algorithm was defined.
@@ -496,6 +504,10 @@ L<life_cycle-mac(7)>
 These functions were added in OpenSSL 3.0.
 
 The EVP_MAC_init_SKEY() function was added in OpenSSL 3.5.
+
+Since OpenSSL 4.2, EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF()
+fail on a context that has not been initialised, or that has been finalised
+and not re-initialised since. Previously results of such calls were undefined.
 
 =head1 COPYRIGHT
 
