@@ -95,6 +95,8 @@ my $code = <<___;
 .text
 ___
 
+# Reverse the low eight bits of an integer.
+# Input: value in [0,256).  Output: its eight-bit bit-reversal in [0,256).
 sub bitrev8 {
     my ($value) = @_;
     my $result = 0;
@@ -106,6 +108,9 @@ sub bitrev8 {
     return $result;
 }
 
+# Raise base to exponent modulo the ML-DSA modulus q.
+# Inputs: integer base and nonnegative integer exponent.  Output: base^exponent
+# modulo q in [0,q).
 sub powmod {
     my ($base, $exponent) = @_;
     my $result = 1;
@@ -118,6 +123,9 @@ sub powmod {
     return $result;
 }
 
+# Calculate the twiddle selected by a bit-reversed table index.
+# Inputs: index in [0,256) and intt, which selects the additive inverse used
+# by the iNTT.  Output: the centred twiddle z in (-q/2,q/2).
 sub centered_twiddle {
     my ($index, $intt) = @_;
     my $root = powmod(1753, bitrev8($index));
@@ -129,8 +137,9 @@ sub centered_twiddle {
     return $root > int($q / 2) ? $root - $q : $root;
 }
 
-# Perl's int() truncates toward zero.  Spell out mathematical floor division
-# because quotient constants for negative twiddles must round toward -infinity.
+# Perform mathematical floor division rather than Perl's truncation toward
+# zero.  Inputs: integer numerator and positive integer denominator.  Output:
+# floor(numerator/denominator), including for a negative numerator.
 sub floor_div {
     my ($numerator, $denominator) = @_;
 
@@ -139,15 +148,20 @@ sub floor_div {
         : -int((-$numerator + $denominator - 1) / $denominator);
 }
 
+# Calculate the fixed-point quotient constant paired with a twiddle.
+# Input: centred twiddle z.  Output: c = floor(2^31*z/q), with
+# -2^30 < c < 2^30.
 sub quotient_constant_for_twiddle {
     my ($twiddle) = @_;
 
     return floor_div($twiddle * (1 << $fixed_point_bits), $q);
 }
 
-# Append the table record consumed by one loop group.  Its first half contains
-# centred twiddles z; its second half contains the matching fixed-point values
-# c = floor(2^31*z/q).  A twiddle and quotient constant are an inseparable pair.
+# Append the table record consumed by one loop group.
+# Inputs: a reference to the NTT or iNTT record array, followed by one or more
+# centred twiddles z.  Output: none; appends a record whose first half contains
+# the twiddles and whose second half contains c = floor(2^31*z/q) for each z.
+# A twiddle and quotient constant are an inseparable pair.
 sub append_twiddle_record {
     my ($constants, @twiddles) = @_;
     my @quotient_constants =
@@ -156,6 +170,11 @@ sub append_twiddle_record {
     push @$constants, [[@twiddles], [@quotient_constants]];
 }
 
+# Generate four parallel multiplications by a constant twiddle.
+# Inputs: destination and source vector-register names, plus registers holding
+# four twiddles z and their quotient constants c.  Runtime output: each
+# destination lane is congruent to a*z modulo q and lies in [0,2q).  Perl
+# output: none; appends instructions to $code and uses $quotient as scratch.
 sub mul_twiddle_lazy {
     my ($dst, $a, $twiddle, $quotient_constant) = @_;
 
@@ -175,7 +194,7 @@ sub mul_twiddle_lazy {
     # 0 <= r < 2q.  This small nonnegative bound means that the low-32-bit
     # arithmetic is the exact integer r, not merely a value modulo 2^32.
     # Compute k before MUL so that dst is permitted to alias a.  This is used
-# by the final iNTT scaling, while the butterfly calls use distinct
+    # by the final iNTT scaling, while the butterfly calls use distinct
     # source and destination registers.
     $code .= <<___;
         sqdmulh $quotient.4s,$a.4s,$quotient_constant.4s
@@ -184,6 +203,10 @@ sub mul_twiddle_lazy {
 ___
 }
 
+# Generate four parallel multiplications followed by canonical reduction.
+# Inputs: the same register names as mul_twiddle_lazy().  Runtime output: each
+# destination lane is a*z modulo q in [0,q).  Perl output: none; appends
+# instructions to $code and uses $quotient as scratch.
 sub mul_twiddle_canonical {
     my ($dst, $a, $twiddle, $quotient_constant) = @_;
 
@@ -196,6 +219,11 @@ sub mul_twiddle_canonical {
 ___
 }
 
+# Generate two independent vectors of lazy twiddle multiplications.
+# Inputs: two destination/source register pairs and shared twiddle-z and
+# quotient-c registers.  Runtime outputs: both destination vectors contain
+# products modulo q in [0,2q).  Perl output: none; appends instructions to
+# $code and uses $quotient and $quotient2 as scratch.
 sub mul_twiddle_pair_lazy {
     my ($dst0, $a0, $dst1, $a1, $twiddle, $quotient_constant) = @_;
 
@@ -213,6 +241,10 @@ sub mul_twiddle_pair_lazy {
 ___
 }
 
+# Generate two independent vectors of canonical twiddle multiplications.
+# Inputs: the same register names as mul_twiddle_pair_lazy().  Runtime outputs:
+# both destination vectors contain products modulo q in [0,q).  Perl output:
+# none; appends instructions to $code and uses both quotient vectors as scratch.
 sub mul_twiddle_pair_canonical {
     my ($dst0, $a0, $dst1, $a1, $twiddle, $quotient_constant) = @_;
 
@@ -234,6 +266,10 @@ ___
 #
 # The 2q bias prevents the subtraction from becoming negative.  It is a
 # multiple of q, so it does not change either result modulo q.
+# Inputs: registers containing four even coefficients, four odd coefficients,
+# four twiddles z, and their quotient constants c; q_bias must contain 2q.
+# Runtime outputs: even and odd are updated in place with the butterfly result.
+# Perl output: none; appends instructions to $code.
 sub ntt_butterfly {
     my ($even, $odd, $twiddle, $quotient_constant) = @_;
 
@@ -253,6 +289,10 @@ ___
 #
 # Each iNTT layer sets bias to the current coefficient bound.  The bias is
 # a multiple of q and keeps difference nonnegative without changing it mod q.
+# Inputs: registers containing four even coefficients, four odd coefficients,
+# four inverse twiddles z, and their quotient constants c; q_bias contains the
+# layer's bias.  Runtime outputs: even and odd are updated in place.  Perl
+# output: none; appends instructions to $code.
 sub intt_butterfly {
     my ($even, $odd, $twiddle, $quotient_constant) = @_;
 
@@ -264,6 +304,10 @@ ___
     mul_twiddle_lazy($odd, $product, $twiddle, $quotient_constant);
 }
 
+# Generate two independent four-lane Cooley-Tukey NTT butterflies.
+# Inputs: two even/odd register pairs and shared twiddle-z and quotient-c
+# registers; q_bias must contain 2q.  Runtime outputs: all four coefficient
+# registers are updated in place.  Perl output: none; appends to $code.
 sub ntt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $twiddle, $quotient_constant) = @_;
@@ -280,6 +324,11 @@ sub ntt_butterfly_pair {
 ___
 }
 
+# Generate two independent four-lane Gentleman-Sande iNTT butterflies.
+# Inputs: two even/odd register pairs and shared inverse-twiddle-z and
+# quotient-c registers; q_bias contains the layer's bias.  Runtime outputs:
+# all four coefficient registers are updated in place.  Perl output: none;
+# appends instructions to $code.
 sub intt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $twiddle, $quotient_constant) = @_;
@@ -296,6 +345,9 @@ ___
                           $twiddle, $quotient_constant);
 }
 
+# Generate the instructions that construct the ML-DSA modulus.
+# Input: none.  Runtime output: q_word contains q and q_vector contains
+# [q,q,q,q].  Perl output: none; appends instructions to $code.
 sub load_modulus {
     $code .= <<___;
         mov     $q_word,#0xe001
@@ -305,8 +357,11 @@ ___
 }
 
 # Generate one NTT stage whose butterfly partners are at least one full
-# vector apart.  step is the number of groups and offset is their coefficient
-# separation, matching the scalar FIPS 204 loop structure.
+# vector apart.  Inputs: step is the number of groups and offset is the
+# coefficient separation within each butterfly, matching the scalar FIPS 204
+# loop structure.  Runtime output: the selected stage updates all 256
+# coefficients in place.  Perl output: none; appends its twiddle records to
+# @ntt_twiddle_records and its instructions to $code.
 sub ntt_wide_stage {
     my ($step, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
@@ -373,6 +428,9 @@ ___
 
 # At offset two, each pair of adjacent 128-bit loads contains interleaved
 # butterfly halves.  ZIP on 64-bit elements places partners in matching lanes.
+# Input: none.  Runtime output: the offset-two NTT stage updates all 256
+# coefficients in place.  Perl output: none; appends 64 twiddles and their
+# quotient constants to @ntt_twiddle_records and appends instructions to $code.
 sub ntt_offset2_stage {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
     $label_index++;
@@ -409,6 +467,9 @@ ___
 
 # At offset one, UZP separates even and odd coefficients into two vectors;
 # ZIP restores the original memory order after the butterflies.
+# Input: none.  Runtime output: the offset-one NTT stage updates all 256
+# coefficients in place.  Perl output: none; appends 128 twiddles and their
+# quotient constants to @ntt_twiddle_records and appends instructions to $code.
 sub ntt_offset1_stage {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
     $label_index++;
@@ -443,6 +504,10 @@ ___
 
 # The iNTT consumes stages in the opposite order.  Its first two stages undo
 # the lane permutations used by the final two NTT stages.
+# Input: none.  Runtime output: the offset-one iNTT stage updates all 256
+# coefficients in place using q as its nonnegative bias.  Perl output: none;
+# appends 128 inverse twiddles and their quotient constants to
+# @intt_twiddle_records and appends instructions to $code.
 sub intt_offset1_stage {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
     $label_index++;
@@ -477,6 +542,11 @@ ___
 ___
 }
 
+# Generate the offset-two iNTT stage, undoing the corresponding NTT lane
+# permutation with 64-bit ZIP operations.  Input: none.  Runtime output: all
+# 256 coefficients are updated in place using 2q as the nonnegative bias.
+# Perl output: none; appends 64 inverse twiddles and their quotient constants
+# to @intt_twiddle_records and appends instructions to $code.
 sub intt_offset2_stage {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
     $label_index++;
@@ -514,8 +584,12 @@ ___
 }
 
 # Generate an iNTT stage with directly loadable even and odd vectors.
-# bias_shift selects q << bias_shift for this layer's nonnegative difference;
-# final requests the canonical iNTT scaling after the last butterflies.
+# Inputs: step is the number of groups; offset is the coefficient separation;
+# bias_shift selects q << bias_shift for the layer's nonnegative difference;
+# final requests canonical iNTT scaling after the last butterflies.  Runtime
+# output: the selected stage updates all 256 coefficients in place.  Perl
+# output: none; appends its inverse-twiddle records to @intt_twiddle_records
+# and its instructions to $code.
 sub intt_wide_stage {
     my ($step, $offset, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
@@ -598,6 +672,9 @@ ___
 }
 
 # Reduce all 256 NTT output coefficients from [0,33q) to [0,q).
+# Input: none; generated code reads the polynomial through $coefficients.
+# Runtime output: all coefficients in memory are canonical.  Perl output: none;
+# appends the reduction loop to $code.
 sub ntt_reduce_coefficients {
     my $loop = ".Lml_dsa_ntt_${label_index}_canonical";
     my $pairs_per_iteration = 2;
