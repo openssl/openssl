@@ -375,6 +375,24 @@ ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ML-DSA-87", ml_dsa_87, yes, pem, SubjectPublicKeyInfo),
 # endif /* OPENSSL_NO_ML_DSA */
 
+# ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+ENCODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, yes, pem, SubjectPublicKeyInfo),
+ENCODER_TEXT("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, yes),
+
+ENCODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, yes, der, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, yes, pem, EncryptedPrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, yes, der, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, yes, pem, PrivateKeyInfo),
+ENCODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, yes, pem, SubjectPublicKeyInfo),
+ENCODER_TEXT("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, yes),
+# endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
+
 /*
  * Entries for key type specific output formats.  These are exactly the
  * same as the type specific above, except that they use the key type

@@ -1260,8 +1260,7 @@ int ossl_sframe_set_move_offset(SFRAME_SET *fs, uint64_t new_offset)
 
     fs->offset = new_offset;
 
-    OSSL_LIST_FOREACH_DELSAFE(sc, save_sc, sc, &sr->sr_chunks)
-    {
+    OSSL_LIST_FOREACH_DELSAFE (sc, save_sc, sc, &sr->sr_chunks) {
         if (new_offset >= sc->sc_range.end) {
             ossl_list_sc_remove(&sr->sr_chunks, sc);
             fs->stream_chunks--;

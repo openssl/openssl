@@ -102,6 +102,10 @@ are also available in the default provider.
 
 =item ML-DSA-87
 
+=item ML-DSA-65-RSA3072-PKCS15-SHA512
+
+=item ML-DSA-65-ECDSA-P256-SHA512
+
 =item ML-KEM-512
 
 =item ML-KEM-768
@@ -176,6 +180,10 @@ combination with the FIPS provider.
 
 =item ML-DSA-87
 
+=item ML-DSA-65-RSA3072-PKCS15-SHA512
+
+=item ML-DSA-65-ECDSA-P256-SHA512
+
 =item ML-KEM-512
 
 =item ML-KEM-768
@@ -242,6 +250,10 @@ Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
 
 Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
 was added in OpenSSL 4.0.
+
+Support for the B<ML-DSA-65-RSA3072-PKCS15-SHA512> and
+B<ML-DSA-65-ECDSA-P256-SHA512> composite signature algorithm encoders and
+decoders was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

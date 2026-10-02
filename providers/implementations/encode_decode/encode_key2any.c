@@ -42,6 +42,10 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+#include "prov/ml_dsa_composite_codecs.h"
+#include <openssl/obj_mac.h>
+#endif
 #include "providers/implementations/encode_decode/encode_key2any.inc"
 
 #include <crypto/asn1.h>
@@ -1782,3 +1786,41 @@ MAKE_ENCODER(ml_dsa_87, ml_dsa, SubjectPublicKeyInfo, pem);
 MAKE_ENCODER(lms, lms, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(lms, lms, SubjectPublicKeyInfo, pem);
 #endif
+
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+static int ml_dsa_composite_spki_pub_to_der(const void *vkey, unsigned char **pder,
+    ossl_unused void *ctx)
+{
+    return ossl_ml_dsa_composite_i2d_pubkey((const ML_DSA_COMPOSITE_KEY *)vkey, pder);
+}
+
+static int ml_dsa_composite_pki_priv_to_der(const void *vkey, unsigned char **pder,
+    ossl_unused void *ctx)
+{
+    return ossl_ml_dsa_composite_i2d_prvkey((const ML_DSA_COMPOSITE_KEY *)vkey, pder);
+}
+
+#define ml_dsa_composite_epki_priv_to_der ml_dsa_composite_pki_priv_to_der
+#define prepare_ml_dsa_composite_params NULL
+#define ml_dsa_composite_check_key_type NULL
+
+/* evp_type and pem_type defines for composite variants */
+#define mldsa65_rsa3072_pkcs15_sha512_evp_type NID_ML_DSA_65_RSA3072_PKCS15_SHA512
+#define mldsa65_rsa3072_pkcs15_sha512_pem_type LN_ML_DSA_65_RSA3072_PKCS15_SHA512
+#define mldsa65_ecdsa_p256_sha512_evp_type NID_ML_DSA_65_ECDSA_P256_SHA512
+#define mldsa65_ecdsa_p256_sha512_pem_type LN_ML_DSA_65_ECDSA_P256_SHA512
+
+MAKE_ENCODER(mldsa65_rsa3072_pkcs15_sha512, ml_dsa_composite, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(mldsa65_rsa3072_pkcs15_sha512, ml_dsa_composite, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(mldsa65_rsa3072_pkcs15_sha512, ml_dsa_composite, PrivateKeyInfo, der);
+MAKE_ENCODER(mldsa65_rsa3072_pkcs15_sha512, ml_dsa_composite, PrivateKeyInfo, pem);
+MAKE_ENCODER(mldsa65_rsa3072_pkcs15_sha512, ml_dsa_composite, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(mldsa65_rsa3072_pkcs15_sha512, ml_dsa_composite, SubjectPublicKeyInfo, pem);
+
+MAKE_ENCODER(mldsa65_ecdsa_p256_sha512, ml_dsa_composite, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(mldsa65_ecdsa_p256_sha512, ml_dsa_composite, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(mldsa65_ecdsa_p256_sha512, ml_dsa_composite, PrivateKeyInfo, der);
+MAKE_ENCODER(mldsa65_ecdsa_p256_sha512, ml_dsa_composite, PrivateKeyInfo, pem);
+MAKE_ENCODER(mldsa65_ecdsa_p256_sha512, ml_dsa_composite, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(mldsa65_ecdsa_p256_sha512, ml_dsa_composite, SubjectPublicKeyInfo, pem);
+#endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
