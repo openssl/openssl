@@ -51,6 +51,15 @@ int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src);
 /* Query the cipher (if any) */
 const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
 
+/**
+ * The EVP_SKEYMGMT algorithm name under which a key for the cipher called
+ * |cipher_name| should be created by the providers in this source tree.
+ * @param cipher_name the cipher name to map to a key type
+ * @returns OSSL_SKEY_TYPE_GENERIC for a NULL name and for anything with no
+ * more specific key type, otherwise the specific key type (e.g., OSSL_SKEY_TYPE_AES)
+ */
+const char *ossl_prov_cipher_skey_type(const char *cipher_name);
+
 /* Digest functions */
 
 /*

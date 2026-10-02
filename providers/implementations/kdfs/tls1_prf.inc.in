@@ -12,16 +12,25 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
 {- produce_param_decoder('tls1prf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_PROPERTIES',        'propq',  'utf8_string'],
-                          ['OSSL_KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_SECRET',            'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_SEED',              'seed',   'octet_string', TLSPRF_MAX_SEEDS],
-                          ['OSSL_KDF_PARAM_FIPS_EMS_CHECK',    'ind_e',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
+                         (['OSSL_KDF_PARAM_PROPERTIES',        'propq',          'utf8_string'],
+                          ['OSSL_KDF_PARAM_DIGEST',            'digest',         'utf8_string'],
+                          ['OSSL_KDF_PARAM_SECRET',            'secret',         'octet_string'],
+                          ['OSSL_KDF_PARAM_SEED',              'seed',           'octet_string', TLSPRF_MAX_SEEDS],
+                          ['OSSL_KDF_PARAM_MAC_KEY_LEN',       'mac_key_len',    'size_t'],
+                          ['OSSL_KDF_PARAM_CIPHER_KEY_LEN',    'cipher_key_len', 'size_t'],
+                          ['OSSL_KDF_PARAM_IV_LEN',            'iv_len',         'size_t'],
+                          ['OSSL_KDF_PARAM_CIPHER',            'cipher',         'utf8_string'],
+                          ['OSSL_KDF_PARAM_MAC',               'mac',            'utf8_string'],
+                          ['OSSL_KDF_PARAM_FIPS_EMS_CHECK',    'ind_e',          'int', 'fips'],
+                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',          'int', 'fips'],
+                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',          'int', 'fips'],
                          )); -}
 
 {- produce_param_decoder('tls1prf_get_ctx_params',
                          (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
                           ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
+                          ['OSSL_KDF_PURPOSE_CLIENT_MAC_KEY',    'client_mac_type',    'utf8_string'],
+                          ['OSSL_KDF_PURPOSE_SERVER_MAC_KEY',    'server_mac_type',    'utf8_string'],
+                          ['OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY', 'client_cipher_type', 'utf8_string'],
+                          ['OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY', 'server_cipher_type', 'utf8_string'],
                          )); -}
