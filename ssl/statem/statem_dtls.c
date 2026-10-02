@@ -764,6 +764,30 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
     }
 }
 
+/*
+ * Whether a fully-received message is already sitting in the reassembly
+ * buffer for the next sequence number we expect, independently of any new
+ * record having just arrived on the wire. dtls1_retrieve_buffered_fragment()
+ * checks this unconditionally on every entry into the read state machine,
+ * but that entry only ever happens as a side effect of a *new*
+ * SSL3_RT_HANDSHAKE/SSL3_RT_ACK record arriving (see dtls1_read_bytes()'s
+ * trampoline) or of a message we just processed ourselves bringing us back
+ * here. Callers use this to decide whether to keep looping instead of
+ * going idle, so a message that arrived out of order and was buffered
+ * ahead of something still missing is not left stranded once that
+ * something finally arrives and is processed in the same call.
+ */
+int dtls1_has_buffered_ready_message(SSL_CONNECTION *s)
+{
+    pitem *item = pqueue_find_u64(&s->d1->rcvd_messages, s->d1->handshake_read_seq);
+    hm_fragment *frag;
+
+    if (item == NULL)
+        return 0;
+    frag = (hm_fragment *)item->data;
+    return frag->reassembly == NULL;
+}
+
 static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr)
 {
@@ -1486,28 +1510,37 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
     /*
      * If our own KeyUpdate is still awaiting installation of its new write
-     * keys, check whether this ACK is what it was waiting for. This is
-     * checked per-message rather than via
-     * dtls_any_sent_messages_are_missing_acknowledge(), since some other,
-     * unrelated buffered message (e.g. a ticket) may still be outstanding
-     * even once our KeyUpdate specifically has been fully acknowledged.
+     * keys, check whether this ACK is what it was waiting for. A peer can
+     * ACK a buffered message before it has actually processed the messages
+     * that precede it (rfc9147 section 7), so an ACK of the KeyUpdate
+     * itself does not establish that the peer has processed everything
+     * sent before it and installed the corresponding read keys. Erratum
+     * 8047 therefore requires waiting for every preceding message to be
+     * acknowledged too, not just the KeyUpdate -- a message sent *after*
+     * the KeyUpdate (e.g. a ticket) is unaffected and may remain
+     * outstanding.
      */
     if (s->d1->key_update_write_pending) {
         pitem *item;
         piterator iter = pqueue_iterator(&s->d1->sent_messages);
+        int preceding_unacked = 0;
 
         while ((item = pqueue_next(&iter)) != NULL) {
             dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
 
-            if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE
-                && ossl_list_record_number_is_empty(&msg->rec_nums)) {
-                s->d1->key_update_write_pending = 0;
-                if (!tls13_update_key(s, 1)) {
-                    /* SSLfatal() already called */
-                    return MSG_PROCESS_ERROR;
+            if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE) {
+                if (!preceding_unacked
+                    && ossl_list_record_number_is_empty(&msg->rec_nums)) {
+                    s->d1->key_update_write_pending = 0;
+                    if (!tls13_update_key(s, 1)) {
+                        /* SSLfatal() already called */
+                        return MSG_PROCESS_ERROR;
+                    }
                 }
                 break;
             }
+            if (!ossl_list_record_number_is_empty(&msg->rec_nums))
+                preceding_unacked = 1;
         }
     }
 
@@ -1525,8 +1558,17 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
      */
     if (s->statem.pre_ack_hand_state == TLS_ST_SR_CERT
         || s->statem.pre_ack_hand_state == TLS_ST_SR_COMP_CERT
-        || s->statem.pre_ack_hand_state == TLS_ST_SR_CERT_VRFY)
+        || s->statem.pre_ack_hand_state == TLS_ST_SR_CERT_VRFY) {
+        /*
+         * We already know above that nothing is left needing
+         * retransmission, so this only resets timeout state and clears the
+         * (already-empty) sent buffer -- it leaves the read state alone, so
+         * the rest of the PHA response, including Finished, is still
+         * processed on return.
+         */
+        dtls1_stop_timer(s);
         return MSG_PROCESS_CONTINUE_READING;
+    }
 
     return MSG_PROCESS_FINISHED_READING;
 }

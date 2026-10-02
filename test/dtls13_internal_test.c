@@ -3700,6 +3700,480 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * dtls_process_ack() must not install a pending KeyUpdate's new write keys
+ * merely because the KeyUpdate's own record was acknowledged. RFC 9147
+ * section 7 lets a peer ACK a buffered message before it has processed the
+ * messages that precede it, so an ACK of the KeyUpdate alone does not
+ * establish that the peer has processed everything sent before it and
+ * installed the corresponding read keys. Erratum 8047 requires waiting for
+ * every preceding message to be acknowledged too.
+ *
+ * The server sends a ticket, then -- without waiting for it to be
+ * acknowledged -- a KeyUpdate, both still at the current write epoch. Only
+ * the KeyUpdate datagram is delivered, so the client buffers it ahead of
+ * the still-missing ticket and does not install new read keys; the record
+ * is merely queued on its ACK list. Forcing the client to flush that
+ * queued ACK immediately, before the ticket ever arrives, models a peer
+ * acknowledging a buffered record it has not actually processed (OpenSSL's
+ * own client would not otherwise flush it until the next in-order
+ * message). The server must still withhold its new write keys, because the
+ * ticket sent before the KeyUpdate remains unacknowledged.
+ *
+ * The ticket's retransmit timer is then forced, so the still-unacknowledged
+ * ticket (and only the ticket -- the already-acknowledged KeyUpdate is not
+ * retransmitted, per rfc9147) goes out again. The client processes it and
+ * acknowledges it. The KeyUpdate it had buffered ahead of the ticket is now
+ * unblocked -- dtls1_has_buffered_ready_message() is what lets the same
+ * read that just handled the ticket loop back and dispatch it too, instead
+ * of stranding it until some unrelated new record happens to arrive later.
+ * Once the ticket's ACK arrives, everything is finally acknowledged, and
+ * the server must install its new write keys; application data must then
+ * flow normally both ways, since the client's own read epoch was updated
+ * when it processed the KeyUpdate above.
+ */
+static int test_dtls13_keyupdate_ack_defers_write_keys(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    unsigned char discard[2048], buf;
+    uint64_t epoch_before;
+    unsigned short seq_before;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+    epoch_before = dtls1_get_epoch(sc, SSL3_CC_WRITE);
+
+    /* Send a ticket, then a KeyUpdate the client never gets to see yet. */
+    if (!TEST_true(SSL_new_session_ticket(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_true(SSL_key_update(server, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(sc->d1->key_update_write_pending)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), epoch_before))
+        goto end;
+
+    /* Drop the ticket datagram; the KeyUpdate datagram is still queued behind it. */
+    if (!TEST_int_gt(BIO_read(SSL_get_rbio(client), discard, sizeof(discard)), 0))
+        goto end;
+
+    /* The client buffers the out-of-order KeyUpdate rather than processing it. */
+    ret = SSL_read(client, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->rcvd_messages), 1)
+        || !TEST_ptr(ossl_list_record_number_head(&cc->d1->ack_rec_num)))
+        goto end;
+
+    /*
+     * Force the client to flush that queued ACK now, as though it were
+     * acknowledging the buffered KeyUpdate on receipt rather than once it
+     * is actually processed.
+     */
+    cc->statem.ack_for_retransmit = 1;
+    ossl_statem_set_in_init(cc, 1);
+    ret = SSL_do_handshake(client);
+    if (ret != 1 && !TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    ret = SSL_read(server, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The KeyUpdate's own record is now acknowledged, but the ticket sent
+     * before it is not. The new write keys must still be withheld.
+     */
+    if (!TEST_true(sc->d1->key_update_write_pending)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), epoch_before))
+        goto end;
+
+    /*
+     * The ticket is still outstanding, so its retransmit timer is still
+     * armed. Force it: the ticket goes out again, but the already-acked
+     * KeyUpdate entry does not -- dtls1_retransmit_sent_messages() skips
+     * anything with an empty record-number list.
+     */
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_true(SSL_handle_events(server))
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+
+    /*
+     * The client processes the retransmitted ticket -- now, finally, in
+     * order -- and acknowledges it. The KeyUpdate it had buffered ahead of
+     * the ticket is dispatched in this same call too: handshake_read_seq
+     * advances by 2 (ticket, then KeyUpdate), and the reassembly buffer
+     * drains completely rather than leaving the KeyUpdate stranded.
+     */
+    seq_before = cc->d1->handshake_read_seq;
+    ret = SSL_read(client, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq((int)cc->d1->handshake_read_seq, (int)seq_before + 2)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->rcvd_messages), 0))
+        goto end;
+
+    /*
+     * The server processes the ticket's ACK: everything is now
+     * acknowledged, so the deferred write keys must finally be installed.
+     */
+    ret = SSL_read(server, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_false(sc->d1->key_update_write_pending)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), epoch_before + 1)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /*
+     * Application data now flows both ways: the client's own read epoch
+     * was updated when it processed the KeyUpdate above.
+     */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * The same deferred-write-key guarantee as
+ * test_dtls13_keyupdate_ack_defers_write_keys() above, exercised end to end
+ * without ever buffering anything out of order: the ticket is delivered and
+ * processed normally, but its ACK specifically is what gets lost in
+ * transit. The KeyUpdate sent after it is delivered and acknowledged
+ * normally too, so the server ends up seeing exactly the preconditions
+ * comment 1 is about -- the KeyUpdate's record acknowledged, the earlier
+ * ticket's not -- through perfectly ordinary message delivery, nothing
+ * buffered out of order at all.
+ *
+ * Recovering the lost ACK via the ticket's own retransmit timer -- the same
+ * mechanism test_dtls13_cert_req_explicit_ack_preserves_ticket() already
+ * proves elsewhere in this file, where a retransmission is recognized and
+ * freshly acknowledged rather than reprocessed -- then lets both the
+ * deferred write-key install and bidirectional application data be
+ * verified completely: the client's own read epoch was already updated
+ * when it processed the KeyUpdate in order, so unlike the sibling test
+ * above there is nothing left needing a further trigger to catch up.
+ */
+static int test_dtls13_keyupdate_ack_defers_write_keys_ticket_ack_lost(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    unsigned char discard[2048], buf;
+    uint64_t epoch_before;
+    int ret, dropped, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    epoch_before = dtls1_get_epoch(sc, SSL3_CC_WRITE);
+
+    /* The ticket is sent and delivered normally. */
+    if (!TEST_true(SSL_new_session_ticket(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1))
+        goto end;
+    ret = SSL_read(client, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Lose the client's ACK for it; the server still sees it outstanding. */
+    dropped = 0;
+    while (BIO_read(SSL_get_rbio(server), discard, sizeof(discard)) > 0)
+        dropped++;
+    if (!TEST_int_gt(dropped, 0)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1))
+        goto end;
+
+    /* The KeyUpdate is sent, delivered, and acknowledged normally too. */
+    if (!TEST_true(SSL_key_update(server, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(sc->d1->key_update_write_pending)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 2)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), epoch_before))
+        goto end;
+    ret = SSL_read(client, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_read(server, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The KeyUpdate is acknowledged, but the ticket sent before it is
+     * not -- its ACK never arrived. The new write keys must still be
+     * withheld.
+     */
+    if (!TEST_true(sc->d1->key_update_write_pending)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), epoch_before))
+        goto end;
+
+    /*
+     * Force the ticket's retransmit timer. The client already processed
+     * the original, so this is recognized and acknowledged as a
+     * retransmission rather than reprocessed.
+     */
+    sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(), ossl_seconds2time(1));
+    if (!TEST_true(SSL_handle_events(server))
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(client)), 0))
+        goto end;
+    ret = SSL_read(client, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The server processes the fresh ACK: everything is now acknowledged,
+     * so the deferred write keys must finally be installed.
+     */
+    ret = SSL_read(server, &buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_false(sc->d1->key_update_write_pending)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), epoch_before + 1)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /*
+     * Application data flows both ways: the client's own read epoch was
+     * already updated when it processed the KeyUpdate above, in order, so
+     * this needs no further trigger to catch up.
+     */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#define PHA_ACK_STOPS_TIMER_MAX_RECS 4
+
+/*
+ * Split a buffer of concatenated DTLS 1.3 unified-header records -- as
+ * produced by this stack's own writer, which always sets both the
+ * sequence-number and length bits -- into its individual records' lengths,
+ * so each can be delivered to the peer as its own separate datagram.
+ */
+static int split_unified_header_records(const unsigned char *in, size_t inlen,
+    size_t reclen[PHA_ACK_STOPS_TIMER_MAX_RECS])
+{
+    size_t off = 0;
+    int n = 0;
+
+    while (off < inlen) {
+        size_t len;
+
+        if (n >= PHA_ACK_STOPS_TIMER_MAX_RECS
+            || inlen - off < DTLS13_UNI_HDR_FIXED_LENGTH
+            || !DTLS13_UNI_HDR_FIX_BITS_IS_SET(in[off])
+            || DTLS13_UNI_HDR_CID_BIT_IS_SET(in[off])
+            || !DTLS13_UNI_HDR_LEN_BIT_IS_SET(in[off])
+            || !DTLS13_UNI_HDR_SEQ_BIT_IS_SET(in[off]))
+            return -1;
+        len = DTLS13_UNI_HDR_FIXED_LENGTH
+            + (((size_t)in[off + 3] << 8) | in[off + 4]);
+        if (inlen - off < len)
+            return -1;
+        reclen[n++] = len;
+        off += len;
+    }
+    return n;
+}
+
+/*
+ * dtls_process_ack() must stop the retransmission timer when an ACK
+ * completes the outstanding flight even while the read sub-state-machine
+ * is still mid-flight on an incomplete post-handshake authentication
+ * response: returning MSG_PROCESS_CONTINUE_READING there bypasses the
+ * dtls1_stop_timer_for_read_flight() call that ordinary flight completion
+ * makes, so a fully-acknowledged flight's timer was otherwise left
+ * running, eventually failing the connection with SSL_R_READ_TIMEOUT_EXPIRED
+ * even though nothing was left to retransmit.
+ *
+ * The client's PHA response (an empty Certificate, then Finished) is split
+ * into its individual records here and delivered one at a time -- OpenSSL
+ * would otherwise coalesce them into one datagram -- so an explicit ACK of
+ * the CertificateRequest (rfc9147 section 7.1) can be injected between
+ * them, leaving the server mid-read (TLS_ST_SR_CERT) at the moment its own
+ * flight becomes fully acknowledged.
+ */
+static int test_dtls13_pha_ack_stops_timer(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    dtls_sent_msg *msg;
+    DTLS1_RECORD_NUMBER *recnum;
+    piterator iter;
+    pitem *item;
+    unsigned char dgram[4096], ack[18], buf[256];
+    size_t dgramlen, reclen[PHA_ACK_STOPS_TIMER_MAX_RECS], off;
+    WPACKET pkt;
+    uint64_t epoch, seqnum;
+    size_t acklen, written;
+    int ret, nrec, i, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    /* Request PHA; this sends just the CertificateRequest. */
+    SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1)
+        || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 1)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* The CertificateRequest's own record number, to forge its ACK below. */
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    if (!TEST_ptr(item = pqueue_next(&iter)))
+        goto end;
+    msg = item->data;
+    if (!TEST_ptr(recnum = ossl_list_record_number_head(&msg->rec_nums)))
+        goto end;
+    epoch = recnum->epoch;
+    seqnum = recnum->seqnum;
+
+    ret = SSL_read(client, buf, 1);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Capture the client's PHA response without letting the server see any
+     * of it yet, and split it into its individual records.
+     */
+    dgramlen = 0;
+    while (BIO_ctrl_pending(SSL_get_rbio(server)) > 0) {
+        ret = BIO_read(SSL_get_rbio(server), dgram + dgramlen,
+            (int)(sizeof(dgram) - dgramlen));
+        if (!TEST_int_gt(ret, 0))
+            goto end;
+        dgramlen += (size_t)ret;
+    }
+    nrec = split_unified_header_records(dgram, dgramlen, reclen);
+    if (!TEST_int_ge(nrec, 2))
+        goto end;
+
+    /* Deliver only the Certificate. Hold the rest back. */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(server), dgram, (int)reclen[0]),
+            (int)reclen[0]))
+        goto end;
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->statem.hand_state, TLS_ST_SR_CERT)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /*
+     * The explicit ACK, as permitted by rfc9147 section 7.1, arrives after
+     * Certificate and before Finished -- while the server is still mid-read
+     * of the PHA response.
+     */
+    if (!TEST_true(WPACKET_init_static_len(&pkt, ack, sizeof(ack), 2))
+        || !TEST_true(WPACKET_put_bytes_u64(&pkt, epoch))
+        || !TEST_true(WPACKET_put_bytes_u64(&pkt, seqnum))
+        || !TEST_true(WPACKET_finish(&pkt))
+        || !TEST_true(WPACKET_get_total_written(&pkt, &acklen))) {
+        WPACKET_cleanup(&pkt);
+        goto end;
+    }
+    WPACKET_cleanup(&pkt);
+    if (!TEST_int_eq(dtls1_write_bytes(cc, SSL3_RT_ACK, ack, acklen, &written), 1)
+        || !TEST_size_t_eq(written, acklen)
+        || !TEST_int_gt(BIO_flush(cc->wbio), 0))
+        goto end;
+
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        /*
+         * A fully-ACKed entry isn't swept out of sent_messages until
+         * something calls dtls1_clear_sent_buffer() -- which, absent the
+         * fix below, doesn't happen here. Check acknowledgment directly
+         * rather than via pqueue_size(), so this isn't itself entangled
+         * with the fix under test.
+         */
+        || !TEST_false(dtls_any_sent_messages_are_missing_acknowledge(sc))
+        || !TEST_int_eq(sc->statem.hand_state, TLS_ST_SR_CERT))
+        goto end;
+
+    /*
+     * The flight is now fully acknowledged, but the server is still
+     * mid-read: the timer must be stopped here regardless, not left
+     * running until the rest of the PHA response completes it.
+     */
+    if (!TEST_true(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* The withheld records still complete the authentication exchange. */
+    off = reclen[0];
+    for (i = 1; i < nrec; i++) {
+        if (!TEST_int_eq(BIO_write(SSL_get_rbio(server), dgram + off,
+                             (int)reclen[i]),
+                (int)reclen[i]))
+            goto end;
+        off += reclen[i];
+    }
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED)
+        || !TEST_int_eq(sc->statem.hand_state, TLS_ST_OK)
+        || !TEST_true(SSL_is_init_finished(server))
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -3741,6 +4215,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_server_keyupdate_preserves_pha);
     ADD_TEST(test_dtls13_server_keyupdate_preserves_pha_ticket);
     ADD_TEST(test_dtls13_server_keyupdate_pha_ticket_survives_retransmit);
+    ADD_TEST(test_dtls13_keyupdate_ack_defers_write_keys);
+    ADD_TEST(test_dtls13_keyupdate_ack_defers_write_keys_ticket_ack_lost);
+    ADD_TEST(test_dtls13_pha_ack_stops_timer);
 #endif
     return 1;
 }
