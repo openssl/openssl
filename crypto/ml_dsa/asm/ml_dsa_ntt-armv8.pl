@@ -125,9 +125,9 @@ ___
 sub barrett_multiply_lazy {
     my ($dst, $a, $z, $c) = @_;
     $code .= <<___;
-        sqdmulh $quotient.4s,$a.4s,$c.4s
-        mul     $dst.4s,$a.4s,$z.4s
-        mls     $dst.4s,$quotient.4s,$q_vector.4s
+        sqdmulh $quotient.4s, $a.4s, $c.4s
+        mul     $dst.4s, $a.4s, $z.4s
+        mls     $dst.4s, $quotient.4s, $q_vector.4s
 ___
 }
 
@@ -146,8 +146,8 @@ sub barrett_multiply {
 
     barrett_multiply_lazy($dst, $a, $z, $c);
     $code .= <<___;
-        sub     $quotient.4s,$dst.4s,$q_vector.4s
-        umin    $dst.4s,$dst.4s,$quotient.4s
+        sub     $quotient.4s, $dst.4s, $q_vector.4s
+        umin    $dst.4s, $dst.4s, $quotient.4s
 ___
 }
 
@@ -168,12 +168,12 @@ sub barrett_multiply_pair_lazy {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
     $code .= <<___;
-        sqdmulh $quotient.4s,$a0.4s,$c.4s
-        sqdmulh $quotient2.4s,$a1.4s,$c.4s
-        mul     $dst0.4s,$a0.4s,$z.4s
-        mul     $dst1.4s,$a1.4s,$z.4s
-        mls     $dst0.4s,$quotient.4s,$q_vector.4s
-        mls     $dst1.4s,$quotient2.4s,$q_vector.4s
+        sqdmulh $quotient.4s, $a0.4s, $c.4s
+        sqdmulh $quotient2.4s, $a1.4s, $c.4s
+        mul     $dst0.4s, $a0.4s, $z.4s
+        mul     $dst1.4s, $a1.4s, $z.4s
+        mls     $dst0.4s, $quotient.4s, $q_vector.4s
+        mls     $dst1.4s, $quotient2.4s, $q_vector.4s
 ___
 }
 
@@ -192,10 +192,10 @@ sub barrett_multiply_pair {
 
     barrett_multiply_pair_lazy($dst0, $a0, $dst1, $a1, $z, $c);
     $code .= <<___;
-        sub     $quotient.4s,$dst0.4s,$q_vector.4s
-        sub     $quotient2.4s,$dst1.4s,$q_vector.4s
-        umin    $dst0.4s,$dst0.4s,$quotient.4s
-        umin    $dst1.4s,$dst1.4s,$quotient2.4s
+        sub     $quotient.4s, $dst0.4s, $q_vector.4s
+        sub     $quotient2.4s, $dst1.4s, $q_vector.4s
+        umin    $dst0.4s, $dst0.4s, $quotient.4s
+        umin    $dst1.4s, $dst1.4s, $quotient2.4s
 ___
 }
 
@@ -222,9 +222,9 @@ sub ntt_butterfly_4way {
 
     barrett_multiply_lazy($product, $odd, $z, $c);
     $code .= <<___;
-        add     $odd.4s,$even.4s,$q_bias.4s
-        add     $even.4s,$odd.4s,$product.4s
-        sub     $odd.4s,$odd.4s,$product.4s
+        add     $odd.4s, $even.4s, $q_bias.4s
+        add     $even.4s, $odd.4s, $product.4s
+        sub     $odd.4s, $odd.4s, $product.4s
 ___
 }
 
@@ -249,9 +249,9 @@ sub intt_butterfly_4way {
     my ($even, $odd, $z, $c) = @_;
 
     $code .= <<___;
-        add     $product.4s,$even.4s,$q_bias.4s
-        sub     $product.4s,$product.4s,$odd.4s
-        add     $even.4s,$even.4s,$odd.4s
+        add     $product.4s, $even.4s, $q_bias.4s
+        sub     $product.4s, $product.4s, $odd.4s
+        add     $even.4s, $even.4s, $odd.4s
 ___
     barrett_multiply_lazy($odd, $product, $z, $c);
 }
@@ -273,12 +273,12 @@ sub ntt_butterfly_8way {
 
     barrett_multiply_pair_lazy($product, $odd0, $product2, $odd1, $z, $c);
     $code .= <<___;
-        add     $odd0.4s,$even0.4s,$q_bias.4s
-        add     $odd1.4s,$even1.4s,$q_bias.4s
-        add     $even0.4s,$odd0.4s,$product.4s
-        add     $even1.4s,$odd1.4s,$product2.4s
-        sub     $odd0.4s,$odd0.4s,$product.4s
-        sub     $odd1.4s,$odd1.4s,$product2.4s
+        add     $odd0.4s, $even0.4s, $q_bias.4s
+        add     $odd1.4s, $even1.4s, $q_bias.4s
+        add     $even0.4s, $odd0.4s, $product.4s
+        add     $even1.4s, $odd1.4s, $product2.4s
+        sub     $odd0.4s, $odd0.4s, $product.4s
+        sub     $odd1.4s, $odd1.4s, $product2.4s
 ___
 }
 
@@ -297,12 +297,12 @@ sub intt_butterfly_8way {
         $z, $c) = @_;
 
     $code .= <<___;
-        add     $product.4s,$even0.4s,$q_bias.4s
-        add     $product2.4s,$even1.4s,$q_bias.4s
-        sub     $product.4s,$product.4s,$odd0.4s
-        sub     $product2.4s,$product2.4s,$odd1.4s
-        add     $even0.4s,$even0.4s,$odd0.4s
-        add     $even1.4s,$even1.4s,$odd1.4s
+        add     $product.4s, $even0.4s, $q_bias.4s
+        add     $product2.4s, $even1.4s, $q_bias.4s
+        sub     $product.4s, $product.4s, $odd0.4s
+        sub     $product2.4s, $product2.4s, $odd1.4s
+        add     $even0.4s, $even0.4s, $odd0.4s
+        add     $even1.4s, $even1.4s, $odd1.4s
 ___
     barrett_multiply_pair_lazy($odd0, $product, $odd1, $product2, $z, $c);
 }
@@ -313,9 +313,9 @@ ___
 # @details MOV and MOVK load the low and high 16-bit halfwords of q.
 sub load_q {
     $code .= <<___;
-        mov     $q_word,#$q_low_halfword
-        movk    $q_word,#$q_high_halfword,lsl#16
-        dup     $q_vector.4s,$q_word
+        mov     $q_word, #$q_low_halfword
+        movk    $q_word, #$q_high_halfword, lsl #16
+        dup     $q_vector.4s, $q_word
 ___
 }
 
@@ -344,46 +344,46 @@ sub ntt_wide_layer {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr,$coefficients
-        mov     $group_count,#$step
+        mov     $group_ptr, $coefficients
+        mov     $group_count, #$step
 $outer:
-        ldr     d2,[$zc_ptr],#8
-        dup     $c.4s,$z.s[1]
-        dup     $z.4s,$z.s[0]
-        mov     $even_ptr,$group_ptr
-        add     $odd_ptr,$group_ptr,#$offset_bytes
-        mov     $vector_count,#$iterations
+        ldr     d2, [$zc_ptr], #8
+        dup     $c.4s, $z.s[1]
+        dup     $z.4s, $z.s[0]
+        mov     $even_ptr, $group_ptr
+        add     $odd_ptr, $group_ptr, #$offset_bytes
+        mov     $vector_count, #$iterations
 $inner:
 ___
     if ($paired) {
         $code .= <<___;
-        ldp     q0,q6,[$even_ptr]
-        ldp     q1,q7,[$odd_ptr]
+        ldp     q0, q6, [$even_ptr]
+        ldp     q1, q7, [$odd_ptr]
 ___
         ntt_butterfly_8way($coeff_vector0, $coeff_vector1,
                            $even_vector2, $odd_vector2,
                            $z, $c);
         $code .= <<___;
-        stp     q0,q6,[$even_ptr],#32
-        stp     q1,q7,[$odd_ptr],#32
+        stp     q0, q6, [$even_ptr], #32
+        stp     q1, q7, [$odd_ptr], #32
 ___
     } else {
         $code .= <<___;
-        ldr     q0,[$even_ptr]
-        ldr     q1,[$odd_ptr]
+        ldr     q0, [$even_ptr]
+        ldr     q1, [$odd_ptr]
 ___
         ntt_butterfly_4way($coeff_vector0, $coeff_vector1, $z, $c);
         $code .= <<___;
-        str     q0,[$even_ptr],#16
-        str     q1,[$odd_ptr],#16
+        str     q0, [$even_ptr], #16
+        str     q1, [$odd_ptr], #16
 ___
     }
     $code .= <<___;
-        sub     $vector_count,$vector_count,#1
-        cbnz    $vector_count,$inner
-        add     $group_ptr,$group_ptr,#$group_bytes
-        sub     $group_count,$group_count,#1
-        cbnz    $group_count,$outer
+        sub     $vector_count, $vector_count, #1
+        cbnz    $vector_count, $inner
+        add     $group_ptr, $group_ptr, #$group_bytes
+        sub     $group_count, $group_count, #1
+        cbnz    $group_count, $outer
 ___
 }
 
@@ -403,25 +403,25 @@ sub ntt_offset2_layer {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr,$coefficients
-        mov     $group_count,#32
+        mov     $group_ptr, $coefficients
+        mov     $group_count, #32
 $loop:
-        ldp     d2,d27,[$zc_ptr],#16
-        zip1    $z.4s,$z.4s,$z.4s
-        zip1    $c.4s,$c.4s,$c.4s
-        ldr     q0,[$group_ptr]
-        ldr     q1,[$group_ptr,#16]
-        zip1    $butterfly_even.2d,$coeff_vector0.2d,$coeff_vector1.2d
-        zip2    $butterfly_odd.2d,$coeff_vector0.2d,$coeff_vector1.2d
+        ldp     d2, d27, [$zc_ptr], #16
+        zip1    $z.4s, $z.4s, $z.4s
+        zip1    $c.4s, $c.4s, $c.4s
+        ldr     q0, [$group_ptr]
+        ldr     q1, [$group_ptr, #16]
+        zip1    $butterfly_even.2d, $coeff_vector0.2d, $coeff_vector1.2d
+        zip2    $butterfly_odd.2d, $coeff_vector0.2d, $coeff_vector1.2d
 ___
     ntt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
-        zip1    $coeff_vector0.2d,$butterfly_even.2d,$butterfly_odd.2d
-        zip2    $coeff_vector1.2d,$butterfly_even.2d,$butterfly_odd.2d
-        str     q0,[$group_ptr],#16
-        str     q1,[$group_ptr],#16
-        sub     $group_count,$group_count,#1
-        cbnz    $group_count,$loop
+        zip1    $coeff_vector0.2d, $butterfly_even.2d, $butterfly_odd.2d
+        zip2    $coeff_vector1.2d, $butterfly_even.2d, $butterfly_odd.2d
+        str     q0, [$group_ptr], #16
+        str     q1, [$group_ptr], #16
+        sub     $group_count, $group_count, #1
+        cbnz    $group_count, $loop
 ___
 }
 
@@ -441,23 +441,23 @@ sub ntt_offset1_layer {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr,$coefficients
-        mov     $group_count,#32
+        mov     $group_ptr, $coefficients
+        mov     $group_count, #32
 $loop:
-        ldp     q2,q27,[$zc_ptr],#32
-        ldr     q0,[$group_ptr]
-        ldr     q1,[$group_ptr,#16]
-        uzp1    $butterfly_even.4s,$coeff_vector0.4s,$coeff_vector1.4s
-        uzp2    $butterfly_odd.4s,$coeff_vector0.4s,$coeff_vector1.4s
+        ldp     q2, q27, [$zc_ptr], #32
+        ldr     q0, [$group_ptr]
+        ldr     q1, [$group_ptr, #16]
+        uzp1    $butterfly_even.4s, $coeff_vector0.4s, $coeff_vector1.4s
+        uzp2    $butterfly_odd.4s, $coeff_vector0.4s, $coeff_vector1.4s
 ___
     ntt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
-        zip1    $coeff_vector0.4s,$butterfly_even.4s,$butterfly_odd.4s
-        zip2    $coeff_vector1.4s,$butterfly_even.4s,$butterfly_odd.4s
-        str     q0,[$group_ptr],#16
-        str     q1,[$group_ptr],#16
-        sub     $group_count,$group_count,#1
-        cbnz    $group_count,$loop
+        zip1    $coeff_vector0.4s, $butterfly_even.4s, $butterfly_odd.4s
+        zip2    $coeff_vector1.4s, $butterfly_even.4s, $butterfly_odd.4s
+        str     q0, [$group_ptr], #16
+        str     q1, [$group_ptr], #16
+        sub     $group_count, $group_count, #1
+        cbnz    $group_count, $loop
 ___
 }
 
@@ -478,24 +478,24 @@ sub intt_offset1_layer {
     $label_index++;
 
     $code .= <<___;
-        mov     $q_bias.16b,$q_vector.16b
-        mov     $group_ptr,$coefficients
-        mov     $group_count,#32
+        mov     $q_bias.16b, $q_vector.16b
+        mov     $group_ptr, $coefficients
+        mov     $group_count, #32
 $loop:
-        ldp     q2,q27,[$zc_ptr],#32
-        ldr     q0,[$group_ptr]
-        ldr     q1,[$group_ptr,#16]
-        uzp1    $butterfly_even.4s,$coeff_vector0.4s,$coeff_vector1.4s
-        uzp2    $butterfly_odd.4s,$coeff_vector0.4s,$coeff_vector1.4s
+        ldp     q2, q27, [$zc_ptr], #32
+        ldr     q0, [$group_ptr]
+        ldr     q1, [$group_ptr, #16]
+        uzp1    $butterfly_even.4s, $coeff_vector0.4s, $coeff_vector1.4s
+        uzp2    $butterfly_odd.4s, $coeff_vector0.4s, $coeff_vector1.4s
 ___
     intt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
-        zip1    $coeff_vector0.4s,$butterfly_even.4s,$butterfly_odd.4s
-        zip2    $coeff_vector1.4s,$butterfly_even.4s,$butterfly_odd.4s
-        str     q0,[$group_ptr],#16
-        str     q1,[$group_ptr],#16
-        sub     $group_count,$group_count,#1
-        cbnz    $group_count,$loop
+        zip1    $coeff_vector0.4s, $butterfly_even.4s, $butterfly_odd.4s
+        zip2    $coeff_vector1.4s, $butterfly_even.4s, $butterfly_odd.4s
+        str     q0, [$group_ptr], #16
+        str     q1, [$group_ptr], #16
+        sub     $group_count, $group_count, #1
+        cbnz    $group_count, $loop
 ___
 }
 
@@ -516,26 +516,26 @@ sub intt_offset2_layer {
     $label_index++;
 
     $code .= <<___;
-        shl     $q_bias.4s,$q_vector.4s,#1
-        mov     $group_ptr,$coefficients
-        mov     $group_count,#32
+        shl     $q_bias.4s, $q_vector.4s, #1
+        mov     $group_ptr, $coefficients
+        mov     $group_count, #32
 $loop:
-        ldp     d2,d27,[$zc_ptr],#16
-        zip1    $z.4s,$z.4s,$z.4s
-        zip1    $c.4s,$c.4s,$c.4s
-        ldr     q0,[$group_ptr]
-        ldr     q1,[$group_ptr,#16]
-        zip1    $butterfly_even.2d,$coeff_vector0.2d,$coeff_vector1.2d
-        zip2    $butterfly_odd.2d,$coeff_vector0.2d,$coeff_vector1.2d
+        ldp     d2, d27, [$zc_ptr], #16
+        zip1    $z.4s, $z.4s, $z.4s
+        zip1    $c.4s, $c.4s, $c.4s
+        ldr     q0, [$group_ptr]
+        ldr     q1, [$group_ptr, #16]
+        zip1    $butterfly_even.2d, $coeff_vector0.2d, $coeff_vector1.2d
+        zip2    $butterfly_odd.2d, $coeff_vector0.2d, $coeff_vector1.2d
 ___
     intt_butterfly_4way($butterfly_even, $butterfly_odd, $z, $c);
     $code .= <<___;
-        zip1    $coeff_vector0.2d,$butterfly_even.2d,$butterfly_odd.2d
-        zip2    $coeff_vector1.2d,$butterfly_even.2d,$butterfly_odd.2d
-        str     q0,[$group_ptr],#16
-        str     q1,[$group_ptr],#16
-        sub     $group_count,$group_count,#1
-        cbnz    $group_count,$loop
+        zip1    $coeff_vector0.2d, $butterfly_even.2d, $butterfly_odd.2d
+        zip2    $coeff_vector1.2d, $butterfly_even.2d, $butterfly_odd.2d
+        str     q0, [$group_ptr], #16
+        str     q1, [$group_ptr], #16
+        sub     $group_count, $group_count, #1
+        cbnz    $group_count, $loop
 ___
 }
 
@@ -566,22 +566,22 @@ sub intt_wide_layer {
     $label_index++;
 
     $code .= <<___;
-        shl     $q_bias.4s,$q_vector.4s,#$bias_shift
-        mov     $group_ptr,$coefficients
-        mov     $group_count,#$step
+        shl     $q_bias.4s, $q_vector.4s, #$bias_shift
+        mov     $group_ptr, $coefficients
+        mov     $group_count, #$step
 $outer:
-        ldr     d2,[$zc_ptr],#8
-        dup     $c.4s,$z.s[1]
-        dup     $z.4s,$z.s[0]
-        mov     $even_ptr,$group_ptr
-        add     $odd_ptr,$group_ptr,#$offset_bytes
-        mov     $vector_count,#$iterations
+        ldr     d2, [$zc_ptr], #8
+        dup     $c.4s, $z.s[1]
+        dup     $z.4s, $z.s[0]
+        mov     $even_ptr, $group_ptr
+        add     $odd_ptr, $group_ptr, #$offset_bytes
+        mov     $vector_count, #$iterations
 $inner:
 ___
     if ($paired) {
         $code .= <<___;
-        ldp     q0,q6,[$even_ptr]
-        ldp     q1,q7,[$odd_ptr]
+        ldp     q0, q6, [$even_ptr]
+        ldp     q1, q7, [$odd_ptr]
 ___
         intt_butterfly_8way($coeff_vector0, $coeff_vector1,
                             $even_vector2, $odd_vector2,
@@ -595,13 +595,13 @@ ___
                                   $scale_z, $scale_c);
         }
         $code .= <<___;
-        stp     q0,q6,[$even_ptr],#32
-        stp     q1,q7,[$odd_ptr],#32
+        stp     q0, q6, [$even_ptr], #32
+        stp     q1, q7, [$odd_ptr], #32
 ___
     } else {
         $code .= <<___;
-        ldr     q0,[$even_ptr]
-        ldr     q1,[$odd_ptr]
+        ldr     q0, [$even_ptr]
+        ldr     q1, [$odd_ptr]
 ___
         intt_butterfly_4way($coeff_vector0, $coeff_vector1, $z, $c);
         if ($final) {
@@ -611,16 +611,16 @@ ___
                             $scale_c);
         }
         $code .= <<___;
-        str     q0,[$even_ptr],#16
-        str     q1,[$odd_ptr],#16
+        str     q0, [$even_ptr], #16
+        str     q1, [$odd_ptr], #16
 ___
     }
     $code .= <<___;
-        sub     $vector_count,$vector_count,#1
-        cbnz    $vector_count,$inner
-        add     $group_ptr,$group_ptr,#$group_bytes
-        sub     $group_count,$group_count,#1
-        cbnz    $group_count,$outer
+        sub     $vector_count, $vector_count, #1
+        cbnz    $vector_count, $inner
+        add     $group_ptr, $group_ptr, #$group_bytes
+        sub     $group_count, $group_count, #1
+        cbnz    $group_count, $outer
 ___
 }
 
@@ -643,26 +643,26 @@ sub ntt_reduce_coefficients {
     $label_index++;
 
     $code .= <<___;
-        mov     $group_ptr,$coefficients
-        mov     $group_count,#$iterations
+        mov     $group_ptr, $coefficients
+        mov     $group_count, #$iterations
 $loop:
 ___
     for (1 .. $pairs_per_iteration) {
         $code .= <<___;
-        ldp     q0,q1,[$group_ptr]
-        ushr    $quotient.4s,$coeff_vector0.4s,#23
-        ushr    $quotient2.4s,$coeff_vector1.4s,#23
-        mls     $coeff_vector0.4s,$quotient.4s,$q_vector.4s
-        mls     $coeff_vector1.4s,$quotient2.4s,$q_vector.4s
-        sub     $quotient.4s,$coeff_vector0.4s,$q_vector.4s
-        sub     $quotient2.4s,$coeff_vector1.4s,$q_vector.4s
-        umin    $coeff_vector0.4s,$coeff_vector0.4s,$quotient.4s
-        umin    $coeff_vector1.4s,$coeff_vector1.4s,$quotient2.4s
-        stp     q0,q1,[$group_ptr],#32
+        ldp     q0, q1, [$group_ptr]
+        ushr    $quotient.4s, $coeff_vector0.4s, #23
+        ushr    $quotient2.4s, $coeff_vector1.4s, #23
+        mls     $coeff_vector0.4s, $quotient.4s, $q_vector.4s
+        mls     $coeff_vector1.4s, $quotient2.4s, $q_vector.4s
+        sub     $quotient.4s, $coeff_vector0.4s, $q_vector.4s
+        sub     $quotient2.4s, $coeff_vector1.4s, $q_vector.4s
+        umin    $coeff_vector0.4s, $coeff_vector0.4s, $quotient.4s
+        umin    $coeff_vector1.4s, $coeff_vector1.4s, $quotient2.4s
+        stp     q0, q1, [$group_ptr], #32
 ___
     }
     $code .= <<___;
-        subs    $group_count,$group_count,#1
+        subs    $group_count, $group_count, #1
         b.ne    $loop
 ___
 }
@@ -676,9 +676,9 @@ ossl_ml_dsa_poly_ntt_armv8:
 ___
 load_q();
 $code .= <<___;
-        adrp    $zc_ptr,.Lml_dsa_ntt_constants
-        add     $zc_ptr,$zc_ptr,#:lo12:.Lml_dsa_ntt_constants
-        shl     $q_bias.4s,$q_vector.4s,#1
+        adrp    $zc_ptr, .Lml_dsa_ntt_constants
+        add     $zc_ptr, $zc_ptr, #:lo12:.Lml_dsa_ntt_constants
+        shl     $q_bias.4s, $q_vector.4s, #1
 ___
 ntt_wide_layer(1, 128);
 ntt_wide_layer(2, 64);
@@ -706,14 +706,14 @@ load_q();
 my $normalization_z = 16382;
 my $normalization_c = 4197891;
 $code .= <<___;
-        adrp    $zc_ptr,.Lml_dsa_intt_constants
-        add     $zc_ptr,$zc_ptr,#:lo12:.Lml_dsa_intt_constants
-        mov     $z_word,#@{[$normalization_z & 0xffff]}
-        movk    $z_word,#@{[($normalization_z >> 16) & 0xffff]},lsl#16
-        dup     $scale_z.4s,$z_word
-        mov     $c_word,#@{[$normalization_c & 0xffff]}
-        movk    $c_word,#@{[($normalization_c >> 16) & 0xffff]},lsl#16
-        dup     $scale_c.4s,$c_word
+        adrp    $zc_ptr, .Lml_dsa_intt_constants
+        add     $zc_ptr, $zc_ptr, #:lo12:.Lml_dsa_intt_constants
+        mov     $z_word, #@{[$normalization_z & 0xffff]}
+        movk    $z_word, #@{[($normalization_z >> 16) & 0xffff]}, lsl #16
+        dup     $scale_z.4s, $z_word
+        mov     $c_word, #@{[$normalization_c & 0xffff]}
+        movk    $c_word, #@{[($normalization_c >> 16) & 0xffff]}, lsl #16
+        dup     $scale_c.4s, $c_word
 ___
 intt_offset1_layer();                    # bias = q
 intt_offset2_layer();                    # bias = 2q
