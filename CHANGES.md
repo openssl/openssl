@@ -36,7 +36,7 @@ OpenSSL 4.2
  * Added SSL_CTX_set_grease_mask() and SSL_set_grease_mask() to choose which
    ClientHello fields carry RFC 8701 GREASE values. SSL_OP_GREASE still turns
    GREASE on, and the default mask covers every field, so existing output is
-   unchanged.
+   unchanged. SSL_OP_GREASE is now also honoured by QUIC clients.
 
    *F1xGOD*
 

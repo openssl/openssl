@@ -38,6 +38,10 @@ created from B<ctx>. SSL_set_grease_mask() changes the mask for B<ssl> without
 changing its parent B<SSL_CTX>. These functions should be called before the
 handshake starts.
 
+On a QUIC connection object, SSL_set_grease_mask() and SSL_get_grease_mask()
+configure and query the connection's TLS handshake. QUIC stream, listener
+and domain objects are not supported.
+
 SSL_CTX_get_grease_mask() and SSL_get_grease_mask() return the configured mask.
 
 The default mask for a new B<SSL_CTX> is B<SSL_GREASE_ALL>, preserving the
@@ -97,6 +101,13 @@ SSL_CTX_set_grease_mask() and SSL_set_grease_mask() return 1 on success and 0
 on failure.
 
 SSL_CTX_get_grease_mask() and SSL_get_grease_mask() return the configured mask.
+
+=head1 ERRORS
+
+SSL_set_grease_mask() and SSL_get_grease_mask() raise
+B<ERR_R_PASSED_INVALID_ARGUMENT> and return 0 if B<ssl> is NULL or does not
+refer to a TLS, DTLS or QUIC connection. A successful SSL_get_grease_mask()
+can also return 0 when all GREASE injection points are disabled.
 
 =head1 SEE ALSO
 

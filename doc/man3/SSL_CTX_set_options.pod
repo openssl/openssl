@@ -537,6 +537,8 @@ These options apply to SSL objects referencing a QUIC connection:
 
 =item SSL_OP_ALLOW_NO_DHE_KEX
 
+=item SSL_OP_GREASE
+
 =item SSL_OP_NO_TX_CERTIFICATE_COMPRESSION
 
 =item SSL_OP_NO_RX_CERTIFICATE_COMPRESSION

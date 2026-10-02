@@ -530,6 +530,39 @@ err:
     return testresult;
 }
 
+/*
+ * Test that a QUIC handshake completes when the client sends GREASE values.
+ * The ClientHello contents are checked by test_grease_mask_quic_wire() in
+ * sslapitest.c.
+ */
+static int test_quic_grease(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    SSL_CTX_set_options(cctx, SSL_OP_GREASE);
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+            privkey, 0, &qtserv,
+            &clientquic, NULL, NULL))
+        || !TEST_uint64_t_ne(SSL_get_options(clientquic) & SSL_OP_GREASE, 0)
+        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    testresult = 1;
+err:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 #if defined(DO_SSL_TRACE_TEST)
 /*
  * Tests that the SSL_trace() msg_callback works as expected with a QUIC
@@ -4794,6 +4827,7 @@ int setup_tests(void)
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_cipher_find);
     ADD_TEST(test_version);
+    ADD_TEST(test_quic_grease);
 #if defined(DO_SSL_TRACE_TEST)
     ADD_TEST(test_ssl_trace);
 #endif

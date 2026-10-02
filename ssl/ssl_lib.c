@@ -6754,9 +6754,14 @@ uint32_t SSL_CTX_get_grease_mask(const SSL_CTX *ctx)
 
 int SSL_set_grease_mask(SSL *s, uint32_t mask)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL || !grease_mask_is_valid(mask))
+    if (sc == NULL) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+            "no TLS connection for GREASE mask");
+        return 0;
+    }
+    if (!grease_mask_is_valid(mask))
         return 0;
 
     sc->grease_mask = mask;
@@ -6765,9 +6770,14 @@ int SSL_set_grease_mask(SSL *s, uint32_t mask)
 
 uint32_t SSL_get_grease_mask(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    return sc == NULL ? 0 : sc->grease_mask;
+    if (sc == NULL) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+            "no TLS connection for GREASE mask");
+        return 0;
+    }
+    return sc->grease_mask;
 }
 
 uint64_t SSL_CTX_get_options(const SSL_CTX *ctx)
