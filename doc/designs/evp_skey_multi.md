@@ -44,16 +44,16 @@ KDF operations.
 
 The params can also be set by a preceding call to `EVP_KDF_CTX_set_params`.
 
-To access the individual EVP_SKEY values, we introduce the functions
+To access the individual EVP_SKEY values, we introduce the function
 
 ```C
-EVP_SKEY *EVP_KDF_CTX_get0_SKEY(EVP_KDF_CTX *ctx, const char *purpose);
 EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose);
 ```
 
 where the `purpose` argument is a name of the particular EVP_SKEY purpose (e.g.
 "client_MAC_key", "server_CIPHER_key") as specified by the documentation of the
-specific KDF operation that was executed.
+specific KDF operation that was executed. The returned EVP_SKEY has its reference
+count incremented and must be freed by the caller.
 
 To access an IV, the proposed API is
 

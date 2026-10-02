@@ -524,6 +524,9 @@ OSSL_CORE_MAKE_FUNC(int, skeymgmt_get_algorithm_id,
 #define OSSL_FUNC_KDF_SET_CTX_PARAMS 11
 #define OSSL_FUNC_KDF_SET_SKEY 12
 #define OSSL_FUNC_KDF_DERIVE_SKEY 13
+#define OSSL_FUNC_KDF_DERIVE_MULTI 14
+#define OSSL_FUNC_KDF_GET_SKEY 15
+#define OSSL_FUNC_KDF_GET_IV 16
 
 OSSL_CORE_MAKE_FUNC(void *, kdf_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, kdf_dupctx, (void *src))
@@ -543,6 +546,14 @@ OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
 OSSL_CORE_MAKE_FUNC(int, kdf_set_skey,
     (void *kctx, void *skeydata, const char *paramname))
 OSSL_CORE_MAKE_FUNC(void *, kdf_derive_skey, (void *ctx, const char *key_type, void *provctx, OSSL_FUNC_skeymgmt_import_fn *import, size_t keylen, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, kdf_derive_multi,
+    (void *kctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, kdf_get_skey,
+    (void *kctx, const char *purpose, const char *key_type,
+        void *provctx, OSSL_FUNC_skeymgmt_import_fn *import))
+OSSL_CORE_MAKE_FUNC(int, kdf_get_iv,
+    (void *kctx, const char *purpose,
+        unsigned char **pIV, size_t *pIVlen))
 
 /* RAND */
 

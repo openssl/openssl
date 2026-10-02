@@ -43,10 +43,17 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
     return ctx;
 }
 
+static void evp_kdf_multi_free(EVP_KDF_CTX *ctx)
+{
+    EVP_SKEYMGMT_free(ctx->multi_skeymgmt);
+    ctx->multi_skeymgmt = NULL;
+}
+
 void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx)
 {
     if (ctx == NULL)
         return;
+    evp_kdf_multi_free(ctx);
     ctx->meth->freectx(ctx->algctx);
     ctx->algctx = NULL;
     EVP_KDF_free(ctx->meth);
@@ -65,6 +72,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
         return NULL;
 
     memcpy(dst, src, sizeof(*dst));
+    dst->multi_skeymgmt = NULL;
     if (!EVP_KDF_up_ref(dst->meth)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         OPENSSL_free(dst);
@@ -128,6 +136,7 @@ void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx)
     if (ctx == NULL)
         return;
 
+    evp_kdf_multi_free(ctx);
     if (ctx->meth->reset != NULL)
         ctx->meth->reset(ctx->algctx);
 }
@@ -295,6 +304,99 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
     if (mgmt != skeymgmt)
         EVP_SKEYMGMT_free(skeymgmt);
     return ret;
+}
+int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+    const char *propquery, const OSSL_PARAM params[])
+{
+    EVP_SKEYMGMT *skeymgmt = NULL;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->meth->derive_multi == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    if (mgmt != NULL) {
+        skeymgmt = mgmt;
+    } else {
+        skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->meth->prov,
+            OSSL_SKEY_TYPE_GENERIC, propquery);
+        if (skeymgmt == NULL) {
+            skeymgmt = EVP_SKEYMGMT_fetch(ossl_provider_libctx(ctx->meth->prov),
+                OSSL_SKEY_TYPE_GENERIC, propquery);
+        }
+        if (skeymgmt == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+            return 0;
+        }
+    }
+
+    evp_kdf_multi_free(ctx);
+
+    if (!ctx->meth->derive_multi(ctx->algctx, params)) {
+        if (mgmt != skeymgmt)
+            EVP_SKEYMGMT_free(skeymgmt);
+        return 0;
+    }
+
+    if (mgmt != skeymgmt)
+        ctx->multi_skeymgmt = skeymgmt;
+    else if (!EVP_SKEYMGMT_up_ref(skeymgmt))
+        return 0;
+    else
+        ctx->multi_skeymgmt = skeymgmt;
+
+    return 1;
+}
+
+EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose)
+{
+    EVP_SKEY *skey;
+    void *keydata;
+
+    if (ctx == NULL || purpose == NULL || ctx->multi_skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (ctx->meth->get_skey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return NULL;
+    }
+
+    keydata = ctx->meth->get_skey(ctx->algctx, purpose,
+        OSSL_SKEY_TYPE_GENERIC,
+        ossl_provider_ctx(ctx->multi_skeymgmt->prov),
+        ctx->multi_skeymgmt->import);
+    if (keydata == NULL)
+        return NULL;
+
+    skey = evp_skey_alloc(ctx->multi_skeymgmt);
+    if (skey == NULL)
+        return NULL;
+    skey->keydata = keydata;
+
+    return skey;
+}
+
+int EVP_KDF_CTX_get0_IV(EVP_KDF_CTX *ctx, const char *purpose,
+    unsigned char **pIV, size_t *pIVlen)
+{
+    if (ctx == NULL || purpose == NULL || pIV == NULL || pIVlen == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->meth->get_iv == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    return ctx->meth->get_iv(ctx->algctx, purpose, pIV, pIVlen);
 }
 #endif /* !FIPS_MODULE */
 

@@ -51,6 +51,9 @@ static OSSL_FUNC_kdf_get_ctx_params_fn hkdf_common_get_ctx_params;
 static OSSL_FUNC_kdf_derive_fn kdf_tls1_3_derive;
 static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_3_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_3_set_ctx_params;
+static OSSL_FUNC_kdf_derive_multi_fn kdf_tls1_3_derive_multi;
+static OSSL_FUNC_kdf_get_skey_fn kdf_tls1_3_get_skey;
+static OSSL_FUNC_kdf_get_iv_fn kdf_tls1_3_get_iv;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha256_new;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha384_new;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha512_new;
@@ -91,6 +94,13 @@ typedef struct {
     unsigned char *info;
     size_t info_len;
     int fixed_digest;
+
+    /* Multi-key derivation config and results */
+    size_t cipher_key_len;
+    size_t iv_len;
+    unsigned char *multi_key;
+    unsigned char *multi_iv;
+
     OSSL_FIPS_IND_DECLARE
 } KDF_HKDF;
 
@@ -151,6 +161,8 @@ static void kdf_hkdf_reset_ex(void *vctx, int on_free)
     OPENSSL_clear_free(ctx->data, ctx->data_len);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->info, ctx->info_len);
+    OPENSSL_clear_free(ctx->multi_key, ctx->cipher_key_len);
+    OPENSSL_free(ctx->multi_iv);
     memset(ctx, 0, sizeof(*ctx));
     ctx->provctx = provctx;
     if (preserve_digest) {
@@ -178,7 +190,11 @@ static void *kdf_hkdf_dup(void *vctx)
                 &dest->data, &dest->data_len)
             || !ossl_prov_memdup(src->info, src->info_len,
                 &dest->info, &dest->info_len)
-            || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            || !ossl_prov_digest_copy(&dest->digest, &src->digest)
+            || !ossl_prov_memdup(src->multi_key, src->cipher_key_len,
+                &dest->multi_key, &dest->cipher_key_len)
+            || !ossl_prov_memdup(src->multi_iv, src->iv_len,
+                &dest->multi_iv, &dest->iv_len))
             goto err;
         dest->mode = src->mode;
         dest->fixed_digest = src->fixed_digest;
@@ -283,6 +299,8 @@ struct hkdf_all_set_ctx_params_st {
     OSSL_PARAM *data;
     OSSL_PARAM *info[HKDF_MAX_INFOS];
     int num_info;
+    OSSL_PARAM *cipher_key_len;
+    OSSL_PARAM *iv_len;
 };
 
 #define hkdf_set_ctx_params_st hkdf_all_set_ctx_params_st
@@ -1024,6 +1042,13 @@ static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 #endif
 
+    if (p.cipher_key_len != NULL
+        && !OSSL_PARAM_get_size_t(p.cipher_key_len, &ctx->cipher_key_len))
+        return 0;
+    if (p.iv_len != NULL
+        && !OSSL_PARAM_get_size_t(p.iv_len, &ctx->iv_len))
+        return 0;
+
     return 1;
 }
 
@@ -1031,6 +1056,118 @@ static const OSSL_PARAM *kdf_tls1_3_settable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
     return kdf_tls1_3_set_ctx_params_list;
+}
+
+static int kdf_tls1_3_derive_multi(void *vctx, const OSSL_PARAM params[])
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    const EVP_MD *md;
+
+    if (!ossl_prov_is_running() || !kdf_tls1_3_set_ctx_params(ctx, params))
+        return 0;
+
+    md = ossl_prov_digest_md(&ctx->digest);
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
+        return 0;
+    }
+    if (ctx->key == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+        return 0;
+    }
+    if (ctx->cipher_key_len == 0 && ctx->iv_len == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+
+    OPENSSL_clear_free(ctx->multi_key, ctx->cipher_key_len);
+    ctx->multi_key = NULL;
+    OPENSSL_free(ctx->multi_iv);
+    ctx->multi_iv = NULL;
+
+    if (ctx->cipher_key_len > 0) {
+        ctx->multi_key = OPENSSL_zalloc(ctx->cipher_key_len);
+        if (ctx->multi_key == NULL)
+            return 0;
+
+        if (!prov_tls13_hkdf_expand(md, ctx->key, ctx->key_len,
+                ctx->prefix, ctx->prefix_len,
+                (const unsigned char *)"key", 3,
+                ctx->data, ctx->data_len,
+                ctx->multi_key, ctx->cipher_key_len)) {
+            OPENSSL_clear_free(ctx->multi_key, ctx->cipher_key_len);
+            ctx->multi_key = NULL;
+            return 0;
+        }
+    }
+
+    if (ctx->iv_len > 0) {
+        ctx->multi_iv = OPENSSL_zalloc(ctx->iv_len);
+        if (ctx->multi_iv == NULL) {
+            OPENSSL_clear_free(ctx->multi_key, ctx->cipher_key_len);
+            ctx->multi_key = NULL;
+            return 0;
+        }
+
+        if (!prov_tls13_hkdf_expand(md, ctx->key, ctx->key_len,
+                ctx->prefix, ctx->prefix_len,
+                (const unsigned char *)"iv", 2,
+                ctx->data, ctx->data_len,
+                ctx->multi_iv, ctx->iv_len)) {
+            OPENSSL_clear_free(ctx->multi_key, ctx->cipher_key_len);
+            ctx->multi_key = NULL;
+            OPENSSL_free(ctx->multi_iv);
+            ctx->multi_iv = NULL;
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static void *kdf_tls1_3_get_skey(void *vctx, const char *purpose,
+    const char *key_type, void *provctx,
+    OSSL_FUNC_skeymgmt_import_fn *import)
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    OSSL_PARAM import_params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    if (ctx->multi_key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
+
+    if (strcmp(purpose, OSSL_KDF_PURPOSE_CLIENT_KEY) != 0
+        && strcmp(purpose, OSSL_KDF_PURPOSE_SERVER_KEY) != 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return NULL;
+    }
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_SKEY_PARAM_RAW_BYTES, ctx->multi_key, ctx->cipher_key_len);
+
+    return import(provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);
+}
+
+static int kdf_tls1_3_get_iv(void *vctx, const char *purpose,
+    unsigned char **pIV, size_t *pIVlen)
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+
+    if (ctx->multi_iv == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    if (strcmp(purpose, OSSL_KDF_PURPOSE_CLIENT_IV) != 0
+        && strcmp(purpose, OSSL_KDF_PURPOSE_SERVER_IV) != 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return 0;
+    }
+
+    *pIV = ctx->multi_iv;
+    *pIVlen = ctx->iv_len;
+    return 1;
 }
 
 const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[] = {
@@ -1045,5 +1182,11 @@ const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
         (void (*)(void))hkdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void (*)(void))hkdf_common_get_ctx_params },
+    { OSSL_FUNC_KDF_DERIVE_MULTI,
+        (void (*)(void))kdf_tls1_3_derive_multi },
+    { OSSL_FUNC_KDF_GET_SKEY,
+        (void (*)(void))kdf_tls1_3_get_skey },
+    { OSSL_FUNC_KDF_GET_IV,
+        (void (*)(void))kdf_tls1_3_get_iv },
     OSSL_DISPATCH_END
 };

@@ -84,6 +84,8 @@ struct evp_kdf_ctx_st {
      * OSSL_FUNC_kdf_newctx()
      */
     void *algctx;
+    /* For multi-key derivation: skeymgmt used for wrapping */
+    EVP_SKEYMGMT *multi_skeymgmt;
 } /* EVP_KDF_CTX */;
 
 struct evp_rand_ctx_st {

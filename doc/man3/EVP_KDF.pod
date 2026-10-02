@@ -6,6 +6,7 @@ EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
 EVP_KDF_CTX_reset, EVP_KDF_derive,
 EVP_KDF_CTX_set_SKEY, EVP_KDF_derive_SKEY,
+EVP_KDF_derive_SKEYs, EVP_KDF_CTX_get1_SKEY, EVP_KDF_CTX_get0_IV,
 EVP_KDF_CTX_get_kdf_size, EVP_KDF_CTX_get0_kdf, EVP_KDF_CTX_get1_kdf,
 EVP_KDF_get0_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
 EVP_KDF_get0_name, EVP_KDF_names_do_all, EVP_KDF_get0_description,
@@ -34,6 +35,11 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
                                const char *key_type, const char *propquery,
                                size_t keylen, const OSSL_PARAM params[]);
+ int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+                         const char *propquery, const OSSL_PARAM params[]);
+ EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose);
+ int EVP_KDF_CTX_get0_IV(EVP_KDF_CTX *ctx, const char *purpose,
+                         unsigned char **pIV, size_t *pIVlen);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
  void EVP_KDF_free(EVP_KDF *kdf);
  EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
@@ -135,6 +141,28 @@ the derivation functions. As different KDFs may accept several parameters as
 key names, we can specify the particular parameter name we set.  If null is
 passed, the parameter B<OSSL_KDF_PARAM_KEY> is implied.  It is used when the
 input key is represented by B<EVP_SKEY> rather than raw bytes.
+
+EVP_KDF_derive_SKEYs() performs a multi-key derivation, producing multiple
+keys and IVs simultaneously from a single KDF operation. This is used by
+protocols such as TLS that derive several keys at once (e.g., client and server
+cipher keys, MAC keys, and IVs from a single PRF call). Any parameters in
+I<params> are passed to the provider. If I<mgmt> is non-NULL, it specifies the
+B<EVP_SKEYMGMT> to use for wrapping derived keys into B<EVP_SKEY> objects;
+otherwise, an appropriate skeymgmt is fetched using I<propquery>. After a
+successful call, individual keys and IVs can be retrieved using
+EVP_KDF_CTX_get1_SKEY() and EVP_KDF_CTX_get0_IV() respectively.
+
+EVP_KDF_CTX_get1_SKEY() retrieves a derived key by I<purpose> string from a
+context on which EVP_KDF_derive_SKEYs() has been called. The caller receives
+an owned reference to the B<EVP_SKEY> and must free it with EVP_SKEY_free().
+The available purpose strings depend on the KDF algorithm; see
+L<EVP_KDF-TLS1_PRF(7)> and L<EVP_KDF-TLS13_KDF(7)> for examples.
+
+EVP_KDF_CTX_get0_IV() retrieves a derived IV by I<purpose> string from a
+context on which EVP_KDF_derive_SKEYs() has been called. On success, I<*pIV>
+is set to a pointer to the IV data owned by the context (not a copy), and
+I<*pIVlen> is set to its length. The pointer remains valid until the context
+is freed or reset.
 
 EVP_KDF_get_params() retrieves details about the implementation
 I<kdf>.
@@ -313,6 +341,9 @@ return value of 0 means that the callback was not called for any names.
 
 EVP_KDF_derive_SKEY() returns the B<EVP_SKEY> object on success or NULL on failure.
 
+EVP_KDF_CTX_get1_SKEY() returns an owned B<EVP_SKEY> pointer on success or NULL
+on failure.
+
 The remaining functions return 1 for success and 0 for failure.
 
 =head1 NOTES
@@ -338,6 +369,9 @@ in OpenSSL 4.1.
 
 EVP_KDF_CTX_kdf() function was deprecated in favour of EVP_KDF_CTX_get0_kdf()
 in OpenSSL 4.1.
+
+EVP_KDF_derive_SKEYs(), EVP_KDF_CTX_get1_SKEY(), and EVP_KDF_CTX_get0_IV()
+were added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
