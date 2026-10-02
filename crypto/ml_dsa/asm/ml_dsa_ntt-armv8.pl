@@ -667,15 +667,13 @@ ___
 # USHR/MLS forms r and one SUB/UMIN makes it canonical.  Processing vector
 # pairs reduces fixed loop overhead while retaining paired loads and stores.
 sub ntt_reduce_coefficients {
-    my $loop = ".Lml_dsa_ntt_${label_index}_canonical";
     my $pairs_per_iteration = 2;
     my $iterations = 32 / $pairs_per_iteration;
-    $label_index++;
 
     $code .= <<___;
         mov     $group_ptr, $inout_coefficients
         mov     $group_count, #$iterations
-$loop:
+.Lml_dsa_ntt_reduce_coefficients_loop:
 ___
     for (1 .. $pairs_per_iteration) {
         $code .= <<___;
@@ -693,7 +691,7 @@ ___
     }
     $code .= <<___;
         subs    $group_count, $group_count, #1
-        b.ne    $loop
+        b.ne    .Lml_dsa_ntt_reduce_coefficients_loop
 ___
 }
 
