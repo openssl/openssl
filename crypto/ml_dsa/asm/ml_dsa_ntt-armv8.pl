@@ -33,16 +33,16 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # stages use ZIP/UZP permutations to put butterfly partners in matching lanes.
 #
 # Constant products are left in [0,2q), and additions and subtractions are
-# reduced lazily.  A forward butterfly uses a public 2q bias; every layer can
+# reduced lazily.  An NTT butterfly uses a public 2q bias; every layer can
 # increase the upper bound by 4q, so the eight layers end below 33q.  One fixed
-# final pass reduces this to [0,q).  In the inverse transform, layer n uses a
+# final pass reduces this to [0,q).  In the iNTT, layer n uses a
 # public 2^(n-1)*q bias and produces sums below 2^n*q; products remain below
 # 2q.  The final layer is therefore below 256q = 2145386752 < 2^31, and the
 # final scaling multiplication returns canonical coefficients.  In summary:
 #
 #                       input         after eight layers
-#   forward NTT         [0,q)         [0,33q)
-#   inverse NTT         [0,q)         [0,256q)
+#   NTT                 [0,q)         [0,33q)
+#   iNTT                [0,q)         [0,256q)
 #   twiddle product     [0,256q)      [0,2q)
 #
 # Since 256q = 2145386752 < 2^31, every coefficient operand supplied to
@@ -60,7 +60,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # z and c are signed 32-bit values.  a is nonnegative and remains below the
 # signed limit.  MUL and MLS retain only the low 32 bits, but this is exact for
 # the final r because the mathematical difference a*z-k*q lies in [0,2q).
-# The inverse bias ranges from q through 128q = 1072693376, also below 2^30.
+# The iNTT bias ranges from q through 128q = 1072693376, also below 2^30.
 #
 # Only caller-saved GPRs and vector registers are used, so both entry points
 # are leaf functions and require no stack frame.
@@ -81,7 +81,7 @@ my $quotient_constant = "v27";
 my ($scale_quotient_constant, $scale, $q) = map("v$_", (28..30));
 my $modulus = 8380417;
 my $fixed_point_bits = 31;
-my (@forward_twiddle_records, @inverse_twiddle_records);
+my (@ntt_twiddle_records, @intt_twiddle_records);
 my $label_index = 0;
 my $code = <<___;
 #include "arch/arm_arch.h"
@@ -113,13 +113,13 @@ sub powmod {
 }
 
 sub centered_twiddle {
-    my ($index, $inverse) = @_;
+    my ($index, $intt) = @_;
     my $root = powmod(1753, bitrev8($index));
 
-    # Inverse layers use the additive inverse of the corresponding forward
-    # twiddle.  Centre either representative in [-floor(q/2), floor(q/2)] so
-    # both it and its fixed-point quotient constant have small signed bounds.
-    $root = $modulus - $root if $inverse;
+    # iNTT layers use the additive inverse of the corresponding NTT twiddle.
+    # Centre either representative in [-floor(q/2), floor(q/2)] so both it and
+    # its fixed-point quotient constant have small signed bounds.
+    $root = $modulus - $root if $intt;
     return $root > int($modulus / 2) ? $root - $modulus : $root;
 }
 
@@ -169,7 +169,7 @@ sub mul_twiddle_lazy {
     # 0 <= r < 2q.  This small nonnegative bound means that the low-32-bit
     # arithmetic is the exact integer r, not merely a value modulo 2^32.
     # Compute k before MUL so that dst is permitted to alias a.  This is used
-    # by the final inverse scaling, while the butterfly calls use distinct
+# by the final iNTT scaling, while the butterfly calls use distinct
     # source and destination registers.
     $code .= <<___;
         sqdmulh $quotient.4s,$a.4s,$quotient_constant.4s
@@ -196,7 +196,7 @@ sub mul_twiddle_pair_lazy {
     # Interleave two independent constant products.  Besides exposing two
     # independent instruction chains to the processor, calculating both
     # quotients first preserves a0 and a1 when either destination aliases its
-    # source during inverse normalization.
+    # source during iNTT normalization.
     $code .= <<___;
         sqdmulh $quotient.4s,$a0.4s,$quotient_constant.4s
         sqdmulh $quotient2.4s,$a1.4s,$quotient_constant.4s
@@ -220,7 +220,7 @@ sub mul_twiddle_pair_canonical {
 ___
 }
 
-# Cooley-Tukey (forward) butterfly:
+# Cooley-Tukey NTT butterfly:
 #
 #   product = odd * twiddle mod q, with 0 <= product < 2q
 #   even'   = even + 2q + product
@@ -228,7 +228,7 @@ ___
 #
 # The 2q bias prevents the subtraction from becoming negative.  It is a
 # multiple of q, so it does not change either result modulo q.
-sub forward_butterfly {
+sub ntt_butterfly {
     my ($even, $odd, $twiddle, $quotient_constant) = @_;
 
     mul_twiddle_lazy($product, $odd, $twiddle, $quotient_constant);
@@ -239,15 +239,15 @@ sub forward_butterfly {
 ___
 }
 
-# Gentleman-Sande (inverse) butterfly:
+# Gentleman-Sande iNTT butterfly:
 #
 #   difference = even + bias - odd
 #   even'      = even + odd
 #   odd'       = difference * twiddle mod q
 #
-# Each inverse layer sets bias to the current coefficient bound.  The bias is
+# Each iNTT layer sets bias to the current coefficient bound.  The bias is
 # a multiple of q and keeps difference nonnegative without changing it mod q.
-sub inverse_butterfly {
+sub intt_butterfly {
     my ($even, $odd, $twiddle, $quotient_constant) = @_;
 
     $code .= <<___;
@@ -258,7 +258,7 @@ ___
     mul_twiddle_lazy($odd, $product, $twiddle, $quotient_constant);
 }
 
-sub forward_butterfly_pair {
+sub ntt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $twiddle, $quotient_constant) = @_;
 
@@ -274,7 +274,7 @@ sub forward_butterfly_pair {
 ___
 }
 
-sub inverse_butterfly_pair {
+sub intt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $twiddle, $quotient_constant) = @_;
 
@@ -298,10 +298,10 @@ sub load_modulus {
 ___
 }
 
-# Generate one forward stage whose butterfly partners are at least one full
+# Generate one NTT stage whose butterfly partners are at least one full
 # vector apart.  step is the number of groups and offset is their coefficient
 # separation, matching the scalar FIPS 204 loop structure.
-sub forward_wide_stage {
+sub ntt_wide_stage {
     my ($step, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
     my $inner = ".Lml_dsa_ntt_${label_index}_inner";
@@ -315,7 +315,7 @@ sub forward_wide_stage {
 
     for my $i (0 .. $step - 1) {
         my $twiddle = centered_twiddle($step + $i, 0);
-        append_twiddle_record(\@forward_twiddle_records, $twiddle);
+        append_twiddle_record(\@ntt_twiddle_records, $twiddle);
     }
 
     $code .= <<___;
@@ -336,9 +336,9 @@ ___
         ldp     q0,q6,[$even_ptr]
         ldp     q1,q7,[$odd_ptr]
 ___
-            forward_butterfly_pair($coeff_vector0, $coeff_vector1,
-                                   $even_vector2, $odd_vector2,
-                                   $twiddle, $quotient_constant);
+            ntt_butterfly_pair($coeff_vector0, $coeff_vector1,
+                               $even_vector2, $odd_vector2,
+                               $twiddle, $quotient_constant);
             $code .= <<___;
         stp     q0,q6,[$even_ptr],#32
         stp     q1,q7,[$odd_ptr],#32
@@ -349,8 +349,8 @@ ___
         ldr     q0,[$even_ptr]
         ldr     q1,[$odd_ptr]
 ___
-        forward_butterfly($coeff_vector0, $coeff_vector1, $twiddle,
-                          $quotient_constant);
+        ntt_butterfly($coeff_vector0, $coeff_vector1, $twiddle,
+                      $quotient_constant);
         $code .= <<___;
         str     q0,[$even_ptr],#16
         str     q1,[$odd_ptr],#16
@@ -367,14 +367,14 @@ ___
 
 # At offset two, each pair of adjacent 128-bit loads contains interleaved
 # butterfly halves.  ZIP on 64-bit elements places partners in matching lanes.
-sub forward_offset2_stage {
+sub ntt_offset2_stage {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
     $label_index++;
 
     for my $group_index (0 .. 31) {
         my @twiddles = map { centered_twiddle($_, 0) }
                         (64 + 2 * $group_index .. 65 + 2 * $group_index);
-        append_twiddle_record(\@forward_twiddle_records, @twiddles);
+        append_twiddle_record(\@ntt_twiddle_records, @twiddles);
     }
 
     $code .= <<___;
@@ -389,8 +389,8 @@ $loop:
         zip1    $butterfly_even.2d,$coeff_vector0.2d,$coeff_vector1.2d
         zip2    $butterfly_odd.2d,$coeff_vector0.2d,$coeff_vector1.2d
 ___
-    forward_butterfly($butterfly_even, $butterfly_odd, $twiddle,
-                      $quotient_constant);
+    ntt_butterfly($butterfly_even, $butterfly_odd, $twiddle,
+                  $quotient_constant);
     $code .= <<___;
         zip1    $coeff_vector0.2d,$butterfly_even.2d,$butterfly_odd.2d
         zip2    $coeff_vector1.2d,$butterfly_even.2d,$butterfly_odd.2d
@@ -403,14 +403,14 @@ ___
 
 # At offset one, UZP separates even and odd coefficients into two vectors;
 # ZIP restores the original memory order after the butterflies.
-sub forward_offset1_stage {
+sub ntt_offset1_stage {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
     $label_index++;
 
     for my $group_index (0 .. 31) {
         my @twiddles = map { centered_twiddle($_, 0) }
                         (128 + 4 * $group_index .. 131 + 4 * $group_index);
-        append_twiddle_record(\@forward_twiddle_records, @twiddles);
+        append_twiddle_record(\@ntt_twiddle_records, @twiddles);
     }
 
     $code .= <<___;
@@ -423,8 +423,8 @@ $loop:
         uzp1    $butterfly_even.4s,$coeff_vector0.4s,$coeff_vector1.4s
         uzp2    $butterfly_odd.4s,$coeff_vector0.4s,$coeff_vector1.4s
 ___
-    forward_butterfly($butterfly_even, $butterfly_odd, $twiddle,
-                      $quotient_constant);
+    ntt_butterfly($butterfly_even, $butterfly_odd, $twiddle,
+                  $quotient_constant);
     $code .= <<___;
         zip1    $coeff_vector0.4s,$butterfly_even.4s,$butterfly_odd.4s
         zip2    $coeff_vector1.4s,$butterfly_even.4s,$butterfly_odd.4s
@@ -435,9 +435,9 @@ ___
 ___
 }
 
-# The inverse transform consumes stages in the opposite order.  Its first two
-# stages undo the lane permutations used by the final two forward stages.
-sub inverse_offset1_stage {
+# The iNTT consumes stages in the opposite order.  Its first two stages undo
+# the lane permutations used by the final two NTT stages.
+sub intt_offset1_stage {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
     $label_index++;
 
@@ -445,7 +445,7 @@ sub inverse_offset1_stage {
         my @twiddles = map { centered_twiddle($_, 1) }
                         reverse(252 - 4 * $group_index
                                 .. 255 - 4 * $group_index);
-        append_twiddle_record(\@inverse_twiddle_records, @twiddles);
+        append_twiddle_record(\@intt_twiddle_records, @twiddles);
     }
 
     $code .= <<___;
@@ -459,8 +459,8 @@ $loop:
         uzp1    $butterfly_even.4s,$coeff_vector0.4s,$coeff_vector1.4s
         uzp2    $butterfly_odd.4s,$coeff_vector0.4s,$coeff_vector1.4s
 ___
-    inverse_butterfly($butterfly_even, $butterfly_odd, $twiddle,
-                      $quotient_constant);
+    intt_butterfly($butterfly_even, $butterfly_odd, $twiddle,
+                   $quotient_constant);
     $code .= <<___;
         zip1    $coeff_vector0.4s,$butterfly_even.4s,$butterfly_odd.4s
         zip2    $coeff_vector1.4s,$butterfly_even.4s,$butterfly_odd.4s
@@ -471,7 +471,7 @@ ___
 ___
 }
 
-sub inverse_offset2_stage {
+sub intt_offset2_stage {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
     $label_index++;
 
@@ -479,7 +479,7 @@ sub inverse_offset2_stage {
         my @twiddles = map { centered_twiddle($_, 1) }
                         reverse(126 - 2 * $group_index
                                 .. 127 - 2 * $group_index);
-        append_twiddle_record(\@inverse_twiddle_records, @twiddles);
+        append_twiddle_record(\@intt_twiddle_records, @twiddles);
     }
 
     $code .= <<___;
@@ -495,8 +495,8 @@ $loop:
         zip1    $butterfly_even.2d,$coeff_vector0.2d,$coeff_vector1.2d
         zip2    $butterfly_odd.2d,$coeff_vector0.2d,$coeff_vector1.2d
 ___
-    inverse_butterfly($butterfly_even, $butterfly_odd, $twiddle,
-                      $quotient_constant);
+    intt_butterfly($butterfly_even, $butterfly_odd, $twiddle,
+                   $quotient_constant);
     $code .= <<___;
         zip1    $coeff_vector0.2d,$butterfly_even.2d,$butterfly_odd.2d
         zip2    $coeff_vector1.2d,$butterfly_even.2d,$butterfly_odd.2d
@@ -507,10 +507,10 @@ ___
 ___
 }
 
-# Generate an inverse stage with directly loadable even and odd vectors.
+# Generate an iNTT stage with directly loadable even and odd vectors.
 # bias_shift selects q << bias_shift for this layer's nonnegative difference;
-# final requests the canonical inverse scaling after the last butterflies.
-sub inverse_wide_stage {
+# final requests the canonical iNTT scaling after the last butterflies.
+sub intt_wide_stage {
     my ($step, $offset, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
     my $inner = ".Lml_dsa_intt_${label_index}_inner";
@@ -524,7 +524,7 @@ sub inverse_wide_stage {
 
     for my $i (0 .. $step - 1) {
         my $twiddle = centered_twiddle(2 * $step - 1 - $i, 1);
-        append_twiddle_record(\@inverse_twiddle_records, $twiddle);
+        append_twiddle_record(\@intt_twiddle_records, $twiddle);
     }
 
     $code .= <<___;
@@ -546,9 +546,9 @@ ___
         ldp     q0,q6,[$even_ptr]
         ldp     q1,q7,[$odd_ptr]
 ___
-            inverse_butterfly_pair($coeff_vector0, $coeff_vector1,
-                                   $even_vector2, $odd_vector2,
-                                   $twiddle, $quotient_constant);
+            intt_butterfly_pair($coeff_vector0, $coeff_vector1,
+                                $even_vector2, $odd_vector2,
+                                $twiddle, $quotient_constant);
             if ($final) {
                 mul_twiddle_pair_canonical($coeff_vector0, $coeff_vector0,
                                            $even_vector2, $even_vector2,
@@ -569,8 +569,8 @@ ___
         ldr     q0,[$even_ptr]
         ldr     q1,[$odd_ptr]
 ___
-        inverse_butterfly($coeff_vector0, $coeff_vector1, $twiddle,
-                          $quotient_constant);
+        intt_butterfly($coeff_vector0, $coeff_vector1, $twiddle,
+                       $quotient_constant);
         if ($final) {
             mul_twiddle_canonical($coeff_vector0, $coeff_vector0, $scale,
                                   $scale_quotient_constant);
@@ -591,13 +591,14 @@ ___
 ___
 }
 
-sub canonicalize_forward {
+# Reduce all 256 NTT output coefficients from [0,33q) to [0,q).
+sub ntt_reduce_coefficients {
     my $loop = ".Lml_dsa_ntt_${label_index}_canonical";
     my $pairs_per_iteration = 2;
     my $iterations = 32 / $pairs_per_iteration;
     $label_index++;
 
-    # Starting in [0,q), every forward layer can add 4q to the upper bound,
+    # Starting in [0,q), every NTT layer can add 4q to the upper bound,
     # so after all eight layers every lane is in [0,33q).  For such x,
     # t=floor(x/2^23) is at most 32 and
     #
@@ -644,15 +645,15 @@ $code .= <<___;
         add     $twiddle_ptr,$twiddle_ptr,#:lo12:.Lml_dsa_ntt_constants
         shl     $q_bias.4s,$q.4s,#1
 ___
-forward_wide_stage(1, 128);
-forward_wide_stage(2, 64);
-forward_wide_stage(4, 32);
-forward_wide_stage(8, 16);
-forward_wide_stage(16, 8);
-forward_wide_stage(32, 4);
-forward_offset2_stage();
-forward_offset1_stage();
-canonicalize_forward();
+ntt_wide_stage(1, 128);
+ntt_wide_stage(2, 64);
+ntt_wide_stage(4, 32);
+ntt_wide_stage(8, 16);
+ntt_wide_stage(16, 8);
+ntt_wide_stage(32, 4);
+ntt_offset2_stage();
+ntt_offset1_stage();
+ntt_reduce_coefficients();
 $code .= <<___;
         ret
 .size   ossl_ml_dsa_poly_ntt_armv8,.-ossl_ml_dsa_poly_ntt_armv8
@@ -663,7 +664,7 @@ $code .= <<___;
 ossl_ml_dsa_poly_ntt_inverse_armv8:
         AARCH64_VALID_CALL_TARGET
 ___
-# The scalar C inverse transform finishes with Montgomery multiplication by
+# The scalar C iNTT finishes with Montgomery multiplication by
 # 41978.  This routine uses ordinary-domain twiddle multiplication, so its
 # equivalent embedded scale is 41978*R^-1 mod q, where R = 2^32 mod q.
 load_modulus();
@@ -684,14 +685,14 @@ $code .= <<___;
         movk    $quotient_constant_word,#@{[($scale_constant_bits >> 16) & 0xffff]},lsl#16
         dup     $scale_quotient_constant.4s,$quotient_constant_word
 ___
-inverse_offset1_stage();                    # bias = q
-inverse_offset2_stage();                    # bias = 2q
-inverse_wide_stage(32, 4,   2, 0);          # bias = 4q
-inverse_wide_stage(16, 8,   3, 0);          # bias = 8q
-inverse_wide_stage(8,  16,  4, 0);          # bias = 16q
-inverse_wide_stage(4,  32,  5, 0);          # bias = 32q
-inverse_wide_stage(2,  64,  6, 0);          # bias = 64q
-inverse_wide_stage(1,  128, 7, 1);          # bias = 128q; scale final layer
+intt_offset1_stage();                    # bias = q
+intt_offset2_stage();                    # bias = 2q
+intt_wide_stage(32, 4,   2, 0);          # bias = 4q
+intt_wide_stage(16, 8,   3, 0);          # bias = 8q
+intt_wide_stage(8,  16,  4, 0);          # bias = 16q
+intt_wide_stage(4,  32,  5, 0);          # bias = 32q
+intt_wide_stage(2,  64,  6, 0);          # bias = 64q
+intt_wide_stage(1,  128, 7, 1);          # bias = 128q; scale final layer
 $code .= <<___;
         ret
 .size   ossl_ml_dsa_poly_ntt_inverse_armv8,.-ossl_ml_dsa_poly_ntt_inverse_armv8
@@ -706,7 +707,7 @@ $code .= <<___;
 # reversed layer index; no precomputed transform table is copied here.
 .Lml_dsa_ntt_constants:
 ___
-for my $record (@forward_twiddle_records) {
+for my $record (@ntt_twiddle_records) {
     my ($twiddles, $quotient_constants) = @$record;
     $code .= "        .word   " . join(',', @$twiddles) . "\n";
     $code .= "        .word   " . join(',', @$quotient_constants) . "\n";
@@ -718,7 +719,7 @@ $code .= <<___;
 # signed additive inverses of the corresponding forward roots.
 .Lml_dsa_intt_constants:
 ___
-for my $record (@inverse_twiddle_records) {
+for my $record (@intt_twiddle_records) {
     my ($twiddles, $quotient_constants) = @$record;
     $code .= "        .word   " . join(',', @$twiddles) . "\n";
     $code .= "        .word   " . join(',', @$quotient_constants) . "\n";
