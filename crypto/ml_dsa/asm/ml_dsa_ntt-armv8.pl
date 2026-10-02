@@ -93,11 +93,15 @@ my $code = <<___;
 .text
 ___
 
-# Generate four parallel multiplications by z, the constant twiddle.
-# Inputs: destination and source vector-register names, plus registers holding
-# four z values and their matching c values.  Runtime output: each destination
-# lane is congruent to a*z modulo q and lies in [0,2q).  Uses $quotient as
-# scratch.
+##
+# @brief Generate four parallel multiplications by constant twiddle z.
+# @param[out] dst Destination vector register.
+# @param[in] a Source vector register containing values in [0,2^8q).
+# @param[in] z Vector register containing the centred twiddles.
+# @param[in] c Vector register containing each z's reduction constant.
+# @return Generated code leaves each dst lane congruent to a*z modulo q in
+# [0,2q).
+# @note Uses $quotient as scratch.
 sub mul_z_lazy {
     my ($dst, $a, $z, $c) = @_;
 
@@ -126,9 +130,14 @@ sub mul_z_lazy {
 ___
 }
 
-# Generate four parallel multiplications followed by canonical reduction.
-# Inputs: the same register names as mul_z_lazy().  Runtime output: each
-# destination lane is a*z modulo q in [0,q).  Uses $quotient as scratch.
+##
+# @brief Generate four twiddle multiplications and canonical reductions.
+# @param[out] dst Destination vector register.
+# @param[in] a Source vector register containing values in [0,2^8q).
+# @param[in] z Vector register containing the centred twiddles.
+# @param[in] c Vector register containing each z's reduction constant.
+# @return Generated code leaves each dst lane equal to a*z modulo q in [0,q).
+# @note Uses $quotient as scratch.
 sub mul_z_canonical {
     my ($dst, $a, $z, $c) = @_;
 
@@ -141,10 +150,16 @@ sub mul_z_canonical {
 ___
 }
 
-# Generate two independent vectors of lazy multiplications by twiddle z.
-# Inputs: two destination/source register pairs and shared z and c registers.
-# Runtime outputs: both destination vectors contain products modulo q in
-# [0,2q).  Uses $quotient and $quotient2 as scratch.
+##
+# @brief Generate two vectors of lazy multiplications by twiddle z.
+# @param[out] dst0 First destination vector register.
+# @param[in] a0 First source vector register.
+# @param[out] dst1 Second destination vector register.
+# @param[in] a1 Second source vector register.
+# @param[in] z Shared vector register containing the centred twiddles.
+# @param[in] c Shared vector register containing each z's reduction constant.
+# @return Generated code leaves both destination vectors in [0,2q).
+# @note Uses $quotient and $quotient2 as scratch.
 sub mul_z_pair_lazy {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
@@ -162,10 +177,16 @@ sub mul_z_pair_lazy {
 ___
 }
 
-# Generate two independent vectors of canonical multiplications by twiddle z.
-# Inputs: the same register names as mul_z_pair_lazy().  Runtime outputs: both
-# destination vectors contain products modulo q in [0,q).  Uses both quotient
-# vectors as scratch.
+##
+# @brief Generate two vectors of canonical multiplications by twiddle z.
+# @param[out] dst0 First destination vector register.
+# @param[in] a0 First source vector register.
+# @param[out] dst1 Second destination vector register.
+# @param[in] a1 Second source vector register.
+# @param[in] z Shared vector register containing the centred twiddles.
+# @param[in] c Shared vector register containing each z's reduction constant.
+# @return Generated code leaves both destination vectors in [0,q).
+# @note Uses both quotient vectors as scratch.
 sub mul_z_pair_canonical {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
@@ -178,7 +199,16 @@ sub mul_z_pair_canonical {
 ___
 }
 
-# Cooley-Tukey NTT butterfly:
+##
+# @brief Generate one four-lane Cooley-Tukey NTT butterfly.
+# @param[in,out] even Vector register containing the even coefficients.
+# @param[in,out] odd Vector register containing the odd coefficients.
+# @param[in] z Vector register containing the NTT twiddles.
+# @param[in] c Vector register containing each z's reduction constant.
+# @pre $q_bias contains 2q.
+# @return Generated code leaves even and odd containing the butterfly results.
+#
+# @par Pseudocode
 #
 #   product = odd * twiddle mod q, with 0 <= product < 2q
 #   even'   = even + 2q + product
@@ -186,9 +216,6 @@ ___
 #
 # The 2q bias prevents the subtraction from becoming negative.  It is a
 # multiple of q, so it does not change either result modulo q.
-# Inputs: registers containing four even coefficients, four odd coefficients,
-# four twiddles z, and their matching c values; q_bias must contain 2q.
-# Runtime outputs: even and odd are updated in place with the butterfly result.
 sub ntt_butterfly {
     my ($even, $odd, $z, $c) = @_;
 
@@ -200,7 +227,16 @@ sub ntt_butterfly {
 ___
 }
 
-# Gentleman-Sande iNTT butterfly:
+##
+# @brief Generate one four-lane Gentleman-Sande iNTT butterfly.
+# @param[in,out] even Vector register containing the even coefficients.
+# @param[in,out] odd Vector register containing the odd coefficients.
+# @param[in] z Vector register containing the iNTT twiddles.
+# @param[in] c Vector register containing each z's reduction constant.
+# @pre $q_bias contains the current layer's multiple of q.
+# @return Generated code leaves even and odd containing the butterfly results.
+#
+# @par Pseudocode
 #
 #   difference = even + bias - odd
 #   even'      = even + odd
@@ -208,9 +244,6 @@ ___
 #
 # Each iNTT layer sets bias to the current coefficient bound.  The bias is
 # a multiple of q and keeps difference nonnegative without changing it mod q.
-# Inputs: registers containing four even coefficients, four odd coefficients,
-# four iNTT twiddles z, and their matching c values; q_bias contains the
-# layer's bias.  Runtime outputs: even and odd are updated in place.
 sub intt_butterfly {
     my ($even, $odd, $z, $c) = @_;
 
@@ -222,10 +255,16 @@ ___
     mul_z_lazy($odd, $product, $z, $c);
 }
 
-# Generate two independent four-lane Cooley-Tukey NTT butterflies.
-# Inputs: two even/odd register pairs and shared z and c registers; z is the
-# NTT twiddle and q_bias must contain 2q.  Runtime outputs: all four coefficient
-# registers are updated in place.
+##
+# @brief Generate two independent four-lane Cooley-Tukey NTT butterflies.
+# @param[in,out] even0 First even-coefficient vector register.
+# @param[in,out] odd0 First odd-coefficient vector register.
+# @param[in,out] even1 Second even-coefficient vector register.
+# @param[in,out] odd1 Second odd-coefficient vector register.
+# @param[in] z Shared vector register containing the NTT twiddles.
+# @param[in] c Shared vector register containing each z's reduction constant.
+# @pre $q_bias contains 2q.
+# @return Generated code leaves all four registers containing butterfly results.
 sub ntt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
@@ -241,10 +280,16 @@ sub ntt_butterfly_pair {
 ___
 }
 
-# Generate two independent four-lane Gentleman-Sande iNTT butterflies.
-# Inputs: two even/odd register pairs and shared iNTT twiddle z and quotient
-# constant c registers; q_bias contains the layer's bias.  Runtime outputs: all
-# four coefficient registers are updated in place.
+##
+# @brief Generate two independent four-lane Gentleman-Sande iNTT butterflies.
+# @param[in,out] even0 First even-coefficient vector register.
+# @param[in,out] odd0 First odd-coefficient vector register.
+# @param[in,out] even1 Second even-coefficient vector register.
+# @param[in,out] odd1 Second odd-coefficient vector register.
+# @param[in] z Shared vector register containing the iNTT twiddles.
+# @param[in] c Shared vector register containing each z's reduction constant.
+# @pre $q_bias contains the current layer's multiple of q.
+# @return Generated code leaves all four registers containing butterfly results.
 sub intt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
@@ -260,9 +305,9 @@ ___
     mul_z_pair_lazy($odd0, $product, $odd1, $product2, $z, $c);
 }
 
-# Generate the instructions that construct the ML-DSA modulus.
-# Input: none.  Runtime output: q_word contains q and q_vector contains
-# [q,q,q,q].
+##
+# @brief Generate instructions that load the ML-DSA modulus.
+# @return Generated code loads q into $q_word and [q,q,q,q] into $q_vector.
 sub load_modulus {
     $code .= <<___;
         mov     $q_word,#0xe001
@@ -271,13 +316,15 @@ sub load_modulus {
 ___
 }
 
-# Generate one NTT layer whose butterfly partners are at least one full
-# vector apart.  Inputs: step is the number of groups and offset is the
-# coefficient separation within each butterfly, matching the scalar FIPS 204
-# loop structure.  Runtime output: the selected layer updates all 256
-# coefficients in place.
+##
+# @brief Generate an NTT layer with directly loadable partner vectors.
+# @param[in] step Number of coefficient groups in the layer.
+# @param[in] offset Coefficient separation between butterfly partners.
+# @return Generated code updates all 256 coefficients in place.
+# @details Applies when partners are at least one vector apart.  The parameters
+# match the scalar FIPS 204 loop structure.
 #
-# Pseudocode:
+# @par Pseudocode
 #   for each group in the layer:
 #       (z, c) = next table record
 #       for each vector of partners separated by offset:
@@ -340,12 +387,13 @@ ___
 ___
 }
 
-# At offset two, each pair of adjacent 128-bit loads contains interleaved
-# butterfly halves.  ZIP on 64-bit elements places partners in matching lanes.
-# Input: none.  Runtime output: the offset-two NTT layer updates all 256
-# coefficients in place.
+##
+# @brief Generate the offset-two NTT layer.
+# @return Generated code updates all 256 coefficients in place.
+# @details Each pair of adjacent 128-bit loads contains interleaved butterfly
+# halves.  ZIP on 64-bit elements places partners in matching lanes.
 #
-# Pseudocode:
+# @par Pseudocode
 #   for each pair of adjacent vectors:
 #       (even, odd) = zip_64_bit_halves(load_two_vectors())
 #       (even, odd) = ntt_butterfly(even, odd, z, c)
@@ -377,12 +425,13 @@ ___
 ___
 }
 
-# At offset one, UZP separates even and odd coefficients into two vectors;
-# ZIP restores the original memory order after the butterflies.
-# Input: none.  Runtime output: the offset-one NTT layer updates all 256
-# coefficients in place.
+##
+# @brief Generate the offset-one NTT layer.
+# @return Generated code updates all 256 coefficients in place.
+# @details UZP separates even and odd coefficients into two vectors; ZIP
+# restores the original memory order after the butterflies.
 #
-# Pseudocode:
+# @par Pseudocode
 #   for each pair of adjacent vectors:
 #       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
 #       (even, odd) = ntt_butterfly(even, odd, z, c)
@@ -412,12 +461,13 @@ ___
 ___
 }
 
-# The iNTT consumes layers in the opposite order.  Its first two layers undo
-# the lane permutations used by the final two NTT layers.
-# Input: none.  Runtime output: the offset-one iNTT layer updates all 256
-# coefficients in place using q as its nonnegative bias.
+##
+# @brief Generate the offset-one iNTT layer.
+# @return Generated code updates all 256 coefficients in place using bias q.
+# @details The first iNTT layer begins undoing the lane permutations used by
+# the final two NTT layers.
 #
-# Pseudocode:
+# @par Pseudocode
 #   bias = q
 #   for each pair of adjacent vectors:
 #       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
@@ -449,11 +499,13 @@ ___
 ___
 }
 
-# Generate the offset-two iNTT layer, undoing the corresponding NTT lane
-# permutation with 64-bit ZIP operations.  Input: none.  Runtime output: all
-# 256 coefficients are updated in place using 2q as the nonnegative bias.
+##
+# @brief Generate the offset-two iNTT layer.
+# @return Generated code updates all 256 coefficients in place using bias 2q.
+# @details Uses 64-bit ZIP operations to undo the corresponding NTT lane
+# permutation.
 #
-# Pseudocode:
+# @par Pseudocode
 #   bias = 2q
 #   for each pair of adjacent vectors:
 #       (even, odd) = zip_64_bit_halves(load_two_vectors())
@@ -487,13 +539,15 @@ ___
 ___
 }
 
-# Generate an iNTT layer with directly loadable even and odd vectors.
-# Inputs: step is the number of groups; offset is the coefficient separation;
-# bias_shift selects q << bias_shift for the layer's nonnegative difference;
-# final requests canonical iNTT scaling after the last butterflies.  Runtime
-# output: the selected layer updates all 256 coefficients in place.
+##
+# @brief Generate an iNTT layer with directly loadable partner vectors.
+# @param[in] step Number of coefficient groups in the layer.
+# @param[in] offset Coefficient separation between butterfly partners.
+# @param[in] bias_shift Selects q << bias_shift as the subtraction bias.
+# @param[in] final Whether to apply canonical iNTT scaling after the layer.
+# @return Generated code updates all 256 coefficients in place.
 #
-# Pseudocode:
+# @par Pseudocode
 #   bias = q << bias_shift
 #   for each group in the layer:
 #       (z, c) = next table record
@@ -573,9 +627,11 @@ ___
 ___
 }
 
-# Reduce all 256 NTT output coefficients from [0,33q) to [0,q).
-# Input: none; generated code reads the polynomial through $coefficients.
-# Runtime output: all coefficients in memory are canonical.
+##
+# @brief Generate the final canonical reduction of all NTT coefficients.
+# @return Generated code reduces all 256 coefficients from [0,33q) to [0,q).
+# @details The generated loop reads and writes the polynomial through
+# $coefficients.
 sub ntt_reduce_coefficients {
     my $loop = ".Lml_dsa_ntt_${label_index}_canonical";
     my $pairs_per_iteration = 2;
