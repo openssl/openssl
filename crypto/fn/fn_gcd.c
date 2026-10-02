@@ -65,6 +65,7 @@ static int ossl_fn_ct_swap(OSSL_FN_ULONG mask, OSSL_FN *a, OSSL_FN *b,
     if (!ossl_assert(a->dsize == b->dsize))
         return 0;
 
+    mask = value_barrier_bn(mask);
     for (int i = 0; i < a->dsize; i++) {
         OSSL_FN_ULONG t = (a->d[i] ^ b->d[i]) & mask;
 
