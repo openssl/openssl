@@ -15,6 +15,9 @@
 #include "internal/property.h"
 #include "internal/refcount.h"
 #include "../crypto/property/property_local.h"
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#include "threadstest.h"
+#endif
 
 /*
  * We make our OSSL_PROVIDER for testing purposes.  All we really need is
@@ -449,6 +452,402 @@ static int test_register_deregister(void)
 err:
     ossl_method_store_free(store);
     return ret;
+}
+
+typedef struct {
+    OSSL_METHOD_STORE *store;
+    int nid;
+    int refs;
+    int uprefs;
+    int free_check_ref;
+    int fail_ref;
+    int visits;
+    int ok;
+} STORE_TEST_METHOD;
+
+static int store_test_method_up_ref(void *arg)
+{
+    STORE_TEST_METHOD *method = arg;
+
+    if (method->fail_ref)
+        return 0;
+    method->refs++;
+    method->uprefs++;
+    return 1;
+}
+
+static void store_test_method_free(void *arg)
+{
+    STORE_TEST_METHOD *method = arg;
+
+    /*
+     * Reenter the store when releasing the snapshot's reference, including
+     * during failure cleanup. The store lock must already be released.
+     */
+    if (method->refs == method->free_check_ref
+        && !TEST_true(ossl_method_store_cache_flush_all(method->store)))
+        method->ok = 0;
+    method->refs--;
+}
+
+static void store_test_method_visit(int nid, void *arg, ossl_unused void *unused)
+{
+    STORE_TEST_METHOD *method = arg;
+
+    if (!TEST_int_eq(nid, method->nid)
+        || !TEST_int_eq(method->refs, 2)
+        || !TEST_int_eq(method->visits, 0)
+        || !TEST_true(ossl_method_store_cache_flush_all(method->store)))
+        method->ok = 0;
+    method->visits++;
+}
+
+static int test_method_store_fetch_ref(int cached)
+{
+    OSSL_METHOD_STORE *store = NULL;
+    OSSL_PROVIDER provider = { 1 };
+    const OSSL_PROVIDER *prov = &provider;
+    STORE_TEST_METHOD method = { 0 };
+    void *fetched = NULL;
+    int ret = 0, refs;
+
+    method.refs = 1;
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !TEST_true(ossl_method_store_add(store, &provider, 1, "", &method,
+            store_test_method_up_ref, store_test_method_free)))
+        goto end;
+    if (cached
+        && !TEST_true(ossl_method_store_cache_set(store, &provider, 1, "",
+            &method, store_test_method_up_ref, store_test_method_free)))
+        goto end;
+
+    refs = method.refs;
+    if (!TEST_true(cached
+                ? ossl_method_store_cache_get_ref(store, &provider, 1, "", &fetched)
+                : ossl_method_store_fetch_ref(store, 1, "", &prov, &fetched))
+        || !TEST_ptr_eq(fetched, &method)
+        || !TEST_int_eq(method.refs, refs + 1))
+        goto end;
+    store_test_method_free(fetched);
+    fetched = NULL;
+    if (!TEST_int_eq(method.refs, refs))
+        goto end;
+
+    method.fail_ref = 1;
+    if (!TEST_false(cached
+                ? ossl_method_store_cache_get_ref(store, &provider, 1, "", &fetched)
+                : ossl_method_store_fetch_ref(store, 1, "", &prov, &fetched))
+        || !TEST_ptr_null(fetched)
+        || !TEST_int_eq(method.refs, refs))
+        goto end;
+    ret = 1;
+end:
+    if (fetched != NULL)
+        store_test_method_free(fetched);
+    ossl_method_store_free(store);
+    return TEST_int_eq(method.refs, 1) && ret;
+}
+
+/*
+ * Model method ownership without freeing the test objects. Check successful
+ * enumeration and failures before or after acquiring snapshot references.
+ */
+static int test_method_store_do_all(int idx)
+{
+    OSSL_METHOD_STORE *store = NULL;
+    OSSL_PROVIDER prov = { 1 };
+    STORE_TEST_METHOD methods[4] = { { 0 } };
+    static const char *properties[] = {
+        "position=1", "position=2", "position=3", "position=4"
+    };
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !add_property_names("position", NULL))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        methods[i].store = store;
+        methods[i].nid = idx == 0 ? 1 + (int)i / 2 : 1;
+        methods[i].ok = 1;
+        methods[i].free_check_ref = 2;
+        if (!TEST_true(ossl_method_store_add(store, &prov, methods[i].nid,
+                properties[i], &methods[i],
+                store_test_method_up_ref, store_test_method_free)))
+            goto end;
+    }
+    if (idx != 0)
+        methods[idx == 1 ? 0 : 2].fail_ref = 1;
+
+    ossl_method_store_do_all(store, store_test_method_visit, NULL);
+
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, idx == 0 ? 2 : 1)
+            || !TEST_int_eq(methods[i].visits, idx == 0 ? 1 : 0)
+            || !TEST_true(methods[i].ok))
+            goto end;
+    }
+    if (idx != 0) {
+        methods[idx == 1 ? 0 : 2].fail_ref = 0;
+        ossl_method_store_do_all(store, store_test_method_visit, NULL);
+        for (i = 0; i < OSSL_NELEM(methods); i++) {
+            if (!TEST_int_eq(methods[i].refs, 2)
+                || !TEST_int_eq(methods[i].visits, 1)
+                || !TEST_true(methods[i].ok))
+                goto end;
+        }
+    }
+    ret = 1;
+end:
+    ossl_method_store_free(store);
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 0))
+            ret = 0;
+    }
+    return ret;
+}
+
+static int test_method_store_do_all_mfail(void)
+{
+    OSSL_METHOD_STORE *store = NULL;
+    OSSL_PROVIDER prov = { 1 };
+    STORE_TEST_METHOD methods[8] = { { 0 } };
+    size_t i;
+    int ret = -1;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL)))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        methods[i].store = store;
+        methods[i].nid = 1 + (int)i;
+        methods[i].ok = 1;
+        methods[i].free_check_ref = 2;
+        if (!TEST_true(ossl_method_store_add(store, &prov, methods[i].nid,
+                "", &methods[i],
+                store_test_method_up_ref, store_test_method_free)))
+            goto end;
+    }
+
+    MFAIL_start();
+    ossl_method_store_do_all(store, store_test_method_visit, NULL);
+    MFAIL_end();
+
+    ret = 1;
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 1 + methods[i].visits)
+            || !TEST_int_le(methods[i].visits, 1)
+            || !TEST_true(methods[i].ok)) {
+            ret = -1;
+            goto end;
+        }
+        if (methods[i].visits == 0)
+            ret = 0;
+    }
+
+end:
+    ossl_method_store_free(store);
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 0))
+            ret = -1;
+    }
+    return ret;
+}
+
+/* Test reuse and invalidation with model objects that remain allocated. */
+static int test_method_store_snapshot_cache(int idx)
+{
+    OSSL_METHOD_STORE *store = NULL;
+    OSSL_PROVIDER providers[2] = { { 1 }, { 1 } };
+    STORE_TEST_METHOD methods[4] = { { 0 } };
+    static const char *properties[] = {
+        "position=1", "position=2", "position=3", "position=4"
+    };
+    size_t i, removed = idx == 0 ? 1 : 2;
+    int ret = 0, round;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !add_property_names("position", NULL))
+        goto end;
+    ossl_method_store_do_all(NULL, store_test_method_visit, NULL);
+    ossl_method_store_do_all(store, store_test_method_visit, NULL);
+
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        methods[i].store = store;
+        methods[i].nid = 1;
+        methods[i].ok = 1;
+        methods[i].free_check_ref = 2;
+    }
+    for (i = 0; i < OSSL_NELEM(methods) - 1; i++) {
+        if (!TEST_true(ossl_method_store_add(store, &providers[i < 2 ? 0 : 1],
+                1, properties[i], &methods[i], store_test_method_up_ref,
+                store_test_method_free)))
+            goto end;
+    }
+
+    /* Reuse must not acquire more method references. */
+    for (round = 0; round < 2; round++) {
+        for (i = 0; i < OSSL_NELEM(methods); i++)
+            methods[i].visits = 0;
+        ossl_method_store_do_all(store, store_test_method_visit, NULL);
+        for (i = 0; i < OSSL_NELEM(methods) - 1; i++) {
+            if (!TEST_int_eq(methods[i].refs, 2)
+                || !TEST_int_eq(methods[i].uprefs, 2)
+                || !TEST_int_eq(methods[i].visits, 1)
+                || !TEST_true(methods[i].ok))
+                goto end;
+        }
+    }
+
+    /* Adding a method retires the old snapshot after unlocking. */
+    if (!TEST_true(ossl_method_store_add(store, &providers[1], 1,
+            properties[3], &methods[3], store_test_method_up_ref,
+            store_test_method_free)))
+        goto end;
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 1) || !TEST_true(methods[i].ok))
+            goto end;
+        methods[i].visits = 0;
+    }
+    ossl_method_store_do_all(store, store_test_method_visit, NULL);
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 2)
+            || !TEST_int_eq(methods[i].visits, 1)
+            || !TEST_int_eq(methods[i].uprefs, i == 3 ? 2 : 3)
+            || !TEST_true(methods[i].ok))
+            goto end;
+        methods[i].visits = 0;
+        if (i < removed)
+            methods[i].free_check_ref = 1;
+    }
+
+    /* Final release of a removed method must also happen outside the lock. */
+    if (idx == 0) {
+        if (!TEST_true(ossl_method_store_remove(store, 1, &methods[0])))
+            goto end;
+    } else if (!TEST_true(ossl_method_store_remove_all_provided(store, &providers[0]))) {
+        goto end;
+    }
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, i < removed ? 0 : 1)
+            || !TEST_true(methods[i].ok))
+            goto end;
+    }
+    ossl_method_store_do_all(store, store_test_method_visit, NULL);
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, i < removed ? 0 : 2)
+            || !TEST_int_eq(methods[i].visits, i < removed ? 0 : 1)
+            || !TEST_true(methods[i].ok))
+            goto end;
+    }
+    ret = 1;
+end:
+    ossl_method_store_free(store);
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 0) || !TEST_true(methods[i].ok))
+            ret = 0;
+    }
+    return ret;
+}
+
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+typedef struct {
+    OSSL_METHOD_STORE *store;
+    OSSL_PROVIDER *provider;
+    STORE_TEST_METHOD *extra;
+    int started;
+    int ok;
+} SNAPSHOT_ADD_STATE;
+
+static SNAPSHOT_ADD_STATE *snapshot_add_state;
+
+static void snapshot_add_worker(void)
+{
+    SNAPSHOT_ADD_STATE *state = snapshot_add_state;
+
+    state->ok = ossl_method_store_add(state->store, state->provider, 1,
+        "position=4", state->extra, store_test_method_up_ref,
+        store_test_method_free);
+}
+
+static void snapshot_visit_during_add(int nid, void *method, void *arg)
+{
+    SNAPSHOT_ADD_STATE *state = arg;
+    thread_t thread;
+
+    if (!state->started) {
+        state->started = 1;
+        if (!TEST_true(run_thread(&thread, snapshot_add_worker))) {
+            state->ok = 0;
+            return;
+        }
+        if (!TEST_true(wait_for_thread(thread))) {
+            state->ok = 0;
+            return;
+        }
+    }
+    store_test_method_visit(nid, method, NULL);
+}
+#endif
+
+/* Adding a method must not replace the snapshot still used by a reader. */
+static int test_method_store_snapshot_in_use(void)
+{
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    OSSL_METHOD_STORE *store = NULL;
+    OSSL_PROVIDER provider = { 1 };
+    STORE_TEST_METHOD methods[4] = { { 0 } };
+    SNAPSHOT_ADD_STATE state = { NULL, &provider, &methods[3], 0, 0 };
+    static const char *properties[] = { "position=1", "position=2", "position=3" };
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !add_property_names("position", NULL))
+        goto end;
+    state.store = store;
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        methods[i].store = store;
+        methods[i].nid = 1;
+        methods[i].ok = 1;
+        methods[i].free_check_ref = 2;
+    }
+    for (i = 0; i < OSSL_NELEM(properties); i++) {
+        if (!TEST_true(ossl_method_store_add(store, &provider, 1, properties[i],
+                &methods[i], store_test_method_up_ref, store_test_method_free)))
+            goto end;
+    }
+    snapshot_add_state = &state;
+    ossl_method_store_do_all(store, snapshot_visit_during_add, &state);
+    snapshot_add_state = NULL;
+    if (!TEST_true(state.started) || !TEST_true(state.ok))
+        goto end;
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 1)
+            || !TEST_int_eq(methods[i].visits, i == 3 ? 0 : 1)
+            || !TEST_true(methods[i].ok))
+            goto end;
+        methods[i].visits = 0;
+    }
+    ossl_method_store_do_all(store, store_test_method_visit, NULL);
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 2)
+            || !TEST_int_eq(methods[i].visits, 1)
+            || !TEST_true(methods[i].ok))
+            goto end;
+    }
+    ret = 1;
+end:
+    ossl_method_store_free(store);
+    for (i = 0; i < OSSL_NELEM(methods); i++) {
+        if (!TEST_int_eq(methods[i].refs, 0))
+            ret = 0;
+    }
+    return ret;
+#else
+    return TEST_skip("requires threads");
+#endif
 }
 
 static int test_property(void)
@@ -981,6 +1380,11 @@ int setup_tests(void)
     ADD_TEST(test_property_defn_cache);
     ADD_ALL_TESTS(test_definition_compares, OSSL_NELEM(definition_tests));
     ADD_TEST(test_register_deregister);
+    ADD_ALL_TESTS(test_method_store_fetch_ref, 2);
+    ADD_ALL_TESTS(test_method_store_do_all, 3);
+    ADD_ALL_TESTS(test_method_store_snapshot_cache, 2);
+    ADD_TEST(test_method_store_snapshot_in_use);
+    ADD_MFAIL_NO_CHECK_TEST(test_method_store_do_all_mfail);
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_query_cache_set_duplicate);

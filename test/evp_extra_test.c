@@ -40,6 +40,8 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "../crypto/evp/evp_local.h"
+#include "../crypto/encode_decode/encoder_local.h"
 #include "fake_rsaprov.h"
 #include "fake_pipelineprov.h"
 
@@ -60,6 +62,67 @@ static char *testpropq = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *deflprov = NULL;
 static OSSL_PROVIDER *lgcyprov = NULL;
+
+/* Guard references keep these model objects alive throughout the checks. */
+static int test_endecode_method_refs(int idx)
+{
+    union {
+        OSSL_DECODER decoder;
+        OSSL_ENCODER encoder;
+        EVP_KEYMGMT keymgmt;
+    } method = { 0 };
+    CRYPTO_REF_COUNT *refcnt;
+    int ret = 0, up_ref;
+
+    switch (idx % 3) {
+    case 0:
+        method.decoder.base.id = 1;
+        method.decoder.base.no_store = idx / 3;
+        refcnt = &method.decoder.base.refcnt;
+        break;
+    case 1:
+        method.encoder.base.id = 1;
+        method.encoder.base.no_store = idx / 3;
+        refcnt = &method.encoder.base.refcnt;
+        break;
+    default:
+        method.keymgmt.no_store = idx / 3;
+        refcnt = &method.keymgmt.refcnt;
+        break;
+    }
+    if (!TEST_true(CRYPTO_NEW_REF(refcnt, 2)))
+        return 0;
+
+    switch (idx % 3) {
+    case 0:
+        up_ref = OSSL_DECODER_up_ref(&method.decoder);
+        break;
+    case 1:
+        up_ref = OSSL_ENCODER_up_ref(&method.encoder);
+        break;
+    default:
+        up_ref = EVP_KEYMGMT_up_ref(&method.keymgmt);
+        break;
+    }
+    if (!TEST_true(up_ref) || !TEST_int_eq(refcnt->val, 3))
+        goto end;
+
+    switch (idx % 3) {
+    case 0:
+        OSSL_DECODER_free(&method.decoder);
+        break;
+    case 1:
+        OSSL_ENCODER_free(&method.encoder);
+        break;
+    default:
+        EVP_KEYMGMT_free(&method.keymgmt);
+        break;
+    }
+    ret = TEST_int_eq(refcnt->val, 2);
+end:
+    CRYPTO_FREE_REF(refcnt);
+    return ret;
+}
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
@@ -910,6 +973,139 @@ static EVP_PKEY *load_example_rsa_key(void)
 {
     return load_example_key("RSA", kExampleRSAKeyDER,
         sizeof(kExampleRSAKeyDER));
+}
+
+/* Cache eviction must not affect outstanding operations or their results. */
+static int test_decoder_cache_ownership(int reverse_order)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *prov = NULL;
+    OSSL_DECODER_CTX *dctx[3] = { NULL, NULL, NULL };
+    EVP_PKEY *pkey[3] = { NULL, NULL, NULL };
+    OSSL_DECODER_INSTANCE *first, *second;
+    const unsigned char *data;
+    size_t len;
+    int i, refs, ret = 0;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(dctx[0] = OSSL_DECODER_CTX_new_for_pkey(&pkey[0],
+                         "DER", NULL, "RSA", OSSL_KEYMGMT_SELECT_KEYPAIR,
+                         libctx, "provider=default"))
+        || !TEST_ptr(dctx[0]->cache_entry)
+        || !TEST_int_gt(OSSL_DECODER_CTX_get_num_decoders(dctx[0]), 0))
+        goto end;
+
+    first = sk_OSSL_DECODER_INSTANCE_value(dctx[0]->decoder_insts, 0);
+    refs = first->decoder->base.refcnt.val;
+    if (!TEST_ptr(dctx[1] = OSSL_DECODER_CTX_new_for_pkey(&pkey[1],
+                      "DER", NULL, "RSA", OSSL_KEYMGMT_SELECT_KEYPAIR,
+                      libctx, "provider=default"))
+        || !TEST_ptr_eq(dctx[0]->cache_entry, dctx[1]->cache_entry)
+        || !TEST_ptr_ne(dctx[0]->construct_data, dctx[1]->construct_data)
+        || !TEST_int_eq(first->decoder->base.refcnt.val, refs)
+        || !TEST_int_eq(OSSL_DECODER_CTX_get_num_decoders(dctx[0]),
+            OSSL_DECODER_CTX_get_num_decoders(dctx[1])))
+        goto end;
+
+    for (i = 0; i < OSSL_DECODER_CTX_get_num_decoders(dctx[0]); i++) {
+        first = sk_OSSL_DECODER_INSTANCE_value(dctx[0]->decoder_insts, i);
+        second = sk_OSSL_DECODER_INSTANCE_value(dctx[1]->decoder_insts, i);
+        if (!TEST_ptr_eq(first->decoder, second->decoder)
+            || !TEST_ptr_ne(first->decoderctx, second->decoderctx))
+            goto end;
+    }
+
+    if (!TEST_true(ossl_decoder_cache_flush(libctx))
+        || !TEST_ptr(dctx[2] = OSSL_DECODER_CTX_new_for_pkey(&pkey[2],
+                         "DER", NULL, "RSA", OSSL_KEYMGMT_SELECT_KEYPAIR,
+                         libctx, "provider=default"))
+        || !TEST_ptr_ne(dctx[0]->cache_entry, dctx[2]->cache_entry))
+        goto end;
+
+    for (i = 0; i < 3; i++) {
+        int n = i < 2 ? (i ^ reverse_order) : i;
+
+        data = n == 1 ? kExampleRSAKeyPKCS8 : kExampleRSAKeyDER;
+        len = n == 1 ? sizeof(kExampleRSAKeyPKCS8) : sizeof(kExampleRSAKeyDER);
+        if (!TEST_true(OSSL_DECODER_from_data(dctx[n], &data, &len))
+            || !TEST_size_t_eq(len, 0)
+            || !TEST_ptr(pkey[n]))
+            goto end;
+        OSSL_DECODER_CTX_free(dctx[n]);
+        dctx[n] = NULL;
+    }
+
+    /* Keys keep their selected keymgmt after both templates are released. */
+    if (!TEST_true(ossl_decoder_cache_flush(libctx))
+        || !TEST_int_eq(EVP_PKEY_get_bits(pkey[0]), 1024)
+        || !TEST_int_eq(EVP_PKEY_eq(pkey[0], pkey[1]), 1)
+        || !TEST_int_eq(EVP_PKEY_eq(pkey[0], pkey[2]), 1))
+        goto end;
+    ret = 1;
+end:
+    for (i = 0; i < 3; i++) {
+        OSSL_DECODER_CTX_free(dctx[i]);
+        EVP_PKEY_free(pkey[i]);
+    }
+    OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
+static int test_decoder_cache_dup_mfail(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *prov = NULL;
+    OSSL_DECODER_CTX *warm = NULL, *attempt = NULL, *retry = NULL;
+    EVP_PKEY *pkey = NULL;
+    const unsigned char *data;
+    size_t len;
+    int ret = -1, ok;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(warm = OSSL_DECODER_CTX_new_for_pkey(&pkey,
+                         "DER", NULL, NULL, OSSL_KEYMGMT_SELECT_KEYPAIR,
+                         libctx, "provider=default")))
+        goto end;
+
+    MFAIL_start();
+    attempt = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, NULL,
+        OSSL_KEYMGMT_SELECT_KEYPAIR, libctx, "provider=default");
+    MFAIL_end();
+    ok = attempt != NULL;
+    OSSL_DECODER_CTX_free(attempt);
+    ERR_clear_error();
+
+    /* Partial clones must release only their own resources and owner ref. */
+    data = kExampleRSAKeyDER;
+    len = sizeof(kExampleRSAKeyDER);
+    if (!TEST_true(ossl_decoder_cache_flush(libctx))
+        || !TEST_true(OSSL_DECODER_from_data(warm, &data, &len))
+        || !TEST_ptr(pkey))
+        goto end;
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+    OSSL_DECODER_CTX_free(warm);
+    warm = NULL;
+
+    data = kExampleRSAKeyDER;
+    len = sizeof(kExampleRSAKeyDER);
+    if (!TEST_ptr(retry = OSSL_DECODER_CTX_new_for_pkey(&pkey,
+                      "DER", NULL, NULL, OSSL_KEYMGMT_SELECT_KEYPAIR,
+                      libctx, "provider=default"))
+        || !TEST_true(OSSL_DECODER_from_data(retry, &data, &len))
+        || !TEST_ptr(pkey))
+        goto end;
+    ret = ok;
+end:
+    OSSL_DECODER_CTX_free(retry);
+    OSSL_DECODER_CTX_free(warm);
+    EVP_PKEY_free(pkey);
+    OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_DSA
@@ -9942,6 +10138,9 @@ int setup_tests(void)
 #endif
 
     ADD_TEST(test_names_do_all);
+    ADD_ALL_TESTS(test_endecode_method_refs, 6);
+    ADD_ALL_TESTS(test_decoder_cache_ownership, 2);
+    ADD_MFAIL_SAMPLED_TEST(test_decoder_cache_dup_mfail, 128);
 
     setup_cipher_list();
     ADD_ALL_TESTS(test_evp_diff_order_init, cipher_list_n);

@@ -68,23 +68,12 @@ static OSSL_ENCODER *ossl_encoder_new(void)
 
 int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder)
 {
-#ifdef OPENSSL_NO_CACHED_FETCH
     return ossl_encoder_up_ref(encoder);
-#else
-    if (encoder->base.no_store != 0)
-        return ossl_encoder_up_ref(encoder);
-    return 1;
-#endif
 }
 
 void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
 {
-#ifdef OPENSSL_NO_CACHED_FETCH
     ossl_encoder_free(encoder);
-#else
-    if (encoder != NULL && (encoder->base.no_store != 0))
-        ossl_encoder_free(encoder);
-#endif
 }
 
 /* Data to be passed through ossl_method_construct() */
@@ -179,7 +168,7 @@ static void *get_encoder_from_store(void *store, const OSSL_PROVIDER **prov,
         && (store = get_encoder_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, id, methdata->propquery, prov, &method))
+    if (!ossl_method_store_fetch_ref(store, id, methdata->propquery, prov, &method))
         return NULL;
     return method;
 }
@@ -376,7 +365,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata,
     unsupported = id == 0;
 
     if (id == 0
-        || !ossl_method_store_cache_get(store, NULL, id, propq, &method)) {
+        || !ossl_method_store_cache_get_ref(store, NULL, id, propq, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             get_tmp_encoder_store,
             reserve_encoder_store,
@@ -407,15 +396,6 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata,
             if (id != 0 && methdata->tmp_store == NULL) {
                 ossl_method_store_cache_set(store, prov, id, propq, method,
                     ossl_encoder_up_ref, ossl_encoder_free);
-            } else {
-                /*
-                 * Like with EVP methods, if the provider requests no caching we need
-                 * to take an extra refcount here so that the tmp_stored encoder
-                 * lives beyond the freeing of that tmp_store
-                 */
-#ifndef OPENSSL_NO_CACHED_FETCH
-                OSSL_ENCODER_up_ref((OSSL_ENCODER *)method);
-#endif
             }
         }
 

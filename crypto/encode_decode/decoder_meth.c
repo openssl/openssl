@@ -67,31 +67,12 @@ static OSSL_DECODER *ossl_decoder_new(void)
 
 int OSSL_DECODER_up_ref(OSSL_DECODER *decoder)
 {
-#ifdef OPENSSL_NO_CACHED_FETCH
     return ossl_decoder_up_ref(decoder);
-#else
-    /*
-     * DECODERS do something weird.  They manually build methods rather than
-     * attempt to fetch them from the method store or construct them through
-     * the ossl_generic_fetch mechanism.  As such they don't make use of the refcounting
-     * that we rely on in the method store, and so we always need to refcount them here
-     * We can identify them based on the fact that they never have a registered nid (i.e.
-     * its always zero)
-     */
-    if (decoder->base.id == 0 || decoder->base.no_store != 0)
-        return ossl_decoder_up_ref(decoder);
-    return 1;
-#endif
 }
 
 void OSSL_DECODER_free(OSSL_DECODER *decoder)
 {
-#ifdef OPENSSL_NO_CACHED_FETCH
     ossl_decoder_free(decoder);
-#else
-    if (decoder != NULL && (decoder->base.id == 0 || decoder->base.no_store != 0))
-        ossl_decoder_free(decoder);
-#endif
 }
 
 /* Data to be passed through ossl_method_construct() */
@@ -186,7 +167,7 @@ static void *get_decoder_from_store(void *store, const OSSL_PROVIDER **prov,
         && (store = get_decoder_store(methdata->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, id, methdata->propquery, prov, &method))
+    if (!ossl_method_store_fetch_ref(store, id, methdata->propquery, prov, &method))
         return NULL;
     return method;
 }
@@ -377,7 +358,7 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
     unsupported = id == 0;
 
     if (id == 0
-        || !ossl_method_store_cache_get(store, NULL, id, propq, &method)) {
+        || !ossl_method_store_cache_get_ref(store, NULL, id, propq, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             get_tmp_decoder_store,
             reserve_decoder_store,
@@ -408,18 +389,6 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
             if (id != 0 && methdata->tmp_store == NULL) {
                 ossl_method_store_cache_set(store, prov, id, propq, method,
                     ossl_decoder_up_ref, ossl_decoder_free);
-            } else {
-                /*
-                 * Like with EVP methods, if the provider requests no caching we need
-                 * to take an extra refcount here so that the tmp_stored decoder
-                 * lives beyond the freeing of that tmp_store
-                 */
-#ifndef OPENSSL_NO_CACHED_FETCH
-                if (!OSSL_DECODER_up_ref((OSSL_DECODER *)method)) {
-                    ossl_decoder_free(method);
-                    method = NULL;
-                }
-#endif
             }
         }
 
@@ -694,6 +663,7 @@ void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx)
         sk_OSSL_DECODER_INSTANCE_pop_free(ctx->decoder_insts,
             ossl_decoder_instance_free);
         ossl_pw_clear_passphrase_data(&ctx->pwdata);
+        ossl_decoder_cache_entry_free(ctx->cache_entry);
         OPENSSL_free(ctx);
     }
 }
