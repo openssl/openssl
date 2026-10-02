@@ -833,28 +833,23 @@ AES_ctr32_encrypt:
 	swl	$s3,12+$MSB($out)
 #endif
 
-	# Increment the low 32-bit counter in big-endian byte order.
+	# Propagate carry through all four bytes without counter-dependent branches.
 	lbu	$t0,$CTR32_BLOCK_OFFSET+15($sp)
 	addiu	$t0,1
-	andi	$t0,0xff
 	sb	$t0,$CTR32_BLOCK_OFFSET+15($sp)
-	bnez	$t0,.Lctr32_no_carry
+	srl	$t1,$t0,8
 	lbu	$t0,$CTR32_BLOCK_OFFSET+14($sp)
-	addiu	$t0,1
-	andi	$t0,0xff
+	addu	$t0,$t1
 	sb	$t0,$CTR32_BLOCK_OFFSET+14($sp)
-	bnez	$t0,.Lctr32_no_carry
+	srl	$t1,$t0,8
 	lbu	$t0,$CTR32_BLOCK_OFFSET+13($sp)
-	addiu	$t0,1
-	andi	$t0,0xff
+	addu	$t0,$t1
 	sb	$t0,$CTR32_BLOCK_OFFSET+13($sp)
-	bnez	$t0,.Lctr32_no_carry
+	srl	$t1,$t0,8
 	lbu	$t0,$CTR32_BLOCK_OFFSET+12($sp)
-	addiu	$t0,1
-	andi	$t0,0xff
+	addu	$t0,$t1
 	sb	$t0,$CTR32_BLOCK_OFFSET+12($sp)
 
-.Lctr32_no_carry:
 	$PTR_ADD $inp,16
 	$PTR_ADD $out,16
 	$REG_L	$t0,$CTR32_COUNT_OFFSET($sp)
@@ -864,6 +859,11 @@ AES_ctr32_encrypt:
 
 .Lctr32_done:
 	.set	noreorder
+	# The private counter can contain the CTR-DRBG's secret V.
+	$REG_S	$zero,$CTR32_BLOCK_OFFSET+0($sp)
+	$REG_S	$zero,$CTR32_BLOCK_OFFSET+4($sp)
+	$REG_S	$zero,$CTR32_BLOCK_OFFSET+8($sp)
+	$REG_S	$zero,$CTR32_BLOCK_OFFSET+12($sp)
 	$REG_L	$ra,$CTR32_FRAMESIZE-1*$SZREG($sp)
 	$REG_L	$fp,$CTR32_FRAMESIZE-2*$SZREG($sp)
 	$REG_L	$s11,$CTR32_FRAMESIZE-3*$SZREG($sp)
