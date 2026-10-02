@@ -94,7 +94,7 @@ my $code = <<___;
 ___
 
 ##
-# @brief Lazy twiddle multiplication.
+# @brief Set dst = a*z mod q with dst in [0,2q).
 # @param[out] dst Destination vector register.
 # @param[in] a Source vector register containing values in [0,2^8q).
 # @param[in] z Vector register containing the centred twiddles.
@@ -128,7 +128,7 @@ ___
 }
 
 ##
-# @brief Canonical twiddle multiplication.
+# @brief Set dst = a*z mod q with dst in [0,q).
 # @param[out] dst Destination vector register.
 # @param[in] a Source vector register containing values in [0,2^8q).
 # @param[in] z Vector register containing the centred twiddles.
@@ -148,7 +148,7 @@ ___
 }
 
 ##
-# @brief Paired lazy twiddle multiplication.
+# @brief Set (dst0,dst1) = (a0*z,a1*z) mod q in [0,2q).
 # @param[out] dst0 First destination vector register.
 # @param[in] a0 First source vector register.
 # @param[out] dst1 Second destination vector register.
@@ -174,7 +174,7 @@ ___
 }
 
 ##
-# @brief Paired canonical twiddle multiplication.
+# @brief Set (dst0,dst1) = (a0*z,a1*z) mod q in [0,q).
 # @param[out] dst0 First destination vector register.
 # @param[in] a0 First source vector register.
 # @param[out] dst1 Second destination vector register.
