@@ -1571,10 +1571,9 @@ static int test_dtls13_finished_ack_loss_recovers(void)
         goto end;
 
     /*
-     * The server has already moved to the next read epoch and discarded the
-     * old one, so it cannot authenticate this retransmission and never
-     * produces a replacement ACK. This is the assertion that must flip once
-     * the previous read epoch is retained: a fresh ACK should appear here.
+     * The server has already moved to the next read epoch, so this
+     * retransmission only authenticates via the server's retained previous
+     * read epoch: a fresh ACK must appear here.
      */
     ret = SSL_read(server, &buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
@@ -1679,10 +1678,9 @@ static int test_dtls13_keyupdate_ack_loss_recovers(int idx)
         goto end;
 
     /*
-     * The receiver has already moved to the next read epoch and discarded
-     * the old one, so it cannot authenticate this retransmission and never
-     * produces a replacement ACK. This is the assertion that must flip once
-     * the previous read epoch is retained: a fresh ACK should appear here.
+     * The receiver has already moved to the next read epoch, so this
+     * retransmission only authenticates via the receiver's retained
+     * previous read epoch: a fresh ACK must appear here.
      */
     ret = SSL_read(receiver, &buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)
@@ -2173,9 +2171,9 @@ end:
  * above), but the ACK branch of dtls_get_reassembled_message() returns
  * before the retained-epoch restriction is applied, dtls1_read_bytes()
  * records the authenticating epoch for handshake records only, and
- * dtls_process_ack() removes matching entries from the retransmission queue
- * without checking which epoch authenticated the ACK. This test fails until
- * the ACK path enforces the handshake/application protection boundary.
+ * dtls_process_ack() removes matching entries from the retransmission queue,
+ * so the ACK path must itself enforce the handshake/application protection
+ * boundary rather than relying on which epoch authenticated the record.
  */
 static int test_dtls13_retained_epoch_ack_authority(void)
 {
@@ -2519,29 +2517,17 @@ static int test_dtls13_keyupdate_preserves_flight(int idx)
          */
         if (!TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(server)), 0))
             goto end;
-#if 0
+
         /*
-         * Disabled until PR 32963 (the retained-previous-read-epoch fix
-         * this assertion depends on) is merged: the server's own read
-         * epoch already advanced when it processed the client's KeyUpdate
-         * above, so this ACK -- sent at the client's still-unbumped write
-         * epoch -- now only authenticates via the server's retained
-         * previous read epoch. Without that mechanism it is silently
-         * dropped instead of clearing the ticket entry.
+         * The server's own read epoch already advanced when it processed
+         * the client's KeyUpdate above, so this ACK -- sent at the client's
+         * still-unbumped write epoch -- now only authenticates via the
+         * server's retained previous read epoch.
          */
         ret = SSL_read(server, buf, 1);
         if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
             || !TEST_size_t_eq(pqueue_size(&sc->d1->sent_messages), 0))
             goto end;
-#else
-        /*
-         * Drain the transport bytes so later pending-byte checks in this
-         * function aren't polluted by an ACK that cannot be processed
-         * without the retained-epoch mechanism above.
-         */
-        while (BIO_read(SSL_get_rbio(server), buf, sizeof(buf)) > 0)
-            continue;
-#endif
 
         /* A second KeyUpdate must be refused while the first is unacked. */
         if (!TEST_false(SSL_key_update(client, SSL_KEY_UPDATE_NOT_REQUESTED)))
@@ -3236,17 +3222,6 @@ static int test_dtls13_server_keyupdate_preserves_ack(void)
         || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_WRITE), c_wepoch))
         goto end;
 
-#if 0
-    /*
-     * Disabled until PR 32963 (the retained-previous-read-epoch fix this
-     * test depends on) is merged: the server's acknowledgment of the
-     * client's KeyUpdate below arrives at the client's still-current
-     * epoch, but by the time it reaches the server the server's own read
-     * epoch has already moved on, so it only decrypts via the server's
-     * retained previous read epoch's keys. Without that mechanism this
-     * ACK is silently dropped instead of authenticating, and the rest of
-     * this test cannot proceed.
-     */
     /*
      * The server processes the client's KeyUpdate and immediately
      * acknowledges it under its current, still-valid keys rather than
@@ -3293,9 +3268,6 @@ static int test_dtls13_server_keyupdate_preserves_ack(void)
     ret = SSL_read(client, buf, sizeof(buf));
     if (!TEST_int_eq(ret, 1) || !TEST_mem_eq(buf, 1, "s", 1))
         goto end;
-#else
-    (void)buf;
-#endif
 
     testresult = 1;
 end:
@@ -3374,17 +3346,6 @@ static int test_dtls13_server_keyupdate_preserves_pha(void)
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
         goto end;
 
-#if 0
-    /*
-     * Disabled until PR 32963 (the retained-previous-read-epoch fix this
-     * test depends on) is merged: recovering the dropped acknowledgment
-     * below relies on the client re-authenticating the server's
-     * retransmitted KeyUpdate via its retained previous read epoch (the
-     * client's read epoch has already moved on by the time the
-     * retransmission arrives). Without that mechanism the retransmission
-     * is silently dropped instead of being re-acknowledged, and the rest
-     * of this test cannot proceed.
-     */
     /* Lose that acknowledgment, leaving the KeyUpdate outstanding. */
     dropped = 0;
     while (BIO_read(SSL_get_rbio(server), buf, sizeof(buf)) > 0)
@@ -3420,9 +3381,6 @@ static int test_dtls13_server_keyupdate_preserves_pha(void)
     ret = SSL_read(client, buf, 1);
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
         goto end;
-#else
-    (void)dropped;
-#endif
 
     testresult = 1;
 end:
