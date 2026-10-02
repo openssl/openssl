@@ -321,7 +321,7 @@ ___
 
 ##
 # @brief Wide-offset NTT layer.
-# @param[in] step Number of coefficient groups in the layer.
+# @param[in] groups Number of coefficient groups in the layer.
 # @param[in] offset Coefficient separation between butterfly partners.
 # @return Generated code updates all 256 coefficients in place.
 # @details Applies when partners are at least one vector apart.  The parameters
@@ -333,7 +333,7 @@ ___
 #       for each vector of partners separated by offset:
 #           (even, odd) = ntt_butterfly_4way(even, odd, z, c)
 sub ntt_wide_layer {
-    my ($step, $offset) = @_;
+    my ($groups, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
     my $inner = ".Lml_dsa_ntt_${label_index}_inner";
     my $offset_bytes = 4 * $offset;
@@ -345,7 +345,7 @@ sub ntt_wide_layer {
 
     $code .= <<___;
         mov     $group_ptr, $coefficients
-        mov     $group_count, #$step
+        mov     $group_count, #$groups
 $outer:
         ldr     d2, [$zc_ptr], #8
         dup     $c.4s, $z.s[1]
@@ -541,7 +541,7 @@ ___
 
 ##
 # @brief Wide-offset iNTT layer.
-# @param[in] step Number of coefficient groups in the layer.
+# @param[in] groups Number of coefficient groups in the layer.
 # @param[in] offset Coefficient separation between butterfly partners.
 # @param[in] bias_shift Selects q << bias_shift as the subtraction bias.
 # @param[in] final Whether to apply canonical iNTT scaling after the layer.
@@ -555,7 +555,7 @@ ___
 #           (even, odd) = intt_butterfly_4way(even, odd, z, c, bias)
 #           if final: reduce even and odd to [0,q)
 sub intt_wide_layer {
-    my ($step, $offset, $bias_shift, $final) = @_;
+    my ($groups, $offset, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
     my $inner = ".Lml_dsa_intt_${label_index}_inner";
     my $offset_bytes = 4 * $offset;
@@ -568,7 +568,7 @@ sub intt_wide_layer {
     $code .= <<___;
         shl     $q_bias.4s, $q_vector.4s, #$bias_shift
         mov     $group_ptr, $coefficients
-        mov     $group_count, #$step
+        mov     $group_count, #$groups
 $outer:
         ldr     d2, [$zc_ptr], #8
         dup     $c.4s, $z.s[1]
