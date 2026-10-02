@@ -289,6 +289,11 @@ $eres = eval {
                         $output_buffer .= "\n".$self->as_string;
                     }
                 }
+
+                # TAP::Base calls callbacks in list context, so without this
+                # return, every line appended above would also return a copy
+                # of all of $output_buffer, which takes quadratic time.
+                return;
             }
         }
 
