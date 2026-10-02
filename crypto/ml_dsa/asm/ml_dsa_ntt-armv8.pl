@@ -276,6 +276,12 @@ ___
 # coefficient separation within each butterfly, matching the scalar FIPS 204
 # loop structure.  Runtime output: the selected layer updates all 256
 # coefficients in place.
+#
+# Pseudocode:
+#   for each group in the layer:
+#       (z, c) = next table record
+#       for each vector of partners separated by offset:
+#           (even, odd) = ntt_butterfly(even, odd, z, c)
 sub ntt_wide_layer {
     my ($step, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
@@ -338,6 +344,12 @@ ___
 # butterfly halves.  ZIP on 64-bit elements places partners in matching lanes.
 # Input: none.  Runtime output: the offset-two NTT layer updates all 256
 # coefficients in place.
+#
+# Pseudocode:
+#   for each pair of adjacent vectors:
+#       (even, odd) = zip_64_bit_halves(load_two_vectors())
+#       (even, odd) = ntt_butterfly(even, odd, z, c)
+#       store_two_vectors(unzip_64_bit_halves(even, odd))
 sub ntt_offset2_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
     $label_index++;
@@ -369,6 +381,12 @@ ___
 # ZIP restores the original memory order after the butterflies.
 # Input: none.  Runtime output: the offset-one NTT layer updates all 256
 # coefficients in place.
+#
+# Pseudocode:
+#   for each pair of adjacent vectors:
+#       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
+#       (even, odd) = ntt_butterfly(even, odd, z, c)
+#       store_two_vectors(interleave_lanes(even, odd))
 sub ntt_offset1_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
     $label_index++;
@@ -398,6 +416,13 @@ ___
 # the lane permutations used by the final two NTT layers.
 # Input: none.  Runtime output: the offset-one iNTT layer updates all 256
 # coefficients in place using q as its nonnegative bias.
+#
+# Pseudocode:
+#   bias = q
+#   for each pair of adjacent vectors:
+#       (even, odd) = separate_even_and_odd_lanes(load_two_vectors())
+#       (even, odd) = intt_butterfly(even, odd, z, c, bias)
+#       store_two_vectors(interleave_lanes(even, odd))
 sub intt_offset1_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
     $label_index++;
@@ -427,6 +452,13 @@ ___
 # Generate the offset-two iNTT layer, undoing the corresponding NTT lane
 # permutation with 64-bit ZIP operations.  Input: none.  Runtime output: all
 # 256 coefficients are updated in place using 2q as the nonnegative bias.
+#
+# Pseudocode:
+#   bias = 2q
+#   for each pair of adjacent vectors:
+#       (even, odd) = zip_64_bit_halves(load_two_vectors())
+#       (even, odd) = intt_butterfly(even, odd, z, c, bias)
+#       store_two_vectors(unzip_64_bit_halves(even, odd))
 sub intt_offset2_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
     $label_index++;
@@ -460,6 +492,14 @@ ___
 # bias_shift selects q << bias_shift for the layer's nonnegative difference;
 # final requests canonical iNTT scaling after the last butterflies.  Runtime
 # output: the selected layer updates all 256 coefficients in place.
+#
+# Pseudocode:
+#   bias = q << bias_shift
+#   for each group in the layer:
+#       (z, c) = next table record
+#       for each vector of partners separated by offset:
+#           (even, odd) = intt_butterfly(even, odd, z, c, bias)
+#           if final: reduce even and odd to [0,q)
 sub intt_wide_layer {
     my ($step, $offset, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
