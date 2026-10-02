@@ -340,8 +340,7 @@ sub ntt_wide_layer {
     my $group_bytes = 2 * $offset_bytes;
     my $vectors = $offset / 4;
     my $paired = $vectors >= 2;
-    my $pair_unroll = 1;
-    my $iterations = $paired ? $vectors / (2 * $pair_unroll) : $vectors;
+    my $iterations = $paired ? $vectors / 2 : $vectors;
     $label_index++;
 
     $code .= <<___;
@@ -357,19 +356,17 @@ $outer:
 $inner:
 ___
     if ($paired) {
-        for (1 .. $pair_unroll) {
-            $code .= <<___;
+        $code .= <<___;
         ldp     q0,q6,[$even_ptr]
         ldp     q1,q7,[$odd_ptr]
 ___
-            ntt_butterfly_8way($coeff_vector0, $coeff_vector1,
-                               $even_vector2, $odd_vector2,
-                               $z, $c);
-            $code .= <<___;
+        ntt_butterfly_8way($coeff_vector0, $coeff_vector1,
+                           $even_vector2, $odd_vector2,
+                           $z, $c);
+        $code .= <<___;
         stp     q0,q6,[$even_ptr],#32
         stp     q1,q7,[$odd_ptr],#32
 ___
-        }
     } else {
         $code .= <<___;
         ldr     q0,[$even_ptr]
@@ -565,8 +562,7 @@ sub intt_wide_layer {
     my $group_bytes = 2 * $offset_bytes;
     my $vectors = $offset / 4;
     my $paired = $vectors >= 2;
-    my $pair_unroll = 1;
-    my $iterations = $paired ? $vectors / (2 * $pair_unroll) : $vectors;
+    my $iterations = $paired ? $vectors / 2 : $vectors;
     $label_index++;
 
     $code .= <<___;
@@ -583,27 +579,25 @@ $outer:
 $inner:
 ___
     if ($paired) {
-        for (1 .. $pair_unroll) {
-            $code .= <<___;
+        $code .= <<___;
         ldp     q0,q6,[$even_ptr]
         ldp     q1,q7,[$odd_ptr]
 ___
-            intt_butterfly_8way($coeff_vector0, $coeff_vector1,
-                                $even_vector2, $odd_vector2,
-                                $z, $c);
-            if ($final) {
-                barrett_multiply_pair($coeff_vector0, $coeff_vector0,
-                                     $even_vector2, $even_vector2,
-                                     $scale_z, $scale_c);
-                barrett_multiply_pair($coeff_vector1, $coeff_vector1,
-                                     $odd_vector2, $odd_vector2,
-                                     $scale_z, $scale_c);
-            }
-            $code .= <<___;
+        intt_butterfly_8way($coeff_vector0, $coeff_vector1,
+                            $even_vector2, $odd_vector2,
+                            $z, $c);
+        if ($final) {
+            barrett_multiply_pair($coeff_vector0, $coeff_vector0,
+                                  $even_vector2, $even_vector2,
+                                  $scale_z, $scale_c);
+            barrett_multiply_pair($coeff_vector1, $coeff_vector1,
+                                  $odd_vector2, $odd_vector2,
+                                  $scale_z, $scale_c);
+        }
+        $code .= <<___;
         stp     q0,q6,[$even_ptr],#32
         stp     q1,q7,[$odd_ptr],#32
 ___
-        }
     } else {
         $code .= <<___;
         ldr     q0,[$even_ptr]
