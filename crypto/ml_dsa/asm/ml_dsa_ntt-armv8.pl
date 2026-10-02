@@ -30,7 +30,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # ml_dsa_ntt.c.  Each Neon register holds four 32-bit coefficients, so four
 # butterflies are evaluated in parallel.  Stages with offsets of at least four
 # can load their even and odd halves directly.  The final offset-2 and offset-1
-# stages use ZIP/UZP permutations to put butterfly partners in matching lanes.
+# layers use ZIP/UZP permutations to put butterfly partners in matching lanes.
 #
 # Constant products are left in [0,2q), and additions and subtractions are
 # reduced lazily.  An NTT butterfly uses a public 2q bias; every layer can
@@ -95,9 +95,9 @@ ___
 
 # Generate four parallel multiplications by z, the constant twiddle.
 # Inputs: destination and source vector-register names, plus registers holding
-# four z values and their matching c values.  Runtime output: each
-# destination lane is congruent to a*z modulo q and lies in [0,2q).  Perl
-# output: none; appends instructions to $code and uses $quotient as scratch.
+# four z values and their matching c values.  Runtime output: each destination
+# lane is congruent to a*z modulo q and lies in [0,2q).  Uses $quotient as
+# scratch.
 sub mul_z_lazy {
     my ($dst, $a, $z, $c) = @_;
 
@@ -128,8 +128,7 @@ ___
 
 # Generate four parallel multiplications followed by canonical reduction.
 # Inputs: the same register names as mul_z_lazy().  Runtime output: each
-# destination lane is a*z modulo q in [0,q).  Perl output: none; appends
-# instructions to $code and uses $quotient as scratch.
+# destination lane is a*z modulo q in [0,q).  Uses $quotient as scratch.
 sub mul_z_canonical {
     my ($dst, $a, $z, $c) = @_;
 
@@ -144,9 +143,8 @@ ___
 
 # Generate two independent vectors of lazy multiplications by twiddle z.
 # Inputs: two destination/source register pairs and shared z and c registers.
-# Runtime outputs: both destination vectors contain
-# products modulo q in [0,2q).  Perl output: none; appends instructions to
-# $code and uses $quotient and $quotient2 as scratch.
+# Runtime outputs: both destination vectors contain products modulo q in
+# [0,2q).  Uses $quotient and $quotient2 as scratch.
 sub mul_z_pair_lazy {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
@@ -165,9 +163,9 @@ ___
 }
 
 # Generate two independent vectors of canonical multiplications by twiddle z.
-# Inputs: the same register names as mul_z_pair_lazy().  Runtime outputs:
-# both destination vectors contain products modulo q in [0,q).  Perl output:
-# none; appends instructions to $code and uses both quotient vectors as scratch.
+# Inputs: the same register names as mul_z_pair_lazy().  Runtime outputs: both
+# destination vectors contain products modulo q in [0,q).  Uses both quotient
+# vectors as scratch.
 sub mul_z_pair_canonical {
     my ($dst0, $a0, $dst1, $a1, $z, $c) = @_;
 
@@ -191,7 +189,6 @@ ___
 # Inputs: registers containing four even coefficients, four odd coefficients,
 # four twiddles z, and their matching c values; q_bias must contain 2q.
 # Runtime outputs: even and odd are updated in place with the butterfly result.
-# Perl output: none; appends instructions to $code.
 sub ntt_butterfly {
     my ($even, $odd, $z, $c) = @_;
 
@@ -213,8 +210,7 @@ ___
 # a multiple of q and keeps difference nonnegative without changing it mod q.
 # Inputs: registers containing four even coefficients, four odd coefficients,
 # four iNTT twiddles z, and their matching c values; q_bias contains the
-# layer's bias.  Runtime outputs: even and odd are updated in place.  Perl
-# output: none; appends instructions to $code.
+# layer's bias.  Runtime outputs: even and odd are updated in place.
 sub intt_butterfly {
     my ($even, $odd, $z, $c) = @_;
 
@@ -229,7 +225,7 @@ ___
 # Generate two independent four-lane Cooley-Tukey NTT butterflies.
 # Inputs: two even/odd register pairs and shared z and c registers; z is the
 # NTT twiddle and q_bias must contain 2q.  Runtime outputs: all four coefficient
-# registers are updated in place.  Perl output: none; appends to $code.
+# registers are updated in place.
 sub ntt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
@@ -248,8 +244,7 @@ ___
 # Generate two independent four-lane Gentleman-Sande iNTT butterflies.
 # Inputs: two even/odd register pairs and shared iNTT twiddle z and quotient
 # constant c registers; q_bias contains the layer's bias.  Runtime outputs: all
-# four coefficient registers are updated in place.  Perl output: none;
-# appends instructions to $code.
+# four coefficient registers are updated in place.
 sub intt_butterfly_pair {
     my ($even0, $odd0, $even1, $odd1,
         $z, $c) = @_;
@@ -267,7 +262,7 @@ ___
 
 # Generate the instructions that construct the ML-DSA modulus.
 # Input: none.  Runtime output: q_word contains q and q_vector contains
-# [q,q,q,q].  Perl output: none; appends instructions to $code.
+# [q,q,q,q].
 sub load_modulus {
     $code .= <<___;
         mov     $q_word,#0xe001
@@ -280,7 +275,7 @@ ___
 # vector apart.  Inputs: step is the number of groups and offset is the
 # coefficient separation within each butterfly, matching the scalar FIPS 204
 # loop structure.  Runtime output: the selected layer updates all 256
-# coefficients in place.  Perl output: none; appends its instructions to $code.
+# coefficients in place.
 sub ntt_wide_layer {
     my ($step, $offset) = @_;
     my $outer = ".Lml_dsa_ntt_${label_index}_outer";
@@ -342,7 +337,7 @@ ___
 # At offset two, each pair of adjacent 128-bit loads contains interleaved
 # butterfly halves.  ZIP on 64-bit elements places partners in matching lanes.
 # Input: none.  Runtime output: the offset-two NTT layer updates all 256
-# coefficients in place.  Perl output: none; appends instructions to $code.
+# coefficients in place.
 sub ntt_offset2_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset2";
     $label_index++;
@@ -373,7 +368,7 @@ ___
 # At offset one, UZP separates even and odd coefficients into two vectors;
 # ZIP restores the original memory order after the butterflies.
 # Input: none.  Runtime output: the offset-one NTT layer updates all 256
-# coefficients in place.  Perl output: none; appends instructions to $code.
+# coefficients in place.
 sub ntt_offset1_layer {
     my $loop = ".Lml_dsa_ntt_${label_index}_offset1";
     $label_index++;
@@ -399,11 +394,10 @@ ___
 ___
 }
 
-# The iNTT consumes stages in the opposite order.  Its first two stages undo
-# the lane permutations used by the final two NTT stages.
+# The iNTT consumes layers in the opposite order.  Its first two layers undo
+# the lane permutations used by the final two NTT layers.
 # Input: none.  Runtime output: the offset-one iNTT layer updates all 256
-# coefficients in place using q as its nonnegative bias.  Perl output: none;
-# appends instructions to $code.
+# coefficients in place using q as its nonnegative bias.
 sub intt_offset1_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset1";
     $label_index++;
@@ -433,7 +427,6 @@ ___
 # Generate the offset-two iNTT layer, undoing the corresponding NTT lane
 # permutation with 64-bit ZIP operations.  Input: none.  Runtime output: all
 # 256 coefficients are updated in place using 2q as the nonnegative bias.
-# Perl output: none; appends instructions to $code.
 sub intt_offset2_layer {
     my $loop = ".Lml_dsa_intt_${label_index}_offset2";
     $label_index++;
@@ -466,8 +459,7 @@ ___
 # Inputs: step is the number of groups; offset is the coefficient separation;
 # bias_shift selects q << bias_shift for the layer's nonnegative difference;
 # final requests canonical iNTT scaling after the last butterflies.  Runtime
-# output: the selected layer updates all 256 coefficients in place.  Perl
-# output: none; appends its instructions to $code.
+# output: the selected layer updates all 256 coefficients in place.
 sub intt_wide_layer {
     my ($step, $offset, $bias_shift, $final) = @_;
     my $outer = ".Lml_dsa_intt_${label_index}_outer";
@@ -543,8 +535,7 @@ ___
 
 # Reduce all 256 NTT output coefficients from [0,33q) to [0,q).
 # Input: none; generated code reads the polynomial through $coefficients.
-# Runtime output: all coefficients in memory are canonical.  Perl output: none;
-# appends the reduction loop to $code.
+# Runtime output: all coefficients in memory are canonical.
 sub ntt_reduce_coefficients {
     my $loop = ".Lml_dsa_ntt_${label_index}_canonical";
     my $pairs_per_iteration = 2;
