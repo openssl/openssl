@@ -54,7 +54,8 @@ Specifies which key or IV to retrieve from a multi-key derivation.
 Must be used together with B<-multi>.
 The available purpose strings depend on the KDF algorithm; for example,
 TLS1-PRF supports B<client_MAC_key>, B<server_MAC_key>, B<client_cipher_key>,
-B<server_cipher_key>, B<client_IV>, and B<server_IV>.
+B<server_cipher_key>, B<client_iv>, and B<server_iv>.
+TLS13-KDF supports B<client_key>, B<server_key>, B<client_iv>, and B<server_iv>.
 See the documentation of the specific KDF for the supported purpose strings.
 
 If the purpose identifies a key, it is retrieved via EVP_KDF_CTX_get1_SKEY()
