@@ -59,6 +59,7 @@ _mul_1x1:
 .cfi_startproc
 	sub	\$128+8,%rsp
 .cfi_adjust_cfa_offset	128+8
+.cfi_endprolog
 	mov	\$-1,$a1
 	lea	($a,$a),$i0
 	shr	\$3,$a1
@@ -181,10 +182,11 @@ $code.=<<___;
 .align	16
 bn_GF2m_mul_2x2:
 .cfi_startproc
-	mov	%rsp,%rax
+	mov	%rsp,%rax                   # TODO: Not needed?
+.cfi_endprolog
 	mov	OPENSSL_ia32cap_P(%rip),%r10
 	bt	\$33,%r10
-	jnc	.Lvanilla_mul_2x2
+	jnc	_bn_GF2m_mul_2x2_vanilla_shortcut
 
 	movq		$a1,%xmm0
 	movq		$b1,%xmm1
@@ -214,29 +216,37 @@ $code.=<<___;
 	movdqu		%xmm2,0($rp)
 	movdqu		%xmm0,16($rp)
 	ret
+.cfi_endproc
+.size   bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
 
+.type	_bn_GF2m_mul_2x2_vanilla,\@abi-omnipotent
 .align	16
-.Lvanilla_mul_2x2:
+_bn_GF2m_mul_2x2_vanilla:
+.cfi_startproc
+_bn_GF2m_mul_2x2_vanilla_shortcut:
 	lea	-8*17(%rsp),%rsp
 .cfi_adjust_cfa_offset	8*17
 ___
 $code.=<<___ if ($win64);
 	mov	`8*17+40`(%rsp),$b0
+.cfi_stackalloc	`8*17+40`
 	mov	%rdi,8*15(%rsp)
+.cfi_sp_offset	%rdi,8*15
 	mov	%rsi,8*16(%rsp)
+.cfi_sp_offset	%rsi,8*16
 ___
 $code.=<<___;
 	mov	%r14,8*10(%rsp)
-.cfi_rel_offset	%r14,8*10
+.cfi_sp_offset	%r14,8*10
 	mov	%r13,8*11(%rsp)
-.cfi_rel_offset	%r13,8*11
+.cfi_sp_offset	%r13,8*11
 	mov	%r12,8*12(%rsp)
-.cfi_rel_offset	%r12,8*12
+.cfi_sp_offset	%r12,8*12
 	mov	%rbp,8*13(%rsp)
-.cfi_rel_offset	%rbp,8*13
+.cfi_sp_offset	%rbp,8*13
 	mov	%rbx,8*14(%rsp)
-.cfi_rel_offset	%rbx,8*14
-.Lbody_mul_2x2:
+.cfi_sp_offset	%rbx,8*14
+.cfi_endprolog
 	mov	$rp,32(%rsp)		# save the arguments
 	mov	$a1,40(%rsp)
 	mov	$a0,48(%rsp)
@@ -300,126 +310,12 @@ ___
 $code.=<<___;
 	lea	8*17(%rsp),%rsp
 .cfi_adjust_cfa_offset	-8*17
-.Lepilogue_mul_2x2:
 	ret
-.Lend_mul_2x2:
 .cfi_endproc
-.size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
+.size	_bn_GF2m_mul_2x2_vanilla,.-_bn_GF2m_mul_2x2_vanilla
 .asciz	"GF(2^m) Multiplication for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	16
 ___
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#               CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern __imp_RtlVirtualUnwind
-
-.type	se_handler,\@abi-omnipotent
-.align	16
-se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	lea	.Lbody_mul_2x2(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<"prologue" label
-	jb	.Lin_prologue
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	lea	.Lepilogue_mul_2x2(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip>="epilogue" label
-	jae	.Lin_prologue
-
-	mov	8*10(%rax),%r14		# mimic epilogue
-	mov	8*11(%rax),%r13
-	mov	8*12(%rax),%r12
-	mov	8*13(%rax),%rbp
-	mov	8*14(%rax),%rbx
-	mov	8*15(%rax),%rdi
-	mov	8*16(%rax),%rsi
-
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-
-	lea	8*17(%rax),%rax
-
-.Lin_prologue:
-	mov	%rax,152($context)	# restore context->Rsp
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	se_handler,.-se_handler
-
-.section	.pdata
-.align	4
-	.rva	_mul_1x1
-	.rva	.Lend_mul_1x1
-	.rva	.LSEH_info_1x1
-
-	.rva	.Lvanilla_mul_2x2
-	.rva	.Lend_mul_2x2
-	.rva	.LSEH_info_2x2
-.section	.xdata
-.align	8
-.LSEH_info_1x1:
-	.byte	0x01,0x07,0x02,0x00
-	.byte	0x07,0x01,0x11,0x00	# sub rsp,128+8
-.LSEH_info_2x2:
-	.byte	9,0,0,0
-	.rva	se_handler
-___
-}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 print $code;

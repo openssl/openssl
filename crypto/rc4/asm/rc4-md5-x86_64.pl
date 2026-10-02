@@ -143,7 +143,7 @@ $func:
 .cfi_push	%r15
 	sub	\$40,%rsp
 .cfi_adjust_cfa_offset	40
-.Lbody:
+.cfi_endprolog
 ___
 if ($rc4) {
 $code.=<<___;
@@ -467,7 +467,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	88(%rsp),%rsp
 .cfi_adjust_cfa_offset	-88
-.Lepilogue:
 .Labort:
 	ret
 .cfi_endproc
@@ -487,6 +486,7 @@ $code.=<<___;
 .align	16
 RC4_set_key:
 .cfi_startproc
+.cfi_endprolog
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -529,118 +529,16 @@ RC4_set_key:
 .type	RC4_options,\@abi-omnipotent
 .align	16
 RC4_options:
+.cfi_startproc
+.cfi_endprolog
 	lea	.Lopts(%rip),%rax
 	ret
+.cfi_endproc
 .align	64
 .Lopts:
 .asciz	"rc4(64x,int)"
 .align	64
 .size	RC4_options,.-RC4_options
-___
-}
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-my $rec="%rcx";
-my $frame="%rdx";
-my $context="%r8";
-my $disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	se_handler,\@abi-omnipotent
-.align	16
-se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	lea	.Lbody(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<.Lbody
-	jb	.Lin_prologue
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	lea	.Lepilogue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
-	jae	.Lin_prologue
-
-	mov	40(%rax),%r15
-	mov	48(%rax),%r14
-	mov	56(%rax),%r13
-	mov	64(%rax),%r12
-	mov	72(%rax),%rbp
-	mov	80(%rax),%rbx
-	lea	88(%rax),%rax
-
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R12
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lin_prologue:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	se_handler,.-se_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_$func
-	.rva	.LSEH_end_$func
-	.rva	.LSEH_info_$func
-
-.section	.xdata
-.align	8
-.LSEH_info_$func:
-	.byte	9,0,0,0
-	.rva	se_handler
 ___
 }
 

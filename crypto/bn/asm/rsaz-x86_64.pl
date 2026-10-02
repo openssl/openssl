@@ -126,7 +126,7 @@ rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
 
 	subq	\$128+24, %rsp
 .cfi_adjust_cfa_offset	128+24
-.Lsqr_body:
+.cfi_endprolog
 	movq	$mod, %xmm1		# common off-load
 	movq	($inp), %rdx
 	movq	8($inp), %rax
@@ -808,7 +808,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	leaq	(%rax), %rsp
 .cfi_def_cfa_register	%rsp
-.Lsqr_epilogue:
 	ret
 .cfi_endproc
 .size	rsaz_512_sqr,.-rsaz_512_sqr
@@ -837,7 +836,7 @@ rsaz_512_mul:
 
 	subq	\$128+24, %rsp
 .cfi_adjust_cfa_offset	128+24
-.Lmul_body:
+.cfi_endprolog
 	movq	$out, %xmm0		# off-load arguments
 	movq	$mod, %xmm1
 	movq	$n0, 128(%rsp)
@@ -921,7 +920,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	leaq	(%rax), %rsp
 .cfi_def_cfa_register	%rsp
-.Lmul_epilogue:
 	ret
 .cfi_endproc
 .size	rsaz_512_mul,.-rsaz_512_mul
@@ -953,18 +951,28 @@ rsaz_512_mul_gather4:
 ___
 $code.=<<___	if ($win64);
 	movaps	%xmm6,0xa0(%rsp)
+.cfi_sp_offset	%xmm6,0xa0
 	movaps	%xmm7,0xb0(%rsp)
+.cfi_sp_offset	%xmm7,0xb0
 	movaps	%xmm8,0xc0(%rsp)
+.cfi_sp_offset	%xmm8,0xc0
 	movaps	%xmm9,0xd0(%rsp)
+.cfi_sp_offset	%xmm9,0xd0
 	movaps	%xmm10,0xe0(%rsp)
+.cfi_sp_offset	%xmm10,0xe0
 	movaps	%xmm11,0xf0(%rsp)
+.cfi_sp_offset	%xmm11,0xf0
 	movaps	%xmm12,0x100(%rsp)
+.cfi_sp_offset	%xmm12,0x100
 	movaps	%xmm13,0x110(%rsp)
+.cfi_sp_offset	%xmm13,0x110
 	movaps	%xmm14,0x120(%rsp)
+.cfi_sp_offset	%xmm14,0x120
 	movaps	%xmm15,0x130(%rsp)
+.cfi_sp_offset	%xmm15,0x140
 ___
 $code.=<<___;
-.Lmul_gather4_body:
+.cfi_endprolog
 	movd	$pwr,%xmm8
 	movdqa	.Linc+16(%rip),%xmm1	# 00000002000000020000000200000002
 	movdqa	.Linc(%rip),%xmm0	# 00000001000000010000000000000000
@@ -1390,7 +1398,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	leaq	(%rax), %rsp
 .cfi_def_cfa_register	%rsp
-.Lmul_gather4_epilogue:
 	ret
 .cfi_endproc
 .size	rsaz_512_mul_gather4,.-rsaz_512_mul_gather4
@@ -1420,7 +1427,7 @@ rsaz_512_mul_scatter4:
 	mov	$pwr, $pwr
 	subq	\$128+24, %rsp
 .cfi_adjust_cfa_offset	128+24
-.Lmul_scatter4_body:
+.cfi_endprolog
 	leaq	($tbl,$pwr,8), $tbl
 	movq	$out, %xmm0		# off-load arguments
 	movq	$mod, %xmm1
@@ -1517,7 +1524,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	leaq	(%rax), %rsp
 .cfi_def_cfa_register	%rsp
-.Lmul_scatter4_epilogue:
 	ret
 .cfi_endproc
 .size	rsaz_512_mul_scatter4,.-rsaz_512_mul_scatter4
@@ -1546,7 +1552,7 @@ rsaz_512_mul_by_one:
 
 	subq	\$128+24, %rsp
 .cfi_adjust_cfa_offset	128+24
-.Lmul_by_one_body:
+.cfi_endprolog
 ___
 $code.=<<___ if ($addx);
 	movl	OPENSSL_ia32cap_P+8(%rip),%eax
@@ -1615,7 +1621,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	leaq	(%rax), %rsp
 .cfi_def_cfa_register	%rsp
-.Lmul_by_one_epilogue:
 	ret
 .cfi_endproc
 .size	rsaz_512_mul_by_one,.-rsaz_512_mul_by_one
@@ -1631,6 +1636,7 @@ $code.=<<___;
 .align	32
 __rsaz_512_reduce:
 .cfi_startproc
+.cfi_endprolog
 	movq	%r8, %rbx
 	imulq	128+8(%rsp), %rbx
 	movq	0(%rbp), %rax
@@ -1725,6 +1731,7 @@ $code.=<<___;
 .align	32
 __rsaz_512_reducex:
 .cfi_startproc
+.cfi_endprolog
 	#movq	128+8(%rsp), %rdx		# pull $n0
 	imulq	%r8, %rdx
 	xorq	%rsi, %rsi			# cf=0,of=0
@@ -1790,6 +1797,7 @@ $code.=<<___;
 .align	32
 __rsaz_512_subtract:
 .cfi_startproc
+.cfi_endprolog
 	movq	%r8, ($out)
 	movq	%r9, 8($out)
 	movq	%r10, 16($out)
@@ -1858,6 +1866,7 @@ $code.=<<___;
 .align	32
 __rsaz_512_mul:
 .cfi_startproc
+.cfi_endprolog
 	leaq	8(%rsp), %rdi
 
 	movq	($ap), %rax
@@ -2012,6 +2021,7 @@ $code.=<<___;
 .align	32
 __rsaz_512_mulx:
 .cfi_startproc
+.cfi_endprolog
 	mulx	($ap), %rbx, %r8	# initial %rdx preloaded by caller
 	mov	\$-6, %rcx
 
@@ -2140,6 +2150,7 @@ $code.=<<___;
 .align	16
 rsaz_512_scatter4:
 .cfi_startproc
+.cfi_endprolog
 	leaq	($out,$power,8), $out
 	movl	\$8, %r9d
 	jmp	.Loop_scatter
@@ -2162,20 +2173,31 @@ rsaz_512_gather4:
 .cfi_startproc
 ___
 $code.=<<___	if ($win64);
-.LSEH_begin_rsaz_512_gather4:
 	.byte	0x48,0x81,0xec,0xa8,0x00,0x00,0x00	# sub    $0xa8,%rsp
+.cfi_stackalloc	0xa8
 	.byte	0x0f,0x29,0x34,0x24			# movaps %xmm6,(%rsp)
+.cfi_sp_offset	%xmm6,0x00
 	.byte	0x0f,0x29,0x7c,0x24,0x10		# movaps %xmm7,0x10(%rsp)
+.cfi_sp_offset	%xmm7,0x10
 	.byte	0x44,0x0f,0x29,0x44,0x24,0x20		# movaps %xmm8,0x20(%rsp)
+.cfi_sp_offset	%xmm8,0x20
 	.byte	0x44,0x0f,0x29,0x4c,0x24,0x30		# movaps %xmm9,0x30(%rsp)
+.cfi_sp_offset	%xmm9,0x30
 	.byte	0x44,0x0f,0x29,0x54,0x24,0x40		# movaps %xmm10,0x40(%rsp)
+.cfi_sp_offset	%xmm10,0x40
 	.byte	0x44,0x0f,0x29,0x5c,0x24,0x50		# movaps %xmm11,0x50(%rsp)
+.cfi_sp_offset	%xmm11,0x50
 	.byte	0x44,0x0f,0x29,0x64,0x24,0x60		# movaps %xmm12,0x60(%rsp)
+.cfi_sp_offset	%xmm12,0x60
 	.byte	0x44,0x0f,0x29,0x6c,0x24,0x70		# movaps %xmm13,0x70(%rsp)
+.cfi_sp_offset	%xmm13,0x70
 	.byte	0x44,0x0f,0x29,0xb4,0x24,0x80,0,0,0	# movaps %xmm14,0x80(%rsp)
+.cfi_sp_offset	%xmm14,0x80
 	.byte	0x44,0x0f,0x29,0xbc,0x24,0x90,0,0,0	# movaps %xmm15,0x90(%rsp)
+.cfi_sp_offset	%xmm15,0x90
 ___
 $code.=<<___;
+.cfi_endprolog
 	movd	$power,%xmm8
 	movdqa	.Linc+16(%rip),%xmm1	# 00000002000000020000000200000002
 	movdqa	.Linc(%rip),%xmm0	# 00000001000000010000000000000000
@@ -2253,7 +2275,6 @@ $code.=<<___	if ($win64);
 ___
 $code.=<<___;
 	ret
-.LSEH_end_rsaz_512_gather4:
 .cfi_endproc
 .size	rsaz_512_gather4,.-rsaz_512_gather4
 
@@ -2263,179 +2284,6 @@ $code.=<<___;
 	.long	0,0, 1,1
 	.long	2,2, 2,2
 .previous
-___
-}
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	se_handler,\@abi-omnipotent
-.align	16
-se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# end of prologue label
-	cmp	%r10,%rbx		# context->Rip<end of prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	lea	128+24+48(%rax),%rax
-
-	lea	.Lmul_gather4_epilogue(%rip),%rbx
-	cmp	%r10,%rbx
-	jne	.Lse_not_in_mul_gather4
-
-	lea	0xb0(%rax),%rax
-
-	lea	-48-0xa8(%rax),%rsi
-	lea	512($context),%rdi
-	mov	\$20,%ecx
-	.long	0xa548f3fc		# cld; rep movsq
-
-.Lse_not_in_mul_gather4:
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-	mov	-48(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	se_handler,.-se_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_rsaz_512_sqr
-	.rva	.LSEH_end_rsaz_512_sqr
-	.rva	.LSEH_info_rsaz_512_sqr
-
-	.rva	.LSEH_begin_rsaz_512_mul
-	.rva	.LSEH_end_rsaz_512_mul
-	.rva	.LSEH_info_rsaz_512_mul
-
-	.rva	.LSEH_begin_rsaz_512_mul_gather4
-	.rva	.LSEH_end_rsaz_512_mul_gather4
-	.rva	.LSEH_info_rsaz_512_mul_gather4
-
-	.rva	.LSEH_begin_rsaz_512_mul_scatter4
-	.rva	.LSEH_end_rsaz_512_mul_scatter4
-	.rva	.LSEH_info_rsaz_512_mul_scatter4
-
-	.rva	.LSEH_begin_rsaz_512_mul_by_one
-	.rva	.LSEH_end_rsaz_512_mul_by_one
-	.rva	.LSEH_info_rsaz_512_mul_by_one
-
-	.rva	.LSEH_begin_rsaz_512_gather4
-	.rva	.LSEH_end_rsaz_512_gather4
-	.rva	.LSEH_info_rsaz_512_gather4
-
-.section	.xdata
-.align	8
-.LSEH_info_rsaz_512_sqr:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lsqr_body,.Lsqr_epilogue			# HandlerData[]
-.LSEH_info_rsaz_512_mul:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lmul_body,.Lmul_epilogue			# HandlerData[]
-.LSEH_info_rsaz_512_mul_gather4:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lmul_gather4_body,.Lmul_gather4_epilogue	# HandlerData[]
-.LSEH_info_rsaz_512_mul_scatter4:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lmul_scatter4_body,.Lmul_scatter4_epilogue	# HandlerData[]
-.LSEH_info_rsaz_512_mul_by_one:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lmul_by_one_body,.Lmul_by_one_epilogue		# HandlerData[]
-.LSEH_info_rsaz_512_gather4:
-	.byte	0x01,0x46,0x16,0x00
-	.byte	0x46,0xf8,0x09,0x00	# vmovaps 0x90(rsp),xmm15
-	.byte	0x3d,0xe8,0x08,0x00	# vmovaps 0x80(rsp),xmm14
-	.byte	0x34,0xd8,0x07,0x00	# vmovaps 0x70(rsp),xmm13
-	.byte	0x2e,0xc8,0x06,0x00	# vmovaps 0x60(rsp),xmm12
-	.byte	0x28,0xb8,0x05,0x00	# vmovaps 0x50(rsp),xmm11
-	.byte	0x22,0xa8,0x04,0x00	# vmovaps 0x40(rsp),xmm10
-	.byte	0x1c,0x98,0x03,0x00	# vmovaps 0x30(rsp),xmm9
-	.byte	0x16,0x88,0x02,0x00	# vmovaps 0x20(rsp),xmm8
-	.byte	0x10,0x78,0x01,0x00	# vmovaps 0x10(rsp),xmm7
-	.byte	0x0b,0x68,0x00,0x00	# vmovaps 0x00(rsp),xmm6
-	.byte	0x07,0x01,0x15,0x00	# sub     rsp,0xa8
 ___
 }
 

@@ -159,21 +159,32 @@ rsaz_1024_sqr_avx2:		# 702 cycles, 14% faster than rsaz_1024_mul_avx2
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa8(%rsp),%rsp
+.cfi_stackalloc	 0xa8
 	vmovaps	%xmm6,-0xd8(%rax)
+.cfi_offset	%xmm6,-0xd8-8
 	vmovaps	%xmm7,-0xc8(%rax)
+.cfi_offset	%xmm7,-0xc8-8
 	vmovaps	%xmm8,-0xb8(%rax)
+.cfi_offset	%xmm8,-0xb8-8
 	vmovaps	%xmm9,-0xa8(%rax)
+.cfi_offset	%xmm9,-0xa8-8
 	vmovaps	%xmm10,-0x98(%rax)
+.cfi_offset	%xmm10,-0x98-8
 	vmovaps	%xmm11,-0x88(%rax)
+.cfi_offset	%xmm11,-0x88-8
 	vmovaps	%xmm12,-0x78(%rax)
+.cfi_offset	%xmm12,-0x78-8
 	vmovaps	%xmm13,-0x68(%rax)
+.cfi_offset	%xmm13,-0x68-8
 	vmovaps	%xmm14,-0x58(%rax)
+.cfi_offset	%xmm14,-0x58-8
 	vmovaps	%xmm15,-0x48(%rax)
-.Lsqr_1024_body:
+.cfi_offset	%xmm15,-0x48-8
 ___
 $code.=<<___;
 	mov	%rax,%rbp
 .cfi_def_cfa_register	%rbp
+.cfi_endprolog
 	mov	%rdx, $np			# reassigned argument
 	sub	\$$FrameSize, %rsp
 	mov	$np, $tmp
@@ -836,7 +847,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rax),%rsp		# restore %rsp
 .cfi_def_cfa_register	%rsp
-.Lsqr_1024_epilogue:
 	ret
 .cfi_endproc
 .size	rsaz_1024_sqr_avx2,.-rsaz_1024_sqr_avx2
@@ -910,21 +920,32 @@ ___
 $code.=<<___ if ($win64);
 	vzeroupper
 	lea	-0xa8(%rsp),%rsp
+.cfi_stackalloc	 0xa8
 	vmovaps	%xmm6,-0xd8(%rax)
+.cfi_offset	%xmm6,-0xd8-8
 	vmovaps	%xmm7,-0xc8(%rax)
+.cfi_offset	%xmm7,-0xc8-8
 	vmovaps	%xmm8,-0xb8(%rax)
+.cfi_offset	%xmm8,-0xb8-8
 	vmovaps	%xmm9,-0xa8(%rax)
+.cfi_offset	%xmm9,-0xa8-8
 	vmovaps	%xmm10,-0x98(%rax)
+.cfi_offset	%xmm10,-0x98-8
 	vmovaps	%xmm11,-0x88(%rax)
+.cfi_offset	%xmm11,-0x88-8
 	vmovaps	%xmm12,-0x78(%rax)
+.cfi_offset	%xmm12,-0x78-8
 	vmovaps	%xmm13,-0x68(%rax)
+.cfi_offset	%xmm13,-0x68-8
 	vmovaps	%xmm14,-0x58(%rax)
+.cfi_offset	%xmm14,-0x58-8
 	vmovaps	%xmm15,-0x48(%rax)
-.Lmul_1024_body:
+.cfi_offset	%xmm15,-0x48-8
 ___
 $code.=<<___;
 	mov	%rax,%rbp
 .cfi_def_cfa_register	%rbp
+.cfi_endprolog
 	vzeroall
 	mov	%rdx, $bp	# reassigned argument
 	sub	\$64,%rsp
@@ -1487,7 +1508,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rax),%rsp		# restore %rsp
 .cfi_def_cfa_register	%rsp
-.Lmul_1024_epilogue:
 	ret
 .cfi_endproc
 .size	rsaz_1024_mul_avx2,.-rsaz_1024_mul_avx2
@@ -1503,6 +1523,7 @@ $code.=<<___;
 .align	32
 rsaz_1024_red2norm_avx2:
 .cfi_startproc
+.cfi_endprolog
 	sub	\$-128,$inp	# size optimization
 	xor	%rax,%rax
 ___
@@ -1544,6 +1565,7 @@ $code.=<<___;
 .align	32
 rsaz_1024_norm2red_avx2:
 .cfi_startproc
+.cfi_endprolog
 	sub	\$-128,$out	# size optimization
 	mov	($inp),@T[0]
 	mov	\$0x1fffffff,%eax
@@ -1588,6 +1610,7 @@ $code.=<<___;
 .align	32
 rsaz_1024_scatter5_avx2:
 .cfi_startproc
+.cfi_endprolog
 	vzeroupper
 	vmovdqu	.Lscatter_permd(%rip),%ymm5
 	shl	\$4,$power
@@ -1621,21 +1644,33 @@ rsaz_1024_gather5_avx2:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
-.LSEH_begin_rsaz_1024_gather5:
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		# lea	-0x20(%rax),%rsp
+.cfi_stackalloc	0x88+0x20
 	.byte	0xc5,0xf8,0x29,0x70,0xe0	# vmovaps %xmm6,-0x20(%rax)
+.cfi_sp_offset	%xmm6,0
 	.byte	0xc5,0xf8,0x29,0x78,0xf0	# vmovaps %xmm7,-0x10(%rax)
+.cfi_sp_offset	%xmm7,0x10
 	.byte	0xc5,0x78,0x29,0x40,0x00	# vmovaps %xmm8,0(%rax)
+.cfi_sp_offset	%xmm8,0x20
 	.byte	0xc5,0x78,0x29,0x48,0x10	# vmovaps %xmm9,0x10(%rax)
+.cfi_sp_offset	%xmm9,0x30
 	.byte	0xc5,0x78,0x29,0x50,0x20	# vmovaps %xmm10,0x20(%rax)
+.cfi_sp_offset	%xmm10,0x40
 	.byte	0xc5,0x78,0x29,0x58,0x30	# vmovaps %xmm11,0x30(%rax)
+.cfi_sp_offset	%xmm11,0x50
 	.byte	0xc5,0x78,0x29,0x60,0x40	# vmovaps %xmm12,0x40(%rax)
+.cfi_sp_offset	%xmm12,0x60
 	.byte	0xc5,0x78,0x29,0x68,0x50	# vmovaps %xmm13,0x50(%rax)
+.cfi_sp_offset	%xmm13,0x70
 	.byte	0xc5,0x78,0x29,0x70,0x60	# vmovaps %xmm14,0x60(%rax)
+.cfi_sp_offset	%xmm14,0x80
 	.byte	0xc5,0x78,0x29,0x78,0x70	# vmovaps %xmm15,0x70(%rax)
+.cfi_sp_offset	%xmm15,0x90
 ___
+
 $code.=<<___;
+.cfi_endprolog
 	lea	-0x100(%rsp),%rsp
 	and	\$-32, %rsp
 	lea	.Linc(%rip), %r10
@@ -1761,7 +1796,6 @@ $code.=<<___;
 .cfi_def_cfa_register	%rsp
 	ret
 .cfi_endproc
-.LSEH_end_rsaz_1024_gather5:
 .size	rsaz_1024_gather5_avx2,.-rsaz_1024_gather5_avx2
 ___
 }
@@ -1772,6 +1806,8 @@ $code.=<<___;
 .type	rsaz_avx2_eligible,\@abi-omnipotent
 .align	32
 rsaz_avx2_eligible:
+.cfi_startproc
+.cfi_endprolog
 	mov	OPENSSL_ia32cap_P+8(%rip),%eax
 ___
 $code.=<<___	if ($addx);
@@ -1785,6 +1821,7 @@ $code.=<<___;
 	and	\$`1<<5`,%eax
 	shr	\$5,%eax
 	ret
+.cfi_endproc
 .size	rsaz_avx2_eligible,.-rsaz_avx2_eligible
 
 .section .rodata align=64
@@ -1802,151 +1839,6 @@ $code.=<<___;
 .previous
 .align	64
 ___
-
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___
-.extern	__imp_RtlVirtualUnwind
-.type	rsaz_se_handler,\@abi-omnipotent
-.align	16
-rsaz_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	mov	160($context),%rbp	# pull context->Rbp
-
-	mov	8(%r11),%r10d		# HandlerData[2]
-	lea	(%rsi,%r10),%r10	# "in tail" label
-	cmp	%r10,%rbx		# context->Rip>="in tail" label
-	cmovc	%rbp,%rax
-
-	mov	-48(%rax),%r15
-	mov	-40(%rax),%r14
-	mov	-32(%rax),%r13
-	mov	-24(%rax),%r12
-	mov	-16(%rax),%rbp
-	mov	-8(%rax),%rbx
-	mov	%r15,240($context)
-	mov	%r14,232($context)
-	mov	%r13,224($context)
-	mov	%r12,216($context)
-	mov	%rbp,160($context)
-	mov	%rbx,144($context)
-
-	lea	-0xd8(%rax),%rsi	# %xmm save area
-	lea	512($context),%rdi	# & context.Xmm6
-	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
-	.long	0xa548f3fc		# cld; rep movsq
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	rsaz_se_handler,.-rsaz_se_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_rsaz_1024_sqr_avx2
-	.rva	.LSEH_end_rsaz_1024_sqr_avx2
-	.rva	.LSEH_info_rsaz_1024_sqr_avx2
-
-	.rva	.LSEH_begin_rsaz_1024_mul_avx2
-	.rva	.LSEH_end_rsaz_1024_mul_avx2
-	.rva	.LSEH_info_rsaz_1024_mul_avx2
-
-	.rva	.LSEH_begin_rsaz_1024_gather5
-	.rva	.LSEH_end_rsaz_1024_gather5
-	.rva	.LSEH_info_rsaz_1024_gather5
-.section	.xdata
-.align	8
-.LSEH_info_rsaz_1024_sqr_avx2:
-	.byte	9,0,0,0
-	.rva	rsaz_se_handler
-	.rva	.Lsqr_1024_body,.Lsqr_1024_epilogue,.Lsqr_1024_in_tail
-	.long	0
-.LSEH_info_rsaz_1024_mul_avx2:
-	.byte	9,0,0,0
-	.rva	rsaz_se_handler
-	.rva	.Lmul_1024_body,.Lmul_1024_epilogue,.Lmul_1024_in_tail
-	.long	0
-.LSEH_info_rsaz_1024_gather5:
-	.byte	0x01,0x36,0x17,0x0b
-	.byte	0x36,0xf8,0x09,0x00	# vmovaps 0x90(rsp),xmm15
-	.byte	0x31,0xe8,0x08,0x00	# vmovaps 0x80(rsp),xmm14
-	.byte	0x2c,0xd8,0x07,0x00	# vmovaps 0x70(rsp),xmm13
-	.byte	0x27,0xc8,0x06,0x00	# vmovaps 0x60(rsp),xmm12
-	.byte	0x22,0xb8,0x05,0x00	# vmovaps 0x50(rsp),xmm11
-	.byte	0x1d,0xa8,0x04,0x00	# vmovaps 0x40(rsp),xmm10
-	.byte	0x18,0x98,0x03,0x00	# vmovaps 0x30(rsp),xmm9
-	.byte	0x13,0x88,0x02,0x00	# vmovaps 0x20(rsp),xmm8
-	.byte	0x0e,0x78,0x01,0x00	# vmovaps 0x10(rsp),xmm7
-	.byte	0x09,0x68,0x00,0x00	# vmovaps 0x00(rsp),xmm6
-	.byte	0x04,0x01,0x15,0x00	# sub	  rsp,0xa8
-	.byte	0x00,0xb3,0x00,0x00	# set_frame r11
-___
-}
 
 foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval($1)/ge;
@@ -1968,8 +1860,11 @@ print <<___;	# assembler is too old
 .globl	rsaz_avx2_eligible
 .type	rsaz_avx2_eligible,\@abi-omnipotent
 rsaz_avx2_eligible:
+.cfi_startproc
+.cfi_endprolog
 	xor	%eax,%eax
 	ret
+.cfi_endproc
 .size	rsaz_avx2_eligible,.-rsaz_avx2_eligible
 
 .globl	rsaz_1024_sqr_avx2
@@ -1985,8 +1880,11 @@ rsaz_1024_norm2red_avx2:
 rsaz_1024_red2norm_avx2:
 rsaz_1024_scatter5_avx2:
 rsaz_1024_gather5_avx2:
+.cfi_startproc
+.cfi_endprolog
 	.byte	0x0f,0x0b	# ud2
 	ret
+.cfi_endproc
 .size	rsaz_1024_sqr_avx2,.-rsaz_1024_sqr_avx2
 ___
 }}}
