@@ -85,13 +85,18 @@ my ($z_word, $c_word, $q_word) =
 # qN and vN are two names for the same 128-bit register.  In the paired wide
 # path, the loads and butterfly arguments therefore map as follows:
 #
-#   q0/v0 = coeff_vector0 = first four even-side coefficients
-#   q6/v6 = even_vector2  = next four even-side coefficients
-#   q1/v1 = coeff_vector1 = first four odd-side coefficients
-#   q7/v7 = odd_vector2   = next four odd-side coefficients
+#   q0/v0 = even_coefficients0 = first four even-side coefficients
+#   q6/v6 = even_coefficients1 = next four even-side coefficients
+#   q1/v1 = odd_coefficients0  = first four odd-side coefficients
+#   q7/v7 = odd_coefficients1  = next four odd-side coefficients
 my ($coeff_vector0, $coeff_vector1, $z, $product,
     $butterfly_even, $butterfly_odd) = map("v$_", (0..5));
-my ($even_vector2, $odd_vector2, $product2) = map("v$_", (6, 7, 17));
+my ($even_coefficients0, $odd_coefficients0,
+    $even_coefficients1, $odd_coefficients1) = map("v$_", (0, 1, 6, 7));
+my ($even_coefficients0_q, $odd_coefficients0_q,
+    $even_coefficients1_q, $odd_coefficients1_q) =
+    map("q$_", (0, 1, 6, 7));
+my $product2 = "v17";
 my ($quotient, $quotient2) = map("v$_", (18, 23));
 my $q_bias = "v26";
 my $c = "v27";
@@ -364,18 +369,16 @@ $outer:
 $inner:
 ___
     if ($paired) {
-        # q0/v0 and q6/v6 are the two even vectors; q1/v1 and q7/v7 are the
-        # corresponding odd vectors passed to ntt_butterfly_8way() below.
         $code .= <<___;
-        ldp     q0, q6, [$even_ptr]
-        ldp     q1, q7, [$odd_ptr]
+        ldp     $even_coefficients0_q, $even_coefficients1_q, [$even_ptr]
+        ldp     $odd_coefficients0_q, $odd_coefficients1_q, [$odd_ptr]
 ___
-        ntt_butterfly_8way($coeff_vector0, $coeff_vector1,
-                           $even_vector2, $odd_vector2,
+        ntt_butterfly_8way($even_coefficients0, $odd_coefficients0,
+                           $even_coefficients1, $odd_coefficients1,
                            $z, $c);
         $code .= <<___;
-        stp     q0, q6, [$even_ptr], #32
-        stp     q1, q7, [$odd_ptr], #32
+        stp     $even_coefficients0_q, $even_coefficients1_q, [$even_ptr], #32
+        stp     $odd_coefficients0_q, $odd_coefficients1_q, [$odd_ptr], #32
 ___
     } else {
         $code .= <<___;
@@ -590,26 +593,24 @@ $outer:
 $inner:
 ___
     if ($paired) {
-        # q0/v0 and q6/v6 are the two even vectors; q1/v1 and q7/v7 are the
-        # corresponding odd vectors passed to intt_butterfly_8way() below.
         $code .= <<___;
-        ldp     q0, q6, [$even_ptr]
-        ldp     q1, q7, [$odd_ptr]
+        ldp     $even_coefficients0_q, $even_coefficients1_q, [$even_ptr]
+        ldp     $odd_coefficients0_q, $odd_coefficients1_q, [$odd_ptr]
 ___
-        intt_butterfly_8way($coeff_vector0, $coeff_vector1,
-                            $even_vector2, $odd_vector2,
+        intt_butterfly_8way($even_coefficients0, $odd_coefficients0,
+                            $even_coefficients1, $odd_coefficients1,
                             $z, $c);
         if ($final) {
-            barrett_multiply_pair($coeff_vector0, $coeff_vector0,
-                                  $even_vector2, $even_vector2,
+            barrett_multiply_pair($even_coefficients0, $even_coefficients0,
+                                  $even_coefficients1, $even_coefficients1,
                                   $scale_z, $scale_c);
-            barrett_multiply_pair($coeff_vector1, $coeff_vector1,
-                                  $odd_vector2, $odd_vector2,
+            barrett_multiply_pair($odd_coefficients0, $odd_coefficients0,
+                                  $odd_coefficients1, $odd_coefficients1,
                                   $scale_z, $scale_c);
         }
         $code .= <<___;
-        stp     q0, q6, [$even_ptr], #32
-        stp     q1, q7, [$odd_ptr], #32
+        stp     $even_coefficients0_q, $even_coefficients1_q, [$even_ptr], #32
+        stp     $odd_coefficients0_q, $odd_coefficients1_q, [$odd_ptr], #32
 ___
     } else {
         $code .= <<___;
