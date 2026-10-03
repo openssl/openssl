@@ -4,6 +4,7 @@
 #
 OPENSSL_armcap                          environment
 OPENSSL_ia32cap                         environment
+OPENSSL_loongarch_hwcap                 environment
 OPENSSL_ppccap                          environment
 OPENSSL_riscvcap                        environment
 OPENSSL_s390xcap                        environment
