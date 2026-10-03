@@ -69,7 +69,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
             len |= *(p++) & 0x7f;
             if (--max == 0)
                 goto err;
-            if (len > (INT_MAX >> 7L))
+            if (len > (INT_MAX >> 7L) || len == 0)
                 goto err;
         }
         len <<= 7L;
@@ -129,7 +129,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
         *inf = 0;
         i = *p & 0x7f;
         if (*p++ & 0x80) {
-            if (max < i)
+            if (max < i || i == 0x7f)
                 return 0;
             /* Skip leading zeroes */
             while (i > 0 && *p == 0) {
