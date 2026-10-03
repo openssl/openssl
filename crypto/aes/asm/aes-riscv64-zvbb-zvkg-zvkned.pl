@@ -35,7 +35,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # - RV64I
-# - RISC-V Vector ('V') with VLEN >= 128
+# - RISC-V Vector ('V') with 2048 > VLEN >= 128
 # - RISC-V Vector Bit-manipulation extension ('Zvbb')
 # - RISC-V Vector GCM/GMAC extension ('Zvkg')
 # - RISC-V Vector AES block cipher extension ('Zvkned')
@@ -582,12 +582,13 @@ aes_xts_dec_128:
     @{[init_first_round]}
     @{[aes_128_load_key]}
 
-    beqz $LEN32, 2f
+    li $T0, 16
+    blt $LEN32, $T0, .Lsmall
 
     @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
-    j 1f
+    j 3f
 
-.Ldec_blocks_128:
+.Ldec_blocks_loop_128:
     @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
     # load ciphertext into v24
     @{[vle32_v $V24, $INPUT]}
@@ -595,7 +596,7 @@ aes_xts_dec_128:
     @{[vgmul_vv $V16, $V20]}
     # reverse the iv's bits order back
     @{[vbrev8_v $V28, $V16]}
-1:
+3:
     @{[vxor_vv $V24, $V24, $V28]}
     slli $T0, $VL, 2
     sub $LEN32, $LEN32, $VL
@@ -607,13 +608,47 @@ aes_xts_dec_128:
     @{[vse32_v $V24, $OUTPUT]}
     add $OUTPUT, $OUTPUT, $T0
 
+    bnez $LEN32, .Ldec_blocks_loop_128
+    j 2f
+
+.Lsmall:
+    beqz $LEN32, 2f
+
+    # setup `x` multiplier with byte-reversed order
+    # 0b00000010 => 0b01000000 (0x40)
+    li $T0, 0x40
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vmv_v_i $V12, 0]}
+    @{[vsetivli "zero", 1, "e8", "m1", "tu", "ma"]}
+    @{[vmv_v_x $V12, $T0]}
+
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    j 1f
+
+.Ldec_blocks_128:
+    # load ciphertext into v24
+    @{[vle32_v $V24, $INPUT]}
+    # update iv
+    @{[vgmul_vv $V16, $V12]}
+    # reverse the iv's bits order back
+    @{[vbrev8_v $V28, $V16]}
+1:
+    @{[vxor_vv $V24, $V24, $V28]}
+    addi $LEN32, $LEN32, -4
+    addi $INPUT, $INPUT, 16
+    @{[aes_128_dec]}
+    @{[vxor_vv $V24, $V24, $V28]}
+
+    # store plaintext
+    @{[vse32_v $V24, $OUTPUT]}
+    addi $OUTPUT, $OUTPUT, 16
+
     bnez $LEN32, .Ldec_blocks_128
 
 2:
     @{[handle_xts_dec_last_block]}
 
     ## xts second to last block
-    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
     @{[vxor_vv $V24, $V24, $V29]}
     @{[aes_128_dec]}
     @{[vxor_vv $V24, $V24, $V29]}
