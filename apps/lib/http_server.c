@@ -314,8 +314,12 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
     /* Read the request line. */
     len = BIO_gets(cbio, reqbuf, sizeof(reqbuf));
-    if (len == 0)
-        return ret;
+    if (len == 0) {
+        /* Client closed the connection without sending a request */
+        BIO_free_all(cbio);
+        *pcbio = NULL;
+        goto out;
+    }
     ret = 1;
     if (len < 0) {
         log_HTTP(prog, LOG_WARNING, "request line read error");
