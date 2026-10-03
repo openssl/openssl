@@ -2930,6 +2930,7 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     STACK_OF(X509_CRL) *crls = NULL;
     X509_CRL *crl;
     STACK_OF(DIST_POINT) *crldp;
+    unsigned long flags;
 
     crls = sk_X509_CRL_new_null();
     if (!crls)
@@ -2947,8 +2948,8 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
         goto error;
 
     /* The verifier ignores delta CRLs unless -use_deltas is given */
-    if ((X509_VERIFY_PARAM_get_flags(X509_STORE_CTX_get0_param(ctx))
-            & X509_V_FLAG_USE_DELTAS) == 0)
+    flags = X509_VERIFY_PARAM_get_flags(X509_STORE_CTX_get0_param(ctx));
+    if ((flags & X509_V_FLAG_USE_DELTAS) == 0)
         return crls;
 
     /* Try to download delta CRL */
