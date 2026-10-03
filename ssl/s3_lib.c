@@ -3834,6 +3834,28 @@ void ssl3_free(SSL *s)
     if (sc == NULL)
         return;
 
+    OPENSSL_cleanse(sc->early_secret, sizeof(sc->early_secret));
+    OPENSSL_cleanse(sc->handshake_secret, sizeof(sc->handshake_secret));
+    OPENSSL_cleanse(sc->master_secret, sizeof(sc->master_secret));
+    OPENSSL_cleanse(sc->resumption_master_secret,
+                    sizeof(sc->resumption_master_secret));
+    OPENSSL_cleanse(sc->client_finished_secret,
+                    sizeof(sc->client_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_secret,
+                    sizeof(sc->server_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_hash,
+                    sizeof(sc->server_finished_hash));
+    OPENSSL_cleanse(sc->handshake_traffic_hash,
+                    sizeof(sc->handshake_traffic_hash));
+    OPENSSL_cleanse(sc->client_app_traffic_secret,
+                    sizeof(sc->client_app_traffic_secret));
+    OPENSSL_cleanse(sc->server_app_traffic_secret,
+                    sizeof(sc->server_app_traffic_secret));
+    OPENSSL_cleanse(sc->exporter_master_secret,
+                    sizeof(sc->exporter_master_secret));
+    OPENSSL_cleanse(sc->early_exporter_master_secret,
+                    sizeof(sc->early_exporter_master_secret));
+
     ssl3_cleanup_key_block(sc);
 
     EVP_PKEY_free(sc->s3.peer_tmp);
@@ -3888,6 +3910,28 @@ int ssl3_clear(SSL *s)
 
     if (sc == NULL)
         return 0;
+
+    OPENSSL_cleanse(sc->early_secret, sizeof(sc->early_secret));
+    OPENSSL_cleanse(sc->handshake_secret, sizeof(sc->handshake_secret));
+    OPENSSL_cleanse(sc->master_secret, sizeof(sc->master_secret));
+    OPENSSL_cleanse(sc->resumption_master_secret,
+                    sizeof(sc->resumption_master_secret));
+    OPENSSL_cleanse(sc->client_finished_secret,
+                    sizeof(sc->client_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_secret,
+                    sizeof(sc->server_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_hash,
+                    sizeof(sc->server_finished_hash));
+    OPENSSL_cleanse(sc->handshake_traffic_hash,
+                    sizeof(sc->handshake_traffic_hash));
+    OPENSSL_cleanse(sc->client_app_traffic_secret,
+                    sizeof(sc->client_app_traffic_secret));
+    OPENSSL_cleanse(sc->server_app_traffic_secret,
+                    sizeof(sc->server_app_traffic_secret));
+    OPENSSL_cleanse(sc->exporter_master_secret,
+                    sizeof(sc->exporter_master_secret));
+    OPENSSL_cleanse(sc->early_exporter_master_secret,
+                    sizeof(sc->early_exporter_master_secret));
 
     ssl3_cleanup_key_block(sc);
     OPENSSL_free(sc->s3.tmp.ctype);
