@@ -2877,8 +2877,10 @@ static int print_dp_urls(STACK_OF(DIST_POINT) *crldp)
 
             if (gtype != GEN_URI)
                 continue;
-            BIO_printf(bio_err, "  %.*s\n", (int)ASN1_STRING_get_length(uri),
-                (const char *)ASN1_STRING_get0_data(uri));
+            BIO_puts(bio_err, "  ");
+            ASN1_STRING_print_ex(bio_err, uri,
+                ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB);
+            BIO_puts(bio_err, "\n");
             n++;
         }
     }
@@ -2916,17 +2918,6 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp, const char *desc)
     return NULL;
 }
 
-/* Warn if a downloaded CRL is unusable because it was issued by another CA */
-static void check_crl_issuer(const X509_CRL *crl, const X509_NAME *nm,
-    const char *desc)
-{
-    if (nm == NULL || X509_NAME_cmp(X509_CRL_get_issuer(crl), nm) == 0)
-        return;
-    BIO_printf(bio_err, "The %s was issued by a different CA\n", desc);
-    print_name(bio_err, "  CRL issuer:      ", X509_CRL_get_issuer(crl));
-    print_name(bio_err, "  expected issuer: ", nm);
-}
-
 /*
  * Example of downloading CRLs from CRLDP:
  * not usable for real world as it always downloads and doesn't cache anything.
@@ -2954,18 +2945,19 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
 
     if (crl == NULL || !sk_X509_CRL_push(crls, crl))
         goto error;
-    check_crl_issuer(crl, nm, "CRL via CDP");
+
+    /* The verifier ignores delta CRLs unless -use_deltas is given */
+    if ((X509_VERIFY_PARAM_get_flags(X509_STORE_CTX_get0_param(ctx))
+            & X509_V_FLAG_USE_DELTAS) == 0)
+        return crls;
 
     /* Try to download delta CRL */
     crldp = X509_get_ext_d2i(x, NID_freshest_crl, NULL, NULL);
     crl = load_crl_crldp(crldp, "delta CRL via CDP");
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
 
-    if (crl != NULL) {
-        if (!sk_X509_CRL_push(crls, crl))
-            goto error;
-        check_crl_issuer(crl, nm, "delta CRL via CDP");
-    }
+    if (crl != NULL && !sk_X509_CRL_push(crls, crl))
+        goto error;
 
     return crls;
 
