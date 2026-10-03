@@ -116,7 +116,7 @@ i2d_PrivateKey_impl(const EVP_PKEY *a, unsigned char **pp, int traditional)
 
     if (a->ameth != NULL && a->ameth->priv_encode != NULL) {
         PKCS8_PRIV_KEY_INFO *p8 = EVP_PKEY2PKCS8(a);
-        int ret = 0;
+        int ret = -1;
 
         if (p8 != NULL) {
             ret = i2d_PKCS8_PRIV_KEY_INFO(p8, pp);
@@ -159,8 +159,12 @@ int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
         return i2d_DSAPublicKey(EVP_PKEY_get0_DSA(a), pp);
 #endif
 #ifndef OPENSSL_NO_EC
-    case EVP_PKEY_EC:
-        return i2o_ECPublicKey(EVP_PKEY_get0_EC_KEY(a), pp);
+    case EVP_PKEY_EC: {
+        int ret = i2o_ECPublicKey(EVP_PKEY_get0_EC_KEY(a), pp);
+        if (ret == 0)
+            return -1;
+        return ret;
+    }
 #endif
     default:
         ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
