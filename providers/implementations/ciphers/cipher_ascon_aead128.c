@@ -170,6 +170,8 @@ static int ascon_aead128_internal_init(void *vctx, direction_t direction,
         memcpy(saved_tag, ctx->tag, ASCON_AEAD_TAG_LEN);
 
     if (ctx->key_set && ctx->iv_set) {
+        if (ctx->internal_ctx == NULL)
+            return 0;
         memcpy(ivcopy, ctx->iv, sizeof(ivcopy));
         ascon_aead128_cleanctx(ctx);
         ctx->key_set = 1;
@@ -239,7 +241,11 @@ static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
         }
 
         /* Process AAD if provided */
-        if (inl > 0 && in != NULL) {
+        if (inl > 0) {
+            if (in == NULL) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+                return 0;
+            }
             if (ctx->internal_ctx == NULL) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
                 return 0;
@@ -322,7 +328,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
         return 0;
     }
 
-    if (!ctx->is_ongoing) {
+    if (!ctx->is_ongoing || ctx->internal_ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
@@ -535,7 +541,7 @@ static int ascon_aead128_cipher(void *vctx, unsigned char *out, size_t *outl,
 
     /* Handle AAD operation (out == NULL) - process associated data */
     if (out == NULL) {
-        if (!ctx->is_ongoing) {
+        if (!ctx->is_ongoing || ctx->internal_ctx == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
             return 0;
         }
@@ -543,8 +549,17 @@ static int ascon_aead128_cipher(void *vctx, unsigned char *out, size_t *outl,
             ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
             return 0;
         }
-        if (inl > 0)
+        if (inl > 0) {
+            if (in == NULL) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+                return 0;
+            }
+            if (ctx->internal_ctx == NULL) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+                return 0;
+            }
             ossl_ascon_aead128_assoc_data_update(ctx->internal_ctx, in, inl);
+        }
         if (outl != NULL)
             *outl = 0;
         return 1;
@@ -557,7 +572,7 @@ static int ascon_aead128_cipher(void *vctx, unsigned char *out, size_t *outl,
     }
 
     /* Handle regular encryption/decryption (streaming update) */
-    if (!ctx->is_ongoing) {
+    if (!ctx->is_ongoing || ctx->internal_ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
