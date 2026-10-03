@@ -35,7 +35,11 @@ static int test_dupctx_tlsmac(int idx)
 {
     static const char *cipher_names[] = {
         "AES-128-CBC",
-        "AES-256-CBC"
+        "AES-256-CBC",
+        "ARIA-128-CBC",
+        "CAMELLIA-128-CBC",
+        "SM4-CBC",
+        "DES-EDE3-CBC"
     };
     const char *name = cipher_names[idx];
     EVP_CIPHER_CTX *ctx = NULL, *dupctx = NULL;
@@ -73,7 +77,8 @@ static int test_dupctx_tlsmac(int idx)
     /*
      * Perform a decrypt update with enough data to trigger tlsmac
      * allocation. Buffer needs at least: block_size + mac_size + 1.
-     * For AES-CBC: 16 + 20 + 1 = 37 minimum. Use 64 for safety.
+     * For a 16-byte block cipher: 16 + 20 + 1 = 37 minimum. Use 64 so
+     * this also covers the tested 8-byte block cipher.
      * Last byte is padding length (0 = 1 byte of padding).
      */
     memset(buf, 0, sizeof(buf));
@@ -113,6 +118,6 @@ err:
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_dupctx_tlsmac, 2);
+    ADD_ALL_TESTS(test_dupctx_tlsmac, 6);
     return 1;
 }
