@@ -478,6 +478,9 @@ void ossl_quic_tx_packetiser_set_validated(OSSL_QUIC_TX_PACKETISER *txp)
  * `SIZE_MAX - 1`. If the current unvalidated credit is already `SIZE_MAX`,
  * the function does nothing.
  *
+ * Credit and consumption are both measured in UDP payload bytes (RFC 9000
+ * s. 8.1), so callers credit whole received datagrams.
+ *
  * @param txp    A pointer to the OSSL_QUIC_TX_PACKETISER structure to update.
  * @param credit The amount of credit to add, multiplied by 3.
  */
@@ -1002,12 +1005,21 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             /* Nothing was generated for this EL, so skip. */
             continue;
 
+        /*
+         * The RFC 9000 s. 8.1 limit applies to bytes sent on the wire, so the
+         * packet overhead (header, PN, AEAD tag) is charged along with the
+         * payload. Without a padding pass pkt_overhead is still the
+         * pre-generation estimate, which can only overstate the charge.
+         */
         if (!ossl_quic_tx_packetiser_check_unvalidated_credit(txp,
-                pkt[enc_level].h.bytes_appended)) {
+                pkt[enc_level].h.bytes_appended
+                    + pkt[enc_level].geom.pkt_overhead)) {
             res = TXP_ERR_SPACE;
             goto out;
         }
-        ossl_quic_tx_packetiser_consume_unvalidated_credit(txp, pkt[enc_level].h.bytes_appended);
+        ossl_quic_tx_packetiser_consume_unvalidated_credit(txp,
+            pkt[enc_level].h.bytes_appended
+                + pkt[enc_level].geom.pkt_overhead);
 
         rc = txp_pkt_commit(txp, &pkt[enc_level], archetype,
             &txpim_pkt_reffed);
