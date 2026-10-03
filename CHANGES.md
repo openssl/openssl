@@ -96,6 +96,16 @@ OpenSSL 4.2
 
    *Paul Grubbs*
 
+ * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
+   (with potential reuse for other architectures with 128 bit vector registers).
+
+   *Timo Keller*
+
+ * Added optimized ML-DSA NTT and scalar multiplication operations on `s390x`
+   (with potential reuse for other architectures with 128 bit vector registers).
+
+   *Timo Keller*
+
 OpenSSL 4.1
 -----------
 
@@ -662,11 +672,6 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30446 -->
 
    *Tomáš Mráz*
-
- * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
-   (with potential reuse for other architectures with 128 bit vector registers).
-
-   *Timo Keller*
 
 OpenSSL 4.0
 -----------
