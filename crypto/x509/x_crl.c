@@ -206,18 +206,38 @@ static int crl_set_issuers(X509_CRL *crl)
     return 1;
 }
 
+static void crl_cache_free(X509_CRL *crl)
+{
+    AUTHORITY_KEYID_free(crl->akid);
+    crl->akid = NULL;
+    ISSUING_DIST_POINT_free(crl->idp);
+    crl->idp = NULL;
+    ASN1_INTEGER_free(crl->crl_number);
+    crl->crl_number = NULL;
+    ASN1_INTEGER_free(crl->base_crl_number);
+    crl->base_crl_number = NULL;
+    sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
+    crl->issuers = NULL;
+    crl->flags = 0;
+    crl->idp_flags = 0;
+    crl->idp_reasons = CRLDP_ALL_REASONS;
+}
+
 /*
  * The X509_CRL structure needs a bit of customisation. Cache some extensions
  * and the internal-use fingerprint of the whole CRL, or set
  * EXFLAG_NO_FINGERPRINT if this fails.
  */
-static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-    void *exarg)
+static int crl_cb_ex(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+    void *exarg, int cache_only)
 {
     X509_CRL *crl = (X509_CRL *)*pval;
     STACK_OF(X509_EXTENSION) *exts;
     X509_EXTENSION *ext;
     int idx, i;
+
+    if (operation == ASN1_OP_D2I_POST)
+        ERR_set_mark();
 
     switch (operation) {
     case ASN1_OP_D2I_PRE:
@@ -225,11 +245,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (!crl->meth->crl_free(crl))
                 return 0;
         }
-        AUTHORITY_KEYID_free(crl->akid);
-        ISSUING_DIST_POINT_free(crl->idp);
-        ASN1_INTEGER_free(crl->crl_number);
-        ASN1_INTEGER_free(crl->base_crl_number);
-        sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
+        crl_cache_free(crl);
         /* fall through */
 
     case ASN1_OP_NEW_POST:
@@ -249,6 +265,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509_CRL), crl,
                 crl->fingerprint))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
+        ERR_pop_to_mark();
         crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
         if (crl->idp == NULL && i != -1) {
             ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
@@ -312,7 +329,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (!crl_set_issuers(crl))
             return 0;
 
-        if (crl->meth->crl_init) {
+        /* Cache refresh must preserve application method data. */
+        if (!cache_only && crl->meth->crl_init) {
             if (crl->meth->crl_init(crl) == 0)
                 return 0;
         }
@@ -325,11 +343,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (!crl->meth->crl_free(crl))
                 return 0;
         }
-        AUTHORITY_KEYID_free(crl->akid);
-        ISSUING_DIST_POINT_free(crl->idp);
-        ASN1_INTEGER_free(crl->crl_number);
-        ASN1_INTEGER_free(crl->base_crl_number);
-        sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
+        crl_cache_free(crl);
         OPENSSL_free(crl->propq);
         break;
     case ASN1_OP_DUP_POST: {
@@ -340,6 +354,35 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     } break;
     }
     return 1;
+}
+
+static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+    void *exarg)
+{
+    return crl_cb_ex(operation, pval, it, exarg, 0);
+}
+
+int ossl_x509_crl_cache_extensions(X509_CRL *crl)
+{
+    ASN1_VALUE *value = (ASN1_VALUE *)crl;
+    int idx;
+
+    /*
+     * Signing can follow changes to an already decoded CRL. Reset the entry
+     * caches to their initial ASN.1 state before freeing the old issuers,
+     * including entries that a subsequent parse failure might leave
+     * unprocessed.
+     */
+    for (idx = 0; idx < sk_X509_REVOKED_num(crl->crl.revoked); idx++) {
+        X509_REVOKED *rev = sk_X509_REVOKED_value(crl->crl.revoked, idx);
+
+        rev->issuer = NULL;
+        rev->reason = 0;
+    }
+    crl_cache_free(crl);
+
+    /* Signing callers must calculate the fingerprint after signing. */
+    return crl_cb_ex(ASN1_OP_D2I_POST, &value, ASN1_ITEM_rptr(X509_CRL), NULL, 1);
 }
 
 /* Convert IDP into a more convenient form */

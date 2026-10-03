@@ -370,6 +370,7 @@ X509_NAME *ossl_dist_point_name_full(const struct DIST_POINT_NAME_st *dpn,
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
+int ossl_x509_crl_cache_extensions(X509_CRL *crl);
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,

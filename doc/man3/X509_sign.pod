@@ -52,6 +52,12 @@ is not always updated meaning a stale version is sometimes used. This is not
 normally a problem because modifying the signed portion will invalidate the
 signature and signing will always update the encoding.
 
+X509_CRL_sign() and X509_CRL_sign_ctx() also refresh the cached CRL extension
+values after signing. This includes the cached issuer and revocation reason
+for each entry, so changes made before signing are reflected in subsequent
+CRL lookups without an encoding and decoding step.
+If cache initialization fails, the signing function returns zero.
+
 When signing X509 certificates and certificate requests, any B<empty>
 subjectKeyIdentifier (empty string) or authorityKeyIdentifier (empty sequence)
 extensions are flagged as an error and the signature operation fails.
