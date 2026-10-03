@@ -1722,12 +1722,18 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      */
     if (!s->server
         && !sent) {
-        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SUITABLE_KEY_SHARE);
-            return 0;
-        }
+        /*
+         * In a full handshake the ServerHello must carry a key_share, so its
+         * absence is a missing_extension alert (RFC 8446, sections 4.2.8
+         * and 6.2). Only when resuming may the server legitimately omit it,
+         * and then only if we offered psk_ke.
+         */
         if (!s->hit) {
             SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_R_NO_SUITABLE_KEY_SHARE);
+            return 0;
+        }
+        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }
     }
