@@ -1050,9 +1050,7 @@ static int final_ec_pt_formats(SSL_CONNECTION *s, unsigned int context,
      * suite, then if server returns an EC point formats lists extension it
      * must contain uncompressed.
      */
-    if (s->ext.ecpointformats != NULL
-        && s->ext.ecpointformats_len > 0
-        && s->ext.peer_ecpointformats != NULL
+    if (s->ext.peer_ecpointformats != NULL
         && s->ext.peer_ecpointformats_len > 0
         && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
         /* we are using an ECC cipher */
