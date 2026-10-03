@@ -2437,8 +2437,46 @@ err:
 }
 #endif /* OPENSSL_NO_KBKDF */
 
+static int test_kdf_null_guards(void)
+{
+    unsigned char buf[16];
+    OSSL_PARAM params[1] = { OSSL_PARAM_END };
+
+    if (!TEST_ptr_null(EVP_KDF_CTX_dup(NULL))
+        || !TEST_ptr_null(EVP_KDF_get0_name(NULL))
+        || !TEST_ptr_null(EVP_KDF_get0_description(NULL))
+        || !TEST_ptr_null(EVP_KDF_get0_provider(NULL))
+        || !TEST_ptr_null(EVP_KDF_CTX_get0_kdf(NULL))
+        || !TEST_ptr_null(EVP_KDF_CTX_get1_kdf(NULL))
+        || !TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(NULL), 0)
+        || !TEST_int_eq(EVP_KDF_derive(NULL, buf, sizeof(buf), NULL), 0)
+#ifndef FIPS_MODULE
+        || !TEST_int_eq(EVP_KDF_CTX_set_SKEY(NULL, NULL, NULL), 0)
+        || !TEST_ptr_null(EVP_KDF_derive_SKEY(NULL, NULL, NULL, NULL, 0, NULL))
+#endif
+        || !TEST_int_eq(EVP_KDF_get_params(NULL, params), 0)
+        || !TEST_int_eq(EVP_KDF_CTX_get_params(NULL, params), 0)
+        || !TEST_int_eq(EVP_KDF_CTX_set_params(NULL, params), 0)
+        || !TEST_int_eq(EVP_KDF_names_do_all(NULL, NULL, NULL), 0)
+        || !TEST_int_eq(EVP_KDF_is_a(NULL, "HKDF"), 0)
+        || !TEST_int_eq(EVP_KDF_up_ref(NULL), 0)
+        || !TEST_ptr_null(EVP_KDF_gettable_params(NULL))
+        || !TEST_ptr_null(EVP_KDF_gettable_ctx_params(NULL))
+        || !TEST_ptr_null(EVP_KDF_settable_ctx_params(NULL))
+        || !TEST_ptr_null(EVP_KDF_CTX_gettable_params(NULL))
+        || !TEST_ptr_null(EVP_KDF_CTX_settable_params(NULL)))
+        return 0;
+
+    EVP_KDF_CTX_reset(NULL);
+    EVP_KDF_free(NULL);
+    EVP_KDF_CTX_free(NULL);
+
+    return 1;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_kdf_null_guards);
     ADD_TEST(test_kdf_pbkdf1);
     ADD_TEST(test_kdf_pbkdf1_skey);
     ADD_TEST(test_kdf_pbkdf1_key_too_long);
