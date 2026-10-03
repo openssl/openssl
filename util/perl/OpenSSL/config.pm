@@ -159,6 +159,7 @@ my $guess_patterns = [
     [ 'machten:.*',                 '${MACHINE}-tenon-${SYSTEM}' ],
     [ 'library:.*',                 '${MACHINE}-ncr-sysv4' ],
     [ 'ConvexOS:.*?:11\.0:.*',      '${MACHINE}-v11-${SYSTEM}' ],
+    [ 'MINGW64.*ARM64.*',           '${MACHINE}-whatever-mingwarm64' ],
     [ 'MINGW64.*?:.*?:.*?:x86_64',  '${MACHINE}-whatever-mingw64' ],
     [ 'MINGW.*',                    '${MACHINE}-whatever-mingw' ],
     [ 'CYGWIN.*',                   '${MACHINE}-pc-cygwin' ],
