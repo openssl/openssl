@@ -2410,6 +2410,33 @@ err:
 }
 #endif
 
+static int test_evp_mac_null_guards(void)
+{
+    unsigned char buf[16];
+    size_t len = 0;
+    OSSL_PARAM params[1] = { OSSL_PARAM_END };
+
+    if (!TEST_ptr_null(EVP_MAC_CTX_dup(NULL))
+        || !TEST_ptr_null(EVP_MAC_CTX_get0_mac(NULL))
+        || !TEST_size_t_eq(EVP_MAC_CTX_get_mac_size(NULL), 0)
+        || !TEST_size_t_eq(EVP_MAC_CTX_get_block_size(NULL), 0)
+        || !TEST_int_eq(EVP_MAC_init(NULL, buf, sizeof(buf), NULL), 0)
+        || !TEST_int_eq(EVP_MAC_init_SKEY(NULL, NULL, NULL), 0)
+        || !TEST_int_eq(EVP_MAC_update(NULL, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(EVP_MAC_final(NULL, buf, &len, sizeof(buf)), 0)
+        || !TEST_int_eq(EVP_MAC_finalXOF(NULL, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(EVP_MAC_CTX_get_params(NULL, params), 0)
+        || !TEST_int_eq(EVP_MAC_CTX_set_params(NULL, params), 0)
+        || !TEST_int_eq(evp_mac_get_number(NULL), 0)
+        || !TEST_ptr_null(EVP_MAC_get0_name(NULL))
+        || !TEST_ptr_null(EVP_MAC_get0_description(NULL))
+        || !TEST_int_eq(EVP_MAC_is_a(NULL, "HMAC"), 0)
+        || !TEST_int_eq(EVP_MAC_names_do_all(NULL, NULL, NULL), 0))
+        return 0;
+
+    return 1;
+}
+
 static int test_d2i_AutoPrivateKey(int i)
 {
     int ret = 0;
@@ -9848,6 +9875,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_POLY1305
     ADD_TEST(test_evp_mac_poly1305_no_key);
 #endif
+    ADD_TEST(test_evp_mac_null_guards);
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
