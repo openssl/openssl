@@ -21,6 +21,8 @@ IF[{- !$disabled{asm} -}]
 
   $POLY1305ASM_c64xplus=poly1305-c64xplus.s
 
+  $POLY1305ASM_riscv64=poly1305_riscv.c poly1305-riscv64.S poly1305-riscv64-v.S
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$POLY1305ASM_{- $target{asm_arch} -}]
@@ -53,3 +55,5 @@ INCLUDE[poly1305-mips.o]=..
 GENERATE[poly1305-c64xplus.S]=asm/poly1305-c64xplus.pl
 INCLUDE[poly1305-s390x.o]=..
 GENERATE[poly1305-s390x.S]=asm/poly1305-s390x.pl
+GENERATE[poly1305-riscv64.S]=asm/poly1305-riscv64.pl
+GENERATE[poly1305-riscv64-v.S]=asm/poly1305-riscv64.pl v
