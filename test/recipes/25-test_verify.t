@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 230;
+plan tests => 232;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -321,6 +321,10 @@ ok(verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
    "accept non-ca with pathlen:0 by default");
 ok(!verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)], "-x509_strict"),
    "reject non-ca with pathlen:0 with strict flag");
+ok(!verify("ee-ku-empty", "sslserver", [qw(ee-ku-empty)], [], "-partial_chain"),
+   "reject trusted leaf with invalid extensions for a purpose");
+ok(!verify("ee-ku-empty", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "reject leaf with invalid extensions");
 
 # EE veaiants wrt timestamp signing
 ok(verify("ee-timestampsign-CABforum", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
