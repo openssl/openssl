@@ -98,13 +98,19 @@ __owur static OSSL_COMP_CERT *OSSL_COMP_CERT_from_uncompressed_data(unsigned cha
 
     switch (alg) {
     case TLSEXT_comp_cert_brotli:
+        ERR_set_mark();
         method = COMP_brotli_oneshot();
+        ERR_pop_to_mark();
         break;
     case TLSEXT_comp_cert_zlib:
+        ERR_set_mark();
         method = COMP_zlib_oneshot();
+        ERR_pop_to_mark();
         break;
     case TLSEXT_comp_cert_zstd:
+        ERR_set_mark();
         method = COMP_zstd_oneshot();
+        ERR_pop_to_mark();
         break;
     default:
         goto err;
