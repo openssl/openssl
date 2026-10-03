@@ -12,7 +12,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_asn1_parse");
 
-plan tests => 4;
+plan tests => 8;
 
 $ENV{OPENSSL_CONF} = srctop_file("test", "test_asn1_parse.cnf");
 
@@ -24,6 +24,18 @@ ok(run(app(([ 'openssl', 'asn1parse',
 
 ok(run(app(([ 'openssl', 'asn1parse',
               '-genstr', 'OID:1.2.3.4.3']))));
+
+ok(run(app(([ 'openssl', 'asn1parse',
+              '-genstr', 'OID:1.2.3.4.4']))));
+
+ok(run(app(([ 'openssl', 'asn1parse',
+              '-genstr', 'OID:1.2.3.4.5']))));
+
+ok(run(app(([ 'openssl', 'asn1parse',
+              '-genstr', 'OID:1.2.3.4.6']))));
+
+ok(run(app(([ 'openssl', 'asn1parse',
+              '-genstr', 'OID:1.2.3.4.7']))));
 
 ok(run(app(([ 'openssl', 'asn1parse',
               '-genconf', srctop_file("test", "test_asn1_genconf.cnf")]))));
