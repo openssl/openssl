@@ -57,16 +57,20 @@ int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_
 {
     DWORD thread_retval;
     HANDLE *handle;
+    int ret = 0;
 
     if (thread == NULL || thread->handle == NULL)
         return 0;
 
     handle = (HANDLE *)thread->handle;
-    if (WaitForSingleObject(*handle, INFINITE) != WAIT_OBJECT_0)
+    if (*handle == NULL)
         return 0;
 
+    if (WaitForSingleObject(*handle, INFINITE) != WAIT_OBJECT_0)
+        goto out;
+
     if (GetExitCodeThread(*handle, &thread_retval) == 0)
-        return 0;
+        goto out;
 
     /*
      * GetExitCodeThread call followed by this check is to make sure that
@@ -75,12 +79,15 @@ int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_
      * if the thread is still active (returns STILL_ACTIVE (259)).
      */
     if (thread_retval != 0)
-        return 0;
+        goto out;
 
+    ret = 1;
+
+out:
     if (CloseHandle(*handle) == 0)
-        return 0;
-
-    return 1;
+        ret = 0;
+    *handle = NULL;
+    return ret;
 }
 
 int ossl_crypto_thread_native_exit(void)
