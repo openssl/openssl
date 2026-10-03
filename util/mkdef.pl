@@ -190,16 +190,17 @@ sub platform_filter {
 
 sub feature_filter {
     my $item = shift;
-    my @features = ( $item->features() );
 
-    # True if no features are defined
-    return 1 if scalar @features == 0;
+    # An item with no condition is unconditionally available.
+    my $verdict = $item->available(\%disabled_uc);
 
-    my $verdict = ! grep { $disabled_uc{$_} } @features;
-
+    # features() lists the feature names the condition mentions and discards
+    # the boolean operators, so a DEPRECATED_x_y term suppresses the symbol
+    # even where the condition does not require that feature -- one arm of a
+    # '||', say.
     if ($disabled{deprecated}) {
-        foreach (@features) {
-            next unless /^DEPRECATEDIN_(\d+)_(\d+)(?:_(\d+))?$/;
+        foreach ($item->features()) {
+            next unless /^DEPRECATED_(\d+)_(\d+)(?:_(\d+))?$/;
             my $symdep = $1 * 10000 + $2 * 100 + ($3 // 0);
             $verdict = 0 if $config{api} >= $symdep;
             print STDERR "DEBUG: \$symdep = $symdep, \$verdict = $verdict\n"
