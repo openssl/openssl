@@ -536,6 +536,68 @@ err:
     EC_GROUP_free(group);
     return ret;
 }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+static int test_ec_points_mul_null_scalar_prime256v1(void)
+{
+    int ret = 0;
+    int num_of_points = 0;
+    EC_GROUP *ecgroup = NULL;
+    BN_CTX *ctx = NULL;
+
+    const EC_POINT **points = NULL;
+    const BIGNUM **scalars = NULL;
+
+    EC_POINT *result = NULL;
+
+    ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+    if (!TEST_ptr(ecgroup))
+        goto end;
+
+    ctx = BN_CTX_new();
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    const EC_POINT *gen = EC_GROUP_get0_generator(ecgroup);
+
+    num_of_points = 3;
+    points = OPENSSL_calloc(num_of_points, sizeof(EC_POINT *));
+    scalars = OPENSSL_calloc(num_of_points, sizeof(BIGNUM *));
+
+    if (!TEST_ptr(points) || !TEST_ptr(scalars))
+        goto end;
+
+    for (int i = 0; i < num_of_points; i++) {
+        points[i] = EC_POINT_new(ecgroup);
+        EC_POINT_copy((EC_POINT *)points[i], gen);
+
+        scalars[i] = (i == 0) ? NULL : BN_new();
+        if (scalars[i])
+            BN_rand((BIGNUM *)scalars[i], 256, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY);
+    }
+    result = EC_POINT_new(ecgroup);
+    if (!TEST_ptr(result))
+        goto end;
+
+    if (!TEST_true(EC_POINTs_mul(ecgroup, result, NULL, num_of_points, points, scalars, ctx)))
+        goto end;
+
+    ret = 1;
+end:
+
+    EC_POINT_free(result);
+    for (int i = 0; i < num_of_points; i++) {
+        EC_POINT_free((EC_POINT *)points[i]);
+        BN_free((BIGNUM *)scalars[i]);
+    }
+    OPENSSL_free(points);
+    OPENSSL_free(scalars);
+
+    BN_CTX_free(ctx);
+    EC_GROUP_free(ecgroup);
+
+    return ret;
+}
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 int setup_tests(void)
 {
@@ -558,6 +620,9 @@ int setup_tests(void)
     ADD_TEST(decoded_flag_test);
     ADD_ALL_TESTS(ecpkparams_i2d2i_test, (int)crv_len);
     ADD_TEST(named_group_creation_test);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_ec_points_mul_null_scalar_prime256v1);
+#endif
 
     return 1;
 }
