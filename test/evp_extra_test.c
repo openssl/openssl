@@ -4853,6 +4853,45 @@ static int test_rand_agglomeration(void)
     return res;
 }
 
+static int test_evp_rand_null_guards(void)
+{
+    unsigned char buf[16];
+    OSSL_PARAM params[1] = { OSSL_PARAM_END };
+
+    if (!TEST_int_eq(EVP_RAND_enable_locking(NULL), 0)
+        || !TEST_int_eq(EVP_RAND_up_ref(NULL), 0)
+        || !TEST_int_eq(evp_rand_get_number(NULL), 0)
+        || !TEST_ptr_null(EVP_RAND_get0_name(NULL))
+        || !TEST_ptr_null(EVP_RAND_get0_description(NULL))
+        || !TEST_int_eq(EVP_RAND_is_a(NULL, "TEST-RAND"), 0)
+        || !TEST_ptr_null(EVP_RAND_get0_provider(NULL))
+        || !TEST_int_eq(EVP_RAND_get_params(NULL, params), 0)
+        || !TEST_ptr_null(EVP_RAND_gettable_params(NULL))
+        || !TEST_ptr_null(EVP_RAND_gettable_ctx_params(NULL))
+        || !TEST_ptr_null(EVP_RAND_settable_ctx_params(NULL))
+        || !TEST_int_eq(EVP_RAND_names_do_all(NULL, NULL, NULL), 0)
+        || !TEST_int_eq(EVP_RAND_CTX_up_ref(NULL), 0)
+        || !TEST_ptr_null(EVP_RAND_CTX_get0_rand(NULL))
+        || !TEST_int_eq(EVP_RAND_CTX_get_params(NULL, params), 0)
+        || !TEST_int_eq(EVP_RAND_CTX_set_params(NULL, params), 0)
+        || !TEST_ptr_null(EVP_RAND_CTX_gettable_params(NULL))
+        || !TEST_ptr_null(EVP_RAND_CTX_settable_params(NULL))
+        || !TEST_int_eq(EVP_RAND_instantiate(NULL, 0, 0, NULL, 0, NULL), 0)
+        || !TEST_int_eq(EVP_RAND_uninstantiate(NULL), 0)
+        || !TEST_int_eq(EVP_RAND_generate(NULL, buf, sizeof(buf), 0, 0,
+                                          NULL, 0), 0)
+        || !TEST_int_eq(EVP_RAND_reseed(NULL, 0, NULL, 0, NULL, 0), 0)
+        || !TEST_uint_eq(EVP_RAND_get_strength(NULL), 0)
+        || !TEST_int_eq(EVP_RAND_nonce(NULL, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(EVP_RAND_get_state(NULL), EVP_RAND_STATE_ERROR)
+        || !TEST_int_eq(EVP_RAND_verify_zeroization(NULL), 0)
+        || !TEST_int_eq(evp_rand_can_seed(NULL), 0))
+        return 0;
+
+    evp_rand_clear_seed(NULL, buf, sizeof(buf));
+    return 1;
+}
+
 /*
  * Test that we correctly return the original or "running" IV after
  * an encryption operation.
@@ -9926,6 +9965,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     ADD_TEST(test_rand_agglomeration);
+    ADD_TEST(test_evp_rand_null_guards);
     ADD_ALL_TESTS(test_evp_iv_aes, 13);
 #ifndef OPENSSL_NO_DES
     ADD_ALL_TESTS(test_evp_iv_des, 6);
