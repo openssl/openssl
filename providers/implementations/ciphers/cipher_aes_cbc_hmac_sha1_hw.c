@@ -713,7 +713,6 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_aad(
     unsigned int frag, last, packlen, inp_len;
 
     inp_len = param->inp[11] << 8 | param->inp[12];
-    ctx->multiblock_interleave = param->interleave;
 
     if (ctx->base.enc) {
         if ((param->inp[9] << 8 | param->inp[10]) < TLS1_1_VERSION)

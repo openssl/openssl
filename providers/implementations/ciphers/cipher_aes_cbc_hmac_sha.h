@@ -48,6 +48,7 @@ typedef struct prov_aes_hmac_sha_ctx_st {
     /* some value that are setup by set methods - that can be retrieved */
     unsigned int multiblock_interleave;
     unsigned int multiblock_aad_packlen;
+    size_t multiblock_aad_plaintext_len;
     size_t multiblock_max_send_fragment;
     size_t multiblock_encrypt_len;
     size_t tls_aad_pad;
