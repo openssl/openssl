@@ -479,6 +479,8 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 
 int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 {
+    if (signature == NULL)
+        return 0;
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_signature_up_ref(signature);
 #else
@@ -490,7 +492,7 @@ int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 
 OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)
 {
-    return signature->prov;
+    return signature != NULL ? signature->prov : NULL;
 }
 
 EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -521,23 +523,25 @@ int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
 
 int EVP_SIGNATURE_has_message_update(const EVP_SIGNATURE *signature)
 {
+    if (signature == NULL)
+        return 0;
     return signature->verify_message_update != NULL
         && signature->sign_message_update != NULL;
 }
 
 int evp_signature_get_number(const EVP_SIGNATURE *signature)
 {
-    return signature->name_id;
+    return signature != NULL ? signature->name_id : 0;
 }
 
 const char *EVP_SIGNATURE_get0_name(const EVP_SIGNATURE *signature)
 {
-    return signature->type_name;
+    return signature != NULL ? signature->type_name : NULL;
 }
 
 const char *EVP_SIGNATURE_get0_description(const EVP_SIGNATURE *signature)
 {
-    return signature->description;
+    return signature != NULL ? signature->description : NULL;
 }
 
 void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
@@ -560,6 +564,9 @@ int EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
     void (*fn)(const char *name, void *data),
     void *data)
 {
+    if (signature == NULL)
+        return 0;
+
     if (signature->prov != NULL)
         return evp_names_do_all(signature->prov, signature->name_id, fn, data);
 
@@ -935,12 +942,15 @@ int EVP_PKEY_sign_message_update(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "";
-    if (signature->sign_message_update == NULL) {
+    if (signature == NULL || signature->sign_message_update == NULL) {
+        desc = (signature != NULL && signature->description != NULL)
+            ? signature->description : "";
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
-            "%s sign_message_update:%s", signature->type_name, desc);
+            "%s sign_message_update:%s",
+            signature != NULL ? signature->type_name : "", desc);
         return -2;
     }
+    desc = signature->description != NULL ? signature->description : "";
 
     ret = signature->sign_message_update(ctx->op.sig.algctx, in, inlen);
     if (ret <= 0)
@@ -956,7 +966,7 @@ int EVP_PKEY_sign_message_final(EVP_PKEY_CTX *ctx,
     const char *desc;
     int ret;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || siglen == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
@@ -967,12 +977,15 @@ int EVP_PKEY_sign_message_final(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "";
-    if (signature->sign_message_final == NULL) {
+    if (signature == NULL || signature->sign_message_final == NULL) {
+        desc = (signature != NULL && signature->description != NULL)
+            ? signature->description : "";
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
-            "%s sign_message_final:%s", signature->type_name, desc);
+            "%s sign_message_final:%s",
+            signature != NULL ? signature->type_name : "", desc);
         return -2;
     }
+    desc = signature->description != NULL ? signature->description : "";
 
     ret = signature->sign_message_final(ctx->op.sig.algctx, sig, siglen,
         (sig == NULL) ? 0 : *siglen);
@@ -990,7 +1003,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
     const char *desc;
     int ret;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || siglen == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
@@ -1007,12 +1020,15 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "";
-    if (signature->sign == NULL) {
+    if (signature == NULL || signature->sign == NULL) {
+        desc = (signature != NULL && signature->description != NULL)
+            ? signature->description : "";
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
-            "%s sign:%s", signature->type_name, desc);
+            "%s sign:%s",
+            signature != NULL ? signature->type_name : "", desc);
         return -2;
     }
+    desc = signature->description != NULL ? signature->description : "";
 
     ret = signature->sign(ctx->op.sig.algctx, sig, siglen,
         (sig == NULL) ? 0 : *siglen, tbs, tbslen);
@@ -1083,12 +1099,15 @@ int EVP_PKEY_verify_message_update(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "";
-    if (signature->verify_message_update == NULL) {
+    if (signature == NULL || signature->verify_message_update == NULL) {
+        desc = (signature != NULL && signature->description != NULL)
+            ? signature->description : "";
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
-            "%s verify_message_update:%s", signature->type_name, desc);
+            "%s verify_message_update:%s",
+            signature != NULL ? signature->type_name : "", desc);
         return -2;
     }
+    desc = signature->description != NULL ? signature->description : "";
 
     ret = signature->verify_message_update(ctx->op.sig.algctx, in, inlen);
     if (ret <= 0)
@@ -1114,12 +1133,15 @@ int EVP_PKEY_verify_message_final(EVP_PKEY_CTX *ctx)
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "";
-    if (signature->verify_message_final == NULL) {
+    if (signature == NULL || signature->verify_message_final == NULL) {
+        desc = (signature != NULL && signature->description != NULL)
+            ? signature->description : "";
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
-            "%s verify_message_final:%s", signature->type_name, desc);
+            "%s verify_message_final:%s",
+            signature != NULL ? signature->type_name : "", desc);
         return -2;
     }
+    desc = signature->description != NULL ? signature->description : "";
 
     /* The signature must have been set with EVP_PKEY_CTX_set_signature() */
     ret = signature->verify_message_final(ctx->op.sig.algctx);
@@ -1154,14 +1176,17 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "";
-    if (signature->verify == NULL) {
+    if (signature == NULL || signature->verify == NULL) {
+        desc = (signature != NULL && signature->description != NULL)
+            ? signature->description : "";
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
-            "%s verify:%s", signature->type_name, desc);
+            "%s verify:%s",
+            signature != NULL ? signature->type_name : "", desc);
         return -2;
     }
+    desc = signature->description != NULL ? signature->description : "";
 
-    ret = ctx->op.sig.signature->verify(ctx->op.sig.algctx, sig, siglen,
+    ret = signature->verify(ctx->op.sig.algctx, sig, siglen,
         tbs, tbslen);
     if (ret <= 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
@@ -1195,7 +1220,7 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
     const char *desc;
     int ret;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || routlen == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
@@ -1211,12 +1236,15 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
     }
 
     signature = ctx->op.sig.signature;
-    desc = signature->description != NULL ? signature->description : "";
-    if (signature->verify_recover == NULL) {
+    if (signature == NULL || signature->verify_recover == NULL) {
+        desc = (signature != NULL && signature->description != NULL)
+            ? signature->description : "";
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED,
-            "%s verify_recover:%s", signature->type_name, desc);
+            "%s verify_recover:%s",
+            signature != NULL ? signature->type_name : "", desc);
         return -2;
     }
+    desc = signature->description != NULL ? signature->description : "";
 
     ret = signature->verify_recover(ctx->op.sig.algctx, rout, routlen,
         (rout == NULL ? 0 : *routlen), sig, siglen);

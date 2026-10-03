@@ -255,6 +255,12 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
         return -2;
     }
 
+    if (ctx->op.encap.kem == NULL
+            || ctx->op.encap.kem->encapsulate == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
     if (out != NULL && secret == NULL)
         return 0;
 
@@ -293,6 +299,13 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
+
+    if (ctx->op.encap.kem == NULL
+            || ctx->op.encap.kem->decapsulate == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
     return ctx->op.encap.kem->decapsulate(ctx->op.encap.algctx,
         secret, secretlen, in, inlen);
 }
@@ -459,6 +472,8 @@ void EVP_KEM_free(EVP_KEM *kem)
 
 int EVP_KEM_up_ref(EVP_KEM *kem)
 {
+    if (kem == NULL)
+        return 0;
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_kem_up_ref(kem);
 #else
@@ -470,7 +485,7 @@ int EVP_KEM_up_ref(EVP_KEM *kem)
 
 OSSL_PROVIDER *EVP_KEM_get0_provider(const EVP_KEM *kem)
 {
-    return kem->prov;
+    return kem != NULL ? kem->prov : NULL;
 }
 
 EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -498,17 +513,17 @@ int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
 
 int evp_kem_get_number(const EVP_KEM *kem)
 {
-    return kem->name_id;
+    return kem != NULL ? kem->name_id : 0;
 }
 
 const char *EVP_KEM_get0_name(const EVP_KEM *kem)
 {
-    return kem->type_name;
+    return kem != NULL ? kem->type_name : NULL;
 }
 
 const char *EVP_KEM_get0_description(const EVP_KEM *kem)
 {
-    return kem->description;
+    return kem != NULL ? kem->description : NULL;
 }
 
 void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
@@ -529,6 +544,9 @@ int EVP_KEM_names_do_all(const EVP_KEM *kem,
     void (*fn)(const char *name, void *data),
     void *data)
 {
+    if (kem == NULL)
+        return 0;
+
     if (kem->prov != NULL)
         return evp_names_do_all(kem->prov, kem->name_id, fn, data);
 

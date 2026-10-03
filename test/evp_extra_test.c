@@ -4853,6 +4853,78 @@ static int test_rand_agglomeration(void)
     return res;
 }
 
+static int test_evp_provider_ops_null_guards(void)
+{
+    unsigned char buf[32];
+    size_t outlen = sizeof(buf);
+    size_t secretlen = sizeof(buf);
+
+    if (!TEST_int_eq(EVP_ASYM_CIPHER_up_ref(NULL), 0)
+        || !TEST_ptr_null(EVP_ASYM_CIPHER_get0_provider(NULL))
+        || !TEST_int_eq(EVP_ASYM_CIPHER_is_a(NULL, "RSA"), 0)
+        || !TEST_int_eq(evp_asym_cipher_get_number(NULL), 0)
+        || !TEST_ptr_null(EVP_ASYM_CIPHER_get0_name(NULL))
+        || !TEST_ptr_null(EVP_ASYM_CIPHER_get0_description(NULL))
+        || !TEST_int_eq(EVP_ASYM_CIPHER_names_do_all(NULL, NULL, NULL), 0)
+        || !TEST_ptr_null(EVP_ASYM_CIPHER_gettable_ctx_params(NULL))
+        || !TEST_ptr_null(EVP_ASYM_CIPHER_settable_ctx_params(NULL))
+        || !TEST_int_eq(EVP_KEM_up_ref(NULL), 0)
+        || !TEST_ptr_null(EVP_KEM_get0_provider(NULL))
+        || !TEST_int_eq(EVP_KEM_is_a(NULL, "RSA"), 0)
+        || !TEST_int_eq(evp_kem_get_number(NULL), 0)
+        || !TEST_ptr_null(EVP_KEM_get0_name(NULL))
+        || !TEST_ptr_null(EVP_KEM_get0_description(NULL))
+        || !TEST_int_eq(EVP_KEM_names_do_all(NULL, NULL, NULL), 0)
+        || !TEST_ptr_null(EVP_KEM_gettable_ctx_params(NULL))
+        || !TEST_ptr_null(EVP_KEM_settable_ctx_params(NULL))
+        || !TEST_int_eq(EVP_KEYEXCH_up_ref(NULL), 0)
+        || !TEST_ptr_null(EVP_KEYEXCH_get0_provider(NULL))
+        || !TEST_int_eq(EVP_KEYEXCH_is_a(NULL, "DH"), 0)
+        || !TEST_int_eq(evp_keyexch_get_number(NULL), 0)
+        || !TEST_ptr_null(EVP_KEYEXCH_get0_name(NULL))
+        || !TEST_ptr_null(EVP_KEYEXCH_get0_description(NULL))
+        || !TEST_int_eq(EVP_KEYEXCH_names_do_all(NULL, NULL, NULL), 0)
+        || !TEST_ptr_null(EVP_KEYEXCH_gettable_ctx_params(NULL))
+        || !TEST_ptr_null(EVP_KEYEXCH_settable_ctx_params(NULL))
+        || !TEST_int_eq(EVP_SIGNATURE_up_ref(NULL), 0)
+        || !TEST_ptr_null(EVP_SIGNATURE_get0_provider(NULL))
+        || !TEST_int_eq(EVP_SIGNATURE_is_a(NULL, "RSA"), 0)
+        || !TEST_int_eq(EVP_SIGNATURE_has_message_update(NULL), 0)
+        || !TEST_int_eq(evp_signature_get_number(NULL), 0)
+        || !TEST_ptr_null(EVP_SIGNATURE_get0_name(NULL))
+        || !TEST_ptr_null(EVP_SIGNATURE_get0_description(NULL))
+        || !TEST_int_eq(EVP_SIGNATURE_names_do_all(NULL, NULL, NULL), 0)
+        || !TEST_ptr_null(EVP_SIGNATURE_gettable_ctx_params(NULL))
+        || !TEST_ptr_null(EVP_SIGNATURE_settable_ctx_params(NULL)))
+        return 0;
+
+    if (!TEST_int_eq(EVP_PKEY_encrypt(NULL, buf, &outlen, buf, sizeof(buf)),
+                     -2)
+        || !TEST_int_eq(EVP_PKEY_decrypt(NULL, buf, &outlen, buf, sizeof(buf)),
+                        -2)
+        || !TEST_int_eq(EVP_PKEY_encapsulate(NULL, buf, &outlen, buf,
+                                            &secretlen), 0)
+        || !TEST_int_eq(EVP_PKEY_decapsulate(NULL, buf, &secretlen, buf,
+                                             sizeof(buf)), 0)
+        || !TEST_int_eq(EVP_PKEY_derive(NULL, buf, &outlen), -1)
+        || !TEST_int_eq(EVP_PKEY_derive_set_peer_ex(NULL, NULL, 0), -1)
+        || !TEST_int_eq(EVP_PKEY_sign(NULL, buf, &outlen, buf, sizeof(buf)),
+                        -1)
+        || !TEST_int_eq(EVP_PKEY_sign_message_update(NULL, buf, sizeof(buf)),
+                        -1)
+        || !TEST_int_eq(EVP_PKEY_sign_message_final(NULL, buf, &outlen), -1)
+        || !TEST_int_eq(EVP_PKEY_verify(NULL, buf, sizeof(buf), buf,
+                                        sizeof(buf)), -1)
+        || !TEST_int_eq(EVP_PKEY_verify_message_update(NULL, buf, sizeof(buf)),
+                        -1)
+        || !TEST_int_eq(EVP_PKEY_verify_message_final(NULL), -1)
+        || !TEST_int_eq(EVP_PKEY_verify_recover(NULL, buf, &outlen, buf,
+                                                sizeof(buf)), -1))
+        return 0;
+
+    return 1;
+}
+
 /*
  * Test that we correctly return the original or "running" IV after
  * an encryption operation.
@@ -9926,6 +9998,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     ADD_TEST(test_rand_agglomeration);
+    ADD_TEST(test_evp_provider_ops_null_guards);
     ADD_ALL_TESTS(test_evp_iv_aes, 13);
 #ifndef OPENSSL_NO_DES
     ADD_ALL_TESTS(test_evp_iv_des, 6);
