@@ -889,11 +889,16 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
              * write keys are not installed until its ACK arrives (see
              * dtls_process_ack()), so this ACK can safely go out under
              * our current, still-valid keys even while our own
-             * KeyUpdate is outstanding. If it is, go back to waiting
-             * for its ACK afterward rather than reporting the
-             * connection idle.
+             * KeyUpdate is outstanding. If its write-key install hasn't
+             * completed yet, go back to waiting rather than reporting
+             * the connection idle: key_update_write_pending, not
+             * dtls_has_unacked_key_update(), is what tracks that -- the
+             * KeyUpdate can already be acknowledged while its install is
+             * still withheld behind an earlier, unrelated message, and
+             * reporting idle in that window would admit new
+             * post-handshake content under the old keys.
              */
-            st->deferred_ack_state = dtls_has_unacked_key_update(s)
+            st->deferred_ack_state = s->d1->key_update_write_pending
                 ? TLS_ST_SW_KEY_UPDATE
                 : TLS_ST_OK;
             st->hand_state = TLS_ST_SW_ACK;
@@ -901,11 +906,21 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         }
         /* Fall through */
     case TLS_ST_SW_KEY_UPDATE:
-        if (SSL_CONNECTION_IS_DTLS13(s))
+        /*
+         * Parked here waiting for our own KeyUpdate's write-key install,
+         * which can complete as a side effect of acknowledging some
+         * entirely unrelated message (e.g. a retransmitted ticket) --
+         * nothing re-enters this function for that on its own, so this
+         * case has to notice it the next time it's reached instead of
+         * assuming key_update_write_pending is still set just because
+         * hand_state hasn't moved. Otherwise anything scheduled behind
+         * it (TLS_ST_OK's own key_update check below) would stay stuck
+         * here indefinitely once the install genuinely finishes.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && s->d1->key_update_write_pending)
             /* We wait for ACK */
             return WRITE_TRAN_FINISHED;
-        else
-            st->hand_state = TLS_ST_OK;
+        st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
@@ -1475,6 +1490,8 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
              * dtls_process_ack() once the ACK arrives.
              */
             s->d1->key_update_write_pending = 1;
+            s->d1->key_update_acked = 0;
+            s->d1->key_update_msg_seq = s->d1->w_msg.msg_seq;
         } else if (!tls13_update_key(s, 1)) {
             /* SSLfatal() already called */
             return WORK_ERROR;

@@ -742,8 +742,17 @@ start:
             return -1;
         } else if (sc->version == DTLS1_3_VERSION) {
             /*
-             * Let's let DTLS ACK and retransmits fix this problem.
+             * Unlike a handshake message, application data has no
+             * reliability layer of its own to resend it if we drop it
+             * here -- there is no ACK or retransmit to "fix this problem"
+             * for a record that was never a handshake message to begin
+             * with. Buffer it instead, so it can still be delivered once
+             * we're ready to read application data again.
              */
+            if (dtls_buffer_record(sc, rr) < 0) {
+                /* SSLfatal() already called */
+                return -1;
+            }
             ssl_release_record(sc, rr, 0);
             return -1;
         } else {

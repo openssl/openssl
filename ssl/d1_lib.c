@@ -653,6 +653,20 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
  * the time Finished is processed it must not still be queued, so retiring
  * it here is idempotent -- the decision to preserve or discard everything
  * else is made separately, from whether anything else remains unacked.
+ *
+ * This can also be what finally unblocks a deferred write-key install, with
+ * no ACK record involved at all. dtls1_check_deferred_write_key() normally
+ * runs from dtls_process_ack() as ACK records arrive, but a
+ * CertificateRequest retired above -- or anything else cleared below -- can
+ * be the last thing our own KeyUpdate was waiting on. If so, nothing else
+ * is ever going to call it, so it has to be checked here instead, at every
+ * point this function can return, using the state left by whatever
+ * clearing just happened.
+ *
+ * Its return value is ignored: a failure there is fatal and SSLfatal() has
+ * already been called, and this function has no error return of its own to
+ * propagate one through. That's the same trust every other void cleanup
+ * helper on this path already places in SSLfatal().
  */
 void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
 {
@@ -662,6 +676,7 @@ void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
         dtls1_retire_sent_certificate_request_messages(s);
         if (dtls_any_sent_messages_are_missing_acknowledge(s)) {
             dtls1_clear_sent_buffer(s, 1);
+            dtls1_check_deferred_write_key(s);
             return;
         }
     }
@@ -674,10 +689,12 @@ void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
                 && s->post_handshake_auth == SSL_PHA_REQUESTED))
         && dtls_any_sent_messages_are_missing_acknowledge(s)) {
         dtls1_clear_sent_buffer(s, 1);
+        dtls1_check_deferred_write_key(s);
         return;
     }
 
     dtls1_stop_timer(s);
+    dtls1_check_deferred_write_key(s);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)

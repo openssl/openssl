@@ -2228,6 +2228,7 @@ typedef struct dtls_sent_msg_st {
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
 int dtls_has_unacked_key_update(SSL_CONNECTION *s);
+int dtls1_check_deferred_write_key(SSL_CONNECTION *s);
 int dtls1_has_buffered_ready_message(SSL_CONNECTION *s);
 
 static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype)
@@ -2296,6 +2297,20 @@ typedef struct dtls1_state_st {
      * keys in the meantime.
      */
     unsigned int key_update_write_pending;
+    /*
+     * Set true once our own pending KeyUpdate has been fully acknowledged.
+     * Tracked separately from its sent_messages entry because that entry
+     * can be freed as soon as it's acknowledged, even while
+     * key_update_write_pending is still waiting on an earlier message -- so
+     * the entry may already be gone by the time we need to know this.
+     */
+    unsigned int key_update_acked;
+    /*
+     * The handshake message sequence number of our own pending KeyUpdate,
+     * captured when it was sent. Lets us tell which other queued messages
+     * precede it, without needing its own entry to still be in the queue.
+     */
+    unsigned short key_update_msg_seq;
 #ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 #endif
