@@ -47,7 +47,8 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed potential CPU DoS via O(n^2) fragment reassembly in QUIC.
     ([CVE-2026-42772])
 
-  * Fixed a timing side-channel in scalar multiplication for mon-NIST EC curves.
+  * Fixed a timing side-channel leak in generic elliptic curve scalar
+    multiplication.
     ([CVE-2026-54872])
 
   * Fixed QUIC `STREAM` fragment metadata DoS.
@@ -77,6 +78,16 @@ This release incorporates the following bug fixes and mitigations:
 
   * Fixed a bug where `EVP_DecryptFinal()` incorrectly reported a stale success
     on AES-SIV authentication failure.
+
+This release incorporates the following potentially significant or incompatible
+changes:
+
+ * Changed the OpenSSL FIPS provider so that every algorithm advertised
+   with `fips=yes` property explicitly exposes a `fips-indicator` gettable
+   context parameter, that returns 1 for an approved operation.  The absence
+   of an indicator is no longer interpreted as approval.  Algorithms advertised
+   with `fips=no` property, including X448MLKEM1024, remain unapproved
+   and return 0 when they expose the indicator.
 
 ### Major changes between OpenSSL 3.6.3 and OpenSSL 3.6.4 [25 Aug 2026]
 
