@@ -883,7 +883,7 @@ OpenSSL 4.0
    *Alexandr Nedvědický*
 
  * Fixed a bug where `EVP_DecryptFinal()` incorrectly reported a stale success
-   on AES-SIV authentication failure after a preciously successful message
+   on AES-SIV authentication failure after a previously successful message
    decryption.
    <!-- https://github.com/openssl/openssl/pull/31610 -->
 
