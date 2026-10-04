@@ -505,8 +505,11 @@ again:
         return 1;
 
     /* reconstruct message header */
-    dtls1_write_hm_header(rec_data, s->s3.tmp.message_type, s->s3.tmp.message_size,
-        s->d1->r_msg_seq, 0, s->s3.tmp.message_size);
+    if (!dtls1_write_hm_header(rec_data, s->s3.tmp.message_type, s->s3.tmp.message_size,
+            s->d1->r_msg_seq, 0, s->s3.tmp.message_size)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     s->d1->r_msg_seq = 0;
 

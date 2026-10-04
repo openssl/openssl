@@ -673,18 +673,32 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
     }
 
     /*
-     * Resume a write we held back because our own KeyUpdate was still
-     * unacknowledged. deferred_key_update_state holds the real
-     * continuation (e.g. TLS_ST_SW_SESSION_TICKET or TLS_ST_OK), not
-     * TLS_ST_SW_ACK itself, and is copied into deferred_ack_state only
-     * here, right before the TLS_ST_SW_ACK case below consumes it --
-     * deferred_ack_state is also used by the ack_for_retransmit handling
-     * above, which can fire any number of times while this wait is still
-     * in progress, so the continuation is kept in the field that handling
-     * never touches until the moment it's actually needed.
+     * Resume a write we held back waiting on our own KeyUpdate.
+     * deferred_key_update_state holds the real continuation (e.g.
+     * TLS_ST_SW_SESSION_TICKET or TLS_ST_OK), not TLS_ST_SW_ACK itself, and
+     * is copied into deferred_ack_state only here, right before the
+     * TLS_ST_SW_ACK case below consumes it -- deferred_ack_state is also
+     * used by the ack_for_retransmit handling above, which can fire any
+     * number of times while this wait is still in progress, so the
+     * continuation is kept in the field that handling never touches until
+     * the moment it's actually needed.
+     *
+     * What it waits on before resuming depends on which continuation that
+     * is, matching whichever of the two TLS_ST_SR_FINISHED branches below
+     * deferred it: a parked TLS_ST_SW_SESSION_TICKET continuation needs the
+     * real write-key install to have completed (key_update_write_pending),
+     * since issuing that ticket bypasses the public SSL_new_session_ticket()
+     * API's own guard; a parked plain TLS_ST_OK continuation only needs our
+     * KeyUpdate's own ACK (dtls_has_unacked_key_update()), since going idle
+     * sends nothing by itself and every public entry point that could
+     * schedule something new from idle already refuses to while
+     * key_update_write_pending is set -- waiting for the full install there
+     * too would just delay ordinary application data for no reason.
      */
     if (st->deferred_key_update_state != TLS_ST_BEFORE
-        && !dtls_has_unacked_key_update(s)) {
+        && (st->deferred_key_update_state == TLS_ST_SW_SESSION_TICKET
+                ? !s->d1->key_update_write_pending
+                : !dtls_has_unacked_key_update(s))) {
         st->deferred_ack_state = st->deferred_key_update_state;
         st->deferred_key_update_state = TLS_ST_BEFORE;
         st->hand_state = TLS_ST_SW_ACK;
@@ -797,10 +811,18 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
                 st->deferred_ack_state = TLS_ST_OK;
                 if (dtls_has_unacked_key_update(s)) {
                     /*
-                     * RFC 9147 section 8: our own KeyUpdate's new keys must
-                     * not be used for anything else until it is
-                     * acknowledged. Hold this ACK back rather than send it
-                     * now. The continuation (TLS_ST_OK) is saved in
+                     * Going idle sends nothing by itself, and
+                     * SSL_new_session_ticket(), SSL_verify_client_post_handshake(),
+                     * and SSL_key_update() each already refuse to schedule
+                     * anything new while key_update_write_pending is set
+                     * (test_dtls13_pha_completion_eviction_blocks_new_actions()).
+                     * So this only needs our own KeyUpdate's ACK, not the
+                     * full write-key install -- key_update_write_pending can
+                     * stay set well after that ACK, behind some unrelated
+                     * predecessor, and would otherwise delay ordinary
+                     * application data for no reason.
+                     * Hold this ACK back rather than send it now. The
+                     * continuation (TLS_ST_OK) is saved in
                      * deferred_key_update_state, not this TLS_ST_SR_FINISHED
                      * state: re-entering TLS_ST_SR_FINISHED on resume would
                      * rerun this whole case against post_handshake_auth/
@@ -858,11 +880,31 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
             st->deferred_ack_state = next_state;
-            if (dtls_has_unacked_key_update(s)) {
+            /*
+             * next_state can be TLS_ST_SW_SESSION_TICKET or, if a ticket
+             * was expected but then suppressed above, plain TLS_ST_OK --
+             * and only the former actually needs to wait for our own
+             * KeyUpdate's write-key install. The automatic ticket reissue
+             * built here bypasses the public SSL_new_session_ticket() API
+             * guard entirely, so key_update_write_pending has to be
+             * enforced on this path directly: RFC 9147 section 8's new
+             * keys must not be used for anything else until the install
+             * completes, and key_update_write_pending -- not
+             * dtls_has_unacked_key_update() -- is what tracks that, since
+             * an earlier unrelated message (e.g. a prior ticket) can hold
+             * the install back even after the KeyUpdate itself is
+             * acknowledged. When next_state is plain TLS_ST_OK instead,
+             * this falls back to the same dtls_has_unacked_key_update()
+             * check as the no-ticket-expected branch above, for the same
+             * reason: going idle alone sends nothing, and every public API
+             * entry point that could schedule something new from idle
+             * already refuses to while key_update_write_pending is set.
+             */
+            if (next_state == TLS_ST_SW_SESSION_TICKET
+                    ? s->d1->key_update_write_pending
+                    : dtls_has_unacked_key_update(s)) {
                 /*
-                 * RFC 9147 section 8: our own KeyUpdate's new keys must not
-                 * be used for anything else until it is acknowledged. Hold
-                 * this ACK back rather than send it now. The real
+                 * Hold this ACK back rather than send it now. The real
                  * continuation (next_state) is saved in
                  * deferred_key_update_state, not this TLS_ST_SR_FINISHED
                  * state: re-entering TLS_ST_SR_FINISHED on resume would
