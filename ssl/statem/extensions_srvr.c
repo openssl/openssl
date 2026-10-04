@@ -2020,6 +2020,12 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     return EXT_RETURN_SENT;
 }
 
+/* Does the HelloRetryRequest ask the client for a different key_share? */
+static int hrr_sends_key_share(const SSL_CONNECTION *s)
+{
+    return s->s3.peer_tmp == NULL && s->s3.group_id != 0;
+}
+
 EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
@@ -2031,10 +2037,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     const TLS_GROUP_INFO *ginf = NULL;
 
     if (s->hello_retry_request == SSL_HRR_PENDING) {
-        if (ckey != NULL) {
-            /* Original key_share was acceptable so don't ask for another one */
+        if (!hrr_sends_key_share(s))
             return EXT_RETURN_NOT_SENT;
-        }
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_put_bytes_u16(pkt, s->s3.group_id)
@@ -2205,7 +2209,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
         || !ssl->method->put_cipher_by_char(s->s3.tmp.new_cipher, pkt,
             &ciphlen)
         /* Is there a key_share extension present in this HRR? */
-        || !WPACKET_put_bytes_u8(pkt, s->s3.peer_tmp == NULL)
+        || !WPACKET_put_bytes_u8(pkt, hrr_sends_key_share(s))
         || !WPACKET_put_bytes_u64(pkt, time(NULL))
         || !WPACKET_start_sub_packet_u16(pkt)
         || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &hashval1)) {
