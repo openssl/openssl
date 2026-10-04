@@ -123,6 +123,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
             TLSProxy::Message::SERVER,
             checkhandshake::KEY_SHARE_HRR_EXTENSION],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::SERVER,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
             TLSProxy::Message::CLIENT,
@@ -170,6 +173,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
             TLSProxy::Message::CLIENT,
             checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
             TLSProxy::Message::SERVER,
@@ -436,8 +442,10 @@ sub modify_kex_modes_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the initial ClientHello
-    return if ($proxy->flight != 0);
+    # We're only interested in the initial ClientHello, and in DTLS also in the
+    # one resent with the HelloRetryRequest cookie
+    return if ($proxy->flight != 0
+               && !($proxy->isdtls() && $proxy->flight == 2));
 
     foreach my $message (@{$proxy->message_list}) {
         if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
