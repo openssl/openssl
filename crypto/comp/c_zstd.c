@@ -452,6 +452,7 @@ typedef struct {
         ZSTD_inBuffer inbuf; /* has const src */
         size_t bufsize;
         void *buffer;
+        int more_output; /* the last read filled the buffer inside a frame */
     } decompress;
     struct { /* output structure */
         ZSTD_CStream *state;
@@ -585,6 +586,7 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
 
     ctx = BIO_get_data(b);
     BIO_clear_retry_flags(b);
+    ctx->decompress.more_output = 0;
     if (ctx->decompress.buffer == NULL) {
         ctx->decompress.buffer = OPENSSL_malloc(ctx->decompress.bufsize);
         if (ctx->decompress.buffer == NULL) {
@@ -610,8 +612,10 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
                 return -1;
             }
             /* No more output space */
-            if (outBuf.pos == outBuf.size)
+            if (outBuf.pos == outBuf.size) {
+                ctx->decompress.more_output = zret != 0;
                 return (int)outBuf.pos;
+            }
         } while (ctx->decompress.inbuf.pos < ctx->decompress.inbuf.size);
 
         /*
@@ -757,6 +761,7 @@ static long bio_zstd_ctrl(BIO *b, int cmd, long num, void *ptr)
         /* reset decompressor */
         ctx->decompress.inbuf.size = 0;
         ctx->decompress.inbuf.pos = 0;
+        ctx->decompress.more_output = 0;
         if (ctx->decompress.state != NULL)
             ZSTD_initDStream(ctx->decompress.state);
 
@@ -831,6 +836,9 @@ static long bio_zstd_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_PENDING:
         if (ctx->decompress.inbuf.size > ctx->decompress.inbuf.pos)
             ret = (long)(ctx->decompress.inbuf.size - ctx->decompress.inbuf.pos);
+        else if (ctx->decompress.more_output)
+            /* Decompressed data may still be buffered */
+            ret = 1;
         else
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
