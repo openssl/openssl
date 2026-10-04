@@ -3065,6 +3065,10 @@ int s_server_main(int argc, char *argv[])
             ERR_print_errors(bio_err);
             goto end;
         }
+        SSL_CTX_set_cookie_generate_cb(ctx2, generate_cookie_callback);
+        SSL_CTX_set_cookie_verify_cb(ctx2, verify_cookie_callback);
+        SSL_CTX_set_stateless_cookie_generate_cb(ctx2, generate_stateless_cookie_callback);
+        SSL_CTX_set_stateless_cookie_verify_cb(ctx2, verify_stateless_cookie_callback);
         tlsextcbp.biodebug = bio_s_out;
 #ifndef OPENSSL_NO_ECH
         SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_ech_servername_cb);
