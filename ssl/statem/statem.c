@@ -736,8 +736,10 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
                 return SUB_STATE_ERROR;
 
             case MSG_PROCESS_FINISHED_READING:
-                if (SSL_CONNECTION_IS_DTLS(s)) {
-                    dtls1_stop_timer_for_read_flight(s);
+                if (SSL_CONNECTION_IS_DTLS(s)
+                    && !dtls1_stop_timer_for_read_flight(s)) {
+                    check_fatal(s);
+                    return SUB_STATE_ERROR;
                 }
                 return SUB_STATE_FINISHED;
 
@@ -769,8 +771,10 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
 
             case WORK_FINISHED_SWAP:
             case WORK_FINISHED_STOP:
-                if (SSL_CONNECTION_IS_DTLS(s)) {
-                    dtls1_stop_timer_for_read_flight(s);
+                if (SSL_CONNECTION_IS_DTLS(s)
+                    && !dtls1_stop_timer_for_read_flight(s)) {
+                    check_fatal(s);
+                    return SUB_STATE_ERROR;
                 }
                 return SUB_STATE_FINISHED;
             }
