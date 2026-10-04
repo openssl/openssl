@@ -663,12 +663,14 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
  * point this function can return, using the state left by whatever
  * clearing just happened.
  *
- * Its return value is ignored: a failure there is fatal and SSLfatal() has
- * already been called, and this function has no error return of its own to
- * propagate one through. That's the same trust every other void cleanup
- * helper on this path already places in SSLfatal().
+ * Returns 0 only on a fatal error installing the deferred write key
+ * (SSLfatal() already called, via dtls1_check_deferred_write_key()); 1
+ * otherwise. The caller must check this and stop driving the connection
+ * forward rather than treat reaching the end of this function as success --
+ * SSLfatal() only records the failure in s->statem.state, it has no other
+ * way to halt execution on its own.
  */
-void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
+int dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
 {
     if (SSL_CONNECTION_IS_DTLS13(s)
         && s->statem.hand_state == TLS_ST_SR_FINISHED
@@ -676,8 +678,7 @@ void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
         dtls1_retire_sent_certificate_request_messages(s);
         if (dtls_any_sent_messages_are_missing_acknowledge(s)) {
             dtls1_clear_sent_buffer(s, 1);
-            dtls1_check_deferred_write_key(s);
-            return;
+            return dtls1_check_deferred_write_key(s);
         }
     }
 
@@ -689,12 +690,11 @@ void dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
                 && s->post_handshake_auth == SSL_PHA_REQUESTED))
         && dtls_any_sent_messages_are_missing_acknowledge(s)) {
         dtls1_clear_sent_buffer(s, 1);
-        dtls1_check_deferred_write_key(s);
-        return;
+        return dtls1_check_deferred_write_key(s);
     }
 
     dtls1_stop_timer(s);
-    dtls1_check_deferred_write_key(s);
+    return dtls1_check_deferred_write_key(s);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)
