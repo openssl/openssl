@@ -128,6 +128,16 @@ This release incorporates the following bug fixes and mitigations:
     where incomplete writes down the BIO chain may result in the loss of encoded
     base64 data.
 
+This release incorporates the following potentially significant or incompatible
+changes:
+
+ * Changed the OpenSSL FIPS provider so that every algorithm advertised
+   with `fips=yes` property explicitly exposes a `fips-indicator` gettable
+   context parameter, that returns 1 for an approved operation.  The absence
+   of an indicator is no longer interpreted as approval.  Algorithms advertised
+   with `fips=no` property, including X448MLKEM1024, remain unapproved
+   and return 0 when they expose the indicator.
+
 ### Major changes between OpenSSL 4.0.1 and OpenSSL 4.0.2 [25 Aug 2026]
 
 OpenSSL 4.0.2 is a security patch release.  The most severe CVE fixed
