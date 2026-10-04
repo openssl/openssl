@@ -358,6 +358,19 @@ start:
             return -1;
 
         if (is_dtls13 && current_state == TLS_ST_OK && SSL_in_init(s)) {
+            /*
+             * The record was buffered, not dropped or failed: it will be
+             * delivered once the in-progress post-handshake exchange (e.g.
+             * a reciprocal KeyUpdate) completes. Without this, rwstate is
+             * left at whatever start: last set it to (SSL_NOTHING, since
+             * this returns instead of looping back there), and
+             * SSL_get_error() reports SSL_ERROR_SYSCALL on an empty error
+             * queue instead of the ordinary retry condition this actually
+             * is.
+             */
+            sc->rwstate = SSL_READING;
+            BIO_clear_retry_flags(SSL_get_rbio(s));
+            BIO_set_retry_read(SSL_get_rbio(s));
             return -1;
         }
         goto start;
