@@ -135,6 +135,7 @@ void ossl_statem_clear(SSL_CONNECTION *s)
     ossl_statem_set_in_init(s, 1);
     s->statem.no_cert_verify = 0;
     s->statem.ack_for_retransmit = 0;
+    s->statem.deferred_key_update_state = TLS_ST_BEFORE;
 }
 
 /*
@@ -736,7 +737,7 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
 
             case MSG_PROCESS_FINISHED_READING:
                 if (SSL_CONNECTION_IS_DTLS(s)) {
-                    dtls1_stop_timer(s);
+                    dtls1_stop_timer_for_read_flight(s);
                 }
                 return SUB_STATE_FINISHED;
 
@@ -769,7 +770,7 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
             case WORK_FINISHED_SWAP:
             case WORK_FINISHED_STOP:
                 if (SSL_CONNECTION_IS_DTLS(s)) {
-                    dtls1_stop_timer(s);
+                    dtls1_stop_timer_for_read_flight(s);
                 }
                 return SUB_STATE_FINISHED;
             }

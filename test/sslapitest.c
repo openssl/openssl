@@ -9876,6 +9876,34 @@ static int test_key_update_local_in_write(int idx)
          */
         if (!TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), -1))
             goto end;
+
+        /*
+         * That read only scheduled the peer's reciprocal KeyUpdate; it
+         * doesn't get constructed and sent until the peer is next entered.
+         * local has nothing new to read yet -- it only reads the ACK of
+         * its own original KeyUpdate here -- and that completes local's
+         * own install, but does not produce anything new for the peer to
+         * read in turn.
+         */
+        if (!TEST_int_eq(SSL_read(local, buf, sizeof(buf)), -1))
+            goto end;
+
+        /* This is what actually constructs and sends the reciprocal. */
+        if (!TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), -1))
+            goto end;
+
+        /*
+         * The peer's reciprocal KeyUpdate is itself withheld from
+         * completing until local acknowledges it. local must read it and
+         * send that ACK before the peer's own deferred write-key install
+         * can finish and it stops being parked waiting for it.
+         */
+        if (!TEST_int_eq(SSL_read(local, buf, sizeof(buf)), -1))
+            goto end;
+
+        /* Let the peer process that ACK and complete its own install. */
+        if (!TEST_int_eq(SSL_read(peer, buf, sizeof(buf)), -1))
+            goto end;
     }
 
     /*
@@ -9888,16 +9916,13 @@ static int test_key_update_local_in_write(int idx)
 
     if (testdtls) {
         /*
-         * DTLS1.3 the peer needs to write to send out
-         * its key update
+         * Both sides' KeyUpdates are now fully installed (see above), so
+         * this is now just an ordinary write/read -- unlike local's first
+         * write back when the peer's reciprocal KeyUpdate still needed to
+         * be triggered and flushed as a side effect of it.
          */
-        if (!TEST_int_eq(SSL_write(peer, mess, (int)strlen(mess)), -1))
-            goto end;
-
-        /*
-         * The local side needs to read the ACK
-         */
-        if (!TEST_int_eq(SSL_read(local, buf, sizeof(buf)), -1))
+        if (!TEST_int_eq(SSL_write(peer, mess, (int)strlen(mess)), (int)strlen(mess))
+            || !TEST_int_eq(SSL_read(local, buf, sizeof(buf)), (int)strlen(mess)))
             goto end;
     }
 

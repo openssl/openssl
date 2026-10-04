@@ -3166,6 +3166,19 @@ int SSL_key_update(SSL *s, int updatetype)
         return 0;
     }
 
+    /*
+     * RFC 9147 section 5.8.4: implementations MUST NOT send a KeyUpdate if
+     * an earlier one has not yet been acknowledged. key_update_write_pending
+     * covers this and more: it also catches an earlier KeyUpdate that is
+     * acknowledged but whose write-key install is still withheld behind an
+     * earlier, unrelated message -- SSL_is_init_finished() above does not
+     * guarantee that has completed.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
+        return 0;
+    }
+
     ossl_statem_set_in_init(sc, 1);
     sc->key_update = updatetype;
     return 1;
@@ -3260,6 +3273,15 @@ int SSL_new_session_ticket(SSL *s)
     if ((SSL_in_init(s) && sc->ext.extra_tickets_expected == 0)
         || SSL_IS_FIRST_HANDSHAKE(sc) || !sc->server
         || !SSL_CONNECTION_IS_VERSION13(sc))
+        return 0;
+
+    /*
+     * Our own KeyUpdate's new keys must not be used for anything else
+     * until its write-key install completes (RFC 9147 section 8) -- even
+     * though it may already be acknowledged, with nothing left for
+     * SSL_is_init_finished() to object to.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending)
         return 0;
     sc->ext.extra_tickets_expected++;
     if (!RECORD_LAYER_write_pending(&sc->rlayer) && !SSL_in_init(s))
@@ -7829,6 +7851,17 @@ int SSL_verify_client_post_handshake(SSL *ssl)
 
     if (!SSL_is_init_finished(ssl)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_STILL_IN_INIT);
+        return 0;
+    }
+
+    /*
+     * Our own KeyUpdate's new keys must not be used for anything else
+     * until its write-key install completes (RFC 9147 section 8) -- even
+     * though it may already be acknowledged, with nothing left for
+     * SSL_is_init_finished() to object to.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
         return 0;
     }
 
