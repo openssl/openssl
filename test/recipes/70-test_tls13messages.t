@@ -120,6 +120,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
             TLSProxy::Message::SERVER,
             checkhandshake::KEY_SHARE_HRR_EXTENSION],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::SERVER,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
             TLSProxy::Message::CLIENT,
@@ -170,6 +173,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
             TLSProxy::Message::CLIENT,
             checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
             TLSProxy::Message::SERVER,

@@ -1014,13 +1014,14 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         ? (DTLS_LISTENER *)s->d1->listener
         : NULL;
     int have_verify_cb = (sctx->verify_stateless_cookie_cb != NULL)
-        || (dl != NULL && dl->require_hrr_cookie);
+        || (dl != NULL && dl->require_hrr_cookie)
+        || (SSL_CONNECTION_IS_DTLS(s) && sctx->app_verify_cookie_cb != NULL);
 #else
     int have_verify_cb = (sctx->verify_stateless_cookie_cb != NULL);
 #endif
 
     /* Ignore any cookie if we're not set up to verify it */
-    if (!have_verify_cb || (s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
+    if (!have_verify_cb || !tls_hrr_cookie_required(s))
         return 1;
 
     if (!PACKET_as_length_prefixed_2(pkt, &cookie)) {
@@ -1141,6 +1142,12 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSL_CONNECTION_GET_USER_SSL(s),
             PACKET_data(&appcookie),
             PACKET_remaining(&appcookie));
+    } else if (sctx->verify_stateless_cookie_cb == NULL
+        && SSL_CONNECTION_IS_DTLS(s) && sctx->app_verify_cookie_cb != NULL) {
+        /* Fall back to the HelloVerifyRequest cookie callbacks */
+        verify_ret = sctx->app_verify_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s),
+            PACKET_data(&appcookie),
+            (unsigned int)PACKET_remaining(&appcookie));
     } else
 #endif
         if (sctx->verify_stateless_cookie_cb != NULL) {
@@ -2185,12 +2192,13 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
         ? (DTLS_LISTENER *)s->d1->listener
         : NULL;
     int have_gen_cb = (sctx->gen_stateless_cookie_cb != NULL)
-        || (dl != NULL && dl->require_hrr_cookie);
+        || (dl != NULL && dl->require_hrr_cookie)
+        || (SSL_CONNECTION_IS_DTLS(s) && sctx->app_gen_cookie_cb != NULL);
 #else
     int have_gen_cb = (sctx->gen_stateless_cookie_cb != NULL);
 #endif
 
-    if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
+    if (!tls_hrr_cookie_required(s))
         return EXT_RETURN_NOT_SENT;
 
     if (!have_gen_cb) {
@@ -2242,6 +2250,14 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     if (dl != NULL && dl->require_hrr_cookie && sctx->gen_stateless_cookie_cb == NULL) {
         gen_ret = ossl_dtls_listener_gen_stateless_cookie_cb(ussl, appcookie1,
             &appcookielen);
+    } else if (sctx->gen_stateless_cookie_cb == NULL
+        && SSL_CONNECTION_IS_DTLS(s) && sctx->app_gen_cookie_cb != NULL) {
+        unsigned int applen = 0;
+
+        /* Fall back to the HelloVerifyRequest cookie callbacks */
+        gen_ret = sctx->app_gen_cookie_cb(ussl, appcookie1, &applen)
+            && applen <= DTLS1_COOKIE_LENGTH;
+        appcookielen = applen;
     } else
 #endif
         if (sctx->gen_stateless_cookie_cb != NULL) {
