@@ -1407,6 +1407,65 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt)
     return CON_FUNC_SUCCESS;
 }
 
+/*
+ * If our own KeyUpdate is still awaiting installation of its new write
+ * keys, check whether it -- and everything sent before it -- is now
+ * acknowledged, and install the deferred write key if so. A peer can ACK a
+ * buffered message before it has actually processed the messages that
+ * precede it (rfc9147 section 7), so an ACK of the KeyUpdate itself does
+ * not establish that the peer has processed everything sent before it and
+ * installed the corresponding read keys. Erratum 8047 therefore requires
+ * waiting for every preceding message to be acknowledged too, not just the
+ * KeyUpdate -- a message sent *after* the KeyUpdate (e.g. a ticket) is
+ * unaffected and may remain outstanding.
+ *
+ * This deliberately does not search sent_messages for the KeyUpdate's own
+ * entry: key_update_acked, latched by dtls_process_ack() the instant
+ * coverage of that message completes, already captures whether it is
+ * acknowledged, and key_update_msg_seq -- the handshake message sequence
+ * number captured when it was sent -- identifies which other queued
+ * entries precede it, without depending on its own entry still being in
+ * the queue to do so. That matters because this is called from more than
+ * one place: not just from dtls_process_ack() when an ACK record arrives,
+ * but also from dtls1_stop_timer_for_read_flight(), since a preceding
+ * CertificateRequest can instead be retired implicitly (rfc9147 7.2) by
+ * the next flight, with no ACK record of its own ever involved.
+ *
+ * Returns 0 only on a fatal error installing the key (SSLfatal() already
+ * called); 1 otherwise, including when there was nothing to do.
+ */
+int dtls1_check_deferred_write_key(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter;
+    int preceding_unacked = 0;
+
+    if (!s->d1->key_update_write_pending || !s->d1->key_update_acked)
+        return 1;
+
+    iter = pqueue_iterator(&s->d1->sent_messages);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->msg_info.msg_seq < s->d1->key_update_msg_seq
+            && !ossl_list_record_number_is_empty(&msg->rec_nums)) {
+            preceding_unacked = 1;
+            break;
+        }
+    }
+
+    if (!preceding_unacked) {
+        s->d1->key_update_write_pending = 0;
+        s->d1->key_update_acked = 0;
+        if (!tls13_update_key(s, 1)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 {
     PACKET record_numbers;
@@ -1502,47 +1561,26 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
                 RSMBLY_BITMASK_IS_COMPLETE(msg->covered,
                     (long)msg->msg_info.msg_body_len, is_complete);
-                if (is_complete)
+                if (is_complete) {
                     ossl_list_record_number_elem_free(&msg->rec_nums);
-            }
-        }
-    }
-
-    /*
-     * If our own KeyUpdate is still awaiting installation of its new write
-     * keys, check whether this ACK is what it was waiting for. A peer can
-     * ACK a buffered message before it has actually processed the messages
-     * that precede it (rfc9147 section 7), so an ACK of the KeyUpdate
-     * itself does not establish that the peer has processed everything
-     * sent before it and installed the corresponding read keys. Erratum
-     * 8047 therefore requires waiting for every preceding message to be
-     * acknowledged too, not just the KeyUpdate -- a message sent *after*
-     * the KeyUpdate (e.g. a ticket) is unaffected and may remain
-     * outstanding.
-     */
-    if (s->d1->key_update_write_pending) {
-        pitem *item;
-        piterator iter = pqueue_iterator(&s->d1->sent_messages);
-        int preceding_unacked = 0;
-
-        while ((item = pqueue_next(&iter)) != NULL) {
-            dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
-
-            if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE) {
-                if (!preceding_unacked
-                    && ossl_list_record_number_is_empty(&msg->rec_nums)) {
-                    s->d1->key_update_write_pending = 0;
-                    if (!tls13_update_key(s, 1)) {
-                        /* SSLfatal() already called */
-                        return MSG_PROCESS_ERROR;
-                    }
+                    /*
+                     * Latch this immediately, rather than re-discovering it
+                     * later by searching sent_messages for the entry: once
+                     * fully acknowledged, this entry is eligible to be freed
+                     * by dtls1_clear_sent_buffer() at any later, unrelated
+                     * point (e.g. when the peer's own KeyUpdate is
+                     * processed), so its continued presence in the queue
+                     * cannot be relied on below.
+                     */
+                    if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE)
+                        s->d1->key_update_acked = 1;
                 }
-                break;
             }
-            if (!ossl_list_record_number_is_empty(&msg->rec_nums))
-                preceding_unacked = 1;
         }
     }
+
+    if (!dtls1_check_deferred_write_key(s))
+        return MSG_PROCESS_ERROR;
 
     /* Keep the retransmit timer running until the whole flight is ACKed. */
     if (dtls_any_sent_messages_are_missing_acknowledge(s))
