@@ -119,6 +119,44 @@ static SSL_CTX *create_context(flag isServer)
     return ctx;
 }
 
+/* Bind the HelloRetryRequest cookie to the peer address */
+static int peer_cookie(SSL *ssl, unsigned char *cookie, size_t *cookie_len)
+{
+    BIO_ADDR *peer = BIO_ADDR_new();
+    unsigned short port;
+    size_t addrlen;
+    int ret = 0;
+
+    if (peer == NULL)
+        return 0;
+    if (BIO_dgram_get_peer(SSL_get_rbio(ssl), peer) <= 0
+        || !BIO_ADDR_rawaddress(peer, cookie, &addrlen))
+        goto end;
+    port = BIO_ADDR_rawport(peer);
+    memcpy(cookie + addrlen, &port, sizeof(port));
+    *cookie_len = addrlen + sizeof(port);
+    ret = 1;
+end:
+    BIO_ADDR_free(peer);
+    return ret;
+}
+
+static int generate_cookie(SSL *ssl, unsigned char *cookie, size_t *cookie_len)
+{
+    return peer_cookie(ssl, cookie, cookie_len);
+}
+
+static int verify_cookie(SSL *ssl, const unsigned char *cookie,
+    size_t cookie_len)
+{
+    unsigned char expected[SSL_COOKIE_LENGTH];
+    size_t expected_len;
+
+    return peer_cookie(ssl, expected, &expected_len)
+        && expected_len == cookie_len
+        && memcmp(expected, cookie, cookie_len) == 0;
+}
+
 static void configure_server_context(SSL_CTX *ctx)
 {
     /* Set the key and cert */
@@ -131,6 +169,11 @@ static void configure_server_context(SSL_CTX *ctx)
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
+
+    /* Validate the client address with a HelloRetryRequest cookie */
+    SSL_CTX_set_options(ctx, SSL_OP_COOKIE_EXCHANGE);
+    SSL_CTX_set_stateless_cookie_generate_cb(ctx, generate_cookie);
+    SSL_CTX_set_stateless_cookie_verify_cb(ctx, verify_cookie);
 }
 
 static void configure_client_context(SSL_CTX *ctx)

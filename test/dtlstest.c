@@ -486,6 +486,131 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
+static int generate_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
+    size_t *cookie_len)
+{
+    memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
+    *cookie_len = sizeof(dummy_cookie);
+    return 1;
+}
+
+static int verify_stateless_cookie_cb(SSL *ssl, const unsigned char *cookie,
+    size_t cookie_len)
+{
+    return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
+}
+
+static int client_hello_count, client_hello_cookie_count;
+
+static int count_client_hello_cb(SSL *s, int *al, void *arg)
+{
+    const unsigned char *ext;
+    size_t extlen;
+
+    client_hello_count++;
+    if (SSL_client_hello_get0_ext(s, TLSEXT_TYPE_cookie, &ext, &extlen))
+        client_hello_cookie_count++;
+
+    return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+/*
+ * Test SSL_OP_COOKIE_EXCHANGE without DTLSv1_listen():
+ * 0: DTLS 1.2 client answered with a HelloVerifyRequest
+ * 1: DTLS 1.3 client answered with a HelloRetryRequest cookie
+ * 2: as 1 with only the HelloVerifyRequest callbacks set
+ * 3: DTLS 1.3 client with no callbacks set fails
+ * 4: as 1 for a PSK-only resumption, where the HelloRetryRequest has no key_share
+ */
+static int test_cookie_exchange(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_SESSION *sess = NULL;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 is disabled");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
+    if (idx != 3) {
+        SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
+        SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
+    }
+    if (idx != 2 && idx != 3) {
+        SSL_CTX_set_stateless_cookie_generate_cb(sctx,
+            generate_stateless_cookie_cb);
+        SSL_CTX_set_stateless_cookie_verify_cb(sctx,
+            verify_stateless_cookie_cb);
+    }
+    if (idx == 4) {
+        SSL_CTX_set_options(sctx, SSL_OP_ALLOW_NO_DHE_KEX | SSL_OP_PREFER_NO_DHE_KEX);
+        SSL_CTX_set_options(cctx, SSL_OP_ALLOW_NO_DHE_KEX);
+    }
+    SSL_CTX_set_client_hello_cb(sctx, count_client_hello_cb, NULL);
+
+    if (idx == 0
+        && !TEST_true(SSL_CTX_set_max_proto_version(cctx, DTLS1_2_VERSION)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (idx == 3) {
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_SSL))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+                SSL_R_NO_COOKIE_CALLBACK_SET))
+            goto end;
+        testresult = 1;
+        goto end;
+    }
+
+    if (idx == 4) {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_ptr(sess = SSL_get1_session(clientssl)))
+            goto end;
+        shutdown_ssl_connection(serverssl, clientssl);
+        serverssl = clientssl = NULL;
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, sess)))
+            goto end;
+    }
+    client_hello_count = client_hello_cookie_count = 0;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_version(clientssl),
+            idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION)
+        || !TEST_int_eq(SSL_session_reused(clientssl), idx == 4)
+        /* The second ClientHello carries the cookie */
+        || !TEST_int_eq(client_hello_count, 2)
+        || !TEST_int_eq(client_hello_cookie_count, idx == 0 ? 0 : 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+
 static int test_dtls_duplicate_records(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -2369,6 +2494,9 @@ int setup_tests(void)
 #endif
 #endif
     ADD_TEST(test_cookie);
+#ifndef OPENSSL_NO_DTLS1_3
+    ADD_ALL_TESTS(test_cookie_exchange, 5);
+#endif
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
 #ifndef OPENSSL_NO_DTLS1_2

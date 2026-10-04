@@ -303,6 +303,7 @@ __owur int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     SSL_SESSION *sess, int sign, int external);
 
 /* Server Extension processing */
+__owur int tls_hrr_cookie_required(const SSL_CONNECTION *s);
 int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
