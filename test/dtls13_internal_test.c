@@ -6114,6 +6114,461 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * Combines two mechanisms that have only ever been tested separately: the
+ * simultaneous-bidirectional-KeyUpdate deadlock fix (see
+ * test_dtls13_server_keyupdate_preserves_ack) and application data racing a
+ * KeyUpdate's resolution (see
+ * test_dtls13_reciprocal_keyupdate_app_data_classification). Both sides
+ * write and hold application data, then both independently send their own
+ * KeyUpdate before either has read anything from the other, and the held
+ * application data is reinjected immediately behind each KeyUpdate.
+ *
+ * idx selects which side moves first (SSL_key_update()+SSL_do_handshake()):
+ * idx == 0 the server, idx == 1 the client. This matters because whichever
+ * side moves *second* finds the first side's KeyUpdate already sitting in
+ * its rbio, so its own SSL_do_handshake() call bundles its new KeyUpdate
+ * together with its ack of the first one -- held data injected after that
+ * lands behind both records. Whichever side moves *first* has nothing to
+ * process yet, so its KeyUpdate goes out alone -- held data injected right
+ * behind it lands ahead of the ack, which doesn't exist yet. Both orderings
+ * need to classify buffered application data correctly, so both sides take
+ * a turn at each role across the two idx values.
+ */
+static int test_dtls13_simultaneous_keyupdate_app_data_classification(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL *first, *second;
+    unsigned char buf[2048], held_first[2048], held_second[2048];
+    int held_first_len, held_second_len, ret;
+    int first_delivered = 0, second_delivered = 0, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    first = (idx == 0) ? server : client;
+    second = (idx == 0) ? client : server;
+
+    /* Each side writes and holds its own application data, before either KeyUpdate goes out. */
+    if (!TEST_int_eq(SSL_write(first, "1", 1), 1))
+        goto end;
+    held_first_len = BIO_read(SSL_get_rbio(second), held_first, sizeof(held_first));
+    if (!TEST_int_gt(held_first_len, 0))
+        goto end;
+    if (!TEST_int_eq(SSL_write(second, "2", 1), 1))
+        goto end;
+    held_second_len = BIO_read(SSL_get_rbio(first), held_second, sizeof(held_second));
+    if (!TEST_int_gt(held_second_len, 0))
+        goto end;
+
+    /* The first mover sends its own KeyUpdate -- nothing from the other side has arrived yet. */
+    if (!TEST_true(SSL_key_update(first, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(first);
+    if (!TEST_int_eq(SSL_get_error(first, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Squeeze the first mover's held application data right behind its lone
+     * KeyUpdate, in the second mover's rbio -- there is no ack to land
+     * behind yet, since the second mover hasn't read anything.
+     */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(second), held_first, held_first_len), held_first_len))
+        goto end;
+
+    /*
+     * The second mover independently sends its own, unrelated KeyUpdate --
+     * but SSL_do_handshake() here still has to process what's already
+     * sitting in its rbio (the first mover's KeyUpdate, with the first
+     * mover's held data squeezed right behind it) as a side effect of
+     * advancing the state machine, and in the same call also constructs and
+     * sends its own new KeyUpdate *and* its ack of the first mover's. That
+     * must not misreport as a syscall error just because application data
+     * was buffered along the way.
+     */
+    if (!TEST_true(SSL_key_update(second, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(second);
+    if (!TEST_int_eq(SSL_get_error(second, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Put the second mover's held application data behind both of what that
+     * call just sent -- its own KeyUpdate and its ack of the first mover's,
+     * bundled together -- in the first mover's rbio.
+     */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(first), held_second, held_second_len), held_second_len))
+        goto end;
+
+    /*
+     * The first mover processes the second mover's KeyUpdate, acknowledges
+     * it, and in the same call also receives the second mover's
+     * acknowledgment of its own KeyUpdate, completing it -- with the second
+     * mover's held application data sitting immediately behind all of that.
+     * Either the resolution finishes synchronously and the data comes back
+     * right now, or it's correctly deferred; either way this must never be
+     * SYSCALL.
+     */
+    ret = SSL_read(first, buf, sizeof(buf));
+    if (ret > 0) {
+        if (!TEST_mem_eq(buf, ret, "2", 1))
+            goto end;
+        second_delivered = 1;
+    } else if (!TEST_int_eq(SSL_get_error(first, ret), SSL_ERROR_WANT_READ)) {
+        goto end;
+    }
+
+    /*
+     * The second mover processes the first mover's KeyUpdate and the first
+     * mover's acknowledgment of its own KeyUpdate, completing it -- with
+     * the first mover's held application data (squeezed in ahead of that
+     * ack, before it existed) sitting somewhere in that same stream.
+     */
+    ret = SSL_read(second, buf, sizeof(buf));
+    if (ret > 0) {
+        if (!TEST_mem_eq(buf, ret, "1", 1))
+            goto end;
+        first_delivered = 1;
+    } else if (!TEST_int_eq(SSL_get_error(second, ret), SSL_ERROR_WANT_READ)) {
+        goto end;
+    }
+
+    /* Whichever side's application data was not already delivered above must still surface now. */
+    if (!first_delivered) {
+        ret = SSL_read(second, buf, sizeof(buf));
+        if (!TEST_int_eq(ret, 1) || !TEST_mem_eq(buf, 1, "1", 1))
+            goto end;
+    }
+    if (!second_delivered) {
+        ret = SSL_read(first, buf, sizeof(buf));
+        if (!TEST_int_eq(ret, 1) || !TEST_mem_eq(buf, 1, "2", 1))
+            goto end;
+    }
+
+    /* Both newly installed write keys must actually work. */
+    if (!TEST_int_eq(SSL_write(second, "3", 1), 1))
+        goto end;
+    ret = SSL_read(first, buf, sizeof(buf));
+    if (!TEST_int_eq(ret, 1) || !TEST_mem_eq(buf, 1, "3", 1))
+        goto end;
+    if (!TEST_int_eq(SSL_write(first, "4", 1), 1))
+        goto end;
+    ret = SSL_read(second, buf, sizeof(buf));
+    if (!TEST_int_eq(ret, 1) || !TEST_mem_eq(buf, 1, "4", 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Application data racing a post-handshake authentication exchange: the
+ * server is parked at TLS_ST_OK with SSL_in_init() set, waiting for the
+ * client's Certificate/Finished response, when application data the client
+ * sent earlier arrives first. This is the same dtls1_read_bytes() buffering
+ * path already proven for KeyUpdate (see
+ * test_dtls13_reciprocal_keyupdate_app_data_classification), exercised here
+ * for PHA instead.
+ */
+static int test_dtls13_pha_response_app_data_classification(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    unsigned char buf[2048], held[2048];
+    int held_len, ret, data_delivered = 0, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    /* The client writes and holds application data before PHA is ever requested. */
+    if (!TEST_int_eq(SSL_write(client, "ABCD", 4), 4))
+        goto end;
+    held_len = BIO_read(SSL_get_rbio(server), held, sizeof(held));
+    if (!TEST_int_gt(held_len, 0))
+        goto end;
+
+    /* The server requests post-handshake authentication. */
+    SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1))
+        goto end;
+
+    /*
+     * Put the held application data into the server's rbio now, before the
+     * client's response flight is even built -- it must be the first thing
+     * the server sees once it starts waiting for that response.
+     */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(server), held, held_len), held_len))
+        goto end;
+
+    /* The client processes the CertificateRequest and sends its (empty) response flight. */
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The server, still waiting for that response, hits the held
+     * application data first -- nothing else is queued yet, so this may
+     * either buffer it (reporting WANT_READ) or, since finding nothing else
+     * to read while still marked in-init ends this post-handshake attempt
+     * and falls back to ordinary app-data reading, deliver it immediately
+     * within this same call. Either is fine; SYSCALL or losing the data
+     * would not be.
+     */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (ret > 0) {
+        if (!TEST_mem_eq(buf, ret, "ABCD", 4))
+            goto end;
+        data_delivered = 1;
+    } else if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)) {
+        goto end;
+    }
+
+    /* Now the server processes the actual PHA response, completing the exchange. */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED))
+        goto end;
+
+    if (!data_delivered) {
+        /* The application data was not lost -- it finally surfaces now. */
+        ret = SSL_read(server, buf, sizeof(buf));
+        if (!TEST_int_eq(ret, 4) || !TEST_mem_eq(buf, 4, "ABCD", 4))
+            goto end;
+    }
+
+    /* Application data flows both ways afterward. */
+    if (!TEST_int_eq(SSL_write(server, "x", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'x')
+        || !TEST_int_eq(SSL_write(client, "y", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'y'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Application data racing a NewSessionTicket delivery: the client is
+ * reading, having just received a ticket, with application data the server
+ * sent right behind it. Same dtls1_read_bytes() buffering path as
+ * test_dtls13_reciprocal_keyupdate_app_data_classification, exercised here
+ * for a ticket instead of a KeyUpdate -- this is the scenario the withdrawn
+ * fragmentation-based attempt at this was actually trying to reach.
+ */
+static int test_dtls13_ticket_app_data_classification(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    unsigned char buf[2048], held_ticket[2048], held_data[2048];
+    int held_ticket_len, held_data_len, ret, testresult = 0;
+
+    ticket_count = 0;
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 1)))
+        goto end;
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
+    SSL_CTX_sess_set_new_cb(cctx, count_ticket);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL)))
+        goto end;
+
+    /*
+     * Use the bare handshake primitive instead of create_ssl_connection():
+     * the latter forces an SSL_read_ex() call on the client purely to
+     * deliver the ticket, which would consume it before we get a chance to
+     * intercept it.
+     */
+    if (!TEST_true(create_bare_ssl_connection_ex(server, client,
+            SSL_ERROR_NONE, 1, 0, NULL, NULL)))
+        goto end;
+
+    /* Capture the ticket, then capture some application data sent right behind it. */
+    held_ticket_len = BIO_read(SSL_get_rbio(client), held_ticket, sizeof(held_ticket));
+    if (!TEST_int_gt(held_ticket_len, 0))
+        goto end;
+    if (!TEST_int_eq(SSL_write(server, "ABCD", 4), 4))
+        goto end;
+    held_data_len = BIO_read(SSL_get_rbio(client), held_data, sizeof(held_data));
+    if (!TEST_int_gt(held_data_len, 0))
+        goto end;
+
+    /* Redeliver the ticket, with the application data right behind it, in that order. */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(client), held_ticket, held_ticket_len),
+            held_ticket_len)
+        || !TEST_int_eq(BIO_write(SSL_get_rbio(client), held_data, held_data_len),
+            held_data_len))
+        goto end;
+
+    /*
+     * One read processes the ticket -- this must never misreport as a
+     * syscall error just because application data was sitting right behind
+     * it, whether that data is buffered for later or (since reassembling
+     * and processing a single, unfragmented ticket can settle back to idle
+     * within this same call) delivered immediately.
+     */
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (ret > 0) {
+        if (!TEST_mem_eq(buf, ret, "ABCD", 4))
+            goto end;
+    } else if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)) {
+        goto end;
+    } else {
+        /* Deferred -- it must still surface, and the ticket must have been processed. */
+        ret = SSL_read(client, buf, sizeof(buf));
+        if (!TEST_int_eq(ret, 4) || !TEST_mem_eq(buf, 4, "ABCD", 4))
+            goto end;
+    }
+    if (!TEST_int_eq(ticket_count, 1))
+        goto end;
+
+    /* Application data flows both ways afterward. */
+    if (!TEST_int_eq(SSL_write(client, "y", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'y')
+        || !TEST_int_eq(SSL_write(server, "x", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'x'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Mirror of test_dtls13_reciprocal_keyupdate_app_data_classification with
+ * roles reversed: that test only ever asserts the server's SSL_get_error()
+ * during the race. This asserts the client's own read path instead -- same
+ * shared dtls1_read_bytes() code, but never directly exercised from this
+ * side with application data in flight.
+ */
+static int test_dtls13_client_keyupdate_app_data_classification(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *cc;
+    unsigned char buf[2048], held[2048];
+    int ret, held_len, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    /*
+     * The server writes application data under the current epoch, then
+     * requests a reciprocal KeyUpdate. Hold the application datagram back
+     * so it can be delivered to the client right after the KeyUpdate --
+     * both records sit in the client's buffer before it reads either one.
+     */
+    if (!TEST_int_eq(SSL_write(server, "ABCD", 4), 4))
+        goto end;
+    held_len = BIO_read(SSL_get_rbio(client), held, sizeof(held));
+    if (!TEST_int_gt(held_len, 0))
+        goto end;
+
+    if (!TEST_true(SSL_key_update(server, SSL_KEY_UPDATE_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* The client's rbio already has the KeyUpdate; add ABCD back right behind it. */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(client), held, held_len), held_len))
+        goto end;
+
+    /*
+     * One SSL_read() processes the KeyUpdate -- scheduling the client's own
+     * reciprocal response and leaving it parked at TLS_ST_OK with in_init
+     * set -- and then reaches the already-buffered application record.
+     */
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(cc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_false(SSL_is_init_finished(client)))
+        goto end;
+
+    /* The server consumes the client's ACK of its KeyUpdate. */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* This read drives out the client's own scheduled reciprocal KeyUpdate. */
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* The server receives the reciprocal KeyUpdate and acknowledges it. */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The client processes that ACK, completing its own write-key install.
+     * The application data buffered several reads ago finally surfaces --
+     * it was never lost, only deferred.
+     */
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (!TEST_int_eq(ret, 4)
+        || !TEST_mem_eq(buf, 4, "ABCD", 4)
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_false(cc->d1->key_update_write_pending))
+        goto end;
+
+    /* Application data flows both ways under the fully-updated epoch. */
+    if (!TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'c')
+        || !TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -6170,6 +6625,10 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_pha_completion_eviction_blocks_new_actions);
     ADD_TEST(test_dtls13_requested_key_update_waits_for_write_key_install);
     ADD_TEST(test_dtls13_reciprocal_keyupdate_app_data_classification);
+    ADD_ALL_TESTS(test_dtls13_simultaneous_keyupdate_app_data_classification, 2);
+    ADD_TEST(test_dtls13_pha_response_app_data_classification);
+    ADD_TEST(test_dtls13_ticket_app_data_classification);
+    ADD_TEST(test_dtls13_client_keyupdate_app_data_classification);
 #endif
     return 1;
 }
