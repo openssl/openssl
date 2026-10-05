@@ -1402,20 +1402,27 @@ static int provider_remove_store_methods(OSSL_PROVIDER *prov)
 int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 {
     int count;
+    int ret;
 
     if (prov == NULL)
         return 0;
-    ossl_lib_ctx_set_new_providers_loaded(prov->libctx);
 #ifndef FIPS_MODULE
     /*
      * If aschild is true, then we only actually do the activation if the
      * provider is a child. If its not, this is still success.
      */
-    if (aschild && !prov->ischild)
+    if (aschild && !prov->ischild) {
+        ossl_lib_ctx_set_new_providers_loaded(prov->libctx);
         return 1;
+    }
 #endif
-    if ((count = provider_activate(prov, 1, upcalls)) > 0)
-        return count == 1 ? provider_flush_store_cache(prov) : 1;
+    if ((count = provider_activate(prov, 1, upcalls)) > 0) {
+        ret = 1;
+        if (count == 1)
+            ret = provider_flush_store_cache(prov);
+        ossl_lib_ctx_set_new_providers_loaded(prov->libctx);
+        return ret;
+    }
 
     return 0;
 }
