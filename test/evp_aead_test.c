@@ -688,6 +688,88 @@ err:
     return testresult;
 }
 
+/*-
+ * A tag must be set before decrypting; EVP_DecryptFinal_ex() must reject
+ * finalization when no tag has been supplied. Applies to every AEAD in
+ * aead_list except the modes skipped below.
+ */
+static int test_evp_final_no_tag(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_enc = NULL;
+    EVP_CIPHER_CTX *ctx_dec = NULL;
+    OSSL_PARAM params[2];
+    unsigned char tag[16];
+    unsigned char data[5] = { 1, 1, 1, 1, 1 };
+    unsigned char ctext[EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char plaintext[sizeof(data)] = { 0 };
+    int ctext_len = 0, len = 0, testresult = 0;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = {
+        0xc9, 0xee, 0xa3, 0x0c, 0x1c, 0x59, 0x0c, 0x8b, 0xd8, 0xbb, 0xa1, 0x1c,
+        0xbc, 0x3a, 0x56, 0xe7, 0xb7, 0xe1, 0x9f, 0xfd, 0x3b, 0x4a, 0xa3, 0xd5,
+        0xc4, 0xdc, 0x2e, 0x62, 0xe6, 0x75, 0x15, 0x5c
+    };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = {
+        0x03, 0x2d, 0x79, 0xef, 0xed, 0x2e, 0xad, 0x3e, 0x0b, 0xdc, 0x8f, 0x57,
+        0x0d, 0x0e, 0x0f, 0x10
+    };
+
+    /*
+     * CCM requires the tag and payload length to be declared up front. OCB
+     * emits plaintext before the tag check. SIV and GCM-SIV verify in the
+     * payload update rather than in final. Skipped until the interface
+     * behavior for these modes is settled.
+     */
+    if (info->mode == EVP_CIPH_CCM_MODE
+        || info->mode == EVP_CIPH_OCB_MODE
+        || info->mode == EVP_CIPH_SIV_MODE
+        || info->mode == EVP_CIPH_GCM_SIV_MODE)
+        return 1;
+
+    if (!TEST_int_le(info->keylen, (int)sizeof(key))
+        || !TEST_int_le(info->ivlen, (int)sizeof(iv))
+        || !TEST_int_le(info->taglen, (int)sizeof(tag))) {
+        TEST_info("%s: keylen %d, ivlen %d or taglen %d exceeds the buffers",
+            EVP_CIPHER_get0_name(info->ciph), info->keylen, info->ivlen,
+            info->taglen);
+        goto err;
+    }
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, sizeof(tag));
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx_enc, ctext, &ctext_len, data,
+            sizeof(data)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_enc, ctext + ctext_len, &len))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx_enc, params))) {
+        TEST_info("%s: encrypt or tag retrieval failed",
+            EVP_CIPHER_get0_name(info->ciph));
+        goto err;
+    }
+    ctext_len += len;
+
+    /* No tag is set on the decrypt side, so finalization must fail. */
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, plaintext, &len, ctext,
+            ctext_len))
+        || !TEST_mem_eq(plaintext, sizeof(data), data, sizeof(data))
+        || !TEST_false(EVP_DecryptFinal_ex(ctx_dec, plaintext + len, &len))) {
+        TEST_info("%s: decrypt without tag did not behave as expected",
+            EVP_CIPHER_get0_name(info->ciph));
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     int i = 0;
@@ -706,6 +788,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
+    ADD_ALL_TESTS(test_evp_final_no_tag, aead_list_n);
     return 1;
 }
 
