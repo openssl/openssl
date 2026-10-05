@@ -1078,12 +1078,13 @@ tail:
     /*
      * Verify the result against the public exponent.  'I' and 'vrfy' must
      * be congruent mod n; if not, don't leak the miscalculated CRT output,
-     * do a raw (slower) mod_exp and return that instead.
+     * do a raw (slower) mod_exp and return that instead.  Both are below
+     * n, so the quick subtraction applies; OSSL_FN_mod_sub() would divide.
      */
     if (fn_e != NULL) {
         if (!rsa->meth->ossl_fn_mod_exp(vrfy, r0, fn_e, f_n, ctx, mont_n))
             goto err;
-        if (!OSSL_FN_mod_sub(vrfy, vrfy, I, f_n, ctx))
+        if (!OSSL_FN_mod_sub_quick(vrfy, vrfy, I, f_n))
             goto err;
         if (!OSSL_FN_is_zero(vrfy)) {
             if (f_d == NULL)
