@@ -4678,13 +4678,10 @@ end:
 static int pha_install_failure_armed;
 static int pha_install_failure_hits;
 
+/* Match by allocation size, not file/line -- portable and OPENSSL_NO_FILENAMES-safe. */
 static void *pha_install_failure_malloc(size_t n, const char *file, int line)
 {
-    const char *base = file == NULL ? NULL : strrchr(file, '/');
-    const char *name = base == NULL ? file : base + 1;
-
-    if (pha_install_failure_armed && name != NULL
-        && strcmp(name, "tls_common.c") == 0 && line == 1229) {
+    if (pha_install_failure_armed && n == sizeof(OSSL_RECORD_LAYER)) {
         pha_install_failure_hits++;
         pha_install_failure_armed = 0;
         return NULL;
@@ -6116,6 +6113,130 @@ end:
 }
 
 /*
+ * Mirror of test_dtls13_reciprocal_keyupdate_app_data_classification with no
+ * buffered application data anywhere in flight, retrying only on a condition
+ * that is actually reported rather than unconditionally after WANT_READ.
+ * idx selects which side requests the reciprocal KeyUpdate: idx == 0 the
+ * client, idx == 1 the server.
+ *
+ * Without application data racing the exchange, nothing about the
+ * connection's read-side readiness changes once the requester's ACK has been
+ * consumed: SSL_pending(), SSL_has_pending() and the read BIO all read
+ * exactly as they did before any of this started. SSL_read.pod's retry rule
+ * -- call again once the underlying BIO can satisfy the read, or
+ * SSL_pending()/SSL_has_pending() says bytes are already buffered -- gives no
+ * basis to call SSL_read() again at that point, yet the reciprocal KeyUpdate
+ * is still unsent. SSL_in_init() is the condition that is actually reported
+ * here: true means the state machine still has local work scheduled, and
+ * that -- not WANT_READ, not buffered application data -- is what justifies
+ * calling SSL_read() again (see the comment in tls_process_key_update(),
+ * statem_lib.c, and dtls1_read_bytes()'s in-init check at the top of the
+ * function).
+ */
+static int test_dtls13_reciprocal_keyupdate_no_app_data_classification(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL *local, *peer;
+    SSL_CONNECTION *pc;
+    unsigned char buf[2048];
+    uint64_t epoch_before;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    local = (idx == 0) ? client : server;
+    peer = (idx == 0) ? server : client;
+    pc = SSL_CONNECTION_FROM_SSL(peer);
+    epoch_before = dtls1_get_epoch(pc, SSL3_CC_WRITE);
+
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(local);
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The peer processes the KeyUpdate, scheduling its own reciprocal
+     * response and leaving it parked at TLS_ST_OK with in_init set. With no
+     * application data anywhere in flight, this is the only thing left
+     * outstanding.
+     */
+    ret = SSL_read(peer, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(pc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_true(SSL_in_init(peer))
+        || !TEST_false(SSL_is_init_finished(peer)))
+        goto end;
+
+    /*
+     * The requester consumes the peer's ACK and goes idle -- it has nothing
+     * else to send. This is the point the reviewed comment is about:
+     * SSL_pending(), SSL_has_pending() and the read BIO all read exactly as
+     * they did before any of this started, yet the reciprocal KeyUpdate is
+     * still unsent and SSL_in_init(peer) is still true.
+     */
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ)
+        || !TEST_false(SSL_in_init(local)))
+        goto end;
+    if (!TEST_int_eq(SSL_pending(peer), 0)
+        || !TEST_false(SSL_has_pending(peer))
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(peer)), 0)
+        || !TEST_true(SSL_in_init(peer)))
+        goto end;
+
+    /*
+     * SSL_in_init() is the condition actually reported here, and it alone
+     * justifies calling SSL_read() again: this drives out the peer's
+     * scheduled reciprocal KeyUpdate even though nothing new ever arrived
+     * on its read BIO.
+     */
+    ret = SSL_read(peer, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* The requester receives the reciprocal KeyUpdate and acknowledges it. */
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The peer processes that ACK, completing its own write-key install --
+     * again with nothing else to classify, since no application data was
+     * ever in flight.
+     */
+    ret = SSL_read(peer, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_is_init_finished(peer))
+        || !TEST_false(pc->d1->key_update_write_pending)
+        || !TEST_uint64_t_ne(dtls1_get_epoch(pc, SSL3_CC_WRITE), epoch_before))
+        goto end;
+
+    /* Application data flows both ways under the fully-updated epoch. */
+    if (!TEST_int_eq(SSL_write(peer, "p", 1), 1)
+        || !TEST_int_eq(SSL_read(local, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'p')
+        || !TEST_int_eq(SSL_write(local, "l", 1), 1)
+        || !TEST_int_eq(SSL_read(peer, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'l'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * Combines two mechanisms that have only ever been tested separately: the
  * simultaneous-bidirectional-KeyUpdate deadlock fix (see
  * test_dtls13_server_keyupdate_preserves_ack) and application data racing a
@@ -6625,6 +6746,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_pha_completion_eviction_blocks_new_actions);
     ADD_TEST(test_dtls13_requested_key_update_waits_for_write_key_install);
     ADD_TEST(test_dtls13_reciprocal_keyupdate_app_data_classification);
+    ADD_ALL_TESTS(test_dtls13_reciprocal_keyupdate_no_app_data_classification, 2);
     ADD_ALL_TESTS(test_dtls13_simultaneous_keyupdate_app_data_classification, 2);
     ADD_TEST(test_dtls13_pha_response_app_data_classification);
     ADD_TEST(test_dtls13_ticket_app_data_classification);
