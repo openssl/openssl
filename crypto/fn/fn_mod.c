@@ -58,7 +58,7 @@ int OSSL_FN_mod_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
 
     if (token == NULL)
         return 0;
-    if ((t = OSSL_FN_CTX_get_limbs(ctx, tl)) == NULL)
+    if ((t = OSSL_FN_CTX_get_limbs(ctx, token, tl)) == NULL)
         goto err;
 
     ret = OSSL_FN_add(t, a, b)
@@ -180,11 +180,11 @@ int OSSL_FN_mod_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
 
     if (token == NULL)
         return 0;
-    if ((am = OSSL_FN_CTX_get_limbs(ctx, m->dsize)) == NULL
-        || (bm = OSSL_FN_CTX_get_limbs(ctx, m->dsize)) == NULL)
+    if ((am = OSSL_FN_CTX_get_limbs(ctx, token, m->dsize)) == NULL
+        || (bm = OSSL_FN_CTX_get_limbs(ctx, token, m->dsize)) == NULL)
         goto err;
 
-    if (r == m && (rr = OSSL_FN_CTX_get_limbs(ctx, m->dsize)) == NULL)
+    if (r == m && (rr = OSSL_FN_CTX_get_limbs(ctx, token, m->dsize)) == NULL)
         goto err;
 
     ret = OSSL_FN_mod(am, a, m, ctx)
@@ -337,13 +337,13 @@ int OSSL_FN_mod_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     if (a == b) {
         size_t tl = 2 * a->dsize;
 
-        if ((t = OSSL_FN_CTX_get_limbs(ctx, tl)) == NULL
+        if ((t = OSSL_FN_CTX_get_limbs(ctx, token, tl)) == NULL
             || !OSSL_FN_sqr(t, a, ctx))
             goto err;
     } else {
         size_t tl = a->dsize + b->dsize;
 
-        if ((t = OSSL_FN_CTX_get_limbs(ctx, tl)) == NULL
+        if ((t = OSSL_FN_CTX_get_limbs(ctx, token, tl)) == NULL
             || !OSSL_FN_mul(t, a, b, ctx))
             goto err;
     }
@@ -391,7 +391,7 @@ int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
 
     if (token == NULL)
         return 0;
-    if ((t = OSSL_FN_CTX_get_limbs(ctx, (size_t)(2 * a->dsize))) == NULL)
+    if ((t = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)(2 * a->dsize))) == NULL)
         goto err;
 
     ret = OSSL_FN_sqr(t, a, ctx)
@@ -436,7 +436,7 @@ int OSSL_FN_mod_lshift1(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
 
     if (token == NULL)
         return 0;
-    if ((t = OSSL_FN_CTX_get_limbs(ctx, (size_t)(m->dsize + 1))) == NULL)
+    if ((t = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)(m->dsize + 1))) == NULL)
         goto err;
 
     ret = OSSL_FN_lshift1(t, a)
@@ -539,7 +539,7 @@ int OSSL_FN_mod_lshift(OSSL_FN *r, const OSSL_FN *a, int n, const OSSL_FN *m,
 
     if (token == NULL)
         return 0;
-    if ((ra = OSSL_FN_CTX_get_limbs(ctx, m->dsize)) == NULL)
+    if ((ra = OSSL_FN_CTX_get_limbs(ctx, token, m->dsize)) == NULL)
         goto err;
 
     ret = OSSL_FN_mod(ra, a, m, ctx)

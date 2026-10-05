@@ -387,7 +387,10 @@ void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx);
  *
  * @param[in]   ctx     The OSSL_FN_CTX to start the frame in.
  * @returns     Ownership token of the started frame, NULL on error.
- *              This token must be passed to OSSL_FN_CTX_end().
+ *              It aims to prevent the use of another’s frame.
+ *              This token must be passed to OSSL_FN_CTX_get_limbs(),
+ *              OSSL_FN_CTX_get_bytes(), OSSL_FN_CTX_get_bits() and
+ *              OSSL_FN_CTX_end().
  */
 const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
 
@@ -410,32 +413,65 @@ int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token);
 /**
  * Get a suitably sized OSSL_FN from an OSSL_FN_CTX.
  *
+ * The number is allocated in the most recent frame, which must be the one
+ * owned by the caller.
+ *
  * @param[in]   ctx     The OSSL_FN_CTX
+ * @param[in]   token   Ownership token returned by OSSL_FN_CTX_start()
+ *                      for the current frame.
  * @param[in]   limbs   The desired size of the resulting OSSL_FN,
  *                      in number of limbs.
  * @returns     an OSSL_FN pointer on success, NULL on error.
+ *
+ * @note Passing a token that does not belong to the most recent frame
+ * (for example, because the caller forgot to call OSSL_FN_CTX_start()
+ * and would thus allocate in its caller's frame) is a programming error
+ * and the function will fail.
  */
-OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs);
+OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, const void *token,
+    size_t limbs);
 
 /**
  * Get a suitably sized OSSL_FN from an OSSL_FN_CTX.
  *
+ * The number is allocated in the most recent frame, which must be the one
+ * owned by the caller.
+ *
  * @param[in]   ctx     The OSSL_FN_CTX
- * @param[in]   limbs   The desired size of the resulting OSSL_FN,
+ * @param[in]   token   Ownership token returned by OSSL_FN_CTX_start()
+ *                      for the current frame.
+ * @param[in]   bytes   The desired size of the resulting OSSL_FN,
  *                      in number of bytes.
  * @returns     an OSSL_FN pointer on success, NULL on error.
+ *
+ * @note Passing a token that does not belong to the most recent frame
+ * (for example, because the caller forgot to call OSSL_FN_CTX_start()
+ * and would thus allocate in its caller's frame) is a programming error
+ * and the function will fail.
  */
-OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, size_t bytes);
+OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, const void *token,
+    size_t bytes);
 
 /**
  * Get a suitably sized OSSL_FN from an OSSL_FN_CTX.
  *
+ * The number is allocated in the most recent frame, which must be the one
+ * owned by the caller.
+ *
  * @param[in]   ctx     The OSSL_FN_CTX
- * @param[in]   limbs   The desired size of the resulting OSSL_FN,
+ * @param[in]   token   Ownership token returned by OSSL_FN_CTX_start()
+ *                      for the current frame.
+ * @param[in]   bits    The desired size of the resulting OSSL_FN,
  *                      in number of bits.
  * @returns     an OSSL_FN pointer on success, NULL on error.
+ *
+ * @note Passing a token that does not belong to the most recent frame
+ * (for example, because the caller forgot to call OSSL_FN_CTX_start()
+ * and would thus allocate in its caller's frame) is a programming error
+ * and the function will fail.
  */
-OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits);
+OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, const void *token,
+    size_t bits);
 
 /*
  * Arithmetic functions treat the OSSL_FN 'd' array as a large 2's complement

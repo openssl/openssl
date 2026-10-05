@@ -71,13 +71,13 @@ int OSSL_FN_mod_sqrt(OSSL_FN *ret, const OSSL_FN *a, const OSSL_FN *p,
         goto end;
     }
 
-    OSSL_FN *A = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *b = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *q = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *t = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *x = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *y = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *z = OSSL_FN_CTX_get_limbs(ctx, L);
+    OSSL_FN *A = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *b = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *q = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *t = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *x = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *y = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *z = OSSL_FN_CTX_get_limbs(ctx, token, L);
     if (z == NULL)
         goto end;
 

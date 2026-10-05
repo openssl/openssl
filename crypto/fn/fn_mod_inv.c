@@ -138,12 +138,12 @@ int OSSL_FN_mod_inverse(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n,
     size_t nl = (size_t)n->dsize;
     size_t L = al > nl ? al : nl;
 
-    OSSL_FN *A = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *B = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *X = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *Y = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *D = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *M = OSSL_FN_CTX_get_limbs(ctx, L);
+    OSSL_FN *A = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *B = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *X = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *Y = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *D = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *M = OSSL_FN_CTX_get_limbs(ctx, token, L);
     if (A == NULL || B == NULL || X == NULL || Y == NULL
         || D == NULL || M == NULL)
         goto err;
@@ -342,7 +342,7 @@ int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     }
 
     /* e = m - 2, exactly m-wide; 2 is the shared static constant. */
-    if ((e = OSSL_FN_CTX_get_limbs(ctx, (size_t)m->dsize)) == NULL)
+    if ((e = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)m->dsize)) == NULL)
         goto err;
     if (!OSSL_FN_sub(e, m, &ossl_fn_static_const_2_storage.fn))
         goto err;

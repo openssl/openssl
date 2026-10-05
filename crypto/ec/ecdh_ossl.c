@@ -233,7 +233,7 @@ static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
 
         if ((fnctx = OSSL_FN_CTX_secure_new_size(ecdh->libctx, size)) == NULL
             || (token = OSSL_FN_CTX_start(fnctx)) == NULL
-            || (product = OSSL_FN_CTX_get_limbs(fnctx, width)) == NULL
+            || (product = OSSL_FN_CTX_get_limbs(fnctx, token, width)) == NULL
             || !OSSL_FN_mod_mul(product, scalar, cofactor, cardinality, fnctx))
             goto err;
         scalar = product;
