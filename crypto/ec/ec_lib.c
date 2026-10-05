@@ -1629,7 +1629,7 @@ int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
     }
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
-    ret = (t = OSSL_FN_CTX_get_limbs(ctx, 2 * w)) != NULL
+    ret = (t = OSSL_FN_CTX_get_limbs(ctx, token, 2 * w)) != NULL
         && OSSL_FN_copy_truncate(t, src) != NULL
         && OSSL_FN_mont_reduce(res, t, mont, ctx);
     OSSL_FN_CTX_end(ctx, token);

@@ -26,7 +26,7 @@ static int ossl_fn_x931_generate_Xpq_int(OSSL_FN *dst, OSSL_FN *oth,
 
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
-    t = OSSL_FN_CTX_get_limbs(ctx, (size_t)dst->dsize);
+    t = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)dst->dsize);
     if (t == NULL)
         goto err;
 
@@ -208,14 +208,14 @@ int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if (p1 == NULL && (p1 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+    if (p1 == NULL && (p1 = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Xp->dsize)) == NULL)
         goto err;
-    if (p2 == NULL && (p2 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+    if (p2 == NULL && (p2 = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Xp->dsize)) == NULL)
         goto err;
 
-    p1p2 = OSSL_FN_CTX_get_limbs(ctx, 2 * (size_t)Xp->dsize);
-    t = OSSL_FN_CTX_get_limbs(ctx, 2 * (size_t)Xp->dsize);
-    pm1 = OSSL_FN_CTX_get_limbs(ctx, 2 * (size_t)Xp->dsize);
+    p1p2 = OSSL_FN_CTX_get_limbs(ctx, token, 2 * (size_t)Xp->dsize);
+    t = OSSL_FN_CTX_get_limbs(ctx, token, 2 * (size_t)Xp->dsize);
+    pm1 = OSSL_FN_CTX_get_limbs(ctx, token, 2 * (size_t)Xp->dsize);
     /* t and pm1 are double width: t is reduced modulo p1p2, and pm1
      * carries p's full width in the gcd filter. */
     if (pm1 == NULL)
@@ -299,13 +299,13 @@ int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if (p1 == NULL && (p1 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+    if (p1 == NULL && (p1 = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Xp->dsize)) == NULL)
         goto err;
-    if (p2 == NULL && (p2 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+    if (p2 == NULL && (p2 = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Xp->dsize)) == NULL)
         goto err;
-    if (Xp1 == NULL && (Xp1 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+    if (Xp1 == NULL && (Xp1 = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Xp->dsize)) == NULL)
         goto err;
-    if (Xp2 == NULL && (Xp2 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+    if (Xp2 == NULL && (Xp2 = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Xp->dsize)) == NULL)
         goto err;
 
     if (!OSSL_FN_priv_rand(Xp1, 101, OSSL_FN_RAND_TOP_ONE,
