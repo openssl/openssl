@@ -28,6 +28,7 @@
 #include "internal/time.h"
 #include "internal/sockets.h"
 #include "internal/dgram_demux.h"
+#include "internal/dtls_record_rx.h"
 #include "internal/ssl_unwrap.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -1096,6 +1097,148 @@ static int test_dtls13_connection_without_hrr(void)
 end:
     SSL_free(serverssl);
     SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A connection accepted by a DTLS listener has no read BIO of its own --
+ * dtls_listener_create_conn_ssl() (ssl/d1_lib.c) calls SSL_set0_rbio(ssl,
+ * NULL), since such connections receive through the listener's shared demux
+ * queue instead. This exercises the same KeyUpdate/buffered-application-data
+ * race as test_dtls13_reciprocal_keyupdate_app_data_classification in
+ * dtls13_internal_test.c, but over a listener-accepted connection: one
+ * application datagram is queued immediately behind a KeyUpdate that
+ * requests a response, and the accepted connection must classify that as an
+ * ordinary SSL_ERROR_WANT_READ retry condition -- the same outcome as the
+ * ordinary BIO-pair case -- even with no rbio of its own.
+ *
+ * Since the accepted connection has no rbio, the held datagram can't be
+ * reinjected with a plain BIO_write() the way the ordinary test does: the
+ * demux has no per-datagram address to route it by. It's drained from the
+ * listener's shared rbio as raw bytes and reinjected via
+ * ossl_dgram_demux_inject() instead, tagged with the client's address, after
+ * first pumping the KeyUpdate itself into the connection's own queue so the
+ * two land in the right order.
+ */
+static int test_dtls13_listener_keyupdate_app_data_classification(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    BIO_ADDR *client_addr = NULL;
+    unsigned char buf[2048], held[2048];
+    int ret, held_len, testresult = 0;
+    int retc, err_code, abortctr = 0;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &client, &client_addr)))
+        goto end;
+
+    /* Drive the connection until SSL_accept_connection returns the accepted server SSL. */
+    SSL_set_connect_state(client);
+    while (server == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Connection loop did not converge");
+            goto end;
+        }
+        retc = SSL_connect(client);
+        err_code = SSL_get_error(client, retc);
+        if (retc <= 0 && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err_code);
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            server = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+    if (!TEST_ptr(server)
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    /* The accepted connection receives through the listener's queue, not a BIO of its own. */
+    if (!TEST_ptr_null(SSL_get_rbio(server)))
+        goto end;
+
+    /*
+     * The client writes application data under the current epoch, then
+     * requests a reciprocal KeyUpdate. Hold the application datagram back
+     * so it can be delivered right after the KeyUpdate -- both sit in the
+     * listener's shared rbio before the accepted connection reads either.
+     */
+    if (!TEST_int_eq(SSL_write(client, "ABCD", 4), 4))
+        goto end;
+    held_len = BIO_read(SSL_get_rbio(listener), held, sizeof(held));
+    if (!TEST_int_gt(held_len, 0))
+        goto end;
+
+    if (!TEST_true(SSL_key_update(client, SSL_KEY_UPDATE_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The listener's rbio already has the KeyUpdate, still unpumped. Pump it
+     * into the accepted connection's own queue first -- otherwise injecting
+     * ABCD (below) would land ahead of it, since injection dispatches
+     * synchronously instead of waiting its turn behind whatever is still
+     * sitting in the raw network BIO.
+     */
+    if (!TEST_int_eq(ossl_dgram_demux_pump(sc->d1->rx->demux), DGRAM_DEMUX_PUMP_RES_OK))
+        goto end;
+
+    /*
+     * Inject ABCD directly into the accepted connection's demux queue, tagged
+     * with the client's address: a raw BIO_write on the listener's shared
+     * rbio carries no per-datagram source-address metadata, so the demux has
+     * no way to route it to this specific connection (it gets silently
+     * dropped instead of landing in this connection's queue).
+     */
+    if (!TEST_true(ossl_dgram_demux_inject(sc->d1->rx->demux, held, held_len,
+            client_addr, NULL)))
+        goto end;
+
+    /*
+     * The call under test: it processes the KeyUpdate -- scheduling the
+     * accepted connection's own reciprocal response and leaving it parked at
+     * TLS_ST_OK with in_init set -- and then reaches the already-buffered
+     * application record while the connection's rbio is NULL. This must
+     * report SSL_ERROR_WANT_READ, same as the ordinary BIO-pair case.
+     */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_false(SSL_is_init_finished(server)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
     SSL_free(listener);
     BIO_ADDR_free(client_addr);
     SSL_CTX_free(sctx);
@@ -5970,6 +6113,7 @@ int setup_tests(void)
     /* DTLS 1.3 connection tests */
     ADD_TEST(test_dtls13_connection_with_hrr);
     ADD_TEST(test_dtls13_connection_without_hrr);
+    ADD_TEST(test_dtls13_listener_keyupdate_app_data_classification);
 
     /* Mixed version tests */
 #ifndef OPENSSL_NO_DTLS1_2
