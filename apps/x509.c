@@ -1215,8 +1215,8 @@ cert_loop:
         int error;
 
         if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
-            BIO_puts(out, "Malloc failed\n");
-            goto end_cert_loop;
+            BIO_puts(bio_err, "Malloc failed\n");
+            goto err;
         }
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_USE_CHECK_TIME);
         X509_VERIFY_PARAM_set_time(vpm, tcheck);
