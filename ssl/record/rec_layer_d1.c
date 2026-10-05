@@ -409,10 +409,22 @@ start:
              * SSL_get_error() reports SSL_ERROR_SYSCALL on an empty error
              * queue instead of the ordinary retry condition this actually
              * is.
+             *
+             * A connection accepted by a DTLS listener has no read BIO of
+             * its own -- it receives through the listener's shared demux
+             * queue instead (see dtls_listener_create_conn_ssl()) -- so
+             * SSL_get_rbio() returns NULL here and these BIO flag updates
+             * must be skipped. SSL_get_error() already reports
+             * SSL_ERROR_WANT_READ for SSL_READING on such a connection
+             * without needing a BIO at all.
              */
+            BIO *rbio = SSL_get_rbio(s);
+
             sc->rwstate = SSL_READING;
-            BIO_clear_retry_flags(SSL_get_rbio(s));
-            BIO_set_retry_read(SSL_get_rbio(s));
+            if (rbio != NULL) {
+                BIO_clear_retry_flags(rbio);
+                BIO_set_retry_read(rbio);
+            }
             return -1;
         }
         goto start;
