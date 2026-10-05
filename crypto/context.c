@@ -697,7 +697,7 @@ int ossl_lib_ctx_get_new_providers_loaded(OSSL_LIB_CTX *ctx, int op)
      */
     if (!CRYPTO_atomic_load(&ctx->new_provider_loaded, &ret, ctx->lock))
         return 1;
-    return ret & (1UL << op);
+    return !!(ret & (1ULL << op));
 }
 
 int ossl_lib_ctx_set_new_providers_loaded(OSSL_LIB_CTX *ctx)
@@ -711,7 +711,7 @@ int ossl_lib_ctx_set_new_providers_loaded(OSSL_LIB_CTX *ctx)
 
 int ossl_lib_ctx_clear_new_providers_loaded(OSSL_LIB_CTX *ctx, int op)
 {
-    uint64_t val = ~(1UL << op);
+    uint64_t val = ~(1ULL << op);
     uint64_t ret;
 
     ctx = ossl_lib_ctx_get_concrete(ctx);
