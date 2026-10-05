@@ -901,7 +901,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
              * already refuses to while key_update_write_pending is set.
              */
             if (next_state == TLS_ST_SW_SESSION_TICKET
-                    ? s->d1->key_update_write_pending
+                    ? s->d1->key_update_write_pending != 0
                     : dtls_has_unacked_key_update(s)) {
                 /*
                  * Hold this ACK back rather than send it now. The real
