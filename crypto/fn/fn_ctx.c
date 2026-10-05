@@ -205,7 +205,7 @@ const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
 int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token)
 {
     if (ctx == NULL || token == NULL)
-        return 0;
+        return 1;
 
     struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
 
@@ -227,9 +227,10 @@ int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token)
     return 1;
 }
 
-OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs)
+OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, const void *token,
+    size_t limbs)
 {
-    if (ossl_unlikely(ctx == NULL)) {
+    if (ossl_unlikely(ctx == NULL || token == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
@@ -238,6 +239,17 @@ OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs)
 
     if (ossl_unlikely(frame == NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
+
+    /*
+     * Numbers can only be carved out of the most recent frame, and only by
+     * its owner.  A mismatching token means the caller forgot its own
+     * OSSL_FN_CTX_start() (or already ended its frame), and would otherwise
+     * be allocating in someone else's frame.
+     */
+    if (ossl_unlikely(frame != token)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
@@ -265,12 +277,14 @@ OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs)
     return fn;
 }
 
-OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, size_t bytes)
+OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, const void *token,
+    size_t bytes)
 {
-    return OSSL_FN_CTX_get_limbs(ctx, ossl_fn_bytes_to_limbs(bytes));
+    return OSSL_FN_CTX_get_limbs(ctx, token, ossl_fn_bytes_to_limbs(bytes));
 }
 
-OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits)
+OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, const void *token,
+    size_t bits)
 {
-    return OSSL_FN_CTX_get_bytes(ctx, ossl_fn_bits_to_bytes(bits));
+    return OSSL_FN_CTX_get_bytes(ctx, token, ossl_fn_bits_to_bytes(bits));
 }

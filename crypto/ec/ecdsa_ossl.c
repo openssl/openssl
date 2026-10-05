@@ -377,7 +377,7 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
     fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need);
     if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
         goto err;
-    if ((kf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+    if ((kf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
         goto err;
 
     do {
