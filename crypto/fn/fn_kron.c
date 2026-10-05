@@ -61,8 +61,8 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
     size_t bl = (size_t)b->dsize;
     size_t L = al > bl ? al : bl;
 
-    OSSL_FN *A = OSSL_FN_CTX_get_limbs(ctx, L);
-    OSSL_FN *B = OSSL_FN_CTX_get_limbs(ctx, L);
+    OSSL_FN *A = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FN *B = OSSL_FN_CTX_get_limbs(ctx, token, L);
     if (A == NULL || B == NULL)
         goto end;
 
