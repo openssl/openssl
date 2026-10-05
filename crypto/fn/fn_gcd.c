@@ -162,10 +162,10 @@ int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     int shift;
     size_t ubits, vbits, m;
 
-    if ((u = OSSL_FN_CTX_get_limbs(ctx, scratch)) == NULL
-        || (v = OSSL_FN_CTX_get_limbs(ctx, scratch)) == NULL
-        || (t = OSSL_FN_CTX_get_limbs(ctx, scratch)) == NULL
-        || (rr = OSSL_FN_CTX_get_limbs(ctx, scratch)) == NULL)
+    if ((u = OSSL_FN_CTX_get_limbs(ctx, token, scratch)) == NULL
+        || (v = OSSL_FN_CTX_get_limbs(ctx, token, scratch)) == NULL
+        || (t = OSSL_FN_CTX_get_limbs(ctx, token, scratch)) == NULL
+        || (rr = OSSL_FN_CTX_get_limbs(ctx, token, scratch)) == NULL)
         goto err;
 
     /*

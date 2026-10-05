@@ -61,11 +61,11 @@ int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
     /* rl < max is always true when r == a, so covers that case too */
     OSSL_FN *rr = r;
     if (rl < max)
-        if ((rr = OSSL_FN_CTX_get_limbs(ctx, max)) == NULL)
+        if ((rr = OSSL_FN_CTX_get_limbs(ctx, token, max)) == NULL)
             goto err;
 
     OSSL_FN *tmp = NULL;
-    if ((tmp = OSSL_FN_CTX_get_limbs(ctx, max)) == NULL)
+    if ((tmp = OSSL_FN_CTX_get_limbs(ctx, token, max)) == NULL)
         goto err;
 
     if (al != 0)

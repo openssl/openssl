@@ -376,7 +376,7 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
     fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need);
     if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
         goto err;
-    if ((kf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+    if ((kf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
         goto err;
 
     do {
@@ -640,7 +640,7 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
             need = iter_need;
             if ((fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need)) == NULL
                 || (token = OSSL_FN_CTX_start(fnctx)) == NULL
-                || (t = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+                || (t = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
                 goto err;
         }
 

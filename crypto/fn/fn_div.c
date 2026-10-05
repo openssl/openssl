@@ -293,7 +293,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
      * need to be allocated.
      */
     size_t snuml = ((nl <= dl) ? dl : nl) + 1;
-    OSSL_FN *snum = OSSL_FN_CTX_get_limbs(ctx, snuml);
+    OSSL_FN *snum = OSSL_FN_CTX_get_limbs(ctx, token, snuml);
     if (!ossl_assert(snuml <= INT_MAX && snum != NULL))
         goto err;
     copy_align_left(snum, n, norm_shift);
@@ -304,7 +304,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
      * the denominator's highest limb is a very small number.
      */
     size_t sdivl = dl;
-    OSSL_FN *sdiv = OSSL_FN_CTX_get_limbs(ctx, sdivl);
+    OSSL_FN *sdiv = OSSL_FN_CTX_get_limbs(ctx, token, sdivl);
     if (!ossl_assert(sdivl <= INT_MAX && sdiv != NULL))
         goto err;
     copy_align_left(sdiv, d, norm_shift);
@@ -326,7 +326,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
      * Set up the quotient.  It will be stored directly in |q| if it has
      * enough space, otherwise temporary storage is allocated.
      */
-    OSSL_FN *res = (ql < loop) ? OSSL_FN_CTX_get_limbs(ctx, loop) : q;
+    OSSL_FN *res = (ql < loop) ? OSSL_FN_CTX_get_limbs(ctx, token, loop) : q;
     if (!ossl_assert(res != NULL))
         goto err;
 
@@ -334,7 +334,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
     OSSL_FN_ULONG *resp = &(res->d[loop]);
 
     /* Intermediary storage */
-    OSSL_FN *tmp = OSSL_FN_CTX_get_limbs(ctx, sdivl + 1);
+    OSSL_FN *tmp = OSSL_FN_CTX_get_limbs(ctx, token, sdivl + 1);
     if (!ossl_assert(tmp != NULL))
         goto err;
 
