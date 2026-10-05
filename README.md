@@ -231,6 +231,9 @@ All rights reserved.
 [RFC 9000]:
      <https://tools.ietf.org/html/rfc9000>
 
+[RFC 9147]:
+    <https://tools.ietf.org/html/rfc9147>
+
 [Binaries]:
     <https://github.com/openssl/openssl/wiki/Binaries>
     "List of third party OpenSSL binaries"
