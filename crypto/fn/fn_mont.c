@@ -335,7 +335,7 @@ int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     if (token == NULL)
         return 0;
 
-    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, (size_t)len + 2);
+    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)len + 2);
     if (T == NULL)
         goto end;
     OSSL_FN_clear(T);
@@ -461,7 +461,7 @@ int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
         return 0;
 
     if (a->dsize != len || OSSL_FN_cmp(a, mont->N) >= 0) {
-        tmp = OSSL_FN_CTX_get_limbs(ctx, len);
+        tmp = OSSL_FN_CTX_get_limbs(ctx, token, len);
         if (tmp == NULL)
             goto end;
         if (OSSL_FN_mod(tmp, a, mont->N, ctx) == 0)
@@ -470,7 +470,7 @@ int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     }
 
     if (b->dsize != len || OSSL_FN_cmp(b, mont->N) >= 0) {
-        tmp = OSSL_FN_CTX_get_limbs(ctx, len);
+        tmp = OSSL_FN_CTX_get_limbs(ctx, token, len);
         if (tmp == NULL)
             goto end;
         if (OSSL_FN_mod(tmp, b, mont->N, ctx) == 0)
@@ -479,7 +479,7 @@ int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     }
 
     if (r->dsize != len) {
-        rr = OSSL_FN_CTX_get_limbs(ctx, len);
+        rr = OSSL_FN_CTX_get_limbs(ctx, token, len);
         if (rr == NULL)
             goto end;
     }
@@ -645,7 +645,7 @@ static int from_mont_wide(OSSL_FN *r, const OSSL_FN *a,
     if (token == NULL)
         return 0;
 
-    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, 2 * (size_t)len);
+    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, token, 2 * (size_t)len);
     if (T == NULL || OSSL_FN_copy(T, a) == NULL)
         goto end;
 
@@ -709,7 +709,7 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
     if (token == NULL)
         return 0;
 
-    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, (size_t)len + 2);
+    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)len + 2);
     if (T == NULL)
         goto end;
 
@@ -814,7 +814,7 @@ int OSSL_FN_mont_reduce(OSSL_FN *r, const OSSL_FN *a,
         return 0;
 
     if (a->dsize < mont->N->dsize) {
-        OSSL_FN *t = OSSL_FN_CTX_get_limbs(ctx, (size_t)mont->N->dsize);
+        OSSL_FN *t = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)mont->N->dsize);
 
         if (t == NULL || OSSL_FN_copy(t, a) == NULL)
             goto end;
