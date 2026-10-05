@@ -135,7 +135,8 @@ static int test_zstd_wpending(void)
     int ret = 0;
 
     memset(buf, 'A', sizeof(buf));
-    if (!TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+    if (!TEST_ptr(BIO_f_zstd())
+        || !TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
         || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
         goto err;
     BIO_push(bcomp, bmem);
@@ -166,7 +167,8 @@ static int test_zstd_wpending_nonzero(void)
     if (!TEST_int_gt(RAND_bytes(buf, sizeof(buf)), 0))
         goto err;
     /* Compress the same input into a memory BIO to get the frame length */
-    if (!TEST_ptr(bref = BIO_new(BIO_f_zstd()))
+    if (!TEST_ptr(BIO_f_zstd())
+        || !TEST_ptr(bref = BIO_new(BIO_f_zstd()))
         || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
         goto err;
     BIO_push(bref, bmem);
@@ -206,7 +208,8 @@ static int test_zstd_pending(void)
     int ret = 0;
 
     memset(buf, 'A', sizeof(buf));
-    if (!TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+    if (!TEST_ptr(BIO_f_zstd())
+        || !TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
         || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
         goto err;
     BIO_push(bcomp, bmem);
@@ -260,12 +263,13 @@ static int test_zstd_pending_nonblocking(void)
     int total_len;
     int off = 0;
     int got = 0;
-    int n;
-    int r = 0;
+    int chunk;
+    int nread = 0;
     int i;
     int ret = 0;
 
     if (!TEST_int_gt(RAND_bytes(buf, sizeof(buf)), 0)
+        || !TEST_ptr(BIO_f_zstd())
         || !TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
         || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
         goto err;
@@ -282,13 +286,13 @@ static int test_zstd_pending_nonblocking(void)
     /* Feed the frame in pieces and read it back in small slices */
     for (i = 0; got < (int)sizeof(buf) && i < 1000; i++) {
         if (off < total_len) {
-            n = total_len - off < 1000 ? total_len - off : 1000;
-            if (!TEST_int_eq(BIO_write(bfeed, comp + off, n), n))
+            chunk = total_len - off < 1000 ? total_len - off : 1000;
+            if (!TEST_int_eq(BIO_write(bfeed, comp + off, chunk), chunk))
                 goto err;
-            off += n;
+            off += chunk;
         }
-        while ((r = BIO_read(bdec, out + got, 16)) > 0) {
-            got += r;
+        while ((nread = BIO_read(bdec, out + got, 16)) > 0) {
+            got += nread;
             /* With nothing reported pending a read must not return data */
             if (BIO_pending(bdec) == 0) {
                 if (!TEST_int_le(BIO_read(bdec, out + got, 16), 0))
@@ -296,7 +300,7 @@ static int test_zstd_pending_nonblocking(void)
                 break;
             }
         }
-        if (off == total_len && r <= 0 && BIO_pending(bdec) == 0)
+        if (off == total_len && nread <= 0 && BIO_pending(bdec) == 0)
             break;
     }
     if (!TEST_mem_eq(out, got, buf, sizeof(buf)))
