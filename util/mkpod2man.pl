@@ -91,9 +91,11 @@ sub format_page
 }
 
 open(my $fh, '<', $opt_f) or die "Could not open '$opt_f': $!\n";
-my $podline = <$fh>;
-chomp($podline);
-my @pods = split(' ', $podline);
+my @pods = ();
+while (<$fh>) {
+    chomp($_);
+    push @pods, $_;
+}
 close($fh);
 
 exit 0 unless @pods;

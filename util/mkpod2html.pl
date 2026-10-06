@@ -33,7 +33,6 @@ our ($opt_f);    # -f MANDOCS, read pod file names from this file
 getopts('i:o:t:r:f:j:');
 die "-o flag missing" unless $opt_o;
 die "-r flag missing" unless $opt_r;
-die "-f flag missing" unless $opt_f;
 
 # We originally used realpath() here, but the Windows implementation appears
 # to require that the directory or file exist to be able to process the input,
@@ -122,9 +121,11 @@ sub page_of
 }
 
 open(my $fh, '<', $opt_f) or die "Could not open '$opt_f': $!\n";
-my $podline = <$fh>;
-chomp($podline);
-my @pods = split(' ', $podline);
+my @pods = ();
+while (<$fh>) {
+    chomp($_);
+    push @pods, $_;
+}
 close($fh);
 
 exit 0 unless @pods;
