@@ -365,78 +365,6 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         apps\openssl.exe version -a
 
-  cygwin:
-    # Run a job for each of the specified target architectures:
-    strategy:
-      matrix:
-        os:
-          - windows-2022
-        platform:
-          - arch: win64
-            config: -DCMAKE_C_COMPILER=gcc --strict-warnings enable-demos no-fips
-# are we really learning sth new from win32? So let's save some CO2 for now disabling this
-#          - arch: win32
-#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips
-    runs-on: ${{ matrix.os }}
-    env:
-      CYGWIN_NOWINPATH: 1
-      SHELLOPTS: igncr
-# Don't overwhelm github CI VMs:
-      MAKE_PARAMS: -j 4
-    steps:
-# Checkout before cygwin can mess with PATH...
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d #v6
-      with:
-         packages: perl git make gcc-core
-    - name: Check repo
-      run: cygcheck -V
-    - name: Full cygcheck status
-      run: cygcheck -s -v -r -h
-# Activate this if checkout action fails:
-#    - name: Clone repo
-#      run: bash -c "pwd && git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git"
-    - name: Full build
-      shell: bash
-      run: |
-        gcc --version
-        ./config ${{ matrix.platform.config }}
-        make $MAKE_PARAMS
-# Disable testing for now. TBD: Need local cygwin installation to debug .
-#    - name: Run openssl tests
-#      run: bash -c "cd openssl && make V=1 test"
-
-  mingw64:
-    strategy:
-      matrix:
-        platform:
-          - arch: mingw64
-            target: x86_64
-            #  Avoid MINGW bug in headers. Remove when CI is upgraded.
-            config: enable-demos -Wno-array-bounds
-          - arch: mingw
-            target: i686
-            config: -Wno-array-bounds -Wno-stringop-overflow
-    runs-on: ubuntu-latest
-    env:
-      CC: ${{ matrix.platform.target }}-w64-mingw32-gcc
-      CXX: ${{ matrix.platform.target }}-w64-mingw32-g++
-      AR: ${{ matrix.platform.target }}-w64-mingw32-ar
-      RANLIB: ${{ matrix.platform.target }}-w64-mingw32-ranlib
-      RC: ${{ matrix.platform.target }}-w64-mingw32-windres
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - name: install MINGW64
-      run: sudo apt-get install -y mingw-w64
-    - name: config
-      run: ./config ${{ matrix.platform.arch }}  --strict-warnings --banner=Configured ${{ matrix.platform.config }}
-    - name: make
-      run: make -j4 -s
-
   msys2-mingw64:
     strategy:
       matrix:
@@ -445,10 +373,6 @@ jobs:
             cc: gcc
             pkgs:  mingw-w64-ucrt-x86_64-gcc
             config: mingw64 enable-demos
-          - arch: CLANG64
-            cc: clang
-            pkgs: mingw-w64-clang-x86_64-clang
-            config: mingw64
     runs-on: windows-latest
     env:
       CC: ${{ matrix.platform.cc }}
