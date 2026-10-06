@@ -8,6 +8,7 @@
  */
 
 #include "internal/e_os.h"
+#include "internal/threads_common.h"
 #include "internal/cryptlib.h"
 #include "internal/mem_alloc_utils.h"
 #include "crypto/cryptlib.h"
@@ -219,6 +220,8 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         return NULL;
 
     if (allow_customize) {
+        TSAN_BENIGN(&allow_customize,
+            "allow_customize is intentionally racy");
         /*
          * Disallow customization after the first allocation. We only set this
          * if necessary to avoid a store to the same cache line on every
