@@ -209,6 +209,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
+            ERR_clear_last_mark();
             c->accept_sock = s;
             b->num = s;
             c->state = BIO_ACPT_S_LISTEN;
@@ -298,8 +299,10 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             if (c->bio_chain != NULL) {
                 if ((dbio = BIO_dup_chain(c->bio_chain)) == NULL)
                     goto exit_loop;
-                if (!BIO_push(dbio, bio))
+                if (!BIO_push(dbio, bio)) {
+                    BIO_free_all(dbio);
                     goto exit_loop;
+                }
                 bio = dbio;
             }
             if (BIO_push(b, bio) == NULL)
@@ -328,7 +331,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
 
 exit_loop:
     if (bio != NULL)
-        BIO_free(bio);
+        BIO_free_all(bio);
     else if (s >= 0)
         BIO_closesocket(s);
 end:
