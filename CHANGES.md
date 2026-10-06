@@ -48,13 +48,6 @@ OpenSSL 4.2
 
    *Viktor Dukhovni*
 
- * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
-   protocol from an earlier connection after a resumption negotiated a
-   different protocol (or none), on both the server and the client,
-   which could otherwise affect a later 0-RTT decision.
-
-   *Daniel Kubec and Viktor Dukhovni*
-
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys
