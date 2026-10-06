@@ -93,6 +93,19 @@ static int test_subtree_is_valid(void)
     s.end = UINT64_MAX;
     if (!TEST_true(ossl_mtc_subtree_is_valid(s)))
         return 0;
+    /* Test max sizes */
+    s.start = 1;
+    s.end = (UINT64_C(1) << 63) + 2;
+    if (!TEST_false(ossl_mtc_subtree_is_valid(s)))
+        return 0;
+    s.start = UINT64_C(1) << 63;
+    s.end = UINT64_MAX;
+    if (!TEST_true(ossl_mtc_subtree_is_valid(s)))
+        return 0;
+    s.start = UINT64_C(1) << 62;
+    s.end = (UINT64_C(1) << 62) + (UINT64_C(1) << 63);
+    if (!TEST_false(ossl_mtc_subtree_is_valid(s)))
+        return 0;
     /* Subtrees need not start at zero. */
     s.start = 4;
     s.end = 8;

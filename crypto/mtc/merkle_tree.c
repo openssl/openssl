@@ -57,19 +57,24 @@ static uint64_t pow2_smaller(uint64_t n)
 
 int ossl_mtc_subtree_is_valid(OSSL_MTC_SUBTREE subtree)
 {
-    uint64_t n, k;
+    uint64_t size;
 
     /* A subtree must be a valid interval; it may be empty. */
     if (subtree.start > subtree.end)
         return 0;
 
     /*
-     * A subtree must not have a ragged left edge: if k is the largest power
-     * of two that divides start, the size must be at most k.
+     * The start must be a multiple of the size rounded up to a power of two
+     * (section 4.1).  Sizes of 0 and 1 round up to 1, so every start is a
+     * multiple.
      */
-    n = subtree.end - subtree.start;
-    k = subtree.start & (~subtree.start + 1);
-    return subtree.start == 0 || n <= k;
+    size = subtree.end - subtree.start;
+    if (size <= 1)
+        return 1;
+    /* Rounding a larger size up overflows; only 0 is a multiple of 2^64. */
+    if (size > (UINT64_C(1) << 63))
+        return subtree.start == 0;
+    return subtree.start % (2 * pow2_smaller(size)) == 0;
 }
 
 uint64_t ossl_mtc_subtree_leaf_count(OSSL_MTC_SUBTREE subtree)
