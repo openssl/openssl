@@ -32,6 +32,10 @@ OpenSSL 4.2
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
+  * Added support for deriving several `EVP_SKEY` objects and IVs from a
+    single KDF operation, as TLS requires. New API `EVP_KDF_derive_SKEYs()`,
+    `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` have been added.
+
 OpenSSL 4.1
 -----------
 
