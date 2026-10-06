@@ -681,8 +681,9 @@ end:
  *     subtraction was needed does not leak.  The reduction loop rotates
  *     nothing by value; its carries propagate branchlessly.
  *   - What leaks: only public widths -- the limb count len drives the loop
- *     trip count and the buffer size.  No branch or memory access depends on
- *     the values of a, N, n0, or the intermediate T.
+ *     trip count and the buffer size, and a wider |a| selects
+ *     from_mont_wide().  No branch or memory access depends on the values
+ *     of a, N, n0, or the intermediate T.
  *   - The primitives used (bn_mul_add_words, bn_sub_words) scan all len limbs
  *     regardless of value, and OSSL_FN_copy copies a fixed len limbs.
  */
