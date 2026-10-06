@@ -1,0 +1,233 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Configurations that used to run on every push and pull request but, over
+# May to October 2026, never failed when the other jobs passed. They run once
+# a day instead. See https://github.com/openssl/project/issues/2071
+
+name: Nightly CI
+
+on:
+  schedule:
+    - cron: '45 02 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  non-caching:
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'openssl/openssl'
+    runs-on: ubuntu-latest
+    env:
+      OSSL_RUN_CI_TESTS: 1
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: config
+      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@non-caching"
+        path: artifacts.tar.gz
+
+  full_featured:
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'openssl/openssl'
+    runs-on: ubuntu-latest
+    env:
+      OSSL_RUN_CI_TESTS: 1
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: modprobe tls
+      run: sudo modprobe tls
+    - name: Enable sctp
+      run: sudo modprobe sctp
+    - name: Enable auth in sctp
+      run: sudo sysctl -w net.sctp.auth_enable=1
+    - name: install extra config support
+      run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
+    - name: config
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-ktls enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: .github/workflows/make-test
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@full_featured"
+        path: artifacts.tar.gz
+
+  threads_sanitizer_atomic_fallback:
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'openssl/openssl'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: config
+      run: CC=clang ./config --strict-warnings --banner=Configured no-shared no-fips -g -fsanitize=thread -DBROKEN_CLANG_ATOMICS && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: make test V=1 TESTS="test_lhash test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic* test_dtls_listener_races"
+
+  cygwin:
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'openssl/openssl'
+    # Run a job for each of the specified target architectures:
+    strategy:
+      matrix:
+        os:
+          - windows-2022
+        platform:
+          - arch: win64
+            config: -DCMAKE_C_COMPILER=gcc --strict-warnings enable-demos no-fips
+# are we really learning sth new from win32? So let's save some CO2 for now disabling this
+#          - arch: win32
+#            config: -DCMAKE_C_COMPILER=gcc --strict-warnings no-fips
+    runs-on: ${{ matrix.os }}
+    env:
+      CYGWIN_NOWINPATH: 1
+      SHELLOPTS: igncr
+# Don't overwhelm github CI VMs:
+      MAKE_PARAMS: -j 4
+    steps:
+# Checkout before cygwin can mess with PATH...
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d #v6
+      with:
+         packages: perl git make gcc-core
+    - name: Check repo
+      run: cygcheck -V
+    - name: Full cygcheck status
+      run: cygcheck -s -v -r -h
+# Activate this if checkout action fails:
+#    - name: Clone repo
+#      run: bash -c "pwd && git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git"
+    - name: Full build
+      shell: bash
+      run: |
+        gcc --version
+        ./config ${{ matrix.platform.config }}
+        make $MAKE_PARAMS
+# Disable testing for now. TBD: Need local cygwin installation to debug .
+#    - name: Run openssl tests
+#      run: bash -c "cd openssl && make V=1 test"
+
+  msys2-mingw64:
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'openssl/openssl'
+    strategy:
+      matrix:
+        platform:
+          - arch: CLANG64
+            cc: clang
+            pkgs: mingw-w64-clang-x86_64-clang
+            config: mingw64
+    runs-on: windows-latest
+    env:
+      CC: ${{ matrix.platform.cc }}
+      MSYSTEM: ${{ matrix.platform.arch }}
+      CHERE_INVOKING: 'yes'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: install MSYS2
+        run: |
+          $url = 'https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe'
+          (New-Object System.Net.WebClient).DownloadFile($url, 'msys2.exe')
+          # Remove preinstalled MSYS2
+          if (Test-Path C:\msys64) { Remove-Item -Recurse -Force C:\msys64 }
+          .\msys2.exe -y -oC:\
+          Remove-Item msys2.exe
+
+      - name: update MSYS2
+        run: |
+          C:\msys64\usr\bin\bash.exe -lc ' '
+          # Update core and then normal update
+          C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'
+          C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'
+
+      - name: install dependencies
+        run: C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -S --needed perl git make ${{ matrix.platform.pkgs }}'
+
+      - name: config
+        run: C:\msys64\usr\bin\bash.exe -lc './config --strict-warnings --banner=Configured ${{ matrix.platform.config }}'
+
+      - name: make
+        run: C:\msys64\usr\bin\bash.exe -lc 'make -j4 -s'
+# Tests are broken for now
+#      - name: test
+#        run: C:\msys64\usr\bin\bash.exe -lc 'make test'
+
+  mingw64:
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'openssl/openssl'
+    strategy:
+      matrix:
+        platform:
+          - arch: mingw64
+            target: x86_64
+            #  Avoid MINGW bug in headers. Remove when CI is upgraded.
+            config: enable-demos -Wno-array-bounds
+          - arch: mingw
+            target: i686
+            config: -Wno-array-bounds -Wno-stringop-overflow
+    runs-on: ubuntu-latest
+    env:
+      CC: ${{ matrix.platform.target }}-w64-mingw32-gcc
+      CXX: ${{ matrix.platform.target }}-w64-mingw32-g++
+      AR: ${{ matrix.platform.target }}-w64-mingw32-ar
+      RANLIB: ${{ matrix.platform.target }}-w64-mingw32-ranlib
+      RC: ${{ matrix.platform.target }}-w64-mingw32-windres
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: install MINGW64
+      run: sudo apt-get install -y mingw-w64
+    - name: config
+      run: ./config ${{ matrix.platform.arch }}  --strict-warnings --banner=Configured ${{ matrix.platform.config }}
+    - name: make
+      run: make -j4 -s

@@ -8,7 +8,8 @@
 name: Compiler Zoo CI
 
 on:
-  push:
+  schedule:
+    - cron: '45 02 * * *'
   workflow_dispatch:
     inputs:
       pr:
@@ -51,6 +52,7 @@ jobs:
   gcc:
     needs: [validate-dispatch-inputs]
     if: |
+      (github.event_name != 'schedule' || github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -88,6 +90,7 @@ jobs:
   vs2013:
     needs: [validate-dispatch-inputs]
     if: |
+      (github.event_name != 'schedule' || github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -148,6 +151,7 @@ jobs:
   clang:
     needs: [validate-dispatch-inputs]
     if: |
+      (github.event_name != 'schedule' || github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
