@@ -21,6 +21,7 @@
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
 #include "crypto/security_bits.h"
+#include "internal/constant_time.h"
 
 #ifdef FIPS_MODULE
 #define MIN_STRENGTH 112
@@ -32,8 +33,61 @@ static int generate_key(DH *dh);
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
     const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *p, const OSSL_FN *m);
 static int dh_init(DH *dh);
 static int dh_finish(DH *dh);
+
+#ifndef S390X_MOD_EXP
+/*
+ * ossl_dh_compute_key() for the default method, in constant time: Z stays in
+ * a fixed-width OSSL_FN, as a BIGNUM's top would reveal its length.
+ */
+static int dh_compute_key_fn(unsigned char *key, const BIGNUM *pub_key,
+    const DH *dh)
+{
+    const OSSL_FN *fn_pub = bn_get_ossl_fn(pub_key);
+    const OSSL_FN *fn_priv = bn_get_ossl_fn(dh->priv_key);
+    const OSSL_FN *fn_p = bn_get_ossl_fn(dh->params.p);
+    int plen = BN_num_bytes(dh->params.p);
+    OSSL_FN *z = NULL, *pminus1 = NULL;
+    uint32_t bad;
+    int ret = -1;
+
+    if (fn_pub == NULL || fn_priv == NULL || fn_p == NULL)
+        return -1;
+    if ((z = OSSL_FN_secure_new_limbs(ossl_fn_get_dsize(fn_p))) == NULL
+        || (pminus1 = OSSL_FN_new_limbs(ossl_fn_get_dsize(fn_p))) == NULL
+        || OSSL_FN_copy(pminus1, fn_p) == NULL
+        || !OSSL_FN_sub_word(pminus1, 1))
+        goto err;
+
+    /* (Step 1) Z = pub_key^priv_key mod p */
+    if (!dh_fn_mod_exp(dh, z, fn_pub, fn_priv, fn_p)) {
+        ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /* (Step 2) Error if z <= 1 or z = p - 1; whether it is, is public */
+    bad = (uint32_t)(OSSL_FN_is_zero(z) | OSSL_FN_is_one(z))
+        | (constant_time_is_zero((unsigned int)OSSL_FN_cmp(z, pminus1))
+            & 1);
+    if (constant_time_declassify_u32(bad)) {
+        ERR_raise(ERR_LIB_DH, DH_R_INVALID_SECRET);
+        goto err;
+    }
+
+    /* Return the padded key; z < p, so it always fits */
+    if (!constant_time_declassify_u32(
+            (uint32_t)OSSL_FN_to_bytes_be(z, key, (size_t)plen)))
+        goto err;
+    ret = plen;
+err:
+    OSSL_FN_clear_free(z);
+    OSSL_FN_free(pminus1);
+    return ret;
+}
+#endif
 
 /*
  * See SP800-56Ar3 Section 5.7.1.1
@@ -61,6 +115,17 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         return 0;
     }
 
+    if (dh->priv_key == NULL) {
+        ERR_raise(ERR_LIB_DH, DH_R_NO_PRIVATE_VALUE);
+        goto err;
+    }
+
+    /* The default method computes Z in constant time */
+#ifndef S390X_MOD_EXP
+    if (dh->meth->bn_mod_exp == dh_bn_mod_exp)
+        return dh_compute_key_fn(key, pub_key, dh);
+#endif
+
     ctx = BN_CTX_new_ex(dh->libctx);
     if (ctx == NULL)
         goto err;
@@ -69,11 +134,6 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     z = BN_CTX_get(ctx);
     if (z == NULL)
         goto err;
-
-    if (dh->priv_key == NULL) {
-        ERR_raise(ERR_LIB_DH, DH_R_NO_PRIVATE_VALUE);
-        goto err;
-    }
 
     /*
      * Flag the private key CONSTTIME for bn_mod_exp implementations
@@ -186,36 +246,16 @@ const DH_METHOD *DH_get_default_method(void)
 }
 
 /*
- * The OSSL_FN modular exponentiation backing the default
- * DH_METHOD::bn_mod_exp implementation; see dh_bn_mod_exp().
+ * r = a^p mod m, with r at m's width.  This is the OSSL_FN core of the
+ * default method, shared by dh_ossl_fn_mod_exp() and dh_compute_key_fn().
  */
-static int dh_ossl_fn_mod_exp(const DH *dh, BIGNUM *r,
-    const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m)
+static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *p, const OSSL_FN *m)
 {
     int ret = 0;
     OSSL_FN_CTX *fn_ctx = NULL;
     OSSL_FN_MONT_CTX *fn_mont = NULL;
-    OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL, *fn_p = NULL, *fn_m = NULL;
-    int limbs;
     size_t fn_size;
-
-    fn_a = bn_get_ossl_fn(a);
-    fn_p = bn_get_ossl_fn(p);
-    fn_m = bn_get_ossl_fn(m);
-    if (fn_a == NULL || fn_p == NULL || fn_m == NULL)
-        return 0;
-    limbs = (int)ossl_fn_get_dsize(fn_m);
-
-    /*
-     * Acquire the writable result before OSSL_FN_CTX sizing.  The modexp
-     * result is reduced mod m, so it has at most dsize(m) significant
-     * limbs and always fits in the acquired width; that width is
-     * therefore the bn_release() width as well.
-     */
-    if ((fn_r = bn_acquire_ossl_fn(r, limbs)) == NULL)
-        return 0;
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         /*
@@ -227,27 +267,56 @@ static int dh_ossl_fn_mod_exp(const DH *dh, BIGNUM *r,
          */
         OSSL_FN_MONT_CTX **pmont = (OSSL_FN_MONT_CTX **)&dh->method_mont_fn_p;
 
-        fn_mont = OSSL_FN_MONT_CTX_set_locked(pmont, dh->lock, fn_m);
+        fn_mont = OSSL_FN_MONT_CTX_set_locked(pmont, dh->lock, m);
         if (fn_mont == NULL)
-            goto err;
+            return 0;
     }
 
-    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, fn_a, fn_p, fn_m, fn_mont);
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size(r, a, p, m, fn_mont);
     if (fn_size == 0)
-        goto err;
+        return 0;
 
     fn_ctx = OSSL_FN_CTX_secure_new_size(dh->libctx, fn_size);
     if (fn_ctx == NULL)
-        goto err;
+        return 0;
     /*
      * No OSSL_FN_CTX_start() here: OSSL_FN_mod_exp_mont_ctx_size()
      * budgets the callee's frames, not a caller frame.
      */
-    ret = OSSL_FN_mod_exp_mont(fn_r, fn_a, fn_p, fn_m, fn_ctx, fn_mont);
-
-err:
-    bn_release(r, limbs);
+    ret = OSSL_FN_mod_exp_mont(r, a, p, m, fn_ctx, fn_mont);
     OSSL_FN_CTX_free(fn_ctx);
+    return ret;
+}
+
+/*
+ * The OSSL_FN modular exponentiation backing the default
+ * DH_METHOD::bn_mod_exp implementation; see dh_bn_mod_exp().
+ */
+static int dh_ossl_fn_mod_exp(const DH *dh, BIGNUM *r,
+    const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m)
+{
+    int ret;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_p = NULL, *fn_m = NULL;
+    int limbs;
+
+    fn_a = bn_get_ossl_fn(a);
+    fn_p = bn_get_ossl_fn(p);
+    fn_m = bn_get_ossl_fn(m);
+    if (fn_a == NULL || fn_p == NULL || fn_m == NULL)
+        return 0;
+    limbs = (int)ossl_fn_get_dsize(fn_m);
+
+    /*
+     * The modexp result is reduced mod m, so it has at most dsize(m)
+     * significant limbs and always fits in the acquired width; that width
+     * is therefore the bn_release() width as well.
+     */
+    if ((fn_r = bn_acquire_ossl_fn(r, limbs)) == NULL)
+        return 0;
+    ret = dh_fn_mod_exp(dh, fn_r, fn_a, fn_p, fn_m);
+    bn_release(r, limbs);
     return ret;
 }
 
