@@ -68,6 +68,16 @@ This release adds the following new features:
 
   * Initial support for the Elbrus2000 (`e2k`) architecture.
 
+Known issues in 4.1.0
+
+  * <https://github.com/openssl/openssl/issues/32878>
+    When a DTLS 1.3 KeyUpdate is received, all other outstanding
+    post-handshake records are dropped from the retransmission buffer.
+    This means post-handshake records still awaiting an ACK (such as a
+    NewSessionTicket) will no longer be retransmitted if the original
+    transmission is lost. A fix is in progress and planned for a future
+    release.
+
 OpenSSL 4.0
 -----------
 
