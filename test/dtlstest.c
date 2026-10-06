@@ -2469,6 +2469,218 @@ end:
     SSL_CTX_free(sctx);
     return testresult;
 }
+
+/*
+ * Take the datagrams the client has sent so far out of the server's read BIO,
+ * note the record sequence numbers of the epoch 0 (plaintext) records in them
+ * and, unless they are to be lost, put them back.
+ */
+static int snoop_epoch0_seqs(BIO *s_rbio, int lose, uint64_t *seqs, int *nseqs,
+    int maxseqs)
+{
+    unsigned char dgrams[8][2048];
+    int lens[8], ndgrams = 0, i;
+
+    while (BIO_ctrl_pending(s_rbio) > 0) {
+        if (!TEST_int_lt(ndgrams, 8)
+            || !TEST_int_gt(lens[ndgrams] = BIO_read(s_rbio, dgrams[ndgrams],
+                                sizeof(dgrams[0])),
+                0))
+            return 0;
+        ndgrams++;
+    }
+
+    for (i = 0; i < ndgrams; i++) {
+        PACKET dgram, fragment;
+
+        if (!TEST_true(PACKET_buf_init(&dgram, dgrams[i], lens[i])))
+            return 0;
+
+        while (PACKET_remaining(&dgram) >= DTLS1_RT_HEADER_LENGTH) {
+            unsigned int rectype, epoch;
+            uint64_t seq;
+
+            /* Epoch 0 records have the DTLS 1.2 style header */
+            if (!TEST_true(PACKET_get_1(&dgram, &rectype))
+                || !TEST_true(PACKET_forward(&dgram, 2))
+                || !TEST_true(PACKET_get_net_2(&dgram, &epoch))
+                || !TEST_true(PACKET_get_net_6(&dgram, &seq)))
+                return 0;
+            if (rectype != SSL3_RT_HANDSHAKE || epoch != 0)
+                break;
+            if (!TEST_true(PACKET_get_length_prefixed_2(&dgram, &fragment))
+                || !TEST_int_lt(*nseqs, maxseqs))
+                return 0;
+            seqs[(*nseqs)++] = seq;
+        }
+        if (!lose
+            && !TEST_int_eq(BIO_write(s_rbio, dgrams[i], lens[i]), lens[i]))
+            return 0;
+    }
+    return 1;
+}
+
+/*
+ * Check that a DTLS 1.3 client that sends early data still retransmits its
+ * ClientHello if the first flight is lost, and that early data sent after the
+ * retransmission is delivered. With idx 1 the server answers with a
+ * HelloRetryRequest, so the second ClientHello must not reuse a record sequence
+ * number of the retransmitted first one.
+ */
+static int test_dtls13_early_data_retransmit(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    SSL_SESSION *sess = NULL;
+    BIO *s_rbio;
+    struct timeval tv;
+    unsigned char buf[2048], rbuf[64];
+    static const char msg1[] = "early data 1";
+    static const char msg2[] = "early data 2";
+    static const char app_c[] = "from client";
+    static const char app_s[] = "from server";
+    size_t written, readbytes = 0, len;
+    uint64_t seqs[16];
+    int nseqs = 0, i, ret, cdone, sdone, testresult = 0;
+    int hrr = idx == 1;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_max_early_data(sctx,
+            SSL3_RT_MAX_PLAIN_LENGTH)))
+        goto end;
+
+    /* Do a full handshake to get a session that allows early data */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE))
+        || !TEST_ptr(sess = SSL_get1_session(cssl))
+        || !TEST_uint_eq(SSL_SESSION_get_max_early_data(sess),
+            SSL3_RT_MAX_PLAIN_LENGTH))
+        goto end;
+    shutdown_ssl_connection(sssl, cssl);
+    sssl = cssl = NULL;
+
+    /* Make the server reject the client's key share to force an HRR */
+#ifdef OPENSSL_NO_EC
+    if (hrr && !TEST_true(SSL_CTX_set1_groups_list(sctx, "ffdhe3072")))
+#else
+    if (hrr && !TEST_true(SSL_CTX_set1_groups_list(sctx, "P-384")))
+#endif
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(SSL_set_session(cssl, sess)))
+        goto end;
+
+    DTLS_set_timer_cb(cssl, timer_cb);
+
+    /* Sends the ClientHello followed by the early data */
+    if (!TEST_true(SSL_write_early_data(cssl, msg1, sizeof(msg1), &written))
+        || !TEST_size_t_eq(written, sizeof(msg1)))
+        goto end;
+
+    /* Lose everything the client has sent so far */
+    s_rbio = SSL_get_rbio(sssl);
+    if (!TEST_int_gt((int)BIO_ctrl_pending(s_rbio), 0)
+        || !snoop_epoch0_seqs(s_rbio, 1, seqs, &nseqs, OSSL_NELEM(seqs)))
+        goto end;
+
+    /* The ClientHello retransmission timer must be running */
+    if (!TEST_int_gt((int)DTLSv1_get_timeout(cssl, &tv), 0))
+        goto end;
+    OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+    if (!TEST_int_gt((int)DTLSv1_handle_timeout(cssl), 0)
+        || !TEST_size_t_gt(BIO_ctrl_pending(s_rbio), 0))
+        goto end;
+
+    /* The first early data was lost, so send a fresh payload */
+    if (!TEST_true(SSL_write_early_data(cssl, msg2, sizeof(msg2), &written))
+        || !TEST_size_t_eq(written, sizeof(msg2)))
+        goto end;
+
+    /*
+     * Let the server read the early data while the client carries on with the
+     * handshake. After an HRR the server skips the early data.
+     */
+    for (i = 0; i < 100; i++) {
+        ret = SSL_connect(cssl);
+        if (ret <= 0
+            && !TEST_int_eq(SSL_get_error(cssl, ret), SSL_ERROR_WANT_READ))
+            goto end;
+        if (!snoop_epoch0_seqs(s_rbio, 0, seqs, &nseqs, OSSL_NELEM(seqs)))
+            goto end;
+        ret = SSL_read_early_data(sssl, rbuf, sizeof(rbuf), &len);
+        if (ret == SSL_READ_EARLY_DATA_SUCCESS) {
+            if (!TEST_false(hrr)
+                || !TEST_size_t_lt(readbytes + len, sizeof(rbuf)))
+                goto end;
+            readbytes += len;
+            break;
+        }
+        if (ret == SSL_READ_EARLY_DATA_FINISH)
+            break;
+        if (!TEST_int_eq(SSL_get_error(sssl, 0), SSL_ERROR_WANT_READ))
+            goto end;
+    }
+    if (!TEST_int_lt(i, 100))
+        goto end;
+
+    if (hrr) {
+        if (!TEST_size_t_eq(readbytes, 0))
+            goto end;
+    } else if (!TEST_size_t_eq(readbytes, sizeof(msg2))
+        || !TEST_mem_eq(rbuf, readbytes, msg2, sizeof(msg2))) {
+        goto end;
+    }
+
+    /* The handshake should complete using the retransmitted ClientHello */
+    for (i = 0, cdone = sdone = 0; i < 100 && !(cdone && sdone); i++) {
+        if (!cdone)
+            cdone = SSL_connect(cssl) > 0;
+        if (!snoop_epoch0_seqs(s_rbio, 0, seqs, &nseqs, OSSL_NELEM(seqs)))
+            goto end;
+        if (!sdone)
+            sdone = SSL_accept(sssl) > 0;
+    }
+    if (!TEST_true(cdone && sdone)
+        || !TEST_int_eq(SSL_get_early_data_status(cssl),
+            hrr ? SSL_EARLY_DATA_REJECTED : SSL_EARLY_DATA_ACCEPTED))
+        goto end;
+    if (!hrr
+        && (!TEST_true(SSL_session_reused(cssl))
+            || !TEST_true(SSL_session_reused(sssl))))
+        goto end;
+
+    /*
+     * Every epoch 0 record the client sent, including those of the lost first
+     * flight and of the retransmission, must have used the next unused record
+     * sequence number.
+     */
+    if (!TEST_int_gt(nseqs, 0))
+        goto end;
+    for (i = 0; i < nseqs; i++)
+        if (!TEST_uint64_t_eq(seqs[i], (uint64_t)i))
+            goto end;
+
+    /* Exchange application data in both directions */
+    if (!TEST_true(SSL_write_ex(cssl, app_c, sizeof(app_c), &written))
+        || !TEST_true(SSL_read_ex(sssl, buf, sizeof(buf), &len))
+        || !TEST_mem_eq(buf, len, app_c, sizeof(app_c))
+        || !TEST_true(SSL_write_ex(sssl, app_s, sizeof(app_s), &written))
+        || !TEST_true(SSL_read_ex(cssl, buf, sizeof(buf), &len))
+        || !TEST_mem_eq(buf, len, app_s, sizeof(app_s)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -2518,6 +2730,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_epoch0_plaintext_alert);
     ADD_TEST(test_dtls13_ccm8_not_offered);
     ADD_TEST(test_dtls13_ack_read_timeout);
+    ADD_ALL_TESTS(test_dtls13_early_data_retransmit, 2);
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_client_retransmit);
