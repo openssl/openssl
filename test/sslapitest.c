@@ -995,7 +995,7 @@ static int test_empty_client_certificate(int idx)
     SSL *serverssl = NULL, *clientssl = NULL;
     int version = empty_client_cert_tests[idx].version;
     int request_cert = empty_client_cert_tests[idx].request_cert;
-    long expected = request_cert ? X509_V_ERR_UNSPECIFIED : X509_V_OK;
+    long expected = X509_V_OK;
     int calls = 0, testresult = 0;
 
 #ifdef OPENSSL_NO_TLS1_2

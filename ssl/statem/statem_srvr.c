@@ -4087,7 +4087,7 @@ static void tls_clear_pending_client_identity(SSL_CONNECTION *sc)
  * accepting an empty initial Certificate response. Empty PHA responses retain
  * the previous state. Do not clear results produced by the new verification.
  */
-static void tls_clear_client_verification_state(SSL_CONNECTION *sc)
+static void tls_clear_client_verification_state(SSL_CONNECTION *sc, long verify_result)
 {
     OSSL_STACK_OF_X509_free(sc->verified_chain);
     sc->verified_chain = NULL;
@@ -4097,7 +4097,7 @@ static void tls_clear_client_verification_state(SSL_CONNECTION *sc)
     X509_free(sc->dane.mcert);
     sc->dane.mcert = NULL;
     sc->dane.mtlsa = NULL;
-    sc->verify_result = X509_V_ERR_UNSPECIFIED;
+    sc->verify_result = verify_result;
 }
 
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
@@ -4113,7 +4113,7 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     tls_clear_pending_client_identity(sc);
     sc->s3.tmp.pending_peer_rpk = peer_rpk;
     if (peer_rpk != NULL)
-        tls_clear_client_verification_state(sc);
+        tls_clear_client_verification_state(sc, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 }
@@ -4173,7 +4173,7 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
 
     if (peer_rpk != NULL || sc->post_handshake_auth != SSL_PHA_REQUESTED) {
         if (peer_rpk == NULL)
-            tls_clear_client_verification_state(sc);
+            tls_clear_client_verification_state(sc, X509_V_OK);
         ossl_session_set0_peer(sc->session, NULL, peer_rpk, sc->verify_result);
         sc->s3.tmp.pending_peer_rpk = NULL;
     }
@@ -4312,7 +4312,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     tls_clear_pending_client_identity(s);
     s->s3.tmp.pending_peer_chain = sk;
     if (sk_X509_num(sk) > 0)
-        tls_clear_client_verification_state(s);
+        tls_clear_client_verification_state(s, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 
@@ -4407,7 +4407,7 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
         tls_clear_pending_client_identity(s);
         sk = NULL;
         if (s->post_handshake_auth != SSL_PHA_REQUESTED)
-            tls_clear_client_verification_state(s);
+            tls_clear_client_verification_state(s, X509_V_OK);
     }
     if (has_cert || s->post_handshake_auth != SSL_PHA_REQUESTED) {
         ossl_session_set0_peer(s->session, sk, NULL, s->verify_result);

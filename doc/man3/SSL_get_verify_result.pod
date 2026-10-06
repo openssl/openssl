@@ -34,9 +34,10 @@ The verification result is part of the established session and is restored
 when a session is reused.
 
 When a server accepts an empty client Certificate message during the initial
-handshake, the result is X509_V_ERR_UNSPECIFIED. This applies to both X.509
-certificates and raw public keys. The handshake can still complete if client
-authentication is optional.
+handshake, the result is X509_V_OK. This applies to both X.509 certificates
+and raw public keys. No credential verification was performed, and this result
+does not establish that the peer was authenticated. The handshake can still
+complete if client authentication is optional.
 
 An empty response to an optional post-handshake authentication request leaves
 the previous peer identity and verification result unchanged. No certificate
@@ -64,11 +65,6 @@ The following return values can currently occur:
 No verification error was recorded. A peer certificate or raw public key might
 not have been presented; see L</BUGS>.
 
-=item X509_V_ERR_UNSPECIFIED
-
-An unspecified verification error occurred, or the server accepted an empty
-client Certificate message during the initial handshake.
-
 =item Any other value
 
 Documented in L<openssl-verify(1)>.
@@ -81,12 +77,6 @@ L<ssl(7)>, L<SSL_set_verify_result(3)>,
 L<SSL_get_peer_certificate(3)>,
 L<SSL_get0_peer_rpk(3)>,
 L<openssl-verify(1)>
-
-=head1 HISTORY
-
-Reporting X509_V_ERR_UNSPECIFIED for accepted empty client Certificate
-responses during the initial handshake was introduced in OpenSSL 4.1.
-Previously, accepting such a response returned X509_V_OK.
 
 =head1 COPYRIGHT
 
