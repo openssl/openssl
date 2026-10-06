@@ -85,6 +85,7 @@ jobs:
         run: |
           mkdir -p /build/SPECS && cd /build && echo -e "%_topdir /build\n%_lto_cflags %{nil}" >~/.rpmmacros && rpmdev-setuptree
           cd /build && cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.spec SPECS/ && \
+          sed -i '/PRE_RELEASE_TAG/s/-/~/g' ${GITHUB_WORKSPACE}/VERSION.dat && \
           cd SPECS/ && source ${GITHUB_WORKSPACE}/VERSION.dat && \
           sed -i "s/SOVERSION/$SHLIB_VERSION/" openssl.spec && \
           sed -i "s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec
