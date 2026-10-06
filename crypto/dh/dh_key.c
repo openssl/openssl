@@ -38,6 +38,7 @@ static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
 static int dh_init(DH *dh);
 static int dh_finish(DH *dh);
 
+#ifndef S390X_MOD_EXP
 /*
  * ossl_dh_compute_key() for the default method, in constant time: Z stays in
  * a fixed-width OSSL_FN, as a BIGNUM's top would reveal its length.
@@ -86,6 +87,7 @@ err:
     OSSL_FN_free(pminus1);
     return ret;
 }
+#endif
 
 /*
  * See SP800-56Ar3 Section 5.7.1.1
