@@ -43,6 +43,21 @@ OpenSSL 4.2
 
    *Iva Marinova*
 
+ * Added support for deriving several symmetric keys and IVs from a single
+   KDF operation. `EVP_KDF_derive_SKEYs()` performs the derivation and
+   `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` collect the
+   individual results by purpose, for example "client_cipher_key" or
+   "server_iv". TLS1-PRF and TLS13-KDF implement it, so a TLS 1.2 key block
+   can be produced in one call. The caller names the cipher and MAC the keys
+   are for and the provider chooses the key type accordingly, which lets a
+   provider holding its keys on a token derive them all in a single
+   operation without ever exposing the raw bytes. Providers implement this
+   through the new `OSSL_FUNC_kdf_derive_multi()` and its companion
+   functions.
+   <!-- https://github.com/openssl/openssl/pull/33082 -->
+
+   *Dmitry Belyavskiy*
+
  * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
    X509_OBJECT_up_ref_count() does not reference count the X509_OBJECT itself.
    With X509_OBJECT being opaque there is nothing useful an application can do
