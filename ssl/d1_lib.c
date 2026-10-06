@@ -207,12 +207,23 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
                 || (SSL_CONNECTION_IS_DTLS13(s)
                     && (msg_type == SSL3_MT_FINISHED
                         || msg_type == SSL3_MT_SERVER_HELLO
-                        || msg_type == SSL3_MT_KEY_UPDATE)))
+                        || msg_type == SSL3_MT_KEY_UPDATE))
+                /*
+                 * A ClientHello followed by early data. SSL3_MT_CLIENT_HELLO
+                 * has the same value as SSL3_MT_CCS, which is recorded as the
+                 * message type of a CCS, so the record type has to be checked
+                 * as well to tell the two apart. The other message types
+                 * above do not clash with anything.
+                 */
+                || (record_type == SSL3_RT_HANDSHAKE
+                    && msg_type == SSL3_MT_CLIENT_HELLO))
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
             /*
-             * If we're freeing the CCS then we're done with the old wrl and it
-             * can bee freed
+             * This message was the last one sent with its write record layer
+             * before the keys changed, and the record layer was kept only so
+             * that the message could be retransmitted. Now that the message
+             * is being dropped, the record layer can be freed too.
              */
             sent_msg->saved_retransmit_state.wrlmethod->free(sent_msg->saved_retransmit_state.wrl);
         }
@@ -249,6 +260,24 @@ void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s)
             sent_msg->saved_retransmit_state.wrlmethod = NULL;
         }
     }
+}
+
+/*
+ * Returns 1 if a message in the sent_messages queue was sent with the current
+ * write record layer, which then has to be kept for retransmissions.
+ */
+int dtls1_sent_buffer_uses_current_wrl(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+
+        if (sent_msg->saved_retransmit_state.wrl == s->rlayer.wrl)
+            return 1;
+    }
+    return 0;
 }
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
