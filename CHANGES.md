@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * `EVP_PKEY_derive_set_peer_ex()` now exports the peer key to the provider
+   that performs the key exchange with `OSSL_KEYMGMT_SELECT_PUBLIC_KEY` and
+   `OSSL_KEYMGMT_SELECT_ALL_PARAMETERS` instead of `OSSL_KEYMGMT_SELECT_ALL`.
+   A peer key is only used for its public part and parameters, so providers
+   are no longer asked to import a private key that the peer does not have.
+
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys

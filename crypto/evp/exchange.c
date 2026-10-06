@@ -434,8 +434,11 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
     }
     /* A Coverity issue with up_ref/down_ref and free */
     /* coverity[pass_freed_arg] */
-    provkey = evp_pkey_export_to_provider(peer, ctx->libctx,
-        &tmp_keymgmt, ctx->propquery);
+    /* A peer key is only used for its public part and parameters */
+    provkey = evp_pkey_export_to_provider_ex(peer, ctx->libctx,
+        &tmp_keymgmt, ctx->propquery,
+        OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+            | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
     EVP_KEYMGMT_free(tmp_keymgmt_tofree);
 
     if (provkey == NULL) {

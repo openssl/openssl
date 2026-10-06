@@ -782,12 +782,52 @@ end:
     return ret;
 }
 
+/*
+ * A peer key of a key exchange is only used for its public part and its
+ * parameters, so only those must be requested when it is exported to the
+ * provider that does the key exchange.
+ */
+static int test_pkey_derive_peer_selection(void)
+{
+    OSSL_PROVIDER *deflt = NULL, *fake_rsa = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *own = NULL, *peer = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(fake_rsa = fake_rsa_start(libctx))
+        || !TEST_ptr(deflt = OSSL_PROVIDER_load(libctx, "default")))
+        goto end;
+
+    /* The key of the key exchange belongs to the fake provider, the peer to default */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", "provider=fake-rsa"))
+        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &own, EVP_PKEY_KEYPAIR, NULL))
+        || !TEST_ptr(peer = EVP_PKEY_Q_keygen(libctx, "provider=default", "RSA", (size_t)2048)))
+        goto end;
+    EVP_PKEY_CTX_free(ctx);
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, own, "provider=fake-rsa"))
+        || !TEST_int_gt(EVP_PKEY_derive_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_derive_set_peer_ex(ctx, peer, 0), 0))
+        goto end;
+
+    ret = TEST_int_eq(fake_rsa_import_selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY, 0);
+end:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(own);
+    EVP_PKEY_free(peer);
+    OSSL_PROVIDER_unload(deflt);
+    fake_rsa_finish(fake_rsa);
+    return ret;
+}
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL)
         return 0;
 
+    ADD_TEST(test_pkey_derive_peer_selection);
     ADD_TEST(test_pkey_sig);
     ADD_TEST(test_alternative_keygen_init);
     ADD_TEST(test_pkey_eq);

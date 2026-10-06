@@ -503,6 +503,9 @@ void evp_cleanup_int(void);
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
     EVP_KEYMGMT **keymgmt,
     const char *propquery);
+void *evp_pkey_export_to_provider_ex(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
+    EVP_KEYMGMT **keymgmt,
+    const char *propquery, int selection);
 #ifndef FIPS_MODULE
 int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
 void *evp_pkey_get_legacy(EVP_PKEY *pk);

@@ -15,6 +15,9 @@
 OSSL_PROVIDER *fake_rsa_start(OSSL_LIB_CTX *libctx);
 void fake_rsa_finish(OSSL_PROVIDER *p);
 
+/* The selection of the last key import done by the fake key management */
+extern int fake_rsa_import_selection;
+
 OSSL_PARAM *fake_rsa_key_params(int priv);
 void fake_rsa_restore_store_state(void);
 
