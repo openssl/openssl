@@ -167,6 +167,7 @@ jobs:
           no-x942kdf,
           no-x963kdf,
           enable-zlib-dynamic,
+          enable-pcap,
           -DOPENSSL_PEDANTIC_ZEROIZATION,
           -DOPENSSL_PEDANTIC_ZEROIZATION enable-fips,
           -DOPENSSL_NO_BUILTIN_OVERFLOW_CHECKING,

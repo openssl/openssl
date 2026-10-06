@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
+   datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
+   in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
+   must be configured with `enable-pcap` option.
+   <!-- https://github.com/openssl/openssl/pull/32266 -->
+
+   *Alexandr Nedvedicky*
+
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys
