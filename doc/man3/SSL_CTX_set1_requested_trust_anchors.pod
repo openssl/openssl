@@ -27,9 +27,9 @@ of them: a client requests in the ClientHello, and a server asking for a client
 certificate requests in the CertificateRequest (see
 L<https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids/>).
 
-I<ids> is the list in wire format: a series of nonempty, 8-bit
-length-prefixed trust anchor IDs, each an identifier in binary form. I<ids_len>
-is its length in bytes. The bytes are copied. Passing an empty list (I<ids_len>
+I<ids> is the list in wire format: a series of 8-bit length-prefixed trust
+anchor IDs, each an identifier in binary form of 1 to 32 bytes. I<ids_len> is
+its length in bytes. The bytes are copied. Passing an empty list (I<ids_len>
 zero) is permitted: the extension is still sent, with no identifiers, which
 signals support for the retry mechanism without naming any trust anchor.
 

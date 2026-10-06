@@ -127,7 +127,8 @@ int ossl_ssl_credential_set1_certificate_properties(SSL_CREDENTIAL *cred,
 
         switch (type) {
         case 0: /* trust_anchor_id */
-            if (PACKET_remaining(&data) == 0)
+            if (PACKET_remaining(&data) == 0
+                || PACKET_remaining(&data) > TLSEXT_TRUST_ANCHOR_ID_MAX_LEN)
                 goto malformed;
             if (!ossl_ssl_credential_set1_trust_anchor_id(cred,
                     PACKET_data(&data), PACKET_remaining(&data)))

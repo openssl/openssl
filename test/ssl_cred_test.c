@@ -198,6 +198,18 @@ static const struct {
         14, 0 },
     /* trust_anchors with 0 bytes of data. */
     { (const uint8_t *)"\x00\x04\x00\x00\x00\x00", 6, 0 },
+    /* trust_anchors of 32 bytes, the longest. */
+    { (const uint8_t *)"\x00\x24\x00\x00\x00\x20"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01",
+        38, 1 },
+    /* trust_anchors one byte longer than that. */
+    { (const uint8_t *)"\x00\x25\x00\x00\x00\x21"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01\x01",
+        39, 0 },
     /* trust_anchors with extra data. */
     { (const uint8_t *)"\x00\x08\x00\x00\x00\x03\xba\xdb\x0b\xbb", 10, 0 },
     /* trust_anchors with missing data. */
