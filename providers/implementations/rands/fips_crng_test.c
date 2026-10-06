@@ -126,7 +126,7 @@ static int RCT_test(CRNG_TEST *crngt, uint8_t next)
             return 1;
         ERR_raise_data(ERR_LIB_PROV,
             PROV_R_ENTROPY_SOURCE_FAILED_RCT_CONTINUOUS_TEST,
-            "byte %02x repreats %u times", crngt->rct.a, crngt->rct.b);
+            "byte repreats %u times", crngt->rct.b);
         return 0;
     }
     crngt->rct.a = next;
@@ -155,8 +155,8 @@ static int APT_test(CRNG_TEST *crngt, uint8_t next)
             && ossl_unlikely(++crngt->apt.b >= apt_c[ENTROPY_H])) {
             ERR_raise_data(ERR_LIB_PROV,
                 PROV_R_ENTROPY_SOURCE_FAILED_APT_CONTINUOUS_TEST,
-                "bytes %02x appears %u times by position %u",
-                crngt->apt.a, crngt->apt.b, crngt->apt.i);
+                "byte appears %u times by position %u",
+                crngt->apt.b, crngt->apt.i);
             crngt->apt.b = 0;
             return 0;
         }
