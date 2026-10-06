@@ -20,6 +20,7 @@
 
 #include "internal/common.h"
 
+#include <stdarg.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
@@ -195,6 +196,41 @@ int ossl_strtoint(const char *str, char **endptr, int base, int *result);
  *  and returns the number of bytes written
  */
 size_t ossl_to_hex(char *buf, uint8_t n);
+
+/**
+ * @brief Portable asprintf() backed by OPENSSL_malloc().
+ *
+ * On failure nothing remains allocated and *str is set to NULL.
+ *
+ * @param str    receives the allocated buffer, to be freed with OPENSSL_free()
+ * @param format printf-style format string
+ * @returns bytes written on success, or -1 on error
+ */
+int ossl_asprintf(char **str, const char *format, ...)
+#if defined(__has_attribute)
+#if __has_attribute(format)
+    __attribute__((__format__(__printf__, 2, 3)))
+#endif
+#endif
+    ;
+
+/**
+ * @brief va_list form of ossl_asprintf().
+ *
+ * On failure nothing remains allocated and *str is set to NULL.
+ *
+ * @param str    receives the allocated buffer, to be freed with OPENSSL_free()
+ * @param format printf-style format string
+ * @param args   variadic arguments; consumed by the call
+ * @returns bytes written on success, or -1 on error
+ */
+int ossl_vasprintf(char **str, const char *format, va_list args)
+#if defined(__has_attribute)
+#if __has_attribute(format)
+    __attribute__((__format__(__printf__, 2, 0)))
+#endif
+#endif
+    ;
 
 STACK_OF(SSL_COMP) *ossl_load_builtin_compressions(void);
 void ossl_free_compression_methods_int(STACK_OF(SSL_COMP) *methods);

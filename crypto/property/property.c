@@ -49,6 +49,7 @@ typedef struct {
 } METHOD;
 
 typedef struct {
+    int archived;
     const OSSL_PROVIDER *provider;
     OSSL_PROPERTY_LIST *properties;
     METHOD method;
@@ -416,6 +417,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
         return 0;
+    impl->archived = 0;
     impl->method.method = method;
     impl->method.up_ref = method_up_ref;
     impl->method.free = method_destruct;
@@ -481,6 +483,9 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     /* Push onto stack if there isn't one there already */
     for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
         const IMPLEMENTATION *tmpimpl = sk_IMPLEMENTATION_value(alg->impls, i);
+
+        if (tmpimpl->archived == 1)
+            continue;
 
         if (tmpimpl->provider == impl->provider
             && tmpimpl->properties == impl->properties)
@@ -602,10 +607,8 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
             }
             OSSL_TRACE_END(QUERY);
 #endif
-
-            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
+            impl->archived = 1;
             count++;
-            impl_free(impl);
         }
     }
 
@@ -648,12 +651,25 @@ static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
 static void alg_copy(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
     STACK_OF(ALGORITHM) *newalg = arg;
+    int i;
+    IMPLEMENTATION *impl;
 
     alg = OPENSSL_memdup(alg, sizeof(ALGORITHM));
     if (alg == NULL)
         return;
 
     alg->impls = sk_IMPLEMENTATION_dup(alg->impls);
+
+    /*
+     * Remove any archived items while we're under lock
+     * note we don't have to free the implementation here
+     * as its still tracked in the alg struct we're cloning from
+     */
+    for (i = sk_IMPLEMENTATION_num(alg->impls); i-- > 0;) {
+        impl = sk_IMPLEMENTATION_value(alg->impls, i);
+        if (impl->archived == 1)
+            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
+    }
 
     (void)sk_ALGORITHM_push(newalg, alg);
 }
@@ -799,6 +815,8 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     if (pq == NULL) {
         for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
             impl = sk_IMPLEMENTATION_value(alg->impls, j);
+            if (impl->archived == 1)
+                continue;
             if (impl != NULL
                 && (prov == NULL || impl->provider == prov)) {
                 best_impl = impl;
@@ -818,6 +836,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
         impl = sk_IMPLEMENTATION_value(alg->impls, j);
         if (impl != NULL
+            && impl->archived == 0
             && (prov == NULL || impl->provider == prov)) {
             score = ossl_property_match_count(pq, impl->properties);
             if (score > best) {
@@ -1243,10 +1262,8 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
          *
          * Only insert it if no NULL-provider entry exists yet for this nid and
          * property query.  The first provider to cache this nid owns that
-         * entry, which matches the provider ossl_method_store_fetch would pick
-         * by implementation order.  Without this check, a later cache_set from
-         * a different provider would overwrite it and change which provider an
-         * "any provider" lookup resolves to.
+         * entry, which is the provider ossl_method_store_fetch picks by
+         * implementation order.
          */
         if (ossl_method_store_atomic_find_in_list(sa, nid, NULL, prop_query) == NULL) {
             p = QUERY_new(strlen(prop_query));

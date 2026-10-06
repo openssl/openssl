@@ -149,9 +149,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                  * truncated.  Only a clean EOF at a top-level object boundary
                  * (i == 0, diff == 0, eos == 0) is the normal end of input:
                  * fail without queuing an error so that callers looping over
-                 * concatenated DER values (e.g. the libcrypto d2i_*_bio()
-                 * consumers in CPython's ssl module) terminate cleanly instead
-                 * of seeing a spurious ASN1_R_NOT_ENOUGH_DATA.
+                 * concatenated DER values terminate cleanly.
                  */
                 if (i < 0 || diff != 0 || eos != 0)
                     ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);

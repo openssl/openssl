@@ -4295,9 +4295,8 @@ static int test_RSA_verify_recover_empty_payload(void)
         goto done;
 
     /*
-     * The actual recovery call is essential: a NULL output buffer would only
-     * run the size-query path, which never decodes the signature and so would
-     * not reproduce the regression.
+     * A NULL output buffer runs only the size-query path, which never decodes
+     * the signature.
      */
     recovered_len = (size_t)recovered_cap;
     if (!TEST_int_gt(EVP_PKEY_verify_recover(verify_ctx, recovered,

@@ -58,7 +58,7 @@ Show the output as a hex string.
 
 =item B<-n>
 
-Do not output the trailing newline.
+Do not output the trailing newline when the output is a hex string.
 
 {- $OpenSSL::safe::opt_r_item -}
 

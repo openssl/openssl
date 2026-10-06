@@ -21,7 +21,7 @@ Table of Contents
    - [Compiler Warnings](#compiler-warnings)
    - [Compression Algorithm Flags](#compression-algorithm-flags)
    - [Seeding the Random Generator](#seeding-the-random-generator)
-   - [Setting the FIPS HMAC key](#setting-the-FIPS-HMAC-key)
+   - [Setting the FIPS HMAC key](#setting-the-fips-hmac-key)
    - [Enable and Disable Features](#enable-and-disable-features)
    - [Displaying configuration data](#displaying-configuration-data)
  - [Installation Steps in Detail](#installation-steps-in-detail)

@@ -1144,11 +1144,9 @@ int ossl_ackm_on_tx_ack_only_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
         return 0;
 
     /*
-     * A packet containing only an ACK frame must not be treated as
-     * in-flight or ack-eliciting; if it were, ossl_ackm_on_tx_packet()
-     * below would (correctly) perform bytes-in-flight/timer/CC bookkeeping
-     * for a packet we are about to discard from history, which would be
-     * incorrect.
+     * A packet containing only an ACK frame is not kept in history, so it
+     * must not be in-flight or ack-eliciting: ossl_ackm_on_tx_packet() below
+     * performs bytes-in-flight, timer and CC bookkeeping for such packets.
      */
     if (pkt->is_inflight || pkt->is_ack_eliciting)
         return 0;

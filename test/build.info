@@ -81,7 +81,8 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test
+          engine_stubs_test base64_simdutf_test base64_dec_avx2_test bio_eof_test \
+          ech_test ossl_rbtree_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -779,6 +780,14 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[base64_simdutf_test] = ../include ../apps/include ../crypto/include ../crypto/evp/
   DEPEND[base64_simdutf_test] = ../libcrypto libtestutil.a
 
+  SOURCE[base64_dec_avx2_test] = base64_dec_avx2_test.c
+  INCLUDE[base64_dec_avx2_test] = ../include ../apps/include ../crypto/include ../crypto/evp/
+  DEPEND[base64_dec_avx2_test] = ../libcrypto.a libtestutil.a
+  IF[{- !$disabled{asm} && $config{processor} ne '386'
+        && ($target{asm_arch} // '') eq 'x86_64' -}]
+    DEFINE[base64_dec_avx2_test] = OPENSSL_CPUID_OBJ
+  ENDIF
+
   SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include ../apps/include
   DEPEND[bio_enc_test]=../libcrypto libtestutil.a
@@ -980,7 +989,8 @@ IF[{- !$disabled{tests} -}]
   # programs are forcibly linked with the static libraries, where all symbols
   # are always available.
   IF[1]
-    PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
+    PROGRAMS{noinst}=asprintf_test \
+                     asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
@@ -1033,6 +1043,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[asn1_internal_test]=asn1_internal_test.c
     INCLUDE[asn1_internal_test]=.. ../include ../apps/include
     DEPEND[asn1_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[asprintf_test]=asprintf_test.c
+    INCLUDE[asprintf_test]=../include ../apps/include
+    DEPEND[asprintf_test]=../libcrypto.a libtestutil.a
 
     SOURCE[modes_internal_test]=modes_internal_test.c
     INCLUDE[modes_internal_test]=.. ../include ../apps/include

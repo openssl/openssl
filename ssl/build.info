@@ -26,7 +26,7 @@ SOURCE[../libssl]=\
 # in libssl as well.
 SHARED_SOURCE[../libssl]=\
         ../crypto/packet.c ../crypto/quic_vlint.c ../crypto/time.c \
-        ../crypto/rbtree/rbtree.c
+        ../crypto/rbtree/rbtree.c ../crypto/asprintf.c
 
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../libssl]=ssl_rsa_legacy.c

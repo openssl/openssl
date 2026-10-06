@@ -120,6 +120,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
             TLSProxy::Message::SERVER,
             checkhandshake::KEY_SHARE_HRR_EXTENSION],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::SERVER,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
             TLSProxy::Message::CLIENT,
@@ -170,6 +173,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
             TLSProxy::Message::CLIENT,
             checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
             TLSProxy::Message::SERVER,
@@ -208,7 +214,7 @@ sub setup_extensions
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
-my $testcount = 19;
+my $testcount = 20;
 my $fatal_alert = 0;
 my $hello_request_added = 0;
 my $hello_request_after_server_hello = 0;
@@ -519,6 +525,27 @@ sub run_tests
         $proxy->start();
         ok(TLSProxy::Message->success() && !$fatal_alert,
            "HelloRequest ignored in $legacy_version");
+    }
+
+    #Test 20: Server name handshake with a (D)TLSv1.2 client against a server
+    #         that also supports (D)TLSv1.3. For DTLS the HelloVerifyRequest
+    #         cookie is then generated after the switch to the SNI context.
+    SKIP: {
+        my $legacy_version = $run_test_as_dtls ? "DTLSv1.2" : "TLSv1.2";
+        my $legacy_version_disabled = $run_test_as_dtls
+                                      ? disabled("dtls1_2")
+                                      : disabled("tls1_2");
+
+        skip "$legacy_version disabled", 1 if $legacy_version_disabled;
+
+        $proxy->clear();
+        $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+        $proxy->clientflags("-no_rx_cert_comp -max_protocol $legacy_version"
+                            ." -servername testhost");
+        $proxy->serverflags("-no_rx_cert_comp -servername testhost");
+        $proxy->start();
+        ok(TLSProxy::Message->success(),
+           "Server name handshake with $legacy_version client");
     }
 
     unlink $session;

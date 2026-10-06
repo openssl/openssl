@@ -83,6 +83,11 @@ The EVP_SKEY_get0_raw_key() returns a pointer to a raw key bytes to the passed
 address and sets the key len. The returned address is managed by the internal
 key management and shouldn't be freed explicitly.  The operation can fail when
 the underlying key management doesn't support export of the secret key.
+If I<key> is NULL, only the key length is returned in I<*len>.  In that case
+the secret key is not exported; the length is obtained from the "key-length"
+(B<OSSL_SKEY_PARAM_KEY_LENGTH>) key parameter, so it is also available for keys
+that cannot be exported.  The operation fails if the underlying key management
+doesn't provide that parameter.
 
 The EVP_SKEY_get0_key_id() returns a NUL-terminated string providing some
 human-readable identifier of the key if provided by the underlying key
@@ -207,6 +212,9 @@ The EVP_SKEY_import_SKEYMGMT() function was introduced in OpenSSL 4.0.
 
 The EVP_SKEY_get0_local_keyid() and EVP_SKEY_get0_algorithm_id()
 functions were added in OpenSSL 4.1.
+
+Passing NULL as I<key> to EVP_SKEY_get0_raw_key() to retrieve only the key
+length was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

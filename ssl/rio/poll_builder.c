@@ -156,12 +156,12 @@ int ossl_rio_poll_builder_poll(RIO_POLL_BUILDER *rpb, OSSL_TIME deadline)
     /*
      * Waiting with no file descriptors is legitimate: a DTLS connection whose
      * BIO cannot provide a poll descriptor has no readiness to wait for, but
-     * still has a retransmission deadline to wake for. Handle that here rather
-     * than leaving it to the OS, because poll() treats an empty descriptor set
-     * as a plain sleep whereas Windows' select() rejects it outright.
+     * still has a retransmission deadline to wake for. poll() treats an empty
+     * descriptor set as a plain sleep and Windows' select() rejects it, so
+     * the sleep is done here.
      *
-     * With no descriptors and no deadline nothing could ever wake us, so that
-     * is a caller error rather than an indefinite sleep.
+     * With no descriptors and no deadline nothing can wake the wait; that is
+     * a caller error.
      */
     if (rio_poll_builder_is_empty(rpb)) {
         if (ossl_time_is_infinite(deadline))

@@ -837,13 +837,21 @@ int x509_main(int argc, char **argv)
 
         if (extsect == NULL) {
             extsect = app_conf_try_string(extconf, "default", "extensions");
+            /*
+             * If neither -extfile nor -extensions is provided, and the default
+             * config file's default section doesn't contain the "extensions"
+             * config option, extsect is left as NULL, which is then used
+             * as an indicator to avoid trying to load extensions.
+             */
             if (extfile != NULL && extsect == NULL)
                 extsect = "default";
         }
-        X509V3_set_ctx_test(&ctx2);
-        if (!do_EXT_add_nconf(extconf, extconf, &ctx2, NULL,
-                "Error checking extension section %s\n", extsect))
-            goto err;
+        if (extsect != NULL) {
+            X509V3_set_ctx_test(&ctx2);
+            if (!do_EXT_add_nconf(extconf, extconf, &ctx2, NULL,
+                    "Error checking extension section %s\n", extsect))
+                goto err;
+        }
     } else if (newout && !confquiet) {
         goto err;
     }
@@ -1009,7 +1017,7 @@ cert_loop:
         if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
             goto err;
     }
-    if (extconf != NULL && !x509toreq) {
+    if (extconf != NULL && !x509toreq && extsect != NULL) {
         if (!do_EXT_add_nconf(extconf, extconf, &ext_ctx, x,
                 "Error adding extensions from section %s\n", extsect))
             goto err;
@@ -1034,7 +1042,7 @@ cert_loop:
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
-        if (extconf != NULL) {
+        if (extconf != NULL && extsect != NULL) {
             if (!do_EXT_REQ_add_nconf(extconf, extconf, &ext_ctx, rq,
                     "Error adding request extensions from section %s\n", extsect))
                 goto err;

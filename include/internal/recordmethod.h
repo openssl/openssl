@@ -360,6 +360,14 @@ struct ossl_record_method_st {
      * data. Buffers are automatically reallocated on next read/write.
      */
     int (*free_buffers)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * DTLS only. Instead of freeing previous record layer hand it over
+     * so that a retransmission arriving for the previous epoch can still
+     * be processed correctly. The current record layer takes ownership
+     * of the previous record layer.
+     */
+    int (*set_prev_epoch_rl)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_LAYER *prev);
 };
 
 /* Standard built-in record methods */

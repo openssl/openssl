@@ -21,6 +21,7 @@
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
+#include "ssl/record/methods/tls_common.inc"
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
@@ -264,15 +265,18 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
-static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
+int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     TLS_BUFFER *b;
 
     b = &rl->rbuf;
+    if (b->buf == NULL)
+        return 1;
     if ((rl->options & SSL_OP_CLEANSE_PLAINTEXT) != 0)
         OPENSSL_cleanse(b->buf, b->len);
     OPENSSL_free(b->buf);
     b->buf = NULL;
+    b->len = 0;
     rl->packet = NULL;
     rl->packet_length = 0;
     return 1;
@@ -943,13 +947,9 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     rl->num_released = 0;
     ret = OSSL_RECORD_RETURN_SUCCESS;
 end:
-    if (macbufs != NULL) {
-        for (j = 0; j < num_recs; j++) {
-            if (macbufs[j].alloced)
-                OPENSSL_free(macbufs[j].mac);
-        }
+    if (macbufs != NULL)
         OPENSSL_free(macbufs);
-    }
+
     return ret;
 }
 
@@ -1163,36 +1163,37 @@ int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length)
 
 int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
 {
+    struct tls_set_options_params_st prms;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS);
+    if (!tls_set_options_params_decoder(options, &prms))
+        return 0;
+
+    p = prms.options;
     if (p != NULL && !OSSL_PARAM_get_uint64(p, &rl->options)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE);
+    p = prms.mode;
     if (p != NULL && !OSSL_PARAM_get_uint32(p, &rl->mode)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
         return 0;
     }
 
     if (rl->direction == OSSL_RECORD_DIRECTION_READ) {
-        p = OSSL_PARAM_locate_const(options,
-            OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN);
+        p = prms.rbuf_len;
         if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->rbuf.default_len)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
     } else {
-        p = OSSL_PARAM_locate_const(options,
-            OSSL_LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING);
+        p = prms.blockpad;
         if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->block_padding)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        p = OSSL_PARAM_locate_const(options,
-            OSSL_LIBSSL_RECORD_LAYER_PARAM_HS_PADDING);
+        p = prms.hspad;
         if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->hs_padding)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
             return 0;
@@ -1206,8 +1207,7 @@ int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
          * that is destined for a higher protection level. To simplify the logic
          * we don't support that at this stage.
          */
-        p = OSSL_PARAM_locate_const(options,
-            OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD);
+        p = prms.readahead;
         if (p != NULL && !OSSL_PARAM_get_int(p, &rl->read_ahead)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
             return 0;
@@ -1350,7 +1350,7 @@ int tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     if ((rl->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) == 0
-        && rl->version <= TLS1_VERSION
+        && rl->version == TLS1_VERSION
         && !EVP_CIPHER_is_a(ciph, "NULL")
         && !EVP_CIPHER_is_a(ciph, "RC4")) {
         /*
@@ -2326,5 +2326,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     NULL,
     NULL,
     tls_alloc_buffers,
-    tls_free_buffers
+    tls_free_buffers,
+    NULL /* set_prev_epoch_rl: DTLS only */
 };
