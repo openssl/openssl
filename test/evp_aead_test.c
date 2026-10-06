@@ -688,6 +688,50 @@ err:
     return testresult;
 }
 
+/*
+ * AES-SIV does its single crypto operation inside the payload Update and
+ * remembers the result for Final. After a completed encrypt, a second Update
+ * on the same context must be rejected, and the Final that follows must fail
+ * as well rather than report the earlier success.
+ *
+ * Only AES-128-SIV is exercised here.
+ */
+static int test_aes_siv_ctx_enc_retval(void)
+{
+    unsigned char key[32] = { 7 };
+    unsigned char in[6] = "input";
+    unsigned char ct[6] = { 0 };
+
+    unsigned char tagbuf[16];
+    int len, ret = 0;
+    EVP_CIPHER_CTX *enc_ctx = NULL;
+
+    EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-SIV", NULL);
+
+    if (cipher == NULL)
+        return TEST_skip("AES-128-SIV cipher is not available");
+
+    enc_ctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(enc_ctx)
+        || !TEST_true(EVP_EncryptInit_ex(enc_ctx, cipher, NULL, key, NULL))
+        || !TEST_true(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(enc_ctx, EVP_CTRL_AEAD_GET_TAG, sizeof(tagbuf), tagbuf))
+        || !TEST_true(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len)))
+        goto err;
+
+    /*
+     * Encryption is fine, provoke error by repeating encrypt on same context. */
+    if (!TEST_false(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_false(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(enc_ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 int setup_tests(void)
 {
     int i = 0;
@@ -706,6 +750,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
+    ADD_TEST(test_aes_siv_ctx_enc_retval);
     return 1;
 }
 
