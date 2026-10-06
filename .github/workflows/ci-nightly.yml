@@ -47,7 +47,7 @@ jobs:
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v5
       with:
         name: "ci@non-caching"
         path: artifacts.tar.gz
@@ -83,7 +83,7 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v5
       with:
         name: "ci@full_featured"
         path: artifacts.tar.gz
