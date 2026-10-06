@@ -377,11 +377,17 @@ static int test_cipher_reinit(int test_id)
     };
     const char *name = sk_OPENSSL_STRING_value(cipher_names, test_id);
 
-    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
-        goto err;
-
     TEST_note("Fetching %s\n", name);
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
+        goto err;
+
+    if (fips_provider_version_match(libctx, "<4.2.0")
+        && EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE) {
+        EVP_CIPHER_free(cipher);
+        return TEST_skip("CCM modes do not support reinit with old providers");
+    }
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
         goto err;
 
     /* siv cannot be called with NULL key as the iv is irrelevant */
