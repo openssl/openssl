@@ -133,7 +133,6 @@ jobs:
           no-scrypt,
           no-secure-memory,
           no-seed,
-          no-shared,
           no-siphash,
           no-siv,
           no-sm2-precomp,
