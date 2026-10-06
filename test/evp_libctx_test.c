@@ -384,8 +384,9 @@ static int test_cipher_reinit(int test_id)
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
         goto err;
 
-    /* ccm fails on the second update - this matches OpenSSL 1_1_1 behaviour */
-    ccm = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE);
+    /* ccm fails on the second update on <4.2.0 - this matches OpenSSL 1_1_1 behaviour */
+    ccm = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
+        && fips_provider_version_match(libctx, "<4.2.0"));
 
     /* siv cannot be called with NULL key as the iv is irrelevant */
     siv = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_SIV_MODE);
