@@ -2469,6 +2469,81 @@ end:
     SSL_CTX_free(sctx);
     return testresult;
 }
+
+/*
+ * Check that a DTLS 1.3 client that sends early data still retransmits its
+ * ClientHello if the first flight is lost.
+ */
+static int test_dtls13_early_data_retransmit(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    SSL_SESSION *sess = NULL;
+    BIO *s_rbio;
+    struct timeval tv;
+    unsigned char buf[2048];
+    static const char msg[] = "early data";
+    size_t written;
+    int dropped = 0, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_max_early_data(sctx,
+            SSL3_RT_MAX_PLAIN_LENGTH)))
+        goto end;
+
+    /* Do a full handshake to get a session that allows early data */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE))
+        || !TEST_ptr(sess = SSL_get1_session(cssl))
+        || !TEST_uint_gt(SSL_SESSION_get_max_early_data(sess), 0))
+        goto end;
+    shutdown_ssl_connection(sssl, cssl);
+    sssl = cssl = NULL;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(SSL_set_session(cssl, sess)))
+        goto end;
+
+    DTLS_set_timer_cb(cssl, timer_cb);
+
+    /* Sends the ClientHello followed by the early data */
+    if (!TEST_true(SSL_write_early_data(cssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+
+    /* Lose everything the client has sent so far */
+    s_rbio = SSL_get_rbio(sssl);
+    while (BIO_ctrl_pending(s_rbio) > 0) {
+        if (!TEST_int_gt(BIO_read(s_rbio, buf, sizeof(buf)), 0))
+            goto end;
+        dropped++;
+    }
+    if (!TEST_int_gt(dropped, 0))
+        goto end;
+
+    /* The ClientHello retransmission timer must be running */
+    if (!TEST_int_gt((int)DTLSv1_get_timeout(cssl, &tv), 0))
+        goto end;
+    OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+    if (!TEST_int_gt((int)DTLSv1_handle_timeout(cssl), 0)
+        || !TEST_size_t_gt(BIO_ctrl_pending(s_rbio), 0))
+        goto end;
+
+    /* The handshake should now complete using the retransmitted ClientHello */
+    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -2518,6 +2593,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_epoch0_plaintext_alert);
     ADD_TEST(test_dtls13_ccm8_not_offered);
     ADD_TEST(test_dtls13_ack_read_timeout);
+    ADD_TEST(test_dtls13_early_data_retransmit);
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_client_retransmit);
