@@ -29,6 +29,10 @@ Non approved operations may only occur if the user has deliberately chosen to do
 so (either by setting a global FIPS configuration option or via an option in an
 algorithm's operation context).
 
+For operations that are unapproved depending on the usage such as
+AES-ECB Encryption the callback is not triggered. For these cases querying the
+"fips-indicator" from the operation ctx will return the approved status.
+
 The user's callback B<OSSL_INDICATOR_CALLBACK> I<type> and I<desc>
 contain the algorithm type and operation that is not approved.
 I<params> is not currently used.

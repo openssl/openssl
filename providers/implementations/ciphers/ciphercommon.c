@@ -168,7 +168,7 @@ int ossl_cipher_generic_dupctx_tlsmac(PROV_CIPHER_CTX *dst,
     return 1;
 }
 
-static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
+int ossl_cipher_generic_init(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen,
     const unsigned char *iv, size_t ivlen,
     const OSSL_PARAM params[], int enc)
@@ -212,7 +212,7 @@ int ossl_cipher_generic_einit(void *vctx, const unsigned char *key,
     size_t keylen, const unsigned char *iv,
     size_t ivlen, const OSSL_PARAM params[])
 {
-    return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx, key, keylen,
+    return ossl_cipher_generic_init((PROV_CIPHER_CTX *)vctx, key, keylen,
         iv, ivlen, params, 1);
 }
 
@@ -220,7 +220,7 @@ int ossl_cipher_generic_dinit(void *vctx, const unsigned char *key,
     size_t keylen, const unsigned char *iv,
     size_t ivlen, const OSSL_PARAM params[])
 {
-    return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx, key, keylen,
+    return ossl_cipher_generic_init((PROV_CIPHER_CTX *)vctx, key, keylen,
         iv, ivlen, params, 0);
 }
 
@@ -230,7 +230,7 @@ int ossl_cipher_generic_skey_einit(void *vctx, void *skeydata,
 {
     PROV_SKEY *key = skeydata;
 
-    return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx,
+    return ossl_cipher_generic_init((PROV_CIPHER_CTX *)vctx,
         key->data, key->length,
         iv, ivlen, params, 1);
 }
@@ -241,7 +241,7 @@ int ossl_cipher_generic_skey_dinit(void *vctx, void *skeydata,
 {
     PROV_SKEY *key = skeydata;
 
-    return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx,
+    return ossl_cipher_generic_init((PROV_CIPHER_CTX *)vctx,
         key->data, key->length,
         iv, ivlen, params, 0);
 }
