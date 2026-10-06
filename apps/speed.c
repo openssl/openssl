@@ -3740,7 +3740,7 @@ int speed_main(int argc, char **argv)
 
             /* no string after rsa<bitcnt> permitted: */
             if (strlen(kem_name) < MAX_ALGNAME_SUFFIX + 4 /* rsa+digit */
-                && sscanf(kem_name, "rsa%u%s", &bits, sfx) == 1)
+                && sscanf(kem_name, "rsa%u%99s", &bits, sfx) == 1)
                 kem_type = KEM_RSA;
             else if (strncmp(kem_name, "EC", 2) == 0)
                 kem_type = KEM_EC;
@@ -3939,7 +3939,7 @@ int speed_main(int argc, char **argv)
 
             /* no string after rsa<bitcnt> permitted: */
             if (strlen(sig_name) < MAX_ALGNAME_SUFFIX + 4 /* rsa+digit */
-                && sscanf(sig_name, "rsa%u%s", &bits, sfx) == 1) {
+                && sscanf(sig_name, "rsa%u%99s", &bits, sfx) == 1) {
                 params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_RSA_BITS,
                     &bits);
                 use_params = 1;
