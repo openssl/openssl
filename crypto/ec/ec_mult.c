@@ -463,7 +463,7 @@ static size_t ec_fn_encode_ctx_size(const EC_GROUP *group)
  * decoded, inverted, and re-encoded; a plain one is inverted directly.  The
  * inverse is Fermat's a^(m-2) mod m via OSSL_FN_mod_inverse_prime(), which is
  * constant-time in the secret operand for the prime field modulus, reusing the
- * group's field Montgomery context on the encoded path.
+ * group's field Montgomery context on both paths.
  */
 static ossl_inline int ec_fn_finv(const EC_GROUP *group, OSSL_FN *r,
     const OSSL_FN *a, OSSL_FN_CTX *ctx)
@@ -474,7 +474,7 @@ static ossl_inline int ec_fn_finv(const EC_GROUP *group, OSSL_FN *r,
         return OSSL_FN_from_mont(r, a, group->fn_mont_ctx, ctx)
             && OSSL_FN_mod_inverse_prime(r, r, p_fn, ctx, group->fn_mont_ctx)
             && OSSL_FN_to_mont(r, r, group->fn_mont_ctx, ctx);
-    return OSSL_FN_mod_inverse_prime(r, a, p_fn, ctx, NULL);
+    return OSSL_FN_mod_inverse_prime(r, a, p_fn, ctx, group->fn_mont_ctx);
 }
 
 static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
@@ -483,7 +483,8 @@ static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
     size_t frm, inv, tom, m;
 
     if (!ec_fn_is_mont(group))
-        return OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, NULL);
+        return OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn,
+            group->fn_mont_ctx);
 
     frm = OSSL_FN_from_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
     inv = OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, group->fn_mont_ctx);
