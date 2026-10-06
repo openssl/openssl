@@ -1,0 +1,1366 @@
+/*
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include "internal/nelem.h"
+
+#include "testutil.h"
+
+#include <crypto/asn1.h>
+
+static const char *infile;
+
+static const struct {
+    const char *single; /* Valid */
+    const char *duplicate; /* Invalid */
+} duplicate_field_configs[] = {
+    { "[default]\nbasicConstraints=CA:true\n",
+        "[default]\nbasicConstraints=CA:true,CA:false\n" },
+    { "[default]\nbasicConstraints=pathlen:0\n",
+        "[default]\nbasicConstraints=pathlen:0,pathlen:1\n" },
+    { "[default]\nbasicAttConstraints=authority:true\n",
+        "[default]\nbasicAttConstraints=authority:true,authority:false\n" },
+    { "[default]\nbasicAttConstraints=pathlen:0\n",
+        "[default]\nbasicAttConstraints=pathlen:0,pathlen:1\n" },
+    { "[default]\npolicyConstraints=requireExplicitPolicy:0\n",
+        "[default]\npolicyConstraints=requireExplicitPolicy:0,requireExplicitPolicy:1\n" },
+    { "[default]\npolicyConstraints=inhibitPolicyMapping:0\n",
+        "[default]\npolicyConstraints=inhibitPolicyMapping:0,inhibitPolicyMapping:1\n" },
+};
+
+static int test_field_config(const char *config, int should_pass)
+{
+    size_t config_len = strlen(config);
+    BIO *in = NULL;
+    CONF *conf = NULL;
+    X509 *cert = NULL;
+    X509V3_CTX ctx;
+    int conf_res, ret = 0;
+
+    if (!TEST_ptr(in = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(BIO_write(in, config, (int)config_len),
+            (int)config_len)
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, in, NULL), 0)
+        || !TEST_ptr(cert = X509_new()))
+        goto end;
+
+    X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+    X509V3_set_nconf(&ctx, conf);
+
+    ERR_clear_error();
+    conf_res = X509V3_EXT_add_nconf(conf, &ctx, "default", cert);
+    if (!TEST_int_eq(conf_res, should_pass)
+        || (!should_pass && !TEST_err_r(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD)))
+        goto end;
+
+    ret = 1;
+end:
+    X509_free(cert);
+    NCONF_free(conf);
+    BIO_free(in);
+    ERR_clear_error();
+    return ret;
+}
+
+static int test_duplicate_field(int idx)
+{
+    return test_field_config(duplicate_field_configs[idx].single, 1)
+        && test_field_config(duplicate_field_configs[idx].duplicate, 0);
+}
+
+static int test_asn1_multi_mfail(void)
+{
+    static const char config[] = "[default]\n"
+                                 "1.2.3.4 = ASN1:SEQUENCE:items\n"
+                                 "[items]\n"
+                                 "value = INTEGER:1\n";
+    size_t config_len = strlen(config);
+    BIO *in = NULL;
+    CONF *conf = NULL;
+    X509 *cert = NULL;
+    X509V3_CTX ctx;
+    int ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf(config, (int)config_len))
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, in, NULL), 0)
+        || !TEST_ptr(cert = X509_new()))
+        goto end;
+
+    X509V3_set_ctx(&ctx, NULL, NULL, NULL, NULL, 0);
+    X509V3_set_nconf(&ctx, conf);
+
+    MFAIL_start();
+    ret = X509V3_EXT_add_nconf(conf, &ctx, "default", cert);
+    MFAIL_end();
+
+end:
+    X509_free(cert);
+    NCONF_free(conf);
+    BIO_free(in);
+    return ret;
+}
+
+static int test_pathlen(void)
+{
+    X509 *x = NULL;
+    BIO *b = NULL;
+    long pathlen;
+    int ret = 0;
+
+    if (!TEST_ptr(b = BIO_new_file(infile, "r"))
+        || !TEST_ptr(x = PEM_read_bio_X509(b, NULL, NULL, NULL))
+        || !TEST_int_eq(pathlen = X509_get_pathlen(x), 6))
+        goto end;
+
+    ret = 1;
+
+end:
+    BIO_free(b);
+    X509_free(x);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_RFC3779
+static int test_asid(void)
+{
+    ASN1_INTEGER *val1 = NULL, *val2 = NULL;
+    ASIdentifiers *asid1 = ASIdentifiers_new(), *asid2 = ASIdentifiers_new(),
+                  *asid3 = ASIdentifiers_new(), *asid4 = ASIdentifiers_new();
+    int testresult = 0;
+
+    if (!TEST_ptr(asid1)
+        || !TEST_ptr(asid2)
+        || !TEST_ptr(asid3))
+        goto err;
+
+    if (!TEST_ptr(val1 = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val1, 64496)))
+        goto err;
+
+    if (!TEST_true(X509v3_asid_add_id_or_range(asid1, V3_ASID_ASNUM, val1, NULL)))
+        goto err;
+
+    val1 = NULL;
+    if (!TEST_ptr(val2 = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val2, 64497)))
+        goto err;
+
+    if (!TEST_true(X509v3_asid_add_id_or_range(asid2, V3_ASID_ASNUM, val2, NULL)))
+        goto err;
+
+    val2 = NULL;
+    if (!TEST_ptr(val1 = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val1, 64496))
+        || !TEST_ptr(val2 = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val2, 64497)))
+        goto err;
+
+    /*
+     * Just tests V3_ASID_ASNUM for now. Could be extended at some point to also
+     * test V3_ASID_RDI if we think it is worth it.
+     */
+    if (!TEST_true(X509v3_asid_add_id_or_range(asid3, V3_ASID_ASNUM, val1, val2)))
+        goto err;
+    val1 = val2 = NULL;
+
+    /* Actual subsets */
+    if (!TEST_true(X509v3_asid_subset(NULL, NULL))
+        || !TEST_true(X509v3_asid_subset(NULL, asid1))
+        || !TEST_true(X509v3_asid_subset(asid1, asid1))
+        || !TEST_true(X509v3_asid_subset(asid2, asid2))
+        || !TEST_true(X509v3_asid_subset(asid1, asid3))
+        || !TEST_true(X509v3_asid_subset(asid2, asid3))
+        || !TEST_true(X509v3_asid_subset(asid3, asid3))
+        || !TEST_true(X509v3_asid_subset(asid4, asid1))
+        || !TEST_true(X509v3_asid_subset(asid4, asid2))
+        || !TEST_true(X509v3_asid_subset(asid4, asid3)))
+        goto err;
+
+    /* Not subsets */
+    if (!TEST_false(X509v3_asid_subset(asid1, NULL))
+        || !TEST_false(X509v3_asid_subset(asid1, asid2))
+        || !TEST_false(X509v3_asid_subset(asid2, asid1))
+        || !TEST_false(X509v3_asid_subset(asid3, asid1))
+        || !TEST_false(X509v3_asid_subset(asid3, asid2))
+        || !TEST_false(X509v3_asid_subset(asid1, asid4))
+        || !TEST_false(X509v3_asid_subset(asid2, asid4))
+        || !TEST_false(X509v3_asid_subset(asid3, asid4)))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val1);
+    ASN1_INTEGER_free(val2);
+    ASIdentifiers_free(asid1);
+    ASIdentifiers_free(asid2);
+    ASIdentifiers_free(asid3);
+    ASIdentifiers_free(asid4);
+    return testresult;
+}
+
+static struct ip_ranges_st {
+    const unsigned int afi;
+    const char *ip1;
+    const char *ip2;
+    int rorp;
+} ranges[] = {
+    { IANA_AFI_IPV4, "192.168.0.0", "192.168.0.1", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV4, "192.168.0.0", "192.168.0.2", IPAddressOrRange_addressRange },
+    { IANA_AFI_IPV4, "192.168.0.0", "192.168.0.3", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV4, "192.168.0.0", "192.168.0.254", IPAddressOrRange_addressRange },
+    { IANA_AFI_IPV4, "192.168.0.0", "192.168.0.255", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV4, "192.168.0.1", "192.168.0.255", IPAddressOrRange_addressRange },
+    { IANA_AFI_IPV4, "192.168.0.1", "192.168.0.1", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV4, "192.168.0.0", "192.168.255.255", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV4, "192.168.1.0", "192.168.255.255", IPAddressOrRange_addressRange },
+    { IANA_AFI_IPV6, "2001:0db8::0", "2001:0db8::1", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV6, "2001:0db8::0", "2001:0db8::2", IPAddressOrRange_addressRange },
+    { IANA_AFI_IPV6, "2001:0db8::0", "2001:0db8::3", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV6, "2001:0db8::0", "2001:0db8::fffe", IPAddressOrRange_addressRange },
+    { IANA_AFI_IPV6, "2001:0db8::0", "2001:0db8::ffff", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV6, "2001:0db8::1", "2001:0db8::ffff", IPAddressOrRange_addressRange },
+    { IANA_AFI_IPV6, "2001:0db8::1", "2001:0db8::1", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV6, "2001:0db8::0:0", "2001:0db8::ffff:ffff", IPAddressOrRange_addressPrefix },
+    { IANA_AFI_IPV6, "2001:0db8::1:0", "2001:0db8::ffff:ffff", IPAddressOrRange_addressRange }
+};
+
+static int check_addr(IPAddrBlocks *addr, int type)
+{
+    IPAddressFamily *fam;
+    IPAddressOrRange *aorr;
+
+    if (!TEST_int_eq(sk_IPAddressFamily_num(addr), 1))
+        return 0;
+
+    fam = sk_IPAddressFamily_value(addr, 0);
+    if (!TEST_ptr(fam))
+        return 0;
+
+    if (!TEST_int_eq(fam->ipAddressChoice->type, IPAddressChoice_addressesOrRanges))
+        return 0;
+
+    if (!TEST_int_eq(sk_IPAddressOrRange_num(fam->ipAddressChoice->u.addressesOrRanges), 1))
+        return 0;
+
+    aorr = sk_IPAddressOrRange_value(fam->ipAddressChoice->u.addressesOrRanges, 0);
+    if (!TEST_ptr(aorr))
+        return 0;
+
+    if (!TEST_int_eq(aorr->type, type))
+        return 0;
+
+    return 1;
+}
+
+static int test_addr_ranges(void)
+{
+    IPAddrBlocks *addr = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    size_t i;
+    int testresult = 0;
+
+    for (i = 0; i < OSSL_NELEM(ranges); i++) {
+        addr = sk_IPAddressFamily_new_null();
+        if (!TEST_ptr(addr))
+            goto end;
+        /*
+         * Has the side effect of installing the comparison function onto the
+         * stack.
+         */
+        if (!TEST_true(X509v3_addr_canonize(addr)))
+            goto end;
+
+        ip1 = a2i_IPADDRESS(ranges[i].ip1);
+        if (!TEST_ptr(ip1))
+            goto end;
+        if (!TEST_true(ip1->length == 4 || ip1->length == 16))
+            goto end;
+        ip2 = a2i_IPADDRESS(ranges[i].ip2);
+        if (!TEST_ptr(ip2))
+            goto end;
+        if (!TEST_int_eq(ip2->length, ip1->length))
+            goto end;
+        if (!TEST_true(memcmp(ip1->data, ip2->data, ip1->length) <= 0))
+            goto end;
+
+        if (!TEST_true(X509v3_addr_add_range(addr, ranges[i].afi, NULL, ip1->data, ip2->data)))
+            goto end;
+
+        if (!TEST_true(X509v3_addr_is_canonical(addr)))
+            goto end;
+
+        if (!check_addr(addr, ranges[i].rorp))
+            goto end;
+
+        sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+        addr = NULL;
+        ASN1_OCTET_STRING_free(ip1);
+        ASN1_OCTET_STRING_free(ip2);
+        ip1 = ip2 = NULL;
+    }
+
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    return testresult;
+}
+
+static int test_addr_fam_len(void)
+{
+    int testresult = 0;
+    IPAddrBlocks *addr = NULL;
+    IPAddressFamily *f1 = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    unsigned char key[6];
+    unsigned int keylen;
+    unsigned afi = IANA_AFI_IPV4;
+
+    /* Create the IPAddrBlocks with a good IPAddressFamily */
+    addr = sk_IPAddressFamily_new_null();
+    if (!TEST_ptr(addr))
+        goto end;
+    ip1 = a2i_IPADDRESS(ranges[0].ip1);
+    if (!TEST_ptr(ip1))
+        goto end;
+    ip2 = a2i_IPADDRESS(ranges[0].ip2);
+    if (!TEST_ptr(ip2))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, ranges[0].afi, NULL, ip1->data, ip2->data)))
+        goto end;
+    if (!TEST_true(X509v3_addr_is_canonical(addr)))
+        goto end;
+
+    /* Create our malformed IPAddressFamily */
+    key[0] = (afi >> 8) & 0xFF;
+    key[1] = afi & 0xFF;
+    key[2] = 0xD;
+    key[3] = 0xE;
+    key[4] = 0xA;
+    key[5] = 0xD;
+    keylen = 6;
+    if ((f1 = IPAddressFamily_new()) == NULL)
+        goto end;
+    if (f1->ipAddressChoice == NULL && (f1->ipAddressChoice = IPAddressChoice_new()) == NULL)
+        goto end;
+    if (f1->addressFamily == NULL && (f1->addressFamily = ASN1_OCTET_STRING_new()) == NULL)
+        goto end;
+    if (!ASN1_OCTET_STRING_set(f1->addressFamily, key, keylen))
+        goto end;
+
+    /* Push and transfer memory ownership to stack */
+    if (!sk_IPAddressFamily_push(addr, f1))
+        goto end;
+    f1 = NULL;
+
+    /* Shouldn't be able to canonize this as the len is > 3*/
+    if (!TEST_false(X509v3_addr_canonize(addr)))
+        goto end;
+
+    /* Pop and free the new stack element */
+    IPAddressFamily_free(sk_IPAddressFamily_pop(addr));
+
+    /* Create a well-formed IPAddressFamily */
+    key[0] = (afi >> 8) & 0xFF;
+    key[1] = afi & 0xFF;
+    key[2] = 0x1;
+    keylen = 3;
+    if ((f1 = IPAddressFamily_new()) == NULL)
+        goto end;
+    if (f1->ipAddressChoice == NULL && (f1->ipAddressChoice = IPAddressChoice_new()) == NULL)
+        goto end;
+    if (f1->addressFamily == NULL && (f1->addressFamily = ASN1_OCTET_STRING_new()) == NULL)
+        goto end;
+    if (!ASN1_OCTET_STRING_set(f1->addressFamily, key, keylen))
+        goto end;
+
+    /* Mark this as inheritance so we skip some of the is_canonize checks */
+    f1->ipAddressChoice->type = IPAddressChoice_inherit;
+
+    /* Push and transfer memory ownership to stack */
+    if (!sk_IPAddressFamily_push(addr, f1))
+        goto end;
+    f1 = NULL;
+
+    /* Should be able to canonize now */
+    if (!TEST_true(X509v3_addr_canonize(addr)))
+        goto end;
+
+    testresult = 1;
+end:
+    /* Free stack and any memory owned by detached element */
+    IPAddressFamily_free(f1);
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    return testresult;
+}
+
+static struct extvalues_st {
+    const char *value;
+    int pass;
+} extvalues[] = {
+    /* No prefix is ok */
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.1\n", 1 },
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.0/0\n", 1 },
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.0/1\n", 1 },
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.0/32\n", 1 },
+    /* Prefix is too long */
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.0/33\n", 0 },
+    /* Unreasonably large prefix */
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.0/12341234\n", 0 },
+    /* Invalid IP addresses */
+    { "sbgp-ipAddrBlock = IPv4:192.0.0\n", 0 },
+    { "sbgp-ipAddrBlock = IPv4:256.0.0.0\n", 0 },
+    { "sbgp-ipAddrBlock = IPv4:-1.0.0.0\n", 0 },
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.0.0\n", 0 },
+    { "sbgp-ipAddrBlock = IPv3:192.0.0.0\n", 0 },
+
+    /* IPv6 */
+    /* No prefix is ok */
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001::db8\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001:0db8:0000:0000:0000:0000:0000:0000\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::/0\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::/1\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::/32\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001:0db8:0000:0000:0000:0000:0000:0000/32\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::/128\n", 1 },
+    /* Prefix is too long */
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::/129\n", 0 },
+    /* Unreasonably large prefix */
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::/12341234\n", 0 },
+    /* Invalid IP addresses */
+    /* Not enough blocks of numbers */
+    { "sbgp-ipAddrBlock = IPv6:2001:0db8:0000:0000:0000:0000:0000\n", 0 },
+    /* Too many blocks of numbers */
+    { "sbgp-ipAddrBlock = IPv6:2001:0db8:0000:0000:0000:0000:0000:0000:0000\n", 0 },
+    /* First value too large */
+    { "sbgp-ipAddrBlock = IPv6:1ffff:0db8:0000:0000:0000:0000:0000:0000\n", 0 },
+    /* First value with invalid characters */
+    { "sbgp-ipAddrBlock = IPv6:fffg:0db8:0000:0000:0000:0000:0000:0000\n", 0 },
+    /* First value is negative */
+    { "sbgp-ipAddrBlock = IPv6:-1:0db8:0000:0000:0000:0000:0000:0000\n", 0 }
+};
+
+static int test_ext_syntax(void)
+{
+    size_t i;
+    int testresult = 1;
+
+    for (i = 0; i < OSSL_NELEM(extvalues); i++) {
+        X509V3_CTX ctx;
+        BIO *extbio = BIO_new_mem_buf(extvalues[i].value,
+            (int)strlen(extvalues[i].value));
+        CONF *conf;
+        long eline;
+
+        if (!TEST_ptr(extbio))
+            return 0;
+
+        conf = NCONF_new_ex(NULL, NULL);
+        if (!TEST_ptr(conf)) {
+            BIO_free(extbio);
+            return 0;
+        }
+        if (!TEST_long_gt(NCONF_load_bio(conf, extbio, &eline), 0)) {
+            testresult = 0;
+        } else {
+            X509V3_set_ctx_test(&ctx);
+            X509V3_set_nconf(&ctx, conf);
+
+            if (extvalues[i].pass) {
+                if (!TEST_true(X509V3_EXT_add_nconf(conf, &ctx, "default",
+                        NULL))) {
+                    TEST_info("Value: %s", extvalues[i].value);
+                    testresult = 0;
+                }
+            } else {
+                ERR_set_mark();
+                if (!TEST_false(X509V3_EXT_add_nconf(conf, &ctx, "default",
+                        NULL))) {
+                    testresult = 0;
+                    TEST_info("Value: %s", extvalues[i].value);
+                    ERR_clear_last_mark();
+                } else {
+                    ERR_pop_to_mark();
+                }
+            }
+        }
+        BIO_free(extbio);
+        NCONF_free(conf);
+    }
+
+    return testresult;
+}
+
+/*
+ * Number of entries the large-canonize regression tests construct.
+ * Chosen well above the legacy 4096 cap and large enough that the
+ * previous O(N^2) merge would be visibly slow under any sanitiser
+ * configuration, while still small enough to keep CI cost negligible
+ * with the linear merge.
+ */
+#define V3EXT_TEST_LARGE_N 8192
+
+/*
+ * Build an ASIdentifiers extension containing V3EXT_TEST_LARGE_N
+ * adjacent single integers (1, 2, 3, ...), exercise canonize, and
+ * verify that the entire list collapses to one ASIdOrRange_range and
+ * that the post-canonize result reports canonical.  Stresses the
+ * linear merge path that replaced the quadratic in-place delete.
+ */
+static int test_asid_large_canonize_merge(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *val = NULL;
+    int i;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    for (i = 0; i < V3EXT_TEST_LARGE_N; i++) {
+        if (!TEST_ptr(val = ASN1_INTEGER_new())
+            || !TEST_true(ASN1_INTEGER_set_int64(val, (int64_t)(i + 1))))
+            goto err;
+        if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+                val, NULL)))
+            goto err;
+        /* Ownership of val transferred on success. */
+        val = NULL;
+    }
+
+    if (!TEST_int_eq(sk_ASIdOrRange_num(asid->asnum->u.asIdsOrRanges),
+            V3EXT_TEST_LARGE_N))
+        goto err;
+
+    if (!TEST_true(X509v3_asid_canonize(asid)))
+        goto err;
+
+    /* The whole list must collapse to a single merged range [1, N]. */
+    if (!TEST_int_eq(sk_ASIdOrRange_num(asid->asnum->u.asIdsOrRanges), 1))
+        goto err;
+    {
+        ASIdOrRange *aor = sk_ASIdOrRange_value(asid->asnum->u.asIdsOrRanges,
+            0);
+        int64_t got_min = 0, got_max = 0;
+
+        if (!TEST_ptr(aor) || !TEST_int_eq(aor->type, ASIdOrRange_range))
+            goto err;
+        if (!TEST_true(ASN1_INTEGER_get_int64(&got_min, aor->u.range->min))
+            || !TEST_int64_t_eq(got_min, 1)
+            || !TEST_true(ASN1_INTEGER_get_int64(&got_max, aor->u.range->max))
+            || !TEST_int64_t_eq(got_max, (int64_t)V3EXT_TEST_LARGE_N))
+            goto err;
+    }
+
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 1))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Build an ASIdentifiers extension containing V3EXT_TEST_LARGE_N
+ * non-mergeable single integers (1, 3, 5, ...).  After canonize the
+ * list must be unchanged in length, every entry must remain an id
+ * with its original value (none silently merged or transformed), and
+ * is_canonical must report canonical -- i.e. the large list is
+ * accepted on its merits with no arbitrary cap kicking in.
+ */
+static int test_asid_large_canonize_no_merge(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *val = NULL;
+    int i;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    for (i = 0; i < V3EXT_TEST_LARGE_N; i++) {
+        if (!TEST_ptr(val = ASN1_INTEGER_new())
+            || !TEST_true(ASN1_INTEGER_set_int64(val, (int64_t)(2 * i + 1))))
+            goto err;
+        if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+                val, NULL)))
+            goto err;
+        val = NULL;
+    }
+
+    if (!TEST_true(X509v3_asid_canonize(asid)))
+        goto err;
+
+    if (!TEST_int_eq(sk_ASIdOrRange_num(asid->asnum->u.asIdsOrRanges),
+            V3EXT_TEST_LARGE_N))
+        goto err;
+
+    /*
+     * Every entry must still be a single id with its original value;
+     * adjacent ids should NOT have been merged.
+     */
+    for (i = 0; i < V3EXT_TEST_LARGE_N; i++) {
+        ASIdOrRange *aor = sk_ASIdOrRange_value(asid->asnum->u.asIdsOrRanges,
+            i);
+        int64_t got = 0;
+
+        if (!TEST_ptr(aor)
+            || !TEST_int_eq(aor->type, ASIdOrRange_id)
+            || !TEST_true(ASN1_INTEGER_get_int64(&got, aor->u.id))
+            || !TEST_int64_t_eq(got, (int64_t)(2 * i + 1)))
+            goto err;
+    }
+
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 1))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Build an IPAddrBlocks with a single IPv4 family carrying
+ * V3EXT_TEST_LARGE_N adjacent /32 host prefixes starting at 1.0.0.1
+ * (deliberately offset by one from the prefix-aligned 1.0.0.0 so the
+ * merged span [1.0.0.1, 1.0.32.0] cannot be expressed as a single
+ * prefix and stays an IPAddressOrRange_addressRange).  After canonize
+ * the family must contain exactly one IPAddressOrRange of type
+ * addressRange covering the whole block, and is_canonical must
+ * accept it.  Stresses the linear merge path in v3_addr.c.
+ */
+static int test_addr_large_canonize_merge(void)
+{
+    IPAddrBlocks *addr = NULL;
+    int i;
+    int testresult = 0;
+
+    if (!TEST_ptr(addr = sk_IPAddressFamily_new_null()))
+        goto end;
+
+    for (i = 0; i < V3EXT_TEST_LARGE_N; i++) {
+        unsigned char ip[4];
+        unsigned int v = 0x01000001u + (unsigned int)i; /* 1.0.0.1 + i */
+
+        ip[0] = (unsigned char)((v >> 24) & 0xFF);
+        ip[1] = (unsigned char)((v >> 16) & 0xFF);
+        ip[2] = (unsigned char)((v >> 8) & 0xFF);
+        ip[3] = (unsigned char)(v & 0xFF);
+        if (!TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+                ip, 32)))
+            goto end;
+    }
+
+    if (!TEST_true(X509v3_addr_canonize(addr)))
+        goto end;
+
+    if (!TEST_int_eq(sk_IPAddressFamily_num(addr), 1))
+        goto end;
+    {
+        IPAddressFamily *f = sk_IPAddressFamily_value(addr, 0);
+        IPAddressOrRange *aor;
+        unsigned char got_min[4], got_max[4];
+        unsigned int expected_max = 0x01000001u + V3EXT_TEST_LARGE_N - 1;
+        unsigned char want_min[4] = { 0x01, 0x00, 0x00, 0x01 };
+        unsigned char want_max[4];
+
+        want_max[0] = (unsigned char)((expected_max >> 24) & 0xFF);
+        want_max[1] = (unsigned char)((expected_max >> 16) & 0xFF);
+        want_max[2] = (unsigned char)((expected_max >> 8) & 0xFF);
+        want_max[3] = (unsigned char)(expected_max & 0xFF);
+
+        if (!TEST_ptr(f)
+            || !TEST_int_eq(f->ipAddressChoice->type,
+                IPAddressChoice_addressesOrRanges)
+            || !TEST_int_eq(sk_IPAddressOrRange_num(
+                                f->ipAddressChoice->u.addressesOrRanges),
+                1))
+            goto end;
+
+        aor = sk_IPAddressOrRange_value(f->ipAddressChoice->u.addressesOrRanges,
+            0);
+        if (!TEST_ptr(aor)
+            || !TEST_int_eq(aor->type, IPAddressOrRange_addressRange))
+            goto end;
+        if (!TEST_int_eq(X509v3_addr_get_range(aor, IANA_AFI_IPV4,
+                             got_min, got_max, sizeof(got_min)),
+                4)
+            || !TEST_mem_eq(got_min, 4, want_min, 4)
+            || !TEST_mem_eq(got_max, 4, want_max, 4))
+            goto end;
+    }
+
+    if (!TEST_int_eq(X509v3_addr_is_canonical(addr), 1))
+        goto end;
+
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    return testresult;
+}
+
+/*
+ * Interleaved merge / no-merge pattern, exercising the slide-forward
+ * arm of the linear-sweep compaction in ASIdentifierChoice_canonize.
+ *
+ * We build pairs of adjacent integers separated by gaps: (1, 2), (5, 6),
+ * (9, 10), ...  Each pair merges to a single range, so the canonical
+ * output has exactly V3EXT_TEST_LARGE_N / 2 entries.  Critically, after
+ * the second element of every pair merges into the first the merge
+ * loop's `write` index falls behind `read`; the *next* (non-mergeable)
+ * pair-start must then be slid forward into slot `write` and the source
+ * slot at `read` must be NULL'd.  This is the path with no coverage in
+ * the all-merge or all-no-merge tests.
+ */
+static int test_asid_interleaved_canonize(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *val = NULL;
+    int i;
+    int expected = V3EXT_TEST_LARGE_N / 2;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    for (i = 0; i < V3EXT_TEST_LARGE_N; i++) {
+        /* Pair starts at 4*p, then 4*p+1; the next pair starts at 4*(p+1). */
+        int pair = i / 2;
+        int within = i % 2;
+        int64_t v = 4 * (int64_t)pair + within + 1;
+
+        if (!TEST_ptr(val = ASN1_INTEGER_new())
+            || !TEST_true(ASN1_INTEGER_set_int64(val, v)))
+            goto err;
+        if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+                val, NULL)))
+            goto err;
+        val = NULL;
+    }
+
+    if (!TEST_true(X509v3_asid_canonize(asid)))
+        goto err;
+
+    if (!TEST_int_eq(sk_ASIdOrRange_num(asid->asnum->u.asIdsOrRanges),
+            expected))
+        goto err;
+
+    /* Every entry must now be a 2-wide range (the merge result of a pair). */
+    for (i = 0; i < expected; i++) {
+        ASIdOrRange *aor = sk_ASIdOrRange_value(asid->asnum->u.asIdsOrRanges, i);
+
+        if (!TEST_ptr(aor) || !TEST_int_eq(aor->type, ASIdOrRange_range))
+            goto err;
+    }
+
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 1))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * IP-address counterpart to test_asid_interleaved_canonize: pairs of
+ * adjacent /32 prefixes separated by a gap of 2, so each pair merges
+ * but the next pair-start must be slid forward.
+ */
+static int test_addr_interleaved_canonize(void)
+{
+    IPAddrBlocks *addr = NULL;
+    int i;
+    int expected = V3EXT_TEST_LARGE_N / 2;
+    int testresult = 0;
+
+    if (!TEST_ptr(addr = sk_IPAddressFamily_new_null()))
+        goto end;
+
+    for (i = 0; i < V3EXT_TEST_LARGE_N; i++) {
+        unsigned char ip[4];
+        unsigned int pair = (unsigned int)(i / 2);
+        unsigned int within = (unsigned int)(i % 2);
+        unsigned int v = 0x01000000u + 4u * pair + within;
+
+        ip[0] = (unsigned char)((v >> 24) & 0xFF);
+        ip[1] = (unsigned char)((v >> 16) & 0xFF);
+        ip[2] = (unsigned char)((v >> 8) & 0xFF);
+        ip[3] = (unsigned char)(v & 0xFF);
+        if (!TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+                ip, 32)))
+            goto end;
+    }
+
+    if (!TEST_true(X509v3_addr_canonize(addr)))
+        goto end;
+
+    if (!TEST_int_eq(sk_IPAddressFamily_num(addr), 1))
+        goto end;
+    {
+        IPAddressFamily *f = sk_IPAddressFamily_value(addr, 0);
+
+        if (!TEST_ptr(f)
+            || !TEST_int_eq(f->ipAddressChoice->type,
+                IPAddressChoice_addressesOrRanges)
+            || !TEST_int_eq(sk_IPAddressOrRange_num(
+                                f->ipAddressChoice->u.addressesOrRanges),
+                expected))
+            goto end;
+    }
+
+    if (!TEST_int_eq(X509v3_addr_is_canonical(addr), 1))
+        goto end;
+
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    return testresult;
+}
+
+/*
+ * Trigger an overlap-detection error partway through the linear
+ * merge.  The first V3EXT_TEST_LARGE_N / 2 entries are adjacent and
+ * mergeable; entry K is a duplicate of entry K-1 (overlap).  The
+ * canonize call must return 0, and the resulting object must remain
+ * valid: the failed canonize must leave the stack partially
+ * canonicalized but hole-free, so that inspecting it, retrying
+ * canonize, and freeing it are all safe.  ASan / UBSan-instrumented
+ * builds will catch any double-free or use-after-free in those walks.
+ */
+static int test_asid_canonize_error_midsweep(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *val = NULL;
+    int i;
+    int n = V3EXT_TEST_LARGE_N;
+    int k = n / 2;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    for (i = 0; i < n; i++) {
+        /*
+         * Entries 1..k are 1,2,...,k (all adjacent).
+         * Entry k+1 duplicates entry k (overlap, triggers the error).
+         * Remaining entries are far away so they sort after the overlap.
+         */
+        int64_t v;
+
+        if (i < k)
+            v = (int64_t)i + 1;
+        else if (i == k)
+            v = (int64_t)k; /* duplicate, overlap */
+        else
+            v = (int64_t)i + 1000000; /* far suffix, untouched */
+
+        if (!TEST_ptr(val = ASN1_INTEGER_new())
+            || !TEST_true(ASN1_INTEGER_set_int64(val, v)))
+            goto err;
+        if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+                val, NULL)))
+            goto err;
+        val = NULL;
+    }
+
+    /* canonize must reject overlap. */
+    if (!TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    /*
+     * The object must also be safe to inspect and to retry, not only
+     * to free: both calls walk (and the second re-sorts) the stack,
+     * so they would crash on any NULL slot left by the mid-sweep merge.
+     */
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 0)
+        || !TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    /*
+     * Successful return below relies on ASIdentifiers_free walking the
+     * partially-canonicalized, hole-free stack without UAF or
+     * double-free.  Under ASan / UBSan that walk is the actual test.
+     */
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Trigger an overlap-detection error partway through the linear merge
+ * in IPAddressOrRanges_canonize.  Construct a list whose first half is
+ * adjacent and mergeable, with a duplicate at position k that hits the
+ * overlap check after a series of merges has driven write < read.
+ * The canonize call must return 0, and the resulting object must
+ * remain valid: the failed canonize must leave the stack partially
+ * canonicalized but hole-free, so that inspecting it, retrying
+ * canonize, and freeing it are all safe.  ASan / UBSan catches any
+ * double-free or UAF in those walks.
+ */
+static int test_addr_canonize_error_midsweep(void)
+{
+    IPAddrBlocks *addr = NULL;
+    int i;
+    int n = V3EXT_TEST_LARGE_N;
+    int k = n / 2;
+    int testresult = 0;
+
+    if (!TEST_ptr(addr = sk_IPAddressFamily_new_null()))
+        goto end;
+
+    for (i = 0; i < n; i++) {
+        unsigned char ip[4];
+        unsigned int v;
+
+        if (i < k)
+            v = 0x01000000u + (unsigned int)i; /* adjacent /32 prefixes */
+        else if (i == k)
+            v = 0x01000000u + (unsigned int)(k - 1); /* duplicate, overlap */
+        else
+            v = 0x02000000u + (unsigned int)i; /* far suffix, untouched */
+
+        ip[0] = (unsigned char)((v >> 24) & 0xFF);
+        ip[1] = (unsigned char)((v >> 16) & 0xFF);
+        ip[2] = (unsigned char)((v >> 8) & 0xFF);
+        ip[3] = (unsigned char)(v & 0xFF);
+        if (!TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+                ip, 32)))
+            goto end;
+    }
+
+    /* canonize must reject overlap. */
+    if (!TEST_int_eq(X509v3_addr_canonize(addr), 0))
+        goto end;
+
+    /*
+     * The object must also be safe to inspect and to retry, not only
+     * to free: both calls walk (and the second re-sorts) the stack,
+     * so they would crash on any NULL slot left by the mid-sweep merge.
+     */
+    if (!TEST_int_eq(X509v3_addr_is_canonical(addr), 0)
+        || !TEST_int_eq(X509v3_addr_canonize(addr), 0))
+        goto end;
+
+    /*
+     * Successful return below relies on sk_IPAddressFamily_pop_free
+     * walking the partially-canonicalized, hole-free aors stack
+     * without UAF or double-free.  Under ASan / UBSan that walk is
+     * the actual test.
+     */
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    return testresult;
+}
+
+/*
+ * Verify that an ASIdentifiers object remains safe to inspect and to
+ * retry after a canonize() call fails.  The input [1, 2, 2] fails
+ * because 2 overlaps the merged [1, 2] range; the merge of 1 and 2
+ * runs first, so the failure happens mid-sweep.  canonize() must
+ * return 0 and leave the object in a state where is_canonical() and
+ * a second canonize() both run without crashing and return 0.
+ */
+static int test_asid_canonize_failure_then_inspect(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *val = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    if (!TEST_ptr(val = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val, 1))
+        || !TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+            val, NULL)))
+        goto err;
+    val = NULL;
+    if (!TEST_ptr(val = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val, 2))
+        || !TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+            val, NULL)))
+        goto err;
+    val = NULL;
+    if (!TEST_ptr(val = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val, 2))
+        || !TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+            val, NULL)))
+        goto err;
+    val = NULL;
+
+    /* canonize must reject the overlap. */
+    if (!TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    /* The object must be safe to inspect and to retry after the failure. */
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 0))
+        goto err;
+    if (!TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Verify that an IPAddrBlocks object remains safe to inspect and to
+ * retry after a canonize() call fails.  The input
+ * [1.0.0.0/32, 1.0.0.1/32, 1.0.0.1/32] fails because the third
+ * prefix overlaps the merged range of the first two; that merge runs
+ * first, so the failure happens mid-sweep.  canonize() must return 0
+ * and leave the object in a state where is_canonical() and a second
+ * canonize() both run without crashing and return 0.
+ */
+static int test_addr_canonize_failure_then_inspect(void)
+{
+    IPAddrBlocks *addr = NULL;
+    unsigned char ip0[4] = { 1, 0, 0, 0 };
+    unsigned char ip1[4] = { 1, 0, 0, 1 };
+    int testresult = 0;
+
+    if (!TEST_ptr(addr = sk_IPAddressFamily_new_null()))
+        goto end;
+
+    if (!TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+            ip0, 32))
+        || !TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+            ip1, 32))
+        || !TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+            ip1, 32)))
+        goto end;
+
+    /* canonize must reject the overlap. */
+    if (!TEST_int_eq(X509v3_addr_canonize(addr), 0))
+        goto end;
+
+    /* The object must be safe to inspect and to retry after the failure. */
+    if (!TEST_int_eq(X509v3_addr_is_canonical(addr), 0))
+        goto end;
+    if (!TEST_int_eq(X509v3_addr_canonize(addr), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    return testresult;
+}
+
+/*
+ * Exercise the merge arm where `cur` is itself a range (rather than a
+ * single integer), hitting the `case ASIdOrRange_range` detach branch
+ * in ASIdentifierChoice_canonize.  Build adjacent 2-wide ranges
+ * [1,2], [3,4], [5,6], ... which all fold into a single big range
+ * [1, 2 * V3EXT_TEST_LARGE_N].
+ */
+static int test_asid_range_merge_canonize(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *minv = NULL, *maxv = NULL;
+    int i;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    for (i = 0; i < V3EXT_TEST_LARGE_N; i++) {
+        if (!TEST_ptr(minv = ASN1_INTEGER_new())
+            || !TEST_true(ASN1_INTEGER_set_int64(minv,
+                (int64_t)(2 * i + 1)))
+            || !TEST_ptr(maxv = ASN1_INTEGER_new())
+            || !TEST_true(ASN1_INTEGER_set_int64(maxv,
+                (int64_t)(2 * i + 2))))
+            goto err;
+        if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+                minv, maxv)))
+            goto err;
+        minv = maxv = NULL;
+    }
+
+    if (!TEST_true(X509v3_asid_canonize(asid)))
+        goto err;
+
+    if (!TEST_int_eq(sk_ASIdOrRange_num(asid->asnum->u.asIdsOrRanges), 1))
+        goto err;
+    {
+        ASIdOrRange *aor = sk_ASIdOrRange_value(asid->asnum->u.asIdsOrRanges,
+            0);
+        int64_t got_min = 0, got_max = 0;
+
+        if (!TEST_ptr(aor) || !TEST_int_eq(aor->type, ASIdOrRange_range))
+            goto err;
+        /*
+         * The merged range must cover [1, 2 * V3EXT_TEST_LARGE_N];
+         * incorrect max-propagation would still leave a single range
+         * but with a truncated upper bound.
+         */
+        if (!TEST_true(ASN1_INTEGER_get_int64(&got_min, aor->u.range->min))
+            || !TEST_int64_t_eq(got_min, 1)
+            || !TEST_true(ASN1_INTEGER_get_int64(&got_max, aor->u.range->max))
+            || !TEST_int64_t_eq(got_max, (int64_t)(2 * V3EXT_TEST_LARGE_N)))
+            goto err;
+    }
+
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 1))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(minv);
+    ASN1_INTEGER_free(maxv);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Trigger the inverted-range guard partway through the linear merge
+ * in ASIdentifierChoice_canonize.  The first half of the list is
+ * well-formed adjacent integers; entry k is an explicitly inverted
+ * range (min = 1000, max = 100).  X509v3_asid_add_id_or_range does
+ * not validate min <= max for ranges, so the bad entry is admitted
+ * into the list, and canonize must detect it on the sweep.  Like the
+ * overlap case, the failure happens after earlier merges have run, so
+ * canonize must return 0 and leave the object safe to inspect, retry,
+ * and free.
+ *
+ * The addr-side counterpart of this branch (v3_addr.c:849) is not
+ * reachable through the public API: make_addressRange refuses to
+ * construct an inverted IPAddressOrRange in the first place.  The
+ * guard remains as defence against a DER-decoded extension that
+ * carries inverted min/max bit strings; exercising it from C would
+ * require hand-building an IPAddressOrRange, which would bind the
+ * test to internal ASN.1 layout.
+ */
+static int test_asid_canonize_inverted_midsweep(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *val = NULL, *minv = NULL, *maxv = NULL;
+    int i;
+    int n = V3EXT_TEST_LARGE_N;
+    int k = n / 2;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    for (i = 0; i < n; i++) {
+        if (i == k) {
+            /* Inverted range: min=1000, max=100. */
+            if (!TEST_ptr(minv = ASN1_INTEGER_new())
+                || !TEST_true(ASN1_INTEGER_set_int64(minv, 1000))
+                || !TEST_ptr(maxv = ASN1_INTEGER_new())
+                || !TEST_true(ASN1_INTEGER_set_int64(maxv, 100)))
+                goto err;
+            if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+                    minv, maxv)))
+                goto err;
+            minv = maxv = NULL;
+        } else {
+            int64_t v = (i < k) ? (int64_t)i + 1
+                                : (int64_t)i + 1000000; /* far suffix */
+
+            if (!TEST_ptr(val = ASN1_INTEGER_new())
+                || !TEST_true(ASN1_INTEGER_set_int64(val, v)))
+                goto err;
+            if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+                    val, NULL)))
+                goto err;
+            val = NULL;
+        }
+    }
+
+    /* canonize must reject the inverted entry. */
+    if (!TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    /*
+     * The object must also be safe to inspect and to retry, not only
+     * to free: both calls walk (and the second re-sorts) the stack,
+     * so they would crash on any NULL slot left by the mid-sweep merge.
+     */
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 0)
+        || !TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val);
+    ASN1_INTEGER_free(minv);
+    ASN1_INTEGER_free(maxv);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+static int test_addr_subset(void)
+{
+    int i;
+    int ret = 0;
+    IPAddrBlocks *addrEmpty = NULL;
+    IPAddrBlocks *addr[3] = { NULL, NULL };
+    ASN1_OCTET_STRING *ip1[3] = { NULL, NULL };
+    ASN1_OCTET_STRING *ip2[3] = { NULL, NULL };
+    int sz = OSSL_NELEM(addr);
+
+    for (i = 0; i < sz; ++i) {
+        /* Create the IPAddrBlocks with a good IPAddressFamily */
+        if (!TEST_ptr(addr[i] = sk_IPAddressFamily_new_null())
+            || !TEST_ptr(ip1[i] = a2i_IPADDRESS(ranges[i].ip1))
+            || !TEST_ptr(ip2[i] = a2i_IPADDRESS(ranges[i].ip2))
+            || !TEST_true(X509v3_addr_add_range(addr[i], ranges[i].afi, NULL,
+                ip1[i]->data, ip2[i]->data)))
+            goto end;
+    }
+
+    ret = TEST_ptr(addrEmpty = sk_IPAddressFamily_new_null())
+        && TEST_true(X509v3_addr_subset(NULL, NULL))
+        && TEST_true(X509v3_addr_subset(NULL, addr[0]))
+        && TEST_true(X509v3_addr_subset(addrEmpty, addr[0]))
+        && TEST_true(X509v3_addr_subset(addr[0], addr[0]))
+        && TEST_true(X509v3_addr_subset(addr[0], addr[1]))
+        && TEST_true(X509v3_addr_subset(addr[0], addr[2]))
+        && TEST_true(X509v3_addr_subset(addr[1], addr[2]))
+        && TEST_false(X509v3_addr_subset(addr[0], NULL))
+        && TEST_false(X509v3_addr_subset(addr[1], addr[0]))
+        && TEST_false(X509v3_addr_subset(addr[2], addr[1]))
+        && TEST_false(X509v3_addr_subset(addr[0], addrEmpty));
+end:
+    sk_IPAddressFamily_pop_free(addrEmpty, IPAddressFamily_free);
+    for (i = 0; i < sz; ++i) {
+        sk_IPAddressFamily_pop_free(addr[i], IPAddressFamily_free);
+        ASN1_OCTET_STRING_free(ip1[i]);
+        ASN1_OCTET_STRING_free(ip2[i]);
+    }
+    return ret;
+}
+
+/*
+ * Regression test for IPAddrBlocks_new/free and d2i/i2d_IPAddrBlocks (issue #18528).
+ * Ensures empty and non-empty IPAddrBlocks round-trip correctly.
+ */
+static int test_ipaddrblocks_api(void)
+{
+    IPAddrBlocks *addr = NULL, *decoded = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    unsigned char *der = NULL, *derp;
+    int len;
+    int ret = 0;
+
+    /* Round-trip empty IPAddrBlocks */
+    addr = IPAddrBlocks_new();
+    if (!TEST_ptr(addr))
+        goto end;
+    len = i2d_IPAddrBlocks(addr, &der);
+    if (!TEST_int_ge(len, 0) || !TEST_ptr(der))
+        goto end;
+    derp = der;
+    decoded = d2i_IPAddrBlocks(NULL, (const unsigned char **)&derp, len);
+    if (!TEST_ptr(decoded) || !TEST_int_eq(sk_IPAddressFamily_num(decoded), 0))
+        goto end;
+    IPAddrBlocks_free(addr);
+    IPAddrBlocks_free(decoded);
+    OPENSSL_free(der);
+    addr = decoded = NULL;
+    der = NULL;
+
+    /* Round-trip non-empty IPAddrBlocks and verify structure */
+    addr = IPAddrBlocks_new();
+    if (!TEST_ptr(addr))
+        goto end;
+    if (!TEST_true(X509v3_addr_canonize(addr)))
+        goto end;
+    ip1 = a2i_IPADDRESS(ranges[0].ip1);
+    ip2 = a2i_IPADDRESS(ranges[0].ip2);
+    if (!TEST_ptr(ip1) || !TEST_ptr(ip2))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, ranges[0].afi, NULL, ip1->data, ip2->data)))
+        goto end;
+    if (!TEST_true(X509v3_addr_is_canonical(addr)))
+        goto end;
+
+    len = i2d_IPAddrBlocks(addr, &der);
+    if (!TEST_int_ge(len, 0) || !TEST_ptr(der))
+        goto end;
+    derp = der;
+    decoded = d2i_IPAddrBlocks(NULL, (const unsigned char **)&derp, len);
+    if (!TEST_ptr(decoded))
+        goto end;
+    if (!check_addr(decoded, ranges[0].rorp))
+        goto end;
+
+    ret = 1;
+end:
+    IPAddrBlocks_free(addr);
+    IPAddrBlocks_free(decoded);
+    OPENSSL_free(der);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    return ret;
+}
+
+#endif /* OPENSSL_NO_RFC3779 */
+
+OPT_TEST_DECLARE_USAGE("cert.pem\n")
+
+int setup_tests(void)
+{
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    if (!TEST_ptr(infile = test_get_argument(0)))
+        return 0;
+
+    ADD_TEST(test_pathlen);
+    ADD_ALL_TESTS(test_duplicate_field, OSSL_NELEM(duplicate_field_configs));
+    ADD_MFAIL_TEST(test_asn1_multi_mfail);
+#ifndef OPENSSL_NO_RFC3779
+    ADD_TEST(test_asid);
+    ADD_TEST(test_addr_ranges);
+    ADD_TEST(test_ext_syntax);
+    ADD_TEST(test_addr_fam_len);
+    ADD_TEST(test_addr_subset);
+    ADD_TEST(test_asid_large_canonize_merge);
+    ADD_TEST(test_asid_large_canonize_no_merge);
+    ADD_TEST(test_addr_large_canonize_merge);
+    ADD_TEST(test_asid_interleaved_canonize);
+    ADD_TEST(test_addr_interleaved_canonize);
+    ADD_TEST(test_asid_canonize_error_midsweep);
+    ADD_TEST(test_addr_canonize_error_midsweep);
+    ADD_TEST(test_asid_canonize_failure_then_inspect);
+    ADD_TEST(test_addr_canonize_failure_then_inspect);
+    ADD_TEST(test_asid_range_merge_canonize);
+    ADD_TEST(test_asid_canonize_inverted_midsweep);
+    ADD_TEST(test_ipaddrblocks_api);
+#endif /* OPENSSL_NO_RFC3779 */
+    return 1;
+}

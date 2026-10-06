@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+#
+# OpenSSL external testing using the pkcs11-provider
+#
+
+unpatch() {
+    cd "$SRC_ABS_TOP/pkcs11-provider" && git reset --hard "$GITLEVEL"
+}
+
+trap unpatch EXIT
+
+
+PWD="$(pwd)"
+
+SRCTOP="$(cd $SRCTOP; pwd)"
+SRC_ABS_TOP="$PWD/../.."
+DATA_ABS_TOP="$SRC_ABS_TOP/test/recipes/95-test_external_pkcs11_provider_data"
+echo "$DATA_ABS_TOP"
+BLDTOP="$(cd $BLDTOP; pwd)"
+
+if [ "$SRCTOP" != "$BLDTOP" ] ; then
+    echo "Out of tree builds not supported with pkcsa11-provider test!"
+    exit 1
+fi
+
+GITLEVEL=$(git rev-parse HEAD)
+cd "$SRC_ABS_TOP/pkcs11-provider"
+# "git am" refuses to run without a user configured.
+for FILE in "$DATA_ABS_TOP"/patches/*; do
+    if [ -f "$FILE" ]; then
+	git -c 'user.name=OpenSSL External Tests' -c 'user.email=nonsuch@openssl.org' am $FILE
+    fi
+done
+
+cd $BLDTOP
+
+O_EXE="$BLDTOP/apps"
+O_BINC="$BLDTOP/include"
+O_SINC="$SRCTOP/include"
+O_LIB="$BLDTOP"
+
+unset OPENSSL_CONF
+
+export PATH="$O_EXE:$PATH"
+export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
+export OPENSSL_ROOT_DIR="$O_LIB"
+
+# Check/Set openssl version
+OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
+
+echo "------------------------------------------------------------------"
+echo "Testing OpenSSL using pkcs11-provider:"
+echo "   CWD:                $PWD"
+echo "   SRCTOP:             $SRCTOP"
+echo "   BLDTOP:             $BLDTOP"
+echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
+echo "   OpenSSL version:    $OPENSSL_VERSION"
+echo "------------------------------------------------------------------"
+
+PKCS11_PROVIDER_SRCDIR=$OPENSSL_ROOT_DIR/pkcs11-provider/
+PKCS11_PROVIDER_BUILDDIR=$OPENSSL_ROOT_DIR/pkcs11-provider/builddir
+
+echo "------------------------------------------------------------------"
+echo "Building pkcs11-provider"
+echo "------------------------------------------------------------------"
+
+PKG_CONFIG_PATH="$BLDTOP" meson setup $PKCS11_PROVIDER_BUILDDIR $OPENSSL_ROOT_DIR/pkcs11-provider/ || exit 1
+meson compile -C $PKCS11_PROVIDER_BUILDDIR pkcs11 || exit 1
+
+# Remove pkcs11-provider tlsfuzzer submodule tlsfuzzer directory to skip tlsfuzzer tests
+if [ -d "${PKCS11_PROVIDER_SRCDIR}/tlsfuzzer/tlsfuzzer" ]; then
+    rm -rf "${PKCS11_PROVIDER_SRCDIR}/tlsfuzzer/tlsfuzzer"
+fi
+
+echo "------------------------------------------------------------------"
+echo "Running tests"
+echo "------------------------------------------------------------------"
+
+# For maintenance reasons and simplicity we only run test with kryoptic token
+meson test -C $PKCS11_PROVIDER_BUILDDIR --print-errorlogs --suite=kryoptic
+
+RESULT=$?
+
+rm -rf $PKCS11_PROVIDER_BUILDDIR
+
+exit $RESULT

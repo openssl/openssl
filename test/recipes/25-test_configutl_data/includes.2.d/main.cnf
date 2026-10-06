@@ -1,0 +1,4 @@
+[includes2]
+main = present
+
+.include tests/config/include.2.d/subincludes.d

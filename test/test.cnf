@@ -1,0 +1,103 @@
+
+####################################################################
+[ ca ]
+default_ca	= CA_default		# The default ca section
+
+####################################################################
+[ CA_default ]
+
+dir		= ./demoCA		# Where everything is kept
+certs		= $dir/certs		# Where the issued certs are kept
+database	= $dir/index.txt	# database index file.
+new_certs_dir	= $dir/new_certs	# default place for new certs.
+
+certificate	= $dir/CAcert.pem 	# The CA certificate
+serial		= $dir/serial 		# The current serial number
+crl		= $dir/crl.pem 		# The current CRL
+private_key	= $dir/private/CAkey.pem# The private key
+
+default_days	= 365			# how long to certify for
+default_crl_days= 30			# how long before next CRL
+default_md	= md5			# which md to use.
+
+# A few difference way of specifying how similar the request should look
+# For type CA, the listed attributes must be the same, and the optional
+# and supplied fields are just that :-)
+policy		= policy_match
+
+# For the CA policy
+[ policy_match ]
+countryName		= match
+stateOrProvinceName	= match
+organizationName	= match
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+# For the 'anything' policy
+# At this point in time, you must list all acceptable 'object'
+# types.
+[ policy_anything ]
+countryName		= optional
+stateOrProvinceName	= optional
+localityName		= optional
+organizationName	= optional
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+####################################################################
+[ req ]
+distinguished_name	= req_distinguished_name
+
+# Make altreq be identical to req
+[ altreq ]
+distinguished_name	= req_distinguished_name
+encrypt_rsa_key		= no
+
+[ req_distinguished_name ]
+countryName			= C field
+countryName_value		= AU
+stateOrProvinceName		= SP field
+stateOrProvinceName_value	=
+localityName			= L field
+localityName_value		= Brisbane
+organizationName		= O field
+organizationName_value		= CryptSoft Pty Ltd
+organizationalUnitName		= OU field
+organizationalUnitName_value	= .
+commonName			= CN field
+commonName_value		= Eric Young
+emailAddress			= email field
+emailAddress_value		= eay@mincom.oz.au
+
+# Request section with prompt-style attributes
+[ req_attrs ]
+distinguished_name	= req_distinguished_name
+attributes		= req_attributes
+
+[ req_attributes ]
+challengePassword		= A challenge password
+challengePassword_value		= SecretPass123
+challengePassword_min		= 4
+challengePassword_max		= 20
+unstructuredName		= An unstructured name
+unstructuredName_value		= An Example Company
+
+# Request section with attributes without prompting
+[ req_attrs_noprompt ]
+prompt			= no
+distinguished_name	= dirname_sec
+attributes		= req_attributes_noprompt
+
+[ req_attributes_noprompt ]
+challengePassword	= NopromptSecret456
+
+[ dirname_sec ]
+C  = UK
+O  = My Organization
+OU = My Unit
+CN = My Name
+
+[ reqexts ]
+keyUsage = critical,digitalSignature,keyEncipherment

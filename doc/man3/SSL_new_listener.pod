@@ -1,0 +1,442 @@
+=pod
+
+=head1 NAME
+
+SSL_new_listener, SSL_new_listener_from, SSL_is_listener, SSL_get0_listener,
+SSL_listen, SSL_listen_ex,
+SSL_accept_connection, SSL_get_accept_connection_queue_len,
+SSL_new_from_listener,
+SSL_ACCEPT_CONNECTION_NO_BLOCK,
+SSL_LISTENER_FLAG_NO_VALIDATE,
+SSL_LISTENER_FLAG_ADDRESS_VALIDATION,
+SSL_LISTENER_FLAG_SINGLE_THREAD - SSL object interface for abstracted connection
+acceptance
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
+ SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags);
+
+ int SSL_is_listener(SSL *ssl);
+ SSL *SSL_get0_listener(SSL *ssl);
+
+ int SSL_listen(SSL *ssl);
+ int SSL_listen_ex(SSL *ssl, SSL *new_conn);
+
+ #define SSL_ACCEPT_CONNECTION_NO_BLOCK
+
+ #define SSL_LISTENER_FLAG_NO_VALIDATE
+ #define SSL_LISTENER_FLAG_ADDRESS_VALIDATION
+ #define SSL_LISTENER_FLAG_SINGLE_THREAD
+
+ SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
+
+ size_t SSL_get_accept_connection_queue_len(SSL *ssl);
+
+ SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags);
+
+=head1 DESCRIPTION
+
+The SSL_new_listener() function creates a listener SSL object.  Listener SSL
+objects are specialised to only accept network connections in a protocol-
+agnostic manner. They cannot be used, for example, for sending or receiving data
+using L<SSL_write_ex(3)> or L<SSL_read_ex(3)>. In general, only those functions
+expressly documented as being supported on a listener SSL object are available.
+
+The SSL_new_listener_from() function creates a listener SSL object which is
+subordinate to a QUIC domain SSL object I<ssl>. See L<SSL_new_domain(3)> and
+L<openssl-quic-concurrency(7)> for details on QUIC domain SSL objects.
+
+A listener SSL object supports the following operations:
+
+=over 4
+
+=item
+
+Standard reference counting and free operations, such as L<SSL_up_ref(3)> and
+L<SSL_free(3)>;
+
+=item
+
+Network BIO configuration operations, such as L<SSL_set_bio(3)>;
+
+=item
+
+Event processing and polling enablement APIs such as L<SSL_handle_events(3)>,
+L<SSL_get_event_timeout(3)>, L<SSL_get_rpoll_descriptor(3)>,
+L<SSL_get_wpoll_descriptor(3)>, L<SSL_net_read_desired(3)> and
+L<SSL_net_write_desired(3)>;
+
+=item
+
+Certain configurable parameters described in L<SSL_get_value_uint(3)> (see
+L<SSL_get_value_uint(3)> for details);
+
+=item
+
+Accepting network connections using the functions documented in this manual
+page, such as SSL_accept_connection().
+
+=back
+
+The basic workflow of using a listener object is as follows:
+
+=over 4
+
+=item
+
+Create a new listener object using SSL_new_listener() using a B<SSL_CTX> which
+uses a supported B<SSL_METHOD> (such as L<OSSL_QUIC_server_method(3)>);
+
+=item
+
+Configure appropriate network BIOs using L<SSL_set_bio(3)> on the listener SSL
+object;
+
+=item
+
+Configure the blocking mode using L<SSL_set_blocking_mode(3)>;
+
+=item
+
+Accept connections in a loop by calling SSL_accept_connection(). Each returned
+SSL object is a valid connection which can be used in a normal manner.
+
+=back
+
+The SSL_is_listener() function returns 1 if and only if a SSL object is a
+listener SSL object.
+
+The SSL_get0_listener() function returns a listener object which is related to
+the given SSL object, if there is one. For a listener object, this is the same
+object (the function returns its argument). For a connection object which was
+created by a listener object, that listener object is returned. If the I<ssl>
+argument is an SSL object which is not a listener object and which is not
+descended from a listener object (e.g. a connection obtained using
+SSL_accept_connection()) or indirectly from a listener object (e.g. a QUIC
+stream SSL object obtained using SSL_accept_stream() called on a connection
+obtained using SSL_accept_connection()) the return value is NULL. See NOTES
+below for caveats related to pending SSL connections on a QUIC listener's accept
+queue.
+
+The SSL_listen() function begins monitoring the listener I<ssl> for incoming
+connections. Appropriate BIOs must have been configured before calling
+SSL_listen(), along with any other needed configuration for the listener SSL
+object. It is typically not necessary to call SSL_listen() because it will be
+called automatically on the first call to SSL_accept_connection(). However,
+SSL_listen() may be called explicitly if it is desired to control precisely when
+the listening process begins, or to ensure that no errors occur when starting to
+listen for connections. After a call to SSL_listen() (or
+SSL_accept_connection()) succeeds. The SSL_listen() function is idempotent,
+subsequent calls on the same I<ssl> object are no-ops. This call is supported
+only on listener SSL objects.
+
+The SSL_listen_ex() function behaves in a similar fashion to L<DTLSv1_listen(3)>
+in that it polls a listening SSL object, and, if a new connection is available,
+writes that connection into the SSL object pointed to by B<new_conn>.  Note that
+once a connection is returned from a listener via this call, accepting
+connections via L<SSL_accept_connection(3)> is no longer permissible, and will
+result in an error. Many calls into the QUIC API may trigger the QUIC reactor
+(such as L<SSL_poll(3)>) and select L<SSL_accept_connection(3)> mode for the
+port. Applications intending to use SSL_listen_ex() must call it before any
+operation selects that mode; in practice, it should be the first I/O call made
+on the listener.
+
+Likewise, if a listener has accepted a connection via
+L<SSL_accept_connection(3)>, it is impermissible to accept connections via
+B<SSL_listen_ex()>. The SSL object passed in the B<new_conn> parameter must be
+a fresh standalone connection returned by L<SSL_new(3)>.
+L<OSSL_QUIC_method(3)> is intended for this use. The connection must not use
+thread assisted mode, have been started or shut down, have streams or network
+BIOs configured on it, or belong to another QUIC object hierarchy. The
+application must not access I<new_conn> concurrently while SSL_listen_ex() is
+executing.
+
+On success, I<new_conn> is adopted into the listener's object hierarchy and
+uses its shared network port and TLS configuration derived from the listener.
+Certificates, verification parameters, ciphersuites, ALPN configuration and
+other security policy must be configured on the listener's
+B<SSL_CTX>. The connection is reset to accepted-connection defaults. TLS
+callbacks and QUIC message tracing callbacks are derived from the listener.
+Application ex data set on I<new_conn> is retained. Applications must not rely
+on any other configuration applied to I<new_conn> before the call being
+retained. Configure such settings on the listener or after SSL_listen_ex()
+succeeds. Applications must not call L<SSL_set_bio(3)> or L<SSL_set_fd(3)> to
+install a private connected BIO or file descriptor on the returned connection;
+it continues to use the listener's shared network port.
+
+Once B<SSL_listen_ex()> returns success, the connection written to I<new_conn>
+is already in the accept (server) state. Use L<SSL_do_handshake(3)> (or
+L<SSL_handle_events(3)>) to progress its handshake towards completion.
+L<SSL_accept(3)> must not be used for this purpose; use
+L<SSL_do_handshake(3)> instead.
+
+The SSL_accept_connection() call is supported only on a listener SSL object and
+accepts a new incoming connection. A new SSL object representing the accepted
+connection is created and returned on success. If no incoming connection is
+available and the listener SSL object is configured in nonblocking mode, NULL is
+returned.
+
+The new SSL object returned from SSL_accept_connection() may or may not have
+completed its handshake at the point it is returned. Optionally, you may use the
+function L<SSL_is_init_finished(3)> to determine this. You may call the
+functions L<SSL_accept(3)>, L<SSL_do_handshake(3)> or L<SSL_handle_events(3)> to
+progress the state of the SSL object towards handshake completion. Other "I/O"
+functions may also implicitly progress the state of the handshake such as
+L<SSL_poll(3)>, L<SSL_read(3)> and L<SSL_write(3)>.
+
+The B<SSL_ACCEPT_CONNECTION_NO_BLOCK> flag may be specified to
+SSL_accept_connection(). If specified, the call does not block even if the
+listener SSL object is configured in blocking mode.
+
+The SSL_get_accept_connection_queue_len() call returns the number of pending
+connections on the I<ssl> listener's queue. SSL_accept_connection() returns the
+next pending connection, removing it from the queue. The returned connection
+count is a point-in-time value, the actual number of connections that will
+ultimately be returned may be different.
+
+For DTLS listeners, several per-listener tunables are configured through
+L<SSL_get_value_uint(3)> / L<SSL_set_value_uint(3)>:
+B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (pending-connection cap, default
+256, cannot be disabled), B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> (millisecond
+reap timeout, default 30000, B<UINT64_MAX> disables) and
+B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE> (maximum received datagram size in
+bytes, default 2000). See L<SSL_get_value_uint(3)> for details.
+
+Currently, listener SSL objects are supported for QUIC server usage via
+L<OSSL_QUIC_server_method(3)>, QUIC client-only usage via
+L<OSSL_QUIC_client_method(3)> or L<OSSL_QUIC_client_thread_method(3)> (see
+L</CLIENT-ONLY USAGE>), and DTLS server usage via L<DTLS_server_method(3)>.
+The listener interface provides an abstracted API for connection acceptance
+that may be expanded to support other protocols in the future.
+
+SSL_listen() and SSL_accept_connection() are "I/O" functions, meaning that they
+update the value returned by L<SSL_get_error(3)> if they fail.
+
+=head1 CLIENT-ONLY USAGE
+
+It is also possible to use the listener interface without accepting any
+connections and without listening for connections. This can be useful in
+circumstances where it is desirable for multiple connections to share the same
+underlying network resources. For example, multiple outgoing QUIC client
+connections could be made to use the same underlying UDP socket.
+
+To disable client address validation on a listener SSL object, the flag
+B<SSL_LISTENER_FLAG_NO_VALIDATE> may be passed in the flags field of both
+SSL_new_listener() and SSL_new_listener_from().  Note that this flag only
+impacts the sending of retry frames for server address validation.  Tokens may
+still be communicated from the server via NEW_TOKEN frames, which will still
+be validated on receipt in future connections.  Note that this setting is not
+recommended and may be dangerous in untrusted environments.  Not performing
+address validation exposes the server to malicious clients that may open large
+numbers of connections and never transact data on them (roughly equivalent to
+a TCP syn flood attack), which address validation mitigates.
+
+The SSL_new_from_listener() function creates a client connection under a given
+listener SSL object. For QUIC, it is also possible to use
+SSL_new_from_listener(), leading to a UDP network endpoint which has both
+incoming and outgoing connections.
+
+The I<flags> argument of SSL_new_from_listener() is reserved and must be set to
+0.
+
+=head1 DTLS LISTENER USAGE
+
+The SSL_new_listener() function supports DTLS when called with an SSL_CTX
+created using L<DTLS_server_method(3)> or L<DTLS_method(3)>. A DTLS listener
+provides server-side connection demultiplexing, allowing multiple DTLS clients
+to connect to the same UDP socket.
+
+For DTLS listeners, address validation is performed by default: the listener
+sends a HelloVerifyRequest (HVR) with a cookie for DTLS 1.0/1.2 connections and
+a HelloRetryRequest (HRR) with a cookie extension for DTLS 1.3 connections, and
+the client must echo the valid cookie in a subsequent ClientHello before the
+handshake proceeds. This protects against amplification attacks across all
+supported DTLS versions. The following flags adjust this behavior:
+
+=over 4
+
+=item B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION>
+
+Requests address validation (HVR for DTLS 1.0/1.2, HRR with cookie for
+DTLS 1.3). This is the default.
+
+=item B<SSL_LISTENER_FLAG_NO_VALIDATE>
+
+Disables all address validation. The listener will not send HelloVerifyRequest
+(for DTLS 1.0/1.2) or HelloRetryRequest with cookie (for DTLS 1.3). This is
+faster but provides no protection against amplification attacks, and is not
+recommended for use in untrusted network environments. If both this flag and
+B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION> are specified, the listener fails safe
+and performs address validation.
+
+=item B<SSL_LISTENER_FLAG_SINGLE_THREAD>
+
+Specifies that the DTLS listener will operate in single-threaded mode. When
+this flag is set, the listener and all connections accepted from it should
+only be used from a single thread at a time. Single-threaded mode avoids the
+overhead of synchronization mechanisms and notifiers.
+
+If this flag is not set, the listener initializes internal synchronization
+mechanisms that allow connections accepted from the listener to be safely
+used from multiple threads concurrently.
+
+This flag is only applicable to DTLS listeners.
+
+=back
+
+For DTLS listeners, SSL_accept_connection() returns a connection after cookie
+validation is complete (the default) or after receiving the first ClientHello
+(if B<SSL_LISTENER_FLAG_NO_VALIDATE> is set). The handshake is B<not> complete
+at this point. The application must call L<SSL_do_handshake(3)> or
+L<SSL_accept(3)> to complete the handshake before sending or receiving
+application data.
+
+If cookie generation and verification callbacks have not been set on the
+SSL_CTX using L<SSL_CTX_set_cookie_generate_cb(3)> and
+L<SSL_CTX_set_cookie_verify_cb(3)> (for HVR) or
+L<SSL_CTX_set_stateless_cookie_generate_cb(3)> and
+L<SSL_CTX_set_stateless_cookie_verify_cb(3)> (for HRR), the DTLS listener will
+install internal default callbacks automatically. These internal callbacks
+generate and verify cookies based on the client's address, providing basic
+amplification attack protection without requiring application-specific
+callback implementations.
+
+A DTLS listener demultiplexes a single network socket to many connections, so it
+cannot allow one connection's read to block and thereby stall the others. Its
+network BIO is configured for nonblocking operation when it is set, and blocking
+behaviour is provided by waiting for readiness of that socket instead. A DTLS
+listener is blocking by default, and the connections it returns inherit that;
+use L<SSL_set_blocking_mode(3)> to change it. A listener whose BIO cannot provide
+a poll descriptor, such as one using a memory BIO, has nothing to wait on and is
+nonblocking whatever is requested.
+
+An example DTLS server using the listener API in single threaded mode which only
+accepts one connection at a time. A typical implementation would utilize L<SSL_poll(3)>
+and can accept multiple connections concurrently.
+
+ SSL_CTX *ctx = SSL_CTX_new(DTLS_server_method());
+ SSL_CTX_use_certificate_file(ctx, "server.pem", SSL_FILETYPE_PEM);
+ SSL_CTX_use_PrivateKey_file(ctx, "key.pem", SSL_FILETYPE_PEM);
+
+ /*
+  * Create listener in single-threaded mode.  Address validation (HVR for
+  * DTLS 1.0/1.2, HRR with cookie for DTLS 1.3) is enabled by default.
+  */
+ SSL *listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD);
+
+ /* Set up UDP socket BIO */
+ BIO *bio = BIO_new_dgram(socket_fd, BIO_NOCLOSE);
+ SSL_set_bio(listener, bio, bio);
+
+ /* Start listening */
+ SSL_listen(listener);
+
+ /* Accept connections (blocking) */
+ while ((conn = SSL_accept_connection(listener, 0)) != NULL) {
+     /*
+      * conn has passed cookie validation but handshake is not complete.
+      * Complete the handshake with SSL_do_handshake() or SSL_accept().
+      */
+     if (SSL_do_handshake(conn) != 1) {
+         /* Handle handshake error or retry */
+     }
+     /* Handle the connection... */
+ }
+
+Note that SSL_new_listener_from() and SSL_listen_ex() are not supported for
+DTLS listeners and will return NULL or an error if called with a DTLS SSL
+object.
+
+=head1 RETURN VALUES
+
+SSL_new_listener() and SSL_new_listener_from() return a new listener SSL object
+or NULL on failure.
+
+SSL_is_listener() returns 1 if its I<ssl> argument is a listener object, 0
+otherwise.
+
+SSL_get0_listener() returns an SSL object pointer (potentially to the same
+object on which it is called) or NULL.
+
+SSL_listen() returns 1 on success or 0 on failure.
+
+SSL_listen_ex() returns 1 when a new connection was accepted on the new_conn
+parameter, 0 if no new connection was available at the time of the call, or -1
+on error, signaling a need to check the error queue.
+
+SSL_accept_connection() returns a pointer to a new SSL object on success or NULL
+on failure. On success, the caller assumes ownership of the reference.
+
+SSL_get_accept_connection_queue_len() returns a nonnegative value, or 0 if the
+queue is empty, or called on an unsupported SSL object type.
+
+SSL_new_from_listener() returns a pointer to a new SSL object on success or NULL
+on failure. On success, the caller assumes ownership of the reference.
+
+=head1 NOTES
+
+SSL_get0_listener() behaves somewhat differently in SSL callbacks for QUIC
+connections.  As QUIC connections begin TLS handshake operations prior to them
+being accepted via SSL_accept_connection(), an application may receive callbacks
+for such pending connection prior to acceptance via SSL_accept_connection().  As
+listener association takes place during the accept process, prior to being
+returned from SSL_accept_connection(), calls to SSL_get0_listener() made from
+such SSL callbacks will return NULL.  This can be used as an indicator within
+the callback that the referenced SSL object has not yet been accepted.
+
+=head1 THREAD SAFETY
+
+For DTLS listeners, the network BIOs (set via L<SSL_set_bio(3)>) must not be
+changed concurrently with any other operations on the listener or its
+connections. This includes SSL_accept_connection(), L<SSL_poll(3)>,
+L<SSL_handle_events(3)>, and any I/O operations on connections created from
+the listener.
+
+The BIO should typically be configured once before calling SSL_listen() and
+not modified afterward while the listener is in use. Changing the BIO while
+other threads are actively using the listener or its connections results in
+undefined behavior.
+
+When using B<SSL_LISTENER_FLAG_SINGLE_THREAD>, all operations on the listener
+and its connections must be performed from a single thread at a time. No
+additional synchronization is provided in this mode.
+
+=head1 SEE ALSO
+
+L<OSSL_QUIC_server_method(3)>, L<DTLS_server_method(3)>, L<DTLSv1_listen(3)>,
+L<SSL_free(3)>, L<SSL_set_bio(3)>, L<SSL_handle_events(3)>,
+L<SSL_get_rpoll_descriptor(3)>, L<SSL_set_blocking_mode(3)>,
+L<SSL_CTX_set_cookie_generate_cb(3)>, L<SSL_CTX_set_cookie_verify_cb(3)>,
+L<SSL_CTX_set_stateless_cookie_generate_cb(3)>,
+L<SSL_CTX_set_stateless_cookie_verify_cb(3)>,
+L<SSL_get_value_uint(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.5.
+
+SSL_listen_ex() was added in OpenSSL 4.0.
+
+DTLS listener support (including the B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION>,
+B<SSL_LISTENER_FLAG_NO_VALIDATE> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
+flags) was added in OpenSSL 4.1.
+
+The DTLS listener tunables B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>,
+B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> and
+B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE>, accessed via
+L<SSL_get_value_uint(3)> and L<SSL_set_value_uint(3)>, were added in
+OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

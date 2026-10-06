@@ -1,0 +1,381 @@
+#! /usr/bin/env perl
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+use strict;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file srctop_dir bldtop_dir/;
+use OpenSSL::Test::Utils;
+use File::Temp qw(tempfile);
+use TLSProxy::Proxy;
+use TLSProxy::Message;
+use checkhandshake qw(checkhandshake @handmessages @extensions);
+use Cwd qw(abs_path);
+
+my $test_name = "test_tls13certcomp";
+setup($test_name);
+
+$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
+
+plan skip_all => "TLSProxy isn't usable on $^O"
+    if $^O =~ /^(VMS)$/;
+
+plan skip_all => "$test_name needs the module feature enabled"
+    if disabled("module");
+
+plan skip_all => "$test_name needs the sock feature enabled"
+    if disabled("sock");
+
+plan skip_all => "$test_name needs TLSv1.3 enabled"
+    if disabled("tls1_3");
+
+plan skip_all => "$test_name needs EC enabled"
+    if disabled("ec");
+
+plan skip_all => "$test_name needs compression and algorithms enabled"
+    if disabled("comp") || (disabled("brotli") && disabled("zlib") && disabled("zstd"));
+
+@handmessages = (
+    [TLSProxy::Message::MT_CLIENT_HELLO,
+        checkhandshake::ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_SERVER_HELLO,
+        checkhandshake::ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS,
+        checkhandshake::ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_CERTIFICATE_REQUEST,
+        checkhandshake::CERT_COMP_CLI_HANDSHAKE | checkhandshake::CERT_COMP_BOTH_HANDSHAKE],
+    [TLSProxy::Message::MT_CERTIFICATE,
+        checkhandshake::ALL_HANDSHAKES & ~(checkhandshake::CERT_COMP_SRV_HANDSHAKE | checkhandshake::CERT_COMP_BOTH_HANDSHAKE)],
+    [TLSProxy::Message::MT_COMPRESSED_CERTIFICATE,
+        checkhandshake::CERT_COMP_SRV_HANDSHAKE | checkhandshake::CERT_COMP_BOTH_HANDSHAKE],
+    [TLSProxy::Message::MT_CERTIFICATE_VERIFY,
+        checkhandshake::ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_FINISHED,
+        checkhandshake::ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_COMPRESSED_CERTIFICATE,
+        checkhandshake::CERT_COMP_CLI_HANDSHAKE | checkhandshake::CERT_COMP_BOTH_HANDSHAKE],
+    [TLSProxy::Message::MT_CERTIFICATE_VERIFY,
+        checkhandshake::CERT_COMP_CLI_HANDSHAKE | checkhandshake::CERT_COMP_BOTH_HANDSHAKE],
+    [TLSProxy::Message::MT_FINISHED,
+        checkhandshake::ALL_HANDSHAKES],
+    [0, 0]
+);
+
+@extensions = (
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::SERVER_NAME_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::ALPN_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::SCT_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::PSK_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_COMPRESS_CERTIFICATE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::CERT_COMP_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        TLSProxy::Message::SERVER,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+        TLSProxy::Message::SERVER,
+        checkhandshake::KEY_SHARE_HRR_EXTENSION],
+
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::SERVER_NAME_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::ALPN_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::SCT_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::PSK_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_COMPRESS_CERTIFICATE,
+        TLSProxy::Message::CLIENT,
+        checkhandshake::CERT_COMP_CLI_EXTENSION],
+
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        TLSProxy::Message::SERVER,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+        TLSProxy::Message::SERVER,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,
+        TLSProxy::Message::SERVER,
+        checkhandshake::PSK_SRV_EXTENSION],
+
+    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SERVER_NAME,
+        TLSProxy::Message::SERVER,
+        checkhandshake::SERVER_NAME_SRV_EXTENSION],
+    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_ALPN,
+        TLSProxy::Message::SERVER,
+        checkhandshake::ALPN_SRV_EXTENSION],
+    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+        TLSProxy::Message::SERVER,
+        checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION],
+
+    [TLSProxy::Message::MT_CERTIFICATE_REQUEST, TLSProxy::Message::EXT_SIG_ALGS,
+        TLSProxy::Message::SERVER,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CERTIFICATE_REQUEST, TLSProxy::Message::EXT_COMPRESS_CERTIFICATE,
+        TLSProxy::Message::SERVER,
+        checkhandshake::CERT_COMP_SRV_EXTENSION],
+
+    [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_STATUS_REQUEST,
+        TLSProxy::Message::SERVER,
+        checkhandshake::STATUS_REQUEST_SRV_EXTENSION],
+    [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_SCT,
+        TLSProxy::Message::SERVER,
+        checkhandshake::SCT_SRV_EXTENSION],
+
+    [0,0,0,0]
+);
+
+my $testcount = 9;
+
+plan tests => 2 * $testcount;
+
+SKIP: {
+    skip "TLS 1.3 is disabled", $testcount if disabled("tls1_3");
+    # Run tests with TLS
+    run_tests(0);
+}
+
+SKIP: {
+    skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
+    skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
+    run_tests(1);
+}
+
+sub run_tests
+{
+    my $run_test_as_dtls = shift;
+    my $proxy_start_success = 0;
+
+    my $proxy;
+    if ($run_test_as_dtls == 1) {
+        $proxy = TLSProxy::Proxy->new_dtls(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
+        );
+    }
+    else {
+        $proxy = TLSProxy::Proxy->new(
+            undef,
+            cmdstr(app([ "openssl" ]), display => 1),
+            srctop_file("apps", "server.pem"),
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
+        );
+    }
+
+    $proxy->clear();
+
+    #Test 1: Client sends cert comp, but no client auth
+    $proxy->serverconnects(2);
+    $proxy->clear();
+    $proxy->serverflags("-no_tx_cert_comp -no_rx_cert_comp");
+    # One final skip check
+    $proxy_start_success = $proxy->start();
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION,
+        "Client supports certificate compression");
+
+    #Test 2: Server sends cert comp, no client auth
+    $proxy->clear();
+    $proxy->clientflags("-no_tx_cert_comp -no_rx_cert_comp");
+    $proxy->serverflags("-cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Server supports certificate compression, but no client auth");
+
+    #Test 3: Both send cert comp, no client auth
+    $proxy->clear();
+    $proxy->serverflags("-cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_SRV_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Both support certificate compression, but no client auth");
+
+    #Test 4: Both send cert comp, with client auth
+    $proxy->clear();
+    $proxy->clientflags("-cert " . srctop_file("apps", "server.pem"));
+    $proxy->serverflags("-Verify 5 -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_BOTH_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Both support certificate compression, with client auth");
+
+    #Test 5: Client-to-server-only certificate compression, with client auth
+    $proxy->clear();
+    $proxy->clientflags("-no_rx_cert_comp -cert " . srctop_file("apps", "server.pem"));
+    $proxy->serverflags("-no_tx_cert_comp -Verify 5 -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_CLI_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Client-to-server-only certificate compression, with client auth");
+
+    #Test 6: Server-to-client-only certificate compression
+    $proxy->clear();
+    $proxy->clientflags("-no_tx_cert_comp");
+    $proxy->serverflags("-no_rx_cert_comp -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::CERT_COMP_SRV_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION,
+        "Server-to-client-only certificate compression");
+
+    #Test 7: Neither side wants to send a compressed cert, but will accept one
+    $proxy->clear();
+    $proxy->clientflags("-no_tx_cert_comp");
+    $proxy->serverflags("-no_tx_cert_comp -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::CERT_COMP_CLI_EXTENSION
+            | checkhandshake::CERT_COMP_SRV_EXTENSION,
+        "Accept but not send compressed certificates");
+
+    #Test 8: Neither side wants to receive a compressed cert, but will send one
+    $proxy->clear();
+    $proxy->clientflags("-no_rx_cert_comp");
+    $proxy->serverflags("-no_rx_cert_comp -cert_comp");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS,
+        "Send but not accept compressed certificates");
+
+    #Test 9: Excessive uncompressed certificate length in CompressedCertificate
+    SKIP: {
+        skip "TLSProxy does not support modifying fragmented encrypted messages for dtls", 1
+            if $run_test_as_dtls == 1;
+        $proxy->clear();
+        $proxy->filter(\&excessive_uncompressed_len_filter);
+        $proxy->serverflags("-cert_comp");
+        $proxy->start();
+        ok(is_alert_message(TLSProxy::Message::AL_DESC_BAD_CERTIFICATE),
+            "Excessive uncompressed certificate length rejected");
+    }
+}
+
+my $done = 0;
+
+sub excessive_uncompressed_len_filter
+{
+    my $proxy = shift;
+
+    return if $done;
+
+    foreach my $m (@{$proxy->message_list}) {
+        next unless $m->mt == TLSProxy::Message::MT_COMPRESSED_CERTIFICATE;
+
+        my $data = $m->data;
+        # RFC8879 CompressedCertificate:
+        # uint16 algorithm; uint24 uncompressed_length; ...
+        substr($data, 2, 3) = "\xFF\xFF\xFF";   # uncompressed_length
+        $m->data($data);
+        $m->repack();
+        $done = 1;
+        last;
+    }
+}
+
+# Test if the last message was a failure and matches the expected type.
+sub is_alert_message
+{
+    my $alert_type = shift;
+    return 0 unless TLSProxy::Message->fail();
+    return 1 if TLSProxy::Message->alert->description() == $alert_type;
+    return 0;
+}

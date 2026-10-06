@@ -1,0 +1,669 @@
+/*
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/* ASN1_STRING tests */
+
+#include <stdio.h>
+
+#include <openssl/asn1.h>
+#include "testutil.h"
+
+struct abs_get_length_test {
+    const char *descr;
+    int valid;
+    const unsigned char der[20];
+    int der_len;
+    size_t length;
+    int unused_bits;
+};
+
+static const struct abs_get_length_test abs_get_length_tests[] = {
+    {
+        .descr = "zero bits",
+        .valid = 1,
+        .der = { 0x03, 0x01, 0x00 },
+        .der_len = 3,
+        .length = 0,
+        .unused_bits = 0,
+    },
+    {
+        .descr = "zero bits one unused",
+        .valid = 0,
+        .der = { 0x03, 0x01, 0x01 },
+        .der_len = 3,
+    },
+    {
+        .descr = "single zero bit",
+        .valid = 1,
+        .der = { 0x03, 0x02, 0x07, 0x00 },
+        .der_len = 4,
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "single one bit",
+        .valid = 1,
+        .der = { 0x03, 0x02, 0x07, 0x80 },
+        .der_len = 4,
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        /* XXX - the library pretends this is 03 02 07 80 */
+        .descr = "invalid: single one bit, seventh bit set",
+        .valid = 1,
+        .der = { 0x03, 0x02, 0x07, 0xc0 },
+        .der_len = 4,
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "x.690, primitive encoding in example 8.6.4.2",
+        .valid = 1,
+        .der = { 0x03, 0x07, 0x04, 0x0A, 0x3b, 0x5F, 0x29, 0x1c, 0xd0 },
+        .der_len = 9,
+        .length = 6,
+        .unused_bits = 4,
+    },
+    {
+        /*
+         * XXX - the library thinks it "decodes" this but gets it
+         * quite wrong. Looks like it uses the unused bits of the
+         * first component, and the unused bits octet 04 of the
+         * second component somehow becomes part of the value.
+         */
+        .descr = "x.690, constructed encoding in example 8.6.4.2",
+        .valid = 1,
+        .der = { 0x23, 0x80, 0x03, 0x03, 0x00, 0x0A, 0x3b, 0x03, 0x05, 0x04,
+            0x5F, 0x29, 0x1c, 0xd0, 0x00, 0x00 },
+        .der_len = 16,
+        .length = 7, /* XXX - should be 6. */
+        .unused_bits = 0, /* XXX - should be 4. */
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0.4",
+        .valid = 1,
+        .der = { 0x03, 0x05, 0x00, 0x0a, 0x05, 0x00, 0x04 },
+        .der_len = 7,
+        .length = 4,
+        .unused_bits = 0,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 prefix 10.5.0/23",
+        .valid = 1,
+        .der = { 0x03, 0x04, 0x01, 0x0a, 0x05, 0x00 },
+        .der_len = 6,
+        .length = 3,
+        .unused_bits = 1,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv6 address 2001:0:200:3::1",
+        .valid = 1,
+        .der = { 0x03, 0x11, 0x00, 0x20, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00,
+            0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
+        .der_len = 19,
+        .length = 16,
+        .unused_bits = 0,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv6 prefix 2001:0:200/39",
+        .valid = 1,
+        .der = { 0x03, 0x06, 0x01, 0x20, 0x01, 0x00, 0x00, 0x02 },
+        .der_len = 8,
+        .length = 5,
+        .unused_bits = 1,
+    },
+};
+
+static int
+abs_get_length_test(const struct abs_get_length_test *tbl, int idx)
+{
+    const struct abs_get_length_test *test = &tbl[idx];
+    ASN1_BIT_STRING *abs = NULL;
+    const unsigned char *p;
+    int unused_bits, ret;
+    size_t length;
+    int success = 0;
+
+    p = test->der;
+    if (!TEST_ptr(abs = d2i_ASN1_BIT_STRING(NULL, &p, test->der_len))) {
+        TEST_info("%s, (idx=%d) - d2i_ASN1_BIT_STRING faled", OPENSSL_FUNC, idx);
+        goto err;
+    }
+
+    ret = ASN1_BIT_STRING_get_length(abs, &length, &unused_bits);
+    if (!TEST_int_eq(test->valid, ret)) {
+        TEST_info("%s (idx=%d): %s ASN1_BIT_STRING_get_length want %d, got %d\n",
+            OPENSSL_FUNC, idx, test->descr, test->valid, ret);
+        goto err;
+    }
+    if (!test->valid)
+        goto done;
+
+    if (!TEST_size_t_eq(length, test->length)
+        || !TEST_int_eq(unused_bits, test->unused_bits)) {
+        TEST_info("%s: (idx=%d) %s: want (%zu, %d), got (%zu, %d)\n", OPENSSL_FUNC,
+            idx, test->descr, test->length, test->unused_bits, length,
+            unused_bits);
+        goto err;
+    }
+
+done:
+    success = 1;
+
+err:
+    ASN1_STRING_free(abs);
+
+    return success;
+}
+
+static int
+asn1_bit_string_get_length_test(int idx)
+{
+    return abs_get_length_test(abs_get_length_tests, idx);
+}
+
+struct abs_set1_test {
+    const char *descr;
+    int valid;
+    const uint8_t data[20];
+    size_t length;
+    int unused_bits;
+    const unsigned char der[20];
+    int der_len;
+};
+
+static const struct abs_set1_test abs_set1_tests[] = {
+    {
+        .descr = "length too large",
+        .valid = 0,
+        .length = (size_t)INT_MAX + 1,
+    },
+    {
+        .descr = "negative unused bits",
+        .valid = 0,
+        .unused_bits = -1,
+    },
+    {
+        .descr = "8 unused bits",
+        .valid = 0,
+        .unused_bits = 8,
+    },
+    {
+        .descr = "empty with unused bits",
+        .valid = 0,
+        .data = {
+            0x00 },
+        .length = 0,
+        .unused_bits = 1,
+    },
+    {
+        .descr = "empty",
+        .valid = 1,
+        .data = { 0x00 },
+        .length = 0,
+        .unused_bits = 0,
+        .der = { 0x03, 0x01, 0x00 },
+        .der_len = 3,
+    },
+    {
+        .descr = "single zero bit",
+        .valid = 1,
+        .data = { 0x00 },
+        .length = 1,
+        .unused_bits = 7,
+        .der = { 0x03, 0x02, 0x07, 0x00 },
+        .der_len = 4,
+    },
+    {
+        .descr = "single zero bit, with non-zero unused bit 6",
+        .valid = 0,
+        .data = { 0x40 },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "single zero bit, with non-zero unused bit 0",
+        .valid = 0,
+        .data = { 0x01 },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "single one bit",
+        .valid = 1,
+        .data = { 0x80 },
+        .length = 1,
+        .unused_bits = 7,
+        .der = { 0x03, 0x02, 0x07, 0x80 },
+        .der_len = 4,
+    },
+    {
+        .descr = "single one bit, with non-zero unused-bit 6",
+        .valid = 0,
+        .data = { 0xc0 },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "single one bit, with non-zero unused-bit 0",
+        .valid = 0,
+        .data = { 0x81 },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0.4",
+        .valid = 1,
+        .data = { 0x0a, 0x05, 0x00, 0x04 },
+        .length = 4,
+        .unused_bits = 0,
+        .der = { 0x03, 0x05, 0x00, 0x0a, 0x05, 0x00, 0x04 },
+        .der_len = 7,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0/23",
+        .valid = 1,
+        .data = { 0x0a, 0x05, 0x00 },
+        .length = 3,
+        .unused_bits = 1,
+        .der = { 0x03, 0x04, 0x01, 0x0a, 0x05, 0x00 },
+        .der_len = 6,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0/23, unused bit",
+        .valid = 0,
+        .data = { 0x0a, 0x05, 0x01 },
+        .length = 3,
+        .unused_bits = 1,
+    },
+    {
+        .descr = "RFC 3779, IPv4 address 10.5.0/17",
+        .valid = 1,
+        .data = { 0x0a, 0x05, 0x00 },
+        .length = 3,
+        .unused_bits = 7,
+        .der = { 0x03, 0x04, 0x07, 0x0a, 0x05, 0x00 },
+        .der_len = 6,
+    },
+    {
+        .descr = "RFC 3779, IPv4 address 10.5.0/18, unused bit set",
+        .valid = 0,
+        .data = { 0x0a, 0x05, 0x20 },
+        .length = 3,
+        .unused_bits = 6,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv6 address 2001:0:200:3::1",
+        .valid = 1,
+        .data = { 0x20, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
+        .length = 16,
+        .unused_bits = 0,
+        .der = { 0x03, 0x11, 0x00, 0x20, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
+        .der_len = 19,
+    },
+    {
+        .descr = "RFC 3779, IPv6 address 2001:0:200:3::/127",
+        .valid = 1,
+        .data = { 0x20, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+        .length = 16,
+        .unused_bits = 1,
+        .der = { 0x03, 0x11, 0x01, 0x20, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+        .der_len = 19,
+    },
+    {
+        .descr = "RFC 3779, IPv6 address 2001:0:200:3::/127, unused bit",
+        .valid = 0,
+        .data = { 0x20, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
+        .length = 16,
+        .unused_bits = 1,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv6 address 2001:0:200:3::/39",
+        .valid = 1,
+        .data = { 0x20, 0x01, 0x00, 0x00, 0x02 },
+        .length = 5,
+        .unused_bits = 1,
+        .der = { 0x03, 0x06, 0x01, 0x20, 0x01, 0x00, 0x00, 0x02 },
+        .der_len = 8,
+    },
+};
+
+static int
+abs_set1_test(const struct abs_set1_test *tbl, int idx)
+{
+    const struct abs_set1_test *test = &tbl[idx];
+    ASN1_BIT_STRING *abs = NULL;
+    unsigned char *der = NULL;
+    int ret, der_len = 0;
+    int success = 0;
+
+    if (!TEST_ptr(abs = ASN1_BIT_STRING_new())) {
+        TEST_info("%s: (idx = %d) %s ASN1_BIT_STRING_new()", OPENSSL_FUNC, idx, test->descr);
+        goto err;
+    }
+
+    ret = ASN1_BIT_STRING_set1(abs, test->data, test->length, test->unused_bits);
+    if (!TEST_int_eq(ret, test->valid)) {
+        TEST_info("%s: (idx = %d) %s ASN1_BIT_STRING_set1(): want %d, got %d",
+            OPENSSL_FUNC, idx, test->descr, test->valid, ret);
+        goto err;
+    }
+
+    if (!test->valid)
+        goto done;
+
+    der = NULL;
+    if (!TEST_int_eq((der_len = i2d_ASN1_BIT_STRING(abs, &der)), test->der_len)) {
+        TEST_info("%s: (idx=%d), %s i2d_ASN1_BIT_STRING(): want %d, got %d",
+            OPENSSL_FUNC, idx, test->descr, test->der_len, der_len);
+        if (der_len < 0)
+            der_len = 0;
+        goto err;
+    }
+
+    if (!TEST_mem_eq(der, der_len, test->der, test->der_len)) {
+        TEST_info("%s: (idx = %d)  %s DER mismatch", OPENSSL_FUNC, idx, test->descr);
+        goto err;
+    }
+
+done:
+    success = 1;
+
+err:
+    ASN1_BIT_STRING_free(abs);
+    OPENSSL_clear_free(der, der_len);
+
+    return success;
+}
+
+static int
+asn1_bit_string_set1_test(int idx)
+{
+    return abs_set1_test(abs_set1_tests, idx);
+}
+
+static int
+asn1_string_new_not_owned_test(void)
+{
+    int success = 0;
+    ASN1_STRING *tmp = NULL;
+    char *tmpstring = NULL;
+    static const uint8_t data[] = { 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b };
+    static const uint8_t data2[] = { 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b };
+
+    if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
+        goto err;
+
+    ASN1_STRING_clear_free(tmp);
+    tmp = NULL;
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_string(tmp, "muppet")))
+        goto err;
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(tmp), strlen("muppet")))
+        goto err;
+
+    if (!TEST_mem_eq(ASN1_STRING_get0_data(tmp), strlen("muppet"), "muppet", strlen("muppet")))
+        goto err;
+
+    ASN1_STRING_clear_free(tmp);
+    tmp = NULL;
+
+    if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
+        goto err;
+
+    if (!TEST_ptr(tmpstring = OPENSSL_strdup("puppet")))
+        goto err;
+
+    ASN1_STRING_set0(tmp, tmpstring, 4);
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(tmp), 4))
+        goto err;
+
+    if (!TEST_mem_eq(ASN1_STRING_get0_data(tmp), strlen("puppet"), "puppet", strlen("puppet")))
+        goto err;
+
+    memset((uint8_t *)ASN1_STRING_get0_data(tmp), 'z', ASN1_STRING_get_length(tmp));
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_mem_eq(tmpstring, strlen("puppet"), "zzzzet", strlen("puppet")))
+        goto err;
+
+    tmpstring = NULL;
+    ASN1_STRING_clear_free(tmp);
+    tmp = NULL;
+
+    if (!TEST_ptr_null(tmp = ASN1_STRING_new_not_owned(V_ASN1_BIT_STRING, data, sizeof(data))))
+        goto err;
+
+    if (!TEST_ptr_null(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, NULL, sizeof(data))))
+        goto err;
+
+    if (!TEST_ptr_null(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, 0)))
+        goto err;
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_clear_free(tmp);
+
+    return success;
+}
+
+static int
+asn1_string_set_data_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    const uint8_t *data;
+
+    if (!TEST_ptr(str = ASN1_STRING_new()))
+        goto err;
+
+    if (!TEST_false(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", -1)))
+        goto err;
+
+    if (!TEST_false(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", (size_t)INT_MAX + 1)))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, NULL, 10)))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", strlen("hoobla"))))
+        goto err;
+
+    data = ASN1_STRING_get0_data(str);
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 6))
+        goto err;
+
+    if (!TEST_int_eq(memcmp("hoobla", data, strlen("hoobla")), 0))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", strlen("hoobla") + 1)))
+        goto err;
+
+    data = ASN1_STRING_get0_data(str);
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 7))
+        goto err;
+
+    if (!TEST_int_eq(strcmp("hoobla", (char *)data), 0))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_free(str);
+    return success;
+}
+
+static int
+asn1_string_set_string_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+
+    if (!TEST_ptr(str = ASN1_STRING_new()))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_string(str, "foo")))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 3))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_string(str, "hoob\0la")))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 4))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_free(str);
+    return success;
+}
+
+static int
+asn1_string_set0_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    uint8_t *data = NULL;
+
+    if (!TEST_ptr(str = ASN1_STRING_new()))
+        goto err;
+
+    if (!TEST_ptr(data = (uint8_t *)OPENSSL_strdup("hoobla")))
+        goto err;
+
+    /* A negative length can never be valid and is treated as empty */
+    ASN1_STRING_set0(str, data, -1);
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 0))
+        goto err;
+
+    /* The string takes ownership of the data even so */
+    if (!TEST_ptr_eq(ASN1_STRING_get0_data(str), data))
+        goto err;
+
+    data = NULL;
+
+    if (!TEST_ptr(data = (uint8_t *)OPENSSL_strdup("hoobla")))
+        goto err;
+
+    ASN1_STRING_set0(str, data, (int)strlen("hoobla"));
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 6))
+        goto err;
+
+    if (!TEST_ptr_eq(ASN1_STRING_get0_data(str), data))
+        goto err;
+
+    data = NULL;
+
+    success = 1;
+
+err:
+    OPENSSL_free(data);
+    ASN1_STRING_free(str);
+    return success;
+}
+
+static int
+asn1_universalstring_to_string_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    static const uint8_t abc[] = { 0, 0, 0, 'A', 0, 0, 0, 'B', 0, 0, 0, 'C' };
+
+    /*
+     * An empty UniversalString, as decoded from an empty string, has
+     * data == NULL and length == 0. Conversion succeeds and leaves it
+     * empty, with the type rewritten like any successful conversion.
+     */
+    if (!TEST_ptr(str = ASN1_STRING_type_new(V_ASN1_UNIVERSALSTRING)))
+        goto err;
+
+    if (!TEST_true(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 0))
+        goto err;
+
+    if (!TEST_ptr_null(ASN1_STRING_get0_data(str)))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_type(str), V_ASN1_PRINTABLESTRING))
+        goto err;
+
+    /* The type is no longer UniversalString, so a second conversion fails. */
+    if (!TEST_false(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    ASN1_STRING_free(str);
+    str = NULL;
+
+    /* A non-empty UniversalString converts to its compacted form. */
+    if (!TEST_ptr(str = ASN1_STRING_type_new(V_ASN1_UNIVERSALSTRING)))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, abc, sizeof(abc))))
+        goto err;
+
+    if (!TEST_true(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 3))
+        goto err;
+
+    if (!TEST_mem_eq(ASN1_STRING_get0_data(str), 3, "ABC", 3))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_type(str), V_ASN1_PRINTABLESTRING))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_free(str);
+    return success;
+}
+
+int setup_tests(void)
+{
+    ADD_ALL_TESTS(asn1_bit_string_get_length_test, OSSL_NELEM(abs_get_length_tests));
+    ADD_ALL_TESTS(asn1_bit_string_set1_test, OSSL_NELEM(abs_set1_tests));
+    ADD_TEST(asn1_string_new_not_owned_test);
+    ADD_TEST(asn1_string_set_data_test);
+    ADD_TEST(asn1_string_set_string_test);
+    ADD_TEST(asn1_string_set0_test);
+    ADD_TEST(asn1_universalstring_to_string_test);
+    return 1;
+}

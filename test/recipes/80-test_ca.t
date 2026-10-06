@@ -1,0 +1,353 @@
+#! /usr/bin/env perl
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+use strict;
+use warnings;
+
+use POSIX;
+use File::Path 2.00 qw/rmtree/;
+use OpenSSL::Test qw/:DEFAULT cmdstr data_file srctop_file/;
+use OpenSSL::Test::Utils;
+use Time::Local qw/timegm/;
+
+setup("test_ca");
+
+$ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
+
+my $cnf = srctop_file("test","ca-and-certs.cnf");
+my $std_openssl_cnf = srctop_file("apps", $^O eq "VMS" ? "openssl-vms.cnf" : "openssl.cnf");
+
+sub src_file {
+    return srctop_file("test", "certs", shift);
+}
+
+rmtree("demoCA", { safe => 0 });
+
+plan tests => 31;
+
+require_ok(srctop_file("test", "recipes", "tconversion.pl"));
+
+ SKIP: {
+     my $cakey = src_file("ca-key.pem");
+     $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
+     skip "failed creating CA structure", 4
+         if !ok(run(perlapp(["CA.pl","-newca",
+                             "-extra-req", qq{-key "$cakey"}], stdin => undef)),
+                'creating CA structure');
+
+     my $eekey = src_file("ee-key.pem");
+     $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
+     skip "failed creating new certificate request", 3
+         if !ok(run(perlapp(["CA.pl","-newreq",
+                             '-extra-req', qq{-outform DER -section userreq -key "$eekey"}])),
+                'creating certificate request');
+     $ENV{OPENSSL_CONFIG} = qq(-rand_serial -inform DER -config "$std_openssl_cnf");
+     skip "failed to sign certificate request", 2
+         if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
+                'signing certificate request');
+
+     ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
+        'verifying new certificate');
+
+     skip "CT not configured, can't use -precert", 1
+         if disabled("ct");
+
+     my $eekey2 = src_file("ee-key-3072.pem");
+     $ENV{OPENSSL_CONFIG} = qq(-config "$cnf");
+     ok(run(perlapp(["CA.pl", "-precert",
+                     '-extra-req', qq{-section userreq -key "$eekey2"}], stderr => undef)),
+        'creating new pre-certificate');
+}
+
+SKIP: {
+    skip "SM2 is not supported by this OpenSSL build", 1
+        if disabled("sm2");
+
+    is(yes(cmdstr(app(["openssl", "ca", "-config",
+                       $cnf,
+                       "-in", src_file("sm2-csr.pem"),
+                       "-out", "sm2-test.crt", "-md", "sm3",
+                       "-cert", src_file("sm2-root.crt"),
+                       "-keyfile", src_file("sm2-root.key")]))),
+       0,
+       "Signing SM2 certificate request");
+}
+
+my $v3_cert = "v3-test.crt";
+ok(run(app(["openssl", "ca", "-batch", "-config", $cnf, "-extensions", "minimal",
+            "-in", src_file("x509-check.csr"), "-out", $v3_cert])));
+# The "minimal" extensions include SKID and AKID.
+has_version($v3_cert, 3);
+has_SKID($v3_cert, 1);
+has_AKID($v3_cert, 1);
+
+# Sign with X509v3 extensions from a separate -extfile, once using its
+# default section and once with a section selected via -extensions.
+test_extfile('extfile_default', [], qr/Digital Signature/);
+test_extfile('extfile_section', ['-extensions', 'alt_ext'],
+             qr/Key Encipherment/);
+
+# Generate a CRL with extensions from the config section named by -crlexts
+ok(run(app(['openssl', 'ca', '-config', $cnf, '-gencrl', '-crlsec', '60',
+            '-crlexts', 'crl_ext', '-out', 'crlexts-crl.pem'])),
+   'Generate CRL with -crlexts');
+my $crlexts_text = join('',
+    run(app(['openssl', 'crl', '-in', 'crlexts-crl.pem',
+             '-noout', '-text']), capture => 1));
+ok($crlexts_text =~ qr/Version 2/, 'CRL with extensions is version 2');
+ok($crlexts_text =~ qr/Authority Key Identifier/, 'CRL contains AKID');
+
+test_revoke('notimes', {
+    should_succeed => 1,
+});
+test_revoke('lastupdate_invalid', {
+    lastupdate     => '1234567890',
+    should_succeed => 0,
+});
+test_revoke('lastupdate_utctime', {
+    lastupdate     => '200901123456Z',
+    should_succeed => 1,
+});
+test_revoke('lastupdate_generalizedtime', {
+    lastupdate     => '20990901123456Z',
+    should_succeed => 1,
+});
+test_revoke('nextupdate_invalid', {
+    nextupdate     => '1234567890',
+    should_succeed => 0,
+});
+test_revoke('nextupdate_utctime', {
+    nextupdate     => '200901123456Z',
+    should_succeed => 1,
+});
+test_revoke('nextupdate_generalizedtime', {
+    nextupdate     => '20990901123456Z',
+    should_succeed => 1,
+});
+test_revoke('both_utctime', {
+    lastupdate     => '200901123456Z',
+    nextupdate     => '200908123456Z',
+    should_succeed => 1,
+});
+test_revoke('both_generalizedtime', {
+    lastupdate     => '20990901123456Z',
+    nextupdate     => '20990908123456Z',
+    should_succeed => 1,
+});
+
+sub test_extfile {
+    my ($filename, $ca_opts, $keyusage_re) = @_;
+
+    $ENV{CN2} = $filename;
+    ok(
+        run(app(['openssl',
+                 'req',
+                 '-config',  $cnf,
+                 '-new',
+                 '-key',     data_file('revoked.key'),
+                 '-out',     "$filename-req.pem",
+                 '-section', 'userreq',
+        ])),
+        "Generate CSR: $filename"
+    );
+    delete $ENV{CN2};
+
+    ok(
+        run(app(['openssl',
+                 'ca',
+                 '-batch',
+                 '-config',  $cnf,
+                 '-extfile', data_file('extensions.cnf'),
+                 @$ca_opts,
+                 '-in',      "$filename-req.pem",
+                 '-out',     "$filename-cert.pem",
+        ])),
+        "Sign CSR with -extfile: $filename"
+    );
+
+    has_version("$filename-cert.pem", 3);
+
+    my $keyusage = join('',
+        run(app(['openssl', 'x509', '-in', "$filename-cert.pem",
+                 '-noout', '-ext', 'keyUsage']), capture => 1));
+    ok($keyusage =~ $keyusage_re,
+       "keyUsage taken from the extfile: $filename");
+}
+
+sub test_revoke {
+    my ($filename, $opts) = @_;
+
+    subtest "Revoke certificate and generate CRL: $filename" => sub {
+        # Before Perl 5.12.0, the range of times Perl could represent was
+        # limited by the size of time_t, so Time::Local was hamstrung by the
+        # Y2038 problem
+        # Perl 5.12.0 onwards use an internal time implementation with a
+        # guaranteed >32-bit time range on all architectures, so the tests
+        # involving post-2038 times won't fail provided we're running under
+        # that version or newer
+        plan skip_all =>
+            'Perl >= 5.12.0 required to run certificate revocation tests'
+            if $] < 5.012000;
+
+        $ENV{CN2} = $filename;
+        ok(
+            run(app(['openssl',
+                     'req',
+                     '-config',  $cnf,
+                     '-new',
+                     '-key',     data_file('revoked.key'),
+                     '-out',     "$filename-req.pem",
+                     '-section', 'userreq',
+            ])),
+            'Generate CSR'
+        );
+        delete $ENV{CN2};
+
+        ok(
+            run(app(['openssl',
+                     'ca',
+                     '-batch',
+                     '-config',  $cnf,
+                     '-in',      "$filename-req.pem",
+                     '-out',     "$filename-cert.pem",
+            ])),
+            'Sign CSR'
+        );
+
+        ok(
+            run(app(['openssl',
+                     'ca',
+                     '-config', $cnf,
+                     '-revoke', "$filename-cert.pem",
+            ])),
+            'Revoke certificate'
+        );
+
+        my @gencrl_opts;
+
+        if (exists $opts->{lastupdate}) {
+            push @gencrl_opts, '-crl_lastupdate', $opts->{lastupdate};
+        }
+
+        if (exists $opts->{nextupdate}) {
+            push @gencrl_opts, '-crl_nextupdate', $opts->{nextupdate};
+        }
+
+        is(
+            run(app(['openssl',
+                     'ca',
+                     '-config', $cnf,
+                     '-gencrl',
+                     '-out',    "$filename-crl.pem",
+                     '-crlsec', '60',
+                     @gencrl_opts,
+            ])),
+            $opts->{should_succeed},
+            'Generate CRL'
+        );
+        my $crl_gentime = time;
+
+        # The following tests only need to run if the CRL was supposed to be
+        # generated:
+        return unless $opts->{should_succeed};
+
+        my $crl_lastupdate = crl_field("$filename-crl.pem", 'lastUpdate');
+        if (exists $opts->{lastupdate}) {
+            is(
+                $crl_lastupdate,
+                rfc5280_time($opts->{lastupdate}),
+                'CRL lastUpdate field has expected value'
+            );
+        } else {
+            diag("CRL lastUpdate:   $crl_lastupdate");
+            diag("openssl run time: $crl_gentime");
+            ok(
+                # Is the CRL's lastUpdate time within a second of the time that
+                # `openssl ca -gencrl` was executed?
+                $crl_gentime - 1 <= $crl_lastupdate && $crl_lastupdate <= $crl_gentime + 1,
+                'CRL lastUpdate field has (roughly) expected value'
+            );
+        }
+
+        my $crl_nextupdate = crl_field("$filename-crl.pem", 'nextUpdate');
+        if (exists $opts->{nextupdate}) {
+            is(
+                $crl_nextupdate,
+                rfc5280_time($opts->{nextupdate}),
+                'CRL nextUpdate field has expected value'
+            );
+        } else {
+            diag("CRL nextUpdate:   $crl_nextupdate");
+            diag("openssl run time: $crl_gentime");
+            ok(
+                # Is the CRL's lastUpdate time within a second of the time that
+                # `openssl ca -gencrl` was executed, taking into account the use
+                # of '-crlsec 60'?
+                $crl_gentime + 59 <= $crl_nextupdate && $crl_nextupdate <= $crl_gentime + 61,
+                'CRL nextUpdate field has (roughly) expected value'
+            );
+        }
+    };
+}
+
+sub yes {
+    my $cntr = 10;
+    open(PIPE, "|-", join(" ",@_));
+    local $SIG{PIPE} = "IGNORE";
+    1 while $cntr-- > 0 && print PIPE "y\n";
+    close PIPE;
+    return 0;
+}
+
+# Get the value of the lastUpdate or nextUpdate field from a CRL
+sub crl_field {
+    my ($crl_path, $field_name) = @_;
+
+    my @out = run(
+        app(['openssl',
+             'crl',
+             '-in', $crl_path,
+             '-noout',
+             '-' . lc($field_name),
+        ]),
+        capture => 1,
+        statusvar => \my $exit,
+    );
+    ok($exit, "CRL $field_name field retrieved");
+    diag("CRL $field_name: $out[0]");
+
+    $out[0] =~ s/^\Q$field_name\E=//;
+    $out[0] =~ s/\n?//;
+    my $time = human_time($out[0]);
+
+    return $time;
+}
+
+# Converts human-readable ASN1_TIME_print() output to Unix time
+sub human_time {
+    my ($human) = @_;
+
+    my ($mo, $d, $h, $m, $s, $y) = $human =~ /^([A-Za-z]{3})\s+(\d+) (\d{2}):(\d{2}):(\d{2}) (\d{4})/;
+
+    my %months = (
+        Jan => 0, Feb => 1, Mar => 2, Apr => 3, May => 4,  Jun => 5,
+        Jul => 6, Aug => 7, Sep => 8, Oct => 9, Nov => 10, Dec => 11,
+    );
+
+    return timegm($s, $m, $h, $d, $months{$mo}, $y);
+}
+
+# Converts an RFC 5280 timestamp to Unix time
+sub rfc5280_time {
+    my ($asn1) = @_;
+
+    my ($y, $mo, $d, $h, $m, $s) = $asn1 =~ /^(\d{2,4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$/;
+
+    return timegm($s, $m, $h, $d, $mo - 1, $y);
+}

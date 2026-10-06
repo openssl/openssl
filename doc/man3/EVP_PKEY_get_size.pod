@@ -1,0 +1,212 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY_get_size, EVP_PKEY_get_bits, EVP_PKEY_get_security_bits,
+EVP_PKEY_bits, EVP_PKEY_security_bits, EVP_PKEY_get_security_category,
+EVP_PKEY_size
+- EVP_PKEY information functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ int EVP_PKEY_get_size(const EVP_PKEY *pkey);
+ int EVP_PKEY_get_bits(const EVP_PKEY *pkey);
+ int EVP_PKEY_get_security_bits(const EVP_PKEY *pkey);
+ int EVP_PKEY_get_security_category(const EVP_PKEY *pkey);
+
+ #define EVP_PKEY_bits EVP_PKEY_get_bits
+ #define EVP_PKEY_security_bits EVP_PKEY_get_security_bits
+ #define EVP_PKEY_size EVP_PKEY_get_size
+
+=head1 DESCRIPTION
+
+EVP_PKEY_get_size() returns the maximum suitable size for the output
+buffers for almost all operations that can be done with I<pkey>.
+This corresponds to the provider parameter B<OSSL_PKEY_PARAM_MAX_SIZE>.
+The primary documented use is with L<EVP_SignFinal(3)> and
+L<EVP_SealInit(3)>, but it isn't limited there.  The returned size is
+also large enough for the output buffer of L<EVP_PKEY_sign(3)>,
+L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt(3)>, L<EVP_PKEY_derive(3)>.
+
+It must be stressed that, unless the documentation for the operation
+that's being performed says otherwise, the size returned by
+EVP_PKEY_get_size() is only preliminary and not exact, so the final
+contents of the target buffer may be smaller.  It is therefore crucial
+to take note of the size given back by the function that performs the
+operation, such as L<EVP_PKEY_sign(3)> (the I<siglen> argument will
+receive that length), to avoid bugs.
+
+EVP_PKEY_get_bits() returns the cryptographic length of the cryptosystem
+to which the key in I<pkey> belongs, in bits.  Note that the definition
+of cryptographic length is specific to the key cryptosystem:
+
+=over 4
+
+=item B<RSA>
+
+The bit length of the modulus B<n>.
+
+=item B<DSA>
+
+The bit length of the prime B<p>.
+
+=item B<DH>
+
+The bit length of the prime B<p>.
+
+=item B<EC>
+
+The bit length of the group order.
+
+=item B<X25519>
+
+253 (fixed for the curve).
+
+=item B<X448>
+
+448 (fixed for the curve).
+
+=item B<Ed25519>
+
+256 (fixed for the curve).
+
+=item B<Ed448>
+
+456 (fixed for the curve).
+
+=item B<ML-DSA>
+
+The bit size of the public key (8 times the public key length in bytes).
+For B<ML-DSA-44>, B<ML-DSA-65>, and B<ML-DSA-87>, this is 10496, 15616, and
+20736 bits respectively.
+
+=item B<SLH-DSA>
+
+The bit size of the public key (8 times the public key length in bytes).
+For B<SLH-DSA*128*>, B<SLH-DSA*192*>, and B<SLH-DSA*256*> variants, this is
+256, 384, and 512 bits respectively.
+
+=item B<ML-KEM>
+
+The security strength indicator from the algorithm name: 512, 768, or 1024
+for B<ML-KEM-512>, B<ML-KEM-768>, and B<ML-KEM-1024> respectively.
+
+=back
+
+This length corresponds to the provider parameter B<OSSL_PKEY_PARAM_BITS>.
+
+EVP_PKEY_get_security_bits() returns the number of security bits of the given
+I<pkey>, bits of security is defined in NIST SP800-57.
+This corresponds to the provider parameter B<OSSL_PKEY_PARAM_SECURITY_BITS>.
+
+EVP_PKEY_get_security_category() returns the
+L<post-quantum security category|https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf>
+as defined by NIST.
+The post-quantum security category is an integer value from 0 to 5 that
+is based on an algorithm's classification on the range of security strengths
+offered by the existing standards in symmetric cryptography:
+
+=begin man
+
+.TS H
+box,center;
+cb lb
+c l.
+Security Category	Attack Type
+_
+0	Weak
+1	Key search on a block cipher with a 128-bit key
+2	Collision search on a 256-bit hash function
+3	Key search on a block cipher with a 192-bit key
+4	Collision search on a 384-bit hash function
+5	Key search on a block cipher with a 256-bit key
+.TE
+
+=end man
+
+=begin text
+
+ Security       Attack
+ Category       Type
+ ==============================================================
+    0           Weak
+    1           Key search on a block cipher with a 128-bit key
+    2           Collision search on a 256-bit hash function
+    3           Key search on a block cipher with a 192-bit key
+    4           Collision search on a 384-bit hash function
+    5           Key search on a block cipher with a 256-bit key
+
+=end text
+
+=begin html
+
+<table>
+<tr><th>Security Category</th><th>Attack Type</th></tr>
+<tr><td>0</td><td>Weak</td></tr>
+<tr><td>1</td><td>Key search on a block cipher with a 128-bit key</td></tr>
+<tr><td>2</td><td>Collision search on a 256-bit hash function</td></tr>
+<tr><td>3</td><td>Key search on a block cipher with a 192-bit key</td></tr>
+<tr><td>4</td><td>Collision search on a 384-bit hash function</td></tr>
+<tr><td>5</td><td>Key search on a block cipher with a 256-bit key</td></tr>
+</table>
+
+=end html
+
+=head1 RETURN VALUES
+
+EVP_PKEY_get_size(), EVP_PKEY_get_bits() and EVP_PKEY_get_security_bits()
+return a positive number, or 0 if this size isn't available.
+
+EVP_PKEY_get_security_category() returns the post-quantum security category
+which is an integer in the range zero to five inclusive.  It returns -1 if
+the security category information isn't available.
+For all classical algorithms, 0 is returned meaning that they are not
+considered to be quantum safe.
+
+=head1 NOTES
+
+Most functions that have an output buffer and are mentioned with
+EVP_PKEY_get_size() have a functionality where you can pass NULL for the
+buffer and still pass a pointer to an integer and get the exact size
+that this function call delivers in the context that it's called in.
+This allows those functions to be called twice, once to find out the
+exact buffer size, then allocate the buffer in between, and call that
+function again actually output the data.  For those functions, it
+isn't strictly necessary to call EVP_PKEY_get_size() to find out the
+buffer size, but may be useful in cases where it's desirable to know
+the upper limit in advance.
+
+It should also be especially noted that EVP_PKEY_get_size() shouldn't be
+used to get the output size for EVP_DigestSignFinal(), according to
+L<EVP_DigestSignFinal(3)/NOTES>.
+
+=head1 SEE ALSO
+
+L<provider-keymgmt(7)>,
+L<EVP_SignFinal(3)>,
+L<EVP_SealInit(3)>,
+L<EVP_PKEY_sign(3)>,
+L<EVP_PKEY_encrypt(3)>,
+L<EVP_PKEY_decrypt(3)>,
+L<EVP_PKEY_derive(3)>
+
+=head1 HISTORY
+
+The EVP_PKEY_bits(), EVP_PKEY_security_bits(), and EVP_PKEY_size() functions
+were renamed to include C<get> in their names in OpenSSL 3.0, respectively.
+The old names are kept as non-deprecated alias macros.
+
+EVP_PKEY_get_security_category() was added in OpenSSL 3.6.
+
+=head1 COPYRIGHT
+
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

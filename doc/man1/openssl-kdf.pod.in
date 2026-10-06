@@ -1,0 +1,296 @@
+=pod
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
+
+=head1 NAME
+
+openssl-kdf - perform Key Derivation Function operations
+
+=head1 SYNOPSIS
+
+B<openssl kdf>
+[B<-help>]
+[B<-cipher>]
+[B<-digest>]
+[B<-mac>]
+[B<-kdfopt> I<nm>:I<v>]
+[B<-keylen> I<num>]
+[B<-out> I<filename>]
+[B<-binary>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
+I<kdf_name>
+
+=head1 DESCRIPTION
+
+The key derivation functions generate a derived key from either a secret or
+password.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print a usage message.
+
+=item B<-keylen> I<num>
+
+The output size of the derived key. This field is required.
+
+=item B<-out> I<filename>
+
+Filename to output to, or standard output by default.
+
+=item B<-binary>
+
+Output the derived key in binary form. Uses hexadecimal text format if not specified.
+
+=item B<-cipher> I<name>
+
+Specify the cipher to be used by the KDF.
+Not all KDFs require a cipher and it is an error to use this option in such
+cases.
+
+=item B<-digest> I<name>
+
+Specify the digest to be used by the KDF.
+Not all KDFs require a digest and it is an error to use this option in such
+cases.
+To see the list of supported digests, use C<openssl list -digest-commands>.
+
+=item B<-mac> I<name>
+
+Specify the MAC to be used by the KDF.
+Not all KDFs require a MAC and it is an error to use this option in such
+cases.
+
+=item B<-kdfopt> I<nm>:I<v>
+
+Passes options to the KDF algorithm.
+A comprehensive list of parameters can be found in L<EVP_KDF(3)/PARAMETERS>.
+Common parameter names used by EVP_KDF_CTX_set_params() are:
+
+=over 4
+
+=item B<key:>I<string>
+
+Specifies the secret key as an alphanumeric string (use if the key contains
+printable characters only).
+The string length must conform to any restrictions of the KDF algorithm.
+A key must be specified for most KDF algorithms.
+
+=item B<hexkey:>I<string>
+
+Alternative to the B<key:> option where
+the secret key is specified in hexadecimal form (two hex digits per byte).
+
+=item B<pass:>I<string>
+
+Specifies the password as an alphanumeric string (use if the password contains
+printable characters only).
+The password must be specified for PBKDF2 and scrypt.
+
+=item B<hexpass:>I<string>
+
+Alternative to the B<pass:> option where
+the password is specified in hexadecimal form (two hex digits per byte).
+
+=item B<salt:>I<string>
+
+Specifies a non-secret unique cryptographic salt as an alphanumeric string
+(use if it contains printable characters only).
+The length must conform to any restrictions of the KDF algorithm.
+A salt parameter is required for several KDF algorithms,
+such as L<EVP_KDF-PBKDF2(7)>.
+
+=item B<hexsalt:>I<string>
+
+Alternative to the B<salt:> option where
+the salt is specified in hexadecimal form (two hex digits per byte).
+
+=item B<info:>I<string>
+
+Some KDF implementations, such as L<EVP_KDF-HKDF(7)>, take an 'info' parameter
+for binding the derived key material
+to application- and context-specific information.
+Specifies the info, fixed info, other info or shared info argument
+as an alphanumeric string (use if it contains printable characters only).
+The length must conform to any restrictions of the KDF algorithm.
+
+=item B<hexinfo:>I<string>
+
+Alternative to the B<info:> option where
+the info is specified in hexadecimal form (two hex digits per byte).
+
+=item B<digest:>I<string>
+
+This option is identical to the B<-digest> option.
+
+=item B<cipher:>I<string>
+
+This option is identical to the B<-cipher> option.
+
+=item B<mac:>I<string>
+
+This option is identical to the B<-mac> option.
+
+=back
+
+{- $OpenSSL::safe::opt_provider_item -}
+
+=item I<kdf_name>
+
+Specifies the name of a supported KDF algorithm which will be used.
+The supported algorithms names include TLS1-PRF, HKDF, IKEV2KDF, SSKDF, PBKDF2,
+SNMPKDF, SRTPKDF, SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
+
+=back
+
+=head1 EXAMPLES
+
+Use TLS1-PRF to create a hex-encoded derived key from a secret key and seed:
+
+    openssl kdf -keylen 16 -kdfopt digest:SHA2-256 -kdfopt key:secret \
+                -kdfopt seed:seed TLS1-PRF
+
+Use HKDF to create a hex-encoded derived key from a secret key, salt and info:
+
+    openssl kdf -keylen 10 -kdfopt digest:SHA2-256 -kdfopt key:secret \
+                -kdfopt salt:salt -kdfopt info:label HKDF
+
+Use IKEV2KDF to create a hex-encoded SEEDKEY from initiator_nonce,
+    responder_nonce, and shared secret:
+
+    openssl kdf -keylen 32 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexsecret:D084A30166A50FB7325C3960874A839449EF9741C2F4F947D0201DD8C1269273D79509F37E3CA3EB4FA2FE2A28254E289CD3F34DAD4EB4DF1A07685A4B8A94FA61E2491F7598B3CE65547FF133B3F63D1AC4175EAA695033F3CEDB026A6873A36455172A8540B8A5D23A0143BED0390EE49B168269D75FFFEE9FB62BE965993C \
+                -kdfopt mode:0 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encoded Derived Key Material (DKM) from initiator_nonce,
+    responder_nonce, SPI_initiator, SPI_responder and SEEDKEY(seed):
+
+    openssl kdf -keylen 224 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexspii:8E5C3AE507221684 \
+                -kdfopt hexspir:B1F201BB155C3ACD \
+                -kdfopt hexseed:EFAA7AB0EAA85A3D0BE2100CD4B6FE00FF5025A9EAFDDB3EF518E9F0D3FE60E6 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encoded DKM(Child_SA) from initiator_nonce,
+    responder_nonce and sk_d(key):
+
+    openssl kdf -keylen 224 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexkey:462B9DD525D4FD71169174272779E704BAF62C6231779AE9EFE8C58B21916B42 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encoded DKM(Child_DH) from initiator_nonce,
+    responder_nonce, sk_d(key) and new shared secret:
+
+    openssl kdf -keylen 224 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexkey:462B9DD525D4FD71169174272779E704BAF62C6231779AE9EFE8C58B21916B42 \
+                -kdfopt hexsecret:52F00AB174C25D5B7139AE5FF4E8E9EDDEE5992D2E36ADF8A559FFD90DAB1442E4FBE429D320C0F33552A17D1557FA41EA70E8FB916C4FA27ED52B5F8EBD8461AFA78F1159159A64055AC5F6319E29C28EAE58CBC6847770F32C3FED1D04750484F854790F95E9EC01BC5BC461F24966462E359511329305038E94DEB6DD42C2 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encoded REKEY from initiator_nonce,
+    responder_nonce, sk_d(key) and new shared secret:
+
+    openssl kdf -keylen 32 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexkey:462B9DD525D4FD71169174272779E704BAF62C6231779AE9EFE8C58B21916B42 \
+                -kdfopt hexsecret:52F00AB174C25D5B7139AE5FF4E8E9EDDEE5992D2E36ADF8A559FFD90DAB1442E4FBE429D320C0F33552A17D1557FA41EA70E8FB916C4FA27ED52B5F8EBD8461AFA78F1159159A64055AC5F6319E29C28EAE58CBC6847770F32C3FED1D04750484F854790F95E9EC01BC5BC461F24966462E359511329305038E94DEB6DD42C2 \
+                -kdfopt mode:2 IKEV2KDF
+
+Use SSKDF with KMAC to create a hex-encoded derived key from a secret key, salt and info:
+
+    openssl kdf -keylen 64 -kdfopt mac:KMAC-128 -kdfopt maclen:20 \
+                -kdfopt hexkey:b74a149a161545 -kdfopt hexinfo:348a37a2 \
+                -kdfopt hexsalt:3638271ccd68a2 SSKDF
+
+Use SSKDF with HMAC to create a hex-encoded derived key from a secret key, salt and info:
+
+    openssl kdf -keylen 16 -kdfopt mac:HMAC -kdfopt digest:SHA2-256 \
+                -kdfopt hexkey:b74a149a -kdfopt hexinfo:348a37a2 \
+                -kdfopt hexsalt:3638271c SSKDF
+
+Use SSKDF with Hash to create a hex-encoded derived key from a secret key, salt and info:
+
+    openssl kdf -keylen 14 -kdfopt digest:SHA2-256 \
+                -kdfopt hexkey:6dbdc23f045488 \
+                -kdfopt hexinfo:a1b2c3d4 SSKDF
+
+Use SNMPKDF to create a hex-encoded derived key from an engine ID, hash and password:
+
+    openssl kdf -keylen 32 -kdfopt digest:SHA256 \
+                -kdfopt pass:IFUcNbMl \
+                -kdfopt hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+                SNMPKDF
+
+Use SRTPKDF to create a SRTP authentication derived key from a cipher, mkey, msalt,
+    kdr, index and label:
+
+    openssl kdf -keylen 20 -kdfopt cipher:AES-128-CTR \
+                -kdfopt key:E1F97A0D3E018BE0D64FA32C06DE4139 \
+                -kdfopt salt:0EC675AD498AFEEBB6960B3AABE6 \
+                -kdfopt index:000000000000 -kdfopt label:1 SRTPKDF
+
+Use SSHKDF to create a hex-encoded derived key from a secret key, hash and session_id:
+
+    openssl kdf -keylen 16 -kdfopt digest:SHA2-256 \
+                -kdfopt hexkey:0102030405 \
+                -kdfopt hexxcghash:06090A \
+                -kdfopt hexsession_id:01020304 \
+                -kdfopt type:A SSHKDF
+
+Use PBKDF2 to create a hex-encoded derived key from a password and salt:
+
+    openssl kdf -keylen 32 -kdfopt digest:SHA256 -kdfopt pass:password \
+                -kdfopt salt:salt -kdfopt iter:2 PBKDF2
+
+Use scrypt to create a hex-encoded derived key from a password and salt:
+
+    openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl \
+                -kdfopt n:1024 -kdfopt r:8 -kdfopt p:16 \
+                -kdfopt maxmem_bytes:10485760 SCRYPT
+
+=head1 NOTES
+
+The KDF mechanisms that are available will depend on the options
+used when building OpenSSL.
+
+=head1 SEE ALSO
+
+L<openssl(1)>,
+L<openssl-pkeyutl(1)>,
+L<EVP_KDF(3)>,
+L<EVP_KDF-SCRYPT(7)>,
+L<EVP_KDF-TLS1_PRF(7)>,
+L<EVP_KDF-PBKDF2(7)>,
+L<EVP_KDF-HKDF(7)>,
+L<EVP_KDF-SNMPKDF(7)>,
+L<EVP_KDF-SRTPKDF(7)>,
+L<EVP_KDF-SS(7)>,
+L<EVP_KDF-SSHKDF(7)>,
+L<EVP_KDF-X942-ASN1(7)>,
+L<EVP_KDF-X942-CONCAT(7)>,
+L<EVP_KDF-X963(7)>
+
+=head1 HISTORY
+
+Added in OpenSSL 3.0
+
+=head1 COPYRIGHT
+
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

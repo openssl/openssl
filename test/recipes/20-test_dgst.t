@@ -1,0 +1,607 @@
+#! /usr/bin/env perl
+# Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+use strict;
+use warnings;
+
+use File::Spec;
+use File::Basename;
+use File::Copy;
+use OpenSSL::Test qw/:DEFAULT with srctop_file srctop_dir data_file bldtop_dir/;
+use OpenSSL::Test::Utils;
+use Cwd qw(abs_path);
+
+setup("test_dgst");
+
+plan tests => 31;
+
+sub tsignverify {
+    my $testtext = shift;
+    my $privkey = shift;
+    my $pubkey = shift;
+
+    my $data_to_sign = srctop_file('test', 'data.bin');
+    my $other_data = srctop_file('test', 'data2.bin');
+
+    my $sigfile = basename($privkey, '.pem') . '.sig';
+    plan tests => 4;
+
+    ok(run(app(['openssl', 'dgst', '-sign', $privkey,
+                '-out', $sigfile,
+                $data_to_sign])),
+       $testtext.": Generating signature");
+
+    ok(run(app(['openssl', 'dgst', '-prverify', $privkey,
+                '-signature', $sigfile,
+                $data_to_sign])),
+       $testtext.": Verify signature with private key");
+
+    ok(run(app(['openssl', 'dgst', '-verify', $pubkey,
+                '-signature', $sigfile,
+                $data_to_sign])),
+       $testtext.": Verify signature with public key");
+
+    ok(!run(app(['openssl', 'dgst', '-verify', $pubkey,
+                 '-signature', $sigfile,
+                 $other_data])),
+       $testtext.": Expect failure verifying mismatching data");
+}
+
+sub tsignverify_sha512 {
+    my $testtext = shift;
+    my $privkey = shift;
+    my $pubkey = shift;
+
+    my $data_to_sign = srctop_file('test', 'data.bin');
+    my $other_data = srctop_file('test', 'data2.bin');
+
+    my $sigfile = basename($privkey, '.pem') . '.sig';
+    plan tests => 5;
+
+    ok(run(app(['openssl', 'sha512', '-sign', $privkey,
+                '-out', $sigfile,
+                $data_to_sign])),
+       $testtext.": Generating signature using sha512 command");
+
+    ok(run(app(['openssl', 'sha512', '-verify', $pubkey,
+                '-signature', $sigfile,
+                $data_to_sign])),
+       $testtext.": Verify signature with public key using sha512 command");
+
+    ok(run(app(['openssl', 'dgst', '-sha512', '-prverify', $privkey,
+                '-signature', $sigfile,
+                $data_to_sign])),
+       $testtext.": Verify signature with private key");
+
+    ok(run(app(['openssl', 'dgst', '-sha512', '-verify', $pubkey,
+                '-signature', $sigfile,
+                $data_to_sign])),
+       $testtext.": Verify signature with public key");
+
+    ok(!run(app(['openssl', 'dgst', '-sha512', '-verify', $pubkey,
+                 '-signature', $sigfile,
+                 $other_data])),
+       $testtext.": Expect failure verifying mismatching data");
+}
+
+subtest "RSA signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    tsignverify("RSA",
+                srctop_file("test","testrsa.pem"),
+                srctop_file("test","testrsapub.pem"));
+};
+
+subtest "RSA signature generation and verification with `sha512` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    tsignverify_sha512("RSA",
+                       srctop_file("test","testrsa2048.pem"),
+                       srctop_file("test","testrsa2048pub.pem"));
+};
+
+subtest "DSA signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("dsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (DSA not supported)");
+        return;
+    }
+    tsignverify("DSA",
+                srctop_file("test","testdsa.pem"),
+                srctop_file("test","testdsapub.pem"));
+};
+
+subtest "ECDSA signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("ec")) {
+        plan tests => 1;
+        ok(1, "Skipped (ECDSA not supported)");
+        return;
+    }
+    tsignverify("ECDSA",
+                srctop_file("test","testec-p256.pem"),
+                srctop_file("test","testecpub-p256.pem"));
+};
+
+subtest "Ed25519 signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("ecx")) {
+        plan tests => 1;
+        ok(1, "Skipped (EdDSA not supported)");
+        return;
+    }
+    tsignverify("Ed25519",
+                srctop_file("test","tested25519.pem"),
+                srctop_file("test","tested25519pub.pem"));
+};
+
+subtest "Ed448 signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("ecx")) {
+        plan tests => 1;
+        ok(1, "Skipped (EdDSA not supported)");
+        return;
+    }
+    tsignverify("Ed448",
+                srctop_file("test","tested448.pem"),
+                srctop_file("test","tested448pub.pem"));
+};
+
+subtest "dgst one-shot: no buffer fallback when mmap path fails (Unix)" => sub {
+    if ($^O eq 'MSWin32' || disabled("ecx")) {
+        plan tests => 1;
+        ok(1, "Skipped (Unix/mmap or EdDSA not available)");
+        return;
+    }
+    plan tests => 2;
+
+    # Use a directory with non-zero st_size so app_mmap_file() attempts open+mmap
+    # (curdir "." often has st_size 0 on some FS, which skips mmap and breaks this test).
+    # mmap() on a directory must fail; we must not fall back to bio_to_mem.
+    my $key = srctop_file("test", "tested25519.pem");
+    my $dir = srctop_dir("test");
+    my $stderr_file = "dgst_nofallback_err.txt";
+
+    with({ exit_checker => sub { return shift != 0; } },
+         sub {
+             ok(run(app(['openssl', 'dgst', '-sign', $key, $dir],
+                        stderr => $stderr_file)),
+                "dgst one-shot with un-mmapable file fails (no fallback)");
+         });
+    if (open(my $fh, '<', $stderr_file)) {
+        my $err = do { local $/; <$fh> };
+        close($fh);
+        ok($err =~ /Error: failed to use memory-mapped file/, "stderr mentions mmap failure");
+    } else {
+        ok(0, "could not read stderr file");
+    }
+    unlink($stderr_file) if -f $stderr_file;
+};
+
+subtest "ML-DSA-44 signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("ml-dsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (ML-DSA not supported)");
+        return;
+    }
+    tsignverify("Ml-DSA-44",
+                srctop_file("test","testmldsa44.pem"),
+                srctop_file("test","testmldsa44pub.pem"));
+};
+subtest "ML-DSA-65 signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("ml-dsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (ML-DSA not supported)");
+        return;
+    }
+    tsignverify("Ml-DSA-65",
+                srctop_file("test","testmldsa65.pem"),
+                srctop_file("test","testmldsa65pub.pem"));
+};
+subtest "ML-DSA-87 signature generation and verification with `dgst` CLI" => sub {
+    if (disabled("ml-dsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (ML-DSA not supported)");
+        return;
+    }
+    tsignverify("Ml-DSA-87",
+                srctop_file("test","testmldsa87.pem"),
+                srctop_file("test","testmldsa87pub.pem"));
+};
+
+subtest "SHA1 generation by provider with `dgst` CLI" => sub {
+    if (disabled("module")) {
+        plan tests => 1;
+        ok(1, "Skipped (dgst with provider not supported)");
+        return;
+    }
+    plan tests => 1;
+
+    $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
+        my $testdata = srctop_file('test', 'data.bin');
+        my @macdata = run(app(['openssl', 'dgst', '-sha1',
+                               '-provider', "p_ossltest",
+                               '-provider', "default",
+                               '-propquery', '?provider=p_ossltest',
+                               $testdata]), capture => 1);
+        chomp(@macdata);
+        my $expected = qr/SHA1\(\Q$testdata\E\)= 000102030405060708090a0b0c0d0e0f10111213/;
+        ok($macdata[0] =~ $expected, "SHA1: Check HASH value is as expected ($macdata[0]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac', '123456',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, default digest" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-hmac', '123456',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via environment" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    local $ENV{MYKEY} = 123456;
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac-env', 'MYKEY',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via stdin" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac-stdin',
+                            $testdata, $testdata], stdin => data_file("keyfile.txt")), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option key" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'key:123456',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option hexkey" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'hexkey:FFFF',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keyenv" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    local $ENV{MYKEY} = '123456';
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keyenv:MYKEY',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keyenvhex" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    local $ENV{MYKEY} = 'FFFF';
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keyenvhex:MYKEY',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keyfile" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keyfile:' . data_file("keyfile.bin"),
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keystdin" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keystdin',
+                            $testdata, $testdata], stdin => data_file("keyfile.txt")), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "Custom length XOF digest generation with `dgst` CLI" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #Digest the data twice to check consistency
+    my @xofdata = run(app(['openssl', 'dgst', '-shake128', '-xoflen', '64',
+                           $testdata, $testdata]), capture => 1);
+    chomp(@xofdata);
+    my $expected = qr/SHAKE-128\(\Q$testdata\E\)= bb565dac72640109e1c926ef441d3fa64ffd0b3e2bf8cd73d5182dfba19b6a8a2eab96d2df854b647b3795ef090582abe41ba4e0717dc4df40bc4e17d88e4677/;
+    ok($xofdata[0] =~ $expected, "XOF: Check digest value is as expected ($xofdata[0]) vs ($expected)");
+    ok($xofdata[1] =~ $expected,
+       "XOF: Check second digest value is consistent with the first ($xofdata[1]) vs ($expected)");
+};
+
+subtest "SHAKE digest generation with no xoflen set `dgst` CLI" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    ok(!run(app(['openssl', 'dgst', '-shake128', $testdata])), "SHAKE128 must fail without xoflen");
+    ok(!run(app(['openssl', 'dgst', '-shake256', $testdata])), "SHAKE256 must fail without xoflen");
+};
+
+subtest "signing with xoflen is not supported `dgst` CLI" => sub {
+    if (disabled("ec")) {
+        plan tests => 1;
+        ok(1, "Skipped (ECDSA not supported)");
+        return;
+    }
+    plan tests => 1;
+    my $data_to_sign = srctop_file('test', 'data.bin');
+
+    ok(!run(app(['openssl', 'dgst', '-shake256', '-xoflen', '64',
+                 '-sign', srctop_file("test","testec-p256.pem"),
+                 '-out', 'test.sig',
+                 srctop_file('test', 'data.bin')])),
+                 "Generating signature with xoflen should fail");
+};
+
+subtest "Coreutils format output with `dgst` CLI" => sub {
+    my $testdata = srctop_file('test', 'data.bin');
+    my $expected =
+        'd9fd1d3a7dc90526d2853450dcc63e26a311012d337fa4a192276f9824a046da';
+
+    # A newline in a filename is not possible everywhere, so that part of
+    # the test is conditional on actually being able to create such a file.
+    my $nlfile = "dgst_r_newline\nname.bin";
+    my $have_nl = $^O ne 'MSWin32' && $^O ne 'VMS' && copy($testdata, $nlfile);
+
+    plan tests => $have_nl ? 3 : 2;
+
+    my @rdata = run(app(['openssl', 'dgst', '-sha256', '-r', $testdata]),
+                    capture => 1);
+    chomp(@rdata);
+    ok($rdata[0] eq "$expected *$testdata",
+       "-r: Check coreutils style output is as expected ($rdata[0])");
+
+    # Without a file argument the input is stdin, reported as "stdin"
+    my @stdindata = run(app(['openssl', 'dgst', '-sha256', '-r'],
+                            stdin => $testdata), capture => 1);
+    chomp(@stdindata);
+    ok($stdindata[0] eq "$expected *stdin",
+       "-r: Check coreutils style output for stdin ($stdindata[0])");
+
+    if ($have_nl) {
+        # A newline in the filename is escaped as "\n" and the whole line
+        # is prefixed with a backslash, the way the '*sum' programs do it.
+        my @nldata = run(app(['openssl', 'dgst', '-sha256', '-r', $nlfile]),
+                         capture => 1);
+        chomp(@nldata);
+        ok($nldata[0] eq "\\$expected *dgst_r_newline\\nname.bin",
+           "-r: Check newline in filename is escaped ($nldata[0])");
+        unlink($nlfile);
+    }
+};
+
+subtest "Colon separated output with `dgst` CLI" => sub {
+    plan tests => 1;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my @cdata = run(app(['openssl', 'dgst', '-sha256', '-c', $testdata]),
+                    capture => 1);
+    chomp(@cdata);
+    my $hash = 'd9:fd:1d:3a:7d:c9:05:26:d2:85:34:50:dc:c6:3e:26:'
+               . 'a3:11:01:2d:33:7f:a4:a1:92:27:6f:98:24:a0:46:da';
+    my $expected = qr/SHA2-256\(\Q$testdata\E\)= \Q$hash\E/;
+    ok($cdata[0] =~ $expected,
+       "-c: Check colon separated output is as expected ($cdata[0])");
+};
+
+subtest "Binary output with `dgst` CLI" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my $outfile = "dgst_binary_out.bin";
+    my $expected =
+        'd9fd1d3a7dc90526d2853450dcc63e26a311012d337fa4a192276f9824a046da';
+
+    ok(run(app(['openssl', 'dgst', '-sha256', '-binary', '-out', $outfile,
+                $testdata])),
+       "-binary: Generating binary digest");
+
+    my $binary = '';
+    if (open(my $fh, '<', $outfile)) {
+        binmode($fh);
+        local $/;
+        $binary = <$fh>;
+        close($fh);
+    }
+    ok(unpack("H*", $binary) eq $expected,
+       "-binary: Check raw digest bytes are as expected");
+    unlink($outfile);
+};
+
+subtest "Hex signature output with `dgst` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    plan tests => 3;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    my $privkey = srctop_file("test", "testrsa.pem");
+    my $sigfile = "dgst_hex_sign.sig";
+
+    # Signature output defaults to binary; -hex must override that.
+    ok(run(app(['openssl', 'dgst', '-sha256', '-sign', $privkey,
+                '-out', $sigfile, $testdata])),
+       "-hex: Generating reference binary signature");
+
+    my $binsig = '';
+    if (open(my $fh, '<', $sigfile)) {
+        binmode($fh);
+        local $/;
+        $binsig = <$fh>;
+        close($fh);
+    }
+    unlink($sigfile);
+
+    my @hexdata = run(app(['openssl', 'dgst', '-sha256', '-hex',
+                           '-sign', $privkey, $testdata]), capture => 1);
+    chomp(@hexdata);
+    ok($hexdata[0] =~ /^RSA-SHA2-256\(\Q$testdata\E\)= ([0-9a-f]+)$/,
+       "-hex: Check hex signature output format ($hexdata[0])");
+    my $hexsig = $1 // '';
+    # RSA PKCS#1 v1.5 signing is deterministic, so both runs must match.
+    ok($hexsig eq unpack("H*", $binsig),
+       "-hex: Check hex signature matches the binary signature");
+};
+
+subtest "Listing supported digests with `dgst` CLI" => sub {
+    plan tests => 3;
+
+    my @listdata = run(app(['openssl', 'dgst', '-list']), capture => 1);
+    chomp(@listdata);
+    my $listing = join("\n", @listdata);
+
+    ok($listing =~ /Supported digests:/, "LIST: Check header is printed");
+    # Only check digests that are always present, each printed as "-<name>"
+    ok($listing =~ /-sha256\b/, "LIST: Check sha256 is listed");
+    ok($listing =~ /-sha512\b/, "LIST: Check sha512 is listed");
+};
+
+subtest "signing and verifying with DER `-keyform` `dgst` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    plan tests => 4;
+
+    my $data_to_sign = srctop_file('test', 'data.bin');
+    my $privkey_pem = srctop_file("test", "testrsa.pem");
+    my $pubkey_pem = srctop_file("test", "testrsapub.pem");
+    my $privkey_der = "testrsa-keyform.der";
+    my $pubkey_der = "testrsapub-keyform.der";
+    my $sigfile = "testrsa-keyform.sig";
+
+    # Convert the keys to DER so the `-keyform DER` code path can be exercised.
+    ok(run(app(['openssl', 'pkey', '-in', $privkey_pem,
+                '-outform', 'DER', '-out', $privkey_der])),
+       "Convert private key to DER");
+    ok(run(app(['openssl', 'pkey', '-in', $pubkey_pem, '-pubin',
+                '-outform', 'DER', '-pubout', '-out', $pubkey_der])),
+       "Convert public key to DER");
+
+    ok(run(app(['openssl', 'dgst', '-sign', $privkey_der, '-keyform', 'DER',
+                '-out', $sigfile,
+                $data_to_sign])),
+       "Generating signature with DER private key via -keyform");
+
+    ok(run(app(['openssl', 'dgst', '-verify', $pubkey_der, '-keyform', 'DER',
+                '-signature', $sigfile,
+                $data_to_sign])),
+       "Verify signature with DER public key via -keyform");
+};
+
+subtest "signing using the nonce-type sigopt" => sub {
+    if (disabled("ec")) {
+        plan tests => 1;
+        ok(1, "Skipped (ECDSA not supported)");
+        return;
+    }
+    if (disabled("hmac-drbg-kdf")) {
+        plan tests => 1;
+        ok(1, "Skipped (HMAC-DRBG-KDF not supported)");
+        return;
+    }
+    plan tests => 1;
+    my $data_to_sign = srctop_file('test', 'data.bin');
+
+    ok(run(app(['openssl', 'dgst', '-sha256',
+                 '-sign', srctop_file("test","testec-p256.pem"),
+                 '-out', 'test.sig',
+                 '-sigopt', 'nonce-type:1',
+                 srctop_file('test', 'data.bin')])),
+                 "Sign using the nonce-type sigopt");
+};

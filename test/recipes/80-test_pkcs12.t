@@ -1,0 +1,880 @@
+#! /usr/bin/env perl
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+use strict;
+use warnings;
+
+use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir with/;
+use OpenSSL::Test::Utils;
+
+use Encode;
+
+setup("test_pkcs12");
+
+my $pass = "σύνθημα γνώρισμα";
+
+my $savedcp;
+if (eval { require Win32::API; 1; }) {
+    # Trouble is that Win32 perl uses CreateProcessA, which
+    # makes it problematic to pass non-ASCII arguments, from perl[!]
+    # that is. This is because CreateProcessA is just a wrapper for
+    # CreateProcessW and will call MultiByteToWideChar and use
+    # system default locale. Since we attempt Greek pass-phrase
+    # conversion can be done only with Greek locale.
+
+    Win32::API->Import("kernel32","UINT GetSystemDefaultLCID()");
+    if (GetSystemDefaultLCID() != 0x408) {
+        plan skip_all => "Non-Greek system locale";
+    } else {
+        # Ensure correct code page so that VERBOSE output is right.
+        Win32::API->Import("kernel32","UINT GetConsoleOutputCP()");
+        Win32::API->Import("kernel32","BOOL SetConsoleOutputCP(UINT cp)");
+        $savedcp = GetConsoleOutputCP();
+        SetConsoleOutputCP(1253);
+        $pass = Encode::encode("cp1253",Encode::decode("utf-8",$pass));
+    }
+} elsif ($^O eq "MSWin32") {
+    plan skip_all => "Win32::API unavailable";
+} elsif ($^O ne "VMS") {
+    # Running MinGW tests transparently under Wine apparently requires
+    # UTF-8 locale...
+
+    foreach(`locale -a`) {
+        s/\R$//;
+        if ($_ =~ m/^C\.UTF\-?8/i) {
+            $ENV{LC_ALL} = $_;
+            last;
+        }
+    }
+}
+$ENV{OPENSSL_WIN32_UTF8}=1;
+
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_err =  disabled('err') || disabled('autoerrinit');
+
+plan tests => 117 + ($no_fips ? 0 : 5);
+
+# Test different PKCS#12 formats
+ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
+# Test with legacy APIs
+ok(run(test(["pkcs12_format_test", "-legacy"])), "test pkcs12 formats using legacy APIs");
+# Test with a non-default library context (and no loaded providers in the default context)
+ok(run(test(["pkcs12_format_test", "-context"])), "test pkcs12 formats using a non-default library context");
+
+SKIP: {
+     skip "VMS doesn't have command line UTF-8 support yet in DCL", 1
+         if $^O eq "VMS";
+
+     # just see that we can read shibboleth.pfx protected with $pass
+     ok(run(app(["openssl", "pkcs12", "-noout",
+                 "-password", "pass:$pass",
+                 "-in", srctop_file("test", "shibboleth.pfx")])),
+        "test_load_cert_pkcs12");
+}
+
+my @path = qw(test certs);
+my $outfile1 = "out1.p12";
+my $outfile2 = "out2.p12";
+my $outfile3 = "out3.p12";
+my $outfile4 = "out4.p12";
+my $outfile5 = "out5.p12";
+my $outfile6 = "out6.p12";
+my $outfile7 = "out7.p12";
+my $outfile8 = "out8.p12";
+
+# Test the -chain option with -untrusted
+ok(run(app(["openssl", "pkcs12", "-export", "-chain",
+            "-CAfile",  srctop_file(@path,  "sroot-cert.pem"),
+            "-untrusted", srctop_file(@path, "ca-cert.pem"),
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-nokeys", "-passout", "pass:", "-out", $outfile1])),
+   "test_pkcs12_chain_untrusted");
+
+# Test the -passcerts option
+SKIP: {
+    skip "Skipping PKCS#12 test because DES is disabled in this build", 1
+        if disabled("des");
+    ok(run(app(["openssl", "pkcs12", "-export",
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-certfile", srctop_file(@path, "v3-certs-TDES.p12"),
+            "-passcerts", "pass:v3-certs",
+            "-nokeys", "-passout", "pass:v3-certs", "-descert",
+            "-out", $outfile2])),
+   "test_pkcs12_passcerts");
+}
+
+SKIP: {
+    skip "Skipping legacy PKCS#12 test because the required algorithms are disabled", 2
+        if disabled("des") || disabled("rc2") || disabled("legacy");
+    # Test reading legacy PKCS#12 file
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-in", srctop_file(@path, "v3-certs-RC2.p12"),
+                "-passin", "pass:v3-certs",
+                "-provider", "default", "-provider", "legacy",
+                "-nokeys", "-passout", "pass:v3-certs", "-descert",
+                "-out", $outfile3], stderr => "outerr2.txt")),
+    "test_pkcs12_passcerts_legacy");
+    open DATA, "outerr2.txt";
+    my @match = grep /:error:/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 0 : 1, "test_pkcs12_passcerts_legacy_outerr2_empty");
+}
+
+# Test export of PEM file with both cert and key
+# -nomac necessary to avoid legacy provider requirement
+ok(run(app(["openssl", "pkcs12", "-export",
+        "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+        "-in", srctop_file(@path, "cert-key-cert.pem"),
+        "-passout", "pass:v3-certs",
+        "-nomac", "-out", $outfile4], stderr => "outerr.txt")),
+   "test_export_pkcs12_cert_key_cert");
+open DATA, "outerr.txt";
+my @match = grep /:error:/, <DATA>;
+close DATA;
+ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr_empty");
+
+ok(run(app(["openssl", "pkcs12",
+            "-in", $outfile4,
+            "-passin", "pass:v3-certs",
+            "-nomacver", "-nodes"])),
+  "test_import_pkcs12_cert_key_cert");
+
+ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile5,
+            "-in", srctop_file(@path, "ee-cert.pem"), "-caname", "testname",
+            "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
+   "test nokeys single cert");
+
+my @pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $outfile5,
+                          "-passin", "pass:"]), capture => 1);
+
+# Test that with one input certificate, we get one output certificate
+ok(grep(/subject=CN\s*=\s*server.example/, @pkcs12info) == 1,
+   "test one cert in output");
+
+# Test that the expected friendly name is present in the output
+ok(grep(/testname/, @pkcs12info) == 1, "test friendly name in output");
+
+# Test there's no Oracle Trusted Key Usage bag attribute
+ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
+    "test no oracle trusted key usage");
+
+# Test export of PEM file with both cert and key, without password.
+# -nomac necessary to avoid legacy provider requirement
+{
+    ok(run(app(["openssl", "pkcs12", "-export",
+            "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+            "-in", srctop_file(@path, "cert-key-cert.pem"),
+            "-passout", "pass:",
+            "-nomac", "-out", $outfile6], stderr => "outerr6.txt")),
+    "test_export_pkcs12_cert_key_cert_no_pass");
+    open DATA, "outerr6.txt";
+    my @match = grep /:error:/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr6_empty");
+}
+
+# Export key + cert + distinct CA cert for combination tests
+ok(run(app(["openssl", "pkcs12", "-export",
+            "-inkey", srctop_file(@path, "ee-key.pem"),
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-certfile", srctop_file(@path, "ca-cert.pem"),
+            "-passout", "pass:",
+            "-nomac", "-out", $outfile8])),
+   "test_export_pkcs12_key_cert_ca");
+
+# Test dumping a PKCS#12 file whose private key is stored in an unencrypted
+# keyBag (created with -keypbe NONE) rather than a shrouded keyBag.
+{
+    my $keybag = "keybag.p12";
+    ok(run(app(["openssl", "pkcs12", "-export", "-keyex", "-keypbe", "NONE",
+                "-certpbe", "NONE", "-nomac",
+                "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+                "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-passout", "pass:", "-out", $keybag])),
+       "export PKCS#12 with an unencrypted key bag");
+
+    # -nodes so the dumped key isn't re-encrypted (which would prompt).
+    my @info = run(app(["openssl", "pkcs12", "-in", $keybag, "-info", "-nodes",
+                        "-passin", "pass:"], stderr => "keybag_info.txt"),
+                   capture => 1);
+    open DATA, "keybag_info.txt";
+    my @match = grep /Key bag/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 1 : 0, "test unencrypted key bag is reported");
+    ok(grep(/-----BEGIN PRIVATE KEY-----/, @info) == 1,
+       "test private key from key bag is output");
+}
+
+my %pbmac1_tests = (
+    pbmac1_defaults => {args => [], lookup => "hmacWithSHA256"},
+    pbmac1_nondefaults => {args => ["-pbmac1_pbkdf2_md", "sha512", "-macalg", "sha384"], lookup => "hmacWithSHA512"},
+);
+
+for my $instance (sort keys %pbmac1_tests) {
+    my $extra_args = $pbmac1_tests{$instance}{args};
+    my $lookup     = $pbmac1_tests{$instance}{lookup};
+    # Test export of PEM file with both cert and key, with password.
+    {
+        my $pbmac1_id = $instance;
+        ok(run(app(["openssl", "pkcs12", "-export", "-pbmac1_pbkdf2",
+                "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+                "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-passout", "pass:1234",
+                @$extra_args,
+                "-out", "$pbmac1_id.p12"], stderr => "${pbmac1_id}_err.txt")),
+        "test_export_pkcs12_${pbmac1_id}");
+        open DATA, "${pbmac1_id}_err.txt";
+        my @match = grep /:error:/, <DATA>;
+        close DATA;
+        ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_${pbmac1_id}_err.empty");
+
+        ok(run(app(["openssl", "pkcs12", "-in", "$pbmac1_id.p12", "-info", "-noout",
+                "-passin", "pass:1234"], stderr => "${pbmac1_id}_info.txt")),
+        "test_export_pkcs12_${pbmac1_id}_info");
+        open DATA, "${pbmac1_id}_info.txt";
+        @match = grep /$lookup/, <DATA>;
+        close DATA;
+        ok(scalar @match > 0 ? 1 : 0, "test_export_pkcs12_${pbmac1_id}_info");
+    }
+}
+
+# Test pbmac1 pkcs12 good files, RFC 9579, and one extra with shorter key
+# length
+for my $file ("pbmac1_256_256.good.p12", "pbmac1_512_256.good.p12",
+              "pbmac1_512_512.good.p12",
+              "pbmac1_256_256.good-shorter-key-len.p12")
+{
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    ok(run(app(["openssl", "pkcs12", "-in", $path, "-password", "pass:1234", "-noenc"])),
+      "test pbmac1 pkcs12 file $file");
+}
+
+# Test pbmac1 pkcs12 bad files, RFC 9579, CVE-2025-11187 and CVE-2026-34181
+for my $file ("pbmac1_256_256.bad-iter.p12", "pbmac1_256_256.bad-salt.p12",
+              "pbmac1_256_256.no-len.p12", "pbmac1_256_256.bad-len.p12",
+              "pbmac1_256_256.bad-salt-type.p12", "pbmac1_256_256.negative-len.p12",
+              "pbmac1_256_256.no-salt.p12", "pbmac1_256_256.very-big-len.p12",
+              "pbmac1_256_256.zero-len.p12", "pbmac1_256_256.bad-key-len.p12")
+{
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            ok(run(app(["openssl", "pkcs12", "-in", $path, "-password", "pass:1234", "-noenc"])),
+            "test pbmac1 pkcs12 bad file $file");
+            }
+        );
+}
+
+# Test pbmac1 pkcs12 file with absent PBKDF2 PRF, usually omitted when selecting sha1
+{
+    my $file = "pbmac1_sha1_hmac_and_prf.p12";
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    ok(run(app(["openssl", "pkcs12", "-in", $path, "-password", "pass:1234", "-noenc"])),
+      "test pbmac1 pkcs12 file $file");
+}
+
+# Test some bad pkcs12 files
+my $bad1 = srctop_file("test", "recipes", "80-test_pkcs12_data", "bad1.p12");
+my $bad2 = srctop_file("test", "recipes", "80-test_pkcs12_data", "bad2.p12");
+my $bad3 = srctop_file("test", "recipes", "80-test_pkcs12_data", "bad3.p12");
+
+with({ exit_checker => sub { return shift == 1; } },
+     sub {
+        ok(run(app(["openssl", "pkcs12", "-in", $bad1, "-password", "pass:"])),
+           "test bad pkcs12 file 1");
+
+        ok(run(app(["openssl", "pkcs12", "-in", $bad1, "-password", "pass:",
+                    "-nomacver"])),
+           "test bad pkcs12 file 1 (nomacver)");
+
+        ok(run(app(["openssl", "pkcs12", "-in", $bad1, "-password", "pass:",
+                    "-info"])),
+           "test bad pkcs12 file 1 (info)");
+
+        ok(run(app(["openssl", "pkcs12", "-in", $bad2, "-password", "pass:"])),
+           "test bad pkcs12 file 2");
+
+        ok(run(app(["openssl", "pkcs12", "-in", $bad2, "-password", "pass:",
+                    "-info"])),
+           "test bad pkcs12 file 2 (info)");
+
+        ok(run(app(["openssl", "pkcs12", "-in", $bad3, "-password", "pass:"])),
+           "test bad pkcs12 file 3");
+
+        ok(run(app(["openssl", "pkcs12", "-in", $bad3, "-password", "pass:",
+                    "-info"])),
+           "test bad pkcs12 file 3 (info)");
+     });
+
+# Test that mac verification doesn't fail when mac is absent in the file
+{
+    my $nomac = srctop_file("test", "recipes", "80-test_pkcs12_data", "nomac_parse.p12");
+    ok(run(app(["openssl", "pkcs12", "-in", $nomac, "-passin", "pass:testpassword"])),
+       "test pkcs12 file without MAC");
+}
+
+# Test with Oracle Trusted Key Usage specified in openssl.cnf
+{
+    ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile7,
+                "-jdktrust", "anyExtendedKeyUsage", "-in", srctop_file(@path, "ee-cert.pem"),
+                "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
+       "test nokeys single cert");
+
+    my @pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $outfile7,
+                          "-passin", "pass:"]), capture => 1);
+    ok(grep(/Trusted key usage \(Oracle\): Any Extended Key Usage \(2.5.29.37.0\)/, @pkcs12info) == 1,
+        "test oracle trusted key usage is set");
+
+    delete $ENV{OPENSSL_CONF}
+}
+
+# Test -clcerts/-cacerts cert filtering and the -name friendly name.
+subtest "pkcs12 -clcerts/-cacerts filtering and -name" => sub {
+    plan tests => 7;
+
+    # A PKCS#12 with a key + matching EE cert (gets a localKeyID) and a CA
+    # cert added via -certfile (no localKeyID), plus a friendly name.
+    my $mixed = "mixed.p12";
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-inkey", srctop_file(@path, "ee-key.pem"),
+                "-in", srctop_file(@path, "ee-cert.pem"),
+                "-certfile", srctop_file(@path, "ca-cert.pem"),
+                "-name", "Friendly Client",
+                "-passout", "pass:", "-out", $mixed])),
+       "export a PKCS#12 with a client cert, a CA cert and a friendly name");
+
+    # -name sets the friendly name, visible in -info output.
+    my @info = run(app(["openssl", "pkcs12", "-in", $mixed, "-info", "-nokeys",
+                        "-passin", "pass:"]), capture => 1);
+    ok(grep(/friendlyName: Friendly Client/, @info) == 1,
+       "the -name friendly name is present in the output");
+
+    # Without filtering both certificates are dumped.
+    my @all = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys",
+                       "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @all) == 2,
+       "both certificates are output without filtering");
+
+    # -clcerts outputs only the client (leaf) certificate.
+    my @cl = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys", "-clcerts",
+                      "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @cl) == 1,
+       "-clcerts outputs a single certificate");
+    ok(grep(/subject=CN\s*=\s*server\.example/, @cl) == 1,
+       "-clcerts outputs the client certificate");
+
+    # -cacerts outputs only the CA certificate.
+    my @ca = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys", "-cacerts",
+                      "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @ca) == 1,
+       "-cacerts outputs a single certificate");
+    ok(grep(/subject=CN\s*=\s*CA\b/, @ca) == 1,
+       "-cacerts outputs the CA certificate");
+};
+
+# Test PKCS12_parse_ex libctx propagation (PR #30937)
+# mixed.p12 uses AES-encrypted cert safe, exercising PKCS7 context propagation
+ok(run(test(["pkcs12_api_test",
+             "-in", "mixed.p12",
+             "-pass", "",
+             "-has-key", 1,
+             "-has-cert", 1,
+             "-has-ca", 1,
+             ])), "Test PKCS12_parse_ex libctx propagation (PR #30937)");
+
+# Tests for pkcs12_parse
+ok(run(test(["pkcs12_api_test",
+             "-in", $outfile1,
+             "-has-ca", 1,
+             ])), "Test pkcs12_parse()");
+
+SKIP: {
+    skip "Skipping PKCS#12 parse test because DES is disabled in this build", 1
+        if disabled("des");
+    ok(run(test(["pkcs12_api_test",
+                 "-in", $outfile2,
+                 "-pass", "v3-certs",
+                 "-has-ca", 1,
+                 ])), "Test pkcs12_parse()");
+}
+
+SKIP: {
+    skip "Skipping PKCS#12 parse test because the required algorithms are disabled", 1
+        if disabled("des") || disabled("rc2") || disabled("legacy");
+    ok(run(test(["pkcs12_api_test",
+                 "-in", $outfile3,
+                 "-pass", "v3-certs",
+                 "-has-ca", 1,
+                 ])), "Test pkcs12_parse()");
+}
+
+ok(run(test(["pkcs12_api_test",
+             "-in", $outfile4,
+             "-pass", "v3-certs",
+             "-has-ca", 1,
+             "-has-key", 1,
+             "-has-cert", 1,
+             "-ca-count", 1,
+             ])), "Test pkcs12_parse()");
+
+ok(run(test(["pkcs12_api_test",
+             "-in", $outfile5,
+             "-has-ca", 1,
+             ])), "Test pkcs12_parse()");
+
+ok(run(test(["pkcs12_api_test",
+             "-in", $outfile6,
+             "-pass", "",
+             "-has-ca", 1,
+             "-has-key", 1,
+             "-has-cert", 1,
+             "-ca-count", 1,
+             ])), "Test pkcs12_parse()");
+
+# Test PKCS12_parse cert placement: two certs sharing a key + unrelated cert.
+# The cert from -in should be returned as the main cert; the other cert
+# matching the key (from -certfile) should go to the CA stack.
+{
+    my $extra_certs = "extra_certs.pem";
+    open(my $out, '>', $extra_certs) or die "Cannot create $extra_certs: $!";
+    for my $f (srctop_file(@path, "ee-cert2.pem"),
+               srctop_file(@path, "ca-cert.pem")) {
+        open(my $in, '<', $f) or die "Cannot read $f: $!";
+        print $out $_ while <$in>;
+        close $in;
+    }
+    close $out;
+
+    my $twocert_p12 = "twocert.p12";
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-inkey", srctop_file(@path, "ee-key.pem"),
+                "-in", srctop_file(@path, "ee-cert.pem"),
+                "-certfile", $extra_certs,
+                "-passout", "pass:", "-nomac", "-out", $twocert_p12])),
+       "export PKCS#12 with two certs sharing a key and unrelated cert");
+
+    ok(run(test(["pkcs12_api_test",
+                 "-in", $twocert_p12,
+                 "-has-key", 1,
+                 "-has-cert", 1,
+                 "-has-ca", 1,
+                 "-ca-count", 2,
+                 "-expected-cert", srctop_file(@path, "ee-cert.pem"),
+                 "-expected-key", srctop_file(@path, "ee-key.pem"),
+                 "-expected-ca", $extra_certs,
+                 ])), "Test PKCS12_parse cert placement with shared key");
+}
+
+# Test PKCS12_parse with a key encrypted using a different password than the MAC.
+# Omitting the key succeeds; requesting it fails.
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data",
+                                "mismatched_key_pass.p12"),
+             "-mismatched-key-pass",
+             ])), "Test PKCS12_parse with mismatched key password");
+ok(run(test(["pkcs12_api_test",
+             "-in", $outfile8,
+             "-pass", "",
+             "-has-ca", 1,
+             "-has-key", 1,
+             "-has-cert", 1,
+             ])), "Test pkcs12_parse() key+cert+ca combinations");
+
+# Test against CVE-2025-69421, octet parameter is expected, but
+# NULL is being received and dereferenced
+
+unless ($no_fips) {
+ SKIP: {
+    skip "Error messages are not compiled in", 1 if $no_err;
+        {
+        my $file = "sha256mac_cert.oct-is-null.p12";
+        my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                                      "-passin", "pass:RedHatEnterpriseLinux10.0", $path],
+                                      stderr => "outerr.txt"),
+                                      capture => 1);
+                open DATA, "outerr.txt";
+                my @match = grep /PKCS12_item_decrypt_d2i_ex:passed a null parameter/, <DATA>;
+                close DATA;
+                ok(scalar @match > 0, "Test against CVE-2025-69421 - null parameter, sha256mac");
+                }
+            );
+        }
+    }
+}
+
+ SKIP: {
+    skip "Error messages are not compiled in", 1 if $no_err;
+    {
+        my $file = "pbmac1_cert.oct-is-null.p12";
+        my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+         with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                                      "-passin", "pass:RedHatEnterpriseLinux10.0", $path],
+                                      stderr => "outerr.txt"),
+                                      capture => 1);
+                open DATA, "outerr.txt";
+                my @match = grep /PKCS12_item_decrypt_d2i_ex:passed a null parameter/, <DATA>;
+                close DATA;
+                ok(scalar @match > 0, "Test against CVE-2025-69421 - null parameter, pbmac1");
+                }
+            );
+    }
+}
+
+# Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert
+unless ($no_fips) {
+ SKIP: {
+    skip "Error messages are not compiled in", 2 if $no_err;
+    {
+        for my $file ("BOOLEAN-in-friendlyName-of-cert-pkcs12-sha256mac.p12",
+                      "BOOLEAN-in-localKeyID-of-cert-pkcs12-sha256mac.p12"
+                      )
+            {
+                my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+                with({ exit_checker => sub { return shift == 1; } },
+                sub {
+                    my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                                "-passin", "pass:RedHatEnterpriseLinux10.0", $path],
+                                stderr => "outerr.txt"),
+                                capture => 1);
+                    open DATA, "outerr.txt";
+                    my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
+                    close DATA;
+                    ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert, sha256mac");
+                    }
+                );
+            }
+        }
+    }
+}
+
+ SKIP: {
+    skip "Error messages are not compiled in", 2 if $no_err;
+    for my $file ("BOOLEAN-in-friendlyName-of-cert-pbmac1.p12",
+                  "BOOLEAN-in-localKeyID-of-cert-pbmac1.p12"
+                  )
+    {
+        my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                            "-passin", "pass:RedHatEnterpriseLinux10.0", $path],
+                            stderr => "outerr.txt"),
+                            capture => 1);
+                open DATA, "outerr.txt";
+                my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
+                close DATA;
+                ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert, pbmac1");
+            }
+        );
+    }
+}
+
+# Test against CVE-2026-22795, missing ASN1_TYPE validation in keys
+unless ($no_fips) {
+ SKIP: {
+    skip "Error messages are not compiled in", 2 if $no_err;
+    {
+        for my $file ("BOOLEAN-in-friendlyName-of-key-pkcs12-sha256mac.p12",
+                      "BOOLEAN-in-localKeyID-of-key-pkcs12-sha256mac.p12"
+                      )
+        {
+            my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+            with({ exit_checker => sub { return shift == 1; } },
+                sub {
+                    my @output = run(app(["openssl", "storeutl", "-keys", "-text",
+                                "-passin", "pass:RedHatEnterpriseLinux10.0", $path],
+                                stderr => "outerr.txt"),
+                                capture => 1);
+                    open DATA, "outerr.txt";
+                    my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
+                    close DATA;
+                    ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in keys, sha256mac");
+                }
+            );
+            }
+        }
+    }
+}
+
+ SKIP: {
+    skip "Error messages are not compiled in", 2 if $no_err;
+    {
+    for my $file ("BOOLEAN-in-friendlyName-of-key-pbmac1.p12",
+              "BOOLEAN-in-localKeyID-of-key-pbmac1.p12"
+              )
+        {
+        my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                my @output = run(app(["openssl", "storeutl", "-keys", "-text",
+                            "-passin", "pass:RedHatEnterpriseLinux10.0", $path],
+                            stderr => "outerr.txt"),
+                            capture => 1);
+                open DATA, "outerr.txt";
+                my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
+                close DATA;
+                ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in keys, pbmac1");
+            }
+        );
+        }
+    }
+}
+
+# Test Java PKCS#12 files with symmetric keys
+{
+    my $java_p12 = srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12");
+    my $java_err = "java-skey.err";
+    my @err_lines;
+    my $fh;
+    my $key_pattern = "41 41 41 41 41 41";
+
+    # Test 1: Info display shows bag attributes
+    my @java_pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $java_p12,
+                                   "-passin", "pass:password"]), capture => 1);
+
+    ok(grep(/friendlyName:\s+my-explicit-key/, @java_pkcs12info) == 1,
+       "test Java PKCS#12 friendly name in output");
+
+    ok(grep(/localKeyID:/, @java_pkcs12info) == 1,
+       "test Java PKCS#12 localKeyID in output");
+
+    # Test 2: Default extraction (without -noenc) should NOT output key data
+    @java_pkcs12info = run(app(["openssl", "pkcs12", "-in", $java_p12, "-nocerts",
+                "-passin", "pass:password"], stderr => $java_err), capture => 1);
+    ok(scalar @java_pkcs12info > 0,
+       "test Java PKCS#12 extract without -noenc");
+
+    open($fh, '<', $java_err) or die "Can't open file $java_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok(grep(/Bag Attributes/, @java_pkcs12info) == 1,
+       "test extracted output contains bag attributes");
+    ok(grep(/Key management/, @err_lines) == 0 && grep(/Key Length:/, @err_lines) == 0,
+       "test extracted output does not contain algorithm and key length without -noenc");
+    ok(grep(/$key_pattern/, @java_pkcs12info, @err_lines) == 0,
+       "test extracted output does NOT contain hex key bytes");
+
+    # Test 3: Extract with -noenc should output key data in hex
+    @java_pkcs12info = run(app(["openssl", "pkcs12", "-in", $java_p12, "-nocerts",
+                "-passin", "pass:password", "-noenc"], stderr => $java_err), capture => 1);
+    ok(scalar @java_pkcs12info > 0,
+       "test Java PKCS#12 extract with -noenc");
+
+    open($fh, '<', $java_err) or die "Can't open file $java_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok(grep(/Bag Attributes/, @java_pkcs12info) == 1,
+       "test extracted key contains bag attributes");
+    ok(grep(/Key management/, @err_lines) == 1
+        && grep(/Key Length: 32 bytes/, @err_lines) == 1 && grep(/Key Data:/, @java_pkcs12info) == 1,
+       "test extracted key contains algorithm, key length and key data labels");
+    ok(grep(/$key_pattern/, @java_pkcs12info) == 1,
+       "test extracted key contains hex data");
+
+    # Test 4: -info -noout does not write to the output BIO
+    ok(run(app(["openssl", "pkcs12", "-info", "-noout", "-in", $java_p12,
+                "-passin", "pass:password"])),
+       "test Java PKCS#12 -info -noout succeeds");
+
+    # Test 5: -noout should not output key material
+    @java_pkcs12info = run(app(["openssl", "pkcs12", "-noout", "-in", $java_p12,
+                "-passin", "pass:password"], stderr => $java_err),
+                capture => 1, statusvar => \my $noout_exit);
+    open($fh, '<', $java_err) or die "Can't open file $java_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($noout_exit, "test Java PKCS#12 -noout succeeds");
+    ok(grep(/$key_pattern/, @java_pkcs12info, @err_lines) == 0,
+       "test Java PKCS#12 -noout does not output key hex data");
+    ok(grep(/Key Data:/, @java_pkcs12info) == 0,
+       "test Java PKCS#12 -noout does not output Key Data label");
+
+    # Test 6: -noout -noenc should still suppress key material
+    @java_pkcs12info = run(app(["openssl", "pkcs12", "-noout", "-noenc", "-in", $java_p12,
+                "-passin", "pass:password"], stderr => $java_err),
+                capture => 1, statusvar => \my $noout_noenc_exit);
+    open($fh, '<', $java_err) or die "Can't open file $java_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($noout_noenc_exit, "test Java PKCS#12 -noout -noenc succeeds");
+    ok(grep(/$key_pattern/, @java_pkcs12info, @err_lines) == 0,
+       "test Java PKCS#12 -noout -noenc does not output key hex data");
+    ok(grep(/Key Data:/, @java_pkcs12info) == 0,
+       "test Java PKCS#12 -noout -noenc does not output Key Data label");
+
+    # Test 7: -nokeys -noenc should suppress key material
+    @java_pkcs12info = run(app(["openssl", "pkcs12", "-nokeys", "-noenc", "-in", $java_p12,
+                "-passin", "pass:password"], stderr => $java_err),
+                capture => 1, statusvar => \my $nokeys_noenc_exit);
+    open($fh, '<', $java_err) or die "Can't open file $java_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($nokeys_noenc_exit, "test Java PKCS#12 -nokeys -noenc succeeds");
+    ok(grep(/$key_pattern/, @java_pkcs12info, @err_lines) == 0,
+       "test Java PKCS#12 -nokeys -noenc does not output key hex data");
+    ok(grep(/Key Data:/, @java_pkcs12info) == 0,
+       "test Java PKCS#12 -nokeys -noenc does not output Key Data label");
+
+    # Test 8: -info -noout -noenc should suppress key material
+    @java_pkcs12info = run(app(["openssl", "pkcs12", "-info", "-noout", "-noenc", "-in", $java_p12,
+                "-passin", "pass:password"], stderr => $java_err),
+                capture => 1, statusvar => \my $info_noout_noenc_exit);
+    open($fh, '<', $java_err) or die "Can't open file $java_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($info_noout_noenc_exit, "test Java PKCS#12 -info -noout -noenc succeeds");
+    ok(grep(/$key_pattern/, @java_pkcs12info, @err_lines) == 0,
+       "test Java PKCS#12 -info -noout -noenc does not output key hex data");
+    ok(grep(/Key Data:/, @java_pkcs12info) == 0,
+       "test Java PKCS#12 -info -noout -noenc does not output Key Data label");
+
+    unlink $java_err;
+}
+
+# Test PKCS12_parse_ex() with Java symmetric key file
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12"),
+             "-pass", "password",
+             "-num-skeys", "1",
+             ])), "Test PKCS12_parse_ex() with symmetric key");
+
+# Test OSSL_STORE with Java symmetric key file
+{
+    my @output = run(app(["openssl", "storeutl",
+                         "-passin", "pass:password",
+                         srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12")]),
+                    capture => 1);
+    ok(@output > 0, "Test OSSL_STORE loads symmetric key from PKCS#12");
+
+    my $output_text = join("", @output);
+    like($output_text, qr/Symmetric key/, "OSSL_STORE output shows symmetric key");
+}
+
+# Test PKCS#12 files with multiple symmetric keys
+{
+    my $multi_p12 = srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12");
+    my $mskey_err = "mskey_stderr.txt";
+    my @err_lines;
+    my $fh;
+    my $key1 = "01 01 01 01 01 01 01 01";
+    my $key2 = "02 02 02 02 02 02 02 02";
+
+    # Test 1: Info display shows both keys with their friendly names
+    my @multi_info = run(app(["openssl", "pkcs12", "-info", "-in", $multi_p12,
+                              "-passin", "pass:password"]), capture => 1);
+
+    ok(grep(/friendlyName:\s+key1/, @multi_info) == 1,
+       "test multi-skey PKCS#12 shows key1 friendly name");
+
+    ok(grep(/friendlyName:\s+key2/, @multi_info) == 1,
+       "test multi-skey PKCS#12 shows key2 friendly name");
+
+    # Test 2: Default extraction shows both keys with metadata
+    @multi_info = run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-passin", "pass:password"],
+                stderr => $mskey_err), capture => 1);
+
+    open $fh, '<', $mskey_err or die "Cannot open $mskey_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok(grep(/Key Length:/, @multi_info, @err_lines) == 0,
+       "test multi-skey output does not show key lengths without -noenc");
+    ok(grep(/$key1/, @multi_info, @err_lines) == 0 && grep(/$key2/, @multi_info, @err_lines) == 0,
+       "test multi-skey output without -noenc doesn't contain raw key hex data");
+
+    # Test 3: Extract with -noenc should output both keys in hex
+    @multi_info = run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-passin", "pass:password", "-noenc"], stderr => $mskey_err), capture => 1),
+
+    open $fh, '<', $mskey_err or die "Cannot open $mskey_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok(grep(/$key1/, @multi_info, @err_lines) == 1 && grep(/$key2/, @multi_info, @err_lines) == 1,
+       "test multi-skey output with -noenc contains raw key hex data");
+
+    # Test 4: -noout should not output any key material
+    @multi_info = run(app(["openssl", "pkcs12", "-noout", "-in", $multi_p12,
+                "-passin", "pass:password"], stderr => $mskey_err),
+                capture => 1, statusvar => \my $m_noout_exit);
+    open $fh, '<', $mskey_err or die "Cannot open $mskey_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($m_noout_exit, "test multi-skey -noout succeeds");
+    ok(grep(/$key1/, @multi_info, @err_lines) == 0 && grep(/$key2/, @multi_info, @err_lines) == 0,
+       "test multi-skey -noout does not output key hex data");
+    ok(grep(/Key Data:/, @multi_info) == 0,
+       "test multi-skey -noout does not output Key Data label");
+
+    # Test 5: -noout -noenc should still suppress key material
+    @multi_info = run(app(["openssl", "pkcs12", "-noout", "-noenc", "-in", $multi_p12,
+                "-passin", "pass:password"], stderr => $mskey_err),
+                capture => 1, statusvar => \my $m_noout_noenc_exit);
+    open $fh, '<', $mskey_err or die "Cannot open $mskey_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($m_noout_noenc_exit, "test multi-skey -noout -noenc succeeds");
+    ok(grep(/$key1/, @multi_info, @err_lines) == 0 && grep(/$key2/, @multi_info, @err_lines) == 0,
+       "test multi-skey -noout -noenc does not output key hex data");
+    ok(grep(/Key Data:/, @multi_info) == 0,
+       "test multi-skey -noout -noenc does not output Key Data label");
+
+    # Test 6: -nokeys -noenc should suppress key material
+    @multi_info = run(app(["openssl", "pkcs12", "-nokeys", "-noenc", "-in", $multi_p12,
+                "-passin", "pass:password"], stderr => $mskey_err),
+                capture => 1, statusvar => \my $m_nokeys_noenc_exit);
+    open $fh, '<', $mskey_err or die "Cannot open $mskey_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($m_nokeys_noenc_exit, "test multi-skey -nokeys -noenc succeeds");
+    ok(grep(/$key1/, @multi_info, @err_lines) == 0 && grep(/$key2/, @multi_info, @err_lines) == 0,
+       "test multi-skey -nokeys -noenc does not output key hex data");
+    ok(grep(/Key Data:/, @multi_info) == 0,
+       "test multi-skey -nokeys -noenc does not output Key Data label");
+
+    # Test 7: -info -noout -noenc should suppress key material
+    @multi_info = run(app(["openssl", "pkcs12", "-info", "-noout", "-noenc", "-in", $multi_p12,
+                "-passin", "pass:password"], stderr => $mskey_err),
+                capture => 1, statusvar => \my $m_info_noout_noenc_exit);
+    open $fh, '<', $mskey_err or die "Cannot open $mskey_err: $!";
+    @err_lines = <$fh>;
+    close $fh;
+    ok($m_info_noout_noenc_exit, "test multi-skey -info -noout -noenc succeeds");
+    ok(grep(/$key1/, @multi_info, @err_lines) == 0 && grep(/$key2/, @multi_info, @err_lines) == 0,
+       "test multi-skey -info -noout -noenc does not output key hex data");
+    ok(grep(/Key Data:/, @multi_info) == 0,
+       "test multi-skey -info -noout -noenc does not output Key Data label");
+
+    unlink $mskey_err;
+}
+
+# Test PKCS12_parse_ex() with multiple symmetric keys
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12"),
+             "-pass", "password",
+             "-num-skeys", "2",
+             ])), "Test PKCS12_parse_ex() with multiple symmetric keys");
+
+# Test OSSL_STORE with multiple symmetric keys
+{
+    my @output = run(app(["openssl", "storeutl",
+                         "-passin", "pass:password",
+                         srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12")]),
+                    capture => 1);
+    ok(@output > 0, "Test OSSL_STORE loads multiple symmetric keys from PKCS#12");
+
+    my $output_text = join("", @output);
+    my @skey_matches = ($output_text =~ /Symmetric key/g);
+    ok(scalar @skey_matches == 2, "OSSL_STORE output shows two symmetric keys");
+}
+
+SetConsoleOutputCP($savedcp) if (defined($savedcp));

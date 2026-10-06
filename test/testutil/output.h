@@ -1,0 +1,70 @@
+/*
+ * Copyright 2014-2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#ifndef OSSL_TESTUTIL_OUTPUT_H
+#define OSSL_TESTUTIL_OUTPUT_H
+
+#include <stdarg.h>
+
+#define ossl_test__attr__(x)
+#if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__MINGW64__) \
+    && !defined(__APPLE__)
+#undef ossl_test__attr__
+#define ossl_test__attr__ __attribute__
+#endif
+/*
+ * The basic I/O functions used internally by the test framework.  These
+ * can be overridden when needed. Note that if one is, then all must be.
+ */
+void test_open_streams(void);
+void test_close_streams(void);
+void test_adjust_streams_tap_level(int level);
+/* The following ALL return the number of characters written */
+int test_vprintf_stdout(const char *fmt, va_list ap)
+    ossl_test__attr__((__format__(__printf__, 1, 0)));
+int test_vprintf_tapout(const char *fmt, va_list ap)
+    ossl_test__attr__((__format__(__printf__, 1, 0)));
+int test_vprintf_stderr(const char *fmt, va_list ap)
+    ossl_test__attr__((__format__(__printf__, 1, 0)));
+int test_vprintf_taperr(const char *fmt, va_list ap)
+    ossl_test__attr__((__format__(__printf__, 1, 0)));
+/* These return failure or success */
+int test_flush_stdout(void);
+int test_flush_tapout(void);
+int test_flush_stderr(void);
+int test_flush_taperr(void);
+
+/**
+ * @brief Begin a logical output record.
+ * Writes made by this thread until the matching test_output_record_end()
+ * are emitted as a unit, so that a record composed of several writes is
+ * not interleaved with output from another thread.  Calls nest; only the
+ * outermost pair has an effect.  Has no effect in a build without
+ * threads.
+ */
+void test_output_record_begin(void);
+
+/**
+ * @brief End a logical output record begun by test_output_record_begin().
+ */
+void test_output_record_end(void);
+
+/* Commodity functions.  There's no need to override these */
+int test_printf_stdout(const char *fmt, ...)
+    ossl_test__attr__((__format__(__printf__, 1, 2)));
+int test_printf_tapout(const char *fmt, ...)
+    ossl_test__attr__((__format__(__printf__, 1, 2)));
+int test_printf_stderr(const char *fmt, ...)
+    ossl_test__attr__((__format__(__printf__, 1, 2)));
+int test_printf_taperr(const char *fmt, ...)
+    ossl_test__attr__((__format__(__printf__, 1, 2)));
+
+#undef ossl_test__attr__
+
+#endif /* OSSL_TESTUTIL_OUTPUT_H */
