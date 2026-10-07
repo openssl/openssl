@@ -700,7 +700,7 @@ err:
  * CCM, GCM-SIV and ChaCha20-Poly1305 are skipped: Final currently succeeds
  * after the rejected Update, and what it should do is not settled yet.
  */
-static int test_aes_siv_ctx_enc_retval(int idx)
+static int test_evp_aead_enc_retval(int idx)
 {
     const AEAD_DATA *info = &aead_list[idx];
     EVP_CIPHER_CTX *enc_ctx = NULL;
@@ -770,7 +770,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
-    ADD_ALL_TESTS(test_aes_siv_ctx_enc_retval, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_enc_retval, aead_list_n);
     return 1;
 }
 
