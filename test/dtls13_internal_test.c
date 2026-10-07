@@ -6785,30 +6785,30 @@ static int test_dtls13_pending_write_completes_before_reciprocal_keyupdate(int i
             1))
         goto end;
 
-    /* The completing retry of the original pending write -- the call under test. */
-    ret = SSL_write(local, payload, sizeof(payload));
-
     /*
-     * ret == sizeof(payload) confirms the full payload was reported written.
-     * key_update == SSL_KEY_UPDATE_NONE confirms the reciprocal KeyUpdate it
-     * owed was actually constructed first: tls_construct_key_update() only
-     * resets key_update once that message has been built. Together, these
-     * rule out the bug -- the payload going out while the KeyUpdate was
-     * still unconstructed.
+     * The completing retry of the original pending write -- the call under
+     * test. It must send the reciprocal KeyUpdate and then, like any write
+     * that has just sent a KeyUpdate, wait for its ACK instead of sending
+     * the payload: key_update == SSL_KEY_UPDATE_NONE confirms the KeyUpdate
+     * was constructed (tls_construct_key_update() only resets key_update
+     * once that message has been built), and WANT_READ confirms the payload
+     * was not sent in this call.
      */
-    if (!TEST_int_eq(ret, (int)sizeof(payload))
+    ret = SSL_write(local, payload, sizeof(payload));
+    if (!TEST_int_eq(ret, -1)
+        || !TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ)
         || !TEST_int_eq(lc->key_update, SSL_KEY_UPDATE_NONE))
         goto end;
 
     /*
      * Nothing ever blocks the peer's own writes in this test, so a single
-     * SSL_read() drives all of it to completion: the peer reads the ACK,
-     * reads the KeyUpdate, sends its own ACK for it, and reads the payload
-     * sent by local.
+     * SSL_read() reads the delayed ACK, reads the KeyUpdate and sends its own
+     * ACK for it. No application data may have arrived ahead of the
+     * KeyUpdate, so there is nothing to return yet.
      */
     ret = SSL_read(peer, buf, sizeof(buf));
-    if (!TEST_int_eq(ret, (int)sizeof(payload))
-        || !TEST_mem_eq(buf, ret, payload, sizeof(payload))
+    if (!TEST_int_eq(ret, -1)
+        || !TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ)
         || !TEST_uint64_t_eq(dtls1_get_epoch(pc, SSL3_CC_WRITE), peer_epoch_before + 1))
         goto end;
 
@@ -6823,6 +6823,14 @@ static int test_dtls13_pending_write_completes_before_reciprocal_keyupdate(int i
         || !TEST_uint64_t_eq(dtls1_get_epoch(lc, SSL3_CC_WRITE), epoch_before + 1))
         goto end;
 
+    /* The pending write now completes under the new epoch. */
+    if (!TEST_int_eq(SSL_write(local, payload, sizeof(payload)), (int)sizeof(payload)))
+        goto end;
+    ret = SSL_read(peer, buf, sizeof(buf));
+    if (!TEST_int_eq(ret, (int)sizeof(payload))
+        || !TEST_mem_eq(buf, ret, payload, sizeof(payload)))
+        goto end;
+
     /* Application data now flows both ways under the new epoch. */
     if (!TEST_int_eq(SSL_write(local, "l", 1), 1)
         || !TEST_int_eq(SSL_read(peer, buf, 1), 1)
@@ -6835,6 +6843,313 @@ static int test_dtls13_pending_write_completes_before_reciprocal_keyupdate(int i
     testresult = 1;
 end:
     BIO_free(retry);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A KeyUpdate(update_requested) from the peer must not make a side build its
+ * reply while its own earlier KeyUpdate still has its write-key install
+ * withheld.
+ *
+ * The replying side's KeyUpdate is acknowledged, but its install stays
+ * pending behind an earlier message that is still unacknowledged. The peer's
+ * own KeyUpdate arrives in that window. Building the reply right away would
+ * reset the pending install, send the reply under the old epoch that the peer
+ * has already left, and leave the replier retransmitting it forever. The
+ * reply must instead wait for the install, then go out under the new epoch
+ * and be accepted.
+ *
+ * idx 0: the server replies. It parks at TLS_ST_OK after completing PHA, then
+ *        receives the client's KeyUpdate; driven with SSL_read().
+ * idx 1: the server replies. The client's PHA response reaches it only after
+ *        the client's KeyUpdate, so it already owes a reply when it completes
+ *        PHA; driven with SSL_read().
+ * idx 2: as idx 0, but the server is driven with SSL_write().
+ * idx 3: as idx 1, but the server is driven with SSL_write().
+ * idx 4: the client replies. Its KeyUpdate is pending behind its own
+ *        unacknowledged PHA response when the server's KeyUpdate arrives;
+ *        driven with SSL_read().
+ * idx 5: the client replies. The server's second CertificateRequest arrives
+ *        ahead of its KeyUpdate, so the client is deferring a PHA response as
+ *        well as owing the reply; driven with SSL_read().
+ * idx 6: as idx 4, but the client is driven with SSL_write().
+ * idx 7: as idx 5, but the client is driven with SSL_write().
+ */
+static int test_dtls13_reciprocal_keyupdate_waits_for_pending_install(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc, *repc, *reqc;
+    unsigned char buf[2048], ack1[2048];
+    size_t ack1len = 0;
+    uint64_t rep_epoch, req_epoch;
+    int client_replies = idx >= 4;
+    int extra_pha = idx & 1, via_write = (idx >> 1) & 1;
+    int i, ret, dropped, converged = 0, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    if (client_replies && !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+    repc = client_replies ? cc : sc;
+    reqc = client_replies ? sc : cc;
+    rep_epoch = dtls1_get_epoch(repc, SSL3_CC_WRITE);
+    req_epoch = dtls1_get_epoch(reqc, SSL3_CC_WRITE);
+
+    if (!client_replies) {
+        if (!TEST_size_t_gt(sc->sent_tickets, 0)
+            || !TEST_size_t_gt(pqueue_size(&sc->d1->sent_messages), 0))
+            goto end;
+
+        /* Lose the client's ACK of the initial ticket: it stays outstanding. */
+        dropped = 0;
+        while (BIO_read(SSL_get_rbio(server), buf, sizeof(buf)) > 0)
+            dropped++;
+        if (!TEST_int_gt(dropped, 0))
+            goto end;
+
+        /* No ticket reissue on PHA completion, so the server parks at TLS_ST_OK. */
+        if (!TEST_true(SSL_set_num_tickets(server, 0)))
+            goto end;
+
+        /* Request PHA. */
+        SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+        if (!TEST_true(SSL_set_session_id_context(server,
+                (const unsigned char *)"reciprocal_ku_test", 18))
+            || !TEST_true(SSL_verify_client_post_handshake(server))
+            || !TEST_int_eq(SSL_do_handshake(server), 1))
+            goto end;
+
+        if (!extra_pha) {
+            /* The client answers the request before the server's KeyUpdate. */
+            ret = SSL_read(client, buf, sizeof(buf));
+            if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+                goto end;
+        }
+
+        /*
+         * The server's KeyUpdate goes out. Without extra_pha, the client's
+         * waiting PHA response is processed in the same call and, the
+         * KeyUpdate being unacknowledged, the server parks with a TLS_ST_OK
+         * continuation. With extra_pha, the response has not been sent yet.
+         */
+        if (!TEST_true(SSL_key_update(server, SSL_KEY_UPDATE_NOT_REQUESTED)))
+            goto end;
+        ret = SSL_do_handshake(server);
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+            || !TEST_true(sc->d1->key_update_write_pending))
+            goto end;
+        if (!extra_pha
+            && (!TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED)
+                || !TEST_int_eq((int)sc->statem.deferred_key_update_state,
+                    (int)TLS_ST_OK)))
+            goto end;
+
+        if (!extra_pha) {
+            /* The client reads the KeyUpdate and acknowledges it. */
+            ret = SSL_read(client, buf, sizeof(buf));
+            if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+                goto end;
+        }
+
+        /*
+         * The client sends its own KeyUpdate asking for a reply. Without
+         * extra_pha it goes out behind the ACK above. With extra_pha the
+         * client has not read anything yet: its KeyUpdate goes out first, the
+         * same call then reads the CertificateRequest and the server's
+         * KeyUpdate, and its PHA response is held back until its own
+         * KeyUpdate is installed.
+         */
+        if (!TEST_true(SSL_key_update(client, SSL_KEY_UPDATE_REQUESTED)))
+            goto end;
+        ret = SSL_do_handshake(client);
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+            goto end;
+
+        /*
+         * The server reads the client's KeyUpdate and the ACK. Its own
+         * install is still withheld behind the ticket.
+         */
+        if (via_write) {
+            ret = SSL_write(server, "s", 1);
+            if (!TEST_int_eq(ret, -1))
+                goto end;
+        } else {
+            ret = SSL_read(server, buf, sizeof(buf));
+        }
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+            || !TEST_true(sc->d1->key_update_write_pending)
+            || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), rep_epoch))
+            goto end;
+
+        if (extra_pha) {
+            /*
+             * The client reads the server's ACK of its KeyUpdate, which
+             * installs it and releases the held PHA response. The server then
+             * completes PHA while still owing the reply.
+             */
+            ret = SSL_read(client, buf, sizeof(buf));
+            if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+                goto end;
+            ret = SSL_read(server, buf, sizeof(buf));
+            if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+                || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED)
+                || !TEST_true(sc->d1->key_update_write_pending)
+                || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE),
+                    rep_epoch))
+                goto end;
+        }
+    } else {
+        /* Request PHA and let the client answer it. */
+        SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+        if (!TEST_true(SSL_verify_client_post_handshake(server))
+            || !TEST_int_eq(SSL_do_handshake(server), 1))
+            goto end;
+        ret = SSL_read(client, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(cc->post_handshake_auth, SSL_PHA_REQUESTED))
+            goto end;
+        ret = SSL_read(server, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED))
+            goto end;
+
+        /* Hold back the server's ACK of that response: it stays outstanding. */
+        while (BIO_ctrl_pending(SSL_get_rbio(client)) > 0) {
+            ret = BIO_read(SSL_get_rbio(client), ack1 + ack1len,
+                (int)(sizeof(ack1) - ack1len));
+            if (!TEST_int_gt(ret, 0))
+                goto end;
+            ack1len += (size_t)ret;
+        }
+        if (!TEST_size_t_gt(ack1len, 0))
+            goto end;
+
+        /* A ticket takes the client back to idle without retiring the response. */
+        if (!TEST_true(SSL_new_session_ticket(server))
+            || !TEST_int_eq(SSL_do_handshake(server), 1))
+            goto end;
+        ret = SSL_read(client, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+            || !TEST_true(SSL_is_init_finished(client)))
+            goto end;
+        ret = SSL_read(server, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+            goto end;
+
+        /* The client's KeyUpdate is sent and withheld behind the response. */
+        if (!TEST_true(SSL_key_update(client, SSL_KEY_UPDATE_NOT_REQUESTED)))
+            goto end;
+        ret = SSL_do_handshake(client);
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+            || !TEST_true(cc->d1->key_update_write_pending)
+            || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_WRITE), rep_epoch))
+            goto end;
+        ret = SSL_read(server, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+            goto end;
+
+        /* Only its ACK is delivered: acknowledged, but the install is withheld. */
+        ret = SSL_read(client, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+            || !TEST_true(cc->d1->key_update_write_pending)
+            || !TEST_false(dtls_has_unacked_key_update(cc))
+            || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_WRITE), rep_epoch))
+            goto end;
+
+        if (extra_pha
+            && (!TEST_true(SSL_verify_client_post_handshake(server))
+                || !TEST_int_eq(SSL_do_handshake(server), 1)))
+            goto end;
+
+        /* The server's KeyUpdate asks the client for a reply. */
+        if (!TEST_true(SSL_key_update(server, SSL_KEY_UPDATE_REQUESTED)))
+            goto end;
+        ret = SSL_do_handshake(server);
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+            goto end;
+
+        /*
+         * The client reads everything the server sent. It owes the reply but
+         * must not build it while its install waits. With extra_pha it also
+         * defers the second PHA response.
+         */
+        if (via_write) {
+            ret = SSL_write(client, "c", 1);
+            if (!TEST_int_eq(ret, -1))
+                goto end;
+        } else {
+            ret = SSL_read(client, buf, sizeof(buf));
+        }
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+            || !TEST_true(cc->d1->key_update_write_pending)
+            || !TEST_int_eq(cc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+            || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_WRITE), rep_epoch))
+            goto end;
+        if (extra_pha
+            && !TEST_int_eq((int)cc->statem.deferred_key_update_state,
+                (int)TLS_ST_CR_CERT_REQ))
+            goto end;
+
+        /* Delivering the held ACK retires the first response. */
+        if (!TEST_int_eq(BIO_write(SSL_get_rbio(client), ack1, (int)ack1len),
+                (int)ack1len))
+            goto end;
+    }
+
+    /*
+     * Recover anything lost by retransmission and let both sides run. The
+     * install can then complete, the reply goes out under the new epoch, and
+     * the peer acknowledges it. A wedged replier keeps retransmitting a reply
+     * the peer never accepts, and never converges.
+     */
+    for (i = 0; i < 10 && !converged; i++) {
+        sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
+            ossl_seconds2time(1));
+        cc->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
+            ossl_seconds2time(1));
+        if (!TEST_true(SSL_handle_events(server))
+            || !TEST_true(SSL_handle_events(client)))
+            goto end;
+        ret = SSL_read(client, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+            goto end;
+        ret = SSL_read(server, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+            goto end;
+        converged = dtls1_get_epoch(repc, SSL3_CC_WRITE) == rep_epoch + 2
+            && !repc->d1->key_update_write_pending
+            && dtls1_get_epoch(reqc, SSL3_CC_WRITE) == req_epoch + 1
+            && !reqc->d1->key_update_write_pending;
+    }
+    if (!TEST_true(converged)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(reqc, SSL3_CC_READ), rep_epoch + 2)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(repc, SSL3_CC_READ), req_epoch + 1))
+        goto end;
+
+    /* Application data flows both ways under the final epochs. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'c'))
+        goto end;
+
+    testresult = 1;
+end:
     SSL_free(server);
     SSL_free(client);
     SSL_CTX_free(sctx);
@@ -6903,6 +7218,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_ticket_app_data_classification);
     ADD_TEST(test_dtls13_client_keyupdate_app_data_classification);
     ADD_ALL_TESTS(test_dtls13_pending_write_completes_before_reciprocal_keyupdate, 2);
+    ADD_ALL_TESTS(test_dtls13_reciprocal_keyupdate_waits_for_pending_install, 8);
 #endif
     return 1;
 }
