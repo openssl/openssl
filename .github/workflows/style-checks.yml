@@ -5,18 +5,10 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-name: Coding style validation 
+name: Coding style and spelling validation
 
 on:
   pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - '*.md'
-      - '*.pod'
-      - 'README*'
-      - 'funding.json'
-      - 'LICENSE.txt'
-      - 'VERSION.dat'
 
 jobs:
   check-style:
