@@ -23,25 +23,6 @@
 #include "crypto/mtc_cert.h"
 #include "internal/packet.h"
 
-/**
- * @brief Read a big-endian 48-bit integer into a uint64_t.
- *
- * PACKET has no native 48-bit getter, so this composes the value from its top
- * 16 and bottom 32 bits.
- *
- * @returns 1 on success, 0 if fewer than 6 bytes remain.
- */
-static int packet_get_u48(PACKET *pkt, uint64_t *out)
-{
-    unsigned int hi;
-    unsigned long lo;
-
-    if (!PACKET_get_net_2(pkt, &hi) || !PACKET_get_net_4(pkt, &lo))
-        return 0;
-    *out = ((uint64_t)hi << 32) | (uint64_t)lo;
-    return 1;
-}
-
 int ossl_mtc_proof_parse(const uint8_t *in, size_t in_len,
     OSSL_MTC_PROOF *proof)
 {
@@ -59,8 +40,8 @@ int ossl_mtc_proof_parse(const uint8_t *in, size_t in_len,
      */
     if (!PACKET_buf_init(&pkt, in, in_len)
         || !PACKET_get_length_prefixed_2(&pkt, &extensions)
-        || !packet_get_u48(&pkt, &parsed.start)
-        || !packet_get_u48(&pkt, &parsed.end)
+        || !PACKET_get_net_6(&pkt, &parsed.start)
+        || !PACKET_get_net_6(&pkt, &parsed.end)
         || !PACKET_get_length_prefixed_2(&pkt, &inclusion_proof)
         || !PACKET_get_length_prefixed_3(&pkt, &signatures)
         || PACKET_remaining(&pkt) != 0)
