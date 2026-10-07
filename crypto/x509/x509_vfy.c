@@ -637,6 +637,8 @@ static int check_extensions(X509_STORE_CTX *ctx)
         CB_FAIL_IF(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY) != 0,
             ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
         ret = X509_check_ca(x);
+        CB_FAIL_IF((x->ex_flags & EXFLAG_INVALID) != 0,
+            ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
         switch (must_be_ca) {
         case -1:
             CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
