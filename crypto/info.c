@@ -24,6 +24,9 @@
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 #include "arch/arm_arch.h"
 #define CPU_INFO_STR_LEN 128
+#elif defined(__loongarch__)
+#include "arch/loongarch_arch.h"
+#define CPU_INFO_STR_LEN 128
 #elif defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC)
 #include "arch/ppc_arch.h"
 #define CPU_INFO_STR_LEN 128
@@ -88,6 +91,13 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
 
     cpu_info_append(CPUINFO_PREFIX "OPENSSL_armcap=0x%x", OPENSSL_armcap_P);
     if ((env = getenv("OPENSSL_armcap")) != NULL)
+        cpu_info_append(" env:%s", env);
+#elif defined(__loongarch__)
+    const char *env;
+
+    cpu_info_append(CPUINFO_PREFIX "OPENSSL_loongarch_hwcap=0x%x",
+        OPENSSL_loongarch_hwcap_P);
+    if ((env = getenv("OPENSSL_loongarch_hwcap")) != NULL)
         cpu_info_append(" env:%s", env);
 #elif defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC)
     const char *env;
