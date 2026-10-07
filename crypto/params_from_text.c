@@ -225,6 +225,9 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
 #endif
     int ok = -1;
 
+    if (p == NULL)
+        return 0;
+
     /*
      * Iterate through each key in the array printing its key and value
      */
