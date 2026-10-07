@@ -3596,6 +3596,8 @@ static int test_quic_amplification_limit(void)
 
     SSL_set_bio(listener, s_bio, s_bio);
     SSL_set_bio(client, c_bio, c_bio);
+    /* The SSL objects own the BIOs now, they are freed with them. */
+    s_bio = c_bio = NULL;
 
     if (!TEST_true(SSL_set_blocking_mode(listener, 0)))
         goto err;
@@ -3639,7 +3641,7 @@ static int test_quic_amplification_limit(void)
     /*
      * Make sure that the client hello was received at the server
      */
-    if (!wait_readable(s_bio, 1000)) {
+    if (!wait_readable(SSL_get_rbio(listener), 1000)) {
         TEST_info("timed out waiting for the ClientHello");
         goto err;
     }
@@ -3669,7 +3671,8 @@ static int test_quic_amplification_limit(void)
         (unsigned long long)first_injected_pn);
 
     /* Count but never deliver the server flight to the QUIC client. */
-    if (!TEST_true(drain_server_output(c_bio, &server_bytes, &server_datagrams)))
+    if (!TEST_true(drain_server_output(SSL_get_rbio(client), &server_bytes,
+            &server_datagrams)))
         goto err;
 
     TEST_info("phase 1 complete: legitimate ClientHello credit exhausted");
@@ -3699,7 +3702,8 @@ static int test_quic_amplification_limit(void)
             goto err;
         if (!TEST_true(SSL_handle_events(server)))
             goto err;
-        drain_server_output(c_bio, &server_bytes, &server_datagrams);
+        drain_server_output(SSL_get_rbio(client), &server_bytes,
+            &server_datagrams);
     }
 
     TEST_info("client UDP payload:  %llu bytes in 2 datagrams",
@@ -3732,6 +3736,8 @@ err:
     SSL_free(server);
     SSL_free(client);
     SSL_free(listener);
+    BIO_free(c_bio);
+    BIO_free(s_bio);
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
     BIO_ADDR_free(client_addr);
