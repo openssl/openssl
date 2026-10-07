@@ -214,9 +214,6 @@ int ossl_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
     }
     EVP_MAC_CTX_free(mac_ctx);
 
-    ctx->final_ret = -1;
-    ctx->crypto_ok = 1;
-
     return 1;
 }
 
