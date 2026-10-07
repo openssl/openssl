@@ -1414,12 +1414,16 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
         /* Try to retrieve relevant CRL */
         if (ctx->get_crl != NULL) {
             X509 *crl_issuer = NULL;
-            unsigned int reasons = 0;
+            /* Accumulate the reasons covered by the CRLs found so far */
+            unsigned int reasons = last_reasons;
 
             ok = ctx->get_crl(ctx, &crl, x);
             if (crl != NULL) {
                 ctx->current_crl_score = get_crl_score(ctx, &crl_issuer,
                     &reasons, crl, x);
+                /* A further CRL that cannot be used is the same as none */
+                if (ctx->current_crl_score == 0 && last_reasons != 0)
+                    ok = 0;
                 ctx->current_issuer = crl_issuer;
                 ctx->current_reasons = reasons;
             }
