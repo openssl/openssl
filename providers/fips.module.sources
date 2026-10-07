@@ -744,6 +744,7 @@ providers/implementations/kdfs/x963kdf.inc.in
 providers/implementations/kem/ml_kem_kem.c
 providers/implementations/kem/ml_kem_kem.inc.in
 providers/implementations/kem/mlx_kem.c
+providers/implementations/kem/mlx_kem.inc.in
 providers/implementations/kem/rsa_kem.c
 providers/implementations/kem/rsa_kem.inc.in
 providers/implementations/keymgmt/dh_kmgmt.c
@@ -754,6 +755,7 @@ providers/implementations/keymgmt/ec_kmgmt.c
 providers/implementations/keymgmt/ecx_kmgmt.c
 providers/implementations/keymgmt/ecx_kmgmt.inc.in
 providers/implementations/keymgmt/kdf_legacy_kmgmt.c
+providers/implementations/keymgmt/keymgmtcommon.inc.in
 providers/implementations/keymgmt/mac_legacy_kmgmt.c
 providers/implementations/keymgmt/mac_legacy_kmgmt.inc.in
 providers/implementations/keymgmt/ml_dsa_kmgmt.c
