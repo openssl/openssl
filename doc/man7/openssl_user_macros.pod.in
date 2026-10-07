@@ -109,7 +109,7 @@ will be hidden.
 If this macro is defined, compiler warnings about usage of deprecated symbols
 are suppressed in the compilation unit.
 Consider using OSSL_BEGIN_ALLOW_DEPRECATED(3) and OSSL_END_ALLOW_DEPRECATED(3)
-for localised deprecation warning suppresion, however.
+for localised deprecation warning suppression, however.
 
 =back
 
