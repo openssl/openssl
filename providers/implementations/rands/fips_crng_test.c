@@ -126,7 +126,7 @@ static int RCT_test(CRNG_TEST *crngt, uint8_t next)
             return 1;
         ERR_raise_data(ERR_LIB_PROV,
             PROV_R_ENTROPY_SOURCE_FAILED_RCT_CONTINUOUS_TEST,
-            "byte repreats %u times", crngt->rct.b);
+            "byte repeats %u times", crngt->rct.b);
         return 0;
     }
     crngt->rct.a = next;
