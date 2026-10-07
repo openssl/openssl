@@ -218,11 +218,10 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
 
     if (ossl_unlikely(num == 0))
         return NULL;
-
-    TSAN_BENIGN(&allow_customize,
-        "allow_customize is intentionally racy");
-
+    
     if (allow_customize) {
+        TSAN_BENIGN(&allow_customize,
+                    "allow_customize is intentionally racy");
         /*
          * Disallow customization after the first allocation. We only set this
          * if necessary to avoid a store to the same cache line on every
