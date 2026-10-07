@@ -99,6 +99,13 @@ get_filename_component(_ossl_prefix "${CMAKE_CURRENT_LIST_FILE}" PATH)
           foreach (split '/', $d);
   }
 -}
+get_filename_component(_ossl_real_current "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
+get_filename_component(_ossl_real_installed "{- unixify($OpenSSL::safe::installdata::CMAKECONFIGDIR[0], 1) -}" REALPATH)
+if(_ossl_real_current STREQUAL _ossl_real_installed)
+  set(_ossl_prefix "{- unixify($OpenSSL::safe::installdata::PREFIX[0], 1) -}")
+endif()
+unset(_ossl_real_current)
+unset(_ossl_real_installed)
 if(_ossl_prefix STREQUAL "/")
   set(_ossl_prefix "")
 endif()
