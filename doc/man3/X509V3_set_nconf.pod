@@ -1,0 +1,78 @@
+=pod
+
+=head1 NAME
+
+X509V3_set_nconf, X509V3_set_conf_lhash - set configuration database
+for X509 extension generation
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
+ void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash);
+
+=head1 DESCRIPTION
+
+X509V3_set_nconf() sets the configuration database of the B<X509V3_CTX>
+structure I<ctx> to the B<CONF> configuration file I<conf>. This allows the
+extension generation functions to look up values and sections from the
+configuration file. This function should be called after L<X509V3_set_ctx(3)>
+and before any calls to extension generation functions such as
+L<X509V3_EXT_nconf(3)> or L<X509V3_EXT_add_nconf(3)>.
+
+X509V3_set_conf_lhash() is an older variant that sets the configuration
+database to an B<LHASH_OF(CONF_VALUE)> structure. New code should use
+X509V3_set_nconf() instead.
+
+=head1 NOTES
+
+The B<X509V3_set_ctx_nodb> macro can be used instead of these functions
+when no configuration database is needed. It is defined as:
+
+ #define X509V3_set_ctx_nodb(ctx) (ctx)->db = NULL;
+
+This is appropriate when all extension values are specified as literal
+strings rather than references to configuration file sections.
+
+=head1 RETURN VALUES
+
+These functions do not return a value.
+
+=head1 EXAMPLES
+
+ X509V3_CTX ctx;
+ CONF *conf;
+
+ /* Load configuration file */
+ conf = NCONF_new(NULL);
+ NCONF_load(conf, "openssl.cnf", NULL);
+
+ /* Set up context */
+ X509V3_set_ctx(&ctx, issuer, subject, NULL, NULL, 0);
+ X509V3_set_nconf(&ctx, conf);
+
+ /* Now generate extensions */
+ X509V3_EXT_add_nconf(conf, &ctx, "v3_extensions", cert);
+
+=head1 SEE ALSO
+
+L<X509V3_set_ctx(3)>,
+L<X509V3_EXT_nconf(3)>,
+L<X509V3_get_string(3)>,
+L<NCONF_new(3)>
+
+=head1 HISTORY
+
+These functions have been available since OpenSSL 0.9.5.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
