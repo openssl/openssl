@@ -44,9 +44,9 @@ OpenSSL 4.2
    *Iva Marinova*
 
  * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
-   X509_OBJECT_up_ref_count() does not reference count the X509_OBJECT itself.
-   With X509_OBJECT being opaque there is nothing useful an application can do
-   with it.
+   `X509_OBJECT_up_ref_count()` does not reference count the `X509_OBJECT`
+   itself.  With `X509_OBJECT` being opaque, there is nothing useful
+   an application can do with it.
    <!-- https://github.com/openssl/openssl/pull/32823 -->
 
    *Daniel Kubec*
