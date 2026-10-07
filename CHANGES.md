@@ -31,6 +31,10 @@ OpenSSL Releases
 OpenSSL 4.1
 -----------
 
+### Changes between 4.1.0 and 4.1.1 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 4.0 and 4.1.0 [7 Oct 2026]
 
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with

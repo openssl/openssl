@@ -26,6 +26,10 @@ OpenSSL Releases
 OpenSSL 4.1
 -----------
 
+### Major changes between OpenSSL 4.1.0 and OpenSSL 4.1.1 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1.0 [7 Oct 2026]
 
 OpenSSL 4.1.0 is a feature release adding significant new functionality
