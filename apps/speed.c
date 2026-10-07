@@ -4169,8 +4169,12 @@ int speed_main(int argc, char **argv)
             continue;
 
         kem_err_break:
-            dofail();
             EVP_PKEY_free(pkey);
+            pkey = NULL;
+            if (kems_doit[testnum] != 0) {
+                dofail(); /* unless skip */
+            }
+            /* set params to goto if statement before stop_it() */
             op_count = 1;
             kem_checks = 0;
             break;
@@ -4204,9 +4208,11 @@ int speed_main(int argc, char **argv)
             kems_results[testnum][2] = (double)count / d;
             op_count = count; /* -1 against KEM_decaps_loop failure or 1 in testmode */
         }
-        /* stop all unless skip only this */
+        /*
+         * Stop all on unexpected failure or
+         * after the first successful run_benchmark() in testmode.
+         */
         if (op_count <= 1 && (kems_doit[testnum] != 0)) {
-            /* if longer than 10s, don't do any more */
             stop_it(kems_doit, testnum);
         }
     }
@@ -4413,9 +4419,13 @@ int speed_main(int argc, char **argv)
             continue;
 
         sig_err_break:
-            dofail();
             EVP_PKEY_free(pkey);
             EVP_SIGNATURE_free(alg);
+            pkey = NULL;
+            if (sigs_doit[testnum] != 0) {
+                dofail(); /* unless skip */
+            }
+            /* set params to goto if statement before stop_it() */
             op_count = 1;
             sig_checks = 0;
             break;
@@ -4452,8 +4462,10 @@ int speed_main(int argc, char **argv)
             sigs_results[testnum][2] = (double)count / d;
             op_count = count; /* -1 against SIG_verify_loop failure or 1 in testmode */
         }
-
-        /* stop all unless skip only this */
+        /*
+         * Stop all on unexpected failure or
+         * after the first successful run_benchmark() in testmode.
+         */
         if (op_count <= 1 && (sigs_doit[testnum] != 0))
             stop_it(sigs_doit, testnum);
     }
