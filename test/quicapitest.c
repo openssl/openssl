@@ -3850,6 +3850,8 @@ static int test_quic_retry_token_refused(void)
 
     SSL_set_bio(listener, s_bio, s_bio);
     SSL_set_bio(client, c_bio, c_bio);
+    /* The SSL objects own the BIOs now, they are freed with them. */
+    s_bio = c_bio = NULL;
 
     if (!TEST_true(SSL_set_blocking_mode(listener, 0))
         || !TEST_true(SSL_set_blocking_mode(client, 0)))
@@ -3864,17 +3866,17 @@ static int test_quic_retry_token_refused(void)
             || ssl_err == SSL_ERROR_WANT_WRITE))
         goto err;
 
-    if (!TEST_true(wait_readable(s_bio, 1000)))
+    if (!TEST_true(wait_readable(SSL_get_rbio(listener), 1000)))
         goto err;
 
-    for (i = 0; i < 8 && BIO_pending(c_bio) == 0; ++i)
+    for (i = 0; i < 8 && BIO_pending(SSL_get_rbio(client)) == 0; ++i)
         if (!TEST_true(SSL_handle_events(listener)))
             goto err;
 
     /* Take the Retry before the client sees it and pull out the token. */
     msg.data = retry;
     msg.data_len = sizeof(retry);
-    if (!TEST_true(BIO_recvmmsg(c_bio, &msg, sizeof(msg), 1, 0,
+    if (!TEST_true(BIO_recvmmsg(SSL_get_rbio(client), &msg, sizeof(msg), 1, 0,
             &num_processed))
         || !TEST_size_t_eq(num_processed, 1)
         || !TEST_true(PACKET_buf_init(&pkt, retry, msg.data_len))
@@ -3888,7 +3890,7 @@ static int test_quic_retry_token_refused(void)
      * The ClientHello may span several Initial datagrams, each of which gets
      * its own Retry. Discard the rest so they are not counted below.
      */
-    drain_server_output(c_bio, &server_bytes, &server_datagrams);
+    drain_server_output(SSL_get_rbio(client), &server_bytes, &server_datagrams);
     server_bytes = 0;
     server_datagrams = 0;
 
@@ -3898,7 +3900,8 @@ static int test_quic_retry_token_refused(void)
      */
     bad_dcid = rhdr.src_conn_id;
     bad_dcid.id[0] ^= 0xff;
-    if (!TEST_true(send_initial_with_token(c_bio, shadow_server_addr,
+    if (!TEST_true(send_initial_with_token(SSL_get_wbio(client),
+            shadow_server_addr,
             &bad_dcid, &cch->init_scid,
             rhdr.data,
             rhdr.len - QUIC_RETRY_INTEGRITY_TAG_LEN)))
@@ -3907,7 +3910,8 @@ static int test_quic_retry_token_refused(void)
     for (i = 0; i < 8; ++i) {
         if (!TEST_true(SSL_handle_events(listener)))
             goto err;
-        drain_server_output(c_bio, &server_bytes, &server_datagrams);
+        drain_server_output(SSL_get_rbio(client), &server_bytes,
+            &server_datagrams);
     }
 
     /* Before the fix, the server answered with another Retry here. */
@@ -3918,7 +3922,8 @@ static int test_quic_retry_token_refused(void)
      * Control: the same token with the right DCID is accepted, and the
      * new connection ACKs our PING.
      */
-    if (!TEST_true(send_initial_with_token(c_bio, shadow_server_addr,
+    if (!TEST_true(send_initial_with_token(SSL_get_wbio(client),
+            shadow_server_addr,
             &rhdr.src_conn_id, &cch->init_scid,
             rhdr.data,
             rhdr.len - QUIC_RETRY_INTEGRITY_TAG_LEN)))
@@ -3927,7 +3932,8 @@ static int test_quic_retry_token_refused(void)
     for (i = 0; i < 64 && server_datagrams == 0; ++i) {
         if (!TEST_true(SSL_handle_events(listener)))
             goto err;
-        drain_server_output(c_bio, &server_bytes, &server_datagrams);
+        drain_server_output(SSL_get_rbio(client), &server_bytes,
+            &server_datagrams);
     }
 
     if (!TEST_size_t_gt(server_datagrams, 0))
@@ -3938,6 +3944,8 @@ static int test_quic_retry_token_refused(void)
 err:
     SSL_free(client);
     SSL_free(listener);
+    BIO_free(c_bio);
+    BIO_free(s_bio);
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
     BIO_ADDR_free(client_addr);
