@@ -1,0 +1,156 @@
+=pod
+
+=head1 NAME
+
+ASN1_BIT_STRING_set,
+ASN1_BIT_STRING_set1,
+ASN1_BIT_STRING_set_bit,
+ASN1_BIT_STRING_get_bit,
+ASN1_BIT_STRING_check,
+ASN1_BIT_STRING_name_print,
+ASN1_BIT_STRING_num_asc,
+ASN1_BIT_STRING_set_asc,
+ASN1_BIT_STRING_get_length - ASN1_BIT_STRING accessors
+
+=head1 SYNOPSIS
+
+  #include <openssl/asn1.h>
+
+  typedef struct BIT_STRING_BITNAME_st {
+      int bitnum;
+      const char *lname;
+      const char *sname;
+  } BIT_STRING_BITNAME;
+
+  int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
+  int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
+  int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
+    const unsigned char *flags, int flags_len);
+
+  int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *bitstr,
+    size_t *length, int *unused_bits);
+  int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *bitstr, const uint8_t *data,
+    size_t length, int unused_bits);
+
+The following function have been deprecated since OpenSSL 4.1, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+  int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
+  int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
+    BIT_STRING_BITNAME *tbl, int indent);
+  int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
+  int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name,
+    int value, BIT_STRING_BITNAME *tbl);
+
+=head1 DESCRIPTION
+
+The ASN.1 BIT STRING type holds a bit string of arbitrary bit length.
+In the distinguished encoding rules DER, its bits are encoded in
+groups of eight, leaving between zero and seven bits of the
+last octet unused. If there are unused bits, they must all be set to
+zero.
+
+ASN1_BIT_STRING_set_bit() sets the I<n>th bit (counted from 0 as the
+least significant bit) of a bit string I<a> to I<value> which is
+interpreted as a boolean.
+
+ASN1_BIT_STRING_get_bit() returns the bit value of the I<n>th bit in the
+bit string I<a>.
+
+ASN1_BIT_STRING_check() checks if the I<a> bit string contains only bits
+specified by the I<flags> vector. I<flags_len> is the length of I<flags>
+in bytes.
+
+ASN1_BIT_STRING_get_length() returns the number of octets in I<bitstr>
+containing bit values in I<length> and the number of unused bits in
+the last octet in I<unused_bits>. The value returned in
+I<unused_bits> is guaranteed to be between 0 and 7, inclusive.
+
+ASN1_BIT_STRING_set() sets the octets of I<a> to the bits in the
+byte string I<d> of I<length> octets.
+
+ASN1_BIT_STRING_set1() sets the type of I<bitstr> to
+I<V_ASN1_BIT_STRING> and its octets to the bits in the byte string
+I<data> of length I<length> octets, making sure that the last
+I<unused_bits> bits in the last byte are zero.
+
+ASN1_BIT_STRING_name_print() prints the corresponding bit name specified
+in I<tbl> to I<out> based on the bit string I<bs>. I<indent> might be
+specified for a number of spaces to indent the line. This function has
+been deprecated as of OpenSSL 4.1. For a replacement strategy, consider
+using a descriptive #define for the bit value, or if your application
+truly needs to do this with strings, implementing your own string to
+integer lookup table.
+
+ASN1_BIT_STRING_num_asc() searches for the provided I<name> in I<lname>
+and I<sname> fields of I<tbl>'s elements and returns the corresponding
+I<bitnum> field value in case there is a match found. This function has
+been deprecated as of OpenSSL 4.1. For a replacement strategy, consider
+using a descriptive #define for the bit value, or if your application
+truly needs to do this with strings, implementing your own string to
+integer lookup table.
+
+ASN1_BIT_STRING_set_asc() sets the corresponding bit to I<name> in I<bs>
+based on the conversion table I<tbl>.  This function has
+been deprecated as of OpenSSL 4.1. For a replacement strategy, consider
+using a descriptive #define for the bit value, or if your application
+truly needs to do this with strings, implementing your own string to
+integer lookup table.
+
+=head1 RETURN VALUES
+
+ASN1_BIT_STRING_set_bit() returns 1 on success or 0 on incorrect input
+values.
+
+ASN1_BIT_STRING_get_bit() returns the value of the requested bit or 0
+when data not available for the requested arguments.
+
+ASN1_BIT_STRING_check() returns 0 if there is at least one bit set in
+I<a> which is not specified in I<flags>, 1 otherwise.
+
+ASN1_BIT_STRING_name_print() returns 1 on success, or 0 when the print
+functions fail.
+
+ASN1_BIT_STRING_num_asc() returns the bit number of the requested
+I<name> or -1 when the name was not found.
+
+ASN1_BIT_STRING_set_asc() returns 1 on success or 0 on failure.
+
+ASN1_BIT_STRING_get_length() returns 1 on success or 0 if the encoding
+of I<bitstr> is internally inconsistent, or if one of I<bitstr>,
+I<length>, or I<unused_bits> is NULL.
+
+ASN1_BIT_STRING_set() returns 1 on success or 0 if memory allocation fails,
+I<length> is not specified (value less than 0) and I<d> is NULL or
+I<length> is larger than INT_MAX-1.
+
+ASN1_BIT_STRING_set1() returns 1 on success or 0 if memory allocation
+fails or if I<bitstr> is NULL, I<length> is too large, I<length> is
+zero and I<unused_bits> is nonzero, I<unused_bits> is less than 0 or
+greater than 7, or any unused bit in the last octet of I<data> is
+nonzero.
+
+=head1 HISTORY
+
+Functions ASN1_BIT_STRING_get_length() and ASN1_BIT_STRING_set1() were
+added in OpenSSL version 4.0.
+
+ASN1_BIT_STRING_set() was deprecated in OpenSSL 4.1 in favour of
+ASN1_BIT_STRING_set1().
+ASN1_BIT_STRING_name_print() ASN1_BIT_STRING_num_asc(), and
+ASN1_BIT_STRING_set_asc(), Along with the BIT_STRING_BITNAME structure
+were present but undocumented in all versions of OpenSSL as public
+API.  They are unused by the library. They were documented and then
+deprecated in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

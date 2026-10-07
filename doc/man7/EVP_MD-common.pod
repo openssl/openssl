@@ -1,0 +1,107 @@
+=pod
+
+=head1 NAME
+
+EVP_MD-common - The OpenSSL EVP_MD implementations, common things
+
+=head1 DESCRIPTION
+
+All the OpenSSL EVP_MD implementations understand the following
+L<OSSL_PARAM(3)> entries that are
+gettable with L<EVP_MD_get_params(3)>, as well as these:
+
+=over 4
+
+=item "blocksize" (B<OSSL_DIGEST_PARAM_BLOCK_SIZE>) <unsigned integer>
+
+The digest block size.
+The length of the "blocksize" parameter should not exceed that of a
+B<size_t>.
+
+This value can also be retrieved with L<EVP_MD_get_block_size(3)>.
+
+=item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
+
+The digest output size.
+The length of the "size" parameter should not exceed that of a B<size_t>.
+
+This value can also be retrieved with L<EVP_MD_get_size(3)>.
+
+=item "flags" (B<OSSL_DIGEST_PARAM_FLAGS>) <unsigned integer>
+
+Diverse flags that describe exceptional behaviour for the digest.
+
+The length of the "flags" parameter should equal that of an
+B<unsigned long int>.
+
+Several flags can be or'd together.  The available flags are:
+
+=over 4
+
+=item EVP_MD_FLAG_ONESHOT
+
+This digest method can only handle one block of input.
+
+=item EVP_MD_FLAG_XOF
+
+This digest method is an extensible-output function (XOF) and supports
+the B<EVP_MD_CTRL_XOF_LEN> control.
+
+=item EVP_MD_FLAG_DIGALGID_NULL
+
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter set to NULL by default.  Use this for PKCS#1.  I<Note: if
+combined with EVP_MD_FLAG_DIGALGID_ABSENT, the latter will override.>
+
+=item EVP_MD_FLAG_DIGALGID_ABSENT
+
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter be left absent by default.  I<Note: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
+
+=item EVP_MD_FLAG_DIGALGID_CUSTOM
+
+Custom DigestAlgorithmIdentifier handling via ctrl, with
+B<EVP_MD_FLAG_DIGALGID_ABSENT> as default.  I<Note: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
+Currently unused.
+
+=item EVP_MD_FLAG_FIPS
+
+This digest method is suitable for use in FIPS mode.
+Currently unused.
+
+=back
+
+This value can also be retrieved with L<EVP_MD_get_flags(3)>.
+
+=back
+
+=head2 FIPS indicator
+
+Digest implementations in the OpenSSL FIPS provider make the following
+parameter available with L<EVP_MD_CTX_get_params(3)>:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+Returns 1 if the operation is FIPS approved, or 0 otherwise.
+See L<fips_module(7)/FIPS indicators> for more information.
+
+=back
+
+=head1 SEE ALSO
+
+L<EVP_DigestInit(3)/PARAMETERS>, L<EVP_MD_get_params(3)>, L<provider-digest(7)>
+
+=head1 COPYRIGHT
+
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

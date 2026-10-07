@@ -1,0 +1,105 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: "Scan to check for NEWS/CHANGES suggestions"
+
+on: pull_request
+env:
+  NEED_NEWS_CHANGES: "no"
+  SKIP_NEWS_CHECK: "no"
+  PR_NUMBER: ${{ github.event.number }}
+  GH_TOKEN: ${{ github.token }}
+permissions: {}
+
+jobs:
+  scan_for_news_changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: "Check if we have the label to skip this test"
+        run: |
+          SKIP_TEST=$(gh pr view $PR_NUMBER --json labels --jq '.labels[] | select(.name == "no_news_changes_needed") | .name')
+          if [ -n "$SKIP_TEST" ]; then
+            echo "SKIP_NEWS_CHECK=yes" >> $GITHUB_ENV
+          fi
+
+      - name: "Check if we already have a NEWS/CHANGES entry"
+        if: ${{ env.SKIP_NEWS_CHECK == 'no' }}
+        run: |
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
+          echo "changed files between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
+          cat ./names.txt
+          set +e
+          grep -q "NEWS\.md" names.txt
+          if [ $? -eq 0 ]; then
+            echo "FOUND_NEWS_CHANGES_ADDITION=yes" >> $GITHUB_ENV
+          else
+            grep -q "CHANGES\.md" names.txt
+            if [ $? -eq 0 ]; then
+              echo "FOUND_NEWS_CHANGES_ADDITION=yes" >> $GITHUB_ENV
+            else
+              echo "FOUND_NEWS_CHANGES_ADDITION=no" >> $GITHUB_ENV
+            fi
+          fi
+      - name: "Check if this PR affects a CVE"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
+        run: |
+          git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./log.txt
+          set +e
+          grep -q "CVE-" ./log.txt
+          if [ $? -eq 0 ]; then
+            echo "Changes in this PR reference a CVE"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Check if this PR impacts a public API"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
+        run: |
+          set +e
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
+          echo "changed files between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
+          cat ./names.txt
+          grep -q "include/openssl" ./names.txt
+          if [ $? -eq 0 ]; then
+            echo "Changes in this PR may impact public APIS's"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Check if this is a feature branch merge"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
+        run: |
+          set +e
+          echo ${{ github.head_ref }} | grep -q "feature"
+          if [ $? -eq 0 ]; then
+            echo "Feature branch found"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Check if configuration options have changed"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
+        run: | 
+          git checkout ${{ github.event.pull_request.base.sha }}
+          set +e
+          ./Configure --help > ./before.txt 2>&1
+          git checkout ${{ github.event.pull_request.head.sha }}
+          ./Configure --help > ./after.txt 2>&1
+          set -e
+          CONF_CHANGE=$(diff ./before.txt ./after.txt | wc -l)
+          if [ $CONF_CHANGE -ne 0 ]; then
+            echo "Configuration options changes"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Report Results"
+        if: ${{ env.SKIP_NEWS_CHECK == 'no' }}
+        run: |
+          if [ "${{ env.NEED_NEWS_CHANGES }}" == "yes" ]; then
+            echo "Suggest that you add a NEWS/CHANGES entry for this PR"
+            echo "Alternatively, quiet this suggestion by applying the no_news_changes_needed label"
+            exit 1
+          fi
+
+

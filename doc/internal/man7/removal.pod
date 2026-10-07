@@ -1,0 +1,79 @@
+=pod
+
+=head1 NAME
+
+removal - How to do Public API removal
+
+=head1 DESCRIPTION
+
+Removal of a public function should only be done after it has been
+previously deprecated as documented in L<deprecation(7)>.
+
+Once you are ready to remove a deprecated function, you need to
+ensure one or more of the following things is true:
+
+=over 4
+
+=item There is a usually straightforward one-to-one replacement of the
+deleted function with a new function.
+
+=item The previous release documents how to replace the function. If
+you feel this documentation is inadequate or incomplete, consider
+updating it if a maintenance release will happen.
+
+=item Details on how to replace the function are provided in
+L<ossl-guide-migration(7)>. If the replacement is complex and was
+not adequately documented in the past release, it is a good idea
+to write a reasonable section here.
+
+=back
+
+Once that is done, you should prepare your PR that removes the
+function, internal uses, and documentation.
+
+Your PR removing functions should include adding the function to the
+list in L<ossl-removed-api(7)> with an appropriate entry. Keep it short and
+simple. Each entry in the list for a version may include a quick link
+to the usual replacement such as:
+
+=over 4
+
+=item SIMPLE-removed-function (Deprecated in 3.0.0) see SIMPLE-replacement-function(3)
+
+=back
+
+If is more complex, mention that the documentation for a previous version should be
+consulted, such as:
+
+=over 4
+
+=item REMOVED-morecomplex (Deprecated in 3.0.0) Consult the documentation in OpenSSL 3.6
+
+=back
+
+Alternatively, if a section covering this is in the migration guide:
+
+=over 4
+
+=item ENGINE-allthethings (Deprecated in 3.0.0) Consult L<ossl-guide-migration(7)>.
+
+=back
+
+The list should NOT include a long migration guide. That should have been present
+in the previous version documentation, or added to ossl-guide-migration.pod
+
+=head1 SEE ALSO
+
+L<deprecation(7)>
+L<ossl-guide-migration(7)>
+
+=head1 COPYRIGHT
+
+Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -1,0 +1,38 @@
+LIBS = ../../libcrypto
+
+$MLKEMASM=
+IF[{- !$disabled{asm} -}]
+  $MLKEMDEF_ppc64=MLKEM_NTT_PPC_ASM
+
+  IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
+    $MLKEMASM_ppc64=asm/mlkem_ntt_ppc64le.S asm/mlkem_intt_ppc64le.S
+  ENDIF
+
+  IF[{- ($target{perlasm_scheme} // '') ne '31' && defined($config{s390x_vector_cflags}) -}]
+    $MLKEM_VX_s390x=ml_kem_vec128.c
+    $MLKEMDEF_s390x=OPENSSL_ML_KEM_S390X
+  ENDIF
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate ones, and define the appropriate macros
+  IF[$MLKEMASM_{- $target{asm_arch} -}]
+    $MLKEMASM=$MLKEMASM_{- $target{asm_arch} -}
+    $MLKEMDEF=$MLKEMDEF_{- $target{asm_arch} -}
+  ENDIF
+  IF[$MLKEM_VX_{- $target{asm_arch} -}]
+    $MLKEM_VX=$MLKEM_VX_{- $target{asm_arch} -}
+    $MLKEMDEF=$MLKEMDEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
+$COMMON=ml_kem.c $MLKEMASM $MLKEM_VX
+
+IF[{- !$disabled{'ml-kem'} -}]
+    SOURCE[../../libcrypto]=$COMMON
+    SOURCE[../../providers/libfips.a]=$COMMON
+ENDIF
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../../libcrypto]=$MLKEMDEF
+DEFINE[../../providers/libfips.a]=$MLKEMDEF

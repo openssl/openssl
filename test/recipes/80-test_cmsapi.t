@@ -1,0 +1,33 @@
+#! /usr/bin/env perl
+# Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+use OpenSSL::Test::Utils;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
+
+setup("test_cmsapi");
+
+plan skip_all => "CMS is disabled in this build" if disabled("cms");
+
+plan tests => 1;
+
+my @ed448_args = disabled("ecx") ? () : (
+    srctop_file("test", "certs", "server-ed448-cert.pem"),
+    srctop_file("test", "certs", "server-ed448-key.pem"));
+
+ok(run(test(["cmsapitest", srctop_file("test", "certs", "servercert.pem"),
+             srctop_file("test", "certs", "serverkey.pem"),
+             srctop_file("test", "recipes", "80-test_cmsapi_data", "encryptedData.der"),
+             srctop_file("test", "recipes", "80-test_cmsapi_data", "encDataWithTooLongIV.pem"),
+             srctop_file("test", "recipes", "80-test_cmsapi_data", "cms_pwri_kek_oob.der"),
+             srctop_file("test", "recipes", "80-test_cmsapi_data", "cms_pwri_kek_NoIV.der"),
+             srctop_file("test", "smime-certs", "smec1.pem"),
+             srctop_file("test", "certs", "alt1-cert.pem"),
+             srctop_file("test", "certs", "alt1-key.pem"),
+             @ed448_args])),
+             "running cmsapitest");

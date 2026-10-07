@@ -1,0 +1,469 @@
+#
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Tests start with one of these keywords
+#       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
+#       PrivPubKeyPair Sign Verify VerifyRecover
+# and continue until a blank line. Lines starting with a pound sign are ignored.
+
+Title = SRTPKDF tests (from RFC 3711 test vectors and additional cases)
+
+# Test Case 1: RFC 3711 test vectors B.3, encryption key
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+
+# Test Case 1.1, variation, missing kdr (default as zero)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+
+# Test Case 1.2, variation, missing index (default as zero)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+
+# Test Case 1.3, variation, default kdr and index
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+
+# Test Case 1.4, variation, missing label (default as zero)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Output = C61E7A93744F39EE10734AFE3FF7A087
+
+# Test Case 2: RFC 3711 test vectors B.3, salt key
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:2
+Output = 30CBBC08863D8C85D49DB34A9AE1
+
+# Test Case 3: RFC 3711 test vectors B.3, authentication key
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:1
+Output = CEBE321F6FF7716B6FD4AB49AF256A156D38BAA4
+
+# Negative Test case 1, missing cipher
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_DERIVE_ERROR
+Reason = missing cipher
+
+# Negative Test case 2, invalid cipher
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CBC
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_CTRL_ERROR
+Reason = invalid cipher
+
+# Negative Test case 3, missing key
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_DERIVE_ERROR
+Reason = missing key
+
+# Negative Test case 4, missing salt
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_DERIVE_ERROR
+Reason = missing salt
+
+# Negative Test case 5, invalid label
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:8
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_CTRL_ERROR
+Reason = invalid label
+
+# Negative Test case 6, invalid kdr (not power of 2)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:5
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_CTRL_ERROR
+Reason = invalid kdr
+
+# Negative Test case 7, invalid kdr (kdr out of range)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0x10000000
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_CTRL_ERROR
+Reason = invalid kdr
+
+# Additional tests from 
+# https://github.com/usnistgov/ACVP-Server/tree/master/gen-val/json-files/kdf-components-srtp-1.0
+
+# prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:08284B49F520
+Ctrl.label = label:0
+Output = A920DF50EAA111D03FBE9B203121C07D
+
+# prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:08284B49F520
+Ctrl.label = label:1
+Output = A337DC070C0DAFA942F1E3A27ACD3C9917CE4B4D
+
+# prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:08284B49F520
+Ctrl.label = label:2
+Output = 9E2BC99C86037F2AD98D72927428
+
+# prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B62109
+Ctrl.label = label:3
+Output = 94D76CA7ADB05b8631CF62538D97BE74
+
+# prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B62109
+Ctrl.label = label:4
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
+
+# prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B62109
+Ctrl.label = label:5
+Output = 70C0481A04E3610EC8AF8623FA9B
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:3D6FECDCE1BE
+Ctrl.label = label:0
+Output = A2F4D858CCDF585D9C5CA787C5A3031F
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:3D6FECDCE1BE
+Ctrl.label = label:1
+Output = C140C97CAC05B2ED338AD353014A90012F37B45C
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:3D6FECDCE1BE
+Ctrl.label = label:2
+Output = AA6DE94B3BCB5108EFD350AD6936
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtcpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:1C7B571C
+Ctrl.label = label:3
+Output = 2844C8F56E2AF865E4EBBD0D083A4FAE
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtcpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:1C7B571C
+Ctrl.label = label:4
+Output = 50135309CF64D5162723749CCF085708F8E81636
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtcpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:1C7B571C
+Ctrl.label = label:5
+Output = 47CB081EC69F7E74FEB3FCD1BD20
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:F4EE616415B9
+Ctrl.label = label:0
+Output = B46322B06F6E4B189F27744EAD8C5173
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:F4EE616415B9
+Ctrl.label = label:1
+Output = F9F246054B3D4AA2520CE2612192749AA6970BB0
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:F4EE616415B9
+Ctrl.label = label:2
+Output = 18EA8EA36A90617224FBFBCB849A
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtcpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:13DE080C
+Ctrl.label = label:3
+Output = F4140d2419f7A75CEE91FC942CD94514
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtcpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:13DE080C
+Ctrl.label = label:4
+Output = 6E65548ABFE131FF91E7AE75409F96AD9D9FE345
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtcpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:13DE080C
+Ctrl.label = label:5
+Output = 2C195A5AA9F539BD7CC7D6E23483
+
+# internalProjection.json, tgId: 1
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:A48A570A43E12372BF58495FDFD88D78
+Ctrl.hexsalt = hexsalt:E1D109B42D6C16A8830F9E7DDF4B
+Ctrl.index = hexindex:8E5BDF08FA78
+Ctrl.label = label:0
+Output = 30371635BF658204857EC5BFE13AFFE3
+
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:A48A570A43E12372BF58495FDFD88D78
+Ctrl.hexsalt = hexsalt:E1D109B42D6C16A8830F9E7DDF4B
+Ctrl.index = hexindex:8E5BDF08FA78
+Ctrl.label = label:1
+Output = 83E0821E1DDBD044C2DD3A980BB445875F97B4D5
+
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:A48A570A43E12372BF58495FDFD88D78
+Ctrl.hexsalt = hexsalt:E1D109B42D6C16A8830F9E7DDF4B
+Ctrl.index = hexindex:8E5BDF08FA78
+Ctrl.label = label:2
+Output = B27816A7A139D73E71A55FCD7006
+
+# The following tests are copies of one of the above tests with
+# invalid sizes for different inputs.
+
+# Test index size too small for label 0 (SRTP)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:08284B49F5
+Ctrl.label = label:0
+Output = A920DF50EAA111D03FBE9B203121C07D
+Result = KDF_DERIVE_ERROR
+Reason = invalid index length
+
+# Test index size too small for label 4 (SRTCP)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B621
+Ctrl.label = label:4
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
+Result = KDF_DERIVE_ERROR
+Reason = invalid index length
+
+# Test salt size is too small
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B62109
+Ctrl.label = label:4
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
+Result = KDF_CTRL_ERROR
+Reason = invalid salt length
+
+# Test invalid key size fails
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B62109
+Ctrl.label = label:4
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
+Result = KDF_CTRL_ERROR
+Reason = invalid key length
+
+# Test Case 1.3, variation, zero length index
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.index = hexindex:
+Ctrl.kdr = kdr:1
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
