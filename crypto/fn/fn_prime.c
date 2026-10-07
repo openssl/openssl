@@ -122,13 +122,13 @@ int ossl_fn_miller_rabin_is_prime(const OSSL_FN *w, int iterations,
 
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         goto err;
-    g = OSSL_FN_CTX_get_limbs(ctx, w->dsize);
-    w1 = OSSL_FN_CTX_get_limbs(ctx, w->dsize);
-    w3 = OSSL_FN_CTX_get_limbs(ctx, w->dsize);
-    x = OSSL_FN_CTX_get_limbs(ctx, w->dsize);
-    m = OSSL_FN_CTX_get_limbs(ctx, w->dsize);
-    z = OSSL_FN_CTX_get_limbs(ctx, w->dsize);
-    b = OSSL_FN_CTX_get_limbs(ctx, w->dsize);
+    g = OSSL_FN_CTX_get_limbs(ctx, token, w->dsize);
+    w1 = OSSL_FN_CTX_get_limbs(ctx, token, w->dsize);
+    w3 = OSSL_FN_CTX_get_limbs(ctx, token, w->dsize);
+    x = OSSL_FN_CTX_get_limbs(ctx, token, w->dsize);
+    m = OSSL_FN_CTX_get_limbs(ctx, token, w->dsize);
+    z = OSSL_FN_CTX_get_limbs(ctx, token, w->dsize);
+    b = OSSL_FN_CTX_get_limbs(ctx, token, w->dsize);
 
     if (!(b != NULL
             /* w1 := w - 1 */
@@ -452,7 +452,7 @@ static int ossl_fn_probable_prime_dh(OSSL_FN *rnd, size_t bits, int safe,
 
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
-    if ((t1 = OSSL_FN_CTX_get_limbs(ctx, rnd->dsize)) == NULL)
+    if ((t1 = OSSL_FN_CTX_get_limbs(ctx, token, rnd->dsize)) == NULL)
         goto err;
 
 again:
@@ -587,8 +587,8 @@ int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         goto err;
     /* One limb of headroom over |bits|, for carry detection. */
-    rntmp = OSSL_FN_CTX_get_limbs(ctx, limbs + 1);
-    t = OSSL_FN_CTX_get_limbs(ctx, limbs + 1);
+    rntmp = OSSL_FN_CTX_get_limbs(ctx, token, limbs + 1);
+    t = OSSL_FN_CTX_get_limbs(ctx, token, limbs + 1);
     if (t == NULL || rntmp == NULL)
         goto err;
 loop:

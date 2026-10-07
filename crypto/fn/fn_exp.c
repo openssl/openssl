@@ -424,8 +424,8 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
 
     size_t ml = (size_t)m->dsize;
 
-    OSSL_FN *rr = OSSL_FN_CTX_get_limbs(ctx, ml);
-    OSSL_FN *d = OSSL_FN_CTX_get_limbs(ctx, ml);
+    OSSL_FN *rr = OSSL_FN_CTX_get_limbs(ctx, token, ml);
+    OSSL_FN *d = OSSL_FN_CTX_get_limbs(ctx, token, ml);
     if (rr == NULL || d == NULL)
         goto err;
 
@@ -435,7 +435,7 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
     for (i = 0; i < TABLE_SIZE; i++)
         val[i] = NULL;
 
-    if ((val[0] = OSSL_FN_CTX_get_limbs(ctx, ml)) == NULL)
+    if ((val[0] = OSSL_FN_CTX_get_limbs(ctx, token, ml)) == NULL)
         goto err;
     if (!OSSL_FN_mod(val[0], a, m, ctx))
         goto err;
@@ -451,7 +451,7 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
             goto err;
         j = 1 << (window - 1);
         for (i = 1; i < j; i++) {
-            if ((val[i] = OSSL_FN_CTX_get_limbs(ctx, ml)) == NULL)
+            if ((val[i] = OSSL_FN_CTX_get_limbs(ctx, token, ml)) == NULL)
                 goto err;
             if (!OSSL_FN_mod_mul(val[i], val[i - 1], d, m, ctx))
                 goto err;
@@ -623,10 +623,10 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     }
     table_limbs = numpowers * ml + np_limbs;
 
-    OSSL_FN *tmp = OSSL_FN_CTX_get_limbs(ctx, ml);
-    OSSL_FN *am = OSSL_FN_CTX_get_limbs(ctx, ml);
+    OSSL_FN *tmp = OSSL_FN_CTX_get_limbs(ctx, token, ml);
+    OSSL_FN *am = OSSL_FN_CTX_get_limbs(ctx, token, ml);
 
-    powerfn = OSSL_FN_CTX_get_limbs(ctx, power_limbs);
+    powerfn = OSSL_FN_CTX_get_limbs(ctx, token, power_limbs);
     if (tmp == NULL || am == NULL || powerfn == NULL)
         goto err;
     powerbuf = (OSSL_FN_ULONG *)MOD_EXP_CTIME_ALIGN(powerfn->d);

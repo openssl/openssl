@@ -654,9 +654,9 @@ static int file_modmul(STANZA *s)
             goto err;
 
         OSSL_FN *am, *bm, *rm;
-        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, nlimbs))
-            || !TEST_ptr(bm = OSSL_FN_CTX_get_limbs(ctx, nlimbs))
-            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, nlimbs)))
+        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs))
+            || !TEST_ptr(bm = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs))
+            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs)))
             goto err;
 
         /*
@@ -762,8 +762,8 @@ static int file_modsqr(STANZA *s)
             goto err;
 
         OSSL_FN *am, *rm;
-        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, nlimbs))
-            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, nlimbs)))
+        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs))
+            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs)))
             goto err;
 
         if (!TEST_true(OSSL_FN_to_mont(am, af, mont, ctx))

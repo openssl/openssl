@@ -5427,8 +5427,8 @@ static int mod_exp_reference(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
 
     if (token == NULL)
         return 0;
-    if ((base = OSSL_FN_CTX_get_limbs(ctx, ml)) == NULL
-        || (acc = OSSL_FN_CTX_get_limbs(ctx, ml)) == NULL)
+    if ((base = OSSL_FN_CTX_get_limbs(ctx, token, ml)) == NULL
+        || (acc = OSSL_FN_CTX_get_limbs(ctx, token, ml)) == NULL)
         goto end;
 
     if (!OSSL_FN_mod(base, a, m, ctx))
@@ -7570,9 +7570,9 @@ static int test_null_params(void)
     CHECK_NO_CRASH(token = OSSL_FN_CTX_start(NULL));
     CHECK_NO_CRASH(OSSL_FN_CTX_end(NULL, token));
     CHECK_NO_CRASH(OSSL_FN_CTX_end(ctx, NULL));
-    CHECK_NO_CRASH(OSSL_FN_CTX_get_limbs(NULL, 1));
-    CHECK_NO_CRASH(OSSL_FN_CTX_get_bytes(NULL, 1));
-    CHECK_NO_CRASH(OSSL_FN_CTX_get_bits(NULL, 1));
+    CHECK_NO_CRASH(OSSL_FN_CTX_get_limbs(NULL, token, 1));
+    CHECK_NO_CRASH(OSSL_FN_CTX_get_bytes(NULL, token, 1));
+    CHECK_NO_CRASH(OSSL_FN_CTX_get_bits(NULL, token, 1));
     OSSL_FN_CTX_peak_usage(ctx, NULL, NULL, NULL);
 
     /* CTX constructors: libctx may be NULL (the default library context). */
