@@ -1147,6 +1147,11 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[fn_ct_test]=.. ../include ../crypto/fn ../apps/include
     DEPEND[fn_ct_test]=../libcrypto.a libtestutil.a
 
+    PROGRAMS{noinst}=pkey_ct_test
+    SOURCE[pkey_ct_test]=pkey_ct_test.c
+    INCLUDE[pkey_ct_test]=.. ../include ../apps/include
+    DEPEND[pkey_ct_test]=../libcrypto.a libtestutil.a
+
     PROGRAMS{noinst}=fntest
     SOURCE[fntest]=fntest.c
     INCLUDE[fntest]=.. ../include ../crypto/fn ../apps/include
