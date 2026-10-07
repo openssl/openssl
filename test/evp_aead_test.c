@@ -688,6 +688,97 @@ err:
     return testresult;
 }
 
+/*
+ * Re-init with the same key must start a fresh operation. After a successful
+ * decrypt, re-init with a forged tag must fail, and re-init with the correct
+ * tag must succeed again.
+ */
+static int test_evp_aead_reinit(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_enc = NULL;
+    EVP_CIPHER_CTX *ctx_dec = NULL;
+    OSSL_PARAM tagparams[2];
+
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    static const unsigned char msg[] = "reinit regression";
+    unsigned char ct[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char pt[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    size_t i = 0;
+    int len = 0, testresult = 0;
+
+    for (i = 0; i < (size_t)info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < (size_t)info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, info->taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+
+    /* encrypt: Init, (CCM len), Update, Final, get tag */
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx_enc, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_true(EVP_EncryptUpdate(ctx_enc, ct, &len, msg, sizeof(msg)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_enc, ct + len, &len))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx_enc, tagparams))) {
+        TEST_info("%s: encrypt", info->name);
+        goto err;
+    }
+
+    /* decrypt with the correct tag */
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, pt, &len, ct, sizeof(msg)))
+        || !TEST_true(EVP_DecryptFinal_ex(ctx_dec, pt + len, &len))
+        || !TEST_mem_eq(pt, sizeof(msg), msg, sizeof(msg))) {
+        TEST_info("%s: decrypt", info->name);
+        goto err;
+    }
+
+    /* re-init with the same key and a forged tag: must fail at Update or Final */
+    tag[0] ^= 1;
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec, NULL, NULL, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_false(EVP_DecryptUpdate(ctx_dec, pt, &len, ct, sizeof(msg)) > 0
+            && EVP_DecryptFinal_ex(ctx_dec, pt + len, &len) > 0)) {
+        TEST_info("%s: forged tag after re-init", info->name);
+        goto err;
+    }
+
+    /* re-init again with the correct tag: the failure must not carry over */
+    tag[0] ^= 1;
+    memset(pt, 0, sizeof(pt));
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec, NULL, NULL, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, pt, &len, ct, sizeof(msg)))
+        || !TEST_true(EVP_DecryptFinal_ex(ctx_dec, pt + len, &len))
+        || !TEST_mem_eq(pt, sizeof(msg), msg, sizeof(msg))) {
+        TEST_info("%s: correct tag after re-init", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     int i = 0;
@@ -705,6 +796,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_reinit, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
     return 1;
 }
