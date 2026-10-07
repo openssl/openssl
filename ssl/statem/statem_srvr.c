@@ -719,6 +719,15 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
     case TLS_ST_OK:
         if (s->key_update != SSL_KEY_UPDATE_NONE) {
             st->hand_state = TLS_ST_SW_KEY_UPDATE;
+            /*
+             * A reply owed to the peer's KeyUpdate is built here without
+             * going through a public API, so nothing else has checked that
+             * our own KeyUpdate's write-key install is still pending.
+             * Building another KeyUpdate now would reset that install. Wait
+             * in TLS_ST_SW_KEY_UPDATE, which resumes here once it completes.
+             */
+            if (SSL_CONNECTION_IS_DTLS13(s) && s->d1->key_update_write_pending)
+                return WRITE_TRAN_FINISHED;
             return WRITE_TRAN_CONTINUE;
         }
         if (s->post_handshake_auth == SSL_PHA_REQUEST_PENDING) {
