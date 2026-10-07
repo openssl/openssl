@@ -1473,6 +1473,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[mem_alloc_test]=../include ../apps/include
   DEPEND[mem_alloc_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=ml_kem_print_err_test
+  SOURCE[ml_kem_print_err_test]=ml_kem_print_err_test.c
+  INCLUDE[ml_kem_print_err_test]=../include ../apps/include
+  DEPEND[ml_kem_print_err_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=mem_alloc_custom_fns_test
   SOURCE[mem_alloc_custom_fns_test]=mem_alloc_custom_fns_test.c
   INCLUDE[mem_alloc_custom_fns_test]=../include ../apps/include
