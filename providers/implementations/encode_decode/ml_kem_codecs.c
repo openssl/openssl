@@ -476,8 +476,10 @@ int ossl_ml_kem_key_to_text(BIO *out, const ML_KEM_KEY *key, int selection)
 
         if ((pubenc = OPENSSL_malloc(key->vinfo->pubkey_bytes)) == NULL
             || !ossl_ml_kem_encode_public_key(pubenc, publen, key)
-            || !ossl_bio_print_labeled_buf(out, "ek:", pubenc, publen))
+            || !ossl_bio_print_labeled_buf(out, "ek:", pubenc, publen)) {
+            ret = 0;
             goto end;
+        }
         ret = 1;
     }
 
