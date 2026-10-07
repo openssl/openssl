@@ -22,17 +22,16 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    char *b;
+    char b[256];  /* Stack buffer for small input strings */
     unsigned int out[16], outlen = OSSL_NELEM(out);
     char outc[16];
 
-    b = OPENSSL_malloc(len + 1);
-    if (b != NULL) {
-        ossl_punycode_decode((const char *)buf, len, out, &outlen);
+    /* Only process if input fits in our stack buffer */
+    if (len < sizeof(b)) {
         memcpy(b, buf, len);
         b[len] = '\0';
+        ossl_punycode_decode((const char *)buf, len, out, &outlen);
         ossl_a2ulabel(b, outc, sizeof(outc));
-        OPENSSL_free(b);
     }
     return 0;
 }
