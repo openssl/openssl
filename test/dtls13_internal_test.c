@@ -6690,6 +6690,157 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * A write that is refused by the transport (WANT_WRITE) and later retried
+ * must not complete by sending the pending application data before an
+ * intervening reciprocal KeyUpdate has been sent, even though a single
+ * handshake_func() call inside the retry can report success while that
+ * KeyUpdate is still unconstructed.
+ *
+ * idx == 0: the server's write is refused right when it must also send a
+ * reciprocal KeyUpdate. idx == 1: same, with roles reversed.
+ */
+static int test_dtls13_pending_write_completes_before_reciprocal_keyupdate(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL *local, *peer;
+    SSL_CONNECTION *lc, *pc;
+    BIO *retry = NULL;
+    static const unsigned char payload[] = "pending-write-payload";
+    unsigned char buf[2048];
+    uint64_t epoch_before, peer_epoch_before;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+
+    local = (idx == 0) ? server : client;
+    peer = (idx == 0) ? client : server;
+    lc = SSL_CONNECTION_FROM_SSL(local);
+    pc = SSL_CONNECTION_FROM_SSL(peer);
+    epoch_before = dtls1_get_epoch(lc, SSL3_CC_WRITE);
+    peer_epoch_before = dtls1_get_epoch(pc, SSL3_CC_WRITE);
+
+    /* Interpose a filter that can refuse local's writes on demand. */
+    if (!TEST_ptr(retry = BIO_new(bio_s_maybe_retry()))
+        || !TEST_true(BIO_up_ref(SSL_get_wbio(local))))
+        goto end;
+
+    SSL_set0_wbio(local, BIO_push(retry, SSL_get_wbio(local)));
+    retry = NULL;
+
+    /* Refuse exactly the next write: nothing reaches the peer. */
+    if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(local),
+                          MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 0, NULL),
+            1))
+        goto end;
+
+    ret = SSL_write(local, payload, sizeof(payload));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Reopen the filter: the refused record was dropped, not queued. */
+    if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(local),
+                          MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 100, NULL),
+            1))
+        goto end;
+
+    /* The peer requests a reciprocal KeyUpdate. */
+    if (!TEST_true(SSL_key_update(peer, SSL_KEY_UPDATE_REQUESTED)))
+        goto end;
+
+    ret = SSL_do_handshake(peer);
+    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Block the next write before local reads the peer's KeyUpdate.
+     * Processing it does two things: it schedules local's own reciprocal
+     * KeyUpdate, and it immediately tries to send the ACK for the KeyUpdate
+     * just received. That ACK send is what gets blocked here, leaving the
+     * reciprocal KeyUpdate still unsent when the pending write below
+     * retries.
+     */
+    if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(local),
+                          MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 0, NULL),
+            1))
+        goto end;
+
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_WRITE)
+        || !TEST_int_eq(lc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_true(SSL_in_init(local)))
+        goto end;
+
+    /* Reopen the filter and retry the original pending write. */
+    if (!TEST_long_eq(BIO_ctrl(SSL_get_wbio(local),
+                          MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT, 100, NULL),
+            1))
+        goto end;
+
+    /* The completing retry of the original pending write -- the call under test. */
+    ret = SSL_write(local, payload, sizeof(payload));
+
+    /*
+     * ret == sizeof(payload) confirms the full payload was reported written.
+     * key_update == SSL_KEY_UPDATE_NONE confirms the reciprocal KeyUpdate it
+     * owed was actually constructed first: tls_construct_key_update() only
+     * resets key_update once that message has been built. Together, these
+     * rule out the bug -- the payload going out while the KeyUpdate was
+     * still unconstructed.
+     */
+    if (!TEST_int_eq(ret, (int)sizeof(payload))
+        || !TEST_int_eq(lc->key_update, SSL_KEY_UPDATE_NONE))
+        goto end;
+
+    /*
+     * Nothing ever blocks the peer's own writes in this test, so a single
+     * SSL_read() drives all of it to completion: the peer reads the ACK,
+     * reads the KeyUpdate, sends its own ACK for it, and reads the payload
+     * sent by local.
+     */
+    ret = SSL_read(peer, buf, sizeof(buf));
+    if (!TEST_int_eq(ret, (int)sizeof(payload))
+        || !TEST_mem_eq(buf, ret, payload, sizeof(payload))
+        || !TEST_uint64_t_eq(dtls1_get_epoch(pc, SSL3_CC_WRITE), peer_epoch_before + 1))
+        goto end;
+
+    /*
+     * The peer's ACK of the reciprocal KeyUpdate completes local's write-key
+     * install, bumping the write epoch past where this test started.
+     */
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ)
+        || !TEST_false(lc->d1->key_update_write_pending)
+        || !TEST_true(SSL_is_init_finished(local))
+        || !TEST_uint64_t_eq(dtls1_get_epoch(lc, SSL3_CC_WRITE), epoch_before + 1))
+        goto end;
+
+    /* Application data now flows both ways under the new epoch. */
+    if (!TEST_int_eq(SSL_write(local, "l", 1), 1)
+        || !TEST_int_eq(SSL_read(peer, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'l')
+        || !TEST_int_eq(SSL_write(peer, "p", 1), 1)
+        || !TEST_int_eq(SSL_read(local, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'p'))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free(retry);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -6751,6 +6902,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_pha_response_app_data_classification);
     ADD_TEST(test_dtls13_ticket_app_data_classification);
     ADD_TEST(test_dtls13_client_keyupdate_app_data_classification);
+    ADD_ALL_TESTS(test_dtls13_pending_write_completes_before_reciprocal_keyupdate, 2);
 #endif
     return 1;
 }
