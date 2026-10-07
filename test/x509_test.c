@@ -104,6 +104,118 @@ static int test_x509_tbs_cache(void)
     return ret;
 }
 
+static int test_x509_store_object_count(X509_STORE *store, int expected)
+{
+    STACK_OF(X509_OBJECT) *objs = X509_STORE_get1_objects(store);
+    int ret = TEST_ptr(objs)
+        && TEST_int_eq(sk_X509_OBJECT_num(objs), expected);
+
+    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
+    return ret;
+}
+
+/*
+ * Test both object types with a hash-table store, an unsorted legacy stack,
+ * and a sorted legacy stack. Matching objects are separated by the other type.
+ */
+static int test_x509_store_duplicates(int idx)
+{
+    int crl_test = idx % 2, mode = idx / 2;
+    int i, ret = 0;
+    const unsigned char *p;
+    X509_STORE *store = NULL;
+    STACK_OF(X509_OBJECT) *objs = NULL;
+    X509 *cert = NULL, *certs[4] = { NULL };
+    X509_CRL *crl = NULL, *crls[4] = { NULL };
+    ASN1_TIME *last_update = NULL;
+
+#ifdef OPENSSL_NO_DEPRECATED_4_0
+    if (mode != 0)
+        return TEST_skip("X509_STORE_get0_objects is disabled");
+#endif
+
+    p = certdata;
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(cert = d2i_X509(NULL, &p, sizeof(certdata))))
+        goto end;
+    p = crldata;
+    if (!TEST_ptr(crl = d2i_X509_CRL(NULL, &p, sizeof(crldata)))
+        || !TEST_true(X509_CRL_set_issuer_name(crl,
+            X509_get_subject_name(cert))))
+        goto end;
+
+    /* Decode signed objects so the CRLs have their cached fingerprints. */
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(cert), i + 1))
+            || !TEST_int_gt(X509_sign(cert, privkey, signmd), 0)
+            || !TEST_ptr(certs[i] = X509_dup(cert))
+            || !TEST_ptr(last_update = ASN1_TIME_adj(NULL, 0, i, 0))
+            || !TEST_true(X509_CRL_set1_lastUpdate(crl, last_update))
+            || !TEST_int_gt(X509_CRL_sign(crl, privkey, signmd), 0)
+            || !TEST_ptr(crls[i] = X509_CRL_dup(crl)))
+            goto end;
+        ASN1_TIME_free(last_update);
+        last_update = NULL;
+    }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+    if (mode != 0 && !TEST_ptr(objs = X509_STORE_get0_objects(store)))
+        goto end;
+#endif
+
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(crl_test ? X509_STORE_add_crl(store, crls[i])
+                                : X509_STORE_add_cert(store, certs[i])))
+            goto end;
+        if (i == 0
+            && !TEST_true(crl_test ? X509_STORE_add_cert(store, certs[0])
+                                   : X509_STORE_add_crl(store, crls[0])))
+            goto end;
+    }
+    if (!test_x509_store_object_count(store, 5))
+        goto end;
+    if (mode != 0 && !TEST_false(sk_X509_OBJECT_is_sorted(objs)))
+        goto end;
+    if (mode == 2) {
+        sk_X509_OBJECT_sort(objs);
+        if (!TEST_true(sk_X509_OBJECT_is_sorted(objs)))
+            goto end;
+    }
+
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(crl_test ? X509_STORE_add_crl(store, crls[i])
+                                : X509_STORE_add_cert(store, certs[i]))
+            || !test_x509_store_object_count(store, 5))
+            goto end;
+        /* Equal encodings at different addresses must also be duplicates. */
+        if (crl_test) {
+            X509_CRL_free(crl);
+            crl = X509_CRL_dup(crls[i]);
+            if (!TEST_ptr(crl) || !TEST_true(X509_STORE_add_crl(store, crl)))
+                goto end;
+        } else {
+            X509_free(cert);
+            cert = X509_dup(certs[i]);
+            if (!TEST_ptr(cert) || !TEST_true(X509_STORE_add_cert(store, cert)))
+                goto end;
+        }
+        if (!test_x509_store_object_count(store, 5))
+            goto end;
+    }
+    ret = 1;
+
+end:
+    ASN1_TIME_free(last_update);
+    X509_STORE_free(store);
+    X509_free(cert);
+    X509_CRL_free(crl);
+    for (i = 0; i < 4; i++) {
+        X509_free(certs[i]);
+        X509_CRL_free(crls[i]);
+    }
+    return ret;
+}
+
 static int test_x509_verify_with_new(void)
 {
     int ret;
@@ -931,6 +1043,7 @@ int setup_tests(void)
 
     ADD_TEST(test_x509_tbs_cache);
     ADD_TEST(test_x509_crl_tbs_cache);
+    ADD_ALL_TESTS(test_x509_store_duplicates, 6);
     ADD_TEST(test_asn1_item_verify);
     ADD_MFAIL_NO_CHECK_TEST(test_x509_asn1_item_verify_mfail);
     ADD_MFAIL_TEST(test_x509_issuer_name_hash_mfail);
