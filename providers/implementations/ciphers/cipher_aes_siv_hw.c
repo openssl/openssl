@@ -25,6 +25,10 @@ static int aes_siv_initkey(void *vctx, const unsigned char *key, size_t keylen)
     OSSL_LIB_CTX *libctx = ctx->libctx;
     const char *propq = NULL;
 
+    /* no new key: start a new operation with the existing one */
+    if (key == NULL)
+        return ossl_siv128_init(sctx, NULL, 0, NULL, NULL, libctx, propq);
+
     EVP_CIPHER_free(ctx->cbc);
     EVP_CIPHER_free(ctx->ctr);
     ctx->cbc = NULL;
