@@ -3739,6 +3739,212 @@ err:
     return ret;
 }
 
+/*
+ * Send a single ack-eliciting Initial packet carrying |token| to |peer|
+ * through |bio|.
+ */
+static int send_initial_with_token(BIO *bio, const BIO_ADDR *peer,
+    const QUIC_CONN_ID *dcid,
+    const QUIC_CONN_ID *scid,
+    const unsigned char *token,
+    size_t token_len)
+{
+    static unsigned char payload[QUIC_MDPL]; /* PING then PADDING */
+    OSSL_QTX *qtx = NULL;
+    OSSL_QTX_ARGS qtx_args = { 0 };
+    OSSL_QTX_IOVEC iovec = { 0 };
+    OSSL_QTX_PKT pkt = { 0 };
+    QUIC_PKT_HDR hdr = { 0 };
+    int ret = 0;
+
+    payload[0] = OSSL_QUIC_FRAME_TYPE_PING;
+
+    qtx_args.bio = bio;
+    qtx_args.mdpl = 1500;
+    qtx_args.libctx = libctx;
+    if (!TEST_ptr(qtx = ossl_qtx_new(&qtx_args))
+        || !TEST_true(ossl_quic_provide_initial_secret(libctx, NULL, dcid,
+            0, NULL, qtx)))
+        goto err;
+
+    hdr.type = QUIC_PKT_TYPE_INITIAL;
+    hdr.fixed = 1;
+    hdr.pn_len = 4;
+    hdr.version = QUIC_VERSION_1;
+    hdr.dst_conn_id = *dcid;
+    hdr.src_conn_id = *scid;
+    hdr.token = token;
+    hdr.token_len = token_len;
+
+    iovec.buf = payload;
+    iovec.buf_len = sizeof(payload);
+    pkt.hdr = &hdr;
+    pkt.iovec = &iovec;
+    pkt.num_iovec = 1;
+    pkt.peer = peer;
+
+    if (!TEST_true(ossl_qtx_write_pkt(qtx, &pkt))
+        || !TEST_int_eq(ossl_qtx_flush_net(qtx), QTX_FLUSH_NET_RES_OK))
+        goto err;
+
+    ret = 1;
+err:
+    ossl_qtx_free(qtx);
+    return ret;
+}
+
+/*
+ * Test that the server does not answer a Retry token it minted itself, but
+ * which then fails validation, with yet another Retry. The client has already
+ * processed one Retry and must ignore any further ones (RFC 9000 s 17.2.5.2),
+ * so the server should drop the packet instead (RFC 9000 s 8.1.2).
+ */
+static int test_quic_retry_token_refused(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client = NULL;
+    QUIC_CHANNEL *cch = NULL;
+    QUIC_PKT_HDR rhdr = { 0 };
+    QUIC_CONN_ID bad_dcid;
+    PACKET pkt;
+    BIO_MSG msg = { 0 };
+    BIO_ADDR *server_addr = NULL, *client_addr = NULL;
+    BIO_ADDR *shadow_server_addr = NULL;
+    BIO *c_bio = NULL, *s_bio = NULL;
+    unsigned char retry[1500];
+    size_t num_processed = 0, server_datagrams = 0;
+    uint64_t server_bytes = 0;
+    int rc, ssl_err, i, ret = 0;
+    struct in_addr ina;
+    static const unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+
+    sctx = create_server_ctx();
+    cctx = create_client_ctx();
+    if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
+        goto err;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_true(BIO_new_bio_dgram_pair(&c_bio, 65535, &s_bio, 65535)))
+        goto err;
+    if (!TEST_ptr((server_addr = create_addr(&ina, SERVER_PORT)))
+        || !TEST_ptr((client_addr = create_addr(&ina, CLIENT_PORT))))
+        goto err;
+
+    if (!TEST_true(bio_addr_bind(c_bio, client_addr)))
+        goto err;
+    client_addr = NULL;
+
+    if (!TEST_true(bio_addr_bind(s_bio, server_addr)))
+        goto err;
+    shadow_server_addr = server_addr;
+    server_addr = NULL;
+
+    /* Address validation is on by default, so the server sends a Retry. */
+    if (!TEST_ptr((listener = SSL_new_listener(sctx, 0)))
+        || !TEST_true(SSL_listen(listener))
+        || !TEST_ptr((client = SSL_new(cctx)))
+        || !TEST_true(SSL_set1_initial_peer_addr(client, shadow_server_addr))
+        || !TEST_int_eq(SSL_set_alpn_protos(client, alpn, sizeof(alpn)), 0)
+        || !TEST_ptr((cch = ossl_quic_conn_get_channel(client))))
+        goto err;
+
+    SSL_set_bio(listener, s_bio, s_bio);
+    SSL_set_bio(client, c_bio, c_bio);
+
+    if (!TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !TEST_true(SSL_set_blocking_mode(client, 0)))
+        goto err;
+
+    /* Client sends its first Initial, without a token. */
+    rc = SSL_connect(client);
+    if (!TEST_int_le(rc, 0))
+        goto err;
+    ssl_err = SSL_get_error(client, rc);
+    if (!TEST_true(ssl_err == SSL_ERROR_WANT_READ
+            || ssl_err == SSL_ERROR_WANT_WRITE))
+        goto err;
+
+    if (!TEST_true(wait_readable(s_bio, 1000)))
+        goto err;
+
+    for (i = 0; i < 8 && BIO_pending(c_bio) == 0; ++i)
+        if (!TEST_true(SSL_handle_events(listener)))
+            goto err;
+
+    /* Take the Retry before the client sees it and pull out the token. */
+    msg.data = retry;
+    msg.data_len = sizeof(retry);
+    if (!TEST_true(BIO_recvmmsg(c_bio, &msg, sizeof(msg), 1, 0,
+            &num_processed))
+        || !TEST_size_t_eq(num_processed, 1)
+        || !TEST_true(PACKET_buf_init(&pkt, retry, msg.data_len))
+        || !TEST_true(ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, 0, &rhdr,
+            NULL, NULL))
+        || !TEST_int_eq(rhdr.type, QUIC_PKT_TYPE_RETRY)
+        || !TEST_size_t_gt(rhdr.len, QUIC_RETRY_INTEGRITY_TAG_LEN))
+        goto err;
+
+    /*
+     * The ClientHello may span several Initial datagrams, each of which gets
+     * its own Retry. Discard the rest so they are not counted below.
+     */
+    drain_server_output(c_bio, &server_bytes, &server_datagrams);
+    server_bytes = 0;
+    server_datagrams = 0;
+
+    /*
+     * Send the token back with a DCID other than the Retry's SCID. The token
+     * decrypts and is one of ours, but port_validate_token() refuses it.
+     */
+    bad_dcid = rhdr.src_conn_id;
+    bad_dcid.id[0] ^= 0xff;
+    if (!TEST_true(send_initial_with_token(c_bio, shadow_server_addr,
+            &bad_dcid, &cch->init_scid,
+            rhdr.data,
+            rhdr.len - QUIC_RETRY_INTEGRITY_TAG_LEN)))
+        goto err;
+
+    for (i = 0; i < 8; ++i) {
+        if (!TEST_true(SSL_handle_events(listener)))
+            goto err;
+        drain_server_output(c_bio, &server_bytes, &server_datagrams);
+    }
+
+    /* Before the fix, the server answered with another Retry here. */
+    if (!TEST_size_t_eq(server_datagrams, 0))
+        goto err;
+
+    /*
+     * Control: the same token with the right DCID is accepted, and the
+     * new connection ACKs our PING.
+     */
+    if (!TEST_true(send_initial_with_token(c_bio, shadow_server_addr,
+            &rhdr.src_conn_id, &cch->init_scid,
+            rhdr.data,
+            rhdr.len - QUIC_RETRY_INTEGRITY_TAG_LEN)))
+        goto err;
+
+    for (i = 0; i < 64 && server_datagrams == 0; ++i) {
+        if (!TEST_true(SSL_handle_events(listener)))
+            goto err;
+        drain_server_output(c_bio, &server_bytes, &server_datagrams);
+    }
+
+    if (!TEST_size_t_gt(server_datagrams, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    SSL_free(client);
+    SSL_free(listener);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    BIO_ADDR_free(client_addr);
+    BIO_ADDR_free(server_addr);
+    return ret;
+}
+
 static SSL *quic_verify_ssl = NULL;
 
 static int quic_verify_cb(int ok, X509_STORE_CTX *ctx)
@@ -4827,6 +5033,7 @@ int setup_tests(void)
     ADD_TEST(test_server_method_with_ssl_new);
     ADD_TEST(test_ssl_accept_connection);
     ADD_TEST(test_quic_amplification_limit);
+    ADD_TEST(test_quic_retry_token_refused);
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
     ADD_TEST(test_reject_stream_gc);
