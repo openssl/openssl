@@ -170,6 +170,7 @@ strspn
 strstr
 strtol
 strtoul
+strtoull
 terminate
 tolower
 wcsstr

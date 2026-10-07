@@ -339,6 +339,15 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 #define X509_V_ERR_DUPLICATE_EXTENSION 104
 
+/* Merkle Tree Certificate errors */
+#define X509_V_ERR_MTC_NOT_MTC 105
+#define X509_V_ERR_MTC_BAD_PROOF 106
+#define X509_V_ERR_MTC_UNTRUSTED_CA 107
+#define X509_V_ERR_MTC_REVOKED 108
+#define X509_V_ERR_MTC_INCLUSION_FAILED 109
+#define X509_V_ERR_MTC_NOT_TRUSTED 110
+#define X509_V_ERR_MTC_COSIGNER_QUORUM 111
+
 /* Certificate verify flags */
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #define X509_V_FLAG_CB_ISSUER_CHECK 0x0 /* Deprecated */
@@ -623,6 +632,18 @@ X509_LOOKUP_get_by_alias_fn X509_LOOKUP_meth_get_get_by_alias(
 
 int X509_STORE_add_cert(X509_STORE *xs, const X509 *x);
 int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x);
+
+/**
+ * @brief Trust a Merkle Tree Certificate CA in an X509_STORE.
+ * @see X509_STORE_trust_mtc_ca(3), X509_STORE_add_cert(3)
+ */
+int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca);
+
+/**
+ * @brief Trust a Merkle Tree Certificate cosigner in an X509_STORE.
+ * @see X509_STORE_trust_mtc_cosigner(3), X509_STORE_trust_mtc_ca(3)
+ */
+int X509_STORE_trust_mtc_cosigner(X509_STORE *store, OSSL_MTC_COSIGNER *cosigner);
 
 int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *vs,
     X509_LOOKUP_TYPE type,

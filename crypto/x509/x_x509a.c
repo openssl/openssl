@@ -194,3 +194,32 @@ const STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(const X509 *x)
         return x->aux->reject;
     return NULL;
 }
+
+int ossl_x509_set1_certificate_properties(X509 *x, const uint8_t *props,
+    size_t props_len)
+{
+    ASN1_OCTET_STRING *os;
+
+    if ((os = ASN1_OCTET_STRING_new()) == NULL)
+        return 0;
+    if (!ASN1_OCTET_STRING_set(os, props, (int)props_len)) {
+        ASN1_OCTET_STRING_free(os);
+        return 0;
+    }
+    ASN1_OCTET_STRING_free(x->properties);
+    x->properties = os;
+    return 1;
+}
+
+int ossl_x509_get0_certificate_properties(const X509 *x, const uint8_t **props,
+    size_t *props_len)
+{
+    if (x->properties == NULL) {
+        *props = NULL;
+        *props_len = 0;
+        return 0;
+    }
+    *props = ASN1_STRING_get0_data(x->properties);
+    *props_len = ASN1_STRING_get_length(x->properties);
+    return 1;
+}

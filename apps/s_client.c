@@ -44,6 +44,8 @@ typedef unsigned int u_int;
 #include <openssl/bn.h>
 #include <openssl/trace.h>
 #include <openssl/async.h>
+#include <openssl/mtc.h>
+#include <openssl/proof.h>
 #ifndef OPENSSL_NO_CT
 #include <openssl/ct.h>
 #endif
@@ -579,6 +581,13 @@ typedef enum OPTION_choice {
     OPT_NOCASTORE,
     OPT_CHAINCASTORE,
     OPT_VERIFYCASTORE,
+    OPT_MTC_CAS,
+    OPT_MTC_LANDMARKS,
+    OPT_MTC_SUBTREES,
+    OPT_MTC_COSIGNERS,
+    OPT_MTC_COSIGNER_QUORUM,
+    OPT_TAI_CHAINS,
+    OPT_TAI_KEYS,
     OPT_SERVERINFO,
     OPT_STARTTLS,
     OPT_SERVERNAME,
@@ -693,6 +702,25 @@ const OPTIONS s_client_options[] = {
     { "CAfile", OPT_CAFILE, '<', "File in PEM format with trusted CA certs" },
     { "CApath", OPT_CAPATH, '/', "Dir with trusted CA cert files in PEM format" },
     { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
+    { "mtc_cas", OPT_MTC_CAS, '<',
+        "File of Merkle Tree Certificate CA certs to trust and request" },
+    { "mtc_landmarks", OPT_MTC_LANDMARKS, 's',
+        "Active landmarks of one -mtc_cas log, as id:log:file, where file holds"
+        " the CA's published landmark description (may be given more than once)" },
+    { "mtc_subtrees", OPT_MTC_SUBTREES, '<',
+        "File of vetted subtree hashes for the -mtc_landmarks logs"
+        " (landmark-relative MTC)" },
+    { "mtc_cosigners", OPT_MTC_COSIGNERS, '<',
+        "File of Merkle Tree Certificate cosigner certs to trust for the"
+        " -mtc_cosigner_quorum" },
+    { "mtc_cosigner_quorum", OPT_MTC_COSIGNER_QUORUM, 'N',
+        "Trusted cosigners a standalone Merkle Tree Certificate must carry" },
+    { "tai_chains", OPT_TAI_CHAINS, 's',
+        "PEM file, or directory of PEM files, of trust anchor decorated"
+        " certificate chains sent when a server requests their trust anchor" },
+    { "tai_keys", OPT_TAI_KEYS, 's',
+        "PEM file, or directory of PEM files, of further private keys for"
+        " -tai_chains certificates" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',
@@ -1010,6 +1038,13 @@ int s_client_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
+    const char *mtc_cas_file = NULL, *mtc_subtrees_file = NULL;
+    const char *mtc_cosigners_file = NULL;
+    int mtc_cosigner_quorum = 0;
+    const char *tai_chains_file = NULL, *tai_keys_file = NULL;
+    STACK_OF(OPENSSL_STRING) *mtc_landmarks = NULL;
+    STACK_OF(OSSL_MTC_CA) *mtc_cas = NULL;
+    STACK_OF(OSSL_MTC_COSIGNER) *mtc_cosigners = NULL;
     char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
     char *proxystr = NULL, *proxyuser = NULL;
     char *proxypassarg = NULL, *proxypass = NULL;
@@ -1611,6 +1646,33 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_CASTORE:
             CAstore = opt_arg();
+            break;
+        case OPT_MTC_CAS:
+            mtc_cas_file = opt_arg();
+            break;
+        case OPT_MTC_LANDMARKS:
+            if (mtc_landmarks == NULL
+                && (mtc_landmarks = sk_OPENSSL_STRING_new_null()) == NULL)
+                goto end;
+            if (!sk_OPENSSL_STRING_push(mtc_landmarks, opt_arg()))
+                goto end;
+            break;
+        case OPT_MTC_SUBTREES:
+            mtc_subtrees_file = opt_arg();
+            break;
+        case OPT_MTC_COSIGNERS:
+            mtc_cosigners_file = opt_arg();
+            break;
+        case OPT_MTC_COSIGNER_QUORUM:
+            mtc_cosigner_quorum = opt_int_arg();
+            if (mtc_cosigner_quorum < 0)
+                goto opthelp;
+            break;
+        case OPT_TAI_CHAINS:
+            tai_chains_file = opt_arg();
+            break;
+        case OPT_TAI_KEYS:
+            tai_keys_file = opt_arg();
             break;
         case OPT_NOCASTORE:
             noCAstore = 1;
@@ -2244,7 +2306,65 @@ int s_client_main(int argc, char **argv)
 
     ssl_ctx_add_crls(ctx, crls, crl_download);
 
+    /*
+     * Trust the Merkle Tree Certificate CAs from -mtc_cas.  Adding them to the
+     * verify store both lets the client verify MTC certificates against them
+     * and advertises their trust anchor IDs in the trust_anchors extension.
+     * The store borrows the CAs, so mtc_cas is kept alive until after the
+     * SSL_CTX is freed.
+     */
+    if (mtc_cas_file != NULL
+        && (mtc_cas = load_mtc_cas(ctx, mtc_cas_file)) == NULL)
+        goto end;
+
+    /*
+     * Set the active landmark windows of the loaded MTC CAs, then the vetted
+     * hashes of subtrees in those windows (landmark-relative MTC).  The windows
+     * come first: a hash is accepted only for a subtree that is active.
+     */
+    if (mtc_landmarks != NULL) {
+        if (mtc_cas == NULL) {
+            BIO_printf(bio_err, "-mtc_landmarks requires -mtc_cas\n");
+            goto end;
+        }
+        for (i = 0; i < sk_OPENSSL_STRING_num(mtc_landmarks); i++) {
+            if (!load_mtc_landmarks(mtc_cas,
+                    sk_OPENSSL_STRING_value(mtc_landmarks, i), vpm))
+                goto end;
+        }
+    }
+
+    if (mtc_subtrees_file != NULL) {
+        if (mtc_cas == NULL) {
+            BIO_printf(bio_err, "-mtc_subtrees requires -mtc_cas\n");
+            goto end;
+        }
+        if (!load_mtc_subtrees(mtc_cas, mtc_subtrees_file))
+            goto end;
+    }
+
+    /*
+     * Trust the Merkle Tree Certificate cosigners from -mtc_cosigners; they
+     * count toward -mtc_cosigner_quorum.  The store borrows them, so
+     * mtc_cosigners is kept alive until after the SSL_CTX is freed.
+     */
+    if (mtc_cosigners_file != NULL
+        && (mtc_cosigners = load_mtc_cosigners(ctx, mtc_cosigners_file)) == NULL)
+        goto end;
+    if (!OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(SSL_CTX_get0_proof_params(ctx),
+            (size_t)mtc_cosigner_quorum))
+        goto end;
+
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
+        goto end;
+
+    /*
+     * Client certificates for -tai_chains are negotiation gated: one is sent
+     * only when the server asks for a client certificate from a trust anchor
+     * it matches, and -cert is what we fall back on otherwise.
+     */
+    if (tai_chains_file != NULL
+        && !load_tai_credentials(ctx, tai_chains_file, tai_keys_file))
         goto end;
 
     if (!noservername) {
@@ -3609,6 +3729,10 @@ end:
     OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
+    /* Freed after the store that borrowed them. */
+    sk_OPENSSL_STRING_free(mtc_landmarks);
+    sk_OSSL_MTC_CA_pop_free(mtc_cas, OSSL_MTC_CA_free);
+    sk_OSSL_MTC_COSIGNER_pop_free(mtc_cosigners, OSSL_MTC_COSIGNER_free);
     set_keylog_file(NULL, NULL);
     X509_free(cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
@@ -3788,6 +3912,8 @@ static void print_ech_status(BIO *bio, SSL *s, int estat)
 
 static void print_stuff(BIO *bio, SSL *s, int full)
 {
+    const uint8_t *tas = NULL;
+    size_t tas_len = 0;
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
@@ -4006,6 +4132,35 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         verify_result = SSL_get_verify_result(s);
         BIO_printf(bio, "Verify return code: %ld (%s)\n", verify_result,
             X509_verify_cert_error_string(verify_result));
+
+        /*
+         * The trust anchors the server said it has certification paths for, if
+         * it sent any.  An application that did not trust what it was served
+         * would choose one of these and connect again asking only for it; we
+         * report them so an operator can see what was on offer.
+         */
+        SSL_get0_peer_available_trust_anchors(s, &tas, &tas_len);
+        if (tas_len > 0) {
+            size_t off = 0;
+
+            BIO_puts(bio, "Available trust anchor IDs:\n");
+            while (off < tas_len) {
+                size_t idlen = tas[off++];
+                char *text;
+
+                if (idlen == 0 || idlen > tas_len - off)
+                    break;
+                if ((text = app_reloid_to_text(tas + off, idlen)) != NULL) {
+                    BIO_printf(bio, "    %s\n", text);
+                    OPENSSL_free(text);
+                } else {
+                    /* Not a relative OID after all; show what arrived. */
+                    BIO_hex_string(bio, 4, (int)idlen, tas + off, (int)idlen);
+                    BIO_puts(bio, "\n");
+                }
+                off += idlen;
+            }
+        }
     } else {
         /* In TLSv1.3 we do this on arrival of a NewSessionTicket */
         SSL_SESSION_print(bio, SSL_get_session(s));

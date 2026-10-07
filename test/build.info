@@ -80,7 +80,8 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test
+          engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test \
+          merkle_tree_test mtc_cert_test mtc_ca_test mtc_verify_test proof_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -194,6 +195,26 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sha_test]=sha_test.c
   INCLUDE[sha_test]=../include ../apps/include
   DEPEND[sha_test]=../libcrypto libtestutil.a
+
+  SOURCE[merkle_tree_test]=merkle_tree_test.c
+  INCLUDE[merkle_tree_test]=../include ../apps/include
+  DEPEND[merkle_tree_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[mtc_cert_test]=mtc_cert_test.c
+  INCLUDE[mtc_cert_test]=../include ../apps/include
+  DEPEND[mtc_cert_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[mtc_ca_test]=mtc_ca_test.c
+  INCLUDE[mtc_ca_test]=../include ../apps/include
+  DEPEND[mtc_ca_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[mtc_verify_test]=mtc_verify_test.c
+  INCLUDE[mtc_verify_test]=../include ../apps/include
+  DEPEND[mtc_verify_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[proof_test]=proof_test.c
+  INCLUDE[proof_test]=../include ../apps/include
+  DEPEND[proof_test]=../libcrypto.a libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
@@ -971,12 +992,13 @@ IF[{- !$disabled{tests} -}]
   # are always available.
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
-                     tls13encryptiontest wpackettest ctype_internal_test \
+                     tls13encryptiontest ssl_cred_test ssl_trust_anchors_test \
+                     wpackettest ctype_internal_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
                      asn1_dsa_internal_test dsatest dsa_no_digest_size_test \
-                     dhtest ssl_old_test
+                     dhtest ssl_old_test pool_internal_test
 
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS{noinst}=poly1305_internal_test
@@ -1077,6 +1099,14 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
     DEPEND[tls13encryptiontest]=../libcrypto.a ../libssl.a libtestutil.a
 
+    SOURCE[ssl_cred_test]=ssl_cred_test.c helpers/ssltestlib.c
+    INCLUDE[ssl_cred_test]=.. ../include ../apps/include
+    DEPEND[ssl_cred_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    SOURCE[ssl_trust_anchors_test]=ssl_trust_anchors_test.c
+    INCLUDE[ssl_trust_anchors_test]=.. ../include ../apps/include
+    DEPEND[ssl_trust_anchors_test]=../libcrypto.a ../libssl.a libtestutil.a
+
     SOURCE[ideatest]=ideatest.c
     INCLUDE[ideatest]=../include ../apps/include
     DEPEND[ideatest]=../libcrypto.a libtestutil.a
@@ -1096,6 +1126,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sparse_array_test]=sparse_array_test.c
     INCLUDE[sparse_array_test]=../include ../apps/include
     DEPEND[sparse_array_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[pool_internal_test]=pool_internal_test.c
+    INCLUDE[pool_internal_test]=.. ../include ../apps/include
+    DEPEND[pool_internal_test]=../libcrypto.a libtestutil.a
 
     IF[{- !$disabled{quic} -}]
       SOURCE[priority_queue_test]=priority_queue_test.c

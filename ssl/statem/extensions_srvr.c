@@ -1268,6 +1268,167 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 }
 
+/*
+ * Parse the peer's trust_anchors extension (section 5 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  From
+ * the ClientHello it is a RequestedTrustAnchorList of the trust anchor IDs the
+ * relying party supports, each a nonempty u8-length-prefixed string of at most
+ * 255 bytes.  The list MAY be empty.  It is saved for certificate selection,
+ * an empty list meaning the peer supports the extension but disclosed no IDs.
+ * From the client's Certificate message it is the marker described below.
+ */
+int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET id_list;
+
+    /*
+     * In the client's Certificate message the extension is its marker that the
+     * certificate matched what we asked for: empty, and only in the first
+     * entry.  An extension we did not ask for is refused before we are called.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE) {
+        if (PACKET_remaining(pkt) != 0 || chainidx != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        s->ext.peer_matched_trust_anchor = 1;
+        return 1;
+    }
+
+    if (!PACKET_as_length_prefixed_2(pkt, &id_list)
+        || !ossl_tls_valid_trust_anchor_list(&id_list)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    OPENSSL_free(s->ext.peer_requested_trust_anchors);
+    s->ext.peer_requested_trust_anchors = NULL;
+    s->ext.peer_requested_trust_anchors_len = 0;
+    s->ext.peer_sent_trust_anchors = 1;
+    if (PACKET_remaining(&id_list) > 0
+        && !PACKET_memdup(&id_list, &s->ext.peer_requested_trust_anchors,
+            &s->ext.peer_requested_trust_anchors_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+/*
+ * Collect the trust anchors this connection could serve, in preference order,
+ * into found (which must have room for every configured credential).  A
+ * credential qualifies if it has a trust anchor ID and a signature algorithm
+ * usable here; the list names each trust anchor once, so a credential whose
+ * identifier a qualifying credential already contributed is skipped.  Returns
+ * how many were collected.
+ */
+static int collect_available_trust_anchors(SSL_CONNECTION *s,
+    const SSL_CREDENTIAL **found)
+{
+    int i, j, n = 0;
+
+    for (i = 0; i < sk_SSL_CREDENTIAL_num(s->cert->credentials); i++) {
+        const SSL_CREDENTIAL *cred
+            = sk_SSL_CREDENTIAL_value(s->cert->credentials, i);
+
+        if (cred->trust_anchor_id == NULL
+            || !ossl_tls_credential_usable(s, cred))
+            continue;
+        for (j = 0; j < n; j++)
+            if (found[j]->trust_anchor_id_len == cred->trust_anchor_id_len
+                && memcmp(found[j]->trust_anchor_id, cred->trust_anchor_id,
+                       cred->trust_anchor_id_len)
+                    == 0)
+                break;
+        if (j == n)
+            found[n++] = cred;
+    }
+    return n;
+}
+
+/*
+ * The AvailableTrustAnchorList: the trust anchors of the certification paths
+ * we have, sent when the client asked for trust anchors at all, so that a
+ * client whose request went unmatched can pick one and retry (section 5.6 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  The
+ * list may not be empty, so the extension is omitted when nothing qualifies.
+ */
+static EXT_RETURN construct_stoc_available_trust_anchors(SSL_CONNECTION *s,
+    WPACKET *pkt)
+{
+    const SSL_CREDENTIAL **found = NULL;
+    int i, n, configured;
+
+    if (!s->ext.peer_sent_trust_anchors)
+        return EXT_RETURN_NOT_SENT;
+    if ((configured = sk_SSL_CREDENTIAL_num(s->cert->credentials)) <= 0)
+        return EXT_RETURN_NOT_SENT;
+
+    if ((found = OPENSSL_malloc_array(configured, sizeof(*found))) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+        return EXT_RETURN_FAIL;
+    }
+    n = collect_available_trust_anchors(s, found);
+    if (n == 0) {
+        OPENSSL_free(found);
+        return EXT_RETURN_NOT_SENT;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_start_sub_packet_u16(pkt))
+        goto err;
+    for (i = 0; i < n; i++)
+        if (!WPACKET_sub_memcpy_u8(pkt, found[i]->trust_anchor_id,
+                found[i]->trust_anchor_id_len))
+            goto err;
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt))
+        goto err;
+
+    OPENSSL_free(found);
+    return EXT_RETURN_SENT;
+err:
+    OPENSSL_free(found);
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    return EXT_RETURN_FAIL;
+}
+
+EXT_RETURN tls_construct_stoc_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context, X509 *x,
+    size_t chainidx)
+{
+    /*
+     * This extension shares its definition with the ClientHello request form.
+     * In EncryptedExtensions it lists the trust anchors we have; in the
+     * CertificateRequest it asks for a client certificate from trust anchors
+     * we accept; in the Certificate message it acknowledges that the
+     * certificate we served matched what the client asked for, which is an
+     * empty extension in the first CertificateEntry only.  See
+     * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+     */
+    if (context == SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)
+        return construct_stoc_available_trust_anchors(s, pkt);
+
+    /* Asking for a client certificate, we are the relying party. */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST)
+        return ossl_tls_construct_requested_trust_anchors(s, pkt);
+
+    if (context != SSL_EXT_TLS1_3_CERTIFICATE
+        || s->s3.tmp.credential == NULL || chainidx != 0)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
 int tls_parse_ctos_ems(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {

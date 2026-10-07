@@ -1,0 +1,144 @@
+=pod
+
+=head1 NAME
+
+OSSL_MTC_CA_load_landmarks, OSSL_MTC_CA_add_subtree_hash
+- update a trusted Merkle Tree Certificate CA's landmark state
+
+=head1 SYNOPSIS
+
+ #include <openssl/mtc.h>
+
+ int OSSL_MTC_CA_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number,
+                                BIO *in, int64_t cutoff);
+
+ int OSSL_MTC_CA_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
+                                  uint64_t start, uint64_t end,
+                                  const uint8_t *hash, size_t hash_len);
+
+=head1 DESCRIPTION
+
+These functions keep a trusted Merkle Tree Certificate CA current with the
+landmark information published for its issuance logs, so that landmark-relative
+certificates can be accepted and requested by trust anchor identifier group.
+Together, OSSL_MTC_CA_load_landmarks() and OSSL_MTC_CA_add_subtree_hash()
+implement the trusted-subtree configuration of section 7.4 of the Merkle Tree
+Certificates draft.
+
+I<log_number> selects one of the CA's issuance logs. The CA to update is found
+with L<OSSL_MTC_CA_find(3)>.
+
+OSSL_MTC_CA_load_landmarks() reads a log's published landmark description from
+I<in> and B<replaces> that log's active window with it; the description is a
+full snapshot. A subtree that is still active keeps any hash previously added to
+it, one that is no longer active is dropped, and a newly active subtree is
+recorded without a hash. This sets which subtrees are active, but does not make
+any subtree usable on its own: a subtree is used only once it is both active and
+has a hash.
+
+The description is in the format of section 6.4.3 of the Merkle Tree
+Certificates draft: a line holding the number of the newest landmark, followed
+by one line per landmark, newest first, each holding the landmark's tree size
+and its expiry time in seconds since the Epoch, separated by a space. Tree sizes
+are strictly decreasing and expiry times do not increase. Numbers are written in
+decimal without leading zeros, and every line ends in a newline character.
+
+The description ends at the first landmark whose expiry time is earlier than
+I<cutoff>, or at the last line if there is none; that landmark is not loaded,
+and its tree size only marks where the landmark after it begins. Lines after it
+are not read. Passing B<INT64_MIN> as I<cutoff> loads every landmark in the
+description. Passing the current time, or the time at which certificates will
+be verified, avoids loading landmarks that are no longer valid at that time.
+
+OSSL_MTC_CA_add_subtree_hash() trusts I<hash> of length I<hash_len> as the hash
+of the active subtree with bounds I<start> and I<end> in log I<log_number>. The
+hash must have been obtained from a source trusted to have vetted it correctly;
+adding it is the act of trusting it. The subtree must already be in the log's
+active window, and I<hash_len> must equal the output length of the log's hash
+algorithm. A subtree's hash is immutable once set: supplying the value it already
+holds succeeds and changes nothing, but supplying a different value fails. The
+bytes of I<hash> are copied.
+
+Once these functions have added a landmark subtree with a verified hash to a CA,
+any TLS handshake subsequently performed with an X509_STORE that trusts the CA
+will by default send the correct trust anchor identifier group in the
+B<trust_anchors> extension, requesting the corresponding landmark-relative
+certificates.
+
+=head1 RETURN VALUES
+
+OSSL_MTC_CA_load_landmarks() and OSSL_MTC_CA_add_subtree_hash() return 1 on
+success and 0 on failure. OSSL_MTC_CA_load_landmarks() fails if I<in> cannot be
+parsed or is internally inconsistent (for example tree sizes that are not
+strictly decreasing, or expiry times that increase).
+OSSL_MTC_CA_add_subtree_hash() fails if the named subtree is not in the log's
+active window, if I<hash_len> does not match the
+log's hash length, or if a different hash is already recorded for the subtree. On
+failure the CA is left unchanged.
+
+=head1 NOTES
+
+OSSL_MTC_CA_load_landmarks() and OSSL_MTC_CA_add_subtree_hash() update the CA
+under its write lock and are safe to use while other threads verify against, or
+read the requested trust anchors of, the same CA.
+
+=head1 EXAMPLES
+
+Apply a landmark update to the trusted MTC CA with ID C<32473.1> in a stack
+B<cas>:
+
+ /*
+  * Skippy the Wonder Frog -- who visits from his magical mirrored log home
+  * nestled among the plants in the swamp and is trusted to implement landmark
+  * verification correctly -- has vetted that the subtree hash "hash" of length
+  * "hash_len", for log 2 of CA 32473.1 and covering ["start", "end"), is
+  * trustworthy.
+  *
+  * Only afterwards did we fetch this CA's active-landmark description from
+  * http://honestachmed.com/mtc/2.txt into "landmarks" of length "landmark_len".
+  * We hope the fetched window is at least as new as the state Skippy vetted,
+  * and that it will still contain the vetted subtree.
+  */
+ STACK_OF(OSSL_MTC_CA) *cas;      /* the trusted CAs */
+ const uint8_t *hash;             /* the vetted subtree hash */
+ size_t hash_len;
+ uint64_t start, end;             /* the vetted subtree's bounds */
+ const uint8_t *landmarks;        /* the fetched active-landmark description */
+ size_t landmark_len;
+ OSSL_MTC_CA *ca;
+ BIO *bio = NULL;
+
+ if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, "32473.1")) == NULL)
+     goto err;
+ if ((bio = BIO_new_mem_buf(landmarks, landmark_len)) == NULL)
+     goto err;
+ if (!OSSL_MTC_CA_load_landmarks(ca, 2, bio, INT64_MIN))
+     goto err;
+ if (!OSSL_MTC_CA_add_subtree_hash(ca, 2, start, end, hash, hash_len))
+     goto err;
+
+ /* the vetted subtree is now trusted for landmark-relative certs */
+
+ err:
+     BIO_free(bio);
+     /* handle any error from the steps above here */
+
+=head1 SEE ALSO
+
+L<OSSL_MTC_CA_new(3)>, L<OSSL_MTC_CA_parse_certificates(3)>,
+L<X509_STORE_trust_mtc_ca(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

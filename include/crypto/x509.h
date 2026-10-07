@@ -227,6 +227,14 @@ struct x509_st {
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
 
+    /*
+     * The certificate's CertificatePropertyList, captured from an accompanying
+     * CERTIFICATE PROPERTIES block at load time (see
+     * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).
+     * In-memory state only; not part of the certificate encoding.
+     */
+    ASN1_OCTET_STRING *properties;
+
     OSSL_LIB_CTX *libctx;
     char *propq;
 } /* X509 */;
@@ -337,6 +345,12 @@ struct x509_object_st {
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
+
+/* In-memory CertificatePropertyList carried on a loaded certificate. */
+int ossl_x509_set1_certificate_properties(X509 *x, const uint8_t *props,
+    size_t props_len);
+int ossl_x509_get0_certificate_properties(const X509 *x, const uint8_t **props,
+    size_t *props_len);
 int ossl_x509v3_cache_extensions(const X509 *x);
 
 /**
@@ -449,7 +463,87 @@ int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
     const ASN1_TIME *time, int *comparison);
 /* No error callback if depth < 0 */
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
+/**
+ * @brief Return a certificate's cached TBSCertificate DER encoding.
+ *
+ * Returns the encoding of the signed part captured when x was parsed, so it is
+ * available without re-encoding and without modifying x.  It fails if x has no
+ * cached encoding, that is, if x was modified or built in memory rather than
+ * parsed from DER.
+ *
+ * This is a stopgap that reaches into X509's internal cached encoding.  It
+ * should go away once accessing the single cached TBSCertificate copy directly,
+ * without a copy, is a first-class API.
+ *
+ * @param x the certificate
+ * @param tbs set to the cached TBSCertificate bytes, owned by x
+ * @param tbs_len set to the length of the bytes
+ * @returns 1 on success, 0 if no cached encoding is available.
+ * @see https://github.com/openssl/openssl/issues/30162
+ */
+int ossl_x509_get0_tbs(const X509 *x, const uint8_t **tbs, size_t *tbs_len);
+/**
+ * @brief Verify cert as a Merkle Tree Certificate: the proof (section 7.2) and
+ *        the generic X.509 leaf checks.
+ * @param ctx the verification context (the certificate, the trusted MTC CAs
+ *        and cosigners on its store, and the verification parameters)
+ * @param quorum how many of the store's trusted cosigners, besides the CA
+ *        cosigner, must have cosigned a standalone certificate's subtree
+ * @returns 1 if verified, 0 otherwise, with the reason in ctx->error.
+ */
+int ossl_x509_verify_mtc(X509_STORE_CTX *ctx, size_t quorum);
+/**
+ * @brief Apply the generic X.509 leaf checks a Merkle Tree Certificate is
+ *        subject to: validity times, the identity and purpose the caller asked
+ *        for, and the certificate's own well-formedness.
+ *
+ * ossl_x509_verify_mtc() calls this once the proof has been verified; it is
+ * separate so that these checks can be exercised on their own.
+ *
+ * @param ctx the verification context (the certificate and the verification
+ *        parameters; the store and the trusted CAs are not consulted)
+ * @returns 1 if the certificate passes, 0 otherwise, with the reason in
+ *          ctx->error.
+ */
+int ossl_x509_mtc_leaf_checks(X509_STORE_CTX *ctx);
+/**
+ * @brief Return the trusted Merkle Tree Certificate CAs configured on a store.
+ *
+ * These are the CAs added with X509_STORE_trust_mtc_ca().  The returned stack
+ * is borrowed from the store (not reference-counted) and may be NULL if none
+ * have been configured.  It is intended to let libssl advertise the configured
+ * CA identifiers in the TLS trust_anchors extension
+ * (https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/); a
+ * Merkle Tree Certificate CA ID serves as the trust anchor ID (section 8.1 of
+ * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+ *
+ * The caller must not mutate the store concurrently, matching the other get0
+ * store accessors: the trusted-CA set is expected to be configured before the
+ * store is shared across handshakes.
+ *
+ * @param store the certificate store
+ * @returns the stack of trusted MTC CAs, or NULL if none are configured.
+ */
+STACK_OF(OSSL_MTC_CA) *ossl_x509_store_get0_mtc_cas(const X509_STORE *store);
+
+/*
+ * Return the trust anchor IDs collected from loaded certificates'
+ * CertificatePropertyLists, as the wire contents of a RequestedTrustAnchorList
+ * (a run of u8-length-prefixed IDs).  Borrowed from the store; may be NULL.
+ */
+int ossl_x509_store_get0_trust_anchor_ids(const X509_STORE *store,
+    const uint8_t **ids, size_t *ids_len);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
+/**
+ * @brief Whether a CRL issued by x's issuer covers x: the CRL's issuing
+ *        distribution point, if any, admits x's kind of certificate and
+ *        names a distribution point x's CRL distribution points name, or x
+ *        has none and the CRL is the issuer's complete CRL (RFC 5280 6.3.3).
+ * @param x the certificate
+ * @param crl a CRL whose issuer name is x's issuer name
+ * @returns 1 if crl covers x, 0 otherwise
+ */
+int ossl_x509_crl_covers(X509 *x, X509_CRL *crl);
 int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);
 int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,

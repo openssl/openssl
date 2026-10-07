@@ -498,6 +498,7 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     { TLSEXT_TYPE_post_handshake_auth, "post_handshake_auth" },
     { TLSEXT_TYPE_signature_algorithms_cert, "signature_algorithms_cert" },
     { TLSEXT_TYPE_key_share, "key_share" },
+    { TLSEXT_TYPE_trust_anchors, "trust_anchors" },
     { TLSEXT_TYPE_renegotiate, "renegotiate" },
 #ifndef OPENSSL_NO_NEXTPROTONEG
     { TLSEXT_TYPE_next_proto_neg, "next_proto_neg" },
@@ -876,6 +877,35 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
     case TLSEXT_TYPE_session_ticket:
         if (extlen != 0)
             ssl_print_hex(bio, indent + 4, "ticket", ext, extlen);
+        break;
+
+    case TLSEXT_TYPE_trust_anchors:
+        /*
+         * A list of trust anchor IDs: those the sender requests of its peer in
+         * the ClientHello and CertificateRequest, or those it has certification
+         * paths for in EncryptedExtensions.  In the Certificate message it is
+         * empty, marking the certificate as chosen for a requested ID.
+         */
+        if (extlen == 0) {
+            BIO_indent(bio, indent + 4, 80);
+            BIO_puts(bio, "<EMPTY>\n");
+            break;
+        }
+        if (extlen < 2)
+            return 0;
+        xlen = (ext[0] << 8) | ext[1];
+        if (extlen != xlen + 2)
+            return 0;
+        ext += 2;
+        while (xlen > 0) {
+            size_t idlen = ext[0];
+
+            if (xlen < idlen + 1)
+                return 0;
+            ssl_print_hex(bio, indent + 4, "trust_anchor_id", ext + 1, idlen);
+            ext += idlen + 1;
+            xlen -= idlen + 1;
+        }
         break;
 
     case TLSEXT_TYPE_key_share:

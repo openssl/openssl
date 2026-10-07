@@ -15,6 +15,7 @@
 
 #include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/proof.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
@@ -600,6 +601,14 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->ext.early_data_session = NULL;
     sc->ext.tick_age_checked = 0;
     sc->ext.tick_age_ms = 0;
+    OPENSSL_free(sc->ext.peer_requested_trust_anchors);
+    sc->ext.peer_requested_trust_anchors = NULL;
+    sc->ext.peer_requested_trust_anchors_len = 0;
+    sc->ext.peer_sent_trust_anchors = 0;
+    OPENSSL_free(sc->ext.peer_available_trust_anchors);
+    sc->ext.peer_available_trust_anchors = NULL;
+    sc->ext.peer_available_trust_anchors_len = 0;
+    sc->ext.peer_matched_trust_anchor = 0;
 
     if (sc->renegotiate) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -632,7 +641,8 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->dane.mtlsa = NULL;
 
     /* Clear the verification result peername */
-    X509_VERIFY_PARAM_move_peername(sc->param, NULL);
+    OPENSSL_free(sc->peername);
+    sc->peername = NULL;
 
     /* Clear any shared connection state */
     OPENSSL_free(sc->shared_sigalgs);
@@ -874,6 +884,10 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     if (s->param == NULL)
         goto asn1err;
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
+    if ((s->proof_params = OSSL_PROOF_PARAMS_new()) == NULL
+        || !OSSL_PROOF_PARAMS_set_mtc_cosigner_quorum(s->proof_params,
+            OSSL_PROOF_PARAMS_get_mtc_cosigner_quorum(ctx->proof_params)))
+        goto err;
     s->quiet_shutdown = IS_QUIC_CTX(ctx) ? 0 : ctx->quiet_shutdown;
 
     if (!IS_QUIC_CTX(ctx))
@@ -1328,7 +1342,7 @@ const char *SSL_get0_peername(SSL *s)
     if (sc == NULL)
         return NULL;
 
-    return X509_VERIFY_PARAM_get0_peername(sc->param);
+    return sc->peername;
 }
 
 int SSL_CTX_dane_enable(SSL_CTX *ctx)
@@ -1534,6 +1548,21 @@ X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl)
     return sc->param;
 }
 
+OSSL_PROOF_PARAMS *SSL_CTX_get0_proof_params(SSL_CTX *ctx)
+{
+    return ctx->proof_params;
+}
+
+OSSL_PROOF_PARAMS *SSL_get0_proof_params(SSL *ssl)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return NULL;
+
+    return sc->proof_params;
+}
+
 void SSL_certs_clear(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -1594,6 +1623,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     RECORD_LAYER_clear(&s->rlayer);
 
     X509_VERIFY_PARAM_free(s->param);
+    OSSL_PROOF_PARAMS_free(s->proof_params);
     dane_final(&s->dane);
 
     BUF_MEM_free(s->init_buf);
@@ -1624,6 +1654,9 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->ext.keyshares);
     OPENSSL_free(s->ext.tuples);
     OPENSSL_free(s->ext.peer_supportedgroups);
+    OPENSSL_free(s->ext.peer_requested_trust_anchors);
+    OPENSSL_free(s->ext.peer_available_trust_anchors);
+    OPENSSL_free(s->ext.requested_trust_anchors);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 
 #ifndef OPENSSL_NO_OCSP
@@ -1654,6 +1687,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->server_cert_type);
 
     OSSL_STACK_OF_X509_free(s->verified_chain);
+    OPENSSL_free(s->peername);
 
     if (ssl->method != NULL)
         ssl->method->ssl_deinit(ssl);
@@ -4121,6 +4155,78 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
 }
 
 /*
+ * Validate and store a RequestedTrustAnchorList.  |ids| must be in wire
+ * format: a series of non-empty, 8-bit length-prefixed trust anchor IDs.  An
+ * empty list (|ids_len| zero) is accepted and marks the list as explicitly
+ * set, so the trust_anchors extension is still sent.
+ */
+static int set1_requested_trust_anchors(uint8_t **field, size_t *field_len,
+    int *field_set, const uint8_t *ids, size_t ids_len)
+{
+    uint8_t *copy = NULL;
+
+    if (ids_len > 0) {
+        PACKET pkt, id;
+
+        if (ids == NULL || !PACKET_buf_init(&pkt, ids, ids_len)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        while (PACKET_remaining(&pkt) > 0) {
+            if (!PACKET_get_length_prefixed_1(&pkt, &id)
+                || PACKET_remaining(&id) == 0
+                || PACKET_remaining(&id) > TLSEXT_TRUST_ANCHOR_ID_MAX_LEN) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+                return 0;
+            }
+        }
+        if ((copy = OPENSSL_memdup(ids, ids_len)) == NULL)
+            return 0;
+    }
+    OPENSSL_free(*field);
+    *field = copy;
+    *field_len = ids_len;
+    *field_set = 1;
+    return 1;
+}
+
+int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx, const uint8_t *ids,
+    size_t ids_len)
+{
+    return set1_requested_trust_anchors(&ctx->ext.requested_trust_anchors,
+        &ctx->ext.requested_trust_anchors_len,
+        &ctx->ext.requested_trust_anchors_set, ids, ids_len);
+}
+
+int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
+    size_t ids_len)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return 0;
+    return set1_requested_trust_anchors(&sc->ext.requested_trust_anchors,
+        &sc->ext.requested_trust_anchors_len,
+        &sc->ext.requested_trust_anchors_set, ids, ids_len);
+}
+
+int SSL_peer_matched_trust_anchor(const SSL *ssl)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    return sc != NULL && sc->ext.peer_matched_trust_anchor;
+}
+
+void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
+    const uint8_t **out_ids, size_t *out_ids_len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    *out_ids = sc == NULL ? NULL : sc->ext.peer_available_trust_anchors;
+    *out_ids_len = sc == NULL ? 0 : sc->ext.peer_available_trust_anchors_len;
+}
+
+/*
  * SSL_CTX_set_get0_protos gets the ALPN protocol list on |ctx| to |protos|.
  */
 void SSL_CTX_get0_alpn_protos(SSL_CTX *ctx, const unsigned char **protos,
@@ -4517,6 +4623,10 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
+    if ((ret->proof_params = OSSL_PROOF_PARAMS_new()) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
 
     if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -4745,6 +4855,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     X509_VERIFY_PARAM_free(a->param);
+    OSSL_PROOF_PARAMS_free(a->proof_params);
     dane_ctx_final(&a->dane);
 
     /*
@@ -4791,6 +4902,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.keyshares);
     OPENSSL_free(a->ext.tuples);
     OPENSSL_free(a->ext.alpn);
+    OPENSSL_free(a->ext.requested_trust_anchors);
     OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
     for (j = 0; j < SSL_ENC_NUM_IDX; j++)

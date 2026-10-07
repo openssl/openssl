@@ -191,6 +191,7 @@ typedef struct ui_method_st UI_METHOD;
 typedef struct engine_st ENGINE;
 typedef struct ssl_st SSL;
 typedef struct ssl_ctx_st SSL_CTX;
+typedef struct ssl_credential_st SSL_CREDENTIAL;
 
 typedef struct comp_ctx_st COMP_CTX;
 typedef struct comp_method_st COMP_METHOD;
@@ -237,6 +238,17 @@ typedef struct ossl_decoder_st OSSL_DECODER;
 typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
+
+/* opaque type for a trusted Merkle Tree Certificate CA */
+typedef struct ossl_mtc_ca_st OSSL_MTC_CA;
+/* opaque type for a recognised Merkle Tree Certificate cosigner */
+typedef struct ossl_mtc_cosigner_st OSSL_MTC_COSIGNER;
+
+/* opaque proof, its trust configuration, parameters and verification output */
+typedef struct ossl_proof_st OSSL_PROOF;
+typedef struct ossl_proof_trust_st OSSL_PROOF_TRUST;
+typedef struct ossl_proof_params_st OSSL_PROOF_PARAMS;
+typedef struct ossl_proof_output_st OSSL_PROOF_OUTPUT;
 
 #ifndef OPENSSL_NO_ECH
 /* opaque type for ECH related information */

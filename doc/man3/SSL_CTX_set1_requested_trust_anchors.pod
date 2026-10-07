@@ -1,0 +1,109 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_set1_requested_trust_anchors, SSL_set1_requested_trust_anchors,
+SSL_get0_peer_available_trust_anchors, SSL_peer_matched_trust_anchor
+- set the trust anchors requested of a TLS peer
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx,
+                                          const uint8_t *ids, size_t ids_len);
+ int SSL_set1_requested_trust_anchors(SSL *ssl,
+                                      const uint8_t *ids, size_t ids_len);
+ void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
+                                            const uint8_t **out_ids,
+                                            size_t *out_ids_len);
+ int SSL_peer_matched_trust_anchor(const SSL *ssl);
+
+=head1 DESCRIPTION
+
+These functions set the list of trust anchors requested of the peer in the
+B<trust_anchors> extension, so the peer can select a certificate issued by one
+of them: a client requests in the ClientHello, and a server asking for a client
+certificate requests in the CertificateRequest (see
+L<https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids/>).
+
+I<ids> is the list in wire format: a series of 8-bit length-prefixed trust
+anchor IDs, each an identifier in binary form of 1 to 32 bytes. I<ids_len> is
+its length in bytes. The bytes are copied. Passing an empty list (I<ids_len>
+zero) is permitted: the extension is still sent, with no identifiers, which
+signals support for the retry mechanism without naming any trust anchor.
+
+SSL_CTX_set1_requested_trust_anchors() configures the default for connections
+created from I<ctx>. SSL_set1_requested_trust_anchors() configures a single
+connection and overrides the context's setting for that connection.
+
+If neither is called, the identifiers advertised are by default those of every
+trust anchor the endpoint is configured to verify against that has trust anchor
+identifier information associated with it, and sends nothing if there are none.
+This covers Merkle Tree Certificate CAs (see L<X509_STORE_trust_mtc_ca(3)>) and
+any conventional CA loaded from a file in which the certificate was preceded by
+a B<CERTIFICATE PROPERTIES> PEM block carrying a trust anchor ID. Calling either
+function replaces that default with the supplied list.
+
+These functions only control what is advertised to the peer; they do not affect
+certificate verification, which proceeds as usual against the configured trust
+anchors.
+
+SSL_get0_peer_available_trust_anchors() reports the trust anchors the peer said
+it has a certification path for. It sets I<*out_ids> and I<*out_ids_len> to a
+list in the same wire format, belonging to I<ssl> and valid until the handshake
+completes. Only servers send available trust anchor IDs, so this outputs a list
+only when I<ssl> is a client; otherwise, and when the peer sent no list,
+I<*out_ids_len> is set to zero. A client that was sent a certificate it does not
+trust can choose an identifier from this list and try again on a new
+connection, requesting only that one.
+
+SSL_peer_matched_trust_anchor() reports whether the peer said the certificate
+it sent was chosen for one of the trust anchors requested on I<ssl>. When it
+did, the certificate list it sent is a complete certification path from that
+trust anchor, correctly ordered and with nothing extraneous, so the caller may
+validate it as given rather than building a path. The value is available once
+the peer's certificate has been received, so a certificate verification
+callback may consult it.
+
+=head1 RETURN VALUES
+
+SSL_CTX_set1_requested_trust_anchors() and SSL_set1_requested_trust_anchors()
+return 1 on success and 0 on error, including when I<ids> is not a well-formed
+list.
+
+SSL_get0_peer_available_trust_anchors() does not return a value.
+
+SSL_peer_matched_trust_anchor() returns 1 if the peer reported such a match and
+0 otherwise.
+
+=head1 NOTES
+
+Most callers do not need these functions. The default -- advertising every
+configured trust anchor that has an associated identifier -- is normally the
+desired behaviour, and it requires no action.
+
+Set an explicit list only in the less common cases where the default is
+unsuitable: when the trust anchor list is large enough that sending it in full
+is a burden, or when advertising the full list would expose an unusual, client-
+identifying configuration. In those cases supply a relevant subset, or an empty
+list, to limit what is disclosed; see the privacy considerations of the draft.
+
+=head1 SEE ALSO
+
+L<X509_STORE_trust_mtc_ca(3)>, L<SSL_CTX_add1_credential(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 4.1. They originate in BoringSSL.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

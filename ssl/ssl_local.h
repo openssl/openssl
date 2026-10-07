@@ -31,6 +31,7 @@
 #include "internal/statem.h"
 #include "internal/packet.h"
 #include "internal/dane.h"
+#include "internal/pool.h"
 #include "internal/refcount.h"
 #include "internal/tlssigalgs.h"
 #include "internal/tsan_assist.h"
@@ -786,6 +787,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_trust_anchors,
     TLSEXT_IDX_ech,
     TLSEXT_IDX_outer_extensions,
     TLSEXT_IDX_grease1,
@@ -1051,6 +1053,8 @@ struct ssl_ctx_st {
     GEN_SESSION_CB generate_session_id;
 
     X509_VERIFY_PARAM *param;
+    /* Proof verification parameters, for the forms OSSL_PROOF_verify() takes */
+    OSSL_PROOF_PARAMS *proof_params;
 
     int quiet_shutdown;
 
@@ -1173,6 +1177,16 @@ struct ssl_ctx_st {
 #endif
 
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
+
+        /*
+         * The default RequestedTrustAnchorList advertised by clients created
+         * from this context, as wire-format u8-length-prefixed trust anchor
+         * IDs.  See the matching fields in the SSL_CONNECTION extension state;
+         * set with SSL_CTX_set1_requested_trust_anchors().
+         */
+        size_t requested_trust_anchors_len;
+        uint8_t *requested_trust_anchors;
+        int requested_trust_anchors_set;
 #ifndef OPENSSL_NO_ECH
         OSSL_ECH_CTX ech;
 #endif
@@ -1508,6 +1522,12 @@ struct ssl_connection_st {
             /* Pointer to certificate we use */
             CERT_PKEY *cert;
             /*
+             * The credential we use, when a negotiation mechanism such as
+             * trust anchor identifiers selects one.  When NULL the legacy
+             * CERT_PKEY path above is used instead.
+             */
+            SSL_CREDENTIAL *credential;
+            /*
              * signature algorithms peer reports: e.g. supported signature
              * algorithms extension for server or as part of a certificate
              * request for client.
@@ -1602,6 +1622,8 @@ struct ssl_connection_st {
     void *msg_callback_arg;
     int hit; /* reusing a previous session */
     X509_VERIFY_PARAM *param;
+    /* Proof verification parameters, for the forms OSSL_PROOF_verify() takes */
+    OSSL_PROOF_PARAMS *proof_params;
     /* Per connection DANE state */
     SSL_DANE dane;
     /* crypto */
@@ -1692,6 +1714,8 @@ struct ssl_connection_st {
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;
     long verify_result;
+    /* Peer certificate "name" bytes that matched a configured host, or NULL */
+    char *peername;
     /*
      * What we put in certificate_authorities extension for TLS 1.3
      * (ClientHello and CertificateRequest) or just client cert requests for
@@ -1771,6 +1795,48 @@ struct ssl_connection_st {
         /* peer's list */
         size_t peer_supportedgroups_len;
         uint16_t *peer_supportedgroups;
+
+        /*
+         * The peer's RequestedTrustAnchorList from the trust_anchors
+         * extension, as wire-format u8-length-prefixed trust anchor IDs, for
+         * certificate selection.  The list may legitimately be empty:
+         * peer_sent_trust_anchors distinguishes an absent extension from a
+         * present, empty list.
+         */
+        size_t peer_requested_trust_anchors_len;
+        uint8_t *peer_requested_trust_anchors;
+        int peer_sent_trust_anchors;
+
+        /*
+         * The server's AvailableTrustAnchorList from the trust_anchors
+         * extension in EncryptedExtensions, as wire-format u8-length-prefixed
+         * trust anchor IDs.  A client that was sent no certificate it trusts
+         * can pick one of these and try again.  NULL when the server sent no
+         * list; the list itself is never empty.
+         */
+        size_t peer_available_trust_anchors_len;
+        uint8_t *peer_available_trust_anchors;
+
+        /*
+         * Set when the peer marked the certificate it sent as one it chose for
+         * a trust anchor we asked for: the empty trust_anchors extension in
+         * the first CertificateEntry.  The certificate_list is then a complete
+         * path from that trust anchor, so a relying party may validate it as
+         * given rather than building a path.
+         */
+        int peer_matched_trust_anchor;
+
+        /*
+         * The RequestedTrustAnchorList this client advertises, as wire-format
+         * u8-length-prefixed trust anchor IDs.  When requested_trust_anchors_set
+         * is 0 the list has not been configured and the trusted MTC CAs are
+         * advertised by default; when 1 this list is sent verbatim, even when
+         * empty.  Set with SSL_set1_requested_trust_anchors(); inherited from
+         * the SSL_CTX when not set here.
+         */
+        size_t requested_trust_anchors_len;
+        uint8_t *requested_trust_anchors;
+        int requested_trust_anchors_set;
 
         /* key shares */
         size_t keyshares_len;
@@ -2173,7 +2239,7 @@ DEFINE_LIST_OF(record_number, DTLS1_RECORD_NUMBER);
 
 DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum);
 
-void ossl_list_record_number_elem_free(OSSL_LIST(record_number) * p_list);
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list);
 
 typedef struct dtls_sent_msg_st {
     dtls_msg_info msg_info;
@@ -2550,6 +2616,176 @@ typedef struct {
     size_t meths_count;
 } custom_ext_methods;
 
+/**
+ * @brief The form of credential an SSL_CREDENTIAL carries.
+ *
+ * Only X.509 certificate chains exist today; further forms are expected.
+ */
+typedef enum {
+    SSL_CREDENTIAL_TYPE_X509 = 0
+} SSL_CREDENTIAL_TYPE;
+
+/**
+ * @struct ssl_trust_anchor_pattern_st
+ * @brief A trust anchor ID pattern, in its byte representation.
+ *
+ * A pattern is a sequence of min and max pairs, one per ID component, and
+ * describes a collection of related trust anchor group IDs; see section 5.3.1
+ * of https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+ */
+typedef struct ssl_trust_anchor_pattern_st {
+    uint8_t *pattern; /**< the pattern's byte representation, owned */
+    size_t pattern_len;
+} SSL_TRUST_ANCHOR_PATTERN;
+
+/**
+ * @struct ssl_credential_st
+ * @brief A single credential an authenticating party may present in TLS 1.3.
+ *
+ * A credential added to an SSL_CTX participates in trust anchor negotiation
+ * (the trust_anchors extension, see
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/):
+ * unlike the default certificate configured through the legacy interfaces,
+ * it is only used when the relying party requests its trust anchor.  Owns a
+ * reference on everything it holds.
+ */
+struct ssl_credential_st {
+    SSL_CREDENTIAL_TYPE type;
+    STACK_OF(CRYPTO_BUFFER) *chain; /**< certificate chain, leaf first, DER */
+    EVP_PKEY *pkey; /**< private key matching the leaf */
+    uint8_t *trust_anchor_id; /**< TrustAnchorID relative-OID bytes, owned */
+    size_t trust_anchor_id_len;
+    /*
+     * Patterns for the trust anchor groups that contain this credential's
+     * trust anchor (the certificate's trust_anchor_groups property).
+     */
+    SSL_TRUST_ANCHOR_PATTERN *groups;
+    size_t group_count;
+    CRYPTO_REF_COUNT references;
+};
+/* STACK_OF(SSL_CREDENTIAL) is declared publicly in <openssl/ssl.h.in>. */
+
+/**
+ * @brief Create an empty credential of the given form.
+ *
+ * The credential is created with one reference and populated with the
+ * ossl_ssl_credential setters.
+ *
+ * @param type the form of credential
+ * @return the new credential, or NULL on error
+ */
+SSL_CREDENTIAL *ossl_ssl_credential_new(SSL_CREDENTIAL_TYPE type);
+
+/**
+ * @brief Set a credential's certificate chain.
+ *
+ * A reference is taken on each buffer; the caller retains its own.  Any
+ * previous chain is released.
+ *
+ * @param cred the credential
+ * @param chain the chain as DER certificate buffers, leaf first
+ * @return 1 on success, 0 on error
+ */
+int ossl_ssl_credential_set1_cert_chain(SSL_CREDENTIAL *cred,
+    STACK_OF(CRYPTO_BUFFER) *chain);
+
+/**
+ * @brief Set a credential's private key.
+ *
+ * A reference is taken on pkey; any previous key is released.
+ *
+ * @param cred the credential
+ * @param pkey the private key matching the credential's leaf certificate
+ * @return 1 on success, 0 on error
+ */
+int ossl_ssl_credential_set1_private_key(SSL_CREDENTIAL *cred, EVP_PKEY *pkey);
+
+/**
+ * @brief Set a credential's trust anchor identifier.
+ *
+ * The bytes are copied; any previous identifier is released.
+ *
+ * @param cred the credential
+ * @param id the trust anchor ID as TrustAnchorID relative-OID bytes
+ * @param id_len the length of id in bytes
+ * @return 1 on success, 0 on error
+ */
+int ossl_ssl_credential_set1_trust_anchor_id(SSL_CREDENTIAL *cred,
+    const uint8_t *id, size_t id_len);
+
+/**
+ * @brief Add a trust anchor group pattern to a credential.
+ *
+ * Records that the trust anchor groups whose IDs the pattern contains also
+ * contain the credential's trust anchor.  The pattern bytes are copied.
+ *
+ * @param cred the credential
+ * @param pattern the trust anchor ID pattern's byte representation
+ * @param pattern_len the length of pattern in bytes
+ * @return 1 on success, 0 on error
+ */
+int ossl_ssl_credential_add1_trust_anchor_group(SSL_CREDENTIAL *cred,
+    const uint8_t *pattern, size_t pattern_len);
+
+/**
+ * @brief Apply an encoded CertificatePropertyList to a credential.
+ *
+ * Parses the property list and sets the credential's trust anchor ID and
+ * trust anchor group patterns from the trust_anchor_id and
+ * trust_anchor_groups properties; see section 7 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+ * Properties must be numerically sorted by type with no duplicates, and the
+ * trust_anchor_negotiation property must be empty; unknown property types are
+ * ignored but must be well formed.
+ *
+ * @param cred the credential to populate
+ * @param props the encoded CertificatePropertyList
+ * @param props_len the length of props in bytes
+ * @return 1 on success, 0 on a malformed property list
+ */
+int ossl_ssl_credential_set1_certificate_properties(SSL_CREDENTIAL *cred,
+    const uint8_t *props, size_t props_len);
+
+/**
+ * @brief Check whether a trust anchor ID pattern contains a trust anchor ID.
+ *
+ * Follows the containment procedure of section 5.3.1 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/, so a
+ * malformed pattern or ID contains nothing.
+ *
+ * @param pattern the trust anchor ID pattern's byte representation
+ * @param pattern_len the length of pattern in bytes
+ * @param id the trust anchor ID as TrustAnchorID relative-OID bytes
+ * @param id_len the length of id in bytes
+ * @return 1 if the pattern contains id, 0 otherwise
+ */
+int ossl_ssl_trust_anchor_pattern_contains(const uint8_t *pattern,
+    size_t pattern_len, const uint8_t *id, size_t id_len);
+
+/**
+ * @brief Check whether a credential matches a requested trust anchor list.
+ *
+ * The credential matches when its trust anchor ID equals a requested ID, or
+ * when one of its trust anchor group patterns contains a requested ID.
+ *
+ * @param cred the credential
+ * @param ids the peer's requested trust anchor IDs, as the wire-format list
+ * of u8-length-prefixed IDs saved by tls_parse_ctos_trust_anchors()
+ * @param ids_len the length of ids in bytes
+ * @return 1 if the credential matches a requested ID, 0 otherwise
+ */
+/**
+ * @brief Whether a credential can be used on this connection.
+ * @param s the connection, whose shared signature algorithms are consulted
+ * @param cred the credential
+ * @returns 1 if some shared signature algorithm works with the credential's
+ *          key, 0 otherwise.
+ */
+int ossl_tls_credential_usable(SSL_CONNECTION *s, const SSL_CREDENTIAL *cred);
+
+int ossl_ssl_credential_matches_request(const SSL_CREDENTIAL *cred,
+    const uint8_t *ids, size_t ids_len);
+
 typedef struct cert_st {
     /* Current active set */
     /*
@@ -2614,6 +2850,12 @@ typedef struct cert_st {
     /* If not NULL psk identity hint to use for servers */
     char *psk_identity_hint;
 #endif
+    /*
+     * Credentials for trust anchor negotiation, in preference order.  Unlike
+     * the default pkeys entries above, these are only used when the relying
+     * party requests a credential's trust anchor.
+     */
+    STACK_OF(SSL_CREDENTIAL) *credentials;
     CRYPTO_REF_COUNT references; /* >1 only if SSL_copy_session_id is used */
 } CERT;
 
@@ -3023,6 +3265,20 @@ __owur int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf,
 void ssl3_free_digest_list(SSL_CONNECTION *s);
 __owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
     CERT_PKEY *cpk, int for_comp);
+/**
+ * @brief Write a credential's certificate chain into a TLS 1.3 Certificate
+ * message, each entry followed by its certificate extensions.
+ *
+ * The chain is written as stored on the credential, without building or
+ * verifying a path; SSLfatal() is called on failure.
+ *
+ * @param s the connection whose Certificate message is being constructed
+ * @param pkt the packet to write the chain into
+ * @param cred the credential supplying the chain
+ * @returns 1 on success, 0 on error.
+ */
+__owur unsigned long ssl3_output_cred_chain(SSL_CONNECTION *s, WPACKET *pkt,
+    SSL_CREDENTIAL *cred);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s,
     STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);

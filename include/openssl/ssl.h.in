@@ -1920,6 +1920,18 @@ __owur int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 __owur X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
 __owur X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
 
+/**
+ * @brief Get the proof verification parameters of an SSL_CTX, applied when a
+ *        peer presents a proof such as a Merkle Tree Certificate.
+ * @see SSL_CTX_get0_proof_params(3), OSSL_PROOF_verify(3)
+ */
+__owur OSSL_PROOF_PARAMS *SSL_CTX_get0_proof_params(SSL_CTX *ctx);
+/**
+ * @brief Get the proof verification parameters of an SSL connection.
+ * @see SSL_get0_proof_params(3), SSL_CTX_get0_proof_params(3)
+ */
+__owur OSSL_PROOF_PARAMS *SSL_get0_proof_params(SSL *ssl);
+
 #ifndef OPENSSL_NO_SRP
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name);
@@ -2913,6 +2925,86 @@ int SSL_set_quic_tls_transport_params(SSL *s,
     size_t params_len);
 
 int SSL_set_quic_tls_early_data_enabled(SSL *s, int enabled);
+
+/* clang-format off */
+{-
+    generate_stack_macros("SSL_CREDENTIAL");
+-}
+/* clang-format on */
+
+/**
+ * @brief Release a reference to a credential.
+ * @see SSL_CREDENTIAL_free(3), SSL_CTX_add1_credential(3)
+ */
+void SSL_CREDENTIAL_free(SSL_CREDENTIAL *cred);
+
+/**
+ * @brief Take an additional reference to a credential.
+ * @see SSL_CREDENTIAL_up_ref(3), SSL_CTX_add1_credential(3)
+ */
+__owur int SSL_CREDENTIAL_up_ref(SSL_CREDENTIAL *cred);
+
+/**
+ * @brief Append a credential to the context's credentials, in preference
+ * order.
+ * @see SSL_CTX_add1_credential(3)
+ */
+__owur int SSL_CTX_add1_credential(SSL_CTX *ctx, SSL_CREDENTIAL *cred);
+
+/**
+ * @brief Parse PEM certificates carrying certificate property lists into
+ * credentials.
+ * @see SSL_parse_certificates_with_properties(3)
+ */
+__owur int SSL_parse_certificates_with_properties(BIO *in,
+    STACK_OF(EVP_PKEY) *keys, STACK_OF(SSL_CREDENTIAL) *out_credentials);
+
+/**
+ * @brief Compare two credentials by their on-the-wire size.
+ *
+ * Suitable as a STACK_OF(SSL_CREDENTIAL) comparison function: install it with
+ * sk_SSL_CREDENTIAL_set_cmp_func() and call sk_SSL_CREDENTIAL_sort() to order
+ * credentials smallest first.
+ * @see SSL_CREDENTIAL_size_cmp(3), SSL_parse_certificates_with_properties(3)
+ */
+int SSL_CREDENTIAL_size_cmp(const SSL_CREDENTIAL *const *a,
+    const SSL_CREDENTIAL *const *b);
+
+/**
+ * @brief Parse PEM private keys into a stack.
+ * @see SSL_parse_private_keys(3), SSL_parse_certificates_with_properties(3)
+ */
+__owur int SSL_parse_private_keys(BIO *in, STACK_OF(EVP_PKEY) *out_keys);
+
+/**
+ * @brief Set the trust anchors a client requests, overriding the default of
+ * advertising the configured Merkle Tree Certificate CAs.
+ * @see SSL_CTX_set1_requested_trust_anchors(3)
+ */
+__owur int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx,
+    const uint8_t *ids, size_t ids_len);
+
+/**
+ * @brief Whether the peer said its certificate matched a trust anchor we asked
+ * for.
+ * @see SSL_peer_matched_trust_anchor(3)
+ */
+__owur int SSL_peer_matched_trust_anchor(const SSL *ssl);
+
+/**
+ * @brief Get the trust anchors the server said it has paths for.
+ * @see SSL_get0_peer_available_trust_anchors(3)
+ */
+void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
+    const uint8_t **out_ids, size_t *out_ids_len);
+
+/**
+ * @brief Set the trust anchors a client requests on a single connection.
+ * @see SSL_set1_requested_trust_anchors(3),
+ *      SSL_CTX_set1_requested_trust_anchors(3)
+ */
+__owur int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
+    size_t ids_len);
 
 #ifdef __cplusplus
 }

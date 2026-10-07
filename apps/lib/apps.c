@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 #include <sys/types.h>
 #ifndef OPENSSL_NO_POSIX_IO
@@ -37,6 +38,8 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>
+#include "internal/o_dir.h" /* for OPENSSL_DIR_read */
+#include <openssl/mtc.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
@@ -60,6 +63,10 @@ static int WIN32_rename(const char *from, const char *to);
 #if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32) || defined(__BORLANDC__)
 #define _kbhit kbhit
 #endif
+
+#if !defined(PATH_MAX)
+#define PATH_MAX 4096
+#endif /* !defined(PATH_MAX) */
 
 static BIO *bio_open_default_(const char *filename, char mode, int format,
     int quiet);
@@ -693,6 +700,348 @@ void *app_malloc_array(size_t n, size_t sz, const char *what)
         app_bail_out("%s: Could not allocate %zu*%zu bytes for %s\n",
             opt_getprog(), n, sz, what);
     return vp;
+}
+
+/* Argument bundle for tai_chains_cb() passed through tai_for_each_pem(). */
+struct tai_chain_arg {
+    STACK_OF(EVP_PKEY) *keys;
+    STACK_OF(SSL_CREDENTIAL) *creds;
+};
+
+static int tai_keys_cb(BIO *in, void *arg)
+{
+    return SSL_parse_private_keys(in, (STACK_OF(EVP_PKEY) *)arg);
+}
+
+static int tai_chains_cb(BIO *in, void *arg)
+{
+    struct tai_chain_arg *a = arg;
+
+    return SSL_parse_certificates_with_properties(in, a->keys, a->creds);
+}
+
+/*
+ * Call cb(in, arg) on path if it is a file, or on each file it contains if it
+ * is a directory.  Returns 1 on success, 0 on the first failure.
+ */
+static int tai_for_each_pem(const char *path, int (*cb)(BIO *in, void *arg),
+    void *arg)
+{
+    OPENSSL_DIR_CTX *d = NULL;
+    const char *name;
+    BIO *in;
+    int ok, n;
+
+    if (app_isdir(path) <= 0) {
+        if ((in = BIO_new_file(path, "r")) == NULL)
+            return 0;
+        ok = cb(in, arg);
+        BIO_free(in);
+        return ok;
+    }
+
+    ok = 1;
+    while (ok && (name = OPENSSL_DIR_read(&d, path)) != NULL) {
+        char filepath[PATH_MAX];
+
+#ifdef OPENSSL_SYS_VMS
+        n = snprintf(filepath, sizeof(filepath), "%s%s", path, name);
+#else
+        n = snprintf(filepath, sizeof(filepath), "%s/%s", path, name);
+#endif
+        if (n < 0 || (size_t)n >= sizeof(filepath)) {
+            ok = 0;
+            break;
+        }
+        if (app_isdir(filepath) > 0)
+            continue;
+        if ((in = BIO_new_file(filepath, "r")) == NULL) {
+            ok = 0;
+            break;
+        }
+        ok = cb(in, arg);
+        BIO_free(in);
+    }
+    if (d != NULL)
+        OPENSSL_DIR_end(&d);
+    return ok;
+}
+
+/*
+ * Install trust anchor decorated certificate chains as negotiation gated
+ * credentials.  Each chain in
+ * chains_path (a file, or a directory of PEM files) becomes a credential that
+ * is served only when the peer requests its trust anchor.  Each chain's key is
+ * matched by public key among the keys in its file and in keys_path.  From a
+ * file, chains keep their file order (their preference order); from a
+ * directory they are installed in ascending on-the-wire size, so the smallest
+ * is preferred.
+ */
+int load_tai_credentials(SSL_CTX *ssl_ctx, const char *chains_path,
+    const char *keys_path)
+{
+    STACK_OF(EVP_PKEY) *keys = NULL;
+    STACK_OF(SSL_CREDENTIAL) *creds = NULL;
+    struct tai_chain_arg arg;
+    int i, ret = 0;
+
+    if ((creds = sk_SSL_CREDENTIAL_new_null()) == NULL)
+        goto err;
+    if (keys_path != NULL) {
+        if ((keys = sk_EVP_PKEY_new_null()) == NULL
+            || !tai_for_each_pem(keys_path, tai_keys_cb, keys)) {
+            BIO_printf(bio_err, "Failed to load TAI keys: %s\n", keys_path);
+            goto err;
+        }
+    }
+    arg.keys = keys;
+    arg.creds = creds;
+    if (!tai_for_each_pem(chains_path, tai_chains_cb, &arg)) {
+        BIO_printf(bio_err, "Failed to load TAI chains: %s\n", chains_path);
+        goto err;
+    }
+    if (app_isdir(chains_path) > 0) {
+        sk_SSL_CREDENTIAL_set_cmp_func(creds, SSL_CREDENTIAL_size_cmp);
+        sk_SSL_CREDENTIAL_sort(creds);
+    }
+    for (i = 0; i < sk_SSL_CREDENTIAL_num(creds); i++) {
+        if (!SSL_CTX_add1_credential(ssl_ctx, sk_SSL_CREDENTIAL_value(creds, i))) {
+            BIO_printf(bio_err, "Failed to install TAI credential\n");
+            goto err;
+        }
+    }
+    ret = 1;
+err:
+    sk_SSL_CREDENTIAL_pop_free(creds, SSL_CREDENTIAL_free);
+    sk_EVP_PKEY_pop_free(keys, EVP_PKEY_free);
+    return ret;
+}
+
+/*
+ * Trust the Merkle Tree Certificate CAs in file, adding each to ctx's verify
+ * store.  This both lets the certificates they issue be verified and puts
+ * their trust anchor IDs in what we request of the peer.  The store borrows
+ * the CAs, so the returned stack must outlive ctx; free it with
+ * sk_OSSL_MTC_CA_pop_free(stack, OSSL_MTC_CA_free).  Returns NULL on failure.
+ */
+STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file)
+{
+    STACK_OF(OSSL_MTC_CA) *cas = NULL;
+    X509_STORE *store = SSL_CTX_get_cert_store(ctx);
+    BIO *in = BIO_new_file(file, "r");
+    int i, ok = 0;
+
+    if (in != NULL
+        && (cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)) != NULL
+        && OSSL_MTC_CA_parse_certificates(app_get0_libctx(), app_get0_propq(),
+            in, cas)) {
+        ok = 1;
+        for (i = 0; i < sk_OSSL_MTC_CA_num(cas); i++) {
+            if (!X509_STORE_trust_mtc_ca(store,
+                    sk_OSSL_MTC_CA_value(cas, i))) {
+                ok = 0;
+                break;
+            }
+        }
+    }
+    BIO_free(in);
+    if (!ok) {
+        BIO_printf(bio_err, "Error loading MTC CAs from %s\n", file);
+        sk_OSSL_MTC_CA_pop_free(cas, OSSL_MTC_CA_free);
+        return NULL;
+    }
+    return cas;
+}
+
+/*
+ * Trust the Merkle Tree Certificate cosigners in file, adding each to ctx's
+ * verify store, where they count toward the cosigner quorum of a standalone
+ * Merkle Tree Certificate.  The store borrows the cosigners, so the returned
+ * stack must outlive ctx; free it with
+ * sk_OSSL_MTC_COSIGNER_pop_free(stack, OSSL_MTC_COSIGNER_free).  Returns NULL
+ * on failure.
+ */
+STACK_OF(OSSL_MTC_COSIGNER) *load_mtc_cosigners(SSL_CTX *ctx, const char *file)
+{
+    STACK_OF(OSSL_MTC_COSIGNER) *cosigners = NULL;
+    X509_STORE *store = SSL_CTX_get_cert_store(ctx);
+    BIO *in = BIO_new_file(file, "r");
+    int i, ok = 0;
+
+    if (in != NULL
+        && (cosigners = sk_OSSL_MTC_COSIGNER_new(OSSL_MTC_COSIGNER_cmp)) != NULL
+        && OSSL_MTC_COSIGNER_parse_certificates(app_get0_libctx(),
+            app_get0_propq(), in, cosigners)) {
+        ok = 1;
+        for (i = 0; i < sk_OSSL_MTC_COSIGNER_num(cosigners); i++) {
+            if (!X509_STORE_trust_mtc_cosigner(store,
+                    sk_OSSL_MTC_COSIGNER_value(cosigners, i))) {
+                ok = 0;
+                break;
+            }
+        }
+    }
+    BIO_free(in);
+    if (!ok) {
+        BIO_printf(bio_err, "Error loading MTC cosigners from %s\n", file);
+        sk_OSSL_MTC_COSIGNER_pop_free(cosigners, OSSL_MTC_COSIGNER_free);
+        return NULL;
+    }
+    return cosigners;
+}
+
+/*
+ * Load one MTC log's active landmarks from "id:log:file", where id is the CA's
+ * trust anchor ID in dotted text, log is the decimal log number, and file holds
+ * the landmark description the CA publishes for that log (section 6.4.3 of
+ * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+ * This sets which subtrees are active; their hashes are supplied separately.
+ * Landmarks that expired before the verification time of vpm, when one is
+ * set (-attime), are not loaded.
+ */
+int load_mtc_landmarks(STACK_OF(OSSL_MTC_CA) *cas, const char *spec,
+    const X509_VERIFY_PARAM *vpm)
+{
+    char *dup = NULL, *colon1, *colon2, *end;
+    const char *file;
+    BIO *in = NULL;
+    OSSL_MTC_CA *ca;
+    unsigned long long log;
+    int64_t cutoff = INT64_MIN;
+    int ret = 0;
+
+    if ((X509_VERIFY_PARAM_get_flags(vpm) & X509_V_FLAG_USE_CHECK_TIME) != 0)
+        cutoff = (int64_t)X509_VERIFY_PARAM_get_time(vpm);
+    if ((dup = OPENSSL_strdup(spec)) == NULL)
+        return 0;
+    colon1 = strchr(dup, ':');
+    colon2 = colon1 == NULL ? NULL : strchr(colon1 + 1, ':');
+    if (colon2 == NULL) {
+        BIO_printf(bio_err,
+            "-mtc_landmarks needs id:log:file, not '%s'\n", spec);
+        goto err;
+    }
+    *colon1 = '\0';
+    *colon2 = '\0';
+    file = colon2 + 1;
+
+    errno = 0;
+    log = strtoull(colon1 + 1, &end, 10);
+    if (errno != 0 || *end != '\0' || end == colon1 + 1) {
+        BIO_printf(bio_err, "Invalid log number in '%s'\n", spec);
+        goto err;
+    }
+
+    if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, dup)) == NULL) {
+        BIO_printf(bio_err, "No -mtc_cas CA matches trust anchor ID '%s'\n",
+            dup);
+        goto err;
+    }
+    if ((in = BIO_new_file(file, "r")) == NULL) {
+        BIO_printf(bio_err, "Error opening MTC landmarks file %s\n", file);
+        goto err;
+    }
+    if (!OSSL_MTC_CA_load_landmarks(ca, log, in, cutoff)) {
+        BIO_printf(bio_err, "Failed to load MTC landmarks from %s\n", file);
+        goto err;
+    }
+    ret = 1;
+err:
+    BIO_free(in);
+    OPENSSL_free(dup);
+    return ret;
+}
+
+/*
+ * Read vetted subtree hashes for the loaded MTC CAs from a file, one per line as
+ * "id log start end hash", where id is the CA's trust anchor ID in dotted text,
+ * log/start/end are decimal, and hash is the base64 SHA-256 subtree hash.  Each
+ * hash is applied to the -mtc_cas CA whose trust anchor ID matches id, and the
+ * subtree must be active there, so -mtc_landmarks is loaded first.
+ */
+int load_mtc_subtrees(STACK_OF(OSSL_MTC_CA) *cas, const char *file)
+{
+    BIO *in = BIO_new_file(file, "r");
+    char line[512];
+    int ret = 0;
+
+    if (in == NULL) {
+        BIO_printf(bio_err, "Error opening MTC subtrees file %s\n", file);
+        return 0;
+    }
+    while (BIO_gets(in, line, sizeof(line)) > 0) {
+        char oid[64], hashb64[128];
+        unsigned long long log, start, end;
+        uint8_t hash[128];
+        OSSL_MTC_CA *ca;
+        int declen;
+
+        if (line[0] == '#' || line[0] == '\n' || line[0] == '\r'
+            || line[0] == '\0')
+            continue;
+        if (sscanf(line, "%63s %llu %llu %llu %127s", oid, &log, &start, &end,
+                hashb64)
+            != 5) {
+            BIO_printf(bio_err, "Malformed MTC subtree line: %s", line);
+            goto err;
+        }
+        if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, oid)) == NULL) {
+            BIO_printf(bio_err,
+                "No -mtc_cas CA matches trust anchor ID '%s'\n", oid);
+            goto err;
+        }
+        declen = EVP_DecodeBlock(hash, (const uint8_t *)hashb64,
+            (int)strlen(hashb64));
+        if (declen < 32) {
+            BIO_printf(bio_err, "Bad subtree hash for '%s'\n", oid);
+            goto err;
+        }
+        if (!OSSL_MTC_CA_add_subtree_hash(ca, log, start, end, hash, 32)) {
+            BIO_printf(bio_err,
+                "Failed to add subtree hash for '%s' (is [%llu, %llu) an"
+                " active landmark subtree of log %llu?)\n",
+                oid, start, end, log);
+            goto err;
+        }
+    }
+    ret = 1;
+err:
+    BIO_free(in);
+    return ret;
+}
+
+char *app_reloid_to_text(const unsigned char *id, size_t id_len)
+{
+    char *out, *p;
+    size_t i = 0, room;
+
+    /* An arc contributes at least one byte and at most twenty digits. */
+    room = id_len * 21 + 1;
+    if (id_len == 0 || (out = OPENSSL_malloc(room)) == NULL)
+        return NULL;
+
+    p = out;
+    while (i < id_len) {
+        uint64_t v = 0;
+        int n;
+
+        for (;;) {
+            if (i == id_len || v > (UINT64_MAX >> 7))
+                goto err; /* truncated or overlong arc */
+            v = (v << 7) | (id[i] & 0x7f);
+            if ((id[i++] & 0x80) == 0)
+                break;
+        }
+        n = snprintf(p, room - (size_t)(p - out), "%s%ju",
+            p == out ? "" : ".", (uintmax_t)v);
+        if (n < 0 || (size_t)n >= room - (size_t)(p - out))
+            goto err;
+        p += n;
+    }
+    return out;
+err:
+    OPENSSL_free(out);
+    return NULL;
 }
 
 char *next_item(char *opt) /* in list separated by comma and/or spaces */

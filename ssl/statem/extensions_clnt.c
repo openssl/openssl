@@ -8,12 +8,15 @@
  */
 
 #include <openssl/ocsp.h>
+#include <openssl/mtc.h>
 #include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/tlsgroups.h"
 #include "statem_local.h"
+#include "crypto/mtc_ca.h"
+#include "crypto/x509.h"
 #ifndef OPENSSL_NO_ECH
 #include "internal/ech_helpers.h"
 #endif
@@ -1741,6 +1744,40 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
 #endif
 }
 
+EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context,
+    ossl_unused X509 *x,
+    size_t chainidx)
+{
+    /*
+     * In its own Certificate message a client marks a certificate it chose for
+     * a trust anchor the server asked for, with an empty extension in the
+     * first entry only.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE) {
+        if (s->s3.tmp.credential == NULL || chainidx != 0)
+            return EXT_RETURN_NOT_SENT;
+
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        return EXT_RETURN_SENT;
+    }
+
+    /*
+     * Otherwise a client requests trust anchors, in the ClientHello.  The
+     * extension shares one context with the CertificateRequest and
+     * EncryptedExtensions forms we accept on receipt, so guard on the message.
+     */
+    if ((context & SSL_EXT_CLIENT_HELLO) == 0)
+        return EXT_RETURN_NOT_SENT;
+
+    return ossl_tls_construct_requested_trust_anchors(s, pkt);
+}
+
 /*
  * Parse the server's renegotiation binding and abort if it's not right
  */
@@ -3021,4 +3058,82 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     return EXT_RETURN_SENT;
+}
+
+/*
+ * The trust_anchors extension as a client receives it, in two forms (see
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  In
+ * EncryptedExtensions it is the AvailableTrustAnchorList: the trust anchors
+ * the server has a certification path for, in its preference order, kept for
+ * the application, which may use it to try again with one the server has.
+ * Unlike the request form, that list may not be empty.  In the
+ * CertificateRequest it is what the server will accept for a client
+ * certificate, and in the Certificate message it is the marker described
+ * below.
+ */
+int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET id_list;
+
+    /*
+     * In the CertificateRequest it is the server's RequestedTrustAnchorList,
+     * kept in the same place the server keeps a client's, for choosing the
+     * certificate we send back.  The list may be empty.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
+        if (!PACKET_as_length_prefixed_2(pkt, &id_list)
+            || !ossl_tls_valid_trust_anchor_list(&id_list)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+
+        OPENSSL_free(s->ext.peer_requested_trust_anchors);
+        s->ext.peer_requested_trust_anchors = NULL;
+        s->ext.peer_requested_trust_anchors_len = 0;
+        s->ext.peer_sent_trust_anchors = 1;
+        if (PACKET_remaining(&id_list) > 0
+            && !PACKET_memdup(&id_list, &s->ext.peer_requested_trust_anchors,
+                &s->ext.peer_requested_trust_anchors_len)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        return 1;
+    }
+
+    /*
+     * In the Certificate message the extension is the peer's marker that the
+     * certificate matched what we asked for: empty, and only in the first
+     * entry.  An extension we did not ask for is refused before we are called.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE) {
+        if (PACKET_remaining(pkt) != 0 || chainidx != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        s->ext.peer_matched_trust_anchor = 1;
+        return 1;
+    }
+
+    if (context != SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)
+        return 1;
+
+    /* This list, unlike the request form, may not be empty. */
+    if (!PACKET_as_length_prefixed_2(pkt, &id_list)
+        || PACKET_remaining(&id_list) == 0
+        || !ossl_tls_valid_trust_anchor_list(&id_list)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    OPENSSL_free(s->ext.peer_available_trust_anchors);
+    s->ext.peer_available_trust_anchors = NULL;
+    s->ext.peer_available_trust_anchors_len = 0;
+    if (!PACKET_memdup(&id_list, &s->ext.peer_available_trust_anchors,
+            &s->ext.peer_available_trust_anchors_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
 }
