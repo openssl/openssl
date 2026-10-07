@@ -1268,6 +1268,12 @@ lint: ## Evaluate C code via "splint"
 
 CLANG_FORMAT_DIFF = clang-format-diff
 
+# The diff command whose output $(CLANG_FORMAT_DIFF) evaluates.  The
+# default uses git; another VCS can be substituted, provided it emits
+# a unified diff with zero lines of context and standard a/ b/ path
+# prefixes, e.g.  VCS_DIFF='jj diff --git --context 0'
+VCS_DIFF = git diff -U0 --no-color
+
 .PHONY: check-format check-clang-format-diff-cmd
 check-clang-format-diff-cmd:
 	@if ! command -v "$(CLANG_FORMAT_DIFF)" >/dev/null; then \
@@ -1277,7 +1283,7 @@ check-clang-format-diff-cmd:
 	fi
 
 check-format: check-clang-format-diff-cmd ## Evaluate C code according to OpenSSL coding standards
-	( cd $(SRCDIR); git diff -U0 --no-prefix --no-color | $(CLANG_FORMAT_DIFF) )
+	( cd $(SRCDIR); $(VCS_DIFF) | $(CLANG_FORMAT_DIFF) -p1 )
 
 generate_apps:
 	( cd $(SRCDIR); \
