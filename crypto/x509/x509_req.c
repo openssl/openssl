@@ -25,8 +25,11 @@ X509_REQ *X509_to_X509_REQ(const X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     X509_REQ_INFO *ri;
     int i;
     EVP_PKEY *pktmp;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
 
-    ret = X509_REQ_new_ex(x->libctx, x->propq);
+    ossl_x509_get0_libctx(x, &libctx, &propq);
+    ret = X509_REQ_new_ex(libctx, propq);
     if (ret == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         goto err;
