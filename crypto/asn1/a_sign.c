@@ -286,7 +286,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     /* Only a sequence item carries a cached encoding */
     if ((it->itype == ASN1_ITYPE_SEQUENCE
             || it->itype == ASN1_ITYPE_NDEF_SEQUENCE)
-        && !ossl_asn1_enc_save((ASN1_VALUE **)&data, buf_in, buf_len, it)) {
+        && !ossl_asn1_enc_save((ASN1_VALUE **)&data, buf_in, buf_len, it, 0)) {
         outl = 0;
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;

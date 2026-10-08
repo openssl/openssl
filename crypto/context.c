@@ -19,6 +19,10 @@
 #include "internal/conf.h"
 #include "crypto/decoder.h"
 #include "crypto/context.h"
+#include "internal/pool.h"
+#include "crypto/siphash.h"
+#include "crypto/rand.h"
+#include "crypto/rand_pool.h"
 
 struct ossl_lib_ctx_st {
     CRYPTO_RWLOCK *lock;
@@ -42,6 +46,13 @@ struct ossl_lib_ctx_st {
     OSSL_METHOD_STORE *store_loader_store;
     void *self_test_cb;
     void *indicator_cb;
+    /*
+     * The pool certificates share their bytes in. There is one, on the global
+     * default context, created with it; every other context's is NULL.
+     */
+    CRYPTO_BUFFER_POOL *certificate_pool;
+    /* Set when certificates decoded through this context do not use the pool */
+    int certificate_pool_disabled;
 #endif
 #if defined(OPENSSL_THREADS)
     void *threads;
@@ -255,6 +266,12 @@ err:
 
 static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 {
+#ifndef FIPS_MODULE
+    /* The pool is empty: certificates decoded through the context are freed before it */
+    CRYPTO_BUFFER_POOL_free(ctx->certificate_pool);
+    ctx->certificate_pool = NULL;
+#endif
+
     /* P2. */
     if (ctx->drbg != NULL) {
         ossl_rand_ctx_free(ctx->drbg);
@@ -417,10 +434,30 @@ DEFINE_RUN_ONCE_STATIC(default_context_do_thread_key_init)
     return 1;
 }
 
+/*
+ * Create the certificate pool of the global default context, keyed from the
+ * operating system's entropy source. Without a key there is no pool, and
+ * certificates are decoded unpooled.
+ */
+static void default_context_create_certificate_pool(OSSL_LIB_CTX *ctx)
+{
+    RAND_POOL *entropy = ossl_rand_pool_new(SIPHASH_KEY_SIZE * 8, 0,
+        SIPHASH_KEY_SIZE, RAND_POOL_MAX_LENGTH);
+
+    if (entropy == NULL)
+        return;
+    if (ossl_pool_acquire_entropy(entropy) >= SIPHASH_KEY_SIZE * 8
+        && ossl_rand_pool_length(entropy) >= SIPHASH_KEY_SIZE)
+        ctx->certificate_pool = ossl_crypto_buffer_pool_new(
+            ossl_rand_pool_buffer(entropy), SIPHASH_KEY_SIZE);
+    ossl_rand_pool_free(entropy);
+}
+
 DEFINE_RUN_ONCE_STATIC(default_context_do_init)
 {
     if (!context_init(&default_context_int))
         return 0;
+    default_context_create_certificate_pool(&default_context_int);
 
     default_context_inited = 1;
     return 1;
@@ -721,3 +758,38 @@ void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *libctx, int value)
         return;
     libctx->conf_diagnostics = value;
 }
+
+#ifndef FIPS_MODULE
+int OSSL_LIB_CTX_set_certificate_pool(OSSL_LIB_CTX *libctx, int enable)
+{
+    libctx = ossl_lib_ctx_get_concrete(libctx);
+    if (libctx == NULL)
+        return 0;
+    if (!CRYPTO_THREAD_write_lock(libctx->lock))
+        return 0;
+    libctx->certificate_pool_disabled = !enable;
+    CRYPTO_THREAD_unlock(libctx->lock);
+    return 1;
+}
+
+CRYPTO_BUFFER_POOL *ossl_lib_ctx_get0_certificate_pool(OSSL_LIB_CTX *libctx)
+{
+    OSSL_LIB_CTX *global;
+    int disabled;
+
+    libctx = ossl_lib_ctx_get_concrete(libctx);
+    if (libctx == NULL)
+        return NULL;
+    if (!CRYPTO_THREAD_read_lock(libctx->lock))
+        return NULL;
+    disabled = libctx->certificate_pool_disabled;
+    CRYPTO_THREAD_unlock(libctx->lock);
+    if (disabled)
+        return NULL;
+
+    /* The pool is set when the global default context is created */
+    if ((global = OSSL_LIB_CTX_get0_global_default()) == NULL)
+        return NULL;
+    return global->certificate_pool;
+}
+#endif

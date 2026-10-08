@@ -596,9 +596,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
     }
-    /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(signer, -1, -1);
-
     if (!X509_up_ref(signer))
         goto err;
     if (!EVP_PKEY_up_ref(pk)) {

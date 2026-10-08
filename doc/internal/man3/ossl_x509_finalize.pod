@@ -1,0 +1,53 @@
+=pod
+
+=head1 NAME
+
+ossl_x509_finalize, ossl_x509_reset_ext_cache
+- build and discard the cached extension data of a certificate
+
+=head1 SYNOPSIS
+
+ #include "crypto/x509/x509_local.h"
+
+ void ossl_x509_finalize(X509 *x);
+ void ossl_x509_reset_ext_cache(X509 *x);
+
+=head1 DESCRIPTION
+
+ossl_x509_finalize() processes the X509v3 extensions present in the X509
+object I<x> and caches the result of that processing as well as further
+derived info, for instance whether the certificate is self-issued or has
+version X.509v1, and sets B<EXFLAG_SET>. It computes an internal-use
+fingerprint of the certificate, used only by L<X509_cmp(3)>, independent of
+any library context or property query string, and stores the result in
+x->fingerprint; on failure (which can only be a memory allocation failure
+while encoding the certificate) it sets B<EXFLAG_NO_FINGERPRINT> in
+x->ex_flags instead. An invalid extension sets B<EXFLAG_INVALID>; the error
+is raised when the cached data is used, by L<X509_check_purpose(3)>.
+
+It is called when a certificate is decoded with a B<d2i_X509> function and
+when it is signed with L<X509_sign(3)> or X509_sign_ctx(). See the
+CACHED CERTIFICATE INFORMATION section of L<x509(7)>.
+
+ossl_x509_reset_ext_cache() discards the cached extension data, including
+what L<X509_set_proxy_flag(3)> and X509_set_proxy_pathlen() set, leaving
+I<x> unfinalized. ossl_x509_finalize() calls it first, and the signing
+functions call it before signing so that a certificate whose signing fails
+is not left finalized with stale data.
+
+The caller must own I<x>: neither function locks it.
+
+=head1 RETURN VALUES
+
+Neither function returns a value.
+
+=head1 COPYRIGHT
+
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

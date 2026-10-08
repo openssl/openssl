@@ -10,6 +10,7 @@
 /* Internal tests for the OpenSSL library context */
 
 #include "internal/cryptlib.h"
+#include "internal/pool.h"
 #include "testutil.h"
 
 static int test_set0_default(void)
@@ -75,9 +76,42 @@ err:
     return res;
 }
 
+/*
+ * There is one certificate pool, reached through every context that has not
+ * disabled pooling; buffers made in it share their bytes.
+ */
+static int test_certificate_pool(void)
+{
+    static const unsigned char bytes[] = "certificate";
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    CRYPTO_BUFFER_POOL *pool;
+    CRYPTO_BUFFER *a = NULL, *b = NULL;
+    int res = 0;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(pool = ossl_lib_ctx_get0_certificate_pool(ctx))
+        || !TEST_ptr_eq(pool, ossl_lib_ctx_get0_certificate_pool(NULL))
+        || !TEST_ptr(a = CRYPTO_BUFFER_new(bytes, sizeof(bytes), pool))
+        || !TEST_ptr(b = CRYPTO_BUFFER_new(bytes, sizeof(bytes), pool))
+        || !TEST_ptr_eq(a, b)
+        || !TEST_true(OSSL_LIB_CTX_set_certificate_pool(ctx, 0))
+        || !TEST_ptr_null(ossl_lib_ctx_get0_certificate_pool(ctx))
+        || !TEST_true(OSSL_LIB_CTX_set_certificate_pool(ctx, 1))
+        || !TEST_ptr_eq(pool, ossl_lib_ctx_get0_certificate_pool(ctx)))
+        goto err;
+
+    res = 1;
+err:
+    CRYPTO_BUFFER_free(a);
+    CRYPTO_BUFFER_free(b);
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_set0_default);
     ADD_TEST(test_set_get_conf_diagnostics);
+    ADD_TEST(test_certificate_pool);
     return 1;
 }
