@@ -12,7 +12,7 @@ use warnings;
 
 use POSIX;
 use File::Path 2.00 qw/rmtree/;
-use OpenSSL::Test qw/:DEFAULT cmdstr data_file srctop_file/;
+use OpenSSL::Test qw/:DEFAULT bldtop_file cmdstr data_file srctop_file/;
 use OpenSSL::Test::Utils;
 use Time::Local qw/timegm/;
 
@@ -21,7 +21,8 @@ setup("test_ca");
 $ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
 
 my $cnf = srctop_file("test","ca-and-certs.cnf");
-my $std_openssl_cnf = srctop_file("apps", $^O eq "VMS" ? "openssl-vms.cnf" : "openssl.cnf");
+my $std_openssl_cnf = $^O eq "VMS" ? bldtop_file("apps", "openssl-vms.cnf")
+                                   : srctop_file("apps", "openssl.cnf");
 
 sub src_file {
     return srctop_file("test", "certs", shift);

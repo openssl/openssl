@@ -26,7 +26,7 @@ use configdata;
 
 # Every file the build generates must be absent from the index and covered
 # by .gitignore.  The generated files that are deliberately committed --
-# doc/build.info, util/libcrypto.num and the like -- come from explicit
+# crypto/objects/obj_mac.num and the like -- come from explicit
 # "make update" targets rather than GENERATE directives, so they are not
 # among the targets checked here.
 
