@@ -8287,6 +8287,239 @@ end:
 }
 
 /*
+ * Server side PSK callbacks must be able to observe the server random via
+ * SSL_get_server_random(). Prior to the fix for issue #26404 the server
+ * random was only generated after the ClientHello extensions had been
+ * processed, so in (D)TLSv1.3 (where the PSK callbacks run during extension
+ * processing) the callbacks observed an all-zero value - or, after a
+ * HelloRetryRequest, the stale value generated for the first ClientHello.
+ */
+/* Enough slots for a HelloRetryRequest handshake (two ClientHellos) */
+#define CB_SERVER_RANDOM_MAX 2
+static unsigned char cb_server_random[CB_SERVER_RANDOM_MAX][SSL3_RANDOM_SIZE];
+static size_t cb_server_random_len = 0;
+static int cb_server_random_cnt = 0;
+
+static int record_cb_server_random(SSL *ssl)
+{
+    unsigned char *slot;
+
+    if (cb_server_random_cnt >= CB_SERVER_RANDOM_MAX)
+        return 0;
+    slot = cb_server_random[cb_server_random_cnt++];
+    memset(slot, 0, SSL3_RANDOM_SIZE);
+    cb_server_random_len = SSL_get_server_random(ssl, slot, SSL3_RANDOM_SIZE);
+    return cb_server_random_len == SSL3_RANDOM_SIZE;
+}
+
+static int find_session_cb_server_random(SSL *ssl,
+    const unsigned char *identity,
+    size_t identity_len,
+    SSL_SESSION **sess)
+{
+    if (!record_cb_server_random(ssl))
+        return 0;
+    return find_session_cb(ssl, identity, identity_len, sess);
+}
+
+#ifndef OPENSSL_NO_PSK
+static unsigned int psk_server_cb_server_random(SSL *ssl,
+    const char *identity,
+    unsigned char *psk,
+    unsigned int max_psk_len)
+{
+    if (!record_cb_server_random(ssl))
+        return 0;
+    return psk_server_cb(ssl, identity, psk, max_psk_len);
+}
+#endif
+
+/*
+ * Test 0: (D)TLSv1.3, new style callback (psk_find_session_cb())
+ * Test 1: (D)TLSv1.3, old style callback (psk_server_callback())
+ * Test 2: (D)TLSv1.2, old style callback (psk_server_callback())
+ * Test 3: (D)TLSv1.3, new style callback, with a HelloRetryRequest
+ *
+ * |pskver| is the protocol version to record in the PSK session and |expver|
+ * the version expected to be negotiated; |vermax| caps the handshake to
+ * (D)TLSv1.2 for test 2.
+ */
+static int psk_cb_server_random(const SSL_METHOD *smeth,
+    const SSL_METHOD *cmeth,
+    int vermin, int vermax,
+    int pskver, int expver, int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *s = NULL, *c = NULL;
+    const SSL_CIPHER *cipher = NULL;
+    const unsigned char key[] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+        0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
+        0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f
+    };
+    unsigned char zeros[SSL3_RANDOM_SIZE] = { 0 };
+    unsigned char snonce[SSL3_RANDOM_SIZE];
+    unsigned char cnonce[SSL3_RANDOM_SIZE];
+    const unsigned char *final;
+    int oldstyle = (idx == 1 || idx == 2);
+    int v12 = (idx == 2);
+    int hrr = (idx == 3);
+    /* With a HelloRetryRequest the callback runs once per ClientHello */
+    int expcnt = hrr ? 2 : 1;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_PSK
+    if (oldstyle)
+        return TEST_skip("PSK not supported");
+#endif
+#ifdef OPENSSL_NO_EC
+    if (hrr)
+        return TEST_skip("No EC groups available to force a HelloRetryRequest");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    cb_server_random_cnt = 0;
+    cb_server_random_len = 0;
+    srvid = pskid;
+    use_session_cb_cnt = find_session_cb_cnt = 0;
+    psk_client_cb_cnt = psk_server_cb_cnt = 0;
+
+    if (!oldstyle) {
+        SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
+        SSL_CTX_set_psk_find_session_callback(sctx,
+            find_session_cb_server_random);
+    } else {
+#ifndef OPENSSL_NO_PSK
+        SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
+        SSL_CTX_set_psk_server_callback(sctx, psk_server_cb_server_random);
+#endif
+    }
+
+    if (v12) {
+        /* Make sure a (D)TLSv1.2 PSK ciphersuite gets selected */
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "PSK-AES128-GCM-SHA256")))
+            goto end;
+    } else {
+        /* Old style callbacks always default to SHA256 */
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256")))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &s, &c, NULL, NULL)))
+        goto end;
+
+    if (hrr) {
+        /* Client sends a P-256 key_share; server forces a retry to P-384 */
+        if (!TEST_true(SSL_set1_groups_list(c, "P-256:P-384"))
+            || !TEST_true(SSL_set1_groups_list(s, "P-384")))
+            goto end;
+    }
+
+    /* Create the PSK */
+    cipher = SSL_CIPHER_find(c, TLS13_AES_128_GCM_SHA256_BYTES);
+    clientpsk = SSL_SESSION_new();
+    if (!TEST_ptr(clientpsk)
+        || !TEST_ptr(cipher)
+        || !TEST_true(SSL_SESSION_set1_master_key(clientpsk, key, sizeof(key)))
+        || !TEST_true(SSL_SESSION_set_cipher(clientpsk, cipher))
+        || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk, pskver))
+        || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+        goto end;
+    serverpsk = clientpsk;
+
+    final = cb_server_random[expcnt - 1];
+    if (!TEST_true(create_ssl_connection(s, c, SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_version(s), expver)
+        || !TEST_int_eq(cb_server_random_cnt, expcnt)
+        || !TEST_size_t_eq(cb_server_random_len, SSL3_RANDOM_SIZE)
+        /* The value seen by the callback must be populated ... */
+        || !TEST_mem_ne(final, SSL3_RANDOM_SIZE, zeros, sizeof(zeros))
+        /* ... and must be the value actually used in the handshake */
+        || !TEST_size_t_eq(SSL_get_server_random(s, snonce, sizeof(snonce)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_size_t_eq(SSL_get_server_random(c, cnonce, sizeof(cnonce)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_mem_eq(final, SSL3_RANDOM_SIZE, snonce, sizeof(snonce))
+        || !TEST_mem_eq(final, SSL3_RANDOM_SIZE, cnonce, sizeof(cnonce)))
+        goto end;
+
+    if (hrr) {
+        /*
+         * A fresh server_random is generated for the second ClientHello, so the
+         * value seen while processing the first one must have been populated
+         * too but differs from the one finally sent.
+         */
+        if (!TEST_mem_ne(cb_server_random[0], SSL3_RANDOM_SIZE,
+                zeros, sizeof(zeros))
+            || !TEST_mem_ne(cb_server_random[0], SSL3_RANDOM_SIZE,
+                cb_server_random[1], SSL3_RANDOM_SIZE))
+            goto end;
+    }
+
+    if (!oldstyle) {
+        /* The PSK must actually have been accepted via the wrapped callback */
+        if (!TEST_true(SSL_session_reused(s))
+            || !TEST_int_eq(find_session_cb_cnt, expcnt)
+            || !TEST_int_eq(psk_server_cb_cnt, 0))
+            goto end;
+    } else {
+        if (!TEST_int_eq(find_session_cb_cnt, 0)
+            || !TEST_int_eq(psk_server_cb_cnt, 1))
+            goto end;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(s);
+    SSL_free(c);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int test_tls_psk_cb_server_random(int idx)
+{
+    int v12 = (idx == 2);
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (v12)
+        return TEST_skip("No TLSv1.2");
+#endif
+    return psk_cb_server_random(TLS_server_method(), TLS_client_method(),
+        TLS1_VERSION, v12 ? TLS1_2_VERSION : 0,
+        TLS1_3_VERSION,
+        v12 ? TLS1_2_VERSION : TLS1_3_VERSION, idx);
+}
+
+#ifndef OPENSSL_NO_DTLS
+static int test_dtls_psk_cb_server_random(int idx)
+{
+    int v12 = (idx == 2);
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (v12)
+        return TEST_skip("No DTLSv1.2");
+#endif
+#ifdef OSSL_NO_USABLE_DTLS1_3
+    if (!v12)
+        return TEST_skip("No usable DTLSv1.3");
+#endif
+    return psk_cb_server_random(DTLS_server_method(), DTLS_client_method(),
+        DTLS1_VERSION, v12 ? DTLS1_2_VERSION : 0,
+        DTLS1_3_VERSION,
+        v12 ? DTLS1_2_VERSION : DTLS1_3_VERSION, idx);
+}
+#endif /* OPENSSL_NO_DTLS */
+
+/*
  * A client with its own session ID context configured must still be able
  * to resume a TLS 1.3 external PSK obtained via the legacy
  * psk_use_session_cb()/psk_client_callback() callbacks. s->psksession is
@@ -11551,6 +11784,193 @@ end:
 }
 
 /*
+ * The other server side callbacks invoked while the ClientHello is being
+ * processed must be able to observe the server random too: the servername
+ * callback, the session ticket decrypt callback and the ticket key callback
+ * (in the decrypt direction). Prior to the fix for issue #26404 all of them
+ * observed an all-zero value in every protocol version, since the server
+ * random was only generated once the extensions had been processed.
+ */
+static unsigned char sni_cb_random[SSL3_RANDOM_SIZE];
+static unsigned char dec_tick_cb_random[SSL3_RANDOM_SIZE];
+static unsigned char tick_key_cb_random[SSL3_RANDOM_SIZE];
+static int sni_cb_random_cnt, dec_tick_cb_random_cnt, tick_key_cb_random_cnt;
+
+static int sni_cb_server_random(SSL *s, int *al, void *arg)
+{
+    sni_cb_random_cnt++;
+    if (SSL_get_server_random(s, sni_cb_random, sizeof(sni_cb_random))
+        != SSL3_RANDOM_SIZE) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static SSL_TICKET_RETURN dec_tick_cb_server_random(SSL *s, SSL_SESSION *ss,
+    const unsigned char *keyname,
+    size_t keyname_length,
+    SSL_TICKET_STATUS status,
+    void *arg)
+{
+    dec_tick_cb_random_cnt++;
+    if (SSL_get_server_random(s, dec_tick_cb_random,
+            sizeof(dec_tick_cb_random))
+        != SSL3_RANDOM_SIZE)
+        return SSL_TICKET_RETURN_ABORT;
+
+    switch (status) {
+    case SSL_TICKET_SUCCESS:
+        return SSL_TICKET_RETURN_USE;
+    case SSL_TICKET_SUCCESS_RENEW:
+        return SSL_TICKET_RETURN_USE_RENEW;
+    default:
+        /* No (usable) ticket: make sure one gets issued */
+        return SSL_TICKET_RETURN_IGNORE_RENEW;
+    }
+}
+
+static int tick_key_evp_cb_server_random(SSL *s, unsigned char key_name[16],
+    unsigned char iv[EVP_MAX_IV_LENGTH],
+    EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hctx,
+    int enc)
+{
+    /* Only the decrypt direction runs while the ClientHello is processed */
+    if (!enc) {
+        tick_key_cb_random_cnt++;
+        if (SSL_get_server_random(s, tick_key_cb_random,
+                sizeof(tick_key_cb_random))
+            != SSL3_RANDOM_SIZE)
+            return -1;
+    }
+    return tick_key_evp_cb(s, key_name, iv, ctx, hctx, enc);
+}
+
+/*
+ * Do a full handshake followed by a ticket based resumption and check that
+ * the value seen by each callback is the server random actually used in that
+ * handshake.
+ */
+static int clienthello_cb_server_random(const SSL_METHOD *smeth,
+    const SSL_METHOD *cmeth,
+    int vermin, int vermax, int expver)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *s = NULL, *c = NULL;
+    SSL_SESSION *sess = NULL;
+    unsigned char zeros[SSL3_RANDOM_SIZE] = { 0 };
+    unsigned char snonce[SSL3_RANDOM_SIZE];
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* Resume from the ticket only, not from the session cache */
+    if (!TEST_true(SSL_CTX_set_session_cache_mode(sctx, SSL_SESS_CACHE_OFF))
+        || !TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx,
+            sni_cb_server_random))
+        || !TEST_true(SSL_CTX_set_session_ticket_cb(sctx, NULL,
+            dec_tick_cb_server_random, NULL))
+        || !TEST_true(SSL_CTX_set_tlsext_ticket_key_evp_cb(sctx,
+            tick_key_evp_cb_server_random)))
+        goto end;
+    tick_key_renew = 0;
+    tick_key_cb_called = 0;
+
+    sni_cb_random_cnt = dec_tick_cb_random_cnt = tick_key_cb_random_cnt = 0;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &s, &c, NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(c, "server.example"))
+        || !TEST_true(create_ssl_connection(s, c, SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_version(s), expver)
+        || !TEST_int_eq(sni_cb_random_cnt, 1)
+        || !TEST_mem_ne(sni_cb_random, SSL3_RANDOM_SIZE, zeros, sizeof(zeros))
+        || !TEST_size_t_eq(SSL_get_server_random(s, snonce, sizeof(snonce)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_mem_eq(sni_cb_random, SSL3_RANDOM_SIZE, snonce, sizeof(snonce)))
+        goto end;
+
+    /*
+     * In TLSv1.2 the decrypt callback also runs during the initial handshake
+     * (with SSL_TICKET_EMPTY) and must have seen the same value.
+     */
+    if (dec_tick_cb_random_cnt != 0
+        && !TEST_mem_eq(dec_tick_cb_random, SSL3_RANDOM_SIZE,
+            snonce, sizeof(snonce)))
+        goto end;
+
+    if (!TEST_ptr(sess = SSL_get1_session(c)))
+        goto end;
+    shutdown_ssl_connection(s, c);
+    s = c = NULL;
+
+    sni_cb_random_cnt = dec_tick_cb_random_cnt = tick_key_cb_random_cnt = 0;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &s, &c, NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(c, "server.example"))
+        || !TEST_true(SSL_set_session(c, sess))
+        || !TEST_true(create_ssl_connection(s, c, SSL_ERROR_NONE))
+        || !TEST_true(SSL_session_reused(s))
+        || !TEST_int_eq(sni_cb_random_cnt, 1)
+        || !TEST_int_eq(dec_tick_cb_random_cnt, 1)
+        || !TEST_int_eq(tick_key_cb_random_cnt, 1)
+        || !TEST_size_t_eq(SSL_get_server_random(s, snonce, sizeof(snonce)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_mem_ne(snonce, sizeof(snonce), zeros, sizeof(zeros))
+        || !TEST_mem_eq(sni_cb_random, SSL3_RANDOM_SIZE, snonce, sizeof(snonce))
+        || !TEST_mem_eq(dec_tick_cb_random, SSL3_RANDOM_SIZE,
+            snonce, sizeof(snonce))
+        || !TEST_mem_eq(tick_key_cb_random, SSL3_RANDOM_SIZE,
+            snonce, sizeof(snonce)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(s);
+    SSL_free(c);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/* Test 0: TLSv1.3, Test 1: TLSv1.2 */
+static int test_tls_clienthello_cb_server_random(int idx)
+{
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (idx == 0)
+        return TEST_skip("No usable TLSv1.3");
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    if (idx == 1)
+        return TEST_skip("No TLSv1.2");
+#endif
+    return clienthello_cb_server_random(TLS_server_method(),
+        TLS_client_method(), TLS1_VERSION,
+        idx == 1 ? TLS1_2_VERSION : 0,
+        idx == 1 ? TLS1_2_VERSION : TLS1_3_VERSION);
+}
+
+#ifndef OPENSSL_NO_DTLS
+/* Test 0: DTLSv1.3, Test 1: DTLSv1.2 */
+static int test_dtls_clienthello_cb_server_random(int idx)
+{
+#ifdef OSSL_NO_USABLE_DTLS1_3
+    if (idx == 0)
+        return TEST_skip("No usable DTLSv1.3");
+#endif
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 1)
+        return TEST_skip("No DTLSv1.2");
+#endif
+    return clienthello_cb_server_random(DTLS_server_method(),
+        DTLS_client_method(), DTLS1_VERSION,
+        idx == 1 ? DTLS1_2_VERSION : 0,
+        idx == 1 ? DTLS1_2_VERSION : DTLS1_3_VERSION);
+}
+#endif /* OPENSSL_NO_DTLS */
+
+/*
  * Callback that always returns ABORT for successfully decrypted tickets.
  * Used by test_ticket_abort_session_leak to exercise the error path in
  * tls_parse_ctos_psk() that previously leaked the SSL_SESSION.
@@ -14156,6 +14576,14 @@ static int secret_cb(SSL *s, void *secretin, int *secret_len,
 {
     int i;
     unsigned char *secret = secretin;
+    unsigned char zeros[SSL3_RANDOM_SIZE] = { 0 };
+    unsigned char snonce[SSL3_RANDOM_SIZE];
+
+    /* The server random must already be available on both sides */
+    if (!TEST_size_t_eq(SSL_get_server_random(s, snonce, sizeof(snonce)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_mem_ne(snonce, sizeof(snonce), zeros, sizeof(zeros)))
+        return 0;
 
     /* Just use a fixed master secret */
     for (i = 0; i < *secret_len; i++)
@@ -18213,6 +18641,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_tls13_psk_client_sid_ctx, 2);
 #endif /* OPENSSL_NO_PSK */
     ADD_TEST(test_tls13_psk_verify_peer_no_sid_ctx);
+    ADD_ALL_TESTS(test_tls_psk_cb_server_random, 4);
+#ifndef OPENSSL_NO_DTLS
+    ADD_ALL_TESTS(test_dtls_psk_cb_server_random, 4);
+#endif
     ADD_TEST(test_tls13_psk_verify_peer_no_ticket);
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
 #if !defined(OSSL_NO_USABLE_TLS1_3)
@@ -18260,6 +18692,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 20);
+    ADD_ALL_TESTS(test_tls_clienthello_cb_server_random, 2);
+#ifndef OPENSSL_NO_DTLS
+    ADD_ALL_TESTS(test_dtls_clienthello_cb_server_random, 2);
+#endif
     ADD_TEST(test_ticket_abort_session_leak);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_TEST(test_async_shutdown);

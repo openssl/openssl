@@ -2341,6 +2341,112 @@ end:
     return res;
 }
 
+static unsigned char sni_cb_random[SSL3_RANDOM_SIZE];
+static int sni_cb_random_cnt = 0;
+
+static int sni_cb_server_random(SSL *s, int *al, void *arg)
+{
+    sni_cb_random_cnt++;
+    if (SSL_get_server_random(s, sni_cb_random, sizeof(sni_cb_random))
+        != SSL3_RANDOM_SIZE) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+    return SSL_TLSEXT_ERR_OK;
+}
+
+/*
+ * The server random is available to the callbacks invoked while the
+ * ClientHello is processed, but when ECH is accepted its final 8 bytes are
+ * replaced with the acceptance confirmation only while the ServerHello is
+ * constructed. So a value observed from such a callback must match the one
+ * finally sent in all but those bytes.
+ * idx 0: ECH accepted, idx 1: ECH accepted after a HRR, idx 2: no ECH
+ */
+static int test_ech_cb_server_random(int idx)
+{
+    int res = 0, clientstatus, serverstatus;
+    OSSL_ECHSTORE *es = NULL;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    SSL_CTX *c = NULL, *s = NULL;
+    SSL *cssl = NULL, *sssl = NULL;
+    char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
+    unsigned char zeros[SSL3_RANDOM_SIZE] = { 0 };
+    unsigned char srv_rnd[SSL3_RANDOM_SIZE], clnt_rnd[SSL3_RANDOM_SIZE];
+    const size_t siglen = 8; /* length of the ECH acceptance confirmation */
+    const size_t prefix = SSL3_RANDOM_SIZE - siglen;
+
+    if (!TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_new_config(es, OSSL_ECH_CURRENT_VERSION,
+            0, "example.com", hpke_suite))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &s, &c, cert, privkey))
+        || !TEST_true(SSL_CTX_set_tlsext_servername_callback(s,
+            sni_cb_server_random)))
+        goto end;
+    if (idx != 2
+        && (!TEST_true(SSL_CTX_set1_echstore(s, es))
+            || !TEST_true(SSL_CTX_set1_echstore(c, es))))
+        goto end;
+    if (!TEST_true(create_ssl_objects(s, c, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(cssl, "server.example")))
+        goto end;
+    /* force a HRR for the 2nd iteration */
+    if (idx == 1 && !TEST_true(SSL_set1_groups_list(sssl, "P-384")))
+        goto end;
+    sni_cb_random_cnt = 0;
+    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+    /* override cert verification */
+    SSL_set_verify_result(cssl, X509_V_OK);
+    clientstatus = SSL_ech_get1_status(cssl, &cinner, &couter);
+    serverstatus = SSL_ech_get1_status(sssl, &sinner, &souter);
+    if (idx != 2
+        && (!TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS)
+            || !TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS)))
+        goto end;
+    if (idx == 2
+        && (!TEST_int_eq(clientstatus, SSL_ECH_STATUS_NOT_CONFIGURED)
+            || !TEST_int_eq(serverstatus, SSL_ECH_STATUS_NOT_CONFIGURED)))
+        goto end;
+    /* with a HRR the callback runs once per ClientHello */
+    if (!TEST_int_eq(sni_cb_random_cnt, idx == 1 ? 2 : 1)
+        || !TEST_mem_ne(sni_cb_random, SSL3_RANDOM_SIZE, zeros, sizeof(zeros))
+        || !TEST_size_t_eq(SSL_get_server_random(sssl, srv_rnd,
+                               sizeof(srv_rnd)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_size_t_eq(SSL_get_server_random(cssl, clnt_rnd,
+                               sizeof(clnt_rnd)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_mem_eq(srv_rnd, sizeof(srv_rnd), clnt_rnd, sizeof(clnt_rnd))
+        || !TEST_mem_eq(sni_cb_random, prefix, srv_rnd, prefix))
+        goto end;
+    if (idx != 2) {
+        /* the ECH acceptance confirmation replaced the final bytes */
+        if (!TEST_mem_ne(sni_cb_random + prefix, siglen,
+                srv_rnd + prefix, siglen))
+            goto end;
+    } else {
+        if (!TEST_mem_eq(sni_cb_random, SSL3_RANDOM_SIZE,
+                srv_rnd, sizeof(srv_rnd)))
+            goto end;
+    }
+    res = 1;
+end:
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    OPENSSL_free(cinner);
+    OPENSSL_free(couter);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2391,6 +2497,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     ADD_ALL_TESTS(test_ech_keylog_random, 4);
+    ADD_ALL_TESTS(test_ech_cb_server_random, 3);
     return 1;
 err:
     return 0;

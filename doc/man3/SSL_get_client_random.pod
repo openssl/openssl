@@ -74,6 +74,23 @@ Finally, though the "client_random" and "server_random" values are called
 "random", many TLS implementations will generate four bytes of those
 values based on their view of the current time.
 
+On the server side the server_random value is generated as soon as the
+protocol version has been selected during ClientHello processing. It is
+therefore already available to callbacks invoked later during that
+processing, such as the servername callback, the session ticket callbacks
+and the PSK callbacks (see L<SSL_CTX_set_psk_find_session_callback(3)> and
+L<SSL_CTX_set_psk_server_callback(3)>), including in (D)TLSv1.3. Note that if a
+HelloRetryRequest is sent a fresh server_random is generated when the second
+ClientHello is processed. When Encrypted ClientHello (ECH) is accepted, the
+final eight bytes of the server_random are replaced with the ECH acceptance
+confirmation while the ServerHello is being constructed, so a value observed
+from a callback before that point will differ in those bytes from the value
+sent to the client. On the client side the value is available once the
+ServerHello has been received.
+
+These functions also work on QUIC connection SSL objects, where they return
+the values from the underlying TLS handshake, including from within the server
+side PSK callbacks. On QUIC stream SSL objects they return 0.
 
 =head1 RETURN VALUES
 
