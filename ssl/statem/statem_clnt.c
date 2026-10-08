@@ -432,6 +432,23 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
     }
 
     /*
+     * Resume a write we held back because our own KeyUpdate's write-key
+     * install was still pending (see the TLS_ST_CR_CERT_REQ case below).
+     * Once that completes, fall through into the switch below as if we
+     * were still at the deferred read state, so it can now proceed to
+     * construct that response. Unlike the server's equivalent resume
+     * check, this one only ever resumes into TLS_ST_CR_CERT_REQ, which
+     * re-validates key_update_write_pending itself before sending
+     * anything -- so either check would behave the same here, but this
+     * one matches what it's actually resuming.
+     */
+    if (st->deferred_key_update_state != TLS_ST_BEFORE
+        && !s->d1->key_update_write_pending) {
+        st->hand_state = st->deferred_key_update_state;
+        st->deferred_key_update_state = TLS_ST_BEFORE;
+    }
+
+    /*
      * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
      * TLSv1.3 yet at that point. They are handled by
      * ossl_statem_client_write_transition().
@@ -444,6 +461,22 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_CR_CERT_REQ:
         if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
+            if (SSL_CONNECTION_IS_DTLS13(s) && s->d1->key_update_write_pending) {
+                /*
+                 * RFC 9147 section 8: our own KeyUpdate's new keys must not
+                 * be used for anything else until it is acknowledged. Hold
+                 * this response back rather than send it now. Checking
+                 * key_update_write_pending rather than
+                 * dtls_has_unacked_key_update() matters here: the KeyUpdate
+                 * can already be acknowledged while its write-key install is
+                 * still withheld behind an earlier, unrelated message, and
+                 * sending genuinely new content in that window would still
+                 * use the old keys.
+                 */
+                st->deferred_key_update_state = st->hand_state;
+                st->hand_state = TLS_ST_CW_KEY_UPDATE;
+                return WRITE_TRAN_FINISHED;
+            }
             if (do_compressed_cert(s))
                 st->hand_state = TLS_ST_CW_COMP_CERT;
             else
@@ -520,6 +553,18 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
     case TLS_ST_CR_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
         if (SSL_CONNECTION_IS_DTLS13(s)) {
+            /*
+             * RFC 9147 section 8's restriction is on using the new
+             * epoch's keys, not on sending at all. Our own KeyUpdate's
+             * write keys are not installed until its ACK arrives, so
+             * this ACK -- for a received KeyUpdate or NewSessionTicket
+             * alike -- can safely go out under our current, still-valid
+             * keys even while our own KeyUpdate is outstanding. Unlike
+             * the TLS_ST_CR_CERT_REQ case above, this is only ever an
+             * ACK, never new post-handshake content, so it never needs
+             * to share deferred_key_update_state with a genuinely held
+             * back authentication response.
+             */
             st->hand_state = TLS_ST_CW_ACK;
             return WRITE_TRAN_CONTINUE;
         }
@@ -546,6 +591,16 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         if (st->ack_for_retransmit) {
             st->hand_state = st->deferred_ack_state;
             st->ack_for_retransmit = 0;
+            return WRITE_TRAN_FINISHED;
+        }
+        if (SSL_CONNECTION_IS_DTLS13(s) && s->d1->key_update_write_pending) {
+            /*
+             * This ACK was for something unrelated to our own KeyUpdate
+             * (see TLS_ST_CR_KEY_UPDATE above), whose write-key install is
+             * still withheld behind an earlier, unrelated message. Go back
+             * to waiting rather than reporting the connection idle.
+             */
+            st->hand_state = TLS_ST_CW_KEY_UPDATE;
             return WRITE_TRAN_FINISHED;
         }
         st->hand_state = TLS_ST_OK;
@@ -844,6 +899,31 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         return tls_finish_handshake(s, wst, 0, 1);
 
     case TLS_ST_OK:
+        /*
+         * A message that arrived out of order may already be sitting fully
+         * received in the reassembly buffer, waiting on something earlier
+         * that we just finished processing in this same call. Loop back
+         * into reading instead of going idle, rather than stranding it
+         * until some unrelated new record happens to arrive later.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && dtls1_has_buffered_ready_message(s)) {
+            /*
+             * This skips tls_finish_handshake() below, so its
+             * post_handshake_auth reset must happen here instead.
+             * Calling the full function isn't an option: its
+             * initial-handshake cleanup clears the reassembly buffer,
+             * which would discard the very message we're trying to keep.
+             *
+             * Without this, a second CertificateRequest already sitting in
+             * that buffer gets rejected as unexpected --
+             * ossl_statem_client_read_transition() only accepts one while
+             * post_handshake_auth is SSL_PHA_EXT_SENT, and it would still
+             * be SSL_PHA_REQUESTED from the exchange that just finished.
+             */
+            if (s->post_handshake_auth == SSL_PHA_REQUESTED)
+                s->post_handshake_auth = SSL_PHA_EXT_SENT;
+            return WORK_FINISHED_SWAP;
+        }
         /* Calls SSLfatal() as required */
         return tls_finish_handshake(s, wst, 1, 1);
     }
@@ -991,7 +1071,17 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
     case TLS_ST_CW_KEY_UPDATE:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
-        if (!tls13_update_key(s, 1)) {
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            /*
+             * RFC 9147 section 8: don't switch to the new write keys
+             * until this KeyUpdate has been acknowledged; keep using
+             * the current, still-valid keys until then. Installed from
+             * dtls_process_ack() once the ACK arrives.
+             */
+            s->d1->key_update_write_pending = 1;
+            s->d1->key_update_acked = 0;
+            s->d1->key_update_msg_seq = s->d1->w_msg.msg_seq;
+        } else if (!tls13_update_key(s, 1)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
         }

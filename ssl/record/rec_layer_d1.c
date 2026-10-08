@@ -87,7 +87,14 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
         return -1;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new_u64(rec->seq_num, rdata);
+    /*
+     * DTLS 1.3 sequence numbers restart in every epoch, so records of
+     * different epochs can share one. Key on the epoch as well: the 48-bit
+     * sequence number leaves the top 16 bits for the low bits of the epoch.
+     */
+    item = pitem_new_u64(((rec->epoch & 0xFFFF) << 48)
+            | (rec->seq_num & 0xFFFFFFFFFFFFULL),
+        rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -358,6 +365,31 @@ start:
             return -1;
 
         if (is_dtls13 && current_state == TLS_ST_OK && SSL_in_init(s)) {
+            /*
+             * The record was buffered, not dropped or failed: it will be
+             * delivered once the in-progress post-handshake exchange (e.g.
+             * a reciprocal KeyUpdate) completes. Without this, rwstate is
+             * left at whatever start: last set it to (SSL_NOTHING, since
+             * this returns instead of looping back there), and
+             * SSL_get_error() reports SSL_ERROR_SYSCALL on an empty error
+             * queue instead of the ordinary retry condition this actually
+             * is.
+             *
+             * A connection accepted by a DTLS listener has no read BIO of
+             * its own -- it receives through the listener's shared demux
+             * queue instead (see dtls_listener_create_conn_ssl()) -- so
+             * SSL_get_rbio() returns NULL here and these BIO flag updates
+             * must be skipped. SSL_get_error() already reports
+             * SSL_ERROR_WANT_READ for SSL_READING on such a connection
+             * without needing a BIO at all.
+             */
+            BIO *rbio = SSL_get_rbio(s);
+
+            sc->rwstate = SSL_READING;
+            if (rbio != NULL) {
+                BIO_clear_retry_flags(rbio);
+                BIO_set_retry_read(rbio);
+            }
             return -1;
         }
         goto start;
@@ -759,8 +791,17 @@ start:
             return -1;
         } else if (sc->version == DTLS1_3_VERSION) {
             /*
-             * Let's let DTLS ACK and retransmits fix this problem.
+             * Unlike a handshake message, application data has no
+             * reliability layer of its own to resend it if we drop it
+             * here -- there is no ACK or retransmit to "fix this problem"
+             * for a record that was never a handshake message to begin
+             * with. Buffer it instead, so it can still be delivered once
+             * we're ready to read application data again.
              */
+            if (dtls_buffer_record(sc, rr) < 0) {
+                /* SSLfatal() already called */
+                return -1;
+            }
             ssl_release_record(sc, rr, 0);
             return -1;
         } else {
