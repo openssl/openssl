@@ -3226,8 +3226,7 @@ int speed_main(int argc, char **argv)
             op_count = count; /* -1 against RSA_sign_loop failure or 1 in testmode */
         }
 
-        /* st == 1 */
-        for (i = 0; i < loopargs_len; i++) {
+        for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].rsa_verify_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key,
                 NULL);
             if (loopargs[i].rsa_verify_ctx[testnum] == NULL
@@ -3237,7 +3236,7 @@ int speed_main(int argc, char **argv)
                        loopargs[i].sigsize,
                        loopargs[i].buf, 36)
                     <= 0)
-                st = 0;
+                st = 0; /* also breaks this loop */
         }
         if (!st) {
             /* stop all the rsa's except for kems_doit[] and sigs_doit[] */
@@ -3317,8 +3316,7 @@ int speed_main(int argc, char **argv)
                 op_count = count; /* -1 against RSA_encrypt_loop failure or 1 in testmode */
             }
 
-            /* st == 1 */
-            for (i = 0; i < loopargs_len; i++) {
+            for (i = 0; st && i < loopargs_len; i++) {
                 loopargs[i].rsa_decrypt_ctx[testnum] = EVP_PKEY_CTX_new(rsa_key, NULL);
                 declen = loopargs[i].buflen;
                 if (loopargs[i].rsa_decrypt_ctx[testnum] == NULL
@@ -3329,7 +3327,7 @@ int speed_main(int argc, char **argv)
                            loopargs[i].buf2,
                            loopargs[i].encsize)
                         <= 0)
-                    st = 0;
+                    st = 0; /* also breaks this loop */
             }
             if (!st) {
                 /* stop all the rsa's except for kems_doit[] and sigs_doit[] */
@@ -3520,8 +3518,7 @@ int speed_main(int argc, char **argv)
             }
         }
 
-        /* st == 1 */
-        for (i = 0; i < loopargs_len; i++) {
+        for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].sigsize = loopargs[i].buflen;
             loopargs[i].curve_name[testnum] = EC_CURVE_NAME(ec_curves[testnum]);
             if (!mdsig) {
@@ -3532,7 +3529,7 @@ int speed_main(int argc, char **argv)
                     || EVP_PKEY_sign(pctx, loopargs[i].buf2,
                            &loopargs[i].sigsize, loopargs[i].buf, 20)
                         <= 0)
-                    st = 0;
+                    st = 0; /* also breaks this loop */
             } else {
                 OSSL_PARAM params[2] = {
                     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_TLS_VERSION, NULL),
@@ -3590,8 +3587,7 @@ int speed_main(int argc, char **argv)
             op_count = count; /* -1 against ECDSA_sign_loop failure or 1 in testmode */
         }
 
-        /* st == 1 */
-        for (i = 0; i < loopargs_len; i++) {
+        for (i = 0; st && i < loopargs_len; i++) {
             if (!mdsig) {
                 EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
 
@@ -3600,7 +3596,7 @@ int speed_main(int argc, char **argv)
                     || EVP_PKEY_verify(pctx, loopargs[i].buf2,
                            loopargs[i].sigsize, loopargs[i].buf, 20)
                         <= 0)
-                    st = 0;
+                    st = 0; /* also breaks this loop */
             } else {
                 OSSL_PARAM params[2] = {
                     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_TLS_VERSION, NULL),
