@@ -12,7 +12,7 @@
  * non-internal use) in order to implement provider AES ciphers.
  */
 #include "internal/deprecated.h"
-
+#include <openssl/proverr.h>
 #include "cipher_aes_siv.h"
 
 static void aes_siv_cleanup(void *vctx);
@@ -133,7 +133,11 @@ static int aes_siv_cipher(void *vctx, unsigned char *out,
     if (ctx->enc)
         return ossl_siv128_encrypt(sctx, in, out, len) > 0;
 
-    return ossl_siv128_decrypt(sctx, in, out, len) > 0;
+    if (ossl_siv128_decrypt(sctx, in, out, len) <= 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+        return 0;
+    }
+    return 1;
 }
 
 static const PROV_CIPHER_HW_AES_SIV aes_siv_hw = {

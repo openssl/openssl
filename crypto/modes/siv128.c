@@ -361,6 +361,9 @@ int ossl_siv128_set_tag(SIV128_CONTEXT *ctx, const unsigned char *tag, size_t le
 {
     if (len != SIV_LEN)
         return 0;
+    /* A NULL tag only sets the length, early return success */
+    if (tag == NULL)
+        return 1;
 
     /* Copy the tag from the supplied buffer */
     memcpy(ctx->tag.byte, tag, len);
