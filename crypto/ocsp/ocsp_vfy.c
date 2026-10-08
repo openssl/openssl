@@ -31,11 +31,15 @@ static int ocsp_verify_signer(X509 *signer, int response,
     X509_STORE *st, unsigned long flags,
     STACK_OF(X509) *untrusted, STACK_OF(X509) **chain)
 {
-    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+    X509_STORE_CTX *ctx;
     X509_VERIFY_PARAM *vp;
     int ret = -1;
 
-    if (ctx == NULL) {
+    /* The chain is verified in the signer's library context, as the signature is */
+    ossl_x509_get0_libctx(signer, &libctx, &propq);
+    if ((ctx = X509_STORE_CTX_new_ex(libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_OCSP, ERR_R_X509_LIB);
         goto end;
     }
