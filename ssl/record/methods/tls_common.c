@@ -1046,6 +1046,18 @@ int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
         return 0;
     }
 
+    /*
+     * RFC 5246 section 6.2.1 prohibits senders from sending zero-length
+     * Handshake or Alert fragments. As a defensive receiver-side enhancement,
+     * consistent with tls13_common_post_process_record, we reject any such
+     * records we receive.
+     */
+    if ((rec->type == SSL3_RT_HANDSHAKE || rec->type == SSL3_RT_ALERT)
+        && rec->length == 0) {
+        RLAYERfatal(rl, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_LENGTH);
+        return 0;
+    }
+
     return 1;
 }
 
