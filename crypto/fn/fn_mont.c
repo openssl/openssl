@@ -264,6 +264,15 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx)
     return ret;
 }
 
+const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont)
+{
+    if (ossl_unlikely(mont == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    return mont->N;
+}
+
 /*
  * Arena payload size needed by OSSL_FN_mul_mont_quick().
  *
@@ -551,6 +560,39 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
 }
 
 /*
+ * Arena payload size needed by OSSL_FN_to_mont_quick().
+ *
+ * Constant-time profile:
+ *   - This function is constant-time; it depends on the public modulus
+ *     width only.
+ */
+size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont)
+{
+    return OSSL_FN_mul_mont_quick_ctx_size(r, a, NULL, mont);
+}
+
+/*
+ * Convert a into Montgomery form: r = a * R mod N, as
+ * OSSL_FN_mul_mont_quick(a, RR).  r and a must have the width of N, and a
+ * must be less than N.
+ *
+ * Constant-time profile:
+ *   - What leaks: only public widths.  Unlike OSSL_FN_to_mont() there is no
+ *     canonicalisation test on a; the profile is that of
+ *     OSSL_FN_mul_mont_quick().
+ */
+int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx)
+{
+    if (ossl_unlikely(r == NULL || a == NULL || mont == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return OSSL_FN_mul_mont_quick(r, a, mont->RR, mont, ctx);
+}
+
+/*
  * Arena payload size needed by OSSL_FN_from_mont().
  *
  * Constant-time profile:
@@ -565,11 +607,67 @@ size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     if (mont == NULL)
         return 0;
 
+    /* A wider |a| is reduced in a copy of itself; see from_mont_wide() */
+    if (a != NULL && a->dsize > mont->N->dsize)
+        return OSSL_FN_CTX_size(1, 1, 2 * (size_t)mont->N->dsize);
+
     /*
      * from_mont is mul_mont_quick specialised to b == 1, so it uses the same
      * len + 2 scratch buffer (len limbs plus the two CIOS guard words).
      */
     return OSSL_FN_CTX_size(1, 1, (size_t)mont->N->dsize + 2);
+}
+
+/*
+ * OSSL_FN_from_mont() for an |a| wider than N but at most twice its width,
+ * where a < N * R.  This is bn_from_montgomery_word(): one reduction step
+ * per limb of N runs in place over a copy of a, each adding a multiple of N
+ * that clears the lowest remaining limb.
+ *
+ * Constant-time profile: as OSSL_FN_from_mont().  The carry out of each step
+ * is folded with comparisons that only feed arithmetic, and the final
+ * subtraction is a masked select.
+ */
+static int from_mont_wide(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx)
+{
+    int len = mont->N->dsize;
+    const OSSL_FN_ULONG *np = mont->N->d;
+    OSSL_FN_ULONG *tp, *ap, v, carry = 0;
+    int i, ret = 0;
+
+    if (!ossl_assert(a->dsize <= 2 * len)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    const void *token = OSSL_FN_CTX_start(ctx);
+    if (token == NULL)
+        return 0;
+
+    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, 2 * (size_t)len);
+    if (T == NULL || OSSL_FN_copy(T, a) == NULL)
+        goto end;
+
+    tp = T->d;
+    for (i = 0; i < len; i++, tp++) {
+        v = bn_mul_add_words(tp, np, len, tp[0] * mont->n0[0]);
+        v = (v + carry + tp[len]) & OSSL_FN_MASK;
+        carry |= (v != tp[len]);
+        carry &= (v <= tp[len]);
+        tp[len] = v;
+    }
+
+    /* The value is now < 2N, in T->d[len .. 2 * len - 1] plus carry */
+    ap = T->d + len;
+    carry -= bn_sub_words(r->d, ap, np, len);
+    for (i = 0; i < len; i++)
+        r->d[i] = (carry & ap[i]) | (~carry & r->d[i]);
+
+    ret = 1;
+end:
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
 }
 
 /*
@@ -583,8 +681,9 @@ size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  *     subtraction was needed does not leak.  The reduction loop rotates
  *     nothing by value; its carries propagate branchlessly.
  *   - What leaks: only public widths -- the limb count len drives the loop
- *     trip count and the buffer size.  No branch or memory access depends on
- *     the values of a, N, n0, or the intermediate T.
+ *     trip count and the buffer size, and a wider |a| selects
+ *     from_mont_wide().  No branch or memory access depends on the values
+ *     of a, N, n0, or the intermediate T.
  *   - The primitives used (bn_mul_add_words, bn_sub_words) scan all len limbs
  *     regardless of value, and OSSL_FN_copy copies a fixed len limbs.
  */
@@ -599,10 +698,12 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
         return 0;
     }
     int len = mont->N->dsize;
-    if (!ossl_assert(r->dsize == len) || !ossl_assert(a->dsize == len)) {
+    if (!ossl_assert(r->dsize == len) || !ossl_assert(a->dsize >= len)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
+    if (a->dsize > len)
+        return from_mont_wide(r, a, mont, ctx);
 
     const void *token = OSSL_FN_CTX_start(ctx);
     if (token == NULL)
@@ -653,6 +754,74 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
         r->d[i] = (carry & T->d[i]) | (~carry & r->d[i]);
 
     ret = 1;
+end:
+    OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+/*
+ * Arena payload size needed by OSSL_FN_mont_reduce().
+ *
+ * Constant-time profile:
+ *   - This function is constant-time; it depends on public widths only.
+ */
+size_t OSSL_FN_mont_reduce_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont)
+{
+    size_t own_size, nested_size;
+
+    if (mont == NULL)
+        return 0;
+
+    /* A NULL |a| is budgeted as the widest operand accepted */
+    OSSL_FN narrow = { .dsize = mont->N->dsize };
+    OSSL_FN widest = { .dsize = 2 * mont->N->dsize };
+    const OSSL_FN *src = a;
+
+    if (a == NULL)
+        src = &widest;
+    else if (a->dsize < mont->N->dsize)
+        src = &narrow;
+
+    own_size = OSSL_FN_CTX_size(1, 1, (size_t)mont->N->dsize);
+    nested_size = ossl_fn_ctx_max_size(
+        OSSL_FN_from_mont_ctx_size(r, src, mont),
+        OSSL_FN_to_mont_quick_ctx_size(r, NULL, mont));
+    return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+/*
+ * r = a mod N, as to_mont_quick(from_mont(a)).  r must have the width of N.
+ * a may be narrower than N, or up to twice as wide provided a < N * R.
+ *
+ * Constant-time profile:
+ *   - What leaks: only public widths.  Both steps are Montgomery reductions
+ *     with masked final subtractions; no division takes place.
+ */
+int OSSL_FN_mont_reduce(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx)
+{
+    if (ossl_unlikely(r == NULL || a == NULL || mont == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    const OSSL_FN *src = a;
+    int ret = 0;
+
+    const void *token = OSSL_FN_CTX_start(ctx);
+    if (token == NULL)
+        return 0;
+
+    if (a->dsize < mont->N->dsize) {
+        OSSL_FN *t = OSSL_FN_CTX_get_limbs(ctx, (size_t)mont->N->dsize);
+
+        if (t == NULL || OSSL_FN_copy(t, a) == NULL)
+            goto end;
+        src = t;
+    }
+    ret = OSSL_FN_from_mont(r, src, mont, ctx)
+        && OSSL_FN_to_mont_quick(r, r, mont, ctx);
 end:
     OSSL_FN_CTX_end(ctx, token);
     return ret;
