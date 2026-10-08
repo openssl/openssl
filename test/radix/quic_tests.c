@@ -1039,20 +1039,6 @@ err:
     return ok;
 }
 
-/*
- * script_5 - script_106 are place holders for tests we
- * currently keep in test/quic_multistream_test.c.
- * We need to move those here so we can get rid off
- * QUIC T-server mock-up.
- *
- * there should be one PR for each script being moved here,
- * to make reviewer's life easier. Once all scripts will be
- * moved we can find better names for script_5, ..., script_106.
- *
- * The scaffolding here hopes to avoid conflicts in 'scripts'
- * array below when more PRs will be in flight.
- */
-
 /* 5. Test stream reset functionality */
 DEF_SCRIPT(script_5, "Test stream reset functionality")
 {
@@ -1916,6 +1902,108 @@ DEF_SCRIPT(script_21, "Fault injection - unknown frame in 1-RTT packet")
     OP_ENGINE_TICK_ENABLE(S);
 
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
+}
+
+struct forbidden_frame_type {
+    uint64_t pkt_type, frame_type, expected_err;
+};
+
+static const struct forbidden_frame_type forbidden_frame_types[] = {
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_VLINT_MAX, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_VLINT_MAX, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR },
+    { QUIC_PKT_TYPE_1RTT, OSSL_QUIC_VLINT_MAX, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR },
+
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAM, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_RESET_STREAM, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STOP_SENDING, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_DATA, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_INITIAL, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAM, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_RESET_STREAM, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STOP_SENDING, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_DATA, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+    { QUIC_PKT_TYPE_HANDSHAKE, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+
+    /* Client uses a zero-length CID so this is not allowed. */
+    { QUIC_PKT_TYPE_1RTT, OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, OSSL_QUIC_ERR_PROTOCOL_VIOLATION },
+};
+
+static int forbidden_frame_client_hello_cb(SSL *s, int *al, void *arg)
+{
+    radix_fault.ch = ossl_quic_conn_get_channel(s);
+    return ossl_quic_channel_set_mutator(radix_fault.ch, radix_fault_mutate,
+        radix_fault_finish, &radix_fault);
+}
+
+DEF_FUNC(arm_forbidden_frame)
+{
+    int ok = 0;
+    SSL *listener;
+
+    REQUIRE_SSL(listener);
+
+    OPENSSL_free((unsigned char *)radix_fault.io.buf);
+    memset(&radix_fault, 0, sizeof(radix_fault));
+    radix_fault.cb = script_21_inject_plain;
+    F_POP2(radix_fault.word0, radix_fault.word1);
+
+    SSL_CTX_set_client_hello_cb(SSL_get_SSL_CTX(listener),
+        forbidden_frame_client_hello_cb, NULL);
+
+    TEST_info("Packet type %llu, frame type %llu",
+        (unsigned long long)radix_fault.word0,
+        (unsigned long long)radix_fault.word1);
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(forbidden_frame_types, "Fault injection - forbidden frame types")
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(forbidden_frame_types); ++i) {
+        OP_CLEAR();
+        OP_NEW_SSL_L_LISTEN(L);
+
+        OP_SELECT_SSL(0, L);
+        OP_PUSH_U64(forbidden_frame_types[i].pkt_type);
+        OP_PUSH_U64(forbidden_frame_types[i].frame_type);
+        OP_FUNC(arm_forbidden_frame);
+
+        OP_NEW_SSL_C(C);
+        OP_SET_PEER_ADDR_FROM(C, L);
+        OP_CONNECT_WAIT_OR_FAIL(C);
+
+        OP_EXPECT_CONN_CLOSE_INFO(C, forbidden_frame_types[i].expected_err, 0, 0);
+    }
 }
 
 /* 22. Fault injection - non-zero packet header reserved bits */
@@ -3939,152 +4027,1462 @@ DEF_SCRIPT(script_69, "Send a TLS KeyUpdate message post-handshake")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN + SSL_AD_UNEXPECTED_MESSAGE, 0, 0);
 }
 
-DEF_SCRIPT(script_70, "place holder for multistrem script_70")
+DEF_SCRIPT(script_70, "Send a TLS NewSessionTicket message with invalid max_early_data")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_MAX_EARLY_DATA(S, 0xfffffffe);
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_NEW_TICKET(S);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
-DEF_SCRIPT(script_71, "place holder for multistrem script_71")
+DEF_SCRIPT(script_71, "Send a TLS NewSessionTicket message with valid max_early_data")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_MAX_EARLY_DATA(S, 0xffffffff);
+    OP_NEW_TICKET(S);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
 }
 
-DEF_SCRIPT(script_72, "place holder for multistrem script_72")
+DEF_SCRIPT(script_72, "Test that APL stops handing out streams after limit reached (bidi)")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /*
+     * Request more streams than a server will initially hand out and test that
+     * they fail properly.
+     */
+    OP_STREAM_LIMIT_PROBE(C, SSL_STREAM_FLAG_NO_BLOCK, 200, 50);
 }
 
-DEF_SCRIPT(script_73, "place holder for multistrem script_73")
+DEF_SCRIPT(script_73, "Test that APL stops handing out streams after limit reached (uni)")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /*
+     * Request more streams than a server will initially hand out and test that
+     * they fail properly.
+     */
+    OP_STREAM_LIMIT_PROBE(C, SSL_STREAM_FLAG_UNI | SSL_STREAM_FLAG_NO_BLOCK, 200, 50);
 }
 
-DEF_SCRIPT(script_74, "place holder for multistrem script_74")
+/*
+ * Check packets to transmit, if we have an initial packet
+ * Modify the version number to something incorrect
+ * so that we trigger a version negotiation
+ * Note, this is a use once function, it will only modify the
+ * first INITIAL packet it sees, after which it needs to be
+ * armed again
+ */
+static int do_mutation_74 = 0;
+static QUIC_PKT_HDR *hdr_to_free_74 = NULL;
+
+static int script_74_alter_version(const QUIC_PKT_HDR *hdrin,
+    const OSSL_QTX_IOVEC *iovecin, size_t numin,
+    QUIC_PKT_HDR **hdrout,
+    const OSSL_QTX_IOVEC **iovecout,
+    size_t *numout,
+    void *arg)
 {
+    *hdrout = OPENSSL_memdup(hdrin, sizeof(QUIC_PKT_HDR));
+    *iovecout = iovecin;
+    *numout = numin;
+    hdr_to_free_74 = *hdrout;
+
+    if (do_mutation_74 == 0)
+        return 1;
+    do_mutation_74 = 0;
+
+    if (hdrin->type == QUIC_PKT_TYPE_INITIAL)
+        (*hdrout)->version = 0xdeadbeef;
+    return 1;
 }
 
-DEF_SCRIPT(script_75, "place holder for multistrem script_75")
+static void script_74_finish_mutation(void *arg)
 {
+    OPENSSL_free(hdr_to_free_74);
 }
 
-DEF_SCRIPT(script_76, "place holder for multistrem script_76")
+/*
+ * Enable the packet mutator for the client channel
+ * So that when we send a Initial packet
+ * We modify the version to be something invalid
+ * to force a version negotiation
+ */
+DEF_FUNC(script_74_arm_packet_mutator)
 {
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+
+    do_mutation_74 = 1;
+    if (!TEST_true(ossl_quic_channel_set_mutator(ch, script_74_alter_version,
+            script_74_finish_mutation, NULL)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_77, "place holder for multistrem script_77")
+DEF_SCRIPT(script_74, "Version negotiation: QUIC_VERSION_1 ignored")
 {
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(script_74_arm_packet_mutator);
+
+    OP_CONNECT_WAIT(C);
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
 }
 
-DEF_SCRIPT(script_78, "place holder for multistrem script_78")
+/*
+ * No channel exists yet for an unaccepted connection, so the usual
+ * RADIX_FAULT channel mutator can't intercept this datagram; filter the
+ * listener's wbio directly instead.
+ */
+#define BIO_TYPE_SCRIPT_75_FILTER (0x80 | BIO_TYPE_FILTER)
+static BIO_METHOD *script_75_filter_meth;
+static uint32_t script_75_word0;
+
+static int script_75_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
 {
+    BIO *next = BIO_next(b);
+    QUIC_PKT_HDR hdr;
+    WPACKET wpkt;
+    size_t written;
+
+    if (next == NULL)
+        return 0;
+
+    if (script_75_word0 != 0 && num_msg > 0) {
+        memset(&hdr, 0, sizeof(hdr));
+        hdr.type = QUIC_PKT_TYPE_VERSION_NEG;
+        hdr.version = 0;
+        hdr.fixed = 1;
+        hdr.dst_conn_id.id_len = 0;
+        hdr.src_conn_id.id_len = 8;
+        memset(hdr.src_conn_id.id, 0x55, 8);
+
+        if (!TEST_true(WPACKET_init_static_len(&wpkt, msg[0].data,
+                msg[0].data_len, 0)))
+            return 0;
+
+        if (!TEST_true(ossl_quic_wire_encode_pkt_hdr(&wpkt, 0, &hdr, NULL))
+            || !TEST_true(WPACKET_put_bytes_u32(&wpkt,
+                script_75_word0 == 1 ? QUIC_VERSION_1 : 0x5432abcd))
+            || !TEST_true(WPACKET_get_total_written(&wpkt, &written))) {
+            WPACKET_cleanup(&wpkt);
+            return 0;
+        }
+        WPACKET_finish(&wpkt);
+
+        msg[0].data_len = written;
+        script_75_word0 = 0;
+    }
+
+    return BIO_sendmmsg(next, msg, stride, num_msg, flags, msgs_processed);
 }
 
-DEF_SCRIPT(script_79, "place holder for multistrem script_79")
+static long script_75_ctrl(BIO *b, int cmd, long larg, void *parg)
 {
+    BIO *next = BIO_next(b);
+
+    if (next == NULL)
+        return -1;
+
+    return BIO_ctrl(next, cmd, larg, parg);
 }
 
-DEF_SCRIPT(script_80, "place holder for multistrem script_80")
+DEF_FUNC(script_75_arm_version_neg)
 {
+    int ok = 0;
+    SSL *listener;
+    BIO *filter, *real_wbio;
+
+    REQUIRE_SSL(listener);
+
+    script_75_word0 = 2; /* unknown version */
+
+    if (script_75_filter_meth == NULL) {
+        if (!TEST_ptr(script_75_filter_meth = BIO_meth_new(
+                          BIO_TYPE_SCRIPT_75_FILTER, "Version Negotiation Filter")))
+            goto err;
+        if (!TEST_true(BIO_meth_set_sendmmsg(script_75_filter_meth,
+                script_75_sendmmsg))
+            || !TEST_true(BIO_meth_set_ctrl(script_75_filter_meth,
+                script_75_ctrl)))
+            goto err;
+    }
+
+    if (!TEST_ptr(real_wbio = SSL_get_wbio(listener)))
+        goto err;
+    if (!TEST_true(BIO_up_ref(real_wbio)))
+        goto err;
+
+    if (!TEST_ptr(filter = BIO_new(script_75_filter_meth))) {
+        BIO_free(real_wbio);
+        goto err;
+    }
+
+    if (!TEST_ptr(BIO_push(filter, real_wbio))) {
+        BIO_free(real_wbio);
+        BIO_free(filter);
+        goto err;
+    }
+
+    SSL_set0_wbio(listener, filter);
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_81, "place holder for multistrem script_81")
+DEF_SCRIPT(script_75, "Version negotiation: Unknown version causes connection abort")
 {
+    OP_NEW_SSL_L_LISTEN(L);
+
+    OP_SELECT_SSL(0, L);
+    OP_FUNC(script_75_arm_version_neg);
+
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+    OP_CONNECT_WAIT_OR_FAIL(C);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CONNECTION_REFUSED, 0, 0);
 }
 
-DEF_SCRIPT(script_82, "place holder for multistrem script_82")
+DEF_FUNC(check_peer_shutdown_wait_76)
 {
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_shutdown_ex(ssl,
+            SSL_SHUTDOWN_FLAG_WAIT_PEER | SSL_SHUTDOWN_FLAG_NO_BLOCK,
+            NULL, 0)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_83, "place holder for multistrem script_83")
+DEF_SCRIPT(script_76, "Test peer-initiated shutdown wait")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    /* Check a WAIT_PEER call doesn't succeed yet. */
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(check_peer_shutdown_wait_76);
+
+    OP_SHUTDOWN_WAIT(S, 0, 42, NULL);
+
+    OP_SHUTDOWN_WAIT(C, SSL_SHUTDOWN_FLAG_WAIT_PEER, 0, NULL);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 42, 1, 1);
 }
 
-DEF_SCRIPT(script_84, "place holder for multistrem script_84")
+DEF_SCRIPT(script_77, "Ensure default stream popping operates correctly")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_ACCEPT, 0);
+
+    OP_NEW_STREAM(S, Sa, 0);
+    OP_WRITE(Sa, "Strawberry", 10);
+
+    OP_READ_EXPECT(C, "Strawberry", 10);
+
+    OP_NEW_STREAM(S, Sb, 0);
+    OP_WRITE(Sb, "xyz", 3);
+
+    OP_ACCEPT_STREAM_WAIT(C, Cb, 0);
+    OP_READ_EXPECT(Cb, "xyz", 3);
 }
 
-DEF_SCRIPT(script_85, "place holder for multistrem script_85")
+static size_t new_session_count_78;
+
+static int on_new_session_78(SSL *s, SSL_SESSION *sess)
 {
+    ++new_session_count_78;
+    return 0; /* do not ref session, we aren't keeping it */
 }
 
-DEF_SCRIPT(script_86, "place holder for multistrem script_86")
+DEF_FUNC(setup_session_78)
 {
+    int ok = 0;
+    SSL *ssl;
+    SSL_CTX *ctx;
+
+    REQUIRE_SSL(ssl);
+    ctx = SSL_get_SSL_CTX(ssl);
+
+    SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_BOTH);
+    SSL_CTX_sess_set_new_cb(ctx, on_new_session_78);
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_87, "place holder for multistrem script_87")
+DEF_FUNC(reset_new_session_count_78)
 {
+    new_session_count_78 = 0;
+    return 1;
 }
 
-DEF_SCRIPT(script_88, "place holder for multistrem script_88")
+DEF_FUNC(check_got_session_ticket_78)
 {
+    return TEST_size_t_gt(new_session_count_78, 0);
 }
 
-DEF_SCRIPT(script_89, "place holder for multistrem script_89")
+DEF_SCRIPT(script_78, "Post-connection session ticket handling")
 {
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(setup_session_78);
+
+    OP_CONNECT_WAIT(C);
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+
+    OP_FUNC(reset_new_session_count_78);
+    OP_NEW_TICKET(S);
+
+    OP_WRITE(Sa, "Strawberry", 10);
+    OP_READ_EXPECT(Ca, "Strawberry", 10);
+
+    OP_FUNC(check_got_session_ticket_78);
+    OP_CHECK_IDLE_TIMEOUT(C, SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
-DEF_SCRIPT(script_90, "place holder for multistrem script_90")
+DEF_SCRIPT(script_79, "Optimised FIN test")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_WRITE_EX2(C, "apple", 5, SSL_WRITE_FLAG_CONCLUDE);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_EXPECT_FIN(Sa);
+    OP_WRITE(Sa, "orange", 6);
+    OP_CONCLUDE(Sa);
+
+    OP_READ_EXPECT(C, "orange", 6);
+    OP_EXPECT_FIN(C);
 }
 
-DEF_SCRIPT(script_91, "place holder for multistrem script_91")
+/* 80. Stateless reset detection test */
+static QUIC_STATELESS_RESET_TOKEN script_80_reset_token = {
+    { 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+        0xde, 0xad, 0xbe, 0xef }
+};
+
+static SSL *script_80_c_ssl;
+static BIO_ADDR *script_80_s_addr;
+
+DEF_FUNC(setup_stateless_reset_80)
 {
+    int ok = 0;
+    SSL *c_ssl, *s_ssl;
+    BIO *s_bio;
+    int s_fd = -1;
+    union BIO_sock_info_u s_info;
+
+    REQUIRE_SSL_2(c_ssl, s_ssl);
+
+    script_80_c_ssl = c_ssl;
+    BIO_ADDR_free(script_80_s_addr);
+
+    if (!TEST_ptr(s_bio = SSL_get_rbio(s_ssl))
+        || !TEST_ptr(script_80_s_addr = BIO_ADDR_new())
+        || !TEST_true(BIO_get_fd(s_bio, &s_fd)) || !TEST_int_ge(s_fd, 0))
+        goto err;
+
+    s_info.addr = script_80_s_addr;
+    if (!TEST_true(BIO_sock_info(s_fd, BIO_SOCK_INFO_ADDRESS, &s_info)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_92, "place holder for multistrem script_92")
+DEF_FUNC(cleanup_stateless_reset_80)
 {
+    BIO_ADDR_free(script_80_s_addr);
+    script_80_s_addr = NULL;
+    script_80_c_ssl = NULL;
+    return 1;
 }
 
-DEF_SCRIPT(script_93, "place holder for multistrem script_93")
+/*
+ * Generate a packet in the following format:
+ * https://www.rfc-editor.org/rfc/rfc9000.html#name-stateless-reset
+ * Stateless Reset {
+ *  Fixed Bits (2): 1
+ *  Unpredictable bits (38..)
+ *  Stateless reset token (128)
+ *  }
+ */
+static int script_80_send_stateless_reset(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    unsigned char databuf[64];
+
+    if (fault->word1 == 0)
+        return 1;
+
+    fault->word1 = 0;
+
+    fprintf(stderr, "Sending stateless reset\n");
+
+    RAND_bytes(databuf, 64);
+    databuf[0] = 0x40;
+    memcpy(&databuf[48], script_80_reset_token.token,
+        sizeof(script_80_reset_token.token));
+
+    if (!TEST_int_eq(SSL_inject_net_dgram(script_80_c_ssl, databuf, sizeof(databuf),
+                         NULL, script_80_s_addr),
+            1))
+        return 0;
+
+    return 1;
 }
 
-DEF_SCRIPT(script_94, "place holder for multistrem script_94")
+static int script_80_gen_new_conn_id(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int rc = 0;
+    size_t l;
+    unsigned char frame_buf[64];
+    WPACKET wpkt;
+    QUIC_CONN_ID new_cid = { 0 };
+    OSSL_QUIC_FRAME_NEW_CONN_ID ncid = { 0 };
+
+    if (fault->word0 == 0)
+        return 1;
+
+    fault->word0 = 0;
+
+    fprintf(stderr, "sending new conn id\n");
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    ossl_quic_channel_get_diag_local_cid(fault->ch, &new_cid);
+
+    ncid.seq_num = 2;
+    ncid.retire_prior_to = 2;
+    ncid.conn_id = new_cid;
+    memcpy(ncid.stateless_reset.token, script_80_reset_token.token,
+        sizeof(script_80_reset_token.token));
+
+    if (!TEST_true(ossl_quic_wire_encode_frame_new_conn_id(&wpkt, &ncid)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
+        goto err;
+
+    if (!radix_fault_prepend_frame(fault, frame_buf, l))
+        goto err;
+
+    rc = 1;
+err:
+    if (rc)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+
+    return rc;
 }
 
-DEF_SCRIPT(script_95, "place holder for multistrem script_95")
+static int script_80_inject_pkt(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    if (fault->word1 == 1)
+        return script_80_send_stateless_reset(fault, hdr, buf, len);
+    else if (fault->word0 == 1)
+        return script_80_gen_new_conn_id(fault, hdr, buf, len);
+
+    return 1;
 }
 
-DEF_SCRIPT(script_96, "place holder for multistrem script_96")
+DEF_SCRIPT(script_80, "Stateless reset detection test")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SELECT_SSL(0, C);
+    OP_SELECT_SSL(1, S);
+    OP_FUNC(setup_stateless_reset_80);
+
+    OP_SET_INJECT_PLAIN(S, script_80_inject_pkt);
+
+    OP_WRITE(C, "apple", 5);
+    OP_CONCLUDE(C);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_SET_INJECT_WORD(1, 0);
+    OP_WRITE(Sa, "apple", 5);
+    OP_READ_EXPECT(C, "apple", 5);
+    OP_SET_INJECT_WORD(0, 1);
+    OP_WRITE(Sa, "apple", 5);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 0, 1);
+
+    OP_FUNC(cleanup_stateless_reset_80);
 }
 
-DEF_SCRIPT(script_97, "place holder for multistrem script_97")
+/* 81. Idle timeout configuration */
+DEF_SCRIPT(script_81, "Idle timeout configuration")
 {
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT, 25000);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 25000);
 }
 
-DEF_SCRIPT(script_98, "place holder for multistrem script_98")
+/* 82. Negotiated default idle timeout if not configured */
+DEF_SCRIPT(script_82, "Negotiated default idle timeout if not configured")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
-DEF_SCRIPT(script_99, "place holder for multistrem script_99")
+/* 83. No late changes to idle timeout */
+DEF_SCRIPT(script_83, "No late changes to idle timeout")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT, 30000, 5000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+        SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000);
 }
 
-DEF_SCRIPT(script_100, "place holder for multistrem script_100")
+/* 84. Test query of available streams */
+DEF_FUNC(check_avail_streams_84)
 {
+    int ok = 0;
+    SSL *ssl;
+    uint64_t kind, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(kind);
+    REQUIRE_SSL(ssl);
+
+    switch (kind) {
+    case 0:
+        if (!TEST_true(SSL_get_quic_stream_bidi_local_avail(ssl, &v)))
+            goto err;
+        break;
+    case 1:
+        if (!TEST_true(SSL_get_quic_stream_bidi_remote_avail(ssl, &v)))
+            goto err;
+        break;
+    case 2:
+        if (!TEST_true(SSL_get_quic_stream_uni_local_avail(ssl, &v)))
+            goto err;
+        break;
+    case 3:
+        if (!TEST_true(SSL_get_quic_stream_uni_remote_avail(ssl, &v)))
+            goto err;
+        break;
+    default:
+        goto err;
+    }
+
+    if (!TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_101, "place holder for multistrem script_101")
+DEF_FUNC(check_write_buf_stat_84)
 {
+    int ok = 0;
+    SSL *ssl;
+    uint64_t used, size, actual_used, avail;
+
+    F_POP(used);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_stream_write_buf_size(ssl, &size))
+        || !TEST_true(SSL_get_stream_write_buf_used(ssl, &actual_used))
+        || !TEST_true(SSL_get_stream_write_buf_avail(ssl, &avail))
+        || !TEST_uint64_t_ge(size, avail)
+        || !TEST_uint64_t_ge(size, actual_used)
+        || !TEST_uint64_t_eq(avail + actual_used, size)
+        || !TEST_uint64_t_eq(actual_used, used))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_102, "place holder for multistrem script_102")
+#define CHECK_AVAIL_84(kind, expected)   \
+    do {                                 \
+        OP_PUSH_U64(kind);               \
+        OP_PUSH_U64(expected);           \
+        OP_SELECT_SSL(0, C);             \
+        OP_FUNC(check_avail_streams_84); \
+    } while (0)
+
+DEF_SCRIPT(script_84, "Test query of available streams")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    CHECK_AVAIL_84(0, 100);
+    CHECK_AVAIL_84(1, 100);
+    CHECK_AVAIL_84(2, 100);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(C, Ca, 0);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 100);
+    CHECK_AVAIL_84(2, 100);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(C, Cb, SSL_STREAM_FLAG_UNI);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 100);
+    CHECK_AVAIL_84(2, 99);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(S, Sc, 0);
+    OP_WRITE(Sc, "x", 1);
+
+    OP_ACCEPT_STREAM_WAIT(C, Cc, 0);
+    OP_READ_EXPECT(Cc, "x", 1);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 99);
+    CHECK_AVAIL_84(2, 99);
+    CHECK_AVAIL_84(3, 100);
+
+    OP_NEW_STREAM(S, Sd, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sd, "x", 1);
+
+    OP_ACCEPT_STREAM_WAIT(C, Cd, 0);
+    OP_READ_EXPECT(Cd, "x", 1);
+
+    CHECK_AVAIL_84(0, 99);
+    CHECK_AVAIL_84(1, 99);
+    CHECK_AVAIL_84(2, 99);
+    CHECK_AVAIL_84(3, 99);
+
+    OP_PUSH_U64(0);
+    OP_SELECT_SSL(0, Ca);
+    OP_FUNC(check_write_buf_stat_84);
+
+    OP_TICK_DISABLE(C);
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+    OP_WRITE(Ca, "apple", 5);
+    OP_PUSH_U64(5);
+    OP_SELECT_SSL(0, Ca);
+    OP_FUNC(check_write_buf_stat_84);
+
+    OP_TICK_ENABLE(C);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
 }
 
-DEF_SCRIPT(script_103, "place holder for multistrem script_103")
+/* 85. Test SSL_poll (lite, non-blocking) */
+DEF_FUNC(script_85_poll)
 {
+    int ok = 0, ret, expected_ret = 1;
+    static const struct timeval timeout = { 0 };
+    size_t result_count, expected_result_count = 0;
+    SSL_POLL_ITEM items[5] = { 0 }, *item = items;
+    SSL *c_a, *c_b, *c_c, *c_d, *c_conn;
+    size_t i;
+    uint64_t mode;
+    uint64_t expected_revents[5] = { 0 };
+
+    F_POP(mode);
+    REQUIRE_SSL_5(c_a, c_b, c_c, c_d, c_conn);
+
+    item->desc = SSL_as_poll_descriptor(c_a);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_b);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_c);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_d);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_conn);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    result_count = SIZE_MAX;
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        &timeout, 0,
+        &result_count);
+
+    switch (mode) {
+    case 0:
+        /* No incoming data yet */
+        expected_revents[0] = SSL_POLL_EVENT_W;
+        expected_revents[1] = SSL_POLL_EVENT_W;
+        expected_revents[2] = SSL_POLL_EVENT_W;
+        expected_revents[3] = SSL_POLL_EVENT_W;
+        expected_revents[4] = SSL_POLL_EVENT_OS;
+        expected_result_count = 5;
+        break;
+    case 1:
+        /* Expect more events */
+        expected_revents[0] = SSL_POLL_EVENT_W | SSL_POLL_EVENT_R;
+        expected_revents[1] = SSL_POLL_EVENT_W | SSL_POLL_EVENT_ER;
+        expected_revents[2] = SSL_POLL_EVENT_EW;
+        expected_revents[3] = SSL_POLL_EVENT_W;
+        expected_revents[4] = SSL_POLL_EVENT_OS | SSL_POLL_EVENT_ISB;
+        expected_result_count = 5;
+        break;
+    default:
+        goto err;
+    }
+
+    ok = 1;
+
+    if (!TEST_int_eq(ret, expected_ret)
+        || !TEST_size_t_eq(result_count, expected_result_count))
+        ok = 0;
+
+    for (i = 0; i < OSSL_NELEM(items); ++i)
+        if (!TEST_uint64_t_eq(items[i].revents, expected_revents[i])) {
+            TEST_error("mismatch at index %zu in poll results, mode %d",
+                i, (int)mode);
+            ok = 0;
+        }
+
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_104, "place holder for multistrem script_104")
+DEF_SCRIPT(script_85, "Test SSL_poll (lite, non-blocking)")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "flamingo", 8);
+
+    OP_NEW_STREAM(C, Cb, 0);
+    OP_WRITE(Cb, "orange", 6);
+
+    OP_NEW_STREAM(C, Cc, 0);
+    OP_WRITE(Cc, "Strawberry", 10);
+
+    OP_NEW_STREAM(C, Cd, 0);
+    OP_WRITE(Cd, "sync", 4);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sb, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sc, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sd, 0);
+
+    /* Check nothing readable yet. */
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, Cb);
+    OP_SELECT_SSL(2, Cc);
+    OP_SELECT_SSL(3, Cd);
+    OP_SELECT_SSL(4, C);
+    OP_PUSH_U64(0);
+    OP_FUNC(script_85_poll);
+
+    /* Send something that will make client sockets readable. */
+    OP_READ_EXPECT(Sa, "flamingo", 8);
+    OP_WRITE(Sa, "herringbone", 11);
+
+    /* Send something that will make 'b' reset. */
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    /* Ensure sync. */
+    OP_READ_EXPECT(Sd, "sync", 4);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(C_BIDI_ID(1) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM);
+    OP_WRITE(Sd, "x", 1);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_READ_EXPECT(Cd, "x", 1);
+
+    /* Send something that will make 'c' reset. */
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(C_BIDI_ID(2) + 1, OSSL_QUIC_FRAME_TYPE_STOP_SENDING);
+    OP_NEW_STREAM(S, Sz, 0);
+    OP_WRITE(Sz, "z", 1);
+
+    /* Ensure sync. */
+    OP_WRITE(Sd, "x", 1);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_READ_EXPECT(Cd, "x", 1);
+
+    /* Check a is now readable. */
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, Cb);
+    OP_SELECT_SSL(2, Cc);
+    OP_SELECT_SSL(3, Cd);
+    OP_SELECT_SSL(4, C);
+    OP_PUSH_U64(1);
+    OP_FUNC(script_85_poll);
 }
 
-DEF_SCRIPT(script_105, "place holder for multistrem script_105")
+/* 86. Event Handling Mode Configuration */
+DEF_SCRIPT(script_86, "Event Handling Mode Configuration")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /* Turn on explicit handling mode. */
+    OP_TICK_DISABLE(C);
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+
+    /*
+     * Create a new stream and write data. This won't get sent
+     * to the network net because we are in explicit mode
+     * and we haven't called SSL_handle_events().
+     */
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    /* Put connection back into implicit handling mode. */
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT);
+
+    /* Override at stream level. */
+    OP_SET_EVENT_HANDLING_MODE(Ca, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+    OP_WRITE(Ca, "orange", 6);
+    OP_CONCLUDE(Ca);
+
+    /*
+     * Confirm the data isn't going to arrive. OP_SLEEP is always undesirable
+     * but we have no reasonable way to synchronise on something not arriving
+     * given all network traffic is essentially stopped and there are no other
+     * signals arriving from the peer which could be used for synchronisation.
+     * Slow OSes will pass this anyway (fail-open).
+     */
+    for (i = 0; i < 20; ++i) {
+        OP_ACCEPT_STREAM_NONE(S, 0);
+        OP_SLEEP(10);
+    }
+
+    /* Now let the data arrive and confirm it arrives. */
+    OP_TICK_ENABLE(C);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "appleorange", 11);
+    OP_EXPECT_FIN(Sa);
+
+    /* Back into explicit mode. */
+    OP_TICK_DISABLE(C);
+    OP_SET_EVENT_HANDLING_MODE(C, SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT);
+    OP_WRITE(Sa, "ok", 2);
+    OP_READ_FAIL(Ca);
+
+    /* Works once event handling is done. */
+    OP_TICK_ENABLE(C);
+    OP_READ_EXPECT(Ca, "ok", 2);
 }
 
-DEF_SCRIPT(script_106, "place holder for multistrem script_106")
+/* 87. Test stream reset functionality */
+DEF_SCRIPT(script_87, "Test stream reset functionality")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_CONCLUDE(Ca);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+    OP_EXPECT_FIN(Sa);
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(Ca, "orange", 6);
+    OP_CONCLUDE(Sa);
+    OP_EXPECT_FIN(Ca);
+    OP_SLEEP(1000);
+    OP_STREAM_RESET_FAIL(Ca, 42);
+}
+
+/* 88. Test SSL_poll (lite, non-blocking) */
+#define POLL_FMT "%s%s%s%s%s%s%s%s%s%s%s%s%s"
+#define POLL_PRINTA(_revents_)                                         \
+    (_revents_) & SSL_POLL_EVENT_F ? "SSL_POLL_EVENT_F " : "",         \
+        (_revents_) & SSL_POLL_EVENT_EL ? "SSL_POLL_EVENT_EL " : "",   \
+        (_revents_) & SSL_POLL_EVENT_EC ? "SSL_POLL_EVENT_EC " : "",   \
+        (_revents_) & SSL_POLL_EVENT_ECD ? "SSL_POLL_EVENT_ECD " : "", \
+        (_revents_) & SSL_POLL_EVENT_ER ? "SSL_POLL_EVENT_ER " : "",   \
+        (_revents_) & SSL_POLL_EVENT_EW ? "SSL_POLL_EVENT_EW " : "",   \
+        (_revents_) & SSL_POLL_EVENT_R ? "SSL_POLL_EVENT_R " : "",     \
+        (_revents_) & SSL_POLL_EVENT_W ? "SSL_POLL_EVENT_W " : "",     \
+        (_revents_) & SSL_POLL_EVENT_IC ? "SSL_POLL_EVENT_IC " : "",   \
+        (_revents_) & SSL_POLL_EVENT_ISB ? "SSL_POLL_EVENT_ISB " : "", \
+        (_revents_) & SSL_POLL_EVENT_ISU ? "SSL_POLL_EVENT_ISU " : "", \
+        (_revents_) & SSL_POLL_EVENT_OSB ? "SSL_POLL_EVENT_OSB " : "", \
+        (_revents_) & SSL_POLL_EVENT_OSU ? "SSL_POLL_EVENT_OSU " : ""
+
+/*
+ * verify SSL_poll() signals SSL_POLL_EVENT_EC event
+ * to notify client it's time to call SSL_shutdown().
+ */
+DEF_FUNC(script_88_poll)
+{
+    int ok = 0, ret, expected_ret = 1;
+    static const struct timeval timeout = { 0 };
+    size_t result_count, processed;
+    SSL_POLL_ITEM items[2] = { 0 }, *item = items;
+    SSL *c_a, *c_conn;
+    size_t i;
+    uint64_t mode;
+    uint64_t expected_revents[2] = { 0 };
+
+    F_POP(mode);
+    REQUIRE_SSL_2(c_a, c_conn);
+
+    item->desc = SSL_as_poll_descriptor(c_a);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    item->desc = SSL_as_poll_descriptor(c_conn);
+    item->events = UINT64_MAX;
+    item->revents = UINT64_MAX;
+    ++item;
+
+    result_count = SIZE_MAX;
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        &timeout, 0,
+        &result_count);
+
+    switch (mode) {
+    case 0:
+        /* No incoming data yet */
+        expected_revents[0] = SSL_POLL_EVENT_W;
+        expected_revents[1] = SSL_POLL_EVENT_OS;
+        break;
+    case 1:
+        /* Expect more events */
+        expected_revents[0] = SSL_POLL_EVENT_R;
+        expected_revents[1] = SSL_POLL_EVENT_OS;
+        break;
+    default:
+        goto err;
+    }
+
+    ok = 1;
+
+    if (!TEST_int_eq(ret, expected_ret))
+        ok = 0;
+
+    /*
+     * Unlike script 85 which always expects all objects
+     * get signaled in single call to SSL_poll() we must
+     * assume here we can get notification for only one.
+     */
+    processed = 0;
+    for (i = 0; i < OSSL_NELEM(items); ++i) {
+        if (items[i].revents == 0)
+            continue;
+
+        processed++;
+        if (!TEST_uint64_t_eq(items[i].revents, expected_revents[i])) {
+            TEST_info("wanted: " POLL_FMT " got: " POLL_FMT,
+                POLL_PRINTA(expected_revents[i]),
+                POLL_PRINTA(items[i].revents));
+            TEST_error("mismatch at index %zu in poll results, mode %d",
+                i, (int)mode);
+            ok = 0;
+        }
+    }
+
+    if (!TEST_size_t_eq(processed, result_count))
+        ok = 0;
+
+err:
+    return ok;
+}
+
+/*
+ * Unlike the mock (whose T-server is serviced by a dedicated background
+ * thread independent of script stepping), radix has no such thread here: a
+ * connection is only ticked between interpreter ops (do_per_op). So rather
+ * than busy-looping over SSL_poll()/OSSL_sleep() within a single op (which
+ * would starve the peer of any ticks for the whole loop), retry one
+ * SSL_poll()/SSL_shutdown() attempt per invocation via F_SPIN_AGAIN() so the
+ * interpreter ticks every object (including the peer) between attempts, same
+ * as any other spin-driven op.
+ */
+DEF_FUNC(script_88_poll_conly)
+{
+    int ok = 0, ret;
+    static const struct timeval timeout = { 0 };
+    size_t result_count;
+    SSL_POLL_ITEM items[1] = { 0 };
+    SSL *c_conn;
+
+    REQUIRE_SSL(c_conn);
+
+    result_count = SIZE_MAX;
+
+    items[0].desc = SSL_as_poll_descriptor(c_conn);
+    items[0].events = UINT64_MAX;
+    items[0].revents = UINT64_MAX;
+
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        &timeout, 0,
+        &result_count);
+    if (!TEST_int_eq(ret, 1))
+        goto err;
+
+    if ((items[0].revents & SSL_POLL_EVENT_EC) == SSL_POLL_EVENT_EC)
+        SSL_shutdown(c_conn);
+
+    if ((items[0].revents & SSL_POLL_EVENT_ECD) != SSL_POLL_EVENT_ECD)
+        F_SPIN_AGAIN();
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_88, "Test SSL_poll (lite, non-blocking)")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+
+    /* Check nothing readable yet. */
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, C);
+    OP_PUSH_U64(0);
+    OP_FUNC(script_88_poll);
+
+    OP_WRITE(Ca, "flamingo", 8);
+    OP_CONCLUDE(Ca);
+
+    /* Send something that will make client sockets readable. */
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "flamingo", 8);
+    OP_WRITE(Sa, "flamingo", 8);
+    OP_CONCLUDE(Sa);
+
+    OP_SELECT_SSL(0, Ca);
+    OP_SELECT_SSL(1, C);
+    OP_PUSH_U64(1);
+    OP_FUNC(script_88_poll);
+
+    OP_READ_EXPECT(Ca, "flamingo", 8);
+
+    /*
+     * client calls non-blocking SSL_shutdown() and gives
+     * server chance to run by calling sleep.
+     */
+    OP_SHUTDOWN_ONCE(C, 0, 0, NULL);
+    OP_SLEEP(100);
+
+    /*
+     * Here we call SSL_poll() and handle SSL_POLL_EVENT_EC
+     * and SSL_POLL_EVENT_ECD on connection object. Whenever
+     * _EC event comes we call SSL_shutdown() to keep connection
+     * draining. We keep calling SSL_poll()/SSL_shutdown() until
+     * SSL_poll() signals SSL_POLL_EVENT_ECD to let us know connection
+     * has dried out and con be closed.
+     */
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(script_88_poll_conly);
+}
+
+/* 89. Max udp payload size configuration */
+DEF_FUNC(check_udp_payload_size_bounds_89)
+{
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_set_feature_request_uint(ssl,
+            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+            QUIC_MIN_INITIAL_DGRAM_LEN - 1))
+        || !TEST_false(SSL_set_feature_request_uint(ssl,
+            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+            QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE + 1)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_89, "Max udp payload size configuration")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(check_udp_payload_size_bounds_89);
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE);
+}
+
+/* 90. Negotiated default max udp payload size if not configured */
+DEF_SCRIPT(script_90, "Negotiated default max udp payload size if not configured")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
+}
+
+/* 91. No late changes to max udp payload size */
+DEF_SCRIPT(script_91, "No late changes to max udp payload size")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        QUIC_MIN_INITIAL_DGRAM_LEN, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN);
+}
+
+/* 92. Connection window configuration */
+DEF_SCRIPT(script_92, "Connection window configuration")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON, 800000);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 800000);
+}
+
+/* 93. Negotiated default connection window if not configured */
+DEF_SCRIPT(script_93, "Negotiated default connection window if not configured")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 768 * 1024);
+}
+
+/* 94. No late changes to connection window */
+DEF_SCRIPT(script_94, "No late changes to connection window")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON, 768 * 1024, 800000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWCON,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024);
+}
+
+/* 95. Bidi stream window configuration */
+DEF_SCRIPT(script_95, "Bidi stream window configuration")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR, 600000);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 600000);
+}
+
+/* 96. Negotiated default bidi stream window if not configured */
+DEF_SCRIPT(script_96, "Negotiated default bidi stream window if not configured")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024);
+}
+
+/* 97. No late changes to bidi stream window */
+DEF_SCRIPT(script_97, "No late changes to bidi stream window")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR, 512 * 1024, 600000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWBSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+}
+
+/* 98. Uni stream window configuration */
+DEF_SCRIPT(script_98, "Uni stream window configuration")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR, 600000);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 600000);
+}
+
+/* 99. Negotiated default uni stream window if not configured */
+DEF_SCRIPT(script_99, "Negotiated default uni stream window if not configured")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024);
+}
+
+/* 100. No late changes to uni stream window */
+DEF_SCRIPT(script_100, "No late changes to uni stream window")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR, 512 * 1024, 600000);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_WINDOWUSTR,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024);
+}
+
+/* 101. Ack delay exponent configuration */
+DEF_SCRIPT(script_101, "Ack delay exponent configuration")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_REJECT_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        QUIC_MAX_ACK_DELAY_EXP + 1);
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        QUIC_DEFAULT_ACK_DELAY_EXP + 1);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP + 1);
+}
+
+/* 102. Negotiated default ack delay exponent if not configured */
+DEF_SCRIPT(script_102, "Negotiated default ack delay exponent if not configured")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP);
+}
+
+/* 103. No late changes to ack delay exponent */
+DEF_SCRIPT(script_103, "No late changes to ack delay exponent")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        QUIC_DEFAULT_ACK_DELAY_EXP, QUIC_DEFAULT_ACK_DELAY_EXP + 1);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP);
+}
+
+/* 104. Max ack delay configuration */
+DEF_SCRIPT(script_104, "Max ack delay configuration")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_REJECT_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        QUIC_MAX_MAX_ACK_DELAY + 1);
+    OP_MODIFY_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        QUIC_DEFAULT_MAX_ACK_DELAY / 2);
+
+    OP_CONNECT_WAIT(C);
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY / 2);
+}
+
+/* 105. Negotiated default max ack delay if not configured */
+DEF_SCRIPT(script_105, "Negotiated default max ack delay if not configured")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY);
+}
+
+/* 106. No late changes to max ack delay */
+DEF_SCRIPT(script_106, "No late changes to max ack delay")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_CANNOT_CHANGE_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        QUIC_DEFAULT_MAX_ACK_DELAY, QUIC_DEFAULT_MAX_ACK_DELAY / 2);
+    OP_CHECK_VALUE_UINT(C, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY);
 }
 
 static int inject_new_cids(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
@@ -4278,4 +5676,5 @@ static SCRIPT_INFO *const scripts[] = {
     USE(script_105),
     USE(script_106),
     USE(new_connid),
+    USE(forbidden_frame_types),
 };
