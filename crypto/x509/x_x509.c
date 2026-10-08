@@ -95,26 +95,15 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
-        OPENSSL_free(ret->propq);
         break;
 
-    case ASN1_OP_DUP_POST: {
-        X509 *old = exarg;
+    case ASN1_OP_GET0_LIBCTX:
+        ossl_x509_get0_libctx(ret, exarg, NULL);
+        break;
 
-        if (!ossl_x509_set0_libctx(ret, old->libctx, old->propq))
-            return 0;
-    } break;
-    case ASN1_OP_GET0_LIBCTX: {
-        OSSL_LIB_CTX **libctx = exarg;
-
-        *libctx = ret->libctx;
-    } break;
-
-    case ASN1_OP_GET0_PROPQ: {
-        const char **propq = exarg;
-
-        *propq = ret->propq;
-    } break;
+    case ASN1_OP_GET0_PROPQ:
+        ossl_x509_get0_libctx(ret, NULL, exarg);
+        break;
 
     default:
         break;
@@ -132,36 +121,20 @@ ASN1_SEQUENCE_ref(X509, x509_cb) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
-/*
- * This should only be used if the X509 object was embedded inside another
- * asn1 object and it needs a libctx to operate.
- * Use X509_new_ex() instead if possible.
- */
-int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
+void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
+    const char **propq)
 {
-    if (x != NULL) {
-        x->libctx = libctx;
-        OPENSSL_free(x->propq);
-        x->propq = NULL;
-        if (propq != NULL) {
-            x->propq = OPENSSL_strdup(propq);
-            if (x->propq == NULL)
-                return 0;
-        }
-    }
-    return 1;
+    if (libctx != NULL)
+        *libctx = NULL;
+    if (propq != NULL)
+        *propq = NULL;
+    if (x->cert_info.key != NULL)
+        (void)ossl_x509_PUBKEY_get0_libctx(libctx, propq, x->cert_info.key);
 }
 
 X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    X509 *cert = NULL;
-
-    cert = (X509 *)ASN1_item_new_ex(ASN1_ITEM_rptr(X509), libctx, propq);
-    if (!ossl_x509_set0_libctx(cert, libctx, propq)) {
-        X509_free(cert);
-        cert = NULL;
-    }
-    return cert;
+    return (X509 *)ASN1_item_new_ex(ASN1_ITEM_rptr(X509), libctx, propq);
 }
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
