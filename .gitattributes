@@ -5,6 +5,11 @@
 test/recipes/15-test_ml_dsa_codecs_data/*.dat   binary
 test/recipes/15-test_ml_kem_codecs_data/*.dat binary
 
+# The symbol files are unordered sets of lines, so two branches adding
+# symbols have no conflict to resolve: take both sides.  A duplicated or
+# contradictory entry is caught when the file is read, not by git.
+util/*.sym                              merge=union
+
 # For git archive
 fuzz/corpora/**                         export-ignore
 Configurations/*.norelease.conf         export-ignore
