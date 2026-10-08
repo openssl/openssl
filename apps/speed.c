@@ -3368,29 +3368,27 @@ int speed_main(int argc, char **argv)
             continue;
 
         st = (dsa_key = get_dsa(dsa_bits[testnum])) != NULL;
-        if (!st) {
-            /* skip only this */
-            dsa_doit[testnum] = 0;
-            if (!mr) {
-                /* space after 'Skip' is to align with 'Doing' */
-                BIO_printf(bio_err, "Skip  %s with get_dsa() failure\n",
-                    dsa_choices[testnum].name);
-            }
-            goto dsa_err_break;
-        }
-
         for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].dsa_sign_ctx[testnum] = EVP_PKEY_CTX_new(dsa_key,
                 NULL);
             loopargs[i].sigsize = loopargs[i].buflen;
-            if (loopargs[i].dsa_sign_ctx[testnum] == NULL
-                || EVP_PKEY_sign_init(loopargs[i].dsa_sign_ctx[testnum]) <= 0
-                || EVP_PKEY_sign(loopargs[i].dsa_sign_ctx[testnum],
-                       loopargs[i].buf2,
-                       &loopargs[i].sigsize,
-                       loopargs[i].buf, 20)
-                    <= 0) {
-                /* this failure tends to be caused by EVP_PKEY_init() not by EVP_PKEY_CTX_new() */
+            if (loopargs[i].dsa_sign_ctx[testnum] == NULL)
+                st = 0;
+            if (st && EVP_PKEY_sign_init(loopargs[i].dsa_sign_ctx[testnum]) <= 0) {
+                /* skip only this */
+                dsa_doit[testnum] = 0;
+                if (!mr) {
+                    /* space after 'Skip' is to align with 'Doing' */
+                    BIO_printf(bio_err, "Skip  %s with EVP_PKEY_sign_init() failure\n",
+                        dsa_choices[testnum].name);
+                }
+                goto dsa_err_break;
+            }
+            if (EVP_PKEY_sign(loopargs[i].dsa_sign_ctx[testnum],
+                    loopargs[i].buf2,
+                    &loopargs[i].sigsize,
+                    loopargs[i].buf, 20)
+                <= 0) {
                 st = 0;
             }
         }
