@@ -51,11 +51,8 @@ static int crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     if (!a || !a->revoked)
         return 1;
     switch (operation) {
-        /*
-         * Just set cmp function here. We don't sort because that would
-         * affect the output of X509_CRL_print().
-         */
     case ASN1_OP_D2I_POST:
+        /* The comparison function orders the entries by serial number */
         (void)sk_X509_REVOKED_set_cmp_func(a->revoked, X509_REVOKED_cmp);
         break;
     }
@@ -312,6 +309,13 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (!crl_set_issuers(crl))
             return 0;
 
+        /*
+         * Sort the revoked entries by serial number for
+         * X509_CRL_get0_by_serial(), after crl_set_issuers() has read them
+         * in their encoded order.
+         */
+        sk_X509_REVOKED_sort(crl->crl.revoked);
+
         if (crl->meth->crl_init) {
             if (crl->meth->crl_init(crl) == 0)
                 return 0;
@@ -392,7 +396,7 @@ static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
     return ret;
 }
 
-ASN1_SEQUENCE_ref(X509_CRL, crl_cb) = {
+ASN1_SEQUENCE_ref_nolock(X509_CRL, crl_cb) = {
     ASN1_EMBED(X509_CRL, crl, X509_CRL_INFO),
     ASN1_EMBED(X509_CRL, sig_alg, X509_ALGOR),
     ASN1_EMBED(X509_CRL, signature, ASN1_BIT_STRING)
@@ -466,7 +470,8 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, const X509 *x)
     return 0;
 }
 
-static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
+static int def_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq)
 {
     if (X509_ALGOR_cmp(&crl->sig_alg, &crl->crl.sig_alg) != 0) {
         ERR_raise(ERR_LIB_X509, X509_R_CRL_SIGNATURE_ALGORITHM_MISMATCH);
@@ -474,7 +479,21 @@ static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
     }
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CRL_INFO),
         &crl->sig_alg, &crl->signature, &crl->crl, NULL,
-        r, crl->libctx, crl->propq);
+        r, libctx, propq);
+}
+
+static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
+{
+    return def_crl_verify_ex(crl, r, crl->libctx, crl->propq);
+}
+
+int ossl_x509_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    /* A custom X509_CRL_METHOD has no library context to be told about */
+    if (crl->meth->crl_verify != def_crl_verify)
+        return X509_CRL_verify(crl, r);
+    return def_crl_verify_ex(crl, r, libctx, propq);
 }
 
 static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,
@@ -508,30 +527,28 @@ static int def_crl_lookup(X509_CRL *crl,
     const X509_NAME *issuer)
 {
     X509_REVOKED rtmp, *rev;
-    int idx, num;
+    int idx, num, sorted;
 
     if (crl->crl.revoked == NULL)
         return 0;
 
-    /*
-     * Sort revoked into serial number order if not already sorted. Do this
-     * under a lock to avoid race condition.
-     */
-    if (!sk_X509_REVOKED_is_sorted(crl->crl.revoked)) {
-        if (!CRYPTO_THREAD_write_lock(crl->lock))
-            return 0;
-        sk_X509_REVOKED_sort(crl->crl.revoked);
-        CRYPTO_THREAD_unlock(crl->lock);
-    }
     rtmp.serialNumber = *serial;
     idx = sk_X509_REVOKED_find(crl->crl.revoked, &rtmp);
     if (idx < 0)
         return 0;
-    /* Need to look for matching name */
+    /*
+     * Need to look for matching name. Entries with the same serial are
+     * adjacent only while the list is sorted: an entry appended after the
+     * CRL was decoded can follow other serials.
+     */
+    sorted = sk_X509_REVOKED_is_sorted(crl->crl.revoked);
     for (num = sk_X509_REVOKED_num(crl->crl.revoked); idx < num; idx++) {
         rev = sk_X509_REVOKED_value(crl->crl.revoked, idx);
-        if (ASN1_INTEGER_cmp(&rev->serialNumber, serial))
-            return 0;
+        if (ASN1_INTEGER_cmp(&rev->serialNumber, serial)) {
+            if (sorted)
+                return 0;
+            continue;
+        }
         if (crl_revoked_issuer_match(crl, issuer, rev)) {
             if (ret)
                 *ret = rev;

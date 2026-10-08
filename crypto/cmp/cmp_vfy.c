@@ -301,8 +301,8 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
 
     if (!check_kid(ctx, X509_get0_subject_key_id(cert), msg->header->senderKID))
         return 0;
-    /* prevent misleading error later in case x509v3_cache_extensions() fails */
-    if (!ossl_x509v3_cache_extensions(cert)) {
+    /* prevent misleading error later in case the cert is invalid */
+    if (X509_check_purpose(cert, -1, 0) != 1) {
         ossl_cmp_warn(ctx, "cert appears to be invalid");
         return 0;
     }

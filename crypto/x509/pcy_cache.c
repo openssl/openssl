@@ -18,89 +18,94 @@ static int policy_data_cmp(const X509_POLICY_DATA *const *a,
     const X509_POLICY_DATA *const *b);
 static int policy_cache_set_int(long *out, ASN1_INTEGER *value);
 
-/*
- * Set cache entry according to CertificatePolicies extension. Note: this
- * destroys the passed CERTIFICATEPOLICIES structure.
+/**
+ * @brief Populate a policy cache from the CertificatePolicies extension.
+ *
+ * Adds one policy data entry per policy, rejecting duplicate policy OIDs.  The
+ * passed CERTIFICATEPOLICIES structure is consumed (freed) by this call.
+ *
+ * @param cache the policy cache to populate
+ * @param policies the decoded CertificatePolicies extension, consumed here
+ * @param crit non-zero if the extension is marked critical
+ * @returns 1 on success, 0 on a fatal error such as a memory allocation
+ *          failure.  Invalid policies, e.g. duplicate OIDs, are not fatal:
+ *          cache->invalid is set and 1 is returned.
  */
-
-static int policy_cache_create(X509 *x,
+static int policy_cache_create(X509_POLICY_CACHE *cache,
     CERTIFICATEPOLICIES *policies, int crit)
 {
-    int i, num, ret = 0;
-    X509_POLICY_CACHE *cache = x->policy_cache;
+    int i, num;
+    int ret = 0;
     X509_POLICY_DATA *data = NULL;
     POLICYINFO *policy;
 
     if ((num = sk_POLICYINFO_num(policies)) <= 0)
-        goto bad_policy;
+        goto done;
     cache->data = sk_X509_POLICY_DATA_new(policy_data_cmp);
     if (cache->data == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-        goto just_cleanup;
+        goto err;
     }
     for (i = 0; i < num; i++) {
         policy = sk_POLICYINFO_value(policies, i);
         data = ossl_policy_data_new(policy, NULL, crit);
         if (data == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_X509_LIB);
-            goto just_cleanup;
+            goto err;
         }
         /*
-         * Duplicate policy OIDs are illegal: reject if matches found.
+         * Duplicate policy OIDs are illegal: flag the cache invalid and stop.
          */
         if (OBJ_obj2nid(data->valid_policy) == NID_any_policy) {
-            if (cache->anyPolicy) {
-                ret = -1;
-                goto bad_policy;
+            if (cache->anyPolicy != NULL) {
+                cache->invalid = 1;
+                goto done;
             }
             cache->anyPolicy = data;
         } else if (sk_X509_POLICY_DATA_find(cache->data, data) >= 0) {
-            ret = -1;
-            goto bad_policy;
+            cache->invalid = 1;
+            goto done;
         } else if (!sk_X509_POLICY_DATA_push(cache->data, data)) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
-            goto bad_policy;
+            goto err;
         }
         data = NULL;
     }
     /* Sort so we can find more quickly */
     sk_X509_POLICY_DATA_sort(cache->data);
+
+done:
     ret = 1;
 
-bad_policy:
-    if (ret == -1)
-        x->ex_flags |= EXFLAG_INVALID_POLICY;
+err:
     ossl_policy_data_free(data);
-just_cleanup:
     sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
-    if (ret <= 0) {
+    if (ret == 0) {
         sk_X509_POLICY_DATA_pop_free(cache->data, ossl_policy_data_free);
         cache->data = NULL;
     }
     return ret;
 }
 
-static int policy_cache_new(X509 *x)
+X509_POLICY_CACHE *ossl_policy_cache_new(const X509 *x)
 {
     X509_POLICY_CACHE *cache;
+    X509_POLICY_CACHE *ret = NULL;
     ASN1_INTEGER *ext_any = NULL;
     POLICY_CONSTRAINTS *ext_pcons = NULL;
     CERTIFICATEPOLICIES *ext_cpols = NULL;
     POLICY_MAPPINGS *ext_pmaps = NULL;
     int i;
 
-    if (x->policy_cache != NULL)
-        return 1;
     cache = OPENSSL_malloc(sizeof(*cache));
     if (cache == NULL)
-        return 0;
+        return NULL;
     cache->anyPolicy = NULL;
     cache->data = NULL;
     cache->any_skip = -1;
     cache->explicit_skip = -1;
     cache->map_skip = -1;
-
-    x->policy_cache = cache;
+    cache->invalid = 0;
 
     /*
      * Handle requireExplicitPolicy *first*. Need to process this even if we
@@ -109,18 +114,26 @@ static int policy_cache_new(X509 *x)
     ext_pcons = X509_get_ext_d2i(x, NID_policy_constraints, &i, NULL);
 
     if (!ext_pcons) {
-        if (i != -1)
-            goto bad_cache;
+        if (i != -1) {
+            cache->invalid = 1;
+            goto done;
+        }
     } else {
         if (!ext_pcons->requireExplicitPolicy
-            && !ext_pcons->inhibitPolicyMapping)
-            goto bad_cache;
+            && !ext_pcons->inhibitPolicyMapping) {
+            cache->invalid = 1;
+            goto done;
+        }
         if (!policy_cache_set_int(&cache->explicit_skip,
-                ext_pcons->requireExplicitPolicy))
-            goto bad_cache;
+                ext_pcons->requireExplicitPolicy)) {
+            cache->invalid = 1;
+            goto done;
+        }
         if (!policy_cache_set_int(&cache->map_skip,
-                ext_pcons->inhibitPolicyMapping))
-            goto bad_cache;
+                ext_pcons->inhibitPolicyMapping)) {
+            cache->invalid = 1;
+            goto done;
+        }
     }
 
     /* Process CertificatePolicies */
@@ -133,48 +146,44 @@ static int policy_cache_new(X509 *x)
     if (!ext_cpols) {
         /* If not absent some problem with extension */
         if (i != -1)
-            goto bad_cache;
-        POLICY_CONSTRAINTS_free(ext_pcons);
-        return 1;
+            cache->invalid = 1;
+        goto done;
     }
 
-    i = policy_cache_create(x, ext_cpols, i);
-
-    /* NB: ext_cpols freed by policy_cache_set_policies */
-
-    if (i <= 0) {
-        POLICY_CONSTRAINTS_free(ext_pcons);
-        return i;
-    }
+    /* NB: ext_cpols freed by policy_cache_create */
+    if (!policy_cache_create(cache, ext_cpols, i))
+        goto err;
 
     ext_pmaps = X509_get_ext_d2i(x, NID_policy_mappings, &i, NULL);
 
     if (!ext_pmaps) {
         /* If not absent some problem with extension */
-        if (i != -1)
-            goto bad_cache;
-    } else {
-        i = ossl_policy_cache_set_mapping(x, ext_pmaps);
-        if (i <= 0)
-            goto bad_cache;
+        if (i != -1) {
+            cache->invalid = 1;
+            goto done;
+        }
+    } else if (!ossl_policy_cache_set_mapping(cache, ext_pmaps)) {
+        goto err;
     }
 
     ext_any = X509_get_ext_d2i(x, NID_inhibit_any_policy, &i, NULL);
 
     if (!ext_any) {
         if (i != -1)
-            goto bad_cache;
-    } else if (!policy_cache_set_int(&cache->any_skip, ext_any))
-        goto bad_cache;
-    goto just_cleanup;
+            cache->invalid = 1;
+    } else if (!policy_cache_set_int(&cache->any_skip, ext_any)) {
+        cache->invalid = 1;
+    }
 
-bad_cache:
-    x->ex_flags |= EXFLAG_INVALID_POLICY;
+done:
+    ret = cache;
+    cache = NULL;
 
-just_cleanup:
+err:
+    ossl_policy_cache_free(cache);
     POLICY_CONSTRAINTS_free(ext_pcons);
     ASN1_INTEGER_free(ext_any);
-    return 1;
+    return ret;
 }
 
 void ossl_policy_cache_free(X509_POLICY_CACHE *cache)
@@ -184,19 +193,6 @@ void ossl_policy_cache_free(X509_POLICY_CACHE *cache)
     ossl_policy_data_free(cache->anyPolicy);
     sk_X509_POLICY_DATA_pop_free(cache->data, ossl_policy_data_free);
     OPENSSL_free(cache);
-}
-
-const X509_POLICY_CACHE *ossl_policy_cache_set(X509 *x)
-{
-
-    if (x->policy_cache == NULL) {
-        if (!CRYPTO_THREAD_write_lock(x->lock))
-            return NULL;
-        policy_cache_new(x);
-        CRYPTO_THREAD_unlock(x->lock);
-    }
-
-    return x->policy_cache;
 }
 
 X509_POLICY_DATA *ossl_policy_cache_find_data(const X509_POLICY_CACHE *cache,

@@ -95,12 +95,9 @@ struct X509_req_st {
     X509_ALGOR sig_alg; /* signature algorithm */
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
-    OSSL_LIB_CTX *libctx;
-    char *propq;
 };
 
 struct X509_crl_info_st {
@@ -142,7 +139,6 @@ struct X509_crl_st {
     /* alternative method to handle this CRL */
     const X509_CRL_METHOD *meth;
     void *meth_data;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_LIB_CTX *libctx;
     char *propq;
@@ -205,16 +201,8 @@ struct x509_st {
     uint32_t ex_kusage;
     uint32_t ex_xkusage;
     uint32_t ex_nscert;
-    ASN1_OCTET_STRING *skid;
-    AUTHORITY_KEYID *akid;
-    X509_POLICY_CACHE *policy_cache;
-    STACK_OF(DIST_POINT) *crldp;
-    STACK_OF(GENERAL_NAME) *altname;
-    NAME_CONSTRAINTS *nc;
-#ifndef OPENSSL_NO_RFC3779
-    STACK_OF(IPAddressFamily) *rfc3779_addr;
-    struct ASIdentifiers_st *rfc3779_asid;
-#endif
+    const ASN1_OCTET_STRING *skid; /* Borrowed from the extension */
+    const AUTHORITY_KEYID *akid; /* Borrowed from the extension */
     /*
      * Internal-use fingerprint for X509_cmp(), see
      * ossl_x509_internal_fingerprint(). Not cryptographically secure and
@@ -222,14 +210,9 @@ struct x509_st {
      */
     unsigned char fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     X509_CERT_AUX *aux;
-    CRYPTO_RWLOCK *lock;
-    volatile int ex_cached;
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
-
-    OSSL_LIB_CTX *libctx;
-    char *propq;
 } /* X509 */;
 
 /*
@@ -338,7 +321,6 @@ struct x509_object_st {
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
-int ossl_x509v3_cache_extensions(const X509 *x);
 
 /**
  * @brief Compute the internal-use fingerprint of a DER-encodable object.
@@ -367,11 +349,104 @@ int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
 X509_NAME *ossl_dist_point_name_full(const struct DIST_POINT_NAME_st *dpn,
     const X509_NAME *iname);
 
-int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Verify a certificate signature, fetching algorithms from @p libctx.
+ *
+ * Like X509_verify(), but the signature algorithm is fetched from the given
+ * library context and property query rather than the certificate's own.
+ *
+ * @param a the certificate to verify
+ * @param r the public key of the issuer
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns 1 if the signature is valid, 0 if not, -1 on error
+ */
+int ossl_x509_verify_ex(const X509 *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq);
+
+/**
+ * @brief Verify a CRL signature, fetching algorithms from @p libctx.
+ *
+ * Like X509_CRL_verify(), but the signature algorithm is fetched from the
+ * given library context and property query rather than the CRL's own. A
+ * CRL with a custom X509_CRL_METHOD is verified by that method, which is
+ * not told about the library context.
+ *
+ * @param crl the CRL to verify
+ * @param r the public key of the issuer
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns 1 if the signature is valid, 0 if not, -1 on error
+ */
+int ossl_x509_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq);
+
+/**
+ * @brief Describe a certificate's signature, fetching from @p libctx.
+ *
+ * Like X509_get_signature_info(), but any digest needed to determine the
+ * security bits is fetched from the given library context and property
+ * query rather than the certificate's own.
+ *
+ * @param x the certificate
+ * @param mdnid where to store the digest NID, may be NULL
+ * @param pknid where to store the public key algorithm NID, may be NULL
+ * @param secbits where to store the security bits, may be NULL
+ * @param flags where to store the X509_SIG_INFO flags, may be NULL
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns 1 if the information is valid, 0 if it is not available
+ */
+int ossl_x509_get_signature_info_ex(const X509 *x, int *mdnid, int *pknid,
+    int *secbits, uint32_t *flags, OSSL_LIB_CTX *libctx, const char *propq);
+
+/**
+ * @brief Digest a certificate with its own signature digest, fetching from
+ *        @p libctx.
+ *
+ * Like X509_digest_sig(), but the digest is fetched from the given library
+ * context and property query rather than the certificate's own.
+ *
+ * @param cert the certificate to digest
+ * @param md_used where to store the digest used, owned by the caller;
+ *                may be NULL
+ * @param md_is_fallback where to store whether a fallback digest was used
+ *                       because the signature algorithm has none; may be NULL
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns the digest as a new ASN1_OCTET_STRING, or NULL on error
+ */
+ASN1_OCTET_STRING *ossl_x509_digest_sig_ex(const X509 *cert,
+    EVP_MD **md_used, int *md_is_fallback,
+    OSSL_LIB_CTX *libctx, const char *propq);
+
+/**
+ * @brief Get the library context and property query of a certificate.
+ *
+ * A certificate has no library context of its own; the one given to
+ * X509_new_ex(), or to the decoder of the structure it is embedded in, is
+ * kept by its X509_PUBKEY, which needs it to decode the public key.
+ *
+ * @param x the certificate
+ * @param libctx where to store the library context, may be NULL
+ * @param propq where to store the property query, may be NULL
+ */
+void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
+    const char **propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
-int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
-    const char *propq);
+/**
+ * @brief Get the library context and property query of a request.
+ *
+ * As for ossl_x509_get0_libctx(): the request has none of its own; the
+ * one given to X509_REQ_new_ex() is kept by its X509_PUBKEY.
+ *
+ * @param x the certificate request
+ * @param libctx where to store the library context, may be NULL
+ * @param propq where to store the property query, may be NULL
+ */
+void ossl_x509_req_get0_libctx(const X509_REQ *x, OSSL_LIB_CTX **libctx,
+    const char **propq);
 int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,
     void *data, unsigned char *md, unsigned int *len,
     OSSL_LIB_CTX *libctx, const char *propq);

@@ -183,24 +183,22 @@ void *X509V3_EXT_d2i(const X509_EXTENSION *ext)
     return method->d2i(NULL, &p, (int)extlen);
 }
 
-/*-
- * Get critical flag and decoded version of extension from a NID.
- * The "idx" variable returns the last found extension and can
- * be used to retrieve multiple extensions of the same NID.
- * However multiple extensions with the same NID is usually
- * due to a badly encoded certificate so if idx is NULL we
- * choke if multiple extensions exist.
- * The "crit" variable is set to the critical value.
- * The return value is the decoded extension or NULL on
- * error. The actual error can have several different causes,
- * the value of *crit reflects the cause:
- * >= 0, extension found but not decoded (reflects critical value).
- * -1 extension not found.
- * -2 extension occurs more than once.
+/**
+ * @brief Find the extension with the given NID in a stack of extensions.
+ * With idx NULL the extension must occur exactly once; with idx non-NULL the
+ * search starts after *idx and *idx is set to the index of the extension
+ * found, so repeated calls walk every occurrence.
+ * @param x the extensions to search, NULL for none
+ * @param nid the NID of the extension
+ * @param crit if non-NULL receives the criticality of the extension found
+ *             (0 or 1), -1 if it is absent, or -2 if it occurs more than
+ *             once and idx is NULL
+ * @param idx NULL, or the index to search after on input and the index of
+ *            the extension found on output, -1 if it is absent
+ * @returns the extension, or NULL if it is absent or occurs more than once
  */
-
-void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
-    int *idx)
+static X509_EXTENSION *find_ext(const STACK_OF(X509_EXTENSION) *x, int nid,
+    int *crit, int *idx)
 {
     int lastpos, i;
     X509_EXTENSION *ex, *found_ex = NULL;
@@ -238,7 +236,7 @@ void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
         /* Found it */
         if (crit)
             *crit = X509_EXTENSION_get_critical(found_ex);
-        return X509V3_EXT_d2i(found_ex);
+        return found_ex;
     }
 
     /* Extension not found */
@@ -247,6 +245,37 @@ void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
     if (crit)
         *crit = -1;
     return NULL;
+}
+
+/*
+ * The caller frees the result. NULL with *crit >= 0 means the extension is
+ * present and does not decode.
+ */
+void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
+    int *idx)
+{
+    X509_EXTENSION *ex = find_ext(x, nid, crit, idx);
+
+    if (ex == NULL)
+        return NULL;
+    return X509V3_EXT_d2i(ex);
+}
+
+int X509V3_get0_value(const STACK_OF(X509_EXTENSION) *x, int nid,
+    const void **value, int *outcome)
+{
+    int crit;
+    const X509_EXTENSION *ex = find_ext(x, nid, &crit, NULL);
+
+    if (ex == NULL) {
+        if (value != NULL)
+            *value = NULL;
+        if (outcome != NULL)
+            *outcome = crit == -2 ? X509_EXT_VALUE_DUPLICATE
+                                  : X509_EXT_VALUE_ABSENT;
+        return 0;
+    }
+    return X509_EXTENSION_get0_value(ex, value, outcome);
 }
 
 /*
