@@ -46,6 +46,8 @@ void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 void OPENSSL_brd31_probe(void);
+void OPENSSL_crypto32_probe(void);
+void OPENSSL_dmf_probe(void);
 
 long OPENSSL_rdtsc_mftb(void);
 long OPENSSL_rdtsc_mfspr268(void);
@@ -318,6 +320,16 @@ void OPENSSL_cpuid_setup(void)
         if (sigsetjmp(ill_jmp, 1) == 0) {
             OPENSSL_crypto207_probe();
             OPENSSL_ppccap_P |= PPC_CRYPTO207;
+        }
+
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            OPENSSL_crypto32_probe();
+            OPENSSL_ppccap_P |= PPC_CRYPTO32;
+        }
+
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            OPENSSL_dmf_probe();
+            OPENSSL_ppccap_P |= PPC_DMF;
         }
     }
 
