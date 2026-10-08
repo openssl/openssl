@@ -991,7 +991,7 @@ static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int role, int direction, int level, uint64_t epoch,
     unsigned char *secret, size_t secretlen,
-    unsigned char *snkey, unsigned char *key, size_t keylen,
+    unsigned char *snkey, const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
     const EVP_CIPHER *snciph,
@@ -1041,7 +1041,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         goto err;
     }
 
-    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key,
         iv, ivlen, mackey, mackeylen,
         snciph, ciph, taglen, mactype, md,
         comp);

@@ -65,6 +65,22 @@ struct ossl_record_template_st {
 typedef struct ossl_record_template_st OSSL_RECORD_TEMPLATE;
 
 /*
+ * A key for the record layer, in whichever of the two forms the key schedule
+ * produced it: raw bytes, or an opaque object from a provider that cannot
+ * export them.  The two are alternatives and never both, so |opaque| says
+ * which arm is live and there is no separate tag to keep in step with it.
+ *
+ * A NULL OSSL_RECORD_KEY pointer means there is no key of that kind at all.
+ */
+struct ossl_record_key_st {
+    EVP_SKEY *opaque;
+    unsigned char *secret;
+    size_t len;
+};
+
+typedef struct ossl_record_key_st OSSL_RECORD_KEY;
+
+/*
  * Rather than a "method" approach, we could make this fetchable - Should we?
  * There could be some complexity in finding suitable record layer implementations
  * e.g. we need to find one that matches the negotiated protocol, cipher,
@@ -120,8 +136,7 @@ struct ossl_record_method_st {
         unsigned char *secret,
         size_t secretlen,
         unsigned char *snkey,
-        unsigned char *key,
-        size_t keylen,
+        const OSSL_RECORD_KEY *key,
         unsigned char *iv,
         size_t ivlen,
         unsigned char *mackey,

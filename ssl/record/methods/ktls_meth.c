@@ -285,7 +285,7 @@ static int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CI
 
 static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     unsigned char *snkey,
-    unsigned char *key, size_t keylen,
+    const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
     const EVP_CIPHER *snciph,
@@ -309,6 +309,13 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (comp != NULL)
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
+    /*
+     * The kernel needs the raw key bytes, so an opaque key rules KTLS out.
+     * Falling back is the whole point of the non-fatal return here.
+     */
+    if (key == NULL || key->opaque != NULL)
+        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+
     /* ktls supports only the maximum fragment size */
     if (rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH)
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
@@ -330,7 +337,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, recseq,
             &crypto_info,
             rl->direction == OSSL_RECORD_DIRECTION_WRITE,
-            iv, ivlen, key, keylen, mackey, mackeylen))
+            iv, ivlen, key->secret, key->len, mackey, mackeylen))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction))
@@ -404,7 +411,7 @@ static int
 ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int role, int direction, int level, uint64_t epoch,
     unsigned char *secret, size_t secretlen,
-    unsigned char *snkey, unsigned char *key, size_t keylen,
+    unsigned char *snkey, const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
     const EVP_CIPHER *snciph,
@@ -430,7 +437,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     (*retrl)->funcs = &ossl_ktls_funcs;
 
-    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key,
         iv, ivlen, mackey, mackeylen,
         snciph, ciph, taglen, mactype, md,
         comp);

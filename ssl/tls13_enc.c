@@ -399,6 +399,86 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
     return 1;
 }
 
+/*
+ * Derive a TLS 1.3 traffic key as an EVP_SKEY, and the IV along with it.
+ *
+ * The same two HKDF-Expand-Label operations as tls13_derive_key() and
+ * tls13_derive_iv(), and therefore the same bytes, but performed as one
+ * derivation that keeps the key opaque -- which is what a provider deriving
+ * on a token needs, having no raw bytes to hand back.  The IV is not secret
+ * and is copied out into |iv| as usual.
+ */
+static int tls13_derive_skey_and_iv(SSL_CONNECTION *s, EVP_KDF *kdf,
+    const EVP_MD *md,
+    const EVP_CIPHER *ciph,
+    const unsigned char *secret,
+    const char *key_purpose,
+    const char *iv_purpose,
+    EVP_SKEY **keyskey,
+    unsigned char *iv, size_t ivlen)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const int isdtls = SSL_CONNECTION_IS_DTLS(s);
+    const unsigned char *label_prefix = isdtls ? label_prefix_dtls13
+                                               : label_prefix_tls13;
+    const size_t label_prefix_len = isdtls ? sizeof(label_prefix_dtls13) - 1
+                                           : sizeof(label_prefix_tls13) - 1;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[8], *p = params;
+    int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
+    const unsigned char *skiv;
+    size_t skivlen, hashlen;
+    int hashleni = EVP_MD_get_size(md);
+    int ret = 0;
+
+    if (hashleni <= 0)
+        goto err;
+    hashlen = (size_t)hashleni;
+
+    if ((kctx = EVP_KDF_CTX_new(kdf)) == NULL)
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        (char *)EVP_MD_get0_name(md), 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (unsigned char *)secret, hashlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (unsigned char *)label_prefix, label_prefix_len);
+    /*
+     * The "key" and "iv" labels are the provider's own; only the prefix
+     * differs between TLS and DTLS.  Naming the cipher lets the provider
+     * settle both the key length and the key type, so no "cipher_key_len" is
+     * given, but the IV length is the protocol's and is stated.
+     */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        (char *)EVP_CIPHER_get0_name(ciph), 0);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &ivlen);
+    if (sctx->propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+            (char *)sctx->propq, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!EVP_KDF_derive_SKEYs(kctx, params))
+        goto err;
+
+    *keyskey = EVP_KDF_CTX_get1_SKEY(kctx, key_purpose, sctx->propq);
+    if (*keyskey == NULL)
+        goto err;
+
+    if (!EVP_KDF_CTX_get0_IV(kctx, iv_purpose, &skiv, &skivlen)
+        || skivlen != ivlen)
+        goto err;
+    memcpy(iv, skiv, ivlen);
+
+    ret = 1;
+err:
+    if (ret == 0)
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
 static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     const EVP_CIPHER *ciph,
     int mac_type,
@@ -409,12 +489,17 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     size_t labellen, unsigned char *secret,
     unsigned char *snkey,
     unsigned char *key, size_t *keylen,
+    EVP_SKEY **keyskey,
+    const char *key_purpose, const char *iv_purpose,
     unsigned char **iv, size_t *ivlen,
     size_t *taglen)
 {
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    EVP_KDF *kdf;
     int hashleni = EVP_MD_get_size(md);
     size_t hashlen;
     int mode, mac_mdleni;
+    int null_cipher_mac, use_skey, ret;
 
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashleni > 0)) {
@@ -430,9 +515,10 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
     }
 
     /* if ciph is NULL cipher, then use new_hash to calculate keylen */
-    if (EVP_CIPHER_is_a(ciph, "NULL")
+    null_cipher_mac = EVP_CIPHER_is_a(ciph, "NULL")
         && mac_md != NULL
-        && mac_type == NID_hmac) {
+        && mac_type == NID_hmac;
+    if (null_cipher_mac) {
         mac_mdleni = EVP_MD_get_size(mac_md);
 
         if (mac_mdleni <= 0) {
@@ -492,10 +578,37 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
         }
     }
 
-    if (!tls13_derive_key(s, md, secret, key, *keylen)
-        || !tls13_derive_iv(s, md, secret, *iv, *ivlen)
-        || (SSL_CONNECTION_IS_DTLS(s)
-            && !dtls13_derive_snkey(s, md, secret, snkey, *keylen))) {
+    /*
+     * An integrity-only ciphersuite has no cipher key at all: what |key|
+     * holds is the HMAC key, which the record layer still needs as bytes.
+     * Report its size so the policy can rule the SKEY path out.
+     */
+    kdf = EVP_KDF_fetch(sctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF, sctx->propq);
+    if (kdf == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_FETCH_FAILED);
+        return 0;
+    }
+    use_skey = ssl_prefer_skey_derivation(s, kdf, ciph,
+        null_cipher_mac ? *keylen : 0);
+    if (use_skey)
+        ret = tls13_derive_skey_and_iv(s, kdf, md, ciph, secret, key_purpose,
+            iv_purpose, keyskey, *iv, *ivlen);
+    else
+        ret = tls13_derive_key(s, md, secret, key, *keylen)
+            && tls13_derive_iv(s, md, secret, *iv, *ivlen);
+    EVP_KDF_free(kdf);
+    if (!ret) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    /*
+     * The DTLS 1.3 sequence number key is not part of a multi-key derivation
+     * -- PKCS#11 has no DTLS mechanism to map it onto -- so it keeps its own
+     * expansion from |secret|, which is raw either way.
+     */
+    if (SSL_CONNECTION_IS_DTLS(s)
+        && !dtls13_derive_snkey(s, md, secret, snkey, *keylen)) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -568,9 +681,13 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     int level;
     int direction = (which & SSL3_CC_READ) != 0 ? OSSL_RECORD_DIRECTION_READ
                                                 : OSSL_RECORD_DIRECTION_WRITE;
+    OSSL_RECORD_KEY cipherkey = { 0 };
+    const char *key_purpose, *iv_purpose;
 
     if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
         || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
+        key_purpose = OSSL_KDF_PURPOSE_CLIENT_KEY;
+        iv_purpose = OSSL_KDF_PURPOSE_CLIENT_IV;
         if ((which & SSL3_CC_EARLY) != 0) {
             EVP_MD_CTX *mdctx = NULL;
             long handlen;
@@ -746,6 +863,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             hash = s->server_finished_hash;
         }
     } else {
+        key_purpose = OSSL_KDF_PURPOSE_SERVER_KEY;
+        iv_purpose = OSSL_KDF_PURPOSE_SERVER_IV;
+
         /* Early data never applies to client-read/server-write */
         if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
@@ -804,9 +924,14 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (!derive_secret_key_and_iv(s, md, cipher, mac_pkey_type, mac_md,
             insecret, hash, label, labellen, secret,
-            snkey, key, &keylen, &iv, &ivlen, &taglen)) {
+            snkey, key, &keylen, &cipherkey.opaque, key_purpose, iv_purpose,
+            &iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
+    }
+    if (cipherkey.opaque == NULL) {
+        cipherkey.secret = key;
+        cipherkey.len = keylen;
     }
 
     if (label == server_application_traffic) {
@@ -885,7 +1010,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     }
 
     if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,
-            hashlen, snkey, key, keylen, iv, ivlen,
+            hashlen, snkey, &cipherkey, iv, ivlen,
             NULL, 0, sncipher, cipher, taglen,
             mac_pkey_type, mac_md, NULL, md)) {
         /* SSLfatal already called */
@@ -901,6 +1026,7 @@ err:
         ssl_evp_cipher_free(cipher);
         ssl_evp_cipher_free(sncipher);
     }
+    EVP_SKEY_free(cipherkey.opaque);
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(snkey, sizeof(snkey));
     OPENSSL_cleanse(secret, sizeof(secret));
@@ -928,6 +1054,8 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     int which = sending ? SSL3_CC_WRITE : SSL3_CC_READ;
     unsigned char iv_intern[EVP_MAX_IV_LENGTH];
     unsigned char *iv = iv_intern;
+    OSSL_RECORD_KEY cipherkey = { 0 };
+    const char *key_purpose, *iv_purpose;
 
     if ((l = EVP_MD_get_size(md)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -935,10 +1063,15 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     }
     hashlen = (size_t)l;
 
-    if (s->server == sending)
+    if (s->server == sending) {
         insecret = s->server_app_traffic_secret;
-    else
+        key_purpose = OSSL_KDF_PURPOSE_SERVER_KEY;
+        iv_purpose = OSSL_KDF_PURPOSE_SERVER_IV;
+    } else {
         insecret = s->client_app_traffic_secret;
+        key_purpose = OSSL_KDF_PURPOSE_CLIENT_KEY;
+        iv_purpose = OSSL_KDF_PURPOSE_CLIENT_IV;
+    }
 
     if (!derive_secret_key_and_iv(s, md,
             s->s3.tmp.new_sym_enc,
@@ -946,9 +1079,14 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
             insecret, NULL,
             application_traffic,
             sizeof(application_traffic) - 1, secret, snkey,
-            key, &keylen, &iv, &ivlen, &taglen)) {
+            key, &keylen, &cipherkey.opaque, key_purpose, iv_purpose,
+            &iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
+    }
+    if (cipherkey.opaque == NULL) {
+        cipherkey.secret = key;
+        cipherkey.len = keylen;
     }
 
     memcpy(insecret, secret, hashlen);
@@ -963,8 +1101,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
 
     if (!ssl_set_new_record_layer(s, s->version, direction,
             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-            insecret, hashlen, snkey, key, keylen,
-            iv, ivlen, NULL, 0,
+            insecret, hashlen, snkey, &cipherkey, iv, ivlen, NULL, 0,
             snenc,
             s->s3.tmp.new_sym_enc,
             taglen, NID_undef, NULL, NULL, md)) {
@@ -980,6 +1117,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     }
     ret = 1;
 err:
+    EVP_SKEY_free(cipherkey.opaque);
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(snkey, sizeof(snkey));
     OPENSSL_cleanse(secret, sizeof(secret));
