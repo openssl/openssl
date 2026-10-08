@@ -35,7 +35,7 @@ my $boundary_test_type = undef;
 my $fatal_alert = undef; # set by filters at expected fatal alerts
 my $proxy_start_success = 0;
 
-plan tests => 34;
+plan tests => 35;
 
 SKIP: {
     skip "TLS 1.2 is disabled", 17 if disabled("tls1_2");
@@ -47,6 +47,31 @@ SKIP: {
     skip "DTLS 1.2 is disabled", 17 if disabled("dtls1_2");
     skip "DTLSProxy does not work on Windows", 17 if $^O =~ /^(MSWin32)$/;
     run_tests(1);
+}
+
+# Test 35: Zero-length TLS 1.2 Handshake records must now be rejected
+# (RFC 5246 §6.2.1 enhancement — receiver-side strictness).
+# We reuse add_empty_recs_filter: it injects one zero-length RT_HANDSHAKE
+# record after the ClientHello (flight 0, client→server). The server hits
+# the new guard and replies with an unexpected_message fatal alert in flight 1
+# (server→client, odd). The filter sets $fatal_alert when it sees that alert.
+SKIP: {
+    skip "TLS 1.2 is disabled", 1 if disabled("tls1_2");
+
+    $fatal_alert = 0;
+    $content_type = TLSProxy::Record::RT_HANDSHAKE;
+    $inject_recs_num = 1;
+    my $proxy = TLSProxy::Proxy->new(
+        \&add_empty_recs_filter,
+        cmdstr(app(["openssl"]), display => 1),
+        srctop_file("apps", "server.pem"),
+        (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+        have_IPv6()
+    );
+    $proxy->serverflags("-tls1_2");
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->start();
+    ok($fatal_alert, "Zero-length TLS 1.2 Handshake record rejected");
 }
 
 sub run_tests
@@ -89,23 +114,23 @@ sub run_tests
     skip "TLSProxy did not start correctly", 21 if $proxy_start_success == 0
                                                    && $run_test_as_dtls == 0;
 
-    #Test 2: Injecting in context empty records should succeed
-    $proxy->clear();
-    $content_type = TLSProxy::Record::RT_HANDSHAKE;
+    #Test 2: Injecting in context empty records should succeed (DTLS only)
     if ($run_test_as_dtls == 1) {
+        $proxy->clear();
+        $content_type = TLSProxy::Record::RT_HANDSHAKE;
         $proxy->serverflags("-min_protocol DTLSv1.2 -max_protocol DTLSv1.2");
         $proxy->clientflags("-max_protocol DTLSv1.2");
+        $proxy_start_success = $proxy->start();
+
+        skip "TLSProxy did not start correctly", 20 if $proxy_start_success == 0;
+
+        ok($proxy_start_success && TLSProxy::Message->success(),
+           "In context empty records test for DTLS");
     } else {
-        $proxy->serverflags("-tls1_2");
-        $proxy->clientflags("-no_tls1_3");
+        SKIP: {
+            skip "Record tests not intended for TLS", 1;
+        }
     }
-    $proxy_start_success = $proxy->start();
-
-    skip "TLSProxy did not start correctly", 20 if $proxy_start_success == 0
-                                                   && $run_test_as_dtls == 1;
-
-    ok($proxy_start_success && TLSProxy::Message->success(),
-       "In context empty records test".($run_test_as_dtls == 1) ? " for DTLS" : " for TLS");
 
     SKIP: {
         skip "Record tests not intended for dtls", 2 if $run_test_as_dtls == 1;
