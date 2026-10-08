@@ -504,6 +504,7 @@ providers/implementations/rands/test_rng.inc
 # Auto generated assembly language source files
 *.s
 !/crypto/*/asm/*.s
+/crypto/ml_dsa/asm/ml_dsa_ntt-armv8.S
 /crypto/*.S
 /crypto/*/*.S
 *.asm
