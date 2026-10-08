@@ -33,6 +33,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added an opt-in CMP client option to require `EnvelopedData` when receiving
+   centrally generated private keys. This allows clients to reject the
+   deprecated `EncryptedValue` alternative and enforce authenticated key
+   delivery as required by the Lightweight CMP Profile (RFC 9483).
+
+   *quickroom*
+   
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys

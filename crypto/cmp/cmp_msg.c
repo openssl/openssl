@@ -14,6 +14,7 @@
 #include "cmp_local.h"
 
 #include <internal/cms.h> /* for ossl_cms_sign_encrypt() */
+#include <internal/crmf.h>
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -1135,6 +1136,11 @@ X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx, const OSSL_CMP_CE
     if (encr_key != NULL) {
         if (!central_keygen) {
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_CENTRAL_GEN_KEY);
+            return NULL;
+        }
+        if (ctx->require_enveloped_data
+            && !ossl_crmf_encryptedkey_is_enveloped_data(encr_key)) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_ENVELOPED_DATA_REQUIRED);
             return NULL;
         }
         /* found encrypted private key, try to extract */

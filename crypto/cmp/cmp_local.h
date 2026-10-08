@@ -93,6 +93,7 @@ struct ossl_cmp_ctx_st {
     STACK_OF(OSSL_CMP_ITAV) *geninfo_ITAVs;
     int implicitConfirm; /* set implicitConfirm in IR/KUR/CR messages */
     int disableConfirm; /* disable certConf in IR/KUR/CR for broken servers */
+    int require_enveloped_data; /* reject EncryptedValue for central keygen */
     STACK_OF(X509) *extraCertsOut; /* to be included in request messages */
 
     /* certificate template */
