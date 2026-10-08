@@ -87,7 +87,14 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
         return -1;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new_u64(rec->seq_num, rdata);
+    /*
+     * DTLS 1.3 sequence numbers restart in every epoch, so records of
+     * different epochs can share one. Key on the epoch as well: the 48-bit
+     * sequence number leaves the top 16 bits for the low bits of the epoch.
+     */
+    item = pitem_new_u64(((rec->epoch & 0xFFFF) << 48)
+            | (rec->seq_num & 0xFFFFFFFFFFFFULL),
+        rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
