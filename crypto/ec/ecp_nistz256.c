@@ -28,6 +28,7 @@
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
+#include "internal/constant_time.h"
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h" /* ossl_fn_get_words(), ossl_fn_get_dsize() */
 #include "ec_local.h"
@@ -1357,6 +1358,7 @@ static int ecp_nistz256_secret_coord(BN_ULONG out[P256_LIMBS], const BIGNUM *in)
     const OSSL_FN_ULONG *w;
     size_t dsize, i;
     OSSL_FN_ULONG hi = 0;
+    int fits;
 
     if (fn == NULL)
         return 0;
@@ -1366,7 +1368,11 @@ static int ecp_nistz256_secret_coord(BN_ULONG out[P256_LIMBS], const BIGNUM *in)
         out[i] = i < dsize ? w[i] : 0;
     for (; i < dsize; i++)
         hi |= w[i];
-    return hi == 0;
+
+    /* Whether the value fits is a validity condition, not a secret */
+    fits = (int)(constant_time_is_zero_bn(hi) & 1);
+    CONSTTIME_DECLASSIFY(&fits, sizeof(fits));
+    return fits;
 }
 
 /*

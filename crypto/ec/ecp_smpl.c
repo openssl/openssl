@@ -219,20 +219,16 @@ int ossl_ec_GFp_simple_group_set_curve(EC_GROUP *group,
         goto err;
 
     /*
-     * Build the field Montgomery context from field_fn, but only for methods
-     * that keep point coordinates in Montgomery form (field_encode != NULL):
-     * the ladder multiplies coordinates with OSSL_FN_mul_mont_quick(), which
-     * is only correct for encoded operands.  Plain-representation methods
-     * (nist, nistp*, simple, sm2) leave it NULL and use field_fn as the plain
-     * modulus instead.
+     * Build the field Montgomery context from field_fn.  Methods that keep
+     * point coordinates in Montgomery form (field_encode != NULL) do their
+     * coordinate arithmetic in it; plain-representation methods (nist,
+     * nistp*, simple, sm2) use it for constant-time field arithmetic such as
+     * converting a secret projective point to affine.
      */
     OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
-    group->fn_mont_ctx = NULL;
-    if (group->meth->field_encode != NULL) {
-        group->fn_mont_ctx = OSSL_FN_MONT_CTX_new(group->field_fn);
-        if (group->fn_mont_ctx == NULL)
-            goto err;
-    }
+    group->fn_mont_ctx = OSSL_FN_MONT_CTX_new(group->field_fn);
+    if (group->fn_mont_ctx == NULL)
+        goto err;
 
     ret = 1;
 
@@ -668,7 +664,8 @@ err:
  * point_get_affine_coordinates().
  *
  * The field inverse is Fermat's Z^(p-2) mod p via OSSL_FN_mod_inverse_prime(),
- * constant-time in the (secret) coordinate for the prime field modulus.
+ * constant-time in the (secret) coordinate for the prime field modulus, and
+ * the multiplications are Montgomery multiplications, never division.
  */
 int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
     const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len)
@@ -679,6 +676,7 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
     OSSL_FN *X = NULL, *Y = NULL, *Z = NULL, *Zinv = NULL, *Z2 = NULL,
             *Z3 = NULL;
     const int is_mont = group->meth->field_encode != NULL;
+    OSSL_FN_MONT_CTX *mont;
     int nlimbs;
     size_t need = 0;
     int ret = 0;
@@ -688,7 +686,8 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
         return 0;
     }
 
-    if ((p_fn = group->field_fn) == NULL) {
+    if ((p_fn = group->field_fn) == NULL
+        || (mont = group->fn_mont_ctx) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         return 0;
     }
@@ -701,11 +700,10 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
      * the field width of an arbitrary curve, so guard the * 6 against overflow.
      */
     need = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, group->fn_mont_ctx),
-        OSSL_FN_mod_mul_ctx_size(p_fn, p_fn, p_fn, p_fn));
-    if (is_mont)
-        need = ossl_fn_ctx_max_size(need,
-            OSSL_FN_from_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx));
+        OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, mont),
+        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+    need = ossl_fn_ctx_max_size(need,
+        OSSL_FN_mont_reduce_ctx_size(NULL, p_fn, mont));
     need = ossl_fn_ctx_add_size(need,
         (size_t)nlimbs > SIZE_MAX / 6 ? 0
                                       : OSSL_FN_CTX_size(1, 6, (size_t)nlimbs * 6));
@@ -729,7 +727,8 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
     /*
      * Read the coordinates through their fixed-width OSSL_FN view, so nothing
      * about their magnitude leaks.  A Montgomery-form method stores them
-     * encoded; decode to plain before the plain modular arithmetic below.
+     * encoded; decode them to plain.  Plain ones are reduced instead, which
+     * the strict-width Montgomery functions below need.
      */
     if (!ossl_ec_fn_read(X, point->X)
         || !ossl_ec_fn_read(Y, point->Y)
@@ -738,9 +737,12 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
         goto err;
     }
     if (is_mont
-        && (!OSSL_FN_from_mont(X, X, group->fn_mont_ctx, fnctx)
-            || !OSSL_FN_from_mont(Y, Y, group->fn_mont_ctx, fnctx)
-            || !OSSL_FN_from_mont(Z, Z, group->fn_mont_ctx, fnctx))) {
+            ? (!OSSL_FN_from_mont(X, X, mont, fnctx)
+                  || !OSSL_FN_from_mont(Y, Y, mont, fnctx)
+                  || !OSSL_FN_from_mont(Z, Z, mont, fnctx))
+            : (!OSSL_FN_mont_reduce(X, X, mont, fnctx)
+                  || !OSSL_FN_mont_reduce(Y, Y, mont, fnctx)
+                  || !OSSL_FN_mont_reduce(Z, Z, mont, fnctx))) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
@@ -753,11 +755,16 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
      * conversion is not skipped for it and adds no secret-dependent timing.
      */
     if (!point->Z_is_one) {
-        if (!OSSL_FN_mod_inverse_prime(Zinv, Z, p_fn, fnctx, group->fn_mont_ctx)
-            || !OSSL_FN_mod_mul(Z2, Zinv, Zinv, p_fn, fnctx)
-            || !OSSL_FN_mod_mul(Z3, Z2, Zinv, p_fn, fnctx)
-            || (x != NULL && !OSSL_FN_mod_mul(X, X, Z2, p_fn, fnctx))
-            || (y != NULL && !OSSL_FN_mod_mul(Y, Y, Z3, p_fn, fnctx))) {
+        /*
+         * Zinv, Z2 and Z3 are kept in Montgomery form, so multiplying the
+         * plain X and Y by them gives plain results.
+         */
+        if (!OSSL_FN_mod_inverse_prime(Zinv, Z, p_fn, fnctx, mont)
+            || !OSSL_FN_to_mont_quick(Zinv, Zinv, mont, fnctx)
+            || !OSSL_FN_mul_mont_quick(Z2, Zinv, Zinv, mont, fnctx)
+            || !OSSL_FN_mul_mont_quick(Z3, Z2, Zinv, mont, fnctx)
+            || (x != NULL && !OSSL_FN_mul_mont_quick(X, X, Z2, mont, fnctx))
+            || (y != NULL && !OSSL_FN_mul_mont_quick(Y, Y, Z3, mont, fnctx))) {
             ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }

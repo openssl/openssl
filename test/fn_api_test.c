@@ -7465,6 +7465,7 @@ static int test_null_params(void)
     OSSL_FN_MONT_CTX_free(slot);
     slot = NULL;
     CHECK_NO_CRASH(OSSL_FN_MONT_CTX_dup(NULL));
+    CHECK_NO_CRASH(OSSL_FN_MONT_CTX_get0_modulus(NULL));
     CHECK_NO_CRASH(OSSL_FN_mul_mont(NULL, a, b, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont(r, NULL, b, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont(r, a, NULL, mont, ctx));
@@ -7490,6 +7491,13 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(NULL, a, mont));
     CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(r, NULL, mont));
     CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick(NULL, a, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick(r, NULL, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick(r, a, mont, NULL));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size(r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_from_mont(NULL, a, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_from_mont(r, NULL, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_from_mont(r, a, NULL, ctx));
@@ -7497,6 +7505,13 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(NULL, a, mont));
     CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, NULL, mont));
     CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(NULL, a, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, NULL, mont, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, a, NULL, ctx));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, a, mont, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(r, a, NULL));
 
     /* fn_lib.c word accessors */
     CHECK_NO_CRASH(OSSL_FN_get_word(NULL));
