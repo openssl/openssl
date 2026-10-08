@@ -1,0 +1,15 @@
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = providers
+
+[providers]
+default = default_provider
+tls-provider = tls_provider
+
+[default_provider]
+activate = 1
+
+[tls_provider]
+activate = 1
+tls-ciphersuite-mode = valid-both

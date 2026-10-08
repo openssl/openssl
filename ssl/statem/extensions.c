@@ -1451,15 +1451,35 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
         if (!SSL_CONNECTION_IS_VERSION13(s))
             ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
         s->servername_done = 0;
-        return 1;
+        break;
 
     case SSL_TLSEXT_ERR_NOACK:
         s->servername_done = 0;
-        return 1;
+        break;
 
     default:
-        return 1;
+        break;
     }
+
+    /*
+     * TLS 1.3 selects its ciphersuite before final SNI processing. A callback
+     * may have changed the per-connection ciphersuite list since selection.
+     */
+#if !defined(OPENSSL_NO_TLS1_3)
+    if (s->server && SSL_CONNECTION_IS_VERSION13(s)
+        && s->s3.tmp.new_cipher != NULL
+        && s->s3.tmp.new_cipher->origin == SSL_CIPHER_ORIGIN_PROVIDER) {
+        const SSL_CIPHER *cipher = ossl_ssl_get0_cipher_canon_enabled(s, s->s3.tmp.new_cipher);
+
+        if (cipher == NULL) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_SHARED_CIPHER);
+            return 0;
+        }
+        s->s3.tmp.new_cipher = cipher;
+    }
+#endif /* !defined(OPENSSL_NO_TLS1_3) */
+
+    return 1;
 }
 
 static int init_session_ticket(SSL_CONNECTION *s, unsigned int context)

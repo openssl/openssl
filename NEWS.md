@@ -29,6 +29,11 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
+  * Providers can add explicitly selected TLS 1.3 ciphersuites through the
+    `TLS-CIPHERSUITE` capability. Sessions that have used such a suite cannot
+    be resumed, cached, serialised or ticketed. Provider suites are unavailable
+    for kTLS, DTLS and QUIC.
+
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
