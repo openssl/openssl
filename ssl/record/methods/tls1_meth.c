@@ -18,7 +18,7 @@
 
 static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     unsigned char *snkey,
-    unsigned char *key, size_t keylen,
+    const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
     const EVP_CIPHER *snciph,
@@ -100,7 +100,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, NULL, enc)
+        if (!tls_cipher_init_key(ciph_ctx, ciph, key, NULL, 0, enc)
             || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
                    (int)ivlen, iv)
                 <= 0) {
@@ -118,12 +118,12 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_CCM_SET_IV_FIXED,
                    (int)ivlen, iv)
                 <= 0
-            || !EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, enc)) {
+            || !tls_cipher_init_key(ciph_ctx, NULL, key, NULL, 0, enc)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
     } else {
-        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, iv, enc)) {
+        if (!tls_cipher_init_key(ciph_ctx, ciph, key, iv, ivlen, enc)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }

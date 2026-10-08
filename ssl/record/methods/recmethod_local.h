@@ -96,7 +96,7 @@ struct record_functions_st {
      */
     int (*set_crypto_state)(OSSL_RECORD_LAYER *rl, int level,
         unsigned char *snkey,
-        unsigned char *key, size_t keylen,
+        const OSSL_RECORD_KEY *key,
         unsigned char *iv, size_t ivlen,
         unsigned char *mackey, size_t mackeylen,
         const EVP_CIPHER *snciph,
@@ -584,6 +584,21 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *templates,
     size_t numtempl);
+
+/**
+ * Initialize cipher context with opaque or raw key
+ *
+ * @param ctx cipher context to initialize
+ * @param cipher the cipher algorithm
+ * @param key opaque SKEY or raw key bytes
+ * @param iv initialization vector
+ * @param ivlen IV length
+ * @param enc 1 for encrypt, 0 for decrypt
+ * @returns 1 on success, 0 on failure
+ */
+int tls_cipher_init_key(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+    const OSSL_RECORD_KEY *key,
+    const unsigned char *iv, size_t ivlen, int enc);
 
 /* Macros/functions provided by the TLS_BUFFER component */
 

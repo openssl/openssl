@@ -187,11 +187,34 @@ int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
     char *file, int line);
 
+/**
+ * Create and configure a new record layer
+ *
+ * @param s SSL connection
+ * @param version protocol version
+ * @param direction read (0) or write (1)
+ * @param level encryption level
+ * @param secret TLS 1.3 traffic secret
+ * @param secretlen secret length
+ * @param snkey sequence number encryption key (DTLS 1.3)
+ * @param key cipher key (opaque or raw)
+ * @param iv initialization vector
+ * @param ivlen IV length
+ * @param mackey MAC key (opaque or raw, TLS 1.2 only)
+ * @param snciph sequence number cipher (DTLS 1.3)
+ * @param ciph record encryption cipher
+ * @param taglen AEAD tag length
+ * @param mactype MAC algorithm NID
+ * @param md MAC digest
+ * @param comp compression method
+ * @param kdfdigest KDF digest for key derivation
+ * @returns 1 on success, 0 on failure
+ */
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int direction, int level,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey,
-    unsigned char *key, size_t keylen,
+    const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
     const EVP_CIPHER *snciph,
