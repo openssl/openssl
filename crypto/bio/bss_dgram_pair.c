@@ -593,9 +593,6 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
     ring_buf_destroy(&b1->rbuf);
     bio1->init = 0;
 
-    if (ring_buf_init(&b1->rbuf, b1->req_buf_len) == 0)
-        return 0;
-
     /*
      * Since one half of the pair is going away, we are now
      * orphaned
@@ -624,6 +621,14 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
      */
     TSAN_BENIGN(b1->pair, "b1 no longer accesses b1->pair");
     b1->pair = NULL;
+
+    /*
+     * Reinstate a private read buffer. Failure to allocate it must not
+     * abort teardown of the shared pair data above.
+     */
+    if (ring_buf_init(&b1->rbuf, b1->req_buf_len) == 0)
+        return 0;
+
     return 1;
 }
 
