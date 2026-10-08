@@ -107,6 +107,14 @@ resumption and the historical servername callback.
 The SSL_client_hello_* family of functions may only be called from code
 executing within a ClientHello callback.
 
+The ClientHello callback runs before the protocol version has been selected,
+and may itself change the set of supported versions. As the server_random
+depends on the selected version, it has not been generated yet when the
+callback runs, so L<SSL_get_server_random(3)> does not return the value of the
+current handshake from within it. Callbacks invoked later in ClientHello
+processing, such as the session ticket, PSK and servername callbacks, can
+observe it.
+
 The SSL_client_hello_get0_*() functions return raw ClientHello data, whereas
 SSL_client_hello_get1_extensions_present() returns only recognized extensions
 (so unknown/GREASE-extensions are not included).
