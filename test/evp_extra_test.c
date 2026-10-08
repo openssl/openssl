@@ -2410,6 +2410,314 @@ err:
 }
 #endif
 
+/*
+ * The EVP layer enforces the life-cycle of life_cycle-mac(7): EVP_MAC_update(),
+ * EVP_MAC_final() and EVP_MAC_finalXOF() must fail on a context that has not
+ * been initialised, and once EVP_MAC_final() or EVP_MAC_finalXOF() has been
+ * called they must fail again until the context is re-initialised,
+ * irrespective of what the underlying MAC implementation would do.
+ */
+typedef struct {
+    const char *name;
+    const char *subalg_param; /* OSSL_MAC_PARAM_DIGEST/_CIPHER or NULL */
+    const char *subalg;
+    size_t keylen;
+    int needs_iv; /* The IV has to be supplied on every init (GMAC) */
+    int null_key_reinit; /* EVP_MAC_init() with a NULL key re-initialises */
+} MAC_LIFE_CYCLE_TEST;
+
+static const MAC_LIFE_CYCLE_TEST mac_life_cycle_tests[] = {
+    { "HMAC", OSSL_MAC_PARAM_DIGEST, "SHA256", 32, 0, 1 },
+    { "KMAC128", NULL, NULL, 32, 0, 1 },
+    { "GMAC", OSSL_MAC_PARAM_CIPHER, "AES-128-GCM", 16, 1, 1 },
+#ifndef OPENSSL_NO_CMAC
+    { "CMAC", OSSL_MAC_PARAM_CIPHER, "AES-128-CBC", 16, 0, 1 },
+#endif
+#ifndef OPENSSL_NO_POLY1305
+    { "Poly1305", NULL, NULL, 32, 0, 0 },
+#endif
+#ifndef OPENSSL_NO_SIPHASH
+    { "SipHash", NULL, NULL, 16, 0, 1 },
+#endif
+};
+
+static int test_evp_mac_life_cycle(int idx)
+{
+    const MAC_LIFE_CYCLE_TEST *t = &mac_life_cycle_tests[idx];
+    int ret = 0;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL, *dup = NULL, *pre = NULL;
+    OSSL_PARAM init_params[3], reinit_params[2], bad_params[2], *p;
+    static const unsigned char data[] = "EVP_MAC life-cycle enforcement";
+    unsigned char key[32], iv[12];
+    unsigned char mac1[EVP_MAX_MD_SIZE], mac2[EVP_MAX_MD_SIZE];
+    size_t mac1len = 0, mac2len = 0, i;
+
+    for (i = 0; i < sizeof(key); i++)
+        key[i] = (unsigned char)(0x10 + i);
+    for (i = 0; i < sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xa0 + i);
+
+    p = init_params;
+    if (t->subalg != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(t->subalg_param,
+            (char *)t->subalg, 0);
+    if (t->needs_iv)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+            iv, sizeof(iv));
+    *p = OSSL_PARAM_construct_end();
+    p = reinit_params;
+    if (t->needs_iv)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+            iv, sizeof(iv));
+    *p = OSSL_PARAM_construct_end();
+    /* An unknown sub-algorithm, for the implementations that take one */
+    bad_params[0] = OSSL_PARAM_construct_utf8_string(t->subalg_param,
+        (char *)"no-such-algorithm", 0);
+    bad_params[1] = OSSL_PARAM_construct_end();
+
+    ERR_clear_error();
+    if (!TEST_ptr(mac = EVP_MAC_fetch(testctx, t->name, testpropq))
+        || !TEST_ptr(ctx = EVP_MAC_CTX_new(mac)))
+        goto err;
+
+    /* Nothing but parameters and initialisation is accepted before init */
+    if (!TEST_false(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED)
+        || !TEST_false(EVP_MAC_final(ctx, mac1, &mac1len, sizeof(mac1)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED)
+        || !TEST_false(EVP_MAC_finalXOF(ctx, mac1, sizeof(mac1)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED)
+        || !TEST_true(EVP_MAC_final(ctx, NULL, &mac1len, 0))
+        || !TEST_true(EVP_MAC_CTX_set_params(ctx, init_params)))
+        goto err;
+
+    /*
+     * A failed initialisation leaves the context uninitialised.  Use an
+     * unknown sub-algorithm where there is one, a one byte key otherwise.
+     */
+    if (!TEST_false(t->subalg_param != NULL
+                ? EVP_MAC_init(ctx, key, t->keylen, bad_params)
+                : EVP_MAC_init(ctx, key, 1, init_params)))
+        goto err;
+    ERR_clear_error();
+    if (!TEST_false(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED))
+        goto err;
+
+    /*
+     * A copy of an uninitialised context is uninitialised too.  Not every
+     * implementation can copy an unkeyed context (CMAC cannot), so only
+     * check the copy when there is one.
+     */
+    if ((dup = EVP_MAC_CTX_dup(ctx)) != NULL
+        && (!TEST_false(EVP_MAC_update(dup, data, sizeof(data)))
+            || !TEST_err_r(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED)))
+        goto err;
+    EVP_MAC_CTX_free(dup);
+    dup = NULL;
+    ERR_clear_error();
+
+    /* Output can be produced straight after initialisation (empty input) */
+    if (!TEST_true(EVP_MAC_init(ctx, key, t->keylen, init_params))
+        || !TEST_true(EVP_MAC_final(ctx, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_size_t_gt(mac2len, 0)
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+
+    /* Regular use, ending with EVP_MAC_final() */
+    if (!TEST_true(EVP_MAC_init(ctx, key, t->keylen, init_params))
+        || !TEST_true(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_ptr(pre = EVP_MAC_CTX_dup(ctx))
+        || !TEST_true(EVP_MAC_final(ctx, mac1, &mac1len, sizeof(mac1)))
+        || !TEST_size_t_gt(mac1len, 0))
+        goto err;
+
+    /* A copy of an initialised context can be used on its own */
+    if (!TEST_true(EVP_MAC_init(ctx, key, t->keylen, init_params))
+        || !TEST_ptr(dup = EVP_MAC_CTX_dup(ctx))
+        || !TEST_true(EVP_MAC_update(dup, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(dup, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_mem_eq(mac2, mac2len, mac1, mac1len))
+        goto err;
+    EVP_MAC_CTX_free(dup);
+    dup = NULL;
+
+    /* Input may be split over several updates */
+    if (!TEST_true(EVP_MAC_update(ctx, data, 1))
+        || !TEST_true(EVP_MAC_update(ctx, data + 1, sizeof(data) - 1))
+        || !TEST_true(EVP_MAC_final(ctx, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_mem_eq(mac2, mac2len, mac1, mac1len))
+        goto err;
+
+    /* Re-initialising after input discards that input */
+    if (!TEST_true(EVP_MAC_init(ctx, key, t->keylen, init_params))
+        || !TEST_true(EVP_MAC_update(ctx, iv, sizeof(iv)))
+        || !TEST_true(EVP_MAC_init(ctx, key, t->keylen, init_params))
+        || !TEST_true(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(ctx, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_mem_eq(mac2, mac2len, mac1, mac1len))
+        goto err;
+
+    /* A copy taken before finalisation is unaffected by it */
+    if (!TEST_true(EVP_MAC_final(pre, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_mem_eq(mac2, mac2len, mac1, mac1len)
+        || !TEST_false(EVP_MAC_update(pre, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR))
+        goto err;
+
+    /* The context is now finalised: no more input, no more output */
+    if (!TEST_false(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR)
+        || !TEST_false(EVP_MAC_update(ctx, data, 0))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR)
+        || !TEST_false(EVP_MAC_final(ctx, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_FINAL_ERROR)
+        || !TEST_false(EVP_MAC_finalXOF(ctx, mac2, sizeof(mac2)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_FINAL_ERROR))
+        goto err;
+
+    /* Querying the output length and parameter access do not touch the state */
+    if (!TEST_true(EVP_MAC_final(ctx, NULL, &mac2len, 0))
+        || !TEST_size_t_eq(mac2len, mac1len)
+        || !TEST_size_t_eq(EVP_MAC_CTX_get_mac_size(ctx), mac1len)
+        || !TEST_true(EVP_MAC_CTX_set_params(ctx, reinit_params))
+        || !TEST_false(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR))
+        goto err;
+
+    /* A copy of a finalised context is finalised too */
+    if (!TEST_ptr(dup = EVP_MAC_CTX_dup(ctx))
+        || !TEST_false(EVP_MAC_update(dup, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR)
+        || !TEST_false(EVP_MAC_final(dup, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_FINAL_ERROR))
+        goto err;
+
+    /* Re-initialising the finalised copy makes it usable again */
+    if (!TEST_true(EVP_MAC_init(dup, key, t->keylen, init_params))
+        || !TEST_true(EVP_MAC_update(dup, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(dup, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_mem_eq(mac2, mac2len, mac1, mac1len))
+        goto err;
+
+    if (t->null_key_reinit) {
+        /* Re-initialisation with the previously set key */
+        if (!TEST_true(EVP_MAC_init(ctx, NULL, 0, reinit_params))
+            || !TEST_true(EVP_MAC_update(ctx, data, sizeof(data)))
+            || !TEST_true(EVP_MAC_final(ctx, mac2, &mac2len, sizeof(mac2)))
+            || !TEST_mem_eq(mac2, mac2len, mac1, mac1len))
+            goto err;
+    } else {
+        /* A failed re-initialisation leaves the context finalised */
+        if (!TEST_false(EVP_MAC_init(ctx, NULL, 0, reinit_params)))
+            goto err;
+        ERR_clear_error();
+        if (!TEST_false(EVP_MAC_update(ctx, data, sizeof(data)))
+            || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR))
+            goto err;
+    }
+
+    /* A successful re-initialisation with a key must not leave errors behind */
+    ERR_clear_error();
+    if (!TEST_true(EVP_MAC_init(ctx, key, t->keylen, init_params))
+        || !TEST_true(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(ctx, mac2, &mac2len, sizeof(mac2)))
+        || !TEST_mem_eq(mac2, mac2len, mac1, mac1len)
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(pre);
+    EVP_MAC_CTX_free(dup);
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    return ret;
+}
+
+static const char *const mac_xof_life_cycle_names[] = { "KMAC128", "KMAC256" };
+
+/* Same as above, but the context is finalised with EVP_MAC_finalXOF() */
+static int test_evp_mac_life_cycle_xof(int idx)
+{
+    int ret = 0;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL, *dup = NULL;
+    static const unsigned char data[] = "EVP_MAC life-cycle enforcement";
+    static const unsigned char key[32] = { 0 };
+    unsigned char out1[64], out2[sizeof(out1)];
+    size_t len = 0, outlen = sizeof(out1);
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &outlen);
+    params[1] = OSSL_PARAM_construct_end();
+
+    ERR_clear_error();
+    if (!TEST_ptr(mac = EVP_MAC_fetch(testctx, mac_xof_life_cycle_names[idx],
+                      testpropq))
+        || !TEST_ptr(ctx = EVP_MAC_CTX_new(mac)))
+        goto err;
+
+    /* Nothing is accepted before initialisation */
+    if (!TEST_false(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED)
+        || !TEST_false(EVP_MAC_finalXOF(ctx, out1, sizeof(out1)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED))
+        goto err;
+    ERR_clear_error();
+
+    /* Output can be produced straight after initialisation (empty input) */
+    if (!TEST_true(EVP_MAC_init(ctx, key, sizeof(key), params))
+        || !TEST_true(EVP_MAC_finalXOF(ctx, out2, sizeof(out2)))
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+
+    /* Regular use, ending with EVP_MAC_finalXOF() */
+    if (!TEST_true(EVP_MAC_init(ctx, key, sizeof(key), params))
+        || !TEST_true(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_finalXOF(ctx, out1, sizeof(out1))))
+        goto err;
+
+    /* The context is now finalised: no more input, no more output */
+    if (!TEST_false(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR)
+        || !TEST_false(EVP_MAC_finalXOF(ctx, out2, sizeof(out2)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_FINAL_ERROR)
+        || !TEST_false(EVP_MAC_final(ctx, out2, &len, sizeof(out2)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_FINAL_ERROR))
+        goto err;
+
+    /* Querying the output length still works */
+    if (!TEST_true(EVP_MAC_final(ctx, NULL, &len, 0))
+        || !TEST_size_t_eq(len, sizeof(out1)))
+        goto err;
+
+    /* A copy of a finalised context is finalised too */
+    if (!TEST_ptr(dup = EVP_MAC_CTX_dup(ctx))
+        || !TEST_false(EVP_MAC_update(dup, data, sizeof(data)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_UPDATE_ERROR)
+        || !TEST_false(EVP_MAC_finalXOF(dup, out2, sizeof(out2)))
+        || !TEST_err_r(ERR_LIB_EVP, EVP_R_FINAL_ERROR))
+        goto err;
+
+    /* Re-initialisation with the previously set key starts afresh */
+    ERR_clear_error();
+    if (!TEST_true(EVP_MAC_init(ctx, NULL, 0, NULL))
+        || !TEST_true(EVP_MAC_update(ctx, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_finalXOF(ctx, out2, sizeof(out2)))
+        || !TEST_mem_eq(out2, sizeof(out2), out1, sizeof(out1))
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(dup);
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    return ret;
+}
+
 static int test_d2i_AutoPrivateKey(int i)
 {
     int ret = 0;
@@ -9848,6 +10156,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_POLY1305
     ADD_TEST(test_evp_mac_poly1305_no_key);
 #endif
+    ADD_ALL_TESTS(test_evp_mac_life_cycle, OSSL_NELEM(mac_life_cycle_tests));
+    ADD_ALL_TESTS(test_evp_mac_life_cycle_xof, OSSL_NELEM(mac_xof_life_cycle_names));
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
