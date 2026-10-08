@@ -293,8 +293,9 @@ structure. The parameters are encoded using a PKCS#3 DHparameter
 structure.
 
 The B<X509> functions process an X509 certificate using an X509
-structure. They will also process a trusted X509 certificate but
-any trust settings are discarded.
+structure. They will not process a trusted X509 certificate (a PEM
+block of type "TRUSTED CERTIFICATE"); use the B<X509_AUX> functions
+to read those.
 
 The B<X509_ACERT> functions process an X509 attribute certificate using
 an X509_ACERT structure.
