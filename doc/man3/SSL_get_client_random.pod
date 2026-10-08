@@ -74,6 +74,52 @@ Finally, though the "client_random" and "server_random" values are called
 "random", many TLS implementations will generate four bytes of those
 values based on their view of the current time.
 
+On the server side the server_random value is generated during ClientHello
+processing, after the protocol version has been selected and the ClientHello
+has passed its initial checks (such as DTLS cookie verification and cipher
+list validation), but before the session is looked up. It is therefore
+available to callbacks invoked from that point on, such as the session ticket
+callbacks, the servername callback and the PSK callbacks (see
+L<SSL_CTX_set_psk_find_session_callback(3)> and
+L<SSL_CTX_set_psk_server_callback(3)>), including in (D)TLSv1.3. It is not yet
+available to the ClientHello callback (see L<SSL_CTX_set_client_hello_cb(3)>)
+or to the DTLS cookie verification callback (see
+L<SSL_CTX_set_cookie_verify_cb(3)>). The final eight bytes of the
+server_random carry the downgrade protection sentinel (RFC 8446 section 4.1.3)
+whose value depends on the selected protocol version, and the ClientHello
+callback is permitted to change the set of supported versions, so the version
+cannot be selected before that callback has run. The cookie verification
+callback runs before any per-connection resources are committed to a
+ClientHello whose source address has not yet been validated, so the
+server_random is deliberately not generated until it has succeeded. From
+within these two callbacks SSL_get_server_random() does not return the value
+of the current handshake but whatever the B<SSL> object currently holds: all
+zeros if no server_random has been generated on it yet, the value of the
+previous handshake on this B<SSL> object, or, while processing the second
+ClientHello after a HelloRetryRequest, the value generated for the first
+ClientHello. A fresh server_random is generated for each ClientHello that
+reaches the session lookup, so after a HelloRetryRequest only the one
+generated for the final ClientHello is sent to the client. A DTLS ClientHello
+that is answered with a HelloVerifyRequest does not reach that point, so no
+server_random is generated for it. When Encrypted ClientHello (ECH) is
+accepted, the final eight bytes
+of the server_random are replaced with the ECH acceptance confirmation while
+the ServerHello is being constructed, so a value observed from a callback
+before that point will differ in those bytes from the value sent to the
+client. On the client side the value is available once the ServerHello has
+been received.
+
+These functions also work on QUIC connection SSL objects, where they return
+the values from the underlying TLS handshake, including from within TLS
+callbacks such as the server side PSK callbacks. On QUIC stream SSL objects
+they return 0. Like other functions reporting TLS handshake state, on a QUIC
+connection they read the handshake layer without taking the QUIC connection
+lock. In thread assisted mode (see L<OSSL_QUIC_client_thread_method(3)>) the
+background thread may be progressing the handshake concurrently, so an
+application must only call these functions either once the handshake has
+completed, for example after L<SSL_connect(3)> or L<SSL_do_handshake(3)> has
+returned 1, or from within a callback invoked by the handshake itself. In both
+cases the values can no longer change concurrently.
 
 =head1 RETURN VALUES
 

@@ -1336,10 +1336,23 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
     return 1;
 }
 
+/*
+ * The server random as observed from within find_session_cb(). Prior to the
+ * fix for issue #26404 the server random was generated only after the
+ * ClientHello extensions had been processed, so a PSK callback observed an
+ * all-zero value.
+ */
+static unsigned char cb_server_random[SSL3_RANDOM_SIZE];
+static size_t cb_server_random_len;
+
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
     size_t identity_len, SSL_SESSION **sess)
 {
     find_session_cb_cnt++;
+
+    memset(cb_server_random, 0, sizeof(cb_server_random));
+    cb_server_random_len = SSL_get_server_random(ssl, cb_server_random,
+        sizeof(cb_server_random));
 
     if (serverpsk == NULL || !SSL_SESSION_up_ref(serverpsk))
         return 0;
@@ -1359,38 +1372,65 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 static int test_quic_psk(void)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
-    SSL *clientquic = NULL;
+    SSL *c = NULL;
     QUIC_TSERVER *qtserv = NULL;
+    SSL *stream = NULL;
+    unsigned char zeros[SSL3_RANDOM_SIZE] = { 0 };
+    unsigned char snonce[SSL3_RANDOM_SIZE];
+    unsigned char cnonce[SSL3_RANDOM_SIZE];
     int testresult = 0;
 
     if (!TEST_ptr(cctx)
         /* No cert or private key for the server, i.e. PSK only */
         || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, NULL,
-            NULL, 0, &qtserv,
-            &clientquic, NULL, NULL)))
+            NULL, 0, &qtserv, &c, NULL, NULL)))
         goto end;
 
-    SSL_set_psk_use_session_callback(clientquic, use_session_cb);
+    SSL_set_psk_use_session_callback(c, use_session_cb);
     ossl_quic_tserver_set_psk_find_session_cb(qtserv, find_session_cb);
     use_session_cb_cnt = 0;
     find_session_cb_cnt = 0;
 
-    clientpsk = serverpsk = create_a_psk(clientquic, SHA384_DIGEST_LENGTH);
+    clientpsk = serverpsk = create_a_psk(c, SHA384_DIGEST_LENGTH);
     /* We already had one ref. Add another one */
     if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
         goto end;
 
-    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic))
+    if (!TEST_true(qtest_create_quic_connection(qtserv, c))
         || !TEST_int_eq(1, find_session_cb_cnt)
         || !TEST_int_eq(1, use_session_cb_cnt)
         /* Check that we actually used the PSK */
-        || !TEST_true(SSL_session_reused(clientquic)))
+        || !TEST_true(SSL_session_reused(c)))
+        goto end;
+
+    /*
+     * The server PSK callback must have observed the server random actually
+     * used in the handshake. The client side SSL object is a QUIC connection
+     * object, on which SSL_get_server_random() and SSL_get_client_random()
+     * report the values from the underlying TLS handshake.
+     */
+    if (!TEST_size_t_eq(cb_server_random_len, SSL3_RANDOM_SIZE)
+        || !TEST_mem_ne(cb_server_random, sizeof(cb_server_random),
+            zeros, sizeof(zeros))
+        || !TEST_size_t_eq(SSL_get_server_random(c, snonce, sizeof(snonce)),
+            SSL3_RANDOM_SIZE)
+        || !TEST_mem_eq(cb_server_random, sizeof(cb_server_random),
+            snonce, sizeof(snonce))
+        || !TEST_size_t_eq(SSL_get_client_random(c, cnonce, sizeof(cnonce)),
+            SSL3_RANDOM_SIZE))
+        goto end;
+
+    /* On a QUIC stream object the getters are not applicable and return 0 */
+    if (!TEST_ptr(stream = SSL_new_stream(c, 0))
+        || !TEST_size_t_eq(SSL_get_server_random(stream, snonce, sizeof(snonce)), 0)
+        || !TEST_size_t_eq(SSL_get_client_random(stream, cnonce, sizeof(cnonce)), 0))
         goto end;
 
     testresult = 1;
 
 end:
-    SSL_free(clientquic);
+    SSL_free(stream);
+    SSL_free(c);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
     SSL_SESSION_free(clientpsk);
