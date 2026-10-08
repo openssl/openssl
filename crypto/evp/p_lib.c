@@ -1770,9 +1770,16 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
     EVP_KEYMGMT **keymgmt,
     const char *propquery)
 {
+    return evp_pkey_export_to_provider_ex(pk, libctx, keymgmt, propquery,
+        OSSL_KEYMGMT_SELECT_ALL);
+}
+
+void *evp_pkey_export_to_provider_ex(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
+    EVP_KEYMGMT **keymgmt,
+    const char *propquery, int selection)
+{
     EVP_KEYMGMT *allocated_keymgmt = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
-    int selection = OSSL_KEYMGMT_SELECT_ALL;
     void *keydata = NULL;
     int check;
 

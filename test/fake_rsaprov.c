@@ -29,6 +29,7 @@ static OSSL_FUNC_keymgmt_export_fn fake_rsa_keymgmt_export;
 static OSSL_FUNC_keymgmt_export_types_fn fake_rsa_keymgmt_exptypes;
 static OSSL_FUNC_keymgmt_load_fn fake_rsa_keymgmt_load;
 
+int fake_rsa_import_selection;
 static int has_selection;
 static int imptypes_selection;
 static int exptypes_selection;
@@ -101,6 +102,7 @@ static int fake_rsa_keymgmt_import(void *keydata, int selection,
 
     /* key was imported */
     fake_rsa_key->status = FAKE_RSA_STATUS_IMPORTED;
+    fake_rsa_import_selection = selection;
 
     return 1;
 }
@@ -295,6 +297,47 @@ static const OSSL_DISPATCH fake_rsa_keymgmt_funcs[] = {
 
 static const OSSL_ALGORITHM fake_rsa_keymgmt_algs[] = {
     { "RSA:rsaEncryption", "provider=fake-rsa", fake_rsa_keymgmt_funcs, "Fake RSA Key Management" },
+    { NULL, NULL, NULL, NULL }
+};
+
+/* A key exchange that does nothing, only to be able to set a peer key */
+static void *fake_rsa_kex_newctx(void *provctx)
+{
+    return OPENSSL_zalloc(1);
+}
+
+static void fake_rsa_kex_freectx(void *ctx)
+{
+    OPENSSL_free(ctx);
+}
+
+static int fake_rsa_kex_init(void *ctx, void *key, const OSSL_PARAM params[])
+{
+    return 1;
+}
+
+static int fake_rsa_kex_set_peer(void *ctx, void *peer)
+{
+    return peer != NULL;
+}
+
+static int fake_rsa_kex_derive(void *ctx, unsigned char *out, size_t *len,
+    size_t outlen)
+{
+    return 0;
+}
+
+static const OSSL_DISPATCH fake_rsa_kex_funcs[] = {
+    { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))fake_rsa_kex_newctx },
+    { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))fake_rsa_kex_freectx },
+    { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))fake_rsa_kex_init },
+    { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))fake_rsa_kex_set_peer },
+    { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))fake_rsa_kex_derive },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM fake_rsa_kex_algs[] = {
+    { "RSA:rsaEncryption", "provider=fake-rsa", fake_rsa_kex_funcs, "Fake RSA Key Exchange" },
     { NULL, NULL, NULL, NULL }
 };
 
@@ -1208,6 +1251,9 @@ static const OSSL_ALGORITHM *fake_rsa_query(void *provctx,
 
     case OSSL_OP_KEYMGMT:
         return fake_rsa_keymgmt_algs;
+
+    case OSSL_OP_KEYEXCH:
+        return fake_rsa_kex_algs;
 
     case OSSL_OP_STORE:
         return fake_rsa_store_algs;
