@@ -7156,6 +7156,460 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+struct overlap_pump_st {
+    SSL *peer;
+    int stage;
+    int pumping;
+    int failed;
+};
+
+/*
+ * BIO callback on the writer's write filter. Each datagram the writer gets
+ * accepted drives the peer one step, so the peer's replies are in flight
+ * while the writer is still inside a single SSL_write() call:
+ *
+ *   stage 0: the writer's ACK of the peer's first KeyUpdate (A) is accepted.
+ *            The peer consumes it and sends a second requested KeyUpdate (C).
+ *   stage 1: the writer's reciprocal KeyUpdate (B) is accepted. The peer
+ *            consumes it and ACKs it.
+ *   stage 2: the writer's ACK of C is accepted. The peer consumes it.
+ */
+static long overlap_pump_cb(BIO *b, int oper, const char *argp, size_t len,
+    int argi, long argl, int ret, size_t *processed)
+{
+    struct overlap_pump_st *pump = (struct overlap_pump_st *)BIO_get_callback_arg(b);
+    unsigned char buf[32];
+    int r;
+
+    if (oper != (BIO_CB_WRITE | BIO_CB_RETURN) || ret <= 0)
+        return ret;
+    if (pump == NULL || pump->peer == NULL || pump->pumping
+        || pump->stage > 2)
+        return ret;
+
+    pump->pumping = 1;
+    ERR_clear_error();
+    r = SSL_read(pump->peer, buf, sizeof(buf));
+    if (r > 0 || SSL_get_error(pump->peer, r) != SSL_ERROR_WANT_READ) {
+        pump->failed = 1;
+        goto done;
+    }
+
+    if (pump->stage == 0) {
+        if (SSL_key_update(pump->peer, SSL_KEY_UPDATE_REQUESTED) != 1) {
+            pump->failed = 1;
+            goto done;
+        }
+        ERR_clear_error();
+        r = SSL_do_handshake(pump->peer);
+        if (r > 0 || SSL_get_error(pump->peer, r) != SSL_ERROR_WANT_READ) {
+            pump->failed = 1;
+            goto done;
+        }
+    }
+    pump->stage++;
+
+done:
+    pump->pumping = 0;
+    return ret;
+}
+
+/*
+ * A pending SSL_write() must send the reciprocal KeyUpdate owed for a second
+ * requested KeyUpdate before it sends application data, even when that second
+ * request arrives while the write is still completing the first exchange.
+ *
+ * The write is first refused by the transport, then the peer sends a
+ * requested KeyUpdate (A) whose ACK the writer is also unable to send. While
+ * the original write is retried, a second requested KeyUpdate (C) arrives
+ * between the writer sending its reciprocal KeyUpdate (B) and receiving the
+ * ACK of it. The handshake_func() call in dtls1_write_app_data_bytes() that
+ * completes B therefore returns success with a new KeyUpdate still owed.
+ * RFC 8446 section 4.6.3 requires that response to precede the writer's next
+ * application record.
+ *
+ * idx 0: the server is the writer. idx 1: the client is the writer.
+ */
+static int test_dtls13_overlapping_keyupdate_before_app_data(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL *local, *peer;
+    SSL_CONNECTION *lc, *pc;
+    BIO *retry = NULL, *filter = NULL;
+    struct overlap_pump_st pump = { NULL, 0, 0, 0 };
+    static const unsigned char payload[] = "pending-write-payload";
+    unsigned char buf[2048];
+    uint64_t peer_read_epoch;
+    int ret, wrote, got, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+
+    local = (idx == 0) ? server : client;
+    peer = (idx == 0) ? client : server;
+    lc = SSL_CONNECTION_FROM_SSL(local);
+    pc = SSL_CONNECTION_FROM_SSL(peer);
+
+    /* Interpose a filter that can refuse local's writes on demand. */
+    if (!TEST_ptr(retry = BIO_new(bio_s_maybe_retry()))
+        || !TEST_true(BIO_up_ref(SSL_get_wbio(local))))
+        goto end;
+
+    filter = retry;
+    SSL_set0_wbio(local, BIO_push(retry, SSL_get_wbio(local)));
+    retry = NULL;
+
+    /* Refuse the next write: nothing reaches the peer. */
+    if (!TEST_long_eq(BIO_ctrl(filter, MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT,
+                          0, NULL),
+            1))
+        goto end;
+
+    ret = SSL_write(local, payload, sizeof(payload));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Reopen the filter: the refused record was dropped, not queued. */
+    if (!TEST_long_eq(BIO_ctrl(filter, MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT,
+                          100, NULL),
+            1))
+        goto end;
+
+    /* The peer requests a reciprocal KeyUpdate (A). */
+    if (!TEST_true(SSL_key_update(peer, SSL_KEY_UPDATE_REQUESTED)))
+        goto end;
+
+    ret = SSL_do_handshake(peer);
+    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Block the write that ACKs A. Local schedules its reciprocal KeyUpdate
+     * (B) but can neither ACK A nor send B yet.
+     */
+    if (!TEST_long_eq(BIO_ctrl(filter, MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT,
+                          0, NULL),
+            1))
+        goto end;
+
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_WRITE)
+        || !TEST_int_eq(lc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_true(SSL_in_init(local)))
+        goto end;
+
+    /* Reopen the filter and arm the peer to react to local's writes. */
+    if (!TEST_long_eq(BIO_ctrl(filter, MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT,
+                          100, NULL),
+            1))
+        goto end;
+
+    pump.peer = peer;
+    BIO_set_callback_ex(filter, overlap_pump_cb);
+    BIO_set_callback_arg(filter, (char *)&pump);
+
+    /* The completing retry of the original write: the call under test. */
+    ERR_clear_error();
+    ret = SSL_write(local, payload, sizeof(payload));
+    wrote = (ret == (int)sizeof(payload));
+
+    /*
+     * Both of the peer's requests and all three replies must have happened.
+     * The write either waits for the ACK of its reciprocal KeyUpdate or, if
+     * it can finish outright, has already sent the payload.
+     */
+    if (!TEST_false(pump.failed)
+        || !TEST_int_eq(pump.stage, 3)
+        || (!wrote
+            && !TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ)))
+        goto end;
+
+    /*
+     * Everything the peer receives from here on was sent by the call above
+     * after the peer had already seen B. If application data comes out
+     * ahead of the reciprocal KeyUpdate for C, the peer returns it without
+     * its read epoch having advanced again.
+     */
+    peer_read_epoch = dtls1_get_epoch(pc, SSL3_CC_READ);
+    ERR_clear_error();
+    ret = SSL_read(peer, buf, sizeof(buf));
+    got = (ret == (int)sizeof(payload)
+        && memcmp(buf, payload, sizeof(payload)) == 0);
+    if (!TEST_uint64_t_eq(dtls1_get_epoch(pc, SSL3_CC_READ), peer_read_epoch + 1))
+        goto end;
+    if (!got && !TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Local sees the peer's ACK of the reciprocal KeyUpdate. */
+    ERR_clear_error();
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_is_init_finished(local)))
+        goto end;
+
+    /* The payload is delivered exactly once, under the new epoch. */
+    if (!wrote) {
+        ERR_clear_error();
+        if (!TEST_int_eq(SSL_write(local, payload, sizeof(payload)),
+                (int)sizeof(payload)))
+            goto end;
+    }
+    if (!got) {
+        ERR_clear_error();
+        ret = SSL_read(peer, buf, sizeof(buf));
+        if (!TEST_int_eq(ret, (int)sizeof(payload))
+            || !TEST_mem_eq(buf, ret, payload, sizeof(payload)))
+            goto end;
+    }
+
+    /* Application data now flows both ways under the new epochs. */
+    if (!TEST_int_eq(SSL_write(local, "l", 1), 1)
+        || !TEST_int_eq(SSL_read(peer, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'l')
+        || !TEST_int_eq(SSL_write(peer, "p", 1), 1)
+        || !TEST_int_eq(SSL_read(local, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'p'))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free(retry);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#define EPOCH_QUEUE_OLD "OLD-EPOCH-RECORD!!"
+#define EPOCH_QUEUE_NEW "NEW-EPOCH-RECORD!!"
+
+/*
+ * Application records from different DTLS 1.3 epochs must not collide when
+ * they are buffered. Sequence numbers restart in every epoch, so two records
+ * of different epochs can carry the same one.
+ *
+ * The sender writes one application record, then sends requested KeyUpdate
+ * A. The receiver processes A and moves its read epoch forward before that
+ * application record is delivered, so the record belongs to the previous
+ * epoch when it is buffered. The receiver sends its reciprocal KeyUpdate and
+ * waits for it to be acknowledged. That ACK is withheld while the sender
+ * completes its own update and sends a current-epoch application record,
+ * which is buffered as well. DTLS makes no ordering promise for application
+ * data, so returning both records in either order passes.
+ *
+ * idx 0: the server receives. idx 1: the client receives.
+ */
+static int test_dtls13_buffered_app_data_across_epochs(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL, *sender, *receiver;
+    unsigned char old_pkt[2048], new_pkt[2048], ack[2048], reciprocal_ack[2048];
+    SSL_CONNECTION *rc, *sc;
+    unsigned char buf[64];
+    uint64_t recv_read_epoch, recv_write_epoch, send_read_epoch, send_write_epoch;
+    int old_len = 0, new_len = 0, ack_len = 0, reciprocal_ack_len = 0;
+    int ret, i, got_old = 0, got_new = 0, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+
+    receiver = (idx == 0) ? server : client;
+    sender = (idx == 0) ? client : server;
+    rc = SSL_CONNECTION_FROM_SSL(receiver);
+    sc = SSL_CONNECTION_FROM_SSL(sender);
+
+    /* Remember where every epoch starts so each move can be checked. */
+    recv_read_epoch = dtls1_get_epoch(rc, SSL3_CC_READ);
+    recv_write_epoch = dtls1_get_epoch(rc, SSL3_CC_WRITE);
+    send_read_epoch = dtls1_get_epoch(sc, SSL3_CC_READ);
+    send_write_epoch = dtls1_get_epoch(sc, SSL3_CC_WRITE);
+
+    ERR_clear_error();
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The sender writes the old-epoch application record. Take it out of the
+     * transport instead of letting the receiver see it, so it can be
+     * delivered only after the receiver has processed requested KeyUpdate A.
+     * Exactly one datagram must be queued for the receiver.
+     */
+    if (!TEST_int_eq(SSL_write(sender, EPOCH_QUEUE_OLD, (int)strlen(EPOCH_QUEUE_OLD)),
+            (int)strlen(EPOCH_QUEUE_OLD))
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(receiver)), 0))
+        goto end;
+    old_len = BIO_read(SSL_get_rbio(receiver), old_pkt, sizeof(old_pkt));
+    if (!TEST_int_gt(old_len, 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(receiver)), 0))
+        goto end;
+
+    /* The sender sends requested KeyUpdate A and waits for its ACK. */
+    if (!TEST_true(SSL_key_update(sender, SSL_KEY_UPDATE_REQUESTED)))
+        goto end;
+    ERR_clear_error();
+    ret = SSL_do_handshake(sender);
+    if (!TEST_int_eq(SSL_get_error(sender, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The receiver processes A, moving its read epoch forward, and parks
+     * waiting on its reciprocal KeyUpdate. Take what it sent back for A out
+     * of the transport so the sender does not see it yet.
+     */
+    ERR_clear_error();
+    ret = SSL_read(receiver, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_in_init(receiver))
+        || !TEST_uint64_t_eq(dtls1_get_epoch(rc, SSL3_CC_READ), recv_read_epoch + 1)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(sender)), 0))
+        goto end;
+    ack_len = BIO_read(SSL_get_rbio(sender), ack, sizeof(ack));
+    if (!TEST_int_gt(ack_len, 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(sender)), 0))
+        goto end;
+
+    /*
+     * Deliver the old-epoch record to the receiver by writing it back into
+     * the receiver's read queue. The receiver is already on the new read
+     * epoch, so the record is from the previous epoch, and since the
+     * receiver is still in init it is buffered.
+     */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(receiver), old_pkt, old_len), old_len))
+        goto end;
+    ERR_clear_error();
+    ret = SSL_read(receiver, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_in_init(receiver)))
+        goto end;
+
+    /*
+     * Deliver what the receiver sent for A to the sender by writing it back
+     * into the sender's read queue. The sender answers the receiver's
+     * reciprocal KeyUpdate with an ACK. Take that ACK out of the transport
+     * and withhold it, so the receiver stays parked waiting for it.
+     */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(sender), ack, ack_len), ack_len))
+        goto end;
+    ERR_clear_error();
+    ret = SSL_read(sender, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(sender, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(receiver)), 0))
+        goto end;
+    reciprocal_ack_len = BIO_read(SSL_get_rbio(receiver), reciprocal_ack,
+        sizeof(reciprocal_ack));
+    if (!TEST_int_gt(reciprocal_ack_len, 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(receiver)), 0))
+        goto end;
+
+    /*
+     * The sender completes its own update: it is no longer in init and has
+     * moved to the next write epoch, so the record written below is from a
+     * different epoch than the old one.
+     */
+    ERR_clear_error();
+    if (!TEST_int_eq(SSL_do_handshake(sender), 1)
+        || !TEST_false(SSL_in_init(sender))
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), send_write_epoch + 1))
+        goto end;
+
+    /*
+     * The sender writes a current-epoch application record. Take it out of
+     * the transport (exactly one datagram) and write it into the receiver's
+     * read queue. The receiver is still parked waiting for the withheld ACK,
+     * so this record is buffered as well.
+     */
+    if (!TEST_int_eq(SSL_write(sender, EPOCH_QUEUE_NEW, (int)strlen(EPOCH_QUEUE_NEW)),
+            (int)strlen(EPOCH_QUEUE_NEW))
+        || !TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(receiver)), 0))
+        goto end;
+    new_len = BIO_read(SSL_get_rbio(receiver), new_pkt, sizeof(new_pkt));
+    if (!TEST_int_gt(new_len, 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(receiver)), 0)
+        || !TEST_int_eq(BIO_write(SSL_get_rbio(receiver), new_pkt, new_len), new_len))
+        goto end;
+    ERR_clear_error();
+    ret = SSL_read(receiver, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_in_init(receiver))
+        || !TEST_int_gt(SSL_pending(receiver), 0))
+        goto end;
+
+    /*
+     * Release the withheld ACK of the reciprocal KeyUpdate by writing it into
+     * the receiver's read queue. No more application data is written, so
+     * every later read can only return what was accepted above.
+     */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(receiver), reciprocal_ack,
+                         reciprocal_ack_len),
+            reciprocal_ack_len))
+        goto end;
+
+    /* Read until both buffered records have been returned, in either order. */
+    for (i = 0; i < 6 && !(got_old && got_new); i++) {
+        ERR_clear_error();
+        ret = SSL_read(receiver, buf, sizeof(buf));
+        if (ret == (int)strlen(EPOCH_QUEUE_OLD)
+            && memcmp(buf, EPOCH_QUEUE_OLD, (size_t)ret) == 0) {
+            got_old = 1;
+        } else if (ret == (int)strlen(EPOCH_QUEUE_NEW)
+            && memcmp(buf, EPOCH_QUEUE_NEW, (size_t)ret) == 0) {
+            got_new = 1;
+        } else if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)) {
+            goto end;
+        } else if (SSL_pending(receiver) == 0 && !SSL_in_init(receiver)) {
+            break;
+        }
+    }
+
+    if (!TEST_true(got_old) || !TEST_true(got_new))
+        goto end;
+
+    /*
+     * Let the receiver finish processing the released ACK, then check that
+     * both directions of both sides moved forward by exactly one epoch: the
+     * KeyUpdate exchange completed and no further update happened.
+     */
+    ERR_clear_error();
+    ret = SSL_read(receiver, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_is_init_finished(receiver))
+        || !TEST_uint64_t_eq(dtls1_get_epoch(rc, SSL3_CC_READ), recv_read_epoch + 1)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(rc, SSL3_CC_WRITE), recv_write_epoch + 1)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_READ), send_read_epoch + 1)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_WRITE), send_write_epoch + 1))
+        goto end;
+
+    /* Application data now flows both ways under the new epochs. */
+    if (!TEST_int_eq(SSL_write(sender, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(receiver, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's')
+        || !TEST_int_eq(SSL_write(receiver, "r", 1), 1)
+        || !TEST_int_eq(SSL_read(sender, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'r'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -7219,6 +7673,8 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_client_keyupdate_app_data_classification);
     ADD_ALL_TESTS(test_dtls13_pending_write_completes_before_reciprocal_keyupdate, 2);
     ADD_ALL_TESTS(test_dtls13_reciprocal_keyupdate_waits_for_pending_install, 8);
+    ADD_ALL_TESTS(test_dtls13_overlapping_keyupdate_before_app_data, 2);
+    ADD_ALL_TESTS(test_dtls13_buffered_app_data_across_epochs, 2);
 #endif
     return 1;
 }
