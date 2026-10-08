@@ -4519,6 +4519,13 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
 #endif
 
+    /*
+     * TLS13-KDF is optional: applications that never use TLS 1.3, or whose
+     * provider does not supply it, can still create a context. A NULL kdf
+     * makes ssl_prefer_skey_derivation() return 0, which is correct.
+     */
+    ret->tls13kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_3_KDF, propq);
+
     ret->method = meth;
     ret->min_proto_version = 0;
     ret->max_proto_version = 0;
@@ -4859,6 +4866,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF_free(a->tls1prf);
 #endif
+    EVP_KDF_free(a->tls13kdf);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
     lh_SSL_SESSION_free(a->sessions);

@@ -864,7 +864,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
                     versionany,
                     OSSL_RECORD_DIRECTION_WRITE,
                     OSSL_RECORD_PROTECTION_LEVEL_NONE,
-                    NULL, 0, NULL, NULL, 0, NULL, 0,
+                    NULL, 0, NULL, NULL, NULL, 0,
                     NULL, 0, NULL, NULL, 0, NID_undef,
                     NULL, NULL, NULL)) {
                 /* SSLfatal already called */
@@ -2450,7 +2450,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
         && !ssl_set_new_record_layer(s, versionany,
             OSSL_RECORD_DIRECTION_WRITE,
             OSSL_RECORD_PROTECTION_LEVEL_NONE,
-            NULL, 0, NULL, NULL, 0, NULL, 0, NULL,
+            NULL, 0, NULL, NULL, NULL, 0, NULL,
             0, NULL, NULL, 0, NID_undef, NULL,
             NULL, NULL)) {
         /* SSLfatal already called */

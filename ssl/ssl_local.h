@@ -891,6 +891,7 @@ struct ssl_ctx_st {
 #ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF *tls1prf;
 #endif
+    EVP_KDF *tls13kdf;
     /*
      * Most session-ids that will be cached, default is
      * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited.
@@ -1466,6 +1467,12 @@ struct ssl_connection_st {
             STACK_OF(X509_NAME) *peer_ca_names;
             size_t key_block_length;
             unsigned char *key_block;
+            /*
+             * Set when the key schedule was derived as EVP_SKEY objects
+             * rather than as a raw key block; holds them until they are
+             * collected.  See ssl_prefer_skey_derivation().
+             */
+            EVP_KDF_CTX *key_block_kdf;
             const EVP_CIPHER *new_sym_enc;
             const EVP_CIPHER *new_sym_enc_sn;
             const EVP_MD *new_hash;
@@ -3313,6 +3320,23 @@ int ssl_free_wbio_buffer(SSL_CONNECTION *s);
 
 __owur int tls1_change_cipher_state(SSL_CONNECTION *s, int which);
 __owur int tls1_setup_key_block(SSL_CONNECTION *s);
+/**
+ * Decide whether to derive keys as opaque objects
+ *
+ * Policy function that determines whether the key schedule should produce
+ * opaque EVP_SKEY objects or raw key bytes.
+ *
+ * @param s SSL connection
+ * @param kdf KDF to be used for derivation
+ * @param c cipher to be used
+ * @param mac MAC to be used (NULL for AEAD)
+ * @param mac_secret_size MAC key size (0 for AEAD)
+ * @returns 1 to prefer SKEY derivation, 0 to prefer raw bytes
+ */
+__owur int ssl_prefer_skey_derivation(const SSL_CONNECTION *s,
+                                      const EVP_KDF *kdf,
+                                      const EVP_CIPHER *c,
+                                      size_t mac_secret_size);
 __owur size_t tls1_final_finish_mac(SSL_CONNECTION *s, const char *str,
     size_t slen, unsigned char *p);
 __owur int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,

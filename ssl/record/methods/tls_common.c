@@ -1371,7 +1371,7 @@ static int
 tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int role, int direction, int level, uint64_t epoch,
     unsigned char *secret, size_t secretlen,
-    unsigned char *snkey, unsigned char *key, size_t keylen,
+    unsigned char *snkey, const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
     const EVP_CIPHER *snciph,
@@ -1414,7 +1414,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         goto err;
     }
 
-    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key,
         iv, ivlen, mackey, mackeylen,
         snciph, ciph, taglen, mactype, md,
         comp);
@@ -2218,6 +2218,28 @@ void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
      * the new record layer. We can't change the existing buffer because it may
      * already have data in it.
      */
+}
+
+/*
+ * Install |key| in |ctx|, whichever of the two forms the key schedule
+ * produced it in.  An opaque key is used as it is, since a provider that
+ * holds it on a token has no raw bytes to give us.
+ *
+ * |cipher| may be NULL to keep the one the context already has, and |iv| may
+ * be NULL to set the key on its own.  |ivlen| is only consulted for an opaque
+ * key; the byte form takes the length from the cipher, as EVP_CipherInit_ex()
+ * always has.
+ */
+int tls_cipher_init_key(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+    const OSSL_RECORD_KEY *key,
+    const unsigned char *iv, size_t ivlen, int enc)
+{
+    if (key->opaque != NULL)
+        return EVP_CipherInit_SKEY(ctx, cipher, key->opaque, iv, ivlen, enc,
+                   NULL)
+            > 0;
+
+    return EVP_CipherInit_ex(ctx, cipher, NULL, key->secret, iv, enc) > 0;
 }
 
 int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
