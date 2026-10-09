@@ -51,6 +51,19 @@ static OSSL_FUNC_kdf_get_ctx_params_fn hkdf_common_get_ctx_params;
 static OSSL_FUNC_kdf_derive_fn kdf_tls1_3_derive;
 static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_3_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_3_set_ctx_params;
+static OSSL_FUNC_kdf_derive_multi_fn kdf_tls1_3_derive_multi;
+static OSSL_FUNC_kdf_get_skey_fn kdf_tls1_3_get_skey;
+static OSSL_FUNC_kdf_get_iv_fn kdf_tls1_3_get_iv;
+
+typedef struct kdf_hkdf_st KDF_HKDF;
+static void kdf_tls1_3_multi_cleanup(KDF_HKDF *ctx);
+
+/*
+ * TLS 1.3 derives one key and one IV from a traffic secret; the secret
+ * already encodes the direction, so the client and server purposes name the
+ * same key and differ only in the type the caller may request.
+ */
+#define TLS13_NUM_KEYS 2
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha256_new;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha384_new;
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_sha512_new;
@@ -74,7 +87,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     const unsigned char *info, size_t info_len,
     unsigned char *okm, size_t okm_len);
 
-typedef struct {
+struct kdf_hkdf_st {
     void *provctx;
     int mode;
     PROV_DIGEST digest;
@@ -91,8 +104,40 @@ typedef struct {
     unsigned char *info;
     size_t info_len;
     int fixed_digest;
+
+    /* Multi-key derivation configuration */
+    size_t cipher_key_len;
+    size_t iv_len;
+    /*
+     * The cipher the derived key is for, resolved at set time to just the
+     * two facts needed of it: the name, which decides the key type, and the
+     * key length.  The EVP_CIPHER itself is not kept.
+     *
+     * The length is deliberately *not* merged into cipher_key_len above.
+     * That one is what the caller asked for, this one is what the cipher
+     * requires, and derive_multi() compares them -- naming AES-128-CBC and a
+     * cipher_key_len of 10 is a contradiction worth reporting rather than
+     * silently resolving.  Keeping them apart is also what lets a later
+     * "cipher" replace an earlier one while a caller-supplied length still
+     * conflicts with it, whatever order the two arrive in.
+     */
+    char *multi_cipher_name;
+    size_t multi_cipher_keylen;
+
+    /*
+     * Result of a multi-key derivation, released by kdf_hkdf_reset_ex() and
+     * copied by kdf_hkdf_dup().
+     */
+    struct {
+        unsigned char *key;
+        size_t key_len;
+        unsigned char *iv;
+        size_t iv_len;
+        char *cipher_key_type;
+    } multi;
+
     OSSL_FIPS_IND_DECLARE
-} KDF_HKDF;
+};
 
 static void *kdf_hkdf_new(void *provctx)
 {
@@ -151,6 +196,8 @@ static void kdf_hkdf_reset_ex(void *vctx, int on_free)
     OPENSSL_clear_free(ctx->data, ctx->data_len);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->info, ctx->info_len);
+    OPENSSL_free(ctx->multi_cipher_name);
+    kdf_tls1_3_multi_cleanup(ctx);
     memset(ctx, 0, sizeof(*ctx));
     ctx->provctx = provctx;
     if (preserve_digest) {
@@ -180,6 +227,20 @@ static void *kdf_hkdf_dup(void *vctx)
                 &dest->info, &dest->info_len)
             || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
+        if (src->multi_cipher_name != NULL
+            && (dest->multi_cipher_name = OPENSSL_strdup(src->multi_cipher_name)) == NULL)
+            goto err;
+        dest->multi_cipher_keylen = src->multi_cipher_keylen;
+        if (!ossl_prov_memdup(src->multi.key, src->multi.key_len,
+                &dest->multi.key, &dest->multi.key_len)
+            || !ossl_prov_memdup(src->multi.iv, src->multi.iv_len,
+                &dest->multi.iv, &dest->multi.iv_len))
+            goto err;
+        if (src->multi.cipher_key_type != NULL
+            && (dest->multi.cipher_key_type = OPENSSL_strdup(src->multi.cipher_key_type)) == NULL)
+            goto err;
+        dest->cipher_key_len = src->cipher_key_len;
+        dest->iv_len = src->iv_len;
         dest->mode = src->mode;
         dest->fixed_digest = src->fixed_digest;
         OSSL_FIPS_IND_COPY(dest, src)
@@ -283,6 +344,9 @@ struct hkdf_all_set_ctx_params_st {
     OSSL_PARAM *data;
     OSSL_PARAM *info[HKDF_MAX_INFOS];
     int num_info;
+    OSSL_PARAM *cipher_key_len;
+    OSSL_PARAM *iv_len;
+    OSSL_PARAM *cipher;
 };
 
 #define hkdf_set_ctx_params_st hkdf_all_set_ctx_params_st
@@ -418,6 +482,24 @@ static int hkdf_common_get_ctx_params(void *vctx, OSSL_PARAM params[])
         if (md == NULL)
             return 0;
         else if (!OSSL_PARAM_set_utf8_string(p.digest, EVP_MD_get0_name(md)))
+            return 0;
+    }
+
+    /*
+     * Key type settled on by a preceding multi-key derivation.  Both purposes
+     * name the same key, since a TLS 1.3 traffic secret already encodes the
+     * direction.  Failing reports that no key was derived.
+     */
+    if (p.client_key_type != NULL || p.server_key_type != NULL) {
+        OSSL_PARAM *out = p.client_key_type != NULL ? p.client_key_type
+                                                    : p.server_key_type;
+
+        if (ctx->multi.key == NULL
+            || !OSSL_PARAM_set_utf8_string(out, ctx->multi.cipher_key_type))
+            return 0;
+        if (p.client_key_type != NULL && p.server_key_type != NULL
+            && !OSSL_PARAM_set_utf8_string(p.server_key_type,
+                ctx->multi.cipher_key_type))
             return 0;
     }
 
@@ -1024,6 +1106,36 @@ static int kdf_tls1_3_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 #endif
 
+    if (p.cipher != NULL) {
+        PROV_CIPHER pc = { 0 };
+        const EVP_CIPHER *ciph;
+        int clen;
+
+        if (!ossl_prov_cipher_load(&pc, p.cipher, p.propq,
+                PROV_LIBCTX_OF(ctx->provctx)))
+            return 0;
+        ciph = ossl_prov_cipher_cipher(&pc);
+        clen = ciph != NULL ? EVP_CIPHER_get_key_length(ciph) : -1;
+        if (clen <= 0) {
+            ossl_prov_cipher_reset(&pc);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+        OPENSSL_free(ctx->multi_cipher_name);
+        ctx->multi_cipher_name = OPENSSL_strdup(EVP_CIPHER_get0_name(ciph));
+        ctx->multi_cipher_keylen = (size_t)clen;
+        ossl_prov_cipher_reset(&pc);
+        if (ctx->multi_cipher_name == NULL)
+            return 0;
+    }
+
+    if (p.cipher_key_len != NULL
+        && !OSSL_PARAM_get_size_t(p.cipher_key_len, &ctx->cipher_key_len))
+        return 0;
+    if (p.iv_len != NULL
+        && !OSSL_PARAM_get_size_t(p.iv_len, &ctx->iv_len))
+        return 0;
+
     return 1;
 }
 
@@ -1031,6 +1143,132 @@ static const OSSL_PARAM *kdf_tls1_3_settable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
     return kdf_tls1_3_set_ctx_params_list;
+}
+
+static void kdf_tls1_3_multi_cleanup(KDF_HKDF *ctx)
+{
+    OPENSSL_clear_free(ctx->multi.key, ctx->multi.key_len);
+    OPENSSL_free(ctx->multi.iv);
+    OPENSSL_free(ctx->multi.cipher_key_type);
+    memset(&ctx->multi, 0, sizeof(ctx->multi));
+}
+
+static int kdf_tls1_3_derive_multi(void *vctx, const OSSL_PARAM params[])
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    const EVP_MD *md;
+    size_t cipher_key_len;
+
+    if (!ossl_prov_is_running() || !kdf_tls1_3_set_ctx_params(ctx, params))
+        return 0;
+
+    md = ossl_prov_digest_md(&ctx->digest);
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
+        return 0;
+    }
+    if (ctx->key == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+        return 0;
+    }
+
+    /*
+     * Settle on the cipher key length: the caller's, the named cipher's, or
+     * an error if they disagree.  See the field comments in KDF_HKDF.
+     */
+    cipher_key_len = ctx->cipher_key_len;
+    if (ctx->multi_cipher_keylen != 0) {
+        if (cipher_key_len == 0) {
+            cipher_key_len = ctx->multi_cipher_keylen;
+        } else if (cipher_key_len != ctx->multi_cipher_keylen) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
+                "%s needs a %zu byte key, not %zu", ctx->multi_cipher_name,
+                ctx->multi_cipher_keylen, cipher_key_len);
+            return 0;
+        }
+    }
+
+    if (cipher_key_len == 0 && ctx->iv_len == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+
+    /* Discard anything left by a previous derivation on this context */
+    kdf_tls1_3_multi_cleanup(ctx);
+
+    ctx->multi.cipher_key_type = OPENSSL_strdup(ossl_prov_cipher_skey_type(ctx->multi_cipher_name));
+    if (ctx->multi.cipher_key_type == NULL)
+        goto err;
+
+    if (cipher_key_len > 0) {
+        ctx->multi.key = OPENSSL_zalloc(cipher_key_len);
+        if (ctx->multi.key == NULL)
+            goto err;
+        ctx->multi.key_len = cipher_key_len;
+
+        if (!prov_tls13_hkdf_expand(md, ctx->key, ctx->key_len,
+                ctx->prefix, ctx->prefix_len,
+                (const unsigned char *)"key", 3,
+                ctx->data, ctx->data_len,
+                ctx->multi.key, ctx->multi.key_len))
+            goto err;
+    }
+
+    if (ctx->iv_len > 0) {
+        ctx->multi.iv = OPENSSL_zalloc(ctx->iv_len);
+        if (ctx->multi.iv == NULL)
+            goto err;
+        ctx->multi.iv_len = ctx->iv_len;
+
+        if (!prov_tls13_hkdf_expand(md, ctx->key, ctx->key_len,
+                ctx->prefix, ctx->prefix_len,
+                (const unsigned char *)"iv", 2,
+                ctx->data, ctx->data_len,
+                ctx->multi.iv, ctx->multi.iv_len))
+            goto err;
+    }
+
+    return 1;
+
+err:
+    kdf_tls1_3_multi_cleanup(ctx);
+    return 0;
+}
+
+static void *kdf_tls1_3_get_skey(void *vctx, const char *purpose,
+    void *provctx, OSSL_FUNC_skeymgmt_import_fn *import)
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    OSSL_PARAM import_params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    if (ctx->multi.key == NULL
+        || (strcmp(purpose, OSSL_KDF_PURPOSE_CLIENT_KEY) != 0
+            && strcmp(purpose, OSSL_KDF_PURPOSE_SERVER_KEY) != 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return NULL;
+    }
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_SKEY_PARAM_RAW_BYTES, ctx->multi.key, ctx->multi.key_len);
+
+    return import(provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);
+}
+
+static int kdf_tls1_3_get_iv(void *vctx, const char *purpose,
+    const unsigned char **pIV, size_t *pIVlen)
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+
+    if (ctx->multi.iv == NULL
+        || (strcmp(purpose, OSSL_KDF_PURPOSE_CLIENT_IV) != 0
+            && strcmp(purpose, OSSL_KDF_PURPOSE_SERVER_IV) != 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return 0;
+    }
+
+    *pIV = ctx->multi.iv;
+    *pIVlen = ctx->multi.iv_len;
+    return 1;
 }
 
 const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[] = {
@@ -1045,5 +1283,11 @@ const OSSL_DISPATCH ossl_kdf_tls1_3_kdf_functions[] = {
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
         (void (*)(void))hkdf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void (*)(void))hkdf_common_get_ctx_params },
+    { OSSL_FUNC_KDF_DERIVE_MULTI,
+        (void (*)(void))kdf_tls1_3_derive_multi },
+    { OSSL_FUNC_KDF_GET_SKEY,
+        (void (*)(void))kdf_tls1_3_get_skey },
+    { OSSL_FUNC_KDF_GET_IV,
+        (void (*)(void))kdf_tls1_3_get_iv },
     OSSL_DISPATCH_END
 };
