@@ -119,8 +119,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
     unsigned char *key, *iv;
-    OSSL_RECORD_KEY cipherkey = { 0 };
-    const char *key_purpose, *iv_purpose;
+    OSSL_RECORD_KEY cipherkey = { 0 }, mackey = { 0 };
+    OSSL_RECORD_KEY *pmackey = NULL;
+    const char *key_purpose, *mac_purpose, *iv_purpose;
     const EVP_CIPHER *c;
     const SSL_COMP *comp = NULL;
     const EVP_MD *m;
@@ -155,6 +156,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     k = iivlen;
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) || (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         key_purpose = OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY;
+        mac_purpose = OSSL_KDF_PURPOSE_CLIENT_MAC_KEY;
         iv_purpose = OSSL_KDF_PURPOSE_CLIENT_IV;
         mac_secret = &(p[0]);
         n = i + i;
@@ -164,6 +166,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         n += k + k;
     } else {
         key_purpose = OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY;
+        mac_purpose = OSSL_KDF_PURPOSE_SERVER_MAC_KEY;
         iv_purpose = OSSL_KDF_PURPOSE_SERVER_IV;
         n = i;
         mac_secret = &(p[n]);
@@ -176,19 +179,28 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (s->s3.tmp.key_block_kdf != NULL) {
         /*
-         * The schedule was derived as EVP_SKEY objects, so the cipher key is
-         * taken as one and never becomes bytes here.  The IV is not secret
-         * and is still handed over raw.
+         * The schedule was derived as EVP_SKEY objects, so the keys are taken
+         * as such and never become bytes here.  The IV is not secret and is
+         * still handed over raw.
          */
+        const char *propq = SSL_CONNECTION_GET_CTX(s)->propq;
         const unsigned char *skiv;
         size_t skivlen;
 
         cipherkey.opaque = EVP_KDF_CTX_get1_SKEY(s->s3.tmp.key_block_kdf,
-                                                 key_purpose,
-                                                 SSL_CONNECTION_GET_CTX(s)->propq);
+            key_purpose, propq);
         if (cipherkey.opaque == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
+        if (mac_secret_size != 0) {
+            mackey.opaque = EVP_KDF_CTX_get1_SKEY(s->s3.tmp.key_block_kdf,
+                mac_purpose, propq);
+            if (mackey.opaque == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            pmackey = &mackey;
         }
         if (k != 0) {
             if (!EVP_KDF_CTX_get0_IV(s->s3.tmp.key_block_kdf, iv_purpose,
@@ -271,17 +283,24 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         cipherkey.secret = key;
         cipherkey.len = cl;
     }
+    if (mac_secret_size != 0 && mackey.opaque == NULL) {
+        mackey.secret = mac_secret;
+        mackey.len = mac_secret_size;
+        pmackey = &mackey;
+    }
 
     if (!ssl_set_new_record_layer(s, s->version, direction,
             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
             NULL, 0, NULL, &cipherkey, iv, (size_t)k,
-            mac_secret, mac_secret_size, NULL, c, taglen,
+            pmackey, NULL, c, taglen,
             mac_type, m, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
     }
     EVP_SKEY_free(cipherkey.opaque);
     cipherkey.opaque = NULL;
+    EVP_SKEY_free(mackey.opaque);
+    mackey.opaque = NULL;
 
     OSSL_TRACE_BEGIN(TLS)
     {
@@ -299,6 +318,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     return 1;
 err:
     EVP_SKEY_free(cipherkey.opaque);
+    EVP_SKEY_free(mackey.opaque);
     return 0;
 }
 
@@ -387,29 +407,43 @@ err:
  * Two things make the SKEY path unusable whatever the preference, and both
  * are answered here so that a caller has only this one question to ask:
  *
- * - |mac_secret_size| is nonzero for a ciphersuite with a separate MAC key,
- *   and |c| has no key at all for an integrity-only one, where what the
- *   schedule produces in a cipher key's place is a MAC key.  Either way only
- *   the cipher key is taken as an EVP_SKEY today; a MAC key still goes
- *   through EVP_PKEY_new_raw_private_key_ex(), which needs its bytes.
+ * - Everything has to come from one provider.  An EVP_SKEY belongs to the
+ *   provider that made it, and both EVP_CipherInit_SKEY() and
+ *   EVP_MAC_init_SKEY() refuse a primitive from any other -- rightly, since
+ *   the key may be a handle that only its own provider can make sense of.
+ *   The pieces parting ways is not exotic: a provider supplying just the
+ *   cipher, as the test one does, leaves the KDF with the default provider.
  *
- * - |kdf| and |c| have to come from the same provider.  An EVP_SKEY belongs
- *   to the provider that made it and EVP_CipherInit_SKEY() refuses a cipher
- *   from any other -- rightly, since the key may be a handle that only its
- *   own provider can make sense of.  The two parting ways is not exotic: a
- *   provider supplying just the cipher, as the test one does, leaves the KDF
- *   with the default provider.
+ * - |c| has no key at all for an integrity-only ciphersuite, where what the
+ *   schedule produces in a cipher key's place is a MAC key.  No KDF here
+ *   derives one of those yet.
+ *
+ * - A separate MAC key, which |mac_secret_size| being nonzero says the
+ *   ciphersuite has, must be usable as an object too.  |mac| is NULL for the
+ *   GOST MACs, which have no EVP_MAC implementation and so no
+ *   EVP_MAC_init_SKEY() to hand one to.  A "composite" cipher such as
+ *   AES-128-CBC-HMAC-SHA256 rules it out from the other side: it MACs
+ *   internally and is given the key through EVP_CTRL_AEAD_SET_MAC_KEY, a
+ *   ctrl that takes bytes and has no form that accepts an object.
  *
  * For now the raw key block is always preferred.
  */
 int ssl_prefer_skey_derivation(const SSL_CONNECTION *s, const EVP_KDF *kdf,
-    const EVP_CIPHER *c, size_t mac_secret_size)
+    const EVP_CIPHER *c, const EVP_MAC *mac, size_t mac_secret_size)
 {
-    if (mac_secret_size != 0)
+    const OSSL_PROVIDER *prov;
+
+    if (kdf == NULL || c == NULL || EVP_CIPHER_get_key_length(c) <= 0)
         return 0;
 
-    if (kdf == NULL || c == NULL || EVP_CIPHER_get_key_length(c) <= 0
-        || EVP_KDF_get0_provider(kdf) != EVP_CIPHER_get0_provider(c))
+    prov = EVP_KDF_get0_provider(kdf);
+    if (prov != EVP_CIPHER_get0_provider(c))
+        return 0;
+
+    if (mac_secret_size != 0
+        && (mac == NULL
+            || prov != EVP_MAC_get0_provider(mac)
+            || (EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0))
         return 0;
 
     return 0;
@@ -476,6 +510,7 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
     OSSL_TRACE_END(TLS);
 
     if (ssl_prefer_skey_derivation(s, SSL_CONNECTION_GET_CTX(s)->tls1prf, c,
+            mac_type == EVP_PKEY_HMAC ? SSL_CONNECTION_GET_CTX(s)->hmac : NULL,
             mac_secret_size)) {
         if (!tls1_generate_key_skeys(s, c, mac_secret_size, (size_t)ivlen)) {
             /* SSLfatal() already called */

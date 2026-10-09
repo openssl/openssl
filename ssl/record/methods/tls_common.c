@@ -92,7 +92,19 @@ int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
  */
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 {
-    switch (EVP_MD_CTX_get_type(ctx)) {
+    return (char)ossl_cbc_digest_supported(EVP_MD_CTX_get0_md(ctx));
+}
+
+/*
+ * The same question asked of a digest rather than of a context, for the MACs
+ * that are driven through EVP_MAC and so have no EVP_MD_CTX to inspect.
+ */
+int ossl_cbc_digest_supported(const EVP_MD *md)
+{
+    if (md == NULL)
+        return 0;
+
+    switch (EVP_MD_get_type(md)) {
     case NID_md5:
     case NID_sha1:
     case NID_sha224:
@@ -579,7 +591,6 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     unsigned char md[EVP_MAX_MD_SIZE];
     unsigned int version;
     size_t mac_size = 0;
-    int imac_size;
     size_t num_recs = 0, max_recs, j;
     PACKET pkt;
     SSL_MAC_BUF *macbufs = NULL;
@@ -737,24 +748,19 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
         return OSSL_RECORD_RETURN_SUCCESS;
     }
 
-    if (rl->md_ctx != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(rl->md_ctx);
-
-        if (tmpmd != NULL) {
-            imac_size = EVP_MD_get_size(tmpmd);
-            if (!ossl_assert(imac_size > 0 && imac_size <= EVP_MAX_MD_SIZE)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-                return OSSL_RECORD_RETURN_FATAL;
-            }
-            mac_size = (size_t)imac_size;
+    if (rl->mac_size != 0) {
+        if (!ossl_assert(rl->mac_size <= EVP_MAX_MD_SIZE)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+            return OSSL_RECORD_RETURN_FATAL;
         }
+        mac_size = rl->mac_size;
     }
 
     /*
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
      * the details below are public so no timing details can leak.
      */
-    if (rl->use_etm && rl->md_ctx != NULL) {
+    if (rl->use_etm && rl->mac_size != 0) {
         unsigned char *mac;
 
         for (j = 0; j < num_recs; j++) {
@@ -851,7 +857,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     /* r->length is now the compressed data plus mac */
     if (rl->enc_ctx != NULL
         && !rl->use_etm
-        && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
+        && rl->mac_size != 0) {
         for (j = 0; j < num_recs; j++) {
             SSL_MAC_BUF *thismb = &macbufs[j];
 
@@ -1373,7 +1379,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey, const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
@@ -1415,7 +1421,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key,
-        iv, ivlen, mackey, mackeylen,
+        iv, ivlen, mackey,
         snciph, ciph, taglen, mactype, md,
         comp);
 
@@ -1774,13 +1780,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
 
-    if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
-        mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
-        if (mac_size < 0) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    }
+    mac_size = (int)rl->mac_size;
 
     if (!rl->funcs->allocate_write_buffers(rl, templates, numtempl, &prefix)) {
         /* RLAYERfatal() already called */
@@ -2240,6 +2240,16 @@ int tls_cipher_init_key(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             > 0;
 
     return EVP_CipherInit_ex(ctx, cipher, NULL, key->secret, iv, enc) > 0;
+}
+
+/* The same for a MAC key. */
+int tls_mac_init_key(EVP_MAC_CTX *ctx, const OSSL_RECORD_KEY *key,
+    const OSSL_PARAM params[])
+{
+    if (key->opaque != NULL)
+        return EVP_MAC_init_SKEY(ctx, key->opaque, params);
+
+    return EVP_MAC_init(ctx, key->secret, key->len, params);
 }
 
 int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)

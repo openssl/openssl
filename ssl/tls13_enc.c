@@ -588,7 +588,7 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, const EVP_MD *md,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_FETCH_FAILED);
         return 0;
     }
-    use_skey = ssl_prefer_skey_derivation(s, kdf, ciph,
+    use_skey = ssl_prefer_skey_derivation(s, kdf, ciph, NULL,
         null_cipher_mac ? *keylen : 0);
     if (use_skey)
         ret = tls13_derive_skey_and_iv(s, kdf, md, ciph, secret, key_purpose,
@@ -1011,7 +1011,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,
             hashlen, snkey, &cipherkey, iv, ivlen,
-            NULL, 0, sncipher, cipher, taglen,
+            NULL, sncipher, cipher, taglen,
             mac_pkey_type, mac_md, NULL, md)) {
         /* SSLfatal already called */
         goto err;
@@ -1101,7 +1101,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
 
     if (!ssl_set_new_record_layer(s, s->version, direction,
             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-            insecret, hashlen, snkey, &cipherkey, iv, ivlen, NULL, 0,
+            insecret, hashlen, snkey, &cipherkey, iv, ivlen, NULL,
             snenc,
             s->s3.tmp.new_sym_enc,
             taglen, NID_undef, NULL, NULL, md)) {

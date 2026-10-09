@@ -136,7 +136,6 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     int i;
     int enc_err;
     TLS_RL_RECORD *rr;
-    int imac_size;
     size_t mac_size = 0;
     size_t rechdrsize = dtls_get_rec_header_size(rl->packet[0]);
     unsigned char md[EVP_MAX_MD_SIZE];
@@ -173,20 +172,15 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     rr->data = rr->input;
     rr->orig_len = rr->length;
 
-    if (rl->md_ctx != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(rl->md_ctx);
-
-        if (tmpmd != NULL) {
-            imac_size = EVP_MD_get_size(tmpmd);
-            if (!ossl_assert(imac_size > 0 && imac_size <= EVP_MAX_MD_SIZE)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-                return 0;
-            }
-            mac_size = (size_t)imac_size;
+    if (rl->mac_size != 0) {
+        if (!ossl_assert(rl->mac_size <= EVP_MAX_MD_SIZE)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+            return 0;
         }
+        mac_size = rl->mac_size;
     }
 
-    if (rl->use_etm && rl->md_ctx != NULL) {
+    if (rl->use_etm && rl->mac_size != 0) {
         unsigned char *mac;
 
         if (rr->orig_len < mac_size) {
@@ -244,8 +238,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     /* r->length is now the compressed data plus mac */
     if (!rl->use_etm
         && (rl->enc_ctx != NULL)
-        && (EVP_MD_CTX_get0_md(rl->md_ctx) != NULL)) {
-        /* rl->md_ctx != NULL => mac_size != -1 */
+        && rl->mac_size != 0) {
 
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
         if (i == 0 || macbuf.mac == NULL
@@ -993,7 +986,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey, const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
@@ -1042,7 +1035,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key,
-        iv, ivlen, mackey, mackeylen,
+        iv, ivlen, mackey,
         snciph, ciph, taglen, mactype, md,
         comp);
 
