@@ -1578,6 +1578,13 @@ maximum tag length for OCB.
 
 =back
 
+Outside TLS record mode, a GCM EVP_Cipher() call with non-NULL input and
+zero input length leaves the operation unchanged. NULL input still requests
+finalization.
+
+In OCB mode, EVP_Cipher() with non-NULL input and NULL output processes AAD,
+buffering partial AAD blocks in the same way as EVP_CipherUpdate().
+
 =head2 CCM Mode
 
 The EVP interface for CCM mode is similar to that of the GCM mode but with a

@@ -8394,6 +8394,262 @@ static int test_invalid_ctx_for_digest(void)
     return ret;
 }
 
+/*
+ * Compare complete operations with AAD supplied through Update or EVP_Cipher.
+ * CCM and SIV use one AAD component and one payload update. GCM/OCB additionally
+ * exercise fragmented AAD and empty calls with both AAD APIs and raw payloads.
+ */
+static int test_aead_cipher_aad(const EVP_CIPHER *cipher)
+{
+    static const unsigned char key[EVP_MAX_KEY_LENGTH] = { 1 };
+    static const unsigned char iv[EVP_MAX_IV_LENGTH] = { 2 };
+    static const unsigned char aad[33] = { 3 };
+    static const unsigned char msg[33] = { 4 };
+    /* split=1 supplies the first AAD byte separately (GCM/OCB only). */
+    static const struct {
+        int aadlen, msglen, split;
+    } tests[] = {
+        { 0, sizeof(msg), 0 },
+        { 1, sizeof(msg), 0 },
+        { 16, sizeof(msg), 0 },
+        { sizeof(aad), sizeof(msg), 0 },
+        { sizeof(aad), 0, 1 },
+        { sizeof(aad), 32, 1 }
+    };
+    unsigned char out[sizeof(msg) + EVP_MAX_BLOCK_LENGTH];
+    unsigned char ciphertext[sizeof(msg)], tag[EVP_MAX_MD_SIZE];
+    unsigned char reference_tag[sizeof(tag)];
+    EVP_CIPHER_CTX *ctx = NULL;
+    int mode = EVP_CIPHER_get_mode(cipher);
+    int run, enc, variant, variants, outl, finl, aadout = 0, taglen = 0, ret = 0;
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(tests); i++) {
+        if (tests[i].split && mode != EVP_CIPH_GCM_MODE && mode != EVP_CIPH_OCB_MODE)
+            continue;
+        variants = tests[i].split ? 4 : 2;
+        for (run = 0; run < 2 * variants; run++) {
+            enc = run < variants;
+            variant = run % variants;
+            TEST_info("cipher=%s aadlen=%d msglen=%d split=%d enc=%d variant=%d",
+                EVP_CIPHER_get0_name(cipher), tests[i].aadlen, tests[i].msglen,
+                tests[i].split, enc, variant);
+            if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+                || !TEST_true(EVP_CipherInit_ex2(ctx, cipher, key, iv, enc, NULL))
+                || (!enc && !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, reference_tag), 0)))
+                goto end;
+            if (mode == EVP_CIPH_CCM_MODE
+                && !TEST_true(EVP_CipherUpdate(ctx, NULL, &outl, NULL,
+                    tests[i].msglen)))
+                goto end;
+
+            if (tests[i].split) {
+                /* Variant zero is the streaming reference without empty calls. */
+                if (variant != 0 && !TEST_int_eq(EVP_Cipher(ctx, out, msg, 0), 0))
+                    goto end;
+                /* The variant bits select the API for each AAD fragment. */
+                if (variant & 2) {
+                    if (!TEST_int_ge(EVP_Cipher(ctx, NULL, aad, 1), 0))
+                        goto end;
+                } else if (!TEST_true(EVP_CipherUpdate(ctx, NULL, &outl, aad, 1))) {
+                    goto end;
+                }
+                if (variant != 0
+                    && (!TEST_int_eq(EVP_Cipher(ctx, out, msg, 0), 0)
+                        || !TEST_int_eq(EVP_Cipher(ctx, NULL, msg, 0), 0)))
+                    goto end;
+            }
+            if (variant & 1) {
+                if (!TEST_int_eq(EVP_Cipher(ctx, NULL, aad + tests[i].split,
+                                     tests[i].aadlen - tests[i].split),
+                        aadout))
+                    goto end;
+            } else if (!TEST_true(EVP_CipherUpdate(ctx, NULL, &aadout,
+                           aad + tests[i].split, tests[i].aadlen - tests[i].split))) {
+                goto end;
+            }
+
+            if (tests[i].split && variant != 0) {
+                outl = EVP_Cipher(ctx, out, enc ? msg : ciphertext, tests[i].msglen);
+                if (!TEST_int_eq(outl, tests[i].msglen)
+                    || !TEST_int_ge(finl = EVP_Cipher(ctx, out + outl, NULL, 0), 0))
+                    goto end;
+            } else if (!TEST_true(EVP_CipherUpdate(ctx, out, &outl,
+                           enc ? msg : ciphertext, tests[i].msglen))
+                || !TEST_true(EVP_CipherFinal_ex(ctx, out + outl, &finl))) {
+                goto end;
+            }
+            if (!TEST_int_eq(outl + finl, tests[i].msglen))
+                goto end;
+
+            if (enc) {
+                taglen = EVP_CIPHER_CTX_get_tag_length(ctx);
+                if (taglen == 0)
+                    taglen = 16;
+                if (!TEST_int_gt(taglen, 0) || !TEST_int_le(taglen, sizeof(tag))
+                    || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                        taglen, tag),
+                        0))
+                    goto end;
+                if (variant == 0) {
+                    memcpy(ciphertext, out, tests[i].msglen);
+                    memcpy(reference_tag, tag, taglen);
+                } else if (!TEST_mem_eq(out, tests[i].msglen, ciphertext,
+                               tests[i].msglen)
+                    || !TEST_mem_eq(tag, taglen, reference_tag, taglen)) {
+                    goto end;
+                }
+            } else if (!TEST_mem_eq(out, tests[i].msglen, msg, tests[i].msglen)) {
+                goto end;
+            }
+            EVP_CIPHER_CTX_free(ctx);
+            ctx = NULL;
+        }
+    }
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+/* Empty plaintext still needs GCM's explicit IV and an authentic TLS tag. */
+static int test_gcm_tls_empty_record(const EVP_CIPHER *cipher)
+{
+    static const unsigned char key[EVP_MAX_KEY_LENGTH] = { 1 };
+    static const unsigned char iv[EVP_GCM_TLS_FIXED_IV_LEN
+        + EVP_GCM_TLS_EXPLICIT_IV_LEN]
+        = { 2 };
+    static const struct {
+        int enc;
+        int empty;
+        int badtag;
+    } tests[] = {
+        { 1, 0, 0 }, /* Generate a valid empty-plaintext record first. */
+        { 0, 0, 0 }, /* Verify its tag. */
+        { 0, 0, 1 }, /* Reject a corrupted tag. */
+        { 1, 1, 0 }, /* Reject zero record bytes on encrypt. */
+        { 0, 1, 0 } /* Reject zero record bytes on decrypt. */
+    };
+    unsigned char record[EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN] = { 0 };
+    unsigned char buf[sizeof(record)];
+    unsigned char aad[EVP_AEAD_TLS1_AAD_LEN] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 23, 3, 3, 0, 0
+    };
+    const OSSL_PARAM *params;
+    EVP_CIPHER_CTX *ctx = NULL;
+    size_t i;
+    int ret = 0;
+
+    params = EVP_CIPHER_settable_ctx_params(cipher);
+    if (OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD) == NULL
+        || OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED) == NULL)
+        return 1;
+    if (!TEST_int_eq(EVP_CIPHER_get_iv_length(cipher), sizeof(iv)))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(tests); i++) {
+        TEST_info("cipher=%s TLS case=%zu", EVP_CIPHER_get0_name(cipher), i);
+        aad[sizeof(aad) - 1] = EVP_GCM_TLS_EXPLICIT_IV_LEN
+            + (tests[i].enc ? 0 : EVP_GCM_TLS_TAG_LEN);
+        memcpy(buf, record, sizeof(buf));
+        if (tests[i].badtag)
+            buf[sizeof(buf) - 1] ^= 1;
+
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_CipherInit_ex2(ctx, cipher, key, iv,
+                tests[i].enc, NULL))
+            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+                                -1, (void *)iv),
+                0)
+            || !TEST_int_eq(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
+                                sizeof(aad), aad),
+                EVP_GCM_TLS_TAG_LEN)
+            || !TEST_int_eq(EVP_Cipher(ctx, buf, buf,
+                                tests[i].empty ? 0 : sizeof(buf)),
+                tests[i].empty || tests[i].badtag ? -1 : (int)sizeof(buf)))
+            goto end;
+        if (tests[i].enc && !tests[i].empty)
+            memcpy(record, buf, sizeof(record));
+        ERR_clear_error();
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = NULL;
+    }
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+/* OCB validates the key and IV even when a non-final call has no input bytes. */
+static int test_ocb_empty_input_state(const EVP_CIPHER *cipher)
+{
+    static const unsigned char key[EVP_MAX_KEY_LENGTH] = { 1 };
+    static const unsigned char iv[EVP_MAX_IV_LENGTH] = { 2 };
+    unsigned char in = 0, out[EVP_MAX_BLOCK_LENGTH];
+    EVP_CIPHER_CTX *ctx = NULL;
+    int enc, state, ret = 0;
+
+    for (enc = 0; enc < 2; enc++) {
+        for (state = 0; state < 2; state++) {
+            TEST_info("cipher=%s enc=%d missing_%s", EVP_CIPHER_get0_name(cipher), enc,
+                state == 0 ? "key" : "iv");
+            ERR_clear_error();
+            if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+                || !TEST_true(EVP_CipherInit_ex2(ctx, cipher,
+                    state == 0 ? NULL : key, state == 1 ? NULL : iv, enc, NULL))
+                || !TEST_int_lt(EVP_Cipher(ctx, out, &in, 0), 0))
+                goto end;
+            ERR_clear_error();
+            EVP_CIPHER_CTX_free(ctx);
+            ctx = NULL;
+        }
+    }
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+typedef struct {
+    int count, ok;
+} AEAD_TEST_RESULT;
+
+static void test_aead_cipher_cb(EVP_CIPHER *cipher, void *arg)
+{
+    AEAD_TEST_RESULT *result = arg;
+    int keylen = EVP_CIPHER_get_key_length(cipher);
+    int ivlen = EVP_CIPHER_get_iv_length(cipher);
+    int mode = EVP_CIPHER_get_mode(cipher);
+
+    /* TLS-only composite ciphers lack the standalone tag interface. */
+    if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0
+        || OSSL_PARAM_locate_const(EVP_CIPHER_gettable_ctx_params(cipher),
+               OSSL_CIPHER_PARAM_AEAD_TAG)
+            == NULL
+        || OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(cipher),
+               OSSL_CIPHER_PARAM_AEAD_TAG)
+            == NULL)
+        return;
+    result->count++;
+    TEST_info("AEAD cipher: %s, provider: %s", EVP_CIPHER_get0_name(cipher),
+        OSSL_PROVIDER_get0_name(EVP_CIPHER_get0_provider(cipher)));
+    if (!TEST_int_gt(keylen, 0) || !TEST_int_le(keylen, EVP_MAX_KEY_LENGTH)
+        || !TEST_int_ge(ivlen, 0) || !TEST_int_le(ivlen, EVP_MAX_IV_LENGTH)
+        || !test_aead_cipher_aad(cipher)
+        || (mode == EVP_CIPH_GCM_MODE && !test_gcm_tls_empty_record(cipher))
+        || (mode == EVP_CIPH_OCB_MODE && !test_ocb_empty_input_state(cipher)))
+        result->ok = 0;
+}
+
+static int test_evp_aead_cipher(void)
+{
+    AEAD_TEST_RESULT result = { 0, 1 };
+
+    /* Use each provided implementation during its callback; retain no list. */
+    EVP_CIPHER_do_all_provided(testctx, test_aead_cipher_cb, &result);
+    return TEST_int_gt(result.count, 0) && result.ok;
+}
+
 static int test_evp_cipher_negative_length(void)
 {
     EVP_CIPHER_CTX *ctx = NULL;
@@ -9829,11 +10085,18 @@ int setup_tests(void)
         }
     }
 
+    /* The recipe uses this to run only AEAD tests with a provider config. */
+    if (getenv("OPENSSL_TEST_AEAD_ONLY") != NULL) {
+        ADD_TEST(test_evp_aead_cipher);
+        return 1;
+    }
+
     if (config_file != NULL) {
         ADD_TEST(test_EVP_set_config_properties);
         return 1;
     }
 
+    ADD_TEST(test_evp_aead_cipher);
     ADD_TEST(test_EVP_set_default_properties);
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 30);
     ADD_TEST(test_EVP_DigestVerifyInit);
