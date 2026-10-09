@@ -10,3 +10,7 @@ oid_section = oids
 testoid1 = 1.2.3.4.1
 testoid2 = A Very Long OID Name, 1.2.3.4.2
 testoid3 = ,1.2.3.4.3
+testoid4 =         OID Name     ,1.2.3.4.4
+testoid5 = "         ",1.2.3.4.5
+testoid6 = "      e    ",1.2.3.4.6
+testoid7 =           ,1.2.3.4.7
