@@ -26,7 +26,6 @@ default_ca	= CA_default		# The default ca section
 [ CA_default ]
 
 dir		= ./demoCA
-certs		= $dir/certs		# Where the issued certs are kept
 database	= $dir/index.txt	# database index file.
 new_certs_dir	= $dir/newcerts		# default place for new certs.
 
