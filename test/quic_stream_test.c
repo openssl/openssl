@@ -3169,7 +3169,7 @@ DEFINE_LIST_OF(tho, THO_ALLOC_HDR);
 #define THO_N_SLIDES 256
 
 static size_t tho_reas_live, tho_reas_peak;
-static size_t tho_heap1024_live, tho_heap1024_peak, tho_heap1024_total;
+static size_t tho_heap1024_live, tho_heap1024_peak;
 static int tho_tracking;
 
 static OSSL_LIST(tho)
@@ -3207,7 +3207,6 @@ static void *tho_malloc(size_t sz, const char *file, int line)
             tho_reas_peak = tho_reas_live;
         if (sz == THO_FRAME_LEN) {
             tho_heap1024_live++;
-            tho_heap1024_total++;
             if (tho_heap1024_live > tho_heap1024_peak)
                 tho_heap1024_peak = tho_heap1024_live;
         }
