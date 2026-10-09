@@ -583,6 +583,7 @@ err:
 static int test_evp_aead_late_aad(int idx)
 {
     const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_tag = NULL; /* SIV: encryption giving a valid tag */
     EVP_CIPHER_CTX *ctx_enc = NULL; /* late AAD after plaintext: must fail */
     EVP_CIPHER_CTX *ctx_dec = NULL; /* late AAD after ciphertext: must fail */
     EVP_CIPHER_CTX *ctx_c_enc = NULL; /* as ctx_enc, EVP_Cipher() interface */
@@ -592,12 +593,15 @@ static int test_evp_aead_late_aad(int idx)
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
     unsigned char aad[] = "aad";
     unsigned char msg[] = "message";
+    unsigned char ct[sizeof(msg)] = { 0 };
+    unsigned char tag[16] = { 0 };
     unsigned char out[sizeof(msg) + EVP_MAX_BLOCK_LENGTH];
+    const unsigned char *dec_in = msg;
+    OSSL_PARAM params[2], *dec_params = NULL;
 
     int i = 0, len = 0, testresult = 0;
 
     if (info->mode == EVP_CIPH_CCM_MODE /* fails at first AAD */
-        || info->mode == EVP_CIPH_SIV_MODE /* accepts late AAD */
         || info->mode == EVP_CIPH_OCB_MODE) /* accepts late AAD */
         return 1;
 
@@ -605,6 +609,31 @@ static int test_evp_aead_late_aad(int idx)
         key[i] = (unsigned char)(0xA0 + i);
     for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
         iv[i] = (unsigned char)(0xB0 + i);
+
+    /*
+     * SIV checks the tag when the ciphertext is decrypted, so its decrypt
+     * cases need a valid ciphertext and tag: take them from an encryption
+     * of the same data.
+     */
+    if (info->mode == EVP_CIPH_SIV_MODE) {
+        params[0] = OSSL_PARAM_construct_octet_string(
+            OSSL_CIPHER_PARAM_AEAD_TAG, tag, sizeof(tag));
+        params[1] = OSSL_PARAM_construct_end();
+        if (!TEST_ptr(ctx_tag = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex2(ctx_tag, info->ciph, key, iv,
+                NULL))
+            || !TEST_true(EVP_EncryptUpdate(ctx_tag, NULL, &len, aad,
+                sizeof(aad)))
+            || !TEST_true(EVP_EncryptUpdate(ctx_tag, ct, &len, msg,
+                sizeof(msg)))
+            || !TEST_true(EVP_EncryptFinal_ex(ctx_tag, out, &len))
+            || !TEST_true(EVP_CIPHER_CTX_get_params(ctx_tag, params))) {
+            TEST_info("test_evp_aead_late_aad %s: SIV tag", info->name);
+            goto err;
+        }
+        dec_params = params;
+        dec_in = ct;
+    }
 
     /* encrypt: aad, then plaintext, then a late aad update must be rejected */
     ERR_clear_error();
@@ -620,13 +649,16 @@ static int test_evp_aead_late_aad(int idx)
 
     /*
      * decrypt: same sequence, late aad after ciphertext must be rejected.
-     * the ciphertext content is irrelevant; the tag is never finalized here.
+     * Except for SIV, the ciphertext content is irrelevant; the tag is never
+     * finalized here.
      */
     ERR_clear_error();
     if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
-        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv,
+            dec_params))
         || !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))
-        || !TEST_true(EVP_DecryptUpdate(ctx_dec, out, &len, msg, sizeof(msg)))
+        || !TEST_true(EVP_DecryptUpdate(ctx_dec, out, &len, dec_in,
+            sizeof(msg)))
         || !TEST_false(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))
         || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
         TEST_info("test_evp_aead_late_aad %s: decrypt", info->name);
@@ -648,9 +680,10 @@ static int test_evp_aead_late_aad(int idx)
     /* decrypt, EVP_Cipher() interface */
     ERR_clear_error();
     if (!TEST_ptr(ctx_c_dec = EVP_CIPHER_CTX_new())
-        || !TEST_true(EVP_DecryptInit_ex2(ctx_c_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_c_dec, info->ciph, key, iv,
+            dec_params))
         || !TEST_int_ge(EVP_Cipher(ctx_c_dec, NULL, aad, sizeof(aad)), 0)
-        || !TEST_int_ge(EVP_Cipher(ctx_c_dec, out, msg, sizeof(msg)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_c_dec, out, dec_in, sizeof(msg)), 0)
         || !TEST_int_lt(EVP_Cipher(ctx_c_dec, NULL, aad, sizeof(aad)), 0)
         || !TEST_err_r(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
         TEST_info("test_evp_aead_late_aad %s: decrypt (EVP_Cipher)", info->name);
@@ -659,6 +692,7 @@ static int test_evp_aead_late_aad(int idx)
 
     testresult = 1;
 err:
+    EVP_CIPHER_CTX_free(ctx_tag);
     EVP_CIPHER_CTX_free(ctx_enc);
     EVP_CIPHER_CTX_free(ctx_dec);
     EVP_CIPHER_CTX_free(ctx_c_enc);
