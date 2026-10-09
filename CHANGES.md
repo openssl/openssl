@@ -31,7 +31,7 @@ OpenSSL Releases
 OpenSSL 4.1
 -----------
 
-### Changes between 4.0 and 4.1 [xx XXX xxxx]
+### Changes between 4.0 and 4.1.0 [9 Oct 2026]
 
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
