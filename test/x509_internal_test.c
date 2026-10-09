@@ -1273,6 +1273,166 @@ err:
     return ret;
 }
 
+
+/*
+ * Test X509_set1_issuerUID() and X509_set1_subjectUID() for correct handling
+ * of optional unique identifiers, including copying, replacement, encoding
+ * cache invalidation, invalid arguments, and DER round-tripping.
+ */
+static int test_x509_set1_uids(void)
+{
+    X509 *x = NULL, *decoded = NULL;
+    EVP_PKEY *pkey = NULL;
+    X509_NAME *name = NULL;
+    ASN1_BIT_STRING *issuer_uid = NULL, *subject_uid = NULL;
+    const ASN1_BIT_STRING *got_issuer_uid = NULL;
+    const ASN1_BIT_STRING *got_subject_uid = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *derp;
+    static const unsigned char issuer_data[] = { 0xaa };
+    static const unsigned char subject_data[] = { 0x55 };
+    static const unsigned char replacement_data[] = { 0x33 };
+    int der_len = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(x = X509_new())
+        || !TEST_true(X509_set_version(x, X509_VERSION_2))
+        || !TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA",
+                                              (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"UID setter test", -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(x, name))
+        || !TEST_true(X509_set_issuer_name(x, name))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 3600))
+        || !TEST_true(X509_set_pubkey(x, pkey))
+        || !TEST_ptr(issuer_uid = ASN1_BIT_STRING_new())
+        || !TEST_ptr(subject_uid = ASN1_BIT_STRING_new())
+        || !TEST_true(ASN1_BIT_STRING_set1(issuer_uid, issuer_data, 1, 0))
+        || !TEST_true(ASN1_BIT_STRING_set1(subject_uid, subject_data, 1, 0)))
+        goto err;
+
+    /* A new certificate initially has neither UID. */
+    X509_get0_uids(x, &got_issuer_uid, &got_subject_uid);
+    if (!TEST_ptr_null(got_issuer_uid)
+        || !TEST_ptr_null(got_subject_uid))
+        goto err;
+
+    /* Invalid arguments must fail safely. */
+    if (!TEST_int_eq(X509_set1_issuerUID(NULL, issuer_uid), 0)
+        || !TEST_int_eq(X509_set1_issuerUID(x, NULL), 0)
+        || !TEST_int_eq(X509_set1_subjectUID(NULL, subject_uid), 0)
+        || !TEST_int_eq(X509_set1_subjectUID(x, NULL), 0))
+        goto err;
+
+    /*
+     * Each setter must invalidate the cached encoding independently.
+     * Signing refreshes the cached encoding before the next setter is tested.
+     */
+    if (!TEST_int_gt(X509_sign(x, pkey, EVP_sha256()), 0)
+        || !TEST_false(x->cert_info.enc.modified)
+        || !TEST_true(X509_set1_issuerUID(x, issuer_uid))
+        || !TEST_true(x->cert_info.enc.modified)
+        || !TEST_int_gt(X509_sign(x, pkey, EVP_sha256()), 0)
+        || !TEST_false(x->cert_info.enc.modified)
+        || !TEST_true(X509_set1_subjectUID(x, subject_uid))
+        || !TEST_true(x->cert_info.enc.modified)
+        || !TEST_int_gt(X509_sign(x, pkey, EVP_sha256()), 0)
+        || !TEST_false(x->cert_info.enc.modified))
+        goto err;
+
+    X509_get0_uids(x, &got_issuer_uid, &got_subject_uid);
+    if (!TEST_ptr(got_issuer_uid)
+        || !TEST_ptr(got_subject_uid)
+        || !TEST_true(got_issuer_uid != issuer_uid)
+        || !TEST_true(got_subject_uid != subject_uid)
+        || !TEST_int_eq(ASN1_STRING_get_length(got_issuer_uid), 1)
+        || !TEST_int_eq(ASN1_STRING_get_length(got_subject_uid), 1)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(got_issuer_uid), 1,
+                        issuer_data, 1)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(got_subject_uid), 1,
+                        subject_data, 1))
+        goto err;
+
+    /*
+     * Changing the source must not change the UID already stored
+     * in the certificate.
+     */
+    if (!TEST_true(ASN1_BIT_STRING_set1(issuer_uid,
+                                        replacement_data, 1, 0)))
+        goto err;
+
+    X509_get0_uids(x, &got_issuer_uid, &got_subject_uid);
+    if (!TEST_ptr(got_issuer_uid)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(got_issuer_uid), 1,
+                        issuer_data, 1))
+        goto err;
+
+    /* Replacing the issuer UID must update the certificate. */
+    if (!TEST_true(X509_set1_issuerUID(x, issuer_uid))
+        || !TEST_true(x->cert_info.enc.modified))
+        goto err;
+
+    X509_get0_uids(x, &got_issuer_uid, &got_subject_uid);
+    if (!TEST_ptr(got_issuer_uid)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(got_issuer_uid), 1,
+                        replacement_data, 1))
+        goto err;
+
+    /* The certificate must retain its copy after freeing the input. */
+    ASN1_BIT_STRING_free(subject_uid);
+    subject_uid = NULL;
+
+    X509_get0_uids(x, &got_issuer_uid, &got_subject_uid);
+    if (!TEST_ptr(got_subject_uid)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(got_subject_uid), 1,
+                        subject_data, 1))
+        goto err;
+
+    /*
+     * Re-sign the modified certificate, which should refresh its
+     * cached encoding.
+     */
+    if (!TEST_int_gt(X509_sign(x, pkey, EVP_sha256()), 0)
+        || !TEST_false(x->cert_info.enc.modified))
+        goto err;
+
+    /*
+     * Encode and decode the certificate to verify that both UIDs
+     * survive a DER round-trip.
+     */
+    if (!TEST_int_gt(der_len = i2d_X509(x, &der), 0)
+        || !TEST_ptr(der))
+        goto err;
+
+    derp = der;
+    if (!TEST_ptr(decoded = d2i_X509(NULL, &derp, der_len))
+        || !TEST_true(derp == der + der_len))
+        goto err;
+
+    X509_get0_uids(decoded, &got_issuer_uid, &got_subject_uid);
+    if (!TEST_ptr(got_issuer_uid)
+        || !TEST_ptr(got_subject_uid)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(got_issuer_uid), 1,
+                        replacement_data, 1)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(got_subject_uid), 1,
+                        subject_data, 1))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(der);
+    X509_free(decoded);
+    X509_free(x);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    ASN1_BIT_STRING_free(issuer_uid);
+    ASN1_BIT_STRING_free(subject_uid);
+    return ret;
+}
+
+
 /*
  * Signing leaves the cached encoding of the signed part current and equal
  * to the decoded one; modifying the object afterwards marks it stale.
@@ -1447,5 +1607,6 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_X509_ALGOR_set_md_nid_undef_known_name);
     ADD_TEST(test_X509_ALGOR_set_md_null_obj);
+    ADD_TEST(test_x509_set1_uids);
     return 1;
 }
