@@ -3738,13 +3738,13 @@ int speed_main(int argc, char **argv)
             if (EVP_PKEY_derive(ctx, loopargs[i].secret_a, &outlen) <= 0 /* compute a*B */
                 || EVP_PKEY_derive(test_ctx, loopargs[i].secret_b, &test_outlen) <= 0 /* compute b*A */
             ) {
-                /* skip only this */
-                ecdh_doit[testnum] = 0;
                 ecdh_checks = 0;
                 error = ERR_peek_error();
                 /* skip or stop depending on error code */
                 if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                     && ERR_GET_REASON(error) == PROV_R_COFACTOR_REQUIRED) {
+                    /* skip only this */
+                    ecdh_doit[testnum] = 0;
                     ERR_get_error(); /* skip this error */
                     if (!mr) {
                         /* space after 'Skip' is to align with 'Doing' */
@@ -3753,7 +3753,6 @@ int speed_main(int argc, char **argv)
                     }
                 } else {
                     /* stop all the ecdh's */
-                    ecdh_checks = 0;
                     BIO_puts(bio_err, "ECDH computation failure.\n");
                     dofail();
                     op_count = 1;
