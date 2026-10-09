@@ -121,8 +121,14 @@ static int RCT_test(CRNG_TEST *crngt, uint8_t next)
     };
 
     if (ossl_likely(crngt->rct.b != 0)
-        && ossl_unlikely(next == crngt->rct.a))
-        return ossl_likely(++crngt->rct.b < rct_c[ENTROPY_H]);
+        && ossl_unlikely(next == crngt->rct.a)) {
+        if (ossl_likely(++crngt->rct.b < rct_c[ENTROPY_H]))
+            return 1;
+        ERR_raise_data(ERR_LIB_PROV,
+            PROV_R_ENTROPY_SOURCE_FAILED_RCT_CONTINUOUS_TEST,
+            "byte repeats %u times", crngt->rct.b);
+        return 0;
+    }
     crngt->rct.a = next;
     crngt->rct.b = 1;
     return 1;
@@ -147,6 +153,10 @@ static int APT_test(CRNG_TEST *crngt, uint8_t next)
     if (ossl_likely(crngt->apt.b != 0)) {
         if (ossl_unlikely(crngt->apt.a == next)
             && ossl_unlikely(++crngt->apt.b >= apt_c[ENTROPY_H])) {
+            ERR_raise_data(ERR_LIB_PROV,
+                PROV_R_ENTROPY_SOURCE_FAILED_APT_CONTINUOUS_TEST,
+                "byte appears %u times by position %u",
+                crngt->apt.b, crngt->apt.i);
             crngt->apt.b = 0;
             return 0;
         }
@@ -167,8 +177,6 @@ static int crng_test(CRNG_TEST *crngt, const unsigned char *buf, size_t n)
     for (i = 0; i < n; i++)
         if (!RCT_test(crngt, buf[i]) || !APT_test(crngt, buf[i])) {
             crngt->state = EVP_RAND_STATE_ERROR;
-            ERR_raise(ERR_LIB_PROV,
-                PROV_R_ENTROPY_SOURCE_FAILED_CONTINUOUS_TESTS);
             return 0;
         }
     return 1;
