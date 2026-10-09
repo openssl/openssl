@@ -545,10 +545,10 @@ at the end of this document.
 
 ### jitter
 
-When configured with `enable-jitter`, a "JITTER" RNG is compiled that
-can provide an alternative software seed source. It can be configured
-by setting `seed` option in `openssl.cnf`. A minimal `openssl.cnf` is
-shown below:
+When configured with `enable-jitter` or `enable-jitter-dynamic`, a
+"JITTER" RNG is compiled that can provide an alternative software seed
+source. It can be configured by setting `seed` option in `openssl.cnf`.
+A minimal `openssl.cnf` is shown below:
 
     openssl_conf = openssl_init
 
@@ -560,6 +560,14 @@ shown below:
 
 It uses a statically linked [jitterentropy-library] as the seed source.
 
+When configured with `enable-jitter-dynamic`, libcrypto, and the FIPS
+provider when `enable-fips-jitter` is also given, link against the shared
+jitterentropy library (`-ljitterentropy`) instead.  This is only supported
+on Unix-like targets.  The library is then a single process-wide instance,
+shared by libcrypto, the FIPS provider and any other user of it in the
+process.  See [EVP_RAND-JITTER(7)](doc/man7/EVP_RAND-JITTER.pod) for the
+implications for the FIPS provider.
+
 Additional configuration flags available:
 
     --with-jitter-include=DIR
@@ -569,8 +577,9 @@ it is outside the system include path.
 
     --with-jitter-lib=DIR
 
-This is the directory containing the static libjitterentropy.a
-library, if it is outside the system library path.
+This is the directory containing the static libjitterentropy.a library,
+or the shared library when `enable-jitter-dynamic` is used, if it is outside
+the system library path.
 
 Setting the FIPS HMAC key
 -------------------------

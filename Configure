@@ -549,6 +549,7 @@ my @disablables_features = (
     "fuzz-libfuzzer",
     "integrity-only-ciphers",
     "jitter",
+    "jitter-dynamic",
     "legacy",
     "makedepend",
     "module",
@@ -645,6 +646,7 @@ our %disabled = ( # "what"         => "comment"
                   "fuzz-libfuzzer"      => "default",
                   "pie"                 => "default",
                   "jitter"              => "default",
+                  "jitter-dynamic"      => "default",
                   "ktls"                => "default",
                   "lms"                 => "default",
                   "md2"                 => "default",
@@ -693,6 +695,7 @@ my @disable_cascades = (
     "zlib"              => [ "zlib-dynamic" ],
     "brotli"            => [ "brotli-dynamic" ],
     "zstd"              => [ "zstd-dynamic" ],
+    "jitter"            => [ "jitter-dynamic" ],
     "des"               => [ "mdc2" ],
     "deprecated"        => [ "tls-deprecated-ec" ],
     "ec"                => [ qw(ec2m ec_explicit_curves sm2 gost ecx tls-deprecated-ec) ],
@@ -1004,6 +1007,10 @@ while (@argvcopy)
                 elsif ($1 eq "fips-jitter")
                         {
                         delete $disabled{"fips"};
+                        delete $disabled{"jitter"};
+                        }
+                elsif ($1 eq "jitter-dynamic")
+                        {
                         delete $disabled{"jitter"};
                         }
                 elsif (exists $deprecated_disablables{$1})
@@ -1985,6 +1992,9 @@ foreach (keys %$apitable) {
 }
 
 disable();                      # Run a cascade now
+
+die "***** enable-jitter-dynamic is only supported on Unix-like targets\n"
+    if !$disabled{"jitter-dynamic"} && $builder_platform ne "unix";
 
 # Hack cflags for better warnings (dev option) #######################
 
