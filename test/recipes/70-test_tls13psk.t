@@ -194,7 +194,7 @@ sub run_tests
     #        as per RFC8446 Appendix E.6
     $proxy2->clear();
     $proxy2->clientflags("-sess_in ".$session);
-    $proxy2->serverflags("-psk ffeeddccbbaa99887766554433221100 -no_ticket");
+    $proxy2->serverflags("-nocert -psk ffeeddccbbaa99887766554433221100 -no_ticket");
     if ($run_test_as_dtls) {
         $proxy2->start();
         # For DTLS, the proxy may return 0 even when we got the expected alert,
