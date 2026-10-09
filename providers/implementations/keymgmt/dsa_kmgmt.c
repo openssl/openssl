@@ -518,6 +518,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (p.type != NULL) {
         if (p.type->data_type != OSSL_PARAM_UTF8_STRING
+            || p.type->data == NULL
             || ((gen_type = dsa_gen_type_name2id(p.type->data)) == -1)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
