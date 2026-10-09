@@ -82,7 +82,7 @@
  * Likewise is there a problem with the glibc implementation on riscv.
  */
 #if defined(PTHREAD_RWLOCK_INITIALIZER) && !defined(_KLT_MODEL_) && !defined(_PUT_MODEL_) \
-    && !defined(__riscv)
+    && !defined(__riscv) && !defined(OPENSSL_SYS_AIX)
 #define USE_RWLOCK
 #endif
 
