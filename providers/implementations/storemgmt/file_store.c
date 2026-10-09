@@ -203,7 +203,7 @@ static const char *uri_file_stat(const char *uri, struct stat *st)
             size_t len = p == NULL ? strlen(q) : (size_t)(p - q);
 
             ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED,
-                "%.*s", len, q);
+                "%.*s", (int)len, q);
             ERR_clear_last_mark();
             return NULL;
         }

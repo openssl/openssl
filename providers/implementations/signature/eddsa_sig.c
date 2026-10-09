@@ -856,8 +856,7 @@ static int eddsa_set_ctx_params_internal(PROV_EDDSA_CTX *peddsactx, const struct
         if (peddsactx->instance_id_preset_flag) {
             /* When the instance is preset, the caller must not try to set it */
             ERR_raise_data(ERR_LIB_PROV, PROV_R_NO_INSTANCE_ALLOWED,
-                "the EdDSA instance is preset, you may not try to specify it",
-                NULL);
+                "the EdDSA instance is preset, you may not try to specify it");
             return 0;
         }
 

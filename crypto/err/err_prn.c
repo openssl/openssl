@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "crypto/err.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
@@ -121,7 +122,7 @@ void ERR_add_error_txt(const char *separator, const char *txt)
                 tmp = OPENSSL_strndup(txt, curr - txt);
                 if (tmp == NULL)
                     return;
-                ERR_add_error_data(2, separator, tmp);
+                ossl_err_add_error_fmt("%s%s", separator, tmp);
                 OPENSSL_free(tmp);
             }
             put_error(ERR_GET_LIB(err), func, err, file, line);
@@ -132,10 +133,10 @@ void ERR_add_error_txt(const char *separator, const char *txt)
                 if (tmp == NULL)
                     return;
                 /* output txt without the trailing separator */
-                ERR_add_error_data(2, leading_separator, tmp);
+                ossl_err_add_error_fmt("%s%s", leading_separator, tmp);
                 OPENSSL_free(tmp);
             } else {
-                ERR_add_error_data(2, leading_separator, txt);
+                ossl_err_add_error_fmt("%s%s", leading_separator, txt);
             }
             txt = next; /* finished */
         }

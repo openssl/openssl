@@ -106,6 +106,14 @@ OpenSSL 4.2
 
    *Paul Grubbs*
 
+ * Deprecated ERR_add_error_data() and ERR_add_error_vdata(). Their `num`
+   argument counts the strings that follow it, nothing verifies that the
+   count is right, and a value larger than the number of arguments actually
+   passed reads beyond them. Use ERR_add_error_txt() to append a single
+   string, or ERR_raise_data() to raise an error carrying formatted text.
+
+   *Bob Beck*
+
 OpenSSL 4.1
 -----------
 
