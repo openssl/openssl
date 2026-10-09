@@ -161,7 +161,7 @@ The signature of the certificate is invalid.
 
 The signature of the CRL is invalid.
 
-=item B<X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid>
+=item B<X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid or the system clock is incorrect>
 
 The certificate is not yet valid: the C<notBefore> date is after the
 current time.
