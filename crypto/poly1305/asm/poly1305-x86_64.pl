@@ -3836,6 +3836,7 @@ my ($out,$inp,$otp,$len)=$win64 ? ("%rcx","%rdx","%r8", "%r9") :  # Win64 order
                                   ("%rdi","%rsi","%rdx","%rcx");  # Unix order
 $code.=<<___;
 .globl	xor128_encrypt_n_pad
+.hidden xor128_encrypt_n_pad
 .type	xor128_encrypt_n_pad,\@abi-omnipotent
 .align	16
 xor128_encrypt_n_pad:
@@ -3885,6 +3886,7 @@ xor128_encrypt_n_pad:
 .size	xor128_encrypt_n_pad,.-xor128_encrypt_n_pad
 
 .globl	xor128_decrypt_n_pad
+.hidden xor128_decrypt_n_pad
 .type	xor128_decrypt_n_pad,\@abi-omnipotent
 .align	16
 xor128_decrypt_n_pad:

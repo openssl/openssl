@@ -254,6 +254,7 @@ ___
 #
 $code.=<<___;
 .global aes_gcm_enc_128_kernel
+.hidden aes_gcm_enc_128_kernel
 .type   aes_gcm_enc_128_kernel,%function
 .align  4
 aes_gcm_enc_128_kernel:
@@ -1140,6 +1141,7 @@ ___
 #
 $code.=<<___;
 .global aes_gcm_dec_128_kernel
+.hidden aes_gcm_dec_128_kernel
 .type   aes_gcm_dec_128_kernel,%function
 .align  4
 aes_gcm_dec_128_kernel:
@@ -2098,6 +2100,7 @@ my $rk4d="d22";
 #
 $code.=<<___;
 .global aes_gcm_enc_192_kernel
+.hidden aes_gcm_enc_192_kernel
 .type   aes_gcm_enc_192_kernel,%function
 .align  4
 aes_gcm_enc_192_kernel:
@@ -3035,6 +3038,7 @@ ___
 #
 $code.=<<___;
 .global aes_gcm_dec_192_kernel
+.hidden aes_gcm_dec_192_kernel
 .type   aes_gcm_dec_192_kernel,%function
 .align  4
 aes_gcm_dec_192_kernel:
@@ -4043,6 +4047,7 @@ my $rk4d="d22";
 #
 $code.=<<___;
 .global aes_gcm_enc_256_kernel
+.hidden aes_gcm_enc_256_kernel
 .type   aes_gcm_enc_256_kernel,%function
 .align  4
 aes_gcm_enc_256_kernel:
@@ -5028,6 +5033,7 @@ my $t9d="d6";
 #
 $code.=<<___;
 .global aes_gcm_dec_256_kernel
+.hidden aes_gcm_dec_256_kernel
 .type   aes_gcm_dec_256_kernel,%function
 .align  4
 aes_gcm_dec_256_kernel:
