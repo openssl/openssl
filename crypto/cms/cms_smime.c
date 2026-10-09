@@ -503,7 +503,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
                 continue;
             for (j = 0; j < num; j++) {
                 X509_ATTRIBUTE *attr = CMS_unsigned_get_attr(si, j);
-                ASN1_OBJECT *obj = X509_ATTRIBUTE_get0_object(attr);
+                const ASN1_OBJECT *obj = X509_ATTRIBUTE_get0_object(attr);
                 switch (OBJ_obj2nid(obj)) {
                     case NID_id_smime_aa_timeStampToken:
                         /*
