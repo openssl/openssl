@@ -8,16 +8,18 @@
  */
 
 /*
- * Scope the VX instruction set to this translation unit only.
- * GCC: #pragma GCC target sets the arch/feature flags for this file; the rest
- *      of libcrypto is compiled without -mvx and stays safe on pre-z13 CPUs.
- * Clang: does not honour #pragma GCC target for <vecintrin.h> inclusion; it
- *        requires -fzvector at the command line (added globally by Configure
- *        when needed, but that flag only unlocks vecintrin.h and does NOT
- *        change the code-generation architecture).
+ * Enable the VX instruction set for this translation unit only.
+ * GCC: #pragma GCC target("vx") enables VX code generation for this file
+ *      without pinning the architecture level; the -march= flag supplied by
+ *      the Makefile (S390X_VEC_MARCH_FLAGS) determines the actual architecture
+ *      (z13 by default, or the user-supplied level when CFLAGS contains
+ *      -march=).  The rest of libcrypto is compiled without -mvx and stays
+ *      safe on pre-z13 CPUs.
+ * Clang: does not honour #pragma GCC target; it relies solely on the
+ *        command-line -march= and -mvx flags supplied by the Makefile.
  */
 #if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC target("arch=z13,vx")
+#pragma GCC target("vx")
 #endif
 
 /* z13 introduced VX (facility bit 129); z14 adds VXE.  Only VX is needed. */
