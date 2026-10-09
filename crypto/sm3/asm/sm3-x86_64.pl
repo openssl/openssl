@@ -114,7 +114,7 @@ ___
 $code.=<<___ if($win64);
     # xmm6:xmm12 need to be maintained for Windows
     sub \$`7*16`,%rsp
-.cfi_adjust_cfa_offset \$`7*16`
+.cfi_adjust_cfa_offset `7*16`
     vmovdqu %xmm6, 16*0(%rsp)
     vmovdqu %xmm7, 16*1(%rsp)
     vmovdqu %xmm8, 16*2(%rsp)
@@ -260,7 +260,7 @@ $code.=<<___ if($win64);
     vmovdqu 16*5(%rsp),%xmm11
     vmovdqu 16*6(%rsp),%xmm12
     add \$`7*16`,%rsp
-.cfi_adjust_cfa_offset \$`-7*16`
+.cfi_adjust_cfa_offset `-7*16`
 ___
   $code .= <<___;
      pop     %rbp
