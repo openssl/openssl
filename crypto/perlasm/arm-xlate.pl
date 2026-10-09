@@ -45,8 +45,19 @@ my $previous = sub {
 	last;
     }
 };
+my %externs;
 my $hidden = sub {
-    if ($flavour =~ /ios/)	{ ".private_extern\t".join(',',@_); }
+    if ($flavour =~ /ios32/ && $externs{$_[0]}) {
+	my $name = $externs{$_[0]};
+	my $ret = ".private_extern\t_$name\n";
+	$ret .= ".data\n";
+	$ret .= ".align\t2\n";
+	$ret .= "$name:\n";
+	$ret .= ".long\t_$name\n";
+	$ret .= ".previous";
+	$ret;
+    }
+    elsif ($flavour =~ /ios/)	{ ".private_extern\t".join(',',@_); }
     elsif ($flavour =~ /win64/) { ""; }
     else			{ ".hidden\t".join(',',@_); }
 };
@@ -85,6 +96,7 @@ my $globl = sub {
 };
 my $global = $globl;
 my $extern = sub {
+    $externs{"_$_[0]"} = $_[0] if ($flavour =~ /ios32/);
     &$globl(@_);
     return;	# return nothing
 };
