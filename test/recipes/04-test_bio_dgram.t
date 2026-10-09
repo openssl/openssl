@@ -9,4 +9,6 @@
 
 use OpenSSL::Test::Simple;
 
+plan skip_all => "Test is disabled on AIX64-CC" if config('target') =~ m|^aix64-cc|;
+
 simple_test("test_bio_dgram", "bio_dgram_test");
