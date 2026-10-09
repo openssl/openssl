@@ -933,7 +933,7 @@ IF[{- !$disabled{tests} -}]
       PROGRAMS{noinst}=sm4_internal_test
     ENDIF
     IF[{- !$disabled{ec} -}]
-      PROGRAMS{noinst}=ectest ec_internal_test evp_pkey_dhkem_test
+      PROGRAMS{noinst}=ectest ec_internal_test ec_ct_test evp_pkey_dhkem_test
     ENDIF
     IF[{- !$disabled{ecx} -}]
       PROGRAMS{noinst}=curve448_internal_test
@@ -1101,6 +1101,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[ec_internal_test]=ec_internal_test.c $INITSRC
     INCLUDE[ec_internal_test]=../include ../crypto/ec ../apps/include
     DEPEND[ec_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[ec_ct_test]=ec_ct_test.c
+    INCLUDE[ec_ct_test]=../include ../crypto/ec ../apps/include
+    DEPEND[ec_ct_test]=../libcrypto.a libtestutil.a
 
     IF[{- !$disabled{ecx} -}]
       SOURCE[curve448_internal_test]=curve448_internal_test.c

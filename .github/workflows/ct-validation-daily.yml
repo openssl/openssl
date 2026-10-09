@@ -105,7 +105,8 @@ jobs:
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
         # - OSSL_FN quick modular helpers and mod_exp_mont: test_fn_ct
+        # - ECDSA and SM2 signing, EC point to bytes: test_ec_ct
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_fn_ct" \
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_fn_ct test_ec_ct" \
                OSSL_VALGRIND_CT=yes \
                test
