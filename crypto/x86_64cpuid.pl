@@ -73,9 +73,12 @@ OPENSSL_rdtsc:
 OPENSSL_ia32_cpuid:
 .cfi_startproc
 	endbranch
+	push %r12
+.cfi_push %r12
 	mov	%rbx,%r8		# save %rbx
 .cfi_register	%rbx,%r8
 
+	mov	\$1,%r12		# non-Hygon platform by default
 	xor	%eax,%eax
 	mov	%rax,8(%rdi)		# clear extended feature flags
 	cpuid
@@ -91,6 +94,17 @@ OPENSSL_ia32_cpuid:
 	cmp	\$0x6c65746e,%ecx	# "ntel"
 	setne	%al
 	or	%eax,%r9d		# 0 indicates Intel CPU
+	jz	.Lintel
+
+	cmp	\$0x6f677948,%ebx	# "Hygo"
+	setne	%al
+	mov	%eax,%r12d
+	cmp	\$0x6e65476e,%edx	# "nGen"
+	setne	%al
+	or	%eax,%r12d
+	cmp	\$0x656e6975,%ecx	# "uine"
+	setne	%al
+	or	%eax,%r12d		# 0 indicates Hygon CPU
 	jz	.Lintel
 
 	cmp	\$0x68747541,%ebx	# "Auth"
@@ -169,6 +183,10 @@ OPENSSL_ia32_cpuid:
 	and	\$0xfbffffff,%ecx	# clear XSAVE flag to mimic Silvermont
 
 .Lnotintel:
+	cmp	\$0,%r12d		# if Hygon CPU
+	jne	.Lnothygon
+	or	\$0x00010000,%ecx	# set reserved bit#16 on Hygon CPUs
+.Lnothygon:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Lgeneric
 	and	\$0xefffffff,%edx	# ~(1<<28)
@@ -258,6 +276,8 @@ OPENSSL_ia32_cpuid:
 	mov	%r10d,%eax
 	mov	%r8,%rbx		# restore %rbx
 .cfi_restore	%rbx
+	pop %r12
+.cfi_pop %r12
 	or	%r9,%rax
 	ret
 .cfi_endproc
