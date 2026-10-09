@@ -693,6 +693,8 @@ const X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x);
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
 void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
     const ASN1_BIT_STRING **psuid);
+int X509_set1_issuerUID(X509 *x, const ASN1_BIT_STRING *uid);
+int X509_set1_subjectUID(X509 *x, const ASN1_BIT_STRING *uid);
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 
 const ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);

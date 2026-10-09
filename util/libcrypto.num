@@ -5747,3 +5747,5 @@ PKCS12_PARSE_CTX_set_cert               ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_ca                 ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_skeys              ?	4_2_0	EXIST::FUNCTION:
 PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
+X509_set1_issuerUID                     ?	4_2_0	EXIST::FUNCTION:
+X509_set1_subjectUID                    ?	4_2_0	EXIST::FUNCTION:

@@ -42,6 +42,12 @@ OpenSSL 4.2
    <!-- https://github.com/openssl/openssl/pull/33035 -->
 
    *Iva Marinova*
+ * Added public API functions `X509_set1_issuerUID()` and
+   `X509_set1_subjectUID()` to set issuer and subject unique identifiers
+   in X.509 certificates.
+
+   *Harsh Dhabekar*
+
 
  * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
    X509_OBJECT_up_ref_count() does not reference count the X509_OBJECT itself.
