@@ -234,7 +234,7 @@ void ssl_evp_md_free(const EVP_MD *md)
 }
 
 int ssl_prefer_skey_derivation(const SSL_CONNECTION *s, const EVP_KDF *kdf,
-    const EVP_CIPHER *c, size_t mac_secret_size)
+    const EVP_CIPHER *c, const EVP_MAC *mac, size_t mac_secret_size)
 {
     return 0;
 }
@@ -244,7 +244,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
     unsigned char *snkey,
     const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype, const EVP_MD *md,

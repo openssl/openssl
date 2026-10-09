@@ -287,7 +287,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     unsigned char *snkey,
     const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph,
     size_t taglen,
@@ -313,7 +313,8 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
      * The kernel needs raw key bytes. If we received opaque keys, fall back
      * to software crypto.
      */
-    if (key == NULL || key->opaque != NULL)
+    if (key == NULL || key->opaque != NULL
+        || (mackey != NULL && mackey->opaque != NULL))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* ktls supports only the maximum fragment size */
@@ -337,7 +338,9 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, recseq,
             &crypto_info,
             rl->direction == OSSL_RECORD_DIRECTION_WRITE,
-            iv, ivlen, key->secret, key->len, mackey, mackeylen))
+            iv, ivlen, key->secret, key->len,
+            mackey == NULL ? NULL : mackey->secret,
+            mackey == NULL ? 0 : mackey->len))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction))
@@ -413,7 +416,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey, const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
@@ -438,7 +441,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     (*retrl)->funcs = &ossl_ktls_funcs;
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key,
-        iv, ivlen, mackey, mackeylen,
+        iv, ivlen, mackey,
         snciph, ciph, taglen, mactype, md,
         comp);
 

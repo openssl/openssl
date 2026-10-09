@@ -120,8 +120,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
     unsigned char *key, *iv;
-    OSSL_RECORD_KEY cipherkey = { 0 };
-    const char *key_purpose, *iv_purpose;
+    OSSL_RECORD_KEY cipherkey = { 0 }, mackey = { 0 };
+    OSSL_RECORD_KEY *pmackey = NULL;
+    const char *key_purpose, *mac_purpose, *iv_purpose;
     const EVP_CIPHER *c;
     const SSL_COMP *comp = NULL;
     const EVP_MD *m;
@@ -156,6 +157,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     k = iivlen;
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) || (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         key_purpose = OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY;
+        mac_purpose = OSSL_KDF_PURPOSE_CLIENT_MAC_KEY;
         iv_purpose = OSSL_KDF_PURPOSE_CLIENT_IV;
         mac_secret = &(p[0]);
         n = i + i;
@@ -165,6 +167,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         n += k + k;
     } else {
         key_purpose = OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY;
+        mac_purpose = OSSL_KDF_PURPOSE_SERVER_MAC_KEY;
         iv_purpose = OSSL_KDF_PURPOSE_SERVER_IV;
         n = i;
         mac_secret = &(p[n]);
@@ -177,19 +180,28 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (s->s3.tmp.key_block_kdf != NULL) {
         /*
-         * The schedule was derived as EVP_SKEY objects, so the cipher key is
-         * taken as one and never becomes bytes here.  The IV is not secret
-         * and is still handed over raw.
+         * The schedule was derived as EVP_SKEY objects, so the keys are taken
+         * as such and never become bytes here.  The IV is not secret and is
+         * still handed over raw.
          */
+        const char *propq = SSL_CONNECTION_GET_CTX(s)->propq;
         const unsigned char *skiv;
         size_t skivlen;
 
         cipherkey.opaque = EVP_KDF_CTX_get1_SKEY(s->s3.tmp.key_block_kdf,
-                                                 key_purpose,
-                                                 SSL_CONNECTION_GET_CTX(s)->propq);
+            key_purpose, propq);
         if (cipherkey.opaque == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
+        if (mac_secret_size != 0) {
+            mackey.opaque = EVP_KDF_CTX_get1_SKEY(s->s3.tmp.key_block_kdf,
+                mac_purpose, propq);
+            if (mackey.opaque == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            pmackey = &mackey;
         }
         if (k != 0) {
             if (!EVP_KDF_CTX_get0_IV(s->s3.tmp.key_block_kdf, iv_purpose,
@@ -272,17 +284,20 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         cipherkey.secret = key;
         cipherkey.len = cl;
     }
+    if (mac_secret_size != 0 && mackey.opaque == NULL) {
+        mackey.secret = mac_secret;
+        mackey.len = mac_secret_size;
+        pmackey = &mackey;
+    }
 
     if (!ssl_set_new_record_layer(s, s->version, direction,
             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
             NULL, 0, NULL, &cipherkey, iv, (size_t)k,
-            mac_secret, mac_secret_size, NULL, c, taglen,
+            pmackey, NULL, c, taglen,
             mac_type, m, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
     }
-    EVP_SKEY_free(cipherkey.opaque);
-    cipherkey.opaque = NULL;
 
     OSSL_TRACE_BEGIN(TLS)
     {
@@ -305,6 +320,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     return 1;
 err:
     EVP_SKEY_free(cipherkey.opaque);
+    EVP_SKEY_free(mackey.opaque);
     return 0;
 }
 
@@ -443,6 +459,7 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
 
 #ifdef OPENSSL_HAVE_TLS1PRF
     if (ssl_prefer_skey_derivation(s, SSL_CONNECTION_GET_CTX(s)->tls1prf, c,
+            mac_type == EVP_PKEY_HMAC ? SSL_CONNECTION_GET_CTX(s)->hmac : NULL,
             mac_secret_size)) {
         if (!tls1_generate_key_skeys(s, c, mac_secret_size, (size_t)ivlen)) {
             /* SSLfatal() already called */

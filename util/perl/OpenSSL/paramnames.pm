@@ -209,6 +209,7 @@ my %params = (
     'OSSL_MAC_PARAM_SIZE' =>             "size",                     # size_t
     'OSSL_MAC_PARAM_BLOCK_SIZE' =>       "block-size",               # size_t
     'OSSL_MAC_PARAM_TLS_DATA_SIZE' =>    "tls-data-size",            # size_t
+    'OSSL_MAC_PARAM_TLSTREE' =>          "tlstree",                  # octet_string
     'OSSL_MAC_PARAM_FIPS_NO_SHORT_MAC' =>'*OSSL_PROV_PARAM_NO_SHORT_MAC',
     'OSSL_MAC_PARAM_FIPS_KEY_CHECK' =>   '*OSSL_PKEY_PARAM_FIPS_KEY_CHECK',
     'OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR' => '*OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR',

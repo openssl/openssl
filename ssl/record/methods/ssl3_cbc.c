@@ -107,8 +107,8 @@ static void tls1_sha512_final_raw(void *ctx, unsigned char *md_out)
 /*-
  * ssl3_cbc_digest_record computes the MAC of a decrypted, padded TLS record.
  *
- *   ctx: the EVP_MD_CTX from which we take the hash function.
- *     ssl3_cbc_record_digest_supported must return true for this EVP_MD_CTX.
+ *   md: the hash function to use.
+ *     ossl_cbc_digest_supported must return true for this digest.
  *   md_out: the digest output. At most EVP_MAX_MD_SIZE bytes will be written.
  *   md_out_size: if non-NULL, the number of output bytes is written here.
  *   header: the 13-byte, TLS record header.
@@ -211,7 +211,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         md_length_size = 16;
     } else {
         /*
-         * ssl3_cbc_record_digest_supported should have been called first to
+         * ossl_cbc_digest_supported should have been called first to
          * check that the hash function is supported.
          */
         if (md_out_size != NULL)
