@@ -1,0 +1,5 @@
+[extensions]
+crlDistributionPoints = URI:http://primary.example/crl.pem, DNS:not-a-uri.example, URI:ldap://directory.example/crl
+
+[malformed_extensions]
+2.5.29.31 = DER:01:01:FF

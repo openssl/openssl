@@ -106,6 +106,11 @@ OpenSSL 4.2
 
    *Paul Grubbs*
 
+ * Added the `-crl_uri` option to `openssl x509` for printing URIs from a
+   certificate's CRL distribution points.
+
+   *Sai Kiran Taduri*
+
 OpenSSL 4.1
 -----------
 
