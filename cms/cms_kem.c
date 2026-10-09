@@ -7,15 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <assert.h>
 #include <limits.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
-#include "internal/sizes.h"
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "cms_local.h"
 
 static int kem_cms_decrypt(CMS_RecipientInfo *ri)
@@ -25,7 +24,7 @@ static int kem_cms_decrypt(CMS_RecipientInfo *ri)
     EVP_PKEY_CTX *pctx;
     EVP_CIPHER_CTX *kekctx;
     uint32_t cipher_length;
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
     EVP_CIPHER *kekcipher = NULL;
     int rv = 0;
 
@@ -41,7 +40,8 @@ static int kem_cms_decrypt(CMS_RecipientInfo *ri)
         goto err;
 
     OBJ_obj2txt(name, sizeof(name), wrap->algorithm, 0);
-    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
+    kekcipher = EVP_CIPHER_fetch(EVP_PKEY_CTX_get0_libctx(pctx), name,
+        EVP_PKEY_CTX_get0_propq(pctx));
     if (kekcipher == NULL || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
@@ -70,7 +70,7 @@ static int kem_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_PKEY *pkey;
     int security_bits;
     const ASN1_OBJECT *kdf_obj = NULL;
-    unsigned char kemri_x509_algor[OSSL_MAX_ALGORITHM_ID_SIZE];
+    unsigned char kemri_x509_algor[CMS_MAX_ALGORITHM_ID_SIZE];
     OSSL_PARAM params[2];
     X509_ALGOR *x509_algor = NULL;
     EVP_CIPHER_CTX *kekctx;

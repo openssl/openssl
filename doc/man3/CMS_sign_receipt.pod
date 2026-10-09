@@ -6,7 +6,7 @@ CMS_sign_receipt - create a CMS signed receipt
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si, X509 *signcert,
                                    EVP_PKEY *pkey, const STACK_OF(X509) *certs,
@@ -39,6 +39,12 @@ an error occurred.  The error can be obtained from ERR_get_error(3).
 L<ERR_get_error(3)>,
 L<CMS_verify_receipt(3)>,
 L<CMS_sign(3)>
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

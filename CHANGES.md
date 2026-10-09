@@ -74,6 +74,15 @@ OpenSSL 4.2
 
    *John Claus*
 
+ * The CMS API in libcrypto is deprecated.  The same API, without
+   deprecation, is now provided by the new libcms library, reached through
+   the `<libcms/cms.h>` header.  Note that switching to it requires both
+   using this header and linking with libcms, since libcms exports the API
+   under its own symbol names.  libcrypto keeps exporting the deprecated
+   symbols for ABI compatibility until removed in a future major release.
+
+   *Bob Beck*
+
  * Added AVX-512 and VAES optimizations for AES-CTR mode. Performance for
    large inputs (1024 bytes or more) improved by 2.9x to 3.9x.
    <!-- https://github.com/openssl/openssl/pull/30755 -->

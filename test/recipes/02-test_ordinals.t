@@ -8,13 +8,18 @@
 
 use strict;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_ordinals");
 
-plan tests => 2;
+plan tests => 3;
 
 ok(testordinals(srctop_file("util", "libcrypto.num")), "Test libcrypto.num");
 ok(testordinals(srctop_file("util", "libssl.num")), "Test libssl.num");
+SKIP: {
+    skip "CMS is disabled", 1 if disabled("cms");
+    ok(testordinals(srctop_file("util", "libcms.num")), "Test libcms.num");
+}
 
 sub testordinals
 {
