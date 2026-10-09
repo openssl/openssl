@@ -1602,7 +1602,7 @@ int cms_main(int argc, char **argv)
             ret = 7;
             goto end;
         }
-        ret = BIO_write(tmp, os->data, os->length);
+        ret = BIO_write(tmp, ASN1_STRING_get0_data(os), ASN1_STRING_get_length(os));
         BIO_free(tmp);
         if (ret <= 0) {
             ret = 7;
