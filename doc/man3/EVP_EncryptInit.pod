@@ -623,8 +623,11 @@ the tag length has not been set.
 =item EVP_CIPHER_get_block_size() and EVP_CIPHER_CTX_get_block_size()
 
 Return the block size of a cipher when passed an B<EVP_CIPHER> or
-B<EVP_CIPHER_CTX> structure. The constant B<EVP_MAX_BLOCK_LENGTH> is also the
-maximum block length for all ciphers.
+B<EVP_CIPHER_CTX> structure. The constant B<EVP_MAX_BLOCK_LENGTH> is not a
+maximum block length for every fetched cipher. In particular, some composite
+ciphers can report a larger block size. Applications should use the block size
+returned by EVP_CIPHER_get_block_size() or EVP_CIPHER_CTX_get_block_size() when
+they need to size buffers for a specific cipher.
 A value of 0 is returned if, with B<EVP_CIPHER_get_block_size()>, the cipher
 I<e> is NULL, or, with B<EVP_CIPHER_CTX_get_block_size()>, the context
 I<ctx> is NULL or has not been properly initialized with a call to
