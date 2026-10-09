@@ -70,7 +70,8 @@ typedef struct ossl_record_template_st OSSL_RECORD_TEMPLATE;
  * export them.  The two are alternatives and never both, so |opaque| says
  * which arm is live and there is no separate tag to keep in step with it.
  *
- * A NULL OSSL_RECORD_KEY pointer means there is no key of that kind at all.
+ * A NULL OSSL_RECORD_KEY pointer means there is no key of that kind at all,
+ * as for the MAC key of an AEAD ciphersuite.
  */
 struct ossl_record_key_st {
     EVP_SKEY *opaque;
@@ -139,8 +140,7 @@ struct ossl_record_method_st {
         const OSSL_RECORD_KEY *key,
         unsigned char *iv,
         size_t ivlen,
-        unsigned char *mackey,
-        size_t mackeylen,
+        const OSSL_RECORD_KEY *mackey,
         const EVP_CIPHER *snciph,
         const EVP_CIPHER *ciph,
         size_t taglen,

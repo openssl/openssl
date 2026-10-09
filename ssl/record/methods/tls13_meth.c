@@ -17,7 +17,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     unsigned char *snkey,
     const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph,
     size_t taglen,
@@ -55,7 +55,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
             (char *)EVP_MD_name(md), 0);
         *p = OSSL_PARAM_construct_end();
-        if (!EVP_MAC_init(mac_ctx, key->secret, key->len, params)) {
+        if (!tls_mac_init_key(mac_ctx, key, params)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
