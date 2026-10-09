@@ -10,7 +10,7 @@
  */
 
 #include "helpers/cmp_testlib.h"
-#include "../crypto/crmf/crmf_local.h" /* for manipulating the CertId issuer */
+#include "../cmp/crmf_local.h" /* for manipulating the CertId issuer */
 
 #include "cmp_mock_srv.h"
 

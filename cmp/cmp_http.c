@@ -9,6 +9,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
+
 #include <stdio.h>
 
 #include "cmp_local.h"

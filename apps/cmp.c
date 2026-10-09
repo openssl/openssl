@@ -37,9 +37,9 @@
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <stdlib.h>
-#include <openssl/cmp.h>
-#include <openssl/cmp_util.h>
-#include <openssl/crmf.h>
+#include <libcmp/cmp.h>
+#include <libcmp/cmp_util.h>
+#include <libcmp/crmf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/store.h>

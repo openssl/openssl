@@ -8,7 +8,7 @@ OSSL_CMP_validate_cert_path
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
  int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
  int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
                                  X509_STORE *trusted_store, X509 *cert);
@@ -76,6 +76,10 @@ L<OSSL_CMP_CTX_set1_untrusted(3)>, L<OSSL_CMP_CTX_set0_trusted(3)>
 =head1 HISTORY
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

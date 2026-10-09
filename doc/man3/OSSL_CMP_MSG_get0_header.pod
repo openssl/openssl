@@ -16,7 +16,7 @@ i2d_OSSL_CMP_MSG_bio
 
 =head1 SYNOPSIS
 
-  #include <openssl/cmp.h>
+  #include <libcmp/cmp.h>
 
   OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg);
   int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg);
@@ -154,6 +154,10 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 OSSL_CMP_MSG_update_recipNonce() was added in OpenSSL 3.0.9.
 
 OSSL_CMP_MSG_get0_certreq_publickey() was added in OpenSSL 3.3.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

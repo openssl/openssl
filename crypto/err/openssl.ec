@@ -29,8 +29,8 @@ L UI            include/openssl/uierr.h         crypto/ui/ui_err.c              
 L COMP          include/openssl/comperr.h       crypto/comp/comp_err.c                  include/crypto/comperr.h
 L TS            include/openssl/tserr.h         crypto/ts/ts_err.c                      include/crypto/tserr.h
 L CMS           include/openssl/cmserr.h        crypto/cms/cms_err.c                    include/crypto/cmserr.h
-L CRMF          include/openssl/crmferr.h       crypto/crmf/crmf_err.c                  include/crypto/crmferr.h
-L CMP           include/openssl/cmperr.h        crypto/cmp/cmp_err.c                    include/crypto/cmperr.h
+L CRMF          include/openssl/crmferr.h       cmp/crmf_err.c                          include/crypto/crmferr.h
+L CMP           include/openssl/cmperr.h        cmp/cmp_err.c                           include/crypto/cmperr.h
 L CT            include/openssl/cterr.h         crypto/ct/ct_err.c                      include/crypto/cterr.h
 L ASYNC         include/openssl/asyncerr.h      crypto/async/async_err.c                include/crypto/asyncerr.h
 # KDF is only here for conservation purposes
