@@ -15,6 +15,10 @@
 #include <string.h>
 #include <openssl/e_os2.h> /* For 'ossl_inline' */
 
+#if defined(__riscv_vector)
+#include <riscv_vector.h>
+#endif /* defined(__riscv_vector) */
+
 /*-
  * The boolean methods return a bitmask of all ones (0xff...f) for true
  * and 0 for false. This is useful for choosing a value based on the result
@@ -462,6 +466,36 @@ static ossl_inline void constant_time_lookup(void *out,
     unsigned char mask;
 
     memset(out, 0, rowsize);
+
+#if defined(__riscv_vector)
+    /*
+     * Vectorized masked-select OR accumulation.  For each table row, load the
+     * row a full vector group at a time (e8/m8 => VLMAX=128 at VLEN=128,
+     * 256 at VLEN=256), AND with the constant-time row mask, and OR into
+     * |out|.  The mask is invariant within a row, so it is applied as a
+     * scalar operand (vand.vx); the strip-mined vsetvl makes this
+     * VLEN-agnostic and handles any final partial group with a shorter
+     * vector.  Bit-exact with the scalar path below for all mask values.
+     */
+    {
+        size_t vl = __riscv_vsetvl_e8m8(rowsize);
+        if (vl > 0) {
+            for (i = 0; i < numrows; i++, idx--) {
+                mask = (unsigned char)constant_time_is_zero_s(idx);
+                const unsigned char *row = tablec + i * rowsize;
+                for (j = 0; j < rowsize; j += vl) {
+                    vl = __riscv_vsetvl_e8m8(rowsize - j);
+                    vuint8m8_t vr = __riscv_vle8_v_u8m8(row + j, vl);
+                    vuint8m8_t vm = __riscv_vand_vx_u8m8(vr, mask, vl);
+                    vuint8m8_t vo = __riscv_vle8_v_u8m8(outc + j, vl);
+                    __riscv_vse8_v_u8m8(outc + j,
+                        __riscv_vor_vv_u8m8(vo, vm, vl), vl);
+                }
+            }
+            return;
+        }
+    }
+#endif /* defined(__riscv_vector) */
 
     /* Note idx may underflow - but that is well defined */
     for (i = 0; i < numrows; i++, idx--) {
