@@ -54,8 +54,10 @@ static void *ml_kem_newctx(void *provctx)
 
 #ifdef FIPS_MODULE
     if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
-            ST_ID_KEM_ML_KEM))
+            ST_ID_KEM_ML_KEM)) {
+        OPENSSL_free(ctx);
         return NULL;
+    }
 #endif
 
     ctx->key = NULL;
