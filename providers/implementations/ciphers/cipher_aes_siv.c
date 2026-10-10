@@ -86,14 +86,14 @@ static int siv_init(void *vctx, const unsigned char *key, size_t keylen,
 
     ctx->enc = enc;
 
-    if (key != NULL) {
-        if (keylen != ctx->keylen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-            return 0;
-        }
-        if (!ctx->hw->initkey(ctx, key, ctx->keylen))
-            return 0;
+    if (key != NULL && keylen != ctx->keylen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
     }
+    /* nothing to start an operation with until a key has been supplied */
+    if ((key != NULL || ctx->siv.cipher_ctx != NULL)
+        && !ctx->hw->initkey(ctx, key, ctx->keylen))
+        return 0;
     return aes_siv_set_ctx_params(ctx, params);
 }
 

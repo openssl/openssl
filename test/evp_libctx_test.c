@@ -347,7 +347,7 @@ err:
 
 static int test_cipher_reinit(int test_id)
 {
-    int ret = 0, diff, siv, no_null_key;
+    int ret = 0, diff, no_null_key;
     int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -390,9 +390,6 @@ static int test_cipher_reinit(int test_id)
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
         goto err;
 
-    /* siv cannot be called with NULL key as the iv is irrelevant */
-    siv = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_SIV_MODE);
-
     /*
      * Skip init call with a null key for RC4 as the stream cipher does not
      * handle reinit (1.1.1 behaviour).
@@ -409,8 +406,7 @@ static int test_cipher_reinit(int test_id)
         || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, sizeof(in)))
         || (!no_null_key
             && (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
-                || !TEST_int_eq(EVP_EncryptUpdate(ctx, out3, &out3_len, in, sizeof(in)),
-                    siv ? 0 : 1))))
+                || !TEST_true(EVP_EncryptUpdate(ctx, out3, &out3_len, in, sizeof(in))))))
         goto err;
 
     if (diff) {
@@ -420,7 +416,7 @@ static int test_cipher_reinit(int test_id)
             goto err;
     } else {
         if (!TEST_mem_eq(out1, out1_len, out2, out2_len)
-            || (!siv && !no_null_key && !TEST_mem_eq(out1, out1_len, out3, out3_len)))
+            || (!no_null_key && !TEST_mem_eq(out1, out1_len, out3, out3_len)))
             goto err;
     }
     ret = 1;
