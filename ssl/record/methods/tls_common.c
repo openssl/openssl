@@ -1400,7 +1400,8 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     BIO_free(rl->prev);
     BIO_free_all(rl->bio);
     BIO_free(rl->next);
-    ossl_tls_buffer_release(&rl->rbuf);
+    if (rl->rbuf.buf != NULL)
+        tls_release_read_buffer(rl);
 
     tls_release_write_buffer(rl);
 
