@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include "ssl_local.h"
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
@@ -20,6 +21,8 @@ void ssl3_cleanup_key_block(SSL_CONNECTION *s)
     OPENSSL_clear_free(s->s3.tmp.key_block, s->s3.tmp.key_block_length);
     s->s3.tmp.key_block = NULL;
     s->s3.tmp.key_block_length = 0;
+    EVP_KDF_CTX_free(s->s3.tmp.key_block_kdf);
+    s->s3.tmp.key_block_kdf = NULL;
 }
 
 int ssl3_init_finished_mac(SSL_CONNECTION *s)

@@ -27,6 +27,8 @@ typedef enum OPTION_choice {
     OPT_CIPHER,
     OPT_DIGEST,
     OPT_MAC,
+    OPT_MULTI,
+    OPT_PURPOSE,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -41,6 +43,9 @@ const OPTIONS kdf_options[] = {
     { "mac", OPT_MAC, 's', "MAC" },
     { OPT_MORE_STR, 1, '-', "See 'Supported Controls' in the EVP_KDF_ docs\n" },
     { "keylen", OPT_KEYLEN, 'p', "The size of the output derived key" },
+    { "multi", OPT_MULTI, '-', "Use multi-key derivation" },
+    { "purpose", OPT_PURPOSE, 's',
+        "Purpose string for retrieving a specific key or IV from multi-derive" },
 
     OPT_SECTION("Output"),
     { "out", OPT_OUT, '>', "Output to filename rather than stdout" },
@@ -75,11 +80,12 @@ static char *alloc_kdf_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,
 
 int kdf_main(int argc, char **argv)
 {
-    int ret = 1, out_bin = 0;
+    int ret = 1, out_bin = 0, multi = 0;
     OPTION_CHOICE o;
     STACK_OF(OPENSSL_STRING) *opts = NULL;
     char *prog, *hexout = NULL;
     const char *outfile = NULL;
+    const char *purpose = NULL;
     unsigned char *dkm_bytes = NULL;
     int dkm_len = 0;
     BIO *out = NULL;
@@ -131,6 +137,12 @@ int kdf_main(int argc, char **argv)
             if (mac == NULL)
                 goto opthelp;
             break;
+        case OPT_MULTI:
+            multi = 1;
+            break;
+        case OPT_PURPOSE:
+            purpose = opt_arg();
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto err;
@@ -176,17 +188,61 @@ int kdf_main(int argc, char **argv)
     if (out == NULL)
         goto err;
 
-    if (dkm_len <= 0) {
-        BIO_puts(bio_err, "Derived key length is mandatory!\n");
-        goto err;
-    }
-    dkm_bytes = app_malloc(dkm_len, "out buffer");
-    if (dkm_bytes == NULL)
-        goto err;
+    if (multi) {
+        EVP_SKEY *skey = NULL;
+        const unsigned char *raw = NULL;
+        const unsigned char *iv = NULL;
+        size_t len = 0;
 
-    if (!EVP_KDF_derive(ctx, dkm_bytes, dkm_len, NULL)) {
-        BIO_puts(bio_err, "EVP_KDF_derive failed\n");
-        goto err;
+        if (purpose == NULL) {
+            BIO_puts(bio_err, "Multi-derive requires -purpose\n");
+            goto err;
+        }
+
+        if (!EVP_KDF_derive_SKEYs(ctx, NULL)) {
+            BIO_puts(bio_err, "EVP_KDF_derive_SKEYs failed\n");
+            goto err;
+        }
+
+        skey = EVP_KDF_CTX_get1_SKEY(ctx, purpose, app_get0_propq());
+        if (skey != NULL) {
+            if (!EVP_SKEY_get0_raw_key(skey, &raw, &len)) {
+                BIO_puts(bio_err, "Failed to get raw key bytes\n");
+                EVP_SKEY_free(skey);
+                goto err;
+            }
+            dkm_bytes = app_malloc(len, "out buffer");
+            if (dkm_bytes == NULL) {
+                EVP_SKEY_free(skey);
+                goto err;
+            }
+            memcpy(dkm_bytes, raw, len);
+            dkm_len = (int)len;
+            EVP_SKEY_free(skey);
+        } else if (EVP_KDF_CTX_get0_IV(ctx, purpose, &iv, &len)) {
+            dkm_bytes = app_malloc(len, "out buffer");
+            if (dkm_bytes == NULL)
+                goto err;
+            memcpy(dkm_bytes, iv, len);
+            dkm_len = (int)len;
+        } else {
+            BIO_printf(bio_err, "Failed to get key or IV for purpose '%s'\n",
+                purpose);
+            goto err;
+        }
+    } else {
+        if (dkm_len <= 0) {
+            BIO_puts(bio_err, "Derived key length is mandatory!\n");
+            goto err;
+        }
+        dkm_bytes = app_malloc(dkm_len, "out buffer");
+        if (dkm_bytes == NULL)
+            goto err;
+
+        if (!EVP_KDF_derive(ctx, dkm_bytes, dkm_len, NULL)) {
+            BIO_puts(bio_err, "EVP_KDF_derive failed\n");
+            goto err;
+        }
     }
 
     if (out_bin) {

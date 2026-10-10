@@ -100,9 +100,9 @@ struct record_functions_st {
      */
     int (*set_crypto_state)(OSSL_RECORD_LAYER *rl, int level,
         unsigned char *snkey,
-        unsigned char *key, size_t keylen,
+        const OSSL_RECORD_KEY *key,
         unsigned char *iv, size_t ivlen,
-        unsigned char *mackey, size_t mackeylen,
+        const OSSL_RECORD_KEY *mackey,
         const EVP_CIPHER *snciph,
         const EVP_CIPHER *ciph,
         size_t taglen,
@@ -297,14 +297,29 @@ struct ossl_record_layer_st {
     /* cryptographic state for DTLS 1.3 encrypted sequence numbers */
     EVP_CIPHER_CTX *sn_enc_ctx;
 
-    /* TLSv1.3 MAC ctx, only used with integrity-only cipher */
+    /*
+     * The MAC, where the records carry one of their own: TLS 1.3 with an
+     * integrity-only ciphersuite, and TLS 1.2 with HMAC.
+     */
     EVP_MAC_CTX *mac_ctx;
 
     /* Explicit IV length */
     size_t eivlen;
 
-    /* used for mac generation */
+    /*
+     * Used for mac generation by the GOST MACs, which have no EVP_MAC
+     * implementation to drive through |mac_ctx| above.
+     */
     EVP_MD_CTX *md_ctx;
+
+    /*
+     * Length of the MAC that TLS 1.2 appends to each record, or 0 if the
+     * records are not MACed that way -- an AEAD ciphersuite, or TLS 1.3,
+     * which MACs inside tls13_cipher() instead.  This is what the shared
+     * record code asks rather than inspecting the MAC state itself, since
+     * that now takes two forms.
+     */
+    size_t mac_size;
 
     /* compress/uncompress */
     COMP_CTX *compctx;
@@ -588,6 +603,12 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *templates,
     size_t numtempl);
+
+int tls_cipher_init_key(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+    const OSSL_RECORD_KEY *key,
+    const unsigned char *iv, size_t ivlen, int enc);
+int tls_mac_init_key(EVP_MAC_CTX *ctx, const OSSL_RECORD_KEY *key,
+    const OSSL_PARAM params[]);
 
 /* Macros/functions provided by the TLS_BUFFER component */
 

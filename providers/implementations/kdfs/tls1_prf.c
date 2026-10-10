@@ -84,6 +84,14 @@ static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_prf_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_prf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_tls1_prf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_tls1_prf_get_ctx_params;
+static OSSL_FUNC_kdf_derive_multi_fn kdf_tls1_prf_derive_multi;
+static OSSL_FUNC_kdf_get_skey_fn kdf_tls1_prf_get_skey;
+static OSSL_FUNC_kdf_get_iv_fn kdf_tls1_prf_get_iv;
+
+typedef struct tls1_prf_st TLS1_PRF;
+static void tls1_prf_multi_cleanup(TLS1_PRF *ctx);
+static int tls1_prf_purpose_to_offset(const TLS1_PRF *ctx, const char *purpose,
+    size_t *offset, size_t *len);
 
 static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
     const unsigned char *sec, size_t slen,
@@ -97,8 +105,35 @@ static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
 
 #include "providers/implementations/kdfs/tls1_prf.inc"
 
+/*
+ * Key slots of a TLS 1.2 key block, in the order they appear in it.  The IVs
+ * that follow them are not keys and so have no slot here.
+ */
+#define TLS1_PRF_NUM_KEYS 4
+
+static const char *const tls1_prf_key_purposes[TLS1_PRF_NUM_KEYS] = {
+    OSSL_KDF_PURPOSE_CLIENT_MAC_KEY,
+    OSSL_KDF_PURPOSE_SERVER_MAC_KEY,
+    OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY,
+    OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY
+};
+
+/*
+ * A key type is chosen per category rather than per purpose: the two
+ * directions of a TLS connection always agree on it, and PKCS#11 models the
+ * same thing with a single C_DeriveKey template.
+ */
+#define TLS1_PRF_KEYTYPE_MAC 0
+#define TLS1_PRF_KEYTYPE_CIPHER 1
+#define TLS1_PRF_NUM_KEYTYPES 2
+
+static const int tls1_prf_purpose_keytype[TLS1_PRF_NUM_KEYS] = {
+    TLS1_PRF_KEYTYPE_MAC, TLS1_PRF_KEYTYPE_MAC,
+    TLS1_PRF_KEYTYPE_CIPHER, TLS1_PRF_KEYTYPE_CIPHER
+};
+
 /* TLS KDF kdf context structure */
-typedef struct {
+struct tls1_prf_st {
     void *provctx;
 
     /* MAC context for the main digest */
@@ -113,8 +148,42 @@ typedef struct {
     unsigned char *seed;
     size_t seedlen;
 
+    /* Multi-key derivation configuration */
+    size_t mac_key_len;
+    size_t cipher_key_len;
+    size_t iv_len;
+    /*
+     * The cipher the derived keys are for, resolved at set time to just the
+     * two facts needed of it: the name, which decides the key type, and the
+     * key length.  The EVP_CIPHER itself is not kept.
+     *
+     * The length is deliberately *not* merged into cipher_key_len above.
+     * That one is what the caller asked for, this one is what the cipher
+     * requires, and derive_multi() compares them -- naming AES-128-CBC and a
+     * cipher_key_len of 10 is a contradiction worth reporting rather than
+     * silently resolving.  Keeping them apart is also what lets a later
+     * "cipher" replace an earlier one while a caller-supplied length still
+     * conflicts with it, whatever order the two arrive in.
+     */
+    char *cipher_name;
+    size_t cipher_keylen;
+
+    /*
+     * Result of a multi-key derivation: the whole key block, the lengths
+     * actually used for it, and the key type settled on for each kind of key.
+     * Released by kdf_tls1_prf_reset() and copied by kdf_tls1_prf_dup().
+     */
+    struct {
+        unsigned char *key_block;
+        size_t key_block_len;
+        size_t mac_key_len;
+        size_t cipher_key_len;
+        size_t iv_len;
+        char *keytype[TLS1_PRF_NUM_KEYTYPES];
+    } multi;
+
     OSSL_FIPS_IND_DECLARE
-} TLS1_PRF;
+};
 
 static void *kdf_tls1_prf_new(void *provctx)
 {
@@ -155,6 +224,8 @@ static void kdf_tls1_prf_reset(void *vctx)
     EVP_MAC_CTX_free(ctx->P_sha1);
     OPENSSL_clear_free(ctx->sec, ctx->seclen);
     OPENSSL_clear_free(ctx->seed, ctx->seedlen);
+    OPENSSL_free(ctx->cipher_name);
+    tls1_prf_multi_cleanup(ctx);
     memset(ctx, 0, sizeof(*ctx));
     ctx->provctx = provctx;
 }
@@ -163,6 +234,7 @@ static void *kdf_tls1_prf_dup(void *vctx)
 {
     const TLS1_PRF *src = (const TLS1_PRF *)vctx;
     TLS1_PRF *dest;
+    int i;
 
     dest = kdf_tls1_prf_new(src->provctx);
     if (dest != NULL) {
@@ -177,6 +249,23 @@ static void *kdf_tls1_prf_dup(void *vctx)
         if (!ossl_prov_memdup(src->seed, src->seedlen, &dest->seed,
                 &dest->seedlen))
             goto err;
+        if (src->cipher_name != NULL
+            && (dest->cipher_name = OPENSSL_strdup(src->cipher_name)) == NULL)
+            goto err;
+        dest->cipher_keylen = src->cipher_keylen;
+        if (!ossl_prov_memdup(src->multi.key_block, src->multi.key_block_len,
+                &dest->multi.key_block, &dest->multi.key_block_len))
+            goto err;
+        for (i = 0; i < TLS1_PRF_NUM_KEYTYPES; i++)
+            if (src->multi.keytype[i] != NULL
+                && (dest->multi.keytype[i] = OPENSSL_strdup(src->multi.keytype[i])) == NULL)
+                goto err;
+        dest->multi.mac_key_len = src->multi.mac_key_len;
+        dest->multi.cipher_key_len = src->multi.cipher_key_len;
+        dest->multi.iv_len = src->multi.iv_len;
+        dest->mac_key_len = src->mac_key_len;
+        dest->cipher_key_len = src->cipher_key_len;
+        dest->iv_len = src->iv_len;
         OSSL_FIPS_IND_COPY(dest, src)
     }
     return dest;
@@ -416,6 +505,39 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
+    if (p.cipher != NULL) {
+        PROV_CIPHER pc = { 0 };
+        const EVP_CIPHER *ciph;
+        int clen;
+
+        if (!ossl_prov_cipher_load(&pc, p.cipher, p.propq,
+                PROV_LIBCTX_OF(ctx->provctx)))
+            return 0;
+        ciph = ossl_prov_cipher_cipher(&pc);
+        clen = ciph != NULL ? EVP_CIPHER_get_key_length(ciph) : -1;
+        if (clen <= 0) {
+            ossl_prov_cipher_reset(&pc);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+        OPENSSL_free(ctx->cipher_name);
+        ctx->cipher_name = OPENSSL_strdup(EVP_CIPHER_get0_name(ciph));
+        ctx->cipher_keylen = (size_t)clen;
+        ossl_prov_cipher_reset(&pc);
+        if (ctx->cipher_name == NULL)
+            return 0;
+    }
+
+    if (p.mac_key_len != NULL
+        && !OSSL_PARAM_get_size_t(p.mac_key_len, &ctx->mac_key_len))
+        return 0;
+    if (p.cipher_key_len != NULL
+        && !OSSL_PARAM_get_size_t(p.cipher_key_len, &ctx->cipher_key_len))
+        return 0;
+    if (p.iv_len != NULL
+        && !OSSL_PARAM_get_size_t(p.iv_len, &ctx->iv_len))
+        return 0;
+
     return 1;
 }
 
@@ -436,6 +558,34 @@ static int kdf_tls1_prf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.size != NULL && !OSSL_PARAM_set_size_t(p.size, SIZE_MAX))
         return 0;
 
+    /*
+     * Report the key type settled on for each purpose of a preceding
+     * multi-key derivation.  A purpose with no key derived for it, such as a
+     * MAC key in an AEAD ciphersuite, is reported as absent by failing.
+     */
+    {
+        OSSL_PARAM *const out[TLS1_PRF_NUM_KEYS] = {
+            p.client_mac_type, p.server_mac_type,
+            p.client_cipher_type, p.server_cipher_type
+        };
+        int i;
+
+        for (i = 0; i < TLS1_PRF_NUM_KEYS; i++) {
+            size_t offset, len;
+
+            if (out[i] == NULL)
+                continue;
+            if (ctx->multi.key_block == NULL
+                || !tls1_prf_purpose_to_offset(ctx, tls1_prf_key_purposes[i],
+                    &offset, &len)
+                || len == 0)
+                return 0;
+            if (!OSSL_PARAM_set_utf8_string(out[i],
+                    ctx->multi.keytype[tls1_prf_purpose_keytype[i]]))
+                return 0;
+        }
+    }
+
     if (!OSSL_FIPS_IND_GET_CTX_FROM_PARAM(ctx, p.ind))
         return 0;
     return 1;
@@ -445,6 +595,186 @@ static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(
     ossl_unused void *ctx, ossl_unused void *provctx)
 {
     return tls1prf_get_ctx_params_list;
+}
+
+static void tls1_prf_multi_cleanup(TLS1_PRF *ctx)
+{
+    int i;
+
+    OPENSSL_clear_free(ctx->multi.key_block, ctx->multi.key_block_len);
+    for (i = 0; i < TLS1_PRF_NUM_KEYTYPES; i++)
+        OPENSSL_free(ctx->multi.keytype[i]);
+    memset(&ctx->multi, 0, sizeof(ctx->multi));
+}
+
+static int kdf_tls1_prf_derive_multi(void *vctx, const OSSL_PARAM params[])
+{
+    TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+    size_t total, cipher_key_len;
+    int err = 0;
+
+    if (!ossl_prov_is_running() || !kdf_tls1_prf_set_ctx_params(ctx, params))
+        return 0;
+
+    if (ctx->P_hash == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
+        return 0;
+    }
+    if (ctx->sec == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
+        return 0;
+    }
+    if (ctx->seedlen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SEED);
+        return 0;
+    }
+
+    /*
+     * Settle on the cipher key length: the caller's, the named cipher's, or
+     * an error if they disagree.  See the field comments in TLS1_PRF.
+     *
+     * The IV length is not taken from the cipher: the IV in a TLS 1.2 key
+     * block is whatever the protocol says it is, which for an AEAD suite is
+     * the implicit nonce rather than the cipher's full IV.
+     */
+    cipher_key_len = ctx->cipher_key_len;
+    if (ctx->cipher_keylen != 0) {
+        if (cipher_key_len == 0) {
+            cipher_key_len = ctx->cipher_keylen;
+        } else if (cipher_key_len != ctx->cipher_keylen) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
+                "%s needs a %zu byte key, not %zu", ctx->cipher_name,
+                ctx->cipher_keylen, cipher_key_len);
+            return 0;
+        }
+    }
+
+    /* total = 2 * (mac_key_len + cipher_key_len + iv_len) */
+    total = safe_add_size_t(ctx->mac_key_len, cipher_key_len, &err);
+    total = safe_add_size_t(total, ctx->iv_len, &err);
+    total = safe_mul_size_t(total, 2, &err);
+    if (err || total == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+
+#ifdef FIPS_MODULE
+    if (!fips_ems_check_passed(ctx))
+        return 0;
+#endif
+
+    /* Discard anything left by a previous derivation on this context */
+    tls1_prf_multi_cleanup(ctx);
+
+    ctx->multi.mac_key_len = ctx->mac_key_len;
+    ctx->multi.cipher_key_len = cipher_key_len;
+    ctx->multi.iv_len = ctx->iv_len;
+
+    /*
+     * Settle on the key type for each category now, while the algorithm
+     * names are still to hand.  Which type a given algorithm maps to is this
+     * provider's business; see ossl_prov_cipher_skey_type().
+     */
+    ctx->multi.keytype[TLS1_PRF_KEYTYPE_CIPHER] = OPENSSL_strdup(ossl_prov_cipher_skey_type(ctx->cipher_name));
+    /*
+     * "mac" names the algorithm the MAC keys are for.  This provider has no
+     * MAC-specific key type to map it to, so they are plain secrets whatever
+     * it says; a provider backed by a token would decide differently here.
+     */
+    ctx->multi.keytype[TLS1_PRF_KEYTYPE_MAC] = OPENSSL_strdup(OSSL_SKEY_TYPE_GENERIC);
+    if (ctx->multi.keytype[TLS1_PRF_KEYTYPE_CIPHER] == NULL
+        || ctx->multi.keytype[TLS1_PRF_KEYTYPE_MAC] == NULL)
+        goto err;
+
+    ctx->multi.key_block = OPENSSL_zalloc(total);
+    if (ctx->multi.key_block == NULL)
+        goto err;
+    ctx->multi.key_block_len = total;
+
+    if (!tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
+            ctx->sec, ctx->seclen,
+            ctx->seed, ctx->seedlen,
+            ctx->multi.key_block, ctx->multi.key_block_len))
+        goto err;
+
+    return 1;
+
+err:
+    tls1_prf_multi_cleanup(ctx);
+    return 0;
+}
+
+/*
+ * Map a purpose string to an offset and length within the key block.
+ * Key block layout: client_MAC | server_MAC | client_key | server_key |
+ *                   client_iv  | server_iv
+ */
+static int tls1_prf_purpose_to_offset(const TLS1_PRF *ctx,
+    const char *purpose, size_t *offset, size_t *len)
+{
+    size_t mac2 = 2 * ctx->multi.mac_key_len;
+    size_t key2 = 2 * ctx->multi.cipher_key_len;
+
+    if (strcmp(purpose, OSSL_KDF_PURPOSE_CLIENT_MAC_KEY) == 0) {
+        *offset = 0;
+        *len = ctx->multi.mac_key_len;
+    } else if (strcmp(purpose, OSSL_KDF_PURPOSE_SERVER_MAC_KEY) == 0) {
+        *offset = ctx->multi.mac_key_len;
+        *len = ctx->multi.mac_key_len;
+    } else if (strcmp(purpose, OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY) == 0) {
+        *offset = mac2;
+        *len = ctx->multi.cipher_key_len;
+    } else if (strcmp(purpose, OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY) == 0) {
+        *offset = mac2 + ctx->multi.cipher_key_len;
+        *len = ctx->multi.cipher_key_len;
+    } else if (strcmp(purpose, OSSL_KDF_PURPOSE_CLIENT_IV) == 0) {
+        *offset = mac2 + key2;
+        *len = ctx->multi.iv_len;
+    } else if (strcmp(purpose, OSSL_KDF_PURPOSE_SERVER_IV) == 0) {
+        *offset = mac2 + key2 + ctx->multi.iv_len;
+        *len = ctx->multi.iv_len;
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
+static void *kdf_tls1_prf_get_skey(void *vctx, const char *purpose,
+    void *provctx, OSSL_FUNC_skeymgmt_import_fn *import)
+{
+    TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+    size_t offset, len;
+    OSSL_PARAM import_params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    if (ctx->multi.key_block == NULL
+        || !tls1_prf_purpose_to_offset(ctx, purpose, &offset, &len)
+        || len == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return NULL;
+    }
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_SKEY_PARAM_RAW_BYTES, ctx->multi.key_block + offset, len);
+
+    return import(provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);
+}
+
+static int kdf_tls1_prf_get_iv(void *vctx, const char *purpose,
+    const unsigned char **pIV, size_t *pIVlen)
+{
+    TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+    size_t offset, len;
+
+    if (ctx->multi.key_block == NULL
+        || !tls1_prf_purpose_to_offset(ctx, purpose, &offset, &len)
+        || len == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return 0;
+    }
+
+    *pIV = ctx->multi.key_block + offset;
+    *pIVlen = len;
+    return 1;
 }
 
 const OSSL_DISPATCH ossl_kdf_tls1_prf_functions[] = {
@@ -461,6 +791,12 @@ const OSSL_DISPATCH ossl_kdf_tls1_prf_functions[] = {
         (void (*)(void))kdf_tls1_prf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS,
         (void (*)(void))kdf_tls1_prf_get_ctx_params },
+    { OSSL_FUNC_KDF_DERIVE_MULTI,
+        (void (*)(void))kdf_tls1_prf_derive_multi },
+    { OSSL_FUNC_KDF_GET_SKEY,
+        (void (*)(void))kdf_tls1_prf_get_skey },
+    { OSSL_FUNC_KDF_GET_IV,
+        (void (*)(void))kdf_tls1_prf_get_iv },
     OSSL_DISPATCH_END
 };
 

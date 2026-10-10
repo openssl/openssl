@@ -1481,6 +1481,12 @@ struct ssl_connection_st {
             STACK_OF(X509_NAME) *peer_ca_names;
             size_t key_block_length;
             unsigned char *key_block;
+            /*
+             * Set when the key schedule was derived as EVP_SKEY objects
+             * rather than as a raw key block; holds them until they are
+             * collected.  See ssl_prefer_skey_derivation().
+             */
+            EVP_KDF_CTX *key_block_kdf;
             const EVP_CIPHER *new_sym_enc;
             const EVP_CIPHER *new_sym_enc_sn;
             const EVP_MD *new_hash;
@@ -3209,6 +3215,11 @@ int ssl_free_wbio_buffer(SSL_CONNECTION *s);
 
 __owur int tls1_change_cipher_state(SSL_CONNECTION *s, int which);
 __owur int tls1_setup_key_block(SSL_CONNECTION *s);
+__owur int ssl_prefer_skey_derivation(const SSL_CONNECTION *s,
+    const EVP_KDF *kdf,
+    const EVP_CIPHER *c,
+    const EVP_MAC *mac,
+    size_t mac_secret_size);
 __owur size_t tls1_final_finish_mac(SSL_CONNECTION *s, const char *str,
     size_t slen, unsigned char *p);
 __owur int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,

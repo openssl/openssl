@@ -82,7 +82,7 @@ int RECORD_LAYER_reset(RECORD_LAYER *rl)
             : TLS_ANY_VERSION,
         OSSL_RECORD_DIRECTION_READ,
         OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-        NULL, NULL, 0, NULL, 0, NULL, 0, NULL, NULL,
+        NULL, NULL, NULL, 0, NULL, NULL, NULL,
         0, NID_undef, NULL, NULL, NULL);
 
     ret &= ssl_set_new_record_layer(rl->s,
@@ -91,7 +91,7 @@ int RECORD_LAYER_reset(RECORD_LAYER *rl)
             : TLS_ANY_VERSION,
         OSSL_RECORD_DIRECTION_WRITE,
         OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
-        NULL, NULL, 0, NULL, 0, NULL, 0, NULL, NULL,
+        NULL, NULL, NULL, 0, NULL, NULL, NULL,
         0, NID_undef, NULL, NULL, NULL);
 
     /* SSLfatal already called in the event of failure */
@@ -1303,9 +1303,9 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int direction, int level,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey,
-    unsigned char *key, size_t keylen,
+    const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype, const EVP_MD *md,
@@ -1540,9 +1540,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
         rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
             s->server, direction, level, epoch,
-            secret, secretlen, snkey, key, keylen,
-            iv,
-            ivlen, mackey, mackeylen, snciph, ciph,
+            secret, secretlen, snkey, key,
+            iv, ivlen, mackey, snciph, ciph,
             taglen, mactype, md, compm, kdfdigest,
             prev, thisbio, next, use_urxe, settings,
             options, rlayer_dispatch_tmp, s,

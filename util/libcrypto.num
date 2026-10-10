@@ -5747,3 +5747,6 @@ PKCS12_PARSE_CTX_set_cert               ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_ca                 ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_skeys              ?	4_2_0	EXIST::FUNCTION:
 PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
+EVP_KDF_derive_SKEYs                    ?	4_2_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get1_SKEY                   ?	4_2_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get0_IV                     ?	4_2_0	EXIST::FUNCTION:

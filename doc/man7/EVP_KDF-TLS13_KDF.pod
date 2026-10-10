@@ -81,6 +81,62 @@ an error will occur.
 
 =back
 
+=head2 Multi-key Derivation Parameters
+
+The following additional settable parameters are supported when using
+multi-key derivation via L<EVP_KDF_derive_SKEYs(3)>:
+
+=over 4
+
+=item "cipher_key_len" (B<OSSL_KDF_PARAM_CIPHER_KEY_LEN>) <unsigned integer>
+
+Sets the length of the cipher key to derive. This is used as the output
+length for the HKDF-Expand-Label operation with label "key".
+
+=item "iv_len" (B<OSSL_KDF_PARAM_IV_LEN>) <unsigned integer>
+
+Sets the length of the IV to derive. This is used as the output length for
+the HKDF-Expand-Label operation with label "iv".
+
+=item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
+
+The cipher the derived key is for, for example "AES-128-GCM". This is not
+used by the KDF itself; it tells the provider how large a key to derive and
+which kind of key to produce, making "cipher_key_len" unnecessary. If both are
+given they must agree, and a mismatch is reported by
+L<EVP_KDF_derive_SKEYs(3)>.
+
+The key type settled on is reported by EVP_SKEY_get0_skeymgmt_name() on the
+key that comes back; the default provider produces B<OSSL_SKEY_TYPE_AES> for
+AES ciphers and B<OSSL_SKEY_TYPE_GENERIC> otherwise.
+
+TLS 1.3 is AEAD only and derives no MAC keys, so there is no "mac" parameter.
+
+=back
+
+After calling L<EVP_KDF_derive_SKEYs(3)>, the derived key and IV can be
+retrieved using L<EVP_KDF_CTX_get1_SKEY(3)> and L<EVP_KDF_CTX_get0_IV(3)>
+respectively, with the following purpose strings:
+
+=over 4
+
+=item B<client_key>, B<server_key>
+
+Retrieve the derived cipher key via L<EVP_KDF_CTX_get1_SKEY(3)>.
+In TLS 1.3, the traffic secret already encodes direction, so both purpose
+strings return the same derived key.
+
+=item B<client_iv>, B<server_iv>
+
+Retrieve the derived IV via L<EVP_KDF_CTX_get0_IV(3)>.
+Both purpose strings return the same derived IV for the same reason.
+
+=back
+
+The mode must be set to B<EXPAND_ONLY> when using multi-key derivation.
+The key, data (transcript hash), prefix, and digest parameters must be
+set as for a normal expand operation.
+
 The OpenSSL FIPS provider also supports the following parameters:
 
 =over 4
@@ -158,7 +214,7 @@ This functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
