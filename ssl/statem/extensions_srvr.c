@@ -1744,7 +1744,7 @@ EXT_RETURN tls_construct_stoc_ec_pt_formats(SSL_CONNECTION *s, WPACKET *pkt,
 {
     unsigned long alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
     unsigned long alg_a = s->s3.tmp.new_cipher->algorithm_auth;
-    int using_ecc = (alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA);
+    int using_ecc = (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) || (alg_a & SSL_aECDSA);
     const unsigned char *plist;
     size_t plistlen;
 
