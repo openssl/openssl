@@ -426,7 +426,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
 end:
     OPENSSL_free(fmt_slots);
     if (ret == 0)
-        OPENSSL_free(buf);
+        OPENSSL_clear_free(buf, (size_t)len);
     return ret;
 }
 
@@ -459,7 +459,7 @@ int ossl_ml_kem_key_to_text(BIO *out, const ML_KEM_KEY *key, int selection)
         }
         if (ossl_ml_kem_have_prvkey(key)) {
             if ((prvenc = OPENSSL_malloc(prvlen)) == NULL)
-                return 0;
+                goto end;
             if (!ossl_ml_kem_encode_private_key(prvenc, prvlen, key))
                 goto end;
             if (!ossl_bio_print_labeled_buf(out, "dk:", prvenc, prvlen))
@@ -488,7 +488,8 @@ int ossl_ml_kem_key_to_text(BIO *out, const ML_KEM_KEY *key, int selection)
             type_label);
 
 end:
+    OPENSSL_cleanse(seed, sizeof(seed));
     OPENSSL_free(pubenc);
-    OPENSSL_free(prvenc);
+    OPENSSL_clear_free(prvenc, prvlen);
     return ret;
 }
