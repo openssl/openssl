@@ -31,6 +31,129 @@
 #include "../crypto/x509/ext_dat.h"
 #include "../crypto/x509/standard_exts.h"
 
+#ifndef OPENSSL_NO_ML_DSA
+static X509 *mldsa_root_cert = NULL;
+static EVP_PKEY *mldsa_root_key = NULL;
+
+static int add_cert_ext(X509 *cert, int nid, const char *value)
+{
+    X509_EXTENSION *ext = X509V3_EXT_conf_nid(NULL, NULL, nid, (char *)value);
+    int ret = ext != NULL && X509_add_ext(cert, ext, -1);
+
+    X509_EXTENSION_free(ext);
+    return ret;
+}
+
+static X509 *new_mldsa_leaf(const char *key_usage)
+{
+    X509 *cert = NULL;
+    X509_NAME *subject = NULL;
+    EVP_PKEY *subject_key = NULL;
+
+    if ((cert = X509_new()) == NULL
+        || (subject = X509_NAME_new()) == NULL
+        || (subject_key = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44")) == NULL
+        || !X509_set_version(cert, X509_VERSION_3)
+        || !ASN1_INTEGER_set(X509_get_serialNumber(cert), 1)
+        || !X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_ASC,
+               (const unsigned char *)"ML-DSA keyUsage test", -1, -1, 0)
+        || !X509_set_subject_name(cert, subject)
+        || !X509_set_issuer_name(cert, X509_get_subject_name(mldsa_root_cert))
+        || X509_gmtime_adj(X509_getm_notBefore(cert), 0) == NULL
+        || X509_gmtime_adj(X509_getm_notAfter(cert), 3600) == NULL
+        || !X509_set_pubkey(cert, subject_key)
+        || !add_cert_ext(cert, NID_basic_constraints, "critical,CA:FALSE")
+        || !add_cert_ext(cert, NID_key_usage, key_usage)) {
+        X509_free(cert);
+        cert = NULL;
+    }
+
+    EVP_PKEY_free(subject_key);
+    X509_NAME_free(subject);
+    return cert;
+}
+
+static const char *mldsa_forbidden_key_usages[] = {
+    "keyEncipherment",
+    "dataEncipherment",
+    "keyAgreement",
+    "encipherOnly",
+    "decipherOnly",
+};
+
+static int test_mldsa_forbidden_key_usage_sign(int idx)
+{
+    X509 *cert = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cert = new_mldsa_leaf(mldsa_forbidden_key_usages[idx]))
+        || !TEST_int_eq(X509_sign(cert, mldsa_root_key, EVP_sha256()), 0))
+        goto end;
+    ERR_clear_error();
+
+    X509_free(cert);
+    cert = NULL;
+    if (!TEST_ptr(cert = new_mldsa_leaf(mldsa_forbidden_key_usages[idx]))
+        || !TEST_ptr(mctx = EVP_MD_CTX_new())
+        || !TEST_int_eq(EVP_DigestSignInit(mctx, NULL, EVP_sha256(), NULL,
+                           mldsa_root_key),
+            1)
+        || !TEST_int_eq(X509_sign_ctx(cert, mctx), 0))
+        goto end;
+    ERR_clear_error();
+
+    ret = 1;
+end:
+    EVP_MD_CTX_free(mctx);
+    X509_free(cert);
+    return ret;
+}
+
+static int test_mldsa_valid_key_usage_sign(void)
+{
+    X509 *cert = NULL;
+    int ret = TEST_ptr(cert = new_mldsa_leaf("digitalSignature"))
+        && TEST_int_gt(X509_sign(cert, mldsa_root_key, EVP_sha256()), 0);
+
+    X509_free(cert);
+    return ret;
+}
+
+static int test_mldsa_forbidden_key_usage_strict_verify(void)
+{
+    X509 *cert = NULL;
+    X509_EXTENSION *ext = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int loc, ret = 0;
+
+    if (!TEST_ptr(cert = new_mldsa_leaf("digitalSignature"))
+        || !TEST_int_gt(X509_sign(cert, mldsa_root_key, EVP_sha256()), 0)
+        || !TEST_int_ge(loc = X509_get_ext_by_NID(cert, NID_key_usage, -1), 0)
+        || !TEST_ptr(ext = X509_delete_ext(cert, loc))
+        || !TEST_true(add_cert_ext(cert, NID_key_usage, "keyAgreement"))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, mldsa_root_cert))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL))
+        || !TEST_true(X509_VERIFY_PARAM_set_flags(
+               X509_STORE_CTX_get0_param(ctx), X509_V_FLAG_X509_STRICT))
+        || !TEST_false(X509_verify_cert(ctx))
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+               X509_V_ERR_INVALID_EXTENSION))
+        goto end;
+
+    ret = 1;
+end:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_EXTENSION_free(ext);
+    X509_free(cert);
+    return ret;
+}
+#endif
+
 static int test_standard_exts(void)
 {
     size_t i;
@@ -1423,6 +1546,17 @@ err:
 
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_ML_DSA
+    if (test_get_argument_count() != 2
+        || !TEST_ptr(mldsa_root_cert = load_cert_pem(test_get_argument(0), NULL))
+        || !TEST_ptr(mldsa_root_key = load_pkey_pem(test_get_argument(1), NULL)))
+        return 0;
+
+    ADD_ALL_TESTS(test_mldsa_forbidden_key_usage_sign,
+        OSSL_NELEM(mldsa_forbidden_key_usages));
+    ADD_TEST(test_mldsa_valid_key_usage_sign);
+    ADD_TEST(test_mldsa_forbidden_key_usage_strict_verify);
+#endif
     ADD_TEST(test_sign_caches_encoding);
     ADD_TEST(test_cmp_modified);
     ADD_TEST(test_standard_exts);
@@ -1448,4 +1582,12 @@ int setup_tests(void)
     ADD_TEST(test_X509_ALGOR_set_md_nid_undef_known_name);
     ADD_TEST(test_X509_ALGOR_set_md_null_obj);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+#ifndef OPENSSL_NO_ML_DSA
+    X509_free(mldsa_root_cert);
+    EVP_PKEY_free(mldsa_root_key);
+#endif
 }
