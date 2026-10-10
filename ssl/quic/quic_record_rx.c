@@ -285,6 +285,7 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     uint32_t pn_space;
     OSSL_QRL_ENC_LEVEL *el = NULL;
     uint64_t rx_key_epoch = UINT64_MAX;
+    const unsigned char *token = NULL;
 
     if (!PACKET_buf_init(&pkt, ossl_quic_urxe_data(urxe), urxe->data_len))
         return 0;
@@ -322,7 +323,7 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         goto malformed;
 
     if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL) {
-        const unsigned char *token = rxe->hdr.token;
+        token = rxe->hdr.token;
 
         /*
          * This may change the value of rxe and change the value of the token
@@ -354,6 +355,13 @@ static int qrx_validate_initial_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
             0, 0, &rxe->hdr, NULL, NULL)
         != 1)
         goto malformed;
+
+    /*
+     * Restore the relocated token value here, since the above decode reset it
+     * to be within the packet
+     */
+    if (token != NULL)
+        rxe->hdr.token = token;
 
     /* Validate header and decode PN. */
     if (!qrx_validate_hdr(qrx, rxe))
