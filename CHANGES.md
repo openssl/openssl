@@ -131,6 +131,13 @@ OpenSSL 4.2
 
    *Timo Keller*
 
+ * Added `OSSL_HPKE_get_suite()`, `OSSL_HPKE_get_public_key_size()`,
+   `OSSL_HPKE_mode_is_supported()`, and `OSSL_HPKE_suite2str()` functions.
+
+   *Shivam Kumar*
+
+   *Adam Tabak*
+
 OpenSSL 4.1
 -----------
 
@@ -577,8 +584,6 @@ OpenSSL 4.1
    in the `basicConstraints`, `basicAttConstraints`, and `policyConstraints`
    X.509v3 extension configurations, instead of silently using the last value.
    <!-- https://github.com/openssl/openssl/pull/32181 -->
-
-   *Adam Tabak*
 
  * Fixed X.509 verification of certificate chains that use DSA signatures
    with SHA-384 or SHA-512 by registering `dsa_with_SHA384` and
