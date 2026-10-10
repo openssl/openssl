@@ -688,6 +688,70 @@ err:
     return testresult;
 }
 
+/*
+ * After a completed encrypt, a further Update on the same context must be
+ * rejected, and the Final that follows must fail as well instead of reporting
+ * the earlier success.
+ *
+ * How a cipher gets there differs: GCM, OCB and ASCON mark the context
+ * finished, while SIV does its single crypto operation inside the payload
+ * Update and lets any later failed operation overwrite the stored result.
+ *
+ * CCM, GCM-SIV and ChaCha20-Poly1305 are skipped: Final currently succeeds
+ * after the rejected Update, and what it should do is not settled yet.
+ */
+static int test_evp_aead_enc_retval(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *enc_ctx = NULL;
+    OSSL_PARAM tagparams[2];
+
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    static const unsigned char in[] = "input";
+    unsigned char ct[sizeof(in) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    int i = 0, len = 0, ret = 0;
+
+    if (info->mode == EVP_CIPH_CCM_MODE
+        || info->mode == EVP_CIPH_GCM_SIV_MODE
+        || EVP_CIPHER_is_a(info->ciph, "ChaCha20-Poly1305"))
+        return 1;
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, info->taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(enc_ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(enc_ctx, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_true(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(enc_ctx, tagparams))) {
+        TEST_info("%s: encrypt", info->name);
+        goto err;
+    }
+
+    /* Encryption is fine, provoke error by repeating it on the same context */
+    if (!TEST_false(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_false(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len))) {
+        TEST_info("%s: encrypt Update, Final after Final", info->name);
+        goto err;
+    }
+
+    ret = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(enc_ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     int i = 0;
@@ -706,6 +770,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_enc_retval, aead_list_n);
     return 1;
 }
 
