@@ -2142,6 +2142,8 @@ typedef struct hm_fragment_st {
     struct hm_header_st msg_header;
     unsigned char *fragment;
     unsigned char *reassembly;
+    /* Total bytes allocated for this fragment (frag_len + bitmask) */
+    size_t alloc_bytes;
 } hm_fragment;
 
 typedef struct pqueue_st pqueue;
@@ -2267,6 +2269,8 @@ typedef struct dtls1_state_st {
         SSL_HVR_RECEIVED,
         SSL_HVR_SENT } hello_verify_request;
     DOWNGRADE downgrade_after_hvr; /* Only used by a stateful server */
+    /* Current aggregate bytes in DTLS receive-side reassembly state */
+    size_t reassembly_bytes;
     size_t link_mtu; /* max on-the-wire DTLS packet size */
     size_t mtu; /* max DTLS packet size */
     dtls_msg_info w_msg;
@@ -3132,7 +3136,7 @@ void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
 __owur size_t dtls1_min_mtu(SSL_CONNECTION *s);
-void dtls1_hm_fragment_free(hm_fragment *frag);
+void dtls1_hm_fragment_free(SSL_CONNECTION *s, hm_fragment *frag);
 void dtls1_sent_msg_free(dtls_sent_msg *msg);
 __owur int dtls1_query_mtu(SSL_CONNECTION *s);
 

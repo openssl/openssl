@@ -111,6 +111,16 @@ static int dtls_ccs_expected(SSL_CONNECTION *s)
     }
 }
 
+/*
+ * The number of bytes a DTLS reassembly slot for a message of length
+ * |msg_len| will allocate: the message body itself plus, when reassembly
+ * is active, the bitmask used to track which fragments have arrived.
+ */
+static size_t dtls1_reassembly_slot_bytes(size_t msg_len, int reassembly)
+{
+    return msg_len + (reassembly ? RSMBLY_BITMASK_SIZE(msg_len) : 0);
+}
+
 static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len, size_t body_len,
     int track_coverage)
 {
@@ -173,11 +183,23 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
         memset(frag->reassembly, 0, bitmask_len);
     }
 
+    frag->alloc_bytes = dtls1_reassembly_slot_bytes(frag_len, reassembly);
+
     return frag;
 }
 
-void dtls1_hm_fragment_free(hm_fragment *frag)
+void dtls1_hm_fragment_free(SSL_CONNECTION *s, hm_fragment *frag)
 {
+    if (!frag)
+        return;
+
+    if (s != NULL && s->d1 != NULL) {
+        if (!ossl_assert(s->d1->reassembly_bytes >= frag->alloc_bytes))
+            s->d1->reassembly_bytes = 0;
+        else
+            s->d1->reassembly_bytes -= frag->alloc_bytes;
+    }
+
     OPENSSL_free(frag);
 }
 
@@ -580,6 +602,29 @@ static size_t dtls1_max_handshake_message_len(const SSL_CONNECTION *s)
     return max_len;
 }
 
+/*
+ * dtls1_reassembly_budget returns the maximum aggregate bytes that may be
+ * retained in the receive-side reassembly queue (rcvd_messages) for
+ * |s|. It is derived per connection from the configured maximum certificate
+ * list size (SSL_CTX_set_max_cert_list) so that the bound scales with that
+ * setting, and is never smaller than the largest single handshake message
+ * the peer may legally send (dtls1_max_handshake_message_len). At the
+ * default certificate list size this is DTLS_MAX_REASSEMBLY_BUDGET_DEFAULT
+ * (~400 KB).
+ */
+static size_t dtls1_reassembly_budget(const SSL_CONNECTION *s)
+{
+    size_t budget;
+
+    if (s->max_cert_list > SIZE_MAX / 4)
+        budget = SIZE_MAX;
+    else
+        budget = s->max_cert_list * 4;
+    if (budget < dtls1_max_handshake_message_len(s))
+        budget = dtls1_max_handshake_message_len(s);
+    return budget;
+}
+
 static int dtls1_preprocess_fragment(SSL_CONNECTION *s,
     const struct hm_header_st *const msg_hdr)
 {
@@ -686,7 +731,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                  * we have an active iterator
                  */
                 pqueue_pop(rcvd_messages);
-                dtls1_hm_fragment_free(frag);
+                dtls1_hm_fragment_free(s, frag);
                 pitem_free(item);
                 item = NULL;
                 frag = NULL;
@@ -706,7 +751,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                          * cookie and one with. Ditch the one without.
                          */
                         pqueue_pop(rcvd_messages);
-                        dtls1_hm_fragment_free(frag);
+                        dtls1_hm_fragment_free(s, frag);
                         pitem_free(item);
                         item = next;
                         frag = nextfrag;
@@ -738,7 +783,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                 frag->msg_header.frag_len);
         }
 
-        dtls1_hm_fragment_free(frag);
+        dtls1_hm_fragment_free(s, frag);
         pitem_free(item);
 
         if (ret) {
@@ -786,9 +831,26 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     item = pqueue_find_u64(&s->d1->rcvd_messages, msg_hdr->seq);
 
     if (item == NULL) {
+        size_t new_bytes = dtls1_reassembly_slot_bytes(msg_hdr->msg_len, 1);
+
+        if (new_bytes > dtls1_reassembly_budget(s) - s->d1->reassembly_bytes) {
+            unsigned char devnull[256];
+
+            while (frag_len) {
+                i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
+                    devnull,
+                    frag_len > sizeof(devnull) ? sizeof(devnull) : frag_len, 0, &readbytes);
+                if (i <= 0)
+                    goto err;
+                frag_len -= readbytes;
+            }
+            return DTLS1_HM_FRAGMENT_RETRY;
+        }
+
         frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
         if (frag == NULL)
             goto err;
+        s->d1->reassembly_bytes += frag->alloc_bytes;
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
         frag->msg_header.frag_len = frag->msg_header.msg_len;
         frag->msg_header.frag_off = 0;
@@ -862,7 +924,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
 
 err:
     if (item == NULL)
-        dtls1_hm_fragment_free(frag);
+        dtls1_hm_fragment_free(s, frag);
     return -1;
 }
 
@@ -952,9 +1014,24 @@ int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         if (frag_len > dtls1_max_handshake_message_len(s))
             goto err;
 
+        if (frag_len > dtls1_reassembly_budget(s) - s->d1->reassembly_bytes) {
+            unsigned char devnull[256];
+
+            while (frag_len) {
+                i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
+                    devnull,
+                    frag_len > sizeof(devnull) ? sizeof(devnull) : frag_len, 0, &readbytes);
+                if (i <= 0)
+                    goto err;
+                frag_len -= readbytes;
+            }
+            return DTLS1_HM_FRAGMENT_RETRY;
+        }
+
         frag = dtls1_hm_fragment_new(frag_len, 0);
         if (frag == NULL)
             goto err;
+        s->d1->reassembly_bytes += frag->alloc_bytes;
 
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 
@@ -997,7 +1074,7 @@ int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
 
 err:
     if (item == NULL)
-        dtls1_hm_fragment_free(frag);
+        dtls1_hm_fragment_free(s, frag);
     return 0;
 }
 
