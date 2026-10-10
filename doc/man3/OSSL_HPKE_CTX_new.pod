@@ -603,7 +603,7 @@ This functionality described here was added in OpenSSL 3.2.
 
 OSSL_HPKE_get_suite(), OSSL_HPKE_get_public_key_size(),
 OSSL_HPKE_mode_is_supported() and OSSL_HPKE_suite2str() were added in
-OpenSSL 4.1.
+OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
