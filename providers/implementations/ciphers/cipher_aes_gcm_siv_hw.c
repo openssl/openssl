@@ -289,6 +289,11 @@ static int aes_gcm_siv_cipher(void *vctx, unsigned char *out,
 {
     PROV_AES_GCM_SIV_CTX *ctx = (PROV_AES_GCM_SIV_CTX *)vctx;
 
+    if (ctx->ecb_ctx == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
+
     /* EncryptFinal or DecryptFinal */
     if (in == NULL)
         return aes_gcm_siv_finish(ctx);

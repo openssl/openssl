@@ -688,6 +688,45 @@ err:
     return testresult;
 }
 
+/*
+ * a fresh context without a key should fail to do anything meaningful
+ * with plaintext or ciphertext
+ */
+static int test_evp_aead_no_key(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_enc = NULL;
+    EVP_CIPHER_CTX *ctx_dec = NULL;
+
+    static const unsigned char msg[] = "no key regression";
+    unsigned char out[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    int len = 0, testresult = 0;
+
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, NULL, NULL, NULL))
+        || !TEST_false(EVP_EncryptUpdate(ctx_enc, out, &len, msg, sizeof(msg)) > 0
+            && EVP_EncryptFinal_ex(ctx_enc, out + len, &len) > 0)) {
+        TEST_info("%s: encrypt without key", info->name);
+        goto err;
+    }
+
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, NULL, NULL, NULL))
+        || !TEST_false(EVP_DecryptUpdate(ctx_dec, out, &len, msg, sizeof(msg)) > 0
+            && EVP_DecryptFinal_ex(ctx_dec, out + len, &len) > 0)) {
+        TEST_info("%s: decrypt without key", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     int i = 0;
@@ -705,6 +744,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_no_key, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
     return 1;
 }

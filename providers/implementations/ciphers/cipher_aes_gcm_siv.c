@@ -115,7 +115,8 @@ static int ossl_aes_gcm_siv_init(void *vctx, const unsigned char *key, size_t ke
         memcpy(ctx->nonce, iv, sizeof(ctx->nonce));
     }
 
-    if (!ctx->hw->initkey(ctx))
+    /* only initialize state if we have a key */
+    if ((key != NULL || ctx->ecb_ctx != NULL) && ctx->hw->initkey(ctx) == 0)
         return 0;
 
     return ossl_aes_gcm_siv_set_ctx_params(ctx, params);
