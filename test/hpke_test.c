@@ -186,6 +186,11 @@ static int do_testhpke(const TEST_BASEDATA *base,
                       OSSL_HPKE_ROLE_RECEIVER,
                       libctx, propq)))
         goto end;
+    retrieved_suite = OSSL_HPKE_get_suite(openctx);
+    if (!TEST_uint_eq(retrieved_suite.kem_id, base->suite.kem_id)
+        || !TEST_uint_eq(retrieved_suite.kdf_id, base->suite.kdf_id)
+        || !TEST_uint_eq(retrieved_suite.aead_id, base->suite.aead_id))
+        goto end;
     if (base->mode == OSSL_HPKE_MODE_PSK
         || base->mode == OSSL_HPKE_MODE_PSKAUTH) {
         if (!TEST_true(base->pskid != NULL && base->psk != NULL
@@ -989,16 +994,85 @@ static int test_hpke_modes_suites(void)
                     unsigned char cipher[OSSL_HPKE_TSTSIZE];
                     size_t clearlen = OSSL_HPKE_TSTSIZE;
                     unsigned char clear[OSSL_HPKE_TSTSIZE];
+                    size_t expected_pklen = 0;
+                    size_t pk_size;
+                    OSSL_HPKE_SUITE s_suite, r_suite;
 
                     hpke_suite.aead_id = aead_id;
+
+                    /*
+                     * Test OSSL_HPKE_mode_is_supported across modes for hpke_suite.
+                     * All four RFC 9180 modes are supported for all current KEMs,
+                     * while invalid modes must be rejected.
+                     */
+                    if (!TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite, hpke_mode))
+                        || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
+                                                                 OSSL_HPKE_MODE_BASE))
+                        || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
+                                                                 OSSL_HPKE_MODE_PSK))
+                        || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
+                                                                 OSSL_HPKE_MODE_AUTH))
+                        || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
+                                                                 OSSL_HPKE_MODE_PSKAUTH))
+                        || !TEST_false(OSSL_HPKE_mode_is_supported(hpke_suite,
+                                                                  0xbad)))
+                        overallresult = 0;
+
                     if (!TEST_true(OSSL_HPKE_keygen(hpke_suite,
                             pub, &publen, &privp,
                             NULL, 0, testctx, NULL)))
                         overallresult = 0;
+
+                    /*
+                     * Test OSSL_HPKE_get_public_key_size for all supported KEMs.
+                     * Npk is the KEM public key size, distinct from Nenc (encap
+                     * public-value size in senderpublen).
+                     */
+                    pk_size = OSSL_HPKE_get_public_key_size(hpke_suite);
+                    switch (hpke_suite.kem_id) {
+                    case OSSL_HPKE_KEM_ID_P256:
+                        expected_pklen = 65;
+                        break;
+                    case OSSL_HPKE_KEM_ID_P384:
+                        expected_pklen = 97;
+                        break;
+                    case OSSL_HPKE_KEM_ID_P521:
+                        expected_pklen = 133;
+                        break;
+#ifndef OPENSSL_NO_ECX
+                    case OSSL_HPKE_KEM_ID_X25519:
+                        expected_pklen = 32;
+                        break;
+                    case OSSL_HPKE_KEM_ID_X448:
+                        expected_pklen = 56;
+                        break;
+#endif
+                    default:
+                        expected_pklen = 0;
+                        break;
+                    }
+
+                    if (!TEST_size_t_gt(pk_size, 0)
+                        || !TEST_size_t_eq(pk_size, expected_pklen)
+                        || !TEST_size_t_eq(pk_size, publen))
+                        overallresult = 0;
+
+                    if ((hpke_mode == OSSL_HPKE_MODE_AUTH
+                         || hpke_mode == OSSL_HPKE_MODE_PSKAUTH)
+                        && !TEST_size_t_eq(pk_size, authpublen))
+                        overallresult = 0;
+
                     if (!TEST_ptr(ctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
                                       OSSL_HPKE_ROLE_SENDER,
-                                      testctx, NULL)))
+                                      testctx, NULL))) {
                         overallresult = 0;
+                    } else {
+                        s_suite = OSSL_HPKE_get_suite(ctx);
+                        if (!TEST_uint_eq(s_suite.kem_id, hpke_suite.kem_id)
+                            || !TEST_uint_eq(s_suite.kdf_id, hpke_suite.kdf_id)
+                            || !TEST_uint_eq(s_suite.aead_id, hpke_suite.aead_id))
+                            overallresult = 0;
+                    }
                     if (hpke_mode == OSSL_HPKE_MODE_PSK
                         || hpke_mode == OSSL_HPKE_MODE_PSKAUTH) {
                         if (!TEST_true(OSSL_HPKE_CTX_set1_psk(ctx, pskidp,
@@ -1033,8 +1107,15 @@ static int test_hpke_modes_suites(void)
                     rctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
                         OSSL_HPKE_ROLE_RECEIVER,
                         testctx, NULL);
-                    if (!TEST_ptr(rctx))
+                    if (!TEST_ptr(rctx)) {
                         overallresult = 0;
+                    } else {
+                        r_suite = OSSL_HPKE_get_suite(rctx);
+                        if (!TEST_uint_eq(r_suite.kem_id, hpke_suite.kem_id)
+                            || !TEST_uint_eq(r_suite.kdf_id, hpke_suite.kdf_id)
+                            || !TEST_uint_eq(r_suite.aead_id, hpke_suite.aead_id))
+                            overallresult = 0;
+                    }
                     if (hpke_mode == OSSL_HPKE_MODE_PSK
                         || hpke_mode == OSSL_HPKE_MODE_PSKAUTH) {
                         if (!TEST_true(OSSL_HPKE_CTX_set1_psk(rctx, pskidp,
@@ -1379,7 +1460,7 @@ static int test_hpke_oddcalls(void)
     uint64_t lseq = 0;
     char giant_pskid[OSSL_HPKE_MAX_PARMLEN + 10];
     unsigned char info[OSSL_HPKE_TSTSIZE];
-    OSSL_HPKE_SUITE suite, retrieved;
+    OSSL_HPKE_SUITE retrieved;
 
     /* many of the calls below are designed to get better test coverage */
 
@@ -1430,8 +1511,7 @@ static int test_hpke_oddcalls(void)
         goto end;
 
     /* Test OSSL_HPKE_mode_is_supported with bad mode */
-    suite.kem_id = OSSL_HPKE_KEM_ID_P256;
-    if (!TEST_false(OSSL_HPKE_mode_is_supported(suite, bad_mode)))
+    if (!TEST_false(OSSL_HPKE_mode_is_supported(hpke_suite, bad_mode)))
         goto end;
 
     /* Test OSSL_HPKE_mode_is_supported with bad suite */
