@@ -3129,6 +3129,7 @@ void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
+int dtls1_sent_buffer_uses_current_wrl(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
 __owur size_t dtls1_min_mtu(SSL_CONNECTION *s);
