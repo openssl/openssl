@@ -688,6 +688,95 @@ err:
     return testresult;
 }
 
+/*
+ * An update with no input and a nonzero length must fail, except for the
+ * CCM message length, which is passed with no input and no output. This is
+ * checked for both encryption and decryption.
+ */
+static int test_evp_aead_update_null_input(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char out[16] = { 0xAB }, untouched[16] = { 0xAB };
+    int outl = 0, testresult = 0;
+
+    /* encrypt: no input, no output -- valid only as the CCM message length */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL)))
+        goto err;
+    if (info->mode == EVP_CIPH_CCM_MODE) {
+        if (!TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, NULL, 16))) {
+            TEST_info("encrypt CCM length rejected: idx=%d cipher=%s",
+                idx, info->name);
+            goto err;
+        }
+    } else if (!TEST_false(EVP_EncryptUpdate(ctx, NULL, &outl, NULL, 16))
+        || !TEST_err_r(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER)) {
+        TEST_info("encrypt no input, no output: idx=%d cipher=%s",
+            idx, info->name);
+        goto err;
+    }
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+
+    /* encrypt: no input with an output buffer -- always fails, writes nothing */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || !TEST_false(EVP_EncryptUpdate(ctx, out, &outl, NULL, 16))
+        || !TEST_err_r(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER)
+        || !TEST_int_eq(outl, 0)
+        || !TEST_mem_eq(out, sizeof(out), untouched, sizeof(untouched))) {
+        TEST_info("encrypt no input, with output: idx=%d cipher=%s",
+            idx, info->name);
+        goto err;
+    }
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+
+    /* decrypt: no input, no output -- valid only as the CCM message length */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, info->ciph, key, iv, NULL)))
+        goto err;
+    if (info->mode == EVP_CIPH_CCM_MODE) {
+        if (!TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, NULL, 16))) {
+            TEST_info("decrypt CCM length rejected: idx=%d cipher=%s",
+                idx, info->name);
+            goto err;
+        }
+    } else if (!TEST_false(EVP_DecryptUpdate(ctx, NULL, &outl, NULL, 16))
+        || !TEST_err_r(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER)) {
+        TEST_info("decrypt no input, no output: idx=%d cipher=%s",
+            idx, info->name);
+        goto err;
+    }
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+
+    /* decrypt: no input with an output buffer -- always fails, writes nothing */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || !TEST_false(EVP_DecryptUpdate(ctx, out, &outl, NULL, 16))
+        || !TEST_err_r(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER)
+        || !TEST_int_eq(outl, 0)
+        || !TEST_mem_eq(out, sizeof(out), untouched, sizeof(untouched))) {
+        TEST_info("decrypt no input, with output: idx=%d cipher=%s",
+            idx, info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     int i = 0;
@@ -706,6 +795,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_update_null_input, aead_list_n);
     return 1;
 }
 

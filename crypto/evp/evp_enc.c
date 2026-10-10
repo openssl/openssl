@@ -682,6 +682,14 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ossl_unlikely(ctx->cipher->prov == NULL))
         return 0;
 
+    /* A NULL input is only valid as the CCM length, with no output. */
+    if (ossl_unlikely(in == NULL && inl != 0
+            && (out != NULL
+                || EVP_CIPHER_get_mode(ctx->cipher) != EVP_CIPH_CCM_MODE))) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     blocksize = ctx->cipher->block_size;
 
     if (ossl_unlikely(ctx->cipher->cupdate == NULL || blocksize < 1)) {
@@ -791,6 +799,14 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     }
     if (ossl_unlikely(ctx->cipher->prov == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    /* A NULL input is only valid as the CCM length, with no output. */
+    if (ossl_unlikely(in == NULL && inl != 0
+            && (out != NULL
+                || EVP_CIPHER_get_mode(ctx->cipher) != EVP_CIPH_CCM_MODE))) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 

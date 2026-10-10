@@ -398,7 +398,7 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
         }
     }
 finish:
-    olen = inl;
+    olen = in != NULL ? inl : 0;
     rv = 1;
 err:
     *outl = olen;
