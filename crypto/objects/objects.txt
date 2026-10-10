@@ -286,6 +286,14 @@ id-smime-ct 48		: id-ct-signedChecklist
 id-smime-ct 49		: id-ct-ASPA
 id-smime-ct 50		: id-ct-signedTAL
 id-smime-ct 51		: id-ct-rpkiSignedPrefixList
+id-smime-ct 52		: id-ct-privateKeyInfo
+id-smime-ct 53		: id-ct-encrPrivateKeyInfo
+id-smime-ct 54		: id-ct-rpkiCanonicalCacheRepresentation
+id-smime-ct 55		: id-ct-rpkiErikIndex
+id-smime-ct 56		: id-ct-rpkiErikPartition
+id-smime-ct 57		: id-ct-prefixlenCSVwithCRLF
+id-smime-ct 58		: id-ct-CDR
+id-smime-ct 59		: id-ct-rpkiErikSegmentIndex
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -720,6 +728,8 @@ id-ad 5			: caRepository		: CA Repository
 id-ad 10		: rpkiManifest		: RPKI Manifest
 id-ad 11		: signedObject		: Signed Object
 id-ad 13		: rpkiNotify		: RPKI Notify
+id-ad 14		: stirTNList		: TN Authorization List
+id-ad 15		: communityDefinition	: BGP Community Definition
 
 !Alias id-pkix-OCSP ad-OCSP
 !module id-pkix-OCSP
