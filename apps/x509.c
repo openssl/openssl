@@ -1221,13 +1221,26 @@ cert_loop:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_USE_CHECK_TIME);
         X509_VERIFY_PARAM_set_time(vpm, tcheck);
 
-        if (!X509_check_certificate_times(vpm, x, &error)) {
-            if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
-                BIO_puts(out, "Certificate will expire\n");
-                expired = 1;
-            }
-        } else {
+        if (X509_check_certificate_times(vpm, x, &error)) {
             BIO_puts(out, "Certificate will not expire\n");
+        } else if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
+            BIO_puts(out, "Certificate will expire\n");
+            expired = 1;
+        } else if (error == X509_V_ERR_CERT_NOT_YET_VALID) {
+            /*
+             * The certificate only becomes valid after the check time,
+             * so it cannot expire before it.
+             */
+            BIO_puts(out, "Certificate will not expire\n");
+        } else {
+            /*
+             * A notBefore or notAfter field that cannot be parsed must not
+             * be reported as "will not expire", see issue #11772.
+             */
+            BIO_printf(bio_err, "Cannot check certificate expiry: %s\n",
+                X509_verify_cert_error_string(error));
+            X509_VERIFY_PARAM_free(vpm);
+            goto err;
         }
         if (multi && k > 0)
             ret |= expired;
