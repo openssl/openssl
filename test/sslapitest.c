@@ -2978,9 +2978,68 @@ end:
 
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3) \
     || !defined(OPENSSL_NO_DTLS)
+static CRYPTO_free_fn rbuf_watch_free_save;
+static const unsigned char *rbuf_watch_buf;
+static size_t rbuf_watch_len;
+static int rbuf_watch_seen;
+static int rbuf_watch_dirty;
+
+/*
+ * Free hook used by free_and_check_rbuf_cleansed(): when the watched read
+ * buffer is released, record whether any byte of it was left uncleansed.
+ */
+static void rbuf_watch_free(void *ptr, const char *file, int line)
+{
+    size_t i;
+
+    if (ptr != NULL && ptr == rbuf_watch_buf) {
+        rbuf_watch_seen = 1;
+        for (i = 0; i < rbuf_watch_len; i++) {
+            if (rbuf_watch_buf[i] != 0) {
+                rbuf_watch_dirty = 1;
+                break;
+            }
+        }
+    }
+    rbuf_watch_free_save(ptr, file, line);
+}
+
+/*
+ * Free |s| and check that the read buffer of its record layer is cleansed
+ * before it is released. |s| is freed in all cases.
+ */
+static int free_and_check_rbuf_cleansed(SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    TLS_BUFFER *rbuf;
+
+    if (!TEST_ptr(sc) || !TEST_ptr(sc->rlayer.rrl)
+        || !TEST_ptr(sc->rlayer.rrl->rbuf.buf)) {
+        SSL_free(s);
+        return 0;
+    }
+    rbuf = &sc->rlayer.rrl->rbuf;
+    rbuf_watch_buf = rbuf->buf;
+    rbuf_watch_len = rbuf->len;
+    rbuf_watch_seen = 0;
+    rbuf_watch_dirty = 0;
+
+    CRYPTO_get_mem_functions(NULL, NULL, &rbuf_watch_free_save);
+    if (!TEST_true(CRYPTO_set_mem_functions(NULL, NULL, rbuf_watch_free))) {
+        SSL_free(s);
+        return 0;
+    }
+    SSL_free(s);
+    CRYPTO_set_mem_functions(NULL, NULL, rbuf_watch_free_save);
+    rbuf_watch_buf = NULL;
+
+    return TEST_true(rbuf_watch_seen) && TEST_false(rbuf_watch_dirty);
+}
+
 static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
     const SSL_METHOD *cmeth,
-    int min_version, int max_version)
+    int min_version, int max_version,
+    int free_unread)
 {
     size_t i;
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -3062,6 +3121,16 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
     if (!TEST_mem_eq(cbuf, sizeof(cbuf), zbuf, sizeof(cbuf)))
         goto end;
 
+    if (free_unread) {
+        /*
+         * Free the connection with the plaintext still unread: the record
+         * layer must cleanse its read buffer when it is released.
+         */
+        testresult = free_and_check_rbuf_cleansed(serverssl);
+        serverssl = NULL;
+        goto end;
+    }
+
     memset(sbuf, 0, sizeof(sbuf));
     if (!TEST_int_eq(SSL_read(serverssl, &sbuf, sizeof(sbuf)), sizeof(sbuf)))
         goto end;
@@ -3088,13 +3157,20 @@ end:
         * || !defined(OPENSSL_NO_DTLS)                                   \
         */
 
-static int test_cleanse_plaintext(void)
+/*
+ * Test SSL_OP_CLEANSE_PLAINTEXT
+ * Test 0: the plaintext is cleansed once it has been read
+ * Test 1: the plaintext is cleansed when the connection is freed with the
+ *         data still unread
+ */
+static int test_cleanse_plaintext(int idx)
 {
 #if !defined(OPENSSL_NO_TLS1_2)
     if (!TEST_true(execute_cleanse_plaintext(TLS_server_method(),
             TLS_client_method(),
             TLS1_2_VERSION,
-            TLS1_2_VERSION)))
+            TLS1_2_VERSION,
+            idx)))
         return 0;
 
 #endif
@@ -3103,7 +3179,8 @@ static int test_cleanse_plaintext(void)
     if (!TEST_true(execute_cleanse_plaintext(TLS_server_method(),
             TLS_client_method(),
             TLS1_3_VERSION,
-            TLS1_3_VERSION)))
+            TLS1_3_VERSION,
+            idx)))
         return 0;
 #endif
 
@@ -3111,7 +3188,8 @@ static int test_cleanse_plaintext(void)
     if (!TEST_true(execute_cleanse_plaintext(DTLS_server_method(),
             DTLS_client_method(),
             DTLS1_2_VERSION,
-            DTLS1_2_VERSION)))
+            DTLS1_2_VERSION,
+            idx)))
         return 0;
 #endif
 
@@ -3119,7 +3197,8 @@ static int test_cleanse_plaintext(void)
     if (!TEST_true(execute_cleanse_plaintext(DTLS_server_method(),
             DTLS_client_method(),
             DTLS1_3_VERSION,
-            DTLS1_3_VERSION)))
+            DTLS1_3_VERSION,
+            idx)))
         return 0;
 #endif
     return 1;
@@ -18826,7 +18905,7 @@ int setup_tests(void)
     ADD_TEST(test_large_message_dtls);
 #endif
     ADD_ALL_TESTS(test_large_app_data, 28);
-    ADD_TEST(test_cleanse_plaintext);
+    ADD_ALL_TESTS(test_cleanse_plaintext, 2);
 #if !defined(OSSL_NO_USABLE_DTLS1_3)
     ADD_TEST(test_dtls13_release_buffers_cleanse);
 #endif
