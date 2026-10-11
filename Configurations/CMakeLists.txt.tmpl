@@ -42,6 +42,7 @@
          PERL => $config{PERL},
          CROSS_COMPILE => $config{CROSS_COMPILE},
          CC => '$(CROSS_COMPILE)' . $config{CC},
+         CXX => $config{CXX} ? '$(CROSS_COMPILE)' . $config{CXX} : '',
          AR => '$(CROSS_COMPILE)' . $config{AR},
          RANLIB => $config{RANLIB} ? '$(CROSS_COMPILE)' . $config{RANLIB} : '',
          INSTALLTOP => $prefix,
@@ -64,6 +65,7 @@
                           (map { "-I".$_ } @{$config{CPPINCLUDES}}),
                           @{$config{CPPFLAGS}}),
          CFLAGS => join(' ', @{$config{CFLAGS}}),
+         CXXFLAGS => join(' ', @{$config{CXXFLAGS}}),
          LDFLAGS => join(' ', @{$config{LDFLAGS}}),
          EX_LIBS => join(' ', @{$config{LDLIBS}}),
          CNF_CPPFLAGS => join(' ', $target{cppflags} || (),
@@ -73,6 +75,8 @@
                                                @{$config{includes}}),
                               @{$config{cppflags}}),
          CNF_CFLAGS => join(' ', $target{cflags} || (), @{$config{cflags}}),
+         CNF_CXXFLAGS => join(' ', $target{cxxflags} || (),
+                              @{$config{cxxflags}}),
          CNF_LDFLAGS => join(' ', $target{lflags} || (), @{$config{lflags}}),
          CNF_EX_LIBS => join(' ', $target{ex_libs} || (), @{$config{ex_libs}}),
          LIB_CPPFLAGS => join(' ', $target{lib_cppflags} || (),
@@ -98,6 +102,11 @@
                             @{$config{lib_cflags}},
                             @{$config{shared_cflag}},
                             '$(CNF_CFLAGS)', '$(CFLAGS)'),
+         LIB_CXXFLAGS => join(' ', $target{lib_cxxflags} || (),
+                              $target{shared_cxxflag} || (),
+                              @{$config{lib_cxxflags}},
+                              @{$config{shared_cxxflag}},
+                              '$(CNF_CXXFLAGS)', '$(CXXFLAGS)'),
          LIB_LDFLAGS => join(' ', $target{shared_ldflag} || (),
                              $config{shared_ldflag} || (),
                              '$(CNF_LDFLAGS)', '$(LDFLAGS)'),
@@ -122,6 +131,17 @@
                             @{$config{dso_cflags}},
                             @{$config{module_cflags}},
                             '$(CNF_CFLAGS)', '$(CFLAGS)'),
+         DSO_CXXFLAGS => join(' ', $target{dso_cxxflags} || (),
+                              $target{module_cxxflags} || (),
+                              @{$config{dso_cxxflags}},
+                              @{$config{module_cxxflag}},
+                              '$(CNF_CXXFLAGS)', '$(CXXFLAGS)'),
+         DSO_LDFLAGS => join(' ', $target{dso_ldflags} || (),
+                             $target{module_ldflags} || (),
+                             @{$config{dso_ldflags}},
+                             @{$config{module_ldflags}},
+                             '$(CNF_LDFLAGS)', '$(LDFLAGS)'),
+         DSO_EX_LIBS => '$(CNF_EX_LIBS) $(EX_LIBS)',
          BIN_CPPFLAGS => join(' ', $target{bin_cppflags} || (),
                               (map { '-D'.$_ } @{$config{bin_defines} || ()}),
                               @{$config{bin_cppflags}},
@@ -129,6 +149,13 @@
          BIN_CFLAGS => join(' ', $target{bin_cflags} || (),
                             @{$config{bin_cflags}},
                             '$(CNF_CFLAGS)', '$(CFLAGS)'),
+         BIN_CXXFLAGS => join(' ', $target{bin_cxxflags} || (),
+                              @{$config{bin_cxxflags}},
+                              '$(CNF_CXXFLAGS)', '$(CXXFLAGS)'),
+         BIN_LDFLAGS => join(' ', $target{bin_lflags} || (),
+                             @{$config{bin_lflags}},
+                             '$(CNF_LDFLAGS)', '$(LDFLAGS)'),
+         BIN_EX_LIBS => '$(CNF_EX_LIBS) $(EX_LIBS)',
          );
 
      # CPPFLAGS_Q is used for one thing only: to build up buildinf.h
@@ -220,6 +247,12 @@
          dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
          bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)',
          );
+     our %intent_cxxflags = (
+         shlib => '$(LIB_CXXFLAGS) $(LIB_CPPFLAGS)',
+         lib => '$(LIB_CXXFLAGS) $(LIB_CPPFLAGS)',
+         dso => '$(DSO_CXXFLAGS) $(DSO_CPPFLAGS)',
+         bin => '$(BIN_CXXFLAGS) $(BIN_CPPFLAGS)',
+         );
 
      "";
 -}
@@ -234,6 +267,7 @@ endif()
 # Configure has chosen the compiler and every flag; CMake adds none.
 set(CMAKE_C_COMPILER {- cmq(mkexpand('$(CC)')) -})
 set(CMAKE_ASM_COMPILER {- cmq(mkexpand('$(CC)')) -})
+{- $config{CXX} ? "set(CMAKE_CXX_COMPILER " . cmq(mkexpand('$(CXX)')) . ")\nset(CMAKE_CXX_FLAGS \"\")" : "" -}
 set(CMAKE_AR {- cmq(mkexpand('$(AR)')) -})
 set(CMAKE_BUILD_TYPE "")
 set(CMAKE_OSX_SYSROOT "")
@@ -241,10 +275,17 @@ set(CMAKE_C_FLAGS "")
 set(CMAKE_ASM_FLAGS "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(OpenSSL VERSION {- $config{version} -} LANGUAGES C ASM)
+project(OpenSSL VERSION {- $config{version} -}
+  LANGUAGES C ASM{- $config{CXX} ? " CXX" : "" -})
 
 set(CMAKE_C_FLAGS "")
 set(CMAKE_ASM_FLAGS "")
+set(CMAKE_CXX_FLAGS "")
+set(CMAKE_EXE_LINKER_FLAGS "")
+set(CMAKE_SHARED_LINKER_FLAGS "")
+set(CMAKE_MODULE_LINKER_FLAGS "")
+set(CMAKE_C_LINK_FLAGS "")
+set(CMAKE_CXX_LINK_FLAGS "")
 
 # Shared libraries are linked with exactly the command the Makefile uses;
 # every flag is in the target's link options.
@@ -252,6 +293,28 @@ set(CMAKE_C_CREATE_SHARED_LIBRARY
   "<CMAKE_C_COMPILER> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
 set(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "")
 set(CMAKE_SHARED_LIBRARY_C_FLAGS "")
+
+# Modules and programs likewise.
+set(CMAKE_C_CREATE_SHARED_MODULE
+  "<CMAKE_C_COMPILER> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+set(CMAKE_SHARED_MODULE_CREATE_C_FLAGS "")
+set(CMAKE_SHARED_MODULE_C_FLAGS "")
+set(CMAKE_C_LINK_EXECUTABLE
+  "<CMAKE_C_COMPILER> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+set(CMAKE_CXX_LINK_EXECUTABLE
+  "<CMAKE_CXX_COMPILER> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+
+# Runs the test suite once everything is built.  TESTS in the
+# environment selects tests, as with "make test TESTS=...".
+add_custom_target(tests
+  COMMAND ${CMAKE_COMMAND} -E env
+    {- cmql("SRCTOP=$config{sourcedir}", "BLDTOP=$config{builddir}",
+            "PERL=" . mkexpand('$(PERL)'), "FIPSKEY=$config{FIPSKEY}",
+            "EXE_EXT=" . platform->binext()) -}
+    {- cmql(mkwords('$(PERL)'), '-e',
+            q|exec $^X, shift, split(' ', $ENV{TESTS} // '')|) -}
+    {- cmq(catfile($config{sourcedir}, "test", "run_tests.pl")) -}
+  USES_TERMINAL VERBATIM)
 
 # The files every compilation may need, generated before anything is
 # compiled.
@@ -397,8 +460,8 @@ add_custom_target(generated_mandatory ALL
          my %args = @_;
          my @srcs = @{$args{srcs}};
 
-         # Only objects of libraries are built yet.
-         return "" unless $args{intent} eq 'lib' || $args{intent} eq 'shlib';
+         # Windows resource files are not built yet.
+         return "" if grep /\.rc$/, @srcs;
 
          my $obj = objtarget($args{obj});
          my @incs = map { "-I$_" } @{$args{incs}};
@@ -410,6 +473,9 @@ add_custom_target(generated_mandatory ALL
 
          if (grep /\.s$/, @srcs) {
              $flags = mkexpand($intent_cflags{$args{intent}});
+         } elsif (grep /\.(cc|cpp)$/, @srcs) {
+             $flags = mkexpand(join(' ', @incs, @defs,
+                                    $intent_cxxflags{$args{intent}}));
          } else {
              $flags = mkexpand(join(' ', @incs, @defs,
                                     $intent_cflags{$args{intent}}) . $extra);
@@ -446,6 +512,156 @@ add_custom_target(generated_mandatory ALL
              . ($dir eq '.' ? '' : "/$dir") . "\")\n";
      }
 
+     # What linking against the libraries in @_ takes, as the Makefile
+     # does it: static libraries by file (here, by CMake target), others
+     # with -L and -l.  Returns the -L flags, the link items and the
+     # CMake targets the link must wait for.
+     sub link_inputs {
+         my @linkdirs = ();
+         my @linklibs = ();
+         my @linkdeps = ();
+
+         foreach (@_) {
+             next unless defined $_;
+             if (platform->isstaticlib($_)) {
+                 # "libfoo.a" names the static form of library "libfoo".
+                 (my $lib = $_) =~ s/\.a$//;
+                 $lib = $_ unless is_library($lib);
+                 push @linklibs, cmtarget($lib);
+             } else {
+                 my $d = "-L" . dirname($_);
+                 my $l = basename($_);
+                 $l =~ s/^lib//;
+                 push @linklibs, "-l$l";
+                 push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+                 if ($disabled{shared}) {
+                     push @linkdeps, cmtarget($_);
+                 } else {
+                     push @linkdeps, cmtarget($_) . "_shared";
+                     push @linkdeps, cmtarget($_) . "_simple"
+                         if defined platform->sharedlib_simple($_);
+                 }
+             }
+         }
+         return (\@linkdirs, \@linklibs, \@linkdeps);
+     }
+
+     # The CMake text for a linked product: properties naming its file
+     # exactly, its link flags and libraries, and what it waits for.
+     sub link_props {
+         my %args = @_;
+         my $name = $args{name};
+         my $file = $args{file};
+         my $dir = dirname($file);
+         my $outdir = "\"\${CMAKE_BINARY_DIR}"
+             . ($dir eq '.' ? '' : "/$dir") . "\"";
+         my $out = "\nset_target_properties($name PROPERTIES"
+             . " PREFIX \"\" SUFFIX \"\" OUTPUT_NAME " . cmq(basename($file))
+             . " LIBRARY_OUTPUT_DIRECTORY $outdir"
+             . " RUNTIME_OUTPUT_DIRECTORY $outdir"
+             . " LINKER_LANGUAGE " . ($args{language} // 'C')
+             . ($args{def} ? " LINK_DEPENDS " . cmpath($args{def}) : "")
+             . ")"
+             . "\ntarget_link_options($name PRIVATE "
+             . cmq("SHELL:" . $args{ldflags}) . ")"
+             . "\ntarget_link_libraries($name PRIVATE "
+             . cmql(@{$args{libs}}) . ")\n";
+
+         $out .= "add_dependencies(tests $name)\n";
+         if ($args{def}) {
+             $out .= "add_custom_target(${name}_def DEPENDS "
+                 . cmpath($args{def}) . ")"
+                 . "\nadd_dependencies($name ${name}_def)\n";
+         }
+         $out .= "add_dependencies($name " . join(' ', @{$args{deps}}) . ")\n"
+             if @{$args{deps}};
+         return $out;
+     }
+
+     # A module is a CMake MODULE library, linked like a shared library.
+     sub obj2dso {
+         my %args = @_;
+         my $module = $args{module};
+         my $name = cmtarget($module);
+         my ($linkdirs, $linklibs, $linkdeps) = link_inputs(@{$args{deps}});
+         my @objs = grep { !platform->isdef($_) } @{$args{objs}};
+         my @defs = map { platform->def($_) }
+                    grep { platform->isdef($_) } @{$args{objs}};
+         my $shared_def = join('', map { ' ' . $target{shared_defflag} . $_ }
+                                   @defs);
+         $shared_def .= ' ' . $target{shared_fipsflag}
+             if defined $target{shared_fipsflag}
+                && $shared_def =~ m/providers\/fips/;
+
+         return "\nadd_library($name MODULE"
+             . join('', map { "\n  \$<TARGET_OBJECTS:" . objtarget($_) . ">" }
+                        @objs)
+             . ")"
+             . link_props(name => $name,
+                          file => platform->dso($module),
+                          def => $defs[0],
+                          ldflags => mkexpand('$(DSO_CFLAGS) '
+                                              . join('', map { "$_ " }
+                                                         @$linkdirs)
+                                              . '$(DSO_LDFLAGS)'
+                                              . $shared_def),
+                          libs => [ @$linklibs, mkwords('$(DSO_EX_LIBS)') ],
+                          deps => $linkdeps);
+     }
+
+     sub obj2bin {
+         my %args = @_;
+         my $bin = $args{bin};
+         my $name = cmtarget($bin);
+         my ($linkdirs, $linklibs, $linkdeps) = link_inputs(@{$args{deps}});
+         my $wrapflags = '';
+         $wrapflags = ' ' . join(' ', map { "-Wl,--wrap=$_" }
+                                      @{$unified_info{wraps}->{$bin}})
+             if defined $unified_info{wraps}->{$bin};
+         my $utlibs = $unified_info{unit_test_libs}->{$bin} // '';
+         my $cxx = grep /_cc\.o$/, @{$args{objs}};
+         my $cmdflags = $cxx ? '$(BIN_CXXFLAGS)' : '$(BIN_CFLAGS)';
+
+         return "\nadd_executable($name"
+             . join('', map { "\n  \$<TARGET_OBJECTS:" . objtarget($_) . ">" }
+                        @{$args{objs}})
+             . ")"
+             . link_props(name => $name,
+                          file => platform->bin($bin),
+                          language => $cxx ? 'CXX' : 'C',
+                          ldflags => mkexpand("$cmdflags "
+                                              . join('', map { "$_ " }
+                                                         @$linkdirs)
+                                              . '$(BIN_LDFLAGS)'
+                                              . $wrapflags),
+                          libs => [ @$linklibs, mkwords('$(BIN_EX_LIBS)'),
+                                    mkwords($utlibs) ],
+                          deps => $linkdeps);
+     }
+
+     sub in2script {
+         my %args = @_;
+         my $script = $args{script};
+         my @sources = @{$args{sources}};
+         my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
+                                              "util", "dofile.pl")),
+                              rel2abs($config{builddir}));
+
+         return "\nadd_custom_command(OUTPUT " . cmpath($script)
+             . "\n  COMMAND " . cmql(mkwords('$(PERL)'),
+                                     catfile($config{sourcedir}, "util",
+                                             "file-from-stdout.pl"),
+                                     '-x', $script, mkwords('$(PERL)'),
+                                     '-I' . $config{builddir},
+                                     '-Mconfigdata', $dofile,
+                                     "-o$config{build_file}", @sources)
+             . "\n  DEPENDS " . cmpathl(@sources, 'configdata.pm')
+             . "\n  VERBATIM)"
+             . "\nadd_custom_target(" . cmtarget($script) . " ALL DEPENDS "
+             . cmpath($script) . ")"
+             . "\nadd_dependencies(tests " . cmtarget($script) . ")\n";
+     }
+
      # A shared library is a CMake SHARED library whose file is named
      # exactly as the Makefile names it, linked with the Makefile's
      # command line.  Libraries it depends on are linked the same way,
@@ -457,26 +673,7 @@ add_custom_target(generated_mandatory ALL
          my $name = cmtarget($lib) . "_shared";
          my $full = platform->sharedlib($lib);
          my $simple = platform->sharedlib_simple($lib);
-         my @linkdirs = ();
-         my @linklibs = ();
-         my @linkdeps = ();
-
-         foreach (@{$args{deps}}) {
-             if (platform->isstaticlib($_)) {
-                 # CMake links the file of a static library target.
-                 push @linklibs, cmtarget($_);
-             } else {
-                 my $d = "-L" . dirname($_);
-                 my $l = basename($_);
-                 $l =~ s/^lib//;
-                 push @linklibs, "-l$l";
-                 push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
-                 push @linkdeps, cmtarget($_) . "_shared";
-                 push @linkdeps, cmtarget($_) . "_simple"
-                     if defined platform->sharedlib_simple($_);
-             }
-         }
-
+         my ($linkdirs, $linklibs, $linkdeps) = link_inputs(@{$args{deps}});
          my @objs = grep { !platform->isdef($_) } @{$args{objs}};
          my @defs = map { platform->def($_) }
                     grep { platform->isdef($_) } @{$args{objs}};
@@ -486,36 +683,21 @@ add_custom_target(generated_mandatory ALL
              ? ' ' . $target{shared_sonameflag} . basename($full) : '';
          my $shared_def = join('', map { ' ' . $target{shared_defflag} . $_ }
                                    @defs);
-         my $ldflags = mkexpand('$(LIB_CFLAGS) ' . join('', map { "$_ " }
-                                                           @linkdirs)
-                                . '$(LIB_LDFLAGS)' . $shared_soname
-                                . $shared_def);
-         my @libs = (@linklibs, mkwords('$(LIB_EX_LIBS)'));
-         my $base = basename($full);
-         my $dir = dirname($full);
          my $out = "\nadd_library($name SHARED"
              . join('', map { "\n  \$<TARGET_OBJECTS:" . objtarget($_) . ">" }
                         @objs)
              . ")"
-             . "\nset_target_properties($name PROPERTIES"
-             . " PREFIX \"\" SUFFIX \"\" OUTPUT_NAME " . cmq($base)
-             . " LIBRARY_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}"
-             . ($dir eq '.' ? '' : "/$dir") . "\""
-             . " RUNTIME_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}"
-             . ($dir eq '.' ? '' : "/$dir") . "\""
-             . (@defs ? " LINK_DEPENDS " . cmpath($defs[0]) : "")
-             . ")"
-             . "\ntarget_link_options($name PRIVATE "
-             . cmq("SHELL:$ldflags") . ")"
-             . "\ntarget_link_libraries($name PRIVATE "
-             . cmql(@libs) . ")\n";
+             . link_props(name => $name,
+                          file => $full,
+                          def => $defs[0],
+                          ldflags => mkexpand('$(LIB_CFLAGS) '
+                                              . join('', map { "$_ " }
+                                                         @$linkdirs)
+                                              . '$(LIB_LDFLAGS)'
+                                              . $shared_soname . $shared_def),
+                          libs => [ @$linklibs, mkwords('$(LIB_EX_LIBS)') ],
+                          deps => $linkdeps);
 
-         $out .= "add_custom_target(" . cmtarget($lib) . "_def DEPENDS "
-             . cmpath($defs[0]) . ")"
-             . "\nadd_dependencies($name " . cmtarget($lib) . "_def)\n"
-             if @defs;
-         $out .= "add_dependencies($name " . join(' ', @linkdeps) . ")\n"
-             if @linkdeps;
          if (defined $simple && $simple ne $full) {
              $out .= "add_custom_command(OUTPUT " . cmpath($simple)
                  . "\n  COMMAND \${CMAKE_COMMAND} -E create_symlink "
@@ -526,9 +708,6 @@ add_custom_target(generated_mandatory ALL
          }
          return $out;
      }
-     sub obj2dso { "" }
-     sub obj2bin { "" }
-     sub in2script { "" }
 
      "";
 -}
