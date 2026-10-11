@@ -40,6 +40,18 @@ static const struct {
     { (const uint8_t *)"\x00\x00", 2, 1 },
     /* A zero-length ID is not. */
     { (const uint8_t *)"\x00\x01\x00", 3, 0 },
+    /* A 32-byte ID is the longest. */
+    { (const uint8_t *)"\x00\x21\x20"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01",
+        35, 1 },
+    /* One byte longer is rejected. */
+    { (const uint8_t *)"\x00\x22\x21"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+                       "\x01\x01\x01\x01\x01",
+        36, 0 },
     /* The list must fill its length. */
     { (const uint8_t *)"\x00\x05\x04\x81\xfd\x59", 6, 0 },
     /* An ID truncated by the list. */
@@ -310,6 +322,10 @@ static int test_requested_ta_setter(void)
 {
     static const uint8_t bad_trunc[] = { 0x04, 0x81, 0xfd }; /* claims 4 */
     static const uint8_t bad_zero[] = { 0x00 }; /* empty ID */
+    static const uint8_t bad_long[] = { 0x21, 0x01, 0x01, 0x01, 0x01, 0x01,
+        0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+        0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+        0x01, 0x01, 0x01, 0x01 }; /* 33-byte ID */
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     SSL_CONNECTION *sc;
@@ -331,7 +347,9 @@ static int test_requested_ta_setter(void)
     if (!TEST_false(SSL_set1_requested_trust_anchors(ssl, bad_trunc,
             sizeof(bad_trunc)))
         || !TEST_false(SSL_set1_requested_trust_anchors(ssl, bad_zero,
-            sizeof(bad_zero))))
+            sizeof(bad_zero)))
+        || !TEST_false(SSL_set1_requested_trust_anchors(ssl, bad_long,
+            sizeof(bad_long))))
         goto err;
     ERR_clear_error();
 

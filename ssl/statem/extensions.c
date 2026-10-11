@@ -121,7 +121,8 @@ int ossl_tls_valid_trust_anchor_list(const PACKET *list)
 
     while (PACKET_remaining(&ids) > 0)
         if (!PACKET_get_length_prefixed_1(&ids, &id)
-            || PACKET_remaining(&id) == 0)
+            || PACKET_remaining(&id) == 0
+            || PACKET_remaining(&id) > TLSEXT_TRUST_ANCHOR_ID_MAX_LEN)
             return 0;
     return 1;
 }
