@@ -29,7 +29,7 @@ plan skip_all => "$test_name needs EC or DH enabled"
 plan skip_all => "$test_name is not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 12;
+plan tests => 14;
 
 my $shlib_wrap   = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -40,6 +40,7 @@ my $eecert    = srctop_file("test", "certs", "ee-cert.pem");
 my $eekey     = srctop_file("test", "certs", "ee-key.pem");
 my $srvcert   = srctop_file("test", "certs", "servercert.pem");
 my $srvkey    = srctop_file("test", "certs", "serverkey.pem");
+my $mtc_ca    = srctop_file("test", "mtc", "mtc-ca-cert.pem");
 
 # Trust anchor IDs: 32473.1 is served by the server; 32473.9 is not.
 # 0x81fd5901 is 32473.1 in its binary form.
@@ -66,11 +67,13 @@ openssl_ok("decorate server chain", "openssl", "generate_tai_chain",
 
 # Start an s_server with the fallback certificate and the TAI credential, run
 # one s_client with the given -CAfile and further options, and return the
-# client's stdout together with the accepted port.
+# accepted port, the client's stdout and the server's.  The server runs with
+# -tlsextdebug, so its output shows the extensions the client sent.
 sub run_case {
     my ($client_ca, @copts) = @_;
     my $port = "0";
     my $out = "";
+    my $sout = "";
 
     eval {
         local $SIG{ALRM} = sub { die "timeout\n" };
@@ -79,7 +82,7 @@ sub run_case {
         my @scmd = ("s_server", "-accept", "0", "-naccept", "1",
             "-cert", $srvcert, "-key", $srvkey,
             "-tai_chains", $srv_tai, "-tai_keys", $eekey,
-            "-tls1_3");
+            "-tlsextdebug", "-tls1_3");
         print("s_server @scmd\n");
         my $spid = open3(my $si, my $so, my $se,
             $shlib_wrap, $apps_openssl, @scmd);
@@ -108,14 +111,20 @@ sub run_case {
             $out = <$co>;
         }
         waitpid($cpid, 0);
-        kill 'HUP', $spid if kill(0, $spid);
+
+        # The server exits after one connection, so read what it said.
+        {
+            local $/;
+            $sout = <$so>;
+        }
         waitpid($spid, 0);
         print("s_client output:\n$out\n");
+        print("s_server output:\n$sout\n");
 
         alarm 0;
     };
     print("case error: $@") if $@;
-    return ($port, $out // "");
+    return ($port, $out // "", $sout // "");
 }
 
 my $verify_ok  = qr/Verify return code: 0 \(ok\)/;
@@ -177,3 +186,15 @@ my $tai_served_leaf = qr/^\s*i:CN=CA$/m;
         "empty: fallback served and verified");
 }
 
+# 7. The client trusts an MTC CA (32473.1, from its subject) and adds 32473.9
+#    with -request-tais: the ClientHello requests the CA's ID, then the added
+#    one.  BIO_dump separates the eighth and ninth bytes with a dash.
+SKIP: {
+    skip "MTC CAs need ML-DSA", 2 if disabled("ml-dsa");
+
+    my ($port, $out, $sout) = run_case($rootcert, "-mtc_cas", $mtc_ca,
+        "-request-tais", $tai_absent);
+    ok($port ne "0", "mtc and added: server started");
+    ok($sout =~ /00 0a 04 81 fd 59 01 04[ -]81 fd 59 09/,
+        "mtc and added: the CA's ID, then the added ID, are requested");
+}
