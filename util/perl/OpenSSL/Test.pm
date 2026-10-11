@@ -1334,6 +1334,8 @@ sub __wrap_cmd {
     if (defined($exe_shell)) {
         # If $exe_shell is defined, trust it
         @prefix = ( $exe_shell );
+    } elsif (__direct_env_ok()) {
+        @prefix = __direct_env();
     } else {
         # Otherwise, use the standard wrapper
         my $std_wrapper = __bldtop_file("util", "wrap.pl");
@@ -1352,6 +1354,44 @@ sub __wrap_cmd {
     }
 
     return (@prefix, $cmd);
+}
+
+# __direct_env_ok
+#
+# __direct_env_ok returns true if commands can be run with the environment
+# from __direct_env in place of util/wrap.pl.  That holds on the platforms
+# where util/shlib_wrap.sh sets the library search path with no more than
+# environment variables, unless OPENSSL_REGRESSION asks util/shlib_wrap.sh
+# to defer to another build.
+sub __direct_env_ok {
+    return 0 if $^O =~ m/^(?:VMS|MSWin32|solaris|irix|nsk)$/;
+    return 0 if ($ENV{OPENSSL_REGRESSION} // '') ne '';
+    return 1;
+}
+
+# __direct_env
+#
+# __direct_env returns an env(1) command line that gives a command the
+# environment util/wrap.pl and util/shlib_wrap.sh would give it, to be
+# placed before the command.  It works both for callers that execute the
+# command through a shell and for those, such as CA.pl, that execute it
+# without one.
+sub __direct_env {
+    my $top = $directories{BLDTOP};
+    my $providers = catdir($top, "providers");
+    my $conf = catfile($top, "apps", "openssl.cnf");
+    my %env = ( OPENSSL_RUNNING_UNIT_TESTS => "yes" );
+
+    $env{OPENSSL_MODULES} = $providers
+        if ($ENV{OPENSSL_MODULES} // '') eq '' && -d $providers;
+    $env{OPENSSL_CONF} = $conf
+        if ($ENV{OPENSSL_CONF} // '') eq '' && -f $conf;
+    foreach (qw(LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH)) {
+        $env{$_} = $top . ":" . ($ENV{$_} // '');
+    }
+
+    return ( "env",
+             map { "$_=" . (fixup_cmd_elements($env{$_}))[0] } sort keys %env );
 }
 
 # __fixup_prg PROG
