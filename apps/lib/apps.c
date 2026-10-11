@@ -37,6 +37,7 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>
+#include <openssl/buffer.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
@@ -693,6 +694,136 @@ void *app_malloc_array(size_t n, size_t sz, const char *what)
         app_bail_out("%s: Could not allocate %zu*%zu bytes for %s\n",
             opt_getprog(), n, sz, what);
     return vp;
+}
+
+/* Append len bytes at p to buf. */
+static int buf_append(BUF_MEM *buf, const void *p, size_t len)
+{
+    size_t off = buf->length;
+
+    if (BUF_MEM_grow(buf, off + len) == 0)
+        return 0;
+    memcpy(buf->data + off, p, len);
+    return 1;
+}
+
+int app_reloid_component_from_text(BUF_MEM *buf, const char *text,
+    size_t text_len)
+{
+    uint8_t tmp[10], enc[10];
+    uint64_t v = 0;
+    size_t i, n = 0;
+
+    if (text_len == 0)
+        return 0;
+    for (i = 0; i < text_len; i++) {
+        if (text[i] < '0' || text[i] > '9' || v > (UINT64_MAX - 9) / 10)
+            return 0;
+        v = v * 10 + (uint64_t)(text[i] - '0');
+    }
+    do {
+        tmp[n++] = (uint8_t)(v & 0x7f);
+        v >>= 7;
+    } while (v != 0);
+    for (i = 0; i < n; i++)
+        enc[i] = tmp[n - 1 - i] | (i + 1 < n ? 0x80 : 0);
+    return buf_append(buf, enc, n);
+}
+
+int app_reloid_from_text(BUF_MEM *buf, const char *text, size_t text_len)
+{
+    const char *end = text + text_len;
+
+    for (;;) {
+        const char *dot = memchr(text, '.', (size_t)(end - text));
+        size_t len = (size_t)((dot != NULL ? dot : end) - text);
+
+        if (!app_reloid_component_from_text(buf, text, len))
+            return 0;
+        if (dot == NULL)
+            return 1;
+        text = dot + 1;
+    }
+}
+
+/**
+ * @brief Append one trust anchor ID to buf with its u8 length prefix.
+ * Hex gives the ID's binary form directly, so it can express any byte string.
+ * @param buf the RequestedTrustAnchorList contents to append to
+ * @param text the ID in dotted decimal or "0x"-prefixed hex, not NUL terminated
+ * @param text_len the number of bytes at text
+ * @returns 1 on success, 0 if the ID is malformed, empty or longer than
+ *          UINT8_MAX bytes, or on allocation failure.
+ */
+static int append_requested_tai(BUF_MEM *buf, const char *text, size_t text_len)
+{
+    size_t at = buf->length, id_len;
+    uint8_t zero = 0;
+
+    if (!buf_append(buf, &zero, 1))
+        return 0;
+    if (text_len >= 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
+        uint8_t id[UINT8_MAX];
+        char *hex = OPENSSL_strndup(text + 2, text_len - 2);
+        int ok = hex != NULL
+            && OPENSSL_hexstr2buf_ex(id, sizeof(id), &id_len, hex, '\0')
+            && buf_append(buf, id, id_len);
+
+        OPENSSL_free(hex);
+        if (!ok)
+            return 0;
+    } else if (!app_reloid_from_text(buf, text, text_len)) {
+        return 0;
+    }
+    id_len = buf->length - at - 1;
+    if (id_len == 0 || id_len > UINT8_MAX)
+        return 0;
+    buf->data[at] = (char)id_len;
+    return 1;
+}
+
+/**
+ * @brief Append each trust anchor ID of a comma-separated list to buf.
+ * Prints an error to bio_err naming the item that fails.
+ * @param buf the RequestedTrustAnchorList contents to append to
+ * @param list the non-empty, comma-separated IDs
+ * @returns 1 on success, 0 on failure.
+ */
+static int append_requested_tais(BUF_MEM *buf, const char *list)
+{
+    const char *p = list;
+
+    for (;;) {
+        const char *comma = strchr(p, ',');
+        size_t len = comma != NULL ? (size_t)(comma - p) : strlen(p);
+
+        if (!append_requested_tai(buf, p, len)) {
+            BIO_printf(bio_err, "Bad trust anchor ID '%.*s'\n", (int)len, p);
+            return 0;
+        }
+        if (comma == NULL)
+            return 1;
+        p = comma + 1;
+    }
+}
+
+int add_requested_tais(SSL_CTX *ctx, const char *list)
+{
+    BUF_MEM *buf = BUF_MEM_new();
+    int ret = 0;
+
+    /* An empty list adds nothing but still has the extension sent. */
+    if (buf == NULL || (*list != '\0' && !append_requested_tais(buf, list)))
+        goto end;
+    if (!SSL_CTX_add1_requested_trust_anchors(ctx, (uint8_t *)buf->data,
+            buf->length)) {
+        BIO_printf(bio_err, "Failed to set the requested trust anchor IDs\n");
+        goto end;
+    }
+    ret = 1;
+end:
+    BUF_MEM_free(buf);
+    return ret;
 }
 
 char *next_item(char *opt) /* in list separated by comma and/or spaces */

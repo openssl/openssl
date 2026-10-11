@@ -27,6 +27,7 @@ B<openssl> B<s_client>
 [B<-verify_return_error>]
 [B<-verify_quiet>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
+[B<-request-tais> I<ids>]
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<filename>|I<uri>]
@@ -333,6 +334,18 @@ overridden by B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> options.
 They are also used as trust anchors when attempting
 to build the client certificate chain provided to the server unless
 overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
+
+=item B<-request-tais> I<ids>
+
+Request the trust anchors with these identifiers in the B<trust_anchors>
+extension of the ClientHello, so the server can choose a certificate chain
+issued under one of them (see L<SSL_CTX_add1_requested_trust_anchors(3)>).
+I<ids> is a comma-separated list. Each identifier is either a relative object
+identifier in dotted decimal, such as C<32473.1>, or its binary form in
+hexadecimal prefixed with C<0x>, such as C<0x81fd5901>. The hexadecimal form is
+sent as given, without checking that it is a well-formed relative object
+identifier. An empty I<ids> adds no identifiers but still has the extension
+sent, which signals support for retry.
 
 =item B<-verifyCAfile> I<filename>
 
