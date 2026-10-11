@@ -23,12 +23,6 @@
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
-void ossl_tls_buffer_release(TLS_BUFFER *b)
-{
-    OPENSSL_free(b->buf);
-    b->buf = NULL;
-}
-
 static void TLS_RL_RECORD_release(TLS_RL_RECORD *r, size_t num_recs)
 {
     size_t i;
@@ -279,10 +273,13 @@ static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
     TLS_BUFFER *b;
 
     b = &rl->rbuf;
+    if (b->buf == NULL)
+        return 1;
     if ((rl->options & SSL_OP_CLEANSE_PLAINTEXT) != 0)
         OPENSSL_cleanse(b->buf, b->len);
     OPENSSL_free(b->buf);
     b->buf = NULL;
+    b->len = 0;
     rl->packet = NULL;
     rl->packet_length = 0;
     return 1;
@@ -1400,8 +1397,7 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     BIO_free(rl->prev);
     BIO_free_all(rl->bio);
     BIO_free(rl->next);
-    if (rl->rbuf.buf != NULL)
-        tls_release_read_buffer(rl);
+    tls_release_read_buffer(rl);
 
     tls_release_write_buffer(rl);
 
