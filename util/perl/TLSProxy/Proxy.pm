@@ -495,6 +495,7 @@ sub clientstart
     $fdset = IO::Select->new($server_sock, $client_sock);
     my @ready;
     my $ctr = 0;
+    my $client_reaped = 0;
     local $SIG{PIPE} = "IGNORE";
     $self->{saw_session_ticket} = undef;
     $self->{session_ticket_seq} = [];
@@ -530,6 +531,14 @@ sub clientstart
             my $handshake_done = $self->handshake_complete();
             my $msg_end = TLSProxy::Message->end();
             if ($success_flag && $handshake_done == 1) {
+                last;
+            }
+            # UDP has no end of file, so a DTLS connection ends when
+            # s_client exits, as it does once its handshake has failed.
+            if ($self->{isdtls} && $self->{clientpid} > 0
+                    && waitpid($self->{clientpid}, POSIX::WNOHANG) > 0) {
+                $self->{clientexit} = $?;
+                $client_reaped = 1;
                 last;
             }
             $ctr++;
@@ -655,10 +664,12 @@ sub clientstart
         # s_server is actually done with current session...
         $self->connect_to_server();
     }
-    $pid = $self->{clientpid};
-    print "Waiting for s_client process to close: $pid...\n";
-    waitpid($pid, 0);
-    $self->{clientexit} = $?;
+    if (!$client_reaped) {
+        $pid = $self->{clientpid};
+        print "Waiting for s_client process to close: $pid...\n";
+        waitpid($pid, 0);
+        $self->{clientexit} = $?;
+    }
 
     # Slurp and parse the captured s_client output
     if (defined $self->{clientcapture}) {
