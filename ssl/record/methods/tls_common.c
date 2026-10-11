@@ -25,12 +25,6 @@
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
-void ossl_tls_buffer_release(TLS_BUFFER *b)
-{
-    OPENSSL_free(b->buf);
-    b->buf = NULL;
-}
-
 static void TLS_RL_RECORD_release(TLS_RL_RECORD *r, size_t num_recs)
 {
     size_t i;
