@@ -1829,6 +1829,60 @@ static int test_dh_priv_bits(void)
 }
 #endif
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Test that d2i_PrivateKey() NULLs out *a when the legacy path frees it
+ * internally due to a key type mismatch.  Before the fix, *a was left as a
+ * dangling pointer.
+ */
+static int test_d2i_PrivateKey_type_mismatch(void)
+{
+    int ok = 0;
+    OSSL_PROVIDER *provider = NULL;
+    EVP_PKEY *rsa_key = NULL;
+    EVP_PKEY *saved_ptr = NULL;
+    EVP_PKEY *result = NULL;
+    const unsigned char *p;
+
+    if (!TEST_ptr(provider = OSSL_PROVIDER_load(NULL, "default")))
+        goto err;
+
+    /* The pre-existing *a passed in by the caller */
+    p = kExampleRSAKeyDER;
+    if (!TEST_ptr(rsa_key = d2i_PrivateKey(EVP_PKEY_RSA, NULL, &p,
+                      sizeof(kExampleRSAKeyDER))))
+        goto err;
+    saved_ptr = rsa_key;
+
+    /* Extra ref so the free inside d2i_PrivateKey() does not deallocate */
+    if (!TEST_true(EVP_PKEY_up_ref(rsa_key)))
+        goto err;
+
+    /*
+     * RSA is requested but an EC key in PKCS#8 format is supplied.  The
+     * decoder fails, so the legacy path re-parses the input as PKCS#8,
+     * frees *a, and then rejects the result because the type differs.
+     */
+    p = kExampleECKey2DER;
+    ERR_clear_error();
+    result = d2i_PrivateKey(EVP_PKEY_RSA, &rsa_key, &p,
+        sizeof(kExampleECKey2DER));
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    /* *a has to be cleared because it was freed inside the call */
+    if (!TEST_ptr_null(rsa_key))
+        goto err;
+
+    ok = 1;
+err:
+    EVP_PKEY_free(result);
+    EVP_PKEY_free(saved_ptr);
+    OSSL_PROVIDER_unload(provider);
+    return ok;
+}
+#endif /* OPENSSL_NO_EC */
+
 int setup_tests(void)
 {
     if (!test_get_libctx(&mainctx, &nullprov, NULL, NULL, NULL)) {
@@ -1843,6 +1897,7 @@ int setup_tests(void)
     ADD_TEST(test_new_keytype);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
+    ADD_TEST(test_d2i_PrivateKey_type_mismatch);
     ADD_TEST(test_ec_d2i_i2d_pubkey);
 #else
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 1);
