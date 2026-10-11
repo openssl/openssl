@@ -67,14 +67,14 @@ If you are adding objects
 Each built-in ASN.1 object is a line in `crypto/objects/objects.txt`;
 see [crypto/objects/README.md].
 
-Updating OpenSSL's bookkeeping files
-------------------------------------
+If you are adding error reasons
+-------------------------------
 
-OpenSSL generates files related to error messages.  To bring them up to
-date, please do the following:
+Each error reason is a line in `crypto/err/openssl.txt`; see
+[crypto/err/README.md].
 
-    ./Configure --strict-warnings [your-options]
-    make update
+Checking documentation
+----------------------
 
 If you plan to submit the changes you made to OpenSSL (see
 [CONTRIBUTING.md]), it's also worth running the following, to ensure that
@@ -90,3 +90,4 @@ More details are at
 [Configurations/unix-Makefile.tmpl]: ../../Configurations/unix-Makefile.tmpl
 [CONTRIBUTING.md]: ../../CONTRIBUTING.md
 [crypto/objects/README.md]: ../../crypto/objects/README.md
+[crypto/err/README.md]: ../../crypto/err/README.md
