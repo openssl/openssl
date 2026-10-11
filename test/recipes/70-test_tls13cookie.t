@@ -79,32 +79,38 @@ sub run_tests
         );
     }
 
-    #Test 1: Inserting a cookie into an HRR should see it echoed in the ClientHello
-    #        (when a key share is required)
-    $proxy->clear();
-    $testtype = COOKIE_AND_KEY_SHARE;
     $proxy->filter(\&cookie_filter);
-    if (disabled("ecx")) {
-        $proxy->clientflags("-curves ffdhe3072:ffdhe2048");
-        $proxy->serverflags("-curves ffdhe2048");
-    } else {
-        $proxy->clientflags("-curves P-256:X25519");
-        $proxy->serverflags("-curves X25519");
-    }
-    $proxy_start_success = $proxy->start();
-    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
-    ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
 
-    #Test 2: Inserting a cookie into an HRR should see it echoed in the ClientHello
-    #        (without a key share required)
     SKIP: {
-        skip "ECX disabled", 1, if (disabled("ecx"));
-        $testtype = COOKIE_ONLY;
+        skip "A DTLS server only accepts the cookie it sent", 2
+            if $run_test_as_dtls;
+
+        #Test 1: Inserting a cookie into an HRR should see it echoed in the
+        #        ClientHello (when a key share is required)
         $proxy->clear();
-        $proxy->serverflags("-curves X25519");
-        $proxy->clientflags("-curves X25519:secp256r1");
-        $proxy->start();
+        $testtype = COOKIE_AND_KEY_SHARE;
+        if (disabled("ecx")) {
+            $proxy->clientflags("-curves ffdhe3072:ffdhe2048");
+            $proxy->serverflags("-curves ffdhe2048");
+        } else {
+            $proxy->clientflags("-curves P-256:X25519");
+            $proxy->serverflags("-curves X25519");
+        }
+        $proxy_start_success = $proxy->start();
+        skip "TLSProxy did not start correctly", 2 if $proxy_start_success == 0;
         ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
+
+        #Test 2: Inserting a cookie into an HRR should see it echoed in the
+        #        ClientHello (without a key share required)
+        SKIP: {
+            skip "ECX disabled", 1, if (disabled("ecx"));
+            $testtype = COOKIE_ONLY;
+            $proxy->clear();
+            $proxy->serverflags("-curves X25519");
+            $proxy->clientflags("-curves X25519:secp256r1");
+            $proxy->start();
+            ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
+        }
     }
 
     #Test 3: A client should reject an empty cookie in an HRR
