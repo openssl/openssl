@@ -10,8 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "internal/nelem.h"
+#include "internal/safe_math.h"
 
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
@@ -23,6 +25,8 @@
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
+
+OSSL_SAFE_MATH_SIGNED(int, int)
 
 static int test_null_args(void)
 {
@@ -803,6 +807,146 @@ err:
     return ret;
 }
 
+/*
+ * The largest asclen that does not overflow is (INT_MAX - 2) / 2, since
+ * OPENSSL_asc2uni() computes asclen * 2 + 2; an asclen above that cannot be
+ * encoded and must be rejected.
+ *
+ * What the previous code did without a sanitizer depends on the compiler and
+ * the optimisation level, because the overflow is undefined behaviour.
+ * Measured with the function as it stood before this change, gcc 15.3.0 and
+ * clang 21.1.8 on x86-64:
+ *   - gcc at -O0/-O2/-O3, and clang at -O0: NULL for all three boundary inputs
+ *   - clang at -O2/-O3: the allocator is asked for a large positive size and
+ *     the process dies with SIGSEGV for asclen = (INT_MAX - 2) / 2 + 1 and
+ *     + 2; asclen = INT_MAX returns NULL because CRYPTO_malloc(0) does
+ * Under UBSan the overflow is reported before any of that, which is what
+ * makes this a regression test for the address_ub_sanitizer and
+ * address_ub_sanitizer_no_asm jobs in .github/workflows/ci.yml.
+ */
+static int test_asc2uni_overflow(void)
+{
+    unsigned char *result = NULL;
+    int unilen = 0;
+    int ret = 0;
+
+    /*
+     * The smallest asclen that overflows: (INT_MAX - 2) / 2 + 1.  INT_MAX / 2
+     * is the same number (2147483647 / 2 == (2147483647 - 2) / 2 + 1), so it is
+     * not repeated here.
+     */
+    result = OPENSSL_asc2uni("A", (INT_MAX - 2) / 2 + 1, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    /* One above the smallest overflowing value */
+    result = OPENSSL_asc2uni("A", (INT_MAX - 2) / 2 + 2, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    /* asclen = INT_MAX also overflows */
+    result = OPENSSL_asc2uni("A", INT_MAX, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    /* asclen = 0 should succeed (just null terminator) */
+    result = OPENSSL_asc2uni("", 0, &result, &unilen);
+    if (!TEST_ptr(result))
+        goto err;
+    if (!TEST_int_eq(unilen, 2))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
+/*
+ * A rejected call must leave the caller's outputs untouched, and asclen = 0
+ * must produce the two terminating zero bytes.
+ */
+static int test_asc2uni_outputs(void)
+{
+    unsigned char *result = NULL;
+    unsigned char *out = (unsigned char *)0x1;
+    int unilen = -12345;
+    int ret = 0;
+
+    result = OPENSSL_asc2uni("A", INT_MAX, &out, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+    if (!TEST_ptr_eq(out, (unsigned char *)0x1))
+        goto err;
+    if (!TEST_int_eq(unilen, -12345))
+        goto err;
+
+    /* asclen = 0 succeeds and writes only the terminator */
+    result = OPENSSL_asc2uni("", 0, &result, &unilen);
+    if (!TEST_ptr(result))
+        goto err;
+    if (!TEST_int_eq(unilen, 2))
+        goto err;
+    if (!TEST_mem_eq(result, 2, "\0\0", 2))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
+/*
+ * asclen = -1 takes the strlen() path, which this change also guards.  Exercise
+ * it through the product code with a length that fits in an int.
+ */
+static int test_asc2uni_strlen(void)
+{
+    static const unsigned char expected[] = { 0x00, 0x41, 0x00, 0x42, 0x00, 0x00 };
+    unsigned char *result = NULL;
+    int unilen = 0;
+    int ret = 0;
+
+    result = OPENSSL_asc2uni("AB", -1, &result, &unilen);
+    if (!TEST_ptr(result))
+        goto err;
+    if (!TEST_int_eq(unilen, 6))
+        goto err;
+    if (!TEST_mem_eq(result, 6, expected, sizeof(expected)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
+/*
+ * Positive test for the largest valid input.  Allocating a buffer for an
+ * INT_MAX-sized BMPString is impractical, so the boundary arithmetic that
+ * OPENSSL_asc2uni() performs is repeated here with the safe_math helpers.
+ * This test does not call OPENSSL_asc2uni(): it will keep passing if the
+ * computation in p12_utl.c changes, so treat it as a check of the helpers.
+ */
+static int test_safe_math_asc2uni_boundary(void)
+{
+    int err = 0;
+    int ulen;
+    int max_valid = (INT_MAX - 2) / 2;
+
+    /* Largest valid input: result fits in an int, no overflow */
+    ulen = safe_add_int(safe_mul_int(max_valid, 2, &err), 2, &err);
+    if (!TEST_false(err))
+        return 0;
+    if (!TEST_int_eq(ulen, max_valid * 2 + 2))
+        return 0;
+
+    /* One past the largest valid input overflows */
+    err = 0;
+    ulen = safe_add_int(safe_mul_int(max_valid + 1, 2, &err), 2, &err);
+    return TEST_true(err);
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -870,6 +1014,10 @@ int setup_tests(void)
     ADD_TEST(test_parse_ex_skey);
     ADD_ALL_TESTS(test_parse_ex_libctx, 2);
     ADD_ALL_TESTS(test_parse_ex_skey_libctx, 4);
+    ADD_TEST(test_asc2uni_overflow);
+    ADD_TEST(test_asc2uni_outputs);
+    ADD_TEST(test_asc2uni_strlen);
+    ADD_TEST(test_safe_math_asc2uni_boundary);
     return 1;
 }
 
