@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The openssl-ocsp(1) command now uses 32-byte OCSP nonces as
+   recommended by RFC 9654.  When acting as a responder it rejects
+   nonce values of zero length or more than 128 octets with a
+   malformedRequest status.
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and

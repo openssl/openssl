@@ -724,7 +724,8 @@ redo_accept:
     }
 
     if (req != NULL && add_nonce) {
-        if (!OCSP_request_add1_nonce(req, NULL, -1))
+        /* RFC 9654: use a 32-byte nonce */
+        if (!OCSP_request_add1_nonce(req, NULL, 32))
             goto end;
     }
 
@@ -1209,7 +1210,43 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         OCSP_CERTID_free(cid_resp_md);
     }
 
-    OCSP_copy_nonce(bs, req);
+    /* RFC 9654: reject nonces of 0 or more than 128 octets */
+    {
+        int nonce_idx;
+
+        nonce_idx = OCSP_REQUEST_get_ext_by_NID(req,
+                                                NID_id_pkix_OCSP_Nonce, -1);
+        if (nonce_idx >= 0) {
+            const X509_EXTENSION *nonce_ext;
+            const ASN1_OCTET_STRING *nonce_extnValue;
+            ASN1_OCTET_STRING *nonce_val = NULL;
+            const unsigned char *p;
+            int nonce_len;
+
+            nonce_ext = OCSP_REQUEST_get_ext(req, nonce_idx);
+            nonce_extnValue = X509_EXTENSION_get_data(nonce_ext);
+            p = ASN1_STRING_get0_data(nonce_extnValue);
+            nonce_val = d2i_ASN1_OCTET_STRING(NULL, &p,
+                                              ASN1_STRING_get_length(nonce_extnValue));
+            if (nonce_val == NULL) {
+                *resp = OCSP_response_create(
+                            OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, NULL);
+                goto end;
+            }
+            nonce_len = ASN1_STRING_get_length(nonce_val);
+            ASN1_OCTET_STRING_free(nonce_val);
+            if (nonce_len == 0 || nonce_len > 128) {
+                *resp = OCSP_response_create(
+                            OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, NULL);
+                goto end;
+            }
+        }
+    }
+
+    if (!OCSP_copy_nonce(bs, req)) {
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, bs);
+        goto end;
+    }
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL || !EVP_DigestSignInit(mctx, &pkctx, rmd, NULL, rkey)) {
