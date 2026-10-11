@@ -164,6 +164,67 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
     const char *keytype, const char *desc,
     int suppress_decode_errors);
 char *next_item(char *opt); /* in list separated by comma and/or space */
+/*
+ * Decode a relative OID, as trust anchor identifiers are carried on the wire,
+ * into dotted decimal.  Returns a string the caller frees, or NULL if the
+ * bytes are not a well-formed relative OID.
+ */
+char *app_reloid_to_text(const unsigned char *id, size_t id_len);
+
+/**
+ * @brief Encode one relative OID component from its decimal text.
+ * Appends the base-128 encoding of the decimal integer to buf.
+ * @param buf the buffer to append to
+ * @param text the decimal digits, not NUL terminated
+ * @param text_len the number of bytes at text
+ * @returns 1 on success, 0 if text is empty, not decimal, or exceeds 2^64-1,
+ *          or on allocation failure.
+ */
+int app_reloid_component_from_text(BUF_MEM *buf, const char *text,
+    size_t text_len);
+
+/**
+ * @brief Encode a relative OID from its dotted decimal text.
+ * Appends the content octets of the relative OID, the binary form of a trust
+ * anchor identifier such as 32473.1, to buf.
+ * @param buf the buffer to append to
+ * @param text the dotted decimal text, not NUL terminated
+ * @param text_len the number of bytes at text
+ * @returns 1 on success, 0 if a component is not valid (see
+ *          app_reloid_component_from_text()) or on allocation failure.
+ */
+int app_reloid_from_text(BUF_MEM *buf, const char *text, size_t text_len);
+
+/**
+ * @brief Add trust anchor IDs to those ctx requests of its peer.
+ * Each comma-separated item of list is a trust anchor ID in dotted decimal or
+ * in hex prefixed with "0x".  The IDs follow the default list of requested
+ * trust anchors; an empty list adds none but still has the trust_anchors
+ * extension sent, which signals support for retry.  Prints an error to
+ * bio_err on failure.
+ * @param ctx the context to configure
+ * @param list the comma-separated trust anchor IDs
+ * @returns 1 on success, 0 on failure.
+ * @see SSL_CTX_add1_requested_trust_anchors(3)
+ */
+int add_requested_tais(SSL_CTX *ctx, const char *list);
+
+/* Install trust anchor decorated chains from a file or directory. */
+int load_tai_credentials(SSL_CTX *ssl_ctx, const char *chains_path,
+    const char *keys_path);
+
+/* Trust the Merkle Tree Certificate CAs in a file; the caller frees them. */
+STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file);
+
+/* Trust the Merkle Tree Certificate cosigners in a file; the caller frees them. */
+STACK_OF(OSSL_MTC_COSIGNER) *load_mtc_cosigners(SSL_CTX *ctx, const char *file);
+
+/* Set one log's active landmarks, given as "id:log:file". */
+int load_mtc_landmarks(STACK_OF(OSSL_MTC_CA) *cas, const char *spec,
+    const X509_VERIFY_PARAM *vpm);
+
+/* Read vetted subtree hashes, one per line as "id log start end hash". */
+int load_mtc_subtrees(STACK_OF(OSSL_MTC_CA) *cas, const char *file);
 char *process_additional_mac_key_arguments(const char *arg);
 char *get_str_from_file(const char *filename);
 int load_cert_certs(const char *uri,

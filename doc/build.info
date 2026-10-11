@@ -118,6 +118,12 @@ DEPEND[man/man1/openssl-gendsa.1]=man1/openssl-gendsa.pod
 GENERATE[man/man1/openssl-gendsa.1]=man1/openssl-gendsa.pod
 DEPEND[man1/openssl-gendsa.pod]{pod}=man1/openssl-gendsa.pod.in
 GENERATE[man1/openssl-gendsa.pod]=man1/openssl-gendsa.pod.in
+DEPEND[html/man1/openssl-generate_tai_chain.html]=man1/openssl-generate_tai_chain.pod
+GENERATE[html/man1/openssl-generate_tai_chain.html]=man1/openssl-generate_tai_chain.pod
+DEPEND[man/man1/openssl-generate_tai_chain.1]=man1/openssl-generate_tai_chain.pod
+GENERATE[man/man1/openssl-generate_tai_chain.1]=man1/openssl-generate_tai_chain.pod
+DEPEND[man1/openssl-generate_tai_chain.pod]{pod}=man1/openssl-generate_tai_chain.pod.in
+GENERATE[man1/openssl-generate_tai_chain.pod]=man1/openssl-generate_tai_chain.pod.in
 DEPEND[html/man1/openssl-genpkey.html]=man1/openssl-genpkey.pod
 GENERATE[html/man1/openssl-genpkey.html]=man1/openssl-genpkey.pod
 DEPEND[man/man1/openssl-genpkey.1]=man1/openssl-genpkey.pod
@@ -365,6 +371,7 @@ html/man1/openssl-errstr.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
 html/man1/openssl-gendsa.html \
+html/man1/openssl-generate_tai_chain.html \
 html/man1/openssl-genpkey.html \
 html/man1/openssl-genrsa.html \
 html/man1/openssl-info.html \
@@ -427,6 +434,7 @@ man/man1/openssl-errstr.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
 man/man1/openssl-gendsa.1 \
+man/man1/openssl-generate_tai_chain.1 \
 man/man1/openssl-genpkey.1 \
 man/man1/openssl-genrsa.1 \
 man/man1/openssl-info.1 \
@@ -1791,6 +1799,14 @@ DEPEND[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_c
 GENERATE[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 DEPEND[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 GENERATE[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
+DEPEND[html/man3/OSSL_MTC_CA_load_landmarks.html]=man3/OSSL_MTC_CA_load_landmarks.pod
+GENERATE[html/man3/OSSL_MTC_CA_load_landmarks.html]=man3/OSSL_MTC_CA_load_landmarks.pod
+DEPEND[man/man3/OSSL_MTC_CA_load_landmarks.3]=man3/OSSL_MTC_CA_load_landmarks.pod
+GENERATE[man/man3/OSSL_MTC_CA_load_landmarks.3]=man3/OSSL_MTC_CA_load_landmarks.pod
+DEPEND[html/man3/OSSL_MTC_CA_new.html]=man3/OSSL_MTC_CA_new.pod
+GENERATE[html/man3/OSSL_MTC_CA_new.html]=man3/OSSL_MTC_CA_new.pod
+DEPEND[man/man3/OSSL_MTC_CA_new.3]=man3/OSSL_MTC_CA_new.pod
+GENERATE[man/man3/OSSL_MTC_CA_new.3]=man3/OSSL_MTC_CA_new.pod
 DEPEND[html/man3/OSSL_PARAM.html]=man3/OSSL_PARAM.pod
 GENERATE[html/man3/OSSL_PARAM.html]=man3/OSSL_PARAM.pod
 DEPEND[man/man3/OSSL_PARAM.3]=man3/OSSL_PARAM.pod
@@ -1815,6 +1831,10 @@ DEPEND[html/man3/OSSL_PARAM_print_to_bio.html]=man3/OSSL_PARAM_print_to_bio.pod
 GENERATE[html/man3/OSSL_PARAM_print_to_bio.html]=man3/OSSL_PARAM_print_to_bio.pod
 DEPEND[man/man3/OSSL_PARAM_print_to_bio.3]=man3/OSSL_PARAM_print_to_bio.pod
 GENERATE[man/man3/OSSL_PARAM_print_to_bio.3]=man3/OSSL_PARAM_print_to_bio.pod
+DEPEND[html/man3/OSSL_PROOF_verify.html]=man3/OSSL_PROOF_verify.pod
+GENERATE[html/man3/OSSL_PROOF_verify.html]=man3/OSSL_PROOF_verify.pod
+DEPEND[man/man3/OSSL_PROOF_verify.3]=man3/OSSL_PROOF_verify.pod
+GENERATE[man/man3/OSSL_PROOF_verify.3]=man3/OSSL_PROOF_verify.pod
 DEPEND[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 GENERATE[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 DEPEND[man/man3/OSSL_PROVIDER.3]=man3/OSSL_PROVIDER.pod
@@ -2235,6 +2255,10 @@ DEPEND[html/man3/SSL_CTX_add1_chain_cert.html]=man3/SSL_CTX_add1_chain_cert.pod
 GENERATE[html/man3/SSL_CTX_add1_chain_cert.html]=man3/SSL_CTX_add1_chain_cert.pod
 DEPEND[man/man3/SSL_CTX_add1_chain_cert.3]=man3/SSL_CTX_add1_chain_cert.pod
 GENERATE[man/man3/SSL_CTX_add1_chain_cert.3]=man3/SSL_CTX_add1_chain_cert.pod
+DEPEND[html/man3/SSL_CTX_add1_credential.html]=man3/SSL_CTX_add1_credential.pod
+GENERATE[html/man3/SSL_CTX_add1_credential.html]=man3/SSL_CTX_add1_credential.pod
+DEPEND[man/man3/SSL_CTX_add1_credential.3]=man3/SSL_CTX_add1_credential.pod
+GENERATE[man/man3/SSL_CTX_add1_credential.3]=man3/SSL_CTX_add1_credential.pod
 DEPEND[html/man3/SSL_CTX_add_extra_chain_cert.html]=man3/SSL_CTX_add_extra_chain_cert.pod
 GENERATE[html/man3/SSL_CTX_add_extra_chain_cert.html]=man3/SSL_CTX_add_extra_chain_cert.pod
 DEPEND[man/man3/SSL_CTX_add_extra_chain_cert.3]=man3/SSL_CTX_add_extra_chain_cert.pod
@@ -2267,6 +2291,10 @@ DEPEND[html/man3/SSL_CTX_get0_param.html]=man3/SSL_CTX_get0_param.pod
 GENERATE[html/man3/SSL_CTX_get0_param.html]=man3/SSL_CTX_get0_param.pod
 DEPEND[man/man3/SSL_CTX_get0_param.3]=man3/SSL_CTX_get0_param.pod
 GENERATE[man/man3/SSL_CTX_get0_param.3]=man3/SSL_CTX_get0_param.pod
+DEPEND[html/man3/SSL_CTX_get0_proof_params.html]=man3/SSL_CTX_get0_proof_params.pod
+GENERATE[html/man3/SSL_CTX_get0_proof_params.html]=man3/SSL_CTX_get0_proof_params.pod
+DEPEND[man/man3/SSL_CTX_get0_proof_params.3]=man3/SSL_CTX_get0_proof_params.pod
+GENERATE[man/man3/SSL_CTX_get0_proof_params.3]=man3/SSL_CTX_get0_proof_params.pod
 DEPEND[html/man3/SSL_CTX_get_verify_mode.html]=man3/SSL_CTX_get_verify_mode.pod
 GENERATE[html/man3/SSL_CTX_get_verify_mode.html]=man3/SSL_CTX_get_verify_mode.pod
 DEPEND[man/man3/SSL_CTX_get_verify_mode.3]=man3/SSL_CTX_get_verify_mode.pod
@@ -2311,6 +2339,10 @@ DEPEND[html/man3/SSL_CTX_set1_curves.html]=man3/SSL_CTX_set1_curves.pod
 GENERATE[html/man3/SSL_CTX_set1_curves.html]=man3/SSL_CTX_set1_curves.pod
 DEPEND[man/man3/SSL_CTX_set1_curves.3]=man3/SSL_CTX_set1_curves.pod
 GENERATE[man/man3/SSL_CTX_set1_curves.3]=man3/SSL_CTX_set1_curves.pod
+DEPEND[html/man3/SSL_CTX_set1_requested_trust_anchors.html]=man3/SSL_CTX_set1_requested_trust_anchors.pod
+GENERATE[html/man3/SSL_CTX_set1_requested_trust_anchors.html]=man3/SSL_CTX_set1_requested_trust_anchors.pod
+DEPEND[man/man3/SSL_CTX_set1_requested_trust_anchors.3]=man3/SSL_CTX_set1_requested_trust_anchors.pod
+GENERATE[man/man3/SSL_CTX_set1_requested_trust_anchors.3]=man3/SSL_CTX_set1_requested_trust_anchors.pod
 DEPEND[html/man3/SSL_CTX_set1_sigalgs.html]=man3/SSL_CTX_set1_sigalgs.pod
 GENERATE[html/man3/SSL_CTX_set1_sigalgs.html]=man3/SSL_CTX_set1_sigalgs.pod
 DEPEND[man/man3/SSL_CTX_set1_sigalgs.3]=man3/SSL_CTX_set1_sigalgs.pod
@@ -2763,6 +2795,10 @@ DEPEND[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 GENERATE[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 DEPEND[man/man3/SSL_new_stream.3]=man3/SSL_new_stream.pod
 GENERATE[man/man3/SSL_new_stream.3]=man3/SSL_new_stream.pod
+DEPEND[html/man3/SSL_parse_certificates_with_properties.html]=man3/SSL_parse_certificates_with_properties.pod
+GENERATE[html/man3/SSL_parse_certificates_with_properties.html]=man3/SSL_parse_certificates_with_properties.pod
+DEPEND[man/man3/SSL_parse_certificates_with_properties.3]=man3/SSL_parse_certificates_with_properties.pod
+GENERATE[man/man3/SSL_parse_certificates_with_properties.3]=man3/SSL_parse_certificates_with_properties.pod
 DEPEND[html/man3/SSL_pending.html]=man3/SSL_pending.pod
 GENERATE[html/man3/SSL_pending.html]=man3/SSL_pending.pod
 DEPEND[man/man3/SSL_pending.3]=man3/SSL_pending.pod
@@ -3035,6 +3071,10 @@ DEPEND[html/man3/X509_STORE_set_verify_cb_func.html]=man3/X509_STORE_set_verify_
 GENERATE[html/man3/X509_STORE_set_verify_cb_func.html]=man3/X509_STORE_set_verify_cb_func.pod
 DEPEND[man/man3/X509_STORE_set_verify_cb_func.3]=man3/X509_STORE_set_verify_cb_func.pod
 GENERATE[man/man3/X509_STORE_set_verify_cb_func.3]=man3/X509_STORE_set_verify_cb_func.pod
+DEPEND[html/man3/X509_STORE_trust_mtc_ca.html]=man3/X509_STORE_trust_mtc_ca.pod
+GENERATE[html/man3/X509_STORE_trust_mtc_ca.html]=man3/X509_STORE_trust_mtc_ca.pod
+DEPEND[man/man3/X509_STORE_trust_mtc_ca.3]=man3/X509_STORE_trust_mtc_ca.pod
+GENERATE[man/man3/X509_STORE_trust_mtc_ca.3]=man3/X509_STORE_trust_mtc_ca.pod
 DEPEND[html/man3/X509_VERIFY_PARAM_set1_host.html]=man3/X509_VERIFY_PARAM_set1_host.pod
 GENERATE[html/man3/X509_VERIFY_PARAM_set1_host.html]=man3/X509_VERIFY_PARAM_set1_host.pod
 DEPEND[man/man3/X509_VERIFY_PARAM_set1_host.3]=man3/X509_VERIFY_PARAM_set1_host.pod
@@ -3523,12 +3563,15 @@ html/man3/OSSL_INDICATOR_set_callback.html \
 html/man3/OSSL_ITEM.html \
 html/man3/OSSL_LIB_CTX.html \
 html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html \
+html/man3/OSSL_MTC_CA_load_landmarks.html \
+html/man3/OSSL_MTC_CA_new.html \
 html/man3/OSSL_PARAM.html \
 html/man3/OSSL_PARAM_BLD.html \
 html/man3/OSSL_PARAM_allocate_from_text.html \
 html/man3/OSSL_PARAM_dup.html \
 html/man3/OSSL_PARAM_int.html \
 html/man3/OSSL_PARAM_print_to_bio.html \
+html/man3/OSSL_PROOF_verify.html \
 html/man3/OSSL_PROVIDER.html \
 html/man3/OSSL_QUIC_client_method.html \
 html/man3/OSSL_SELF_TEST_new.html \
@@ -3634,6 +3677,7 @@ html/man3/SSL_CONF_CTX_set_ssl_ctx.html \
 html/man3/SSL_CONF_cmd.html \
 html/man3/SSL_CONF_cmd_argv.html \
 html/man3/SSL_CTX_add1_chain_cert.html \
+html/man3/SSL_CTX_add1_credential.html \
 html/man3/SSL_CTX_add_extra_chain_cert.html \
 html/man3/SSL_CTX_add_session.html \
 html/man3/SSL_CTX_config.html \
@@ -3642,6 +3686,7 @@ html/man3/SSL_CTX_dane_enable.html \
 html/man3/SSL_CTX_flush_sessions.html \
 html/man3/SSL_CTX_free.html \
 html/man3/SSL_CTX_get0_param.html \
+html/man3/SSL_CTX_get0_proof_params.html \
 html/man3/SSL_CTX_get_verify_mode.html \
 html/man3/SSL_CTX_has_client_custom_ext.html \
 html/man3/SSL_CTX_load_verify_locations.html \
@@ -3653,6 +3698,7 @@ html/man3/SSL_CTX_sessions.html \
 html/man3/SSL_CTX_set0_CA_list.html \
 html/man3/SSL_CTX_set1_cert_comp_preference.html \
 html/man3/SSL_CTX_set1_curves.html \
+html/man3/SSL_CTX_set1_requested_trust_anchors.html \
 html/man3/SSL_CTX_set1_sigalgs.html \
 html/man3/SSL_CTX_set1_verify_cert_store.html \
 html/man3/SSL_CTX_set_alpn_select_cb.html \
@@ -3766,6 +3812,7 @@ html/man3/SSL_new.html \
 html/man3/SSL_new_domain.html \
 html/man3/SSL_new_listener.html \
 html/man3/SSL_new_stream.html \
+html/man3/SSL_parse_certificates_with_properties.html \
 html/man3/SSL_pending.html \
 html/man3/SSL_poll.html \
 html/man3/SSL_read.html \
@@ -3834,6 +3881,7 @@ html/man3/X509_STORE_add_cert.html \
 html/man3/X509_STORE_get0_param.html \
 html/man3/X509_STORE_new.html \
 html/man3/X509_STORE_set_verify_cb_func.html \
+html/man3/X509_STORE_trust_mtc_ca.html \
 html/man3/X509_VERIFY_PARAM_set1_host.html \
 html/man3/X509_VERIFY_PARAM_set_flags.html \
 html/man3/X509_VERIFY_PARAM_set_hostflags.html \
@@ -4204,12 +4252,15 @@ man/man3/OSSL_INDICATOR_set_callback.3 \
 man/man3/OSSL_ITEM.3 \
 man/man3/OSSL_LIB_CTX.3 \
 man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3 \
+man/man3/OSSL_MTC_CA_load_landmarks.3 \
+man/man3/OSSL_MTC_CA_new.3 \
 man/man3/OSSL_PARAM.3 \
 man/man3/OSSL_PARAM_BLD.3 \
 man/man3/OSSL_PARAM_allocate_from_text.3 \
 man/man3/OSSL_PARAM_dup.3 \
 man/man3/OSSL_PARAM_int.3 \
 man/man3/OSSL_PARAM_print_to_bio.3 \
+man/man3/OSSL_PROOF_verify.3 \
 man/man3/OSSL_PROVIDER.3 \
 man/man3/OSSL_QUIC_client_method.3 \
 man/man3/OSSL_SELF_TEST_new.3 \
@@ -4315,6 +4366,7 @@ man/man3/SSL_CONF_CTX_set_ssl_ctx.3 \
 man/man3/SSL_CONF_cmd.3 \
 man/man3/SSL_CONF_cmd_argv.3 \
 man/man3/SSL_CTX_add1_chain_cert.3 \
+man/man3/SSL_CTX_add1_credential.3 \
 man/man3/SSL_CTX_add_extra_chain_cert.3 \
 man/man3/SSL_CTX_add_session.3 \
 man/man3/SSL_CTX_config.3 \
@@ -4323,6 +4375,7 @@ man/man3/SSL_CTX_dane_enable.3 \
 man/man3/SSL_CTX_flush_sessions.3 \
 man/man3/SSL_CTX_free.3 \
 man/man3/SSL_CTX_get0_param.3 \
+man/man3/SSL_CTX_get0_proof_params.3 \
 man/man3/SSL_CTX_get_verify_mode.3 \
 man/man3/SSL_CTX_has_client_custom_ext.3 \
 man/man3/SSL_CTX_load_verify_locations.3 \
@@ -4334,6 +4387,7 @@ man/man3/SSL_CTX_sessions.3 \
 man/man3/SSL_CTX_set0_CA_list.3 \
 man/man3/SSL_CTX_set1_cert_comp_preference.3 \
 man/man3/SSL_CTX_set1_curves.3 \
+man/man3/SSL_CTX_set1_requested_trust_anchors.3 \
 man/man3/SSL_CTX_set1_sigalgs.3 \
 man/man3/SSL_CTX_set1_verify_cert_store.3 \
 man/man3/SSL_CTX_set_alpn_select_cb.3 \
@@ -4447,6 +4501,7 @@ man/man3/SSL_new.3 \
 man/man3/SSL_new_domain.3 \
 man/man3/SSL_new_listener.3 \
 man/man3/SSL_new_stream.3 \
+man/man3/SSL_parse_certificates_with_properties.3 \
 man/man3/SSL_pending.3 \
 man/man3/SSL_poll.3 \
 man/man3/SSL_read.3 \
@@ -4515,6 +4570,7 @@ man/man3/X509_STORE_add_cert.3 \
 man/man3/X509_STORE_get0_param.3 \
 man/man3/X509_STORE_new.3 \
 man/man3/X509_STORE_set_verify_cb_func.3 \
+man/man3/X509_STORE_trust_mtc_ca.3 \
 man/man3/X509_VERIFY_PARAM_set1_host.3 \
 man/man3/X509_VERIFY_PARAM_set_flags.3 \
 man/man3/X509_VERIFY_PARAM_set_hostflags.3 \

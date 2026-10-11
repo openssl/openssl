@@ -151,6 +151,7 @@ strspn
 strstr
 strtol
 strtoul
+strtoull
 syscall
 sysconf
 syslog

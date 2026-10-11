@@ -4797,13 +4797,121 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x,
  * a fatal error: we will either try another certificate or not present one
  * to the server. In this case no error is set.
  */
+/*
+ * Find a shared signature algorithm usable with the private key of the
+ * supplied credential.  Unlike find_sig_alg() this considers only the
+ * credential's own key rather than the legacy s->cert->pkeys[] slots, and
+ * does not require an X509 certificate.  Returns the chosen algorithm, or
+ * NULL if none of the shared algorithms is usable with the key.
+ */
+static const SIGALG_LOOKUP *find_sig_alg_for_credential(SSL_CONNECTION *s,
+    const SSL_CREDENTIAL *cred)
+{
+    const SIGALG_LOOKUP *lu = NULL;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    EVP_PKEY *pkey = cred->pkey;
+    size_t i, idx;
+    int curve = -1;
+
+    if (pkey == NULL
+        || ssl_cert_lookup_by_pkey(pkey, &idx, sctx) == NULL)
+        return NULL;
+
+    for (i = 0; i < s->shared_sigalgslen; i++) {
+        lu = s->shared_sigalgs[i];
+
+        /* Skip SHA1, SHA224, DSA and RSA if not PSS, as find_sig_alg() does. */
+        if (lu->hash == NID_sha1
+            || lu->hash == NID_sha224
+            || lu->sig == EVP_PKEY_DSA
+            || lu->sig == EVP_PKEY_RSA
+            || !tls_sigalg_compat(s, lu))
+            continue;
+        if (!tls1_lookup_md(sctx, lu, NULL))
+            continue;
+
+        /* The algorithm must match the credential key's type. */
+        if ((size_t)lu->sig_idx != idx)
+            continue;
+        if (EVP_PKEY_digestsign_supports_digest(pkey, sctx->libctx,
+                lu->hash != NID_undef ? OBJ_nid2sn(lu->hash) : NULL,
+                sctx->propq)
+            <= 0)
+            continue;
+
+        if (lu->sig == EVP_PKEY_EC) {
+            if (curve == -1)
+                curve = ssl_get_EC_curve_nid(pkey);
+            if (lu->curve != NID_undef && curve != lu->curve)
+                continue;
+        } else if (lu->sig == EVP_PKEY_RSA_PSS) {
+            if (!rsa_pss_check_min_key_size(sctx, pkey, lu))
+                continue;
+        }
+        return lu;
+    }
+
+    return NULL;
+}
+
+int ossl_tls_credential_usable(SSL_CONNECTION *s, const SSL_CREDENTIAL *cred)
+{
+    return find_sig_alg_for_credential(s, cred) != NULL;
+}
+
+/*
+ * When the peer requested particular trust anchors, try to select a
+ * configured credential that satisfies the request.  Returns 1 and sets
+ * s->s3.tmp.credential and s->s3.tmp.sigalg on success; returns 0 without
+ * setting them when no credential is selected, in which case the caller
+ * falls back to the legacy certificate path.
+ */
+static int choose_credential(SSL_CONNECTION *s)
+{
+    int i;
+
+    /* Only negotiate credentials when the peer requested trust anchors. */
+    if (!s->ext.peer_sent_trust_anchors || s->cert->credentials == NULL)
+        return 0;
+
+    /* Credentials are consulted in configured order, which is preference. */
+    for (i = 0; i < sk_SSL_CREDENTIAL_num(s->cert->credentials); i++) {
+        SSL_CREDENTIAL *cred = sk_SSL_CREDENTIAL_value(s->cert->credentials, i);
+        const SIGALG_LOOKUP *lu;
+
+        if (!ossl_ssl_credential_matches_request(cred,
+                s->ext.peer_requested_trust_anchors,
+                s->ext.peer_requested_trust_anchors_len))
+            continue;
+        if ((lu = find_sig_alg_for_credential(s, cred)) == NULL)
+            continue;
+
+        s->s3.tmp.credential = cred;
+        s->s3.tmp.sigalg = lu;
+        return 1;
+    }
+
+    return 0;
+}
+
 int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
 {
     const SIGALG_LOOKUP *lu = NULL;
     int sig_idx = -1;
 
     s->s3.tmp.cert = NULL;
+    s->s3.tmp.credential = NULL;
     s->s3.tmp.sigalg = NULL;
+
+    /*
+     * In (D)TLS 1.3, divert to a negotiated credential if one matches the
+     * trust anchors the peer requested: of a server in the ClientHello, or of a
+     * client in the CertificateRequest.  On success the legacy path below is
+     * skipped entirely; otherwise s->s3.tmp.credential stays NULL and we fall
+     * back to the certificate slots as usual.
+     */
+    if (SSL_CONNECTION_IS_VERSION13(s) && choose_credential(s))
+        return 1;
 
     if (SSL_CONNECTION_IS_VERSION13(s)) {
         lu = find_sig_alg(s, NULL, NULL);

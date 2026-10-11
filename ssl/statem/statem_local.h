@@ -509,6 +509,64 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
 EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
+/**
+ * @brief Construct the client's trust_anchors extension: the identifiers of
+ * the configured Merkle Tree Certificate CAs, sent in the TLS 1.3 ClientHello.
+ * @param s the SSL connection
+ * @param pkt the WPACKET the extension is written to
+ * @param context the extension context (the message being constructed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; unused here
+ * @returns EXT_RETURN_SENT when written, EXT_RETURN_NOT_SENT when no MTC CAs
+ * are configured, EXT_RETURN_FAIL on error.
+ */
+/*
+ * Whether a trust anchor list holds only well-formed identifiers: a series of
+ * non-empty u8-length-prefixed strings filling it exactly.  An empty list is
+ * well formed; whether it is allowed depends on the message it came in.
+ */
+int ossl_tls_valid_trust_anchor_list(const PACKET *list);
+
+/*
+ * Write a trust_anchors extension holding the trust anchors this end requests
+ * of its peer, as the ClientHello and CertificateRequest forms both do.
+ */
+EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
+    WPACKET *pkt);
+
+int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context, X509 *x, size_t chainidx);
+EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
+/**
+ * @brief Parse the peer's trust_anchors extension from the ClientHello,
+ * saving the requested trust anchor IDs for certificate selection.
+ * @param s the SSL connection
+ * @param pkt the PACKET holding the extension contents
+ * @param context the extension context (the message being parsed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; unused here
+ * @returns 1 on success, 0 on error (a fatal alert has been scheduled).
+ */
+int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
+/**
+ * @brief Construct the server's trust_anchors acknowledgement, an empty
+ * extension sent in the first CertificateEntry when a negotiated credential
+ * was served.
+ * @param s the SSL connection
+ * @param pkt the WPACKET to write the extension to
+ * @param context the extension context (the message being constructed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; the acknowledgement is sent
+ * only when this is zero
+ * @returns an EXT_RETURN value indicating whether the extension was sent
+ */
+EXT_RETURN tls_construct_stoc_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
 
 int tls_parse_stoc_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,

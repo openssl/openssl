@@ -1,0 +1,190 @@
+=pod
+
+=head1 NAME
+
+SSL_parse_certificates_with_properties, SSL_parse_private_keys,
+SSL_CREDENTIAL_size_cmp
+- parse certificates carrying certificate property lists into credentials,
+parse private keys, and order credentials by size
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_parse_certificates_with_properties(BIO *in,
+                                            STACK_OF(EVP_PKEY) *keys,
+                                            STACK_OF(SSL_CREDENTIAL) *out_credentials);
+
+ int SSL_parse_private_keys(BIO *in, STACK_OF(EVP_PKEY) *out_keys);
+
+ int SSL_CREDENTIAL_size_cmp(const SSL_CREDENTIAL *const *a,
+                                 const SSL_CREDENTIAL *const *b);
+
+=head1 DESCRIPTION
+
+SSL_parse_certificates_with_properties() reads PEM data from the B<BIO> I<in>
+and parses it into a set of B<SSL_CREDENTIAL> objects appended to
+I<out_credentials>.
+
+The input is a sequence of PEM blocks, read once.  A
+B<CERTIFICATE PROPERTIES> block, holding an encoded CertificatePropertyList,
+begins a new credential; the B<CERTIFICATE> blocks that follow it are that
+credential's certificate chain, leaf first.  Private key blocks
+(B<PRIVATE KEY>, B<EC PRIVATE KEY>, or B<RSA PRIVATE KEY>) may appear anywhere
+in the input.  Blocks of any other type are skipped.
+
+Each credential's private key is the key whose public key matches the leaf
+certificate's, found among the keys in the input and those in I<keys>, which
+may be NULL.  Each credential must have a matching key.  A credential parsed
+this way is only ever used when a negotiation mechanism, such as trust anchor
+identifiers, selects it; see L<SSL_CTX_add1_credential(3)>.
+
+SSL_parse_private_keys() reads PEM private keys from the B<BIO> I<in> and
+appends them to I<out_keys>.  It reads B<PRIVATE KEY>, B<EC PRIVATE KEY>, and
+B<RSA PRIVATE KEY> blocks and skips blocks of any other type.  The resulting
+stack is suitable as the I<keys> argument to
+SSL_parse_certificates_with_properties(), allowing a certificate chain and its
+key to be supplied in separate inputs.
+
+Neither function accepts an encrypted private key.
+
+Both parsing functions are all-or-nothing.  If the input cannot be read,
+contains an encrypted private key, fails to parse, or (for
+SSL_parse_certificates_with_properties()) yields a malformed credential or one
+with no matching key, nothing is added to the output stack and the call fails.
+
+On success the credentials are appended to I<out_credentials> in the order
+they appear in the input.  This order is significant: when a credential is
+added to an B<SSL_CTX> with L<SSL_CTX_add1_credential(3)>, credentials are used
+in the order they were added, so a credential earlier in the input is
+preferred over a later one.
+
+The caller controls the resulting preference order by the order in which it
+adds the parsed credentials.  Two orderings are common.  When the order of the
+credentials in the input expresses the intended preference, the caller adds
+them as returned.  Alternatively the caller may sort them, typically by the total
+size of the credential on the wire with the smallest preferred, before adding
+them.
+
+SSL_CREDENTIAL_size_cmp() compares two credentials by the size of the
+credential in bytes on the wire, ordering a smaller credential before a larger
+one.  It is intended to be used to sort a stack of credentials when the
+preference is to serve the smaller credential first.  It has the signature of
+a STACK_OF(SSL_CREDENTIAL) comparison function, so a caller can order a stack
+smallest first with:
+
+ sk_SSL_CREDENTIAL_set_cmp_func(creds, SSL_CREDENTIAL_size_cmp);
+ sk_SSL_CREDENTIAL_sort(creds);
+
+The caller owns the credentials added to I<out_credentials> and must release
+each with L<SSL_CREDENTIAL_free(3)>, and likewise owns the keys added to
+I<out_keys> and must release each with L<EVP_PKEY_free(3)>.
+
+=head1 RETURN VALUES
+
+SSL_parse_certificates_with_properties() and SSL_parse_private_keys() return 1
+on success, 0 on error.
+
+SSL_CREDENTIAL_size_cmp() returns a negative value, zero, or a
+positive value if the first credential is smaller than, equal in size to, or
+larger than the second.
+
+=head1 ERRORS
+
+On failure the parsing functions place a reason on the error stack, which the
+caller can retrieve with L<ERR_get_error(3)>.
+
+SSL_parse_certificates_with_properties() and SSL_parse_private_keys() raise
+B<SSL_R_UNEXPECTED_PEM_BLOCK> for an encrypted private key; the accompanying
+error data names the offending block, as in C<PEM block 3>.
+SSL_parse_certificates_with_properties() also raises it for a certificate
+chain with no B<CERTIFICATE PROPERTIES> block or a B<CERTIFICATE PROPERTIES>
+block with no certificate.
+
+SSL_parse_certificates_with_properties() additionally raises
+B<SSL_R_INVALID_CERTIFICATE_PROPERTY_LIST> for a malformed certificate
+property list, and B<SSL_R_NO_MATCHING_PRIVATE_KEY> for a credential whose leaf
+certificate matches no key in the input or in I<keys>.
+
+A certificate or key that fails to decode leaves the underlying reason from the
+X.509 or key decoder on the error stack.
+
+=head1 EXAMPLES
+
+Load every private key in one directory into a key stack, then every
+credential in another directory, resolving each credential's key from that
+stack.  A file that does not parse is skipped with a warning naming the file
+and the reason.  The credentials are then ordered smallest first and installed
+on an B<SSL_CTX>.
+
+ STACK_OF(EVP_PKEY) *keys = sk_EVP_PKEY_new_null();
+ STACK_OF(SSL_CREDENTIAL) *creds = sk_SSL_CREDENTIAL_new_null();
+ const char *keydir = "/some/where/keys";
+ const char *certdir = "/some/where/certs";
+ char path[PATH_MAX];
+ struct dirent *ent;
+ DIR *dir;
+ int i;
+
+ /* Read all the keys first, so credentials can resolve against them. */
+ dir = opendir(keydir);
+ while ((ent = readdir(dir)) != NULL) {
+     BIO *in;
+
+     if (ent->d_name[0] == '.')
+         continue;
+     snprintf(path, sizeof(path), "%s/%s", keydir, ent->d_name);
+     in = BIO_new_file(path, "r");
+     if (in == NULL || !SSL_parse_private_keys(in, keys))
+         fprintf(stderr, "skipping key file %s: %s\n", path,
+                 ERR_reason_error_string(ERR_get_error()));
+     ERR_clear_error();
+     BIO_free(in);
+ }
+ closedir(dir);
+
+ /* Read the credentials, matching each to a key by its leaf. */
+ dir = opendir(certdir);
+ while ((ent = readdir(dir)) != NULL) {
+     BIO *in;
+
+     if (ent->d_name[0] == '.')
+         continue;
+     snprintf(path, sizeof(path), "%s/%s", certdir, ent->d_name);
+     in = BIO_new_file(path, "r");
+     if (in == NULL
+             || !SSL_parse_certificates_with_properties(in, keys, creds))
+         fprintf(stderr, "skipping cert file %s: %s\n", path,
+                 ERR_reason_error_string(ERR_get_error()));
+     ERR_clear_error();
+     BIO_free(in);
+ }
+ closedir(dir);
+
+ /* Prefer the smallest credential on the wire, then install in order. */
+ sk_SSL_CREDENTIAL_set_cmp_func(creds, SSL_CREDENTIAL_size_cmp);
+ sk_SSL_CREDENTIAL_sort(creds);
+ for (i = 0; i < sk_SSL_CREDENTIAL_num(creds); i++)
+     SSL_CTX_add1_credential(ctx, sk_SSL_CREDENTIAL_value(creds, i));
+
+ sk_SSL_CREDENTIAL_pop_free(creds, SSL_CREDENTIAL_free);
+ sk_EVP_PKEY_pop_free(keys, EVP_PKEY_free);
+
+=head1 SEE ALSO
+
+L<SSL_CTX_add1_credential(3)>, L<ERR_get_error(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
