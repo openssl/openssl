@@ -27,6 +27,7 @@ B<openssl> B<s_client>
 [B<-verify_return_error>]
 [B<-verify_quiet>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
+[B<-mtc_cas> I<filename>]
 [B<-request-tais> I<ids>]
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
@@ -335,6 +336,14 @@ They are also used as trust anchors when attempting
 to build the client certificate chain provided to the server unless
 overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
 
+=item B<-mtc_cas> I<filename>
+
+A file in PEM format containing one or more Merkle Tree Certificate CA
+certificates (draft-ietf-plants-merkle-tree-certs) to trust. Their trust anchor
+identifiers are requested from the server in the B<trust_anchors> extension, and
+they are trusted when verifying a Merkle Tree Certificate returned by the
+server.
+
 =item B<-request-tais> I<ids>
 
 Request the trust anchors with these identifiers in the B<trust_anchors>
@@ -346,6 +355,8 @@ hexadecimal prefixed with C<0x>, such as C<0x81fd5901>. The hexadecimal form is
 sent as given, without checking that it is a well-formed relative object
 identifier. An empty I<ids> adds no identifiers but still has the extension
 sent, which signals support for retry.
+
+The listed identifiers are requested after those of the B<-mtc_cas> CAs.
 
 =item B<-verifyCAfile> I<filename>
 
