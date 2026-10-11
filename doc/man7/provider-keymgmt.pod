@@ -548,6 +548,7 @@ L<EVP_PKEY-DSA(7)>,
 L<EVP_PKEY-DH(7)>,
 L<EVP_PKEY-LMS(7)>,
 L<EVP_PKEY-ML-DSA(7)>,
+L<EVP_PKEY-ML-DSA-COMPOSITE(7)>,
 L<EVP_PKEY-ML-KEM(7)>,
 L<EVP_PKEY-SLH-DSA(7)>.
 
@@ -566,6 +567,9 @@ The parameters "sign-check" and "fips-indicator" were added in OpenSSL 3.4.
 Support for the B<ML-DSA>, B<ML-KEM> and B<SLH-DSA> algorithms was added in OpenSSL 3.5.
 
 Support for the B<LMS> algorithm was added in OpenSSL 3.6.
+
+Support for the B<ML-DSA-65-RSA3072-PKCS15-SHA512> and
+B<ML-DSA-65-ECDSA-P256-SHA512> composite algorithms was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

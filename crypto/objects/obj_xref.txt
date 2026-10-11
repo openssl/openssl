@@ -40,6 +40,8 @@ SLH_DSA_SHAKE_192s undef SLH_DSA_SHAKE_192s
 SLH_DSA_SHAKE_192f undef SLH_DSA_SHAKE_192f
 SLH_DSA_SHAKE_256s undef SLH_DSA_SHAKE_256s
 SLH_DSA_SHAKE_256f undef SLH_DSA_SHAKE_256f
+ML_DSA_65_RSA3072_PKCS15_SHA512		undef	ML_DSA_65_RSA3072_PKCS15_SHA512
+ML_DSA_65_ECDSA_P256_SHA512		undef	ML_DSA_65_ECDSA_P256_SHA512
 
 # Alternative deprecated OIDs. By using the older "rsa" OID this
 # type will be recognized by not normally used.
