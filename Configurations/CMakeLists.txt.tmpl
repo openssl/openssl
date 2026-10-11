@@ -90,7 +90,7 @@
          MANSUFFIX => 'ossl',
          RELEASE_DATE => release_date(),
          CMAKECONFIGDIR => '$(libdir)/cmake/OpenSSL',
-         APPS_OPENSSL => catfile("apps", platform->bin("openssl")),
+         APPS_OPENSSL => catfile("apps", "openssl"),
          PERLASM_SCHEME => $target{perlasm_scheme},
          FIPSMODULE => join(' ', map { platform->dso($_) } fipsmodules()),
          FIPSMODULENAME => join(' ', map { basename(platform->dso($_)) }
