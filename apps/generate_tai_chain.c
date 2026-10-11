@@ -17,6 +17,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <openssl/tls1.h>
 
 /*
  * Decorate a PEM certificate chain with a CERTIFICATE PROPERTIES block so that
@@ -194,6 +195,7 @@ static int build_properties(BUF_MEM *buf, size_t *out_len, const char *oid,
         || !buf_put_u16(buf, 0)
         || !buf_open(buf, 2, &data)
         || !app_reloid_from_text(buf, oid, strlen(oid))
+        || buf->length - data - 2 > TLSEXT_TRUST_ANCHOR_ID_MAX_LEN
         || !buf_close(buf, 2, data))
         return 0;
 

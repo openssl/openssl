@@ -426,8 +426,9 @@ I<ids> is a comma-separated list. Each identifier is either a relative object
 identifier in dotted decimal, such as C<32473.1>, or its binary form in
 hexadecimal prefixed with C<0x>, such as C<0x81fd5901>. The hexadecimal form is
 sent as given, without checking that it is a well-formed relative object
-identifier. An empty I<ids> adds no identifiers but still has the extension
-sent, which signals support for retry.
+identifier. Each identifier is 1 to 32 bytes in binary form. An empty I<ids>
+adds no identifiers but still has the extension sent, which signals support
+for retry.
 
 The listed identifiers are requested after those of the B<-mtc_cas> CAs.
 

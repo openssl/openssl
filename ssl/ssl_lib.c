@@ -4172,7 +4172,8 @@ static int requested_trust_anchors_valid(const uint8_t *ids, size_t ids_len)
     }
     while (PACKET_remaining(&pkt) > 0) {
         if (!PACKET_get_length_prefixed_1(&pkt, &id)
-            || PACKET_remaining(&id) == 0) {
+            || PACKET_remaining(&id) == 0
+            || PACKET_remaining(&id) > TLSEXT_TRUST_ANCHOR_ID_MAX_LEN) {
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
