@@ -61,11 +61,17 @@ for it, anywhere in the file, naming any features it depends on:
 
 The format is described in [doc/internal/man7/sym.pod].
 
+If you are adding objects
+-------------------------
+
+Each built-in ASN.1 object is a line in `crypto/objects/objects.txt`;
+see [crypto/objects/README.md].
+
 Updating OpenSSL's bookkeeping files
 ------------------------------------
 
-OpenSSL generates files related to OIDs (in the `crypto/objects/` folder)
-and error messages.  To bring them up to date, please do the following:
+OpenSSL generates files related to error messages.  To bring them up to
+date, please do the following:
 
     ./Configure --strict-warnings [your-options]
     make update
@@ -83,3 +89,4 @@ More details are at
 [doc/internal/man7/sym.pod]: ../internal/man7/sym.pod
 [Configurations/unix-Makefile.tmpl]: ../../Configurations/unix-Makefile.tmpl
 [CONTRIBUTING.md]: ../../CONTRIBUTING.md
+[crypto/objects/README.md]: ../../crypto/objects/README.md

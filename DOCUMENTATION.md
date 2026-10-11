@@ -39,7 +39,9 @@ All new public symbols must be documented in a POD manual page in the
 The allowed exceptions are:
 
 - guard macros preventing a header file being included twice
-- new symbols generated automatically via `make update` (errors, objects, etc.)
+- object macros (`SN_`, `LN_`, `NID_`, `OBJ_`) generated from
+  `crypto/objects/objects.txt`
+- new symbols generated automatically via `make update` (errors, etc.)
 
 Each public function's declaration in its public header must carry a
 doxygen comment block. The block's `@see` must include the function's

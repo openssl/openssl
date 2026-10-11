@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* NID_ac_auditEntity has no OID of its own. */
+#define OBJ_ac_auditEntity OBJ_ac_auditIdentity
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
 #define SN_id_tc26_cipher_gostr3412_2015_magma_ctracpkm SN_magma_ctr_acpkm

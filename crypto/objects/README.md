@@ -1,43 +1,52 @@
-objects.txt syntax
-==================
+objects.txt
+===========
 
-To cover all the naming hacks that were previously in `objects.h` needed some
-kind of hacks in `objects.txt`.
+`objects.txt` lists the built-in ASN.1 objects.  The build generates
+`include/openssl/obj_mac.h`, `crypto/objects/obj_dat.h` and
+`crypto/objects/obj_xref.h` from it.
 
-The basic syntax for adding an object is as follows:
+Each line has five fields separated by colons, with no spaces around
+them:
 
-        1 2 3 4         : shortName     : Long Name
+    NID:NAME:OID:SN:LN
 
-                If Long Name contains only word characters and hyphen-minus
-                (0x2D) or full stop (0x2E) then Long Name is used as basis
-                for the base name in C. Otherwise, the shortName is used.
+- `NID` is the object's number, `NID_<NAME>`.
+- `NAME` is its C name.  The macros for the object are `SN_<NAME>`,
+  `LN_<NAME>`, `NID_<NAME>` and `OBJ_<NAME>`.
+- `OID` is the object identifier in dotted decimal.
+- `SN` is the short name.
+- `LN` is the long name.
 
-                The base name (let's call it 'base') will then be used to
-                create the C macros SN_base, LN_base, NID_base and OBJ_base.
+An empty field means the object has none.  Every line has all five
+fields, and only `LN` may contain spaces.  Lines starting with `#` are
+comments.
 
-                Note that if the base name contains spaces, dashes or periods,
-                those will be converted to underscore.
+    1:rsadsi:1.2.840.113549:rsadsi:RSA Data Security, Inc.
+    6:rsaEncryption:1.2.840.113549.1.1.1::rsaEncryption
 
-Then there are some extra commands:
+The numbered lines are in NID order, each NID one more than the one
+before.
 
-        !Alias foo 1 2 3 4
+A removed object keeps its NID, with `removed` in place of the OID and
+no names:
 
-                This just makes a name foo for an OID.  The C macro
-                OBJ_foo will be created as a result.
+    124:rle_compression:removed::
 
-        !Cname foo
+An alias defines only `OBJ_<NAME>`, has no NID, and may be anywhere in
+the file:
 
-                This makes sure that the name foo will be used as base name
-                in C.
+    alias:pkcs12:1.2.840.113549.1.12::
 
-        !module foo
-        1 2 3 4         : shortName     : Long Name
-        !global
+Adding an object
+----------------
 
-                The !module command was meant to define a kind of modularity.
-                What it does is to make sure the module name is prepended
-                to the base name.  !global turns this off.  This construction
-                is not recursive.
+Append a line at the end of the file, with the NID one more than the
+NID on the last line.
 
-Lines starting with `#` are treated as comments, as well as any line starting
-with ! and not matching the commands above.
+A NID is part of the API: applications compile it in, and it is the
+same on every branch the object is backported to.  An existing line's
+NID never changes, and a removed object's NID is never reused.
+
+The build fails with the file and line number on a NID out of
+sequence, a name, short name or long name that is already used, a
+malformed OID, or a line without five fields.
