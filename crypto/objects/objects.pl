@@ -6,133 +6,144 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# Generates include/openssl/obj_mac.h from crypto/objects/objects.txt.
+# crypto/objects/README.md describes the input format.
+#
+# usage: objects.pl [-a compat_header] objects.txt
+
+use strict;
+use warnings;
+
 use Getopt::Std;
 use FindBin;
 use lib "$FindBin::Bin/../../util/perl";
 use OpenSSL::copyright;
 
-our($opt_n, $opt_a);
-getopts('na:');
+our $opt_a;
+getopts('a:') or die "usage: $0 [-a compat_header] objects.txt\n";
+die "usage: $0 [-a compat_header] objects.txt\n" unless @ARGV == 1;
 
-# The year the output file is generated.
-my $YEAR = OpenSSL::copyright::latest(($0, $ARGV[1], $ARGV[0]));
+my $input = $ARGV[0];
+my $YEAR = OpenSSL::copyright::latest(($0, $input));
 
-open (NUMIN,"$ARGV[1]") || die "Can't open number file $ARGV[1]";
-$max_nid=0;
-$o=0;
-while(<NUMIN>)
-	{
-	s|\R$||;
-	$o++;
-	s/#.*$//;
-	next if /^\s*$/;
-	$_ = 'X'.$_;
-	($Cname,$mynum) = split;
-	$Cname =~ s/^X//;
-	if (defined($nidn{$mynum}))
-		{ die "$ARGV[1]:$o:There's already an object with NID ",$mynum," on line ",$order{$mynum},"\n"; }
-	if (defined($nid{$Cname}))
-		{ die "$ARGV[1]:$o:There's already an object with name ",$Cname," on line ",$order{$nid{$Cname}},"\n"; }
-	$nid{$Cname} = $mynum;
-	$nidn{$mynum} = $Cname;
-	$order{$mynum} = $o;
-	$max_nid = $mynum if $mynum > $max_nid;
-	}
-close NUMIN;
+my @entries;    # objects and aliases, in file order
+my %line_of;    # NAME -> line it is defined on
+my %sn_line;    # short name -> line
+my %ln_line;    # long name -> line
+my $last_nid = 0;
+my $errors = 0;
 
-open (IN,"$ARGV[0]") || die "Can't open input file $ARGV[0]";
-$Cname="";
-$o=0;
-while (<IN>)
-	{
-	s|\R$||;
-	$o++;
-        if (/^!module\s+(.*)$/)
-		{
-		$module = $1."-";
-		$module =~ s/\./_/g;
-		$module =~ s/-/_/g;
-		}
-        if (/^!global$/)
-		{ $module = ""; }
-	if (/^!Cname\s+(.*)$/)
-		{ $Cname = $1; }
-	if (/^!Alias\s+(.+?)\s+(.*)$/)
-		{
-		$Cname = $module.$1;
-		$myoid = $2;
-		$myoid = &process_oid($myoid);
-		$Cname =~ s/-/_/g;
-		$ordern{$o} = $Cname;
-		$order{$Cname} = $o;
-		$obj{$Cname} = $myoid;
-		$_ = "";
-		$Cname = "";
-		}
-	s/!.*$//;
-	s/#.*$//;
-	next if /^\s*$/;
-	($myoid,$mysn,$myln) = split ':';
-	$mysn =~ s/^\s*//;
-	$mysn =~ s/\s*$//;
-	$myln =~ s/^\s*//;
-	$myln =~ s/\s*$//;
-	$myoid =~ s/^\s*//;
-	$myoid =~ s/\s*$//;
-	if ($myoid ne "")
-		{
-		$myoid = &process_oid($myoid);
-		}
+sub fail
+{
+    my ($line, $msg) = @_;
 
-	if ($Cname eq "" && ($myln =~ /^[_A-Za-z][\w.-]*$/ ))
-		{
-		$Cname = $myln;
-		$Cname =~ s/\./_/g;
-		$Cname =~ s/-/_/g;
-		if ($Cname ne "" && defined($ln{$module.$Cname}))
-			{ die "objects.txt:$o:There's already an object with long name ",$ln{$module.$Cname}," on line ",$order{$module.$Cname},"\n"; }
-		}
-	if ($Cname eq "")
-		{
-		$Cname = $mysn;
-		$Cname =~ s/-/_/g;
-		if ($Cname ne "" && defined($sn{$module.$Cname}))
-			{ die "objects.txt:$o:There's already an object with short name ",$sn{$module.$Cname}," on line ",$order{$module.$Cname},"\n"; }
-		}
-	if ($Cname eq "")
-		{
-		$Cname = $myln;
-		$Cname =~ s/-/_/g;
-		$Cname =~ s/\./_/g;
-		$Cname =~ s/ /_/g;
-		if ($Cname ne "" && defined($ln{$module.$Cname}))
-			{ die "objects.txt:$o:There's already an object with long name ",$ln{$module.$Cname}," on line ",$order{$module.$Cname},"\n"; }
-		}
-	$Cname =~ s/\./_/g;
-	$Cname =~ s/-/_/g;
-	$Cname = $module.$Cname;
-	$ordern{$o} = $Cname;
-	$order{$Cname} = $o;
-	$sn{$Cname} = $mysn;
-	$ln{$Cname} = $myln;
-	$obj{$Cname} = $myoid;
-	if (!defined($nid{$Cname}))
-		{
-		$max_nid++;
-		$nid{$Cname} = $max_nid;
-		$nidn{$max_nid} = $Cname;
-print STDERR "Added OID $Cname\n";
-		}
-	$Cname="";
-	}
-close IN;
+    print STDERR "$input:$line: $msg\n";
+    $errors++;
+}
 
-if ( $opt_n ) {
-    foreach (sort { $a <=> $b } keys %nidn)
-            {
-            print $nidn{$_},"\t\t",$_,"\n";
-            }
-    exit;
+sub claim_name
+{
+    my ($line, $name) = @_;
+
+    if ($name !~ /^[A-Za-z_][A-Za-z0-9_]*$/) {
+        fail($line, "\"$name\" is not a C identifier");
+    } elsif (defined $line_of{$name}) {
+        fail($line, "$name is already defined on line $line_of{$name}");
+    } else {
+        $line_of{$name} = $line;
+    }
+}
+
+sub check_oid
+{
+    my ($line, $oid) = @_;
+
+    fail($line, "\"$oid\" is not a dotted decimal OID")
+        if $oid ne '' && $oid !~ /^\d+(\.\d+)*$/;
+}
+
+sub obj_value
+{
+    my $oid = shift;
+
+    return join(',', map { "${_}L" } split(/\./, $oid));
+}
+
+open my $in, '<', $input or die "Can't open $input, $!\n";
+while (<$in>) {
+    s|\R$||;
+    next if /^#/ || /^$/;
+
+    my $line = $.;
+    my @field = split /:/, $_, -1;
+
+    if (@field != 5) {
+        fail($line, "a line has five fields, NID:NAME:OID:SN:LN");
+        next;
+    }
+
+    my ($nid, $name, $oid, $sn, $ln) = @field;
+
+    # Only the long name may contain spaces, and not at either end.
+    if ("$nid$name$oid$sn" =~ /\s/ || $ln =~ /^\s|\s$/) {
+        fail($line, "unexpected space");
+        next;
+    }
+
+    if ($nid eq 'alias') {
+        if ($oid eq '' || $sn ne '' || $ln ne '') {
+            fail($line, "an alias line is alias:NAME:OID::");
+            next;
+        }
+        claim_name($line, $name);
+        check_oid($line, $oid);
+        push @entries, { name => $name, oid => $oid };
+        next;
+    }
+
+    if ($nid !~ /^\d+$/) {
+        fail($line, "a line starts with a NID or alias");
+        next;
+    }
+    if ($nid != $last_nid + 1) {
+        fail($line, "NID $nid follows NID $last_nid; the next NID is "
+                    . ($last_nid + 1));
+    }
+    $last_nid = $nid;
+
+    if ($oid eq 'removed') {
+        fail($line, "a removed line is NID:NAME:removed::")
+            if $sn ne '' || $ln ne '';
+        claim_name($line, $name) if $name ne '';
+        next;
+    }
+
+    claim_name($line, $name);
+    check_oid($line, $oid);
+    if ($sn ne '') {
+        fail($line, "short name $sn is already used on line $sn_line{$sn}")
+            if defined $sn_line{$sn};
+        $sn_line{$sn} = $line;
+    }
+    if ($ln ne '') {
+        fail($line, "long name \"$ln\" is already used on line $ln_line{$ln}")
+            if defined $ln_line{$ln};
+        $ln_line{$ln} = $line;
+    }
+    push @entries, { name => $name, nid => $nid, oid => $oid,
+                     sn => $sn, ln => $ln };
+}
+close $in;
+
+die "$input: $errors error(s)\n" if $errors;
+
+sub expand
+{
+    my $string = shift;
+
+    1 while $string =~ s/\t+/' ' x (length($&) * 8 - length($`) % 8)/e;
+
+    return $string;
 }
 
 print <<"EOF";
@@ -158,24 +169,19 @@ print <<"EOF";
 #define OBJ_undef                       0L
 EOF
 
-sub expand
-	{
-	my $string = shift;
+foreach my $e (@entries) {
+    my $name = $e->{name};
 
-	1 while $string =~ s/\t+/' ' x (length($&) * 8 - length($`) % 8)/e;
-
-	return $string;
-	}
-
-foreach (sort { $a <=> $b } keys %ordern)
-	{
-	$Cname=$ordern{$_};
-	print "\n";
-	print expand("#define SN_$Cname\t\t\"$sn{$Cname}\"\n") if $sn{$Cname} ne "";
-	print expand("#define LN_$Cname\t\t\"$ln{$Cname}\"\n") if $ln{$Cname} ne "";
-	print expand("#define NID_$Cname\t\t$nid{$Cname}\n") if $nid{$Cname} ne "";
-	print expand("#define OBJ_$Cname\t\t$obj{$Cname}\n") if $obj{$Cname} ne "";
-	}
+    print "\n";
+    print expand("#define SN_$name\t\t\"$e->{sn}\"\n")
+        if defined $e->{sn} && $e->{sn} ne '';
+    print expand("#define LN_$name\t\t\"$e->{ln}\"\n")
+        if defined $e->{ln} && $e->{ln} ne '';
+    print expand("#define NID_$name\t\t$e->{nid}\n")
+        if defined $e->{nid};
+    print expand("#define OBJ_$name\t\t" . obj_value($e->{oid}) . "\n")
+        if $e->{oid} ne '';
+}
 
 print <<EOF;
 /* clang-format on */
@@ -183,44 +189,11 @@ print <<EOF;
 #endif /* OPENSSL_OBJ_MAC_H */
 EOF
 
-# Append the compatibility aliases, skipping their license header the
-# same way the old build recipe did with sed -e '1,8d'.
-if ( $opt_a )
-	{
-	open (CMP,"$opt_a") || die "Can't open compat file $opt_a";
-	my $line = 0;
-	while (<CMP>)
-		{
-		print if ++$line > 8;
-		}
-	close CMP;
-	}
-
-sub process_oid
-	{
-	local($oid)=@_;
-	local(@a,$oid_pref);
-
-	@a = split(/\s+/,$myoid);
-	$pref_oid = "";
-	$pref_sep = "";
-	if (!($a[0] =~ /^[0-9]+$/))
-		{
-		$a[0] =~ s/-/_/g;
-		if (!defined($obj{$a[0]}))
-			{ die "$ARGV[0]:$o:Undefined identifier ",$a[0],"\n"; }
-		$pref_oid = "OBJ_" . $a[0];
-		$pref_sep = ",";
-		shift @a;
-		}
-	$oids = join('L,',@a) . "L";
-	if ($oids ne "L")
-		{
-		$oids = $pref_oid . $pref_sep . $oids;
-		}
-	else
-		{
-		$oids = $pref_oid;
-		}
-	return($oids);
-	}
+# Append the compatibility aliases, skipping their license header.
+if ($opt_a) {
+    open my $cmp, '<', $opt_a or die "Can't open compat file $opt_a, $!\n";
+    while (<$cmp>) {
+        print if $. > 8;
+    }
+    close $cmp;
+}

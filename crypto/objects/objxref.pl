@@ -14,19 +14,24 @@ use OpenSSL::copyright;
 my %xref_tbl;
 my %oid_tbl;
 
-my ($mac_file, $xref_file) = @ARGV;
+my ($objects_file, $xref_file) = @ARGV;
 
 # The year the output file is generated.
-my $YEAR = OpenSSL::copyright::latest(($0, $mac_file, $xref_file));
+my $YEAR = OpenSSL::copyright::latest(($0, $objects_file, $xref_file));
 
-open(IN, $mac_file) || die "Can't open $mac_file, $!\n";
+open(IN, $objects_file) || die "Can't open $objects_file, $!\n";
 
-# Read in OID nid values for a lookup table.
+# Read in OID nid values for a lookup table.  NID_undef is not in the
+# objects file.
+$oid_tbl{"undef"} = 0;
 
 while (<IN>)
 	{
 	s|\R$||;                # Better chomp
-	my ($name, $num) = /^(\S+)\s+(\S+)$/;
+	next if /^#/;
+	my ($num, $name, $oid) = split /:/;
+	next unless defined $num && $num =~ /^\d+$/;
+	next if defined $oid && $oid eq "removed";
 	$oid_tbl{$name} = $num;
 	}
 close IN;

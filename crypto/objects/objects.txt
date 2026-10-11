@@ -1,2074 +1,1571 @@
-# CCITT was renamed to ITU-T quite some time ago
-0			: ITU-T			: itu-t
-!Alias ccitt itu-t
-
-1			: ISO			: iso
-
-2			: JOINT-ISO-ITU-T	: joint-iso-itu-t
-!Alias joint-iso-ccitt joint-iso-itu-t
-
-iso 2			: member-body		: ISO Member Body
-
-iso 3			: identified-organization
-
-# GMAC OID
-iso 0 9797 3 4                          : GMAC          : gmac
-
-# HMAC OIDs
-identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5
-identified-organization 6 1 5 5 8 1 2	: HMAC-SHA1	: hmac-sha1
-
-# "1.3.36.8.3.3"
-identified-organization 36 8 3 3	: x509ExtAdmission	: Professional Information or basis for Admission
-
-identified-organization 132	: certicom-arc
-
-identified-organization 111     : ieee
-ieee 2 1619                     : ieee-siswg    : IEEE Security in Storage Working Group
-
-joint-iso-itu-t 23	: international-organizations	: International Organizations
-
-international-organizations 43	: wap
-wap 1			: wap-wsg
-
-joint-iso-itu-t 5 1 5	: selected-attribute-types	: Selected Attribute Types
-
-selected-attribute-types 55	: clearance
-
-member-body 840		: ISO-US		: ISO US Member Body
-ISO-US 10040		: X9-57			: X9.57
-X9-57 4			: X9cm			: X9.57 CM ?
-
-member-body 156         : ISO-CN        : ISO CN Member Body
-ISO-CN 10197            : oscca
-oscca 1                 : sm-scheme
-
-!Cname dsa
-X9cm 1			: DSA			: dsaEncryption
-X9cm 3			: DSA-SHA1		: dsaWithSHA1
-
-
-ISO-US 10045		: ansi-X9-62		: ANSI X9.62
-!module X9-62
-!Alias id-fieldType ansi-X9-62 1
-X9-62_id-fieldType 1		: prime-field
-X9-62_id-fieldType 2		: characteristic-two-field
-X9-62_characteristic-two-field 3 : id-characteristic-two-basis
-X9-62_id-characteristic-two-basis 1 : onBasis
-X9-62_id-characteristic-two-basis 2 : tpBasis
-X9-62_id-characteristic-two-basis 3 : ppBasis
-!Alias id-publicKeyType ansi-X9-62 2
-X9-62_id-publicKeyType 1	: id-ecPublicKey
-!Alias ellipticCurve ansi-X9-62 3
-!Alias c-TwoCurve X9-62_ellipticCurve 0
-X9-62_c-TwoCurve 1		: c2pnb163v1
-X9-62_c-TwoCurve 2		: c2pnb163v2
-X9-62_c-TwoCurve 3		: c2pnb163v3
-X9-62_c-TwoCurve 4		: c2pnb176v1
-X9-62_c-TwoCurve 5		: c2tnb191v1
-X9-62_c-TwoCurve 6		: c2tnb191v2
-X9-62_c-TwoCurve 7		: c2tnb191v3
-X9-62_c-TwoCurve 8		: c2onb191v4
-X9-62_c-TwoCurve 9		: c2onb191v5
-X9-62_c-TwoCurve 10		: c2pnb208w1
-X9-62_c-TwoCurve 11		: c2tnb239v1
-X9-62_c-TwoCurve 12		: c2tnb239v2
-X9-62_c-TwoCurve 13		: c2tnb239v3
-X9-62_c-TwoCurve 14		: c2onb239v4
-X9-62_c-TwoCurve 15		: c2onb239v5
-X9-62_c-TwoCurve 16		: c2pnb272w1
-X9-62_c-TwoCurve 17		: c2pnb304w1
-X9-62_c-TwoCurve 18		: c2tnb359v1
-X9-62_c-TwoCurve 19		: c2pnb368w1
-X9-62_c-TwoCurve 20		: c2tnb431r1
-!Alias primeCurve X9-62_ellipticCurve 1
-X9-62_primeCurve 1	 	: prime192v1
-X9-62_primeCurve 2	 	: prime192v2
-X9-62_primeCurve 3	 	: prime192v3
-X9-62_primeCurve 4	 	: prime239v1
-X9-62_primeCurve 5	 	: prime239v2
-X9-62_primeCurve 6	 	: prime239v3
-X9-62_primeCurve 7	 	: prime256v1
-!Alias id-ecSigType ansi-X9-62 4
-!global
-X9-62_id-ecSigType 1		: ecdsa-with-SHA1
-X9-62_id-ecSigType 2		: ecdsa-with-Recommended
-X9-62_id-ecSigType 3		: ecdsa-with-Specified
-ecdsa-with-Specified 1		: ecdsa-with-SHA224
-ecdsa-with-Specified 2		: ecdsa-with-SHA256
-ecdsa-with-Specified 3		: ecdsa-with-SHA384
-ecdsa-with-Specified 4		: ecdsa-with-SHA512
-
-# SECG curve OIDs from "SEC 2: Recommended Elliptic Curve Domain Parameters"
-# (http://www.secg.org/)
-!Alias secg_ellipticCurve certicom-arc 0
-# SECG prime curves OIDs
-secg-ellipticCurve 6		: secp112r1
-secg-ellipticCurve 7		: secp112r2
-secg-ellipticCurve 28		: secp128r1
-secg-ellipticCurve 29		: secp128r2
-secg-ellipticCurve 9		: secp160k1
-secg-ellipticCurve 8		: secp160r1
-secg-ellipticCurve 30		: secp160r2
-secg-ellipticCurve 31		: secp192k1
-# NOTE: the curve secp192r1 is the same as prime192v1 defined above
-#       and is therefore omitted
-secg-ellipticCurve 32		: secp224k1
-secg-ellipticCurve 33		: secp224r1
-secg-ellipticCurve 10		: secp256k1
-# NOTE: the curve secp256r1 is the same as prime256v1 defined above
-#       and is therefore omitted
-secg-ellipticCurve 34		: secp384r1
-secg-ellipticCurve 35		: secp521r1
-# SECG characteristic two curves OIDs
-secg-ellipticCurve 4		: sect113r1
-secg-ellipticCurve 5		: sect113r2
-secg-ellipticCurve 22		: sect131r1
-secg-ellipticCurve 23		: sect131r2
-secg-ellipticCurve 1		: sect163k1
-secg-ellipticCurve 2		: sect163r1
-secg-ellipticCurve 15		: sect163r2
-secg-ellipticCurve 24		: sect193r1
-secg-ellipticCurve 25		: sect193r2
-secg-ellipticCurve 26		: sect233k1
-secg-ellipticCurve 27		: sect233r1
-secg-ellipticCurve 3		: sect239k1
-secg-ellipticCurve 16		: sect283k1
-secg-ellipticCurve 17		: sect283r1
-secg-ellipticCurve 36		: sect409k1
-secg-ellipticCurve 37		: sect409r1
-secg-ellipticCurve 38		: sect571k1
-secg-ellipticCurve 39		: sect571r1
-
-# WAP/TLS curve OIDs (http://www.wapforum.org/)
-!Alias wap-wsg-idm-ecid wap-wsg 4
-wap-wsg-idm-ecid 1	: wap-wsg-idm-ecid-wtls1
-wap-wsg-idm-ecid 3	: wap-wsg-idm-ecid-wtls3
-wap-wsg-idm-ecid 4	: wap-wsg-idm-ecid-wtls4
-wap-wsg-idm-ecid 5	: wap-wsg-idm-ecid-wtls5
-wap-wsg-idm-ecid 6	: wap-wsg-idm-ecid-wtls6
-wap-wsg-idm-ecid 7	: wap-wsg-idm-ecid-wtls7
-wap-wsg-idm-ecid 8	: wap-wsg-idm-ecid-wtls8
-wap-wsg-idm-ecid 9	: wap-wsg-idm-ecid-wtls9
-wap-wsg-idm-ecid 10	: wap-wsg-idm-ecid-wtls10
-wap-wsg-idm-ecid 11	: wap-wsg-idm-ecid-wtls11
-wap-wsg-idm-ecid 12	: wap-wsg-idm-ecid-wtls12
-
-
-ISO-US 113533 7 66 10	: CAST5-CBC		: cast5-cbc
-			: CAST5-ECB		: cast5-ecb
-!Cname cast5-cfb64
-			: CAST5-CFB		: cast5-cfb
-!Cname cast5-ofb64
-			: CAST5-OFB		: cast5-ofb
-!Cname pbeWithMD5AndCast5-CBC
-ISO-US 113533 7 66 12	:			: pbeWithMD5AndCast5CBC
-
-# Macs for CMP and CRMF
-ISO-US 113533 7 66 13	: id-PasswordBasedMAC	: password based MAC
-ISO-US 113533 7 66 30	: id-DHBasedMac		: Diffie-Hellman based MAC
-
-ISO-US 113549		: rsadsi		: RSA Data Security, Inc.
-
-rsadsi 1		: pkcs			: RSA Data Security, Inc. PKCS
-
-pkcs 1			: pkcs1
-pkcs1 1			:			: rsaEncryption
-pkcs1 2			: RSA-MD2		: md2WithRSAEncryption
-pkcs1 3			: RSA-MD4		: md4WithRSAEncryption
-pkcs1 4			: RSA-MD5		: md5WithRSAEncryption
-pkcs1 5			: RSA-SHA1		: sha1WithRSAEncryption
-# According to PKCS #1 version 2.1
-pkcs1 7			: RSAES-OAEP		: rsaesOaep
-pkcs1 8			: MGF1			: mgf1
-pkcs1 9			: PSPECIFIED		: pSpecified
-pkcs1 10		: RSASSA-PSS		: rsassaPss
-
-pkcs1 11		: RSA-SHA256		: sha256WithRSAEncryption
-pkcs1 12		: RSA-SHA384		: sha384WithRSAEncryption
-pkcs1 13		: RSA-SHA512		: sha512WithRSAEncryption
-pkcs1 14		: RSA-SHA224		: sha224WithRSAEncryption
-pkcs1 15		: RSA-SHA512/224	: sha512-224WithRSAEncryption
-pkcs1 16		: RSA-SHA512/256	: sha512-256WithRSAEncryption
-
-pkcs 3			: pkcs3
-pkcs3 1			:			: dhKeyAgreement
-
-pkcs 5			: pkcs5
-pkcs5 1			: PBE-MD2-DES		: pbeWithMD2AndDES-CBC
-pkcs5 3			: PBE-MD5-DES		: pbeWithMD5AndDES-CBC
-pkcs5 4			: PBE-MD2-RC2-64	: pbeWithMD2AndRC2-CBC
-pkcs5 6			: PBE-MD5-RC2-64	: pbeWithMD5AndRC2-CBC
-pkcs5 10		: PBE-SHA1-DES		: pbeWithSHA1AndDES-CBC
-pkcs5 11		: PBE-SHA1-RC2-64	: pbeWithSHA1AndRC2-CBC
-!Cname id_pbkdf2
-pkcs5 12		:			: PBKDF2
-!Cname pbes2
-pkcs5 13		:			: PBES2
-!Cname pbmac1
-pkcs5 14		:			: PBMAC1
-
-pkcs 7			: pkcs7
-pkcs7 1			:			: pkcs7-data
-!Cname pkcs7-signed
-pkcs7 2			:			: pkcs7-signedData
-!Cname pkcs7-enveloped
-pkcs7 3			:			: pkcs7-envelopedData
-!Cname pkcs7-signedAndEnveloped
-pkcs7 4			:			: pkcs7-signedAndEnvelopedData
-!Cname pkcs7-digest
-pkcs7 5			:			: pkcs7-digestData
-!Cname pkcs7-encrypted
-pkcs7 6			:			: pkcs7-encryptedData
-
-pkcs 9			: pkcs9
-!module pkcs9
-pkcs9 1			: 			: emailAddress
-pkcs9 2			:			: unstructuredName
-pkcs9 3			:			: contentType
-pkcs9 4			:			: messageDigest
-pkcs9 5			:			: signingTime
-pkcs9 6			:			: countersignature
-pkcs9 7			:			: challengePassword
-pkcs9 8			:			: unstructuredAddress
-!Cname extCertAttributes
-pkcs9 9			:			: extendedCertificateAttributes
-!global
-
-!Cname ext-req
-pkcs9 14		: extReq		: Extension Request
-
-!Cname SMIMECapabilities
-pkcs9 15		: SMIME-CAPS		: S/MIME Capabilities
-
-# S/MIME
-!Cname SMIME
-pkcs9 16		: SMIME			: S/MIME
-SMIME 0			: id-smime-mod
-SMIME 1			: id-smime-ct
-SMIME 2			: id-smime-aa
-SMIME 3			: id-smime-alg
-SMIME 4			: id-smime-cd
-SMIME 5			: id-smime-spq
-SMIME 6			: id-smime-cti
-SMIME 13		: id-smime-ori
-
-# S/MIME Modules
-id-smime-mod 1		: id-smime-mod-cms
-id-smime-mod 2		: id-smime-mod-ess
-id-smime-mod 3		: id-smime-mod-oid
-id-smime-mod 4		: id-smime-mod-msg-v3
-id-smime-mod 5		: id-smime-mod-ets-eSignature-88
-id-smime-mod 6		: id-smime-mod-ets-eSignature-97
-id-smime-mod 7		: id-smime-mod-ets-eSigPolicy-88
-id-smime-mod 8		: id-smime-mod-ets-eSigPolicy-97
-
-# S/MIME Content Types
-id-smime-ct 1		: id-smime-ct-receipt
-id-smime-ct 2		: id-smime-ct-authData
-id-smime-ct 3		: id-smime-ct-publishCert
-id-smime-ct 4		: id-smime-ct-TSTInfo
-id-smime-ct 5		: id-smime-ct-TDTInfo
-id-smime-ct 6		: id-smime-ct-contentInfo
-id-smime-ct 7		: id-smime-ct-DVCSRequestData
-id-smime-ct 8		: id-smime-ct-DVCSResponseData
-id-smime-ct 9		: id-smime-ct-compressedData
-id-smime-ct 19		: id-smime-ct-contentCollection
-id-smime-ct 23		: id-smime-ct-authEnvelopedData
-id-smime-ct 24		: id-ct-routeOriginAuthz
-id-smime-ct 26		: id-ct-rpkiManifest
-id-smime-ct 27		: id-ct-asciiTextWithCRLF
-id-smime-ct 28		: id-ct-xml
-id-smime-ct 35		: id-ct-rpkiGhostbusters
-id-smime-ct 36		: id-ct-resourceTaggedAttest
-id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
-id-smime-ct 48		: id-ct-signedChecklist
-id-smime-ct 49		: id-ct-ASPA
-id-smime-ct 50		: id-ct-signedTAL
-id-smime-ct 51		: id-ct-rpkiSignedPrefixList
-
-# S/MIME Attributes
-id-smime-aa 1		: id-smime-aa-receiptRequest
-id-smime-aa 2		: id-smime-aa-securityLabel
-id-smime-aa 3		: id-smime-aa-mlExpandHistory
-id-smime-aa 4		: id-smime-aa-contentHint
-id-smime-aa 5		: id-smime-aa-msgSigDigest
-# obsolete
-id-smime-aa 6		: id-smime-aa-encapContentType
-id-smime-aa 7		: id-smime-aa-contentIdentifier
-# obsolete
-id-smime-aa 8		: id-smime-aa-macValue
-id-smime-aa 9		: id-smime-aa-equivalentLabels
-id-smime-aa 10		: id-smime-aa-contentReference
-id-smime-aa 11		: id-smime-aa-encrypKeyPref
-id-smime-aa 12		: id-smime-aa-signingCertificate
-id-smime-aa 13		: id-smime-aa-smimeEncryptCerts
-id-smime-aa 14		: id-smime-aa-timeStampToken
-id-smime-aa 15		: id-smime-aa-ets-sigPolicyId
-id-smime-aa 16		: id-smime-aa-ets-commitmentType
-id-smime-aa 17		: id-smime-aa-ets-signerLocation
-id-smime-aa 18		: id-smime-aa-ets-signerAttr
-id-smime-aa 19		: id-smime-aa-ets-otherSigCert
-id-smime-aa 20		: id-smime-aa-ets-contentTimestamp
-id-smime-aa 21		: id-smime-aa-ets-CertificateRefs
-id-smime-aa 22		: id-smime-aa-ets-RevocationRefs
-id-smime-aa 23		: id-smime-aa-ets-certValues
-id-smime-aa 24		: id-smime-aa-ets-revocationValues
-id-smime-aa 25		: id-smime-aa-ets-escTimeStamp
-id-smime-aa 26		: id-smime-aa-ets-certCRLTimestamp
-id-smime-aa 27		: id-smime-aa-ets-archiveTimeStamp
-id-smime-aa 28		: id-smime-aa-signatureType
-id-smime-aa 29		: id-smime-aa-dvcs-dvc
-id-smime-aa 44		: id-aa-ets-attrCertificateRefs
-id-smime-aa 45		: id-aa-ets-attrRevocationRefs
-id-smime-aa 47		: id-smime-aa-signingCertificateV2
-id-smime-aa 48		: id-aa-ets-archiveTimestampV2
-
-# S/MIME Algorithm Identifiers
-# obsolete
-id-smime-alg 1		: id-smime-alg-ESDHwith3DES
-# obsolete
-id-smime-alg 2		: id-smime-alg-ESDHwithRC2
-# obsolete
-id-smime-alg 3		: id-smime-alg-3DESwrap
-# obsolete
-id-smime-alg 4		: id-smime-alg-RC2wrap
-id-smime-alg 5		: id-smime-alg-ESDH
-id-smime-alg 6		: id-smime-alg-CMS3DESwrap
-id-smime-alg 7		: id-smime-alg-CMSRC2wrap
-id-smime-alg 9		: id-alg-PWRI-KEK
-id-smime-alg 17     : id-alg-hss-lms-hashsig
-id-smime-alg 28		: id-alg-hkdf-with-sha256	: HKDF-SHA256
-id-smime-alg 29		: id-alg-hkdf-with-sha384	: HKDF-SHA384
-id-smime-alg 30		: id-alg-hkdf-with-sha512	: HKDF-SHA512
-
-# S/MIME Certificate Distribution
-id-smime-cd 1		: id-smime-cd-ldap
-
-# S/MIME Signature Policy Qualifier
-id-smime-spq 1		: id-smime-spq-ets-sqt-uri
-id-smime-spq 2		: id-smime-spq-ets-sqt-unotice
-
-# S/MIME Commitment Type Identifier
-id-smime-cti 1		: id-smime-cti-ets-proofOfOrigin
-id-smime-cti 2		: id-smime-cti-ets-proofOfReceipt
-id-smime-cti 3		: id-smime-cti-ets-proofOfDelivery
-id-smime-cti 4		: id-smime-cti-ets-proofOfSender
-id-smime-cti 5		: id-smime-cti-ets-proofOfApproval
-id-smime-cti 6		: id-smime-cti-ets-proofOfCreation
-
-# S/MIME OtherRecipientInfo Type Identifier
-id-smime-ori 3		: id-smime-ori-kem
-
-pkcs9 20		:			: friendlyName
-pkcs9 21		:			: localKeyID
-!Alias ms-corp 1 3 6 1 4 1 311
-!Cname ms-csp-name
-ms-corp 17 1	: CSPName		: Microsoft CSP Name
-ms-corp 17 2	: LocalKeySet		: Microsoft Local Key set
-!Alias certTypes pkcs9 22
-certTypes 1		:			: x509Certificate
-certTypes 2		:			: sdsiCertificate
-!Alias crlTypes pkcs9 23
-crlTypes 1		:			: x509Crl
-
-pkcs9 52		: id-aa-CMSAlgorithmProtection
-
-!Alias pkcs12 pkcs 12
-!Alias pkcs12-pbeids pkcs12 1
-
-!Cname pbe-WithSHA1And128BitRC4
-pkcs12-pbeids 1		: PBE-SHA1-RC4-128	: pbeWithSHA1And128BitRC4
-!Cname pbe-WithSHA1And40BitRC4
-pkcs12-pbeids 2		: PBE-SHA1-RC4-40	: pbeWithSHA1And40BitRC4
-!Cname pbe-WithSHA1And3_Key_TripleDES-CBC
-pkcs12-pbeids 3		: PBE-SHA1-3DES		: pbeWithSHA1And3-KeyTripleDES-CBC
-!Cname pbe-WithSHA1And2_Key_TripleDES-CBC
-pkcs12-pbeids 4		: PBE-SHA1-2DES		: pbeWithSHA1And2-KeyTripleDES-CBC
-!Cname pbe-WithSHA1And128BitRC2-CBC
-pkcs12-pbeids 5		: PBE-SHA1-RC2-128	: pbeWithSHA1And128BitRC2-CBC
-!Cname pbe-WithSHA1And40BitRC2-CBC
-pkcs12-pbeids 6		: PBE-SHA1-RC2-40	: pbeWithSHA1And40BitRC2-CBC
-
-!Alias pkcs12-Version1 pkcs12 10
-!Alias pkcs12-BagIds pkcs12-Version1 1
-pkcs12-BagIds 1		:			: keyBag
-pkcs12-BagIds 2		:			: pkcs8ShroudedKeyBag
-pkcs12-BagIds 3		:			: certBag
-pkcs12-BagIds 4		:			: crlBag
-pkcs12-BagIds 5		:			: secretBag
-pkcs12-BagIds 6		:			: safeContentsBag
-
-rsadsi 2 2		: MD2			: md2
-rsadsi 2 4		: MD4			: md4
-rsadsi 2 5		: MD5			: md5
-			: MD5-SHA1		: md5-sha1
-rsadsi 2 6		:			: hmacWithMD5
-rsadsi 2 7		:			: hmacWithSHA1
-
-sm-scheme 301           : SM2                   : sm2
-
-sm-scheme 401           : SM3                   : sm3
-sm-scheme 504           : RSA-SM3		: sm3WithRSAEncryption
-
-sm-scheme 501           : SM2-SM3               : SM2-with-SM3
-
-# From GM/T 0091-2020
-sm3 3 1			:			: hmacWithSM3
-
-# From RFC4231
-rsadsi 2 8		:			: hmacWithSHA224
-rsadsi 2 9		:			: hmacWithSHA256
-rsadsi 2 10		:			: hmacWithSHA384
-rsadsi 2 11		:			: hmacWithSHA512
-
-# From RFC8018
-rsadsi 2 12             :                       : hmacWithSHA512-224
-rsadsi 2 13             :                       : hmacWithSHA512-256
-
-rsadsi 3 2		: RC2-CBC		: rc2-cbc
-			: RC2-ECB		: rc2-ecb
-!Cname rc2-cfb64
-			: RC2-CFB		: rc2-cfb
-!Cname rc2-ofb64
-			: RC2-OFB		: rc2-ofb
-			: RC2-40-CBC		: rc2-40-cbc
-			: RC2-64-CBC		: rc2-64-cbc
-rsadsi 3 4		: RC4			: rc4
-			: RC4-40		: rc4-40
-rsadsi 3 7		: DES-EDE3-CBC		: des-ede3-cbc
-rsadsi 3 8		: RC5-CBC		: rc5-cbc
-			: RC5-ECB		: rc5-ecb
-!Cname rc5-cfb64
-			: RC5-CFB		: rc5-cfb
-!Cname rc5-ofb64
-			: RC5-OFB		: rc5-ofb
-
-!Cname ms-ext-req
-ms-corp 2 1 14	: msExtReq		: Microsoft Extension Request
-!Cname ms-code-ind
-ms-corp 2 1 21	: msCodeInd		: Microsoft Individual Code Signing
-!Cname ms-code-com
-ms-corp 2 1 22	: msCodeCom		: Microsoft Commercial Code Signing
-!Cname ms-ctl-sign
-ms-corp 10 3 1	: msCTLSign		: Microsoft Trust List Signing
-!Cname ms-sgc
-ms-corp 10 3 3	: msSGC			: Microsoft Server Gated Crypto
-!Cname ms-efs
-ms-corp 10 3 4	: msEFS			: Microsoft Encrypted File System
-!Cname ms-smartcard-login
-ms-corp 20 2 2	: msSmartcardLogin	: Microsoft Smartcard Login
-!Cname ms-upn
-ms-corp 20 2 3	: msUPN			: Microsoft User Principal Name
-
-ms-corp 25 2	: ms-ntds-sec-ext	: Microsoft NTDS CA Extension
-ms-corp 25 2 1	: ms-ntds-obj-sid	: Microsoft NTDS AD objectSid
-ms-corp 21 7	: ms-cert-templ		: Microsoft certificate template
-ms-corp 21 10	: ms-app-policies	: Microsoft Application Policies Extension
-
-1 3 6 1 4 1 188 7 1 1 2	: IDEA-CBC		: idea-cbc
-			: IDEA-ECB		: idea-ecb
-!Cname idea-cfb64
-			: IDEA-CFB		: idea-cfb
-!Cname idea-ofb64
-			: IDEA-OFB		: idea-ofb
-
-1 3 6 1 4 1 3029 1 2	: BF-CBC		: bf-cbc
-			: BF-ECB		: bf-ecb
-!Cname bf-cfb64
-			: BF-CFB		: bf-cfb
-!Cname bf-ofb64
-			: BF-OFB		: bf-ofb
-
-!Cname id-pkix
-1 3 6 1 5 5 7		: PKIX
-
-# PKIX Arcs
-id-pkix 0		: id-pkix-mod
-id-pkix 1		: id-pe
-id-pkix 2		: id-qt
-id-pkix 3		: id-kp
-id-pkix 4		: id-it
-id-pkix 5		: id-pkip
-id-pkix 6		: id-alg
-id-pkix 7		: id-cmc
-id-pkix 8		: id-on
-id-pkix 9		: id-pda
-id-pkix 10		: id-aca
-id-pkix 11		: id-qcs
-id-pkix 14		: id-cp
-id-pkix 12		: id-cct
-id-pkix 21		: id-ppl
-id-pkix 25 1		: id-rdna-unsigned
-id-pkix 48		: id-ad
-
-# PKIX Modules
-id-pkix-mod 1		: id-pkix1-explicit-88
-id-pkix-mod 2		: id-pkix1-implicit-88
-id-pkix-mod 3		: id-pkix1-explicit-93
-id-pkix-mod 4		: id-pkix1-implicit-93
-id-pkix-mod 5		: id-mod-crmf
-id-pkix-mod 6		: id-mod-cmc
-id-pkix-mod 7		: id-mod-kea-profile-88
-id-pkix-mod 8		: id-mod-kea-profile-93
-id-pkix-mod 9		: id-mod-cmp
-id-pkix-mod 10		: id-mod-qualified-cert-88
-id-pkix-mod 11		: id-mod-qualified-cert-93
-id-pkix-mod 12		: id-mod-attribute-cert
-id-pkix-mod 13		: id-mod-timestamp-protocol
-id-pkix-mod 14		: id-mod-ocsp
-id-pkix-mod 15		: id-mod-dvcs
-id-pkix-mod 16		: id-mod-cmp2000
-id-pkix-mod 50		: id-mod-cmp2000-02
-id-pkix-mod 99		: id-mod-cmp2021-88
-id-pkix-mod 100		: id-mod-cmp2021-02
-
-# PKIX Private Extensions
-!Cname info-access
-id-pe 1			: authorityInfoAccess	: Authority Information Access
-id-pe 2			: biometricInfo		: Biometric Info
-id-pe 3			: qcStatements
-id-pe 4         : ac-auditIdentity      : X509v3 Audit Identity
-!Alias ac-auditEntity ac-auditIdentity
-id-pe 5			: ac-targeting
-id-pe 6			: aaControls
-id-pe 7			: sbgp-ipAddrBlock
-id-pe 8			: sbgp-autonomousSysNum
-id-pe 9			: sbgp-routerIdentifier
-id-pe 10		: ac-proxying
-!Cname sinfo-access
-id-pe 11		: subjectInfoAccess	: Subject Information Access
-id-pe 14		: proxyCertInfo		: Proxy Certificate Information
-id-pe 24		: tlsfeature		: TLS Feature
-id-pe 28		: sbgp-ipAddrBlockv2
-id-pe 29		: sbgp-autonomousSysNumv2
-
-# PKIX policyQualifiers for Internet policy qualifiers
-id-qt 1			: id-qt-cps		: Policy Qualifier CPS
-id-qt 2			: id-qt-unotice		: Policy Qualifier User Notice
-id-qt 3			: textNotice
-
-# https://www.iana.org/assignments/smi-numbers/smi-numbers.xhtml#smi-numbers-1.3.6.1.5.5.7.3
-# PKIX key purpose identifiers
-!Cname server-auth
-id-kp 1			: serverAuth		: TLS Web Server Authentication
-!Cname client-auth
-id-kp 2			: clientAuth		: TLS Web Client Authentication
-!Cname code-sign
-id-kp 3			: codeSigning		: Code Signing
-!Cname email-protect
-id-kp 4			: emailProtection	: E-mail Protection
-id-kp 5			: ipsecEndSystem	: IPSec End System
-id-kp 6			: ipsecTunnel		: IPSec Tunnel
-id-kp 7			: ipsecUser		: IPSec User
-!Cname time-stamp
-id-kp 8			: timeStamping		: Time Stamping
-# From OCSP spec RFC2560
-!Cname OCSP-sign
-id-kp 9			: OCSPSigning		: OCSP Signing
-id-kp 10		: DVCS			: dvcs
-!Cname ipsec-IKE
-id-kp 17                : ipsecIKE              : ipsec Internet Key Exchange
-id-kp 18                : capwapAC              : Ctrl/provision WAP Access
-id-kp 19                : capwapWTP             : Ctrl/Provision WAP Termination
-!Cname sshClient
-id-kp 21                : secureShellClient     : SSH Client
-!Cname sshServer
-id-kp 22                : secureShellServer     : SSH Server
-id-kp 23                : sendRouter            : Send Router
-id-kp 24                : sendProxiedRouter     : Send Proxied Router
-id-kp 25                : sendOwner             : Send Owner
-id-kp 26                : sendProxiedOwner      : Send Proxied Owner
-id-kp 27                : cmcCA                 : CMC Certificate Authority
-id-kp 28                : cmcRA                 : CMC Registration Authority
-id-kp 29                : cmcArchive            : CMC Archive Server
-id-kp 30                : id-kp-bgpsec-router 	: BGPsec Router
-id-kp 31                : id-kp-BrandIndicatorforMessageIdentification : Brand Indicator for Message Identification
-id-kp 32                : cmKGA                 : Certificate Management Key Generation Authority
-
-# https://www.iana.org/assignments/smi-numbers/smi-numbers.xhtml#smi-numbers-1.3.6.1.5.5.7.4
-# CMP information types
-id-it 1			: id-it-caProtEncCert
-id-it 2			: id-it-signKeyPairTypes
-id-it 3			: id-it-encKeyPairTypes
-id-it 4			: id-it-preferredSymmAlg
-id-it 5			: id-it-caKeyUpdateInfo
-id-it 6			: id-it-currentCRL
-id-it 7			: id-it-unsupportedOIDs
-# [Reserved and Obsolete]:
-id-it 8			: id-it-subscriptionRequest
-# [Reserved and Obsolete]:
-id-it 9			: id-it-subscriptionResponse
-id-it 10		: id-it-keyPairParamReq
-id-it 11		: id-it-keyPairParamRep
-id-it 12		: id-it-revPassphrase
-id-it 13		: id-it-implicitConfirm
-id-it 14		: id-it-confirmWaitTime
-id-it 15		: id-it-origPKIMessage
-id-it 16		: id-it-suppLangTags
-id-it 17		: id-it-caCerts
-id-it 18		: id-it-rootCaKeyUpdate
-id-it 19		: id-it-certReqTemplate
-id-it 20		: id-it-rootCaCert
-id-it 21		: id-it-certProfile
-id-it 22		: id-it-crlStatusList
-id-it 23		: id-it-crls
-
-# CRMF registration
-id-pkip 1		: id-regCtrl
-id-pkip 2		: id-regInfo
-
-# CRMF registration controls
-id-regCtrl 1		: id-regCtrl-regToken
-id-regCtrl 2		: id-regCtrl-authenticator
-id-regCtrl 3		: id-regCtrl-pkiPublicationInfo
-id-regCtrl 4		: id-regCtrl-pkiArchiveOptions
-id-regCtrl 5		: id-regCtrl-oldCertID
-id-regCtrl 6		: id-regCtrl-protocolEncrKey
-id-regCtrl 7		: id-regCtrl-altCertTemplate
-# id-regCtrl 8		: id-regCtrl-wtlsTemplate	[Reserved and Obsolete]
-# id-regCtrl 9		: id-regCtrl-regTokenUTF8	[Reserved and Obsolete]
-# id-regCtrl 10		: id-regCtrl-authenticatorUTF8	[Reserved and Obsolete]
-id-regCtrl 11		: id-regCtrl-algId
-id-regCtrl 12		: id-regCtrl-rsaKeyLen
-
-# CRMF registration information
-id-regInfo 1		: id-regInfo-utf8Pairs
-id-regInfo 2		: id-regInfo-certReq
-
-# algorithms
-id-alg 1		: id-alg-des40
-id-alg 2		: id-alg-noSignature
-id-alg 3		: id-alg-dh-sig-hmac-sha1
-id-alg 4		: id-alg-dh-pop
-id-alg 36		: id-alg-unsigned
-
-# CMC controls
-id-cmc 1		: id-cmc-statusInfo
-id-cmc 2		: id-cmc-identification
-id-cmc 3		: id-cmc-identityProof
-id-cmc 4		: id-cmc-dataReturn
-id-cmc 5		: id-cmc-transactionId
-id-cmc 6		: id-cmc-senderNonce
-id-cmc 7		: id-cmc-recipientNonce
-id-cmc 8		: id-cmc-addExtensions
-id-cmc 9		: id-cmc-encryptedPOP
-id-cmc 10		: id-cmc-decryptedPOP
-id-cmc 11		: id-cmc-lraPOPWitness
-id-cmc 15		: id-cmc-getCert
-id-cmc 16		: id-cmc-getCRL
-id-cmc 17		: id-cmc-revokeRequest
-id-cmc 18		: id-cmc-regInfo
-id-cmc 19		: id-cmc-responseInfo
-id-cmc 21		: id-cmc-queryPending
-id-cmc 22		: id-cmc-popLinkRandom
-id-cmc 23		: id-cmc-popLinkWitness
-id-cmc 24		: id-cmc-confirmCertAcceptance
-
-# other names
-id-on 1			: id-on-personalData
-id-on 3			: id-on-permanentIdentifier : Permanent Identifier
-id-on 4			: id-on-hardwareModuleName : Hardware Module Name
-id-on 5			: id-on-xmppAddr : XmppAddr
-id-on 7			: id-on-dnsSRV : SRVName
-id-on 8			: id-on-NAIRealm : NAIRealm
-id-on 9			: id-on-SmtpUTF8Mailbox : Smtp UTF8 Mailbox
-
-# personal data attributes
-id-pda 1		: id-pda-dateOfBirth
-id-pda 2		: id-pda-placeOfBirth
-id-pda 3		: id-pda-gender
-id-pda 4		: id-pda-countryOfCitizenship
-id-pda 5		: id-pda-countryOfResidence
-
-# attribute certificate attributes
-id-aca 1		: id-aca-authenticationInfo
-id-aca 2		: id-aca-accessIdentity
-id-aca 3		: id-aca-chargingIdentity
-id-aca 4		: id-aca-group
-# attention : the following seems to be obsolete, replace by 'role'
-id-aca 5		: id-aca-role
-id-aca 6		: id-aca-encAttrs
-
-# qualified certificate statements
-id-qcs 1		: id-qcs-pkixQCSyntax-v1
-
-# PKIX Certificate Policies
-id-cp 2			: ipAddr-asNumber
-id-cp 3			: ipAddr-asNumberv2
-
-# CMC content types
-id-cct 1		: id-cct-crs
-id-cct 2		: id-cct-PKIData
-id-cct 3		: id-cct-PKIResponse
-
-# Predefined Proxy Certificate policy languages
-id-ppl 0		: id-ppl-anyLanguage	: Any language
-id-ppl 1		: id-ppl-inheritAll	: Inherit all
-id-ppl 2		: id-ppl-independent	: Independent
-
-# access descriptors for authority info access extension
-!Cname ad-OCSP
-id-ad 1			: OCSP			: OCSP
-!Cname ad-ca-issuers
-id-ad 2			: caIssuers		: CA Issuers
-!Cname ad-timeStamping
-id-ad 3			: ad_timestamping	: AD Time Stamping
-!Cname ad-dvcs
-id-ad 4			: AD_DVCS		: ad dvcs
-id-ad 5			: caRepository		: CA Repository
-id-ad 10		: rpkiManifest		: RPKI Manifest
-id-ad 11		: signedObject		: Signed Object
-id-ad 13		: rpkiNotify		: RPKI Notify
-
-!Alias id-pkix-OCSP ad-OCSP
-!module id-pkix-OCSP
-!Cname basic
-id-pkix-OCSP 1		: basicOCSPResponse	: Basic OCSP Response
-id-pkix-OCSP 2		: Nonce			: OCSP Nonce
-id-pkix-OCSP 3		: CrlID			: OCSP CRL ID
-id-pkix-OCSP 4		: acceptableResponses	: Acceptable OCSP Responses
-id-pkix-OCSP 5		: noCheck		: OCSP No Check
-id-pkix-OCSP 6		: archiveCutoff		: OCSP Archive Cutoff
-id-pkix-OCSP 7		: serviceLocator	: OCSP Service Locator
-id-pkix-OCSP 8		: extendedStatus	: Extended OCSP Status
-id-pkix-OCSP 9		: valid
-id-pkix-OCSP 10		: path
-id-pkix-OCSP 11		: trustRoot		: Trust Root
-!global
-
-1 3 14 3 2		: algorithm		: algorithm
-algorithm 3		: RSA-NP-MD5		: md5WithRSA
-algorithm 6		: DES-ECB		: des-ecb
-algorithm 7		: DES-CBC		: des-cbc
-!Cname des-ofb64
-algorithm 8		: DES-OFB		: des-ofb
-!Cname des-cfb64
-algorithm 9		: DES-CFB		: des-cfb
-algorithm 11		: rsaSignature
-!Cname dsa-2
-algorithm 12		: DSA-old		: dsaEncryption-old
-algorithm 13		: DSA-SHA		: dsaWithSHA
-algorithm 15		: RSA-SHA		: shaWithRSAEncryption
-!Cname des-ede-ecb
-algorithm 17		: DES-EDE		: des-ede
-!Cname des-ede3-ecb
-			: DES-EDE3		: des-ede3
-			: DES-EDE-CBC		: des-ede-cbc
-!Cname des-ede-cfb64
-			: DES-EDE-CFB		: des-ede-cfb
-!Cname des-ede3-cfb64
-			: DES-EDE3-CFB		: des-ede3-cfb
-!Cname des-ede-ofb64
-			: DES-EDE-OFB		: des-ede-ofb
-!Cname des-ede3-ofb64
-			: DES-EDE3-OFB		: des-ede3-ofb
-			: DESX-CBC		: desx-cbc
-algorithm 18		: SHA			: sha
-algorithm 26		: SHA1			: sha1
-!Cname dsaWithSHA1-2
-algorithm 27		: DSA-SHA1-old		: dsaWithSHA1-old
-algorithm 29		: RSA-SHA1-2		: sha1WithRSA
-
-1 3 36 3 2 1		: RIPEMD160		: ripemd160
-1 3 36 3 3 1 2		: RSA-RIPEMD160		: ripemd160WithRSA
-
-1 3 6 1 4 1 1722 12 2 1 : BLAKE2BMAC	        : blake2bmac
-1 3 6 1 4 1 1722 12 2 2 : BLAKE2SMAC   	        : blake2smac
-blake2bmac 16           : BLAKE2b512            : blake2b512
-blake2smac 8            : BLAKE2s256            : blake2s256
-
-!Cname sxnet
-1 3 101 1 4 1		: SXNetID		: Strong Extranet ID
-
-2 5			: X500			: directory services (X.500)
-
-X500 4			: X509
-X509 3			: CN			: commonName
-X509 4			: SN			: surname
-X509 5			: 			: serialNumber
-X509 6			: C			: countryName
-X509 7			: L			: localityName
-X509 8			: ST			: stateOrProvinceName
-X509 9			: street		: streetAddress
-X509 10			: O			: organizationName
-X509 11			: OU			: organizationalUnitName
-X509 12			: title			: title
-X509 13			: 			: description
-X509 14			: 			: searchGuide
-X509 15			: 			: businessCategory
-X509 16			: 			: postalAddress
-X509 17			: 			: postalCode
-X509 18			: 			: postOfficeBox
-X509 19			: 			: physicalDeliveryOfficeName
-X509 20			: 			: telephoneNumber
-X509 21			: 			: telexNumber
-X509 22			: 			: teletexTerminalIdentifier
-X509 23			: 			: facsimileTelephoneNumber
-X509 24			: 			: x121Address
-X509 25			: 			: internationaliSDNNumber
-X509 26			: 			: registeredAddress
-X509 27			: 			: destinationIndicator
-X509 28			: 			: preferredDeliveryMethod
-X509 29			: 			: presentationAddress
-X509 30			: 			: supportedApplicationContext
-X509 31			: member		:
-X509 32			: owner			:
-X509 33			: 			: roleOccupant
-X509 34			: seeAlso		:
-X509 35			: 			: userPassword
-X509 36			: 			: userCertificate
-X509 37			: 			: cACertificate
-X509 38			: 			: authorityRevocationList
-X509 39			: 			: certificateRevocationList
-X509 40			: 			: crossCertificatePair
-X509 41			: name			: name
-X509 42			: GN			: givenName
-X509 43			: initials		: initials
-X509 44			: 			: generationQualifier
-X509 45			: 			: x500UniqueIdentifier
-X509 46			: dnQualifier		: dnQualifier
-X509 47			: 			: enhancedSearchGuide
-X509 48			: 			: protocolInformation
-X509 49			: 			: distinguishedName
-X509 50			: 			: uniqueMember
-X509 51			: 			: houseIdentifier
-X509 52			: 			: supportedAlgorithms
-X509 53			: 			: deltaRevocationList
-X509 54			: dmdName		:
-X509 65			:			: pseudonym
-X509 72			: role			: role
-X509 97                 :			: organizationIdentifier
-X509 98			: c3			: countryCode3c
-X509 99			: n3			: countryCode3n
-X509 100		:			: dnsName
-
-
-X500 8			: X500algorithms	: directory services - algorithms
-X500algorithms 1 1	: RSA			: rsa
-X500algorithms 3 100	: RSA-MDC2		: mdc2WithRSA
-X500algorithms 3 101	: MDC2			: mdc2
-
-X500 29			: id-ce
-!Cname subject-directory-attributes
-id-ce 9			: subjectDirectoryAttributes : X509v3 Subject Directory Attributes
-!Cname subject-key-identifier
-id-ce 14		: subjectKeyIdentifier	: X509v3 Subject Key Identifier
-!Cname key-usage
-id-ce 15		: keyUsage		: X509v3 Key Usage
-!Cname private-key-usage-period
-id-ce 16		: privateKeyUsagePeriod	: X509v3 Private Key Usage Period
-!Cname subject-alt-name
-id-ce 17		: subjectAltName	: X509v3 Subject Alternative Name
-!Cname issuer-alt-name
-id-ce 18		: issuerAltName		: X509v3 Issuer Alternative Name
-!Cname basic-constraints
-id-ce 19		: basicConstraints	: X509v3 Basic Constraints
-!Cname crl-number
-id-ce 20		: crlNumber		: X509v3 CRL Number
-!Cname crl-reason
-id-ce 21		: CRLReason		: X509v3 CRL Reason Code
-!Cname invalidity-date
-id-ce 24		: invalidityDate	: Invalidity Date
-!Cname delta-crl
-id-ce 27		: deltaCRL		: X509v3 Delta CRL Indicator
-!Cname issuing-distribution-point
-id-ce 28		: issuingDistributionPoint : X509v3 Issuing Distribution Point
-!Cname certificate-issuer
-id-ce 29		: certificateIssuer	: X509v3 Certificate Issuer
-!Cname name-constraints
-id-ce 30		: nameConstraints	: X509v3 Name Constraints
-!Cname crl-distribution-points
-id-ce 31		: crlDistributionPoints	: X509v3 CRL Distribution Points
-!Cname certificate-policies
-id-ce 32		: certificatePolicies	: X509v3 Certificate Policies
-!Cname any-policy
-certificate-policies 0	: anyPolicy		: X509v3 Any Policy
-!Cname policy-mappings
-id-ce 33		: policyMappings	: X509v3 Policy Mappings
-!Cname authority-key-identifier
-id-ce 35		: authorityKeyIdentifier : X509v3 Authority Key Identifier
-!Cname policy-constraints
-id-ce 36		: policyConstraints	: X509v3 Policy Constraints
-!Cname ext-key-usage
-id-ce 37		: extendedKeyUsage	: X509v3 Extended Key Usage
-!Cname authority-attribute-identifier
-id-ce 38		: authorityAttributeIdentifier : X509v3 Authority Attribute Identifier
-!Cname role-spec-cert-identifier
-id-ce 39		: roleSpecCertIdentifier	: X509v3 Role Specification Certificate Identifier
-!Cname basic-att-constraints
-id-ce 41		: basicAttConstraints		: X509v3 Basic Attribute Certificate Constraints
-!Cname delegated-name-constraints
-id-ce 42 		: delegatedNameConstraints	: X509v3 Delegated Name Constraints
-!Cname time-specification
-id-ce 43		: timeSpecification			: X509v3 Time Specification
-!Cname freshest-crl
-id-ce 46		: freshestCRL		: X509v3 Freshest CRL
-!Cname attribute-descriptor
-id-ce 48		: attributeDescriptor		: X509v3 Attribute Descriptor
-!Cname user-notice
-id-ce 49		: userNotice				: X509v3 User Notice
-!Cname soa-identifier
-id-ce 50        : sOAIdentifier     : X509v3 Source of Authority Identifier
-!Cname acceptable-cert-policies
-id-ce 52		: acceptableCertPolicies	: X509v3 Acceptable Certification Policies
-!Cname inhibit-any-policy
-id-ce 54		: inhibitAnyPolicy	: X509v3 Inhibit Any Policy
-!Cname target-information
-id-ce 55		: targetInformation	: X509v3 AC Targeting
-!Cname no-rev-avail
-id-ce 56		: noRevAvail		: X509v3 No Revocation Available
-!Cname acceptable-privilege-policies
-id-ce 57		: acceptablePrivPolicies	: X509v3 Acceptable Privilege Policies
-!Cname indirect-issuer
-id-ce 61		: indirectIssuer			: X509v3 Indirect Issuer
-!Cname no-assertion
-id-ce 62        : noAssertion       : X509v3 No Assertion
-!Cname id-aa-issuing-distribution-point
-id-ce 63		: aAissuingDistributionPoint : X509v3 Attribute Authority Issuing Distribution Point
-!Cname issued-on-behalf-of
-id-ce 64		: issuedOnBehalfOf	: X509v3 Issued On Behalf Of
-!Cname single-use
-id-ce 65		: singleUse			: X509v3 Single Use
-!Cname group-ac
-id-ce 66		: groupAC			: X509v3 Group Attribute Certificate
-!Cname allowed-attribute-assignments
-id-ce 67		: allowedAttributeAssignments		: X509v3 Allowed Attribute Assignments
-!Cname attribute-mappings
-id-ce 68		: attributeMappings		: X509v3 Attribute Mappings
-!Cname holder-name-constraints
-id-ce 69		: holderNameConstraints	: X509v3 Holder Name Constraints
-!Cname authorization-validation
-id-ce 70		: authorizationValidation : X509v3 Authorization Validation
-!Cname prot-restrict
-id-ce 71		: protRestrict : X509v3 Protocol Restriction
-!Cname subject-alt-public-key-info
-id-ce 72		: subjectAltPublicKeyInfo : X509v3 Subject Alternative Public Key Info
-!Cname alt-signature-algorithm
-id-ce 73		: altSignatureAlgorithm : X509v3 Alternative Signature Algorithm
-!Cname alt-signature-value
-id-ce 74		: altSignatureValue : X509v3 Alternative Signature Value
-!Cname associated-information
-id-ce 75		: associatedInformation : X509v3 Associated Information
-
-# From RFC5280
-ext-key-usage 0		: anyExtendedKeyUsage	: Any Extended Key Usage
-
-
-!Cname netscape
-2 16 840 1 113730	: Netscape		: Netscape Communications Corp.
-!Cname netscape-cert-extension
-netscape 1		: nsCertExt		: Netscape Certificate Extension
-!Cname netscape-data-type
-netscape 2		: nsDataType		: Netscape Data Type
-!Cname netscape-cert-type
-netscape-cert-extension 1 : nsCertType		: Netscape Cert Type
-!Cname netscape-base-url
-netscape-cert-extension 2 : nsBaseUrl		: Netscape Base Url
-!Cname netscape-revocation-url
-netscape-cert-extension 3 : nsRevocationUrl	: Netscape Revocation Url
-!Cname netscape-ca-revocation-url
-netscape-cert-extension 4 : nsCaRevocationUrl	: Netscape CA Revocation Url
-!Cname netscape-renewal-url
-netscape-cert-extension 7 : nsRenewalUrl	: Netscape Renewal Url
-!Cname netscape-ca-policy-url
-netscape-cert-extension 8 : nsCaPolicyUrl	: Netscape CA Policy Url
-!Cname netscape-ssl-server-name
-netscape-cert-extension 12 : nsSslServerName	: Netscape SSL Server Name
-!Cname netscape-comment
-netscape-cert-extension 13 : nsComment		: Netscape Comment
-!Cname netscape-cert-sequence
-netscape-data-type 5	: nsCertSequence	: Netscape Certificate Sequence
-!Cname ns-sgc
-netscape 4 1		: nsSGC			: Netscape Server Gated Crypto
-
-# iso(1)
-iso 3			: ORG			: org
-org 6			: DOD			: dod
-dod 1			: IANA			: iana
-!Alias internet iana
-
-internet 1		: directory		: Directory
-internet 2		: mgmt			: Management
-internet 3		: experimental		: Experimental
-internet 4		: private		: Private
-internet 5		: security		: Security
-internet 6		: snmpv2		: SNMPv2
-# Documents refer to "internet 7" as "mail". This however leads to ambiguities
-# with RFC2798, Section 9.1.3, where "mail" is defined as the short name for
-# rfc822Mailbox. The short name is therefore here left out for a reason.
-# Subclasses of "mail", e.g. "MIME MHS" don't constitute a problem, as
-# references are realized via long name "Mail" (with capital M).
-internet 7		:			: Mail
-
-Private 1		: enterprises		: Enterprises
-
-# RFC 2247
-Enterprises 1466 344	: dcobject		: dcObject
-
-# Wi-SUN Assigned Value Registry
-Enterprises 45605 1     : id-kp-wisun-fan-device : Wi-SUN Alliance Field Area Network (FAN)
-
-# RFC 1495
-Mail 1			: mime-mhs		: MIME MHS
-mime-mhs 1		: mime-mhs-headings	: mime-mhs-headings
-mime-mhs 2		: mime-mhs-bodies	: mime-mhs-bodies
-mime-mhs-headings 1	: id-hex-partial-message : id-hex-partial-message
-mime-mhs-headings 2	: id-hex-multipart-message : id-hex-multipart-message
-
-# RFC 3274
-!Cname zlib-compression
-id-smime-alg 8		: ZLIB			: zlib compression
-
-# AES aka Rijndael
-
-!Alias csor 2 16 840 1 101 3
-!Alias nistAlgorithms csor 4
-!Alias aes nistAlgorithms 1
-
-# Base AES OID (used by Java keytool for generic AES keys)
-nistAlgorithms 1	: id-aes
-
-aes 1			: AES-128-ECB		: aes-128-ecb
-aes 2			: AES-128-CBC		: aes-128-cbc
-!Cname aes-128-ofb128
-aes 3			: AES-128-OFB		: aes-128-ofb
-!Cname aes-128-cfb128
-aes 4			: AES-128-CFB		: aes-128-cfb
-aes 5			: id-aes128-wrap
-aes 6			: id-aes128-GCM		: aes-128-gcm
-aes 7			: id-aes128-CCM		: aes-128-ccm
-aes 8			: id-aes128-wrap-pad
-
-aes 21			: AES-192-ECB		: aes-192-ecb
-aes 22			: AES-192-CBC		: aes-192-cbc
-!Cname aes-192-ofb128
-aes 23			: AES-192-OFB		: aes-192-ofb
-!Cname aes-192-cfb128
-aes 24			: AES-192-CFB		: aes-192-cfb
-aes 25			: id-aes192-wrap
-aes 26			: id-aes192-GCM		: aes-192-gcm
-aes 27			: id-aes192-CCM		: aes-192-ccm
-aes 28			: id-aes192-wrap-pad
-
-aes 41			: AES-256-ECB		: aes-256-ecb
-aes 42			: AES-256-CBC		: aes-256-cbc
-!Cname aes-256-ofb128
-aes 43			: AES-256-OFB		: aes-256-ofb
-!Cname aes-256-cfb128
-aes 44			: AES-256-CFB		: aes-256-cfb
-aes 45			: id-aes256-wrap
-aes 46			: id-aes256-GCM		: aes-256-gcm
-aes 47			: id-aes256-CCM		: aes-256-ccm
-aes 48			: id-aes256-wrap-pad
-
-ieee-siswg 0 1 1        : AES-128-XTS		: aes-128-xts
-ieee-siswg 0 1 2        : AES-256-XTS		: aes-256-xts
-
-# There are no OIDs for these modes...
-
-			: AES-128-CFB1		: aes-128-cfb1
-			: AES-192-CFB1		: aes-192-cfb1
-			: AES-256-CFB1		: aes-256-cfb1
-			: AES-128-CFB8		: aes-128-cfb8
-			: AES-192-CFB8		: aes-192-cfb8
-			: AES-256-CFB8		: aes-256-cfb8
-			: AES-128-CTR		: aes-128-ctr
-			: AES-192-CTR		: aes-192-ctr
-			: AES-256-CTR		: aes-256-ctr
-			: AES-128-OCB		: aes-128-ocb
-			: AES-192-OCB		: aes-192-ocb
-			: AES-256-OCB		: aes-256-ocb
-			: DES-CFB1		: des-cfb1
-			: DES-CFB8		: des-cfb8
-			: DES-EDE3-CFB1		: des-ede3-cfb1
-			: DES-EDE3-CFB8		: des-ede3-cfb8
-
-# OIDs for SHA224, SHA256, SHA385 and SHA512, according to x9.84 and
-# http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/algorithms.html
-# "Middle" names are specified to be id-sha256, id-sha384, etc., but
-# we adhere to unprefixed capitals for backward compatibility...
-!Alias nist_hashalgs nistAlgorithms 2
-nist_hashalgs 1		: SHA256		: sha256
-nist_hashalgs 2		: SHA384		: sha384
-nist_hashalgs 3		: SHA512		: sha512
-nist_hashalgs 4		: SHA224		: sha224
-nist_hashalgs 5		: SHA512-224		: sha512-224
-nist_hashalgs 6		: SHA512-256		: sha512-256
-nist_hashalgs 7		: SHA3-224		: sha3-224
-nist_hashalgs 8		: SHA3-256		: sha3-256
-nist_hashalgs 9		: SHA3-384		: sha3-384
-nist_hashalgs 10	: SHA3-512		: sha3-512
-nist_hashalgs 11	: SHAKE128		: shake128
-nist_hashalgs 12	: SHAKE256		: shake256
-nist_hashalgs 13	: id-hmacWithSHA3-224	: hmac-sha3-224
-nist_hashalgs 14	: id-hmacWithSHA3-256	: hmac-sha3-256
-nist_hashalgs 15	: id-hmacWithSHA3-384	: hmac-sha3-384
-nist_hashalgs 16	: id-hmacWithSHA3-512	: hmac-sha3-512
-# Below two are incomplete OIDs, to be uncommented when we figure out
-# how to handle them...
-# nist_hashalgs 17	: id-shake128-len	: shake128-len
-# nist_hashalgs 18	: id-shake256-len	: shake256-len
-nist_hashalgs 19        : KMAC128               : kmac128
-nist_hashalgs 20        : KMAC256               : kmac256
-# nist_hashalgs 21      : KMAC128-XOF           : kmac128-xof
-# nist_hashalgs 22      : KMAC256-XOF           : kmac256-xof
-
-# OIDs for dsa-with-sha224 and dsa-with-sha256
-!Alias dsa_with_sha2 nistAlgorithms 3
-dsa_with_sha2 1		: dsa_with_SHA224
-dsa_with_sha2 2		: dsa_with_SHA256
-# Above two belong below, but kept as they are for backward compatibility
-!Alias sigAlgs nistAlgorithms 3
-sigAlgs 3	: id-dsa-with-sha384	: dsa_with_SHA384
-sigAlgs 4	: id-dsa-with-sha512	: dsa_with_SHA512
-sigAlgs 5	: id-dsa-with-sha3-224	: dsa_with_SHA3-224
-sigAlgs 6	: id-dsa-with-sha3-256	: dsa_with_SHA3-256
-sigAlgs 7	: id-dsa-with-sha3-384	: dsa_with_SHA3-384
-sigAlgs 8	: id-dsa-with-sha3-512	: dsa_with_SHA3-512
-sigAlgs 9	: id-ecdsa-with-sha3-224	: ecdsa_with_SHA3-224
-sigAlgs 10	: id-ecdsa-with-sha3-256	: ecdsa_with_SHA3-256
-sigAlgs 11	: id-ecdsa-with-sha3-384	: ecdsa_with_SHA3-384
-sigAlgs 12	: id-ecdsa-with-sha3-512	: ecdsa_with_SHA3-512
-sigAlgs 13	: id-rsassa-pkcs1-v1_5-with-sha3-224	: RSA-SHA3-224
-sigAlgs 14	: id-rsassa-pkcs1-v1_5-with-sha3-256	: RSA-SHA3-256
-sigAlgs 15	: id-rsassa-pkcs1-v1_5-with-sha3-384	: RSA-SHA3-384
-sigAlgs 16	: id-rsassa-pkcs1-v1_5-with-sha3-512	: RSA-SHA3-512
-sigAlgs 17      : id-ml-dsa-44      : ML-DSA-44
-sigAlgs 18      : id-ml-dsa-65      : ML-DSA-65
-sigAlgs 19      : id-ml-dsa-87      : ML-DSA-87
-sigAlgs 20      : id-slh-dsa-sha2-128s	: SLH-DSA-SHA2-128s
-sigAlgs 21      : id-slh-dsa-sha2-128f	: SLH-DSA-SHA2-128f
-sigAlgs 22      : id-slh-dsa-sha2-192s	: SLH-DSA-SHA2-192s
-sigAlgs 23      : id-slh-dsa-sha2-192f	: SLH-DSA-SHA2-192f
-sigAlgs 24      : id-slh-dsa-sha2-256s	: SLH-DSA-SHA2-256s
-sigAlgs 25      : id-slh-dsa-sha2-256f	: SLH-DSA-SHA2-256f
-sigAlgs 26      : id-slh-dsa-shake-128s	: SLH-DSA-SHAKE-128s
-sigAlgs 27      : id-slh-dsa-shake-128f	: SLH-DSA-SHAKE-128f
-sigAlgs 28      : id-slh-dsa-shake-192s	: SLH-DSA-SHAKE-192s
-sigAlgs 29      : id-slh-dsa-shake-192f	: SLH-DSA-SHAKE-192f
-sigAlgs 30      : id-slh-dsa-shake-256s	: SLH-DSA-SHAKE-256s
-sigAlgs 31      : id-slh-dsa-shake-256f	: SLH-DSA-SHAKE-256f
-sigAlgs 32      : id-hash-ml-dsa-44-with-sha512 : HASH-ML-DSA-44-WITH-SHA512
-sigAlgs 33      : id-hash-ml-dsa-65-with-sha512 : HASH-ML-DSA-65-WITH-SHA512
-sigAlgs 34      : id-hash-ml-dsa-87-with-sha512 : HASH-ML-DSA-87-WITH-SHA512
-sigAlgs 35      : id-hash-slh-dsa-sha2-128s-with-sha256    : SLH-DSA-SHA2-128s-WITH-SHA256
-sigAlgs 36      : id-hash-slh-dsa-sha2-128f-with-sha256    : SLH-DSA-SHA2-128f-WITH-SHA256
-sigAlgs 37      : id-hash-slh-dsa-sha2-192s-with-sha512    : SLH-DSA-SHA2-192s-WITH-SHA512
-sigAlgs 38      : id-hash-slh-dsa-sha2-192f-with-sha512    : SLH-DSA-SHA2-192f-WITH-SHA512
-sigAlgs 39      : id-hash-slh-dsa-sha2-256s-with-sha512    : SLH-DSA-SHA2-256s-WITH-SHA512
-sigAlgs 40      : id-hash-slh-dsa-sha2-256f-with-sha512    : SLH-DSA-SHA2-256f-WITH-SHA512
-sigAlgs 41      : id-hash-slh-dsa-shake-128s-with-shake128 : SLH-DSA-SHAKE-128s-WITH-SHAKE128
-sigAlgs 42      : id-hash-slh-dsa-shake-128f-with-shake128 : SLH-DSA-SHAKE-128f-WITH-SHAKE128
-sigAlgs 43      : id-hash-slh-dsa-shake-192s-with-shake256 : SLH-DSA-SHAKE-192s-WITH-SHAKE256
-sigAlgs 44      : id-hash-slh-dsa-shake-192f-with-shake256 : SLH-DSA-SHAKE-192f-WITH-SHAKE256
-sigAlgs 45      : id-hash-slh-dsa-shake-256s-with-shake256 : SLH-DSA-SHAKE-256s-WITH-SHAKE256
-sigAlgs 46      : id-hash-slh-dsa-shake-256f-with-shake256 : SLH-DSA-SHAKE-256f-WITH-SHAKE256
-
-# Hold instruction CRL entry extension
-!Cname hold-instruction-code
-id-ce 23		: holdInstructionCode	: Hold Instruction Code
-!Alias holdInstruction	X9-57 2
-!Cname hold-instruction-none
-holdInstruction 1	: holdInstructionNone	: Hold Instruction None
-!Cname hold-instruction-call-issuer
-holdInstruction 2	: holdInstructionCallIssuer : Hold Instruction Call Issuer
-!Cname hold-instruction-reject
-holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject
-
-# OID's from ITU-T.  Most of this is defined in RFC 1274.  A couple of
-# them are also mentioned in RFC 2247
-# OIDs specific to Electronic Signature Standard/CAdES are as specified in
-# ETSI EN 319 122-1 V1.2.1 (2021-10):
-# Electronic Signatures and Infrastructures (ESI); CAdES digital signatures;
-# Part 1: Building blocks and CAdES baseline signatures
-itu-t 4			: itu-t-identified-organization
-itu-t-identified-organization 0: etsi
-etsi 1733		: electronic-signature-standard
-electronic-signature-standard 2: ess-attributes
-ess-attributes 1	: id-aa-ets-mimeType
-ess-attributes 2	: id-aa-ets-longTermValidation
-ess-attributes 3	: id-aa-ets-SignaturePolicyDocument
-ess-attributes 4	: id-aa-ets-archiveTimestampV3
-ess-attributes 5	: id-aa-ATSHashIndex
-etsi 19122		: cades
-cades 1			: cades-attributes
-cades-attributes 1	: id-aa-ets-signerAttrV2
-cades-attributes 3	: id-aa-ets-sigPolicyStore
-cades-attributes 4	: id-aa-ATSHashIndex-v2
-cades-attributes 5	: id-aa-ATSHashIndex-v3
-cades-attributes 6	: signedAssertion
-
-itu-t 9			: data
-data 2342		: pss
-pss 19200300		: ucl
-ucl 100			: pilot
-pilot 1			:			: pilotAttributeType
-pilot 3			:			: pilotAttributeSyntax
-pilot 4			:			: pilotObjectClass
-pilot 10		:			: pilotGroups
-pilotAttributeSyntax 4	:			: iA5StringSyntax
-pilotAttributeSyntax 5	:			: caseIgnoreIA5StringSyntax
-pilotObjectClass 3	:			: pilotObject
-pilotObjectClass 4	:			: pilotPerson
-pilotObjectClass 5	: account
-pilotObjectClass 6	: document
-pilotObjectClass 7	: room
-pilotObjectClass 9	:			: documentSeries
-pilotObjectClass 13	: domain		: Domain
-pilotObjectClass 14	:			: rFC822localPart
-pilotObjectClass 15	:			: dNSDomain
-pilotObjectClass 17	:			: domainRelatedObject
-pilotObjectClass 18	:			: friendlyCountry
-pilotObjectClass 19	:			: simpleSecurityObject
-pilotObjectClass 20	:			: pilotOrganization
-pilotObjectClass 21	:			: pilotDSA
-pilotObjectClass 22	:			: qualityLabelledData
-pilotAttributeType 1	: UID			: userId
-pilotAttributeType 2	:			: textEncodedORAddress
-pilotAttributeType 3	: mail			: rfc822Mailbox
-pilotAttributeType 4	: info
-pilotAttributeType 5	:			: favouriteDrink
-pilotAttributeType 6	:			: roomNumber
-pilotAttributeType 7	: photo
-pilotAttributeType 8	:			: userClass
-pilotAttributeType 9	: host
-pilotAttributeType 10	: manager
-pilotAttributeType 11	:			: documentIdentifier
-pilotAttributeType 12	:			: documentTitle
-pilotAttributeType 13	:			: documentVersion
-pilotAttributeType 14	:			: documentAuthor
-pilotAttributeType 15	:			: documentLocation
-pilotAttributeType 20	:			: homeTelephoneNumber
-pilotAttributeType 21	: secretary
-pilotAttributeType 22	:			: otherMailbox
-pilotAttributeType 23	:			: lastModifiedTime
-pilotAttributeType 24	:			: lastModifiedBy
-pilotAttributeType 25	: DC			: domainComponent
-pilotAttributeType 26	:			: aRecord
-pilotAttributeType 27	:			: pilotAttributeType27
-pilotAttributeType 28	:			: mXRecord
-pilotAttributeType 29	:			: nSRecord
-pilotAttributeType 30	:			: sOARecord
-pilotAttributeType 31	:			: cNAMERecord
-pilotAttributeType 37	:			: associatedDomain
-pilotAttributeType 38	:			: associatedName
-pilotAttributeType 39	:			: homePostalAddress
-pilotAttributeType 40	:			: personalTitle
-pilotAttributeType 41	:			: mobileTelephoneNumber
-pilotAttributeType 42	:			: pagerTelephoneNumber
-pilotAttributeType 43	:			: friendlyCountryName
-pilotAttributeType 44	: uid			: uniqueIdentifier
-pilotAttributeType 45	:			: organizationalStatus
-pilotAttributeType 46	:			: janetMailbox
-pilotAttributeType 47	:			: mailPreferenceOption
-pilotAttributeType 48	:			: buildingName
-pilotAttributeType 49	:			: dSAQuality
-pilotAttributeType 50	:			: singleLevelQuality
-pilotAttributeType 51	:			: subtreeMinimumQuality
-pilotAttributeType 52	:			: subtreeMaximumQuality
-pilotAttributeType 53	:			: personalSignature
-pilotAttributeType 54	:			: dITRedirect
-pilotAttributeType 55	: audio
-pilotAttributeType 56	:			: documentPublisher
-
-international-organizations 42	: id-set	: Secure Electronic Transactions
-
-id-set 0		: set-ctype		: content types
-id-set 1		: set-msgExt		: message extensions
-id-set 3		: set-attr
-id-set 5		: set-policy
-id-set 7		: set-certExt		: certificate extensions
-id-set 8		: set-brand
-
-set-ctype 0		: setct-PANData
-set-ctype 1		: setct-PANToken
-set-ctype 2		: setct-PANOnly
-set-ctype 3		: setct-OIData
-set-ctype 4		: setct-PI
-set-ctype 5		: setct-PIData
-set-ctype 6		: setct-PIDataUnsigned
-set-ctype 7		: setct-HODInput
-set-ctype 8		: setct-AuthResBaggage
-set-ctype 9		: setct-AuthRevReqBaggage
-set-ctype 10		: setct-AuthRevResBaggage
-set-ctype 11		: setct-CapTokenSeq
-set-ctype 12		: setct-PInitResData
-set-ctype 13		: setct-PI-TBS
-set-ctype 14		: setct-PResData
-set-ctype 16		: setct-AuthReqTBS
-set-ctype 17		: setct-AuthResTBS
-set-ctype 18		: setct-AuthResTBSX
-set-ctype 19		: setct-AuthTokenTBS
-set-ctype 20		: setct-CapTokenData
-set-ctype 21		: setct-CapTokenTBS
-set-ctype 22		: setct-AcqCardCodeMsg
-set-ctype 23		: setct-AuthRevReqTBS
-set-ctype 24		: setct-AuthRevResData
-set-ctype 25		: setct-AuthRevResTBS
-set-ctype 26		: setct-CapReqTBS
-set-ctype 27		: setct-CapReqTBSX
-set-ctype 28		: setct-CapResData
-set-ctype 29		: setct-CapRevReqTBS
-set-ctype 30		: setct-CapRevReqTBSX
-set-ctype 31		: setct-CapRevResData
-set-ctype 32		: setct-CredReqTBS
-set-ctype 33		: setct-CredReqTBSX
-set-ctype 34		: setct-CredResData
-set-ctype 35		: setct-CredRevReqTBS
-set-ctype 36		: setct-CredRevReqTBSX
-set-ctype 37		: setct-CredRevResData
-set-ctype 38		: setct-PCertReqData
-set-ctype 39		: setct-PCertResTBS
-set-ctype 40		: setct-BatchAdminReqData
-set-ctype 41		: setct-BatchAdminResData
-set-ctype 42		: setct-CardCInitResTBS
-set-ctype 43		: setct-MeAqCInitResTBS
-set-ctype 44		: setct-RegFormResTBS
-set-ctype 45		: setct-CertReqData
-set-ctype 46		: setct-CertReqTBS
-set-ctype 47		: setct-CertResData
-set-ctype 48		: setct-CertInqReqTBS
-set-ctype 49		: setct-ErrorTBS
-set-ctype 50		: setct-PIDualSignedTBE
-set-ctype 51		: setct-PIUnsignedTBE
-set-ctype 52		: setct-AuthReqTBE
-set-ctype 53		: setct-AuthResTBE
-set-ctype 54		: setct-AuthResTBEX
-set-ctype 55		: setct-AuthTokenTBE
-set-ctype 56		: setct-CapTokenTBE
-set-ctype 57		: setct-CapTokenTBEX
-set-ctype 58		: setct-AcqCardCodeMsgTBE
-set-ctype 59		: setct-AuthRevReqTBE
-set-ctype 60		: setct-AuthRevResTBE
-set-ctype 61		: setct-AuthRevResTBEB
-set-ctype 62		: setct-CapReqTBE
-set-ctype 63		: setct-CapReqTBEX
-set-ctype 64		: setct-CapResTBE
-set-ctype 65		: setct-CapRevReqTBE
-set-ctype 66		: setct-CapRevReqTBEX
-set-ctype 67		: setct-CapRevResTBE
-set-ctype 68		: setct-CredReqTBE
-set-ctype 69		: setct-CredReqTBEX
-set-ctype 70		: setct-CredResTBE
-set-ctype 71		: setct-CredRevReqTBE
-set-ctype 72		: setct-CredRevReqTBEX
-set-ctype 73		: setct-CredRevResTBE
-set-ctype 74		: setct-BatchAdminReqTBE
-set-ctype 75		: setct-BatchAdminResTBE
-set-ctype 76		: setct-RegFormReqTBE
-set-ctype 77		: setct-CertReqTBE
-set-ctype 78		: setct-CertReqTBEX
-set-ctype 79		: setct-CertResTBE
-set-ctype 80		: setct-CRLNotificationTBS
-set-ctype 81		: setct-CRLNotificationResTBS
-set-ctype 82		: setct-BCIDistributionTBS
-
-set-msgExt 1		: setext-genCrypt	: generic cryptogram
-set-msgExt 3		: setext-miAuth		: merchant initiated auth
-set-msgExt 4		: setext-pinSecure
-set-msgExt 5		: setext-pinAny
-set-msgExt 7		: setext-track2
-set-msgExt 8		: setext-cv		: additional verification
-
-set-policy 0		: set-policy-root
-
-set-certExt 0		: setCext-hashedRoot
-set-certExt 1		: setCext-certType
-set-certExt 2		: setCext-merchData
-set-certExt 3		: setCext-cCertRequired
-set-certExt 4		: setCext-tunneling
-set-certExt 5		: setCext-setExt
-set-certExt 6		: setCext-setQualf
-set-certExt 7		: setCext-PGWYcapabilities
-set-certExt 8		: setCext-TokenIdentifier
-set-certExt 9		: setCext-Track2Data
-set-certExt 10		: setCext-TokenType
-set-certExt 11		: setCext-IssuerCapabilities
-
-set-attr 0		: setAttr-Cert
-set-attr 1		: setAttr-PGWYcap	: payment gateway capabilities
-set-attr 2		: setAttr-TokenType
-set-attr 3		: setAttr-IssCap	: issuer capabilities
-
-setAttr-Cert 0		: set-rootKeyThumb
-setAttr-Cert 1		: set-addPolicy
-
-setAttr-TokenType 1	: setAttr-Token-EMV
-setAttr-TokenType 2	: setAttr-Token-B0Prime
-
-setAttr-IssCap 3	: setAttr-IssCap-CVM
-setAttr-IssCap 4	: setAttr-IssCap-T2
-setAttr-IssCap 5	: setAttr-IssCap-Sig
-
-setAttr-IssCap-CVM 1	: setAttr-GenCryptgrm	: generate cryptogram
-setAttr-IssCap-T2 1	: setAttr-T2Enc		: encrypted track 2
-setAttr-IssCap-T2 2	: setAttr-T2cleartxt	: cleartext track 2
-
-setAttr-IssCap-Sig 1	: setAttr-TokICCsig	: ICC or token signature
-setAttr-IssCap-Sig 2	: setAttr-SecDevSig	: secure device signature
-
-set-brand 1		: set-brand-IATA-ATA
-set-brand 30		: set-brand-Diners
-set-brand 34		: set-brand-AmericanExpress
-set-brand 35		: set-brand-JCB
-set-brand 4		: set-brand-Visa
-set-brand 5		: set-brand-MasterCard
-set-brand 6011		: set-brand-Novus
-
-rsadsi 3 10		: DES-CDMF		: des-cdmf
-rsadsi 1 1 6		: rsaOAEPEncryptionSET
-
-			: Oakley-EC2N-3		: ipsec3
-			: Oakley-EC2N-4		: ipsec4
-
-iso 0 10118 3 0 55	: whirlpool
-
-# GOST OIDs
-
-member-body 643 2 2	: cryptopro
-member-body 643 2 9	: cryptocom
-member-body 643 7 1	: id-tc26
-
-cryptopro 3		: id-GostR3411-94-with-GostR3410-2001 : GOST R 34.11-94 with GOST R 34.10-2001
-cryptopro 4		: id-GostR3411-94-with-GostR3410-94 : GOST R 34.11-94 with GOST R 34.10-94
-!Cname id-GostR3411-94
-cryptopro 9		: md_gost94		: GOST R 34.11-94
-cryptopro 10		: id-HMACGostR3411-94	: HMAC GOST 34.11-94
-!Cname id-GostR3410-2001
-cryptopro 19		: gost2001	: GOST R 34.10-2001
-!Cname id-GostR3410-94
-cryptopro 20		: gost94	: GOST R 34.10-94
-!Cname id-Gost28147-89
-cryptopro 21		: gost89 		: GOST 28147-89
-			: gost89-cnt
-			: gost89-cnt-12
-			: gost89-cbc
-			: gost89-ecb
-			: gost89-ctr
-!Cname id-Gost28147-89-MAC
-cryptopro 22		: gost-mac	: GOST 28147-89 MAC
-			: gost-mac-12
-!Cname id-GostR3411-94-prf
-cryptopro 23		: prf-gostr3411-94	: GOST R 34.11-94 PRF
-cryptopro 98		: id-GostR3410-2001DH	: GOST R 34.10-2001 DH
-cryptopro 99		: id-GostR3410-94DH	: GOST R 34.10-94 DH
-
-cryptopro 14 1		: id-Gost28147-89-CryptoPro-KeyMeshing
-cryptopro 14 0		: id-Gost28147-89-None-KeyMeshing
-
-# GOST parameter set OIDs
-
-cryptopro 30 0		: id-GostR3411-94-TestParamSet
-cryptopro 30 1		: id-GostR3411-94-CryptoProParamSet
-
-cryptopro 31 0		: id-Gost28147-89-TestParamSet
-cryptopro 31 1		: id-Gost28147-89-CryptoPro-A-ParamSet
-cryptopro 31 2		: id-Gost28147-89-CryptoPro-B-ParamSet
-cryptopro 31 3		: id-Gost28147-89-CryptoPro-C-ParamSet
-cryptopro 31 4		: id-Gost28147-89-CryptoPro-D-ParamSet
-cryptopro 31 5		: id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet
-cryptopro 31 6		: id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet
-cryptopro 31 7		: id-Gost28147-89-CryptoPro-RIC-1-ParamSet
-
-cryptopro 32 0		: id-GostR3410-94-TestParamSet
-cryptopro 32 2		: id-GostR3410-94-CryptoPro-A-ParamSet
-cryptopro 32 3		: id-GostR3410-94-CryptoPro-B-ParamSet
-cryptopro 32 4		: id-GostR3410-94-CryptoPro-C-ParamSet
-cryptopro 32 5		: id-GostR3410-94-CryptoPro-D-ParamSet
-
-cryptopro 33 1		: id-GostR3410-94-CryptoPro-XchA-ParamSet
-cryptopro 33 2		: id-GostR3410-94-CryptoPro-XchB-ParamSet
-cryptopro 33 3		: id-GostR3410-94-CryptoPro-XchC-ParamSet
-
-cryptopro 35 0		: id-GostR3410-2001-TestParamSet
-cryptopro 35 1		: id-GostR3410-2001-CryptoPro-A-ParamSet
-cryptopro 35 2		: id-GostR3410-2001-CryptoPro-B-ParamSet
-cryptopro 35 3		: id-GostR3410-2001-CryptoPro-C-ParamSet
-
-cryptopro 36 0		: id-GostR3410-2001-CryptoPro-XchA-ParamSet
-cryptopro 36 1		: id-GostR3410-2001-CryptoPro-XchB-ParamSet
-
-id-GostR3410-94 1	: id-GostR3410-94-a
-id-GostR3410-94 2	: id-GostR3410-94-aBis
-id-GostR3410-94 3	: id-GostR3410-94-b
-id-GostR3410-94 4	: id-GostR3410-94-bBis
-
-# Cryptocom LTD GOST OIDs
-
-cryptocom 1 6 1		: id-Gost28147-89-cc	: GOST 28147-89 Cryptocom ParamSet
-!Cname id-GostR3410-94-cc
-cryptocom 1 5 3		: gost94cc	: GOST 34.10-94 Cryptocom
-!Cname id-GostR3410-2001-cc
-cryptocom 1 5 4		: gost2001cc	: GOST 34.10-2001 Cryptocom
-
-cryptocom 1 3 3		: id-GostR3411-94-with-GostR3410-94-cc : GOST R 34.11-94 with GOST R 34.10-94 Cryptocom
-cryptocom 1 3 4		: id-GostR3411-94-with-GostR3410-2001-cc : GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom
-
-cryptocom 1 8 1		: id-GostR3410-2001-ParamSet-cc : GOST R 3410-2001 Parameter Set Cryptocom
-
-# TC26 GOST OIDs
-
-id-tc26 1 		: id-tc26-algorithms
-id-tc26-algorithms 1	: id-tc26-sign
-!Cname id-GostR3410-2012-256
-id-tc26-sign 1		: gost2012_256: GOST R 34.10-2012 with 256 bit modulus
-!Cname id-GostR3410-2012-512
-id-tc26-sign 2		: gost2012_512: GOST R 34.10-2012 with 512 bit modulus
-
-id-tc26-algorithms 2	: id-tc26-digest
-!Cname id-GostR3411-2012-256
-id-tc26-digest 2	: md_gost12_256: GOST R 34.11-2012 with 256 bit hash
-!Cname id-GostR3411-2012-512
-id-tc26-digest 3	: md_gost12_512: GOST R 34.11-2012 with 512 bit hash
-
-id-tc26-algorithms 3	: id-tc26-signwithdigest
-id-tc26-signwithdigest 2: id-tc26-signwithdigest-gost3410-2012-256: GOST R 34.10-2012 with GOST R 34.11-2012 (256 bit)
-id-tc26-signwithdigest 3: id-tc26-signwithdigest-gost3410-2012-512: GOST R 34.10-2012 with GOST R 34.11-2012 (512 bit)
-
-id-tc26-algorithms 4	: id-tc26-mac
-id-tc26-mac 1		: id-tc26-hmac-gost-3411-2012-256 : HMAC GOST 34.11-2012 256 bit
-id-tc26-mac 2		: id-tc26-hmac-gost-3411-2012-512 : HMAC GOST 34.11-2012 512 bit
-
-id-tc26-algorithms 5	: id-tc26-cipher
-id-tc26-cipher 1	:  id-tc26-cipher-gostr3412-2015-magma
-id-tc26-cipher-gostr3412-2015-magma 1	: magma-ctr-acpkm
-id-tc26-cipher-gostr3412-2015-magma 2	: magma-ctr-acpkm-omac
-id-tc26-cipher 2	:  id-tc26-cipher-gostr3412-2015-kuznyechik
-id-tc26-cipher-gostr3412-2015-kuznyechik 1	: kuznyechik-ctr-acpkm
-id-tc26-cipher-gostr3412-2015-kuznyechik 2	: kuznyechik-ctr-acpkm-omac
-
-id-tc26-algorithms 6	: id-tc26-agreement
-id-tc26-agreement 1	: id-tc26-agreement-gost-3410-2012-256
-id-tc26-agreement 2	: id-tc26-agreement-gost-3410-2012-512
-
-id-tc26-algorithms 7	:	id-tc26-wrap
-id-tc26-wrap 1	: id-tc26-wrap-gostr3412-2015-magma
-id-tc26-wrap-gostr3412-2015-magma 1	: magma-kexp15
-id-tc26-wrap 2	: id-tc26-wrap-gostr3412-2015-kuznyechik
-id-tc26-wrap-gostr3412-2015-kuznyechik 1	: kuznyechik-kexp15
-
-id-tc26 2 		: id-tc26-constants
-
-id-tc26-constants 1	: id-tc26-sign-constants
-id-tc26-sign-constants 1: id-tc26-gost-3410-2012-256-constants
-id-tc26-gost-3410-2012-256-constants 1	: id-tc26-gost-3410-2012-256-paramSetA: GOST R 34.10-2012 (256 bit) ParamSet A
-id-tc26-gost-3410-2012-256-constants 2	: id-tc26-gost-3410-2012-256-paramSetB: GOST R 34.10-2012 (256 bit) ParamSet B
-id-tc26-gost-3410-2012-256-constants 3	: id-tc26-gost-3410-2012-256-paramSetC: GOST R 34.10-2012 (256 bit) ParamSet C
-id-tc26-gost-3410-2012-256-constants 4	: id-tc26-gost-3410-2012-256-paramSetD: GOST R 34.10-2012 (256 bit) ParamSet D
-id-tc26-sign-constants 2: id-tc26-gost-3410-2012-512-constants
-id-tc26-gost-3410-2012-512-constants 0	: id-tc26-gost-3410-2012-512-paramSetTest: GOST R 34.10-2012 (512 bit) testing parameter set
-id-tc26-gost-3410-2012-512-constants 1	: id-tc26-gost-3410-2012-512-paramSetA: GOST R 34.10-2012 (512 bit) ParamSet A
-id-tc26-gost-3410-2012-512-constants 2	: id-tc26-gost-3410-2012-512-paramSetB: GOST R 34.10-2012 (512 bit) ParamSet B
-id-tc26-gost-3410-2012-512-constants 3	: id-tc26-gost-3410-2012-512-paramSetC: GOST R 34.10-2012 (512 bit) ParamSet C
-
-id-tc26-constants 2     : id-tc26-digest-constants
-id-tc26-constants 5     : id-tc26-cipher-constants
-id-tc26-cipher-constants 1	: id-tc26-gost-28147-constants
-id-tc26-gost-28147-constants 1	: id-tc26-gost-28147-param-Z : GOST 28147-89 TC26 parameter set
-
-member-body 643 3 131 1 1	: INN	: INN
-member-body 643 100 1		: OGRN	: OGRN
-member-body 643 100 3		: SNILS	: SNILS
-member-body 643 100 5		: OGRNIP	: OGRNIP
-member-body 643 100 111	: subjectSignTool	: Signing Tool of Subject
-member-body 643 100 112	: issuerSignTool	: Signing Tool of Issuer
-member-body 643 100 113  : classSignTool   : Class of Signing Tool
-member-body 643 100 113 1 : classSignToolKC1 : Class of Signing Tool KC1
-member-body 643 100 113 2 : classSignToolKC2 : Class of Signing Tool KC2
-member-body 643 100 113 3 : classSignToolKC3 : Class of Signing Tool KC3
-member-body 643 100 113 4 : classSignToolKB1 : Class of Signing Tool KB1
-member-body 643 100 113 5 : classSignToolKB2 : Class of Signing Tool KB2
-member-body 643 100 113 6 : classSignToolKA1 : Class of Signing Tool KA1
-
-#GOST R34.13-2015 Grasshopper "Kuznechik"
-			: kuznyechik-ecb
-			: kuznyechik-ctr
-			: kuznyechik-ofb
-			: kuznyechik-cbc
-			: kuznyechik-cfb
-			: kuznyechik-mac
-
-#GOST R34.13-2015 Magma
-			: magma-ecb
-			: magma-ctr
-			: magma-ofb
-			: magma-cbc
-			: magma-cfb
-			: magma-mac
-
-# Definitions for Camellia cipher - CBC MODE
-
-1 2 392 200011 61 1 1 1 2 : CAMELLIA-128-CBC		: camellia-128-cbc
-1 2 392 200011 61 1 1 1 3 : CAMELLIA-192-CBC		: camellia-192-cbc
-1 2 392 200011 61 1 1 1 4 : CAMELLIA-256-CBC		: camellia-256-cbc
-1 2 392 200011 61 1 1 3 2 : id-camellia128-wrap
-1 2 392 200011 61 1 1 3 3 : id-camellia192-wrap
-1 2 392 200011 61 1 1 3 4 : id-camellia256-wrap
-
-# Definitions for Camellia cipher - ECB, CFB, OFB MODE
-
-!Alias ntt-ds 0 3 4401 5
-!Alias camellia ntt-ds 3 1 9
-
-camellia 1		: CAMELLIA-128-ECB		: camellia-128-ecb
-!Cname camellia-128-ofb128
-camellia 3		: CAMELLIA-128-OFB		: camellia-128-ofb
-!Cname camellia-128-cfb128
-camellia 4		: CAMELLIA-128-CFB		: camellia-128-cfb
-camellia 6		: CAMELLIA-128-GCM		: camellia-128-gcm
-camellia 7		: CAMELLIA-128-CCM		: camellia-128-ccm
-camellia 9		: CAMELLIA-128-CTR		: camellia-128-ctr
-camellia 10		: CAMELLIA-128-CMAC		: camellia-128-cmac
-
-camellia 21		: CAMELLIA-192-ECB		: camellia-192-ecb
-!Cname camellia-192-ofb128
-camellia 23		: CAMELLIA-192-OFB		: camellia-192-ofb
-!Cname camellia-192-cfb128
-camellia 24		: CAMELLIA-192-CFB		: camellia-192-cfb
-camellia 26		: CAMELLIA-192-GCM		: camellia-192-gcm
-camellia 27		: CAMELLIA-192-CCM		: camellia-192-ccm
-camellia 29		: CAMELLIA-192-CTR		: camellia-192-ctr
-camellia 30		: CAMELLIA-192-CMAC		: camellia-192-cmac
-
-camellia 41		: CAMELLIA-256-ECB		: camellia-256-ecb
-!Cname camellia-256-ofb128
-camellia 43		: CAMELLIA-256-OFB		: camellia-256-ofb
-!Cname camellia-256-cfb128
-camellia 44		: CAMELLIA-256-CFB		: camellia-256-cfb
-camellia 46		: CAMELLIA-256-GCM		: camellia-256-gcm
-camellia 47		: CAMELLIA-256-CCM		: camellia-256-ccm
-camellia 49		: CAMELLIA-256-CTR		: camellia-256-ctr
-camellia 50		: CAMELLIA-256-CMAC		: camellia-256-cmac
-
-# There are no OIDs for these modes...
-
-			: CAMELLIA-128-CFB1		: camellia-128-cfb1
-			: CAMELLIA-192-CFB1		: camellia-192-cfb1
-			: CAMELLIA-256-CFB1		: camellia-256-cfb1
-			: CAMELLIA-128-CFB8		: camellia-128-cfb8
-			: CAMELLIA-192-CFB8		: camellia-192-cfb8
-			: CAMELLIA-256-CFB8		: camellia-256-cfb8
-
-# Definitions for ARIA cipher
-
-!Alias aria 1 2 410 200046 1 1
-aria 1                  : ARIA-128-ECB                  : aria-128-ecb
-aria 2                  : ARIA-128-CBC                  : aria-128-cbc
-!Cname aria-128-cfb128
-aria 3                  : ARIA-128-CFB                  : aria-128-cfb
-!Cname aria-128-ofb128
-aria 4                  : ARIA-128-OFB                  : aria-128-ofb
-aria 5			: ARIA-128-CTR                  : aria-128-ctr
-
-aria 6                  : ARIA-192-ECB                  : aria-192-ecb
-aria 7                  : ARIA-192-CBC                  : aria-192-cbc
-!Cname aria-192-cfb128
-aria 8                  : ARIA-192-CFB                  : aria-192-cfb
-!Cname aria-192-ofb128
-aria 9                  : ARIA-192-OFB                  : aria-192-ofb
-aria 10                 : ARIA-192-CTR                  : aria-192-ctr
-
-aria 11                 : ARIA-256-ECB                  : aria-256-ecb
-aria 12                 : ARIA-256-CBC                  : aria-256-cbc
-!Cname aria-256-cfb128
-aria 13                 : ARIA-256-CFB                  : aria-256-cfb
-!Cname aria-256-ofb128
-aria 14                 : ARIA-256-OFB                  : aria-256-ofb
-aria 15                 : ARIA-256-CTR                  : aria-256-ctr
-
-# There are no OIDs for these ARIA modes...
-                        : ARIA-128-CFB1                 : aria-128-cfb1
-                        : ARIA-192-CFB1                 : aria-192-cfb1
-                        : ARIA-256-CFB1                 : aria-256-cfb1
-                        : ARIA-128-CFB8                 : aria-128-cfb8
-                        : ARIA-192-CFB8                 : aria-192-cfb8
-                        : ARIA-256-CFB8                 : aria-256-cfb8
-
-aria 37                 : ARIA-128-CCM                  : aria-128-ccm
-aria 38                 : ARIA-192-CCM                  : aria-192-ccm
-aria 39                 : ARIA-256-CCM                  : aria-256-ccm
-aria 34                 : ARIA-128-GCM                  : aria-128-gcm
-aria 35                 : ARIA-192-GCM                  : aria-192-gcm
-aria 36                 : ARIA-256-GCM                  : aria-256-gcm
-
-# Definitions for SEED cipher - ECB, CBC, OFB mode
-
-member-body 410 200004  : KISA          : kisa
-kisa 1 3                : SEED-ECB      : seed-ecb
-kisa 1 4                : SEED-CBC      : seed-cbc
-!Cname seed-cfb128
-kisa 1 5                : SEED-CFB      : seed-cfb
-!Cname seed-ofb128
-kisa 1 6                : SEED-OFB      : seed-ofb
-
-
-# Definitions for SM4 cipher
-
-sm-scheme 104 1         : SM4-ECB             : sm4-ecb
-sm-scheme 104 2         : SM4-CBC             : sm4-cbc
-!Cname sm4-ofb128
-sm-scheme 104 3         : SM4-OFB             : sm4-ofb
-!Cname sm4-cfb128
-sm-scheme 104 4         : SM4-CFB             : sm4-cfb
-sm-scheme 104 5         : SM4-CFB1            : sm4-cfb1
-sm-scheme 104 6         : SM4-CFB8            : sm4-cfb8
-sm-scheme 104 7         : SM4-CTR             : sm4-ctr
-sm-scheme 104 8         : SM4-GCM             : sm4-gcm
-sm-scheme 104 9         : SM4-CCM             : sm4-ccm
-sm-scheme 104 10        : SM4-XTS             : sm4-xts
-
-# There is no OID that just denotes "HMAC" oddly enough...
-
-			: HMAC				: hmac
-# Nor CMAC either
-			: CMAC				: cmac
-
-# Synthetic composite ciphersuites
-			: RC4-HMAC-MD5			: rc4-hmac-md5
-			: AES-128-CBC-HMAC-SHA1		: aes-128-cbc-hmac-sha1
-			: AES-192-CBC-HMAC-SHA1		: aes-192-cbc-hmac-sha1
-			: AES-256-CBC-HMAC-SHA1		: aes-256-cbc-hmac-sha1
-			: AES-128-CBC-HMAC-SHA256	: aes-128-cbc-hmac-sha256
-			: AES-192-CBC-HMAC-SHA256	: aes-192-cbc-hmac-sha256
-			: AES-256-CBC-HMAC-SHA256	: aes-256-cbc-hmac-sha256
-			: ChaCha20-Poly1305		: chacha20-poly1305
-			: ChaCha20			: chacha20
-			: AES-128-CBC-HMAC-SHA1-ETM	: aes-128-cbc-hmac-sha1-etm
-			: AES-192-CBC-HMAC-SHA1-ETM	: aes-192-cbc-hmac-sha1-etm
-			: AES-256-CBC-HMAC-SHA1-ETM	: aes-256-cbc-hmac-sha1-etm
-			: AES-128-CBC-HMAC-SHA256-ETM	: aes-128-cbc-hmac-sha256-etm
-			: AES-192-CBC-HMAC-SHA256-ETM	: aes-192-cbc-hmac-sha256-etm
-			: AES-256-CBC-HMAC-SHA256-ETM	: aes-256-cbc-hmac-sha256-etm
-			: AES-128-CBC-HMAC-SHA512-ETM	: aes-128-cbc-hmac-sha512-etm
-			: AES-192-CBC-HMAC-SHA512-ETM	: aes-192-cbc-hmac-sha512-etm
-			: AES-256-CBC-HMAC-SHA512-ETM	: aes-256-cbc-hmac-sha512-etm
-
-ISO-US 10046 2 1	: dhpublicnumber		: X9.42 DH
-
-# RFC 5639 curve OIDs (see http://www.ietf.org/rfc/rfc5639.txt)
-# versionOne OBJECT IDENTIFIER ::= {
-# iso(1) identified-organization(3) teletrust(36) algorithm(3)
-# signature-algorithm(3) ecSign(2) ecStdCurvesAndGeneration(8)
-# ellipticCurve(1) 1 }
-1 3 36 3 3 2 8 1 1 1 : brainpoolP160r1
-1 3 36 3 3 2 8 1 1 2 : brainpoolP160t1
-1 3 36 3 3 2 8 1 1 3 : brainpoolP192r1
-1 3 36 3 3 2 8 1 1 4 : brainpoolP192t1
-1 3 36 3 3 2 8 1 1 5 : brainpoolP224r1
-1 3 36 3 3 2 8 1 1 6 : brainpoolP224t1
-1 3 36 3 3 2 8 1 1 7 : brainpoolP256r1
-# Alternate NID to represent the TLSv1.3 brainpoolP256r1 group
-                     : brainpoolP256r1tls13
-1 3 36 3 3 2 8 1 1 8 : brainpoolP256t1
-1 3 36 3 3 2 8 1 1 9 : brainpoolP320r1
-1 3 36 3 3 2 8 1 1 10 : brainpoolP320t1
-1 3 36 3 3 2 8 1 1 11 : brainpoolP384r1
-# Alternate NID to represent the TLSv1.3 brainpoolP384r1 group
-                      : brainpoolP384r1tls13
-1 3 36 3 3 2 8 1 1 12 : brainpoolP384t1
-1 3 36 3 3 2 8 1 1 13 : brainpoolP512r1
-# Alternate NID to represent the TLSv1.3 brainpoolP512r1 group
-                      : brainpoolP512r1tls13
-1 3 36 3 3 2 8 1 1 14 : brainpoolP512t1
-
-# ECDH schemes from RFC5753
-!Alias x9-63-scheme 1 3 133 16 840 63 0
-!Alias secg-scheme certicom-arc 1
-
-x9-63-scheme 2   : dhSinglePass-stdDH-sha1kdf-scheme
-secg-scheme 11 0 : dhSinglePass-stdDH-sha224kdf-scheme
-secg-scheme 11 1 : dhSinglePass-stdDH-sha256kdf-scheme
-secg-scheme 11 2 : dhSinglePass-stdDH-sha384kdf-scheme
-secg-scheme 11 3 : dhSinglePass-stdDH-sha512kdf-scheme
-
-x9-63-scheme 3   : dhSinglePass-cofactorDH-sha1kdf-scheme
-secg-scheme 14 0 : dhSinglePass-cofactorDH-sha224kdf-scheme
-secg-scheme 14 1 : dhSinglePass-cofactorDH-sha256kdf-scheme
-secg-scheme 14 2 : dhSinglePass-cofactorDH-sha384kdf-scheme
-secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
-# NIDs for use with lookup tables.
-                 : dh-std-kdf
-                 : dh-cofactor-kdf
-
-# RFC 6962 Extension OIDs (see http://www.ietf.org/rfc/rfc6962.txt)
-1 3 6 1 4 1 11129 2 4 2	: ct_precert_scts		: CT Precertificate SCTs
-1 3 6 1 4 1 11129 2 4 3	: ct_precert_poison		: CT Precertificate Poison
-1 3 6 1 4 1 11129 2 4 4	: ct_precert_signer		: CT Precertificate Signer
-1 3 6 1 4 1 11129 2 4 5	: ct_cert_scts			: CT Certificate SCTs
-
-# CABForum EV SSL Certificate Guidelines
-# (see https://cabforum.org/extended-validation/)
-# OIDs for Subject Jurisdiction of Incorporation or Registration
-ms-corp 60 2 1 1	: jurisdictionL		: jurisdictionLocalityName
-ms-corp 60 2 1 2	: jurisdictionST	: jurisdictionStateOrProvinceName
-ms-corp 60 2 1 3	: jurisdictionC		: jurisdictionCountryName
-
-# SCRYPT algorithm
-!Cname id-scrypt
-1 3 6 1 4 1 11591 4 11		: id-scrypt         : scrypt
-
-# NID for TLS1 PRF
-                            : TLS1-PRF          : tls1-prf
-
-# NID for HKDF
-                            : HKDF              : hkdf
-
-# NID for SSHKDF
-                            : SSHKDF            : sshkdf
-
-# NID for SSKDF
-                            : SSKDF              : sskdf
-# NID for X942KDF
-                            : X942KDF            : x942kdf
-
-# NID for X963-2001 KDF
-                            : X963KDF            : x963kdf
-
-# RFC 4556
-1 3 6 1 5 2 3 : id-pkinit
-id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth
-id-pkinit 5                     : pkInitKDC             : Signing KDC Response
-
-# From RFC8410
-1 3 101 110 : X25519
-1 3 101 111 : X448
-1 3 101 112 : ED25519
-1 3 101 113 : ED448
-
-
-# NIDs for cipher key exchange
-                            : KxRSA        : kx-rsa
-                            : KxECDHE      : kx-ecdhe
-                            : KxDHE        : kx-dhe
-                            : KxECDHE-PSK  : kx-ecdhe-psk
-                            : KxDHE-PSK    : kx-dhe-psk
-                            : KxRSA_PSK    : kx-rsa-psk
-                            : KxPSK        : kx-psk
-                            : KxSRP        : kx-srp
-                            : KxGOST       : kx-gost
-                            : KxGOST18     : kx-gost18
-                            : KxANY        : kx-any
-
-# NIDs for cipher authentication
-                            : AuthRSA      : auth-rsa
-                            : AuthECDSA    : auth-ecdsa
-                            : AuthPSK      : auth-psk
-                            : AuthDSS      : auth-dss
-                            : AuthGOST01   : auth-gost01
-                            : AuthGOST12   : auth-gost12
-                            : AuthSRP      : auth-srp
-                            : AuthNULL     : auth-null
-                            : AuthANY      : auth-any
-# NID for Poly1305
-                            : Poly1305     : poly1305
-# NID for SipHash
-                            : SipHash      : siphash
-# NIDs for RFC7919 DH parameters
-                            : ffdhe2048
-                            : ffdhe3072
-                            : ffdhe4096
-                            : ffdhe6144
-                            : ffdhe8192
-# NIDs for RFC3526 DH parameters
-                            : modp_1536
-                            : modp_2048
-                            : modp_3072
-                            : modp_4096
-                            : modp_6144
-                            : modp_8192
-
-# OIDs for DSTU-4145/DSTU-7564 (http://zakon2.rada.gov.ua/laws/show/z0423-17)
-
-# DSTU OIDs
-member-body 804   : ISO-UA
-ISO-UA 2 1 1 1    : ua-pki
-ua-pki 1 1 1      : dstu28147         : DSTU Gost 28147-2009
-dstu28147 2       : dstu28147-ofb     : DSTU Gost 28147-2009 OFB mode
-dstu28147 3       : dstu28147-cfb     : DSTU Gost 28147-2009 CFB mode
-dstu28147 5       : dstu28147-wrap    : DSTU Gost 28147-2009 key wrap
-
-ua-pki 1 1 2      : hmacWithDstu34311 : HMAC DSTU Gost 34311-95
-ua-pki 1 2 1      : dstu34311         : DSTU Gost 34311-95
-
-ua-pki 1 3 1 1    : dstu4145le        : DSTU 4145-2002 little endian
-dstu4145le 1 1    : dstu4145be        : DSTU 4145-2002 big endian
-
-# 1.2.804. 2.1.1.1 1.3.1.1  .2.6
-#     UA    ua-pki  4145 le
-# DSTU named curves
-dstu4145le 2 0 : uacurve0 : DSTU curve 0
-dstu4145le 2 1 : uacurve1 : DSTU curve 1
-dstu4145le 2 2 : uacurve2 : DSTU curve 2
-dstu4145le 2 3 : uacurve3 : DSTU curve 3
-dstu4145le 2 4 : uacurve4 : DSTU curve 4
-dstu4145le 2 5 : uacurve5 : DSTU curve 5
-dstu4145le 2 6 : uacurve6 : DSTU curve 6
-dstu4145le 2 7 : uacurve7 : DSTU curve 7
-dstu4145le 2 8 : uacurve8 : DSTU curve 8
-dstu4145le 2 9 : uacurve9 : DSTU curve 9
-# NID for AES-SIV
-                            : AES-128-SIV  : aes-128-siv
-                            : AES-192-SIV  : aes-192-siv
-                            : AES-256-SIV  : aes-256-siv
-
-
-!Cname oracle
-joint-iso-itu-t 16 840 1 113894 : oracle-organization : Oracle organization
-# Jdk trustedKeyUsage attribute
-oracle 746875 1 1 : oracle-jdk-trustedkeyusage : Trusted key usage (Oracle)
-
-# NID for compression
-                            : brotli : Brotli compression
-			    : zstd : Zstandard compression
-
-2 23 133 : tcg 		: Trusted Computing Group
-
-tcg 1  : tcg-tcpaSpecVersion
-tcg 2  : tcg-attribute 			: Trusted Computing Group Attributes
-tcg 3  : tcg-protocol 			: Trusted Computing Group Protocols
-tcg 4  : tcg-algorithm 			: Trusted Computing Group Algorithms
-tcg 5  : tcg-platformClass 		: Trusted Computing Group Platform Classes
-tcg 6  : tcg-ce 				: Trusted Computing Group Certificate Extensions
-tcg 8  : tcg-kp 				: Trusted Computing Group Key Purposes
-tcg 11 : tcg-ca					: Trusted Computing Group Certificate Policies
-tcg 17 : tcg-address 			: Trusted Computing Group Address Formats
-tcg 18 : tcg-registry 			: Trusted Computing Group Registry
-tcg 19 : tcg-traits				: Trusted Computing Group Traits
-
-tcg-platformClass 1 : tcg-common 							: Trusted Computing Group Common
-tcg-common 1		: tcg-at-platformManufacturerStr		: TCG Platform Manufacturer String
-tcg-common 2		: tcg-at-platformManufacturerId			: TCG Platform Manufacturer ID
-tcg-common 3		: tcg-at-platformConfigUri				: TCG Platform Configuration URI
-tcg-common 4		: tcg-at-platformModel					: TCG Platform Model
-tcg-common 5		: tcg-at-platformVersion				: TCG Platform Version
-tcg-common 6		: tcg-at-platformSerial					: TCG Platform Serial Number
-tcg-common 7		: tcg-at-platformConfiguration			: TCG Platform Configuration
-tcg-common 8		: tcg-at-platformIdentifier				: TCG Platform Identifier
-
-tcg-attribute 1		: tcg-at-tpmManufacturer			  : TPM Manufacturer
-tcg-attribute 2		: tcg-at-tpmModel					  : TPM Model
-tcg-attribute 3		: tcg-at-tpmVersion 				  : TPM Version
-tcg-attribute 10	: tcg-at-securityQualities			  : Security Qualities
-tcg-attribute 11	: tcg-at-tpmProtectionProfile		  : TPM Protection Profile
-tcg-attribute 12	: tcg-at-tpmSecurityTarget 			  : TPM Security Target
-tcg-attribute 13	: tcg-at-tbbProtectionProfile		  : TBB Protection Profile
-tcg-attribute 14	: tcg-at-tbbSecurityTarget			  : TBB Security Target
-tcg-attribute 15	: tcg-at-tpmIdLabel					  : TPM ID Label
-tcg-attribute 16	: tcg-at-tpmSpecification			  : TPM Specification
-tcg-attribute 17	: tcg-at-tcgPlatformSpecification	  : TPM Platform Specification
-tcg-attribute 18	: tcg-at-tpmSecurityAssertions		  : TPM Security Assertions
-tcg-attribute 19	: tcg-at-tbbSecurityAssertions		  : TBB Security Assertions
-tcg-attribute 23	: tcg-at-tcgCredentialSpecification	  : TCG Credential Specification
-tcg-attribute 25	: tcg-at-tcgCredentialType			  : TCG Credential Type
-tcg-attribute 26    : tcg-at-previousPlatformCertificates : TCG Previous Platform Certificates
-tcg-attribute 27    : tcg-at-tbbSecurityAssertions-v3     : TCG TBB Security Assertions V3
-tcg-attribute 28    : tcg-at-cryptographicAnchors         : TCG Cryptographic Anchors
-
-tcg-at-platformConfiguration 1 : tcg-at-platformConfiguration-v1 : Platform Configuration Version 1
-tcg-at-platformConfiguration 2 : tcg-at-platformConfiguration-v2 : Platform Configuration Version 2
-tcg-at-platformConfiguration 3 : tcg-at-platformConfiguration-v3 : Platform Configuration Version 3
-tcg-at-platformConfiguration 4 : tcg-at-platformConfigUri-v3     : Platform Configuration URI Version 3
-
-tcg-algorithm 1 : tcg-algorithm-null : TCG NULL Algorithm
-
-tcg-kp 1 : tcg-kp-EKCertificate 						 : Endorsement Key Certificate
-tcg-kp 2 : tcg-kp-PlatformAttributeCertificate 			 : Platform Attribute Certificate
-tcg-kp 3 : tcg-kp-AIKCertificate 						 : Attestation Identity Key Certificate
-tcg-kp 4 : tcg-kp-PlatformKeyCertificate 				 : Platform Key Certificate
-tcg-kp 5 : tcg-kp-DeltaPlatformAttributeCertificate 	 : Delta Platform Attribute Certificate
-tcg-kp 6 : tcg-kp-DeltaPlatformKeyCertificate 			 : Delta Platform Key Certificate
-tcg-kp 7 : tcg-kp-AdditionalPlatformAttributeCertificate : Additional Platform Attribute Certificate
-tcg-kp 8 : tcg-kp-AdditionalPlatformKeyCertificate 		 : Additional Platform Key Certificate
-
-tcg-ce 2 : tcg-ce-relevantCredentials						: Relevant Credentials
-tcg-ce 3 : tcg-ce-relevantManifests							: Relevant Manifests
-tcg-ce 4 : tcg-ce-virtualPlatformAttestationService			: Virtual Platform Attestation Service
-tcg-ce 5 : tcg-ce-migrationControllerAttestationService		: Migration Controller Attestation Service
-tcg-ce 6 : tcg-ce-migrationControllerRegistrationService	: Migration Controller Registration Service
-tcg-ce 7 : tcg-ce-virtualPlatformBackupService				: Virtual Platform Backup Service
-
-tcg-protocol 1 : tcg-prt-tpmIdProtocol : TCG TPM Protocol
-
-tcg-address 1 : tcg-address-ethernetmac		: Ethernet MAC Address
-tcg-address 2 : tcg-address-wlanmac			: WLAN MAC Address
-tcg-address 3 : tcg-address-bluetoothmac	: Bluetooth MAC Address
-
-tcg-registry 3 : tcg-registry-componentClass : TCG Component Class
-
-tcg-registry-componentClass 1 : tcg-registry-componentClass-tcg		: Trusted Computed Group Registry
-tcg-registry-componentClass 2 : tcg-registry-componentClass-ietf	: Internet Engineering Task Force Registry
-tcg-registry-componentClass 3 : tcg-registry-componentClass-dmtf	: Distributed Management Task Force Registry
-tcg-registry-componentClass 4 : tcg-registry-componentClass-pcie	: PCIE Component Class
-tcg-registry-componentClass 5 : tcg-registry-componentClass-disk	: Disk Component Class
-
-tcg-ca 4 : tcg-cap-verifiedPlatformCertificate : TCG Verified Platform Certificate CA Policy
-
-tcg-traits 1 : tcg-tr-ID       : TCG Trait Identifiers
-tcg-traits 2 : tcg-tr-category : TCG Trait Categories
-tcg-traits 3 : tcg-tr-registry : TCG Trait Registries
-
-tcg-tr-ID 1  : tcg-tr-ID-Boolean 								: Boolean Trait
-tcg-tr-ID 2  : tcg-tr-ID-CertificateIdentifier 					: Certificate Identifier Trait
-tcg-tr-ID 3  : tcg-tr-ID-CommonCriteria 						: Common Criteria Trait
-tcg-tr-ID 4  : tcg-tr-ID-componentClass 						: Component Class Trait
-tcg-tr-ID 5  : tcg-tr-ID-componentIdentifierV11 				: Component Identifier V1.1 Trait
-tcg-tr-ID 6  : tcg-tr-ID-FIPSLevel 								: FIPS Level Trait
-tcg-tr-ID 7  : tcg-tr-ID-ISO9000Level 							: ISO 9000 Level Trait
-tcg-tr-ID 8  : tcg-tr-ID-networkMAC 							: Network MAC Trait
-tcg-tr-ID 9  : tcg-tr-ID-OID 									: Object Identifier Trait
-tcg-tr-ID 10 : tcg-tr-ID-PEN 									: Private Enterprise Number Trait
-tcg-tr-ID 11 : tcg-tr-ID-platformFirmwareCapabilities 			: Platform Firmware Capabilities Trait
-tcg-tr-ID 12 : tcg-tr-ID-platformFirmwareSignatureVerification 	: Platform Firmware Signature Verification Trait
-tcg-tr-ID 13 : tcg-tr-ID-platformFirmwareUpdateCompliance 		: Platform Firmware Update Compliance Trait
-tcg-tr-ID 14 : tcg-tr-ID-platformHardwareCapabilities 			: Platform Hardware Capabilities Trait
-tcg-tr-ID 15 : tcg-tr-ID-RTM 									: Root of Trust for Measurement Trait
-tcg-tr-ID 16 : tcg-tr-ID-status 								: Attribute Status Trait
-tcg-tr-ID 17 : tcg-tr-ID-URI 									: Uniform Resource Identifier Trait
-tcg-tr-ID 18 : tcg-tr-ID-UTF8String 							: UTF8String Trait
-tcg-tr-ID 19 : tcg-tr-ID-IA5String 								: IA5String Trait
-tcg-tr-ID 20 : tcg-tr-ID-PEMCertString 							: PEM-Encoded Certificate String Trait
-tcg-tr-ID 21 : tcg-tr-ID-PublicKey 								: Public Key Trait
-
-tcg-tr-category 1  : tcg-tr-cat-platformManufacturer 					: Platform Manufacturer Trait Category
-tcg-tr-category 2  : tcg-tr-cat-platformModel 							: Platform Model Trait Category
-tcg-tr-category 3  : tcg-tr-cat-platformVersion 						: Platform Version Trait Category
-tcg-tr-category 4  : tcg-tr-cat-platformSerial 							: Platform Serial Trait Category
-tcg-tr-category 5  : tcg-tr-cat-platformManufacturerIdentifier 			: Platform Manufacturer Identifier Trait Category
-tcg-tr-category 6  : tcg-tr-cat-platformOwnership 						: Platform Ownership Trait Category
-tcg-tr-category 7  : tcg-tr-cat-componentClass 							: Component Class Trait Category
-tcg-tr-category 8  : tcg-tr-cat-componentManufacturer 					: Component Manufacturer Trait Category
-tcg-tr-category 9  : tcg-tr-cat-componentModel 							: Component Model Trait Category
-tcg-tr-category 10 : tcg-tr-cat-componentSerial 						: Component Serial Trait Category
-tcg-tr-category 11 : tcg-tr-cat-componentStatus 						: Component Status Trait Category
-tcg-tr-category 12 : tcg-tr-cat-componentLocation 						: Component Location Trait Category
-tcg-tr-category 13 : tcg-tr-cat-componentRevision 						: Component Revision Trait Category
-tcg-tr-category 14 : tcg-tr-cat-componentFieldReplaceable 				: Component Field Replaceable Trait Category
-tcg-tr-category 15 : tcg-tr-cat-EKCertificate 							: EK Certificate Trait Category
-tcg-tr-category 16 : tcg-tr-cat-IAKCertificate 							: IAK Certificate Trait Category
-tcg-tr-category 17 : tcg-tr-cat-IDevIDCertificate 						: IDevID Certificate Trait Category
-tcg-tr-category 18 : tcg-tr-cat-DICECertificate 						: DICE Certificate Trait Category
-tcg-tr-category 19 : tcg-tr-cat-SPDMCertificate 						: SPDM Certificate Trait Category
-tcg-tr-category 20 : tcg-tr-cat-PEMCertificate 							: PEM Certificate Trait Category
-tcg-tr-category 21 : tcg-tr-cat-PlatformCertificate 					: Platform Certificate Trait Category
-tcg-tr-category 22 : tcg-tr-cat-DeltaPlatformCertificate 				: Delta Platform Certificate Trait Category
-tcg-tr-category 23 : tcg-tr-cat-RebasePlatformCertificate 				: Rebase Platform Certificate Trait Category
-tcg-tr-category 24 : tcg-tr-cat-genericCertificate 						: Generic Certificate Trait Category
-tcg-tr-category 25 : tcg-tr-cat-CommonCriteria 							: Common Criteria Trait Category
-tcg-tr-category 26 : tcg-tr-cat-componentIdentifierV11 					: Component Identifier V1.1 Trait Category
-tcg-tr-category 27 : tcg-tr-cat-FIPSLevel 								: FIPS Level Trait Category
-tcg-tr-category 28 : tcg-tr-cat-ISO9000 								: ISO 9000 Trait Category
-tcg-tr-category 29 : tcg-tr-cat-networkMAC 								: Network MAC Trait Category
-tcg-tr-category 30 : tcg-tr-cat-attestationProtocol 					: Attestation Protocol Trait Category
-tcg-tr-category 31 : tcg-tr-cat-PEN 									: Private Enterprise Number Trait Category
-tcg-tr-category 32 : tcg-tr-cat-platformFirmwareCapabilities 			: Platform Firmware Capabilities Trait Category
-tcg-tr-category 33 : tcg-tr-cat-platformHardwareCapabilities 			: Platform Hardware Capabilities Trait Category
-tcg-tr-category 34 : tcg-tr-cat-platformFirmwareSignatureVerification 	: Platform Firmware Signature Verification Trait Category
-tcg-tr-category 35 : tcg-tr-cat-platformFirmwareUpdateCompliance 		: Platform Firmware Update Compliance Trait Category
-tcg-tr-category 36 : tcg-tr-cat-RTM 									: Root of Trust of Measurement Trait Category
-tcg-tr-category 37 : tcg-tr-cat-PublicKey 								: Public Key Trait Category
-
-!Alias nistKems nistAlgorithms 4
-nistKems 1 : id-alg-ml-kem-512  : ML-KEM-512
-nistKems 2 : id-alg-ml-kem-768  : ML-KEM-768
-nistKems 3 : id-alg-ml-kem-1024 : ML-KEM-1024
+# Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# The built-in ASN.1 objects.  The build generates
+# include/openssl/obj_mac.h, crypto/objects/obj_dat.h and
+# crypto/objects/obj_xref.h from this file; crypto/objects/README.md
+# describes the format.
+#
+# To add an object, append a line at the end of the file,
+# with the NID one more than the last one:
+#
+#   NID:NAME:OID:SN:LN
+#
+# NID   the object's number, NID_<NAME>.  Part of the API: never
+#       changed or reused.
+# NAME  the C name: the macros are SN_<NAME>, LN_<NAME>, NID_<NAME>
+#       and OBJ_<NAME>.
+# OID   dotted decimal.
+# SN    the short name.
+# LN    the long name, which may contain spaces.
+#
+# Every line has all five fields.  An empty field means the object has
+# none.  Only LN may contain spaces.
+#
+# A removed object keeps its NID, with "removed" in place of the OID
+# and no names:
+#
+#   NID:NAME:removed::
+#
+# An alias defines only OBJ_<NAME>, has no NID, and may be anywhere:
+#
+#   alias:NAME:OID::
+
+1:rsadsi:1.2.840.113549:rsadsi:RSA Data Security, Inc.
+2:pkcs:1.2.840.113549.1:pkcs:RSA Data Security, Inc. PKCS
+3:md2:1.2.840.113549.2.2:MD2:md2
+4:md5:1.2.840.113549.2.5:MD5:md5
+5:rc4:1.2.840.113549.3.4:RC4:rc4
+6:rsaEncryption:1.2.840.113549.1.1.1::rsaEncryption
+7:md2WithRSAEncryption:1.2.840.113549.1.1.2:RSA-MD2:md2WithRSAEncryption
+8:md5WithRSAEncryption:1.2.840.113549.1.1.4:RSA-MD5:md5WithRSAEncryption
+9:pbeWithMD2AndDES_CBC:1.2.840.113549.1.5.1:PBE-MD2-DES:pbeWithMD2AndDES-CBC
+10:pbeWithMD5AndDES_CBC:1.2.840.113549.1.5.3:PBE-MD5-DES:pbeWithMD5AndDES-CBC
+11:X500:2.5:X500:directory services (X.500)
+12:X509:2.5.4:X509:
+13:commonName:2.5.4.3:CN:commonName
+14:countryName:2.5.4.6:C:countryName
+15:localityName:2.5.4.7:L:localityName
+16:stateOrProvinceName:2.5.4.8:ST:stateOrProvinceName
+17:organizationName:2.5.4.10:O:organizationName
+18:organizationalUnitName:2.5.4.11:OU:organizationalUnitName
+19:rsa:2.5.8.1.1:RSA:rsa
+20:pkcs7:1.2.840.113549.1.7:pkcs7:
+21:pkcs7_data:1.2.840.113549.1.7.1::pkcs7-data
+22:pkcs7_signed:1.2.840.113549.1.7.2::pkcs7-signedData
+23:pkcs7_enveloped:1.2.840.113549.1.7.3::pkcs7-envelopedData
+24:pkcs7_signedAndEnveloped:1.2.840.113549.1.7.4::pkcs7-signedAndEnvelopedData
+25:pkcs7_digest:1.2.840.113549.1.7.5::pkcs7-digestData
+26:pkcs7_encrypted:1.2.840.113549.1.7.6::pkcs7-encryptedData
+27:pkcs3:1.2.840.113549.1.3:pkcs3:
+28:dhKeyAgreement:1.2.840.113549.1.3.1::dhKeyAgreement
+29:des_ecb:1.3.14.3.2.6:DES-ECB:des-ecb
+30:des_cfb64:1.3.14.3.2.9:DES-CFB:des-cfb
+31:des_cbc:1.3.14.3.2.7:DES-CBC:des-cbc
+32:des_ede_ecb:1.3.14.3.2.17:DES-EDE:des-ede
+33:des_ede3_ecb::DES-EDE3:des-ede3
+alias:internet:1.3.6.1::
+34:idea_cbc:1.3.6.1.4.1.188.7.1.1.2:IDEA-CBC:idea-cbc
+35:idea_cfb64::IDEA-CFB:idea-cfb
+36:idea_ecb::IDEA-ECB:idea-ecb
+37:rc2_cbc:1.2.840.113549.3.2:RC2-CBC:rc2-cbc
+38:rc2_ecb::RC2-ECB:rc2-ecb
+39:rc2_cfb64::RC2-CFB:rc2-cfb
+40:rc2_ofb64::RC2-OFB:rc2-ofb
+41:sha:1.3.14.3.2.18:SHA:sha
+42:shaWithRSAEncryption:1.3.14.3.2.15:RSA-SHA:shaWithRSAEncryption
+43:des_ede_cbc::DES-EDE-CBC:des-ede-cbc
+44:des_ede3_cbc:1.2.840.113549.3.7:DES-EDE3-CBC:des-ede3-cbc
+45:des_ofb64:1.3.14.3.2.8:DES-OFB:des-ofb
+46:idea_ofb64::IDEA-OFB:idea-ofb
+47:pkcs9:1.2.840.113549.1.9:pkcs9:
+48:pkcs9_emailAddress:1.2.840.113549.1.9.1::emailAddress
+49:pkcs9_unstructuredName:1.2.840.113549.1.9.2::unstructuredName
+50:pkcs9_contentType:1.2.840.113549.1.9.3::contentType
+51:pkcs9_messageDigest:1.2.840.113549.1.9.4::messageDigest
+52:pkcs9_signingTime:1.2.840.113549.1.9.5::signingTime
+53:pkcs9_countersignature:1.2.840.113549.1.9.6::countersignature
+54:pkcs9_challengePassword:1.2.840.113549.1.9.7::challengePassword
+55:pkcs9_unstructuredAddress:1.2.840.113549.1.9.8::unstructuredAddress
+56:pkcs9_extCertAttributes:1.2.840.113549.1.9.9::extendedCertificateAttributes
+57:netscape:2.16.840.1.113730:Netscape:Netscape Communications Corp.
+58:netscape_cert_extension:2.16.840.1.113730.1:nsCertExt:Netscape Certificate Extension
+59:netscape_data_type:2.16.840.1.113730.2:nsDataType:Netscape Data Type
+60:des_ede_cfb64::DES-EDE-CFB:des-ede-cfb
+61:des_ede3_cfb64::DES-EDE3-CFB:des-ede3-cfb
+62:des_ede_ofb64::DES-EDE-OFB:des-ede-ofb
+63:des_ede3_ofb64::DES-EDE3-OFB:des-ede3-ofb
+64:sha1:1.3.14.3.2.26:SHA1:sha1
+65:sha1WithRSAEncryption:1.2.840.113549.1.1.5:RSA-SHA1:sha1WithRSAEncryption
+66:dsaWithSHA:1.3.14.3.2.13:DSA-SHA:dsaWithSHA
+67:dsa_2:1.3.14.3.2.12:DSA-old:dsaEncryption-old
+68:pbeWithSHA1AndRC2_CBC:1.2.840.113549.1.5.11:PBE-SHA1-RC2-64:pbeWithSHA1AndRC2-CBC
+69:id_pbkdf2:1.2.840.113549.1.5.12::PBKDF2
+70:dsaWithSHA1_2:1.3.14.3.2.27:DSA-SHA1-old:dsaWithSHA1-old
+71:netscape_cert_type:2.16.840.1.113730.1.1:nsCertType:Netscape Cert Type
+72:netscape_base_url:2.16.840.1.113730.1.2:nsBaseUrl:Netscape Base Url
+73:netscape_revocation_url:2.16.840.1.113730.1.3:nsRevocationUrl:Netscape Revocation Url
+74:netscape_ca_revocation_url:2.16.840.1.113730.1.4:nsCaRevocationUrl:Netscape CA Revocation Url
+75:netscape_renewal_url:2.16.840.1.113730.1.7:nsRenewalUrl:Netscape Renewal Url
+76:netscape_ca_policy_url:2.16.840.1.113730.1.8:nsCaPolicyUrl:Netscape CA Policy Url
+77:netscape_ssl_server_name:2.16.840.1.113730.1.12:nsSslServerName:Netscape SSL Server Name
+78:netscape_comment:2.16.840.1.113730.1.13:nsComment:Netscape Comment
+79:netscape_cert_sequence:2.16.840.1.113730.2.5:nsCertSequence:Netscape Certificate Sequence
+80:desx_cbc::DESX-CBC:desx-cbc
+81:id_ce:2.5.29:id-ce:
+82:subject_key_identifier:2.5.29.14:subjectKeyIdentifier:X509v3 Subject Key Identifier
+83:key_usage:2.5.29.15:keyUsage:X509v3 Key Usage
+84:private_key_usage_period:2.5.29.16:privateKeyUsagePeriod:X509v3 Private Key Usage Period
+85:subject_alt_name:2.5.29.17:subjectAltName:X509v3 Subject Alternative Name
+86:issuer_alt_name:2.5.29.18:issuerAltName:X509v3 Issuer Alternative Name
+87:basic_constraints:2.5.29.19:basicConstraints:X509v3 Basic Constraints
+88:crl_number:2.5.29.20:crlNumber:X509v3 CRL Number
+89:certificate_policies:2.5.29.32:certificatePolicies:X509v3 Certificate Policies
+90:authority_key_identifier:2.5.29.35:authorityKeyIdentifier:X509v3 Authority Key Identifier
+91:bf_cbc:1.3.6.1.4.1.3029.1.2:BF-CBC:bf-cbc
+92:bf_ecb::BF-ECB:bf-ecb
+93:bf_cfb64::BF-CFB:bf-cfb
+94:bf_ofb64::BF-OFB:bf-ofb
+95:mdc2:2.5.8.3.101:MDC2:mdc2
+96:mdc2WithRSA:2.5.8.3.100:RSA-MDC2:mdc2WithRSA
+97:rc4_40::RC4-40:rc4-40
+98:rc2_40_cbc::RC2-40-CBC:rc2-40-cbc
+99:givenName:2.5.4.42:GN:givenName
+100:surname:2.5.4.4:SN:surname
+101:initials:2.5.4.43:initials:initials
+102:uniqueIdentifier:0.9.2342.19200300.100.1.44:uid:uniqueIdentifier
+103:crl_distribution_points:2.5.29.31:crlDistributionPoints:X509v3 CRL Distribution Points
+104:md5WithRSA:1.3.14.3.2.3:RSA-NP-MD5:md5WithRSA
+105:serialNumber:2.5.4.5::serialNumber
+106:title:2.5.4.12:title:title
+107:description:2.5.4.13::description
+108:cast5_cbc:1.2.840.113533.7.66.10:CAST5-CBC:cast5-cbc
+109:cast5_ecb::CAST5-ECB:cast5-ecb
+110:cast5_cfb64::CAST5-CFB:cast5-cfb
+111:cast5_ofb64::CAST5-OFB:cast5-ofb
+112:pbeWithMD5AndCast5_CBC:1.2.840.113533.7.66.12::pbeWithMD5AndCast5CBC
+113:dsaWithSHA1:1.2.840.10040.4.3:DSA-SHA1:dsaWithSHA1
+114:md5_sha1::MD5-SHA1:md5-sha1
+115:sha1WithRSA:1.3.14.3.2.29:RSA-SHA1-2:sha1WithRSA
+116:dsa:1.2.840.10040.4.1:DSA:dsaEncryption
+117:ripemd160:1.3.36.3.2.1:RIPEMD160:ripemd160
+118::removed::
+119:ripemd160WithRSA:1.3.36.3.3.1.2:RSA-RIPEMD160:ripemd160WithRSA
+120:rc5_cbc:1.2.840.113549.3.8:RC5-CBC:rc5-cbc
+121:rc5_ecb::RC5-ECB:rc5-ecb
+122:rc5_cfb64::RC5-CFB:rc5-cfb
+123:rc5_ofb64::RC5-OFB:rc5-ofb
+124:rle_compression:removed::
+125:zlib_compression:1.2.840.113549.1.9.16.3.8:ZLIB:zlib compression
+126:ext_key_usage:2.5.29.37:extendedKeyUsage:X509v3 Extended Key Usage
+127:id_pkix:1.3.6.1.5.5.7:PKIX:
+128:id_kp:1.3.6.1.5.5.7.3:id-kp:
+129:server_auth:1.3.6.1.5.5.7.3.1:serverAuth:TLS Web Server Authentication
+130:client_auth:1.3.6.1.5.5.7.3.2:clientAuth:TLS Web Client Authentication
+131:code_sign:1.3.6.1.5.5.7.3.3:codeSigning:Code Signing
+132:email_protect:1.3.6.1.5.5.7.3.4:emailProtection:E-mail Protection
+133:time_stamp:1.3.6.1.5.5.7.3.8:timeStamping:Time Stamping
+alias:ms_corp:1.3.6.1.4.1.311::
+134:ms_code_ind:1.3.6.1.4.1.311.2.1.21:msCodeInd:Microsoft Individual Code Signing
+135:ms_code_com:1.3.6.1.4.1.311.2.1.22:msCodeCom:Microsoft Commercial Code Signing
+136:ms_ctl_sign:1.3.6.1.4.1.311.10.3.1:msCTLSign:Microsoft Trust List Signing
+137:ms_sgc:1.3.6.1.4.1.311.10.3.3:msSGC:Microsoft Server Gated Crypto
+138:ms_efs:1.3.6.1.4.1.311.10.3.4:msEFS:Microsoft Encrypted File System
+139:ns_sgc:2.16.840.1.113730.4.1:nsSGC:Netscape Server Gated Crypto
+140:delta_crl:2.5.29.27:deltaCRL:X509v3 Delta CRL Indicator
+141:crl_reason:2.5.29.21:CRLReason:X509v3 CRL Reason Code
+142:invalidity_date:2.5.29.24:invalidityDate:Invalidity Date
+143:sxnet:1.3.101.1.4.1:SXNetID:Strong Extranet ID
+alias:pkcs12:1.2.840.113549.1.12::
+alias:pkcs12_pbeids:1.2.840.113549.1.12.1::
+144:pbe_WithSHA1And128BitRC4:1.2.840.113549.1.12.1.1:PBE-SHA1-RC4-128:pbeWithSHA1And128BitRC4
+145:pbe_WithSHA1And40BitRC4:1.2.840.113549.1.12.1.2:PBE-SHA1-RC4-40:pbeWithSHA1And40BitRC4
+146:pbe_WithSHA1And3_Key_TripleDES_CBC:1.2.840.113549.1.12.1.3:PBE-SHA1-3DES:pbeWithSHA1And3-KeyTripleDES-CBC
+147:pbe_WithSHA1And2_Key_TripleDES_CBC:1.2.840.113549.1.12.1.4:PBE-SHA1-2DES:pbeWithSHA1And2-KeyTripleDES-CBC
+148:pbe_WithSHA1And128BitRC2_CBC:1.2.840.113549.1.12.1.5:PBE-SHA1-RC2-128:pbeWithSHA1And128BitRC2-CBC
+149:pbe_WithSHA1And40BitRC2_CBC:1.2.840.113549.1.12.1.6:PBE-SHA1-RC2-40:pbeWithSHA1And40BitRC2-CBC
+alias:pkcs12_Version1:1.2.840.113549.1.12.10::
+alias:pkcs12_BagIds:1.2.840.113549.1.12.10.1::
+150:keyBag:1.2.840.113549.1.12.10.1.1::keyBag
+151:pkcs8ShroudedKeyBag:1.2.840.113549.1.12.10.1.2::pkcs8ShroudedKeyBag
+152:certBag:1.2.840.113549.1.12.10.1.3::certBag
+153:crlBag:1.2.840.113549.1.12.10.1.4::crlBag
+154:secretBag:1.2.840.113549.1.12.10.1.5::secretBag
+155:safeContentsBag:1.2.840.113549.1.12.10.1.6::safeContentsBag
+156:friendlyName:1.2.840.113549.1.9.20::friendlyName
+157:localKeyID:1.2.840.113549.1.9.21::localKeyID
+alias:certTypes:1.2.840.113549.1.9.22::
+158:x509Certificate:1.2.840.113549.1.9.22.1::x509Certificate
+159:sdsiCertificate:1.2.840.113549.1.9.22.2::sdsiCertificate
+alias:crlTypes:1.2.840.113549.1.9.23::
+160:x509Crl:1.2.840.113549.1.9.23.1::x509Crl
+161:pbes2:1.2.840.113549.1.5.13::PBES2
+162:pbmac1:1.2.840.113549.1.5.14::PBMAC1
+163:hmacWithSHA1:1.2.840.113549.2.7::hmacWithSHA1
+164:id_qt_cps:1.3.6.1.5.5.7.2.1:id-qt-cps:Policy Qualifier CPS
+165:id_qt_unotice:1.3.6.1.5.5.7.2.2:id-qt-unotice:Policy Qualifier User Notice
+166:rc2_64_cbc::RC2-64-CBC:rc2-64-cbc
+167:SMIMECapabilities:1.2.840.113549.1.9.15:SMIME-CAPS:S/MIME Capabilities
+168:pbeWithMD2AndRC2_CBC:1.2.840.113549.1.5.4:PBE-MD2-RC2-64:pbeWithMD2AndRC2-CBC
+169:pbeWithMD5AndRC2_CBC:1.2.840.113549.1.5.6:PBE-MD5-RC2-64:pbeWithMD5AndRC2-CBC
+170:pbeWithSHA1AndDES_CBC:1.2.840.113549.1.5.10:PBE-SHA1-DES:pbeWithSHA1AndDES-CBC
+171:ms_ext_req:1.3.6.1.4.1.311.2.1.14:msExtReq:Microsoft Extension Request
+172:ext_req:1.2.840.113549.1.9.14:extReq:Extension Request
+173:name:2.5.4.41:name:name
+174:dnQualifier:2.5.4.46:dnQualifier:dnQualifier
+175:id_pe:1.3.6.1.5.5.7.1:id-pe:
+176:id_ad:1.3.6.1.5.5.7.48:id-ad:
+177:info_access:1.3.6.1.5.5.7.1.1:authorityInfoAccess:Authority Information Access
+alias:id_pkix_OCSP:1.3.6.1.5.5.7.48.1::
+178:ad_OCSP:1.3.6.1.5.5.7.48.1:OCSP:OCSP
+179:ad_ca_issuers:1.3.6.1.5.5.7.48.2:caIssuers:CA Issuers
+180:OCSP_sign:1.3.6.1.5.5.7.3.9:OCSPSigning:OCSP Signing
+181:iso:1:ISO:iso
+182:member_body:1.2:member-body:ISO Member Body
+183:ISO_US:1.2.840:ISO-US:ISO US Member Body
+184:X9_57:1.2.840.10040:X9-57:X9.57
+185:X9cm:1.2.840.10040.4:X9cm:X9.57 CM ?
+186:pkcs1:1.2.840.113549.1.1:pkcs1:
+187:pkcs5:1.2.840.113549.1.5:pkcs5:
+188:SMIME:1.2.840.113549.1.9.16:SMIME:S/MIME
+189:id_smime_mod:1.2.840.113549.1.9.16.0:id-smime-mod:
+190:id_smime_ct:1.2.840.113549.1.9.16.1:id-smime-ct:
+191:id_smime_aa:1.2.840.113549.1.9.16.2:id-smime-aa:
+192:id_smime_alg:1.2.840.113549.1.9.16.3:id-smime-alg:
+193:id_smime_cd:1.2.840.113549.1.9.16.4:id-smime-cd:
+194:id_smime_spq:1.2.840.113549.1.9.16.5:id-smime-spq:
+195:id_smime_cti:1.2.840.113549.1.9.16.6:id-smime-cti:
+196:id_smime_mod_cms:1.2.840.113549.1.9.16.0.1:id-smime-mod-cms:
+197:id_smime_mod_ess:1.2.840.113549.1.9.16.0.2:id-smime-mod-ess:
+198:id_smime_mod_oid:1.2.840.113549.1.9.16.0.3:id-smime-mod-oid:
+199:id_smime_mod_msg_v3:1.2.840.113549.1.9.16.0.4:id-smime-mod-msg-v3:
+200:id_smime_mod_ets_eSignature_88:1.2.840.113549.1.9.16.0.5:id-smime-mod-ets-eSignature-88:
+201:id_smime_mod_ets_eSignature_97:1.2.840.113549.1.9.16.0.6:id-smime-mod-ets-eSignature-97:
+202:id_smime_mod_ets_eSigPolicy_88:1.2.840.113549.1.9.16.0.7:id-smime-mod-ets-eSigPolicy-88:
+203:id_smime_mod_ets_eSigPolicy_97:1.2.840.113549.1.9.16.0.8:id-smime-mod-ets-eSigPolicy-97:
+204:id_smime_ct_receipt:1.2.840.113549.1.9.16.1.1:id-smime-ct-receipt:
+205:id_smime_ct_authData:1.2.840.113549.1.9.16.1.2:id-smime-ct-authData:
+206:id_smime_ct_publishCert:1.2.840.113549.1.9.16.1.3:id-smime-ct-publishCert:
+207:id_smime_ct_TSTInfo:1.2.840.113549.1.9.16.1.4:id-smime-ct-TSTInfo:
+208:id_smime_ct_TDTInfo:1.2.840.113549.1.9.16.1.5:id-smime-ct-TDTInfo:
+209:id_smime_ct_contentInfo:1.2.840.113549.1.9.16.1.6:id-smime-ct-contentInfo:
+210:id_smime_ct_DVCSRequestData:1.2.840.113549.1.9.16.1.7:id-smime-ct-DVCSRequestData:
+211:id_smime_ct_DVCSResponseData:1.2.840.113549.1.9.16.1.8:id-smime-ct-DVCSResponseData:
+212:id_smime_aa_receiptRequest:1.2.840.113549.1.9.16.2.1:id-smime-aa-receiptRequest:
+213:id_smime_aa_securityLabel:1.2.840.113549.1.9.16.2.2:id-smime-aa-securityLabel:
+214:id_smime_aa_mlExpandHistory:1.2.840.113549.1.9.16.2.3:id-smime-aa-mlExpandHistory:
+215:id_smime_aa_contentHint:1.2.840.113549.1.9.16.2.4:id-smime-aa-contentHint:
+216:id_smime_aa_msgSigDigest:1.2.840.113549.1.9.16.2.5:id-smime-aa-msgSigDigest:
+217:id_smime_aa_encapContentType:1.2.840.113549.1.9.16.2.6:id-smime-aa-encapContentType:
+218:id_smime_aa_contentIdentifier:1.2.840.113549.1.9.16.2.7:id-smime-aa-contentIdentifier:
+219:id_smime_aa_macValue:1.2.840.113549.1.9.16.2.8:id-smime-aa-macValue:
+220:id_smime_aa_equivalentLabels:1.2.840.113549.1.9.16.2.9:id-smime-aa-equivalentLabels:
+221:id_smime_aa_contentReference:1.2.840.113549.1.9.16.2.10:id-smime-aa-contentReference:
+222:id_smime_aa_encrypKeyPref:1.2.840.113549.1.9.16.2.11:id-smime-aa-encrypKeyPref:
+223:id_smime_aa_signingCertificate:1.2.840.113549.1.9.16.2.12:id-smime-aa-signingCertificate:
+224:id_smime_aa_smimeEncryptCerts:1.2.840.113549.1.9.16.2.13:id-smime-aa-smimeEncryptCerts:
+225:id_smime_aa_timeStampToken:1.2.840.113549.1.9.16.2.14:id-smime-aa-timeStampToken:
+226:id_smime_aa_ets_sigPolicyId:1.2.840.113549.1.9.16.2.15:id-smime-aa-ets-sigPolicyId:
+227:id_smime_aa_ets_commitmentType:1.2.840.113549.1.9.16.2.16:id-smime-aa-ets-commitmentType:
+228:id_smime_aa_ets_signerLocation:1.2.840.113549.1.9.16.2.17:id-smime-aa-ets-signerLocation:
+229:id_smime_aa_ets_signerAttr:1.2.840.113549.1.9.16.2.18:id-smime-aa-ets-signerAttr:
+230:id_smime_aa_ets_otherSigCert:1.2.840.113549.1.9.16.2.19:id-smime-aa-ets-otherSigCert:
+231:id_smime_aa_ets_contentTimestamp:1.2.840.113549.1.9.16.2.20:id-smime-aa-ets-contentTimestamp:
+232:id_smime_aa_ets_CertificateRefs:1.2.840.113549.1.9.16.2.21:id-smime-aa-ets-CertificateRefs:
+233:id_smime_aa_ets_RevocationRefs:1.2.840.113549.1.9.16.2.22:id-smime-aa-ets-RevocationRefs:
+234:id_smime_aa_ets_certValues:1.2.840.113549.1.9.16.2.23:id-smime-aa-ets-certValues:
+235:id_smime_aa_ets_revocationValues:1.2.840.113549.1.9.16.2.24:id-smime-aa-ets-revocationValues:
+236:id_smime_aa_ets_escTimeStamp:1.2.840.113549.1.9.16.2.25:id-smime-aa-ets-escTimeStamp:
+237:id_smime_aa_ets_certCRLTimestamp:1.2.840.113549.1.9.16.2.26:id-smime-aa-ets-certCRLTimestamp:
+238:id_smime_aa_ets_archiveTimeStamp:1.2.840.113549.1.9.16.2.27:id-smime-aa-ets-archiveTimeStamp:
+239:id_smime_aa_signatureType:1.2.840.113549.1.9.16.2.28:id-smime-aa-signatureType:
+240:id_smime_aa_dvcs_dvc:1.2.840.113549.1.9.16.2.29:id-smime-aa-dvcs-dvc:
+241:id_smime_alg_ESDHwith3DES:1.2.840.113549.1.9.16.3.1:id-smime-alg-ESDHwith3DES:
+242:id_smime_alg_ESDHwithRC2:1.2.840.113549.1.9.16.3.2:id-smime-alg-ESDHwithRC2:
+243:id_smime_alg_3DESwrap:1.2.840.113549.1.9.16.3.3:id-smime-alg-3DESwrap:
+244:id_smime_alg_RC2wrap:1.2.840.113549.1.9.16.3.4:id-smime-alg-RC2wrap:
+245:id_smime_alg_ESDH:1.2.840.113549.1.9.16.3.5:id-smime-alg-ESDH:
+246:id_smime_alg_CMS3DESwrap:1.2.840.113549.1.9.16.3.6:id-smime-alg-CMS3DESwrap:
+247:id_smime_alg_CMSRC2wrap:1.2.840.113549.1.9.16.3.7:id-smime-alg-CMSRC2wrap:
+248:id_smime_cd_ldap:1.2.840.113549.1.9.16.4.1:id-smime-cd-ldap:
+249:id_smime_spq_ets_sqt_uri:1.2.840.113549.1.9.16.5.1:id-smime-spq-ets-sqt-uri:
+250:id_smime_spq_ets_sqt_unotice:1.2.840.113549.1.9.16.5.2:id-smime-spq-ets-sqt-unotice:
+251:id_smime_cti_ets_proofOfOrigin:1.2.840.113549.1.9.16.6.1:id-smime-cti-ets-proofOfOrigin:
+252:id_smime_cti_ets_proofOfReceipt:1.2.840.113549.1.9.16.6.2:id-smime-cti-ets-proofOfReceipt:
+253:id_smime_cti_ets_proofOfDelivery:1.2.840.113549.1.9.16.6.3:id-smime-cti-ets-proofOfDelivery:
+254:id_smime_cti_ets_proofOfSender:1.2.840.113549.1.9.16.6.4:id-smime-cti-ets-proofOfSender:
+255:id_smime_cti_ets_proofOfApproval:1.2.840.113549.1.9.16.6.5:id-smime-cti-ets-proofOfApproval:
+256:id_smime_cti_ets_proofOfCreation:1.2.840.113549.1.9.16.6.6:id-smime-cti-ets-proofOfCreation:
+257:md4:1.2.840.113549.2.4:MD4:md4
+258:id_pkix_mod:1.3.6.1.5.5.7.0:id-pkix-mod:
+259:id_qt:1.3.6.1.5.5.7.2:id-qt:
+260:id_it:1.3.6.1.5.5.7.4:id-it:
+261:id_pkip:1.3.6.1.5.5.7.5:id-pkip:
+262:id_alg:1.3.6.1.5.5.7.6:id-alg:
+263:id_cmc:1.3.6.1.5.5.7.7:id-cmc:
+264:id_on:1.3.6.1.5.5.7.8:id-on:
+265:id_pda:1.3.6.1.5.5.7.9:id-pda:
+266:id_aca:1.3.6.1.5.5.7.10:id-aca:
+267:id_qcs:1.3.6.1.5.5.7.11:id-qcs:
+268:id_cct:1.3.6.1.5.5.7.12:id-cct:
+269:id_pkix1_explicit_88:1.3.6.1.5.5.7.0.1:id-pkix1-explicit-88:
+270:id_pkix1_implicit_88:1.3.6.1.5.5.7.0.2:id-pkix1-implicit-88:
+271:id_pkix1_explicit_93:1.3.6.1.5.5.7.0.3:id-pkix1-explicit-93:
+272:id_pkix1_implicit_93:1.3.6.1.5.5.7.0.4:id-pkix1-implicit-93:
+273:id_mod_crmf:1.3.6.1.5.5.7.0.5:id-mod-crmf:
+274:id_mod_cmc:1.3.6.1.5.5.7.0.6:id-mod-cmc:
+275:id_mod_kea_profile_88:1.3.6.1.5.5.7.0.7:id-mod-kea-profile-88:
+276:id_mod_kea_profile_93:1.3.6.1.5.5.7.0.8:id-mod-kea-profile-93:
+277:id_mod_cmp:1.3.6.1.5.5.7.0.9:id-mod-cmp:
+278:id_mod_qualified_cert_88:1.3.6.1.5.5.7.0.10:id-mod-qualified-cert-88:
+279:id_mod_qualified_cert_93:1.3.6.1.5.5.7.0.11:id-mod-qualified-cert-93:
+280:id_mod_attribute_cert:1.3.6.1.5.5.7.0.12:id-mod-attribute-cert:
+281:id_mod_timestamp_protocol:1.3.6.1.5.5.7.0.13:id-mod-timestamp-protocol:
+282:id_mod_ocsp:1.3.6.1.5.5.7.0.14:id-mod-ocsp:
+283:id_mod_dvcs:1.3.6.1.5.5.7.0.15:id-mod-dvcs:
+284:id_mod_cmp2000:1.3.6.1.5.5.7.0.16:id-mod-cmp2000:
+285:biometricInfo:1.3.6.1.5.5.7.1.2:biometricInfo:Biometric Info
+286:qcStatements:1.3.6.1.5.5.7.1.3:qcStatements:
+287:ac_auditIdentity:1.3.6.1.5.5.7.1.4:ac-auditIdentity:X509v3 Audit Identity
+288:ac_targeting:1.3.6.1.5.5.7.1.5:ac-targeting:
+289:aaControls:1.3.6.1.5.5.7.1.6:aaControls:
+290:sbgp_ipAddrBlock:1.3.6.1.5.5.7.1.7:sbgp-ipAddrBlock:
+291:sbgp_autonomousSysNum:1.3.6.1.5.5.7.1.8:sbgp-autonomousSysNum:
+292:sbgp_routerIdentifier:1.3.6.1.5.5.7.1.9:sbgp-routerIdentifier:
+293:textNotice:1.3.6.1.5.5.7.2.3:textNotice:
+294:ipsecEndSystem:1.3.6.1.5.5.7.3.5:ipsecEndSystem:IPSec End System
+295:ipsecTunnel:1.3.6.1.5.5.7.3.6:ipsecTunnel:IPSec Tunnel
+296:ipsecUser:1.3.6.1.5.5.7.3.7:ipsecUser:IPSec User
+297:dvcs:1.3.6.1.5.5.7.3.10:DVCS:dvcs
+298:id_it_caProtEncCert:1.3.6.1.5.5.7.4.1:id-it-caProtEncCert:
+299:id_it_signKeyPairTypes:1.3.6.1.5.5.7.4.2:id-it-signKeyPairTypes:
+300:id_it_encKeyPairTypes:1.3.6.1.5.5.7.4.3:id-it-encKeyPairTypes:
+301:id_it_preferredSymmAlg:1.3.6.1.5.5.7.4.4:id-it-preferredSymmAlg:
+302:id_it_caKeyUpdateInfo:1.3.6.1.5.5.7.4.5:id-it-caKeyUpdateInfo:
+303:id_it_currentCRL:1.3.6.1.5.5.7.4.6:id-it-currentCRL:
+304:id_it_unsupportedOIDs:1.3.6.1.5.5.7.4.7:id-it-unsupportedOIDs:
+305:id_it_subscriptionRequest:1.3.6.1.5.5.7.4.8:id-it-subscriptionRequest:
+306:id_it_subscriptionResponse:1.3.6.1.5.5.7.4.9:id-it-subscriptionResponse:
+307:id_it_keyPairParamReq:1.3.6.1.5.5.7.4.10:id-it-keyPairParamReq:
+308:id_it_keyPairParamRep:1.3.6.1.5.5.7.4.11:id-it-keyPairParamRep:
+309:id_it_revPassphrase:1.3.6.1.5.5.7.4.12:id-it-revPassphrase:
+310:id_it_implicitConfirm:1.3.6.1.5.5.7.4.13:id-it-implicitConfirm:
+311:id_it_confirmWaitTime:1.3.6.1.5.5.7.4.14:id-it-confirmWaitTime:
+312:id_it_origPKIMessage:1.3.6.1.5.5.7.4.15:id-it-origPKIMessage:
+313:id_regCtrl:1.3.6.1.5.5.7.5.1:id-regCtrl:
+314:id_regInfo:1.3.6.1.5.5.7.5.2:id-regInfo:
+315:id_regCtrl_regToken:1.3.6.1.5.5.7.5.1.1:id-regCtrl-regToken:
+316:id_regCtrl_authenticator:1.3.6.1.5.5.7.5.1.2:id-regCtrl-authenticator:
+317:id_regCtrl_pkiPublicationInfo:1.3.6.1.5.5.7.5.1.3:id-regCtrl-pkiPublicationInfo:
+318:id_regCtrl_pkiArchiveOptions:1.3.6.1.5.5.7.5.1.4:id-regCtrl-pkiArchiveOptions:
+319:id_regCtrl_oldCertID:1.3.6.1.5.5.7.5.1.5:id-regCtrl-oldCertID:
+320:id_regCtrl_protocolEncrKey:1.3.6.1.5.5.7.5.1.6:id-regCtrl-protocolEncrKey:
+321:id_regInfo_utf8Pairs:1.3.6.1.5.5.7.5.2.1:id-regInfo-utf8Pairs:
+322:id_regInfo_certReq:1.3.6.1.5.5.7.5.2.2:id-regInfo-certReq:
+323:id_alg_des40:1.3.6.1.5.5.7.6.1:id-alg-des40:
+324:id_alg_noSignature:1.3.6.1.5.5.7.6.2:id-alg-noSignature:
+325:id_alg_dh_sig_hmac_sha1:1.3.6.1.5.5.7.6.3:id-alg-dh-sig-hmac-sha1:
+326:id_alg_dh_pop:1.3.6.1.5.5.7.6.4:id-alg-dh-pop:
+327:id_cmc_statusInfo:1.3.6.1.5.5.7.7.1:id-cmc-statusInfo:
+328:id_cmc_identification:1.3.6.1.5.5.7.7.2:id-cmc-identification:
+329:id_cmc_identityProof:1.3.6.1.5.5.7.7.3:id-cmc-identityProof:
+330:id_cmc_dataReturn:1.3.6.1.5.5.7.7.4:id-cmc-dataReturn:
+331:id_cmc_transactionId:1.3.6.1.5.5.7.7.5:id-cmc-transactionId:
+332:id_cmc_senderNonce:1.3.6.1.5.5.7.7.6:id-cmc-senderNonce:
+333:id_cmc_recipientNonce:1.3.6.1.5.5.7.7.7:id-cmc-recipientNonce:
+334:id_cmc_addExtensions:1.3.6.1.5.5.7.7.8:id-cmc-addExtensions:
+335:id_cmc_encryptedPOP:1.3.6.1.5.5.7.7.9:id-cmc-encryptedPOP:
+336:id_cmc_decryptedPOP:1.3.6.1.5.5.7.7.10:id-cmc-decryptedPOP:
+337:id_cmc_lraPOPWitness:1.3.6.1.5.5.7.7.11:id-cmc-lraPOPWitness:
+338:id_cmc_getCert:1.3.6.1.5.5.7.7.15:id-cmc-getCert:
+339:id_cmc_getCRL:1.3.6.1.5.5.7.7.16:id-cmc-getCRL:
+340:id_cmc_revokeRequest:1.3.6.1.5.5.7.7.17:id-cmc-revokeRequest:
+341:id_cmc_regInfo:1.3.6.1.5.5.7.7.18:id-cmc-regInfo:
+342:id_cmc_responseInfo:1.3.6.1.5.5.7.7.19:id-cmc-responseInfo:
+343:id_cmc_queryPending:1.3.6.1.5.5.7.7.21:id-cmc-queryPending:
+344:id_cmc_popLinkRandom:1.3.6.1.5.5.7.7.22:id-cmc-popLinkRandom:
+345:id_cmc_popLinkWitness:1.3.6.1.5.5.7.7.23:id-cmc-popLinkWitness:
+346:id_cmc_confirmCertAcceptance:1.3.6.1.5.5.7.7.24:id-cmc-confirmCertAcceptance:
+347:id_on_personalData:1.3.6.1.5.5.7.8.1:id-on-personalData:
+348:id_pda_dateOfBirth:1.3.6.1.5.5.7.9.1:id-pda-dateOfBirth:
+349:id_pda_placeOfBirth:1.3.6.1.5.5.7.9.2:id-pda-placeOfBirth:
+350:id_pda_pseudonym:removed::
+351:id_pda_gender:1.3.6.1.5.5.7.9.3:id-pda-gender:
+352:id_pda_countryOfCitizenship:1.3.6.1.5.5.7.9.4:id-pda-countryOfCitizenship:
+353:id_pda_countryOfResidence:1.3.6.1.5.5.7.9.5:id-pda-countryOfResidence:
+354:id_aca_authenticationInfo:1.3.6.1.5.5.7.10.1:id-aca-authenticationInfo:
+355:id_aca_accessIdentity:1.3.6.1.5.5.7.10.2:id-aca-accessIdentity:
+356:id_aca_chargingIdentity:1.3.6.1.5.5.7.10.3:id-aca-chargingIdentity:
+357:id_aca_group:1.3.6.1.5.5.7.10.4:id-aca-group:
+358:id_aca_role:1.3.6.1.5.5.7.10.5:id-aca-role:
+359:id_qcs_pkixQCSyntax_v1:1.3.6.1.5.5.7.11.1:id-qcs-pkixQCSyntax-v1:
+360:id_cct_crs:1.3.6.1.5.5.7.12.1:id-cct-crs:
+361:id_cct_PKIData:1.3.6.1.5.5.7.12.2:id-cct-PKIData:
+362:id_cct_PKIResponse:1.3.6.1.5.5.7.12.3:id-cct-PKIResponse:
+363:ad_timeStamping:1.3.6.1.5.5.7.48.3:ad_timestamping:AD Time Stamping
+364:ad_dvcs:1.3.6.1.5.5.7.48.4:AD_DVCS:ad dvcs
+365:id_pkix_OCSP_basic:1.3.6.1.5.5.7.48.1.1:basicOCSPResponse:Basic OCSP Response
+366:id_pkix_OCSP_Nonce:1.3.6.1.5.5.7.48.1.2:Nonce:OCSP Nonce
+367:id_pkix_OCSP_CrlID:1.3.6.1.5.5.7.48.1.3:CrlID:OCSP CRL ID
+368:id_pkix_OCSP_acceptableResponses:1.3.6.1.5.5.7.48.1.4:acceptableResponses:Acceptable OCSP Responses
+369:id_pkix_OCSP_noCheck:1.3.6.1.5.5.7.48.1.5:noCheck:OCSP No Check
+370:id_pkix_OCSP_archiveCutoff:1.3.6.1.5.5.7.48.1.6:archiveCutoff:OCSP Archive Cutoff
+371:id_pkix_OCSP_serviceLocator:1.3.6.1.5.5.7.48.1.7:serviceLocator:OCSP Service Locator
+372:id_pkix_OCSP_extendedStatus:1.3.6.1.5.5.7.48.1.8:extendedStatus:Extended OCSP Status
+373:id_pkix_OCSP_valid:1.3.6.1.5.5.7.48.1.9:valid:
+374:id_pkix_OCSP_path:1.3.6.1.5.5.7.48.1.10:path:
+375:id_pkix_OCSP_trustRoot:1.3.6.1.5.5.7.48.1.11:trustRoot:Trust Root
+376:algorithm:1.3.14.3.2:algorithm:algorithm
+377:rsaSignature:1.3.14.3.2.11:rsaSignature:
+378:X500algorithms:2.5.8:X500algorithms:directory services - algorithms
+379:org:1.3:ORG:org
+380:dod:1.3.6:DOD:dod
+381:iana:1.3.6.1:IANA:iana
+382:Directory:1.3.6.1.1:directory:Directory
+383:Management:1.3.6.1.2:mgmt:Management
+384:Experimental:1.3.6.1.3:experimental:Experimental
+385:Private:1.3.6.1.4:private:Private
+386:Security:1.3.6.1.5:security:Security
+387:SNMPv2:1.3.6.1.6:snmpv2:SNMPv2
+388:Mail:1.3.6.1.7::Mail
+389:Enterprises:1.3.6.1.4.1:enterprises:Enterprises
+390:dcObject:1.3.6.1.4.1.1466.344:dcobject:dcObject
+391:domainComponent:0.9.2342.19200300.100.1.25:DC:domainComponent
+392:Domain:0.9.2342.19200300.100.4.13:domain:Domain
+393:joint_iso_ccitt:2::
+394:selected_attribute_types:2.5.1.5:selected-attribute-types:Selected Attribute Types
+395:clearance:2.5.1.5.55:clearance:
+396:md4WithRSAEncryption:1.2.840.113549.1.1.3:RSA-MD4:md4WithRSAEncryption
+397:ac_proxying:1.3.6.1.5.5.7.1.10:ac-proxying:
+398:sinfo_access:1.3.6.1.5.5.7.1.11:subjectInfoAccess:Subject Information Access
+399:id_aca_encAttrs:1.3.6.1.5.5.7.10.6:id-aca-encAttrs:
+400:role:2.5.4.72:role:role
+401:policy_constraints:2.5.29.36:policyConstraints:X509v3 Policy Constraints
+402:target_information:2.5.29.55:targetInformation:X509v3 AC Targeting
+403:no_rev_avail:2.5.29.56:noRevAvail:X509v3 No Revocation Available
+404:ccitt:0::
+405:ansi_X9_62:1.2.840.10045:ansi-X9-62:ANSI X9.62
+alias:X9_62_id_fieldType:1.2.840.10045.1::
+406:X9_62_prime_field:1.2.840.10045.1.1:prime-field:
+407:X9_62_characteristic_two_field:1.2.840.10045.1.2:characteristic-two-field:
+alias:X9_62_id_publicKeyType:1.2.840.10045.2::
+408:X9_62_id_ecPublicKey:1.2.840.10045.2.1:id-ecPublicKey:
+alias:X9_62_ellipticCurve:1.2.840.10045.3::
+alias:X9_62_primeCurve:1.2.840.10045.3.1::
+409:X9_62_prime192v1:1.2.840.10045.3.1.1:prime192v1:
+410:X9_62_prime192v2:1.2.840.10045.3.1.2:prime192v2:
+411:X9_62_prime192v3:1.2.840.10045.3.1.3:prime192v3:
+412:X9_62_prime239v1:1.2.840.10045.3.1.4:prime239v1:
+413:X9_62_prime239v2:1.2.840.10045.3.1.5:prime239v2:
+414:X9_62_prime239v3:1.2.840.10045.3.1.6:prime239v3:
+415:X9_62_prime256v1:1.2.840.10045.3.1.7:prime256v1:
+alias:X9_62_id_ecSigType:1.2.840.10045.4::
+416:ecdsa_with_SHA1:1.2.840.10045.4.1:ecdsa-with-SHA1:
+417:ms_csp_name:1.3.6.1.4.1.311.17.1:CSPName:Microsoft CSP Name
+alias:csor:2.16.840.1.101.3::
+alias:nistAlgorithms:2.16.840.1.101.3.4::
+alias:aes:2.16.840.1.101.3.4.1::
+418:aes_128_ecb:2.16.840.1.101.3.4.1.1:AES-128-ECB:aes-128-ecb
+419:aes_128_cbc:2.16.840.1.101.3.4.1.2:AES-128-CBC:aes-128-cbc
+420:aes_128_ofb128:2.16.840.1.101.3.4.1.3:AES-128-OFB:aes-128-ofb
+421:aes_128_cfb128:2.16.840.1.101.3.4.1.4:AES-128-CFB:aes-128-cfb
+422:aes_192_ecb:2.16.840.1.101.3.4.1.21:AES-192-ECB:aes-192-ecb
+423:aes_192_cbc:2.16.840.1.101.3.4.1.22:AES-192-CBC:aes-192-cbc
+424:aes_192_ofb128:2.16.840.1.101.3.4.1.23:AES-192-OFB:aes-192-ofb
+425:aes_192_cfb128:2.16.840.1.101.3.4.1.24:AES-192-CFB:aes-192-cfb
+426:aes_256_ecb:2.16.840.1.101.3.4.1.41:AES-256-ECB:aes-256-ecb
+427:aes_256_cbc:2.16.840.1.101.3.4.1.42:AES-256-CBC:aes-256-cbc
+428:aes_256_ofb128:2.16.840.1.101.3.4.1.43:AES-256-OFB:aes-256-ofb
+429:aes_256_cfb128:2.16.840.1.101.3.4.1.44:AES-256-CFB:aes-256-cfb
+430:hold_instruction_code:2.5.29.23:holdInstructionCode:Hold Instruction Code
+alias:holdInstruction:1.2.840.10040.2::
+431:hold_instruction_none:1.2.840.10040.2.1:holdInstructionNone:Hold Instruction None
+432:hold_instruction_call_issuer:1.2.840.10040.2.2:holdInstructionCallIssuer:Hold Instruction Call Issuer
+433:hold_instruction_reject:1.2.840.10040.2.3:holdInstructionReject:Hold Instruction Reject
+434:data:0.9:data:
+435:pss:0.9.2342:pss:
+436:ucl:0.9.2342.19200300:ucl:
+437:pilot:0.9.2342.19200300.100:pilot:
+438:pilotAttributeType:0.9.2342.19200300.100.1::pilotAttributeType
+439:pilotAttributeSyntax:0.9.2342.19200300.100.3::pilotAttributeSyntax
+440:pilotObjectClass:0.9.2342.19200300.100.4::pilotObjectClass
+441:pilotGroups:0.9.2342.19200300.100.10::pilotGroups
+442:iA5StringSyntax:0.9.2342.19200300.100.3.4::iA5StringSyntax
+443:caseIgnoreIA5StringSyntax:0.9.2342.19200300.100.3.5::caseIgnoreIA5StringSyntax
+444:pilotObject:0.9.2342.19200300.100.4.3::pilotObject
+445:pilotPerson:0.9.2342.19200300.100.4.4::pilotPerson
+446:account:0.9.2342.19200300.100.4.5:account:
+447:document:0.9.2342.19200300.100.4.6:document:
+448:room:0.9.2342.19200300.100.4.7:room:
+449:documentSeries:0.9.2342.19200300.100.4.9::documentSeries
+450:rFC822localPart:0.9.2342.19200300.100.4.14::rFC822localPart
+451:dNSDomain:0.9.2342.19200300.100.4.15::dNSDomain
+452:domainRelatedObject:0.9.2342.19200300.100.4.17::domainRelatedObject
+453:friendlyCountry:0.9.2342.19200300.100.4.18::friendlyCountry
+454:simpleSecurityObject:0.9.2342.19200300.100.4.19::simpleSecurityObject
+455:pilotOrganization:0.9.2342.19200300.100.4.20::pilotOrganization
+456:pilotDSA:0.9.2342.19200300.100.4.21::pilotDSA
+457:qualityLabelledData:0.9.2342.19200300.100.4.22::qualityLabelledData
+458:userId:0.9.2342.19200300.100.1.1:UID:userId
+459:textEncodedORAddress:0.9.2342.19200300.100.1.2::textEncodedORAddress
+460:rfc822Mailbox:0.9.2342.19200300.100.1.3:mail:rfc822Mailbox
+461:info:0.9.2342.19200300.100.1.4:info:
+462:favouriteDrink:0.9.2342.19200300.100.1.5::favouriteDrink
+463:roomNumber:0.9.2342.19200300.100.1.6::roomNumber
+464:photo:0.9.2342.19200300.100.1.7:photo:
+465:userClass:0.9.2342.19200300.100.1.8::userClass
+466:host:0.9.2342.19200300.100.1.9:host:
+467:manager:0.9.2342.19200300.100.1.10:manager:
+468:documentIdentifier:0.9.2342.19200300.100.1.11::documentIdentifier
+469:documentTitle:0.9.2342.19200300.100.1.12::documentTitle
+470:documentVersion:0.9.2342.19200300.100.1.13::documentVersion
+471:documentAuthor:0.9.2342.19200300.100.1.14::documentAuthor
+472:documentLocation:0.9.2342.19200300.100.1.15::documentLocation
+473:homeTelephoneNumber:0.9.2342.19200300.100.1.20::homeTelephoneNumber
+474:secretary:0.9.2342.19200300.100.1.21:secretary:
+475:otherMailbox:0.9.2342.19200300.100.1.22::otherMailbox
+476:lastModifiedTime:0.9.2342.19200300.100.1.23::lastModifiedTime
+477:lastModifiedBy:0.9.2342.19200300.100.1.24::lastModifiedBy
+478:aRecord:0.9.2342.19200300.100.1.26::aRecord
+479:pilotAttributeType27:0.9.2342.19200300.100.1.27::pilotAttributeType27
+480:mXRecord:0.9.2342.19200300.100.1.28::mXRecord
+481:nSRecord:0.9.2342.19200300.100.1.29::nSRecord
+482:sOARecord:0.9.2342.19200300.100.1.30::sOARecord
+483:cNAMERecord:0.9.2342.19200300.100.1.31::cNAMERecord
+484:associatedDomain:0.9.2342.19200300.100.1.37::associatedDomain
+485:associatedName:0.9.2342.19200300.100.1.38::associatedName
+486:homePostalAddress:0.9.2342.19200300.100.1.39::homePostalAddress
+487:personalTitle:0.9.2342.19200300.100.1.40::personalTitle
+488:mobileTelephoneNumber:0.9.2342.19200300.100.1.41::mobileTelephoneNumber
+489:pagerTelephoneNumber:0.9.2342.19200300.100.1.42::pagerTelephoneNumber
+490:friendlyCountryName:0.9.2342.19200300.100.1.43::friendlyCountryName
+491:organizationalStatus:0.9.2342.19200300.100.1.45::organizationalStatus
+492:janetMailbox:0.9.2342.19200300.100.1.46::janetMailbox
+493:mailPreferenceOption:0.9.2342.19200300.100.1.47::mailPreferenceOption
+494:buildingName:0.9.2342.19200300.100.1.48::buildingName
+495:dSAQuality:0.9.2342.19200300.100.1.49::dSAQuality
+496:singleLevelQuality:0.9.2342.19200300.100.1.50::singleLevelQuality
+497:subtreeMinimumQuality:0.9.2342.19200300.100.1.51::subtreeMinimumQuality
+498:subtreeMaximumQuality:0.9.2342.19200300.100.1.52::subtreeMaximumQuality
+499:personalSignature:0.9.2342.19200300.100.1.53::personalSignature
+500:dITRedirect:0.9.2342.19200300.100.1.54::dITRedirect
+501:audio:0.9.2342.19200300.100.1.55:audio:
+502:documentPublisher:0.9.2342.19200300.100.1.56::documentPublisher
+503:x500UniqueIdentifier:2.5.4.45::x500UniqueIdentifier
+504:mime_mhs:1.3.6.1.7.1:mime-mhs:MIME MHS
+505:mime_mhs_headings:1.3.6.1.7.1.1:mime-mhs-headings:mime-mhs-headings
+506:mime_mhs_bodies:1.3.6.1.7.1.2:mime-mhs-bodies:mime-mhs-bodies
+507:id_hex_partial_message:1.3.6.1.7.1.1.1:id-hex-partial-message:id-hex-partial-message
+508:id_hex_multipart_message:1.3.6.1.7.1.1.2:id-hex-multipart-message:id-hex-multipart-message
+509:generationQualifier:2.5.4.44::generationQualifier
+510:pseudonym:2.5.4.65::pseudonym
+511:InternationalRA:removed::
+512:id_set:2.23.42:id-set:Secure Electronic Transactions
+513:set_ctype:2.23.42.0:set-ctype:content types
+514:set_msgExt:2.23.42.1:set-msgExt:message extensions
+515:set_attr:2.23.42.3:set-attr:
+516:set_policy:2.23.42.5:set-policy:
+517:set_certExt:2.23.42.7:set-certExt:certificate extensions
+518:set_brand:2.23.42.8:set-brand:
+519:setct_PANData:2.23.42.0.0:setct-PANData:
+520:setct_PANToken:2.23.42.0.1:setct-PANToken:
+521:setct_PANOnly:2.23.42.0.2:setct-PANOnly:
+522:setct_OIData:2.23.42.0.3:setct-OIData:
+523:setct_PI:2.23.42.0.4:setct-PI:
+524:setct_PIData:2.23.42.0.5:setct-PIData:
+525:setct_PIDataUnsigned:2.23.42.0.6:setct-PIDataUnsigned:
+526:setct_HODInput:2.23.42.0.7:setct-HODInput:
+527:setct_AuthResBaggage:2.23.42.0.8:setct-AuthResBaggage:
+528:setct_AuthRevReqBaggage:2.23.42.0.9:setct-AuthRevReqBaggage:
+529:setct_AuthRevResBaggage:2.23.42.0.10:setct-AuthRevResBaggage:
+530:setct_CapTokenSeq:2.23.42.0.11:setct-CapTokenSeq:
+531:setct_PInitResData:2.23.42.0.12:setct-PInitResData:
+532:setct_PI_TBS:2.23.42.0.13:setct-PI-TBS:
+533:setct_PResData:2.23.42.0.14:setct-PResData:
+534:setct_AuthReqTBS:2.23.42.0.16:setct-AuthReqTBS:
+535:setct_AuthResTBS:2.23.42.0.17:setct-AuthResTBS:
+536:setct_AuthResTBSX:2.23.42.0.18:setct-AuthResTBSX:
+537:setct_AuthTokenTBS:2.23.42.0.19:setct-AuthTokenTBS:
+538:setct_CapTokenData:2.23.42.0.20:setct-CapTokenData:
+539:setct_CapTokenTBS:2.23.42.0.21:setct-CapTokenTBS:
+540:setct_AcqCardCodeMsg:2.23.42.0.22:setct-AcqCardCodeMsg:
+541:setct_AuthRevReqTBS:2.23.42.0.23:setct-AuthRevReqTBS:
+542:setct_AuthRevResData:2.23.42.0.24:setct-AuthRevResData:
+543:setct_AuthRevResTBS:2.23.42.0.25:setct-AuthRevResTBS:
+544:setct_CapReqTBS:2.23.42.0.26:setct-CapReqTBS:
+545:setct_CapReqTBSX:2.23.42.0.27:setct-CapReqTBSX:
+546:setct_CapResData:2.23.42.0.28:setct-CapResData:
+547:setct_CapRevReqTBS:2.23.42.0.29:setct-CapRevReqTBS:
+548:setct_CapRevReqTBSX:2.23.42.0.30:setct-CapRevReqTBSX:
+549:setct_CapRevResData:2.23.42.0.31:setct-CapRevResData:
+550:setct_CredReqTBS:2.23.42.0.32:setct-CredReqTBS:
+551:setct_CredReqTBSX:2.23.42.0.33:setct-CredReqTBSX:
+552:setct_CredResData:2.23.42.0.34:setct-CredResData:
+553:setct_CredRevReqTBS:2.23.42.0.35:setct-CredRevReqTBS:
+554:setct_CredRevReqTBSX:2.23.42.0.36:setct-CredRevReqTBSX:
+555:setct_CredRevResData:2.23.42.0.37:setct-CredRevResData:
+556:setct_PCertReqData:2.23.42.0.38:setct-PCertReqData:
+557:setct_PCertResTBS:2.23.42.0.39:setct-PCertResTBS:
+558:setct_BatchAdminReqData:2.23.42.0.40:setct-BatchAdminReqData:
+559:setct_BatchAdminResData:2.23.42.0.41:setct-BatchAdminResData:
+560:setct_CardCInitResTBS:2.23.42.0.42:setct-CardCInitResTBS:
+561:setct_MeAqCInitResTBS:2.23.42.0.43:setct-MeAqCInitResTBS:
+562:setct_RegFormResTBS:2.23.42.0.44:setct-RegFormResTBS:
+563:setct_CertReqData:2.23.42.0.45:setct-CertReqData:
+564:setct_CertReqTBS:2.23.42.0.46:setct-CertReqTBS:
+565:setct_CertResData:2.23.42.0.47:setct-CertResData:
+566:setct_CertInqReqTBS:2.23.42.0.48:setct-CertInqReqTBS:
+567:setct_ErrorTBS:2.23.42.0.49:setct-ErrorTBS:
+568:setct_PIDualSignedTBE:2.23.42.0.50:setct-PIDualSignedTBE:
+569:setct_PIUnsignedTBE:2.23.42.0.51:setct-PIUnsignedTBE:
+570:setct_AuthReqTBE:2.23.42.0.52:setct-AuthReqTBE:
+571:setct_AuthResTBE:2.23.42.0.53:setct-AuthResTBE:
+572:setct_AuthResTBEX:2.23.42.0.54:setct-AuthResTBEX:
+573:setct_AuthTokenTBE:2.23.42.0.55:setct-AuthTokenTBE:
+574:setct_CapTokenTBE:2.23.42.0.56:setct-CapTokenTBE:
+575:setct_CapTokenTBEX:2.23.42.0.57:setct-CapTokenTBEX:
+576:setct_AcqCardCodeMsgTBE:2.23.42.0.58:setct-AcqCardCodeMsgTBE:
+577:setct_AuthRevReqTBE:2.23.42.0.59:setct-AuthRevReqTBE:
+578:setct_AuthRevResTBE:2.23.42.0.60:setct-AuthRevResTBE:
+579:setct_AuthRevResTBEB:2.23.42.0.61:setct-AuthRevResTBEB:
+580:setct_CapReqTBE:2.23.42.0.62:setct-CapReqTBE:
+581:setct_CapReqTBEX:2.23.42.0.63:setct-CapReqTBEX:
+582:setct_CapResTBE:2.23.42.0.64:setct-CapResTBE:
+583:setct_CapRevReqTBE:2.23.42.0.65:setct-CapRevReqTBE:
+584:setct_CapRevReqTBEX:2.23.42.0.66:setct-CapRevReqTBEX:
+585:setct_CapRevResTBE:2.23.42.0.67:setct-CapRevResTBE:
+586:setct_CredReqTBE:2.23.42.0.68:setct-CredReqTBE:
+587:setct_CredReqTBEX:2.23.42.0.69:setct-CredReqTBEX:
+588:setct_CredResTBE:2.23.42.0.70:setct-CredResTBE:
+589:setct_CredRevReqTBE:2.23.42.0.71:setct-CredRevReqTBE:
+590:setct_CredRevReqTBEX:2.23.42.0.72:setct-CredRevReqTBEX:
+591:setct_CredRevResTBE:2.23.42.0.73:setct-CredRevResTBE:
+592:setct_BatchAdminReqTBE:2.23.42.0.74:setct-BatchAdminReqTBE:
+593:setct_BatchAdminResTBE:2.23.42.0.75:setct-BatchAdminResTBE:
+594:setct_RegFormReqTBE:2.23.42.0.76:setct-RegFormReqTBE:
+595:setct_CertReqTBE:2.23.42.0.77:setct-CertReqTBE:
+596:setct_CertReqTBEX:2.23.42.0.78:setct-CertReqTBEX:
+597:setct_CertResTBE:2.23.42.0.79:setct-CertResTBE:
+598:setct_CRLNotificationTBS:2.23.42.0.80:setct-CRLNotificationTBS:
+599:setct_CRLNotificationResTBS:2.23.42.0.81:setct-CRLNotificationResTBS:
+600:setct_BCIDistributionTBS:2.23.42.0.82:setct-BCIDistributionTBS:
+601:setext_genCrypt:2.23.42.1.1:setext-genCrypt:generic cryptogram
+602:setext_miAuth:2.23.42.1.3:setext-miAuth:merchant initiated auth
+603:setext_pinSecure:2.23.42.1.4:setext-pinSecure:
+604:setext_pinAny:2.23.42.1.5:setext-pinAny:
+605:setext_track2:2.23.42.1.7:setext-track2:
+606:setext_cv:2.23.42.1.8:setext-cv:additional verification
+607:set_policy_root:2.23.42.5.0:set-policy-root:
+608:setCext_hashedRoot:2.23.42.7.0:setCext-hashedRoot:
+609:setCext_certType:2.23.42.7.1:setCext-certType:
+610:setCext_merchData:2.23.42.7.2:setCext-merchData:
+611:setCext_cCertRequired:2.23.42.7.3:setCext-cCertRequired:
+612:setCext_tunneling:2.23.42.7.4:setCext-tunneling:
+613:setCext_setExt:2.23.42.7.5:setCext-setExt:
+614:setCext_setQualf:2.23.42.7.6:setCext-setQualf:
+615:setCext_PGWYcapabilities:2.23.42.7.7:setCext-PGWYcapabilities:
+616:setCext_TokenIdentifier:2.23.42.7.8:setCext-TokenIdentifier:
+617:setCext_Track2Data:2.23.42.7.9:setCext-Track2Data:
+618:setCext_TokenType:2.23.42.7.10:setCext-TokenType:
+619:setCext_IssuerCapabilities:2.23.42.7.11:setCext-IssuerCapabilities:
+620:setAttr_Cert:2.23.42.3.0:setAttr-Cert:
+621:setAttr_PGWYcap:2.23.42.3.1:setAttr-PGWYcap:payment gateway capabilities
+622:setAttr_TokenType:2.23.42.3.2:setAttr-TokenType:
+623:setAttr_IssCap:2.23.42.3.3:setAttr-IssCap:issuer capabilities
+624:set_rootKeyThumb:2.23.42.3.0.0:set-rootKeyThumb:
+625:set_addPolicy:2.23.42.3.0.1:set-addPolicy:
+626:setAttr_Token_EMV:2.23.42.3.2.1:setAttr-Token-EMV:
+627:setAttr_Token_B0Prime:2.23.42.3.2.2:setAttr-Token-B0Prime:
+628:setAttr_IssCap_CVM:2.23.42.3.3.3:setAttr-IssCap-CVM:
+629:setAttr_IssCap_T2:2.23.42.3.3.4:setAttr-IssCap-T2:
+630:setAttr_IssCap_Sig:2.23.42.3.3.5:setAttr-IssCap-Sig:
+631:setAttr_GenCryptgrm:2.23.42.3.3.3.1:setAttr-GenCryptgrm:generate cryptogram
+632:setAttr_T2Enc:2.23.42.3.3.4.1:setAttr-T2Enc:encrypted track 2
+633:setAttr_T2cleartxt:2.23.42.3.3.4.2:setAttr-T2cleartxt:cleartext track 2
+634:setAttr_TokICCsig:2.23.42.3.3.5.1:setAttr-TokICCsig:ICC or token signature
+635:setAttr_SecDevSig:2.23.42.3.3.5.2:setAttr-SecDevSig:secure device signature
+636:set_brand_IATA_ATA:2.23.42.8.1:set-brand-IATA-ATA:
+637:set_brand_Diners:2.23.42.8.30:set-brand-Diners:
+638:set_brand_AmericanExpress:2.23.42.8.34:set-brand-AmericanExpress:
+639:set_brand_JCB:2.23.42.8.35:set-brand-JCB:
+640:set_brand_Visa:2.23.42.8.4:set-brand-Visa:
+641:set_brand_MasterCard:2.23.42.8.5:set-brand-MasterCard:
+642:set_brand_Novus:2.23.42.8.6011:set-brand-Novus:
+643:des_cdmf:1.2.840.113549.3.10:DES-CDMF:des-cdmf
+644:rsaOAEPEncryptionSET:1.2.840.113549.1.1.6:rsaOAEPEncryptionSET:
+645:itu_t:0:ITU-T:itu-t
+646:joint_iso_itu_t:2:JOINT-ISO-ITU-T:joint-iso-itu-t
+647:international_organizations:2.23:international-organizations:International Organizations
+648:ms_smartcard_login:1.3.6.1.4.1.311.20.2.2:msSmartcardLogin:Microsoft Smartcard Login
+649:ms_upn:1.3.6.1.4.1.311.20.2.3:msUPN:Microsoft User Principal Name
+650:aes_128_cfb1::AES-128-CFB1:aes-128-cfb1
+651:aes_192_cfb1::AES-192-CFB1:aes-192-cfb1
+652:aes_256_cfb1::AES-256-CFB1:aes-256-cfb1
+653:aes_128_cfb8::AES-128-CFB8:aes-128-cfb8
+654:aes_192_cfb8::AES-192-CFB8:aes-192-cfb8
+655:aes_256_cfb8::AES-256-CFB8:aes-256-cfb8
+656:des_cfb1::DES-CFB1:des-cfb1
+657:des_cfb8::DES-CFB8:des-cfb8
+658:des_ede3_cfb1::DES-EDE3-CFB1:des-ede3-cfb1
+659:des_ede3_cfb8::DES-EDE3-CFB8:des-ede3-cfb8
+660:streetAddress:2.5.4.9:street:streetAddress
+661:postalCode:2.5.4.17::postalCode
+662:id_ppl:1.3.6.1.5.5.7.21:id-ppl:
+663:proxyCertInfo:1.3.6.1.5.5.7.1.14:proxyCertInfo:Proxy Certificate Information
+664:id_ppl_anyLanguage:1.3.6.1.5.5.7.21.0:id-ppl-anyLanguage:Any language
+665:id_ppl_inheritAll:1.3.6.1.5.5.7.21.1:id-ppl-inheritAll:Inherit all
+666:name_constraints:2.5.29.30:nameConstraints:X509v3 Name Constraints
+667:Independent:1.3.6.1.5.5.7.21.2:id-ppl-independent:Independent
+668:sha256WithRSAEncryption:1.2.840.113549.1.1.11:RSA-SHA256:sha256WithRSAEncryption
+669:sha384WithRSAEncryption:1.2.840.113549.1.1.12:RSA-SHA384:sha384WithRSAEncryption
+670:sha512WithRSAEncryption:1.2.840.113549.1.1.13:RSA-SHA512:sha512WithRSAEncryption
+671:sha224WithRSAEncryption:1.2.840.113549.1.1.14:RSA-SHA224:sha224WithRSAEncryption
+alias:nist_hashalgs:2.16.840.1.101.3.4.2::
+672:sha256:2.16.840.1.101.3.4.2.1:SHA256:sha256
+673:sha384:2.16.840.1.101.3.4.2.2:SHA384:sha384
+674:sha512:2.16.840.1.101.3.4.2.3:SHA512:sha512
+675:sha224:2.16.840.1.101.3.4.2.4:SHA224:sha224
+676:identified_organization:1.3:identified-organization:
+677:certicom_arc:1.3.132:certicom-arc:
+678:wap:2.23.43:wap:
+679:wap_wsg:2.23.43.1:wap-wsg:
+680:X9_62_id_characteristic_two_basis:1.2.840.10045.1.2.3:id-characteristic-two-basis:
+681:X9_62_onBasis:1.2.840.10045.1.2.3.1:onBasis:
+682:X9_62_tpBasis:1.2.840.10045.1.2.3.2:tpBasis:
+683:X9_62_ppBasis:1.2.840.10045.1.2.3.3:ppBasis:
+alias:X9_62_c_TwoCurve:1.2.840.10045.3.0::
+684:X9_62_c2pnb163v1:1.2.840.10045.3.0.1:c2pnb163v1:
+685:X9_62_c2pnb163v2:1.2.840.10045.3.0.2:c2pnb163v2:
+686:X9_62_c2pnb163v3:1.2.840.10045.3.0.3:c2pnb163v3:
+687:X9_62_c2pnb176v1:1.2.840.10045.3.0.4:c2pnb176v1:
+688:X9_62_c2tnb191v1:1.2.840.10045.3.0.5:c2tnb191v1:
+689:X9_62_c2tnb191v2:1.2.840.10045.3.0.6:c2tnb191v2:
+690:X9_62_c2tnb191v3:1.2.840.10045.3.0.7:c2tnb191v3:
+691:X9_62_c2onb191v4:1.2.840.10045.3.0.8:c2onb191v4:
+692:X9_62_c2onb191v5:1.2.840.10045.3.0.9:c2onb191v5:
+693:X9_62_c2pnb208w1:1.2.840.10045.3.0.10:c2pnb208w1:
+694:X9_62_c2tnb239v1:1.2.840.10045.3.0.11:c2tnb239v1:
+695:X9_62_c2tnb239v2:1.2.840.10045.3.0.12:c2tnb239v2:
+696:X9_62_c2tnb239v3:1.2.840.10045.3.0.13:c2tnb239v3:
+697:X9_62_c2onb239v4:1.2.840.10045.3.0.14:c2onb239v4:
+698:X9_62_c2onb239v5:1.2.840.10045.3.0.15:c2onb239v5:
+699:X9_62_c2pnb272w1:1.2.840.10045.3.0.16:c2pnb272w1:
+700:X9_62_c2pnb304w1:1.2.840.10045.3.0.17:c2pnb304w1:
+701:X9_62_c2tnb359v1:1.2.840.10045.3.0.18:c2tnb359v1:
+702:X9_62_c2pnb368w1:1.2.840.10045.3.0.19:c2pnb368w1:
+703:X9_62_c2tnb431r1:1.2.840.10045.3.0.20:c2tnb431r1:
+alias:secg_ellipticCurve:1.3.132.0::
+704:secp112r1:1.3.132.0.6:secp112r1:
+705:secp112r2:1.3.132.0.7:secp112r2:
+706:secp128r1:1.3.132.0.28:secp128r1:
+707:secp128r2:1.3.132.0.29:secp128r2:
+708:secp160k1:1.3.132.0.9:secp160k1:
+709:secp160r1:1.3.132.0.8:secp160r1:
+710:secp160r2:1.3.132.0.30:secp160r2:
+711:secp192k1:1.3.132.0.31:secp192k1:
+712:secp224k1:1.3.132.0.32:secp224k1:
+713:secp224r1:1.3.132.0.33:secp224r1:
+714:secp256k1:1.3.132.0.10:secp256k1:
+715:secp384r1:1.3.132.0.34:secp384r1:
+716:secp521r1:1.3.132.0.35:secp521r1:
+717:sect113r1:1.3.132.0.4:sect113r1:
+718:sect113r2:1.3.132.0.5:sect113r2:
+719:sect131r1:1.3.132.0.22:sect131r1:
+720:sect131r2:1.3.132.0.23:sect131r2:
+721:sect163k1:1.3.132.0.1:sect163k1:
+722:sect163r1:1.3.132.0.2:sect163r1:
+723:sect163r2:1.3.132.0.15:sect163r2:
+724:sect193r1:1.3.132.0.24:sect193r1:
+725:sect193r2:1.3.132.0.25:sect193r2:
+726:sect233k1:1.3.132.0.26:sect233k1:
+727:sect233r1:1.3.132.0.27:sect233r1:
+728:sect239k1:1.3.132.0.3:sect239k1:
+729:sect283k1:1.3.132.0.16:sect283k1:
+730:sect283r1:1.3.132.0.17:sect283r1:
+731:sect409k1:1.3.132.0.36:sect409k1:
+732:sect409r1:1.3.132.0.37:sect409r1:
+733:sect571k1:1.3.132.0.38:sect571k1:
+734:sect571r1:1.3.132.0.39:sect571r1:
+alias:wap_wsg_idm_ecid:2.23.43.1.4::
+735:wap_wsg_idm_ecid_wtls1:2.23.43.1.4.1:wap-wsg-idm-ecid-wtls1:
+736:wap_wsg_idm_ecid_wtls3:2.23.43.1.4.3:wap-wsg-idm-ecid-wtls3:
+737:wap_wsg_idm_ecid_wtls4:2.23.43.1.4.4:wap-wsg-idm-ecid-wtls4:
+738:wap_wsg_idm_ecid_wtls5:2.23.43.1.4.5:wap-wsg-idm-ecid-wtls5:
+739:wap_wsg_idm_ecid_wtls6:2.23.43.1.4.6:wap-wsg-idm-ecid-wtls6:
+740:wap_wsg_idm_ecid_wtls7:2.23.43.1.4.7:wap-wsg-idm-ecid-wtls7:
+741:wap_wsg_idm_ecid_wtls8:2.23.43.1.4.8:wap-wsg-idm-ecid-wtls8:
+742:wap_wsg_idm_ecid_wtls9:2.23.43.1.4.9:wap-wsg-idm-ecid-wtls9:
+743:wap_wsg_idm_ecid_wtls10:2.23.43.1.4.10:wap-wsg-idm-ecid-wtls10:
+744:wap_wsg_idm_ecid_wtls11:2.23.43.1.4.11:wap-wsg-idm-ecid-wtls11:
+745:wap_wsg_idm_ecid_wtls12:2.23.43.1.4.12:wap-wsg-idm-ecid-wtls12:
+746:any_policy:2.5.29.32.0:anyPolicy:X509v3 Any Policy
+747:policy_mappings:2.5.29.33:policyMappings:X509v3 Policy Mappings
+748:inhibit_any_policy:2.5.29.54:inhibitAnyPolicy:X509v3 Inhibit Any Policy
+749:ipsec3::Oakley-EC2N-3:ipsec3
+750:ipsec4::Oakley-EC2N-4:ipsec4
+751:camellia_128_cbc:1.2.392.200011.61.1.1.1.2:CAMELLIA-128-CBC:camellia-128-cbc
+752:camellia_192_cbc:1.2.392.200011.61.1.1.1.3:CAMELLIA-192-CBC:camellia-192-cbc
+753:camellia_256_cbc:1.2.392.200011.61.1.1.1.4:CAMELLIA-256-CBC:camellia-256-cbc
+alias:ntt_ds:0.3.4401.5::
+alias:camellia:0.3.4401.5.3.1.9::
+754:camellia_128_ecb:0.3.4401.5.3.1.9.1:CAMELLIA-128-ECB:camellia-128-ecb
+755:camellia_192_ecb:0.3.4401.5.3.1.9.21:CAMELLIA-192-ECB:camellia-192-ecb
+756:camellia_256_ecb:0.3.4401.5.3.1.9.41:CAMELLIA-256-ECB:camellia-256-ecb
+757:camellia_128_cfb128:0.3.4401.5.3.1.9.4:CAMELLIA-128-CFB:camellia-128-cfb
+758:camellia_192_cfb128:0.3.4401.5.3.1.9.24:CAMELLIA-192-CFB:camellia-192-cfb
+759:camellia_256_cfb128:0.3.4401.5.3.1.9.44:CAMELLIA-256-CFB:camellia-256-cfb
+760:camellia_128_cfb1::CAMELLIA-128-CFB1:camellia-128-cfb1
+761:camellia_192_cfb1::CAMELLIA-192-CFB1:camellia-192-cfb1
+762:camellia_256_cfb1::CAMELLIA-256-CFB1:camellia-256-cfb1
+763:camellia_128_cfb8::CAMELLIA-128-CFB8:camellia-128-cfb8
+764:camellia_192_cfb8::CAMELLIA-192-CFB8:camellia-192-cfb8
+765:camellia_256_cfb8::CAMELLIA-256-CFB8:camellia-256-cfb8
+766:camellia_128_ofb128:0.3.4401.5.3.1.9.3:CAMELLIA-128-OFB:camellia-128-ofb
+767:camellia_192_ofb128:0.3.4401.5.3.1.9.23:CAMELLIA-192-OFB:camellia-192-ofb
+768:camellia_256_ofb128:0.3.4401.5.3.1.9.43:CAMELLIA-256-OFB:camellia-256-ofb
+769:subject_directory_attributes:2.5.29.9:subjectDirectoryAttributes:X509v3 Subject Directory Attributes
+770:issuing_distribution_point:2.5.29.28:issuingDistributionPoint:X509v3 Issuing Distribution Point
+771:certificate_issuer:2.5.29.29:certificateIssuer:X509v3 Certificate Issuer
+772:korea:removed::
+773:kisa:1.2.410.200004:KISA:kisa
+774:kftc:removed::
+775:npki_alg:removed::
+776:seed_ecb:1.2.410.200004.1.3:SEED-ECB:seed-ecb
+777:seed_cbc:1.2.410.200004.1.4:SEED-CBC:seed-cbc
+778:seed_ofb128:1.2.410.200004.1.6:SEED-OFB:seed-ofb
+779:seed_cfb128:1.2.410.200004.1.5:SEED-CFB:seed-cfb
+780:hmac_md5:1.3.6.1.5.5.8.1.1:HMAC-MD5:hmac-md5
+781:hmac_sha1:1.3.6.1.5.5.8.1.2:HMAC-SHA1:hmac-sha1
+782:id_PasswordBasedMAC:1.2.840.113533.7.66.13:id-PasswordBasedMAC:password based MAC
+783:id_DHBasedMac:1.2.840.113533.7.66.30:id-DHBasedMac:Diffie-Hellman based MAC
+784:id_it_suppLangTags:1.3.6.1.5.5.7.4.16:id-it-suppLangTags:
+785:caRepository:1.3.6.1.5.5.7.48.5:caRepository:CA Repository
+786:id_smime_ct_compressedData:1.2.840.113549.1.9.16.1.9:id-smime-ct-compressedData:
+787:id_ct_asciiTextWithCRLF:1.2.840.113549.1.9.16.1.27:id-ct-asciiTextWithCRLF:
+788:id_aes128_wrap:2.16.840.1.101.3.4.1.5:id-aes128-wrap:
+789:id_aes192_wrap:2.16.840.1.101.3.4.1.25:id-aes192-wrap:
+790:id_aes256_wrap:2.16.840.1.101.3.4.1.45:id-aes256-wrap:
+791:ecdsa_with_Recommended:1.2.840.10045.4.2:ecdsa-with-Recommended:
+792:ecdsa_with_Specified:1.2.840.10045.4.3:ecdsa-with-Specified:
+793:ecdsa_with_SHA224:1.2.840.10045.4.3.1:ecdsa-with-SHA224:
+794:ecdsa_with_SHA256:1.2.840.10045.4.3.2:ecdsa-with-SHA256:
+795:ecdsa_with_SHA384:1.2.840.10045.4.3.3:ecdsa-with-SHA384:
+796:ecdsa_with_SHA512:1.2.840.10045.4.3.4:ecdsa-with-SHA512:
+797:hmacWithMD5:1.2.840.113549.2.6::hmacWithMD5
+798:hmacWithSHA224:1.2.840.113549.2.8::hmacWithSHA224
+799:hmacWithSHA256:1.2.840.113549.2.9::hmacWithSHA256
+800:hmacWithSHA384:1.2.840.113549.2.10::hmacWithSHA384
+801:hmacWithSHA512:1.2.840.113549.2.11::hmacWithSHA512
+alias:dsa_with_sha2:2.16.840.1.101.3.4.3::
+alias:sigAlgs:2.16.840.1.101.3.4.3::
+802:dsa_with_SHA224:2.16.840.1.101.3.4.3.1:dsa_with_SHA224:
+803:dsa_with_SHA256:2.16.840.1.101.3.4.3.2:dsa_with_SHA256:
+804:whirlpool:1.0.10118.3.0.55:whirlpool:
+805:cryptopro:1.2.643.2.2:cryptopro:
+806:cryptocom:1.2.643.2.9:cryptocom:
+807:id_GostR3411_94_with_GostR3410_2001:1.2.643.2.2.3:id-GostR3411-94-with-GostR3410-2001:GOST R 34.11-94 with GOST R 34.10-2001
+808:id_GostR3411_94_with_GostR3410_94:1.2.643.2.2.4:id-GostR3411-94-with-GostR3410-94:GOST R 34.11-94 with GOST R 34.10-94
+809:id_GostR3411_94:1.2.643.2.2.9:md_gost94:GOST R 34.11-94
+810:id_HMACGostR3411_94:1.2.643.2.2.10:id-HMACGostR3411-94:HMAC GOST 34.11-94
+811:id_GostR3410_2001:1.2.643.2.2.19:gost2001:GOST R 34.10-2001
+812:id_GostR3410_94:1.2.643.2.2.20:gost94:GOST R 34.10-94
+813:id_Gost28147_89:1.2.643.2.2.21:gost89:GOST 28147-89
+814:gost89_cnt::gost89-cnt:
+815:id_Gost28147_89_MAC:1.2.643.2.2.22:gost-mac:GOST 28147-89 MAC
+816:id_GostR3411_94_prf:1.2.643.2.2.23:prf-gostr3411-94:GOST R 34.11-94 PRF
+817:id_GostR3410_2001DH:1.2.643.2.2.98:id-GostR3410-2001DH:GOST R 34.10-2001 DH
+818:id_GostR3410_94DH:1.2.643.2.2.99:id-GostR3410-94DH:GOST R 34.10-94 DH
+819:id_Gost28147_89_CryptoPro_KeyMeshing:1.2.643.2.2.14.1:id-Gost28147-89-CryptoPro-KeyMeshing:
+820:id_Gost28147_89_None_KeyMeshing:1.2.643.2.2.14.0:id-Gost28147-89-None-KeyMeshing:
+821:id_GostR3411_94_TestParamSet:1.2.643.2.2.30.0:id-GostR3411-94-TestParamSet:
+822:id_GostR3411_94_CryptoProParamSet:1.2.643.2.2.30.1:id-GostR3411-94-CryptoProParamSet:
+823:id_Gost28147_89_TestParamSet:1.2.643.2.2.31.0:id-Gost28147-89-TestParamSet:
+824:id_Gost28147_89_CryptoPro_A_ParamSet:1.2.643.2.2.31.1:id-Gost28147-89-CryptoPro-A-ParamSet:
+825:id_Gost28147_89_CryptoPro_B_ParamSet:1.2.643.2.2.31.2:id-Gost28147-89-CryptoPro-B-ParamSet:
+826:id_Gost28147_89_CryptoPro_C_ParamSet:1.2.643.2.2.31.3:id-Gost28147-89-CryptoPro-C-ParamSet:
+827:id_Gost28147_89_CryptoPro_D_ParamSet:1.2.643.2.2.31.4:id-Gost28147-89-CryptoPro-D-ParamSet:
+828:id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet:1.2.643.2.2.31.5:id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet:
+829:id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet:1.2.643.2.2.31.6:id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet:
+830:id_Gost28147_89_CryptoPro_RIC_1_ParamSet:1.2.643.2.2.31.7:id-Gost28147-89-CryptoPro-RIC-1-ParamSet:
+831:id_GostR3410_94_TestParamSet:1.2.643.2.2.32.0:id-GostR3410-94-TestParamSet:
+832:id_GostR3410_94_CryptoPro_A_ParamSet:1.2.643.2.2.32.2:id-GostR3410-94-CryptoPro-A-ParamSet:
+833:id_GostR3410_94_CryptoPro_B_ParamSet:1.2.643.2.2.32.3:id-GostR3410-94-CryptoPro-B-ParamSet:
+834:id_GostR3410_94_CryptoPro_C_ParamSet:1.2.643.2.2.32.4:id-GostR3410-94-CryptoPro-C-ParamSet:
+835:id_GostR3410_94_CryptoPro_D_ParamSet:1.2.643.2.2.32.5:id-GostR3410-94-CryptoPro-D-ParamSet:
+836:id_GostR3410_94_CryptoPro_XchA_ParamSet:1.2.643.2.2.33.1:id-GostR3410-94-CryptoPro-XchA-ParamSet:
+837:id_GostR3410_94_CryptoPro_XchB_ParamSet:1.2.643.2.2.33.2:id-GostR3410-94-CryptoPro-XchB-ParamSet:
+838:id_GostR3410_94_CryptoPro_XchC_ParamSet:1.2.643.2.2.33.3:id-GostR3410-94-CryptoPro-XchC-ParamSet:
+839:id_GostR3410_2001_TestParamSet:1.2.643.2.2.35.0:id-GostR3410-2001-TestParamSet:
+840:id_GostR3410_2001_CryptoPro_A_ParamSet:1.2.643.2.2.35.1:id-GostR3410-2001-CryptoPro-A-ParamSet:
+841:id_GostR3410_2001_CryptoPro_B_ParamSet:1.2.643.2.2.35.2:id-GostR3410-2001-CryptoPro-B-ParamSet:
+842:id_GostR3410_2001_CryptoPro_C_ParamSet:1.2.643.2.2.35.3:id-GostR3410-2001-CryptoPro-C-ParamSet:
+843:id_GostR3410_2001_CryptoPro_XchA_ParamSet:1.2.643.2.2.36.0:id-GostR3410-2001-CryptoPro-XchA-ParamSet:
+844:id_GostR3410_2001_CryptoPro_XchB_ParamSet:1.2.643.2.2.36.1:id-GostR3410-2001-CryptoPro-XchB-ParamSet:
+845:id_GostR3410_94_a:1.2.643.2.2.20.1:id-GostR3410-94-a:
+846:id_GostR3410_94_aBis:1.2.643.2.2.20.2:id-GostR3410-94-aBis:
+847:id_GostR3410_94_b:1.2.643.2.2.20.3:id-GostR3410-94-b:
+848:id_GostR3410_94_bBis:1.2.643.2.2.20.4:id-GostR3410-94-bBis:
+849:id_Gost28147_89_cc:1.2.643.2.9.1.6.1:id-Gost28147-89-cc:GOST 28147-89 Cryptocom ParamSet
+850:id_GostR3410_94_cc:1.2.643.2.9.1.5.3:gost94cc:GOST 34.10-94 Cryptocom
+851:id_GostR3410_2001_cc:1.2.643.2.9.1.5.4:gost2001cc:GOST 34.10-2001 Cryptocom
+852:id_GostR3411_94_with_GostR3410_94_cc:1.2.643.2.9.1.3.3:id-GostR3411-94-with-GostR3410-94-cc:GOST R 34.11-94 with GOST R 34.10-94 Cryptocom
+853:id_GostR3411_94_with_GostR3410_2001_cc:1.2.643.2.9.1.3.4:id-GostR3411-94-with-GostR3410-2001-cc:GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom
+854:id_GostR3410_2001_ParamSet_cc:1.2.643.2.9.1.8.1:id-GostR3410-2001-ParamSet-cc:GOST R 3410-2001 Parameter Set Cryptocom
+855:hmac::HMAC:hmac
+856:LocalKeySet:1.3.6.1.4.1.311.17.2:LocalKeySet:Microsoft Local Key set
+857:freshest_crl:2.5.29.46:freshestCRL:X509v3 Freshest CRL
+858:id_on_permanentIdentifier:1.3.6.1.5.5.7.8.3:id-on-permanentIdentifier:Permanent Identifier
+859:searchGuide:2.5.4.14::searchGuide
+860:businessCategory:2.5.4.15::businessCategory
+861:postalAddress:2.5.4.16::postalAddress
+862:postOfficeBox:2.5.4.18::postOfficeBox
+863:physicalDeliveryOfficeName:2.5.4.19::physicalDeliveryOfficeName
+864:telephoneNumber:2.5.4.20::telephoneNumber
+865:telexNumber:2.5.4.21::telexNumber
+866:teletexTerminalIdentifier:2.5.4.22::teletexTerminalIdentifier
+867:facsimileTelephoneNumber:2.5.4.23::facsimileTelephoneNumber
+868:x121Address:2.5.4.24::x121Address
+869:internationaliSDNNumber:2.5.4.25::internationaliSDNNumber
+870:registeredAddress:2.5.4.26::registeredAddress
+871:destinationIndicator:2.5.4.27::destinationIndicator
+872:preferredDeliveryMethod:2.5.4.28::preferredDeliveryMethod
+873:presentationAddress:2.5.4.29::presentationAddress
+874:supportedApplicationContext:2.5.4.30::supportedApplicationContext
+875:member:2.5.4.31:member:
+876:owner:2.5.4.32:owner:
+877:roleOccupant:2.5.4.33::roleOccupant
+878:seeAlso:2.5.4.34:seeAlso:
+879:userPassword:2.5.4.35::userPassword
+880:userCertificate:2.5.4.36::userCertificate
+881:cACertificate:2.5.4.37::cACertificate
+882:authorityRevocationList:2.5.4.38::authorityRevocationList
+883:certificateRevocationList:2.5.4.39::certificateRevocationList
+884:crossCertificatePair:2.5.4.40::crossCertificatePair
+885:enhancedSearchGuide:2.5.4.47::enhancedSearchGuide
+886:protocolInformation:2.5.4.48::protocolInformation
+887:distinguishedName:2.5.4.49::distinguishedName
+888:uniqueMember:2.5.4.50::uniqueMember
+889:houseIdentifier:2.5.4.51::houseIdentifier
+890:supportedAlgorithms:2.5.4.52::supportedAlgorithms
+891:deltaRevocationList:2.5.4.53::deltaRevocationList
+892:dmdName:2.5.4.54:dmdName:
+893:id_alg_PWRI_KEK:1.2.840.113549.1.9.16.3.9:id-alg-PWRI-KEK:
+894:cmac::CMAC:cmac
+895:aes_128_gcm:2.16.840.1.101.3.4.1.6:id-aes128-GCM:aes-128-gcm
+896:aes_128_ccm:2.16.840.1.101.3.4.1.7:id-aes128-CCM:aes-128-ccm
+897:id_aes128_wrap_pad:2.16.840.1.101.3.4.1.8:id-aes128-wrap-pad:
+898:aes_192_gcm:2.16.840.1.101.3.4.1.26:id-aes192-GCM:aes-192-gcm
+899:aes_192_ccm:2.16.840.1.101.3.4.1.27:id-aes192-CCM:aes-192-ccm
+900:id_aes192_wrap_pad:2.16.840.1.101.3.4.1.28:id-aes192-wrap-pad:
+901:aes_256_gcm:2.16.840.1.101.3.4.1.46:id-aes256-GCM:aes-256-gcm
+902:aes_256_ccm:2.16.840.1.101.3.4.1.47:id-aes256-CCM:aes-256-ccm
+903:id_aes256_wrap_pad:2.16.840.1.101.3.4.1.48:id-aes256-wrap-pad:
+904:aes_128_ctr::AES-128-CTR:aes-128-ctr
+905:aes_192_ctr::AES-192-CTR:aes-192-ctr
+906:aes_256_ctr::AES-256-CTR:aes-256-ctr
+907:id_camellia128_wrap:1.2.392.200011.61.1.1.3.2:id-camellia128-wrap:
+908:id_camellia192_wrap:1.2.392.200011.61.1.1.3.3:id-camellia192-wrap:
+909:id_camellia256_wrap:1.2.392.200011.61.1.1.3.4:id-camellia256-wrap:
+910:anyExtendedKeyUsage:2.5.29.37.0:anyExtendedKeyUsage:Any Extended Key Usage
+911:mgf1:1.2.840.113549.1.1.8:MGF1:mgf1
+912:rsassaPss:1.2.840.113549.1.1.10:RSASSA-PSS:rsassaPss
+913:aes_128_xts:1.3.111.2.1619.0.1.1:AES-128-XTS:aes-128-xts
+914:aes_256_xts:1.3.111.2.1619.0.1.2:AES-256-XTS:aes-256-xts
+915:rc4_hmac_md5::RC4-HMAC-MD5:rc4-hmac-md5
+916:aes_128_cbc_hmac_sha1::AES-128-CBC-HMAC-SHA1:aes-128-cbc-hmac-sha1
+917:aes_192_cbc_hmac_sha1::AES-192-CBC-HMAC-SHA1:aes-192-cbc-hmac-sha1
+918:aes_256_cbc_hmac_sha1::AES-256-CBC-HMAC-SHA1:aes-256-cbc-hmac-sha1
+919:rsaesOaep:1.2.840.113549.1.1.7:RSAES-OAEP:rsaesOaep
+920:dhpublicnumber:1.2.840.10046.2.1:dhpublicnumber:X9.42 DH
+921:brainpoolP160r1:1.3.36.3.3.2.8.1.1.1:brainpoolP160r1:
+922:brainpoolP160t1:1.3.36.3.3.2.8.1.1.2:brainpoolP160t1:
+923:brainpoolP192r1:1.3.36.3.3.2.8.1.1.3:brainpoolP192r1:
+924:brainpoolP192t1:1.3.36.3.3.2.8.1.1.4:brainpoolP192t1:
+925:brainpoolP224r1:1.3.36.3.3.2.8.1.1.5:brainpoolP224r1:
+926:brainpoolP224t1:1.3.36.3.3.2.8.1.1.6:brainpoolP224t1:
+927:brainpoolP256r1:1.3.36.3.3.2.8.1.1.7:brainpoolP256r1:
+928:brainpoolP256t1:1.3.36.3.3.2.8.1.1.8:brainpoolP256t1:
+929:brainpoolP320r1:1.3.36.3.3.2.8.1.1.9:brainpoolP320r1:
+930:brainpoolP320t1:1.3.36.3.3.2.8.1.1.10:brainpoolP320t1:
+931:brainpoolP384r1:1.3.36.3.3.2.8.1.1.11:brainpoolP384r1:
+932:brainpoolP384t1:1.3.36.3.3.2.8.1.1.12:brainpoolP384t1:
+933:brainpoolP512r1:1.3.36.3.3.2.8.1.1.13:brainpoolP512r1:
+934:brainpoolP512t1:1.3.36.3.3.2.8.1.1.14:brainpoolP512t1:
+935:pSpecified:1.2.840.113549.1.1.9:PSPECIFIED:pSpecified
+alias:x9_63_scheme:1.3.133.16.840.63.0::
+936:dhSinglePass_stdDH_sha1kdf_scheme:1.3.133.16.840.63.0.2:dhSinglePass-stdDH-sha1kdf-scheme:
+alias:secg_scheme:1.3.132.1::
+937:dhSinglePass_stdDH_sha224kdf_scheme:1.3.132.1.11.0:dhSinglePass-stdDH-sha224kdf-scheme:
+938:dhSinglePass_stdDH_sha256kdf_scheme:1.3.132.1.11.1:dhSinglePass-stdDH-sha256kdf-scheme:
+939:dhSinglePass_stdDH_sha384kdf_scheme:1.3.132.1.11.2:dhSinglePass-stdDH-sha384kdf-scheme:
+940:dhSinglePass_stdDH_sha512kdf_scheme:1.3.132.1.11.3:dhSinglePass-stdDH-sha512kdf-scheme:
+941:dhSinglePass_cofactorDH_sha1kdf_scheme:1.3.133.16.840.63.0.3:dhSinglePass-cofactorDH-sha1kdf-scheme:
+942:dhSinglePass_cofactorDH_sha224kdf_scheme:1.3.132.1.14.0:dhSinglePass-cofactorDH-sha224kdf-scheme:
+943:dhSinglePass_cofactorDH_sha256kdf_scheme:1.3.132.1.14.1:dhSinglePass-cofactorDH-sha256kdf-scheme:
+944:dhSinglePass_cofactorDH_sha384kdf_scheme:1.3.132.1.14.2:dhSinglePass-cofactorDH-sha384kdf-scheme:
+945:dhSinglePass_cofactorDH_sha512kdf_scheme:1.3.132.1.14.3:dhSinglePass-cofactorDH-sha512kdf-scheme:
+946:dh_std_kdf::dh-std-kdf:
+947:dh_cofactor_kdf::dh-cofactor-kdf:
+948:aes_128_cbc_hmac_sha256::AES-128-CBC-HMAC-SHA256:aes-128-cbc-hmac-sha256
+949:aes_192_cbc_hmac_sha256::AES-192-CBC-HMAC-SHA256:aes-192-cbc-hmac-sha256
+950:aes_256_cbc_hmac_sha256::AES-256-CBC-HMAC-SHA256:aes-256-cbc-hmac-sha256
+951:ct_precert_scts:1.3.6.1.4.1.11129.2.4.2:ct_precert_scts:CT Precertificate SCTs
+952:ct_precert_poison:1.3.6.1.4.1.11129.2.4.3:ct_precert_poison:CT Precertificate Poison
+953:ct_precert_signer:1.3.6.1.4.1.11129.2.4.4:ct_precert_signer:CT Precertificate Signer
+954:ct_cert_scts:1.3.6.1.4.1.11129.2.4.5:ct_cert_scts:CT Certificate SCTs
+955:jurisdictionLocalityName:1.3.6.1.4.1.311.60.2.1.1:jurisdictionL:jurisdictionLocalityName
+956:jurisdictionStateOrProvinceName:1.3.6.1.4.1.311.60.2.1.2:jurisdictionST:jurisdictionStateOrProvinceName
+957:jurisdictionCountryName:1.3.6.1.4.1.311.60.2.1.3:jurisdictionC:jurisdictionCountryName
+958:aes_128_ocb::AES-128-OCB:aes-128-ocb
+959:aes_192_ocb::AES-192-OCB:aes-192-ocb
+960:aes_256_ocb::AES-256-OCB:aes-256-ocb
+961:camellia_128_gcm:0.3.4401.5.3.1.9.6:CAMELLIA-128-GCM:camellia-128-gcm
+962:camellia_128_ccm:0.3.4401.5.3.1.9.7:CAMELLIA-128-CCM:camellia-128-ccm
+963:camellia_128_ctr:0.3.4401.5.3.1.9.9:CAMELLIA-128-CTR:camellia-128-ctr
+964:camellia_128_cmac:0.3.4401.5.3.1.9.10:CAMELLIA-128-CMAC:camellia-128-cmac
+965:camellia_192_gcm:0.3.4401.5.3.1.9.26:CAMELLIA-192-GCM:camellia-192-gcm
+966:camellia_192_ccm:0.3.4401.5.3.1.9.27:CAMELLIA-192-CCM:camellia-192-ccm
+967:camellia_192_ctr:0.3.4401.5.3.1.9.29:CAMELLIA-192-CTR:camellia-192-ctr
+968:camellia_192_cmac:0.3.4401.5.3.1.9.30:CAMELLIA-192-CMAC:camellia-192-cmac
+969:camellia_256_gcm:0.3.4401.5.3.1.9.46:CAMELLIA-256-GCM:camellia-256-gcm
+970:camellia_256_ccm:0.3.4401.5.3.1.9.47:CAMELLIA-256-CCM:camellia-256-ccm
+971:camellia_256_ctr:0.3.4401.5.3.1.9.49:CAMELLIA-256-CTR:camellia-256-ctr
+972:camellia_256_cmac:0.3.4401.5.3.1.9.50:CAMELLIA-256-CMAC:camellia-256-cmac
+973:id_scrypt:1.3.6.1.4.1.11591.4.11:id-scrypt:scrypt
+974:id_tc26:1.2.643.7.1:id-tc26:
+975:gost89_cnt_12::gost89-cnt-12:
+976:gost_mac_12::gost-mac-12:
+977:id_tc26_algorithms:1.2.643.7.1.1:id-tc26-algorithms:
+978:id_tc26_sign:1.2.643.7.1.1.1:id-tc26-sign:
+979:id_GostR3410_2012_256:1.2.643.7.1.1.1.1:gost2012_256:GOST R 34.10-2012 with 256 bit modulus
+980:id_GostR3410_2012_512:1.2.643.7.1.1.1.2:gost2012_512:GOST R 34.10-2012 with 512 bit modulus
+981:id_tc26_digest:1.2.643.7.1.1.2:id-tc26-digest:
+982:id_GostR3411_2012_256:1.2.643.7.1.1.2.2:md_gost12_256:GOST R 34.11-2012 with 256 bit hash
+983:id_GostR3411_2012_512:1.2.643.7.1.1.2.3:md_gost12_512:GOST R 34.11-2012 with 512 bit hash
+984:id_tc26_signwithdigest:1.2.643.7.1.1.3:id-tc26-signwithdigest:
+985:id_tc26_signwithdigest_gost3410_2012_256:1.2.643.7.1.1.3.2:id-tc26-signwithdigest-gost3410-2012-256:GOST R 34.10-2012 with GOST R 34.11-2012 (256 bit)
+986:id_tc26_signwithdigest_gost3410_2012_512:1.2.643.7.1.1.3.3:id-tc26-signwithdigest-gost3410-2012-512:GOST R 34.10-2012 with GOST R 34.11-2012 (512 bit)
+987:id_tc26_mac:1.2.643.7.1.1.4:id-tc26-mac:
+988:id_tc26_hmac_gost_3411_2012_256:1.2.643.7.1.1.4.1:id-tc26-hmac-gost-3411-2012-256:HMAC GOST 34.11-2012 256 bit
+989:id_tc26_hmac_gost_3411_2012_512:1.2.643.7.1.1.4.2:id-tc26-hmac-gost-3411-2012-512:HMAC GOST 34.11-2012 512 bit
+990:id_tc26_cipher:1.2.643.7.1.1.5:id-tc26-cipher:
+991:id_tc26_agreement:1.2.643.7.1.1.6:id-tc26-agreement:
+992:id_tc26_agreement_gost_3410_2012_256:1.2.643.7.1.1.6.1:id-tc26-agreement-gost-3410-2012-256:
+993:id_tc26_agreement_gost_3410_2012_512:1.2.643.7.1.1.6.2:id-tc26-agreement-gost-3410-2012-512:
+994:id_tc26_constants:1.2.643.7.1.2:id-tc26-constants:
+995:id_tc26_sign_constants:1.2.643.7.1.2.1:id-tc26-sign-constants:
+996:id_tc26_gost_3410_2012_512_constants:1.2.643.7.1.2.1.2:id-tc26-gost-3410-2012-512-constants:
+997:id_tc26_gost_3410_2012_512_paramSetTest:1.2.643.7.1.2.1.2.0:id-tc26-gost-3410-2012-512-paramSetTest:GOST R 34.10-2012 (512 bit) testing parameter set
+998:id_tc26_gost_3410_2012_512_paramSetA:1.2.643.7.1.2.1.2.1:id-tc26-gost-3410-2012-512-paramSetA:GOST R 34.10-2012 (512 bit) ParamSet A
+999:id_tc26_gost_3410_2012_512_paramSetB:1.2.643.7.1.2.1.2.2:id-tc26-gost-3410-2012-512-paramSetB:GOST R 34.10-2012 (512 bit) ParamSet B
+1000:id_tc26_digest_constants:1.2.643.7.1.2.2:id-tc26-digest-constants:
+1001:id_tc26_cipher_constants:1.2.643.7.1.2.5:id-tc26-cipher-constants:
+1002:id_tc26_gost_28147_constants:1.2.643.7.1.2.5.1:id-tc26-gost-28147-constants:
+1003:id_tc26_gost_28147_param_Z:1.2.643.7.1.2.5.1.1:id-tc26-gost-28147-param-Z:GOST 28147-89 TC26 parameter set
+1004:INN:1.2.643.3.131.1.1:INN:INN
+1005:OGRN:1.2.643.100.1:OGRN:OGRN
+1006:SNILS:1.2.643.100.3:SNILS:SNILS
+1007:subjectSignTool:1.2.643.100.111:subjectSignTool:Signing Tool of Subject
+1008:issuerSignTool:1.2.643.100.112:issuerSignTool:Signing Tool of Issuer
+1009:gost89_cbc::gost89-cbc:
+1010:gost89_ecb::gost89-ecb:
+1011:gost89_ctr::gost89-ctr:
+1012:kuznyechik_ecb::kuznyechik-ecb:
+1013:kuznyechik_ctr::kuznyechik-ctr:
+1014:kuznyechik_ofb::kuznyechik-ofb:
+1015:kuznyechik_cbc::kuznyechik-cbc:
+1016:kuznyechik_cfb::kuznyechik-cfb:
+1017:kuznyechik_mac::kuznyechik-mac:
+1018:chacha20_poly1305::ChaCha20-Poly1305:chacha20-poly1305
+1019:chacha20::ChaCha20:chacha20
+1020:tlsfeature:1.3.6.1.5.5.7.1.24:tlsfeature:TLS Feature
+1021:tls1_prf::TLS1-PRF:tls1-prf
+1022:ipsec_IKE:1.3.6.1.5.5.7.3.17:ipsecIKE:ipsec Internet Key Exchange
+1023:capwapAC:1.3.6.1.5.5.7.3.18:capwapAC:Ctrl/provision WAP Access
+1024:capwapWTP:1.3.6.1.5.5.7.3.19:capwapWTP:Ctrl/Provision WAP Termination
+1025:sshClient:1.3.6.1.5.5.7.3.21:secureShellClient:SSH Client
+1026:sshServer:1.3.6.1.5.5.7.3.22:secureShellServer:SSH Server
+1027:sendRouter:1.3.6.1.5.5.7.3.23:sendRouter:Send Router
+1028:sendProxiedRouter:1.3.6.1.5.5.7.3.24:sendProxiedRouter:Send Proxied Router
+1029:sendOwner:1.3.6.1.5.5.7.3.25:sendOwner:Send Owner
+1030:sendProxiedOwner:1.3.6.1.5.5.7.3.26:sendProxiedOwner:Send Proxied Owner
+1031:id_pkinit:1.3.6.1.5.2.3:id-pkinit:
+1032:pkInitClientAuth:1.3.6.1.5.2.3.4:pkInitClientAuth:PKINIT Client Auth
+1033:pkInitKDC:1.3.6.1.5.2.3.5:pkInitKDC:Signing KDC Response
+1034:X25519:1.3.101.110:X25519:
+1035:X448:1.3.101.111:X448:
+1036:hkdf::HKDF:hkdf
+1037:kx_rsa::KxRSA:kx-rsa
+1038:kx_ecdhe::KxECDHE:kx-ecdhe
+1039:kx_dhe::KxDHE:kx-dhe
+1040:kx_ecdhe_psk::KxECDHE-PSK:kx-ecdhe-psk
+1041:kx_dhe_psk::KxDHE-PSK:kx-dhe-psk
+1042:kx_rsa_psk::KxRSA_PSK:kx-rsa-psk
+1043:kx_psk::KxPSK:kx-psk
+1044:kx_srp::KxSRP:kx-srp
+1045:kx_gost::KxGOST:kx-gost
+1046:auth_rsa::AuthRSA:auth-rsa
+1047:auth_ecdsa::AuthECDSA:auth-ecdsa
+1048:auth_psk::AuthPSK:auth-psk
+1049:auth_dss::AuthDSS:auth-dss
+1050:auth_gost01::AuthGOST01:auth-gost01
+1051:auth_gost12::AuthGOST12:auth-gost12
+1052:auth_srp::AuthSRP:auth-srp
+1053:auth_null::AuthNULL:auth-null
+1054:fips_none:removed::
+1055:fips_140_2:removed::
+1056:blake2b512:1.3.6.1.4.1.1722.12.2.1.16:BLAKE2b512:blake2b512
+1057:blake2s256:1.3.6.1.4.1.1722.12.2.2.8:BLAKE2s256:blake2s256
+1058:id_smime_ct_contentCollection:1.2.840.113549.1.9.16.1.19:id-smime-ct-contentCollection:
+1059:id_smime_ct_authEnvelopedData:1.2.840.113549.1.9.16.1.23:id-smime-ct-authEnvelopedData:
+1060:id_ct_xml:1.2.840.113549.1.9.16.1.28:id-ct-xml:
+1061:poly1305::Poly1305:poly1305
+1062:siphash::SipHash:siphash
+1063:kx_any::KxANY:kx-any
+1064:auth_any::AuthANY:auth-any
+alias:aria:1.2.410.200046.1.1::
+1065:aria_128_ecb:1.2.410.200046.1.1.1:ARIA-128-ECB:aria-128-ecb
+1066:aria_128_cbc:1.2.410.200046.1.1.2:ARIA-128-CBC:aria-128-cbc
+1067:aria_128_cfb128:1.2.410.200046.1.1.3:ARIA-128-CFB:aria-128-cfb
+1068:aria_128_ofb128:1.2.410.200046.1.1.4:ARIA-128-OFB:aria-128-ofb
+1069:aria_128_ctr:1.2.410.200046.1.1.5:ARIA-128-CTR:aria-128-ctr
+1070:aria_192_ecb:1.2.410.200046.1.1.6:ARIA-192-ECB:aria-192-ecb
+1071:aria_192_cbc:1.2.410.200046.1.1.7:ARIA-192-CBC:aria-192-cbc
+1072:aria_192_cfb128:1.2.410.200046.1.1.8:ARIA-192-CFB:aria-192-cfb
+1073:aria_192_ofb128:1.2.410.200046.1.1.9:ARIA-192-OFB:aria-192-ofb
+1074:aria_192_ctr:1.2.410.200046.1.1.10:ARIA-192-CTR:aria-192-ctr
+1075:aria_256_ecb:1.2.410.200046.1.1.11:ARIA-256-ECB:aria-256-ecb
+1076:aria_256_cbc:1.2.410.200046.1.1.12:ARIA-256-CBC:aria-256-cbc
+1077:aria_256_cfb128:1.2.410.200046.1.1.13:ARIA-256-CFB:aria-256-cfb
+1078:aria_256_ofb128:1.2.410.200046.1.1.14:ARIA-256-OFB:aria-256-ofb
+1079:aria_256_ctr:1.2.410.200046.1.1.15:ARIA-256-CTR:aria-256-ctr
+1080:aria_128_cfb1::ARIA-128-CFB1:aria-128-cfb1
+1081:aria_192_cfb1::ARIA-192-CFB1:aria-192-cfb1
+1082:aria_256_cfb1::ARIA-256-CFB1:aria-256-cfb1
+1083:aria_128_cfb8::ARIA-128-CFB8:aria-128-cfb8
+1084:aria_192_cfb8::ARIA-192-CFB8:aria-192-cfb8
+1085:aria_256_cfb8::ARIA-256-CFB8:aria-256-cfb8
+1086:id_smime_aa_signingCertificateV2:1.2.840.113549.1.9.16.2.47:id-smime-aa-signingCertificateV2:
+1087:ED25519:1.3.101.112:ED25519:
+1088:ED448:1.3.101.113:ED448:
+1089:organizationIdentifier:2.5.4.97::organizationIdentifier
+1090:countryCode3c:2.5.4.98:c3:countryCode3c
+1091:countryCode3n:2.5.4.99:n3:countryCode3n
+1092:dnsName:2.5.4.100::dnsName
+1093:x509ExtAdmission:1.3.36.8.3.3:x509ExtAdmission:Professional Information or basis for Admission
+1094:sha512_224:2.16.840.1.101.3.4.2.5:SHA512-224:sha512-224
+1095:sha512_256:2.16.840.1.101.3.4.2.6:SHA512-256:sha512-256
+1096:sha3_224:2.16.840.1.101.3.4.2.7:SHA3-224:sha3-224
+1097:sha3_256:2.16.840.1.101.3.4.2.8:SHA3-256:sha3-256
+1098:sha3_384:2.16.840.1.101.3.4.2.9:SHA3-384:sha3-384
+1099:sha3_512:2.16.840.1.101.3.4.2.10:SHA3-512:sha3-512
+1100:shake128:2.16.840.1.101.3.4.2.11:SHAKE128:shake128
+1101:shake256:2.16.840.1.101.3.4.2.12:SHAKE256:shake256
+1102:hmac_sha3_224:2.16.840.1.101.3.4.2.13:id-hmacWithSHA3-224:hmac-sha3-224
+1103:hmac_sha3_256:2.16.840.1.101.3.4.2.14:id-hmacWithSHA3-256:hmac-sha3-256
+1104:hmac_sha3_384:2.16.840.1.101.3.4.2.15:id-hmacWithSHA3-384:hmac-sha3-384
+1105:hmac_sha3_512:2.16.840.1.101.3.4.2.16:id-hmacWithSHA3-512:hmac-sha3-512
+1106:dsa_with_SHA384:2.16.840.1.101.3.4.3.3:id-dsa-with-sha384:dsa_with_SHA384
+1107:dsa_with_SHA512:2.16.840.1.101.3.4.3.4:id-dsa-with-sha512:dsa_with_SHA512
+1108:dsa_with_SHA3_224:2.16.840.1.101.3.4.3.5:id-dsa-with-sha3-224:dsa_with_SHA3-224
+1109:dsa_with_SHA3_256:2.16.840.1.101.3.4.3.6:id-dsa-with-sha3-256:dsa_with_SHA3-256
+1110:dsa_with_SHA3_384:2.16.840.1.101.3.4.3.7:id-dsa-with-sha3-384:dsa_with_SHA3-384
+1111:dsa_with_SHA3_512:2.16.840.1.101.3.4.3.8:id-dsa-with-sha3-512:dsa_with_SHA3-512
+1112:ecdsa_with_SHA3_224:2.16.840.1.101.3.4.3.9:id-ecdsa-with-sha3-224:ecdsa_with_SHA3-224
+1113:ecdsa_with_SHA3_256:2.16.840.1.101.3.4.3.10:id-ecdsa-with-sha3-256:ecdsa_with_SHA3-256
+1114:ecdsa_with_SHA3_384:2.16.840.1.101.3.4.3.11:id-ecdsa-with-sha3-384:ecdsa_with_SHA3-384
+1115:ecdsa_with_SHA3_512:2.16.840.1.101.3.4.3.12:id-ecdsa-with-sha3-512:ecdsa_with_SHA3-512
+1116:RSA_SHA3_224:2.16.840.1.101.3.4.3.13:id-rsassa-pkcs1-v1_5-with-sha3-224:RSA-SHA3-224
+1117:RSA_SHA3_256:2.16.840.1.101.3.4.3.14:id-rsassa-pkcs1-v1_5-with-sha3-256:RSA-SHA3-256
+1118:RSA_SHA3_384:2.16.840.1.101.3.4.3.15:id-rsassa-pkcs1-v1_5-with-sha3-384:RSA-SHA3-384
+1119:RSA_SHA3_512:2.16.840.1.101.3.4.3.16:id-rsassa-pkcs1-v1_5-with-sha3-512:RSA-SHA3-512
+1120:aria_128_ccm:1.2.410.200046.1.1.37:ARIA-128-CCM:aria-128-ccm
+1121:aria_192_ccm:1.2.410.200046.1.1.38:ARIA-192-CCM:aria-192-ccm
+1122:aria_256_ccm:1.2.410.200046.1.1.39:ARIA-256-CCM:aria-256-ccm
+1123:aria_128_gcm:1.2.410.200046.1.1.34:ARIA-128-GCM:aria-128-gcm
+1124:aria_192_gcm:1.2.410.200046.1.1.35:ARIA-192-GCM:aria-192-gcm
+1125:aria_256_gcm:1.2.410.200046.1.1.36:ARIA-256-GCM:aria-256-gcm
+1126:ffdhe2048::ffdhe2048:
+1127:ffdhe3072::ffdhe3072:
+1128:ffdhe4096::ffdhe4096:
+1129:ffdhe6144::ffdhe6144:
+1130:ffdhe8192::ffdhe8192:
+1131:cmcCA:1.3.6.1.5.5.7.3.27:cmcCA:CMC Certificate Authority
+1132:cmcRA:1.3.6.1.5.5.7.3.28:cmcRA:CMC Registration Authority
+1133:sm4_ecb:1.2.156.10197.1.104.1:SM4-ECB:sm4-ecb
+1134:sm4_cbc:1.2.156.10197.1.104.2:SM4-CBC:sm4-cbc
+1135:sm4_ofb128:1.2.156.10197.1.104.3:SM4-OFB:sm4-ofb
+1136:sm4_cfb1:1.2.156.10197.1.104.5:SM4-CFB1:sm4-cfb1
+1137:sm4_cfb128:1.2.156.10197.1.104.4:SM4-CFB:sm4-cfb
+1138:sm4_cfb8:1.2.156.10197.1.104.6:SM4-CFB8:sm4-cfb8
+1139:sm4_ctr:1.2.156.10197.1.104.7:SM4-CTR:sm4-ctr
+1140:ISO_CN:1.2.156:ISO-CN:ISO CN Member Body
+1141:oscca:1.2.156.10197:oscca:
+1142:sm_scheme:1.2.156.10197.1:sm-scheme:
+1143:sm3:1.2.156.10197.1.401:SM3:sm3
+1144:sm3WithRSAEncryption:1.2.156.10197.1.504:RSA-SM3:sm3WithRSAEncryption
+1145:sha512_224WithRSAEncryption:1.2.840.113549.1.1.15:RSA-SHA512/224:sha512-224WithRSAEncryption
+1146:sha512_256WithRSAEncryption:1.2.840.113549.1.1.16:RSA-SHA512/256:sha512-256WithRSAEncryption
+1147:id_tc26_gost_3410_2012_256_constants:1.2.643.7.1.2.1.1:id-tc26-gost-3410-2012-256-constants:
+1148:id_tc26_gost_3410_2012_256_paramSetA:1.2.643.7.1.2.1.1.1:id-tc26-gost-3410-2012-256-paramSetA:GOST R 34.10-2012 (256 bit) ParamSet A
+1149:id_tc26_gost_3410_2012_512_paramSetC:1.2.643.7.1.2.1.2.3:id-tc26-gost-3410-2012-512-paramSetC:GOST R 34.10-2012 (512 bit) ParamSet C
+1150:ISO_UA:1.2.804:ISO-UA:
+1151:ua_pki:1.2.804.2.1.1.1:ua-pki:
+1152:dstu28147:1.2.804.2.1.1.1.1.1.1:dstu28147:DSTU Gost 28147-2009
+1153:dstu28147_ofb:1.2.804.2.1.1.1.1.1.1.2:dstu28147-ofb:DSTU Gost 28147-2009 OFB mode
+1154:dstu28147_cfb:1.2.804.2.1.1.1.1.1.1.3:dstu28147-cfb:DSTU Gost 28147-2009 CFB mode
+1155:dstu28147_wrap:1.2.804.2.1.1.1.1.1.1.5:dstu28147-wrap:DSTU Gost 28147-2009 key wrap
+1156:hmacWithDstu34311:1.2.804.2.1.1.1.1.1.2:hmacWithDstu34311:HMAC DSTU Gost 34311-95
+1157:dstu34311:1.2.804.2.1.1.1.1.2.1:dstu34311:DSTU Gost 34311-95
+1158:dstu4145le:1.2.804.2.1.1.1.1.3.1.1:dstu4145le:DSTU 4145-2002 little endian
+1159:dstu4145be:1.2.804.2.1.1.1.1.3.1.1.1.1:dstu4145be:DSTU 4145-2002 big endian
+1160:uacurve0:1.2.804.2.1.1.1.1.3.1.1.2.0:uacurve0:DSTU curve 0
+1161:uacurve1:1.2.804.2.1.1.1.1.3.1.1.2.1:uacurve1:DSTU curve 1
+1162:uacurve2:1.2.804.2.1.1.1.1.3.1.1.2.2:uacurve2:DSTU curve 2
+1163:uacurve3:1.2.804.2.1.1.1.1.3.1.1.2.3:uacurve3:DSTU curve 3
+1164:uacurve4:1.2.804.2.1.1.1.1.3.1.1.2.4:uacurve4:DSTU curve 4
+1165:uacurve5:1.2.804.2.1.1.1.1.3.1.1.2.5:uacurve5:DSTU curve 5
+1166:uacurve6:1.2.804.2.1.1.1.1.3.1.1.2.6:uacurve6:DSTU curve 6
+1167:uacurve7:1.2.804.2.1.1.1.1.3.1.1.2.7:uacurve7:DSTU curve 7
+1168:uacurve8:1.2.804.2.1.1.1.1.3.1.1.2.8:uacurve8:DSTU curve 8
+1169:uacurve9:1.2.804.2.1.1.1.1.3.1.1.2.9:uacurve9:DSTU curve 9
+1170:ieee:1.3.111:ieee:
+1171:ieee_siswg:1.3.111.2.1619:ieee-siswg:IEEE Security in Storage Working Group
+1172:sm2:1.2.156.10197.1.301:SM2:sm2
+1173:id_tc26_cipher_gostr3412_2015_magma:1.2.643.7.1.1.5.1:id-tc26-cipher-gostr3412-2015-magma:
+1174:magma_ctr_acpkm:1.2.643.7.1.1.5.1.1:magma-ctr-acpkm:
+1175:magma_ctr_acpkm_omac:1.2.643.7.1.1.5.1.2:magma-ctr-acpkm-omac:
+1176:id_tc26_cipher_gostr3412_2015_kuznyechik:1.2.643.7.1.1.5.2:id-tc26-cipher-gostr3412-2015-kuznyechik:
+1177:kuznyechik_ctr_acpkm:1.2.643.7.1.1.5.2.1:kuznyechik-ctr-acpkm:
+1178:kuznyechik_ctr_acpkm_omac:1.2.643.7.1.1.5.2.2:kuznyechik-ctr-acpkm-omac:
+1179:id_tc26_wrap:1.2.643.7.1.1.7:id-tc26-wrap:
+1180:id_tc26_wrap_gostr3412_2015_magma:1.2.643.7.1.1.7.1:id-tc26-wrap-gostr3412-2015-magma:
+1181:magma_kexp15:1.2.643.7.1.1.7.1.1:magma-kexp15:
+1182:id_tc26_wrap_gostr3412_2015_kuznyechik:1.2.643.7.1.1.7.2:id-tc26-wrap-gostr3412-2015-kuznyechik:
+1183:kuznyechik_kexp15:1.2.643.7.1.1.7.2.1:kuznyechik-kexp15:
+1184:id_tc26_gost_3410_2012_256_paramSetB:1.2.643.7.1.2.1.1.2:id-tc26-gost-3410-2012-256-paramSetB:GOST R 34.10-2012 (256 bit) ParamSet B
+1185:id_tc26_gost_3410_2012_256_paramSetC:1.2.643.7.1.2.1.1.3:id-tc26-gost-3410-2012-256-paramSetC:GOST R 34.10-2012 (256 bit) ParamSet C
+1186:id_tc26_gost_3410_2012_256_paramSetD:1.2.643.7.1.2.1.1.4:id-tc26-gost-3410-2012-256-paramSetD:GOST R 34.10-2012 (256 bit) ParamSet D
+1187:magma_ecb::magma-ecb:
+1188:magma_ctr::magma-ctr:
+1189:magma_ofb::magma-ofb:
+1190:magma_cbc::magma-cbc:
+1191:magma_cfb::magma-cfb:
+1192:magma_mac::magma-mac:
+1193:hmacWithSHA512_224:1.2.840.113549.2.12::hmacWithSHA512-224
+1194:hmacWithSHA512_256:1.2.840.113549.2.13::hmacWithSHA512-256
+1195:gmac:1.0.9797.3.4:GMAC:gmac
+1196:kmac128:2.16.840.1.101.3.4.2.19:KMAC128:kmac128
+1197:kmac256:2.16.840.1.101.3.4.2.20:KMAC256:kmac256
+1198:aes_128_siv::AES-128-SIV:aes-128-siv
+1199:aes_192_siv::AES-192-SIV:aes-192-siv
+1200:aes_256_siv::AES-256-SIV:aes-256-siv
+1201:blake2bmac:1.3.6.1.4.1.1722.12.2.1:BLAKE2BMAC:blake2bmac
+1202:blake2smac:1.3.6.1.4.1.1722.12.2.2:BLAKE2SMAC:blake2smac
+1203:sshkdf::SSHKDF:sshkdf
+1204:SM2_with_SM3:1.2.156.10197.1.501:SM2-SM3:SM2-with-SM3
+1205:sskdf::SSKDF:sskdf
+1206:x963kdf::X963KDF:x963kdf
+1207:x942kdf::X942KDF:x942kdf
+1208:id_on_SmtpUTF8Mailbox:1.3.6.1.5.5.7.8.9:id-on-SmtpUTF8Mailbox:Smtp UTF8 Mailbox
+1209:XmppAddr:1.3.6.1.5.5.7.8.5:id-on-xmppAddr:XmppAddr
+1210:SRVName:1.3.6.1.5.5.7.8.7:id-on-dnsSRV:SRVName
+1211:NAIRealm:1.3.6.1.5.5.7.8.8:id-on-NAIRealm:NAIRealm
+1212:modp_1536::modp_1536:
+1213:modp_2048::modp_2048:
+1214:modp_3072::modp_3072:
+1215:modp_4096::modp_4096:
+1216:modp_6144::modp_6144:
+1217:modp_8192::modp_8192:
+1218:kx_gost18::KxGOST18:kx-gost18
+1219:cmcArchive:1.3.6.1.5.5.7.3.29:cmcArchive:CMC Archive Server
+1220:id_kp_bgpsec_router:1.3.6.1.5.5.7.3.30:id-kp-bgpsec-router:BGPsec Router
+1221:id_kp_BrandIndicatorforMessageIdentification:1.3.6.1.5.5.7.3.31:id-kp-BrandIndicatorforMessageIdentification:Brand Indicator for Message Identification
+1222:cmKGA:1.3.6.1.5.5.7.3.32:cmKGA:Certificate Management Key Generation Authority
+1223:id_it_caCerts:1.3.6.1.5.5.7.4.17:id-it-caCerts:
+1224:id_it_rootCaKeyUpdate:1.3.6.1.5.5.7.4.18:id-it-rootCaKeyUpdate:
+1225:id_it_certReqTemplate:1.3.6.1.5.5.7.4.19:id-it-certReqTemplate:
+1226:OGRNIP:1.2.643.100.5:OGRNIP:OGRNIP
+1227:classSignTool:1.2.643.100.113:classSignTool:Class of Signing Tool
+1228:classSignToolKC1:1.2.643.100.113.1:classSignToolKC1:Class of Signing Tool KC1
+1229:classSignToolKC2:1.2.643.100.113.2:classSignToolKC2:Class of Signing Tool KC2
+1230:classSignToolKC3:1.2.643.100.113.3:classSignToolKC3:Class of Signing Tool KC3
+1231:classSignToolKB1:1.2.643.100.113.4:classSignToolKB1:Class of Signing Tool KB1
+1232:classSignToolKB2:1.2.643.100.113.5:classSignToolKB2:Class of Signing Tool KB2
+1233:classSignToolKA1:1.2.643.100.113.6:classSignToolKA1:Class of Signing Tool KA1
+1234:id_ct_routeOriginAuthz:1.2.840.113549.1.9.16.1.24:id-ct-routeOriginAuthz:
+1235:id_ct_rpkiManifest:1.2.840.113549.1.9.16.1.26:id-ct-rpkiManifest:
+1236:id_ct_rpkiGhostbusters:1.2.840.113549.1.9.16.1.35:id-ct-rpkiGhostbusters:
+1237:id_ct_resourceTaggedAttest:1.2.840.113549.1.9.16.1.36:id-ct-resourceTaggedAttest:
+1238:id_cp:1.3.6.1.5.5.7.14:id-cp:
+1239:sbgp_ipAddrBlockv2:1.3.6.1.5.5.7.1.28:sbgp-ipAddrBlockv2:
+1240:sbgp_autonomousSysNumv2:1.3.6.1.5.5.7.1.29:sbgp-autonomousSysNumv2:
+1241:ipAddr_asNumber:1.3.6.1.5.5.7.14.2:ipAddr-asNumber:
+1242:ipAddr_asNumberv2:1.3.6.1.5.5.7.14.3:ipAddr-asNumberv2:
+1243:rpkiManifest:1.3.6.1.5.5.7.48.10:rpkiManifest:RPKI Manifest
+1244:signedObject:1.3.6.1.5.5.7.48.11:signedObject:Signed Object
+1245:rpkiNotify:1.3.6.1.5.5.7.48.13:rpkiNotify:RPKI Notify
+1246:id_ct_geofeedCSVwithCRLF:1.2.840.113549.1.9.16.1.47:id-ct-geofeedCSVwithCRLF:
+1247:id_ct_signedChecklist:1.2.840.113549.1.9.16.1.48:id-ct-signedChecklist:
+1248:sm4_gcm:1.2.156.10197.1.104.8:SM4-GCM:sm4-gcm
+1249:sm4_ccm:1.2.156.10197.1.104.9:SM4-CCM:sm4-ccm
+1250:id_ct_ASPA:1.2.840.113549.1.9.16.1.49:id-ct-ASPA:
+1251:id_mod_cmp2000_02:1.3.6.1.5.5.7.0.50:id-mod-cmp2000-02:
+1252:id_mod_cmp2021_88:1.3.6.1.5.5.7.0.99:id-mod-cmp2021-88:
+1253:id_mod_cmp2021_02:1.3.6.1.5.5.7.0.100:id-mod-cmp2021-02:
+1254:id_it_rootCaCert:1.3.6.1.5.5.7.4.20:id-it-rootCaCert:
+1255:id_it_certProfile:1.3.6.1.5.5.7.4.21:id-it-certProfile:
+1256:id_it_crlStatusList:1.3.6.1.5.5.7.4.22:id-it-crlStatusList:
+1257:id_it_crls:1.3.6.1.5.5.7.4.23:id-it-crls:
+1258:id_regCtrl_altCertTemplate:1.3.6.1.5.5.7.5.1.7:id-regCtrl-altCertTemplate:
+1259:id_regCtrl_algId:1.3.6.1.5.5.7.5.1.11:id-regCtrl-algId:
+1260:id_regCtrl_rsaKeyLen:1.3.6.1.5.5.7.5.1.12:id-regCtrl-rsaKeyLen:
+1261:id_aa_ets_attrCertificateRefs:1.2.840.113549.1.9.16.2.44:id-aa-ets-attrCertificateRefs:
+1262:id_aa_ets_attrRevocationRefs:1.2.840.113549.1.9.16.2.45:id-aa-ets-attrRevocationRefs:
+1263:id_aa_CMSAlgorithmProtection:1.2.840.113549.1.9.52:id-aa-CMSAlgorithmProtection:
+1264:itu_t_identified_organization:0.4:itu-t-identified-organization:
+1265:etsi:0.4.0:etsi:
+1266:electronic_signature_standard:0.4.0.1733:electronic-signature-standard:
+1267:ess_attributes:0.4.0.1733.2:ess-attributes:
+1268:id_aa_ets_mimeType:0.4.0.1733.2.1:id-aa-ets-mimeType:
+1269:id_aa_ets_longTermValidation:0.4.0.1733.2.2:id-aa-ets-longTermValidation:
+1270:id_aa_ets_SignaturePolicyDocument:0.4.0.1733.2.3:id-aa-ets-SignaturePolicyDocument:
+1271:id_aa_ets_archiveTimestampV3:0.4.0.1733.2.4:id-aa-ets-archiveTimestampV3:
+1272:id_aa_ATSHashIndex:0.4.0.1733.2.5:id-aa-ATSHashIndex:
+1273:cades:0.4.0.19122:cades:
+1274:cades_attributes:0.4.0.19122.1:cades-attributes:
+1275:id_aa_ets_signerAttrV2:0.4.0.19122.1.1:id-aa-ets-signerAttrV2:
+1276:id_aa_ets_sigPolicyStore:0.4.0.19122.1.3:id-aa-ets-sigPolicyStore:
+1277:id_aa_ATSHashIndex_v2:0.4.0.19122.1.4:id-aa-ATSHashIndex-v2:
+1278:id_aa_ATSHashIndex_v3:0.4.0.19122.1.5:id-aa-ATSHashIndex-v3:
+1279:signedAssertion:0.4.0.19122.1.6:signedAssertion:
+1280:id_aa_ets_archiveTimestampV2:1.2.840.113549.1.9.16.2.48:id-aa-ets-archiveTimestampV2:
+1281:hmacWithSM3:1.2.156.10197.1.401.3.1::hmacWithSM3
+1282:oracle:2.16.840.1.113894:oracle-organization:Oracle organization
+1283:oracle_jdk_trustedkeyusage:2.16.840.1.113894.746875.1.1:oracle-jdk-trustedkeyusage:Trusted key usage (Oracle)
+1284:id_ct_signedTAL:1.2.840.113549.1.9.16.1.50:id-ct-signedTAL:
+1285:brainpoolP256r1tls13::brainpoolP256r1tls13:
+1286:brainpoolP384r1tls13::brainpoolP384r1tls13:
+1287:brainpoolP512r1tls13::brainpoolP512r1tls13:
+1288:brotli::brotli:Brotli compression
+1289:zstd::zstd:Zstandard compression
+1290:sm4_xts:1.2.156.10197.1.104.10:SM4-XTS:sm4-xts
+1291:ms_ntds_obj_sid:1.3.6.1.4.1.311.25.2.1:ms-ntds-obj-sid:Microsoft NTDS AD objectSid
+1292:ms_ntds_sec_ext:1.3.6.1.4.1.311.25.2:ms-ntds-sec-ext:Microsoft NTDS CA Extension
+1293:ms_cert_templ:1.3.6.1.4.1.311.21.7:ms-cert-templ:Microsoft certificate template
+1294:ms_app_policies:1.3.6.1.4.1.311.21.10:ms-app-policies:Microsoft Application Policies Extension
+1295:authority_attribute_identifier:2.5.29.38:authorityAttributeIdentifier:X509v3 Authority Attribute Identifier
+1296:role_spec_cert_identifier:2.5.29.39:roleSpecCertIdentifier:X509v3 Role Specification Certificate Identifier
+1297:basic_att_constraints:2.5.29.41:basicAttConstraints:X509v3 Basic Attribute Certificate Constraints
+1298:delegated_name_constraints:2.5.29.42:delegatedNameConstraints:X509v3 Delegated Name Constraints
+1299:time_specification:2.5.29.43:timeSpecification:X509v3 Time Specification
+1300:attribute_descriptor:2.5.29.48:attributeDescriptor:X509v3 Attribute Descriptor
+1301:user_notice:2.5.29.49:userNotice:X509v3 User Notice
+1302:soa_identifier:2.5.29.50:sOAIdentifier:X509v3 Source of Authority Identifier
+1303:acceptable_cert_policies:2.5.29.52:acceptableCertPolicies:X509v3 Acceptable Certification Policies
+1304:acceptable_privilege_policies:2.5.29.57:acceptablePrivPolicies:X509v3 Acceptable Privilege Policies
+1305:indirect_issuer:2.5.29.61:indirectIssuer:X509v3 Indirect Issuer
+1306:no_assertion:2.5.29.62:noAssertion:X509v3 No Assertion
+1307:id_aa_issuing_distribution_point:2.5.29.63:aAissuingDistributionPoint:X509v3 Attribute Authority Issuing Distribution Point
+1308:issued_on_behalf_of:2.5.29.64:issuedOnBehalfOf:X509v3 Issued On Behalf Of
+1309:single_use:2.5.29.65:singleUse:X509v3 Single Use
+1310:group_ac:2.5.29.66:groupAC:X509v3 Group Attribute Certificate
+1311:allowed_attribute_assignments:2.5.29.67:allowedAttributeAssignments:X509v3 Allowed Attribute Assignments
+1312:attribute_mappings:2.5.29.68:attributeMappings:X509v3 Attribute Mappings
+1313:holder_name_constraints:2.5.29.69:holderNameConstraints:X509v3 Holder Name Constraints
+1314:authorization_validation:2.5.29.70:authorizationValidation:X509v3 Authorization Validation
+1315:prot_restrict:2.5.29.71:protRestrict:X509v3 Protocol Restriction
+1316:subject_alt_public_key_info:2.5.29.72:subjectAltPublicKeyInfo:X509v3 Subject Alternative Public Key Info
+1317:alt_signature_algorithm:2.5.29.73:altSignatureAlgorithm:X509v3 Alternative Signature Algorithm
+1318:alt_signature_value:2.5.29.74:altSignatureValue:X509v3 Alternative Signature Value
+1319:associated_information:2.5.29.75:associatedInformation:X509v3 Associated Information
+1320:id_ct_rpkiSignedPrefixList:1.2.840.113549.1.9.16.1.51:id-ct-rpkiSignedPrefixList:
+1321:id_on_hardwareModuleName:1.3.6.1.5.5.7.8.4:id-on-hardwareModuleName:Hardware Module Name
+1322:id_kp_wisun_fan_device:1.3.6.1.4.1.45605.1:id-kp-wisun-fan-device:Wi-SUN Alliance Field Area Network (FAN)
+1323:ac_auditEntity:::
+1324:tcg:2.23.133:tcg:Trusted Computing Group
+1325:tcg_tcpaSpecVersion:2.23.133.1:tcg-tcpaSpecVersion:
+1326:tcg_attribute:2.23.133.2:tcg-attribute:Trusted Computing Group Attributes
+1327:tcg_protocol:2.23.133.3:tcg-protocol:Trusted Computing Group Protocols
+1328:tcg_algorithm:2.23.133.4:tcg-algorithm:Trusted Computing Group Algorithms
+1329:tcg_platformClass:2.23.133.5:tcg-platformClass:Trusted Computing Group Platform Classes
+1330:tcg_ce:2.23.133.6:tcg-ce:Trusted Computing Group Certificate Extensions
+1331:tcg_kp:2.23.133.8:tcg-kp:Trusted Computing Group Key Purposes
+1332:tcg_ca:2.23.133.11:tcg-ca:Trusted Computing Group Certificate Policies
+1333:tcg_address:2.23.133.17:tcg-address:Trusted Computing Group Address Formats
+1334:tcg_registry:2.23.133.18:tcg-registry:Trusted Computing Group Registry
+1335:tcg_traits:2.23.133.19:tcg-traits:Trusted Computing Group Traits
+1336:tcg_common:2.23.133.5.1:tcg-common:Trusted Computing Group Common
+1337:tcg_at_platformManufacturerStr:2.23.133.5.1.1:tcg-at-platformManufacturerStr:TCG Platform Manufacturer String
+1338:tcg_at_platformManufacturerId:2.23.133.5.1.2:tcg-at-platformManufacturerId:TCG Platform Manufacturer ID
+1339:tcg_at_platformConfigUri:2.23.133.5.1.3:tcg-at-platformConfigUri:TCG Platform Configuration URI
+1340:tcg_at_platformModel:2.23.133.5.1.4:tcg-at-platformModel:TCG Platform Model
+1341:tcg_at_platformVersion:2.23.133.5.1.5:tcg-at-platformVersion:TCG Platform Version
+1342:tcg_at_platformSerial:2.23.133.5.1.6:tcg-at-platformSerial:TCG Platform Serial Number
+1343:tcg_at_platformConfiguration:2.23.133.5.1.7:tcg-at-platformConfiguration:TCG Platform Configuration
+1344:tcg_at_platformIdentifier:2.23.133.5.1.8:tcg-at-platformIdentifier:TCG Platform Identifier
+1345:tcg_at_tpmManufacturer:2.23.133.2.1:tcg-at-tpmManufacturer:TPM Manufacturer
+1346:tcg_at_tpmModel:2.23.133.2.2:tcg-at-tpmModel:TPM Model
+1347:tcg_at_tpmVersion:2.23.133.2.3:tcg-at-tpmVersion:TPM Version
+1348:tcg_at_securityQualities:2.23.133.2.10:tcg-at-securityQualities:Security Qualities
+1349:tcg_at_tpmProtectionProfile:2.23.133.2.11:tcg-at-tpmProtectionProfile:TPM Protection Profile
+1350:tcg_at_tpmSecurityTarget:2.23.133.2.12:tcg-at-tpmSecurityTarget:TPM Security Target
+1351:tcg_at_tbbProtectionProfile:2.23.133.2.13:tcg-at-tbbProtectionProfile:TBB Protection Profile
+1352:tcg_at_tbbSecurityTarget:2.23.133.2.14:tcg-at-tbbSecurityTarget:TBB Security Target
+1353:tcg_at_tpmIdLabel:2.23.133.2.15:tcg-at-tpmIdLabel:TPM ID Label
+1354:tcg_at_tpmSpecification:2.23.133.2.16:tcg-at-tpmSpecification:TPM Specification
+1355:tcg_at_tcgPlatformSpecification:2.23.133.2.17:tcg-at-tcgPlatformSpecification:TPM Platform Specification
+1356:tcg_at_tpmSecurityAssertions:2.23.133.2.18:tcg-at-tpmSecurityAssertions:TPM Security Assertions
+1357:tcg_at_tbbSecurityAssertions:2.23.133.2.19:tcg-at-tbbSecurityAssertions:TBB Security Assertions
+1358:tcg_at_tcgCredentialSpecification:2.23.133.2.23:tcg-at-tcgCredentialSpecification:TCG Credential Specification
+1359:tcg_at_tcgCredentialType:2.23.133.2.25:tcg-at-tcgCredentialType:TCG Credential Type
+1360:tcg_at_previousPlatformCertificates:2.23.133.2.26:tcg-at-previousPlatformCertificates:TCG Previous Platform Certificates
+1361:tcg_at_tbbSecurityAssertions_v3:2.23.133.2.27:tcg-at-tbbSecurityAssertions-v3:TCG TBB Security Assertions V3
+1362:tcg_at_cryptographicAnchors:2.23.133.2.28:tcg-at-cryptographicAnchors:TCG Cryptographic Anchors
+1363:tcg_at_platformConfiguration_v1:2.23.133.5.1.7.1:tcg-at-platformConfiguration-v1:Platform Configuration Version 1
+1364:tcg_at_platformConfiguration_v2:2.23.133.5.1.7.2:tcg-at-platformConfiguration-v2:Platform Configuration Version 2
+1365:tcg_at_platformConfiguration_v3:2.23.133.5.1.7.3:tcg-at-platformConfiguration-v3:Platform Configuration Version 3
+1366:tcg_at_platformConfigUri_v3:2.23.133.5.1.7.4:tcg-at-platformConfigUri-v3:Platform Configuration URI Version 3
+1367:tcg_algorithm_null:2.23.133.4.1:tcg-algorithm-null:TCG NULL Algorithm
+1368:tcg_kp_EKCertificate:2.23.133.8.1:tcg-kp-EKCertificate:Endorsement Key Certificate
+1369:tcg_kp_PlatformAttributeCertificate:2.23.133.8.2:tcg-kp-PlatformAttributeCertificate:Platform Attribute Certificate
+1370:tcg_kp_AIKCertificate:2.23.133.8.3:tcg-kp-AIKCertificate:Attestation Identity Key Certificate
+1371:tcg_kp_PlatformKeyCertificate:2.23.133.8.4:tcg-kp-PlatformKeyCertificate:Platform Key Certificate
+1372:tcg_kp_DeltaPlatformAttributeCertificate:2.23.133.8.5:tcg-kp-DeltaPlatformAttributeCertificate:Delta Platform Attribute Certificate
+1373:tcg_kp_DeltaPlatformKeyCertificate:2.23.133.8.6:tcg-kp-DeltaPlatformKeyCertificate:Delta Platform Key Certificate
+1374:tcg_kp_AdditionalPlatformAttributeCertificate:2.23.133.8.7:tcg-kp-AdditionalPlatformAttributeCertificate:Additional Platform Attribute Certificate
+1375:tcg_kp_AdditionalPlatformKeyCertificate:2.23.133.8.8:tcg-kp-AdditionalPlatformKeyCertificate:Additional Platform Key Certificate
+1376:tcg_ce_relevantCredentials:2.23.133.6.2:tcg-ce-relevantCredentials:Relevant Credentials
+1377:tcg_ce_relevantManifests:2.23.133.6.3:tcg-ce-relevantManifests:Relevant Manifests
+1378:tcg_ce_virtualPlatformAttestationService:2.23.133.6.4:tcg-ce-virtualPlatformAttestationService:Virtual Platform Attestation Service
+1379:tcg_ce_migrationControllerAttestationService:2.23.133.6.5:tcg-ce-migrationControllerAttestationService:Migration Controller Attestation Service
+1380:tcg_ce_migrationControllerRegistrationService:2.23.133.6.6:tcg-ce-migrationControllerRegistrationService:Migration Controller Registration Service
+1381:tcg_ce_virtualPlatformBackupService:2.23.133.6.7:tcg-ce-virtualPlatformBackupService:Virtual Platform Backup Service
+1382:tcg_prt_tpmIdProtocol:2.23.133.3.1:tcg-prt-tpmIdProtocol:TCG TPM Protocol
+1383:tcg_address_ethernetmac:2.23.133.17.1:tcg-address-ethernetmac:Ethernet MAC Address
+1384:tcg_address_wlanmac:2.23.133.17.2:tcg-address-wlanmac:WLAN MAC Address
+1385:tcg_address_bluetoothmac:2.23.133.17.3:tcg-address-bluetoothmac:Bluetooth MAC Address
+1386:tcg_registry_componentClass:2.23.133.18.3:tcg-registry-componentClass:TCG Component Class
+1387:tcg_registry_componentClass_tcg:2.23.133.18.3.1:tcg-registry-componentClass-tcg:Trusted Computed Group Registry
+1388:tcg_registry_componentClass_ietf:2.23.133.18.3.2:tcg-registry-componentClass-ietf:Internet Engineering Task Force Registry
+1389:tcg_registry_componentClass_dmtf:2.23.133.18.3.3:tcg-registry-componentClass-dmtf:Distributed Management Task Force Registry
+1390:tcg_registry_componentClass_pcie:2.23.133.18.3.4:tcg-registry-componentClass-pcie:PCIE Component Class
+1391:tcg_registry_componentClass_disk:2.23.133.18.3.5:tcg-registry-componentClass-disk:Disk Component Class
+1392:tcg_cap_verifiedPlatformCertificate:2.23.133.11.4:tcg-cap-verifiedPlatformCertificate:TCG Verified Platform Certificate CA Policy
+1393:tcg_tr_ID:2.23.133.19.1:tcg-tr-ID:TCG Trait Identifiers
+1394:tcg_tr_category:2.23.133.19.2:tcg-tr-category:TCG Trait Categories
+1395:tcg_tr_registry:2.23.133.19.3:tcg-tr-registry:TCG Trait Registries
+1396:tcg_tr_ID_Boolean:2.23.133.19.1.1:tcg-tr-ID-Boolean:Boolean Trait
+1397:tcg_tr_ID_CertificateIdentifier:2.23.133.19.1.2:tcg-tr-ID-CertificateIdentifier:Certificate Identifier Trait
+1398:tcg_tr_ID_CommonCriteria:2.23.133.19.1.3:tcg-tr-ID-CommonCriteria:Common Criteria Trait
+1399:tcg_tr_ID_componentClass:2.23.133.19.1.4:tcg-tr-ID-componentClass:Component Class Trait
+1400:tcg_tr_ID_componentIdentifierV11:2.23.133.19.1.5:tcg-tr-ID-componentIdentifierV11:Component Identifier V1.1 Trait
+1401:tcg_tr_ID_FIPSLevel:2.23.133.19.1.6:tcg-tr-ID-FIPSLevel:FIPS Level Trait
+1402:tcg_tr_ID_ISO9000Level:2.23.133.19.1.7:tcg-tr-ID-ISO9000Level:ISO 9000 Level Trait
+1403:tcg_tr_ID_networkMAC:2.23.133.19.1.8:tcg-tr-ID-networkMAC:Network MAC Trait
+1404:tcg_tr_ID_OID:2.23.133.19.1.9:tcg-tr-ID-OID:Object Identifier Trait
+1405:tcg_tr_ID_PEN:2.23.133.19.1.10:tcg-tr-ID-PEN:Private Enterprise Number Trait
+1406:tcg_tr_ID_platformFirmwareCapabilities:2.23.133.19.1.11:tcg-tr-ID-platformFirmwareCapabilities:Platform Firmware Capabilities Trait
+1407:tcg_tr_ID_platformFirmwareSignatureVerification:2.23.133.19.1.12:tcg-tr-ID-platformFirmwareSignatureVerification:Platform Firmware Signature Verification Trait
+1408:tcg_tr_ID_platformFirmwareUpdateCompliance:2.23.133.19.1.13:tcg-tr-ID-platformFirmwareUpdateCompliance:Platform Firmware Update Compliance Trait
+1409:tcg_tr_ID_platformHardwareCapabilities:2.23.133.19.1.14:tcg-tr-ID-platformHardwareCapabilities:Platform Hardware Capabilities Trait
+1410:tcg_tr_ID_RTM:2.23.133.19.1.15:tcg-tr-ID-RTM:Root of Trust for Measurement Trait
+1411:tcg_tr_ID_status:2.23.133.19.1.16:tcg-tr-ID-status:Attribute Status Trait
+1412:tcg_tr_ID_URI:2.23.133.19.1.17:tcg-tr-ID-URI:Uniform Resource Identifier Trait
+1413:tcg_tr_ID_UTF8String:2.23.133.19.1.18:tcg-tr-ID-UTF8String:UTF8String Trait
+1414:tcg_tr_ID_IA5String:2.23.133.19.1.19:tcg-tr-ID-IA5String:IA5String Trait
+1415:tcg_tr_ID_PEMCertString:2.23.133.19.1.20:tcg-tr-ID-PEMCertString:PEM-Encoded Certificate String Trait
+1416:tcg_tr_ID_PublicKey:2.23.133.19.1.21:tcg-tr-ID-PublicKey:Public Key Trait
+1417:tcg_tr_cat_platformManufacturer:2.23.133.19.2.1:tcg-tr-cat-platformManufacturer:Platform Manufacturer Trait Category
+1418:tcg_tr_cat_platformModel:2.23.133.19.2.2:tcg-tr-cat-platformModel:Platform Model Trait Category
+1419:tcg_tr_cat_platformVersion:2.23.133.19.2.3:tcg-tr-cat-platformVersion:Platform Version Trait Category
+1420:tcg_tr_cat_platformSerial:2.23.133.19.2.4:tcg-tr-cat-platformSerial:Platform Serial Trait Category
+1421:tcg_tr_cat_platformManufacturerIdentifier:2.23.133.19.2.5:tcg-tr-cat-platformManufacturerIdentifier:Platform Manufacturer Identifier Trait Category
+1422:tcg_tr_cat_platformOwnership:2.23.133.19.2.6:tcg-tr-cat-platformOwnership:Platform Ownership Trait Category
+1423:tcg_tr_cat_componentClass:2.23.133.19.2.7:tcg-tr-cat-componentClass:Component Class Trait Category
+1424:tcg_tr_cat_componentManufacturer:2.23.133.19.2.8:tcg-tr-cat-componentManufacturer:Component Manufacturer Trait Category
+1425:tcg_tr_cat_componentModel:2.23.133.19.2.9:tcg-tr-cat-componentModel:Component Model Trait Category
+1426:tcg_tr_cat_componentSerial:2.23.133.19.2.10:tcg-tr-cat-componentSerial:Component Serial Trait Category
+1427:tcg_tr_cat_componentStatus:2.23.133.19.2.11:tcg-tr-cat-componentStatus:Component Status Trait Category
+1428:tcg_tr_cat_componentLocation:2.23.133.19.2.12:tcg-tr-cat-componentLocation:Component Location Trait Category
+1429:tcg_tr_cat_componentRevision:2.23.133.19.2.13:tcg-tr-cat-componentRevision:Component Revision Trait Category
+1430:tcg_tr_cat_componentFieldReplaceable:2.23.133.19.2.14:tcg-tr-cat-componentFieldReplaceable:Component Field Replaceable Trait Category
+1431:tcg_tr_cat_EKCertificate:2.23.133.19.2.15:tcg-tr-cat-EKCertificate:EK Certificate Trait Category
+1432:tcg_tr_cat_IAKCertificate:2.23.133.19.2.16:tcg-tr-cat-IAKCertificate:IAK Certificate Trait Category
+1433:tcg_tr_cat_IDevIDCertificate:2.23.133.19.2.17:tcg-tr-cat-IDevIDCertificate:IDevID Certificate Trait Category
+1434:tcg_tr_cat_DICECertificate:2.23.133.19.2.18:tcg-tr-cat-DICECertificate:DICE Certificate Trait Category
+1435:tcg_tr_cat_SPDMCertificate:2.23.133.19.2.19:tcg-tr-cat-SPDMCertificate:SPDM Certificate Trait Category
+1436:tcg_tr_cat_PEMCertificate:2.23.133.19.2.20:tcg-tr-cat-PEMCertificate:PEM Certificate Trait Category
+1437:tcg_tr_cat_PlatformCertificate:2.23.133.19.2.21:tcg-tr-cat-PlatformCertificate:Platform Certificate Trait Category
+1438:tcg_tr_cat_DeltaPlatformCertificate:2.23.133.19.2.22:tcg-tr-cat-DeltaPlatformCertificate:Delta Platform Certificate Trait Category
+1439:tcg_tr_cat_RebasePlatformCertificate:2.23.133.19.2.23:tcg-tr-cat-RebasePlatformCertificate:Rebase Platform Certificate Trait Category
+1440:tcg_tr_cat_genericCertificate:2.23.133.19.2.24:tcg-tr-cat-genericCertificate:Generic Certificate Trait Category
+1441:tcg_tr_cat_CommonCriteria:2.23.133.19.2.25:tcg-tr-cat-CommonCriteria:Common Criteria Trait Category
+1442:tcg_tr_cat_componentIdentifierV11:2.23.133.19.2.26:tcg-tr-cat-componentIdentifierV11:Component Identifier V1.1 Trait Category
+1443:tcg_tr_cat_FIPSLevel:2.23.133.19.2.27:tcg-tr-cat-FIPSLevel:FIPS Level Trait Category
+1444:tcg_tr_cat_ISO9000:2.23.133.19.2.28:tcg-tr-cat-ISO9000:ISO 9000 Trait Category
+1445:tcg_tr_cat_networkMAC:2.23.133.19.2.29:tcg-tr-cat-networkMAC:Network MAC Trait Category
+1446:tcg_tr_cat_attestationProtocol:2.23.133.19.2.30:tcg-tr-cat-attestationProtocol:Attestation Protocol Trait Category
+1447:tcg_tr_cat_PEN:2.23.133.19.2.31:tcg-tr-cat-PEN:Private Enterprise Number Trait Category
+1448:tcg_tr_cat_platformFirmwareCapabilities:2.23.133.19.2.32:tcg-tr-cat-platformFirmwareCapabilities:Platform Firmware Capabilities Trait Category
+1449:tcg_tr_cat_platformHardwareCapabilities:2.23.133.19.2.33:tcg-tr-cat-platformHardwareCapabilities:Platform Hardware Capabilities Trait Category
+1450:tcg_tr_cat_platformFirmwareSignatureVerification:2.23.133.19.2.34:tcg-tr-cat-platformFirmwareSignatureVerification:Platform Firmware Signature Verification Trait Category
+1451:tcg_tr_cat_platformFirmwareUpdateCompliance:2.23.133.19.2.35:tcg-tr-cat-platformFirmwareUpdateCompliance:Platform Firmware Update Compliance Trait Category
+1452:tcg_tr_cat_RTM:2.23.133.19.2.36:tcg-tr-cat-RTM:Root of Trust of Measurement Trait Category
+1453:tcg_tr_cat_PublicKey:2.23.133.19.2.37:tcg-tr-cat-PublicKey:Public Key Trait Category
+alias:nistKems:2.16.840.1.101.3.4.4::
+1454:ML_KEM_512:2.16.840.1.101.3.4.4.1:id-alg-ml-kem-512:ML-KEM-512
+1455:ML_KEM_768:2.16.840.1.101.3.4.4.2:id-alg-ml-kem-768:ML-KEM-768
+1456:ML_KEM_1024:2.16.840.1.101.3.4.4.3:id-alg-ml-kem-1024:ML-KEM-1024
+1457:ML_DSA_44:2.16.840.1.101.3.4.3.17:id-ml-dsa-44:ML-DSA-44
+1458:ML_DSA_65:2.16.840.1.101.3.4.3.18:id-ml-dsa-65:ML-DSA-65
+1459:ML_DSA_87:2.16.840.1.101.3.4.3.19:id-ml-dsa-87:ML-DSA-87
+1460:SLH_DSA_SHA2_128s:2.16.840.1.101.3.4.3.20:id-slh-dsa-sha2-128s:SLH-DSA-SHA2-128s
+1461:SLH_DSA_SHA2_128f:2.16.840.1.101.3.4.3.21:id-slh-dsa-sha2-128f:SLH-DSA-SHA2-128f
+1462:SLH_DSA_SHA2_192s:2.16.840.1.101.3.4.3.22:id-slh-dsa-sha2-192s:SLH-DSA-SHA2-192s
+1463:SLH_DSA_SHA2_192f:2.16.840.1.101.3.4.3.23:id-slh-dsa-sha2-192f:SLH-DSA-SHA2-192f
+1464:SLH_DSA_SHA2_256s:2.16.840.1.101.3.4.3.24:id-slh-dsa-sha2-256s:SLH-DSA-SHA2-256s
+1465:SLH_DSA_SHA2_256f:2.16.840.1.101.3.4.3.25:id-slh-dsa-sha2-256f:SLH-DSA-SHA2-256f
+1466:SLH_DSA_SHAKE_128s:2.16.840.1.101.3.4.3.26:id-slh-dsa-shake-128s:SLH-DSA-SHAKE-128s
+1467:SLH_DSA_SHAKE_128f:2.16.840.1.101.3.4.3.27:id-slh-dsa-shake-128f:SLH-DSA-SHAKE-128f
+1468:SLH_DSA_SHAKE_192s:2.16.840.1.101.3.4.3.28:id-slh-dsa-shake-192s:SLH-DSA-SHAKE-192s
+1469:SLH_DSA_SHAKE_192f:2.16.840.1.101.3.4.3.29:id-slh-dsa-shake-192f:SLH-DSA-SHAKE-192f
+1470:SLH_DSA_SHAKE_256s:2.16.840.1.101.3.4.3.30:id-slh-dsa-shake-256s:SLH-DSA-SHAKE-256s
+1471:SLH_DSA_SHAKE_256f:2.16.840.1.101.3.4.3.31:id-slh-dsa-shake-256f:SLH-DSA-SHAKE-256f
+1472:HASH_ML_DSA_44_WITH_SHA512:2.16.840.1.101.3.4.3.32:id-hash-ml-dsa-44-with-sha512:HASH-ML-DSA-44-WITH-SHA512
+1473:HASH_ML_DSA_65_WITH_SHA512:2.16.840.1.101.3.4.3.33:id-hash-ml-dsa-65-with-sha512:HASH-ML-DSA-65-WITH-SHA512
+1474:HASH_ML_DSA_87_WITH_SHA512:2.16.840.1.101.3.4.3.34:id-hash-ml-dsa-87-with-sha512:HASH-ML-DSA-87-WITH-SHA512
+1475:SLH_DSA_SHA2_128s_WITH_SHA256:2.16.840.1.101.3.4.3.35:id-hash-slh-dsa-sha2-128s-with-sha256:SLH-DSA-SHA2-128s-WITH-SHA256
+1476:SLH_DSA_SHA2_128f_WITH_SHA256:2.16.840.1.101.3.4.3.36:id-hash-slh-dsa-sha2-128f-with-sha256:SLH-DSA-SHA2-128f-WITH-SHA256
+1477:SLH_DSA_SHA2_192s_WITH_SHA512:2.16.840.1.101.3.4.3.37:id-hash-slh-dsa-sha2-192s-with-sha512:SLH-DSA-SHA2-192s-WITH-SHA512
+1478:SLH_DSA_SHA2_192f_WITH_SHA512:2.16.840.1.101.3.4.3.38:id-hash-slh-dsa-sha2-192f-with-sha512:SLH-DSA-SHA2-192f-WITH-SHA512
+1479:SLH_DSA_SHA2_256s_WITH_SHA512:2.16.840.1.101.3.4.3.39:id-hash-slh-dsa-sha2-256s-with-sha512:SLH-DSA-SHA2-256s-WITH-SHA512
+1480:SLH_DSA_SHA2_256f_WITH_SHA512:2.16.840.1.101.3.4.3.40:id-hash-slh-dsa-sha2-256f-with-sha512:SLH-DSA-SHA2-256f-WITH-SHA512
+1481:SLH_DSA_SHAKE_128s_WITH_SHAKE128:2.16.840.1.101.3.4.3.41:id-hash-slh-dsa-shake-128s-with-shake128:SLH-DSA-SHAKE-128s-WITH-SHAKE128
+1482:SLH_DSA_SHAKE_128f_WITH_SHAKE128:2.16.840.1.101.3.4.3.42:id-hash-slh-dsa-shake-128f-with-shake128:SLH-DSA-SHAKE-128f-WITH-SHAKE128
+1483:SLH_DSA_SHAKE_192s_WITH_SHAKE256:2.16.840.1.101.3.4.3.43:id-hash-slh-dsa-shake-192s-with-shake256:SLH-DSA-SHAKE-192s-WITH-SHAKE256
+1484:SLH_DSA_SHAKE_192f_WITH_SHAKE256:2.16.840.1.101.3.4.3.44:id-hash-slh-dsa-shake-192f-with-shake256:SLH-DSA-SHAKE-192f-WITH-SHAKE256
+1485:SLH_DSA_SHAKE_256s_WITH_SHAKE256:2.16.840.1.101.3.4.3.45:id-hash-slh-dsa-shake-256s-with-shake256:SLH-DSA-SHAKE-256s-WITH-SHAKE256
+1486:SLH_DSA_SHAKE_256f_WITH_SHAKE256:2.16.840.1.101.3.4.3.46:id-hash-slh-dsa-shake-256f-with-shake256:SLH-DSA-SHAKE-256f-WITH-SHAKE256
+1487:aes_128_cbc_hmac_sha1_etm::AES-128-CBC-HMAC-SHA1-ETM:aes-128-cbc-hmac-sha1-etm
+1488:aes_192_cbc_hmac_sha1_etm::AES-192-CBC-HMAC-SHA1-ETM:aes-192-cbc-hmac-sha1-etm
+1489:aes_256_cbc_hmac_sha1_etm::AES-256-CBC-HMAC-SHA1-ETM:aes-256-cbc-hmac-sha1-etm
+1490:aes_128_cbc_hmac_sha256_etm::AES-128-CBC-HMAC-SHA256-ETM:aes-128-cbc-hmac-sha256-etm
+1491:aes_192_cbc_hmac_sha256_etm::AES-192-CBC-HMAC-SHA256-ETM:aes-192-cbc-hmac-sha256-etm
+1492:aes_256_cbc_hmac_sha256_etm::AES-256-CBC-HMAC-SHA256-ETM:aes-256-cbc-hmac-sha256-etm
+1493:aes_128_cbc_hmac_sha512_etm::AES-128-CBC-HMAC-SHA512-ETM:aes-128-cbc-hmac-sha512-etm
+1494:aes_192_cbc_hmac_sha512_etm::AES-192-CBC-HMAC-SHA512-ETM:aes-192-cbc-hmac-sha512-etm
+1495:aes_256_cbc_hmac_sha512_etm::AES-256-CBC-HMAC-SHA512-ETM:aes-256-cbc-hmac-sha512-etm
+1496:HKDF_SHA256:1.2.840.113549.1.9.16.3.28:id-alg-hkdf-with-sha256:HKDF-SHA256
+1497:HKDF_SHA384:1.2.840.113549.1.9.16.3.29:id-alg-hkdf-with-sha384:HKDF-SHA384
+1498:HKDF_SHA512:1.2.840.113549.1.9.16.3.30:id-alg-hkdf-with-sha512:HKDF-SHA512
+1499:id_smime_ori:1.2.840.113549.1.9.16.13:id-smime-ori:
+1500:id_smime_ori_kem:1.2.840.113549.1.9.16.13.3:id-smime-ori-kem:
+1501:id_alg_hss_lms_hashsig:1.2.840.113549.1.9.16.3.17:id-alg-hss-lms-hashsig:
+1502:id_rdna_unsigned:1.3.6.1.5.5.7.25.1:id-rdna-unsigned:
+1503:id_alg_unsigned:1.3.6.1.5.5.7.6.36:id-alg-unsigned:
+1504:id_aes:2.16.840.1.101.3.4.1:id-aes:
