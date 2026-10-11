@@ -1292,7 +1292,7 @@ sub check_env_vars {
         # The following files are generated, and are therefore found in the
         # build directory rather than the source directory
         "$config{builddir}/providers/implementations/keymgmt/template_kmgmt.c",
-        "$config{builddir}/Makefile.in",
+        "$config{builddir}/$config{build_file}.in",
     );
     my @env_headers;
     my @env_macro;
@@ -1320,11 +1320,11 @@ sub check_env_vars {
 
     # look for source files
     my $git_ok = 0;
-    open my $glf_pipe, '-|', "git ls-files -- \"$config{sourcedir}\"";
+    open my $glf_pipe, '-|', "git -C \"$config{sourcedir}\" ls-files";
     while (<$glf_pipe>) {
         $git_ok = 1;
         s/\R$//; # better chomp
-        push @env_files, $_ if /\.c$|\.in$/;
+        push @env_files, catfile($config{sourcedir}, $_) if /\.c$|\.in$/;
     }
     close $glf_pipe;
     # git call has failed, trying to find files manually
