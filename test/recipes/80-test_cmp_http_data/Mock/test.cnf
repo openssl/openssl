@@ -54,6 +54,16 @@ tls_keypass =
 tls_trusted =
 tls_host =
 
+[timeouts]
+total_timeout =
+# reset any TLS options to default:
+tls_used =
+tls_cert =
+tls_key =
+tls_keypass =
+tls_trusted =
+tls_host =
+
 [tls]
 server =
 tls_used =
@@ -107,6 +117,8 @@ certout =
 out_trusted =
 oldcert =
 csr =
+
+[invalid_options]
 
 ############################# extra cert template contents
 
