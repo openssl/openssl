@@ -63,6 +63,9 @@
          CMAKECONFIGDIR => '$(libdir)/cmake/OpenSSL',
          APPS_OPENSSL => catfile("apps", platform->bin("openssl")),
          PERLASM_SCHEME => $target{perlasm_scheme},
+         FIPSMODULE => join(' ', map { platform->dso($_) } fipsmodules()),
+         FIPSMODULENAME => join(' ', map { basename(platform->dso($_)) }
+                                     fipsmodules()),
          PROCESSOR => '',
          S390X_VEC_CFLAGS => $config{s390x_vector_cflags} // '',
          CPPFLAGS => join(' ',
@@ -184,6 +187,15 @@
          s|([\\"])|\\$1|g foreach ($cppflags1, $cppflags2, $lib_cppflags);
          $mkvars{CPPFLAGS_Q} = join(' ', $lib_cppflags || (),
                                     $cppflags2 || (), $cppflags1 || ());
+     }
+
+     # The FIPS module, of which there is at most one.
+     sub fipsmodules {
+         my @m = grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                        && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                 @{$unified_info{modules}};
+         die "More that one FIPS module" if scalar @m > 1;
+         return @m;
      }
 
      sub release_date {
@@ -343,6 +355,11 @@ project(OpenSSL VERSION {- $config{version} -}
 set(CMAKE_C_FLAGS "")
 set(CMAKE_ASM_FLAGS "")
 set(CMAKE_CXX_FLAGS "")
+# On macOS, CMake would add -arch and -isysroot of its own.
+set(CMAKE_OSX_ARCHITECTURES "")
+set(CMAKE_C_SYSROOT_FLAG "")
+set(CMAKE_ASM_SYSROOT_FLAG "")
+set(CMAKE_CXX_SYSROOT_FLAG "")
 set(CMAKE_EXE_LINKER_FLAGS "")
 set(CMAKE_SHARED_LINKER_FLAGS "")
 set(CMAKE_MODULE_LINKER_FLAGS "")
@@ -382,7 +399,100 @@ add_custom_target(tests
 # compiled.
 add_custom_target(generated_mandatory ALL
   DEPENDS {- join(' ', cmdeps(@{$unified_info{depends}->{""} // []})) -})
+
+# The Makefile's build targets.  Each product adds itself to one of
+# build_libs, build_modules and build_programs.
+add_custom_target(build_generated)
+add_dependencies(build_generated generated_mandatory)
+add_custom_target(build_libs)
+add_custom_target(build_modules)
+add_custom_target(build_programs)
+add_custom_target(build_sw)
+add_dependencies(build_sw build_libs build_modules build_programs)
 {-
+     # Pods that are generated, which doc-nits needs to see.
+     my @genpods = grep {
+         my $x = $_;
+         grep { $unified_info{attributes}->{depends}->{$x}->{$_}->{pod} // 0 }
+             keys %{$unified_info{attributes}->{depends}->{$x}}
+     } @generated;
+     "add_custom_target(build_generated_pods"
+         . (@genpods ? "\n  DEPENDS " . cmpathl(@genpods) : "") . ")\n";
+-}
+# Developer targets, as in the Unix Makefile.
+add_custom_target(doc-nits
+  COMMAND {- cmql(mkwords('$(PERL)'),
+                  catfile($config{sourcedir}, "util", "find-doc-nits"),
+                  qw(-c -n -l -e -i -a)) -}
+  USES_TERMINAL VERBATIM)
+add_dependencies(doc-nits build_generated build_generated_pods)
+add_custom_target(md-nits
+  COMMAND mdl -s {- cmq(catfile($config{sourcedir}, "util",
+                                "markdownlint.rb")) -} .
+  USES_TERMINAL VERBATIM)
+add_custom_target(check-format
+  COMMAND sh -c {- cmq('cd ' . $config{sourcedir}
+                       . ' && git diff -U0 --no-prefix --no-color'
+                       . ' | ${CLANG_FORMAT_DIFF:-clang-format-diff}') -}
+  USES_TERMINAL VERBATIM)
+add_custom_target(list-tests
+  COMMAND ${CMAKE_COMMAND} -E env TESTS=list
+    {- cmql("SRCTOP=$config{sourcedir}", "BLDTOP=$config{builddir}",
+            "PERL=" . mkexpand('$(PERL)'), "FIPSKEY=$config{FIPSKEY}",
+            "EXE_EXT=" . platform->binext(), mkwords('$(PERL)'),
+            catfile($config{sourcedir}, "test", "run_tests.pl"), 'list') -}
+  USES_TERMINAL VERBATIM)
+add_custom_target(renumber
+{-
+     join('', map {
+         "  COMMAND "
+             . cmql(mkwords('$(PERL)'),
+                    catfile($config{sourcedir}, "util", "mkordinals.pl"),
+                    '--allocate', '--version', mkexpand('$(VERSION_NUMBER)'),
+                    '--symbols',
+                    catfile($config{sourcedir}, "util", "$_.sym"),
+                    '--release',
+                    catfile($config{sourcedir}, "util", "$_.release.num"),
+                    '--out',
+                    catfile($config{sourcedir}, "util", "$_.release.num"))
+             . "\n"
+     } qw(libcrypto libssl));
+-}
+  VERBATIM)
+add_custom_target(tags
+  COMMAND ${CMAKE_COMMAND} -E rm -f TAGS tags
+  COMMAND sh -c {- cmq('cd ' . $config{sourcedir} . ' && util/ctags.sh || true') -}
+  COMMAND sh -c "etags `find . -name '*.[ch]' -o -name '*.pm' -o -name '*.inc'` || true"
+  VERBATIM)
+add_dependencies(tags build_generated)
+add_custom_target(cov-clean
+  COMMAND sh -c "find . \\( -name '*.gcda' -o -name '*.gcno' \\) \\! -type d | xargs rm -f"
+  VERBATIM)
+add_custom_target(cov-reset
+  COMMAND sh -c "find . -name '*.gcda' \\! -type d | xargs rm -f"
+  VERBATIM)
+add_custom_target(cov-report
+  COMMAND gcovr -r . --txt-metric=branch --html --html-details
+    -o openssl-metrics.html
+  USES_TERMINAL VERBATIM)
+add_dependencies(cov-report build_libs)
+{-
+     my @shlibs = $disabled{shared} ? ()
+         : map { platform->sharedlib($_) // () } @{$unified_info{libraries}};
+     my $objcopy = mkexpand($config{OBJCOPY} // 'objcopy');
+
+     @shlibs
+         ? "add_custom_target(debuginfo\n"
+           . join('', map {
+                 "  COMMAND " . cmql($objcopy, '--only-keep-debug', $_,
+                                     "$_.debug") . "\n"
+                 . "  COMMAND " . cmql($objcopy, '--strip-debug',
+                                       "--add-gnu-debuglink=$_.debug", $_)
+                 . "\n"
+             } @shlibs)
+           . "  VERBATIM)\nadd_dependencies(debuginfo build_libs)\n"
+         : "";
+-}{-
      # Documentation: the whole manual is formatted in one run, and the
      # HTML pages are converted in another, as in the Makefile.
      our @docsections = qw(man1 man3 man5 man7);
@@ -433,10 +543,10 @@ add_custom_target(generated_mandatory ALL
      $out;
 -}
 {-
-     # Installation, in three components: "sw" (libraries, headers,
+     # Installation, in four components: "sw" (libraries, headers,
      # modules, programs, pkg-config and CMake files), "ssldirs" (the
-     # OPENSSLDIR tree) and "docs".  Every destination is absolute and
-     # DESTDIR is honoured.
+     # OPENSSLDIR tree), "fips" (the FIPS module and fipsmodule.cnf) and
+     # "docs".  Every destination is absolute and DESTDIR is honoured.
      my $abs = sub { rel2abs(shift, rel2abs($config{builddir})) };
      my $dest = sub { cmq(mkexpand(shift)) };
      my %attrs = %{$unified_info{attributes}};
@@ -556,6 +666,16 @@ add_custom_target(generated_mandatory ALL
          $out .= $code->($c, "ssldirs");
      }
 
+     # The FIPS module and its configuration
+     unless ($disabled{fips}) {
+         $out .= "install(FILES " . cmpathl(mkwords('$(FIPSMODULE)'))
+             . "\n  DESTINATION " . $dest->('$(MODULESDIR)')
+             . " $dir755 COMPONENT fips)\n"
+             . "install(FILES " . cmpath("providers/fipsmodule.cnf")
+             . "\n  DESTINATION " . $dest->('$(OPENSSLDIR)')
+             . " $dir644 COMPONENT fips)\n";
+     }
+
      # Documentation
      unless ($disabled{docs}) {
          my $c = "";
@@ -603,7 +723,8 @@ add_custom_target(generated_mandatory ALL
          my %args = @_;
          my $name = cmtarget($args{target});
 
-         return "\nadd_custom_target(" . cmq($name)
+         # build.info hooks these into the default build.
+         return "\nadd_custom_target(" . cmq($name) . " ALL"
              . (@{$args{deps}}
                 ? "\n  DEPENDS " . join(' ', cmdeps(@{$args{deps}})) : "")
              . ")\n";
@@ -787,7 +908,8 @@ add_custom_target(generated_mandatory ALL
              . " PREFIX " . cmq($prefix)
              . " OUTPUT_NAME " . cmq($base)
              . " ARCHIVE_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}"
-             . ($dir eq '.' ? '' : "/$dir") . "\")\n";
+             . ($dir eq '.' ? '' : "/$dir") . "\")"
+             . "\nadd_dependencies(build_libs $name)\n";
      }
 
      # What linking against the libraries in @_ takes, as the Makefile
@@ -845,7 +967,8 @@ add_custom_target(generated_mandatory ALL
              . "\ntarget_link_libraries($name PRIVATE "
              . cmql(@{$args{libs}}) . ")\n";
 
-         $out .= "add_dependencies(tests $name)\n";
+         $out .= "add_dependencies(tests $name)\n"
+             . "add_dependencies($args{group} $name)\n";
          if ($args{def}) {
              $out .= "add_custom_target(${name}_def DEPENDS "
                  . cmpath($args{def}) . ")"
@@ -875,7 +998,8 @@ add_custom_target(generated_mandatory ALL
              . join('', map { "\n  \$<TARGET_OBJECTS:" . objtarget($_) . ">" }
                         @objs)
              . ")"
-             . link_props(name => $name,
+             . link_props(group => 'build_modules',
+                          name => $name,
                           file => platform->dso($module),
                           def => $defs[0],
                           ldflags => mkexpand('$(DSO_CFLAGS) '
@@ -904,7 +1028,8 @@ add_custom_target(generated_mandatory ALL
              . join('', map { "\n  \$<TARGET_OBJECTS:" . objtarget($_) . ">" }
                         @{$args{objs}})
              . ")"
-             . link_props(name => $name,
+             . link_props(group => 'build_programs',
+                          name => $name,
                           file => platform->bin($bin),
                           language => $cxx ? 'CXX' : 'C',
                           ldflags => mkexpand("$cmdflags "
@@ -937,7 +1062,8 @@ add_custom_target(generated_mandatory ALL
              . "\n  VERBATIM)"
              . "\nadd_custom_target(" . cmtarget($script) . " ALL DEPENDS "
              . cmpath($script) . ")"
-             . "\nadd_dependencies(tests " . cmtarget($script) . ")\n";
+             . "\nadd_dependencies(tests " . cmtarget($script) . ")"
+             . "\nadd_dependencies(build_programs " . cmtarget($script) . ")\n";
      }
 
      # A shared library is a CMake SHARED library whose file is named
@@ -965,7 +1091,8 @@ add_custom_target(generated_mandatory ALL
              . join('', map { "\n  \$<TARGET_OBJECTS:" . objtarget($_) . ">" }
                         @objs)
              . ")"
-             . link_props(name => $name,
+             . link_props(group => 'build_libs',
+                          name => $name,
                           file => $full,
                           def => $defs[0],
                           ldflags => mkexpand('$(LIB_CFLAGS) '
