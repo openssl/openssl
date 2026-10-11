@@ -2626,9 +2626,10 @@ if ($builder eq "unified") {
             foreach (@{$sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir, 1);
 
-                # If it's generated or we simply don't find it in the source
-                # tree, we assume it's in the build tree.
-                if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
+                # A generated file, a static library, or anything not found
+                # in the source tree is in the build tree.
+                if ($s eq $src_configdata || $generate{$_} || /\.a$/
+                    || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
                 my $o = $_;
@@ -2671,9 +2672,10 @@ if ($builder eq "unified") {
             foreach (@{$shared_sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir, 1);
 
-                # If it's generated or we simply don't find it in the source
-                # tree, we assume it's in the build tree.
-                if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
+                # A generated file, a static library, or anything not found
+                # in the source tree is in the build tree.
+                if ($s eq $src_configdata || $generate{$_} || /\.a$/
+                    || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
 
