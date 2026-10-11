@@ -10,8 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "internal/nelem.h"
+#include "internal/safe_math.h"
 
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
@@ -23,6 +25,8 @@
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
+
+OSSL_SAFE_MATH_SIGNED(int, int)
 
 static int test_null_args(void)
 {
@@ -803,6 +807,108 @@ err:
     return ret;
 }
 
+/* (INT_MAX - 2) / 2 is the largest asclen that does not overflow asclen * 2 + 2. */
+static int test_asc2uni_overflow(void)
+{
+    unsigned char *result = NULL;
+    int unilen = 0;
+    int ret = 0;
+
+    result = OPENSSL_asc2uni("A", (INT_MAX - 2) / 2 + 1, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    result = OPENSSL_asc2uni("A", (INT_MAX - 2) / 2 + 2, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    result = OPENSSL_asc2uni("A", INT_MAX, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    result = OPENSSL_asc2uni("", 0, &result, &unilen);
+    if (!TEST_ptr(result))
+        goto err;
+    if (!TEST_int_eq(unilen, 2))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
+static int test_asc2uni_outputs(void)
+{
+    unsigned char *result = NULL;
+    unsigned char *out = (unsigned char *)0x1;
+    int unilen = -12345;
+    int ret = 0;
+
+    result = OPENSSL_asc2uni("A", INT_MAX, &out, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+    if (!TEST_ptr_eq(out, (unsigned char *)0x1))
+        goto err;
+    if (!TEST_int_eq(unilen, -12345))
+        goto err;
+
+    result = OPENSSL_asc2uni("", 0, &result, &unilen);
+    if (!TEST_ptr(result))
+        goto err;
+    if (!TEST_int_eq(unilen, 2))
+        goto err;
+    if (!TEST_mem_eq(result, 2, "\0\0", 2))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
+static int test_asc2uni_strlen(void)
+{
+    static const unsigned char expected[] = { 0x00, 0x41, 0x00, 0x42, 0x00, 0x00 };
+    unsigned char *result = NULL;
+    int unilen = 0;
+    int ret = 0;
+
+    result = OPENSSL_asc2uni("AB", -1, &result, &unilen);
+    if (!TEST_ptr(result))
+        goto err;
+    if (!TEST_int_eq(unilen, 6))
+        goto err;
+    if (!TEST_mem_eq(result, 6, expected, sizeof(expected)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
+/*
+ * A BMPString of that size (about 2 GB) is too large to allocate in a test, so
+ * this checks the arithmetic through the safe_math helpers instead.
+ */
+static int test_safe_math_asc2uni_boundary(void)
+{
+    int err = 0;
+    int ulen;
+    int max_valid = (INT_MAX - 2) / 2;
+
+    ulen = safe_add_int(safe_mul_int(max_valid, 2, &err), 2, &err);
+    if (!TEST_false(err))
+        return 0;
+    if (!TEST_int_eq(ulen, max_valid * 2 + 2))
+        return 0;
+
+    err = 0;
+    ulen = safe_add_int(safe_mul_int(max_valid + 1, 2, &err), 2, &err);
+    return TEST_true(err);
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -870,6 +976,10 @@ int setup_tests(void)
     ADD_TEST(test_parse_ex_skey);
     ADD_ALL_TESTS(test_parse_ex_libctx, 2);
     ADD_ALL_TESTS(test_parse_ex_skey_libctx, 4);
+    ADD_TEST(test_asc2uni_overflow);
+    ADD_TEST(test_asc2uni_outputs);
+    ADD_TEST(test_asc2uni_strlen);
+    ADD_TEST(test_safe_math_asc2uni_boundary);
     return 1;
 }
 
