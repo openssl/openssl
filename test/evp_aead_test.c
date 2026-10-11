@@ -688,6 +688,70 @@ err:
     return testresult;
 }
 
+/*
+ * Decrypting without a tag must fail and report it: at the payload update
+ * for CCM and SIV, which need the tag first, otherwise at Final.
+ */
+static int test_evp_aead_decrypt_no_tag(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    /* the ciphertext content is irrelevant; no tag is ever set */
+    static const unsigned char ct[] = "decrypt without a tag";
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char out[sizeof(ct) + EVP_MAX_BLOCK_LENGTH];
+    const int ctlen = (int)sizeof(ct) - 1;
+    int outl = 0, testresult = 0;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, NULL, ctlen)))) {
+        TEST_info("decrypt setup failed: idx=%d cipher=%s", idx, info->name);
+        goto err;
+    }
+
+    ERR_clear_error();
+    if (info->mode == EVP_CIPH_CCM_MODE) {
+        /* the tag must be set before any data is decrypted */
+        if (!TEST_false(EVP_DecryptUpdate(ctx, out, &outl, ct, ctlen))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_TAG_NOT_SET)) {
+            TEST_info("update without a tag: idx=%d cipher=%s",
+                idx, info->name);
+            goto err;
+        }
+    } else if (info->mode == EVP_CIPH_SIV_MODE) {
+        /* the tag is checked during the update, against no tag */
+        if (!TEST_false(EVP_DecryptUpdate(ctx, out, &outl, ct, ctlen))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_BAD_DECRYPT)) {
+            TEST_info("update without a tag: idx=%d cipher=%s",
+                idx, info->name);
+            goto err;
+        }
+    } else if (info->mode == EVP_CIPH_OCB_MODE) {
+        /* the tag is checked at Final, against no tag */
+        if (!TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, ctlen))
+            || !TEST_false(EVP_DecryptFinal_ex(ctx, out + outl, &outl))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_BAD_DECRYPT)) {
+            TEST_info("final without a tag: idx=%d cipher=%s",
+                idx, info->name);
+            goto err;
+        }
+    } else if (!TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, ctlen))
+        || !TEST_false(EVP_DecryptFinal_ex(ctx, out + outl, &outl))
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_TAG_NOT_SET)) {
+        TEST_info("final without a tag: idx=%d cipher=%s", idx, info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     int i = 0;
@@ -706,6 +770,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_late_aad, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, aead_list_n);
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, aead_list_n);
+    ADD_ALL_TESTS(test_evp_aead_decrypt_no_tag, aead_list_n);
     return 1;
 }
 
