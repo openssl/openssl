@@ -55,6 +55,11 @@
          bindir => file_name_is_absolute($bindir)
                    ? $bindir : '$(INSTALLTOP)/$(BINDIR)',
          PKGCONFIGDIR => '$(libdir)/pkgconfig',
+         MANDIR => '$(INSTALLTOP)/share/man',
+         DOCDIR => '$(INSTALLTOP)/share/doc/openssl',
+         HTMLDIR => '$(DOCDIR)/html',
+         MANSUFFIX => 'ossl',
+         RELEASE_DATE => release_date(),
          CMAKECONFIGDIR => '$(libdir)/cmake/OpenSSL',
          APPS_OPENSSL => catfile("apps", platform->bin("openssl")),
          PERLASM_SCHEME => $target{perlasm_scheme},
@@ -181,6 +186,19 @@
                                     $cppflags2 || (), $cppflags1 || ());
      }
 
+     sub release_date {
+         use Time::Piece;
+         my $t = localtime;
+
+         if ($config{release_date}) {
+             eval { $t = Time::Piece->strptime($config{release_date},
+                                              "%d %b %Y"); }
+                 || die "Parsing \$config{release_date}"
+                        . " ('$config{release_date}') failed: $@";
+         }
+         return $t->strftime("%Y-%m-%d");
+     }
+
      # Expands make variable references, $(NAME), until none are left.
      sub mkexpand {
          my $s = shift;
@@ -257,11 +275,55 @@
      "";
 -}
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
   message(FATAL_ERROR
     "Run CMake in the directory Configure wrote this file to: cmake -G Ninja .")
+endif()
+
+# A change to Configure or its inputs reruns Configure with the same
+# arguments; a change to configdata.pm or the templates regenerates this
+# file.  Either way the new file is then read in place of this one.
+set(OPENSSL_RECONFIGURE_INPUTS
+  {- cmpathl(catfile($config{sourcedir}, "Configure"),
+             catfile($config{sourcedir}, "config"),
+             @{$config{build_infos}}, @{$config{conf_files}}) -})
+set(OPENSSL_REGENERATE_INPUTS
+  {- cmpathl("configdata.pm", @{$config{build_file_templates}}) -})
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+  ${OPENSSL_RECONFIGURE_INPUTS} ${OPENSSL_REGENERATE_INPUTS})
+if(NOT OPENSSL_REGENERATED)
+  set(OPENSSL_REGENERATE "")
+  foreach(f IN LISTS OPENSSL_RECONFIGURE_INPUTS)
+    if("${f}" IS_NEWER_THAN "${CMAKE_BINARY_DIR}/configdata.pm")
+      set(OPENSSL_REGENERATE "-r")
+    endif()
+  endforeach()
+  if(NOT OPENSSL_REGENERATE)
+    foreach(f IN LISTS OPENSSL_REGENERATE_INPUTS)
+      if("${f}" IS_NEWER_THAN "${CMAKE_CURRENT_LIST_FILE}")
+        set(OPENSSL_REGENERATE "-")
+      endif()
+    endforeach()
+  endif()
+  if(OPENSSL_REGENERATE)
+    if(OPENSSL_REGENERATE STREQUAL "-r")
+      set(OPENSSL_REGENERATE_ARGS "-r")
+    else()
+      set(OPENSSL_REGENERATE_ARGS "")
+    endif()
+    execute_process(
+      COMMAND {- cmql(mkwords('$(PERL)')) -} configdata.pm ${OPENSSL_REGENERATE_ARGS}
+      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+      RESULT_VARIABLE OPENSSL_REGENERATE_RESULT)
+    if(OPENSSL_REGENERATE_RESULT)
+      message(FATAL_ERROR "perl configdata.pm ${OPENSSL_REGENERATE_ARGS} failed")
+    endif()
+    set(OPENSSL_REGENERATED TRUE)
+    include("${CMAKE_CURRENT_LIST_FILE}")
+    return()
+  endif()
 endif()
 
 # Configure has chosen the compiler and every flag; CMake adds none.
@@ -320,6 +382,222 @@ add_custom_target(tests
 # compiled.
 add_custom_target(generated_mandatory ALL
   DEPENDS {- join(' ', cmdeps(@{$unified_info{depends}->{""} // []})) -})
+{-
+     # Documentation: the whole manual is formatted in one run, and the
+     # HTML pages are converted in another, as in the Makefile.
+     our @docsections = qw(man1 man3 man5 man7);
+     my $out = "";
+
+     unless ($disabled{docs}) {
+         my @manpods = map { $unified_info{generate}->{$_}->[0] }
+                       map { @{$unified_info{mandocs}->{$_} // []} }
+                       @docsections;
+         my @htmlpods = map { $unified_info{generate}->{$_}->[0] }
+                        map { @{$unified_info{htmldocs}->{$_} // []} }
+                        @docsections;
+
+         die "Only roff manual pages are supported with CMake\n"
+             unless $config{manpage_format} eq "roff";
+         $out .= "\nadd_custom_command(OUTPUT "
+             . cmpath("doc/man/.mandocs.stamp")
+             . "\n  COMMAND "
+             . cmql(mkwords('$(PERL)'),
+                    catfile($config{sourcedir}, "util", "mkpod2man.pl"),
+                    '-o', 'doc/man', '-m', mkexpand('$(MANSUFFIX)'),
+                    '-d', mkexpand('$(RELEASE_DATE)'),
+                    '-r', mkexpand('$(VERSION)'), @manpods)
+             . "\n  COMMAND \${CMAKE_COMMAND} -E touch doc/man/.mandocs.stamp"
+             . "\n  DEPENDS "
+             . cmpathl(catfile($config{sourcedir}, "util", "mkpod2man.pl"),
+                       @manpods)
+             . "\n  VERBATIM)"
+             . "\nadd_custom_target(build_man_docs ALL DEPENDS "
+             . cmpath("doc/man/.mandocs.stamp") . ")\n";
+         $out .= "\nadd_custom_command(OUTPUT "
+             . cmpath("doc/html/.htmldocs.stamp")
+             . "\n  COMMAND "
+             . cmql(mkwords('$(PERL)'),
+                    catfile($config{sourcedir}, "util", "mkpod2html.pl"),
+                    '-o', 'doc/html', '-r',
+                    catdir($config{sourcedir}, "doc"), @htmlpods)
+             . "\n  COMMAND \${CMAKE_COMMAND} -E touch doc/html/.htmldocs.stamp"
+             . "\n  DEPENDS "
+             . cmpathl(catfile($config{sourcedir}, "util", "mkpod2html.pl"),
+                       @htmlpods)
+             . "\n  VERBATIM)"
+             . "\nadd_custom_target(build_html_docs ALL DEPENDS "
+             . cmpath("doc/html/.htmldocs.stamp") . ")"
+             . "\nadd_custom_target(build_docs)"
+             . "\nadd_dependencies(build_docs build_man_docs build_html_docs)\n";
+     }
+     $out;
+-}
+{-
+     # Installation, in three components: "sw" (libraries, headers,
+     # modules, programs, pkg-config and CMake files), "ssldirs" (the
+     # OPENSSLDIR tree) and "docs".  Every destination is absolute and
+     # DESTDIR is honoured.
+     my $abs = sub { rel2abs(shift, rel2abs($config{builddir})) };
+     my $dest = sub { cmq(mkexpand(shift)) };
+     my %attrs = %{$unified_info{attributes}};
+     my $out = "\nset(CMAKE_INSTALL_PREFIX " . $dest->('$(INSTALLTOP)') . ")\n";
+     my $code = sub { "install(CODE [==[\n" . shift . "]==] COMPONENT "
+                      . shift . ")\n" };
+     my $dir644 = "PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ";
+     my $dir755 = "PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE"
+         . " GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE";
+     my $link = sub {
+         my ($target, $link) = @_;
+         "  message(STATUS \"Linking: \$ENV{DESTDIR}$link -> $target\")\n"
+             . "  file(CREATE_LINK " . cmq($target)
+             . " \"\$ENV{DESTDIR}" . cmesc($link) . "\" SYMBOLIC)\n";
+     };
+
+     # Headers: the generated ones from the build tree, every other one
+     # from the source tree.
+     my @genhdrs = sort grep { m|^include/openssl/[^/]+\.h$| }
+                   keys %{$unified_info{generate}};
+     my %genhdr = map { basename($_) => 1 } @genhdrs;
+     my @srchdrs = grep { !$genhdr{basename($_)} }
+                   sort glob(catfile($config{sourcedir},
+                                     "include", "openssl", "*.h"));
+     push @srchdrs, catfile($config{sourcedir}, "ms", "applink.c")
+         unless $disabled{uplink};
+     $out .= "install(FILES " . cmpathl(@srchdrs, @genhdrs)
+         . "\n  DESTINATION " . $dest->('$(INSTALLTOP)/include/openssl')
+         . " $dir644 COMPONENT sw)\n";
+
+     # Libraries
+     my @libs = grep { !$attrs{libraries}->{$_}->{noinst} }
+                @{$unified_info{libraries}};
+     my @static = map { platform->staticlib($_) // () } @libs;
+     $out .= "install(FILES " . cmpathl(@static)
+         . "\n  DESTINATION " . $dest->('$(libdir)')
+         . " $dir644 COMPONENT sw)\n" if @static;
+     unless ($disabled{shared}) {
+         foreach (@libs) {
+             my $full = platform->sharedlib($_) // next;
+             my $simple = platform->sharedlib_simple($_);
+
+             $out .= "install(FILES " . cmpath($full)
+                 . " DESTINATION " . $dest->('$(libdir)')
+                 . " $dir755 COMPONENT sw)\n";
+             $out .= $code->($link->(basename($full),
+                                     mkexpand('$(libdir)') . "/"
+                                     . basename($simple)), "sw")
+                 if defined $simple && $simple ne $full;
+         }
+     }
+
+     # pkg-config and CMake files
+     foreach my $exp (['pkg-config', '$(PKGCONFIGDIR)'],
+                      ['cmake', '$(CMAKECONFIGDIR)']) {
+         my @files = grep { ($attrs{generate}->{$_}->{exporter} // '')
+                                eq $exp->[0] }
+                     sort keys %{$unified_info{generate}};
+         $out .= "install(FILES " . cmpathl(@files)
+             . "\n  DESTINATION " . $dest->($exp->[1])
+             . " $dir644 COMPONENT sw)\n" if @files;
+     }
+
+     # Modules and programs
+     my @modules = map { platform->dso($_) }
+                   grep { !$attrs{modules}->{$_}->{noinst}
+                          && !$attrs{modules}->{$_}->{fips} }
+                   @{$unified_info{modules}};
+     $out .= "install(FILES " . cmpathl(@modules)
+         . "\n  DESTINATION " . $dest->('$(MODULESDIR)')
+         . " $dir755 COMPONENT sw)\n" if @modules;
+     my @programs = map { platform->bin($_) }
+                    grep { !$attrs{programs}->{$_}->{noinst} }
+                    @{$unified_info{programs}};
+     $out .= "install(PROGRAMS " . cmpathl(@programs)
+         . "\n  DESTINATION " . $dest->('$(bindir)') . " COMPONENT sw)\n"
+         if @programs;
+
+     # Scripts: ordinary ones in bindir, "misc" ones in OPENSSLDIR/misc,
+     # each with its link name, if any, as a symbolic link to it.
+     foreach my $script (grep { !$attrs{scripts}->{$_}->{noinst} }
+                         @{$unified_info{scripts}}) {
+         my $misc = $attrs{scripts}->{$script}->{misc};
+         my $dir = mkexpand($misc ? '$(OPENSSLDIR)/misc' : '$(bindir)');
+         my $linkname = $attrs{scripts}->{$script}->{linkname};
+
+         $out .= "install(PROGRAMS " . cmpath($script)
+             . " DESTINATION " . cmq($dir) . " COMPONENT "
+             . ($misc ? "ssldirs" : "sw") . ")\n";
+         $out .= $code->($link->(basename($script),
+                                 "$dir/" . basename($linkname)),
+                         $misc ? "ssldirs" : "sw")
+             if $linkname;
+     }
+
+     # The OPENSSLDIR tree.  openssl.cnf and ct_log_list.cnf are always
+     # installed as *.dist, and as themselves only when not already there.
+     {
+         my $d = mkexpand('$(OPENSSLDIR)');
+         my $c = "  set(d \"\$ENV{DESTDIR}" . cmesc($d) . "\")\n"
+             . "  file(MAKE_DIRECTORY \"\${d}/certs\" \"\${d}/private\""
+             . " \"\${d}/misc\")\n";
+
+         foreach my $cnf ("openssl.cnf", "ct_log_list.cnf") {
+             my $src = cmq($abs->(catfile($config{sourcedir}, "apps", $cnf)));
+
+             $c .= "  message(STATUS \"Installing: \${d}/$cnf.dist\")\n"
+                 . "  file(COPY_FILE $src \"\${d}/$cnf.dist\""
+                 . " ONLY_IF_DIFFERENT)\n"
+                 . "  file(CHMOD \"\${d}/$cnf.dist\" $dir644)\n"
+                 . "  if(NOT EXISTS \"\${d}/$cnf\")\n"
+                 . "    message(STATUS \"Installing: \${d}/$cnf\")\n"
+                 . "    file(COPY_FILE $src \"\${d}/$cnf\")\n"
+                 . "    file(CHMOD \"\${d}/$cnf\" $dir644)\n"
+                 . "  endif()\n";
+         }
+         $out .= $code->($c, "ssldirs");
+     }
+
+     # Documentation
+     unless ($disabled{docs}) {
+         my $c = "";
+
+         foreach my $sec (@docsections) {
+             my @pages = @{$unified_info{mandocs}->{$sec} // []};
+             my $dir = mkexpand('$(MANDIR)') . "/$sec";
+
+             next unless @pages;
+             $c .= "  file(MAKE_DIRECTORY \"\$ENV{DESTDIR}" . cmesc($dir) . "\")\n"
+                 . "  execute_process(COMMAND "
+                 . cmql(mkwords('$(PERL)'),
+                        $abs->(catfile($config{sourcedir}, "util",
+                                       "install-man-pages.pl")),
+                        'install',
+                        $abs->(catdir($config{sourcedir}, "doc", $sec)),
+                        $abs->(catdir("doc", $sec)))
+                 . "\n      \"\$ENV{DESTDIR}" . cmesc($dir) . "\" "
+                 . cmql(mkexpand('$(MANSUFFIX)'), @pages)
+                 . "\n    WORKING_DIRECTORY " . cmq($abs->("."))
+                 . "\n    RESULT_VARIABLE r)\n"
+                 . "  if(r)\n"
+                 . "    message(FATAL_ERROR \"Installing the $sec manual"
+                 . " pages failed\")\n"
+                 . "  endif()\n";
+         }
+         $out .= $code->($c, "docs") if $c;
+         foreach my $sec (@docsections) {
+             my @pages = @{$unified_info{htmldocs}->{$sec} // []};
+
+             $out .= "install(FILES " . cmpathl(@pages)
+                 . "\n  DESTINATION " . $dest->("\$(HTMLDIR)/$sec")
+                 . " $dir644 COMPONENT docs)\n" if @pages;
+         }
+         my @images = map { catfile($config{sourcedir}, $_) }
+                      @{$unified_info{imagedocs}->{man7} // []};
+         $out .= "install(FILES " . cmpathl(@images)
+             . "\n  DESTINATION " . $dest->('$(HTMLDIR)/man7/img')
+             . " $dir644 COMPONENT docs)\n" if @images;
+     }
+     $out;
+-}
 {-
      sub generatetarget {
          my %args = @_;
