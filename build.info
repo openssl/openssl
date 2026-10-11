@@ -20,7 +20,7 @@
    our $err_headers = join(" \\\n         ", grep { m|\.h$| } @err_files);
    our $err_rules =
        join("", map {
-                "GENERATE[$_]=util/mkerr.pl -internal \\\n"
+                "GENERATE[$_]=util/mkerr.pl \\\n"
                 . "    -conf \$(SRCDIR)/crypto/err/openssl.ec -emit $_\n"
                 . "DEPEND[$_]=crypto/err/openssl.ec crypto/err/openssl.txt\n"
             } @err_files);

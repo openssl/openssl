@@ -5,1891 +5,1875 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-#Reason codes
-ASN1_R_ADDING_OBJECT:171:adding object
-ASN1_R_ASN1_PARSE_ERROR:203:asn1 parse error
-ASN1_R_ASN1_SIG_PARSE_ERROR:204:asn1 sig parse error
-ASN1_R_AUX_ERROR:100:aux error
-ASN1_R_BAD_OBJECT_HEADER:102:bad object header
-ASN1_R_BAD_TEMPLATE:230:bad template
-ASN1_R_BMPSTRING_IS_WRONG_LENGTH:214:bmpstring is wrong length
-ASN1_R_BN_LIB:105:bn lib
-ASN1_R_BOOLEAN_IS_WRONG_LENGTH:106:boolean is wrong length
-ASN1_R_BUFFER_TOO_SMALL:107:buffer too small
-ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER:108:cipher has no object identifier
-ASN1_R_CONTEXT_NOT_INITIALISED:217:context not initialised
-ASN1_R_DATA_IS_WRONG:109:data is wrong
-ASN1_R_DECODE_ERROR:110:decode error
-ASN1_R_DEPTH_EXCEEDED:174:depth exceeded
-ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED:198:digest and key type not supported
-ASN1_R_ENCODE_ERROR:112:encode error
-ASN1_R_ERROR_GETTING_TIME:173:error getting time
-ASN1_R_ERROR_LOADING_SECTION:172:error loading section
-ASN1_R_ERROR_SETTING_CIPHER_PARAMS:114:error setting cipher params
-ASN1_R_EXPECTING_AN_INTEGER:115:expecting an integer
-ASN1_R_EXPECTING_AN_OBJECT:116:expecting an object
-ASN1_R_EXPLICIT_LENGTH_MISMATCH:119:explicit length mismatch
-ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED:120:explicit tag not constructed
-ASN1_R_FIELD_MISSING:121:field missing
-ASN1_R_FIRST_NUM_TOO_LARGE:122:first num too large
-ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT:232:generalizedtime is too short
-ASN1_R_HEADER_TOO_LONG:123:header too long
-ASN1_R_ILLEGAL_BITSTRING_FORMAT:175:illegal bitstring format
-ASN1_R_ILLEGAL_BOOLEAN:176:illegal boolean
-ASN1_R_ILLEGAL_CHARACTERS:124:illegal characters
-ASN1_R_ILLEGAL_FORMAT:177:illegal format
-ASN1_R_ILLEGAL_HEX:178:illegal hex
-ASN1_R_ILLEGAL_IMPLICIT_TAG:179:illegal implicit tag
-ASN1_R_ILLEGAL_INTEGER:180:illegal integer
-ASN1_R_ILLEGAL_NEGATIVE_VALUE:226:illegal negative value
-ASN1_R_ILLEGAL_NESTED_TAGGING:181:illegal nested tagging
-ASN1_R_ILLEGAL_NULL:125:illegal null
-ASN1_R_ILLEGAL_NULL_VALUE:182:illegal null value
-ASN1_R_ILLEGAL_OBJECT:183:illegal object
-ASN1_R_ILLEGAL_OPTIONAL_ANY:126:illegal optional any
-ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE:170:illegal options on item template
-ASN1_R_ILLEGAL_PADDING:221:illegal padding
-ASN1_R_ILLEGAL_TAGGED_ANY:127:illegal tagged any
-ASN1_R_ILLEGAL_TIME_VALUE:184:illegal time value
-ASN1_R_ILLEGAL_ZERO_CONTENT:222:illegal zero content
-ASN1_R_INTEGER_NOT_ASCII_FORMAT:185:integer not ascii format
-ASN1_R_INTEGER_TOO_LARGE_FOR_LONG:128:integer too large for long
-ASN1_R_INVALID_BIT_STRING_BITS_LEFT:220:invalid bit string bits left
-ASN1_R_INVALID_BMPSTRING_LENGTH:129:invalid bmpstring length
-ASN1_R_INVALID_DIGIT:130:invalid digit
-ASN1_R_INVALID_MIME_TYPE:205:invalid mime type
-ASN1_R_INVALID_MODIFIER:186:invalid modifier
-ASN1_R_INVALID_NUMBER:187:invalid number
-ASN1_R_INVALID_OBJECT_ENCODING:216:invalid object encoding
-ASN1_R_INVALID_SCRYPT_PARAMETERS:227:invalid scrypt parameters
-ASN1_R_INVALID_SEPARATOR:131:invalid separator
-ASN1_R_INVALID_STRING_TABLE_VALUE:218:invalid string table value
-ASN1_R_INVALID_UNIVERSALSTRING_LENGTH:133:invalid universalstring length
-ASN1_R_INVALID_UTF8STRING:134:invalid utf8string
-ASN1_R_INVALID_VALUE:219:invalid value
-ASN1_R_LENGTH_TOO_LONG:231:length too long
-ASN1_R_LIST_ERROR:188:list error
-ASN1_R_MIME_NO_CONTENT_TYPE:206:mime no content type
-ASN1_R_MIME_PARSE_ERROR:207:mime parse error
-ASN1_R_MIME_SIG_PARSE_ERROR:208:mime sig parse error
-ASN1_R_MISSING_EOC:137:missing eoc
-ASN1_R_MISSING_SECOND_NUMBER:138:missing second number
-ASN1_R_MISSING_VALUE:189:missing value
-ASN1_R_MSTRING_NOT_UNIVERSAL:139:mstring not universal
-ASN1_R_MSTRING_WRONG_TAG:140:mstring wrong tag
-ASN1_R_NESTED_ASN1_STRING:197:nested asn1 string
-ASN1_R_NESTED_TOO_DEEP:201:nested too deep
-ASN1_R_NON_HEX_CHARACTERS:141:non hex characters
-ASN1_R_NOT_ASCII_FORMAT:190:not ascii format
-ASN1_R_NOT_ENOUGH_DATA:142:not enough data
-ASN1_R_NO_CONTENT_TYPE:209:no content type
-ASN1_R_NO_MATCHING_CHOICE_TYPE:143:no matching choice type
-ASN1_R_NO_MULTIPART_BODY_FAILURE:210:no multipart body failure
-ASN1_R_NO_MULTIPART_BOUNDARY:211:no multipart boundary
-ASN1_R_NO_SIG_CONTENT_TYPE:212:no sig content type
-ASN1_R_NULL_IS_WRONG_LENGTH:144:null is wrong length
-ASN1_R_OBJECT_NOT_ASCII_FORMAT:191:object not ascii format
-ASN1_R_ODD_NUMBER_OF_CHARS:145:odd number of chars
-ASN1_R_SECOND_NUMBER_TOO_LARGE:147:second number too large
-ASN1_R_SEQUENCE_LENGTH_MISMATCH:148:sequence length mismatch
-ASN1_R_SEQUENCE_NOT_CONSTRUCTED:149:sequence not constructed
-ASN1_R_SEQUENCE_OR_SET_NEEDS_CONFIG:192:sequence or set needs config
-ASN1_R_SHORT_LINE:150:short line
-ASN1_R_SIG_INVALID_MIME_TYPE:213:sig invalid mime type
-ASN1_R_STREAMING_NOT_SUPPORTED:202:streaming not supported
-ASN1_R_STRING_TOO_LONG:151:string too long
-ASN1_R_STRING_TOO_SHORT:152:string too short
-ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:154:\
-	the asn1 object identifier is not known for this md
-ASN1_R_TIME_NOT_ASCII_FORMAT:193:time not ascii format
-ASN1_R_TOO_LARGE:223:too large
-ASN1_R_TOO_LONG:155:too long
-ASN1_R_TOO_SMALL:224:too small
-ASN1_R_TYPE_NOT_CONSTRUCTED:156:type not constructed
-ASN1_R_TYPE_NOT_PRIMITIVE:195:type not primitive
-ASN1_R_UNEXPECTED_EOC:159:unexpected eoc
-ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH:215:universalstring is wrong length
-ASN1_R_UNKNOWN_DIGEST:229:unknown digest
-ASN1_R_UNKNOWN_FORMAT:160:unknown format
-ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM:161:unknown message digest algorithm
-ASN1_R_UNKNOWN_OBJECT_TYPE:162:unknown object type
-ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE:163:unknown public key type
-ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM:199:unknown signature algorithm
-ASN1_R_UNKNOWN_TAG:194:unknown tag
-ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE:164:unsupported any defined by type
-ASN1_R_UNSUPPORTED_CIPHER:228:unsupported cipher
-ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE:167:unsupported public key type
-ASN1_R_UNSUPPORTED_TYPE:196:unsupported type
-ASN1_R_UTCTIME_IS_TOO_SHORT:233:utctime is too short
-ASN1_R_WRONG_INTEGER_TYPE:225:wrong integer type
-ASN1_R_WRONG_PUBLIC_KEY_TYPE:200:wrong public key type
-ASN1_R_WRONG_TAG:168:wrong tag
-ASYNC_R_FAILED_TO_SET_POOL:101:failed to set pool
-ASYNC_R_FAILED_TO_SWAP_CONTEXT:102:failed to swap context
-ASYNC_R_INIT_FAILED:105:init failed
-ASYNC_R_INVALID_POOL_SIZE:103:invalid pool size
-BIO_R_ACCEPT_ERROR:100:accept error
-BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET:141:addrinfo addr is not af inet
-BIO_R_AMBIGUOUS_HOST_OR_SERVICE:129:ambiguous host or service
-BIO_R_BAD_FOPEN_MODE:101:bad fopen mode
-BIO_R_BROKEN_PIPE:124:broken pipe
-BIO_R_CONNECT_ERROR:103:connect error
-BIO_R_CONNECT_TIMEOUT:147:connect timeout
-BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET:107:gethostbyname addr is not af inet
-BIO_R_GETSOCKNAME_ERROR:132:getsockname error
-BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS:133:getsockname truncated address
-BIO_R_GETTING_SOCKTYPE:134:getting socktype
-BIO_R_INVALID_ARGUMENT:125:invalid argument
-BIO_R_INVALID_SOCKET:135:invalid socket
-BIO_R_IN_USE:123:in use
-BIO_R_LENGTH_TOO_LONG:102:length too long
-BIO_R_LISTEN_V6_ONLY:136:listen v6 only
-BIO_R_LOCAL_ADDR_NOT_AVAILABLE:111:local addr not available
-BIO_R_LOOKUP_RETURNED_NOTHING:142:lookup returned nothing
-BIO_R_MALFORMED_HOST_OR_SERVICE:130:malformed host or service
-BIO_R_NBIO_CONNECT_ERROR:110:nbio connect error
-BIO_R_NON_FATAL:112:non fatal
-BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED:143:\
-	no accept addr or service specified
-BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED:144:no hostname or service specified
-BIO_R_NO_PORT_DEFINED:113:no port defined
-BIO_R_NO_SUCH_FILE:128:no such file
-BIO_R_NULL_PARAMETER:115:null parameter
-BIO_R_PEER_ADDR_NOT_AVAILABLE:151:peer addr not available
-BIO_R_PORT_MISMATCH:150:port mismatch
-BIO_R_TFO_DISABLED:106:tfo disabled
-BIO_R_TFO_NO_KERNEL_SUPPORT:108:tfo no kernel support
-BIO_R_TRANSFER_ERROR:104:transfer error
-BIO_R_TRANSFER_TIMEOUT:105:transfer timeout
-BIO_R_UNABLE_TO_BIND_SOCKET:117:unable to bind socket
-BIO_R_UNABLE_TO_CREATE_SOCKET:118:unable to create socket
-BIO_R_UNABLE_TO_KEEPALIVE:137:unable to keepalive
-BIO_R_UNABLE_TO_LISTEN_SOCKET:119:unable to listen socket
-BIO_R_UNABLE_TO_NODELAY:138:unable to nodelay
-BIO_R_UNABLE_TO_REUSEADDR:139:unable to reuseaddr
-BIO_R_UNABLE_TO_TFO:109:unable to tfo
-BIO_R_UNAVAILABLE_IP_FAMILY:145:unavailable ip family
-BIO_R_UNINITIALIZED:120:uninitialized
-BIO_R_UNKNOWN_INFO_TYPE:140:unknown info type
-BIO_R_UNSUPPORTED_IP_FAMILY:146:unsupported ip family
-BIO_R_UNSUPPORTED_METHOD:121:unsupported method
-BIO_R_UNSUPPORTED_PROTOCOL_FAMILY:131:unsupported protocol family
-BIO_R_WRITE_TO_READ_ONLY_BIO:126:write to read only BIO
-BIO_R_WSASTARTUP:122:WSAStartup
-BN_R_ARG2_LT_ARG3:100:arg2 lt arg3
-BN_R_BAD_RECIPROCAL:101:bad reciprocal
-BN_R_BIGNUM_TOO_LONG:114:bignum too long
-BN_R_BITS_TOO_SMALL:118:bits too small
-BN_R_CALLED_WITH_EVEN_MODULUS:102:called with even modulus
-BN_R_DIV_BY_ZERO:103:div by zero
-BN_R_ENCODING_ERROR:104:encoding error
-BN_R_EXPAND_ON_STATIC_BIGNUM_DATA:105:expand on static bignum data
-BN_R_INPUT_NOT_REDUCED:110:input not reduced
-BN_R_INVALID_LENGTH:106:invalid length
-BN_R_INVALID_RANGE:115:invalid range
-BN_R_INVALID_SHIFT:119:invalid shift
-BN_R_NOT_A_SQUARE:111:not a square
-BN_R_NOT_INITIALIZED:107:not initialized
-BN_R_NO_INVERSE:108:no inverse
-BN_R_NO_PRIME_CANDIDATE:121:no prime candidate
-BN_R_NO_SOLUTION:116:no solution
-BN_R_NO_SUITABLE_DIGEST:120:no suitable digest
-BN_R_PRIVATE_KEY_TOO_LARGE:117:private key too large
-BN_R_P_IS_NOT_PRIME:112:p is not prime
-BN_R_TOO_MANY_ITERATIONS:113:too many iterations
-BN_R_TOO_MANY_TEMPORARY_VARIABLES:109:too many temporary variables
-CMP_R_ALGORITHM_NOT_SUPPORTED:139:algorithm not supported
-CMP_R_BAD_CHECKAFTER_IN_POLLREP:167:bad checkafter in pollrep
-CMP_R_BAD_REQUEST_ID:108:bad request id
-CMP_R_CERTHASH_UNMATCHED:156:certhash unmatched
-CMP_R_CERTID_NOT_FOUND:109:certid not found
-CMP_R_CERTIFICATE_NOT_ACCEPTED:169:certificate not accepted
-CMP_R_CERTIFICATE_NOT_FOUND:112:certificate not found
-CMP_R_CERTREQMSG_NOT_FOUND:157:certreqmsg not found
-CMP_R_CERTRESPONSE_NOT_FOUND:113:certresponse not found
-CMP_R_CERT_AND_KEY_DO_NOT_MATCH:114:cert and key do not match
-CMP_R_CHECKAFTER_OUT_OF_RANGE:181:checkafter out of range
-CMP_R_ENCOUNTERED_KEYUPDATEWARNING:176:encountered keyupdatewarning
-CMP_R_ENCOUNTERED_WAITING:162:encountered waiting
-CMP_R_ERROR_CALCULATING_PROTECTION:115:error calculating protection
-CMP_R_ERROR_CREATING_CERTCONF:116:error creating certconf
-CMP_R_ERROR_CREATING_CERTREP:117:error creating certrep
-CMP_R_ERROR_CREATING_CERTREQ:163:error creating certreq
-CMP_R_ERROR_CREATING_ERROR:118:error creating error
-CMP_R_ERROR_CREATING_GENM:119:error creating genm
-CMP_R_ERROR_CREATING_GENP:120:error creating genp
-CMP_R_ERROR_CREATING_PKICONF:122:error creating pkiconf
-CMP_R_ERROR_CREATING_POLLREP:123:error creating pollrep
-CMP_R_ERROR_CREATING_POLLREQ:124:error creating pollreq
-CMP_R_ERROR_CREATING_RP:125:error creating rp
-CMP_R_ERROR_CREATING_RR:126:error creating rr
-CMP_R_ERROR_PARSING_PKISTATUS:107:error parsing pkistatus
-CMP_R_ERROR_PROCESSING_MESSAGE:158:error processing message
-CMP_R_ERROR_PROTECTING_MESSAGE:127:error protecting message
-CMP_R_ERROR_SETTING_CERTHASH:128:error setting certhash
-CMP_R_ERROR_UNEXPECTED_CERTCONF:160:error unexpected certconf
-CMP_R_ERROR_VALIDATING_PROTECTION:140:error validating protection
-CMP_R_ERROR_VALIDATING_SIGNATURE:171:error validating signature
-CMP_R_EXPECTED_POLLREQ:104:expected pollreq
-CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
-CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY:203:failed extracting central gen key
-CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
-CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
-CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
-CMP_R_GENERATE_CERTREQTEMPLATE:197:generate certreqtemplate
-CMP_R_GENERATE_CRLSTATUS:198:error creating crlstatus
-CMP_R_GETTING_GENP:192:getting genp
-CMP_R_GET_ITAV:199:get itav
-CMP_R_INVALID_ARGS:100:invalid args
-CMP_R_INVALID_GENP:193:invalid genp
-CMP_R_INVALID_KEYSPEC:202:invalid keyspec
-CMP_R_INVALID_OPTION:174:invalid option
-CMP_R_INVALID_ROOTCAKEYUPDATE:195:invalid rootcakeyupdate
-CMP_R_MISSING_CENTRAL_GEN_KEY:204:missing central gen key
-CMP_R_MISSING_CERTID:165:missing certid
-CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
-	missing key input for creating protection
-CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE:142:missing key usage digitalsignature
-CMP_R_MISSING_P10CSR:121:missing p10csr
-CMP_R_MISSING_PBM_SECRET:166:missing pbm secret
-CMP_R_MISSING_PRIVATE_KEY:131:missing private key
-CMP_R_MISSING_PRIVATE_KEY_FOR_POPO:190:missing private key for popo
-CMP_R_MISSING_PROTECTION:143:missing protection
-CMP_R_MISSING_PUBLIC_KEY:183:missing public key
-CMP_R_MISSING_REFERENCE_CERT:168:missing reference cert
-CMP_R_MISSING_SECRET:178:missing secret
-CMP_R_MISSING_SENDER_IDENTIFICATION:111:missing sender identification
-CMP_R_MISSING_TRUST_ANCHOR:179:missing trust anchor
-CMP_R_MISSING_TRUST_STORE:144:missing trust store
-CMP_R_MULTIPLE_REQUESTS_NOT_SUPPORTED:161:multiple requests not supported
-CMP_R_MULTIPLE_RESPONSES_NOT_SUPPORTED:170:multiple responses not supported
-CMP_R_MULTIPLE_SAN_SOURCES:102:multiple san sources
-CMP_R_NO_STDIO:194:no stdio
-CMP_R_NO_SUITABLE_SENDER_CERT:145:no suitable sender cert
-CMP_R_NULL_ARGUMENT:103:null argument
-CMP_R_PKIBODY_ERROR:146:pkibody error
-CMP_R_PKISTATUSINFO_NOT_FOUND:132:pkistatusinfo not found
-CMP_R_POLLING_FAILED:172:polling failed
-CMP_R_POTENTIALLY_INVALID_CERTIFICATE:147:potentially invalid certificate
-CMP_R_RECEIVED_ERROR:180:received error
-CMP_R_RECIPNONCE_UNMATCHED:148:recipnonce unmatched
-CMP_R_REQUEST_NOT_ACCEPTED:149:request not accepted
-CMP_R_REQUEST_REJECTED_BY_SERVER:182:request rejected by server
-CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED:150:\
-	sender generalname type not supported
-CMP_R_SRVCERT_DOES_NOT_VALIDATE_MSG:151:srvcert does not validate msg
-CMP_R_TOTAL_TIMEOUT:184:total timeout
-CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
-CMP_R_TRANSFER_ERROR:159:transfer error
-CMP_R_UNCLEAN_CTX:191:unclean ctx
-CMP_R_UNEXPECTED_CENTRAL_GEN_KEY:205:unexpected central gen key
-CMP_R_UNEXPECTED_CERTPROFILE:196:unexpected certprofile
-CMP_R_UNEXPECTED_CRLSTATUSLIST:201:unexpected crlstatuslist
-CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
-CMP_R_UNEXPECTED_PKISTATUS:185:unexpected pkistatus
-CMP_R_UNEXPECTED_POLLREQ:105:unexpected pollreq
-CMP_R_UNEXPECTED_PVNO:153:unexpected pvno
-CMP_R_UNEXPECTED_SENDER:106:unexpected sender
-CMP_R_UNKNOWN_ALGORITHM_ID:134:unknown algorithm id
-CMP_R_UNKNOWN_CERT_TYPE:135:unknown cert type
-CMP_R_UNKNOWN_CRL_ISSUER:200:unknown crl issuer
-CMP_R_UNKNOWN_PKISTATUS:186:unknown pkistatus
-CMP_R_UNSUPPORTED_ALGORITHM:136:unsupported algorithm
-CMP_R_UNSUPPORTED_KEY_TYPE:137:unsupported key type
-CMP_R_UNSUPPORTED_PKIBODY:101:unsupported pkibody
-CMP_R_UNSUPPORTED_PROTECTION_ALG_DHBASEDMAC:154:\
-	unsupported protection alg dhbasedmac
-CMP_R_VALUE_TOO_LARGE:175:value too large
-CMP_R_VALUE_TOO_SMALL:177:value too small
-CMP_R_WRONG_ALGORITHM_OID:138:wrong algorithm oid
-CMP_R_WRONG_CERTID:189:wrong certid
-CMP_R_WRONG_CERTID_IN_RP:187:wrong certid in rp
-CMP_R_WRONG_PBM_VALUE:155:wrong pbm value
-CMP_R_WRONG_RP_COMPONENT_COUNT:188:wrong rp component count
-CMP_R_WRONG_SERIAL_IN_RP:173:wrong serial in rp
-CMS_R_ADD_SIGNER_ERROR:99:add signer error
-CMS_R_ATTRIBUTE_ERROR:161:attribute error
-CMS_R_CERTIFICATE_ALREADY_PRESENT:175:certificate already present
-CMS_R_CERTIFICATE_HAS_NO_KEYID:160:certificate has no keyid
-CMS_R_CERTIFICATE_VERIFY_ERROR:100:certificate verify error
-CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA:200:cipher aead in enveloped data
-CMS_R_CIPHER_AEAD_SET_TAG_ERROR:184:cipher aead set tag error
-CMS_R_CIPHER_GET_TAG:185:cipher get tag
-CMS_R_CIPHER_INITIALISATION_ERROR:101:cipher initialisation error
-CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR:102:\
-	cipher parameter initialisation error
-CMS_R_CMS_DATAFINAL_ERROR:103:cms datafinal error
-CMS_R_CMS_LIB:104:cms lib
-CMS_R_CONTENTIDENTIFIER_MISMATCH:170:contentidentifier mismatch
-CMS_R_CONTENT_NOT_FOUND:105:content not found
-CMS_R_CONTENT_TYPE_MISMATCH:171:content type mismatch
-CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA:106:content type not compressed data
-CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA:107:content type not enveloped data
-CMS_R_CONTENT_TYPE_NOT_SIGNED_DATA:108:content type not signed data
-CMS_R_CONTENT_VERIFY_ERROR:109:content verify error
-CMS_R_CTRL_ERROR:110:ctrl error
-CMS_R_CTRL_FAILURE:111:ctrl failure
-CMS_R_DECODE_ERROR:187:decode error
-CMS_R_DECRYPT_ERROR:112:decrypt error
-CMS_R_ERROR_GETTING_PUBLIC_KEY:113:error getting public key
-CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:114:\
-	error reading messagedigest attribute
-CMS_R_ERROR_SETTING_KEY:115:error setting key
-CMS_R_ERROR_SETTING_RECIPIENTINFO:116:error setting recipientinfo
-CMS_R_ERROR_UNSUPPORTED_STATIC_KEY_AGREEMENT:196:\
-	error unsupported static key agreement
-CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:183:ess signing certid mismatch error
-CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:117:invalid encrypted key length
-CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:176:invalid key encryption parameter
-CMS_R_INVALID_KEY_LENGTH:118:invalid key length
-CMS_R_INVALID_LABEL:190:invalid label
-CMS_R_INVALID_OAEP_PARAMETERS:191:invalid oaep parameters
-CMS_R_KDF_PARAMETER_ERROR:186:kdf parameter error
-CMS_R_MD_BIO_INIT_ERROR:119:md bio init error
-CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH:120:\
-	messagedigest attribute wrong length
-CMS_R_MESSAGEDIGEST_WRONG_LENGTH:121:messagedigest wrong length
-CMS_R_MSGSIGDIGEST_ERROR:172:msgsigdigest error
-CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE:162:msgsigdigest verification failure
-CMS_R_MSGSIGDIGEST_WRONG_LENGTH:163:msgsigdigest wrong length
-CMS_R_NEED_ONE_SIGNER:164:need one signer
-CMS_R_NOT_A_SIGNED_RECEIPT:165:not a signed receipt
-CMS_R_NOT_ENCRYPTED_DATA:122:not encrypted data
-CMS_R_NOT_KEK:123:not kek
-CMS_R_NOT_KEM:197:not kem
-CMS_R_NOT_KEY_AGREEMENT:181:not key agreement
-CMS_R_NOT_KEY_TRANSPORT:124:not key transport
-CMS_R_NOT_PWRI:177:not pwri
-CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE:125:not supported for this key type
-CMS_R_NO_CIPHER:126:no cipher
-CMS_R_NO_CONTENT:127:no content
-CMS_R_NO_CONTENT_TYPE:173:no content type
-CMS_R_NO_DEFAULT_DIGEST:128:no default digest
-CMS_R_NO_DIGEST_SET:129:no digest set
-CMS_R_NO_KEY:130:no key
-CMS_R_NO_KEY_OR_CERT:174:no key or cert
-CMS_R_NO_MATCHING_DIGEST:131:no matching digest
-CMS_R_NO_MATCHING_RECIPIENT:132:no matching recipient
-CMS_R_NO_MATCHING_SIGNATURE:166:no matching signature
-CMS_R_NO_MSGSIGDIGEST:167:no msgsigdigest
-CMS_R_NO_PASSWORD:178:no password
-CMS_R_NO_PRIVATE_KEY:133:no private key
-CMS_R_NO_PUBLIC_KEY:134:no public key
-CMS_R_NO_RECEIPT_REQUEST:168:no receipt request
-CMS_R_NO_SIGNERS:135:no signers
-CMS_R_OPERATION_UNSUPPORTED:182:operation unsupported
-CMS_R_PEER_KEY_ERROR:188:peer key error
-CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:136:\
-	private key does not match certificate
-CMS_R_RECEIPT_DECODE_ERROR:169:receipt decode error
-CMS_R_RECIPIENT_ERROR:137:recipient error
-CMS_R_SHARED_INFO_ERROR:189:shared info error
-CMS_R_SIGNER_CERTIFICATE_NOT_FOUND:138:signer certificate not found
-CMS_R_SIGNFINAL_ERROR:139:signfinal error
-CMS_R_SMIME_TEXT_ERROR:140:smime text error
-CMS_R_STORE_INIT_ERROR:141:store init error
-CMS_R_TYPE_NOT_COMPRESSED_DATA:142:type not compressed data
-CMS_R_TYPE_NOT_DATA:143:type not data
-CMS_R_TYPE_NOT_DIGESTED_DATA:144:type not digested data
-CMS_R_TYPE_NOT_ENCRYPTED_DATA:145:type not encrypted data
-CMS_R_TYPE_NOT_ENVELOPED_DATA:146:type not enveloped data
-CMS_R_UNABLE_TO_FINALIZE_CONTEXT:147:unable to finalize context
-CMS_R_UNKNOWN_CIPHER:148:unknown cipher
-CMS_R_UNKNOWN_DIGEST_ALGORITHM:149:unknown digest algorithm
-CMS_R_UNKNOWN_ID:150:unknown id
-CMS_R_UNKNOWN_KDF_ALGORITHM:198:unknown kdf algorithm
-CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM:151:unsupported compression algorithm
-CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM:194:\
-	unsupported content encryption algorithm
-CMS_R_UNSUPPORTED_CONTENT_TYPE:152:unsupported content type
-CMS_R_UNSUPPORTED_ENCRYPTION_TYPE:192:unsupported encryption type
-CMS_R_UNSUPPORTED_KDF_ALGORITHM:199:unsupported kdf algorithm
-CMS_R_UNSUPPORTED_KEK_ALGORITHM:153:unsupported kek algorithm
-CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM:179:\
-	unsupported key encryption algorithm
-CMS_R_UNSUPPORTED_LABEL_SOURCE:193:unsupported label source
-CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE:155:unsupported recipientinfo type
-CMS_R_UNSUPPORTED_RECIPIENT_TYPE:154:unsupported recipient type
-CMS_R_UNSUPPORTED_SIGNATURE_ALGORITHM:195:unsupported signature algorithm
-CMS_R_UNSUPPORTED_TYPE:156:unsupported type
-CMS_R_UNWRAP_ERROR:157:unwrap error
-CMS_R_UNWRAP_FAILURE:180:unwrap failure
-CMS_R_VERIFICATION_FAILURE:158:verification failure
-CMS_R_WRAP_ERROR:159:wrap error
-COMP_R_BROTLI_DECODE_ERROR:102:brotli decode error
-COMP_R_BROTLI_ENCODE_ERROR:103:brotli encode error
-COMP_R_BROTLI_NOT_SUPPORTED:104:brotli not supported
-COMP_R_ZLIB_DEFLATE_ERROR:99:zlib deflate error
-COMP_R_ZLIB_INFLATE_ERROR:100:zlib inflate error
-COMP_R_ZLIB_NOT_SUPPORTED:101:zlib not supported
-COMP_R_ZSTD_COMPRESS_ERROR:105:zstd compress error
-COMP_R_ZSTD_DECODE_ERROR:106:zstd decode error
-COMP_R_ZSTD_DECOMPRESS_ERROR:107:zstd decompress error
-COMP_R_ZSTD_NOT_SUPPORTED:108:zstd not supported
-CONF_R_ERROR_LOADING_DSO:110:error loading dso
-CONF_R_INVALID_PRAGMA:122:invalid pragma
-CONF_R_LIST_CANNOT_BE_NULL:115:list cannot be null
-CONF_R_MANDATORY_BRACES_IN_VARIABLE_EXPANSION:123:\
-	mandatory braces in variable expansion
-CONF_R_MISSING_CLOSE_SQUARE_BRACKET:100:missing close square bracket
-CONF_R_MISSING_EQUAL_SIGN:101:missing equal sign
-CONF_R_MISSING_INIT_FUNCTION:112:missing init function
-CONF_R_MODULE_INITIALIZATION_ERROR:109:module initialization error
-CONF_R_NO_CLOSE_BRACE:102:no close brace
-CONF_R_NO_CONF:105:no conf
-CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE:106:no conf or environment variable
-CONF_R_NO_SECTION:107:no section
-CONF_R_NO_SUCH_FILE:114:no such file
-CONF_R_NO_VALUE:108:no value
-CONF_R_NUMBER_TOO_LARGE:121:number too large
-CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION:124:\
-	openssl conf references missing section
-CONF_R_RECURSIVE_DIRECTORY_INCLUDE:111:recursive directory include
-CONF_R_RECURSIVE_SECTION_REFERENCE:126:recursive section reference
-CONF_R_RELATIVE_PATH:125:relative path
-CONF_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
-CONF_R_SSL_COMMAND_SECTION_NOT_FOUND:118:ssl command section not found
-CONF_R_SSL_SECTION_EMPTY:119:ssl section empty
-CONF_R_SSL_SECTION_NOT_FOUND:120:ssl section not found
-CONF_R_UNABLE_TO_CREATE_NEW_SECTION:103:unable to create new section
-CONF_R_UNKNOWN_MODULE_NAME:113:unknown module name
-CONF_R_VARIABLE_EXPANSION_TOO_LONG:116:variable expansion too long
-CONF_R_VARIABLE_HAS_NO_VALUE:104:variable has no value
-CRMF_R_BAD_PBM_ITERATIONCOUNT:100:bad pbm iterationcount
-CRMF_R_CMS_NOT_SUPPORTED:122:cms not supported
-CRMF_R_CRMFERROR:102:crmferror
-CRMF_R_ERROR:103:error
-CRMF_R_ERROR_DECODING_CERTIFICATE:104:error decoding certificate
-CRMF_R_ERROR_DECODING_ENCRYPTEDKEY:123:error decoding encryptedkey
-CRMF_R_ERROR_DECRYPTING_CERTIFICATE:105:error decrypting certificate
-CRMF_R_ERROR_DECRYPTING_ENCRYPTEDKEY:124:error decrypting encryptedkey
-CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE:125:error decrypting encryptedvalue
-CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
-CRMF_R_ERROR_SETTING_PURPOSE:126:error setting purpose
-CRMF_R_ERROR_SIGNING_POPO:129:error signing popo
-CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY:127:error verifying encryptedkey
-CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
-CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
-CRMF_R_MALFORMED_IV:101:malformed iv
-CRMF_R_NULL_ARGUMENT:109:null argument
-CRMF_R_POPOSKINPUT_NOT_SUPPORTED:113:poposkinput not supported
-CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN:128:popo inconsistent central keygen
-CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY:117:popo inconsistent public key
-CRMF_R_POPO_MISSING:121:popo missing
-CRMF_R_POPO_MISSING_PUBLIC_KEY:118:popo missing public key
-CRMF_R_POPO_MISSING_SUBJECT:119:popo missing subject
-CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED:120:popo raverified not accepted
-CRMF_R_SETTING_MAC_ALGOR_FAILURE:110:setting mac algor failure
-CRMF_R_SETTING_OWF_ALGOR_FAILURE:111:setting owf algor failure
-CRMF_R_UNSUPPORTED_ALGORITHM:112:unsupported algorithm
-CRMF_R_UNSUPPORTED_CIPHER:114:unsupported cipher
-CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:115:\
-	unsupported method for creating popo
-CRMF_R_UNSUPPORTED_POPO_METHOD:116:unsupported popo method
-CRYPTO_R_BAD_ALGORITHM_NAME:117:bad algorithm name
-CRYPTO_R_CONFLICTING_NAMES:118:conflicting names
-CRYPTO_R_HEX_STRING_TOO_SHORT:121:hex string too short
-CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
-CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space
-CRYPTO_R_INSUFFICIENT_PARAM_SIZE:107:insufficient param size
-CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE:108:insufficient secure data space
-CRYPTO_R_INTEGER_OVERFLOW:127:integer overflow
-CRYPTO_R_INVALID_NEGATIVE_VALUE:122:invalid negative value
-CRYPTO_R_INVALID_NULL_ARGUMENT:109:invalid null argument
-CRYPTO_R_INVALID_OSSL_PARAM_TYPE:110:invalid ossl param type
-CRYPTO_R_NO_PARAMS_TO_MERGE:131:no params to merge
-CRYPTO_R_NO_SPACE_FOR_TERMINATING_NULL:128:no space for terminating null
-CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
-CRYPTO_R_PARAM_CANNOT_BE_REPRESENTED_EXACTLY:123:\
-	param cannot be represented exactly
-CRYPTO_R_PARAM_NOT_INTEGER_TYPE:124:param not integer type
-CRYPTO_R_PARAM_OF_INCOMPATIBLE_TYPE:129:param of incompatible type
-CRYPTO_R_PARAM_UNSIGNED_INTEGER_NEGATIVE_VALUE_UNSUPPORTED:125:\
-	param unsigned integer negative value unsupported
-CRYPTO_R_PARAM_UNSUPPORTED_FLOATING_POINT_FORMAT:130:\
-	param unsupported floating point format
-CRYPTO_R_PARAM_VALUE_TOO_LARGE_FOR_DESTINATION:126:\
-	param value too large for destination
-CRYPTO_R_PROVIDER_ALREADY_EXISTS:104:provider already exists
-CRYPTO_R_PROVIDER_SECTION_ERROR:105:provider section error
-CRYPTO_R_RANDOM_SECTION_ERROR:119:random section error
-CRYPTO_R_SECURE_MALLOC_FAILURE:111:secure malloc failure
-CRYPTO_R_STRING_TOO_LONG:112:string too long
-CRYPTO_R_TOO_MANY_BYTES:113:too many bytes
-CRYPTO_R_TOO_MANY_NAMES:132:too many names
-CRYPTO_R_TOO_MANY_RECORDS:114:too many records
-CRYPTO_R_TOO_SMALL_BUFFER:116:too small buffer
-CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION:120:unknown name in random section
-CRYPTO_R_ZERO_LENGTH_NUMBER:115:zero length number
-CT_R_BASE64_DECODE_ERROR:108:base64 decode error
-CT_R_INVALID_LOG_ID_LENGTH:100:invalid log id length
-CT_R_LOG_CONF_INVALID:109:log conf invalid
-CT_R_LOG_CONF_INVALID_KEY:110:log conf invalid key
-CT_R_LOG_CONF_MISSING_DESCRIPTION:111:log conf missing description
-CT_R_LOG_CONF_MISSING_KEY:112:log conf missing key
-CT_R_LOG_KEY_INVALID:113:log key invalid
-CT_R_SCT_FUTURE_TIMESTAMP:116:sct future timestamp
-CT_R_SCT_INVALID:104:sct invalid
-CT_R_SCT_INVALID_SIGNATURE:107:sct invalid signature
-CT_R_SCT_LIST_INVALID:105:sct list invalid
-CT_R_SCT_LOG_ID_MISMATCH:114:sct log id mismatch
-CT_R_SCT_NOT_SET:106:sct not set
-CT_R_SCT_UNSUPPORTED_VERSION:115:sct unsupported version
-CT_R_UNRECOGNIZED_SIGNATURE_NID:101:unrecognized signature nid
-CT_R_UNSUPPORTED_ENTRY_TYPE:102:unsupported entry type
-CT_R_UNSUPPORTED_VERSION:103:unsupported version
-DH_R_BAD_FFC_PARAMETERS:127:bad ffc parameters
-DH_R_BAD_GENERATOR:101:bad generator
-DH_R_BN_DECODE_ERROR:109:bn decode error
-DH_R_BN_ERROR:106:bn error
-DH_R_CHECK_INVALID_J_VALUE:115:check invalid j value
-DH_R_CHECK_INVALID_Q_VALUE:116:check invalid q value
-DH_R_CHECK_PUBKEY_INVALID:122:check pubkey invalid
-DH_R_CHECK_PUBKEY_TOO_LARGE:123:check pubkey too large
-DH_R_CHECK_PUBKEY_TOO_SMALL:124:check pubkey too small
-DH_R_CHECK_P_NOT_PRIME:117:check p not prime
-DH_R_CHECK_P_NOT_SAFE_PRIME:118:check p not safe prime
-DH_R_CHECK_Q_NOT_PRIME:119:check q not prime
-DH_R_DECODE_ERROR:104:decode error
-DH_R_INVALID_PARAMETER_NAME:110:invalid parameter name
-DH_R_INVALID_PARAMETER_NID:114:invalid parameter nid
-DH_R_INVALID_PUBKEY:102:invalid public key
-DH_R_INVALID_SECRET:128:invalid secret
-DH_R_INVALID_SIZE:129:invalid size
-DH_R_KDF_PARAMETER_ERROR:112:kdf parameter error
-DH_R_KEYS_NOT_SET:108:keys not set
-DH_R_MISSING_PUBKEY:125:missing pubkey
-DH_R_MODULUS_TOO_LARGE:103:modulus too large
-DH_R_MODULUS_TOO_SMALL:126:modulus too small
-DH_R_NOT_SUITABLE_GENERATOR:120:not suitable generator
-DH_R_NO_PARAMETERS_SET:107:no parameters set
-DH_R_NO_PRIVATE_VALUE:100:no private value
-DH_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
-DH_R_PEER_KEY_ERROR:111:peer key error
-DH_R_Q_TOO_LARGE:130:q too large
-DH_R_SHARED_INFO_ERROR:113:shared info error
-DH_R_UNABLE_TO_CHECK_GENERATOR:121:unable to check generator
-DSA_R_BAD_FFC_PARAMETERS:114:bad ffc parameters
-DSA_R_BAD_Q_VALUE:102:bad q value
-DSA_R_BN_DECODE_ERROR:108:bn decode error
-DSA_R_BN_ERROR:109:bn error
-DSA_R_DECODE_ERROR:104:decode error
-DSA_R_INVALID_DIGEST_TYPE:106:invalid digest type
-DSA_R_INVALID_PARAMETERS:112:invalid parameters
-DSA_R_MISSING_PARAMETERS:101:missing parameters
-DSA_R_MISSING_PRIVATE_KEY:111:missing private key
-DSA_R_MODULUS_TOO_LARGE:103:modulus too large
-DSA_R_NO_PARAMETERS_SET:107:no parameters set
-DSA_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
-DSA_R_P_NOT_PRIME:115:p not prime
-DSA_R_Q_NOT_PRIME:113:q not prime
-DSA_R_SEED_LEN_SMALL:110:seed_len is less than the length of q
-DSA_R_TOO_MANY_RETRIES:116:too many retries
-DSO_R_CTRL_FAILED:100:control command failed
-DSO_R_DSO_ALREADY_LOADED:110:dso already loaded
-DSO_R_EMPTY_FILE_STRUCTURE:113:empty file structure
-DSO_R_FAILURE:114:failure
-DSO_R_FILENAME_TOO_BIG:101:filename too big
-DSO_R_FINISH_FAILED:102:cleanup method function failed
-DSO_R_INCORRECT_FILE_SYNTAX:115:incorrect file syntax
-DSO_R_LOAD_FAILED:103:could not load the shared library
-DSO_R_NAME_TRANSLATION_FAILED:109:name translation failed
-DSO_R_NO_FILENAME:111:no filename
-DSO_R_NULL_HANDLE:104:a null shared library handle was used
-DSO_R_SET_FILENAME_FAILED:112:set filename failed
-DSO_R_STACK_ERROR:105:the meth_data stack is corrupt
-DSO_R_SYM_FAILURE:106:could not bind to the requested symbol name
-DSO_R_UNLOAD_FAILED:107:could not unload the shared library
-DSO_R_UNSUPPORTED:108:functionality not supported
-EC_R_ASN1_ERROR:115:asn1 error
-EC_R_BAD_SIGNATURE:156:bad signature
-EC_R_BIGNUM_OUT_OF_RANGE:144:bignum out of range
-EC_R_BUFFER_TOO_SMALL:100:buffer too small
-EC_R_CANNOT_INVERT:165:cannot invert
-EC_R_COORDINATES_OUT_OF_RANGE:146:coordinates out of range
-EC_R_CURVE_DOES_NOT_SUPPORT_ECDH:160:curve does not support ecdh
-EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA:170:curve does not support ecdsa
-EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING:159:curve does not support signing
-EC_R_DECODE_ERROR:142:decode error
-EC_R_DISCRIMINANT_IS_ZERO:118:discriminant is zero
-EC_R_EC_GROUP_NEW_BY_NAME_FAILURE:119:ec group new by name failure
-EC_R_EXPLICIT_PARAMS_NOT_SUPPORTED:127:explicit params not supported
-EC_R_FAILED_MAKING_PUBLIC_KEY:166:failed making public key
-EC_R_FIELD_TOO_LARGE:143:field too large
-EC_R_GF2M_NOT_SUPPORTED:147:gf2m not supported
-EC_R_GROUP2PKPARAMETERS_FAILURE:120:group2pkparameters failure
-EC_R_I2D_ECPKPARAMETERS_FAILURE:121:i2d ecpkparameters failure
-EC_R_INCOMPATIBLE_OBJECTS:101:incompatible objects
-EC_R_INVALID_A:168:invalid a
-EC_R_INVALID_ARGUMENT:112:invalid argument
-EC_R_INVALID_B:169:invalid b
-EC_R_INVALID_COFACTOR:171:invalid cofactor
-EC_R_INVALID_COMPRESSED_POINT:110:invalid compressed point
-EC_R_INVALID_COMPRESSION_BIT:109:invalid compression bit
-EC_R_INVALID_CURVE:141:invalid curve
-EC_R_INVALID_DIGEST:151:invalid digest
-EC_R_INVALID_DIGEST_TYPE:138:invalid digest type
-EC_R_INVALID_ENCODING:102:invalid encoding
-EC_R_INVALID_FIELD:103:invalid field
-EC_R_INVALID_FORM:104:invalid form
-EC_R_INVALID_GENERATOR:173:invalid generator
-EC_R_INVALID_GROUP_ORDER:122:invalid group order
-EC_R_INVALID_KEY:116:invalid key
-EC_R_INVALID_LENGTH:117:invalid length
-EC_R_INVALID_NAMED_GROUP_CONVERSION:174:invalid named group conversion
-EC_R_INVALID_OUTPUT_LENGTH:161:invalid output length
-EC_R_INVALID_P:172:invalid p
-EC_R_INVALID_PEER_KEY:133:invalid peer key
-EC_R_INVALID_PENTANOMIAL_BASIS:132:invalid pentanomial basis
-EC_R_INVALID_PRIVATE_KEY:123:invalid private key
-EC_R_INVALID_SEED:175:invalid seed
-EC_R_INVALID_TRINOMIAL_BASIS:137:invalid trinomial basis
-EC_R_KDF_PARAMETER_ERROR:148:kdf parameter error
-EC_R_KEYS_NOT_SET:140:keys not set
-EC_R_LADDER_POST_FAILURE:136:ladder post failure
-EC_R_LADDER_PRE_FAILURE:153:ladder pre failure
-EC_R_LADDER_STEP_FAILURE:162:ladder step failure
-EC_R_MISSING_OID:167:missing OID
-EC_R_MISSING_PARAMETERS:124:missing parameters
-EC_R_MISSING_PRIVATE_KEY:125:missing private key
-EC_R_NEED_NEW_SETUP_VALUES:157:need new setup values
-EC_R_NOT_A_NIST_PRIME:135:not a NIST prime
-EC_R_NOT_IMPLEMENTED:126:not implemented
-EC_R_NOT_INITIALIZED:111:not initialized
-EC_R_NO_PARAMETERS_SET:139:no parameters set
-EC_R_NO_PRIVATE_VALUE:154:no private value
-EC_R_OPERATION_NOT_SUPPORTED:152:operation not supported
-EC_R_PASSED_NULL_PARAMETER:134:passed null parameter
-EC_R_PEER_KEY_ERROR:149:peer key error
-EC_R_POINT_ARITHMETIC_FAILURE:155:point arithmetic failure
-EC_R_POINT_AT_INFINITY:106:point at infinity
-EC_R_POINT_COORDINATES_BLIND_FAILURE:163:point coordinates blind failure
-EC_R_POINT_IS_NOT_ON_CURVE:107:point is not on curve
-EC_R_RANDOM_NUMBER_GENERATION_FAILED:158:random number generation failed
-EC_R_SHARED_INFO_ERROR:150:shared info error
-EC_R_SLOT_FULL:108:slot full
-EC_R_TOO_MANY_RETRIES:176:too many retries
-EC_R_UNDEFINED_GENERATOR:113:undefined generator
-EC_R_UNDEFINED_ORDER:128:undefined order
-EC_R_UNKNOWN_COFACTOR:164:unknown cofactor
-EC_R_UNKNOWN_GROUP:129:unknown group
-EC_R_UNKNOWN_ORDER:114:unknown order
-EC_R_UNSUPPORTED_FIELD:131:unsupported field
-EC_R_WRONG_CURVE_PARAMETERS:145:wrong curve parameters
-EC_R_WRONG_ORDER:130:wrong order
-ESS_R_EMPTY_ESS_CERT_ID_LIST:107:empty ess cert id list
-ESS_R_ESS_CERT_DIGEST_ERROR:103:ess cert digest error
-ESS_R_ESS_CERT_ID_NOT_FOUND:104:ess cert id not found
-ESS_R_ESS_CERT_ID_WRONG_ORDER:105:ess cert id wrong order
-ESS_R_ESS_DIGEST_ALG_UNKNOWN:106:ess digest alg unknown
-ESS_R_ESS_SIGNING_CERTIFICATE_ERROR:102:ess signing certificate error
-ESS_R_ESS_SIGNING_CERT_ADD_ERROR:100:ess signing cert add error
-ESS_R_ESS_SIGNING_CERT_V2_ADD_ERROR:101:ess signing cert v2 add error
-ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE:108:\
-	missing signing certificate attribute
-EVP_R_AES_KEY_SETUP_FAILED:143:aes key setup failed
-EVP_R_ARIA_KEY_SETUP_FAILED:176:aria key setup failed
-EVP_R_BAD_ALGORITHM_NAME:200:bad algorithm name
-EVP_R_BAD_DECRYPT:100:bad decrypt
-EVP_R_BAD_KEY_LENGTH:195:bad key length
-EVP_R_BUFFER_TOO_SMALL:155:buffer too small
-EVP_R_CACHE_CONSTANTS_FAILED:225:cache constants failed
-EVP_R_CAMELLIA_KEY_SETUP_FAILED:157:camellia key setup failed
-EVP_R_CANNOT_GET_PARAMETERS:197:cannot get parameters
-EVP_R_CANNOT_SET_PARAMETERS:198:cannot set parameters
-EVP_R_CIPHER_NOT_GCM_MODE:184:cipher not gcm mode
-EVP_R_CIPHER_PARAMETER_ERROR:122:cipher parameter error
-EVP_R_COMMAND_NOT_SUPPORTED:147:command not supported
-EVP_R_CONFLICTING_ALGORITHM_NAME:201:conflicting algorithm name
-EVP_R_CONTEXT_FINALIZED:239:context finalized
-EVP_R_COPY_ERROR:173:copy error
-EVP_R_CTRL_NOT_IMPLEMENTED:132:ctrl not implemented
-EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED:133:ctrl operation not implemented
-EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH:138:data not multiple of block length
-EVP_R_DECODE_ERROR:114:decode error
-EVP_R_DEFAULT_QUERY_PARSE_ERROR:210:default query parse error
-EVP_R_DIFFERENT_KEY_TYPES:101:different key types
-EVP_R_DIFFERENT_PARAMETERS:153:different parameters
-EVP_R_ERROR_LOADING_SECTION:165:error loading section
-EVP_R_EXPECTING_AN_HMAC_KEY:174:expecting an hmac key
-EVP_R_EXPECTING_AN_RSA_KEY:127:expecting an rsa key
-EVP_R_EXPECTING_A_DH_KEY:128:expecting a dh key
-EVP_R_EXPECTING_A_DSA_KEY:129:expecting a dsa key
-EVP_R_EXPECTING_A_ECX_KEY:219:expecting an ecx key
-EVP_R_EXPECTING_A_EC_KEY:142:expecting an ec key
-EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
-EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
-EVP_R_FINAL_ERROR:188:final error
-EVP_R_GENERATE_ERROR:214:generate error
-EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED:229:\
-	getting AlgorithmIdentifier not supported
-EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
-EVP_R_ILLEGAL_SCRYPT_PARAMETERS:171:illegal scrypt parameters
-EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS:204:inaccessible domain parameters
-EVP_R_INACCESSIBLE_KEY:203:inaccessible key
-EVP_R_INITIALIZATION_ERROR:134:initialization error
-EVP_R_INPUT_NOT_INITIALIZED:111:input not initialized
-EVP_R_INVALID_CUSTOM_LENGTH:185:invalid custom length
-EVP_R_INVALID_DIGEST:152:invalid digest
-EVP_R_INVALID_IV_LENGTH:194:invalid iv length
-EVP_R_INVALID_KEY:163:invalid key
-EVP_R_INVALID_KEY_LENGTH:130:invalid key length
-EVP_R_INVALID_LENGTH:221:invalid length
-EVP_R_INVALID_NULL_ALGORITHM:218:invalid null algorithm
-EVP_R_INVALID_OPERATION:148:invalid operation
-EVP_R_INVALID_PROVIDER_FUNCTIONS:193:invalid provider functions
-EVP_R_INVALID_SALT_LENGTH:186:invalid salt length
-EVP_R_INVALID_SECRET_LENGTH:223:invalid secret length
-EVP_R_INVALID_SEED_LENGTH:220:invalid seed length
-EVP_R_INVALID_VALUE:222:invalid value
-EVP_R_KEYMGMT_EXPORT_FAILURE:205:keymgmt export failure
-EVP_R_KEY_SETUP_FAILED:180:key setup failed
-EVP_R_LOCKING_NOT_SUPPORTED:213:locking not supported
-EVP_R_MEMORY_LIMIT_EXCEEDED:172:memory limit exceeded
-EVP_R_MESSAGE_DIGEST_IS_NULL:159:message digest is null
-EVP_R_METHOD_NOT_SUPPORTED:144:method not supported
-EVP_R_MISSING_PARAMETERS:103:missing parameters
-EVP_R_NOT_ABLE_TO_COPY_CTX:190:not able to copy ctx
-EVP_R_NOT_XOF_OR_INVALID_LENGTH:178:not XOF or invalid length
-EVP_R_NO_CIPHER_SET:131:no cipher set
-EVP_R_NO_DEFAULT_DIGEST:158:no default digest
-EVP_R_NO_DIGEST_SET:139:no digest set
-EVP_R_NO_IMPORT_FUNCTION:206:no import function
-EVP_R_NO_KEYMGMT_AVAILABLE:199:no keymgmt available
-EVP_R_NO_KEYMGMT_PRESENT:196:no keymgmt present
-EVP_R_NO_KEY_SET:154:no key set
-EVP_R_NO_OPERATION_SET:149:no operation set
-EVP_R_NULL_MAC_PKEY_CTX:208:null mac pkey ctx
-EVP_R_ONLY_ONESHOT_SUPPORTED:177:only oneshot supported
-EVP_R_OPERATION_NOT_INITIALIZED:151:operation not initialized
-EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:150:\
-	operation not supported for this keytype
-EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_SIGNATURE_TYPE:226:\
-	operation not supported for this signature type
-EVP_R_OUTPUT_WOULD_OVERFLOW:202:output would overflow
-EVP_R_PARAMETER_TOO_LARGE:187:parameter too large
-EVP_R_PARTIALLY_OVERLAPPING:162:partially overlapping buffers
-EVP_R_PBKDF2_ERROR:181:pbkdf2 error
-EVP_R_PIPELINE_NOT_SUPPORTED:230:pipeline not supported
-EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED:179:\
-	pkey application asn1 method already registered
-EVP_R_PRIVATE_KEY_DECODE_ERROR:145:private key decode error
-EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
-EVP_R_PROVIDER_ASYM_CIPHER_FAILURE:232:provider asym cipher failure
-EVP_R_PROVIDER_ASYM_CIPHER_NOT_SUPPORTED:235:provider asym cipher not supported
-EVP_R_PROVIDER_GET_CTX_PARAMS_NOT_SUPPORTED:238:\
-	provider get ctx params not supported
-EVP_R_PROVIDER_KEYMGMT_FAILURE:233:provider keymgmt failure
-EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED:236:provider keymgmt not supported
-EVP_R_PROVIDER_SIGNATURE_FAILURE:234:provider signature failure
-EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED:237:provider signature not supported
-EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
-EVP_R_SETTING_XOF_FAILED:227:setting xof failed
-EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
-EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE:228:\
-	signature type and key type incompatible
-EVP_R_TOO_MANY_PIPES:231:too many pipes
-EVP_R_TOO_MANY_RECORDS:183:too many records
-EVP_R_UNABLE_TO_ENABLE_LOCKING:212:unable to enable locking
-EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:215:unable to get maximum request size
-EVP_R_UNABLE_TO_GET_RANDOM_STRENGTH:216:unable to get random strength
-EVP_R_UNABLE_TO_LOCK_CONTEXT:211:unable to lock context
-EVP_R_UNABLE_TO_SET_CALLBACKS:217:unable to set callbacks
-EVP_R_UNKNOWN_BITS:166:unknown bits
-EVP_R_UNKNOWN_CIPHER:160:unknown cipher
-EVP_R_UNKNOWN_DIGEST:161:unknown digest
-EVP_R_UNKNOWN_KEY_TYPE:207:unknown key type
-EVP_R_UNKNOWN_MAX_SIZE:167:unknown max size
-EVP_R_UNKNOWN_OPTION:169:unknown option
-EVP_R_UNKNOWN_PBE_ALGORITHM:121:unknown pbe algorithm
-EVP_R_UNKNOWN_SECURITY_BITS:168:unknown security bits
-EVP_R_UNSUPPORTED_ALGORITHM:156:unsupported algorithm
-EVP_R_UNSUPPORTED_CIPHER:107:unsupported cipher
-EVP_R_UNSUPPORTED_KEYLENGTH:123:unsupported keylength
-EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION:124:\
-	unsupported key derivation function
-EVP_R_UNSUPPORTED_KEY_SIZE:108:unsupported key size
-EVP_R_UNSUPPORTED_KEY_TYPE:224:unsupported key type
-EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS:135:unsupported number of rounds
-EVP_R_UNSUPPORTED_PRF:125:unsupported prf
-EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM:118:unsupported private key algorithm
-EVP_R_UNSUPPORTED_SALT_TYPE:126:unsupported salt type
-EVP_R_UPDATE_ERROR:189:update error
-EVP_R_WRAP_MODE_NOT_ALLOWED:170:wrap mode not allowed
-EVP_R_WRONG_FINAL_BLOCK_LENGTH:109:wrong final block length
-EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE:191:xts data unit is too large
-EVP_R_XTS_DUPLICATED_KEYS:192:xts duplicated keys
-HTTP_R_ASN1_LEN_EXCEEDS_MAX_RESP_LEN:108:asn1 len exceeds max resp len
-HTTP_R_CONNECT_FAILURE:100:connect failure
-HTTP_R_CONTENT_TYPE_MISMATCH:131:content type mismatch
-HTTP_R_ERROR_PARSING_ASN1_LENGTH:109:error parsing asn1 length
-HTTP_R_ERROR_PARSING_CONTENT_LENGTH:119:error parsing content length
-HTTP_R_ERROR_PARSING_URL:101:error parsing url
-HTTP_R_ERROR_RECEIVING:103:error receiving
-HTTP_R_ERROR_SENDING:102:error sending
-HTTP_R_FAILED_READING_DATA:128:failed reading data
-HTTP_R_HEADER_PARSE_ERROR:126:header parse error
-HTTP_R_INCONSISTENT_CONTENT_LENGTH:120:inconsistent content length
-HTTP_R_INVALID_PORT_NUMBER:123:invalid port number
-HTTP_R_INVALID_URL_PATH:125:invalid url path
-HTTP_R_INVALID_URL_SCHEME:124:invalid url scheme
-HTTP_R_MAX_RESP_LEN_EXCEEDED:117:max resp len exceeded
-HTTP_R_MISSING_ASN1_ENCODING:110:missing asn1 encoding
-HTTP_R_MISSING_CONTENT_TYPE:121:missing content type
-HTTP_R_MISSING_REDIRECT_LOCATION:111:missing redirect location
-HTTP_R_RECEIVED_ERROR:105:received error
-HTTP_R_RECEIVED_WRONG_HTTP_VERSION:106:received wrong http version
-HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
-HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
-HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
-HTTP_R_RESPONSE_PARSE_ERROR:104:response parse error
-HTTP_R_RESPONSE_TOO_MANY_HDRLINES:130:response too many hdrlines
-HTTP_R_RETRY_TIMEOUT:129:retry timeout
-HTTP_R_SERVER_CANCELED_CONNECTION:127:server canceled connection
-HTTP_R_SOCK_NOT_SUPPORTED:122:sock not supported
-HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported
-HTTP_R_TLS_NOT_ENABLED:107:tls not enabled
-HTTP_R_TOO_MANY_REDIRECTIONS:115:too many redirections
-HTTP_R_UNEXPECTED_CONTENT_TYPE:118:unexpected content type
-OBJ_R_OID_EXISTS:102:oid exists
-OBJ_R_UNKNOWN_NID:101:unknown nid
-OBJ_R_UNKNOWN_OBJECT_NAME:103:unknown object name
-OCSP_R_CERTIFICATE_VERIFY_ERROR:101:certificate verify error
-OCSP_R_DIGEST_ERR:102:digest err
-OCSP_R_DIGEST_NAME_ERR:106:digest name err
-OCSP_R_DIGEST_SIZE_ERR:107:digest size err
-OCSP_R_ERROR_IN_NEXTUPDATE_FIELD:122:error in nextupdate field
-OCSP_R_ERROR_IN_THISUPDATE_FIELD:123:error in thisupdate field
-OCSP_R_MISSING_OCSPSIGNING_USAGE:103:missing ocspsigning usage
-OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE:124:nextupdate before thisupdate
-OCSP_R_NOT_BASIC_RESPONSE:104:not basic response
-OCSP_R_NO_CERTIFICATES_IN_CHAIN:105:no certificates in chain
-OCSP_R_NO_RESPONSE_DATA:108:no response data
-OCSP_R_NO_REVOKED_TIME:109:no revoked time
-OCSP_R_NO_SIGNER_KEY:130:no signer key
-OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:110:\
-	private key does not match certificate
-OCSP_R_REQUEST_NOT_SIGNED:128:request not signed
-OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA:111:\
-	response contains no revocation data
-OCSP_R_ROOT_CA_NOT_TRUSTED:112:root ca not trusted
-OCSP_R_SIGNATURE_FAILURE:117:signature failure
-OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND:118:signer certificate not found
-OCSP_R_STATUS_EXPIRED:125:status expired
-OCSP_R_STATUS_NOT_YET_VALID:126:status not yet valid
-OCSP_R_STATUS_TOO_OLD:127:status too old
-OCSP_R_UNKNOWN_MESSAGE_DIGEST:119:unknown message digest
-OCSP_R_UNKNOWN_NID:120:unknown nid
-OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE:129:unsupported requestorname type
-OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT:101:could not decode object
-OSSL_DECODER_R_DECODER_NOT_FOUND:102:decoder not found
-OSSL_DECODER_R_MISSING_GET_PARAMS:100:missing get params
-OSSL_ENCODER_R_BAD_PARAMETER_VALUE:103:bad parameter value
-OSSL_ENCODER_R_ENCODER_NOT_FOUND:101:encoder not found
-OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY:100:incorrect property query
-OSSL_ENCODER_R_MISSING_GET_PARAMS:102:missing get params
-OSSL_ENCODER_R_UNKNOWN_PARAMETER_NAME:104:unknown parameter name
-OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE:107:ambiguous content type
-OSSL_STORE_R_BAD_PASSWORD_READ:115:bad password read
-OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC:113:error verifying pkcs12 mac
-OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST:121:\
-	fingerprint size does not match digest
-OSSL_STORE_R_INVALID_SCHEME:106:invalid scheme
-OSSL_STORE_R_IS_NOT_A:112:is not a
-OSSL_STORE_R_LOADER_INCOMPLETE:116:loader incomplete
-OSSL_STORE_R_LOADING_STARTED:117:loading started
-OSSL_STORE_R_NOT_A_CERTIFICATE:100:not a certificate
-OSSL_STORE_R_NOT_A_CRL:101:not a crl
-OSSL_STORE_R_NOT_A_NAME:103:not a name
-OSSL_STORE_R_NOT_A_PRIVATE_KEY:102:not a private key
-OSSL_STORE_R_NOT_A_PUBLIC_KEY:122:not a public key
-OSSL_STORE_R_NOT_A_SYMMETRIC_KEY:124:not a symmetric key
-OSSL_STORE_R_NOT_PARAMETERS:104:not parameters
-OSSL_STORE_R_NO_LOADERS_FOUND:123:no loaders found
-OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR:114:passphrase callback error
-OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE:108:path must be absolute
-OSSL_STORE_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES:119:\
-	search only supported for directories
-OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED:109:\
-	ui process interrupted or cancelled
-OSSL_STORE_R_UNREGISTERED_SCHEME:105:unregistered scheme
-OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE:110:unsupported content type
-OSSL_STORE_R_UNSUPPORTED_OPERATION:118:unsupported operation
-OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE:120:unsupported search type
-OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED:111:uri authority unsupported
-PEM_R_BAD_BASE64_DECODE:100:bad base64 decode
-PEM_R_BAD_DECRYPT:101:bad decrypt
-PEM_R_BAD_END_LINE:102:bad end line
-PEM_R_BAD_IV_CHARS:103:bad iv chars
-PEM_R_BAD_MAGIC_NUMBER:116:bad magic number
-PEM_R_BAD_PASSWORD_READ:104:bad password read
-PEM_R_BAD_VERSION_NUMBER:117:bad version number
-PEM_R_BIO_WRITE_FAILURE:118:bio write failure
-PEM_R_CIPHER_IS_NULL:127:cipher is null
-PEM_R_ERROR_CONVERTING_PRIVATE_KEY:115:error converting private key
-PEM_R_EXPECTING_DSS_KEY_BLOB:131:expecting dss key blob
-PEM_R_EXPECTING_PRIVATE_KEY_BLOB:119:expecting private key blob
-PEM_R_EXPECTING_PUBLIC_KEY_BLOB:120:expecting public key blob
-PEM_R_EXPECTING_RSA_KEY_BLOB:132:expecting rsa key blob
-PEM_R_HEADER_TOO_LONG:128:header too long
-PEM_R_INCONSISTENT_HEADER:121:inconsistent header
-PEM_R_KEYBLOB_HEADER_PARSE_ERROR:122:keyblob header parse error
-PEM_R_KEYBLOB_TOO_SHORT:123:keyblob too short
-PEM_R_MISSING_DEK_IV:129:missing dek iv
-PEM_R_NOT_DEK_INFO:105:not dek info
-PEM_R_NOT_ENCRYPTED:106:not encrypted
-PEM_R_NOT_PROC_TYPE:107:not proc type
-PEM_R_NO_START_LINE:108:no start line
-PEM_R_PROBLEMS_GETTING_PASSWORD:109:problems getting password
-PEM_R_PVK_DATA_TOO_SHORT:124:pvk data too short
-PEM_R_PVK_TOO_SHORT:125:pvk too short
-PEM_R_READ_KEY:111:read key
-PEM_R_SHORT_HEADER:112:short header
-PEM_R_UNEXPECTED_DEK_IV:130:unexpected dek iv
-PEM_R_UNSUPPORTED_CIPHER:113:unsupported cipher
-PEM_R_UNSUPPORTED_ENCRYPTION:114:unsupported encryption
-PEM_R_UNSUPPORTED_KEY_COMPONENTS:126:unsupported key components
-PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE:110:unsupported public key type
-PEM_R_UNSUPPORTED_PVK_KEY_TYPE:133:unsupported pvk key type
-PKCS12_R_CALLBACK_FAILED:115:callback failed
-PKCS12_R_CANT_PACK_STRUCTURE:100:can't pack structure
-PKCS12_R_CONTENT_TYPE_NOT_DATA:121:content type not data
-PKCS12_R_DECODE_ERROR:101:decode error
-PKCS12_R_ENCODE_ERROR:102:encode error
-PKCS12_R_ENCRYPT_ERROR:103:encrypt error
-PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE:120:error setting encrypted data type
-PKCS12_R_INVALID_NULL_ARGUMENT:104:invalid null argument
-PKCS12_R_INVALID_NULL_PKCS12_POINTER:105:invalid null pkcs12 pointer
-PKCS12_R_INVALID_SALT_LENGTH:117:invalid salt length
-PKCS12_R_INVALID_TYPE:112:invalid type
-PKCS12_R_IV_GEN_ERROR:106:iv gen error
-PKCS12_R_KEY_GEN_ERROR:107:key gen error
-PKCS12_R_MAC_ABSENT:108:mac absent
-PKCS12_R_MAC_GENERATION_ERROR:109:mac generation error
-PKCS12_R_MAC_SETUP_ERROR:110:mac setup error
-PKCS12_R_MAC_STRING_SET_ERROR:111:mac string set error
-PKCS12_R_MAC_VERIFY_FAILURE:113:mac verify failure
-PKCS12_R_PARSE_ERROR:114:parse error
-PKCS12_R_PKCS12_CIPHERFINAL_ERROR:116:pkcs12 cipherfinal error
-PKCS12_R_UNKNOWN_DIGEST_ALGORITHM:118:unknown digest algorithm
-PKCS12_R_UNSUPPORTED_PKCS12_MODE:119:unsupported pkcs12 mode
-PKCS7_R_CERTIFICATE_VERIFY_ERROR:117:certificate verify error
-PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER:144:cipher has no object identifier
-PKCS7_R_CIPHER_NOT_INITIALIZED:116:cipher not initialized
-PKCS7_R_CONTENT_AND_DATA_PRESENT:118:content and data present
-PKCS7_R_CTRL_ERROR:152:ctrl error
-PKCS7_R_DECRYPT_ERROR:119:decrypt error
-PKCS7_R_DIGEST_FAILURE:101:digest failure
-PKCS7_R_ENCRYPTION_CTRL_FAILURE:149:encryption ctrl failure
-PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE:150:\
-	encryption not supported for this key type
-PKCS7_R_ERROR_ADDING_RECIPIENT:120:error adding recipient
-PKCS7_R_ERROR_SETTING_CIPHER:121:error setting cipher
-PKCS7_R_INVALID_NULL_POINTER:143:invalid null pointer
-PKCS7_R_INVALID_SIGNED_DATA_TYPE:155:invalid signed data type
-PKCS7_R_NO_CONTENT:122:no content
-PKCS7_R_NO_DEFAULT_DIGEST:151:no default digest
-PKCS7_R_NO_MATCHING_DIGEST_TYPE_FOUND:154:no matching digest type found
-PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE:115:no recipient matches certificate
-PKCS7_R_NO_SIGNATURES_ON_DATA:123:no signatures on data
-PKCS7_R_NO_SIGNERS:142:no signers
-PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE:104:\
-	operation not supported on this type
-PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR:124:pkcs7 add signature error
-PKCS7_R_PKCS7_ADD_SIGNER_ERROR:153:pkcs7 add signer error
-PKCS7_R_PKCS7_DATASIGN:145:pkcs7 datasign
-PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:127:\
-	private key does not match certificate
-PKCS7_R_SIGNATURE_FAILURE:105:signature failure
-PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND:128:signer certificate not found
-PKCS7_R_SIGNING_CTRL_FAILURE:147:signing ctrl failure
-PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE:148:\
-	signing not supported for this key type
-PKCS7_R_SMIME_TEXT_ERROR:129:smime text error
-PKCS7_R_UNABLE_TO_FIND_CERTIFICATE:106:unable to find certificate
-PKCS7_R_UNABLE_TO_FIND_MEM_BIO:107:unable to find mem bio
-PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST:108:unable to find message digest
-PKCS7_R_UNKNOWN_DIGEST_TYPE:109:unknown digest type
-PKCS7_R_UNKNOWN_OPERATION:110:unknown operation
-PKCS7_R_UNSUPPORTED_CIPHER_TYPE:111:unsupported cipher type
-PKCS7_R_UNSUPPORTED_CONTENT_TYPE:112:unsupported content type
-PKCS7_R_WRONG_CONTENT_TYPE:113:wrong content type
-PKCS7_R_WRONG_PKCS7_TYPE:114:wrong pkcs7 type
-PROP_R_NAME_TOO_LONG:100:name too long
-PROP_R_NOT_AN_ASCII_CHARACTER:101:not an ascii character
-PROP_R_NOT_AN_HEXADECIMAL_DIGIT:102:not an hexadecimal digit
-PROP_R_NOT_AN_IDENTIFIER:103:not an identifier
-PROP_R_NOT_AN_OCTAL_DIGIT:104:not an octal digit
-PROP_R_NOT_A_DECIMAL_DIGIT:105:not a decimal digit
-PROP_R_NO_MATCHING_STRING_DELIMITER:106:no matching string delimiter
-PROP_R_NO_VALUE:107:no value
-PROP_R_PARSE_FAILED:108:parse failed
-PROP_R_STRING_TOO_LONG:109:string too long
-PROP_R_TRAILING_CHARACTERS:110:trailing characters
-PROV_R_ADDITIONAL_INPUT_TOO_LONG:184:additional input too long
-PROV_R_ALGORITHM_MISMATCH:173:algorithm mismatch
-PROV_R_ALREADY_INSTANTIATED:185:already instantiated
-PROV_R_BAD_DECRYPT:100:bad decrypt
-PROV_R_BAD_ENCODING:141:bad encoding
-PROV_R_BAD_LENGTH:142:bad length
-PROV_R_BAD_TLS_CLIENT_VERSION:161:bad tls client version
-PROV_R_BN_ERROR:160:bn error
-PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
-PROV_R_COFACTOR_REQUIRED:236:cofactor required
-PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
-PROV_R_DIGEST_NOT_ALLOWED:174:digest not allowed
-PROV_R_EMS_NOT_ENABLED:233:ems not enabled
-PROV_R_ENTROPY_SOURCE_FAILED_CONTINUOUS_TESTS:244:\
-	entropy source failed continuous tests
-PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK:186:entropy source strength too weak
-PROV_R_ERROR_INSTANTIATING_DRBG:188:error instantiating drbg
-PROV_R_ERROR_RETRIEVING_ENTROPY:189:error retrieving entropy
-PROV_R_ERROR_RETRIEVING_NONCE:190:error retrieving nonce
-PROV_R_FAILED_DURING_DERIVATION:164:failed during derivation
-PROV_R_FAILED_TO_CREATE_LOCK:180:failed to create lock
-PROV_R_FAILED_TO_DECRYPT:162:failed to decrypt
-PROV_R_FAILED_TO_GENERATE_KEY:121:failed to generate key
-PROV_R_FAILED_TO_GET_PARAMETER:103:failed to get parameter
-PROV_R_FAILED_TO_SET_PARAMETER:104:failed to set parameter
-PROV_R_FAILED_TO_SIGN:175:failed to sign
-PROV_R_FINAL_CALL_OUT_OF_ORDER:237:final call out of order
-PROV_R_FIPS_MODULE_CONDITIONAL_ERROR:227:fips module conditional error
-PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE:224:fips module entering error state
-PROV_R_FIPS_MODULE_IMPORT_PCT_ERROR:253:fips module import pct error
-PROV_R_FIPS_MODULE_IN_ERROR_STATE:225:fips module in error state
-PROV_R_FIPS_MODULE_MISSING_CHECKSUM:267:fips module missing checksum
-PROV_R_GENERATE_ERROR:191:generate error
-PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:165:\
-	illegal or unsupported padding mode
-PROV_R_INDICATOR_INTEGRITY_FAILURE:210:indicator integrity failure
-PROV_R_INIT_CALL_OUT_OF_ORDER:238:init call out of order
-PROV_R_INSUFFICIENT_DRBG_STRENGTH:181:insufficient drbg strength
-PROV_R_INVALID_AAD:108:invalid aad
-PROV_R_INVALID_AEAD:231:invalid aead
-PROV_R_INVALID_CIPHER:260:invalid cipher
-PROV_R_INVALID_CONFIG_DATA:211:invalid config data
-PROV_R_INVALID_CONSTANT_LENGTH:157:invalid constant length
-PROV_R_INVALID_CURVE:176:invalid curve
-PROV_R_INVALID_CUSTOM_LENGTH:111:invalid custom length
-PROV_R_INVALID_DATA:115:invalid data
-PROV_R_INVALID_DIGEST:122:invalid digest
-PROV_R_INVALID_DIGEST_LENGTH:166:invalid digest length
-PROV_R_INVALID_DIGEST_SIZE:218:invalid digest size
-PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION:243:\
-	invalid eddsa instance for attempted operation
-PROV_R_INVALID_FUNCTION_NAME:258:invalid function name
-PROV_R_INVALID_INDEX_LENGTH:259:invalid index length
-PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
-PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
-PROV_R_INVALID_IV_LENGTH:109:invalid iv length
-PROV_R_INVALID_KDF:232:invalid kdf
-PROV_R_INVALID_KDR:256:invalid kdr
-PROV_R_INVALID_KEY:158:invalid key
-PROV_R_INVALID_KEY_LENGTH:105:invalid key length
-PROV_R_INVALID_LABEL:257:invalid label
-PROV_R_INVALID_MAC:151:invalid mac
-PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
-PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
-PROV_R_INVALID_MODE:125:invalid mode
-PROV_R_INVALID_NONCE_LENGTH:264:invalid nonce length
-PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
-PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
-PROV_R_INVALID_PARAMETERS_FOR_DKM:261:invalid parameters for dkm
-PROV_R_INVALID_PREHASHED_DIGEST_LENGTH:241:invalid prehashed digest length
-PROV_R_INVALID_PUBINFO:198:invalid pubinfo
-PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
-PROV_R_INVALID_SECRET_LENGTH:265:invalid secret length
-PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
-PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
-PROV_R_INVALID_STATE:212:invalid state
-PROV_R_INVALID_TAG:110:invalid tag
-PROV_R_INVALID_TAG_LENGTH:118:invalid tag length
-PROV_R_INVALID_THREAD_POOL_SIZE:234:invalid thread pool size
-PROV_R_INVALID_UKM_LENGTH:200:invalid ukm length
-PROV_R_INVALID_X931_DIGEST:170:invalid x931 digest
-PROV_R_IN_ERROR_STATE:192:in error state
-PROV_R_KEY_IMMUTABLE_ONCE_SET:266:key immutable once set
-PROV_R_KEY_SETUP_FAILED:101:key setup failed
-PROV_R_KEY_SIZE_TOO_SMALL:171:key size too small
-PROV_R_LENGTH_TOO_LARGE:202:length too large
-PROV_R_MISMATCHING_DOMAIN_PARAMETERS:203:mismatching domain parameters
-PROV_R_MISSING_CEK_ALG:144:missing cek alg
-PROV_R_MISSING_CIPHER:155:missing cipher
-PROV_R_MISSING_CONFIG_DATA:213:missing config data
-PROV_R_MISSING_CONSTANT:156:missing constant
-PROV_R_MISSING_DKM:262:missing dkm
-PROV_R_MISSING_EID:255:missing eid
-PROV_R_MISSING_KEY:128:missing key
-PROV_R_MISSING_MAC:150:missing mac
-PROV_R_MISSING_MESSAGE_DIGEST:129:missing message digest
-PROV_R_MISSING_NONCE:263:missing nonce
-PROV_R_MISSING_OID:209:missing OID
-PROV_R_MISSING_PASS:130:missing pass
-PROV_R_MISSING_SALT:131:missing salt
-PROV_R_MISSING_SECRET:132:missing secret
-PROV_R_MISSING_SEED:140:missing seed
-PROV_R_MISSING_SESSION_ID:133:missing session id
-PROV_R_MISSING_TYPE:134:missing type
-PROV_R_MISSING_XCGHASH:135:missing xcghash
-PROV_R_ML_DSA_NO_FORMAT:245:ml dsa no format
-PROV_R_ML_KEM_NO_FORMAT:246:ml kem no format
-PROV_R_MODULE_INTEGRITY_FAILURE:214:module integrity failure
-PROV_R_NOT_A_PRIVATE_KEY:221:not a private key
-PROV_R_NOT_A_PUBLIC_KEY:220:not a public key
-PROV_R_NOT_INSTANTIATED:193:not instantiated
-PROV_R_NOT_PARAMETERS:226:not parameters
-PROV_R_NOT_SUPPORTED:136:not supported
-PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
-PROV_R_NO_INSTANCE_ALLOWED:242:no instance allowed
-PROV_R_NO_KEY_SET:114:no key set
-PROV_R_NO_PARAMETERS_SET:177:no parameters set
-PROV_R_NULL_LENGTH_POINTER:247:null length pointer
-PROV_R_NULL_OUTPUT_BUFFER:248:null output buffer
-PROV_R_ONESHOT_CALL_OUT_OF_ORDER:239:oneshot call out of order
-PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
-	operation not supported for this keytype
-PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
-PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:228:\
-	parent cannot generate random numbers
-PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED:187:parent cannot supply entropy seed
-PROV_R_PARENT_LOCKING_NOT_ENABLED:182:parent locking not enabled
-PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
-PROV_R_PASSWORD_STRENGTH_TOO_WEAK:254:password strength too weak
-PROV_R_PATH_MUST_BE_ABSOLUTE:219:path must be absolute
-PROV_R_PERSONALISATION_STRING_TOO_LONG:195:personalisation string too long
-PROV_R_PSS_SALTLEN_TOO_SMALL:172:pss saltlen too small
-PROV_R_REPEATED_PARAMETER:252:repeated parameter
-PROV_R_REQUEST_TOO_LARGE_FOR_DRBG:196:request too large for drbg
-PROV_R_REQUIRE_CTR_MODE_CIPHER:206:require ctr mode cipher
-PROV_R_RESEED_ERROR:197:reseed error
-PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES:222:\
-	search only supported for directories
-PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT:229:\
-	seed sources must not have a parent
-PROV_R_SELF_TEST_KAT_FAILURE:215:self test kat failure
-PROV_R_SELF_TEST_POST_FAILURE:216:self test post failure
-PROV_R_TAG_NOT_NEEDED:120:tag not needed
-PROV_R_TAG_NOT_SET:119:tag not set
-PROV_R_TOO_MANY_RECORDS:126:too many records
-PROV_R_UNABLE_TO_FIND_CIPHERS:207:unable to find ciphers
-PROV_R_UNABLE_TO_GET_PARENT_STRENGTH:199:unable to get parent strength
-PROV_R_UNABLE_TO_GET_PASSPHRASE:159:unable to get passphrase
-PROV_R_UNABLE_TO_INITIALISE_CIPHERS:208:unable to initialise ciphers
-PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
-PROV_R_UNABLE_TO_LOCK_PARENT:201:unable to lock parent
-PROV_R_UNABLE_TO_RESEED:204:unable to reseed
-PROV_R_UNEXPECTED_KEY_PARAMETERS:249:unexpected key parameters
-PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
-PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
-PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
-PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:152:unsupported number of rounds
-PROV_R_UNSUPPORTED_SELECTION:250:unsupported selection
-PROV_R_UPDATE_CALL_OUT_OF_ORDER:240:update call out of order
-PROV_R_URI_AUTHORITY_UNSUPPORTED:223:uri authority unsupported
-PROV_R_VALUE_ERROR:138:value error
-PROV_R_WRONG_CIPHERTEXT_SIZE:251:wrong ciphertext size
-PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
-PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
-PROV_R_XOF_DIGESTS_NOT_ALLOWED:183:xof digests not allowed
-PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE:148:xts data unit is too large
-PROV_R_XTS_DUPLICATED_KEYS:149:xts duplicated keys
-RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
-RAND_R_ALREADY_INSTANTIATED:103:already instantiated
-RAND_R_ARGUMENT_OUT_OF_RANGE:105:argument out of range
-RAND_R_CANNOT_OPEN_FILE:121:Cannot open file
-RAND_R_DRBG_ALREADY_INITIALIZED:129:drbg already initialized
-RAND_R_DRBG_NOT_INITIALISED:104:drbg not initialised
-RAND_R_ENTROPY_INPUT_TOO_LONG:106:entropy input too long
-RAND_R_ENTROPY_OUT_OF_RANGE:124:entropy out of range
-RAND_R_ERROR_ENTROPY_POOL_WAS_IGNORED:127:error entropy pool was ignored
-RAND_R_ERROR_INITIALISING_DRBG:107:error initialising drbg
-RAND_R_ERROR_INSTANTIATING_DRBG:108:error instantiating drbg
-RAND_R_ERROR_RETRIEVING_ADDITIONAL_INPUT:109:error retrieving additional input
-RAND_R_ERROR_RETRIEVING_ENTROPY:110:error retrieving entropy
-RAND_R_ERROR_RETRIEVING_NONCE:111:error retrieving nonce
-RAND_R_FAILED_TO_CREATE_LOCK:126:failed to create lock
-RAND_R_FUNC_NOT_IMPLEMENTED:101:Function not implemented
-RAND_R_FWRITE_ERROR:123:Error writing file
-RAND_R_GENERATE_ERROR:112:generate error
-RAND_R_INSUFFICIENT_DRBG_STRENGTH:139:insufficient drbg strength
-RAND_R_INTERNAL_ERROR:113:internal error
-RAND_R_INVALID_PROPERTY_QUERY:137:invalid property query
-RAND_R_IN_ERROR_STATE:114:in error state
-RAND_R_NOT_A_REGULAR_FILE:122:Not a regular file
-RAND_R_NOT_INSTANTIATED:115:not instantiated
-RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED:128:no drbg implementation selected
-RAND_R_PARENT_LOCKING_NOT_ENABLED:130:parent locking not enabled
-RAND_R_PARENT_STRENGTH_TOO_WEAK:131:parent strength too weak
-RAND_R_PERSONALISATION_STRING_TOO_LONG:116:personalisation string too long
-RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED:133:\
-	prediction resistance not supported
-RAND_R_PRNG_NOT_SEEDED:100:PRNG not seeded
-RAND_R_RANDOM_POOL_IS_EMPTY:142:random pool is empty
-RAND_R_RANDOM_POOL_OVERFLOW:125:random pool overflow
-RAND_R_RANDOM_POOL_UNDERFLOW:134:random pool underflow
-RAND_R_REQUEST_TOO_LARGE_FOR_DRBG:117:request too large for drbg
-RAND_R_RESEED_ERROR:118:reseed error
-RAND_R_SELFTEST_FAILURE:119:selftest failure
-RAND_R_TOO_LITTLE_NONCE_REQUESTED:135:too little nonce requested
-RAND_R_TOO_MUCH_NONCE_REQUESTED:136:too much nonce requested
-RAND_R_UNABLE_TO_CREATE_DRBG:143:unable to create drbg
-RAND_R_UNABLE_TO_FETCH_DRBG:144:unable to fetch drbg
-RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:141:\
-	unable to get parent reseed prop counter
-RAND_R_UNABLE_TO_GET_PARENT_STRENGTH:138:unable to get parent strength
-RAND_R_UNABLE_TO_LOCK_PARENT:140:unable to lock parent
-RAND_R_UNSUPPORTED_DRBG_FLAGS:132:unsupported drbg flags
-RAND_R_UNSUPPORTED_DRBG_TYPE:120:unsupported drbg type
-RSA_R_ALGORITHM_MISMATCH:100:algorithm mismatch
-RSA_R_BAD_E_VALUE:101:bad e value
-RSA_R_BAD_FIXED_HEADER_DECRYPT:102:bad fixed header decrypt
-RSA_R_BAD_PAD_BYTE_COUNT:103:bad pad byte count
-RSA_R_BAD_SIGNATURE:104:bad signature
-RSA_R_BLOCK_TYPE_IS_NOT_01:106:block type is not 01
-RSA_R_BLOCK_TYPE_IS_NOT_02:107:block type is not 02
-RSA_R_DATA_GREATER_THAN_MOD_LEN:108:data greater than mod len
-RSA_R_DATA_TOO_LARGE:109:data too large
-RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE:110:data too large for key size
-RSA_R_DATA_TOO_LARGE_FOR_MODULUS:132:data too large for modulus
-RSA_R_DATA_TOO_SMALL:111:data too small
-RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE:122:data too small for key size
-RSA_R_DIGEST_DOES_NOT_MATCH:158:digest does not match
-RSA_R_DIGEST_NOT_ALLOWED:145:digest not allowed
-RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY:112:digest too big for rsa key
-RSA_R_DMP1_NOT_CONGRUENT_TO_D:124:dmp1 not congruent to d
-RSA_R_DMQ1_NOT_CONGRUENT_TO_D:125:dmq1 not congruent to d
-RSA_R_D_E_NOT_CONGRUENT_TO_1:123:d e not congruent to 1
-RSA_R_FIRST_OCTET_INVALID:133:first octet invalid
-RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:144:\
-	illegal or unsupported padding mode
-RSA_R_INVALID_DIGEST:157:invalid digest
-RSA_R_INVALID_DIGEST_LENGTH:143:invalid digest length
-RSA_R_INVALID_HEADER:137:invalid header
-RSA_R_INVALID_KEYPAIR:171:invalid keypair
-RSA_R_INVALID_KEY_LENGTH:173:invalid key length
-RSA_R_INVALID_LABEL:160:invalid label
-RSA_R_INVALID_LENGTH:181:invalid length
-RSA_R_INVALID_MESSAGE_LENGTH:131:invalid message length
-RSA_R_INVALID_MGF1_MD:156:invalid mgf1 md
-RSA_R_INVALID_MODULUS:174:invalid modulus
-RSA_R_INVALID_MULTI_PRIME_KEY:167:invalid multi prime key
-RSA_R_INVALID_OAEP_PARAMETERS:161:invalid oaep parameters
-RSA_R_INVALID_PADDING:138:invalid padding
-RSA_R_INVALID_PADDING_MODE:141:invalid padding mode
-RSA_R_INVALID_PSS_PARAMETERS:149:invalid pss parameters
-RSA_R_INVALID_PSS_SALTLEN:146:invalid pss saltlen
-RSA_R_INVALID_REQUEST:175:invalid request
-RSA_R_INVALID_SALT_LENGTH:150:invalid salt length
-RSA_R_INVALID_STRENGTH:176:invalid strength
-RSA_R_INVALID_TRAILER:139:invalid trailer
-RSA_R_INVALID_X931_DIGEST:142:invalid x931 digest
-RSA_R_IQMP_NOT_INVERSE_OF_Q:126:iqmp not inverse of q
-RSA_R_KEY_PRIME_NUM_INVALID:165:key prime num invalid
-RSA_R_KEY_SIZE_TOO_SMALL:120:key size too small
-RSA_R_LAST_OCTET_INVALID:134:last octet invalid
-RSA_R_MGF1_DIGEST_NOT_ALLOWED:152:mgf1 digest not allowed
-RSA_R_MISSING_PRIVATE_KEY:179:missing private key
-RSA_R_MODULUS_TOO_LARGE:105:modulus too large
-RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R:168:mp coefficient not inverse of r
-RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D:169:mp exponent not congruent to d
-RSA_R_MP_R_NOT_PRIME:170:mp r not prime
-RSA_R_NO_PUBLIC_EXPONENT:140:no public exponent
-RSA_R_NULL_BEFORE_BLOCK_MISSING:113:null before block missing
-RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES:172:n does not equal product of primes
-RSA_R_N_DOES_NOT_EQUAL_P_Q:127:n does not equal p q
-RSA_R_OAEP_DECODING_ERROR:121:oaep decoding error
-RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:148:\
-	operation not supported for this keytype
-RSA_R_PADDING_CHECK_FAILED:114:padding check failed
-RSA_R_PAIRWISE_TEST_FAILURE:177:pairwise test failure
-RSA_R_PKCS_DECODING_ERROR:159:pkcs decoding error
-RSA_R_PSS_SALTLEN_TOO_SMALL:164:pss saltlen too small
-RSA_R_PUB_EXPONENT_OUT_OF_RANGE:178:pub exponent out of range
-RSA_R_P_NOT_PRIME:128:p not prime
-RSA_R_Q_NOT_PRIME:129:q not prime
-RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT:180:\
-	randomness source strength insufficient
-RSA_R_RSA_OPERATIONS_NOT_SUPPORTED:130:rsa operations not supported
-RSA_R_SLEN_CHECK_FAILED:136:salt length check failed
-RSA_R_SLEN_RECOVERY_FAILED:135:salt length recovery failed
-RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:116:\
-	the asn1 object identifier is not known for this md
-RSA_R_UNKNOWN_ALGORITHM_TYPE:117:unknown algorithm type
-RSA_R_UNKNOWN_DIGEST:166:unknown digest
-RSA_R_UNKNOWN_MASK_DIGEST:151:unknown mask digest
-RSA_R_UNKNOWN_PADDING_TYPE:118:unknown padding type
-RSA_R_UNSUPPORTED_ENCRYPTION_TYPE:162:unsupported encryption type
-RSA_R_UNSUPPORTED_LABEL_SOURCE:163:unsupported label source
-RSA_R_UNSUPPORTED_MASK_ALGORITHM:153:unsupported mask algorithm
-RSA_R_UNSUPPORTED_MASK_PARAMETER:154:unsupported mask parameter
-RSA_R_UNSUPPORTED_SIGNATURE_TYPE:155:unsupported signature type
-RSA_R_VALUE_MISSING:147:value missing
-RSA_R_WRONG_SIGNATURE_LENGTH:119:wrong signature length
-SM2_R_ASN1_ERROR:100:asn1 error
-SM2_R_BAD_SIGNATURE:101:bad signature
-SM2_R_BUFFER_TOO_SMALL:107:buffer too small
-SM2_R_DIST_ID_TOO_LARGE:110:dist id too large
-SM2_R_ID_NOT_SET:112:id not set
-SM2_R_ID_TOO_LARGE:111:id too large
-SM2_R_INVALID_CURVE:108:invalid curve
-SM2_R_INVALID_DIGEST:102:invalid digest
-SM2_R_INVALID_DIGEST_TYPE:103:invalid digest type
-SM2_R_INVALID_ENCODING:104:invalid encoding
-SM2_R_INVALID_FIELD:105:invalid field
-SM2_R_INVALID_PRIVATE_KEY:113:invalid private key
-SM2_R_NO_PARAMETERS_SET:109:no parameters set
-SM2_R_USER_ID_TOO_LARGE:106:user id too large
-SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY:291:\
-	application data after close notify
-SSL_R_APP_DATA_IN_HANDSHAKE:100:app data in handshake
-SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT:272:\
-	attempt to reuse session in different context
-SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
-	at least (D)TLS 1.2 needed in Suite B mode
-SSL_R_BAD_CERTIFICATE:348:bad certificate
-SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
-SSL_R_BAD_CIPHER:186:bad cipher
-SSL_R_BAD_COMPRESSION_ALGORITHM:326:bad compression algorithm
-SSL_R_BAD_DATA:390:bad data
-SSL_R_BAD_DATA_RETURNED_BY_CALLBACK:106:bad data returned by callback
-SSL_R_BAD_DECOMPRESSION:107:bad decompression
-SSL_R_BAD_DH_VALUE:102:bad dh value
-SSL_R_BAD_DIGEST_LENGTH:111:bad digest length
-SSL_R_BAD_EARLY_DATA:233:bad early data
-SSL_R_BAD_ECC_CERT:304:bad ecc cert
-SSL_R_BAD_ECHCONFIG_EXTENSION:425:bad echconfig extension
-SSL_R_BAD_ECPOINT:306:bad ecpoint
-SSL_R_BAD_EXTENSION:110:bad extension
-SSL_R_BAD_HANDSHAKE_LENGTH:332:bad handshake length
-SSL_R_BAD_HANDSHAKE_STATE:236:bad handshake state
-SSL_R_BAD_HELLO_REQUEST:105:bad hello request
-SSL_R_BAD_HRR_VERSION:263:bad hrr version
-SSL_R_BAD_KEY_SHARE:108:bad key share
-SSL_R_BAD_KEY_UPDATE:122:bad key update
-SSL_R_BAD_LEGACY_VERSION:292:bad legacy version
-SSL_R_BAD_LENGTH:271:bad length
-SSL_R_BAD_PACKET:240:bad packet
-SSL_R_BAD_PACKET_LENGTH:115:bad packet length
-SSL_R_BAD_PROTOCOL_VERSION_NUMBER:116:bad protocol version number
-SSL_R_BAD_PSK:219:bad psk
-SSL_R_BAD_PSK_IDENTITY:114:bad psk identity
-SSL_R_BAD_RECORD_TYPE:443:bad record type
-SSL_R_BAD_RSA_ENCRYPT:119:bad rsa encrypt
-SSL_R_BAD_SIGNATURE:123:bad signature
-SSL_R_BAD_SRP_A_LENGTH:347:bad srp a length
-SSL_R_BAD_SRP_PARAMETERS:371:bad srp parameters
-SSL_R_BAD_SRTP_MKI_VALUE:352:bad srtp mki value
-SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST:353:bad srtp protection profile list
-SSL_R_BAD_SSL_FILETYPE:124:bad ssl filetype
-SSL_R_BAD_VALUE:384:bad value
-SSL_R_BAD_WRITE_RETRY:127:bad write retry
-SSL_R_BINDER_DOES_NOT_VERIFY:253:binder does not verify
-SSL_R_BIO_NOT_SET:128:bio not set
-SSL_R_BLOCK_CIPHER_PAD_IS_WRONG:129:block cipher pad is wrong
-SSL_R_BN_LIB:130:bn lib
-SSL_R_CALLBACK_FAILED:234:callback failed
-SSL_R_CANNOT_CHANGE_CIPHER:109:cannot change cipher
-SSL_R_CANNOT_GET_GROUP_NAME:299:cannot get group name
-SSL_R_CA_DN_LENGTH_MISMATCH:131:ca dn length mismatch
-SSL_R_CA_KEY_TOO_SMALL:397:ca key too small
-SSL_R_CA_MD_TOO_WEAK:398:ca md too weak
-SSL_R_CCS_RECEIVED_EARLY:133:ccs received early
-SSL_R_CERTIFICATE_VERIFY_FAILED:134:certificate verify failed
-SSL_R_CERT_CB_ERROR:377:cert cb error
-SSL_R_CERT_LENGTH_MISMATCH:135:cert length mismatch
-SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED:218:ciphersuite digest has changed
-SSL_R_CIPHER_CODE_WRONG_LENGTH:137:cipher code wrong length
-SSL_R_CLIENTHELLO_TLSEXT:226:clienthello tlsext
-SSL_R_COMPRESSED_LENGTH_TOO_LONG:140:compressed length too long
-SSL_R_COMPRESSION_DISABLED:343:compression disabled
-SSL_R_COMPRESSION_FAILURE:141:compression failure
-SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE:307:\
-	compression id not within private range
-SSL_R_COMPRESSION_LIBRARY_ERROR:142:compression library error
-SSL_R_CONNECTION_TYPE_NOT_SET:144:connection type not set
-SSL_R_CONN_USE_ONLY:356:conn use only
-SSL_R_CONTEXT_NOT_DANE_ENABLED:167:context not dane enabled
-SSL_R_COOKIE_GEN_CALLBACK_FAILURE:400:cookie gen callback failure
-SSL_R_COOKIE_MISMATCH:308:cookie mismatch
-SSL_R_COPY_PARAMETERS_FAILED:296:copy parameters failed
-SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED:206:\
-	custom ext handler already installed
-SSL_R_DANE_ALREADY_ENABLED:172:dane already enabled
-SSL_R_DANE_CANNOT_OVERRIDE_MTYPE_FULL:173:dane cannot override mtype full
-SSL_R_DANE_NOT_ENABLED:175:dane not enabled
-SSL_R_DANE_TLSA_BAD_CERTIFICATE:180:dane tlsa bad certificate
-SSL_R_DANE_TLSA_BAD_CERTIFICATE_USAGE:184:dane tlsa bad certificate usage
-SSL_R_DANE_TLSA_BAD_DATA_LENGTH:189:dane tlsa bad data length
-SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH:192:dane tlsa bad digest length
-SSL_R_DANE_TLSA_BAD_MATCHING_TYPE:200:dane tlsa bad matching type
-SSL_R_DANE_TLSA_BAD_PUBLIC_KEY:201:dane tlsa bad public key
-SSL_R_DANE_TLSA_BAD_SELECTOR:202:dane tlsa bad selector
-SSL_R_DANE_TLSA_NULL_DATA:203:dane tlsa null data
-SSL_R_DATA_BETWEEN_CCS_AND_FINISHED:145:data between ccs and finished
-SSL_R_DATA_LENGTH_TOO_LONG:146:data length too long
-SSL_R_DECRYPTION_FAILED:147:decryption failed
-SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC:281:\
-	decryption failed or bad record mac
-SSL_R_DH_KEY_TOO_SMALL:394:dh key too small
-SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG:148:dh public value length is wrong
-SSL_R_DIGEST_CHECK_FAILED:149:digest check failed
-SSL_R_DOMAIN_USE_ONLY:422:domain use only
-SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
-SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
-SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
-SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
-SSL_R_ECH_DECODE_ERROR:426:ech decode error
-SSL_R_ECH_REQUIRED:424:ech required
-SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
-SSL_R_EMPTY_RAW_PUBLIC_KEY:349:empty raw public key
-SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:354:empty srtp protection profile list
-SSL_R_ENCRYPTED_LENGTH_TOO_LONG:150:encrypted length too long
-SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST:151:error in received cipher list
-SSL_R_ERROR_IN_SYSTEM_DEFAULT_CONFIG:419:error in system default config
-SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN:204:error setting tlsa base domain
-SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE:194:exceeds max fragment size
-SSL_R_EXCESSIVE_MESSAGE_SIZE:152:excessive message size
-SSL_R_EXTENSION_NOT_RECEIVED:279:extension not received
-SSL_R_EXTRA_DATA_IN_MESSAGE:153:extra data in message
-SSL_R_EXT_LENGTH_MISMATCH:163:ext length mismatch
-SSL_R_FAILED_TO_GET_PARAMETER:316:failed to get parameter
-SSL_R_FAILED_TO_INIT_ASYNC:405:failed to init async
-SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE:417:feature negotiation not complete
-SSL_R_FEATURE_NOT_RENEGOTIABLE:413:feature not renegotiable
-SSL_R_FRAGMENTED_CLIENT_HELLO:401:fragmented client hello
-SSL_R_GOT_A_FIN_BEFORE_A_CCS:154:got a fin before a ccs
-SSL_R_HTTPS_PROXY_REQUEST:155:https proxy request
-SSL_R_HTTP_REQUEST:156:http request
-SSL_R_ILLEGAL_POINT_COMPRESSION:162:illegal point compression
-SSL_R_ILLEGAL_SUITEB_DIGEST:380:illegal Suite B digest
-SSL_R_INAPPROPRIATE_FALLBACK:373:inappropriate fallback
-SSL_R_INCONSISTENT_COMPRESSION:340:inconsistent compression
-SSL_R_INCONSISTENT_EARLY_DATA_ALPN:222:inconsistent early data alpn
-SSL_R_INCONSISTENT_EARLY_DATA_SNI:231:inconsistent early data sni
-SSL_R_INCONSISTENT_EXTMS:104:inconsistent extms
-SSL_R_INSUFFICIENT_SECURITY:241:insufficient security
-SSL_R_INVALID_ALERT:205:invalid alert
-SSL_R_INVALID_CCS_MESSAGE:260:invalid ccs message
-SSL_R_INVALID_CERTIFICATE_OR_ALG:238:invalid certificate or alg
-SSL_R_INVALID_COMMAND:280:invalid command
-SSL_R_INVALID_COMPRESSION_ALGORITHM:341:invalid compression algorithm
-SSL_R_INVALID_CONFIG:283:invalid config
-SSL_R_INVALID_CONFIGURATION_NAME:113:invalid configuration name
-SSL_R_INVALID_CONTEXT:282:invalid context
-SSL_R_INVALID_CT_VALIDATION_TYPE:212:invalid ct validation type
-SSL_R_INVALID_KEY_UPDATE_TYPE:120:invalid key update type
-SSL_R_INVALID_MAX_EARLY_DATA:174:invalid max early data
-SSL_R_INVALID_NULL_CMD_NAME:385:invalid null cmd name
-SSL_R_INVALID_RAW_PUBLIC_KEY:350:invalid raw public key
-SSL_R_INVALID_RECORD:317:invalid record
-SSL_R_INVALID_SEQUENCE_NUMBER:402:invalid sequence number
-SSL_R_INVALID_SERVERINFO_DATA:388:invalid serverinfo data
-SSL_R_INVALID_SESSION_ID:999:invalid session id
-SSL_R_INVALID_SRP_USERNAME:357:invalid srp username
-SSL_R_INVALID_STATUS_RESPONSE:328:invalid status response
-SSL_R_INVALID_TICKET_KEYS_LENGTH:325:invalid ticket keys length
-SSL_R_LEGACY_SIGALG_DISALLOWED_OR_UNSUPPORTED:333:\
-	legacy sigalg disallowed or unsupported
-SSL_R_LENGTH_MISMATCH:159:length mismatch
-SSL_R_LENGTH_TOO_LONG:404:length too long
-SSL_R_LENGTH_TOO_SHORT:160:length too short
-SSL_R_LIBRARY_BUG:274:library bug
-SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
-SSL_R_LISTENER_USE_ONLY:421:listener use only
-SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED:395:maximum encrypted pkts reached
-SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
-SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
-SSL_R_MISSING_FATAL:256:missing fatal
-SSL_R_MISSING_PARAMETERS:290:missing parameters
-SSL_R_MISSING_PSK_KEX_MODES_EXTENSION:310:missing psk kex modes extension
-SSL_R_MISSING_QUIC_TLS_FUNCTIONS:423:missing quic tls functions
-SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
-SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
-SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert
-SSL_R_MISSING_SIGALGS_EXTENSION:112:missing sigalgs extension
-SSL_R_MISSING_SIGNING_CERT:221:missing signing cert
-SSL_R_MISSING_SRP_PARAM:358:can't find SRP server param
-SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION:209:missing supported groups extension
-SSL_R_MISSING_SUPPORTED_VERSIONS_EXTENSION:420:\
-	missing supported versions extension
-SSL_R_MISSING_TMP_DH_KEY:171:missing tmp dh key
-SSL_R_MISSING_TMP_ECDH_KEY:311:missing tmp ecdh key
-SSL_R_MIXED_HANDSHAKE_AND_NON_HANDSHAKE_DATA:293:\
-	mixed handshake and non handshake data
-SSL_R_NOT_ON_RECORD_BOUNDARY:182:not on record boundary
-SSL_R_NOT_REPLACING_CERTIFICATE:289:not replacing certificate
-SSL_R_NOT_SERVER:284:not server
-SSL_R_NO_APPLICATION_PROTOCOL:235:no application protocol
-SSL_R_NO_CERTIFICATES_RETURNED:176:no certificates returned
-SSL_R_NO_CERTIFICATE_ASSIGNED:177:no certificate assigned
-SSL_R_NO_CERTIFICATE_SET:179:no certificate set
-SSL_R_NO_CHANGE_FOLLOWING_HRR:214:no change following hrr
-SSL_R_NO_CIPHERS_AVAILABLE:181:no ciphers available
-SSL_R_NO_CIPHERS_SPECIFIED:183:no ciphers specified
-SSL_R_NO_CIPHER_MATCH:185:no cipher match
-SSL_R_NO_CLIENT_CERT_METHOD:331:no client cert method
-SSL_R_NO_COMPRESSION_SPECIFIED:187:no compression specified
-SSL_R_NO_COOKIE_CALLBACK_SET:287:no cookie callback set
-SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER:330:\
-	Peer haven't sent GOST certificate, required for selected ciphersuite
-SSL_R_NO_METHOD_SPECIFIED:188:no method specified
-SSL_R_NO_PEM_EXTENSIONS:389:no pem extensions
-SSL_R_NO_PRIVATE_KEY_ASSIGNED:190:no private key assigned
-SSL_R_NO_PROTOCOLS_AVAILABLE:191:no protocols available
-SSL_R_NO_RENEGOTIATION:339:no renegotiation
-SSL_R_NO_REQUIRED_DIGEST:324:no required digest
-SSL_R_NO_SHARED_CIPHER:193:no shared cipher
-SSL_R_NO_SHARED_GROUPS:410:no shared groups
-SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS:376:no shared signature algorithms
-SSL_R_NO_SRTP_PROFILES:359:no srtp profiles
-SSL_R_NO_STREAM:355:no stream
-SSL_R_NO_SUITABLE_DIGEST_ALGORITHM:297:no suitable digest algorithm
-SSL_R_NO_SUITABLE_GROUPS:295:no suitable groups
-SSL_R_NO_SUITABLE_KEY_SHARE:101:no suitable key share
-SSL_R_NO_SUITABLE_RECORD_LAYER:322:no suitable record layer
-SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM:118:no suitable signature algorithm
-SSL_R_NO_VALID_SCTS:216:no valid scts
-SSL_R_NO_VERIFY_COOKIE_CALLBACK:403:no verify cookie callback
-SSL_R_NULL_SSL_CTX:195:null ssl ctx
-SSL_R_NULL_SSL_METHOD_PASSED:196:null ssl method passed
-SSL_R_OCSP_CALLBACK_FAILURE:305:ocsp callback failure
-SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED:197:old session cipher not returned
-SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED:344:\
-	old session compression algorithm not returned
-SSL_R_OVERFLOW_ERROR:237:overflow error
-SSL_R_PACKET_LENGTH_TOO_LONG:198:packet length too long
-SSL_R_PARSE_TLSEXT:227:parse tlsext
-SSL_R_PATH_TOO_LONG:270:path too long
-SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE:199:peer did not return a certificate
-SSL_R_PEM_NAME_BAD_PREFIX:391:pem name bad prefix
-SSL_R_PEM_NAME_TOO_SHORT:392:pem name too short
-SSL_R_PIPELINE_FAILURE:406:pipeline failure
-SSL_R_POLL_REQUEST_NOT_SUPPORTED:418:poll request not supported
-SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR:278:post handshake auth encoding err
-SSL_R_PRIVATE_KEY_MISMATCH:288:private key mismatch
-SSL_R_PROTOCOL_IS_SHUTDOWN:207:protocol is shutdown
-SSL_R_PSK_IDENTITY_NOT_FOUND:223:psk identity not found
-SSL_R_PSK_NO_CLIENT_CB:224:psk no client cb
-SSL_R_PSK_NO_SERVER_CB:225:psk no server cb
-SSL_R_QUIC_HANDSHAKE_LAYER_ERROR:393:quic handshake layer error
-SSL_R_QUIC_NETWORK_ERROR:387:quic network error
-SSL_R_QUIC_PROTOCOL_ERROR:382:quic protocol error
-SSL_R_READ_BIO_NOT_SET:211:read bio not set
-SSL_R_READ_TIMEOUT_EXPIRED:312:read timeout expired
-SSL_R_RECORDS_NOT_RELEASED:321:records not released
-SSL_R_RECORD_LAYER_FAILURE:313:record layer failure
-SSL_R_RECORD_LENGTH_MISMATCH:213:record length mismatch
-SSL_R_RECORD_TOO_SMALL:298:record too small
-SSL_R_REMOTE_PEER_ADDRESS_NOT_SET:346:remote peer address not set
-SSL_R_RENEGOTIATE_EXT_TOO_LONG:335:renegotiate ext too long
-SSL_R_RENEGOTIATION_ENCODING_ERR:336:renegotiation encoding err
-SSL_R_RENEGOTIATION_MISMATCH:337:renegotiation mismatch
-SSL_R_REQUEST_PENDING:285:request pending
-SSL_R_REQUEST_SENT:286:request sent
-SSL_R_REQUIRED_CIPHER_MISSING:215:required cipher missing
-SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING:342:\
-	required compression algorithm missing
-SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING:345:scsv received when renegotiating
-SSL_R_SCT_VERIFICATION_FAILED:208:sct verification failed
-SSL_R_SEQUENCE_CTR_WRAPPED:327:sequence ctr wrapped
-SSL_R_SERVERHELLO_TLSEXT:275:serverhello tlsext
-SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED:277:session id context uninitialized
-SSL_R_SHUTDOWN_WHILE_IN_INIT:407:shutdown while in init
-SSL_R_SIGNATURE_ALGORITHMS_ERROR:360:signature algorithms error
-SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE:220:\
-	signature for non signing certificate
-SSL_R_SRP_A_CALC:361:error with the srp params
-SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES:362:srtp could not allocate profiles
-SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG:363:\
-	srtp protection profile list too long
-SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE:364:srtp unknown protection profile
-SSL_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
-SSL_R_SSL_COMMAND_SECTION_NOT_FOUND:125:ssl command section not found
-SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION:228:ssl ctx has no default ssl version
-SSL_R_SSL_HANDSHAKE_FAILURE:229:ssl handshake failure
-SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS:230:ssl library has no ciphers
-SSL_R_SSL_NEGATIVE_LENGTH:372:ssl negative length
-SSL_R_SSL_SECTION_EMPTY:126:ssl section empty
-SSL_R_SSL_SECTION_NOT_FOUND:136:ssl section not found
-SSL_R_SSL_SESSION_ID_CALLBACK_FAILED:301:ssl session id callback failed
-SSL_R_SSL_SESSION_ID_CONFLICT:302:ssl session id conflict
-SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG:273:ssl session id context too long
-SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH:303:ssl session id has bad length
-SSL_R_SSL_SESSION_ID_TOO_LONG:408:ssl session id too long
-SSL_R_SSL_SESSION_VERSION_MISMATCH:210:ssl session version mismatch
-SSL_R_STILL_IN_INIT:121:still in init
-SSL_R_STREAM_COUNT_LIMITED:411:stream count limited
-SSL_R_STREAM_FINISHED:365:stream finished
-SSL_R_STREAM_RECV_ONLY:366:stream recv only
-SSL_R_STREAM_RESET:375:stream reset
-SSL_R_STREAM_SEND_ONLY:379:stream send only
-SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED:1116:tlsv13 alert certificate required
-SSL_R_TLSV13_ALERT_MISSING_EXTENSION:1109:tlsv13 alert missing extension
-SSL_R_TLSV1_ALERT_ACCESS_DENIED:1049:tlsv1 alert access denied
-SSL_R_TLSV1_ALERT_DECODE_ERROR:1050:tlsv1 alert decode error
-SSL_R_TLSV1_ALERT_DECRYPTION_FAILED:1021:tlsv1 alert decryption failed
-SSL_R_TLSV1_ALERT_DECRYPT_ERROR:1051:tlsv1 alert decrypt error
-SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION:1060:tlsv1 alert export restriction
-SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK:1086:tlsv1 alert inappropriate fallback
-SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY:1071:tlsv1 alert insufficient security
-SSL_R_TLSV1_ALERT_INTERNAL_ERROR:1080:tlsv1 alert internal error
-SSL_R_TLSV1_ALERT_NO_APPLICATION_PROTOCOL:1120:\
-	tlsv1 alert no application protocol
-SSL_R_TLSV1_ALERT_NO_RENEGOTIATION:1100:tlsv1 alert no renegotiation
-SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:1070:tlsv1 alert protocol version
-SSL_R_TLSV1_ALERT_RECORD_OVERFLOW:1022:tlsv1 alert record overflow
-SSL_R_TLSV1_ALERT_UNKNOWN_CA:1048:tlsv1 alert unknown ca
-SSL_R_TLSV1_ALERT_UNKNOWN_PSK_IDENTITY:1115:tlsv1 alert unknown psk identity
-SSL_R_TLSV1_ALERT_USER_CANCELLED:1090:tlsv1 alert user cancelled
-SSL_R_TLSV1_BAD_CERTIFICATE_HASH_VALUE:1114:tlsv1 bad certificate hash value
-SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE:1113:\
-	tlsv1 bad certificate status response
-SSL_R_TLSV1_CERTIFICATE_UNOBTAINABLE:1111:tlsv1 certificate unobtainable
-SSL_R_TLSV1_UNRECOGNIZED_NAME:1112:tlsv1 unrecognized name
-SSL_R_TLSV1_UNSUPPORTED_EXTENSION:1110:tlsv1 unsupported extension
-SSL_R_TLS_ALERT_BAD_CERTIFICATE:1042:tls alert bad certificate
-SSL_R_TLS_ALERT_BAD_RECORD_MAC:1020:tls alert bad record mac
-SSL_R_TLS_ALERT_CERTIFICATE_EXPIRED:1045:tls alert certificate expired
-SSL_R_TLS_ALERT_CERTIFICATE_REVOKED:1044:tls alert certificate revoked
-SSL_R_TLS_ALERT_CERTIFICATE_UNKNOWN:1046:tls alert certificate unknown
-SSL_R_TLS_ALERT_DECOMPRESSION_FAILURE:1030:tls alert decompression failure
-SSL_R_TLS_ALERT_HANDSHAKE_FAILURE:1040:tls alert handshake failure
-SSL_R_TLS_ALERT_ILLEGAL_PARAMETER:1047:tls alert illegal parameter
-SSL_R_TLS_ALERT_NO_CERTIFICATE:1041:tls alert no certificate
-SSL_R_TLS_ALERT_UNEXPECTED_MESSAGE:1010:tls alert unexpected message
-SSL_R_TLS_ALERT_UNSUPPORTED_CERTIFICATE:1043:tls alert unsupported certificate
-SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
-	tls ext invalid max fragment length
-SSL_R_TLS_EXT_INVALID_SERVERNAME:319:tls ext invalid servername
-SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE:320:tls ext invalid servername type
-SSL_R_TLS_ILLEGAL_EXPORTER_LABEL:367:tls illegal exporter label
-SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST:157:tls invalid ecpointformat list
-SSL_R_TLS_SESSION_ID_TOO_LONG:300:tls session id too long
-SSL_R_TOO_MANY_KEY_UPDATES:132:too many key updates
-SSL_R_TOO_MANY_WARN_ALERTS:409:too many warn alerts
-SSL_R_TOO_MUCH_EARLY_DATA:164:too much early data
-SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS:314:unable to find ecdh parameters
-SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS:239:\
-	unable to find public key parameters
-SSL_R_UNEXPECTED_CCS_MESSAGE:262:unexpected ccs message
-SSL_R_UNEXPECTED_END_OF_EARLY_DATA:178:unexpected end of early data
-SSL_R_UNEXPECTED_EOF_WHILE_READING:294:unexpected eof while reading
-SSL_R_UNEXPECTED_MESSAGE:244:unexpected message
-SSL_R_UNEXPECTED_RECORD:245:unexpected record
-SSL_R_UNINITIALIZED:276:uninitialized
-SSL_R_UNKNOWN_ALERT_TYPE:246:unknown alert type
-SSL_R_UNKNOWN_CERTIFICATE_TYPE:247:unknown certificate type
-SSL_R_UNKNOWN_CIPHER_RETURNED:248:unknown cipher returned
-SSL_R_UNKNOWN_CIPHER_TYPE:249:unknown cipher type
-SSL_R_UNKNOWN_CMD_NAME:386:unknown cmd name
-SSL_R_UNKNOWN_COMMAND:139:unknown command
-SSL_R_UNKNOWN_DIGEST:368:unknown digest
-SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE:250:unknown key exchange type
-SSL_R_UNKNOWN_MANDATORY_PARAMETER:323:unknown mandatory parameter
-SSL_R_UNKNOWN_PKEY_TYPE:251:unknown pkey type
-SSL_R_UNKNOWN_PROTOCOL:252:unknown protocol
-SSL_R_UNKNOWN_SSL_VERSION:254:unknown ssl version
-SSL_R_UNKNOWN_STATE:255:unknown state
-SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED:338:\
-	unsafe legacy renegotiation disabled
-SSL_R_UNSOLICITED_EXTENSION:217:unsolicited extension
-SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM:257:unsupported compression algorithm
-SSL_R_UNSUPPORTED_CONFIG_VALUE:414:unsupported config value
-SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS:415:unsupported config value class
-SSL_R_UNSUPPORTED_CONFIG_VALUE_OP:416:unsupported config value op
-SSL_R_UNSUPPORTED_ELLIPTIC_CURVE:315:unsupported elliptic curve
-SSL_R_UNSUPPORTED_PROTOCOL:258:unsupported protocol
-SSL_R_UNSUPPORTED_SSL_VERSION:259:unsupported ssl version
-SSL_R_UNSUPPORTED_STATUS_TYPE:329:unsupported status type
-SSL_R_UNSUPPORTED_WRITE_FLAG:412:unsupported write flag
-SSL_R_USE_SRTP_NOT_NEGOTIATED:369:use srtp not negotiated
-SSL_R_VERSION_TOO_HIGH:166:version too high
-SSL_R_VERSION_TOO_LOW:396:version too low
-SSL_R_WRONG_CERTIFICATE_TYPE:383:wrong certificate type
-SSL_R_WRONG_CIPHER_RETURNED:261:wrong cipher returned
-SSL_R_WRONG_CURVE:378:wrong curve
-SSL_R_WRONG_RPK_TYPE:351:wrong rpk type
-SSL_R_WRONG_SIGNATURE_LENGTH:264:wrong signature length
-SSL_R_WRONG_SIGNATURE_SIZE:265:wrong signature size
-SSL_R_WRONG_SIGNATURE_TYPE:370:wrong signature type
-SSL_R_WRONG_SSL_VERSION:266:wrong ssl version
-SSL_R_WRONG_VERSION_NUMBER:267:wrong version number
-SSL_R_X509_LIB:268:x509 lib
-SSL_R_X509_VERIFICATION_SETUP_PROBLEMS:269:x509 verification setup problems
-TS_R_BAD_PKCS7_TYPE:132:bad pkcs7 type
-TS_R_BAD_TYPE:133:bad type
-TS_R_CANNOT_LOAD_CERT:137:cannot load certificate
-TS_R_CANNOT_LOAD_KEY:138:cannot load private key
-TS_R_CERTIFICATE_VERIFY_ERROR:100:certificate verify error
-TS_R_COULD_NOT_SET_ENGINE:127:could not set engine
-TS_R_COULD_NOT_SET_TIME:115:could not set time
-TS_R_DETACHED_CONTENT:134:detached content
-TS_R_ESS_ADD_SIGNING_CERT_ERROR:116:ess add signing cert error
-TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR:139:ess add signing cert v2 error
-TS_R_ESS_SIGNING_CERTIFICATE_ERROR:101:ess signing certificate error
-TS_R_INVALID_NULL_POINTER:102:invalid null pointer
-TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE:117:invalid signer certificate purpose
-TS_R_MESSAGE_IMPRINT_MISMATCH:103:message imprint mismatch
-TS_R_NONCE_MISMATCH:104:nonce mismatch
-TS_R_NONCE_NOT_RETURNED:105:nonce not returned
-TS_R_NO_CONTENT:106:no content
-TS_R_NO_TIME_STAMP_TOKEN:107:no time stamp token
-TS_R_PKCS7_ADD_SIGNATURE_ERROR:118:pkcs7 add signature error
-TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR:119:pkcs7 add signed attr error
-TS_R_PKCS7_TO_TS_TST_INFO_FAILED:129:pkcs7 to ts tst info failed
-TS_R_POLICY_MISMATCH:108:policy mismatch
-TS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:120:\
-	private key does not match certificate
-TS_R_RESPONSE_SETUP_ERROR:121:response setup error
-TS_R_SIGNATURE_FAILURE:109:signature failure
-TS_R_THERE_MUST_BE_ONE_SIGNER:110:there must be one signer
-TS_R_TIME_SYSCALL_ERROR:122:time syscall error
-TS_R_TOKEN_NOT_PRESENT:130:token not present
-TS_R_TOKEN_PRESENT:131:token present
-TS_R_TSA_NAME_MISMATCH:111:tsa name mismatch
-TS_R_TSA_UNTRUSTED:112:tsa untrusted
-TS_R_TST_INFO_SETUP_ERROR:123:tst info setup error
-TS_R_TS_DATASIGN:124:ts datasign
-TS_R_UNACCEPTABLE_POLICY:125:unacceptable policy
-TS_R_UNSUPPORTED_MD_ALGORITHM:126:unsupported md algorithm
-TS_R_UNSUPPORTED_VERSION:113:unsupported version
-TS_R_VAR_BAD_VALUE:135:var bad value
-TS_R_VAR_LOOKUP_FAILURE:136:cannot find config variable
-TS_R_WRONG_CONTENT_TYPE:114:wrong content type
-UI_R_COMMON_OK_AND_CANCEL_CHARACTERS:104:common ok and cancel characters
-UI_R_INDEX_TOO_LARGE:102:index too large
-UI_R_INDEX_TOO_SMALL:103:index too small
-UI_R_NO_RESULT_BUFFER:105:no result buffer
-UI_R_PROCESSING_ERROR:107:processing error
-UI_R_RESULT_TOO_LARGE:100:result too large
-UI_R_RESULT_TOO_SMALL:101:result too small
-UI_R_SYSASSIGN_ERROR:109:sys$assign error
-UI_R_SYSDASSGN_ERROR:110:sys$dassgn error
-UI_R_SYSQIOW_ERROR:111:sys$qiow error
-UI_R_UNKNOWN_CONTROL_COMMAND:106:unknown control command
-UI_R_UNKNOWN_TTYGET_ERRNO_VALUE:108:unknown ttyget errno value
-UI_R_USER_DATA_DUPLICATION_UNSUPPORTED:112:user data duplication unsupported
-X509V3_R_BAD_IP_ADDRESS:118:bad ip address
-X509V3_R_BAD_OBJECT:119:bad object
-X509V3_R_BAD_OPTION:170:bad option
-X509V3_R_BAD_VALUE:171:bad value
-X509V3_R_BN_DEC2BN_ERROR:100:bn dec2bn error
-X509V3_R_BN_TO_ASN1_INTEGER_ERROR:101:bn to asn1 integer error
-X509V3_R_DIRNAME_ERROR:149:dirname error
-X509V3_R_DISTPOINT_ALREADY_SET:160:distpoint already set
-X509V3_R_DUPLICATE_FIELD:174:duplicate field
-X509V3_R_DUPLICATE_ZONE_ID:133:duplicate zone id
-X509V3_R_EMPTY_KEY_USAGE:169:empty key usage
-X509V3_R_ERROR_CONVERTING_ZONE:131:error converting zone
-X509V3_R_ERROR_CREATING_EXTENSION:144:error creating extension
-X509V3_R_ERROR_IN_EXTENSION:128:error in extension
-X509V3_R_EXPECTED_A_SECTION_NAME:137:expected a section name
-X509V3_R_EXTENSION_EXISTS:145:extension exists
-X509V3_R_EXTENSION_NAME_ERROR:115:extension name error
-X509V3_R_EXTENSION_NOT_FOUND:102:extension not found
-X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED:103:extension setting not supported
-X509V3_R_EXTENSION_VALUE_ERROR:116:extension value error
-X509V3_R_ILLEGAL_EMPTY_EXTENSION:151:illegal empty extension
-X509V3_R_INCORRECT_POLICY_SYNTAX_TAG:152:incorrect policy syntax tag
-X509V3_R_INVALID_ASNUMBER:162:invalid asnumber
-X509V3_R_INVALID_ASRANGE:163:invalid asrange
-X509V3_R_INVALID_BOOLEAN_STRING:104:invalid boolean string
-X509V3_R_INVALID_CERTIFICATE:158:invalid certificate
-X509V3_R_INVALID_EMPTY_NAME:108:invalid empty name
-X509V3_R_INVALID_EXTENSION_STRING:105:invalid extension string
-X509V3_R_INVALID_INHERITANCE:165:invalid inheritance
-X509V3_R_INVALID_IPADDRESS:166:invalid ipaddress
-X509V3_R_INVALID_MULTIPLE_RDNS:161:invalid multiple rdns
-X509V3_R_INVALID_NAME:106:invalid name
-X509V3_R_INVALID_NULL_ARGUMENT:107:invalid null argument
-X509V3_R_INVALID_NULL_VALUE:109:invalid null value
-X509V3_R_INVALID_NUMBER:140:invalid number
-X509V3_R_INVALID_NUMBERS:141:invalid numbers
-X509V3_R_INVALID_OBJECT_IDENTIFIER:110:invalid object identifier
-X509V3_R_INVALID_OPTION:138:invalid option
-X509V3_R_INVALID_POLICY_IDENTIFIER:134:invalid policy identifier
-X509V3_R_INVALID_PROXY_POLICY_SETTING:153:invalid proxy policy setting
-X509V3_R_INVALID_PURPOSE:146:invalid purpose
-X509V3_R_INVALID_SAFI:164:invalid safi
-X509V3_R_INVALID_SECTION:135:invalid section
-X509V3_R_INVALID_SYNTAX:143:invalid syntax
-X509V3_R_ISSUER_DECODE_ERROR:126:issuer decode error
-X509V3_R_MISSING_VALUE:124:missing value
-X509V3_R_NEED_ORGANIZATION_AND_NUMBERS:142:need organization and numbers
-X509V3_R_NEGATIVE_PATHLEN:168:negative pathlen
-X509V3_R_NO_CONFIG_DATABASE:136:no config database
-X509V3_R_NO_ISSUER_CERTIFICATE:121:no issuer certificate
-X509V3_R_NO_ISSUER_DETAILS:127:no issuer details
-X509V3_R_NO_POLICY_IDENTIFIER:139:no policy identifier
-X509V3_R_NO_PROXY_CERT_POLICY_LANGUAGE_DEFINED:154:\
-	no proxy cert policy language defined
-X509V3_R_NO_PUBLIC_KEY:114:no public key
-X509V3_R_NO_SUBJECT_DETAILS:125:no subject details
-X509V3_R_OPERATION_NOT_DEFINED:148:operation not defined
-X509V3_R_OTHERNAME_ERROR:147:othername error
-X509V3_R_PATHLEN_TOO_LARGE:175:pathlen too large
-X509V3_R_POLICY_LANGUAGE_ALREADY_DEFINED:155:policy language already defined
-X509V3_R_POLICY_PATH_LENGTH:156:policy path length
-X509V3_R_POLICY_PATH_LENGTH_ALREADY_DEFINED:157:\
-	policy path length already defined
-X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY:159:\
-	policy when proxy language requires no policy
-X509V3_R_PURPOSE_NOT_UNIQUE:173:purpose not unique
-X509V3_R_SECTION_NOT_FOUND:150:section not found
-X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS:122:unable to get issuer details
-X509V3_R_UNABLE_TO_GET_ISSUER_KEYID:123:unable to get issuer keyid
-X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT:111:unknown bit string argument
-X509V3_R_UNKNOWN_EXTENSION:129:unknown extension
-X509V3_R_UNKNOWN_EXTENSION_NAME:130:unknown extension name
-X509V3_R_UNKNOWN_OPTION:120:unknown option
-X509V3_R_UNKNOWN_VALUE:172:unknown value
-X509V3_R_UNSUPPORTED_OPTION:117:unsupported option
-X509V3_R_UNSUPPORTED_TYPE:167:unsupported type
-X509V3_R_USER_TOO_LONG:132:user too long
-X509_R_AKID_MISMATCH:110:akid mismatch
-X509_R_BAD_SELECTOR:133:bad selector
-X509_R_BAD_X509_FILETYPE:100:bad x509 filetype
-X509_R_BASE64_DECODE_ERROR:118:base64 decode error
-X509_R_CANT_CHECK_DH_KEY:114:can't check dh key
-X509_R_CERTIFICATE_VERIFICATION_FAILED:139:certificate verification failed
-X509_R_CERT_ALREADY_IN_HASH_TABLE:101:cert already in hash table
-X509_R_CRL_ALREADY_DELTA:127:crl already delta
-X509_R_CRL_SIGNATURE_ALGORITHM_MISMATCH:147:crl signature algorithm mismatch
-X509_R_CRL_VERIFY_FAILURE:131:crl verify failure
-X509_R_DUPLICATE_ATTRIBUTE:140:duplicate attribute
-X509_R_ERROR_GETTING_MD_BY_NID:141:error getting md by nid
-X509_R_ERROR_USING_SIGINF_SET:142:error using siginf set
-X509_R_IDP_MISMATCH:128:idp mismatch
-X509_R_INVALID_ATTRIBUTES:138:invalid attributes
-X509_R_INVALID_DIRECTORY:113:invalid directory
-X509_R_INVALID_DISTPOINT:143:invalid distpoint
-X509_R_INVALID_EXTENSION:146:invalid extension
-X509_R_INVALID_FIELD_NAME:119:invalid field name
-X509_R_INVALID_TRUST:123:invalid trust
-X509_R_ISSUER_MISMATCH:129:issuer mismatch
-X509_R_KEY_TYPE_MISMATCH:115:key type mismatch
-X509_R_KEY_VALUES_MISMATCH:116:key values mismatch
-X509_R_LOADING_CERT_DIR:103:loading cert dir
-X509_R_LOADING_DEFAULTS:104:loading defaults
-X509_R_METHOD_NOT_SUPPORTED:124:method not supported
-X509_R_NAME_TOO_LONG:134:name too long
-X509_R_NEWER_CRL_NOT_NEWER:132:newer crl not newer
-X509_R_NO_CERTIFICATE_FOUND:135:no certificate found
-X509_R_NO_CERTIFICATE_OR_CRL_FOUND:136:no certificate or crl found
-X509_R_NO_CERT_SET_FOR_US_TO_VERIFY:105:no cert set for us to verify
-X509_R_NO_CRL_FOUND:137:no crl found
-X509_R_NO_CRL_NUMBER:130:no crl number
-X509_R_PUBLIC_KEY_DECODE_ERROR:125:public key decode error
-X509_R_PUBLIC_KEY_ENCODE_ERROR:126:public key encode error
-X509_R_SHOULD_RETRY:106:should retry
-X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN:107:unable to find parameters in chain
-X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY:108:unable to get certs public key
-X509_R_UNKNOWN_KEY_TYPE:117:unknown key type
-X509_R_UNKNOWN_NID:109:unknown nid
-X509_R_UNKNOWN_PURPOSE_ID:121:unknown purpose id
-X509_R_UNKNOWN_SIGID_ALGS:144:unknown sigid algs
-X509_R_UNKNOWN_TRUST_ID:120:unknown trust id
-X509_R_UNSUPPORTED_ALGORITHM:111:unsupported algorithm
-X509_R_UNSUPPORTED_VERSION:145:unsupported version
-X509_R_WRONG_LOOKUP_TYPE:112:wrong lookup type
-X509_R_WRONG_TYPE:122:wrong type
+# The error reason codes.  The build generates the error headers and
+# string tables named in crypto/err/openssl.ec from this file;
+# crypto/err/README.md describes the format.
+#
+# Each line is
+#
+#   NUMBER:NAME:TEXT
+#
+# NUMBER  the reason code, unique within its library.  Part of the API:
+#         never changed or reused.
+# NAME    the reason macro, <LIB>_R_<REASON>, for a library LIB in
+#         crypto/err/openssl.ec.
+# TEXT    the string ERR_reason_error_string() returns.
+#
+# To add a reason, add a line at the end of its library's section with
+# the NUMBER one more than the last line's.  The TLS alert reasons have
+# a section of their own, with the numbers listed in
+# crypto/err/openssl.ec.  The SSL section starts with
+# SSL_R_INVALID_SESSION_ID, whose number is 999.
+
+# BN reasons
+100:BN_R_ARG2_LT_ARG3:arg2 lt arg3
+101:BN_R_BAD_RECIPROCAL:bad reciprocal
+102:BN_R_CALLED_WITH_EVEN_MODULUS:called with even modulus
+103:BN_R_DIV_BY_ZERO:div by zero
+104:BN_R_ENCODING_ERROR:encoding error
+105:BN_R_EXPAND_ON_STATIC_BIGNUM_DATA:expand on static bignum data
+106:BN_R_INVALID_LENGTH:invalid length
+107:BN_R_NOT_INITIALIZED:not initialized
+108:BN_R_NO_INVERSE:no inverse
+109:BN_R_TOO_MANY_TEMPORARY_VARIABLES:too many temporary variables
+110:BN_R_INPUT_NOT_REDUCED:input not reduced
+111:BN_R_NOT_A_SQUARE:not a square
+112:BN_R_P_IS_NOT_PRIME:p is not prime
+113:BN_R_TOO_MANY_ITERATIONS:too many iterations
+114:BN_R_BIGNUM_TOO_LONG:bignum too long
+115:BN_R_INVALID_RANGE:invalid range
+116:BN_R_NO_SOLUTION:no solution
+117:BN_R_PRIVATE_KEY_TOO_LARGE:private key too large
+118:BN_R_BITS_TOO_SMALL:bits too small
+119:BN_R_INVALID_SHIFT:invalid shift
+120:BN_R_NO_SUITABLE_DIGEST:no suitable digest
+121:BN_R_NO_PRIME_CANDIDATE:no prime candidate
+# RSA reasons
+100:RSA_R_ALGORITHM_MISMATCH:algorithm mismatch
+101:RSA_R_BAD_E_VALUE:bad e value
+102:RSA_R_BAD_FIXED_HEADER_DECRYPT:bad fixed header decrypt
+103:RSA_R_BAD_PAD_BYTE_COUNT:bad pad byte count
+104:RSA_R_BAD_SIGNATURE:bad signature
+105:RSA_R_MODULUS_TOO_LARGE:modulus too large
+106:RSA_R_BLOCK_TYPE_IS_NOT_01:block type is not 01
+107:RSA_R_BLOCK_TYPE_IS_NOT_02:block type is not 02
+108:RSA_R_DATA_GREATER_THAN_MOD_LEN:data greater than mod len
+109:RSA_R_DATA_TOO_LARGE:data too large
+110:RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE:data too large for key size
+111:RSA_R_DATA_TOO_SMALL:data too small
+112:RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY:digest too big for rsa key
+113:RSA_R_NULL_BEFORE_BLOCK_MISSING:null before block missing
+114:RSA_R_PADDING_CHECK_FAILED:padding check failed
+116:RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:the asn1 object identifier is not known for this md
+117:RSA_R_UNKNOWN_ALGORITHM_TYPE:unknown algorithm type
+118:RSA_R_UNKNOWN_PADDING_TYPE:unknown padding type
+119:RSA_R_WRONG_SIGNATURE_LENGTH:wrong signature length
+120:RSA_R_KEY_SIZE_TOO_SMALL:key size too small
+121:RSA_R_OAEP_DECODING_ERROR:oaep decoding error
+122:RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE:data too small for key size
+123:RSA_R_D_E_NOT_CONGRUENT_TO_1:d e not congruent to 1
+124:RSA_R_DMP1_NOT_CONGRUENT_TO_D:dmp1 not congruent to d
+125:RSA_R_DMQ1_NOT_CONGRUENT_TO_D:dmq1 not congruent to d
+126:RSA_R_IQMP_NOT_INVERSE_OF_Q:iqmp not inverse of q
+127:RSA_R_N_DOES_NOT_EQUAL_P_Q:n does not equal p q
+128:RSA_R_P_NOT_PRIME:p not prime
+129:RSA_R_Q_NOT_PRIME:q not prime
+130:RSA_R_RSA_OPERATIONS_NOT_SUPPORTED:rsa operations not supported
+131:RSA_R_INVALID_MESSAGE_LENGTH:invalid message length
+132:RSA_R_DATA_TOO_LARGE_FOR_MODULUS:data too large for modulus
+133:RSA_R_FIRST_OCTET_INVALID:first octet invalid
+134:RSA_R_LAST_OCTET_INVALID:last octet invalid
+135:RSA_R_SLEN_RECOVERY_FAILED:salt length recovery failed
+136:RSA_R_SLEN_CHECK_FAILED:salt length check failed
+137:RSA_R_INVALID_HEADER:invalid header
+138:RSA_R_INVALID_PADDING:invalid padding
+139:RSA_R_INVALID_TRAILER:invalid trailer
+140:RSA_R_NO_PUBLIC_EXPONENT:no public exponent
+141:RSA_R_INVALID_PADDING_MODE:invalid padding mode
+142:RSA_R_INVALID_X931_DIGEST:invalid x931 digest
+143:RSA_R_INVALID_DIGEST_LENGTH:invalid digest length
+144:RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:illegal or unsupported padding mode
+145:RSA_R_DIGEST_NOT_ALLOWED:digest not allowed
+146:RSA_R_INVALID_PSS_SALTLEN:invalid pss saltlen
+147:RSA_R_VALUE_MISSING:value missing
+148:RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:operation not supported for this keytype
+149:RSA_R_INVALID_PSS_PARAMETERS:invalid pss parameters
+150:RSA_R_INVALID_SALT_LENGTH:invalid salt length
+151:RSA_R_UNKNOWN_MASK_DIGEST:unknown mask digest
+152:RSA_R_MGF1_DIGEST_NOT_ALLOWED:mgf1 digest not allowed
+153:RSA_R_UNSUPPORTED_MASK_ALGORITHM:unsupported mask algorithm
+154:RSA_R_UNSUPPORTED_MASK_PARAMETER:unsupported mask parameter
+155:RSA_R_UNSUPPORTED_SIGNATURE_TYPE:unsupported signature type
+156:RSA_R_INVALID_MGF1_MD:invalid mgf1 md
+157:RSA_R_INVALID_DIGEST:invalid digest
+158:RSA_R_DIGEST_DOES_NOT_MATCH:digest does not match
+159:RSA_R_PKCS_DECODING_ERROR:pkcs decoding error
+160:RSA_R_INVALID_LABEL:invalid label
+161:RSA_R_INVALID_OAEP_PARAMETERS:invalid oaep parameters
+162:RSA_R_UNSUPPORTED_ENCRYPTION_TYPE:unsupported encryption type
+163:RSA_R_UNSUPPORTED_LABEL_SOURCE:unsupported label source
+164:RSA_R_PSS_SALTLEN_TOO_SMALL:pss saltlen too small
+165:RSA_R_KEY_PRIME_NUM_INVALID:key prime num invalid
+166:RSA_R_UNKNOWN_DIGEST:unknown digest
+167:RSA_R_INVALID_MULTI_PRIME_KEY:invalid multi prime key
+168:RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R:mp coefficient not inverse of r
+169:RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D:mp exponent not congruent to d
+170:RSA_R_MP_R_NOT_PRIME:mp r not prime
+171:RSA_R_INVALID_KEYPAIR:invalid keypair
+172:RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES:n does not equal product of primes
+173:RSA_R_INVALID_KEY_LENGTH:invalid key length
+174:RSA_R_INVALID_MODULUS:invalid modulus
+175:RSA_R_INVALID_REQUEST:invalid request
+176:RSA_R_INVALID_STRENGTH:invalid strength
+177:RSA_R_PAIRWISE_TEST_FAILURE:pairwise test failure
+178:RSA_R_PUB_EXPONENT_OUT_OF_RANGE:pub exponent out of range
+179:RSA_R_MISSING_PRIVATE_KEY:missing private key
+180:RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT:randomness source strength insufficient
+181:RSA_R_INVALID_LENGTH:invalid length
+# DH reasons
+100:DH_R_NO_PRIVATE_VALUE:no private value
+101:DH_R_BAD_GENERATOR:bad generator
+102:DH_R_INVALID_PUBKEY:invalid public key
+103:DH_R_MODULUS_TOO_LARGE:modulus too large
+104:DH_R_DECODE_ERROR:decode error
+105:DH_R_PARAMETER_ENCODING_ERROR:parameter encoding error
+106:DH_R_BN_ERROR:bn error
+107:DH_R_NO_PARAMETERS_SET:no parameters set
+108:DH_R_KEYS_NOT_SET:keys not set
+109:DH_R_BN_DECODE_ERROR:bn decode error
+110:DH_R_INVALID_PARAMETER_NAME:invalid parameter name
+111:DH_R_PEER_KEY_ERROR:peer key error
+112:DH_R_KDF_PARAMETER_ERROR:kdf parameter error
+113:DH_R_SHARED_INFO_ERROR:shared info error
+114:DH_R_INVALID_PARAMETER_NID:invalid parameter nid
+115:DH_R_CHECK_INVALID_J_VALUE:check invalid j value
+116:DH_R_CHECK_INVALID_Q_VALUE:check invalid q value
+117:DH_R_CHECK_P_NOT_PRIME:check p not prime
+118:DH_R_CHECK_P_NOT_SAFE_PRIME:check p not safe prime
+119:DH_R_CHECK_Q_NOT_PRIME:check q not prime
+120:DH_R_NOT_SUITABLE_GENERATOR:not suitable generator
+121:DH_R_UNABLE_TO_CHECK_GENERATOR:unable to check generator
+122:DH_R_CHECK_PUBKEY_INVALID:check pubkey invalid
+123:DH_R_CHECK_PUBKEY_TOO_LARGE:check pubkey too large
+124:DH_R_CHECK_PUBKEY_TOO_SMALL:check pubkey too small
+125:DH_R_MISSING_PUBKEY:missing pubkey
+126:DH_R_MODULUS_TOO_SMALL:modulus too small
+127:DH_R_BAD_FFC_PARAMETERS:bad ffc parameters
+128:DH_R_INVALID_SECRET:invalid secret
+129:DH_R_INVALID_SIZE:invalid size
+130:DH_R_Q_TOO_LARGE:q too large
+# EVP reasons
+100:EVP_R_BAD_DECRYPT:bad decrypt
+101:EVP_R_DIFFERENT_KEY_TYPES:different key types
+103:EVP_R_MISSING_PARAMETERS:missing parameters
+106:EVP_R_PUBLIC_KEY_NOT_RSA:public key not rsa
+107:EVP_R_UNSUPPORTED_CIPHER:unsupported cipher
+108:EVP_R_UNSUPPORTED_KEY_SIZE:unsupported key size
+109:EVP_R_WRONG_FINAL_BLOCK_LENGTH:wrong final block length
+111:EVP_R_INPUT_NOT_INITIALIZED:input not initialized
+114:EVP_R_DECODE_ERROR:decode error
+118:EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM:unsupported private key algorithm
+121:EVP_R_UNKNOWN_PBE_ALGORITHM:unknown pbe algorithm
+122:EVP_R_CIPHER_PARAMETER_ERROR:cipher parameter error
+123:EVP_R_UNSUPPORTED_KEYLENGTH:unsupported keylength
+124:EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION:unsupported key derivation function
+125:EVP_R_UNSUPPORTED_PRF:unsupported prf
+126:EVP_R_UNSUPPORTED_SALT_TYPE:unsupported salt type
+127:EVP_R_EXPECTING_AN_RSA_KEY:expecting an rsa key
+128:EVP_R_EXPECTING_A_DH_KEY:expecting a dh key
+129:EVP_R_EXPECTING_A_DSA_KEY:expecting a dsa key
+130:EVP_R_INVALID_KEY_LENGTH:invalid key length
+131:EVP_R_NO_CIPHER_SET:no cipher set
+132:EVP_R_CTRL_NOT_IMPLEMENTED:ctrl not implemented
+133:EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED:ctrl operation not implemented
+134:EVP_R_INITIALIZATION_ERROR:initialization error
+135:EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS:unsupported number of rounds
+138:EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH:data not multiple of block length
+139:EVP_R_NO_DIGEST_SET:no digest set
+142:EVP_R_EXPECTING_A_EC_KEY:expecting an ec key
+143:EVP_R_AES_KEY_SETUP_FAILED:aes key setup failed
+144:EVP_R_METHOD_NOT_SUPPORTED:method not supported
+145:EVP_R_PRIVATE_KEY_DECODE_ERROR:private key decode error
+146:EVP_R_PRIVATE_KEY_ENCODE_ERROR:private key encode error
+147:EVP_R_COMMAND_NOT_SUPPORTED:command not supported
+148:EVP_R_INVALID_OPERATION:invalid operation
+149:EVP_R_NO_OPERATION_SET:no operation set
+150:EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:operation not supported for this keytype
+151:EVP_R_OPERATION_NOT_INITIALIZED:operation not initialized
+152:EVP_R_INVALID_DIGEST:invalid digest
+153:EVP_R_DIFFERENT_PARAMETERS:different parameters
+154:EVP_R_NO_KEY_SET:no key set
+155:EVP_R_BUFFER_TOO_SMALL:buffer too small
+156:EVP_R_UNSUPPORTED_ALGORITHM:unsupported algorithm
+157:EVP_R_CAMELLIA_KEY_SETUP_FAILED:camellia key setup failed
+158:EVP_R_NO_DEFAULT_DIGEST:no default digest
+159:EVP_R_MESSAGE_DIGEST_IS_NULL:message digest is null
+160:EVP_R_UNKNOWN_CIPHER:unknown cipher
+161:EVP_R_UNKNOWN_DIGEST:unknown digest
+162:EVP_R_PARTIALLY_OVERLAPPING:partially overlapping buffers
+163:EVP_R_INVALID_KEY:invalid key
+164:EVP_R_EXPECTING_A_POLY1305_KEY:expecting a poly1305 key
+165:EVP_R_ERROR_LOADING_SECTION:error loading section
+166:EVP_R_UNKNOWN_BITS:unknown bits
+167:EVP_R_UNKNOWN_MAX_SIZE:unknown max size
+168:EVP_R_UNKNOWN_SECURITY_BITS:unknown security bits
+169:EVP_R_UNKNOWN_OPTION:unknown option
+170:EVP_R_WRAP_MODE_NOT_ALLOWED:wrap mode not allowed
+171:EVP_R_ILLEGAL_SCRYPT_PARAMETERS:illegal scrypt parameters
+172:EVP_R_MEMORY_LIMIT_EXCEEDED:memory limit exceeded
+173:EVP_R_COPY_ERROR:copy error
+174:EVP_R_EXPECTING_AN_HMAC_KEY:expecting an hmac key
+175:EVP_R_EXPECTING_A_SIPHASH_KEY:expecting a siphash key
+176:EVP_R_ARIA_KEY_SETUP_FAILED:aria key setup failed
+177:EVP_R_ONLY_ONESHOT_SUPPORTED:only oneshot supported
+178:EVP_R_NOT_XOF_OR_INVALID_LENGTH:not XOF or invalid length
+179:EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED:pkey application asn1 method already registered
+180:EVP_R_KEY_SETUP_FAILED:key setup failed
+181:EVP_R_PBKDF2_ERROR:pbkdf2 error
+182:EVP_R_GET_RAW_KEY_FAILED:get raw key failed
+183:EVP_R_TOO_MANY_RECORDS:too many records
+184:EVP_R_CIPHER_NOT_GCM_MODE:cipher not gcm mode
+185:EVP_R_INVALID_CUSTOM_LENGTH:invalid custom length
+186:EVP_R_INVALID_SALT_LENGTH:invalid salt length
+187:EVP_R_PARAMETER_TOO_LARGE:parameter too large
+188:EVP_R_FINAL_ERROR:final error
+189:EVP_R_UPDATE_ERROR:update error
+190:EVP_R_NOT_ABLE_TO_COPY_CTX:not able to copy ctx
+191:EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE:xts data unit is too large
+192:EVP_R_XTS_DUPLICATED_KEYS:xts duplicated keys
+193:EVP_R_INVALID_PROVIDER_FUNCTIONS:invalid provider functions
+194:EVP_R_INVALID_IV_LENGTH:invalid iv length
+195:EVP_R_BAD_KEY_LENGTH:bad key length
+196:EVP_R_NO_KEYMGMT_PRESENT:no keymgmt present
+197:EVP_R_CANNOT_GET_PARAMETERS:cannot get parameters
+198:EVP_R_CANNOT_SET_PARAMETERS:cannot set parameters
+199:EVP_R_NO_KEYMGMT_AVAILABLE:no keymgmt available
+200:EVP_R_BAD_ALGORITHM_NAME:bad algorithm name
+201:EVP_R_CONFLICTING_ALGORITHM_NAME:conflicting algorithm name
+202:EVP_R_OUTPUT_WOULD_OVERFLOW:output would overflow
+203:EVP_R_INACCESSIBLE_KEY:inaccessible key
+204:EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS:inaccessible domain parameters
+205:EVP_R_KEYMGMT_EXPORT_FAILURE:keymgmt export failure
+206:EVP_R_NO_IMPORT_FUNCTION:no import function
+207:EVP_R_UNKNOWN_KEY_TYPE:unknown key type
+208:EVP_R_NULL_MAC_PKEY_CTX:null mac pkey ctx
+209:EVP_R_SET_DEFAULT_PROPERTY_FAILURE:set default property failure
+210:EVP_R_DEFAULT_QUERY_PARSE_ERROR:default query parse error
+211:EVP_R_UNABLE_TO_LOCK_CONTEXT:unable to lock context
+212:EVP_R_UNABLE_TO_ENABLE_LOCKING:unable to enable locking
+213:EVP_R_LOCKING_NOT_SUPPORTED:locking not supported
+214:EVP_R_GENERATE_ERROR:generate error
+215:EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:unable to get maximum request size
+216:EVP_R_UNABLE_TO_GET_RANDOM_STRENGTH:unable to get random strength
+217:EVP_R_UNABLE_TO_SET_CALLBACKS:unable to set callbacks
+218:EVP_R_INVALID_NULL_ALGORITHM:invalid null algorithm
+219:EVP_R_EXPECTING_A_ECX_KEY:expecting an ecx key
+220:EVP_R_INVALID_SEED_LENGTH:invalid seed length
+221:EVP_R_INVALID_LENGTH:invalid length
+222:EVP_R_INVALID_VALUE:invalid value
+223:EVP_R_INVALID_SECRET_LENGTH:invalid secret length
+224:EVP_R_UNSUPPORTED_KEY_TYPE:unsupported key type
+225:EVP_R_CACHE_CONSTANTS_FAILED:cache constants failed
+226:EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_SIGNATURE_TYPE:operation not supported for this signature type
+227:EVP_R_SETTING_XOF_FAILED:setting xof failed
+228:EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE:signature type and key type incompatible
+229:EVP_R_GETTING_ALGORITHMIDENTIFIER_NOT_SUPPORTED:getting AlgorithmIdentifier not supported
+230:EVP_R_PIPELINE_NOT_SUPPORTED:pipeline not supported
+231:EVP_R_TOO_MANY_PIPES:too many pipes
+232:EVP_R_PROVIDER_ASYM_CIPHER_FAILURE:provider asym cipher failure
+233:EVP_R_PROVIDER_KEYMGMT_FAILURE:provider keymgmt failure
+234:EVP_R_PROVIDER_SIGNATURE_FAILURE:provider signature failure
+235:EVP_R_PROVIDER_ASYM_CIPHER_NOT_SUPPORTED:provider asym cipher not supported
+236:EVP_R_PROVIDER_KEYMGMT_NOT_SUPPORTED:provider keymgmt not supported
+237:EVP_R_PROVIDER_SIGNATURE_NOT_SUPPORTED:provider signature not supported
+238:EVP_R_PROVIDER_GET_CTX_PARAMS_NOT_SUPPORTED:provider get ctx params not supported
+239:EVP_R_CONTEXT_FINALIZED:context finalized
+# OBJ reasons
+101:OBJ_R_UNKNOWN_NID:unknown nid
+102:OBJ_R_OID_EXISTS:oid exists
+103:OBJ_R_UNKNOWN_OBJECT_NAME:unknown object name
+# PEM reasons
+100:PEM_R_BAD_BASE64_DECODE:bad base64 decode
+101:PEM_R_BAD_DECRYPT:bad decrypt
+102:PEM_R_BAD_END_LINE:bad end line
+103:PEM_R_BAD_IV_CHARS:bad iv chars
+104:PEM_R_BAD_PASSWORD_READ:bad password read
+105:PEM_R_NOT_DEK_INFO:not dek info
+106:PEM_R_NOT_ENCRYPTED:not encrypted
+107:PEM_R_NOT_PROC_TYPE:not proc type
+108:PEM_R_NO_START_LINE:no start line
+109:PEM_R_PROBLEMS_GETTING_PASSWORD:problems getting password
+110:PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE:unsupported public key type
+111:PEM_R_READ_KEY:read key
+112:PEM_R_SHORT_HEADER:short header
+113:PEM_R_UNSUPPORTED_CIPHER:unsupported cipher
+114:PEM_R_UNSUPPORTED_ENCRYPTION:unsupported encryption
+115:PEM_R_ERROR_CONVERTING_PRIVATE_KEY:error converting private key
+116:PEM_R_BAD_MAGIC_NUMBER:bad magic number
+117:PEM_R_BAD_VERSION_NUMBER:bad version number
+118:PEM_R_BIO_WRITE_FAILURE:bio write failure
+119:PEM_R_EXPECTING_PRIVATE_KEY_BLOB:expecting private key blob
+120:PEM_R_EXPECTING_PUBLIC_KEY_BLOB:expecting public key blob
+121:PEM_R_INCONSISTENT_HEADER:inconsistent header
+122:PEM_R_KEYBLOB_HEADER_PARSE_ERROR:keyblob header parse error
+123:PEM_R_KEYBLOB_TOO_SHORT:keyblob too short
+124:PEM_R_PVK_DATA_TOO_SHORT:pvk data too short
+125:PEM_R_PVK_TOO_SHORT:pvk too short
+126:PEM_R_UNSUPPORTED_KEY_COMPONENTS:unsupported key components
+127:PEM_R_CIPHER_IS_NULL:cipher is null
+128:PEM_R_HEADER_TOO_LONG:header too long
+129:PEM_R_MISSING_DEK_IV:missing dek iv
+130:PEM_R_UNEXPECTED_DEK_IV:unexpected dek iv
+131:PEM_R_EXPECTING_DSS_KEY_BLOB:expecting dss key blob
+132:PEM_R_EXPECTING_RSA_KEY_BLOB:expecting rsa key blob
+133:PEM_R_UNSUPPORTED_PVK_KEY_TYPE:unsupported pvk key type
+# DSA reasons
+101:DSA_R_MISSING_PARAMETERS:missing parameters
+102:DSA_R_BAD_Q_VALUE:bad q value
+103:DSA_R_MODULUS_TOO_LARGE:modulus too large
+104:DSA_R_DECODE_ERROR:decode error
+105:DSA_R_PARAMETER_ENCODING_ERROR:parameter encoding error
+106:DSA_R_INVALID_DIGEST_TYPE:invalid digest type
+107:DSA_R_NO_PARAMETERS_SET:no parameters set
+108:DSA_R_BN_DECODE_ERROR:bn decode error
+109:DSA_R_BN_ERROR:bn error
+110:DSA_R_SEED_LEN_SMALL:seed_len is less than the length of q
+111:DSA_R_MISSING_PRIVATE_KEY:missing private key
+112:DSA_R_INVALID_PARAMETERS:invalid parameters
+113:DSA_R_Q_NOT_PRIME:q not prime
+114:DSA_R_BAD_FFC_PARAMETERS:bad ffc parameters
+115:DSA_R_P_NOT_PRIME:p not prime
+116:DSA_R_TOO_MANY_RETRIES:too many retries
+# X509 reasons
+100:X509_R_BAD_X509_FILETYPE:bad x509 filetype
+101:X509_R_CERT_ALREADY_IN_HASH_TABLE:cert already in hash table
+103:X509_R_LOADING_CERT_DIR:loading cert dir
+104:X509_R_LOADING_DEFAULTS:loading defaults
+105:X509_R_NO_CERT_SET_FOR_US_TO_VERIFY:no cert set for us to verify
+106:X509_R_SHOULD_RETRY:should retry
+107:X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN:unable to find parameters in chain
+108:X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY:unable to get certs public key
+109:X509_R_UNKNOWN_NID:unknown nid
+110:X509_R_AKID_MISMATCH:akid mismatch
+111:X509_R_UNSUPPORTED_ALGORITHM:unsupported algorithm
+112:X509_R_WRONG_LOOKUP_TYPE:wrong lookup type
+113:X509_R_INVALID_DIRECTORY:invalid directory
+114:X509_R_CANT_CHECK_DH_KEY:can't check dh key
+115:X509_R_KEY_TYPE_MISMATCH:key type mismatch
+116:X509_R_KEY_VALUES_MISMATCH:key values mismatch
+117:X509_R_UNKNOWN_KEY_TYPE:unknown key type
+118:X509_R_BASE64_DECODE_ERROR:base64 decode error
+119:X509_R_INVALID_FIELD_NAME:invalid field name
+120:X509_R_UNKNOWN_TRUST_ID:unknown trust id
+121:X509_R_UNKNOWN_PURPOSE_ID:unknown purpose id
+122:X509_R_WRONG_TYPE:wrong type
+123:X509_R_INVALID_TRUST:invalid trust
+124:X509_R_METHOD_NOT_SUPPORTED:method not supported
+125:X509_R_PUBLIC_KEY_DECODE_ERROR:public key decode error
+126:X509_R_PUBLIC_KEY_ENCODE_ERROR:public key encode error
+127:X509_R_CRL_ALREADY_DELTA:crl already delta
+128:X509_R_IDP_MISMATCH:idp mismatch
+129:X509_R_ISSUER_MISMATCH:issuer mismatch
+130:X509_R_NO_CRL_NUMBER:no crl number
+131:X509_R_CRL_VERIFY_FAILURE:crl verify failure
+132:X509_R_NEWER_CRL_NOT_NEWER:newer crl not newer
+133:X509_R_BAD_SELECTOR:bad selector
+134:X509_R_NAME_TOO_LONG:name too long
+135:X509_R_NO_CERTIFICATE_FOUND:no certificate found
+136:X509_R_NO_CERTIFICATE_OR_CRL_FOUND:no certificate or crl found
+137:X509_R_NO_CRL_FOUND:no crl found
+138:X509_R_INVALID_ATTRIBUTES:invalid attributes
+139:X509_R_CERTIFICATE_VERIFICATION_FAILED:certificate verification failed
+140:X509_R_DUPLICATE_ATTRIBUTE:duplicate attribute
+141:X509_R_ERROR_GETTING_MD_BY_NID:error getting md by nid
+142:X509_R_ERROR_USING_SIGINF_SET:error using siginf set
+143:X509_R_INVALID_DISTPOINT:invalid distpoint
+144:X509_R_UNKNOWN_SIGID_ALGS:unknown sigid algs
+145:X509_R_UNSUPPORTED_VERSION:unsupported version
+146:X509_R_INVALID_EXTENSION:invalid extension
+147:X509_R_CRL_SIGNATURE_ALGORITHM_MISMATCH:crl signature algorithm mismatch
+# ASN1 reasons
+100:ASN1_R_AUX_ERROR:aux error
+102:ASN1_R_BAD_OBJECT_HEADER:bad object header
+105:ASN1_R_BN_LIB:bn lib
+106:ASN1_R_BOOLEAN_IS_WRONG_LENGTH:boolean is wrong length
+107:ASN1_R_BUFFER_TOO_SMALL:buffer too small
+108:ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER:cipher has no object identifier
+109:ASN1_R_DATA_IS_WRONG:data is wrong
+110:ASN1_R_DECODE_ERROR:decode error
+112:ASN1_R_ENCODE_ERROR:encode error
+114:ASN1_R_ERROR_SETTING_CIPHER_PARAMS:error setting cipher params
+115:ASN1_R_EXPECTING_AN_INTEGER:expecting an integer
+116:ASN1_R_EXPECTING_AN_OBJECT:expecting an object
+119:ASN1_R_EXPLICIT_LENGTH_MISMATCH:explicit length mismatch
+120:ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED:explicit tag not constructed
+121:ASN1_R_FIELD_MISSING:field missing
+122:ASN1_R_FIRST_NUM_TOO_LARGE:first num too large
+123:ASN1_R_HEADER_TOO_LONG:header too long
+124:ASN1_R_ILLEGAL_CHARACTERS:illegal characters
+125:ASN1_R_ILLEGAL_NULL:illegal null
+126:ASN1_R_ILLEGAL_OPTIONAL_ANY:illegal optional any
+127:ASN1_R_ILLEGAL_TAGGED_ANY:illegal tagged any
+128:ASN1_R_INTEGER_TOO_LARGE_FOR_LONG:integer too large for long
+129:ASN1_R_INVALID_BMPSTRING_LENGTH:invalid bmpstring length
+130:ASN1_R_INVALID_DIGIT:invalid digit
+131:ASN1_R_INVALID_SEPARATOR:invalid separator
+133:ASN1_R_INVALID_UNIVERSALSTRING_LENGTH:invalid universalstring length
+134:ASN1_R_INVALID_UTF8STRING:invalid utf8string
+137:ASN1_R_MISSING_EOC:missing eoc
+138:ASN1_R_MISSING_SECOND_NUMBER:missing second number
+139:ASN1_R_MSTRING_NOT_UNIVERSAL:mstring not universal
+140:ASN1_R_MSTRING_WRONG_TAG:mstring wrong tag
+141:ASN1_R_NON_HEX_CHARACTERS:non hex characters
+142:ASN1_R_NOT_ENOUGH_DATA:not enough data
+143:ASN1_R_NO_MATCHING_CHOICE_TYPE:no matching choice type
+144:ASN1_R_NULL_IS_WRONG_LENGTH:null is wrong length
+145:ASN1_R_ODD_NUMBER_OF_CHARS:odd number of chars
+147:ASN1_R_SECOND_NUMBER_TOO_LARGE:second number too large
+148:ASN1_R_SEQUENCE_LENGTH_MISMATCH:sequence length mismatch
+149:ASN1_R_SEQUENCE_NOT_CONSTRUCTED:sequence not constructed
+150:ASN1_R_SHORT_LINE:short line
+151:ASN1_R_STRING_TOO_LONG:string too long
+152:ASN1_R_STRING_TOO_SHORT:string too short
+154:ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:the asn1 object identifier is not known for this md
+155:ASN1_R_TOO_LONG:too long
+156:ASN1_R_TYPE_NOT_CONSTRUCTED:type not constructed
+159:ASN1_R_UNEXPECTED_EOC:unexpected eoc
+160:ASN1_R_UNKNOWN_FORMAT:unknown format
+161:ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM:unknown message digest algorithm
+162:ASN1_R_UNKNOWN_OBJECT_TYPE:unknown object type
+163:ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE:unknown public key type
+164:ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE:unsupported any defined by type
+167:ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE:unsupported public key type
+168:ASN1_R_WRONG_TAG:wrong tag
+170:ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE:illegal options on item template
+171:ASN1_R_ADDING_OBJECT:adding object
+172:ASN1_R_ERROR_LOADING_SECTION:error loading section
+173:ASN1_R_ERROR_GETTING_TIME:error getting time
+174:ASN1_R_DEPTH_EXCEEDED:depth exceeded
+175:ASN1_R_ILLEGAL_BITSTRING_FORMAT:illegal bitstring format
+176:ASN1_R_ILLEGAL_BOOLEAN:illegal boolean
+177:ASN1_R_ILLEGAL_FORMAT:illegal format
+178:ASN1_R_ILLEGAL_HEX:illegal hex
+179:ASN1_R_ILLEGAL_IMPLICIT_TAG:illegal implicit tag
+180:ASN1_R_ILLEGAL_INTEGER:illegal integer
+181:ASN1_R_ILLEGAL_NESTED_TAGGING:illegal nested tagging
+182:ASN1_R_ILLEGAL_NULL_VALUE:illegal null value
+183:ASN1_R_ILLEGAL_OBJECT:illegal object
+184:ASN1_R_ILLEGAL_TIME_VALUE:illegal time value
+185:ASN1_R_INTEGER_NOT_ASCII_FORMAT:integer not ascii format
+186:ASN1_R_INVALID_MODIFIER:invalid modifier
+187:ASN1_R_INVALID_NUMBER:invalid number
+188:ASN1_R_LIST_ERROR:list error
+189:ASN1_R_MISSING_VALUE:missing value
+190:ASN1_R_NOT_ASCII_FORMAT:not ascii format
+191:ASN1_R_OBJECT_NOT_ASCII_FORMAT:object not ascii format
+192:ASN1_R_SEQUENCE_OR_SET_NEEDS_CONFIG:sequence or set needs config
+193:ASN1_R_TIME_NOT_ASCII_FORMAT:time not ascii format
+194:ASN1_R_UNKNOWN_TAG:unknown tag
+195:ASN1_R_TYPE_NOT_PRIMITIVE:type not primitive
+196:ASN1_R_UNSUPPORTED_TYPE:unsupported type
+197:ASN1_R_NESTED_ASN1_STRING:nested asn1 string
+198:ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED:digest and key type not supported
+199:ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM:unknown signature algorithm
+200:ASN1_R_WRONG_PUBLIC_KEY_TYPE:wrong public key type
+201:ASN1_R_NESTED_TOO_DEEP:nested too deep
+202:ASN1_R_STREAMING_NOT_SUPPORTED:streaming not supported
+203:ASN1_R_ASN1_PARSE_ERROR:asn1 parse error
+204:ASN1_R_ASN1_SIG_PARSE_ERROR:asn1 sig parse error
+205:ASN1_R_INVALID_MIME_TYPE:invalid mime type
+206:ASN1_R_MIME_NO_CONTENT_TYPE:mime no content type
+207:ASN1_R_MIME_PARSE_ERROR:mime parse error
+208:ASN1_R_MIME_SIG_PARSE_ERROR:mime sig parse error
+209:ASN1_R_NO_CONTENT_TYPE:no content type
+210:ASN1_R_NO_MULTIPART_BODY_FAILURE:no multipart body failure
+211:ASN1_R_NO_MULTIPART_BOUNDARY:no multipart boundary
+212:ASN1_R_NO_SIG_CONTENT_TYPE:no sig content type
+213:ASN1_R_SIG_INVALID_MIME_TYPE:sig invalid mime type
+214:ASN1_R_BMPSTRING_IS_WRONG_LENGTH:bmpstring is wrong length
+215:ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH:universalstring is wrong length
+216:ASN1_R_INVALID_OBJECT_ENCODING:invalid object encoding
+217:ASN1_R_CONTEXT_NOT_INITIALISED:context not initialised
+218:ASN1_R_INVALID_STRING_TABLE_VALUE:invalid string table value
+219:ASN1_R_INVALID_VALUE:invalid value
+220:ASN1_R_INVALID_BIT_STRING_BITS_LEFT:invalid bit string bits left
+221:ASN1_R_ILLEGAL_PADDING:illegal padding
+222:ASN1_R_ILLEGAL_ZERO_CONTENT:illegal zero content
+223:ASN1_R_TOO_LARGE:too large
+224:ASN1_R_TOO_SMALL:too small
+225:ASN1_R_WRONG_INTEGER_TYPE:wrong integer type
+226:ASN1_R_ILLEGAL_NEGATIVE_VALUE:illegal negative value
+227:ASN1_R_INVALID_SCRYPT_PARAMETERS:invalid scrypt parameters
+228:ASN1_R_UNSUPPORTED_CIPHER:unsupported cipher
+229:ASN1_R_UNKNOWN_DIGEST:unknown digest
+230:ASN1_R_BAD_TEMPLATE:bad template
+231:ASN1_R_LENGTH_TOO_LONG:length too long
+232:ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT:generalizedtime is too short
+233:ASN1_R_UTCTIME_IS_TOO_SHORT:utctime is too short
+# CONF reasons
+100:CONF_R_MISSING_CLOSE_SQUARE_BRACKET:missing close square bracket
+101:CONF_R_MISSING_EQUAL_SIGN:missing equal sign
+102:CONF_R_NO_CLOSE_BRACE:no close brace
+103:CONF_R_UNABLE_TO_CREATE_NEW_SECTION:unable to create new section
+104:CONF_R_VARIABLE_HAS_NO_VALUE:variable has no value
+105:CONF_R_NO_CONF:no conf
+106:CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE:no conf or environment variable
+107:CONF_R_NO_SECTION:no section
+108:CONF_R_NO_VALUE:no value
+109:CONF_R_MODULE_INITIALIZATION_ERROR:module initialization error
+110:CONF_R_ERROR_LOADING_DSO:error loading dso
+111:CONF_R_RECURSIVE_DIRECTORY_INCLUDE:recursive directory include
+112:CONF_R_MISSING_INIT_FUNCTION:missing init function
+113:CONF_R_UNKNOWN_MODULE_NAME:unknown module name
+114:CONF_R_NO_SUCH_FILE:no such file
+115:CONF_R_LIST_CANNOT_BE_NULL:list cannot be null
+116:CONF_R_VARIABLE_EXPANSION_TOO_LONG:variable expansion too long
+117:CONF_R_SSL_COMMAND_SECTION_EMPTY:ssl command section empty
+118:CONF_R_SSL_COMMAND_SECTION_NOT_FOUND:ssl command section not found
+119:CONF_R_SSL_SECTION_EMPTY:ssl section empty
+120:CONF_R_SSL_SECTION_NOT_FOUND:ssl section not found
+121:CONF_R_NUMBER_TOO_LARGE:number too large
+122:CONF_R_INVALID_PRAGMA:invalid pragma
+123:CONF_R_MANDATORY_BRACES_IN_VARIABLE_EXPANSION:mandatory braces in variable expansion
+124:CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION:openssl conf references missing section
+125:CONF_R_RELATIVE_PATH:relative path
+126:CONF_R_RECURSIVE_SECTION_REFERENCE:recursive section reference
+# CRYPTO reasons
+102:CRYPTO_R_ILLEGAL_HEX_DIGIT:illegal hex digit
+103:CRYPTO_R_ODD_NUMBER_OF_DIGITS:odd number of digits
+104:CRYPTO_R_PROVIDER_ALREADY_EXISTS:provider already exists
+105:CRYPTO_R_PROVIDER_SECTION_ERROR:provider section error
+106:CRYPTO_R_INSUFFICIENT_DATA_SPACE:insufficient data space
+107:CRYPTO_R_INSUFFICIENT_PARAM_SIZE:insufficient param size
+108:CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE:insufficient secure data space
+109:CRYPTO_R_INVALID_NULL_ARGUMENT:invalid null argument
+110:CRYPTO_R_INVALID_OSSL_PARAM_TYPE:invalid ossl param type
+111:CRYPTO_R_SECURE_MALLOC_FAILURE:secure malloc failure
+112:CRYPTO_R_STRING_TOO_LONG:string too long
+113:CRYPTO_R_TOO_MANY_BYTES:too many bytes
+114:CRYPTO_R_TOO_MANY_RECORDS:too many records
+115:CRYPTO_R_ZERO_LENGTH_NUMBER:zero length number
+116:CRYPTO_R_TOO_SMALL_BUFFER:too small buffer
+117:CRYPTO_R_BAD_ALGORITHM_NAME:bad algorithm name
+118:CRYPTO_R_CONFLICTING_NAMES:conflicting names
+119:CRYPTO_R_RANDOM_SECTION_ERROR:random section error
+120:CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION:unknown name in random section
+121:CRYPTO_R_HEX_STRING_TOO_SHORT:hex string too short
+122:CRYPTO_R_INVALID_NEGATIVE_VALUE:invalid negative value
+123:CRYPTO_R_PARAM_CANNOT_BE_REPRESENTED_EXACTLY:param cannot be represented exactly
+124:CRYPTO_R_PARAM_NOT_INTEGER_TYPE:param not integer type
+125:CRYPTO_R_PARAM_UNSIGNED_INTEGER_NEGATIVE_VALUE_UNSUPPORTED:param unsigned integer negative value unsupported
+126:CRYPTO_R_PARAM_VALUE_TOO_LARGE_FOR_DESTINATION:param value too large for destination
+127:CRYPTO_R_INTEGER_OVERFLOW:integer overflow
+128:CRYPTO_R_NO_SPACE_FOR_TERMINATING_NULL:no space for terminating null
+129:CRYPTO_R_PARAM_OF_INCOMPATIBLE_TYPE:param of incompatible type
+130:CRYPTO_R_PARAM_UNSUPPORTED_FLOATING_POINT_FORMAT:param unsupported floating point format
+131:CRYPTO_R_NO_PARAMS_TO_MERGE:no params to merge
+132:CRYPTO_R_TOO_MANY_NAMES:too many names
+# EC reasons
+100:EC_R_BUFFER_TOO_SMALL:buffer too small
+101:EC_R_INCOMPATIBLE_OBJECTS:incompatible objects
+102:EC_R_INVALID_ENCODING:invalid encoding
+103:EC_R_INVALID_FIELD:invalid field
+104:EC_R_INVALID_FORM:invalid form
+106:EC_R_POINT_AT_INFINITY:point at infinity
+107:EC_R_POINT_IS_NOT_ON_CURVE:point is not on curve
+108:EC_R_SLOT_FULL:slot full
+109:EC_R_INVALID_COMPRESSION_BIT:invalid compression bit
+110:EC_R_INVALID_COMPRESSED_POINT:invalid compressed point
+111:EC_R_NOT_INITIALIZED:not initialized
+112:EC_R_INVALID_ARGUMENT:invalid argument
+113:EC_R_UNDEFINED_GENERATOR:undefined generator
+114:EC_R_UNKNOWN_ORDER:unknown order
+115:EC_R_ASN1_ERROR:asn1 error
+116:EC_R_INVALID_KEY:invalid key
+117:EC_R_INVALID_LENGTH:invalid length
+118:EC_R_DISCRIMINANT_IS_ZERO:discriminant is zero
+119:EC_R_EC_GROUP_NEW_BY_NAME_FAILURE:ec group new by name failure
+120:EC_R_GROUP2PKPARAMETERS_FAILURE:group2pkparameters failure
+121:EC_R_I2D_ECPKPARAMETERS_FAILURE:i2d ecpkparameters failure
+122:EC_R_INVALID_GROUP_ORDER:invalid group order
+123:EC_R_INVALID_PRIVATE_KEY:invalid private key
+124:EC_R_MISSING_PARAMETERS:missing parameters
+125:EC_R_MISSING_PRIVATE_KEY:missing private key
+126:EC_R_NOT_IMPLEMENTED:not implemented
+127:EC_R_EXPLICIT_PARAMS_NOT_SUPPORTED:explicit params not supported
+128:EC_R_UNDEFINED_ORDER:undefined order
+129:EC_R_UNKNOWN_GROUP:unknown group
+130:EC_R_WRONG_ORDER:wrong order
+131:EC_R_UNSUPPORTED_FIELD:unsupported field
+132:EC_R_INVALID_PENTANOMIAL_BASIS:invalid pentanomial basis
+133:EC_R_INVALID_PEER_KEY:invalid peer key
+134:EC_R_PASSED_NULL_PARAMETER:passed null parameter
+135:EC_R_NOT_A_NIST_PRIME:not a NIST prime
+136:EC_R_LADDER_POST_FAILURE:ladder post failure
+137:EC_R_INVALID_TRINOMIAL_BASIS:invalid trinomial basis
+138:EC_R_INVALID_DIGEST_TYPE:invalid digest type
+139:EC_R_NO_PARAMETERS_SET:no parameters set
+140:EC_R_KEYS_NOT_SET:keys not set
+141:EC_R_INVALID_CURVE:invalid curve
+142:EC_R_DECODE_ERROR:decode error
+143:EC_R_FIELD_TOO_LARGE:field too large
+144:EC_R_BIGNUM_OUT_OF_RANGE:bignum out of range
+145:EC_R_WRONG_CURVE_PARAMETERS:wrong curve parameters
+146:EC_R_COORDINATES_OUT_OF_RANGE:coordinates out of range
+147:EC_R_GF2M_NOT_SUPPORTED:gf2m not supported
+148:EC_R_KDF_PARAMETER_ERROR:kdf parameter error
+149:EC_R_PEER_KEY_ERROR:peer key error
+150:EC_R_SHARED_INFO_ERROR:shared info error
+151:EC_R_INVALID_DIGEST:invalid digest
+152:EC_R_OPERATION_NOT_SUPPORTED:operation not supported
+153:EC_R_LADDER_PRE_FAILURE:ladder pre failure
+154:EC_R_NO_PRIVATE_VALUE:no private value
+155:EC_R_POINT_ARITHMETIC_FAILURE:point arithmetic failure
+156:EC_R_BAD_SIGNATURE:bad signature
+157:EC_R_NEED_NEW_SETUP_VALUES:need new setup values
+158:EC_R_RANDOM_NUMBER_GENERATION_FAILED:random number generation failed
+159:EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING:curve does not support signing
+160:EC_R_CURVE_DOES_NOT_SUPPORT_ECDH:curve does not support ecdh
+161:EC_R_INVALID_OUTPUT_LENGTH:invalid output length
+162:EC_R_LADDER_STEP_FAILURE:ladder step failure
+163:EC_R_POINT_COORDINATES_BLIND_FAILURE:point coordinates blind failure
+164:EC_R_UNKNOWN_COFACTOR:unknown cofactor
+165:EC_R_CANNOT_INVERT:cannot invert
+166:EC_R_FAILED_MAKING_PUBLIC_KEY:failed making public key
+167:EC_R_MISSING_OID:missing OID
+168:EC_R_INVALID_A:invalid a
+169:EC_R_INVALID_B:invalid b
+170:EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA:curve does not support ecdsa
+171:EC_R_INVALID_COFACTOR:invalid cofactor
+172:EC_R_INVALID_P:invalid p
+173:EC_R_INVALID_GENERATOR:invalid generator
+174:EC_R_INVALID_NAMED_GROUP_CONVERSION:invalid named group conversion
+175:EC_R_INVALID_SEED:invalid seed
+176:EC_R_TOO_MANY_RETRIES:too many retries
+# SSL reasons, which must be below 1000
+999:SSL_R_INVALID_SESSION_ID:invalid session id
+100:SSL_R_APP_DATA_IN_HANDSHAKE:app data in handshake
+101:SSL_R_NO_SUITABLE_KEY_SHARE:no suitable key share
+102:SSL_R_BAD_DH_VALUE:bad dh value
+103:SSL_R_BAD_CHANGE_CIPHER_SPEC:bad change cipher spec
+104:SSL_R_INCONSISTENT_EXTMS:inconsistent extms
+105:SSL_R_BAD_HELLO_REQUEST:bad hello request
+106:SSL_R_BAD_DATA_RETURNED_BY_CALLBACK:bad data returned by callback
+107:SSL_R_BAD_DECOMPRESSION:bad decompression
+108:SSL_R_BAD_KEY_SHARE:bad key share
+109:SSL_R_CANNOT_CHANGE_CIPHER:cannot change cipher
+110:SSL_R_BAD_EXTENSION:bad extension
+111:SSL_R_BAD_DIGEST_LENGTH:bad digest length
+112:SSL_R_MISSING_SIGALGS_EXTENSION:missing sigalgs extension
+113:SSL_R_INVALID_CONFIGURATION_NAME:invalid configuration name
+114:SSL_R_BAD_PSK_IDENTITY:bad psk identity
+115:SSL_R_BAD_PACKET_LENGTH:bad packet length
+116:SSL_R_BAD_PROTOCOL_VERSION_NUMBER:bad protocol version number
+117:SSL_R_SSL_COMMAND_SECTION_EMPTY:ssl command section empty
+118:SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM:no suitable signature algorithm
+119:SSL_R_BAD_RSA_ENCRYPT:bad rsa encrypt
+120:SSL_R_INVALID_KEY_UPDATE_TYPE:invalid key update type
+121:SSL_R_STILL_IN_INIT:still in init
+122:SSL_R_BAD_KEY_UPDATE:bad key update
+123:SSL_R_BAD_SIGNATURE:bad signature
+124:SSL_R_BAD_SSL_FILETYPE:bad ssl filetype
+125:SSL_R_SSL_COMMAND_SECTION_NOT_FOUND:ssl command section not found
+126:SSL_R_SSL_SECTION_EMPTY:ssl section empty
+127:SSL_R_BAD_WRITE_RETRY:bad write retry
+128:SSL_R_BIO_NOT_SET:bio not set
+129:SSL_R_BLOCK_CIPHER_PAD_IS_WRONG:block cipher pad is wrong
+130:SSL_R_BN_LIB:bn lib
+131:SSL_R_CA_DN_LENGTH_MISMATCH:ca dn length mismatch
+132:SSL_R_TOO_MANY_KEY_UPDATES:too many key updates
+133:SSL_R_CCS_RECEIVED_EARLY:ccs received early
+134:SSL_R_CERTIFICATE_VERIFY_FAILED:certificate verify failed
+135:SSL_R_CERT_LENGTH_MISMATCH:cert length mismatch
+136:SSL_R_SSL_SECTION_NOT_FOUND:ssl section not found
+137:SSL_R_CIPHER_CODE_WRONG_LENGTH:cipher code wrong length
+139:SSL_R_UNKNOWN_COMMAND:unknown command
+140:SSL_R_COMPRESSED_LENGTH_TOO_LONG:compressed length too long
+141:SSL_R_COMPRESSION_FAILURE:compression failure
+142:SSL_R_COMPRESSION_LIBRARY_ERROR:compression library error
+144:SSL_R_CONNECTION_TYPE_NOT_SET:connection type not set
+145:SSL_R_DATA_BETWEEN_CCS_AND_FINISHED:data between ccs and finished
+146:SSL_R_DATA_LENGTH_TOO_LONG:data length too long
+147:SSL_R_DECRYPTION_FAILED:decryption failed
+148:SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG:dh public value length is wrong
+149:SSL_R_DIGEST_CHECK_FAILED:digest check failed
+150:SSL_R_ENCRYPTED_LENGTH_TOO_LONG:encrypted length too long
+151:SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST:error in received cipher list
+152:SSL_R_EXCESSIVE_MESSAGE_SIZE:excessive message size
+153:SSL_R_EXTRA_DATA_IN_MESSAGE:extra data in message
+154:SSL_R_GOT_A_FIN_BEFORE_A_CCS:got a fin before a ccs
+155:SSL_R_HTTPS_PROXY_REQUEST:https proxy request
+156:SSL_R_HTTP_REQUEST:http request
+157:SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST:tls invalid ecpointformat list
+158:SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:at least (D)TLS 1.2 needed in Suite B mode
+159:SSL_R_LENGTH_MISMATCH:length mismatch
+160:SSL_R_LENGTH_TOO_SHORT:length too short
+161:SSL_R_LIBRARY_HAS_NO_CIPHERS:library has no ciphers
+162:SSL_R_ILLEGAL_POINT_COMPRESSION:illegal point compression
+163:SSL_R_EXT_LENGTH_MISMATCH:ext length mismatch
+164:SSL_R_TOO_MUCH_EARLY_DATA:too much early data
+165:SSL_R_MISSING_DSA_SIGNING_CERT:missing dsa signing cert
+166:SSL_R_VERSION_TOO_HIGH:version too high
+167:SSL_R_CONTEXT_NOT_DANE_ENABLED:context not dane enabled
+168:SSL_R_MISSING_RSA_CERTIFICATE:missing rsa certificate
+169:SSL_R_MISSING_RSA_ENCRYPTING_CERT:missing rsa encrypting cert
+170:SSL_R_MISSING_RSA_SIGNING_CERT:missing rsa signing cert
+171:SSL_R_MISSING_TMP_DH_KEY:missing tmp dh key
+172:SSL_R_DANE_ALREADY_ENABLED:dane already enabled
+173:SSL_R_DANE_CANNOT_OVERRIDE_MTYPE_FULL:dane cannot override mtype full
+174:SSL_R_INVALID_MAX_EARLY_DATA:invalid max early data
+175:SSL_R_DANE_NOT_ENABLED:dane not enabled
+176:SSL_R_NO_CERTIFICATES_RETURNED:no certificates returned
+177:SSL_R_NO_CERTIFICATE_ASSIGNED:no certificate assigned
+178:SSL_R_UNEXPECTED_END_OF_EARLY_DATA:unexpected end of early data
+179:SSL_R_NO_CERTIFICATE_SET:no certificate set
+180:SSL_R_DANE_TLSA_BAD_CERTIFICATE:dane tlsa bad certificate
+181:SSL_R_NO_CIPHERS_AVAILABLE:no ciphers available
+182:SSL_R_NOT_ON_RECORD_BOUNDARY:not on record boundary
+183:SSL_R_NO_CIPHERS_SPECIFIED:no ciphers specified
+184:SSL_R_DANE_TLSA_BAD_CERTIFICATE_USAGE:dane tlsa bad certificate usage
+185:SSL_R_NO_CIPHER_MATCH:no cipher match
+186:SSL_R_BAD_CIPHER:bad cipher
+187:SSL_R_NO_COMPRESSION_SPECIFIED:no compression specified
+188:SSL_R_NO_METHOD_SPECIFIED:no method specified
+189:SSL_R_DANE_TLSA_BAD_DATA_LENGTH:dane tlsa bad data length
+190:SSL_R_NO_PRIVATE_KEY_ASSIGNED:no private key assigned
+191:SSL_R_NO_PROTOCOLS_AVAILABLE:no protocols available
+192:SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH:dane tlsa bad digest length
+193:SSL_R_NO_SHARED_CIPHER:no shared cipher
+194:SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE:exceeds max fragment size
+195:SSL_R_NULL_SSL_CTX:null ssl ctx
+196:SSL_R_NULL_SSL_METHOD_PASSED:null ssl method passed
+197:SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED:old session cipher not returned
+198:SSL_R_PACKET_LENGTH_TOO_LONG:packet length too long
+199:SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE:peer did not return a certificate
+200:SSL_R_DANE_TLSA_BAD_MATCHING_TYPE:dane tlsa bad matching type
+201:SSL_R_DANE_TLSA_BAD_PUBLIC_KEY:dane tlsa bad public key
+202:SSL_R_DANE_TLSA_BAD_SELECTOR:dane tlsa bad selector
+203:SSL_R_DANE_TLSA_NULL_DATA:dane tlsa null data
+204:SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN:error setting tlsa base domain
+205:SSL_R_INVALID_ALERT:invalid alert
+206:SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED:custom ext handler already installed
+207:SSL_R_PROTOCOL_IS_SHUTDOWN:protocol is shutdown
+208:SSL_R_SCT_VERIFICATION_FAILED:sct verification failed
+209:SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION:missing supported groups extension
+210:SSL_R_SSL_SESSION_VERSION_MISMATCH:ssl session version mismatch
+211:SSL_R_READ_BIO_NOT_SET:read bio not set
+212:SSL_R_INVALID_CT_VALIDATION_TYPE:invalid ct validation type
+213:SSL_R_RECORD_LENGTH_MISMATCH:record length mismatch
+214:SSL_R_NO_CHANGE_FOLLOWING_HRR:no change following hrr
+215:SSL_R_REQUIRED_CIPHER_MISSING:required cipher missing
+216:SSL_R_NO_VALID_SCTS:no valid scts
+217:SSL_R_UNSOLICITED_EXTENSION:unsolicited extension
+218:SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED:ciphersuite digest has changed
+219:SSL_R_BAD_PSK:bad psk
+220:SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE:signature for non signing certificate
+221:SSL_R_MISSING_SIGNING_CERT:missing signing cert
+222:SSL_R_INCONSISTENT_EARLY_DATA_ALPN:inconsistent early data alpn
+223:SSL_R_PSK_IDENTITY_NOT_FOUND:psk identity not found
+224:SSL_R_PSK_NO_CLIENT_CB:psk no client cb
+225:SSL_R_PSK_NO_SERVER_CB:psk no server cb
+226:SSL_R_CLIENTHELLO_TLSEXT:clienthello tlsext
+227:SSL_R_PARSE_TLSEXT:parse tlsext
+228:SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION:ssl ctx has no default ssl version
+229:SSL_R_SSL_HANDSHAKE_FAILURE:ssl handshake failure
+230:SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS:ssl library has no ciphers
+231:SSL_R_INCONSISTENT_EARLY_DATA_SNI:inconsistent early data sni
+232:SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH:tls ext invalid max fragment length
+233:SSL_R_BAD_EARLY_DATA:bad early data
+234:SSL_R_CALLBACK_FAILED:callback failed
+235:SSL_R_NO_APPLICATION_PROTOCOL:no application protocol
+236:SSL_R_BAD_HANDSHAKE_STATE:bad handshake state
+237:SSL_R_OVERFLOW_ERROR:overflow error
+238:SSL_R_INVALID_CERTIFICATE_OR_ALG:invalid certificate or alg
+239:SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS:unable to find public key parameters
+240:SSL_R_BAD_PACKET:bad packet
+241:SSL_R_INSUFFICIENT_SECURITY:insufficient security
+244:SSL_R_UNEXPECTED_MESSAGE:unexpected message
+245:SSL_R_UNEXPECTED_RECORD:unexpected record
+246:SSL_R_UNKNOWN_ALERT_TYPE:unknown alert type
+247:SSL_R_UNKNOWN_CERTIFICATE_TYPE:unknown certificate type
+248:SSL_R_UNKNOWN_CIPHER_RETURNED:unknown cipher returned
+249:SSL_R_UNKNOWN_CIPHER_TYPE:unknown cipher type
+250:SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE:unknown key exchange type
+251:SSL_R_UNKNOWN_PKEY_TYPE:unknown pkey type
+252:SSL_R_UNKNOWN_PROTOCOL:unknown protocol
+253:SSL_R_BINDER_DOES_NOT_VERIFY:binder does not verify
+254:SSL_R_UNKNOWN_SSL_VERSION:unknown ssl version
+255:SSL_R_UNKNOWN_STATE:unknown state
+256:SSL_R_MISSING_FATAL:missing fatal
+257:SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM:unsupported compression algorithm
+258:SSL_R_UNSUPPORTED_PROTOCOL:unsupported protocol
+259:SSL_R_UNSUPPORTED_SSL_VERSION:unsupported ssl version
+260:SSL_R_INVALID_CCS_MESSAGE:invalid ccs message
+261:SSL_R_WRONG_CIPHER_RETURNED:wrong cipher returned
+262:SSL_R_UNEXPECTED_CCS_MESSAGE:unexpected ccs message
+263:SSL_R_BAD_HRR_VERSION:bad hrr version
+264:SSL_R_WRONG_SIGNATURE_LENGTH:wrong signature length
+265:SSL_R_WRONG_SIGNATURE_SIZE:wrong signature size
+266:SSL_R_WRONG_SSL_VERSION:wrong ssl version
+267:SSL_R_WRONG_VERSION_NUMBER:wrong version number
+268:SSL_R_X509_LIB:x509 lib
+269:SSL_R_X509_VERIFICATION_SETUP_PROBLEMS:x509 verification setup problems
+270:SSL_R_PATH_TOO_LONG:path too long
+271:SSL_R_BAD_LENGTH:bad length
+272:SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT:attempt to reuse session in different context
+273:SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG:ssl session id context too long
+274:SSL_R_LIBRARY_BUG:library bug
+275:SSL_R_SERVERHELLO_TLSEXT:serverhello tlsext
+276:SSL_R_UNINITIALIZED:uninitialized
+277:SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED:session id context uninitialized
+278:SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR:post handshake auth encoding err
+279:SSL_R_EXTENSION_NOT_RECEIVED:extension not received
+280:SSL_R_INVALID_COMMAND:invalid command
+281:SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC:decryption failed or bad record mac
+282:SSL_R_INVALID_CONTEXT:invalid context
+283:SSL_R_INVALID_CONFIG:invalid config
+284:SSL_R_NOT_SERVER:not server
+285:SSL_R_REQUEST_PENDING:request pending
+286:SSL_R_REQUEST_SENT:request sent
+287:SSL_R_NO_COOKIE_CALLBACK_SET:no cookie callback set
+288:SSL_R_PRIVATE_KEY_MISMATCH:private key mismatch
+289:SSL_R_NOT_REPLACING_CERTIFICATE:not replacing certificate
+290:SSL_R_MISSING_PARAMETERS:missing parameters
+291:SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY:application data after close notify
+292:SSL_R_BAD_LEGACY_VERSION:bad legacy version
+293:SSL_R_MIXED_HANDSHAKE_AND_NON_HANDSHAKE_DATA:mixed handshake and non handshake data
+294:SSL_R_UNEXPECTED_EOF_WHILE_READING:unexpected eof while reading
+295:SSL_R_NO_SUITABLE_GROUPS:no suitable groups
+296:SSL_R_COPY_PARAMETERS_FAILED:copy parameters failed
+297:SSL_R_NO_SUITABLE_DIGEST_ALGORITHM:no suitable digest algorithm
+298:SSL_R_RECORD_TOO_SMALL:record too small
+299:SSL_R_CANNOT_GET_GROUP_NAME:cannot get group name
+300:SSL_R_TLS_SESSION_ID_TOO_LONG:tls session id too long
+301:SSL_R_SSL_SESSION_ID_CALLBACK_FAILED:ssl session id callback failed
+302:SSL_R_SSL_SESSION_ID_CONFLICT:ssl session id conflict
+303:SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH:ssl session id has bad length
+304:SSL_R_BAD_ECC_CERT:bad ecc cert
+305:SSL_R_OCSP_CALLBACK_FAILURE:ocsp callback failure
+306:SSL_R_BAD_ECPOINT:bad ecpoint
+307:SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE:compression id not within private range
+308:SSL_R_COOKIE_MISMATCH:cookie mismatch
+309:SSL_R_DUPLICATE_COMPRESSION_ID:duplicate compression id
+310:SSL_R_MISSING_PSK_KEX_MODES_EXTENSION:missing psk kex modes extension
+311:SSL_R_MISSING_TMP_ECDH_KEY:missing tmp ecdh key
+312:SSL_R_READ_TIMEOUT_EXPIRED:read timeout expired
+313:SSL_R_RECORD_LAYER_FAILURE:record layer failure
+314:SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS:unable to find ecdh parameters
+315:SSL_R_UNSUPPORTED_ELLIPTIC_CURVE:unsupported elliptic curve
+316:SSL_R_FAILED_TO_GET_PARAMETER:failed to get parameter
+317:SSL_R_INVALID_RECORD:invalid record
+318:SSL_R_ECC_CERT_NOT_FOR_SIGNING:ecc cert not for signing
+319:SSL_R_TLS_EXT_INVALID_SERVERNAME:tls ext invalid servername
+320:SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE:tls ext invalid servername type
+321:SSL_R_RECORDS_NOT_RELEASED:records not released
+322:SSL_R_NO_SUITABLE_RECORD_LAYER:no suitable record layer
+323:SSL_R_UNKNOWN_MANDATORY_PARAMETER:unknown mandatory parameter
+324:SSL_R_NO_REQUIRED_DIGEST:no required digest
+325:SSL_R_INVALID_TICKET_KEYS_LENGTH:invalid ticket keys length
+326:SSL_R_BAD_COMPRESSION_ALGORITHM:bad compression algorithm
+327:SSL_R_SEQUENCE_CTR_WRAPPED:sequence ctr wrapped
+328:SSL_R_INVALID_STATUS_RESPONSE:invalid status response
+329:SSL_R_UNSUPPORTED_STATUS_TYPE:unsupported status type
+330:SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER:Peer haven't sent GOST certificate, required for selected ciphersuite
+331:SSL_R_NO_CLIENT_CERT_METHOD:no client cert method
+332:SSL_R_BAD_HANDSHAKE_LENGTH:bad handshake length
+333:SSL_R_LEGACY_SIGALG_DISALLOWED_OR_UNSUPPORTED:legacy sigalg disallowed or unsupported
+334:SSL_R_DTLS_MESSAGE_TOO_BIG:dtls message too big
+335:SSL_R_RENEGOTIATE_EXT_TOO_LONG:renegotiate ext too long
+336:SSL_R_RENEGOTIATION_ENCODING_ERR:renegotiation encoding err
+337:SSL_R_RENEGOTIATION_MISMATCH:renegotiation mismatch
+338:SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED:unsafe legacy renegotiation disabled
+339:SSL_R_NO_RENEGOTIATION:no renegotiation
+340:SSL_R_INCONSISTENT_COMPRESSION:inconsistent compression
+341:SSL_R_INVALID_COMPRESSION_ALGORITHM:invalid compression algorithm
+342:SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING:required compression algorithm missing
+343:SSL_R_COMPRESSION_DISABLED:compression disabled
+344:SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED:old session compression algorithm not returned
+345:SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING:scsv received when renegotiating
+346:SSL_R_REMOTE_PEER_ADDRESS_NOT_SET:remote peer address not set
+347:SSL_R_BAD_SRP_A_LENGTH:bad srp a length
+348:SSL_R_BAD_CERTIFICATE:bad certificate
+349:SSL_R_EMPTY_RAW_PUBLIC_KEY:empty raw public key
+350:SSL_R_INVALID_RAW_PUBLIC_KEY:invalid raw public key
+351:SSL_R_WRONG_RPK_TYPE:wrong rpk type
+352:SSL_R_BAD_SRTP_MKI_VALUE:bad srtp mki value
+353:SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST:bad srtp protection profile list
+354:SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:empty srtp protection profile list
+355:SSL_R_NO_STREAM:no stream
+356:SSL_R_CONN_USE_ONLY:conn use only
+357:SSL_R_INVALID_SRP_USERNAME:invalid srp username
+358:SSL_R_MISSING_SRP_PARAM:can't find SRP server param
+359:SSL_R_NO_SRTP_PROFILES:no srtp profiles
+360:SSL_R_SIGNATURE_ALGORITHMS_ERROR:signature algorithms error
+361:SSL_R_SRP_A_CALC:error with the srp params
+362:SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES:srtp could not allocate profiles
+363:SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG:srtp protection profile list too long
+364:SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE:srtp unknown protection profile
+365:SSL_R_STREAM_FINISHED:stream finished
+366:SSL_R_STREAM_RECV_ONLY:stream recv only
+367:SSL_R_TLS_ILLEGAL_EXPORTER_LABEL:tls illegal exporter label
+368:SSL_R_UNKNOWN_DIGEST:unknown digest
+369:SSL_R_USE_SRTP_NOT_NEGOTIATED:use srtp not negotiated
+370:SSL_R_WRONG_SIGNATURE_TYPE:wrong signature type
+371:SSL_R_BAD_SRP_PARAMETERS:bad srp parameters
+372:SSL_R_SSL_NEGATIVE_LENGTH:ssl negative length
+373:SSL_R_INAPPROPRIATE_FALLBACK:inappropriate fallback
+374:SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:ecdh required for suiteb mode
+375:SSL_R_STREAM_RESET:stream reset
+376:SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS:no shared signature algorithms
+377:SSL_R_CERT_CB_ERROR:cert cb error
+378:SSL_R_WRONG_CURVE:wrong curve
+379:SSL_R_STREAM_SEND_ONLY:stream send only
+380:SSL_R_ILLEGAL_SUITEB_DIGEST:illegal Suite B digest
+381:SSL_R_MISSING_ECDSA_SIGNING_CERT:missing ecdsa signing cert
+382:SSL_R_QUIC_PROTOCOL_ERROR:quic protocol error
+383:SSL_R_WRONG_CERTIFICATE_TYPE:wrong certificate type
+384:SSL_R_BAD_VALUE:bad value
+385:SSL_R_INVALID_NULL_CMD_NAME:invalid null cmd name
+386:SSL_R_UNKNOWN_CMD_NAME:unknown cmd name
+387:SSL_R_QUIC_NETWORK_ERROR:quic network error
+388:SSL_R_INVALID_SERVERINFO_DATA:invalid serverinfo data
+389:SSL_R_NO_PEM_EXTENSIONS:no pem extensions
+390:SSL_R_BAD_DATA:bad data
+391:SSL_R_PEM_NAME_BAD_PREFIX:pem name bad prefix
+392:SSL_R_PEM_NAME_TOO_SHORT:pem name too short
+393:SSL_R_QUIC_HANDSHAKE_LAYER_ERROR:quic handshake layer error
+394:SSL_R_DH_KEY_TOO_SMALL:dh key too small
+395:SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED:maximum encrypted pkts reached
+396:SSL_R_VERSION_TOO_LOW:version too low
+397:SSL_R_CA_KEY_TOO_SMALL:ca key too small
+398:SSL_R_CA_MD_TOO_WEAK:ca md too weak
+399:SSL_R_EE_KEY_TOO_SMALL:ee key too small
+400:SSL_R_COOKIE_GEN_CALLBACK_FAILURE:cookie gen callback failure
+401:SSL_R_FRAGMENTED_CLIENT_HELLO:fragmented client hello
+402:SSL_R_INVALID_SEQUENCE_NUMBER:invalid sequence number
+403:SSL_R_NO_VERIFY_COOKIE_CALLBACK:no verify cookie callback
+404:SSL_R_LENGTH_TOO_LONG:length too long
+405:SSL_R_FAILED_TO_INIT_ASYNC:failed to init async
+406:SSL_R_PIPELINE_FAILURE:pipeline failure
+407:SSL_R_SHUTDOWN_WHILE_IN_INIT:shutdown while in init
+408:SSL_R_SSL_SESSION_ID_TOO_LONG:ssl session id too long
+409:SSL_R_TOO_MANY_WARN_ALERTS:too many warn alerts
+410:SSL_R_NO_SHARED_GROUPS:no shared groups
+411:SSL_R_STREAM_COUNT_LIMITED:stream count limited
+412:SSL_R_UNSUPPORTED_WRITE_FLAG:unsupported write flag
+413:SSL_R_FEATURE_NOT_RENEGOTIABLE:feature not renegotiable
+414:SSL_R_UNSUPPORTED_CONFIG_VALUE:unsupported config value
+415:SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS:unsupported config value class
+416:SSL_R_UNSUPPORTED_CONFIG_VALUE_OP:unsupported config value op
+417:SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE:feature negotiation not complete
+418:SSL_R_POLL_REQUEST_NOT_SUPPORTED:poll request not supported
+419:SSL_R_ERROR_IN_SYSTEM_DEFAULT_CONFIG:error in system default config
+420:SSL_R_MISSING_SUPPORTED_VERSIONS_EXTENSION:missing supported versions extension
+421:SSL_R_LISTENER_USE_ONLY:listener use only
+422:SSL_R_DOMAIN_USE_ONLY:domain use only
+423:SSL_R_MISSING_QUIC_TLS_FUNCTIONS:missing quic tls functions
+424:SSL_R_ECH_REQUIRED:ech required
+425:SSL_R_BAD_ECHCONFIG_EXTENSION:bad echconfig extension
+426:SSL_R_ECH_DECODE_ERROR:ech decode error
+443:SSL_R_BAD_RECORD_TYPE:bad record type
+# SSL TLS alert reasons, which must be 1000 or above
+1010:SSL_R_TLS_ALERT_UNEXPECTED_MESSAGE:tls alert unexpected message
+1020:SSL_R_TLS_ALERT_BAD_RECORD_MAC:tls alert bad record mac
+1021:SSL_R_TLSV1_ALERT_DECRYPTION_FAILED:tlsv1 alert decryption failed
+1022:SSL_R_TLSV1_ALERT_RECORD_OVERFLOW:tlsv1 alert record overflow
+1030:SSL_R_TLS_ALERT_DECOMPRESSION_FAILURE:tls alert decompression failure
+1040:SSL_R_TLS_ALERT_HANDSHAKE_FAILURE:tls alert handshake failure
+1041:SSL_R_TLS_ALERT_NO_CERTIFICATE:tls alert no certificate
+1042:SSL_R_TLS_ALERT_BAD_CERTIFICATE:tls alert bad certificate
+1043:SSL_R_TLS_ALERT_UNSUPPORTED_CERTIFICATE:tls alert unsupported certificate
+1044:SSL_R_TLS_ALERT_CERTIFICATE_REVOKED:tls alert certificate revoked
+1045:SSL_R_TLS_ALERT_CERTIFICATE_EXPIRED:tls alert certificate expired
+1046:SSL_R_TLS_ALERT_CERTIFICATE_UNKNOWN:tls alert certificate unknown
+1047:SSL_R_TLS_ALERT_ILLEGAL_PARAMETER:tls alert illegal parameter
+1048:SSL_R_TLSV1_ALERT_UNKNOWN_CA:tlsv1 alert unknown ca
+1049:SSL_R_TLSV1_ALERT_ACCESS_DENIED:tlsv1 alert access denied
+1050:SSL_R_TLSV1_ALERT_DECODE_ERROR:tlsv1 alert decode error
+1051:SSL_R_TLSV1_ALERT_DECRYPT_ERROR:tlsv1 alert decrypt error
+1060:SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION:tlsv1 alert export restriction
+1070:SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:tlsv1 alert protocol version
+1071:SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY:tlsv1 alert insufficient security
+1080:SSL_R_TLSV1_ALERT_INTERNAL_ERROR:tlsv1 alert internal error
+1086:SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK:tlsv1 alert inappropriate fallback
+1090:SSL_R_TLSV1_ALERT_USER_CANCELLED:tlsv1 alert user cancelled
+1100:SSL_R_TLSV1_ALERT_NO_RENEGOTIATION:tlsv1 alert no renegotiation
+1109:SSL_R_TLSV13_ALERT_MISSING_EXTENSION:tlsv13 alert missing extension
+1110:SSL_R_TLSV1_UNSUPPORTED_EXTENSION:tlsv1 unsupported extension
+1111:SSL_R_TLSV1_CERTIFICATE_UNOBTAINABLE:tlsv1 certificate unobtainable
+1112:SSL_R_TLSV1_UNRECOGNIZED_NAME:tlsv1 unrecognized name
+1113:SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE:tlsv1 bad certificate status response
+1114:SSL_R_TLSV1_BAD_CERTIFICATE_HASH_VALUE:tlsv1 bad certificate hash value
+1115:SSL_R_TLSV1_ALERT_UNKNOWN_PSK_IDENTITY:tlsv1 alert unknown psk identity
+1116:SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED:tlsv13 alert certificate required
+1120:SSL_R_TLSV1_ALERT_NO_APPLICATION_PROTOCOL:tlsv1 alert no application protocol
+# BIO reasons
+100:BIO_R_ACCEPT_ERROR:accept error
+101:BIO_R_BAD_FOPEN_MODE:bad fopen mode
+102:BIO_R_LENGTH_TOO_LONG:length too long
+103:BIO_R_CONNECT_ERROR:connect error
+104:BIO_R_TRANSFER_ERROR:transfer error
+105:BIO_R_TRANSFER_TIMEOUT:transfer timeout
+106:BIO_R_TFO_DISABLED:tfo disabled
+107:BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET:gethostbyname addr is not af inet
+108:BIO_R_TFO_NO_KERNEL_SUPPORT:tfo no kernel support
+109:BIO_R_UNABLE_TO_TFO:unable to tfo
+110:BIO_R_NBIO_CONNECT_ERROR:nbio connect error
+111:BIO_R_LOCAL_ADDR_NOT_AVAILABLE:local addr not available
+112:BIO_R_NON_FATAL:non fatal
+113:BIO_R_NO_PORT_DEFINED:no port defined
+115:BIO_R_NULL_PARAMETER:null parameter
+117:BIO_R_UNABLE_TO_BIND_SOCKET:unable to bind socket
+118:BIO_R_UNABLE_TO_CREATE_SOCKET:unable to create socket
+119:BIO_R_UNABLE_TO_LISTEN_SOCKET:unable to listen socket
+120:BIO_R_UNINITIALIZED:uninitialized
+121:BIO_R_UNSUPPORTED_METHOD:unsupported method
+122:BIO_R_WSASTARTUP:WSAStartup
+123:BIO_R_IN_USE:in use
+124:BIO_R_BROKEN_PIPE:broken pipe
+125:BIO_R_INVALID_ARGUMENT:invalid argument
+126:BIO_R_WRITE_TO_READ_ONLY_BIO:write to read only BIO
+128:BIO_R_NO_SUCH_FILE:no such file
+129:BIO_R_AMBIGUOUS_HOST_OR_SERVICE:ambiguous host or service
+130:BIO_R_MALFORMED_HOST_OR_SERVICE:malformed host or service
+131:BIO_R_UNSUPPORTED_PROTOCOL_FAMILY:unsupported protocol family
+132:BIO_R_GETSOCKNAME_ERROR:getsockname error
+133:BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS:getsockname truncated address
+134:BIO_R_GETTING_SOCKTYPE:getting socktype
+135:BIO_R_INVALID_SOCKET:invalid socket
+136:BIO_R_LISTEN_V6_ONLY:listen v6 only
+137:BIO_R_UNABLE_TO_KEEPALIVE:unable to keepalive
+138:BIO_R_UNABLE_TO_NODELAY:unable to nodelay
+139:BIO_R_UNABLE_TO_REUSEADDR:unable to reuseaddr
+140:BIO_R_UNKNOWN_INFO_TYPE:unknown info type
+141:BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET:addrinfo addr is not af inet
+142:BIO_R_LOOKUP_RETURNED_NOTHING:lookup returned nothing
+143:BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED:no accept addr or service specified
+144:BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED:no hostname or service specified
+145:BIO_R_UNAVAILABLE_IP_FAMILY:unavailable ip family
+146:BIO_R_UNSUPPORTED_IP_FAMILY:unsupported ip family
+147:BIO_R_CONNECT_TIMEOUT:connect timeout
+150:BIO_R_PORT_MISMATCH:port mismatch
+151:BIO_R_PEER_ADDR_NOT_AVAILABLE:peer addr not available
+# PKCS7 reasons
+101:PKCS7_R_DIGEST_FAILURE:digest failure
+104:PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE:operation not supported on this type
+105:PKCS7_R_SIGNATURE_FAILURE:signature failure
+106:PKCS7_R_UNABLE_TO_FIND_CERTIFICATE:unable to find certificate
+107:PKCS7_R_UNABLE_TO_FIND_MEM_BIO:unable to find mem bio
+108:PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST:unable to find message digest
+109:PKCS7_R_UNKNOWN_DIGEST_TYPE:unknown digest type
+110:PKCS7_R_UNKNOWN_OPERATION:unknown operation
+111:PKCS7_R_UNSUPPORTED_CIPHER_TYPE:unsupported cipher type
+112:PKCS7_R_UNSUPPORTED_CONTENT_TYPE:unsupported content type
+113:PKCS7_R_WRONG_CONTENT_TYPE:wrong content type
+114:PKCS7_R_WRONG_PKCS7_TYPE:wrong pkcs7 type
+115:PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE:no recipient matches certificate
+116:PKCS7_R_CIPHER_NOT_INITIALIZED:cipher not initialized
+117:PKCS7_R_CERTIFICATE_VERIFY_ERROR:certificate verify error
+118:PKCS7_R_CONTENT_AND_DATA_PRESENT:content and data present
+119:PKCS7_R_DECRYPT_ERROR:decrypt error
+120:PKCS7_R_ERROR_ADDING_RECIPIENT:error adding recipient
+121:PKCS7_R_ERROR_SETTING_CIPHER:error setting cipher
+122:PKCS7_R_NO_CONTENT:no content
+123:PKCS7_R_NO_SIGNATURES_ON_DATA:no signatures on data
+124:PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR:pkcs7 add signature error
+127:PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:private key does not match certificate
+128:PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND:signer certificate not found
+129:PKCS7_R_SMIME_TEXT_ERROR:smime text error
+142:PKCS7_R_NO_SIGNERS:no signers
+143:PKCS7_R_INVALID_NULL_POINTER:invalid null pointer
+144:PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER:cipher has no object identifier
+145:PKCS7_R_PKCS7_DATASIGN:pkcs7 datasign
+147:PKCS7_R_SIGNING_CTRL_FAILURE:signing ctrl failure
+148:PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE:signing not supported for this key type
+149:PKCS7_R_ENCRYPTION_CTRL_FAILURE:encryption ctrl failure
+150:PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE:encryption not supported for this key type
+151:PKCS7_R_NO_DEFAULT_DIGEST:no default digest
+152:PKCS7_R_CTRL_ERROR:ctrl error
+153:PKCS7_R_PKCS7_ADD_SIGNER_ERROR:pkcs7 add signer error
+154:PKCS7_R_NO_MATCHING_DIGEST_TYPE_FOUND:no matching digest type found
+155:PKCS7_R_INVALID_SIGNED_DATA_TYPE:invalid signed data type
+# X509V3 reasons
+100:X509V3_R_BN_DEC2BN_ERROR:bn dec2bn error
+101:X509V3_R_BN_TO_ASN1_INTEGER_ERROR:bn to asn1 integer error
+102:X509V3_R_EXTENSION_NOT_FOUND:extension not found
+103:X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED:extension setting not supported
+104:X509V3_R_INVALID_BOOLEAN_STRING:invalid boolean string
+105:X509V3_R_INVALID_EXTENSION_STRING:invalid extension string
+106:X509V3_R_INVALID_NAME:invalid name
+107:X509V3_R_INVALID_NULL_ARGUMENT:invalid null argument
+108:X509V3_R_INVALID_EMPTY_NAME:invalid empty name
+109:X509V3_R_INVALID_NULL_VALUE:invalid null value
+110:X509V3_R_INVALID_OBJECT_IDENTIFIER:invalid object identifier
+111:X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT:unknown bit string argument
+114:X509V3_R_NO_PUBLIC_KEY:no public key
+115:X509V3_R_EXTENSION_NAME_ERROR:extension name error
+116:X509V3_R_EXTENSION_VALUE_ERROR:extension value error
+117:X509V3_R_UNSUPPORTED_OPTION:unsupported option
+118:X509V3_R_BAD_IP_ADDRESS:bad ip address
+119:X509V3_R_BAD_OBJECT:bad object
+120:X509V3_R_UNKNOWN_OPTION:unknown option
+121:X509V3_R_NO_ISSUER_CERTIFICATE:no issuer certificate
+122:X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS:unable to get issuer details
+123:X509V3_R_UNABLE_TO_GET_ISSUER_KEYID:unable to get issuer keyid
+124:X509V3_R_MISSING_VALUE:missing value
+125:X509V3_R_NO_SUBJECT_DETAILS:no subject details
+126:X509V3_R_ISSUER_DECODE_ERROR:issuer decode error
+127:X509V3_R_NO_ISSUER_DETAILS:no issuer details
+128:X509V3_R_ERROR_IN_EXTENSION:error in extension
+129:X509V3_R_UNKNOWN_EXTENSION:unknown extension
+130:X509V3_R_UNKNOWN_EXTENSION_NAME:unknown extension name
+131:X509V3_R_ERROR_CONVERTING_ZONE:error converting zone
+132:X509V3_R_USER_TOO_LONG:user too long
+133:X509V3_R_DUPLICATE_ZONE_ID:duplicate zone id
+134:X509V3_R_INVALID_POLICY_IDENTIFIER:invalid policy identifier
+135:X509V3_R_INVALID_SECTION:invalid section
+136:X509V3_R_NO_CONFIG_DATABASE:no config database
+137:X509V3_R_EXPECTED_A_SECTION_NAME:expected a section name
+138:X509V3_R_INVALID_OPTION:invalid option
+139:X509V3_R_NO_POLICY_IDENTIFIER:no policy identifier
+140:X509V3_R_INVALID_NUMBER:invalid number
+141:X509V3_R_INVALID_NUMBERS:invalid numbers
+142:X509V3_R_NEED_ORGANIZATION_AND_NUMBERS:need organization and numbers
+143:X509V3_R_INVALID_SYNTAX:invalid syntax
+144:X509V3_R_ERROR_CREATING_EXTENSION:error creating extension
+145:X509V3_R_EXTENSION_EXISTS:extension exists
+146:X509V3_R_INVALID_PURPOSE:invalid purpose
+147:X509V3_R_OTHERNAME_ERROR:othername error
+148:X509V3_R_OPERATION_NOT_DEFINED:operation not defined
+149:X509V3_R_DIRNAME_ERROR:dirname error
+150:X509V3_R_SECTION_NOT_FOUND:section not found
+151:X509V3_R_ILLEGAL_EMPTY_EXTENSION:illegal empty extension
+152:X509V3_R_INCORRECT_POLICY_SYNTAX_TAG:incorrect policy syntax tag
+153:X509V3_R_INVALID_PROXY_POLICY_SETTING:invalid proxy policy setting
+154:X509V3_R_NO_PROXY_CERT_POLICY_LANGUAGE_DEFINED:no proxy cert policy language defined
+155:X509V3_R_POLICY_LANGUAGE_ALREADY_DEFINED:policy language already defined
+156:X509V3_R_POLICY_PATH_LENGTH:policy path length
+157:X509V3_R_POLICY_PATH_LENGTH_ALREADY_DEFINED:policy path length already defined
+158:X509V3_R_INVALID_CERTIFICATE:invalid certificate
+159:X509V3_R_POLICY_WHEN_PROXY_LANGUAGE_REQUIRES_NO_POLICY:policy when proxy language requires no policy
+160:X509V3_R_DISTPOINT_ALREADY_SET:distpoint already set
+161:X509V3_R_INVALID_MULTIPLE_RDNS:invalid multiple rdns
+162:X509V3_R_INVALID_ASNUMBER:invalid asnumber
+163:X509V3_R_INVALID_ASRANGE:invalid asrange
+164:X509V3_R_INVALID_SAFI:invalid safi
+165:X509V3_R_INVALID_INHERITANCE:invalid inheritance
+166:X509V3_R_INVALID_IPADDRESS:invalid ipaddress
+167:X509V3_R_UNSUPPORTED_TYPE:unsupported type
+168:X509V3_R_NEGATIVE_PATHLEN:negative pathlen
+169:X509V3_R_EMPTY_KEY_USAGE:empty key usage
+170:X509V3_R_BAD_OPTION:bad option
+171:X509V3_R_BAD_VALUE:bad value
+172:X509V3_R_UNKNOWN_VALUE:unknown value
+173:X509V3_R_PURPOSE_NOT_UNIQUE:purpose not unique
+174:X509V3_R_DUPLICATE_FIELD:duplicate field
+175:X509V3_R_PATHLEN_TOO_LARGE:pathlen too large
+# PKCS12 reasons
+100:PKCS12_R_CANT_PACK_STRUCTURE:can't pack structure
+101:PKCS12_R_DECODE_ERROR:decode error
+102:PKCS12_R_ENCODE_ERROR:encode error
+103:PKCS12_R_ENCRYPT_ERROR:encrypt error
+104:PKCS12_R_INVALID_NULL_ARGUMENT:invalid null argument
+105:PKCS12_R_INVALID_NULL_PKCS12_POINTER:invalid null pkcs12 pointer
+106:PKCS12_R_IV_GEN_ERROR:iv gen error
+107:PKCS12_R_KEY_GEN_ERROR:key gen error
+108:PKCS12_R_MAC_ABSENT:mac absent
+109:PKCS12_R_MAC_GENERATION_ERROR:mac generation error
+110:PKCS12_R_MAC_SETUP_ERROR:mac setup error
+111:PKCS12_R_MAC_STRING_SET_ERROR:mac string set error
+112:PKCS12_R_INVALID_TYPE:invalid type
+113:PKCS12_R_MAC_VERIFY_FAILURE:mac verify failure
+114:PKCS12_R_PARSE_ERROR:parse error
+115:PKCS12_R_CALLBACK_FAILED:callback failed
+116:PKCS12_R_PKCS12_CIPHERFINAL_ERROR:pkcs12 cipherfinal error
+117:PKCS12_R_INVALID_SALT_LENGTH:invalid salt length
+118:PKCS12_R_UNKNOWN_DIGEST_ALGORITHM:unknown digest algorithm
+119:PKCS12_R_UNSUPPORTED_PKCS12_MODE:unsupported pkcs12 mode
+120:PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE:error setting encrypted data type
+121:PKCS12_R_CONTENT_TYPE_NOT_DATA:content type not data
+# RAND reasons
+100:RAND_R_PRNG_NOT_SEEDED:PRNG not seeded
+101:RAND_R_FUNC_NOT_IMPLEMENTED:Function not implemented
+102:RAND_R_ADDITIONAL_INPUT_TOO_LONG:additional input too long
+103:RAND_R_ALREADY_INSTANTIATED:already instantiated
+104:RAND_R_DRBG_NOT_INITIALISED:drbg not initialised
+105:RAND_R_ARGUMENT_OUT_OF_RANGE:argument out of range
+106:RAND_R_ENTROPY_INPUT_TOO_LONG:entropy input too long
+107:RAND_R_ERROR_INITIALISING_DRBG:error initialising drbg
+108:RAND_R_ERROR_INSTANTIATING_DRBG:error instantiating drbg
+109:RAND_R_ERROR_RETRIEVING_ADDITIONAL_INPUT:error retrieving additional input
+110:RAND_R_ERROR_RETRIEVING_ENTROPY:error retrieving entropy
+111:RAND_R_ERROR_RETRIEVING_NONCE:error retrieving nonce
+112:RAND_R_GENERATE_ERROR:generate error
+113:RAND_R_INTERNAL_ERROR:internal error
+114:RAND_R_IN_ERROR_STATE:in error state
+115:RAND_R_NOT_INSTANTIATED:not instantiated
+116:RAND_R_PERSONALISATION_STRING_TOO_LONG:personalisation string too long
+117:RAND_R_REQUEST_TOO_LARGE_FOR_DRBG:request too large for drbg
+118:RAND_R_RESEED_ERROR:reseed error
+119:RAND_R_SELFTEST_FAILURE:selftest failure
+120:RAND_R_UNSUPPORTED_DRBG_TYPE:unsupported drbg type
+121:RAND_R_CANNOT_OPEN_FILE:Cannot open file
+122:RAND_R_NOT_A_REGULAR_FILE:Not a regular file
+123:RAND_R_FWRITE_ERROR:Error writing file
+124:RAND_R_ENTROPY_OUT_OF_RANGE:entropy out of range
+125:RAND_R_RANDOM_POOL_OVERFLOW:random pool overflow
+126:RAND_R_FAILED_TO_CREATE_LOCK:failed to create lock
+127:RAND_R_ERROR_ENTROPY_POOL_WAS_IGNORED:error entropy pool was ignored
+128:RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED:no drbg implementation selected
+129:RAND_R_DRBG_ALREADY_INITIALIZED:drbg already initialized
+130:RAND_R_PARENT_LOCKING_NOT_ENABLED:parent locking not enabled
+131:RAND_R_PARENT_STRENGTH_TOO_WEAK:parent strength too weak
+132:RAND_R_UNSUPPORTED_DRBG_FLAGS:unsupported drbg flags
+133:RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED:prediction resistance not supported
+134:RAND_R_RANDOM_POOL_UNDERFLOW:random pool underflow
+135:RAND_R_TOO_LITTLE_NONCE_REQUESTED:too little nonce requested
+136:RAND_R_TOO_MUCH_NONCE_REQUESTED:too much nonce requested
+137:RAND_R_INVALID_PROPERTY_QUERY:invalid property query
+138:RAND_R_UNABLE_TO_GET_PARENT_STRENGTH:unable to get parent strength
+139:RAND_R_INSUFFICIENT_DRBG_STRENGTH:insufficient drbg strength
+140:RAND_R_UNABLE_TO_LOCK_PARENT:unable to lock parent
+141:RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:unable to get parent reseed prop counter
+142:RAND_R_RANDOM_POOL_IS_EMPTY:random pool is empty
+143:RAND_R_UNABLE_TO_CREATE_DRBG:unable to create drbg
+144:RAND_R_UNABLE_TO_FETCH_DRBG:unable to fetch drbg
+# DSO reasons
+100:DSO_R_CTRL_FAILED:control command failed
+101:DSO_R_FILENAME_TOO_BIG:filename too big
+102:DSO_R_FINISH_FAILED:cleanup method function failed
+103:DSO_R_LOAD_FAILED:could not load the shared library
+104:DSO_R_NULL_HANDLE:a null shared library handle was used
+105:DSO_R_STACK_ERROR:the meth_data stack is corrupt
+106:DSO_R_SYM_FAILURE:could not bind to the requested symbol name
+107:DSO_R_UNLOAD_FAILED:could not unload the shared library
+108:DSO_R_UNSUPPORTED:functionality not supported
+109:DSO_R_NAME_TRANSLATION_FAILED:name translation failed
+110:DSO_R_DSO_ALREADY_LOADED:dso already loaded
+111:DSO_R_NO_FILENAME:no filename
+112:DSO_R_SET_FILENAME_FAILED:set filename failed
+113:DSO_R_EMPTY_FILE_STRUCTURE:empty file structure
+114:DSO_R_FAILURE:failure
+115:DSO_R_INCORRECT_FILE_SYNTAX:incorrect file syntax
+# OCSP reasons
+101:OCSP_R_CERTIFICATE_VERIFY_ERROR:certificate verify error
+102:OCSP_R_DIGEST_ERR:digest err
+103:OCSP_R_MISSING_OCSPSIGNING_USAGE:missing ocspsigning usage
+104:OCSP_R_NOT_BASIC_RESPONSE:not basic response
+105:OCSP_R_NO_CERTIFICATES_IN_CHAIN:no certificates in chain
+106:OCSP_R_DIGEST_NAME_ERR:digest name err
+107:OCSP_R_DIGEST_SIZE_ERR:digest size err
+108:OCSP_R_NO_RESPONSE_DATA:no response data
+109:OCSP_R_NO_REVOKED_TIME:no revoked time
+110:OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:private key does not match certificate
+111:OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA:response contains no revocation data
+112:OCSP_R_ROOT_CA_NOT_TRUSTED:root ca not trusted
+117:OCSP_R_SIGNATURE_FAILURE:signature failure
+118:OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND:signer certificate not found
+119:OCSP_R_UNKNOWN_MESSAGE_DIGEST:unknown message digest
+120:OCSP_R_UNKNOWN_NID:unknown nid
+122:OCSP_R_ERROR_IN_NEXTUPDATE_FIELD:error in nextupdate field
+123:OCSP_R_ERROR_IN_THISUPDATE_FIELD:error in thisupdate field
+124:OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE:nextupdate before thisupdate
+125:OCSP_R_STATUS_EXPIRED:status expired
+126:OCSP_R_STATUS_NOT_YET_VALID:status not yet valid
+127:OCSP_R_STATUS_TOO_OLD:status too old
+128:OCSP_R_REQUEST_NOT_SIGNED:request not signed
+129:OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE:unsupported requestorname type
+130:OCSP_R_NO_SIGNER_KEY:no signer key
+# UI reasons
+100:UI_R_RESULT_TOO_LARGE:result too large
+101:UI_R_RESULT_TOO_SMALL:result too small
+102:UI_R_INDEX_TOO_LARGE:index too large
+103:UI_R_INDEX_TOO_SMALL:index too small
+104:UI_R_COMMON_OK_AND_CANCEL_CHARACTERS:common ok and cancel characters
+105:UI_R_NO_RESULT_BUFFER:no result buffer
+106:UI_R_UNKNOWN_CONTROL_COMMAND:unknown control command
+107:UI_R_PROCESSING_ERROR:processing error
+108:UI_R_UNKNOWN_TTYGET_ERRNO_VALUE:unknown ttyget errno value
+109:UI_R_SYSASSIGN_ERROR:sys$assign error
+110:UI_R_SYSDASSGN_ERROR:sys$dassgn error
+111:UI_R_SYSQIOW_ERROR:sys$qiow error
+112:UI_R_USER_DATA_DUPLICATION_UNSUPPORTED:user data duplication unsupported
+# COMP reasons
+99:COMP_R_ZLIB_DEFLATE_ERROR:zlib deflate error
+100:COMP_R_ZLIB_INFLATE_ERROR:zlib inflate error
+101:COMP_R_ZLIB_NOT_SUPPORTED:zlib not supported
+102:COMP_R_BROTLI_DECODE_ERROR:brotli decode error
+103:COMP_R_BROTLI_ENCODE_ERROR:brotli encode error
+104:COMP_R_BROTLI_NOT_SUPPORTED:brotli not supported
+105:COMP_R_ZSTD_COMPRESS_ERROR:zstd compress error
+106:COMP_R_ZSTD_DECODE_ERROR:zstd decode error
+107:COMP_R_ZSTD_DECOMPRESS_ERROR:zstd decompress error
+108:COMP_R_ZSTD_NOT_SUPPORTED:zstd not supported
+# TS reasons
+100:TS_R_CERTIFICATE_VERIFY_ERROR:certificate verify error
+101:TS_R_ESS_SIGNING_CERTIFICATE_ERROR:ess signing certificate error
+102:TS_R_INVALID_NULL_POINTER:invalid null pointer
+103:TS_R_MESSAGE_IMPRINT_MISMATCH:message imprint mismatch
+104:TS_R_NONCE_MISMATCH:nonce mismatch
+105:TS_R_NONCE_NOT_RETURNED:nonce not returned
+106:TS_R_NO_CONTENT:no content
+107:TS_R_NO_TIME_STAMP_TOKEN:no time stamp token
+108:TS_R_POLICY_MISMATCH:policy mismatch
+109:TS_R_SIGNATURE_FAILURE:signature failure
+110:TS_R_THERE_MUST_BE_ONE_SIGNER:there must be one signer
+111:TS_R_TSA_NAME_MISMATCH:tsa name mismatch
+112:TS_R_TSA_UNTRUSTED:tsa untrusted
+113:TS_R_UNSUPPORTED_VERSION:unsupported version
+114:TS_R_WRONG_CONTENT_TYPE:wrong content type
+115:TS_R_COULD_NOT_SET_TIME:could not set time
+116:TS_R_ESS_ADD_SIGNING_CERT_ERROR:ess add signing cert error
+117:TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE:invalid signer certificate purpose
+118:TS_R_PKCS7_ADD_SIGNATURE_ERROR:pkcs7 add signature error
+119:TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR:pkcs7 add signed attr error
+120:TS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:private key does not match certificate
+121:TS_R_RESPONSE_SETUP_ERROR:response setup error
+122:TS_R_TIME_SYSCALL_ERROR:time syscall error
+123:TS_R_TST_INFO_SETUP_ERROR:tst info setup error
+124:TS_R_TS_DATASIGN:ts datasign
+125:TS_R_UNACCEPTABLE_POLICY:unacceptable policy
+126:TS_R_UNSUPPORTED_MD_ALGORITHM:unsupported md algorithm
+127:TS_R_COULD_NOT_SET_ENGINE:could not set engine
+129:TS_R_PKCS7_TO_TS_TST_INFO_FAILED:pkcs7 to ts tst info failed
+130:TS_R_TOKEN_NOT_PRESENT:token not present
+131:TS_R_TOKEN_PRESENT:token present
+132:TS_R_BAD_PKCS7_TYPE:bad pkcs7 type
+133:TS_R_BAD_TYPE:bad type
+134:TS_R_DETACHED_CONTENT:detached content
+135:TS_R_VAR_BAD_VALUE:var bad value
+136:TS_R_VAR_LOOKUP_FAILURE:cannot find config variable
+137:TS_R_CANNOT_LOAD_CERT:cannot load certificate
+138:TS_R_CANNOT_LOAD_KEY:cannot load private key
+139:TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR:ess add signing cert v2 error
+# CMS reasons
+99:CMS_R_ADD_SIGNER_ERROR:add signer error
+100:CMS_R_CERTIFICATE_VERIFY_ERROR:certificate verify error
+101:CMS_R_CIPHER_INITIALISATION_ERROR:cipher initialisation error
+102:CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR:cipher parameter initialisation error
+103:CMS_R_CMS_DATAFINAL_ERROR:cms datafinal error
+104:CMS_R_CMS_LIB:cms lib
+105:CMS_R_CONTENT_NOT_FOUND:content not found
+106:CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA:content type not compressed data
+107:CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA:content type not enveloped data
+108:CMS_R_CONTENT_TYPE_NOT_SIGNED_DATA:content type not signed data
+109:CMS_R_CONTENT_VERIFY_ERROR:content verify error
+110:CMS_R_CTRL_ERROR:ctrl error
+111:CMS_R_CTRL_FAILURE:ctrl failure
+112:CMS_R_DECRYPT_ERROR:decrypt error
+113:CMS_R_ERROR_GETTING_PUBLIC_KEY:error getting public key
+114:CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:error reading messagedigest attribute
+115:CMS_R_ERROR_SETTING_KEY:error setting key
+116:CMS_R_ERROR_SETTING_RECIPIENTINFO:error setting recipientinfo
+117:CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:invalid encrypted key length
+118:CMS_R_INVALID_KEY_LENGTH:invalid key length
+119:CMS_R_MD_BIO_INIT_ERROR:md bio init error
+120:CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH:messagedigest attribute wrong length
+121:CMS_R_MESSAGEDIGEST_WRONG_LENGTH:messagedigest wrong length
+122:CMS_R_NOT_ENCRYPTED_DATA:not encrypted data
+123:CMS_R_NOT_KEK:not kek
+124:CMS_R_NOT_KEY_TRANSPORT:not key transport
+125:CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE:not supported for this key type
+126:CMS_R_NO_CIPHER:no cipher
+127:CMS_R_NO_CONTENT:no content
+128:CMS_R_NO_DEFAULT_DIGEST:no default digest
+129:CMS_R_NO_DIGEST_SET:no digest set
+130:CMS_R_NO_KEY:no key
+131:CMS_R_NO_MATCHING_DIGEST:no matching digest
+132:CMS_R_NO_MATCHING_RECIPIENT:no matching recipient
+133:CMS_R_NO_PRIVATE_KEY:no private key
+134:CMS_R_NO_PUBLIC_KEY:no public key
+135:CMS_R_NO_SIGNERS:no signers
+136:CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:private key does not match certificate
+137:CMS_R_RECIPIENT_ERROR:recipient error
+138:CMS_R_SIGNER_CERTIFICATE_NOT_FOUND:signer certificate not found
+139:CMS_R_SIGNFINAL_ERROR:signfinal error
+140:CMS_R_SMIME_TEXT_ERROR:smime text error
+141:CMS_R_STORE_INIT_ERROR:store init error
+142:CMS_R_TYPE_NOT_COMPRESSED_DATA:type not compressed data
+143:CMS_R_TYPE_NOT_DATA:type not data
+144:CMS_R_TYPE_NOT_DIGESTED_DATA:type not digested data
+145:CMS_R_TYPE_NOT_ENCRYPTED_DATA:type not encrypted data
+146:CMS_R_TYPE_NOT_ENVELOPED_DATA:type not enveloped data
+147:CMS_R_UNABLE_TO_FINALIZE_CONTEXT:unable to finalize context
+148:CMS_R_UNKNOWN_CIPHER:unknown cipher
+149:CMS_R_UNKNOWN_DIGEST_ALGORITHM:unknown digest algorithm
+150:CMS_R_UNKNOWN_ID:unknown id
+151:CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM:unsupported compression algorithm
+152:CMS_R_UNSUPPORTED_CONTENT_TYPE:unsupported content type
+153:CMS_R_UNSUPPORTED_KEK_ALGORITHM:unsupported kek algorithm
+154:CMS_R_UNSUPPORTED_RECIPIENT_TYPE:unsupported recipient type
+155:CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE:unsupported recipientinfo type
+156:CMS_R_UNSUPPORTED_TYPE:unsupported type
+157:CMS_R_UNWRAP_ERROR:unwrap error
+158:CMS_R_VERIFICATION_FAILURE:verification failure
+159:CMS_R_WRAP_ERROR:wrap error
+160:CMS_R_CERTIFICATE_HAS_NO_KEYID:certificate has no keyid
+161:CMS_R_ATTRIBUTE_ERROR:attribute error
+162:CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE:msgsigdigest verification failure
+163:CMS_R_MSGSIGDIGEST_WRONG_LENGTH:msgsigdigest wrong length
+164:CMS_R_NEED_ONE_SIGNER:need one signer
+165:CMS_R_NOT_A_SIGNED_RECEIPT:not a signed receipt
+166:CMS_R_NO_MATCHING_SIGNATURE:no matching signature
+167:CMS_R_NO_MSGSIGDIGEST:no msgsigdigest
+168:CMS_R_NO_RECEIPT_REQUEST:no receipt request
+169:CMS_R_RECEIPT_DECODE_ERROR:receipt decode error
+170:CMS_R_CONTENTIDENTIFIER_MISMATCH:contentidentifier mismatch
+171:CMS_R_CONTENT_TYPE_MISMATCH:content type mismatch
+172:CMS_R_MSGSIGDIGEST_ERROR:msgsigdigest error
+173:CMS_R_NO_CONTENT_TYPE:no content type
+174:CMS_R_NO_KEY_OR_CERT:no key or cert
+175:CMS_R_CERTIFICATE_ALREADY_PRESENT:certificate already present
+176:CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:invalid key encryption parameter
+177:CMS_R_NOT_PWRI:not pwri
+178:CMS_R_NO_PASSWORD:no password
+179:CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM:unsupported key encryption algorithm
+180:CMS_R_UNWRAP_FAILURE:unwrap failure
+181:CMS_R_NOT_KEY_AGREEMENT:not key agreement
+182:CMS_R_OPERATION_UNSUPPORTED:operation unsupported
+183:CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:ess signing certid mismatch error
+184:CMS_R_CIPHER_AEAD_SET_TAG_ERROR:cipher aead set tag error
+185:CMS_R_CIPHER_GET_TAG:cipher get tag
+186:CMS_R_KDF_PARAMETER_ERROR:kdf parameter error
+187:CMS_R_DECODE_ERROR:decode error
+188:CMS_R_PEER_KEY_ERROR:peer key error
+189:CMS_R_SHARED_INFO_ERROR:shared info error
+190:CMS_R_INVALID_LABEL:invalid label
+191:CMS_R_INVALID_OAEP_PARAMETERS:invalid oaep parameters
+192:CMS_R_UNSUPPORTED_ENCRYPTION_TYPE:unsupported encryption type
+193:CMS_R_UNSUPPORTED_LABEL_SOURCE:unsupported label source
+194:CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM:unsupported content encryption algorithm
+195:CMS_R_UNSUPPORTED_SIGNATURE_ALGORITHM:unsupported signature algorithm
+196:CMS_R_ERROR_UNSUPPORTED_STATIC_KEY_AGREEMENT:error unsupported static key agreement
+197:CMS_R_NOT_KEM:not kem
+198:CMS_R_UNKNOWN_KDF_ALGORITHM:unknown kdf algorithm
+199:CMS_R_UNSUPPORTED_KDF_ALGORITHM:unsupported kdf algorithm
+200:CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA:cipher aead in enveloped data
+# CRMF reasons
+100:CRMF_R_BAD_PBM_ITERATIONCOUNT:bad pbm iterationcount
+101:CRMF_R_MALFORMED_IV:malformed iv
+102:CRMF_R_CRMFERROR:crmferror
+103:CRMF_R_ERROR:error
+104:CRMF_R_ERROR_DECODING_CERTIFICATE:error decoding certificate
+105:CRMF_R_ERROR_DECRYPTING_CERTIFICATE:error decrypting certificate
+106:CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:error decrypting symmetric key
+107:CRMF_R_FAILURE_OBTAINING_RANDOM:failure obtaining random
+108:CRMF_R_ITERATIONCOUNT_BELOW_100:iterationcount below 100
+109:CRMF_R_NULL_ARGUMENT:null argument
+110:CRMF_R_SETTING_MAC_ALGOR_FAILURE:setting mac algor failure
+111:CRMF_R_SETTING_OWF_ALGOR_FAILURE:setting owf algor failure
+112:CRMF_R_UNSUPPORTED_ALGORITHM:unsupported algorithm
+113:CRMF_R_POPOSKINPUT_NOT_SUPPORTED:poposkinput not supported
+114:CRMF_R_UNSUPPORTED_CIPHER:unsupported cipher
+115:CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:unsupported method for creating popo
+116:CRMF_R_UNSUPPORTED_POPO_METHOD:unsupported popo method
+117:CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY:popo inconsistent public key
+118:CRMF_R_POPO_MISSING_PUBLIC_KEY:popo missing public key
+119:CRMF_R_POPO_MISSING_SUBJECT:popo missing subject
+120:CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED:popo raverified not accepted
+121:CRMF_R_POPO_MISSING:popo missing
+122:CRMF_R_CMS_NOT_SUPPORTED:cms not supported
+123:CRMF_R_ERROR_DECODING_ENCRYPTEDKEY:error decoding encryptedkey
+124:CRMF_R_ERROR_DECRYPTING_ENCRYPTEDKEY:error decrypting encryptedkey
+125:CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE:error decrypting encryptedvalue
+126:CRMF_R_ERROR_SETTING_PURPOSE:error setting purpose
+127:CRMF_R_ERROR_VERIFYING_ENCRYPTEDKEY:error verifying encryptedkey
+128:CRMF_R_POPO_INCONSISTENT_CENTRAL_KEYGEN:popo inconsistent central keygen
+129:CRMF_R_ERROR_SIGNING_POPO:error signing popo
+# CMP reasons
+100:CMP_R_INVALID_ARGS:invalid args
+101:CMP_R_UNSUPPORTED_PKIBODY:unsupported pkibody
+102:CMP_R_MULTIPLE_SAN_SOURCES:multiple san sources
+103:CMP_R_NULL_ARGUMENT:null argument
+104:CMP_R_EXPECTED_POLLREQ:expected pollreq
+105:CMP_R_UNEXPECTED_POLLREQ:unexpected pollreq
+106:CMP_R_UNEXPECTED_SENDER:unexpected sender
+107:CMP_R_ERROR_PARSING_PKISTATUS:error parsing pkistatus
+108:CMP_R_BAD_REQUEST_ID:bad request id
+109:CMP_R_CERTID_NOT_FOUND:certid not found
+110:CMP_R_FAILURE_OBTAINING_RANDOM:failure obtaining random
+111:CMP_R_MISSING_SENDER_IDENTIFICATION:missing sender identification
+112:CMP_R_CERTIFICATE_NOT_FOUND:certificate not found
+113:CMP_R_CERTRESPONSE_NOT_FOUND:certresponse not found
+114:CMP_R_CERT_AND_KEY_DO_NOT_MATCH:cert and key do not match
+115:CMP_R_ERROR_CALCULATING_PROTECTION:error calculating protection
+116:CMP_R_ERROR_CREATING_CERTCONF:error creating certconf
+117:CMP_R_ERROR_CREATING_CERTREP:error creating certrep
+118:CMP_R_ERROR_CREATING_ERROR:error creating error
+119:CMP_R_ERROR_CREATING_GENM:error creating genm
+120:CMP_R_ERROR_CREATING_GENP:error creating genp
+121:CMP_R_MISSING_P10CSR:missing p10csr
+122:CMP_R_ERROR_CREATING_PKICONF:error creating pkiconf
+123:CMP_R_ERROR_CREATING_POLLREP:error creating pollrep
+124:CMP_R_ERROR_CREATING_POLLREQ:error creating pollreq
+125:CMP_R_ERROR_CREATING_RP:error creating rp
+126:CMP_R_ERROR_CREATING_RR:error creating rr
+127:CMP_R_ERROR_PROTECTING_MESSAGE:error protecting message
+128:CMP_R_ERROR_SETTING_CERTHASH:error setting certhash
+129:CMP_R_FAIL_INFO_OUT_OF_RANGE:fail info out of range
+130:CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:missing key input for creating protection
+131:CMP_R_MISSING_PRIVATE_KEY:missing private key
+132:CMP_R_PKISTATUSINFO_NOT_FOUND:pkistatusinfo not found
+133:CMP_R_UNEXPECTED_PKIBODY:unexpected pkibody
+134:CMP_R_UNKNOWN_ALGORITHM_ID:unknown algorithm id
+135:CMP_R_UNKNOWN_CERT_TYPE:unknown cert type
+136:CMP_R_UNSUPPORTED_ALGORITHM:unsupported algorithm
+137:CMP_R_UNSUPPORTED_KEY_TYPE:unsupported key type
+138:CMP_R_WRONG_ALGORITHM_OID:wrong algorithm oid
+139:CMP_R_ALGORITHM_NOT_SUPPORTED:algorithm not supported
+140:CMP_R_ERROR_VALIDATING_PROTECTION:error validating protection
+141:CMP_R_FAILED_EXTRACTING_PUBKEY:failed extracting pubkey
+142:CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE:missing key usage digitalsignature
+143:CMP_R_MISSING_PROTECTION:missing protection
+144:CMP_R_MISSING_TRUST_STORE:missing trust store
+145:CMP_R_NO_SUITABLE_SENDER_CERT:no suitable sender cert
+146:CMP_R_PKIBODY_ERROR:pkibody error
+147:CMP_R_POTENTIALLY_INVALID_CERTIFICATE:potentially invalid certificate
+148:CMP_R_RECIPNONCE_UNMATCHED:recipnonce unmatched
+149:CMP_R_REQUEST_NOT_ACCEPTED:request not accepted
+150:CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED:sender generalname type not supported
+151:CMP_R_SRVCERT_DOES_NOT_VALIDATE_MSG:srvcert does not validate msg
+152:CMP_R_TRANSACTIONID_UNMATCHED:transactionid unmatched
+153:CMP_R_UNEXPECTED_PVNO:unexpected pvno
+154:CMP_R_UNSUPPORTED_PROTECTION_ALG_DHBASEDMAC:unsupported protection alg dhbasedmac
+155:CMP_R_WRONG_PBM_VALUE:wrong pbm value
+156:CMP_R_CERTHASH_UNMATCHED:certhash unmatched
+157:CMP_R_CERTREQMSG_NOT_FOUND:certreqmsg not found
+158:CMP_R_ERROR_PROCESSING_MESSAGE:error processing message
+159:CMP_R_TRANSFER_ERROR:transfer error
+160:CMP_R_ERROR_UNEXPECTED_CERTCONF:error unexpected certconf
+161:CMP_R_MULTIPLE_REQUESTS_NOT_SUPPORTED:multiple requests not supported
+162:CMP_R_ENCOUNTERED_WAITING:encountered waiting
+163:CMP_R_ERROR_CREATING_CERTREQ:error creating certreq
+164:CMP_R_FAILED_BUILDING_OWN_CHAIN:failed building own chain
+165:CMP_R_MISSING_CERTID:missing certid
+166:CMP_R_MISSING_PBM_SECRET:missing pbm secret
+167:CMP_R_BAD_CHECKAFTER_IN_POLLREP:bad checkafter in pollrep
+168:CMP_R_MISSING_REFERENCE_CERT:missing reference cert
+169:CMP_R_CERTIFICATE_NOT_ACCEPTED:certificate not accepted
+170:CMP_R_MULTIPLE_RESPONSES_NOT_SUPPORTED:multiple responses not supported
+171:CMP_R_ERROR_VALIDATING_SIGNATURE:error validating signature
+172:CMP_R_POLLING_FAILED:polling failed
+173:CMP_R_WRONG_SERIAL_IN_RP:wrong serial in rp
+174:CMP_R_INVALID_OPTION:invalid option
+175:CMP_R_VALUE_TOO_LARGE:value too large
+176:CMP_R_ENCOUNTERED_KEYUPDATEWARNING:encountered keyupdatewarning
+177:CMP_R_VALUE_TOO_SMALL:value too small
+178:CMP_R_MISSING_SECRET:missing secret
+179:CMP_R_MISSING_TRUST_ANCHOR:missing trust anchor
+180:CMP_R_RECEIVED_ERROR:received error
+181:CMP_R_CHECKAFTER_OUT_OF_RANGE:checkafter out of range
+182:CMP_R_REQUEST_REJECTED_BY_SERVER:request rejected by server
+183:CMP_R_MISSING_PUBLIC_KEY:missing public key
+184:CMP_R_TOTAL_TIMEOUT:total timeout
+185:CMP_R_UNEXPECTED_PKISTATUS:unexpected pkistatus
+186:CMP_R_UNKNOWN_PKISTATUS:unknown pkistatus
+187:CMP_R_WRONG_CERTID_IN_RP:wrong certid in rp
+188:CMP_R_WRONG_RP_COMPONENT_COUNT:wrong rp component count
+189:CMP_R_WRONG_CERTID:wrong certid
+190:CMP_R_MISSING_PRIVATE_KEY_FOR_POPO:missing private key for popo
+191:CMP_R_UNCLEAN_CTX:unclean ctx
+192:CMP_R_GETTING_GENP:getting genp
+193:CMP_R_INVALID_GENP:invalid genp
+194:CMP_R_NO_STDIO:no stdio
+195:CMP_R_INVALID_ROOTCAKEYUPDATE:invalid rootcakeyupdate
+196:CMP_R_UNEXPECTED_CERTPROFILE:unexpected certprofile
+197:CMP_R_GENERATE_CERTREQTEMPLATE:generate certreqtemplate
+198:CMP_R_GENERATE_CRLSTATUS:error creating crlstatus
+199:CMP_R_GET_ITAV:get itav
+200:CMP_R_UNKNOWN_CRL_ISSUER:unknown crl issuer
+201:CMP_R_UNEXPECTED_CRLSTATUSLIST:unexpected crlstatuslist
+202:CMP_R_INVALID_KEYSPEC:invalid keyspec
+203:CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY:failed extracting central gen key
+204:CMP_R_MISSING_CENTRAL_GEN_KEY:missing central gen key
+205:CMP_R_UNEXPECTED_CENTRAL_GEN_KEY:unexpected central gen key
+# CT reasons
+100:CT_R_INVALID_LOG_ID_LENGTH:invalid log id length
+101:CT_R_UNRECOGNIZED_SIGNATURE_NID:unrecognized signature nid
+102:CT_R_UNSUPPORTED_ENTRY_TYPE:unsupported entry type
+103:CT_R_UNSUPPORTED_VERSION:unsupported version
+104:CT_R_SCT_INVALID:sct invalid
+105:CT_R_SCT_LIST_INVALID:sct list invalid
+106:CT_R_SCT_NOT_SET:sct not set
+107:CT_R_SCT_INVALID_SIGNATURE:sct invalid signature
+108:CT_R_BASE64_DECODE_ERROR:base64 decode error
+109:CT_R_LOG_CONF_INVALID:log conf invalid
+110:CT_R_LOG_CONF_INVALID_KEY:log conf invalid key
+111:CT_R_LOG_CONF_MISSING_DESCRIPTION:log conf missing description
+112:CT_R_LOG_CONF_MISSING_KEY:log conf missing key
+113:CT_R_LOG_KEY_INVALID:log key invalid
+114:CT_R_SCT_LOG_ID_MISMATCH:sct log id mismatch
+115:CT_R_SCT_UNSUPPORTED_VERSION:sct unsupported version
+116:CT_R_SCT_FUTURE_TIMESTAMP:sct future timestamp
+# ASYNC reasons
+101:ASYNC_R_FAILED_TO_SET_POOL:failed to set pool
+102:ASYNC_R_FAILED_TO_SWAP_CONTEXT:failed to swap context
+103:ASYNC_R_INVALID_POOL_SIZE:invalid pool size
+105:ASYNC_R_INIT_FAILED:init failed
+# SM2 reasons
+100:SM2_R_ASN1_ERROR:asn1 error
+101:SM2_R_BAD_SIGNATURE:bad signature
+102:SM2_R_INVALID_DIGEST:invalid digest
+103:SM2_R_INVALID_DIGEST_TYPE:invalid digest type
+104:SM2_R_INVALID_ENCODING:invalid encoding
+105:SM2_R_INVALID_FIELD:invalid field
+106:SM2_R_USER_ID_TOO_LARGE:user id too large
+107:SM2_R_BUFFER_TOO_SMALL:buffer too small
+108:SM2_R_INVALID_CURVE:invalid curve
+109:SM2_R_NO_PARAMETERS_SET:no parameters set
+110:SM2_R_DIST_ID_TOO_LARGE:dist id too large
+111:SM2_R_ID_TOO_LARGE:id too large
+112:SM2_R_ID_NOT_SET:id not set
+113:SM2_R_INVALID_PRIVATE_KEY:invalid private key
+# OSSL_STORE reasons
+100:OSSL_STORE_R_NOT_A_CERTIFICATE:not a certificate
+101:OSSL_STORE_R_NOT_A_CRL:not a crl
+102:OSSL_STORE_R_NOT_A_PRIVATE_KEY:not a private key
+103:OSSL_STORE_R_NOT_A_NAME:not a name
+104:OSSL_STORE_R_NOT_PARAMETERS:not parameters
+105:OSSL_STORE_R_UNREGISTERED_SCHEME:unregistered scheme
+106:OSSL_STORE_R_INVALID_SCHEME:invalid scheme
+107:OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE:ambiguous content type
+108:OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE:path must be absolute
+109:OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED:ui process interrupted or cancelled
+110:OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE:unsupported content type
+111:OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED:uri authority unsupported
+112:OSSL_STORE_R_IS_NOT_A:is not a
+113:OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC:error verifying pkcs12 mac
+114:OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR:passphrase callback error
+115:OSSL_STORE_R_BAD_PASSWORD_READ:bad password read
+116:OSSL_STORE_R_LOADER_INCOMPLETE:loader incomplete
+117:OSSL_STORE_R_LOADING_STARTED:loading started
+118:OSSL_STORE_R_UNSUPPORTED_OPERATION:unsupported operation
+119:OSSL_STORE_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES:search only supported for directories
+120:OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE:unsupported search type
+121:OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST:fingerprint size does not match digest
+122:OSSL_STORE_R_NOT_A_PUBLIC_KEY:not a public key
+123:OSSL_STORE_R_NO_LOADERS_FOUND:no loaders found
+124:OSSL_STORE_R_NOT_A_SYMMETRIC_KEY:not a symmetric key
+# ESS reasons
+100:ESS_R_ESS_SIGNING_CERT_ADD_ERROR:ess signing cert add error
+101:ESS_R_ESS_SIGNING_CERT_V2_ADD_ERROR:ess signing cert v2 add error
+102:ESS_R_ESS_SIGNING_CERTIFICATE_ERROR:ess signing certificate error
+103:ESS_R_ESS_CERT_DIGEST_ERROR:ess cert digest error
+104:ESS_R_ESS_CERT_ID_NOT_FOUND:ess cert id not found
+105:ESS_R_ESS_CERT_ID_WRONG_ORDER:ess cert id wrong order
+106:ESS_R_ESS_DIGEST_ALG_UNKNOWN:ess digest alg unknown
+107:ESS_R_EMPTY_ESS_CERT_ID_LIST:empty ess cert id list
+108:ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE:missing signing certificate attribute
+# PROP reasons
+100:PROP_R_NAME_TOO_LONG:name too long
+101:PROP_R_NOT_AN_ASCII_CHARACTER:not an ascii character
+102:PROP_R_NOT_AN_HEXADECIMAL_DIGIT:not an hexadecimal digit
+103:PROP_R_NOT_AN_IDENTIFIER:not an identifier
+104:PROP_R_NOT_AN_OCTAL_DIGIT:not an octal digit
+105:PROP_R_NOT_A_DECIMAL_DIGIT:not a decimal digit
+106:PROP_R_NO_MATCHING_STRING_DELIMITER:no matching string delimiter
+107:PROP_R_NO_VALUE:no value
+108:PROP_R_PARSE_FAILED:parse failed
+109:PROP_R_STRING_TOO_LONG:string too long
+110:PROP_R_TRAILING_CHARACTERS:trailing characters
+# PROV reasons
+100:PROV_R_BAD_DECRYPT:bad decrypt
+101:PROV_R_KEY_SETUP_FAILED:key setup failed
+102:PROV_R_CIPHER_OPERATION_FAILED:cipher operation failed
+103:PROV_R_FAILED_TO_GET_PARAMETER:failed to get parameter
+104:PROV_R_FAILED_TO_SET_PARAMETER:failed to set parameter
+105:PROV_R_INVALID_KEY_LENGTH:invalid key length
+106:PROV_R_OUTPUT_BUFFER_TOO_SMALL:output buffer too small
+107:PROV_R_WRONG_FINAL_BLOCK_LENGTH:wrong final block length
+108:PROV_R_INVALID_AAD:invalid aad
+109:PROV_R_INVALID_IV_LENGTH:invalid iv length
+110:PROV_R_INVALID_TAG:invalid tag
+111:PROV_R_INVALID_CUSTOM_LENGTH:invalid custom length
+112:PROV_R_INVALID_SALT_LENGTH:invalid salt length
+113:PROV_R_NOT_XOF_OR_INVALID_LENGTH:not xof or invalid length
+114:PROV_R_NO_KEY_SET:no key set
+115:PROV_R_INVALID_DATA:invalid data
+118:PROV_R_INVALID_TAG_LENGTH:invalid tag length
+119:PROV_R_TAG_NOT_SET:tag not set
+120:PROV_R_TAG_NOT_NEEDED:tag not needed
+121:PROV_R_FAILED_TO_GENERATE_KEY:failed to generate key
+122:PROV_R_INVALID_DIGEST:invalid digest
+123:PROV_R_INVALID_ITERATION_COUNT:invalid iteration count
+125:PROV_R_INVALID_MODE:invalid mode
+126:PROV_R_TOO_MANY_RECORDS:too many records
+128:PROV_R_MISSING_KEY:missing key
+129:PROV_R_MISSING_MESSAGE_DIGEST:missing message digest
+130:PROV_R_MISSING_PASS:missing pass
+131:PROV_R_MISSING_SALT:missing salt
+132:PROV_R_MISSING_SECRET:missing secret
+133:PROV_R_MISSING_SESSION_ID:missing session id
+134:PROV_R_MISSING_TYPE:missing type
+135:PROV_R_MISSING_XCGHASH:missing xcghash
+136:PROV_R_NOT_SUPPORTED:not supported
+137:PROV_R_UNSUPPORTED_MAC_TYPE:unsupported mac type
+138:PROV_R_VALUE_ERROR:value error
+139:PROV_R_WRONG_OUTPUT_BUFFER_SIZE:wrong output buffer size
+140:PROV_R_MISSING_SEED:missing seed
+141:PROV_R_BAD_ENCODING:bad encoding
+142:PROV_R_BAD_LENGTH:bad length
+144:PROV_R_MISSING_CEK_ALG:missing cek alg
+145:PROV_R_UNSUPPORTED_CEK_ALG:unsupported cek alg
+147:PROV_R_UNABLE_TO_LOAD_SHA256:unable to load sha256
+148:PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE:xts data unit is too large
+149:PROV_R_XTS_DUPLICATED_KEYS:xts duplicated keys
+150:PROV_R_MISSING_MAC:missing mac
+151:PROV_R_INVALID_MAC:invalid mac
+152:PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:unsupported number of rounds
+153:PROV_R_UNSUPPORTED_KEY_SIZE:unsupported key size
+154:PROV_R_INVALID_SEED_LENGTH:invalid seed length
+155:PROV_R_MISSING_CIPHER:missing cipher
+156:PROV_R_MISSING_CONSTANT:missing constant
+157:PROV_R_INVALID_CONSTANT_LENGTH:invalid constant length
+158:PROV_R_INVALID_KEY:invalid key
+159:PROV_R_UNABLE_TO_GET_PASSPHRASE:unable to get passphrase
+160:PROV_R_BN_ERROR:bn error
+161:PROV_R_BAD_TLS_CLIENT_VERSION:bad tls client version
+162:PROV_R_FAILED_TO_DECRYPT:failed to decrypt
+164:PROV_R_FAILED_DURING_DERIVATION:failed during derivation
+165:PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:illegal or unsupported padding mode
+166:PROV_R_INVALID_DIGEST_LENGTH:invalid digest length
+167:PROV_R_INVALID_MGF1_MD:invalid mgf1 md
+168:PROV_R_INVALID_PADDING_MODE:invalid padding mode
+170:PROV_R_INVALID_X931_DIGEST:invalid x931 digest
+171:PROV_R_KEY_SIZE_TOO_SMALL:key size too small
+172:PROV_R_PSS_SALTLEN_TOO_SMALL:pss saltlen too small
+173:PROV_R_ALGORITHM_MISMATCH:algorithm mismatch
+174:PROV_R_DIGEST_NOT_ALLOWED:digest not allowed
+175:PROV_R_FAILED_TO_SIGN:failed to sign
+176:PROV_R_INVALID_CURVE:invalid curve
+177:PROV_R_NO_PARAMETERS_SET:no parameters set
+178:PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:operation not supported for this keytype
+179:PROV_R_INVALID_SIGNATURE_SIZE:invalid signature size
+180:PROV_R_FAILED_TO_CREATE_LOCK:failed to create lock
+181:PROV_R_INSUFFICIENT_DRBG_STRENGTH:insufficient drbg strength
+182:PROV_R_PARENT_LOCKING_NOT_ENABLED:parent locking not enabled
+183:PROV_R_XOF_DIGESTS_NOT_ALLOWED:xof digests not allowed
+184:PROV_R_ADDITIONAL_INPUT_TOO_LONG:additional input too long
+185:PROV_R_ALREADY_INSTANTIATED:already instantiated
+186:PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK:entropy source strength too weak
+187:PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED:parent cannot supply entropy seed
+188:PROV_R_ERROR_INSTANTIATING_DRBG:error instantiating drbg
+189:PROV_R_ERROR_RETRIEVING_ENTROPY:error retrieving entropy
+190:PROV_R_ERROR_RETRIEVING_NONCE:error retrieving nonce
+191:PROV_R_GENERATE_ERROR:generate error
+192:PROV_R_IN_ERROR_STATE:in error state
+193:PROV_R_NOT_INSTANTIATED:not instantiated
+194:PROV_R_PARENT_STRENGTH_TOO_WEAK:parent strength too weak
+195:PROV_R_PERSONALISATION_STRING_TOO_LONG:personalisation string too long
+196:PROV_R_REQUEST_TOO_LARGE_FOR_DRBG:request too large for drbg
+197:PROV_R_RESEED_ERROR:reseed error
+198:PROV_R_INVALID_PUBINFO:invalid pubinfo
+199:PROV_R_UNABLE_TO_GET_PARENT_STRENGTH:unable to get parent strength
+200:PROV_R_INVALID_UKM_LENGTH:invalid ukm length
+201:PROV_R_UNABLE_TO_LOCK_PARENT:unable to lock parent
+202:PROV_R_LENGTH_TOO_LARGE:length too large
+203:PROV_R_MISMATCHING_DOMAIN_PARAMETERS:mismatching domain parameters
+204:PROV_R_UNABLE_TO_RESEED:unable to reseed
+205:PROV_R_DERIVATION_FUNCTION_INIT_FAILED:derivation function init failed
+206:PROV_R_REQUIRE_CTR_MODE_CIPHER:require ctr mode cipher
+207:PROV_R_UNABLE_TO_FIND_CIPHERS:unable to find ciphers
+208:PROV_R_UNABLE_TO_INITIALISE_CIPHERS:unable to initialise ciphers
+209:PROV_R_MISSING_OID:missing OID
+210:PROV_R_INDICATOR_INTEGRITY_FAILURE:indicator integrity failure
+211:PROV_R_INVALID_CONFIG_DATA:invalid config data
+212:PROV_R_INVALID_STATE:invalid state
+213:PROV_R_MISSING_CONFIG_DATA:missing config data
+214:PROV_R_MODULE_INTEGRITY_FAILURE:module integrity failure
+215:PROV_R_SELF_TEST_KAT_FAILURE:self test kat failure
+216:PROV_R_SELF_TEST_POST_FAILURE:self test post failure
+217:PROV_R_INVALID_OUTPUT_LENGTH:invalid output length
+218:PROV_R_INVALID_DIGEST_SIZE:invalid digest size
+219:PROV_R_PATH_MUST_BE_ABSOLUTE:path must be absolute
+220:PROV_R_NOT_A_PUBLIC_KEY:not a public key
+221:PROV_R_NOT_A_PRIVATE_KEY:not a private key
+222:PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES:search only supported for directories
+223:PROV_R_URI_AUTHORITY_UNSUPPORTED:uri authority unsupported
+224:PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE:fips module entering error state
+225:PROV_R_FIPS_MODULE_IN_ERROR_STATE:fips module in error state
+226:PROV_R_NOT_PARAMETERS:not parameters
+227:PROV_R_FIPS_MODULE_CONDITIONAL_ERROR:fips module conditional error
+228:PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:parent cannot generate random numbers
+229:PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT:seed sources must not have a parent
+230:PROV_R_INVALID_INPUT_LENGTH:invalid input length
+231:PROV_R_INVALID_AEAD:invalid aead
+232:PROV_R_INVALID_KDF:invalid kdf
+233:PROV_R_EMS_NOT_ENABLED:ems not enabled
+234:PROV_R_INVALID_THREAD_POOL_SIZE:invalid thread pool size
+235:PROV_R_INVALID_MEMORY_SIZE:invalid memory size
+236:PROV_R_COFACTOR_REQUIRED:cofactor required
+237:PROV_R_FINAL_CALL_OUT_OF_ORDER:final call out of order
+238:PROV_R_INIT_CALL_OUT_OF_ORDER:init call out of order
+239:PROV_R_ONESHOT_CALL_OUT_OF_ORDER:oneshot call out of order
+240:PROV_R_UPDATE_CALL_OUT_OF_ORDER:update call out of order
+241:PROV_R_INVALID_PREHASHED_DIGEST_LENGTH:invalid prehashed digest length
+242:PROV_R_NO_INSTANCE_ALLOWED:no instance allowed
+243:PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION:invalid eddsa instance for attempted operation
+244:PROV_R_ENTROPY_SOURCE_FAILED_CONTINUOUS_TESTS:entropy source failed continuous tests
+245:PROV_R_ML_DSA_NO_FORMAT:ml dsa no format
+246:PROV_R_ML_KEM_NO_FORMAT:ml kem no format
+247:PROV_R_NULL_LENGTH_POINTER:null length pointer
+248:PROV_R_NULL_OUTPUT_BUFFER:null output buffer
+249:PROV_R_UNEXPECTED_KEY_PARAMETERS:unexpected key parameters
+250:PROV_R_UNSUPPORTED_SELECTION:unsupported selection
+251:PROV_R_WRONG_CIPHERTEXT_SIZE:wrong ciphertext size
+252:PROV_R_REPEATED_PARAMETER:repeated parameter
+253:PROV_R_FIPS_MODULE_IMPORT_PCT_ERROR:fips module import pct error
+254:PROV_R_PASSWORD_STRENGTH_TOO_WEAK:password strength too weak
+255:PROV_R_MISSING_EID:missing eid
+256:PROV_R_INVALID_KDR:invalid kdr
+257:PROV_R_INVALID_LABEL:invalid label
+258:PROV_R_INVALID_FUNCTION_NAME:invalid function name
+259:PROV_R_INVALID_INDEX_LENGTH:invalid index length
+260:PROV_R_INVALID_CIPHER:invalid cipher
+261:PROV_R_INVALID_PARAMETERS_FOR_DKM:invalid parameters for dkm
+262:PROV_R_MISSING_DKM:missing dkm
+263:PROV_R_MISSING_NONCE:missing nonce
+264:PROV_R_INVALID_NONCE_LENGTH:invalid nonce length
+265:PROV_R_INVALID_SECRET_LENGTH:invalid secret length
+266:PROV_R_KEY_IMMUTABLE_ONCE_SET:key immutable once set
+267:PROV_R_FIPS_MODULE_MISSING_CHECKSUM:fips module missing checksum
+# OSSL_ENCODER reasons
+100:OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY:incorrect property query
+101:OSSL_ENCODER_R_ENCODER_NOT_FOUND:encoder not found
+102:OSSL_ENCODER_R_MISSING_GET_PARAMS:missing get params
+103:OSSL_ENCODER_R_BAD_PARAMETER_VALUE:bad parameter value
+104:OSSL_ENCODER_R_UNKNOWN_PARAMETER_NAME:unknown parameter name
+# OSSL_DECODER reasons
+100:OSSL_DECODER_R_MISSING_GET_PARAMS:missing get params
+101:OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT:could not decode object
+102:OSSL_DECODER_R_DECODER_NOT_FOUND:decoder not found
+# HTTP reasons
+100:HTTP_R_CONNECT_FAILURE:connect failure
+101:HTTP_R_ERROR_PARSING_URL:error parsing url
+102:HTTP_R_ERROR_SENDING:error sending
+103:HTTP_R_ERROR_RECEIVING:error receiving
+104:HTTP_R_RESPONSE_PARSE_ERROR:response parse error
+105:HTTP_R_RECEIVED_ERROR:received error
+106:HTTP_R_RECEIVED_WRONG_HTTP_VERSION:received wrong http version
+107:HTTP_R_TLS_NOT_ENABLED:tls not enabled
+108:HTTP_R_ASN1_LEN_EXCEEDS_MAX_RESP_LEN:asn1 len exceeds max resp len
+109:HTTP_R_ERROR_PARSING_ASN1_LENGTH:error parsing asn1 length
+110:HTTP_R_MISSING_ASN1_ENCODING:missing asn1 encoding
+111:HTTP_R_MISSING_REDIRECT_LOCATION:missing redirect location
+112:HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:redirection from https to http
+113:HTTP_R_RESPONSE_LINE_TOO_LONG:response line too long
+114:HTTP_R_STATUS_CODE_UNSUPPORTED:status code unsupported
+115:HTTP_R_TOO_MANY_REDIRECTIONS:too many redirections
+116:HTTP_R_REDIRECTION_NOT_ENABLED:redirection not enabled
+117:HTTP_R_MAX_RESP_LEN_EXCEEDED:max resp len exceeded
+118:HTTP_R_UNEXPECTED_CONTENT_TYPE:unexpected content type
+119:HTTP_R_ERROR_PARSING_CONTENT_LENGTH:error parsing content length
+120:HTTP_R_INCONSISTENT_CONTENT_LENGTH:inconsistent content length
+121:HTTP_R_MISSING_CONTENT_TYPE:missing content type
+122:HTTP_R_SOCK_NOT_SUPPORTED:sock not supported
+123:HTTP_R_INVALID_PORT_NUMBER:invalid port number
+124:HTTP_R_INVALID_URL_SCHEME:invalid url scheme
+125:HTTP_R_INVALID_URL_PATH:invalid url path
+126:HTTP_R_HEADER_PARSE_ERROR:header parse error
+127:HTTP_R_SERVER_CANCELED_CONNECTION:server canceled connection
+128:HTTP_R_FAILED_READING_DATA:failed reading data
+129:HTTP_R_RETRY_TIMEOUT:retry timeout
+130:HTTP_R_RESPONSE_TOO_MANY_HDRLINES:response too many hdrlines
+131:HTTP_R_CONTENT_TYPE_MISMATCH:content type mismatch

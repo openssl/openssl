@@ -179,7 +179,7 @@ help()
         "        clang-format command (Current: '${CLANG_FMT_CMD}')." \
         "    EXCLUDE_FILES" \
         "        Space-separated list of files to exclude from clang-format" \
-        "        processing, as they are generated with make update" \
+        "        processing, as they are generated" \
         "        (Current: '${EXCLUDE_FILES}')." \
         "    FMT_EXTENSIONS" \
         "        List of extensions of files to process with clang-format" \

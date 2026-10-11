@@ -34,7 +34,7 @@ Usage: release.sh [ options ... ]
                 key (default: use the default e-mail address’ key).
 
 --no-upload     Don't upload to upload@dev.openssl.org.
---no-update     Don't perform 'make update' and 'make update-fips-checksums'.
+--no-update     Don't perform 'make update-fips-checksums'.
 --verbose       Verbose output.
 --debug         Include debug output.  Implies --no-upload.
 
@@ -325,7 +325,6 @@ echo "== Configuring OpenSSL for update and release.  This may take a bit of tim
 
 $VERBOSE "== Checking source file updates and fips checksums"
 
-make update >&42
 # As long as we're doing an alpha release, we can have symbols without specific
 # numbers assigned. In a beta or final release, all symbols MUST have an
 # assigned number.
@@ -708,7 +707,7 @@ Don't upload the produced files.
 
 =item B<--no-update>
 
-Don't run C<make update> and C<make update-fips-checksums>.
+Don't run C<make update-fips-checksums>.
 
 =item B<--verbose>
 

@@ -32,18 +32,14 @@ Raise an error with `ERR_raise()`, using a reason name of the form
 
     ERR_raise(ERR_LIB_XXX, XXX_R_SOMETHING_FAILED);
 
-The reason does not have to be declared first.  Running
+and add a line for the reason at the end of the library's section of
+`crypto/err/openssl.txt`, with the number one more than the last
+line's:
 
-    make update
+    142:XXX_R_SOMETHING_FAILED:something failed
 
-scans the sources, assigns a number to each reason that does not have
-one, and records it in `crypto/err/openssl.txt`:
-
-    XXX_R_SOMETHING_FAILED:100:something failed
-
-Numbers already recorded there are kept, so they remain stable for
-applications that have compiled against them.
-
-The third field is the string returned by `ERR_reason_error_string()`.
-It is derived from the reason name, with underscores replaced by
-spaces; edit `crypto/err/openssl.txt` if it should read differently.
+The fields are the reason number, the reason name and the string
+returned by `ERR_reason_error_string()`; the header of
+`crypto/err/openssl.txt` describes them.  The number is unique within
+the library and is part of the API: an existing reason's number never
+changes.

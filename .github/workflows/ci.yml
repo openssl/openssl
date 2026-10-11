@@ -43,26 +43,6 @@ env:
   OSSL_RUN_CI_TESTS: 1
 
 jobs:
-  check_update:
-    runs-on: ubuntu-latest
-    steps:
-    - name: install unifdef
-      run: |
-        sudo apt-get update
-        sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install unifdef
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-        persist-credentials: false
-    - name: config
-      run: ./config --strict-warnings --banner=Configured enable-fips && perl configdata.pm --dump
-    - name: make build_generated
-      run: make -s build_generated
-    - name: make update
-      run: make update
-    - name: git diff
-      run: git diff --exit-code
-
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.

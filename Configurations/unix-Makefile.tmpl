@@ -1228,8 +1228,6 @@ uninstall_image_docs:
 # Developer targets (note: these are only available on Unix) #########
 ##@ Code maintenance
 
-update: errors ## Update error codes
-
 .PHONY: doc-nits md-nits
 doc-nits: build_generated build_generated_pods ## Evaluate OpenSSL documentation
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e -i -a
@@ -1322,13 +1320,6 @@ providers/fips.module.sources.new: configdata.pm
 	  done \
 	) | grep -v sm2p256 | sort | uniq > providers/fips.module.sources.new
 	rm -rf sources-tmp
-
-# Set to -force to force a rebuild
-ERROR_REBUILD=
-errors:
-	( b=`pwd`; set -e; cd $(SRCDIR); \
-          $(PERL) util/ck_errf.pl -strict -internal; \
-          $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal -state )
 
 {- use File::Basename;
 
