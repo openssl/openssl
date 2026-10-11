@@ -1102,7 +1102,7 @@ int app_reloid_from_text(BUF_MEM *buf, const char *text, size_t text_len)
  * @param text the ID in dotted decimal or "0x"-prefixed hex, not NUL terminated
  * @param text_len the number of bytes at text
  * @returns 1 on success, 0 if the ID is malformed, empty or longer than
- *          UINT8_MAX bytes, or on allocation failure.
+ *          TLSEXT_TRUST_ANCHOR_ID_MAX_LEN, or on allocation failure.
  */
 static int append_requested_tai(BUF_MEM *buf, const char *text, size_t text_len)
 {
@@ -1112,7 +1112,7 @@ static int append_requested_tai(BUF_MEM *buf, const char *text, size_t text_len)
     if (!buf_append(buf, &zero, 1))
         return 0;
     if (text_len >= 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
-        uint8_t id[UINT8_MAX];
+        uint8_t id[TLSEXT_TRUST_ANCHOR_ID_MAX_LEN];
         char *hex = OPENSSL_strndup(text + 2, text_len - 2);
         int ok = hex != NULL
             && OPENSSL_hexstr2buf_ex(id, sizeof(id), &id_len, hex, '\0')
@@ -1125,7 +1125,7 @@ static int append_requested_tai(BUF_MEM *buf, const char *text, size_t text_len)
         return 0;
     }
     id_len = buf->length - at - 1;
-    if (id_len == 0 || id_len > UINT8_MAX)
+    if (id_len == 0 || id_len > TLSEXT_TRUST_ANCHOR_ID_MAX_LEN)
         return 0;
     buf->data[at] = (char)id_len;
     return 1;
