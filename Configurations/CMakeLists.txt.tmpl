@@ -36,6 +36,9 @@
          FIPSKEY => $config{FIPSKEY},
          VERSION => $config{full_version},
          VERSION_NUMBER => $config{version},
+         SHLIB_VERSION_NUMBER => $config{shlib_version},
+         MAJOR => $config{major},
+         MINOR => $config{minor},
          PERL => $config{PERL},
          CROSS_COMPILE => $config{CROSS_COMPILE},
          CC => '$(CROSS_COMPILE)' . $config{CC},
@@ -95,6 +98,9 @@
                             @{$config{lib_cflags}},
                             @{$config{shared_cflag}},
                             '$(CNF_CFLAGS)', '$(CFLAGS)'),
+         LIB_LDFLAGS => join(' ', $target{shared_ldflag} || (),
+                             $config{shared_ldflag} || (),
+                             '$(CNF_LDFLAGS)', '$(LDFLAGS)'),
          LIB_EX_LIBS => '$(CNF_EX_LIBS) $(EX_LIBS)',
          DSO_CPPFLAGS => join(' ', $target{dso_cppflags} || (),
                               $target{module_cppflags} || (),
@@ -230,6 +236,7 @@ set(CMAKE_C_COMPILER {- cmq(mkexpand('$(CC)')) -})
 set(CMAKE_ASM_COMPILER {- cmq(mkexpand('$(CC)')) -})
 set(CMAKE_AR {- cmq(mkexpand('$(AR)')) -})
 set(CMAKE_BUILD_TYPE "")
+set(CMAKE_OSX_SYSROOT "")
 set(CMAKE_C_FLAGS "")
 set(CMAKE_ASM_FLAGS "")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -238,6 +245,13 @@ project(OpenSSL VERSION {- $config{version} -} LANGUAGES C ASM)
 
 set(CMAKE_C_FLAGS "")
 set(CMAKE_ASM_FLAGS "")
+
+# Shared libraries are linked with exactly the command the Makefile uses;
+# every flag is in the target's link options.
+set(CMAKE_C_CREATE_SHARED_LIBRARY
+  "<CMAKE_C_COMPILER> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+set(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "")
+set(CMAKE_SHARED_LIBRARY_C_FLAGS "")
 
 # The files every compilation may need, generated before anything is
 # compiled.
@@ -383,8 +397,8 @@ add_custom_target(generated_mandatory ALL
          my %args = @_;
          my @srcs = @{$args{srcs}};
 
-         # Only objects of static libraries are built yet.
-         return "" unless $args{intent} eq 'lib';
+         # Only objects of libraries are built yet.
+         return "" unless $args{intent} eq 'lib' || $args{intent} eq 'shlib';
 
          my $obj = objtarget($args{obj});
          my @incs = map { "-I$_" } @{$args{incs}};
@@ -432,7 +446,86 @@ add_custom_target(generated_mandatory ALL
              . ($dir eq '.' ? '' : "/$dir") . "\")\n";
      }
 
-     sub obj2shlib { "" }
+     # A shared library is a CMake SHARED library whose file is named
+     # exactly as the Makefile names it, linked with the Makefile's
+     # command line.  Libraries it depends on are linked the same way,
+     # with -L and -l, and CMake is told about them only for ordering
+     # and relinking.
+     sub obj2shlib {
+         my %args = @_;
+         my $lib = $args{lib};
+         my $name = cmtarget($lib) . "_shared";
+         my $full = platform->sharedlib($lib);
+         my $simple = platform->sharedlib_simple($lib);
+         my @linkdirs = ();
+         my @linklibs = ();
+         my @linkdeps = ();
+
+         foreach (@{$args{deps}}) {
+             if (platform->isstaticlib($_)) {
+                 # CMake links the file of a static library target.
+                 push @linklibs, cmtarget($_);
+             } else {
+                 my $d = "-L" . dirname($_);
+                 my $l = basename($_);
+                 $l =~ s/^lib//;
+                 push @linklibs, "-l$l";
+                 push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+                 push @linkdeps, cmtarget($_) . "_shared";
+                 push @linkdeps, cmtarget($_) . "_simple"
+                     if defined platform->sharedlib_simple($_);
+             }
+         }
+
+         my @objs = grep { !platform->isdef($_) } @{$args{objs}};
+         my @defs = map { platform->def($_) }
+                    grep { platform->isdef($_) } @{$args{objs}};
+         die "More than one exported symbol map" if scalar @defs > 1;
+
+         my $shared_soname = defined $target{shared_sonameflag}
+             ? ' ' . $target{shared_sonameflag} . basename($full) : '';
+         my $shared_def = join('', map { ' ' . $target{shared_defflag} . $_ }
+                                   @defs);
+         my $ldflags = mkexpand('$(LIB_CFLAGS) ' . join('', map { "$_ " }
+                                                           @linkdirs)
+                                . '$(LIB_LDFLAGS)' . $shared_soname
+                                . $shared_def);
+         my @libs = (@linklibs, mkwords('$(LIB_EX_LIBS)'));
+         my $base = basename($full);
+         my $dir = dirname($full);
+         my $out = "\nadd_library($name SHARED"
+             . join('', map { "\n  \$<TARGET_OBJECTS:" . objtarget($_) . ">" }
+                        @objs)
+             . ")"
+             . "\nset_target_properties($name PROPERTIES"
+             . " PREFIX \"\" SUFFIX \"\" OUTPUT_NAME " . cmq($base)
+             . " LIBRARY_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}"
+             . ($dir eq '.' ? '' : "/$dir") . "\""
+             . " RUNTIME_OUTPUT_DIRECTORY \"\${CMAKE_BINARY_DIR}"
+             . ($dir eq '.' ? '' : "/$dir") . "\""
+             . (@defs ? " LINK_DEPENDS " . cmpath($defs[0]) : "")
+             . ")"
+             . "\ntarget_link_options($name PRIVATE "
+             . cmq("SHELL:$ldflags") . ")"
+             . "\ntarget_link_libraries($name PRIVATE "
+             . cmql(@libs) . ")\n";
+
+         $out .= "add_custom_target(" . cmtarget($lib) . "_def DEPENDS "
+             . cmpath($defs[0]) . ")"
+             . "\nadd_dependencies($name " . cmtarget($lib) . "_def)\n"
+             if @defs;
+         $out .= "add_dependencies($name " . join(' ', @linkdeps) . ")\n"
+             if @linkdeps;
+         if (defined $simple && $simple ne $full) {
+             $out .= "add_custom_command(OUTPUT " . cmpath($simple)
+                 . "\n  COMMAND \${CMAKE_COMMAND} -E create_symlink "
+                 . cmq(basename($full)) . " " . cmq($simple)
+                 . "\n  DEPENDS $name VERBATIM)"
+                 . "\nadd_custom_target(" . cmtarget($lib) . "_simple ALL"
+                 . " DEPENDS " . cmpath($simple) . ")\n";
+         }
+         return $out;
+     }
      sub obj2dso { "" }
      sub obj2bin { "" }
      sub in2script { "" }
