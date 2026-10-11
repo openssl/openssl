@@ -20,9 +20,10 @@ B<-oid> I<id>
 
 This command reads a PEM certificate chain and writes it back out preceded by a
 B<CERTIFICATE PROPERTIES> block that associates a trust anchor identifier with
-the chain. A TLS server or client that loads the decorated chain as a
-credential can then select it when its peer requests that trust anchor in the
-B<trust_anchors> extension (see
+the chain. A TLS server or client loading the decorated chain as a credential,
+as with the B<-tai_chains> option of L<openssl-s_server(1)> and
+L<openssl-s_client(1)>, can then select it when its peer requests that trust
+anchor in the B<trust_anchors> extension (see
 L<https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids/>).
 
 The input must not already contain a B<CERTIFICATE PROPERTIES> block, and,
@@ -78,7 +79,9 @@ issued under that trust anchor:
 =head1 SEE ALSO
 
 L<openssl(1)>,
-L<openssl-verify(1)>
+L<openssl-verify(1)>,
+L<openssl-s_server(1)>,
+L<openssl-s_client(1)>
 
 =head1 HISTORY
 
