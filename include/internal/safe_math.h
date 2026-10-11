@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -405,8 +405,8 @@
     }
 
 /* Calculate ranges of types */
-#define OSSL_SAFE_MATH_MINS(type) ((type)1 << (sizeof(type) * 8 - 1))
-#define OSSL_SAFE_MATH_MAXS(type) (~OSSL_SAFE_MATH_MINS(type))
+#define OSSL_SAFE_MATH_MAXS(type) ((type)((((type)1 << (sizeof(type) * 8 - 2)) - 1) * 2 + 1))
+#define OSSL_SAFE_MATH_MINS(type) (-OSSL_SAFE_MATH_MAXS(type) - 1)
 #define OSSL_SAFE_MATH_MAXU(type) (~(type)0)
 
 /*
