@@ -471,7 +471,9 @@ static int state_machine(SSL_CONNECTION *s, int server)
          * SCTP
          */
 #ifndef OPENSSL_NO_SCTP
-        if (!SSL_CONNECTION_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(ssl)))
+        if (!SSL_CONNECTION_IS_DTLS(s) && !BIO_dgram_is_sctp(SSL_get_wbio(ssl)))
+#else
+        if (!SSL_CONNECTION_IS_DTLS(s))
 #endif
             if (!ssl_init_wbio_buffer(s)) {
                 SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
