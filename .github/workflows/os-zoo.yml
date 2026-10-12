@@ -104,9 +104,10 @@ jobs:
             # Debian 11 LTS ended 2026-08-31: bullseye-security metadata is
             # expired and its pool has been pruned.  Use the snapshot repos
             # the image pins itself.
-            install: |
+            setup: |
               sed -i -e 's|^deb |#deb |' \
-                    -e 's|^# deb http://snapshot|deb http://snapshot|' /etc/apt/sources.list && \
+                    -e 's|^# deb http://snapshot|deb http://snapshot|' /etc/apt/sources.list
+            install: |
               apt-get -o Acquire::Check-Valid-Until=false update && \
               apt-get install -y gcc make perl
           - image: docker.io/library/debian:12
@@ -124,10 +125,10 @@ jobs:
           - image: docker.io/library/fedora:42
             install: dnf install -y gcc make perl-core
           - image: docker.io/library/centos:8
-            install: |
+            setup: |
               sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
-              sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
-              dnf install -y gcc make perl-core
+              sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+            install: dnf install -y gcc make perl-core
           - image: docker.io/library/rockylinux:8
             install: dnf install -y gcc make perl-core
           - image: docker.io/library/rockylinux:9
@@ -139,8 +140,13 @@ jobs:
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: prepare package sources
+      if: matrix.zoo.setup != ''
+      run: ${{ matrix.zoo.setup }}
     - name: install packages
-      run: ${{ matrix.zoo.install }}
+      env:
+        INSTALL: ${{ matrix.zoo.install }}
+      run: .github/retry sh -c "$INSTALL"
     - name: config
       run: ./config
     - name: config dump
@@ -229,7 +235,7 @@ jobs:
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
-        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip" -MaximumRetryCount 3 -RetryIntervalSec 30
     - name: get cpu info
       working-directory: _build
       run: |
