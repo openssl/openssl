@@ -7,21 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * Enable the VX instruction set for this translation unit only.
- * GCC: #pragma GCC target("vx") enables VX code generation for this file
- *      without pinning the architecture level; the -march= flag supplied by
- *      the Makefile (S390X_VEC_MARCH_FLAGS) determines the actual architecture
- *      (z13 by default, or the user-supplied level when CFLAGS contains
- *      -march=).  The rest of libcrypto is compiled without -mvx and stays
- *      safe on pre-z13 CPUs.
- * Clang: does not honour #pragma GCC target; it relies solely on the
- *        command-line -march= and -mvx flags supplied by the Makefile.
- */
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC target("vx")
-#endif
-
 /* z13 introduced VX (facility bit 129); z14 adds VXE.  Only VX is needed. */
 #if defined(OPENSSL_ML_DSA_S390X) && defined(__s390x__) && defined(__VX__)
 #define VX_COMPILER_SUPPORT_VEC128

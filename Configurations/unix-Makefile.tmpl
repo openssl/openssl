@@ -532,17 +532,14 @@ BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 # Extra flags appended only to the two s390x VX vector source files
 # (ml_kem_vec128.c and ml_dsa_ntt_vec128.c).
 #
-# S390X_VEC_MARCH_FLAGS: the effective -march=/-mvx flags for these TUs.
-#   - No user -march= in CFLAGS or older architecture (e.g. z10): "-march=z13 -mvx"
-#     (minimum VX floor; runtime S390X_VX_CAPABLE capability check guards execution).
-#   - User supplied -march= >= z13 (e.g. -march=native, -march=z17): "-mvx" only;
-#     the user's -march= flows through $(CFLAGS) → $(LIB_CFLAGS) and is not
-#     downgraded to z13.
-#
-# S390X_VEC_CFLAGS: compiler-specific unlock flag for <vecintrin.h>.
-#   - GCC: empty (the #pragma GCC target("vx") inside each file enables VX).
-#   - Clang: "-fzvector" when the probe determined it is needed.
-S390X_VEC_MARCH_FLAGS={- $config{s390x_vec_march_flags} // '-march=z13 -mvx' -}
+# S390X_VEC_CFLAGS: the VX enable flags for these TUs, as determined by the
+# Configure probe.  The user's -march= (or the compiler's default architecture)
+# flows through $(CFLAGS) → $(LIB_CFLAGS) unchanged; this variable only adds
+# the minimum flags needed to unlock VX vector intrinsics:
+#   - GCC:         "-mvx"
+#   - Clang:       "-mvx -fzvector"
+# If the Configure probe failed (compiler/arch does not support VX) this
+# variable is empty and the two vec128 files are excluded from the build.
 S390X_VEC_CFLAGS={- $config{s390x_vector_cflags} // '' -}
 
 CMOCKA_LIBS={- $config{cmocka_libs} // '' -}
@@ -1816,14 +1813,12 @@ EOF
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
       # Per-file extra flags for the two s390x VX vector translation units.
-      # $(S390X_VEC_MARCH_FLAGS) supplies the effective -march=/-mvx: either
-      # "-march=z13 -mvx" (no user -march=, minimum VX floor) or "-mvx" only
-      # (user supplied -march= in CFLAGS, which flows through $(LIB_CFLAGS)).
-      # $(S390X_VEC_CFLAGS) adds -fzvector for older Clang to unlock
-      # <vecintrin.h>; it is empty for GCC.
+      # $(S390X_VEC_CFLAGS) carries "-mvx" (GCC) or "-mvx -fzvector" (Clang)
+      # as determined by the Configure probe.  No -march= is injected here;
+      # the user's own -march= flows through $(LIB_CFLAGS) unchanged.
       my $extra_cflags = "";
       if (grep m{(?:^|/)(ml_kem_vec128|ml_dsa_ntt_vec128)\.c$}, @srcs) {
-          $extra_cflags = " \$(S390X_VEC_MARCH_FLAGS) \$(S390X_VEC_CFLAGS)";
+          $extra_cflags = " \$(S390X_VEC_CFLAGS)";
       }
       my $cmd;
       my $cmdflags;
