@@ -1703,37 +1703,6 @@ void SSL_set0_rbio(SSL *s, BIO *rbio)
     sc->rlayer.rrlmethod->set1_bio(sc->rlayer.rrl, sc->rbio);
 }
 
-static int wbio_is_shared(const SSL_CONNECTION *s)
-{
-#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    return SSL_CONNECTION_IS_DTLS(s) && s->d1->listener != NULL;
-#else
-    return 0;
-#endif /* !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK) */
-}
-
-static void wbio_buffer_link(SSL_CONNECTION *s, BIO *wbio)
-{
-    if (s->bbio_shares_wbio) {
-        BIO_set_next(s->bbio, wbio);
-        s->wbio = s->bbio;
-    } else {
-        s->wbio = BIO_push(s->bbio, wbio);
-    }
-}
-
-static BIO *wbio_buffer_unlink(SSL_CONNECTION *s)
-{
-    BIO *wbio;
-
-    if (!s->bbio_shares_wbio)
-        return BIO_pop(s->wbio);
-
-    wbio = BIO_next(s->bbio);
-    BIO_set_next(s->bbio, NULL);
-    return wbio;
-}
-
 void SSL_set0_wbio(SSL *s, BIO *wbio)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -1759,14 +1728,14 @@ void SSL_set0_wbio(SSL *s, BIO *wbio)
      * If the output buffering BIO is still in place, remove it
      */
     if (sc->bbio != NULL)
-        sc->wbio = wbio_buffer_unlink(sc);
+        sc->wbio = BIO_pop(sc->wbio);
 
     BIO_free_all(sc->wbio);
     sc->wbio = wbio;
 
     /* Re-attach |bbio| to the new |wbio|. */
     if (sc->bbio != NULL)
-        wbio_buffer_link(sc, sc->wbio);
+        sc->wbio = BIO_push(sc->bbio, sc->wbio);
 
     sc->rlayer.wrlmethod->set1_bio(sc->rlayer.wrl, sc->wbio);
 }
@@ -5819,8 +5788,7 @@ int ssl_init_wbio_buffer(SSL_CONNECTION *s)
         return 0;
     }
     s->bbio = bbio;
-    s->bbio_shares_wbio = wbio_is_shared(s);
-    wbio_buffer_link(s, s->wbio);
+    s->wbio = BIO_push(bbio, s->wbio);
 
     s->rlayer.wrlmethod->set1_bio(s->rlayer.wrl, s->wbio);
 
@@ -5833,7 +5801,7 @@ int ssl_free_wbio_buffer(SSL_CONNECTION *s)
     if (s->bbio == NULL)
         return 1;
 
-    s->wbio = wbio_buffer_unlink(s);
+    s->wbio = BIO_pop(s->wbio);
     s->rlayer.wrlmethod->set1_bio(s->rlayer.wrl, s->wbio);
 
     BIO_free(s->bbio);
