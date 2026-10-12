@@ -2427,7 +2427,8 @@ typedef struct dtls_listener_st {
     OSSL_TIME pending_timeout;
 
     /*
-     * Maximum number of pending connections allowed.
+     * Maximum number of listener-owned connections allowed, counting both
+     * the pending table and the accept queue.
      * When this limit is reached, new connection attempts are rejected.
      *
      * Default: DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS

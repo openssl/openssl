@@ -1446,7 +1446,9 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
          * not need a conn_ssl, so performing it first avoids creating and then
          * immediately freeing a connection when we are at capacity.
          */
-        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns)
+        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns)
+                + (size_t)sk_SSL_num(dl->incoming_connections)
+            >= dl->max_pending_conns)
             goto release;
 
         conn_ssl = dtls_listener_create_conn_ssl(dl, &urxe->peer);
@@ -2856,11 +2858,14 @@ int ossl_dtls_listener_set_override_now_cb(SSL *s,
  *
  * Supported (id) values:
  *   SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS
- *       Current cap on the number of pending (handshake-in-progress)
- *       connections the listener will track.
+ *       Admission budget: the total connections the listener owns,
+ *       counting both the pending (handshake-in-progress) table and the
+ *       accept queue (validated connections awaiting
+ *       SSL_accept_connection). Accepted connections are not counted.
  *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
  *       Current reap timeout for pending connections, in milliseconds.
- *       UINT64_MAX means "infinite / disabled".
+ *       UINT64_MAX means "infinite / disabled". Accept-queue entries do
+ *       not expire.
  *   SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE
  *       Maximum size in bytes of a datagram the listener will receive.
  *
@@ -2935,7 +2940,9 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
  *   SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS
  *       value == 0 is rejected (a zero cap would reject every incoming
  *       connection). Values larger than SIZE_MAX are clamped to SIZE_MAX
- *       to avoid silent truncation on 32-bit builds.
+ *       to avoid silent truncation on 32-bit builds. Lowering the value
+ *       below the current number of listener-owned connections does not
+ *       evict any of them; it only affects later admission.
  *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
  *       Interpreted as milliseconds. value == 0 is rejected. UINT64_MAX is
  *       treated as "infinite / disabled".
