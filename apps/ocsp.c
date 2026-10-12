@@ -724,7 +724,7 @@ redo_accept:
     }
 
     if (req != NULL && add_nonce) {
-        /* RFC 9654: use a 32-byte nonce */
+        /* RFC 9654: nonces must be at least 32 octets */
         if (!OCSP_request_add1_nonce(req, NULL, 32))
             goto end;
     }
@@ -1087,6 +1087,55 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     return ret;
 }
 
+/*
+ * Check the nonce extension of a request, if there is one.  RFC 9654
+ * requires a responder to reject a nonce of zero length or more than 128
+ * octets.  The extension must also occur at most once, and its value must
+ * be exactly the DER encoding of an OCTET STRING, since OCSP_copy_nonce()
+ * echoes the raw extension value.
+ *
+ * Returns 1 if the request is acceptable, 0 if it is malformed and -1 on
+ * internal error.
+ */
+static int check_request_nonce(OCSP_REQUEST *req)
+{
+    const X509_EXTENSION *ext;
+    const ASN1_OCTET_STRING *extval;
+    ASN1_OCTET_STRING *nonce;
+    const unsigned char *p;
+    unsigned char *der = NULL;
+    size_t extlen, noncelen;
+    int idx, derlen, ret = 0;
+
+    idx = OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, -1);
+    if (idx < 0)
+        return 1;
+    if (OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, idx) >= 0)
+        return 0;
+
+    ext = OCSP_REQUEST_get_ext(req, idx);
+    extval = X509_EXTENSION_get_data(ext);
+    extlen = ASN1_STRING_get_length(extval);
+    p = ASN1_STRING_get0_data(extval);
+    nonce = d2i_ASN1_OCTET_STRING(NULL, &p, (long)extlen);
+    if (nonce == NULL)
+        return 0;
+
+    /* Reject trailing data and non-DER (e.g. constructed) encodings */
+    derlen = i2d_ASN1_OCTET_STRING(nonce, &der);
+    if (derlen < 0) {
+        ret = -1;
+    } else if ((size_t)derlen == extlen
+        && memcmp(der, ASN1_STRING_get0_data(extval), extlen) == 0) {
+        noncelen = ASN1_STRING_get_length(nonce);
+        ret = noncelen > 0 && noncelen <= 128;
+    }
+
+    OPENSSL_free(der);
+    ASN1_OCTET_STRING_free(nonce);
+    return ret;
+}
+
 static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
     EVP_PKEY *rkey, const EVP_MD *rmd,
@@ -1210,41 +1259,20 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         OCSP_CERTID_free(cid_resp_md);
     }
 
-    /* RFC 9654: reject nonces of 0 or more than 128 octets */
-    {
-        int nonce_idx;
-
-        nonce_idx = OCSP_REQUEST_get_ext_by_NID(req,
-                                                NID_id_pkix_OCSP_Nonce, -1);
-        if (nonce_idx >= 0) {
-            const X509_EXTENSION *nonce_ext;
-            const ASN1_OCTET_STRING *nonce_extnValue;
-            ASN1_OCTET_STRING *nonce_val = NULL;
-            const unsigned char *p;
-            int nonce_len;
-
-            nonce_ext = OCSP_REQUEST_get_ext(req, nonce_idx);
-            nonce_extnValue = X509_EXTENSION_get_data(nonce_ext);
-            p = ASN1_STRING_get0_data(nonce_extnValue);
-            nonce_val = d2i_ASN1_OCTET_STRING(NULL, &p,
-                                              ASN1_STRING_get_length(nonce_extnValue));
-            if (nonce_val == NULL) {
-                *resp = OCSP_response_create(
-                            OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, NULL);
-                goto end;
-            }
-            nonce_len = ASN1_STRING_get_length(nonce_val);
-            ASN1_OCTET_STRING_free(nonce_val);
-            if (nonce_len == 0 || nonce_len > 128) {
-                *resp = OCSP_response_create(
-                            OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, NULL);
-                goto end;
-            }
-        }
+    switch (check_request_nonce(req)) {
+    case 1:
+        break;
+    case 0:
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST,
+            NULL);
+        goto end;
+    default:
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
+        goto end;
     }
 
     if (!OCSP_copy_nonce(bs, req)) {
-        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, bs);
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
         goto end;
     }
 
