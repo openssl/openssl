@@ -1374,7 +1374,6 @@ struct ssl_connection_st {
     BIO *wbio;
     /* used during session-id reuse to concatenate messages */
     BIO *bbio;
-    int bbio_shares_wbio;
     /*
      * This holds a variable that indicates what we were doing when a 0 or -1
      * is returned.  This is needed for non-blocking IO so we know what
