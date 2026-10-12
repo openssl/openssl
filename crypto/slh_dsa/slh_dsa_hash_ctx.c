@@ -6,6 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "internal/deprecated.h" /* SHA512_CTX */
+
 #include <stddef.h>
 #include <openssl/crypto.h>
 #include "slh_dsa_local.h"
@@ -100,6 +102,7 @@ void ossl_slh_dsa_hash_ctx_free(SLH_DSA_HASH_CTX *ctx)
         return;
     OPENSSL_clear_free(ctx->shactx, ctx->shactx_len);
     OPENSSL_clear_free(ctx->shactx_pkseed, ctx->shactx_len);
+    OPENSSL_clear_free(ctx->shactx_pkseed_sha512, sizeof(SHA512_CTX));
     OPENSSL_clear_free(ctx->scratch, ctx->scratch_len);
     EVP_MAC_CTX_free(ctx->hmac_ctx);
     OPENSSL_free(ctx);
