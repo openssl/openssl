@@ -16,6 +16,17 @@
 
 #ifndef OPENSSL_NO_DTLS
 
+/*
+ * Maximum datagrams queued per connection in DTLS_RX::urxe_pending: a
+ * count, not a byte cap. On overflow the oldest datagram is evicted
+ * (DTLS permits datagram loss). Each queued URXE holds a buffer of the
+ * listener's maximum datagram size, so 128 entries cost about 295 KB per
+ * connection at the default 2000-byte size - roughly one default kernel
+ * socket receive buffer, the bound that queuing into userspace would
+ * otherwise bypass.
+ */
+#define OSSL_DTLS_RX_DEFAULT_MAX_QUEUED 128
+
 typedef struct dtls_rx_st {
     DGRAM_DEMUX *demux;
     DGRAM_URXE_LIST urxe_pending;
