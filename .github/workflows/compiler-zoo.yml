@@ -61,14 +61,12 @@ jobs:
         gcc: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, gcc-14]
     runs-on: ubuntu-24.04
     steps:
-    - name: install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get -y install ${{ matrix.gcc }}
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: install packages
+      run: .github/retry sh -c "sudo apt-get update && sudo apt-get -y install ${{ matrix.gcc }}"
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -115,8 +113,8 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: pull the VS2013 toolchain image
-      shell: cmd
-      run: docker pull %IMAGE%
+      shell: bash
+      run: bash .github/retry docker pull "$IMAGE"
     - name: config
       run: |
         $chain = @(
@@ -160,18 +158,17 @@ jobs:
         clang: [clang-11, clang-12, clang-13, clang-14, clang-15, clang-16, clang-17, clang-18, clang-19, clang-20, clang-21]
     runs-on: ubuntu-22.04
     steps:
-    - name: install packages
-      run: |
-        set -euo pipefail
-        VERSION=$(awk -F- '{print $NF}' <<< ${{ matrix.clang }})
-        wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-        echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$VERSION main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get update || true
-        sudo apt-get -y install ${{ matrix.clang }}
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: install packages
+      run: |
+        set -euo pipefail
+        VERSION=$(awk -F- '{print $NF}' <<< ${{ matrix.clang }})
+        .github/retry sudo wget -qO /etc/apt/trusted.gpg.d/apt.llvm.org.asc https://apt.llvm.org/llvm-snapshot.gpg.key
+        echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$VERSION main" | sudo tee -a /etc/apt/sources.list
+        .github/retry sh -c "sudo apt-get update; sudo apt-get -y install ${{ matrix.clang }}"
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
