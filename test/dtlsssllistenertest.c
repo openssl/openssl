@@ -6451,6 +6451,140 @@ err:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * Regression test: the demux free list must be bounded, so a transient
+ * flood does not raise the listener's retained memory for its lifetime. A
+ * parked connection's queue is filled to the cap, then freed; the released
+ * URXEs must not leave more than DEMUX_MAX_FREE_URXE cached, and a fresh
+ * handshake must still complete.
+ */
+static int test_dtls_listener_flood_then_handshake_int(int version)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    SSL *client2 = NULL, *serverssl2 = NULL;
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1, client_fd = -1, client2_fd = -1;
+    DTLS_LISTENER *dl;
+    SSL_CONNECTION *sc;
+    unsigned char garbage[1200];
+    size_t queued, i;
+    int testresult = 0, k;
+    const size_t cap = OSSL_DTLS_RX_DEFAULT_MAX_QUEUED;
+    /* Fill the queue, then keep flooding across many more pump batches. */
+    const size_t flood = cap + 128;
+
+    memset(garbage, 0xA5, sizeof(garbage)); /* invalid content type */
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener(sctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+            &clientssl, &client_fd)))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+
+    /* Complete the cookie exchange and promotion, then park the connection. */
+    if (!drive_client_to_promotion(listener, clientssl, 1))
+        goto end;
+    if (!TEST_ptr(serverssl = SSL_accept_connection(listener,
+                      SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    for (i = 0; i < flood; i++) {
+        /*
+         * Send a raw datagram from the client's own endpoint, bypassing its
+         * SSL object, so it is routed to the parked connection's queue.
+         */
+        if (!TEST_int_eq(BIO_write(SSL_get_rbio(clientssl), garbage,
+                             (int)sizeof(garbage)),
+                (int)sizeof(garbage)))
+            goto end;
+        listener_tick(listener);
+    }
+    /* Drain anything still in the kernel buffer. */
+    for (k = 0; k < 50; k++) {
+        listener_tick(listener);
+        OSSL_sleep(2);
+    }
+
+    /* The receive queue is exactly at its cap, not at the flood size. */
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr(sc->listener_rx))
+        goto end;
+    queued = ossl_list_urxe_num(&sc->listener_rx->urxe_pending);
+    if (!TEST_size_t_eq(queued, cap))
+        goto end;
+
+    /* Freeing the parked connection releases its URXEs to the demux. */
+    SSL_free(serverssl);
+    serverssl = NULL;
+
+    /*
+     * The flood pushed cap URXEs through the free list, but the list is
+     * capped at release time: at most DEMUX_MAX_FREE_URXE may be cached.
+     */
+    if (!TEST_size_t_le(ossl_dgram_demux_get_free_list_len(dl->demux),
+            DEMUX_MAX_FREE_URXE))
+        goto end;
+
+    /* A fresh connection over the same listener must complete a handshake. */
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+            &client2, &client2_fd)))
+        goto end;
+    if (!drive_client_to_promotion(listener, client2, 1))
+        goto end;
+    if (!TEST_ptr(serverssl2 = SSL_accept_connection(listener,
+                      SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+    if (!TEST_true(create_ssl_connection(serverssl2, client2,
+            SSL_ERROR_NONE)))
+        goto end;
+    if (!TEST_int_eq(SSL_version(serverssl2), version))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(serverssl2);
+    SSL_free(client2);
+    SSL_free(clientssl);
+    if (client2_fd >= 0)
+        BIO_closesocket(client2_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int test_dtls_listener_flood_then_handshake(void)
+{
+    int ok = 1;
+
+#ifndef OPENSSL_NO_DTLS1_2
+    if (!test_dtls_listener_flood_then_handshake_int(DTLS1_2_VERSION))
+        ok = 0;
+#endif
+#ifndef OPENSSL_NO_DTLS1_3
+    if (!test_dtls_listener_flood_then_handshake_int(DTLS1_3_VERSION))
+        ok = 0;
+#endif
+    return ok;
+}
 #endif /* !OPENSSL_NO_DTLS1_2 || !OPENSSL_NO_DTLS1_3 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -6596,6 +6730,8 @@ int setup_tests(void)
      */
     ADD_TEST(test_dtls_listener_accept_queue_capped);
     ADD_TEST(test_dtls_listener_accept_queue_novalidate_capped);
+    /* Demux free-list bound regression test; runs every enabled version */
+    ADD_TEST(test_dtls_listener_flood_then_handshake);
 #endif
 
     return 1;
