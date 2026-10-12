@@ -112,8 +112,18 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: pull the VS2013 toolchain image
-      shell: cmd
-      run: docker pull %IMAGE%
+      run: |
+        for ($attempt = 1; $attempt -le 3; $attempt++) {
+          docker pull $env:IMAGE
+          if ($LASTEXITCODE -eq 0) { break }
+          if ($attempt -eq 3) {
+            $msg = "docker pull failed 3 times; this is a runner or registry problem, not a test failure"
+            echo "::error title=Environment failure::$msg"
+            echo "Environment failure: $msg" >> $env:GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          Start-Sleep -Seconds 30
+        }
     - name: config
       run: |
         $chain = @(
