@@ -28,6 +28,7 @@
 #include "internal/time.h"
 #include "internal/sockets.h"
 #include "internal/dgram_demux.h"
+#include "internal/dtls_record_rx.h"
 #include "internal/ssl_unwrap.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -5994,6 +5995,111 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
+/*
+ * Regression test for the receive-queue bound and its overflow policy: a
+ * connection left unread must not accumulate an unbounded datagram queue,
+ * and when the queue is full the oldest datagram is evicted, not the
+ * newest. A parked connection is flooded past the cap with datagrams
+ * carrying a sequence counter; the queue must stop at
+ * OSSL_DTLS_RX_DEFAULT_MAX_QUEUED entries, with the head carrying
+ * (flood - cap) and the tail (flood - 1). Under tail-drop the head would
+ * still carry 0.
+ */
+static int test_dtls_listener_rx_queue_drops_oldest(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    BIO *client_bio;
+    SSL_CONNECTION *sc;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result, queued, i;
+    unsigned char record[64];
+    DGRAM_URXE *head, *tail;
+    const unsigned char *head_data, *tail_data;
+    unsigned int head_seq, tail_seq;
+    int testresult = 0;
+    const size_t cap = OSSL_DTLS_RX_DEFAULT_MAX_QUEUED;
+    const size_t flood = cap + 64;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!TEST_true(drive_until_connection_queued(listener, clientssl)))
+        goto end;
+    if (!TEST_ptr(serverssl = SSL_accept_connection(listener,
+                      SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    client_bio = SSL_get_rbio(clientssl);
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    /*
+     * The client SSL is never stepped again, so no retransmit can add
+     * datagrams: every queued entry is one of ours, in order.
+     */
+    memset(record, 0xA5, sizeof(record));
+    for (i = 0; i < flood; i++) {
+        /* Stamp a big-endian sequence counter into the first four bytes. */
+        record[0] = (unsigned char)(i >> 24);
+        record[1] = (unsigned char)(i >> 16);
+        record[2] = (unsigned char)(i >> 8);
+        record[3] = (unsigned char)i;
+        if (!TEST_int_eq(BIO_write(client_bio, record, sizeof(record)),
+                (int)sizeof(record)))
+            goto end;
+        poll_item.revents = 0;
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+                &poll_timeout, 0, &poll_result)))
+            goto end;
+    }
+
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr(sc->listener_rx))
+        goto end;
+    queued = ossl_list_urxe_num(&sc->listener_rx->urxe_pending);
+    if (!TEST_size_t_eq(queued, cap))
+        goto end;
+
+    /* The oldest datagrams were evicted: only the newest cap ones remain. */
+    if (!TEST_ptr(head = ossl_list_urxe_head(&sc->listener_rx->urxe_pending))
+        || !TEST_ptr(tail = ossl_list_urxe_tail(&sc->listener_rx->urxe_pending)))
+        goto end;
+    head_data = ossl_dgram_urxe_data(head);
+    tail_data = ossl_dgram_urxe_data(tail);
+    head_seq = ((unsigned int)head_data[0] << 24) | ((unsigned int)head_data[1] << 16)
+        | ((unsigned int)head_data[2] << 8) | head_data[3];
+    tail_seq = ((unsigned int)tail_data[0] << 24) | ((unsigned int)tail_data[1] << 16)
+        | ((unsigned int)tail_data[2] << 8) | tail_data[3];
+    if (!TEST_uint_eq(head_seq, (unsigned int)(flood - cap))
+        || !TEST_uint_eq(tail_seq, (unsigned int)(flood - 1)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_2 */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -6125,6 +6231,11 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_dtls_poll_conn_honours_retransmit_timer);
     ADD_TEST(test_dtls_timer_stopped_when_retransmits_exhausted);
+
+    /* Receive-queue bound regression test */
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_TEST(test_dtls_listener_rx_queue_drops_oldest);
+#endif
 
     return 1;
 }
