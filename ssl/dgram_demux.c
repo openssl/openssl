@@ -18,7 +18,6 @@
 
 /* URXE_DEMUX_STATE_* are defined in dgram_demux.h */
 
-#define DEMUX_MAX_MSGS_PER_CALL 32
 #define DEMUX_DEFAULT_MTU 1500
 #define DEMUX_MIN_INITIAL_DGRAM_LEN 1200
 
@@ -63,6 +62,9 @@ struct dgram_demux_st {
 
     /* Whether internal locking is required */
     char require_mutex;
+
+    /* Maximum URXEs cached on urx_free; 0 means unbounded. */
+    size_t max_free_urxe;
 
     /*
      * Mutex protecting the URXE lists (urx_free and urx_pending).
@@ -182,6 +184,27 @@ int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu)
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
     return 1;
+}
+
+void ossl_dgram_demux_set_max_free_urxe(DGRAM_DEMUX *demux, size_t max_free)
+{
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    demux->max_free_urxe = max_free;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+}
+
+size_t ossl_dgram_demux_get_free_list_len(DGRAM_DEMUX *demux)
+{
+    size_t n;
+
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    n = ossl_list_urxe_num(&demux->urx_free);
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+    return n;
 }
 
 void ossl_dgram_demux_set_default_handler(DGRAM_DEMUX *demux,
@@ -512,18 +535,31 @@ end:
     return ret;
 }
 
-/* Called by our user to return a URXE to the free list. */
+/*
+ * Called by our user to return a URXE to the free list. If the free list
+ * is already at its limit the URXE is freed instead of being cached;
+ * callers must not reference a URXE after releasing it, so freeing here
+ * is safe even inside the routing callback.
+ */
 void ossl_dgram_demux_release_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
 {
+    int cache;
+
     assert(ossl_list_urxe_prev(e) == NULL && ossl_list_urxe_next(e) == NULL);
     assert(e->demux_state == URXE_DEMUX_STATE_ISSUED);
 
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
-    ossl_list_urxe_insert_tail(&demux->urx_free, e);
-    e->demux_state = URXE_DEMUX_STATE_FREE;
+    cache = demux->max_free_urxe == 0
+        || ossl_list_urxe_num(&demux->urx_free) < demux->max_free_urxe;
+    if (cache) {
+        ossl_list_urxe_insert_tail(&demux->urx_free, e);
+        e->demux_state = URXE_DEMUX_STATE_FREE;
+    }
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
+    if (!cache)
+        OPENSSL_free(e);
 }
 
 void ossl_dgram_demux_reinject_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)

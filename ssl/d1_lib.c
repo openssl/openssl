@@ -1850,6 +1850,8 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
         goto err;
     }
 
+    ossl_dgram_demux_set_max_free_urxe(dl->demux, DEMUX_MAX_FREE_URXE);
+
     /* Set up the packet handler callback for routing datagrams to connections */
     ossl_dgram_demux_set_default_handler(dl->demux, dtls_listener_packet_handler, dl);
 
