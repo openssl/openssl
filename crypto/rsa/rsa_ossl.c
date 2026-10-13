@@ -890,17 +890,17 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
 
-    r1 = OSSL_FN_CTX_get_limbs(ctx, nl);
-    m1 = OSSL_FN_CTX_get_limbs(ctx, nl);
-    vrfy = OSSL_FN_CTX_get_limbs(ctx, nl);
-    t = OSSL_FN_CTX_get_limbs(ctx, 2 * nl);
+    r1 = OSSL_FN_CTX_get_limbs(ctx, token, nl);
+    m1 = OSSL_FN_CTX_get_limbs(ctx, token, nl);
+    vrfy = OSSL_FN_CTX_get_limbs(ctx, token, nl);
+    t = OSSL_FN_CTX_get_limbs(ctx, token, 2 * nl);
     /*
      * Prime-width scratch for the smooth path's Montgomery operations,
      * which require operands and result to match the prime's width
      * exactly (the OSSL_FN_*_mont functions are strict-width).
      */
-    sp = OSSL_FN_CTX_get_limbs(ctx, pl);
-    sq = OSSL_FN_CTX_get_limbs(ctx, ql);
+    sp = OSSL_FN_CTX_get_limbs(ctx, token, pl);
+    sq = OSSL_FN_CTX_get_limbs(ctx, token, ql);
     /*
      * Top-width copies of the key components: the strict-width
      * operations require the exponents and MONT_CTX moduli at the
@@ -908,14 +908,14 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
      * views don't guarantee.  Truncation is lossless, every value
      * being below its modulus.
      */
-    f_n = OSSL_FN_CTX_get_limbs(ctx, nl);
-    f_p = OSSL_FN_CTX_get_limbs(ctx, pl);
-    f_q = OSSL_FN_CTX_get_limbs(ctx, ql);
-    f_dmp1 = OSSL_FN_CTX_get_limbs(ctx, pl);
-    f_dmq1 = OSSL_FN_CTX_get_limbs(ctx, ql);
-    f_iqmp = OSSL_FN_CTX_get_limbs(ctx, pl);
+    f_n = OSSL_FN_CTX_get_limbs(ctx, token, nl);
+    f_p = OSSL_FN_CTX_get_limbs(ctx, token, pl);
+    f_q = OSSL_FN_CTX_get_limbs(ctx, token, ql);
+    f_dmp1 = OSSL_FN_CTX_get_limbs(ctx, token, pl);
+    f_dmq1 = OSSL_FN_CTX_get_limbs(ctx, token, ql);
+    f_iqmp = OSSL_FN_CTX_get_limbs(ctx, token, pl);
     if (fn_d != NULL)
-        f_d = OSSL_FN_CTX_get_limbs(ctx, nl);
+        f_d = OSSL_FN_CTX_get_limbs(ctx, token, nl);
     if (r1 == NULL || m1 == NULL || vrfy == NULL || t == NULL
         || sp == NULL || sq == NULL || f_n == NULL || f_p == NULL
         || f_q == NULL || f_dmp1 == NULL || f_dmq1 == NULL

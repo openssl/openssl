@@ -513,16 +513,16 @@ int ossl_ec_point_ladder_step_fn(const EC_GROUP *group, EC_POINT *r,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t1 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t2 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t3 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t4 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t5 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t6 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (ca = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (cb = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (px = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL)
+    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t1 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t2 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t3 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t4 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t5 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t6 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (ca = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (cb = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (px = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL)
         goto err;
 
     /* r, s, p are distinct; acquire r/s coords, then copy p->X, a and b to w. */
@@ -629,9 +629,9 @@ int ossl_ec_point_ladder_pre_fn(const EC_GROUP *group, EC_POINT *r,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if ((ca = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (cb = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (px = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL)
+    if ((ca = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (cb = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (px = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL)
         goto err;
 
     if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
@@ -755,17 +755,17 @@ int ossl_ec_point_ladder_post_fn(const EC_GROUP *group, EC_POINT *r,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t1 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t2 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t3 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t4 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t5 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (t6 = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (ca = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (cb = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (px = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL
-        || (py = OSSL_FN_CTX_get_limbs(ctx, w)) == NULL)
+    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t1 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t2 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t3 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t4 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t5 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t6 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (ca = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (cb = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (px = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (py = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL)
         goto err;
 
     if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
@@ -956,8 +956,8 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
     if ((token = OSSL_FN_CTX_start(fnctx)) == NULL)
         goto err;
 
-    if ((k = OSSL_FN_CTX_get_limbs(fnctx, width)) == NULL
-        || (lambda = OSSL_FN_CTX_get_limbs(fnctx, width)) == NULL)
+    if ((k = OSSL_FN_CTX_get_limbs(fnctx, token, width)) == NULL
+        || (lambda = OSSL_FN_CTX_get_limbs(fnctx, token, width)) == NULL)
         goto err;
 
     /*

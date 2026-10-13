@@ -718,12 +718,12 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
     if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
         goto err;
 
-    if ((X = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (Y = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (Z = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (Zinv = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (Z2 = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (Z3 = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+    if ((X = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Y = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Z = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Zinv = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Z2 = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Z3 = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
         goto err;
 
     /*

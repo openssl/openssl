@@ -332,13 +332,13 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
      * rk holds r + k unreduced, and both are below the order, so it needs one
      * limb more than the order to be sure of not truncating the sum.
      */
-    if ((k = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (rk = OSSL_FN_CTX_get_limbs(fnctx, nlimbs + 1)) == NULL
-        || (tmp = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (sf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (rf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (dAf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
-        || (one = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+    if ((k = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (rk = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs + 1)) == NULL
+        || (tmp = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (sf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (rf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (dAf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (one = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
         goto done;
 
     /*

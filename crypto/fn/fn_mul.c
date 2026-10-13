@@ -51,7 +51,7 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx
 
     OSSL_FN *rr = r;
     if ((r == a) || (r == b))
-        if ((rr = OSSL_FN_CTX_get_limbs(ctx, rl)) == NULL)
+        if ((rr = OSSL_FN_CTX_get_limbs(ctx, token, rl)) == NULL)
             goto err;
 
     bn_mul_truncated(rr->d, (int)rl, a->d, (int)al, b->d, (int)bl);
