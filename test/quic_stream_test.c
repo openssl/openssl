@@ -3156,7 +3156,11 @@ err:
     return ok;
 }
 
-typedef struct tho_alloc_hdr_st {
+/*
+ * Increased alignment needed, because memory is allocated at addresses
+ * directly following an THO_ALLOC_HDR.
+ */
+typedef struct __attribute__((aligned(__alignof__(uint64_t)))) tho_alloc_hdr_st {
     size_t size;
     const char *file;
     int from_reas;
