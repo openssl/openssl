@@ -28,18 +28,18 @@
     ((gamma1) == ML_DSA_GAMMA1_TWO_POWER_19         \
             ? ML_DSA_EXPAND_MASK_BUF_SIZE_GAMMA1_19 \
             : ML_DSA_EXPAND_MASK_BUF_SIZE_GAMMA1_17)
-#define ML_DSA_EXPAND_MASK_BUF_SIZE_BLOCKS(gamma1) \
-    ((gamma1) == ML_DSA_GAMMA1_TWO_POWER_19         \
+#define ML_DSA_EXPAND_MASK_BUF_SIZE_BLOCKS(gamma1)                                \
+    ((gamma1) == ML_DSA_GAMMA1_TWO_POWER_19                                       \
             ? BLOCK_ALIGNED(ML_DSA_EXPAND_MASK_BUF_SIZE_GAMMA1_19, SHAKE256_RATE) \
             : BLOCK_ALIGNED(ML_DSA_EXPAND_MASK_BUF_SIZE_GAMMA1_17, SHAKE256_RATE))
 #define ML_DSA_EXPAND_MASK_BLOCKS_MAX ML_DSA_EXPAND_MASK_BUF_SIZE_BLOCKS(ML_DSA_GAMMA1_TWO_POWER_19)
 
 /* Assembler API */
-extern void ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake128_2x_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake256_2x_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2, size_t outlen);
+extern void ossl_sha3_shake128_x2_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake128_x2_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake256_x2_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2, size_t outlen);
 extern void SHA3_secure_vector_clear_armv8(void);
 
 /*
@@ -50,8 +50,8 @@ extern void SHA3_secure_vector_clear_armv8(void);
  *   words[2] = input1 next 8 bytes,   words[3] = input2 next 8 bytes
  * The rate for SHAKE128 is 168 which is 21 * uint64 values
  * The rate for SHAKE256 is 136 which is 17 * uint64 values
- * The end of the absorb does padding, so we can the ending 0x80 here.
- * The inputs used in ML-DSA for shake are all less than the capacity, and all
+ * The absorb ends with padding, so we can set the trailing 0x80 here.
+ * The inputs used in ML-DSA for shake are all less than the rate, and all
  * 3 variants input a small fixed seed of 32 or 64 bytes that is used multiple
  * times, so we just do this once. This is followed by a variable index that
  * can change. We return the index of this changing value which can then be passed
@@ -61,46 +61,46 @@ static uint64_t *absorb_once_shake128(uint64_t *state, const uint8_t *in, size_t
 {
     size_t i;
 
-    memset((uint8_t *)state, 0, 168*2);
-    /* write trailing interleaved bytes for SHAKE128 */
-    state[40] = 0x8000000000000000; /* 20 * 2 */
-    state[41] = 0x8000000000000000;
+    memset(state, 0, SHAKE128_RATE * ML_DSA_SHAKE_X2_BATCH_SIZE);
 
     /*
      * Assuming inlen is a multiple of 8 bytes
      * Store this value twice into uint64_t interleaved blocks
      * Which is the order required for 2 x parallel processing on armv8.
      */
-    for (i = 0; i < inlen/4; i += 2) {
+    for (i = 0; i < inlen / 4; i += 2) {
         uint64_t val;
         in = OPENSSL_load_u64_le(&val, in);
         state[i] = val;
-        state[i+1] = val;
+        state[i + 1] = val;
     }
-    return state+i;
+    /* write trailing 0x80 interleaved bytes for SHAKE128 */
+    state[ML_DSA_SHAKE_X2_BATCH_SIZE * (SHAKE128_WORDS - 1)] = 0x8000000000000000;
+    state[ML_DSA_SHAKE_X2_BATCH_SIZE * (SHAKE128_WORDS - 1) + 1] = 0x8000000000000000;
+    return state + i;
 }
 
 static uint64_t *absorb_once_shake256(uint64_t *state, const uint8_t *in, size_t inlen)
 {
     size_t i;
 
-    memset((uint8_t *)state, 0, 136*2);
+    memset(state, 0, SHAKE256_RATE * ML_DSA_SHAKE_X2_BATCH_SIZE);
 
     /*
      * Assuming inlen is a multiple of 8 bytes
      * Store this value twice into uint64_t interleaved blocks
      * Which is the order required for 2 x parallel processing on armv8.
      */
-    for (i = 0; i < inlen/4; i+=2) {
+    for (i = 0; i < inlen / 4; i += 2) {
         uint64_t val;
         in = OPENSSL_load_u64_le(&val, in);
         state[i] = val;
-        state[i+1] = val;
+        state[i + 1] = val;
     }
     /* write trailing 0x80 interleaved bytes for SHAKE256 */
-    state[32] = 0x8000000000000000;
-    state[33] = 0x8000000000000000;
-    return state+i;
+    state[ML_DSA_SHAKE_X2_BATCH_SIZE * (SHAKE256_WORDS - 1)] = 0x8000000000000000;
+    state[ML_DSA_SHAKE_X2_BATCH_SIZE * (SHAKE256_WORDS - 1) + 1] = 0x8000000000000000;
+    return state + i;
 }
 
 /*
@@ -123,8 +123,8 @@ static ossl_unused int rej_ntt_poly_mb(const uint64_t *words,
     int coeff_idx[ML_DSA_SHAKE_X2_BATCH_SIZE] = { 0, 0 };
     size_t lane;
 
-    ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, words, blocks[0], blocks[1]);
-    while(1) {
+    ossl_sha3_shake128_x2_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, words, blocks[0], blocks[1]);
+    while (1) {
         int finished = 0;
         for (lane = 0; lane < ML_DSA_SHAKE_X2_BATCH_SIZE; ++lane) {
             const uint8_t *b = blocks[lane];
@@ -137,7 +137,7 @@ static ossl_unused int rej_ntt_poly_mb(const uint64_t *words,
                 continue;
             }
             for (; b < end; b += 3) {
-                if (coeff_from_three_bytes(b, coeff+j)) {
+                if (coeff_from_three_bytes(b, coeff + j)) {
                     if (++j == ML_DSA_NUM_POLY_COEFFICIENTS) {
                         finished++;
                         break;
@@ -155,9 +155,9 @@ static ossl_unused int rej_ntt_poly_mb(const uint64_t *words,
          * than this. In this rare case it will take the hit of consuming
          * another parallel block (even though it may only use one of them).
          */
-        ossl_shake128_2x_squeeze_singleblock(ctx.A, blocks[0], blocks[1]);
+        ossl_sha3_shake128_x2_squeeze_singleblock(ctx.A, blocks[0], blocks[1]);
     }
-    ossl_shakex2_cleanup_armv8(&ctx);
+    ossl_sha3_shake_x2_cleanup_armv8(&ctx);
     return 1;
 }
 
@@ -165,7 +165,7 @@ static void vector_expand_mask_mb(VECTOR *out,
     const uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES], const uint32_t kappa, const uint32_t gamma1,
     EVP_MD_CTX *h_ctx, const EVP_MD *md)
 {
-    ALIGN16 uint64_t words[2 * SHAKE256_WORDS]; /* 21 = 168 bytes * 8 / 64 */
+    ALIGN16 uint64_t words[2 * SHAKE256_WORDS]; /* Two interleaved SHAKE256 blocks, each containing 17 words. */
     ALIGN16 uint8_t buffers[ML_DSA_SHAKE_X2_BATCH_SIZE][ML_DSA_EXPAND_MASK_BLOCKS_MAX];
     size_t i;
     const size_t num_polys = out->num_poly;
@@ -175,7 +175,7 @@ static void vector_expand_mask_mb(VECTOR *out,
 
     for (i = 0; i + (ML_DSA_SHAKE_X2_BATCH_SIZE - 1) < num_polys; i += ML_DSA_SHAKE_X2_BATCH_SIZE) {
         set_index(pindx, (uint64_t)(kappa + i), (uint64_t)(kappa + i + 1));
-        ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(words, buffers[0], buffers[1], buf_size_blocks);
+        ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(words, buffers[0], buffers[1], buf_size_blocks);
         ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 0], buffers[0], buf_size, gamma1);
         ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 1], buffers[1], buf_size, gamma1);
     }
@@ -186,7 +186,7 @@ static void vector_expand_mask_mb(VECTOR *out,
      */
     if (i < num_polys) {
         set_index(pindx, (uint64_t)(kappa + i), (uint64_t)(kappa + i));
-        ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(words, buffers[0], buffers[1], buf_size_blocks);
+        ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(words, buffers[0], buffers[1], buf_size_blocks);
         ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 0], buffers[0], buf_size, gamma1);
     }
 
@@ -203,7 +203,7 @@ static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nib
     int coeff_idx[ML_DSA_SHAKE_X2_BATCH_SIZE] = { 0, 0 };
     int lane;
 
-    ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, words, blocks[0], blocks[1]);
+    ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, words, blocks[0], blocks[1]);
     while (1) {
         int finished = 0;
         for (lane = 0; lane < count; lane++) {
@@ -223,23 +223,23 @@ static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nib
 
                 if (coef_from_nibble(z0, coeff + j)
                     && ++j == ML_DSA_NUM_POLY_COEFFICIENTS) {
-                        finished++;
-                        break;
+                    finished++;
+                    break;
                 }
                 if (coef_from_nibble(z1, coeff + j)
                     && ++j == ML_DSA_NUM_POLY_COEFFICIENTS) {
-                        finished++;
-                        break;
+                    finished++;
+                    break;
                 }
             }
             coeff_idx[lane] = j;
         }
         if (finished == count)
             break;
-        ossl_shake256_2x_squeeze_singleblock(ctx.A, blocks[0], blocks[1]);
+        ossl_sha3_shake256_x2_squeeze_singleblock(ctx.A, blocks[0], blocks[1]);
     }
     OPENSSL_cleanse(blocks, sizeof(blocks));
-    ossl_shakex2_cleanup_armv8(&ctx);
+    ossl_sha3_shake_x2_cleanup_armv8(&ctx);
     return 1;
 }
 
@@ -262,8 +262,8 @@ static int matrix_expand_A_mb(EVP_MD_CTX *g_ctx, const EVP_MD *md,
     for (cols = 0; cols < out->l; cols++) {
         id = cols;
         index = cols;
-        for (rows = 0; rows < out->k; rows += 2, index += (2<<8), id += (2*out->l)) {
-            set_index(pindx, index, index + (1<<8));
+        for (rows = 0; rows < out->k; rows += 2, index += (2 << 8), id += (2 * out->l)) {
+            set_index(pindx, index, index + (1 << 8));
             /* Generate the polynomial for each matrix element using a unique seed */
             polys[0] = &poly[id];
             polys[1] = &poly[id + out->l];

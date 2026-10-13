@@ -79,7 +79,7 @@ typedef struct {
     /* 4 interleaved Keccak states (800 bytes)
        plus 8 bytes to store the number of
        already absorbed or not yet squeezed bytes */
-    ALIGN16 uint64_t A[(25 * 4) + 1];
+    uint64_t A[(25 * 4) + 1];
     size_t rate; /* Rate in bytes: 168 (SHAKE-128) or 136 (SHAKE-256) */
     unsigned finalized; /* Has finalize been called? 0=no, 1=yes */
 } KECCAK1600_X4_AVX512VL_CTX;
@@ -151,8 +151,8 @@ typedef struct {
     ALIGN16 uint64_t A[25 * 2]; /* 2 interleaved Keccak states (400 bytes) */
 } KECCAK1600_X2_ARMV8_CTX;
 
-int ossl_shakex2_sha3_capable_armv8(void);
-void ossl_shakex2_cleanup_armv8(KECCAK1600_X2_ARMV8_CTX *ctx);
+int ossl_sha3_shake_x2_capable_armv8(void);
+void ossl_sha3_shake_x2_cleanup_armv8(KECCAK1600_X2_ARMV8_CTX *ctx);
 
 #endif /* aarch64 && KECCAK1600_ASM && !OPENSSL_NO_ASM) */
 

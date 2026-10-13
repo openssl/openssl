@@ -33,7 +33,8 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * Added AARCH64 optimized SHAKE x2 operations for ML-DSA on `armv8`.
+ * Added AArch64 optimized SHAKE x2 operations for ML-DSA on processors
+   with FEAT_SHA3.
 
    *Shane Lontis*
 

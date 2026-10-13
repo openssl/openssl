@@ -24,14 +24,14 @@
 #include "internal/common.h"
 #if defined(__aarch64__) && defined(__AARCH64EL__) && defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM)
 
-int ossl_shakex2_sha3_capable_armv8(void)
+int ossl_sha3_shake_x2_capable_armv8(void)
 {
     return (OPENSSL_armcap_P & ARMV8_SHA3);
 }
 
-void ossl_shakex2_cleanup_armv8(KECCAK1600_X2_ARMV8_CTX *ctx)
+void ossl_sha3_shake_x2_cleanup_armv8(KECCAK1600_X2_ARMV8_CTX *ctx)
 {
     OPENSSL_cleanse(ctx->A, sizeof(ctx->A));
 }
 
-#endif /* KECCAK1600_ASM && x86_64 && !OPENSSL_NO_ASM */
+#endif /* __aarch64__ && __AARCH64EL__ && KECCAK1600_ASM && !OPENSSL_NO_ASM */

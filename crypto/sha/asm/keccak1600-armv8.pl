@@ -885,6 +885,9 @@ ___
 }								}}}
 
 {{{
+$code.=<<___;
+#if defined(__AARCH64EL__)
+___
 my $shake128_rate = 168; # 21 words
 my $shake256_rate = 136; # 17 words
 
@@ -925,7 +928,7 @@ ___
 sub function_end {
     my ($name) = @_;
 $code.=<<___;
-    eor v0.16b, v0.16b, v0.16b
+    movi v0.16b, #0
     ldp q8,q9,[sp,#16]
     ldp q10,q11,[sp,#48]
     ldp q12,q13,[sp,#80]
@@ -1050,10 +1053,10 @@ ___
 sub zero_4_qvectors {
     my ($i, $j, $k, $l) = @_;
 $code.=<<___;
-    eor v$i.16b,v$i.16b,v$i.16b
-    eor v$j.16b,v$j.16b,v$j.16b
-    eor v$k.16b,v$k.16b,v$k.16b
-    eor v$l.16b,v$l.16b,v$l.16b
+    movi v$i.16b, #0
+    movi v$j.16b, #0
+    movi v$k.16b, #0
+    movi v$l.16b, #0
 ___
 }
 
@@ -1069,13 +1072,13 @@ sub copy_4x2_qvectors_to_out2 {
     my $k = $i+2;
     my $l = $i+3;
 $code.=<<___;
-    st1 {v$i.d}[0], [$out1], #8
+    stp d$i,d$j,[$out1]
+    add $out1,$out1,#16
     st1 {v$i.d}[1], [$out2], #8
-    st1 {v$j.d}[0], [$out1], #8
     st1 {v$j.d}[1], [$out2], #8
-    st1 {v$k.d}[0], [$out1], #8
+    stp d$k,d$l,[$out1]
+    add $out1,$out1,#16
     st1 {v$k.d}[1], [$out2], #8
-    st1 {v$l.d}[0], [$out1], #8
     st1 {v$l.d}[1], [$out2], #8
 ___
 }
@@ -1088,7 +1091,8 @@ ___
 sub copy_1x2_qvectors_to_out2 {
     my ($out1, $out2, $i) = @_;
 $code.=<<___;
-    st1 {v$i.d}[0], [$out1], #8
+    str d$i,[$out1]
+    add $out1,$out1,#8
     st1 {v$i.d}[1], [$out2], #8
 ___
 }
@@ -1123,28 +1127,28 @@ sub shake256_2x_copy_qvectors_to_out_block{
 ## @param $out1 Output Stream1 of 168 bytes (Must be Aligned to an 8 byte boundary)
 ## @param $out2 Output Stream2 of 168 bytes (Must be Aligned to an 8 byte boundary)
 my ($state_out,$inp,$out1,$out2) = map("x$_",(0..3));
-function_start('ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze', 1);
+function_start('ossl_sha3_shake128_x2_oneshot_singleblock_absorb_interleaved_squeeze', 1);
     shake128_2x_copy_input_block_to_qvectors($inp);
 $code.=<<___;
     bl  KeccakF1600_ce
 ___
     shake128_2x_copy_qvectors_to_out_block($out1, $out2);
     save_qvectors_to_aligned16_state($state_out);
-function_end('ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze');
+function_end('ossl_sha3_shake128_x2_oneshot_singleblock_absorb_interleaved_squeeze');
 
 ## @param $inp 16 byte aligned interleaved message (17 double words)
 ## @param $state_out Output state of 5x5 double words.
 ## @param $out1 Output Stream1 of 136 bytes (Must be Aligned to an 8 byte boundary)
 ## @param $out2 Output Stream2 of 136 bytes (Must be Aligned to an 8 byte boundary)
 my ($state_out,$inp,$out1,$out2) = map("x$_",(0..3));
-function_start('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze', 1);
+function_start('ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_squeeze', 1);
     shake256_2x_copy_input_block_to_qvectors($inp);
 $code.=<<___;
     bl  KeccakF1600_ce
 ___
     shake256_2x_copy_qvectors_to_out_block($out1, $out2);
     save_qvectors_to_aligned16_state($state_out);
-function_end('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze');
+function_end('ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_squeeze');
 
 # These functions are intended for multiple squeeze(s) of a single block
 # May be called multiple times after ossl_shake???_2x_oneshot_singleblock_absorb_interleaved_squeeze
@@ -1154,28 +1158,28 @@ function_end('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze');
 ## @param $out1 Output Stream1 of 168 bytes (Must be Aligned to an 8 byte boundary)
 ## @param $out2 Output Stream2 of 168 bytes (Must be Aligned to an 8 byte boundary)
 my ($state,$out1,$out2) = map("x$_",(0..2));
-function_start('ossl_shake128_2x_squeeze_singleblock', 1);
+function_start('ossl_sha3_shake128_x2_squeeze_singleblock', 1);
     load_qvectors_from_aligned16_state($state);
 $code.=<<___;
     bl  KeccakF1600_ce
 ___
     shake128_2x_copy_qvectors_to_out_block($out1, $out2);
     save_qvectors_to_aligned16_state($state);
-function_end('ossl_shake128_2x_squeeze_singleblock');
+function_end('ossl_sha3_shake128_x2_squeeze_singleblock');
 
 ## @brief A 2 way SHAKE256 squeeze of a single block
 ## @param $state The Input/Output state of 5x5 double words
 ## @param $out1 Output Stream1 of 136 bytes (Must be Aligned to an 8 byte boundary)
 ## @param $out2 Output Stream2 of 136 bytes (Must be Aligned to an 8 byte boundary)
 my ($state,$out1,$out2) = map("x$_",(0..2));
-function_start('ossl_shake256_2x_squeeze_singleblock', 1);
+function_start('ossl_sha3_shake256_x2_squeeze_singleblock', 1);
     load_qvectors_from_aligned16_state($state);
 $code.=<<___;
     bl  KeccakF1600_ce
 ___
     shake256_2x_copy_qvectors_to_out_block($out1, $out2);
     save_qvectors_to_aligned16_state($state);
-function_end('ossl_shake256_2x_squeeze_singleblock');
+function_end('ossl_sha3_shake256_x2_squeeze_singleblock');
 
 ## @brief A 2 way SHAKE256 one shot function that does not use external state.
 ##        it absorbs a single block, and assumes that 1 or more blocks will be squeezed at once
@@ -1184,7 +1188,7 @@ function_end('ossl_shake256_2x_squeeze_singleblock');
 ## @param $out2 Output Stream2 of outlen bytes (Must be Aligned to an 8 byte boundary)
 ## @param $outlen Must be a non zero multiple of the rate (136)
 my ($inp,$out1,$out2,$outlen) = map("x$_",(0..4));
-function_start('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze', 1);
+function_start('ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze', 1);
     shake256_2x_copy_input_block_to_qvectors($inp);
 $code.=<<___;
 .Loop_shake256_2x_squeeze:
@@ -1195,7 +1199,7 @@ ___
 $code.=<<___;
     b.ne .Loop_shake256_2x_squeeze
 ___
-function_end('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze');
+function_end('ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze');
 }                               }}}
 
 $code.=<<___;
@@ -1206,6 +1210,7 @@ $code.=<<___;
 .type   SHA3_secure_vector_clear_armv8,%function
 .align  5
 SHA3_secure_vector_clear_armv8:
+    AARCH64_VALID_CALL_TARGET
 ___
     zero_4_qvectors(0,1,2,3);
     zero_4_qvectors(4,5,6,7);
@@ -1218,6 +1223,7 @@ ___
 $code.=<<___;
     ret
 .size  SHA3_secure_vector_clear_armv8,.-SHA3_secure_vector_clear_armv8
+#endif /* __AARCH64EL__ */
 ___
 
 $code.=<<___;
