@@ -3156,14 +3156,14 @@ err:
     return ok;
 }
 
-#define ALIGN_UINT64 __alignof__(uint64_t)
-
 /*
  * Inspired by include/internal/common.h
  */
 #if defined(__GNUC__) || defined(__clang__)
+#define ALIGN_UINT64 __alignof__(uint64_t)
 #define ALIGN_THO_ALLOC_HDR __attribute((aligned(ALIGN_UINT64)))
 #elif defined(_MSC_VER)
+#define ALIGN_UINT64 alignof(uint64_t)
 #define ALIGN_THO_ALLOC_HDR __declspec(align(ALIGN_UINT64))
 #else
 #define ALIGN_THO_ALLOC_HDR
