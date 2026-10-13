@@ -322,11 +322,18 @@ static int test_sanity_sleep(int i)
  */
 static int test_sanity_user32_on_demand(void)
 {
+    int service;
+
     if (!TEST_ptr_null(GetModuleHandleW(L"user32.dll")))
         return 0;
-    if (!TEST_int_ge(OPENSSL_isservice(), 0))
-        return 0;
-    return TEST_ptr(GetModuleHandleW(L"user32.dll"));
+    service = OPENSSL_isservice();
+    /*
+     * Where user32.dll cannot be loaded, e.g. when Win32k system calls are
+     * disabled for the process, OPENSSL_isservice() reports -1.
+     */
+    if (GetModuleHandleW(L"user32.dll") == NULL)
+        return TEST_int_eq(service, -1);
+    return TEST_int_ge(service, 0);
 }
 #endif
 

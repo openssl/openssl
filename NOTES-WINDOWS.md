@@ -259,12 +259,16 @@ message box when it aborts, are looked up when first needed. This
 also lets OpenSSL load in processes that cannot use `USER32.DLL`,
 such as processes that disable Win32k system calls. If `USER32.DLL`
 cannot be loaded, `OPENSSL_isservice()` returns -1 and fatal error
-messages are sent to `OutputDebugString()`. Applications that want
-to keep `USER32.DLL` off the process entirely, even when OpenSSL
-needs to know whether it runs as a service, should consider
-implementing and exporting from the .exe image in question their own
-`_OPENSSL_isservice` not relying on `USER32.DLL`. E.g., on Windows
-Vista and later you could:
+messages are sent to `OutputDebugString()`.
+
+Detecting whether the process is a service loads `USER32.DLL`.
+Services that want to avoid that should consider implementing and
+exporting from the .exe image in question their own
+`_OPENSSL_isservice` not relying on `USER32.DLL`. This only replaces
+the detection: in a process it reports as not being a service, a
+fatal error can still load `USER32.DLL` to show a message box when
+standard error is not available. E.g., on Windows Vista and later you
+could:
 
        __declspec(dllexport) __cdecl BOOL _OPENSSL_isservice(void)
        {
