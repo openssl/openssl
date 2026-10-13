@@ -608,7 +608,8 @@ static int test_ladder_step_fn(int idx)
 
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
         return 0;
-    if (group->fn_mont_ctx == NULL) { /* not a Montgomery-representation method */
+    /* Skip methods that don't keep coordinates in Montgomery form */
+    if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
@@ -697,7 +698,7 @@ static int test_ladder_pre_fn(int idx)
 
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
         return 0;
-    if (group->fn_mont_ctx == NULL) {
+    if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
@@ -803,7 +804,7 @@ static int test_ladder_post_fn(int idx)
 
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
         return 0;
-    if (group->fn_mont_ctx == NULL) {
+    if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
@@ -1191,6 +1192,27 @@ static int test_get_affine_coords_bytes(int idx)
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+/*
+ * prime256v1 selects the nistz256 assembly method whenever it is built, so the
+ * nistp256 point_get_affine_coords_bytes is never reached through a built-in
+ * curve.  Exercise it on a P-256 group built explicitly with the nistp256
+ * method, mirroring test_scalar_mul_fn_nistp256().
+ */
+static int test_get_affine_coords_bytes_nistp256(void)
+{
+    int ret;
+    EC_GROUP *group = fn_clone_group_with_method(NID_X9_62_prime256v1,
+        EC_GFp_nistp256_method());
+
+    if (group == NULL)
+        return 0;
+    ret = fn_check_get_affine_coords_bytes(group);
+    EC_GROUP_free(group);
+    return ret;
+}
+#endif /* OPENSSL_NO_EC_NISTP_64_GCC_128 */
+
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
@@ -1221,6 +1243,9 @@ int setup_tests(void)
     ADD_TEST(test_scalar_mul_fn_nistp256);
 #endif
     ADD_ALL_TESTS(test_get_affine_coords_bytes, OSSL_NELEM(fn_ladder_curves));
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    ADD_TEST(test_get_affine_coords_bytes_nistp256);
+#endif
 
     return 1;
 }
