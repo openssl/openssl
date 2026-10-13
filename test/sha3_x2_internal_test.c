@@ -26,11 +26,11 @@
 #define SHAKE128_WORDS (SHAKE128_RATE * 8 / 64)
 #define SHAKE128_BUFFER_SZ 5 * SHAKE128_RATE
 
-extern void ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake128_2x_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake256_2x_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
-extern void ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2, size_t outlen);
+extern void ossl_sha3_shake128_x2_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_squeeze(uint64_t *statex2_out, const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake128_x2_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake256_x2_squeeze_singleblock(uint64_t *statex2, uint8_t *out1, uint8_t *out2);
+extern void ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2, size_t outlen);
 extern void SHA3_secure_vector_clear_armv8(void);
 
 static int do_single_shake(int shake256, const uint8_t *in1, const uint8_t *in2, size_t inlen,
@@ -115,17 +115,17 @@ static int do_shake_single_absorb_multiblock_squeeze(size_t rate, size_t outlen)
         goto err;
     do_interleave(rate, in1, in2, inlen, inx2);
     if (rate == SHAKE128_RATE)
-        ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, inx2, o1, o2);
+        ossl_sha3_shake128_x2_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, inx2, o1, o2);
     else
-        ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, inx2, o1, o2);
+        ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, inx2, o1, o2);
     len -= rate;
     while (len > 0) {
         o1 += rate;
         o2 += rate;
         if (rate == SHAKE128_RATE)
-            ossl_shake128_2x_squeeze_singleblock(ctx.A, o1, o2);
+            ossl_sha3_shake128_x2_squeeze_singleblock(ctx.A, o1, o2);
         else
-            ossl_shake256_2x_squeeze_singleblock(ctx.A, o1, o2);
+            ossl_sha3_shake256_x2_squeeze_singleblock(ctx.A, o1, o2);
         len -= rate;
     }
     if (!TEST_mem_eq(out1, outlen, expected_out1, outlen)
@@ -162,7 +162,7 @@ static int test_shake256_stateless_multiblock_squeeze_once(int tstid)
     if (!do_single_shake(1, in1, in2, inlen, expected_out1, expected_out2, outlen))
         goto err;
     do_interleave(SHAKE256_RATE, in1, in2, inlen, inx2);
-    ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(inx2, out1, out2, outlen);
+    ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(inx2, out1, out2, outlen);
     if (!TEST_mem_eq(out1, outlen, expected_out1, outlen)
         || !TEST_mem_eq(out2, outlen, expected_out2, outlen))
         goto err;
@@ -188,7 +188,7 @@ static int test_shake256_stateless_absorb_multiblock_squeeze_once(void)
     if (!do_single_shake(1, in1, in2, inlen, expected_out1, expected_out2, outlen))
         goto err;
     do_interleave(SHAKE256_RATE, in1, in2, inlen, inx2);
-    ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(inx2, out1, out2, outlen);
+    ossl_sha3_shake256_x2_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(inx2, out1, out2, outlen);
     if (!TEST_mem_eq(out1, outlen, expected_out1, outlen)
         || !TEST_mem_eq(out2, outlen, expected_out2, outlen))
         goto err;
@@ -210,8 +210,8 @@ int setup_tests(void)
 #if !defined(KECCAK1600_ASM) || !defined(__aarch64__) || !defined(__AARCH64EL__) || defined(OPENSSL_NO_ASM)
     return TEST_skip("SHAKE x2 AARCH64 API not available in this build");
 #else
-    if (!ossl_shakex2_sha3_capable_armv8())
-        return TEST_skip("ARM SHA3_FEAT not available; skipping SHAKE x2 tests");
+    if (!ossl_sha3_shake_x2_capable_armv8())
+        return TEST_skip("AArch64 FEAT_SHA3 not available; skipping SHAKE x2 tests");
     ADD_TEST(test_shake128_single_absorb_multiblock_squeeze);
     ADD_TEST(test_shake256_single_absorb_multiblock_squeeze);
     ADD_TEST(test_shake256_stateless_absorb_multiblock_squeeze_once);

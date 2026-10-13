@@ -444,7 +444,7 @@ const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
 #include "ml_dsa_sample_hw_armv8.inc"
 const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
 {
-    if (ossl_shakex2_sha3_capable_armv8())
+    if (ossl_sha3_shake_x2_capable_armv8())
         return &ml_dsa_sample_armv8;
     return &ml_dsa_sample_generic_meth;
 }
