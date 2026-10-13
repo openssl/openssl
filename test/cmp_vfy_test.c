@@ -614,17 +614,13 @@ static int execute_msg_check_update_malicious_sender(CMP_VFY_TEST_FIXTURE *fixtu
 static int test_msg_check_update_malicious_sender(void)
 {
     OSSL_CMP_PKIHEADER *hdr;
-    X509_NAME *expected = X509_NAME_new();
-    X509_NAME *actual = X509_NAME_new();
-
-    if (expected == NULL || actual == NULL) {
-        X509_NAME_free(expected);
-        X509_NAME_free(actual);
-        return 0;
-    }
+    X509_NAME *expected = NULL;
+    X509_NAME *actual = NULL;
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
+    if (!TEST_ptr(expected = X509_NAME_new())
+        || !TEST_ptr(actual = X509_NAME_new())
+        || !TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_ptr(hdr = OSSL_CMP_MSG_get0_header(fixture->msg))
         || !TEST_int_eq(X509_NAME_add_entry_by_txt(expected, "CN", MBSTRING_ASC,
                             (unsigned char *)"%n", -1, -1, 0),
