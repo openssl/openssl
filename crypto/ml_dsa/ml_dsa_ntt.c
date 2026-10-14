@@ -20,6 +20,13 @@ void ml_dsa_poly_ntt_inverse_avx2(uint32_t *p_coeff);
 void ml_dsa_poly_ntt_mult_avx2(const uint32_t *a, const uint32_t *b, uint32_t *out);
 #endif
 
+#if defined(OPENSSL_ML_DSA_AARCH64) && !defined(__AARCH64EB__)
+#include "arch/arm_arch.h"
+
+void ossl_ml_dsa_poly_ntt_armv8(uint32_t *p_coeff);
+void ossl_ml_dsa_poly_ntt_inverse_armv8(uint32_t *p_coeff);
+#endif
+
 /*
  * Function pointer types for NTT operations.
  * These allow selecting AVX2 or scalar implementations at initialization time.
@@ -227,6 +234,18 @@ static void poly_ntt_inverse_avx2_wrapper(POLY *p)
 }
 #endif
 
+#if defined(OPENSSL_ML_DSA_AARCH64) && !defined(__AARCH64EB__)
+static void poly_ntt_armv8_wrapper(POLY *p)
+{
+    ossl_ml_dsa_poly_ntt_armv8(p->coeff);
+}
+
+static void poly_ntt_inverse_armv8_wrapper(POLY *p)
+{
+    ossl_ml_dsa_poly_ntt_inverse_armv8(p->coeff);
+}
+#endif
+
 /*
  * PPC64le wrapper functions.
  */
@@ -266,6 +285,13 @@ static void ml_dsa_ntt_init(void)
         poly_ntt_impl = poly_ntt_avx2_wrapper;
         poly_ntt_inverse_impl = poly_ntt_inverse_avx2_wrapper;
         poly_ntt_mult_impl = poly_ntt_mult_avx2_wrapper;
+    }
+#endif
+
+#if defined(OPENSSL_ML_DSA_AARCH64) && !defined(__AARCH64EB__)
+    if (OPENSSL_armcap_P & ARMV7_NEON) {
+        poly_ntt_impl = poly_ntt_armv8_wrapper;
+        poly_ntt_inverse_impl = poly_ntt_inverse_armv8_wrapper;
     }
 #endif
 
