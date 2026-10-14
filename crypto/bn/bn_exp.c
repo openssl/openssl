@@ -314,7 +314,9 @@ err:
  * AVX_IFMA when the modulus is 2048-bit in the RSAZ-supported limb layout and
  * the exponent fits the fixed-width buffer expected by the kernel.
  * Returns 1 if |rr| was computed, 0 to fall back to the generic
- * BN_mod_exp_mont path.
+ * BN_mod_exp_mont path, or -1 if this path was selected and failed.
+ * A selected path that fails, including an allocation failure, must not
+ * fall back: malloc-failure tests require that error to propagate.
  */
 static int bn_mod_exp_mont_rsaz_avx512_x1(BIGNUM *rr, const BIGNUM *a,
     const BIGNUM *base_plain,
@@ -357,20 +359,20 @@ static int bn_mod_exp_mont_rsaz_avx512_x1(BIGNUM *rr, const BIGNUM *a,
     memcpy(base_pad, base_plain->d,
         (size_t)base_plain->top * sizeof(BN_ULONG));
     if (bn_wexpand(&mont->RR, 32) == NULL)
-        return 0;
+        return -1;
     if (mont->RR.top < 32)
         memset(mont->RR.d + mont->RR.top, 0,
             (32 - mont->RR.top) * sizeof(BN_ULONG));
 
-    if (bn_wexpand(rr, m->top) != NULL
-        && ossl_rsaz_mod_exp_avx512_x1(rr->d, base_pad, exp_pad,
-            m->d, mont->RR.d, mont->n0[0], mod_bits, exp_bits)) {
-        rr->top = m->top;
-        rr->neg = 0;
-        bn_correct_top(rr);
-        return 1;
-    }
-    return 0;
+    if (bn_wexpand(rr, m->top) == NULL
+        || !ossl_rsaz_mod_exp_avx512_x1(rr->d, base_pad, exp_pad,
+            m->d, mont->RR.d, mont->n0[0], mod_bits, exp_bits))
+        return -1;
+
+    rr->top = m->top;
+    rr->neg = 0;
+    bn_correct_top(rr);
+    return 1;
 }
 #endif
 
@@ -441,9 +443,14 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         aa = a;
 
 #ifdef RSAZ_ENABLED
-    if (bn_mod_exp_mont_rsaz_avx512_x1(rr, a, aa, p, m, mont, bits)) {
-        ret = 1;
-        goto err;
+    {
+        int rsaz_r = bn_mod_exp_mont_rsaz_avx512_x1(rr, a, aa, p, m, mont,
+            bits);
+
+        if (rsaz_r != 0) {
+            ret = rsaz_r > 0;
+            goto err;
+        }
     }
 #endif
 
