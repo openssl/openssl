@@ -2216,6 +2216,256 @@ err:
     return testresult;
 }
 
+/*-
+ * A key length other than the cipher's own, via set_params or as an init
+ * param, must be refused where KEYLEN is settable and ignored where it is
+ * not. Either way the keyed context must stay usable: the key length is
+ * unchanged, for the provider and for EVP, and a NULL-key re-init reproduces
+ * the same ciphertext and tag.
+ */
+static int test_evp_aead_keylen_reinit(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+
+    OSSL_PARAM tagparams[2];
+    OSSL_PARAM keylenparams[2];
+
+    size_t wrong_keylen = 0, got_keylen = 0;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag2[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    static const unsigned char msg[] = "key length re-init regression";
+    static const unsigned char aad[] = "key length re-init aad";
+    unsigned char ct1[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    size_t i = 0;
+    int len = 0, ct1len = 0, ct2len = 0, settable = 0, testresult = 0;
+
+    for (i = 0; i < (size_t)info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < (size_t)info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    wrong_keylen = (size_t)info->keylen / 2;
+    settable = OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(info->ciph),
+                   OSSL_CIPHER_PARAM_KEYLEN)
+        != NULL;
+
+    /* reference: Init, (CCM len), AAD, Update, Final, get tag */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct1, &len, msg, sizeof(msg)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct1 + len, &ct1len))) {
+        TEST_info("%s: encrypt on a fresh context failed", info->name);
+        goto err;
+    }
+    ct1len += len;
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag1, info->taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, tagparams))) {
+        TEST_info("%s: reading the tag after encrypt failed", info->name);
+        goto err;
+    }
+
+    keylenparams[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN,
+        &wrong_keylen);
+    keylenparams[1] = OSSL_PARAM_construct_end();
+
+    ERR_clear_error();
+
+    /* via set_params: refused if settable, ignored otherwise */
+    if (!TEST_int_eq(EVP_CIPHER_CTX_set_params(ctx, keylenparams), !settable)) {
+        TEST_info("%s: set_params with KEYLEN %zu (key length %d) %s",
+            info->name, wrong_keylen, info->keylen,
+            settable ? "accepted, but KEYLEN is settable and must refuse it"
+                     : "failed, but KEYLEN is not settable and must be ignored");
+        goto err;
+    }
+
+    /* as an init param, without a key so the context keeps its own */
+    if (!TEST_int_eq(EVP_EncryptInit_ex2(ctx, NULL, NULL, iv, keylenparams),
+            !settable)) {
+        TEST_info("%s: init with KEYLEN %zu param (key length %d) %s",
+            info->name, wrong_keylen, info->keylen,
+            settable ? "accepted, but KEYLEN is settable and must refuse it"
+                     : "failed, but KEYLEN is not settable and must be ignored");
+        goto err;
+    }
+
+    ERR_clear_error();
+
+    /* the key length is unchanged, for the provider and for EVP */
+    keylenparams[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN,
+        &got_keylen);
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, keylenparams))
+        || !TEST_size_t_eq(got_keylen, (size_t)info->keylen)
+        || !TEST_int_eq(EVP_CIPHER_CTX_get_key_length(ctx), info->keylen)) {
+        TEST_info("%s: key length not %d after a wrong length was offered",
+            info->name, info->keylen);
+        goto err;
+    }
+
+    /* NULL-key re-init must reproduce the reference ciphertext and tag */
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag2, info->taglen);
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct2, &len, msg, sizeof(msg)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct2 + len, &ct2len))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, tagparams))
+        || !TEST_mem_eq(ct1, ct1len, ct2, ct2len + len)
+        || !TEST_mem_eq(tag1, info->taglen, tag2, info->taglen)) {
+        TEST_info("%s: NULL-key re-init after a wrong KEYLEN was offered "
+            "does not reproduce the reference ciphertext and tag", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
+/*-
+ * An IV length no AEAD can take, via set_params or as an init param, must be
+ * refused where IVLEN is settable and ignored where it is not. Either way the
+ * keyed context must stay usable: the IV length is unchanged, for the
+ * provider and for EVP, and a NULL-key re-init reproduces the same
+ * ciphertext and tag.
+ */
+static int test_evp_aead_ivlen_reinit(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+
+    OSSL_PARAM tagparams[2];
+    OSSL_PARAM ivlenparams[2];
+
+    size_t wrong_ivlen = 0xFFFF, ref_ivlen = 0, got_ivlen = 0;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag2[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    static const unsigned char msg[] = "IV length re-init regression";
+    static const unsigned char aad[] = "IV length re-init aad";
+    unsigned char ct1[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    size_t i = 0;
+    int len = 0, ct1len = 0, ct2len = 0, settable = 0, testresult = 0;
+    int ref_evp_ivlen = 0;
+
+    for (i = 0; i < (size_t)info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < (size_t)info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    settable = OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(info->ciph),
+                   OSSL_CIPHER_PARAM_IVLEN)
+        != NULL;
+
+    /* reference: Init, (CCM len), AAD, Update, Final, get tag */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct1, &len, msg, sizeof(msg)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct1 + len, &ct1len))) {
+        TEST_info("%s: encrypt on a fresh context failed", info->name);
+        goto err;
+    }
+    ct1len += len;
+
+    /* the context's own IV length, which need not be the cipher's default */
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag1, info->taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+    ivlenparams[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN,
+        &ref_ivlen);
+    ivlenparams[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, tagparams))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, ivlenparams))) {
+        TEST_info("%s: reading the tag and IV length after encrypt failed",
+            info->name);
+        goto err;
+    }
+    ref_evp_ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+
+    ivlenparams[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN,
+        &wrong_ivlen);
+
+    ERR_clear_error();
+
+    /* via set_params: refused if settable, ignored otherwise */
+    if (!TEST_int_eq(EVP_CIPHER_CTX_set_params(ctx, ivlenparams), !settable)) {
+        TEST_info("%s: set_params with IVLEN %zu (IV length %zu) %s",
+            info->name, wrong_ivlen, ref_ivlen,
+            settable ? "accepted, but IVLEN is settable and must refuse it"
+                     : "failed, but IVLEN is not settable and must be ignored");
+        goto err;
+    }
+
+    /* as an init param, without a key so the context keeps its own */
+    if (!TEST_int_eq(EVP_EncryptInit_ex2(ctx, NULL, NULL, NULL, ivlenparams),
+            !settable)) {
+        TEST_info("%s: init with IVLEN %zu param (IV length %zu) %s",
+            info->name, wrong_ivlen, ref_ivlen,
+            settable ? "accepted, but IVLEN is settable and must refuse it"
+                     : "failed, but IVLEN is not settable and must be ignored");
+        goto err;
+    }
+
+    ERR_clear_error();
+
+    /* the IV length is unchanged, for the provider and for EVP */
+    ivlenparams[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN,
+        &got_ivlen);
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, ivlenparams))
+        || !TEST_size_t_eq(got_ivlen, ref_ivlen)
+        || !TEST_int_eq(EVP_CIPHER_CTX_get_iv_length(ctx), ref_evp_ivlen)) {
+        TEST_info("%s: IV length changed after a wrong length was offered",
+            info->name);
+        goto err;
+    }
+
+    /* NULL-key re-init must reproduce the reference ciphertext and tag */
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag2, info->taglen);
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, NULL, sizeof(msg))))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct2, &len, msg, sizeof(msg)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct2 + len, &ct2len))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, tagparams))
+        || !TEST_mem_eq(ct1, ct1len, ct2, ct2len + len)
+        || !TEST_mem_eq(tag1, info->taglen, tag2, info->taglen)) {
+        TEST_info("%s: NULL-key re-init after a wrong IVLEN was offered "
+            "does not reproduce the reference ciphertext and tag", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     size_t i = 0;
@@ -2238,6 +2488,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_no_key, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_reinit, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_aead_keylen_reinit, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_aead_ivlen_reinit, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_final_no_tag, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_enc_retval, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_dec_retval, OSSL_NELEM(aead_list));

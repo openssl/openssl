@@ -611,8 +611,9 @@ length to any value other than the fixed value is an error.
 Return the IV length of a cipher when passed an B<EVP_CIPHER> or
 B<EVP_CIPHER_CTX>. It will return zero if the cipher does not use an IV, if
 the cipher has not yet been initialized within the B<EVP_CIPHER_CTX>, or if the
-passed cipher is NULL.  The constant B<EVP_MAX_IV_LENGTH> is the maximum IV
-length for all ciphers.
+passed cipher is NULL.  The constant B<EVP_MAX_IV_LENGTH> is the maximum
+default IV length for all ciphers. Some ciphers that allow the IV length to be
+set, such as GCM, accept lengths larger than this.
 
 =item EVP_CIPHER_CTX_get_tag_length()
 
