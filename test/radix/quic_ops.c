@@ -242,6 +242,12 @@ DEF_FUNC(hf_new_ssl)
         && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
         goto err;
 
+    /* The interpreter must remain free to tick peers and advance the clock. */
+    if (!is_domain && !TEST_true(SSL_set_blocking_mode(ssl, 0))) {
+        SSL_free(ssl);
+        goto err;
+    }
+
     if (!TEST_true(ossl_quic_set_override_now_cb(ssl, get_time, NULL))) {
         SSL_free(ssl);
         goto err;
@@ -275,8 +281,11 @@ DEF_FUNC(hf_new_ssl_listener_from)
     if (!TEST_ptr(listener = SSL_new_listener_from(domain, flags)))
         goto err;
 
-    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL)))
+    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))) {
+        SSL_free(listener);
         goto err;
+    }
 
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), listener_name, listener))) {
         SSL_free(listener);
@@ -633,8 +642,13 @@ DEF_FUNC(hf_write)
     REQUIRE_SSL(ssl);
 
     r = SSL_write_ex(ssl, buf, buf_len, &bytes_written);
+    if (!check_consistent_want(ssl, r))
+        goto err;
+
+    if (r == 0 && is_want(ssl, r))
+        F_SPIN_AGAIN();
+
     if (!TEST_true(r)
-        || !check_consistent_want(ssl, r)
         || !TEST_size_t_eq(bytes_written, buf_len))
         goto err;
 
