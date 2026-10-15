@@ -326,33 +326,32 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - name: install package repository
       if: matrix.platform.ppa != ''
-      run: |
-        sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
+      run: .github/retry sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
     - name: install packages (GCC)
       if: matrix.platform.compiler != 'clang'
       run: |
-        sudo apt-get update
-        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
+        .github/retry sh -c "sudo apt-get update &&
+          sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             gcc-${{ matrix.platform.arch }} \
-            ${{ matrix.platform.libs }}
+            ${{ matrix.platform.libs }}"
     - name: install packages (Clang)
       if: matrix.platform.compiler == 'clang'
       run: |
-        sudo apt-get update
-        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
+        .github/retry sh -c "sudo apt-get update &&
+          sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             clang \
             binutils-${{ matrix.platform.arch }} \
             gcc-${{ matrix.platform.arch }} \
-            ${{ matrix.platform.libs }}
+            ${{ matrix.platform.libs }}"
         # Detect sysroot: Ubuntu <=22.04 uses .../sys-root, 24.04+ installs directly.
         SYSROOT=/usr/${{ matrix.platform.arch }}/sys-root
         [ -d "$SYSROOT" ] || SYSROOT=/usr/${{ matrix.platform.arch }}
         echo "CROSS_SYSROOT=$SYSROOT" >> $GITHUB_ENV
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
 
