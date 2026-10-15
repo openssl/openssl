@@ -198,6 +198,12 @@ the ALPN sent in the outer ClientHello of the B<SSL> connection, I<s>. The
 I<protos> and I<protos_len> inputs must be provided as for
 L<SSL_set_alpn_protos(3)>.
 
+The outer ALPN list, including a list inherited from an B<SSL_CTX>, is
+preserved by L<SSL_clear(3)> and the implicit reset at handshake start.
+Passing B<NULL> for I<protos> to SSL_ech_set1_outer_alpn_protos() removes the
+outer override. Subsequent ClientHellos use the current ALPN list configured
+with L<SSL_set_alpn_protos(3)> for both the inner and outer messages.
+
 If a client attempts ECH but that fails, or sends an ECH-GREASE'd ClientHello,
 to an ECH-supporting server, then that server may return a set of ECH
 retry-config values that the client could choose to use in a subsequent
@@ -216,6 +222,16 @@ accessed using SSL_ech_get1_retry_config().  The application can then choose to
 use those in a subsequent attempt to establish a TLS session with the server.
 If the TLS session fails for some other reason (e.g. a bad server Finished
 message), then the retry config values will not be returned to the application.
+
+On ECH rejection, the effective public DNS name is applied to the temporary
+B<X509_STORE_CTX> used for certificate verification. This is the ECHConfig
+I<public_name>, or the name supplied by an application outer-name override.
+The name is retained for certificate-verification retries even if the
+application changes its outer-name configuration. The application's
+configured DNS names, accessible through L<SSL_get0_param(3)>, are unchanged.
+Application certificate-verification callbacks should use the parameters of
+their B<X509_STORE_CTX>, obtained with L<X509_STORE_CTX_get0_param(3)>, for the
+effective DNS constraint, rather than the application's configured DNS names.
 
 "GREASEing" (defined in RFC8701) is a mechanism intended to discourage protocol
 ossification that can be used for ECH.
