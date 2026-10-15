@@ -968,6 +968,68 @@ err:
     return ret;
 }
 
+/*
+ * A CA with excludedSubtrees rfc822Name=user@xn--bcher-kva.example must reject
+ * a leaf carrying that mailbox, both as an rfc822Name SAN and as an RFC 8398
+ * SmtpUTF8Mailbox SAN (user@b\xc3\xbccher.example). A different local part at
+ * the same host is not excluded.
+ */
+static int test_nc_eai_mailbox(int idx)
+{
+    static const struct {
+        const char *leaf;
+        int expected;
+    } cases[] = {
+        { "nc-eai-mbox-leaf-rfc822.pem", X509_V_ERR_EXCLUDED_VIOLATION },
+        { "nc-eai-mbox-leaf-utf8.pem", X509_V_ERR_EXCLUDED_VIOLATION },
+        { "nc-eai-mbox-leaf-other.pem", X509_V_OK }
+    };
+    char *root_path = NULL, *ica_path = NULL, *leaf_path = NULL;
+    X509 *root = NULL, *ica = NULL, *leaf = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_VERIFY_PARAM *vpm;
+    int ret = 0;
+
+    if (!TEST_ptr(root_path = test_mk_file_path(certs_dir, "root-cert.pem"))
+        || !TEST_ptr(ica_path = test_mk_file_path(certs_dir,
+                         "nc-eai-mbox-ica.pem"))
+        || !TEST_ptr(leaf_path = test_mk_file_path(certs_dir,
+                         cases[idx].leaf))
+        || !TEST_ptr(root = load_cert_from_file(root_path))
+        || !TEST_ptr(ica = load_cert_from_file(ica_path))
+        || !TEST_ptr(leaf = load_cert_from_file(leaf_path))
+        || !TEST_ptr(untrusted = sk_X509_new_null())
+        || !TEST_true(sk_X509_push(untrusted, ica)))
+        goto end;
+    ica = NULL;
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, root))
+        || !TEST_ptr(vpm = X509_STORE_get0_param(store))
+        || !TEST_true(X509_VERIFY_PARAM_set_flags(vpm,
+            X509_V_FLAG_NO_CHECK_TIME))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, untrusted)))
+        goto end;
+
+    ret = TEST_int_eq(X509_verify_cert(ctx), cases[idx].expected == X509_V_OK)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx), cases[idx].expected);
+
+end:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    OSSL_STACK_OF_X509_free(untrusted);
+    X509_free(leaf);
+    X509_free(ica);
+    X509_free(root);
+    OPENSSL_free(leaf_path);
+    OPENSSL_free(ica_path);
+    OPENSSL_free(root_path);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -1003,6 +1065,7 @@ int setup_tests(void)
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
     ADD_ALL_TESTS(test_pathlen_chain, OSSL_NELEM(pathlen_chains));
+    ADD_ALL_TESTS(test_nc_eai_mailbox, 3);
     return 1;
 err:
     cleanup_tests();

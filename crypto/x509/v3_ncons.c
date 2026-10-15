@@ -665,6 +665,8 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
 {
     ASN1_UTF8STRING *eml;
     char *baseptr = NULL;
+    const char *basehost;
+    const char *baseat;
     const char *emlptr;
     const char *emlat;
     char ulabel[256];
@@ -713,7 +715,22 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
         goto end;
     }
 
-    if (ossl_a2ulabel(baseptr, ulabel, size) <= 0) {
+    /* If we have anything before '@' match the local part */
+    basehost = baseptr;
+    baseat = strrchr(baseptr, '@');
+    if (baseat != NULL) {
+        if (baseat != baseptr) {
+            if ((size_t)(baseat - baseptr) != (size_t)(emlat - emlptr)
+                || memcmp(baseptr, emlptr, (size_t)(emlat - emlptr)) != 0) {
+                ret = X509_V_ERR_PERMITTED_VIOLATION;
+                goto end;
+            }
+        }
+        /* Only the host part is an A-label */
+        basehost = baseat + 1;
+    }
+
+    if (ossl_a2ulabel(basehost, ulabel, size) <= 0) {
         ret = X509_V_ERR_UNSPECIFIED;
         goto end;
     }

@@ -472,6 +472,23 @@ NC="excluded;otherName:SRVName;UTF8STRING:foo@example.org" ./mkcert.sh genca \
     nccaothername-key nccaothername-cert \
     "otherName.1 = SRVName;UTF8STRING:foo@example.org"
 
+# NC CA excluding the mailbox user@xn--bcher-kva.example; a leaf carrying that
+# mailbox must be rejected whether it is encoded as rfc822Name or as an RFC 8398
+# SmtpUTF8Mailbox otherName, while another local part at the same host is fine.
+NC="critical,excluded;email:user@xn--bcher-kva.example" ./mkcert.sh genca \
+    "Test NC EAI mailbox CA" nc-eai-mbox-ica-key nc-eai-mbox-ica root-key root-cert
+./mkcert.sh req nc-eai-mbox-leaf-key "CN = NC EAI mailbox rfc822 leaf" | \
+    ./mkcert.sh geneealt nc-eai-mbox-leaf-key nc-eai-mbox-leaf-rfc822 \
+    nc-eai-mbox-ica-key nc-eai-mbox-ica "email.1 = user@xn--bcher-kva.example"
+./mkcert.sh req nc-eai-mbox-leaf-key "CN = NC EAI mailbox utf8 leaf" | \
+    ./mkcert.sh geneealt nc-eai-mbox-leaf-key nc-eai-mbox-leaf-utf8 \
+    nc-eai-mbox-ica-key nc-eai-mbox-ica \
+    "otherName.1 = id-on-SmtpUTF8Mailbox;FORMAT:UTF8,UTF8:user@bücher.example"
+./mkcert.sh req nc-eai-mbox-leaf-key "CN = NC EAI mailbox other leaf" | \
+    ./mkcert.sh geneealt nc-eai-mbox-leaf-key nc-eai-mbox-leaf-other \
+    nc-eai-mbox-ica-key nc-eai-mbox-ica \
+    "otherName.1 = id-on-SmtpUTF8Mailbox;FORMAT:UTF8,UTF8:other@bücher.example"
+
 # RSA-PSS signatures
 # SHA1
 ./mkcert.sh genee PSS-SHA1 ee-key ee-pss-sha1-cert ca-key ca-cert \
