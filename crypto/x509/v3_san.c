@@ -82,6 +82,8 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 {
     char othername[300];
     char oline[256], *tmp;
+    long tmplen, r;
+    BIO *bio = NULL;
 
     switch (gen->type) {
     case GEN_OTHERNAME:
@@ -183,9 +185,23 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_DIRNAME:
-        if (X509_NAME_oneline(gen->d.dirn, oline, sizeof(oline)) == NULL
-            || !X509V3_add_value("DirName", oline, &ret))
+        bio = BIO_new(BIO_s_mem());
+        if (bio == NULL)
             return NULL;
+        r = X509_NAME_print_ex(bio, gen->d.dirn, 0,
+            XN_FLAG_ONELINE & ~(ASN1_STRFLGS_ESC_MSB | XN_FLAG_SPC_EQ));
+        if (r < 0)
+            goto err;
+
+        tmplen = BIO_get_mem_data(bio, &tmp);
+        if (tmplen < 0)
+            goto err;
+        if (!x509v3_add_len_value_uchar("DirName",
+                (const unsigned char *)(tmplen == 0 ? "" : tmp),
+                (size_t)tmplen, &ret))
+            goto err;
+
+        BIO_free(bio);
         break;
 
     case GEN_IPADD:
@@ -202,6 +218,10 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
     }
     return ret;
+
+err:
+    BIO_free(bio);
+    return NULL;
 }
 
 int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
@@ -289,7 +309,8 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 
     case GEN_DIRNAME:
         BIO_printf(out, "DirName:");
-        X509_NAME_print_ex(out, gen->d.dirn, 0, XN_FLAG_ONELINE);
+        X509_NAME_print_ex(out, gen->d.dirn, 0,
+            XN_FLAG_ONELINE & ~(ASN1_STRFLGS_ESC_MSB | XN_FLAG_SPC_EQ));
         break;
 
     case GEN_IPADD:
