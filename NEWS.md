@@ -42,7 +42,8 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed potential CPU DoS via O(n^2) fragment reassembly in QUIC.
     ([CVE-2026-42772])
 
-  * Fixed a timing side-channel in scalar multiplication for mon-NIST EC curves.
+  * Fixed a timing side-channel leak in generic elliptic curve scalar
+    multiplication.
     ([CVE-2026-54872])
 
   * Fixed QUIC `STREAM` fragment metadata DoS.
