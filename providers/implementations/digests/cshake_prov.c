@@ -151,7 +151,7 @@ static int cshake_set_encode_string(const char *in,
      */
     if (inlen == 0)
         return 1;
-    if (inlen >= CSHAKE_MAX_STRING)
+    if (inlen > CSHAKE_MAX_STRING)
         return 0;
     return ossl_sp800_185_encode_string(out, outmax, outlen,
         (const unsigned char *)in, inlen);
@@ -270,8 +270,10 @@ static int cshake_init(void *vctx, const OSSL_PARAM params[])
         return 0;
     ctx->inited = 0;
     ctx->xoflen = (ctx->bitlen == 128) ? 32 : 64; /* Set default values here */
-    cshake_set_func_encode_string(NULL, &ctx->func, &ctx->funclen);
-    cshake_set_encode_string(NULL, ctx->custom, sizeof(ctx->custom), &ctx->customlen);
+    if (!cshake_set_func_encode_string(NULL, &ctx->func, &ctx->funclen)
+        || !cshake_set_encode_string(NULL, ctx->custom, sizeof(ctx->custom),
+            &ctx->customlen))
+        return 0;
     return cshake_set_ctx_params(vctx, params);
 }
 
