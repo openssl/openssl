@@ -1207,7 +1207,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -1265,7 +1265,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -1459,7 +1459,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -2562,7 +2562,7 @@ static int test_ssl_ownership_three_conn_states(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -2610,7 +2610,7 @@ static int test_ssl_ownership_three_conn_states(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -2644,7 +2644,7 @@ static int test_ssl_ownership_three_conn_states(void)
     poll_item.events = SSL_POLL_EVENT_R;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 100000;
+    poll_timeout.tv_usec = 10000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
         goto end;
@@ -4414,7 +4414,7 @@ static int cap_test_send_clienthello(SSL_CTX *cctx, const BIO_ADDR *server_addr,
     poll_item.events = SSL_POLL_EVENT_R;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 100000;
+    poll_timeout.tv_usec = 10000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
             &poll_timeout, 0, &poll_result)))
@@ -5157,7 +5157,7 @@ static int test_dtls_poll_listener_enters_blocking_section(void)
     poll_item.events = SSL_POLL_EVENT_IC;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 100000;
+    poll_timeout.tv_usec = 10000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0,
             &poll_result)))
@@ -5360,7 +5360,7 @@ static int test_dtls_poll_conn_honours_retransmit_timer(void)
     poll_item.events = SSL_POLL_EVENT_R;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 500000;
+    poll_timeout.tv_usec = 150000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0,
             &poll_result)))
