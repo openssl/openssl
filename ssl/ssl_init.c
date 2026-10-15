@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "internal/e_os.h"
 
 #include "internal/err.h"
@@ -21,7 +24,7 @@ static int stopped;
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_4_2)
     OSSL_TRACE(INIT, "ossl_init_ssl_base: "
                      "SSL_COMP_get_compression_methods()\n");
     /*
