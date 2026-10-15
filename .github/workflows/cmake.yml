@@ -1,0 +1,140 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: CMake
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+
+permissions:
+  contents: read
+
+env:
+  OSSL_RUN_CI_TESTS: 1
+
+jobs:
+  # Configure writes a CMake project (BUILDFILE=CMakeLists.txt), which is
+  # built with Ninja out of tree, tested, rebuilt to check that nothing is
+  # left to do, and installed.
+  ninja:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: install ninja (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends install ninja-build
+    - name: install ninja (macOS)
+      if: runner.os == 'macOS'
+      run: brew install ninja
+    - name: config
+      run: |
+        mkdir _build
+        cd _build
+        BUILDFILE=CMakeLists.txt ../Configure --banner=Configured --strict-warnings
+        perl configdata.pm --dump
+    - name: cmake
+      working-directory: _build
+      run: cmake -G Ninja .
+    - name: build
+      working-directory: _build
+      run: ninja
+    - name: test
+      working-directory: _build
+      run: ninja tests
+    - name: nothing left to rebuild
+      working-directory: _build
+      run: ninja -n | grep -q 'no work to do'
+    - name: install
+      working-directory: _build
+      run: |
+        DESTDIR=$PWD/../_install ninja install
+        test -x $PWD/../_install/usr/local/bin/openssl
+
+  # The same with MSVC and NASM on Windows.
+  ninja-windows:
+    runs-on: windows-2022
+    env:
+      VCVARS: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: install nasm
+      if: github.repository == 'openssl/openssl'
+      run: |
+        $installer = "nasm-3.01-installer-x64.exe"
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
+        $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+        "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install nasm (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        $installer = "nasm-3.01-installer-x64.exe"
+        Invoke-WebRequest -Uri "https://www.nasm.us/pub/nasm/releasebuilds/3.01/win64/$installer" -OutFile $installer
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+        "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: config
+      shell: cmd
+      run: |
+        mkdir _build
+        cd _build
+        call "%VCVARS%"
+        set BUILDFILE=CMakeLists.txt
+        perl ..\Configure --banner=Configured --strict-warnings VC-WIN64A
+        perl configdata.pm --dump
+    - name: cmake
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        cmake -G Ninja .
+    - name: build
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        ninja
+    - name: test
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        ninja tests
+    - name: nothing left to rebuild
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        ninja -n | findstr /C:"no work to do"

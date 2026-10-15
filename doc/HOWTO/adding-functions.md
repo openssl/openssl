@@ -49,37 +49,45 @@ functions are meant for the `libssl` library*, you will need to edit
 [Configurations/unix-Makefile.tmpl] and add the header file name in the
 array `my @sslheaders_tmpl`.
 
-Updating OpenSSL's bookkeeping files
-------------------------------------
+Listing the symbol for export
+-----------------------------
 
-OpenSSL has a few bookkeeping files to keep track of exposed functions, most
-importantly `util/libcrypto.num` and `util/libssl.num`.  Any time a new
-public function - as defined above - is added, these files must be updated.
+A public function is exported only if it is named in `util/libcrypto.sym`,
+or in `util/libssl.sym` for a function belonging to `libssl`.  Add a line
+for it, anywhere in the file, naming any features it depends on:
 
-To make such an update, please do the following:
+    BIO_set_dgram_foo
+    OCSP_crlID_new                          OCSP
 
-    ./Configure --strict-warnings [your-options]
-    make update
+The format is described in [doc/internal/man7/sym.pod].
+
+If you are adding objects
+-------------------------
+
+Each built-in ASN.1 object is a line in `crypto/objects/objects.txt`;
+see [crypto/objects/README.md].
+
+If you are adding error reasons
+-------------------------------
+
+Each error reason is a line in `crypto/err/openssl.txt`; see
+[crypto/err/README.md].
+
+Checking documentation
+----------------------
 
 If you plan to submit the changes you made to OpenSSL (see
-[CONTRIBUTING.md]), it's also worth running the following after running
-`make update`, to ensure that documentation has correct format.
+[CONTRIBUTING.md]), it's also worth running the following, to ensure that
+documentation has correct format.
 
     make doc-nits
-
-`make update` ensures that your functions declarations are added to
-`util/libcrypto.num` or `util/libssl.num`.
-It also generates files related to OIDs (in the `crypto/objects/`  folder)
-and error messages.
 
 More details are at
   [doc/HOWTO/documenting-functions-macros.md](Documenting Functions and Macros)
 
-If a git merge error occurs in one of these generated files, then the
-generated files need to be removed and regenerated using `make update`.
-To aid in this process, the generated files should be committed separately
-so they can be removed easily by reverting that commit.
-
 [doc/internal/man7/build.info.pod]: ../doc/internal/man7/build.info.pod
+[doc/internal/man7/sym.pod]: ../internal/man7/sym.pod
 [Configurations/unix-Makefile.tmpl]: ../../Configurations/unix-Makefile.tmpl
 [CONTRIBUTING.md]: ../../CONTRIBUTING.md
+[crypto/objects/README.md]: ../../crypto/objects/README.md
+[crypto/err/README.md]: ../../crypto/err/README.md

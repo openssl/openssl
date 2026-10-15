@@ -960,13 +960,15 @@ my @history_maybe_macro_functions;
 my %macros_maybe_undocumented;
 
 # Parse libcrypto.num, etc., and return sorted list of what's there.
-sub loadnum ($;$) {
+sub loadnum ($;$$) {
     my $file = shift;
     my $type = shift;
+    my $root = shift // $config{sourcedir};
     my @symbols;
+    my $path = catfile($root, $file);
 
-    open my $IN, '<', catfile($config{sourcedir}, $file)
-        or die "Can't open $file, $!, stopped";
+    open my $IN, '<', $path
+        or die "Can't open $path, $!, stopped";
 
     while ( <$IN> ) {
         next if /^#/;
@@ -1290,7 +1292,7 @@ sub check_env_vars {
         # The following files are generated, and are therefore found in the
         # build directory rather than the source directory
         "$config{builddir}/providers/implementations/keymgmt/template_kmgmt.c",
-        "$config{builddir}/Makefile.in",
+        "$config{builddir}/$config{build_file}.in",
     );
     my @env_headers;
     my @env_macro;
@@ -1318,11 +1320,11 @@ sub check_env_vars {
 
     # look for source files
     my $git_ok = 0;
-    open my $glf_pipe, '-|', "git ls-files -- \"$config{sourcedir}\"";
+    open my $glf_pipe, '-|', "git -C \"$config{sourcedir}\" ls-files";
     while (<$glf_pipe>) {
         $git_ok = 1;
         s/\R$//; # better chomp
-        push @env_files, $_ if /\.c$|\.in$/;
+        push @env_files, catfile($config{sourcedir}, $_) if /\.c$|\.in$/;
     }
     close $glf_pipe;
     # git call has failed, trying to find files manually
@@ -1468,8 +1470,8 @@ if ( $opt_c ) {
 }
 
 # Populate %state
-loadnum('util/libcrypto.num', 'crypto');
-loadnum('util/libssl.num', 'ssl');
+loadnum('util/libcrypto.num', 'crypto', $config{builddir});
+loadnum('util/libssl.num', 'ssl', $config{builddir});
 loadnum('util/other.syms', 'other');
 loadnum('util/other-internal.syms');
 if ( !$opt_u ) {

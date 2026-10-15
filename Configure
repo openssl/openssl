@@ -2201,6 +2201,15 @@ if ($builder eq "unified") {
         return $res;
     }
 
+    # A name with no extension, or a static library name, is something
+    # this build makes: a library, module or program.  A file of that name
+    # in the source tree is left over from an earlier build there.
+    sub built_name {
+        my $name = shift;
+
+        return basename($name) !~ /\./ || $name =~ /\.a$/;
+    }
+
     sub cleanfile {
         my $base = shift;
         my $file = shift;
@@ -2626,9 +2635,10 @@ if ($builder eq "unified") {
             foreach (@{$sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir, 1);
 
-                # If it's generated or we simply don't find it in the source
-                # tree, we assume it's in the build tree.
-                if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
+                # A generated file, a product of the build, or anything not
+                # found in the source tree is in the build tree.
+                if ($s eq $src_configdata || $generate{$_} || built_name($_)
+                    || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
                 my $o = $_;
@@ -2671,9 +2681,10 @@ if ($builder eq "unified") {
             foreach (@{$shared_sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir, 1);
 
-                # If it's generated or we simply don't find it in the source
-                # tree, we assume it's in the build tree.
-                if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
+                # A generated file, a product of the build, or anything not
+                # found in the source tree is in the build tree.
+                if ($s eq $src_configdata || $generate{$_} || built_name($_)
+                    || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
 
@@ -2754,7 +2765,8 @@ if ($builder eq "unified") {
 
                 # If the destination doesn't exist in source, it can only be
                 # a generated file in the build tree.
-                if ($ddest eq $src_configdata || ! -f $ddest) {
+                if ($ddest eq $src_configdata || built_name($dest)
+                    || ! -f $ddest) {
                     $ddest = cleanfile($buildd, $dest, $blddir);
                 }
             }
@@ -2791,6 +2803,7 @@ if ($builder eq "unified") {
                 if ($d eq $src_configdata
                     || (grep { $d2 eq $_ }
                         keys %{$unified_info{generate}})
+                    || built_name($f)
                     || ! -f $d) {
                     $d = $d2;
                     $i = $i2;
@@ -2816,7 +2829,8 @@ if ($builder eq "unified") {
 
             # If the destination doesn't exist in source, it can only be
             # a generated file in the build tree.
-            if ($ddest eq $src_configdata || ! -f $ddest) {
+            if ($ddest eq $src_configdata || built_name($dest)
+                || ! -f $ddest) {
                 $ddest = cleanfile($buildd, $_, $blddir);
             }
             foreach (@{$includes{$dest}}) {
@@ -2837,7 +2851,7 @@ if ($builder eq "unified") {
 
                 # If the destination doesn't exist in source, it can only
                 # be a generated file in the build tree.
-                if (! -f $ddest) {
+                if (built_name($dest) || ! -f $ddest) {
                     $ddest = cleanfile($buildd, $dest, $blddir);
                 }
             }
