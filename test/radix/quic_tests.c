@@ -3932,6 +3932,9 @@ DEF_SCRIPT(script_69, "Send a TLS KeyUpdate message post-handshake")
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    /* A normal ticket must not reuse the previous script's injection. */
+    OP_NEW_TICKET(S);
+
     OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(2, 0);
     OP_NEW_TICKET(S);
