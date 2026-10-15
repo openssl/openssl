@@ -1306,6 +1306,10 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 
         if (count == 1 && store != NULL) {
             ret = create_provider_children(prov);
+            if (!ret
+                && CRYPTO_atomic_add(&prov->activatecnt, -1, &count,
+                    prov->activatecnt_lock))
+                prov->flag_activated = 0;
         }
     }
     if (lock) {
@@ -1445,6 +1449,9 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
     int activated_fallback_count = 0;
     int ret = 0;
     const OSSL_PROVIDER_INFO *p;
+    OSSL_PROVIDER tmpl = {
+        0,
+    };
 
     if (!CRYPTO_THREAD_read_lock(store->lock))
         return 0;
@@ -1467,9 +1474,38 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
         OSSL_PROVIDER_INFO *info = store->provinfo;
         STACK_OF(INFOPAIR) *params = NULL;
         size_t i;
+        int idx;
 
         if (!p->is_fallback)
             continue;
+
+        /*
+         * Reuse an explicitly loaded fallback and take the activation
+         * reference normally owned by automatic fallback loading.
+         */
+        tmpl.name = (char *)p->name;
+        idx = sk_OSSL_PROVIDER_find(store->providers, &tmpl);
+        if (idx != -1) {
+            int activate_count;
+
+            prov = sk_OSSL_PROVIDER_value(store->providers, idx);
+            /*
+             * store->lock is held. Take flag_lock in order and suppress
+             * internal locking. Fallback entries cannot require parent upcalls.
+             */
+#ifndef FIPS_MODULE
+            if (!ossl_assert(!prov->ischild))
+                goto err;
+#endif
+            if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
+                goto err;
+            activate_count = provider_activate(prov, 0, 0);
+            CRYPTO_THREAD_unlock(prov->flag_lock);
+            if (activate_count < 0)
+                goto err;
+            activated_fallback_count++;
+            continue;
+        }
 
         for (i = 0; i < store->numprovinfo; info++, i++) {
             if (strcmp(info->name, p->name) != 0)
