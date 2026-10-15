@@ -19,6 +19,44 @@
 #define alloca _alloca
 #endif
 
+#ifndef OPENSSL_SYS_WIN_CORE
+/*
+ * user32.dll is only needed to tell whether the process is a service and to
+ * show a message box when OpenSSL aborts.  Look its functions up on first use,
+ * so that loading libcrypto does not map user32.dll, and the GDI libraries it
+ * depends on, into every process.
+ */
+typedef void (*user32_fn)(void);
+
+static user32_fn user32_proc(const char *name)
+{
+    HMODULE mod = GetModuleHandle(_T("user32.dll"));
+
+    if (mod == NULL)
+        mod = LoadLibrary(_T("user32.dll"));
+    if (mod == NULL)
+        return NULL;
+    return (user32_fn)GetProcAddress(mod, name);
+}
+
+static void show_fatal_message_box(const TCHAR *msg)
+{
+    int(WINAPI * message_box)(HWND, LPCTSTR, LPCTSTR, UINT);
+
+#ifdef UNICODE
+    message_box = (int(WINAPI *)(HWND, LPCTSTR, LPCTSTR, UINT))
+        user32_proc("MessageBoxW");
+#else
+    message_box = (int(WINAPI *)(HWND, LPCTSTR, LPCTSTR, UINT))
+        user32_proc("MessageBoxA");
+#endif
+    if (message_box != NULL)
+        message_box(NULL, msg, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+    else
+        OutputDebugString(msg);
+}
+#endif
+
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0333
 #ifdef OPENSSL_SYS_WIN_CORE
 
@@ -33,6 +71,8 @@ int OPENSSL_isservice(void)
     HWINSTA h;
     DWORD len;
     WCHAR *name;
+    HWINSTA(WINAPI * get_window_station)(void);
+    BOOL(WINAPI * get_object_info)(HANDLE, int, PVOID, DWORD, LPDWORD);
     static union {
         void *p;
         FARPROC f;
@@ -55,18 +95,25 @@ int OPENSSL_isservice(void)
     if (_OPENSSL_isservice.p != (void *)-1)
         return (int)((*_OPENSSL_isservice.f)());
 
-    h = GetProcessWindowStation();
+    get_window_station = (HWINSTA(WINAPI *)(void))
+        user32_proc("GetProcessWindowStation");
+    get_object_info = (BOOL(WINAPI *)(HANDLE, int, PVOID, DWORD, LPDWORD))
+        user32_proc("GetUserObjectInformationW");
+    if (get_window_station == NULL || get_object_info == NULL)
+        return -1;
+
+    h = get_window_station();
     if (h == NULL)
         return -1;
 
-    if (GetUserObjectInformationW(h, UOI_NAME, NULL, 0, &len) || GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+    if (get_object_info(h, UOI_NAME, NULL, 0, &len) || GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         return -1;
 
     if (len > 512)
         return -1; /* paranoia */
     len++, len &= ~1; /* paranoia */
     name = (WCHAR *)alloca(len + sizeof(WCHAR));
-    if (!GetUserObjectInformationW(h, UOI_NAME, name, len, &len))
+    if (!get_object_info(h, UOI_NAME, name, len, &len))
         return -1;
 
     len++, len &= ~1; /* paranoia */
@@ -216,11 +263,11 @@ void OPENSSL_showfatal(const char *fmta, ...)
             (void)DeregisterEventSource(hEventLog);
         }
     } else {
-        MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+        show_fatal_message_box(buf);
     }
 #endif
 #else
-    MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+    show_fatal_message_box(buf);
 #endif
 }
 #else
