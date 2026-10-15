@@ -590,8 +590,9 @@ static ossl_inline int match_key(HT_KEY *a, HT_KEY *b)
      */
     PREFETCH(a->keybuf);
     PREFETCH(b->keybuf);
-    if (a->keybuf != NULL && b->keybuf != NULL && a->keysize == b->keysize)
-        return !memcmp(a->keybuf, b->keybuf, a->keysize);
+    if (a->keybuf != NULL && b->keybuf != NULL)
+        return a->keysize == b->keysize
+            && !memcmp(a->keybuf, b->keybuf, a->keysize);
 
     return 1;
 }
