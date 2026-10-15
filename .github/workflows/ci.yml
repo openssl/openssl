@@ -384,6 +384,97 @@ jobs:
         name: "ci@no-shared-macos-14"
         path: artifacts.tar.gz
 
+  # Temporary validation for #33213. Remove this job before merging.
+  radix-macos-repeat:
+    if: github.repository == 'openssl/openssl' && github.event_name == 'pull_request' && github.event.pull_request.number == 33213
+    name: RADIX repeats (${{ matrix.build.os }}, batch ${{ matrix.batch }})
+    runs-on: ${{ matrix.build.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - os: macos-14
+            options: no-shared no-fips
+          - os: macos-15
+            options: enable-fips
+        batch: [1, 2]
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: record environment
+      shell: bash
+      run: |
+        mkdir -p radix-ci-logs
+        {
+          git show --no-patch --format=fuller HEAD
+          sw_vers
+          uname -m
+          sysctl machdep.cpu
+          clang --version
+          printf 'ImageOS=%s ImageVersion=%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}"
+        } | tee radix-ci-logs/environment.log
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: config
+      shell: bash
+      run: |
+        ./config --strict-warnings --banner=Configured enable-demos enable-h3demo ${{ matrix.build.options }}
+        perl configdata.pm --dump | tee radix-ci-logs/configdata.log
+    - name: make
+      run: make -s -j4
+    - name: run full suite
+      shell: bash
+      run: .github/workflows/make-test 2>&1 | tee radix-ci-logs/full-suite.log
+    - name: repeat QUIC recipes
+      shell: bash
+      env:
+        OPENSSL_TEST_TIMEOUT: 180
+      run: |
+        printf 'round\tseconds\texit_status\n' > radix-ci-logs/results.tsv
+        for round in {1..50}; do
+          log="radix-ci-logs/round-${round}.log"
+          started=$SECONDS
+          printf 'Starting round %d of 50\n' "$round"
+          # Verbose mode disables recipe parallelism. Save TAP separately.
+          if HARNESS_TAP_COPY="$PWD/radix-ci-logs/round-${round}.tap" \
+            make test HARNESS_JOBS=4 \
+              TESTS="test_quic_radix test_quic_multistream" > "$log" 2>&1; then
+            result=0
+          else
+            result=$?
+          fi
+          printf '%d\t%d\t%d\n' "$round" "$((SECONDS - started))" "$result" \
+            | tee -a radix-ci-logs/results.tsv
+          if [ "$result" -ne 0 ]; then
+            tail -n 200 "$log"
+            # Leave both result directories intact for the artifact upload.
+            exit "$result"
+          fi
+        done
+    - name: summarize repetitions
+      if: always()
+      shell: bash
+      run: |
+        if [ -f radix-ci-logs/results.tsv ]; then
+          awk -F '\t' 'NR > 1 { attempted++; passed += ($3 == 0) }
+            END { printf "QUIC recipe pairs: %d passed, %d completed, 50 planned.\n", passed, attempted }' \
+            radix-ci-logs/results.tsv >> "$GITHUB_STEP_SUMMARY"
+        fi
+    - name: save repetition artifacts
+      if: always()
+      uses: actions/upload-artifact@v5
+      with:
+        name: radix-macos-${{ matrix.build.os }}-${{ matrix.batch }}-${{ github.run_attempt }}
+        retention-days: 14
+        path: |
+          radix-ci-logs/
+          test-runs/test_quic_radix/
+          test-runs/test_quic_multistream/
+          artifacts.tar.gz
+
   non-caching:
     runs-on: ubuntu-latest
     steps:

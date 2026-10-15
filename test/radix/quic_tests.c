@@ -951,7 +951,8 @@ DEF_FUNC(new_listener)
     if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
         goto err;
 
-    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL))) {
+    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))) {
         SSL_free(listener);
         goto err;
     }
@@ -3357,6 +3358,7 @@ DEF_FUNC(new_listener_54)
 
     if (!TEST_ptr(listener = SSL_new_listener(ctx, 0))
         || !TEST_true(ssl_attach_bio_dgram(listener, 0, NULL))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))
         || !TEST_true(RADIX_PROCESS_set_ssl(RP(), name, listener))) {
         SSL_free(listener);
         goto err;
@@ -3930,6 +3932,9 @@ DEF_SCRIPT(script_69, "Send a TLS KeyUpdate message post-handshake")
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    /* A normal ticket must not reuse the previous script's injection. */
+    OP_NEW_TICKET(S);
+
     OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(2, 0);
     OP_NEW_TICKET(S);
@@ -4159,6 +4164,73 @@ DEF_SCRIPT(new_connid, "verify remote peer does not send excessive amount of NEW
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR, 0, 0);
 }
 
+DEF_FUNC(check_blocking_mode)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t blocking;
+
+    REQUIRE_SSL(ssl);
+    F_POP(blocking);
+
+    ok = TEST_int_eq(SSL_get_blocking_mode(ssl), (int)blocking);
+err:
+    return ok;
+}
+
+#define OP_CHECK_BLOCKING_MODE(name, blocking) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(blocking),                 \
+        OP_FUNC(check_blocking_mode))
+
+/*
+ * A packet which starts a key update while the peer still retains its old keys
+ * may be discarded (RFC 9001 s. 6.5), requiring retransmission. Delay an
+ * ACK to give the server a much larger PTO than the client, which makes the
+ * client's next key update arrive too early. The read waiting for that data
+ * must let the interpreter drive the client and advance the clock.
+ */
+DEF_SCRIPT(key_update_retained_keys,
+    "Key update recovery when the peer still retains old keys")
+{
+    size_t i, j;
+
+    for (i = 0; i < 2; ++i) {
+        if (i == 0) {
+            OP_NEW_SSL_L_LISTEN(L);
+        } else {
+            OP_CLEAR();
+            OP_NEW_SSL_D(Ds);
+            OP_NEW_SSL_L_FROM_LISTEN(Ds, L, 0);
+        }
+
+        OP_CHECK_BLOCKING_MODE(L, 0);
+        OP_NEW_SSL_C(C);
+        /* Check construction before OP_CONNECT_WAIT sets the mode again. */
+        OP_CHECK_BLOCKING_MODE(C, 0);
+        OP_SET_PEER_ADDR_FROM(C, L);
+        OP_CONNECT_WAIT(C);
+        OP_ACCEPT_CONN_WAIT(L, S, 0);
+        OP_CHECK_BLOCKING_MODE(S, 0);
+
+        OP_WRITE(C, "apple", 5);
+        OP_READ_EXPECT(S, "apple", 5);
+
+        OP_WRITE(S, "x", 1);
+        OP_SKIP_TIME(400);
+        OP_READ_EXPECT(C, "x", 1);
+
+        OP_OVERRIDE_KEY_UPDATE(C, 1);
+        for (j = 0; j < 200; ++j) {
+            OP_WRITE(C, "apple", 5);
+            OP_READ_EXPECT(S, "apple", 5);
+            OP_SKIP_TIME(8);
+        }
+
+        OP_CHECK_KEY_UPDATE_GE(C, 2);
+    }
+}
+
 /*
  * List of Test Scripts
  * ============================================================================
@@ -4278,4 +4350,5 @@ static SCRIPT_INFO *const scripts[] = {
     USE(script_105),
     USE(script_106),
     USE(new_connid),
+    USE(key_update_retained_keys),
 };
