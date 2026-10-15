@@ -23,11 +23,11 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn aes_cbc_cts_settable_ctx_params;
 
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(aes_cbc_cts)
 OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, NULL, 0),
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(aes_cbc_cts)
+    CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(aes_cbc_cts)
 
 static int aes_cbc_cts_einit(void *ctx, const unsigned char *key, size_t keylen,
-                             const unsigned char *iv, size_t ivlen,
-                             const OSSL_PARAM params[])
+    const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
 {
     if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
@@ -35,8 +35,8 @@ static int aes_cbc_cts_einit(void *ctx, const unsigned char *key, size_t keylen,
 }
 
 static int aes_cbc_cts_dinit(void *ctx, const unsigned char *key, size_t keylen,
-                             const unsigned char *iv, size_t ivlen,
-                             const OSSL_PARAM params[])
+    const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
 {
     if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
         return 0;
@@ -62,9 +62,9 @@ static int aes_cbc_cts_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(aes_cbc_cts)
 OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, NULL, 0),
-CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(aes_cbc_cts)
+    CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(aes_cbc_cts)
 
-static int aes_cbc_cts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+        static int aes_cbc_cts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
