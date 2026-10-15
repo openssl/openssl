@@ -1782,25 +1782,30 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *             send a HelloRetryRequest
      */
     if (s->server) {
-        /*
-         * RFC 8446, section 9.2: a ClientHello containing a supported_groups
-         * extension MUST also contain a key_share extension, and vice versa
-         * (an empty KeyShare.client_shares vector is permitted).  Servers
-         * MUST abort the handshake with a missing_extension alert otherwise.
-         */
-        if (s->clienthello != NULL) {
-            const RAW_EXTENSION *groups = &s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups];
-
-            if ((sent != 0) != (groups->present != 0)) {
+        if (s->s3.peer_tmp != NULL) {
+            /*
+             * We have a suitable key_share.  RFC 8446, section 9.2: a
+             * ClientHello containing a key_share extension MUST also contain
+             * a supported_groups extension, and vice versa.  Every other path
+             * to an (EC)DHE exchange already fails without supported_groups
+             * in tls_parse_ctos_key_share(), but in a ClientHello following
+             * a HelloRetryRequest the group list remembered from the first
+             * ClientHello would be used instead, so check the extension's
+             * presence in this ClientHello.
+             *
+             * The pairing is deliberately not enforced when no (EC)DHE
+             * exchange takes place, i.e. for psk_ke resumption, which uses
+             * neither extension: deployed clients that offer only psk_ke
+             * send one of them without the other (an empty key_share without
+             * supported_groups, or supported_groups for TLS 1.2 without a
+             * key_share), and rejecting them only breaks interoperability.
+             */
+            if (s->clienthello != NULL
+                && !s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups].present) {
                 SSLfatal(s, SSL_AD_MISSING_EXTENSION,
-                    sent ? SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION
-                         : SSL_R_NO_SUITABLE_KEY_SHARE);
+                    SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION);
                 return 0;
             }
-        }
-
-        if (s->s3.peer_tmp != NULL) {
-            /* We have a suitable key_share */
             if (tls_hrr_cookie_required(s) && !s->ext.cookieok) {
                 if (s->hello_retry_request != SSL_HRR_NONE) {
                     /* We already sent an HRR and still have no valid cookie */
