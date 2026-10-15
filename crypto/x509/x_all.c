@@ -201,6 +201,11 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         && sk_X509_EXTENSION_num(exts) > 0
         && (bad_keyid_exts(exts) || !X509_set_version(x, X509_VERSION_3)))
         return 0;
+    if (ossl_x509_mldsa_key_usage_invalid(x)) {
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE,
+            "ML-DSA keyUsage contains an RFC 9881 forbidden bit");
+        return 0;
+    }
 
     /*
      * Setting the modified flag before signing it. This makes the cached
@@ -228,6 +233,11 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
     if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
         && !X509_set_version(x, X509_VERSION_3))
         return 0;
+    if (ossl_x509_mldsa_key_usage_invalid(x)) {
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE,
+            "ML-DSA keyUsage contains an RFC 9881 forbidden bit");
+        return 0;
+    }
     x->cert_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
         &x->cert_info.signature,

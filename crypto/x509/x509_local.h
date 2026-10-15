@@ -189,6 +189,7 @@ DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 int ossl_ignored_x509_extension(const X509_EXTENSION *ex, int flags);
 int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject);
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
+int ossl_x509_mldsa_key_usage_invalid(const X509 *x);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
