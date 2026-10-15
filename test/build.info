@@ -1008,6 +1008,9 @@ IF[{- !$disabled{tests} -}]
     IF[{- !$disabled{chacha} -}]
       PROGRAMS{noinst}=chacha_internal_test
     ENDIF
+    IF[{- !$disabled{chacha} && !$disabled{poly1305} -}]
+      PROGRAMS{noinst}=chachapoly_fused_test
+    ENDIF
     IF[{- !$disabled{siphash} -}]
       PROGRAMS{noinst}=siphash_internal_test
     ENDIF
@@ -1039,6 +1042,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[chacha_internal_test]=chacha_internal_test.c
     INCLUDE[chacha_internal_test]=.. ../include ../apps/include
     DEPEND[chacha_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[chachapoly_fused_test]=chachapoly_fused_test.c
+    INCLUDE[chachapoly_fused_test]=.. ../include ../apps/include
+    DEPEND[chachapoly_fused_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sha3_x4_internal_test]=sha3_x4_internal_test.c
     INCLUDE[sha3_x4_internal_test]=.. ../include ../apps/include
