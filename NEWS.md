@@ -87,6 +87,16 @@ Known issues in 4.1.0
     transmission is lost. A fix is in progress and planned for a future
     release.
 
+ * Remove the constants OSSL_PKEY_PARAM_RSA_FACTOR, OSSL_PKEY_PARAM_RSA_EXPONENT,
+   and OSSL_PKEY_PARAM_RSA_COEFFICIENT. These values were not intended to be used
+   as OSSL_PARAM key names. Using these key names previously as params passed
+   into EVP_PKEY_fromdata() resulted in the values being ignored, which is not
+   the desired result if the user intended to use CRT values. Please use the
+   names such as OSSL_PKEY_PARAM_RSA_FACTOR1 instead.
+   See doc/man7/EVP_PKEY-RSA.pod for more information.
+
+   *Shane Lontis*
+
 OpenSSL 4.0
 -----------
 
