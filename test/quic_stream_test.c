@@ -3401,6 +3401,80 @@ err:
     return ok;
 }
 
+/*
+ * A record returned by ossl_quic_rstream_get_record() must stay valid until
+ * it is released, whatever arrives in the meantime. TLS keeps the record
+ * across a pause such as SSL_ERROR_WANT_CLIENT_HELLO_CB while the channel
+ * keeps queueing CRYPTO frames. A frame which starts at the read offset and
+ * covers a later range must be merged into the head range instead of
+ * replacing it. The packets are large enough for the data to be copied out
+ * of them, so the chunks live on the heap.
+ */
+static int test_rstream_held_record(void)
+{
+    unsigned char data[64];
+    unsigned char buf[sizeof(data)];
+    OSSL_QRX_PKT *pkt[3] = { NULL };
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    const unsigned char *record;
+    size_t rec_len, readbytes, i;
+    int fin = 0, ok = 0;
+
+    for (i = 0; i < sizeof(data); i++)
+        data[i] = FILL_PATTERN[i % (sizeof(FILL_PATTERN) - 1)];
+
+    for (i = 0; i < OSSL_NELEM(pkt); i++)
+        if (!TEST_ptr(pkt[i] = pkt_test_new(70000)))
+            goto err;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    /* [32, 48) arrives first and becomes the root of the range tree */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[0], 32,
+            &data[32], 16, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[1], 0,
+            &data[0], 20, 0))
+        || !TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 2))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_get_record(rstream, &record, &rec_len,
+            &fin))
+        || !TEST_size_t_eq(rec_len, 20)
+        || !TEST_mem_eq(record, rec_len, data, 20))
+        goto err;
+
+    /* [0, 49) covers both ranges while the record is still held */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[2], 0,
+            &data[0], 49, 0))
+        || !TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1)
+        || !TEST_mem_eq(record, rec_len, data, 20)
+        || !TEST_true(ossl_quic_rstream_release_record(rstream, rec_len)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 49 - 20)
+        || !TEST_mem_eq(buf, readbytes, &data[20], 49 - 20))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_quic_rstream_free(rstream);
+
+    for (i = 0; i < OSSL_NELEM(pkt); i++)
+        pkt_test_free(pkt[i]);
+
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
@@ -3425,6 +3499,7 @@ int setup_tests(void)
     ADD_TEST(test_trim_right);
     ADD_TEST(test_dstorage_cleanse);
     ADD_TEST(test_heap_overlap);
+    ADD_TEST(test_rstream_held_record);
 
     return 1;
 }
