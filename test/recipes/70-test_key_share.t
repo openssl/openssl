@@ -90,7 +90,7 @@ if (disabled("ec")) {
     $proxy->serverflags("-groups P-384");
 }
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 25;
+plan tests => 26;
 ok(TLSProxy::Message->success(), "Success after HRR");
 
 #Test 2: The server sending an HRR requesting a group the client already sent
@@ -345,6 +345,27 @@ SKIP: {
     ok(TLSProxy::Message->success(), "Large number of supported groups");
 }
 
+#Test 26: A ServerHello without a key_share in a full (non-resumption)
+#         handshake must fail with a missing_extension alert (RFC 8446
+#         sections 4.2.8 and 6.2), not illegal_parameter
+$proxy->clear();
+$direction = SERVER_TO_CLIENT;
+$testtype = MISSING_EXTENSION;
+$proxy->start();
+ok(is_missing_extension_client_alert(),
+   "Missing key_share in ServerHello gives missing_extension alert");
+
+sub is_missing_extension_client_alert
+{
+    return 0 unless TLSProxy::Message->fail();
+
+    my $alert = TLSProxy::Message->alert();
+    return 1 if !$alert->server()
+                && $alert->description()
+                   == TLSProxy::Message::AL_DESC_MISSING_EXTENSION;
+    return 0;
+}
+
 sub modify_key_shares_filter
 {
     my $proxy = shift;
@@ -514,6 +535,11 @@ sub modify_key_shares_filter
             if ($testtype == NO_KEY_SHARES_IN_HRR) {
                 $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE);
                 $message->set_extension(TLSProxy::Message::EXT_UNKNOWN, "");
+                $message->repack();
+                return;
+            }
+            if ($testtype == MISSING_EXTENSION) {
+                $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE);
                 $message->repack();
                 return;
             }
