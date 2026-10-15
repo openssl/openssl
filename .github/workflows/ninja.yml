@@ -50,6 +50,37 @@ jobs:
     - name: check markdown
       run: ninja -C _build md-nits
 
+  linux-fedora:
+    runs-on: ubuntu-latest
+    container: docker.io/library/fedora:44
+    steps:
+    - name: install dependencies
+      run: dnf install -y gcc git ninja-build perl-core
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        git submodule update --init --depth 1 fuzz/corpora
+    - name: prepare the build directory
+      run: mkdir _build
+    - name: config
+      working-directory: _build
+      # Complement the Ubuntu shared build with static libraries.
+      run: BUILDFILE=build.ninja perl ../Configure --banner=Configured --strict-warnings no-shared enable-fips enable-lms
+    - name: build
+      run: ninja -C _build -j4
+    - name: test
+      env:
+        HARNESS_JOBS: 4
+      run: ninja -C _build test
+    - name: check no-op rebuild
+      run: |
+        output="$(ninja -C _build -n)"
+        printf '%s\n' "$output"
+        printf '%s\n' "$output" | grep -F "ninja: no work to do."
+
   windows:
     runs-on: windows-2022
     steps:
