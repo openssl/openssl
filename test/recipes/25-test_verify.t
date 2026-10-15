@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 230;
+plan tests => 253;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -164,6 +164,59 @@ ok(!verify("ee-cert", "sslserver", [qw(sroot-anyEKU)], [qw(ca-cert)]),
    "fail wildcard mistrust with server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(croot-anyEKU)], [qw(ca-cert)]),
    "fail wildcard mistrust with client purpose");
+
+# COMPAT purposes must honour a blanket rejection without interpreting
+# purpose-specific auxiliary attributes as blanket trust or rejection.
+for my $purpose (qw(crlsign ocsphelper)) {
+    ok(verify("ca-cert", $purpose, ["root-cert"], []),
+       "$purpose accepts a root without auxiliary attributes");
+    ok(verify("ca-cert", $purpose, ["root-serverAuth"], []),
+       "$purpose ignores unrelated server rejection");
+    ok(verify("ca-cert", $purpose, ["root+serverAuth"], []),
+       "$purpose preserves compatibility with positive trust attributes");
+    ok(verify("ca-cert", $purpose, ["root+anyEKU"], []),
+       "$purpose accepts a self-signed root with anyEKU trust");
+    my $errfile = "compat-$purpose.err";
+    ok(!verify("ca-cert", $purpose, ["root-anyEKU"], [],
+               { stderr => $errfile }),
+       "$purpose rejects anyEKU mistrust");
+    open my $err, "<", $errfile or die "Cannot read $errfile: $!";
+    my $errors = do { local $/; <$err> };
+    close $err;
+    like($errors, qr/error 28 at 1 depth lookup: certificate rejected/,
+         "$purpose reports explicit anchor rejection");
+}
+
+# A non-self-signed anchor must not evade explicit rejection via partial_chain.
+ok(run(app(["openssl", "x509", "-in", $ca_cert,
+            "-addreject", "anyExtendedKeyUsage", "-trustout",
+            "-out", "compat-ca-reject.pem"])),
+   "create a non-self-signed anchor with blanket rejection");
+for my $purpose (qw(crlsign ocsphelper)) {
+    ok(verify("ca-cert", $purpose, ["ca-cert"], [], "-partial_chain"),
+       "$purpose accepts a clean partial-chain anchor");
+    my $errfile = "compat-partial-$purpose.err";
+    ok(!verify("ca-cert", $purpose, [], [], "-partial_chain",
+               "-trusted", "compat-ca-reject.pem", { stderr => $errfile }),
+       "$purpose rejects a distrusted partial-chain anchor");
+    open my $err, "<", $errfile or die "Cannot read $errfile: $!";
+    my $errors = do { local $/; <$err> };
+    close $err;
+    like($errors, qr/error 28 at 0 depth lookup: certificate rejected/,
+         "$purpose reports explicit partial-chain anchor rejection");
+}
+# Positive auxiliary trust must not bypass COMPAT's purpose checks.
+for my $root (qw(root-cert root+anyEKU)) {
+    my $errfile = "compat-keyusage-$root.err";
+    ok(!verify("ee-codesign", "crlsign", [$root], ["ca-cert"],
+               { stderr => $errfile }),
+       "crlsign retains key usage checks with $root");
+    open my $err, "<", $errfile or die "Cannot read $errfile: $!";
+    my $errors = do { local $/; <$err> };
+    close $err;
+    like($errors, qr/error 26 at 0 depth lookup: unsuitable certificate purpose/,
+         "crlsign reports unsuitable purpose with $root");
+}
 
 # Check that trusted-first is on by setting up paths to different roots
 # depending on whether the intermediate is the trusted or untrusted one.
