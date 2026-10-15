@@ -376,7 +376,8 @@ jobs:
         sysctl machdep.cpu
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: .github/workflows/make-test
+      # Flaky on macOS; still run nightly in os-zoo.yml (openssl/project#2072)
+      run: .github/workflows/make-test TESTS="-test_quic_multistream -test_quic_radix -test_dtlsssllistener"
     - name: save artifacts
       if: success() || failure()
       uses: actions/upload-artifact@v5
