@@ -308,6 +308,74 @@ err:
     return ret;
 }
 
+#ifdef RSAZ_ENABLED
+/*
+ * Single-shot modular exponentiation using 256-bit (AVX512VL) AVX512_IFMA or
+ * AVX_IFMA when the modulus is 2048-bit in the RSAZ-supported limb layout and
+ * the exponent fits the fixed-width buffer expected by the kernel.
+ * Returns 1 if |rr| was computed, 0 to fall back to the generic
+ * BN_mod_exp_mont path, or -1 if this path was selected and failed.
+ * A selected path that fails, including an allocation failure, must not
+ * fall back: malloc-failure tests require that error to propagate.
+ */
+static int bn_mod_exp_mont_rsaz_avx512_x1(BIGNUM *rr, const BIGNUM *a,
+    const BIGNUM *base_plain,
+    const BIGNUM *p,
+    const BIGNUM *m, BN_MONT_CTX *mont, int exp_bits)
+{
+    const int mod_bits = BN_num_bits(m);
+    BN_ULONG exp_pad[32] = { 0 };
+    BN_ULONG base_pad[32] = { 0 };
+
+    if (!(ossl_rsaz_avx512ifma_eligible() || ossl_rsaz_avxifma_eligible()))
+        return 0;
+    if (BN_get_flags(a, BN_FLG_CONSTTIME) != 0
+        || BN_get_flags(p, BN_FLG_CONSTTIME) != 0
+        || BN_get_flags(m, BN_FLG_CONSTTIME) != 0)
+        return 0;
+    if (!(mod_bits == 2048 && m->top == 32) || p->neg != 0 || p->top <= 0
+        || p->top > 32)
+        return 0;
+    /*
+     * |base_plain| is |aa| from BN_mod_exp_mont: either the input |a| (when
+     * 0 <= a < m) or BN_nnmod(a, m) in val[0]. Both are non-negative and
+     * strictly less than m, so base_plain->top <= m->top == 32.
+     * bn_correct_top can leave |top| smaller than |dmax|, and a zero BIGNUM
+     * can have top == 0 with d == NULL. Require 1..32 limbs and do not copy
+     * past base_plain->top.
+     */
+    if (base_plain->top <= 0 || base_plain->top > 32)
+        return 0;
+
+    /*
+     * ossl_rsaz_mod_exp_avx512_x1 reads exactly 32 radix-64 limbs from each
+     * of |base|, |exp|, |m| and |RR|. The gates above guarantee m->top == 32
+     * and 1 <= p->top <= 32 (and likewise for base_plain). The copies below
+     * stage p and base_plain into the zeroed 32-limb stack buffers; widen RR
+     * to 32 limbs so a BIGNUM whose |top| is smaller than 32 (e.g. BN_one())
+     * does not cause the kernel to read past the BIGNUM's allocated d[].
+     */
+    memcpy(exp_pad, p->d, (size_t)p->top * sizeof(BN_ULONG));
+    memcpy(base_pad, base_plain->d,
+        (size_t)base_plain->top * sizeof(BN_ULONG));
+    if (bn_wexpand(&mont->RR, 32) == NULL)
+        return -1;
+    if (mont->RR.top < 32)
+        memset(mont->RR.d + mont->RR.top, 0,
+            (32 - mont->RR.top) * sizeof(BN_ULONG));
+
+    if (bn_wexpand(rr, m->top) == NULL
+        || !ossl_rsaz_mod_exp_avx512_x1(rr->d, base_pad, exp_pad,
+            m->d, mont->RR.d, mont->n0[0], mod_bits, exp_bits))
+        return -1;
+
+    rr->top = m->top;
+    rr->neg = 0;
+    bn_correct_top(rr);
+    return 1;
+}
+#endif
+
 int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 {
@@ -373,6 +441,19 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         aa = val[0];
     } else
         aa = a;
+
+#ifdef RSAZ_ENABLED
+    {
+        int rsaz_r = bn_mod_exp_mont_rsaz_avx512_x1(rr, a, aa, p, m, mont,
+            bits);
+
+        if (rsaz_r != 0) {
+            ret = rsaz_r > 0;
+            goto err;
+        }
+    }
+#endif
+
     if (!bn_to_mont_fixed_top(val[0], aa, mont, ctx))
         goto err; /* 1 */
 

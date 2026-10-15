@@ -333,11 +333,215 @@ err:
     return ret;
 }
 
+/*
+ * Compare BN_mod_exp_mont against BN_mod_exp_simple. On x86_64 with IFMA,
+ * BN_mod_exp_mont uses the RSAZ x1 2048-bit public path when the operands
+ * are not marked BN_FLG_CONSTTIME.
+ */
+static int rsaz_x1_compare(const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    BN_CTX *ctx, BN_MONT_CTX *mont)
+{
+    int ret = 0;
+    BIGNUM *r_mont = NULL, *r_simple = NULL, *r_const = NULL;
+    BIGNUM *a_simple = NULL, *p_simple = NULL, *m_simple = NULL;
+
+    /*
+     * BN_mod_exp_simple refuses BN_FLG_CONSTTIME. BN_dup/BN_copy do not copy
+     * that flag, so the simple path can still provide an independent reference.
+     */
+    if (!TEST_ptr(r_mont = BN_new())
+        || !TEST_ptr(r_simple = BN_new())
+        || !TEST_ptr(r_const = BN_new())
+        || !TEST_ptr(a_simple = BN_dup(a))
+        || !TEST_ptr(p_simple = BN_dup(p))
+        || !TEST_ptr(m_simple = BN_dup(m))
+        || !TEST_true(BN_mod_exp_simple(r_simple, a_simple, p_simple, m_simple,
+            ctx))
+        || !TEST_true(BN_mod_exp_mont(r_mont, a, p, m, ctx, mont))
+        || !TEST_true(BN_mod_exp_mont_consttime(r_const, a, p, m, ctx, mont)))
+        goto err;
+
+    if (!TEST_BN_eq(r_simple, r_mont) || !TEST_BN_eq(r_simple, r_const)) {
+        if (BN_cmp(r_simple, r_mont) != 0)
+            TEST_info("simple and mont results differ");
+        if (BN_cmp(r_simple, r_const) != 0)
+            TEST_info("simple and mont const time results differ");
+        BN_print_var(a);
+        BN_print_var(p);
+        BN_print_var(m);
+        BN_print_var(r_simple);
+        BN_print_var(r_mont);
+        BN_print_var(r_const);
+        goto err;
+    }
+
+    ret = 1;
+err:
+    BN_free(r_mont);
+    BN_free(r_simple);
+    BN_free(r_const);
+    BN_free(a_simple);
+    BN_free(p_simple);
+    BN_free(m_simple);
+    return ret;
+}
+
+/*
+ * Exercise the 2048-bit BN_mod_exp_mont RSAZ IFMA x1 hook (or the generic
+ * fallback on CPUs without IFMA). Cases cover RSA public e, the 80/81-bit
+ * SQM vs w=5 split, a full-width exponent, short and zero bases, unreduced
+ * base, a reused Montgomery context, and BN_FLG_CONSTTIME operands.
+ */
+static int test_mod_exp_rsaz_x1(int idx)
+{
+    BN_CTX *ctx = NULL;
+    BN_MONT_CTX *mont = NULL;
+    BIGNUM *a = NULL, *p = NULL, *m = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(p = BN_new())
+        || !TEST_ptr(m = BN_new())
+        || !TEST_true(BN_rand(m, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD)))
+        goto err;
+
+    switch (idx) {
+    case 0:
+        /* Typical RSA public exponent (binary / SQM path). */
+        if (!TEST_true(BN_set_word(p, 65537))
+            || !TEST_true(BN_rand(a, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_mod(a, a, m, ctx)))
+            goto err;
+        break;
+    case 1:
+        /* SQM / window boundary: BN_num_bits(exp) == 80. */
+        if (!TEST_true(BN_rand(p, 80, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_rand(a, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_mod(a, a, m, ctx)))
+            goto err;
+        break;
+    case 2:
+        /* First w=5 windowed path: BN_num_bits(exp) == 81. */
+        if (!TEST_true(BN_rand(p, 81, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_rand(a, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_mod(a, a, m, ctx)))
+            goto err;
+        break;
+    case 3:
+        /* Full-width 2048-bit exponent. */
+        if (!TEST_true(BN_rand(p, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_rand(a, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_mod(a, a, m, ctx)))
+            goto err;
+        break;
+    case 4:
+        /* Short base: BN_one() has top < 32; the mont hook pads and runs. */
+        if (!TEST_true(BN_one(a)) || !TEST_true(BN_set_word(p, 65537)))
+            goto err;
+        break;
+    case 5:
+        /*
+         * Zero base: BN_zero leaves top == 0 (d may still be NULL). The RSAZ
+         * mont hook rejects that and falls back to generic BN_mod_exp_mont;
+         * compare against BN_mod_exp_simple.
+         */
+        BN_zero(a);
+        if (!TEST_true(BN_set_word(p, 65537)))
+            goto err;
+        break;
+    case 6:
+        /* Unreduced base (a > m) so BN_mod_exp_mont takes the nnmod path. */
+        if (!TEST_true(BN_copy(a, m))
+            || !TEST_true(BN_add_word(a, 3))
+            || !TEST_true(BN_set_word(p, 65537)))
+            goto err;
+        break;
+    case 7:
+        /*
+         * Reuse a Montgomery context: first a short base (pads RR), then a
+         * reduced random base with the same mont.
+         */
+        if (!TEST_ptr(mont = BN_MONT_CTX_new())
+            || !TEST_true(BN_MONT_CTX_set(mont, m, ctx))
+            || !TEST_true(BN_one(a))
+            || !TEST_true(BN_set_word(p, 65537))
+            || !TEST_true(rsaz_x1_compare(a, p, m, ctx, mont))
+            || !TEST_true(BN_rand(a, 64, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY)))
+            goto err;
+        break;
+    case 8:
+        /*
+         * CONSTTIME exponent: BN_mod_exp_mont must not use the variable-time
+         * RSAZ x1 table lookup.
+         */
+        if (!TEST_true(BN_set_word(p, 65537))
+            || !TEST_true(BN_rand(a, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_mod(a, a, m, ctx)))
+            goto err;
+        BN_set_flags(p, BN_FLG_CONSTTIME);
+        break;
+    case 9:
+        /* CONSTTIME base: same diversion before the x1 hook. */
+        if (!TEST_true(BN_set_word(p, 65537))
+            || !TEST_true(BN_rand(a, 2048, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            || !TEST_true(BN_mod(a, a, m, ctx)))
+            goto err;
+        BN_set_flags(a, BN_FLG_CONSTTIME);
+        break;
+    default:
+        goto err;
+    }
+
+    if (!TEST_true(rsaz_x1_compare(a, p, m, ctx, mont)))
+        goto err;
+
+    ret = 1;
+err:
+    BN_MONT_CTX_free(mont);
+    BN_free(a);
+    BN_free(p);
+    BN_free(m);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Sizes the RSAZ x1 hook does not accept must still match BN_mod_exp_simple.
+ */
+static int test_mod_exp_mont_not_2048(void)
+{
+    BN_CTX *ctx = NULL;
+    BIGNUM *a = NULL, *p = NULL, *m = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(p = BN_new())
+        || !TEST_ptr(m = BN_new())
+        || !TEST_true(BN_rand(m, 1024, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+        || !TEST_true(BN_set_word(p, 65537))
+        || !TEST_true(BN_rand(a, 1024, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+        || !TEST_true(BN_mod(a, a, m, ctx))
+        || !TEST_true(rsaz_x1_compare(a, p, m, ctx, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    BN_free(a);
+    BN_free(p);
+    BN_free(m);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_mod_exp_zero);
     ADD_ALL_TESTS(test_mod_exp, 200);
     ADD_ALL_TESTS(test_mod_exp_x2,
         OSSL_NELEM(factor_sizes) * ROUNDS_PER_FACTOR_SIZE);
+    ADD_ALL_TESTS(test_mod_exp_rsaz_x1, 10);
+    ADD_TEST(test_mod_exp_mont_not_2048);
     return 1;
 }
