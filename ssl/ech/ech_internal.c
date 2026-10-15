@@ -185,7 +185,7 @@ void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
     OPENSSL_free(ec->outer_hostname);
     OPENSSL_free(ec->alpn_outer);
     OPENSSL_free(ec->former_inner);
-    OPENSSL_free(ec->cover_hostname);
+    OPENSSL_free(ec->public_hostname);
     OPENSSL_free(ec->transbuf);
     OPENSSL_free(ec->innerch);
     OPENSSL_free(ec->grease_suite);
@@ -201,9 +201,9 @@ void ossl_ech_conn_clear(OSSL_ECH_CONN *ec)
 /*
  * Fallback can run on both HRR and the final ServerHello. Preserve the
  * application SNI only while ECH owns its replacement, and keep a separate
- * cover constraint for certificate verification and its retries.
+ * public name constraint for certificate verification and its retries.
  */
-int ossl_ech_switch_to_cover_identity(SSL_CONNECTION *s)
+int ossl_ech_switch_to_public_identity(SSL_CONNECTION *s)
 {
     OSSL_ECH_CONN *ec = &s->ext.ech;
     char *hostname = NULL;
@@ -211,8 +211,8 @@ int ossl_ech_switch_to_cover_identity(SSL_CONNECTION *s)
     if (ec->outer_hostname != NULL) {
         if ((hostname = OPENSSL_strdup(ec->outer_hostname)) == NULL)
             return 0;
-        if (ec->cover_hostname == NULL
-            && (ec->cover_hostname = OPENSSL_strdup(ec->outer_hostname)) == NULL) {
+        if (ec->public_hostname == NULL
+            && (ec->public_hostname = OPENSSL_strdup(ec->outer_hostname)) == NULL) {
             OPENSSL_free(hostname);
             return 0;
         }
@@ -230,8 +230,11 @@ int ossl_ech_switch_to_cover_identity(SSL_CONNECTION *s)
 
 /*
  * Clear handshake state without allocating or changing application DNS
- * configuration. Explicit outer names and client GREASE settings survive;
- * values derived from an ECHConfig or received from the peer do not.
+ * configuration. Explicit outer names, outer ALPN and client GREASE settings
+ * survive; values derived from an ECHConfig or received from the peer do not.
+ * alpn_outer always holds application configuration, possibly inherited from
+ * SSL_CTX. Without it, the outer ClientHello uses the current normal ALPN
+ * list directly, so there is no derived ALPN value to discard.
  * SSL_new() also calls this before ossl_ech_conn_init(), so it must tolerate
  * zeroed ECH state.
  */
@@ -249,8 +252,8 @@ void ossl_ech_conn_reset_handshake(SSL_CONNECTION *s)
         OPENSSL_free(ec->former_inner);
         ec->former_inner = NULL;
     }
-    OPENSSL_free(ec->cover_hostname);
-    ec->cover_hostname = NULL;
+    OPENSSL_free(ec->public_hostname);
+    ec->public_hostname = NULL;
     if (ec->outer_hostname_explicit == 0) {
         /* run-derived outer name: belongs to the previous handshake */
         OPENSSL_free(ec->outer_hostname);

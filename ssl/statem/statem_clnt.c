@@ -2020,7 +2020,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         } else {
             OSSL_TRACE1(TLS, "ECH falling back to public_name: %s\n",
                 s->ext.ech.outer_hostname != NULL ? s->ext.ech.outer_hostname : "NONE");
-            if (!ossl_ech_switch_to_cover_identity(s)) {
+            if (!ossl_ech_switch_to_public_identity(s)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -2448,7 +2448,7 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
 #ifndef OPENSSL_NO_ECH
     /*
      * Keep ECH verification setup errors fatal with SSL_VERIFY_NONE, as
-     * cover-name setup was during ServerHello processing.
+     * public name setup was during ServerHello processing.
      */
     if (ossl_statem_in_error(sc)) {
         ERR_clear_last_mark();
@@ -2636,7 +2636,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
 #ifndef OPENSSL_NO_ECH
     /*
      * Keep ECH verification setup errors fatal with SSL_VERIFY_NONE, as
-     * cover-name setup was during ServerHello processing.
+     * public name setup was during ServerHello processing.
      */
     if (ossl_statem_in_error(s)) {
         ERR_clear_last_mark();

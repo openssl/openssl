@@ -2047,20 +2047,20 @@ end:
     return ok;
 }
 
-static int ech_reject_cover_calls;
+static int ech_reject_public_name_calls;
 
-static int ech_reject_cover(const char *name, size_t len)
+static int ech_reject_public_name(const char *name, size_t len)
 {
-    static const char cover[] = "front.server.example";
+    static const char public_name[] = "front.server.example";
 
-    ech_reject_cover_calls++;
-    return len != sizeof(cover) - 1 || memcmp(name, cover, len) != 0;
+    ech_reject_public_name_calls++;
+    return len != sizeof(public_name) - 1 || memcmp(name, public_name, len) != 0;
 }
 
 /* Verify the effective constraint, including after WANT_RETRY_VERIFY. */
 static int ech_verify_retry(X509_STORE_CTX *ctx, void *arg)
 {
-    static const char cover[] = "front.server.example";
+    static const char public_name[] = "front.server.example";
     static const char origin[] = "back.unique.example";
     int *calls = arg;
     SSL *ssl = X509_STORE_CTX_get_ex_data(ctx,
@@ -2074,8 +2074,8 @@ static int ech_verify_retry(X509_STORE_CTX *ctx, void *arg)
     configured = X509_VERIFY_PARAM_get0_host(SSL_get0_param(ssl), 0);
     /* Compare reference identifiers using the known input lengths. */
     if (!TEST_ptr(effective)
-        || !TEST_mem_eq(effective, sizeof(cover) - 1,
-            cover, sizeof(cover) - 1)
+        || !TEST_mem_eq(effective, sizeof(public_name) - 1,
+            public_name, sizeof(public_name) - 1)
         || !TEST_ptr(configured)
         || !TEST_mem_eq(configured, sizeof(origin) - 1,
             origin, sizeof(origin) - 1)
@@ -2089,11 +2089,12 @@ static int ech_verify_retry(X509_STORE_CTX *ctx, void *arg)
 }
 
 /*
- * Rejection authenticates the cover without changing configured DNS names:
+ * Rejection authenticates the public name, preserving configured DNS names:
  * 0-2 single/multiple/empty lists; 3-4 context inheritance/SSL_set1_param;
- * 5 invalid cover; 6 accepted ECH with an invalid origin; 7-8 cover setup
- * failure with/without verification; 9 verification retry; 10 accepted ECH;
- * 11-12 GREASE/plain controls; 13 no outer SNI.
+ * 5 invalid public name; 6 accepted ECH with an invalid origin;
+ * 7-8 public name setup failure with/without verification;
+ * 9 verification retry; 10 accepted ECH; 11-12 GREASE/plain controls;
+ * 13 no outer SNI.
  */
 static int test_ech_verify_dnsname(int idx)
 {
@@ -2157,8 +2158,8 @@ static int test_ech_verify_dnsname(int idx)
         reason = SSL_R_CERTIFICATE_VERIFY_FAILED;
     if (idx == 7 || idx == 8) {
         reason = ERR_R_INTERNAL_ERROR;
-        ech_reject_cover_calls = 0;
-        X509_VERIFY_PARAM_set1_host_input_validation(param, ech_reject_cover);
+        ech_reject_public_name_calls = 0;
+        X509_VERIFY_PARAM_set1_host_input_validation(param, ech_reject_public_name);
     }
     if (idx == 9) {
         SSL_CTX_set_cert_verify_callback(cctx, ech_verify_retry, &calls);
@@ -2167,7 +2168,7 @@ static int test_ech_verify_dnsname(int idx)
             || !TEST_int_eq(calls, 1)
             /*
              * Changing next-connection configuration must not change the
-             * cover constraint when this verification is retried.
+             * public name constraint when this verification is retried.
              */
             || !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
                 "front.unique.example", 0)))
@@ -2192,7 +2193,7 @@ static int test_ech_verify_dnsname(int idx)
             goto end;
     }
     if (idx == 7 || idx == 8) {
-        if (!TEST_int_gt(ech_reject_cover_calls, 0)
+        if (!TEST_int_gt(ech_reject_public_name_calls, 0)
             || !TEST_long_eq(SSL_get_verify_result(clientssl),
                 X509_V_ERR_UNSPECIFIED)
             || !TEST_int_eq(SSL_ech_get1_status(clientssl, &inner, &outer),
@@ -2254,7 +2255,8 @@ typedef struct ech_ch_capture_st {
     int seen; /* an extension of the wanted type was found */
     int parse_error; /* malformed ClientHello or extension */
     int sni_seen;
-    int outer_alpn_seen;
+    unsigned char alpn[32]; /* enough for the ALPN lists used by these tests */
+    size_t alpn_len;
     uint16_t kdf_id;
     uint16_t aead_id;
     uint8_t config_id;
@@ -2275,7 +2277,7 @@ typedef struct ech_ch_capture_st {
 static int ech_parse_ch_for_ech(const unsigned char *buf, size_t len,
     ECH_CH_CAPTURE *out)
 {
-    PACKET pkt, session, ciphers, compression, exts, ext_data, enc, payload;
+    PACKET pkt, session, ciphers, compression, exts, ext_data, alpn, enc, payload;
     unsigned int etype = 0, tmp = 0;
 
     if (buf == NULL || out == NULL
@@ -2295,10 +2297,12 @@ static int ech_parse_ch_for_ech(const unsigned char *buf, size_t len,
         if (etype == TLSEXT_TYPE_server_name)
             out->sni_seen = 1;
         if (etype == TLSEXT_TYPE_application_layer_protocol_negotiation) {
-            static const unsigned char alpn[] = { 0, 6, 5, 'o', 'u', 't', 'e', 'r' };
-
-            out->outer_alpn_seen = PACKET_remaining(&ext_data) == sizeof(alpn)
-                && memcmp(PACKET_data(&ext_data), alpn, sizeof(alpn)) == 0;
+            if (!PACKET_as_length_prefixed_2(&ext_data, &alpn))
+                return 0;
+            out->alpn_len = PACKET_remaining(&alpn);
+            if (out->alpn_len > sizeof(out->alpn)
+                || !PACKET_copy_bytes(&alpn, out->alpn, out->alpn_len))
+                return 0;
         }
         if (etype != out->wanted_type)
             continue;
@@ -2443,7 +2447,9 @@ static int test_ech_ssl_clear_client_reuse(int idx)
         || !TEST_int_eq(hrr_ch_count, idx + 1)
         || !TEST_int_eq(hrr_ech_count, idx + 1)
         || (idx == 0 && !TEST_int_eq(ech_clear_callback_count, 1))
-        || (idx == 1 && (!TEST_false(cap1.sni_seen) || !TEST_true(cap1.outer_alpn_seen))))
+        || (idx == 1
+            && (!TEST_false(cap1.sni_seen)
+                || !TEST_mem_eq(cap1.alpn, cap1.alpn_len, "\005outer", 6))))
         goto end;
     SSL_set_verify_result(clientssl, X509_V_OK);
     if (!TEST_int_eq(SSL_ech_get1_status(clientssl, &sni, &outer),
@@ -2506,7 +2512,7 @@ static int test_ech_ssl_clear_client_reuse(int idx)
         || !TEST_int_eq(hrr_ech_count, 1)
         || !TEST_int_eq(ech_clear_callback_count, 1)
         || !TEST_false(cap2.sni_seen)
-        || !TEST_true(cap2.outer_alpn_seen)
+        || !TEST_mem_eq(cap2.alpn, cap2.alpn_len, "\005outer", 6)
         || !TEST_true(cap2.seen)
         || !TEST_false(cap2.parse_error)
         || !TEST_true(cap1.enc_len != cap2.enc_len
@@ -2542,7 +2548,7 @@ static int test_ech_ssl_clear_client_reuse(int idx)
         || !TEST_int_eq(hrr_ech_count, 1)
         || !TEST_int_eq(ech_clear_callback_count, 2)
         || !TEST_false(cap3.sni_seen)
-        || !TEST_true(cap3.outer_alpn_seen)
+        || !TEST_mem_eq(cap3.alpn, cap3.alpn_len, "\005outer", 6)
         || !TEST_true(cap3.seen)
         || !TEST_false(cap3.parse_error)
         || !TEST_true(cap2.enc_len != cap3.enc_len
@@ -2553,6 +2559,95 @@ static int test_ech_ssl_clear_client_reuse(int idx)
 end:
     OPENSSL_free(sni);
     OPENSSL_free(outer);
+    OSSL_ECHSTORE_free(es);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/*
+ * Outer ALPN is application configuration, with no cached derived value.
+ * Exercise explicit (even idx) and implicit (odd idx) resets for:
+ * 0-1: an inherited override, unaffected by later SSL_CTX changes;
+ * 2-3: no override, following changes to the ordinary ALPN list;
+ * 4-5: a removed override, falling back to the current ordinary ALPN list.
+ */
+static int test_ech_ssl_clear_alpn(int idx)
+{
+    static const unsigned char alpn1[] = "\002h2";
+    static const unsigned char alpn2[] = "\010http/1.1";
+    static const unsigned char outer_alpn[] = "\005outer";
+    int res = 0, i, scenario = idx / 2;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    ECH_CH_CAPTURE cap;
+    const unsigned char *expected = scenario == 1 ? alpn1 : outer_alpn;
+    size_t expected_len = scenario == 1 ? sizeof(alpn1) - 1 : sizeof(outer_alpn) - 1;
+
+    if (!ech_clear_make_store(&es, "example.com")
+        || !ech_clear_make_ctxs(&sctx, &cctx, es)
+        || (scenario == 0
+            && !TEST_true(SSL_CTX_ech_set1_outer_alpn_protos(cctx,
+                outer_alpn, sizeof(outer_alpn) - 1))))
+        goto end;
+
+    for (i = 0; i < 2; i++) {
+        if (i != 0) {
+            if (scenario == 0) {
+                /* The existing SSL keeps the list it originally inherited. */
+                if (!TEST_true(SSL_CTX_ech_set1_outer_alpn_protos(cctx,
+                        alpn2, sizeof(alpn2) - 1)))
+                    goto end;
+            } else {
+                if (!TEST_int_eq(SSL_set_alpn_protos(clientssl,
+                                     alpn2, sizeof(alpn2) - 1),
+                        0)
+                    || (scenario == 2
+                        && !TEST_true(SSL_ech_set1_outer_alpn_protos(clientssl,
+                            NULL, 0))))
+                    goto end;
+                expected = alpn2;
+                expected_len = sizeof(alpn2) - 1;
+            }
+            if (idx % 2 != 0) {
+                SSL_set_connect_state(clientssl);
+            } else if (!TEST_true(SSL_clear(clientssl))) {
+                goto end;
+            }
+        }
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                NULL, NULL))
+            || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+            goto end;
+        if (i == 0
+            && (!TEST_int_eq(SSL_set_alpn_protos(clientssl,
+                                 alpn1, sizeof(alpn1) - 1),
+                    0)
+                || (scenario == 2
+                    && !TEST_true(SSL_ech_set1_outer_alpn_protos(clientssl,
+                        outer_alpn, sizeof(outer_alpn) - 1)))))
+            goto end;
+
+        memset(&cap, 0, sizeof(cap));
+        cap.wanted_type = TLSEXT_TYPE_ech;
+        SSL_set_msg_callback(clientssl, ech_ch_capture_msg_cb);
+        SSL_set_msg_callback_arg(clientssl, &cap);
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+            || !TEST_true(cap.seen)
+            || !TEST_false(cap.parse_error)
+            || !TEST_mem_eq(cap.alpn, cap.alpn_len, expected, expected_len))
+            goto end;
+        SSL_shutdown(clientssl);
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+        serverssl = NULL;
+    }
+
+    res = 1;
+end:
     OSSL_ECHSTORE_free(es);
     SSL_free(clientssl);
     SSL_free(serverssl);
@@ -2932,8 +3027,8 @@ static int ech_identity_make_rejection(SSL_CTX **sctx, SSL_CTX **cctx,
  * retry configs are only handed out when the handshake got far enough
  * that everything except ECH worked (the retry_configs_ok flag).
  * Connection 1 is such an authenticated ECH rejection: the client
- * verifies the cover certificate with SSL_VERIFY_PEER, only ECH fails,
- * and the getter returns the retry configs.  After SSL_clear(),
+ * verifies the certificate for the public name with SSL_VERIFY_PEER, only
+ * ECH fails, and the getter returns the retry configs. After SSL_clear(),
  * connection 2 retries with the same wrong config but certificate
  * verification is forced to fail this time, and the getter must then
  * refuse: a stale retry_configs_ok flag would otherwise hand out retry
@@ -2955,8 +3050,8 @@ static int test_ech_ssl_clear_retry_gate(void)
         goto end;
 
     /*
-     * Connection 1: ECH is rejected, but the cover certificate verifies
-     * against front.server.example, so authentication succeeds and the
+     * Connection 1: ECH is rejected, but the certificate verifies against
+     * the public name front.server.example, so authentication succeeds and the
      * client aborts with ECH_REQUIRED; retry configs are available.
      */
     ERR_clear_error();
@@ -3040,7 +3135,8 @@ end:
 
 /*
  * Preserve independent application identities after rejection. Later setters
- * affect only their own configuration, even when a DNS update equals the cover.
+ * affect only their own configuration, even when a DNS update equals the
+ * public name.
  */
 static int test_ech_ssl_clear_identity(int idx)
 {
@@ -3116,12 +3212,12 @@ static int test_ech_ssl_clear_identity(int idx)
         goto end;
 
     /* Reset neither validates nor reconstructs application DNS names. */
-    ech_reject_cover_calls = 0;
+    ech_reject_public_name_calls = 0;
     X509_VERIFY_PARAM_set1_host_input_validation(SSL_get0_param(clientssl),
-        ech_reject_cover);
+        ech_reject_public_name);
     if (!TEST_true(SSL_clear(clientssl))
         || !TEST_true(SSL_clear(clientssl))
-        || !TEST_int_eq(ech_reject_cover_calls, 0)
+        || !TEST_int_eq(ech_reject_public_name_calls, 0)
         || !ech_clear_identity_ok(clientssl, expected_sni, dns1, dns2))
         goto end;
     res = 1;
@@ -3139,7 +3235,7 @@ end:
 
 /*
  * Fallback runs both on a HelloRetryRequest without an ECH extension and on
- * the final ServerHello. The second fallback must not save the cover SNI
+ * the final ServerHello. The second fallback must not save the public SNI
  * as the application's original SNI.
  */
 static int test_ech_ssl_clear_hrr_rejection(void)
@@ -3773,6 +3869,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_v12_test, suite_combos);
     ADD_ALL_TESTS(test_ech_verify_dnsname, 14);
     ADD_ALL_TESTS(test_ech_ssl_clear_client_reuse, 2);
+    ADD_ALL_TESTS(test_ech_ssl_clear_alpn, 6);
     ADD_ALL_TESTS(test_ech_ssl_clear_server_reuse, 3);
     ADD_ALL_TESTS(test_ech_ssl_clear_fresh_config, 3);
     ADD_TEST(test_ech_ssl_clear_grease_persist);

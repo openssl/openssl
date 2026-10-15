@@ -195,8 +195,12 @@ typedef struct ossl_ech_conn_st {
      */
     char *former_inner;
     int sni_override; /* ECH still owns the temporary SNI replacement */
-    /* Cover DNS constraint for this rejected handshake, not SSL configuration */
-    char *cover_hostname;
+    /*
+     * Public DNS name for this rejected handshake, including any application
+     * override of the ECHConfig public_name. Keep it separate from
+     * outer_hostname so verification retries use the same constraint.
+     */
+    char *public_hostname;
     /* inner CH transcript buffer */
     unsigned char *transbuf;
     size_t transbuf_len;
@@ -346,7 +350,7 @@ int ossl_ech_conn_init(SSL_CONNECTION *s, SSL_CTX *ctx,
     const SSL_METHOD *method);
 void ossl_ech_conn_clear(OSSL_ECH_CONN *ec);
 void ossl_ech_conn_reset_handshake(SSL_CONNECTION *s);
-int ossl_ech_switch_to_cover_identity(SSL_CONNECTION *s);
+int ossl_ech_switch_to_public_identity(SSL_CONNECTION *s);
 void ossl_echext_free(OSSL_ECHEXT *e);
 OSSL_ECHEXT *ossl_echext_dup(const OSSL_ECHEXT *src);
 #ifdef OSSL_ECH_SUPERVERBOSE
