@@ -77,7 +77,7 @@ OpenSSL 3.6
 
    Severity: Low
 
-   Issue summary: The OpenSSL QUIC server, when configured to not preform
+   Issue summary: The OpenSSL QUIC server, when configured to not perform
    address validation, can be forced to count incoming packets multiple times
    in its unvalidated credit computation, leading to a violation
    of the [RFC 9000] unvalidated connection amplification limit of 3 times
@@ -115,7 +115,8 @@ OpenSSL 3.6
 
    *Alexandr Nedvědický*
 
- * Fixed a timing side-channel in scalar multiplication for mon-NIST EC curves.
+ * Fixed a timing side-channel leak in generic elliptic curve scalar
+   multiplication.
 
    Severity: Low
 
@@ -208,7 +209,7 @@ OpenSSL 3.6
    flow control for streams to make the QUIC stack receive ~100 MiB of memory
    instead of 768 KiB (default flow control window size).
 
-   Reportedby: Moltenbit, Bhabani Sankar Das, Saiyowa Security Team, mzfr.
+   Reported by: Moltenbit, Bhabani Sankar Das, Saiyowa Security Team, mzfr.
 
    ([CVE-2026-75804])
 
@@ -293,7 +294,7 @@ OpenSSL 3.6
    *Alexandr Nedvědický*
 
  * Fixed a bug where `EVP_DecryptFinal()` incorrectly reported a stale success
-   on AES-SIV authentication failure after a preciously successful message
+   on AES-SIV authentication failure after a previously successful message
    decryption.
    <!-- https://github.com/openssl/openssl/pull/31610 -->
 
