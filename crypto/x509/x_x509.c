@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/bytestring.h"
 #include <openssl/evp.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
@@ -54,10 +55,12 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
+        CRYPTO_BUFFER_free(ret->der);
 
         /* fall through */
 
     case ASN1_OP_NEW_POST:
+        ret->der = NULL;
         ret->ex_cached = 0;
         ret->ex_kusage = 0;
         ret->ex_xkusage = 0;
@@ -95,6 +98,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
+        CRYPTO_BUFFER_free(ret->der);
         OPENSSL_free(ret->propq);
         break;
 
@@ -103,6 +107,11 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
         if (!ossl_x509_set0_libctx(ret, old->libctx, old->propq))
             return 0;
+        if (old->der != NULL) {
+            if (!CRYPTO_BUFFER_up_ref(old->der))
+                return 0;
+            ret->der = old->der;
+        }
     } break;
     case ASN1_OP_GET0_LIBCTX: {
         OSSL_LIB_CTX **libctx = exarg;
@@ -129,8 +138,64 @@ ASN1_SEQUENCE_ref(X509, x509_cb) = {
     ASN1_EMBED(X509, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509, X509)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509)
+X509 *X509_new(void)
+{
+    return (X509 *)ASN1_item_new(ASN1_ITEM_rptr(X509));
+}
+
+void X509_free(X509 *a)
+{
+    ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(X509));
+}
+
+X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
+{
+    CRYPTO_BUFFER *der = NULL;
+    CBS cbs, cert;
+    const unsigned char *p;
+    X509 *x = NULL;
+
+    if (in == NULL || *in == NULL || len < 0) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
+        goto out;
+    }
+    CBS_init(&cbs, *in, (size_t)len);
+    if (!CBS_get_asn1_element(&cbs, &cert, CBS_ASN1_SEQUENCE)) {
+        x = (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+            ASN1_ITEM_rptr(X509));
+        goto out;
+    }
+    if ((der = CRYPTO_BUFFER_new(CBS_data(&cert), CBS_len(&cert), NULL))
+        == NULL)
+        goto out;
+
+    p = CRYPTO_BUFFER_data(der);
+    x = (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, &p,
+        (long)CRYPTO_BUFFER_len(der), ASN1_ITEM_rptr(X509));
+    if (x == NULL)
+        goto out;
+    x->der = der;
+    der = NULL;
+    *in += CBS_len(&cert);
+
+out:
+    CRYPTO_BUFFER_free(der);
+    return x;
+}
+
+int i2d_X509(const X509 *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(X509));
+}
+
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
+
+void ossl_x509_set_modified(X509 *x)
+{
+    x->cert_info.enc.modified = 1;
+    CRYPTO_BUFFER_free(x->der);
+    x->der = NULL;
+}
 
 /*
  * This should only be used if the X509 object was embedded inside another
@@ -280,7 +345,7 @@ int i2d_X509_AUX(const X509 *a, unsigned char **pp)
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
 {
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return i2d_X509_CINF(&x->cert_info, pp);
 }
 
