@@ -1414,7 +1414,8 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
         /* Try to retrieve relevant CRL */
         if (ctx->get_crl != NULL) {
             X509 *crl_issuer = NULL;
-            unsigned int reasons = 0;
+            /* Accumulate the reasons covered by the CRLs found so far */
+            unsigned int reasons = last_reasons;
 
             ok = ctx->get_crl(ctx, &crl, x);
             if (crl != NULL) {
