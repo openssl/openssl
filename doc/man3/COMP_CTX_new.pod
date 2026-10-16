@@ -113,6 +113,14 @@ While compressing non-compressible data, the output may be larger than the
 input. Care should be taken to size output buffers appropriate for both
 compression and expansion.
 
+For BIO_f_zlib() and BIO_f_zstd(), BIO_pending() on a decompressing BIO
+returns the number of compressed bytes read from the next BIO that the
+decompressor has not consumed yet. If there are none, BIO_f_zstd() returns 1
+when the last BIO_read() filled the caller's buffer before the end of a frame,
+and otherwise both return the pending count of the next BIO. It is not the
+number of decompressed bytes that BIO_read() can return, which may be larger or
+smaller.
+
 Compression support and compression algorithms must be enabled and built into
 the library before use. Refer to the INSTALL.md file when configuring OpenSSL.
 
@@ -166,7 +174,7 @@ a B<BIO_METHOD> on success.
 
 =head1 SEE ALSO
 
-L<BIO_new(3)>, L<SSL_CTX_set_options(3)>, L<SSL_set_options(3)>
+L<BIO_ctrl(3)>, L<BIO_new(3)>, L<SSL_CTX_set_options(3)>, L<SSL_set_options(3)>
 
 =head1 HISTORY
 
@@ -174,7 +182,7 @@ Brotli and Zstandard functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
