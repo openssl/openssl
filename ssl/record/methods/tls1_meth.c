@@ -16,11 +16,95 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
+/*
+ * Set up the record layer's HMAC, the MAC of every non-AEAD ciphersuite bar
+ * the GOST ones.  Driving it through EVP_MAC rather than an EVP_PKEY is what
+ * lets the key be an opaque object: there is no EVP_PKEY form of an EVP_SKEY,
+ * but EVP_MAC_init_SKEY() takes one directly.
+ */
+static int tls1_set_hmac_state(OSSL_RECORD_LAYER *rl,
+    const OSSL_RECORD_KEY *mackey,
+    const EVP_MD *md)
+{
+    OSSL_PARAM params[3], *p = params;
+    EVP_MAC *mac;
+    int ret = 0;
+
+    mac = EVP_MAC_fetch(rl->libctx, "HMAC", rl->propq);
+    if (mac == NULL)
+        goto err;
+    rl->mac_ctx = EVP_MAC_CTX_new(mac);
+    EVP_MAC_free(mac);
+    if (rl->mac_ctx == NULL)
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        (char *)EVP_MD_get0_name(md), 0);
+    /*
+     * We want the underlying mac to use our passed property query when
+     * allocating its internal digest as well
+     */
+    if (rl->propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+            (char *)rl->propq, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    ret = tls_mac_init_key(rl->mac_ctx, mackey, params);
+
+err:
+    if (!ret)
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    return ret;
+}
+
+/*
+ * Set up the record layer's MAC for the GOST ciphersuites, the only ones left
+ * whose MAC has no EVP_MAC implementation and so still goes through an
+ * EVP_PKEY.  That has no way to carry an opaque key, which is why the key
+ * schedule never hands one to this path.
+ */
+static int tls1_set_pkey_mac_state(OSSL_RECORD_LAYER *rl,
+    const OSSL_RECORD_KEY *mackey,
+    int mactype, const EVP_MD *md)
+{
+    OSSL_PARAM params[2], *p = params;
+    EVP_PKEY *mac_key;
+    int ret = 0;
+
+    if (mackey->opaque != NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    if ((rl->md_ctx = EVP_MD_CTX_new()) == NULL)
+        goto err;
+
+    if (rl->propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+            (char *)rl->propq, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    mac_key = EVP_PKEY_new_mac_key(mactype, NULL, mackey->secret,
+        (int)mackey->len);
+    if (mac_key == NULL)
+        goto err;
+
+    ret = EVP_DigestSignInit_ex(rl->md_ctx, NULL, EVP_MD_get0_name(md),
+              rl->libctx, rl->propq, mac_key, params)
+        > 0;
+    EVP_PKEY_free(mac_key);
+
+err:
+    if (!ret)
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    return ret;
+}
+
 static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     unsigned char *snkey,
-    unsigned char *key, size_t keylen,
+    const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph,
     size_t taglen,
@@ -29,8 +113,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     COMP_METHOD *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
-    EVP_PKEY *mac_key;
-    OSSL_PARAM params[2], *p = params;
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
@@ -43,11 +125,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 
     ciph_ctx = rl->enc_ctx;
 
-    rl->md_ctx = EVP_MD_CTX_new();
-    if (rl->md_ctx == NULL) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return OSSL_RECORD_RETURN_FATAL;
-    }
 #ifndef OPENSSL_NO_COMP
     if (comp != NULL) {
         rl->compctx = COMP_CTX_new(comp);
@@ -63,44 +140,37 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
      * setting up the MAC key.
      */
     if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
-        if (mactype == EVP_PKEY_HMAC) {
-            mac_key = EVP_PKEY_new_raw_private_key_ex(rl->libctx, "HMAC",
-                rl->propq, mackey,
-                mackeylen);
-        } else {
-            /*
-             * If its not HMAC then the only other types of MAC we support are
-             * the GOST MACs, so we need to use the old style way of creating
-             * a MAC key.
-             */
-            mac_key = EVP_PKEY_new_mac_key(mactype, NULL, mackey,
-                (int)mackeylen);
-        }
+        int imac_size;
 
-        /*
-         * We want the underlying mac to use our passed property query when allocating
-         * its internal digest as well
-         */
-        if (rl->propq != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-                (char *)rl->propq, 0);
-
-        *p = OSSL_PARAM_construct_end();
-
-        if (mac_key == NULL
-            || EVP_DigestSignInit_ex(rl->md_ctx, NULL, EVP_MD_get0_name(md),
-                   rl->libctx, rl->propq, mac_key,
-                   params)
-                <= 0) {
-            EVP_PKEY_free(mac_key);
+        if (mackey == NULL || md == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
-        EVP_PKEY_free(mac_key);
+
+        /*
+         * Anything that is not HMAC is one of the GOST MACs, which have no
+         * EVP_MAC implementation to use.
+         */
+        if (mactype == EVP_PKEY_HMAC) {
+            if (!tls1_set_hmac_state(rl, mackey, md)) {
+                /* ERR_raise already called */
+                return OSSL_RECORD_RETURN_FATAL;
+            }
+        } else if (!tls1_set_pkey_mac_state(rl, mackey, mactype, md)) {
+            /* ERR_raise already called */
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+
+        imac_size = EVP_MD_get_size(md);
+        if (imac_size <= 0) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+        rl->mac_size = (size_t)imac_size;
     }
 
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, NULL, enc)
+        if (!tls_cipher_init_key(ciph_ctx, ciph, key, NULL, 0, enc)
             || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
                    (int)ivlen, iv)
                 <= 0) {
@@ -118,21 +188,30 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_CCM_SET_IV_FIXED,
                    (int)ivlen, iv)
                 <= 0
-            || !EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, enc)) {
+            || !tls_cipher_init_key(ciph_ctx, NULL, key, NULL, 0, enc)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
     } else {
-        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, iv, enc)) {
+        if (!tls_cipher_init_key(ciph_ctx, ciph, key, iv, ivlen, enc)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
     }
-    /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
+    /*
+     * Needed for "composite" AEADs, such as RC4-HMAC-MD5.  The ctrl takes the
+     * key as bytes and has no form that accepts an object, so an opaque one
+     * cannot be used here at all.
+     */
     if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
-        && mackeylen != 0
+        && mackey != NULL && mackey->opaque != NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
+        return OSSL_RECORD_RETURN_FATAL;
+    }
+    if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
+        && mackey != NULL && mackey->len != 0
         && EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
-               (int)mackeylen, mackey)
+               (int)mackey->len, mackey->secret)
             <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
@@ -223,14 +302,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return 0;
     }
 
-    if (EVP_MD_CTX_get0_md(rl->md_ctx)) {
-        int n = EVP_MD_CTX_get_size(rl->md_ctx);
-
-        if (!ossl_assert(n >= 0)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-    }
     ds = rl->enc_ctx;
     if (!ossl_assert(rl->enc_ctx != NULL)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -432,63 +503,92 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     int sending)
 {
     unsigned char seq[SEQ_NUM_SIZE], *p_seq = seq;
-    EVP_MD_CTX *hash;
-    size_t md_size;
-    EVP_MD_CTX *hmac = NULL, *mac_ctx;
-    EVP_PKEY_CTX *pkctx;
     unsigned char header[13];
-    int t;
+    size_t md_size = rl->mac_size;
+    EVP_MAC_CTX *macctx = NULL;
+    EVP_MD_CTX *hmac = NULL;
+    /*
+     * A CBC record that is not using encrypt-then-MAC has to be MACed over
+     * its padding too, in constant time.  Handing the MAC the length of the
+     * whole record is what asks it to do that.
+     */
+    int cbc_padded = !sending
+        && !rl->use_etm
+        && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE;
     int ret = 0;
 
-    hash = rl->md_ctx;
     l2n8(rl->sequence, p_seq);
-
-    t = EVP_MD_CTX_get_size(hash);
-    if (!ossl_assert(t >= 0))
-        return 0;
-    md_size = t;
-
-    if (rl->stream_mac) {
-        mac_ctx = hash;
-    } else {
-        hmac = EVP_MD_CTX_new();
-        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash)) {
-            goto end;
-        }
-        mac_ctx = hmac;
-    }
-
-    if (!rl->isdtls
-        && rl->tlstree
-        && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0)
-        goto end;
 
     if (!setup_record_header(rl, rec, header, sizeof(header)))
         goto end;
 
-    if (!sending && !rl->use_etm
-        && EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE
-        && ssl3_cbc_record_digest_supported(mac_ctx)) {
-        OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
-
-        *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE,
-            &rec->orig_len);
-        *p++ = OSSL_PARAM_construct_end();
-
-        pkctx = EVP_MD_CTX_get_pkey_ctx(mac_ctx);
-        if (pkctx == NULL) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    if (rl->mac_ctx != NULL) {
+        /*
+         * HMAC.  The context is duplicated rather than reused because each
+         * record starts from the keyed state, and |rl->mac_ctx| is what
+         * holds it; the GOST branch below reuses its context instead when
+         * the MAC is a running one across records.
+         */
+        if ((macctx = EVP_MAC_CTX_dup(rl->mac_ctx)) == NULL)
             goto end;
+
+        if (cbc_padded && ossl_cbc_digest_supported(rl->md)) {
+            OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
+
+            *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE,
+                &rec->orig_len);
+            *p++ = OSSL_PARAM_construct_end();
+
+            if (!EVP_MAC_CTX_set_params(macctx, tls_hmac_params))
+                goto end;
         }
 
-        if (!EVP_PKEY_CTX_set_params(pkctx, tls_hmac_params))
+        if (!EVP_MAC_update(macctx, header, sizeof(header))
+            || !EVP_MAC_update(macctx, rec->input, rec->length)
+            || !EVP_MAC_final(macctx, md, &md_size, EVP_MAX_MD_SIZE))
+            goto end;
+    } else {
+        /* One of the GOST MACs, which still goes through an EVP_PKEY. */
+        EVP_MD_CTX *hash = rl->md_ctx;
+        EVP_MD_CTX *mac_ctx;
+        EVP_PKEY_CTX *pkctx;
+
+        if (rl->stream_mac) {
+            mac_ctx = hash;
+        } else {
+            hmac = EVP_MD_CTX_new();
+            if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash))
+                goto end;
+            mac_ctx = hmac;
+        }
+
+        if (!rl->isdtls
+            && rl->tlstree
+            && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0)
+            goto end;
+
+        if (cbc_padded && ssl3_cbc_record_digest_supported(mac_ctx)) {
+            OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
+
+            *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE,
+                &rec->orig_len);
+            *p++ = OSSL_PARAM_construct_end();
+
+            pkctx = EVP_MD_CTX_get_pkey_ctx(mac_ctx);
+            if (pkctx == NULL) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto end;
+            }
+
+            if (!EVP_PKEY_CTX_set_params(pkctx, tls_hmac_params))
+                goto end;
+        }
+
+        if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
+            || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
+            || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0)
             goto end;
     }
-
-    if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
-        || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
-        || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0)
-        goto end;
 
     OSSL_TRACE_BEGIN(TLS)
     {
@@ -513,6 +613,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     ret = 1;
 end:
     EVP_MD_CTX_free(hmac);
+    EVP_MAC_CTX_free(macctx);
     return ret;
 }
 
