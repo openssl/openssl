@@ -449,6 +449,54 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
     return issuer;
 }
 
+static STACK_OF(X509) *get1_certs_by_subject(X509_STORE_CTX *ctx,
+    const CBS *subject)
+{
+    X509_STORE *store = ctx->store;
+    STACK_OF(X509) *certs;
+    X509_OBJECT *obj;
+    X509_NAME *name;
+    const unsigned char *p;
+
+    if (store == NULL)
+        return NULL;
+    if ((certs = ossl_x509_store_get1_certs_by_subject(store, subject, NULL))
+            != NULL
+        || sk_X509_LOOKUP_num(store->get_cert_methods) == 0)
+        return certs;
+
+    p = CBS_data(subject);
+    if ((name = d2i_X509_NAME(NULL, &p, CBS_len(subject))) == NULL)
+        return NULL;
+    obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);
+    X509_NAME_free(name);
+    if (obj == NULL)
+        return NULL;
+    X509_OBJECT_free(obj);
+
+    return ossl_x509_store_get1_certs_by_subject(store, subject, NULL);
+}
+
+static int get1_issuer_by_view(X509 **issuer, X509_STORE_CTX *ctx,
+    const X509 *x)
+{
+    const struct x509_view *view;
+    STACK_OF(X509) *certs;
+    CBS name;
+    int ret = 0;
+
+    if ((view = x509_get0_view(x)) == NULL)
+        return 0;
+    x509_view_get_issuer(view, &name);
+    if ((certs = get1_certs_by_subject(ctx, &name)) == NULL)
+        return 0;
+    *issuer = get0_best_issuer_sk(ctx, 0, 0 /* allow duplicates */, certs, x);
+    if (*issuer != NULL)
+        ret = X509_up_ref(*issuer) ? 1 : -1;
+    OSSL_STACK_OF_X509_free(certs);
+    return ret;
+}
+
 /*-
  * Try to get issuer cert from |ctx->store| accepted by |ctx->check_issued|.
  * Prefer the first match with suitable validity period or latest expiration.
@@ -460,13 +508,17 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
  */
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
 {
-    const X509_NAME *xn = X509_get_issuer_name(x);
-    X509_OBJECT *obj = X509_OBJECT_new();
+    const X509_NAME *xn;
+    X509_OBJECT *obj;
     STACK_OF(X509) *certs;
     int ret;
 
     *issuer = NULL;
-    if (obj == NULL)
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0)
+        return get1_issuer_by_view(issuer, ctx, x);
+
+    xn = X509_get_issuer_name(x);
+    if ((obj = X509_OBJECT_new()) == NULL)
         return -1;
     ret = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_X509, xn, obj);
     if (ret != 1)
