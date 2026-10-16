@@ -99,11 +99,14 @@ $code .= <<___;
 .type   ml_dsa_ntt_avx2_capable,\@abi-omnipotent
 .align 32
 ml_dsa_ntt_avx2_capable:
+.cfi_startproc
+.cfi_endprolog
     mov     OPENSSL_ia32cap_P+8(%rip), %rcx
     xor     %eax, %eax
     and     \$$avx2_mask, %ecx
     cmovnz  %ecx, %eax
     ret
+.cfi_endproc
 .size   ml_dsa_ntt_avx2_capable, .-ml_dsa_ntt_avx2_capable
 ___
 
@@ -1595,6 +1598,7 @@ ml_dsa_poly_ntt_mult_avx2:
 ___
 $code .= <<___ if ($win64);
     lea     -168(%rax), %rsp
+.cfi_stackalloc 168
     vmovaps %xmm6,   0(%rsp)
     vmovaps %xmm7,   16(%rsp)
     vmovaps %xmm8,   32(%rsp)
@@ -1607,6 +1611,7 @@ $code .= <<___ if ($win64);
     vmovaps %xmm15,  144(%rsp)
 ___
 $code .= <<___;
+.cfi_endprolog
 .Lntt_mult_body:
     vpbroadcastq ml_dsa_q_neg_inv(%rip), %ymm14
     vpbroadcastd ml_dsa_q(%rip), %ymm15
@@ -1693,6 +1698,7 @@ ml_dsa_poly_ntt_avx2:
 ___
 $code .= <<___ if ($win64);
     lea     -168(%rax), %rsp
+.cfi_stackalloc 168
     vmovaps %xmm6,   0(%rsp)
     vmovaps %xmm7,   16(%rsp)
     vmovaps %xmm8,   32(%rsp)
@@ -1705,6 +1711,7 @@ $code .= <<___ if ($win64);
     vmovaps %xmm15,  144(%rsp)
 ___
 $code .= <<___;
+.cfi_endprolog
 .Lntt_body:
 
     # move p_zetas to r11
@@ -1807,6 +1814,7 @@ ml_dsa_poly_ntt_inverse_avx2:
 ___
 $code .= <<___ if ($win64);
     lea     -168(%rax), %rsp
+.cfi_stackalloc 168
     vmovaps %xmm6,   0(%rsp)
     vmovaps %xmm7,   16(%rsp)
     vmovaps %xmm8,   32(%rsp)
@@ -1819,6 +1827,7 @@ $code .= <<___ if ($win64);
     vmovaps %xmm15,  144(%rsp)
 ___
 $code .= <<___;
+.cfi_endprolog
 .Lintt_body:
     lea zetas_inverse(%rip), %r11
 
@@ -1892,120 +1901,6 @@ $code .= <<___;
 .size   ml_dsa_poly_ntt_inverse_avx2, .-ml_dsa_poly_ntt_inverse_avx2
 ___
 
-# Windows SEH exception handler and unwind data
-if ($win64) {
-my $context = "%r8";
-my $disp    = "%r9";
-
-$code .= <<___;
-.extern __imp_RtlVirtualUnwind
-.type   ntt_se_handler,\@abi-omnipotent
-.align  16
-ntt_se_handler:
-    push    %rsi
-    push    %rdi
-    push    %rbx
-    push    %rbp
-    push    %r12
-    push    %r13
-    push    %r14
-    push    %r15
-    pushfq
-    sub     \$64, %rsp
-
-    mov     120($context), %rax     # context->Rax = original %rsp (saved by xlate preamble)
-    mov     248($context), %rbx     # context->Rip
-
-    mov     8($disp), %rsi          # disp->ImageBase
-    mov     56($disp), %r11         # disp->HandlerData
-
-    mov     0(%r11), %r10d          # HandlerData[0]: body label (rva)
-    lea     (%rsi,%r10), %r10
-    cmp     %r10, %rbx              # Rip < body?
-    jb      .Lntt_in_prologue
-
-    mov     4(%r11), %r10d          # HandlerData[1]: epilogue label (rva)
-    lea     (%rsi,%r10), %r10
-    cmp     %r10, %rbx              # Rip >= epilogue?
-    jae     .Lntt_in_prologue
-
-    # In function body: XMM6-XMM15 are saved at 0..144(new_rsp).
-    # context->Rsp = new_rsp = rax - 168
-    mov     152($context), %rsi     # context->Rsp = new_rsp (address of XMM saves)
-    lea     512($context), %rdi     # &context->Xmm6
-    mov     \$20, %ecx              # 10 XMMs * 2 qwords = 20 qwords
-    .long   0xa548f3fc              # cld; rep movsq
-
-.Lntt_in_prologue:
-    # Restore rdi and rsi saved by xlate preamble in shadow space
-    mov     8(%rax), %rcx
-    mov     16(%rax), %rdx
-    mov     %rcx, 176($context)     # context->Rdi
-    mov     %rdx, 168($context)     # context->Rsi
-    mov     %rax, 152($context)     # context->Rsp = original %rsp
-
-    mov     40($disp), %rdi         # disp->ContextRecord
-    mov     $context, %rsi
-    mov     \$154, %ecx             # sizeof(CONTEXT)/8
-    .long   0xa548f3fc              # cld; rep movsq
-
-    mov     $disp, %rsi
-    xor     %rcx, %rcx              # UNW_FLAG_NHANDLER
-    mov     8(%rsi), %rdx           # disp->ImageBase
-    mov     0(%rsi), %r8            # disp->ControlPc
-    mov     16(%rsi), %r9           # disp->FunctionEntry
-    mov     40(%rsi), %r10          # disp->ContextRecord
-    lea     56(%rsi), %r11          # &disp->HandlerData
-    lea     24(%rsi), %r12          # &disp->EstablisherFrame
-    mov     %r10, 32(%rsp)
-    mov     %r11, 40(%rsp)
-    mov     %r12, 48(%rsp)
-    mov     %rcx, 56(%rsp)
-    call    *__imp_RtlVirtualUnwind(%rip)
-
-    mov     \$1, %eax               # ExceptionContinueSearch
-    add     \$64, %rsp
-    popfq
-    pop     %r15
-    pop     %r14
-    pop     %r13
-    pop     %r12
-    pop     %rbp
-    pop     %rbx
-    pop     %rdi
-    pop     %rsi
-    ret
-.size   ntt_se_handler,.-ntt_se_handler
-
-.section    .pdata
-.align  4
-    .rva    .LSEH_begin_ml_dsa_poly_ntt_mult_avx2
-    .rva    .LSEH_end_ml_dsa_poly_ntt_mult_avx2
-    .rva    .LSEH_info_ml_dsa_poly_ntt_mult_avx2
-    .rva    .LSEH_begin_ml_dsa_poly_ntt_avx2
-    .rva    .LSEH_end_ml_dsa_poly_ntt_avx2
-    .rva    .LSEH_info_ml_dsa_poly_ntt_avx2
-    .rva    .LSEH_begin_ml_dsa_poly_ntt_inverse_avx2
-    .rva    .LSEH_end_ml_dsa_poly_ntt_inverse_avx2
-    .rva    .LSEH_info_ml_dsa_poly_ntt_inverse_avx2
-
-.section    .xdata
-.align  8
-.LSEH_info_ml_dsa_poly_ntt_mult_avx2:
-    .byte   9,0,0,0
-    .rva    ntt_se_handler
-    .rva    .Lntt_mult_body,.Lntt_mult_epilogue
-.LSEH_info_ml_dsa_poly_ntt_avx2:
-    .byte   9,0,0,0
-    .rva    ntt_se_handler
-    .rva    .Lntt_body,.Lntt_epilogue
-.LSEH_info_ml_dsa_poly_ntt_inverse_avx2:
-    .byte   9,0,0,0
-    .rva    ntt_se_handler
-    .rva    .Lintt_body,.Lintt_epilogue
-___
-}
-
 }}} else {{{
 # When AVX2 is not available, output stub functions
 # The capable function returns 0, and the operation functions trap if called
@@ -2015,8 +1910,11 @@ $code .= <<___;
 .globl  ml_dsa_ntt_avx2_capable
 .type   ml_dsa_ntt_avx2_capable,\@abi-omnipotent
 ml_dsa_ntt_avx2_capable:
+.cfi_startproc
+.cfi_endprolog
     xor     %eax, %eax
     ret
+.cfi_endproc
 .size   ml_dsa_ntt_avx2_capable, .-ml_dsa_ntt_avx2_capable
 
 .globl  ml_dsa_poly_ntt_mult_avx2
@@ -2026,8 +1924,11 @@ ml_dsa_ntt_avx2_capable:
 ml_dsa_poly_ntt_mult_avx2:
 ml_dsa_poly_ntt_avx2:
 ml_dsa_poly_ntt_inverse_avx2:
+.cfi_startproc
+.cfi_endprolog
     .byte   0x0f,0x0b       # ud2
     ret
+.cfi_endproc
 .size   ml_dsa_poly_ntt_mult_avx2, .-ml_dsa_poly_ntt_mult_avx2
 ___
 }}}
