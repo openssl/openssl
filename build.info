@@ -20,7 +20,7 @@
    our $err_headers = join(" \\\n         ", grep { m|\.h$| } @err_files);
    our $err_rules =
        join("", map {
-                "GENERATE[$_]=util/mkerr.pl -internal \\\n"
+                "GENERATE[$_]=util/mkerr.pl \\\n"
                 . "    -conf \$(SRCDIR)/crypto/err/openssl.ec -emit $_\n"
                 . "DEPEND[$_]=crypto/err/openssl.ec crypto/err/openssl.txt\n"
             } @err_files);
@@ -188,9 +188,9 @@ GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
 
 {- $err_rules -}GENERATE[include/openssl/obj_mac.h]=crypto/objects/objects.pl \
     -a $(SRCDIR)/crypto/objects/obj_compat.h \
-    $(SRCDIR)/crypto/objects/objects.txt $(SRCDIR)/crypto/objects/obj_mac.num
+    $(SRCDIR)/crypto/objects/objects.txt
 DEPEND[include/openssl/obj_mac.h]=crypto/objects/objects.txt \
-    crypto/objects/obj_mac.num crypto/objects/obj_compat.h
+    crypto/objects/obj_compat.h
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
 GENERATE[include/openssl/bio.h]=include/openssl/bio.h.in
 GENERATE[include/openssl/cmp.h]=include/openssl/cmp.h.in
@@ -540,6 +540,22 @@ GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
 GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
+
+GENERATE[util/libcrypto.num]=util/mkordinals.pl \
+    --symbols $(SRCDIR)/util/libcrypto.sym \
+    --release $(SRCDIR)/util/libcrypto.release.num \
+    --version $(VERSION_NUMBER)
+DEPEND[util/libcrypto.num]=util/libcrypto.sym util/libcrypto.release.num
+
+GENERATE[util/libssl.num]=util/mkordinals.pl \
+    --symbols $(SRCDIR)/util/libssl.sym \
+    --release $(SRCDIR)/util/libssl.release.num \
+    --version $(VERSION_NUMBER)
+DEPEND[util/libssl.num]=util/libssl.sym util/libssl.release.num
+
+# Only the linker script generation consumes these, and only on the
+# platforms that have one, but the test recipes read them everywhere.
+DEPEND[]=util/libcrypto.num util/libssl.num
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld

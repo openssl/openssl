@@ -13,7 +13,7 @@ use warnings;
 my @directory_vars = ( "dir", "certs", "new_certs_dir" );
 my @file_vars = ( "database", "certificate", "serial", "crlnumber",
 		  "crl", "private_key", "RANDFILE" );
-while(<STDIN>) {
+while(<>) {
     s|\R$||;
     foreach my $d (@directory_vars) {
 	if (/^(\s*\#?\s*${d}\s*=\s*)\.\/([^\s\#]*)([\s\#].*)$/) {

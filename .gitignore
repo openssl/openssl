@@ -23,6 +23,7 @@
 
 # Links under apps
 /apps/CA.pl
+/apps/openssl-vms.cnf
 /apps/tsget
 /apps/tsget.pl
 /apps/md4.c
@@ -203,8 +204,6 @@ providers/implementations/rands/seed_src.inc
 providers/implementations/rands/seed_src_jitter.inc
 providers/implementations/rands/test_rng.inc
 
-# error code files
-/crypto/err/openssl.txt.old
 # Generated error code files (from crypto/err/openssl.txt)
 /crypto/asn1/asn1_err.c
 /crypto/async/async_err.c
@@ -314,7 +313,6 @@ providers/implementations/rands/test_rng.inc
 /include/openssl/x509v3err.h
 /providers/common/include/prov/proverr.h
 /providers/common/provider_err.c
-/crypto/err/openssl.txt.stamp
 /engines/e_afalg.txt.old
 /engines/e_capi.txt.old
 /engines/e_dasync.txt.old
@@ -438,9 +436,12 @@ providers/implementations/rands/test_rng.inc
 !/fuzz/README*
 !/fuzz/corpora
 !/fuzz/*.*
+/fuzz/oids.txt
 
 # Misc auto generated files
 /doc/man7/openssl_user_macros.pod
+/util/libcrypto.num
+/util/libssl.num
 /util/shlib_wrap.sh
 /util/wrap.pl
 /tags
