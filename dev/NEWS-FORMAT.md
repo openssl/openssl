@@ -31,6 +31,10 @@ General editorial principles
 
 - Omit blocks which have no items to list.
 
+- Patch releases made after a subsequent feature release has been branched 
+  (e.g., 3.6.3 released after 4.0) are documented exclusively on their
+  respective release branch (e.g., openssl-3.6) and omitted from master.
+
 Structure
 ---------
 
