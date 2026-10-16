@@ -509,6 +509,20 @@ int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,
  * @param peername where to store a copy of the matching name, or NULL
  * @returns 1 on a match, 0 otherwise
  */
+/**
+ * @brief Verifies the signature of the certificate whose view is given
+ * with pkey, as X509_verify() does.
+ * @param view the certificate's view
+ * @param id the distinguishing identifier for SM2 signatures, or NULL
+ * @param pkey the issuer's public key
+ * @param libctx the library context to fetch algorithms from, or NULL
+ * @param propq the property query for fetching, or NULL
+ * @returns 1 if the signature verifies, 0 otherwise
+ */
+int ossl_x509_view_verify(const struct x509_view *view,
+    const ASN1_OCTET_STRING *id, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
+    const char *propq);
+
 int ossl_x509_view_check_host(const struct x509_view *view,
     const uint8_t *chk, size_t chklen, unsigned int flags, char **peername);
 int ossl_x509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,

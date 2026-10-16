@@ -26,6 +26,7 @@
 #include <openssl/x509v3.h>
 #include "internal/asn1.h"
 #include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
@@ -138,6 +139,73 @@ int X509_verify(const X509 *a, EVP_PKEY *r)
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
         &a->signature, &a->cert_info,
         a->distinguishing_id, r, a->libctx, a->propq);
+}
+
+static X509_ALGOR *view_sig_alg(const struct x509_view *view)
+{
+    X509_ALGOR *alg;
+    CBS cbs;
+    const unsigned char *p;
+
+    x509_view_get_sig_alg(view, &cbs);
+    p = CBS_data(&cbs);
+    if ((alg = d2i_X509_ALGOR(NULL, &p, CBS_len(&cbs))) == NULL)
+        return NULL;
+    if (p != CBS_data(&cbs) + CBS_len(&cbs)) {
+        X509_ALGOR_free(alg);
+        return NULL;
+    }
+
+    return alg;
+}
+
+int ossl_x509_view_verify(const struct x509_view *view,
+    const ASN1_OCTET_STRING *id, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    EVP_MD_CTX *ctx;
+    EVP_MD *md = NULL;
+    X509_ALGOR *alg = NULL;
+    CBS tbs, bit_string, signature;
+    uint8_t unused;
+    int md_nid, pkey_nid, ret = 0;
+
+    if (!x509_view_sig_algs_match(view)
+        || !OBJ_find_sigid_algs(x509_view_sig_nid(view), &md_nid, &pkey_nid))
+        return 0;
+    if ((ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq)) == NULL)
+        return 0;
+
+    if (md_nid == NID_undef && pkey_nid == EVP_PKEY_RSA_PSS) {
+        if ((!EVP_PKEY_is_a(pkey, "RSA") && !EVP_PKEY_is_a(pkey, "RSA-PSS"))
+            || (alg = view_sig_alg(view)) == NULL
+            || ossl_rsa_pss_to_ctx(ctx, NULL, alg, pkey) <= 0)
+            goto err;
+    } else {
+        if (!EVP_PKEY_is_a(pkey, OBJ_nid2sn(pkey_nid)))
+            goto err;
+        if (md_nid != NID_undef
+            && (md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_nid), propq)) == NULL)
+            goto err;
+        if (!EVP_DigestVerifyInit(ctx, NULL, md, NULL, pkey))
+            goto err;
+    }
+
+    x509_view_get_tbs(view, &tbs);
+    x509_view_get_signature(view, &bit_string);
+    if (!CBS_get_asn1(&bit_string, &signature, CBS_ASN1_BITSTRING)
+        || !CBS_get_u8(&signature, &unused) || unused != 0)
+        goto err;
+    ret = EVP_DigestVerify(ctx, CBS_data(&signature), CBS_len(&signature),
+              CBS_data(&tbs), CBS_len(&tbs))
+        > 0;
+
+err:
+    EVP_MD_free(md);
+    X509_ALGOR_free(alg);
+    EVP_PKEY_CTX_free(EVP_MD_CTX_get_pkey_ctx(ctx));
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,

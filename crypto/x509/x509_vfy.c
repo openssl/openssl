@@ -2871,6 +2871,18 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     return 1;
 }
 
+static int verify_signature(X509_STORE_CTX *ctx, X509 *x, EVP_PKEY *pkey)
+{
+    const struct x509_view *view;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return X509_verify(x, pkey) > 0;
+
+    return (view = x509_get0_view(x)) != NULL
+        && ossl_x509_view_verify(view, x->distinguishing_id, pkey,
+            ctx->libctx, ctx->propq);
+}
+
 /*
  * Verify the issuer signatures and cert times of ctx->chain.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -2966,7 +2978,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 CB_FAIL_IF(1, ctx, xi, issuer_depth,
                     X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY);
             } else {
-                CB_FAIL_IF(X509_verify(xs, pkey) <= 0,
+                CB_FAIL_IF(!verify_signature(ctx, xs, pkey),
                     ctx, xs, n, X509_V_ERR_CERT_SIGNATURE_FAILURE);
             }
         }

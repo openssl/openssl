@@ -192,6 +192,49 @@ static int test_strict_host(void)
     return ret;
 }
 
+/* ee-cert.pem with the last octet of its signature changed. */
+static X509 *load_bad_signature(void)
+{
+    X509 *x, *bad = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int der_len;
+
+    if (!TEST_ptr(x = load_cert("ee-cert.pem"))
+        || !TEST_int_gt(der_len = i2d_X509(x, &der), 0))
+        goto err;
+    der[der_len - 1] ^= 0x01;
+    p = der;
+    if (!TEST_ptr(bad = d2i_X509(NULL, &p, der_len))
+        || !TEST_ptr(x509_get0_view(bad))) {
+        X509_free(bad);
+        bad = NULL;
+    }
+
+err:
+    OPENSSL_free(der);
+    X509_free(x);
+    return bad;
+}
+
+static int test_strict_signature(void)
+{
+    X509 *pss = NULL, *bad = NULL;
+    int ret;
+
+    ret = TEST_ptr(pss = load_cert("ee-pss-sha256-cert.pem"))
+        && TEST_int_eq(verify(pss, X509_V_FLAG_X509_STRICT, NULL, NULL),
+            X509_V_OK)
+        && TEST_ptr(bad = load_bad_signature())
+        && TEST_int_eq(verify(bad, 0, NULL, NULL),
+            X509_V_ERR_CERT_SIGNATURE_FAILURE)
+        && TEST_int_eq(verify(bad, X509_V_FLAG_X509_STRICT, NULL, NULL),
+            X509_V_ERR_CERT_SIGNATURE_FAILURE);
+    X509_free(pss);
+    X509_free(bad);
+    return ret;
+}
+
 static X509_NAME *make_name(const char *cn, int type)
 {
     X509_NAME *name;
@@ -315,6 +358,7 @@ int setup_tests(void)
     ADD_TEST(test_strict_malformed_extension);
     ADD_TEST(test_strict_times);
     ADD_TEST(test_strict_host);
+    ADD_TEST(test_strict_signature);
     ADD_TEST(test_strict_issuer_bytes);
     return 1;
 }
