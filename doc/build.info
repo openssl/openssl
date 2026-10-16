@@ -1599,6 +1599,10 @@ DEPEND[html/man3/OPENSSL_load_u16_le.html]=man3/OPENSSL_load_u16_le.pod
 GENERATE[html/man3/OPENSSL_load_u16_le.html]=man3/OPENSSL_load_u16_le.pod
 DEPEND[man/man3/OPENSSL_load_u16_le.3]=man3/OPENSSL_load_u16_le.pod
 GENERATE[man/man3/OPENSSL_load_u16_le.3]=man3/OPENSSL_load_u16_le.pod
+DEPEND[html/man3/OPENSSL_loongarch_hwcap.html]=man3/OPENSSL_loongarch_hwcap.pod
+GENERATE[html/man3/OPENSSL_loongarch_hwcap.html]=man3/OPENSSL_loongarch_hwcap.pod
+DEPEND[man/man3/OPENSSL_loongarch_hwcap.3]=man3/OPENSSL_loongarch_hwcap.pod
+GENERATE[man/man3/OPENSSL_loongarch_hwcap.3]=man3/OPENSSL_loongarch_hwcap.pod
 DEPEND[html/man3/OPENSSL_malloc.html]=man3/OPENSSL_malloc.pod
 GENERATE[html/man3/OPENSSL_malloc.html]=man3/OPENSSL_malloc.pod
 DEPEND[man/man3/OPENSSL_malloc.3]=man3/OPENSSL_malloc.pod
@@ -3475,6 +3479,7 @@ html/man3/OPENSSL_init_ssl.html \
 html/man3/OPENSSL_instrument_bus.html \
 html/man3/OPENSSL_load_builtin_modules.html \
 html/man3/OPENSSL_load_u16_le.html \
+html/man3/OPENSSL_loongarch_hwcap.html \
 html/man3/OPENSSL_malloc.html \
 html/man3/OPENSSL_ppccap.html \
 html/man3/OPENSSL_riscvcap.html \
@@ -4156,6 +4161,7 @@ man/man3/OPENSSL_init_ssl.3 \
 man/man3/OPENSSL_instrument_bus.3 \
 man/man3/OPENSSL_load_builtin_modules.3 \
 man/man3/OPENSSL_load_u16_le.3 \
+man/man3/OPENSSL_loongarch_hwcap.3 \
 man/man3/OPENSSL_malloc.3 \
 man/man3/OPENSSL_ppccap.3 \
 man/man3/OPENSSL_riscvcap.3 \
