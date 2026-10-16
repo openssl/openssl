@@ -8387,6 +8387,167 @@ err:
     return ret;
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * Cross-driver round-trip test for AEAD one-shot vs streaming paths.
+ *
+ * The streaming path (EVP_CipherUpdate/Final, dispatched to
+ * OSSL_FUNC_CIPHER_UPDATE/_FINAL) is treated as the oracle.  For each
+ * AEAD configuration we encrypt and decrypt the same (key, iv, aad, pt),
+ * driving the body in two combinations:
+ *
+ *   1.  body encrypt via EVP_Cipher() (one-shot, OSSL_FUNC_CIPHER_CIPHER),
+ *       body decrypt via EVP_CipherUpdate (streaming).
+ *   2.  body encrypt via EVP_CipherUpdate, body decrypt via EVP_Cipher().
+ *
+ * Both combinations must recover the plaintext and verify the tag.  AAD
+ * is always fed via EVP_CipherUpdate(NULL, ...): OCB's one-shot is body
+ * only and the asymmetric "AAD streaming, body one-shot" call shape is
+ * the natural pattern a caller reaching for EVP_Cipher() for throughput
+ * would write anyway.
+ *
+ * CVE-2026-45445 (AES-OCB EVP_Cipher() ignored IV) was a silent failure
+ * in this matrix: the one-shot encrypt path produced ciphertext under
+ * Offset_0 = 0 regardless of IV, which the streaming decrypt path then
+ * could not verify.  Adding this cross-check catches the same class of
+ * bug for any future AEAD whose one-shot dispatch diverges from its
+ * streaming dispatch.
+ */
+typedef struct {
+    const char *name; /* EVP_CIPHER fetch name */
+    size_t keylen;
+    size_t ivlen;
+    size_t taglen;
+    int is_ccm; /* needs length-up-front + tag-before-body dance */
+} AEAD_ONESHOT_CFG;
+
+static const AEAD_ONESHOT_CFG aead_oneshot_cfgs[] = {
+    { "AES-128-GCM", 16, 12, 16, 0 },
+    { "AES-256-GCM", 32, 12, 16, 0 },
+    { "AES-128-CCM", 16, 12, 16, 1 },
+    { "AES-256-CCM", 32, 12, 16, 1 },
+    { "AES-128-OCB", 16, 12, 16, 0 },
+    { "AES-256-OCB", 32, 12, 16, 0 },
+    { "ChaCha20-Poly1305", 32, 12, 16, 0 }
+};
+
+/*
+ * Drive an encrypt or decrypt operation.  AAD always via EVP_CipherUpdate.
+ * Body via EVP_Cipher() when oneshot_body is non-zero, EVP_CipherUpdate
+ * otherwise.  On encrypt, fills *out and the caller-provided tag buffer.
+ * On decrypt, reads from in and verifies tag; returns 0 if verification
+ * fails (the test asserts the expected outcome).
+ */
+static int aead_oneshot_op(const AEAD_ONESHOT_CFG *cfg, int enc,
+    int oneshot_body, const unsigned char *key,
+    const unsigned char *iv, const unsigned char *aad,
+    size_t aad_len, const unsigned char *in, size_t in_len,
+    unsigned char *out, unsigned char *tag, const char **why)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int outl = 0, tmpl = 0;
+    int ok = 0;
+    int body_rv;
+
+    *why = NULL;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, cfg->name, testpropq))) {
+        *why = "CIPHER_FETCH";
+        goto end;
+    }
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())) {
+        *why = "CTX_NEW";
+        goto end;
+    }
+    if (!TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc))) {
+        *why = "INIT_CIPHER";
+        goto end;
+    }
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                         (int)cfg->ivlen, NULL),
+            0)) {
+        *why = "SET_IVLEN";
+        goto end;
+    }
+    if (cfg->is_ccm) {
+        /* Placeholder taglen on encrypt, real tag on decrypt; both before key+iv. */
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                             (int)cfg->taglen, enc ? NULL : tag),
+                0)) {
+            *why = "CCM_SET_TAG";
+            goto end;
+        }
+    }
+    if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))) {
+        *why = "INIT_KEY_IV";
+        goto end;
+    }
+    if (cfg->is_ccm) {
+        if (!TEST_true(EVP_CipherUpdate(ctx, NULL, &outl, NULL, (int)in_len))) {
+            *why = "CCM_LEN_DECL";
+            goto end;
+        }
+    }
+    if (aad_len > 0
+        && !TEST_true(EVP_CipherUpdate(ctx, NULL, &outl, aad, (int)aad_len))) {
+        *why = "AAD";
+        goto end;
+    }
+    if (!enc && !cfg->is_ccm
+        && !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                            (int)cfg->taglen, tag),
+            0)) {
+        *why = "SET_TAG";
+        goto end;
+    }
+
+    if (oneshot_body) {
+        body_rv = EVP_Cipher(ctx, out, in, (unsigned int)in_len);
+        if (cfg->is_ccm && !enc) {
+            /* CCM decrypt: 0 means tag verify failed, < 0 means error. */
+            if (!TEST_int_gt(body_rv, 0)) {
+                *why = "ONESHOT_DECRYPT";
+                goto end;
+            }
+        } else {
+            if (!TEST_int_ge(body_rv, 0)) {
+                *why = "ONESHOT_BODY";
+                goto end;
+            }
+        }
+        outl = (int)in_len;
+    } else {
+        if (!TEST_true(EVP_CipherUpdate(ctx, out, &outl, in, (int)in_len))) {
+            *why = enc ? "STREAM_BODY_ENC" : "STREAM_BODY_DEC";
+            goto end;
+        }
+    }
+
+    if (!cfg->is_ccm) {
+        if (!TEST_true(EVP_CipherFinal_ex(ctx, out + outl, &tmpl))) {
+            *why = enc ? "FINAL_ENC" : "FINAL_DEC";
+            goto end;
+        }
+    }
+
+    if (enc) {
+        if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                             (int)cfg->taglen, tag),
+                0)) {
+            *why = "GET_TAG";
+            goto end;
+        }
+    }
+    ok = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ok;
+}
+
+>>>>>>> f137477208 (Migrates test_aead_oneshot_roundtrip and helper fucntion aead_oneshot_op)
 #ifndef OPENSSL_NO_DES
 static int test_EVP_CIPHER_get_type_des_ede3(void)
 {
