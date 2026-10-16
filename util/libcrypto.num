@@ -5747,3 +5747,9 @@ PKCS12_PARSE_CTX_set_cert               ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_ca                 ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_set_skeys              ?	4_2_0	EXIST::FUNCTION:
 PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
+X509_get0_ext_value                     ?	4_2_0	EXIST::FUNCTION:
+X509_EXTENSION_get0_value               ?	4_2_0	EXIST::FUNCTION:
+X509V3_get0_value                       ?	4_2_0	EXIST::FUNCTION:
+X509_CRL_get0_ext_value                 ?	4_2_0	EXIST::FUNCTION:
+X509_REVOKED_get0_ext_value             ?	4_2_0	EXIST::FUNCTION:
+X509_ACERT_get0_ext_value               ?	4_2_0	EXIST::FUNCTION:

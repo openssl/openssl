@@ -78,18 +78,20 @@ int ossl_asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
     aux = it->funcs;
     if (aux == NULL || (aux->flags & ASN1_AFLG_REFCOUNT) == 0)
         return 0;
-    lock = offset2ptr(*pval, aux->ref_lock);
+    lock = aux->ref_lock < 0 ? NULL : offset2ptr(*pval, aux->ref_lock);
     refcnt = offset2ptr(*pval, aux->ref_offset);
 
     switch (op) {
     case 0:
         if (!CRYPTO_NEW_REF(refcnt, 1))
             return -1;
-        *lock = CRYPTO_THREAD_lock_new();
-        if (*lock == NULL) {
-            CRYPTO_FREE_REF(refcnt);
-            ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
-            return -1;
+        if (lock != NULL) {
+            *lock = CRYPTO_THREAD_lock_new();
+            if (*lock == NULL) {
+                CRYPTO_FREE_REF(refcnt);
+                ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
+                return -1;
+            }
         }
         ret = 1;
         break;
@@ -103,8 +105,10 @@ int ossl_asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
         REF_PRINT_EX(it->sname, ret, (void *)it);
         REF_ASSERT_ISNT(ret < 0);
         if (ret == 0) {
-            CRYPTO_THREAD_lock_free(*lock);
-            *lock = NULL;
+            if (lock != NULL) {
+                CRYPTO_THREAD_lock_free(*lock);
+                *lock = NULL;
+            }
             CRYPTO_FREE_REF(refcnt);
         }
         break;
