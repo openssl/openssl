@@ -38,9 +38,10 @@ err:
 
 /*
  * Verifies leaf against root-cert.pem with ca-cert.pem untrusted, as a
- * server certificate, and returns the verification error.
+ * server certificate, at check_time when it is not NULL, and returns the
+ * verification error.
  */
-static int verify(X509 *leaf, unsigned long flags)
+static int verify(X509 *leaf, unsigned long flags, const int64_t *check_time)
 {
     X509_STORE *store = NULL;
     X509_STORE_CTX *ctx = NULL;
@@ -60,6 +61,9 @@ static int verify(X509 *leaf, unsigned long flags)
         || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, untrusted)))
         goto err;
     X509_STORE_CTX_set_flags(ctx, flags);
+    if (check_time != NULL)
+        ossl_x509_verify_param_set_time_posix(X509_STORE_CTX_get0_param(ctx),
+            *check_time);
     X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_SSL_SERVER);
     (void)X509_verify_cert(ctx);
     ret = X509_STORE_CTX_get_error(ctx);
@@ -79,8 +83,8 @@ static int test_strict_chain(void)
     int ret;
 
     ret = TEST_ptr(leaf = load_cert("ee-cert.pem"))
-        && TEST_int_eq(verify(leaf, 0), X509_V_OK)
-        && TEST_int_eq(verify(leaf, X509_V_FLAG_X509_STRICT), X509_V_OK);
+        && TEST_int_eq(verify(leaf, 0, NULL), X509_V_OK)
+        && TEST_int_eq(verify(leaf, X509_V_FLAG_X509_STRICT, NULL), X509_V_OK);
     X509_free(leaf);
     return ret;
 }
@@ -99,8 +103,8 @@ static int test_strict_no_view(void)
         || !TEST_ptr(serial = ASN1_INTEGER_dup(X509_get0_serialNumber(leaf)))
         || !TEST_true(X509_set_serialNumber(leaf, serial))
         || !TEST_ptr_null(x509_get0_view(leaf))
-        || !TEST_int_eq(verify(leaf, 0), X509_V_OK)
-        || !TEST_int_ne(verify(leaf, X509_V_FLAG_X509_STRICT), X509_V_OK))
+        || !TEST_int_eq(verify(leaf, 0, NULL), X509_V_OK)
+        || !TEST_int_ne(verify(leaf, X509_V_FLAG_X509_STRICT, NULL), X509_V_OK))
         goto err;
     ret = 1;
 
@@ -122,9 +126,26 @@ static int test_strict_malformed_extension(void)
     ret = TEST_ptr(leaf = load_cert("ee-pathlen.pem"))
         && TEST_ptr(x509_get0_view(leaf))
         && TEST_true(x509_view_has_malformed_extension(x509_get0_view(leaf)))
-        && TEST_int_eq(verify(leaf, 0), X509_V_OK)
-        && TEST_int_eq(verify(leaf, X509_V_FLAG_X509_STRICT),
+        && TEST_int_eq(verify(leaf, 0, NULL), X509_V_OK)
+        && TEST_int_eq(verify(leaf, X509_V_FLAG_X509_STRICT, NULL),
             X509_V_ERR_INVALID_EXTENSION);
+    X509_free(leaf);
+    return ret;
+}
+
+static int test_strict_times(void)
+{
+    X509 *leaf;
+    int64_t before = 0, after = INT64_C(253402300799);
+    int ret;
+
+    ret = TEST_ptr(leaf = load_cert("ee-cert.pem"))
+        && TEST_int_eq(verify(leaf, 0, &before), X509_V_ERR_CERT_NOT_YET_VALID)
+        && TEST_int_eq(verify(leaf, X509_V_FLAG_X509_STRICT, &before),
+            X509_V_ERR_CERT_NOT_YET_VALID)
+        && TEST_int_eq(verify(leaf, 0, &after), X509_V_ERR_CERT_HAS_EXPIRED)
+        && TEST_int_eq(verify(leaf, X509_V_FLAG_X509_STRICT, &after),
+            X509_V_ERR_CERT_HAS_EXPIRED);
     X509_free(leaf);
     return ret;
 }
@@ -250,6 +271,7 @@ int setup_tests(void)
     ADD_TEST(test_strict_chain);
     ADD_TEST(test_strict_no_view);
     ADD_TEST(test_strict_malformed_extension);
+    ADD_TEST(test_strict_times);
     ADD_TEST(test_strict_issuer_bytes);
     return 1;
 }

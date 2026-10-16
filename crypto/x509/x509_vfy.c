@@ -2789,6 +2789,27 @@ done:
     return ret;
 }
 
+static int check_cert_time_view(X509_STORE_CTX *ctx, X509 *x, int depth,
+    int64_t verification_time)
+{
+    const struct x509_view *view;
+    int64_t not_after;
+
+    if ((view = x509_get0_view(x)) == NULL)
+        return 0;
+    if (verification_time < x509_view_not_before_posix(view)
+        && (depth < 0
+            || verify_cb_cert(ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID) == 0))
+        return 0;
+    not_after = x509_view_not_after_posix(view);
+    if (not_after != INT64_C(253402300799) && verification_time > not_after
+        && (depth < 0
+            || verify_cb_cert(ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED) == 0))
+        return 0;
+
+    return 1;
+}
+
 /*-
  * Check certificate validity times.
  * If depth >= 0, invoke verification callbacks on error, otherwise just return
@@ -2805,6 +2826,8 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 
     if (!get_verification_time(vpm, &verification_time))
         return 1;
+    if ((vpm->flags & X509_V_FLAG_X509_STRICT) != 0)
+        return check_cert_time_view(ctx, x, depth, verification_time);
 
     if (!certificate_time_to_posix(X509_get0_notBefore(x), &notbefore_seconds)) {
         err = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
