@@ -21,6 +21,7 @@
 
 #include <crypto/asn1.h>
 #include <crypto/siphash.h>
+#include "internal/pool.h"
 
 /*
  * Size in bytes of the internal X509 / X509_CRL fingerprint, see
@@ -196,6 +197,11 @@ struct x509_st {
     X509_CINF cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
+    /**
+     * The DER encoding the certificate was decoded from or signed into, or
+     * NULL if it has none or has been modified since.
+     */
+    CRYPTO_BUFFER *der;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
@@ -368,6 +374,13 @@ X509_NAME *ossl_dist_point_name_full(const struct DIST_POINT_NAME_st *dpn,
     const X509_NAME *iname);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+
+/**
+ * @brief Marks x as modified: its cached TBSCertificate encoding is not
+ * used for encoding and its DER is freed.
+ * @param x the certificate
+ */
+void ossl_x509_set_modified(X509 *x);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
