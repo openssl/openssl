@@ -51,6 +51,7 @@ jobs:
       check_run_id: ${{ inputs.check_run_id }}
 
   cross-compilation-aarch64:
+    name: cross-compilation-aarch64 (${{ matrix.platform.capslabel }})
     # pull request title contains 'aarch64'
     # pull request title contains 'arm64'
     # pull request body contains '[aarch64 ci]'

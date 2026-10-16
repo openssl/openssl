@@ -59,6 +59,7 @@ jobs:
       check_run_id: ${{ inputs.check_run_id }}
 
   cross-compilation-riscv:
+    name: cross-compilation-riscv (${{ matrix.platform.label }})
     # pull request title contains 'riscv'
     # pull request title contains 'RISC-V'
     # pull request body contains '[riscv ci]'
@@ -86,6 +87,7 @@ jobs:
         #          to never run the tests, otherwise its value is passed to
         #          the "make test" command to allow selective disabling of
         #          tests.
+        #   label: short unique name for the entry, used in the job name.
         #   qemucpu: optional; string that describes CPU properties.
         #            The string will be used to set the QEMU_CPU variable.
         #   opensslcapsname: optional; string that describes the postfix of the
@@ -110,6 +112,7 @@ jobs:
             #   crypto/sha/asm/sha512-riscv64-zbb.pl
             #   crypto/sm3/asm/sm3-riscv64-zbb.pl
             arch: riscv64-linux-gnu,
+            label: zbb-zbc-zbkb-zknd-zkne,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -120,6 +123,7 @@ jobs:
             # RV64GC ZBC ZBB, but without ZBKB
             #   crypto/modes/gcm128.c
             arch: riscv64-linux-gnu,
+            label: zbc-zbb,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -130,6 +134,7 @@ jobs:
             # RV64GC ZBC, but without ZBB/ZBKB
             #   crypto/modes/gcm128.c
             arch: riscv64-linux-gnu,
+            label: zbc,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -142,6 +147,7 @@ jobs:
             # For chacha20 vector-only path from #24069
             #   crypto/chacha/asm/chacha-riscv64-v-zbb.pl
             arch: riscv64-linux-gnu,
+            label: v-zbb,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -152,6 +158,7 @@ jobs:
             # RV64GC V ZVKG, but without ZVKB
             #   crypto/modes/gcm128.c
             arch: riscv64-linux-gnu,
+            label: v-zvkg,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -165,6 +172,7 @@ jobs:
             # RV64GC V ZVKB ZVBC, but without ZVKG
             #   crypto/modes/gcm128.c
             arch: riscv64-linux-gnu,
+            label: v-zvkb-zvbc,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -181,6 +189,7 @@ jobs:
             #   providers/implementations/ciphers/cipher_aes_hw_rv64i.inc
             #   providers/implementations/ciphers/cipher_aes_gcm_hw_rv64i.inc
             arch: riscv64-linux-gnu,
+            label: v-zvkned,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -201,6 +210,7 @@ jobs:
             #   crypto/sha/asm/sha256-riscv64-zvkb-zvknha_or_zvknhb.pl
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
             arch: riscv64-linux-gnu,
+            label: all-vlen128,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -212,6 +222,7 @@ jobs:
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
             #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
             arch: riscv64-linux-gnu,
+            label: all-vlen256,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -223,6 +234,7 @@ jobs:
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
             #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
             arch: riscv64-linux-gnu,
+            label: all-vlen512,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -242,6 +254,7 @@ jobs:
             # zksh:
             #   crypto/sm3/sm3_local.h
             arch: riscv64-linux-gnu,
+            label: inlineasm,
             libs: libc6-dev-riscv64-cross,
             target: -march=rv64gc_zbb_zbkb_zknh_zksh linux64-riscv64,
             fips: no,
@@ -254,6 +267,7 @@ jobs:
             # V is absent so AT_HWCAP V bit is clear (VECTOR_CAPABLE=false).
             # The rv64 CPU model includes ZBB/ZBC/ZBS/ZBKB by default.
             arch: riscv64-linux-gnu,
+            label: novector-hwprobe,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
@@ -267,6 +281,7 @@ jobs:
             # Forces the hwprobe_to_cap() code path (skipped when OPENSSL_riscvcap is set).
             # V is present so AT_HWCAP V bit is set (VECTOR_CAPABLE=true).
             arch: riscv64-linux-gnu,
+            label: v-zvkned-hwprobe,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no,
