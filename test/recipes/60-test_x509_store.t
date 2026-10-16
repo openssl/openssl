@@ -36,7 +36,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 3;
+plan tests => 4;
 
 indir "60-test_x509_store" => sub {
     for (("root-cert")) {
@@ -47,6 +47,9 @@ indir "60-test_x509_store" => sub {
     # Canonical success
     ok(verify("ee-cert", "sslserver", curdir(), ["ca-cert"], "-show_chain"),
        "verify ee-cert");
+    ok(verify("ee-cert", "sslserver", curdir(), ["ca-cert"], "-x509_strict",
+              "-show_chain"),
+       "verify ee-cert strict");
 
     # Failure because root cert not present in CApath
     ok(!verify("ca-root2", "any", curdir(), [], "-show_chain"));
