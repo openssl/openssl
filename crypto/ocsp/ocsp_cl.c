@@ -73,6 +73,9 @@ int OCSP_request_sign(OCSP_REQUEST *req,
     const EVP_MD *dgst,
     const STACK_OF(X509) *certs, unsigned long flags)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
     if (!OCSP_request_set1_name(req, X509_get_subject_name(signer)))
         goto err;
 
@@ -84,7 +87,8 @@ int OCSP_request_sign(OCSP_REQUEST *req,
                 OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
             goto err;
         }
-        if (!OCSP_REQUEST_sign(req, key, dgst, signer->libctx, signer->propq))
+        ossl_x509_get0_libctx(signer, &libctx, &propq);
+        if (!OCSP_REQUEST_sign(req, key, dgst, libctx, propq))
             goto err;
     }
 

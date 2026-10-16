@@ -573,6 +573,12 @@ int X509_NAME_set(X509_NAME **xn, const X509_NAME *name);
 DECLARE_ASN1_FUNCTIONS(X509_CINF)
 DECLARE_ASN1_FUNCTIONS(X509)
 X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Decode an immutable certificate that keeps one copy of its bytes.
+ * @see X509_parse_from_bytes(3)
+ */
+X509 *X509_parse_from_bytes(OSSL_LIB_CTX *libctx, const char *propq,
+    const unsigned char *data, size_t len);
 DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
 
 #define X509_get_ex_new_index(l, p, newf, dupf, freef) \
@@ -915,6 +921,13 @@ const X509_EXTENSION *X509_get_ext(const X509 *x, int loc);
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
 int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc);
 void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx);
+/**
+ * @brief Find a certificate extension by NID and get a borrowed pointer to
+ * its decoded value and the X509_EXT_VALUE_* outcome.
+ * @see X509_get0_ext_value(3), X509V3_get0_value(3)
+ */
+int X509_get0_ext_value(const X509 *x, int nid, const void **value,
+    int *outcome);
 int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
     unsigned long flags);
 
@@ -927,6 +940,13 @@ const X509_EXTENSION *X509_CRL_get_ext(const X509_CRL *x, int loc);
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
 int X509_CRL_add_ext(X509_CRL *x, const X509_EXTENSION *ex, int loc);
 void *X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit, int *idx);
+/**
+ * @brief Find a CRL extension by NID and get a borrowed pointer to its
+ * decoded value and the X509_EXT_VALUE_* outcome.
+ * @see X509_CRL_get0_ext_value(3), X509V3_get0_value(3)
+ */
+int X509_CRL_get0_ext_value(const X509_CRL *x, int nid, const void **value,
+    int *outcome);
 int X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
     unsigned long flags);
 
@@ -941,6 +961,13 @@ X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
 int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
 void *X509_REVOKED_get_ext_d2i(const X509_REVOKED *x, int nid, int *crit,
     int *idx);
+/**
+ * @brief Find a CRL entry extension by NID and get a borrowed pointer to its
+ * decoded value and the X509_EXT_VALUE_* outcome.
+ * @see X509_REVOKED_get0_ext_value(3), X509V3_get0_value(3)
+ */
+int X509_REVOKED_get0_ext_value(const X509_REVOKED *x, int nid,
+    const void **value, int *outcome);
 int X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value, int crit,
     unsigned long flags);
 
@@ -955,6 +982,29 @@ int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit);
 int X509_EXTENSION_set_data(X509_EXTENSION *ex, const ASN1_OCTET_STRING *data);
 const ASN1_OBJECT *X509_EXTENSION_get_object(const X509_EXTENSION *ex);
 const ASN1_OCTET_STRING *X509_EXTENSION_get_data(const X509_EXTENSION *ne);
+
+/*
+ * Outcome of decoding an extension's value, reported by
+ * X509_EXTENSION_get0_value() and the functions that look an extension up
+ * by NID.
+ */
+#define X509_EXT_VALUE_DECODED 0 /* decoded; *value is set */
+#define X509_EXT_VALUE_UNKNOWN 1 /* no X509V3_EXT_METHOD for the OID, not critical */
+#define X509_EXT_VALUE_UNKNOWN_CRITICAL 2 /* no X509V3_EXT_METHOD for the OID, critical */
+#define X509_EXT_VALUE_INVALID 3 /* the value does not decode, not critical */
+#define X509_EXT_VALUE_INVALID_CRITICAL 4 /* the value does not decode, critical */
+#define X509_EXT_VALUE_MALLOC_FAILED 5 /* the decode ran out of memory */
+#define X509_EXT_VALUE_ERROR 6 /* the decode failed without saying why */
+#define X509_EXT_VALUE_ABSENT 7 /* no extension with the NID */
+#define X509_EXT_VALUE_DUPLICATE 8 /* more than one extension with the NID */
+
+/**
+ * @brief Get a borrowed pointer to the decoded value of an extension and the
+ * X509_EXT_VALUE_* outcome of decoding it.
+ * @see X509_EXTENSION_get0_value(3), X509V3_get0_value(3)
+ */
+int X509_EXTENSION_get0_value(const X509_EXTENSION *ex, const void **value,
+    int *outcome);
 int X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x);

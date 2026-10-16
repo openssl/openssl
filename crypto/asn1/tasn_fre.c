@@ -78,6 +78,7 @@ void ossl_asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed
         break;
 
     case ASN1_ITYPE_EXTERN:
+    case ASN1_ITYPE_EXTERN_INTERNAL:
         ef = it->funcs;
         if (ef && ef->asn1_ex_free)
             ef->asn1_ex_free(pval, it);
