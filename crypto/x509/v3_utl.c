@@ -1005,6 +1005,42 @@ int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,
     return do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, peername);
 }
 
+int ossl_x509_view_check_host(const struct x509_view *view,
+    const uint8_t *chk, size_t chklen, unsigned int flags, char **peername)
+{
+    CBS san, names, name;
+    equal_fn equal;
+    int type;
+
+    flags &= ~_X509_CHECK_FLAG_DOT_SUBDOMAINS;
+    if (chklen > 1 && chk[0] == '.')
+        flags |= _X509_CHECK_FLAG_DOT_SUBDOMAINS;
+    if ((flags & X509_CHECK_FLAG_NO_WILDCARDS) != 0)
+        equal = equal_nocase;
+    else
+        equal = equal_wildcard;
+
+    if (!x509_view_get_san(view, &san)
+        || !CBS_get_asn1(&san, &names, CBS_ASN1_SEQUENCE))
+        return 0;
+    while (CBS_len(&names) > 0) {
+        if (!x509_view_next_general_name(&names, &type, &name))
+            return 0;
+        if (type != GEN_DNS || CBS_len(&name) == 0)
+            continue;
+        if (!equal(CBS_data(&name), CBS_len(&name), chk, chklen, flags))
+            continue;
+        if (peername != NULL
+            && (*peername = OPENSSL_strndup((const char *)CBS_data(&name),
+                    CBS_len(&name)))
+                == NULL)
+            return 0;
+        return 1;
+    }
+
+    return 0;
+}
+
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
 int X509_check_host(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername)

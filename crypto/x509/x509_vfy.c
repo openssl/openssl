@@ -1337,6 +1337,7 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 
 static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
+    const struct x509_view *view = NULL;
     const uint8_t *name;
     int n = sk_X509_BUFFER_num(vpm->hosts);
 
@@ -1344,13 +1345,21 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
         OPENSSL_free(vpm->peername);
         vpm->peername = NULL;
     }
+    if ((vpm->flags & X509_V_FLAG_X509_STRICT) != 0
+        && (view = x509_get0_view(x)) == NULL)
+        return 0;
     for (int i = 0; i < n; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->hosts, i)->len;
         name = sk_X509_BUFFER_value(vpm->hosts, i)->data;
-        if (ossl_x509_check_host(x, (const char *)name, len, vpm->hostflags,
-                &vpm->peername)
-            > 0)
+        if (view != NULL) {
+            if (ossl_x509_view_check_host(view, name, len, vpm->hostflags,
+                    &vpm->peername))
+                return 1;
+        } else if (ossl_x509_check_host(x, (const char *)name, len,
+                       vpm->hostflags, &vpm->peername)
+            > 0) {
             return 1;
+        }
     }
     return n <= 0;
 }
