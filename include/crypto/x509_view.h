@@ -13,6 +13,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <openssl/types.h>
+
 #include "internal/bytestring.h"
 
 /**
@@ -107,6 +109,14 @@ struct x509_view {
  * @returns 1 if der is accepted, 0 otherwise
  */
 int x509_view_parse(const uint8_t *der, size_t der_len, struct x509_view *cert);
+
+/**
+ * @brief Returns the view of x's DER encoding.
+ * @param x the certificate
+ * @returns the view, or NULL when x has no DER encoding or x509_view_parse()
+ *          rejected it
+ */
+const struct x509_view *x509_get0_view(const X509 *x);
 
 /**
  * @brief Sets *out to the certificate's TBSCertificate, tag and length

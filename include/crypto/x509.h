@@ -22,6 +22,7 @@
 #include <crypto/asn1.h>
 #include <crypto/siphash.h>
 #include "internal/pool.h"
+#include "crypto/x509_view.h"
 
 /*
  * Size in bytes of the internal X509 / X509_CRL fingerprint, see
@@ -202,6 +203,10 @@ struct x509_st {
      * NULL if it has none or has been modified since.
      */
     CRYPTO_BUFFER *der;
+    /** The view of der, valid when has_view is set */
+    struct x509_view view;
+    /** Whether der is set and x509_view_parse() accepted it */
+    int has_view;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
@@ -381,6 +386,14 @@ int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
  * @param x the certificate
  */
 void ossl_x509_set_modified(X509 *x);
+
+/**
+ * @brief Replaces x's DER encoding with der, taking ownership of it, and
+ * parses the view of it.
+ * @param x the certificate
+ * @param der the DER encoding of x, or NULL to leave x without one
+ */
+void ossl_x509_set0_der(X509 *x, CRYPTO_BUFFER *der);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
