@@ -64,7 +64,7 @@ if (!$avx512ifma && `$ENV{CC} -v 2>&1`
     }
 }
 
-if (!$avx512ifma && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+if (!$avx512ifma && $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E 2>&1`
     =~ /#define __clang_major__.([0-9]+)/) {
     if ($1) {
         $avx512ifma = ($1>=11); #icx started with clang 11
