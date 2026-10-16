@@ -495,10 +495,118 @@ end:
     return ret;
 }
 
-/* Check that the given certificate |x| is issued by the certificate |issuer| */
-static int check_issued(ossl_unused X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer)
+static int view_contents_equal(const CBS *a, unsigned int a_tag, const CBS *b,
+    unsigned int b_tag)
 {
-    int err = ossl_x509_likely_issued(issuer, x);
+    CBS a_field, b_field, a_contents, b_contents;
+
+    CBS_dup(a, &a_field);
+    CBS_dup(b, &b_field);
+    if (!CBS_get_asn1(&a_field, &a_contents, a_tag)
+        || !CBS_get_asn1(&b_field, &b_contents, b_tag))
+        return 0;
+
+    return CBS_mem_equal(&a_contents, CBS_data(&b_contents),
+        CBS_len(&b_contents));
+}
+
+/*
+ * Whether subject's authorityKeyIdentifier, if it has one, names issuer:
+ * its key identifier is issuer's subjectKeyIdentifier, its serial number
+ * is issuer's and its first directoryName is issuer's issuer, each when
+ * present (RFC 5280 4.2.1.1).
+ */
+static int view_akid_matches(const struct x509_view *issuer,
+    const struct x509_view *subject)
+{
+    CBS keyid, skid, akid_serial, serial, akid_issuer, names, name;
+    CBS issuer_issuer;
+    int type;
+
+    if (x509_view_get_akid_keyid(subject, &keyid)
+        && x509_view_get_skid(issuer, &skid)
+        && !view_contents_equal(&keyid, CBS_ASN1_CONTEXT_SPECIFIC | 0, &skid,
+            CBS_ASN1_OCTETSTRING))
+        return 0;
+    if (x509_view_get_akid_serial(subject, &akid_serial)
+        && x509_view_get_serial(issuer, &serial)
+        && !view_contents_equal(&akid_serial, CBS_ASN1_CONTEXT_SPECIFIC | 2,
+            &serial, CBS_ASN1_INTEGER))
+        return 0;
+    if (x509_view_get_akid_issuer(subject, &akid_issuer)) {
+        if (!CBS_get_asn1(&akid_issuer, &names,
+                CBS_ASN1_CONTEXT_SPECIFIC | CBS_ASN1_CONSTRUCTED | 1))
+            return 0;
+        x509_view_get_issuer(issuer, &issuer_issuer);
+        while (CBS_len(&names) > 0) {
+            if (!x509_view_next_general_name(&names, &type, &name))
+                return 0;
+            if (type != GEN_DIRNAME)
+                continue;
+            return CBS_mem_equal(&name, CBS_data(&issuer_issuer),
+                CBS_len(&issuer_issuer));
+        }
+    }
+
+    return 1;
+}
+
+static int view_self_signed(const struct x509_view *view)
+{
+    uint32_t key_usage;
+
+    return x509_view_is_self_issued(view) && view_akid_matches(view, view)
+        && (!x509_view_key_usage(view, &key_usage)
+            || (key_usage & KU_KEY_CERT_SIGN) != 0);
+}
+
+static int view_issued(const X509 *issuer, const struct x509_view *issuer_view,
+    const X509 *subject, const struct x509_view *subject_view)
+{
+    const EVP_PKEY *pkey;
+    CBS issuer_name, subject_name, issuer_issuer, issuer_serial, serial;
+    int sig_nid;
+
+    x509_view_get_subject(issuer_view, &issuer_name);
+    x509_view_get_issuer(subject_view, &subject_name);
+    if (!CBS_mem_equal(&issuer_name, CBS_data(&subject_name),
+            CBS_len(&subject_name)))
+        return 0;
+
+    x509_view_get_issuer(issuer_view, &issuer_issuer);
+    x509_view_get_serial(issuer_view, &issuer_serial);
+    x509_view_get_serial(subject_view, &serial);
+    if (issuer == subject
+        || (CBS_mem_equal(&issuer_issuer, CBS_data(&subject_name),
+                CBS_len(&subject_name))
+            && CBS_mem_equal(&issuer_serial, CBS_data(&serial),
+                CBS_len(&serial))))
+        return view_self_signed(issuer_view);
+
+    if (!view_akid_matches(issuer_view, subject_view))
+        return 0;
+
+    if ((pkey = X509_get0_pubkey(issuer)) == NULL
+        || !OBJ_find_sigid_algs(x509_view_sig_nid(subject_view), NULL,
+            &sig_nid))
+        return 0;
+
+    return EVP_PKEY_is_a(pkey, OBJ_nid2sn(sig_nid))
+        || (EVP_PKEY_is_a(pkey, "RSA") && sig_nid == NID_rsassaPss);
+}
+
+/* Check that the given certificate |x| is issued by the certificate |issuer| */
+static int check_issued(X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer)
+{
+    const struct x509_view *issuer_view, *view;
+    int err;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0)
+        return (issuer_view = x509_get0_view(issuer)) != NULL
+            && (view = x509_get0_view(x)) != NULL
+            && view_issued(issuer, issuer_view, x, view);
+
+    err = ossl_x509_likely_issued(issuer, x);
 
     if (err == X509_V_OK)
         return 1;
