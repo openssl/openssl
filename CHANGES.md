@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * API calls `RAND_set_default_parameters`, and
+    `RAND_set_default_primary_parameters` have been added to libcrypto.
+
+   *Christian Vögl*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
