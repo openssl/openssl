@@ -15,7 +15,7 @@ use File::Spec::Functions qw/devnull catfile/;
 use File::Basename;
 use File::Copy;
 use File::Compare qw/compare/;
-use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir data_file/;
+use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir srctop_file data_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_ocsp");
@@ -228,7 +228,10 @@ my $key = data_file("key.pem");
 subtest "=== OCSP API TESTS===" => sub {
     plan tests => 1;
 
-    ok(run(test(["ocspapitest", $cert, $key])),
+    ok(run(test(["ocspapitest", $cert, $key,
+                 srctop_file("test", "certs", "ee-cert.pem"),
+                 srctop_file("test", "certs", "ee-key.pem"),
+                 srctop_file("test", "certs", "ca-cert.pem")])),
                  "running ocspapitest");
 };
 
