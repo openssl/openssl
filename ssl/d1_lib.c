@@ -3305,12 +3305,13 @@ void ossl_dtls_listener_enter_blocking_section(SSL *s)
     }
 }
 
-void ossl_dtls_listener_leave_blocking_section(SSL *s)
+int ossl_dtls_listener_deregister_blocking_section(SSL *s, uint64_t *generation)
 {
     DTLS_LISTENER *dl;
+    int need_wait = 0;
 
     if (!IS_DTLS_LISTENER(s))
-        return;
+        return 0;
 
     dl = (DTLS_LISTENER *)s;
 
@@ -3324,20 +3325,47 @@ void ossl_dtls_listener_leave_blocking_section(SSL *s)
             if (dl->cur_blocking_waiters == 0) {
                 ossl_rio_notifier_unsignal(&dl->notifier);
                 dl->signalled_notifier = 0;
+                ++dl->notify_generation;
 
                 /*
                  * Release the other threads which have woken up
                  */
                 ossl_crypto_condvar_broadcast(dl->notifier_cv);
             } else {
-                /* We are not the last waiter out - so wait for that one. */
-                while (dl->signalled_notifier)
-                    ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
+                *generation = dl->notify_generation;
+                need_wait = 1;
             }
         }
 
         ossl_crypto_mutex_unlock(dl->mutex);
     }
+
+    return need_wait;
+}
+
+void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation)
+{
+    DTLS_LISTENER *dl;
+
+    if (!IS_DTLS_LISTENER(s))
+        return;
+
+    dl = (DTLS_LISTENER *)s;
+    if (dl->have_notifier) {
+        ossl_crypto_mutex_lock(dl->mutex);
+        while (dl->signalled_notifier && dl->notify_generation == generation)
+            ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
+        ossl_crypto_mutex_unlock(dl->mutex);
+    }
+}
+
+/* Combined leave for single-listener tests; poll cleanup uses both phases. */
+void ossl_dtls_listener_leave_blocking_section(SSL *s)
+{
+    uint64_t generation;
+
+    if (ossl_dtls_listener_deregister_blocking_section(s, &generation))
+        ossl_dtls_listener_wait_for_notifier_clear(s, generation);
 }
 
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,

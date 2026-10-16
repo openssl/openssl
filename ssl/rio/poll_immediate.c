@@ -16,9 +16,24 @@
 #include "../ssl_local.h"
 #include "poll_builder.h"
 
-#ifdef OPENSSL_NO_QUIC
-/* Stub type when QUIC is disabled so function signatures remain consistent */
-typedef int QUIC_REACTOR_WAIT_CTX;
+#ifndef OPENSSL_NO_DTLS
+typedef struct dtls_poll_wait_slot_st {
+    struct dtls_poll_wait_slot_st *next;
+    SSL *listener;
+    uint64_t generation;
+    int need_wait;
+} DTLS_POLL_WAIT_SLOT;
+#endif
+
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
+typedef struct poll_wait_ctx_st {
+#ifndef OPENSSL_NO_QUIC
+    QUIC_REACTOR_WAIT_CTX quic;
+#endif
+#ifndef OPENSSL_NO_DTLS
+    DTLS_POLL_WAIT_SLOT *dtls;
+#endif
+} POLL_WAIT_CTX;
 #endif
 
 #if defined(_AIX)
@@ -175,7 +190,27 @@ static void postpoll_translation_deregister_ssl_quic(SSL *ssl,
 #endif /* OPENSSL_NO_QUIC */
 
 #ifndef OPENSSL_NO_DTLS
+/* Record each listener before registering, including on partial setup exits. */
+static int poll_register_dtls_listener(POLL_WAIT_CTX *wctx, SSL *listener)
+{
+    DTLS_POLL_WAIT_SLOT *slot;
+
+    for (slot = wctx->dtls; slot != NULL; slot = slot->next)
+        if (slot->listener == listener)
+            return 1;
+
+    if ((slot = OPENSSL_zalloc(sizeof(*slot))) == NULL)
+        return 0;
+
+    slot->listener = listener;
+    slot->next = wctx->dtls;
+    wctx->dtls = slot;
+    ossl_dtls_listener_enter_blocking_section(listener);
+    return 1;
+}
+
 static int poll_translate_ssl_dtls_listener(SSL *ssl,
+    POLL_WAIT_CTX *wctx,
     RIO_POLL_BUILDER *rpb,
     uint64_t events,
     int *abort_blocking)
@@ -220,7 +255,8 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
                 return 0;
 
             /* Tell the listener we need to receive notifications. */
-            ossl_dtls_listener_enter_blocking_section(ssl);
+            if (!poll_register_dtls_listener(wctx, ssl))
+                return 0;
 
             /*
              * Only after the above call returns is it guaranteed that any
@@ -229,13 +265,10 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
              * readout which decided we needed to block. Re-check now.
              */
             if (!ossl_dtls_listener_poll_events(ssl, events, /*do_tick=*/0,
-                    &revents)) {
-                ossl_dtls_listener_leave_blocking_section(ssl);
+                    &revents))
                 return 0;
-            }
 
             if (revents != 0) {
-                ossl_dtls_listener_leave_blocking_section(ssl);
                 *abort_blocking = 1;
                 return 1;
             }
@@ -246,6 +279,7 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
 }
 
 static int poll_translate_ssl_dtls_conn(SSL *ssl,
+    POLL_WAIT_CTX *wctx,
     RIO_POLL_BUILDER *rpb,
     uint64_t events,
     int *abort_blocking)
@@ -302,7 +336,8 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
                         return 0;
 
                     /* Tell listener we need to receive notifications. */
-                    ossl_dtls_listener_enter_blocking_section(sc->d1->listener);
+                    if (!poll_register_dtls_listener(wctx, sc->d1->listener))
+                        return 0;
 
                     /*
                      * Only after the above call returns is it guaranteed that
@@ -316,7 +351,6 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
                         has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
                         ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
                         if (has_pending) {
-                            ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
                             *abort_blocking = 1;
                             return 1;
                         }
@@ -364,56 +398,35 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     return 1;
 }
 
-static void postpoll_translation_cleanup_ssl_dtls_listener(SSL *ssl)
-{
-    DTLS_LISTENER *dl = (DTLS_LISTENER *)ssl;
-
-    /* Need to mirror the enter blocking section call */
-    if (dl->have_notifier && ossl_rio_notifier_as_fd(&dl->notifier) != -1)
-        ossl_dtls_listener_leave_blocking_section(ssl);
-}
-
-static void postpoll_translation_cleanup_ssl_dtls_conn(SSL *ssl, uint64_t events)
-{
-    SSL_CONNECTION *sc;
-    DTLS_LISTENER *dl;
-
-    /*
-     * We only enter blocking section when read events are requested.
-     * Don't call leave if we never entered.
-     */
-    if ((events & SSL_POLL_EVENT_R) == 0)
-        return;
-
-    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-    if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)
-        return;
-
-    /* Need to mirror the enter blocking section call */
-    if (SSL_get_rbio(ssl) != NULL)
-        return;
-
-    dl = (DTLS_LISTENER *)sc->d1->listener;
-    if (dl->have_notifier && ossl_rio_notifier_as_fd(&dl->notifier) != -1)
-        ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
-}
 #endif /* OPENSSL_NO_DTLS */
 
 #if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
-static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
-    size_t num_items,
-    size_t stride,
-    ossl_unused QUIC_REACTOR_WAIT_CTX *wctx)
+static void postpoll_translation_cleanup(ossl_unused SSL_POLL_ITEM *items,
+    ossl_unused size_t num_items,
+    ossl_unused size_t stride,
+    POLL_WAIT_CTX *wctx)
 {
+#ifndef OPENSSL_NO_DTLS
+    DTLS_POLL_WAIT_SLOT *slot, *next;
+#endif
+#ifndef OPENSSL_NO_QUIC
     SSL_POLL_ITEM *item;
     SSL *ssl;
     size_t i;
+#endif
 
     /*
-     * QUIC cleanup uses two phases: deregister each QUIC item here without
-     * waiting for its notifier, then drain the recorded cycles below. See
-     * quic_reactor.h for the QUIC leave-ordering invariant.
+     * Phase 1 releases every DTLS and QUIC registration without waiting for
+     * any notifier. Otherwise cleanup could wait for a registration this
+     * call still owns, including one for the other protocol.
      */
+#ifndef OPENSSL_NO_DTLS
+    for (slot = wctx->dtls; slot != NULL; slot = slot->next)
+        slot->need_wait = ossl_dtls_listener_deregister_blocking_section(
+            slot->listener, &slot->generation);
+#endif
+
+#ifndef OPENSSL_NO_QUIC
     for (i = 0; i < num_items; ++i) {
         item = &ITEM_N(items, stride, i);
 
@@ -424,23 +437,11 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
                 break;
 
             switch (ssl->type) {
-#ifndef OPENSSL_NO_QUIC
             case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
-                postpoll_translation_deregister_ssl_quic(ssl, wctx);
+                postpoll_translation_deregister_ssl_quic(ssl, &wctx->quic);
                 break;
-#endif
-
-#ifndef OPENSSL_NO_DTLS
-            case SSL_TYPE_DTLS_LISTENER:
-                postpoll_translation_cleanup_ssl_dtls_listener(ssl);
-                break;
-            case SSL_TYPE_SSL_CONNECTION:
-                if (SSL_is_dtls(ssl))
-                    postpoll_translation_cleanup_ssl_dtls_conn(ssl, item->events);
-                break;
-#endif
 
             default:
                 break;
@@ -450,20 +451,33 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
             break;
         }
     }
+#endif
 
     /*
-     * Phase 2 also prevents the retry loop from re-registering before the
-     * signal cycle observed by this blocking attempt has been drained.
+     * Phase 2 waits for the recorded notification cycles to finish before
+     * the retry loop can re-register. No registrations owned by this call
+     * remain when these waits begin.
      */
 #ifndef OPENSSL_NO_QUIC
-    ossl_quic_reactor_wait_ctx_drain(wctx);
+    ossl_quic_reactor_wait_ctx_drain(&wctx->quic);
+#endif
+
+#ifndef OPENSSL_NO_DTLS
+    for (slot = wctx->dtls; slot != NULL; slot = next) {
+        next = slot->next;
+        if (slot->need_wait)
+            ossl_dtls_listener_wait_for_notifier_clear(slot->listener,
+                slot->generation);
+        OPENSSL_free(slot);
+    }
+    wctx->dtls = NULL;
 #endif
 }
 
 static int poll_translate(SSL_POLL_ITEM *items,
     size_t num_items,
     size_t stride,
-    ossl_unused QUIC_REACTOR_WAIT_CTX *wctx,
+    POLL_WAIT_CTX *wctx,
     RIO_POLL_BUILDER *rpb,
     OSSL_TIME *p_earliest_wakeup_deadline,
     int *abort_blocking,
@@ -502,7 +516,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
             case SSL_TYPE_QUIC_LISTENER:
             case SSL_TYPE_QUIC_CONNECTION:
             case SSL_TYPE_QUIC_XSO:
-                if (!poll_translate_ssl_quic(ssl, wctx, rpb, item->events,
+                if (!poll_translate_ssl_quic(ssl, &wctx->quic, rpb, item->events,
                         abort_blocking))
                     FAIL_ITEM(i);
 
@@ -523,7 +537,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
 #ifndef OPENSSL_NO_DTLS
             case SSL_TYPE_DTLS_LISTENER:
-                if (!poll_translate_ssl_dtls_listener(ssl, rpb, item->events,
+                if (!poll_translate_ssl_dtls_listener(ssl, wctx, rpb, item->events,
                         abort_blocking))
                     FAIL_ITEM(i);
 
@@ -533,7 +547,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
                 break;
             case SSL_TYPE_SSL_CONNECTION:
                 if (SSL_is_dtls(ssl)) {
-                    if (!poll_translate_ssl_dtls_conn(ssl, rpb, item->events,
+                    if (!poll_translate_ssl_dtls_conn(ssl, wctx, rpb, item->events,
                             abort_blocking))
                         FAIL_ITEM(i);
 
@@ -598,6 +612,8 @@ out:
      * increment i so the registered triggering item is included in the cleanup
      * prefix. Phase 2 drains every reactor recorded in wctx, including one
      * already deregistered by the triggering item.
+     * DTLS registrations are tracked independently of the item prefix, so even
+     * a partially translated triggering item is included in both phases.
      */
     if (!ok || *abort_blocking)
         postpoll_translation_cleanup(items, i, stride, wctx);
@@ -616,7 +632,7 @@ static int poll_block(SSL_POLL_ITEM *items,
 {
     int ok = 0, abort_blocking = 0;
     RIO_POLL_BUILDER rpb;
-    QUIC_REACTOR_WAIT_CTX wctx;
+    POLL_WAIT_CTX wctx;
     OSSL_TIME earliest_wakeup_deadline;
 
     /*
@@ -641,7 +657,10 @@ static int poll_block(SSL_POLL_ITEM *items,
      *   also to facilitate a more efficient readout.
      */
 #ifndef OPENSSL_NO_QUIC
-    ossl_quic_reactor_wait_ctx_init(&wctx);
+    ossl_quic_reactor_wait_ctx_init(&wctx.quic);
+#endif
+#ifndef OPENSSL_NO_DTLS
+    wctx.dtls = NULL;
 #endif
     ossl_rio_poll_builder_init(&rpb);
 
@@ -672,7 +691,7 @@ static int poll_block(SSL_POLL_ITEM *items,
 out:
     ossl_rio_poll_builder_cleanup(&rpb);
 #ifndef OPENSSL_NO_QUIC
-    ossl_quic_reactor_wait_ctx_cleanup(&wctx);
+    ossl_quic_reactor_wait_ctx_cleanup(&wctx.quic);
 #endif
     return ok;
 }
