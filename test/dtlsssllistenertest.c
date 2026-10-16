@@ -6429,6 +6429,155 @@ end:
 }
 #endif
 
+#if defined(OPENSSL_THREADS)
+struct poll_shared_listener_signal {
+    SSL *listener;
+    int descriptors, signalled;
+};
+
+/*
+ * For two connections, the second descriptor lookup follows both registration
+ * attempts; for repeated listeners it follows the first registration.
+ * Signal at that point to model another thread producing readiness, without
+ * relying on scheduling or signalling a listener with no registered waiter.
+ */
+static long poll_shared_listener_bio_cb(BIO *bio, int oper, const char *argp,
+    size_t len, int cmd, long argl, int ret, size_t *processed)
+{
+    struct poll_shared_listener_signal *s = (void *)BIO_get_callback_arg(bio);
+
+    if (oper == (BIO_CB_CTRL | BIO_CB_RETURN)
+        && cmd == BIO_CTRL_GET_RPOLL_DESCRIPTOR && ++s->descriptors == 2)
+        s->signalled = poll_signal_listener(s->listener);
+    return ret;
+}
+
+/*
+ * Poll a listener and a connection, two connections, or repeated listener
+ * items. In modes 0 and 2 a datagram for S1 is demuxed by S0's translator
+ * after the listener registers, naturally signalling the notifier. Mode 2
+ * also polls S1, so finding its data aborts translation. Modes 1 and 3 use
+ * the BIO callback to signal after registration. Run each with the notifier
+ * enabled and with SINGLE_THREAD as a control. The watchdog never operates
+ * on SSL objects: the natural trigger needs only one thread using DTLS.
+ */
+static int test_dtls_poll_shared_listener(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client[2] = { NULL, NULL };
+    SSL *server[2] = { NULL, NULL };
+    BIO_ADDR *addr = NULL;
+    BIO *signal_bio = NULL;
+    int server_fd = -1, client_fd[2] = { -1, -1 };
+    SSL_POLL_ITEM items[3] = { 0 };
+    struct timeval timeout = { 1, 0 };
+    DTLS_LISTENER *dl;
+    struct poll_shared_listener_signal signal = { 0 };
+    struct poll_watchdog watchdog = { 0 };
+    CRYPTO_THREAD *thread = NULL;
+    uint64_t generation;
+    size_t count, written, nitems = 2, i;
+    char buf[4];
+    int single_thread = idx / 4, mode = idx % 4, ok = 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    return TEST_skip("DTLS 1.2 disabled");
+#endif
+    /* DTLS 1.2 has no post-handshake ACKs to make the connections readable. */
+    if (!create_ssl_ctx_pair(NULL, DTLS_server_method(), DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION, &sctx, &cctx, cert, privkey)
+        || !create_udp_listener(sctx,
+            single_thread ? SSL_LISTENER_FLAG_SINGLE_THREAD : 0,
+            &listener, &addr, &server_fd))
+        goto end;
+    dl = (DTLS_LISTENER *)listener;
+    for (i = 0; i < OSSL_NELEM(client); ++i) {
+        if (!create_dtls_client_for_addr(cctx, addr, &client[i], &client_fd[i])
+            || !drive_until_connection_queued(listener, client[i])
+            || !TEST_ptr(server[i] = SSL_accept_connection(listener,
+                             SSL_ACCEPT_CONNECTION_NO_BLOCK))
+            || !TEST_true(create_ssl_connection(server[i], client[i], SSL_ERROR_NONE)))
+            goto end;
+    }
+
+    items[0].desc = SSL_as_poll_descriptor(mode == 1 ? server[0] : listener);
+    items[0].events = mode == 1 ? SSL_POLL_EVENT_R : SSL_POLL_EVENT_IC;
+    items[1].desc = SSL_as_poll_descriptor(mode == 3 ? listener : server[mode == 1]);
+    items[1].events = mode == 3 ? SSL_POLL_EVENT_IC : SSL_POLL_EVENT_R;
+    if (mode == 2) {
+        items[2].desc = SSL_as_poll_descriptor(server[1]);
+        items[2].events = SSL_POLL_EVENT_R;
+        nitems = 3;
+    }
+    if (mode == 0 || mode == 2) {
+        if (!TEST_true(SSL_write_ex(client[1], "data", 4, &written))
+            || !TEST_int_gt(BIO_socket_wait(server_fd, 1, time(NULL) + 5), 0))
+            goto end;
+    }
+
+    if (!TEST_size_t_eq(dl->cur_blocking_waiters, 0)
+        || !TEST_false(dl->signalled_notifier))
+        goto end;
+    generation = dl->notify_generation;
+    if (!single_thread && (mode == 1 || mode == 3)) {
+        signal.listener = listener;
+        signal_bio = SSL_get_rbio(listener);
+        BIO_set_callback_arg(signal_bio, (char *)&signal);
+        BIO_set_callback_ex(signal_bio, poll_shared_listener_bio_cb);
+    }
+    if (!TEST_ptr(thread = poll_watchdog_start(&watchdog)))
+        goto end;
+    if (!TEST_true(SSL_poll(items, nitems, sizeof(items[0]), &timeout,
+            SSL_POLL_FLAG_NO_HANDLE_EVENTS, &count))
+        || !TEST_size_t_eq(count, mode == 2 ? 1 : 0)
+        || !TEST_uint64_t_eq(items[0].revents, 0)
+        || !TEST_uint64_t_eq(items[1].revents, 0)
+        || !TEST_size_t_eq(dl->cur_blocking_waiters, 0)
+        || !TEST_false(dl->signalled_notifier))
+        goto end;
+
+    /* The natural triggers must actually complete a notification cycle. */
+    if (!single_thread && !TEST_uint64_t_ne(dl->notify_generation, generation))
+        goto end;
+    if (!single_thread && (mode == 1 || mode == 3)
+        && !TEST_true(signal.signalled))
+        goto end;
+    if (mode == 2 && !TEST_uint64_t_eq(items[2].revents, SSL_POLL_EVENT_R))
+        goto end;
+    if ((mode == 0 || mode == 2)
+        && (!TEST_true(dtls_read_with_retry(server[1], buf, sizeof(buf), &count))
+            || !TEST_mem_eq(buf, count, "data", 4)))
+        goto end;
+
+    /* Follow-up single-item polling must not inherit a stranded registration. */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 10000;
+    if (!TEST_true(SSL_poll(items, 1, sizeof(items[0]), &timeout, 0, &count))
+        || !TEST_size_t_eq(count, 0))
+        goto end;
+    ok = 1;
+end:
+    poll_watchdog_stop(&watchdog, thread);
+    if (signal_bio != NULL) {
+        BIO_set_callback_ex(signal_bio, NULL);
+        BIO_set_callback_arg(signal_bio, NULL);
+    }
+    for (i = 0; i < OSSL_NELEM(client); ++i) {
+        SSL_free(server[i]);
+        SSL_free(client[i]);
+        if (client_fd[i] >= 0)
+            BIO_closesocket(client_fd[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return ok;
+}
+#endif
+
 /*
  * Test the blocking mode of a DTLS listener and of the connections it creates.
  *

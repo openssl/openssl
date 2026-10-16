@@ -428,11 +428,6 @@ static void postpoll_translation_cleanup(ossl_unused SSL_POLL_ITEM *items,
 #endif
 
 #ifndef OPENSSL_NO_QUIC
-    /*
-     * QUIC cleanup uses two phases: deregister each QUIC item here without
-     * waiting for its notifier, then drain the recorded cycles below. See
-     * quic_reactor.h for the QUIC leave-ordering invariant.
-     */
     for (i = 0; i < num_items; ++i) {
         item = &ITEM_N(items, stride, i);
 
@@ -477,13 +472,6 @@ static void postpoll_translation_cleanup(ossl_unused SSL_POLL_ITEM *items,
         OPENSSL_free(slot);
     }
     wctx->dtls = NULL;
-
-    /*
-     * Phase 2 also prevents the retry loop from re-registering before the
-     * signal cycle observed by this blocking attempt has been drained.
-     */
-#ifndef OPENSSL_NO_QUIC
-    ossl_quic_reactor_wait_ctx_drain(wctx);
 #endif
 }
 
@@ -747,7 +735,6 @@ int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
         &result_count);
 }
 #endif /* OPENSSL_NO_DTLS */
-#endif
 
 static int poll_readout(SSL_POLL_ITEM *items,
     size_t num_items,
