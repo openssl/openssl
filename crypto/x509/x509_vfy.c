@@ -777,6 +777,245 @@ static int check_views(X509_STORE_CTX *ctx)
     return 1;
 }
 
+static int view_key_usage_allows(const struct x509_view *view, uint32_t usage)
+{
+    uint32_t key_usage;
+
+    return !x509_view_key_usage(view, &key_usage) || (key_usage & usage) != 0;
+}
+
+static int view_ext_key_usage_allows(const struct x509_view *view,
+    uint32_t usage)
+{
+    uint32_t ext_key_usage;
+
+    return !x509_view_ext_key_usage(view, &ext_key_usage)
+        || (ext_key_usage & usage) != 0;
+}
+
+static int view_is_ca(const struct x509_view *view)
+{
+    return x509_view_is_ca(view)
+        && view_key_usage_allows(view, KU_KEY_CERT_SIGN);
+}
+
+/* extKeyUsage, as DER content octets. */
+static const uint8_t oid_ext_key_usage[] = { 0x55, 0x1d, 0x25 };
+
+static int view_ext_key_usage_is_critical(const struct x509_view *view)
+{
+    CBS extensions, exts, oid, value;
+    int critical;
+
+    x509_view_get_extensions(view, &extensions);
+    if (!CBS_get_asn1(&extensions, &exts, CBS_ASN1_SEQUENCE))
+        return 0;
+    while (CBS_len(&exts) > 0) {
+        if (!x509_view_next_extension(&exts, &oid, &critical, &value))
+            return 0;
+        if (CBS_mem_equal(&oid, oid_ext_key_usage, sizeof(oid_ext_key_usage)))
+            return critical;
+    }
+
+    return 0;
+}
+
+/*
+ * A time stamping certificate's keyUsage, if present, holds nothing but
+ * digitalSignature or nonRepudiation, and its extendedKeyUsage is critical
+ * and holds no other known purpose (RFC 3161 section 2.3).
+ */
+static int view_is_time_stamp_signer(const struct x509_view *view)
+{
+    uint32_t key_usage, ext_key_usage;
+
+    if (x509_view_key_usage(view, &key_usage)) {
+        if ((key_usage & ~(KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION)) != 0)
+            return 0;
+        if ((key_usage & (KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION)) == 0)
+            return 0;
+    }
+    if (!x509_view_ext_key_usage(view, &ext_key_usage)
+        || ext_key_usage != XKU_TIMESTAMP)
+        return 0;
+
+    return view_ext_key_usage_is_critical(view);
+}
+
+static int view_check_purpose(const struct x509_view *view, int purpose,
+    int need_ca)
+{
+    uint32_t key_usage = 0, ext_key_usage = 0;
+
+    switch (purpose) {
+    case X509_PURPOSE_SSL_CLIENT:
+        key_usage = KU_DIGITAL_SIGNATURE;
+        ext_key_usage = XKU_SSL_CLIENT;
+        break;
+    case X509_PURPOSE_SSL_SERVER:
+        key_usage = KU_DIGITAL_SIGNATURE | KU_KEY_ENCIPHERMENT;
+        ext_key_usage = XKU_SSL_SERVER | XKU_SGC;
+        break;
+    case X509_PURPOSE_NS_SSL_SERVER:
+        key_usage = KU_KEY_ENCIPHERMENT;
+        ext_key_usage = XKU_SSL_SERVER | XKU_SGC;
+        break;
+    case X509_PURPOSE_SMIME_SIGN:
+        key_usage = KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION;
+        ext_key_usage = XKU_SMIME;
+        break;
+    case X509_PURPOSE_SMIME_ENCRYPT:
+        key_usage = KU_KEY_ENCIPHERMENT;
+        ext_key_usage = XKU_SMIME;
+        break;
+    case X509_PURPOSE_CRL_SIGN:
+        key_usage = KU_CRL_SIGN;
+        break;
+    case X509_PURPOSE_ANY:
+        return 1;
+    case X509_PURPOSE_OCSP_HELPER:
+    case X509_PURPOSE_TIMESTAMP_SIGN:
+        break;
+    default:
+        return 0;
+    }
+
+    if (ext_key_usage != 0 && !view_ext_key_usage_allows(view, ext_key_usage))
+        return 0;
+    if (need_ca)
+        return view_is_ca(view);
+    if (key_usage != 0 && !view_key_usage_allows(view, key_usage))
+        return 0;
+    if (purpose == X509_PURPOSE_TIMESTAMP_SIGN)
+        return view_is_time_stamp_signer(view);
+
+    return 1;
+}
+
+static int view_sequence_is_empty(const CBS *element)
+{
+    CBS cbs, contents;
+
+    CBS_dup(element, &cbs);
+
+    return CBS_get_asn1(&cbs, &contents, CBS_ASN1_SEQUENCE)
+        && CBS_len(&contents) == 0;
+}
+
+/* The checks of RFC 5280 sections 4.1 and 4.2 on a certificate's view. */
+static int check_rfc5280_view(X509_STORE_CTX *ctx, X509 *x,
+    const struct x509_view *view, int depth, int num)
+{
+    CBS name, san, value;
+    int64_t path_len;
+    uint32_t key_usage;
+    int is_ca, has_key_usage, has_san, has_issuer, has_serial, check_akid;
+
+    is_ca = x509_view_is_ca(view);
+    has_key_usage = x509_view_key_usage(view, &key_usage);
+    has_san = x509_view_get_san(view, &san);
+
+    CB_FAIL_IF(x509_view_path_len(view, &path_len)
+            && !view_key_usage_allows(view, KU_KEY_CERT_SIGN),
+        ctx, x, depth, X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN);
+    CB_FAIL_IF(is_ca && !has_key_usage,
+        ctx, x, depth, X509_V_ERR_CA_CERT_MISSING_KEY_USAGE);
+    CB_FAIL_IF(!is_ca && has_key_usage && (key_usage & KU_KEY_CERT_SIGN) != 0,
+        ctx, x, depth, X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA);
+    x509_view_get_issuer(view, &name);
+    CB_FAIL_IF(view_sequence_is_empty(&name),
+        ctx, x, depth, X509_V_ERR_ISSUER_NAME_EMPTY);
+    x509_view_get_subject(view, &name);
+    CB_FAIL_IF((is_ca || (has_key_usage && (key_usage & KU_CRL_SIGN) != 0)
+                   || !has_san)
+            && view_sequence_is_empty(&name),
+        ctx, x, depth, X509_V_ERR_SUBJECT_NAME_EMPTY);
+    CB_FAIL_IF(has_san && view_sequence_is_empty(&san),
+        ctx, x, depth, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
+    CB_FAIL_IF(!x509_view_sig_algs_match(view),
+        ctx, x, depth, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);
+
+    if (x509_view_version(view) != X509_VERSION_3)
+        return 1;
+
+    has_issuer = x509_view_get_akid_issuer(view, &value);
+    has_serial = x509_view_get_akid_serial(view, &value);
+    check_akid = depth + 1 < num && !view_self_signed(view);
+    CB_FAIL_IF(check_akid && !view->has_akid,
+        ctx, x, depth, X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER);
+    CB_FAIL_IF(check_akid && view->has_akid
+            && !x509_view_get_akid_keyid(view, &value) && !has_issuer
+            && !has_serial,
+        ctx, x, depth, X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER);
+    CB_FAIL_IF(has_issuer != has_serial,
+        ctx, x, depth, X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED);
+    CB_FAIL_IF(is_ca && !x509_view_get_skid(view, &value),
+        ctx, x, depth, X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER);
+
+    return 1;
+}
+
+static int check_extensions_view(X509_STORE_CTX *ctx)
+{
+    const struct x509_view *view;
+    X509 *x;
+    int64_t path_len;
+    int i, ret, purpose, num = sk_X509_num(ctx->chain), plen = 0;
+    int allow_proxy_certs, is_proxy, below_is_proxy = 0, proxy_plen = 0;
+
+    if (ctx->parent != NULL) {
+        allow_proxy_certs = 0;
+        purpose = X509_PURPOSE_CRL_SIGN;
+    } else {
+        allow_proxy_certs = (ctx->param->flags & X509_V_FLAG_ALLOW_PROXY_CERTS) != 0;
+        purpose = ctx->param->purpose;
+    }
+
+    for (i = 0; i < num; i++) {
+        x = sk_X509_value(ctx->chain, i);
+        if ((view = x509_get0_view(x)) == NULL)
+            return 0;
+        CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
+                && x509_view_has_unhandled_critical(view),
+            ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
+        is_proxy = x509_view_extensions_present(view,
+                       X509_VIEW_EXT_PROXY_CERT_INFO)
+            != 0;
+        CB_FAIL_IF(is_proxy && !allow_proxy_certs,
+            ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
+        CB_FAIL_IF(i > 0 && !below_is_proxy && !view_is_ca(view),
+            ctx, x, i, X509_V_ERR_INVALID_CA);
+        CB_FAIL_IF(below_is_proxy && x509_view_is_ca(view),
+            ctx, x, i, X509_V_ERR_INVALID_NON_CA);
+        if (num > 1) {
+            ret = check_curve(x);
+            CB_FAIL_IF(ret < 0, ctx, x, i, X509_V_ERR_UNSPECIFIED);
+            CB_FAIL_IF(ret == 0, ctx, x, i, X509_V_ERR_EC_KEY_EXPLICIT_PARAMS);
+            if (!check_rfc5280_view(ctx, x, view, i, num))
+                return 0;
+        }
+        CB_FAIL_IF(purpose >= X509_PURPOSE_MIN
+                && !view_check_purpose(view, purpose, i > 0 && !below_is_proxy),
+            ctx, x, i, X509_V_ERR_INVALID_PURPOSE);
+        CB_FAIL_IF(i > 1 && x509_view_path_len(view, &path_len)
+                && plen > path_len + proxy_plen,
+            ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED);
+        if (i > 0 && !x509_view_is_self_issued(view))
+            plen++;
+        if (is_proxy) {
+            if (x->ex_pcpathlen != -1) {
+                CB_FAIL_IF(proxy_plen > x->ex_pcpathlen,
+                    ctx, x, i, X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED);
+                proxy_plen = x->ex_pcpathlen;
+            }
+            proxy_plen++;
+        }
+        below_is_proxy = is_proxy;
+    }
+
+    return 1;
+}
+
 /*-
  * Check extensions of a cert chain for consistency with the supplied purpose.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -787,6 +1026,9 @@ static int check_extensions(X509_STORE_CTX *ctx)
     X509 *x;
     int ret, proxy_path_length = 0;
     int purpose, allow_proxy_certs, num = sk_X509_num(ctx->chain);
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0)
+        return check_extensions_view(ctx);
 
     /*-
      *  must_be_ca can have 1 of 3 values:

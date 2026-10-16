@@ -87,6 +87,7 @@ struct x509_view {
 #define X509_VIEW_EXT_INHIBIT_ANY_POLICY (1U << 4) /**< inhibitAnyPolicy */
 #define X509_VIEW_EXT_IP_ADDR_BLOCKS (1U << 5) /**< sbgp-ipAddrBlock */
 #define X509_VIEW_EXT_AUTONOMOUS_SYS_IDS (1U << 6) /**< sbgp-autonomousSysNum */
+#define X509_VIEW_EXT_PROXY_CERT_INFO (1U << 7) /**< proxyCertInfo */
 
 /** The X509_VIEW_EXT_ bits of the policy extensions. */
 #define X509_VIEW_EXT_POLICY                                            \

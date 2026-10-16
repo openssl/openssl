@@ -709,9 +709,10 @@ static int test_unknown_extension(void)
         && TEST_true(cert.has_unhandled_critical);
 }
 
-#define X509_VIEW_EXT_ALL                                  \
-    (X509_VIEW_EXT_NAME_CONSTRAINTS | X509_VIEW_EXT_POLICY \
-        | X509_VIEW_EXT_IP_ADDR_BLOCKS | X509_VIEW_EXT_AUTONOMOUS_SYS_IDS)
+#define X509_VIEW_EXT_ALL                                                 \
+    (X509_VIEW_EXT_NAME_CONSTRAINTS | X509_VIEW_EXT_POLICY                \
+        | X509_VIEW_EXT_IP_ADDR_BLOCKS | X509_VIEW_EXT_AUTONOMOUS_SYS_IDS \
+        | X509_VIEW_EXT_PROXY_CERT_INFO)
 
 static const struct extensions_present_test {
     const char *name;
@@ -727,7 +728,8 @@ static const struct extensions_present_test {
     { "inhibitAnyPolicy", "2.5.29.54", X509_VIEW_EXT_INHIBIT_ANY_POLICY, 0 },
     { "ipAddrBlocks", "1.3.6.1.5.5.7.1.7", X509_VIEW_EXT_IP_ADDR_BLOCKS, 0 },
     { "autonomousSysIds", "1.3.6.1.5.5.7.1.8",
-        X509_VIEW_EXT_AUTONOMOUS_SYS_IDS, 0 }
+        X509_VIEW_EXT_AUTONOMOUS_SYS_IDS, 0 },
+    { "proxyCertInfo", "1.3.6.1.5.5.7.1.14", X509_VIEW_EXT_PROXY_CERT_INFO, 0 }
 };
 
 /*
@@ -1036,8 +1038,9 @@ err:
 }
 
 /*
- * The extensions x509_view parses, by NID; a critical extension outside
- * this set is unhandled for x509_view whether or not X509 supports it.
+ * The extensions x509_view parses and those it records in
+ * extensions_present, by NID; a critical extension outside this set is
+ * unhandled for x509_view whether or not X509 supports it.
  */
 static const int handled_nids[] = {
     NID_basic_constraints,
@@ -1046,7 +1049,14 @@ static const int handled_nids[] = {
     NID_subject_alt_name,
     NID_subject_key_identifier,
     NID_authority_key_identifier,
-    NID_name_constraints
+    NID_name_constraints,
+    NID_certificate_policies,
+    NID_policy_mappings,
+    NID_policy_constraints,
+    NID_inhibit_any_policy,
+    NID_sbgp_ipAddrBlock,
+    NID_sbgp_autonomousSysNum,
+    NID_proxyCertInfo
 };
 
 static int has_unhandled_critical(const X509 *x509)
