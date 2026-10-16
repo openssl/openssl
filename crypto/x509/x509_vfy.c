@@ -53,6 +53,7 @@ static int dane_verify(X509_STORE_CTX *ctx);
 static int dane_verify_rpk(X509_STORE_CTX *ctx);
 static int null_callback(int ok, X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer);
+static int check_views(X509_STORE_CTX *ctx);
 static int check_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
@@ -261,6 +262,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
     int ok;
 
     if ((ok = build_chain(ctx)) <= 0
+        || (ok = check_views(ctx)) <= 0
         || (ok = check_extensions(ctx)) <= 0
         || (ok = check_auth_level(ctx)) <= 0
         || (ok = check_id(ctx)) <= 0
@@ -593,6 +595,26 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
     }
 
     return verify_cb_cert(ctx, x, depth, X509_V_ERR_INVALID_PURPOSE);
+}
+
+static int check_views(X509_STORE_CTX *ctx)
+{
+    const struct x509_view *view;
+    X509 *x;
+    int i;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return 1;
+
+    for (i = 0; i < sk_X509_num(ctx->chain); i++) {
+        x = sk_X509_value(ctx->chain, i);
+        view = x509_get0_view(x);
+        CB_FAIL_IF(view == NULL, ctx, x, i, X509_V_ERR_UNSPECIFIED);
+        CB_FAIL_IF(view != NULL && x509_view_has_malformed_extension(view),
+            ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
+    }
+
+    return 1;
 }
 
 /*-
