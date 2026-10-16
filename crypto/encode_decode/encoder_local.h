@@ -26,7 +26,10 @@ struct ossl_endecode_base_st {
     int id;
     int no_store;
     char *name;
+    /* Retained only for cacheable provider query results */
     const OSSL_ALGORITHM *algodef;
+    char *propdef;
+    char *description;
     OSSL_PROPERTY_LIST *parsed_propdef;
 
     CRYPTO_REF_COUNT refcnt;

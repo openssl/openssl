@@ -273,11 +273,17 @@ well as the caller supplied argument I<arg>.
 ossl_provider_query_operation() calls the provider's
 I<query_operation> function, if the provider has one.
 It should return an array of I<OSSL_ALGORITHM> for the given
-I<operation_id>.
+I<operation_id>.  If I<*no_cache> is set to 0, the returned array and its
+associated data may be retained and must remain valid until provider teardown.
+If I<*no_cache> is set to 1, they must not be accessed after the corresponding
+ossl_provider_unquery_operation() call.
 
 ossl_provider_unquery_operation() informs the provider that the result of
-ossl_provider_query_operation() is no longer going to be directly accessed and
-that all relevant information has been copied.
+ossl_provider_query_operation() is no longer directly required for the current
+query.  For a result returned with I<*no_cache> set to 1, all relevant
+information has been copied and the provider may release the returned array
+and its associated data.  For a result returned with I<*no_cache> set to 0,
+this call does not shorten their required lifetime.
 
 ossl_provider_random_bytes() queries the provider, I<prov>, randomness
 source for I<n> bytes of entropy which are returned in the buffer
@@ -400,7 +406,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

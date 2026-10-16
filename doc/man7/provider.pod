@@ -80,17 +80,34 @@ and has the following signature:
 
  const OSSL_ALGORITHM *provider_query_operation(void *provctx,
                                                 int operation_id,
-                                                const int *no_store);
+                                                int *no_store);
 
 I<provctx> is the provider specific context that was passed back by
 the initialization function.
 
 I<operation_id> is an operation identity (see L</Operations> below).
 
-I<no_store> is a flag back to the OpenSSL libraries which, when
-nonzero, signifies that the OpenSSL libraries will not store a
-reference to the returned data in their internal store of
-implementations.
+I<no_store> is an output flag that controls whether the OpenSSL libraries may
+retain references to the returned array and its associated data.  If
+I<*no_store> is zero, the provider must keep the array, its strings, and its
+dispatch tables valid until provider teardown.  If I<*no_store> is nonzero,
+the OpenSSL libraries will not retain references to that data after the
+corresponding provider_unquery_operation() call, and the provider may then
+release it.  See L<provider-base(7)> for further details.
+
+The provider may also offer a function referred to with the number
+B<OSSL_FUNC_PROVIDER_UNQUERY_OPERATION>, with the following signature:
+
+ void provider_unquery_operation(void *provctx, int operation_id,
+                                 const OSSL_ALGORITHM *algs);
+
+I<operation_id> must match the value passed to provider_query_operation(), and
+I<algs> must be the array that it returned.  This callback informs the provider
+that the current query processing is complete.  If I<*no_store> was nonzero for
+that result, the OpenSSL libraries have copied the information they need, will
+no longer access the returned array or its associated data, and the provider
+may release them.  If I<*no_store> was zero, this callback does not shorten the
+lifetime requirement described above.
 
 The returned L<OSSL_ALGORITHM(3)> is the foundation of any OpenSSL
 library API that uses providers for their implementation, most
@@ -275,7 +292,7 @@ introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
