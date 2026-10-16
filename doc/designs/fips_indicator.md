@@ -52,7 +52,13 @@ but needs to be.
 
 - The fipsinstall application will have a configurable item added for each algorithm that requires a change. These options will be passed to the FIPS provider in a manner similar to existing code.
 
-- A user defined callback similar to OSSL_SELF_TEST will be added. This callback will be triggered whenever an approved mode test fails.
+- A user defined callback similar to OSSL_SELF_TEST will be added. This callback will be triggered whenever an approved mode test fails for items that
+have been disabled via configuration.
+
+Some algorithms operations do not trigger the callback because their approval
+depends on how they are used. This includes IV generation for AES_GCM,
+and AES_ECB encryption. In these cases it is the user's responsibility to query
+the indicator.
 
 It may be set up by the user using
 
