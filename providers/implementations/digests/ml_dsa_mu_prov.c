@@ -321,6 +321,9 @@ static int mu_final(void *vctx, uint8_t *out, size_t *outl, size_t outsz)
 
         if (ctx->remaining != 0)
             return 0;
+        /* The message may be empty, in which case mu_update() never ran */
+        if (!check_init(ctx))
+            return 0;
         if (!ossl_ml_dsa_mu_finalize(ctx->mdctx, out, len))
             return 0;
     }
