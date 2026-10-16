@@ -571,3 +571,97 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
         return -1;
     return 0;
 }
+
+static int cbs_get_two_digit_value(CBS *cbs, int *out)
+{
+    uint8_t first_digit, second_digit;
+
+    if (!CBS_get_u8(cbs, &first_digit) || !ossl_ascii_isdigit(first_digit))
+        return 0;
+    if (!CBS_get_u8(cbs, &second_digit) || !ossl_ascii_isdigit(second_digit))
+        return 0;
+
+    *out = (first_digit - 0x30) * 10 + (second_digit - 0x30);
+
+    return 1;
+}
+
+static int is_valid_day(int year, int month, int day)
+{
+    static const int mdays[12] = {
+        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+    };
+
+    if (day < 1)
+        return 0;
+    if (month == 2 && leap_year(year))
+        return day <= 29;
+
+    return day <= mdays[month - 1];
+}
+
+int ossl_asn1_time_parse_cbs(const CBS *cbs, int is_gentime, struct tm *out_tm)
+{
+    int year, month, day, hour, min, sec, val;
+    CBS copy;
+    uint8_t tz;
+
+    CBS_dup(cbs, &copy);
+
+    if (is_gentime) {
+        if (!cbs_get_two_digit_value(&copy, &val))
+            return 0;
+        year = val * 100;
+        if (!cbs_get_two_digit_value(&copy, &val))
+            return 0;
+        year += val;
+    } else {
+        year = 1900;
+        if (!cbs_get_two_digit_value(&copy, &val))
+            return 0;
+        year += val;
+        if (year < 1950)
+            year += 100;
+        if (year >= 2050)
+            return 0;
+    }
+
+    if (!cbs_get_two_digit_value(&copy, &month))
+        return 0;
+    if (month < 1 || month > 12)
+        return 0;
+    if (!cbs_get_two_digit_value(&copy, &day))
+        return 0;
+    if (!is_valid_day(year, month, day))
+        return 0;
+    if (!cbs_get_two_digit_value(&copy, &hour))
+        return 0;
+    if (hour > 23)
+        return 0;
+    if (!cbs_get_two_digit_value(&copy, &min))
+        return 0;
+    if (min > 59)
+        return 0;
+    if (!cbs_get_two_digit_value(&copy, &sec))
+        return 0;
+    if (sec > 59)
+        return 0;
+    if (!CBS_get_u8(&copy, &tz))
+        return 0;
+    if (tz != 0x5a)
+        return 0;
+    if (CBS_len(&copy) != 0)
+        return 0;
+
+    if (out_tm != NULL) {
+        memset(out_tm, 0, sizeof(*out_tm));
+        out_tm->tm_year = year - 1900;
+        out_tm->tm_mon = month - 1;
+        out_tm->tm_mday = day;
+        out_tm->tm_hour = hour;
+        out_tm->tm_min = min;
+        out_tm->tm_sec = sec;
+    }
+
+    return 1;
+}
