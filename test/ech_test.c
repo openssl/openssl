@@ -2410,6 +2410,75 @@ end:
     return res;
 }
 
+/*
+ * A server which rejects the client's ECH and also sends a HRR. In the 1st
+ * iteration the server has a different ECH key, so treats the ECH as GREASE,
+ * includes an ECH extension with a random value in the HRR and sends
+ * retry-configs. In the 2nd the server has no ECH, so its HRR has no ECH
+ * extension. Either way the client should fall back to the public_name
+ * once, keeping the inner SNI it tried, and fail with ech_required after
+ * the handshake.
+ */
+static int ech_hrr_reject_test(int idx)
+{
+    int res = 0, clientstatus;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    char *cinner = NULL, *couter = NULL;
+    unsigned char *retryconfig = NULL;
+    size_t retryconfiglen = 0;
+    BIO *in = NULL;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    if (idx == 0
+        && (!TEST_ptr(in = BIO_new(BIO_s_mem()))
+            || !TEST_int_gt(BIO_write(in, pem_kp2, (int)strlen(pem_kp2)), 0)
+            || !TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
+            || !TEST_true(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY))
+            || !TEST_true(SSL_CTX_set1_echstore(sctx, es))))
+        goto end;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set1_ech_config_list(clientssl,
+            (unsigned char *)ec_kp1, ec_kp1len))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example"))
+        /* force a HRR */
+        || !TEST_true(SSL_set1_groups_list(serverssl, "P-384"))
+        || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_R_ECH_REQUIRED)))
+        goto end;
+    /* override cert verification */
+    SSL_set_verify_result(clientssl, X509_V_OK);
+    clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
+    if (verbose)
+        TEST_info("client status %d, %s, %s", clientstatus, cinner, couter);
+    if (!TEST_int_eq(clientstatus, idx == 0 ? SSL_ECH_STATUS_FAILED_ECH : SSL_ECH_STATUS_FAILED)
+        || !TEST_str_eq(cinner, "server.example")
+        || !TEST_str_eq(couter, "example.com"))
+        goto end;
+    if (idx == 0
+        && (!TEST_true(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+                &retryconfiglen))
+            || !TEST_ptr(retryconfig)))
+        goto end;
+    res = 1;
+end:
+    OPENSSL_free(cinner);
+    OPENSSL_free(couter);
+    OPENSSL_free(retryconfig);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OSSL_ECHSTORE_free(es);
+    BIO_free(in);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2461,6 +2530,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     ADD_ALL_TESTS(test_ech_keylog_random, 4);
     ADD_TEST(ech_unauth_client_status_test);
+    ADD_ALL_TESTS(ech_hrr_reject_test, 2);
     return 1;
 err:
     return 0;
