@@ -498,6 +498,19 @@ int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);
 int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername);
+
+/**
+ * @brief Matches chk against the dNSNames in the subjectAltName of view,
+ * as ossl_x509_check_host() does, never consulting the subject.
+ * @param view the certificate's view
+ * @param chk the host name to match
+ * @param chklen the length of chk, at least 1
+ * @param flags X509_CHECK_FLAG_ values
+ * @param peername where to store a copy of the matching name, or NULL
+ * @returns 1 on a match, 0 otherwise
+ */
+int ossl_x509_view_check_host(const struct x509_view *view,
+    const uint8_t *chk, size_t chklen, unsigned int flags, char **peername);
 int ossl_x509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,
     unsigned int flags);
 
