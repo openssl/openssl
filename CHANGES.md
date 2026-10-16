@@ -33,6 +33,19 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The padding request held by an `EVP_CIPHER_CTX` is now kept across
+   re-initialisation, whether it was made with `EVP_CIPHER_CTX_set_padding()`,
+   the `EVP_CIPH_NO_PADDING` flag or the `OSSL_CIPHER_PARAM_PADDING` parameter,
+   which `EVP_CIPHER_CTX_test_flags()` now reports as well. Re-enabling padding
+   through the flag takes effect on the next initialisation, where before the
+   cipher went on producing unpadded output. The request is sent to the
+   provider at each initialisation, so a cipher whose provider implements no
+   `OSSL_FUNC_cipher_set_ctx_params()` function now fails to initialise when
+   the request can be neither delivered nor already met.
+   <!-- https://github.com/openssl/openssl/pull/32760 -->
+
+   *Madan Mohan Manokar*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
