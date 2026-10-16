@@ -17,11 +17,9 @@
 #if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE)
 #if __has_include(<asm/hwprobe.h>)
 #include <sys/syscall.h>
-#/*
-     * Some environments using musl are reported to have the hwprobe.h include
-     * file but not have the __NR_riscv_hwprobe define.
-     */
-#ifdef __NR_riscv_hwprobe
+#ifndef __NR_riscv_hwprobe
+#define __NR_riscv_hwprobe 258
+#endif
 #define OSSL_RISCV_HWPROBE
 #include <asm/hwcap.h>
 extern unsigned int OPENSSL_riscv_hwcap_P;
@@ -29,7 +27,6 @@ extern unsigned int OPENSSL_riscv_hwcap_P;
 #define ZVX_MIN 15
 #define ZVX_MAX 23
 #define IS_IN_DEPEND_VECTOR(offset) ((ZVX_MIN <= offset) && (offset <= ZVX_MAX))
-#endif
 #endif
 #endif
 
