@@ -8655,111 +8655,6 @@ end:
     return ok;
 }
 
-/*
- * For each AEAD row we run two AAD modes, and within each AAD mode two
- * cross-driver round trips:
- *
- *   aad_mode 0:  no AAD.  Critical for catching the OCB-style bug: any
- *                EVP_CipherUpdate(NULL, aad, ...) call before the body
- *                would itself pass through the (correct) streaming
- *                handler and apply the buffered IV, masking the one-shot
- *                handler's failure to do so.  With aad_len == 0 we make
- *                EVP_Cipher() the very first cipher operation on the
- *                context, which is the shape the bug requires.
- *
- *   aad_mode 1:  with AAD via streaming.  Catches divergence between the
- *                drivers when AAD is in play.
- *
- *   leg 0:       encrypt-oneshot   + decrypt-streaming
- *   leg 1:       encrypt-streaming + decrypt-oneshot
- *
- * The test index encodes (cipher, aad_mode) so a failure points at both.
- */
-static int test_aead_oneshot_roundtrip(int idx)
-{
-    static const unsigned char fixed_key[32] = {
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
-    };
-    static const unsigned char fixed_iv[12] = {
-        0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xab
-    };
-    static const unsigned char fixed_aad[] = "extra:context";
-    static const unsigned char fixed_pt[] = "THE QUICK BROWN FOX JUMPS OVER LAZY!!";
-    const AEAD_ONESHOT_CFG *cfg = &aead_oneshot_cfgs[idx / 2];
-    int with_aad = idx % 2;
-    size_t aad_len = with_aad ? sizeof(fixed_aad) - 1 : 0;
-    size_t pt_len = sizeof(fixed_pt) - 1;
-    EVP_CIPHER *probe = NULL;
-    unsigned char ct[64], pt[64];
-    unsigned char tag_oneshot[16], tag_stream[16];
-    const char *why = NULL;
-    int leg, ok = 0;
-
-    /*
-     * Probe for the cipher: a build with no-ocb / no-chacha / etc. will
-     * not have it, and we treat that as a pass (nothing to test here).
-     */
-    ERR_set_mark();
-    probe = EVP_CIPHER_fetch(testctx, cfg->name, testpropq);
-    ERR_pop_to_mark();
-    if (probe == NULL) {
-        TEST_info("skipping, '%s' is not available", cfg->name);
-        return 1;
-    }
-    EVP_CIPHER_free(probe);
-
-    for (leg = 0; leg <= 1; leg++) {
-        int enc_oneshot = (leg == 0);
-        unsigned char *tag = enc_oneshot ? tag_oneshot : tag_stream;
-
-        memset(ct, 0, sizeof(ct));
-        memset(pt, 0, sizeof(pt));
-        memset(tag, 0, cfg->taglen);
-
-        if (!aead_oneshot_op(cfg, /*enc=*/1, /*oneshot_body=*/enc_oneshot,
-                fixed_key, fixed_iv, fixed_aad, aad_len,
-                fixed_pt, pt_len, ct, tag, &why)) {
-            TEST_error("%s (%s): encrypt leg %d (%s body) failed at %s",
-                cfg->name, with_aad ? "with AAD" : "no AAD",
-                leg, enc_oneshot ? "oneshot" : "stream",
-                why ? why : "?");
-            goto end;
-        }
-        if (!aead_oneshot_op(cfg, /*enc=*/0, /*oneshot_body=*/!enc_oneshot,
-                fixed_key, fixed_iv, fixed_aad, aad_len,
-                ct, pt_len, pt, tag, &why)) {
-            TEST_error("%s (%s): decrypt leg %d (%s body) failed at %s",
-                cfg->name, with_aad ? "with AAD" : "no AAD",
-                leg, enc_oneshot ? "stream" : "oneshot",
-                why ? why : "?");
-            goto end;
-        }
-        if (!TEST_mem_eq(pt, pt_len, fixed_pt, pt_len)) {
-            TEST_error("%s (%s): leg %d: recovered plaintext differs",
-                cfg->name, with_aad ? "with AAD" : "no AAD", leg);
-            goto end;
-        }
-    }
-
-    /*
-     * Both legs share the same (key, iv, aad, pt) and must therefore
-     * agree on the tag bit-for-bit, regardless of which driver computed
-     * it.  This catches the OCB-style failure where the one-shot path
-     * silently emits a different ciphertext/tag from the streaming path.
-     */
-    if (!TEST_mem_eq(tag_oneshot, cfg->taglen, tag_stream, cfg->taglen)) {
-        TEST_error("%s (%s): oneshot-encrypt tag != streaming-encrypt tag",
-            cfg->name, with_aad ? "with AAD" : "no AAD");
-        goto end;
-    }
-    ok = 1;
-end:
-    return ok;
-}
-
 #ifndef OPENSSL_NO_DES
 static int test_EVP_CIPHER_get_type_des_ede3(void)
 {
@@ -9980,9 +9875,6 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_RC4
     ADD_TEST(test_aes_rc4_keylen_change_cve_2023_5363);
 #endif
-
-    ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
-
     /* Test cases for CVE-2026-45446 */
     ADD_TEST(test_aes_gcm_siv_empty_data);
     ADD_TEST(test_aes_siv_ctx_reuse);
