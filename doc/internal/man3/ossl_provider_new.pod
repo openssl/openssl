@@ -367,9 +367,10 @@ ossl_provider_module_name(), and ossl_provider_module_path() return a
 pointer to their respective data if it's available, otherwise NULL
 is returned.
 
-ossl_provider_libctx() return a pointer to the library context.
-This may be NULL, and is perfectly valid, as it denotes the default
-global library context.
+ossl_provider_libctx() returns a pointer to the library context.
+This is the concrete library context selected when the provider store was
+resolved. In particular, passing NULL while creating or loading a provider
+selects the current default context rather than storing NULL in the provider.
 
 ossl_provider_teardown() doesn't return any value.
 
