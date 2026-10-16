@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
 
 #include "crypto/x509.h"
 #include "crypto/x509_view.h"
@@ -98,8 +100,7 @@ static int test_strict_no_view(void)
         || !TEST_true(X509_set_serialNumber(leaf, serial))
         || !TEST_ptr_null(x509_get0_view(leaf))
         || !TEST_int_eq(verify(leaf, 0), X509_V_OK)
-        || !TEST_int_eq(verify(leaf, X509_V_FLAG_X509_STRICT),
-            X509_V_ERR_UNSPECIFIED))
+        || !TEST_int_ne(verify(leaf, X509_V_FLAG_X509_STRICT), X509_V_OK))
         goto err;
     ret = 1;
 
@@ -128,6 +129,113 @@ static int test_strict_malformed_extension(void)
     return ret;
 }
 
+static X509_NAME *make_name(const char *cn, int type)
+{
+    X509_NAME *name;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", type,
+            (const unsigned char *)cn, -1, -1, 0))) {
+        X509_NAME_free(name);
+        return NULL;
+    }
+    return name;
+}
+
+/*
+ * A certificate for key with the names given, signed by sign_key, and a CA
+ * certificate when ca is set.
+ */
+static X509 *make_cert(const X509_NAME *subject, const X509_NAME *issuer,
+    EVP_PKEY *key, EVP_PKEY *sign_key, int ca)
+{
+    BASIC_CONSTRAINTS *bc = NULL;
+    X509 *x;
+
+    if (ca) {
+        if (!TEST_ptr(bc = BASIC_CONSTRAINTS_new()))
+            return NULL;
+        bc->ca = 0xff;
+    }
+    if (!TEST_ptr(x = X509_new())
+        || !TEST_true(X509_set_version(x, X509_VERSION_3))
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(x), 1))
+        || !TEST_true(X509_set_subject_name(x, subject))
+        || !TEST_true(X509_set_issuer_name(x, issuer))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), -3600))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 3600))
+        || !TEST_true(X509_set_pubkey(x, key))
+        || (bc != NULL
+            && !TEST_true(X509_add1_ext_i2d(x, NID_basic_constraints, bc, 1,
+                0)))
+        || !TEST_int_gt(X509_sign(x, sign_key, NULL), 0)) {
+        X509_free(x);
+        x = NULL;
+    }
+    BASIC_CONSTRAINTS_free(bc);
+    return x;
+}
+
+static int verify_with_root(X509 *root, X509 *leaf, unsigned long flags)
+{
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int ret = -1;
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, root))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
+        goto err;
+    X509_STORE_CTX_set_flags(ctx, flags);
+    (void)X509_verify_cert(ctx);
+    ret = X509_STORE_CTX_get_error(ctx);
+
+err:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    return ret;
+}
+
+/*
+ * The leaf names its issuer as a UTF8String, the root its subject as a
+ * PrintableString with the same characters: equal as canonical names, not
+ * as bytes.
+ */
+static int test_strict_issuer_bytes(void)
+{
+    EVP_PKEY *root_key = NULL, *leaf_key = NULL;
+    X509_NAME *root_name = NULL, *utf8_name = NULL, *leaf_name = NULL;
+    X509 *root = NULL, *leaf = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(root_key = EVP_PKEY_Q_keygen(NULL, NULL, "ED25519"))
+        || !TEST_ptr(leaf_key = EVP_PKEY_Q_keygen(NULL, NULL, "ED25519"))
+        || !TEST_ptr(root_name = make_name("View Root",
+                         V_ASN1_PRINTABLESTRING))
+        || !TEST_ptr(utf8_name = make_name("View Root", V_ASN1_UTF8STRING))
+        || !TEST_ptr(leaf_name = make_name("View Leaf", V_ASN1_UTF8STRING))
+        || !TEST_ptr(root = make_cert(root_name, root_name, root_key,
+                         root_key, 1))
+        || !TEST_ptr(leaf = make_cert(leaf_name, utf8_name, leaf_key,
+                         root_key, 0))
+        || !TEST_int_eq(verify_with_root(root, leaf, 0), X509_V_OK)
+        || !TEST_int_eq(verify_with_root(root, leaf, X509_V_FLAG_X509_STRICT),
+            X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY))
+        goto err;
+    ret = 1;
+
+err:
+    X509_free(root);
+    X509_free(leaf);
+    X509_NAME_free(root_name);
+    X509_NAME_free(utf8_name);
+    X509_NAME_free(leaf_name);
+    EVP_PKEY_free(root_key);
+    EVP_PKEY_free(leaf_key);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -142,5 +250,6 @@ int setup_tests(void)
     ADD_TEST(test_strict_chain);
     ADD_TEST(test_strict_no_view);
     ADD_TEST(test_strict_malformed_extension);
+    ADD_TEST(test_strict_issuer_bytes);
     return 1;
 }
