@@ -30,6 +30,8 @@
 #include "internal/dgram_demux.h"
 #include "internal/dtls_record_rx.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/quic_ssl.h"
+#include "internal/quic_port.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "../ssl/ssl_local.h"
@@ -5192,6 +5194,404 @@ end:
 
 #endif /* OPENSSL_THREADS */
 
+#if defined(OPENSSL_THREADS)
+/* Longer than the one-second SSL_poll() calls guarded by these helpers. */
+static int poll_test_wait(CRYPTO_MUTEX *mutex, CRYPTO_CONDVAR *cv, int *flag)
+{
+    OSSL_TIME deadline = ossl_time_add(ossl_time_now(), ossl_seconds2time(5));
+    int ok;
+
+    ossl_crypto_mutex_lock(mutex);
+    while (!*flag && ossl_time_compare(ossl_time_now(), deadline) < 0)
+        ossl_crypto_condvar_wait_timeout(cv, mutex, deadline);
+    ok = *flag;
+    ossl_crypto_mutex_unlock(mutex);
+    return ok;
+}
+
+struct poll_watchdog {
+    CRYPTO_MUTEX *mutex;
+    CRYPTO_CONDVAR *cv;
+    int done;
+};
+
+static CRYPTO_THREAD_RETVAL poll_watchdog_worker(void *arg)
+{
+    struct poll_watchdog *w = arg;
+
+    if (!poll_test_wait(w->mutex, w->cv, &w->done))
+        OPENSSL_die("DTLS poll test is wedged", __FILE__, __LINE__);
+    return 0;
+}
+
+static CRYPTO_THREAD *poll_watchdog_start(struct poll_watchdog *w)
+{
+    if (!TEST_ptr(w->mutex = ossl_crypto_mutex_new())
+        || !TEST_ptr(w->cv = ossl_crypto_condvar_new()))
+        return NULL;
+    return ossl_crypto_thread_native_start(poll_watchdog_worker, w, 1);
+}
+
+static void poll_watchdog_stop(struct poll_watchdog *w, CRYPTO_THREAD *thread)
+{
+    if (thread != NULL) {
+        ossl_crypto_mutex_lock(w->mutex);
+        w->done = 1;
+        ossl_crypto_condvar_broadcast(w->cv);
+        ossl_crypto_mutex_unlock(w->mutex);
+        ossl_crypto_thread_native_join(thread, NULL);
+        ossl_crypto_thread_native_clean(thread);
+    }
+    ossl_crypto_condvar_free(&w->cv);
+    ossl_crypto_mutex_free(&w->mutex);
+}
+
+static int poll_signal_listener(SSL *listener)
+{
+    DTLS_LISTENER *dl = (DTLS_LISTENER *)listener;
+    int ok;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    /* Match the production signal helper's registered-waiter precondition. */
+    ok = TEST_size_t_gt(dl->cur_blocking_waiters, 0)
+        && TEST_true(ossl_rio_notifier_signal(&dl->notifier));
+    if (ok)
+        dl->signalled_notifier = 1;
+    ossl_crypto_mutex_unlock(dl->mutex);
+    return ok;
+}
+
+/* A later notification must not extend a wait for a completed cycle. */
+static int test_dtls_poll_notification_generation(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *listener = NULL;
+    DTLS_LISTENER *dl;
+    struct poll_watchdog watchdog = { 0 };
+    CRYPTO_THREAD *thread = NULL;
+    uint64_t generation, unused;
+    int ok = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(listener = SSL_new_listener(ctx, 0))
+        || !TEST_ptr(thread = poll_watchdog_start(&watchdog)))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    ossl_dtls_listener_enter_blocking_section(listener);
+    ossl_dtls_listener_enter_blocking_section(listener);
+    if (!poll_signal_listener(listener))
+        goto end;
+
+    if (!TEST_true(ossl_dtls_listener_deregister_blocking_section(listener,
+            &generation))
+        || !TEST_false(ossl_dtls_listener_deregister_blocking_section(listener,
+            &unused))
+        || !TEST_uint64_t_ne(dl->notify_generation, generation))
+        goto end;
+
+    ossl_dtls_listener_enter_blocking_section(listener);
+    if (!poll_signal_listener(listener))
+        goto end;
+    ossl_dtls_listener_wait_for_notifier_clear(listener, generation);
+    if (!TEST_true(dl->signalled_notifier)
+        || !TEST_size_t_eq(dl->cur_blocking_waiters, 1))
+        goto end;
+
+    ossl_dtls_listener_leave_blocking_section(listener);
+    ok = TEST_false(dl->signalled_notifier);
+end:
+    poll_watchdog_stop(&watchdog, thread);
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    return ok;
+}
+
+/* Fail allocation of the first or second listener's poll registration. */
+static int test_dtls_poll_registration_failure(int idx)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *listener[2] = { NULL, NULL };
+    BIO_ADDR *addr[2] = { NULL, NULL };
+    int fd[2] = { -1, -1 };
+    SSL_POLL_ITEM items[2] = { 0 };
+    struct timeval timeout = { 1, 0 };
+    size_t count = 0, i;
+    int ret, triggered, ok = 0;
+
+    if (!mfail_is_installed())
+        return TEST_skip("allocation failure injection unavailable");
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto end;
+    for (i = 0; i < OSSL_NELEM(listener); ++i) {
+        if (!create_dtls_listener(ctx, 0, &listener[i], &addr[i], &fd[i]))
+            goto end;
+        items[i].desc = SSL_as_poll_descriptor(listener[i]);
+        items[i].events = SSL_POLL_EVENT_IC;
+    }
+
+    /*
+     * With empty listeners and NO_HANDLE_EVENTS, the first allocations are
+     * their wait slots. The four descriptors fit in the poll builder's stack
+     * storage. Revisit these indices if translation gains other allocations.
+     */
+    mfail_start();
+    mfail_arm_once(idx);
+    ret = SSL_poll(items, OSSL_NELEM(items), sizeof(items[0]), &timeout,
+        SSL_POLL_FLAG_NO_HANDLE_EVENTS, &count);
+    triggered = mfail_was_triggered();
+    mfail_end();
+    mfail_disarm();
+    if (!TEST_true(triggered) || !TEST_false(ret)
+        || !TEST_size_t_eq(count, 1)
+        || !TEST_uint64_t_eq(items[idx].revents, SSL_POLL_EVENT_F))
+        goto end;
+    ERR_clear_error();
+
+    for (i = 0; i < OSSL_NELEM(listener); ++i)
+        if (!TEST_size_t_eq(((DTLS_LISTENER *)listener[i])->cur_blocking_waiters, 0))
+            goto end;
+
+    /* The same objects must still be usable after the partial setup failure. */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 10000;
+    ok = TEST_true(SSL_poll(items, OSSL_NELEM(items), sizeof(items[0]),
+             &timeout, 0, &count))
+        && TEST_size_t_eq(count, 0);
+end:
+    for (i = 0; i < OSSL_NELEM(listener); ++i) {
+        SSL_free(listener[i]);
+        BIO_ADDR_free(addr[i]);
+        if (fd[i] >= 0)
+            BIO_closesocket(fd[i]);
+    }
+    SSL_CTX_free(ctx);
+    return ok;
+}
+
+struct poll_cleanup_test {
+    CRYPTO_MUTEX *mutex;
+    CRYPTO_CONDVAR *cv;
+    int arrived, release, done, descriptors, mode, ret;
+    size_t count;
+    SSL_POLL_ITEM items[3];
+};
+
+/* Stop translation after both objects registered, using the repeated item. */
+static long poll_cleanup_bio_cb(BIO *bio, int oper, const char *argp,
+    size_t len, int cmd, long argl, int ret, size_t *processed)
+{
+    struct poll_cleanup_test *t = (void *)BIO_get_callback_arg(bio);
+
+    if (oper != (BIO_CB_CTRL | BIO_CB_RETURN))
+        return ret;
+    if (cmd == BIO_CTRL_GET_RPOLL_DESCRIPTOR && ++t->descriptors == 2) {
+        ossl_crypto_mutex_lock(t->mutex);
+        t->arrived = 1;
+        ossl_crypto_condvar_broadcast(t->cv);
+        while (!t->release)
+            ossl_crypto_condvar_wait(t->cv, t->mutex);
+        ossl_crypto_mutex_unlock(t->mutex);
+        if (t->mode == 2)
+            return 0; /* Translation failure after earlier registrations. */
+    }
+    if (cmd == BIO_CTRL_PENDING && t->descriptors >= 2 && t->mode == 1)
+        return 1; /* Readiness discovered by the post-registration recheck. */
+    return ret;
+}
+
+static CRYPTO_THREAD_RETVAL poll_cleanup_worker(void *arg)
+{
+    struct poll_cleanup_test *t = arg;
+    const struct timeval timeout = { 1, 0 };
+
+    t->ret = SSL_poll(t->items, OSSL_NELEM(t->items), sizeof(t->items[0]),
+        &timeout, SSL_POLL_FLAG_NO_HANDLE_EVENTS, &t->count);
+    ERR_clear_error();
+    ossl_crypto_mutex_lock(t->mutex);
+    t->done = 1;
+    ossl_crypto_condvar_broadcast(t->cv);
+    ossl_crypto_mutex_unlock(t->mutex);
+    return 0;
+}
+
+/*
+ * Retain an external registration on each listener while a poll cleans up.
+ * Both of its registrations must disappear before either external one is
+ * released. This forces the ordering without relying on two cleanups racing.
+ * Also test mixed DTLS/QUIC arrays, in both orders, and translation exits.
+ * The final iteration, [QUIC, L0, L0(R)] with translation failure, is a smoke
+ * test: the old cleanup already deregistered QUIC before waiting on L0 there.
+ */
+static int test_dtls_poll_cleanup_order(int idx)
+{
+    SSL_CTX *ctx[2] = { NULL, NULL };
+    SSL *listener[2] = { NULL, NULL };
+    BIO_ADDR *addr[2] = { NULL, NULL };
+    int fd[2] = { -1, -1 }, registered[2] = { 0, 0 };
+    DTLS_LISTENER *dl[2] = { NULL, NULL };
+#ifndef OPENSSL_NO_QUIC
+    QUIC_REACTOR *rtor = NULL;
+#endif
+    CRYPTO_THREAD *thread = NULL;
+    struct poll_cleanup_test t = { 0 };
+    OSSL_TIME deadline;
+    uint64_t generation;
+    size_t i, remaining[2] = { 0, 0 };
+    int mixed = idx / 3, ok = 0;
+
+#ifdef OPENSSL_NO_QUIC
+    if (mixed)
+        return TEST_skip("QUIC disabled");
+#endif
+    t.mode = idx % 3;
+    if (!TEST_ptr(t.mutex = ossl_crypto_mutex_new())
+        || !TEST_ptr(t.cv = ossl_crypto_condvar_new()))
+        goto end;
+    for (i = 0; i < 2; ++i) {
+#ifndef OPENSSL_NO_QUIC
+        if (mixed && i == 1) {
+            if (!TEST_ptr(ctx[i] = SSL_CTX_new(OSSL_QUIC_server_method()))
+                || !TEST_true(SSL_CTX_set_domain_flags(ctx[i],
+                    SSL_DOMAIN_FLAG_MULTI_THREAD | SSL_DOMAIN_FLAG_BLOCKING)))
+                goto end;
+        } else
+#endif
+        {
+            if (!TEST_ptr(ctx[i] = SSL_CTX_new(DTLS_server_method())))
+                goto end;
+        }
+        if (!create_dtls_listener(ctx[i], 0, &listener[i], &addr[i], &fd[i]))
+            goto end;
+#ifndef OPENSSL_NO_QUIC
+        if (mixed && i == 1) {
+            rtor = ossl_quic_port_get0_reactor(ossl_quic_listener_get_port(listener[i]));
+            ossl_crypto_mutex_lock(rtor->mutex);
+            ossl_quic_reactor_enter_blocking_section(rtor);
+            ossl_crypto_mutex_unlock(rtor->mutex);
+        } else
+#endif
+        {
+            dl[i] = (DTLS_LISTENER *)listener[i];
+            ossl_dtls_listener_enter_blocking_section(listener[i]);
+        }
+        registered[i] = 1;
+    }
+
+    t.items[0].desc = SSL_as_poll_descriptor(listener[mixed == 2]);
+    t.items[1].desc = SSL_as_poll_descriptor(listener[mixed != 2]);
+    t.items[2].desc = SSL_as_poll_descriptor(listener[0]);
+    t.items[0].events = t.items[1].events = SSL_POLL_EVENT_IC;
+    t.items[2].events = SSL_POLL_EVENT_R;
+    BIO_set_callback_arg(SSL_get_rbio(listener[0]), (char *)&t);
+    BIO_set_callback_ex(SSL_get_rbio(listener[0]), poll_cleanup_bio_cb);
+    if (!TEST_ptr(thread = ossl_crypto_thread_native_start(poll_cleanup_worker, &t, 1))
+        || !TEST_true(poll_test_wait(t.mutex, t.cv, &t.arrived)))
+        goto end;
+
+    for (i = 0; i < 2; ++i) {
+        if (dl[i] != NULL) {
+            if (!TEST_size_t_eq(dl[i]->cur_blocking_waiters, 2))
+                goto end;
+            if (!poll_signal_listener(listener[i]))
+                goto end;
+        }
+#ifndef OPENSSL_NO_QUIC
+        else {
+            ossl_crypto_mutex_lock(rtor->mutex);
+            remaining[i] = rtor->cur_blocking_waiters;
+            ossl_rio_notifier_signal(&rtor->notifier);
+            rtor->signalled_notifier = 1;
+            ossl_crypto_mutex_unlock(rtor->mutex);
+            if (!TEST_size_t_eq(remaining[i], 2))
+                goto end;
+        }
+#endif
+    }
+    ossl_crypto_mutex_lock(t.mutex);
+    t.release = 1;
+    ossl_crypto_condvar_broadcast(t.cv);
+    ossl_crypto_mutex_unlock(t.mutex);
+
+    deadline = ossl_time_add(ossl_time_now(), ossl_seconds2time(5));
+    do {
+        for (i = 0; i < 2; ++i) {
+            if (dl[i] != NULL) {
+                ossl_crypto_mutex_lock(dl[i]->mutex);
+                remaining[i] = dl[i]->cur_blocking_waiters;
+                ossl_crypto_mutex_unlock(dl[i]->mutex);
+            }
+#ifndef OPENSSL_NO_QUIC
+            else {
+                ossl_crypto_mutex_lock(rtor->mutex);
+                remaining[i] = rtor->cur_blocking_waiters;
+                ossl_crypto_mutex_unlock(rtor->mutex);
+            }
+#endif
+        }
+        if (remaining[0] == 1 && remaining[1] == 1)
+            break;
+        OSSL_sleep(1);
+    } while (ossl_time_compare(ossl_time_now(), deadline) < 0);
+    ok = TEST_size_t_eq(remaining[0], 1) && TEST_size_t_eq(remaining[1], 1);
+end:
+    if (t.mutex != NULL) {
+        ossl_crypto_mutex_lock(t.mutex);
+        t.release = 1;
+        if (t.cv != NULL)
+            ossl_crypto_condvar_broadcast(t.cv);
+        ossl_crypto_mutex_unlock(t.mutex);
+    }
+    for (i = 0; i < 2; ++i) {
+        if (!registered[i])
+            continue;
+        if (dl[i] != NULL)
+            ossl_dtls_listener_deregister_blocking_section(listener[i], &generation);
+#ifndef OPENSSL_NO_QUIC
+        else {
+            ossl_crypto_mutex_lock(rtor->mutex);
+            ossl_quic_reactor_deregister_blocking_section(rtor, &generation);
+            ossl_crypto_mutex_unlock(rtor->mutex);
+        }
+#endif
+    }
+    if (thread != NULL) {
+        if (!poll_test_wait(t.mutex, t.cv, &t.done))
+            OPENSSL_die("DTLS poll cleanup worker is wedged", __FILE__, __LINE__);
+        ossl_crypto_thread_native_join(thread, NULL);
+        ossl_crypto_thread_native_clean(thread);
+        if (!TEST_int_eq(t.ret, t.mode != 2)
+            || !TEST_size_t_eq(t.count, t.mode == 0 ? 0 : 1)
+            || !TEST_uint64_t_eq(t.items[2].revents,
+                t.mode == 0 ? 0 : t.mode == 1 ? SSL_POLL_EVENT_R
+                                              : SSL_POLL_EVENT_F))
+            ok = 0;
+    }
+    for (i = 0; i < 2; ++i) {
+        if (listener[i] != NULL)
+            BIO_set_callback_ex(SSL_get_rbio(listener[i]), NULL);
+        if (dl[i] != NULL
+            && (!TEST_size_t_eq(dl[i]->cur_blocking_waiters, 0)
+                || !TEST_false(dl[i]->signalled_notifier)))
+            ok = 0;
+#ifndef OPENSSL_NO_QUIC
+        if (i == 1 && rtor != NULL
+            && (!TEST_size_t_eq(rtor->cur_blocking_waiters, 0)
+                || !TEST_false(rtor->signalled_notifier)))
+            ok = 0;
+#endif
+        SSL_free(listener[i]);
+        BIO_ADDR_free(addr[i]);
+        if (fd[i] >= 0)
+            BIO_closesocket(fd[i]);
+        SSL_CTX_free(ctx[i]);
+    }
+    ossl_crypto_condvar_free(&t.cv);
+    ossl_crypto_mutex_free(&t.mutex);
+    return ok;
+}
+#endif
+
 static unsigned int short_timer_cb_count;
 
 /* Force a short retransmission timeout and count how often it is consulted. */
@@ -5426,6 +5826,155 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
     TEST_error("cookie exchange loop did not converge");
     return 0;
 }
+
+#if defined(OPENSSL_THREADS)
+struct poll_shared_listener_signal {
+    SSL *listener;
+    int descriptors, signalled;
+};
+
+/*
+ * For two connections, the second descriptor lookup follows both registration
+ * attempts; for repeated listeners it follows the first registration.
+ * Signal at that point to model another thread producing readiness, without
+ * relying on scheduling or signalling a listener with no registered waiter.
+ */
+static long poll_shared_listener_bio_cb(BIO *bio, int oper, const char *argp,
+    size_t len, int cmd, long argl, int ret, size_t *processed)
+{
+    struct poll_shared_listener_signal *s = (void *)BIO_get_callback_arg(bio);
+
+    if (oper == (BIO_CB_CTRL | BIO_CB_RETURN)
+        && cmd == BIO_CTRL_GET_RPOLL_DESCRIPTOR && ++s->descriptors == 2)
+        s->signalled = poll_signal_listener(s->listener);
+    return ret;
+}
+
+/*
+ * Poll a listener and a connection, two connections, or repeated listener
+ * items. In modes 0 and 2 a datagram for S1 is demuxed by S0's translator
+ * after the listener registers, naturally signalling the notifier. Mode 2
+ * also polls S1, so finding its data aborts translation. Modes 1 and 3 use
+ * the BIO callback to signal after registration. Run each with the notifier
+ * enabled and with SINGLE_THREAD as a control. The watchdog never operates
+ * on SSL objects: the natural trigger needs only one thread using DTLS.
+ */
+static int test_dtls_poll_shared_listener(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client[2] = { NULL, NULL };
+    SSL *server[2] = { NULL, NULL };
+    BIO_ADDR *addr = NULL;
+    BIO *signal_bio = NULL;
+    int server_fd = -1, client_fd[2] = { -1, -1 };
+    SSL_POLL_ITEM items[3] = { 0 };
+    struct timeval timeout = { 1, 0 };
+    DTLS_LISTENER *dl;
+    struct poll_shared_listener_signal signal = { 0 };
+    struct poll_watchdog watchdog = { 0 };
+    CRYPTO_THREAD *thread = NULL;
+    uint64_t generation;
+    size_t count, written, nitems = 2, i;
+    char buf[4];
+    int single_thread = idx / 4, mode = idx % 4, ok = 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    return TEST_skip("DTLS 1.2 disabled");
+#endif
+    /* DTLS 1.2 has no post-handshake ACKs to make the connections readable. */
+    if (!create_ssl_ctx_pair(NULL, DTLS_server_method(), DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION, &sctx, &cctx, cert, privkey)
+        || !create_dtls_listener(sctx,
+            single_thread ? SSL_LISTENER_FLAG_SINGLE_THREAD : 0,
+            &listener, &addr, &server_fd))
+        goto end;
+    dl = (DTLS_LISTENER *)listener;
+    for (i = 0; i < OSSL_NELEM(client); ++i) {
+        if (!create_dtls_client_for_addr(cctx, addr, &client[i], &client_fd[i])
+            || !drive_until_connection_queued(listener, client[i])
+            || !TEST_ptr(server[i] = SSL_accept_connection(listener,
+                             SSL_ACCEPT_CONNECTION_NO_BLOCK))
+            || !TEST_true(create_ssl_connection(server[i], client[i], SSL_ERROR_NONE)))
+            goto end;
+    }
+
+    items[0].desc = SSL_as_poll_descriptor(mode == 1 ? server[0] : listener);
+    items[0].events = mode == 1 ? SSL_POLL_EVENT_R : SSL_POLL_EVENT_IC;
+    items[1].desc = SSL_as_poll_descriptor(mode == 3 ? listener : server[mode == 1]);
+    items[1].events = mode == 3 ? SSL_POLL_EVENT_IC : SSL_POLL_EVENT_R;
+    if (mode == 2) {
+        items[2].desc = SSL_as_poll_descriptor(server[1]);
+        items[2].events = SSL_POLL_EVENT_R;
+        nitems = 3;
+    }
+    if (mode == 0 || mode == 2) {
+        if (!TEST_true(SSL_write_ex(client[1], "data", 4, &written))
+            || !TEST_int_gt(BIO_socket_wait(server_fd, 1, time(NULL) + 5), 0))
+            goto end;
+    }
+
+    if (!TEST_size_t_eq(dl->cur_blocking_waiters, 0)
+        || !TEST_false(dl->signalled_notifier))
+        goto end;
+    generation = dl->notify_generation;
+    if (!single_thread && (mode == 1 || mode == 3)) {
+        signal.listener = listener;
+        signal_bio = SSL_get_rbio(listener);
+        BIO_set_callback_arg(signal_bio, (char *)&signal);
+        BIO_set_callback_ex(signal_bio, poll_shared_listener_bio_cb);
+    }
+    if (!TEST_ptr(thread = poll_watchdog_start(&watchdog)))
+        goto end;
+    if (!TEST_true(SSL_poll(items, nitems, sizeof(items[0]), &timeout,
+            SSL_POLL_FLAG_NO_HANDLE_EVENTS, &count))
+        || !TEST_size_t_eq(count, mode == 2 ? 1 : 0)
+        || !TEST_uint64_t_eq(items[0].revents, 0)
+        || !TEST_uint64_t_eq(items[1].revents, 0)
+        || !TEST_size_t_eq(dl->cur_blocking_waiters, 0)
+        || !TEST_false(dl->signalled_notifier))
+        goto end;
+
+    /* The natural triggers must actually complete a notification cycle. */
+    if (!single_thread && !TEST_uint64_t_ne(dl->notify_generation, generation))
+        goto end;
+    if (!single_thread && (mode == 1 || mode == 3)
+        && !TEST_true(signal.signalled))
+        goto end;
+    if (mode == 2 && !TEST_uint64_t_eq(items[2].revents, SSL_POLL_EVENT_R))
+        goto end;
+    if ((mode == 0 || mode == 2)
+        && (!TEST_true(dtls_read_with_retry(server[1], buf, sizeof(buf), &count))
+            || !TEST_mem_eq(buf, count, "data", 4)))
+        goto end;
+
+    /* Follow-up single-item polling must not inherit a stranded registration. */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 10000;
+    if (!TEST_true(SSL_poll(items, 1, sizeof(items[0]), &timeout, 0, &count))
+        || !TEST_size_t_eq(count, 0))
+        goto end;
+    ok = 1;
+end:
+    poll_watchdog_stop(&watchdog, thread);
+    if (signal_bio != NULL) {
+        BIO_set_callback_ex(signal_bio, NULL);
+        BIO_set_callback_arg(signal_bio, NULL);
+    }
+    for (i = 0; i < OSSL_NELEM(client); ++i) {
+        SSL_free(server[i]);
+        SSL_free(client[i]);
+        if (client_fd[i] >= 0)
+            BIO_closesocket(client_fd[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return ok;
+}
+#endif
 
 /*
  * Test the blocking mode of a DTLS listener and of the connections it creates.
@@ -6689,6 +7238,12 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_listener_multiple_events);
     ADD_TEST(test_dtls_poll_conn_event_ec);
     ADD_TEST(test_dtls_poll_null_item);
+#if defined(OPENSSL_THREADS)
+    ADD_ALL_TESTS(test_dtls_poll_shared_listener, 8);
+    ADD_ALL_TESTS(test_dtls_poll_registration_failure, 2);
+    ADD_ALL_TESTS(test_dtls_poll_cleanup_order, 9);
+    ADD_TEST(test_dtls_poll_notification_generation);
+#endif
 
 #ifndef OPENSSL_NO_DTLS1_3
     /* Message buffering test */
