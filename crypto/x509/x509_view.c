@@ -18,6 +18,7 @@
 
 #include "crypto/asn1.h"
 #include "crypto/objects.h"
+#include "crypto/x509.h"
 #include "crypto/x509_view.h"
 #include "internal/bytestring.h"
 #include "internal/nelem.h"
@@ -658,6 +659,14 @@ static int sig_alg_nid(const CBS *sig_alg, int *out_nid)
     *out_nid = ossl_obj_cbs2nid(&oid);
 
     return 1;
+}
+
+const struct x509_view *x509_get0_view(const X509 *x)
+{
+    if (!x->has_view)
+        return NULL;
+
+    return &x->view;
 }
 
 int x509_view_parse(const uint8_t *der, size_t der_len, struct x509_view *cert)

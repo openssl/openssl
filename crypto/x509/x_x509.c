@@ -55,12 +55,11 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
-        CRYPTO_BUFFER_free(ret->der);
 
         /* fall through */
 
     case ASN1_OP_NEW_POST:
-        ret->der = NULL;
+        ossl_x509_set0_der(ret, NULL);
         ret->ex_cached = 0;
         ret->ex_kusage = 0;
         ret->ex_xkusage = 0;
@@ -98,7 +97,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
-        CRYPTO_BUFFER_free(ret->der);
+        ossl_x509_set0_der(ret, NULL);
         OPENSSL_free(ret->propq);
         break;
 
@@ -111,6 +110,8 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (!CRYPTO_BUFFER_up_ref(old->der))
                 return 0;
             ret->der = old->der;
+            ret->view = old->view;
+            ret->has_view = old->has_view;
         }
     } break;
     case ASN1_OP_GET0_LIBCTX: {
@@ -174,7 +175,7 @@ X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
         (long)CRYPTO_BUFFER_len(der), ASN1_ITEM_rptr(X509));
     if (x == NULL)
         goto out;
-    x->der = der;
+    ossl_x509_set0_der(x, der);
     der = NULL;
     *in += CBS_len(&cert);
 
@@ -193,8 +194,16 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 void ossl_x509_set_modified(X509 *x)
 {
     x->cert_info.enc.modified = 1;
+    ossl_x509_set0_der(x, NULL);
+}
+
+void ossl_x509_set0_der(X509 *x, CRYPTO_BUFFER *der)
+{
     CRYPTO_BUFFER_free(x->der);
-    x->der = NULL;
+    x->der = der;
+    x->has_view = der != NULL
+        && x509_view_parse(CRYPTO_BUFFER_data(der), CRYPTO_BUFFER_len(der),
+            &x->view);
 }
 
 /*

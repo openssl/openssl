@@ -191,15 +191,18 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
 
 static int x509_set_der(X509 *x)
 {
+    CRYPTO_BUFFER *buf = NULL;
     unsigned char *der = NULL;
     int der_len;
 
-    if ((der_len = i2d_X509(x, &der)) <= 0)
-        return 0;
-    x->der = CRYPTO_BUFFER_new(der, (size_t)der_len, NULL);
+    if ((der_len = i2d_X509(x, &der)) > 0)
+        buf = CRYPTO_BUFFER_new(der, (size_t)der_len, NULL);
     OPENSSL_free(der);
+    if (buf == NULL)
+        return 0;
+    ossl_x509_set0_der(x, buf);
 
-    return x->der != NULL;
+    return 1;
 }
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
