@@ -388,20 +388,24 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int ret = -1;
     size_t outl = 0;
     size_t blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
+    size_t outsize;
 
     if (blocksize == 0)
         return 0;
 
+    if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
+        outsize = (((size_t)inl + blocksize - 1) / blocksize + 1) * blocksize;
+    else
+        outsize = (size_t)inl + (blocksize == 1 ? 0 : blocksize);
+
     if (ctx->cipher->ccipher != NULL)
         ret = ctx->cipher->ccipher(ctx->algctx, out, &outl,
-                  inl + (blocksize == 1 ? 0 : blocksize),
-                  in, (size_t)inl)
+                  outsize, in, (size_t)inl)
             ? (int)outl
             : -1;
     else if (in != NULL)
-        ret = ctx->cipher->cupdate(ctx->algctx, out, &outl,
-            inl + (blocksize == 1 ? 0 : blocksize),
-            in, (size_t)inl);
+        ret = ctx->cipher->cupdate(ctx->algctx, out, &outl, outsize, in,
+            (size_t)inl);
     else
         ret = ctx->cipher->cfinal(ctx->algctx, out, &outl,
             blocksize == 1 ? 0 : blocksize);
