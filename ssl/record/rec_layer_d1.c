@@ -630,8 +630,17 @@ start:
 
                     sc->rwstate = SSL_READING;
                     bio = SSL_get_rbio(s);
-                    BIO_clear_retry_flags(bio);
-                    BIO_set_retry_read(bio);
+                    /*
+                     * A connection accepted by a DTLS listener has no read
+                     * BIO of its own (see dtls_listener_create_conn_ssl());
+                     * SSL_get_error() already reports SSL_ERROR_WANT_READ
+                     * for SSL_READING on such a connection without needing
+                     * one.
+                     */
+                    if (bio != NULL) {
+                        BIO_clear_retry_flags(bio);
+                        BIO_set_retry_read(bio);
+                    }
                     return -1;
                 }
             }
@@ -679,8 +688,16 @@ start:
                  */
                 sc->rwstate = SSL_READING;
                 bio = SSL_get_rbio(s);
-                BIO_clear_retry_flags(bio);
-                BIO_set_retry_read(bio);
+                /*
+                 * A connection accepted by a DTLS listener has no read BIO
+                 * of its own (see dtls_listener_create_conn_ssl());
+                 * SSL_get_error() already reports SSL_ERROR_WANT_READ for
+                 * SSL_READING on such a connection without needing one.
+                 */
+                if (bio != NULL) {
+                    BIO_clear_retry_flags(bio);
+                    BIO_set_retry_read(bio);
+                }
                 return -1;
             }
         }

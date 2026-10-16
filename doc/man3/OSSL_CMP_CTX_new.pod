@@ -900,9 +900,6 @@ OSSL_CMP_CTX_get0_geninfo_ITAVs() were added in OpenSSL 3.3.
 Support for central key generation, requested via B<OSSL_CRMF_POPO_NONE>,
 was added in OpenSSL 3.5.
 
-
-The B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR> option was added in OpenSSL 4.0.
-
 The B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES> option was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT

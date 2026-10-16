@@ -33,6 +33,21 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
+   only when it can actually be used. A resumption ticket or external PSK is
+   offered only if some offered ciphersuite shares its handshake digest, and
+   0-RTT is attempted only if the first offered PSK's exact ciphersuite and,
+   where recorded, its ALPN protocol are offered and, for a ticket, it has not
+   aged out. When 0-RTT is not viable the client keeps the PSK for a 1-RTT
+   handshake. In particular a client-detected ALPN inconsistency now suppresses
+   0-RTT rather than failing with `SSL_R_INCONSISTENT_EARLY_DATA_ALPN`.
+
+   Fixed TLS 1.3 clients to reject a `psk_use_session` callback PSK whose master
+   key is empty, with `SSL_R_BAD_PSK`, instead of failing later in binder
+   computation.
+
+   *Viktor Dukhovni*
+
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys
@@ -105,6 +120,16 @@ OpenSSL 4.2
    accepted when the server allowed non-DHE PSK key exchange.
 
    *Paul Grubbs*
+
+ * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
+   (with potential reuse for other architectures with 128 bit vector registers).
+
+   *Timo Keller*
+
+ * Added optimized ML-DSA NTT and scalar multiplication operations on `s390x`
+   (with potential reuse for other architectures with 128 bit vector registers).
+
+   *Timo Keller*
 
 OpenSSL 4.1
 -----------
@@ -672,11 +697,6 @@ OpenSSL 4.1
    <!-- https://github.com/openssl/openssl/pull/30446 -->
 
    *Tomáš Mráz*
-
- * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
-   (with potential reuse for other architectures with 128 bit vector registers).
-
-   *Timo Keller*
 
 OpenSSL 4.0
 -----------
@@ -1730,8 +1750,9 @@ OpenSSL 4.0
 
    *Bob Beck*
 
- * Added `OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR` option for `OSSL_CMP_CTX`
-   and a corresponding `-ta_in_ip_extracert` option for the `openssl cmp` command.
+ * Added a `-ta_in_ip_extracert` option for the `openssl cmp` command, that sets
+   `OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR` option for the `OSSL_CMP_CTX`
+   object.
 
    This work was sponsored by Siemens AG.
 

@@ -761,6 +761,57 @@ static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+static int obj_ht_to_stack(HT_VALUE *v, void *arg)
+{
+    STACK_OF(X509_OBJECT) **sk = arg;
+    STACK_OF(X509_OBJECT) *objs = v->value;
+    X509_OBJECT *obj;
+    int i;
+
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
+        obj = sk_X509_OBJECT_value(objs, i);
+        if (sk_X509_OBJECT_push(*sk, obj) == 0)
+            goto err;
+    }
+
+    return 1;
+
+err:
+    sk_X509_OBJECT_zero(*sk);
+
+    return 0;
+}
+
+static int obj_ht_zero_stacks(HT_VALUE *v, void *arg)
+{
+    STACK_OF(X509_OBJECT) *objs = v->value;
+
+    sk_X509_OBJECT_zero(objs);
+
+    return 1;
+}
+
+STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
+{
+    X509_STORE *store = (X509_STORE *)xs;
+
+    if (xs->objs_ht != NULL) {
+        ossl_ht_foreach_until(xs->objs_ht, obj_ht_to_stack, &store->objs);
+        if (sk_X509_OBJECT_num(store->objs) > 0
+            || ossl_ht_count(xs->objs_ht) == 0) {
+            ossl_ht_foreach_until(xs->objs_ht, obj_ht_zero_stacks, NULL);
+            ossl_ht_free(xs->objs_ht);
+            store->objs_ht = NULL;
+        } else {
+            return NULL;
+        }
+    }
+
+    return xs->objs;
+}
+#endif
+
 static int obj_ht_foreach_object(HT_VALUE *v, void *arg)
 {
     STACK_OF(X509_OBJECT) **sk = arg;
@@ -786,21 +837,6 @@ err:
 
     return 0;
 }
-
-#ifndef OPENSSL_NO_DEPRECATED_4_0
-STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
-{
-    X509_STORE *store = (X509_STORE *)xs;
-
-    if (xs->objs_ht != NULL) {
-        ossl_ht_foreach_until(xs->objs_ht, obj_ht_foreach_object, &store->objs);
-        ossl_ht_free(xs->objs_ht);
-        store->objs_ht = NULL;
-    }
-
-    return xs->objs;
-}
-#endif
 
 STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
 {
