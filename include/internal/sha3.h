@@ -14,6 +14,7 @@
 
 #include <openssl/e_os2.h>
 #include <stddef.h>
+#include "internal/common.h"
 
 #define KECCAK1600_WIDTH 1600
 #define SHA3_MDSIZE(bitlen) (bitlen / 8)
@@ -135,5 +136,24 @@ void ossl_sha3_shake256_x4_avx512vl(
     size_t inlen);
 
 #endif /* KECCAK1600_ASM && x86_64 && !OPENSSL_NO_ASM */
+
+/* Multi-buffer (x2) Keccak-f[1600] context and API */
+#if defined(__aarch64__) && defined(__AARCH64EL__) && defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM)
+/*
+ * Context for 2-way parallel SHAKE operations.
+ * It only performs operations on a single interleaved
+ * absorb block and multiple squeeze blocks. Because it
+ * only handles full sized blocks, there is no need to
+ * handle partial blocks currently. The caller is responsible
+ * for handling interleaving and partial blocks.
+ */
+typedef struct {
+    ALIGN16 uint64_t A[25 * 2]; /* 2 interleaved Keccak states (400 bytes) */
+} KECCAK1600_X2_ARMV8_CTX;
+
+int ossl_sha3_shake_x2_capable_armv8(void);
+void ossl_sha3_shake_x2_cleanup_armv8(KECCAK1600_X2_ARMV8_CTX *ctx);
+
+#endif /* aarch64 && KECCAK1600_ASM && !OPENSSL_NO_ASM) */
 
 #endif /* OSSL_INTERNAL_SHA3_H */
