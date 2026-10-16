@@ -394,6 +394,20 @@ void ossl_x509_set_modified(X509 *x);
  * @param der the DER encoding of x, or NULL to leave x without one
  */
 void ossl_x509_set0_der(X509 *x, CRYPTO_BUFFER *der);
+
+/**
+ * @brief Returns the store's certificates whose encoded subject is
+ * subject, from its index of certificates with a view.  With check_time,
+ * those whose validity covers it come first; otherwise they are in the
+ * order they were added.
+ * @param store the store
+ * @param subject the encoded subject Name, tag and length included
+ * @param check_time the verification time as a POSIX time, or NULL
+ * @returns a new stack holding a reference to each certificate, or NULL if
+ *          there is none or on failure
+ */
+STACK_OF(X509) *ossl_x509_store_get1_certs_by_subject(X509_STORE *store,
+    const CBS *subject, const int64_t *check_time);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,

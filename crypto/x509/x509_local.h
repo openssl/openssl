@@ -133,6 +133,14 @@ HT_DEF_KEY_FIELD(xn_canon_enclen, int)
 HT_END_KEY_DEFN(OBJS_KEY)
 
 /*
+ * The key of the store's subject index.  Its bytes are an encoded subject
+ * Name, set with HT_INIT_KEY_EXTERNAL().
+ */
+HT_START_KEY_DEFN(subject_key)
+HT_DEF_KEY_FIELD(unused, uint8_t)
+HT_END_KEY_DEFN(SUBJECT_KEY)
+
+/*
  * This is used to hold everything.  It is used for all certificate
  * validation.  Once we have a certificate chain, the 'verify' function is
  * then called to actually check the cert chain.
@@ -142,6 +150,11 @@ struct x509_store_st {
     int cache; /* if true, stash any hits */
     /* Maps X509_NAME -> STACK_OF(X509_OBJECT) */
     HT *objs_ht;
+    /*
+     * Maps the encoded subject of each certificate with a view to a
+     * STACK_OF(X509) holding a reference to every such certificate
+     */
+    HT *subjects_ht;
     /*
      * Deprecated. Used only in the X509_STORE_get0_objects() for backward
      * compatibility.

@@ -197,6 +197,13 @@ static uint64_t obj_ht_hash(HT_KEY *key)
     return ossl_fnv1a_hash(k->keyfields.xn_canon, k->keyfields.xn_canon_enclen);
 }
 
+static void subjects_ht_free(HT_VALUE *v)
+{
+    STACK_OF(X509) *certs = v->value;
+
+    sk_X509_pop_free(certs, X509_free);
+}
+
 X509_STORE *X509_STORE_new(void)
 {
     X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
@@ -206,10 +213,17 @@ X509_STORE *X509_STORE_new(void)
         .init_neighborhoods = X509_OBJS_HT_BUCKETS,
         .no_rcu = 1,
     };
+    HT_CONFIG subjects_htconf = {
+        .ht_free_fn = subjects_ht_free,
+        .init_neighborhoods = X509_OBJS_HT_BUCKETS,
+        .collision_check = 1,
+        .no_rcu = 1,
+    };
 
     if (ret == NULL)
         return NULL;
-    if ((ret->objs_ht = ossl_ht_new(&htconf)) == NULL) {
+    if ((ret->objs_ht = ossl_ht_new(&htconf)) == NULL
+        || (ret->subjects_ht = ossl_ht_new(&subjects_htconf)) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
@@ -247,6 +261,7 @@ err:
     sk_X509_OBJECT_free(ret->objs);
     sk_X509_LOOKUP_free(ret->get_cert_methods);
     ossl_ht_free(ret->objs_ht);
+    ossl_ht_free(ret->subjects_ht);
     CRYPTO_THREAD_lock_free(ret->lock);
     OPENSSL_free(ret);
     return NULL;
@@ -280,6 +295,7 @@ void X509_STORE_free(X509_STORE *xs)
     CRYPTO_THREAD_lock_free(xs->lock);
     CRYPTO_FREE_REF(&xs->references);
     ossl_ht_free(xs->objs_ht);
+    ossl_ht_free(xs->subjects_ht);
     OPENSSL_free(xs);
 }
 
@@ -511,6 +527,111 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
 {
     return ossl_x509_store_ctx_get_by_subject(ctx, type, name, ret) > 0;
 }
+/*
+ * Adds x to the subject index if it has a view.  The caller holds the
+ * store's write lock.
+ */
+static int x509_store_subjects_add(X509_STORE *store, X509 *x)
+{
+    const struct x509_view *view;
+    STACK_OF(X509) *certs;
+    SUBJECT_KEY key;
+    HT_VALUE val = { 0 }, *v;
+    CBS subject;
+    int ret = 0;
+
+    if ((view = x509_get0_view(x)) == NULL)
+        return 1;
+    x509_view_get_subject(view, &subject);
+    HT_INIT_KEY_EXTERNAL(&key, (uint8_t *)CBS_data(&subject),
+        CBS_len(&subject));
+
+    if ((v = ossl_ht_get(store->subjects_ht, TO_HT_KEY(&key))) != NULL) {
+        v = ossl_rcu_deref(&v);
+        certs = v->value;
+        if (!X509_up_ref(x))
+            return 0;
+        if (!sk_X509_push(certs, x)) {
+            X509_free(x);
+            return 0;
+        }
+        return 1;
+    }
+
+    if ((certs = sk_X509_new_null()) == NULL)
+        return 0;
+    if (!X509_up_ref(x))
+        goto err;
+    if (!sk_X509_push(certs, x)) {
+        X509_free(x);
+        goto err;
+    }
+    val.value = certs;
+    if (ossl_ht_insert(store->subjects_ht, TO_HT_KEY(&key), &val, NULL) != 1)
+        goto err;
+    certs = NULL;
+    ret = 1;
+
+err:
+    sk_X509_pop_free(certs, X509_free);
+    return ret;
+}
+
+static int x509_valid_at(const X509 *x, int64_t check_time)
+{
+    const struct x509_view *view;
+
+    if ((view = x509_get0_view(x)) == NULL)
+        return 0;
+
+    return check_time >= x509_view_not_before_posix(view)
+        && check_time <= x509_view_not_after_posix(view);
+}
+
+STACK_OF(X509) *ossl_x509_store_get1_certs_by_subject(X509_STORE *store,
+    const CBS *subject, const int64_t *check_time)
+{
+    STACK_OF(X509) *found, *certs = NULL;
+    SUBJECT_KEY key;
+    HT_VALUE *v;
+    X509 *x;
+    int i, pass;
+
+    if (!ossl_x509_store_read_lock(store))
+        return NULL;
+    HT_INIT_KEY_EXTERNAL(&key, (uint8_t *)CBS_data(subject), CBS_len(subject));
+    if ((v = ossl_ht_get(store->subjects_ht, TO_HT_KEY(&key))) == NULL)
+        goto done;
+    v = ossl_rcu_deref(&v);
+    found = v->value;
+    if ((certs = sk_X509_new_reserve(NULL, sk_X509_num(found))) == NULL)
+        goto done;
+
+    /* Certificates valid at check_time come first. */
+    for (pass = 0; pass < 2; pass++) {
+        for (i = 0; i < sk_X509_num(found); i++) {
+            x = sk_X509_value(found, i);
+            if (check_time != NULL
+                && x509_valid_at(x, *check_time) != (pass == 0))
+                continue;
+            if (!X509_up_ref(x))
+                goto err;
+            (void)sk_X509_push(certs, x);
+        }
+        if (check_time == NULL)
+            break;
+    }
+    goto done;
+
+err:
+    sk_X509_pop_free(certs, X509_free);
+    certs = NULL;
+
+done:
+    X509_STORE_unlock(store);
+    return certs;
+}
+
 static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
 {
     const X509_NAME *xn;
@@ -555,6 +676,9 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
             ret = added != 0;
         }
     }
+    if (added != 0 && obj->type == X509_LU_X509
+        && !x509_store_subjects_add(store, obj->data.x509))
+        ret = 0;
     X509_STORE_unlock(store);
 
     if (added == 0) /* obj not pushed */
