@@ -27,6 +27,9 @@ sub fuzz_print_backtrace {
     my $bt_log = result_file("$f-backtrace.stderr.log");
     local $ENV{OPENSSL_TEST_MFAIL_BACKTRACE} = 1;
     local $ENV{OPENSSL_TEST_MFAIL_POINT} = $point if defined $point;
+    # never limit the single file rerun used for diagnostics
+    delete local $ENV{OPENSSL_TEST_CORPUS_MAX_TIME};
+    delete local $ENV{OPENSSL_TEST_CORPUS_MAX_FILES};
     run(fuzz(["$f-test", $path], stderr => $bt_log));
 
     diag("- backtrace at injection point:");
@@ -108,17 +111,18 @@ sub fuzz_run_count_only {
     my $exit_ok = run(fuzz(["$f-test", $d], stderr => $log));
     fuzz_dump_log($log);
 
-    my ($corpus_time, $cur, @allocs) = (0, undef);
+    my ($corpus_time, $total, $cur, @allocs) = (0, 0, undef);
     if (open(my $fh, '<', $log)) {
         while (my $line = <$fh>) {
             $corpus_time = $1 if $line =~ /^#\s*corpus_time:\s*([\d.]+)/;
+            $total = $1 if $line =~ /^#\s*corpus_files:\s*total=(\d+)/;
             $cur = $1 if $line =~ /^#\s*CORPUS_FILE\s+file_idx=(\d+)/;
             push @allocs, $1 + 0 if defined $cur
                 && $line =~ /:\s*(\d+)\s+allocations\s*$/;
         }
         close $fh;
     }
-    return ($exit_ok, $corpus_time, \@allocs);
+    return ($exit_ok, $corpus_time, \@allocs, $total);
 }
 
 # find path and point of the reported leak for easy recreation
@@ -142,6 +146,8 @@ sub fuzz_mfail_bisect {
     delete local $ENV{OPENSSL_TEST_MFAIL_COUNT};
     delete local $ENV{OPENSSL_TEST_MFAIL_START};
     delete local $ENV{OPENSSL_TEST_MFAIL_POINT};
+    delete local $ENV{OPENSSL_TEST_CORPUS_MAX_TIME};
+    delete local $ENV{OPENSSL_TEST_CORPUS_MAX_FILES};
 
     diag("bisecting mfail leak across isolated point reruns");
 
@@ -228,6 +234,19 @@ sub fuzz_per_test_budget {
     return $per_test;
 }
 
+# report when the run was cut short by the corpus time limit
+sub fuzz_check_max_time {
+    my ($f, $log) = @_;
+    return unless open(my $fh, '<', $log);
+    while (my $line = <$fh>) {
+        if ($line =~ /^#\s*(CORPUS_MAX_TIME reached.*?)\s*$/) {
+            diag("$f: $1");
+            last;
+        }
+    }
+    close $fh;
+}
+
 sub fuzz_ok {
     my ($f, %opts) = @_;
     my $d = srctop_dir('fuzz', 'corpora', $f);
@@ -245,12 +264,31 @@ sub fuzz_ok {
             return;
         }
 
-        # baseline run to measure the corpus run time
-        my ($ok, $corpus_time, $allocs) = fuzz_run_count_only($f, $d);
+        # probe a small evenly spread sample, selected by the test runner,
+        # to estimate the per-file run time
+        my ($ok, $probe_time, $allocs, $num_files);
+        {
+            local $ENV{OPENSSL_TEST_CORPUS_MAX_FILES} = 16;
+            # bound the probe in case even its few files are too slow
+            local $ENV{OPENSSL_TEST_CORPUS_MAX_TIME} =
+                sprintf("%.3f", 0.25 * $target);
+            ($ok, $probe_time, $allocs, $num_files) =
+                fuzz_run_count_only($f, $d);
+        }
         unless ($ok) {
             ok(0, "Fuzzing $f (count-only)");
             return;
         }
+
+        # empty corpus, nothing to select, just run it as it is
+        if ($num_files <= 0) {
+            ok(run(fuzz(["$f-test", $d])), "Fuzzing $f");
+            return;
+        }
+
+        # average over the files the probe managed to process
+        my $probe_n = scalar @$allocs;
+        $probe_n = 1 if $probe_n < 1;
 
         # get the maximum allocations in instance and count total
         my $total_allocs = 0;
@@ -259,44 +297,54 @@ sub fuzz_ok {
             $total_allocs += $_;
             $max_k = $_ if $_ > $max_k;
         }
-        my $num_files = scalar @$allocs;
-        diag(sprintf("%s: count-only %.3fs, allocs=%d, files=%d, max=%d",
-                $f, $corpus_time, $total_allocs, $num_files, $max_k));
-
-        # baseline alone consumed the budget, nothing left for mfail
-        if ($corpus_time <= 0 || $corpus_time >= $target) {
-            ok(1, "Fuzzing $f (no mfail budget; "
-                . "corpus=${corpus_time}s, target=${target}s)");
-            return;
-        }
+        diag(sprintf("%s: probe %d/%d files in %.3fs, allocs=%d, max=%d",
+                $f, $probe_n, $num_files, $probe_time, $total_allocs, $max_k));
 
         # no allocations counted, can't size the mfail run
-        if ($total_allocs <= 0 || $num_files <= 0) {
+        if ($total_allocs <= 0) {
             ok(1, "Fuzzing $f (no allocations counted)");
             return;
         }
 
-        # number of mfail iterations that fit alongside the baseline:
-        # ~corpus_time * (1 + count / 2) <= target
-        my $count = int(2 * ($target - $corpus_time) / $corpus_time);
+        # average per-file time; the clock may be too coarse to measure
+        my $avg = $probe_time / $probe_n;
+        $avg = 0.001 if $avg <= 0;
+        my $remaining = $target - $probe_time;
+        $remaining = 0 if $remaining < 0;
+
+        # a file with count injections costs ~avg * (1 + count / 2), so
+        # running mfail over n files fits: n * avg * (1 + count / 2) <= budget
+        my $min_count = 3;
+        my $use_n = $num_files;
+        my $count = int(2 * ($remaining / ($avg * $num_files) - 1));
+        if ($count < $min_count) {
+            # budget too low for the whole corpus, drop some files instead
+            $count = $min_count;
+            $use_n = int($remaining / ($avg * (1 + $count / 2)));
+            # always exercise mfail on at least one file
+            ($use_n, $count) = (1, 1) if $use_n < 1;
+        }
         # never exceed max(K_i); injections beyond that are wasted
         $count = $max_k if $count > $max_k;
-        if ($count <= 0) {
-            ok(1, "Fuzzing $f (budget too small for mfail)");
-            return;
-        }
-        diag("$f: running mfail with count=$count");
+
+        $use_n = $num_files if $use_n > $num_files;
+        diag(sprintf("%s: running mfail on %d/%d files with count=%d",
+                $f, $use_n, $num_files, $count));
 
         local $ENV{OPENSSL_TEST_MFAIL_COUNT} = $count;
+        # the test runner selects an evenly spread subset of this size
+        local $ENV{OPENSSL_TEST_CORPUS_MAX_FILES} = $use_n;
+        # hard stop in case the probe estimate was too optimistic
+        local $ENV{OPENSSL_TEST_CORPUS_MAX_TIME} =
+            sprintf("%.3f", $remaining > 1 ? $remaining : 1);
         my $main_log = "$f-mfail.stderr.log";
         my ($passed, $leaks, undef, $log) = fuzz_run($f, $d, $main_log, 1);
 
-        unless ($passed) {
-            fuzz_mfail_bisect($f, $log) if $leaks;
-            ok(0, "Fuzzing $f (mfail count=$count, per-test=${per_test}s)");
-            return;
-        }
-        ok(1, "Fuzzing $f (mfail count=$count, per-test=${per_test}s)");
+        fuzz_check_max_time($f, $log);
+        fuzz_mfail_bisect($f, $log) if !$passed && $leaks;
+        ok($passed, sprintf("Fuzzing %s (mfail count=%d, files=%d/%d, "
+                . "per-test=%.3fs)", $f, $count, $use_n, $num_files,
+                $per_test));
     }
 }
 
