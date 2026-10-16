@@ -41,6 +41,9 @@ static const uint8_t oid_ip_addr_blocks[] = {
 static const uint8_t oid_autonomous_sys_ids[] = {
     0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x01, 0x08
 };
+static const uint8_t oid_proxy_cert_info[] = {
+    0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x01, 0x0e
+};
 
 /* Extended key usage OIDs, as DER content octets. */
 static const uint8_t oid_server_auth[] = {
@@ -486,7 +489,9 @@ static const struct {
     { oid_ip_addr_blocks, sizeof(oid_ip_addr_blocks), NULL,
         X509_VIEW_EXT_IP_ADDR_BLOCKS },
     { oid_autonomous_sys_ids, sizeof(oid_autonomous_sys_ids), NULL,
-        X509_VIEW_EXT_AUTONOMOUS_SYS_IDS }
+        X509_VIEW_EXT_AUTONOMOUS_SYS_IDS },
+    { oid_proxy_cert_info, sizeof(oid_proxy_cert_info), NULL,
+        X509_VIEW_EXT_PROXY_CERT_INFO }
 };
 
 /* Splits an Extension into its OID, critical flag and extnValue octets. */

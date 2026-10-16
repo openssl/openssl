@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 230;
+plan tests => 235;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -385,6 +385,21 @@ ok(verify("pc5-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-ce
 ok(!verify("pc6-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
           "-allow_proxy_certs"),
    "failed proxy cert where last CN was added as a multivalue RDN component");
+ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)],
+           "-x509_strict"),
+   "fail to accept proxy cert without -allow_proxy_certs, strict");
+ok(verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "accept proxy cert 1, strict");
+ok(verify("pc2-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "accept proxy cert 2, strict");
+ok(!verify("bad-pc4-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "fail proxy cert with incorrect pathlen, strict");
+ok(verify("pc5-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "accept proxy cert missing proxy policy, strict");
 
 # Security level tests
 ok(verify("ee-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
