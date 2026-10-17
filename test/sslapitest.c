@@ -43,8 +43,32 @@
 #include "internal/ktls.h"
 #include "internal/ssl_unwrap.h"
 #include "../ssl/ssl_local.h"
+#include "../ssl/statem/statem_local.h"
 #include "../ssl/record/methods/recmethod_local.h"
 #include "filterprov.h"
+
+/*
+ * PSK pre binder overhead =
+ *  2 bytes for TLSEXT_TYPE_psk
+ *  2 bytes for extension length
+ *  2 bytes for identities list length
+ *  2 bytes for identity length
+ *  4 bytes for obfuscated_ticket_age
+ *  2 bytes for binder list length
+ *  1 byte for binder length
+ * The above excludes the number of bytes for the identity itself and the
+ * subsequent binder bytes
+ */
+#define PSK_PRE_BINDER_OVERHEAD (2 + 2 + 2 + 2 + 4 + 2 + 1)
+/* Each further identity adds its identity length and obfuscated_ticket_age */
+#define PSK_IDENTITY_OVERHEAD (2 + 4)
+#define PSK_BINDERS_LIST_LEN_BYTES 2
+#define PSK_BINDER_LEN_BYTES 1
+/*
+ * Initial packet buffer length in test_psk_binder_growth(): the first binder
+ * ends exactly here, so allocating the second one must grow the buffer.
+ */
+#define PSK_GROWTH_BUFLEN 256
 
 #undef OSSL_NO_USABLE_TLS1_3
 #if defined(OPENSSL_NO_TLS1_3) \
@@ -3383,6 +3407,96 @@ end:
     clientpsk = serverpsk = NULL;
 
     return testresult;
+}
+
+/* Both PSK binders must remain valid if allocating the second grows the packet. */
+static int test_psk_binder_growth(int idx)
+{
+#ifdef OSSL_NO_USABLE_TLS1_3
+    return TEST_skip("TLSv1.3 is not usable");
+#else
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc;
+    SSL_SESSION *sess = NULL;
+    BUF_MEM *buf = NULL;
+    WPACKET pkt = { 0 };
+    EVP_MD *md = NULL;
+    const char *tick = "a ticket";
+    size_t tick_len = strlen(tick);
+    const char *psksession_id = "Identity";
+    size_t psksession_id_len = strlen(psksession_id);
+    size_t hashsize = idx == 0 ? SHA256_DIGEST_LENGTH : SHA384_DIGEST_LENGTH;
+    /* Bytes before the extension, chosen so the first binder ends at the buffer end */
+    size_t prefix = PSK_GROWTH_BUFLEN
+        - (PSK_PRE_BINDER_OVERHEAD + PSK_IDENTITY_OVERHEAD + tick_len
+            + psksession_id_len + hashsize);
+    /* Offset of the binders list, i.e. the end of the data the binders cover */
+    size_t binderoffset = PSK_GROWTH_BUFLEN - hashsize - PSK_BINDER_LEN_BYTES
+        - PSK_BINDERS_LIST_LEN_BYTES;
+    unsigned char *resbinder, *pskbinder;
+    size_t written;
+    uintptr_t original;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sess = create_a_psk(ssl, hashsize))
+        || !TEST_ptr(sess->ext.tick = OPENSSL_memdup(tick, tick_len)))
+        goto end;
+    sess->ext.ticklen = tick_len;
+    sess->ext.tick_lifetime_hint = 7200;
+    if (!TEST_true(SSL_set_session(ssl, sess)))
+        goto end;
+    SSL_set_connect_state(ssl);
+    sc = SSL_CONNECTION_FROM_SSL(ssl);
+    sc->version = TLS1_3_VERSION;
+    /* Secure-buffer growth allocates before freeing, forcing relocation. */
+    if (!TEST_ptr(sc->psksession = create_a_psk(ssl, hashsize))
+        || !TEST_ptr(sc->psksession_id = OPENSSL_memdup(psksession_id, psksession_id_len))
+        || !TEST_ptr(md = EVP_MD_fetch(libctx, idx == 0 ? "SHA256" : "SHA384", NULL))
+        || !TEST_ptr(buf = BUF_MEM_new_ex(BUF_MEM_FLAG_SECURE))
+        || !TEST_size_t_eq(BUF_MEM_grow(buf, PSK_GROWTH_BUFLEN), PSK_GROWTH_BUFLEN))
+        goto end;
+    sc->psksession_id_len = psksession_id_len;
+    original = (uintptr_t)buf->data;
+    if (!TEST_true(WPACKET_init(&pkt, buf)))
+        goto end;
+    /* The first binder ends at the buffer end; the second must grow the packet. */
+    if (!TEST_true(WPACKET_put_bytes_u8(&pkt, SSL3_MT_CLIENT_HELLO))
+        || !TEST_true(WPACKET_start_sub_packet_u24(&pkt))
+        || !TEST_true(WPACKET_memset(&pkt, 0, prefix - SSL3_HM_HEADER_LENGTH))
+        || !TEST_int_eq(tls_construct_ctos_psk(sc, &pkt, SSL_EXT_CLIENT_HELLO,
+                            NULL, 0),
+            EXT_RETURN_SENT)
+        || !TEST_true(WPACKET_close(&pkt))
+        || !TEST_true(WPACKET_finish(&pkt))
+        || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+        || !TEST_size_t_eq(written,
+            PSK_GROWTH_BUFLEN + PSK_BINDER_LEN_BYTES + hashsize)
+        || !TEST_true(original != (uintptr_t)buf->data))
+        goto end;
+    resbinder = (unsigned char *)buf->data + PSK_GROWTH_BUFLEN - hashsize;
+    pskbinder = (unsigned char *)buf->data + PSK_GROWTH_BUFLEN + PSK_BINDER_LEN_BYTES;
+
+    if (!TEST_int_eq(tls_psk_do_binder(sc, md, (unsigned char *)buf->data,
+                         binderoffset, resbinder, NULL, sess, 0, 0),
+            1)
+        || !TEST_int_eq(tls_psk_do_binder(sc, md, (unsigned char *)buf->data,
+                            binderoffset, pskbinder, NULL, sc->psksession,
+                            0, 1),
+            1))
+        goto end;
+    ret = 1;
+end:
+    WPACKET_cleanup(&pkt);
+    EVP_MD_free(md);
+    BUF_MEM_free(buf);
+    SSL_SESSION_free(sess);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return ret;
+#endif
 }
 
 static int test_extra_tickets(int idx)
@@ -15358,6 +15472,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_stateful_tickets, 3);
     ADD_ALL_TESTS(test_stateless_tickets, 3);
     ADD_TEST(test_psk_tickets);
+    ADD_ALL_TESTS(test_psk_binder_growth, 2);
     ADD_ALL_TESTS(test_extra_tickets, 6);
 #endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
