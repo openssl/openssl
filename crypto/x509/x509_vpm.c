@@ -78,9 +78,14 @@ err:
     return ret;
 }
 
-static X509_BUFFER *buffer_copy(const X509_BUFFER *b)
+static X509_BUFFER *buffer_copy_bytes(const X509_BUFFER *b)
 {
     return buffer_from_bytes(b->data, b->len);
+}
+
+static X509_BUFFER *buffer_copy_string(const X509_BUFFER *b)
+{
+    return buffer_from_string(b->data, b->len);
 }
 
 static void buffer_free(X509_BUFFER *b)
@@ -91,13 +96,26 @@ static void buffer_free(X509_BUFFER *b)
     OPENSSL_free(b);
 }
 
-static int replace_buffer_stack(STACK_OF(X509_BUFFER) **dest,
+static int replace_buffer_stack_bytes(STACK_OF(X509_BUFFER) **dest,
     STACK_OF(X509_BUFFER) *const *src)
 {
     sk_X509_BUFFER_pop_free(*dest, buffer_free);
     *dest = NULL;
     if (*src != NULL) {
-        *dest = sk_X509_BUFFER_deep_copy(*src, buffer_copy, buffer_free);
+        *dest = sk_X509_BUFFER_deep_copy(*src, buffer_copy_bytes, buffer_free);
+        if (*dest == NULL)
+            return 0;
+    }
+    return 1;
+}
+
+static int replace_buffer_stack_string(STACK_OF(X509_BUFFER) **dest,
+    STACK_OF(X509_BUFFER) *const *src)
+{
+    sk_X509_BUFFER_pop_free(*dest, buffer_free);
+    *dest = NULL;
+    if (*src != NULL) {
+        *dest = sk_X509_BUFFER_deep_copy(*src, buffer_copy_string, buffer_free);
         if (*dest == NULL)
             return 0;
     }
@@ -464,25 +482,25 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
     x509_verify_param_copy(hostflags, 0);
 
     if (test_x509_verify_param_copy(hosts, NULL)) {
-        if (!replace_buffer_stack(&dest->hosts, &src->hosts))
+        if (!replace_buffer_stack_string(&dest->hosts, &src->hosts))
             return 0;
     }
     x509_verify_param_copy(validate_host, NULL);
 
     if (test_x509_verify_param_copy(ips, NULL)) {
-        if (!replace_buffer_stack(&dest->ips, &src->ips))
+        if (!replace_buffer_stack_bytes(&dest->ips, &src->ips))
             return 0;
     }
     x509_verify_param_copy(validate_ip, NULL);
 
     if (test_x509_verify_param_copy(rfc822s, NULL)) {
-        if (!replace_buffer_stack(&dest->rfc822s, &src->rfc822s))
+        if (!replace_buffer_stack_string(&dest->rfc822s, &src->rfc822s))
             return 0;
     }
     x509_verify_param_copy(validate_rfc822, NULL);
 
     if (test_x509_verify_param_copy(smtputf8s, NULL)) {
-        if (!replace_buffer_stack(&dest->smtputf8s, &src->smtputf8s))
+        if (!replace_buffer_stack_string(&dest->smtputf8s, &src->smtputf8s))
             return 0;
     }
     x509_verify_param_copy(validate_smtputf8, NULL);
