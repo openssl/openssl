@@ -679,6 +679,41 @@ err:
     return ret;
 }
 
+static int test_vpm_copy_string_nul_term(void)
+{
+    X509_VERIFY_PARAM *src = NULL, *dest = NULL;
+    const char *test_host = "test.example.com";
+    const char *test_email = "user@example.com";
+    const char *ret_host, *ret_email;
+    int ret = 0;
+
+    if (!TEST_ptr(src = X509_VERIFY_PARAM_new())
+        || !TEST_ptr(dest = X509_VERIFY_PARAM_new()))
+        goto err;
+
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(src, test_host, 0))
+        || !TEST_true(X509_VERIFY_PARAM_set1_email(src, test_email, 0)))
+        goto err;
+
+    if (!TEST_true(X509_VERIFY_PARAM_set1(dest, src)))
+        goto err;
+
+    if (!TEST_ptr(ret_host = X509_VERIFY_PARAM_get0_host(dest, 0))
+        || !TEST_str_eq(ret_host, test_host))
+        goto err;
+
+    if (!TEST_ptr(ret_email = X509_VERIFY_PARAM_get0_email(dest))
+        || !TEST_str_eq(ret_email, test_email))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_VERIFY_PARAM_free(src);
+    X509_VERIFY_PARAM_free(dest);
+    return ret;
+}
+
 static int test_self_signed_good(void)
 {
     return test_self_signed(root_f, 1, 1);
@@ -1002,6 +1037,7 @@ int setup_tests(void)
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
+    ADD_TEST(test_vpm_copy_string_nul_term);
     ADD_ALL_TESTS(test_pathlen_chain, OSSL_NELEM(pathlen_chains));
     return 1;
 err:
