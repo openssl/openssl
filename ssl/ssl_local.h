@@ -2442,6 +2442,9 @@ typedef struct dtls_listener_st {
     /* Notifier has been signalled */
     int signalled_notifier;
 
+    /* Advanced when the last waiter clears the notifier. */
+    uint64_t notify_generation;
+
     /*
      * Time callback for customizable time source (primarily for testing).
      * If NULL, ossl_time_now() is used.
@@ -2481,7 +2484,7 @@ typedef struct dtls_listener_st {
     RIO_NOTIFIER notifier;
 
     /*
-     * Count of threads currently blocked waiting in poll().
+     * Count of outstanding blocking registrations.
      */
     size_t cur_blocking_waiters;
 
@@ -3170,6 +3173,9 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 void ossl_dtls_listener_enter_blocking_section(SSL *s);
 void ossl_dtls_listener_leave_blocking_section(SSL *s);
+/* Deregister without waiting, then wait only for the recorded signal cycle. */
+int ossl_dtls_listener_deregister_blocking_section(SSL *s, uint64_t *generation);
+void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation);
 int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
     int bound_by_event_timeout);
 int ossl_dtls_blocking(const SSL *s);
