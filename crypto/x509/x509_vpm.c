@@ -34,14 +34,26 @@ typedef enum {
 static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
 {
     X509_BUFFER *buf;
+    uint8_t *data;
 
-    if ((buf = OPENSSL_zalloc(sizeof(*buf))) != NULL
-        && (buf->data = OPENSSL_memdup(bytes, length)) != NULL) {
-        buf->len = length;
-    } else {
+    if (bytes == NULL && length != 0)
+        return NULL;
+    if (length >= INT_MAX)
+        return NULL;
+
+    if ((buf = OPENSSL_zalloc(sizeof(*buf))) == NULL)
+        return NULL;
+
+    if ((data = OPENSSL_malloc(length + 1)) == NULL) {
         OPENSSL_free(buf);
-        buf = NULL;
+        return NULL;
     }
+
+    if (length > 0)
+        memcpy(data, bytes, length);
+    data[length] = '\0';
+    buf->data = data;
+    buf->len = length;
     return buf;
 }
 
