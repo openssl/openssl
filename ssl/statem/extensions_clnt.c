@@ -1066,7 +1066,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     uint32_t agesec, agems = 0;
-    size_t binderoffset, msglen;
+    size_t binderoffset, msglen, resbinder_end_offset = 0, pskbinder_end_offset = 0;
     int reshashsize = 0, pskhashsize = 0;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
@@ -1231,9 +1231,11 @@ dopsksess:
         || !WPACKET_get_total_written(pkt, &binderoffset)
         || !WPACKET_start_sub_packet_u16(pkt)
         || (dores
-            && !WPACKET_sub_allocate_bytes_u8(pkt, reshashsize, &resbinder))
+            && (!WPACKET_sub_allocate_bytes_u8(pkt, reshashsize, NULL)
+                || !WPACKET_get_total_written(pkt, &resbinder_end_offset)))
         || (s->psksession != NULL
-            && !WPACKET_sub_allocate_bytes_u8(pkt, pskhashsize, &pskbinder))
+            && (!WPACKET_sub_allocate_bytes_u8(pkt, pskhashsize, NULL)
+                || !WPACKET_get_total_written(pkt, &pskbinder_end_offset)))
         || !WPACKET_close(pkt)
         || !WPACKET_close(pkt)
         || !WPACKET_get_total_written(pkt, &msglen)
@@ -1247,6 +1249,11 @@ dopsksess:
     }
 
     msgstart = WPACKET_get_curr(pkt) - msglen;
+    /* Allocating either binder may relocate the packet's backing buffer. */
+    if (dores)
+        resbinder = msgstart + resbinder_end_offset - reshashsize;
+    if (s->psksession != NULL)
+        pskbinder = msgstart + pskbinder_end_offset - pskhashsize;
 
     if (dores
         && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
