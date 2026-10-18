@@ -460,6 +460,19 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
 
 EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
     long length);
+
+/**
+ * @brief Decodes a DER SubjectPublicKeyInfo into a public key.
+ * An RSA key, a named-curve EC key, or an Ed25519, Ed448, X25519 or X448
+ * key is imported from its values by EVP_PKEY_fromdata(); any other key is
+ * decoded by d2i_PUBKEY().  The values in spki determine the key
+ * completely.  An operation in another provider or library context gets
+ * the key exported to it at first use, where that provider's import
+ * checks apply.
+ * @param spki the SubjectPublicKeyInfo, tag and length included
+ * @returns the key, or NULL if spki does not decode
+ */
+EVP_PKEY *ossl_x509_spki_to_pkey(const CBS *spki);
 int ossl_x509_check_private_key(const EVP_PKEY *k, const EVP_PKEY *pkey);
 
 int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
