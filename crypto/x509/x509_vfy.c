@@ -440,6 +440,34 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
     return 0;
 }
 
+static int cert_self_issued(const X509_STORE_CTX *ctx, const X509 *x)
+{
+    const struct x509_view *view;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return (x->ex_flags & EXFLAG_SI) != 0;
+
+    return (view = x509_get0_view(x)) != NULL
+        && x509_view_is_self_issued(view);
+}
+
+static int cert_expires_later(const X509_STORE_CTX *ctx, const X509 *a,
+    const X509 *b)
+{
+    const struct x509_view *a_view, *b_view;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return ASN1_TIME_compare(X509_get0_notAfter(a), X509_get0_notAfter(b))
+            > 0;
+
+    if ((a_view = x509_get0_view(a)) == NULL
+        || (b_view = x509_get0_view(b)) == NULL)
+        return 0;
+
+    return x509_view_not_after_posix(a_view)
+        > x509_view_not_after_posix(b_view);
+}
+
 /*-
  * Find in |sk| an issuer cert of cert |x| accepted by |ctx->check_issued|.
  * If no_dup, the issuer must not yet be in |ctx->chain|, yet allowing the
@@ -463,7 +491,7 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
     for (i = 0; i < sk_X509_num(sk); i++) {
         candidate = sk_X509_value(sk, i);
         if (no_dup
-            && !((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
+            && !(cert_self_issued(ctx, x) && sk_X509_num(ctx->chain) == 1)
             && sk_X509_contains(ctx->chain, candidate))
             continue;
         if (ctx->check_issued(ctx, x, candidate)) {
@@ -477,10 +505,7 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
              * Leave in *issuer the first match that has the latest expiration
              * date so we return nearest match if no certificate time is OK.
              */
-            if (issuer == NULL
-                || ASN1_TIME_compare(X509_get0_notAfter(candidate),
-                       X509_get0_notAfter(issuer))
-                    > 0)
+            if (issuer == NULL || cert_expires_later(ctx, candidate, issuer))
                 issuer = candidate;
         }
     }
@@ -650,12 +675,25 @@ static int view_self_signed(const struct x509_view *view)
             || (key_usage & KU_KEY_CERT_SIGN) != 0);
 }
 
+static int view_sig_alg_matches(const X509 *issuer,
+    const struct x509_view *subject_view)
+{
+    const EVP_PKEY *pkey;
+    int sig_nid;
+
+    if ((pkey = X509_get0_pubkey(issuer)) == NULL
+        || !OBJ_find_sigid_algs(x509_view_sig_nid(subject_view), NULL,
+            &sig_nid))
+        return 0;
+
+    return EVP_PKEY_is_a(pkey, OBJ_nid2sn(sig_nid))
+        || (EVP_PKEY_is_a(pkey, "RSA") && sig_nid == NID_rsassaPss);
+}
+
 static int view_issued(const X509 *issuer, const struct x509_view *issuer_view,
     const X509 *subject, const struct x509_view *subject_view)
 {
-    const EVP_PKEY *pkey;
     CBS issuer_name, subject_name, issuer_issuer, issuer_serial, serial;
-    int sig_nid;
 
     x509_view_get_subject(issuer_view, &issuer_name);
     x509_view_get_issuer(subject_view, &subject_name);
@@ -673,16 +711,8 @@ static int view_issued(const X509 *issuer, const struct x509_view *issuer_view,
                 CBS_len(&serial))))
         return view_self_signed(issuer_view);
 
-    if (!view_akid_matches(issuer_view, subject_view))
-        return 0;
-
-    if ((pkey = X509_get0_pubkey(issuer)) == NULL
-        || !OBJ_find_sigid_algs(x509_view_sig_nid(subject_view), NULL,
-            &sig_nid))
-        return 0;
-
-    return EVP_PKEY_is_a(pkey, OBJ_nid2sn(sig_nid))
-        || (EVP_PKEY_is_a(pkey, "RSA") && sig_nid == NID_rsassaPss);
+    return view_akid_matches(issuer_view, subject_view)
+        && view_sig_alg_matches(issuer, subject_view);
 }
 
 static int cert_self_signed(const X509_STORE_CTX *ctx, const X509 *x)
@@ -3017,6 +3047,50 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     return 1;
 }
 
+static int likely_self_issued(const X509_STORE_CTX *ctx, const X509 *x)
+{
+    const struct x509_view *view;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return ossl_x509_likely_issued(x, x) == X509_V_OK;
+
+    return (view = x509_get0_view(x)) != NULL
+        && x509_view_is_self_issued(view) && view_akid_matches(view, view)
+        && view_sig_alg_matches(x, view);
+}
+
+static int cert_is_ca(const X509_STORE_CTX *ctx, const X509 *x)
+{
+    const struct x509_view *view;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return (x->ex_flags & EXFLAG_CA) != 0;
+
+    return (view = x509_get0_view(x)) != NULL && x509_view_is_ca(view);
+}
+
+static int signing_allowed(const X509_STORE_CTX *ctx, const X509 *issuer,
+    const X509 *subject)
+{
+    const struct x509_view *issuer_view, *subject_view;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return ossl_x509_signing_allowed(issuer, subject);
+
+    if ((issuer_view = x509_get0_view(issuer)) == NULL
+        || (subject_view = x509_get0_view(subject)) == NULL)
+        return X509_V_ERR_UNSPECIFIED;
+    if (x509_view_extensions_present(subject_view,
+            X509_VIEW_EXT_PROXY_CERT_INFO)
+        != 0) {
+        if (!view_key_usage_allows(issuer_view, KU_DIGITAL_SIGNATURE))
+            return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
+    } else if (!view_key_usage_allows(issuer_view, KU_KEY_CERT_SIGN)) {
+        return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
+    }
+    return X509_V_OK;
+}
+
 static int verify_signature(X509_STORE_CTX *ctx, X509 *x, EVP_PKEY *pkey)
 {
     const struct x509_view *view;
@@ -3057,7 +3131,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
          * We report the issuer as NULL because all we have is a bare key.
          */
         xi = NULL;
-    } else if (ossl_x509_likely_issued(xi, xi) != X509_V_OK
+    } else if (!likely_self_issued(ctx, xi)
         /* exceptional case: last cert in the chain is not self-issued */
         && ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0)) {
         if (n > 0) {
@@ -3094,7 +3168,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         if (xi != NULL
             && (xs != xi
                 || ((ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE) != 0
-                    && (xi->ex_flags & EXFLAG_SS) != 0))) {
+                    && cert_self_signed(ctx, xi) > 0))) {
             EVP_PKEY *pkey;
             /*
              * If the issuer's public key is not available or its key usage
@@ -3115,9 +3189,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
              * (see https://tools.ietf.org/html/rfc6818#section-2) and thus
              * we are free to ignore any key usage restrictions on such certs.
              */
-            int ret = xs == xi && (xi->ex_flags & EXFLAG_CA) == 0
+            int ret = xs == xi && !cert_is_ca(ctx, xi)
                 ? X509_V_OK
-                : ossl_x509_signing_allowed(xi, xs);
+                : signing_allowed(ctx, xi, xs);
 
             CB_FAIL_IF(ret != X509_V_OK, ctx, xi, issuer_depth, ret);
             if ((pkey = X509_get0_pubkey(xi)) == NULL) {
@@ -4533,7 +4607,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
 
             if (ok > 0) {
-                int self_signed = X509_self_signed(curr, 0);
+                int self_signed = cert_self_signed(ctx, curr);
 
                 if (self_signed < 0) {
                     X509_free(issuer);
@@ -4579,7 +4653,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
                         goto memerr;
                     }
-                    if ((self_signed = X509_self_signed(issuer, 0)) < 0)
+                    if ((self_signed = cert_self_signed(ctx, issuer)) < 0)
                         goto int_err;
                 } else {
                     /*
@@ -4655,7 +4729,11 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (X509_self_signed(curr, 0) > 0 || num > max_depth) ? NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
+            if (cert_self_signed(ctx, curr) > 0 || num > max_depth)
+                issuer = NULL;
+            else
+                issuer = get0_best_issuer_sk(ctx, 0, 1 /* no_dup */,
+                    sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
                  * Once we have reached a self-signed cert or num > max_depth
@@ -4724,7 +4802,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         CB_FAIL_IF(DANETLS_ENABLED(dane)
                 && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
             ctx, NULL, num - 1, X509_V_ERR_DANE_NO_MATCH);
-        if (X509_self_signed(sk_X509_value(ctx->chain, num - 1), 0) > 0)
+        if (cert_self_signed(ctx, sk_X509_value(ctx->chain, num - 1)) > 0)
             return verify_cb_cert(ctx, NULL, num - 1,
                 num == 1
                     ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
