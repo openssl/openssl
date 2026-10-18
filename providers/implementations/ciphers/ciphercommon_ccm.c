@@ -172,8 +172,8 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)
-            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, p->data_size)) {
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ccm_get_ivlen(ctx))
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ccm_get_ivlen(ctx))) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -185,8 +185,8 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)
-            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, p->data_size)) {
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ccm_get_ivlen(ctx))
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ccm_get_ivlen(ctx))) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
