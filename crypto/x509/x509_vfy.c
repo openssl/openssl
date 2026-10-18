@@ -71,6 +71,8 @@ static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert);
 static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey);
 static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
 static int check_curve(X509 *cert);
+static STACK_OF(X509) *get1_certs_by_subject(X509_STORE_CTX *ctx,
+    const CBS *subject);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     unsigned int *preasons, X509_CRL *crl, X509 *x);
@@ -127,17 +129,31 @@ int X509_self_signed(const X509 *cert, int verify_signature)
  */
 static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
 {
+    const struct x509_view *view;
     STACK_OF(X509) *certs;
     X509 *xtmp = NULL;
+    CBS subject;
     int i, ret;
 
     *result = NULL;
-    /* Lookup all certs with matching subject name */
-    ERR_set_mark();
-    certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
-    ERR_pop_to_mark();
-    if (certs == NULL)
-        return -1;
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
+        && ctx->lookup_certs == X509_STORE_CTX_get1_certs) {
+        if ((view = x509_get0_view(x)) == NULL)
+            return 0;
+        x509_view_get_subject(view, &subject);
+        ERR_set_mark();
+        certs = get1_certs_by_subject(ctx, &subject);
+        ERR_pop_to_mark();
+        if (certs == NULL)
+            return 0;
+    } else {
+        /* Lookup all certs with matching subject name */
+        ERR_set_mark();
+        certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
+        ERR_pop_to_mark();
+        if (certs == NULL)
+            return -1;
+    }
 
     /* Look for exact match */
     for (i = 0; i < sk_X509_num(certs); i++) {
@@ -1673,6 +1689,19 @@ static int certificate_time_to_posix(const ASN1_TIME *ctm, int64_t *out_time)
     return 1;
 }
 
+static int check_cert_trust(X509_STORE_CTX *ctx, X509 *x)
+{
+    int flags = 0;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0) {
+        flags = X509_TRUST_SELF_SIGNED_KNOWN;
+        if (cert_self_signed(ctx, x) > 0)
+            flags |= X509_TRUST_SELF_SIGNED;
+    }
+
+    return X509_check_trust(x, ctx->param->trust, flags);
+}
+
 /* Returns -1 on internal error */
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
 {
@@ -1701,7 +1730,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
      */
     for (i = num_untrusted; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
-        trust = X509_check_trust(x, ctx->param->trust, 0);
+        trust = check_cert_trust(ctx, x);
         /* If explicitly trusted (so not neutral nor rejected) return trusted */
         if (trust == X509_TRUST_TRUSTED)
             goto trusted;
@@ -1737,7 +1766,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
          * Check explicit auxiliary trust/reject settings.  If none are set,
          * we'll accept X509_TRUST_UNTRUSTED when not self-signed.
          */
-        trust = X509_check_trust(mx, ctx->param->trust, 0);
+        trust = check_cert_trust(ctx, mx);
         if (trust == X509_TRUST_REJECTED) {
             X509_free(mx);
             goto rejected;

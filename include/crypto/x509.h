@@ -496,6 +496,11 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
 int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);
+/** X509_check_trust() flag: X509_TRUST_SELF_SIGNED gives self-signedness */
+#define X509_TRUST_SELF_SIGNED_KNOWN (1U << 16)
+/** X509_check_trust() flag: the certificate is self-signed */
+#define X509_TRUST_SELF_SIGNED (1U << 17)
+
 int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername);
 
