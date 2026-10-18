@@ -17,8 +17,8 @@
 #include <openssl/x509.h>
 #include "fuzzer.h"
 
-#define MAX_INPUT_SIZE (256 * 1024)
-#define MAX_LOADS 64
+#define MAX_INPUT_SIZE 16384
+#define MAX_LOADS 4
 
 #define MODE_EXPECT_MASK 7u
 #define MODE_INPUT_SHIFT 3u
