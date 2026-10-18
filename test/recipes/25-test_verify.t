@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 235;
+plan tests => 238;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -394,6 +394,9 @@ ok(verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)],
 ok(verify("pc2-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
           "-allow_proxy_certs", "-x509_strict"),
    "accept proxy cert 2, strict");
+ok(!verify("bad-pc3-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "fail proxy cert with incorrect subject, strict");
 ok(!verify("bad-pc4-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
           "-allow_proxy_certs", "-x509_strict"),
    "fail proxy cert with incorrect pathlen, strict");
@@ -542,6 +545,12 @@ ok(verify("badcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
 
 ok(!verify("badalt1-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints hostname not permitted");
+
+ok(verify("alt1-cert", "", ["root-cert"], ["ncca1-cert"], "-x509_strict"),
+   "Name Constraints everything permitted, strict");
+
+ok(!verify("badalt1-cert", "", ["root-cert"], ["ncca1-cert"], "-x509_strict"),
+   "Name Constraints hostname not permitted, strict");
 
 ok(!verify("badalt2-cert", "", ["root-cert"], ["ncca2-cert"], ),
    "Name Constraints hostname excluded");

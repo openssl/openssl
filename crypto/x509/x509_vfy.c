@@ -252,6 +252,46 @@ static int verify_rpk(X509_STORE_CTX *ctx)
     return !!ctx->verify_cb(ctx->error == X509_V_OK, ctx);
 }
 
+static int cache_chain_extensions(X509_STORE_CTX *ctx)
+{
+    X509 *x;
+    int i;
+
+    for (i = 0; i < sk_X509_num(ctx->chain); i++) {
+        x = sk_X509_value(ctx->chain, i);
+        CB_FAIL_IF(!ossl_x509v3_cache_extensions(x),
+            ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
+    }
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_RFC3779
+static int check_rfc3779(X509_STORE_CTX *ctx)
+{
+    const struct x509_view *view;
+    uint32_t present = 0;
+    int i, ok;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0) {
+        for (i = 0; i < sk_X509_num(ctx->chain); i++) {
+            if ((view = x509_get0_view(sk_X509_value(ctx->chain, i))) == NULL)
+                return 0;
+            present |= x509_view_extensions_present(view,
+                X509_VIEW_EXT_IP_ADDR_BLOCKS | X509_VIEW_EXT_AUTONOMOUS_SYS_IDS);
+        }
+        if (present == 0)
+            return 1;
+        if ((ok = cache_chain_extensions(ctx)) <= 0)
+            return ok;
+    }
+
+    if ((ok = X509v3_asid_validate_path(ctx)) <= 0)
+        return ok;
+    return X509v3_addr_validate_path(ctx);
+}
+#endif
+
 /*-
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -284,9 +324,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 #ifndef OPENSSL_NO_RFC3779
     /* RFC 3779 path validation, now that CRL check has been done */
-    if ((ok = X509v3_asid_validate_path(ctx)) <= 0)
-        return ok;
-    if ((ok = X509v3_addr_validate_path(ctx)) <= 0)
+    if ((ok = check_rfc3779(ctx)) <= 0)
         return ok;
 #endif
 
@@ -647,6 +685,16 @@ static int view_issued(const X509 *issuer, const struct x509_view *issuer_view,
         || (EVP_PKEY_is_a(pkey, "RSA") && sig_nid == NID_rsassaPss);
 }
 
+static int cert_self_signed(const X509_STORE_CTX *ctx, const X509 *x)
+{
+    const struct x509_view *view;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+        return X509_self_signed(x, 0);
+
+    return (view = x509_get0_view(x)) != NULL && view_self_signed(view);
+}
+
 /* Check that the given certificate |x| is issued by the certificate |issuer| */
 static int check_issued(X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer)
 {
@@ -1003,6 +1051,8 @@ static int check_extensions_view(X509_STORE_CTX *ctx)
         if (i > 0 && !x509_view_is_self_issued(view))
             plen++;
         if (is_proxy) {
+            CB_FAIL_IF(!ossl_x509v3_cache_extensions(x),
+                ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
             if (x->ex_pcpathlen != -1) {
                 CB_FAIL_IF(proxy_plen > x->ex_pcpathlen,
                     ctx, x, i, X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED);
@@ -1202,13 +1252,164 @@ static int check_extensions(X509_STORE_CTX *ctx)
     return 1;
 }
 
+/*
+ * Proxy certificates policy has an extra constraint, where the
+ * certificate subject MUST be the issuer with a single CN entry
+ * added.
+ * (RFC 3820: 3.4, 4.1.3 (a)(4))
+ */
+static int check_proxy_subject(const X509 *x)
+{
+    const X509_NAME *tmpsubject = X509_get_subject_name(x);
+    const X509_NAME *tmpissuer = X509_get_issuer_name(x);
+    X509_NAME *tmpsubject2;
+    X509_NAME_ENTRY *tmpentry = NULL;
+    int last_nid = 0;
+    int err = X509_V_OK;
+    int last_loc = X509_NAME_entry_count(tmpsubject) - 1;
+
+    /* Check that there are at least two RDNs */
+    if (last_loc < 1)
+        return X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
+
+    /*
+     * Check that there is exactly one more RDN in subject as
+     * there is in issuer.
+     */
+    if (X509_NAME_entry_count(tmpsubject)
+        != X509_NAME_entry_count(tmpissuer) + 1)
+        return X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
+
+    /*
+     * Check that the last subject component isn't part of a
+     * multi-valued RDN
+     */
+    if (X509_NAME_ENTRY_set(X509_NAME_get_entry(tmpsubject, last_loc))
+        == X509_NAME_ENTRY_set(X509_NAME_get_entry(tmpsubject,
+            last_loc - 1)))
+        return X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
+
+    /*
+     * Check that the last subject RDN is a commonName, and that
+     * all the previous RDNs match the issuer exactly
+     */
+    tmpsubject2 = X509_NAME_dup(tmpsubject);
+    if (tmpsubject2 == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
+        return X509_V_ERR_OUT_OF_MEM;
+    }
+
+    tmpentry = X509_NAME_delete_entry(tmpsubject2, last_loc);
+    last_nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(tmpentry));
+
+    if (last_nid != NID_commonName
+        || X509_NAME_cmp(tmpsubject2, tmpissuer) != 0)
+        err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
+
+    X509_NAME_ENTRY_free(tmpentry);
+    X509_NAME_free(tmpsubject2);
+    return err;
+}
+
+static void *view_decode(const CBS *element, const ASN1_ITEM *it)
+{
+    ASN1_VALUE *val;
+    const unsigned char *p = CBS_data(element);
+
+    if ((val = ASN1_item_d2i(NULL, &p, CBS_len(element), it)) == NULL)
+        return NULL;
+    if (p != CBS_data(element) + CBS_len(element)) {
+        ASN1_item_free(val, it);
+        return NULL;
+    }
+
+    return val;
+}
+
+static int check_view_against_constraints(X509_STORE_CTX *ctx, X509 *x,
+    const struct x509_view *view, int i)
+{
+    const struct x509_view *nc_view;
+    X509_NAME *subject = NULL;
+    GENERAL_NAMES *altnames = NULL;
+    NAME_CONSTRAINTS *nc;
+    CBS nc_cbs, name_cbs;
+    int j, rv, ret = 0;
+
+    for (j = sk_X509_num(ctx->chain) - 1; j > i; j--) {
+        if ((nc_view = x509_get0_view(sk_X509_value(ctx->chain, j))) == NULL)
+            goto err;
+        if (!x509_view_get_name_constraints(nc_view, &nc_cbs))
+            continue;
+        if (subject == NULL) {
+            x509_view_get_subject(view, &name_cbs);
+            if ((subject = view_decode(&name_cbs, ASN1_ITEM_rptr(X509_NAME)))
+                == NULL)
+                goto err;
+            if (x509_view_get_san(view, &name_cbs)
+                && (altnames = view_decode(&name_cbs,
+                        ASN1_ITEM_rptr(GENERAL_NAMES)))
+                    == NULL)
+                goto err;
+        }
+        if ((nc = view_decode(&nc_cbs, ASN1_ITEM_rptr(NAME_CONSTRAINTS)))
+            == NULL)
+            goto err;
+        rv = ossl_name_constraints_check(subject, altnames, nc);
+        NAME_CONSTRAINTS_free(nc);
+        if (rv == X509_V_ERR_OUT_OF_MEM) {
+            ret = -1;
+            goto err;
+        }
+        if (rv != X509_V_OK && verify_cb_cert(ctx, x, i, rv) == 0)
+            goto err;
+    }
+    ret = 1;
+
+err:
+    X509_NAME_free(subject);
+    GENERAL_NAMES_free(altnames);
+    return ret;
+}
+
+static int check_name_constraints_view(X509_STORE_CTX *ctx)
+{
+    const struct x509_view *view;
+    X509 *x;
+    int i, ret;
+
+    for (i = sk_X509_num(ctx->chain) - 1; i >= 0; i--) {
+        x = sk_X509_value(ctx->chain, i);
+        if ((view = x509_get0_view(x)) == NULL)
+            return 0;
+        if (i != 0 && x509_view_is_self_issued(view))
+            continue;
+        if (x509_view_extensions_present(view, X509_VIEW_EXT_PROXY_CERT_INFO)
+            != 0) {
+            ret = check_proxy_subject(x);
+            if (ret == X509_V_ERR_OUT_OF_MEM) {
+                ctx->error = X509_V_ERR_OUT_OF_MEM;
+                return -1;
+            }
+            CB_FAIL_IF(ret != X509_V_OK, ctx, x, i, ret);
+        }
+        if ((ret = check_view_against_constraints(ctx, x, view, i)) <= 0)
+            return ret;
+    }
+
+    return 1;
+}
+
 /*-
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
 static int check_name_constraints(X509_STORE_CTX *ctx)
 {
-    int i;
+    int i, err;
+
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0)
+        return check_name_constraints_view(ctx);
 
     /* Check name constraints for all certificates */
     for (i = sk_X509_num(ctx->chain) - 1; i >= 0; i--) {
@@ -1219,71 +1420,12 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
         if (i != 0 && (x->ex_flags & EXFLAG_SI) != 0)
             continue;
 
-        /*
-         * Proxy certificates policy has an extra constraint, where the
-         * certificate subject MUST be the issuer with a single CN entry
-         * added.
-         * (RFC 3820: 3.4, 4.1.3 (a)(4))
-         */
         if ((x->ex_flags & EXFLAG_PROXY) != 0) {
-            const X509_NAME *tmpsubject = X509_get_subject_name(x);
-            const X509_NAME *tmpissuer = X509_get_issuer_name(x);
-            X509_NAME *tmpsubject2;
-            X509_NAME_ENTRY *tmpentry = NULL;
-            int last_nid = 0;
-            int err = X509_V_OK;
-            int last_loc = X509_NAME_entry_count(tmpsubject) - 1;
-
-            /* Check that there are at least two RDNs */
-            if (last_loc < 1) {
-                err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
-                goto proxy_name_done;
-            }
-
-            /*
-             * Check that there is exactly one more RDN in subject as
-             * there is in issuer.
-             */
-            if (X509_NAME_entry_count(tmpsubject)
-                != X509_NAME_entry_count(tmpissuer) + 1) {
-                err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
-                goto proxy_name_done;
-            }
-
-            /*
-             * Check that the last subject component isn't part of a
-             * multi-valued RDN
-             */
-            if (X509_NAME_ENTRY_set(X509_NAME_get_entry(tmpsubject, last_loc))
-                == X509_NAME_ENTRY_set(X509_NAME_get_entry(tmpsubject,
-                    last_loc - 1))) {
-                err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
-                goto proxy_name_done;
-            }
-
-            /*
-             * Check that the last subject RDN is a commonName, and that
-             * all the previous RDNs match the issuer exactly
-             */
-            tmpsubject2 = X509_NAME_dup(tmpsubject);
-            if (tmpsubject2 == NULL) {
-                ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
+            err = check_proxy_subject(x);
+            if (err == X509_V_ERR_OUT_OF_MEM) {
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return -1;
             }
-
-            tmpentry = X509_NAME_delete_entry(tmpsubject2, last_loc);
-            last_nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(tmpentry));
-
-            if (last_nid != NID_commonName
-                || X509_NAME_cmp(tmpsubject2, tmpissuer) != 0) {
-                err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
-            }
-
-            X509_NAME_ENTRY_free(tmpentry);
-            X509_NAME_free(tmpsubject2);
-
-        proxy_name_done:
             CB_FAIL_IF(err != X509_V_OK, ctx, x, i, err);
         }
 
@@ -1615,6 +1757,10 @@ static int check_revocation(X509_STORE_CTX *ctx)
 
     if (!crl_check_enabled && !ocsp_check_enabled)
         return 1;
+    if (crl_check_enabled
+        && (ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
+        && (ok = cache_chain_extensions(ctx)) <= 0)
+        return ok;
 
     if (ocsp_check_enabled) {
 #ifndef OPENSSL_NO_OCSP
@@ -1631,7 +1777,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
             ctx->current_cert = sk_X509_value(ctx->chain, i);
 
             /* skip if cert is apparently self-signed */
-            if (ctx->current_cert->ex_flags & EXFLAG_SS)
+            if (cert_self_signed(ctx, ctx->current_cert) > 0)
                 continue;
 
             /* the issuer certificate is the next in the chain */
