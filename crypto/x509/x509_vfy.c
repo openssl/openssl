@@ -309,6 +309,14 @@ static int check_rfc3779(X509_STORE_CTX *ctx)
 }
 #endif
 
+static int get_pubkey_parameters(X509_STORE_CTX *ctx)
+{
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0)
+        return 1;
+
+    return X509_get_pubkey_parameters(NULL, ctx->chain) ? 1 : -1;
+}
+
 /*-
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -323,7 +331,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
         || (ok = check_extensions(ctx)) <= 0
         || (ok = check_auth_level(ctx)) <= 0
         || (ok = check_id(ctx)) <= 0
-        || (ok = X509_get_pubkey_parameters(NULL, ctx->chain) ? 1 : -1) <= 0
+        || (ok = get_pubkey_parameters(ctx)) <= 0
         || (ok = ctx->check_revocation(ctx)) <= 0)
         return ok;
 
