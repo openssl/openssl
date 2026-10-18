@@ -25,6 +25,7 @@ static char *cert = NULL;
 static char *privkey = NULL;
 static char *rootcert = NULL;
 static int ch_test_cb_ok = 0;
+static int client_ext1_adds = 0;
 
 /* ECH callback */
 static unsigned int ech_test_cb(SSL *s, const char *str)
@@ -119,6 +120,8 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
     if (*server != SSL_is_server(s))
         return -1;
     if (ext_type == TEST_EXT_TYPE1) {
+        if (!SSL_is_server(s))
+            client_ext1_adds++;
         if ((data = OPENSSL_malloc(sizeof(*data))) == NULL)
             return -1;
         *data = 1;
@@ -1278,6 +1281,7 @@ end:
 #define OSSL_ECH_TEST_CBS 5 /* test callbacks */
 #define OSSL_ECH_TEST_V12 6 /* test TLSv1.2 */
 #define OSSL_ECH_TEST_NO_INNER 7 /* test no inner SNI */
+#define OSSL_ECH_TEST_CUSTOM_HRR 8 /* custom CH ext + HRR */
 /* note: early-data is prohibited after HRR so no tests for that */
 
 /*
@@ -1354,7 +1358,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
                 SSL3_RT_MAX_PLAIN_LENGTH)))
             goto end;
     }
-    if (combo == OSSL_ECH_TEST_CUSTOM) {
+    if (combo == OSSL_ECH_TEST_CUSTOM || combo == OSSL_ECH_TEST_CUSTOM_HRR) {
         context = SSL_EXT_CLIENT_HELLO; /* add custom CH ext to client/server */
         if (!TEST_true(SSL_CTX_add_custom_ext(cctx, TEST_EXT_TYPE1, context,
                 new_add_cb, new_free_cb,
@@ -1383,7 +1387,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
             &clientssl, NULL, NULL)))
         goto end;
-    if (combo == OSSL_ECH_TEST_HRR
+    if ((combo == OSSL_ECH_TEST_HRR || combo == OSSL_ECH_TEST_CUSTOM_HRR)
         && !TEST_true(SSL_set1_groups_list(serverssl, "P-384")))
         goto end;
     if (combo != OSSL_ECH_TEST_NO_INNER
@@ -1422,10 +1426,15 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         goto end;
     if (combo == OSSL_ECH_TEST_CBS && !TEST_int_eq(ch_test_cb_ok, 1))
         goto end;
+    /* client must have added TEST_EXT_TYPE1 to both inner ClientHellos */
+    if (combo == OSSL_ECH_TEST_CUSTOM_HRR
+        && !TEST_int_eq(client_ext1_adds, 2))
+        goto end;
     /* all good */
     if (combo == OSSL_ECH_TEST_BASIC || combo == OSSL_ECH_TEST_HRR
         || combo == OSSL_ECH_TEST_CUSTOM || combo == OSSL_ECH_TEST_CBS
-        || combo == OSSL_ECH_TEST_NO_INNER) {
+        || combo == OSSL_ECH_TEST_NO_INNER
+        || combo == OSSL_ECH_TEST_CUSTOM_HRR) {
         res = 1;
         goto end;
     }
@@ -1499,6 +1508,7 @@ end:
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
     ch_test_cb_ok = 0;
+    client_ext1_adds = 0;
     return res;
 }
 
@@ -1540,6 +1550,14 @@ static int ech_custom_test(int idx)
     if (verbose)
         TEST_info("Doing: ech_custom_test");
     return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_CUSTOM);
+}
+
+/* Test a roundtrip with ECH, custom CH extensions and HRR */
+static int ech_custom_hrr_test(int idx)
+{
+    if (verbose)
+        TEST_info("Doing: ech_custom_hrr_test");
+    return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_CUSTOM_HRR);
 }
 
 /* Test a roundtrip with No ECH, and early data */
@@ -2453,6 +2471,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ech_hrr, suite_combos);
     ADD_ALL_TESTS(test_ech_early, suite_combos);
     ADD_ALL_TESTS(ech_custom_test, suite_combos);
+    ADD_ALL_TESTS(ech_custom_hrr_test, suite_combos);
     ADD_ALL_TESTS(ech_enoe_test, suite_combos);
     ADD_ALL_TESTS(ech_cb_test, suite_combos);
     ADD_ALL_TESTS(ech_v12_test, suite_combos);

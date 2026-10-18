@@ -4635,8 +4635,12 @@ err:
     return ret;
 }
 
-/* Test ECH with quic */
-static int test_ech(void)
+/*
+ * Test ECH with quic. QUIC carries its transport parameters as a custom
+ * extension, so idx 1 also forces a HelloRetryRequest to check that the
+ * custom extension is added again to the second inner ClientHello.
+ */
+static int test_ech(int idx)
 {
     /*
      * Don't try this test if various ECC things are set of unavailable
@@ -4689,6 +4693,13 @@ static int test_ech(void)
     sctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
     /* set OSSL_ECHSTORE for server */
     if (!TEST_ptr(sctx) || !TEST_true(SSL_CTX_set1_echstore(sctx, es)))
+        goto err;
+
+    /* client key share is X25519 only, server accepts P-256 only: HRR */
+    if (idx == 1
+        && (!TEST_ptr(cctx)
+            || !TEST_true(SSL_CTX_set1_groups_list(cctx, "X25519:P-256"))
+            || !TEST_true(SSL_CTX_set1_groups_list(sctx, "P-256"))))
         goto err;
 
     if (!TEST_ptr(cctx)
@@ -5057,7 +5068,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_quic_peer_addr_v4);
     ADD_MFAIL_NO_CHECK_TEST(test_quic_handshake_multipkt_mfail);
-    ADD_TEST(test_ech);
+    ADD_ALL_TESTS(test_ech, 2);
     ADD_TEST(test_quic_resize_txe);
     ADD_MFAIL_TEST(test_ssl_new_mfail);
     ADD_TEST(test_pending_limit);
