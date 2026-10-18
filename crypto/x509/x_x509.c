@@ -112,6 +112,9 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             ret->der = old->der;
             ret->view = old->view;
             ret->has_view = old->has_view;
+            if (old->pkey != NULL && !EVP_PKEY_up_ref(old->pkey))
+                return 0;
+            ret->pkey = old->pkey;
         }
     } break;
     case ASN1_OP_GET0_LIBCTX: {
@@ -199,11 +202,21 @@ void ossl_x509_set_modified(X509 *x)
 
 void ossl_x509_set0_der(X509 *x, CRYPTO_BUFFER *der)
 {
+    CBS spki;
+
     CRYPTO_BUFFER_free(x->der);
+    EVP_PKEY_free(x->pkey);
     x->der = der;
+    x->pkey = NULL;
     x->has_view = der != NULL
         && x509_view_parse(CRYPTO_BUFFER_data(der), CRYPTO_BUFFER_len(der),
             &x->view);
+    if (!x->has_view)
+        return;
+    x509_view_get_spki(&x->view, &spki);
+    ERR_set_mark();
+    x->pkey = ossl_x509_spki_to_pkey(&spki);
+    ERR_pop_to_mark();
 }
 
 /*

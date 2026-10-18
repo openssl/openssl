@@ -273,10 +273,61 @@ err:
     return ret;
 }
 
+static int test_x509_pubkey(void)
+{
+    EVP_PKEY *pkey = NULL, *other = NULL, *got = NULL;
+    X509 *x = NULL, *y = NULL, *z = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *q;
+    int der_len, ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "EC", "P-256"))
+        || !TEST_ptr(other = EVP_PKEY_Q_keygen(NULL, NULL, "EC", "P-256"))
+        || !TEST_ptr(x = make_cert(pkey))
+        || !TEST_int_gt(der_len = i2d_X509(x, &der), 0))
+        goto err;
+
+    /* A signed and a decoded X509 cache the key from the view. */
+    q = der;
+    if (!TEST_ptr(x->pkey)
+        || !TEST_ptr_eq(X509_get0_pubkey(x), x->pkey)
+        || !TEST_int_eq(EVP_PKEY_eq(x->pkey, pkey), 1)
+        || !TEST_ptr(y = d2i_X509(NULL, &q, der_len))
+        || !TEST_ptr(y->pkey)
+        || !TEST_ptr_eq(X509_get0_pubkey(y), y->pkey)
+        || !TEST_int_eq(EVP_PKEY_eq(y->pkey, pkey), 1)
+        || !TEST_ptr(got = X509_get_pubkey(y))
+        || !TEST_ptr_eq(got, y->pkey))
+        goto err;
+
+    /* X509_dup shares the key. */
+    if (!TEST_ptr(z = X509_dup(y))
+        || !TEST_ptr_eq(z->pkey, y->pkey))
+        goto err;
+
+    /* A modified X509 caches none, and returns the key it was given. */
+    if (!TEST_true(X509_set_pubkey(z, other))
+        || !TEST_ptr_null(z->pkey)
+        || !TEST_int_eq(EVP_PKEY_eq(X509_get0_pubkey(z), other), 1))
+        goto err;
+    ret = 1;
+
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(other);
+    EVP_PKEY_free(got);
+    X509_free(x);
+    X509_free(y);
+    X509_free(z);
+    OPENSSL_free(der);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_x509_buffer);
     ADD_TEST(test_x509_view);
     ADD_TEST(test_x509_cmp);
+    ADD_TEST(test_x509_pubkey);
     return 1;
 }

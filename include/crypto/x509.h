@@ -207,6 +207,11 @@ struct x509_st {
     struct x509_view view;
     /** Whether der is set and x509_view_parse() accepted it */
     int has_view;
+    /**
+     * The public key decoded from the view's SubjectPublicKeyInfo, or NULL
+     * if there is no view or the key does not decode
+     */
+    EVP_PKEY *pkey;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
@@ -389,7 +394,7 @@ void ossl_x509_set_modified(X509 *x);
 
 /**
  * @brief Replaces x's DER encoding with der, taking ownership of it, and
- * parses the view of it.
+ * parses the view of it and the public key in the view.
  * @param x the certificate
  * @param der the DER encoding of x, or NULL to leave x without one
  */
