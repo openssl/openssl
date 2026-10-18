@@ -510,6 +510,18 @@ int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,
  * @returns 1 on a match, 0 otherwise
  */
 /**
+ * @brief Checks a certificate's subject and subject alternative names
+ * against name constraints, as NAME_CONSTRAINTS_check() does.
+ * @param nm the certificate's subject
+ * @param altnames the certificate's subject alternative names, or NULL
+ * @param nc the name constraints
+ * @returns X509_V_OK if the names satisfy nc, an X509_V_ERR_ value
+ * otherwise
+ */
+int ossl_name_constraints_check(const X509_NAME *nm,
+    const GENERAL_NAMES *altnames, NAME_CONSTRAINTS *nc);
+
+/**
  * @brief Verifies the signature of the certificate whose view is given
  * with pkey, as X509_verify() does.
  * @param view the certificate's view
