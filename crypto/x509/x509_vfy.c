@@ -28,6 +28,7 @@
 #include <openssl/posix_time.h>
 #include <openssl/core_names.h>
 #include "internal/dane.h"
+#include "crypto/objects.h"
 #include "crypto/x509.h"
 #include "x509_local.h"
 
@@ -675,19 +676,28 @@ static int view_self_signed(const struct x509_view *view)
             || (key_usage & KU_KEY_CERT_SIGN) != 0);
 }
 
-static int view_sig_alg_matches(const X509 *issuer,
+static int view_sig_alg_matches(const struct x509_view *issuer_view,
     const struct x509_view *subject_view)
 {
-    const EVP_PKEY *pkey;
-    int sig_nid;
+    CBS spki, seq, alg, oid, params;
+    int key_nid, sig_nid;
 
-    if ((pkey = X509_get0_pubkey(issuer)) == NULL
-        || !OBJ_find_sigid_algs(x509_view_sig_nid(subject_view), NULL,
-            &sig_nid))
+    if (!OBJ_find_sigid_algs(x509_view_sig_nid(subject_view), NULL, &sig_nid))
+        return 0;
+    x509_view_get_spki(issuer_view, &spki);
+    if (!CBS_get_asn1(&spki, &seq, CBS_ASN1_SEQUENCE)
+        || !CBS_get_asn1(&seq, &alg, CBS_ASN1_SEQUENCE)
+        || !CBS_get_asn1(&alg, &oid, CBS_ASN1_OBJECT)
+        || (key_nid = ossl_obj_cbs2nid(&oid)) == NID_undef)
         return 0;
 
-    return EVP_PKEY_is_a(pkey, OBJ_nid2sn(sig_nid))
-        || (EVP_PKEY_is_a(pkey, "RSA") && sig_nid == NID_rsassaPss);
+    if (key_nid == sig_nid)
+        return 1;
+    if (key_nid == NID_rsaEncryption && sig_nid == NID_rsassaPss)
+        return 1;
+    return key_nid == NID_X9_62_id_ecPublicKey && sig_nid == NID_sm2
+        && CBS_get_asn1(&alg, &params, CBS_ASN1_OBJECT)
+        && ossl_obj_cbs2nid(&params) == NID_sm2;
 }
 
 static int view_issued(const X509 *issuer, const struct x509_view *issuer_view,
@@ -712,7 +722,7 @@ static int view_issued(const X509 *issuer, const struct x509_view *issuer_view,
         return view_self_signed(issuer_view);
 
     return view_akid_matches(issuer_view, subject_view)
-        && view_sig_alg_matches(issuer, subject_view);
+        && view_sig_alg_matches(issuer_view, subject_view);
 }
 
 static int cert_self_signed(const X509_STORE_CTX *ctx, const X509 *x)
@@ -3056,7 +3066,7 @@ static int likely_self_issued(const X509_STORE_CTX *ctx, const X509 *x)
 
     return (view = x509_get0_view(x)) != NULL
         && x509_view_is_self_issued(view) && view_akid_matches(view, view)
-        && view_sig_alg_matches(x, view);
+        && view_sig_alg_matches(view, view);
 }
 
 static int cert_is_ca(const X509_STORE_CTX *ctx, const X509 *x)
