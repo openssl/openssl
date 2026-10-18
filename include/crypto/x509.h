@@ -195,7 +195,7 @@ struct x509_cinf_st {
 };
 
 struct x509_st {
-    X509_CINF cert_info;
+    X509_CINF *cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
     /**

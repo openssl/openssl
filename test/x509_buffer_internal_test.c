@@ -210,8 +210,8 @@ static int test_x509_view(void)
         goto err;
 
     /* A certificate with der the view rejects has none: an encoded v1. */
-    if (!TEST_ptr(x->cert_info.version = ASN1_INTEGER_new())
-        || !TEST_true(ASN1_INTEGER_set(x->cert_info.version, 0))
+    if (!TEST_ptr(x->cert_info->version = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(x->cert_info->version, 0))
         || !TEST_int_gt(X509_sign(x, pkey, EVP_sha256()), 0)
         || !TEST_ptr(x->der)
         || !TEST_ptr_null(x509_get0_view(x)))

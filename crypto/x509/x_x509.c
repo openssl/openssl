@@ -139,7 +139,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 }
 
 ASN1_SEQUENCE_ref(X509, x509_cb) = {
-    ASN1_EMBED(X509, cert_info, X509_CINF),
+    ASN1_SIMPLE(X509, cert_info, X509_CINF),
     ASN1_EMBED(X509, sig_alg, X509_ALGOR),
     ASN1_EMBED(X509, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509, X509)
@@ -194,7 +194,7 @@ int i2d_X509(const X509 *a, unsigned char **out)
     const uint8_t *data;
     size_t len;
 
-    if (a == NULL || a->der == NULL || a->cert_info.enc.modified)
+    if (a == NULL || a->der == NULL || a->cert_info->enc.modified)
         return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(X509));
 
     data = CRYPTO_BUFFER_data(a->der);
@@ -219,7 +219,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
 void ossl_x509_set_modified(X509 *x)
 {
-    x->cert_info.enc.modified = 1;
+    x->cert_info->enc.modified = 1;
     ossl_x509_set0_der(x, NULL);
 }
 
@@ -391,7 +391,7 @@ int i2d_X509_AUX(const X509 *a, unsigned char **pp)
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
 {
     ossl_x509_set_modified(x);
-    return i2d_X509_CINF(&x->cert_info, pp);
+    return i2d_X509_CINF(x->cert_info, pp);
 }
 
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
