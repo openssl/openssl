@@ -239,10 +239,17 @@ static int trust_1oid(X509_TRUST *trust, const X509 *x, int flags)
 
 static int trust_compat(X509_TRUST *trust, const X509 *x, int flags)
 {
-    /* Call for side-effect of setting EXFLAG_SS for self-signed-certs */
-    if (X509_check_purpose(x, -1, 0) != 1)
-        return X509_TRUST_UNTRUSTED;
-    if ((flags & X509_TRUST_NO_SS_COMPAT) == 0 && (x->ex_flags & EXFLAG_SS))
+    int self_signed;
+
+    if ((flags & X509_TRUST_SELF_SIGNED_KNOWN) != 0) {
+        self_signed = (flags & X509_TRUST_SELF_SIGNED) != 0;
+    } else {
+        /* Call for side-effect of setting EXFLAG_SS for self-signed-certs */
+        if (X509_check_purpose(x, -1, 0) != 1)
+            return X509_TRUST_UNTRUSTED;
+        self_signed = (x->ex_flags & EXFLAG_SS) != 0;
+    }
+    if ((flags & X509_TRUST_NO_SS_COMPAT) == 0 && self_signed)
         return X509_TRUST_TRUSTED;
     else
         return X509_TRUST_UNTRUSTED;

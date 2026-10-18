@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 241;
+plan tests => 244;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -243,6 +243,12 @@ ok(!verify("ee-cert", "sslserver", [], [qw(ca+serverAuth)], "-partial_chain"),
    "fail untrusted partial issuer with ignored server trust");
 ok(!verify("ee-cert", "sslserver", [qw(ca-serverAuth)], [], "-partial_chain"),
    "fail server mistrust partial chain");
+ok(verify("ee-cert", "sslserver", [qw(ca-cert)], [], "-partial_chain",
+          "-x509_strict"),
+   "accept trusted partial chain, strict");
+ok(!verify("ee-cert", "sslserver", [qw(ca-serverAuth)], [], "-partial_chain",
+           "-x509_strict"),
+   "fail server mistrust partial chain, strict");
 ok(!verify("ee-cert", "sslserver", [qw(ca+clientAuth)], [], "-partial_chain"),
    "fail client trust partial chain");
 ok(!verify("ee-cert", "sslserver", [qw(ca-anyEKU)], [], "-partial_chain"),
@@ -305,6 +311,9 @@ ok(!verify("ee-expired", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
    "fail expired leaf");
 ok(verify("ee-cert", "sslserver", [qw(ee-cert)], [], "-partial_chain"),
    "accept last-resort direct leaf match");
+ok(verify("ee-cert", "sslserver", [qw(ee-cert)], [], "-partial_chain",
+          "-x509_strict"),
+   "accept last-resort direct leaf match, strict");
 ok(verify("ee-client", "sslclient", [qw(ee-client)], [], "-partial_chain"),
    "accept last-resort direct leaf match");
 ok(!verify("ee-cert", "sslserver", [qw(ee-client)], [], "-partial_chain"),
