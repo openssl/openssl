@@ -176,6 +176,18 @@ int X509_cmp(const X509 *a, const X509 *b)
     if (a == b) /* for efficiency */
         return 0;
 
+    if (a->der != NULL && b->der != NULL) {
+        size_t a_len, b_len;
+
+        a_len = CRYPTO_BUFFER_len(a->der);
+        b_len = CRYPTO_BUFFER_len(b->der);
+        if (a_len != b_len)
+            return a_len < b_len ? -1 : 1;
+        rv = memcmp(CRYPTO_BUFFER_data(a->der), CRYPTO_BUFFER_data(b->der),
+            a_len);
+        return rv < 0 ? -1 : rv > 0;
+    }
+
     /*
      * A certificate modified since it was signed or decoded is equal only
      * to itself

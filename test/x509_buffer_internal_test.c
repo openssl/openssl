@@ -227,9 +227,56 @@ err:
     return ret;
 }
 
+static int test_x509_cmp(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509 *x = NULL, *y = NULL, *z = NULL, *w = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *q;
+    int der_len, ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "EC", "P-256"))
+        || !TEST_ptr(x = make_cert(pkey))
+        || !TEST_ptr(w = make_cert(pkey))
+        || !TEST_int_gt(der_len = i2d_X509(x, &der), 0))
+        goto err;
+    q = der;
+    if (!TEST_ptr(y = d2i_X509(NULL, &q, der_len)))
+        goto err;
+    q = der;
+    if (!TEST_ptr(z = d2i_X509(NULL, &q, der_len)))
+        goto err;
+
+    /* Certificates with DER compare by it, without the extension cache. */
+    if (!TEST_int_eq(X509_cmp(y, z), 0)
+        || !TEST_int_eq(X509_cmp(x, y), 0)
+        || !TEST_int_ne(X509_cmp(y, w), 0)
+        || !TEST_int_eq(X509_cmp(y, w), -X509_cmp(w, y))
+        || !TEST_int_eq(y->ex_cached, 0)
+        || !TEST_int_eq(z->ex_cached, 0))
+        goto err;
+
+    /* A certificate with DER equals the same certificate without. */
+    ossl_x509_set0_der(z, NULL);
+    if (!TEST_int_eq(X509_cmp(y, z), 0)
+        || !TEST_int_eq(X509_cmp(z, y), 0))
+        goto err;
+    ret = 1;
+
+err:
+    EVP_PKEY_free(pkey);
+    X509_free(x);
+    X509_free(y);
+    X509_free(z);
+    X509_free(w);
+    OPENSSL_free(der);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_x509_buffer);
     ADD_TEST(test_x509_view);
+    ADD_TEST(test_x509_cmp);
     return 1;
 }
