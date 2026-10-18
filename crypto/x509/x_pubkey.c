@@ -1202,7 +1202,7 @@ const ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
 {
     if (x == NULL)
         return NULL;
-    return x->cert_info.key->public_key;
+    return x->cert_info->key->public_key;
 }
 
 /* Returns 1 for equal, 0, for non-equal, < 0 on error */

@@ -170,7 +170,7 @@ static int test_asn1_item_verify(void)
 
     if (!TEST_int_gt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
                          alg, sig,
-                         &x509->cert_info, pkey),
+                         x509->cert_info, pkey),
             0))
         goto err;
 
@@ -227,7 +227,7 @@ static int test_x509_asn1_item_verify_mfail(void)
 
     MFAIL_start();
     (void)ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), alg, sig,
-        &x509->cert_info, pkey);
+        x509->cert_info, pkey);
     MFAIL_end();
 
     X509_free(x509);
@@ -713,17 +713,17 @@ static int test_x509_name_canon_failure_cache(void)
     if (!TEST_ptr(cert = X509_new())
         || !TEST_ptr(empty = X509_NAME_new())
         || !TEST_ptr(store = X509_STORE_new())
-        || !TEST_true(X509_NAME_add_entry_by_txt(cert->cert_info.subject,
+        || !TEST_true(X509_NAME_add_entry_by_txt(cert->cert_info->subject,
             "CN", V_ASN1_UTF8STRING, invalid_utf8, sizeof(invalid_utf8), -1,
             0))
         /*
          * The first attempt populates DER before canonicalization fails. A
          * retry must not reuse that partial cache.
          */
-        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
-        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
-        || !TEST_int_eq(X509_NAME_cmp(cert->cert_info.subject, empty), -2)
-        || !TEST_ulong_eq(X509_NAME_hash_ex(cert->cert_info.subject, NULL,
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info->subject, NULL), 0)
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info->subject, NULL), 0)
+        || !TEST_int_eq(X509_NAME_cmp(cert->cert_info->subject, empty), -2)
+        || !TEST_ulong_eq(X509_NAME_hash_ex(cert->cert_info->subject, NULL,
                               NULL, &hash_ok),
             0)
         || !TEST_false(hash_ok)

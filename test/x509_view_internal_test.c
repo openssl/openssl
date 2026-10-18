@@ -154,23 +154,23 @@ err:
 /* Leaves x509 with no Extensions field. */
 static void delete_extensions(X509 *x509)
 {
-    sk_X509_EXTENSION_pop_free(x509->cert_info.extensions,
+    sk_X509_EXTENSION_pop_free(x509->cert_info->extensions,
         X509_EXTENSION_free);
-    x509->cert_info.extensions = NULL;
-    x509->cert_info.enc.modified = 1;
+    x509->cert_info->extensions = NULL;
+    x509->cert_info->enc.modified = 1;
 }
 
 /* Encodes version in the version field when present, else omits it. */
 static int set_version_field(X509 *x509, int present, long version)
 {
-    ASN1_INTEGER_free(x509->cert_info.version);
-    x509->cert_info.version = NULL;
-    x509->cert_info.enc.modified = 1;
+    ASN1_INTEGER_free(x509->cert_info->version);
+    x509->cert_info->version = NULL;
+    x509->cert_info->enc.modified = 1;
     if (!present)
         return 1;
 
-    return TEST_ptr(x509->cert_info.version = ASN1_INTEGER_new())
-        && TEST_true(ASN1_INTEGER_set(x509->cert_info.version, version));
+    return TEST_ptr(x509->cert_info->version = ASN1_INTEGER_new())
+        && TEST_true(ASN1_INTEGER_set(x509->cert_info->version, version));
 }
 
 /* Whether the view holds any field of the extension with the given NID. */
@@ -583,8 +583,8 @@ static int test_unique_ids(void)
         || !TEST_true(ASN1_BIT_STRING_set_bit(uid, 7, 1)))
         goto err;
 
-    x509->cert_info.issuerUID = uid;
-    x509->cert_info.enc.modified = 1;
+    x509->cert_info->issuerUID = uid;
+    x509->cert_info->enc.modified = 1;
     if (!TEST_ptr(der = cert_der(x509, &der_len))
         || !TEST_true(x509_view_parse(der, der_len, &cert))
         || !TEST_true(x509_view_get_issuer_uid(&cert, &cbs))
@@ -593,10 +593,10 @@ static int test_unique_ids(void)
         goto err;
     OPENSSL_free(der);
     der = NULL;
-    x509->cert_info.issuerUID = NULL;
+    x509->cert_info->issuerUID = NULL;
 
-    x509->cert_info.subjectUID = uid;
-    x509->cert_info.enc.modified = 1;
+    x509->cert_info->subjectUID = uid;
+    x509->cert_info->enc.modified = 1;
     if (!TEST_ptr(der = cert_der(x509, &der_len))
         || !TEST_true(x509_view_parse(der, der_len, &cert))
         || !TEST_true(x509_view_get_subject_uid(&cert, &cbs))
@@ -622,8 +622,8 @@ static int test_unique_ids(void)
 
 err:
     if (x509 != NULL) {
-        x509->cert_info.issuerUID = NULL;
-        x509->cert_info.subjectUID = NULL;
+        x509->cert_info->issuerUID = NULL;
+        x509->cert_info->subjectUID = NULL;
     }
     OPENSSL_free(der);
     ASN1_BIT_STRING_free(uid);
@@ -832,9 +832,9 @@ static int test_no_extensions(void)
     OPENSSL_free(der);
     der = NULL;
 
-    if (!TEST_ptr(x509->cert_info.extensions = sk_X509_EXTENSION_new_null()))
+    if (!TEST_ptr(x509->cert_info->extensions = sk_X509_EXTENSION_new_null()))
         goto err;
-    x509->cert_info.enc.modified = 1;
+    x509->cert_info->enc.modified = 1;
     if (!TEST_ptr(der = cert_der(x509, &der_len))
         || !TEST_true(x509_view_parse(der, der_len, &cert))
         || !TEST_true(x509_view_has_malformed_extension(&cert)))
@@ -870,7 +870,7 @@ static int test_times(void)
         || !TEST_true(ASN1_TIME_set_string(X509_getm_notAfter(x509),
             "20310101000000Z")))
         goto err;
-    x509->cert_info.enc.modified = 1;
+    x509->cert_info->enc.modified = 1;
     if (!TEST_ptr(der = cert_der(x509, &der_len))
         || !TEST_true(x509_view_parse(der, der_len, &cert))
         || !TEST_true(x509_view_get_not_before(&cert, &cbs))
@@ -1211,7 +1211,7 @@ static int compare_getters(X509 *x509, const struct x509_view *view)
     int64_t path_len;
     int len, len2, got, ret = 0;
 
-    len = i2d_X509_CINF(&x509->cert_info, &der);
+    len = i2d_X509_CINF(x509->cert_info, &der);
     if (!compare_element("tbs", x509_view_get_tbs(view, &cbs), &cbs, der, len))
         goto err;
     OPENSSL_free(der);
@@ -1425,9 +1425,9 @@ static int compare_cert(X509 *x509)
     X509_get0_uids(x509, &issuer_uid, &subject_uid);
     version = X509_get_version(x509);
     want_accept = version >= 0 && version <= 2
-        && !(x509->cert_info.version != NULL && version == 0)
+        && !(x509->cert_info->version != NULL && version == 0)
         && !(version == 0 && (issuer_uid != NULL || subject_uid != NULL))
-        && !(version != 2 && x509->cert_info.extensions != NULL);
+        && !(version != 2 && x509->cert_info->extensions != NULL);
     accept = x509_view_parse(der, der_len, &cert);
     if (!TEST_int_eq(accept, want_accept))
         goto err;

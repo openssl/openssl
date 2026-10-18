@@ -133,11 +133,11 @@ static int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out)
 
 int X509_verify(const X509 *a, EVP_PKEY *r)
 {
-    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info->signature) != 0)
         return 0;
 
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
-        &a->signature, &a->cert_info,
+        &a->signature, a->cert_info,
         a->distinguishing_id, r, a->libctx, a->propq);
 }
 
@@ -295,8 +295,8 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * which exist below are the same.
      */
     ossl_x509_set_modified(x);
-    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
-        &x->sig_alg, &x->signature, &x->cert_info, NULL,
+    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info->signature,
+        &x->sig_alg, &x->signature, x->cert_info, NULL,
         pkey, md, x->libctx, x->propq);
     if (ret <= 0 || !x509_set_der(x))
         return 0;
@@ -319,8 +319,8 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         return 0;
     ossl_x509_set_modified(x);
     ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
-        &x->cert_info.signature,
-        &x->sig_alg, &x->signature, &x->cert_info, ctx);
+        &x->cert_info->signature,
+        &x->sig_alg, &x->signature, x->cert_info, ctx);
     if (ret <= 0 || !x509_set_der(x))
         return 0;
     return ret;

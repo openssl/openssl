@@ -27,16 +27,16 @@ int X509_set_version(X509 *x, long version)
     if (version == X509_get_version(x))
         return 1; /* avoid needless modification even re-allocation */
     if (version == X509_VERSION_1) {
-        ASN1_INTEGER_free(x->cert_info.version);
-        x->cert_info.version = NULL;
+        ASN1_INTEGER_free(x->cert_info->version);
+        x->cert_info->version = NULL;
         ossl_x509_set_modified(x);
         return 1;
     }
-    if (x->cert_info.version == NULL) {
-        if ((x->cert_info.version = ASN1_INTEGER_new()) == NULL)
+    if (x->cert_info->version == NULL) {
+        if ((x->cert_info->version = ASN1_INTEGER_new()) == NULL)
             return 0;
     }
-    if (!ASN1_INTEGER_set(x->cert_info.version, version))
+    if (!ASN1_INTEGER_set(x->cert_info->version, version))
         return 0;
     ossl_x509_set_modified(x);
     return 1;
@@ -48,7 +48,7 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 
     if (x == NULL)
         return 0;
-    in = &x->cert_info.serialNumber;
+    in = &x->cert_info->serialNumber;
     if (in != serial && !ASN1_STRING_copy(in, serial))
         return 0;
     ossl_x509_set_modified(x);
@@ -57,7 +57,7 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 
 int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 {
-    if (x == NULL || !X509_NAME_set(&x->cert_info.issuer, name))
+    if (x == NULL || !X509_NAME_set(&x->cert_info->issuer, name))
         return 0;
     ossl_x509_set_modified(x);
     return 1;
@@ -65,7 +65,7 @@ int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 
 int X509_set_subject_name(X509 *x, const X509_NAME *name)
 {
-    if (x == NULL || !X509_NAME_set(&x->cert_info.subject, name))
+    if (x == NULL || !X509_NAME_set(&x->cert_info->subject, name))
         return 0;
     ossl_x509_set_modified(x);
     return 1;
@@ -93,7 +93,7 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 
     if (x == NULL || tm == NULL)
         return 0;
-    if (!ossl_x509_set1_time(&modified, &x->cert_info.validity.notBefore, tm))
+    if (!ossl_x509_set1_time(&modified, &x->cert_info->validity.notBefore, tm))
         return 0;
     if (modified)
         ossl_x509_set_modified(x);
@@ -106,7 +106,7 @@ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 
     if (x == NULL || tm == NULL)
         return 0;
-    if (!ossl_x509_set1_time(&modified, &x->cert_info.validity.notAfter, tm))
+    if (!ossl_x509_set1_time(&modified, &x->cert_info->validity.notAfter, tm))
         return 0;
     if (modified)
         ossl_x509_set_modified(x);
@@ -117,7 +117,7 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
 {
     if (x == NULL)
         return 0;
-    if (!X509_PUBKEY_set(&(x->cert_info.key), pkey))
+    if (!X509_PUBKEY_set(&(x->cert_info->key), pkey))
         return 0;
     ossl_x509_set_modified(x);
     return 1;
@@ -137,27 +137,27 @@ int X509_up_ref(X509 *x)
 
 long X509_get_version(const X509 *x)
 {
-    return ASN1_INTEGER_get(x->cert_info.version);
+    return ASN1_INTEGER_get(x->cert_info->version);
 }
 
 const ASN1_TIME *X509_get0_notBefore(const X509 *x)
 {
-    return x->cert_info.validity.notBefore;
+    return x->cert_info->validity.notBefore;
 }
 
 const ASN1_TIME *X509_get0_notAfter(const X509 *x)
 {
-    return x->cert_info.validity.notAfter;
+    return x->cert_info->validity.notAfter;
 }
 
 ASN1_TIME *X509_getm_notBefore(X509 *x)
 {
-    return x->cert_info.validity.notBefore;
+    return x->cert_info->validity.notBefore;
 }
 
 ASN1_TIME *X509_getm_notAfter(X509 *x)
 {
-    return x->cert_info.validity.notAfter;
+    return x->cert_info->validity.notAfter;
 }
 
 int X509_get_signature_type(const X509 *x)
@@ -167,26 +167,26 @@ int X509_get_signature_type(const X509 *x)
 
 const X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
 {
-    return x->cert_info.key;
+    return x->cert_info->key;
 }
 
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x)
 {
-    return x->cert_info.extensions;
+    return x->cert_info->extensions;
 }
 
 void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
     const ASN1_BIT_STRING **psuid)
 {
     if (piuid != NULL)
-        *piuid = x->cert_info.issuerUID;
+        *piuid = x->cert_info->issuerUID;
     if (psuid != NULL)
-        *psuid = x->cert_info.subjectUID;
+        *psuid = x->cert_info->subjectUID;
 }
 
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x)
 {
-    return &x->cert_info.signature;
+    return &x->cert_info->signature;
 }
 
 int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
@@ -330,7 +330,7 @@ int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
     }
     ERR_set_mark();
     (void)x509_sig_info_init(&siginf, OBJ_obj2nid(x->sig_alg.algorithm),
-        &x->sig_alg, &x->signature, X509_PUBKEY_get0(x->cert_info.key),
+        &x->sig_alg, &x->signature, X509_PUBKEY_get0(x->cert_info->key),
         x->libctx, x->propq);
     ERR_pop_to_mark();
     return X509_SIG_INFO_get(&siginf, mdnid, pknid, secbits, flags);
