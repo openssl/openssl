@@ -426,6 +426,8 @@ EVP_PKEY *X509_get0_pubkey(const X509 *x)
 {
     if (x == NULL)
         return NULL;
+    if (x->pkey != NULL)
+        return x->pkey;
     return X509_PUBKEY_get0(x->cert_info.key);
 }
 
@@ -433,7 +435,13 @@ EVP_PKEY *X509_get_pubkey(const X509 *x)
 {
     if (x == NULL)
         return NULL;
-    return X509_PUBKEY_get(x->cert_info.key);
+    if (x->pkey == NULL)
+        return X509_PUBKEY_get(x->cert_info.key);
+    if (!EVP_PKEY_up_ref(x->pkey)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
+    return x->pkey;
 }
 
 int X509_check_private_key(const X509 *cert, const EVP_PKEY *pkey)
