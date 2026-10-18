@@ -4943,6 +4943,7 @@ static int check_curve(X509 *cert)
  */
 static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
 {
+    const struct x509_view *view;
     int secbits = -1;
     int level = ctx->param->auth_level;
 
@@ -4951,8 +4952,14 @@ static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
     if (level > NUM_AUTH_LEVELS)
         level = NUM_AUTH_LEVELS;
 
-    if (!X509_get_signature_info(cert, NULL, NULL, &secbits, NULL))
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0) {
+        if (!X509_get_signature_info(cert, NULL, NULL, &secbits, NULL))
+            return 0;
+    } else if ((view = x509_get0_view(cert)) == NULL
+        || !ossl_x509_view_get_signature_info(view, X509_get0_pubkey(cert),
+            ctx->libctx, ctx->propq, NULL, NULL, &secbits, NULL)) {
         return 0;
+    }
 
     return secbits >= minbits_table[level - 1];
 }

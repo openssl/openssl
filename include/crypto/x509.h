@@ -522,6 +522,31 @@ int ossl_name_constraints_check(const X509_NAME *nm,
     const GENERAL_NAMES *altnames, NAME_CONSTRAINTS *nc);
 
 /**
+ * @brief Decodes the signatureAlgorithm of the certificate whose view is
+ * given.
+ * @param view the certificate's view
+ * @returns the AlgorithmIdentifier, which the caller frees, or NULL
+ */
+X509_ALGOR *ossl_x509_view_get1_sig_alg(const struct x509_view *view);
+
+/**
+ * @brief Gets the signature information of the certificate whose view is
+ * given, as X509_get_signature_info() does.
+ * @param view the certificate's view
+ * @param pubkey the certificate's public key, or NULL
+ * @param libctx the library context to fetch digests from, or NULL
+ * @param propq the property query for fetching, or NULL
+ * @param mdnid where to store the digest NID, or NULL
+ * @param pknid where to store the public key NID, or NULL
+ * @param secbits where to store the security bits, or NULL
+ * @param flags where to store the X509_SIG_INFO_ flags, or NULL
+ * @returns 1 if the signature information is valid, 0 otherwise
+ */
+int ossl_x509_view_get_signature_info(const struct x509_view *view,
+    const EVP_PKEY *pubkey, OSSL_LIB_CTX *libctx, const char *propq,
+    int *mdnid, int *pknid, int *secbits, uint32_t *flags);
+
+/**
  * @brief Verifies the signature of the certificate whose view is given
  * with pkey, as X509_verify() does.
  * @param view the certificate's view
