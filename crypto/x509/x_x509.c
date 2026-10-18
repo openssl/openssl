@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/bytestring.h"
 #include <openssl/evp.h>
@@ -189,7 +191,28 @@ out:
 
 int i2d_X509(const X509 *a, unsigned char **out)
 {
-    return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(X509));
+    const uint8_t *data;
+    size_t len;
+
+    if (a == NULL || a->der == NULL || a->cert_info.enc.modified)
+        return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(X509));
+
+    data = CRYPTO_BUFFER_data(a->der);
+    len = CRYPTO_BUFFER_len(a->der);
+    if (len > INT_MAX) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
+        return -1;
+    }
+    if (out == NULL)
+        return (int)len;
+    if (*out == NULL) {
+        if ((*out = OPENSSL_memdup(data, len)) == NULL)
+            return -1;
+    } else {
+        memcpy(*out, data, len);
+        *out += len;
+    }
+    return (int)len;
 }
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)

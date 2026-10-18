@@ -323,8 +323,49 @@ err:
     return ret;
 }
 
+static int test_i2d_x509(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509 *x = NULL, *y = NULL;
+    unsigned char *der = NULL, *out = NULL, *buf = NULL, *p;
+    const unsigned char *q;
+    int der_len, ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "EC", "P-256"))
+        || !TEST_ptr(x = make_cert(pkey))
+        || !TEST_int_gt(der_len = i2d_X509(x, &der), 0))
+        goto err;
+    q = der;
+    if (!TEST_ptr(y = d2i_X509(NULL, &q, der_len)))
+        goto err;
+
+    /* A certificate with DER encodes as its DER, not from its fields. */
+    y->signature.data[0] ^= 1;
+    if (!TEST_int_eq(i2d_X509(y, NULL), der_len)
+        || !TEST_int_eq(i2d_X509(y, &out), der_len)
+        || !TEST_mem_eq(out, der_len, der, der_len)
+        || !TEST_ptr(buf = OPENSSL_malloc(der_len)))
+        goto err;
+    p = buf;
+    if (!TEST_int_eq(i2d_X509(y, &p), der_len)
+        || !TEST_ptr_eq(p, buf + der_len)
+        || !TEST_mem_eq(buf, der_len, der, der_len))
+        goto err;
+    ret = 1;
+
+err:
+    EVP_PKEY_free(pkey);
+    X509_free(x);
+    X509_free(y);
+    OPENSSL_free(der);
+    OPENSSL_free(out);
+    OPENSSL_free(buf);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_i2d_x509);
     ADD_TEST(test_x509_buffer);
     ADD_TEST(test_x509_view);
     ADD_TEST(test_x509_cmp);
