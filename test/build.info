@@ -999,7 +999,7 @@ IF[{- !$disabled{tests} -}]
                      dhtest ssl_old_test bytestring_internal_test \
                      x509_view_internal_test pool_internal_test \
                      x509_buffer_internal_test x509_store_internal_test \
-                     x509_verify_view_internal_test
+                     x509_verify_view_internal_test x509_spki_internal_test
 
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS{noinst}=poly1305_internal_test
@@ -1058,6 +1058,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[x509_buffer_internal_test]=x509_buffer_internal_test.c
     INCLUDE[x509_buffer_internal_test]=.. ../include ../apps/include
     DEPEND[x509_buffer_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[x509_spki_internal_test]=x509_spki_internal_test.c
+    INCLUDE[x509_spki_internal_test]=.. ../include ../apps/include
+    DEPEND[x509_spki_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[x509_store_internal_test]=x509_store_internal_test.c
     INCLUDE[x509_store_internal_test]=.. ../include ../apps/include

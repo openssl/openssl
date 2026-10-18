@@ -17,9 +17,14 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include <assert.h>
+#include <limits.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/objects.h"
 #include "crypto/x509.h"
+#include "internal/endian.h"
+#include <openssl/core_names.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/decoder.h>
@@ -555,6 +560,151 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
 EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
 {
     return d2i_PUBKEY_ex(a, pp, length, NULL, NULL);
+}
+
+static EVP_PKEY *pkey_fromdata(const char *name, OSSL_PARAM *params)
+{
+    EVP_PKEY_CTX *ctx;
+    EVP_PKEY *pkey = NULL;
+
+    if ((ctx = EVP_PKEY_CTX_new_from_name(NULL, name, NULL)) == NULL)
+        return NULL;
+    if (EVP_PKEY_fromdata_init(ctx) != 1
+        || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, params) != 1)
+        pkey = NULL;
+    EVP_PKEY_CTX_free(ctx);
+
+    return pkey;
+}
+
+static int get_positive_integer(CBS *cbs, CBS *out)
+{
+    const uint8_t *data;
+
+    if (!CBS_get_asn1(cbs, out, CBS_ASN1_INTEGER) || CBS_len(out) == 0)
+        return 0;
+    data = CBS_data(out);
+    if ((data[0] & 0x80) != 0)
+        return 0;
+    if (data[0] != 0)
+        return 1;
+    return CBS_len(out) > 1 && (data[1] & 0x80) != 0 && CBS_skip(out, 1);
+}
+
+static void copy_to_native(uint8_t *out, const CBS *in)
+{
+    const uint8_t *data = CBS_data(in);
+    size_t len = CBS_len(in), i;
+    DECLARE_IS_ENDIAN;
+
+    if (!IS_LITTLE_ENDIAN) {
+        memcpy(out, data, len);
+        return;
+    }
+    for (i = 0; i < len; i++)
+        out[i] = data[len - 1 - i];
+}
+
+static EVP_PKEY *rsa_from_spki(CBS *alg, CBS *key)
+{
+    uint8_t n_buf[OPENSSL_RSA_MAX_MODULUS_BITS / 8], e_buf[8];
+    OSSL_PARAM params[3];
+    CBS null, seq, n, e;
+
+    if (!CBS_get_asn1(alg, &null, CBS_ASN1_NULL) || CBS_len(&null) != 0
+        || CBS_len(alg) != 0
+        || !CBS_get_asn1(key, &seq, CBS_ASN1_SEQUENCE) || CBS_len(key) != 0
+        || !get_positive_integer(&seq, &n) || !get_positive_integer(&seq, &e)
+        || CBS_len(&seq) != 0 || CBS_len(&n) > sizeof(n_buf)
+        || CBS_len(&e) > sizeof(e_buf))
+        return NULL;
+    copy_to_native(n_buf, &n);
+    copy_to_native(e_buf, &e);
+    params[0] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_RSA_N, n_buf,
+        CBS_len(&n));
+    params[1] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_RSA_E, e_buf,
+        CBS_len(&e));
+    params[2] = OSSL_PARAM_construct_end();
+
+    return pkey_fromdata("RSA", params);
+}
+
+static EVP_PKEY *ec_from_spki(CBS *alg, const CBS *key)
+{
+    OSSL_PARAM params[3];
+    CBS curve;
+    int curve_nid;
+
+    if (!CBS_get_asn1(alg, &curve, CBS_ASN1_OBJECT) || CBS_len(alg) != 0)
+        return NULL;
+    curve_nid = ossl_obj_cbs2nid(&curve);
+    if (curve_nid == NID_undef || curve_nid == NID_sm2)
+        return NULL;
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+        (char *)OBJ_nid2sn(curve_nid), 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+        (void *)CBS_data(key), CBS_len(key));
+    params[2] = OSSL_PARAM_construct_end();
+
+    return pkey_fromdata("EC", params);
+}
+
+static EVP_PKEY *raw_from_spki(int nid, const CBS *alg, const CBS *key)
+{
+    OSSL_PARAM params[2];
+
+    if (CBS_len(alg) != 0)
+        return NULL;
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+        (void *)CBS_data(key), CBS_len(key));
+    params[1] = OSSL_PARAM_construct_end();
+
+    return pkey_fromdata(OBJ_nid2sn(nid), params);
+}
+
+static EVP_PKEY *import_spki(const CBS *spki)
+{
+    CBS cbs, seq, alg, oid, key;
+    uint8_t unused_bits;
+    int nid;
+
+    CBS_dup(spki, &cbs);
+    if (!CBS_get_asn1(&cbs, &seq, CBS_ASN1_SEQUENCE) || CBS_len(&cbs) != 0
+        || !CBS_get_asn1(&seq, &alg, CBS_ASN1_SEQUENCE)
+        || !CBS_get_asn1(&alg, &oid, CBS_ASN1_OBJECT)
+        || !CBS_get_asn1(&seq, &key, CBS_ASN1_BITSTRING) || CBS_len(&seq) != 0
+        || !CBS_get_u8(&key, &unused_bits) || unused_bits != 0)
+        return NULL;
+
+    nid = ossl_obj_cbs2nid(&oid);
+    switch (nid) {
+    case NID_rsaEncryption:
+        return rsa_from_spki(&alg, &key);
+    case NID_X9_62_id_ecPublicKey:
+        return ec_from_spki(&alg, &key);
+    case NID_ED25519:
+    case NID_ED448:
+    case NID_X25519:
+    case NID_X448:
+        return raw_from_spki(nid, &alg, &key);
+    default:
+        return NULL;
+    }
+}
+
+EVP_PKEY *ossl_x509_spki_to_pkey(const CBS *spki)
+{
+    const unsigned char *p = CBS_data(spki);
+    EVP_PKEY *pkey;
+
+    assert(CBS_len(spki) <= LONG_MAX);
+    ERR_set_mark();
+    pkey = import_spki(spki);
+    ERR_pop_to_mark();
+    if (pkey != NULL)
+        return pkey;
+
+    return d2i_PUBKEY(NULL, &p, (long)CBS_len(spki));
 }
 
 int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
