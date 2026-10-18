@@ -141,7 +141,7 @@ int X509_verify(const X509 *a, EVP_PKEY *r)
         a->distinguishing_id, r, a->libctx, a->propq);
 }
 
-static X509_ALGOR *view_sig_alg(const struct x509_view *view)
+X509_ALGOR *ossl_x509_view_get1_sig_alg(const struct x509_view *view)
 {
     X509_ALGOR *alg;
     CBS cbs;
@@ -178,7 +178,7 @@ int ossl_x509_view_verify(const struct x509_view *view,
 
     if (md_nid == NID_undef && pkey_nid == EVP_PKEY_RSA_PSS) {
         if ((!EVP_PKEY_is_a(pkey, "RSA") && !EVP_PKEY_is_a(pkey, "RSA-PSS"))
-            || (alg = view_sig_alg(view)) == NULL
+            || (alg = ossl_x509_view_get1_sig_alg(view)) == NULL
             || ossl_rsa_pss_to_ctx(ctx, NULL, alg, pkey) <= 0)
             goto err;
     } else {

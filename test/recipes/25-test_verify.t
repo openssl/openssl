@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 238;
+plan tests => 241;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -434,6 +434,8 @@ ok(verify("ee-cert-md5", "", ["root-cert"], ["ca-cert"], "-auth_level", "0"),
    "accept md5 leaf at auth level 0");
 ok(!verify("ee-cert-md5", "", ["root-cert"], ["ca-cert"]),
    "reject md5 leaf at auth level 1");
+ok(!verify("ee-cert-md5", "", ["root-cert"], ["ca-cert"], "-x509_strict"),
+   "reject md5 leaf at auth level 1, strict");
 
 # Explicit vs named curve tests
 SKIP: {
@@ -608,6 +610,14 @@ ok(!verify("ee-pss-sha1-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "1
 
 ok(verify("ee-pss-sha256-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
+
+ok(!verify("ee-pss-sha1-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "1",
+           "-x509_strict"),
+    "Reject PSS signature using SHA1 and auth level 1, strict");
+
+ok(verify("ee-pss-sha256-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "2",
+          "-x509_strict"),
+    "PSS signature using SHA256 and auth level 2, strict");
 
 ok(verify("ee-pss-cert", "", ["root-cert"], ["ca-pss-cert"], ),
     "CA PSS signature");

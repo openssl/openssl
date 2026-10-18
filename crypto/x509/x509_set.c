@@ -212,9 +212,13 @@ void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
     siginf->flags = flags;
 }
 
-/* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
-static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-    const ASN1_STRING *sig, const EVP_PKEY *pubkey,
+/*
+ * Modify *siginf according to the signature algorithm sig_nid, whose
+ * AlgorithmIdentifier alg is needed only when sig_nid names no digest, and
+ * sig.  Return 1 on success, else 0.
+ */
+static int x509_sig_info_init(X509_SIG_INFO *siginf, int sig_nid,
+    const X509_ALGOR *alg, const ASN1_STRING *sig, const EVP_PKEY *pubkey,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     int pknid, mdnid, md_size;
@@ -225,7 +229,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     siginf->pknid = NID_undef;
     siginf->secbits = -1;
     siginf->flags = 0;
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)
+    if (!OBJ_find_sigid_algs(sig_nid, &mdnid, &pknid)
         || pknid == NID_undef) {
         ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
         return 0;
@@ -237,7 +241,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     case NID_undef:
         /* If we have one, use a custom handler for this algorithm */
         ameth = evp_pkey_asn1_find(pknid);
-        if (ameth != NULL && ameth->siginf_set != NULL
+        if (ameth != NULL && ameth->siginf_set != NULL && alg != NULL
             && ameth->siginf_set(siginf, alg, sig))
             break;
         if (pubkey != NULL) {
@@ -325,8 +329,28 @@ int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
         return 0;
     }
     ERR_set_mark();
-    (void)x509_sig_info_init(&siginf, &x->sig_alg, &x->signature,
-        X509_PUBKEY_get0(x->cert_info.key), x->libctx, x->propq);
+    (void)x509_sig_info_init(&siginf, OBJ_obj2nid(x->sig_alg.algorithm),
+        &x->sig_alg, &x->signature, X509_PUBKEY_get0(x->cert_info.key),
+        x->libctx, x->propq);
     ERR_pop_to_mark();
+    return X509_SIG_INFO_get(&siginf, mdnid, pknid, secbits, flags);
+}
+
+int ossl_x509_view_get_signature_info(const struct x509_view *view,
+    const EVP_PKEY *pubkey, OSSL_LIB_CTX *libctx, const char *propq,
+    int *mdnid, int *pknid, int *secbits, uint32_t *flags)
+{
+    X509_SIG_INFO siginf;
+    X509_ALGOR *alg = NULL;
+    int sig_nid = x509_view_sig_nid(view), md_nid, pkey_nid;
+
+    if (OBJ_find_sigid_algs(sig_nid, &md_nid, &pkey_nid)
+        && md_nid == NID_undef)
+        alg = ossl_x509_view_get1_sig_alg(view);
+    ERR_set_mark();
+    (void)x509_sig_info_init(&siginf, sig_nid, alg, NULL, pubkey, libctx,
+        propq);
+    ERR_pop_to_mark();
+    X509_ALGOR_free(alg);
     return X509_SIG_INFO_get(&siginf, mdnid, pknid, secbits, flags);
 }
