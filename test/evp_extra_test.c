@@ -7137,6 +7137,53 @@ err:
     return testresult;
 }
 
+static int test_ccm_get_iv_with_large_buffer(void)
+{
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[12] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+        0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b
+    };
+    unsigned char expected[EVP_MAX_IV_LENGTH];
+    unsigned char actual[EVP_MAX_IV_LENGTH];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-128-CCM", testpropq))) {
+        TEST_skip("AES-128-CCM is not supported");
+        testresult = 1;
+        goto err;
+    }
+
+    memset(expected, 0xa5, sizeof(expected));
+    memcpy(expected, iv, sizeof(iv));
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, NULL, NULL, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                            sizeof(iv), NULL),
+            0)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, key, iv, NULL)))
+        goto err;
+
+    memset(actual, 0xa5, sizeof(actual));
+    if (!TEST_true(EVP_CIPHER_CTX_get_original_iv(ctx, actual, sizeof(actual)))
+        || !TEST_mem_eq(actual, sizeof(actual), expected, sizeof(expected)))
+        goto err;
+
+    memset(actual, 0xa5, sizeof(actual));
+    if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, actual, sizeof(actual)))
+        || !TEST_mem_eq(actual, sizeof(actual), expected, sizeof(expected)))
+        goto err;
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return testresult;
+}
+
 typedef struct {
     const unsigned char *iv1;
     const unsigned char *iv2;
@@ -9846,6 +9893,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_reinit_seq, OSSL_NELEM(evp_reinit_tests));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
+    ADD_TEST(test_ccm_get_iv_with_large_buffer);
 
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
     ADD_ALL_TESTS(test_iv_reuse, OSSL_NELEM(iv_state_ciphers));
