@@ -18,6 +18,8 @@
 #include <openssl/obj_mac.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+#include <openssl/core_names.h>
+#include <stdint.h>
 #include "../crypto/rand/rand_local.h"
 #include "../include/crypto/rand.h"
 #include "../include/crypto/evp.h"
@@ -882,8 +884,116 @@ err:
     return ret;
 }
 
+
+#if defined(__linux__) && !defined(FIPS_MODULE)
+/*
+ * A regular file laid out like the VMClock page stands in for the device
+ * (OPENSSL_VMCLOCK is set to it in setup_tests, before any DRBG runs). Bumping
+ * the generation counter in it must reseed the public and private DRBGs, and
+ * the primary through them, on their next generate call; leaving it alone must
+ * not.
+ */
+# include <fcntl.h>
+# include <sys/mman.h>
+# include <unistd.h>
+
+static char vmclock_test_path[64];
+static uint8_t *vmclock_test_page;
+
+static int vmclock_test_setup(void)
+{
+    static const uint8_t header[32] = {
+        'V', 'C', 'L', 'K', 112, 0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 0,   /* magic, size, version, ids, seq */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0              /* marker, flags = GEN_COUNTER_PRESENT */
+    };
+    uint8_t page[4096] = { 0 };
+    int fd;
+
+    memcpy(page, header, sizeof(header));
+    strcpy(vmclock_test_path, "/tmp/openssl-vmclock-test-XXXXXX");
+    fd = mkstemp(vmclock_test_path);
+    if (fd < 0 || write(fd, page, sizeof(page)) != (ssize_t)sizeof(page))
+        return 0;
+    vmclock_test_page = mmap(NULL, sizeof(page), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    if (vmclock_test_page == MAP_FAILED)
+        return 0;
+    setenv("OPENSSL_VMCLOCK", vmclock_test_path, 1);
+    return 1;
+}
+
+static void vmclock_test_bump(void)
+{
+    uint64_t counter;
+    uint32_t seq = 3;
+
+    memcpy(&counter, vmclock_test_page + 104, sizeof(counter));
+    counter++;
+    memcpy(vmclock_test_page + 12, &seq, sizeof(seq));   /* odd: update in progress */
+    memcpy(vmclock_test_page + 104, &counter, sizeof(counter));
+    seq = 4;
+    memcpy(vmclock_test_page + 12, &seq, sizeof(seq));
+}
+
+static unsigned int vmclock_reseed_counter(EVP_RAND_CTX *drbg)
+{
+    unsigned int n = 0;
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, &n);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!EVP_RAND_CTX_get_params(drbg, params))
+        return 0;
+    return n;
+}
+
+static int test_rand_reseed_on_vmclock(void)
+{
+    EVP_RAND_CTX *primary, *public, *private;
+    unsigned char buf[32];
+    unsigned int pri, pub, pri2, pub2;
+
+    if (using_fips_rng())
+        return TEST_skip("FIPS provider DRBGs do not read VMClock");
+    if (!TEST_ptr(primary = RAND_get0_primary(NULL))
+        || !TEST_ptr(public = RAND_get0_public(NULL))
+        || !TEST_ptr(private = RAND_get0_private(NULL)))
+        return 0;
+    if (!TEST_true(RAND_bytes(buf, sizeof(buf))) || !TEST_true(RAND_priv_bytes(buf, sizeof(buf))))
+        return 0;
+    pri = vmclock_reseed_counter(primary);
+    pub = vmclock_reseed_counter(public);
+
+    /* nothing changed: no reseed */
+    if (!TEST_true(RAND_bytes(buf, sizeof(buf)))
+        || !TEST_uint_eq(vmclock_reseed_counter(public), pub)
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri))
+        return 0;
+
+    /* the generation counter moved: the public DRBG reseeds, and the primary with it */
+    vmclock_test_bump();
+    if (!TEST_true(RAND_bytes(buf, sizeof(buf))))
+        return 0;
+    pub2 = vmclock_reseed_counter(public);
+    pri2 = vmclock_reseed_counter(primary);
+    if (!TEST_uint_eq(pub2, pub + 1) || !TEST_uint_eq(pri2, pri + 1))
+        return 0;
+    /* and the private DRBG on its next call, once */
+    if (!TEST_true(RAND_priv_bytes(buf, sizeof(buf)))
+        || !TEST_true(RAND_priv_bytes(buf, sizeof(buf)))
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri2))
+        return 0;
+    return 1;
+}
+#endif
+
 int setup_tests(void)
 {
+#if defined(__linux__) && !defined(FIPS_MODULE)
+    if (!vmclock_test_setup())
+        return 0;
+    ADD_TEST(test_rand_reseed_on_vmclock);
+#endif
     ADD_TEST(test_rand_reseed);
 #if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_RAND_SEED_EGD)
     ADD_ALL_TESTS(test_rand_fork_safety, RANDOM_SIZE);
