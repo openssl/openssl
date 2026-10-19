@@ -77,6 +77,13 @@ struct prov_drbg_st {
      * DRBG in the child process.
      */
     int fork_id;
+    /*
+     * Stores the return value of ossl_prov_vmclock_epoch() as of when we last
+     * reseeded. A guest restored from a snapshot keeps its pid and its clock,
+     * so this is the one check that sees that restore; 0 where there is no
+     * VMClock device, in which case it never triggers.
+     */
+    uint64_t vmclock_epoch;
     unsigned short flags; /* various external flags */
 
     /*

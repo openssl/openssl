@@ -18,6 +18,12 @@ size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool);
 size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool);
 
 /*
+ * The VMClock generation signal: a value that changes whenever the guest
+ * was restored from a snapshot or migrated, 0 where no such device exists.
+ */
+uint64_t ossl_prov_vmclock_epoch(void);
+
+/*
  * External seeding functions from the core dispatch table.
  */
 int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns);

@@ -624,6 +624,7 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     const unsigned char *adin, size_t adinlen)
 {
     int fork_id;
+    uint64_t vmclock_epoch;
     int reseed_required = 0;
     int ret = 0;
     time_t reseed_time_interval = drbg->reseed_time_interval;
@@ -633,6 +634,11 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         return 0;
 
     fork_id = openssl_get_fork_id();
+#ifndef FIPS_MODULE
+    vmclock_epoch = ossl_prov_vmclock_epoch();
+#else
+    vmclock_epoch = 0;
+#endif
 
     if (reseed_time_interval > 0)
         now = time(NULL);
@@ -669,6 +675,10 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
 
     if (drbg->fork_id != fork_id) {
         drbg->fork_id = fork_id;
+        reseed_required = 1;
+    }
+    if (drbg->vmclock_epoch != vmclock_epoch) {
+        drbg->vmclock_epoch = vmclock_epoch;
         reseed_required = 1;
     }
 
@@ -812,6 +822,9 @@ PROV_DRBG *ossl_rand_drbg_new(void *provctx, void *parent, const OSSL_DISPATCH *
     drbg->reseed = reseed;
     drbg->generate = generate;
     drbg->fork_id = openssl_get_fork_id();
+#ifndef FIPS_MODULE
+    drbg->vmclock_epoch = ossl_prov_vmclock_epoch();
+#endif
 
     /* Extract parent's functions */
     drbg->parent = parent;
