@@ -2870,7 +2870,17 @@ static CRYPTO_malloc_fn malloc_save;
 static CRYPTO_realloc_fn realloc_save;
 static CRYPTO_free_fn free_save;
 
-typedef struct tdc_alloc_hdr_st {
+#if defined(__GNUC__) || defined(__clang__)
+#define ALIGN_ALLOC_HDR __attribute((aligned(16)))
+#else
+#define ALIGN_ALLOC_HDR
+#endif
+
+/*
+ * Increased alignment needed, because memory is allocated at addresses
+ * directly following a TDC_ALLOC_HDR.
+ */
+typedef struct ALIGN_ALLOC_HDR tdc_alloc_hdr_st {
     size_t size;
     OSSL_LIST_MEMBER(tdc, struct tdc_alloc_hdr_st);
 } TDC_ALLOC_HDR;
@@ -3160,17 +3170,16 @@ err:
  * Inspired by include/internal/common.h
  */
 #if defined(__GNUC__) || defined(__clang__)
-#define ALIGN_UINT64 __alignof__(uint64_t)
-#define ALIGN_THO_ALLOC_HDR __attribute((aligned(ALIGN_UINT64)))
+#define ALIGN_ALLOC_HDR __attribute((aligned(16)))
 #else
-#define ALIGN_THO_ALLOC_HDR
+#define ALIGN_ALLOC_HDR
 #endif
 
 /*
  * Increased alignment needed, because memory is allocated at addresses
- * directly following an THO_ALLOC_HDR.
+ * directly following a THO_ALLOC_HDR.
  */
-typedef struct ALIGN_THO_ALLOC_HDR tho_alloc_hdr_st {
+typedef struct ALIGN_ALLOC_HDR tho_alloc_hdr_st {
     size_t size;
     const char *file;
     int from_reas;
