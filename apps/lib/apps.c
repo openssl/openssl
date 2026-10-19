@@ -891,6 +891,25 @@ STACK_OF(OSSL_MTC_COSIGNER) *load_mtc_cosigners(SSL_CTX *ctx, const char *file)
     return cosigners;
 }
 
+/**
+ * @brief Find the CA in cas whose trust anchor ID is text in dotted decimal.
+ * @param cas the trusted MTC CAs
+ * @param text the trust anchor ID in dotted decimal, NUL terminated
+ * @returns the CA, or NULL if text is not a valid ID or no CA has it
+ */
+static OSSL_MTC_CA *find_mtc_ca(STACK_OF(OSSL_MTC_CA) *cas, const char *text)
+{
+    BUF_MEM *buf;
+    OSSL_MTC_CA *ca = NULL;
+
+    if ((buf = BUF_MEM_new()) == NULL)
+        return NULL;
+    if (app_reloid_from_text(buf, text, strlen(text)))
+        ca = OSSL_MTC_CA_find(cas, (const uint8_t *)buf->data, buf->length);
+    BUF_MEM_free(buf);
+    return ca;
+}
+
 /*
  * Load one MTC log's active landmarks from "id:log:file", where id is the CA's
  * trust anchor ID in dotted text, log is the decimal log number, and file holds
@@ -933,7 +952,7 @@ int load_mtc_landmarks(STACK_OF(OSSL_MTC_CA) *cas, const char *spec,
         goto err;
     }
 
-    if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, dup)) == NULL) {
+    if ((ca = find_mtc_ca(cas, dup)) == NULL) {
         BIO_printf(bio_err, "No -mtc_cas CA matches trust anchor ID '%s'\n",
             dup);
         goto err;
@@ -986,7 +1005,7 @@ int load_mtc_subtrees(STACK_OF(OSSL_MTC_CA) *cas, const char *file)
             BIO_printf(bio_err, "Malformed MTC subtree line: %s", line);
             goto err;
         }
-        if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, oid)) == NULL) {
+        if ((ca = find_mtc_ca(cas, oid)) == NULL) {
             BIO_printf(bio_err,
                 "No -mtc_cas CA matches trust anchor ID '%s'\n", oid);
             goto err;
