@@ -74,7 +74,7 @@ jobs:
       working-directory: ./build
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@out-of-readonly-source-and-install-ubuntu"
         path: build/artifacts.tar.gz
@@ -116,7 +116,7 @@ jobs:
       working-directory: ./build
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@out-of-readonly-source-and-install-macos-15"
         path: build/artifacts.tar.gz
