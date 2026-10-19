@@ -39,8 +39,7 @@ OSSL_MTC_COSIGNER_cmp
  int OSSL_MTC_CA_cmp(const OSSL_MTC_CA *const *a,
                      const OSSL_MTC_CA *const *b);
  OSSL_MTC_CA *OSSL_MTC_CA_find(STACK_OF(OSSL_MTC_CA) *cas,
-                               const uint8_t *ca_id, size_t ca_id_len,
-                               const char *ca_id_str);
+                               const uint8_t *ca_id, size_t ca_id_len);
 
  uint64_t OSSL_MTC_serial(uint16_t log_number, uint64_t index);
 
@@ -122,11 +121,9 @@ OSSL_MTC_CA_cmp() orders two trusted CAs by their CA IDs. It is the comparison
 function for a sorted stack of them, so a stack passed to OSSL_MTC_CA_find()
 must be created with it, as in C<sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)>.
 
-OSSL_MTC_CA_find() returns the CA in I<cas> with the requested CA ID. If
-I<ca_id_str> is non-NULL it gives the CA ID as a NUL-terminated dotted-decimal
-string (for example C<"32473.1">); otherwise I<ca_id> of length I<ca_id_len>
-gives it in wire form. The returned CA is borrowed from I<cas> and must not be
-freed.
+OSSL_MTC_CA_find() returns the CA in I<cas> whose CA ID is the I<ca_id_len>
+bytes at I<ca_id>, in wire form. The returned CA is borrowed from I<cas> and
+must not be freed.
 
 OSSL_MTC_serial() is a convenience function that returns the serial number
 formed from issuance log number I<log_number> and zero-based log index

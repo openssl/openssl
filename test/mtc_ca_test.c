@@ -331,17 +331,14 @@ static int test_ca_find(void)
         || !TEST_true(ossl_mtc_ca_stack_add(cas, ca1)))
         goto err;
 
-    /* Wire form (ca_id_str NULL) and dotted-decimal find the same CA. */
-    if (!TEST_ptr_eq(OSSL_MTC_CA_find(cas, ca_id, sizeof(ca_id), NULL), ca1)
-        || !TEST_ptr_eq(OSSL_MTC_CA_find(cas, NULL, 0, "32473.1"), ca1)
-        || !TEST_ptr_eq(OSSL_MTC_CA_find(cas, NULL, 0, "32473.0"), ca0))
+    if (!TEST_ptr_eq(OSSL_MTC_CA_find(cas, ca_id, sizeof(ca_id)), ca1)
+        || !TEST_ptr_eq(OSSL_MTC_CA_find(cas, cosigner0_id,
+                            sizeof(cosigner0_id)),
+            ca0))
         goto err;
 
-    /* Absent ID, and a malformed dotted-decimal string, both miss. */
-    if (!TEST_ptr_null(OSSL_MTC_CA_find(cas, absent_id, sizeof(absent_id),
-            NULL))
-        || !TEST_ptr_null(OSSL_MTC_CA_find(cas, NULL, 0, "32473.9"))
-        || !TEST_ptr_null(OSSL_MTC_CA_find(cas, NULL, 0, "not.an.oid")))
+    /* An absent ID misses. */
+    if (!TEST_ptr_null(OSSL_MTC_CA_find(cas, absent_id, sizeof(absent_id))))
         goto err;
 
     ret = 1;
@@ -355,8 +352,8 @@ err:
 }
 
 /*
- * OSSL_MTC_CA_find over a stack of several CAs: each is found by either form of
- * its ID, and an absent ID misses wherever it would fall.
+ * OSSL_MTC_CA_find over a stack of several CAs: each is found by its ID, and an
+ * absent ID misses wherever it would fall.
  */
 static int test_ca_find_ordering(void)
 {
@@ -370,14 +367,13 @@ static int test_ca_find_ordering(void)
     static const struct {
         const uint8_t *id;
         size_t id_len;
-        const char *text;
     } ids[] = {
-        { id_32473_0, sizeof(id_32473_0), "32473.0" },
-        { id_32473_1, sizeof(id_32473_1), "32473.1" },
-        { id_32473_2, sizeof(id_32473_2), "32473.2" },
-        { id_32474_1, sizeof(id_32474_1), "32474.1" },
-        { id_32473_1_5, sizeof(id_32473_1_5), "32473.1.5" },
-        { id_32473_200, sizeof(id_32473_200), "32473.200" },
+        { id_32473_0, sizeof(id_32473_0) },
+        { id_32473_1, sizeof(id_32473_1) },
+        { id_32473_2, sizeof(id_32473_2) },
+        { id_32474_1, sizeof(id_32474_1) },
+        { id_32473_1_5, sizeof(id_32473_1_5) },
+        { id_32473_200, sizeof(id_32473_200) },
     };
     /*
      * Absent IDs: shorter than every CA in the stack, in the gap between two of
@@ -425,17 +421,14 @@ static int test_ca_find_ordering(void)
         if (!TEST_ptr_eq(sk_OSSL_MTC_CA_value(cas, (int)i), cas_by_id[i]))
             goto err;
 
-    /* Each CA is found by its wire-form ID and by its dotted-decimal one. */
     for (i = 0; i < OSSL_NELEM(ids); i++)
-        if (!TEST_ptr_eq(OSSL_MTC_CA_find(cas, ids[i].id, ids[i].id_len, NULL),
-                cas_by_id[i])
-            || !TEST_ptr_eq(OSSL_MTC_CA_find(cas, NULL, 0, ids[i].text),
+        if (!TEST_ptr_eq(OSSL_MTC_CA_find(cas, ids[i].id, ids[i].id_len),
                 cas_by_id[i]))
             goto err;
 
     for (i = 0; i < OSSL_NELEM(absent); i++)
         if (!TEST_ptr_null(OSSL_MTC_CA_find(cas, absent[i].id,
-                absent[i].id_len, NULL)))
+                absent[i].id_len)))
             goto err;
 
     ret = 1;

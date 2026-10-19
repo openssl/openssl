@@ -99,6 +99,7 @@ B<cas>:
   * We hope the fetched window is at least as new as the state Skippy vetted,
   * and that it will still contain the vetted subtree.
   */
+ static const uint8_t ca_id[] = { 0x81, 0xfd, 0x59, 0x01 }; /* 32473.1 */
  STACK_OF(OSSL_MTC_CA) *cas;      /* the trusted CAs */
  const uint8_t *hash;             /* the vetted subtree hash */
  size_t hash_len;
@@ -108,7 +109,7 @@ B<cas>:
  OSSL_MTC_CA *ca;
  BIO *bio = NULL;
 
- if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, "32473.1")) == NULL)
+ if ((ca = OSSL_MTC_CA_find(cas, ca_id, sizeof(ca_id))) == NULL)
      goto err;
  if ((bio = BIO_new_mem_buf(landmarks, landmark_len)) == NULL)
      goto err;

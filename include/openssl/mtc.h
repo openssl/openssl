@@ -65,7 +65,7 @@ int OSSL_MTC_CA_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b);
  * @see OSSL_MTC_CA_find(3)
  */
 OSSL_MTC_CA *OSSL_MTC_CA_find(STACK_OF(OSSL_MTC_CA) *cas, const uint8_t *ca_id,
-    size_t ca_id_len, const char *ca_id_str);
+    size_t ca_id_len);
 
 /**
  * @brief Replace an issuance log's active landmark window from a published
