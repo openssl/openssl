@@ -24,6 +24,7 @@
 #include <openssl/crypto.h>
 #include <openssl/e_os2.h>
 #include <internal/e_os.h>
+#include <crypto/aarch64_dit.h>
 
 typedef struct async_ctx_st async_ctx;
 typedef struct async_pool_st async_pool;
@@ -170,6 +171,9 @@ struct async_job_st {
     void *funcargs;
     int ret;
     int status;
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+    int dit_prev;
+#endif
     ASYNC_WAIT_CTX *waitctx;
     OSSL_LIB_CTX *libctx;
 };

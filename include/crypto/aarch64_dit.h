@@ -77,6 +77,30 @@ int ossl_ensure_dit_on(int);
         __attribute__((unused))                             \
         = ossl_ensure_dit_on(1);
 
+/**
+ * @brief                   Get the current DIT state. We allow the caller to supply the "on" value
+ *                          returned so that bit flags can be supported more easily.
+ *
+ * @param value_for_on      Value to be returned if DIT is on.
+ *
+ * @return                  DIT state: 0 for off, value given for on.
+ */
+int ossl_get_dit(int value_for_on);
+
+/**
+ * @brief                   Ensure DIT is on (if dit_val is non-zero) or off, and return the
+ *                          previous DIT state so that we can restore it later. We allow the caller
+ *                          to supply the "on" value returned so that bit flags can be supported
+ *                          more easily.
+ *
+ * @param dit_val           Value to set for DIT - zero for off, non-zero for on.
+ *
+ * @param value_for_on      Value to be returned if DIT was on prior to calling this function.
+ *
+ * @return                  Previous DIT state: 0 for off, value given for on.
+ */
+int ossl_set_dit(const int dit_val, const int value_for_on);
+
 #else
 
 #define OSSL_ENABLE_DIT_FOR_SCOPE
