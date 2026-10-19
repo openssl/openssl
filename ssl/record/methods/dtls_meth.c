@@ -467,17 +467,19 @@ int dtls_prev_epoch_allows_type(const OSSL_RECORD_LAYER *crypto_rl, int type)
 }
 
 /*
- * In DTLS 1.3 only the hellos are sent unprotected. Once they are done the
- * read layer still stays in epoch 0 until the peer's first epoch 2 record
- * turns up. libssl marks that point by allowing plaintext alerts, and from
- * then on an alert is the only thing that may still arrive unprotected.
+ * In DTLS 1.3 only the hello handshake messages are sent unprotected. Once
+ * they are done, the read layer stays in epoch 0 until the peer's first
+ * epoch 2 record arrives. libssl marks this phase by allowing plaintext
+ * alerts. Only alerts and ACKs may arrive unprotected in this phase;
+ * dtls_process_ack() checks the epoch authority of each ACK entry.
  */
 static int dtls13_plaintext_allows_type(const OSSL_RECORD_LAYER *rl, int type)
 {
     return rl->version != DTLS1_3_VERSION
         || rl->epoch != 0
         || !rl->allow_plain_alerts
-        || type == SSL3_RT_ALERT;
+        || type == SSL3_RT_ALERT
+        || (type == SSL3_RT_ACK && rl->role == OSSL_RECORD_ROLE_SERVER);
 }
 
 /*-

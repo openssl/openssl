@@ -873,6 +873,19 @@ int dtls_record_from_retained_epoch(SSL_CONNECTION *s)
         && s->s3.tmp.record_epoch != dtls1_get_epoch(s, SSL3_CC_READ);
 }
 
+/*
+ * Server read states where an ACK must not finish the client's flight.
+ * The certificate states are also used during post-handshake authentication.
+ * Callers admitting ACKs must exclude a pending HelloRetryRequest.
+ */
+int dtls13_server_waiting_for_client_flight(OSSL_HANDSHAKE_STATE state)
+{
+    return state == TLS_ST_EARLY_DATA
+        || state == TLS_ST_SR_CERT
+        || state == TLS_ST_SR_COMP_CERT
+        || state == TLS_ST_SR_CERT_VRFY;
+}
+
 int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr)
 {
@@ -1407,6 +1420,16 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
         }
 
         /*
+         * RFC 9147 section 7: during the initial handshake, an ACK must be
+         * carried in an epoch at least as high as the record it acknowledges.
+         * Ignore unauthorized entries before changing retransmission state.
+         * After the handshake, sending and receiving epochs can differ.
+         */
+        if (SSL_IS_FIRST_HANDSHAKE(s)
+            && epoch > s->s3.tmp.record_epoch)
+            continue;
+
+        /*
          * Epoch 2 is the fixed handshake epoch and is never used again once
          * epoch 3 (the first application epoch) is installed. An ACK that
          * only authenticated via a retained epoch-2 layer must not be
@@ -1480,6 +1503,26 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
     /* Keep the retransmit timer running until the whole flight is ACKed. */
     if (dtls_any_sent_messages_are_missing_acknowledge(s))
         return MSG_PROCESS_CONTINUE_READING;
+
+    /*
+     * This ACK interrupted a server still reading the client's flight.
+     * A complete ACK of our flight does not replace the remaining client
+     * messages. It may arrive before Certificate or be reordered after
+     * Certificate or CertificateVerify. Finishing the read sub-state-machine
+     * here would let write_transition() move to TLS_ST_OK and skip them.
+     */
+    if (s->server
+        && dtls13_server_waiting_for_client_flight(s->statem.pre_ack_hand_state)) {
+        /*
+         * We already know above that nothing is left needing
+         * retransmission, so this only resets timeout state and clears the
+         * (already-empty) sent buffer -- it leaves the read state alone, so
+         * the client's flight, including Finished, is still processed on
+         * return.
+         */
+        dtls1_stop_timer(s);
+        return MSG_PROCESS_CONTINUE_READING;
+    }
 
     return MSG_PROCESS_FINISHED_READING;
 }
