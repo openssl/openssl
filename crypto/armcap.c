@@ -509,7 +509,7 @@ void OPENSSL_cpuid_setup(void)
  *
  * @return                  Current value of DIT flag: 0 for off, 1 for on.
  */
-static ossl_inline uint64_t ossl_get_dit(void)
+static ossl_inline uint64_t ossl_get_dit_internal(void)
 {
     uint64_t val = 0;
 
@@ -517,6 +517,25 @@ static ossl_inline uint64_t ossl_get_dit(void)
     __asm__ volatile("mrs %0, s3_3_c4_c2_5" : "=r"(val));
 
     return (val >> 24) & 1;
+}
+
+/**
+ * @brief                   Get the current DIT state. We allow the caller to supply the "on" value
+ *                          returned so that bit flags can be supported more easily.
+ *
+ * @param value_for_on      Value to be returned if DIT is on.
+ *
+ * @return                  DIT state: 0 for off, value given for on.
+ */
+int ossl_get_dit(int value_for_on)
+{
+    if ((OPENSSL_armcap_P & ARMV8_DIT)) {
+        if (ossl_get_dit_internal()) {
+            return value_for_on;
+        }
+    }
+
+    return 0;
 }
 
 /**
@@ -550,10 +569,43 @@ static ossl_inline void ossl_set_dit_off(void)
 int ossl_ensure_dit_on(int value_for_on)
 {
     if ((OPENSSL_armcap_P & ARMV8_DIT)) {
-        if (ossl_get_dit()) {
+        if (ossl_get_dit_internal()) {
             return value_for_on; /* If its already enabled, tell caller to leave it on. */
         }
         ossl_set_dit_on();
+    }
+
+    return 0;
+}
+
+/**
+ * @brief                   Ensure DIT is on (if dit_val is non-zero) or off, and return the
+ *                          previous DIT state so that we can restore it later. We allow the caller
+ *                          to supply the "on" value returned so that bit flags can be supported
+ *                          more easily.
+ *
+ * @param dit_val           Value to set for DIT: zero for off, non-zero for on.
+ *
+ * @param value_for_on      Value to be returned if DIT was on prior to calling this function.
+ *
+ * @return                  Previous DIT state: 0 for off, value given for on.
+ */
+int ossl_set_dit(const int dit_val, const int value_for_on)
+{
+    if ((OPENSSL_armcap_P & ARMV8_DIT)) {
+        uint64_t dit_prev = ossl_get_dit_internal();
+
+        if (dit_val) {
+            if (!dit_prev) {
+                ossl_set_dit_on();
+            }
+        } else if (dit_prev) {
+            ossl_set_dit_off();
+        }
+
+        if (dit_prev) {
+            return value_for_on;
+        }
     }
 
     return 0;
