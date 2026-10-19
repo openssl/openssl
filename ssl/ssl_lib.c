@@ -2115,17 +2115,9 @@ int SSL_has_pending(const SSL *s)
     sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     /* Check buffered app data if any first */
-    if (SSL_CONNECTION_IS_DTLS(sc)) {
-        TLS_RECORD *rdata;
-        pitem *item, *iter;
-
-        iter = pqueue_iterator(sc->rlayer.d->buffered_app_data);
-        while ((item = pqueue_next(&iter)) != NULL) {
-            rdata = item->data;
-            if (rdata->length > 0)
-                return 1;
-        }
-    }
+    if (SSL_CONNECTION_IS_DTLS(sc)
+        && DTLS_RECORD_LAYER_buffered_app_data_pending(&sc->rlayer))
+        return 1;
 
     if (RECORD_LAYER_processed_read_pending(&sc->rlayer))
         return 1;

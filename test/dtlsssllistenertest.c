@@ -3551,6 +3551,162 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
+static int poll_conn_readable(SSL *s, int *readable)
+{
+    SSL_POLL_ITEM item;
+    struct timeval timeout = { 0, 0 };
+    size_t count;
+
+    item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    item.desc.value.ssl = s;
+    item.events = SSL_POLL_EVENT_R;
+    item.revents = 0;
+
+    if (!TEST_true(SSL_poll(&item, 1, sizeof(item), &timeout, 0, &count)))
+        return 0;
+    *readable = (item.revents & SSL_POLL_EVENT_R) != 0;
+    return 1;
+}
+
+/*
+ * Test: SSL_poll() does not report SSL_POLL_EVENT_R for application data that
+ * cannot be read until a handshake in progress completes.
+ *
+ * In DTLS 1.3 the sender of a KeyUpdate stays in init until it is ACKed, and
+ * application data arriving meanwhile is held back until then. If SSL_poll()
+ * reports that data as readable, an event loop spins: every SSL_read() returns
+ * SSL_ERROR_WANT_READ and every SSL_poll() returns immediately, until the peer
+ * sends its ACK or the retransmissions run out.
+ *
+ * idx 0: the server (a listener connection) sends the KeyUpdate
+ * idx 1: the client (a standalone connection) sends the KeyUpdate
+ */
+static int test_dtls13_poll_conn_held_app_data(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL *updater, *peer;
+    BIO_ADDR *client_addr = NULL;
+    unsigned char buf[16];
+    size_t n;
+    int ret, readable = 0;
+    int testresult = 0;
+    int abortctr = 0;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (serverssl == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Connection loop did not converge");
+            goto end;
+        }
+
+        ret = SSL_connect(clientssl);
+        if (ret <= 0 && SSL_get_error(clientssl, ret) != SSL_ERROR_WANT_READ) {
+            TEST_error("SSL_connect failed");
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(serverssl)
+        || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Consume the tickets and their ACKs so that nothing is left to read. */
+    ret = SSL_read(clientssl, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_read(serverssl, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    updater = idx == 0 ? serverssl : clientssl;
+    peer = idx == 0 ? clientssl : serverssl;
+
+    if (!TEST_true(SSL_key_update(updater, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(updater);
+    if (!TEST_int_eq(SSL_get_error(updater, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(updater),
+            idx == 0 ? TLS_ST_SW_KEY_UPDATE : TLS_ST_CW_KEY_UPDATE))
+        goto end;
+
+    /* The peer sends data before it has read, and so ACKed, the KeyUpdate. */
+    if (!TEST_true(SSL_write_ex(peer, "x", 1, &n)))
+        goto end;
+
+    /* The updater reads that record but must hold it back until the ACK. */
+    ret = SSL_read(updater, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(updater, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_in_init(updater))
+        || !TEST_true(SSL_has_pending(updater)))
+        goto end;
+
+    if (!poll_conn_readable(updater, &readable)
+        || !TEST_false(readable))
+        goto end;
+
+    /* The peer reads the KeyUpdate and ACKs it. */
+    ret = SSL_read(peer, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The waiting ACK makes the updater readable. SSL_poll() does not process
+     * it, SSL_read() does: that completes the KeyUpdate and releases the held
+     * record.
+     */
+    if (!poll_conn_readable(updater, &readable)
+        || !TEST_true(readable)
+        || !TEST_true(SSL_in_init(updater))
+        || !TEST_true(SSL_read_ex(updater, buf, sizeof(buf), &n))
+        || !TEST_mem_eq(buf, n, "x", 1)
+        || !TEST_false(SSL_in_init(updater)))
+        goto end;
+
+    if (!poll_conn_readable(updater, &readable)
+        || !TEST_false(readable))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+
 /*
  * Test: SSL_poll() on listener with multiple event types.
  *
@@ -6583,6 +6739,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_conn_event_w);
     ADD_TEST(test_dtls_poll_conn_dgram_pair_readable);
     ADD_TEST(test_dtls_poll_conn_no_events_before_data);
+#ifndef OPENSSL_NO_DTLS1_3
+    ADD_ALL_TESTS(test_dtls13_poll_conn_held_app_data, 2);
+#endif
     ADD_TEST(test_dtls_poll_listener_multiple_events);
     ADD_TEST(test_dtls_poll_conn_event_ec);
     ADD_TEST(test_dtls_poll_null_item);
