@@ -1252,6 +1252,9 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_ERROR;
             } else {
                 s->dtls13_process_hello = 1;
+                /* Anything still buffered arrived in epoch 0. */
+                if (SSL_CONNECTION_IS_DTLS13(s))
+                    dtls1_clear_received_buffer(s);
             }
             /*
              * We don't yet know whether the next record we are going to receive

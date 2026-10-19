@@ -1601,6 +1601,138 @@ end:
 }
 
 /*
+ * Build a DTLS handshake message with a 32 byte body of filler and the given
+ * message sequence number.
+ */
+static size_t make_bogus_handshake_message(uint8_t *out, unsigned int type,
+    unsigned int msg_seq)
+{
+    const size_t body_len = 32;
+
+    out[0] = (uint8_t)type;
+    out[1] = 0;
+    out[2] = 0;
+    out[3] = (uint8_t)body_len;
+    out[4] = (uint8_t)(msg_seq >> 8);
+    out[5] = (uint8_t)msg_seq;
+    out[6] = 0;
+    out[7] = 0;
+    out[8] = 0;
+    out[9] = 0;
+    out[10] = 0;
+    out[11] = (uint8_t)body_len;
+    memset(out + DTLS1_HM_HEADER_LENGTH, 0xbb, body_len);
+    return DTLS1_HM_HEADER_LENGTH + body_len;
+}
+
+/*
+ * Split the datagram waiting in the receiver's read BIO after its first
+ * record and queue the forged record in the gap. Record sequence numbers are
+ * left as they are.
+ */
+static int inject_after_first_record(SSL *receiver, const uint8_t *pkt,
+    size_t pktlen)
+{
+    BIO *bio = SSL_get_rbio(receiver);
+    uint8_t dgram[2048];
+    size_t first;
+    int n;
+
+    if (!TEST_ptr(bio)
+        || !TEST_int_gt(n = BIO_read(bio, dgram, sizeof(dgram)),
+            DTLS1_RT_HEADER_LENGTH))
+        return 0;
+    first = DTLS1_RT_HEADER_LENGTH
+        + (((size_t)dgram[DTLS1_RT_HEADER_LENGTH - 2] << 8)
+            | dgram[DTLS1_RT_HEADER_LENGTH - 1]);
+    if (!TEST_size_t_le(first, (size_t)n)
+        || !TEST_int_eq(mempacket_test_inject(bio, (const char *)dgram,
+                            (int)first, -1, INJECT_PACKET_IGNORE_REC_SEQ),
+            (int)first)
+        || !TEST_int_eq(mempacket_test_inject(bio, (const char *)pkt,
+                            (int)pktlen, -1, INJECT_PACKET_IGNORE_REC_SEQ),
+            (int)pktlen))
+        return 0;
+    if (first == (size_t)n)
+        return 1;
+    return TEST_int_eq(mempacket_test_inject(bio, (const char *)dgram + first,
+                           n - (int)first, -1,
+                           INJECT_PACKET_IGNORE_REC_SEQ),
+        n - (int)first);
+}
+
+/*
+ * RFC 9147 section 6.1 assigns epoch 0 to the ClientHello, ServerHello and
+ * HelloRetryRequest only. An epoch 0 handshake record after the ServerHello
+ * must be discarded and the handshake must still complete. Index 0 queues
+ * the record behind the ClientHello, where the server reads it after sending
+ * its own flight. Index 1 queues it between the ServerHello and the rest of
+ * the server's flight.
+ */
+static int test_dtls13_epoch0_handshake_after_hello(int idx)
+{
+#ifdef OPENSSL_NO_EC
+    const char *group = "ffdhe3072";
+#else
+    const char *group = "P-256";
+#endif
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    uint8_t msg[DTLS1_HM_HEADER_LENGTH + 32];
+    uint8_t pkt[DTLS1_RT_HEADER_LENGTH + sizeof(msg)];
+    size_t msglen, pktlen;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    /* Keep ClientHello in one record so sequence number 1 remains unused. */
+    if (!TEST_true(SSL_CTX_set1_groups_list(sctx, group))
+        || !TEST_true(SSL_CTX_set1_groups_list(cctx, group)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    /* Send flight 1: ClientHello */
+    if (!TEST_int_le(SSL_connect(cssl), 0))
+        goto end;
+
+    /*
+     * The first message in either direction has message sequence 0, so the
+     * forged message takes sequence 1.
+     */
+    if (idx == 0) {
+        msglen = make_bogus_handshake_message(msg, SSL3_MT_FINISHED, 1);
+    } else {
+        /* Send flight 2: ServerHello and the encrypted remainder */
+        if (!TEST_int_le(SSL_accept(sssl), 0))
+            goto end;
+        msglen = make_bogus_handshake_message(msg,
+            SSL3_MT_ENCRYPTED_EXTENSIONS, 1);
+    }
+    pktlen = make_forged_plaintext_record(pkt, 0, 1, SSL3_RT_HANDSHAKE,
+        msg, msglen);
+    if (!inject_after_first_record(idx == 0 ? sssl : cssl, pkt, pktlen))
+        goto end;
+
+    if (!TEST_true(do_dtls13_handshake(sssl, cssl)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
+
+/*
  * RFC 9147 (DTLS 1.3): TLS_AES_128_CCM_8_SHA256 MUST NOT be used in DTLS
  * without additional safeguards against forgery, due to its short
  * authentication tag. OpenSSL does not implement such safeguards, so a
@@ -2516,6 +2648,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert, 8);
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert_plant, 3);
     ADD_TEST(test_dtls13_epoch0_plaintext_alert);
+    ADD_ALL_TESTS(test_dtls13_epoch0_handshake_after_hello, 2);
     ADD_TEST(test_dtls13_ccm8_not_offered);
     ADD_TEST(test_dtls13_ack_read_timeout);
 #endif
