@@ -589,6 +589,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->psksession_id = NULL;
     sc->psksession_id_len = 0;
     sc->hello_retry_request = SSL_HRR_NONE;
+    sc->dtls13_process_hello = 0;
     sc->sent_tickets = 0;
 
     sc->error = 0;
