@@ -25,6 +25,8 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
         return a != NULL;
     if (a == NULL)
         return -1;
+    if (!ossl_x509_decode(a) || !ossl_x509_decode(b))
+        return -2;
     ai = a->cert_info;
     bi = b->cert_info;
     i = ASN1_INTEGER_cmp(&ai->serialNumber, &bi->serialNumber);
@@ -42,7 +44,7 @@ unsigned long X509_issuer_and_serial_hash(const X509 *a)
     char *f = NULL;
     EVP_MD *digest = NULL;
 
-    if (ctx == NULL)
+    if (ctx == NULL || !ossl_x509_decode(a))
         goto err;
     f = X509_NAME_oneline(a->cert_info->issuer, NULL, 0);
     if (f == NULL)
@@ -71,11 +73,15 @@ err:
 
 int X509_issuer_name_cmp(const X509 *a, const X509 *b)
 {
+    if (!ossl_x509_decode(a) || !ossl_x509_decode(b))
+        return -2;
     return X509_NAME_cmp(a->cert_info->issuer, b->cert_info->issuer);
 }
 
 int X509_subject_name_cmp(const X509 *a, const X509 *b)
 {
+    if (!ossl_x509_decode(a) || !ossl_x509_decode(b))
+        return -2;
     return X509_NAME_cmp(a->cert_info->subject, b->cert_info->subject);
 }
 
@@ -119,44 +125,60 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 
 const X509_NAME *X509_get_issuer_name(const X509 *a)
 {
+    if (!ossl_x509_decode(a))
+        return NULL;
     return a->cert_info->issuer;
 }
 
 unsigned long X509_issuer_name_hash(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return 0;
     return X509_NAME_hash_ex(x->cert_info->issuer, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
 unsigned long X509_issuer_name_hash_old(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return 0;
     return X509_NAME_hash_old(x->cert_info->issuer);
 }
 #endif
 
 const X509_NAME *X509_get_subject_name(const X509 *a)
 {
+    if (!ossl_x509_decode(a))
+        return NULL;
     return a->cert_info->subject;
 }
 
 ASN1_INTEGER *X509_get_serialNumber(X509 *a)
 {
+    if (!ossl_x509_decode(a))
+        return NULL;
     return &a->cert_info->serialNumber;
 }
 
 const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
 {
+    if (!ossl_x509_decode(a))
+        return NULL;
     return &a->cert_info->serialNumber;
 }
 
 unsigned long X509_subject_name_hash(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return 0;
     return X509_NAME_hash_ex(x->cert_info->subject, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
 unsigned long X509_subject_name_hash_old(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return 0;
     return X509_NAME_hash_old(x->cert_info->subject);
 }
 #endif
@@ -189,9 +211,13 @@ int X509_cmp(const X509 *a, const X509 *b)
     }
 
     /*
-     * A certificate modified since it was signed or decoded is equal only
-     * to itself
+     * A certificate that does not decode, or was modified since it was
+     * signed or decoded, is equal only to itself
      */
+    if (!ossl_x509_decode(a))
+        return 1;
+    if (!ossl_x509_decode(b))
+        return -1;
     if (a->cert_info->enc.modified || b->cert_info->enc.modified)
         return a->cert_info->enc.modified ? 1 : -1;
 
@@ -399,6 +425,7 @@ X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *
     if (!sk)
         return NULL;
 
+    memset(&x, 0, sizeof(x));
     x.cert_info = &cinf;
     cinf.serialNumber = *serial;
     cinf.issuer = (X509_NAME *)name;
@@ -430,6 +457,8 @@ EVP_PKEY *X509_get0_pubkey(const X509 *x)
         return NULL;
     if (x->pkey != NULL)
         return x->pkey;
+    if (!ossl_x509_decode(x))
+        return NULL;
     return X509_PUBKEY_get0(x->cert_info->key);
 }
 
@@ -438,7 +467,7 @@ EVP_PKEY *X509_get_pubkey(const X509 *x)
     if (x == NULL)
         return NULL;
     if (x->pkey == NULL)
-        return X509_PUBKEY_get(x->cert_info->key);
+        return ossl_x509_decode(x) ? X509_PUBKEY_get(x->cert_info->key) : NULL;
     if (!EVP_PKEY_up_ref(x->pkey)) {
         ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
         return NULL;

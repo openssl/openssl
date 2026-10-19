@@ -133,6 +133,8 @@ static int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out)
 
 int X509_verify(const X509 *a, EVP_PKEY *r)
 {
+    if (!ossl_x509_decode(a))
+        return -1;
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info->signature) != 0)
         return 0;
 
@@ -282,6 +284,8 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (!ossl_x509_decode(x))
+        return 0;
     if ((exts = X509_get0_extensions(x)) != NULL
         && sk_X509_EXTENSION_num(exts) > 0
         && (bad_keyid_exts(exts) || !X509_set_version(x, X509_VERSION_3)))
@@ -312,6 +316,8 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (!ossl_x509_decode(x))
+        return 0;
     if ((exts = X509_get0_extensions(x)) != NULL && bad_keyid_exts(exts))
         return 0;
     if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0

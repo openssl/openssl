@@ -22,7 +22,7 @@
 
 int X509_set_version(X509 *x, long version)
 {
-    if (x == NULL)
+    if (x == NULL || !ossl_x509_decode(x))
         return 0;
     if (version == X509_get_version(x))
         return 1; /* avoid needless modification even re-allocation */
@@ -46,7 +46,7 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 {
     ASN1_INTEGER *in;
 
-    if (x == NULL)
+    if (x == NULL || !ossl_x509_decode(x))
         return 0;
     in = &x->cert_info->serialNumber;
     if (in != serial && !ASN1_STRING_copy(in, serial))
@@ -57,7 +57,8 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 
 int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 {
-    if (x == NULL || !X509_NAME_set(&x->cert_info->issuer, name))
+    if (x == NULL || !ossl_x509_decode(x)
+        || !X509_NAME_set(&x->cert_info->issuer, name))
         return 0;
     ossl_x509_set_modified(x);
     return 1;
@@ -65,7 +66,8 @@ int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 
 int X509_set_subject_name(X509 *x, const X509_NAME *name)
 {
-    if (x == NULL || !X509_NAME_set(&x->cert_info->subject, name))
+    if (x == NULL || !ossl_x509_decode(x)
+        || !X509_NAME_set(&x->cert_info->subject, name))
         return 0;
     ossl_x509_set_modified(x);
     return 1;
@@ -91,7 +93,7 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 {
     int modified = 0;
 
-    if (x == NULL || tm == NULL)
+    if (x == NULL || tm == NULL || !ossl_x509_decode(x))
         return 0;
     if (!ossl_x509_set1_time(&modified, &x->cert_info->validity.notBefore, tm))
         return 0;
@@ -104,7 +106,7 @@ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 {
     int modified = 0;
 
-    if (x == NULL || tm == NULL)
+    if (x == NULL || tm == NULL || !ossl_x509_decode(x))
         return 0;
     if (!ossl_x509_set1_time(&modified, &x->cert_info->validity.notAfter, tm))
         return 0;
@@ -115,7 +117,7 @@ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
 {
-    if (x == NULL)
+    if (x == NULL || !ossl_x509_decode(x))
         return 0;
     if (!X509_PUBKEY_set(&(x->cert_info->key), pkey))
         return 0;
@@ -137,47 +139,70 @@ int X509_up_ref(X509 *x)
 
 long X509_get_version(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return -1;
     return ASN1_INTEGER_get(x->cert_info->version);
 }
 
 const ASN1_TIME *X509_get0_notBefore(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NULL;
     return x->cert_info->validity.notBefore;
 }
 
 const ASN1_TIME *X509_get0_notAfter(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NULL;
     return x->cert_info->validity.notAfter;
 }
 
 ASN1_TIME *X509_getm_notBefore(X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NULL;
     return x->cert_info->validity.notBefore;
 }
 
 ASN1_TIME *X509_getm_notAfter(X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NULL;
     return x->cert_info->validity.notAfter;
 }
 
 int X509_get_signature_type(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NID_undef;
     return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg.algorithm));
 }
 
 const X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NULL;
     return x->cert_info->key;
 }
 
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NULL;
     return x->cert_info->extensions;
 }
 
 void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
     const ASN1_BIT_STRING **psuid)
 {
+    if (!ossl_x509_decode(x)) {
+        if (piuid != NULL)
+            *piuid = NULL;
+        if (psuid != NULL)
+            *psuid = NULL;
+        return;
+    }
     if (piuid != NULL)
         *piuid = x->cert_info->issuerUID;
     if (psuid != NULL)
@@ -186,6 +211,8 @@ void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
 
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NULL;
     return &x->cert_info->signature;
 }
 
@@ -328,6 +355,8 @@ int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (!ossl_x509_decode(x))
+        return 0;
     ERR_set_mark();
     (void)x509_sig_info_init(&siginf, OBJ_obj2nid(x->sig_alg.algorithm),
         &x->sig_alg, &x->signature, X509_PUBKEY_get0(x->cert_info->key),

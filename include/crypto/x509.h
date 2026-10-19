@@ -212,6 +212,11 @@ struct x509_st {
      * if there is no view or the key does not decode
      */
     EVP_PKEY *pkey;
+    /**
+     * Set while cert_info, sig_alg and signature are not decoded from der;
+     * ossl_x509_decode() decodes them
+     */
+    int undecoded;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
@@ -399,6 +404,14 @@ void ossl_x509_set_modified(X509 *x);
  * @param der the DER encoding of x, or NULL to leave x without one
  */
 void ossl_x509_set0_der(X509 *x, CRYPTO_BUFFER *der);
+
+/**
+ * @brief Decodes x's cert_info, sig_alg and signature from its DER if they
+ * are not decoded.  Every reader of those fields calls it first.
+ * @param x the certificate
+ * @returns 1 if the fields are decoded, 0 on failure
+ */
+int ossl_x509_decode(const X509 *x);
 
 /**
  * @brief Returns the store's certificates whose encoded subject is

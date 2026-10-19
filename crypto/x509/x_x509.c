@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -62,6 +63,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_NEW_POST:
         ossl_x509_set0_der(ret, NULL);
+        ret->undecoded = 0;
         ret->ex_cached = 0;
         ret->ex_kusage = 0;
         ret->ex_xkusage = 0;
@@ -82,6 +84,12 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->aux = NULL;
         ret->crldp = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
+            return 0;
+        break;
+
+    case ASN1_OP_I2D_PRE:
+    case ASN1_OP_PRINT_PRE:
+        if (!ossl_x509_decode(ret))
             return 0;
         break;
 
@@ -154,6 +162,50 @@ void X509_free(X509 *a)
     ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(X509));
 }
 
+static int x509_is_decoded(const X509 *x)
+{
+    int undecoded;
+
+    return CRYPTO_atomic_load_int((int *)&x->undecoded, &undecoded, x->lock)
+        && !undecoded;
+}
+
+static int x509_set_undecoded(X509 *x, CRYPTO_BUFFER *der)
+{
+    if (!CRYPTO_BUFFER_up_ref(der))
+        return 0;
+    ossl_x509_set0_der(x, der);
+    if (!x->has_view)
+        return 0;
+    x->undecoded = 1;
+
+    return 1;
+}
+
+static X509 *x509_new_undecoded(CRYPTO_BUFFER *der)
+{
+    X509 *x;
+
+    if ((x = X509_new()) == NULL)
+        return NULL;
+    if (!x509_set_undecoded(x, der)) {
+        X509_free(x);
+        return NULL;
+    }
+    X509_CINF_free(x->cert_info);
+    x->cert_info = NULL;
+
+    return x;
+}
+
+static int x509_reuse_undecoded(X509 *x, CRYPTO_BUFFER *der)
+{
+    ASN1_VALUE *val = (ASN1_VALUE *)x;
+
+    return x509_cb(ASN1_OP_D2I_PRE, &val, ASN1_ITEM_rptr(X509), NULL)
+        && x509_set_undecoded(x, der);
+}
+
 X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
 {
     CRYPTO_BUFFER *der = NULL;
@@ -174,6 +226,18 @@ X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
     if ((der = CRYPTO_BUFFER_new(CBS_data(&cert), CBS_len(&cert), NULL))
         == NULL)
         goto out;
+    if (a != NULL && *a != NULL) {
+        if (x509_reuse_undecoded(*a, der)) {
+            x = *a;
+            *in += CBS_len(&cert);
+            goto out;
+        }
+    } else if ((x = x509_new_undecoded(der)) != NULL) {
+        if (a != NULL)
+            *a = x;
+        *in += CBS_len(&cert);
+        goto out;
+    }
 
     p = CRYPTO_BUFFER_data(der);
     x = (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, &p,
@@ -194,7 +258,8 @@ int i2d_X509(const X509 *a, unsigned char **out)
     const uint8_t *data;
     size_t len;
 
-    if (a == NULL || a->der == NULL || a->cert_info->enc.modified)
+    if (a == NULL || a->der == NULL
+        || (x509_is_decoded(a) && a->cert_info->enc.modified))
         return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(X509));
 
     data = CRYPTO_BUFFER_data(a->der);
@@ -215,10 +280,94 @@ int i2d_X509(const X509 *a, unsigned char **out)
     return (int)len;
 }
 
-IMPLEMENT_ASN1_DUP_FUNCTION(X509)
+X509 *X509_dup(const X509 *x)
+{
+    X509 *ret;
+
+    if (x == NULL || !x->has_view
+        || (x509_is_decoded(x) && x->cert_info->enc.modified))
+        return ASN1_item_dup(ASN1_ITEM_rptr(X509), x);
+
+    if ((ret = X509_new()) == NULL)
+        return NULL;
+    if (!ossl_x509_set0_libctx(ret, x->libctx, x->propq)
+        || !CRYPTO_BUFFER_up_ref(x->der)) {
+        X509_free(ret);
+        return NULL;
+    }
+    ret->der = x->der;
+    ret->view = x->view;
+    ret->has_view = 1;
+    if (x->pkey != NULL && !EVP_PKEY_up_ref(x->pkey)) {
+        X509_free(ret);
+        return NULL;
+    }
+    ret->pkey = x->pkey;
+    X509_CINF_free(ret->cert_info);
+    ret->cert_info = NULL;
+    ret->undecoded = 1;
+
+    return ret;
+}
+
+int ossl_x509_decode(const X509 *cx)
+{
+    X509 *x = (X509 *)cx;
+    X509_ALGOR *sig_alg = NULL, tmp_alg;
+    ASN1_BIT_STRING *signature = NULL, tmp_sig;
+    CBS cert, seq, tbs, alg, sig;
+    const unsigned char *p;
+    int ret = 0;
+
+    if (x509_is_decoded(x))
+        return 1;
+    if (!CRYPTO_THREAD_write_lock(x->lock))
+        return 0;
+    if (!x->undecoded) {
+        ret = 1;
+        goto out;
+    }
+    CBS_init(&cert, CRYPTO_BUFFER_data(x->der), CRYPTO_BUFFER_len(x->der));
+    if (!ossl_assert(CBS_get_asn1(&cert, &seq, CBS_ASN1_SEQUENCE)
+            && CBS_get_asn1_element(&seq, &tbs, CBS_ASN1_SEQUENCE)
+            && CBS_get_asn1_element(&seq, &alg, CBS_ASN1_SEQUENCE)
+            && CBS_get_asn1_element(&seq, &sig, CBS_ASN1_BITSTRING)
+            && CBS_len(&seq) == 0)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
+        goto out;
+    }
+    p = CBS_data(&tbs);
+    if (ASN1_item_d2i_ex((ASN1_VALUE **)&x->cert_info, &p, (long)CBS_len(&tbs),
+            ASN1_ITEM_rptr(X509_CINF), x->libctx, x->propq)
+        == NULL)
+        goto out;
+    p = CBS_data(&alg);
+    if ((sig_alg = d2i_X509_ALGOR(NULL, &p, (long)CBS_len(&alg))) == NULL)
+        goto out;
+    p = CBS_data(&sig);
+    if ((signature = d2i_ASN1_BIT_STRING(NULL, &p, (long)CBS_len(&sig)))
+        == NULL)
+        goto out;
+    tmp_alg = x->sig_alg;
+    x->sig_alg = *sig_alg;
+    *sig_alg = tmp_alg;
+    tmp_sig = x->signature;
+    x->signature = *signature;
+    *signature = tmp_sig;
+    if (!CRYPTO_atomic_store_int(&x->undecoded, 0, x->lock))
+        goto out;
+    ret = 1;
+
+out:
+    X509_ALGOR_free(sig_alg);
+    ASN1_BIT_STRING_free(signature);
+    CRYPTO_THREAD_unlock(x->lock);
+    return ret;
+}
 
 void ossl_x509_set_modified(X509 *x)
 {
+    assert(x509_is_decoded(x));
     x->cert_info->enc.modified = 1;
     ossl_x509_set0_der(x, NULL);
 }
@@ -390,6 +539,8 @@ int i2d_X509_AUX(const X509 *a, unsigned char **pp)
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
 {
+    if (!ossl_x509_decode(x))
+        return -1;
     ossl_x509_set_modified(x);
     return i2d_X509_CINF(x->cert_info, pp);
 }
@@ -397,6 +548,7 @@ int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg, const X509 *x)
 {
+    (void)ossl_x509_decode(x);
     if (psig)
         *psig = &x->signature;
     if (palg)
@@ -405,6 +557,8 @@ void X509_get0_signature(const ASN1_BIT_STRING **psig,
 
 int X509_get_signature_nid(const X509 *x)
 {
+    if (!ossl_x509_decode(x))
+        return NID_undef;
     return OBJ_obj2nid(x->sig_alg.algorithm);
 }
 

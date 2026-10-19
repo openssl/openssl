@@ -641,7 +641,7 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
     if (obj->type == X509_LU_CRL)
         xn = obj->data.crl->crl.issuer;
     else
-        xn = obj->data.x509->cert_info->subject;
+        xn = X509_get_subject_name(obj->data.x509);
 
     if (xn == NULL) {
         obj->type = X509_LU_NONE;
@@ -834,6 +834,7 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
     switch (type) {
     case X509_LU_X509:
         stmp.data.x509 = &x509_s;
+        memset(&x509_s, 0, sizeof(x509_s));
         x509_s.cert_info = &cinf_s;
         cinf_s.subject = (X509_NAME *)name;
         break;
