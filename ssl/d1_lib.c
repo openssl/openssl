@@ -2190,6 +2190,16 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
         }
     }
 
+    if (sc->listener_idle && !dtls1_is_timer_expired(sc)) {
+        int empty;
+
+        ossl_crypto_mutex_lock(sc->listener_rx->mutex);
+        empty = ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending);
+        ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
+        if (empty)
+            return;
+    }
+
     /*
      * Up-ref and add to list first, then mark as being driven.
      * The up-ref ensures the connection stays valid while we drive it
@@ -2240,6 +2250,8 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     sc->listener_force_nonblocking = 1;
     ret = SSL_accept(ssl);
     sc->listener_force_nonblocking = 0;
+    ssl_err = SSL_get_error(ssl, ret);
+    sc->listener_idle = ssl_err == SSL_ERROR_WANT_READ;
 
     /*
      * Always clear the stateless flag after SSL_accept() completes.
@@ -2257,9 +2269,6 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     /* Check if connection needs retry (HRR/HVR sent) */
     if (dtls_listener_conn_needs_retry(ssl))
         return;
-
-    /* Check SSL error */
-    ssl_err = SSL_get_error(ssl, ret);
 
     if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE) {
         /* Handshake in progress, needs more data - keep pending */

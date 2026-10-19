@@ -1170,8 +1170,13 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
      * This is safe because dtls_listener_drive_pending() releases the mutex
      * before calling SSL_accept() on connections, so the packet handler
      * callback can acquire the mutex when needed.
+     *
+     * Not while the listener's tick is driving us: the tick has just pumped,
+     * and a datagram pumped here for a connection the tick has already passed
+     * over would wait in its queue until the next tick.
      */
-    if (urxe == NULL && s->d1->listener != NULL) {
+    if (urxe == NULL && s->d1->listener != NULL
+        && !s->listener_force_nonblocking) {
         ossl_dgram_demux_pump(s->d1->rx->demux);
         urxe = ossl_dtls_read_datagram(s->d1->rx);
     }

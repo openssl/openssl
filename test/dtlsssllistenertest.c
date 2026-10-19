@@ -6604,6 +6604,121 @@ end:
     return testresult;
 }
 #endif /* OPENSSL_NO_DTLS1_2 */
+
+static int idle_pending_accept_calls;
+
+static void idle_pending_info_cb(const SSL *ssl, int where, int ret)
+{
+    if ((where & SSL_CB_ACCEPT_EXIT) == SSL_CB_ACCEPT_EXIT)
+        idle_pending_accept_calls++;
+}
+
+#define IDLE_PENDING_TICKS 20
+
+/*
+ * Regression test: a pending connection waiting for its peer must not be
+ * driven on every listener tick. One pending connection has received a
+ * junk datagram, another a ClientHello answered with an HVR/HRR. Ticking
+ * the listener with nothing new arriving must not call SSL_accept() on
+ * either; the client must then still complete its handshake.
+ */
+static int test_dtls_listener_idle_pending_not_driven_int(int version)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    SSL *junk = NULL;
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1, client_fd = -1, junk_fd = -1;
+    DTLS_LISTENER *dl;
+    int testresult = 0, k;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    SSL_CTX_set_info_callback(sctx, idle_pending_info_cb);
+
+    if (!TEST_true(create_dtls_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+    dl = (DTLS_LISTENER *)listener;
+
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+            &junk, &junk_fd))
+        || !TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+            &clientssl, &client_fd)))
+        goto end;
+
+    /* A one-byte datagram, not a DTLS record. */
+    if (!TEST_int_eq(BIO_write(SSL_get_wbio(junk), "", 1), 1)
+        || !client_step(clientssl))
+        goto end;
+
+    for (k = 0; k < 100
+        && ossl_dgram_conn_lookup_num_items(dl->pending_conns) < 2;
+        k++) {
+        listener_tick(listener);
+        OSSL_sleep(10);
+    }
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
+            2))
+        goto end;
+    /* Let each connection be driven over what it has received. */
+    for (k = 0; k < 3; k++)
+        listener_tick(listener);
+    if (!TEST_int_gt(idle_pending_accept_calls, 0))
+        goto end;
+
+    idle_pending_accept_calls = 0;
+    for (k = 0; k < IDLE_PENDING_TICKS; k++)
+        listener_tick(listener);
+    if (!TEST_int_eq(idle_pending_accept_calls, 0)
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
+            2))
+        goto end;
+
+    /* The client's next flight is still processed. */
+    if (!drive_client_to_promotion(listener, clientssl, 1))
+        goto end;
+    if (!TEST_ptr(serverssl = SSL_accept_connection(listener,
+                      SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_version(serverssl), version))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(junk);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    if (junk_fd >= 0)
+        BIO_closesocket(junk_fd);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int test_dtls_listener_idle_pending_not_driven(void)
+{
+    int ok = 1;
+
+#ifndef OPENSSL_NO_DTLS1_2
+    if (!test_dtls_listener_idle_pending_not_driven_int(DTLS1_2_VERSION))
+        ok = 0;
+#endif
+#ifndef OPENSSL_NO_DTLS1_3
+    if (!test_dtls_listener_idle_pending_not_driven_int(DTLS1_3_VERSION))
+        ok = 0;
+#endif
+    return ok;
+}
 #endif /* !OPENSSL_NO_DTLS1_2 || !OPENSSL_NO_DTLS1_3 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -6751,6 +6866,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listener_accept_queue_novalidate_capped);
     /* Demux free-list bound regression test; runs every enabled version */
     ADD_TEST(test_dtls_listener_flood_then_handshake);
+    ADD_TEST(test_dtls_listener_idle_pending_not_driven);
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls12_listener_alert_after_hvr_frees_pending);

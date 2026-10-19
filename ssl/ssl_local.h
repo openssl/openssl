@@ -1616,6 +1616,12 @@ struct ssl_connection_st {
      * making any further progress, including the progress being waited for.
      */
     unsigned int listener_force_nonblocking;
+    /*
+     * Set when the listener's last drive of this pending connection left it
+     * waiting for its peer, so it need not be driven again until a datagram
+     * is queued for it or its retransmission timer expires.
+     */
+    unsigned int listener_idle;
 #endif
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback)(int write_p, int version, int content_type,
