@@ -2972,9 +2972,13 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
 #ifndef OPENSSL_NO_ECH
     /*
      * Calculate the ECH-accept server random to indicate that
-     * we're accepting ECH, if that's the case
+     * we're accepting ECH, if that's the case. ECH is only confirmed
+     * if TLSv1.3 is negotiated (RFC 9849, section 7.2): below that
+     * the last 8 bytes of the server random may hold the downgrade
+     * sentinel, which must not be overwritten.
      */
     if (s->ext.ech.attempted_type == TLSEXT_TYPE_ech
+        && usetls13
         && (s->ext.ech.backend == 1
             || (s->ext.ech.es != NULL && s->ext.ech.success == 1))) {
         unsigned char acbuf[8];

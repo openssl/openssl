@@ -2410,6 +2410,90 @@ end:
     return res;
 }
 
+/*
+ * A TLSv1.2 ClientHello (no supported_versions) that carries an inner
+ * "encrypted_client_hello" extension, as an on-path attacker could
+ * produce by rewriting a TLSv1.3 client's ClientHello.
+ */
+static const unsigned char v12_ch_with_inner_ech[] = {
+    /* record header */
+    0x16, 0x03, 0x01, 0x00, 0x4e,
+    /* ClientHello, length 74 */
+    0x01, 0x00, 0x00, 0x4a,
+    0x03, 0x03,
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+    /* empty session id */
+    0x00,
+    /* TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 */
+    0x00, 0x02, 0xc0, 0x2f,
+    /* null compression */
+    0x01, 0x00,
+    /* extensions, length 31 */
+    0x00, 0x1f,
+    /* supported_groups: secp256r1, x25519 */
+    0x00, 0x0a, 0x00, 0x06, 0x00, 0x04, 0x00, 0x17, 0x00, 0x1d,
+    /* ec_point_formats: uncompressed */
+    0x00, 0x0b, 0x00, 0x02, 0x01, 0x00,
+    /* signature_algorithms: rsa_pss_rsae_sha256, rsa_pkcs1_sha256 */
+    0x00, 0x0d, 0x00, 0x06, 0x00, 0x04, 0x08, 0x04, 0x04, 0x01,
+    /* encrypted_client_hello, type inner */
+    0xfe, 0x0d, 0x00, 0x01, 0x01
+};
+
+/*
+ * A server that supports TLSv1.3 but negotiates TLSv1.2 must put the
+ * RFC 8446 downgrade sentinel in its ServerHello.random, even when the
+ * ClientHello has an inner ECH extension: ECH acceptance is only
+ * signalled with TLSv1.3 and must not overwrite the sentinel.
+ */
+static int ech_v12_downgrade_sentinel_test(void)
+{
+    static const unsigned char dgrd[8] = {
+        0x44, 0x4F, 0x57, 0x4E, 0x47, 0x52, 0x44, 0x01
+    };
+    int res = 0;
+    SSL_CTX *sctx = NULL;
+    SSL *serverssl = NULL;
+    BIO *rbio = NULL, *wbio = NULL;
+    unsigned char srandom[SSL3_RANDOM_SIZE];
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(libctx, propq, TLS_server_method()))
+        || !TEST_true(SSL_CTX_set_max_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_use_certificate_file(sctx, cert,
+            SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(sctx, privkey,
+            SSL_FILETYPE_PEM))
+        || !TEST_ptr(serverssl = SSL_new(sctx))
+        || !TEST_ptr(rbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(wbio = BIO_new(BIO_s_mem())))
+        goto end;
+    SSL_set_bio(serverssl, rbio, wbio);
+    rbio = wbio = NULL;
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(serverssl), v12_ch_with_inner_ech,
+                         sizeof(v12_ch_with_inner_ech)),
+            (int)sizeof(v12_ch_with_inner_ech))
+        /* The server writes its first flight then waits for the client */
+        || !TEST_int_le(SSL_accept(serverssl), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_version(serverssl), TLS1_2_VERSION)
+        || !TEST_size_t_eq(SSL_get_server_random(serverssl, srandom,
+                               sizeof(srandom)),
+            sizeof(srandom))
+        || !TEST_mem_eq(srandom + sizeof(srandom) - sizeof(dgrd), sizeof(dgrd),
+            dgrd, sizeof(dgrd)))
+        goto end;
+    res = 1;
+end:
+    BIO_free(rbio);
+    BIO_free(wbio);
+    SSL_free(serverssl);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2461,6 +2545,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     ADD_ALL_TESTS(test_ech_keylog_random, 4);
     ADD_TEST(ech_unauth_client_status_test);
+    ADD_TEST(ech_v12_downgrade_sentinel_test);
     return 1;
 err:
     return 0;
