@@ -753,10 +753,51 @@ err:
     return ret;
 }
 
+/*
+ * Replacing the method of a key whose Montgomery contexts have been cached
+ * runs the old method's finish().  The key must stay usable and be freed
+ * cleanly afterwards, also when the new method keeps the default finish().
+ */
+static int test_rsa_set_method_after_use(int idx)
+{
+    int ret = 0;
+    RSA *key = NULL;
+    RSA_METHOD *meth = NULL;
+    unsigned char ptext[256];
+    unsigned char ctext[256];
+    static unsigned char ptext_ex[] = "\x54\x85\x9b\x34\x2c\x49\xea\x2a";
+    int plen = sizeof(ptext_ex) - 1;
+    int clen, num, i;
+
+    clen = rsa_setkey(&key, NULL, idx);
+    if (!TEST_ptr(key)
+        || !TEST_ptr(meth = RSA_meth_dup(RSA_PKCS1_OpenSSL())))
+        goto err;
+
+    for (i = 0; i < 2; i++) {
+        num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
+            RSA_PKCS1_PADDING);
+        if (!TEST_int_eq(num, clen))
+            goto err;
+        num = RSA_private_decrypt(num, ctext, ptext, key, RSA_PKCS1_PADDING);
+        if (!TEST_int_gt(num, 0)
+            || !TEST_mem_eq(ptext, num, ptext_ex, plen))
+            goto err;
+        if (i == 0 && !TEST_true(RSA_set_method(key, meth)))
+            goto err;
+    }
+    ret = 1;
+err:
+    RSA_free(key);
+    RSA_meth_free(meth);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
+    ADD_ALL_TESTS(test_rsa_set_method_after_use, 3);
     ADD_MFAIL_ALL_TESTS(test_rsa_pkcs1_mfail, 3);
     ADD_MFAIL_ALL_TESTS(test_rsa_oaep_mfail, 3);
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));

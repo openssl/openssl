@@ -1185,12 +1185,16 @@ static int rsa_ossl_finish(RSA *rsa)
     for (i = 0; i < sk_RSA_PRIME_INFO_num(rsa->prime_infos); i++) {
         pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
         BN_MONT_CTX_free(pinfo->m);
+        pinfo->m = NULL;
     }
 #endif
 
     BN_MONT_CTX_free(rsa->_method_mod_n);
+    rsa->_method_mod_n = NULL;
     BN_MONT_CTX_free(rsa->_method_mod_p);
+    rsa->_method_mod_p = NULL;
     BN_MONT_CTX_free(rsa->_method_mod_q);
+    rsa->_method_mod_q = NULL;
     return 1;
 }
 
