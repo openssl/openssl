@@ -1616,6 +1616,12 @@ struct ssl_connection_st {
      * making any further progress, including the progress being waited for.
      */
     unsigned int listener_force_nonblocking;
+    /*
+     * Set when the listener's last drive of this pending connection left it
+     * waiting for its peer, so it need not be driven again until a datagram
+     * is queued for it or its retransmission timer expires.
+     */
+    unsigned int listener_idle;
 #endif
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback)(int write_p, int version, int content_type,
@@ -2334,6 +2340,9 @@ DEFINE_STACK_OF(SSL)
  */
 #define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 256
 
+/* Most drive passes over the pending connections in one listener tick */
+#define DTLS_LISTENER_MAX_DRIVE_PASSES 4
+
 /*
  * Default maximum size in bytes of a datagram a DTLS listener will receive.
  * A DTLS 1.3 ClientHello carrying large (e.g. post-quantum) key shares can
@@ -2414,6 +2423,12 @@ typedef struct dtls_listener_st {
 
     /* Advanced when the last waiter clears the notifier. */
     uint64_t notify_generation;
+
+    /*
+     * A pending connection may have queued input that no drive pass in
+     * progress will see. Protected by mutex.
+     */
+    unsigned int pending_input;
 
     /*
      * Time callback for customizable time source (primarily for testing).
@@ -3155,6 +3170,7 @@ int ossl_dtls_get_blocking_mode(const SSL *s);
 int ossl_dtls_conn_wait_for_datagram(SSL *s);
 int ossl_dtls_conn_wait_for_write(SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
+int ossl_dtls_listener_has_pending_input(SSL *s);
 
 /* DTLS Listener internal cookie callbacks */
 int ossl_dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,

@@ -1441,6 +1441,7 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     DTLS_LISTENER *dl = arg;
     SSL *conn_ssl = NULL;
     SSL_CONNECTION *sc = NULL;
+    int pending = 0;
 
     ossl_crypto_mutex_lock(dl->mutex);
 
@@ -1449,8 +1450,10 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
         conn_ssl = ossl_dgram_conn_lookup_find(dl->established_conns, urxe);
 
     /* Check pending connections */
-    if (conn_ssl == NULL)
+    if (conn_ssl == NULL) {
         conn_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
+        pending = 1;
+    }
 
     /* Create new pending connection if needed */
     if (conn_ssl == NULL) {
@@ -1533,6 +1536,13 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 
     /* Inject packet into connection's URXE queue */
     ossl_dtls_rx_inject_urxe(sc->listener_rx, urxe);
+
+    /*
+     * A connection being driven is rechecked by its driver in phase 3 of
+     * dtls_listener_drive_pass(). Anything else needs another pass.
+     */
+    if (pending && !sc->listener_being_driven)
+        dl->pending_input = 1;
 
     /* Signal notifier if needed */
     dtls_listener_signal_notifier(dl);
@@ -2207,6 +2217,16 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
         }
     }
 
+    if (sc->listener_idle && !dtls1_is_timer_expired(sc)) {
+        int empty;
+
+        ossl_crypto_mutex_lock(sc->listener_rx->mutex);
+        empty = ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending);
+        ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
+        if (empty)
+            return;
+    }
+
     /*
      * Up-ref and add to list first, then mark as being driven.
      * The up-ref ensures the connection stays valid while we drive it
@@ -2257,6 +2277,8 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     sc->listener_force_nonblocking = 1;
     ret = SSL_accept(ssl);
     sc->listener_force_nonblocking = 0;
+    ssl_err = SSL_get_error(ssl, ret);
+    sc->listener_idle = ssl_err == SSL_ERROR_WANT_READ;
 
     /*
      * Always clear the stateless flag after SSL_accept() completes.
@@ -2275,9 +2297,6 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     if (dtls_listener_conn_needs_retry(ssl))
         return;
 
-    /* Check SSL error */
-    ssl_err = SSL_get_error(ssl, ret);
-
     if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE) {
         /* Handshake in progress, needs more data - keep pending */
         return;
@@ -2291,7 +2310,7 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
 }
 
 /*
- * dtls_listener_drive_pending - drive handshakes for all pending connections.
+ * dtls_listener_drive_pass - drive handshakes for all pending connections.
  *
  * Uses a three-phase approach to minimize lock contention:
  *   Phase 1: LOCK - collect connections to drive, mark as being_driven, up-ref
@@ -2301,12 +2320,15 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
  * This approach allows SSL_accept() to call demux_pump() without deadlock,
  * since the mutex is not held during phase 2.
  *
+ * *again is set if a pending connection may have input left undriven.
+ *
  * Returns:
  *   1   At least one connection was moved to incoming_connections
  *   0   No connections completed (all still pending or failed)
  *  -1   Fatal error
  */
-static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
+static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
+    int *again)
 {
     DRIVE_PENDING_CTX ctx;
     SSL *ssl;
@@ -2333,6 +2355,7 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
      * and up-ref them so they stay valid after we release the mutex.
      */
     ossl_crypto_mutex_lock(dl->mutex);
+    dl->pending_input = 0;
     ossl_dgram_conn_lookup_foreach(dl->pending_conns, collect_pending_cb, &ctx);
     ossl_crypto_mutex_unlock(dl->mutex);
 
@@ -2361,8 +2384,15 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         ssl = sk_SSL_value(ctx.to_drive, i);
         sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
-        if (sc != NULL)
+        if (sc != NULL) {
             sc->listener_being_driven = 0;
+            if (sc->listener_idle && sc->listener_rx != NULL) {
+                ossl_crypto_mutex_lock(sc->listener_rx->mutex);
+                if (!ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
+                    dl->pending_input = 1;
+                ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
+            }
+        }
 
         SSL_free(ssl); /* Release reference from phase 1 */
     }
@@ -2418,12 +2448,39 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         dtls_listener_connection_free(ssl);
     }
 
+    *again = dl->pending_input;
+    /* Out of passes: make sure a blocked waiter ticks again. */
+    if (*again && last_pass)
+        dtls_listener_signal_notifier(dl);
+
     ossl_crypto_mutex_unlock(dl->mutex);
 
     sk_SSL_free(ctx.to_drive);
     sk_SSL_free(ctx.ready_conns);
     sk_SSL_free(ctx.failed_conns);
 
+    return result;
+}
+
+/*
+ * Driving a connection pumps the demux, which can queue input for a pending
+ * connection that the pass did not collect or has already driven. Pass again
+ * while that happens, up to a bound.
+ */
+static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
+{
+    int pass, ret, again = 0, result = 0;
+
+    for (pass = 0; pass < DTLS_LISTENER_MAX_DRIVE_PASSES; pass++) {
+        ret = dtls_listener_drive_pass(dl,
+            pass == DTLS_LISTENER_MAX_DRIVE_PASSES - 1, &again);
+        if (ret < 0)
+            return -1;
+        if (ret > 0)
+            result = 1;
+        if (!again)
+            break;
+    }
     return result;
 }
 
@@ -2468,6 +2525,26 @@ int ossl_dtls_tick(DTLS_LISTENER *dl)
      * to allow handshakes to progress even when no new data is arriving
      */
     return dtls_listener_drive_pending(dl);
+}
+
+/*
+ * Does a pending connection have input which the last tick left undriven?
+ * A waiter must then tick again rather than sleep. Not on a fatal listener:
+ * its ticks fail before driving, so pending_input may never be cleared.
+ */
+int ossl_dtls_listener_has_pending_input(SSL *s)
+{
+    DTLS_LISTENER *dl;
+    int ret;
+
+    if (!IS_DTLS_LISTENER(s))
+        return 0;
+
+    dl = (DTLS_LISTENER *)s;
+    ossl_crypto_mutex_lock(dl->mutex);
+    ret = dl->pending_input && !dl->fatal;
+    ossl_crypto_mutex_unlock(dl->mutex);
+    return ret;
 }
 
 SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
