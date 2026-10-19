@@ -2335,6 +2335,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         } else {
             s->dtls13_process_hello = 1;
+            /* Anything still buffered arrived in epoch 0. */
+            if (SSL_CONNECTION_IS_DTLS13(s))
+                dtls1_clear_received_buffer(s);
         }
     }
 

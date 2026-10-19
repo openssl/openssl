@@ -903,19 +903,22 @@ int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     if (item != NULL && frag_len != msg_hdr->msg_len)
         item = NULL;
 
-    /*
-     * Discard the message if sequence number was already there, is too far
-     * in the future, already in the queue, if we received a FINISHED
-     * before the SERVER_HELLO (which then must be a stale retransmit), or
-     * if it only authenticated via a retained previous epoch: such a
-     * message must never be buffered for future reassembly and eventually
-     * processed as new content, no matter what sequence number it claims.
+    /*-
+     * Discard the message if:
+     * - its sequence number was already seen
+     * - it is too far in the future
+     * - it is already in the queue
+     * - it is a FINISHED before the SERVER_HELLO (a stale retransmit)
+     * - it only authenticated via a retained previous epoch
+     * - it is a DTLS 1.3 message in epoch 0 or 1 after the ServerHello
      */
     if (msg_hdr->seq <= s->d1->handshake_read_seq
         || msg_hdr->seq > s->d1->handshake_read_seq + 10
         || item != NULL
         || (s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED)
-        || dtls_record_from_retained_epoch(s)) {
+        || dtls_record_from_retained_epoch(s)
+        || (SSL_CONNECTION_IS_DTLS13(s) && s->dtls13_process_hello
+            && s->s3.tmp.record_epoch < 2)) {
         unsigned char devnull[256];
 
         while (frag_len) {
@@ -1188,19 +1191,19 @@ redo:
         goto f_err;
     }
 
-    /*
-     * if this is a future (or stale) message it gets buffered
-     * (or dropped)--no further processing at this time
+    /*-
+     * Hand the message to dtls1_process_out_of_seq_message(), which buffers
+     * or drops it, if:
+     * - its sequence number is not the next expected one
+     * - it only authenticated via a retained previous epoch
+     * - it is a DTLS 1.3 message in epoch 0 or 1 after the ServerHello
      * While listening, we accept seq 1 (ClientHello with cookie)
-     * although we're still expecting seq 0 (ClientHello)
-     *
-     * A message that only authenticated via a retained previous epoch must
-     * always be routed to dtls1_process_out_of_seq_message(), even when its
-     * claimed sequence number happens to match the next expected one: that
-     * match does not mean this content is actually new.
+     * although we're still expecting seq 0 (ClientHello).
      */
     if (msg_hdr.seq != s->d1->handshake_read_seq
-        || dtls_record_from_retained_epoch(s)) {
+        || dtls_record_from_retained_epoch(s)
+        || (SSL_CONNECTION_IS_DTLS13(s) && s->dtls13_process_hello
+            && s->s3.tmp.record_epoch < 2)) {
         if (!s->server
             || msg_hdr.seq != 0
             || s->d1->handshake_read_seq != 1
