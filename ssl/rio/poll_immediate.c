@@ -233,6 +233,15 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
     }
 
     /*
+     * Input already taken off the socket for a pending connection is not
+     * signalled by the socket. Tick again instead of sleeping.
+     */
+    if (ossl_dtls_listener_has_pending_input(ssl)) {
+        *abort_blocking = 1;
+        return 1;
+    }
+
+    /*
      * Watch the socket for readability whatever was asked for. Every event a
      * listener reports is ultimately driven by a datagram arriving, both an
      * incoming connection and data pending on the listener itself, so there is
@@ -268,7 +277,7 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
                     &revents))
                 return 0;
 
-            if (revents != 0) {
+            if (revents != 0 || ossl_dtls_listener_has_pending_input(ssl)) {
                 *abort_blocking = 1;
                 return 1;
             }
@@ -310,8 +319,14 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
             /*
              * Now check the URXE buffer. If data has been demuxed into
              * this connection's receive queue, abort blocking immediately -
-             * there is no need to wait on the socket FD.
+             * there is no need to wait on the socket FD. Likewise if the
+             * tick left input undriven on a pending connection: the socket
+             * will not signal it, so tick again instead of sleeping.
              */
+            if (ossl_dtls_listener_has_pending_input(sc->d1->listener)) {
+                *abort_blocking = 1;
+                return 1;
+            }
             if (sc->d1->rx != NULL) {
                 ossl_crypto_mutex_lock(sc->d1->rx->mutex);
                 has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
@@ -343,17 +358,19 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
                      * Only after the above call returns is it guaranteed that
                      * any readiness events will cause the notifier to become
                      * readable. Therefore, it is possible data was demuxed to
-                     * our URXE queue after our initial check above but before
-                     * we entered the blocking section. Re-check now.
+                     * our URXE queue, or input left on a pending connection,
+                     * after our initial check above but before we entered
+                     * the blocking section. Re-check now.
                      */
-                    if (sc->d1->rx != NULL) {
+                    has_pending = ossl_dtls_listener_has_pending_input(sc->d1->listener);
+                    if (!has_pending && sc->d1->rx != NULL) {
                         ossl_crypto_mutex_lock(sc->d1->rx->mutex);
                         has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
                         ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
-                        if (has_pending) {
-                            *abort_blocking = 1;
-                            return 1;
-                        }
+                    }
+                    if (has_pending) {
+                        *abort_blocking = 1;
+                        return 1;
                     }
                 }
             }
