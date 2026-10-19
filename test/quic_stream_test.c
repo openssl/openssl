@@ -2877,8 +2877,8 @@ static CRYPTO_free_fn free_save;
 #endif
 
 /*
- * Increased alignment needed, because memory is allocated at addresses
- * directly following a TDC_ALLOC_HDR.
+ * Increased alignment is needed, as tdc_malloc() custom allocator
+ * returns memory addresses directly following a TDC_ALLOC_HDR.
  */
 typedef struct ALIGN_ALLOC_HDR tdc_alloc_hdr_st {
     size_t size;
@@ -3167,8 +3167,8 @@ err:
 }
 
 /*
- * Increased alignment needed, because memory is allocated at addresses
- * directly following a THO_ALLOC_HDR.
+ * Increased alignment is needed, as tho_malloc() custom allocator
+ * returns memory addresses directly following a THO_ALLOC_HDR.
  */
 typedef struct ALIGN_ALLOC_HDR tho_alloc_hdr_st {
     size_t size;
