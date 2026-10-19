@@ -1105,6 +1105,107 @@ end:
 }
 
 /*
+ * Unauthenticated epoch-0 application data received before ClientHello must
+ * not survive the handshake and be delivered by SSL_read(). At this point
+ * the connection's maximum version is DTLS 1.3, but its read record layer
+ * still uses DTLS_ANY_VERSION with no cryptographic protection.
+ */
+static int test_dtls13_listener_epoch0_app_data(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *server = NULL, *client = NULL;
+    BIO_ADDR *client_addr = NULL;
+    const unsigned char injected[] = {
+        SSL3_RT_APPLICATION_DATA,
+        0xfe, 0xfd, /* legacy record version: DTLS 1.2 */
+        0, 0, /* epoch 0: no authentication */
+        0, 0, 0, 0, 0, 63, /* leave ClientHello sequence 0 in the replay window */
+        0, 4, /* payload length */
+        'E', 'V', 'I', 'L'
+    };
+    const unsigned char msg[] = { 'G', 'O', 'O', 'D' };
+    const unsigned char reply[] = { 'S', 'A', 'F', 'E' };
+    unsigned char buf[64];
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &client, &client_addr))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0)))
+        goto end;
+
+    SSL_set_connect_state(client);
+    /* Bypass SSL_write(): these bytes have never been authenticated. */
+    if (!TEST_int_eq(BIO_write(SSL_get_wbio(client), injected,
+                         sizeof(injected)),
+            sizeof(injected)))
+        goto end;
+
+    /*
+     * NO_VALIDATE promotes the connection after driving the first datagram,
+     * even if it was not a ClientHello. The datagram pair preserves the source
+     * address, so the subsequent real client traffic reaches this same SSL.
+     */
+    if (!TEST_ptr(server = SSL_accept_connection(listener,
+                      SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_ptr_null(SSL_get_rbio(server)))
+        goto end;
+
+    /* No ClientHello has been sent yet; this must be an ordinary retry. */
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(server), TLS_ST_BEFORE))
+        goto end;
+
+    /*
+     * Do not use create_ssl_connection(): its intermediate SSL_read() calls
+     * could consume the injected bytes and fail before the handshake finishes.
+     * Disabling those reads leaves the delivery assertion to this test.
+     */
+    if (!TEST_true(create_bare_ssl_connection(server, client,
+            SSL_ERROR_NONE, 0, 0))
+        || !TEST_true(SSL_is_init_finished(server))
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_int_eq(SSL_version(server), DTLS1_3_VERSION)
+        || !TEST_int_eq(SSL_version(client), DTLS1_3_VERSION))
+        goto end;
+
+    /* Verify authenticated traffic in the other direction before the oracle. */
+    if (!TEST_int_eq(SSL_write(server, reply, sizeof(reply)), sizeof(reply))
+        || !TEST_int_eq(SSL_read(client, buf, sizeof(buf)), sizeof(reply))
+        || !TEST_mem_eq(buf, sizeof(reply), reply, sizeof(reply)))
+        goto end;
+
+    /*
+     * Both payloads have four bytes: accepting the injection fails the content
+     * comparison (EVIL instead of GOOD), after a successful real handshake.
+     */
+    if (!TEST_int_eq(SSL_write(client, msg, sizeof(msg)), sizeof(msg))
+        || !TEST_int_eq(SSL_read(server, buf, sizeof(buf)), sizeof(msg))
+        || !TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
+        goto end;
+
+    /* No injected bytes may remain queued behind the authenticated record. */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * A connection accepted by a DTLS listener has no read BIO of its own --
  * dtls_listener_create_conn_ssl() (ssl/d1_lib.c) calls SSL_set0_rbio(ssl,
  * NULL), since such connections receive through the listener's shared demux
@@ -6711,6 +6812,7 @@ int setup_tests(void)
     /* DTLS 1.3 connection tests */
     ADD_TEST(test_dtls13_connection_with_hrr);
     ADD_TEST(test_dtls13_connection_without_hrr);
+    ADD_TEST(test_dtls13_listener_epoch0_app_data);
     ADD_TEST(test_dtls13_listener_keyupdate_app_data_classification);
 
     /* Mixed version tests */
