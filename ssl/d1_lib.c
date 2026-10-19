@@ -2128,7 +2128,8 @@ static int dtls_listener_conn_needs_retry(SSL *ssl)
      * For DTLS 1.2: Check if we're in a state that indicates HVR was sent.
      * The state machine will be waiting for the next ClientHello.
      */
-    if (sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST)
+    if (sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST
+        && !ossl_statem_in_error(sc))
         return 1;
 
     return 0;
