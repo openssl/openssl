@@ -284,6 +284,8 @@ start:
                     SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
+                /* This must only ever happen once per handshake */
+                sc->dtls13_process_hello = 0;
 
                 /*
                  * Read the Buffered epoch

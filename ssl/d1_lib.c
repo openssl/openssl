@@ -134,6 +134,20 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     s->d1->has_change_cipher_spec = 0;
 }
 
+/*
+ * Called once the DTLS 1.3 hellos are done. Our handshake read keys are only
+ * installed when the peer's first epoch 2 record arrives (dtls1_read_bytes()),
+ * so until then nothing but a plaintext alert may be read. Anything already
+ * reassembled or buffered arrived unprotected, so discard it.
+ */
+void dtls13_hellos_done(SSL_CONNECTION *s)
+{
+    s->dtls13_process_hello = 1;
+    dtls1_clear_received_buffer(s);
+    if (s->rlayer.rrlmethod->set_plain_alerts != NULL)
+        s->rlayer.rrlmethod->set_plain_alerts(s->rlayer.rrl, 1);
+}
+
 void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list)
 {
     DTLS1_RECORD_NUMBER *p_elem;

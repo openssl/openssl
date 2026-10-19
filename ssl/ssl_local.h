@@ -3120,6 +3120,7 @@ void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
     int record_type);
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
+void dtls13_hellos_done(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs);
 void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch);
 __owur OSSL_TIME dtls1_default_timeout(void);
