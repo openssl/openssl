@@ -82,6 +82,19 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
     }
 
     /*
+     * An ACK may arrive before or between messages of the client's flight.
+     * Preserve the interrupted read state so CertificateVerify and Finished
+     * are still required, even if the ACK covers our entire flight.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(s) && mt == DTLS13_MT_ACK
+        && s->hello_retry_request != SSL_HRR_PENDING
+        && dtls13_server_waiting_for_client_flight(st->hand_state)) {
+        st->pre_ack_hand_state = st->hand_state;
+        st->hand_state = TLS_ST_SR_ACK;
+        return 1;
+    }
+
+    /*
      * Note: There is no case for TLS_ST_BEFORE because at that stage we have
      * not negotiated TLSv1.3 yet, so that case is handled by
      * ossl_statem_server_read_transition()
