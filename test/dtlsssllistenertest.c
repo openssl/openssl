@@ -5583,6 +5583,156 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
     return 0;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
+static CRYPTO_malloc_fn ssl_clear_malloc;
+static CRYPTO_realloc_fn ssl_clear_realloc;
+static int ssl_clear_oom_active;
+
+/*
+ * Preserve MFAIL's first-failure selection, then keep normal allocations
+ * failing until SSL_clear() returns. Error/debug allocations use a NULL file
+ * and remain available for reporting the original failure.
+ */
+static void *ssl_clear_oom_malloc(size_t num, const char *file, int line)
+{
+    if (ssl_clear_oom_active && num > 0 && file != NULL
+        && mfail_was_triggered())
+        return NULL;
+    return ssl_clear_malloc(num, file, line);
+}
+
+static void *ssl_clear_oom_realloc(void *ptr, size_t num,
+    const char *file, int line)
+{
+    if (ssl_clear_oom_active && num > 0 && file != NULL
+        && mfail_was_triggered())
+        return NULL;
+    return ssl_clear_realloc(ptr, num, file, line);
+}
+
+/*
+ * A failed replacement of the DTLS state must not leave a listener entry.
+ * idx == 0 injects a single failure; idx == 1 keeps allocations failing
+ * through reset cleanup, including any allocation needed to unregister.
+ */
+static int test_dtls_listener_ssl_clear_mfail(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl = NULL;
+    DGRAM_URXE probe = { 0 };
+    CRYPTO_free_fn saved_free = NULL;
+    int have_peer = 0, wrapped = 0, ret;
+    /* Invariant failures must fail even when an allocation was injected. */
+    int testresult = -1;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr))
+        || !drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr(sc->d1)
+        || !TEST_ptr_eq(sc->d1->listener, listener)
+        || !TEST_ptr(sc->d1->rx)
+        || !TEST_ptr_eq(sc->listener_rx, sc->d1->rx)
+        || !TEST_ptr_ne(serverssl->method, serverssl->defltmeth))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    probe.peer = sc->d1->peer_addr;
+    have_peer = 1;
+    if (!TEST_int_eq(BIO_ADDR_family(&probe.peer), AF_INET)
+        || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl, &probe),
+            serverssl)
+        || !TEST_size_t_eq(
+            ossl_dgram_conn_lookup_num_items(dl->established_conns), 1))
+        goto end;
+
+    /* Wrap only the installed MFAIL allocator, never the default allocator. */
+    if (idx == 1 && mfail_is_installed()) {
+        CRYPTO_get_mem_functions(&ssl_clear_malloc, &ssl_clear_realloc,
+            &saved_free);
+        if (!TEST_true(CRYPTO_set_mem_functions(ssl_clear_oom_malloc,
+                ssl_clear_oom_realloc, saved_free)))
+            goto end;
+        wrapped = 1;
+    }
+
+    /* Only the reset is subject to allocation-failure injection. */
+    ssl_clear_oom_active = wrapped;
+    MFAIL_start();
+    ret = SSL_clear(serverssl);
+    MFAIL_end();
+    ssl_clear_oom_active = 0;
+    if (wrapped) {
+        if (!TEST_true(CRYPTO_set_mem_functions(ssl_clear_malloc,
+                ssl_clear_realloc, saved_free)))
+            goto end;
+        wrapped = 0;
+    }
+    ERR_clear_error();
+
+    if (!TEST_ptr_eq(serverssl->method, serverssl->defltmeth)
+        || (ret == 0 && !TEST_true(mfail_was_triggered())))
+        goto end;
+
+    if (ret == 0 && (sc->d1 == NULL || sc->d1->listener == NULL)) {
+        /*
+         * ssl_init failed before restoring the listener association. Check
+         * the saved peer while the SSL is still alive: freeing it first would
+         * turn a stale registration into a dangling pointer.
+         */
+        if (!TEST_ptr_null(sc->listener_rx)
+            || !TEST_size_t_eq(
+                ossl_dgram_conn_lookup_num_items(dl->established_conns), 0)
+            || !TEST_ptr_null(
+                ossl_dtls_listener_find_established_conn(dl, &probe)))
+            goto end;
+    } else {
+        /*
+         * A successful reset, or a failure after ssl_init restored the
+         * association, must preserve the connection's registration.
+         */
+        if (!TEST_ptr(sc->d1)
+            || !TEST_ptr_eq(sc->d1->listener, listener)
+            || !TEST_ptr(sc->d1->rx)
+            || !TEST_ptr_eq(sc->listener_rx, sc->d1->rx)
+            || !TEST_size_t_eq(
+                ossl_dgram_conn_lookup_num_items(dl->established_conns), 1)
+            || !TEST_ptr_eq(
+                ossl_dtls_listener_find_established_conn(dl, &probe), serverssl))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    ssl_clear_oom_active = 0;
+    MFAIL_end();
+    if (wrapped
+        && !TEST_true(CRYPTO_set_mem_functions(ssl_clear_malloc,
+            ssl_clear_realloc, saved_free)))
+        testresult = -1;
+    /* Remove any stale entry before freeing the object on a failing run. */
+    if (have_peer)
+        ossl_dtls_listener_unregister_established_conn(listener, &probe.peer);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    ERR_clear_error();
+    return testresult;
+}
+#endif
+
 /*
  * Test the blocking mode of a DTLS listener and of the connections it creates.
  *
@@ -6879,6 +7029,9 @@ int setup_tests(void)
     ADD_TEST(test_ssl_ownership_set_rbio_incoming_leak);
     ADD_TEST(test_ssl_ownership_multiple_pending_leak);
     ADD_TEST(test_ssl_ownership_pending_timeout_cleanup);
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_dtls_listener_ssl_clear_mfail, 2);
+#endif
 
     /* Max number of pending connections tests */
     ADD_TEST(test_dtls_listener_max_pending_conns_api);
