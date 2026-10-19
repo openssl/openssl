@@ -511,6 +511,32 @@ int ossl_x509_mtc_leaf_checks(X509_STORE_CTX *ctx);
  * @returns the stack of trusted MTC CAs, or NULL if none are configured.
  */
 STACK_OF(OSSL_MTC_CA) *ossl_x509_store_get0_mtc_cas(const X509_STORE *store);
+/**
+ * @brief Report whether the subjects of a store's certificates name any trust
+ *        anchor ID.
+ *
+ * Each certificate added to the store whose subject is the single attribute
+ * id-rdna-trustAnchorID contributes its ID, once.  The store is read under
+ * its read lock.
+ *
+ * @param store the certificate store, which may be NULL
+ * @returns 1 if the store holds at least one such ID, 0 otherwise.
+ */
+int ossl_x509_store_has_trust_anchor_ids(X509_STORE *store);
+struct wpacket_st;
+/**
+ * @brief Append the trust anchor IDs named by the subjects of a store's
+ *        certificates to a packet.
+ *
+ * The IDs are written in the wire format of the TLS trust_anchors extension,
+ * each with a one-byte length prefix, copied under the store's read lock.
+ *
+ * @param store the certificate store, which may be NULL
+ * @param pkt the packet to append to
+ * @returns 1 on success, 0 on error.
+ */
+int ossl_x509_store_put_trust_anchor_ids(X509_STORE *store,
+    struct wpacket_st *pkt);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
 /**
  * @brief Whether a CRL issued by x's issuer covers x: the CRL's issuing
