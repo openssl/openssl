@@ -91,6 +91,19 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
         break;
 
     case TLS_ST_EARLY_DATA:
+        /*
+         * DTLS 1.3 only. Having sent our first flight we are waiting for the
+         * client's. Before that arrives the client may ACK all or part of
+         * ours (rfc9147 section 7.1), e.g. when it only received some of it.
+         * Accept it and resume this same read afterward, restored by the
+         * TLS_ST_SR_ACK handling at the top of this function.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && mt == DTLS13_MT_ACK
+            && s->hello_retry_request != SSL_HRR_PENDING) {
+            st->pre_ack_hand_state = st->hand_state;
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
         if (s->hello_retry_request == SSL_HRR_PENDING) {
             if (mt == SSL3_MT_CLIENT_HELLO) {
                 st->hand_state = TLS_ST_SR_CLNT_HELLO;

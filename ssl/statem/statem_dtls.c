@@ -1488,6 +1488,25 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
     if (dtls_any_sent_messages_are_missing_acknowledge(s))
         return MSG_PROCESS_CONTINUE_READING;
 
+    /*
+     * This ACK interrupted a server still waiting for the client's first
+     * flight. That flight isn't finished just because this ACK is: the
+     * client may ACK all of ours before it has sent its Certificate or
+     * Finished. Finishing the read sub-state-machine here would let
+     * write_transition() move straight to TLS_ST_OK and skip them.
+     */
+    if (s->server && s->statem.pre_ack_hand_state == TLS_ST_EARLY_DATA) {
+        /*
+         * We already know above that nothing is left needing
+         * retransmission, so this only resets timeout state and clears the
+         * (already-empty) sent buffer -- it leaves the read state alone, so
+         * the client's flight, including Finished, is still processed on
+         * return.
+         */
+        dtls1_stop_timer(s);
+        return MSG_PROCESS_CONTINUE_READING;
+    }
+
     return MSG_PROCESS_FINISHED_READING;
 }
 
