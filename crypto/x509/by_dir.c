@@ -241,6 +241,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
     stmp.type = type;
     if (type == X509_LU_X509) {
+        memset(&data.st_x509, 0, sizeof(data.st_x509));
         data.st_x509.cert_info = &st_cinf;
         st_cinf.subject = (X509_NAME *)name;
         stmp.data.x509 = &data.st_x509;

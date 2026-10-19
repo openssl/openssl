@@ -257,6 +257,8 @@ static int test_x509_cmp(void)
         goto err;
 
     /* A certificate with DER equals the same certificate without. */
+    if (!TEST_true(ossl_x509_decode(z)))
+        goto err;
     ossl_x509_set0_der(z, NULL);
     if (!TEST_int_eq(X509_cmp(y, z), 0)
         || !TEST_int_eq(X509_cmp(z, y), 0))
@@ -336,7 +338,8 @@ static int test_i2d_x509(void)
         || !TEST_int_gt(der_len = i2d_X509(x, &der), 0))
         goto err;
     q = der;
-    if (!TEST_ptr(y = d2i_X509(NULL, &q, der_len)))
+    if (!TEST_ptr(y = d2i_X509(NULL, &q, der_len))
+        || !TEST_true(ossl_x509_decode(y)))
         goto err;
 
     /* A certificate with DER encodes as its DER, not from its fields. */
@@ -363,8 +366,76 @@ err:
     return ret;
 }
 
+static int test_lazy_decode(void)
+{
+    EVP_PKEY *pkey = NULL;
+    X509 *x = NULL, *y = NULL, *z = NULL, *w = NULL;
+    unsigned char *der = NULL, *out = NULL;
+    const unsigned char *q;
+    int der_len, ret = 0;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "EC", "P-256"))
+        || !TEST_ptr(x = make_cert(pkey))
+        || !TEST_int_gt(der_len = i2d_X509(x, &der), 0))
+        goto err;
+
+    /* A decoded certificate has no cert_info until a reader needs it. */
+    q = der;
+    if (!TEST_ptr(y = d2i_X509(NULL, &q, der_len))
+        || !TEST_ptr_null(y->cert_info)
+        || !TEST_ptr(X509_get0_pubkey(y))
+        || !TEST_int_eq(X509_cmp(x, y), 0)
+        || !TEST_int_eq(i2d_X509(y, &out), der_len)
+        || !TEST_mem_eq(out, der_len, der, der_len)
+        || !TEST_ptr_null(y->cert_info))
+        goto err;
+
+    /*
+     * Decoding into an existing certificate reuses it undecoded and keeps
+     * its property query.
+     */
+    q = der;
+    if (!TEST_ptr(w = X509_new_ex(NULL, "provider=default"))
+        || !TEST_ptr_eq(d2i_X509(&w, &q, der_len), w)
+        || !TEST_true(w->undecoded)
+        || !TEST_str_eq(w->propq, "provider=default")
+        || !TEST_ptr(X509_get_subject_name(w))
+        || !TEST_false(w->undecoded)
+        || !TEST_int_eq(X509_cmp(w, x), 0))
+        goto err;
+
+    /* X509_dup shares its DER, view and key without decoding. */
+    if (!TEST_ptr(z = X509_dup(y))
+        || !TEST_ptr_null(z->cert_info)
+        || !TEST_ptr_eq(z->der, y->der)
+        || !TEST_ptr_eq(z->pkey, y->pkey))
+        goto err;
+
+    /* A reader decodes it. */
+    if (!TEST_ptr(X509_get_subject_name(y))
+        || !TEST_ptr(y->cert_info)
+        || !TEST_int_eq(X509_NAME_cmp(X509_get_subject_name(y),
+                            X509_get_subject_name(x)),
+            0)
+        || !TEST_int_eq(X509_get_signature_nid(z), X509_get_signature_nid(x))
+        || !TEST_ptr(z->cert_info))
+        goto err;
+    ret = 1;
+
+err:
+    EVP_PKEY_free(pkey);
+    X509_free(x);
+    X509_free(y);
+    X509_free(z);
+    X509_free(w);
+    OPENSSL_free(der);
+    OPENSSL_free(out);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_lazy_decode);
     ADD_TEST(test_i2d_x509);
     ADD_TEST(test_x509_buffer);
     ADD_TEST(test_x509_view);

@@ -1357,6 +1357,7 @@ static int test_sign_caches_encoding(void)
         || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
         || !TEST_false(cert->cert_info->enc.modified)
         || !TEST_ptr(cert_copy = X509_dup(cert))
+        || !TEST_true(ossl_x509_decode(cert_copy))
         || !TEST_false(cert_copy->cert_info->enc.modified)
         || !TEST_mem_eq(cert->cert_info->enc.enc,
             (size_t)cert->cert_info->enc.len,

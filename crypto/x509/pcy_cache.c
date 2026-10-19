@@ -190,7 +190,7 @@ const X509_POLICY_CACHE *ossl_policy_cache_set(X509 *x)
 {
 
     if (x->policy_cache == NULL) {
-        if (!CRYPTO_THREAD_write_lock(x->lock))
+        if (!ossl_x509_decode(x) || !CRYPTO_THREAD_write_lock(x->lock))
             return NULL;
         policy_cache_new(x);
         CRYPTO_THREAD_unlock(x->lock);

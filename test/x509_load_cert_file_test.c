@@ -182,7 +182,7 @@ static int test_x509_store_add_mfail(void)
     int ret = 0;
 
     cert = X509_from_strings(cn_cert1);
-    if (!TEST_ptr(cert))
+    if (!TEST_ptr(cert) || !TEST_ptr(X509_get_subject_name(cert)))
         goto err;
     store = X509_STORE_new();
     if (!TEST_ptr(store))

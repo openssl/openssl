@@ -240,8 +240,11 @@ static int test_x509_issuer_name_hash_mfail(void)
     X509 *x509;
     int ret = -1;
 
-    if (!TEST_ptr(x509 = load_arg_cert()))
+    if (!TEST_ptr(x509 = load_arg_cert())
+        || !TEST_ptr(X509_get_issuer_name(x509))) {
+        X509_free(x509);
         return -1;
+    }
 
     MFAIL_start();
     ret = X509_issuer_name_hash(x509) != 0 ? 1 : 0;
