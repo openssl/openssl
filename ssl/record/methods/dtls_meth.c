@@ -464,6 +464,20 @@ int dtls_prev_epoch_allows_type(const OSSL_RECORD_LAYER *crypto_rl, int type)
     return !(crypto_rl->epoch == 2 && type == SSL3_RT_APPLICATION_DATA);
 }
 
+/*
+ * In DTLS 1.3 only the hellos are sent unprotected. Once they are done the
+ * read layer still stays in epoch 0 until the peer's first epoch 2 record
+ * turns up. libssl marks that point by allowing plaintext alerts, and from
+ * then on an alert is the only thing that may still arrive unprotected.
+ */
+static int dtls13_plaintext_allows_type(const OSSL_RECORD_LAYER *rl, int type)
+{
+    return rl->version != DTLS1_3_VERSION
+        || rl->epoch != 0
+        || !rl->allow_plain_alerts
+        || type == SSL3_RT_ALERT;
+}
+
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -902,6 +916,12 @@ again:
     /* rr->type is only decoded after post_process_record() above. */
     if (crypto_rl != rl && !dtls_prev_epoch_allows_type(crypto_rl, rr->type)) {
         rr->length = 0;
+        goto again;
+    }
+
+    if (!dtls13_plaintext_allows_type(rl, rr->type)) {
+        rr->length = 0;
+        rl->packet_length = 0;
         goto again;
     }
 
