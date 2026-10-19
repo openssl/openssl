@@ -181,6 +181,8 @@ struct x509_store_st {
     CRYPTO_RWLOCK *lock;
     STACK_OF(OSSL_MTC_CA) *mtc_cas;
     STACK_OF(OSSL_MTC_COSIGNER) *mtc_cosigners; /* trusted cosigners other than CA cosigners, sorted by ID */
+    uint8_t *trust_anchor_ids; /* trust anchor ids from certificate subjects */
+    size_t trust_anchor_ids_len; /**< bytes at trust_anchor_ids */
 };
 
 typedef struct lookup_dir_hashes_st BY_DIR_HASH;

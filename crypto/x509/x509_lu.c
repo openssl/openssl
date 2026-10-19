@@ -279,6 +279,7 @@ void X509_STORE_free(X509_STORE *xs)
     X509_VERIFY_PARAM_free(xs->param);
     sk_OSSL_MTC_CA_free(xs->mtc_cas); /* borrowed CAs: free the container */
     sk_OSSL_MTC_COSIGNER_free(xs->mtc_cosigners); /* borrowed likewise */
+    OPENSSL_free(xs->trust_anchor_ids);
     CRYPTO_THREAD_lock_free(xs->lock);
     CRYPTO_FREE_REF(&xs->references);
     ossl_ht_free(xs->objs_ht);
@@ -496,6 +497,64 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
 {
     return ossl_x509_store_ctx_get_by_subject(ctx, type, name, ret) > 0;
 }
+/* The universal tag of a RELATIVE-OID, the type of a trust anchor ID value. */
+#define X509_ASN1_RELATIVE_OID 13
+
+/**
+ * @brief Record the trust anchor ID a certificate's subject names, if any.
+ *
+ * A trust anchor decorated with its ID has a subject of one RDN, one attribute
+ * of type id-rdna-trustAnchorID whose value is a RELATIVE-OID holding the ID.
+ * The ID is appended to the store's trust_anchor_ids in the wire format of the
+ * TLS trust_anchors extension, unless already present.  IDs longer than the
+ * extension permits (section 4 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-06/) are
+ * not recorded.  Called with the store lock held.
+ *
+ * @param store the store, write-locked
+ * @param subject the certificate's subject name
+ * @returns 1 on success, including when there is nothing to record, 0 on
+ *          allocation failure
+ */
+static int x509_store_note_trust_anchor_id(X509_STORE *store,
+    const X509_NAME *subject)
+{
+    const X509_NAME_ENTRY *ne;
+    const ASN1_STRING *val;
+    const uint8_t *id;
+    size_t id_len, pos;
+    uint8_t *tmp;
+
+    if (X509_NAME_entry_count(subject) != 1)
+        return 1;
+    ne = X509_NAME_get_entry(subject, 0);
+    val = X509_NAME_ENTRY_get_data(ne);
+    if (OBJ_obj2nid(X509_NAME_ENTRY_get_object(ne)) != NID_id_rdna_trustAnchorID
+        || ASN1_STRING_type(val) != X509_ASN1_RELATIVE_OID)
+        return 1;
+    id = ASN1_STRING_get0_data(val);
+    id_len = (size_t)ASN1_STRING_get_length(val);
+    if (id_len < 1 || id_len > 32)
+        return 1;
+
+    for (pos = 0; pos < store->trust_anchor_ids_len;
+        pos += 1 + store->trust_anchor_ids[pos]) {
+        if (store->trust_anchor_ids[pos] == id_len
+            && memcmp(store->trust_anchor_ids + pos + 1, id, id_len) == 0)
+            return 1;
+    }
+
+    tmp = OPENSSL_realloc(store->trust_anchor_ids,
+        store->trust_anchor_ids_len + 1 + id_len);
+    if (tmp == NULL)
+        return 0;
+    tmp[store->trust_anchor_ids_len] = (uint8_t)id_len;
+    memcpy(tmp + store->trust_anchor_ids_len + 1, id, id_len);
+    store->trust_anchor_ids = tmp;
+    store->trust_anchor_ids_len += 1 + id_len;
+    return 1;
+}
+
 static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
 {
     const X509_NAME *xn;
@@ -540,6 +599,9 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
             ret = added != 0;
         }
     }
+    if (added != 0 && obj->type == X509_LU_X509
+        && !x509_store_note_trust_anchor_id(store, xn))
+        ret = 0;
     X509_STORE_unlock(store);
 
     if (added == 0) /* obj not pushed */

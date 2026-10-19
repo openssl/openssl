@@ -131,8 +131,8 @@ EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
     WPACKET *pkt)
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    const uint8_t *ids = NULL;
-    size_t ids_len = 0;
+    const uint8_t *ids = NULL, *store_ids;
+    size_t ids_len = 0, store_ids_len;
     X509_STORE *store;
     STACK_OF(OSSL_MTC_CA) *cas;
     int i, num, explicit_list = 0;
@@ -148,13 +148,14 @@ EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
      * this connection with SSL_set1_requested_trust_anchors(), else the list
      * configured on the SSL_CTX with SSL_CTX_set1_requested_trust_anchors(),
      * else the default list: the IDs of the Merkle Tree Certificate CAs on
-     * the verification store, followed by the IDs added on the SSL_CTX with
-     * SSL_CTX_add1_requested_trust_anchors() and then on this connection with
+     * the verification store, then the IDs the store's certificates name in
+     * their subjects, then the IDs added on the SSL_CTX with
+     * SSL_CTX_add1_requested_trust_anchors() and on this connection with
      * SSL_add1_requested_trust_anchors(), not deduplicated.  An explicitly
      * configured list is sent verbatim even when empty (signalling retry
      * support without naming a trust anchor); the default list is sent when
-     * the store has an MTC CA or either add function has been called, even if
-     * it is empty.
+     * the store contributes an ID or either add function has been called,
+     * even if it is empty.
      *
      * The store is chosen exactly as in
      * ssl_verify_cert_chain().  An MTC CA with landmark state advertises its
@@ -185,18 +186,20 @@ EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
     }
 
     /*
-     * Default: advertise the store's MTC CAs, then the added IDs.  Each MTC CA
-     * holds its advertisement precomputed (one landmark group ID per issuance
-     * log with landmark state, or its bare CA ID when none has any) as a run
-     * of u8-length-prefixed IDs, repacked whenever the CA is updated.  The
-     * added IDs are stored the same way.  All are appended verbatim.
+     * Default: advertise the store's MTC CAs, then the store's decorated
+     * certificates, then the added IDs.  Each MTC CA holds its advertisement
+     * precomputed (one landmark group ID per issuance log with landmark state,
+     * or its bare CA ID when none has any) as a run of u8-length-prefixed IDs,
+     * repacked whenever the CA is updated.  The store's certificate IDs and
+     * the added IDs are stored the same way.  All are appended verbatim.
      */
     store = s->cert->verify_store != NULL
         ? s->cert->verify_store
         : sctx->cert_store;
     cas = ossl_x509_store_get0_mtc_cas(store);
     num = sk_OSSL_MTC_CA_num(cas);
-    if (num <= 0 && !sctx->ext.added_trust_anchors_set
+    store_ids = ossl_x509_store_get0_trust_anchor_ids(store, &store_ids_len);
+    if (num <= 0 && store_ids_len == 0 && !sctx->ext.added_trust_anchors_set
         && !s->ext.added_trust_anchors_set)
         return EXT_RETURN_NOT_SENT;
 
@@ -215,7 +218,8 @@ EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
         }
     }
 
-    if (!WPACKET_memcpy(pkt, sctx->ext.added_trust_anchors,
+    if (!WPACKET_memcpy(pkt, store_ids, store_ids_len)
+        || !WPACKET_memcpy(pkt, sctx->ext.added_trust_anchors,
             sctx->ext.added_trust_anchors_len)
         || !WPACKET_memcpy(pkt, s->ext.added_trust_anchors,
             s->ext.added_trust_anchors_len)

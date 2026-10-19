@@ -44,20 +44,21 @@ connection and overrides the context's setting for that connection.
 
 If neither is called, the default list is advertised. It holds the identifiers
 of the Merkle Tree Certificate CAs the endpoint is configured to verify against
-(see L<X509_STORE_trust_mtc_ca(3)>), followed by any identifiers added with
-SSL_CTX_add1_requested_trust_anchors() and then
+(see L<X509_STORE_trust_mtc_ca(3)>), then the trust_anchor_id of each trust
+anchor in the endpoint's certificate store whose subject name carries one,
+then any identifiers added with SSL_CTX_add1_requested_trust_anchors() and
 SSL_add1_requested_trust_anchors(). Calling SSL_CTX_set1_requested_trust_anchors()
 or SSL_set1_requested_trust_anchors() replaces the whole default list,
-including the Merkle Tree Certificate CA identifiers, with the supplied list.
+including the identifiers from the store, with the supplied list.
 
 SSL_CTX_add1_requested_trust_anchors() adds identifiers to the default list of
 connections created from I<ctx>, and SSL_add1_requested_trust_anchors() adds
 identifiers for a single connection. They are for trust anchors whose
 identifiers are configured separately from the trust anchors themselves, such
-as conventional CAs. Each call appends to the identifiers added by earlier
-calls. Identifiers are not deduplicated. Once either function has been called,
-the extension is sent even if the list is empty, so passing an empty list
-signals support for the retry mechanism.
+as conventional CAs that do not name one. Each call appends to the identifiers
+added by earlier calls. Identifiers are not deduplicated. Once either function
+has been called, the extension is sent even if the list is empty, so passing an
+empty list signals support for the retry mechanism.
 
 These functions only control what is advertised to the peer; they do not affect
 certificate verification, which proceeds as usual against the configured trust

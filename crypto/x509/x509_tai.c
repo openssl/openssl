@@ -22,3 +22,14 @@ STACK_OF(OSSL_MTC_CA) *ossl_x509_store_get0_mtc_cas(const X509_STORE *store)
 {
     return store == NULL ? NULL : store->mtc_cas;
 }
+
+const uint8_t *ossl_x509_store_get0_trust_anchor_ids(const X509_STORE *store,
+    size_t *ids_len)
+{
+    if (store == NULL) {
+        *ids_len = 0;
+        return NULL;
+    }
+    *ids_len = store->trust_anchor_ids_len;
+    return store->trust_anchor_ids;
+}
