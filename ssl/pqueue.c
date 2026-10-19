@@ -62,6 +62,7 @@ pitem *pqueue_insert(pqueue *pq, pitem *item)
     pitem *curr, *next;
 
     if (pq->items == NULL) {
+        item->next = NULL;
         pq->items = item;
         return item;
     }
