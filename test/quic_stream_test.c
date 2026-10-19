@@ -3167,15 +3167,6 @@ err:
 }
 
 /*
- * Inspired by include/internal/common.h
- */
-#if defined(__GNUC__) || defined(__clang__)
-#define ALIGN_ALLOC_HDR __attribute((aligned(16)))
-#else
-#define ALIGN_ALLOC_HDR
-#endif
-
-/*
  * Increased alignment needed, because memory is allocated at addresses
  * directly following a THO_ALLOC_HDR.
  */
