@@ -1543,7 +1543,11 @@ int dtls1_read_failed(SSL_CONNECTION *s, int code)
     }
     /* done, no need to send a retransmit */
     if (!SSL_in_init(ssl)) {
-        BIO_set_flags(SSL_get_rbio(ssl), BIO_FLAGS_READ);
+        BIO *rbio = SSL_get_rbio(ssl);
+
+        /* Connections created by a DTLS listener have no rbio */
+        if (rbio != NULL)
+            BIO_set_flags(rbio, BIO_FLAGS_READ);
         return code;
     }
 

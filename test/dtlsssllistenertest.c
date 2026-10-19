@@ -6593,6 +6593,109 @@ static int test_dtls_listener_flood_then_handshake(void)
 }
 #endif /* !OPENSSL_NO_DTLS1_2 || !OPENSSL_NO_DTLS1_3 */
 
+#ifndef OPENSSL_NO_DTLS1_3
+/*
+ * Expire the connection's retransmission timer once the listener's demux has
+ * read from the network, i.e. after dtls1_read_bytes() has checked for a
+ * timeout but before the record layer reports that nothing arrived.
+ */
+static long expire_timer_on_recv_cb(BIO *b, int oper, const char *argp,
+    size_t len, int argi, long argl, int ret, size_t *processed)
+{
+    SSL_CONNECTION *sc = (SSL_CONNECTION *)BIO_get_callback_arg(b);
+
+    if (sc != NULL && oper == (BIO_CB_RECVMMSG | BIO_CB_RETURN)) {
+        sc->d1->next_timeout = ossl_ticks2time(1);
+        BIO_set_callback_arg(b, NULL);
+    }
+    return ret;
+}
+
+/*
+ * A DTLS 1.3 server keeps its retransmission timer running after the
+ * handshake until the client ACKs the NewSessionTickets. If that timer
+ * expires during an SSL_read() which finds no record, dtls1_read_failed()
+ * marks the read BIO as wanting a read. A connection created by a listener
+ * has no read BIO, so this must not dereference it.
+ */
+static int test_dtls13_listener_conn_read_timeout(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    BIO *netbio = NULL;
+    SSL_CONNECTION *sc;
+    const char msg[] = "still alive";
+    char buf[64];
+    size_t written, readbytes;
+    int i, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    for (i = 0; i < 100 && serverssl == NULL; i++) {
+        if (!TEST_true(client_step(clientssl)))
+            goto end;
+        listener_tick(listener);
+        serverssl = SSL_accept_connection(listener,
+            SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    /* Don't read on the client, so the tickets are never ACKed */
+    if (!TEST_ptr(serverssl)
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0)))
+        goto end;
+
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr_null(SSL_get_rbio(serverssl))
+        || !TEST_true(SSL_is_init_finished(serverssl))
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    /* Only let the timer expire from the BIO callback */
+    sc->d1->next_timeout = ossl_time_infinite();
+    netbio = SSL_get_rbio(listener);
+    BIO_set_callback_arg(netbio, (char *)sc);
+    BIO_set_callback_ex(netbio, expire_timer_on_recv_cb);
+
+    ret = SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes);
+    if (!TEST_false(ret)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ)
+        || !TEST_ptr_null(BIO_get_callback_arg(netbio)))
+        goto end;
+
+    /* The connection must still be usable */
+    if (!TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_true(dtls_read_with_retry(serverssl, buf, sizeof(buf),
+            &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    testresult = 1;
+end:
+    if (netbio != NULL) {
+        BIO_set_callback_ex(netbio, NULL);
+        BIO_set_callback_arg(netbio, NULL);
+    }
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -6738,6 +6841,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listener_accept_queue_novalidate_capped);
     /* Demux free-list bound regression test; runs every enabled version */
     ADD_TEST(test_dtls_listener_flood_then_handshake);
+#endif
+#ifndef OPENSSL_NO_DTLS1_3
+    ADD_TEST(test_dtls13_listener_conn_read_timeout);
 #endif
 
     return 1;
