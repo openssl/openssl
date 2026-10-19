@@ -930,6 +930,12 @@ again:
         goto again;
     }
 
+    if (!dtls13_plaintext_allows_type(rl, rr->type)) {
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
+
     if (rr->length == 0) {
         /* No payload data in this record. Dump it */
         rl->packet_length = 0;
