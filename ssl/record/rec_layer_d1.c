@@ -833,19 +833,20 @@ start:
             return -1;
         } else if (sc->version == DTLS1_3_VERSION) {
             /*
-             * Unlike a handshake message, application data has no
-             * reliability layer of its own to resend it if we drop it
-             * here -- there is no ACK or retransmit to "fix this problem"
-             * for a record that was never a handshake message to begin
-             * with. Buffer it instead, so it can still be delivered once
-             * we're ready to read application data again.
+             * Only buffer data authenticated under application traffic keys
+             * (epoch 3 onwards), including delayed data interleaved with a
+             * post-handshake authentication response. Plaintext, early data,
+             * and handshake-epoch data must not be buffered here for delivery
+             * as ordinary application data.
              */
-            if (dtls_buffer_record(sc, rr) < 0) {
+            if (rr->epoch >= 3 && dtls_buffer_record(sc, rr) < 0) {
                 /* SSLfatal() already called */
                 return -1;
             }
-            ssl_release_record(sc, rr, 0);
-            return -1;
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            /* Continue to the next record or obtain a genuine read retry. */
+            goto start;
         } else {
             SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
             return -1;

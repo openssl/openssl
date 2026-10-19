@@ -171,6 +171,193 @@ static int test_seq_num_reconstruction(int idx)
 }
 
 #ifndef OPENSSL_NO_DTLS1_3
+/*
+ * Epoch-0 application data received before ClientHello must be discarded,
+ * allowing an ordinary direct DTLS connection to complete its handshake and
+ * deliver only protected application data.
+ */
+static int test_dtls13_epoch0_app_data(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    const unsigned char injected[] = {
+        SSL3_RT_APPLICATION_DATA,
+        0xfe, 0xfd, /* legacy record version: DTLS 1.2 */
+        0, 0, /* epoch 0: no authentication */
+        0, 0, 0, 0, 0, 63, /* leave ClientHello sequence 0 in the replay window */
+        0, 4, /* payload length */
+        'E', 'V', 'I', 'L'
+    };
+    const unsigned char msg[] = { 'G', 'O', 'O', 'D' };
+    const unsigned char reply[] = { 'S', 'A', 'F', 'E' };
+    unsigned char buf[64];
+    int ret, err, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+
+    /*
+     * Write a raw datagram through the standard mempacket BIO. With no
+     * packet-injection or record-drop controls enabled, it preserves the
+     * wire sequence numbers of both this record and the real handshake.
+     */
+    if (!TEST_int_eq(BIO_write(SSL_get_wbio(client), injected,
+                         sizeof(injected)),
+            sizeof(injected)))
+        goto end;
+
+    /*
+     * No ClientHello has been sent. Require a legitimate
+     * retry before starting the client. If buffering the plaintext returns
+     * without setting BIO retry flags, SSL_get_error() reports SYSCALL here:
+     * that is an early API-error finding, not post-handshake data delivery.
+     */
+    ret = SSL_accept(server);
+    err = SSL_get_error(server, ret);
+    if (!TEST_int_eq(err, SSL_ERROR_WANT_READ)
+        || !TEST_int_lt(ret, 0)) {
+        TEST_info("Pre-ClientHello SSL_accept failed; "
+                  "post-handshake delivery was not tested");
+        goto end;
+    }
+    if (!TEST_int_eq(SSL_get_state(server), TLS_ST_BEFORE)
+        || !TEST_false(SSL_is_init_finished(server)))
+        goto end;
+
+    /* Leave all application reads to the post-handshake delivery checks. */
+    if (!TEST_true(create_bare_ssl_connection(server, client,
+            SSL_ERROR_NONE, 0, 0))
+        || !TEST_true(SSL_is_init_finished(server))
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_int_eq(SSL_version(server), DTLS1_3_VERSION)
+        || !TEST_int_eq(SSL_version(client), DTLS1_3_VERSION))
+        goto end;
+
+    /* Verify protected traffic in the other direction before the oracle. */
+    if (!TEST_int_eq(SSL_write(server, reply, sizeof(reply)), sizeof(reply))
+        || !TEST_int_eq(SSL_read(client, buf, sizeof(buf)), sizeof(reply))
+        || !TEST_mem_eq(buf, sizeof(reply), reply, sizeof(reply)))
+        goto end;
+
+    /* Equal payload lengths make EVIL fail the content check against GOOD. */
+    if (!TEST_int_eq(SSL_write(client, msg, sizeof(msg)), sizeof(msg))
+        || !TEST_int_eq(SSL_read(server, buf, sizeof(buf)), sizeof(msg))
+        || !TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
+        goto end;
+
+    /* Also reject injected data queued behind the protected record. */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Application data protected with handshake keys must also be discarded while
+ * epoch 2 is active, before Finished installs the application read keys. Use
+ * the client's saved Finished writer so the injected record really authenticates.
+ */
+static int test_dtls13_active_epoch2_app_data(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    dtls_sent_msg *msg;
+    struct dtls1_retransmit_state *saved;
+    pitem *item;
+    OSSL_RECORD_TEMPLATE tmpl = { 0 };
+    const unsigned char injected[] = { 'E', 'V', 'I', 'L' };
+    const unsigned char good[] = { 'G', 'O', 'O', 'D' };
+    unsigned char finished[4096], buf[64];
+    int finishedlen, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_size_t_eq(pqueue_size(&cc->d1->sent_messages), 1)
+        || !TEST_ptr(item = pqueue_peek(&cc->d1->sent_messages)))
+        goto end;
+    msg = item->data;
+    saved = &msg->saved_retransmit_state;
+    if (!TEST_int_eq(msg->msg_info.msg_type, SSL3_MT_FINISHED)
+        || !TEST_uint64_t_eq(saved->wrl->epoch, 2))
+        goto end;
+
+    /* Withhold Finished so the injected data is read under active epoch 2. */
+    finishedlen = BIO_read(SSL_get_rbio(server), finished, sizeof(finished));
+    if (!TEST_int_gt(finishedlen, 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(server)), 0))
+        goto end;
+    tmpl.type = SSL3_RT_APPLICATION_DATA;
+    tmpl.version = DTLS1_2_VERSION;
+    tmpl.buf = injected;
+    tmpl.buflen = sizeof(injected);
+    if (!TEST_true(saved->wrlmethod->set1_bio(saved->wrl, cc->wbio))
+        || !TEST_int_eq(saved->wrlmethod->write_records(saved->wrl, &tmpl, 1),
+            OSSL_RECORD_RETURN_SUCCESS)
+        || !TEST_uint64_t_eq(tmpl.epoch, 2)
+        || !TEST_int_gt(BIO_flush(cc->wbio), 0))
+        goto end;
+
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(server), TLS_ST_EARLY_DATA)
+        || !TEST_uint64_t_eq(sc->rlayer.rrl->epoch, 2)
+        /* The replay window advances only after successful deprotection. */
+        || !TEST_uint64_t_eq(sc->rlayer.rrl->bitmap.max_seq_num,
+            tmpl.sequence_number)
+        || !TEST_size_t_eq(pqueue_size(sc->rlayer.d->buffered_app_data), 0))
+        goto end;
+
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(server), finished, finishedlen),
+            finishedlen)
+        || !TEST_true(create_bare_ssl_connection(server, client,
+            SSL_ERROR_NONE, 0, 0))
+        || !TEST_true(SSL_is_init_finished(server))
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_int_eq(SSL_write(client, good, sizeof(good)), sizeof(good))
+        || !TEST_int_eq(SSL_read(server, buf, sizeof(buf)), sizeof(good))
+        || !TEST_mem_eq(buf, sizeof(good), good, sizeof(good)))
+        goto end;
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /* Empty and single-entry ACK vectors, with and without trailing data. */
 static int test_dtls13_ack_length(int idx)
 {
@@ -5047,6 +5234,120 @@ static int split_unified_header_records(const unsigned char *in, size_t inlen,
 }
 
 /*
+ * A datagram sent before PHA can arrive between Certificate and Finished.
+ * This reaches the generic application-data fallback in TLS_ST_SR_CERT,
+ * rather than the earlier TLS_ST_OK/ACK-wait buffering path.
+ *
+ * idx 0: Finished is already queued behind the delayed application data.
+ * idx 1: Finished arrives after a read retry with the data still buffered.
+ */
+static int test_dtls13_pha_interleaved_app_data(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    unsigned char held[2048], flight[4096], buf[64];
+    const unsigned char msg[] = { 'G', 'O', 'O', 'D' };
+    size_t flightlen = 0, reclen[PHA_ACK_STOPS_TIMER_MAX_RECS];
+    int heldlen, nrec, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    /* Hold a genuine application record, retaining its original sequence. */
+    if (!TEST_int_eq(SSL_write(client, msg, sizeof(msg)), sizeof(msg)))
+        goto end;
+    heldlen = BIO_read(SSL_get_rbio(server), held, sizeof(held));
+    if (!TEST_int_gt(heldlen, 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(server)), 0))
+        goto end;
+
+    SSL_set_verify(server, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(server))
+        || !TEST_int_eq(SSL_do_handshake(server), 1))
+        goto end;
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Split the real empty-Certificate/Finished response into two records. */
+    while (BIO_ctrl_pending(SSL_get_rbio(server)) > 0) {
+        if (!TEST_size_t_lt(flightlen, sizeof(flight)))
+            goto end;
+        ret = BIO_read(SSL_get_rbio(server), flight + flightlen,
+            (int)(sizeof(flight) - flightlen));
+        if (!TEST_int_gt(ret, 0))
+            goto end;
+        flightlen += (size_t)ret;
+    }
+    nrec = split_unified_header_records(flight, flightlen, reclen);
+    if (!TEST_int_eq(nrec, 2)
+        || !TEST_int_eq(BIO_write(SSL_get_rbio(server), flight, (int)reclen[0]),
+            (int)reclen[0]))
+        goto end;
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(server), TLS_ST_SR_CERT)
+        || !TEST_true(SSL_in_init(server))
+        || !TEST_uint64_t_eq(sc->rlayer.rrl->epoch, 3))
+        goto end;
+
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(server), held, heldlen), heldlen))
+        goto end;
+    if (idx == 1) {
+        ret = SSL_read(server, buf, sizeof(buf));
+        if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(SSL_get_state(server), TLS_ST_SR_CERT)
+            || !TEST_false(SSL_is_init_finished(server))
+            || !TEST_size_t_eq(pqueue_size(sc->rlayer.d->buffered_app_data), 1))
+            goto end;
+    }
+
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(server), flight + reclen[0],
+                         (int)reclen[1]),
+            (int)reclen[1]))
+        goto end;
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(ret, sizeof(msg))
+        || !TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg))
+        || !TEST_true(SSL_is_init_finished(server))
+        || !TEST_int_eq(sc->post_handshake_auth, SSL_PHA_EXT_RECEIVED)
+        || !TEST_size_t_eq(pqueue_size(sc->rlayer.d->buffered_app_data), 0))
+        goto end;
+
+    /* Complete the client's ACK wait and verify subsequent traffic both ways. */
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_int_eq(SSL_write(client, "next", 4), 4)
+        || !TEST_int_eq(SSL_read(server, buf, sizeof(buf)), 4)
+        || !TEST_mem_eq(buf, 4, "next", 4)
+        || !TEST_int_eq(SSL_write(server, "reply", 5), 5)
+        || !TEST_int_eq(SSL_read(client, buf, sizeof(buf)), 5)
+        || !TEST_mem_eq(buf, 5, "reply", 5))
+        goto end;
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * dtls_process_ack() must stop the retransmission timer when an ACK
  * completes the outstanding flight even while the read sub-state-machine
  * is still mid-flight on an incomplete post-handshake authentication
@@ -7803,6 +8104,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls_crypt_sequence_number, OSSL_NELEM(cipher_names));
     ADD_ALL_TESTS(test_seq_num_reconstruction, OSSL_NELEM(seq_num_tests));
 #ifndef OPENSSL_NO_DTLS1_3
+    ADD_TEST(test_dtls13_epoch0_app_data);
+    ADD_TEST(test_dtls13_active_epoch2_app_data);
     ADD_ALL_TESTS(test_dtls13_ack_length, 4);
     ADD_TEST(test_dtls13_increment_epoch_max);
     ADD_ALL_TESTS(test_dtls13_ack_coverage, 2);
@@ -7841,6 +8144,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_keyupdate_ack_survives_pha_completion_eviction);
     ADD_TEST(test_dtls13_keyupdate_install_on_pha_cert_req_retirement);
     ADD_TEST(test_dtls13_pha_install_failure);
+    ADD_ALL_TESTS(test_dtls13_pha_interleaved_app_data, 2);
     ADD_TEST(test_dtls13_pha_ack_stops_timer);
     ADD_TEST(test_dtls13_pha_second_request_survives_buffered_dispatch);
     ADD_TEST(test_dtls13_pha_defer_waits_for_write_key_install);
