@@ -302,10 +302,31 @@ start:
                  * Anything other than a timeout is an error. SSLfatal() already
                  * called if appropriate.
                  */
-                if (ret <= 0)
-                    return ret;
-                else
+                if (ret > 0)
                     goto start;
+
+                /*
+                 * Once the record layer holds buffered records from a later
+                 * epoch it asks for a retry without reading the BIO again (see
+                 * dtls_get_more_records()), so nothing has set the BIO's retry
+                 * flags. Without them SSL_get_error() reports
+                 * SSL_ERROR_SYSCALL for what is an ordinary wait for more
+                 * data.
+                 *
+                 * A connection accepted by a DTLS listener has no read BIO of
+                 * its own (see dtls_listener_create_conn_ssl());
+                 * SSL_get_error() already reports SSL_ERROR_WANT_READ for
+                 * SSL_READING on such a connection without needing one.
+                 */
+                if (sc->rwstate == SSL_READING) {
+                    BIO *rbio = SSL_get_rbio(s);
+
+                    if (rbio != NULL && !BIO_should_retry(rbio)) {
+                        BIO_clear_retry_flags(rbio);
+                        BIO_set_retry_read(rbio);
+                    }
+                }
+                return ret;
             }
             rr->off = 0;
             sc->rlayer.num_recs++;
