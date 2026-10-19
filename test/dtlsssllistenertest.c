@@ -6280,7 +6280,6 @@ end:
     return testresult;
 }
 #endif
-
 #if defined(OPENSSL_THREADS)
 struct poll_shared_listener_signal {
     SSL *listener;
