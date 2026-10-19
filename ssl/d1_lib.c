@@ -3404,7 +3404,17 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
         SSL_handle_events(s);
 
     if ((events & SSL_POLL_EVENT_R) != 0) {
-        if (SSL_has_pending(s) || SSL_pending(s) > 0) {
+        /*
+         * Application data buffered during a handshake cannot be read until
+         * the handshake finishes. Until then, reporting it would make
+         * SSL_poll() return immediately while SSL_read() keeps failing with
+         * SSL_ERROR_WANT_READ, so wait for the datagrams that complete the
+         * handshake instead.
+         */
+        if (RECORD_LAYER_processed_read_pending(&sc->rlayer)
+            || RECORD_LAYER_read_pending(&sc->rlayer)
+            || (SSL_is_init_finished(s)
+                && DTLS_RECORD_LAYER_buffered_app_data_pending(&sc->rlayer))) {
             result |= SSL_POLL_EVENT_R;
         } else if (sc->d1->rx != NULL) {
             /* Listener-based connection: check URXE queue */

@@ -165,6 +165,7 @@ __owur int ssl3_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
+int DTLS_RECORD_LAYER_buffered_app_data_pending(const RECORD_LAYER *rl);
 __owur int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     unsigned char *buf, size_t len, int peek,
     size_t *readbytes);
