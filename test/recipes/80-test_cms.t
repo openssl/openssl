@@ -1850,13 +1850,14 @@ subtest "PWRI missing keyDerivationAlgorithm regression" => sub {
 };
 
 subtest "sign and verify with multiple keys and -verify_partial" => sub {
-    plan tests => 9;
+    plan tests => 10;
 
     my $smrsa2 = catfile($smdir, "smrsa2.pem");
     my $sig1 = "sig1.cms";
     my $out1 = "out1.txt";
     my $sig2 = "sig2.cms";
     my $out2 = "out2.txt";
+    my $signers = "signers.pem";
 
     ok(run(app(['openssl', 'cms',
                 @defaultprov,
@@ -1900,9 +1901,14 @@ subtest "sign and verify with multiple keys and -verify_partial" => sub {
                 '-verify', '-in', $sig2, '-inform', 'DER',
                 '-CAfile', $smrsa1, '-partial_chain',
                 '-verify_partial',
+                '-signer', $signers,
                 '-out', $out2,
                ])),
        "verify two signatures with only rsa1");
+    # only the certificate of the verified signature may be written out
+    is(scalar(grep { /^-----BEGIN CERTIFICATE-----/ }
+              do { open(my $fh, '<', $signers) or die; <$fh> }), 1,
+       "only the verified signer is output");
 
     # because the smrsa2 signature can be verified, overall verification succeeds
     ok(run(app(['openssl', 'cms',
