@@ -6615,6 +6615,44 @@ static void idle_pending_info_cb(const SSL *ssl, int where, int ret)
 
 #define IDLE_PENDING_TICKS 20
 
+typedef struct {
+    int retry_sent; /* pending connections that have sent an HVR/HRR */
+    int queued; /* pending connections with a datagram still queued */
+} IDLE_PENDING_STATE;
+
+static void idle_pending_state_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+{
+    IDLE_PENDING_STATE *st = arg;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+    if (sc == NULL || sc->listener_rx == NULL) {
+        st->queued++;
+        return;
+    }
+    if (sc->hello_retry_request == SSL_HRR_PENDING
+        || sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST)
+        st->retry_sent++;
+    if (!ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
+        st->queued++;
+}
+
+/*
+ * Have both pending connections consumed everything sent to them? The
+ * client's has sent its HVR/HRR, so has read its whole ClientHello, and
+ * the junk datagram has been read since its connection exists; neither
+ * has a datagram queued.
+ */
+static int idle_pending_settled(DTLS_LISTENER *dl)
+{
+    IDLE_PENDING_STATE st = { 0, 0 };
+
+    if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) != 2)
+        return 0;
+    ossl_dgram_conn_lookup_foreach(dl->pending_conns, idle_pending_state_cb,
+        &st);
+    return st.retry_sent == 1 && st.queued == 0;
+}
+
 /*
  * Regression test: a pending connection waiting for its peer must not be
  * driven on every listener tick. One pending connection has received a
@@ -6655,19 +6693,22 @@ static int test_dtls_listener_idle_pending_not_driven_int(int version)
         || !client_step(clientssl))
         goto end;
 
-    for (k = 0; k < 100
-        && ossl_dgram_conn_lookup_num_items(dl->pending_conns) < 2;
-        k++) {
+    /*
+     * Tick until both connections have consumed what was sent to them and
+     * a tick has driven neither. How many ticks that takes depends on how
+     * many datagrams each pump reads. Without the fix no tick is quiet, so
+     * this runs to its bound and the check below fails.
+     */
+    for (k = 0; k < 200; k++) {
+        int prev = idle_pending_accept_calls;
+
         listener_tick(listener);
+        if (idle_pending_accept_calls == prev && idle_pending_settled(dl))
+            break;
         OSSL_sleep(10);
     }
-    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
-            2))
-        goto end;
-    /* Let each connection be driven over what it has received. */
-    for (k = 0; k < 3; k++)
-        listener_tick(listener);
-    if (!TEST_int_gt(idle_pending_accept_calls, 0))
+    if (!TEST_true(idle_pending_settled(dl))
+        || !TEST_int_gt(idle_pending_accept_calls, 0))
         goto end;
 
     idle_pending_accept_calls = 0;
