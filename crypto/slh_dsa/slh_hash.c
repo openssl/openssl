@@ -386,7 +386,8 @@ slh_h_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs
     const SLH_DSA_PARAMS *prms = hctx->key->params;
     size_t n = prms->n;
 
-    *sctx = *((SHA512_CTX *)hctx->shactx_pkseed_sha512);
+    /* Copying is safe: the SHA implementation comes from the same provider. */
+    *sctx = *hctx->shactx_pkseed_sha512;
     SHA512_Update(sctx, adrs, SLH_ADRSC_SIZE);
     SHA512_Update(sctx, m1, n);
     SHA512_Update(sctx, m2, n);
@@ -413,7 +414,8 @@ slh_t_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs
 {
     SHA512_CTX *sctx = (SHA512_CTX *)(hctx->scratch);
 
-    *sctx = *((SHA512_CTX *)hctx->shactx_pkseed_sha512);
+    /* Copying is safe: the SHA implementation comes from the same provider. */
+    *sctx = *hctx->shactx_pkseed_sha512;
     SHA512_Update(sctx, adrs, SLH_ADRSC_SIZE);
     SHA512_Update(sctx, ml, ml_len);
     sha512_final(sctx, out, hctx->key->params->n);
@@ -499,7 +501,7 @@ static int slh_hash_sha256_precache(SLH_DSA_HASH_CTX *hctx, const uint8_t *pksee
         SHA512_Init(ctx512);
         SHA512_Update(ctx512, pkseed, n);
         SHA512_Update(ctx512, zeros, 128 - n);
-        hctx->shactx_pkseed_sha512 = (void *)ctx512;
+        hctx->shactx_pkseed_sha512 = ctx512;
     }
     return 1;
 }
