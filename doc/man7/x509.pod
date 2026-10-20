@@ -45,6 +45,69 @@ B<X509_ATTRIBUTE_>I<XXX> functions handle certificate attributes.
 
 B<X509_EXTENSION_>I<XXX> functions handle certificate extensions.
 
+=head1 EXTENSION VALUES
+
+The value of an extension is decoded when the extension is parsed, or its
+type or data set, into the structure for its type given by the
+B<X509V3_EXT_METHOD> registered for the type at that time. Applications that
+register their own methods with X509V3_EXT_add() do so before parsing the
+certificates that carry them. The decoded structure is owned by the extension
+and read with L<X509_EXTENSION_get0_value(3)>, L<X509_get0_ext_value(3)> and
+the related functions, which also report why there is no value: no method for
+the type, a value the method rejected, or the extension being absent or
+present more than once.
+
+Parsing a certificate succeeds whatever its extensions contain, so that the
+certificate can be displayed and examined. Whether the certificate is fit for
+use is decided when it is finalized (see L</CACHED CERTIFICATE INFORMATION>
+below): a certificate with an extension of a known type whose value does not
+decode, or with more than one instance of an extension, is finalized as
+invalid. L<X509_check_purpose(3)> fails on it with
+B<X509V3_R_INVALID_CERTIFICATE>, and L<X509_verify_cert(3)> rejects it with
+B<X509_V_ERR_INVALID_EXTENSION> or B<X509_V_ERR_DUPLICATE_EXTENSION>.
+
+=head1 CACHED CERTIFICATE INFORMATION
+
+Some information derived from a certificate's extensions is computed once and
+cached within the B<X509> object rather than recomputed on each access, for
+instance the values reported by L<X509_get_extension_flags(3)> and related
+accessors.
+
+This cached information is populated when a certificate becomes I<finalized>:
+when it is parsed from its ASN.1 encoding with a B<d2i_X509> function, or
+signed with L<X509_sign(3)> or X509_sign_ctx(). It reflects the certificate as
+it was at that point. The extension accessors and the certificate verification
+functions rely on this cached information and require a finalized certificate:
+called on a certificate that is not finalized they fail, reporting
+B<ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED>. A certificate constructed with
+L<X509_new(3)> is finalized by signing it. One that is never signed, such as
+a trust anchor an application builds around a bare public key, is finalized
+by encoding it with L<i2d_X509(3)>, which produces an unsigned certificate
+(RFC 9925), and parsing the result.
+
+Modifying a finalized certificate with a setter such as L<X509_set_version(3)>
+or L<X509_set_pubkey(3)>, or by adding or removing an extension with
+L<X509_add_ext(3)>, L<X509_add1_ext_i2d(3)> or L<X509_delete_ext(3)>, discards
+the cached information: the certificate is no longer finalized and must be
+signed again, or encoded and parsed again, before it is used. Finalizing it
+again frees and rebuilds the cached information, so any pointer that a B<get0>
+accessor such as L<X509_get0_subject_key_id(3)> returned earlier is then
+invalid, and what L<X509_set_proxy_flag(3)> and X509_set_proxy_pathlen() set
+is cleared.
+
+=head1 IMMUTABLE CERTIFICATES
+
+A certificate decoded with L<X509_parse_from_bytes(3)> keeps one copy of its
+encoding, which the values returned by its accessors point into, and cannot
+be modified: L<X509_set_version(3)>, L<X509_add_ext(3)>, L<X509_sign(3)> and
+the other functions that change a certificate fail on it with
+B<X509_R_IMMUTABLE_CERTIFICATE>. A certificate decoded with a B<d2i_X509>
+function or read from PEM is a copy the application owns and can modify.
+
+Certificates decoded from the same bytes through one library context share
+the copy of the encoding; L<OSSL_LIB_CTX_set_certificate_pool(3)> controls
+the sharing.
+
 =head1 SEE ALSO
 
 L<X509_NAME_ENTRY_get_object(3)>,

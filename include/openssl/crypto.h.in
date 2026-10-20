@@ -590,6 +590,12 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
 OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx);
 int OSSL_LIB_CTX_get_conf_diagnostics(OSSL_LIB_CTX *ctx);
 void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *ctx, int value);
+/**
+ * @brief Enable or disable sharing the bytes of the certificates the library
+ * holds through a library context.
+ * @see OSSL_LIB_CTX_set_certificate_pool(3)
+ */
+int OSSL_LIB_CTX_set_certificate_pool(OSSL_LIB_CTX *ctx, int enable);
 
 void OSSL_sleep(uint64_t millis);
 

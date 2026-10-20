@@ -62,6 +62,12 @@ err:
 ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     const unsigned char **pp, long len)
 {
+    return ossl_c2i_ASN1_BIT_STRING_ex(a, pp, len, 0);
+}
+
+ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING_ex(ASN1_BIT_STRING **a,
+    const unsigned char **pp, long len, int borrow)
+{
     ASN1_BIT_STRING *ret = NULL;
     const unsigned char *p;
     unsigned char *s;
@@ -96,6 +102,21 @@ ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     ossl_asn1_bit_string_set_unused_bits(ret, i);
 
     if (len-- > 1) { /* using one because of the bits left byte */
+        /*
+         * The unused bits of the last octet are zero in the internal form.
+         * DER requires them to be zero on the wire, and content that has
+         * them zero is borrowed as it is; anything else is copied and
+         * masked.
+         */
+        if (borrow && (p[len - 1] & ~(0xff << i)) == 0) {
+            ossl_asn1_string_set0_not_owned(ret, p, (int)len);
+            ret->type = V_ASN1_BIT_STRING;
+            p += len;
+            if (a != NULL)
+                (*a) = ret;
+            *pp = p;
+            return ret;
+        }
         s = OPENSSL_malloc((int)len);
         if (s == NULL) {
             goto err;

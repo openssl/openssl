@@ -173,6 +173,7 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
         break;
 
     case ASN1_ITYPE_EXTERN:
+    case ASN1_ITYPE_EXTERN_INTERNAL:
         if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
             return 0;
         /* Use new style print routine if possible */
