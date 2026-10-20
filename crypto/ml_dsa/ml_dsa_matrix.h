@@ -41,4 +41,10 @@ matrix_mult_vector(const MATRIX *a, const VECTOR *s, VECTOR *t)
     ossl_ml_dsa_matrix_mult_vector(a, s, t);
 }
 
+static ossl_inline ossl_unused void
+matrix_mult_vector_intt(const MATRIX *a, const VECTOR *s, VECTOR *out)
+{
+    ossl_ml_dsa_matrix_mult_vector_intt(a, s, out);
+}
+
 #endif /* !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_MATRIX_H) */

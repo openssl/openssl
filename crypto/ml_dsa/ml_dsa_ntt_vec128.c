@@ -929,4 +929,92 @@ void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
     }
 }
 
+/*
+ * poly_ntt_mult_accumulate_vec128: helper used by the fused matrix-multiply +
+ * INTT path.  Accumulates unreduced Montgomery products into an existing
+ * accumulator without any reduction.
+ *
+ * Pre:  a_vec and s_vec coefficients are in [0, q).
+ *       t_vec already holds the sum of (j) previous unreduced products; the
+ *       total after this call will be (j+1) products, so
+ *       |t_vec[i]| <= (j+1) * 4 321 280.  The caller must ensure j+1 <= l <= 7.
+ */
+static ossl_inline void
+poly_ntt_mult_accumulate_vec128(const vec_int32_t *a_vec,
+    const vec_int32_t *s_vec, vec_int32_t *t_vec)
+{
+    int c;
+
+    for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; c++) {
+        vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c] * (vec_uint32_t)vec_q_inv);
+        t_vec[c] += montgomery_multiplication_unreduced(a_vec[c], a_twist,
+            s_vec[c]);
+    }
+}
+
+/*
+ * ossl_ml_dsa_matrix_mult_vector_intt_vec128: fused matrix-vector multiply
+ * followed by inverse NTT.
+ *
+ * Computes out[i] = INTT(sum_j A[i,j] (*) s[j]) for each row i.
+ *
+ * The accumulation step is identical to ossl_ml_dsa_matrix_mult_vector_vec128
+ * but omits the final reduce_fully pass, leaving each output polynomial in
+ * unreduced Montgomery form.  The INTT step begins with a reduce_fully pass
+ * (to bring the input into the [-9q, 9q] range that ossl_ml_dsa_poly_ntt_inverse_vec128
+ * expects) and then runs the standard lazy INTT, saving one full data pass
+ * over each output polynomial compared with calling the two functions separately.
+ *
+ * Pre:  All coefficients of A and s are in [0, q)  (NTT-domain standard form).
+ *       out->num_poly == a->k,  a->l == s->num_poly.
+ * Post: All coefficients of out are in [0, q) and equal
+ *       INTT(sum_j A[i,j] (*) s[j]) mod q.
+ */
+void ossl_ml_dsa_matrix_mult_vector_intt_vec128(const MATRIX *a,
+    const VECTOR *s, VECTOR *out)
+{
+    size_t i, j;
+    const POLY *ap = a->m_poly;
+
+    for (i = 0; i < a->k; i++) {
+        POLY *out_poly = &out->poly[i];
+        vec_int32_t *t_vec = (vec_int32_t *)out_poly->coeff;
+        int c;
+
+        /* First column: set accumulator. */
+        {
+            const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
+            const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[0].coeff;
+
+            for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR;
+                c++) {
+                vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
+                    * (vec_uint32_t)vec_q_inv);
+                t_vec[c] = montgomery_multiplication_unreduced(a_vec[c],
+                    a_twist,
+                    s_vec[c]);
+            }
+            ap++;
+        }
+
+        /* Remaining columns: accumulate unreduced. */
+        for (j = 1; j < a->l; j++) {
+            poly_ntt_mult_accumulate_vec128((const vec_int32_t *)ap->coeff,
+                (const vec_int32_t *)s->poly[j].coeff,
+                t_vec);
+            ap++;
+        }
+
+        /*
+         * Fused reduce + INTT: bring the unreduced accumulator into the
+         * range [0, q) with one reduce_fully pass, then run the lazy INTT
+         * in-place.  This avoids a separate data traversal that the
+         * separate-call path would require.
+         */
+        for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; c++)
+            t_vec[c] = reduce_fully(t_vec[c]);
+        ossl_ml_dsa_poly_ntt_inverse_vec128(out_poly);
+    }
+}
+
 #endif /* VX_COMPILER_SUPPORT_VEC128 */
