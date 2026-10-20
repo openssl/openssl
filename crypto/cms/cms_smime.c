@@ -353,6 +353,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     int i, n = 0, scount = 0, ret = 0;
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
     int cadesVerify = (flags & CMS_CADES) != 0;
+    int partial = (flags & CMS_VERIFY_PARTIAL) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
 
     if (dcont == NULL && !check_content(cms)) {
@@ -439,6 +440,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
                     si_chains ? &si_chains[i] : NULL,
                     ctx)) {
                 si->verify_result = 0;
+                if (!partial)
+                    goto err;
                 continue;
             }
             si->cert_verified = 1;
@@ -458,6 +461,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
             }
             if (CMS_SignerInfo_verify(si) <= 0) {
                 si->verify_result = 0;
+                if (!partial)
+                    goto err;
                 continue;
             }
             if (cadesVerify) {
@@ -465,6 +470,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
 
                 if (ossl_cms_check_signing_certs(si, si_chain) <= 0) {
                     si->verify_result = 0;
+                    if (!partial)
+                        goto err;
                     continue;
                 }
             }
@@ -538,6 +545,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
             if (CMS_SignerInfo_verify_ex(si, cmsbio, tmpin) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
                 si->verify_result = 0;
+                if (!partial)
+                    goto err;
                 continue;
             }
             si->content_verified = 1;
@@ -549,7 +558,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         if (sk_CMS_SignerInfo_value(sinfos, i)->verify_result)
             n++;
     }
-    if ((flags & CMS_VERIFY_PARTIAL) != 0)
+    if (partial)
         ret = n > 0; /* One success is enough */
     else
         ret = n == scount; /* All must be successful */
