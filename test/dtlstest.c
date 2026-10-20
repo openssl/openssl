@@ -1623,6 +1623,8 @@ static int test_dtls13_plaintext_after_hellos(int idx)
 #endif
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *sssl = NULL, *cssl = NULL;
+    OSSL_RECORD_LAYER *rl;
+    DTLS_BITMAP bitmap;
     /*
      * A handshake message header. The remaining SHA384_DIGEST_LENGTH bytes
      * are not initialised explicitly, so they are zero: that is the body.
@@ -1636,7 +1638,7 @@ static int test_dtls13_plaintext_after_hellos(int idx)
     };
     unsigned char pkt[DTLS1_RT_HEADER_LENGTH + sizeof(msg)];
     size_t pktlen;
-    int testresult = 0;
+    int ret, testresult = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
@@ -1665,6 +1667,16 @@ static int test_dtls13_plaintext_after_hellos(int idx)
         if (!TEST_int_le(SSL_connect(cssl), 0)
             || !TEST_int_le(SSL_accept(sssl), 0)
             || !inject_client_datagram(cssl, pkt, pktlen))
+            goto end;
+
+        /* Discarding the plaintext record must leave replay state unchanged. */
+        rl = SSL_CONNECTION_FROM_SSL_ONLY(sssl)->rlayer.rrl;
+        bitmap = rl->bitmap;
+        ret = SSL_accept(sssl);
+        if (!TEST_int_eq(SSL_get_error(sssl, ret), SSL_ERROR_WANT_READ)
+            || !TEST_ptr_eq(SSL_CONNECTION_FROM_SSL_ONLY(sssl)->rlayer.rrl, rl)
+            || !TEST_uint64_t_eq(rl->bitmap.max_seq_num, bitmap.max_seq_num)
+            || !TEST_uint64_t_eq(rl->bitmap.map, bitmap.map))
             goto end;
         break;
     case 1:

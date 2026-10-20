@@ -865,6 +865,17 @@ again:
     }
 
     /*
+     * Reject forbidden epoch 0 records before they can update the replay
+     * bitmap. Next epoch records have already been buffered above, so their
+     * unified headers aren't interpreted as plaintext content types here.
+     */
+    if (!dtls13_plaintext_allows_type(rl, rr->type)) {
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
+
+    /*
      * dtls_record_replay_check() and dtls_process_record() read and write
      * whichever OSSL_RECORD_LAYER they are passed, not rr. When crypto_rl is
      * the retained previous epoch, seed its record slot from rr so they
@@ -918,12 +929,6 @@ again:
     /* rr->type is only decoded after post_process_record() above. */
     if (crypto_rl != rl && !dtls_prev_epoch_allows_type(crypto_rl, rr->type)) {
         rr->length = 0;
-        goto again;
-    }
-
-    if (!dtls13_plaintext_allows_type(rl, rr->type)) {
-        rr->length = 0;
-        rl->packet_length = 0;
         goto again;
     }
 
