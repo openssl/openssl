@@ -49,6 +49,7 @@ typedef uint32_t vec_uint32_alias_t __attribute__((vector_size(VECTOR_REG_WIDTH_
 
 /* Our implementation of the vectorized algorithms assumes NUM_INT32_IN_VECTOR == 4. */
 #define NUM_INT32_IN_VECTOR (VECTOR_REG_WIDTH_BYTES / ((int)sizeof(int32_t)))
+#define NUM_VEC_PER_POLY (ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR)
 
 /*
  * This file has multiple parts required for fast matrix multiplication,
@@ -490,7 +491,7 @@ void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *ou
     const vec_int32_t *rhs_vec_ptr = (const vec_int32_t *)rhs->coeff;
     vec_int32_t *out_vec_ptr = (vec_int32_t *)out->coeff;
 
-    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i++) {
+    for (i = 0; i < NUM_VEC_PER_POLY; i++) {
         vec_int32_t twist_vec = (vec_int32_t)((vec_uint32_t)lhs_vec_ptr[i] * (vec_uint32_t)vec_q_inv);
         out_vec_ptr[i] = montgomery_multiplication_vectorized(
             lhs_vec_ptr[i], twist_vec, rhs_vec_ptr[i]);
@@ -959,8 +960,7 @@ void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
             const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
             const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[0].coeff;
 
-            for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR;
-                c++) {
+            for (c = 0; c < NUM_VEC_PER_POLY; c++) {
                 vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
                     * (vec_uint32_t)vec_q_inv);
                 t_vec[c] = montgomery_multiplication_unreduced(a_vec[c],
@@ -975,8 +975,7 @@ void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
             const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
             const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[j].coeff;
 
-            for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR;
-                c++) {
+            for (c = 0; c < NUM_VEC_PER_POLY; c++) {
                 vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
                     * (vec_uint32_t)vec_q_inv);
                 t_vec[c] += montgomery_multiplication_unreduced(a_vec[c],
@@ -987,7 +986,7 @@ void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
         }
 
         /* Single Barrett reduction pass over the accumulated row output. */
-        for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; c++)
+        for (c = 0; c < NUM_VEC_PER_POLY; c++)
             t_vec[c] = reduce_fully(t_vec[c]);
     }
 }
@@ -1008,7 +1007,7 @@ poly_ntt_mult_accumulate_vec128(const vec_int32_t *a_vec,
 {
     int c;
 
-    for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; c++) {
+    for (c = 0; c < NUM_VEC_PER_POLY; c++) {
         vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c] * (vec_uint32_t)vec_q_inv);
         t_vec[c] += montgomery_multiplication_unreduced(a_vec[c], a_twist,
             s_vec[c]);
@@ -1049,8 +1048,7 @@ void ossl_ml_dsa_matrix_mult_vector_intt_vec128(const MATRIX *a,
             const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
             const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[0].coeff;
 
-            for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR;
-                c++) {
+            for (c = 0; c < NUM_VEC_PER_POLY; c++) {
                 vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
                     * (vec_uint32_t)vec_q_inv);
                 t_vec[c] = montgomery_multiplication_unreduced(a_vec[c],
@@ -1074,7 +1072,7 @@ void ossl_ml_dsa_matrix_mult_vector_intt_vec128(const MATRIX *a,
          * in-place.  This avoids a separate data traversal that the
          * separate-call path would require.
          */
-        for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; c++)
+        for (c = 0; c < NUM_VEC_PER_POLY; c++)
             t_vec[c] = reduce_fully(t_vec[c]);
         ossl_ml_dsa_poly_ntt_inverse_vec128(out_poly);
     }
