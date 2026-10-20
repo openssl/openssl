@@ -694,15 +694,15 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
  *     Layer 5 (offset  16): S_5 ~= 4.021q,  T_5 ~= 0.508q
  *     Layer 6 (offset  32): S_6 ~= 4.529q,  T_6 ~= 0.509q
  *     Layer 7 (offset  64): S_7 ~= 5.038q,  T_7 ~= 0.510q
- *     Layer 8 (offset 128): S_8 ~= 5.548q
  *
- *   5.548q ~= 46.5M < 2^26 << 2^31: no signed 32-bit overflow ever occurs.
+ *   5.038q ~= 42.2M < 2^26 << 2^31: no signed 32-bit overflow for layers 1-7.
  *
- *   The final normalization multiply receives |b| <= 5.548q:
+ *   Layer 8 (offset 128) is handled separately with a fused butterfly +
+ *   normalization (see the dedicated block below).  Its inputs satisfy
+ *   |b| <= S_7 + T_7 ~= 5.548q; montgomery_multiplication_vectorized produces
+ *   canonical [0, q) output:
  *     |z_hi| <= floor((q-1)*5.548q/2^32) ~= 90 720
- *     |r|    <= 90 720 + 4 190 208 ~= 4 281 000 < q
- *   montgomery_multiplication_vectorized (reduce_twice_signed) produces
- *   canonical [0, q) output correctly.
+ *     |r|    <= 90 720 + 4 190 208 ~= 4 281 000 < q  ✓
  *
  * Contrast with ML-KEM (q = 3329, R = 2^16): there the naive bound doubles
  * each layer (T_L ~= q), reaching 16q > 2^15 after 4 layers, requiring
@@ -714,22 +714,64 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
 {
     int i, j, k, offset, step = ML_DSA_NUM_POLY_COEFFICIENTS;
     /*
-     * The multiplicative inverse of 256 mod q, in Montgomery form is
-     * ((256^-1 mod q) * ((2^32 * 2^32) mod q)) mod q = (8347681 * 2365951) mod 8380417
+     * Normalization constant: 256^{-1} mod q in Montgomery form.
+     * = ((256^{-1} mod q) * ((2^32)^2 mod q)) mod q
+     * = (8347681 * 2365951) mod 8380417 = 41978
+     *
+     * This is only used for the even-sum outputs of the last layer (offset ==
+     * 128); the twiddle outputs of that layer use a merged constant instead
+     * (see below).
      */
     static const int32_t inverse_degree_montgomery = 41978;
     static const vec_int32_t vec_inverse_degree_montgomery = {
-        inverse_degree_montgomery,
-        inverse_degree_montgomery,
-        inverse_degree_montgomery,
-        inverse_degree_montgomery
+        inverse_degree_montgomery, inverse_degree_montgomery,
+        inverse_degree_montgomery, inverse_degree_montgomery
     };
     static const int32_t inverse_degree_montgomery_twisted = -8395782;
     static const vec_int32_t vec_inverse_degree_montgomery_twisted = {
-        inverse_degree_montgomery_twisted,
-        inverse_degree_montgomery_twisted,
-        inverse_degree_montgomery_twisted,
-        inverse_degree_montgomery_twisted
+        inverse_degree_montgomery_twisted, inverse_degree_montgomery_twisted,
+        inverse_degree_montgomery_twisted, inverse_degree_montgomery_twisted
+    };
+
+    /*
+     * Merged twiddle for the last INTT layer (offset == 128).
+     *
+     * At offset == 128 there is exactly one twiddle factor:
+     *   neg_zetas_montgomery[1] = q - zetas_montgomery[1] = 8380417 - 25847
+     *                           = 8354570
+     *
+     * The twiddle output of this layer is:
+     *   coeff_j_offset = MontMulRaw(neg_zeta_1, even - odd)
+     * then normalised:
+     *   result         = MontMul(inv256_mont, coeff_j_offset)
+     *                  = MontMul(inv256_mont, MontMulRaw(neg_zeta_1, even-odd))
+     *                  = MontMulRaw(MontMul(inv256_mont, neg_zeta_1), even-odd)
+     *
+     * Folding both multiplications into one:
+     *   merged_twiddle = MontMul(41978, 8354570) mod q = 3975713
+     *   merged_twisted = (uint32_t)3975713 * ML_DSA_Q_INV mod 2^32
+     *                  = 151046689  (as int32_t)
+     *
+     * The even-sum output (coeff_j = even + odd) still requires the separate
+     * normalization multiply by inv256_mont.
+     *
+     * Python verification:
+     *   q, R = 8380417, 2**32
+     *   q_neg_inv = 4236238847  # (-q)^{-1} mod 2^32
+     *   def mont_mul(a, b):
+     *       t = (a * b * q_neg_inv) % R; return ((a*b + t*q) >> 32) % q
+     *   merged = mont_mul(41978, 8354570)   # => 3975713
+     *   # verify: mont_mul(merged, x) == mont_mul(41978, mont_mul(8354570, x))
+     */
+    static const int32_t merged_twiddle_last = 3975713;
+    static const vec_int32_t vec_merged_twiddle_last = {
+        merged_twiddle_last, merged_twiddle_last,
+        merged_twiddle_last, merged_twiddle_last
+    };
+    static const int32_t merged_twiddle_last_twisted = 151046689;
+    static const vec_int32_t vec_merged_twiddle_last_twisted = {
+        merged_twiddle_last_twisted, merged_twiddle_last_twisted,
+        merged_twiddle_last_twisted, merged_twiddle_last_twisted
     };
 
     vec_int32_t *p_vec = (vec_int32_t *)p->coeff;
@@ -815,8 +857,8 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
         k += 2 * 2 * offset;
     }
 
-    /* offset >= 4: layers 3–8 */
-    for (offset <<= 1; offset < ML_DSA_NUM_POLY_COEFFICIENTS; offset <<= 1) {
+    /* offset >= 4: layers 3–7 (standard lazy GS butterfly) */
+    for (offset <<= 1; offset < ML_DSA_NUM_POLY_COEFFICIENTS / 2; offset <<= 1) {
         step >>= 1;
         k = 0;
 
@@ -846,12 +888,33 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
         }
     }
 
-    /* Final normalization: multiply each coefficient by 256^{-1} mod q. */
-    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i++) {
-        p_vec[i] = montgomery_multiplication_vectorized(
-            vec_inverse_degree_montgomery,
-            vec_inverse_degree_montgomery_twisted,
-            p_vec[i]);
+    /*
+     * Layer 8 (offset == 128): fused butterfly + normalization.
+     *
+     * The even-sum output (coeff_j = even + odd) is multiplied by inv256_mont
+     * as usual.  The twiddle output (coeff_j_offset) is multiplied by the
+     * pre-merged constant merged_twiddle_last = MontMul(inv256_mont, neg_zeta_1),
+     * collapsing two Montgomery multiplications into one and eliminating the
+     * separate normalization pass entirely.
+     */
+    {
+        k = 0;
+        for (j = 0; j < ML_DSA_NUM_POLY_COEFFICIENTS / 2; j += NUM_INT32_IN_VECTOR) {
+            vec_int32_t even = p_vec[j / NUM_INT32_IN_VECTOR];
+            vec_int32_t odd = p_vec[(j + ML_DSA_NUM_POLY_COEFFICIENTS / 2)
+                / NUM_INT32_IN_VECTOR];
+
+            vec_int32_t coeff_j = montgomery_multiplication_vectorized(
+                vec_inverse_degree_montgomery,
+                vec_inverse_degree_montgomery_twisted,
+                odd + even);
+            vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
+                vec_merged_twiddle_last,
+                vec_merged_twiddle_last_twisted,
+                even - odd);
+            p_vec[j / NUM_INT32_IN_VECTOR] = coeff_j;
+            p_vec[(j + ML_DSA_NUM_POLY_COEFFICIENTS / 2) / NUM_INT32_IN_VECTOR] = coeff_j_offset;
+        }
     }
 }
 
