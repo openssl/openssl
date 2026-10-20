@@ -6632,6 +6632,7 @@ static int test_dtls_listener_idle_pending_not_driven_int(int version)
     DTLS_LISTENER *dl;
     int testresult = 0, k;
 
+    idle_pending_accept_calls = 0;
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), version, version,
             &sctx, &cctx, cert, privkey)))
