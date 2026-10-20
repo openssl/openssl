@@ -431,6 +431,9 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 #if defined(_ARCH_PPC64)
 #include "arch/ppc_arch.h"
 #endif
+#if defined(MLKEM_NTT_ARMV8_ASM)
+#include "arch/arm_arch.h"
+#endif
 
 /*
  * Function pointer types for NTT dispatch.
@@ -506,6 +509,21 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 }
 #endif
 
+#if defined(MLKEM_NTT_ARMV8_ASM)
+void ossl_ml_kem_ntt_armv8(uint16_t *c);
+void ossl_ml_kem_intt_armv8(uint16_t *c);
+
+static void scalar_ntt_armv8(scalar *s)
+{
+    ossl_ml_kem_ntt_armv8(s->c);
+}
+
+static void scalar_inverse_ntt_armv8(scalar *s)
+{
+    ossl_ml_kem_intt_armv8(s->c);
+}
+#endif
+
 /*
  * VX_COMPILER_SUPPORT_VEC128 is now defined (via include/crypto/ml_kem.h)
  * whenever OPENSSL_ML_KEM_S390X && __s390x__, without requiring __VX__.
@@ -569,6 +587,14 @@ static ml_kem_matrix_mult_intt_fn matrix_mult_intt = matrix_mult_intt_generic;
 
 static void ml_kem_ntt_init(void)
 {
+#if defined(MLKEM_NTT_ARMV8_ASM)
+    if (OPENSSL_armcap_P & ARMV7_NEON) {
+        scalar_ntt = scalar_ntt_armv8;
+        scalar_inverse_ntt = scalar_inverse_ntt_armv8;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_armv8;
+    }
+#endif
+
 /*
  * Initialize NTT function pointers to PPC64le implementations if available.
  * Scalar implementations are used by default.
