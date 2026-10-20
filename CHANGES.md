@@ -44,6 +44,15 @@ OpenSSL 4.2
 
    *Ingo Franzki*
 
+ * Added the `no-buildinfo-cflags` Configure option.  It stops the compiler
+   command line and flags from being recorded in `libcrypto`, which helps
+   reproducible builds across different build environments.
+   `OpenSSL_version(OPENSSL_CFLAGS)` and `openssl version -f` then report
+   `compiler: information not available`.
+   <!-- https://github.com/openssl/openssl/pull/33280 -->
+
+   *Dmitry Misharov*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
