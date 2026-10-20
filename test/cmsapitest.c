@@ -751,6 +751,7 @@ static int test_CMS_verify_result_partial_independence(void)
     EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
     X509 *cert1 = NULL, *local_cert2 = NULL;
     STACK_OF(CMS_SignerInfo) *sinfos;
+    STACK_OF(X509) *signers = NULL;
     CMS_SignerInfo *si1, *si2;
     ASN1_OCTET_STRING *sig;
     int ret = 0;
@@ -808,6 +809,12 @@ static int test_CMS_verify_result_partial_independence(void)
         || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_CERT), 1))
         goto end;
 
+    /* Only the signer whose signature verified may be reported */
+    if (!TEST_ptr(signers = CMS_get0_signers(cms))
+        || !TEST_int_eq(sk_X509_num(signers), 1)
+        || !TEST_int_eq(X509_cmp(sk_X509_value(signers, 0), local_cert2), 0))
+        goto end;
+
     /* now also break signer 2's signature: the overall call must now fail */
     if (!TEST_ptr(sig = CMS_SignerInfo_get0_signature(si2))
         || !TEST_size_t_gt(ASN1_STRING_get_length(sig), 0))
@@ -834,6 +841,7 @@ static int test_CMS_verify_result_partial_independence(void)
 
     ret = 1;
 end:
+    sk_X509_free(signers);
     CMS_ContentInfo_free(cms);
     X509_STORE_free(store);
     X509_free(cert1);
