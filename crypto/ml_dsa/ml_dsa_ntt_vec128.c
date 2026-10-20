@@ -359,14 +359,67 @@ static ossl_inline
 }
 
 /*
- * @brief Computes the Montgomery product of a and b.
- *        See [Seiler 2018, Algorithm 3].
+ * montgomery_multiplication_unreduced: raw Montgomery multiplication,
+ * no canonical reduction.
  *
- * @param a is the first factor, assumed to be in [0, q).
- * @param a_twist is (int32)((uint32)a * ML_DSA_Q_INV).
- * @param b is the second factor.
- * @returns The Montgomery product of a and b in the range
- *          [0, q).
+ * Algorithm (Seiler 2018, Algorithm 3):
+ *
+ *   k    = (a_twist * b) mod 2^32   (unsigned low-word multiply)
+ *   c    = mulh(k, q)               signed high-word
+ *   z_hi = mulh(a, b)               signed high-word
+ *   r    = z_hi - c
+ *
+ * where a_twist = (uint32_t)a * ML_DSA_Q_INV mod 2^32 (precomputed by caller).
+ *
+ * Correctness: r ≡ a * b * R^{-1} (mod q), R = 2^32.
+ *
+ * Range bounds (q = 8 380 417, R = 2^32):
+ *   |c| = |mulh(k, q)| <= floor(q / 2) = 4 190 208
+ *
+ *   Case a, b in [0, q):
+ *     |z_hi| <= floor((q-1)^2 / 2^32) = 16 379
+ *     |r| <= 4 206 587 < 2^23 < 2^31        (fits int32, no overflow)
+ *
+ *   Case a in [0, q), |b| <= 8q (NTT butterfly bound after lazy layers):
+ *     |z_hi| <= floor((q-1) * 8q / 2^32) = 131 072
+ *     |r| <= 4 321 280 < 2^23 < 2^31        (fits int32, no overflow)
+ *
+ *   Case L unreduced accumulations (matrix-vector row, L <= 7):
+ *     |sum| <= L * 4 321 280 <= 7 * 4 321 280 ≈ 30.2M < 2^25 << 2^31
+ *
+ * Implementation note: the low-word product k = a_twist * b must be computed
+ * as an *unsigned* 32-bit lane multiply.  a_twist holds precomputed values
+ * from zetas_montgomery_twisted[] such as 1830765815; multiplying those by
+ * even small values of b overflows int32_t, which is undefined behaviour and
+ * caught immediately by UBSan (signed integer overflow).
+ *
+ * Both operands are cast to the __may_alias__ unsigned type (vec_uint32_t)
+ * before multiplying so that wrapping is well-defined; the result is
+ * reinterpreted back as vec_int32_t.  See montgomery_multiplication_vectorized
+ * below for the full aliasing rationale.
+ *
+ * No reduction is performed; the caller is responsible for eventual
+ * reduce_fully() when the accumulated value must be brought to [0, q).
+ */
+static ossl_inline __owur vec_int32_t
+montgomery_multiplication_unreduced(vec_int32_t a, vec_int32_t a_twist,
+    vec_int32_t b)
+{
+    vec_int32_t k = (vec_int32_t)((vec_uint32_t)a_twist * (vec_uint32_t)b);
+    vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
+    vec_int32_t z_hi = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
+    return z_hi - c;
+}
+
+/*
+ * montgomery_multiplication_vectorized: Montgomery multiplication with full
+ * canonical reduction to [0, q).
+ *
+ * Wraps montgomery_multiplication_unreduced and applies reduce_twice_signed
+ * to bring the result into [0, q).  Use this when the canonical form is
+ * required immediately (e.g. the final INTT normalization step).  Prefer
+ * montgomery_multiplication_unreduced when results will be accumulated before
+ * a final reduce_fully().
  *
  * Implementation note: the low-word product k = a_twist * b must be computed
  * as an *unsigned* 32-bit lane multiply.  a_twist holds precomputed values
@@ -388,15 +441,12 @@ static ossl_inline
  * unsigned type (vec_uint32_t) is therefore required for both operands of the
  * low multiply, matching the ML-KEM pattern exactly.
  */
-static ossl_inline
-    vec_int32_t
-    montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
+static ossl_inline vec_int32_t
+montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist,
+    vec_int32_t b)
 {
-    vec_int32_t k = (vec_int32_t)((vec_uint32_t)a_twist * (vec_uint32_t)b);
-    vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
-    vec_int32_t z_high = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
-    vec_int32_t r = z_high - c;
-    return reduce_twice_signed(r);
+    return reduce_twice_signed(
+        montgomery_multiplication_unreduced(a, a_twist, b));
 }
 
 /*
