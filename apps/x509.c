@@ -312,6 +312,24 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
     return ret;
 }
 
+/* Return a finalized copy of cert, encoded and decoded again */
+static X509 *reparse_cert(const X509 *cert)
+{
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    X509 *copy = NULL;
+    int len = i2d_X509(cert, &der);
+
+    if (len > 0
+        && (copy = X509_new_ex(app_get0_libctx(), app_get0_propq())) != NULL) {
+        p = der;
+        if (d2i_X509(&copy, &p, len) == NULL)
+            copy = NULL;
+    }
+    OPENSSL_free(der);
+    return copy;
+}
+
 static int add_object(STACK_OF(ASN1_OBJECT) **sk, const char *name,
     const char *desc, const char *prog)
 {
@@ -374,6 +392,7 @@ int x509_main(int argc, char **argv)
     EVP_PKEY *privkey = NULL, *CAkey = NULL, *pubkey = NULL;
     EVP_PKEY *pkey;
     int newcert = 0, newout = 0;
+    int ext_deleted;
     char *issu = NULL, *subj = NULL, *digest = NULL;
     X509_NAME *fissu = NULL, *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
@@ -973,12 +992,29 @@ cert_loop:
 
     if (clrext && ext_names != NULL)
         BIO_puts(bio_err, "Warning: Ignoring -ext since -clrext is given\n");
+    ext_deleted = 0;
     for (i = X509_get_ext_count(x) - 1; i >= 0; i--) {
         const X509_EXTENSION *ex = X509_get_ext(x, i);
         const char *sn = OBJ_nid2sn(OBJ_obj2nid(X509_EXTENSION_get_object(ex)));
 
-        if (clrext || (ext_names != NULL && strstr(ext_names, sn) == NULL))
+        if (clrext || (ext_names != NULL && strstr(ext_names, sn) == NULL)) {
             X509_EXTENSION_free(X509_delete_ext(x, i));
+            ext_deleted = 1;
+        }
+    }
+    /*
+     * Deleting an extension leaves the certificate not finalized, see
+     * x509(7). Parse it again, unless it is new and finalized by signing below.
+     */
+    if (ext_deleted && !newcert) {
+        X509 *copy = reparse_cert(x);
+
+        if (copy == NULL)
+            goto err;
+        if (multi)
+            (void)sk_X509_set(certs, k, copy);
+        X509_free(x);
+        x = copy;
     }
 
     issuer_cert = x;
