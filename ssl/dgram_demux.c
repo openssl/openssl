@@ -66,8 +66,12 @@ struct dgram_demux_st {
     /* Maximum URXEs cached on urx_free; 0 means unbounded. */
     size_t max_free_urxe;
 
+    /* Permanent failure retained by pump_with_error(), protected by mutex. */
+    unsigned long permanent_error;
+
     /*
-     * Mutex protecting the URXE lists (urx_free and urx_pending).
+     * Mutex protecting receive operations, permanent_error and the URXE lists
+     * (urx_free and urx_pending).
      */
     CRYPTO_MUTEX *mutex;
 };
@@ -434,7 +438,9 @@ static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
     int ret;
 
     while ((e = ossl_list_urxe_head(&demux->urx_pending)) != NULL)
-        if ((ret = dgram_demux_process_pending_urxe(demux, e)) <= 0)
+        if (demux->permanent_error != 0)
+            return 0;
+        else if ((ret = dgram_demux_process_pending_urxe(demux, e)) <= 0)
             return ret;
 
     return 1;
@@ -444,12 +450,17 @@ static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
  * Drain the pending URXE list, processing any pending URXEs by making their
  * callbacks. If no URXEs are pending, a network read is attempted first.
  */
-int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
+static int dgram_demux_pump(DGRAM_DEMUX *demux, unsigned long *error)
 {
     int ret;
 
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
+
+    if (demux->permanent_error != 0) {
+        ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+        goto end;
+    }
 
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
         if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
@@ -476,9 +487,36 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
     ret = DGRAM_DEMUX_PUMP_RES_OK;
 
 end:
+    /*
+     * Capture the failure before another pump can enter the receive path.
+     * A routing callback drops the mutex, so another pump may already have
+     * recorded a failure while this one was processing a packet.
+     */
+    if (error != NULL && ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL
+        && demux->permanent_error == 0) {
+        demux->permanent_error = ERR_peek_last_error();
+        /* Retaining failure must not require allocation of an error queue. */
+        if (demux->permanent_error == 0)
+            demux->permanent_error = ERR_PACK(ERR_LIB_BIO, 0, BIO_R_TRANSFER_ERROR);
+    }
+    if (demux->permanent_error != 0)
+        ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+    if (error != NULL)
+        *error = demux->permanent_error;
+
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
     return ret;
+}
+
+int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
+{
+    return dgram_demux_pump(demux, NULL);
+}
+
+int ossl_dgram_demux_pump_with_error(DGRAM_DEMUX *demux, unsigned long *error)
+{
+    return dgram_demux_pump(demux, error);
 }
 
 /* Artificially inject a packet into the demuxer for testing purposes. */

@@ -412,7 +412,10 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
             size_t pkt_len = 0;
             void *pkt_handle = NULL;
 
-            if (rl->get_urxe_packet(rl->cbarg, &pkt_data, &pkt_len, &pkt_handle)) {
+            int pkt_ret = rl->get_urxe_packet(rl->cbarg, &pkt_data, &pkt_len,
+                &pkt_handle);
+
+            if (pkt_ret > 0) {
                 size_t urxe_data_read = pkt_len;
 
                 if (urxe_data_read > max - left)
@@ -426,6 +429,8 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                 /* Release packet back via callback */
                 if (rl->release_urxe_packet != NULL)
                     rl->release_urxe_packet(rl->cbarg, pkt_handle);
+            } else if (pkt_ret < 0) {
+                ret = OSSL_RECORD_RETURN_FATAL;
             } else {
                 /* No packets available */
                 ret = OSSL_RECORD_RETURN_RETRY;

@@ -2355,6 +2355,11 @@ static int ssl_reset_error_state(SSL_CONNECTION *sc)
     if (sc == NULL)
         return 1;
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (ossl_dtls_check_listener_error(sc))
+        return 0;
+#endif
+
     if (sc->statem.state == MSG_FLOW_ERROR) {
         sc->statem.error_state = ERROR_STATE_SSL;
         return 0;
@@ -2377,6 +2382,12 @@ static void ssl_update_error_state(SSL_CONNECTION *sc)
 
     if (sc == NULL)
         return;
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (sc->statem.state == MSG_FLOW_ERROR
+        && ossl_dtls_check_listener_error(sc))
+        return;
+#endif
 
     if (sc->statem.state == MSG_FLOW_ERROR
         && sc->statem.error_state == ERROR_STATE_NOERROR) {
@@ -8015,6 +8026,10 @@ int SSL_handle_events(SSL *s)
 #endif
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (sc != NULL && ossl_dtls_check_listener_error(sc))
+        return 0;
+#endif
     if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc))
         /*
          * DTLSv1_handle_timeout returns 0 if the timer wasn't expired yet,

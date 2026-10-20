@@ -1428,6 +1428,9 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 
     ossl_crypto_mutex_lock(dl->mutex);
 
+    if (dl->fatal)
+        goto release;
+
     /* Check established connections first */
     if (dl->established_conns != NULL)
         conn_ssl = ossl_dgram_conn_lookup_find(dl->established_conns, urxe);
@@ -1491,10 +1494,10 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
                 dl->ssl.ctx->new_pending_conn_arg);
             ossl_crypto_mutex_lock(dl->mutex);
 
-            if (!keep) {
+            if (!keep || dl->fatal) {
                 /*
-                 * The pending callback doesn't want this connection, so
-                 * unregister and free it. While the mutex was dropped a
+                 * The callback vetoed the connection or the listener failed.
+                 * Unregister and free it. While the mutex was dropped a
                  * concurrent handler may have found this same connection and
                  * injected datagrams into its RX queue; freeing releases them
                  * back to the demux via ossl_dtls_rx_free(), so nothing leaks.
@@ -2315,7 +2318,8 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
      * and up-ref them so they stay valid after we release the mutex.
      */
     ossl_crypto_mutex_lock(dl->mutex);
-    ossl_dgram_conn_lookup_foreach(dl->pending_conns, collect_pending_cb, &ctx);
+    if (!dl->fatal)
+        ossl_dgram_conn_lookup_foreach(dl->pending_conns, collect_pending_cb, &ctx);
     ossl_crypto_mutex_unlock(dl->mutex);
 
     /*
@@ -2356,6 +2360,12 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
 
         if (sc == NULL || sc->d1 == NULL)
             continue;
+
+        if (dl->fatal) {
+            ossl_dgram_conn_lookup_unregister(dl->pending_conns, &sc->d1->peer_addr);
+            dtls_listener_connection_free(ssl);
+            continue;
+        }
 
         /* Get peer address from the connection */
         if (BIO_ADDR_family(&sc->d1->peer_addr) != AF_UNSPEC) {
@@ -2409,6 +2419,91 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
     return result;
 }
 
+/* Caller holds dl->mutex. Never overwrite the first transport failure. */
+static void dtls_listener_set_error(DTLS_LISTENER *dl, unsigned long reason)
+{
+    if (dl->fatal != SSL_ERROR_NONE)
+        return;
+
+    dl->fatal_reason = reason;
+    dl->fatal = ERR_GET_LIB(reason) == ERR_LIB_SYS
+        ? SSL_ERROR_SYSCALL
+        : SSL_ERROR_SSL;
+    dtls_listener_signal_notifier(dl);
+}
+
+int ossl_dtls_listener_get_error(DTLS_LISTENER *dl, int raise_error)
+{
+    int fatal;
+    unsigned long reason;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    fatal = dl->fatal;
+    reason = dl->fatal_reason;
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    if (fatal != SSL_ERROR_NONE && raise_error) {
+        /* Keep unrelated errors and avoid duplicating the current diagnostic. */
+        if (ERR_peek_last_error() != reason)
+            ERR_raise(ERR_GET_LIB(reason), ERR_GET_REASON(reason));
+        if (fatal == SSL_ERROR_SYSCALL)
+            set_sys_error(ERR_GET_REASON(reason));
+    }
+    return fatal;
+}
+
+/* Test instrumentation only; always NULL outside the test harness. */
+void (*ossl_dtls_listener_pump_test_cb)(DTLS_LISTENER *dl) = NULL;
+
+/*
+ * Pump without the listener mutex: demux routing callbacks acquire it. The
+ * demux mutex is also released before publishing the failure and notifying
+ * waiters, so no demux-to-listener lock ordering is introduced here.
+ */
+int ossl_dtls_listener_pump(DTLS_LISTENER *dl)
+{
+    int ret;
+    unsigned long reason;
+
+    if (ossl_dtls_listener_get_error(dl, 1) != SSL_ERROR_NONE)
+        return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+    if (dl->net_rbio == NULL)
+        return DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL;
+
+    ret = ossl_dgram_demux_pump_with_error(dl->demux, &reason);
+    if (ossl_dtls_listener_pump_test_cb != NULL)
+        ossl_dtls_listener_pump_test_cb(dl);
+    if (ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL) {
+        ossl_crypto_mutex_lock(dl->mutex);
+        dtls_listener_set_error(dl, reason);
+        ossl_crypto_mutex_unlock(dl->mutex);
+    }
+
+    /* A concurrent pump may have failed while this one was routing packets. */
+    if (ossl_dtls_listener_get_error(dl, 1) != SSL_ERROR_NONE)
+        return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+    return ret;
+}
+
+/* Only the thread operating on this connection changes its state machine. */
+int ossl_dtls_check_listener_error(SSL_CONNECTION *sc)
+{
+    int error;
+
+    if (!SSL_CONNECTION_IS_DTLS(sc) || sc->d1 == NULL
+        || sc->d1->listener == NULL)
+        return 0;
+    error = ossl_dtls_listener_get_error((DTLS_LISTENER *)sc->d1->listener, 1);
+    if (error == SSL_ERROR_NONE)
+        return 0;
+
+    ossl_statem_send_fatal(sc, SSL_AD_NO_ALERT);
+    sc->statem.error_state = error == SSL_ERROR_SYSCALL
+        ? ERROR_STATE_SYSCALL
+        : ERROR_STATE_SSL;
+    return 1;
+}
+
 /*
  * ossl_dtls_tick - drive one iteration of the DTLS listener I/O loop.
  *
@@ -2422,11 +2517,11 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
  * Return values:
  *   1   A verified connection was pushed onto dl->incoming_connections.
  *   0   Exchange incomplete (HRR/HVR sent, or no data yet); call again.
- *  -1   Fatal error; dl->fatal is set.
+ *  -1   Failure; permanent receive errors are retained on the listener.
  */
 int ossl_dtls_tick(DTLS_LISTENER *dl)
 {
-    int pump_ret;
+    int pump_ret, ret;
 
     if (dl == NULL || dl->net_rbio == NULL)
         return 0;
@@ -2434,22 +2529,20 @@ int ossl_dtls_tick(DTLS_LISTENER *dl)
     /*
      * Get datagrams from the network and route them to connections.
      */
-    pump_ret = ossl_dgram_demux_pump(dl->demux);
+    pump_ret = ossl_dtls_listener_pump(dl);
 
-    if (pump_ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL) {
-        /* Fatal BIO or allocation error */
-        ossl_crypto_mutex_lock(dl->mutex);
-        dl->fatal = 1;
-        ossl_crypto_mutex_unlock(dl->mutex);
+    if (pump_ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL)
         return -1;
-    }
 
     /*
      * Drive Handshakes for pending connections.
      * call even if pump_ret indicates no data or temporary failure,
      * to allow handshakes to progress even when no new data is arriving
      */
-    return dtls_listener_drive_pending(dl);
+    ret = dtls_listener_drive_pending(dl);
+    if (ossl_dtls_listener_get_error(dl, 1) != SSL_ERROR_NONE)
+        return -1;
+    return ret;
 }
 
 SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
@@ -2469,10 +2562,11 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
     if (!ossl_dtls_listen(ssl))
         return NULL;
 
-    /* If a previous tick produced a fatal BIO error, do not try again. */
+    /* A permanently failed listener cannot accept further connections. */
     ossl_crypto_mutex_lock(dl->mutex);
     if (dl->fatal) {
         ossl_crypto_mutex_unlock(dl->mutex);
+        ossl_dtls_listener_get_error(dl, 1);
         return NULL;
     }
 
@@ -2495,15 +2589,14 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
          * Non-blocking: run one tick to drain any pending datagram, then
          * return whatever is in the queue
          */
-        if (dl->net_rbio != NULL) {
-            if (ossl_dtls_tick(dl) < 0) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-                return NULL;
-            }
-        }
+        if (dl->net_rbio != NULL && ossl_dtls_tick(dl) < 0)
+            return NULL;
         ossl_crypto_mutex_lock(dl->mutex);
-        conn = sk_SSL_shift(dl->incoming_connections);
+        if (!dl->fatal)
+            conn = sk_SSL_shift(dl->incoming_connections);
         ossl_crypto_mutex_unlock(dl->mutex);
+        if (conn == NULL)
+            ossl_dtls_listener_get_error(dl, 1);
         goto end;
     }
 
@@ -2523,15 +2616,15 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
      * without waiting in between, this loop would spin.
      */
     for (;;) {
-        if (ossl_dtls_tick(dl) < 0) {
-            /* fatal BIO error */
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        if (ossl_dtls_tick(dl) < 0)
             break;
-        }
 
         ossl_crypto_mutex_lock(dl->mutex);
-        conn = sk_SSL_shift(dl->incoming_connections);
+        if (!dl->fatal)
+            conn = sk_SSL_shift(dl->incoming_connections);
         ossl_crypto_mutex_unlock(dl->mutex);
+        if (ossl_dtls_listener_get_error(dl, 1) != SSL_ERROR_NONE && conn == NULL)
+            break;
         if (conn != NULL)
             break;
 
@@ -2541,7 +2634,7 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
          * listener: the network socket becoming readable, or another thread
          * signalling the notifier because it produced readiness on our behalf.
          */
-        if (!ossl_dtls_block_until_ready(ssl, SSL_POLL_EVENT_IC,
+        if (!ossl_dtls_block_until_ready(ssl, SSL_POLL_EVENT_IC | SSL_POLL_EVENT_EL,
                 ossl_time_infinite(), /*bound_by_event_timeout=*/1))
             break;
     }
@@ -3186,26 +3279,25 @@ int ossl_dtls_conn_wait_for_datagram(SSL *s)
     dl = (DTLS_LISTENER *)sc->d1->listener;
 
     for (;;) {
-        ossl_crypto_mutex_lock(dl->mutex);
-        if (dl->fatal) {
-            ossl_crypto_mutex_unlock(dl->mutex);
+        if (ossl_dtls_check_listener_error(sc))
             return 0;
-        }
-        ossl_crypto_mutex_unlock(dl->mutex);
 
         /*
          * An infinite deadline here is bounded by the connection's own event
          * timeout, which the poll translation folds in, so this still wakes in
          * time to retransmit.
          */
-        if (!ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_R,
+        if (!ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_R | SSL_POLL_EVENT_EC,
                 ossl_time_infinite(), /*bound_by_event_timeout=*/1))
             return 0;
 
         if (!SSL_handle_events(s))
             return 0;
 
-        ossl_dgram_demux_pump(sc->d1->rx->demux);
+        if (ossl_dtls_listener_pump(dl) == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL) {
+            ossl_dtls_check_listener_error(sc);
+            return 0;
+        }
 
         ossl_crypto_mutex_lock(sc->d1->rx->mutex);
         empty = ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
@@ -3238,22 +3330,19 @@ int ossl_dtls_conn_wait_for_datagram(SSL *s)
 int ossl_dtls_conn_wait_for_write(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
-    DTLS_LISTENER *dl;
-    int fatal;
+    int ret;
 
     if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)
         return 0;
 
-    dl = (DTLS_LISTENER *)sc->d1->listener;
-
-    ossl_crypto_mutex_lock(dl->mutex);
-    fatal = dl->fatal;
-    ossl_crypto_mutex_unlock(dl->mutex);
-    if (fatal)
+    if (ossl_dtls_check_listener_error(sc))
         return 0;
 
-    return ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_W,
+    ret = ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_W | SSL_POLL_EVENT_EC,
         ossl_time_infinite(), /*bound_by_event_timeout=*/0);
+    if (ossl_dtls_check_listener_error(sc))
+        return 0;
+    return ret;
 }
 
 void ossl_dtls_listener_enter_blocking_section(SSL *s)
@@ -3321,6 +3410,11 @@ int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     if (do_tick)
         ossl_dtls_tick(dl);
 
+    if (ossl_dtls_listener_get_error(dl, 0) != SSL_ERROR_NONE) {
+        *revents = events & SSL_POLL_EVENT_EL;
+        return 1;
+    }
+
     if ((events & SSL_POLL_EVENT_IC) != 0) {
         if (SSL_get_accept_connection_queue_len(s) > 0)
             result |= SSL_POLL_EVENT_IC;
@@ -3356,6 +3450,13 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     if (do_tick && sc->d1->listener != NULL) {
         DTLS_LISTENER *dl = (DTLS_LISTENER *)sc->d1->listener;
         ossl_dtls_tick(dl);
+    }
+
+    if (sc->d1->listener != NULL
+        && ossl_dtls_listener_get_error((DTLS_LISTENER *)sc->d1->listener, 0)
+            != SSL_ERROR_NONE) {
+        *revents = events & SSL_POLL_EVENT_EC;
+        return 1;
     }
 
     /*
@@ -3406,8 +3507,8 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
         result |= SSL_POLL_EVENT_W;
     }
 
-    if ((events & (SSL_POLL_EVENT_EC | SSL_POLL_EVENT_F)) != 0) {
-        if (SSL_get_error(s, 0) == SSL_ERROR_SSL || SSL_get_shutdown(s) != 0)
+    if ((events & SSL_POLL_EVENT_EC) != 0) {
+        if (ossl_statem_in_error(sc) || SSL_get_shutdown(s) != 0)
             result |= SSL_POLL_EVENT_EC;
     }
 

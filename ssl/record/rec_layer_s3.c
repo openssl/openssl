@@ -1161,6 +1161,9 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
     if (s == NULL || s->d1 == NULL || s->d1->rx == NULL)
         return 0;
 
+    if (ossl_dtls_check_listener_error(s))
+        return -1;
+
     urxe = ossl_dtls_read_datagram(s->d1->rx);
 
     /*
@@ -1172,7 +1175,9 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
      * callback can acquire the mutex when needed.
      */
     if (urxe == NULL && s->d1->listener != NULL) {
-        ossl_dgram_demux_pump(s->d1->rx->demux);
+        if (ossl_dtls_listener_pump((DTLS_LISTENER *)s->d1->listener)
+            == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL)
+            return -1;
         urxe = ossl_dtls_read_datagram(s->d1->rx);
     }
 
@@ -1187,6 +1192,8 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
         && ossl_dtls_conn_wait_for_datagram(SSL_CONNECTION_GET_SSL(s)))
         urxe = ossl_dtls_read_datagram(s->d1->rx);
 
+    if (urxe == NULL && ossl_dtls_check_listener_error(s))
+        return -1;
     if (urxe == NULL)
         return 0;
 

@@ -2394,6 +2394,7 @@ typedef struct dtls_listener_st {
      * - pending_conns: pending connection lookup table
      * - established_conns: established connection lookup table
      * - incoming_connections: queue of completed connections awaiting accept
+     * - fatal and fatal_reason: persistent listener transport failure
      *
      * Accessed from:
      * - Listener thread: packet handling, driving handshakes
@@ -2425,10 +2426,13 @@ typedef struct dtls_listener_st {
     TSAN_QUALIFIER int listening;
 
     /*
-     * Set by ossl_dtls_tick() when the network BIO returns a hard error.
-     * Once set, ossl_dtls_accept_connection() returns NULL immediately.
+     * The first permanent receive failure, protected by mutex. fatal holds
+     * SSL_ERROR_NONE, SSL_ERROR_SSL or SSL_ERROR_SYSCALL. fatal_reason retains
+     * the error code so later operations, including on other threads, can
+     * report the failure after the original thread's error queue is cleared.
      */
     int fatal;
+    unsigned long fatal_reason;
 
     /* Require HelloVerifyRequest + cookie for DTLS 1.0/1.2 */
     unsigned int require_hvr_cookie : 1;
@@ -3178,6 +3182,12 @@ int ossl_dtls_get_blocking_mode(const SSL *s);
 int ossl_dtls_conn_wait_for_datagram(SSL *s);
 int ossl_dtls_conn_wait_for_write(SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
+/* These functions acquire the listener mutex; callers must not hold it. */
+int ossl_dtls_listener_get_error(DTLS_LISTENER *dl, int raise_error);
+int ossl_dtls_listener_pump(DTLS_LISTENER *dl);
+/* Test-only interleaving hook; never set during normal library operation. */
+extern void (*ossl_dtls_listener_pump_test_cb)(DTLS_LISTENER *dl);
+int ossl_dtls_check_listener_error(SSL_CONNECTION *sc);
 
 /* DTLS Listener internal cookie callbacks */
 int ossl_dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,

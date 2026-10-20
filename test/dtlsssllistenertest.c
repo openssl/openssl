@@ -20,6 +20,7 @@
  *   - SSL_poll()
  */
 
+#include <errno.h>
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
@@ -5917,6 +5918,483 @@ end:
 }
 
 #ifndef OPENSSL_NO_DTLS1_2
+struct failing_recv_data {
+    int enabled;
+    int lib;
+    int reason;
+    int failures;
+    const BIO_ADDR *inject_peer;
+};
+
+#define BIO_TYPE_FAILING_RECV_FILTER (0x84 | BIO_TYPE_FILTER)
+
+static long failing_recv_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    if (cmd == BIO_CTRL_DUP || BIO_next(bio) == NULL)
+        return 0;
+    return BIO_ctrl(BIO_next(bio), cmd, num, ptr);
+}
+
+static int failing_recv_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
+{
+    struct failing_recv_data *data = BIO_get_data(bio);
+
+    BIO_clear_retry_flags(bio);
+    if (!data->enabled)
+        return BIO_recvmmsg(BIO_next(bio), msg, stride, num_msg, flags,
+            msgs_processed);
+
+    if (data->inject_peer != NULL) {
+        *msgs_processed = 0;
+        if (num_msg == 0 || msg->data == NULL || msg->data_len == 0
+            || msg->peer == NULL
+            || !BIO_ADDR_copy(msg->peer, data->inject_peer)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TRANSFER_ERROR);
+            return 0;
+        }
+        /* Admission runs before record validation; the callback vetoes this. */
+        *(unsigned char *)msg->data = 0;
+        msg->data_len = 1;
+        data->inject_peer = NULL;
+        *msgs_processed = 1;
+        return 1;
+    }
+
+    data->failures++;
+    *msgs_processed = 0;
+    ERR_raise(data->lib, data->reason);
+    return 0;
+}
+
+#if defined(OPENSSL_THREADS)
+struct translation_pending_data {
+    DTLS_LISTENER *dl;
+    struct failing_recv_data recv;
+    int calls;
+    size_t observed_waiters;
+};
+
+static int translation_pending_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    struct translation_pending_data *data = arg;
+
+    /* The application callback runs outside both listener and demux locks. */
+    ossl_crypto_mutex_lock(data->dl->mutex);
+    data->observed_waiters = data->dl->cur_blocking_waiters;
+    ossl_crypto_mutex_unlock(data->dl->mutex);
+    data->calls++;
+    data->recv.enabled = 1;
+    data->recv.lib = ERR_LIB_BIO;
+    data->recv.reason = BIO_R_NON_FATAL;
+    return 0;
+}
+
+/* A translation-time application callback must precede waiter registration. */
+static int test_dtls_poll_translation_before_waiter_registration(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL, *peer_b = NULL;
+    BIO_METHOD *method = NULL;
+    BIO *filter = NULL, *rbio;
+    struct translation_pending_data data = { 0 };
+    struct in_addr ina;
+    OSSL_TIME deadline;
+    size_t remaining_waiters;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    data.dl = (DTLS_LISTENER *)listener;
+    if (!TEST_true(data.dl->have_notifier)
+        || !TEST_int_ge(ossl_rio_notifier_as_fd(&data.dl->notifier), 0)
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_true(SSL_set_blocking_mode(serverssl, 0))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_ptr_null(SSL_get_rbio(serverssl)))
+        goto end;
+
+    /* A uses port 12345; B must create a new pending connection. */
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_ptr(peer_b = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(peer_b, AF_INET, &ina, sizeof(ina),
+            htons(12346)))
+        || !TEST_ptr(method = BIO_meth_new(BIO_TYPE_FAILING_RECV_FILTER,
+                         "Translation-time datagram injection"))
+        || !TEST_true(BIO_meth_set_ctrl(method, failing_recv_ctrl))
+        || !TEST_true(BIO_meth_set_recvmmsg(method, failing_recv_recvmmsg))
+        || !TEST_ptr(filter = BIO_new(method))
+        || !TEST_ptr(rbio = SSL_get_rbio(listener)))
+        goto end;
+
+    data.recv.enabled = 1;
+    data.recv.lib = ERR_LIB_BIO;
+    data.recv.reason = BIO_R_NON_FATAL;
+    data.recv.inject_peer = peer_b;
+    BIO_set_data(filter, &data.recv);
+    BIO_set_init(filter, 1);
+    if (!TEST_true(BIO_up_ref(rbio)))
+        goto end;
+    BIO_push(filter, rbio);
+    SSL_set0_rbio(listener, filter);
+    filter = NULL;
+    SSL_CTX_set_new_pending_conn_cb(sctx, translation_pending_cb, &data);
+
+    /*
+     * This is SSL_poll's wait path without its initial readout or deadline
+     * check. Translation therefore runs even if scheduling consumes 10 ms.
+     * B is vetoed, and all subsequent receives are transient, so no traffic
+     * or nested wait is needed. The absolute deadline bounds the OS wait.
+     */
+    ERR_clear_error();
+    deadline = ossl_time_add(ossl_time_now(), ossl_ms2time(10));
+    ret = ossl_dtls_block_until_ready(serverssl,
+        SSL_POLL_EVENT_R | SSL_POLL_EVENT_EC, deadline, 0);
+    ossl_crypto_mutex_lock(data.dl->mutex);
+    remaining_waiters = data.dl->cur_blocking_waiters;
+    ossl_crypto_mutex_unlock(data.dl->mutex);
+
+    testresult = TEST_true(ret);
+    testresult &= TEST_int_eq(data.calls, 1);
+    testresult &= TEST_size_t_eq(data.observed_waiters, 0);
+    testresult &= TEST_size_t_eq(remaining_waiters, 0);
+end:
+    if (sctx != NULL)
+        SSL_CTX_set_new_pending_conn_cb(sctx, NULL, NULL);
+    ERR_clear_error();
+    BIO_free_all(filter);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_meth_free(method);
+    BIO_ADDR_free(peer_b);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_THREADS */
+
+/*
+ * Deterministically simulate a second pump between the first demux failure
+ * and its publication. This is an interleaving simulation, not a thread test.
+ */
+static int overlapping_pump_calls;
+static int overlapping_pump_result;
+
+static void overlapping_pump_cb(DTLS_LISTENER *dl)
+{
+    ossl_dtls_listener_pump_test_cb = NULL;
+    overlapping_pump_calls++;
+    overlapping_pump_result = ossl_dtls_listener_pump(dl);
+}
+
+static int test_dtls_listener_error_replay(SSL *listener, SSL *serverssl,
+    struct failing_recv_data *data, int use_accept, int expected_error)
+{
+    SSL *accepted = NULL;
+    unsigned char buf[32];
+    size_t readbytes = 0;
+    unsigned long unrelated, error, last = 0;
+    int ret, ssl_error, found = 0, testresult = 1;
+    int failures = data->failures;
+
+    /* OpenSSL 4 permits unrelated errors to remain queued across SSL I/O. */
+    ERR_clear_error();
+    ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
+    unrelated = ERR_peek_error();
+    if (use_accept) {
+        accepted = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+        testresult &= TEST_ptr_null(accepted);
+        ssl_error = ossl_dtls_listener_get_error((DTLS_LISTENER *)listener, 0);
+    } else {
+        ret = SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes);
+        ssl_error = SSL_get_error(serverssl, ret);
+        testresult &= TEST_int_eq(ret, 0);
+        testresult &= TEST_size_t_eq(readbytes, 0);
+    }
+    testresult &= TEST_int_eq(ssl_error, expected_error);
+    testresult &= TEST_int_eq(data->failures, failures);
+    testresult &= TEST_ulong_eq(ERR_get_error(), unrelated);
+    while ((error = ERR_get_error()) != 0) {
+        if (ERR_GET_LIB(error) == data->lib
+            && ERR_GET_REASON(error) == data->reason)
+            found = 1;
+        last = error;
+    }
+    testresult &= TEST_true(found);
+    testresult &= TEST_int_eq(ERR_GET_LIB(last), data->lib);
+    testresult &= TEST_int_eq(ERR_GET_REASON(last), data->reason);
+    SSL_free(accepted);
+    return testresult;
+}
+
+/*
+ * A permanent receive error on the listener's transport must not look like
+ * an empty receive queue on an accepted connection (issue #33277).
+ * Cases 0/1 discover BIO/system errors through a connection read; cases 2/3
+ * discover them through listener poll first. Case 4 checks transient recovery.
+ * Cases 0-4 use memory BIOs. Cases 5/6 use real sockets and a blocking accepted
+ * connection, discovering a permanent BIO error through read/listener poll.
+ * Cases 7/8 replay BIO/system errors through read with an unrelated queued
+ * error; cases 9/10 do the same through accept. Case 11 simulates overlapping
+ * pumps. Each case exits after its own assertions, independently of the
+ * other regression cases.
+ */
+static int test_dtls_listener_permanent_recv_error(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    SSL *accepted = NULL;
+    BIO_ADDR *client_addr = NULL, *server_addr = NULL;
+    BIO_METHOD *method = NULL;
+    BIO *filter = NULL, *rbio;
+    struct failing_recv_data data = { 1, ERR_LIB_BIO, BIO_R_TRANSFER_ERROR, 0, NULL };
+    SSL_POLL_ITEM items[2] = { 0 };
+    struct timeval timeout = { 0, 0 };
+    const char msg[] = "receive recovered";
+    unsigned char buf[32];
+    size_t readbytes = 0, written, result_count;
+    unsigned long error;
+    int ret, ssl_error, expected_error, failures, i, testresult = 0;
+    int transient = idx == 4;
+    int blocking = idx == 5 || idx == 6;
+    int server_fd = -1, client_fd = -1;
+
+    expected_error = SSL_ERROR_SSL;
+    if (transient) {
+        data.reason = BIO_R_NON_FATAL;
+        expected_error = SSL_ERROR_WANT_READ;
+    } else if (idx == 1 || idx == 3 || idx == 8 || idx == 10) {
+        data.lib = ERR_LIB_SYS;
+        data.reason = EBADF;
+        expected_error = SSL_ERROR_SYSCALL;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (blocking) {
+        /* Keep the listener non-blocking while driving both handshake ends. */
+        if (!TEST_true(create_dtls_listener(sctx, 0,
+                &listener, &server_addr, &server_fd))
+            || !TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+                &clientssl, &client_fd)))
+            goto end;
+    } else if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+                   SSL_LISTENER_FLAG_SINGLE_THREAD, &listener, &clientssl,
+                   &client_addr))) {
+        goto end;
+    }
+
+    if (!TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_true(SSL_set_blocking_mode(serverssl, 0))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* An empty, working transport is retryable. */
+    ERR_clear_error();
+    ret = SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes);
+    ssl_error = SSL_get_error(serverssl, ret);
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_eq(ssl_error, SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Install a receive-only failure after the handshake. The chain needs its
+     * own reference to the underlying BIO; the listener still uses it to send.
+     */
+    if (!TEST_ptr(method = BIO_meth_new(BIO_TYPE_FAILING_RECV_FILTER,
+                      "Datagram receive failure"))
+        || !TEST_true(BIO_meth_set_ctrl(method, failing_recv_ctrl))
+        || !TEST_true(BIO_meth_set_recvmmsg(method, failing_recv_recvmmsg))
+        || !TEST_ptr(filter = BIO_new(method))
+        || !TEST_ptr(rbio = SSL_get_rbio(listener)))
+        goto end;
+    BIO_set_data(filter, &data);
+    BIO_set_init(filter, 1);
+    if (!TEST_true(BIO_up_ref(rbio)))
+        goto end;
+    BIO_push(filter, rbio);
+    SSL_set0_rbio(listener, filter);
+    filter = NULL;
+
+    /* Only switch to blocking once the handshake and failure filter are ready. */
+    if (blocking
+        && (!TEST_true(SSL_set_blocking_mode(serverssl, 1))
+            || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 1)))
+        goto end;
+
+    items[0].desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    items[0].desc.value.ssl = listener;
+    items[0].events = SSL_POLL_EVENT_EL;
+    items[1].desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    items[1].desc.value.ssl = serverssl;
+    items[1].events = SSL_POLL_EVENT_EC;
+
+    if (idx == 2 || idx == 3 || idx == 6) {
+        /* The first connection read must also handle an already-failed parent. */
+        ERR_clear_error();
+        if (!TEST_true(SSL_poll(items, 1, sizeof(items[0]), &timeout, 0,
+                &result_count))
+            || !TEST_size_t_eq(result_count, 1)
+            || !TEST_true(items[0].revents == SSL_POLL_EVENT_EL)
+            || !TEST_int_eq(data.failures, 1))
+            goto end;
+    }
+
+    /*
+     * A permanent pump failure must return fatal before an actual socket wait.
+     * If a regression reaches the blocking wait path, its tick still sees the
+     * always-failing receive filter and latches the fatal error before waiting,
+     * so these socket cases should not wait indefinitely for client traffic.
+     */
+    if (idx == 11) {
+        overlapping_pump_calls = 0;
+        overlapping_pump_result = 0;
+        ossl_dtls_listener_pump_test_cb = overlapping_pump_cb;
+    }
+    ERR_clear_error();
+    ret = SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes);
+    ossl_dtls_listener_pump_test_cb = NULL;
+    ssl_error = SSL_get_error(serverssl, ret);
+    error = ERR_peek_error();
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_size_t_eq(readbytes, 0)
+        || !TEST_int_gt(data.failures, 0)
+        || !TEST_int_eq(ssl_error, expected_error))
+        goto end;
+
+    if (transient) {
+        if (!TEST_ulong_eq(error, 0))
+            goto end;
+        data.enabled = 0;
+        failures = data.failures;
+        if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+            || !TEST_size_t_eq(written, sizeof(msg))
+            || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+            || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg))
+            || !TEST_int_eq(data.failures, failures))
+            goto end;
+        testresult = 1;
+        goto end;
+    }
+
+    if (idx == 11) {
+        testresult = TEST_int_eq(overlapping_pump_calls, 1);
+        testresult &= TEST_int_eq(overlapping_pump_result,
+            DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL);
+        testresult &= TEST_int_eq(data.failures, 1);
+        /* The failure remains available after clearing the error queue. */
+        ERR_clear_error();
+        testresult &= TEST_int_eq(ossl_dtls_listener_get_error(
+                                      (DTLS_LISTENER *)listener, 1),
+            expected_error);
+        error = ERR_peek_last_error();
+        testresult &= TEST_int_eq(ERR_GET_LIB(error), data.lib);
+        testresult &= TEST_int_eq(ERR_GET_REASON(error), data.reason);
+        goto end;
+    }
+
+    if (!TEST_int_eq(data.failures, 1)
+        || !TEST_int_eq(ERR_GET_LIB(error), data.lib)
+        || !TEST_int_eq(ERR_GET_REASON(error), data.reason))
+        goto end;
+
+    if (idx >= 7 && idx <= 10) {
+        testresult = test_dtls_listener_error_replay(listener, serverssl,
+            &data, idx >= 9, expected_error);
+        goto end;
+    }
+
+    /* Clearing the queue must not lose the saved diagnostic or restart I/O. */
+    ERR_clear_error();
+    ret = SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes);
+    ssl_error = SSL_get_error(serverssl, ret);
+    error = ERR_peek_error();
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_size_t_eq(readbytes, 0)
+        || !TEST_int_eq(ssl_error, expected_error)
+        || !TEST_int_eq(ERR_GET_LIB(error), data.lib)
+        || !TEST_int_eq(ERR_GET_REASON(error), data.reason)
+        || !TEST_int_eq(data.failures, 1))
+        goto end;
+
+    for (i = 0; i < 2; i++) {
+        ERR_clear_error();
+        accepted = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+        error = ERR_peek_error();
+        if (!TEST_ptr_null(accepted)
+            || !TEST_ulong_ne(error, 0)
+            || !TEST_int_eq(ERR_GET_LIB(error), data.lib)
+            || !TEST_int_eq(ERR_GET_REASON(error), data.reason)
+            || !TEST_int_eq(data.failures, 1))
+            goto end;
+    }
+
+    /* Error events are reported only when requested, on the correct object. */
+    ERR_clear_error();
+    items[0].revents = items[1].revents = 0;
+    if (!TEST_true(SSL_poll(items, 2, sizeof(items[0]), &timeout, 0,
+            &result_count))
+        || !TEST_size_t_eq(result_count, 2)
+        || !TEST_true(items[0].revents == SSL_POLL_EVENT_EL)
+        || !TEST_true(items[1].revents == SSL_POLL_EVENT_EC)
+        || !TEST_int_eq(data.failures, 1))
+        goto end;
+
+    /*
+     * A finite wait exercises poll-descriptor translation with exceptions
+     * masked out. Neither failed object should cause another transport pump.
+     */
+    ERR_clear_error();
+    timeout.tv_usec = 1000;
+    items[0].events = SSL_POLL_EVENT_IC;
+    items[1].events = SSL_POLL_EVENT_R;
+    items[0].revents = items[1].revents = 0;
+    if (!TEST_true(SSL_poll(items, 2, sizeof(items[0]), &timeout, 0,
+            &result_count))
+        || !TEST_size_t_eq(result_count, 0)
+        || !TEST_true(items[0].revents == 0)
+        || !TEST_true(items[1].revents == 0)
+        || !TEST_int_eq(data.failures, 1))
+        goto end;
+
+    testresult = 1;
+end:
+    ossl_dtls_listener_pump_test_cb = NULL;
+    ERR_clear_error();
+    BIO_free_all(filter);
+    SSL_free(accepted);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_meth_free(method);
+    BIO_ADDR_free(client_addr);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /*
  * Regression test for the receive-queue bound and its overflow policy: a
  * connection left unread must not accumulate an unbounded datagram queue,
@@ -6563,6 +7041,10 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls12_connection_with_hvr);
     ADD_TEST(test_dtls12_connection_without_hvr);
+    ADD_ALL_TESTS(test_dtls_listener_permanent_recv_error, 12);
+#if defined(OPENSSL_THREADS)
+    ADD_TEST(test_dtls_poll_translation_before_waiter_registration);
+#endif
 #endif
 
 #ifndef OPENSSL_NO_DTLS1_3

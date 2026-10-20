@@ -245,6 +245,20 @@ void ossl_dgram_demux_reinject_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e);
 int ossl_dgram_demux_pump(DGRAM_DEMUX *demux);
 
 /*
+ * Pump with persistent failure handling for a shared DTLS listener transport.
+ * error must be non-NULL. The first permanent error is saved under the demux
+ * mutex and returned through *error; subsequent pumps do not receive or route
+ * further packets. *error is zero when no permanent failure has occurred.
+ * Replacing the BIO does not reset this state. The caller reports the saved
+ * diagnostic after the demux mutex has been released.
+ *
+ * Callers requiring this policy must use this entry point consistently.
+ * The ordinary pump entry point does not enable failure retention, preserving
+ * the error-handling policy of other demux users such as QUIC.
+ */
+int ossl_dgram_demux_pump_with_error(DGRAM_DEMUX *demux, unsigned long *error);
+
+/*
  * Artificially inject a packet into the demuxer for testing purposes. The
  * buffer must not exceed the URXE size being used by the demuxer.
  *

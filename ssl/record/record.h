@@ -211,7 +211,8 @@ OSSL_CORE_MAKE_FUNC(size_t, rlayer_padding, (void *cbarg, int type, size_t len))
 /*
  * Callback for listener-based connections to read data from their receive
  * queue. Used by DTLS listener connections (and future TLS listener).
- * Returns 1 on success with data/len set, 0 if no data available.
+ * Returns 1 on success with data/len set, 0 if no data available, or -1 on
+ * permanent failure with the transport diagnostic on the error queue.
  * The caller must call the release callback when done with the data.
  */
 #define OSSL_FUNC_RLAYER_GET_URXE_PACKET 5
