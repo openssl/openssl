@@ -15232,6 +15232,66 @@ end:
     return testresult;
 }
 #endif /* OPENSSL_NO_TLS1_2 */
+
+/*
+ * The ClientHello raw extension array is sized when the ClientHello is
+ * collected. Switching to an SSL_CTX with more custom extensions from the
+ * ClientHello callback must not make the later parse walk past its end.
+ */
+static int cust_ext_switch_parse_cb(SSL *s, unsigned int ext_type,
+    unsigned int context, const unsigned char *in, size_t inlen, X509 *x,
+    size_t chainidx, int *al, void *parse_arg)
+{
+    return 1;
+}
+
+static int cust_ext_switch_ch_cb(SSL *s, int *al, void *arg)
+{
+    SSL_CTX *newctx = arg;
+
+    if (SSL_get_SSL_CTX(s) != newctx && SSL_set_SSL_CTX(s, newctx) == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+    return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+static int test_ctx_switch_more_custom_exts(void)
+{
+    SSL_CTX *sctx = NULL, *newsctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    unsigned int i;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
+            0, 0, &newsctx, NULL, cert, privkey)))
+        goto end;
+
+    for (i = 0; i < 64; i++)
+        if (!TEST_true(SSL_CTX_add_custom_ext(newsctx, 0xff10 + i,
+                SSL_EXT_CLIENT_HELLO, NULL, NULL, NULL,
+                cust_ext_switch_parse_cb, NULL)))
+            goto end;
+
+    SSL_CTX_set_client_hello_cb(sctx, cust_ext_switch_ch_cb, newsctx);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(newsctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -19528,6 +19588,7 @@ int setup_tests(void)
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_sigalg_ctx_switch, 4);
+    ADD_TEST(test_ctx_switch_more_custom_exts);
     ADD_ALL_TESTS(test_sigalg_ctx_switch_cert_cb, 2);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_sigalg_ctx_switch_reneg);

@@ -2103,6 +2103,25 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
     }
 
+    /*
+     * The callback may have switched to an SSL_CTX with a different set of
+     * custom extensions. The collected extensions are indexed by that set, so
+     * collect them again for the context now in use.
+     */
+    if (SSL_CONNECTION_GET_CTX(s) != sctx) {
+        PACKET extensions = clienthello->extensions;
+
+        OPENSSL_free(clienthello->pre_proc_exts);
+        clienthello->pre_proc_exts = NULL;
+        clienthello->pre_proc_exts_len = 0;
+        if (!tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
+                &clienthello->pre_proc_exts,
+                &clienthello->pre_proc_exts_len, 1)) {
+            /* SSLfatal already been called */
+            goto err;
+        }
+    }
+
     /* Set up the client_random */
     memcpy(s->s3.client_random, clienthello->random, SSL3_RANDOM_SIZE);
 
