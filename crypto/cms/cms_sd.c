@@ -847,7 +847,7 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms)
     sinfos = CMS_get0_SignerInfos(cms);
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
         si = sk_CMS_SignerInfo_value(sinfos, i);
-        if (si->signer != NULL) {
+        if (si->signer != NULL && si->verify_result) {
             if (!ossl_x509_add_cert_new(&signers, si->signer,
                     X509_ADD_FLAG_DEFAULT)) {
                 sk_X509_free(signers);
