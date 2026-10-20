@@ -102,7 +102,26 @@ void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
 void ossl_ml_dsa_poly_ntt_scalar(POLY *p);
 void ossl_ml_dsa_poly_ntt_vec128(POLY *p);
 void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p);
-void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out);
+/**
+ * @brief Vectorized pointwise polynomial multiplication in NTT form.
+ *
+ * @param lhs Multiplicand polynomial
+ * @param rhs Multiplier polynomial
+ * @param out Result polynomial
+ */
+void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs,
+    POLY *out);
+
+/**
+ * @brief Vectorized matrix-vector multiplication in NTT form.
+ * Computes t[i] = sum_j A[i,j] (*) s[j] for each row i.
+ *
+ * @param a A k * l matrix of polynomials in NTT form
+ * @param s A 1 * l vector of polynomials in NTT form
+ * @param t A 1 * k vector of polynomial results in NTT form
+ */
+void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
+    VECTOR *t);
 #endif
 
 void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r0);

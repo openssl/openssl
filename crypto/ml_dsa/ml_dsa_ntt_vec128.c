@@ -28,6 +28,8 @@
 
 #include "ml_dsa_local.h"
 #include "ml_dsa_poly.h"
+#include "ml_dsa_vector.h"
+#include "ml_dsa_matrix.h"
 
 #if defined(VX_COMPILER_SUPPORT_VEC128)
 
@@ -850,6 +852,80 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
             vec_inverse_degree_montgomery,
             vec_inverse_degree_montgomery_twisted,
             p_vec[i]);
+    }
+}
+
+/*
+ * ossl_ml_dsa_matrix_mult_vector_vec128: vectorized matrix-vector multiply
+ * with lazy (deferred) reduction.
+ *
+ * Computes t[i] = sum_{j=0}^{l-1} A[i,j] (*) s[j]  for each row i, where (*)
+ * denotes NTT-domain pointwise Montgomery multiplication.
+ *
+ * For each row the per-element products are accumulated *without* per-product
+ * reduction using montgomery_multiplication_unreduced().  After l terms the
+ * accumulated int32 value satisfies |acc| <= l * 4 321 280 <= 7 * 4 321 280
+ * ≈ 30.2M < 2^25, well within signed 32-bit range.  A single reduce_fully()
+ * pass at the end of each row converts to [0, q).
+ *
+ * This avoids:
+ *   - reduce_twice_signed inside each pointwise multiply  (l*256/4 calls/row)
+ *   - reduce_once inside poly_add                         (l*256 calls/row)
+ *   - The intermediate scratch POLY used by the scalar path
+ *
+ * The matrix A and the input vector s contain only public NTT-domain values,
+ * so no OPENSSL_cleanse of the accumulator is required.
+ *
+ * Pre:  All coefficients of A and s are in [0, q)  (NTT-domain standard form).
+ *       t->num_poly == a->k,  a->l == s->num_poly.
+ * Post: All coefficients of t are in [0, q) and represent
+ *       sum_j A[i,j] (*) s[j] reduced mod q.
+ */
+void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
+    VECTOR *t)
+{
+    size_t i, j;
+    const POLY *ap = a->m_poly;
+
+    for (i = 0; i < a->k; i++) {
+        vec_int32_t *t_vec = (vec_int32_t *)t->poly[i].coeff;
+        int c;
+
+        /* First column: initialise accumulator (no addition). */
+        {
+            const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
+            const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[0].coeff;
+
+            for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR;
+                c++) {
+                vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
+                    * (vec_uint32_t)vec_q_inv);
+                t_vec[c] = montgomery_multiplication_unreduced(a_vec[c],
+                    a_twist,
+                    s_vec[c]);
+            }
+            ap++;
+        }
+
+        /* Remaining columns: accumulate without per-product reduction. */
+        for (j = 1; j < a->l; j++) {
+            const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
+            const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[j].coeff;
+
+            for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR;
+                c++) {
+                vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
+                    * (vec_uint32_t)vec_q_inv);
+                t_vec[c] += montgomery_multiplication_unreduced(a_vec[c],
+                    a_twist,
+                    s_vec[c]);
+            }
+            ap++;
+        }
+
+        /* Single Barrett reduction pass over the accumulated row output. */
+        for (c = 0; c < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; c++)
+            t_vec[c] = reduce_fully(t_vec[c]);
     }
 }
 

@@ -12,16 +12,8 @@
 #include "ml_dsa_vector.h"
 #include "ml_dsa_matrix.h"
 
-/*
- * Matrix multiply of a k*l matrix of polynomials by a 1 * l vector of
- * polynomials to produce a 1 * k vector of polynomial results.
- * i.e. t = a * s
- *
- * @param a A k * l matrix of polynomials in NTT form
- * @param s A 1 * l vector of polynomials in NTT form
- * @param t 1 * k vector of polynomial results in NTT form
- */
-void ossl_ml_dsa_matrix_mult_vector(const MATRIX *a, const VECTOR *s,
+/* Scalar (fallback) implementation */
+static void matrix_mult_vector_scalar(const MATRIX *a, const VECTOR *s,
     VECTOR *t)
 {
     size_t i, j;
@@ -38,4 +30,39 @@ void ossl_ml_dsa_matrix_mult_vector(const MATRIX *a, const VECTOR *s,
     }
 
     OPENSSL_cleanse(&product, sizeof(product));
+}
+
+/*
+ * Function pointer for the matrix-vector multiply implementation.
+ * Defaults to the scalar path; upgraded to the vec128 path on s390x if the
+ * VX facility is present (see ml_dsa_matrix_init below).
+ */
+typedef void (*matrix_mult_vector_fn)(const MATRIX *, const VECTOR *,
+    VECTOR *);
+static matrix_mult_vector_fn matrix_mult_impl = matrix_mult_vector_scalar;
+
+static CRYPTO_ONCE matrix_once = CRYPTO_ONCE_STATIC_INIT;
+
+static void ml_dsa_matrix_init(void)
+{
+#if defined(OPENSSL_ML_DSA_S390X)
+    if (S390X_VX_CAPABLE)
+        matrix_mult_impl = ossl_ml_dsa_matrix_mult_vector_vec128;
+#endif
+}
+
+/*
+ * Matrix multiply of a k*l matrix of polynomials by a 1 * l vector of
+ * polynomials to produce a 1 * k vector of polynomial results.
+ * i.e. t = a * s
+ *
+ * @param a A k * l matrix of polynomials in NTT form
+ * @param s A 1 * l vector of polynomials in NTT form
+ * @param t 1 * k vector of polynomial results in NTT form
+ */
+void ossl_ml_dsa_matrix_mult_vector(const MATRIX *a, const VECTOR *s,
+    VECTOR *t)
+{
+    (void)CRYPTO_THREAD_run_once(&matrix_once, ml_dsa_matrix_init);
+    matrix_mult_impl(a, s, t);
 }
