@@ -5441,7 +5441,7 @@ static const struct {
         POLL_CLEANUP_TRANSLATION_FAILURE },
     { "QUIC/DTLS after poll", POLL_CLEANUP_QUIC_DTLS, POLL_CLEANUP_AFTER_POLL },
     { "QUIC/DTLS ready", POLL_CLEANUP_QUIC_DTLS, POLL_CLEANUP_READY },
-    /* Passed before this fix; catches either protocol being drained first. */
+    /* Guard against waiting on one protocol before deregistering the other. */
     { "QUIC/DTLS translation failure", POLL_CLEANUP_QUIC_DTLS,
         POLL_CLEANUP_TRANSLATION_FAILURE },
 };
@@ -5708,6 +5708,10 @@ static int test_dtls_poll_cleanup_order(int idx)
     } while (ossl_time_compare(ossl_time_now(), deadline) < 0);
     ok = TEST_size_t_eq(remaining[0], 1) && TEST_size_t_eq(remaining[1], 1);
 end:
+    /*
+     * Release the worker if an early failure skipped the normal release above.
+     * On the normal path, t.release is already set.
+     */
     if (t.mutex != NULL) {
         ossl_crypto_mutex_lock(t.mutex);
         t.release = 1;
