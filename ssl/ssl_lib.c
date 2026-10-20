@@ -3117,6 +3117,22 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
+    /*
+     * An unsent reciprocal KeyUpdate does not prevent an orderly close.
+     * Cancel it only at a completed post-handshake boundary, with no write-key
+     * installation pending. A KeyUpdate already in flight must retain its
+     * state until the exchange completes.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc)
+        && !SSL_IS_FIRST_HANDSHAKE(sc)
+        && sc->statem.state == MSG_FLOW_FINISHED
+        && sc->statem.hand_state == TLS_ST_OK
+        && sc->key_update == SSL_KEY_UPDATE_NOT_REQUESTED
+        && !sc->d1->key_update_write_pending) {
+        sc->key_update = SSL_KEY_UPDATE_NONE;
+        ossl_statem_set_in_init(sc, 0);
+    }
+
     if (!SSL_in_init(s)) {
         if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
             struct ssl_async_args args;

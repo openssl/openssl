@@ -6596,28 +6596,15 @@ end:
 }
 
 /*
- * Mirror of test_dtls13_reciprocal_keyupdate_app_data_classification with no
- * buffered application data anywhere in flight, retrying only on a condition
- * that is actually reported rather than unconditionally after WANT_READ.
- * idx selects which side requests the reciprocal KeyUpdate: idx == 0 the
- * client, idx == 1 the server.
- *
- * Without application data racing the exchange, nothing about the
- * connection's read-side readiness changes once the requester's ACK has been
- * consumed: SSL_pending(), SSL_has_pending() and the read BIO all read
- * exactly as they did before any of this started. SSL_read.pod's retry rule
- * -- call again once the underlying BIO can satisfy the read, or
- * SSL_pending()/SSL_has_pending() says bytes are already buffered -- gives no
- * basis to call SSL_read() again at that point, yet the reciprocal KeyUpdate
- * is still unsent. SSL_in_init() is the condition that is actually reported
- * here: true means the state machine still has local work scheduled, and
- * that -- not WANT_READ, not buffered application data -- is what justifies
- * calling SSL_read() again (see the comment in tls_process_key_update(),
- * statem_lib.c, and dtls1_read_bytes()'s in-init check at the top of the
- * function).
+ * With no application data in flight, a reciprocal KeyUpdate can remain
+ * scheduled while both endpoints wait for input. SSL_in_init() describes
+ * handshake state, not readiness, so it is not a reason to retry a read.
+ * A later application write must send the response before its application
+ * data. idx selects the requester: 0 for the client, 1 for the server.
  */
 static int test_dtls13_reciprocal_keyupdate_no_app_data_classification(int idx)
 {
+    static const char msg[] = "p";
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *server = NULL, *client = NULL;
     SSL *local, *peer;
@@ -6657,13 +6644,9 @@ static int test_dtls13_reciprocal_keyupdate_no_app_data_classification(int idx)
         || !TEST_false(SSL_is_init_finished(peer)))
         goto end;
 
-    /*
-     * The requester consumes the peer's ACK and goes idle -- it has nothing
-     * else to send. This is the point the reviewed comment is about:
-     * SSL_pending(), SSL_has_pending() and the read BIO all read exactly as
-     * they did before any of this started, yet the reciprocal KeyUpdate is
-     * still unsent and SSL_in_init(peer) is still true.
-     */
+    /* The requester consumes the ACK and has no further input to send. */
+    if (!TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(local)), 0))
+        goto end;
     ret = SSL_read(local, buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ)
         || !TEST_false(SSL_in_init(local)))
@@ -6675,39 +6658,118 @@ static int test_dtls13_reciprocal_keyupdate_no_app_data_classification(int idx)
         goto end;
 
     /*
-     * SSL_in_init() is the condition actually reported here, and it alone
-     * justifies calling SSL_read() again: this drives out the peer's
-     * scheduled reciprocal KeyUpdate even though nothing new ever arrived
-     * on its read BIO.
+     * No input is available, so do not retry SSL_read(). A later application
+     * write sends the scheduled reciprocal KeyUpdate, then waits for its ACK.
      */
-    ret = SSL_read(peer, buf, sizeof(buf));
+    ret = SSL_write(peer, msg, sizeof(msg) - 1);
     if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ))
         goto end;
 
     /* The requester receives the reciprocal KeyUpdate and acknowledges it. */
+    if (!TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(local)), 0))
+        goto end;
     ret = SSL_read(local, buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ))
         goto end;
 
     /*
-     * The peer processes that ACK, completing its own write-key install --
-     * again with nothing else to classify, since no application data was
-     * ever in flight.
+     * Input is available for the blocked write: retry with the same data to
+     * consume the ACK, install the write keys and send the application record.
      */
-    ret = SSL_read(peer, buf, sizeof(buf));
-    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ)
+    if (!TEST_size_t_gt(BIO_ctrl_pending(SSL_get_rbio(peer)), 0)
+        || !TEST_int_eq(SSL_write(peer, msg, sizeof(msg) - 1), 1)
         || !TEST_true(SSL_is_init_finished(peer))
         || !TEST_false(pc->d1->key_update_write_pending)
         || !TEST_uint64_t_ne(dtls1_get_epoch(pc, SSL3_CC_WRITE), epoch_before))
         goto end;
 
     /* Application data flows both ways under the fully-updated epoch. */
-    if (!TEST_int_eq(SSL_write(peer, "p", 1), 1)
-        || !TEST_int_eq(SSL_read(local, buf, 1), 1)
+    if (!TEST_int_eq(SSL_read(local, buf, 1), 1)
         || !TEST_uchar_eq(buf[0], 'p')
         || !TEST_int_eq(SSL_write(local, "l", 1), 1)
         || !TEST_int_eq(SSL_read(peer, buf, 1), 1)
         || !TEST_uchar_eq(buf[0], 'l'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * An unsent reciprocal KeyUpdate must not prevent an orderly close. Exercise
+ * both responder roles without application data or buffered input, and check
+ * that shutdown does not start another KeyUpdate exchange.
+ */
+static int test_dtls13_scheduled_keyupdate_shutdown(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL *local, *peer;
+    SSL_CONNECTION *pc;
+    unsigned char buf[1];
+    uint64_t epoch_before;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+
+    local = (idx == 0) ? client : server;
+    peer = (idx == 0) ? server : client;
+    pc = SSL_CONNECTION_FROM_SSL(peer);
+    epoch_before = dtls1_get_epoch(pc, SSL3_CC_WRITE);
+
+    if (!TEST_true(SSL_key_update(local, SSL_KEY_UPDATE_REQUESTED)))
+        goto end;
+    ret = SSL_do_handshake(local);
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Receive the request and schedule, but do not send, the response. */
+    ret = SSL_read(peer, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(peer, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Consume the request's ACK so that neither transport has pending input. */
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(SSL_is_init_finished(local))
+        || !TEST_int_eq(SSL_get_state(peer), TLS_ST_OK)
+        || !TEST_int_eq(pc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_false(pc->d1->key_update_write_pending)
+        || !TEST_int_eq(SSL_pending(peer), 0)
+        || !TEST_false(SSL_has_pending(peer))
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(peer)), 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_rbio(local)), 0))
+        goto end;
+
+    if (!TEST_int_eq(SSL_shutdown(peer), 0)
+        || !TEST_int_eq(SSL_get_shutdown(peer), SSL_SENT_SHUTDOWN)
+        || !TEST_int_eq(pc->key_update, SSL_KEY_UPDATE_NONE)
+        || !TEST_false(pc->d1->key_update_write_pending)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(pc, SSL3_CC_WRITE), epoch_before))
+        goto end;
+
+    /* The requester receives close_notify, not a reciprocal KeyUpdate. */
+    ret = SSL_read(local, buf, sizeof(buf));
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_eq(SSL_get_error(local, ret), SSL_ERROR_ZERO_RETURN)
+        || !TEST_int_eq(SSL_get_shutdown(local), SSL_RECEIVED_SHUTDOWN)
+        || !TEST_int_eq(SSL_shutdown(local), 1)
+        || !TEST_int_eq(SSL_shutdown(peer), 1)
+        || !TEST_int_eq(SSL_get_shutdown(peer),
+            SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN)
+        || !TEST_false(pc->d1->key_update_write_pending)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(pc, SSL3_CC_WRITE), epoch_before))
         goto end;
 
     testresult = 1;
@@ -8154,6 +8216,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_requested_key_update_waits_for_write_key_install);
     ADD_TEST(test_dtls13_reciprocal_keyupdate_app_data_classification);
     ADD_ALL_TESTS(test_dtls13_reciprocal_keyupdate_no_app_data_classification, 2);
+    ADD_ALL_TESTS(test_dtls13_scheduled_keyupdate_shutdown, 2);
     ADD_ALL_TESTS(test_dtls13_simultaneous_keyupdate_app_data_classification, 2);
     ADD_TEST(test_dtls13_pha_response_app_data_classification);
     ADD_TEST(test_dtls13_ticket_app_data_classification);
