@@ -13,13 +13,14 @@
 #include "crypto/slh_dsa/slh_dsa_key.h"
 #include "testutil.h"
 
+static const char *names[] = {
+    "SLH-DSA-SHA2-128s", "SLH-DSA-SHA2-128f",
+    "SLH-DSA-SHA2-192s", "SLH-DSA-SHA2-192f",
+    "SLH-DSA-SHA2-256s", "SLH-DSA-SHA2-256f"
+};
+
 static int test_sha2_prefix(int idx)
 {
-    static const char *names[] = {
-        "SLH-DSA-SHA2-128s", "SLH-DSA-SHA2-128f",
-        "SLH-DSA-SHA2-192s", "SLH-DSA-SHA2-192f",
-        "SLH-DSA-SHA2-256s", "SLH-DSA-SHA2-256f"
-    };
     SLH_DSA_KEY key = { 0 };
     SLH_DSA_HASH_CTX *ctx = NULL, *dup = NULL;
     unsigned char input[128 + SLH_ADRSC_SIZE + 2144];
@@ -74,6 +75,6 @@ end:
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_sha2_prefix, 6);
+    ADD_ALL_TESTS(test_sha2_prefix, OSSL_NELEM(names));
     return 1;
 }
