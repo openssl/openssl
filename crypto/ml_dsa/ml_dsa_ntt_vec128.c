@@ -380,12 +380,14 @@ static ossl_inline
  *     |z_hi| <= floor((q-1)^2 / 2^32) = 16 379
  *     |r| <= 4 206 587 < 2^23 < 2^31        (fits int32, no overflow)
  *
- *   Case a in [0, q), |b| <= 8q (NTT butterfly bound after lazy layers):
- *     |z_hi| <= floor((q-1) * 8q / 2^32) = 131 072
- *     |r| <= 4 321 280 < 2^23 < 2^31        (fits int32, no overflow)
+ *   Case a in [0, q), |b| <= 6.06q (worst case: INTT even-odd difference):
+ *     |z_hi| <= floor((q-1) * 6.06q / 2^32) = 99 131
+ *     |r| <= 4 289 339 < 2^23 < 2^31        (fits int32, no overflow)
+ *     (NTT worst case is |b| <= 5.037q, giving |r| <= 4 272 575.)
  *
  *   Case L unreduced accumulations (matrix-vector row, L <= 7):
- *     |sum| <= L * 4 321 280 <= 7 * 4 321 280 ≈ 30.2M < 2^25 << 2^31
+ *     Each term |r| <= 4 206 587; after L additions:
+ *     |sum| <= 7 * 4 206 587 = 29 446 109 ~= 3.51q < 2^25 << 2^31
  *
  * Implementation note: the low-word product k = a_twist * b must be computed
  * as an *unsigned* 32-bit lane multiply.  a_twist holds precomputed values
@@ -450,18 +452,21 @@ montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist,
 }
 
 /*
- * @brief Reduce modulo q to a non-negative vector.
- *        See [Seiler 2018, Algorithm 5].
+ * reduce_fully: vectorized Barrett reduction for signed values.
+ *              See [Seiler 2018, Algorithm 5].
  *
- * @param a in the range [-9q, 9q]
- *        (Note that we are only calling this function twice in
- *        ossl_ml_dsa_poly_ntt_vec128 with inputs in the range [-9q, 9q],
- *        which is inside the valid range.)
- * @returns a mod q in the range [0, q).
+ * Pre:  Every lane of a is a signed 32-bit integer with |a[i]| <= 9q.
+ *       Current call-sites and their worst-case inputs:
+ *         - NTT final layer (offset == 1): |even +/- t| <= ~5.1q after 8
+ *           lazy CT layers (twiddle branch bounded by ~0.516q per layer).
+ *         - Matrix-vector row accumulation: l <= 7 unreduced products,
+ *           |acc| <= 7 * 4 206 587 ~= 29.4M ~= 3.51q < 9q.
+ *         - Fused INTT prefix (matrix_mult_vector_intt): same as above.
+ *       All inputs satisfy |a[i]| < 5.55q < 9q.
+ * Post: Every lane of the result is in [0, q) and congruent to a[i] mod q.
  */
-static ossl_inline
-    vec_int32_t
-    reduce_fully(vec_int32_t a)
+static ossl_inline vec_int32_t
+reduce_fully(vec_int32_t a)
 {
     const int32_t v_scalar = 1074791296;
     const vec_int32_alias_t v = { v_scalar, v_scalar, v_scalar, v_scalar };
@@ -491,13 +496,34 @@ void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *ou
 }
 
 /*
- * In place number theoretic transform of a given polynomial.
+ * ossl_ml_dsa_poly_ntt_vec128: in-place forward NTT.
+ * See FIPS 204, Algorithm 41, NTT().
  *
- * See FIPS 204, Algorithm 41, NTT()
- * This function uses montgomery multiplication.
+ * Lazy Cooley-Tukey butterflies: the first 7 layers use
+ * montgomery_multiplication_unreduced so no per-butterfly reduction is needed.
+ * The final layer (offset == 1) feeds the unreduced output into reduce_fully()
+ * to produce canonical [0, q) output.
  *
- * @param p a polynomial that is used as the input, that is replaced with
- *        the NTT of the polynomial
+ * Overflow analysis for the lazy CT butterfly
+ *   t = MontMulRaw(odd, zeta),   new_even = even + t,   new_odd = even - t:
+ *
+ *   Both outputs are stored back to the same array, so both even and odd
+ *   in the next layer carry the same bound B_L.  With input in [0, q):
+ *     |t_L| <= floor((q-1) * B_{L-1}*q / 2^32) + floor(q/2)
+ *            = B_{L-1} * ~0.00195q + ~0.5002q  ~= 0.502q..0.508q
+ *     B_L    = B_{L-1} + |t_L|/q
+ *
+ *   Per-layer values (q = 8 380 417):
+ *     Layer 1 (offset 128): B_0 = 1q  -> |t| ~= 0.502q,  B_1 ~= 1.502q
+ *     Layer 2 (offset  64): B_1 ~= 1.502q -> B_2 ~= 2.004q
+ *     Layer 3 (offset  32): B_2 ~= 2.004q -> B_3 ~= 2.507q
+ *     Layer 4 (offset  16): B_3 ~= 2.507q -> B_4 ~= 3.011q
+ *     Layer 5 (offset   8): B_4 ~= 3.011q -> B_5 ~= 3.516q
+ *     Layer 6 (offset   4): B_5 ~= 3.516q -> B_6 ~= 4.022q
+ *     Layer 7 (offset   2): B_6 ~= 4.022q -> B_7 ~= 4.529q
+ *     Layer 8 (offset   1): B_7 ~= 4.529q -> inputs to reduce_fully ~= 5.037q
+ *
+ *   5.037q ~= 42.2M < 2^26 << 2^31: no signed 32-bit overflow occurs.
  */
 void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
 {
@@ -524,7 +550,7 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
             for (j = k; j < k + offset; j += NUM_INT32_IN_VECTOR) {
                 vec_int32_t w_even_vec = p_vec[j / NUM_INT32_IN_VECTOR];
                 vec_int32_t w_odd_vec = p_vec[(j + offset) / NUM_INT32_IN_VECTOR];
-                vec_int32_t t_odd_vec = montgomery_multiplication_vectorized(
+                vec_int32_t t_odd_vec = montgomery_multiplication_unreduced(
                     zeta,
                     zeta_twisted,
                     w_odd_vec);
@@ -567,7 +593,7 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
             p_vec[j / NUM_INT32_IN_VECTOR + 1][2],
             p_vec[j / NUM_INT32_IN_VECTOR + 1][3]
         };
-        vec_int32_t t_odd_vec = montgomery_multiplication_vectorized(
+        vec_int32_t t_odd_vec = montgomery_multiplication_unreduced(
             zeta,
             zeta_twisted,
             w_odd_vec);
@@ -616,7 +642,9 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
             p_vec[k / NUM_INT32_IN_VECTOR + 1][1],
             p_vec[k / NUM_INT32_IN_VECTOR + 1][3]
         };
-        vec_int32_t t_odd_vec = montgomery_multiplication_vectorized(
+        /* Final NTT layer (offset == 1): apply reduce_fully to produce the
+         * canonical [0, q) NTT-domain output required by all consumers.   */
+        vec_int32_t t_odd_vec = montgomery_multiplication_unreduced(
             zeta,
             zeta_twisted,
             w_odd_vec);
@@ -637,18 +665,51 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
 }
 
 /*
- * @brief In place inverse number theoretic transform of a given polynomial.
- * See FIPS 204, Algorithm 42,  NTT^-1()
+ * ossl_ml_dsa_poly_ntt_inverse_vec128: in-place inverse NTT.
+ * See FIPS 204, Algorithm 42, NTT^{-1}().
  *
- * @param p a polynomial that is used as the input, that is overwritten with
- *          the inverse of the NTT.
+ * Fully lazy Gentleman-Sande butterflies: no reduce_fully() is needed at any
+ * intermediate layer.  All twiddle multiplications use
+ * montgomery_multiplication_unreduced.
+ *
+ * The even-sum branch (S) and twiddle branch (T) are tracked separately
+ * because T is reset by MontMulRaw each layer while S accumulates:
+ *
+ *   T_L (twiddle output, always small):
+ *     With |even-odd| <= S_{L-1} + T_{L-1} and zeta in [0,q):
+ *       |z_hi| <= floor((q-1)*(S_{L-1}+T_{L-1})/2^32)  [tiny for small B]
+ *       |c|    <= floor(q/2) = 4 190 208
+ *       T_L    <= z_hi + c  ~= 0.504q..0.510q  (grows negligibly)
+ *
+ *   S_L (even-sum output, cumulative):
+ *     S_L = S_{L-1} + T_{L-1}
+ *
+ *   Exact per-layer values (q = 8 380 417):
+ *     Layer 1 (offset   1): S_1 ~= 2.000q,  T_1 ~= 0.504q
+ *     Layer 2 (offset   2): S_2 ~= 2.504q,  T_2 ~= 0.504q
+ *     Layer 3 (offset   4): S_3 ~= 3.008q,  T_3 ~= 0.506q
+ *     Layer 4 (offset   8): S_4 ~= 3.514q,  T_4 ~= 0.507q
+ *     Layer 5 (offset  16): S_5 ~= 4.021q,  T_5 ~= 0.508q
+ *     Layer 6 (offset  32): S_6 ~= 4.529q,  T_6 ~= 0.509q
+ *     Layer 7 (offset  64): S_7 ~= 5.038q,  T_7 ~= 0.510q
+ *     Layer 8 (offset 128): S_8 ~= 5.548q
+ *
+ *   5.548q ~= 46.5M < 2^26 << 2^31: no signed 32-bit overflow ever occurs.
+ *
+ *   The final normalization multiply receives |b| <= 5.548q:
+ *     |z_hi| <= floor((q-1)*5.548q/2^32) ~= 90 720
+ *     |r|    <= 90 720 + 4 190 208 ~= 4 281 000 < q
+ *   montgomery_multiplication_vectorized (reduce_twice_signed) produces
+ *   canonical [0, q) output correctly.
+ *
+ * Contrast with ML-KEM (q = 3329, R = 2^16): there the naive bound doubles
+ * each layer (T_L ~= q), reaching 16q > 2^15 after 4 layers, requiring
+ * two reduce_fully() resets.  For ML-DSA T_L is capped at ~q/2 because the
+ * MontMulRaw |c| term dominates, so all 8 layers fit within int32_t without
+ * any intermediate reduction.
  */
 void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
 {
-    /*
-     * Step: 128, 64, 32, 16, ..., 1
-     * Offset: 1, 2, 4, 8, ..., 128
-     */
     int i, j, k, offset, step = ML_DSA_NUM_POLY_COEFFICIENTS;
     /*
      * The multiplicative inverse of 256 mod q, in Montgomery form is
@@ -675,16 +736,18 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
     step >>= 1;
     k = 0;
 
+    /* offset == 1 */
     for (i = 0; i < step; i += NUM_INT32_IN_VECTOR) {
-        /* offset == 1*/
         const vec_int32_t zeta = { neg_zetas_montgomery[step + (step - 1 - i)],
             neg_zetas_montgomery[step + (step - 1 - i - 1)],
             neg_zetas_montgomery[step + (step - 1 - i - 2)],
             neg_zetas_montgomery[step + (step - 1 - i - 3)] };
-        const vec_int32_t zeta_twisted = { neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+        const vec_int32_t zeta_twisted = {
+            neg_zetas_montgomery_twisted[step + (step - 1 - i)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i - 2)],
-            neg_zetas_montgomery_twisted[step + (step - 1 - i - 3)] };
+            neg_zetas_montgomery_twisted[step + (step - 1 - i - 3)]
+        };
         vec_int32_t even = { p->coeff[k],
             p->coeff[k + 2],
             p->coeff[k + 4],
@@ -695,10 +758,8 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
             p->coeff[k + 1 + 6] };
 
         vec_int32_t coeff_j = (odd + even);
-        vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
-            zeta,
-            zeta_twisted,
-            even - odd);
+        vec_int32_t coeff_j_offset = montgomery_multiplication_unreduced(
+            zeta, zeta_twisted, even - odd);
 
         p->coeff[k + 0] = coeff_j[0];
         p->coeff[k + 2] = coeff_j[1];
@@ -722,10 +783,12 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
             neg_zetas_montgomery[step + (step - 1 - i)],
             neg_zetas_montgomery[step + (step - 1 - i - 1)],
             neg_zetas_montgomery[step + (step - 1 - i - 1)] };
-        const vec_int32_t zeta_twisted = { neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+        const vec_int32_t zeta_twisted = {
+            neg_zetas_montgomery_twisted[step + (step - 1 - i)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)],
-            neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)] };
+            neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)]
+        };
 
         j = k;
         vec_int32_t even = { p->coeff[j],
@@ -738,27 +801,19 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
             p->coeff[j + 7] };
 
         vec_int32_t coeff_j = (odd + even);
-        vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
-            zeta,
-            zeta_twisted,
-            even - odd);
+        vec_int32_t coeff_j_offset = montgomery_multiplication_unreduced(
+            zeta, zeta_twisted, even - odd);
 
         p_vec[j / NUM_INT32_IN_VECTOR] = (vec_int32_t) {
-            coeff_j[0],
-            coeff_j[1],
-            coeff_j_offset[0],
-            coeff_j_offset[1]
+            coeff_j[0], coeff_j[1], coeff_j_offset[0], coeff_j_offset[1]
         };
         p_vec[j / NUM_INT32_IN_VECTOR + 1] = (vec_int32_t) {
-            coeff_j[2],
-            coeff_j[3],
-            coeff_j_offset[2],
-            coeff_j_offset[3]
+            coeff_j[2], coeff_j[3], coeff_j_offset[2], coeff_j_offset[3]
         };
         k += 2 * 2 * offset;
     }
 
-    /* offset >= 4 */
+    /* offset >= 4: layers 3–8 */
     for (offset <<= 1; offset < ML_DSA_NUM_POLY_COEFFICIENTS; offset <<= 1) {
         step >>= 1;
         k = 0;
@@ -768,20 +823,20 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
                 neg_zetas_montgomery[step + (step - 1 - i)],
                 neg_zetas_montgomery[step + (step - 1 - i)],
                 neg_zetas_montgomery[step + (step - 1 - i)] };
-            const vec_int32_t zeta_twisted = { neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+            const vec_int32_t zeta_twisted = {
                 neg_zetas_montgomery_twisted[step + (step - 1 - i)],
                 neg_zetas_montgomery_twisted[step + (step - 1 - i)],
-                neg_zetas_montgomery_twisted[step + (step - 1 - i)] };
+                neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+                neg_zetas_montgomery_twisted[step + (step - 1 - i)]
+            };
 
             for (j = k; j < k + offset; j += NUM_INT32_IN_VECTOR) {
                 vec_int32_t even = p_vec[j / NUM_INT32_IN_VECTOR];
                 vec_int32_t odd = p_vec[(j + offset) / NUM_INT32_IN_VECTOR];
 
                 vec_int32_t coeff_j = (odd + even);
-                vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
-                    zeta,
-                    zeta_twisted,
-                    even - odd);
+                vec_int32_t coeff_j_offset = montgomery_multiplication_unreduced(
+                    zeta, zeta_twisted, even - odd);
                 p_vec[j / NUM_INT32_IN_VECTOR] = coeff_j;
                 p_vec[(j + offset) / NUM_INT32_IN_VECTOR] = coeff_j_offset;
             }
@@ -789,7 +844,8 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
         }
     }
 
-    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i += 1) {
+    /* Final normalization: multiply each coefficient by 256^{-1} mod q. */
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i++) {
         p_vec[i] = montgomery_multiplication_vectorized(
             vec_inverse_degree_montgomery,
             vec_inverse_degree_montgomery_twisted,
