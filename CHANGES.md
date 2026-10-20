@@ -33,6 +33,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added the `no-buildinfo` Configure option.  It stops the compiler command
+   line and flags from being recorded in libcrypto, which helps reproducible
+   builds across different build environments.  `OpenSSL_version(OPENSSL_CFLAGS)`
+   and `openssl version -f` then report `compiler: information not available`.
+
+   *Dmitry Misharov*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and

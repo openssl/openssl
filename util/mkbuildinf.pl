@@ -12,7 +12,8 @@ use warnings;
 my $platform = pop @ARGV;
 my $cflags = join(' ', @ARGV);
 $cflags =~ s(\\)(\\\\)g;
-$cflags = "compiler: $cflags";
+# No flags are given when configured with no-buildinfo
+$cflags = "compiler: " . ($cflags eq '' ? "information not available" : $cflags);
 
 # Use the value of the envvar SOURCE_DATE_EPOCH, even if it's
 # zero or the empty string.

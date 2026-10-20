@@ -518,6 +518,7 @@ my @disablables_features = (
     "autoerrinit",
     "autoload-config",
     "brotli-dynamic",
+    "buildinfo",
     "buildtest-c++",
     "bulk",
     "cached-fetch",
