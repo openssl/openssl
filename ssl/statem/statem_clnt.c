@@ -1951,6 +1951,14 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         && s->ext.ech.done != 1 && s->ext.ech.ch_depth == 0
         && s->ext.ech.grease == OSSL_ECH_NOT_GREASE
         && s->ext.ech.attempted_type == TLSEXT_TYPE_ech) {
+        /*
+         * At the ServerHello after a HRR, success still says whether that
+         * HRR accepted ECH. If it didn't, we already fell back to the
+         * public_name when processing the HRR.
+         */
+        int after_hrr = !hrr && s->hello_retry_request != SSL_HRR_NONE;
+        int hrr_accepted = after_hrr && s->ext.ech.success == 1;
+
         if (!set_client_ciphersuite(s, cipherchars)) {
             /* SSLfatal() already called */
             goto err;
@@ -1993,6 +2001,14 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             OSSL_TRACE_END(TLS);
             s->ext.ech.success = 1;
         }
+        if (after_hrr && s->ext.ech.success != hrr_accepted) {
+            /*
+             * the HRR and SH.random ECH acceptance signals disagree,
+             * so that's an illegal protocol error
+             */
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
+            goto err;
+        }
         if (!hrr && s->ext.ech.success == 1) {
             if (ossl_ech_swaperoo(s) != 1
                 || ossl_ech_intbuf_fetch(s, &abuf, &alen) != 1
@@ -2007,16 +2023,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
              * the outer CH, so we better set the hostname for the
              * connection accordingly.
              */
-        } else if (!hrr && s->ext.ech.success == 0
-            && s->ext.ech.hrrsignal_p != NULL) {
-            /*
-             * we previously saw a good HRR ECH acceptance but now
-             * the SH.random ECH acceptance signal is bad so that's an
-             * illegal protocol error
-             */
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
-            goto err;
-        } else {
+        } else if (!after_hrr) {
             OSSL_TRACE1(TLS, "ECH falling back to public_name: %s\n",
                 s->ext.ech.outer_hostname != NULL ? s->ext.ech.outer_hostname : "NONE");
             s->ext.ech.former_inner = s->ext.hostname;
