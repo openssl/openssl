@@ -32,6 +32,9 @@ OpenSSL 4.2
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
+   * API calls `RAND_set_default_parameters`, and
+    `RAND_set_default_primary_parameters` have been added
+
 OpenSSL 4.1
 -----------
 
