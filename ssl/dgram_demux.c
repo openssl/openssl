@@ -63,11 +63,15 @@ struct dgram_demux_st {
     /* Whether internal locking is required */
     char require_mutex;
 
+    /* Permanent failure retention, enabled for shared DTLS listener transports. */
+    char retain_errors;
+    unsigned long permanent_error;
+
     /* Maximum URXEs cached on urx_free; 0 means unbounded. */
     size_t max_free_urxe;
 
     /*
-     * Mutex protecting the URXE lists (urx_free and urx_pending).
+     * Mutex protecting receiving, the URXE lists and retained error state.
      */
     CRYPTO_MUTEX *mutex;
 };
@@ -433,11 +437,37 @@ static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
     DGRAM_URXE *e;
     int ret;
 
-    while ((e = ossl_list_urxe_head(&demux->urx_pending)) != NULL)
+    while (demux->permanent_error == 0
+        && (e = ossl_list_urxe_head(&demux->urx_pending)) != NULL)
         if ((ret = dgram_demux_process_pending_urxe(demux, e)) <= 0)
             return ret;
 
+    if (demux->permanent_error != 0)
+        return 0;
+
     return 1;
+}
+
+void ossl_dgram_demux_set_retain_errors(DGRAM_DEMUX *demux)
+{
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    demux->retain_errors = 1;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+}
+
+unsigned long ossl_dgram_demux_get_error(DGRAM_DEMUX *demux)
+{
+    unsigned long error;
+
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    error = demux->permanent_error;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+
+    return error;
 }
 
 /*
@@ -447,9 +477,15 @@ static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
 int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
 {
     int ret;
+    unsigned long error = 0;
 
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
+
+    if (demux->permanent_error != 0) {
+        ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+        goto end;
+    }
 
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
         if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
@@ -476,8 +512,22 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
     ret = DGRAM_DEMUX_PUMP_RES_OK;
 
 end:
+    if (ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL && demux->retain_errors) {
+        if (demux->permanent_error == 0) {
+            demux->permanent_error = ERR_peek_last_error();
+            if (demux->permanent_error == 0)
+                demux->permanent_error = ERR_PACK(ERR_LIB_BIO, 0, ERR_R_INTERNAL_ERROR);
+        }
+        error = demux->permanent_error;
+    }
+
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
+
+    /* Replay the shared diagnostic on the calling thread's error queue. */
+    if (error != 0 && ERR_peek_last_error() != error)
+        ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
+
     return ret;
 }
 

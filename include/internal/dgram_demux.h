@@ -245,6 +245,16 @@ void ossl_dgram_demux_reinject_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e);
 int ossl_dgram_demux_pump(DGRAM_DEMUX *demux);
 
 /*
+ * Enable permanent failure retention before the first pump. Once failed,
+ * subsequent pumps report the saved error without receiving more datagrams.
+ * Replacing the BIO does not clear the failure.
+ */
+void ossl_dgram_demux_set_retain_errors(DGRAM_DEMUX *demux);
+
+/* Return the retained error, or zero if no permanent failure was retained. */
+unsigned long ossl_dgram_demux_get_error(DGRAM_DEMUX *demux);
+
+/*
  * Artificially inject a packet into the demuxer for testing purposes. The
  * buffer must not exceed the URXE size being used by the demuxer.
  *
