@@ -243,7 +243,7 @@ IF[{- !$disabled{tests} -}]
     DEFINE[evp_test]=NO_LEGACY_MODULE
   ENDIF
 
-  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c \
+  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c \
                          helpers/predefined_dsaparams.c \
                          helpers/predefined_dhparams.c
   INCLUDE[evp_extra_test]=../include ../apps/include \
@@ -257,8 +257,10 @@ IF[{- !$disabled{tests} -}]
                            ../providers/libcommon.a
   ENDIF
 
-  SOURCE[evp_aead_test]=evp_aead_test.c
-  INCLUDE[evp_aead_test]=../include ../apps/include
+  SOURCE[evp_aead_test]=evp_aead_test.c fake_pipelineprov.c
+  INCLUDE[evp_aead_test]=../include ../apps/include \
+                         ../providers/common/include \
+                         ../providers/implementations/include
   DEPEND[evp_aead_test]=../libcrypto.a libtestutil.a
 
   SOURCE[hpke_test]=hpke_test.c
