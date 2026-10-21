@@ -8387,8 +8387,6 @@ err:
     return ret;
 }
 
-<<<<<<< HEAD
-=======
 /*
  * Cross-driver round-trip test for AEAD one-shot vs streaming paths.
  *
@@ -8547,7 +8545,6 @@ end:
     return ok;
 }
 
->>>>>>> f137477208 (Migrates test_aead_oneshot_roundtrip and helper fucntion aead_oneshot_op)
 #ifndef OPENSSL_NO_DES
 static int test_EVP_CIPHER_get_type_des_ede3(void)
 {
