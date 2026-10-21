@@ -113,11 +113,11 @@ static int RCT_test(CRNG_TEST *crngt, uint8_t next)
      *
      *      C = 1 + \left\lceil\frac{ -log_2 \alpha}H\right\rceil
      *
-     * where alpha = 2^-20 and H is the expected entropy per sample.
+     * where alpha = 2^-40 and H is the expected entropy per sample.
      */
     static const unsigned int rct_c[9] = {
-        41, /* H = 0.5 */
-        21, 11, 8, 6, 5, 5, 4, 4 /* H = 1, ..., 8 */
+        81, /* H = 0.5 */
+        41, 21, 15, 11, 9, 8, 7, 6 /* H = 1, ..., 8 */
     };
 
     if (ossl_likely(crngt->rct.b != 0)
@@ -142,12 +142,12 @@ static int APT_test(CRNG_TEST *crngt, uint8_t next)
     /*
      * Critical values for this test are drawn from a binomial
      * distribution with n = 512, p = 2^-H at a critical threshold of
-     * 2^-20.  H being the expected entropy per sample.  Refer SP 800-90B
+     * 2^-40.  H being the expected entropy per sample.  Refer SP 800-90B
      * section 4.4.2, table 2.
      */
     static const unsigned int apt_c[9] = {
-        410, /* H = 0.5 */
-        311, 177, 103, 62, 39, 25, 18, 13 /* H = 1, ..., 8 */
+        432, /* H = 0.5 */
+        336, 201, 123, 78, 51, 35, 26, 19 /* H = 1, ..., 8 */
     };
 
     if (ossl_likely(crngt->apt.b != 0)) {
