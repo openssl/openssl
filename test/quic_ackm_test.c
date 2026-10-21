@@ -1137,6 +1137,101 @@ err:
 }
 
 /*
+ * Pseudo-loss
+ * ******************************************************************
+ */
+
+/*
+ * Pseudo-lost packets (e.g. the Initial packets of a ClientHello sent before a
+ * Retry) are no longer in flight, so the congestion controller must stop
+ * counting them. They were not lost on the network, so the congestion window
+ * must not shrink.
+ */
+static int test_tx_pseudo_loss(void)
+{
+    int testresult = 0, have_statm = 0;
+    OSSL_STATM statm;
+    OSSL_CC_DATA *ccdata = NULL;
+    OSSL_ACKM *ackm = NULL;
+    OSSL_ACKM_TX_PKT *tx[2] = { NULL, NULL };
+    struct pkt_info info[2] = { { 0 } };
+    OSSL_PARAM params[3], *p = params;
+    uint64_t cwnd = 0, bytes_in_flight = 0, init_cwnd;
+    size_t i;
+
+    fake_time = TIME_BASE;
+
+    if (!TEST_int_eq(ossl_statm_init(&statm), 1))
+        goto err;
+
+    have_statm = 1;
+
+    *p++ = OSSL_PARAM_construct_uint64(OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT,
+        &bytes_in_flight);
+    *p++ = OSSL_PARAM_construct_uint64(OSSL_CC_OPTION_CUR_CWND_SIZE,
+        &cwnd);
+    *p++ = OSSL_PARAM_construct_end();
+
+    ccdata = ossl_cc_newreno_method.new(fake_now, NULL);
+    if (!TEST_ptr(ccdata)
+        || !TEST_true(ossl_cc_newreno_method.bind_diagnostics(ccdata, params)))
+        goto err;
+
+    ackm = ossl_ackm_new(fake_now, NULL, &statm,
+        &ossl_cc_newreno_method, ccdata,
+        /* is_server */ 0);
+    if (!TEST_ptr(ackm))
+        goto err;
+
+    init_cwnd = cwnd;
+
+    for (i = 0; i < OSSL_NELEM(tx); ++i) {
+        if (!TEST_ptr(tx[i] = OPENSSL_zalloc(sizeof(*tx[i]))))
+            goto err;
+
+        tx[i]->pkt_num = i;
+        tx[i]->pkt_space = QUIC_PN_SPACE_INITIAL;
+        tx[i]->is_inflight = 1;
+        tx[i]->is_ack_eliciting = 1;
+        tx[i]->num_bytes = 1200;
+        tx[i]->largest_acked = QUIC_PN_INVALID;
+        tx[i]->on_lost = on_lost;
+        tx[i]->on_acked = on_acked;
+        tx[i]->on_discarded = on_discarded;
+        tx[i]->cb_arg = &info[i];
+        tx[i]->time = fake_time;
+
+        if (!TEST_int_eq(ossl_ackm_on_tx_packet(ackm, tx[i]), 1))
+            goto err;
+    }
+
+    if (!TEST_uint64_t_eq(bytes_in_flight, 2400))
+        goto err;
+
+    if (!TEST_true(ossl_ackm_mark_packet_pseudo_lost(ackm,
+            QUIC_PN_SPACE_INITIAL, 0))
+        || !TEST_uint64_t_eq(bytes_in_flight, 1200)
+        || !TEST_true(ossl_ackm_mark_packet_pseudo_lost(ackm,
+            QUIC_PN_SPACE_INITIAL, 1))
+        || !TEST_uint64_t_eq(bytes_in_flight, 0)
+        || !TEST_int_eq(info[0].lost, 1)
+        || !TEST_int_eq(info[1].lost, 1)
+        || !TEST_uint64_t_eq(cwnd, init_cwnd))
+        goto err;
+
+    testresult = 1;
+err:
+    ossl_ackm_free(ackm);
+    if (ccdata != NULL)
+        ossl_cc_newreno_method.free(ccdata);
+    if (have_statm)
+        ossl_statm_destroy(&statm);
+    for (i = 0; i < OSSL_NELEM(tx); ++i)
+        OPENSSL_free(tx[i]);
+    return testresult;
+}
+
+/*
  * Driver
  * ******************************************************************
  */
@@ -1169,5 +1264,6 @@ int setup_tests(void)
         OSSL_NELEM(tx_ack_cases) * MODE_NUM * QUIC_PN_SPACE_NUM);
     ADD_ALL_TESTS(test_tx_ack_time_script, OSSL_NELEM(tx_ack_time_scripts));
     ADD_ALL_TESTS(test_rx_ack, OSSL_NELEM(rx_test_scripts) * QUIC_PN_SPACE_NUM);
+    ADD_TEST(test_tx_pseudo_loss);
     return 1;
 }
