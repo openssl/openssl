@@ -1954,7 +1954,11 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_stale_key_reinit, OSSL_NELEM(aead_list));
     ADD_TEST(test_aes_gcm_ivlen_change_cve_2023_5363);
     ADD_ALL_TESTS(test_evp_aead_tag_reject, OSSL_NELEM(aead_list));
+<<<<<<< HEAD
     ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
+=======
+    ADD_ALL_TESTS(test_evp_aead_tag_direction, OSSL_NELEM(aead_list));
+>>>>>>> b0f1b8fec8 (Migrate test_evp_aead_tag_direction to evp_aead_test.c)
     return 1;
 }
 
