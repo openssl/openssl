@@ -87,6 +87,12 @@ Known issues in 4.1.0
     transmission is lost. A fix is in progress and planned for a future
     release.
 
+  * <https://github.com/openssl/openssl/issues/33242>
+    DTLS 1.3 servers may abort handshakes with an `unexpected_message` alert
+    when a client acknowledges part or all of the server's first flight
+    before sending its response. This can occur after packet loss or while
+    the client is preparing its authentication response.
+
 OpenSSL 4.0
 -----------
 
