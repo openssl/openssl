@@ -947,6 +947,64 @@ err:
     return testresult;
 }
 
+/*
+ * With AEAD ciphers, a tag is an input when decrypting (the value to verify)
+ * and an output when encrypting (the generated value). For every AEAD:
+ * - setting a tag value while encrypting must fail with PROV_R_TAG_NOT_NEEDED
+ * - reading the tag while decrypting must fail with PROV_R_TAG_NOT_SET
+ */
+static int test_evp_aead_tag_direction(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_enc = NULL; /* set tag while encrypting: must fail */
+    EVP_CIPHER_CTX *ctx_dec = NULL; /* get tag while decrypting: must fail */
+
+    OSSL_PARAM tagparams[2];
+
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    int i = 0, testresult = 0;
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    /* a non-NULL data pointer makes this a value set, not a length query */
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, info->taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+
+    /* encrypt: supplying a tag value must be rejected */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))
+        || !TEST_false(EVP_CIPHER_CTX_set_params(ctx_enc, tagparams))
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED)) {
+        TEST_info("%s: set tag while encrypting", info->name);
+        goto err;
+    }
+
+    /* decrypt: setting the tag is fine, reading it back must be rejected */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))
+        || !TEST_false(EVP_CIPHER_CTX_get_params(ctx_dec, tagparams))
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_TAG_NOT_SET)) {
+        TEST_info("%s: get tag while decrypting", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     size_t i = 0;
@@ -969,6 +1027,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_final_no_tag, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_enc_retval, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_update_null_input, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_aead_tag_direction, OSSL_NELEM(aead_list));
     return 1;
 }
 
