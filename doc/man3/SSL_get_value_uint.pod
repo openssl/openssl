@@ -401,18 +401,23 @@ macros). Using any other value class fails with an error.
 
 =item B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (DTLS listener object)
 
-Generic value. Bounds the number of connections a DTLS listener created by
-L<SSL_new_listener(3)> owns at any one time: pending (handshake-in-progress)
-connections plus validated connections waiting in the accept queue for
+Generic value. Sets an admission limit for connections owned by a DTLS
+listener created by L<SSL_new_listener(3)>: pending (handshake-in-progress)
+connections plus connections waiting in the accept queue for
 L<SSL_accept_connection(3)>. When the limit is reached, datagrams from novel
-peers are silently discarded before any connection state is allocated; the
-peer retransmits its ClientHello and is admitted once a slot frees up. A
-connection returned by L<SSL_accept_connection(3)> is no longer counted.
+peers are silently discarded before any connection state is allocated.
+A peer can be admitted if it retransmits its ClientHello while a slot is
+available. A connection returned by L<SSL_accept_connection(3)> is no longer
+counted.
 
 The default limit is 256. Setting the value to 0 is rejected: a cap of 0
 would reject every incoming connection and leave the listener unable to
-accept anything. Lowering the value does not evict connections the listener
-already owns; it only affects later admission. Stale pending entries age out
+accept anything. Any nonzero value is accepted (values larger than B<SIZE_MAX>
+are clamped to B<SIZE_MAX>). Very large limits provide little practical
+protection against excessive unaccepted connection state.
+
+Lowering the value does not evict connections the listener already owns;
+it only affects later admission. Stale pending entries age out
 via B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>; accept-queue entries do not
 expire.
 
