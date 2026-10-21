@@ -2545,12 +2545,13 @@ static int count_dgram_records(const unsigned char *dg, size_t len,
 
     *epoch0 = *epoch2 = 0;
     while (len > 0) {
-        if ((dg[0] & 0xe0) == 0x20) {
+        if ((dg[0] & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS) {
             /* Unified header, 001CSLEE: the epoch is in the low two bits. */
-            if ((dg[0] & 0x10) != 0 || (dg[0] & 0x03) != 2)
+            if ((dg[0] & DTLS13_UNI_HDR_CID_BIT) != 0
+                || (dg[0] & DTLS13_UNI_HDR_EPOCH_BITS_MASK) != 2)
                 return 0;
-            hdrlen = 1 + ((dg[0] & 0x08) != 0 ? 2 : 1);
-            if ((dg[0] & 0x04) != 0) {
+            hdrlen = 1 + ((dg[0] & DTLS13_UNI_HDR_SEQ_BIT) != 0 ? 2 : 1);
+            if ((dg[0] & DTLS13_UNI_HDR_LEN_BIT) != 0) {
                 if (len < hdrlen + 2)
                     return 0;
                 reclen = ((size_t)dg[hdrlen] << 8) | dg[hdrlen + 1];
@@ -2894,7 +2895,10 @@ static int test_dtls13_server_flight_full_ack(void)
         || !TEST_int_eq(SSL_get_state(server), TLS_ST_EARLY_DATA))
         goto end;
     count_flight_acks(sc, &nmsgs, &nacked, &unacked_recs);
-    if (!TEST_size_t_eq(nacked, nmsgs) || !TEST_size_t_eq(unacked_recs, 0))
+    if (!TEST_size_t_eq(nmsgs, 0)
+        || !TEST_size_t_eq(unacked_recs, 0)
+        || !TEST_true(ossl_time_is_zero(sc->d1->next_timeout))
+        || !TEST_false(SSL_is_init_finished(server)))
         goto end;
 
     /* The client's certificate is ready: it replies and the handshake completes. */
@@ -2925,6 +2929,147 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+/*
+ * Withhold the server flight and inject an epoch-0 ACK using record numbers
+ * derived from wire record counts. Check that it cannot acknowledge encrypted
+ * records or stop the retransmission timer, while valid epoch-0 entries are
+ * still processed.
+ *
+ * idx 0: empty ACK; nothing is acknowledged.
+ * idx 1: ACK only ServerHello; the encrypted flight remains outstanding.
+ * idx 2: also claim the epoch-2 records; those claims must not retire them.
+ * The legal epoch-2 full-flight control is test_dtls13_server_flight_full_ack.
+ */
+static int test_dtls13_plaintext_ack_epoch(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    unsigned char dg[2048], ack[2048] = { 0 };
+    size_t n0 = 0, n2 = 0, d0, d2, nmsgs, nacked, nrecs;
+    size_t before_msgs, before_recs, acklen, j;
+    size_t remaining2 = 0;
+    piterator iter;
+    pitem *item;
+    WPACKET pkt;
+    OSSL_TIME timeout;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+
+    SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_long_gt(SSL_set_mtu(server, 400), 0))
+        goto end;
+
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(server), TLS_ST_EARLY_DATA)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(sc, SSL3_CC_READ), 0))
+        goto end;
+
+    /* Discard the flight, counting records independently of server state. */
+    while ((ret = BIO_read(SSL_get_rbio(client), dg, sizeof(dg))) > 0) {
+        if (!TEST_true(count_dgram_records(dg, ret, &d0, &d2)))
+            goto end;
+        n0 += d0;
+        n2 += d2;
+    }
+
+    count_flight_acks(sc, &before_msgs, &nacked, &before_recs);
+    if (!TEST_size_t_gt(n0, 0) || !TEST_size_t_gt(n2, 0)
+        || !TEST_size_t_eq(nacked, 0)
+        || !TEST_size_t_ge(before_recs, n0)
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+        goto end;
+
+    if (!TEST_true(WPACKET_init_static_len(&pkt, ack + DTLS1_RT_HEADER_LENGTH,
+            sizeof(ack) - DTLS1_RT_HEADER_LENGTH, 2)))
+        goto end;
+
+    for (j = 0; idx != 0 && j < n0; j++)
+        if (!TEST_true(WPACKET_put_bytes_u64(&pkt, 0))
+            || !TEST_true(WPACKET_put_bytes_u64(&pkt, j)))
+            goto packet_err;
+
+    for (j = 0; idx == 2 && j < n2; j++)
+        if (!TEST_true(WPACKET_put_bytes_u64(&pkt, 2))
+            || !TEST_true(WPACKET_put_bytes_u64(&pkt, j)))
+            goto packet_err;
+
+    if (!TEST_true(WPACKET_finish(&pkt))
+        || !TEST_true(WPACKET_get_total_written(&pkt, &acklen)))
+        goto packet_err;
+    WPACKET_cleanup(&pkt);
+
+    ack[0] = SSL3_RT_ACK;
+    ack[1] = (unsigned char)(DTLS1_2_VERSION >> 8);
+    ack[2] = (unsigned char)DTLS1_2_VERSION;
+    /* Use a fresh epoch-0 sequence even if ClientHello was fragmented. */
+    ack[9] = 0xff;
+    ack[10] = 0xff;
+    ack[11] = (unsigned char)(acklen >> 8);
+    ack[12] = (unsigned char)acklen;
+    acklen += DTLS1_RT_HEADER_LENGTH;
+    if (!TEST_int_eq(mempacket_test_inject(SSL_get_rbio(server),
+                         (const char *)ack, (int)acklen, -1,
+                         INJECT_PACKET_IGNORE_REC_SEQ),
+            (int)acklen))
+        goto end;
+
+    /* Only ACK processing, not a timer event, may change the sent flight. */
+    timeout = sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(server), TLS_ST_EARLY_DATA)
+        || !TEST_false(SSL_is_init_finished(server))
+        || !TEST_int_eq(ossl_time_compare(sc->d1->next_timeout, timeout), 0))
+        goto end;
+
+    count_flight_acks(sc, &nmsgs, &nacked, &nrecs);
+    /* No encrypted record may be retired, even by a mixed-epoch ACK. */
+    iter = pqueue_iterator(&sc->d1->sent_messages);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = item->data;
+        DTLS1_RECORD_NUMBER *rec;
+
+        for (rec = ossl_list_record_number_head(&msg->rec_nums);
+            rec != NULL; rec = ossl_list_record_number_next(rec)) {
+            if (rec->epoch == 2)
+                remaining2++;
+        }
+    }
+
+    if (!TEST_size_t_eq(nmsgs, before_msgs)
+        || !TEST_size_t_eq(remaining2, n2))
+        goto end;
+    /* Valid epoch-0 entries still apply, even in the mixed-epoch ACK. */
+    if (!TEST_size_t_eq(nacked, idx == 0 ? 0 : 1)
+        || !TEST_size_t_eq(nrecs, idx == 0 ? before_recs : before_recs - n0))
+        goto end;
+
+    testresult = 1;
+    goto end;
+packet_err:
+    WPACKET_cleanup(&pkt);
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -2960,6 +3105,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_hrr_lost_server_hello, 2);
     ADD_TEST(test_dtls13_server_flight_partial_ack);
     ADD_TEST(test_dtls13_server_flight_full_ack);
+    ADD_ALL_TESTS(test_dtls13_plaintext_ack_epoch, 3);
 #endif
     return 1;
 }

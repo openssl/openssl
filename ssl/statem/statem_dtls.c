@@ -1414,6 +1414,16 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
         }
 
         /*
+         * RFC 9147 section 7: during the initial handshake, an ACK must be
+         * carried in an epoch at least as high as the record it acknowledges.
+         * Ignore unauthorized entries before changing retransmission state.
+         * After the handshake, sending and receiving epochs can differ.
+         */
+        if (SSL_IS_FIRST_HANDSHAKE(s)
+            && epoch > s->s3.tmp.record_epoch)
+            continue;
+
+        /*
          * Epoch 2 is the fixed handshake epoch and is never used again once
          * epoch 3 (the first application epoch) is installed. An ACK that
          * only authenticated via a retained epoch-2 layer must not be
