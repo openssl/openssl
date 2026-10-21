@@ -517,6 +517,10 @@ static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (in == NULL)
         return aes_ocb_block_final(vctx, out, outl, outsize);
 
+    /* A NULL output passes AAD, as with Update */
+    if (out == NULL)
+        return aes_ocb_block_update(vctx, out, outl, outsize, in, inl);
+
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
