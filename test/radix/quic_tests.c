@@ -2465,6 +2465,14 @@ DEF_FUNC(arm_forbidden_frame)
     SSL_CTX_set_client_hello_cb(SSL_get_SSL_CTX(listener),
         forbidden_frame_client_hello_cb, NULL);
 
+    /*
+     * A post-quantum key share makes the ServerHello large enough to fill the
+     * server's only Initial packet, leaving no room for the injected frame.
+     */
+    if (!TEST_true(SSL_CTX_set1_groups_list(SSL_get_SSL_CTX(listener),
+            "?X25519:?P-256:?ffdhe2048")))
+        goto err;
+
     TEST_info("Packet type %llu, frame type %llu",
         (unsigned long long)radix_fault.word0,
         (unsigned long long)radix_fault.word1);
