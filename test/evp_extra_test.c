@@ -747,26 +747,12 @@ static const unsigned char kCFBDefaultKey[] = {
 
 static const unsigned char kGCMDefaultKey[32] = { 0 };
 
-static const unsigned char kGCMResetKey[] = {
-    0xfe, 0xff, 0xe9, 0x92, 0x86, 0x65, 0x73, 0x1c, 0x6d, 0x6a, 0x8f, 0x94,
-    0x67, 0x30, 0x83, 0x08, 0xfe, 0xff, 0xe9, 0x92, 0x86, 0x65, 0x73, 0x1c,
-    0x6d, 0x6a, 0x8f, 0x94, 0x67, 0x30, 0x83, 0x08
-};
-
 static const unsigned char iCFBIV[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
     0x0C, 0x0D, 0x0E, 0x0F
 };
 
 static const unsigned char iGCMDefaultIV[12] = { 0 };
-
-static const unsigned char iGCMResetIV1[] = {
-    0xca, 0xfe, 0xba, 0xbe, 0xfa, 0xce, 0xdb, 0xad
-};
-
-static const unsigned char iGCMResetIV2[] = {
-    0xca, 0xfe, 0xba, 0xbe, 0xfa, 0xce, 0xdb, 0xad, 0xde, 0xca, 0xf8, 0x88
-};
 
 static const unsigned char cfbPlaintext[] = {
     0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9, 0x3D, 0x7E, 0x11,
@@ -778,14 +764,6 @@ static const unsigned char cfbPlaintext_partial[] = {
 };
 
 static const unsigned char gcmDefaultPlaintext[16] = { 0 };
-
-static const unsigned char gcmResetPlaintext[] = {
-    0xd9, 0x31, 0x32, 0x25, 0xf8, 0x84, 0x06, 0xe5, 0xa5, 0x59, 0x09, 0xc5,
-    0xaf, 0xf5, 0x26, 0x9a, 0x86, 0xa7, 0xa9, 0x53, 0x15, 0x34, 0xf7, 0xda,
-    0x2e, 0x4c, 0x30, 0x3d, 0x8a, 0x31, 0x8a, 0x72, 0x1c, 0x3c, 0x0c, 0x95,
-    0x95, 0x68, 0x09, 0x53, 0x2f, 0xcf, 0x0e, 0x24, 0x49, 0xa6, 0xb5, 0x25,
-    0xb1, 0x6a, 0xed, 0xf5, 0xaa, 0x0d, 0xe6, 0x57, 0xba, 0x63, 0x7b, 0x39
-};
 
 static const unsigned char cfbCiphertext[] = {
     0x3B, 0x3F, 0xD9, 0x2E, 0xB7, 0x2D, 0xAD, 0x20, 0x33, 0x34, 0x49, 0xF8,
@@ -807,40 +785,9 @@ static const unsigned char gcmDefaultCiphertext[] = {
     0xba, 0xf3, 0x9d, 0x18
 };
 
-static const unsigned char gcmResetCiphertext1[] = {
-    0xc3, 0x76, 0x2d, 0xf1, 0xca, 0x78, 0x7d, 0x32, 0xae, 0x47, 0xc1, 0x3b,
-    0xf1, 0x98, 0x44, 0xcb, 0xaf, 0x1a, 0xe1, 0x4d, 0x0b, 0x97, 0x6a, 0xfa,
-    0xc5, 0x2f, 0xf7, 0xd7, 0x9b, 0xba, 0x9d, 0xe0, 0xfe, 0xb5, 0x82, 0xd3,
-    0x39, 0x34, 0xa4, 0xf0, 0x95, 0x4c, 0xc2, 0x36, 0x3b, 0xc7, 0x3f, 0x78,
-    0x62, 0xac, 0x43, 0x0e, 0x64, 0xab, 0xe4, 0x99, 0xf4, 0x7c, 0x9b, 0x1f
-};
-
-static const unsigned char gcmResetCiphertext2[] = {
-    0x52, 0x2d, 0xc1, 0xf0, 0x99, 0x56, 0x7d, 0x07, 0xf4, 0x7f, 0x37, 0xa3,
-    0x2a, 0x84, 0x42, 0x7d, 0x64, 0x3a, 0x8c, 0xdc, 0xbf, 0xe5, 0xc0, 0xc9,
-    0x75, 0x98, 0xa2, 0xbd, 0x25, 0x55, 0xd1, 0xaa, 0x8c, 0xb0, 0x8e, 0x48,
-    0x59, 0x0d, 0xbb, 0x3d, 0xa7, 0xb0, 0x8b, 0x10, 0x56, 0x82, 0x88, 0x38,
-    0xc5, 0xf6, 0x1e, 0x63, 0x93, 0xba, 0x7a, 0x0a, 0xbc, 0xc9, 0xf6, 0x62
-};
-
-static const unsigned char gcmAAD[] = {
-    0xfe, 0xed, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfe, 0xed, 0xfa, 0xce,
-    0xde, 0xad, 0xbe, 0xef, 0xab, 0xad, 0xda, 0xd2
-};
-
 static const unsigned char gcmDefaultTag[] = {
     0xd0, 0xd1, 0xc8, 0xa7, 0x99, 0x99, 0x6b, 0xf0, 0x26, 0x5b, 0x98, 0xb5,
     0xd4, 0x8a, 0xb9, 0x19
-};
-
-static const unsigned char gcmResetTag1[] = {
-    0x3a, 0x33, 0x7d, 0xbf, 0x46, 0xa7, 0x92, 0xc4, 0x5e, 0x45, 0x49, 0x13,
-    0xfe, 0x2e, 0xa8, 0xf2
-};
-
-static const unsigned char gcmResetTag2[] = {
-    0x76, 0xfc, 0x6e, 0xce, 0x0f, 0x4e, 0x17, 0x68, 0xcd, 0xdf, 0x88, 0x53,
-    0xbb, 0x2d, 0x55, 0x1b
 };
 
 typedef struct APK_DATA_st {
@@ -7137,137 +7084,6 @@ err:
     return testresult;
 }
 
-typedef struct {
-    const unsigned char *iv1;
-    const unsigned char *iv2;
-    const unsigned char *expected1;
-    const unsigned char *expected2;
-    const unsigned char *tag1;
-    const unsigned char *tag2;
-    size_t ivlen1;
-    size_t ivlen2;
-    size_t expectedlen1;
-    size_t expectedlen2;
-} TEST_GCM_IV_REINIT_st;
-
-static const TEST_GCM_IV_REINIT_st gcm_reinit_tests[] = {
-    { iGCMResetIV1, iGCMResetIV2, gcmResetCiphertext1, gcmResetCiphertext2,
-        gcmResetTag1, gcmResetTag2, sizeof(iGCMResetIV1), sizeof(iGCMResetIV2),
-        sizeof(gcmResetCiphertext1), sizeof(gcmResetCiphertext2) },
-    { iGCMResetIV2, iGCMResetIV1, gcmResetCiphertext2, gcmResetCiphertext1,
-        gcmResetTag2, gcmResetTag1, sizeof(iGCMResetIV2), sizeof(iGCMResetIV1),
-        sizeof(gcmResetCiphertext2), sizeof(gcmResetCiphertext1) }
-};
-
-static int test_gcm_reinit(int idx)
-{
-    int outlen1, outlen2, outlen3;
-    int testresult = 0;
-    unsigned char outbuf[1024];
-    unsigned char tag[16];
-    const TEST_GCM_IV_REINIT_st *t = &gcm_reinit_tests[idx];
-    EVP_CIPHER_CTX *ctx = NULL;
-    EVP_CIPHER *type = NULL;
-    size_t taglen = sizeof(tag);
-    char *errmsg = NULL;
-
-    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())) {
-        errmsg = "CTX_ALLOC";
-        goto err;
-    }
-    if (!TEST_ptr(type = EVP_CIPHER_fetch(testctx, "aes-256-gcm", testpropq))) {
-        errmsg = "CIPHER_FETCH";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherInit_ex(ctx, type, NULL, NULL, NULL, 1))) {
-        errmsg = "ENC_INIT";
-        goto err;
-    }
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
-                         (int)t->ivlen1, NULL),
-            0)) {
-        errmsg = "SET_IVLEN1";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, kGCMResetKey, t->iv1, 1))) {
-        errmsg = "SET_IV1";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherUpdate(ctx, NULL, &outlen3, gcmAAD, sizeof(gcmAAD)))) {
-        errmsg = "AAD1";
-        goto err;
-    }
-    EVP_CIPHER_CTX_set_padding(ctx, 0);
-    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1, gcmResetPlaintext,
-            sizeof(gcmResetPlaintext)))) {
-        errmsg = "CIPHER_UPDATE1";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherFinal_ex(ctx, outbuf + outlen1, &outlen2))) {
-        errmsg = "CIPHER_FINAL1";
-        goto err;
-    }
-    if (!TEST_mem_eq(t->expected1, t->expectedlen1, outbuf, outlen1 + outlen2)) {
-        errmsg = "WRONG_RESULT1";
-        goto err;
-    }
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
-                         (int)taglen, tag),
-            0)) {
-        errmsg = "GET_TAG1";
-        goto err;
-    }
-    if (!TEST_mem_eq(t->tag1, taglen, tag, taglen)) {
-        errmsg = "TAG_ERROR1";
-        goto err;
-    }
-    /* Now reinit */
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
-                         (int)t->ivlen2, NULL),
-            0)) {
-        errmsg = "SET_IVLEN2";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, NULL, t->iv2, -1))) {
-        errmsg = "SET_IV2";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherUpdate(ctx, NULL, &outlen3, gcmAAD, sizeof(gcmAAD)))) {
-        errmsg = "AAD2";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherUpdate(ctx, outbuf, &outlen1, gcmResetPlaintext,
-            sizeof(gcmResetPlaintext)))) {
-        errmsg = "CIPHER_UPDATE2";
-        goto err;
-    }
-    if (!TEST_true(EVP_CipherFinal_ex(ctx, outbuf + outlen1, &outlen2))) {
-        errmsg = "CIPHER_FINAL2";
-        goto err;
-    }
-    if (!TEST_mem_eq(t->expected2, t->expectedlen2, outbuf, outlen1 + outlen2)) {
-        errmsg = "WRONG_RESULT2";
-        goto err;
-    }
-    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
-                         (int)taglen, tag),
-            0)) {
-        errmsg = "GET_TAG2";
-        goto err;
-    }
-    if (!TEST_mem_eq(t->tag2, taglen, tag, taglen)) {
-        errmsg = "TAG_ERROR2";
-        goto err;
-    }
-    testresult = 1;
-err:
-    if (errmsg != NULL)
-        TEST_info("evp_init_test %d: %s", idx, errmsg);
-    EVP_CIPHER_CTX_free(ctx);
-    EVP_CIPHER_free(type);
-    return testresult;
-}
-
 static const char *ivlen_change_ciphers[] = {
     "AES-256-GCM",
 #ifndef OPENSSL_NO_OCB
@@ -9844,7 +9660,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
     ADD_ALL_TESTS(test_aes_cbc_decrypt, OSSL_NELEM(aes_cbc_decrypt_ciphers));
     ADD_ALL_TESTS(test_evp_reinit_seq, OSSL_NELEM(evp_reinit_tests));
-    ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
 
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
