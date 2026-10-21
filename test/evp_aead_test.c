@@ -462,6 +462,117 @@ err:
     return testresult;
 }
 
+/*-
+ * AAD supplied through the one-shot EVP_Cipher() interface (out == NULL)
+ * must agree with the streaming Update/Final path:
+ * - the same ciphertext and tag via both interfaces
+ * - the tag passes verification on a one-shot decrypt
+ * For CCM, each operation declares the payload length first.
+ */
+static int test_evp_oneshot_aead_aad(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx_stream = NULL; /* reference: Update and Final */
+    EVP_CIPHER_CTX *ctx_oneshot = NULL; /* encrypt via EVP_Cipher() */
+    EVP_CIPHER_CTX *ctx_dec = NULL; /* decrypt via EVP_Cipher() */
+
+    OSSL_PARAM tagparams[2];
+
+    int taglen = info->taglen;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag_stream[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_oneshot[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    static const unsigned char aad[] = "one-shot AAD regression";
+    static const unsigned char msg[] = "one-shot payload";
+    unsigned char ct_stream[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char ct_oneshot[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char pt[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    int i = 0, len = 0, finlen = 0, testresult = 0;
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    /* reference: Init, (CCM len), AAD, Update, Final */
+    if (!TEST_ptr(ctx_stream = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_stream, info->ciph, key, iv,
+            NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx_stream, NULL, &len, NULL,
+                sizeof(msg))))
+        || !TEST_true(EVP_EncryptUpdate(ctx_stream, NULL, &len, aad,
+            sizeof(aad)))
+        || !TEST_true(EVP_EncryptUpdate(ctx_stream, ct_stream, &len, msg,
+            sizeof(msg)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx_stream, ct_stream + len,
+            &finlen))) {
+        TEST_info("%s: stream encrypt", info->name);
+        goto err;
+    }
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_stream, taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_stream, tagparams))) {
+        TEST_info("%s: stream get tag", info->name);
+        goto err;
+    }
+
+    /* one-shot encrypt: (CCM len), AAD with out == NULL, payload, finalize */
+    if (!TEST_ptr(ctx_oneshot = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx_oneshot, info->ciph, key, iv,
+            NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx_oneshot, NULL, &len, NULL,
+                sizeof(msg))))
+        || !TEST_int_ge(EVP_Cipher(ctx_oneshot, NULL, aad, sizeof(aad)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_oneshot, ct_oneshot, msg, sizeof(msg)),
+            0)
+        || !TEST_int_ge(EVP_Cipher(ctx_oneshot, ct_oneshot + sizeof(msg),
+                            NULL, 0),
+            0)) {
+        TEST_info("%s: one-shot encrypt", info->name);
+        goto err;
+    }
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_oneshot, taglen);
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_oneshot, tagparams))
+        || !TEST_mem_eq(ct_oneshot, sizeof(msg), ct_stream, sizeof(msg))
+        || !TEST_mem_eq(tag_oneshot, taglen, tag_stream, taglen)) {
+        TEST_info("%s: one-shot get tag / compare", info->name);
+        goto err;
+    }
+
+    /* one-shot decrypt: the reference tag must verify */
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_stream, taglen);
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, NULL,
+                sizeof(msg))))
+        || !TEST_int_ge(EVP_Cipher(ctx_dec, NULL, aad, sizeof(aad)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_dec, pt, ct_stream, sizeof(msg)), 0)
+        || !TEST_int_ge(EVP_Cipher(ctx_dec, pt + sizeof(msg), NULL, 0), 0)
+        || !TEST_mem_eq(pt, sizeof(msg), msg, sizeof(msg))) {
+        TEST_info("%s: one-shot decrypt", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx_stream);
+    EVP_CIPHER_CTX_free(ctx_oneshot);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    return testresult;
+}
+
 /*
  * With AEAD ciphers, associated data must precede the payload. Once plaintext
  * or ciphertext processing has begun, a further AAD update (out == NULL) must
@@ -963,6 +1074,7 @@ int setup_tests(void)
     ADD_TEST(test_evp_aead_provided);
     ADD_ALL_TESTS(test_evp_aead_params, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_oneshot_aead_aad, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_late_aad, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_finished_ctx, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, OSSL_NELEM(aead_list));
