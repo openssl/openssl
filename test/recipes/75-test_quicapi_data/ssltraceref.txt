@@ -112,7 +112,7 @@ Sent Packet
   Packet Number: 0x00000002
 Sent Frame: Crypto
     Offset: 1098
-    Len: 60
+    Len: ?
 Sent Frame: Padding
 Sent Packet
   Packet Type: Initial
@@ -128,36 +128,6 @@ Sent Datagram
   Length: 1200
 Received Datagram
   Length: 1200
-Received Packet
-  Packet Type: Initial
-  Version: 0x00000001
-  Destination Conn Id: <zero length id>
-  Source Conn Id: 0x?
-  Payload length: 1178
-  Token: <zero length token>
-  Packet Number: 0x00000000
-Received Frame: Ack  (without ECN)
-    Largest acked: 3
-    Ack delay (raw) 0
-    Ack range count: 0
-    First ack range: 1
-Received Frame: Padding
-Sent Frame: Crypto
-    Offset: 1158
-    Len: ?
-Sent Frame: Padding
-Sent Packet
-  Packet Type: Initial
-  Version: 0x00000001
-  Destination Conn Id: 0x?
-  Source Conn Id: <zero length id>
-  Payload length: 1118
-  Token: ?
-  Packet Number: 0x00000004
-Sent Datagram
-  Length: 1200
-Received Datagram
-  Length: 1200
 Received Datagram
   Length: 1199
 Received Datagram
@@ -169,7 +139,7 @@ Received Packet
   Source Conn Id: 0x?
   Payload length: 1178
   Token: <zero length token>
-  Packet Number: 0x00000001
+  Packet Number: 0x00000000
 Received Packet
   Packet Type: Initial
   Version: 0x00000001
@@ -177,12 +147,12 @@ Received Packet
   Source Conn Id: 0x?
   Payload length: 45
   Token: <zero length token>
-  Packet Number: 0x00000002
+  Packet Number: 0x00000001
 Received Frame: Ack  (without ECN)
-    Largest acked: 4
+    Largest acked: 3
     Ack delay (raw) 0
     Ack range count: 0
-    First ack range: 2
+    First ack range: 1
 Received Frame: Crypto
     Offset: 0
     Len: 1153
@@ -359,10 +329,10 @@ Header:
       verify_data (len=32): ?
 
 Sent Frame: Ack  (without ECN)
-    Largest acked: 2
+    Largest acked: 1
     Ack delay (raw) 0
     Ack range count: 0
-    First ack range: 2
+    First ack range: 1
 Sent Frame: Ack  (without ECN)
     Largest acked: 1
     Ack delay (raw) 0
@@ -379,7 +349,7 @@ Sent Packet
   Source Conn Id: <zero length id>
   Payload length: 1037
   Token: ?
-  Packet Number: 0x00000005
+  Packet Number: 0x00000004
 Sent Packet
   Packet Type: Handshake
   Version: 0x00000001
