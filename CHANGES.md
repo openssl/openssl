@@ -33,6 +33,16 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Deprecated `SSL_COMP_add_compression_method()`,
+   `SSL_COMP_get_compression_methods()`, `SSL_COMP_set0_compression_methods()`,
+   `SSL_COMP_get_name()`, `SSL_COMP_get0_name()`, `SSL_COMP_get_id()`,
+   `SSL_get_current_compression()`, `SSL_get_current_expansion()` and
+   `SSL_SESSION_get_compress_id()`.
+   TLS record-level compression is obsolete and a known security liability
+   (the CRIME attack).  These functions will be removed in a future release.
+
+   *John Claus*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
