@@ -54,8 +54,7 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
     const unsigned char *retry_token,
     size_t retry_token_len,
-    const QUIC_CONN_ID *retry_scid,
-    int drop_later_pn);
+    const QUIC_CONN_ID *retry_scid);
 static int ch_restart(QUIC_CHANNEL *ch);
 
 static void ch_cleanup(QUIC_CHANNEL *ch);
@@ -83,8 +82,7 @@ static void rxku_detected(QUIC_PN pn, void *arg);
 static int ch_retry(QUIC_CHANNEL *ch,
     const unsigned char *retry_token,
     size_t retry_token_len,
-    const QUIC_CONN_ID *retry_scid,
-    int drop_later_pn);
+    const QUIC_CONN_ID *retry_scid);
 static void ch_update_idle(QUIC_CHANNEL *ch);
 static int ch_discard_el(QUIC_CHANNEL *ch,
     uint32_t enc_level);
@@ -2537,7 +2535,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
 
         if (!ch_retry(ch, ch->qrx_pkt->hdr->data,
                 ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
-                &ch->qrx_pkt->hdr->src_conn_id, old_have_processed_any_pkt))
+                &ch->qrx_pkt->hdr->src_conn_id))
             ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR,
                 0, "handling retry packet");
         break;
@@ -2905,9 +2903,29 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
     ch_start_terminating(ch, &tcause, 0);
 }
 
+/*
+ * Force the ACKM to consider every Initial packet still in flight as lost, so
+ * that the CRYPTO data they carried is sent again. None may be in flight, e.g.
+ * when a Version Negotiation packet has just had us mark them all and a Retry
+ * follows before we send again; their data is then already queued.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int ch_mark_initial_pkts_pseudo_lost(QUIC_CHANNEL *ch)
+{
+    OSSL_ACKM *ackm = ch->ackm;
+    QUIC_PN pn;
+
+    while (ossl_ackm_get_largest_unacked(ackm, QUIC_PN_SPACE_INITIAL, &pn))
+        if (!ossl_ackm_mark_packet_pseudo_lost(ackm, QUIC_PN_SPACE_INITIAL, pn))
+            return 0;
+
+    return 1;
+}
+
 /**
  * ch_restart - Restarts the QUIC channel by simulating loss of the initial
- * packet. This forces the packet to be regenerated with the updated protocol
+ * packets. This forces them to be regenerated with the updated protocol
  * version number.
  *
  * @ch: Pointer to the QUIC_CHANNEL structure.
@@ -2917,22 +2935,19 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
 static int ch_restart(QUIC_CHANNEL *ch)
 {
     /*
-     * Just pretend we lost our initial packet, so it gets
+     * Just pretend we lost our initial packets, so they get
      * regenerated, with our updated protocol version number
      */
-    return ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
-        /* PN= */ 0);
+    return ch_mark_initial_pkts_pseudo_lost(ch);
 }
 
 /* Called when a server asks us to do a retry. */
 static int ch_retry(QUIC_CHANNEL *ch,
     const unsigned char *retry_token,
     size_t retry_token_len,
-    const QUIC_CONN_ID *retry_scid,
-    int drop_later_pn)
+    const QUIC_CONN_ID *retry_scid)
 {
     void *buf;
-    QUIC_PN pn = 0;
 
     /*
      * RFC 9000 s. 17.2.5.1: "A client MUST discard a Retry packet that contains
@@ -2969,24 +2984,16 @@ static int ch_retry(QUIC_CHANNEL *ch,
     ch->doing_retry = 1;
 
     /*
-     * If a retry isn't our first response, we need to drop packet number
-     * one instead (i.e. the case where we did version negotiation first
-     */
-    if (drop_later_pn == 1)
-        pn = 1;
-
-    /*
-     * We need to stimulate the Initial EL to generate the first CRYPTO frame
+     * We need to stimulate the Initial EL to generate the CRYPTO frames
      * again. We can do this most cleanly by simply forcing the ACKM to consider
-     * the first Initial packet as lost, which it effectively was as the server
-     * hasn't processed it. This also maintains the desired behaviour with e.g.
-     * PNs not resetting and so on.
+     * every Initial packet we have sent as lost, which they effectively were as
+     * the server hasn't processed them (RFC 9002 s. 6.3). This also maintains
+     * the desired behaviour with e.g. PNs not resetting and so on.
      *
-     * The PN we used initially is always zero, because QUIC does not allow
-     * repeated retries.
+     * The ClientHello may span more than one Initial packet, so all of them
+     * must be marked, not only the first.
      */
-    if (!ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
-            pn))
+    if (!ch_mark_initial_pkts_pseudo_lost(ch))
         return 0;
 
     /*
