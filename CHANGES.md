@@ -33,10 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * Added the `no-buildinfo` Configure option.  It stops the compiler command
-   line and flags from being recorded in libcrypto, which helps reproducible
-   builds across different build environments.  `OpenSSL_version(OPENSSL_CFLAGS)`
-   and `openssl version -f` then report `compiler: information not available`.
+ * Added the `no-buildinfo-cflags` Configure option.  It stops the compiler
+   command line and flags from being recorded in libcrypto, which helps
+   reproducible builds across different build environments.
+   `OpenSSL_version(OPENSSL_CFLAGS)` and `openssl version -f` then report
+   `compiler: information not available`.
 
    *Dmitry Misharov*
 

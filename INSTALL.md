@@ -698,7 +698,7 @@ Don't automatically load the default `openssl.cnf` file.
 Typically OpenSSL will automatically load a system config file which configures
 default SSL options.
 
-### no-buildinfo
+### no-buildinfo-cflags
 
 Don't record the compiler command line and flags in libcrypto.
 

@@ -114,7 +114,7 @@ DEFINE[../libcrypto]=$UPLINKDEF
 
 DEPEND[info.o]=buildinf.h
 DEPEND[cversion.o]=buildinf.h
-IF[{- !$disabled{buildinfo} -}]
+IF[{- !$disabled{"buildinfo-cflags"} -}]
   GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(LIB_CFLAGS) $(CPPFLAGS_Q)" "$(PLATFORM)"
 ELSE
   GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(PLATFORM)"
