@@ -1024,7 +1024,7 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->mode == EVP_CIPH_CCM_MODE) {
         if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_reinit, ivparams))) {
             errmsg = "CCM_SET_IVLEN";
             goto err;
@@ -1040,11 +1040,7 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    /* disable padding for non-aed block-aligned pt */
-    if (info->taglen == 0 && blocksz > 1)
-        EVP_CIPHER_CTX_set_padding(ctx_reinit, 0);
-
-    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE
+    if (info->mode == EVP_CIPH_CCM_MODE
         && !TEST_true(EVP_EncryptUpdate(ctx_reinit, NULL,
             &tmplen, NULL, (int)pt_size))) {
         errmsg = "CCM_DECLARE_PTLEN";
@@ -1064,22 +1060,17 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     ct_len += ct_fin_len;
-    if (info->taglen > 0) {
-        /* override taglen from context if available */
-        int tl = EVP_CIPHER_CTX_get_tag_length(ctx_reinit);
+    /* removed info->taglen > 0 if conditional */
+    int tl = EVP_CIPHER_CTX_get_tag_length(ctx_reinit);
 
-        if (tl > 0)
-            taglen = tl;
+    if (tl > 0) taglen = tl;
 
-        get_tagparams[0] = OSSL_PARAM_construct_octet_string(
-            OSSL_CIPHER_PARAM_AEAD_TAG, tag, taglen);
-        get_tagparams[1] = OSSL_PARAM_construct_end();
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, tag, taglen);
+    get_tagparams[1] = OSSL_PARAM_construct_end();
 
-        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_reinit,
-                                                  get_tagparams))) {
-            errmsg = "AEAD_GET_TAG";
-            goto err;
-        }
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_reinit, get_tagparams))) {
+        errmsg = "AEAD_GET_TAG";
+        goto err;
     }
     /* use same context with a different key and iv in multiple steps */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key2, NULL))) {
@@ -1092,7 +1083,7 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE
+    if (info->mode == EVP_CIPH_CCM_MODE
         && !TEST_true(EVP_EncryptUpdate(ctx_reinit, NULL,
             &tmplen, NULL, (int)pt_size))) {
         errmsg = "CCM_DECLARE_PTLEN";
@@ -1115,9 +1106,7 @@ static int test_evp_stale_key_reinit(int idx)
     get_tagparams[0] = OSSL_PARAM_construct_octet_string(
         OSSL_CIPHER_PARAM_AEAD_TAG, tag_reinit, taglen);
 
-    if (info->taglen > 0
-        && !TEST_true(EVP_CIPHER_CTX_get_params(ctx_reinit,
-                                                get_tagparams))) {
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_reinit, get_tagparams))) {
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
@@ -1133,7 +1122,7 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->mode == EVP_CIPH_CCM_MODE) {
         if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_onestep, ivparams))) {
             errmsg = "CCM_SET_IVLEN";
             goto err;
@@ -1149,10 +1138,10 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->taglen == 0 && blocksz > 1)
+    if (blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_onestep, 0);
 
-    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE
+    if (info->mode == EVP_CIPH_CCM_MODE
         && !TEST_true(EVP_EncryptUpdate(ctx_onestep, NULL,
             &tmplen, NULL, (int)pt_size))) {
         errmsg = "CCM_DECLARE_PTLEN";
@@ -1175,8 +1164,7 @@ static int test_evp_stale_key_reinit(int idx)
     get_tagparams[0] = OSSL_PARAM_construct_octet_string(
         OSSL_CIPHER_PARAM_AEAD_TAG, tag_onestep, taglen);
 
-    if (info->taglen > 0
-        && !TEST_true(EVP_CIPHER_CTX_get_params(ctx_onestep,
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_onestep,
                                                 get_tagparams))) {
         errmsg = "AEAD_GET_TAG";
         goto err;
@@ -1189,8 +1177,7 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->taglen > 0
-        && !TEST_mem_eq(tag_onestep, taglen, tag_reinit, taglen)) {
+    if (!TEST_mem_eq(tag_onestep, taglen, tag_reinit, taglen)) {
         errmsg = "TAG_MISMATCH_SINGLE_vs_REINIT";
         goto err;
     }
