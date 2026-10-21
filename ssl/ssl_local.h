@@ -2435,8 +2435,7 @@ typedef struct dtls_listener_st {
 
     /* Notifier has been signalled */
     int signalled_notifier;
-
-    /* Advanced when the last waiter clears the notifier. */
+    /* Completed notifier cycles, protected by the listener mutex. */
     uint64_t notify_generation;
 
     /*
@@ -3168,8 +3167,10 @@ int ossl_dtls_listener_set_override_now_cb(SSL *s,
 
 int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *value);
 int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t value);
+void ossl_dtls_listener_set_fatal(DTLS_LISTENER *dl);
 
 /* DTLS poll event functions - used by SSL_poll() */
+int ossl_dtls_listener_has_failed(DTLS_LISTENER *dl);
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,

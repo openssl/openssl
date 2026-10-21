@@ -212,8 +212,9 @@ OSSL_CORE_MAKE_FUNC(size_t, rlayer_padding, (void *cbarg, int type, size_t len))
 /*
  * Callback for listener-based connections to read data from their receive
  * queue. Used by DTLS listener connections (and future TLS listener).
- * Returns 1 on success with data/len set, 0 if no data available.
- * The caller must call the release callback when done with the data.
+ * Returns >0 on success with data/len/packet_handle set, 0 if no data is
+ * available (retry), or <0 on fatal failure. On success, the caller must
+ * call the release callback when done with the data.
  */
 #define OSSL_FUNC_RLAYER_GET_URXE_PACKET 5
 OSSL_CORE_MAKE_FUNC(int, rlayer_get_urxe_packet, (void *cbarg, unsigned char **data, size_t *len, void **packet_handle))
@@ -226,8 +227,9 @@ OSSL_CORE_MAKE_FUNC(void, rlayer_release_urxe_packet, (void *cbarg, void *packet
  * connection cannot block in the socket itself, because the socket is shared
  * with every other connection and is always non-blocking.
  *
- * Returns 1 if the send should be attempted again, or 0 to report the write as
- * needing a retry in the usual way.
+ * Returns 1 if the send should be attempted again, 0 to report the write as
+ * needing a retry in the usual way, or -1 on fatal failure with a diagnostic
+ * on the error queue.
  */
 #define OSSL_FUNC_RLAYER_BLOCK_FOR_WRITE 7
 OSSL_CORE_MAKE_FUNC(int, rlayer_block_for_write, (void *cbarg))
