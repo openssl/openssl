@@ -47,10 +47,6 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
     /* Get hash and signature algorithm */
     sct->hash_alg = *p++;
     sct->sig_alg = *p++;
-    if (SCT_get_signature_nid(sct) == NID_undef) {
-        ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID_SIGNATURE);
-        return -1;
-    }
     /* Retrieve signature and check it is consistent with the buffer length */
     n2s(p, siglen);
     len_remaining -= (p - *in);
