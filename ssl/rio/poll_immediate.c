@@ -209,6 +209,22 @@ static int poll_register_dtls_listener(POLL_WAIT_CTX *wctx, SSL *listener)
     return 1;
 }
 
+/* A terminal shared transport cannot produce ordinary readiness or timer work. */
+static int poll_dtls_has_failed(SSL *ssl)
+{
+    SSL_CONNECTION *sc;
+
+    if (IS_DTLS_LISTENER(ssl))
+        return ossl_dtls_listener_has_failed((DTLS_LISTENER *)ssl);
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc)
+        && sc->d1 != NULL && sc->d1->listener != NULL)
+        return ossl_dtls_listener_has_failed((DTLS_LISTENER *)sc->d1->listener);
+
+    return 0;
+}
+
 static int poll_translate_ssl_dtls_listener(SSL *ssl,
     POLL_WAIT_CTX *wctx,
     RIO_POLL_BUILDER *rpb,
@@ -277,7 +293,8 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
                     &revents))
                 return 0;
 
-            if (revents != 0 || ossl_dtls_listener_has_pending_input(ssl)) {
+            if (revents != 0 || ossl_dtls_listener_has_failed(dl)
+                || ossl_dtls_listener_has_pending_input(ssl)) {
                 *abort_blocking = 1;
                 return 1;
             }
@@ -298,7 +315,7 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     int rfd = -1, wfd = -1, nfd = -1;
     SSL_CONNECTION *sc;
     DTLS_LISTENER *dl = NULL;
-    int has_pending;
+    uint64_t revents = 0;
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
@@ -317,24 +334,21 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
             ossl_dtls_tick(dl);
 
             /*
-             * Now check the URXE buffer. If data has been demuxed into
-             * this connection's receive queue, abort blocking immediately -
-             * there is no need to wait on the socket FD. Likewise if the
-             * tick left input undriven on a pending connection: the socket
-             * will not signal it, so tick again instead of sleeping.
+             * The tick may have queued data or discovered a shared transport
+             * failure. Re-check requested events without ticking again so a
+             * ready connection is reported before waiting on the socket.
+             * A masked failure also restarts translation so this item can be
+             * skipped without retaining any descriptors from this attempt.
+             * Input left undriven on a pending connection also requires another
+             * tick, since the socket cannot signal data already taken from it.
              */
-            if (ossl_dtls_listener_has_pending_input(sc->d1->listener)) {
+            if (!ossl_dtls_conn_poll_events(ssl, events, 0, &revents))
+                return 0;
+
+            if (revents != 0 || ossl_dtls_listener_has_failed(dl)
+                || ossl_dtls_listener_has_pending_input(sc->d1->listener)) {
                 *abort_blocking = 1;
                 return 1;
-            }
-            if (sc->d1->rx != NULL) {
-                ossl_crypto_mutex_lock(sc->d1->rx->mutex);
-                has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
-                ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
-                if (has_pending) {
-                    *abort_blocking = 1;
-                    return 1;
-                }
             }
 
             /*
@@ -355,20 +369,18 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
                         return 0;
 
                     /*
-                     * Only after the above call returns is it guaranteed that
-                     * any readiness events will cause the notifier to become
-                     * readable. Therefore, it is possible data was demuxed to
-                     * our URXE queue, or input left on a pending connection,
-                     * after our initial check above but before we entered
-                     * the blocking section. Re-check now.
+                     * Registration ensures subsequent data notifications can
+                     * wake this waiter. The connection may have become ready after
+                     * our initial check but before entering the blocking
+                     * section. Re-check data, requested error events and input
+                     * left undriven on pending connections.
                      */
-                    has_pending = ossl_dtls_listener_has_pending_input(sc->d1->listener);
-                    if (!has_pending && sc->d1->rx != NULL) {
-                        ossl_crypto_mutex_lock(sc->d1->rx->mutex);
-                        has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
-                        ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
-                    }
-                    if (has_pending) {
+                    if (!ossl_dtls_conn_poll_events(ssl, events, 0,
+                            &revents))
+                        return 0;
+
+                    if (revents != 0 || ossl_dtls_listener_has_failed(dl)
+                        || ossl_dtls_listener_has_pending_input(sc->d1->listener)) {
                         *abort_blocking = 1;
                         return 1;
                     }
@@ -376,7 +388,7 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
             }
 
             /*
-             * URXE buffer is empty. Fall back to the listener's rbio so the
+             * No requested event is ready. Fall back to the listener's rbio so the
              * OS-level poll() wakes us up when the shared socket becomes
              * readable and new datagrams may arrive.
              */
@@ -387,6 +399,30 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
             if (BIO_get_rpoll_descriptor(rbio, &rdesc)
                 && rdesc.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD)
                 rfd = rdesc.value.fd;
+        }
+    }
+
+    /* Shared failure must wake write and exception waits without read interest. */
+    if ((events & (SSL_POLL_EVENT_W | SSL_POLL_EVENT_EC)) != 0) {
+        if (dl != NULL && dl->have_notifier && nfd == -1) {
+            nfd = ossl_rio_notifier_as_fd(&dl->notifier);
+            if (nfd != -1) {
+                if (!ossl_rio_poll_builder_add_fd(rpb, nfd, 1, 0))
+                    return 0;
+
+                if (!poll_register_dtls_listener(wctx, sc->d1->listener))
+                    return 0;
+
+                /*
+                 * Failure may precede registration. Recheck it now, but not
+                 * logical W readiness: a retryable send still needs to wait
+                 * for the underlying socket to become writable.
+                 */
+                if (ossl_dtls_listener_has_failed(dl)) {
+                    *abort_blocking = 1;
+                    return 1;
+                }
+            }
         }
     }
 
@@ -421,7 +457,8 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
 static void postpoll_translation_cleanup(ossl_unused SSL_POLL_ITEM *items,
     ossl_unused size_t num_items,
     ossl_unused size_t stride,
-    POLL_WAIT_CTX *wctx)
+    POLL_WAIT_CTX *wctx,
+    ossl_unused const unsigned char *skipped)
 {
 #ifndef OPENSSL_NO_DTLS
     DTLS_POLL_WAIT_SLOT *slot, *next;
@@ -445,6 +482,9 @@ static void postpoll_translation_cleanup(ossl_unused SSL_POLL_ITEM *items,
 
 #ifndef OPENSSL_NO_QUIC
     for (i = 0; i < num_items; ++i) {
+        if (skipped[i])
+            continue;
+
         item = &ITEM_N(items, stride, i);
 
         switch (item->desc.type) {
@@ -499,7 +539,8 @@ static int poll_translate(SSL_POLL_ITEM *items,
     OSSL_TIME *p_earliest_wakeup_deadline,
     int *abort_blocking,
     int bound_by_event_timeout,
-    size_t *p_result_count)
+    size_t *p_result_count,
+    unsigned char *skipped)
 {
     int ok = 1;
     SSL_POLL_ITEM *item;
@@ -527,6 +568,26 @@ static int poll_translate(SSL_POLL_ITEM *items,
             if (ssl == NULL)
                 /* NULL items are no-ops and have revents reported as 0 */
                 break;
+
+#ifndef OPENSSL_NO_DTLS
+            /*
+             * Failed shared transports contribute neither descriptors nor
+             * retransmission deadlines. Remember skipped items so an infinite
+             * wait with no eligible items can be rejected.
+             */
+            if (poll_dtls_has_failed(ssl)) {
+                uint64_t error_event = IS_DTLS_LISTENER(ssl)
+                    ? SSL_POLL_EVENT_EL
+                    : SSL_POLL_EVENT_EC;
+
+                if ((item->events & error_event) != 0) {
+                    *abort_blocking = 1;
+                    goto out;
+                }
+                skipped[i] = 1;
+                break;
+            }
+#endif
 
             switch (ssl->type) {
 #ifndef OPENSSL_NO_QUIC
@@ -633,7 +694,7 @@ out:
      * a partially translated triggering item is included in both phases.
      */
     if (!ok || *abort_blocking)
-        postpoll_translation_cleanup(items, i, stride, wctx);
+        postpoll_translation_cleanup(items, i, stride, wctx, skipped);
 
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;
     *p_result_count = result_count;
@@ -651,6 +712,8 @@ static int poll_block(SSL_POLL_ITEM *items,
     RIO_POLL_BUILDER rpb;
     POLL_WAIT_CTX wctx;
     OSSL_TIME earliest_wakeup_deadline;
+    unsigned char *skipped = NULL;
+    size_t i;
 
     /*
      * Blocking is somewhat involved and involves the following steps:
@@ -681,11 +744,17 @@ static int poll_block(SSL_POLL_ITEM *items,
 #endif
     ossl_rio_poll_builder_init(&rpb);
 
+    skipped = OPENSSL_zalloc(num_items);
+    if (skipped == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        goto out;
+    }
+
     if (!poll_translate(items, num_items, stride, &wctx, &rpb,
             &earliest_wakeup_deadline,
             &abort_blocking,
             bound_by_event_timeout,
-            p_result_count))
+            p_result_count, skipped))
         goto out;
 
     if (abort_blocking) {
@@ -701,11 +770,24 @@ static int poll_block(SSL_POLL_ITEM *items,
     earliest_wakeup_deadline = ossl_time_min(earliest_wakeup_deadline,
         user_deadline);
 
+    /* An infinite wait with every item skipped has no possible wakeup. */
+    if (ossl_time_is_infinite(earliest_wakeup_deadline)) {
+        for (i = 0; i < num_items && skipped[i]; i++)
+            continue;
+        if (i == num_items) {
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
+                "Infinite poll has no eligible items to wait on");
+            goto out;
+        }
+    }
+
     ok = ossl_rio_poll_builder_poll(&rpb, earliest_wakeup_deadline);
 
-    postpoll_translation_cleanup(items, num_items, stride, &wctx);
+    postpoll_translation_cleanup(items, num_items, stride, &wctx, skipped);
 
 out:
+    OPENSSL_free(skipped);
+
     ossl_rio_poll_builder_cleanup(&rpb);
 #ifndef OPENSSL_NO_QUIC
     ossl_quic_reactor_wait_ctx_cleanup(&wctx.quic);
@@ -744,7 +826,8 @@ int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
 
     item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
     item.desc.value.ssl = ssl;
-    item.events = events;
+    /* Internal waits must return to their caller on terminal transport failure. */
+    item.events = events | (IS_DTLS_LISTENER(ssl) ? SSL_POLL_EVENT_EL : SSL_POLL_EVENT_EC);
     item.revents = 0;
 
     return poll_block(&item, 1, sizeof(item), deadline, bound_by_event_timeout,

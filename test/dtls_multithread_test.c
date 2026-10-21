@@ -15,6 +15,9 @@
 #include "internal/thread_arch.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
+#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
+#include "../ssl/ssl_local.h"
+#endif
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -332,6 +335,785 @@ static int do_handshake(SSL *client, SSL *listener, SSL **server_conn)
 
     return 1;
 }
+
+#if !defined(OPENSSL_NO_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2)
+#define RECV_ERROR_POLL_TIMEOUT_SEC 5
+#define RECV_ERROR_PROMPT_MAX_MS 2000
+#define RECV_ERROR_WATCHDOG_SEC 10
+#define RECV_ERROR_MAX_SEND_ATTEMPTS 8
+
+struct recv_error_thread_args {
+    SSL *conn;
+    SSL *second_conn;
+    SSL *idle_listener;
+    SSL *accepted;
+    DTLS_LISTENER *listener;
+    CRYPTO_THREAD *thread;
+    CRYPTO_MUTEX *mutex;
+    CRYPTO_CONDVAR *cv;
+    int armed;
+    int transient_receives;
+    int permanent_receives;
+    int arrived;
+    int release;
+    int barrier_timeout;
+    int done;
+    int blocking_read;
+    int blocking_accept;
+    int blocking_write;
+    int blocked_writer;
+    int write_wait_fd;
+    int send_attempts;
+    int send_limit_hit;
+    int ssl_error;
+    unsigned long error;
+    unsigned long first_error;
+    size_t readbytes;
+    size_t written;
+    size_t waiters_at_barrier;
+    int registered_descriptor_queries;
+    int ret;
+    size_t result_count;
+    uint64_t revents;
+    uint64_t second_revents;
+    OSSL_TIME released;
+    OSSL_TIME finished;
+};
+
+static int recv_error_wait(struct recv_error_thread_args *ta, int *predicate)
+{
+    OSSL_TIME deadline;
+    int ready;
+
+    deadline = ossl_time_add(ossl_time_now(),
+        ossl_seconds2time(RECV_ERROR_WATCHDOG_SEC));
+
+    ossl_crypto_mutex_lock(ta->mutex);
+    while (!*predicate && ossl_time_compare(ossl_time_now(), deadline) < 0)
+        ossl_crypto_condvar_wait_timeout(ta->cv, ta->mutex, deadline);
+    ready = *predicate;
+    ossl_crypto_mutex_unlock(ta->mutex);
+
+    if (!ready)
+        return 0;
+
+    return 1;
+}
+
+/* Keep the peer open and unread so the write descriptor cannot become ready. */
+static int recv_error_fill_write_socket(int fds[2])
+{
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(__DJGPP__) && defined(AF_UNIX)
+    BIO *bio = NULL;
+    char buf[4096] = { 0 };
+    int i, ret, ok = 0;
+
+    if (!TEST_int_eq(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0)
+        || !TEST_true(BIO_socket_nbio(fds[0], 1))
+        || !TEST_ptr(bio = BIO_new_socket(fds[0], BIO_NOCLOSE)))
+        goto end;
+
+    /* Bound setup even if the platform permits unusually large send buffers. */
+    for (i = 0; i < 4096; i++) {
+        ret = BIO_write(bio, buf, sizeof(buf));
+        if (ret <= 0) {
+            if (!TEST_true(BIO_should_retry(bio))
+                || !TEST_int_eq(BIO_socket_ready(fds[0], 0), 0))
+                goto end;
+            ok = 1;
+            break;
+        }
+    }
+    if (!ok)
+        TEST_error("Could not fill the write-wait socket within the setup bound");
+end:
+    BIO_free(bio);
+    ERR_clear_error();
+    return ok;
+#else
+    return 0;
+#endif
+}
+
+static long recv_error_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    struct recv_error_thread_args *ta = BIO_get_data(bio);
+    BIO_POLL_DESCRIPTOR *desc = ptr;
+    OSSL_TIME deadline;
+    size_t waiters;
+    long ret;
+
+    ret = BIO_ctrl(BIO_next(bio), cmd, num, ptr);
+    if (ta->blocked_writer && cmd == BIO_CTRL_GET_WPOLL_DESCRIPTOR) {
+        desc->type = BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
+        desc->value.fd = ta->write_wait_fd;
+        ret = 1;
+    }
+    /* Only park the descriptor query for the worker's internal wait. */
+    if (ta->blocking_accept || ta->idle_listener != NULL
+        || cmd != (ta->blocking_write ? BIO_CTRL_GET_WPOLL_DESCRIPTOR : BIO_CTRL_GET_RPOLL_DESCRIPTOR)
+        || ret <= 0
+        || desc->type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD
+        || desc->value.fd < 0)
+        return ret;
+
+    /* Never acquire the listener mutex while holding the test mutex. */
+    ossl_crypto_mutex_lock(ta->listener->mutex);
+    waiters = ta->listener->cur_blocking_waiters;
+    ossl_crypto_mutex_unlock(ta->listener->mutex);
+
+    /* Blocking capability checks query the descriptor before registration. */
+    if (!ta->blocking_write && waiters == 0)
+        return ret;
+
+    ossl_crypto_mutex_lock(ta->mutex);
+    /* Both items share one registration; park at the second item's query. */
+    if (ta->second_conn != NULL && !ta->arrived
+        && ++ta->registered_descriptor_queries < 2) {
+        ossl_crypto_mutex_unlock(ta->mutex);
+        return ret;
+    }
+    if (!ta->arrived) {
+        /*
+         * Read translation reaches here after registration and its readiness
+         * recheck. Write translation reaches here after a retryable send,
+         * notifier registration and the shared-failure recheck. Neither path
+         * holds the listener mutex here, so another connection can discover
+         * the receive error while we are parked.
+         */
+        ta->waiters_at_barrier = waiters;
+        ta->arrived = 1;
+        ossl_crypto_condvar_broadcast(ta->cv);
+
+        deadline = ossl_time_add(ossl_time_now(),
+            ossl_seconds2time(RECV_ERROR_WATCHDOG_SEC));
+        while (!ta->release && ossl_time_compare(ossl_time_now(), deadline) < 0)
+            ossl_crypto_condvar_wait_timeout(ta->cv, ta->mutex, deadline);
+        if (!ta->release)
+            ta->barrier_timeout = 1;
+    }
+    ossl_crypto_mutex_unlock(ta->mutex);
+
+    return ret;
+}
+
+/* The second, independent item is translated after the EC-only child. */
+static long recv_error_idle_ctrl_cb(BIO *bio, int oper, const char *argp,
+    size_t len, int cmd, long argl, int ret, size_t *processed)
+{
+    struct recv_error_thread_args *ta = (void *)BIO_get_callback_arg(bio);
+    OSSL_TIME deadline;
+    size_t waiters;
+
+    if (oper != (BIO_CB_CTRL | BIO_CB_RETURN)
+        || cmd != BIO_CTRL_GET_RPOLL_DESCRIPTOR || ret <= 0)
+        return ret;
+
+    ossl_crypto_mutex_lock(ta->listener->mutex);
+    waiters = ta->listener->cur_blocking_waiters;
+    ossl_crypto_mutex_unlock(ta->listener->mutex);
+
+    ossl_crypto_mutex_lock(ta->mutex);
+    if (!ta->arrived) {
+        ta->waiters_at_barrier = waiters;
+        ta->arrived = 1;
+        ossl_crypto_condvar_broadcast(ta->cv);
+        deadline = ossl_time_add(ossl_time_now(),
+            ossl_seconds2time(RECV_ERROR_WATCHDOG_SEC));
+        while (!ta->release && ossl_time_compare(ossl_time_now(), deadline) < 0)
+            ossl_crypto_condvar_wait_timeout(ta->cv, ta->mutex, deadline);
+        if (!ta->release)
+            ta->barrier_timeout = 1;
+    }
+    ossl_crypto_mutex_unlock(ta->mutex);
+    return ret;
+}
+
+static int recv_error_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
+{
+    struct recv_error_thread_args *ta = BIO_get_data(bio);
+    int armed;
+
+    ossl_crypto_mutex_lock(ta->mutex);
+    armed = ta->armed;
+    if (armed)
+        ta->permanent_receives++;
+    else
+        ta->transient_receives++;
+    ossl_crypto_mutex_unlock(ta->mutex);
+
+    /* Leave BIO configuration immutable while ctrl and receive can overlap. */
+    *msgs_processed = 0;
+    ERR_raise(ERR_LIB_BIO, armed ? BIO_R_TRANSFER_ERROR : BIO_R_NON_FATAL);
+    return 0;
+}
+
+static int recv_error_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
+{
+    struct recv_error_thread_args *ta = BIO_get_data(bio);
+
+    /* Only the writer uses this BIO; no datagram is sent to the idle client. */
+    *msgs_processed = 0;
+    if (++ta->send_attempts > RECV_ERROR_MAX_SEND_ATTEMPTS) {
+        /* Bound a broken retry loop, and make this escape fail the test. */
+        ta->send_limit_hit = 1;
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+    } else {
+        ERR_raise(ERR_LIB_BIO, BIO_R_NON_FATAL);
+    }
+    return 0;
+}
+
+static unsigned int recv_error_conn_thread(void *arg)
+{
+    struct recv_error_thread_args *ta = arg;
+    SSL_POLL_ITEM items[2];
+    size_t num_items = ta->second_conn != NULL || ta->idle_listener != NULL ? 2 : 1;
+    struct timeval timeout = { RECV_ERROR_POLL_TIMEOUT_SEC, 0 };
+    OSSL_TIME finished;
+    unsigned char buf;
+
+    items[0].desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    items[0].desc.value.ssl = ta->conn;
+    items[0].events = SSL_POLL_EVENT_R | SSL_POLL_EVENT_EC;
+    items[0].revents = 0;
+    items[1] = items[0];
+    items[1].desc.value.ssl = ta->second_conn;
+    if (ta->idle_listener != NULL) {
+        items[0].events = SSL_POLL_EVENT_EC;
+        items[1].desc.value.ssl = ta->idle_listener;
+        items[1].events = SSL_POLL_EVENT_IC;
+    }
+
+    ERR_clear_error();
+    if (ta->blocking_accept) {
+        ta->accepted = SSL_accept_connection((SSL *)ta->listener, 0);
+        ta->first_error = ERR_peek_error();
+        ta->error = ERR_peek_last_error();
+    } else if (ta->blocking_write) {
+        ta->ret = SSL_write_ex(ta->conn, SERVER_TO_CLIENT_MSG,
+            strlen(SERVER_TO_CLIENT_MSG), &ta->written);
+        ta->ssl_error = SSL_get_error(ta->conn, ta->ret);
+        ta->first_error = ERR_peek_error();
+        ta->error = ERR_peek_last_error();
+    } else if (ta->blocking_read) {
+        /* Exercise libssl's internal wait rather than the public polling API. */
+        ta->ret = SSL_read_ex(ta->conn, &buf, sizeof(buf), &ta->readbytes);
+        ta->ssl_error = SSL_get_error(ta->conn, ta->ret);
+        ta->error = ERR_peek_last_error();
+    } else {
+        ta->ret = SSL_poll(items, num_items, sizeof(items[0]), &timeout, 0,
+            &ta->result_count);
+    }
+    finished = ossl_time_now();
+    ta->revents = items[0].revents;
+    ta->second_revents = items[1].revents;
+
+    ossl_crypto_mutex_lock(ta->mutex);
+    ta->finished = finished;
+    ta->done = 1;
+    ossl_crypto_condvar_broadcast(ta->cv);
+    ossl_crypto_mutex_unlock(ta->mutex);
+    return 0;
+}
+
+static void recv_error_release_join(struct recv_error_thread_args *ta)
+{
+    if (ta->thread == NULL)
+        return;
+
+    ossl_crypto_mutex_lock(ta->mutex);
+    if (ossl_time_is_zero(ta->released))
+        ta->released = ossl_time_now();
+    ta->release = 1;
+    ossl_crypto_condvar_broadcast(ta->cv);
+    ossl_crypto_mutex_unlock(ta->mutex);
+
+    /* Bound stuck blocking I/O/accepts and deadlocks during poll cleanup. */
+    if (!recv_error_wait(ta, &ta->done))
+        OPENSSL_die("DTLS receive error poll worker is wedged", __FILE__, __LINE__);
+
+    if (!ossl_crypto_thread_native_join(ta->thread, NULL)
+        || !ossl_crypto_thread_native_clean(ta->thread))
+        OPENSSL_die("DTLS receive error poll worker join failed", __FILE__, __LINE__);
+
+    ta->thread = NULL;
+}
+
+/*
+ * For idx 0..4, a permanent listener receive error discovered by another thread
+ * must wake a registered connection or listener waiter. The handshaken DTLS
+ * client stays idle, the real socket stays live, and no timer or network data
+ * can supply the wakeup. Only production error handling can signal the notifier.
+ * idx 0/1 wait with SSL_poll; idx 2/3 wait with blocking SSL_read_ex.
+ * Within idx 0..3, even indices discover failure through listener polling;
+ * odd indices use a second accepted connection's read, which pumps the shared
+ * demux directly. idx 4 blocks in SSL_accept_connection and uses the second
+ * connection's read to discover failure without concurrent listener polling.
+ * idx 5 forces SSL_write_ex into its internal write wait with a retryable send,
+ * then discovers failure through the second connection at descriptor translation.
+ * The UDP socket remains writable: this checks terminal failure across the write
+ * wait, not notifier wakeup from an OS-blocked send. No send may be retried after
+ * that failure, and the writer must receive the original transport diagnostic.
+ * idx 6 polls two distinct children of one listener. Failure is discovered by
+ * a third child after both poll items reach descriptor translation. They share
+ * one listener registration, which cleanup must release before draining. The
+ * worker watchdog bounds a deadlock; the finite poll timeout cannot bound
+ * cleanup after the OS wait returns.
+ * idx 7 uses the same retryable send as idx 5, but substitutes a full socketpair
+ * endpoint for the write-poll descriptor. Its peer is never drained or closed
+ * while the worker runs, so writability cannot end the wait. The descriptor
+ * barrier orders failure injection; it does not prove an OS sleep has begun.
+ * Production notification must allow prompt completion despite the nonwritable
+ * descriptor. The watchdog aborts if the writer remains stuck.
+ * idx 8 polls only EC on the child. An independent idle listener supplies a
+ * descriptor barrier after that child's translation, without registering on
+ * its behalf. Shared failure must wake the poll before its finite deadline;
+ * the unrelated listener must report no event.
+ */
+static int test_dtls_listener_recv_error_notifier(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client = NULL, *conn = NULL;
+    SSL *detect_client = NULL, *detect_conn = NULL;
+    SSL *second_client = NULL, *second_conn = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO_ADDR *idle_addr = NULL;
+    BIO *idle_bio = NULL;
+    BIO_METHOD *method = NULL;
+    BIO *filter = NULL, *wfilter = NULL, *rbio, *wbio;
+    DTLS_LISTENER *dl;
+    struct recv_error_thread_args ta = { 0 };
+    SSL_POLL_ITEM item;
+    struct timeval timeout = { 0, 0 }, timer_left;
+    OSSL_TIME elapsed, deadline;
+    size_t waiters;
+    size_t result_count = 0;
+    size_t readbytes = 0;
+    unsigned char buf;
+    unsigned long error;
+    int server_fd = -1, client_fd = -1, nfd;
+    int detect_client_fd = -1, read_error = SSL_ERROR_NONE;
+    int second_client_fd = -1;
+    int idle_fd = -1;
+    int write_wait_fds[2] = { -1, -1 };
+    int is_infinite = 0, ret, notifier_ready = 0, worker_done;
+    int testresult = 0;
+    int multi_item = idx == 6;
+    int error_only = idx == 8;
+    int direct_read = idx % 2 || idx == 4 || multi_item || error_only;
+#ifndef OPENSSL_NO_DTLS1_3
+    int version = DTLS1_3_VERSION;
+#else
+    int version = DTLS1_2_VERSION;
+#endif
+
+    ta.blocked_writer = idx == 7;
+#if defined(OPENSSL_SYS_WINDOWS) || defined(__DJGPP__) || !defined(AF_UNIX)
+    if (ta.blocked_writer) {
+        TEST_skip("Nonwritable write descriptor requires a Unix socketpair");
+        return 1;
+    }
+#endif
+
+    /* Protect failure injection and the worker's completion notification. */
+    if (!TEST_ptr(ta.mutex = ossl_crypto_mutex_new())
+        || !TEST_ptr(ta.cv = ossl_crypto_condvar_new()))
+        goto end;
+
+    /* Complete the handshake without ticket traffic that could wake the poll. */
+    ERR_clear_error();
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0))
+        || !TEST_true(create_listener_ex(sctx, SSL_LISTENER_FLAG_NO_VALIDATE,
+            &listener, &server_addr, &server_fd))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !TEST_true(create_client(cctx, server_addr, &client, &client_fd))
+        || !TEST_true(do_handshake(client, listener, &conn)))
+        goto end;
+
+    if (direct_read) {
+        /* Discover failure on a separate, already accepted connection. */
+        if (!TEST_true(create_client(cctx, server_addr, &detect_client,
+                &detect_client_fd))
+            || !TEST_true(do_handshake(detect_client, listener, &detect_conn))
+            || !TEST_true(SSL_set_blocking_mode(detect_conn, 0))
+            || !TEST_true(SSL_is_init_finished(detect_conn))
+            || !TEST_true(SSL_is_init_finished(detect_client))
+            || !TEST_true(SSL_get_event_timeout(detect_conn, &timer_left,
+                &is_infinite))
+            || !TEST_true(is_infinite))
+            goto end;
+    }
+
+    if (multi_item) {
+        /* Both polled children must be idle before installing the fault filter. */
+        if (!TEST_true(create_client(cctx, server_addr, &second_client,
+                &second_client_fd))
+            || !TEST_true(do_handshake(second_client, listener, &second_conn))
+            || !TEST_true(SSL_set_blocking_mode(second_conn, 0))
+            || !TEST_true(SSL_is_init_finished(second_conn))
+            || !TEST_true(SSL_is_init_finished(second_client))
+            || !TEST_true(SSL_get_event_timeout(second_conn, &timer_left,
+                &is_infinite))
+            || !TEST_true(is_infinite))
+            goto end;
+
+        item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        item.desc.value.ssl = second_conn;
+        item.events = SSL_POLL_EVENT_R | SSL_POLL_EVENT_EC;
+        item.revents = 0;
+
+        ERR_clear_error();
+        if (!TEST_int_eq(SSL_poll(&item, 1, sizeof(item), &timeout,
+                             SSL_POLL_FLAG_NO_HANDLE_EVENTS, &result_count),
+                1)
+            || !TEST_size_t_eq(result_count, 0)
+            || !TEST_uint64_t_eq(item.revents, 0))
+            goto end;
+    }
+
+    /* Start with a finished connection and no existing notifier activity. */
+    dl = (DTLS_LISTENER *)listener;
+    ta.listener = dl;
+    ta.conn = conn;
+    ta.second_conn = second_conn;
+    ta.blocking_read = idx == 2 || idx == 3;
+    ta.blocking_accept = idx == 4;
+    ta.blocking_write = idx == 5 || ta.blocked_writer;
+    if (!TEST_true(SSL_is_init_finished(conn))
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_true(dl->have_notifier)
+        || !TEST_size_t_eq(dl->cur_blocking_waiters, 0)
+        || !TEST_int_eq(dl->signalled_notifier, 0))
+        goto end;
+
+    /* No readable socket may supply a receive-error wakeup. */
+    nfd = ossl_rio_notifier_as_fd(&dl->notifier);
+    if (!TEST_int_ge(nfd, 0)
+        || !TEST_int_eq(BIO_socket_ready(nfd, 1), 0)
+        || !TEST_int_eq(BIO_socket_ready(server_fd, 1), 0))
+        goto end;
+
+    /* Write readiness bounds the OS wait after the descriptor rendezvous. */
+    if (ta.blocking_write && !TEST_int_eq(BIO_socket_ready(server_fd, 0), 1))
+        goto end;
+
+    if (ta.blocked_writer) {
+        if (!TEST_true(recv_error_fill_write_socket(write_wait_fds)))
+            goto end;
+        ta.write_wait_fd = write_wait_fds[0];
+    }
+
+    ERR_clear_error();
+    if (!TEST_true(SSL_get_event_timeout(conn, &timer_left, &is_infinite))
+        || !TEST_true(is_infinite))
+        goto end;
+
+    /* Buffered SSL data must not let the worker return before it starts waiting. */
+    item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    item.desc.value.ssl = conn;
+    item.events = SSL_POLL_EVENT_R | SSL_POLL_EVENT_EC;
+    item.revents = 0;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(SSL_poll(&item, 1, sizeof(item), &timeout,
+                         SSL_POLL_FLAG_NO_HANDLE_EVENTS, &result_count),
+            1)
+        || !TEST_size_t_eq(result_count, 0)
+        || !TEST_uint64_t_eq(item.revents, 0))
+        goto end;
+
+    /* Set the worker's mode before installing the descriptor rendezvous. */
+    if (!TEST_true(SSL_set_blocking_mode(conn,
+            ta.blocking_read || ta.blocking_write))
+        || !TEST_int_eq(SSL_get_blocking_mode(conn),
+            ta.blocking_read || ta.blocking_write))
+        goto end;
+
+    if (ta.blocking_accept
+        && (!TEST_true(SSL_set_blocking_mode(listener, 1))
+            || !TEST_int_eq(SSL_get_blocking_mode(listener), 1)))
+        goto end;
+
+    /* Inject receive errors without closing or making the real socket readable. */
+    if (!TEST_ptr(method = BIO_meth_new(BIO_get_new_index() | BIO_TYPE_FILTER,
+                      "Cross-thread receive error filter"))
+        || !TEST_true(BIO_meth_set_ctrl(method, recv_error_ctrl))
+        || !TEST_true(BIO_meth_set_recvmmsg(method, recv_error_recvmmsg))
+        || !TEST_true(BIO_meth_set_sendmmsg(method, recv_error_sendmmsg))
+        || !TEST_ptr(filter = BIO_new(method)))
+        goto end;
+
+    BIO_set_data(filter, &ta);
+    BIO_set_init(filter, 1);
+
+    /* Keep a reference for the receive chain; the write BIO stays unchanged. */
+    if (!TEST_ptr(rbio = SSL_get_rbio(listener))
+        || !TEST_true(BIO_up_ref(rbio)))
+        goto end;
+
+    BIO_push(filter, rbio);
+    ERR_clear_error();
+    SSL_set0_rbio(listener, filter);
+    filter = NULL;
+
+    /* Install a separate send filter only on the connection used by the writer. */
+    if (ta.blocking_write) {
+        if (!TEST_ptr(wfilter = BIO_new(method)))
+            goto end;
+
+        BIO_set_data(wfilter, &ta);
+        BIO_set_init(wfilter, 1);
+        if (!TEST_ptr(wbio = SSL_get_wbio(conn))
+            || !TEST_true(BIO_up_ref(wbio)))
+            goto end;
+
+        BIO_push(wfilter, wbio);
+        SSL_set0_wbio(conn, wfilter);
+        wfilter = NULL;
+    }
+
+    if (error_only) {
+        if (!TEST_true(create_listener_ex(sctx,
+                SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+                &ta.idle_listener, &idle_addr, &idle_fd))
+            || !TEST_true(SSL_set_blocking_mode(ta.idle_listener, 0))
+            || !TEST_int_eq(BIO_socket_ready(idle_fd, 1), 0)
+            || !TEST_ptr(idle_bio = SSL_get_rbio(ta.idle_listener)))
+            goto end;
+
+        BIO_set_callback_arg(idle_bio, (char *)&ta);
+        BIO_set_callback_ex(idle_bio, recv_error_idle_ctrl_cb);
+    }
+
+    /* Connection workers park during descriptor translation of their wait. */
+    ta.thread = ossl_crypto_thread_native_start(recv_error_conn_thread, &ta, 1);
+    if (!TEST_ptr(ta.thread))
+        goto end;
+
+    if (ta.blocking_accept) {
+        /*
+         * Listener descriptor translation precedes registration, so observe
+         * registration instead of using the ctrl rendezvous. This may precede
+         * the final readiness recheck: it validates blocking accept's exit,
+         * not exclusively a wakeup from an OS-level sleep.
+         */
+        deadline = ossl_time_add(ossl_time_now(),
+            ossl_seconds2time(RECV_ERROR_WATCHDOG_SEC));
+        for (;;) {
+            ossl_crypto_mutex_lock(dl->mutex);
+            waiters = dl->cur_blocking_waiters;
+            ossl_crypto_mutex_unlock(dl->mutex);
+
+            ossl_crypto_mutex_lock(ta.mutex);
+            ta.waiters_at_barrier = waiters;
+            worker_done = ta.done;
+            ossl_crypto_mutex_unlock(ta.mutex);
+
+            if (waiters > 0 || worker_done
+                || ossl_time_compare(ossl_time_now(), deadline) >= 0)
+                break;
+
+            OSSL_sleep(1);
+        }
+        if (!TEST_false(worker_done) || !TEST_size_t_gt(waiters, 0))
+            goto end;
+
+    } else if (!TEST_true(recv_error_wait(&ta, &ta.arrived))) {
+        goto end;
+    }
+
+    if (ta.blocked_writer
+        && !TEST_int_eq(BIO_socket_ready(ta.write_wait_fd, 0), 0))
+        goto end;
+
+    if (multi_item) {
+        /* Both translated items must share exactly one listener registration. */
+        ossl_crypto_mutex_lock(dl->mutex);
+        waiters = dl->cur_blocking_waiters;
+        ossl_crypto_mutex_unlock(dl->mutex);
+        if (!TEST_size_t_eq(waiters, 1))
+            goto end;
+    }
+
+    /* Only the main thread's next receive should discover the permanent error. */
+    ossl_crypto_mutex_lock(ta.mutex);
+    /* Accept can finish before release_join; measure from failure injection. */
+    if (ta.blocking_accept)
+        ta.released = ossl_time_now();
+    ta.armed = 1;
+    ossl_crypto_mutex_unlock(ta.mutex);
+
+    ERR_clear_error();
+    if (!direct_read) {
+        /* A zero-time normal poll ticks the listener and discovers the failure. */
+        item.desc.value.ssl = listener;
+        item.events = SSL_POLL_EVENT_IC | SSL_POLL_EVENT_EL;
+        item.revents = 0;
+        ret = SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count);
+    } else {
+        /* Do not tick the listener: the connection read must notify on its own. */
+        ret = SSL_read_ex(detect_conn, &buf, sizeof(buf), &readbytes);
+        read_error = SSL_get_error(detect_conn, ret);
+    }
+    error = ERR_peek_last_error();
+
+    /* Parked registered workers keep the notification pending until release. */
+    if (!ta.blocking_accept && (!ta.blocking_write || ta.blocked_writer))
+        notifier_ready = BIO_socket_ready(nfd, 1);
+    recv_error_release_join(&ta);
+
+    /* Exclude setup/barrier time and the main thread's scheduling after done. */
+    elapsed = ossl_time_subtract(ta.finished, ta.released);
+
+    if (error_only
+        && (!TEST_uint64_t_lt(ossl_time2ms(elapsed), RECV_ERROR_PROMPT_MAX_MS)
+            || !TEST_uint64_t_eq(ta.second_revents, 0)
+            || !TEST_int_eq(BIO_socket_ready(idle_fd, 1), 0)))
+        goto end;
+
+    /* Shared snapshots can be checked without locks now that the worker joined. */
+    if (!TEST_false(ta.barrier_timeout)
+        || (ta.blocked_writer
+            && (!TEST_size_t_eq(ta.waiters_at_barrier, 1)
+                || !TEST_int_eq(BIO_socket_ready(ta.write_wait_fd, 0), 0)))
+        || (!ta.blocking_write
+            && (!TEST_size_t_eq(ta.waiters_at_barrier, 1)
+                || !TEST_int_gt(ta.transient_receives, 0)))
+        || (multi_item && !TEST_int_eq(ta.registered_descriptor_queries, 2))
+        || !TEST_int_eq(ta.permanent_receives, 1)
+        || !TEST_int_eq(ERR_GET_LIB(error), ERR_LIB_BIO)
+        || !TEST_int_eq(ERR_GET_REASON(error), BIO_R_TRANSFER_ERROR))
+        goto end;
+
+    if (!direct_read) {
+        if (!TEST_int_eq(ret, 1)
+            || !TEST_size_t_eq(result_count, 1)
+            || !TEST_uint64_t_eq(item.revents, SSL_POLL_EVENT_EL))
+            goto end;
+
+    } else if (!TEST_int_eq(ret, 0)
+        || !TEST_size_t_eq(readbytes, 0)
+        || !TEST_int_eq(read_error, SSL_ERROR_SSL)) {
+        goto end;
+    }
+
+    /* The last waiter must unregister and drain any production notification. */
+    if (!TEST_size_t_eq(dl->cur_blocking_waiters, 0)
+        || !TEST_int_eq(dl->signalled_notifier, 0)
+        || !TEST_int_eq(BIO_socket_ready(nfd, 1), 0)
+        || !TEST_int_eq(BIO_socket_ready(server_fd, 1), 0))
+        goto end;
+
+    if (ta.blocking_accept) {
+        /* Retain the transport error without appending a generic SSL error. */
+        if (!TEST_ptr_null(ta.accepted)
+            || !TEST_int_eq(ERR_GET_LIB(ta.first_error), ERR_LIB_BIO)
+            || !TEST_int_eq(ERR_GET_REASON(ta.first_error), BIO_R_TRANSFER_ERROR)
+            || !TEST_int_eq(ERR_GET_LIB(ta.error), ERR_LIB_BIO)
+            || !TEST_int_eq(ERR_GET_REASON(ta.error), BIO_R_TRANSFER_ERROR))
+            goto end;
+
+    } else if (ta.blocking_write) {
+        /* A bounded escape or another send cannot substitute for failure. */
+        if (!TEST_false(ta.send_limit_hit)
+            || !TEST_int_eq(ta.send_attempts, 1)
+            || !TEST_int_eq(ta.ret, 0)
+            || !TEST_size_t_eq(ta.written, 0)
+            || !TEST_int_eq(ta.ssl_error, SSL_ERROR_SSL)
+            || !TEST_int_eq(ERR_GET_LIB(ta.first_error), ERR_LIB_BIO)
+            || !TEST_int_eq(ERR_GET_REASON(ta.first_error), BIO_R_TRANSFER_ERROR)
+            || !TEST_int_eq(ERR_GET_LIB(ta.error), ERR_LIB_BIO)
+            || !TEST_int_eq(ERR_GET_REASON(ta.error), BIO_R_TRANSFER_ERROR))
+            goto end;
+
+    } else if (ta.blocking_read) {
+        /* The worker must retain the original error on its own error queue. */
+        if (!TEST_int_eq(ta.ret, 0)
+            || !TEST_size_t_eq(ta.readbytes, 0)
+            || !TEST_int_eq(ta.ssl_error, SSL_ERROR_SSL)
+            || !TEST_int_eq(ERR_GET_LIB(ta.error), ERR_LIB_BIO)
+            || !TEST_int_eq(ERR_GET_REASON(ta.error), BIO_R_TRANSFER_ERROR))
+            goto end;
+
+    } else if (!TEST_int_eq(ta.ret, 1)
+        || !TEST_size_t_eq(ta.result_count, multi_item ? 2 : 1)
+        || !TEST_uint64_t_eq(ta.revents, SSL_POLL_EVENT_EC)
+        || (multi_item
+            && !TEST_uint64_t_eq(ta.second_revents, SSL_POLL_EVENT_EC))) {
+        goto end;
+    }
+
+    /* Accept may drain the notifier; idx 5 checks write failure, not notification. */
+    if (!TEST_int_ge(ossl_time_compare(ta.finished, ta.released), 0)
+        || !TEST_uint64_t_lt(ossl_time2ms(elapsed), RECV_ERROR_PROMPT_MAX_MS)
+        || (!ta.blocking_accept && (!ta.blocking_write || ta.blocked_writer)
+            && !TEST_int_eq(notifier_ready, 1)))
+        goto end;
+
+    testresult = 1;
+end:
+    if (ta.thread != NULL && ta.blocking_accept) {
+        /*
+         * An observer timeout must also release accept through production
+         * error handling. Arming alone cannot wake an idle socket waiter.
+         */
+        ossl_crypto_mutex_lock(ta.mutex);
+        ta.armed = 1;
+        ossl_crypto_mutex_unlock(ta.mutex);
+        ERR_clear_error();
+        if (!TEST_int_eq(ret = SSL_read_ex(detect_conn, &buf, sizeof(buf),
+                             &readbytes),
+                0)
+            || !TEST_int_eq(SSL_get_error(detect_conn, ret), SSL_ERROR_SSL))
+            testresult = 0;
+    }
+    /* Release and join the worker before freeing anything it could still use. */
+    recv_error_release_join(&ta);
+    if (idle_bio != NULL) {
+        BIO_set_callback_ex(idle_bio, NULL);
+        BIO_set_callback_arg(idle_bio, NULL);
+    }
+    SSL_free(ta.idle_listener);
+    BIO_ADDR_free(idle_addr);
+    if (idle_fd >= 0)
+        BIO_closesocket(idle_fd);
+    SSL_free(ta.accepted);
+    SSL_free(second_conn);
+    SSL_free(second_client);
+    SSL_free(detect_conn);
+    SSL_free(detect_client);
+    SSL_free(conn);
+    SSL_free(client);
+    SSL_free(listener);
+    BIO_free_all(filter);
+    BIO_free_all(wfilter);
+    BIO_meth_free(method);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    if (detect_client_fd >= 0)
+        BIO_closesocket(detect_client_fd);
+    if (second_client_fd >= 0)
+        BIO_closesocket(second_client_fd);
+    if (write_wait_fds[0] >= 0)
+        BIO_closesocket(write_wait_fds[0]);
+    if (write_wait_fds[1] >= 0)
+        BIO_closesocket(write_wait_fds[1]);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    ossl_crypto_condvar_free(&ta.cv);
+    ossl_crypto_mutex_free(&ta.mutex);
+    return testresult;
+}
+#endif
 
 #define NUM_LISTENER_THREADS 2
 #define LISTENER_RACE_ITERATIONS 1000
@@ -1032,6 +1814,9 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_dtls_multithread);
+#if !defined(OPENSSL_NO_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2)
+    ADD_ALL_TESTS(test_dtls_listener_recv_error_notifier, 9);
+#endif
     ADD_TEST(test_dtls_listener_clear_race);
     ADD_TEST(test_dtls_listener_clear_replace_race);
     ADD_TEST(test_dtls_blocking_accept);
