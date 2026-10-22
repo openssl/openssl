@@ -10,7 +10,8 @@ ENDIF
 # Source for libapps
 $LIBAPPSSRC=apps.c apps_ui.c log.c opt.c fmt.c s_cb.c s_socket.c app_rand.c \
         columns.c app_params.c names.c app_provider.c app_x509.c http_server.c \
-        app_libctx.c apps_opt_printf.c ../../crypto/uri.c
+        app_libctx.c apps_opt_printf.c ../../crypto/uri.c \
+        ../../crypto/http/http_url.c
 
 IF[{- !$disabled{apps} -}]
   LIBS{noinst}=../libapps.a
