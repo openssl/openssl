@@ -33,6 +33,23 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The default provider's DRBGs now reseed when the VMClock generation
+   signal changes, that is, when the guest they run in has been restored from
+   a snapshot or migrated. Linux exposes the hypervisor's VMClock page as
+   /dev/vmclock0; its vm_generation_counter (Linux 7.0) and disruption_marker
+   are read under the DRBG's lock and the page's sequence count, with no
+   system call, before and after each generate call. A change before is
+   treated like a change of pid; a change after replaces the output with one
+   generated after a reseed. A page that stays in mid-update for a bounded
+   number of reads counts as a change. The reseed draws on the kernel's
+   generator, so restored copies diverge only if the guest kernel has
+   reseeded first, which it does on the VMGenID notification when it has the
+   vmgenid driver. Processes that cannot open the device (by default only
+   root can), the FIPS provider and hosts without the device are unaffected.
+   OPENSSL_VMCLOCK names another path, for tests.
+
+   *Yuxiang Ji*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and

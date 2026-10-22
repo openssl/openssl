@@ -77,6 +77,13 @@ struct prov_drbg_st {
      * DRBG in the child process.
      */
     int fork_id;
+    /*
+     * The VMClock generation as of our last check, read and written under
+     * our lock by ossl_prov_vmclock_changed(). A guest restored from a
+     * snapshot keeps its pid and its clock, so this is the one check that
+     * sees that restore; it never triggers where there is no VMClock device.
+     */
+    uint64_t vmclock_epoch;
     unsigned short flags; /* various external flags */
 
     /*
