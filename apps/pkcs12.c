@@ -952,7 +952,7 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
 {
     STACK_OF(X509_ATTRIBUTE) *attrs = NULL;
     X509_ATTRIBUTE *attr = NULL;
-    ASN1_OBJECT *obj;
+    ASN1_OBJECT *obj = NULL;
 
     /* Nothing to do */
     if (cbarg == NULL)
