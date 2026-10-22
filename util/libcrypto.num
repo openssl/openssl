@@ -1572,7 +1572,7 @@ OSSL_HPKE_str2suite                     1570	4_0_0	EXIST::FUNCTION:
 OSSL_HPKE_get_ciphertext_size           1571	4_0_0	EXIST::FUNCTION:
 OSSL_HPKE_get_public_encap_size         1572	4_0_0	EXIST::FUNCTION:
 OSSL_HPKE_get_recommended_ikmelen       1573	4_0_0	EXIST::FUNCTION:
-OSSL_parse_url                          1574	4_0_0	EXIST::FUNCTION:
+OSSL_parse_url                          1574	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_2
 OSSL_HTTP_REQ_CTX_new                   1575	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_REQ_CTX_free                  1576	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_REQ_CTX_set_request_line      1577	4_0_0	EXIST::FUNCTION:HTTP
@@ -1594,7 +1594,7 @@ OSSL_HTTP_exchange                      1592	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_get                           1593	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_transfer                      1594	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_close                         1595	4_0_0	EXIST::FUNCTION:HTTP
-OSSL_HTTP_parse_url                     1596	4_0_0	EXIST::FUNCTION:HTTP
+OSSL_HTTP_parse_url                     1596	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_2,HTTP
 OSSL_HTTP_adapt_proxy                   1597	4_0_0	EXIST::FUNCTION:HTTP
 IDEA_options                            1598	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 IDEA_ecb_encrypt                        1599	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
