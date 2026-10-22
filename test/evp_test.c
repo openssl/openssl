@@ -316,6 +316,12 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_int("encrypt-check", NULL),
     OSSL_PARAM_int("rsa-pss-saltlen-check", NULL),
     OSSL_PARAM_int("sign-x931-pad-check", NULL),
+    OSSL_PARAM_utf8_string("digest", NULL, 0),
+    OSSL_PARAM_utf8_string("properties", NULL, 0),
+    OSSL_PARAM_utf8_string("pad-mode", NULL, 0),
+    OSSL_PARAM_utf8_string("mgf1-digest", NULL, 0),
+    OSSL_PARAM_utf8_string("mgf1-properties", NULL, 0),
+    OSSL_PARAM_utf8_string("saltlen", NULL, 0),
     OSSL_PARAM_END
 };
 
