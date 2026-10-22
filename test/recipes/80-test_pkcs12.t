@@ -57,7 +57,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_err =  disabled('err') || disabled('autoerrinit');
 
-plan tests => 65 + ($no_fips ? 0 : 5);
+plan tests => 67 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -321,6 +321,21 @@ with({ exit_checker => sub { return shift == 1; } },
         "test oracle trusted key usage is set");
 
     delete $ENV{OPENSSL_CONF}
+}
+
+# Test Oracle Trusted Key Usage with an OID that is not built in, on two certs
+{
+    my $outfile_oid = "out7-custom-oid.p12";
+    ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile_oid,
+                "-jdktrust", "1.2.3", "-in", srctop_file(@path, "ee-cert.pem"),
+                "-certfile", srctop_file(@path, "ca-cert.pem"),
+                "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
+       "test nokeys two certs with a custom trusted key usage OID");
+
+    my @pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $outfile_oid,
+                              "-passin", "pass:"]), capture => 1);
+    ok(grep(/Trusted key usage \(Oracle\): undefined \(1\.2\.3\)$/, @pkcs12info) == 2,
+       "test custom trusted key usage OID is set on both certs");
 }
 
 # Test -clcerts/-cacerts cert filtering and the -name friendly name.
