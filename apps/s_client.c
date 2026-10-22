@@ -603,6 +603,7 @@ typedef enum OPTION_choice {
     OPT_IGNORE_UNEXPECTED_EOF,
     OPT_FALLBACKSCSV,
     OPT_GREASE,
+    OPT_GREASE_FIELDS,
     OPT_NOCMDS,
     OPT_ADV,
     OPT_PROXY,
@@ -677,6 +678,8 @@ const OPTIONS s_client_options[] = {
         "Default read buffer size to be used for connections" },
     { "fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV" },
     { "grease", OPT_GREASE, '-', "Send GREASE values in ClientHello (RFC 8701)" },
+    { "grease_fields", OPT_GREASE_FIELDS, 's',
+        "Comma-separated GREASE fields (cipher_suites,groups,key_share,versions,sigalgs,extensions) or all; implies -grease" },
 
     OPT_SECTION("Identity"),
     { "cert", OPT_CERT, '<', "Client certificate file to use" },
@@ -958,6 +961,39 @@ static void freeandcopy(char **dest, const char *source)
         *dest = OPENSSL_strdup(source);
 }
 
+/**
+ * Parse one -grease_fields name and add its bit to the uint32_t mask in arg.
+ * Return 1 for a recognised name, or 0 for an empty or unknown name.
+ */
+static int grease_field_cb(const char *name, int len, void *arg)
+{
+    static const struct {
+        const char *name;
+        uint32_t mask;
+    } fields[] = {
+        { "cipher_suites", SSL_GREASE_CIPHER_SUITES },
+        { "groups", SSL_GREASE_SUPPORTED_GROUPS },
+        { "key_share", SSL_GREASE_KEY_SHARE },
+        { "versions", SSL_GREASE_SUPPORTED_VERSIONS },
+        { "sigalgs", SSL_GREASE_SIGNATURE_ALGORITHMS },
+        { "extensions", SSL_GREASE_EXTENSIONS },
+        { "all", SSL_GREASE_ALL }
+    };
+    uint32_t *mask = arg;
+    size_t i;
+
+    if (name == NULL || len <= 0)
+        return 0;
+    for (i = 0; i < OSSL_NELEM(fields); i++) {
+        if ((size_t)len == strlen(fields[i].name)
+            && strncmp(name, fields[i].name, (size_t)len) == 0) {
+            *mask |= fields[i].mask;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int new_session_cb(SSL *s, SSL_SESSION *sess)
 {
     const int version1_3 = SSL_is_dtls(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
@@ -1046,6 +1082,7 @@ int s_client_main(int argc, char **argv)
     int read_buf_len = 0;
     int fallback_scsv = 0;
     int grease = 0;
+    uint32_t grease_mask = 0;
     OPTION_CHOICE o;
 #ifndef OPENSSL_NO_DTLS
     int enable_timeouts = 0;
@@ -1552,6 +1589,16 @@ int s_client_main(int argc, char **argv)
         case OPT_GREASE:
             grease = 1;
             break;
+        case OPT_GREASE_FIELDS:
+            grease_mask = 0;
+            if (CONF_parse_list(opt_arg(), ',', 0, grease_field_cb,
+                    &grease_mask)
+                <= 0) {
+                BIO_puts(bio_err, "Invalid -grease_fields list\n");
+                goto end;
+            }
+            grease = 1;
+            break;
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &key_format))
                 goto opthelp;
@@ -2054,6 +2101,11 @@ int s_client_main(int argc, char **argv)
                 ssl_config);
             goto end;
         }
+    }
+
+    if (grease_mask != 0 && !SSL_CTX_set_grease_mask(ctx, grease_mask)) {
+        BIO_puts(bio_err, "Invalid -grease_fields mask: key_share requires groups\n");
+        goto end;
     }
 
 #ifndef OPENSSL_NO_SCTP

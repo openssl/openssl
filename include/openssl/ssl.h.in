@@ -457,6 +457,18 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 /* RFC 8701: Send GREASE values in ClientHello */
 #define SSL_OP_GREASE SSL_OP_BIT(41)
 
+/* RFC 8701 ClientHello GREASE injection points */
+#define SSL_GREASE_CIPHER_SUITES (1U << 0)
+#define SSL_GREASE_SUPPORTED_GROUPS (1U << 1)
+#define SSL_GREASE_KEY_SHARE (1U << 2)
+#define SSL_GREASE_SUPPORTED_VERSIONS (1U << 3)
+#define SSL_GREASE_SIGNATURE_ALGORITHMS (1U << 4)
+#define SSL_GREASE_EXTENSIONS (1U << 5)
+#define SSL_GREASE_ALL                                         \
+    (SSL_GREASE_CIPHER_SUITES | SSL_GREASE_SUPPORTED_GROUPS    \
+        | SSL_GREASE_KEY_SHARE | SSL_GREASE_SUPPORTED_VERSIONS \
+        | SSL_GREASE_SIGNATURE_ALGORITHMS | SSL_GREASE_EXTENSIONS)
+
 /*
  * Option "collections."
  */
@@ -633,6 +645,30 @@ uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t op);
 uint64_t SSL_clear_options(SSL *s, uint64_t op);
 uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t op);
 uint64_t SSL_set_options(SSL *s, uint64_t op);
+
+/**
+ * @brief Set the ClientHello GREASE injection mask for a context.
+ * @see SSL_CTX_set_grease_mask(3)
+ */
+__owur int SSL_CTX_set_grease_mask(SSL_CTX *ctx, uint32_t mask);
+
+/**
+ * @brief Get the ClientHello GREASE injection mask for a context.
+ * @see SSL_CTX_get_grease_mask(3)
+ */
+uint32_t SSL_CTX_get_grease_mask(const SSL_CTX *ctx);
+
+/**
+ * @brief Set the ClientHello GREASE injection mask for a connection.
+ * @see SSL_set_grease_mask(3)
+ */
+__owur int SSL_set_grease_mask(SSL *s, uint32_t mask);
+
+/**
+ * @brief Get the ClientHello GREASE injection mask for a connection.
+ * @see SSL_get_grease_mask(3)
+ */
+uint32_t SSL_get_grease_mask(const SSL *s);
 
 #define SSL_CTX_set_mode(ctx, op) \
     SSL_CTX_ctrl((ctx), SSL_CTRL_MODE, (op), NULL)

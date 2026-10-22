@@ -78,6 +78,7 @@ B<openssl> B<s_client>
 [B<-sctp_label_bug>]
 [B<-fallback_scsv>]
 [B<-grease>]
+[B<-grease_fields> I<fields>]
 [B<-async>]
 [B<-maxfraglen> I<len>]
 [B<-max_send_frag>]
@@ -603,7 +604,21 @@ Send TLS_FALLBACK_SCSV in the ClientHello.
 Send GREASE (Generate Random Extensions And Sustain Extensibility) values in
 the ClientHello as defined in RFC 8701. This injects random reserved values
 into cipher suites, supported groups, supported versions, signature algorithms,
-key share, and extensions to prevent ecosystem ossification.
+key share, and extensions to prevent ecosystem ossification. By default all
+fields are enabled. Use B<-grease_fields> to select a subset.
+
+=item B<-grease_fields> I<fields>
+
+Select the ClientHello fields that carry GREASE values. I<fields> is a
+comma-separated list of C<cipher_suites>, C<groups>, C<key_share>, C<versions>,
+C<sigalgs> and C<extensions>, or C<all> to select every field. Names are
+case-sensitive. Empty or unknown names, including numeric masks, are rejected.
+C<key_share> requires C<groups> in the same list, as required by RFC 8701.
+
+This option implies B<-grease>. If repeated, the last list takes effect.
+For example, B<-grease_fields groups,key_share> enables GREASE only in
+supported groups and key shares. See L<SSL_CTX_set_grease_mask(3)> for details.
+Do not use this option to retry a failed handshake with fewer GREASE fields.
 
 =item B<-async>
 
@@ -1138,6 +1153,8 @@ L<SSL_CTX_set_max_pipelines(3)>,
 L<ossl_store(7)>
 
 =head1 HISTORY
+
+The B<-grease_fields> option was added in OpenSSL 4.2.
 
 The B<-no_alt_chains> option was added in OpenSSL 1.1.0.
 The B<-name> option was added in OpenSSL 1.1.1.
