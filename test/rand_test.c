@@ -21,6 +21,7 @@
 #include <openssl/bio.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include "crypto/rand.h"
 #include "testutil.h"
 
@@ -542,6 +543,8 @@ typedef struct {
     int started;
     int completed;
     int seed_calls;
+    int good_seed_calls;
+    int clear_calls;
     int recursive_error;
 } ASYNC_SEED_PROBE;
 
@@ -655,20 +658,27 @@ static size_t async_seed_get_seed(void *vseed, unsigned char **out,
     size_t additional_input_len)
 {
     ASYNC_SEED *seed = vseed;
-    size_t len = (entropy + 7) / 8;
+    size_t i, len = (entropy + 7) / 8;
 
     if (len < min_len)
         len = min_len;
     if (!seed->ready || len > max_len
         || (*out = OPENSSL_malloc(len)) == NULL)
         return 0;
-    seed->probe->seed_calls++;
-    memset(*out, 0x5a, len);
+    /* Distinct bytes pass the health tests, the constant byte fails them */
+    if (++seed->probe->seed_calls <= seed->probe->good_seed_calls)
+        for (i = 0; i < len; i++)
+            (*out)[i] = (unsigned char)(0x9d * i + 0x3b);
+    else
+        memset(*out, 0x5a, len);
     return len;
 }
 
 static void async_seed_clear_seed(void *vseed, unsigned char *out, size_t len)
 {
+    /* Count the seed material handed back, a NULL hands nothing back */
+    if (out != NULL)
+        ((ASYNC_SEED *)vseed)->probe->clear_calls++;
     OPENSSL_clear_free(out, len);
 }
 
@@ -834,6 +844,161 @@ err:
     if (async_started)
         ASYNC_cleanup_thread();
     OSSL_PROVIDER_unload(def);
+    OSSL_PROVIDER_unload(custom);
+    OSSL_LIB_CTX_free(ctx);
+    async_seed_probe = NULL;
+    return res;
+}
+
+/*
+ * Entropy handed out through the core's get_user_entropy() must be freed
+ * correctly by its cleanup_user_entropy(), whether it came from the operating
+ * system sources or from the seed source, and even when the seed source was
+ * created in between. Entropy from the seed source must go back to its
+ * clear_seed() straight away and never escape to the caller.
+ *
+ * Without the secure heap both allocators end up in malloc(), so freeing with
+ * the wrong one goes unnoticed. Count the clear_seed() calls instead.
+ */
+static int test_rand_user_entropy_cleanup(void)
+{
+#ifdef OPENSSL_RAND_SEED_NONE
+    TEST_info("skipped: no operating system entropy sources");
+    return 1;
+#else
+    ASYNC_SEED_PROBE probe = { 0 };
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *custom = NULL;
+    unsigned char *buf = NULL;
+    size_t len = 0;
+    int res = 0;
+
+    async_seed_probe = &probe;
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        || !TEST_true(OSSL_PROVIDER_add_builtin(ctx, "async-seed-probe",
+            async_seed_provider_init))
+        || !TEST_ptr(custom = OSSL_PROVIDER_load(ctx, "async-seed-probe"))
+        || !TEST_true(RAND_set_seed_source_type(ctx, "ASYNC-SEED",
+            "provider=async-seed-probe")))
+        goto err;
+
+    /* No seed source yet, so this comes from the operating system */
+    if (!TEST_size_t_eq(len = probe.entropy(probe.handle, &buf, 128, 16, 16),
+            16)
+        || !TEST_int_eq(probe.seed_calls, 0))
+        goto err;
+
+    /* Someone else creates the seed source before the cleanup */
+    if (!TEST_ptr(ossl_rand_get0_seed(ctx)))
+        goto err;
+    probe.clear_entropy(probe.handle, buf, len);
+    buf = NULL;
+    if (!TEST_int_eq(probe.clear_calls, 0))
+        goto err;
+
+    /* Now the seed source is used, and gets its buffer back at once */
+    if (!TEST_size_t_eq(len = probe.entropy(probe.handle, &buf, 128, 16, 16),
+            16)
+        || !TEST_int_eq(probe.seed_calls, 1)
+        || !TEST_int_eq(probe.clear_calls, 1))
+        goto err;
+    probe.clear_entropy(probe.handle, buf, len);
+    buf = NULL;
+    if (!TEST_int_eq(probe.clear_calls, 1))
+        goto err;
+
+    res = 1;
+err:
+    if (buf != NULL)
+        probe.clear_entropy(probe.handle, buf, len);
+    OSSL_PROVIDER_unload(custom);
+    OSSL_LIB_CTX_free(ctx);
+    async_seed_probe = NULL;
+    return res;
+#endif /* OPENSSL_RAND_SEED_NONE */
+}
+
+/*
+ * A CRNG-TEST hands seed material that fails the health tests back to where
+ * it came from.  It must then not leave its caller a pointer to that memory:
+ * a child DRBG releases whatever the pointer holds when its reseed fails,
+ * which would free the material a second time.  Nor may the material be
+ * left for the caller to release, since the child DRBG releases nothing
+ * when its instantiation fails.  Cover both of the CRNG-TEST's sources, the
+ * core's get_user_entropy() up-call that the FIPS provider's primary relies
+ * on, and an explicit parent.  The seed source produces acceptable bytes
+ * for the requests that must succeed and a constant byte afterwards, which
+ * fails the repetition count test.
+ */
+static int test_rand_crngt_entropy_failure(int idx)
+{
+    ASYNC_SEED_PROBE probe = { 0 };
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *custom = NULL;
+    EVP_RAND *crngt_alg = NULL, *drbg_alg = NULL;
+    EVP_RAND_CTX *seed, *crngt = NULL, *drbg = NULL;
+    OSSL_PARAM params[2];
+    unsigned char out[16];
+    int parent = idx & 1, reseed = idx & 2, res = 0;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+        (char *)"AES-256-CTR", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    /* The seed material for the instantiation passes, the next does not */
+    probe.good_seed_calls = reseed ? 1 : 0;
+    async_seed_probe = &probe;
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        || !TEST_true(OSSL_LIB_CTX_load_config(ctx, configfile))
+        || !TEST_true(OSSL_PROVIDER_add_builtin(ctx, "async-seed-probe",
+            async_seed_provider_init))
+        || !TEST_ptr(custom = OSSL_PROVIDER_load(ctx, "async-seed-probe"))
+        || !TEST_true(RAND_set_seed_source_type(ctx, "ASYNC-SEED",
+            "provider=async-seed-probe,-fips"))
+        || !TEST_ptr(seed = ossl_rand_get0_seed(ctx))
+        || !TEST_ptr(crngt_alg = EVP_RAND_fetch(ctx, "CRNG-TEST", "-fips"))
+        || !TEST_ptr(drbg_alg = EVP_RAND_fetch(ctx, "CTR-DRBG", NULL))
+        || !TEST_ptr(crngt = EVP_RAND_CTX_new(crngt_alg, parent ? seed : NULL))
+        || !TEST_true(EVP_RAND_instantiate(crngt, 0, 0, NULL, 0, NULL))
+        || !TEST_ptr(drbg = EVP_RAND_CTX_new(drbg_alg, crngt)))
+        goto err;
+
+    if (reseed
+        && (!TEST_true(EVP_RAND_instantiate(drbg, 0, 0, NULL, 0, params))
+            || !TEST_int_eq(probe.seed_calls, 1)
+            || !TEST_int_eq(probe.clear_calls, 1)))
+        goto err;
+
+    ERR_clear_error();
+    if (reseed) {
+        if (!TEST_false(EVP_RAND_reseed(drbg, 0, NULL, 0, NULL, 0)))
+            goto err;
+    } else if (!TEST_false(EVP_RAND_instantiate(drbg, 0, 0, NULL, 0,
+                   params))) {
+        goto err;
+    }
+    /* The rejected seed material went back to its source exactly once */
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            PROV_R_ENTROPY_SOURCE_FAILED_RCT_CONTINUOUS_TEST)
+        || !TEST_int_eq(probe.seed_calls, probe.good_seed_calls + 1)
+        || !TEST_int_eq(probe.clear_calls, probe.good_seed_calls + 1)
+        || !TEST_int_eq(EVP_RAND_get_state(drbg), EVP_RAND_STATE_ERROR))
+        goto err;
+    ERR_clear_error();
+
+    /* Recovering from the error state requests seed material once more */
+    if (!TEST_false(EVP_RAND_generate(drbg, out, sizeof(out), 0, 0, NULL, 0))
+        || !TEST_int_eq(probe.seed_calls, probe.good_seed_calls + 2)
+        || !TEST_int_eq(probe.clear_calls, probe.good_seed_calls + 2))
+        goto err;
+    ERR_clear_error();
+
+    res = 1;
+err:
+    EVP_RAND_CTX_free(drbg);
+    EVP_RAND_CTX_free(crngt);
+    EVP_RAND_free(drbg_alg);
+    EVP_RAND_free(crngt_alg);
     OSSL_PROVIDER_unload(custom);
     OSSL_LIB_CTX_free(ctx);
     async_seed_probe = NULL;
@@ -1053,6 +1218,10 @@ int setup_tests(void)
 #ifdef OPENSSL_NO_FIPS_JITTER
     ADD_ALL_TESTS(test_rand_seed_source_async, 4);
     ADD_TEST(test_rand_seed_source_recursive_error);
+    ADD_TEST(test_rand_user_entropy_cleanup);
+    if (OSSL_PROVIDER_available(NULL, "fips")
+        && fips_provider_version_ge(NULL, 4, 1, 0))
+        ADD_ALL_TESTS(test_rand_crngt_entropy_failure, 4);
 #endif
 
     ADD_MFAIL_ALL_TESTS(test_rand_bytes_mfail, 2);
