@@ -952,6 +952,7 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
 {
     STACK_OF(X509_ATTRIBUTE) *attrs = NULL;
     X509_ATTRIBUTE *attr = NULL;
+    ASN1_OBJECT *obj;
 
     /* Nothing to do */
     if (cbarg == NULL)
@@ -960,8 +961,17 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
     /* Get the current attrs */
     attrs = (STACK_OF(X509_ATTRIBUTE) *)PKCS12_SAFEBAG_get0_attrs(bag);
 
-    /* Create a new attr for the JDK Trusted Usage and add it */
-    attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, (ASN1_OBJECT *)cbarg);
+    /*
+     * Create a new attr for the JDK Trusted Usage and add it. The attr owns
+     * its value, so give it a copy: cbarg stays owned by the caller.
+     */
+    if ((obj = OBJ_dup((ASN1_OBJECT *)cbarg)) == NULL)
+        return -1;
+    attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, obj);
+    if (attr == NULL) {
+        ASN1_OBJECT_free(obj);
+        return -1;
+    }
 
     /* Add the new attr, if attrs is NULL, it'll be initialised */
     X509at_add1_attr(&attrs, attr);
