@@ -184,12 +184,22 @@ violates.
 
 ## Severity
 
-- Important: bugs and security issues with a stated trigger, behaviour
-  changes to public APIs, and missing documentation for a new public
-  symbol, command, option or Configure option.
-- Nit: other `STYLE.md` and `DOCUMENTATION.md` violations, naming, and
-  dead code left by the change. Report at most ten Nits; Important
-  findings are not limited.
+Important is reserved for security issues. A finding is a security issue
+when an attacker can trigger it through untrusted input, such as a TLS or
+QUIC peer, a certificate, key or message being parsed, or a file or
+network stream, or when it breaks a security property: memory safety,
+secrecy of keys and secrets, authentication or verification results,
+constant-time behaviour, or enforcement of mandatory properties such as
+`fips=yes`. Misuse of a public API by the calling application is not a
+security issue.
+
+- Important: security issues. The first sentence says who can trigger
+  the issue and what they gain.
+- Nit: everything else, including functional bugs, behaviour changes,
+  performance regressions, and `STYLE.md` and `DOCUMENTATION.md`
+  violations. The first word names the kind, such as "Functional:",
+  "Performance:" or "Documentation:". Report at most ten Nits, functional
+  bugs first; Important findings are not limited.
 
 ## Do not report
 
