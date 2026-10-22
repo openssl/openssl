@@ -37,12 +37,13 @@
  * @param use_ssl if not NULL, receives 1 for https and 0 for http
  * @param host receives the host, an IPv6 address within "[" and "]"
  * @param port receives the port, or the default port of the scheme
+ * @param port_num if not NULL, receives the number of *port
  * @param path if not NULL, receives the path, or "/" if it is empty,
  * followed by any "?" query
  * @returns 1 on success, 0 on failure
  */
 int ossl_http_parse_url(const uint8_t *url, size_t url_len,
     int allow_no_scheme, int allow_empty_host, int *use_ssl,
-    char **host, char **port, char **path);
+    char **host, char **port, int *port_num, char **path);
 
 #endif /* !defined(OSSL_INTERNAL_HTTP_URL_H) */

@@ -87,7 +87,7 @@ static char *packets_to_string(const PACKET *parts, size_t count)
 
 int ossl_http_parse_url(const uint8_t *url, size_t url_len,
     int allow_no_scheme, int allow_empty_host, int *use_ssl,
-    char **host, char **port, char **path)
+    char **host, char **port, int *port_num, char **path)
 {
     static const uint8_t http_prefix[] = OSSL_HTTP_PREFIX;
     size_t prefix_len = sizeof(http_prefix) - 1;
@@ -157,6 +157,10 @@ int ossl_http_parse_url(const uint8_t *url, size_t url_len,
     }
     if ((*port = packets_to_string(parts, 1)) == NULL)
         goto end;
+    if (port_num != NULL && uri.port_num > 0)
+        *port_num = uri.port_num;
+    else if (port_num != NULL)
+        *port_num = is_https ? 443 : 80;
 
     if (path != NULL) {
         parts[0] = uri.path;

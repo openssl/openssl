@@ -1126,9 +1126,9 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
         proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if (proxy != NULL
             && !ossl_http_parse_url((const uint8_t *)proxy, strlen(proxy),
-                1 /* allow_no_scheme */, 0 /* allow_empty_host */,
-                NULL /* use_ssl */, &proxy_host, &proxy_port,
-                NULL /* path */))
+                /*allow_no_scheme=*/1, /*allow_empty_host=*/0,
+                /*use_ssl=*/NULL, &proxy_host, &proxy_port,
+                /*port_num=*/NULL, /*path=*/NULL))
             return NULL;
         cbio = http_new_bio(server, port, use_ssl, proxy_host, proxy_port);
         OPENSSL_free(proxy_host);
@@ -1311,10 +1311,9 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         char *redirection_url;
 
         /* A redirection URL from the server must be absolute */
-        if (!ossl_http_parse_url((const uint8_t *)current_url, strlen(current_url),
-                n_redirs == 0 /* allow_no_scheme */,
-                bio != NULL /* allow_empty_host */,
-                &use_ssl, &host, &port, &path))
+        if (!ossl_http_parse_url((const uint8_t *)current_url,
+                strlen(current_url), n_redirs == 0, bio != NULL,
+                &use_ssl, &host, &port, /*port_num=*/NULL, &path))
             break;
 
         rctx = OSSL_HTTP_open(host, port, proxy, no_proxy,
