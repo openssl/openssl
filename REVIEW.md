@@ -13,6 +13,23 @@ maintainer reviews between October 2023 and October 2026. Most security
 bugs and regressions in that period were visible in the diff that
 introduced them.
 
+## What Important means here
+
+Reserve Important for security issues: problems an attacker can trigger
+through untrusted input, such as a TLS or QUIC peer, a certificate, key
+or message being parsed, or a file or network stream, and problems that
+break a security property: memory safety, secrecy of keys and secrets,
+authentication or verification results, constant-time behaviour, or
+enforcement of mandatory properties such as `fips=yes`. The first
+sentence of an Important finding says who can trigger it and what they
+gain.
+
+Functional bugs, behaviour changes, performance regressions, misuse of a
+public API by the calling application, and `STYLE.md` and
+`DOCUMENTATION.md` violations are Nit at most, however likely they are
+to cause failures. Start each Nit with its kind, such as "Functional:",
+"Performance:" or "Documentation:".
+
 ## Evidence
 
 Each finding states the inputs or state that trigger it and what goes
@@ -182,24 +199,10 @@ violates.
 - Pointers are compared explicitly with `NULL`. Magic numbers are named
   or explained.
 
-## Severity
+## Cap the nits
 
-Important is reserved for security issues. A finding is a security issue
-when an attacker can trigger it through untrusted input, such as a TLS or
-QUIC peer, a certificate, key or message being parsed, or a file or
-network stream, or when it breaks a security property: memory safety,
-secrecy of keys and secrets, authentication or verification results,
-constant-time behaviour, or enforcement of mandatory properties such as
-`fips=yes`. Misuse of a public API by the calling application is not a
-security issue.
-
-- Important: security issues. The first sentence says who can trigger
-  the issue and what they gain.
-- Nit: everything else, including functional bugs, behaviour changes,
-  performance regressions, and `STYLE.md` and `DOCUMENTATION.md`
-  violations. The first word names the kind, such as "Functional:",
-  "Performance:" or "Documentation:". Report at most ten Nits, functional
-  bugs first; Important findings are not limited.
+Report at most ten Nits per review, functional bugs first. Important
+findings are not limited.
 
 ## Do not report
 
