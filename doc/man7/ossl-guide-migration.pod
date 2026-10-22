@@ -22,6 +22,12 @@ L<crypto(7)>.
 
 =head2 Main Changes from OpenSSL 4.1
 
+=head3 Deprecation of OSSL_parse_url() and OSSL_HTTP_parse_url()
+
+These functions have been deprecated in OpenSSL 4.2.  No replacement is
+provided; applications that need to parse URLs should use a URL parsing
+library.
+
 =head3 Deprecation of X509_OBJECT_up_ref_count()
 
 This function has been deprecated in OpenSSL 4.2.  Despite its name, it does

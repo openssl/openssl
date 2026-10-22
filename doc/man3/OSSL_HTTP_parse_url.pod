@@ -15,6 +15,10 @@ OCSP_parse_url
  const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
                                    const char *server, int use_ssl);
 
+The following functions have been deprecated since OpenSSL 4.2, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
  int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
                     char **pport, int *pport_num,
                     char **ppath, char **pquery, char **pfrag);
@@ -106,6 +110,7 @@ L<OSSL_HTTP_transfer(3)>
 OSSL_HTTP_adapt_proxy(),
 OSSL_parse_url() and OSSL_HTTP_parse_url() were added in OpenSSL 3.0.
 OCSP_parse_url() was deprecated in OpenSSL 3.0.
+OSSL_parse_url() and OSSL_HTTP_parse_url() were deprecated in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

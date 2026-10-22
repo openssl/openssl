@@ -33,9 +33,12 @@ extern "C" {
 #define OPENSSL_HTTPS_PROXY "HTTPS_PROXY"
 
 /* We want to have this even in case of OPENSSL_NO_HTTP */
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+OSSL_DEPRECATEDIN_4_2_FOR("no replacement is provided")
 int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     char **pport, int *pport_num,
     char **ppath, char **pquery, char **pfrag);
+#endif
 
 #ifndef OPENSSL_NO_HTTP
 
@@ -104,9 +107,12 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
 int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok);
 
 /* Auxiliary functions */
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+OSSL_DEPRECATEDIN_4_2_FOR("no replacement is provided")
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     char **pport, int *pport_num,
     char **ppath, char **pquery, char **pfrag);
+#endif
 const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
     const char *server, int use_ssl);
 

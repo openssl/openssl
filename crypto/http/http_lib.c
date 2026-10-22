@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Suppress deprecation warnings for OSSL_parse_url() and
+ * OSSL_HTTP_parse_url(), which are kept until removal.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 #include <openssl/http.h>
 #include <openssl/httperr.h>
@@ -21,6 +27,8 @@
 #define NI_MAXHOST 255
 #endif
 #include "crypto/ctype.h" /* for ossl_isspace() */
+
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 
 static int pstrdup(char **out, const PACKET *parts, size_t count)
 {
@@ -142,7 +150,6 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
 }
 
 #ifndef OPENSSL_NO_HTTP
-
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     char **pport, int *pport_num,
     char **ppath, char **pquery, char **pfrag)
@@ -150,6 +157,11 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     return parse_url(url, /*http_only=*/1, pssl, /*pscheme=*/NULL, puser,
         phost, pport, pport_num, ppath, pquery, pfrag);
 }
+#endif /* !defined(OPENSSL_NO_HTTP) */
+
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
+
+#ifndef OPENSSL_NO_HTTP
 
 /* Respect no_proxy, taking default value from environment variable(s) */
 static int use_proxy(const char *no_proxy, const char *server)

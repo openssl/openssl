@@ -270,8 +270,10 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 int OCSP_request_verify(OCSP_REQUEST *req, const STACK_OF(X509) *certs,
     X509_STORE *store, unsigned long flags);
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 #define OCSP_parse_url(url, host, port, path, ssl) \
     OSSL_HTTP_parse_url(url, ssl, NULL, host, port, NULL, path, NULL, NULL)
+#endif
 
 int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);

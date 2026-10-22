@@ -8,6 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Suppress deprecation warnings for OSSL_HTTP_parse_url(), which is tested
+ * until removal.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/http.h>
 #include <openssl/httperr.h>
 #include <openssl/pem.h>
@@ -450,6 +456,7 @@ err:
     return res;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 static int test_http_url_invalid(const char *url);
 
 static int test_http_url_frag_ok(const char *url, int exp_ssl, const char *exp_host,
@@ -601,6 +608,7 @@ static int test_http_url_invalid_path(void)
 {
     return test_http_url_invalid("https://[FF01::101]pkix");
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int test_http_crlf_rejected(void)
 {
@@ -830,6 +838,7 @@ int setup_tests(void)
     if (!TEST_ptr((x509 = load_cert_pem(test_get_argument(0), NULL))))
         return 0;
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
     ADD_TEST(test_http_url_dns);
     ADD_TEST(test_http_url_ip);
     ADD_TEST(test_http_url_timestamp);
@@ -841,6 +850,7 @@ int setup_tests(void)
     ADD_TEST(test_http_url_invalid_prefix);
     ADD_TEST(test_http_url_invalid_port);
     ADD_TEST(test_http_url_invalid_path);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_http_crlf_rejected);
 
     ADD_TEST(test_http_get_txt);
