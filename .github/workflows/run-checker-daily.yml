@@ -133,7 +133,6 @@ jobs:
           no-scrypt,
           no-secure-memory,
           no-seed,
-          no-shared,
           no-siphash,
           no-siv,
           no-sm2-precomp,
@@ -588,7 +587,7 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@bn_debug"
         path: artifacts.tar.gz

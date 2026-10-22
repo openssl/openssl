@@ -72,6 +72,25 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     d->buffered_app_data = buffered_app_data;
 }
 
+/*
+ * Checks for application data set aside while a handshake was in progress.
+ * dtls1_read_bytes() only returns it once the handshake has finished.
+ */
+int DTLS_RECORD_LAYER_buffered_app_data_pending(const RECORD_LAYER *rl)
+{
+    TLS_RECORD *rdata;
+    pitem *item, *iter;
+
+    iter = pqueue_iterator(rl->d->buffered_app_data);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        rdata = item->data;
+        if (rdata->length > 0)
+            return 1;
+    }
+
+    return 0;
+}
+
 static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 {
     TLS_RECORD *rdata;
@@ -284,6 +303,8 @@ start:
                     SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
+                /* This must only ever happen once per handshake */
+                sc->dtls13_process_hello = 0;
 
                 /*
                  * Read the Buffered epoch
@@ -302,10 +323,31 @@ start:
                  * Anything other than a timeout is an error. SSLfatal() already
                  * called if appropriate.
                  */
-                if (ret <= 0)
-                    return ret;
-                else
+                if (ret > 0)
                     goto start;
+
+                /*
+                 * Once the record layer holds buffered records from a later
+                 * epoch it asks for a retry without reading the BIO again (see
+                 * dtls_get_more_records()), so nothing has set the BIO's retry
+                 * flags. Without them SSL_get_error() reports
+                 * SSL_ERROR_SYSCALL for what is an ordinary wait for more
+                 * data.
+                 *
+                 * A connection accepted by a DTLS listener has no read BIO of
+                 * its own (see dtls_listener_create_conn_ssl());
+                 * SSL_get_error() already reports SSL_ERROR_WANT_READ for
+                 * SSL_READING on such a connection without needing one.
+                 */
+                if (sc->rwstate == SSL_READING) {
+                    BIO *rbio = SSL_get_rbio(s);
+
+                    if (rbio != NULL && !BIO_should_retry(rbio)) {
+                        BIO_clear_retry_flags(rbio);
+                        BIO_set_retry_read(rbio);
+                    }
+                }
+                return ret;
             }
             rr->off = 0;
             sc->rlayer.num_recs++;

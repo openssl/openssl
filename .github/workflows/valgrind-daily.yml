@@ -81,8 +81,8 @@ jobs:
             make -j
         - name: Make test
           run: |
-            # The quic radix and multistream test times out under valgrind in ci
-            make TESTS="-test_quic_radix -test_quic_multistream" OSSL_USE_VALGRIND=yes test
+            # The quic radix test times out under valgrind in ci
+            make TESTS="-test_quic_radix" OSSL_USE_VALGRIND=yes test
         - name: Check for leaks
           run: |
             set +e

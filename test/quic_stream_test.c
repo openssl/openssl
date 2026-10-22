@@ -2870,7 +2870,17 @@ static CRYPTO_malloc_fn malloc_save;
 static CRYPTO_realloc_fn realloc_save;
 static CRYPTO_free_fn free_save;
 
-typedef struct tdc_alloc_hdr_st {
+#if defined(__GNUC__) || defined(__clang__)
+#define ALIGN_ALLOC_HDR __attribute((aligned(16)))
+#else
+#define ALIGN_ALLOC_HDR
+#endif
+
+/*
+ * Increased alignment is needed, as tdc_malloc() custom allocator
+ * returns memory addresses directly following a TDC_ALLOC_HDR.
+ */
+typedef struct ALIGN_ALLOC_HDR tdc_alloc_hdr_st {
     size_t size;
     OSSL_LIST_MEMBER(tdc, struct tdc_alloc_hdr_st);
 } TDC_ALLOC_HDR;
@@ -3156,7 +3166,11 @@ err:
     return ok;
 }
 
-typedef struct tho_alloc_hdr_st {
+/*
+ * Increased alignment is needed, as tho_malloc() custom allocator
+ * returns memory addresses directly following a THO_ALLOC_HDR.
+ */
+typedef struct ALIGN_ALLOC_HDR tho_alloc_hdr_st {
     size_t size;
     const char *file;
     int from_reas;
@@ -3169,7 +3183,7 @@ DEFINE_LIST_OF(tho, THO_ALLOC_HDR);
 #define THO_N_SLIDES 256
 
 static size_t tho_reas_live, tho_reas_peak;
-static size_t tho_heap1024_live, tho_heap1024_peak, tho_heap1024_total;
+static size_t tho_heap1024_live, tho_heap1024_peak;
 static int tho_tracking;
 
 static OSSL_LIST(tho)
@@ -3207,7 +3221,6 @@ static void *tho_malloc(size_t sz, const char *file, int line)
             tho_reas_peak = tho_reas_live;
         if (sz == THO_FRAME_LEN) {
             tho_heap1024_live++;
-            tho_heap1024_total++;
             if (tho_heap1024_live > tho_heap1024_peak)
                 tho_heap1024_peak = tho_heap1024_live;
         }

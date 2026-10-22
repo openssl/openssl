@@ -1051,6 +1051,7 @@ static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
 {
     OSSL_TIME t;
     uint32_t agesec;
+    unsigned long lifetime;
 
     if (s->ext.tick_age_checked)
         return s->ext.tick_age_ok;
@@ -1085,10 +1086,21 @@ static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
     s->ext.tick_age_ms = agesec * (uint32_t)1000;
 
     /*
-     * Ticket is too old. Ignore it. Overflow. Shouldn't happen unless this is a
-     * *really* old session. If so we just ignore it.
+     * RFC 9846 4.7.1: Servers MUST NOT use any value greater than 604800
+     * seconds (7 days). The value of zero indicates that the ticket should be
+     * discarded immediately. Clients MUST NOT use tickets for longer than 7
+     * days after issuance, regardless of the ticket_lifetime, and MAY delete
+     * tickets earlier based on local policy. A server MAY treat a ticket as
+     * valid for a shorter period of time than what is stated in the
+     * ticket_lifetime.
+     *
+     * The hint is capped when a NewSessionTicket is parsed, but a session
+     * restored with d2i_SSL_SESSION() carries whatever value was serialised.
      */
-    if (s->session->ext.tick_lifetime_hint < agesec)
+    lifetime = s->session->ext.tick_lifetime_hint;
+    if (lifetime > 604800)
+        lifetime = 604800;
+    if (lifetime == 0 || ossl_time_compare(t, ossl_seconds2time(lifetime)) > 0)
         s->ext.tick_age_ok = 0;
     else if (agesec != 0 && s->ext.tick_age_ms / (uint32_t)1000 != agesec)
         s->ext.tick_age_ok = 0;
@@ -1284,14 +1296,17 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             psk, sizeof(psk));
 
         if (psklen > PSK_MAX_PSK_LEN) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, ERR_R_INTERNAL_ERROR);
+            OPENSSL_cleanse(psk, sizeof(psk));
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
-        } else if (psklen > 0) {
+        }
+        if (psklen > 0) {
             const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
             const SSL_CIPHER *cipher;
 
             idlen = strlen(identity);
             if (idlen > PSK_MAX_IDENTITY_LEN) {
+                OPENSSL_cleanse(psk, sizeof(psk));
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
             }
@@ -1304,6 +1319,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
                 tls13_aes128gcmsha256_id);
             if (cipher == NULL) {
+                OPENSSL_cleanse(psk, sizeof(psk));
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
             }
@@ -1314,8 +1330,9 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
                 || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
                 || !SSL_SESSION_set_cipher(psksess, cipher)
                 || !SSL_SESSION_set_protocol_version(psksess, version1_3)) {
+                SSL_SESSION_free(psksess);
+                OPENSSL_cleanse(psk, sizeof(psk));
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                OPENSSL_cleanse(psk, psklen);
                 return EXT_RETURN_FAIL;
             }
             OPENSSL_cleanse(psk, psklen);

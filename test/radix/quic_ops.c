@@ -382,6 +382,11 @@ DEF_FUNC(hf_accept_conn)
     if (conn == NULL)
         F_SPIN_AGAIN();
 
+    if (!TEST_true(SSL_set_blocking_mode(conn, 0))) {
+        SSL_free(conn);
+        goto err;
+    }
+
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), conn_name, conn))) {
         SSL_free(conn);
         goto err;
@@ -441,7 +446,7 @@ DEF_FUNC(hf_pop_err)
     return 1;
 }
 
-DEF_FUNC(hf_stream_reset)
+static int hf_stream_reset_impl(FUNC_CTX *fctx, int expect_success)
 {
     int ok = 0;
     const char *name;
@@ -451,12 +456,27 @@ DEF_FUNC(hf_stream_reset)
     F_POP2(name, args.quic_error_code);
     REQUIRE_SSL(ssl);
 
-    if (!TEST_true(SSL_stream_reset(ssl, &args, sizeof(args))))
-        goto err;
+    if (expect_success) {
+        if (!TEST_true(SSL_stream_reset(ssl, &args, sizeof(args))))
+            goto err;
+    } else {
+        if (!TEST_false(SSL_stream_reset(ssl, &args, sizeof(args))))
+            goto err;
+    }
 
     ok = 1;
 err:
     return ok;
+}
+
+DEF_FUNC(hf_stream_reset)
+{
+    return hf_stream_reset_impl(fctx, 1);
+}
+
+DEF_FUNC(hf_stream_reset_fail)
+{
+    return hf_stream_reset_impl(fctx, 0);
 }
 
 DEF_FUNC(hf_set_default_stream_mode)
@@ -469,6 +489,23 @@ DEF_FUNC(hf_set_default_stream_mode)
     REQUIRE_SSL(ssl);
 
     if (!TEST_true(SSL_set_default_stream_mode(ssl, (uint32_t)mode)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_event_handling_mode)
+{
+    int ok = 0;
+    uint64_t mode;
+    SSL *ssl;
+
+    F_POP(mode);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_set_event_handling_mode(ssl, mode)))
         goto err;
 
     ok = 1;
@@ -494,7 +531,7 @@ err:
     return ok;
 }
 
-DEF_FUNC(hf_shutdown_wait)
+static int hf_shutdown_impl(FUNC_CTX *fctx, int retry)
 {
     int ok = 0, ret;
     uint64_t flags;
@@ -514,12 +551,31 @@ DEF_FUNC(hf_shutdown_wait)
     if (!TEST_int_ge(ret, 0))
         goto err;
 
-    if (ret == 0)
+    if (retry && ret == 0)
         F_SPIN_AGAIN();
 
     ok = 1;
 err:
     return ok;
+}
+
+DEF_FUNC(hf_shutdown_wait)
+{
+    return hf_shutdown_impl(fctx, 1);
+}
+
+/*
+ * Like hf_shutdown_wait, but only calls SSL_shutdown_ex() once rather than
+ * retrying until it reports the shutdown fully complete. Use only when the
+ * script itself is testing an app-managed, poll-driven shutdown sequence
+ * (e.g. a single non-blocking SSL_shutdown_ex() call followed by the script
+ * manually polling and re-driving shutdown) — hf_shutdown_wait's retry loop
+ * would otherwise drive the shutdown to completion here and there, silently
+ * bypassing the very sequence under test.
+ */
+DEF_FUNC(hf_shutdown_once)
+{
+    return hf_shutdown_impl(fctx, 0);
 }
 
 DEF_FUNC(hf_conclude)
@@ -1715,6 +1771,173 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_set_max_early_data)
+{
+    int ok = 0;
+    uint64_t value;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    F_POP(value);
+    REQUIRE_SSL(ssl);
+
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_true(SSL_set_max_early_data(ossl_quic_channel_get0_tls(ch),
+            (uint32_t)value)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_stream_limit_probe)
+{
+    int ok = 0;
+    SSL *conn, *stream;
+    uint64_t flags, count, min_fail, fail_count = 0, i;
+    size_t written;
+
+    F_POP2(count, min_fail);
+    F_POP(flags);
+    REQUIRE_SSL(conn);
+
+    for (i = 0; i < count; ++i) {
+        stream = SSL_new_stream(conn, flags);
+        if (stream == NULL) {
+            if (!TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_peek_last_error()),
+                    (size_t)SSL_R_STREAM_COUNT_LIMITED))
+                goto err;
+
+            ++fail_count;
+            continue;
+        }
+
+        if (!TEST_true(SSL_write_ex(stream, "apple", 5, &written))) {
+            SSL_free(stream);
+            goto err;
+        }
+
+        SSL_free(stream);
+    }
+
+    if (!TEST_uint64_t_ge(fail_count, min_fail))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_idle_timeout)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t value_class, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(value_class);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_value_uint(ssl, (uint32_t)value_class,
+            SSL_VALUE_QUIC_IDLE_TIMEOUT, &v))
+        || !TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_modify_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, requested, v = 0;
+
+    F_POP(requested);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    /* Test bad value is rejected. */
+    if (!TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            OSSL_QUIC_VLINT_MAX + 1)))
+        goto err;
+
+    /* Set value. */
+    if (!TEST_true(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            requested))
+        || !TEST_true(SSL_get_feature_request_uint(ssl, (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, requested))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_reject_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, bad;
+
+    F_POP(bad);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            bad)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, value_class, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(value_class);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_value_uint(ssl, (uint32_t)value_class,
+            (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_cannot_change_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, current, requested, v = 0;
+
+    F_POP(requested);
+    F_POP(current);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_feature_request_uint(ssl, (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, current)
+        || !TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            requested)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -1892,6 +2115,11 @@ err:
         OP_PUSH_U64(mode),                     \
         OP_FUNC(hf_set_default_stream_mode))
 
+#define OP_SET_EVENT_HANDLING_MODE(name, mode) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(mode),                     \
+        OP_FUNC(hf_set_event_handling_mode))
+
 #define OP_SET_INCOMING_STREAM_POLICY(name, policy, error_code) \
     (OP_SELECT_SSL(0, name),                                    \
         OP_PUSH_U64(policy),                                    \
@@ -1904,12 +2132,25 @@ err:
         OP_PUSH_U64(error_code),          \
         OP_FUNC(hf_stream_reset))
 
+#define OP_STREAM_RESET_FAIL(name, error_code) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_PZ(#name),                     \
+        OP_PUSH_U64(error_code),               \
+        OP_FUNC(hf_stream_reset_fail))
+
 #define OP_SHUTDOWN_WAIT(name, flags, error_code, reason) \
     (OP_SELECT_SSL(0, name),                              \
         OP_PUSH_U64(flags),                               \
         OP_PUSH_U64(error_code),                          \
         OP_PUSH_PZ(reason),                               \
         OP_FUNC(hf_shutdown_wait))
+
+#define OP_SHUTDOWN_ONCE(name, flags, error_code, reason) \
+    (OP_SELECT_SSL(0, name),                              \
+        OP_PUSH_U64(flags),                               \
+        OP_PUSH_U64(error_code),                          \
+        OP_PUSH_PZ(reason),                               \
+        OP_FUNC(hf_shutdown_once))
 
 #define OP_EXPECT_FIN(name)  \
     (OP_SELECT_SSL(0, name), \
@@ -2067,3 +2308,47 @@ err:
     (OP_SELECT_SSL(0, name),              \
         OP_PUSH_SIZE(size),               \
         OP_FUNC(hf_set_write_buf_size))
+
+#define OP_SET_MAX_EARLY_DATA(name, value) \
+    (OP_SELECT_SSL(0, name),               \
+        OP_PUSH_U64(value),                \
+        OP_FUNC(hf_set_max_early_data))
+
+#define OP_STREAM_LIMIT_PROBE(conn_name, flags, count, min_fail) \
+    (OP_SELECT_SSL(0, conn_name),                                \
+        OP_PUSH_U64(flags),                                      \
+        OP_PUSH_U64(count),                                      \
+        OP_PUSH_U64(min_fail),                                   \
+        OP_FUNC(hf_stream_limit_probe))
+
+#define OP_CHECK_IDLE_TIMEOUT(name, value_class, expected_ms) \
+    (OP_SELECT_SSL(0, name),                                  \
+        OP_PUSH_U64(value_class),                             \
+        OP_PUSH_U64(expected_ms),                             \
+        OP_FUNC(hf_check_idle_timeout))
+
+#define OP_MODIFY_VALUE_UINT(name, ssl_value, requested) \
+    (OP_SELECT_SSL(0, name),                             \
+        OP_PUSH_U64(ssl_value),                          \
+        OP_PUSH_U64(requested),                          \
+        OP_FUNC(hf_modify_value_uint))
+
+#define OP_REJECT_VALUE_UINT(name, ssl_value, bad) \
+    (OP_SELECT_SSL(0, name),                       \
+        OP_PUSH_U64(ssl_value),                    \
+        OP_PUSH_U64(bad),                          \
+        OP_FUNC(hf_reject_value_uint))
+
+#define OP_CHECK_VALUE_UINT(name, ssl_value, value_class, expected) \
+    (OP_SELECT_SSL(0, name),                                        \
+        OP_PUSH_U64(ssl_value),                                     \
+        OP_PUSH_U64(value_class),                                   \
+        OP_PUSH_U64(expected),                                      \
+        OP_FUNC(hf_check_value_uint))
+
+#define OP_CANNOT_CHANGE_VALUE_UINT(name, ssl_value, current, requested) \
+    (OP_SELECT_SSL(0, name),                                             \
+        OP_PUSH_U64(ssl_value),                                          \
+        OP_PUSH_U64(current),                                            \
+        OP_PUSH_U64(requested),                                          \
+        OP_FUNC(hf_cannot_change_value_uint))

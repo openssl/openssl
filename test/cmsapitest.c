@@ -741,7 +741,8 @@ end:
  * With two independently trusted signers and CMS_VERIFY_PARTIAL, one
  * signer's signature failure must not affect the *other* signer's per-field
  * results -- including once that other signer also fails and the overall
- * call fails too.
+ * call fails too.  Without CMS_VERIFY_PARTIAL, verification must stop at
+ * the first failure.
  */
 static int test_CMS_verify_result_partial_independence(void)
 {
@@ -751,6 +752,7 @@ static int test_CMS_verify_result_partial_independence(void)
     EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
     X509 *cert1 = NULL, *local_cert2 = NULL;
     STACK_OF(CMS_SignerInfo) *sinfos;
+    STACK_OF(X509) *signers = NULL;
     CMS_SignerInfo *si1, *si2;
     ASN1_OCTET_STRING *sig;
     int ret = 0;
@@ -792,6 +794,24 @@ static int test_CMS_verify_result_partial_independence(void)
     ((uint8_t *)ASN1_STRING_get0_data(sig))[0] ^= 0xff;
 
     ERR_clear_error();
+    if (!TEST_int_eq(CMS_verify(cms, NULL, store, NULL, out, CMS_BINARY), 0))
+        goto end;
+
+    /*
+     * Without CMS_VERIFY_PARTIAL, verification stops at signer 1's failure:
+     * signer 2's signed attributes are not checked and the content is not
+     * read.
+     */
+    if (!TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_RESULT), 0)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_CERT), 1)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_ATTR), 0)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_RESULT), 0)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_CERT), 1)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_ATTR), 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(out), 0))
+        goto end;
+
+    ERR_clear_error();
     if (!TEST_int_eq(CMS_verify(cms, NULL, store, NULL, out,
                          CMS_BINARY | CMS_VERIFY_PARTIAL),
             1))
@@ -804,8 +824,17 @@ static int test_CMS_verify_result_partial_independence(void)
      */
     if (!TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_RESULT), 0)
         || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_CERT), 1)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_ATTR), 0)
         || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_RESULT), 1)
-        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_CERT), 1))
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_CERT), 1)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_ATTR), 1)
+        || !TEST_size_t_gt(BIO_ctrl_pending(out), 0))
+        goto end;
+
+    /* Only the signer whose signature verified may be reported */
+    if (!TEST_ptr(signers = CMS_get0_signers(cms))
+        || !TEST_int_eq(sk_X509_num(signers), 1)
+        || !TEST_int_eq(X509_cmp(sk_X509_value(signers, 0), local_cert2), 0))
         goto end;
 
     /* now also break signer 2's signature: the overall call must now fail */
@@ -828,12 +857,15 @@ static int test_CMS_verify_result_partial_independence(void)
      */
     if (!TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_RESULT), 0)
         || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_CERT), 1)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si1, CMS_VERIFY_ATTR), 0)
         || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_RESULT), 0)
-        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_CERT), 1))
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_CERT), 1)
+        || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si2, CMS_VERIFY_ATTR), 0))
         goto end;
 
     ret = 1;
 end:
+    sk_X509_free(signers);
     CMS_ContentInfo_free(cms);
     X509_STORE_free(store);
     X509_free(cert1);

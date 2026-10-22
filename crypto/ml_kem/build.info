@@ -2,6 +2,8 @@ LIBS = ../../libcrypto
 
 $MLKEMASM=
 IF[{- !$disabled{asm} -}]
+  $MLKEMASM_x86_64=ml_kem_avx2.s
+  $MLKEMDEF_x86_64=MLKEM_AVX2_X86_64_ASM
   $MLKEMDEF_ppc64=MLKEM_NTT_PPC_ASM
 
   IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
@@ -36,3 +38,5 @@ ENDIF
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$MLKEMDEF
 DEFINE[../../providers/libfips.a]=$MLKEMDEF
+
+GENERATE[ml_kem_avx2.s]=asm/ml_kem_avx2.pl

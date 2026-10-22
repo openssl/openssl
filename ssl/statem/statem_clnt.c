@@ -2328,13 +2328,12 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             }
         }
 
-        if (!SSL_CONNECTION_IS_DTLS13(s)
-            && !ssl->method->ssl3_enc->change_cipher_state(s,
-                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            dtls13_hellos_done(s);
+        } else if (!ssl->method->ssl3_enc->change_cipher_state(s,
+                       SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
             /* SSLfatal() already called */
             goto err;
-        } else {
-            s->dtls13_process_hello = 1;
         }
     }
 
@@ -2511,6 +2510,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
     const unsigned char *certstart, *certbytes;
     size_t chainidx;
     unsigned int context = 0;
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (s->ext.server_cert_type == TLSEXT_cert_type_rpk)
@@ -2542,21 +2542,29 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
         }
 
         certstart = certbytes;
-        x = X509_new_ex(sctx->libctx, sctx->propq);
+        x = ssl_ctx_find_handshake_cert(sctx, certstart, cert_len, sha1_hash);
         if (x == NULL) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        if (d2i_X509(&x, (const unsigned char **)&certbytes,
-                cert_len)
-            == NULL) {
-            SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
-            goto err;
-        }
+            x = X509_new_ex(sctx->libctx, sctx->propq);
+            if (x == NULL) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
+                goto err;
+            }
+            if (d2i_X509(&x, (const unsigned char **)&certbytes,
+                    cert_len)
+                == NULL) {
+                SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
+                goto err;
+            }
 
-        if (certbytes != (certstart + cert_len)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
-            goto err;
+            if (certbytes != (certstart + cert_len)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
+                goto err;
+            }
+
+            /*
+             * Add the cert to our handshake cache
+             */
+            x = ssl_ctx_add_handshake_cert(sctx, x, sha1_hash);
         }
 
         if (SSL_CONNECTION_IS_VERSION13(s)) {

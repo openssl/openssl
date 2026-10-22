@@ -1244,14 +1244,13 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_ERROR;
             }
 
-            if (!SSL_CONNECTION_IS_DTLS13(s)
-                && s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
+            if (SSL_CONNECTION_IS_DTLS13(s)) {
+                dtls13_hellos_done(s);
+            } else if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
                 && !ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
                 /* SSLfatal() already called */
                 return WORK_ERROR;
-            } else {
-                s->dtls13_process_hello = 1;
             }
             /*
              * We don't yet know whether the next record we are going to receive
@@ -2085,6 +2084,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    unsigned char *snonce = s->s3.server_random;
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
@@ -2227,6 +2227,23 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     /*
+     * Generate the server_random now. The protocol version (and hence any
+     * downgrade sentinel) is known, and the cheap structural checks on the
+     * ClientHello (cookie, record boundary, cipher list, SCSVs) have all
+     * passed, so we do not spend entropy on a ClientHello we are going to
+     * reject anyway. It must happen before the session lookup below, as the
+     * callbacks invoked from there on such as the session ticket callbacks,
+     * tls_session_secret_cb, the (D)TLSv1.3 PSK callbacks and the servername
+     * callback can observe the value via SSL_get_server_random(). Note that
+     * in the TLSv1.2 flow tls_session_secret_cb in particular needs it for
+     * SessionTicket key derivation.
+     */
+    if (ssl_fill_hello_random(s, 1, snonce, SSL3_RANDOM_SIZE, dgrd) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
      * We don't allow resumption in a backwards compatible ClientHello.
      * In TLS1.1+, session_id MUST be empty.
      *
@@ -2328,21 +2345,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             clienthello->pre_proc_exts, NULL, 0, 1)) {
         /* SSLfatal() already called */
         goto err;
-    }
-
-    /*
-     * Check if we want to use external pre-shared secret for this handshake
-     * for not reused session only. We need to generate server_random before
-     * calling tls_session_secret_cb in order to allow SessionTicket
-     * processing to use it in key derivation.
-     */
-    {
-        unsigned char *pos;
-        pos = s->s3.server_random;
-        if (ssl_fill_hello_random(s, 1, pos, SSL3_RANDOM_SIZE, dgrd) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
     }
 
     if (!s->hit && !tls1_set_server_sigalgs(s)) {
@@ -2809,7 +2811,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (!WPACKET_put_bytes_u16(pkt, version)
         /*
          * Random stuff. Filling of the server_random takes place in
-         * tls_process_client_hello()
+         * tls_early_post_process_client_hello()
          */
         || !WPACKET_memcpy(pkt,
             s->hello_retry_request == SSL_HRR_PENDING

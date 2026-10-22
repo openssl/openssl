@@ -589,6 +589,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->psksession_id = NULL;
     sc->psksession_id_len = 0;
     sc->hello_retry_request = SSL_HRR_NONE;
+    sc->dtls13_process_hello = 0;
     sc->sent_tickets = 0;
 
     sc->error = 0;
@@ -683,6 +684,9 @@ int ossl_ssl_connection_reset(SSL *s)
             if (is_dtls_listener_conn) {
                 DTLS_LISTENER *dl = (DTLS_LISTENER *)saved_listener;
 
+                /* The detached connection cannot unregister itself on free. */
+                ossl_dtls_listener_unregister_established_conn(saved_listener,
+                    &saved_peer_addr);
                 ossl_crypto_mutex_lock(dl->mutex);
                 sc->listener_rx = NULL;
                 ossl_crypto_mutex_unlock(dl->mutex);
@@ -1154,8 +1158,11 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
     return 1;
 }
 
-int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
-    unsigned int id_len)
+/*
+ * Returns -1 on error, 0 if there is no match and 1 if there is a match.
+ */
+int ssl_has_matching_session_id(const SSL_CONNECTION *sc,
+    const unsigned char *id, unsigned int id_len)
 {
     /*
      * A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
@@ -1165,20 +1172,28 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      * by this SSL.
      */
     SSL_SESSION r, *p;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
 
     if (sc == NULL || id_len > sizeof(r.session_id))
-        return 0;
+        return -1;
 
     r.ssl_version = sc->version;
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
 
     if (!CRYPTO_THREAD_read_lock(sc->session_ctx->lock))
-        return 0;
+        return -1;
     p = lh_SSL_SESSION_retrieve(sc->session_ctx->sessions, &r);
     CRYPTO_THREAD_unlock(sc->session_ctx->lock);
     return (p != NULL);
+}
+
+int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
+    unsigned int id_len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    /* Preserve the public API's boolean return value on internal errors. */
+    return ssl_has_matching_session_id(sc, id, id_len) > 0;
 }
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
@@ -2115,17 +2130,9 @@ int SSL_has_pending(const SSL *s)
     sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     /* Check buffered app data if any first */
-    if (SSL_CONNECTION_IS_DTLS(sc)) {
-        TLS_RECORD *rdata;
-        pitem *item, *iter;
-
-        iter = pqueue_iterator(sc->rlayer.d->buffered_app_data);
-        while ((item = pqueue_next(&iter)) != NULL) {
-            rdata = item->data;
-            if (rdata->length > 0)
-                return 1;
-        }
-    }
+    if (SSL_CONNECTION_IS_DTLS(sc)
+        && DTLS_RECORD_LAYER_buffered_app_data_pending(&sc->rlayer))
+        return 1;
 
     if (RECORD_LAYER_processed_read_pending(&sc->rlayer))
         return 1;
@@ -4425,6 +4432,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     if ((ret->tktenc = EVP_CIPHER_fetch(libctx, "AES-256-CBC", propq)) == NULL)
         goto err;
+    if ((ret->sha1 = EVP_MD_fetch(libctx, "SHA1", propq)) == NULL)
+        goto err;
+
 #if defined(OPENSSL_HAVE_TLS1PRF)
     if ((ret->tls1prf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_PRF, propq)) == NULL)
         goto err;
@@ -4450,6 +4460,14 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret->cert_store == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
+    }
+
+    if (!SSL_CTX_is_server(ret)) {
+        ret->handshake_certs = sk_X509_HS_CACHE_ENT_new(NULL);
+        if (ret->handshake_certs == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
     }
 #ifndef OPENSSL_NO_CT
     ret->ctlog_store = CTLOG_STORE_new_ex(libctx, propq);
@@ -4710,6 +4728,13 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
     return ((i > 1) ? 1 : 0);
 }
 
+static void free_hs_cache_ent(X509_HS_CACHE_ENT *entry)
+{
+    X509_free(entry->cert);
+    OPENSSL_free(entry);
+    return;
+}
+
 void SSL_CTX_free(SSL_CTX *a)
 {
     int i;
@@ -4751,6 +4776,7 @@ void SSL_CTX_free(SSL_CTX *a)
     EVP_MAC_free(a->hmac);
     EVP_MD_free(a->sha256);
     EVP_CIPHER_free(a->tktenc);
+    EVP_MD_free(a->sha1);
 #ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF_free(a->tls1prf);
 #endif
@@ -4782,7 +4808,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
-    for (j = 0; j < SSL_ENC_NUM_IDX; j++)
+    for (j = 0; j < OSSL_NELEM(a->ssl_cipher_methods); j++)
         ssl_evp_cipher_free(a->ssl_cipher_methods[j]);
     for (j = 0; j < SSL_MD_NUM_IDX; j++)
         ssl_evp_md_free(a->ssl_digest_methods[j]);
@@ -4812,6 +4838,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->client_cert_type);
     OPENSSL_free(a->server_cert_type);
 
+    sk_X509_HS_CACHE_ENT_pop_free(a->handshake_certs, free_hs_cache_ent);
     CRYPTO_THREAD_lock_free(a->lock);
     CRYPTO_FREE_REF(&a->references);
 #ifdef TSAN_REQUIRES_LOCKING
@@ -4832,6 +4859,93 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     OPENSSL_free(a);
+}
+
+X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
+    size_t cert_len, unsigned char *sha1_hash)
+{
+    int idx;
+    X509_HS_CACHE_ENT *find = NULL;
+    X509 *ret = NULL;
+    unsigned int len = SHA_DIGEST_LENGTH;
+    int cache_len;
+
+    if (sctx->handshake_certs == NULL)
+        return NULL;
+
+    if (!EVP_Digest(certbytes, cert_len, sha1_hash, &len, sctx->sha1, NULL))
+        return NULL;
+
+    if (len != SHA_DIGEST_LENGTH)
+        return NULL;
+
+    if (!CRYPTO_THREAD_read_lock(sctx->lock))
+        return NULL;
+
+    cache_len = sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs);
+    for (idx = 0; idx < cache_len; idx++) {
+        find = sk_X509_HS_CACHE_ENT_value(sctx->handshake_certs, idx);
+        if (!memcmp(find->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH)) {
+            X509_up_ref(find->cert);
+            ret = find->cert;
+            break;
+        }
+    }
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
+}
+
+X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert,
+    unsigned char *sha1_hash)
+{
+    X509_HS_CACHE_ENT *tmp, *del;
+    X509 *ret = cert;
+
+    if (sctx->handshake_certs == NULL)
+        return cert;
+
+    /*
+     * Force extension caching on the X509 now, while we still "own" it
+     * exclusively. From this point on the cached cert is treated as
+     * immutable by all readers (they only X509_up_ref it).
+     */
+    if (X509_check_purpose(cert, -1, 0) <= 0)
+        return cert;
+
+    tmp = OPENSSL_malloc(sizeof(X509_HS_CACHE_ENT));
+    if (tmp == NULL)
+        return cert;
+
+    /*
+     * We had to compute the hash of the der string in the find routine, so
+     * we can reuse it here
+     */
+    memcpy(tmp->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH);
+    tmp->cert = cert;
+    X509_up_ref(cert);
+
+    if (!CRYPTO_THREAD_write_lock(sctx->lock)) {
+        free_hs_cache_ent(tmp);
+        return cert;
+    }
+
+    if (sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs) > 64) {
+        /*
+         * Evict the oldest entry (index 0). Deleting index 64 with
+         * num > 64 would remove the most-recently-pushed entry, which
+         * is the opposite of what we want.
+         */
+        del = sk_X509_HS_CACHE_ENT_delete(sctx->handshake_certs, 0);
+        if (del != NULL)
+            free_hs_cache_ent(del);
+    }
+    if (!sk_X509_HS_CACHE_ENT_push(sctx->handshake_certs, tmp)) {
+        free_hs_cache_ent(tmp);
+        ret = cert;
+    }
+
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
 }
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)

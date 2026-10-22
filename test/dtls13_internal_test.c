@@ -2318,6 +2318,188 @@ end:
     return testresult;
 }
 
+static const unsigned char dummy_cookie[] = "cookie";
+
+static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
+    unsigned int *cookie_len)
+{
+    memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
+    *cookie_len = sizeof(dummy_cookie);
+    return 1;
+}
+
+static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+    unsigned int cookie_len)
+{
+    return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
+}
+
+/*
+ * Drain the available datagrams with SSL_connect(), requiring WANT_READ and
+ * an empty error queue after every call. Return 0 on an unexpected result or
+ * if the bounded loop cannot drain the read BIO, and 1 otherwise.
+ */
+static int connect_while_readable(SSL *ssl, BIO *rbio)
+{
+    int i, ret;
+
+    for (i = 0; i < 32; i++) {
+        ERR_clear_error();
+        ret = SSL_connect(ssl);
+        if (!TEST_int_eq(SSL_get_error(ssl, ret), SSL_ERROR_WANT_READ)
+            || !TEST_ulong_eq(ERR_peek_error(), 0))
+            return 0;
+        if (BIO_ctrl_pending(rbio) == 0)
+            return 1;
+    }
+    return TEST_size_t_eq(BIO_ctrl_pending(rbio), 0);
+}
+
+/*
+ * After a HelloRetryRequest the client's record layer already expects DTLS
+ * 1.3 but is still in epoch 0. If the datagrams with the ServerHello are lost,
+ * or arrive after ones holding only epoch 2 records, the client has to buffer
+ * those records until the ServerHello turns up. That is an ordinary wait for
+ * more data and must be reported as SSL_ERROR_WANT_READ, not as
+ * SSL_ERROR_SYSCALL, which applications must treat as fatal.
+ *
+ * The server requires a cookie, so it answers the first ClientHello with a
+ * HelloRetryRequest. Its small MTU spreads the ServerHello flight over several
+ * datagrams. The ServerHello datagrams are either delivered after the
+ * encrypted ones (idx == 0), or discarded permanently so that recovery
+ * requires a retransmitted flight (idx == 1).
+ */
+static int test_dtls13_hrr_lost_server_hello(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc;
+    BIO *bio;
+    unsigned char dg[16][1500], buf[2048];
+    int dglen[16];
+    int ndg = 0, first_enc, i, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+    SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
+    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
+    SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client,
+            NULL, NULL)))
+        goto end;
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    bio = SSL_get_rbio(client);
+
+    SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_long_gt(SSL_set_mtu(server, 400), 0))
+        goto end;
+
+    /* ClientHello, then HelloRetryRequest, then the second ClientHello. */
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* The server answers with its ServerHello flight. */
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(sc->hello_retry_request, SSL_HRR_COMPLETE))
+        goto end;
+
+    /* Capture the flight, delivering none of it yet. */
+    while ((ret = BIO_read(bio, dg[ndg], sizeof(dg[0]))) > 0) {
+        dglen[ndg++] = ret;
+        if (!TEST_int_lt(ndg, (int)OSSL_NELEM(dg)))
+            goto end;
+    }
+    if (!TEST_int_ge(ndg, 2))
+        goto end;
+
+    /*
+     * The ServerHello is sent in the clear, in epoch 0 (a legacy record header
+     * starting 0x16), and can itself span several datagrams. Everything after
+     * it holds only encrypted epoch 2 records.
+     */
+    for (first_enc = 0; first_enc < ndg && dg[first_enc][0] == 0x16; first_enc++)
+        continue;
+    if (!TEST_int_gt(first_enc, 0) || !TEST_int_lt(first_enc, ndg))
+        goto end;
+    for (i = first_enc; i < ndg; i++)
+        if (!TEST_int_eq(dg[i][0] & 0xe0, 0x20))
+            goto end;
+
+    /* Deliver only the encrypted datagrams from the original flight. */
+    for (i = first_enc; i < ndg; i++)
+        if (!TEST_int_eq(mempacket_test_inject(bio, (const char *)dg[i],
+                             dglen[i], -1, INJECT_PACKET_IGNORE_REC_SEQ),
+                dglen[i]))
+            goto end;
+
+    /*
+     * The client can only buffer them: it has to wait for more data. Each
+     * call handles one datagram, so keep calling while some are waiting, as an
+     * application does while its socket is readable.
+     */
+    if (!connect_while_readable(client, bio))
+        goto end;
+
+    if (idx == 0) {
+        /* Deliver the original ServerHello datagrams late. */
+        for (i = 0; i < first_enc; i++)
+            if (!TEST_int_eq(mempacket_test_inject(bio, (const char *)dg[i],
+                                 dglen[i], -1, INJECT_PACKET_IGNORE_REC_SEQ),
+                    dglen[i]))
+                goto end;
+    } else {
+        /*
+         * The original ServerHello datagrams remain lost. Expire the server's
+         * timer and deliver its entire retransmitted flight, including any
+         * duplicates of the encrypted handshake messages buffered above.
+         */
+        if (!TEST_size_t_gt(pqueue_size(&sc->d1->sent_messages), 0)
+            || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout)))
+            goto end;
+        sc->d1->next_timeout = ossl_time_subtract(ossl_time_now(),
+            ossl_seconds2time(1));
+        if (!TEST_int_gt(DTLSv1_handle_timeout(server), 0)
+            || !TEST_size_t_gt(BIO_ctrl_pending(bio), 0)
+            || !TEST_ulong_eq(ERR_peek_error(), 0))
+            goto end;
+    }
+    if (!connect_while_readable(client, bio)
+        || !TEST_int_eq(SSL_accept(server), 1))
+        goto end;
+    ret = SSL_read(client, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(client), TLS_ST_OK))
+        goto end;
+
+    /* Application data flows both ways. */
+    if (!TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, buf, 1), 1)
+        || !TEST_uchar_eq(buf[0], 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 int setup_tests(void)
@@ -2350,6 +2532,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_retained_epoch_seq_match);
     ADD_TEST(test_dtls13_retained_epoch_app_data_rejected);
     ADD_TEST(test_dtls13_retained_epoch_ack_authority);
+    ADD_ALL_TESTS(test_dtls13_hrr_lost_server_hello, 2);
 #endif
     return 1;
 }
