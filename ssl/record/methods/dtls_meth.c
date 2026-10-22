@@ -477,7 +477,7 @@ static int dtls13_plaintext_allows_type(const OSSL_RECORD_LAYER *rl, int type)
         || rl->epoch != 0
         || !rl->allow_plain_alerts
         || type == SSL3_RT_ALERT
-        || type == SSL3_RT_ACK;
+        || (type == SSL3_RT_ACK && rl->role == OSSL_RECORD_ROLE_SERVER);
 }
 
 /*-

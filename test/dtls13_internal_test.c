@@ -2798,7 +2798,7 @@ end:
     return testresult;
 }
 
-/* Stand in for a client certificate that takes a while to produce. */
+/* Stand in for a certificate that takes a while to produce. */
 static int cert_cb_wait_once(SSL *ssl, void *arg)
 {
     int *calls = arg;
@@ -3070,6 +3070,218 @@ end:
     return testresult;
 }
 
+/*
+ * A server that cannot immediately respond to ClientHello may send an epoch-0
+ * ACK (RFC 9147 section 7.1). Reordering can deliver that ACK after ServerHello
+ * but before the first protected record. It must not abort the handshake.
+ *
+ * idx 0/1: empty/ClientHello ACK before the encrypted flight.
+ * idx 2/3: the same ACKs after the encrypted flight, closing the epoch-0 window.
+ * Adapted from Mounir Idrassi's public-API delayed-server-ACK reproducer.
+ */
+static int test_dtls13_delayed_server_ack(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *server = NULL, *client = NULL;
+    SSL_CONNECTION *sc, *cc;
+    BIO *bio;
+    unsigned char dg[32][2048], ack[DTLS1_RT_HEADER_LENGTH + 2 + 16] = { 0 };
+    unsigned char buf;
+    int dglen[32];
+    int ndg = 0, i, j, ret, calls = 0, first_enc = -1, testresult = 0;
+    int with_entry = idx % 2, control = idx >= 2;
+    int acklen = DTLS1_RT_HEADER_LENGTH + 2 + (with_entry ? 16 : 0);
+    size_t off, reclen, enc_off = 0, n0, n2;
+    uint64_t seq = 0;
+    OSSL_HANDSHAKE_STATE state;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_num_tickets(sctx, 0)))
+        goto end;
+
+    SSL_CTX_set_cert_cb(sctx, cert_cb_wait_once, &calls);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL, NULL)))
+        goto end;
+
+    sc = SSL_CONNECTION_FROM_SSL(server);
+    cc = SSL_CONNECTION_FROM_SSL(client);
+    SSL_set_options(server, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_long_gt(SSL_set_mtu(server, 1200), 0))
+        goto end;
+
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Capture ClientHello so the one-entry ACK names an actual wire record. */
+    bio = SSL_get_rbio(server);
+    while (BIO_ctrl_pending(bio) > 0) {
+        if (!TEST_int_lt(ndg, (int)OSSL_NELEM(dg))
+            || !TEST_size_t_le(BIO_ctrl_pending(bio), sizeof(dg[0]))
+            || !TEST_int_gt(dglen[ndg] = BIO_read(bio, dg[ndg], sizeof(dg[0])), 0)
+            || !TEST_true(count_dgram_records(dg[ndg], dglen[ndg], &n0, &n2))
+            || !TEST_size_t_eq(n2, 0))
+            goto end;
+
+        ndg++;
+    }
+    if (!TEST_int_gt(ndg, 0)
+        || !TEST_int_gt(dglen[0], DTLS1_RT_HEADER_LENGTH)
+        || !TEST_uchar_eq(dg[0][0], SSL3_RT_HANDSHAKE)
+        || !TEST_uchar_eq(dg[0][DTLS1_RT_HEADER_LENGTH], SSL3_MT_CLIENT_HELLO))
+        goto end;
+
+    if (with_entry) {
+        /* The epoch is zero; right-align the 48-bit sequence in its u64. */
+        for (j = 0; j < 6; j++)
+            ack[DTLS1_RT_HEADER_LENGTH + 2 + 8 + 2 + j] = dg[0][5 + j];
+    }
+
+    for (i = 0; i < ndg; i++)
+        if (!TEST_int_eq(mempacket_test_inject(bio, (const char *)dg[i],
+                             dglen[i], -1, INJECT_PACKET_IGNORE_REC_SEQ),
+                dglen[i]))
+            goto end;
+
+    /* Pause where a peer could generate its ACK, then produce the flight. */
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_X509_LOOKUP)
+        || !TEST_int_eq(calls, 1))
+        goto end;
+
+    ret = SSL_accept(server);
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(calls, 2))
+        goto end;
+
+    /* Keep retransmission from supplying records deliberately withheld below. */
+    sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+    cc->d1->next_timeout = sc->d1->next_timeout;
+
+    bio = SSL_get_rbio(client);
+    ndg = 0;
+    while (BIO_ctrl_pending(bio) > 0) {
+        if (!TEST_int_lt(ndg, (int)OSSL_NELEM(dg))
+            || !TEST_size_t_le(BIO_ctrl_pending(bio), sizeof(dg[0]))
+            || !TEST_int_gt(dglen[ndg] = BIO_read(bio, dg[ndg], sizeof(dg[0])), 0)
+            || !TEST_true(count_dgram_records(dg[ndg], dglen[ndg], &n0, &n2)))
+            goto end;
+
+        ndg++;
+    }
+
+    /*
+     * Deliver just the plaintext prefix, splitting a mixed datagram at the
+     * first protected record without changing any record bytes. This also
+     * handles a ServerHello fragmented across several records or datagrams.
+     */
+    for (i = 0; i < ndg; i++) {
+        for (off = 0; off < (size_t)dglen[i]; off += reclen) {
+            const unsigned char *r = dg[i] + off;
+            size_t remaining = (size_t)dglen[i] - off;
+
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(r[0])) {
+                first_enc = i;
+                enc_off = off;
+                break;
+            }
+            if (!TEST_size_t_ge(remaining, DTLS1_RT_HEADER_LENGTH)
+                || !TEST_uchar_eq(r[0], SSL3_RT_HANDSHAKE))
+                goto end;
+
+            reclen = DTLS1_RT_HEADER_LENGTH + ((size_t)r[11] << 8) + r[12];
+            if (!TEST_size_t_le(reclen, remaining))
+                goto end;
+
+            seq = 0;
+            for (j = 5; j <= 10; j++)
+                seq = (seq << 8) | r[j];
+        }
+        if (off > 0
+            && !TEST_int_eq(mempacket_test_inject(bio, (const char *)dg[i],
+                                (int)off, -1, INJECT_PACKET_IGNORE_REC_SEQ),
+                (int)off))
+            goto end;
+
+        if (first_enc >= 0)
+            break;
+    }
+    if (!TEST_int_ge(first_enc, 0))
+        goto end;
+
+    ret = SSL_connect(client);
+    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_state(client), TLS_ST_CR_SRVR_HELLO)
+        || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_READ), 0))
+        goto end;
+
+    /* Use a fresh server record number, not a replay of ServerHello. */
+    if (!TEST_uint64_t_lt(seq, (UINT64_C(1) << 48) - 1))
+        goto end;
+
+    seq++;
+    ack[0] = SSL3_RT_ACK;
+    ack[1] = (unsigned char)(DTLS1_2_VERSION >> 8);
+    ack[2] = (unsigned char)DTLS1_2_VERSION;
+    for (j = 10; j >= 5; j--, seq >>= 8)
+        ack[j] = (unsigned char)seq;
+    ack[12] = (unsigned char)(acklen - DTLS1_RT_HEADER_LENGTH);
+    ack[14] = with_entry ? 16 : 0;
+
+    /* Run both delivery orders with exactly the same ACK and flight bytes. */
+    for (j = 0; j < 2; j++) {
+        if (j == control) {
+            state = SSL_get_state(client);
+            if (!TEST_int_eq(mempacket_test_inject(bio, (const char *)ack,
+                                 acklen, -1, INJECT_PACKET_IGNORE_REC_SEQ),
+                    acklen))
+                goto end;
+
+            ret = SSL_connect(client);
+            if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+                || !TEST_int_eq(SSL_get_state(client), state)
+                || !TEST_size_t_eq(BIO_ctrl_pending(bio), 0))
+                goto end;
+
+        } else {
+            for (i = first_enc; i < ndg; i++) {
+                off = i == first_enc ? enc_off : 0;
+                ret = dglen[i] - (int)off;
+                if (!TEST_int_eq(mempacket_test_inject(bio,
+                                     (const char *)dg[i] + off, ret, -1,
+                                     INJECT_PACKET_IGNORE_REC_SEQ),
+                        ret))
+                    goto end;
+            }
+            ret = SSL_connect(client);
+            if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
+                || !TEST_uint64_t_eq(dtls1_get_epoch(cc, SSL3_CC_READ), 3))
+                goto end;
+        }
+    }
+
+    if (!TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE))
+        || !TEST_true(SSL_is_init_finished(server))
+        || !TEST_true(SSL_is_init_finished(client))
+        || !TEST_int_eq(SSL_write(server, "s", 1), 1)
+        || !TEST_int_eq(SSL_read(client, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 's')
+        || !TEST_int_eq(SSL_write(client, "c", 1), 1)
+        || !TEST_int_eq(SSL_read(server, &buf, 1), 1)
+        || !TEST_uchar_eq(buf, 'c'))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(server);
+    SSL_free(client);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /* Bypass fixture chain validation only for this client-authentication test. */
 static int reordered_ack_verify_cb(int ok, X509_STORE_CTX *ctx)
 {
@@ -3315,6 +3527,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_server_flight_partial_ack);
     ADD_TEST(test_dtls13_server_flight_full_ack);
     ADD_ALL_TESTS(test_dtls13_plaintext_ack_epoch, 3);
+    ADD_ALL_TESTS(test_dtls13_delayed_server_ack, 4);
     ADD_ALL_TESTS(test_dtls13_reordered_ack, 3);
 #endif
     return 1;
