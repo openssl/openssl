@@ -31,8 +31,8 @@
 #include "prov/endecoder_local.h"
 
 struct msblob2key_ctx_st; /* Forward declaration */
-typedef void *b2i_of_void_fn(const unsigned char **in, unsigned int bitlen,
-    int ispub);
+typedef void *b2i_of_void_fn(const unsigned char **in, unsigned int length,
+    unsigned int bitlen, int ispub);
 typedef void adjust_key_fn(void *, struct msblob2key_ctx_st *ctx);
 typedef void free_key_fn(void *);
 struct keytype_desc_st {
@@ -149,7 +149,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         if (!ossl_pw_set_ossl_passphrase_cb(&pwdata, pw_cb, pw_cbarg))
             goto end;
         p = buf;
-        key = ctx->desc->read_private_key(&p, bitlen, ispub);
+        key = ctx->desc->read_private_key(&p, length, bitlen, ispub);
         if (selection != 0 && key == NULL)
             goto next;
     }
@@ -157,7 +157,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         && ispub
         && ctx->desc->read_public_key != NULL) {
         p = buf;
-        key = ctx->desc->read_public_key(&p, bitlen, ispub);
+        key = ctx->desc->read_public_key(&p, length, bitlen, ispub);
         if (selection != 0 && key == NULL)
             goto next;
     }
