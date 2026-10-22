@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 231;
+plan tests => 235;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -563,6 +563,18 @@ ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
 
 ok(!verify("nc-uri-nul-cert", "", ["root-cert"], ["ncca4-cert"], ),
    "Name constraints URI with embedded NUL");
+
+ok(verify("nc-uri-good-cert", "", ["root-cert"], ["ncca5-cert"], ),
+   "Name constraints URI not excluded");
+
+ok(!verify("nc-uri-twoat-cert", "", ["root-cert"], ["ncca5-cert"], ),
+   "Name constraints URI with two userinfo delimiters");
+
+ok(!verify("nc-uri-nohost-cert", "", ["root-cert"], ["ncca5-cert"], ),
+   "Name constraints URI with empty host");
+
+ok(!verify("nc-uri-ipliteral-cert", "", ["root-cert"], ["ncca5-cert"], ),
+   "Name constraints URI with IP-literal host");
 
 ok(!verify("bad-cert-smtputf8-name-constraints", "root-cert", ["bad-cert-smtputf8-name-constraints"], [],
 	  "-partial_chain", "-attime", "1623060000"),
