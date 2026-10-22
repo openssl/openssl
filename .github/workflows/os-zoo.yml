@@ -153,10 +153,20 @@ jobs:
     - name: prepare package sources
       if: matrix.zoo.setup != ''
       run: ${{ matrix.zoo.setup }}
+    # Images without git get the checkout as a GitHub archive, which leaves out
+    # .github/ (export-ignore), so .github/retry logic is inlined here.
     - name: install packages
       env:
         INSTALL: ${{ matrix.zoo.install }}
-      run: .github/retry sh -c "$INSTALL"
+      run: |
+        for attempt in 1 2 3; do
+          sh -c "$INSTALL" && exit 0
+          if [ "$attempt" -lt 3 ]; then sleep 30; fi
+        done
+        msg="package install failed 3 times; this is a runner or network problem, not a test failure"
+        echo "::error title=Environment failure::$msg"
+        echo "Environment failure: $msg" >> "$GITHUB_STEP_SUMMARY"
+        exit 1
     - name: config
       run: ./config
     - name: config dump
