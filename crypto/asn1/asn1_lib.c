@@ -470,6 +470,13 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
+    /*
+     * We can not return an error, and this is already the likely
+     * outcome if we set len beyond the allocation of data
+     * therefore we enforce positive length here.
+     */
+    OPENSSL_assert(len >= 0);
+
     if (!(str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)) {
         if (str->length > 0)
             OPENSSL_clear_free(str->data, str->length);
@@ -478,7 +485,7 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
     }
     str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     str->data = data;
-    str->length = len < 0 ? 0 : len;
+    str->length = len;
 }
 
 int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
