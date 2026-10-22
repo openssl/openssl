@@ -157,6 +157,20 @@ jobs:
             opensslcapsname: armcap, # OPENSSL_armcap
             opensslcaps: "0x2601d",
             capslabel: armv9-sve2-poly1305
+          }, {
+            # DIT path. OPENSSL_armcap requires the derived ARMv8_DIT bit to be
+            # set when probing is overridden - include the usual base crypto
+            # extensions, as they will be on if DIT is implemented:
+            #   crypto/armcap.c
+            #   include/crypto/aarch64_dit.h
+            arch: aarch64-linux-gnu,
+            libs: libc6-dev-arm64-cross,
+            target: linux-aarch64,
+            fips: no,
+            qemucpu: max,
+            opensslcapsname: armcap, # OPENSSL_armcap
+            opensslcaps: "0x4007d",
+            capslabel: armv8-dit
           }
         ]
     runs-on: ubuntu-latest

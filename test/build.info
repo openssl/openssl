@@ -516,7 +516,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[asynctest]=asynctest.c
   INCLUDE[asynctest]=../include ../apps/include
-  DEPEND[asynctest]=../libcrypto
+  DEPEND[asynctest]=../libcrypto.a
 
   SOURCE[secmemtest]=secmemtest.c
   INCLUDE[secmemtest]=../include ../apps/include

@@ -40,6 +40,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "fake_rsaprov.h"
 #include "fake_pipelineprov.h"
 
@@ -9495,6 +9496,347 @@ err:
     return ret;
 }
 
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+static int dit_probe_active, dit_probe_done, dit_probe_failed;
+static int dit_probe_fail_init;
+static int dit_probe_expect_off;
+
+static void do_dit_probe(int needs_dit)
+{
+    if (dit_probe_active) {
+        int dit = ossl_get_dit(1);
+
+        dit_probe_done = 1;
+        if ((needs_dit && !dit) || (dit_probe_expect_off && dit))
+            dit_probe_failed = 1;
+    }
+}
+
+static void *dit_probe_newctx(void *provctx)
+{
+    do_dit_probe(0);
+    return OPENSSL_zalloc(1);
+}
+
+static void dit_probe_freectx(void *vctx)
+{
+    do_dit_probe(0);
+    OPENSSL_free(vctx);
+}
+
+static void *dit_probe_dupctx(void *vctx)
+{
+    do_dit_probe(0);
+    return OPENSSL_zalloc(1);
+}
+
+static int dit_probe_init(void *vctx, const unsigned char *key, size_t keylen,
+    const unsigned char *iv, size_t ivlen, const OSSL_PARAM params[])
+{
+    do_dit_probe(1);
+    return !dit_probe_fail_init;
+}
+
+static int dit_probe_update(void *vctx, unsigned char *out, size_t *outl,
+    size_t outsize, const unsigned char *in, size_t inl)
+{
+    do_dit_probe(1);
+    if (outsize < inl)
+        return 0;
+    if (in != NULL && out != NULL)
+        memcpy(out, in, inl);
+    *outl = inl;
+    return 1;
+}
+
+static int dit_probe_final(void *vctx, unsigned char *out, size_t *outl,
+    size_t outsize)
+{
+    do_dit_probe(1);
+    *outl = 0;
+    return 1;
+}
+
+static int dit_probe_pipeline_init(void *vctx, const unsigned char *key,
+    size_t keylen, size_t numpipes, const unsigned char **iv, size_t ivlen,
+    const OSSL_PARAM params[])
+{
+    do_dit_probe(1);
+    return 1;
+}
+
+static int dit_probe_pipeline_update(void *vctx, size_t numpipes,
+    unsigned char **out, size_t *outl, const size_t *outsize,
+    const unsigned char **in, const size_t *inl)
+{
+    do_dit_probe(1);
+    if (numpipes != 1 || outsize[0] < inl[0])
+        return 0;
+    memcpy(out[0], in[0], inl[0]);
+    outl[0] = inl[0];
+    return 1;
+}
+
+static int dit_probe_pipeline_final(void *vctx, size_t numpipes,
+    unsigned char **out, size_t *outl, const size_t *outsize)
+{
+    do_dit_probe(1);
+    if (numpipes != 1)
+        return 0;
+    outl[0] = 0;
+    return 1;
+}
+
+static int dit_probe_get_params(OSSL_PARAM in_params[])
+{
+    OSSL_PARAM *param;
+
+    do_dit_probe(0);
+    param = OSSL_PARAM_locate(in_params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
+    if (param != NULL && !OSSL_PARAM_set_size_t(param, 1))
+        return 0;
+    param = OSSL_PARAM_locate(in_params, OSSL_CIPHER_PARAM_KEYLEN);
+    if (param != NULL && !OSSL_PARAM_set_size_t(param, 1))
+        return 0;
+    param = OSSL_PARAM_locate(in_params, OSSL_CIPHER_PARAM_IVLEN);
+    if (param != NULL && !OSSL_PARAM_set_size_t(param, 1))
+        return 0;
+    return 1;
+}
+
+static int dit_probe_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    do_dit_probe(1);
+    return 1;
+}
+
+static int dit_probe_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    do_dit_probe(1);
+    return 1;
+}
+
+static const OSSL_PARAM dit_probe_known_params[] = {
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *dit_probe_gettable_params(void *provctx)
+{
+    do_dit_probe(0);
+    return dit_probe_known_params;
+}
+
+static const OSSL_PARAM *dit_probe_gettable_ctx_params(void *vctx,
+    void *provctx)
+{
+    do_dit_probe(0);
+    return dit_probe_known_params;
+}
+
+static const OSSL_DISPATCH dit_probe_cipher_functions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))dit_probe_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))dit_probe_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))dit_probe_dupctx },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))dit_probe_init },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))dit_probe_init },
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))dit_probe_update },
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))dit_probe_final },
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))dit_probe_update },
+    { OSSL_FUNC_CIPHER_PIPELINE_ENCRYPT_INIT,
+        (void (*)(void))dit_probe_pipeline_init },
+    { OSSL_FUNC_CIPHER_PIPELINE_DECRYPT_INIT,
+        (void (*)(void))dit_probe_pipeline_init },
+    { OSSL_FUNC_CIPHER_PIPELINE_UPDATE,
+        (void (*)(void))dit_probe_pipeline_update },
+    { OSSL_FUNC_CIPHER_PIPELINE_FINAL,
+        (void (*)(void))dit_probe_pipeline_final },
+    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))dit_probe_get_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
+        (void (*)(void))dit_probe_gettable_params },
+    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))dit_probe_ctx_params },
+    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
+        (void (*)(void))dit_probe_set_ctx_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
+        (void (*)(void))dit_probe_gettable_ctx_params },
+    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
+        (void (*)(void))dit_probe_gettable_ctx_params },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM dit_probe_ciphers[] = {
+    { "DIT-PROBE", "provider=dit-probe", dit_probe_cipher_functions },
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM *dit_probe_query(void *provctx, int operation_id,
+    int *no_cache)
+{
+    *no_cache = 0;
+    return operation_id == OSSL_OP_CIPHER ? dit_probe_ciphers : NULL;
+}
+
+static const OSSL_DISPATCH dit_probe_provider_functions[] = {
+    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))dit_probe_query },
+    OSSL_DISPATCH_END
+};
+
+static int dit_probe_provider_init(const OSSL_CORE_HANDLE *handle,
+    const OSSL_DISPATCH *in, const OSSL_DISPATCH **out, void **provctx)
+{
+    *provctx = NULL;
+    *out = dit_probe_provider_functions;
+    return 1;
+}
+
+static int dit_probe_check(void)
+{
+    int ok = TEST_true(dit_probe_done)
+        && TEST_false(dit_probe_failed)
+        && TEST_int_eq(ossl_get_dit(1), 0);
+
+    dit_probe_done = 0;
+    return ok;
+}
+
+static int test_evp_cipher_dit(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *provider = NULL;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER_CTX *copy_ctx = NULL;
+    EVP_CIPHER_CTX *pipeline_ctx = NULL;
+    unsigned char key = 0;
+    unsigned char iv = 0;
+    unsigned char input = 0;
+    unsigned char output = 0;
+    unsigned char *outs[] = { &output };
+    const unsigned char *ins[] = { &input };
+    const unsigned char *ivs[] = { &iv };
+    size_t outlens[1];
+    size_t outsizes[] = { 1 };
+    size_t inlens[] = { 1 };
+    OSSL_PARAM params[] = { OSSL_PARAM_END };
+    int original_dit = 0;
+    int outlen = 0;
+    int ret = 0;
+
+    original_dit = ossl_get_dit(1);
+
+    /* Test that DIT is supported on this system. If its already turned on, then it must be
+     * supported, otherwise try to turn it on, and see if that works. */
+    if (original_dit == 0) {
+        ossl_set_dit(1, 1);
+
+        if (!ossl_get_dit(1)) {
+            ossl_set_dit(original_dit, 1);
+            return TEST_skip("DIT is not supported by this CPU");
+        }
+
+        /* Start test with DIT off. */
+        ossl_set_dit(0, 1);
+    }
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_true(OSSL_PROVIDER_add_builtin(libctx, "dit-probe",
+            dit_probe_provider_init))
+        || !TEST_ptr(provider = OSSL_PROVIDER_load(libctx, "dit-probe"))
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, "DIT-PROBE",
+                         "provider=dit-probe"))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_ptr(copy_ctx = EVP_CIPHER_CTX_new())
+        || !TEST_ptr(pipeline_ctx = EVP_CIPHER_CTX_new()))
+        goto end;
+
+    dit_probe_active = 1;
+    if (!TEST_true(EVP_CipherInit_ex2(ctx, cipher, &key, &iv, 1, NULL))
+        || !dit_probe_check()
+        || !TEST_true(EVP_Cipher(ctx, &output, &input, 1))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CipherUpdate(ctx, &output, &outlen, &input, 1))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CipherFinal_ex(ctx, &output, &outlen))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !dit_probe_check())
+        goto end;
+
+    dit_probe_expect_off = 1;
+    if (!TEST_true(EVP_CIPHER_get_params(cipher, params))
+        || !dit_probe_check()
+        || !TEST_ptr(EVP_CIPHER_gettable_params(cipher))
+        || !dit_probe_check()
+        || !TEST_ptr(EVP_CIPHER_gettable_ctx_params(cipher))
+        || !dit_probe_check()
+        || !TEST_ptr(EVP_CIPHER_settable_ctx_params(cipher))
+        || !dit_probe_check()
+        || !TEST_ptr(EVP_CIPHER_CTX_gettable_params(ctx))
+        || !dit_probe_check()
+        || !TEST_ptr(EVP_CIPHER_CTX_settable_params(ctx))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CIPHER_CTX_copy(copy_ctx, ctx))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CIPHER_CTX_reset(copy_ctx))
+        || !dit_probe_check())
+        goto end;
+
+    dit_probe_expect_off = 0;
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+            1, &output))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CipherPipelineEncryptInit(pipeline_ctx, cipher, &key, 1,
+            1, ivs, 1))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CipherPipelineUpdate(pipeline_ctx, outs, outlens, outsizes,
+            ins, inlens))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CipherPipelineFinal(pipeline_ctx, outs, outlens, outsizes))
+        || !dit_probe_check()
+        || !TEST_true(EVP_CipherPipelineDecryptInit(pipeline_ctx, NULL, &key, 1,
+            1, ivs, 1))
+        || !dit_probe_check())
+        goto end;
+
+    dit_probe_expect_off = 1;
+    if (!TEST_true(EVP_CIPHER_CTX_reset(pipeline_ctx))
+        || !dit_probe_check())
+        goto end;
+    dit_probe_expect_off = 0;
+
+    dit_probe_fail_init = 1;
+    if (!TEST_false(EVP_CipherInit_ex2(ctx, cipher, &key, &iv, 1, NULL))
+        || !dit_probe_check())
+        goto end;
+    dit_probe_fail_init = 0;
+    ERR_clear_error();
+
+    ossl_set_dit(1, 1);
+    dit_probe_done = 0;
+    if (!TEST_true(EVP_CipherInit_ex2(ctx, cipher, &key, &iv, 0, NULL))
+        || !TEST_true(dit_probe_done)
+        || !TEST_false(dit_probe_failed)
+        || !TEST_int_eq(ossl_get_dit(1), 1))
+        goto end;
+    ret = 1;
+
+end:
+    dit_probe_active = 0;
+    dit_probe_fail_init = 0;
+    dit_probe_expect_off = 0;
+    EVP_CIPHER_CTX_free(copy_ctx);
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_CTX_free(pipeline_ctx);
+    EVP_CIPHER_free(cipher);
+    OSSL_PROVIDER_unload(provider);
+    OSSL_LIB_CTX_free(libctx);
+    ossl_set_dit(original_dit, 1);
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -9698,6 +10040,9 @@ int setup_tests(void)
     ADD_TEST(test_aes_xts_rejects_missing_iv);
 
     ADD_TEST(test_evp_cipher_pipeline);
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+    ADD_TEST(test_evp_cipher_dit);
+#endif
 
     ADD_ALL_TESTS(test_rsasve_degenerate_exponent, 2);
     ADD_ALL_TESTS(test_rsasve_degenerate_ciphertext, 3);
