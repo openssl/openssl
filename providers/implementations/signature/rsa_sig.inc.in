@@ -54,3 +54,19 @@ use OpenSSL::paramnames qw(produce_param_decoder produce_param_decoder_with_coun
 {- produce_param_decoder('rsa_sigalg_set_ctx_params',
                          (['OSSL_SIGNATURE_PARAM_SIGNATURE', 'sig', 'octet_string'],
                          )); -}
+
+{- produce_param_decoder('rsa_pss_set_ctx_params',
+                         (['OSSL_SIGNATURE_PARAM_DIGEST',                     'digest',   'utf8_string'],
+                          ['OSSL_SIGNATURE_PARAM_PROPERTIES',                 'propq',    'utf8_string'],
+                          ['OSSL_SIGNATURE_PARAM_PAD_MODE',                   'pad',      'utf8_string'],
+                          ['OSSL_SIGNATURE_PARAM_PAD_MODE',                   'pad',      'int'],
+                          ['OSSL_SIGNATURE_PARAM_MGF1_DIGEST',                'mgf1',     'utf8_string'],
+                          ['OSSL_SIGNATURE_PARAM_MGF1_PROPERTIES',            'mgf1pq',   'utf8_string'],
+                          ['OSSL_SIGNATURE_PARAM_PSS_SALTLEN',                'slen',     'utf8_string'],
+                          ['OSSL_SIGNATURE_PARAM_PSS_SALTLEN',                'slen',     'int'],
+                          ['OSSL_SIGNATURE_PARAM_SIGNATURE',                  'sig',      'octet_string'],
+                          ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',             'ind_k',    'int', 'fips'],
+                          ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK',          'ind_d',    'int', 'fips'],
+                          ['OSSL_SIGNATURE_PARAM_FIPS_RSA_PSS_SALTLEN_CHECK', 'ind_slen', 'int', 'fips'],
+                          ['OSSL_SIGNATURE_PARAM_FIPS_SIGN_X931_PAD_CHECK',   'ind_xpad', 'int', 'fips'],
+                         )); -}
