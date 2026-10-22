@@ -467,6 +467,29 @@ NC=$NC ./mkcert.sh genca "Test NC CA 4" ncca4-key ncca4-cert root-key root-cert
     ./mkcert.sh geneeconfig nc-uri-nul-key nc-uri-nul-cert ncca4-key ncca4-cert \
     "subjectAltName = DER:30:1B:86:19:68:74:74:70:3A:2F:2F:67:6F:6F:64:2E:6F:72:67:00:2E:62:61:64:2E:6F:72:67:2F"
 
+# NC CA5 excludes URIs matching bad.org.
+
+NC="excluded;URI:bad.org"
+NC=$NC ./mkcert.sh genca "Test NC CA 5" ncca5-key ncca5-cert root-key root-cert
+
+# Certificates with URI SANs checked against NC CA5
+./mkcert.sh req alt1-key "O = Good NC Test Certificate 2" \
+    "CN=Joe Bloggs" | \
+    ./mkcert.sh geneealt nc-uri-good-key nc-uri-good-cert ncca5-key ncca5-cert \
+    "URI.1 = http://good.org/"
+./mkcert.sh req alt1-key "O = Bad NC Test Certificate 2" \
+    "CN=Joe Bloggs" | \
+    ./mkcert.sh geneealt nc-uri-twoat-key nc-uri-twoat-cert ncca5-key ncca5-cert \
+    "URI.1 = http://user@other@bad.org/"
+./mkcert.sh req alt1-key "O = Bad NC Test Certificate 3" \
+    "CN=Joe Bloggs" | \
+    ./mkcert.sh geneealt nc-uri-nohost-key nc-uri-nohost-cert ncca5-key ncca5-cert \
+    "URI.1 = http://user@/"
+./mkcert.sh req alt1-key "O = Bad NC Test Certificate 4" \
+    "CN=Joe Bloggs" | \
+    ./mkcert.sh geneealt nc-uri-ipliteral-key nc-uri-ipliteral-cert ncca5-key ncca5-cert \
+    "URI.1 = http://[::1]/"
+
 # Certs for CVE-2022-4203 testcase
 
 NC="excluded;otherName:SRVName;UTF8STRING:foo@example.org" ./mkcert.sh genca \

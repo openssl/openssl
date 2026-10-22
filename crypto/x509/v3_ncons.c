@@ -14,10 +14,10 @@
 #include "crypto/asn1.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
-#include <openssl/http.h>
 #include <openssl/x509v3.h>
 #include <openssl/bn.h>
 
+#include "crypto/ctype.h"
 #include "crypto/x509.h"
 #include "crypto/punycode.h"
 #include "ext_dat.h"
@@ -776,65 +776,85 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
     return X509_V_OK;
 }
 
+/**
+ * @brief Locate the host of a URI subjectAltName.
+ *
+ * The URI must have the RFC 3986 form
+ * scheme "://" [ userinfo "@" ] host [ ":" port ] [ path ] [ "?" query ]
+ * [ "#" fragment ]. RFC 5280 section 4.2.1.10 requires a URI to have a
+ * host that is a fully qualified domain name, so a URI with no host, an
+ * empty host or an IP-literal host is rejected, as is a URI containing a
+ * NUL or with more than one "@" in its authority.
+ *
+ * @param uri the URI to parse
+ * @param host set to the start of the host within uri->data
+ * @param host_len set to the length of the host in bytes
+ * @returns 1 if a host was found, 0 otherwise
+ */
+static int uri_get0_host(const ASN1_IA5STRING *uri, const uint8_t **host,
+    size_t *host_len)
+{
+    const uint8_t *p, *end, *authority_end, *host_end, *at;
+
+    if (uri->length <= 0 || memchr(uri->data, 0, uri->length) != NULL)
+        return 0;
+    p = uri->data;
+    end = p + uri->length;
+
+    /* scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
+    if (!ossl_isalpha(*p))
+        return 0;
+    while (p < end && (ossl_isalnum(*p) || *p == '+' || *p == '-' || *p == '.'))
+        p++;
+    if (end - p < 3 || memcmp(p, "://", 3) != 0)
+        return 0;
+    p += 3;
+
+    for (authority_end = p; authority_end < end; authority_end++) {
+        if (*authority_end == '/' || *authority_end == '?' || *authority_end == '#')
+            break;
+    }
+
+    if ((at = memchr(p, '@', authority_end - p)) != NULL) {
+        if (memchr(at + 1, '@', authority_end - (at + 1)) != NULL)
+            return 0;
+        p = at + 1;
+    }
+
+    if ((host_end = memchr(p, ':', authority_end - p)) == NULL)
+        host_end = authority_end;
+    if (host_end == p || *p == '[')
+        return 0;
+
+    *host = p;
+    *host_len = host_end - p;
+    return 1;
+}
+
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 {
     const char *baseptr = (char *)base->data;
-    char *uri_copy;
-    char *scheme;
-    char *host;
-    int hostlen;
-    int ret;
+    const uint8_t *host;
+    size_t host_len;
 
-    /* OSSL_parse_url() takes a C string: reject embedded NULs. */
-    if (uri->length > 0 && memchr(uri->data, 0, uri->length) != NULL)
+    if (!uri_get0_host(uri, &host, &host_len))
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
-
-    if ((uri_copy = OPENSSL_strndup((const char *)uri->data, uri->length)) == NULL)
-        return X509_V_ERR_UNSPECIFIED;
-
-    if (!OSSL_parse_url(uri_copy, &scheme, NULL, &host, NULL, NULL, NULL, NULL, NULL)) {
-        OPENSSL_free(uri_copy);
-        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
-    }
-
-    /* Make sure the scheme is there */
-    if (scheme == NULL || *scheme == '\0') {
-        ERR_raise_data(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_NAME_SYNTAX,
-            "x509: missing scheme in URI: %s\n", uri_copy);
-        OPENSSL_free(scheme);
-        OPENSSL_free(uri_copy);
-        ret = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
-        goto end;
-    }
-
-    /* We don't need these anymore */
-    OPENSSL_free(scheme);
-    OPENSSL_free(uri_copy);
-
-    hostlen = (int)strlen(host);
 
     /* Special case: initial '.' is RHS match */
     if (base->length > 0 && *baseptr == '.') {
-        if (hostlen > base->length) {
-            if (ia5ncasecmp(host + hostlen - base->length, baseptr, base->length) == 0) {
-                ret = X509_V_OK;
-                goto end;
-            }
-        }
-        ret = X509_V_ERR_PERMITTED_VIOLATION;
-        goto end;
+        if (host_len > (size_t)base->length
+            && ia5ncasecmp((const char *)host + host_len - base->length,
+                   baseptr, base->length)
+                == 0)
+            return X509_V_OK;
+        return X509_V_ERR_PERMITTED_VIOLATION;
     }
 
-    if ((base->length != hostlen)
-        || ia5ncasecmp(host, baseptr, hostlen) != 0) {
-        ret = X509_V_ERR_PERMITTED_VIOLATION;
-        goto end;
-    }
+    if (host_len != (size_t)base->length
+        || ia5ncasecmp((const char *)host, baseptr, host_len) != 0)
+        return X509_V_ERR_PERMITTED_VIOLATION;
 
-    ret = X509_V_OK;
-end:
-    OPENSSL_free(host);
-    return ret;
+    return X509_V_OK;
 }
 
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base)
