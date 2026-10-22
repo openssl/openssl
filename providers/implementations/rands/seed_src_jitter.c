@@ -19,6 +19,13 @@
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
 #include "internal/common.h"
+/*
+ * The jitterentropy library state is global to the process image rather
+ * than to any OSSL_LIB_CTX, so its initialisation is run once even inside
+ * the FIPS module.
+ */
+#define ALLOW_RUN_ONCE_IN_FIPS
+#include "internal/thread_once.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
@@ -52,6 +59,19 @@ typedef struct {
 } PROV_JITTER;
 
 static size_t get_jitter_random_value(PROV_JITTER *s, unsigned char *buf, size_t len);
+
+/*
+ * The jitterentropy library must be initialised exactly once, before any
+ * concurrent use, so do it once per image rather than per instantiation.
+ */
+static CRYPTO_ONCE jitter_init_once = CRYPTO_ONCE_STATIC_INIT;
+static int jitter_init_result = -1;
+
+DEFINE_RUN_ONCE_STATIC(do_jitter_init)
+{
+    jitter_init_result = jent_entropy_init_ex(0, JENT_FORCE_FIPS);
+    return 1;
+}
 
 /*
  * Acquire entropy from jitterentropy library
@@ -153,7 +173,8 @@ static int jitter_instantiate(void *vseed, unsigned int strength,
     PROV_JITTER *s = (PROV_JITTER *)vseed;
     int ret;
 
-    if ((ret = jent_entropy_init_ex(0, JENT_FORCE_FIPS)) != 0) {
+    ret = RUN_ONCE(&jitter_init_once, do_jitter_init) ? jitter_init_result : -1;
+    if (ret != 0) {
         ERR_raise_data(ERR_LIB_RAND, RAND_R_ERROR_RETRIEVING_ENTROPY,
             "jent_entropy_init_ex (%d)", ret);
         s->state = EVP_RAND_STATE_ERROR;

@@ -588,6 +588,6 @@ GENERATE[builddata.pm]=util/mkinstallvars.pl \
     LIBDIR= INCLUDEDIR=include "INCLUDEDIR=$(SRCDIR)/include" \
     MODULESDIR=providers \
     libdir= CMAKECONFIGDIR= PKGCONFIGDIR= \
-    "VERSION=$(VERSION)" "LDLIBS=$(LIB_EX_LIBS)"
+    "VERSION=$(VERSION)" "LDLIBS=$(LIB_EX_LIBS){- $disabled{"jitter-dynamic"} ? "" : " $(JITTER_EX_LIBS)" -}"
 
 DEPEND[""]=openssl.pc

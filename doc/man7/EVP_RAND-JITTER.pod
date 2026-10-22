@@ -12,9 +12,11 @@ B<EVP_RAND> API.
 This software seed source produces randomness based on tiny CPU
 "jitter" fluctuations.
 
-It is available when OpenSSL is compiled with B<enable-jitter>
-option. When available it is listed in B<openssl list
--random-generators> and B<openssl info -seeds>.
+It is available when OpenSSL is compiled with the B<enable-jitter> or
+B<enable-jitter-dynamic> option.  The first statically links the
+jitterentropy library while the second dynamically links it.
+When available it is listed in B<openssl list -random-generators> and
+B<openssl info -seeds>.
 
 =head2 Identity
 
@@ -50,14 +52,31 @@ A context for the seed source can be obtained by calling:
 
 The B<enable-jitter> option was added in OpenSSL 3.4.
 
+The B<enable-jitter-dynamic> option was added in OpenSSL 4.2.
+
 By specifying the B<enable-fips-jitter> configuration option, the FIPS
-provider will use an internal jitter source for its entropy.  Enabling
+provider will use a jitter source for its entropy.  It is internal to the
+provider unless B<enable-jitter-dynamic> is also specified, see below.  Enabling
 this option will cause the FIPS provider to operate in a non-compliant
 mode unless an entropy assessment
 L<ESV|https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations>
 and validation through the
 L<CMVP|https://csrc.nist.gov/projects/cryptographic-module-validation-program>
 are additionally conducted.  This option was added in OpenSSL 3.5.
+
+When B<enable-fips-jitter> is combined with B<enable-jitter-dynamic>, the
+entropy implementation is no longer part of the FIPS provider.  The provider
+then depends on the shared jitterentropy library, identified by its SONAME
+(for example F<libjitterentropy.so.3>), which the system dynamic loader
+resolves through its usual search rules (B<LD_LIBRARY_PATH>, the run path
+and the system library directories) when the provider is loaded.  This
+library lies outside the FIPS provider's module boundary: the provider's
+integrity self-test covers only the provider itself and does not
+authenticate the jitterentropy library.  Ensuring that the intended library
+is loaded, and its integrity, is the responsibility of whoever deploys the
+provider, and must be covered by any entropy assessment and validation.
+The library is also shared with libcrypto and any other user of it in the
+same process.
 
 =head1 EXAMPLES
 
