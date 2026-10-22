@@ -228,7 +228,7 @@ static const uint16_t kInverseDegree = INVERSE_DEGREE;
  * First precomputed array from Appendix A of FIPS 203, or else Python:
  * kNTTRoots = [pow(17, bitreverse(i), p) for i in range(128)]
  */
-static const uint16_t kNTTRoots[128] = {
+const uint16_t ossl_ml_kem_ntt_roots[128] = {
     0x001, 0x6c1, 0xa14, 0xcd9, 0xa52, 0x276, 0x769, 0x350,
     0x426, 0x77f, 0x0c1, 0x31d, 0xae2, 0xcbc, 0x239, 0x6d2,
     0x128, 0x98f, 0x53b, 0x5c4, 0xbe6, 0x038, 0x8c0, 0x535,
@@ -253,7 +253,7 @@ static const uint16_t kNTTRoots[128] = {
  *
  *  0, 64, 65, ..., 127, 32, 33, ..., 63, 16, 17, ..., 31, 8, 9, ...
  */
-static const uint16_t kInverseNTTRoots[128] = {
+const uint16_t ossl_ml_kem_inverse_ntt_roots[128] = {
     0x001, 0x497, 0x98c, 0x18a, 0x4c3, 0x8fc, 0x5af, 0x845,
     0x647, 0x98b, 0x22a, 0x49b, 0x88a, 0x8ff, 0xb6e, 0x8bd,
     0x20d, 0x2df, 0x35f, 0xad0, 0x4ce, 0xa0c, 0x22c, 0xbc2,
@@ -442,16 +442,19 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
  *
  *  scalar_inverse_ntt
  *      Full inverse NTT: butterfly stages followed by multiplication by
- *      INVERSE_DEGREE = (n/2)^-1 mod q.  Used inside matrix_mult_intt where
- *      each result row is immediately transformed back to standard form.
+ *      INVERSE_DEGREE = (n/2)^-1 mod q.  Generic and AVX2 matrix_mult_intt
+ *      call this pointer on each accumulated row.  AVX-512 runs the same
+ *      inverse on that row inside the fused kernel, so the matrix multiply
+ *      does not call this pointer.
  *
  *  scalar_inverse_ntt_demontgomerize
  *      Inverse NTT whose input may still carry an inverse-Montgomery factor
- *      R^-1 from a preceding inner_product_montgomery call.  On the generic
- *      PPC, and AVX2 paths the two pointers are identical (both point at the same
- *      fully-reduced implementation), because the generic inner_product
- *      already produces fully-reduced outputs via Barrett reduction.  On the
- *      s390x/vec128 path the two are distinct:
+ *      R^-1 from a preceding inner_product_montgomery call.  On the generic,
+ *      PPC, and AVX2 paths the two pointers are the same fully-reduced
+ *      function, because those inner products already produce fully-reduced
+ *      outputs.  On AVX-512 they are separate wrappers around that same
+ *      kernel, so each call can be counted.  On the s390x/vec128 path the
+ *      two are distinct:
  *        - inner_product_montgomery_vec128 accumulates the dot-product using
  *          Montgomery arithmetic and intentionally leaves each coefficient
  *          scaled by R^-1 (= 169 mod q), deferring the final conversion to
@@ -470,19 +473,17 @@ typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
 typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
 typedef void (*ml_kem_scalar_inverse_ntt_demontgomerize_fn)(scalar *p);
 
-/* Forward declarations */
-static void ossl_ml_kem_scalar_ntt_generic(scalar *s);
-static void ossl_ml_kem_scalar_inverse_ntt_generic(scalar *s);
-
 static ml_kem_scalar_ntt_fn scalar_ntt = ossl_ml_kem_scalar_ntt_generic;
 /*
- * scalar_inverse_ntt: used by matrix_mult_intt, where inputs are already fully
- * reduced (no deferred Montgomery factor).
+ * scalar_inverse_ntt: generic and AVX2 matrix_mult_intt call this after the
+ * row is fully reduced.  AVX-512 applies the same inverse inside
+ * ossl_ml_kem_basemul_acc_intt_avx512 and does not call this pointer there.
  */
 static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_generic;
 /*
  * scalar_inverse_ntt_demontgomerize: used after inner_product_montgomery.  On
- * generic/PPC/AVX2 this is the same function as scalar_inverse_ntt.  On s390x it is
+ * generic, PPC, and AVX2 this is the same function as scalar_inverse_ntt.  On
+ * AVX-512 it is a separate wrapper around the same kernel.  On s390x it is
  * a specialised variant that also removes the inverse-Montgomery factor R^-1
  * left by inner_product_montgomery_vec128.
  */
@@ -522,6 +523,103 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 }
 #endif
 
+#if ML_KEM_AVX512_ELIGIBLE
+static unsigned int ml_kem_avx512_ntt_calls;
+static unsigned int ml_kem_avx512_inverse_ntt_calls;
+static unsigned int ml_kem_avx512_inverse_ntt_demont_calls;
+static unsigned int ml_kem_avx512_mult_calls;
+static unsigned int ml_kem_avx512_mult_add_calls;
+static unsigned int ml_kem_avx512_acc_calls;
+static unsigned int ml_kem_avx512_transpose_calls;
+
+static void scalar_ntt_avx512(scalar *s)
+{
+    ml_kem_avx512_ntt_calls++;
+    ossl_ml_kem_scalar_ntt_avx512(s->c);
+}
+
+static void scalar_inverse_ntt_avx512(scalar *s)
+{
+    ml_kem_avx512_inverse_ntt_calls++;
+    ossl_ml_kem_scalar_inverse_ntt_avx512(s->c);
+}
+
+static void scalar_inverse_ntt_demontgomerize_avx512(scalar *s)
+{
+    ml_kem_avx512_inverse_ntt_demont_calls++;
+    ossl_ml_kem_scalar_inverse_ntt_avx512(s->c);
+}
+
+static void scalar_mult_avx512(scalar *out, const scalar *lhs,
+    const scalar *rhs)
+{
+    ml_kem_avx512_mult_calls++;
+    ossl_ml_kem_scalar_mult_avx512(out->c, lhs->c, rhs->c);
+}
+
+static void scalar_mult_add_avx512(scalar *out, const scalar *lhs,
+    const scalar *rhs)
+{
+    ml_kem_avx512_mult_add_calls++;
+    ossl_ml_kem_scalar_mult_add_avx512(out->c, lhs->c, rhs->c);
+}
+
+static void inner_product_avx512(scalar *out, const scalar *lhs,
+    const scalar *rhs, int rank)
+{
+    ml_kem_avx512_acc_calls++;
+    ossl_ml_kem_basemul_acc_avx512(out->c, lhs->c, rhs->c, rank);
+}
+
+static void matrix_mult_intt_avx512(scalar *out, const scalar *m,
+    const scalar *a, int rank)
+{
+    int i;
+
+    for (i = 0; i < rank; i++, out++, m += rank) {
+        ml_kem_avx512_acc_calls++;
+        ml_kem_avx512_inverse_ntt_calls++;
+        ossl_ml_kem_basemul_acc_intt_avx512(out->c, m->c, a->c, rank);
+    }
+}
+
+static void matrix_mult_transpose_add_avx512(scalar *out, const scalar *m,
+    const scalar *a, int rank)
+{
+    int i;
+
+    for (i = 0; i < rank; i++) {
+        ml_kem_avx512_transpose_calls++;
+        ossl_ml_kem_basemul_acc_transpose_add_avx512(out[i].c, m[i].c,
+            a[0].c, rank);
+    }
+}
+
+void ossl_ml_kem_avx512_dispatch_counts(unsigned int *ntt,
+    unsigned int *inverse_ntt,
+    unsigned int *inverse_ntt_demontgomerize,
+    unsigned int *mult,
+    unsigned int *mult_add,
+    unsigned int *acc,
+    unsigned int *transpose_add)
+{
+    if (ntt != NULL)
+        *ntt = ml_kem_avx512_ntt_calls;
+    if (inverse_ntt != NULL)
+        *inverse_ntt = ml_kem_avx512_inverse_ntt_calls;
+    if (inverse_ntt_demontgomerize != NULL)
+        *inverse_ntt_demontgomerize = ml_kem_avx512_inverse_ntt_demont_calls;
+    if (mult != NULL)
+        *mult = ml_kem_avx512_mult_calls;
+    if (mult_add != NULL)
+        *mult_add = ml_kem_avx512_mult_add_calls;
+    if (acc != NULL)
+        *acc = ml_kem_avx512_acc_calls;
+    if (transpose_add != NULL)
+        *transpose_add = ml_kem_avx512_transpose_calls;
+}
+#endif
+
 /*
  * VX_COMPILER_SUPPORT_VEC128 is now defined (via include/crypto/ml_kem.h)
  * whenever OPENSSL_ML_KEM_S390X && __s390x__, without requiring __VX__.
@@ -535,6 +633,9 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 /*
  * Function pointer types for scalar multiplication dispatch.
  *
+ *  scalar_mult
+ *      Pointwise-multiply two NTT-domain scalars (out = lhs * rhs).
+ *
  *  scalar_mult_add
  *      Pointwise-multiply two NTT-domain scalars and accumulate the result
  *      into an existing scalar (out += lhs * rhs).
@@ -543,8 +644,11 @@ static void scalar_inverse_ntt_ppc(scalar *s)
  *      Computes the dot-product of two rank-element NTT-domain vectors and
  *      stores the result in *out.  The name "montgomery" signals the output
  *      representation contract:
- *        - On the generic path the function uses Barrett reduction throughout
- *          and the output is fully reduced in [0, q).
+ *        - On the generic, AVX2, and AVX-512 paths the output is fully
+ *          reduced in [0, q).  The generic kernels reduce with Barrett.
+ *          AVX2 and AVX-512 use a fused base-multiplication accumulator and
+ *          store the canonical sum.  The stored coefficients are bit-exact
+ *          with the generic result.
  *        - On the s390x/vec128 path the function uses Montgomery multiplication
  *          internally and the output coefficients are left scaled by R^-1
  *          (= 169 mod q).  Callers MUST immediately follow this call with
@@ -554,9 +658,14 @@ static void scalar_inverse_ntt_ppc(scalar *s)
  *
  *  matrix_mult_intt
  *      Computes out[i] = INTT(sum_j m[i*rank+j] * a[j]) for each row i.
- *      The generic implementation accumulates each row in standard form (via
- *      Barrett reduction) and then calls scalar_inverse_ntt.  The s390x/vec128
- *      implementation accumulates each row in inverse-Montgomery form, then
+ *      The generic path accumulates each row in standard form and then calls
+ *      scalar_inverse_ntt.  AVX2 accumulates each row with a fused
+ *      base-multiplication kernel and then calls scalar_inverse_ntt.
+ *      AVX-512 keeps that accumulated row in registers and runs the inverse
+ *      NTT before storing it.  All three leave coefficients in [0, q).  The
+ *      s390x/vec128
+ *      implementation accumulates each row in
+ *      inverse-Montgomery form, then
  *      explicitly calls demontgomerize_scalar_vec128 to convert to standard
  *      form, and finally calls ossl_ml_kem_scalar_inverse_ntt_vec128 directly
  *      (not the demontgomerize INTT variant, which is reserved for use after
@@ -568,8 +677,6 @@ typedef void (*ml_kem_matrix_mult_intt_fn)(scalar *out, const scalar *m, const s
 typedef void (*ml_kem_matrix_mult_transpose_add_fn)(scalar *out, const scalar *m, const scalar *a, int rank);
 
 /* Forward declarations */
-static void scalar_mult_generic(scalar *out, const scalar *lhs, const scalar *rhs);
-static void scalar_mult_add_generic(scalar *out, const scalar *lhs, const scalar *rhs);
 static void inner_product_generic(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar *a, int rank);
 static void matrix_mult_transpose_add_generic(scalar *out, const scalar *m, const scalar *a, int rank);
@@ -609,7 +716,8 @@ static void matrix_mult_transpose_add_avx2(scalar *out, const scalar *m,
 #endif
 
 /* Function pointers for dispatch */
-static ml_kem_scalar_mult_add_fn scalar_mult_add = scalar_mult_add_generic;
+static ml_kem_scalar_mult_add_fn scalar_mult = ossl_ml_kem_scalar_mult_generic;
+static ml_kem_scalar_mult_add_fn scalar_mult_add = ossl_ml_kem_scalar_mult_add_generic;
 /*
  * Produces the NTT-domain dot-product of two vectors.  Result is in
  * inverse-Montgomery form (each coefficient scaled by R^-1 = 169 mod q)
@@ -622,6 +730,30 @@ static ml_kem_matrix_mult_transpose_add_fn matrix_mult_transpose_add = matrix_mu
 
 static void ml_kem_ntt_init(void)
 {
+/*
+ * Initialize NTT function pointers to PPC64le implementations if available.
+ * Scalar implementations are used by default.
+ */
+#if ML_KEM_AVX512_ELIGIBLE
+    if (ossl_ml_kem_ntt_avx512_capable()) {
+        scalar_ntt = scalar_ntt_avx512;
+        /*
+         * The AVX-512 inverse NTT is a full, fully-reduced inverse, matching
+         * the generic contract of both pointers.  The x86 inner product does
+         * not leave an inverse-Montgomery factor.  The fused accumulator
+         * handles the inner product and both matrix multiplies.  Returning
+         * here leaves the AVX2 matrix kernels unselected.
+         */
+        scalar_inverse_ntt = scalar_inverse_ntt_avx512;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_demontgomerize_avx512;
+        scalar_mult = scalar_mult_avx512;
+        scalar_mult_add = scalar_mult_add_avx512;
+        inner_product_montgomery = inner_product_avx512;
+        matrix_mult_intt = matrix_mult_intt_avx512;
+        matrix_mult_transpose_add = matrix_mult_transpose_add_avx512;
+        return;
+    }
+#endif
 #if defined(MLKEM_AVX2_X86_64_ASM)
     if (mlkem_avx2_capable()) {
         scalar_ntt = scalar_ntt_avx2;
@@ -632,11 +764,6 @@ static void ml_kem_ntt_init(void)
         matrix_mult_transpose_add = matrix_mult_transpose_add_avx2;
     }
 #endif
-
-/*
- * Initialize NTT function pointers to PPC64le implementations if available.
- * Scalar implementations are used by default.
- */
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 #if defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
@@ -710,7 +837,7 @@ static __owur uint16_t reduce_once(uint16_t x)
  *     x < kPrime + 2*kPrime*kPrime,
  *
  * which covers products of two already reduced coefficients together
- * with the additions performed by scalar_mult_add_generic().
+ * with the additions performed by ossl_ml_kem_scalar_mult_add_generic().
  *
  * For BARRETT_SHIFT == 24, this bound is below the first input that
  * would require more than one correction.  For BARRETT_SHIFT == 32,
@@ -747,7 +874,7 @@ static void scalar_mult_const(scalar *s, uint16_t a)
  */
 void ossl_ml_kem_scalar_ntt_generic(scalar *s)
 {
-    const uint16_t *roots = kNTTRoots;
+    const uint16_t *roots = ossl_ml_kem_ntt_roots;
     uint16_t *end = s->c + DEGREE;
     int offset = DEGREE / 2;
 
@@ -779,7 +906,7 @@ void ossl_ml_kem_scalar_ntt_generic(scalar *s)
  */
 void ossl_ml_kem_scalar_inverse_ntt_generic(scalar *s)
 {
-    const uint16_t *roots = kInverseNTTRoots;
+    const uint16_t *roots = ossl_ml_kem_inverse_ntt_roots;
     uint16_t *end = s->c + DEGREE;
     int offset = 2;
 
@@ -832,7 +959,7 @@ static void scalar_sub(scalar *lhs, const scalar *rhs)
  * even if an uint64_t could hold 3 multiplied numbers.
  */
 
-static void scalar_mult_generic(scalar *out, const scalar *lhs,
+void ossl_ml_kem_scalar_mult_generic(scalar *out, const scalar *lhs,
     const scalar *rhs)
 {
     uint16_t *curr = out->c, *end = curr + DEGREE;
@@ -850,7 +977,7 @@ static void scalar_mult_generic(scalar *out, const scalar *lhs,
 }
 
 /* Above, but add the result to an existing scalar */
-static ossl_inline void scalar_mult_add_generic(scalar *out, const scalar *lhs,
+void ossl_ml_kem_scalar_mult_add_generic(scalar *out, const scalar *lhs,
     const scalar *rhs)
 {
     uint16_t *curr = out->c, *end = curr + DEGREE;
@@ -1173,9 +1300,9 @@ static void vector_compress(scalar *a, int bits, int rank)
 static void inner_product_generic(scalar *out, const scalar *lhs, const scalar *rhs,
     int rank)
 {
-    scalar_mult_generic(out, lhs, rhs);
+    scalar_mult(out, lhs, rhs);
     while (--rank > 0)
-        scalar_mult_add_generic(out, ++lhs, ++rhs);
+        scalar_mult_add(out, ++lhs, ++rhs);
 }
 
 /*
@@ -1188,9 +1315,9 @@ static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar 
     int i, j;
 
     for (i = rank; i-- > 0; ++out) {
-        scalar_mult_generic(out, m++, ar = a);
+        scalar_mult(out, m++, ar = a);
         for (j = rank - 1; j > 0; --j)
-            scalar_mult_add_generic(out, m++, ++ar);
+            scalar_mult_add(out, m++, ++ar);
         scalar_inverse_ntt(out);
     }
 }
