@@ -318,4 +318,8 @@ __owur int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
 /* Compare the public key hashes of two keys */
 __owur int ossl_ml_kem_pubkey_cmp(const ML_KEM_KEY *key1, const ML_KEM_KEY *key2);
 
+/* Shared NTT tables used by architecture-specific backends. */
+extern const uint16_t ossl_ml_kem_ntt_roots[128];
+extern const uint16_t ossl_ml_kem_inverse_ntt_roots[128];
+
 #endif /* OPENSSL_HEADER_ML_KEM_H */

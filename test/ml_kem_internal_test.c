@@ -15,6 +15,7 @@
 #include <stdio.h>
 #endif
 #include <crypto/ml_kem.h>
+#include "ml_kem_local.h"
 #include "testutil.h"
 #include "testutil/output.h"
 
@@ -311,6 +312,226 @@ err:
     return ret;
 }
 
+#if ML_KEM_AVX512_ELIGIBLE
+/*
+ * The AVX-512 polynomial arithmetic must be bit-exact with the generic C, not
+ * merely congruent mod q: the surrounding ML-KEM code encodes coefficients
+ * directly.  Forward and inverse NTT, both single-polynomial base
+ * multiplications, the fused dot product, its transpose-add form, and the
+ * inverse NTT of that dot product are compared with the generic functions
+ * in ml_kem.c.
+ *
+ * A key generation, encapsulation, and decapsulation must also increment the
+ * dispatched AVX-512 counters for the NTT, both inverse-NTT wrappers, the
+ * fused accumulator, and the transpose-add accumulator.  Those counters live
+ * in the wrappers assigned by ml_kem_ntt_init(), so a missed pointer fails
+ * even when those three operations succeed.  The single-product multiply
+ * wrappers stay installed but are not on this path.
+ */
+
+/*
+ * Patterns 1-3 use coefficients near q - 1.  A uniformly random polynomial
+ * rarely does.  These inputs exercise the deferred reductions; reaching the
+ * stated 8q bound also depends on how the signs align across the levels.
+ */
+static void fill_poly(uint16_t *p, int pattern)
+{
+    int i;
+
+    for (i = 0; i < ML_KEM_DEGREE; i++) {
+        switch (pattern) {
+        case 0:
+            p[i] = (uint16_t)(test_random() % ML_KEM_PRIME);
+            break;
+        case 1:
+            p[i] = ML_KEM_PRIME - 1;
+            break;
+        case 2:
+            p[i] = (i & 1) ? ML_KEM_PRIME - 1 : 0;
+            break;
+        default:
+            p[i] = (uint16_t)(ML_KEM_PRIME - 1 - (test_random() & 3));
+            break;
+        }
+    }
+}
+
+static int avx512_dispatch_increased(void)
+{
+    EVP_RAND_CTX *privctx, *pubctx;
+    OSSL_PARAM params[3];
+    ML_KEM_KEY *private_key = NULL, *public_key = NULL;
+    const ML_KEM_VINFO *v;
+    uint8_t *encoded_public_key = NULL, *ciphertext = NULL;
+    uint8_t shared_secret[ML_KEM_SHARED_SECRET_BYTES];
+    uint8_t shared_secret2[ML_KEM_SHARED_SECRET_BYTES];
+    unsigned int strength = 256;
+    unsigned int ntt0, intt0, demont0, mult0, madd0, acc0, tadd0;
+    unsigned int ntt1, intt1, demont1, mult1, madd1, acc1, tadd1;
+    int ok = 0;
+
+    ossl_ml_kem_avx512_dispatch_counts(&ntt0, &intt0, &demont0, &mult0, &madd0,
+        &acc0, &tadd0);
+
+    if (!TEST_ptr(privctx = RAND_get0_private(NULL))
+        || !TEST_ptr(pubctx = RAND_get0_public(NULL)))
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+        ml_kem_private_entropy, sizeof(ml_kem_private_entropy));
+    params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params)))
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+        ml_kem_public_entropy, sizeof(ml_kem_public_entropy));
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(pubctx, params)))
+        return 0;
+
+    private_key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_512);
+    public_key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_512);
+    if (!TEST_ptr(private_key) || !TEST_ptr(public_key)
+        || !TEST_ptr(v = ossl_ml_kem_key_vinfo(private_key)))
+        goto err;
+
+    encoded_public_key = OPENSSL_malloc(v->pubkey_bytes);
+    ciphertext = OPENSSL_malloc(v->ctext_bytes);
+    if (!TEST_ptr(encoded_public_key) || !TEST_ptr(ciphertext))
+        goto err;
+
+    if (!TEST_true(ossl_ml_kem_genkey(encoded_public_key, v->pubkey_bytes,
+            private_key))
+        || !TEST_true(ossl_ml_kem_parse_public_key(encoded_public_key,
+            v->pubkey_bytes, public_key))
+        || !TEST_true(ossl_ml_kem_encap_rand(ciphertext, v->ctext_bytes,
+            shared_secret, sizeof(shared_secret), public_key))
+        || !TEST_true(ossl_ml_kem_decap(shared_secret2, sizeof(shared_secret2),
+            ciphertext, v->ctext_bytes, private_key)))
+        goto err;
+
+    ossl_ml_kem_avx512_dispatch_counts(&ntt1, &intt1, &demont1, &mult1, &madd1,
+        &acc1, &tadd1);
+    if (!TEST_int_gt((int)ntt1, (int)ntt0)
+        || !TEST_int_gt((int)intt1, (int)intt0)
+        || !TEST_int_gt((int)demont1, (int)demont0)
+        || !TEST_int_gt((int)acc1, (int)acc0)
+        || !TEST_int_gt((int)tadd1, (int)tadd0))
+        goto err;
+
+    ok = 1;
+err:
+    ossl_ml_kem_key_free(private_key);
+    ossl_ml_kem_key_free(public_key);
+    OPENSSL_free(encoded_public_key);
+    OPENSSL_free(ciphertext);
+    return ok;
+}
+
+static int avx512_arith_test(void)
+{
+    scalar lhs, rhs, acc, got, want;
+    int iter, pattern;
+
+    if (!ossl_ml_kem_ntt_avx512_capable()) {
+        TEST_info("AVX-512 unavailable, ML-KEM arithmetic not exercised");
+        return 1;
+    }
+
+    if (!avx512_dispatch_increased())
+        return 0;
+
+    for (iter = 0; iter < 512; iter++) {
+        for (pattern = 0; pattern < 4; pattern++) {
+            fill_poly(lhs.c, pattern);
+            fill_poly(rhs.c, pattern);
+            fill_poly(acc.c, pattern);
+
+            want = lhs;
+            ossl_ml_kem_scalar_ntt_generic(&want);
+            got = lhs;
+            ossl_ml_kem_scalar_ntt_avx512(got.c);
+            if (!TEST_mem_eq(got.c, sizeof(got.c), want.c, sizeof(want.c)))
+                return 0;
+
+            want = lhs;
+            ossl_ml_kem_scalar_inverse_ntt_generic(&want);
+            got = lhs;
+            ossl_ml_kem_scalar_inverse_ntt_avx512(got.c);
+            if (!TEST_mem_eq(got.c, sizeof(got.c), want.c, sizeof(want.c)))
+                return 0;
+
+            ossl_ml_kem_scalar_mult_generic(&want, &lhs, &rhs);
+            memset(got.c, 0xA5, sizeof(got.c));
+            ossl_ml_kem_scalar_mult_avx512(got.c, lhs.c, rhs.c);
+            if (!TEST_mem_eq(got.c, sizeof(got.c), want.c, sizeof(want.c)))
+                return 0;
+
+            want = acc;
+            ossl_ml_kem_scalar_mult_add_generic(&want, &lhs, &rhs);
+            got = acc;
+            ossl_ml_kem_scalar_mult_add_avx512(got.c, lhs.c, rhs.c);
+            if (!TEST_mem_eq(got.c, sizeof(got.c), want.c, sizeof(want.c)))
+                return 0;
+        }
+    }
+
+    /*
+     * Fused accumulator against the generic mult / mult-add chain, for every
+     * ML-KEM rank.  The transpose form is one output row of A^T * s + e.
+     */
+    for (iter = 0; iter < 64; iter++) {
+        for (pattern = 0; pattern < 4; pattern++) {
+            scalar vec_l[4], vec_r[4], mat[16], avec[4], err, row;
+            int rank, k, rowi;
+
+            for (rank = 2; rank <= 4; rank++) {
+                for (k = 0; k < rank; k++) {
+                    fill_poly(vec_l[k].c, pattern);
+                    fill_poly(vec_r[k].c, pattern);
+                }
+                ossl_ml_kem_scalar_mult_generic(&want, &vec_l[0], &vec_r[0]);
+                for (k = 1; k < rank; k++)
+                    ossl_ml_kem_scalar_mult_add_generic(&want, &vec_l[k],
+                        &vec_r[k]);
+                memset(got.c, 0xA5, sizeof(got.c));
+                ossl_ml_kem_basemul_acc_avx512(got.c, vec_l[0].c, vec_r[0].c,
+                    rank);
+                if (!TEST_mem_eq(got.c, sizeof(got.c), want.c, sizeof(want.c)))
+                    return 0;
+
+                ossl_ml_kem_scalar_inverse_ntt_generic(&want);
+                memset(got.c, 0xA5, sizeof(got.c));
+                ossl_ml_kem_basemul_acc_intt_avx512(got.c, vec_l[0].c,
+                    vec_r[0].c, rank);
+                if (!TEST_mem_eq(got.c, sizeof(got.c), want.c, sizeof(want.c)))
+                    return 0;
+
+                for (k = 0; k < rank * rank; k++)
+                    fill_poly(mat[k].c, pattern);
+                for (k = 0; k < rank; k++)
+                    fill_poly(avec[k].c, pattern);
+                fill_poly(err.c, pattern);
+                for (rowi = 0; rowi < rank; rowi++) {
+                    row = err;
+                    for (k = 0; k < rank; k++)
+                        ossl_ml_kem_scalar_mult_add_generic(&row,
+                            &mat[rowi + k * rank], &avec[k]);
+                    got = err;
+                    ossl_ml_kem_basemul_acc_transpose_add_avx512(got.c,
+                        mat[rowi].c, avec[0].c, rank);
+                    if (!TEST_mem_eq(got.c, sizeof(got.c), row.c, sizeof(row.c)))
+                        return 0;
+                }
+            }
+        }
+    }
+
+    return 1;
+}
+#endif /* ML_KEM_AVX512_ELIGIBLE */
+
 int setup_tests(void)
 {
     if (!TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no", NULL, NULL)))
@@ -318,5 +539,8 @@ int setup_tests(void)
 
     ADD_TEST(sanity_test);
     ADD_MFAIL_TEST(decap_mfail_test);
+#if ML_KEM_AVX512_ELIGIBLE
+    ADD_TEST(avx512_arith_test);
+#endif
     return 1;
 }
