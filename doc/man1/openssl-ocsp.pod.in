@@ -150,6 +150,12 @@ Normally if an OCSP request is input using the B<-reqin> option no
 nonce is added: using the B<-nonce> option will force addition of a nonce.
 If an OCSP request is being created (using B<-cert> and B<-serial> options)
 a nonce is automatically added specifying B<-no_nonce> overrides this.
+The nonce is 32 octets, the minimum length required by RFC 9654.
+
+When acting as a responder, a nonce value of zero length or more than
+128 octets is rejected with a malformedRequest status as required by
+RFC 9654. A request with more than one nonce extension, or with a nonce
+that is not a DER-encoded OCTET STRING, is rejected in the same way.
 
 =item B<-req_text>, B<-resp_text>, B<-text>
 

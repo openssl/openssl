@@ -724,7 +724,8 @@ redo_accept:
     }
 
     if (req != NULL && add_nonce) {
-        if (!OCSP_request_add1_nonce(req, NULL, -1))
+        /* RFC 9654: nonces must be at least 32 octets */
+        if (!OCSP_request_add1_nonce(req, NULL, 32))
             goto end;
     }
 
@@ -1087,6 +1088,57 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     return ret;
 }
 
+/*
+ * Check the nonce extension of a request, if there is one.  RFC 9654
+ * requires a responder to reject a nonce of zero length or more than 128
+ * octets.  The extension must also occur at most once, and its value must
+ * be exactly the DER encoding of an OCTET STRING, since OCSP_copy_nonce()
+ * echoes the raw extension value.
+ *
+ * The encoding is checked in place rather than by decoding it, so that no
+ * memory is allocated and a failure can only mean that the nonce is
+ * malformed.
+ *
+ * Returns 1 if the request is acceptable and 0 if it is malformed.
+ */
+static int check_request_nonce(OCSP_REQUEST *req)
+{
+    const X509_EXTENSION *ext;
+    const ASN1_OCTET_STRING *extval;
+    const unsigned char *start, *p;
+    size_t extlen;
+    long len;
+    int idx, tag, xclass, j, lenbytes;
+
+    idx = OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, -1);
+    if (idx < 0)
+        return 1;
+    if (OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, idx) >= 0)
+        return 0;
+
+    ext = OCSP_REQUEST_get_ext(req, idx);
+    extval = X509_EXTENSION_get_data(ext);
+    extlen = ASN1_STRING_get_length(extval);
+    start = p = ASN1_STRING_get0_data(extval);
+    if (start == NULL)
+        return 0;
+    j = ASN1_get_object(&p, &len, &tag, &xclass, (long)extlen);
+    ERR_clear_error();
+
+    /* A primitive, definite length OCTET STRING, with nothing after it */
+    if ((j & 0x80) != 0 || (j & (V_ASN1_CONSTRUCTED | 1)) != 0
+        || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_OCTET_STRING
+        || len < 1 || len > 128
+        || (size_t)(p - start) + (size_t)len != extlen)
+        return 0;
+
+    /* The length must be encoded in the fewest octets (DER) */
+    lenbytes = (int)(p - start) - 2;
+    if (lenbytes > 0 && (lenbytes != 1 || len < 0x80))
+        return 0;
+    return 1;
+}
+
 static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
     EVP_PKEY *rkey, const EVP_MD *rmd,
@@ -1210,7 +1262,16 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         OCSP_CERTID_free(cid_resp_md);
     }
 
-    OCSP_copy_nonce(bs, req);
+    if (!check_request_nonce(req)) {
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST,
+            NULL);
+        goto end;
+    }
+
+    if (!OCSP_copy_nonce(bs, req)) {
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
+        goto end;
+    }
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL || !EVP_DigestSignInit(mctx, &pkctx, rmd, NULL, rkey)) {

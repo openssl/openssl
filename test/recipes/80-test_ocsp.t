@@ -335,3 +335,155 @@ subtest "=== OCSP offline request/responder/verify round-trip ===" => sub {
         $roundtrip->("UNKNOWN (by serial)", ['-serial', '0x1234'], "unknown");
     }
 };
+
+# Minimal DER helpers for building OCSP requests with crafted nonces.
+sub der_tlv {
+    my ($tag, $content) = @_;
+    my $len = length($content);
+    my $lenbytes;
+
+    if ($len < 0x80) {
+        $lenbytes = chr($len);
+    } else {
+        my $l = "";
+        while ($len > 0) {
+            $l = chr($len & 0xff) . $l;
+            $len >>= 8;
+        }
+        $lenbytes = chr(0x80 | length($l)) . $l;
+    }
+    return chr($tag) . $lenbytes . $content;
+}
+
+# Return the content of the DER TLV at the start of $der.
+sub der_content {
+    my ($der) = @_;
+    my $len = ord(substr($der, 1, 1));
+    my $hdr = 2;
+
+    if ($len & 0x80) {
+        my $n = $len & 0x7f;
+        $len = 0;
+        $len = ($len << 8) | ord(substr($der, 2 + $_, 1)) for 0 .. $n - 1;
+        $hdr += $n;
+    }
+    return substr($der, $hdr, $len);
+}
+
+subtest "=== OCSP responder nonce validation (RFC 9654) ===" => sub {
+    my $issuer  = catfile($ocspdir, "intermediate-cert.pem");
+    my $ee      = catfile($ocspdir, "server-cert.pem");
+    my $index   = catfile($ocspdir, "index.txt");
+    my $rsigner = catfile($ocspdir, "ocsp.pem");
+    my $root    = catfile($ocspdir, "root-cert.pem");
+
+    # id-pkix-ocsp-nonce, 1.3.6.1.5.5.7.48.1.2
+    my $nonce_oid = der_tlv(0x06, "\x2b\x06\x01\x05\x05\x07\x30\x01\x02");
+    my $octets = sub { der_tlv(0x04, "\x5a" x shift) };
+    my %statuses = (successful => 0, malformedRequest => 1);
+
+    # Each case lists the extnValue of every nonce extension in the request
+    # and the expected responseStatus.
+    my @cases = (
+        [ "1-octet nonce",   [ $octets->(1) ],   "successful" ],
+        [ "32-octet nonce",  [ $octets->(32) ],  "successful" ],
+        [ "128-octet nonce", [ $octets->(128) ], "successful" ],
+        [ "empty nonce",     [ $octets->(0) ],   "malformedRequest" ],
+        [ "129-octet nonce", [ $octets->(129) ], "malformedRequest" ],
+        [ "nonce that is not an OCTET STRING",
+          [ der_tlv(0x02, "\x01") ], "malformedRequest" ],
+        [ "trailing data after the nonce",
+          [ $octets->(32) . ("\0" x 16) ], "malformedRequest" ],
+        [ "nonce with a non-minimal length encoding",
+          [ "\x04\x81\x20" . ("\x5a" x 32) ], "malformedRequest" ],
+        [ "nonce with an indefinite length",
+          [ "\x04\x80" . ("\x5a" x 32) . "\0\0" ], "malformedRequest" ],
+        [ "constructed (BER) nonce",
+          [ der_tlv(0x24, $octets->(1) . ($octets->(0) x 4)) ],
+          "malformedRequest" ],
+        [ "valid nonce followed by an empty one",
+          [ $octets->(32), $octets->(0) ], "malformedRequest" ],
+        [ "empty nonce followed by a valid one",
+          [ $octets->(0), $octets->(32) ], "malformedRequest" ],
+        [ "two valid nonces",
+          [ $octets->(32), $octets->(32) ], "malformedRequest" ],
+    );
+
+    plan skip_all => "EC is not supported by this OpenSSL build"
+        if disabled("ec");
+    plan tests => 3 + 3 * scalar(@cases);
+
+    # A request made with the default client options must carry a nonce of
+    # 32 octets: extnValue ::= OCTET STRING { OCTET STRING (32 octets) }
+    my $defreq = "nonce-default-req.der";
+    ok(run(app(['openssl', 'ocsp', '-issuer', $issuer, '-cert', $ee,
+                '-reqout', $defreq])),
+       "produce request with the default nonce");
+    open(my $fh, "<", $defreq) or die "Cannot open $defreq: $!";
+    binmode $fh;
+    my $defbytes = do { local $/; <$fh> };
+    close $fh;
+    ok(index($defbytes, $nonce_oid . "\x04\x22\x04\x20") >= 0,
+       "client request contains a 32-octet nonce");
+
+    my $base = "nonce-base.der";
+    ok(run(app(['openssl', 'ocsp', '-issuer', $issuer, '-cert', $ee,
+                '-no_nonce', '-reqout', $base])),
+       "produce request without a nonce");
+
+    open($fh, "<", $base) or die "Cannot open $base: $!";
+    binmode $fh;
+    my $basereq = do { local $/; <$fh> };
+    close $fh;
+    # OCSPRequest ::= SEQUENCE { tbsRequest, ... }
+    my $tbs = der_content(der_content($basereq));
+
+    foreach my $case (@cases) {
+        my ($title, $values, $status) = @$case;
+        my $exts = join("", map {
+            der_tlv(0x30, $nonce_oid . der_tlv(0x04, $_))
+        } @$values);
+        # requestExtensions [2] EXPLICIT Extensions
+        my $req = der_tlv(0x30, der_tlv(0x30, $tbs
+                                        . der_tlv(0xa2, der_tlv(0x30, $exts))));
+        my $reqfile = "nonce-req.der";
+        my $respfile = "nonce-resp.der";
+
+        open($fh, ">", $reqfile) or die "Cannot open $reqfile: $!";
+        binmode $fh;
+        print $fh $req;
+        close $fh;
+
+        unlink $respfile;
+        my $exit = $status eq "successful" ? 0 : 1;
+        with({ exit_checker => sub { return shift == $exit; } },
+             sub {
+                 ok(run(app(['openssl', 'ocsp', '-index', $index,
+                             '-rsigner', $rsigner, '-CA', $issuer,
+                             '-reqin', $reqfile, '-respout', $respfile])),
+                    "$title: responder produces response");
+             });
+
+        # OCSPResponse ::= SEQUENCE {
+        #     responseStatus  ENUMERATED,
+        #     responseBytes   [0] EXPLICIT ResponseBytes OPTIONAL }
+        open($fh, "<", $respfile) or die "Cannot open $respfile: $!";
+        binmode $fh;
+        my $resp = der_content(do { local $/; <$fh> });
+        close $fh;
+        is(unpack("H*", substr($resp, 0, 3)),
+           sprintf("0a01%02x", $statuses{$status}),
+           "$title: responseStatus is $status");
+        if ($status eq "successful") {
+            # Verifying against the request also checks that the nonce in the
+            # response is the one from the request (no -noverify here)
+            ok(run(app(['openssl', 'ocsp', '-reqin', $reqfile,
+                        '-respin', $respfile, '-CAfile', $root,
+                        '-verify_other', $rsigner,
+                        '-no-CApath', '-no-CAstore'])),
+               "$title: response verifies against the request, nonce echoed");
+        } else {
+            is(length($resp), 3, "$title: no responseBytes");
+        }
+    }
+};
