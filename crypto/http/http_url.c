@@ -62,67 +62,75 @@ static int packet_is_scheme_name(const PACKET *scheme, const char *name,
     return 1;
 }
 
-/* Concatenate parts into a newly allocated NUL-terminated string. */
-static char *packets_to_string(const PACKET *parts, size_t count)
+int ossl_http_uri_parse(const uint8_t *url, size_t url_len,
+    int allow_no_scheme, OSSL_URI *uri, uint8_t **copy, int *prepended)
 {
-    size_t i, len = 0;
-    char *str, *p;
+    static const uint8_t http_prefix[] = OSSL_HTTP_PREFIX;
+    size_t prefix_len = sizeof(http_prefix) - 1;
+    PACKET pkt;
 
-    for (i = 0; i < count; i++) {
-        if (PACKET_remaining(&parts[i]) > SIZE_MAX - 1 - len)
-            return NULL;
-        len += PACKET_remaining(&parts[i]);
+    *copy = NULL;
+    *prepended = 0;
+    if (!PACKET_buf_init(&pkt, url, url_len))
+        return 0;
+    if (!packet_has_scheme_prefix(&pkt)) {
+        if (!allow_no_scheme || url_len > SIZE_MAX - prefix_len)
+            return 0;
+        if ((*copy = OPENSSL_malloc(prefix_len + url_len)) == NULL)
+            return 0;
+        memcpy(*copy, http_prefix, prefix_len);
+        if (url_len > 0)
+            memcpy(*copy + prefix_len, url, url_len);
+        url = *copy;
+        url_len += prefix_len;
+        *prepended = 1;
     }
-    if ((str = OPENSSL_malloc(len + 1)) == NULL)
+    return ossl_uri_parse(url, url_len, uri) && uri->has_authority;
+}
+
+char *ossl_http_uri_host(const OSSL_URI *uri)
+{
+    PACKET parts[3];
+
+    if (uri->host_type != OSSL_URI_HOST_IPV6)
+        return ossl_uri_strdup(&uri->host, 1);
+    if (!PACKET_buf_init(&parts[0], (const uint8_t *)"[", 1)
+        || !PACKET_buf_init(&parts[2], (const uint8_t *)"]", 1))
         return NULL;
-    for (p = str, i = 0; i < count; i++) {
-        if (PACKET_remaining(&parts[i]) > 0) {
-            memcpy(p, PACKET_data(&parts[i]), PACKET_remaining(&parts[i]));
-            p += PACKET_remaining(&parts[i]);
-        }
+    parts[1] = uri->host;
+    return ossl_uri_strdup(parts, 3);
+}
+
+int ossl_http_uri_is_http(const OSSL_URI *uri, int *is_https)
+{
+    if (packet_is_scheme_name(&uri->scheme, OSSL_HTTPS_NAME,
+            sizeof(OSSL_HTTPS_NAME) - 1)) {
+        *is_https = 1;
+        return 1;
     }
-    *p = '\0';
-    return str;
+    *is_https = 0;
+    return packet_is_scheme_name(&uri->scheme, OSSL_HTTP_NAME,
+        sizeof(OSSL_HTTP_NAME) - 1);
 }
 
 int ossl_http_parse_url(const uint8_t *url, size_t url_len,
     int allow_no_scheme, int allow_empty_host, int *use_ssl,
     char **host, char **port, int *port_num, char **path)
 {
-    static const uint8_t http_prefix[] = OSSL_HTTP_PREFIX;
-    size_t prefix_len = sizeof(http_prefix) - 1;
-    uint8_t *prefixed = NULL;
-    PACKET pkt, parts[4];
+    uint8_t *copy = NULL;
+    PACKET parts[3];
     OSSL_URI uri;
-    int is_https, ret = 0;
+    int prepended, is_https, ret = 0;
 
     *host = *port = NULL;
     if (path != NULL)
         *path = NULL;
 
-    if (!PACKET_buf_init(&pkt, url, url_len))
-        goto parse_err;
-    if (!packet_has_scheme_prefix(&pkt)) {
-        if (!allow_no_scheme || url_len > SIZE_MAX - prefix_len)
-            goto parse_err;
-        if ((prefixed = OPENSSL_malloc(prefix_len + url_len)) == NULL)
-            goto end;
-        memcpy(prefixed, http_prefix, prefix_len);
-        if (url_len > 0)
-            memcpy(prefixed + prefix_len, url, url_len);
-        url = prefixed;
-        url_len += prefix_len;
-    }
-    if (!ossl_uri_parse(url, url_len, &uri) || !uri.has_authority)
+    if (!ossl_http_uri_parse(url, url_len, allow_no_scheme, &uri, &copy,
+            &prepended))
         goto parse_err;
 
-    if (packet_is_scheme_name(&uri.scheme, OSSL_HTTPS_NAME,
-            sizeof(OSSL_HTTPS_NAME) - 1)) {
-        is_https = 1;
-    } else if (packet_is_scheme_name(&uri.scheme, OSSL_HTTP_NAME,
-                   sizeof(OSSL_HTTP_NAME) - 1)) {
-        is_https = 0;
-    } else {
+    if (!ossl_http_uri_is_http(&uri, &is_https)) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_SCHEME);
         goto end;
     }
@@ -133,16 +141,7 @@ int ossl_http_parse_url(const uint8_t *url, size_t url_len,
         goto end;
     }
 
-    if (uri.host_type == OSSL_URI_HOST_IPV6) {
-        if (!PACKET_buf_init(&parts[0], (const uint8_t *)"[", 1)
-            || !PACKET_buf_init(&parts[2], (const uint8_t *)"]", 1))
-            goto end;
-        parts[1] = uri.host;
-        *host = packets_to_string(parts, 3);
-    } else {
-        *host = packets_to_string(&uri.host, 1);
-    }
-    if (*host == NULL)
+    if ((*host = ossl_http_uri_host(&uri)) == NULL)
         goto end;
 
     if (uri.port_num > 0) {
@@ -155,7 +154,7 @@ int ossl_http_parse_url(const uint8_t *url, size_t url_len,
                    sizeof(OSSL_HTTP_PORT) - 1)) {
         goto end;
     }
-    if ((*port = packets_to_string(parts, 1)) == NULL)
+    if ((*port = ossl_uri_strdup(parts, 1)) == NULL)
         goto end;
     if (port_num != NULL && uri.port_num > 0)
         *port_num = uri.port_num;
@@ -172,7 +171,7 @@ int ossl_http_parse_url(const uint8_t *url, size_t url_len,
             && !PACKET_buf_init(&parts[1], (const uint8_t *)"?", 1))
             goto end;
         parts[2] = uri.query;
-        if ((*path = packets_to_string(parts, 3)) == NULL)
+        if ((*path = ossl_uri_strdup(parts, 3)) == NULL)
             goto end;
     }
 
@@ -189,6 +188,6 @@ end:
         OPENSSL_free(*port);
         *host = *port = NULL;
     }
-    OPENSSL_free(prefixed);
+    OPENSSL_free(copy);
     return ret;
 }

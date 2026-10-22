@@ -413,3 +413,25 @@ int ossl_uri_parse(const uint8_t *buf, size_t buf_len, OSSL_URI *uri)
 
     return PACKET_remaining(&pkt) == 0;
 }
+
+char *ossl_uri_strdup(const PACKET *parts, size_t count)
+{
+    size_t i, len = 0;
+    char *str, *p;
+
+    for (i = 0; i < count; i++) {
+        if (PACKET_remaining(&parts[i]) > SIZE_MAX - 1 - len)
+            return NULL;
+        len += PACKET_remaining(&parts[i]);
+    }
+    if ((str = OPENSSL_malloc(len + 1)) == NULL)
+        return NULL;
+    for (p = str, i = 0; i < count; i++) {
+        if (PACKET_remaining(&parts[i]) > 0) {
+            memcpy(p, PACKET_data(&parts[i]), PACKET_remaining(&parts[i]));
+            p += PACKET_remaining(&parts[i]);
+        }
+    }
+    *p = '\0';
+    return str;
+}

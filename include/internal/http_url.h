@@ -20,6 +20,42 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "internal/uri.h"
+
+/**
+ * @brief Parse a URL with ossl_uri_parse(), allowing it to lack a scheme.
+ *
+ * When allow_no_scheme is set, a url that does not start with scheme "://"
+ * is parsed with "http://" prepended, which accepts host[:port][/path] and
+ * a bare path. The URL must have an authority. No error is raised.
+ *
+ * @param url the URL, which need not be NUL-terminated
+ * @param url_len the length of the URL in bytes
+ * @param allow_no_scheme 1 to accept a url without scheme "://"
+ * @param uri receives the components of the URL
+ * @param copy receives the prefixed copy of url that uri refers to, or
+ * NULL; to be freed with OPENSSL_free() once uri is no longer used
+ * @param prepended receives 1 if "http://" was prepended, 0 otherwise
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_http_uri_parse(const uint8_t *url, size_t url_len,
+    int allow_no_scheme, OSSL_URI *uri, uint8_t **copy, int *prepended);
+
+/**
+ * @brief Make a string of the host of a URI, an IPv6 address within "["
+ * and "]".
+ * @param uri the URI
+ * @returns the host, to be freed with OPENSSL_free(), or NULL on error
+ */
+char *ossl_http_uri_host(const OSSL_URI *uri);
+
+/**
+ * @brief Check that the scheme of a URI is http or https, in any case.
+ * @param uri the URI
+ * @param is_https receives 1 for https and 0 otherwise
+ * @returns 1 if the scheme is http or https, 0 otherwise
+ */
+int ossl_http_uri_is_http(const OSSL_URI *uri, int *is_https);
 
 /**
  * @brief Parse an http or https URL for an HTTP client.

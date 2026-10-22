@@ -72,4 +72,16 @@ typedef struct ossl_uri_st {
  */
 int ossl_uri_parse(const uint8_t *buf, size_t buf_len, OSSL_URI *uri);
 
+/**
+ * @brief Concatenate URI components into a new NUL-terminated string.
+ *
+ * A component of a URI returned by ossl_uri_parse() contains no NUL, so
+ * neither does the result.
+ *
+ * @param parts the components to concatenate
+ * @param count the number of components
+ * @returns the string, to be freed with OPENSSL_free(), or NULL on error
+ */
+char *ossl_uri_strdup(const PACKET *parts, size_t count);
+
 #endif /* !defined(OSSL_INTERNAL_URI_H) */
