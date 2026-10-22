@@ -4055,32 +4055,32 @@ err:
 }
 
 #if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
-struct first_initial_version {
-    int done;
+struct initial_version {
+    size_t to_alter;
     QUIC_PKT_HDR hdr;
 };
 
 /*
- * Packet mutator giving the first Initial packet the client sends a version
- * the server does not support, so that the server answers it with a Version
- * Negotiation packet.
+ * Packet mutator giving the next to_alter Initial packets the client sends a
+ * version the server does not support, so that the server answers each of
+ * them with a Version Negotiation packet.
  */
-static int alter_first_initial_version(const QUIC_PKT_HDR *hdrin,
+static int alter_initial_version(const QUIC_PKT_HDR *hdrin,
     const OSSL_QTX_IOVEC *iovecin, size_t numin,
     QUIC_PKT_HDR **hdrout,
     const OSSL_QTX_IOVEC **iovecout,
     size_t *numout,
     void *arg)
 {
-    struct first_initial_version *fiv = arg;
+    struct initial_version *iv = arg;
 
-    fiv->hdr = *hdrin;
-    if (!fiv->done && hdrin->type == QUIC_PKT_TYPE_INITIAL) {
-        fiv->hdr.version = 0xdeadbeef;
-        fiv->done = 1;
+    iv->hdr = *hdrin;
+    if (iv->to_alter > 0 && hdrin->type == QUIC_PKT_TYPE_INITIAL) {
+        iv->hdr.version = 0xdeadbeef;
+        --iv->to_alter;
     }
 
-    *hdrout = &fiv->hdr;
+    *hdrout = &iv->hdr;
     *iovecout = iovecin;
     *numout = numin;
     return 1;
@@ -4103,7 +4103,7 @@ static int test_quic_retry_after_version_neg(void)
     SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
     QUIC_CHANNEL *cch;
     QUIC_PN pn;
-    struct first_initial_version fiv = { 0 };
+    struct initial_version iv = { 0 };
     int testresult = 0, i, ret;
 
     if (!TEST_ptr(sctx = create_server_ctx())
@@ -4117,13 +4117,14 @@ static int test_quic_retry_after_version_neg(void)
     if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl)
         || !TEST_ptr(cch = ossl_quic_conn_get_channel(clientssl))
         || !TEST_true(ossl_quic_channel_set_mutator(cch,
-            alter_first_initial_version, NULL, &fiv)))
+            alter_initial_version, NULL, &iv)))
         goto err;
 
+    iv.to_alter = 1;
     ret = SSL_connect(clientssl);
     if (!TEST_int_le(ret, 0)
         || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ)
-        || !TEST_true(fiv.done))
+        || !TEST_size_t_eq(iv.to_alter, 0))
         goto err;
 
     /* The ClientHello must have needed more than one Initial packet. */
@@ -4146,6 +4147,137 @@ static int test_quic_retry_after_version_neg(void)
 
     if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0))
         || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    testresult = 1;
+
+err:
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_free(qlistener);
+
+    return testresult;
+#else
+    return TEST_skip("ML-KEM or X25519 is not supported in this build");
+#endif
+}
+
+/*
+ * Test that the client sends its whole ClientHello again after a Version
+ * Negotiation packet, also when it spans more than one Initial packet. Every
+ * Initial packet the client sends first has an unsupported version, so the
+ * server answers with Version Negotiation packets alone.
+ *
+ * Test 0: The server does not validate addresses, so it answers the
+ *         ClientHello the client sends after Version Negotiation with its
+ *         Handshake packets, without hearing from the client again.
+ * Test 1: The server answers that ClientHello with a Retry, which the client
+ *         processes on a later tick. The Retry has the ClientHello sent again
+ *         anyway, so the client must have sent it whole before.
+ */
+static int test_quic_version_neg_split_client_hello(int idx)
+{
+#if !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_ECX)
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    BIO *sbio;
+    QUIC_CHANNEL *cch, *sch;
+    QUIC_PN first_pn, pn;
+    struct initial_version iv = { 0 };
+    int testresult = 0, i, ret;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx()))
+        goto err;
+
+    /* This key share puts the ClientHello into two Initial packets. */
+    if (!TEST_true(SSL_CTX_set1_groups_list(cctx, "X25519MLKEM768")))
+        goto err;
+
+    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl)
+        || !TEST_ptr(cch = ossl_quic_conn_get_channel(clientssl))
+        || !TEST_true(ossl_quic_channel_set_mutator(cch,
+            alter_initial_version, NULL, &iv)))
+        goto err;
+
+    if (idx == 0) {
+        /* Replace the listener with one that does not validate addresses. */
+        sbio = SSL_get_rbio(qlistener);
+        if (!TEST_true(BIO_up_ref(sbio)))
+            goto err;
+        SSL_free(qlistener);
+        qlistener = SSL_new_listener(sctx, SSL_LISTENER_FLAG_NO_VALIDATE);
+        if (!TEST_ptr(qlistener)) {
+            BIO_free(sbio);
+            goto err;
+        }
+        SSL_set_bio(qlistener, sbio, sbio);
+        if (!TEST_true(SSL_listen(qlistener)))
+            goto err;
+    }
+
+    iv.to_alter = SIZE_MAX;
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto err;
+    iv.to_alter = 0;
+
+    /* The ClientHello must have needed more than one Initial packet. */
+    first_pn = ossl_quic_tx_packetiser_get_next_pn(cch->txp,
+        QUIC_PN_SPACE_INITIAL);
+    if (!TEST_uint64_t_ge(first_pn, 2))
+        goto err;
+
+    /* The server answers with Version Negotiation packets. */
+    SSL_handle_events(qlistener);
+
+    /* The client processes them and sends its ClientHello again. */
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ)
+        || !TEST_false(cch->doing_retry))
+        goto err;
+
+    /*
+     * The whole ClientHello takes as many Initial packets as it did the first
+     * time. If only its first part was sent again, the rest waits for loss
+     * detection.
+     */
+    pn = ossl_quic_tx_packetiser_get_next_pn(cch->txp, QUIC_PN_SPACE_INITIAL);
+    if (!TEST_uint64_t_ge(pn - first_pn, first_pn))
+        goto err;
+
+    if (idx == 1) {
+        /* The server answers with a Retry, and the client processes it. */
+        SSL_handle_events(qlistener);
+
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ)
+            || !TEST_true(cch->doing_retry))
+            goto err;
+    }
+
+    /*
+     * Only the server runs now, so it must make do with what the client sent
+     * last.
+     */
+    for (i = 0; i < 8; i++)
+        SSL_handle_events(qlistener);
+
+    if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0))
+        || !TEST_ptr(sch = ossl_quic_conn_get_channel(serverssl)))
+        goto err;
+
+    pn = ossl_quic_tx_packetiser_get_next_pn(sch->txp, QUIC_PN_SPACE_HANDSHAKE);
+    if (!TEST_uint64_t_gt(pn, 0))
+        goto err;
+
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE, 0, 0)))
         goto err;
 
@@ -5255,6 +5387,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_retry_token_refused);
     ADD_TEST(test_quic_retry_split_client_hello);
     ADD_TEST(test_quic_retry_after_version_neg);
+    ADD_ALL_TESTS(test_quic_version_neg_split_client_hello, 2);
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
     ADD_TEST(test_reject_stream_gc);
