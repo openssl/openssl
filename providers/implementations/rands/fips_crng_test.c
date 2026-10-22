@@ -300,6 +300,12 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
     size_t n;
     size_t r = 0;
 
+    /*
+     * Seed material that fails the health tests goes straight back to its
+     * source.  Do not leave |*pout| pointing at it: a DRBG whose reseed
+     * fails releases whatever |*pout| holds, which would free it again.
+     */
+
     /* Without a parent, we rely on the up calls */
     if (crngt->parent == NULL
         || crngt->parent_get_seed == NULL) {
@@ -307,8 +313,11 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
             min_len, max_len);
         if (n == 0)
             return 0;
-        r = crng_test(crngt, *pout, n);
-        return r > 0 ? n : 0;
+        if (crng_test(crngt, *pout, n) > 0)
+            return n;
+        ossl_prov_cleanup_entropy(crngt->provctx, *pout, n);
+        *pout = NULL;
+        return 0;
     }
 
     /* Grab seed from our parent */
@@ -318,10 +327,13 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
     n = crngt->parent_get_seed(crngt->parent, pout, entropy,
         min_len, max_len, prediction_resistance,
         adin, adin_len);
-    if (n > 0 && crng_test(crngt, *pout, n) > 0)
+    if (n > 0 && crng_test(crngt, *pout, n) > 0) {
         r = n;
-    else if (crngt->parent_clear_seed != NULL)
-        crngt->parent_clear_seed(crngt->parent, *pout, n);
+    } else {
+        if (n > 0 && crngt->parent_clear_seed != NULL)
+            crngt->parent_clear_seed(crngt->parent, *pout, n);
+        *pout = NULL;
+    }
     unlock_parent(crngt);
     return r;
 }
