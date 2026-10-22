@@ -702,6 +702,96 @@ static int test_nc_empty_dirname_permitted(void)
         sizeof(nc_permitted_empty_dirname), X509_V_OK);
 }
 
+/*
+ * Check a certificate with a single URI SAN against a single URI name
+ * constraint, either permitted or excluded.
+ */
+static int nc_check_uri(const char *uri, const char *base, int excluded,
+    int expected)
+{
+    int ok = 0;
+    NAME_CONSTRAINTS *nc = NULL;
+    GENERAL_SUBTREE *sub = NULL;
+    GENERAL_NAMES *gens = NULL;
+    GENERAL_NAME *gen = NULL;
+    X509 *x = NULL;
+    STACK_OF(GENERAL_SUBTREE) **subtrees;
+
+    if (!TEST_ptr(nc = NAME_CONSTRAINTS_new())
+        || !TEST_ptr(sub = GENERAL_SUBTREE_new()))
+        goto end;
+    GENERAL_NAME_free(sub->base);
+    subtrees = excluded ? &nc->excludedSubtrees : &nc->permittedSubtrees;
+    if (!TEST_ptr(sub->base = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_URI,
+                      base, 0))
+        || !TEST_ptr(*subtrees = sk_GENERAL_SUBTREE_new_null())
+        || !TEST_true(sk_GENERAL_SUBTREE_push(*subtrees, sub)))
+        goto end;
+    sub = NULL;
+
+    if (!TEST_ptr(x = nc_empty_dirname_subject("leaf.example"))
+        || !TEST_ptr(gens = GENERAL_NAMES_new())
+        || !TEST_ptr(gen = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_URI, uri, 0))
+        || !TEST_true(sk_GENERAL_NAME_push(gens, gen)))
+        goto end;
+    gen = NULL;
+    /* Populate x->altname, which NAME_CONSTRAINTS_check() relies on */
+    if (!TEST_true(X509_add1_ext_i2d(x, NID_subject_alt_name, gens, 0, 0))
+        || !TEST_false(X509_get_extension_flags(x) & EXFLAG_INVALID))
+        goto end;
+
+    if (!TEST_int_eq(NAME_CONSTRAINTS_check(x, nc), expected)) {
+        TEST_info("URI %s, %s base %s", uri,
+            excluded ? "excluded" : "permitted", base);
+        goto end;
+    }
+
+    ok = 1;
+
+end:
+    X509_free(x);
+    GENERAL_NAME_free(gen);
+    GENERAL_NAMES_free(gens);
+    GENERAL_SUBTREE_free(sub);
+    NAME_CONSTRAINTS_free(nc);
+    return ok;
+}
+
+static const struct {
+    const char *uri;
+    const char *base;
+    int excluded;
+    int expected;
+} nc_uri_tests[] = {
+    { "https://good.example.com/a", "bad.example.com", 1, X509_V_OK },
+    { "https://bad.example.com/a", "bad.example.com", 1,
+        X509_V_ERR_EXCLUDED_VIOLATION },
+    { "https://good.example.com/a", "good.example.com", 0, X509_V_OK },
+    { "https://other.example.com/a", "good.example.com", 0,
+        X509_V_ERR_PERMITTED_VIOLATION },
+    /* RFC 5280 4.2.1.10: IP address or absent authority must be rejected */
+    { "https://192.0.2.1/a", "bad.example.com", 1,
+        X509_V_ERR_UNSUPPORTED_NAME_SYNTAX },
+    { "https://192.0.2.1:8443/a", "bad.example.com", 1,
+        X509_V_ERR_UNSUPPORTED_NAME_SYNTAX },
+    { "https://[2001:db8::1]/a", "bad.example.com", 1,
+        X509_V_ERR_UNSUPPORTED_NAME_SYNTAX },
+    { "file:///etc/passwd", "bad.example.com", 1,
+        X509_V_ERR_UNSUPPORTED_NAME_SYNTAX },
+    { "https://192.0.2.1/a", "good.example.com", 0,
+        X509_V_ERR_UNSUPPORTED_NAME_SYNTAX },
+    { "https://[2001:db8::1]/a", "good.example.com", 0,
+        X509_V_ERR_UNSUPPORTED_NAME_SYNTAX },
+    /* Not a valid IPv4 address, so treated as a DNS name */
+    { "https://192.0.2/a", "bad.example.com", 1, X509_V_OK },
+};
+
+static int test_nc_uri(int i)
+{
+    return nc_check_uri(nc_uri_tests[i].uri, nc_uri_tests[i].base,
+        nc_uri_tests[i].excluded, nc_uri_tests[i].expected);
+}
+
 static int test_x509_name_canon_failure_cache(void)
 {
     static const unsigned char invalid_utf8[] = { 0xc0, 0xaf };
@@ -943,6 +1033,7 @@ int setup_tests(void)
     ADD_TEST(test_x509_verify_with_new);
     ADD_TEST(test_nc_empty_dirname_excluded);
     ADD_TEST(test_nc_empty_dirname_permitted);
+    ADD_ALL_TESTS(test_nc_uri, OSSL_NELEM(nc_uri_tests));
     ADD_TEST(test_x509_name_canon_failure_cache);
     ADD_MFAIL_TEST(test_x509_name_multivalued_rdn_mfail);
     ADD_MFAIL_TEST(test_x509_attribute_i2d_mfail);
