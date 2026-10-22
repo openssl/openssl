@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "apps.h"
+#include "internal/http_url.h"
 #include "http_server.h"
 #include "s_apps.h"
 #include "progs.h"
@@ -2291,8 +2292,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
             CMP_warn("Ignoring -no_proxy option since -server is not given");
         goto set_path;
     }
-    if (!OSSL_HTTP_parse_url(opt_server, &use_ssl, NULL /* user */,
-            &host, &port, &portnum, &path, NULL /* q */, NULL /* frag */)) {
+    if (!ossl_http_parse_url((const uint8_t *)opt_server, strlen(opt_server),
+            /*allow_no_scheme=*/1, /*allow_empty_host=*/0, &use_ssl,
+            &host, &port, &portnum, &path)) {
         CMP_err1("Cannot parse -server URL: %s", opt_server);
         goto err;
     }

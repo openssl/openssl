@@ -65,6 +65,7 @@ typedef unsigned int u_int;
 
 #include <openssl/bn.h>
 #include "apps.h"
+#include "internal/http_url.h"
 #include "progs.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -742,8 +743,11 @@ static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x,
     iname = X509_get_issuer_name(x);
     aia = X509_get1_ocsp(x);
     if (aia != NULL) {
-        if (!OSSL_HTTP_parse_url(sk_OPENSSL_STRING_value(aia, 0), &use_ssl,
-                NULL, &host, &port, NULL, &path, NULL, NULL)) {
+        const char *aia_url = sk_OPENSSL_STRING_value(aia, 0);
+
+        if (!ossl_http_parse_url((const uint8_t *)aia_url, strlen(aia_url),
+                /*allow_no_scheme=*/0, /*allow_empty_host=*/0, &use_ssl,
+                &host, &port, /*port_num=*/NULL, &path)) {
             BIO_puts(bio_err, "cert_status: can't parse AIA URL\n");
             goto err;
         }
@@ -2106,9 +2110,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_STATUS_URL:
 #ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
-            if (!OSSL_HTTP_parse_url(opt_arg(), &tlscstatp.use_ssl, NULL,
-                    &tlscstatp.host, &tlscstatp.port, NULL,
-                    &tlscstatp.path, NULL, NULL)) {
+            if (!ossl_http_parse_url((const uint8_t *)opt_arg(),
+                    strlen(opt_arg()), /*allow_no_scheme=*/1,
+                    /*allow_empty_host=*/0, &tlscstatp.use_ssl,
+                    &tlscstatp.host, &tlscstatp.port, /*port_num=*/NULL,
+                    &tlscstatp.path)) {
                 BIO_puts(bio_err, "Error parsing -status_url argument\n");
                 goto end;
             }
