@@ -394,15 +394,28 @@ static int asn1_print_integer(BIO *out, const ASN1_INTEGER *str)
 
 static int asn1_print_oid(BIO *out, const ASN1_OBJECT *oid)
 {
-    char objbuf[80];
+    char objbuf[80], *p = objbuf;
     const char *ln;
+    int len, ret = 1;
+
     ln = OBJ_nid2ln(OBJ_obj2nid(oid));
     if (!ln)
         ln = "";
-    OBJ_obj2txt(objbuf, sizeof(objbuf), oid, 1);
-    if (BIO_printf(out, "%s (%s)", ln, objbuf) <= 0)
-        return 0;
-    return 1;
+    len = OBJ_obj2txt(objbuf, sizeof(objbuf), oid, 1);
+    if (len > (int)(sizeof(objbuf) - 1)) {
+        if (len > INT_MAX - 1) { /* catch an integer overflow */
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+            return 0;
+        }
+        if ((p = OPENSSL_malloc(len + 1)) == NULL)
+            return 0;
+        OBJ_obj2txt(p, len + 1, oid, 1);
+    }
+    if (BIO_printf(out, "%s (%s)", ln, p) <= 0)
+        ret = 0;
+    if (p != objbuf)
+        OPENSSL_free(p);
+    return ret;
 }
 
 static int asn1_print_obstring(BIO *out, const ASN1_STRING *str, int indent)

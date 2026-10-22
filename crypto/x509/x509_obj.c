@@ -34,6 +34,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
     BUF_MEM *b = NULL;
     int gs_doit[4];
     char tmp_buf[80];
+    char *tmp_alloc = NULL;
 #ifdef CHARSET_EBCDIC
     unsigned char ebcdic_buf[1024];
 #endif
@@ -64,8 +65,18 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         ne = sk_X509_NAME_ENTRY_value(a->entries, i);
         n = OBJ_obj2nid(ne->object);
         if ((n == NID_undef) || ((s = OBJ_nid2sn(n)) == NULL)) {
-            i2t_ASN1_OBJECT(tmp_buf, sizeof(tmp_buf), ne->object);
+            l1 = i2t_ASN1_OBJECT(tmp_buf, sizeof(tmp_buf), ne->object);
             s = tmp_buf;
+            if (l1 > (int)(sizeof(tmp_buf) - 1)) {
+                if (l1 > NAME_ONELINE_MAX) {
+                    ERR_raise(ERR_LIB_X509, X509_R_NAME_TOO_LONG);
+                    goto end;
+                }
+                if ((tmp_alloc = OPENSSL_malloc(l1 + 1)) == NULL)
+                    goto end;
+                i2t_ASN1_OBJECT(tmp_alloc, l1 + 1, ne->object);
+                s = tmp_alloc;
+            }
         }
         l1 = (int)strlen(s);
 
@@ -127,6 +138,8 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         *(p++) = prev_set == ne->set ? '+' : '/';
         memcpy(p, s, (unsigned int)l1);
         p += l1;
+        OPENSSL_free(tmp_alloc);
+        tmp_alloc = NULL;
         *(p++) = '=';
 
 #ifndef CHARSET_EBCDIC /* q was assigned above already. */
@@ -163,6 +176,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         *p = '\0';
         prev_set = ne->set;
     }
+    OPENSSL_free(tmp_alloc);
     if (b != NULL) {
         p = b->data;
         OPENSSL_free(b);
@@ -174,6 +188,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
 buferr:
     ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
 end:
+    OPENSSL_free(tmp_alloc);
     BUF_MEM_free(b);
     return NULL;
 }

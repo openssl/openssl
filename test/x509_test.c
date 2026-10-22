@@ -761,6 +761,133 @@ end:
     return ret;
 }
 
+/*
+ * An attribute type whose dotted form (80 characters) does not fit the 80-byte
+ * buffers of the name printers. RFC 5280 requires support for up to 100.
+ */
+#define LONG_OID "1.2.268435455.268435455.268435455.268435455.268435455" \
+                 ".268435455.268435455.999999"
+
+static X509_NAME *long_oid_name(void)
+{
+    X509_NAME *name = NULL;
+    ASN1_OBJECT *obj = NULL;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_ptr(obj = OBJ_txt2obj(LONG_OID, 1))
+        || !TEST_true(X509_NAME_add_entry_by_OBJ(name, obj, V_ASN1_UTF8STRING,
+            (unsigned char *)"x", -1, -1, 0))) {
+        X509_NAME_free(name);
+        name = NULL;
+    }
+    ASN1_OBJECT_free(obj);
+    return name;
+}
+
+static X509_ALGOR *long_oid_algor(void)
+{
+    X509_ALGOR *alg = NULL;
+    ASN1_OBJECT *obj = NULL;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new())
+        || !TEST_ptr(obj = OBJ_txt2obj(LONG_OID, 1))
+        || !TEST_true(X509_ALGOR_set0(alg, obj, V_ASN1_UNDEF, NULL))) {
+        ASN1_OBJECT_free(obj);
+        X509_ALGOR_free(alg);
+        return NULL;
+    }
+    return alg;
+}
+
+static int test_x509_name_print_long_oid(void)
+{
+    static const char expected[] = LONG_OID "=x";
+    X509_NAME *name = NULL;
+    BIO *bio = NULL;
+    char *oneline = NULL, *data;
+    long len;
+    int ret = 0;
+
+    if (!TEST_ptr(name = long_oid_name())
+        || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(X509_NAME_print_ex(bio, name, 0,
+                            XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_OID),
+            (int)strlen(expected)))
+        goto end;
+
+    len = BIO_get_mem_data(bio, &data);
+    if (!TEST_mem_eq(data, len, expected, strlen(expected))
+        || !TEST_ptr(oneline = X509_NAME_oneline(name, NULL, 0))
+        || !TEST_str_eq(oneline, "/" LONG_OID "=x"))
+        goto end;
+
+    ret = 1;
+
+end:
+    OPENSSL_free(oneline);
+    BIO_free(bio);
+    X509_NAME_free(name);
+    return ret;
+}
+
+static int test_asn1_item_print_long_oid(void)
+{
+    X509_ALGOR *alg = NULL;
+    BIO *bio = NULL;
+    char *data;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = long_oid_algor())
+        || !TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_gt(ASN1_item_print(bio, (ASN1_VALUE *)alg, 0,
+                            ASN1_ITEM_rptr(X509_ALGOR), NULL),
+            0)
+        || !TEST_int_eq(BIO_write(bio, "", 1), 1))
+        goto end;
+
+    BIO_get_mem_data(bio, &data);
+    if (!TEST_ptr(strstr(data, "(" LONG_OID ")")))
+        goto end;
+
+    ret = 1;
+
+end:
+    BIO_free(bio);
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
+static int test_print_long_oid_mfail(void)
+{
+    X509_NAME *name = NULL;
+    X509_ALGOR *alg = NULL;
+    BIO *bio = NULL;
+    char *oneline = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(name = long_oid_name())
+        || !TEST_ptr(alg = long_oid_algor())
+        || !TEST_ptr(bio = BIO_new(BIO_s_mem())))
+        goto end;
+
+    MFAIL_start();
+    ret = X509_NAME_print_ex(bio, name, 0,
+              XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_OID)
+            > 0
+        && (oneline = X509_NAME_oneline(name, NULL, 0)) != NULL
+        && ASN1_item_print(bio, (ASN1_VALUE *)alg, 0,
+               ASN1_ITEM_rptr(X509_ALGOR), NULL)
+            > 0;
+    MFAIL_end();
+
+end:
+    OPENSSL_free(oneline);
+    BIO_free(bio);
+    X509_ALGOR_free(alg);
+    X509_NAME_free(name);
+    return ret;
+}
+
 static int test_x509_attribute_i2d_mfail(void)
 {
     static const unsigned char value1[] = "first";
@@ -945,6 +1072,9 @@ int setup_tests(void)
     ADD_TEST(test_nc_empty_dirname_permitted);
     ADD_TEST(test_x509_name_canon_failure_cache);
     ADD_MFAIL_TEST(test_x509_name_multivalued_rdn_mfail);
+    ADD_TEST(test_x509_name_print_long_oid);
+    ADD_TEST(test_asn1_item_print_long_oid);
+    ADD_MFAIL_TEST(test_print_long_oid_mfail);
     ADD_MFAIL_TEST(test_x509_attribute_i2d_mfail);
     ADD_MFAIL_TEST(test_pkcs7_digest_set_i2d_mfail);
     ADD_MFAIL_NO_CHECK_TEST(test_pkcs7_digest_set_stream_mfail);
