@@ -1,4 +1,5 @@
-# Review instructions
+Review instructions
+===================
 
 Every review covers, in this order of priority:
 
@@ -13,7 +14,8 @@ maintainer reviews between October 2023 and October 2026. Most security
 bugs and regressions in that period were visible in the diff that
 introduced them.
 
-## What Important means here
+What Important means here
+-------------------------
 
 Reserve Important for security issues: problems an attacker can trigger
 through untrusted input, such as a TLS or QUIC peer, a certificate, key
@@ -30,14 +32,16 @@ public API by the calling application, and `STYLE.md` and
 to cause failures. Start each Nit with its kind, such as "Functional:",
 "Performance:" or "Documentation:".
 
-## Evidence
+Evidence
+--------
 
 Each finding states the inputs or state that trigger it and what goes
 wrong, with a `file:line` citation for every claim about code outside the
 diff. Read the callee before claiming what it returns or who owns its
 result. A finding that cannot name a trigger is not reported.
 
-## Error paths and ownership
+Error paths and ownership
+-------------------------
 
 - For every new allocation, find the free on every exit after it. A new
   `return` in a function that otherwise uses `goto err` usually leaks.
@@ -53,7 +57,8 @@ result. A finding that cannot name a trigger is not reported.
   field; a struct-copying `dupctx` must not alias owned pointers.
 - Free functions accept `NULL`; do not guard calls to them.
 
-## Untrusted input
+Untrusted input
+---------------
 
 - Every access to an `ASN1_TYPE`, CHOICE or union member is preceded by
   a check of the discriminant on the same object (`->type`, the `ptype`
@@ -76,7 +81,8 @@ result. A finding that cannot name a trigger is not reported.
   bound that does not depend on the peer acknowledging or the
   application draining. Watch for quadratic work in peer-chosen sizes.
 
-## Return values and errors
+Return values and errors
+------------------------
 
 - For every changed condition on a call's result, check the callee's
   documented convention: 0, -1 or `<= 0` for failure.
@@ -87,7 +93,8 @@ result. A finding that cannot name a trigger is not reported.
   reason code.
 - A check that exists only as `assert()` disappears in release builds.
 
-## Security semantics
+Security semantics
+------------------
 
 - Attacker-supplied data is not stored in a shared or cached object,
   such as an `SSL_SESSION`, before it is verified. Verification results
@@ -106,7 +113,8 @@ result. A finding that cannot name a trigger is not reported.
 - Secrets are cleansed on every path. Zeroisation does not depend on
   `OPENSSL_PEDANTIC_ZEROIZATION`.
 
-## Parallel paths and new modes
+Parallel paths and new modes
+----------------------------
 
 - A new entry point or constructor that duplicates an existing one sets
   up the same state. Compare it with its sibling.
@@ -123,7 +131,8 @@ result. A finding that cannot name a trigger is not reported.
   the same structure in CMS, PKCS#7, PKCS#12, TS, CMP and CRMF; other
   RecipientInfo types; other functions in the file.
 
-## Refactors
+Refactors
+---------
 
 Treat "mechanical" changes as semantic ones.
 
@@ -137,7 +146,8 @@ Treat "mechanical" changes as semantic ones.
 - A refactor or optimisation does not change results through the public
   API, including inputs that used to fail.
 
-## Compatibility
+Compatibility
+-------------
 
 - Changes to a public function's return values, error-queue behaviour,
   flag semantics or `const` qualifiers are compared against its manual
@@ -146,7 +156,8 @@ Treat "mechanical" changes as semantic ones.
 - Behaviour changes and large refactors are not suitable for stable
   branches.
 
-## Providers and the FIPS module
+Providers and the FIPS module
+-----------------------------
 
 - Fetches use the caller's library context and property query; no
   fallback to legacy global lookups such as `EVP_get_digestbyname()`.
@@ -157,7 +168,8 @@ Treat "mechanical" changes as semantic ones.
 - Files added to or removed from the FIPS provider are reflected in the
   FIPS source lists and checksums.
 
-## Build configurations and platforms
+Build configurations and platforms
+----------------------------------
 
 - Code and tests are guarded by exactly the `OPENSSL_NO_*` or platform
   conditions they need, and build with `no-deprecated`.
@@ -165,7 +177,8 @@ Treat "mechanical" changes as semantic ones.
   in `.rodata`.
 - New public headers have `extern "C"` guards and use `ossl_inline`.
 
-## Tests
+Tests
+-----
 
 - A regression test fails without the fix and passes with it.
 - Each `TEST_*` result is acted on, assertions check expected values,
@@ -173,12 +186,14 @@ Treat "mechanical" changes as semantic ones.
 - Tests of behaviour that differs between FIPS provider versions are
   gated on the provider version.
 
-## Performance
+Performance
+-----------
 
 Report per-call allocation, locking or repeated lookups added to hot
 paths, such as per-record or per-update code.
 
-## Project standards
+Project standards
+-----------------
 
 Read `STYLE.md` and `DOCUMENTATION.md` and report violations in lines the
 pull request adds or changes. Each finding cites the section it
@@ -199,12 +214,14 @@ violates.
 - Pointers are compared explicitly with `NULL`. Magic numbers are named
   or explained.
 
-## Cap the nits
+Cap the nits
+------------
 
 Report at most ten Nits per review, functional bugs first. Important
 findings are not limited.
 
-## Do not report
+Do not report
+-------------
 
 - What CI already reports: compiler warnings, clang-format, codespell,
   `make doc-nits`, `make md-nits`.
