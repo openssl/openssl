@@ -30,11 +30,13 @@ require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 subtest "ml-dsa-44 conversions using 'openssl pkey' -- private key" => sub {
     tconversion( -type => "pkey",
+                 -progopts => ['-allow-insecure-private-keys'],
                  -in => srctop_file("test","testmldsa44.pem"),
                  -prefix => "mldsa44-pkey-priv" );
 };
 subtest "ml-dsa-44 conversions using 'openssl pkey' -- pkcs8 key" => sub {
     tconversion( -type => "pkey",
+                 -progopts => ['-allow-insecure-private-keys'],
                  -in => srctop_file("test","testmldsa44.pem"),
                  -args => ["pkey"],
                  -prefix => "mldsa44-pkey-pkcs8" );
@@ -48,11 +50,14 @@ subtest "ml-dsa-44 conversions using 'openssl pkey' -- pub key" => sub {
 
 subtest "ml-dsa-65 conversions using 'openssl pkey' -- private key" => sub {
     tconversion( -type => "pkey",
+                 -progopts => ['-allow-insecure-private-keys'],
                  -in => srctop_file("test","testmldsa65.pem"),
                  -prefix => "mldsa65-pkey-priv");
 };
 subtest "ml-dsa-65 conversions using 'openssl pkey' -- pkcs8 key" => sub {
-    tconversion( -type => "pkey", -in => srctop_file("test","testmldsa65.pem"),
+    tconversion( -type => "pkey",
+                 -progopts => ['-allow-insecure-private-keys'],
+                 -in => srctop_file("test","testmldsa65.pem"),
                  -args => ["pkey"], -prefix => "mldsa65-pkey-pkcs8");
 };
 subtest "ml-dsa-65 conversions using 'openssl pkey' -- pub key" => sub {
@@ -64,11 +69,13 @@ subtest "ml-dsa-65 conversions using 'openssl pkey' -- pub key" => sub {
 
 subtest "ml-dsa-87 conversions using 'openssl pkey' -- private key" => sub {
     tconversion( -type => "pkey",
+                 -progopts => ['-allow-insecure-private-keys'],
                  -in => srctop_file("test","testmldsa87.pem"),
                  -prefix => "mldsa87-pkey-priv" );
 };
 subtest "ml-dsa-87 conversions using 'openssl pkey' -- pkcs8 key" => sub {
     tconversion( -type => "pkey",
+                 -progopts => ['-allow-insecure-private-keys'],
                  -in => srctop_file("test","testmldsa87.pem"),
                  -args => ["pkey"],
                  -prefix => "mldsa87-pkey-pkcs8" );
