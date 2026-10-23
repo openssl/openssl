@@ -1051,6 +1051,9 @@ IF[{- !$disabled{tests} -}]
     SOURCE[modes_internal_test]=modes_internal_test.c
     INCLUDE[modes_internal_test]=.. ../include ../apps/include
     DEPEND[modes_internal_test]=../libcrypto.a libtestutil.a
+    IF[{- !$disabled{asm} && $target{asm_arch} eq "x86_64" -}]
+      DEFINE[modes_internal_test]=AES_ASM
+    ENDIF
 
     SOURCE[x509_internal_test]=x509_internal_test.c
     INCLUDE[x509_internal_test]=.. ../include ../apps/include

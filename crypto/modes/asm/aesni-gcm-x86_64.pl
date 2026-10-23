@@ -46,6 +46,7 @@ $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
+$vaes256 = 0;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
@@ -56,6 +57,7 @@ if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([0-9]+)\.([0-9]+)/) {
 	my $ver = $1 + $2/100.0; # 3.1->3.01, 3.10->3.10
 	$avx = ($ver >= 2.20) + ($ver >= 2.22);
+	$vaes256 = ($ver >= 2.30);
 }
 
 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
@@ -73,6 +75,18 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
+if (!$vaes256 && `$ENV{CC} -v 2>&1`
+	=~ /(Apple)?\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
+	my $ver = $3 + $4/100.0 + ($5 || 0)/10000.0;
+	$vaes256 = $1 ? ($ver >= 10.0001) : ($ver >= 7);
+}
+if ($win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/)) {
+	$vaes256 = (`nasm -v 2>&1` =~ /NASM version ([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/
+		&& ($1 > 2 || ($1 == 2 && ($2 >= 14 || ($2 == 13 && $3 >= 3)))));
+} elsif ($win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/)) {
+	$vaes256 = 0;
+}
+
 if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
 	=~ /#define __clang_major__.([0-9]+)/) {
 	if ($1) {
@@ -86,6 +100,643 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 
 if ($avx>1) {{{
 
+# The VAES variant shares the public entry points, Htable and unwind frame.
+# Only its paired powers and salts are repacked in the per-call local frame.
+sub vaes256_dispatch {
+    my ($direction) = @_;
+    return "" unless $vaes256;
+    return <<___;
+	cmp	\$512,%rdx
+	jb	.Lvaes256_${direction}_legacy
+	mov	OPENSSL_ia32cap_P+4(%rip),%r11d
+	and	\$0x12000002,%r11d
+	cmp	\$0x12000002,%r11d
+	jne	.Lvaes256_${direction}_legacy
+	testl	\$0x20,OPENSSL_ia32cap_P+8(%rip)
+	jz	.Lvaes256_${direction}_legacy
+	mov	OPENSSL_ia32cap_P+12(%rip),%r11d
+	and	\$0x600,%r11d
+	cmp	\$0x600,%r11d
+	je	.Lvaes256_${direction}
+.Lvaes256_${direction}_legacy:
+___
+}
+
+sub vaes256_round {
+    my ($round) = @_;
+    my $offset = 16 * $round;
+    my $text = "\tvbroadcasti128\t$offset(%rbp),%ymm14\n";
+    $text .= "\tvaesenc\t%ymm14,%ymm$_,%ymm$_\n" for (0..3);
+    return $text;
+}
+
+sub vaes256_counters {
+    my ($tag) = @_;
+    my $text = <<___;
+	vbroadcasti128	(%rcx),%ymm14
+	vpshufb	%ymm5,%ymm4,%ymm0
+	vpaddd	.Lvaes256_two(%rip),%ymm4,%ymm15
+	vpxor	%ymm14,%ymm0,%ymm0
+	vpshufb	%ymm5,%ymm15,%ymm1
+	vpaddd	.Lvaes256_four(%rip),%ymm4,%ymm15
+	vpxor	%ymm14,%ymm1,%ymm1
+	vpshufb	%ymm5,%ymm15,%ymm2
+	vpaddd	.Lvaes256_six(%rip),%ymm4,%ymm15
+	vpxor	%ymm14,%ymm2,%ymm2
+	vpshufb	%ymm5,%ymm15,%ymm3
+	vpaddd	.Lvaes256_eight(%rip),%ymm4,%ymm4
+	vpxor	%ymm14,%ymm3,%ymm3
+	cmp	\$9,%ebx
+	je	.Lvaes256_${tag}_ready
+	vbroadcasti128	16(%rcx),%ymm14
+___
+    $text .= "\tvaesenc\t%ymm14,%ymm$_,%ymm$_\n" for (0..3);
+    $text .= "\tvbroadcasti128\t32(%rcx),%ymm14\n";
+    $text .= "\tvaesenc\t%ymm14,%ymm$_,%ymm$_\n" for (0..3);
+    $text .= "\tcmp\t\$11,%ebx\n\tje\t.Lvaes256_${tag}_ready\n";
+    for my $offset (48,64) {
+        $text .= "\tvbroadcasti128\t$offset(%rcx),%ymm14\n";
+        $text .= "\tvaesenc\t%ymm14,%ymm$_,%ymm$_\n" for (0..3);
+    }
+    return $text . ".Lvaes256_${tag}_ready:\n";
+}
+
+sub vaes256_store {
+    my $text = "\tvbroadcasti128\t160(%rbp),%ymm14\n";
+    for my $i (0..3) {
+        my $offset = 32 * $i;
+        $text .= <<___;
+	vaesenclast	%ymm14,%ymm$i,%ymm$i
+	vpxor	$offset(%rdi),%ymm$i,%ymm$i
+	vmovdqu	%ymm$i,$offset(%rsi)
+___
+    }
+    return $text . <<___;
+	add	\$128,%rdi
+	add	\$128,%rsi
+	sub	\$128,%rdx
+___
+}
+
+sub vaes256_multiply {
+    my ($pair) = @_;
+    my $offset = 32 * $pair;
+    my $salt = $pair % 2 ? 0x10 : 0;
+    my $salt_offset = 128 + 32 * int($pair / 2);
+    my $text = <<___;
+	vmovdqu	$offset(%r11),%ymm9
+	vpshufb	%ymm5,%ymm9,%ymm9
+___
+    $text .= "\tvpxor\t%ymm13,%ymm9,%ymm9\n" if $pair == 0;
+    $text .= "\tvmovdqa\t$offset(%rsp),%ymm10\n";
+    $text .= "\tvmovdqa\t$salt_offset(%rsp),%ymm12\n" unless $pair % 2;
+    $text .= <<___;
+	vpshufd	\$0x4e,%ymm9,%ymm11
+	vpxor	%ymm9,%ymm11,%ymm11
+___
+    if ($pair == 0) {
+        $text .= <<___;
+	vpclmulqdq	\$0x00,%ymm10,%ymm9,%ymm6
+	vpclmulqdq	\$0x11,%ymm10,%ymm9,%ymm7
+	vpclmulqdq	\$0x00,%ymm12,%ymm11,%ymm8
+___
+    } else {
+        $text .= <<___;
+	vpclmulqdq	\$0x00,%ymm10,%ymm9,%ymm15
+	vpxor	%ymm15,%ymm6,%ymm6
+	vpclmulqdq	\$0x11,%ymm10,%ymm9,%ymm15
+	vpxor	%ymm15,%ymm7,%ymm7
+	vpclmulqdq	\$$salt,%ymm12,%ymm11,%ymm15
+	vpxor	%ymm15,%ymm8,%ymm8
+___
+    }
+    return $text;
+}
+
+sub vaes256_reduce {
+    my ($interleave) = @_;
+    my $text = <<___;
+	vpxor	%ymm6,%ymm8,%ymm8
+	vpxor	%ymm7,%ymm8,%ymm8
+	vpslldq	\$8,%ymm8,%ymm15
+	vpxor	%ymm15,%ymm6,%ymm6
+	vpsrldq	\$8,%ymm8,%ymm8
+	vpxor	%ymm8,%ymm7,%ymm7
+	vextracti128	\$1,%ymm6,%xmm9
+	vpxor	%xmm6,%xmm9,%xmm9
+	vextracti128	\$1,%ymm7,%xmm10
+	vpxor	%xmm7,%xmm10,%xmm10
+	vmovdqa	.Lpoly(%rip),%xmm11
+	vpclmulqdq	\$0x10,%xmm11,%xmm9,%xmm15
+___
+    $text .= vaes256_round(8) if $interleave;
+    $text .= <<___;
+	vpshufd	\$0x4e,%xmm9,%xmm9
+	vpxor	%xmm15,%xmm9,%xmm9
+	vpclmulqdq	\$0x10,%xmm11,%xmm9,%xmm15
+___
+    $text .= vaes256_round(9) if $interleave;
+    return $text . <<___;
+	vpshufd	\$0x4e,%xmm9,%xmm9
+	vpxor	%xmm15,%xmm9,%xmm9
+	vpxor	%xmm10,%xmm9,%xmm13
+___
+}
+
+sub vaes256_encrypt_v4 {
+    # Keep the previous ciphertext in ymm5/0/2/14 while encrypting its successor.
+    return <<'___';
+.Lvaes256_enc_v4:
+	vmovdqa	%ymm3,%ymm14
+	vmovdqa	%ymm5,%ymm3
+	vmovdqa	%ymm0,%ymm5
+	vmovdqa	%ymm1,%ymm0
+	vmovdqa	%ymm4,%ymm8
+	vmovdqa	%xmm13,%xmm1
+	lea	128(%rcx),%rbp
+.align	32
+.Lvaes256_enc_v4_loop:
+	vmovdqa	%ymm0,%ymm10
+	vpaddd	.Lvaes256_two(%rip),%ymm8,%ymm9
+	vpaddd	.Lvaes256_four(%rip),%ymm8,%ymm4
+	vpshufb	%ymm3,%ymm8,%ymm11
+	add	$128,%rsi
+	vpaddd	.Lvaes256_six(%rip),%ymm8,%ymm6
+	vbroadcasti128	(%rcx),%ymm7
+	vpshufb	%ymm3,%ymm5,%ymm5
+	vmovdqa	%xmm1,%xmm1
+	vbroadcasti128	16(%rcx),%ymm0
+	vpshufb	%ymm3,%ymm9,%ymm9
+	vpshufb	%ymm3,%ymm4,%ymm4
+	vpxor	%ymm5,%ymm1,%ymm1
+	vpxor	%ymm11,%ymm7,%ymm11
+	vpxor	%ymm9,%ymm7,%ymm9
+	vpxor	%ymm4,%ymm7,%ymm4
+	add	$128,%rdi
+	vpshufb	%ymm3,%ymm6,%ymm6
+	vpshufd	$0x4e,%ymm1,%ymm5
+	vmovdqa	128(%rsp),%ymm13
+	vaesenc	%ymm0,%ymm11,%ymm11
+	vpxor	%ymm6,%ymm7,%ymm7
+	vpxor	%ymm5,%ymm1,%ymm5
+	vmovdqa	32(%rsp),%ymm12
+	vaesenc	%ymm0,%ymm9,%ymm9
+	vpshufb	%ymm3,%ymm2,%ymm2
+	vpshufb	%ymm3,%ymm14,%ymm14
+	vpaddd	.Lvaes256_eight(%rip),%ymm8,%ymm8
+	vaesenc	%ymm0,%ymm4,%ymm4
+	vaesenc	%ymm0,%ymm7,%ymm7
+	vbroadcasti128	32(%rcx),%ymm0
+	vpclmulqdq	$0x00,%ymm13,%ymm5,%ymm5
+	vaesenc	%ymm0,%ymm11,%ymm11
+	vaesenc	%ymm0,%ymm9,%ymm9
+	vaesenc	%ymm0,%ymm4,%ymm4
+	vaesenc	%ymm0,%ymm7,%ymm7
+	vbroadcasti128	48(%rcx),%ymm0
+	vaesenc	%ymm0,%ymm11,%ymm11
+	vaesenc	%ymm0,%ymm9,%ymm9
+	vaesenc	%ymm0,%ymm4,%ymm4
+	vaesenc	%ymm0,%ymm7,%ymm7
+	vbroadcasti128	64(%rcx),%ymm0
+	vaesenc	%ymm0,%ymm11,%ymm11
+	vaesenc	%ymm0,%ymm9,%ymm9
+	vaesenc	%ymm0,%ymm4,%ymm4
+	vaesenc	%ymm0,%ymm7,%ymm7
+	vmovdqa	(%rsp),%ymm0
+	vpclmulqdq	$0x00,%ymm0,%ymm1,%ymm6
+	vpclmulqdq	$0x11,%ymm0,%ymm1,%ymm1
+	vbroadcasti128	80(%rcx),%ymm0
+	vaesenc	%ymm0,%ymm11,%ymm11
+	vaesenc	%ymm0,%ymm9,%ymm9
+	vaesenc	%ymm0,%ymm4,%ymm4
+	vaesenc	%ymm0,%ymm7,%ymm7
+	vbroadcasti128	96(%rcx),%ymm0
+	vaesenc	%ymm0,%ymm11,%ymm11
+	vaesenc	%ymm0,%ymm9,%ymm9
+	vaesenc	%ymm0,%ymm4,%ymm4
+	vaesenc	%ymm0,%ymm7,%ymm7
+	vpshufb	%ymm3,%ymm10,%ymm0
+	vpshufd	$0x4e,%ymm0,%ymm10
+	vpxor	%ymm10,%ymm0,%ymm10
+	vpclmulqdq	$0x10,%ymm13,%ymm10,%ymm10
+	vpclmulqdq	$0x00,%ymm12,%ymm0,%ymm13
+	vpclmulqdq	$0x11,%ymm12,%ymm0,%ymm0
+	vbroadcasti128	112(%rcx),%ymm12
+	vaesenc	%ymm12,%ymm4,%ymm4
+	vpxor	%ymm10,%ymm5,%ymm5
+	vpxor	%ymm13,%ymm6,%ymm6
+	vpxor	%ymm0,%ymm1,%ymm0
+	vaesenc	%ymm12,%ymm11,%ymm1
+	vmovdqa	%ymm0,%ymm10
+	vmovdqa	64(%rsp),%ymm11
+	vaesenc	%ymm12,%ymm9,%ymm0
+	vmovdqa	160(%rsp),%ymm9
+	vaesenc	%ymm12,%ymm7,%ymm12
+	vbroadcasti128	(%rbp),%ymm7
+	vpclmulqdq	$0x00,%ymm11,%ymm2,%ymm13
+	vaesenc	%ymm7,%ymm4,%ymm4
+	vaesenc	%ymm7,%ymm1,%ymm1
+	vaesenc	%ymm7,%ymm0,%ymm0
+	vaesenc	%ymm7,%ymm12,%ymm12
+	vpshufd	$0x4e,%ymm2,%ymm7
+	vpxor	%ymm7,%ymm2,%ymm7
+	vpxor	%ymm13,%ymm6,%ymm6
+	vpclmulqdq	$0x00,%ymm9,%ymm7,%ymm7
+	vpclmulqdq	$0x11,%ymm11,%ymm2,%ymm2
+	vpshufd	$0x4e,%ymm14,%ymm11
+	vpxor	%ymm11,%ymm14,%ymm11
+	vpclmulqdq	$0x10,%ymm9,%ymm11,%ymm9
+	vpxor	%ymm7,%ymm5,%ymm5
+	vbroadcasti128	16(%rbp),%ymm7
+	vpxor	%ymm2,%ymm10,%ymm2
+	vbroadcasti128	32(%rbp),%ymm10
+	vmovdqa	.Lpoly(%rip),%xmm13
+	vaesenc	%ymm7,%ymm1,%ymm1
+	vaesenc	%ymm7,%ymm0,%ymm0
+	vaesenc	%ymm7,%ymm4,%ymm4
+	vaesenc	%ymm7,%ymm12,%ymm7
+	vpxor	%ymm9,%ymm5,%ymm5
+	vbroadcasti128	48(%rbp),%ymm9
+	vaesenc	%ymm10,%ymm1,%ymm1
+	vaesenc	%ymm10,%ymm0,%ymm0
+	vaesenc	%ymm10,%ymm4,%ymm4
+	vaesenc	%ymm10,%ymm7,%ymm7
+	vmovdqa	96(%rsp),%ymm10
+	vpclmulqdq	$0x00,%ymm10,%ymm14,%ymm11
+	vpclmulqdq	$0x11,%ymm10,%ymm14,%ymm14
+	vaesenc	%ymm9,%ymm0,%ymm0
+	vaesenc	%ymm9,%ymm4,%ymm4
+	vpxor	%ymm11,%ymm6,%ymm6
+	vpxor	%ymm14,%ymm2,%ymm14
+	vaesenc	%ymm9,%ymm1,%ymm2
+	vaesenc	%ymm9,%ymm7,%ymm9
+	vpxor	%ymm14,%ymm6,%ymm1
+	vpxor	%ymm5,%ymm1,%ymm5
+	vpslldq	$8,%ymm5,%ymm1
+	vpsrldq	$8,%ymm5,%ymm5
+	vpxor	%ymm1,%ymm6,%ymm1
+	vpxor	%ymm5,%ymm14,%ymm5
+	vextracti128	$1,%ymm1,%xmm7
+	vpxor	%xmm1,%xmm7,%xmm7
+	vextracti128	$1,%ymm5,%xmm1
+	vpxor	%xmm5,%xmm1,%xmm1
+	vbroadcasti128	64(%rbp),%ymm5
+	vpclmulqdq	$0x10,%xmm13,%xmm7,%xmm6
+	vpshufd	$0x4e,%xmm7,%xmm7
+	vpxor	%xmm7,%xmm6,%xmm6
+	vaesenc	%ymm5,%ymm2,%ymm2
+	vpclmulqdq	$0x10,%xmm13,%xmm6,%xmm7
+	vpshufd	$0x4e,%xmm6,%xmm6
+	vaesenc	%ymm5,%ymm0,%ymm0
+	vpxor	%xmm6,%xmm7,%xmm7
+	vbroadcasti128	80(%rbp),%ymm6
+	vaesenc	%ymm5,%ymm4,%ymm4
+	vpxor	%xmm7,%xmm1,%xmm1
+	vbroadcasti128	96(%rbp),%ymm7
+	vaesenc	%ymm5,%ymm9,%ymm5
+	vaesenc	%ymm6,%ymm2,%ymm2
+	vaesenc	%ymm6,%ymm0,%ymm0
+	vaesenc	%ymm6,%ymm4,%ymm4
+	vaesenc	%ymm6,%ymm5,%ymm6
+	vaesenclast	%ymm7,%ymm2,%ymm2
+	vaesenclast	%ymm7,%ymm0,%ymm0
+	vpxor	-128(%rdi),%ymm2,%ymm5
+	vaesenclast	%ymm7,%ymm6,%ymm14
+	vpxor	-96(%rdi),%ymm0,%ymm0
+	vaesenclast	%ymm7,%ymm4,%ymm2
+	vpxor	-32(%rdi),%ymm14,%ymm14
+	vpxor	-64(%rdi),%ymm2,%ymm2
+	vmovdqu	%ymm5,-128(%rsi)
+	vmovdqu	%ymm0,-96(%rsi)
+	vmovdqu	%ymm2,-64(%rsi)
+	vmovdqu	%ymm14,-32(%rsi)
+	sub	$128,%rdx
+	jnz	.Lvaes256_enc_v4_loop
+	vmovdqa	%ymm3,%ymm5
+	vmovdqa	%ymm8,%ymm4
+	vmovdqa	%xmm1,%xmm13
+___
+}
+
+sub vaes256_wide_powers {
+    # Montgomery multiplication preserves the twist: H^8 times H^1..H^8.
+    # Keep the additional powers local instead of extending the caller's Htable.
+    my $text = <<'___';
+	vbroadcasti128	(%rsp),%ymm0
+	vbroadcasti128	.Lpoly(%rip),%ymm1
+	vpshufd	$0x4e,%ymm0,%ymm2
+	vpxor	%ymm0,%ymm2,%ymm2
+___
+    for my $pair (0..3) {
+        my $input = 32 * $pair;
+        my $output = 192 + $input;
+        $text .= <<___;
+	vmovdqa	$input(%rsp),%ymm3
+	vpshufd	\$0x4e,%ymm3,%ymm4
+	vpxor	%ymm3,%ymm4,%ymm4
+	vpclmulqdq	\$0x00,%ymm0,%ymm3,%ymm5
+	vpclmulqdq	\$0x11,%ymm0,%ymm3,%ymm6
+	vpclmulqdq	\$0x00,%ymm2,%ymm4,%ymm7
+	vpxor	%ymm5,%ymm7,%ymm7
+	vpxor	%ymm6,%ymm7,%ymm7
+	vpslldq	\$8,%ymm7,%ymm8
+	vpsrldq	\$8,%ymm7,%ymm7
+	vpxor	%ymm8,%ymm5,%ymm5
+	vpxor	%ymm7,%ymm6,%ymm6
+	vpclmulqdq	\$0x10,%ymm1,%ymm5,%ymm7
+	vpshufd	\$0x4e,%ymm5,%ymm5
+	vpxor	%ymm7,%ymm5,%ymm5
+	vpclmulqdq	\$0x10,%ymm1,%ymm5,%ymm7
+	vpshufd	\$0x4e,%ymm5,%ymm5
+	vpxor	%ymm7,%ymm5,%ymm5
+	vpxor	%ymm6,%ymm5,%ymm5
+	vmovdqa	%ymm5,$output(%rsp)
+___
+    }
+    for my $pair (0..1) {
+        my $a = 192 + 64 * $pair;
+        my $b = $a + 32;
+        my $salt = 320 + 32 * $pair;
+        $text .= <<___;
+	vmovdqa	$a(%rsp),%ymm0
+	vmovdqa	$b(%rsp),%ymm1
+	vpshufd	\$0x4e,%ymm0,%ymm2
+	vpshufd	\$0x4e,%ymm1,%ymm3
+	vpxor	%ymm0,%ymm2,%ymm2
+	vpxor	%ymm1,%ymm3,%ymm3
+	vpunpcklqdq	%ymm3,%ymm2,%ymm2
+	vmovdqa	%ymm2,$salt(%rsp)
+___
+    }
+    return $text;
+}
+
+sub vaes256_wide_round {
+    my ($round) = @_;
+    my $offset = 16 * $round;
+    my $text = "\tvbroadcasti128\t$offset(%rcx),%ymm15\n";
+    $text .= "\tvaesenc\t%ymm15,%ymm$_,%ymm$_\n" for (0..7);
+    return $text;
+}
+
+sub vaes256_wide_counters {
+    my @steps = qw(zero two four six eight ten twelve fourteen);
+    my $text = <<'___';
+	vbroadcasti128	(%rcx),%ymm15
+	vpshufb	%ymm13,%ymm12,%ymm0
+	vpxor	%ymm15,%ymm0,%ymm0
+___
+    for my $i (1..7) {
+        $text .= <<___;
+	vpaddd	.Lvaes256_$steps[$i](%rip),%ymm12,%ymm$i
+	vpshufb	%ymm13,%ymm$i,%ymm$i
+	vpxor	%ymm15,%ymm$i,%ymm$i
+___
+    }
+    return $text . "\tvpaddd\t.Lvaes256_sixteen(%rip),%ymm12,%ymm12\n";
+}
+
+sub vaes256_wide_multiply {
+    my ($pair, $register_power) = @_;
+    my $input = 32 * $pair;
+    my $power = $pair < 4 ? 192 + $input : $input - 128;
+    my $salt = $pair < 4 ? 320 + 32 * int($pair / 2)
+                        : 128 + 32 * int(($pair - 4) / 2);
+    my $selector = $pair % 2 ? 0x10 : 0;
+    # Memory operands leave room for eight AES streams without vector spills.
+    my $text = <<___;
+	vmovdqu	$input(%r11),%ymm11
+	vpshufb	%ymm13,%ymm11,%ymm11
+___
+    $text .= "\tvpxor\t%ymm14,%ymm11,%ymm11\n" if $pair == 0;
+    my $power_operand = "$power(%rsp)";
+    if ($register_power) {
+        # Xi is consumed by the first pair, freeing YMM14 for both products.
+        $text .= "\tvmovdqa\t$power(%rsp),%ymm14\n";
+        $power_operand = "%ymm14";
+    }
+    $text .= <<___;
+	vpshufd	\$0x4e,%ymm11,%ymm15
+	vpxor	%ymm11,%ymm15,%ymm15
+___
+    if ($pair == 0) {
+        $text .= <<___;
+	vpclmulqdq	\$$selector,$salt(%rsp),%ymm15,%ymm10
+	vpclmulqdq	\$0x00,$power_operand,%ymm11,%ymm8
+	vpclmulqdq	\$0x11,$power_operand,%ymm11,%ymm9
+___
+    } else {
+        $text .= <<___;
+	vpclmulqdq	\$$selector,$salt(%rsp),%ymm15,%ymm15
+	vpxor	%ymm15,%ymm10,%ymm10
+	vpclmulqdq	\$0x00,$power_operand,%ymm11,%ymm15
+	vpxor	%ymm15,%ymm8,%ymm8
+	vpclmulqdq	\$0x11,$power_operand,%ymm11,%ymm15
+	vpxor	%ymm15,%ymm9,%ymm9
+___
+    }
+    return $text;
+}
+
+sub vaes256_wide_reduce {
+    my ($interleave) = @_;
+    my $text = <<'___';
+	vpxor	%ymm8,%ymm10,%ymm10
+	vpxor	%ymm9,%ymm10,%ymm10
+	vpslldq	$8,%ymm10,%ymm11
+	vpxor	%ymm11,%ymm8,%ymm8
+	vpsrldq	$8,%ymm10,%ymm10
+	vpxor	%ymm10,%ymm9,%ymm9
+	vextracti128	$1,%ymm8,%xmm11
+	vpxor	%xmm8,%xmm11,%xmm11
+	vextracti128	$1,%ymm9,%xmm10
+	vpxor	%xmm9,%xmm10,%xmm10
+	vmovdqa	.Lpoly(%rip),%xmm9
+	vpclmulqdq	$0x10,%xmm9,%xmm11,%xmm8
+___
+    $text .= vaes256_wide_round(9) if $interleave;
+    $text .= <<'___';
+	vpshufd	$0x4e,%xmm11,%xmm11
+	vpxor	%xmm8,%xmm11,%xmm11
+	vpclmulqdq	$0x10,%xmm9,%xmm11,%xmm8
+___
+    $text .= vaes256_wide_round(10) if $interleave;
+    return $text . <<'___';
+	vpshufd	$0x4e,%xmm11,%xmm11
+	vpxor	%xmm8,%xmm11,%xmm11
+	vpxor	%xmm10,%xmm11,%xmm14
+___
+}
+
+sub vaes256_wide_store {
+    my $text = "\tvbroadcasti128\t224(%rcx),%ymm15\n";
+    for my $i (0..7) {
+        my $offset = 32 * $i;
+        $text .= <<___;
+	vaesenclast	%ymm15,%ymm$i,%ymm$i
+	vpxor	$offset(%rdi),%ymm$i,%ymm$i
+	vmovdqu	%ymm$i,$offset(%rsi)
+___
+    }
+    return $text . "\tadd\t\$256,%rdi\n\tadd\t\$256,%rsi\n\tsub\t\$256,%rdx\n";
+}
+
+sub vaes256_wide_body {
+    my ($direction) = @_;
+    my $encrypt = $direction eq "enc";
+    my $text = <<___;
+.Lvaes256_${direction}_wide:
+	and	\$-256,%rdx
+	mov	%rdx,%r10
+	vmovdqa	%ymm4,%ymm12
+	vmovdqa	%xmm13,%xmm14
+	vmovdqa	%ymm5,%ymm13
+___
+    if ($encrypt) {
+        $text .= vaes256_wide_counters();
+        $text .= vaes256_wide_round($_) for (1..13);
+        $text .= vaes256_wide_store();
+    }
+    $text .= ".align\t32\n.Lvaes256_${direction}_wide_loop:\n";
+    # Decryption hashes the current input before any in-place plaintext stores.
+    $text .= $encrypt ? "\tlea\t-256(%rsi),%r11\n"
+                      : "\tmov\t%rdi,%r11\n";
+    $text .= vaes256_wide_counters();
+    for my $pair (0..7) {
+        $text .= vaes256_wide_multiply($pair, !$encrypt);
+        $text .= vaes256_wide_round($pair + 1);
+    }
+    $text .= vaes256_wide_reduce(1);
+    $text .= vaes256_wide_round($_) for (11..13);
+    $text .= vaes256_wide_store();
+    $text .= "\tjnz\t.Lvaes256_${direction}_wide_loop\n";
+    if ($encrypt) {
+        $text .= "\tlea\t-256(%rsi),%r11\n";
+        $text .= vaes256_wide_multiply($_) for (0..7);
+        $text .= vaes256_wide_reduce(0);
+    }
+    return $text . <<___;
+	vmovdqa	%ymm13,%ymm5
+	vmovdqa	%xmm14,%xmm13
+	vmovdqa	%ymm12,%ymm4
+	jmp	.Lvaes256_${direction}_finish
+___
+}
+
+sub vaes256_body {
+    my ($direction) = @_;
+    return "" unless $vaes256;
+    my $encrypt = $direction eq "enc";
+    my $text = <<___;
+	jmp	.Lvaes256_${direction}_done
+.align	32
+.Lvaes256_${direction}:
+	sub	\$416,%rsp
+	and	\$-32,%rsp
+	mov	240(%rcx),%ebx
+	mov	%ebx,%ebp
+	sub	\$9,%ebp
+	shl	\$4,%rbp
+	add	%rcx,%rbp
+	and	\$-128,%rdx
+	mov	%rdx,%r10
+___
+    for my $pair (0..3) {
+        my $index = 9 - 3 * $pair;
+        my $low = 32 + 16 * ($index + 1);
+        my $high = 32 + 16 * $index;
+        my $offset = 32 * $pair;
+        $text .= <<___;
+	vmovdqu	$low(%r9),%xmm0
+	vinserti128	\$1,$high(%r9),%ymm0,%ymm0
+	vmovdqa	%ymm0,$offset(%rsp)
+___
+    }
+    for my $pair (0..1) {
+        my $a = 64 * $pair;
+        my $b = $a + 32;
+        my $salt = 128 + 32 * $pair;
+        $text .= <<___;
+	vmovdqa	$a(%rsp),%ymm0
+	vmovdqa	$b(%rsp),%ymm1
+	vpshufd	\$0x4e,%ymm0,%ymm2
+	vpshufd	\$0x4e,%ymm1,%ymm3
+	vpxor	%ymm0,%ymm2,%ymm2
+	vpxor	%ymm1,%ymm3,%ymm3
+	vpunpcklqdq	%ymm3,%ymm2,%ymm2
+	vmovdqa	%ymm2,$salt(%rsp)
+___
+    }
+    $text .= <<___;
+	cmp	\$13,%ebx
+	jne	.Lvaes256_${direction}_powers_ready
+	cmp	\$4096,%rdx
+	jb	.Lvaes256_${direction}_powers_ready
+___
+    $text .= vaes256_wide_powers();
+    $text .= ".Lvaes256_${direction}_powers_ready:\n";
+    $text .= <<___;
+	vbroadcasti128	.Lbswap_mask(%rip),%ymm5
+	vmovdqu	(%r9),%xmm13
+	vpshufb	%xmm5,%xmm13,%xmm13
+	vbroadcasti128	(%r8),%ymm4
+	vpshufb	%ymm5,%ymm4,%ymm4
+	vpaddd	.Lvaes256_initial(%rip),%ymm4,%ymm4
+___
+    $text .= <<___;
+	cmp	\$13,%ebx
+	jne	.Lvaes256_${direction}_prime
+	cmp	\$4096,%rdx
+	jae	.Lvaes256_${direction}_wide
+.Lvaes256_${direction}_prime:
+___
+    if ($encrypt) {
+        $text .= vaes256_counters("${direction}_prime");
+        $text .= vaes256_round($_) for (1..9);
+        $text .= vaes256_store();
+        $text .= "\tcmp\t\$13,%ebx\n\tje\t.Lvaes256_enc_v4\n";
+    }
+    $text .= ".align\t32\n.Lvaes256_${direction}_loop:\n";
+    $text .= $encrypt ? "\tlea\t-128(%rsi),%r11\n"
+                      : "\tmov\t%rdi,%r11\n";
+    $text .= vaes256_counters("${direction}_loop");
+    for my $pair (0..3) {
+        $text .= vaes256_multiply($pair);
+        $text .= vaes256_round(2 * $pair + 1);
+        $text .= vaes256_round(2 * $pair + 2) if $pair != 3;
+    }
+    $text .= vaes256_reduce(1);
+    $text .= vaes256_store();
+    $text .= "\tjnz\t.Lvaes256_${direction}_loop\n";
+    if ($encrypt) {
+        $text .= "\tjmp\t.Lvaes256_enc_drain\n";
+        $text .= vaes256_encrypt_v4();
+        $text .= ".Lvaes256_enc_drain:\n";
+        $text .= "\tlea\t-128(%rsi),%r11\n";
+        $text .= vaes256_multiply($_) for (0..3);
+        $text .= vaes256_reduce(0);
+        $text .= "\tjmp\t.Lvaes256_enc_finish\n";
+    }
+    $text .= "\tjmp\t.Lvaes256_${direction}_finish\n" unless $encrypt;
+    $text .= vaes256_wide_body($direction);
+    $text .= ".Lvaes256_${direction}_finish:\n";
+    $text .= <<___;
+	vpshufb	%ymm5,%ymm4,%ymm4
+	vmovdqu	%xmm4,(%r8)
+	vpshufb	%xmm5,%xmm13,%xmm13
+	vmovdqu	%xmm13,(%r9)
+	vpxor	%ymm0,%ymm0,%ymm0
+___
+    $text .= "\tvmovdqa\t%ymm0,$_". "(%rsp)\n"
+        for (map { 32 * $_ } (0..11));
+    return $text . ".Lvaes256_${direction}_done:\n";
+}
+
+$vaes256_dec_dispatch = vaes256_dispatch("dec");
+$vaes256_enc_dispatch = vaes256_dispatch("enc");
+$vaes256_dec_body = vaes256_body("dec");
+$vaes256_enc_body = vaes256_body("enc");
+
 ($inp,$out,$len,$key,$ivp,$Xip)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9");
 
 ($Ii,$T1,$T2,$Hkey,
@@ -97,6 +748,7 @@ if ($avx>1) {{{
 
 $code=<<___;
 .text
+.extern	OPENSSL_ia32cap_P
 
 .type	_aesni_ctr32_ghash_6x,\@abi-omnipotent
 .align	32
@@ -459,6 +1111,7 @@ ___
 $code.=<<___;
 	vzeroupper
 
+$vaes256_dec_dispatch
 	vmovdqu		($ivp),$T1		# input counter value
 	add		\$-128,%rsp
 	mov		12($ivp),$counter
@@ -516,6 +1169,7 @@ $code.=<<___;
 	vpshufb		($const),$Xi,$Xi	# .Lbswap_mask
 	vmovdqu		$Xi,-0x40($Xip)		# output Xi
 
+$vaes256_dec_body
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
@@ -648,7 +1302,7 @@ _aesni_ctr32_6x:
 
 .globl	aesni_gcm_encrypt
 .type	aesni_gcm_encrypt,\@function,6
-.align	32
+.align	64
 aesni_gcm_encrypt:
 .cfi_startproc
 	xor	$ret,$ret
@@ -687,6 +1341,7 @@ ___
 $code.=<<___;
 	vzeroupper
 
+$vaes256_enc_dispatch
 	vmovdqu		($ivp),$T1		# input counter value
 	add		\$-128,%rsp
 	mov		12($ivp),$counter
@@ -915,6 +1570,7 @@ $code.=<<___;
 	vpshufb		($const),$Xi,$Xi	# .Lbswap_mask
 	vmovdqu		$Xi,-0x40($Xip)		# output Xi
 
+$vaes256_enc_body
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
@@ -964,6 +1620,25 @@ $code.=<<___;
 	.byte	2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 .Lone_lsb:
 	.byte	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+.align	32
+.Lvaes256_initial:
+	.long	0,0,0,0,1,0,0,0
+.Lvaes256_two:
+	.long	2,0,0,0,2,0,0,0
+.Lvaes256_four:
+	.long	4,0,0,0,4,0,0,0
+.Lvaes256_six:
+	.long	6,0,0,0,6,0,0,0
+.Lvaes256_eight:
+	.long	8,0,0,0,8,0,0,0
+.Lvaes256_ten:
+	.long	10,0,0,0,10,0,0,0
+.Lvaes256_twelve:
+	.long	12,0,0,0,12,0,0,0
+.Lvaes256_fourteen:
+	.long	14,0,0,0,14,0,0,0
+.Lvaes256_sixteen:
+	.long	16,0,0,0,16,0,0,0
 .asciz	"AES-NI GCM module for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 .align	64
