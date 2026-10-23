@@ -246,6 +246,15 @@ policy evaluation.
 
 This variable is not considered security-sensitive.
 
+=item B<OPENSSL_VMCLOCK>
+
+Specifies a file that the default provider's DRBGs read in place of the
+VMClock device F</dev/vmclock0>, whose generation signal makes them reseed
+after the virtual machine is restored from a snapshot or migrated. It is
+meant for tests.
+
+This variable is considered a security-sensitive environment variable.
+
 =item B<OPENSSL_WIN32_UTF8>
 
 If set, then L<UI_OpenSSL(3)> returns UTF-8 encoded strings, rather than
