@@ -5751,3 +5751,5 @@ PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
 PKCS12_check_version                    ?	4_2_0	EXIST::FUNCTION:
 ASN1_item_sign_pkey_ctx                 ?	4_2_0	EXIST::FUNCTION:
 ASN1_item_verify_pkey_ctx               ?	4_2_0	EXIST::FUNCTION:
+X509_verify_pkey_ctx                    ?	4_2_0	EXIST::FUNCTION:
+X509_sign_pkey_ctx                      ?	4_2_0	EXIST::FUNCTION:
