@@ -880,6 +880,25 @@ int dtls_record_from_retained_epoch(SSL_CONNECTION *s)
         && s->s3.tmp.record_epoch != dtls1_get_epoch(s, SSL3_CC_READ);
 }
 
+/*
+ * Is |msg_hdr| a ClientHello with message sequence 1 on a listener's server
+ * connection which has received no message?
+ */
+static int dtls1_is_listener_second_client_hello(const SSL_CONNECTION *s,
+    const struct hm_header_st *msg_hdr)
+{
+#if defined(OPENSSL_NO_DTLS)
+    return 0;
+#else
+    return s->server
+        && s->d1->listener != NULL
+        && s->statem.hand_state == TLS_ST_BEFORE
+        && s->d1->handshake_read_seq == 0
+        && msg_hdr->type == SSL3_MT_CLIENT_HELLO
+        && msg_hdr->seq == 1;
+#endif /* defined(OPENSSL_NO_DTLS) */
+}
+
 int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr)
 {
@@ -1186,6 +1205,27 @@ redo:
     if (msg_hdr.frag_len > s->rlayer.tlsrecs[s->rlayer.curr_rec].length) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_LENGTH);
         goto f_err;
+    }
+
+    if (dtls1_is_listener_second_client_hello(s, &msg_hdr)) {
+        /*
+         * The client's first ClientHello and the HVR/HRR answering it were
+         * each message 0, so both directions continue from message 1.
+         */
+        s->d1->handshake_read_seq = 1;
+        s->d1->handshake_write_seq = 1;
+        s->d1->next_handshake_write_seq = 1;
+        /*
+         * The client has seen the records carrying the HVR/HRR. Records
+         * numbered from this ClientHello's record on are new to it (RFC 6347,
+         * section 4.2.1).
+         */
+        if (s->rlayer.wrlmethod->set_sequence == NULL
+            || !s->rlayer.wrlmethod->set_sequence(s->rlayer.wrl,
+                s->rlayer.tlsrecs[s->rlayer.curr_rec].seq_num)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
     }
 
     /*
