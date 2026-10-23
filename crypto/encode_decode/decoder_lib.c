@@ -1192,6 +1192,8 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         data->flag_construct_called = new_data.flag_construct_called;
 
+        if (!ok)
+            ossl_decoder_ctx_set_harderr(new_data.ctx);
         /* Break on error or if we tried to construct an object already */
         if (!ok || data->flag_construct_called) {
             ERR_clear_last_mark();

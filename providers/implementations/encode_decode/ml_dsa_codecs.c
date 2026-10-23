@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/core_names.h>
 #include "internal/encoder.h"
+#include "internal/secret_check.h"
 #include "prov/ml_dsa.h"
 #include "prov/ml_dsa_codecs.h"
 
@@ -254,6 +255,12 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
     if (p8fmt->priv_length > 0)
         priv = buf + p8fmt->priv_offset;
     /* Any OQS public key content is ignored */
+
+    if (seed != NULL && ossl_secret_check_enabled()
+        && !ossl_secret_bytes_check(seed, ML_DSA_SEED_BYTES, 0)) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_SECRET_NOT_KEY_MATERIAL);
+        goto end;
+    }
 
     if (ossl_ml_dsa_set_prekey(key, 0, 0,
             seed, ML_DSA_SEED_BYTES, priv, v->sk_len))
