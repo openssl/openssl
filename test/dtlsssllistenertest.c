@@ -7262,6 +7262,96 @@ static int test_dtls_listener_accept_queue_capped(void)
 }
 
 /*
+ * Regression test: a client whose pending connection was reaped after its
+ * HVR/HRR must still reach the accept queue. Its second ClientHello, with a
+ * valid cookie, arrives at a fresh pending connection.
+ */
+static int test_dtls_listener_ch2_after_pending_reaped_int(int version)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client = NULL, *accepted = NULL;
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1, client_fd = -1, testresult = 0;
+    uint64_t fake_now_secs = 1700000000;
+    DTLS_LISTENER *dl;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version, &sctx, &cctx, cert,
+            privkey))
+        || !TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd))
+        || !TEST_true(SSL_set_generic_value_uint(listener,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 1000))
+        || !TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
+            test_fake_now_cb, &fake_now_secs))
+        || !TEST_true(create_dtls_client_for_addr(cctx, server_addr, &client,
+            &client_fd)))
+        goto end;
+    dl = (DTLS_LISTENER *)listener;
+
+    /* The first ClientHello is answered with an HVR/HRR */
+    if (!client_step(client)
+        || !TEST_int_gt(BIO_socket_wait(server_fd, 1,
+                            time(NULL) + DTLS_READ_TIMEOUT_SEC),
+            0))
+        goto end;
+    listener_tick(listener);
+    if (!TEST_int_gt(BIO_socket_wait(client_fd, 1,
+                         time(NULL) + DTLS_READ_TIMEOUT_SEC),
+            0))
+        goto end;
+
+    /* The pending connection outlives its timeout and is reaped */
+    fake_now_secs += 2;
+    listener_tick(listener);
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns), 0))
+        goto end;
+
+    /* The second ClientHello carries a cookie that is still valid */
+    if (!client_step(client)
+        || !TEST_int_gt(BIO_socket_wait(server_fd, 1,
+                            time(NULL) + DTLS_READ_TIMEOUT_SEC),
+            0))
+        goto end;
+    listener_tick(listener);
+    if (!TEST_size_t_eq(SSL_get_accept_connection_queue_len(listener), 1)
+        || !TEST_ptr(accepted = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_true(create_ssl_connection(accepted, client, SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_version(accepted), version))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(accepted);
+    SSL_free(client);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int test_dtls_listener_ch2_after_pending_reaped(void)
+{
+    int ok = 1;
+
+#if !defined(OPENSSL_NO_DTLS1_2)
+    if (!test_dtls_listener_ch2_after_pending_reaped_int(DTLS1_2_VERSION))
+        ok = 0;
+#endif /* !defined(OPENSSL_NO_DTLS1_2) */
+#if !defined(OPENSSL_NO_DTLS1_3)
+    if (!test_dtls_listener_ch2_after_pending_reaped_int(DTLS1_3_VERSION))
+        ok = 0;
+#endif /* !defined(OPENSSL_NO_DTLS1_3) */
+    return ok;
+}
+
+/*
  * Regression test for SSL_LISTENER_FLAG_NO_VALIDATE: a connection is
  * queued on its first datagram, so only the admission budget bounds the
  * accept queue there. With the budget at ACCEPT_CAP_TEST_LIMIT, at most
@@ -8602,6 +8692,7 @@ int setup_tests(void)
      * DTLS version, the NO_VALIDATE one runs a single version.
      */
     ADD_TEST(test_dtls_listener_accept_queue_capped);
+    ADD_TEST(test_dtls_listener_ch2_after_pending_reaped);
     ADD_TEST(test_dtls_listener_accept_queue_novalidate_capped);
     /* Demux free-list bound regression test; runs every enabled version */
     ADD_TEST(test_dtls_listener_flood_then_handshake);
