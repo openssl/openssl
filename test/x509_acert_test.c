@@ -11,6 +11,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509_acert.h>
 
+#include "crypto/x509_acert.h"
 #include "testutil.h"
 
 static int test_print_acert(int idx)
@@ -71,6 +72,56 @@ static int test_acert_sign(void)
     ret = 1;
 
 err:
+    BIO_free(bp);
+    X509_ACERT_free(acert);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/* X509_ACERT_sign_pkey_ctx() / X509_ACERT_verify_pkey_ctx() round trip */
+static int test_acert_sign_verify_pkey_ctx(void)
+{
+    int ret = 0;
+    const char *acert_file;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_SIGNATURE *sigalg = NULL;
+    BIO *bp = NULL;
+    X509_ACERT *acert = NULL;
+
+    sigalg = EVP_SIGNATURE_fetch(NULL, "RSA-SHA256", NULL);
+    if (sigalg == NULL)
+        return TEST_skip("signature algorithm RSA-SHA256 not available");
+
+    if (!TEST_ptr(acert_file = test_get_argument(0)))
+        return 0;
+
+    if (!TEST_ptr(pkey = EVP_RSA_gen(2048))
+        || !TEST_ptr(bp = BIO_new_file(acert_file, "r"))
+        || !TEST_ptr(acert = PEM_read_bio_X509_ACERT(bp, NULL, NULL, NULL))
+        || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_sign_message_init(pctx, sigalg, NULL), 0)
+        || !TEST_int_gt(X509_ACERT_sign_pkey_ctx(acert, pctx), 0))
+        goto err;
+
+    EVP_PKEY_CTX_free(pctx);
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_eq(X509_ACERT_verify_pkey_ctx(acert, pctx), 1)
+        || !TEST_int_eq(X509_ACERT_verify(acert, pkey), 1))
+        goto err;
+
+    /* A corrupted signature must not verify */
+    acert->signature.data[0] ^= 0x01;
+    EVP_PKEY_CTX_free(pctx);
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_ne(X509_ACERT_verify_pkey_ctx(acert, pctx), 1))
+        goto err;
+
+    ret = 1;
+
+err:
+    EVP_PKEY_CTX_free(pctx);
+    EVP_SIGNATURE_free(sigalg);
     BIO_free(bp);
     X509_ACERT_free(acert);
     EVP_PKEY_free(pkey);
@@ -167,6 +218,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_print_acert, (int)cnt);
     ADD_TEST(test_acert_sign);
+    ADD_TEST(test_acert_sign_verify_pkey_ctx);
     ADD_ALL_TESTS(test_object_group_attr, OSSL_NELEM(ietf_syntax_tests));
 
     return 1;
