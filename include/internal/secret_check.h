@@ -87,21 +87,14 @@ int ossl_secret_bn_check(const BIGNUM *secret, size_t width_bits);
  * @brief Report whether callers should apply the secret check.
  *
  * The initial value is 0 when the library is configured with
- * no-secret-check and 1 otherwise. The check functions themselves are
- * unconditional; this switch is consulted by the code that decides
- * whether to call them. When the value cannot be read it is reported as
- * enabled.
+ * no-secret-check and 1 otherwise; CRYPTO_secret_check_enable() and
+ * CRYPTO_secret_check_disable() change it. The check functions
+ * themselves are unconditional; this switch is consulted by the code
+ * that decides whether to call them. When the value cannot be read it
+ * is reported as enabled.
  *
  * @returns 1 if the check is enabled, 0 if it is disabled
  */
 int ossl_secret_check_enabled(void);
-
-/**
- * @brief Enable or disable the secret check for the whole process.
- *
- * @param enabled 1 to enable the check, 0 to disable it
- * @returns 1 on success, 0 on failure
- */
-int ossl_secret_check_set_enabled(int enabled);
 
 #endif /* !defined(OSSL_INTERNAL_SECRET_CHECK_H) */

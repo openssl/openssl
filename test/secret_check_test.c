@@ -194,15 +194,18 @@ static int test_switch(void)
 
     if (!TEST_int_eq(ossl_secret_check_enabled(), initial))
         return 0;
-    if (!TEST_true(ossl_secret_check_set_enabled(0))
+    if (!TEST_true(CRYPTO_secret_check_disable())
         || !TEST_int_eq(ossl_secret_check_enabled(), 0)
-        || !TEST_true(ossl_secret_check_set_enabled(1))
+        || !TEST_true(CRYPTO_secret_check_enable())
         || !TEST_int_eq(ossl_secret_check_enabled(), 1))
         goto err;
     ret = 1;
 err:
     /* leave the switch as the build configured it */
-    ossl_secret_check_set_enabled(initial);
+    if (initial)
+        CRYPTO_secret_check_enable();
+    else
+        CRYPTO_secret_check_disable();
     return ret;
 }
 

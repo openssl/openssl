@@ -153,7 +153,12 @@ int ossl_secret_check_enabled(void)
     return enabled;
 }
 
-int ossl_secret_check_set_enabled(int enabled)
+int CRYPTO_secret_check_enable(void)
 {
-    return CRYPTO_atomic_store_int(&secret_check_enabled, enabled != 0, NULL);
+    return CRYPTO_atomic_store_int(&secret_check_enabled, 1, NULL);
+}
+
+int CRYPTO_secret_check_disable(void)
+{
+    return CRYPTO_atomic_store_int(&secret_check_enabled, 0, NULL);
 }
