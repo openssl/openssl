@@ -140,6 +140,15 @@ int X509_verify(const X509 *a, EVP_PKEY *r)
         a->distinguishing_id, r, a->libctx, a->propq);
 }
 
+int X509_verify_pkey_ctx(const X509 *a, EVP_PKEY_CTX *pctx)
+{
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
+        return 0;
+
+    return ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
+        &a->signature, &a->cert_info, pctx);
+}
+
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
     const char *propq)
 {
@@ -158,6 +167,17 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
     return X509_REQ_verify_ex(a, r, NULL, NULL);
 }
 
+int X509_REQ_verify_pkey_ctx(X509_REQ *a, EVP_PKEY_CTX *pctx)
+{
+    if (X509_REQ_get_version(a) != X509_REQ_VERSION_1) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_VERSION);
+        return -1;
+    }
+
+    return ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
+        &a->sig_alg, a->signature, &a->req_info, pctx);
+}
+
 int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->acinfo->signature) != 0)
@@ -166,6 +186,15 @@ int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r)
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_ACERT_INFO), &a->sig_alg,
         &a->signature, a->acinfo,
         NULL, r, NULL, NULL);
+}
+
+int X509_ACERT_verify_pkey_ctx(X509_ACERT *a, EVP_PKEY_CTX *pctx)
+{
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->acinfo->signature) != 0)
+        return 0;
+
+    return ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO),
+        &a->sig_alg, &a->signature, a->acinfo, pctx);
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
@@ -234,6 +263,25 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         &x->sig_alg, &x->signature, &x->cert_info, ctx);
 }
 
+int X509_sign_pkey_ctx(X509 *x, EVP_PKEY_CTX *pctx)
+{
+    const STACK_OF(X509_EXTENSION) *exts;
+
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if ((exts = X509_get0_extensions(x)) != NULL && bad_keyid_exts(exts))
+        return 0;
+    if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
+        && !X509_set_version(x, X509_VERSION_3))
+        return 0;
+    x->cert_info.enc.modified = 1;
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
+        &x->cert_info.signature,
+        &x->sig_alg, &x->signature, &x->cert_info, pctx);
+}
+
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
     int timeout, const ASN1_ITEM *it)
 {
@@ -299,6 +347,25 @@ int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
         ctx);
 }
 
+int X509_REQ_sign_pkey_ctx(X509_REQ *x, EVP_PKEY_CTX *pctx)
+{
+    STACK_OF(X509_EXTENSION) *exts;
+    int bad = 0;
+
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if ((exts = ossl_x509_req_get1_extensions_by_nid(x, NID_ext_req)) != NULL)
+        bad = bad_keyid_exts(exts);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    if (bad)
+        return 0;
+    x->req_info.enc.modified = 1;
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
+        &x->sig_alg, NULL, x->signature, &x->req_info, pctx);
+}
+
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     if (x == NULL) {
@@ -323,6 +390,18 @@ int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
         &x->crl, ctx);
 }
 
+int X509_CRL_sign_pkey_ctx(X509_CRL *x, EVP_PKEY_CTX *pctx)
+{
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    x->crl.enc.modified = 1;
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
+        &x->crl.sig_alg, &x->sig_alg, &x->signature,
+        &x->crl, pctx);
+}
+
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
     return (X509_CRL *)simple_get_asn1(url, bio, rbio, timeout,
@@ -342,6 +421,13 @@ int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx)
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO),
         &x->sig_alg, &x->acinfo->signature, &x->signature,
         x->acinfo, ctx);
+}
+
+int X509_ACERT_sign_pkey_ctx(X509_ACERT *x, EVP_PKEY_CTX *pctx)
+{
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO),
+        &x->sig_alg, &x->acinfo->signature, &x->signature,
+        x->acinfo, pctx);
 }
 
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)

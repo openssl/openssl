@@ -2,10 +2,10 @@
 
 =head1 NAME
 
-X509_sign, X509_sign_ctx,
-X509_REQ_sign, X509_REQ_sign_ctx,
-X509_ACERT_sign, X509_ACERT_sign_ctx,
-X509_CRL_sign, X509_CRL_sign_ctx -
+X509_sign, X509_sign_ctx, X509_sign_pkey_ctx,
+X509_REQ_sign, X509_REQ_sign_ctx, X509_REQ_sign_pkey_ctx,
+X509_ACERT_sign, X509_ACERT_sign_ctx, X509_ACERT_sign_pkey_ctx,
+X509_CRL_sign, X509_CRL_sign_ctx, X509_CRL_sign_pkey_ctx -
 sign certificate, certificate request, or CRL signature
 
 =head1 SYNOPSIS
@@ -14,30 +14,36 @@ sign certificate, certificate request, or CRL signature
 
  int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
+ int X509_sign_pkey_ctx(X509 *x, EVP_PKEY_CTX *pctx);
 
  int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
+ int X509_REQ_sign_pkey_ctx(X509_REQ *x, EVP_PKEY_CTX *pctx);
 
  int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
+ int X509_CRL_sign_pkey_ctx(X509_CRL *x, EVP_PKEY_CTX *pctx);
 
  #include <openssl/x509_acert.h>
 
  int X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx);
+ int X509_ACERT_sign_pkey_ctx(X509_ACERT *x, EVP_PKEY_CTX *pctx);
 
 =head1 DESCRIPTION
 
 X509_sign() signs certificate I<x> using private key I<pkey> and message
 digest I<md> and sets the signature in I<x>. X509_sign_ctx() also signs
 certificate I<x> but uses the parameters contained in digest context I<ctx>.
+X509_sign_pkey_ctx() signs with the B<EVP_PKEY_CTX> I<pctx> directly,
+without a digest context; see L<ASN1_item_sign(3)>.
 If the certificate information includes X.509 extensions,
-these two functions make sure that the certificate bears X.509 version 3.
+these functions make sure that the certificate bears X.509 version 3.
 
-X509_REQ_sign(), X509_REQ_sign_ctx(),
-X509_ACERT_sign(), X509_ACERT_sign_ctx(),
-X509_CRL_sign(), and X509_CRL_sign_ctx()
-sign certificate requests and CRLs, respectively.
+X509_REQ_sign(), X509_REQ_sign_ctx(), X509_REQ_sign_pkey_ctx(),
+X509_ACERT_sign(), X509_ACERT_sign_ctx(), X509_ACERT_sign_pkey_ctx(),
+X509_CRL_sign(), X509_CRL_sign_ctx(), and X509_CRL_sign_pkey_ctx()
+sign certificate requests, attribute certificates and CRLs, respectively.
 
 =head1 NOTES
 
@@ -72,6 +78,10 @@ L<X509_REQ_verify_ex(3)>, L<X509_REQ_verify(3)>,
 L<X509_CRL_verify(3)>
 
 =head1 HISTORY
+
+The X509_sign_pkey_ctx(), X509_REQ_sign_pkey_ctx(),
+X509_CRL_sign_pkey_ctx() and X509_ACERT_sign_pkey_ctx() functions were
+added in OpenSSL 4.2.
 
 The X509_sign(), X509_REQ_sign() and X509_CRL_sign() functions are
 available in all versions of OpenSSL.

@@ -328,12 +328,15 @@ void *X509_CRL_get_meth_data(X509_CRL *crl);
 const char *X509_verify_cert_error_string(long n);
 
 int X509_verify(const X509 *a, EVP_PKEY *r);
+int X509_verify_pkey_ctx(const X509 *a, EVP_PKEY_CTX *pctx);
 int X509_self_signed(const X509 *cert, int verify_signature);
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
     const char *propq);
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
+int X509_REQ_verify_pkey_ctx(X509_REQ *a, EVP_PKEY_CTX *pctx);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
+int X509_CRL_verify_pkey_ctx(X509_CRL *a, EVP_PKEY_CTX *pctx);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 
 NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len);
@@ -349,10 +352,13 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *alg,
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
+int X509_sign_pkey_ctx(X509 *x, EVP_PKEY_CTX *pctx);
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
+int X509_REQ_sign_pkey_ctx(X509_REQ *x, EVP_PKEY_CTX *pctx);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
+int X509_CRL_sign_pkey_ctx(X509_CRL *x, EVP_PKEY_CTX *pctx);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
@@ -652,6 +658,12 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
     const void *data, EVP_MD_CTX *ctx);
+int ASN1_item_sign_pkey_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+    X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+    const void *data, EVP_PKEY_CTX *pctx);
+int ASN1_item_verify_pkey_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+    const ASN1_BIT_STRING *signature, const void *data,
+    EVP_PKEY_CTX *pctx);
 
 #define X509_VERSION_1 0
 #define X509_VERSION_2 1

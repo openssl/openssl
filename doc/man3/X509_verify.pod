@@ -2,9 +2,10 @@
 
 =head1 NAME
 
-X509_verify, X509_self_signed,
-X509_REQ_verify_ex, X509_REQ_verify,
-X509_CRL_verify, X509_ACERT_verify -
+X509_verify, X509_verify_pkey_ctx, X509_self_signed,
+X509_REQ_verify_ex, X509_REQ_verify, X509_REQ_verify_pkey_ctx,
+X509_CRL_verify, X509_CRL_verify_pkey_ctx,
+X509_ACERT_verify, X509_ACERT_verify_pkey_ctx -
 verify certificate, certificate request, or CRL signature
 
 =head1 SYNOPSIS
@@ -12,15 +13,19 @@ verify certificate, certificate request, or CRL signature
  #include <openssl/x509.h>
 
  int X509_verify(X509 *x, EVP_PKEY *pkey);
+ int X509_verify_pkey_ctx(X509 *x, EVP_PKEY_CTX *pctx);
  int X509_self_signed(const X509 *cert, int verify_signature);
 
  int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
                         const char *propq);
  int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
+ int X509_REQ_verify_pkey_ctx(X509_REQ *a, EVP_PKEY_CTX *pctx);
  int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
+ int X509_CRL_verify_pkey_ctx(X509_CRL *a, EVP_PKEY_CTX *pctx);
 
  #include <openssl/x509_acert.h>
  int X509_ACERT_verify(X509_CRL *a, EVP_PKEY *r);
+ int X509_ACERT_verify_pkey_ctx(X509_ACERT *a, EVP_PKEY_CTX *pctx);
 
 =head1 DESCRIPTION
 
@@ -37,6 +42,13 @@ for explicitly trusted certificates this verification is not worth the effort.
 X509_REQ_verify_ex(), X509_REQ_verify(), X509_CRL_verify() and X509_ACERT_verify()
 verify the signatures of certificate requests, CRLs and attribute certificates
 respectively.
+
+X509_verify_pkey_ctx(), X509_REQ_verify_pkey_ctx(),
+X509_CRL_verify_pkey_ctx() and X509_ACERT_verify_pkey_ctx() do the same
+with a key-carrying B<EVP_PKEY_CTX> instead of an B<EVP_PKEY>, initialising
+it for message verification with the signature algorithm named by the
+signature AlgorithmIdentifier, fetched by its OID; see
+L<ASN1_item_sign(3)>.
 
 =head1 RETURN VALUES
 
@@ -69,6 +81,10 @@ L<X509_verify_cert(3)>,
 L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
+
+The X509_verify_pkey_ctx(), X509_REQ_verify_pkey_ctx(),
+X509_CRL_verify_pkey_ctx() and X509_ACERT_verify_pkey_ctx() functions were
+added in OpenSSL 4.2.
 
 The X509_verify(), X509_REQ_verify(), and X509_CRL_verify()
 functions are available in all versions of OpenSSL.
