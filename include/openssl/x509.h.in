@@ -334,6 +334,7 @@ int X509_self_signed(const X509 *cert, int verify_signature);
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
     const char *propq);
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
+int X509_REQ_verify_pkey_ctx(X509_REQ *a, EVP_PKEY_CTX *pctx);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
 
@@ -353,6 +354,7 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
 int X509_sign_pkey_ctx(X509 *x, EVP_PKEY_CTX *pctx);
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
+int X509_REQ_sign_pkey_ctx(X509_REQ *x, EVP_PKEY_CTX *pctx);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);

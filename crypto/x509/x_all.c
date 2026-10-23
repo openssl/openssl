@@ -167,6 +167,17 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
     return X509_REQ_verify_ex(a, r, NULL, NULL);
 }
 
+int X509_REQ_verify_pkey_ctx(X509_REQ *a, EVP_PKEY_CTX *pctx)
+{
+    if (X509_REQ_get_version(a) != X509_REQ_VERSION_1) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_VERSION);
+        return -1;
+    }
+
+    return ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
+        &a->sig_alg, a->signature, &a->req_info, pctx);
+}
+
 int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->acinfo->signature) != 0)
@@ -325,6 +336,25 @@ int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
         &x->sig_alg, NULL, x->signature, &x->req_info,
         ctx);
+}
+
+int X509_REQ_sign_pkey_ctx(X509_REQ *x, EVP_PKEY_CTX *pctx)
+{
+    STACK_OF(X509_EXTENSION) *exts;
+    int bad = 0;
+
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if ((exts = ossl_x509_req_get1_extensions_by_nid(x, NID_ext_req)) != NULL)
+        bad = bad_keyid_exts(exts);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    if (bad)
+        return 0;
+    x->req_info.enc.modified = 1;
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
+        &x->sig_alg, NULL, x->signature, &x->req_info, pctx);
 }
 
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
