@@ -144,6 +144,15 @@ digest size when signing to comply with FIPS 186-4 section 5.5.
 
 =back
 
+=item "algorithm-id-params" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID_PARAMS>) <octet string>
+
+B<"RSA-PSS" only.>  Sets the signature parameters the same way the
+individual "digest", "mgf1-digest" and "saltlen" parameters do, but
+taken from a DER encoded RSASSA-PSS-params value (RFC 8017, A.2.3), as
+found in an AlgorithmIdentifier parameters field.  Elided elements take
+their ASN.1 DEFAULT values.  When both forms are given, the individual
+parameters take precedence over this one.
+
 =back
 
 The OpenSSL FIPS provider also supports the following parameters:
