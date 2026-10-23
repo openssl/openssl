@@ -381,9 +381,17 @@ static int test_dsa_sig_infinite_loop(void)
         || !TEST_int_le(signature_len, signature_len0))
         goto err;
 
-    /* Test using a private key of zero fails - this causes an infinite loop without the retry test */
-    if (!TEST_true(DSA_set0_key(dsa, NULL, badpriv)))
+    /*
+     * Test using a private key of zero fails - this causes an infinite loop
+     * without the retry test. The secret check refuses a zero key, so it is
+     * disabled while the key is set.
+     */
+    if (!TEST_true(CRYPTO_secret_check_disable()))
         goto err;
+    ret = TEST_true(DSA_set0_key(dsa, NULL, badpriv));
+    if (!TEST_true(CRYPTO_secret_check_enable()) || !ret)
+        goto err;
+    ret = 0;
     badpriv = NULL;
     if (!TEST_false(DSA_sign(0, msg, sizeof(msg), signature, &signature_len, dsa)))
         goto err;
