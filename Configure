@@ -562,6 +562,7 @@ my @disablables_features = (
     "unstable-qlog",
     "rdrand",
     "rfc3779",
+    "secret-check",
     "secure-memory",
     "shared",
     "sm2-precomp",
