@@ -13,6 +13,7 @@
 #include <openssl/x509.h>
 #include <openssl/core_names.h>
 #include "internal/encoder.h"
+#include "internal/secret_check.h"
 #include "prov/ml_kem.h"
 #include "prov/ml_kem_codecs.h"
 
@@ -247,6 +248,12 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         goto end;
 
     if (p8fmt->seed_length > 0) {
+        if (ossl_secret_check_enabled()
+            && !ossl_secret_bytes_check(buf + p8fmt->seed_offset,
+                ML_KEM_SEED_BYTES, 0)) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_SECRET_NOT_KEY_MATERIAL);
+            goto end;
+        }
         if (!ossl_ml_kem_set_seed(buf + p8fmt->seed_offset,
                 ML_KEM_SEED_BYTES, key)) {
             ERR_raise_data(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR,
