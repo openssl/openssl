@@ -919,6 +919,10 @@ DEPEND[html/man3/CRYPTO_memcmp.html]=man3/CRYPTO_memcmp.pod
 GENERATE[html/man3/CRYPTO_memcmp.html]=man3/CRYPTO_memcmp.pod
 DEPEND[man/man3/CRYPTO_memcmp.3]=man3/CRYPTO_memcmp.pod
 GENERATE[man/man3/CRYPTO_memcmp.3]=man3/CRYPTO_memcmp.pod
+DEPEND[html/man3/CRYPTO_secret_check_enable.html]=man3/CRYPTO_secret_check_enable.pod
+GENERATE[html/man3/CRYPTO_secret_check_enable.html]=man3/CRYPTO_secret_check_enable.pod
+DEPEND[man/man3/CRYPTO_secret_check_enable.3]=man3/CRYPTO_secret_check_enable.pod
+GENERATE[man/man3/CRYPTO_secret_check_enable.3]=man3/CRYPTO_secret_check_enable.pod
 DEPEND[html/man3/CTLOG_STORE_get0_log_by_id.html]=man3/CTLOG_STORE_get0_log_by_id.pod
 GENERATE[html/man3/CTLOG_STORE_get0_log_by_id.html]=man3/CTLOG_STORE_get0_log_by_id.pod
 DEPEND[man/man3/CTLOG_STORE_get0_log_by_id.3]=man3/CTLOG_STORE_get0_log_by_id.pod
@@ -3305,6 +3309,7 @@ html/man3/CONF_modules_load_file.html \
 html/man3/CRYPTO_THREAD_run_once.html \
 html/man3/CRYPTO_get_ex_new_index.html \
 html/man3/CRYPTO_memcmp.html \
+html/man3/CRYPTO_secret_check_enable.html \
 html/man3/CTLOG_STORE_get0_log_by_id.html \
 html/man3/CTLOG_STORE_new.html \
 html/man3/CTLOG_new.html \
@@ -3986,6 +3991,7 @@ man/man3/CONF_modules_load_file.3 \
 man/man3/CRYPTO_THREAD_run_once.3 \
 man/man3/CRYPTO_get_ex_new_index.3 \
 man/man3/CRYPTO_memcmp.3 \
+man/man3/CRYPTO_secret_check_enable.3 \
 man/man3/CTLOG_STORE_get0_log_by_id.3 \
 man/man3/CTLOG_STORE_new.3 \
 man/man3/CTLOG_new.3 \
