@@ -856,7 +856,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex,
         if ((n = sscanf(tok_begin,
                  " stfle : %" STR(LEN) "[^:] : "
                                        "%" STR(LEN) "[^:] : %" STR(LEN) "s ",
-                 tok[0], tok[1], tok[2]))) {
+                 tok[0], tok[1], tok[2])) > 0) {
             for (i = 0; i < n; i++) {
                 off = (tok[i][0] == '~') ? 1 : 0;
                 if (sscanf(tok[i] + off, "%llx", &cap->stfle[i]) != 1)
