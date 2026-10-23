@@ -188,6 +188,15 @@ int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r)
         NULL, r, NULL, NULL);
 }
 
+int X509_ACERT_verify_pkey_ctx(X509_ACERT *a, EVP_PKEY_CTX *pctx)
+{
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->acinfo->signature) != 0)
+        return 0;
+
+    return ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO),
+        &a->sig_alg, &a->signature, a->acinfo, pctx);
+}
+
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 {
     return ASN1_item_verify(ASN1_ITEM_rptr(NETSCAPE_SPKAC),
@@ -412,6 +421,13 @@ int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx)
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO),
         &x->sig_alg, &x->acinfo->signature, &x->signature,
         x->acinfo, ctx);
+}
+
+int X509_ACERT_sign_pkey_ctx(X509_ACERT *x, EVP_PKEY_CTX *pctx)
+{
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO),
+        &x->sig_alg, &x->acinfo->signature, &x->signature,
+        x->acinfo, pctx);
 }
 
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)

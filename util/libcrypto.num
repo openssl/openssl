@@ -5755,3 +5755,5 @@ X509_REQ_verify_pkey_ctx                ?	4_2_0	EXIST::FUNCTION:
 X509_REQ_sign_pkey_ctx                  ?	4_2_0	EXIST::FUNCTION:
 X509_CRL_verify_pkey_ctx                ?	4_2_0	EXIST::FUNCTION:
 X509_CRL_sign_pkey_ctx                  ?	4_2_0	EXIST::FUNCTION:
+X509_ACERT_sign_pkey_ctx                ?	4_2_0	EXIST::FUNCTION:
+X509_ACERT_verify_pkey_ctx              ?	4_2_0	EXIST::FUNCTION:
