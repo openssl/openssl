@@ -7081,13 +7081,13 @@ static void queue_cap_msg_cb(int write_p, int version, int content_type,
 }
 
 /*
- * Accelerated DTLS retransmit policy for these tests: 100 ms initial,
+ * Accelerated DTLS retransmit policy for these tests: 10 ms initial,
  * doubling, capped at 6 s, so retransmit-driven phases stay fast.
  */
 static unsigned int queue_cap_timer_cb(SSL *ssl, unsigned int us)
 {
     if (us == 0)
-        return 100000;
+        return 10000;
     return us * 2 > 6000000 ? 6000000 : us * 2;
 }
 
@@ -7164,6 +7164,11 @@ static int test_dtls_listener_accept_queue_capped_int(int version)
     /* Bound the runtime of the retransmit-driven phases below. */
     DTLS_set_timer_cb(client_a, queue_cap_timer_cb);
     DTLS_set_timer_cb(client_b, queue_cap_timer_cb);
+    /* Each ClientHello is one datagram, however often it is retransmitted */
+    SSL_set_options(client_a, SSL_OP_NO_QUERY_MTU);
+    SSL_set_mtu(client_a, 1800);
+    SSL_set_options(client_b, SSL_OP_NO_QUERY_MTU);
+    SSL_set_mtu(client_b, 1800);
 
     /* Phase 1: client A fills the accept queue to the cap. */
     if (!drive_client_to_promotion(listener, client_a, ACCEPT_CAP_TEST_LIMIT))
