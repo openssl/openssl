@@ -218,8 +218,10 @@ _____
         $create_configuration->($configuration_h, $configuration_h_in);
         $update_configuration->($configuration_h, $configuration_h_in);
 
-        $create_configuration->($apps_configuration_h, $apps_configuration_h_in);
-        $update_configuration->($apps_configuration_h, $apps_configuration_h_in);
+        unless ($disabled{apps}) {
+            $create_configuration->($apps_configuration_h, $apps_configuration_h_in);
+            $update_configuration->($apps_configuration_h, $apps_configuration_h_in);
+        }
 
         exit(0);
     }
