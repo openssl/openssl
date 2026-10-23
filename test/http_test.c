@@ -8,6 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Suppress deprecation warnings for OSSL_HTTP_parse_url(), which is tested
+ * until removal.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/http.h>
 #include <openssl/httperr.h>
 #include <openssl/pem.h>
@@ -245,13 +251,19 @@ static const struct {
     const char *url;
     const char *redirects[4];
     int success;
+    int reason; /* expected error reason if not success */
 } redirect_tests[] = {
-    { "https://server/start", { "http://server/end" }, 0 },
-    { "https://server/start", { "/relative", "http://server/end" }, 0 },
+    { "https://server/start", { "http://server/end" }, 0,
+        HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP },
+    { "https://server/start", { "/relative", "http://server/end" }, 0,
+        HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP },
     { "http://server/start",
-        { "https://server/secure", "/relative", "http://server/end" }, 0 },
-    { "http://server/start", { "/relative", "http://server/end" }, 1 },
-    { "https://server/start", { "/relative", "https://server/end" }, 1 },
+        { "https://server/secure", "/relative", "http://server/end" }, 0,
+        HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP },
+    { "http://server/start", { "/relative", "http://server/end" }, 1, 0 },
+    { "https://server/start", { "/relative", "https://server/end" }, 1, 0 },
+    { "http://server/start", { "other:80/end" }, 0,
+        HTTP_R_ERROR_PARSING_URL },
 };
 
 /* Replace each flushed request with the next response, using a single mem BIO. */
@@ -307,10 +319,90 @@ static int test_http_redirect(int idx)
         err = ERR_peek_last_error();
         res = TEST_ptr_null(rsp)
             && TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_HTTP)
-            && TEST_int_eq(ERR_GET_REASON(err), HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP);
+            && TEST_int_eq(ERR_GET_REASON(err), redirect_tests[idx].reason);
     }
 
 end:
+    BIO_free(rsp);
+    BIO_free(bio);
+    ERR_clear_error();
+    return res;
+}
+
+static const struct {
+    const char *url;
+    const char *request_line;
+} request_target_tests[] = {
+    { "http://server/p#f?q", "GET /p HTTP/1." },
+    { "http://server/p?q#f", "GET /p?q HTTP/1." },
+    { "http://server", "GET / HTTP/1." },
+    { "http://server?q", "GET /?q HTTP/1." },
+    { "HTTP://server/p", "GET /p HTTP/1." },
+    { "server:80/p", "GET /p HTTP/1." },
+    { "/p", "GET /p HTTP/1." },
+};
+
+/* Check the request line of each flushed request, and respond with text1. */
+static long http_request_target_cb(BIO *bio, int oper, const char *argp,
+    size_t len, int cmd, long argl, int ret, size_t *processed)
+{
+    const char *expected = BIO_get_callback_arg(bio);
+    char *req;
+    long req_len;
+
+    if (oper != (BIO_CB_CTRL | BIO_CB_RETURN))
+        return ret;
+    if (cmd == BIO_C_DO_STATE_MACHINE)
+        return 1; /* mock a successful connection */
+    if (cmd != BIO_CTRL_FLUSH)
+        return ret;
+    req_len = BIO_get_mem_data(bio, &req);
+    if (!TEST_long_ge(req_len, (long)strlen(expected))
+        || !TEST_strn_eq(req, expected, strlen(expected))
+        || !TEST_int_eq(BIO_reset(bio), 1))
+        return 0;
+    return BIO_puts(bio, "HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\n" text1) > 0;
+}
+
+static int test_http_request_target(int idx)
+{
+    BIO *bio = BIO_new(BIO_s_mem());
+    BIO *rsp = NULL;
+    int res;
+
+    if (!TEST_ptr(bio))
+        return 0;
+    BIO_set_callback_ex(bio, http_request_target_cb);
+    BIO_set_callback_arg(bio, (char *)request_target_tests[idx].request_line);
+    rsp = OSSL_HTTP_get(request_target_tests[idx].url, NULL, NULL, bio, NULL,
+        NULL, NULL, 0, NULL, NULL, 0, OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0);
+    res = TEST_ptr(rsp);
+    BIO_free(rsp);
+    BIO_free(bio);
+    return res;
+}
+
+static const char *const bad_get_urls[] = {
+    "ftp://server/p",
+    "http://server:0/p",
+    "http://server:65536/p",
+    "http://a@b@server/p",
+    "http://[v1.x]/p",
+    "http://ser ver/p",
+};
+
+static int test_http_get_bad_url(int idx)
+{
+    BIO *bio = BIO_new(BIO_s_mem());
+    BIO *rsp = NULL;
+    int res;
+
+    if (!TEST_ptr(bio))
+        return 0;
+    rsp = OSSL_HTTP_get(bad_get_urls[idx], NULL, NULL, bio, NULL,
+        NULL, NULL, 0, NULL, NULL, 0, OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0);
+    res = TEST_ptr_null(rsp)
+        && TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_HTTP);
     BIO_free(rsp);
     BIO_free(bio);
     ERR_clear_error();
@@ -364,6 +456,7 @@ err:
     return res;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 static int test_http_url_invalid(const char *url);
 
 static int test_http_url_frag_ok(const char *url, int exp_ssl, const char *exp_host,
@@ -515,6 +608,7 @@ static int test_http_url_invalid_path(void)
 {
     return test_http_url_invalid("https://[FF01::101]pkix");
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int test_http_crlf_rejected(void)
 {
@@ -744,6 +838,7 @@ int setup_tests(void)
     if (!TEST_ptr((x509 = load_cert_pem(test_get_argument(0), NULL))))
         return 0;
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
     ADD_TEST(test_http_url_dns);
     ADD_TEST(test_http_url_ip);
     ADD_TEST(test_http_url_timestamp);
@@ -755,11 +850,14 @@ int setup_tests(void)
     ADD_TEST(test_http_url_invalid_prefix);
     ADD_TEST(test_http_url_invalid_port);
     ADD_TEST(test_http_url_invalid_path);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_http_crlf_rejected);
 
     ADD_TEST(test_http_get_txt);
     ADD_TEST(test_http_get_txt_redirected);
     ADD_ALL_TESTS(test_http_redirect, OSSL_NELEM(redirect_tests));
+    ADD_ALL_TESTS(test_http_request_target, OSSL_NELEM(request_target_tests));
+    ADD_ALL_TESTS(test_http_get_bad_url, OSSL_NELEM(bad_get_urls));
     ADD_TEST(test_http_get_txt_fatal_status);
     ADD_TEST(test_http_get_txt_error_status);
     ADD_TEST(test_http_post_txt);

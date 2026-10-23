@@ -22,6 +22,7 @@
 
 /* Needs to be included before the openssl headers */
 #include "apps.h"
+#include "internal/http_url.h"
 #include "http_server.h"
 #include "progs.h"
 #include "internal/sockets.h"
@@ -327,9 +328,10 @@ int ocsp_main(int argc, char **argv)
             OPENSSL_free(tport);
             OPENSSL_free(tpath);
             thost = tport = tpath = NULL;
-            if (!OSSL_HTTP_parse_url(opt_arg(), &use_ssl, NULL /* userinfo */,
-                    &host, &port, NULL /* port_num */,
-                    &path, NULL /* qry */, NULL /* frag */)) {
+            if (!ossl_http_parse_url((const uint8_t *)opt_arg(),
+                    strlen(opt_arg()), /*allow_no_scheme=*/1,
+                    /*allow_empty_host=*/0, &use_ssl, &host, &port,
+                    /*port_num=*/NULL, &path)) {
                 BIO_printf(bio_err, "%s Error parsing -url argument\n", prog);
                 goto end;
             }

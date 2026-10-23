@@ -24,6 +24,7 @@
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
 #include "internal/cryptlib.h" /* for ossl_asprintf() */
+#include "internal/http_url.h"
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
@@ -1124,9 +1125,10 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
             port = NULL;
         proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if (proxy != NULL
-            && !OSSL_HTTP_parse_url(proxy, NULL /* use_ssl */, NULL /* user */,
-                &proxy_host, &proxy_port, NULL /* num */,
-                NULL /* path */, NULL, NULL))
+            && !ossl_http_parse_url((const uint8_t *)proxy, strlen(proxy),
+                /*allow_no_scheme=*/1, /*allow_empty_host=*/0,
+                /*use_ssl=*/NULL, &proxy_host, &proxy_port,
+                /*port_num=*/NULL, /*path=*/NULL))
             return NULL;
         cbio = http_new_bio(server, port, use_ssl, proxy_host, proxy_port);
         OPENSSL_free(proxy_host);
@@ -1308,8 +1310,10 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         OSSL_HTTP_REQ_CTX *rctx;
         char *redirection_url;
 
-        if (!OSSL_HTTP_parse_url(current_url, &use_ssl, NULL /* user */, &host,
-                &port, NULL /* port_num */, &path, NULL, NULL))
+        /* A redirection URL from the server must be absolute */
+        if (!ossl_http_parse_url((const uint8_t *)current_url,
+                strlen(current_url), n_redirs == 0, bio != NULL,
+                &use_ssl, &host, &port, /*port_num=*/NULL, &path))
             break;
 
         rctx = OSSL_HTTP_open(host, port, proxy, no_proxy,

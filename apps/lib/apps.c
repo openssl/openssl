@@ -43,6 +43,7 @@
 #include <openssl/decoder.h>
 #include "s_apps.h"
 #include "apps.h"
+#include "internal/http_url.h"
 
 #include "internal/sockets.h" /* for openssl_fdset() */
 #include "internal/numbers.h" /* for LONG_MAX */
@@ -2919,7 +2920,7 @@ int host_is_ip_address(const char *host)
     if (host == NULL)
         return 0;
 
-    if (host[0] == '[') { /* OSSL_parse_url() returns IPv6 addresses enclosed in [ and ] */
+    if (host[0] == '[') { /* ossl_http_parse_url() returns IPv6 addresses enclosed in [ and ] */
         size_t len = strlen(++host);
         if (len == 0 || len > sizeof(stripped_host_ipv6) || host[--len] != ']')
             return 0;
@@ -3051,8 +3052,9 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
         return NULL;
     }
 
-    if (!OSSL_HTTP_parse_url(url, &use_ssl, NULL /* userinfo */, &server, &port,
-            NULL /* port_num, */, NULL, NULL, NULL))
+    if (!ossl_http_parse_url((const uint8_t *)url, strlen(url),
+            /*allow_no_scheme=*/1, /*allow_empty_host=*/0, &use_ssl,
+            &server, &port, /*port_num=*/NULL, /*path=*/NULL))
         return NULL;
     if (use_ssl && ssl_ctx == NULL) {
         ERR_raise_data(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER,

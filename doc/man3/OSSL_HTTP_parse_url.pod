@@ -15,6 +15,10 @@ OCSP_parse_url
  const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
                                    const char *server, int use_ssl);
 
+The following functions have been deprecated since OpenSSL 4.2, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
  int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
                     char **pport, int *pport_num,
                     char **ppath, char **pquery, char **pfrag);
@@ -67,8 +71,7 @@ Each non-NULL result pointer argument I<pscheme>, I<puser>, I<phost>, I<pport>,
 I<ppath>, I<pquery>, and I<pfrag>, is assigned the respective url component.
 On success, these are string pointers in case the respective element is present;
 an empty string (with only the terminating NUL char)
-is provided for absent scheme, userinfo, and port;
-NULL is provided for absent query and fragment components.
+is provided for absent scheme, userinfo, query, and fragment components.
 Any IPv6 address in I<*phost> is enclosed in C<[> and C<]>.
 A string returned via I<*ppath> is guaranteed to begin with a C</> character.
 If I<pquery> is NULL, any given query component is handled as part of the path.
@@ -81,7 +84,7 @@ where the scheme, if given, must be C<http> or C<https>.
 If I<pssl> is not NULL, I<*pssl> is assigned 1 in case parsing was successful
 and the scheme is C<https>, else 0.
 The port component is optional and defaults to C<443> if the scheme is C<https>,
-else C<80>.
+else C<80>. If given, it must not be C<0>.
 Note that relative paths must be given with a leading C</>,
 otherwise the first path element is interpreted as the host.
 
@@ -107,6 +110,7 @@ L<OSSL_HTTP_transfer(3)>
 OSSL_HTTP_adapt_proxy(),
 OSSL_parse_url() and OSSL_HTTP_parse_url() were added in OpenSSL 3.0.
 OCSP_parse_url() was deprecated in OpenSSL 3.0.
+OSSL_parse_url() and OSSL_HTTP_parse_url() were deprecated in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
