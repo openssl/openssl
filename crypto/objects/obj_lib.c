@@ -56,6 +56,11 @@ int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
 {
     int ret;
 
+    if (a == NULL || b == NULL) {
+        if (a == b)
+            return 0;
+        return a == NULL ? -1 : 1;
+    }
     ret = (a->length - b->length);
     if (ret)
         return ret;
