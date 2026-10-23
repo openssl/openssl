@@ -348,3 +348,89 @@ CtrlInit = pad-mode:pkcs1
 Input = "Hello World"
 Output = 00
 Result = KEYOP_INIT_ERROR
+
+# Passing the RSASSA-PSS-params raw, as an AlgorithmIdentifier
+# parameters value (RFC 8017, A.2.3):
+#
+# RSASSA-PSS-params ::= SEQUENCE {
+#     hashAlgorithm      [0] HashAlgorithm     DEFAULT sha1,
+#     maskGenAlgorithm   [1] MaskGenAlgorithm  DEFAULT mgf1SHA1,
+#     saltLength         [2] INTEGER           DEFAULT 20,
+#     trailerField       [3] TrailerField      DEFAULT trailerFieldBC
+# }
+#
+# HashAlgorithm and MaskGenAlgorithm are AlgorithmIdentifiers:
+#
+#     HashAlgorithm ::= AlgorithmIdentifier {
+#        {OAEP-PSSDigestAlgorithms} }       -- e.g. { id-sha256, NULL }
+#     MaskGenAlgorithm ::= AlgorithmIdentifier {
+#        {PKCS1MGFAlgorithms} }             -- { id-mgf1, HashAlgorithm }
+#
+# The sign vectors below use saltLength 0, so their expected values
+# are deterministic; the verify vectors use signatures produced with
+# the digest-input path (see the comment at the deterministic vectors
+# above) with the equivalent settings.
+
+# sha256 / mgf1SHA256 / saltLength 0 -- the same settings as
+# "digest:SHA256" and "saltlen:0" above, hence the same signature
+FIPSversion = >=4.2.0
+Sign-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3034a00f300d06096086480165030402010500a11c301a06092a864886f70d010108300d06096086480165030402010500a203020100
+Input = "Hello World"
+Output = 4a35cc7623f176c997696213045024f1b1121a6ec4a5755d206c20fc4a7c5259566d19730f6f1a75ac00878c6290e6757510588d740da3633b09a1d899c7dfba2031cfcae6a490e995c87f4750ea88948009cbed6c80cebb9ebfab7d04805e7a2140373fb888b5e6151d1c4eb7f505c4e0a584c17c6ca71e552ba13e1f20101796fe0d1af0cde661fc47d904b5d3f127073471fe6dc7e78f5cd2a049d67e0c7c92184e2bf97f8e16b50b8385daa1f8882e8f6c8683720903454b35356058f2f0136cad7689105167bacbe0dbad466ff2a298e41e5a65caecac4cde08529b7ea8717258e19b0732c966b34f5d52e4ec3073da78757471086553a3ff6c5460bcda
+
+FIPSversion = >=4.2.0
+Verify-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3034a00f300d06096086480165030402010500a11c301a06092a864886f70d010108300d06096086480165030402010500a203020100
+Input = "Hello World"
+Output = 4a35cc7623f176c997696213045024f1b1121a6ec4a5755d206c20fc4a7c5259566d19730f6f1a75ac00878c6290e6757510588d740da3633b09a1d899c7dfba2031cfcae6a490e995c87f4750ea88948009cbed6c80cebb9ebfab7d04805e7a2140373fb888b5e6151d1c4eb7f505c4e0a584c17c6ca71e552ba13e1f20101796fe0d1af0cde661fc47d904b5d3f127073471fe6dc7e78f5cd2a049d67e0c7c92184e2bf97f8e16b50b8385daa1f8882e8f6c8683720903454b35356058f2f0136cad7689105167bacbe0dbad466ff2a298e41e5a65caecac4cde08529b7ea8717258e19b0732c966b34f5d52e4ec3073da78757471086553a3ff6c5460bcda
+
+# An empty params value means all defaults: SHA1 / mgf1SHA1 /
+# saltLength 20.  The signature was produced with the digest-input
+# path with the equivalent settings
+Availablein = default
+Verify-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3000
+Input = "Hello World"
+Output = aa8c08454e9d038cfebf78c0ae624ce2ee22bf2b9bdfdaed50703bf06f88cfaef8ed548d4c4ae6afbcd089a50cd2769b890be5801eeeab00eddbc142cd96a6a584f74a4c6431bad21cac9523df2154c892bca20c208821c414390fec3dc4fa319baa20a92cc033aaf1599f4b65f9ee3fbcb4cdf2cda0242a32e620215ddde46c56c5bcf53cac565d78abbee86acff6269297917f9a864013c42c7f61317ac21f98aafcac0b0036035225c4ddda75961a95b6438d87163ce9ad0dc81f81999f478b6204538bcd3a1381c203e8b7a43ee8cb1b200fc96a72a417fc7aebd1a485f820a9068f8e0de2760707581ce51f1bca7f3fccca0638d60b4c9aa4a907bbee3b
+
+# sha512 / mgf1SHA512 / saltLength 0
+FIPSversion = >=4.2.0
+Sign-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3034a00f300d06096086480165030402030500a11c301a06092a864886f70d010108300d06096086480165030402030500a203020100
+Input = "Hello World"
+Output = 52d694e2d87a1b92723c3be39f8c5e29dd6e3907ac4f889e74637d02c8197c1103e4b101393378cb89f6cc428bd4869ae4e72b20258dacc2df9ed4b2ce08fd21ca6d2a220c6d02ca7ad084197e609c08e025954b1dd5c9e14df65bc5799ba6a7b7b5e6d18601d758e1747d0368d783ec023403d3b2337a8f4e84374636ca8bf5f7d5f8be3829ac304d1f82b8e33640826ffd4e3f940ba5489ae98e08e5803fdb6282a7549f2fe4d5e2c4297d8dbcca272ac0e9c26f0c6c0e2a5b3a8f51bca824dd078a6d01ace5066ec6595707393ae361413ed79d230b64f6668125b21c587c4403701e62db3a76ef844e9acb16058d358f6135ffee838402b4582d01a6c257
+
+# sha512 / mgf1SHA512 / saltLength 64, with a signature produced
+# with the digest-input path with the equivalent settings
+FIPSversion = >=4.2.0
+Verify-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3034a00f300d06096086480165030402030500a11c301a06092a864886f70d010108300d06096086480165030402030500a203020140
+Input = "Hello World"
+Output = 62d204904649e64cd7574b7a001c684927e24a482ac3b32926b26d798da9a9648a276421a7b2249c3cc8e659ec5aa941eb3c9a73d5df0e4d19df4e7b3cd70f3c7fd2160453962c7ce62aba18348a716e0844b90b02f4972907b4055e0064a830db24b1480e8265c41a4c272d19ef3a95b3bd170edb8a3f3f91fbad517d9d06deaf2f1747c0e06cb453b7bf1c475fa20e75f3804d72a3db386cb449c8d0977508a6bdb67380631f999b663cd89927484d578bcee8081af671419b9c9a5a96214cf0af366ab4b5e3f7179ed92a7b7a38a2af45d1c565bd163ee2603689d15cc4d4a48152401cdbc5df2fc7b0b9de3d999814957de450c6605ec183d99edba1ec4e
+
+# Individual parameters take precedence over the AlgorithmIdentifier
+# parameters: the digest here is SHA512, while mgf1SHA256 and
+# saltLength 0 are taken from the params value
+FIPSversion = >=4.2.0
+Sign-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3034a00f300d06096086480165030402010500a11c301a06092a864886f70d010108300d06096086480165030402010500a203020100
+CtrlInit = digest:SHA512
+Input = "Hello World"
+Output = 46f3df54207dc95dfc54013f385767132360dd6fbde7f0ac7d315cdc0857a09f0af6e45f3d337fd3a3013c69cf2011daeba4b2b1f06a16bd7328df135effb1e9e44c9a4a8a7f836f83cacaf3a90c81744a4f261e6036370bac33dddc576767fc6771dfdd3cc343fc017a6dacad4bed8a21ae0f088448449d319d860b5fefd67a9ced3d200338a1ffbead944faa76a9dbd8dd26e7a982f4306c14cd093f9a991365fab6a1ed4580769b179f43e7ef6357384064e1cd8c5a457402862b433dd88c68beab4ffa8ad09fc9484e707e5b74e63cf520c8d64e1941b3d61c9509396d858761098f8333c77f4bde09a3b487f324e3c7ff2b6af8a5d1ff12ab53b3e29542
+
+# trailerField must be trailerFieldBC (1)
+FIPSversion = >=4.2.0
+Sign-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3005a303020102
+Input = "Hello World"
+Output = 00
+Result = KEYOP_INIT_ERROR
+
+# Unknown elements are rejected
+FIPSversion = >=4.2.0
+Sign-Message = RSA-PSS:RSA-2048
+CtrlInit = hexalgorithm-id-params:3005a403020100
+Input = "Hello World"
+Output = 00
+Result = KEYOP_INIT_ERROR
