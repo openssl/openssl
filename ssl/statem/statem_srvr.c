@@ -2976,7 +2976,8 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
      * Calculate the ECH-accept server random to indicate that
      * we're accepting ECH, if that's the case
      */
-    if (s->ext.ech.attempted_type == TLSEXT_TYPE_ech
+    if (SSL_CONNECTION_IS_VERSION13(s)
+        && s->ext.ech.attempted_type == TLSEXT_TYPE_ech
         && (s->ext.ech.backend == 1
             || (s->ext.ech.es != NULL && s->ext.ech.success == 1))) {
         unsigned char acbuf[8];
