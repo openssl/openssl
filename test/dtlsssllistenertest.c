@@ -5491,7 +5491,7 @@ static int test_dtls_poll_registration_failure(void)
     BIO *registration_bio = NULL;
     int fd[2] = { -1, -1 };
     SSL_POLL_ITEM items[2] = { 0 };
-    struct timeval timeout = { 1, 0 };
+    struct timeval timeout = { 0, 100000 };
     struct poll_registration_test registration = { 0 };
     size_t count = 0, failures = 0, i;
     /* An invariant failure must fail ADD_MFAIL_TEST even during injection. */
@@ -5768,7 +5768,7 @@ static long poll_cleanup_bio_cb(BIO *bio, int oper, const char *argp,
 static CRYPTO_THREAD_RETVAL poll_cleanup_worker(void *arg)
 {
     struct poll_cleanup_test *t = arg;
-    const struct timeval timeout = { 1, 0 };
+    const struct timeval timeout = { 0, 100000 };
 
     t->ret = SSL_poll(t->items, OSSL_NELEM(t->items), sizeof(t->items[0]),
         &timeout, SSL_POLL_FLAG_NO_HANDLE_EVENTS, &t->count);
@@ -6322,7 +6322,7 @@ static int test_dtls_poll_shared_listener(int idx)
     BIO *signal_bio = NULL;
     int server_fd = -1, client_fd[2] = { -1, -1 };
     SSL_POLL_ITEM items[3] = { 0 };
-    struct timeval timeout = { 1, 0 };
+    struct timeval timeout = { 0, 100000 };
     DTLS_LISTENER *dl;
     struct poll_shared_listener_signal signal = { 0 };
     struct poll_watchdog watchdog = { 0 };
