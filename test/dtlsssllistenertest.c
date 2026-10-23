@@ -7765,26 +7765,52 @@ static int test_dtls_listener_idle_pending_not_driven(void)
     return ok;
 }
 
-/*
- * Gives each recvmmsg() at most one datagram, as the recvmsg() fallback does,
- * or for one call only, as many as *data says.
+/**
+ * @struct one_dgram_state_st
+ * @brief State of the one datagram per read filter.
+ */
+typedef struct one_dgram_state_st {
+    size_t batch; /**< datagrams the next read may take; 0 means one */
+    size_t queued; /**< datagrams sent to the socket and not yet read */
+    int fd; /**< the socket under the filter */
+} ONE_DGRAM_STATE;
+
+/**
+ * @brief Read one datagram from the socket under the filter, or for one call
+ * only, as many as the state's batch says.
+ *
+ * Each of the state's queued datagrams is read once it has arrived, as
+ * loopback delivery may lag sendto(). A read with none queued is passed
+ * through with the socket's own readiness.
+ *
+ * @returns 1 if any datagram was read, 0 otherwise
  */
 static int one_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags, size_t *msgs_processed)
 {
-    size_t *batch = BIO_get_data(bio);
+    ONE_DGRAM_STATE *st = BIO_get_data(bio);
     BIO *next = BIO_next(bio);
-    size_t max = 1;
+    size_t max = st->batch > 0 ? st->batch : 1;
+    size_t done = 0, n;
 
     if (next == NULL)
         return 0;
-    if (batch != NULL && *batch > 0)
-        max = *batch;
-    if (!BIO_recvmmsg(next, msg, stride, num_msg > max ? max : num_msg, flags,
-            msgs_processed))
+    if (num_msg > max)
+        num_msg = max;
+    while (done < num_msg && st->queued > 0
+        && BIO_socket_wait(st->fd, 1, time(NULL) + DTLS_READ_TIMEOUT_SEC) > 0
+        && BIO_recvmmsg(next, (BIO_MSG *)((uint8_t *)msg + done * stride),
+            stride, 1, flags, &n)
+        && n > 0) {
+        done += n;
+        st->queued -= n < st->queued ? n : st->queued;
+    }
+    if (done == 0 && !BIO_recvmmsg(next, msg, stride, num_msg, flags, &done)) {
+        *msgs_processed = 0;
         return 0;
-    if (batch != NULL)
-        *batch = 0;
+    }
+    *msgs_processed = done;
+    st->batch = 0;
     return 1;
 }
 
@@ -7855,7 +7881,7 @@ typedef struct {
     SSL *listener;
     BIO_ADDR *server_addr;
     int server_fd;
-    size_t batch; /* datagrams the listener's next read may take */
+    ONE_DGRAM_STATE rx; /* the listener's reads from server_fd */
     size_t nclients;
     SSL *clients[REDRIVE_MAX_CLIENTS];
     int fds[REDRIVE_MAX_CLIENTS];
@@ -7913,7 +7939,8 @@ static int redrive_setup(REDRIVE_FIXTURE *fx, int version, uint64_t flags,
     if (!TEST_ptr(sockbio = SSL_get_rbio(fx->listener))
         || !TEST_ptr(filter = BIO_new(bio_f_one_dgram_filter())))
         return 0;
-    BIO_set_data(filter, &fx->batch);
+    fx->rx.fd = fx->server_fd;
+    BIO_set_data(filter, &fx->rx);
     BIO_set_init(filter, 1);
     if (!TEST_true(BIO_up_ref(sockbio))) {
         BIO_free(filter);
@@ -7936,11 +7963,11 @@ static int redrive_setup(REDRIVE_FIXTURE *fx, int version, uint64_t flags,
             return 0;
     }
 
+    fx->rx.queued = nclients;
     for (k = 0; k < 200; k++) {
+        listener_tick(fx->listener);
         if (redrive_all_idle((DTLS_LISTENER *)fx->listener, nclients))
             return 1;
-        listener_tick(fx->listener);
-        OSSL_sleep(10);
     }
     return TEST_true(redrive_all_idle((DTLS_LISTENER *)fx->listener, nclients));
 }
@@ -7950,15 +7977,17 @@ static int redrive_send_junk(REDRIVE_FIXTURE *fx, size_t i)
     return TEST_int_eq(BIO_write(SSL_get_wbio(fx->clients[i]), "", 1), 1);
 }
 
-/* Have client |i| send its second ClientHello */
+/* Have client |i| read its HVR/HRR and send its second ClientHello */
 static int redrive_send_ch2(REDRIVE_FIXTURE *fx, size_t i)
 {
     int k;
 
     for (k = 0; k < 30 && fx->ch_count[i] < 2; k++) {
-        if (!client_step(fx->clients[i]))
+        if (!TEST_int_gt(BIO_socket_wait(fx->fds[i], 1,
+                             time(NULL) + DTLS_READ_TIMEOUT_SEC),
+                0)
+            || !client_step(fx->clients[i]))
             return 0;
-        OSSL_sleep(10);
     }
     return TEST_int_eq(fx->ch_count[i], 2);
 }
@@ -8036,7 +8065,7 @@ static int test_dtls_listener_redrive(int idx)
             goto end;
     if (!redrive_send_ch2(&fx, ci))
         goto end;
-    OSSL_sleep(50);
+    fx.rx.queued = njunk + 1;
 
     if (njunk == 1) {
         listener_tick(fx.listener);
@@ -8138,9 +8167,9 @@ static int test_dtls_listener_redrive_driven_earlier(int idx)
         || !redrive_send_junk(&fx, s)
         || !redrive_send_ch2(&fx, f))
         goto end;
-    OSSL_sleep(50);
+    fx.rx.queued = 4;
 
-    fx.batch = 2;
+    fx.rx.batch = 2;
     listener_tick(fx.listener);
     if (!redrive_finish(&fx, f))
         goto end;
@@ -8212,24 +8241,27 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
     /* Accept client ei */
     if (!redrive_send_ch2(&fx, ei))
         goto end;
+    fx.rx.queued = 1;
     for (k = 0; k < 200
         && SSL_get_accept_connection_queue_len(fx.listener) == 0;
-        k++) {
+        k++)
         listener_tick(fx.listener);
-        OSSL_sleep(10);
-    }
     if (!TEST_ptr(serverssl = SSL_accept_connection(fx.listener,
                       SSL_ACCEPT_CONNECTION_NO_BLOCK))
         || !TEST_true(create_ssl_connection(serverssl, fx.clients[ei],
             SSL_ERROR_NONE)))
         goto end;
 
-    /* Let any post-handshake messages settle */
+    /* Let any post-handshake messages settle: no flight awaits its ACK */
     for (k = 0; k < 20; k++) {
         if (!TEST_int_le(SSL_read(fx.clients[ei], buf, sizeof(buf)), 0)
             || !TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0))
             goto end;
         listener_tick(fx.listener);
+        if (!DTLSv1_get_timeout(fx.clients[ei], &timeout)
+            && !DTLSv1_get_timeout(serverssl, &timeout)
+            && redrive_all_idle((DTLS_LISTENER *)fx.listener, njunk + 1))
+            break;
         OSSL_sleep(10);
     }
     ERR_clear_error();
@@ -8246,7 +8278,7 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
             goto end;
     if (!redrive_send_ch2(&fx, ci))
         goto end;
-    OSSL_sleep(50);
+    fx.rx.queued = njunk + 1;
 
     item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
     item.desc.value.ssl = serverssl;
