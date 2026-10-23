@@ -3471,12 +3471,18 @@ done:
     return ret;
 }
 
+/* The raw keys in keys[] are printable strings; the secret check rejects them */
 static int test_set_get_raw_keys(int tst)
 {
-    return (nullprov != NULL || test_set_get_raw_keys_int(tst, 0, 0))
+    int ret;
+
+    if (!TEST_true(CRYPTO_secret_check_disable()))
+        return 0;
+    ret = (nullprov != NULL || test_set_get_raw_keys_int(tst, 0, 0))
         && test_set_get_raw_keys_int(tst, 0, 1)
         && (nullprov != NULL || test_set_get_raw_keys_int(tst, 1, 0))
         && test_set_get_raw_keys_int(tst, 1, 1);
+    return TEST_true(CRYPTO_secret_check_enable()) && ret;
 }
 
 static int test_set_get_raw_keys_mfail(int idx)
@@ -3501,6 +3507,8 @@ static int test_set_get_raw_keys_mfail(int idx)
     }
 #endif
 
+    if (!TEST_true(CRYPTO_secret_check_disable()))
+        goto err;
     MFAIL_start();
     pkey = EVP_PKEY_new_raw_private_key_ex(testctx, name, NULL, in, inlen);
     if (pkey != NULL
@@ -3509,6 +3517,8 @@ static int test_set_get_raw_keys_mfail(int idx)
         && EVP_PKEY_get_raw_private_key(pkey, buf, &len))
         ok = 1;
     MFAIL_end();
+    if (!TEST_true(CRYPTO_secret_check_enable()))
+        goto err;
 
     if (!ok)
         goto err;
