@@ -4922,7 +4922,16 @@ X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert,
      */
     memcpy(tmp->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH);
     tmp->cert = cert;
-    X509_up_ref(cert);
+    if (!X509_up_ref(cert)) {
+        /*
+         * We didn't take a ref, so we can't cache this cert, but we still
+         * own the initial ref, so we can just return it for a single use
+         * Note: We use OPENSSL_free here instead of free_hs_cache_ent, as the
+         * latter drops the ref on the cert, which we don't want
+         */
+        OPENSSL_free(tmp);
+        return cert;
+    }
 
     if (!CRYPTO_THREAD_write_lock(sctx->lock)) {
         free_hs_cache_ent(tmp);
