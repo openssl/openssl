@@ -63,6 +63,7 @@ SOURCE[../../providers/libfips.a]=$COMMON
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$MODESDEF
+DEFINE[../../providers/libdefault.a]=$MODESDEF
 DEFINE[../../providers/libfips.a]=$MODESDEF
 
 
