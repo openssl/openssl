@@ -322,6 +322,7 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string("mgf1-digest", NULL, 0),
     OSSL_PARAM_utf8_string("mgf1-properties", NULL, 0),
     OSSL_PARAM_utf8_string("saltlen", NULL, 0),
+    OSSL_PARAM_octet_string("algorithm-id-params", NULL, 0),
     OSSL_PARAM_END
 };
 
