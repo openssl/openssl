@@ -381,6 +381,18 @@ int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
         &x->crl, ctx);
 }
 
+int X509_CRL_sign_pkey_ctx(X509_CRL *x, EVP_PKEY_CTX *pctx)
+{
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    x->crl.enc.modified = 1;
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
+        &x->crl.sig_alg, &x->sig_alg, &x->signature,
+        &x->crl, pctx);
+}
+
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
     return (X509_CRL *)simple_get_asn1(url, bio, rbio, timeout,

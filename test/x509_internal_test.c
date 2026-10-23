@@ -1556,6 +1556,58 @@ err:
     return ret;
 }
 
+/* X509_CRL_sign_pkey_ctx() / X509_CRL_verify_pkey_ctx() round trip */
+static int test_crl_sign_verify_pkey_ctx(void)
+{
+    int ret = 0;
+    X509_CRL *crl = NULL;
+    X509_NAME *name = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_SIGNATURE *sigalg = NULL;
+    ASN1_TIME *tm = NULL;
+
+    sigalg = EVP_SIGNATURE_fetch(NULL, "RSA-SHA256", NULL);
+    if (sigalg == NULL)
+        return TEST_skip("signature algorithm RSA-SHA256 not available");
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"pkey ctx crl test", -1, -1, 0))
+        || !TEST_ptr(tm = X509_gmtime_adj(NULL, 0))
+        || !TEST_ptr(crl = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crl, name))
+        || !TEST_true(X509_CRL_set1_lastUpdate(crl, tm))
+        || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_sign_message_init(pctx, sigalg, NULL), 0)
+        || !TEST_int_gt(X509_CRL_sign_pkey_ctx(crl, pctx), 0))
+        goto err;
+
+    EVP_PKEY_CTX_free(pctx);
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_eq(X509_CRL_verify_pkey_ctx(crl, pctx), 1)
+        || !TEST_int_eq(X509_CRL_verify(crl, pkey), 1))
+        goto err;
+
+    /* A corrupted signature must not verify */
+    crl->signature.data[0] ^= 0x01;
+    EVP_PKEY_CTX_free(pctx);
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_ne(X509_CRL_verify_pkey_ctx(crl, pctx), 1))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(pctx);
+    EVP_SIGNATURE_free(sigalg);
+    X509_CRL_free(crl);
+    ASN1_TIME_free(tm);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 /* A modified, unsigned certificate or CRL is equal only to itself */
 static int test_cmp_modified(void)
 {
@@ -1628,6 +1680,7 @@ int setup_tests(void)
     ADD_TEST(test_sign_verify_pkey_ctx_rsa);
     ADD_TEST(test_sign_verify_pkey_ctx_ed25519);
     ADD_TEST(test_req_sign_verify_pkey_ctx);
+    ADD_TEST(test_crl_sign_verify_pkey_ctx);
     ADD_TEST(test_cmp_modified);
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
