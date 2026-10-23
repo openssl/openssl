@@ -279,6 +279,13 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         } else if (ctx->desc->d2i_private_key != NULL) {
             key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
         }
+        if (key == NULL
+            && ERR_GET_REASON(ERR_peek_last_error())
+                == ERR_R_SECRET_NOT_KEY_MATERIAL) {
+            ctx->flag_fatal = 1;
+            ERR_clear_last_mark();
+            goto end;
+        }
         if (key == NULL && ctx->selection != 0) {
             ERR_clear_last_mark();
             goto next;

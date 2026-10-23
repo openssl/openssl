@@ -17,6 +17,7 @@
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 #include "internal/encoder.h"
+#include "internal/secret_check.h"
 
 static int slh_dsa_compute_pk_root(SLH_DSA_HASH_CTX *ctx, SLH_DSA_KEY *out, int verify);
 
@@ -281,6 +282,11 @@ int ossl_slh_dsa_key_fromdata(SLH_DSA_KEY *key, const OSSL_PARAM *param_pub,
             p = key->priv;
             if (!OSSL_PARAM_get_octet_string(param_priv, &p, priv_len, &data_len))
                 return 0;
+            if (ossl_secret_check_enabled()
+                && !ossl_secret_bytes_check(p, data_len, 0)) {
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_SECRET_NOT_KEY_MATERIAL);
+                goto err;
+            }
             /* If the data read includes all 4 elements then we are finished */
             if (data_len == priv_len) {
                 key->has_priv = 1;
@@ -467,6 +473,11 @@ int ossl_slh_dsa_set_priv(SLH_DSA_KEY *key, const uint8_t *priv, size_t priv_len
 {
     if (ossl_slh_dsa_key_get_priv_len(key) != priv_len)
         return 0;
+    if (ossl_secret_check_enabled()
+        && !ossl_secret_bytes_check(priv, priv_len, 0)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_SECRET_NOT_KEY_MATERIAL);
+        return 0;
+    }
     memcpy(key->priv, priv, priv_len);
     key->has_priv = 1;
     key->pub = SLH_DSA_PUB(key);
