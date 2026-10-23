@@ -27,11 +27,13 @@
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
+#include "internal/der.h"
 #include "crypto/rsa.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
+#include "prov/der_digests.h"
 #include "prov/securitycheck.h"
 #include "internal/fips.h"
 
@@ -2138,6 +2140,139 @@ static OSSL_FUNC_signature_sign_message_init_fn rsa_pss_sign_message_init;
 static OSSL_FUNC_signature_verify_init_fn rsa_pss_verify_init;
 static OSSL_FUNC_signature_verify_message_init_fn rsa_pss_verify_message_init;
 
+/*
+ * The hash algorithms accepted in RSASSA-PSS-params, mapped from their
+ * OID to the NIDs that ossl_rsa_oaeppss_nid2name() understands.
+ */
+static const struct {
+    int nid;
+    const unsigned char *oid;
+    size_t oid_sz;
+} rsa_pss_aid_hashes[] = {
+    { NID_sha1, ossl_der_oid_id_sha1, DER_OID_SZ_id_sha1 },
+    { NID_sha224, ossl_der_oid_id_sha224, DER_OID_SZ_id_sha224 },
+    { NID_sha256, ossl_der_oid_id_sha256, DER_OID_SZ_id_sha256 },
+    { NID_sha384, ossl_der_oid_id_sha384, DER_OID_SZ_id_sha384 },
+    { NID_sha512, ossl_der_oid_id_sha512, DER_OID_SZ_id_sha512 },
+    { NID_sha512_224, ossl_der_oid_id_sha512_224, DER_OID_SZ_id_sha512_224 },
+    { NID_sha512_256, ossl_der_oid_id_sha512_256, DER_OID_SZ_id_sha512_256 },
+};
+
+/*
+ * Read a HashAlgorithm (RFC 8017, A.2.1), an AlgorithmIdentifier whose
+ * parameters are NULL when present, and may be absent altogether.
+ */
+static int rsa_pss_aid_read_hash(PACKET *pkt, int *nid)
+{
+    PACKET aid;
+    size_t i = 0;
+
+    if (!ossl_DER_r_begin_sequence(pkt, DER_NO_CONTEXT, &aid))
+        return 0;
+    for (i = 0; i < OSSL_NELEM(rsa_pss_aid_hashes); i++)
+        if (ossl_DER_r_precompiled(&aid, DER_NO_CONTEXT,
+                rsa_pss_aid_hashes[i].oid,
+                rsa_pss_aid_hashes[i].oid_sz))
+            break;
+    if (i >= OSSL_NELEM(rsa_pss_aid_hashes))
+        return 0;
+    if (PACKET_remaining(&aid) > 0 && !ossl_DER_r_null(&aid, DER_NO_CONTEXT))
+        return 0;
+    if (PACKET_remaining(&aid) != 0)
+        return 0;
+    *nid = rsa_pss_aid_hashes[i].nid;
+    return 1;
+}
+
+/*
+ * Decode RSASSA-PSS-params (RFC 8017, A.2.3) and apply them, much the
+ * same as the "digest", "mgf1-digest" and "saltlen" parameters would.
+ * Elided elements take their ASN.1 DEFAULT values.
+ */
+static int rsa_pss_set_aid_params(PROV_RSA_CTX *prsactx,
+    const unsigned char *der, size_t der_len)
+{
+    static const char desc[] = "RSA-PSS Set AlgorithmIdentifier Params";
+    PACKET pkt, params, elem;
+    unsigned int id = 0;
+    int hashnid = NID_sha1, mgf1hashnid = NID_sha1;
+    uint32_t saltlen = 20, trailer = 1;
+    const char *mdname = NULL, *mgf1mdname = NULL;
+
+    if (!PACKET_buf_init(&pkt, der, der_len)
+        || !ossl_DER_r_begin_sequence(&pkt, DER_NO_CONTEXT, &params))
+        return 0;
+
+    while (PACKET_remaining(&params) > 0) {
+        if (!ossl_DER_r_peek_element(&params, &id, NULL))
+            return 0;
+        switch (id) {
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 0:
+            /* hashAlgorithm [0] HashAlgorithm */
+            if (!ossl_DER_r_element(&params, &id, &elem)
+                || !rsa_pss_aid_read_hash(&elem, &hashnid)
+                || PACKET_remaining(&elem) != 0)
+                return 0;
+            break;
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 1: {
+            /* maskGenAlgorithm [1] MaskGenAlgorithm */
+            PACKET mgf;
+
+            if (!ossl_DER_r_element(&params, &id, &elem)
+                || !ossl_DER_r_begin_sequence(&elem, DER_NO_CONTEXT, &mgf)
+                || !ossl_DER_r_precompiled(&mgf, DER_NO_CONTEXT,
+                    ossl_der_oid_id_mgf1, DER_OID_SZ_id_mgf1)
+                || !rsa_pss_aid_read_hash(&mgf, &mgf1hashnid)
+                || PACKET_remaining(&mgf) != 0
+                || PACKET_remaining(&elem) != 0)
+                return 0;
+            break;
+        }
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 2:
+            /* saltLength [2] INTEGER */
+            if (!ossl_DER_r_uint32(&params, 2, &saltlen))
+                return 0;
+            break;
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 3:
+            /* trailerField [3] TrailerField */
+            if (!ossl_DER_r_uint32(&params, 3, &trailer))
+                return 0;
+            break;
+        default:
+            return 0;
+        }
+    }
+
+    /*
+     * trailerField must be trailerFieldBC (1), no other value is defined.
+     * Salt lengths are int in this code.
+     */
+    if (PACKET_remaining(&pkt) != 0 || trailer != 1 || saltlen > INT_MAX)
+        return 0;
+
+    mdname = ossl_rsa_oaeppss_nid2name(hashnid);
+    mgf1mdname = ossl_rsa_oaeppss_nid2name(mgf1hashnid);
+    if (mdname == NULL || mgf1mdname == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        return 0;
+    }
+
+    /* The same minimum salt length check as for the "saltlen" parameter */
+    if (rsa_pss_restricted(prsactx) && (int)saltlen < prsactx->min_saltlen) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_PSS_SALTLEN_TOO_SMALL,
+            "Should be more than %d, but would be set to %d",
+            prsactx->min_saltlen, (int)saltlen);
+        return 0;
+    }
+
+    /* call rsa_setup_mgf1_md before rsa_setup_md to avoid duplication */
+    if (!rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
+        || !rsa_setup_md(prsactx, mdname, prsactx->propq, desc))
+        return 0;
+    prsactx->saltlen = (int)saltlen;
+    return 1;
+}
+
 static int rsa_pss_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
@@ -2164,6 +2299,24 @@ static int rsa_pss_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_octet_string(p.sig, (void **)&prsactx->sig,
                 0, &prsactx->siglen))
             return 0;
+    }
+
+    /*
+     * The AlgorithmIdentifier parameters, a RSASSA-PSS-params value.  They
+     * are applied before the common processing, so the individual "digest",
+     * "mgf1-digest" and "saltlen" parameters take precedence over them.
+     */
+    if (p.algid != NULL) {
+        const unsigned char *aid = NULL;
+        size_t aid_len = 0;
+
+        if (!OSSL_PARAM_get_octet_string_ptr(p.algid, (const void **)&aid,
+                &aid_len)
+            || !rsa_pss_set_aid_params(prsactx, aid, aid_len)) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER,
+                "invalid algorithm-id-params");
+            return 0;
+        }
     }
 
     /* rsa_set_ctx_params() ignores the "signature" parameter */

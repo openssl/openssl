@@ -64,6 +64,7 @@ use OpenSSL::paramnames qw(produce_param_decoder produce_param_decoder_with_coun
                           ['OSSL_SIGNATURE_PARAM_MGF1_PROPERTIES',            'mgf1pq',   'utf8_string'],
                           ['OSSL_SIGNATURE_PARAM_PSS_SALTLEN',                'slen',     'utf8_string'],
                           ['OSSL_SIGNATURE_PARAM_PSS_SALTLEN',                'slen',     'int'],
+                          ['OSSL_SIGNATURE_PARAM_ALGORITHM_ID_PARAMS',        'algid',    'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_SIGNATURE',                  'sig',      'octet_string'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK',             'ind_k',    'int', 'fips'],
                           ['OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK',          'ind_d',    'int', 'fips'],
