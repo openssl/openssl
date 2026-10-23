@@ -33,6 +33,17 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added `ASN1_item_sign_pkey_ctx()` and `ASN1_item_verify_pkey_ctx()`.
+   These work like `ASN1_item_sign_ctx()` and `ASN1_item_verify_ctx()`,
+   but take a bare `EVP_PKEY_CTX` instead of an `EVP_MD_CTX`, with the
+   algorithm given as a fetched `EVP_SIGNATURE` (notably composite
+   algorithms such as `RSA-SHA256`): signing is done in one shot with
+   `EVP_PKEY_sign_message_init()` initialised contexts, and verification
+   initialises the given context from the signature AlgorithmIdentifier,
+   fetching the algorithm by OID.
+
+   *Richard Levitte*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and

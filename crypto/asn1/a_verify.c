@@ -240,3 +240,90 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
 {
     return item_verify(it, alg, signature, data, ctx, NULL, NULL);
 }
+
+/*
+ * Initialise |pctx| for message verification with the signature algorithm
+ * named by |alg|.  The algorithm is fetched by its OID, in recorded name
+ * form when there is one, otherwise in numeric text form; this covers
+ * provider signature algorithms that have no recorded sigid.  The
+ * AlgorithmIdentifier parameters, when present, are passed on to the
+ * signature implementation.
+ */
+static int item_init_verify_from_algor(EVP_PKEY_CTX *pctx,
+    const X509_ALGOR *alg)
+{
+    OSSL_LIB_CTX *libctx = EVP_PKEY_CTX_get0_libctx(pctx);
+    const char *propq = EVP_PKEY_CTX_get0_propq(pctx);
+    char oidtxt[80];
+    EVP_SIGNATURE *sigalg = NULL;
+    int ret = 0;
+
+    if (OBJ_obj2txt(oidtxt, sizeof(oidtxt), alg->algorithm, 0) <= 0)
+        return 0;
+
+    sigalg = EVP_SIGNATURE_fetch(libctx, oidtxt, propq);
+    if (sigalg == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+        return 0;
+    }
+
+    if (EVP_PKEY_verify_message_init(pctx, sigalg, NULL) > 0
+        && (alg->parameter == NULL
+            || EVP_PKEY_CTX_set_algor_params(pctx, alg) > 0))
+        ret = 1;
+    else
+        ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
+
+    EVP_SIGNATURE_free(sigalg);
+    return ret;
+}
+
+/*
+ * Verify with a bare EVP_PKEY_CTX (carrying the verification key) directly,
+ * without an EVP_MD_CTX; it is initialised for message verification from
+ * |alg|.  This is the entry point for signature algorithms that are
+ * fetched as such (EVP_SIGNATURE), notably composite ones.
+ */
+int ASN1_item_verify_pkey_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+    const ASN1_BIT_STRING *signature, const void *data,
+    EVP_PKEY_CTX *pctx)
+{
+    unsigned char *buf_in = NULL;
+    int ret = -1, inl = 0;
+    size_t inll = 0;
+
+    if (pctx == NULL || EVP_PKEY_CTX_get0_pkey(pctx) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+        return -1;
+    }
+
+    if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+        return -1;
+    }
+
+    if (!item_init_verify_from_algor(pctx, alg))
+        return -1;
+
+    inl = ASN1_item_i2d(data, &buf_in, it);
+    if (inl <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (buf_in == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
+    inll = inl;
+
+    ret = EVP_PKEY_verify(pctx, signature->data, (size_t)signature->length,
+        buf_in, inl);
+    if (ret <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
+        goto err;
+    }
+    ret = 1;
+err:
+    OPENSSL_clear_free(buf_in, inll);
+    return ret;
+}

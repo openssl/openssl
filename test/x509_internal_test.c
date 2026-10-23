@@ -1409,6 +1409,111 @@ err:
     return ret;
 }
 
+/*
+ * ASN1_item_sign_pkey_ctx() signs the TBS in one shot with a message
+ * context (a fetched signature algorithm, EVP_PKEY_sign_message_init()),
+ * and ASN1_item_verify_pkey_ctx() verifies it with a bare EVP_PKEY_CTX.
+ * The result must be indistinguishable from composed signing: same
+ * AlgorithmID, and for these deterministic algorithms the same signature
+ * bytes.
+ */
+static int test_sign_verify_pkey_ctx(const char *signame,
+    const EVP_MD *composed_md,
+    const char *keytype, size_t keybits)
+{
+    int ret = 0;
+    X509_NAME *name = NULL;
+    X509 *cert_comp = NULL, *cert_sigalg = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_SIGNATURE *sigalg = NULL;
+    const ASN1_BIT_STRING *sig_comp = NULL, *sig_sigalg = NULL;
+    const X509_ALGOR *algor_comp = NULL, *algor_sigalg = NULL;
+    EVP_PKEY *pkey = NULL;
+    unsigned char first_sigbyte;
+
+    sigalg = EVP_SIGNATURE_fetch(NULL, signame, NULL);
+    if (sigalg == NULL)
+        return TEST_skip("signature algorithm %s not available", signame);
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, keytype, keybits))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"pkey ctx sign test", -1, -1, 0)))
+        goto err;
+
+    /* Composed signing, for comparison */
+    if (!TEST_ptr(cert_comp = X509_new())
+        || !TEST_true(X509_set_subject_name(cert_comp, name))
+        || !TEST_true(X509_set_issuer_name(cert_comp, name))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert_comp), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert_comp), 3600))
+        || !TEST_true(X509_set_pubkey(cert_comp, pkey))
+        || !TEST_int_gt(X509_sign(cert_comp, pkey, composed_md), 0))
+        goto err;
+
+    /* The same certificate, signed with the fetched signature algorithm */
+    if (!TEST_ptr(cert_sigalg = X509_dup(cert_comp))
+        || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_sign_message_init(pctx, sigalg, NULL), 0))
+        goto err;
+    cert_sigalg->cert_info.enc.modified = 1;
+    if (!TEST_int_gt(ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
+            &cert_sigalg->cert_info.signature, &cert_sigalg->sig_alg,
+            &cert_sigalg->signature, &cert_sigalg->cert_info, pctx), 0))
+        goto err;
+
+    X509_get0_signature(&sig_comp, &algor_comp, cert_comp);
+    X509_get0_signature(&sig_sigalg, &algor_sigalg, cert_sigalg);
+    if (!TEST_int_eq(X509_ALGOR_cmp(algor_comp, algor_sigalg), 0)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(sig_comp),
+            (size_t)ASN1_STRING_get_length(sig_comp),
+            ASN1_STRING_get0_data(sig_sigalg),
+            (size_t)ASN1_STRING_get_length(sig_sigalg))
+        || !TEST_int_eq(X509_verify(cert_sigalg, pkey), 1))
+        goto err;
+
+    /* Verification through a bare EVP_PKEY_CTX, initialised from the algor */
+    EVP_PKEY_CTX_free(pctx);
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_eq(ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
+            &cert_sigalg->sig_alg, &cert_sigalg->signature,
+            &cert_sigalg->cert_info, pctx), 1))
+        goto err;
+
+    /* A corrupted signature must not verify */
+    first_sigbyte = cert_sigalg->signature.data[0];
+    cert_sigalg->signature.data[0] ^= 0x01;
+    EVP_PKEY_CTX_free(pctx);
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
+        || !TEST_int_ne(ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
+            &cert_sigalg->sig_alg, &cert_sigalg->signature,
+            &cert_sigalg->cert_info, pctx), 1))
+        goto err;
+    cert_sigalg->signature.data[0] = first_sigbyte;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(pctx);
+    EVP_SIGNATURE_free(sigalg);
+    X509_free(cert_sigalg);
+    X509_free(cert_comp);
+    X509_NAME_free(name);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int test_sign_verify_pkey_ctx_rsa(void)
+{
+    return test_sign_verify_pkey_ctx("RSA-SHA256", EVP_sha256(), "RSA",
+        (size_t)2048);
+}
+
+static int test_sign_verify_pkey_ctx_ed25519(void)
+{
+    return test_sign_verify_pkey_ctx("ED25519", NULL, "ED25519",
+        (size_t)0);
+}
+
 /* A modified, unsigned certificate or CRL is equal only to itself */
 static int test_cmp_modified(void)
 {
@@ -1478,6 +1583,8 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
+    ADD_TEST(test_sign_verify_pkey_ctx_rsa);
+    ADD_TEST(test_sign_verify_pkey_ctx_ed25519);
     ADD_TEST(test_cmp_modified);
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));

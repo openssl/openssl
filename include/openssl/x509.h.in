@@ -652,6 +652,12 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
     const void *data, EVP_MD_CTX *ctx);
+int ASN1_item_sign_pkey_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+    X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+    const void *data, EVP_PKEY_CTX *pctx);
+int ASN1_item_verify_pkey_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+    const ASN1_BIT_STRING *signature, const void *data,
+    EVP_PKEY_CTX *pctx);
 
 #define X509_VERSION_1 0
 #define X509_VERSION_2 1
