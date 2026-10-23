@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "internal/common.h"
+#include "internal/secret_check.h"
 #include "crypto/dsa.h"
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
 #include "dsa_local.h"
@@ -291,6 +292,13 @@ void DSA_get0_key(const DSA *d,
 
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 {
+    /* The private key width is known only once q is set */
+    if (priv_key != NULL && d->params.q != NULL && !BN_is_zero(d->params.q)
+        && ossl_secret_check_enabled()
+        && !ossl_secret_bn_check(priv_key, BN_num_bits(d->params.q))) {
+        ERR_raise(ERR_LIB_DSA, ERR_R_SECRET_NOT_KEY_MATERIAL);
+        return 0;
+    }
     if (pub_key != NULL) {
         BN_free(d->pub_key);
         d->pub_key = pub_key;
