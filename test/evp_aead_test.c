@@ -947,6 +947,106 @@ err:
     return testresult;
 }
 
+/*-
+ * Setting the tag with no value sets only its length, before the tag itself
+ * is supplied. When decrypting this must not fail unexpectedly, and
+ * decryption with the tag supplied afterwards must succeed. GCM rejects a
+ * tag with no value when decrypting; the tag is then supplied as usual.
+ */
+static int test_evp_aead_set_tag_null(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *enc_ctx = NULL;
+    EVP_CIPHER_CTX *dec_ctx = NULL;
+    OSSL_PARAM tagparams[2];
+    static const unsigned char aad[] = "set tag null";
+    static const unsigned char pt[] = "tag length first, then the tag";
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char ct[sizeof(pt) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char out[sizeof(pt) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    const int ptlen = (int)sizeof(pt) - 1;
+    const int aadlen = (int)sizeof(aad) - 1;
+    int i = 0, outlen = 0, ctlen = 0, testresult = 0;
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, info->taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+
+    /* encrypt to get a ciphertext and tag */
+    if (!TEST_ptr(enc_ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(enc_ctx, info->ciph, key, iv, NULL))
+        /* ccm must be told the payload length before aad or payload */
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(enc_ctx, NULL, &outlen, NULL,
+                ptlen)))
+        || !TEST_true(EVP_EncryptUpdate(enc_ctx, NULL, &outlen, aad, aadlen))
+        || !TEST_true(EVP_EncryptUpdate(enc_ctx, ct, &outlen, pt, ptlen))) {
+        TEST_info("%s: encrypt", info->name);
+        goto err;
+    }
+    ctlen = outlen;
+    if (!TEST_true(EVP_EncryptFinal_ex(enc_ctx, ct + ctlen, &outlen))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(enc_ctx, tagparams))) {
+        TEST_info("%s: encrypt Final or tag read", info->name);
+        goto err;
+    }
+    ctlen += outlen;
+
+    if (!TEST_ptr(dec_ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(dec_ctx, info->ciph, key, iv, NULL))) {
+        TEST_info("%s: decrypt init", info->name);
+        goto err;
+    }
+
+    /* set the tag length only */
+    if (info->mode == EVP_CIPH_GCM_MODE) {
+        /* gcm rejects a tag with no value when decrypting */
+        if (!TEST_false(EVP_CIPHER_CTX_ctrl(dec_ctx, EVP_CTRL_AEAD_SET_TAG,
+                info->taglen, NULL))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER)) {
+            TEST_info("%s: set tag length", info->name);
+            goto err;
+        }
+        ERR_clear_error();
+    } else if (!TEST_true(EVP_CIPHER_CTX_ctrl(dec_ctx, EVP_CTRL_AEAD_SET_TAG,
+                   info->taglen, NULL))) {
+        TEST_info("%s: set tag length", info->name);
+        goto err;
+    }
+
+    /* then supply the tag and decrypt */
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(dec_ctx, EVP_CTRL_AEAD_SET_TAG,
+            info->taglen, tag))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_DecryptUpdate(dec_ctx, NULL, &outlen, NULL,
+                ctlen)))
+        || !TEST_true(EVP_DecryptUpdate(dec_ctx, NULL, &outlen, aad, aadlen))
+        || !TEST_true(EVP_DecryptUpdate(dec_ctx, out, &outlen, ct, ctlen))) {
+        TEST_info("%s: decrypt after setting the tag", info->name);
+        goto err;
+    }
+    ctlen = outlen;
+    if (!TEST_true(EVP_DecryptFinal_ex(dec_ctx, out + ctlen, &outlen))
+        || !TEST_mem_eq(out, ctlen + outlen, pt, ptlen)) {
+        TEST_info("%s: decrypt Final", info->name);
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(enc_ctx);
+    EVP_CIPHER_CTX_free(dec_ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     size_t i = 0;
@@ -969,6 +1069,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_final_no_tag, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_enc_retval, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_update_null_input, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_aead_set_tag_null, OSSL_NELEM(aead_list));
     return 1;
 }
 
