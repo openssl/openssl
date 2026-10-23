@@ -138,6 +138,15 @@ OpenSSL 4.2
 
    *Timo Keller*
 
+ * Added AVX-512 optimized ML-KEM polynomial arithmetic on `x86_64`, covering
+   the forward and inverse number-theoretic transforms, the base
+   multiplication of transformed polynomials, and a fused accumulator for the
+   inner product and matrix multiplies.  The matrix multiply runs the inverse
+   transform on the accumulated row before storing it.  Selected at run time
+   on CPUs with AVX-512F and AVX-512BW.
+
+   *Madan Mohan Manokar*
+
 OpenSSL 4.1
 -----------
 
