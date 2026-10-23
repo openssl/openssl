@@ -1410,9 +1410,9 @@ err:
 }
 
 /*
- * ASN1_item_sign_pkey_ctx() signs the TBS in one shot with a message
- * context (a fetched signature algorithm, EVP_PKEY_sign_message_init()),
- * and ASN1_item_verify_pkey_ctx() verifies it with a bare EVP_PKEY_CTX.
+ * X509_sign_pkey_ctx() signs the TBS in one shot with a message context
+ * (a fetched signature algorithm, EVP_PKEY_sign_message_init()), and
+ * X509_verify_pkey_ctx() verifies it with a bare EVP_PKEY_CTX.
  * The result must be indistinguishable from composed signing: same
  * AlgorithmID, and for these deterministic algorithms the same signature
  * bytes.
@@ -1454,12 +1454,8 @@ static int test_sign_verify_pkey_ctx(const char *signame,
     /* The same certificate, signed with the fetched signature algorithm */
     if (!TEST_ptr(cert_sigalg = X509_dup(cert_comp))
         || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
-        || !TEST_int_gt(EVP_PKEY_sign_message_init(pctx, sigalg, NULL), 0))
-        goto err;
-    cert_sigalg->cert_info.enc.modified = 1;
-    if (!TEST_int_gt(ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
-            &cert_sigalg->cert_info.signature, &cert_sigalg->sig_alg,
-            &cert_sigalg->signature, &cert_sigalg->cert_info, pctx), 0))
+        || !TEST_int_gt(EVP_PKEY_sign_message_init(pctx, sigalg, NULL), 0)
+        || !TEST_int_gt(X509_sign_pkey_ctx(cert_sigalg, pctx), 0))
         goto err;
 
     X509_get0_signature(&sig_comp, &algor_comp, cert_comp);
@@ -1475,9 +1471,7 @@ static int test_sign_verify_pkey_ctx(const char *signame,
     /* Verification through a bare EVP_PKEY_CTX, initialised from the algor */
     EVP_PKEY_CTX_free(pctx);
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
-        || !TEST_int_eq(ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
-            &cert_sigalg->sig_alg, &cert_sigalg->signature,
-            &cert_sigalg->cert_info, pctx), 1))
+        || !TEST_int_eq(X509_verify_pkey_ctx(cert_sigalg, pctx), 1))
         goto err;
 
     /* A corrupted signature must not verify */
@@ -1485,9 +1479,7 @@ static int test_sign_verify_pkey_ctx(const char *signame,
     cert_sigalg->signature.data[0] ^= 0x01;
     EVP_PKEY_CTX_free(pctx);
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))
-        || !TEST_int_ne(ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
-            &cert_sigalg->sig_alg, &cert_sigalg->signature,
-            &cert_sigalg->cert_info, pctx), 1))
+        || !TEST_int_ne(X509_verify_pkey_ctx(cert_sigalg, pctx), 1))
         goto err;
     cert_sigalg->signature.data[0] = first_sigbyte;
 

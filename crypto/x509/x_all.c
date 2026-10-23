@@ -140,6 +140,15 @@ int X509_verify(const X509 *a, EVP_PKEY *r)
         a->distinguishing_id, r, a->libctx, a->propq);
 }
 
+int X509_verify_pkey_ctx(const X509 *a, EVP_PKEY_CTX *pctx)
+{
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
+        return 0;
+
+    return ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
+        &a->signature, &a->cert_info, pctx);
+}
+
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
     const char *propq)
 {
@@ -232,6 +241,25 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
         &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, ctx);
+}
+
+int X509_sign_pkey_ctx(X509 *x, EVP_PKEY_CTX *pctx)
+{
+    const STACK_OF(X509_EXTENSION) *exts;
+
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if ((exts = X509_get0_extensions(x)) != NULL && bad_keyid_exts(exts))
+        return 0;
+    if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
+        && !X509_set_version(x, X509_VERSION_3))
+        return 0;
+    x->cert_info.enc.modified = 1;
+    return ASN1_item_sign_pkey_ctx(ASN1_ITEM_rptr(X509_CINF),
+        &x->cert_info.signature,
+        &x->sig_alg, &x->signature, &x->cert_info, pctx);
 }
 
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
