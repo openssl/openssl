@@ -33,6 +33,19 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed an Encrypted ClientHello (ECH) key handling mismatch that made a
+   server whose ECH key was created with `OSSL_ECHSTORE_new_config()` reject
+   every conformant ECH ClientHello as GREASE and silently fall back to the
+   public name.  `OSSL_ECHSTORE_new_config()` stored a whole `ECHConfigList` in
+   the entry byte string that is later fed to the HPKE `info` parameter, where
+   RFC 9849 requires a single `ECHConfig`.  It now stores the `ECHConfig`, and
+   `OSSL_ECHSTORE_write_pem()` wraps it in an `ECHConfigList` for both the
+   single-index and `OSSL_ECHSTORE_ALL` output modes so that both remain
+   readable by `OSSL_ECHSTORE_read_pem()`.
+   <!-- https://github.com/openssl/openssl/pull/32397 -->
+
+   *Nguyen Anh Binh and Ngo Tung Son*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
