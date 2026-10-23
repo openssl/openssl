@@ -115,7 +115,7 @@ SOURCE[$AES_GOAL]=\
         cipher_aes_cbc_hmac_sha.c \
         cipher_aes_cbc_hmac_sha256_hw.c cipher_aes_cbc_hmac_sha1_hw.c \
         cipher_cts.c
-DEFINE[$AES_GOAL]=$AESXTSDEF
+DEFINE[$AES_GOAL]=$AESXTSDEF $GHASHDEF
 
 # Extra code to satisfy the FIPS and non-FIPS separation.
 # When the AES-xxx-XTS moves to legacy, cipher_aes_xts_fips.c can be removed.

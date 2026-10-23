@@ -35,6 +35,7 @@ ENDIF
 
 SOURCE[../../libcrypto]=$CHACHAASM
 DEFINE[../../libcrypto]=$CHACHADEF
+DEFINE[../../providers/libdefault.a]=$CHACHADEF
 
 GENERATE[chacha-x86.S]=asm/chacha-x86.pl
 GENERATE[chacha-x86_64.s]=asm/chacha-x86_64.pl
