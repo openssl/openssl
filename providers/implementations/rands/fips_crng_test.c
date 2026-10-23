@@ -143,7 +143,7 @@ static int APT_test(CRNG_TEST *crngt, uint8_t next)
      * Critical values for this test are drawn from a binomial
      * distribution with n = 512, p = 2^-H at a critical threshold of
      * 2^-40.  H being the expected entropy per sample.  Refer SP 800-90B
-     * section 4.4.2, table 2.
+     * section 4.4.2, footnote 10.
      */
     static const unsigned int apt_c[9] = {
         432, /* H = 0.5 */
