@@ -991,6 +991,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asprintf_test \
                      asn1_internal_test modes_internal_test x509_internal_test \
+                     secret_check_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
@@ -1055,6 +1056,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[x509_internal_test]=x509_internal_test.c
     INCLUDE[x509_internal_test]=.. ../include ../apps/include
     DEPEND[x509_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[secret_check_test]=secret_check_test.c
+    INCLUDE[secret_check_test]=.. ../include ../apps/include
+    DEPEND[secret_check_test]=../libcrypto.a libtestutil.a
 
     SOURCE[rsa_test]=rsa_test.c
     INCLUDE[rsa_test]=../include ../apps/include
