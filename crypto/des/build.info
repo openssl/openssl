@@ -28,6 +28,7 @@ IF[{- !$disabled{module} && !$disabled{shared} -}]
 ENDIF
 
 DEFINE[../../libcrypto]=$DESDEF
+DEFINE[../../providers/libdefault.a]=$DESDEF
 DEFINE[../../providers/libfips.a]=$DESDEF
 
 # When all deprecated symbols are removed, libcrypto doesn't export the
