@@ -890,12 +890,13 @@ err:
  * (OPENSSL_VMCLOCK is set to it in setup_tests, before any DRBG runs). Bumping
  * the generation counter in it must reseed the public and private DRBGs, and
  * the primary through them, on their next generate call; leaving it alone must
- * not.
+ * not. The page is shared by every library context, so each test below runs
+ * in its own context and puts the counter back before it returns: the other
+ * tests, which compare the default DRBGs' reseed counts, run in any order.
  */
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <openssl/bio.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/provider.h>
 
@@ -919,7 +920,7 @@ static int vmclock_test_setup(void)
 
     if (dir == NULL || *dir == '\0')
         dir = "/tmp";
-    if (BIO_snprintf(vmclock_test_path, sizeof(vmclock_test_path),
+    if (snprintf(vmclock_test_path, sizeof(vmclock_test_path),
             "%s/openssl-vmclock-test-XXXXXX", dir)
         <= 0)
         return 0;
@@ -962,16 +963,22 @@ static void vmclock_test_set_seq(uint32_t seq)
     __atomic_store_n((uint32_t *)(vmclock_test_page + 12), raw, __ATOMIC_SEQ_CST);
 }
 
-/* Bump the generation counter as a hypervisor does, holding the page odd for |hold_us|. */
-static void vmclock_test_bump(unsigned int hold_us)
+/* Set the generation counter as a hypervisor does, holding the page odd for |hold_ms|. */
+static void vmclock_test_set_generation(uint64_t generation, unsigned int hold_ms)
 {
+    vmclock_test_generation = generation;
     vmclock_test_set_seq(++vmclock_test_seq); /* odd: update in progress */
     __atomic_thread_fence(__ATOMIC_SEQ_CST);
-    vmclock_test_put(104, ++vmclock_test_generation, 8);
+    vmclock_test_put(104, generation, 8);
     __atomic_thread_fence(__ATOMIC_SEQ_CST);
-    if (hold_us > 0)
-        usleep(hold_us);
+    if (hold_ms > 0)
+        OSSL_sleep(hold_ms);
     vmclock_test_set_seq(++vmclock_test_seq);
+}
+
+static void vmclock_test_bump(unsigned int hold_ms)
+{
+    vmclock_test_set_generation(vmclock_test_generation + 1, hold_ms);
 }
 
 static unsigned int vmclock_reseed_counter(EVP_RAND_CTX *drbg)
@@ -988,41 +995,49 @@ static unsigned int vmclock_reseed_counter(EVP_RAND_CTX *drbg)
 
 static int test_rand_reseed_on_vmclock(void)
 {
+    OSSL_LIB_CTX *ctx = NULL;
     EVP_RAND_CTX *primary, *public, *private;
+    uint64_t generation = vmclock_test_generation;
     unsigned char buf[32];
     unsigned int pri, pub, pri2, pub2;
+    int ret = 0;
 
     if (using_fips_rng())
         return TEST_skip("FIPS provider DRBGs do not read VMClock");
-    if (!TEST_ptr(primary = RAND_get0_primary(NULL))
-        || !TEST_ptr(public = RAND_get0_public(NULL))
-        || !TEST_ptr(private = RAND_get0_private(NULL)))
-        return 0;
-    if (!TEST_true(RAND_bytes(buf, sizeof(buf))) || !TEST_true(RAND_priv_bytes(buf, sizeof(buf))))
-        return 0;
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(primary = RAND_get0_primary(ctx))
+        || !TEST_ptr(public = RAND_get0_public(ctx))
+        || !TEST_ptr(private = RAND_get0_private(ctx))
+        || !TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_true(RAND_priv_bytes_ex(ctx, buf, sizeof(buf), 0)))
+        goto err;
     pri = vmclock_reseed_counter(primary);
     pub = vmclock_reseed_counter(public);
 
     /* nothing changed: no reseed */
-    if (!TEST_true(RAND_bytes(buf, sizeof(buf)))
+    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
         || !TEST_uint_eq(vmclock_reseed_counter(public), pub)
         || !TEST_uint_eq(vmclock_reseed_counter(primary), pri))
-        return 0;
+        goto err;
 
     /* the generation counter moved: the public DRBG reseeds, and the primary with it */
     vmclock_test_bump(0);
-    if (!TEST_true(RAND_bytes(buf, sizeof(buf))))
-        return 0;
+    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0)))
+        goto err;
     pub2 = vmclock_reseed_counter(public);
     pri2 = vmclock_reseed_counter(primary);
     if (!TEST_uint_eq(pub2, pub + 1) || !TEST_uint_eq(pri2, pri + 1))
-        return 0;
+        goto err;
     /* and the private DRBG on its next call, once */
-    if (!TEST_true(RAND_priv_bytes(buf, sizeof(buf)))
-        || !TEST_true(RAND_priv_bytes(buf, sizeof(buf)))
+    if (!TEST_true(RAND_priv_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_true(RAND_priv_bytes_ex(ctx, buf, sizeof(buf), 0))
         || !TEST_uint_eq(vmclock_reseed_counter(primary), pri2))
-        return 0;
-    return 1;
+        goto err;
+    ret = 1;
+err:
+    vmclock_test_set_generation(generation, 0);
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
 }
 
 /*
@@ -1187,6 +1202,7 @@ static int test_rand_vmclock_recheck(void)
     EVP_RAND *rand = NULL;
     EVP_RAND_CTX *parent = NULL, *drbg = NULL;
     OSSL_PARAM params[2];
+    uint64_t generation = vmclock_test_generation;
     unsigned char buf[32];
     unsigned int n;
     int ret = 0;
@@ -1228,6 +1244,7 @@ static int test_rand_vmclock_recheck(void)
     ret = 1;
 err:
     vmclock_seed_bumps = 0;
+    vmclock_test_set_generation(generation, 0);
     EVP_RAND_CTX_free(drbg);
     EVP_RAND_CTX_free(parent);
     EVP_RAND_free(rand);
@@ -1241,10 +1258,7 @@ err:
  * A page left odd, as if the hypervisor stopped in the middle of an update:
  * the read gives up after a bounded number of looks, the call succeeds and
  * reseeds, and once the page is consistent again without a change, the DRBGs
- * stop reseeding. This test and the next run in their own library context,
- * so that their many reseeds stay out of the counts of the default one, which
- * the other tests compare; the page is shared, so the default DRBGs reseed
- * once more at their next call.
+ * stop reseeding.
  */
 static int test_rand_vmclock_stuck(void)
 {
@@ -1341,6 +1355,7 @@ static int test_rand_vmclock_threads(void)
     pthread_t t[VMCLOCK_THREADS];
     int ok[VMCLOCK_THREADS];
     EVP_RAND_CTX *primary = NULL;
+    uint64_t generation = vmclock_test_generation;
     unsigned int pri = 0;
     int i, n, ret = 1;
 
@@ -1359,8 +1374,9 @@ static int test_rand_vmclock_threads(void)
     vmclock_phases = TEST_int_eq(n, VMCLOCK_THREADS)
         && TEST_int_eq(pthread_barrier_init(&vmclock_barrier, NULL, n + 1), 0);
     for (i = 0; i < VMCLOCK_BUMPS; i++) {
-        vmclock_test_bump(i % 100 == 0 ? 200 : 0);
-        usleep(20);
+        vmclock_test_bump(i % 100 == 0 ? 1 : 0);
+        if (i % 20 == 19)
+            OSSL_sleep(1);
     }
     __atomic_store_n(&vmclock_stop, 1, __ATOMIC_RELEASE);
     if (vmclock_phases) {
@@ -1380,6 +1396,7 @@ static int test_rand_vmclock_threads(void)
         if (!TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1))
             ret = 0;
     }
+    vmclock_test_set_generation(generation, 0);
     OSSL_LIB_CTX_free(vmclock_ctx);
     vmclock_ctx = NULL;
     return vmclock_phases && ret;
