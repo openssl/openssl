@@ -119,6 +119,12 @@ static int siv_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (!ossl_prov_is_running())
         return 0;
 
+    /* no key set: the MAC context only exists once a key has been set */
+    if (ctx->siv.mac_ctx_init == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
+
     if (in == NULL && inl != 0) {
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -144,6 +150,12 @@ static int siv_stream_final(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
+
+    /* no key set: the MAC context only exists once a key has been set */
+    if (ctx->siv.mac_ctx_init == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
 
     if (!ctx->hw->cipher(vctx, out, NULL, 0))
         return 0;
