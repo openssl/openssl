@@ -51,6 +51,9 @@ IF[{- !$disabled{asm} -}]
   $MODESASM_e2kv7=asm/ghash-e2kv6.c
   $MODESDEF_e2kv7=GHASH_ASM
 
+  $MODESASM_loongarch64=ghash-loongarch64.S
+  $MODESDEF_loongarch64=GHASH_ASM
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$MODESASM_{- $target{asm_arch} -}]
@@ -99,3 +102,5 @@ GENERATE[ghash-riscv64.s]=asm/ghash-riscv64.pl
 GENERATE[ghash-riscv64-zvkb-zvbc.s]=asm/ghash-riscv64-zvkb-zvbc.pl
 GENERATE[ghash-riscv64-zvkg.s]=asm/ghash-riscv64-zvkg.pl
 GENERATE[aes-gcm-riscv64-zvkb-zvkg-zvkned.s]=asm/aes-gcm-riscv64-zvkb-zvkg-zvkned.pl
+GENERATE[ghash-loongarch64.S]=asm/ghash-loongarch64.pl
+INCLUDE[ghash-loongarch64.o]=..
