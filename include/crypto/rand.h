@@ -168,6 +168,22 @@ uint32_t ossl_rand_range_uint32(OSSL_LIB_CTX *ctx, uint32_t lower, uint32_t uppe
     int *err);
 
 /*
+ * Random salt for hashing untrusted input, e.g. the SipHash key of a hash
+ * table, with fallbacks for library contexts without a usable RAND.
+ * Not suitable for cryptographic keys, IVs, nonces or other secrets.
+ *
+ * Only built into libcrypto: its fallbacks rely on the libcrypto seeding
+ * code (ossl_rand_get_entropy()), which the FIPS provider does not have,
+ * and inside the FIPS provider RAND is always backed by its own DRBG, so no
+ * fallback is needed there. Hiding the declaration from FIPS_MODULE builds
+ * turns an accidental use into a compile error rather than a link failure
+ * of the FIPS provider.
+ */
+#ifndef FIPS_MODULE
+int ossl_rand_hash_salt(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num);
+#endif
+
+/*
  * Check if the named provider is the nominated entropy/random provider.
  * If it is, use it.
  */
