@@ -2226,6 +2226,22 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         goto err;
     }
 
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
+        memcpy(s->tmp_session_id, s->clienthello->session_id,
+            s->clienthello->session_id_len);
+        s->tmp_session_id_len = s->clienthello->session_id_len;
+
+        /*
+         * A stateless server reconstructs the transcript from the cookie,
+         * which must happen before the PSK binder is verified.
+         */
+        if (!tls_parse_extension(s, TLSEXT_IDX_cookie, SSL_EXT_CLIENT_HELLO,
+                clienthello->pre_proc_exts, NULL, 0)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+    }
+
     /*
      * Generate the server_random now. The protocol version (and hence any
      * downgrade sentinel) is known, and the cheap structural checks on the
@@ -2279,12 +2295,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
                 goto err;
             }
         }
-    }
-
-    if (SSL_CONNECTION_IS_VERSION13(s)) {
-        memcpy(s->tmp_session_id, s->clienthello->session_id,
-            s->clienthello->session_id_len);
-        s->tmp_session_id_len = s->clienthello->session_id_len;
     }
 
     /*
