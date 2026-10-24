@@ -486,6 +486,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_DSA_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_dsa_sha3_512_signature_functions },
 #endif
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_signature_functions },
+    { PROV_NAMES_RSA_PSS, FIPS_DEFAULT_PROPERTIES, ossl_rsa_pss_signature_functions },
     { PROV_NAMES_RSA_SHA1, FIPS_DEFAULT_PROPERTIES,
         ossl_rsa_sha1_signature_functions },
     { PROV_NAMES_RSA_SHA224, FIPS_DEFAULT_PROPERTIES,

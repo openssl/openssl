@@ -138,6 +138,15 @@ OpenSSL 4.2
 
    *Timo Keller*
 
+ * Added an `RSA-PSS` signature algorithm to the default and FIPS
+   providers.  It can be explicitly fetched as an `EVP_SIGNATURE` and
+   used with the `EVP_PKEY_sign_message()` family of functions, and
+   accepts both RSA and RSA-PSS keys.  Unlike the `RSA-{hash}`
+   algorithms, the message digest is given as a parameter rather than
+   being part of the algorithm name.
+
+   *Richard Levitte*
+
 OpenSSL 4.1
 -----------
 

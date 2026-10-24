@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -90,5 +90,61 @@ int ossl_DER_w_octet_string_uint32(WPACKET *pkt, int tag, uint32_t value);
  */
 int ossl_DER_w_begin_sequence(WPACKET *pkt, int tag);
 int ossl_DER_w_end_sequence(WPACKET *pkt, int tag);
+
+/*
+ * Run-time parsers, the reading counterparts of the writers above.
+ *
+ * They use the same |tag| conventions as the writers: DER_NO_CONTEXT for
+ * the bare element with its universal tag, or a context tag number (0-30)
+ * for a constructed context specific element wrapping the value, exactly
+ * as the corresponding writer produces it.  This means that anything the
+ * writers produce can be read back with the corresponding reader using
+ * the same |tag| argument.
+ *
+ * The parsers are lenient in what they accept, as long as it's definite
+ * length: non-minimal length encodings are accepted, while indefinite
+ * lengths and the high-tag-number form (tag numbers larger than 30) are
+ * rejected.  This matches what the writers produce, and tolerates the
+ * BER-ish sloppiness that's common in the wild.
+ */
+
+/*
+ * Lowest level reader: read one DER element from |pkt|.  On success,
+ * |*identifier| receives the identifier octet (the DER class, the
+ * constructed flag and the tag number), |*contents| is filled in with a
+ * sub-PACKET holding the contents octets (it may be NULL to merely skip
+ * the element), and |pkt| is advanced past the element.
+ */
+int ossl_DER_r_element(PACKET *pkt, unsigned int *identifier,
+    PACKET *contents);
+
+/*
+ * Peek variant: reads the same as ossl_DER_r_element(), but doesn't
+ * advance |pkt|
+ */
+int ossl_DER_r_peek_element(const PACKET *pkt, unsigned int *identifier,
+    PACKET *contents);
+
+int ossl_DER_r_precompiled(PACKET *pkt, int tag,
+    const unsigned char *precompiled,
+    size_t precompiled_n);
+int ossl_DER_r_boolean(PACKET *pkt, int tag, int *b);
+int ossl_DER_r_uint32(PACKET *pkt, int tag, uint32_t *v);
+
+/*
+ * On success, |*v| receives a freshly allocated BIGNUM, which the caller
+ * must free with BN_free().  Like the writer, only non-negative integers
+ * are supported.
+ */
+int ossl_DER_r_bn(PACKET *pkt, int tag, BIGNUM **v);
+int ossl_DER_r_null(PACKET *pkt, int tag);
+int ossl_DER_r_octet_string(PACKET *pkt, int tag, PACKET *contents);
+
+/*
+ * The constructed parser hands back the sequence contents in |contents|;
+ * there is no end function, the end is when the contents sub-PACKET has
+ * been fully consumed (or abandoned).
+ */
+int ossl_DER_r_begin_sequence(PACKET *pkt, int tag, PACKET *contents);
 
 #endif

@@ -459,6 +459,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_DSA_SHA3_512, "provider=default", ossl_dsa_sha3_512_signature_functions },
 #endif
     { PROV_NAMES_RSA, "provider=default", ossl_rsa_signature_functions },
+    { PROV_NAMES_RSA_PSS, "provider=default", ossl_rsa_pss_signature_functions },
 #if !defined(OPENSSL_NO_RMD160) && !defined(FIPS_MODULE)
     { PROV_NAMES_RSA_RIPEMD160, "provider=default", ossl_rsa_ripemd160_signature_functions },
 #endif
