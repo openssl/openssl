@@ -244,6 +244,57 @@ end:
 
     return testresult;
 }
+
+/* Trigger memory failures in the server flight with a compressed cert */
+static int test_ssl_cert_comp_mfail(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int ret = -1;
+    int rc, err;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_compress_certs(sctx, 0)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /* Send the ClientHello outside of the mfail section */
+    rc = SSL_connect(clientssl);
+    if (!TEST_int_le(rc, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, rc), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Server processes it and constructs the flight with a compressed cert */
+    MFAIL_start();
+    rc = SSL_accept(serverssl);
+    MFAIL_end();
+
+    err = rc <= 0 ? SSL_get_error(serverssl, rc) : SSL_ERROR_NONE;
+    ret = rc <= 0 && err == SSL_ERROR_WANT_READ;
+
+    /* On a clean pass the handshake must complete with the compressed cert */
+    if (ret == 1 && !mfail_was_triggered()) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(serverssl);
+
+        ret = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)
+            && sc->cert->key->cert_comp_used > 0;
+    }
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return ret;
+}
 #endif
 
 OPT_TEST_DECLARE_USAGE("certdir\n")
@@ -268,6 +319,11 @@ int setup_tests(void)
         goto err;
 
     ADD_ALL_TESTS(test_ssl_cert_comp, 4);
+#if !defined(OPENSSL_NO_BROTLI) || !defined(OPENSSL_NO_ZLIB) \
+    || !defined(OPENSSL_NO_ZSTD)
+    /* NO_CHECK: sigalg/chain/verify fallbacks in the flight absorb failures */
+    ADD_MFAIL_NO_CHECK_TEST(test_ssl_cert_comp_mfail);
+#endif
     return 1;
 
 err:
