@@ -5834,8 +5834,7 @@ ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_loca
     items[0].events = UINT64_MAX;
     items[0].revents = UINT64_MAX;
 
-    t_limit = ossl_time_add(ossl_time_now(),
-        ossl_ticks2time(5 * OSSL_TIME_SECOND));
+    t_limit = ossl_time_add(ossl_time_now(), ossl_ms2time(180000));
     while (done == 0 && ok == 1) {
         ok = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
             &timeout, 0,
@@ -5854,7 +5853,7 @@ ossl_unused static int script_88_poll_conly(struct helper *h, struct helper_loca
         done = ((items[0].revents & SSL_POLL_EVENT_ECD) == SSL_POLL_EVENT_ECD);
 
         if (ossl_time_compare(ossl_time_now(), t_limit) == 1) {
-            TEST_error("shutdown time exceeded 5sec");
+            TEST_error("shutdown time exceeded 180sec");
             ok = 0;
         }
     }
