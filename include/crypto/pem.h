@@ -28,11 +28,11 @@ int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
     unsigned int *psaltlen, unsigned int *pkeylen);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #ifndef OPENSSL_NO_DSA
-DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
-    int ispub);
+DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int length,
+    unsigned int bitlen, int ispub);
 #endif
-RSA *ossl_b2i_RSA_after_header(const unsigned char **in, unsigned int bitlen,
-    int ispub);
+RSA *ossl_b2i_RSA_after_header(const unsigned char **in, unsigned int length,
+    unsigned int bitlen, int ispub);
 #endif
 EVP_PKEY *ossl_b2i(const unsigned char **in, unsigned int length, int *ispub);
 EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub);
