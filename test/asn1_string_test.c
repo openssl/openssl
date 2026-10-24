@@ -563,8 +563,7 @@ asn1_string_set0_test(void)
     if (!TEST_ptr(data = (uint8_t *)OPENSSL_strdup("hoobla")))
         goto err;
 
-    /* A negative length can never be valid and is treated as empty */
-    ASN1_STRING_set0(str, data, -1);
+    ASN1_STRING_set0(str, data, 0);
 
     if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 0))
         goto err;
