@@ -530,12 +530,16 @@ BIN_LDFLAGS={- join(' ', $target{bin_lflags} || (),
 BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 
 # Extra flags appended only to the two s390x VX vector source files
-# (ml_kem_vec128.c and ml_dsa_ntt_vec128.c).  For GCC this is empty
-# (the #pragma GCC target inside each file sets arch=z13,vx for that TU).
-# For Clang this contains -fzvector when the probe determined it is needed
-# to make <vecintrin.h> available.  The per-object rule in src2obj also
-# appends -march=z13 -mvx unconditionally for these two files so that
-# Clang defines __VX__ and emits the vector entry points.
+# (ml_kem_vec128.c and ml_dsa_ntt_vec128.c).
+#
+# S390X_VEC_CFLAGS: the VX enable flags for these TUs, as determined by the
+# Configure probe.  The user's -march= (or the compiler's default architecture)
+# flows through $(CFLAGS) → $(LIB_CFLAGS) unchanged; this variable only adds
+# the minimum flags needed to unlock VX vector intrinsics:
+#   - GCC:         "-mvx"
+#   - Clang:       "-mvx -fzvector"
+# If the Configure probe failed (compiler/arch does not support VX) this
+# variable is empty and the two vec128 files are excluded from the build.
 S390X_VEC_CFLAGS={- $config{s390x_vector_cflags} // '' -}
 
 CMOCKA_LIBS={- $config{cmocka_libs} // '' -}
@@ -1809,13 +1813,12 @@ EOF
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
       # Per-file extra flags for the two s390x VX vector translation units.
-      # GCC uses #pragma GCC target inside each file so only needs an empty
-      # suffix.  Clang needs -march=z13 -mvx (to define __VX__ and generate
-      # VX instructions) plus the optional $(S390X_VEC_CFLAGS) (-fzvector
-      # for older Clang to unlock <vecintrin.h>).
+      # $(S390X_VEC_CFLAGS) carries "-mvx" (GCC) or "-mvx -fzvector" (Clang)
+      # as determined by the Configure probe.  No -march= is injected here;
+      # the user's own -march= flows through $(LIB_CFLAGS) unchanged.
       my $extra_cflags = "";
       if (grep m{(?:^|/)(ml_kem_vec128|ml_dsa_ntt_vec128)\.c$}, @srcs) {
-          $extra_cflags = " -march=z13 -mvx \$(S390X_VEC_CFLAGS)";
+          $extra_cflags = " \$(S390X_VEC_CFLAGS)";
       }
       my $cmd;
       my $cmdflags;
