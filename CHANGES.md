@@ -138,6 +138,10 @@ OpenSSL 4.2
 
    *Timo Keller*
 
+ * Added several new commands to the SSL_CONF API.
+
+   *Stephen Wall*
+
 OpenSSL 4.1
 -----------
 
