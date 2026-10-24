@@ -178,7 +178,7 @@ close IN;
 
 if ( ! $statefile ) {
     $statefile = $config;
-    $statefile =~ s/.ec/.txt/;
+    $statefile =~ s/\.ec$/.txt/;
 }
 
 # The statefile has all the previous assignments.
