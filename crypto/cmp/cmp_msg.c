@@ -1236,7 +1236,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file, OSSL_LIB_CTX *libctx,
 int OSSL_CMP_MSG_write(const char *file, const OSSL_CMP_MSG *msg)
 {
     BIO *bio;
-    int res;
+    int res, len;
 
     if (file == NULL || msg == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -1246,7 +1246,11 @@ int OSSL_CMP_MSG_write(const char *file, const OSSL_CMP_MSG *msg)
     bio = BIO_new_file(file, "wb");
     if (bio == NULL)
         return -2;
-    res = i2d_OSSL_CMP_MSG_bio(bio, msg);
+    len = i2d_OSSL_CMP_MSG(msg, NULL);
+    res = len > 0 && i2d_OSSL_CMP_MSG_bio(bio, msg) > 0
+            && BIO_flush(bio) > 0
+        ? len
+        : -3;
     BIO_free(bio);
     return res;
 }
