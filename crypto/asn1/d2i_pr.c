@@ -133,6 +133,8 @@ ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
                 goto err;
             }
             EVP_PKEY_free(ret);
+            if (a != NULL)
+                *a = NULL;
             ret = tmp;
             ERR_pop_to_mark();
             if (EVP_PKEY_type(keytype) != EVP_PKEY_get_base_id(ret))
