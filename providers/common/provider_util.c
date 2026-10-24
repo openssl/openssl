@@ -68,6 +68,20 @@ const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc)
     return pc->cipher;
 }
 
+const char *ossl_prov_cipher_skey_type(const char *cipher_name)
+{
+    /*
+     * Matching on the family prefix rather than on each individual algorithm
+     * keeps this in step with the skeymgmts that are actually registered: an
+     * AES key is an AES key whichever mode it is later used in.
+     */
+    if (cipher_name != NULL
+        && OPENSSL_strncasecmp(cipher_name, "AES-", 4) == 0)
+        return OSSL_SKEY_TYPE_AES;
+
+    return OSSL_SKEY_TYPE_GENERIC;
+}
+
 void ossl_prov_digest_reset(PROV_DIGEST *pd)
 {
     EVP_MD_free(pd->alloc_md);

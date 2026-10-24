@@ -29,6 +29,11 @@ provider-kdf - The KDF library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_kdf_derive_skey(void *ctx, const char *key_type, void *provctx,
                                  OSSL_FUNC_skeymgmt_import_fn *import,
                                  size_t keylen, const OSSL_PARAM params[]);
+ int OSSL_FUNC_kdf_derive_multi(void *kctx, const OSSL_PARAM params[]);
+ void *OSSL_FUNC_kdf_get_skey(void *kctx, const char *purpose, void *provctx,
+                              OSSL_FUNC_skeymgmt_import_fn *import);
+ int OSSL_FUNC_kdf_get_iv(void *kctx, const char *purpose,
+                          const unsigned char **pIV, size_t *pIVlen);
 
  /* KDF parameter descriptors */
  const OSSL_PARAM *OSSL_FUNC_kdf_gettable_params(void *provctx);
@@ -76,6 +81,9 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_kdf_reset                OSSL_FUNC_KDF_RESET
  OSSL_FUNC_kdf_derive               OSSL_FUNC_KDF_DERIVE
  OSSL_FUNC_kdf_derive_skey          OSSL_FUNC_KDF_DERIVE_SKEY
+ OSSL_FUNC_kdf_derive_multi         OSSL_FUNC_KDF_DERIVE_MULTI
+ OSSL_FUNC_kdf_get_skey             OSSL_FUNC_KDF_GET_SKEY
+ OSSL_FUNC_kdf_get_iv               OSSL_FUNC_KDF_GET_IV
 
  OSSL_FUNC_kdf_get_params           OSSL_FUNC_KDF_GET_PARAMS
  OSSL_FUNC_kdf_get_ctx_params       OSSL_FUNC_KDF_GET_CTX_PARAMS
@@ -92,6 +100,12 @@ must be implemented: OSSL_FUNC_kdf_newctx(), OSSL_FUNC_kdf_freectx(),
 OSSL_FUNC_kdf_set_ctx_params(), and at least one of
 OSSL_FUNC_kdf_derive() or OSSL_FUNC_kdf_derive_skey().
 All other functions are optional.
+
+A provider that implements OSSL_FUNC_kdf_derive_multi() should also implement
+OSSL_FUNC_kdf_get_skey(), without which the derived keys cannot be collected,
+and OSSL_FUNC_kdf_get_iv() if the algorithm derives IVs. The derived keys live in the KDF context, so they are
+released by OSSL_FUNC_kdf_freectx() and copied by OSSL_FUNC_kdf_dupctx() along
+with the rest of it.
 
 =head2 Context Management Functions
 
@@ -129,6 +143,52 @@ give a hint to the provider what type of the key (e.g. generic or AES) would be
 generated and I<import> function from the B<EVP_SKEYMGMT> object to be
 associated with the key. The B<EVP_SKEYMGMT> object comes from the same
 provider as the KDF itself.
+
+=head2 Multi-key Derivation Functions
+
+Some protocols derive several keys and IVs from a single KDF operation. TLS 1.2,
+for example, derives a key block that is split into client and server MAC keys,
+cipher keys and IVs. These functions let a provider perform such a derivation as
+one atomic operation and hand out the individual results afterwards. This is
+particularly relevant for providers backed by hardware or a token (for example
+PKCS#11), where the derivation produces key handles that are never exported as
+raw bytes.
+
+OSSL_FUNC_kdf_derive_multi() performs the derivation after processing the
+I<params> as per OSSL_FUNC_kdf_set_ctx_params(), deriving every key and IV at
+once and retaining them in the KDF context given by I<kctx>. A second call
+replaces the results of the first. Because they live in the context, they are
+released by OSSL_FUNC_kdf_freectx() and copied by OSSL_FUNC_kdf_dupctx(); a
+provider whose keys exist only as handles on a token and cannot be copied
+should fail the latter. The sizes and key types of the individual outputs are
+supplied as parameters, see L</KDF Parameters> below.
+
+Validating the requested sizes and types is the provider's job, and belongs
+here rather than at collection time: a provider whose keys live on a token has
+the whole template in hand at this point, so one the token refuses is rejected
+by the derivation itself.  The software providers do the same, checking a
+requested key length against the cipher that was named for it.
+
+The key type settled on for each purpose is reported through the ordinary
+OSSL_FUNC_kdf_get_ctx_params(), in a parameter named after the purpose. That
+call should fail for a purpose the derivation produced no key for, which is how
+libcrypto learns that a slot is absent; a TLS 1.2 key block for an AEAD
+ciphersuite, for instance, has no MAC keys.
+
+OSSL_FUNC_kdf_get_skey() returns one of the keys, selected by the I<purpose>
+string; the recognised purpose strings are algorithm specific and are
+documented with the individual KDFs, for example in
+L<EVP_KDF-TLS1_PRF(7)> and L<EVP_KDF-TLS13_KDF(7)>. I<import> is the import
+function of the B<EVP_SKEYMGMT> that libcrypto resolved for this purpose from
+the key type reported above; a provider that already holds the key as a native
+object may ignore it and return that object instead. The caller takes ownership
+of the returned key data.
+
+OSSL_FUNC_kdf_get_iv() returns one of the IVs, selected by the I<purpose>
+string. IVs are not keys and are handed back as raw bytes: on success I<*pIV>
+is set to point at the IV data and I<*pIVlen> to its length. That data remains
+owned by the KDF context and must stay valid until the context is reset, freed
+or used for another derivation; the caller must not free it.
 
 =head2 KDF Parameters
 
@@ -274,6 +334,36 @@ associated KDF ctx.
 
 Sets the optional shared info in the associated KDF ctx.
 
+=item "mac_key_len" (B<OSSL_KDF_PARAM_MAC_KEY_LEN>) <unsigned integer>
+
+Sets the length of each MAC key to be produced by a multi-key derivation in the
+associated KDF ctx. See L</Multi-key Derivation Functions> above.
+
+=item "cipher_key_len" (B<OSSL_KDF_PARAM_CIPHER_KEY_LEN>) <unsigned integer>
+
+Sets the length of each cipher key to be produced by a multi-key derivation in
+the associated KDF ctx. See L</Multi-key Derivation Functions> above.
+
+=item "iv_len" (B<OSSL_KDF_PARAM_IV_LEN>) <unsigned integer>
+
+Sets the length of each IV to be produced by a multi-key derivation in the
+associated KDF ctx. See L</Multi-key Derivation Functions> above.
+
+When used with a multi-key derivation, the "cipher" and "mac" parameters above
+name the algorithms the derived keys are I<for>, rather than any algorithm the
+KDF itself uses. It is left to the provider to decide which of its key types a
+given algorithm calls for: the default provider gives an AES cipher an
+B<OSSL_SKEY_TYPE_AES> key and everything else a generic secret, whereas a
+provider backed by a token may well have a distinct type for an HMAC key. The
+key type settled on for each purpose is reported by
+OSSL_FUNC_kdf_get_ctx_params().
+
+A named cipher also states the length of its own key, so "cipher_key_len" need
+not be given alongside it; when both are given they have to agree. The length
+of a MAC key cannot be derived this way, as it is a property of the protocol
+rather than of the MAC, and so is always given explicitly.
+See L</Multi-key Derivation Functions> above.
+
 =item "seed" (B<OSSL_KDF_PARAM_SEED>) <octet string>
 
 Sets the IV in the associated KDF ctx.
@@ -341,14 +431,15 @@ It is defined as per RFC 7292 section B.3.
 OSSL_FUNC_kdf_newctx() and OSSL_FUNC_kdf_dupctx() should return the newly created
 provider side KDF context, or NULL on failure.
 
-OSSL_FUNC_kdf_derive_skey() should return the newly created opaque
-provider-side key object, or NULL on failure.
+OSSL_FUNC_kdf_derive_skey() and OSSL_FUNC_kdf_get_skey() should return the
+newly created opaque provider-side key object, or NULL on failure.
 
-OSSL_FUNC_kdf_derive(), OSSL_FUNC_kdf_get_params(),
-OSSL_FUNC_kdf_get_ctx_params(), OSSL_FUNC_kdf_set_ctx_params() and
-OSSL_FUNC_kdf_set_skey() should return 1 for success or 0 on error.
+OSSL_FUNC_kdf_derive(), OSSL_FUNC_kdf_derive_multi(), OSSL_FUNC_kdf_get_iv(),
+OSSL_FUNC_kdf_get_params(), OSSL_FUNC_kdf_get_ctx_params(),
+OSSL_FUNC_kdf_set_ctx_params() and OSSL_FUNC_kdf_set_skey() should return 1 for
+success or 0 on error.
 
-OSSL_FUNC_kdf_gettable_params(), OSSL_FUNC_kdf_gettable_ctx_params() and
+OSSL_FUNC_kdf_gettable_params(), OSSL_FUNC_kdf_gettable_ctx_params(),
 OSSL_FUNC_kdf_settable_ctx_params() should return a constant L<OSSL_PARAM(3)>
 array, or NULL if none is offered.
 
@@ -367,6 +458,9 @@ L<provider(7)>, L<life_cycle-kdf(7)>, L<EVP_KDF(3)>.
 The provider KDF interface was introduced in OpenSSL 3.0.
 
 OSSL_FUNC_kdf_derive_skey() and OSSL_FUNC_kdf_set_skey() were added in OpenSSL 3.6.
+
+OSSL_FUNC_kdf_derive_multi(), OSSL_FUNC_kdf_get_skey() and
+OSSL_FUNC_kdf_get_iv() were added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
