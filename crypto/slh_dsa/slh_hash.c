@@ -386,9 +386,8 @@ slh_h_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs
     const SLH_DSA_PARAMS *prms = hctx->key->params;
     size_t n = prms->n;
 
-    SHA512_Init(sctx);
-    SHA512_Update(sctx, pk_seed, n);
-    SHA512_Update(sctx, zeros, 128 - n);
+    /* Copying is safe: the SHA implementation comes from the same provider. */
+    *sctx = *hctx->shactx_pkseed_sha512;
     SHA512_Update(sctx, adrs, SLH_ADRSC_SIZE);
     SHA512_Update(sctx, m1, n);
     SHA512_Update(sctx, m2, n);
@@ -414,12 +413,9 @@ slh_t_sha512(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs
     const uint8_t *ml, size_t ml_len, uint8_t *out, size_t out_len)
 {
     SHA512_CTX *sctx = (SHA512_CTX *)(hctx->scratch);
-    const SLH_DSA_PARAMS *prms = hctx->key->params;
-    size_t n = prms->n;
 
-    SHA512_Init(sctx);
-    SHA512_Update(sctx, pk_seed, n);
-    SHA512_Update(sctx, zeros, 128 - n);
+    /* Copying is safe: the SHA implementation comes from the same provider. */
+    *sctx = *hctx->shactx_pkseed_sha512;
     SHA512_Update(sctx, adrs, SLH_ADRSC_SIZE);
     SHA512_Update(sctx, ml, ml_len);
     sha512_final(sctx, out, hctx->key->params->n);
@@ -497,6 +493,16 @@ static int slh_hash_sha256_precache(SLH_DSA_HASH_CTX *hctx, const uint8_t *pksee
     SHA256_Update(ctx, zeros, 64 - n);
     hctx->shactx_pkseed = (void *)ctx;
     hctx->shactx_len = sizeof(*ctx);
+    if (n > 16) {
+        SHA512_CTX *ctx512 = OPENSSL_zalloc(sizeof(*ctx512));
+
+        if (ctx512 == NULL)
+            return 0;
+        SHA512_Init(ctx512);
+        SHA512_Update(ctx512, pkseed, n);
+        SHA512_Update(ctx512, zeros, 128 - n);
+        hctx->shactx_pkseed_sha512 = ctx512;
+    }
     return 1;
 }
 
@@ -513,6 +519,12 @@ static int slh_hash_sha256_dup(SLH_DSA_HASH_CTX *dst, const SLH_DSA_HASH_CTX *sr
      * serve as a SHA512_CTX for security categories 3 and 5.
      */
     dst->shactx_len = src->shactx_len;
+    if (src->shactx_pkseed_sha512 != NULL) {
+        dst->shactx_pkseed_sha512 = OPENSSL_memdup(src->shactx_pkseed_sha512,
+            sizeof(SHA512_CTX));
+        if (dst->shactx_pkseed_sha512 == NULL)
+            return 0;
+    }
     if (dst->shactx_pkseed != NULL) {
         dst->scratch = OPENSSL_malloc(sizeof(SHA512_CTX));
         if (dst->scratch == NULL)
