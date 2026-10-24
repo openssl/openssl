@@ -562,6 +562,14 @@ See L<EVP_SIGNATURE-RSA(7)/Signature Parameters>
 See L<EVP_RAND-HASH-DRBG(7)/Supported parameters> and
 EVP_RAND-HMAC-DRBG(7)/Supported parameters>
 
+=item AES-ECB Encryption
+
+AES-ECB Encryption is unapproved for general purpose data encryption
+(See SP 800-131Ar3). As there are still some use cases that need to support
+single-block operations for an approved construct such as QUIC,
+the B<OSSL_INDICATOR_CALLBACK> does not get triggered.
+See L<EVP_CIPHER-AES(7)/Parameters> for information related to FIPS indicators.
+
 =item DES
 
 Triple-DES is not longer approved for encryption.

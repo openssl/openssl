@@ -143,6 +143,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/storemgmt/winstore_store.inc \
          providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc \
          providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc \
+         providers/implementations/ciphers/cipher_aes_ecb.inc \
          providers/implementations/ciphers/cipher_aes_gcm_siv.inc \
          providers/implementations/ciphers/cipher_aes_ocb.inc \
          providers/implementations/ciphers/cipher_aes_siv.inc \
@@ -286,6 +287,7 @@ DEPEND[ssl/t1_lib.inc \
        providers/implementations/storemgmt/winstore_store.inc \
        providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc \
        providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc \
+       providers/implementations/ciphers/cipher_aes_ecb.inc \
        providers/implementations/ciphers/cipher_aes_gcm_siv.inc \
        providers/implementations/ciphers/cipher_aes_ocb.inc \
        providers/implementations/ciphers/cipher_aes_siv.inc \
@@ -459,6 +461,8 @@ GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc]=\
     providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc.in
 GENERATE[providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc]=\
     providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc.in
+GENERATE[providers/implementations/ciphers/cipher_aes_ecb.inc]=\
+    providers/implementations/ciphers/cipher_aes_ecb.inc.in
 GENERATE[providers/implementations/ciphers/cipher_aes_gcm_siv.inc]=\
     providers/implementations/ciphers/cipher_aes_gcm_siv.inc.in
 GENERATE[providers/implementations/ciphers/cipher_aes_ocb.inc]=\
