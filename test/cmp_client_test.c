@@ -612,6 +612,38 @@ static int test_exec_GENM_ses_total_timeout(void)
     return test_exec_GENM_ses(0, -1, OSSL_CMP_PKISTATUS_trans);
 }
 
+static int execute_get1_rootCaKeyUpdate_test(CMP_SES_TEST_FIXTURE *fixture)
+{
+    X509 *newWithNew = NULL, *newWithOld = NULL, *oldWithNew = NULL;
+    int res;
+
+    res = OSSL_CMP_get1_rootCaKeyUpdate(fixture->cmp_ctx, NULL, &newWithNew,
+        &newWithOld, &oldWithNew);
+    if (res) {
+        X509_free(newWithNew);
+        X509_free(newWithOld);
+        X509_free(oldWithNew);
+    }
+    return TEST_int_eq(fixture->expected, res)
+        && TEST_ptr_null(newWithNew)
+        && TEST_ptr_null(newWithOld)
+        && TEST_ptr_null(oldWithNew);
+}
+
+static int test_get1_rootCaKeyUpdate_invalid_newWithNew(void)
+{
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    fixture->expected = 0;
+    /* client_cert is self-signed and not covered by the client trust store */
+    if (!TEST_true(ossl_cmp_mock_srv_set1_newWithNew(fixture->srv_ctx,
+            client_cert))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    EXECUTE_TEST(execute_get1_rootCaKeyUpdate_test, tear_down);
+    return result;
+}
+
 static int execute_exchange_certConf_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     int res = ossl_cmp_exchange_certConf(fixture->cmp_ctx, OSSL_CMP_CERTREQID,
@@ -720,6 +752,7 @@ int setup_tests(void)
     ADD_TEST(test_exec_GENM_ses_poll_ok);
     ADD_TEST(test_exec_GENM_ses_poll_no_timeout);
     ADD_TEST(test_exec_GENM_ses_poll_total_timeout);
+    ADD_TEST(test_get1_rootCaKeyUpdate_invalid_newWithNew);
     ADD_TEST(test_exchange_certConf);
     ADD_TEST(test_exchange_error);
     return 1;
