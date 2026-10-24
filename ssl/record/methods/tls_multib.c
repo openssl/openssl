@@ -21,8 +21,13 @@ static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, uint8_t type,
     size_t len, size_t fraglen)
 {
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+    /*
+     * Enforce the backend's per-lane minimum before planning multiple records:
+     * these ciphers do not support the ordinary writer's pipelining.
+     */
     if (type == SSL3_RT_APPLICATION_DATA
         && len >= 4 * fraglen
+        && fraglen >= 64 - 13 + 64
         && rl->compctx == NULL
         && rl->msg_callback == NULL
         && !rl->use_etm
