@@ -34,7 +34,11 @@ static int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
     if (OPENSSL_s390xcex == -1 || OPENSSL_s390xcex_nodev)
         return -1;
+    if (BN_num_bits(p) < (int)OPENSSL_s390xcex_min_bits)
+        return -1;
     size = BN_num_bytes(m);
+    if (size > 4096 / 8) /* Acceleration only works up to 4096 bits modulus */
+        return -1;
     buffer = OPENSSL_calloc(size, 4);
     if (buffer == NULL)
         return 0;
@@ -92,7 +96,7 @@ int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
  * SW-fallback.
  */
 int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
-    const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp)
+    const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp, const BIGNUM *n)
 {
     struct ica_rsa_modexpo_crt crt;
     unsigned char *buffer, *part;
@@ -100,6 +104,11 @@ int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
     int res = -1;
 
     if (OPENSSL_s390xcex == -1 || OPENSSL_s390xcex_nodev)
+        return -1;
+    size = BN_num_bits(n);
+    if (size < OPENSSL_s390xcex_min_bits)
+        return -1;
+    if (size > 4096) /* Acceleration only works up to 4096 bits modulus */
         return -1;
     /*-
      * Hardware-accelerated CRT can only deal with p>q.  Fall back to
@@ -172,7 +181,7 @@ int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 }
 
 int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
-    const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp)
+    const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp, const BIGNUM *n)
 {
     return 0;
 }
