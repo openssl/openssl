@@ -39,7 +39,7 @@ if (!$avxifma && `$ENV{CC} -v 2>&1`
     $avxifma = ($ver>=16.0);
 }
 
-if (!$avxifma && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+if (!$avxifma && $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E 2>&1`
     =~ /#define __clang_major__.([0-9]+)/) {
     if ($1) {
         $avxifma = ($1>=16);
