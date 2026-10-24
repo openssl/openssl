@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -126,6 +126,194 @@ static int test_zstd(int n)
 {
     return do_bio_comp(BIO_f_zstd(), n);
 }
+
+static int test_zstd_wpending(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bmem = NULL;
+    unsigned char buf[512];
+    int ret = 0;
+
+    memset(buf, 'A', sizeof(buf));
+    if (!TEST_ptr(BIO_f_zstd())
+        || !TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf))
+        || !TEST_true(BIO_flush(bcomp)))
+        goto err;
+    /* Once everything has been flushed nothing must be left pending */
+    if (!TEST_int_eq(BIO_wpending(bcomp), 0))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bmem);
+    return ret;
+}
+
+static int test_zstd_wpending_nonzero(void)
+{
+    BIO *bref = NULL;
+    BIO *bmem = NULL;
+    BIO *bcomp = NULL;
+    BIO *bpair = NULL;
+    BIO *bpeer = NULL;
+    unsigned char buf[4096];
+    int frame_len;
+    int ret = 0;
+
+    if (!TEST_int_gt(RAND_bytes(buf, sizeof(buf)), 0))
+        goto err;
+    /* Compress the same input into a memory BIO to get the frame length */
+    if (!TEST_ptr(BIO_f_zstd())
+        || !TEST_ptr(bref = BIO_new(BIO_f_zstd()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bref, bmem);
+    if (!TEST_int_eq(BIO_write(bref, buf, (int)sizeof(buf)), (int)sizeof(buf))
+        || !TEST_true(BIO_flush(bref)))
+        goto err;
+    frame_len = BIO_pending(bmem);
+
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_true(BIO_new_bio_pair(&bpair, 16, &bpeer, sizeof(buf))))
+        goto err;
+    BIO_push(bcomp, bpair);
+    /* The small pair buffer cannot drain the output, so it stays pending */
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf)))
+        goto err;
+    if (!TEST_int_eq(BIO_wpending(bcomp), frame_len - BIO_pending(bpeer)))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bref);
+    BIO_free(bmem);
+    BIO_free(bcomp);
+    BIO_free(bpair);
+    BIO_free(bpeer);
+    return ret;
+}
+
+static int test_zstd_pending(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bdec = NULL;
+    BIO *bmem = NULL;
+    unsigned char buf[512];
+    unsigned char out[512];
+    int total_len;
+    int i;
+    int ret = 0;
+
+    memset(buf, 'A', sizeof(buf));
+    if (!TEST_ptr(BIO_f_zstd())
+        || !TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    /* Write several separate frames so the input buffer holds more than one */
+    for (i = 0; i < 20; i++)
+        if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)),
+                (int)sizeof(buf)))
+            goto err;
+    if (!TEST_true(BIO_flush(bcomp)))
+        goto err;
+    BIO_free(bcomp);
+    bcomp = NULL;
+    /* The 20 frames are identical, so each is a twentieth of the total */
+    total_len = BIO_pending(bmem);
+
+    if (!TEST_ptr(bdec = BIO_new(BIO_f_zstd())))
+        goto err;
+    BIO_push(bdec, bmem);
+    /* Read one frame, leaving the other 19 buffered */
+    if (!TEST_int_eq(BIO_read(bdec, out, (int)sizeof(out)), (int)sizeof(out))
+        || !TEST_mem_eq(out, sizeof(out), buf, sizeof(buf)))
+        goto err;
+    /* Pending counts compressed input not yet decompressed, not plaintext */
+    if (!TEST_int_eq(BIO_pending(bdec), total_len - total_len / 20))
+        goto err;
+    /* Read the other 19 frames; nothing is pending after the last one */
+    for (i = 1; i < 20; i++)
+        if (!TEST_int_eq(BIO_read(bdec, out, (int)sizeof(out)),
+                (int)sizeof(out)))
+            goto err;
+    if (!TEST_int_eq(BIO_pending(bdec), 0))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bdec);
+    BIO_free(bmem);
+    return ret;
+}
+
+static int test_zstd_pending_nonblocking(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bmem = NULL;
+    BIO *bdec = NULL;
+    BIO *bsrc = NULL;
+    BIO *bfeed = NULL;
+    unsigned char buf[4096];
+    unsigned char out[sizeof(buf) + 16];
+    char *comp;
+    int total_len;
+    int off = 0;
+    int got = 0;
+    int chunk;
+    int nread = 0;
+    int i;
+    int ret = 0;
+
+    if (!TEST_int_gt(RAND_bytes(buf, sizeof(buf)), 0)
+        || !TEST_ptr(BIO_f_zstd())
+        || !TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf))
+        || !TEST_true(BIO_flush(bcomp)))
+        goto err;
+    total_len = (int)BIO_get_mem_data(bmem, &comp);
+
+    if (!TEST_ptr(bdec = BIO_new(BIO_f_zstd()))
+        || !TEST_true(BIO_new_bio_pair(&bsrc, total_len, &bfeed, total_len)))
+        goto err;
+    BIO_push(bdec, bsrc);
+    /* Feed the frame in pieces and read it back in small slices */
+    for (i = 0; got < (int)sizeof(buf) && i < 1000; i++) {
+        if (off < total_len) {
+            chunk = total_len - off < 1000 ? total_len - off : 1000;
+            if (!TEST_int_eq(BIO_write(bfeed, comp + off, chunk), chunk))
+                goto err;
+            off += chunk;
+        }
+        while ((nread = BIO_read(bdec, out + got, 16)) > 0) {
+            got += nread;
+            /* With nothing reported pending a read must not return data */
+            if (BIO_pending(bdec) == 0) {
+                if (!TEST_int_le(BIO_read(bdec, out + got, 16), 0))
+                    goto err;
+                break;
+            }
+        }
+        if (off == total_len && nread <= 0 && BIO_pending(bdec) == 0)
+            break;
+    }
+    if (!TEST_mem_eq(out, got, buf, sizeof(buf)))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bmem);
+    BIO_free(bdec);
+    BIO_free(bsrc);
+    BIO_free(bfeed);
+    return ret;
+}
 #endif
 #ifndef OPENSSL_NO_BROTLI
 static int test_brotli(int n)
@@ -150,6 +338,10 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_ZSTD
     ADD_ALL_TESTS(test_zstd, NUM_SIZES * 4);
+    ADD_TEST(test_zstd_wpending);
+    ADD_TEST(test_zstd_wpending_nonzero);
+    ADD_TEST(test_zstd_pending);
+    ADD_TEST(test_zstd_pending_nonblocking);
 #endif
     return 1;
 }
