@@ -1502,3 +1502,5 @@ id_alg_hss_lms_hashsig		1501
 id_rdna_unsigned		1502
 id_alg_unsigned		1503
 id_aes		1504
+shake128_len        1505
+shake256_len		1506
