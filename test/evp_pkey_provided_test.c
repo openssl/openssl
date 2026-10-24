@@ -8,6 +8,7 @@
  */
 
 #include <string.h> /* memset */
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/encoder.h>
@@ -852,6 +853,10 @@ static int test_evp_pkey_get_bn_param_large(void)
     /* N is a large buffer */
     memset(n_data, 0xCE, sizeof(n_data));
 
+    /* d is four bytes wide, which the secret check rejects against this n */
+    if (!TEST_true(CRYPTO_secret_check_disable()))
+        return 0;
+
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || !TEST_ptr(n = BN_bin2bn(n_data, sizeof(n_data), NULL))
         || !TEST_ptr(e = BN_bin2bn(e_data, sizeof(e_data), NULL))
@@ -871,6 +876,8 @@ static int test_evp_pkey_get_bn_param_large(void)
         goto err;
     ret = 1;
 err:
+    if (!TEST_true(CRYPTO_secret_check_enable()))
+        ret = 0;
     BN_free(n_out);
     BN_free(n);
     BN_free(e);

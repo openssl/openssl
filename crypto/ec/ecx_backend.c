@@ -17,6 +17,7 @@
 #include <openssl/x509.h>
 #endif
 #include "crypto/ecx.h"
+#include "internal/secret_check.h"
 #include "ecx_backend.h"
 
 /*
@@ -76,6 +77,13 @@ int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM *param_pub_key,
              * can't leave it to ossl_ecx_key_free() because that will call
              * OPENSSL_secure_clear_free() and assume the correct key length
              */
+            OPENSSL_secure_clear_free(ecx->privkey, privkeylen);
+            ecx->privkey = NULL;
+            return 0;
+        }
+        if (ossl_secret_check_enabled()
+            && !ossl_secret_bytes_check(ecx->privkey, privkeylen, 0)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_SECRET_NOT_KEY_MATERIAL);
             OPENSSL_secure_clear_free(ecx->privkey, privkeylen);
             ecx->privkey = NULL;
             return 0;
@@ -206,6 +214,11 @@ ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
                 }
             }
         } else {
+            if (ossl_secret_check_enabled()
+                && !ossl_secret_bytes_check(p, KEYLENID(id), 0)) {
+                ERR_raise(ERR_LIB_EC, ERR_R_SECRET_NOT_KEY_MATERIAL);
+                goto err;
+            }
             memcpy(privkey, p, KEYLENID(id));
         }
         if (!ossl_ecx_public_from_private(key)) {
