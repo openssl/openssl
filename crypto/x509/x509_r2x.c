@@ -56,9 +56,14 @@ X509 *X509_REQ_to_X509(const X509_REQ *r, int days, EVP_PKEY *pkey)
     if (pubkey == NULL || !X509_set_pubkey(ret, pubkey))
         goto err;
 
+#ifndef OPENSSL_NO_MD5
     if (!X509_sign(ret, pkey, EVP_md5()))
         goto err;
     return ret;
+#else
+    /* Signing uses MD5, which is not available in this build */
+    ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
+#endif
 
 err:
     X509_free(ret);

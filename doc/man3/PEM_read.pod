@@ -118,6 +118,10 @@ This is because the underlying PEM encryption format is obsolete, and should
 be avoided.
 It uses an encryption format with an OpenSSL-specific key-derivation function,
 which employs MD5 with an iteration count of 1!
+If OpenSSL was built without MD5 support, this key derivation is not
+available: PEM_do_header() then fails for encrypted payloads and adds
+B<PEM_R_UNSUPPORTED_ENCRYPTION> to the error stack, and writing encrypted
+PEM data fails in the same way.
 Instead, private keys should be stored in PKCS#8 form, with a strong PKCS#5
 v2.0 PBE.
 See L<PEM_write_PrivateKey(3)> and L<d2i_PKCS8PrivateKey_bio(3)>.
