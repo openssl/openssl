@@ -65,6 +65,7 @@ $code=<<___;
 .text
 
 .globl	$func
+.hidden $func
 .type	$func,\@function,3
 .align	16
 $func:
