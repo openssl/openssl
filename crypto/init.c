@@ -108,6 +108,14 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
     /* We use _onexit() in preference because it gets called on DLL unload */
     if (_onexit(win32atexit) == NULL)
         return 0;
+#elif defined(_AIX)
+    /*
+     * On AIX, we use -binitfini linker flag to register OPENSSL_cleanup()
+     * as the cleanup function. This is necessary because atexit() handlers
+     * registered by dynamically loaded libraries are not automatically
+     * deregistered when dlclose() is called, which can lead to crashes when
+     * the program exits and tries to call cleanup code from unmapped memory.
+     */
 #else
     if (atexit(OPENSSL_cleanup) != 0)
         return 0;
