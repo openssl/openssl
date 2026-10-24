@@ -21,6 +21,7 @@ IF[{- !$disabled{sm3} -}]
 
   SOURCE[../../libcrypto]=sm3.c legacy_sm3.c $SM3ASM
   DEFINE[../../libcrypto]=$SM3DEF
+  DEFINE[../../providers/libdefault.a]=$SM3DEF
 
   GENERATE[sm3-armv8.S]=asm/sm3-armv8.pl
   INCLUDE[sm3-armv8.o]=..
