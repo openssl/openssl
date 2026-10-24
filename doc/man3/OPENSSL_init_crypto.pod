@@ -98,12 +98,16 @@ B<OPENSSL_INIT_ADD_ALL_DIGESTS> will be ignored.
 
 =item OPENSSL_INIT_LOAD_CONFIG
 
-With this option an OpenSSL configuration file will be automatically loaded and
-used by calling OPENSSL_config(). This is a default option.
-Note that in OpenSSL 1.1.1 this was the default for libssl but not for
-libcrypto (see L<OPENSSL_init_ssl(3)> for further details about libssl
-initialisation).
-In OpenSSL 1.1.0 this was a nondefault option for both libssl and libcrypto.
+With this option an OpenSSL configuration file will be loaded and used by
+calling OPENSSL_config().
+This flag is B<not> applied automatically when OPENSSL_init_crypto() is called
+without it; pass B<OPENSSL_INIT_LOAD_CONFIG> explicitly (or call a helper that
+does) to load the configuration during that initialisation.
+By contrast, L<OPENSSL_init_ssl(3)> adds this flag by default unless
+B<OPENSSL_INIT_NO_LOAD_CONFIG> is set (when automatic config loading is enabled
+at build time).
+In OpenSSL 1.1.1 this was already the default for libssl but not for libcrypto;
+in OpenSSL 1.1.0 it was a nondefault option for both.
 See the description of OPENSSL_INIT_new(), below.
 
 =item OPENSSL_INIT_NO_LOAD_CONFIG
