@@ -11,6 +11,7 @@ use warnings;
 
 use Getopt::Std;
 use File::Basename;
+use File::Path qw(mkpath);
 use Pod::Man;
 
 # Format man pages without loading Pod::Man once per page.  pod2man is a
@@ -29,8 +30,9 @@ our ($opt_m);    # -m MANSUFFIX, appended to the section inside the page
 our ($opt_d);    # -d DATE
 our ($opt_r);    # -r RELEASE
 our ($opt_j);    # -j JOBS
+our ($opt_f);    # -f FILE, a file naming the pods, one per line
 
-getopts('o:m:d:r:j:');
+getopts('o:m:d:r:j:f:');
 die "-o flag missing" unless defined $opt_o;
 $opt_m = '' unless defined $opt_m;
 $opt_d = '' unless defined $opt_d;
@@ -76,6 +78,7 @@ sub format_page
     return if -e $out && -M $out < -M $pod;
 
     unlink $out;
+    mkpath(dirname($out));
 
     Pod::Man->new(name => uc $name,
                   section => "$section$opt_m",
@@ -88,7 +91,19 @@ sub format_page
         or die "Can't set the mode of $out, $!\n";
 }
 
+# The pods come from the command line, which is how the per-page rules
+# name their one pod, and from the file given with -f, which is how the
+# whole manual is named without the shell expanding every path onto one
+# command line.
 my @pods = @ARGV;
+
+if (defined $opt_f) {
+    open my $fh, '<', $opt_f
+        or die "Can't read $opt_f, $!\n";
+    chomp(my @listed = <$fh>);
+    close $fh;
+    push @pods, grep { $_ ne '' } @listed;
+}
 
 exit 0 unless @pods;
 
