@@ -412,6 +412,9 @@ static int default_context_inited = 0;
 
 DEFINE_RUN_ONCE_STATIC(default_context_do_thread_key_init)
 {
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return 0;
+
     if (!CRYPTO_THREAD_init_local(&default_context_thread_local, NULL))
         return 0;
     return 1;
@@ -419,6 +422,9 @@ DEFINE_RUN_ONCE_STATIC(default_context_do_thread_key_init)
 
 DEFINE_RUN_ONCE_STATIC(default_context_do_init)
 {
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return 0;
+
     if (!context_init(&default_context_int))
         return 0;
 
