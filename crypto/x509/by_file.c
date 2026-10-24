@@ -55,7 +55,7 @@ static int by_file_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
     switch (cmd) {
     case X509_L_FILE_LOAD:
         if (argl == X509_FILETYPE_DEFAULT) {
-            file = ossl_safe_getenv(X509_get_default_cert_file_env());
+            file = CRYPTO_safe_getenv(libctx, X509_get_default_cert_file_env());
             if (file)
                 ok = (X509_load_cert_crl_file_ex(ctx, file, X509_FILETYPE_PEM,
                           libctx, propq)
