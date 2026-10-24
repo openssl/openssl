@@ -949,6 +949,14 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
     assert(r->start < r->end);
 
     if ((sr = find_range(fs, &key_sr)) == NULL) {
+        if (fs->stream_ranges >= QUIC_SFRAME_SET_MAX_RANGES) {
+            ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+                OSSL_QUIC_ERR_FLOW_CONTROL_ERROR,
+                OSSL_QUIC_FRAME_TYPE_STREAM,
+                "too many gaps in stream data");
+            return 0;
+        }
+
         sc = new_schunk(fs, pkt, r, data);
         if (sc == NULL)
             goto err;
