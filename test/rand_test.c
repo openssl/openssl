@@ -253,16 +253,26 @@ static int fips_health_tests(void)
     if (!TEST_true(fips_health_test_one(buf, i, i)))
         return 0;
 
-    /* Verify RCT can fail */
-    for (i = 0; i < 20; i++)
-        buf[i] = 0xff & (i > 10 ? 200 : i);
-    if (!TEST_false(fips_health_test_one(buf, i, i)))
+    /* Verify RCT accepts seven equal bytes and rejects eight */
+    memset(buf, 200, 8);
+    if (!TEST_true(fips_health_test_one(buf, 7, 7))
+        || !TEST_false(fips_health_test_one(buf, 8, 8)))
         return 0;
 
-    /* Verify APT can fail */
-    for (i = 0; i < sizeof(buf); i++)
-        buf[i] = 0xff & (i >= 512 && i % 8 == 0 ? 0x80 : i);
-    if (!TEST_false(fips_health_test_one(buf, i, i)))
+    /*
+     * Verify APT accepts 34 anchor occurrences in a 512-byte window,
+     * including the first byte.  Space them apart to avoid an RCT failure.
+     */
+    for (i = 0; i < 512; i++)
+        buf[i] = 1 + i % 255;
+    for (i = 0; i < 34; i++)
+        buf[15 * i] = 0;
+    if (!TEST_true(fips_health_test_one(buf, 512, 512)))
+        return 0;
+
+    /* A 35th anchor occurrence at the end of the window must fail */
+    buf[511] = 0;
+    if (!TEST_false(fips_health_test_one(buf, 512, 512)))
         return 0;
     return 1;
 }
