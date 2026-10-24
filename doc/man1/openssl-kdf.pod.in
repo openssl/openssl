@@ -14,6 +14,8 @@ B<openssl kdf>
 [B<-mac>]
 [B<-kdfopt> I<nm>:I<v>]
 [B<-keylen> I<num>]
+[B<-multi>]
+[B<-purpose> I<string>]
 [B<-out> I<filename>]
 [B<-binary>]
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -34,7 +36,37 @@ Print a usage message.
 
 =item B<-keylen> I<num>
 
-The output size of the derived key. This field is required.
+The output size of the derived key. This field is required unless B<-multi> is used.
+
+=item B<-multi>
+
+Use multi-key derivation mode. Instead of deriving a single key buffer via
+EVP_KDF_derive(), this calls EVP_KDF_derive_SKEYs() to derive multiple keys
+and IVs simultaneously. The B<-purpose> option must be specified to select
+which derived key or IV to output.
+
+The KDF-specific size parameters (e.g., B<mac_key_len>, B<cipher_key_len>,
+B<iv_len> for TLS1-PRF) should be passed via B<-kdfopt>.
+
+B<-cipher> and B<-mac> name the algorithms the derived keys are for, rather
+than any algorithm the KDF itself uses. The provider takes the cipher key
+length from the named cipher, so B<cipher_key_len> is then unnecessary and it
+is an error to give one that contradicts it. A MAC does not determine its own
+key length, so B<mac_key_len> is still required.
+
+=item B<-purpose> I<string>
+
+Specifies which key or IV to retrieve from a multi-key derivation.
+Must be used together with B<-multi>.
+The available purpose strings depend on the KDF algorithm; for example,
+TLS1-PRF supports B<client_MAC_key>, B<server_MAC_key>, B<client_cipher_key>,
+B<server_cipher_key>, B<client_iv>, and B<server_iv>.
+TLS13-KDF supports B<client_key>, B<server_key>, B<client_iv>, and B<server_iv>.
+See the documentation of the specific KDF for the supported purpose strings.
+
+If the purpose identifies a key, it is retrieved via EVP_KDF_CTX_get1_SKEY()
+and its raw bytes are output. If it identifies an IV, it is retrieved via
+EVP_KDF_CTX_get0_IV().
 
 =item B<-out> I<filename>
 
@@ -151,6 +183,33 @@ Use TLS1-PRF to create a hex-encoded derived key from a secret key and seed:
 
     openssl kdf -keylen 16 -kdfopt digest:SHA2-256 -kdfopt key:secret \
                 -kdfopt seed:seed TLS1-PRF
+
+Use TLS1-PRF multi-key derivation to extract the client cipher key from a
+TLS 1.2 key block (with 10-byte MAC keys, 16-byte cipher keys, and 6-byte IVs):
+
+    openssl kdf -multi -kdfopt digest:SHA2-256 -kdfopt secret:secret \
+                -kdfopt seed:seed -kdfopt mac_key_len:10 \
+                -kdfopt cipher_key_len:16 -kdfopt iv_len:6 \
+                -purpose client_cipher_key TLS1-PRF
+
+Name the cipher and MAC the keys are for instead of giving the cipher key
+length. AES-128-CBC states that its key is 16 bytes, so this derives the same
+client cipher key as the command above:
+
+    openssl kdf -multi -kdfopt digest:SHA2-256 -kdfopt secret:secret \
+                -kdfopt seed:seed -cipher AES-128-CBC -mac HMAC \
+                -kdfopt mac_key_len:10 -kdfopt iv_len:6 \
+                -purpose client_cipher_key TLS1-PRF
+
+Naming the cipher also decides the type of the derived key: with the default
+provider the command above yields an AES key, where leaving the cipher out
+yields a generic secret. Switching to AES-256-CBC derives a 32-byte key from
+the same command, and because the key block grows the IVs move with it:
+
+    openssl kdf -multi -kdfopt digest:SHA2-256 -kdfopt secret:secret \
+                -kdfopt seed:seed -cipher AES-256-CBC -mac HMAC \
+                -kdfopt mac_key_len:10 -kdfopt iv_len:6 \
+                -purpose server_iv TLS1-PRF
 
 Use HKDF to create a hex-encoded derived key from a secret key, salt and info:
 

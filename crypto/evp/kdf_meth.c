@@ -144,6 +144,21 @@ static void *evp_kdf_from_algorithm(int name_id,
                 break;
             kdf->derive_skey = OSSL_FUNC_kdf_derive_skey(fns);
             break;
+        case OSSL_FUNC_KDF_DERIVE_MULTI:
+            if (kdf->derive_multi != NULL)
+                break;
+            kdf->derive_multi = OSSL_FUNC_kdf_derive_multi(fns);
+            break;
+        case OSSL_FUNC_KDF_GET_SKEY:
+            if (kdf->get_skey != NULL)
+                break;
+            kdf->get_skey = OSSL_FUNC_kdf_get_skey(fns);
+            break;
+        case OSSL_FUNC_KDF_GET_IV:
+            if (kdf->get_iv != NULL)
+                break;
+            kdf->get_iv = OSSL_FUNC_kdf_get_iv(fns);
+            break;
         }
     }
     if (fnkdfcnt != 1 || fnctxcnt != 2) {

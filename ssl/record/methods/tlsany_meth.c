@@ -16,9 +16,9 @@
 
 static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     unsigned char *snkey,
-    unsigned char *key, size_t keylen,
+    const OSSL_RECORD_KEY *key,
     unsigned char *iv, size_t ivlen,
-    unsigned char *mackey, size_t mackeylen,
+    const OSSL_RECORD_KEY *mackey,
     const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph,
     size_t taglen,
