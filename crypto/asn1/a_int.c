@@ -207,7 +207,19 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
 int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
     unsigned char *ptr = pp != NULL ? *pp : NULL;
-    size_t ret = i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, &ptr);
+    size_t ret;
+
+    /*
+     * A negative length is never valid here (it can only be produced via
+     * the deprecated ASN1_STRING_length_set()).  Reject it before the
+     * implicit int-to-size_t conversion in i2c_ibuf() turns it into a huge
+     * length and twos_complement() reads/writes out of bounds.
+     */
+    if (a->length < 0) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    ret = i2c_ibuf(a->data, (size_t)a->length, a->type & V_ASN1_NEG, &ptr);
 
     if (ret > INT_MAX) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
