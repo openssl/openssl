@@ -296,7 +296,7 @@ const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv64i(void)
 static int cipher_hw_aes_xts_rv64i_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {
-    if (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKG() && RISCV_HAS_ZVKNED() && riscv_vlen() >= 128) {
+    if (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKG() && RISCV_HAS_ZVKNED() && riscv_vlen() >= 128 && riscv_vlen() < 2048) {
         /* Zvkned only supports 128 and 256 bit keys. */
         if (zvkned_key_schedule_supported(keylen / 2)) {
             return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
