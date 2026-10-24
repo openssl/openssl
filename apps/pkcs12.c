@@ -825,6 +825,8 @@ int pkcs12_main(int argc, char **argv)
 
             if (pbkdf2_param == NULL) {
                 BIO_puts(bio_err, ", Unsupported KDF or params for PBMAC1\n");
+            } else if (pbkdf2_param->salt->type != V_ASN1_OCTET_STRING) {
+                BIO_printf(bio_err, "Invalid salt type %d (expected %d) in PBMAC1\n", pbkdf2_param->salt->type, V_ASN1_OCTET_STRING);
             } else {
                 const ASN1_OBJECT *prfobj;
                 int prfnid;
