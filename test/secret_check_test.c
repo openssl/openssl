@@ -145,6 +145,22 @@ static int test_short_input(void)
         && TEST_int_eq(ossl_secret_bytes_check(buf, sizeof(buf) - 1, 0), 1);
 }
 
+/*
+ * A 1024-byte secret can hold at most 256 distinct byte values, so the
+ * distinct-value demand must be capped: 200 distinct values pass.
+ */
+static int test_wide_distinct(void)
+{
+    uint8_t buf[1024];
+    size_t i;
+
+    for (i = 0; i < sizeof(buf); i++)
+        buf[i] = (uint8_t)((i * 7) % 200 + 50);
+    return TEST_int_eq(ossl_secret_bytes_check(buf, sizeof(buf),
+                           sizeof(buf) * 8),
+        1);
+}
+
 static int test_bn(void)
 {
     BIGNUM *bn = NULL;
@@ -213,6 +229,7 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_vector, OSSL_NELEM(vectors));
     ADD_TEST(test_short_input);
+    ADD_TEST(test_wide_distinct);
     ADD_TEST(test_bn);
     ADD_TEST(test_switch);
     return 1;

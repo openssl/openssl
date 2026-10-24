@@ -16,6 +16,9 @@
 /* Number of leading bits of the domain-width field that must not all be zero */
 #define MAGNITUDE_BITS 64
 
+/* Largest number of distinct byte values the distinct-value test demands */
+#define DISTINCT_THRESHOLD_MAX 64
+
 /* Lowest printable ASCII byte and one past the highest */
 #define PRINTABLE_LOW 0x20
 #define PRINTABLE_HIGH 0x7F
@@ -95,7 +98,16 @@ static size_t count_distinct_bytes(const uint8_t *buf, size_t len)
 int ossl_secret_bytes_check(const uint8_t *buf, size_t len, size_t width_bits)
 {
     size_t threshold = len / 4;
+    size_t distinct_threshold = threshold;
     size_t small = 0, many_zeros, printable, few_distinct, reject;
+
+    /*
+     * There are only 256 byte values, so the distinct-value threshold is
+     * capped: a random run of 256 or more bytes has about 160 or more
+     * distinct values and the cap stays far below that.
+     */
+    if (distinct_threshold > DISTINCT_THRESHOLD_MAX)
+        distinct_threshold = DISTINCT_THRESHOLD_MAX;
 
     if (len < OSSL_SECRET_CHECK_MIN_LEN)
         return 1;
@@ -114,7 +126,7 @@ int ossl_secret_bytes_check(const uint8_t *buf, size_t len, size_t width_bits)
     many_zeros = constant_time_ge_s(count_zero_bytes(buf, len), threshold);
     printable = constant_time_eq_s(all_printable(buf, len), 0xFF);
     few_distinct = constant_time_lt_s(count_distinct_bytes(buf, len),
-        threshold);
+        distinct_threshold);
 
     reject = small | many_zeros | printable | few_distinct;
     return (int)(~reject & 1);

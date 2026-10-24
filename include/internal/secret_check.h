@@ -44,7 +44,8 @@
  *   width_bits is 0 or below OSSL_SECRET_CHECK_MIN_WIDTH_BITS)
  * - at least len / 4 of the bytes are zero
  * - every byte is printable ASCII (0x20 to 0x7E)
- * - fewer than len / 4 distinct byte values occur
+ * - fewer than len / 4 distinct byte values occur, with the demand
+ *   capped at 64 since only 256 byte values exist
  *
  * Any one of them rejects. A uniformly chosen 32-byte value trips one of
  * them with probability about 2^-40; wider values far less often. The
