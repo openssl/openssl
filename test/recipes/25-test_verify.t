@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 230;
+plan tests => 231;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -560,6 +560,9 @@ ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
 
 ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
    "Name constraints URI with userinfo");
+
+ok(!verify("nc-uri-nul-cert", "", ["root-cert"], ["ncca4-cert"], ),
+   "Name constraints URI with embedded NUL");
 
 ok(!verify("bad-cert-smtputf8-name-constraints", "root-cert", ["bad-cert-smtputf8-name-constraints"], [],
 	  "-partial_chain", "-attime", "1623060000"),
