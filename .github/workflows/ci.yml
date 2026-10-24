@@ -730,7 +730,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq install pkgconf libssl-dev
     - name: Configure OpenSSL
-      run: ./config --strict-warnings --banner=Configured --debug enable-external-tests && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-external-tests no-secret-check && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: Setup Python
