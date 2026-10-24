@@ -2,42 +2,155 @@
 
 =head1 NAME
 
-X509V3_EXT_nconf, X509V3_EXT_nconf_nid - functions to
-create X.509 certificate extensions based on OpenSSL configuration
+X509V3_EXT_nconf_nid,
+X509V3_EXT_nconf,
+X509V3_EXT_conf,
+X509V3_EXT_conf_nid,
+X509V3_EXT_add_nconf,
+X509V3_EXT_add_nconf_sk,
+X509V3_EXT_add_conf,
+X509V3_EXT_REQ_add_nconf,
+X509V3_EXT_REQ_add_conf,
+X509V3_EXT_CRL_add_nconf,
+X509V3_EXT_CRL_add_conf
+- functions to create X.509 certificate extensions based on OpenSSL
+configuration
 
 
 =head1 SYNOPSIS
 
  #include <openssl/x509v3.h>
 
- X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx, int ext_nid,
-     const char *value);
- X509_EXTENSION *X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx, const char *name,
-     const char *value);
+ X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx,
+                                      int ext_nid, const char *value);
+ X509_EXTENSION *X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx,
+                                  const char *name, const char *value);
+ X509_EXTENSION *X509V3_EXT_conf(LHASH_OF(CONF_VALUE) *conf,
+                                 X509V3_CTX *ctx,
+                                 const char *name, const char *value);
+ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf,
+                                     X509V3_CTX *ctx,
+                                     int ext_nid, const char *value);
+
+ int X509V3_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx,
+                          const char *section, X509 *cert);
+ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx,
+                             const char *section,
+                             STACK_OF(X509_EXTENSION) **sk);
+ int X509V3_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
+                         const char *section, X509 *cert);
+
+ int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx,
+                              const char *section, X509_REQ *req);
+ int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf,
+                             X509V3_CTX *ctx,
+                             const char *section, X509_REQ *req);
+
+ int X509V3_EXT_CRL_add_nconf(CONF *conf, X509V3_CTX *ctx,
+                              const char *section, X509_CRL *crl);
+ int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf,
+                             X509V3_CTX *ctx,
+                             const char *section, X509_CRL *crl);
 
 =head1 DESCRIPTION
 
 X509V3_EXT_nconf_nid() and X509V3_EXT_nconf() create a requested X.509
-extension identified either by I<name> or I<ext_nid> correspondingly using
+extension identified either by I<name> or I<ext_nid>, respectively;
 I<value> contains the string to encode.
+the certificate environment (see L<X509V3_set_ctx(3)>).
 
-I<conf> the configuration information where additional data
+I<conf> is the configuration information where additional data
 will be read from. I<conf> will typically come from a config
-file.
+file.  If I<conf> is NULL, the extension must not reference any config
+file sections.
+
+The I<value> string may be prefixed with C<critical,> to make the extension
+critical. It may also use the special prefixes C<DER:> to provide raw
+DER-encoded data in hex, or C<ASN1:> to use the L<ASN1_generate_nconf(3)>
+syntax for arbitrary ASN.1 structures.
 
 In case when I<ctx> value is null, the default one is used.
 
+X509V3_EXT_conf() and X509V3_EXT_conf_nid() are older variants that accept
+an B<LHASH_OF(CONF_VALUE)> configuration database rather than a B<CONF>
+structure. New code should use the B<CONF>-based functions instead.
+
+X509V3_EXT_add_nconf() reads all extension definitions from the given
+I<section> of configuration file I<conf> and adds them to the certificate
+I<cert>. If I<cert> is NULL, the extensions are created and checked for
+syntax errors but not added anywhere.
+
+X509V3_EXT_add_nconf_sk() is similar to X509V3_EXT_add_nconf() but adds
+the extensions to a stack of extensions I<*sk> instead of a certificate.
+If I<sk> is NULL, the extensions are only checked for syntax validity.
+
+X509V3_EXT_add_conf() is the B<LHASH>-based variant of
+X509V3_EXT_add_nconf().
+
+X509V3_EXT_REQ_add_nconf() reads all extension definitions from the given
+I<section> and adds them to the certificate request I<req>.
+X509V3_EXT_REQ_add_conf() is its B<LHASH>-based variant.
+
+X509V3_EXT_CRL_add_nconf() reads all extension definitions from the given
+I<section> and adds them to the CRL I<crl>.
+X509V3_EXT_CRL_add_conf() is its B<LHASH>-based variant.
+
 =head1 NOTES
 
-Normally these functions should not be called directly. For many extensions
+Normally these functions should not be called directly. For many extensions,
 they will not produce the expected results without a suitably configured
-context (I<conf> and I<ctx> arguments) that specifies the target object, issuer
-data etc.
+context (I<conf> and I<ctx> arguments);  the context should be set up using
+L<X509V3_set_ctx(3)> and the configuration database should be set using
+L<X509V3_set_nconf(3)> or L<X509V3_set_conf_lhash(3)> before calling
+the extension generation functions.
+
+If B<X509V3_CTX_REPLACE> was passed as the flags to L<X509V3_set_ctx(3)>,
+any existing extension with the same OID will be replaced by the new one.
+
+When adding extensions to a certificate or CRL, the subject key identifier
+extension is always processed before the authority key identifier extension,
+regardless of the order in the configuration file. This ensures that the
+authority key identifier can reference the subject key identifier if needed.
+
+See L<x509v3_config(5)> for details on the extension value syntax
+and the supported extensions.
 
 =head1 RETURN VALUES
 
-X509V3_EXT_nconf() and X509V3_EXT_nconf_nid() return an B<X509_EXTENSION>
-object on success and NULL on failure.
+X509V3_EXT_nconf(), X509V3_EXT_nconf_nid(), X509V3_EXT_conf() and
+X509V3_EXT_conf_nid() return an B<X509_EXTENSION> pointer or NULL on error.
+The returned extension must be freed using L<X509_EXTENSION_free(3)>.
+
+X509V3_EXT_add_nconf(), X509V3_EXT_add_nconf_sk(), X509V3_EXT_add_conf(),
+X509V3_EXT_REQ_add_nconf(), X509V3_EXT_REQ_add_conf(),
+X509V3_EXT_CRL_add_nconf() and X509V3_EXT_CRL_add_conf() return 1 on
+success and 0 on error.
+
+=head1 EXAMPLES
+
+Create a basic constraints extension:
+
+ X509_EXTENSION *ex;
+ ex = X509V3_EXT_nconf(NULL, NULL, "basicConstraints",
+                        "critical,CA:TRUE,pathlen:10");
+
+Add extensions from a configuration file section to a certificate:
+
+ X509V3_CTX ctx;
+ X509V3_set_ctx(&ctx, issuer, subject, NULL, NULL, 0);
+ X509V3_set_nconf(&ctx, conf);
+ X509V3_EXT_add_nconf(conf, &ctx, "v3_extensions", cert);
+
+=head1 SEE ALSO
+
+L<X509V3_set_ctx(3)>,
+L<X509V3_set_nconf(3)>,
+L<X509V3_get_d2i(3)>,
+L<x509v3_config(5)>
+
+=head1 HISTORY
+
+These functions have been available since OpenSSL 0.9.5.
 
 =head1 COPYRIGHT
 
