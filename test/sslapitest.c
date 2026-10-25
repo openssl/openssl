@@ -3361,6 +3361,25 @@ static int test_tlsext_status_type(void)
         || !TEST_true(ocsp_client_called)
         || !TEST_true(ocsp_server_called))
         goto end;
+
+#if !defined(OPENSSL_NO_CT) && !defined(OSSL_NO_USABLE_TLS1_3)
+    /*
+     * This TLS 1.3 handshake staples a valid OCSP SingleResponse without an
+     * SCT extension. Its absence must not abort SCT collection (which also
+     * checks the certificate and TLS extension for SCTs).
+     */
+    if (SSL_version(clientssl) == TLS1_3_VERSION) {
+        SSL_CONNECTION *clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl);
+
+        if (!TEST_ptr(clientsc)
+            || !TEST_ptr(clientsc->ext.ocsp.resp_ex)
+            || !TEST_false(clientsc->scts_parsed))
+            goto end;
+        (void)SSL_get0_peer_scts(clientssl);
+        if (!TEST_true(clientsc->scts_parsed))
+            goto end;
+    }
+#endif
     SSL_free(serverssl);
     SSL_free(clientssl);
     serverssl = NULL;
