@@ -835,7 +835,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex,
     /* clang-format on */
 
     char *tok_begin, *tok_end, *buff, tok[S390X_STFLE_MAX][LEN + 1];
-    int rc, off, i, n;
+    int rc, off, i;
     unsigned int val;
 
     buff = malloc(strlen(env) + 1);
@@ -853,11 +853,11 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex,
     while (tok_begin != NULL) {
         /* clang-format off */
         /* stfle token */
-        if ((n = sscanf(tok_begin,
-                 " stfle : %" STR(LEN) "[^:] : "
-                                       "%" STR(LEN) "[^:] : %" STR(LEN) "s ",
-                 tok[0], tok[1], tok[2])) > 0) {
-            for (i = 0; i < n; i++) {
+        if (sscanf(tok_begin,
+            " stfle : %" STR(LEN) "[^:] : "
+                                  "%" STR(LEN) "[^:] : %" STR(LEN) "s ",
+            tok[0], tok[1], tok[2]) == 3) {
+            for (i = 0; i < 3; i++) {
                 off = (tok[i][0] == '~') ? 1 : 0;
                 if (sscanf(tok[i] + off, "%llx", &cap->stfle[i]) != 1)
                     goto ret;
