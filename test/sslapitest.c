@@ -6099,6 +6099,8 @@ static int test_early_data_dtls1_2_fallback(void)
     SSL *clientssl = NULL;
     SSL_CONNECTION *clientsc = NULL;
     RAW_EXTENSION extensions[TLSEXT_IDX_num_builtins] = { 0 };
+    const unsigned char dtls13ver[] = { DTLS1_3_VERSION >> 8,
+                                         DTLS1_3_VERSION & 0xff };
     int testresult = 0;
 
     if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, DTLS_client_method()))
@@ -6123,6 +6125,22 @@ static int test_early_data_dtls1_2_fallback(void)
             extensions))
         || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
             SSL_R_WRONG_SSL_VERSION))
+        goto end;
+
+    /* A valid DTLS 1.3 selection must still work after attempting 0-RTT. */
+    SSL_free(clientssl);
+    clientssl = NULL;
+    if (!TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
+        || !TEST_ptr(clientsc->ext.early_data_session = SSL_SESSION_new())
+        || !TEST_true(PACKET_buf_init(
+               &extensions[TLSEXT_IDX_supported_versions].data,
+               dtls13ver, sizeof(dtls13ver))))
+        goto end;
+    extensions[TLSEXT_IDX_supported_versions].present = 1;
+    if (!TEST_true(ssl_choose_client_version(clientsc, DTLS1_2_VERSION,
+            extensions))
+        || !TEST_int_eq(clientsc->version, DTLS1_3_VERSION))
         goto end;
 
     testresult = 1;
