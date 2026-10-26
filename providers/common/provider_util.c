@@ -14,6 +14,7 @@
 #ifndef FIPS_MODULE
 #include "crypto/evp.h"
 #endif
+#include "internal/params.h"
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
 
@@ -33,34 +34,38 @@ int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src)
     return 1;
 }
 
-static int set_propq(const OSSL_PARAM *propq, const char **propquery)
+static int set_propq(const OSSL_PARAM *propq, char **propquery)
 {
     *propquery = NULL;
-    if (propq != NULL) {
-        if (propq->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        *propquery = propq->data;
-    }
-    return 1;
+    return propq == NULL
+        || (propq->data == NULL
+                ? propq->data_type == OSSL_PARAM_UTF8_STRING
+                : OSSL_PARAM_get_utf8_string(propq, propquery, 0));
 }
 
 int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
     const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
 {
-    const char *propquery;
+    char *propquery = NULL, *name = NULL;
+    int ret = 0;
 
     if (!set_propq(propq, &propquery))
-        return 0;
+        goto end;
 
-    if (cipher == NULL)
-        return 1;
-    if (cipher->data_type != OSSL_PARAM_UTF8_STRING)
-        return 0;
+    if (cipher == NULL) {
+        ret = 1;
+        goto end;
+    }
+    if (!OSSL_PARAM_get_utf8_string(cipher, &name, 0))
+        goto end;
 
     EVP_CIPHER_free(pc->alloc_cipher);
-    pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, cipher->data,
-        propquery);
-    return pc->cipher != NULL;
+    pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, name, propquery);
+    ret = pc->cipher != NULL;
+end:
+    OPENSSL_free(name);
+    OPENSSL_free(propquery);
+    return ret;
 }
 
 const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc)
@@ -96,18 +101,25 @@ const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
 int ossl_prov_digest_load(PROV_DIGEST *pd, const OSSL_PARAM *digest,
     const OSSL_PARAM *propq, OSSL_LIB_CTX *ctx)
 {
-    const char *propquery;
+    char *propquery = NULL, *name = NULL;
+    int ret = 0;
 
     if (!set_propq(propq, &propquery))
-        return 0;
+        goto end;
 
-    if (digest == NULL)
-        return 1;
-    if (digest->data_type != OSSL_PARAM_UTF8_STRING)
-        return 0;
+    if (digest == NULL) {
+        ret = 1;
+        goto end;
+    }
+    if (!OSSL_PARAM_get_utf8_string(digest, &name, 0))
+        goto end;
 
-    ossl_prov_digest_fetch(pd, ctx, digest->data, propquery);
-    return pd->md != NULL;
+    ossl_prov_digest_fetch(pd, ctx, name, propquery);
+    ret = pd->md != NULL;
+end:
+    OPENSSL_free(name);
+    OPENSSL_free(propquery);
+    return ret;
 }
 
 void ossl_prov_digest_set_md(PROV_DIGEST *pd, EVP_MD *md)
@@ -168,19 +180,31 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
     return ret;
 }
 
+static int get_mac_param(const OSSL_PARAM *param, char **value)
+{
+    const char *data;
+
+    return OSSL_PARAM_get_utf8_string_ptr(param, &data)
+        && (data == NULL
+            || ossl_param_get_utf8_string(param, value, 0));
+}
+
 int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
     const OSSL_PARAM *pmac, const OSSL_PARAM *pcipher,
     const OSSL_PARAM *pdigest, const OSSL_PARAM *propq,
     const char *macname, const char *ciphername,
     const char *mdname, OSSL_LIB_CTX *libctx)
 {
-    const char *properties = NULL;
+    char *properties = NULL, *macbuf = NULL, *cipherbuf = NULL, *mdbuf = NULL;
+    int ret = 0;
 
-    if (macname == NULL && pmac != NULL)
-        if (!OSSL_PARAM_get_utf8_string_ptr(pmac, &macname))
-            return 0;
-    if (propq != NULL && !OSSL_PARAM_get_utf8_string_ptr(propq, &properties))
-        return 0;
+    if (macname == NULL && pmac != NULL) {
+        if (!get_mac_param(pmac, &macbuf))
+            goto end;
+        macname = macbuf;
+    }
+    if (propq != NULL && !get_mac_param(propq, &properties))
+        goto end;
 
     /* If we got a new mac name, we make a new EVP_MAC_CTX */
     if (macname != NULL) {
@@ -191,29 +215,42 @@ int ossl_prov_macctx_load(EVP_MAC_CTX **macctx,
         /* The context holds on to the MAC */
         EVP_MAC_free(mac);
         if (*macctx == NULL)
-            return 0;
+            goto end;
     }
 
     /*
      * If there is no MAC yet (and therefore, no MAC context), we ignore
      * all other parameters.
      */
-    if (*macctx == NULL)
-        return 1;
+    if (*macctx == NULL) {
+        ret = 1;
+        goto end;
+    }
 
-    if (ciphername == NULL && pcipher != NULL)
-        if (!OSSL_PARAM_get_utf8_string_ptr(pcipher, &ciphername))
-            return 0;
-    if (mdname == NULL && pdigest != NULL)
-        if (!OSSL_PARAM_get_utf8_string_ptr(pdigest, &mdname))
-            return 0;
+    if (ciphername == NULL && pcipher != NULL) {
+        if (!get_mac_param(pcipher, &cipherbuf))
+            goto end;
+        ciphername = cipherbuf;
+    }
+    if (mdname == NULL && pdigest != NULL) {
+        if (!get_mac_param(pdigest, &mdbuf))
+            goto end;
+        mdname = mdbuf;
+    }
 
-    if (ossl_prov_set_macctx(*macctx, ciphername, mdname, properties, NULL))
-        return 1;
+    if (ossl_prov_set_macctx(*macctx, ciphername, mdname, properties, NULL)) {
+        ret = 1;
+        goto end;
+    }
 
     EVP_MAC_CTX_free(*macctx);
     *macctx = NULL;
-    return 0;
+end:
+    OPENSSL_free(properties);
+    OPENSSL_free(macbuf);
+    OPENSSL_free(cipherbuf);
+    OPENSSL_free(mdbuf);
+    return ret;
 }
 
 void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,

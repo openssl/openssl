@@ -21,6 +21,7 @@
 #include "internal/fips.h"
 #include "internal/nelem.h"
 #include "prov/provider_ctx.h"
+#include "internal/params.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
@@ -540,9 +541,8 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct sshkdf_set_ctx_params_st p;
     KDF_X942 *ctx = vctx;
     OSSL_LIB_CTX *provctx;
-    const char *cekalg, *propq = NULL;
     const EVP_MD *md;
-    size_t id;
+    size_t id = 0;
 
     if (ctx == NULL || !sshkdf_set_ctx_params_decoder(params, &p))
         return 0;
@@ -597,11 +597,18 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.cekalg != NULL) {
-        if (!OSSL_PARAM_get_utf8_string_ptr(p.cekalg, &cekalg))
-            return 0;
-        if (p.propq != NULL && !OSSL_PARAM_get_utf8_string_ptr(p.propq, &propq))
-            return 0;
-        if (find_alg_id(provctx, cekalg, propq, &id) == 0)
+        char *cekalg = NULL, *propq = NULL;
+        const char *propdata;
+        int ret = ossl_param_get_utf8_string(p.cekalg, &cekalg, 0)
+            && (p.propq == NULL
+                || (OSSL_PARAM_get_utf8_string_ptr(p.propq, &propdata)
+                    && (propdata == NULL
+                        || ossl_param_get_utf8_string(p.propq, &propq, 0))))
+            && find_alg_id(provctx, cekalg, propq, &id);
+
+        OPENSSL_free(cekalg);
+        OPENSSL_free(propq);
+        if (!ret)
             return 0;
         ctx->cek_oid = kek_algs[id].oid;
         ctx->cek_oid_len = kek_algs[id].oid_len;

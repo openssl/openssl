@@ -314,12 +314,15 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.digest != NULL) {
         PROV_DIGEST digest;
         const EVP_MD *md = NULL;
-        const char *dgst;
+        char *dgst = NULL;
+        int md5_sha1;
 
-        if (!OSSL_PARAM_get_utf8_string_ptr(p.digest, &dgst))
+        if (!ossl_param_get_utf8_string(p.digest, &dgst, 0))
             return 0;
+        md5_sha1 = OPENSSL_strcasecmp(dgst, OSSL_DIGEST_NAME_MD5_SHA1) == 0;
+        OPENSSL_free(dgst);
 
-        if (OPENSSL_strcasecmp(dgst, OSSL_DIGEST_NAME_MD5_SHA1) == 0) {
+        if (md5_sha1) {
             if (!ossl_prov_macctx_load(&ctx->P_hash, NULL, NULL, NULL,
                     p.propq,
                     OSSL_MAC_NAME_HMAC, NULL,

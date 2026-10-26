@@ -1375,15 +1375,15 @@ static int kdf_argon2_ctx_set_version(KDF_ARGON2 *ctx, uint32_t version)
     }
 }
 
-static int set_property_query(KDF_ARGON2 *ctx, const char *propq)
+static int set_property_query(KDF_ARGON2 *ctx, const OSSL_PARAM *propq)
 {
+    if (propq->data == NULL && propq->data_type != OSSL_PARAM_UTF8_STRING)
+        return 0;
     OPENSSL_free(ctx->propq);
     ctx->propq = NULL;
-    if (propq != NULL) {
-        ctx->propq = OPENSSL_strdup(propq);
-        if (ctx->propq == NULL)
-            return 0;
-    }
+    if (propq->data != NULL
+        && !OSSL_PARAM_get_utf8_string(propq, &ctx->propq, 0))
+        return 0;
     EVP_MD_free(ctx->md);
     ctx->md = NULL;
     EVP_MAC_free(ctx->mac);
@@ -1461,8 +1461,7 @@ static int argon2_set_ctx_params(KDF_ARGON2 *ctx, const OSSL_PARAM params[],
     }
 
     if (p.propq != NULL) {
-        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING
-            || !set_property_query(ctx, p.propq->data))
+        if (!set_property_query(ctx, p.propq))
             return 0;
     }
 

@@ -2435,14 +2435,117 @@ err:
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+static int test_kbkdf_mode_sizes(int idx)
+{
+    const char *names[] = { "counter", "feedback" };
+    char mode[64], *mode_ptr = mode;
+    unsigned char key[32] = { 0 };
+    unsigned char expected[32], out[32];
+    OSSL_PARAM params[5];
+    EVP_KDF_CTX *ctx = NULL;
+    size_t len;
+    int ret = 0, is_ptr = idx >= 6;
+
+    idx %= 6;
+    len = strlen(names[idx & 1]);
+    memcpy(mode, names[idx & 1], len + 1);
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE, mode, len);
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC, "HMAC", 0);
+    params[2] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        "SHA256", 0);
+    params[3] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        key, sizeof(key));
+    params[4] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(ctx = get_kdfbyname("KBKDF"))
+        || !TEST_int_gt(EVP_KDF_derive(ctx, expected, sizeof(expected), params), 0))
+        goto end;
+
+    switch (idx / 2) {
+    case 0:
+        params[0].data_size = 1;
+        break;
+    case 1:
+        params[0].data_size = sizeof(mode);
+        break;
+    case 2:
+        memset(mode + len, 'X', sizeof(mode) - len);
+        break;
+    }
+    if (is_ptr) {
+        params[0].data_type = OSSL_PARAM_UTF8_PTR;
+        params[0].data = &mode_ptr;
+    }
+    if (!TEST_int_gt(EVP_KDF_derive(ctx, out, sizeof(out), params), 0)
+        || !TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
+        goto end;
+    ret = 1;
+end:
+    EVP_KDF_CTX_free(ctx);
+    return ret;
+}
 #endif /* OPENSSL_NO_KBKDF */
+
+static int test_kdf_utf8_sizes(void)
+{
+    EVP_KDF_CTX *ctx = NULL;
+    unsigned char expected[32], out[32];
+    char digest[] = { 'S', 'H', 'A', '2', '5', '6' };
+    char mode[] = "EXTRACT_ONLY-outside-size";
+    char mode_terminated[64] = "EXTRACT_ONLY\0trailing";
+    char properties[] = "provider=default-outside-size";
+    OSSL_PARAM params[6];
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE,
+        "EXTRACT_ONLY", 0);
+    params[2] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+        "provider=default", 0);
+    params[3] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, "key", 3);
+    params[4] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, "salt", 4);
+    params[5] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(ctx = get_kdfbyname("HKDF"))
+        || !TEST_int_gt(EVP_KDF_derive(ctx, expected, sizeof(expected), params), 0))
+        goto end;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        digest, sizeof(digest));
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE,
+        mode, sizeof("EXTRACT_ONLY") - 1);
+    params[2] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+        properties, sizeof("provider=default") - 1);
+    if (!TEST_int_gt(EVP_KDF_derive(ctx, out, sizeof(out), params), 0)
+        || !TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
+        goto end;
+
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE,
+        mode_terminated, sizeof(mode_terminated));
+    if (!TEST_int_gt(EVP_KDF_derive(ctx, out, sizeof(out), params), 0)
+        || !TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
+        goto end;
+
+    params[1].data_size = 3;
+    if (!TEST_int_le(EVP_KDF_CTX_set_params(ctx, params), 0))
+        goto end;
+    params[1].data_size = sizeof("EXTRACT_ONLY") - 1;
+    params[0].data_size = sizeof(digest) - 1;
+    if (!TEST_int_le(EVP_KDF_CTX_set_params(ctx, params), 0))
+        goto end;
+    ret = 1;
+end:
+    EVP_KDF_CTX_free(ctx);
+    return ret;
+}
 
 int setup_tests(void)
 {
+    ADD_TEST(test_kdf_utf8_sizes);
     ADD_TEST(test_kdf_pbkdf1);
     ADD_TEST(test_kdf_pbkdf1_skey);
     ADD_TEST(test_kdf_pbkdf1_key_too_long);
 #ifndef OPENSSL_NO_KBKDF
+    ADD_ALL_TESTS(test_kbkdf_mode_sizes, 12);
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
     ADD_TEST(test_kdf_kbkdf_6803_256);
