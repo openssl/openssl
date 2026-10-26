@@ -911,8 +911,7 @@ public keys, and the handshake fails for clients that do not offer them.
 =item B<-server_cert_type> I<list>
 
 Specify the supported server certificate types as a comma-separated
-list of B<rpk> and B<x509> (case-insensitive, with B<x.509> accepted as
-a synonym for the latter), in preference order.
+list of B<rpk> and B<x509> (case-insensitive), in preference order.
 This is an explicit alternative to B<-enable_server_rpk>, and the two
 are mutually exclusive.
 The list is used verbatim: with B<x509> omitted the server is raw

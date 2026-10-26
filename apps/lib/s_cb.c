@@ -222,8 +222,6 @@ size_t parse_cert_types(const char *arg, unsigned char *types, size_t max)
             types[n++] = TLSEXT_cert_type_rpk;
         else if (len == 4 && OPENSSL_strncasecmp(p, "x509", len) == 0)
             types[n++] = TLSEXT_cert_type_x509;
-        else if (len == 5 && OPENSSL_strncasecmp(p, "x.509", len) == 0)
-            types[n++] = TLSEXT_cert_type_x509;
         else
             return 0;
         if (comma == NULL)
