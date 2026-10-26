@@ -5303,6 +5303,37 @@ end:
     return ret;
 }
 
+static int test_ctr_drbg_cipher_size(int idx)
+{
+    EVP_RAND *rand = NULL;
+    EVP_RAND_CTX *ctx = NULL;
+    char cipher[] = "AES-256-CTR";
+    char extra[] = "AES-256-CTRX";
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_CIPHER, cipher, sizeof(cipher) - 1),
+        OSSL_PARAM_END
+    };
+    int ret = 0;
+
+    if (idx == 1)
+        params[0].data_size = sizeof(cipher);
+    else if (idx == 2)
+        params[0].data_size = 0;
+    else if (idx == 3)
+        params[0].data = extra;
+    if (!TEST_ptr(rand = EVP_RAND_fetch(testctx, "CTR-DRBG", testpropq))
+        || !TEST_ptr(ctx = EVP_RAND_CTX_new(rand, NULL)))
+        goto end;
+    if (idx == 1 || idx == 2)
+        ret = TEST_false(EVP_RAND_CTX_set_params(ctx, params));
+    else
+        ret = TEST_true(EVP_RAND_CTX_set_params(ctx, params));
+end:
+    EVP_RAND_CTX_free(ctx);
+    EVP_RAND_free(rand);
+    return ret;
+}
+
 static int test_EVP_rsa_pss_utf8_ptr_params(void)
 {
     char *digest = "SHA256";
@@ -9711,6 +9742,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
     ADD_TEST(test_EVP_rsa_pss_set_saltlen);
     ADD_MFAIL_TEST(test_ctrl_utf8_get_mfail);
+    ADD_ALL_TESTS(test_ctr_drbg_cipher_size, 4);
     ADD_ALL_TESTS(test_encoder_sized_utf8_params, 2);
     ADD_TEST(test_EVP_rsa_invalid_key);
 #ifndef OPENSSL_NO_EC
