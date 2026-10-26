@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/core_names.h>
@@ -53,7 +54,13 @@ int main(int argc, char **argv)
         goto done;
     }
 
-    printf("FIPS provider version is %s\n", version);
+    /*
+     * Print out the provider version remembering that UTF8 strings are
+     * are not required to be '\0' terminated.
+     */
+    printf("FIPS provider version is %.*s\n",
+        params[0].return_size > INT_MAX ? INT_MAX : (int)params[0].return_size,
+        version != NULL ? version : "");
     ret = EXIT_SUCCESS;
 done:
     OSSL_PROVIDER_unload(fips_provider);
