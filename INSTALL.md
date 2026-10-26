@@ -981,10 +981,10 @@ Build support for Stream Control Transmission Protocol (SCTP).
 
 ### no-secret-check
 
-Disable, by default, the check that rejects a private key or seed whose
-encoding is evidently not key material: an integer narrower than its
-domain, a mostly-zero value, or a fill pattern.
-The check can also be switched at run time within the library.
+Don't check private keys and seeds, as they are loaded or imported, for
+an encoding that is evidently not key material. The check can still be
+turned on at run time or in the configuration file; see
+`CRYPTO_secret_check_enable(3)`.
 
 ### no-shared
 
