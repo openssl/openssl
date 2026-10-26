@@ -22,6 +22,7 @@
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "internal/sizes.h"
 #include "internal/tlsgroups.h"
 #include "internal/ssl_unwrap.h"
@@ -269,21 +270,11 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     ginf = &ctx->group_list[ctx->group_list_len];
 
     p = prms.name;
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
-    ginf->tlsname = OPENSSL_strdup(p->data);
-    if (ginf->tlsname == NULL)
+    if (!ossl_param_get_utf8_string(p, &ginf->tlsname, 0))
         goto err;
 
     p = prms.internal;
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
-    ginf->realname = OPENSSL_strdup(p->data);
-    if (ginf->realname == NULL)
+    if (!ossl_param_get_utf8_string(p, &ginf->realname, 0))
         goto err;
 
     p = prms.id;
@@ -294,12 +285,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     ginf->group_id = (uint16_t)gid;
 
     p = prms.alg;
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
-    ginf->algorithm = OPENSSL_strdup(p->data);
-    if (ginf->algorithm == NULL)
+    if (!ossl_param_get_utf8_string(p, &ginf->algorithm, 0))
         goto err;
 
     p = prms.secbits;
@@ -441,23 +427,15 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
 
     /* First, mandatory parameters */
     p = prms.name;
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
     OPENSSL_free(sinf->sigalg_name);
-    sinf->sigalg_name = OPENSSL_strdup(p->data);
-    if (sinf->sigalg_name == NULL)
+    sinf->sigalg_name = NULL;
+    if (!ossl_param_get_utf8_string(p, &sinf->sigalg_name, 0))
         goto err;
 
     p = prms.iana_name;
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
     OPENSSL_free(sinf->name);
-    sinf->name = OPENSSL_strdup(p->data);
-    if (sinf->name == NULL)
+    sinf->name = NULL;
+    if (!ossl_param_get_utf8_string(p, &sinf->name, 0))
         goto err;
 
     p = prms.code_point;
@@ -479,84 +457,70 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     p = prms.oid;
     if (p == NULL) {
         sinf->sigalg_oid = NULL;
-    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-        goto err;
     } else {
         OPENSSL_free(sinf->sigalg_oid);
-        sinf->sigalg_oid = OPENSSL_strdup(p->data);
-        if (sinf->sigalg_oid == NULL)
+        sinf->sigalg_oid = NULL;
+        if (!ossl_param_get_utf8_string(p, &sinf->sigalg_oid, 0))
             goto err;
     }
 
     p = prms.sig_name;
     if (p == NULL) {
         sinf->sig_name = NULL;
-    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-        goto err;
     } else {
         OPENSSL_free(sinf->sig_name);
-        sinf->sig_name = OPENSSL_strdup(p->data);
-        if (sinf->sig_name == NULL)
+        sinf->sig_name = NULL;
+        if (!ossl_param_get_utf8_string(p, &sinf->sig_name, 0))
             goto err;
     }
 
     p = prms.sig_oid;
     if (p == NULL) {
         sinf->sig_oid = NULL;
-    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-        goto err;
     } else {
         OPENSSL_free(sinf->sig_oid);
-        sinf->sig_oid = OPENSSL_strdup(p->data);
-        if (sinf->sig_oid == NULL)
+        sinf->sig_oid = NULL;
+        if (!ossl_param_get_utf8_string(p, &sinf->sig_oid, 0))
             goto err;
     }
 
     p = prms.hash_name;
     if (p == NULL) {
         sinf->hash_name = NULL;
-    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-        goto err;
     } else {
         OPENSSL_free(sinf->hash_name);
-        sinf->hash_name = OPENSSL_strdup(p->data);
-        if (sinf->hash_name == NULL)
+        sinf->hash_name = NULL;
+        if (!ossl_param_get_utf8_string(p, &sinf->hash_name, 0))
             goto err;
     }
 
     p = prms.hash_oid;
     if (p == NULL) {
         sinf->hash_oid = NULL;
-    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-        goto err;
     } else {
         OPENSSL_free(sinf->hash_oid);
-        sinf->hash_oid = OPENSSL_strdup(p->data);
-        if (sinf->hash_oid == NULL)
+        sinf->hash_oid = NULL;
+        if (!ossl_param_get_utf8_string(p, &sinf->hash_oid, 0))
             goto err;
     }
 
     p = prms.keytype;
     if (p == NULL) {
         sinf->keytype = NULL;
-    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-        goto err;
     } else {
         OPENSSL_free(sinf->keytype);
-        sinf->keytype = OPENSSL_strdup(p->data);
-        if (sinf->keytype == NULL)
+        sinf->keytype = NULL;
+        if (!ossl_param_get_utf8_string(p, &sinf->keytype, 0))
             goto err;
     }
 
     p = prms.keytype_oid;
     if (p == NULL) {
         sinf->keytype_oid = NULL;
-    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-        goto err;
     } else {
         OPENSSL_free(sinf->keytype_oid);
-        sinf->keytype_oid = OPENSSL_strdup(p->data);
-        if (sinf->keytype_oid == NULL)
+        sinf->keytype_oid = NULL;
+        if (!ossl_param_get_utf8_string(p, &sinf->keytype_oid, 0))
             goto err;
     }
 
