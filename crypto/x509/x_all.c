@@ -189,9 +189,26 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
     return 0;
 }
 
+static int x509_set_der(X509 *x)
+{
+    CRYPTO_BUFFER *buf = NULL;
+    unsigned char *der = NULL;
+    int der_len;
+
+    if ((der_len = i2d_X509(x, &der)) > 0)
+        buf = CRYPTO_BUFFER_new(der, (size_t)der_len, NULL);
+    OPENSSL_free(der);
+    if (buf == NULL)
+        return 0;
+    ossl_x509_set0_der(x, buf);
+
+    return 1;
+}
+
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    int ret;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -209,15 +226,19 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * The X509_sign_ctx, X509_REQ_sign{,_ctx}, X509_CRL_sign{,_ctx} functions
      * which exist below are the same.
      */
-    x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
+    ossl_x509_set_modified(x);
+    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
         pkey, md, x->libctx, x->propq);
+    if (ret <= 0 || !x509_set_der(x))
+        return 0;
+    return ret;
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    int ret;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -228,10 +249,13 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
     if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
         && !X509_set_version(x, X509_VERSION_3))
         return 0;
-    x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
+    ossl_x509_set_modified(x);
+    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
         &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, ctx);
+    if (ret <= 0 || !x509_set_der(x))
+        return 0;
+    return ret;
 }
 
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,

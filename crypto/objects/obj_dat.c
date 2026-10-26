@@ -856,3 +856,15 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 {
     return ossl_obj_obj2nid(a);
 }
+
+int ossl_obj_cbs2nid(const CBS *oid)
+{
+    ASN1_OBJECT obj = { 0 };
+
+    if (CBS_len(oid) > INT_MAX)
+        return NID_undef;
+    obj.data = CBS_data(oid);
+    obj.length = (int)CBS_len(oid);
+
+    return ossl_obj_obj2nid(&obj);
+}
