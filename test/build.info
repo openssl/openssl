@@ -1332,6 +1332,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[aesgcmtest]=../include ../apps/include
   DEPEND[aesgcmtest]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=aes_vaes256_test
+  SOURCE[aes_vaes256_test]=aes_vaes256_test.c
+  INCLUDE[aes_vaes256_test]=../include ../apps/include ../crypto/include
+  DEPEND[aes_vaes256_test]=../libcrypto.a libtestutil.a
+
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c
   INCLUDE[context_internal_test]=.. ../include ../apps/include
