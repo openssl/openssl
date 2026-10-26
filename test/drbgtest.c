@@ -884,7 +884,7 @@ err:
     return ret;
 }
 
-#if defined(__linux__) && !defined(FIPS_MODULE) && defined(__GNUC__)
+#if defined(__linux__) && defined(__GNUC__)
 /*
  * A regular file laid out like the VMClock page stands in for the device
  * (OPENSSL_VMCLOCK is set to it in setup_tests, before any DRBG runs). Bumping
@@ -893,6 +893,8 @@ err:
  * not. The page is shared by every library context, so each test below runs
  * in its own context and puts the counter back before it returns: the other
  * tests, which compare the default DRBGs' reseed counts, run in any order.
+ * Given a configuration that loads the FIPS provider, drbgtest runs only these
+ * tests, in contexts that load it, so that they read the FIPS DRBGs.
  */
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -981,6 +983,30 @@ static void vmclock_test_bump(unsigned int hold_ms)
     vmclock_test_set_generation(vmclock_test_generation + 1, hold_ms);
 }
 
+static const char *vmclock_fips_config;
+
+/*
+ * A new library context for one test. Returns 1, or 0 on an error, or -1 if
+ * the configured FIPS provider is from a release whose DRBGs do not read
+ * VMClock.
+ */
+static int vmclock_ctx_new(OSSL_LIB_CTX **ctx)
+{
+    EVP_RAND_CTX *primary;
+    const OSSL_PROVIDER *prov;
+
+    if (!TEST_ptr(*ctx = OSSL_LIB_CTX_new()))
+        return 0;
+    if (vmclock_fips_config == NULL)
+        return 1;
+    if (!TEST_true(OSSL_LIB_CTX_load_config(*ctx, vmclock_fips_config))
+        || !TEST_ptr(primary = RAND_get0_primary(*ctx))
+        || !TEST_ptr(prov = EVP_RAND_get0_provider(EVP_RAND_CTX_get0_rand(primary)))
+        || !TEST_str_eq(OSSL_PROVIDER_get0_name(prov), "fips"))
+        return 0;
+    return fips_provider_version_ge(*ctx, 4, 2, 0) ? 1 : -1;
+}
+
 static unsigned int vmclock_reseed_counter(EVP_RAND_CTX *drbg)
 {
     unsigned int n = 0;
@@ -1000,12 +1026,14 @@ static int test_rand_reseed_on_vmclock(void)
     uint64_t generation = vmclock_test_generation;
     unsigned char buf[32];
     unsigned int pri, pub, pri2, pub2;
-    int ret = 0;
+    int ret;
 
-    if (using_fips_rng())
-        return TEST_skip("FIPS provider DRBGs do not read VMClock");
-    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
-        || !TEST_ptr(primary = RAND_get0_primary(ctx))
+    if ((ret = vmclock_ctx_new(&ctx)) <= 0) {
+        OSSL_LIB_CTX_free(ctx);
+        return ret < 0 ? TEST_skip("this FIPS provider does not read VMClock") : 0;
+    }
+    ret = 0;
+    if (!TEST_ptr(primary = RAND_get0_primary(ctx))
         || !TEST_ptr(public = RAND_get0_public(ctx))
         || !TEST_ptr(private = RAND_get0_private(ctx))
         || !TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
@@ -1266,12 +1294,14 @@ static int test_rand_vmclock_stuck(void)
     EVP_RAND_CTX *public;
     unsigned char buf[32];
     unsigned int pub;
-    int ret = 0;
+    int ret;
 
-    if (using_fips_rng())
-        return TEST_skip("FIPS provider DRBGs do not read VMClock");
-    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
-        || !TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+    if ((ret = vmclock_ctx_new(&ctx)) <= 0) {
+        OSSL_LIB_CTX_free(ctx);
+        return ret < 0 ? TEST_skip("this FIPS provider does not read VMClock") : 0;
+    }
+    ret = 0;
+    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
         || !TEST_ptr(public = RAND_get0_public(ctx)))
         goto err;
     pub = vmclock_reseed_counter(public);
@@ -1359,13 +1389,11 @@ static int test_rand_vmclock_threads(void)
     unsigned int pri = 0;
     int i, n, ret = 1;
 
-    if (using_fips_rng())
-        return TEST_skip("FIPS provider DRBGs do not read VMClock");
-    if (!TEST_ptr(vmclock_ctx = OSSL_LIB_CTX_new())
+    if ((n = vmclock_ctx_new(&vmclock_ctx)) <= 0
         || !TEST_ptr(primary = RAND_get0_primary(vmclock_ctx))) {
         OSSL_LIB_CTX_free(vmclock_ctx);
         vmclock_ctx = NULL;
-        return 0;
+        return n < 0 ? TEST_skip("this FIPS provider does not read VMClock") : 0;
     }
     for (n = 0; n < VMCLOCK_THREADS; n++)
         if (pthread_create(&t[n], NULL, vmclock_thread, &ok[n]) != 0)
@@ -1404,12 +1432,21 @@ static int test_rand_vmclock_threads(void)
 #endif
 #endif
 
+OPT_TEST_DECLARE_USAGE("[fips_config_file]\n")
+
 int setup_tests(void)
 {
-#if defined(__linux__) && !defined(FIPS_MODULE) && defined(__GNUC__)
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+#if defined(__linux__) && defined(__GNUC__)
+    vmclock_fips_config = test_get_argument(0);
     if (vmclock_test_setup()) {
         ADD_TEST(test_rand_reseed_on_vmclock);
-        ADD_TEST(test_rand_vmclock_recheck);
+        /* its DRBG is the default provider's, over a seed source of its own */
+        if (vmclock_fips_config == NULL)
+            ADD_TEST(test_rand_vmclock_recheck);
         ADD_TEST(test_rand_vmclock_stuck);
 #if defined(OPENSSL_THREADS)
         ADD_TEST(test_rand_vmclock_threads);
@@ -1418,6 +1455,8 @@ int setup_tests(void)
         TEST_note("no file to stand in for the VMClock page; its tests are skipped");
     }
 #endif
+    if (test_get_argument(0) != NULL)
+        return 1;
     ADD_TEST(test_rand_reseed);
 #if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_RAND_SEED_EGD)
     ADD_ALL_TESTS(test_rand_fork_safety, RANDOM_SIZE);
@@ -1431,7 +1470,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-#if defined(__linux__) && !defined(FIPS_MODULE) && defined(__GNUC__)
+#if defined(__linux__) && defined(__GNUC__)
     if (vmclock_test_page != NULL)
         munmap(vmclock_test_page, VMCLOCK_TEST_SIZE);
     if (vmclock_test_created)
