@@ -983,6 +983,13 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     fgbl->fips_params.security_checks = 0;
 #endif
 
+    /* The module holds its own secret check switch, set only from config */
+    if (fgbl->fips_params.secret_check == 0
+        && !CRYPTO_secret_check_disable()) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     /*
      * We did initial set up of selftest_params in a local copy, because we
      * could not create fgbl until c_CRYPTO_zalloc was defined in the loop
