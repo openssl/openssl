@@ -1547,6 +1547,31 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     OPENSSL_free(rl);
 }
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+/* Hand off unread wire bytes when a URXE-backed layer stops being active. */
+int tls_forward_urxe_remainder(OSSL_RECORD_LAYER *rl)
+{
+    size_t written;
+    int ret = 1;
+
+    if (rl->packet_handle == NULL)
+        return 1;
+
+    if (rl->urxe_left > 0)
+        ret = BIO_write_ex(rl->next, rl->urxe_next, rl->urxe_left, &written)
+            && written == rl->urxe_left;
+
+    /* Relinquish ownership even on failure; the caller propagates the error. */
+    rl->release_urxe_packet(rl->cbarg, rl->packet_handle);
+    rl->packet_handle = NULL;
+    rl->urxe_next = NULL;
+    rl->urxe_left = 0;
+    rl->packet = NULL;
+    rl->packet_length = 0;
+    return ret;
+}
+#endif
+
 int tls_free(OSSL_RECORD_LAYER *rl)
 {
     TLS_BUFFER *rbuf;
@@ -1568,25 +1593,7 @@ int tls_free(OSSL_RECORD_LAYER *rl)
     }
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (rl->packet_handle != NULL) {
-        if (rl->urxe_left > 0) {
-            /*
-             * As above: this record layer is closing but the held URXE
-             * still has bytes this epoch's record layer never got a chance
-             * to examine (e.g. it stopped reading once it had what it
-             * needed for the current epoch). They may belong to the next
-             * epoch, so forward them the same way leftover rl->rbuf bytes
-             * are forwarded above, rather than silently dropping them --
-             * dropping them here would just make the peer retransmit.
-             */
-            if (!BIO_write_ex(rl->next, rl->urxe_next, rl->urxe_left, &written))
-                ret = 0;
-        }
-
-        /* Release packet back via callback */
-        rl->release_urxe_packet(rl->cbarg, rl->packet_handle);
-        rl->packet_handle = NULL;
-    }
+    ret &= tls_forward_urxe_remainder(rl);
 #endif
     tls_int_free(rl);
 
@@ -1595,7 +1602,7 @@ int tls_free(OSSL_RECORD_LAYER *rl)
 
 int tls_unprocessed_read_pending(OSSL_RECORD_LAYER *rl)
 {
-    return TLS_BUFFER_get_left(&rl->rbuf) != 0;
+    return TLS_BUFFER_get_left(&rl->rbuf) != 0 || rl->urxe_left != 0;
 }
 
 int tls_processed_read_pending(OSSL_RECORD_LAYER *rl)
@@ -2405,7 +2412,7 @@ int tls_free_buffers(OSSL_RECORD_LAYER *rl)
     /* If we have pending data to be read then fail */
     if (rl->curr_rec < rl->num_recs
         || rl->curr_rec != rl->num_released
-        || TLS_BUFFER_get_left(&rl->rbuf) != 0
+        || tls_unprocessed_read_pending(rl)
         || rl->rstate == SSL_ST_READ_BODY)
         return 0;
 
