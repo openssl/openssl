@@ -2570,6 +2570,7 @@ static OSSL_RECORD_LAYER *new_fake_urxe_rl(FAKE_URXE_QUEUE *q)
      */
     rl->funcs = &dtls_any_funcs;
     rl->version = DTLS_ANY_VERSION;
+    rl->alert = SSL_AD_NO_ALERT;
     rl->is_first_record = 1;
     rl->max_frag_len = SSL3_RT_MAX_PLAIN_LENGTH;
 
@@ -2782,7 +2783,7 @@ static int test_urxe_teardown_forwards_undrained_bytes(void)
     unsigned char forwarded[sizeof(untouched)];
     size_t rec_len, read_back;
     BIO *next = NULL;
-    int testresult = 0;
+    int ret, testresult = 0;
 
     rec_len = build_dtls_record(datagram, SSL3_RT_HANDSHAKE, 0,
         payload, sizeof(payload));
@@ -2837,9 +2838,10 @@ static int test_urxe_teardown_forwards_undrained_bytes(void)
     if (!TEST_int_eq(q.release_count[0], 0))
         goto end;
 
-    if (!TEST_true(tls_free(rl)))
-        goto end;
+    ret = tls_free(rl);
     rl = NULL; /* tls_free() already released it */
+    if (!TEST_true(ret))
+        goto end;
 
     if (!TEST_true(BIO_read_ex(next, forwarded, sizeof(forwarded),
             &read_back))
@@ -2855,6 +2857,175 @@ static int test_urxe_teardown_forwards_undrained_bytes(void)
 end:
     tls_free(rl);
     BIO_free(next);
+    return testresult;
+}
+/*
+ * Listener reads can leave a trailing record in a held URXE rather than rbuf.
+ * The DTLS 1.3 epoch-retention hook must forward it while the old layer remains
+ * alive. Plaintext records isolate the handoff from handshake and decryption:
+ * this test checks the wire bytes passed to the next layer, not epoch keys.
+ */
+static int test_urxe_retained_epoch_forwards_unread_record(void)
+{
+    OSSL_RECORD_LAYER *oldrl = NULL, *newrl = NULL;
+    FAKE_URXE_QUEUE q = { 0 }, empty = { 0 };
+    static const unsigned char payload1[] = { 'A', 'A', 'A', 'A' };
+    static const unsigned char payload2[] = { 'B', 'B', 'B', 'B' };
+    unsigned char datagram[2 * (DTLS1_RT_HEADER_LENGTH + sizeof(payload1))];
+    unsigned char forwarded[DTLS1_RT_HEADER_LENGTH + sizeof(payload2)];
+    BIO *handoff = NULL;
+    size_t len1, len2, readbytes;
+    int ret, testresult = 0;
+
+    /* Coalesce two records into one datagram; only the first will be consumed. */
+    len1 = build_dtls_record(datagram, SSL3_RT_HANDSHAKE, 0,
+        payload1, sizeof(payload1));
+    len2 = build_dtls_record(datagram + len1, SSL3_RT_HANDSHAKE, 1,
+        payload2, sizeof(payload2));
+    q.queue[0].data = datagram;
+    q.queue[0].len = len1 + len2;
+    q.queue_len = 1;
+
+    /* The new layer has no fresh input that could substitute for the remainder. */
+    if (!TEST_ptr(oldrl = new_fake_urxe_rl(&q))
+        || !TEST_ptr(newrl = new_fake_urxe_rl(&empty))
+        || !TEST_ptr(handoff = BIO_new(BIO_s_dgram_mem())))
+        goto end;
+
+    /*
+     * The old layer's next BIO is the new layer's prev BIO. Each owns a
+     * reference; the test keeps one to check for duplicate forwarding at free.
+     */
+    if (!TEST_true(BIO_up_ref(handoff)))
+        goto end;
+    oldrl->next = handoff;
+    if (!TEST_true(BIO_up_ref(handoff)))
+        goto end;
+    newrl->prev = handoff;
+
+    /* Parse the first record through the listener's URXE-backed read path. */
+    if (!TEST_int_eq(dtls_get_more_records(oldrl), OSSL_RECORD_RETURN_SUCCESS)
+        || !TEST_mem_eq(oldrl->rrec[0].data, oldrl->rrec[0].length,
+            payload1, sizeof(payload1)))
+        goto end;
+
+    /* Consume that record, leaving the second wire record in the held URXE. */
+    oldrl->curr_rec = 1;
+    if (!TEST_int_eq(tls_release_record(oldrl, &oldrl->rrec[0],
+                         oldrl->rrec[0].length),
+            OSSL_RECORD_RETURN_SUCCESS)
+        || !TEST_int_eq(q.release_count[0], 0)
+        || !TEST_size_t_eq(oldrl->urxe_left, len2))
+        goto end;
+
+    /*
+     * Retain the old layer through ssl_set_new_record_layer()'s method hook.
+     * Forwarding must happen here, not wait until the retained layer is freed.
+     */
+    ret = ossl_dtls_record_method.set_prev_epoch_rl(newrl, oldrl);
+    oldrl = NULL; /* The hook takes ownership even if forwarding fails. */
+    if (!TEST_true(ret)
+        || !TEST_ptr(newrl->prev_epoch_rl)
+        || !TEST_size_t_eq(BIO_ctrl_pending(newrl->prev), len2))
+        goto end;
+
+    /*
+     * Check immediate, byte-for-byte handoff with no additional packet fetch.
+     * The retained layer must relinquish the URXE and its unread-byte state.
+     */
+    if (!TEST_true(BIO_read_ex(newrl->prev, forwarded, sizeof(forwarded), &readbytes))
+        || !TEST_mem_eq(forwarded, readbytes, datagram + len1, len2)
+        || !TEST_size_t_eq(BIO_ctrl_pending(newrl->prev), 0)
+        || !TEST_size_t_eq(newrl->prev_epoch_rl->urxe_left, 0)
+        || !TEST_ptr_null(newrl->prev_epoch_rl->packet_handle)
+        || !TEST_int_eq(q.get_calls, 1)
+        || !TEST_int_eq(empty.get_calls, 0)
+        || !TEST_int_eq(q.release_count[0], 1))
+        goto end;
+
+    /* Destroy both layers: neither a second release nor another copy is allowed. */
+    ret = ossl_dtls_record_method.free(newrl);
+    newrl = NULL;
+    if (!TEST_true(ret)
+        || !TEST_int_eq(q.release_count[0], 1)
+        || !TEST_size_t_eq(BIO_ctrl_pending(handoff), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    /* After retention newrl owns oldrl; before it, each is independently owned. */
+    if (newrl != NULL)
+        ossl_dtls_record_method.free(newrl);
+    tls_free(oldrl);
+    BIO_free(handoff);
+    return testresult;
+}
+
+/*
+ * Pending-data queries must see a trailing record held outside the read buffer.
+ * Exercise the record-method predicate used by SSL_has_pending() and polling,
+ * without an epoch transition or another datagram supplying readiness.
+ */
+static int test_urxe_unread_record_pending(void)
+{
+    OSSL_RECORD_LAYER *rl = NULL;
+    FAKE_URXE_QUEUE q = { 0 };
+    static const unsigned char payload1[] = { 'A', 'A', 'A', 'A' };
+    static const unsigned char payload2[] = { 'B', 'B', 'B', 'B' };
+    unsigned char datagram[2 * (DTLS1_RT_HEADER_LENGTH + sizeof(payload1))];
+    size_t len1, len2;
+    int testresult = 0;
+
+    /* Put two distinguishable records in the queue's only datagram. */
+    len1 = build_dtls_record(datagram, SSL3_RT_HANDSHAKE, 0,
+        payload1, sizeof(payload1));
+    len2 = build_dtls_record(datagram + len1, SSL3_RT_HANDSHAKE, 1,
+        payload2, sizeof(payload2));
+    q.queue[0].data = datagram;
+    q.queue[0].len = len1 + len2;
+    q.queue_len = 1;
+
+    /* Nothing is held initially; the first read fetches the shared datagram. */
+    if (!TEST_ptr(rl = new_fake_urxe_rl(&q))
+        || !TEST_false(ossl_dtls_record_method.unprocessed_read_pending(rl))
+        || !TEST_int_eq(dtls_get_more_records(rl), OSSL_RECORD_RETURN_SUCCESS)
+        || !TEST_mem_eq(rl->rrec[0].data, rl->rrec[0].length,
+            payload1, sizeof(payload1)))
+        goto end;
+
+    /*
+     * Fully consume the first record. There is no processed record or rbuf
+     * remainder, but the second record still makes unprocessed input pending.
+     */
+    rl->curr_rec = 1;
+    if (!TEST_int_eq(tls_release_record(rl, &rl->rrec[0], rl->rrec[0].length),
+            OSSL_RECORD_RETURN_SUCCESS)
+        || !TEST_false(ossl_dtls_record_method.processed_read_pending(rl))
+        || !TEST_size_t_eq(rl->rbuf.left, 0)
+        || !TEST_size_t_eq(rl->urxe_left, len2)
+        || !TEST_int_eq(q.release_count[0], 0)
+        || !TEST_true(ossl_dtls_record_method.unprocessed_read_pending(rl)))
+        goto end;
+
+    /* Read the pending record directly from the same URXE. */
+    if (!TEST_int_eq(dtls_get_more_records(rl), OSSL_RECORD_RETURN_SUCCESS)
+        || !TEST_mem_eq(rl->rrec[0].data, rl->rrec[0].length,
+            payload2, sizeof(payload2)))
+        goto end;
+
+    /* Draining the datagram clears both pending predicates and releases it once. */
+    rl->curr_rec = 1;
+    if (!TEST_int_eq(tls_release_record(rl, &rl->rrec[0], rl->rrec[0].length),
+            OSSL_RECORD_RETURN_SUCCESS)
+        || !TEST_false(ossl_dtls_record_method.processed_read_pending(rl))
+        || !TEST_false(ossl_dtls_record_method.unprocessed_read_pending(rl))
+        || !TEST_int_eq(q.get_calls, 1)
+        || !TEST_int_eq(q.release_count[0], 1))
+        goto end;
+
+    testresult = 1;
+end:
+    tls_free(rl);
     return testresult;
 }
 #endif /* !OPENSSL_NO_DTLS1_3 && !OPENSSL_NO_SOCK */
@@ -2895,6 +3066,8 @@ int setup_tests(void)
     ADD_TEST(test_urxe_multi_record_no_premature_release);
     ADD_TEST(test_urxe_discarded_record_releases_before_next_fetch);
     ADD_TEST(test_urxe_teardown_forwards_undrained_bytes);
+    ADD_TEST(test_urxe_retained_epoch_forwards_unread_record);
+    ADD_TEST(test_urxe_unread_record_pending);
 #endif
     return 1;
 }

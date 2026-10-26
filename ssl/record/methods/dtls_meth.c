@@ -956,7 +956,7 @@ again:
 }
 
 /*
- * Push any unread buffered bytes and any records already buffered in
+ * Push any unread buffered or URXE bytes and any records already buffered in
  * unprocessed_rcds (see is_next_epoch in dtls_get_more_records()) forward
  * into rl->next, so a pending handshake epoch transition still completes.
  * Must run when rl stops being the active read layer, not deferred until
@@ -975,6 +975,10 @@ static int dtls_forward_pending_records(OSSL_RECORD_LAYER *rl)
         ret = BIO_write_ex(rl->next, rbuf->buf + rbuf->offset, left, &written);
         rbuf->left = 0;
     }
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    ret &= tls_forward_urxe_remainder(rl);
+#endif
 
     while ((item = pqueue_pop(&rl->unprocessed_rcds)) != NULL) {
         rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
