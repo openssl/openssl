@@ -4018,6 +4018,9 @@ static int test_quic_retry_split_client_hello(void)
     uint64_t cwnd = 0, init_cwnd;
     int testresult = 0, i, ret;
 
+    if (is_fips && fips_provider_version_match(libctx, "<3.5.0"))
+        return TEST_skip("FIPS provider does not support X25519MLKEM768");
+
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
         goto err;
@@ -4146,6 +4149,9 @@ static int test_quic_retry_after_version_neg(void)
     struct initial_version iv = { 0 };
     int testresult = 0, i, ret;
 
+    if (is_fips && fips_provider_version_match(libctx, "<3.5.0"))
+        return TEST_skip("FIPS provider does not support X25519MLKEM768");
+
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
         goto err;
@@ -4228,6 +4234,9 @@ static int test_quic_version_neg_split_client_hello(int idx)
     QUIC_PN first_pn, pn;
     struct initial_version iv = { 0 };
     int testresult = 0, i, ret;
+
+    if (is_fips && fips_provider_version_match(libctx, "<3.5.0"))
+        return TEST_skip("FIPS provider does not support X25519MLKEM768");
 
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
