@@ -44,9 +44,11 @@ OpenSSL 4.2
    check can be turned off for the process with
    `CRYPTO_secret_check_disable()` and back on with
    `CRYPTO_secret_check_enable()`, and a build configured with
-   `no-secret-check` starts with it off. Test suites that deliberately use
-   degenerate keys need to disable it. See `CRYPTO_secret_check_enable(3)`
-   for details.
+   `no-secret-check` starts with it off. The FIPS provider applies its own
+   copy of the check, turned off with `secret-check = 0` in its
+   configuration section. Test suites that deliberately use degenerate
+   keys need to disable it. See `CRYPTO_secret_check_enable(3)` for
+   details.
 
    *Bob Beck*
 
