@@ -32,6 +32,7 @@ struct ossl_lib_ctx_st {
     void *global_properties;
     void *drbg;
     void *drbg_nonce;
+    void *vmclock;
 #ifndef FIPS_MODULE
     void *provider_conf;
     void *bio_core;
@@ -201,6 +202,10 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (ctx->drbg_nonce == NULL)
         goto err;
 
+    ctx->vmclock = ossl_prov_vmclock_ctx_new(ctx);
+    if (ctx->vmclock == NULL)
+        goto err;
+
 #ifndef FIPS_MODULE
     ctx->self_test_cb = ossl_self_test_set_callback_new(ctx);
     if (ctx->self_test_cb == NULL)
@@ -337,6 +342,11 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     if (ctx->drbg_nonce != NULL) {
         ossl_prov_drbg_nonce_ctx_free(ctx->drbg_nonce);
         ctx->drbg_nonce = NULL;
+    }
+
+    if (ctx->vmclock != NULL) {
+        ossl_prov_vmclock_ctx_free(ctx->vmclock);
+        ctx->vmclock = NULL;
     }
 
 #ifndef FIPS_MODULE
@@ -639,6 +649,8 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
         return ctx->drbg;
     case OSSL_LIB_CTX_DRBG_NONCE_INDEX:
         return ctx->drbg_nonce;
+    case OSSL_LIB_CTX_VMCLOCK_INDEX:
+        return ctx->vmclock;
 #ifndef FIPS_MODULE
     case OSSL_LIB_CTX_PROVIDER_CONF_INDEX:
         return ctx->provider_conf;

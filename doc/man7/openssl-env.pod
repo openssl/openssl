@@ -248,12 +248,10 @@ This variable is not considered security-sensitive.
 
 =item B<OPENSSL_VMCLOCK>
 
-Specifies a file that the default provider's DRBGs read in place of the
-VMClock device F</dev/vmclock0>, whose generation signal makes them reseed
-after the virtual machine is restored from a snapshot or migrated. It is
-meant for tests.
-
-This variable is considered a security-sensitive environment variable.
+Specifies a file that the DRBGs of the default and FIPS providers read in
+place of the VMClock device F</dev/vmclock0>, whose generation signal makes
+them reseed after the virtual machine is restored from a snapshot or
+migrated. It is meant for tests.
 
 =item B<OPENSSL_WIN32_UTF8>
 
