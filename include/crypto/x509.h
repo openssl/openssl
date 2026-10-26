@@ -21,6 +21,8 @@
 
 #include <crypto/asn1.h>
 #include <crypto/siphash.h>
+#include "internal/pool.h"
+#include "crypto/x509_view.h"
 
 /*
  * Size in bytes of the internal X509 / X509_CRL fingerprint, see
@@ -193,9 +195,28 @@ struct x509_cinf_st {
 };
 
 struct x509_st {
-    X509_CINF cert_info;
+    X509_CINF *cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
+    /**
+     * The DER encoding the certificate was decoded from or signed into, or
+     * NULL if it has none or has been modified since.
+     */
+    CRYPTO_BUFFER *der;
+    /** The view of der, valid when has_view is set */
+    struct x509_view view;
+    /** Whether der is set and x509_view_parse() accepted it */
+    int has_view;
+    /**
+     * The public key decoded from the view's SubjectPublicKeyInfo, or NULL
+     * if there is no view or the key does not decode
+     */
+    EVP_PKEY *pkey;
+    /**
+     * Set while cert_info, sig_alg and signature are not decoded from der;
+     * ossl_x509_decode() decodes them
+     */
+    int undecoded;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
@@ -368,6 +389,43 @@ X509_NAME *ossl_dist_point_name_full(const struct DIST_POINT_NAME_st *dpn,
     const X509_NAME *iname);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+
+/**
+ * @brief Marks x as modified: its cached TBSCertificate encoding is not
+ * used for encoding and its DER is freed.
+ * @param x the certificate
+ */
+void ossl_x509_set_modified(X509 *x);
+
+/**
+ * @brief Replaces x's DER encoding with der, taking ownership of it, and
+ * parses the view of it and the public key in the view.
+ * @param x the certificate
+ * @param der the DER encoding of x, or NULL to leave x without one
+ */
+void ossl_x509_set0_der(X509 *x, CRYPTO_BUFFER *der);
+
+/**
+ * @brief Decodes x's cert_info, sig_alg and signature from its DER if they
+ * are not decoded.  Every reader of those fields calls it first.
+ * @param x the certificate
+ * @returns 1 if the fields are decoded, 0 on failure
+ */
+int ossl_x509_decode(const X509 *x);
+
+/**
+ * @brief Returns the store's certificates whose encoded subject is
+ * subject, from its index of certificates with a view.  With check_time,
+ * those whose validity covers it come first; otherwise they are in the
+ * order they were added.
+ * @param store the store
+ * @param subject the encoded subject Name, tag and length included
+ * @param check_time the verification time as a POSIX time, or NULL
+ * @returns a new stack holding a reference to each certificate, or NULL if
+ *          there is none or on failure
+ */
+STACK_OF(X509) *ossl_x509_store_get1_certs_by_subject(X509_STORE *store,
+    const CBS *subject, const int64_t *check_time);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
@@ -420,6 +478,19 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
 
 EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
     long length);
+
+/**
+ * @brief Decodes a DER SubjectPublicKeyInfo into a public key.
+ * An RSA key, a named-curve EC key, or an Ed25519, Ed448, X25519 or X448
+ * key is imported from its values by EVP_PKEY_fromdata(); any other key is
+ * decoded by d2i_PUBKEY().  The values in spki determine the key
+ * completely.  An operation in another provider or library context gets
+ * the key exported to it at first use, where that provider's import
+ * checks apply.
+ * @param spki the SubjectPublicKeyInfo, tag and length included
+ * @returns the key, or NULL if spki does not decode
+ */
+EVP_PKEY *ossl_x509_spki_to_pkey(const CBS *spki);
 int ossl_x509_check_private_key(const EVP_PKEY *k, const EVP_PKEY *pkey);
 
 int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
@@ -456,8 +527,77 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
 int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);
+/** X509_check_trust() flag: X509_TRUST_SELF_SIGNED gives self-signedness */
+#define X509_TRUST_SELF_SIGNED_KNOWN (1U << 16)
+/** X509_check_trust() flag: the certificate is self-signed */
+#define X509_TRUST_SELF_SIGNED (1U << 17)
+
 int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername);
+
+/**
+ * @brief Matches chk against the dNSNames in the subjectAltName of view,
+ * as ossl_x509_check_host() does, never consulting the subject.
+ * @param view the certificate's view
+ * @param chk the host name to match
+ * @param chklen the length of chk, at least 1
+ * @param flags X509_CHECK_FLAG_ values
+ * @param peername where to store a copy of the matching name, or NULL
+ * @returns 1 on a match, 0 otherwise
+ */
+/**
+ * @brief Checks a certificate's subject and subject alternative names
+ * against name constraints, as NAME_CONSTRAINTS_check() does.
+ * @param nm the certificate's subject
+ * @param altnames the certificate's subject alternative names, or NULL
+ * @param nc the name constraints
+ * @returns X509_V_OK if the names satisfy nc, an X509_V_ERR_ value
+ * otherwise
+ */
+int ossl_name_constraints_check(const X509_NAME *nm,
+    const GENERAL_NAMES *altnames, NAME_CONSTRAINTS *nc);
+
+/**
+ * @brief Decodes the signatureAlgorithm of the certificate whose view is
+ * given.
+ * @param view the certificate's view
+ * @returns the AlgorithmIdentifier, which the caller frees, or NULL
+ */
+X509_ALGOR *ossl_x509_view_get1_sig_alg(const struct x509_view *view);
+
+/**
+ * @brief Gets the signature information of the certificate whose view is
+ * given, as X509_get_signature_info() does.
+ * @param view the certificate's view
+ * @param pubkey the certificate's public key, or NULL
+ * @param libctx the library context to fetch digests from, or NULL
+ * @param propq the property query for fetching, or NULL
+ * @param mdnid where to store the digest NID, or NULL
+ * @param pknid where to store the public key NID, or NULL
+ * @param secbits where to store the security bits, or NULL
+ * @param flags where to store the X509_SIG_INFO_ flags, or NULL
+ * @returns 1 if the signature information is valid, 0 otherwise
+ */
+int ossl_x509_view_get_signature_info(const struct x509_view *view,
+    const EVP_PKEY *pubkey, OSSL_LIB_CTX *libctx, const char *propq,
+    int *mdnid, int *pknid, int *secbits, uint32_t *flags);
+
+/**
+ * @brief Verifies the signature of the certificate whose view is given
+ * with pkey, as X509_verify() does.
+ * @param view the certificate's view
+ * @param id the distinguishing identifier for SM2 signatures, or NULL
+ * @param pkey the issuer's public key
+ * @param libctx the library context to fetch algorithms from, or NULL
+ * @param propq the property query for fetching, or NULL
+ * @returns 1 if the signature verifies, 0 otherwise
+ */
+int ossl_x509_view_verify(const struct x509_view *view,
+    const ASN1_OCTET_STRING *id, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
+    const char *propq);
+
+int ossl_x509_view_check_host(const struct x509_view *view,
+    const uint8_t *chk, size_t chklen, unsigned int flags, char **peername);
 int ossl_x509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,
     unsigned int flags);
 

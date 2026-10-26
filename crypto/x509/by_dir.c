@@ -233,6 +233,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     unsigned long h;
     BUF_MEM *b = NULL;
     X509_OBJECT stmp, *tmp = NULL;
+    X509_CINF st_cinf;
     const char *postfix = "";
 
     if (name == NULL)
@@ -240,7 +241,9 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
     stmp.type = type;
     if (type == X509_LU_X509) {
-        data.st_x509.cert_info.subject = (X509_NAME *)name; /* won't modify it */
+        memset(&data.st_x509, 0, sizeof(data.st_x509));
+        data.st_x509.cert_info = &st_cinf;
+        st_cinf.subject = (X509_NAME *)name;
         stmp.data.x509 = &data.st_x509;
     } else if (type == X509_LU_CRL) {
         data.crl.crl.issuer = (X509_NAME *)name; /* won't modify it */

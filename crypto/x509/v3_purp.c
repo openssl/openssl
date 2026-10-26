@@ -399,7 +399,9 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
 
     if (issuer_key == NULL)
         return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-    if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
+    if (!ossl_x509_decode(subject))
+        return X509_V_ERR_UNSPECIFIED;
+    if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info->signature.algorithm),
             NULL, &subj_sig_nid)
         == 0)
         return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
@@ -601,7 +603,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 #endif
 
-    if (!CRYPTO_THREAD_read_lock(const_x->lock))
+    if (!ossl_x509_decode(const_x)
+        || !CRYPTO_THREAD_read_lock(const_x->lock))
         goto done;
     tmp_ex_flags = const_x->ex_flags;
     tmp_ex_pcpathlen = const_x->ex_pcpathlen;

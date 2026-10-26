@@ -26,6 +26,7 @@
 #include <openssl/x509v3.h>
 #include "internal/asn1.h"
 #include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
@@ -132,12 +133,81 @@ static int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out)
 
 int X509_verify(const X509 *a, EVP_PKEY *r)
 {
-    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
+    if (!ossl_x509_decode(a))
+        return -1;
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info->signature) != 0)
         return 0;
 
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
-        &a->signature, &a->cert_info,
+        &a->signature, a->cert_info,
         a->distinguishing_id, r, a->libctx, a->propq);
+}
+
+X509_ALGOR *ossl_x509_view_get1_sig_alg(const struct x509_view *view)
+{
+    X509_ALGOR *alg;
+    CBS cbs;
+    const unsigned char *p;
+
+    x509_view_get_sig_alg(view, &cbs);
+    p = CBS_data(&cbs);
+    if ((alg = d2i_X509_ALGOR(NULL, &p, CBS_len(&cbs))) == NULL)
+        return NULL;
+    if (p != CBS_data(&cbs) + CBS_len(&cbs)) {
+        X509_ALGOR_free(alg);
+        return NULL;
+    }
+
+    return alg;
+}
+
+int ossl_x509_view_verify(const struct x509_view *view,
+    const ASN1_OCTET_STRING *id, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    EVP_MD_CTX *ctx;
+    EVP_MD *md = NULL;
+    X509_ALGOR *alg = NULL;
+    CBS tbs, bit_string, signature;
+    uint8_t unused;
+    int md_nid, pkey_nid, ret = 0;
+
+    if (!x509_view_sig_algs_match(view)
+        || !OBJ_find_sigid_algs(x509_view_sig_nid(view), &md_nid, &pkey_nid))
+        return 0;
+    if ((ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq)) == NULL)
+        return 0;
+
+    if (md_nid == NID_undef && pkey_nid == EVP_PKEY_RSA_PSS) {
+        if ((!EVP_PKEY_is_a(pkey, "RSA") && !EVP_PKEY_is_a(pkey, "RSA-PSS"))
+            || (alg = ossl_x509_view_get1_sig_alg(view)) == NULL
+            || ossl_rsa_pss_to_ctx(ctx, NULL, alg, pkey) <= 0)
+            goto err;
+    } else {
+        if (!EVP_PKEY_is_a(pkey, OBJ_nid2sn(pkey_nid)))
+            goto err;
+        if (md_nid != NID_undef
+            && (md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_nid), propq)) == NULL)
+            goto err;
+        if (!EVP_DigestVerifyInit(ctx, NULL, md, NULL, pkey))
+            goto err;
+    }
+
+    x509_view_get_tbs(view, &tbs);
+    x509_view_get_signature(view, &bit_string);
+    if (!CBS_get_asn1(&bit_string, &signature, CBS_ASN1_BITSTRING)
+        || !CBS_get_u8(&signature, &unused) || unused != 0)
+        goto err;
+    ret = EVP_DigestVerify(ctx, CBS_data(&signature), CBS_len(&signature),
+              CBS_data(&tbs), CBS_len(&tbs))
+        > 0;
+
+err:
+    EVP_MD_free(md);
+    X509_ALGOR_free(alg);
+    EVP_PKEY_CTX_free(EVP_MD_CTX_get_pkey_ctx(ctx));
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
@@ -189,14 +259,33 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
     return 0;
 }
 
+static int x509_set_der(X509 *x)
+{
+    CRYPTO_BUFFER *buf = NULL;
+    unsigned char *der = NULL;
+    int der_len;
+
+    if ((der_len = i2d_X509(x, &der)) > 0)
+        buf = CRYPTO_BUFFER_new(der, (size_t)der_len, NULL);
+    OPENSSL_free(der);
+    if (buf == NULL)
+        return 0;
+    ossl_x509_set0_der(x, buf);
+
+    return 1;
+}
+
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    int ret;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (!ossl_x509_decode(x))
+        return 0;
     if ((exts = X509_get0_extensions(x)) != NULL
         && sk_X509_EXTENSION_num(exts) > 0
         && (bad_keyid_exts(exts) || !X509_set_version(x, X509_VERSION_3)))
@@ -209,29 +298,38 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * The X509_sign_ctx, X509_REQ_sign{,_ctx}, X509_CRL_sign{,_ctx} functions
      * which exist below are the same.
      */
-    x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
-        &x->sig_alg, &x->signature, &x->cert_info, NULL,
+    ossl_x509_set_modified(x);
+    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info->signature,
+        &x->sig_alg, &x->signature, x->cert_info, NULL,
         pkey, md, x->libctx, x->propq);
+    if (ret <= 0 || !x509_set_der(x))
+        return 0;
+    return ret;
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    int ret;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (!ossl_x509_decode(x))
+        return 0;
     if ((exts = X509_get0_extensions(x)) != NULL && bad_keyid_exts(exts))
         return 0;
     if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
         && !X509_set_version(x, X509_VERSION_3))
         return 0;
-    x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
-        &x->cert_info.signature,
-        &x->sig_alg, &x->signature, &x->cert_info, ctx);
+    ossl_x509_set_modified(x);
+    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
+        &x->cert_info->signature,
+        &x->sig_alg, &x->signature, x->cert_info, ctx);
+    if (ret <= 0 || !x509_set_der(x))
+        return 0;
+    return ret;
 }
 
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,

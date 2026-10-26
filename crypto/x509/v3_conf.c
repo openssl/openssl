@@ -382,8 +382,11 @@ int X509V3_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
 
-    if (cert != NULL)
-        sk = &cert->cert_info.extensions;
+    if (cert != NULL) {
+        if (!ossl_x509_decode(cert))
+            return 0;
+        sk = &cert->cert_info->extensions;
+    }
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 

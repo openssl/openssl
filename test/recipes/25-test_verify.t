@@ -80,7 +80,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 230;
+plan tests => 244;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -243,6 +243,12 @@ ok(!verify("ee-cert", "sslserver", [], [qw(ca+serverAuth)], "-partial_chain"),
    "fail untrusted partial issuer with ignored server trust");
 ok(!verify("ee-cert", "sslserver", [qw(ca-serverAuth)], [], "-partial_chain"),
    "fail server mistrust partial chain");
+ok(verify("ee-cert", "sslserver", [qw(ca-cert)], [], "-partial_chain",
+          "-x509_strict"),
+   "accept trusted partial chain, strict");
+ok(!verify("ee-cert", "sslserver", [qw(ca-serverAuth)], [], "-partial_chain",
+           "-x509_strict"),
+   "fail server mistrust partial chain, strict");
 ok(!verify("ee-cert", "sslserver", [qw(ca+clientAuth)], [], "-partial_chain"),
    "fail client trust partial chain");
 ok(!verify("ee-cert", "sslserver", [qw(ca-anyEKU)], [], "-partial_chain"),
@@ -305,6 +311,9 @@ ok(!verify("ee-expired", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
    "fail expired leaf");
 ok(verify("ee-cert", "sslserver", [qw(ee-cert)], [], "-partial_chain"),
    "accept last-resort direct leaf match");
+ok(verify("ee-cert", "sslserver", [qw(ee-cert)], [], "-partial_chain",
+          "-x509_strict"),
+   "accept last-resort direct leaf match, strict");
 ok(verify("ee-client", "sslclient", [qw(ee-client)], [], "-partial_chain"),
    "accept last-resort direct leaf match");
 ok(!verify("ee-cert", "sslserver", [qw(ee-client)], [], "-partial_chain"),
@@ -385,6 +394,24 @@ ok(verify("pc5-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-ce
 ok(!verify("pc6-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
           "-allow_proxy_certs"),
    "failed proxy cert where last CN was added as a multivalue RDN component");
+ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)],
+           "-x509_strict"),
+   "fail to accept proxy cert without -allow_proxy_certs, strict");
+ok(verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "accept proxy cert 1, strict");
+ok(verify("pc2-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "accept proxy cert 2, strict");
+ok(!verify("bad-pc3-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "fail proxy cert with incorrect subject, strict");
+ok(!verify("bad-pc4-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "fail proxy cert with incorrect pathlen, strict");
+ok(verify("pc5-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs", "-x509_strict"),
+   "accept proxy cert missing proxy policy, strict");
 
 # Security level tests
 ok(verify("ee-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
@@ -416,6 +443,8 @@ ok(verify("ee-cert-md5", "", ["root-cert"], ["ca-cert"], "-auth_level", "0"),
    "accept md5 leaf at auth level 0");
 ok(!verify("ee-cert-md5", "", ["root-cert"], ["ca-cert"]),
    "reject md5 leaf at auth level 1");
+ok(!verify("ee-cert-md5", "", ["root-cert"], ["ca-cert"], "-x509_strict"),
+   "reject md5 leaf at auth level 1, strict");
 
 # Explicit vs named curve tests
 SKIP: {
@@ -528,6 +557,12 @@ ok(verify("badcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
 ok(!verify("badalt1-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints hostname not permitted");
 
+ok(verify("alt1-cert", "", ["root-cert"], ["ncca1-cert"], "-x509_strict"),
+   "Name Constraints everything permitted, strict");
+
+ok(!verify("badalt1-cert", "", ["root-cert"], ["ncca1-cert"], "-x509_strict"),
+   "Name Constraints hostname not permitted, strict");
+
 ok(!verify("badalt2-cert", "", ["root-cert"], ["ncca2-cert"], ),
    "Name Constraints hostname excluded");
 
@@ -584,6 +619,14 @@ ok(!verify("ee-pss-sha1-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "1
 
 ok(verify("ee-pss-sha256-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
+
+ok(!verify("ee-pss-sha1-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "1",
+           "-x509_strict"),
+    "Reject PSS signature using SHA1 and auth level 1, strict");
+
+ok(verify("ee-pss-sha256-cert", "", ["root-cert"], ["ca-cert"], "-auth_level", "2",
+          "-x509_strict"),
+    "PSS signature using SHA256 and auth level 2, strict");
 
 ok(verify("ee-pss-cert", "", ["root-cert"], ["ca-pss-cert"], ),
     "CA PSS signature");

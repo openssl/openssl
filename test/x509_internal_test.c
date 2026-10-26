@@ -1348,25 +1348,26 @@ static int test_sign_caches_encoding(void)
 
     /* Certificate */
     if (!TEST_ptr(cert = X509_new())
-        || !TEST_true(cert->cert_info.enc.modified)
+        || !TEST_true(cert->cert_info->enc.modified)
         || !TEST_true(X509_set_subject_name(cert, name))
         || !TEST_true(X509_set_issuer_name(cert, name))
         || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert), 0))
         || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert), 3600))
         || !TEST_true(X509_set_pubkey(cert, pkey))
         || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
-        || !TEST_false(cert->cert_info.enc.modified)
+        || !TEST_false(cert->cert_info->enc.modified)
         || !TEST_ptr(cert_copy = X509_dup(cert))
-        || !TEST_false(cert_copy->cert_info.enc.modified)
-        || !TEST_mem_eq(cert->cert_info.enc.enc,
-            (size_t)cert->cert_info.enc.len,
-            cert_copy->cert_info.enc.enc,
-            (size_t)cert_copy->cert_info.enc.len)
+        || !TEST_true(ossl_x509_decode(cert_copy))
+        || !TEST_false(cert_copy->cert_info->enc.modified)
+        || !TEST_mem_eq(cert->cert_info->enc.enc,
+            (size_t)cert->cert_info->enc.len,
+            cert_copy->cert_info->enc.enc,
+            (size_t)cert_copy->cert_info->enc.len)
         || !TEST_int_eq(X509_cmp(cert, cert_copy), 0)
         || !TEST_true(X509_set_version(cert, X509_VERSION_2))
-        || !TEST_true(cert->cert_info.enc.modified)
+        || !TEST_true(cert->cert_info->enc.modified)
         || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)
-        || !TEST_false(cert->cert_info.enc.modified)
+        || !TEST_false(cert->cert_info->enc.modified)
         || !TEST_int_ne(X509_cmp(cert, cert_copy), 0))
         goto err;
 

@@ -279,17 +279,21 @@ static int add_lengths(int *out, int a, int b)
 
 int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
 {
-    int r, i, name_count, constraint_count;
-    const X509_NAME *nm;
+    return ossl_name_constraints_check(X509_get_subject_name(x), x->altname,
+        nc);
+}
 
-    nm = X509_get_subject_name(x);
+int ossl_name_constraints_check(const X509_NAME *nm,
+    const GENERAL_NAMES *altnames, NAME_CONSTRAINTS *nc)
+{
+    int r, i, name_count, constraint_count;
 
     /*
      * Guard against certificates with an excessive number of names or
      * constraints causing a computationally expensive name constraints check.
      */
     if (!add_lengths(&name_count, X509_NAME_entry_count(nm),
-            sk_GENERAL_NAME_num(x->altname))
+            sk_GENERAL_NAME_num(altnames))
         || !add_lengths(&constraint_count,
             sk_GENERAL_SUBTREE_num(nc->permittedSubtrees),
             sk_GENERAL_SUBTREE_num(nc->excludedSubtrees))
@@ -330,8 +334,8 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
         }
     }
 
-    for (i = 0; i < sk_GENERAL_NAME_num(x->altname); i++) {
-        GENERAL_NAME *gen = sk_GENERAL_NAME_value(x->altname, i);
+    for (i = 0; i < sk_GENERAL_NAME_num(altnames); i++) {
+        GENERAL_NAME *gen = sk_GENERAL_NAME_value(altnames, i);
         r = nc_match(gen, nc);
         if (r != X509_V_OK)
             return r;
