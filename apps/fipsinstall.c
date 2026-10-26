@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>
@@ -330,11 +331,17 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
             goto end;
         }
         if (OSSL_PARAM_modified(params))
-            BIO_printf(bio_err, "\t%-10s\t%s\n", "name:", name);
+            BIO_printf(bio_err, "\t%-10s\t%.*s\n", "name:",
+                params[0].return_size > INT_MAX ? INT_MAX : (int)params[0].return_size,
+                name != NULL ? name : "");
         if (OSSL_PARAM_modified(params + 1))
-            BIO_printf(bio_err, "\t%-10s\t%s\n", "version:", vers);
+            BIO_printf(bio_err, "\t%-10s\t%.*s\n", "version:",
+                params[1].return_size > INT_MAX ? INT_MAX : (int)params[1].return_size,
+                vers != NULL ? vers : "");
         if (OSSL_PARAM_modified(params + 2))
-            BIO_printf(bio_err, "\t%-10s\t%s\n", "build:", build);
+            BIO_printf(bio_err, "\t%-10s\t%.*s\n", "build:",
+                params[2].return_size > INT_MAX ? INT_MAX : (int)params[2].return_size,
+                build != NULL ? build : "");
     } else {
         *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
             &vers, sizeof(vers));
@@ -344,7 +351,9 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
             goto end;
         }
     }
-    *is_fips_140_2_prov = (strncmp("3.0.", vers, 4) == 0);
+    *is_fips_140_2_prov = (vers != NULL
+        && params[quiet ? 0 : 1].return_size >= 4
+        && strncmp("3.0.", vers, 4) == 0);
     ret = 1;
 end:
     OSSL_PROVIDER_unload(prov);
