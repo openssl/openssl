@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include <stdint.h>
 #include "internal/packet.h"
 #if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
 #include "internal/packet_quic.h"
@@ -100,14 +101,58 @@ static size_t maxmaxsize(size_t lenbytes)
     return ((size_t)1 << (lenbytes * 8)) - 1 + lenbytes;
 }
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+
+static WPACKET_SUB *wpacket_sub_new(WPACKET *pkt)
+{
+    WPACKET_SUB *sub;
+    uint32_t idx;
+
+    if (pkt->nsubs != 0) {
+#if __has_builtin(__builtin_ffs)
+        idx = __builtin_ffs(pkt->nsubs) - 1;
+#else
+        for (idx = 0; (1 << idx) < pkt->nsubs; i++) {
+            if ((1 << idx) & pkt->nsubs)
+                break;
+        }
+#endif
+        pkt->nsubs &= (~(1 << idx));
+        sub = &pkt->inline_subs[idx];
+        memset(sub, 0, sizeof(*sub));
+        sub->flags = WPACKET_FLAGS_SUB_INLINE;
+    } else {
+        sub = OPENSSL_zalloc(sizeof(*sub));
+        if (sub == NULL)
+            return NULL;
+    }
+    return sub;
+}
+
+static void wpacket_sub_free(WPACKET *pkt, WPACKET_SUB *sub)
+{
+    if (sub == NULL)
+        return;
+    if (sub->flags & WPACKET_FLAGS_SUB_INLINE) {
+        uintptr_t idx = ((uintptr_t)sub - (uintptr_t)pkt->inline_subs) / sizeof(WPACKET_SUB);
+
+        pkt->nsubs |= (1 << idx);
+        return;
+    }
+    OPENSSL_free(sub);
+}
+
 static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
 {
     unsigned char *lenchars;
 
     pkt->curr = 0;
     pkt->written = 0;
+    pkt->nsubs = (1 << WPACKET_INLINE_SUBS) - 1;
 
-    if ((pkt->subs = OPENSSL_zalloc(sizeof(*pkt->subs))) == NULL)
+    if ((pkt->subs = wpacket_sub_new(pkt)) == NULL)
         return 0;
 
     if (lenbytes == 0)
@@ -117,7 +162,7 @@ static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
     pkt->subs->lenbytes = lenbytes;
 
     if (!WPACKET_allocate_bytes(pkt, lenbytes, &lenchars)) {
-        OPENSSL_free(pkt->subs);
+        wpacket_sub_free(pkt, pkt->subs);
         pkt->subs = NULL;
         return 0;
     }
@@ -202,7 +247,10 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
     if (!ossl_assert(pkt->subs != NULL))
         return 0;
 
-    pkt->subs->flags = flags;
+    /*
+     * Preserve the inline flag to prevent freeing
+     */
+    pkt->subs->flags = (pkt->subs->flags & WPACKET_FLAGS_SUB_INLINE) | flags;
 
     return 1;
 }
@@ -311,7 +359,7 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
 
     if (doclose) {
         pkt->subs = sub->parent;
-        OPENSSL_free(sub);
+        wpacket_sub_free(pkt, sub);
     }
 
     return 1;
@@ -357,7 +405,7 @@ int WPACKET_finish(WPACKET *pkt)
 
     ret = wpacket_intern_close(pkt, pkt->subs, 1);
     if (ret) {
-        OPENSSL_free(pkt->subs);
+        wpacket_sub_free(pkt, pkt->subs);
         pkt->subs = NULL;
     }
 
@@ -383,7 +431,7 @@ int WPACKET_start_sub_packet_at_offset_len__(WPACKET *pkt, size_t lenbytes,
     if (lenbytes > 0 && pkt->endfirst)
         return 0;
 
-    if ((sub = OPENSSL_zalloc(sizeof(*sub))) == NULL)
+    if ((sub = wpacket_sub_new(pkt)) == NULL)
         return 0;
 
     sub->parent = pkt->subs;
@@ -537,7 +585,7 @@ void WPACKET_cleanup(WPACKET *pkt)
 
     for (sub = pkt->subs; sub != NULL; sub = parent) {
         parent = sub->parent;
-        OPENSSL_free(sub);
+        wpacket_sub_free(pkt, sub);
     }
     pkt->subs = NULL;
 }
