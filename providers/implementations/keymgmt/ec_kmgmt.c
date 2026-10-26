@@ -1051,8 +1051,8 @@ static int ec_gen_set_template(void *genctx, void *templ)
         if ((param)->data_type != OSSL_PARAM_UTF8_STRING) \
             goto err;                                     \
         OPENSSL_free(val);                                \
-        val = OPENSSL_strdup((param)->data);              \
-        if (val == NULL)                                  \
+        val = NULL;                                       \
+        if (!OSSL_PARAM_get_utf8_string(param, &val, 0))  \
             goto err;                                     \
     }
 

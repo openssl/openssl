@@ -214,8 +214,8 @@ static int mac_key_fromdata(MAC_KEY *key, const struct mac_common_params_st *p)
             return 0;
         }
         OPENSSL_free(key->properties);
-        key->properties = OPENSSL_strdup(p->propq->data);
-        if (key->properties == NULL)
+        key->properties = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p->propq, &key->properties, 0))
             return 0;
     }
 

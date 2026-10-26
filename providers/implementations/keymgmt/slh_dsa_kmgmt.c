@@ -406,8 +406,8 @@ static int slh_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         OPENSSL_free(gctx->propq);
-        gctx->propq = OPENSSL_strdup(p.propq->data);
-        if (gctx->propq == NULL)
+        gctx->propq = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p.propq, &gctx->propq, 0))
             return 0;
     }
     return 1;

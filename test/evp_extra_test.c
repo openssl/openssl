@@ -2569,7 +2569,8 @@ static const struct {
 static int ec_export_get_encoding_cb(const OSSL_PARAM params[], void *arg)
 {
     const OSSL_PARAM *p;
-    const char *enc_name = NULL;
+    const char *data = NULL;
+    char *enc_name = NULL;
     int *enc = arg;
     size_t i;
 
@@ -2577,7 +2578,9 @@ static int ec_export_get_encoding_cb(const OSSL_PARAM params[], void *arg)
 
     if (!TEST_ptr(p = OSSL_PARAM_locate_const(params,
                       OSSL_PKEY_PARAM_EC_ENCODING))
-        || !TEST_true(OSSL_PARAM_get_utf8_string_ptr(p, &enc_name)))
+        || !TEST_true(OSSL_PARAM_get_utf8_string_ptr(p, &data))
+        || !TEST_ptr(data)
+        || !TEST_ptr(enc_name = OPENSSL_strndup(data, p->data_size)))
         return 0;
 
     for (i = 0; i < OSSL_NELEM(ec_encodings); i++) {
@@ -2587,6 +2590,7 @@ static int ec_export_get_encoding_cb(const OSSL_PARAM params[], void *arg)
         }
     }
 
+    OPENSSL_free(enc_name);
     return (*enc != -1);
 }
 
@@ -5235,6 +5239,73 @@ static int test_EVP_rsa_invalid_key(void)
     return ret;
 }
 
+static int test_rsa_sized_utf8_params(void)
+{
+    char pad[] = "pss trailing";
+    char salt[] = "digest trailing";
+    char number[] = "12 trailing";
+    char oaep[] = "oaep trailing";
+    char op[] = "RSASVE trailing";
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE, pad, 3),
+        OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, salt, 6),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    int ret = 0, value;
+
+    if (!TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_ptr(mctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestSignInit_ex(mctx, &ctx, "SHA256", testctx,
+            testpropq, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_CTX_set_params(ctx, params), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_get_rsa_padding(ctx, &value), 0)
+        || !TEST_int_eq(value, RSA_PKCS1_PSS_PADDING)
+        || !TEST_int_gt(EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, &value), 0)
+        || !TEST_int_eq(value, RSA_PSS_SALTLEN_DIGEST))
+        goto end;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(
+        OSSL_SIGNATURE_PARAM_PSS_SALTLEN, number, 2);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_gt(EVP_PKEY_CTX_set_params(ctx, params), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, &value), 0)
+        || !TEST_int_eq(value, 12))
+        goto end;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(
+        OSSL_SIGNATURE_PARAM_PSS_SALTLEN, salt, 7);
+    if (!TEST_int_le(EVP_PKEY_CTX_set_params(ctx, params), 0))
+        goto end;
+    ERR_clear_error();
+    ctx = NULL;
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq))
+        || !TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0))
+        goto end;
+    params[0] = OSSL_PARAM_construct_utf8_string(
+        OSSL_ASYM_CIPHER_PARAM_PAD_MODE, oaep, 4);
+    if (!TEST_int_gt(EVP_PKEY_CTX_set_params(ctx, params), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_get_rsa_padding(ctx, &value), 0)
+        || !TEST_int_eq(value, RSA_PKCS1_OAEP_PADDING))
+        goto end;
+    EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
+        op, 6);
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq))
+        || !TEST_int_gt(EVP_PKEY_encapsulate_init(ctx, params), 0))
+        goto end;
+    ret = 1;
+end:
+    if (mctx == NULL || ctx != EVP_MD_CTX_get_pkey_ctx(mctx))
+        EVP_PKEY_CTX_free(ctx);
+    EVP_MD_CTX_free(mctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 static int test_cts_sized_utf8_param(void)
 {
     char mode[] = "CS3 trailing";
@@ -5267,6 +5338,56 @@ static int test_cts_sized_utf8_param(void)
 end:
     EVP_CIPHER_CTX_free(ctx);
     EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+static const struct {
+    const char *algorithm;
+    const char *parameter;
+    const char *value;
+    int generate;
+} sized_keygen_utf8_cases[] = {
+#ifndef OPENSSL_NO_EC
+    { "EC", OSSL_PKEY_PARAM_GROUP_NAME, "prime256v1", 1 },
+#endif
+#ifndef OPENSSL_NO_ECX
+    { "X25519", OSSL_PKEY_PARAM_GROUP_NAME, "x25519", 1 },
+#endif
+#ifndef OPENSSL_NO_DH
+    { "DH", OSSL_PKEY_PARAM_GROUP_NAME, "ffdhe2048", 1 },
+    { "DH", OSSL_PKEY_PARAM_FFC_TYPE, "default", 0 },
+#endif
+#ifndef OPENSSL_NO_DSA
+    { "DSA", OSSL_PKEY_PARAM_FFC_TYPE, "default", 0 },
+#endif
+    { NULL, NULL, NULL, 0 }
+};
+
+static int test_keygen_sized_utf8_param(int idx)
+{
+    char value[80];
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    snprintf(value, sizeof(value), "%s trailing",
+        sized_keygen_utf8_cases[idx].value);
+    params[0] = OSSL_PARAM_construct_utf8_string(
+        sized_keygen_utf8_cases[idx].parameter, value,
+        strlen(sized_keygen_utf8_cases[idx].value));
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx,
+                      sized_keygen_utf8_cases[idx].algorithm, testpropq))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_params(ctx, params), 0))
+        goto end;
+    if (sized_keygen_utf8_cases[idx].generate
+        && !TEST_int_gt(EVP_PKEY_generate(ctx, &pkey), 0))
+        goto end;
+    ret = 1;
+end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
     return ret;
 }
 
@@ -5369,6 +5490,141 @@ end:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_ML_KEM)
+static const struct {
+    const char *name;
+    size_t seedlen;
+} null_properties_cases[] = {
+#ifndef OPENSSL_NO_ML_DSA
+    { "ML-DSA-44", 32 },
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    { "ML-KEM-512", 64 },
+#endif
+    { NULL, 0 }
+};
+
+static int test_pq_null_properties(int idx)
+{
+    unsigned char seed[64] = { 0 };
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_octet_string("seed", seed, null_properties_cases[idx].seedlen),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx,
+                      null_properties_cases[idx].name, testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params), 0))
+        goto end;
+    ret = 1;
+end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif
+
+static int test_rsa_pss_sized_utf8_import(int is_ptr)
+{
+    char digest[] = "SHA256 trailing";
+    char mgf[] = "MGF1 trailing";
+    char mgf_digest[] = "SHA384 trailing";
+    char properties[] = "provider=default trailing";
+    char *values[] = { digest, mgf, mgf_digest, properties };
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST, digest, 6),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MASKGENFUNC, mgf, 4),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST, mgf_digest, 6),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST_PROPS, properties, 16),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int i, ret = 0, test_case = is_ptr / 2;
+
+    is_ptr %= 2;
+    if (is_ptr) {
+        for (i = 0; i < 4; i++) {
+            params[i].data_type = OSSL_PARAM_UTF8_PTR;
+            params[i].data = &values[i];
+        }
+    }
+    if (test_case == 1) {
+        if (is_ptr)
+            values[3] = NULL;
+        else
+            params[3].data = NULL;
+    } else if (test_case == 2) {
+        params[0].data_size = 0;
+    } else if (test_case == 3) {
+        params[3].data_size = 0;
+    }
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA-PSS", testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0))
+        goto end;
+    i = EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params);
+    ret = test_case == 2 ? TEST_int_le(i, 0) : TEST_int_gt(i, 0);
+end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_EC
+static int test_ec_sized_utf8_import(int is_ptr)
+{
+    char group[] = "prime256v1 trailing";
+    char encoding[] = "named_curve trailing";
+    char format[] = "compressed trailing";
+    char check[] = "named trailing";
+    char *values[] = { group, encoding, format, check };
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, group, 10),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING, encoding, 11),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+            format, 10),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE, check, 5),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    char actual[80];
+    int i, ret = 0;
+
+    if (is_ptr) {
+        for (i = 0; i < 4; i++) {
+            params[i].data_type = OSSL_PARAM_UTF8_PTR;
+            params[i].data = &values[i];
+        }
+    }
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "EC", testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS,
+                            params),
+            0)
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(pkey,
+            OSSL_PKEY_PARAM_EC_ENCODING, actual, sizeof(actual), NULL))
+        || !TEST_str_eq(actual, "named_curve")
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(pkey,
+            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT, actual, sizeof(actual), NULL))
+        || !TEST_str_eq(actual, "compressed")
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(pkey,
+            OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE, actual, sizeof(actual), NULL))
+        || !TEST_str_eq(actual, "named"))
+        goto end;
+    ret = 1;
+end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif
+
 static int test_EVP_rsa_pss_utf8_ptr_params(void)
 {
     char *digest = "SHA256";
@@ -5376,17 +5632,17 @@ static int test_EVP_rsa_pss_utf8_ptr_params(void)
     char *mgf1_digest = "SHA384";
     char *missing_provider = "provider=missing";
     OSSL_PARAM ptr_params[] = {
-        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, sizeof("SHA256") - 1),
         OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MASKGENFUNC,
-            &maskgenfunc, 0),
+            &maskgenfunc, sizeof("MGF1") - 1),
         OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST,
-            &mgf1_digest, 0),
+            &mgf1_digest, sizeof("SHA384") - 1),
         OSSL_PARAM_END
     };
     OSSL_PARAM property_params[] = {
-        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, sizeof("SHA256") - 1),
         OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST_PROPS,
-            &missing_provider, 0),
+            &missing_provider, sizeof("provider=missing") - 1),
         OSSL_PARAM_END
     };
     EVP_PKEY_CTX *ctx = NULL;
@@ -5411,7 +5667,8 @@ static int test_ec_fromdata_selection_params(void)
     char group_name[] = "prime256v1";
     unsigned char pub[] = { 0 };
     OSSL_PARAM params[] = {
-        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, group_name, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, group_name,
+            sizeof(group_name) - 1),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub)),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub)),
         OSSL_PARAM_END
@@ -5449,9 +5706,9 @@ static int test_sm2_common_set_params(void)
     unsigned char requested_seed[sizeof(expected_seed)];
     OSSL_PARAM set_params[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
-            requested_encoding, 0),
+            requested_encoding, sizeof(requested_encoding) - 1),
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
-            requested_point_format, 0),
+            requested_point_format, sizeof(requested_point_format) - 1),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, requested_seed,
             sizeof(requested_seed)),
         OSSL_PARAM_END
@@ -9776,10 +10033,20 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
     ADD_TEST(test_EVP_rsa_pss_set_saltlen);
+    ADD_TEST(test_rsa_sized_utf8_params);
+    ADD_ALL_TESTS(test_rsa_pss_sized_utf8_import, 8);
     ADD_MFAIL_TEST(test_ctrl_utf8_get_mfail);
     ADD_ALL_TESTS(test_ctr_drbg_cipher_size, 4);
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_ML_KEM)
+    ADD_ALL_TESTS(test_pq_null_properties, OSSL_NELEM(null_properties_cases) - 1);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_ec_sized_utf8_import, 2);
+#endif
     ADD_TEST(test_cts_sized_utf8_param);
     ADD_ALL_TESTS(test_encoder_sized_utf8_params, 2);
+    ADD_ALL_TESTS(test_keygen_sized_utf8_param,
+        OSSL_NELEM(sized_keygen_utf8_cases) - 1);
     ADD_TEST(test_EVP_rsa_invalid_key);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));

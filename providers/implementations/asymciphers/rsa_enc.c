@@ -497,16 +497,18 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                 return 0;
         } else {
             int i;
+            char *pad_name = NULL;
 
-            if (p.pad->data == NULL)
+            if (!OSSL_PARAM_get_utf8_string(p.pad, &pad_name, 0))
                 return 0;
 
             for (i = 0; padding_item[i].id != 0; i++) {
-                if (strcmp(p.pad->data, padding_item[i].ptr) == 0) {
+                if (strcmp(pad_name, padding_item[i].ptr) == 0) {
                     pad_mode = padding_item[i].id;
                     break;
                 }
             }
+            OPENSSL_free(pad_name);
         }
 
         /*

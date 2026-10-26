@@ -27,6 +27,7 @@
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
+#include "internal/params.h"
 
 #include <crypto/asn1.h>
 
@@ -113,21 +114,14 @@ int ossl_ec_set_check_group_type_from_name(EC_KEY *ec, const char *name)
 
 static int ec_set_check_group_type_from_param(EC_KEY *ec, const OSSL_PARAM *p)
 {
-    const char *name = NULL;
-    int status = 0;
+    char *name = NULL;
+    int ret;
 
-    switch (p->data_type) {
-    case OSSL_PARAM_UTF8_STRING:
-        name = p->data;
-        status = (name != NULL);
-        break;
-    case OSSL_PARAM_UTF8_PTR:
-        status = OSSL_PARAM_get_utf8_ptr(p, &name);
-        break;
-    }
-    if (status)
-        return ossl_ec_set_check_group_type_from_name(ec, name);
-    return 0;
+    if (!ossl_param_get_utf8_string(p, &name, 0))
+        return 0;
+    ret = ossl_ec_set_check_group_type_from_name(ec, name);
+    OPENSSL_free(name);
+    return ret;
 }
 
 int ossl_ec_pt_format_name2id(const char *name)
@@ -733,54 +727,32 @@ err:
 
 int ossl_ec_encoding_param2id(const OSSL_PARAM *p, int *id)
 {
-    const char *name = NULL;
-    int status = 0;
+    char *name = NULL;
+    int i;
 
-    switch (p->data_type) {
-    case OSSL_PARAM_UTF8_STRING:
-        /* The OSSL_PARAM functions have no support for this */
-        name = p->data;
-        status = (name != NULL);
-        break;
-    case OSSL_PARAM_UTF8_PTR:
-        status = OSSL_PARAM_get_utf8_ptr(p, &name);
-        break;
-    }
-    if (status) {
-        int i = ossl_ec_encoding_name2id(name);
-
-        if (i >= 0) {
-            *id = i;
-            return 1;
-        }
-    }
-    return 0;
+    if (!ossl_param_get_utf8_string(p, &name, 0))
+        return 0;
+    i = ossl_ec_encoding_name2id(name);
+    OPENSSL_free(name);
+    if (i < 0)
+        return 0;
+    *id = i;
+    return 1;
 }
 
 int ossl_ec_pt_format_param2id(const OSSL_PARAM *p, int *id)
 {
-    const char *name = NULL;
-    int status = 0;
+    char *name = NULL;
+    int i;
 
-    switch (p->data_type) {
-    case OSSL_PARAM_UTF8_STRING:
-        /* The OSSL_PARAM functions have no support for this */
-        name = p->data;
-        status = (name != NULL);
-        break;
-    case OSSL_PARAM_UTF8_PTR:
-        status = OSSL_PARAM_get_utf8_ptr(p, &name);
-        break;
-    }
-    if (status) {
-        int i = ossl_ec_pt_format_name2id(name);
-
-        if (i >= 0) {
-            *id = i;
-            return 1;
-        }
-    }
-    return 0;
+    if (!ossl_param_get_utf8_string(p, &name, 0))
+        return 0;
+    i = ossl_ec_pt_format_name2id(name);
+    OPENSSL_free(name);
+    if (i < 0)
+        return 0;
+    *id = i;
+    return 1;
 }
 
 #ifndef FIPS_MODULE

@@ -149,18 +149,22 @@ ML_DSA_KEY *ossl_prov_ml_dsa_new(PROV_CTX *ctx, const char *propq, int evp_type)
 static ML_DSA_KEY *ossl_prov_ml_dsa_new_ex(PROV_CTX *ctx, const OSSL_PARAM params[], int evp_type)
 {
     struct ml_dsa_new_key_ex_params_st p;
-    const char *propq = NULL;
+    char *propq = NULL;
+    ML_DSA_KEY *key;
 
     if (!ml_dsa_new_key_ex_params_decoder(params, &p))
         return 0;
 
     if (p.propq != NULL) {
-        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
+        if (p.propq->data == NULL
+                ? p.propq->data_type != OSSL_PARAM_UTF8_STRING
+                : !OSSL_PARAM_get_utf8_string(p.propq, &propq, 0))
             return 0;
-        propq = p.propq->data;
     }
 
-    return ossl_prov_ml_dsa_new(ctx, propq, evp_type);
+    key = ossl_prov_ml_dsa_new(ctx, propq, evp_type);
+    OPENSSL_free(propq);
+    return key;
 }
 
 static void ml_dsa_free_key(void *keydata)
@@ -272,9 +276,16 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     }
 
     if (p.propq != NULL) {
-        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
+        char *propq = NULL;
+        int ret;
+
+        if (p.propq->data == NULL
+                ? p.propq->data_type != OSSL_PARAM_UTF8_STRING
+                : !OSSL_PARAM_get_utf8_string(p.propq, &propq, 0))
             return 0;
-        if (!ossl_ml_dsa_key_fetch_digests(key, p.propq->data))
+        ret = ossl_ml_dsa_key_fetch_digests(key, propq);
+        OPENSSL_free(propq);
+        if (!ret)
             return 0;
     }
     if (seed_len != 0
