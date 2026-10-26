@@ -2180,20 +2180,21 @@ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
     char *str, size_t max_buf_sz,
     size_t *out_len)
 {
-    OSSL_PARAM params[2];
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(key_name, str, max_buf_sz),
+        OSSL_PARAM_END
+    };
     int ret1 = 0, ret2 = 0;
 
     if (key_name == NULL)
         return 0;
 
-    params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, max_buf_sz);
-    params[1] = OSSL_PARAM_construct_end();
     if ((ret1 = EVP_PKEY_get_params(pkey, params)))
         ret2 = OSSL_PARAM_modified(params);
     if (ret2 && out_len != NULL)
         *out_len = params[0].return_size;
 
-    if (ret2 && params[0].return_size == max_buf_sz)
+    if (ret2 && str != NULL && params[0].return_size >= max_buf_sz)
         /* There was no space for a NUL byte */
         return 0;
     /* Add a terminating NUL byte for good measure */

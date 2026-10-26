@@ -5280,6 +5280,29 @@ end:
     return ret;
 }
 
+static int test_ctrl_utf8_get_mfail(void)
+{
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    int padding = -1, ret = 0;
+
+    if (!TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq))
+        || !TEST_int_gt(EVP_PKEY_sign_init(ctx), 0))
+        goto end;
+    MFAIL_start();
+    ret = EVP_PKEY_CTX_get_rsa_padding(ctx, &padding);
+    MFAIL_end();
+    if (ret > 0)
+        ret = TEST_int_eq(padding, RSA_PKCS1_PADDING) ? 1 : -1;
+    else
+        ret = 0;
+end:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 static int test_EVP_rsa_pss_utf8_ptr_params(void)
 {
     char *digest = "SHA256";
@@ -9687,6 +9710,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
     ADD_TEST(test_EVP_rsa_pss_set_saltlen);
+    ADD_MFAIL_TEST(test_ctrl_utf8_get_mfail);
     ADD_ALL_TESTS(test_encoder_sized_utf8_params, 2);
     ADD_TEST(test_EVP_rsa_invalid_key);
 #ifndef OPENSSL_NO_EC

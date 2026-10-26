@@ -971,7 +971,11 @@ static int int_get_rsa_md_name(EVP_PKEY_CTX *ctx,
     const char *mdkey,
     char *mdname, size_t mdnamesize)
 {
-    OSSL_PARAM params[2], *p = params;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(mdkey, mdname, mdnamesize),
+        OSSL_PARAM_END
+    };
+    int ret;
 
     if (ctx == NULL || mdname == NULL || (ctx->operation & optype) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -992,11 +996,13 @@ static int int_get_rsa_md_name(EVP_PKEY_CTX *ctx,
         break;
     }
 
-    /* Cast away the const. This is read only so should be safe */
-    *p++ = OSSL_PARAM_construct_utf8_string(mdkey, (char *)mdname, mdnamesize);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return evp_pkey_ctx_get_params_strict(ctx, params);
+    ret = evp_pkey_ctx_get_params_strict(ctx, params);
+    if (ret > 0 && OSSL_PARAM_modified(params)) {
+        if (params[0].return_size >= mdnamesize)
+            return 0;
+        mdname[params[0].return_size] = '\0';
+    }
+    return ret;
 }
 
 /*

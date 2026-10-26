@@ -32,6 +32,7 @@
 #include <openssl/evperr.h>
 #include <openssl/params.h>
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "internal/ffc.h"
 #include "crypto/evp.h"
@@ -528,7 +529,21 @@ static int default_fixup_args(enum state state,
         if (ctx->action_type == OSSL_ACTION_GET) {
             switch (translation->param_data_type) {
             case OSSL_PARAM_UTF8_STRING:
-            case OSSL_PARAM_UTF8_PTR:
+            case OSSL_PARAM_UTF8_PTR: {
+                OSSL_PARAM p = ctx->params[0];
+                char *value = NULL;
+
+                if (p.data_type == OSSL_PARAM_UTF8_STRING
+                    && p.return_size > p.data_size)
+                    return 0;
+                p.data_size = p.return_size;
+                if (!ossl_param_get_utf8_string(&p, &value, 0))
+                    return 0;
+                ctx->allocated_buf = value;
+                ctx->p2 = value;
+                ctx->p1 = (int)p.return_size;
+                break;
+            }
             case OSSL_PARAM_OCTET_STRING:
             case OSSL_PARAM_OCTET_PTR:
                 ctx->p1 = (int)ctx->params[0].return_size;
@@ -2081,7 +2096,8 @@ static int fix_group_ecx(enum state state,
     const struct translation_st *translation,
     struct translation_ctx_st *ctx)
 {
-    const char *value = NULL;
+    char *value = NULL;
+    int ok;
 
     switch (state) {
     case PRE_PARAMS_TO_CTRL:
@@ -2090,7 +2106,10 @@ static int fix_group_ecx(enum state state,
         ctx->action_type = OSSL_ACTION_NONE;
         return 1;
     case POST_PARAMS_TO_CTRL:
-        if (OSSL_PARAM_get_utf8_string_ptr(ctx->params, &value) == 0 || OPENSSL_strcasecmp(ctx->pctx->keytype, value) != 0) {
+        ok = ossl_param_get_utf8_string(ctx->params, &value, 0)
+            && OPENSSL_strcasecmp(ctx->pctx->keytype, value) == 0;
+        OPENSSL_free(value);
+        if (!ok) {
             ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
             ctx->p1 = 0;
             return 0;
@@ -2805,8 +2824,9 @@ int evp_pkey_ctx_ctrl_to_param(EVP_PKEY_CTX *pctx,
      */
     if (ret > 0) {
         ctx.p1 = ret;
-        fixup(POST_CTRL_TO_PARAMS, translation, &ctx);
-        ret = ctx.p1;
+        ret = fixup(POST_CTRL_TO_PARAMS, translation, &ctx);
+        if (ret > 0)
+            ret = ctx.p1;
     }
 
     cleanup_translation_ctx(POST_CTRL_TO_PARAMS, translation, &ctx);
