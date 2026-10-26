@@ -2140,7 +2140,7 @@ typedef struct pitem_st pitem;
 
 struct pqueue_st {
     pitem *items;
-    int count;
+    size_t count;
 };
 
 struct pitem_st {
