@@ -23,6 +23,7 @@ int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
     const OSSL_PARAM *param_p, *param_q, *param_g;
     BIGNUM *p = NULL, *q = NULL, *g = NULL, *j = NULL;
     int i;
+    char *group_name = NULL, *mdname = NULL, *props = NULL;
 
     prm = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (prm != NULL) {
@@ -33,9 +34,8 @@ int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
 #ifndef OPENSSL_NO_DH
         const DH_NAMED_GROUP *group = NULL;
 
-        if (prm->data_type != OSSL_PARAM_UTF8_STRING
-            || prm->data == NULL
-            || (group = ossl_ffc_name_to_dh_named_group(prm->data)) == NULL
+        if (!OSSL_PARAM_get_utf8_string(prm, &group_name, 0)
+            || (group = ossl_ffc_name_to_dh_named_group(group_name)) == NULL
             || !ossl_ffc_named_group_set(ffc, group))
 #endif
             goto err;
@@ -99,23 +99,28 @@ int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
     prm = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST);
     if (prm != NULL) {
         const OSSL_PARAM *p1;
-        const char *props = NULL;
 
-        if (prm->data_type != OSSL_PARAM_UTF8_STRING)
+        if (!OSSL_PARAM_get_utf8_string(prm, &mdname, 0))
             goto err;
         p1 = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST_PROPS);
         if (p1 != NULL) {
-            if (p1->data_type != OSSL_PARAM_UTF8_STRING)
+            if (!OSSL_PARAM_get_utf8_string(p1, &props, 0))
                 goto err;
-            props = p1->data;
         }
-        ossl_ffc_set_digest(ffc, prm->data, props);
+        if (!ossl_ffc_set_digest(ffc, mdname, props))
+            goto err;
     }
     ossl_ffc_params_set0_pqg(ffc, p, q, g);
     ossl_ffc_params_set0_j(ffc, j);
+    OPENSSL_free(group_name);
+    OPENSSL_free(mdname);
+    OPENSSL_free(props);
     return 1;
 
 err:
+    OPENSSL_free(group_name);
+    OPENSSL_free(mdname);
+    OPENSSL_free(props);
     BN_free(j);
     BN_free(p);
     BN_free(q);

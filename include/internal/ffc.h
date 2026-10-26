@@ -116,8 +116,8 @@ typedef struct ffc_params_st {
      * The digest to use for generation or validation. If this value is NULL,
      * then the digest is chosen using the value of N.
      */
-    const char *mdname;
-    const char *mdprops;
+    char *mdname;
+    char *mdprops;
     /* Default key length for known named groups according to RFC7919 */
     int keylength;
 } FFC_PARAMS;
@@ -154,7 +154,7 @@ void ossl_ffc_params_set_h(FFC_PARAMS *params, int index);
 void ossl_ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags);
 void ossl_ffc_params_enable_flags(FFC_PARAMS *params, unsigned int flags,
     int enable);
-void ossl_ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
+int ossl_ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
 
 int ossl_ffc_params_set_validate_params(FFC_PARAMS *params,
     const unsigned char *seed,

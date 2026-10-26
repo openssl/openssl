@@ -623,8 +623,13 @@ static int dh_gen_common_set_params(struct dh_gen_ctx *gctx,
     int gen_type = -1;
 
     if (p->type != NULL) {
-        if (p->type->data_type != OSSL_PARAM_UTF8_STRING
-            || ((gen_type = dh_gen_type_name2id_w_default(p->type->data, gctx->dh_type)) == -1)) {
+        char *type = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p->type, &type, 0))
+            return 0;
+        gen_type = dh_gen_type_name2id_w_default(type, gctx->dh_type);
+        OPENSSL_free(type);
+        if (gen_type == -1) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
@@ -634,10 +639,13 @@ static int dh_gen_common_set_params(struct dh_gen_ctx *gctx,
 
     if (p->group_name != NULL) {
         const DH_NAMED_GROUP *group = NULL;
+        char *group_name = NULL;
 
-        if (p->group_name->data_type != OSSL_PARAM_UTF8_STRING
-            || p->group_name->data == NULL
-            || (group = ossl_ffc_name_to_dh_named_group(p->group_name->data)) == NULL
+        if (!OSSL_PARAM_get_utf8_string(p->group_name, &group_name, 0))
+            return 0;
+        group = ossl_ffc_name_to_dh_named_group(group_name);
+        OPENSSL_free(group_name);
+        if (group == NULL
             || ((gctx->group_nid = ossl_ffc_named_group_get_uid(group)) == NID_undef)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
@@ -697,8 +705,8 @@ static int dhx_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (p.digest->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         OPENSSL_free(gctx->mdname);
-        gctx->mdname = OPENSSL_strdup(p.digest->data);
-        if (gctx->mdname == NULL)
+        gctx->mdname = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p.digest, &gctx->mdname, 0))
             return 0;
     }
 
@@ -706,8 +714,8 @@ static int dhx_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         OPENSSL_free(gctx->mdprops);
-        gctx->mdprops = OPENSSL_strdup(p.propq->data);
-        if (gctx->mdprops == NULL)
+        gctx->mdprops = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p.propq, &gctx->mdprops, 0))
             return 0;
     }
 
@@ -806,8 +814,9 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         } else if (gctx->hindex != 0) {
             ossl_ffc_params_set_h(ffc, gctx->hindex);
         }
-        if (gctx->mdname != NULL)
-            ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops);
+        if (gctx->mdname != NULL
+            && !ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
+            goto end;
         gctx->cb = osslcb;
         gctx->cbarg = cbarg;
         gencb = BN_GENCB_new();

@@ -20,6 +20,8 @@
 
 #include "internal/nelem.h"
 #include <openssl/crypto.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
@@ -197,7 +199,8 @@ static int ffc_params_validate_g_unverified_test(void)
     p = NULL;
     q = NULL;
     ossl_ffc_params_set_flags(&params, FFC_PARAM_FLAG_VALIDATE_G);
-    ossl_ffc_set_digest(&params, "SHA256", NULL);
+    if (!TEST_true(ossl_ffc_set_digest(&params, "SHA256", NULL)))
+        goto err;
 
     if (!TEST_false(ossl_ffc_params_FIPS186_4_validate(NULL, &params,
             FFC_PARAM_TYPE_DSA,
@@ -261,7 +264,8 @@ static int ffc_params_validate_pq_test(void)
     ossl_ffc_params_set0_pqg(&params, NULL, q, NULL);
     q = NULL;
     ossl_ffc_params_set_flags(&params, FFC_PARAM_FLAG_VALIDATE_PQ);
-    ossl_ffc_set_digest(&params, "SHA224", NULL);
+    if (!TEST_true(ossl_ffc_set_digest(&params, "SHA224", NULL)))
+        goto err;
 
     if (!TEST_false(ossl_ffc_params_FIPS186_4_validate(NULL, &params,
             FFC_PARAM_TYPE_DSA,
@@ -316,7 +320,8 @@ static int ffc_params_validate_pq_test(void)
 
     ossl_ffc_params_set0_pqg(&params, p, q, NULL);
     p = q = NULL;
-    ossl_ffc_set_digest(&params, "SHA512", NULL);
+    if (!TEST_true(ossl_ffc_set_digest(&params, "SHA512", NULL)))
+        goto err;
     ossl_ffc_params_set_validate_params(&params, dsa_3072_256_sha512_seed,
         sizeof(dsa_3072_256_sha512_seed),
         dsa_3072_256_sha512_counter);
@@ -713,7 +718,8 @@ static int ffc_params_copy_mfail(void)
     ossl_ffc_params_set0_pqg(&params, p, q, g);
     p = q = g = NULL;
     if (!TEST_true(ossl_ffc_params_set_seed(&params, dsa_2048_224_sha224_seed,
-            sizeof(dsa_2048_224_sha224_seed))))
+            sizeof(dsa_2048_224_sha224_seed)))
+        || !TEST_true(ossl_ffc_set_digest(&params, "SHA256", "provider=default")))
         goto err;
 
     MFAIL_start();
@@ -735,8 +741,69 @@ err:
 }
 #endif /* OPENSSL_NO_DSA */
 
+static int ffc_fromdata_utf8_test(void)
+{
+    FFC_PARAMS params, copy;
+    char digest[] = "SHA256trailing";
+    char props[] = "provider=defaulttrailing";
+    OSSL_PARAM input[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST, digest, 6),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST_PROPS, props, 16),
+        OSSL_PARAM_END
+    };
+    int ret = 0;
+
+    ossl_ffc_params_init(&params);
+    ossl_ffc_params_init(&copy);
+
+    if (!TEST_true(ossl_ffc_params_fromdata(&params, input))
+        || !TEST_str_eq(params.mdname, "SHA256")
+        || !TEST_str_eq(params.mdprops, "provider=default"))
+        goto err;
+
+    memset(digest, 'x', sizeof(digest));
+    memset(props, 'x', sizeof(props));
+    if (!TEST_str_eq(params.mdname, "SHA256")
+        || !TEST_str_eq(params.mdprops, "provider=default")
+        || !TEST_true(ossl_ffc_params_copy(&copy, &params)))
+        goto err;
+    ossl_ffc_params_cleanup(&params);
+    if (!TEST_str_eq(copy.mdname, "SHA256")
+        || !TEST_str_eq(copy.mdprops, "provider=default"))
+        goto err;
+    ret = 1;
+err:
+    ossl_ffc_params_cleanup(&params);
+    ossl_ffc_params_cleanup(&copy);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_DH
+static int ffc_fromdata_group_utf8_test(void)
+{
+    FFC_PARAMS params;
+    const DH_NAMED_GROUP *expected = ossl_ffc_name_to_dh_named_group("ffdhe2048");
+    char group[] = "ffdhe2048trailing";
+    OSSL_PARAM input[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, group, 9),
+        OSSL_PARAM_END
+    };
+    int ret;
+
+    ossl_ffc_params_init(&params);
+    ret = TEST_ptr(expected)
+        && TEST_true(ossl_ffc_params_fromdata(&params, input))
+        && TEST_ptr_eq(ossl_ffc_numbers_to_dh_named_group(params.p, params.q,
+                           params.g),
+            expected);
+    ossl_ffc_params_cleanup(&params);
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
+    ADD_TEST(ffc_fromdata_utf8_test);
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(ffc_params_validate_pq_test);
     ADD_TEST(ffc_params_validate_g_unverified_test);
@@ -750,6 +817,7 @@ int setup_tests(void)
     ADD_TEST(ffc_private_validate_test);
     ADD_ALL_TESTS(ffc_private_gen_test, 10);
     ADD_TEST(ffc_params_copy_test);
+    ADD_TEST(ffc_fromdata_group_utf8_test);
 #endif /* OPENSSL_NO_DH */
     return 1;
 }
