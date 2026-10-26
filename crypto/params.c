@@ -1347,6 +1347,10 @@ static int get_string_internal(const OSSL_PARAM *p, void **val,
      * termination, allocate an extra byte.
      */
     alloc_sz = sz + (type == OSSL_PARAM_UTF8_STRING || sz == 0);
+    if (alloc_sz < sz) {
+        err_too_small;
+        return 0;
+    }
 
     if (used_len != NULL)
         *used_len = sz;
@@ -1405,6 +1409,23 @@ int OSSL_PARAM_get_utf8_string(const OSSL_PARAM *p, char **val, size_t max_len)
     (*val)[data_length] = '\0';
 
     return ret;
+}
+
+int ossl_param_get_utf8_string(const OSSL_PARAM *p, char **val, size_t max_len)
+{
+    OSSL_PARAM str;
+    const char *data;
+
+    if (p == NULL || p->data == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!OSSL_PARAM_get_utf8_string_ptr(p, &data))
+        return 0;
+    str = *p;
+    str.data_type = OSSL_PARAM_UTF8_STRING;
+    str.data = (void *)data;
+    return OSSL_PARAM_get_utf8_string(&str, val, max_len);
 }
 
 int OSSL_PARAM_get_octet_string(const OSSL_PARAM *p, void **val, size_t max_len,

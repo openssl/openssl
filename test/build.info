@@ -36,7 +36,7 @@ IF[{- !$disabled{tests} -}]
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
           testutil/apps_shims.c testutil/random.c testutil/helper.c \
-          testutil/compare.c mfail/mfail.c $LIBAPPSSRC
+          testutil/compare.c mfail/mfail.c ../crypto/params.c $LIBAPPSSRC
   IF[{- $target{needs_c99_snprintf_compat} -}]
     SOURCE[libtestutil.a]=../crypto/msvc2013_snprintf.c
   ENDIF
@@ -1353,7 +1353,7 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{module} -}]
     MODULES{noinst}=p_test p_ossltest
     SOURCE[p_test]=p_test.c
-    SOURCE[p_ossltest]=p_ossltest.c ../providers/prov_running.c
+    SOURCE[p_ossltest]=p_ossltest.c ../providers/prov_running.c ../crypto/params.c
     INCLUDE[p_test]=../include
     INCLUDE[p_ossltest]=../include ../crypto ../providers/common/include ../providers/implementations/include ../providers/implementations
     DEPEND[p_ossltest]=../providers/libdefault.a ../libcrypto
@@ -1416,7 +1416,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
-  DEPEND[params_test]=../libcrypto libtestutil.a
+  DEPEND[params_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=hexstr_test
   SOURCE[hexstr_test]=hexstr_test.c
