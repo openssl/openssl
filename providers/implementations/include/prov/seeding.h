@@ -18,15 +18,6 @@ size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool);
 size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool);
 
 /*
- * The VMClock generation signal. |*epoch| holds the value the caller last
- * saw. Returns 1 and stores the current value there if the guest has since
- * been restored from a snapshot or migrated; returns 1 without storing if the
- * page could not be read; returns 0 if nothing changed or there is no VMClock
- * device.
- */
-int ossl_prov_vmclock_changed(uint64_t *epoch);
-
-/*
  * External seeding functions from the core dispatch table.
  */
 int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns);

@@ -13,7 +13,7 @@ use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
 use Cwd qw(abs_path);
 
-plan tests => 6;
+plan tests => 7;
 setup("test_rand");
 
 ok(run(test(["rand_test", srctop_file("test", "default.cnf"),
@@ -27,6 +27,13 @@ SKIP: {
 }
 
 ok(run(test(["drbgtest"])));
+
+SKIP: {
+    skip "Skipping FIPS test in this build", 1 if disabled('fips');
+
+    ok(run(test(["drbgtest", srctop_file("test", "fips-and-base.cnf")])));
+}
+
 ok(run(test(["rand_status_test"])));
 
 SKIP: {
