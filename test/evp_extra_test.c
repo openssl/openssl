@@ -5235,6 +5235,41 @@ static int test_EVP_rsa_invalid_key(void)
     return ret;
 }
 
+static int test_cts_sized_utf8_param(void)
+{
+    char mode[] = "CS3 trailing";
+    char actual[4];
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, mode, 3),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM get_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, actual,
+            sizeof(actual)),
+        OSSL_PARAM_END
+    };
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-128-CBC-CTS", testpropq))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, get_params))
+        || !TEST_str_eq(actual, "CS3"))
+        goto end;
+    params[0].data_size = 4;
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto end;
+    ERR_clear_error();
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 static int test_encoder_sized_utf8_params(int is_ptr)
 {
     char cipher[] = "AES-128-CBC trailing";
@@ -9743,6 +9778,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_rsa_pss_set_saltlen);
     ADD_MFAIL_TEST(test_ctrl_utf8_get_mfail);
     ADD_ALL_TESTS(test_ctr_drbg_cipher_size, 4);
+    ADD_TEST(test_cts_sized_utf8_param);
     ADD_ALL_TESTS(test_encoder_sized_utf8_params, 2);
     ADD_TEST(test_EVP_rsa_invalid_key);
 #ifndef OPENSSL_NO_EC

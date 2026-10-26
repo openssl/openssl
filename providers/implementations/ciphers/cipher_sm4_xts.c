@@ -211,12 +211,9 @@ static int sm4_xts_set_ctx_params(void *vxctx, const OSSL_PARAM params[])
      * "IEEE" means the IEEE Std 1619-2007 standard
      */
     if (p.std != NULL) {
-        const char *xts_standard = NULL;
+        char *xts_standard = NULL;
 
-        if (p.std->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-
-        if (!OSSL_PARAM_get_utf8_string_ptr(p.std, &xts_standard)) {
+        if (!OSSL_PARAM_get_utf8_string(p.std, &xts_standard, 0)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -225,9 +222,11 @@ static int sm4_xts_set_ctx_params(void *vxctx, const OSSL_PARAM params[])
         } else if (OPENSSL_strcasecmp(xts_standard, "IEEE") == 0) {
             xctx->xts_standard = 1;
         } else {
+            OPENSSL_free(xts_standard);
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
+        OPENSSL_free(xts_standard);
     }
 
     return 1;
