@@ -514,7 +514,10 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
              * unsupported-critical check for this and every later extension.
              */
             if (h == NULL) {
-                if (RAND_bytes_ex(x509->libctx, (unsigned char *)k, sizeof(k), 0) <= 0
+                OSSL_LIB_CTX *libctx = NULL;
+
+                ossl_x509_get0_libctx(x509, &libctx, NULL);
+                if (RAND_bytes_ex(libctx, (unsigned char *)k, sizeof(k), 0) <= 0
                     || (arr = OPENSSL_malloc_array(count, sizeof(*arr))) == NULL
                     || (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL) {
                     *flags |= EXFLAG_INVALID;
