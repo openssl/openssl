@@ -21,6 +21,73 @@
 static char *cert = NULL;
 static char *privkey = NULL;
 
+static int test_pqueue_size(int idx)
+{
+    const uint64_t priorities[] = { 3, 1, 2, 4 };
+    const size_t order[] = { 1, 2, 0, 3 };
+    pqueue embedded = { 0 }, other = { 0 };
+    pqueue *queue = idx == 0 ? pqueue_new() : &embedded;
+    pitem *items[OSSL_NELEM(priorities)] = { NULL };
+    pitem *duplicate = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(queue)
+        || !TEST_size_t_eq(pqueue_size(queue), 0)
+        || !TEST_ptr_null(pqueue_pop(queue))
+        || !TEST_size_t_eq(pqueue_size(queue), 0))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(priorities); i++) {
+        if (!TEST_ptr(items[i] = pitem_new_u64(priorities[i], NULL))
+            || !TEST_ptr_eq(pqueue_insert(queue, items[i]), items[i])
+            || !TEST_size_t_eq(pqueue_size(queue), i + 1))
+            goto end;
+    }
+
+    if (!TEST_ptr(duplicate = pitem_new_u64(2, NULL))
+        || !TEST_ptr_null(pqueue_insert(queue, duplicate))
+        || !TEST_size_t_eq(pqueue_size(queue), OSSL_NELEM(priorities)))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(order); i++) {
+        if (!TEST_ptr_eq(pqueue_peek(queue), items[order[i]])
+            || !TEST_size_t_eq(pqueue_size(queue), OSSL_NELEM(order) - i)
+            || !TEST_ptr_eq(pqueue_pop(queue), items[order[i]])
+            || !TEST_size_t_eq(pqueue_size(queue), OSSL_NELEM(order) - i - 1))
+            goto end;
+
+        /* Move a popped item into an empty queue, then reuse that queue. */
+        if (!TEST_ptr_eq(pqueue_insert(&other, items[order[i]]), items[order[i]])
+            || !TEST_size_t_eq(pqueue_size(&other), 1)
+            || !TEST_size_t_eq(pqueue_size(queue), OSSL_NELEM(order) - i - 1)
+            || !TEST_ptr_eq(pqueue_pop(&other), items[order[i]])
+            || !TEST_size_t_eq(pqueue_size(&other), 0))
+            goto end;
+    }
+
+    for (i = 0; i < 2; i++) {
+        if (!TEST_ptr_null(pqueue_pop(queue))
+            || !TEST_size_t_eq(pqueue_size(queue), 0))
+            goto end;
+    }
+
+    if (!TEST_ptr_eq(pqueue_insert(queue, items[0]), items[0])
+        || !TEST_size_t_eq(pqueue_size(queue), 1)
+        || !TEST_ptr_eq(pqueue_pop(queue), items[0])
+        || !TEST_size_t_eq(pqueue_size(queue), 0))
+        goto end;
+
+    ret = 1;
+end:
+    for (i = 0; i < OSSL_NELEM(items); i++)
+        pitem_free(items[i]);
+    pitem_free(duplicate);
+    if (idx == 0)
+        pqueue_free(queue);
+    return ret;
+}
+
 static const char *cipher_names[] = {
     "aes-128-ecb",
     "aes-256-ecb",
@@ -2508,6 +2575,7 @@ int setup_tests(void)
         || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;
 
+    ADD_ALL_TESTS(test_pqueue_size, 2);
     ADD_ALL_TESTS(test_dtls_crypt_sequence_number, OSSL_NELEM(cipher_names));
     ADD_ALL_TESTS(test_seq_num_reconstruction, OSSL_NELEM(seq_num_tests));
 #ifndef OPENSSL_NO_DTLS1_3
