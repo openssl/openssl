@@ -20,6 +20,7 @@
 #include <openssl/store.h>
 #include "internal/provider.h"
 #include "internal/passphrase.h"
+#include "internal/params.h"
 #include "crypto/decoder.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
@@ -62,15 +63,15 @@
 
 struct extracted_param_data_st {
     int object_type;
-    const char *data_type;
-    const char *input_type;
-    const char *data_structure;
-    const char *utf8_data;
+    char *data_type;
+    char *input_type;
+    char *data_structure;
+    char *utf8_data;
     const void *octet_data;
     size_t octet_data_size;
     const void *ref;
     size_t ref_size;
-    const char *desc;
+    char *desc;
 };
 
 static int try_name(struct extracted_param_data_st *, OSSL_STORE_INFO **);
@@ -96,37 +97,38 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     const char *propq = ctx->properties;
     const OSSL_PARAM *p;
     struct extracted_param_data_st helper_data;
+    int ret = 0;
 
     memset(&helper_data, 0, sizeof(helper_data));
     helper_data.object_type = OSSL_OBJECT_UNKNOWN;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_TYPE)) != NULL
         && !OSSL_PARAM_get_int(p, &helper_data.object_type))
-        return 0;
+        goto end;
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
     if (p != NULL
-        && !OSSL_PARAM_get_utf8_string_ptr(p, &helper_data.data_type))
-        return 0;
+        && !ossl_param_get_utf8_string(p, &helper_data.data_type, 0))
+        goto end;
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA);
     if (p != NULL
         && !OSSL_PARAM_get_octet_string_ptr(p, &helper_data.octet_data,
             &helper_data.octet_data_size)
-        && !OSSL_PARAM_get_utf8_string_ptr(p, &helper_data.utf8_data))
-        return 0;
+        && !ossl_param_get_utf8_string(p, &helper_data.utf8_data, 0))
+        goto end;
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_STRUCTURE);
     if (p != NULL
-        && !OSSL_PARAM_get_utf8_string_ptr(p, &helper_data.data_structure))
-        return 0;
+        && !ossl_param_get_utf8_string(p, &helper_data.data_structure, 0))
+        goto end;
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_INPUT_TYPE);
     if (p != NULL
-        && !OSSL_PARAM_get_utf8_string_ptr(p, &helper_data.input_type))
-        return 0;
+        && !ossl_param_get_utf8_string(p, &helper_data.input_type, 0))
+        goto end;
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_REFERENCE);
     if (p != NULL && !OSSL_PARAM_get_octet_string_ptr(p, &helper_data.ref, &helper_data.ref_size))
-        return 0;
+        goto end;
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DESC);
-    if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &helper_data.desc))
-        return 0;
+    if (p != NULL && !ossl_param_get_utf8_string(p, &helper_data.desc, 0))
+        goto end;
 
     /*
      * The helper functions return 0 on actual errors, otherwise 1, even if
@@ -171,10 +173,17 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
             ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_UNSUPPORTED);
     }
 
-    return (*v != NULL);
+    ret = (*v != NULL);
+    goto end;
 err:
     ERR_clear_last_mark();
-    return 0;
+end:
+    OPENSSL_free(helper_data.data_type);
+    OPENSSL_free(helper_data.input_type);
+    OPENSSL_free(helper_data.data_structure);
+    OPENSSL_free(helper_data.utf8_data);
+    OPENSSL_free(helper_data.desc);
+    return ret;
 }
 
 static int try_name(struct extracted_param_data_st *data, OSSL_STORE_INFO **v)

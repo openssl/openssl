@@ -5235,6 +5235,51 @@ static int test_EVP_rsa_invalid_key(void)
     return ret;
 }
 
+static int test_encoder_sized_utf8_params(int is_ptr)
+{
+    char cipher[] = "AES-128-CBC trailing";
+    char properties[] = "provider=default trailing";
+    char *cipher_ptr = cipher, *properties_ptr = properties;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_ENCODER_PARAM_CIPHER, cipher, 11),
+        OSSL_PARAM_utf8_string(OSSL_ENCODER_PARAM_PROPERTIES, properties, 16),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY *pkey = NULL;
+    OSSL_ENCODER_CTX *ctx = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    size_t derlen = 0;
+    X509_SIG *encrypted = NULL;
+    int ret = 0;
+
+    if (is_ptr) {
+        params[0] = OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_CIPHER,
+            &cipher_ptr, 11);
+        params[1] = OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_PROPERTIES,
+            &properties_ptr, 16);
+    }
+    if (!TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_ptr(ctx = OSSL_ENCODER_CTX_new_for_pkey(pkey, EVP_PKEY_KEYPAIR,
+                         "DER", "PrivateKeyInfo", testpropq))
+        || !TEST_true(OSSL_ENCODER_CTX_set_params(ctx, params))
+        || !TEST_true(OSSL_ENCODER_CTX_set_passphrase(ctx,
+            (const unsigned char *)"secret", 6))
+        || !TEST_true(OSSL_ENCODER_to_data(ctx, &der, &derlen)))
+        goto end;
+    p = der;
+    if (!TEST_ptr(encrypted = d2i_X509_SIG(NULL, &p, (long)derlen))
+        || !TEST_ptr_eq(p, der + derlen))
+        goto end;
+    ret = 1;
+end:
+    X509_SIG_free(encrypted);
+    OPENSSL_free(der);
+    OSSL_ENCODER_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 static int test_EVP_rsa_pss_utf8_ptr_params(void)
 {
     char *digest = "SHA256";
@@ -9642,6 +9687,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
     ADD_TEST(test_EVP_rsa_pss_set_saltlen);
+    ADD_ALL_TESTS(test_encoder_sized_utf8_params, 2);
     ADD_TEST(test_EVP_rsa_invalid_key);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));

@@ -29,6 +29,7 @@
 #include <openssl/proverr.h>
 #include "internal/passphrase.h"
 #include "internal/cryptlib.h"
+#include "internal/params.h"
 #include "crypto/ecx.h"
 #include "crypto/ml_kem.h"
 #include "crypto/rsa.h"
@@ -1157,21 +1158,32 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.cipher != NULL) {
-        const char *ciphername = NULL;
-        const char *props = NULL;
+        const char *data = NULL;
+        char *ciphername = NULL;
+        char *props = NULL;
         OSSL_LIB_CTX *libctx;
 
-        if (!OSSL_PARAM_get_utf8_string_ptr(p.cipher, &ciphername))
+        if (!OSSL_PARAM_get_utf8_string_ptr(p.cipher, &data)
+            || (data != NULL
+                && !ossl_param_get_utf8_string(p.cipher, &ciphername, 0)))
             return 0;
-        if (p.propq != NULL && !OSSL_PARAM_get_utf8_string_ptr(p.propq, &props))
+        if (p.propq != NULL
+            && (!OSSL_PARAM_get_utf8_string_ptr(p.propq, &data)
+                || (data != NULL
+                    && !ossl_param_get_utf8_string(p.propq, &props, 0)))) {
+            OPENSSL_free(ciphername);
             return 0;
+        }
 
         libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
         EVP_CIPHER_free(ctx->cipher);
         ctx->cipher = NULL;
         ctx->cipher_intent = ciphername != NULL;
-        if (ciphername != NULL
-            && ((ctx->cipher = EVP_CIPHER_fetch(libctx, ciphername, props)) == NULL))
+        if (ciphername != NULL)
+            ctx->cipher = EVP_CIPHER_fetch(libctx, ciphername, props);
+        OPENSSL_free(ciphername);
+        OPENSSL_free(props);
+        if (ctx->cipher_intent && ctx->cipher == NULL)
             return 0;
     }
 

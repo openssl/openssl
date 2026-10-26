@@ -246,11 +246,17 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
 
         for (p = extra_params; p->key != NULL; p++) {
             switch (p->data_type) {
-            case OSSL_PARAM_UTF8_STRING:
+            case OSSL_PARAM_UTF8_STRING: {
+                const char *value = p->data;
+
+                /* The builder uses strlen() when its size argument is zero. */
+                if (value != NULL && p->data_size == 0)
+                    value = "";
                 if (!OSSL_PARAM_BLD_push_utf8_string(bld,
-                        p->key, p->data, p->data_size))
+                        p->key, value, p->data_size))
                     goto err;
                 break;
+            }
             case OSSL_PARAM_OCTET_STRING:
                 if (!OSSL_PARAM_BLD_push_octet_string(bld,
                         p->key, p->data, p->data_size))
