@@ -8,6 +8,7 @@
  */
 
 #include <stddef.h>
+#include <openssl/params.h>
 #include <openssl/crypto.h>
 #include "internal/provider.h"
 #include "testutil.h"
@@ -22,17 +23,25 @@ static OSSL_PARAM greeting_request[] = {
 
 static int test_provider(OSSL_PROVIDER *prov, const char *expected_greeting)
 {
-    const char *greeting = "no greeting received";
+    char *greeting = NULL;
+    OSSL_PARAM greeting_param;
     int ret = 0;
 
-    ret = TEST_true(ossl_provider_activate(prov, 1, 0))
-        && TEST_true(ossl_provider_get_params(prov, greeting_request))
-        && TEST_ptr(greeting = greeting_request[0].data)
-        && TEST_size_t_gt(greeting_request[0].data_size, 0)
+    if (!TEST_true(ossl_provider_activate(prov, 1, 0))
+        || !TEST_true(ossl_provider_get_params(prov, greeting_request))
+        || !TEST_size_t_le(greeting_request[0].return_size,
+            greeting_request[0].data_size))
+        goto end;
+    greeting_param = greeting_request[0];
+    greeting_param.data_size = greeting_param.return_size;
+    ret = TEST_true(OSSL_PARAM_get_utf8_string(&greeting_param, &greeting, 0))
         && TEST_str_eq(greeting, expected_greeting)
         && TEST_true(ossl_provider_deactivate(prov, 1));
 
-    TEST_info("Got this greeting: %s\n", greeting);
+end:
+    TEST_info("Got this greeting: %s\n",
+        greeting == NULL ? "no greeting received" : greeting);
+    OPENSSL_free(greeting);
     ossl_provider_free(prov);
     return ret;
 }

@@ -122,13 +122,26 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
 
             if (c_get_params(hand, counter_request)) {
                 if (greeting) {
-                    strcpy(buf, greeting);
+                    size_t len = counter_request[2].return_size;
+
+                    if (len >= sizeof(buf))
+                        len = sizeof(buf) - 1;
+                    memcpy(buf, greeting, len);
+                    buf[len] = '\0';
                 } else {
                     const char *versionp = *(void **)counter_request[0].data;
                     const char *namep = *(void **)counter_request[1].data;
+                    size_t version_len = counter_request[0].return_size;
+                    size_t name_len = counter_request[1].return_size;
 
-                    local_snprintf(buf, sizeof(buf), "Hello OpenSSL %.20s, greetings from %s!",
-                        versionp, namep);
+                    if (version_len > 20)
+                        version_len = 20;
+                    if (name_len >= sizeof(buf))
+                        name_len = sizeof(buf) - 1;
+                    local_snprintf(buf, sizeof(buf),
+                        "Hello OpenSSL %.*s, greetings from %.*s!",
+                        (int)version_len, versionp == NULL ? "" : versionp,
+                        (int)name_len, namep == NULL ? "" : namep);
                 }
             } else {
                 local_snprintf(buf, sizeof(buf), "Howdy stranger...");

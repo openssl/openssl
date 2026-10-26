@@ -52,7 +52,7 @@ static int self_test_events(const OSSL_PARAM params[], void *arg,
 {
     struct self_test_arg *args = arg;
     const OSSL_PARAM *p = NULL;
-    const char *phase = NULL, *type = NULL, *desc = NULL;
+    char *phase = NULL, *type = NULL, *desc = NULL;
     int ret = 0;
 
     if (args->count == 0)
@@ -60,19 +60,16 @@ static int self_test_events(const OSSL_PARAM params[], void *arg,
     args->count++;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+    if (p == NULL || !OSSL_PARAM_get_utf8_string(p, &phase, 0))
         goto err;
-    phase = (const char *)p->data;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_DESC);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+    if (p == NULL || !OSSL_PARAM_get_utf8_string(p, &desc, 0))
         goto err;
-    desc = (const char *)p->data;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_TYPE);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+    if (p == NULL || !OSSL_PARAM_get_utf8_string(p, &type, 0))
         goto err;
-    type = (const char *)p->data;
 
     if (strcmp(phase, OSSL_SELF_TEST_PHASE_START) == 0)
         BIO_printf(bio_out, "%s : (%s) : ", desc, type);
@@ -87,6 +84,9 @@ static int self_test_events(const OSSL_PARAM params[], void *arg,
         goto err;
     ret = 1;
 err:
+    OPENSSL_free(phase);
+    OPENSSL_free(type);
+    OPENSSL_free(desc);
     return ret;
 }
 

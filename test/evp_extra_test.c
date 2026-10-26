@@ -38,6 +38,7 @@
 #include <crypto/ml_kem.h>
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "fake_rsaprov.h"
@@ -2569,18 +2570,14 @@ static const struct {
 static int ec_export_get_encoding_cb(const OSSL_PARAM params[], void *arg)
 {
     const OSSL_PARAM *p;
-    const char *data = NULL;
     char *enc_name = NULL;
     int *enc = arg;
     size_t i;
 
     *enc = -1;
 
-    if (!TEST_ptr(p = OSSL_PARAM_locate_const(params,
-                      OSSL_PKEY_PARAM_EC_ENCODING))
-        || !TEST_true(OSSL_PARAM_get_utf8_string_ptr(p, &data))
-        || !TEST_ptr(data)
-        || !TEST_ptr(enc_name = OPENSSL_strndup(data, p->data_size)))
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
+    if (!TEST_true(ossl_param_get_utf8_string(p, &enc_name, 0)))
         return 0;
 
     for (i = 0; i < OSSL_NELEM(ec_encodings); i++) {
