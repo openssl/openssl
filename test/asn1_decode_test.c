@@ -473,6 +473,62 @@ err:
     return ret;
 }
 
+/*
+ * BER allows any non-zero octet for a BOOLEAN TRUE, DER only 0xFF.
+ * Check that such values are accepted and re-encoded as DER.
+ */
+static const struct {
+    unsigned char in;
+    unsigned char out;
+} boolean_tests[] = {
+    { 0x00, 0x00 },
+    { 0x7F, 0xFF },
+    { 0xFF, 0xFF },
+};
+
+static int test_boolean_reencode(int idx)
+{
+    unsigned char der[] = { V_ASN1_BOOLEAN, 0x01, boolean_tests[idx].in };
+    const unsigned char *p = der;
+    unsigned char *out = NULL;
+    ASN1_TYPE *t = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(t = d2i_ASN1_TYPE(NULL, &p, sizeof(der)))
+        || !TEST_int_eq(ASN1_TYPE_get(t), V_ASN1_BOOLEAN)
+        || !TEST_int_eq(i2d_ASN1_TYPE(t, &out), 3)
+        || !TEST_uchar_eq(out[2], boolean_tests[idx].out))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(out);
+    ASN1_TYPE_free(t);
+    return ret;
+}
+
+static int test_boolean_encode_nonstandard_true(void)
+{
+    static const unsigned char expected[] = { V_ASN1_BOOLEAN, 0x01, 0xFF };
+    unsigned char *out = NULL;
+    ASN1_TYPE *t = NULL;
+    int len, ret = 0;
+
+    if (!TEST_ptr(t = ASN1_TYPE_new()))
+        goto err;
+    t->type = V_ASN1_BOOLEAN;
+    t->value.boolean = 1;
+    len = i2d_ASN1_TYPE(t, &out);
+    if (!TEST_mem_eq(out, len, expected, sizeof(expected)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(out);
+    ASN1_TYPE_free(t);
+    return ret;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -491,5 +547,7 @@ int setup_tests(void)
     ADD_TEST(test_d2i_read_bio_indefinite_truncated);
     ADD_TEST(test_d2i_read_bio_partial_header);
     ADD_TEST(test_d2i_bio_concatenated_integers);
+    ADD_ALL_TESTS(test_boolean_reencode, OSSL_NELEM(boolean_tests));
+    ADD_TEST(test_boolean_encode_nonstandard_true);
     return 1;
 }
