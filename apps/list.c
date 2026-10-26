@@ -840,7 +840,11 @@ static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
     if (p != NULL && p->data_type == OSSL_PARAM_UTF8_STRING) {
         if (*((int *)data) > 0)
             BIO_puts(bio_out, ":");
-        BIO_puts(bio_out, (p->data != NULL) ? (char *)(p->data) : "(null)");
+        if (p->data != NULL)
+            BIO_write_ex(bio_out, p->data,
+                OPENSSL_strnlen(p->data, p->data_size), NULL);
+        else
+            BIO_puts(bio_out, "(null)");
         /* mark presence of a provider-based sigalg */
         *((int *)data) = 2;
     }
@@ -1394,14 +1398,20 @@ static void list_provider_info(void)
         } else {
             /* Print out the provider information, the params order matches above */
             if (OSSL_PARAM_modified(params))
-                BIO_printf(bio_out, "    name: %s\n", name);
+                BIO_printf(bio_out, "    name: %.*s\n",
+                    params[0].return_size > INT_MAX ? INT_MAX : (int)params[0].return_size,
+                    name != NULL ? name : "");
             if (OSSL_PARAM_modified(params + 1))
-                BIO_printf(bio_out, "    version: %s\n", version);
+                BIO_printf(bio_out, "    version: %.*s\n",
+                    params[1].return_size > INT_MAX ? INT_MAX : (int)params[1].return_size,
+                    version != NULL ? version : "");
             if (OSSL_PARAM_modified(params + 2))
                 BIO_printf(bio_out, "    status: %sactive\n", status ? "" : "in");
             if (verbose) {
                 if (OSSL_PARAM_modified(params + 3))
-                    BIO_printf(bio_out, "    build info: %s\n", buildinfo);
+                    BIO_printf(bio_out, "    build info: %.*s\n",
+                        params[3].return_size > INT_MAX ? INT_MAX : (int)params[3].return_size,
+                        buildinfo != NULL ? buildinfo : "");
                 print_param_types("gettable provider parameters",
                     OSSL_PROVIDER_gettable_params(prov), 4);
             }
