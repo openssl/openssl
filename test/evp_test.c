@@ -2974,7 +2974,7 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
     size_t publen = 0;
     uint8_t *ctx = NULL;
     size_t ctxlen = 0;
-    const char *digestname = NULL;
+    char *digestname = NULL;
     PKEY_DATA *kdata = t->data;
     EVP_PKEY *key = EVP_PKEY_CTX_get0_pkey(kdata->ctx);
     uint8_t *in = kdata->input;
@@ -3002,7 +3002,8 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
         size_t xoflen = 0;
         unsigned int len = 0;
 
-        digestname = p->data;
+        if (!OSSL_PARAM_get_utf8_string(p, &digestname, 0))
+            goto err;
         mdctx = EVP_MD_CTX_new();
         if (mdctx == NULL)
             goto err;
@@ -3038,6 +3039,7 @@ static int pkey_calculate_mu(EVP_TEST *t, uint8_t *mu, size_t *mulen)
         goto err;
     ret = 1;
 err:
+    OPENSSL_free(digestname);
     EVP_MD_free(md);
     EVP_MD_CTX_free(mdctx);
     ctrl2params_free(params, params_n, 0);

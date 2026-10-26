@@ -262,6 +262,74 @@ err:
     return ret;
 }
 
+static int cshake_param_size_test(int tstid)
+{
+    char function[] = { 'K', 'M', 'A', 'C' };
+    char custom[] = { 'C', 'u', 's', 't', 'o', 'm' };
+    char function_extra[] = "KMACX";
+    char function_terminated[] = "KMAC";
+    char custom_extra[] = "CustomX";
+    char custom_terminated[256] = "Custom\0trailing";
+    char properties[] = "provider=defaultX";
+    OSSL_PARAM params[4];
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    unsigned char out[sizeof(cshake256_output)];
+    const unsigned char *expected = cshake256_output;
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_FUNCTION_NAME,
+        tstid == 1 ? function_extra : function, sizeof(function));
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_CUSTOMIZATION,
+        tstid == 1 ? custom_extra : custom, sizeof(custom));
+    params[2] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_PROPERTIES,
+        properties, sizeof(properties) - 2);
+    params[3] = OSSL_PARAM_construct_end();
+    if (tstid == 2) {
+        params[0].data_size = 0;
+        params[1].data_size = 0;
+        params[2].data_size = 0;
+        expected = shake256_output;
+    } else if (tstid == 5) {
+        params[0] = OSSL_PARAM_construct_utf8_string(
+            OSSL_DIGEST_PARAM_FUNCTION_NAME, function_terminated,
+            sizeof(function_terminated));
+        params[1] = OSSL_PARAM_construct_utf8_string(
+            OSSL_DIGEST_PARAM_CUSTOMIZATION, custom_terminated,
+            sizeof("Custom"));
+    } else if (tstid == 6) {
+        params[1] = OSSL_PARAM_construct_utf8_string(
+            OSSL_DIGEST_PARAM_CUSTOMIZATION, custom_terminated,
+            sizeof(custom_terminated));
+    } else if (tstid == 4) {
+        params[0].data = NULL;
+        params[1].data = NULL;
+        params[2].data = NULL;
+        expected = shake256_output;
+    } else if (tstid == 3) {
+        params[0].data_size--;
+    }
+
+    if (!TEST_ptr(md = EVP_MD_fetch(NULL, "CSHAKE256", NULL))
+        || !TEST_ptr(ctx = EVP_MD_CTX_new()))
+        goto end;
+    if (tstid == 3) {
+        ret = TEST_false(EVP_DigestInit_ex2(ctx, md, params));
+        goto end;
+    }
+    if (!TEST_true(EVP_DigestInit_ex2(ctx, md, params))
+        || !TEST_true(EVP_DigestUpdate(ctx, shake256_input,
+            sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
+        || !TEST_mem_eq(out, sizeof(out), expected, sizeof(out)))
+        goto end;
+    ret = 1;
+end:
+    EVP_MD_CTX_free(ctx);
+    EVP_MD_free(md);
+    return ret;
+}
+
 static int xof_kat_digestfinal_test(int tstid)
 {
     const TEST_DATA *td = xof_test_data + tstid;
@@ -627,6 +695,7 @@ static int xof_fail_test(void)
 int setup_tests(void)
 {
     ADD_ALL_TESTS(xof_kat_test, OSSL_NELEM(xof_test_data));
+    ADD_ALL_TESTS(cshake_param_size_test, 7);
     ADD_ALL_TESTS(xof_kat_digestfinal_test, OSSL_NELEM(xof_test_data));
     ADD_ALL_TESTS(xof_kat_digestfinal_xoflen_test, OSSL_NELEM(xof_test_data));
     ADD_ALL_TESTS(xof_squeeze_no_absorb_test, OSSL_NELEM(xof_test_data));

@@ -95,7 +95,7 @@ static const unsigned char parallelhash_encoded_string[] = {
     0x01, 0x60, 0x50, 0x61, 0x72, 0x61, 0x6C, 0x6C, 0x65, 0x6C, 0x48, 0x61, 0x73, 0x68
 };
 
-static int cshake_set_func_encode_string(const char *in,
+static int cshake_set_func_encode_string(const char *in, size_t inlen,
     const uint8_t **out, size_t *outlen)
 {
     /*
@@ -117,11 +117,14 @@ static int cshake_set_func_encode_string(const char *in,
      * one of the strings is not empty. If both are empty then we don't want it
      * to encode at all.
      */
-    if (in == NULL || in[0] == 0)
+    if (in != NULL)
+        inlen = OPENSSL_strnlen(in, inlen);
+    if (in == NULL || inlen == 0)
         return 1;
     for (int i = 1; functionNameMap[i].name != NULL; ++i) {
         if (functionNameMap[i].name[0] == in[0]) {
-            if (OPENSSL_strcasecmp(functionNameMap[i].name, in) == 0) {
+            if (strlen(functionNameMap[i].name) == inlen
+                && OPENSSL_strncasecmp(functionNameMap[i].name, in, inlen) == 0) {
                 *out = functionNameMap[i].encoding;
                 *outlen = functionNameMap[i].encodinglen;
                 return 1;
@@ -132,18 +135,16 @@ static int cshake_set_func_encode_string(const char *in,
     return 0; /* Name not found */
 }
 
-static int cshake_set_encode_string(const char *in,
+static int cshake_set_encode_string(const char *in, size_t inlen,
     uint8_t *out, size_t outmax, size_t *outlen)
 {
-    size_t inlen;
-
     if (*outlen != 0)
         OPENSSL_cleanse(out, outmax);
     *outlen = 0;
     if (in == NULL)
         return 1;
 
-    inlen = strlen(in);
+    inlen = OPENSSL_strnlen(in, inlen);
     /*
      * Don't encode an empty string here - this is done manually later only when
      * one of the strings is not empty. If both are empty then we don't want it
@@ -270,8 +271,8 @@ static int cshake_init(void *vctx, const OSSL_PARAM params[])
         return 0;
     ctx->inited = 0;
     ctx->xoflen = (ctx->bitlen == 128) ? 32 : 64; /* Set default values here */
-    cshake_set_func_encode_string(NULL, &ctx->func, &ctx->funclen);
-    cshake_set_encode_string(NULL, ctx->custom, sizeof(ctx->custom), &ctx->customlen);
+    cshake_set_func_encode_string(NULL, 0, &ctx->func, &ctx->funclen);
+    cshake_set_encode_string(NULL, 0, ctx->custom, sizeof(ctx->custom), &ctx->customlen);
     return cshake_set_ctx_params(vctx, params);
 }
 
@@ -281,15 +282,15 @@ static const OSSL_PARAM *cshake_settable_ctx_params(ossl_unused void *ctx,
     return cshake_set_ctx_params_list;
 }
 
-static int set_property_query(CSHAKE_CTX *ctx, const char *propq)
+static int set_property_query(CSHAKE_CTX *ctx, const OSSL_PARAM *propq)
 {
+    if (propq->data == NULL && propq->data_type != OSSL_PARAM_UTF8_STRING)
+        return 0;
     OPENSSL_free(ctx->propq);
     ctx->propq = NULL;
-    if (propq != NULL) {
-        ctx->propq = OPENSSL_strdup(propq);
-        if (ctx->propq == NULL)
-            return 0;
-    }
+    if (propq->data != NULL
+        && !OSSL_PARAM_get_utf8_string(propq, &ctx->propq, 0))
+        return 0;
     return 1;
 }
 
@@ -313,7 +314,8 @@ static int cshake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.func != NULL) {
         if (p.func->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        if (!cshake_set_func_encode_string(p.func->data, &ctx->func, &ctx->funclen)) {
+        if (!cshake_set_func_encode_string(p.func->data, p.func->data_size,
+                &ctx->func, &ctx->funclen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_FUNCTION_NAME);
             return 0;
         }
@@ -321,12 +323,12 @@ static int cshake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.custom != NULL) {
         if (p.custom->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        if (!cshake_set_encode_string(p.custom->data, ctx->custom, sizeof(ctx->custom), &ctx->customlen))
+        if (!cshake_set_encode_string(p.custom->data, p.custom->data_size,
+                ctx->custom, sizeof(ctx->custom), &ctx->customlen))
             return 0;
     }
     if (p.propq != NULL) {
-        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING
-            || !set_property_query(ctx, p.propq->data))
+        if (!set_property_query(ctx, p.propq))
             return 0;
     }
     return 1;
