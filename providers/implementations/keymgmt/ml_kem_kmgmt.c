@@ -180,9 +180,13 @@ ML_KEM_KEY *ossl_prov_ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
      * the provider context.
      */
     if ((key = ossl_ml_kem_key_new(PROV_LIBCTX_OF(ctx), propq, evp_type)) != NULL) {
-        const char *pct_type = ossl_prov_ctx_get_param(
+        char *pct_type = ossl_prov_ctx_get_param(
             ctx, OSSL_PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE, "random");
 
+        if (pct_type == NULL) {
+            ossl_ml_kem_key_free(key);
+            return NULL;
+        }
         if (ossl_prov_ctx_get_bool_param(
                 ctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1))
             key->prov_flags |= ML_KEM_KEY_RETAIN_SEED;
@@ -199,6 +203,7 @@ ML_KEM_KEY *ossl_prov_ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
             key->prov_flags |= ML_KEM_KEY_FIXED_PCT;
         else
             key->prov_flags &= ~ML_KEM_KEY_PCT_TYPE;
+        OPENSSL_free(pct_type);
     }
     return key;
 }

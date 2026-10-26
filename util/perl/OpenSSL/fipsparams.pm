@@ -58,6 +58,19 @@ sub produce_fips_params {
     print "}\n";
 
     print "\n";
+    print "static void free_fips_params(FIPS_PARAMS *fp)\n";
+    print "{\n";
+    foreach my $p (@params) {
+        my $field = $p->[0];
+        my $type = $p->[2];
+        if ($type eq 'char *') {
+            print "    OPENSSL_free(fp->$field);\n";
+            print "    fp->$field = NULL;\n";
+        }
+    }
+    print "}\n";
+
+    print "\n";
     print "/*\n";
     print " * Parameters to retrieve from the core provider\n";
     print " * NOTE: inside core_get_params() these will be loaded from config items\n";
@@ -92,6 +105,12 @@ sub produce_fips_params {
     print "\n";
     print "    for (;p->key != NULL; p++) {\n";
     print "        if (OSSL_PARAM_modified(p)) {\n";
+    print "            char *value = NULL;\n";
+    print "\n";
+    print "            p->data_size = p->return_size;\n";
+    print "            if (*(const char **)p->data != NULL\n";
+    print "                && !ossl_param_get_utf8_string(p, &value, 0))\n";
+    print "                return 0;\n";
     foreach my $p (@params) {
         my $field = $p->[0];
         my $name  = $p->[1];
@@ -101,20 +120,25 @@ sub produce_fips_params {
             $name = "OSSL_PROV_PARAM_" . $name;
         }
         print "            if (strcmp($name, p->key) == 0) {\n";
-        if ($type eq 'const char *') {
-            print "                fp->$field = $field;\n";
+        if ($type eq 'char *') {
+            print "                OPENSSL_free(fp->$field);\n";
+            print "                fp->$field = value;\n";
+            print "                value = NULL;\n";
         } elsif ($type eq 'unsigned char') {
-            print "                if ($field != NULL\n";
-            print "                    && strcmp($field, \"1\") == 0)\n";
+            print "                if (value != NULL\n";
+            print "                    && strcmp(value, \"1\") == 0)\n";
             print "                    fp->$field = 1;\n";
-            print "                else if ($field != NULL\n";
-            print "                    && strcmp($field, \"0\") == 0)\n";
+            print "                else if (value != NULL\n";
+            print "                    && strcmp(value, \"0\") == 0)\n";
             print "                    fp->$field = 0;\n";
-            print "                else\n";
+            print "                else {\n";
+            print "                    OPENSSL_free(value);\n";
             print "                    return 0;\n";
+            print "                }\n";
         }
         print "            }\n";
     }
+    print "            OPENSSL_free(value);\n";
     print "        }\n";
     print "    }\n";
     print "    return 1;\n";

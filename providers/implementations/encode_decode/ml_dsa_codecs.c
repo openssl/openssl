@@ -151,7 +151,7 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     const uint8_t *buf, *pos;
     const X509_ALGOR *alg = NULL;
-    const char *formats;
+    char *formats;
     int len, ptype;
     uint32_t magic;
     uint16_t seed_magic;
@@ -178,6 +178,7 @@ ossl_ml_dsa_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
         provctx, OSSL_PKEY_PARAM_ML_DSA_INPUT_FORMATS, NULL);
     fmt_slots = ossl_ml_common_pkcs8_fmt_order(v->alg, codec->p8fmt,
         "input", formats);
+    OPENSSL_free(formats);
     if (fmt_slots == NULL)
         goto end;
 
@@ -293,6 +294,7 @@ int ossl_ml_dsa_i2d_prvkey(const ML_DSA_KEY *key, uint8_t **out,
     ML_COMMON_PKCS8_FMT_PREF *fmt_slots, *slot;
     const ML_COMMON_PKCS8_FMT *p8fmt;
     uint8_t *buf = NULL, *pos;
+    char *config_formats = NULL;
     int len = ML_DSA_SEED_BYTES;
     int ret = 0;
     const uint8_t *seed = ossl_ml_dsa_key_get_seed(key);
@@ -312,12 +314,13 @@ int ossl_ml_dsa_i2d_prvkey(const ML_DSA_KEY *key, uint8_t **out,
     if (formats == NULL) {
         if ((ossl_ml_dsa_key_get_prov_flags(key) & ML_DSA_KEY_RETAIN_SEED) == 0)
             seed = NULL;
-        formats = ossl_prov_ctx_get_param(provctx,
+        formats = config_formats = ossl_prov_ctx_get_param(provctx,
             OSSL_PKEY_PARAM_ML_DSA_OUTPUT_FORMATS,
             NULL);
     }
     fmt_slots = ossl_ml_common_pkcs8_fmt_order(params->alg, codec->p8fmt,
         "output", formats);
+    OPENSSL_free(config_formats);
     if (fmt_slots == NULL)
         return 0;
 
