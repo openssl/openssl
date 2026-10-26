@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added AVX2 and VAES optimizations for AES-CTR, AES-CFB128, and AES-CBC
+   decryption on CPUs that have VAES without AVX-512. CPUs with AVX-512 VAES
+   keep the existing 512-bit kernels.
+
+   *Madan Mohan Manokar*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*

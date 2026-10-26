@@ -97,6 +97,29 @@ static const PROV_CIPHER_HW aesni_vaes_cbc = {
 };
 #endif /* VAES_CBC_ELIGIBLE */
 
+#if VAES256_CBC_ELIGIBLE
+static int aes_cbc_vaes256_wrapper(
+    PROV_CIPHER_CTX *ctx,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
+{
+    if (!ctx->enc && len >= 256) {
+        ossl_aes_cbc_vaes256_decrypt(in, out, len, ctx->ks, ctx->iv, ctx->enc);
+        return 1;
+    }
+
+    aesni_cbc_encrypt(in, out, len, ctx->ks, ctx->iv, ctx->enc);
+    return 1;
+}
+
+static const PROV_CIPHER_HW aesni_vaes256_cbc = {
+    cipher_hw_aesni_initkey,
+    aes_cbc_vaes256_wrapper,
+    ossl_cipher_aes_copyctx
+};
+#endif /* VAES256_CBC_ELIGIBLE */
+
 #if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 /* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
 #define VAES_CFB128_ELIGIBLE 1
@@ -137,6 +160,40 @@ static const PROV_CIPHER_HW aesni_vaes_cfb128 = {
     ossl_cipher_aes_copyctx
 };
 #endif /* VAES_CFB128_ELIGIBLE */
+
+#if VAES256_CFB_ELIGIBLE
+static int aes_cfb128_vaes256_encdec_wrapper(
+    PROV_CIPHER_CTX *ctx,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
+{
+    ossl_ssize_t num;
+
+    num = (ossl_ssize_t)ctx->num;
+
+    if (num < 0) {
+        /* behavior from CRYPTO_cfb128_encrypt */
+        ctx->num = -1;
+        return 1;
+    }
+
+    if (ctx->enc)
+        ossl_aes_cfb128_vaes256_enc(in, out, len, ctx->ks, ctx->iv, &num);
+    else
+        ossl_aes_cfb128_vaes256_dec(in, out, len, ctx->ks, ctx->iv, &num);
+
+    ctx->num = (int)num;
+
+    return 1;
+}
+
+static const PROV_CIPHER_HW aesni_vaes256_cfb128 = {
+    cipher_hw_aesni_initkey,
+    aes_cfb128_vaes256_encdec_wrapper,
+    ossl_cipher_aes_copyctx
+};
+#endif /* VAES256_CFB_ELIGIBLE */
 
 static const PROV_CIPHER_HW aesni_cfb128 = {
     cipher_hw_aesni_initkey,
@@ -191,11 +248,46 @@ static const PROV_CIPHER_HW aesni_vaes_ctr = {
 };
 #endif /* VAES_CTR_ELIGIBLE */
 
+#if VAES256_CTR_ELIGIBLE
+static int aes_ctr_vaes256_wrapper(PROV_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t len)
+{
+    const AES_KEY *key = (const AES_KEY *)ctx->ks;
+    unsigned int num;
+
+    if (len >= 64) {
+        num = ctx->num;
+        ossl_aes_ctr_vaes256(in, out, len, key, ctx->iv, ctx->buf, &num);
+        ctx->num = num;
+        return 1;
+    }
+
+    return ossl_cipher_hw_generic_ctr(ctx, out, in, len);
+}
+
+static const PROV_CIPHER_HW aesni_vaes256_ctr = {
+    cipher_hw_aesni_initkey,
+    aes_ctr_vaes256_wrapper,
+    ossl_cipher_aes_copyctx
+};
+#endif /* VAES256_CTR_ELIGIBLE */
+
 static const PROV_CIPHER_HW aesni_ctr = {
     cipher_hw_aesni_initkey,
     ossl_cipher_hw_generic_ctr,
     ossl_cipher_aes_copyctx
 };
+
+#if VAES_CBC_ELIGIBLE || VAES_CTR_ELIGIBLE
+/* AVX-512F, AVX-512DQ, AVX-512BW, and VAES. Scalar, so Zen 3 can call it. */
+static int aes_vaes512_cpu_capable(void)
+{
+    return (OPENSSL_ia32cap_P[2] & (1u << 16))
+        && (OPENSSL_ia32cap_P[2] & (1u << 17))
+        && (OPENSSL_ia32cap_P[2] & (1u << 30))
+        && (OPENSSL_ia32cap_P[3] & (1u << 9));
+}
+#endif
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode)
 {
@@ -205,14 +297,22 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode)
             return &aesni_ecb;
         case AES_MODE_CBC:
 #if VAES_CBC_ELIGIBLE
-            if (ossl_aes_cbc_vaes_eligible())
+            if (aes_vaes512_cpu_capable() && ossl_aes_cbc_vaes_eligible())
                 return &aesni_vaes_cbc;
+#endif
+#if VAES256_CBC_ELIGIBLE
+            if (ossl_aes_cbc_vaes256_eligible())
+                return &aesni_vaes256_cbc;
 #endif
             return &aesni_cbc;
         case AES_MODE_CFB128:
 #if VAES_CFB128_ELIGIBLE
             if (ossl_aes_cfb128_vaes_eligible())
                 return &aesni_vaes_cfb128;
+#endif
+#if VAES256_CFB_ELIGIBLE
+            if (ossl_aes_cfb128_vaes256_eligible())
+                return &aesni_vaes256_cfb128;
 #endif
             return &aesni_cfb128;
         case AES_MODE_CFB8:
@@ -223,8 +323,12 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode)
             return &aesni_ofb128;
         case AES_MODE_CTR:
 #if VAES_CTR_ELIGIBLE
-            if (ossl_aes_ctr_vaes_eligible())
+            if (aes_vaes512_cpu_capable() && ossl_aes_ctr_vaes_eligible())
                 return &aesni_vaes_ctr;
+#endif
+#if VAES256_CTR_ELIGIBLE
+            if (ossl_aes_ctr_vaes256_eligible())
+                return &aesni_vaes256_ctr;
 #endif
             return &aesni_ctr;
         default:
