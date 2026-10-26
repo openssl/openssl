@@ -122,11 +122,11 @@ const OPTIONS pkcs12_options[] = {
     { "out", OPT_OUT, '>', "Output file" },
     { "passin", OPT_PASSIN, 's', "Input file pass phrase source" },
     { "passout", OPT_PASSOUT, 's', "Output file pass phrase source" },
-    { "password", OPT_PASSWORD, 's', "Set PKCS#12 import/export password source" },
+    { "password", OPT_PASSWORD, 's', "Set PKCS #12 import/export password source" },
     { "twopass", OPT_TWOPASS, '-', "Separate MAC, encryption passwords" },
     { "nokeys", OPT_NOKEYS, '-', "Don't output private keys" },
     { "nocerts", OPT_NOCERTS, '-', "Don't output certificates" },
-    { "noout", OPT_NOOUT, '-', "Don't output anything, just verify PKCS#12 input" },
+    { "noout", OPT_NOOUT, '-', "Don't output anything, just verify PKCS #12 input" },
 #ifndef OPENSSL_NO_DES
     { "legacy", OPT_LEGACY_ALG, '-',
 #ifdef OPENSSL_NO_RC2
@@ -139,8 +139,8 @@ const OPTIONS pkcs12_options[] = {
     OPT_PROV_OPTIONS,
     OPT_R_OPTIONS,
 
-    OPT_SECTION("PKCS#12 import (parsing PKCS#12)"),
-    { "info", OPT_INFO, '-', "Print info about PKCS#12 structure" },
+    OPT_SECTION("PKCS #12 import (parsing PKCS #12)"),
+    { "info", OPT_INFO, '-', "Print info about PKCS #12 structure" },
     { "nomacver", OPT_NOMACVER, '-', "Don't verify integrity MAC" },
     { "clcerts", OPT_CLCERTS, '-', "Only output client certificates" },
     { "cacerts", OPT_CACERTS, '-', "Only output CA certificates" },
@@ -148,10 +148,10 @@ const OPTIONS pkcs12_options[] = {
     { "noenc", OPT_NOENC, '-', "Don't encrypt private keys" },
     { "nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated" },
 
-    OPT_SECTION("PKCS#12 output (export)"),
-    { "export", OPT_EXPORT, '-', "Create PKCS12 file" },
+    OPT_SECTION("PKCS #12 output (export)"),
+    { "export", OPT_EXPORT, '-', "Create PKCS #12 file" },
     { "inkey", OPT_INKEY, 's', "Private key, else read from -in input file" },
-    { "certfile", OPT_CERTFILE, '<', "Extra certificates for PKCS12 output" },
+    { "certfile", OPT_CERTFILE, '<', "Extra certificates for PKCS #12 output" },
     { "passcerts", OPT_PASSCERTS, 's', "Certificate file pass phrase source" },
     { "chain", OPT_CHAIN, '-', "Build and add certificate chain for EE cert," },
     { OPT_MORE_STR, 0, 0,
@@ -191,7 +191,7 @@ const OPTIONS pkcs12_options[] = {
     { "maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility" },
     { "macsaltlen", OPT_MACSALTLEN, 'p', "Specify the salt len for MAC" },
     { "nomac", OPT_NOMAC, '-', "Don't generate MAC" },
-    { "jdktrust", OPT_JDKTRUST, 's', "Mark certificate in PKCS#12 store as trusted for JDK compatibility" },
+    { "jdktrust", OPT_JDKTRUST, 's', "Mark certificate in PKCS #12 store as trusted for JDK compatibility" },
     { NULL }
 };
 
@@ -727,7 +727,7 @@ int pkcs12_main(int argc, char **argv)
             jdk_trust, (void *)obj);
 
         if (p12 == NULL) {
-            BIO_printf(bio_err, "Error creating PKCS12 structure for %s\n",
+            BIO_printf(bio_err, "Error creating PKCS #12 structure for %s\n",
                 outfile);
             goto export_end;
         }
@@ -747,7 +747,7 @@ int pkcs12_main(int argc, char **argv)
                 }
             } else {
                 if (!PKCS12_set_mac(p12, mpass, -1, NULL, macsaltlen, maciter, macmd)) {
-                    BIO_puts(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n"
+                    BIO_puts(bio_err, "Error creating PKCS #12 MAC; no PKCS12KDF support?\n"
                                       "Use -nomac or -pbmac1_pbkdf2 if PKCS12KDF support not available\n");
                     goto export_end;
                 }
@@ -871,7 +871,7 @@ int pkcs12_main(int argc, char **argv)
             pkcs12kdf = EVP_KDF_fetch(app_get0_libctx(), "PKCS12KDF",
                 app_get0_propq());
             if (pkcs12kdf == NULL) {
-                BIO_puts(bio_err, "Error verifying PKCS12 MAC; no PKCS12KDF support.\n");
+                BIO_puts(bio_err, "Error verifying PKCS #12 MAC; no PKCS12KDF support.\n");
                 BIO_puts(bio_err, "Use -nomacver if MAC verification is not required.\n");
                 goto end;
             }
