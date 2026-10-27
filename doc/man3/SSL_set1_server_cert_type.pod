@@ -218,7 +218,7 @@ L<SSL_use_certificate(3)>
 
 These functions were added in OpenSSL 3.2.
 
-In OpenSSL 4.1 a peer's certificate type extension is processed even when
+In OpenSSL 4.2 a peer's certificate type extension is processed even when
 no local list is configured, instead of being ignored, and a certificate
 type mismatch is an error only when the affected certificate would
 actually be exchanged.
