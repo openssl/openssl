@@ -33,20 +33,10 @@ jobs:
       - name: "Check if we already have a NEWS/CHANGES entry"
         if: ${{ env.SKIP_NEWS_CHECK == 'no' }}
         run: |
-          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
-          echo "changed files between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
-          cat ./names.txt
-          set +e
-          grep -q "NEWS\.md" names.txt
-          if [ $? -eq 0 ]; then
+          if git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- CHANGES.md NEWS.md | read -r fname; then
             echo "FOUND_NEWS_CHANGES_ADDITION=yes" >> $GITHUB_ENV
           else
-            grep -q "CHANGES\.md" names.txt
-            if [ $? -eq 0 ]; then
-              echo "FOUND_NEWS_CHANGES_ADDITION=yes" >> $GITHUB_ENV
-            else
-              echo "FOUND_NEWS_CHANGES_ADDITION=no" >> $GITHUB_ENV
-            fi
+            echo "FOUND_NEWS_CHANGES_ADDITION=no" >> $GITHUB_ENV
           fi
       - name: "Check if this PR affects a CVE"
         if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
@@ -61,13 +51,8 @@ jobs:
       - name: "Check if this PR impacts a public API"
         if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
         run: |
-          set +e
-          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
-          echo "changed files between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
-          cat ./names.txt
-          grep -q "include/openssl" ./names.txt
-          if [ $? -eq 0 ]; then
-            echo "Changes in this PR may impact public APIS's"
+          if git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- include/openssl | read -r fname; then
+            echo "Changes in this PR may impact public API's"
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
       - name: "Check if this is a feature branch merge"
