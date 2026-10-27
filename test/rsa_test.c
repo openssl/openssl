@@ -831,8 +831,8 @@ err:
 /*
  * The default method's rsa_mod_exp is reachable directly through
  * RSA_meth_get_mod_exp(), so it must compute I^d mod n for any I, not
- * only the I < n that RSA's own callers pass, and whatever the BIGNUM's
- * allocation.
+ * only the 0 <= I < n that RSA's own callers pass, and whatever the
+ * BIGNUM's allocation.
  */
 static int test_rsa_mod_exp_input(int idx)
 {
@@ -856,7 +856,7 @@ static int test_rsa_mod_exp_input(int idx)
     /* n's width in bits, rounded up to whole limbs */
     bits = (nbits + BN_BITS2 - 1) / BN_BITS2 * BN_BITS2;
 
-    for (i = 0; i < 9; i++) {
+    for (i = 0; i < 11; i++) {
         BN_free(in);
         if (!TEST_ptr(in = BN_new()))
             goto err;
@@ -892,6 +892,15 @@ static int test_rsa_mod_exp_input(int idx)
         case 8: /* I = n - 1, likewise */
             BN_set_bit(in, 4 * bits);
             BN_sub(in, n, BN_value_one());
+            break;
+        case 9: /* I = -5 */
+            BN_set_word(in, 5);
+            BN_set_negative(in, 1);
+            break;
+        case 10: /* I = -(2n + 7) */
+            BN_lshift1(in, n);
+            BN_add_word(in, 7);
+            BN_set_negative(in, 1);
             break;
         }
         if (!TEST_true(BN_nnmod(t, in, n, ctx))
