@@ -700,10 +700,13 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
      * the field width of an arbitrary curve, so guard the * 6 against overflow.
      */
     need = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, mont),
-        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+        is_mont ? OSSL_FN_from_mont_ctx_size(NULL, p_fn, mont)
+                : OSSL_FN_mont_reduce_ctx_size(NULL, p_fn, mont),
+        OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, mont));
     need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_mont_reduce_ctx_size(NULL, p_fn, mont));
+        OSSL_FN_to_mont_quick_ctx_size(NULL, NULL, mont));
+    need = ossl_fn_ctx_max_size(need,
+        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
     need = ossl_fn_ctx_add_size(need,
         (size_t)nlimbs > SIZE_MAX / 6 ? 0
                                       : OSSL_FN_CTX_size(1, 6, (size_t)nlimbs * 6));
