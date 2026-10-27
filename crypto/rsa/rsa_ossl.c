@@ -1146,6 +1146,21 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         || rsa->meth->bn_mod_exp != BN_mod_exp_mont)
         return rsa_ossl_mod_exp_bn(r0, I, rsa, ctx);
 
+    /*
+     * OSSL_FN is unsigned, so a direct caller's negative I is brought into
+     * [0, n) first.  RSA's own callers never pass one.
+     */
+    if (BN_is_negative(I)) {
+        BIGNUM *t;
+
+        BN_CTX_start(ctx);
+        ret = (t = BN_CTX_get(ctx)) != NULL
+            && BN_nnmod(t, I, rsa->n, ctx)
+            && rsa_ossl_mod_exp(r0, t, rsa, ctx);
+        BN_CTX_end(ctx);
+        return ret;
+    }
+
     fn_I = bn_get_ossl_fn(I);
     fn_n = bn_get_ossl_fn(rsa->n);
     if (fn_I == NULL || !ossl_assert(fn_n != NULL))
