@@ -9,7 +9,7 @@
 
 #include "internal/quic_srtm.h"
 #include "internal/common.h"
-#include <openssl/lhash.h>
+#include "internal/htable.h"
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
 
@@ -21,13 +21,12 @@ typedef struct srtm_item_st SRTM_ITEM;
 
 #define BLINDED_SRT_LEN 16
 
-DEFINE_LHASH_OF_EX(SRTM_ITEM);
-
 /*
- * The SRTM is implemented using two LHASH instances, one matching opaque pointers to
- * an item structure, and another matching a SRT-derived value to an item
+ * The SRTM is implemented using two hash tables, one matching opaque pointers
+ * to an item structure, and another matching a SRT-derived value to an item
  * structure. Multiple items with different seq_num values under a given opaque,
- * and duplicate SRTs, are handled using sorted singly-linked lists.
+ * and duplicate SRTs, are handled using sorted singly-linked lists: only the
+ * head of each list is in the table, through a node embedded in the item.
  *
  * The O(n) insert and lookup performance is tolerated on the basis that the
  * total number of entries for a given opaque (total number of extant CIDs for a
@@ -37,7 +36,9 @@ DEFINE_LHASH_OF_EX(SRTM_ITEM);
  * opaque.
  *
  * It is expected one SRTM will exist per QUIC_PORT and track all SRTs across
- * all connections for that QUIC_PORT.
+ * all connections for that QUIC_PORT. Each table has a fixed number of
+ * buckets (32 KB on LP64), so chains stay short up to a few thousand
+ * connections per port and only lengthen beyond that.
  */
 struct srtm_item_st {
     SRTM_ITEM *next_by_srt_blinded; /* SORT BY opaque  DESC */
@@ -47,64 +48,95 @@ struct srtm_item_st {
     QUIC_STATELESS_RESET_TOKEN srt;
     unsigned char srt_blinded[BLINDED_SRT_LEN]; /* H(srt) */
 
+    OSSL_QUEUE_MEMBER(fwd); /* in items_fwd while head of its opaque list */
+    OSSL_QUEUE_MEMBER(rev); /* in items_rev while head of its SRT list */
+
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     uint32_t debug_token;
 #endif
 };
 
+#define SRTM_BITS 12
+
+DEFINE_QUEUE_OF(fwd, SRTM_ITEM);
+DEFINE_HTABLE_OF(fwd, SRTM_ITEM, SRTM_BITS);
+DEFINE_QUEUE_OF(rev, SRTM_ITEM);
+DEFINE_HTABLE_OF(rev, SRTM_ITEM, SRTM_BITS);
+
 struct quic_srtm_st {
     /* Crypto context used to calculate blinded SRTs H(srt). */
     EVP_CIPHER_CTX *blind_ctx; /* kept with key */
 
-    LHASH_OF(SRTM_ITEM) *items_fwd; /* (opaque)  -> SRTM_ITEM */
-    LHASH_OF(SRTM_ITEM) *items_rev; /* (H(srt))  -> SRTM_ITEM */
-
-    /*
-     * Monotonically transitions to 1 in event of allocation failure. The only
-     * valid operation on such an object is to free it.
-     */
-    unsigned int alloc_failed : 1;
+    OSSL_HTABLE(fwd)
+    items_fwd; /* (opaque)  -> SRTM_ITEM */
+    OSSL_HTABLE(rev)
+    items_rev; /* (H(srt))  -> SRTM_ITEM */
 };
 
-static unsigned long items_fwd_hash(const SRTM_ITEM *item)
-{
-    return (unsigned long)(uintptr_t)item->opaque;
-}
-
-static int items_fwd_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)
-{
-    return a->opaque != b->opaque;
-}
-
-static unsigned long items_rev_hash(const SRTM_ITEM *item)
+static uint64_t items_rev_hash(const unsigned char *srt_blinded)
 {
     /*
      * srt_blinded has already been through a crypto-grade hash function, so we
      * can just use bits from that.
      */
-    unsigned long l;
+    uint64_t l;
 
-    memcpy(&l, item->srt_blinded, sizeof(l));
+    memcpy(&l, srt_blinded, sizeof(l));
     return l;
 }
 
-static int items_rev_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)
+/* The head of the seq_num-sorted list of items under |opaque|, or NULL. */
+static SRTM_ITEM *srtm_fwd_head(const QUIC_SRTM *srtm, void *opaque)
 {
+    SRTM_ITEM *item;
+
+    OSSL_HTABLE_FIND(item, fwd, &srtm->items_fwd, ossl_hash_ptr(opaque),
+        item->opaque == opaque);
+    return item;
+}
+
+/* The head of the opaque-sorted list of items with |srt_blinded|, or NULL. */
+static SRTM_ITEM *srtm_rev_head(const QUIC_SRTM *srtm,
+    const unsigned char *srt_blinded)
+{
+    SRTM_ITEM *item;
+
     /*
      * We don't need to use CRYPTO_memcmp here as the relationship of
      * srt_blinded to srt is already cryptographically obfuscated.
      */
-    return memcmp(a->srt_blinded, b->srt_blinded, sizeof(a->srt_blinded));
+    OSSL_HTABLE_FIND(item, rev, &srtm->items_rev, items_rev_hash(srt_blinded),
+        memcmp(item->srt_blinded, srt_blinded, BLINDED_SRT_LEN) == 0);
+    return item;
 }
 
-static int srtm_check_lh(QUIC_SRTM *srtm, LHASH_OF(SRTM_ITEM) *lh)
+/*
+ * Make |new_head| (NULL for none) the item in the forward table in place of
+ * |old_head| (NULL for none).
+ */
+static void srtm_fwd_set_head(QUIC_SRTM *srtm, SRTM_ITEM *old_head,
+    SRTM_ITEM *new_head)
 {
-    if (lh_SRTM_ITEM_error(lh)) {
-        srtm->alloc_failed = 1;
-        return 0;
-    }
+    if (old_head == new_head)
+        return;
+    if (old_head != NULL)
+        ossl_htable_fwd_del(&srtm->items_fwd, old_head);
+    if (new_head != NULL)
+        ossl_htable_fwd_add(&srtm->items_fwd, new_head,
+            ossl_hash_ptr(new_head->opaque));
+}
 
-    return 1;
+/* As above, for the reverse table. */
+static void srtm_rev_set_head(QUIC_SRTM *srtm, SRTM_ITEM *old_head,
+    SRTM_ITEM *new_head)
+{
+    if (old_head == new_head)
+        return;
+    if (old_head != NULL)
+        ossl_htable_rev_del(&srtm->items_rev, old_head);
+    if (new_head != NULL)
+        ossl_htable_rev_add(&srtm->items_rev, new_head,
+            items_rev_hash(new_head->srt_blinded));
 }
 
 QUIC_SRTM *ossl_quic_srtm_new(OSSL_LIB_CTX *libctx, const char *propq)
@@ -132,11 +164,8 @@ QUIC_SRTM *ossl_quic_srtm_new(OSSL_LIB_CTX *libctx, const char *propq)
     EVP_CIPHER_free(ecb);
     ecb = NULL;
 
-    /* Create mappings. */
-    if ((srtm->items_fwd = lh_SRTM_ITEM_new(items_fwd_hash, items_fwd_cmp)) == NULL
-        || (srtm->items_rev = lh_SRTM_ITEM_new(items_rev_hash, items_rev_cmp)) == NULL)
-        goto err;
-
+    ossl_htable_fwd_init(&srtm->items_fwd);
+    ossl_htable_rev_init(&srtm->items_rev);
     return srtm;
 
 err:
@@ -149,7 +178,8 @@ err:
     return NULL;
 }
 
-static void srtm_free_each(SRTM_ITEM *ihead)
+/* Free a whole opaque list; the reverse table is dropped without a visit. */
+static void srtm_free_each(SRTM_ITEM *ihead, void *arg)
 {
     SRTM_ITEM *inext, *item = ihead;
 
@@ -166,17 +196,7 @@ void ossl_quic_srtm_free(QUIC_SRTM *srtm)
     if (srtm == NULL)
         return;
 
-    lh_SRTM_ITEM_free(srtm->items_rev);
-    if (srtm->items_fwd != NULL) {
-        /*
-         * We don't need to call lh_SRTM_ITEM_set_down_load(..., 0)
-         * here because srtm_free_each() callback for _doall() does
-         * not call to lh_SRTIM_ITEM_delete().
-         */
-        lh_SRTM_ITEM_doall(srtm->items_fwd, srtm_free_each);
-        lh_SRTM_ITEM_free(srtm->items_fwd);
-    }
-
+    ossl_htable_fwd_doall_arg(&srtm->items_fwd, srtm_free_each, NULL);
     EVP_CIPHER_CTX_free(srtm->blind_ctx);
     OPENSSL_free(srtm);
 }
@@ -191,11 +211,9 @@ void ossl_quic_srtm_free(QUIC_SRTM *srtm)
 static SRTM_ITEM *srtm_find(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     SRTM_ITEM **head_p, SRTM_ITEM **prev_p)
 {
-    SRTM_ITEM key, *item = NULL, *prev = NULL;
+    SRTM_ITEM *item, *prev = NULL;
 
-    key.opaque = opaque;
-
-    item = lh_SRTM_ITEM_retrieve(srtm->items_fwd, &key);
+    item = srtm_fwd_head(srtm, opaque);
     if (head_p != NULL)
         *head_p = item;
 
@@ -264,7 +282,7 @@ static void sorted_insert_srt(SRTM_ITEM *head, SRTM_ITEM *item, SRTM_ITEM **new_
  * mitigation purposes. We compute this once as a cached value when an SRTM_ITEM
  * is formed.
  */
-static int srtm_compute_blinded(QUIC_SRTM *srtm, SRTM_ITEM *item,
+static int srtm_compute_blinded(QUIC_SRTM *srtm, unsigned char *srt_blinded,
     const QUIC_STATELESS_RESET_TOKEN *token)
 {
     int outl = 0;
@@ -274,7 +292,7 @@ static int srtm_compute_blinded(QUIC_SRTM *srtm, SRTM_ITEM *item,
      * blinding for side-channel purposes. Encrypt the token as a single AES
      * block.
      */
-    if (!EVP_EncryptUpdate(srtm->blind_ctx, item->srt_blinded, &outl,
+    if (!EVP_EncryptUpdate(srtm->blind_ctx, srt_blinded, &outl,
             (const unsigned char *)token, sizeof(*token)))
         return 0;
 
@@ -287,10 +305,7 @@ static int srtm_compute_blinded(QUIC_SRTM *srtm, SRTM_ITEM *item,
 int ossl_quic_srtm_add(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     const QUIC_STATELESS_RESET_TOKEN *token)
 {
-    SRTM_ITEM *item = NULL, *head = NULL, *new_head, *r_item;
-
-    if (srtm->alloc_failed)
-        return 0;
+    SRTM_ITEM *item = NULL, *head = NULL, *new_head, *r_head;
 
     /* (opaque, seq_num) duplicates not allowed */
     if ((item = srtm_find(srtm, opaque, seq_num, &head, NULL)) != NULL)
@@ -302,75 +317,32 @@ int ossl_quic_srtm_add(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     item->opaque = opaque;
     item->seq_num = seq_num;
     item->srt = *token;
-    if (!srtm_compute_blinded(srtm, item, &item->srt)) {
+    if (!srtm_compute_blinded(srtm, item->srt_blinded, &item->srt)) {
         OPENSSL_free(item);
         return 0;
     }
 
     /* Add to forward mapping. */
-    if (head == NULL) {
-        /* First item under this opaque */
-        lh_SRTM_ITEM_insert(srtm->items_fwd, item);
-        if (!srtm_check_lh(srtm, srtm->items_fwd)) {
-            OPENSSL_free(item);
-            return 0;
-        }
-    } else {
-        sorted_insert_seq_num(head, item, &new_head);
-        if (new_head != head) { /* head changed, update in lhash */
-            lh_SRTM_ITEM_insert(srtm->items_fwd, new_head);
-            if (!srtm_check_lh(srtm, srtm->items_fwd)) {
-                OPENSSL_free(item);
-                return 0;
-            }
-        }
-    }
+    sorted_insert_seq_num(head, item, &new_head);
+    srtm_fwd_set_head(srtm, head, new_head);
 
     /* Add to reverse mapping. */
-    r_item = lh_SRTM_ITEM_retrieve(srtm->items_rev, item);
-    if (r_item == NULL) {
-        /* First item under this blinded SRT */
-        lh_SRTM_ITEM_insert(srtm->items_rev, item);
-        if (!srtm_check_lh(srtm, srtm->items_rev))
-            /*
-             * Can't free the item now as we would have to undo the insertion
-             * into the forward mapping which would require an insert operation
-             * to restore the previous value. which might also fail. However,
-             * the item will be freed OK when we free the entire SRTM.
-             */
-            return 0;
-    } else {
-        sorted_insert_srt(r_item, item, &new_head);
-        if (new_head != r_item) { /* head changed, update in lhash */
-            lh_SRTM_ITEM_insert(srtm->items_rev, new_head);
-            if (!srtm_check_lh(srtm, srtm->items_rev))
-                /* As above. */
-                return 0;
-        }
-    }
-
+    r_head = srtm_rev_head(srtm, item->srt_blinded);
+    sorted_insert_srt(r_head, item, &new_head);
+    srtm_rev_set_head(srtm, r_head, new_head);
     return 1;
 }
 
 /* Remove item from reverse mapping. */
-static int srtm_remove_from_rev(QUIC_SRTM *srtm, SRTM_ITEM *item)
+static void srtm_remove_from_rev(QUIC_SRTM *srtm, SRTM_ITEM *item)
 {
     SRTM_ITEM *rh_item;
 
-    rh_item = lh_SRTM_ITEM_retrieve(srtm->items_rev, item);
+    rh_item = srtm_rev_head(srtm, item->srt_blinded);
     assert(rh_item != NULL);
     if (rh_item == item) {
-        /*
-         * Change lhash to point to item after this one, or remove the entry if
-         * this is the last one.
-         */
-        if (item->next_by_srt_blinded != NULL) {
-            lh_SRTM_ITEM_insert(srtm->items_rev, item->next_by_srt_blinded);
-            if (!srtm_check_lh(srtm, srtm->items_rev))
-                return 0;
-        } else {
-            lh_SRTM_ITEM_delete(srtm->items_rev, item);
-        }
+        /* The item after this one heads the list now, if there is one. */
+        srtm_rev_set_head(srtm, item, item->next_by_srt_blinded);
     } else {
         /* Find our entry in the SRT list */
         for (; rh_item->next_by_srt_blinded != item;
@@ -378,8 +350,6 @@ static int srtm_remove_from_rev(QUIC_SRTM *srtm, SRTM_ITEM *item)
             ;
         rh_item->next_by_srt_blinded = item->next_by_srt_blinded;
     }
-
-    return 1;
 }
 
 int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
@@ -392,9 +362,6 @@ int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
         match = &match_sink;
     *match = 0;
 
-    if (srtm->alloc_failed)
-        return 0;
-
     if ((item = srtm_find(srtm, opaque, seq_num, NULL, &prev)) == NULL)
         /* No match */
         return 1;
@@ -402,25 +369,13 @@ int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     *match = 1;
 
     /* Remove from forward mapping. */
-    if (prev == NULL) {
-        /*
-         * Change lhash to point to item after this one, or remove the entry if
-         * this is the last one.
-         */
-        if (item->next_by_seq_num != NULL) {
-            lh_SRTM_ITEM_insert(srtm->items_fwd, item->next_by_seq_num);
-            if (!srtm_check_lh(srtm, srtm->items_fwd))
-                return 0;
-        } else {
-            lh_SRTM_ITEM_delete(srtm->items_fwd, item);
-        }
-    } else {
+    if (prev == NULL)
+        srtm_fwd_set_head(srtm, item, item->next_by_seq_num);
+    else
         prev->next_by_seq_num = item->next_by_seq_num;
-    }
 
     /* Remove from reverse mapping. */
-    if (!srtm_remove_from_rev(srtm, item))
-        return 0;
+    srtm_remove_from_rev(srtm, item);
 
     OPENSSL_free(item);
     return 1;
@@ -428,27 +383,18 @@ int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
 
 int ossl_quic_srtm_cull(QUIC_SRTM *srtm, void *opaque)
 {
-    SRTM_ITEM key, *item = NULL, *inext, *ihead;
+    SRTM_ITEM *item, *inext, *ihead;
 
-    key.opaque = opaque;
-
-    if (srtm->alloc_failed)
-        return 0;
-
-    if ((ihead = lh_SRTM_ITEM_retrieve(srtm->items_fwd, &key)) == NULL)
+    if ((ihead = srtm_fwd_head(srtm, opaque)) == NULL)
         return 1; /* nothing removed is a success condition */
 
+    srtm_fwd_set_head(srtm, ihead, NULL);
     for (item = ihead; item != NULL; item = inext) {
         inext = item->next_by_seq_num;
-        if (item != ihead) {
-            srtm_remove_from_rev(srtm, item);
-            OPENSSL_free(item);
-        }
+        srtm_remove_from_rev(srtm, item);
+        OPENSSL_free(item);
     }
 
-    lh_SRTM_ITEM_delete(srtm->items_fwd, ihead);
-    srtm_remove_from_rev(srtm, ihead);
-    OPENSSL_free(ihead);
     return 1;
 }
 
@@ -457,15 +403,13 @@ int ossl_quic_srtm_lookup(QUIC_SRTM *srtm,
     size_t idx,
     void **opaque, uint64_t *seq_num)
 {
-    SRTM_ITEM key, *item;
+    unsigned char srt_blinded[BLINDED_SRT_LEN];
+    SRTM_ITEM *item;
 
-    if (srtm->alloc_failed)
+    if (!srtm_compute_blinded(srtm, srt_blinded, token))
         return 0;
 
-    if (!srtm_compute_blinded(srtm, &key, token))
-        return 0;
-
-    item = lh_SRTM_ITEM_retrieve(srtm->items_rev, &key);
+    item = srtm_rev_head(srtm, srt_blinded);
     for (; idx > 0 && item != NULL; --idx, item = item->next_by_srt_blinded)
         ;
     if (item == NULL)
@@ -537,6 +481,29 @@ static void check_count(SRTM_ITEM *item, void *arg)
     }
 }
 
+/* Visit the head of every opaque list (fwd) or SRT list (rev). */
+static void check_each_fwd(const QUIC_SRTM *srtm,
+    void (*fn)(SRTM_ITEM *, void *), void *arg)
+{
+    SRTM_ITEM *item;
+    size_t i;
+
+    for (i = 0; i < ossl_htable_num_buckets(&srtm->items_fwd); i++)
+        OSSL_QUEUE_FOREACH (item, fwd, &srtm->items_fwd.buckets[i])
+            fn(item, arg);
+}
+
+static void check_each_rev(const QUIC_SRTM *srtm,
+    void (*fn)(SRTM_ITEM *, void *), void *arg)
+{
+    SRTM_ITEM *item;
+    size_t i;
+
+    for (i = 0; i < ossl_htable_num_buckets(&srtm->items_rev); i++)
+        OSSL_QUEUE_FOREACH (item, rev, &srtm->items_rev.buckets[i])
+            fn(item, arg);
+}
+
 #endif
 
 void ossl_quic_srtm_check(const QUIC_SRTM *srtm)
@@ -551,15 +518,13 @@ void ossl_quic_srtm_check(const QUIC_SRTM *srtm)
 
     assert(srtm != NULL);
     assert(srtm->blind_ctx != NULL);
-    assert(srtm->items_fwd != NULL);
-    assert(srtm->items_rev != NULL);
 
     tokens_seen = 0;
-    lh_SRTM_ITEM_doall_arg(srtm->items_fwd, check_mark, &args);
+    check_each_fwd(srtm, check_mark, &args);
 
     tokens_expected = tokens_seen;
     tokens_seen = 0;
-    lh_SRTM_ITEM_doall_arg(srtm->items_rev, check_count, &args);
+    check_each_rev(srtm, check_count, &args);
 
     assert(tokens_seen == tokens_expected);
     tokens_expected_old = tokens_expected;
@@ -569,11 +534,11 @@ void ossl_quic_srtm_check(const QUIC_SRTM *srtm)
 
     args.mode = 1;
     tokens_seen = 0;
-    lh_SRTM_ITEM_doall_arg(srtm->items_rev, check_mark, &args);
+    check_each_rev(srtm, check_mark, &args);
 
     tokens_expected = tokens_seen;
     tokens_seen = 0;
-    lh_SRTM_ITEM_doall_arg(srtm->items_fwd, check_count, &args);
+    check_each_fwd(srtm, check_count, &args);
 
     assert(tokens_seen == tokens_expected);
     assert(tokens_seen == tokens_expected_old);

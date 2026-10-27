@@ -15,8 +15,6 @@
  * QUIC Stream Map
  * ===============
  */
-DEFINE_LHASH_OF_EX(QUIC_STREAM);
-
 static void shutdown_flush_done(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs);
 
 /* Circular list management. */
@@ -72,18 +70,22 @@ static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n
 #define ready_for_gc_head(l) list_next((l), (l), \
     offsetof(QUIC_STREAM, ready_for_gc_node))
 
-static unsigned long hash_stream(const QUIC_STREAM *s)
+static uint64_t stream_id_hash(uint64_t id)
 {
-    return (unsigned long)s->id;
+    /*
+     * Stream IDs are sequential within each of the four (initiator,
+     * direction) types, so mix them before masking to spread the four
+     * interleaved sequences over all buckets.
+     */
+    return ossl_hash_u64(id);
 }
 
-static int cmp_stream(const QUIC_STREAM *a, const QUIC_STREAM *b)
+static QUIC_STREAM *stream_map_find(const QUIC_STREAM_MAP *qsm, uint64_t id)
 {
-    if (a->id < b->id)
-        return -1;
-    if (a->id > b->id)
-        return 1;
-    return 0;
+    QUIC_STREAM *s;
+
+    OSSL_HTABLE_FIND(s, qsm, &qsm->map, stream_id_hash(id), s->id == id);
+    return s;
 }
 
 int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
@@ -93,9 +95,7 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
     QUIC_RXFC *max_streams_uni_rxfc,
     QUIC_CHANNEL *ch)
 {
-    qsm->map = lh_QUIC_STREAM_new(hash_stream, cmp_stream);
-    if (qsm->map == NULL)
-        return 0;
+    ossl_htable_qsm_init(&qsm->map);
     qsm->active_list.prev = qsm->active_list.next = &qsm->active_list;
     qsm->accept_list.prev = qsm->accept_list.next = &qsm->accept_list;
     qsm->ready_for_gc_list.prev = qsm->ready_for_gc_list.next
@@ -125,20 +125,15 @@ static void release_each(QUIC_STREAM *stream, void *arg)
 
 void ossl_quic_stream_map_cleanup(QUIC_STREAM_MAP *qsm)
 {
-    if (qsm->map == NULL)
-        return;
-    lh_QUIC_STREAM_set_down_load(qsm->map, 0);
+    /* Releasing every stream leaves the table empty; it owns no storage. */
     ossl_quic_stream_map_visit(qsm, release_each, qsm);
-
-    lh_QUIC_STREAM_free(qsm->map);
-    qsm->map = NULL;
 }
 
 void ossl_quic_stream_map_visit(QUIC_STREAM_MAP *qsm,
     void (*visit_cb)(QUIC_STREAM *stream, void *arg),
     void *visit_cb_arg)
 {
-    lh_QUIC_STREAM_doall_arg(qsm->map, visit_cb, visit_cb_arg);
+    ossl_htable_qsm_doall_arg(&qsm->map, visit_cb, visit_cb_arg);
 }
 
 QUIC_STREAM *ossl_quic_stream_map_alloc(QUIC_STREAM_MAP *qsm,
@@ -146,12 +141,8 @@ QUIC_STREAM *ossl_quic_stream_map_alloc(QUIC_STREAM_MAP *qsm,
     int type)
 {
     QUIC_STREAM *s;
-    QUIC_STREAM key;
 
-    key.id = stream_id;
-
-    s = lh_QUIC_STREAM_retrieve(qsm->map, &key);
-    if (s != NULL)
+    if (stream_map_find(qsm, stream_id) != NULL)
         return NULL;
 
     s = OPENSSL_zalloc(sizeof(*s));
@@ -172,11 +163,7 @@ QUIC_STREAM *ossl_quic_stream_map_alloc(QUIC_STREAM_MAP *qsm,
 
     s->send_final_size = UINT64_MAX;
 
-    lh_QUIC_STREAM_insert(qsm->map, s);
-    if (lh_QUIC_STREAM_error(qsm->map)) {
-        OPENSSL_free(s);
-        return NULL;
-    }
+    ossl_htable_qsm_add(&qsm->map, s, stream_id_hash(stream_id));
     return s;
 }
 
@@ -198,18 +185,14 @@ void ossl_quic_stream_map_release(QUIC_STREAM_MAP *qsm, QUIC_STREAM *stream)
     ossl_quic_rstream_free(stream->rstream);
     stream->rstream = NULL;
 
-    lh_QUIC_STREAM_delete(qsm->map, stream);
+    ossl_htable_qsm_del(&qsm->map, stream);
     OPENSSL_free(stream);
 }
 
 QUIC_STREAM *ossl_quic_stream_map_get_by_id(QUIC_STREAM_MAP *qsm,
     uint64_t stream_id)
 {
-    QUIC_STREAM key;
-
-    key.id = stream_id;
-
-    return lh_QUIC_STREAM_retrieve(qsm->map, &key);
+    return stream_map_find(qsm, stream_id);
 }
 
 static void stream_map_mark_active(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)

@@ -4614,7 +4614,7 @@ static int test_reject_stream_gc(void)
      * Every rejected stream should have been collected by now, so the map must
      * not have grown in proportion to the number of streams opened.
      */
-    if (!TEST_size_t_lt(OPENSSL_LH_num_items((OPENSSL_LHASH *)qsm->map),
+    if (!TEST_size_t_lt(ossl_htable_num(&qsm->map),
             (size_t)num_streams / 10)
         || !TEST_size_t_eq(SSL_get_accept_stream_queue_len(clientssl), 0))
         goto err;

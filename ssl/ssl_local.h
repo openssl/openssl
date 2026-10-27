@@ -1588,6 +1588,20 @@ struct ssl_connection_st {
     /* Stable alias for d1->rx while SSL_clear() resets or replaces d1. */
     DTLS_RX *listener_rx;
     /*
+     * Membership of the listener's pending or established connection lookup
+     * table (DGRAM_CONN_LOOKUP): zeroed, i.e. unlinked, until registered.
+     * Lives here rather than in d1 because the table points into it and d1 is
+     * wiped (dtls1_clear) or reallocated (SSL_clear) while the connection
+     * stays registered.
+     */
+    DGRAM_CONN_LINK listener_lookup_link;
+    /*
+     * Membership of the listener's run queue (DTLS_LISTENER.run_queue), the
+     * pending connections its next tick drives. Protected by the listener
+     * mutex; zeroed, i.e. not queued, until the listener queues it.
+     */
+    OSSL_QUEUE_MEMBER(listener_run);
+    /*
      * Set when this connection is being driven by dtls_listener_drive_pending().
      * Used to prevent multiple threads from driving the same connection
      * concurrently and to allow the demux pump to be called without holding
@@ -2415,6 +2429,17 @@ typedef struct dtls_listener_st {
      */
     DGRAM_CONN_LOOKUP *established_conns;
 
+    /*
+     * The pending connections the next tick drives: created, given input,
+     * or left by their last drive with work (see dtls_listener_queue_run()).
+     * The rest of pending_conns waits for a peer and costs a tick nothing,
+     * so a tick is proportional to the connections with something to do,
+     * not to the pending table. Driven in the order queued: |run_last| is
+     * the tail of |run_queue|, or NULL. Protected by mutex.
+     */
+    OSSL_QUEUE run_queue;
+    SSL_CONNECTION *run_last;
+
     /* Have we started listening yet? */
     TSAN_QUALIFIER int listening;
 
@@ -3157,8 +3182,7 @@ BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
 /* Established connections API - these handle their own locking */
 SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
     const DGRAM_URXE *urxe);
-void ossl_dtls_listener_unregister_established_conn(SSL *s,
-    const BIO_ADDR *peer_addr);
+void ossl_dtls_listener_unregister_conn(SSL *s, SSL *conn);
 void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl);
 
 size_t ossl_dtls_get_accept_connection_queue_len(SSL *ssl);

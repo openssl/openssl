@@ -685,8 +685,7 @@ int ossl_ssl_connection_reset(SSL *s)
                 DTLS_LISTENER *dl = (DTLS_LISTENER *)saved_listener;
 
                 /* The detached connection cannot unregister itself on free. */
-                ossl_dtls_listener_unregister_established_conn(saved_listener,
-                    &saved_peer_addr);
+                ossl_dtls_listener_unregister_conn(saved_listener, s);
                 ossl_crypto_mutex_lock(dl->mutex);
                 sc->listener_rx = NULL;
                 ossl_crypto_mutex_unlock(dl->mutex);

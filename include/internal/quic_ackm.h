@@ -16,6 +16,7 @@
 #include "internal/quic_predef.h"
 #include "internal/time.h"
 #include "internal/list.h"
+#include "internal/htable.h"
 
 #ifndef OPENSSL_NO_QUIC
 
@@ -118,11 +119,12 @@ struct ossl_ackm_tx_pkt_st {
     /*
      * (Internal use fields; must be zero-initialized.)
      *
-     * Keep a TX history list, anext is used to manifest
-     * a singly-linked list of newly-acknowledged packets, and lnext is used to
-     * manifest a singly-linked list of newly lost packets.
+     * Keep a TX history list and its packet number index, anext is used to
+     * manifest a singly-linked list of newly-acknowledged packets, and lnext
+     * is used to manifest a singly-linked list of newly lost packets.
      */
     OSSL_LIST_MEMBER(tx_history, OSSL_ACKM_TX_PKT);
+    OSSL_QUEUE_MEMBER(tx_history_pn);
 
     struct ossl_ackm_tx_pkt_st *anext;
     struct ossl_ackm_tx_pkt_st *lnext;
