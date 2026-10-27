@@ -12947,6 +12947,361 @@ end:
 }
 
 /*
+ * Set up a connection for the SSL_send_fatal_alert() tests.
+ * prot 0: TLSv1.3, prot 1: TLSv1.2, prot 2: DTLSv1.2
+ */
+static int fatal_alert_setup(int prot, SSL_CTX **sctx, SSL_CTX **cctx,
+    SSL **serverssl, SSL **clientssl)
+{
+    const SSL_METHOD *smeth = TLS_server_method();
+    const SSL_METHOD *cmeth = TLS_client_method();
+    int version;
+
+    switch (prot) {
+    case 0:
+        version = TLS1_3_VERSION;
+        break;
+    case 1:
+        version = TLS1_2_VERSION;
+        break;
+    default:
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        version = DTLS1_2_VERSION;
+        break;
+    }
+
+    return TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, version,
+               version, sctx, cctx, cert, privkey))
+        && TEST_true(create_ssl_objects(*sctx, *cctx, serverssl, clientssl,
+            NULL, NULL))
+        && TEST_true(create_ssl_connection(*serverssl, *clientssl,
+            SSL_ERROR_NONE));
+}
+
+static int fatal_alert_prot_skip(int prot)
+{
+    switch (prot) {
+    case 0:
+#ifdef OSSL_NO_USABLE_TLS1_3
+        return 1;
+#else
+        return 0;
+#endif
+    case 1:
+#ifdef OPENSSL_NO_TLS1_2
+        return 1;
+#else
+        return 0;
+#endif
+    default:
+#if defined(OPENSSL_NO_DTLS) || defined(OPENSSL_NO_DTLS1_2)
+        return 1;
+#else
+        return 0;
+#endif
+    }
+}
+
+/*
+ * Test SSL_send_fatal_alert() after the handshake.
+ * Test 0: TLSv1.3, client sends the alert
+ * Test 1: TLSv1.3, server sends the alert
+ * Test 2: TLSv1.2, client sends the alert
+ * Test 3: TLSv1.2, server sends the alert
+ * Test 4: DTLSv1.2, client sends the alert
+ * Test 5: DTLSv1.2, server sends the alert
+ */
+static int test_send_fatal_alert(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *sender, *peer;
+    int testresult = 0;
+    int prot = idx / 2;
+    char buf[80];
+    static const char *mess = "A test message";
+    uint64_t written;
+
+    if (fatal_alert_prot_skip(prot))
+        return TEST_skip("Protocol version not usable");
+
+    if (!fatal_alert_setup(prot, &sctx, &cctx, &serverssl, &clientssl))
+        goto end;
+
+    sender = (idx % 2 == 0) ? clientssl : serverssl;
+    peer = (idx % 2 == 0) ? serverssl : clientssl;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(SSL_send_fatal_alert(sender, SSL_AD_ACCESS_DENIED), 1))
+        goto end;
+
+    /* No further alert can be sent */
+    if (!TEST_int_le(SSL_send_fatal_alert(sender, SSL_AD_ACCESS_DENIED), 0)
+        || !TEST_int_eq(SSL_get_error(sender, -1), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_PROTOCOL_IS_SHUTDOWN))
+        goto end;
+    ERR_clear_error();
+
+    /* The connection can no longer be used to send or receive data */
+    if (!TEST_int_le(SSL_write(sender, mess, (int)strlen(mess)), 0)
+        || !TEST_int_eq(SSL_get_error(sender, -1), SSL_ERROR_SSL)
+        || !TEST_int_le(SSL_read(sender, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(SSL_get_error(sender, -1), SSL_ERROR_SSL))
+        goto end;
+    ERR_clear_error();
+
+    /* SSL_shutdown() must not send a close_notify after a fatal alert */
+    written = BIO_number_written(SSL_get_wbio(sender));
+    if (!TEST_int_lt(SSL_shutdown(sender), 0)
+        || !TEST_uint64_t_eq(BIO_number_written(SSL_get_wbio(sender)),
+            written)
+        || !TEST_false(SSL_get_shutdown(sender) & SSL_SENT_SHUTDOWN))
+        goto end;
+    ERR_clear_error();
+
+    /* The peer receives the alert as a fatal error */
+    if (!TEST_int_le(SSL_read(peer, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(SSL_get_error(peer, -1), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_TLSV1_ALERT_ACCESS_DENIED))
+        goto end;
+
+    testresult = 1;
+
+end:
+    ERR_clear_error();
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test SSL_send_fatal_alert() while a record from an earlier SSL_write() is
+ * still pending. The pending record must be written before the alert.
+ * Test 0: TLSv1.3
+ * Test 1: TLSv1.2
+ */
+static int test_send_fatal_alert_pending_write(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[80];
+    static const char *mess = "A test message";
+    BIO *bretry = NULL, *tmp = NULL;
+
+    if (fatal_alert_prot_skip(idx))
+        return TEST_skip("Protocol version not usable");
+
+    if (!TEST_ptr(bretry = BIO_new(bio_s_always_retry()))
+        || !fatal_alert_setup(idx, &sctx, &cctx, &serverssl, &clientssl))
+        goto end;
+
+    /* Swap the client's write BIO to force a retry */
+    tmp = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(clientssl, bretry);
+    bretry = NULL;
+
+    if (!TEST_int_eq(SSL_write(clientssl, mess, (int)strlen(mess)), -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* The alert cannot be sent yet either */
+    if (!TEST_int_eq(SSL_send_fatal_alert(clientssl, SSL_AD_INTERNAL_ERROR),
+            -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* A different alert cannot be substituted while retrying */
+    if (!TEST_int_eq(SSL_send_fatal_alert(clientssl, SSL_AD_ACCESS_DENIED),
+            -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_PROTOCOL_IS_SHUTDOWN))
+        goto end;
+    ERR_clear_error();
+
+    /* Reinstate the original write BIO and retry */
+    SSL_set0_wbio(clientssl, tmp);
+    tmp = NULL;
+    if (!TEST_int_eq(SSL_send_fatal_alert(clientssl, SSL_AD_INTERNAL_ERROR),
+            1))
+        goto end;
+
+    /* The server reads the pending data, then the alert */
+    if (!TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), (int)strlen(mess))
+        || !TEST_mem_eq(buf, strlen(mess), mess, strlen(mess))
+        || !TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_TLSV1_ALERT_INTERNAL_ERROR))
+        goto end;
+
+    testresult = 1;
+
+end:
+    ERR_clear_error();
+    BIO_free(bretry);
+    BIO_free(tmp);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test SSL_send_fatal_alert() failure cases that leave the connection usable.
+ * Test 0: close_notify is not a fatal alert
+ * Test 1: a close_notify has already been sent
+ * Test 2: user_canceled is not a fatal alert
+ */
+static int test_send_fatal_alert_errors(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[80];
+    static const char *mess = "A test message";
+    int expected = SSL_R_INVALID_ALERT;
+    uint8_t alert;
+
+    switch (idx) {
+    case 0:
+        alert = SSL_AD_CLOSE_NOTIFY;
+        break;
+    case 1:
+        alert = SSL_AD_INTERNAL_ERROR;
+        expected = SSL_R_PROTOCOL_IS_SHUTDOWN;
+        break;
+    default:
+        alert = SSL_AD_USER_CANCELLED;
+        break;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), 0, 0, &sctx, &cctx, cert,
+            privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    if (idx == 1 && !TEST_int_eq(SSL_shutdown(clientssl), 0))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(SSL_send_fatal_alert(clientssl, alert), -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), expected))
+        goto end;
+    ERR_clear_error();
+
+    if (idx != 1) {
+        /* Nothing was sent: the connection still works */
+        if (!TEST_int_eq(SSL_write(clientssl, mess, (int)strlen(mess)),
+                (int)strlen(mess))
+            || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)),
+                (int)strlen(mess)))
+            goto end;
+    } else {
+        /* The server sees a normal close_notify, not an alert */
+        if (!TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), 0)
+            || !TEST_int_eq(SSL_get_error(serverssl, 0),
+                SSL_ERROR_ZERO_RETURN))
+            goto end;
+    }
+
+    testresult = 1;
+
+end:
+    ERR_clear_error();
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test SSL_send_fatal_alert() by a server during the handshake, between calls
+ * to SSL_accept(), after it has sent its first flight.
+ * Test 0: TLSv1.2
+ * Test 1: TLSv1.3
+ */
+static int test_send_fatal_alert_in_handshake(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0, ret;
+    int version = (idx == 0) ? TLS1_2_VERSION : TLS1_3_VERSION;
+    char buf[80];
+
+    if (fatal_alert_prot_skip(idx == 0 ? 1 : 0))
+        return TEST_skip("Protocol version not usable");
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), version, version, &sctx,
+            &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /* Send the ClientHello and the server's first flight */
+    if (!TEST_int_le(SSL_connect(clientssl), 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_WANT_READ)
+        || !TEST_int_le(SSL_accept(serverssl), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_READ))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(SSL_send_fatal_alert(serverssl, SSL_AD_HANDSHAKE_FAILURE),
+            1))
+        goto end;
+
+    /* The server cannot continue the handshake */
+    if (!TEST_int_le(SSL_accept(serverssl), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_SSL))
+        goto end;
+    ERR_clear_error();
+
+    /*
+     * The client fails once it reads the alert. In TLSv1.3 the client
+     * completes its side of the handshake before it reads the alert.
+     */
+    ret = SSL_connect(clientssl);
+    if (ret == 1)
+        ret = SSL_read(clientssl, buf, sizeof(buf));
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_SSLV3_ALERT_HANDSHAKE_FAILURE))
+        goto end;
+
+    testresult = 1;
+
+end:
+    ERR_clear_error();
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
  * Test bi-directional shutdown.
  * Test 0: TLSv1.2
  * Test 1: TLSv1.2, server continues to read/write after client shutdown
@@ -19615,6 +19970,10 @@ int setup_tests(void)
     ADD_TEST(test_ticket_abort_session_leak);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_TEST(test_async_shutdown);
+    ADD_ALL_TESTS(test_send_fatal_alert, 6);
+    ADD_ALL_TESTS(test_send_fatal_alert_pending_write, 2);
+    ADD_ALL_TESTS(test_send_fatal_alert_errors, 3);
+    ADD_ALL_TESTS(test_send_fatal_alert_in_handshake, 2);
     ADD_ALL_TESTS(test_ssl_bio_eof, 2);
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);

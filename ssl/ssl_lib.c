@@ -3165,6 +3165,117 @@ int SSL_shutdown(SSL *s)
     return ret;
 }
 
+/*
+ * Write out a fatal alert queued by SSL_send_fatal_alert(). A record left
+ * partially written by an earlier SSL_write() is completed first, since the
+ * alert cannot be written until it has been.
+ */
+static int ssl_dispatch_fatal_alert(SSL *s, SSL_CONNECTION *sc)
+{
+    int ret;
+
+    if (sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_NONE)
+        return 1;
+
+    if (sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_PENDING
+        && RECORD_LAYER_write_pending(&sc->rlayer)) {
+        ret = HANDLE_RLAYER_WRITE_RETURN(sc,
+            sc->rlayer.wrlmethod->retry_write_records(sc->rlayer.wrl));
+        if (ret <= 0)
+            return ret;
+        sc->rlayer.wpend_tot = 0;
+    }
+
+    return s->method->ssl_dispatch_alert(s);
+}
+
+int SSL_send_fatal_alert(SSL *s, uint8_t alert)
+{
+    SSL_CONNECTION *sc;
+    int desc, ret;
+
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s)) {
+        /* QUIC reports fatal errors with CONNECTION_CLOSE, not alerts */
+        ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
+        return -1;
+    }
+#endif
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
+
+    sc->statem.error_state = ERROR_STATE_NOERROR;
+    sc->rwstate = SSL_NOTHING;
+
+    if (sc->handshake_func == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
+    }
+
+    /*
+     * Calling this from a callback invoked by the handshake state machine
+     * would leave the state machine running after the alert has been sent.
+     */
+    if (ossl_statem_get_in_handshake(sc)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
+    }
+
+    /*
+     * Map the alert to the wire value in the same way as ssl3_send_alert().
+     * The closure alerts close_notify and user_canceled are not error alerts.
+     */
+    if (SSL_CONNECTION_TREAT_AS_TLS13(sc))
+        desc = tls13_alert_code(alert);
+    else
+        desc = s->method->ssl3_enc->alert_value(alert);
+    if (desc < 0 || desc == SSL3_AD_CLOSE_NOTIFY
+        || desc == TLS1_AD_USER_CANCELLED) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_ALERT);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
+    }
+
+    if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
+        /* Only a retry of the same fatal alert can continue */
+        if (sc->s3.send_alert[0] != SSL3_AL_FATAL
+            || sc->s3.send_alert[1] != desc) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+            sc->statem.error_state = ERROR_STATE_SSL;
+            return -1;
+        }
+    } else {
+        /*
+         * A connection that has already failed, or that has sent a
+         * close_notify, cannot send a fatal alert.
+         */
+        if (ossl_statem_in_error(sc)
+            || (sc->shutdown & SSL_SENT_SHUTDOWN) != 0) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+            sc->statem.error_state = ERROR_STATE_SSL;
+            return -1;
+        }
+
+        /*
+         * Put the connection into the same error state as an internally
+         * detected fatal error and queue the alert. This also removes the
+         * session from the cache.
+         */
+        ossl_statem_send_fatal(sc, alert);
+    }
+
+    ret = ssl_dispatch_fatal_alert(s, sc);
+    if (ret <= 0 && !SSL_want_write(s))
+        ssl_update_error_state(sc);
+    return ret;
+}
+
 int SSL_key_update(SSL *s, int updatetype)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);

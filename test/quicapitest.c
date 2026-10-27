@@ -446,6 +446,32 @@ err:
     return testresult;
 }
 
+/* SSL_send_fatal_alert() is not supported on QUIC objects */
+static int test_send_fatal_alert(void)
+{
+    SSL_CTX *ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *ssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(ssl = SSL_new(ctx)))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(SSL_send_fatal_alert(ssl, SSL_AD_INTERNAL_ERROR), -1)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_WRONG_SSL_VERSION))
+        goto err;
+
+    testresult = 1;
+err:
+    ERR_clear_error();
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
 static int test_cipher_find(void)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
@@ -5399,6 +5425,7 @@ int setup_tests(void)
     ADD_TEST(test_fin_only_blocking);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_cipher_find);
+    ADD_TEST(test_send_fatal_alert);
     ADD_TEST(test_version);
 #if defined(DO_SSL_TRACE_TEST)
     ADD_TEST(test_ssl_trace);

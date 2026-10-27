@@ -41,6 +41,18 @@ OpenSSL 4.2
 
    *Alexandr Nedvedicky*
 
+ * Added `SSL_send_fatal_alert()`, which lets an application send a fatal
+   alert on a TLS or DTLS connection and abort it, for example when it detects
+   an error after the handshake that libssl cannot see. RFC 9846 recommends
+   sending an appropriate fatal alert before closing on a fatal error, but
+   until now there was no public API to do so. After the call the connection
+   is in the same failed state as after an internally detected fatal error,
+   and `SSL_shutdown()` does not send a close_notify. The function has the
+   same signature and semantics as in BoringSSL. It is not supported on QUIC
+   objects.
+
+   *kinchpik*
+
  * s390x: Disable mod-expo offloading to a crypto card for small exponents.
    Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
    environment variable to specify the minimum number of bits that the
