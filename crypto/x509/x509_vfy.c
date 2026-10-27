@@ -3572,14 +3572,29 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
     return X509_TRUST_UNTRUSTED;
 }
 
+/*
+ * As a last resort, check whether the last untrusted certificate is signed by
+ * an explicit DANE-TA(2) SPKI(1) Full(0) public key in the TLSA RRset.
+ */
 static int check_dane_pkeys(X509_STORE_CTX *ctx)
 {
     SSL_DANE *dane = ctx->dane;
     danetls_record *t;
-    int num = ctx->num_untrusted;
-    X509 *cert = sk_X509_value(ctx->chain, num - 1);
+    X509 *cert;
     int recnum = sk_danetls_record_num(dane->trecs);
+    int num;
     int i;
+
+    /*
+     * If, when PKIX-TA/PKIX-EE records are present, a trust store lookup of a
+     * self-signed EE certificate took place and found it in the trust store,
+     * the untrusted count could be 0, but in that case any "2 1 0" signer
+     * would have already matched the public key directly, so we don't need to
+     * check whether any such key is a potential signer.
+     */
+    if ((num = ctx->num_untrusted) == 0
+        || (cert = sk_X509_value(ctx->chain, num - 1)) == NULL)
+        return X509_TRUST_UNTRUSTED;
 
     for (i = 0; i < recnum; ++i) {
         t = sk_danetls_record_value(dane->trecs, i);
@@ -3599,8 +3614,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
         dane->mtlsa = t;
 
         /* Prune any excess chain certificates */
-        num = sk_X509_num(ctx->chain);
-        for (; num > ctx->num_untrusted; --num)
+        for (i = sk_X509_num(ctx->chain); i > num; --i)
             X509_free(sk_X509_pop(ctx->chain));
 
         return X509_TRUST_TRUSTED;
