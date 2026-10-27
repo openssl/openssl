@@ -29,7 +29,8 @@ use constant {
     NO_KEY_SHARES_IN_HRR => 12,
     NON_TLS1_3_KEY_SHARE => 13,
     LARGE_NUM_KEY_SHARES => 14,
-    LARGE_NUM_SUPP_GROUPS => 15
+    LARGE_NUM_SUPP_GROUPS => 15,
+    HYBRID_EC_POINT_FORMAT => 16
 };
 
 use constant {
@@ -48,6 +49,8 @@ use constant {
 my $testtype;
 my $direction;
 my $selectedgroupid;
+my $ecpointlen;
+my $ecpointrewrites;
 
 my $test_name = "test_key_share";
 setup($test_name);
@@ -90,7 +93,7 @@ if (disabled("ec")) {
     $proxy->serverflags("-groups P-384");
 }
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 26;
+plan tests => 32;
 ok(TLSProxy::Message->success(), "Success after HRR");
 
 #Test 2: The server sending an HRR requesting a group the client already sent
@@ -355,6 +358,83 @@ $proxy->start();
 ok(is_missing_extension_client_alert(),
    "Missing key_share in ServerHello gives missing_extension alert");
 
+#Tests 27-32: The ECDHE-MLKEM hybrid groups carry an EC point that TLS 1.3
+#             requires to be in uncompressed form (RFC 8446 section 4.2.8.2).
+#             A point re-encoded in the SEC1 "hybrid" form (0x06/0x07) must be
+#             rejected with an illegal_parameter alert in both directions.
+SKIP: {
+    skip "No EC or ML-KEM support in this OpenSSL build", 6
+        if disabled("ec") || disabled("ml-kem");
+
+    foreach my $grp (["SecP256r1MLKEM768", 65], ["SecP384r1MLKEM1024", 97]) {
+        my ($grpname, $len) = @$grp;
+
+        #Test 27/30: Sanity check, the unmodified hybrid handshake succeeds
+        $proxy->clear();
+        $direction = SERVER_TO_CLIENT;
+        $testtype = LOOK_ONLY;
+        $proxy->clientflags("-groups $grpname");
+        $proxy->serverflags("-groups $grpname");
+        $proxy->start();
+        ok(TLSProxy::Message->success(), "$grpname handshake succeeds");
+
+        #Test 28/31: Hybrid point format in the ClientHello key_share
+        $proxy->clear();
+        $direction = CLIENT_TO_SERVER;
+        $testtype = HYBRID_EC_POINT_FORMAT;
+        $ecpointlen = $len;
+        $ecpointrewrites = 0;
+        $proxy->clientflags("-groups $grpname");
+        $proxy->serverflags("-groups $grpname");
+        $proxy->start();
+        ok($ecpointrewrites == 1 && is_illegal_parameter_alert(1),
+           "$grpname hybrid EC point in ClientHello is rejected");
+
+        #Test 29/32: Hybrid point format in the ServerHello key_share
+        $proxy->clear();
+        $direction = SERVER_TO_CLIENT;
+        $testtype = HYBRID_EC_POINT_FORMAT;
+        $ecpointlen = $len;
+        $ecpointrewrites = 0;
+        $proxy->clientflags("-groups $grpname");
+        $proxy->serverflags("-groups $grpname");
+        $proxy->start();
+        ok($ecpointrewrites == 1 && is_illegal_parameter_alert(0),
+           "$grpname hybrid EC point in ServerHello is rejected");
+    }
+}
+
+sub is_illegal_parameter_alert
+{
+    my $fromserver = shift;
+
+    return 0 unless TLSProxy::Message->fail();
+
+    my $alert = TLSProxy::Message->alert();
+    return 0 unless defined $alert;
+    return 1 if ($alert->server() ? 1 : 0) == $fromserver
+                && $alert->description()
+                   == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER;
+    return 0;
+}
+
+#Re-encode the uncompressed EC point that starts at offset $off in $data in
+#the SEC1 hybrid form: the first octet becomes 0x06 or 0x07 depending on the
+#parity of Y. The point itself is unchanged and still valid.
+sub to_hybrid_ec_point
+{
+    my ($data, $off) = @_;
+    my $ylast = unpack("C", substr($data, $off + $ecpointlen - 1, 1));
+
+    die "Expected an uncompressed EC point"
+        if unpack("C", substr($data, $off, 1)) != 0x04;
+    substr($data, $off, 1) = pack("C", 0x06 | ($ylast & 1));
+    $ecpointrewrites++;
+    note(sprintf("EC point re-encoded: first octet 0x04 -> 0x%02x",
+                 0x06 | ($ylast & 1)));
+    return $data;
+}
+
 sub is_missing_extension_client_alert
 {
     return 0 unless TLSProxy::Message->fail();
@@ -379,6 +459,14 @@ sub modify_key_shares_filter
 
     foreach my $message (@{$proxy->message_list}) {
         if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO
+                && $direction == CLIENT_TO_SERVER
+                && $testtype == HYBRID_EC_POINT_FORMAT) {
+            #list length (2), group (2), key_exchange length (2), EC point
+            $message->set_extension(TLSProxy::Message::EXT_KEY_SHARE,
+                to_hybrid_ec_point($message->extension_data->{
+                    TLSProxy::Message::EXT_KEY_SHARE}, 6));
+            $message->repack();
+        } elsif ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO
                 && $direction == CLIENT_TO_SERVER) {
             my $ext;
             my $suppgroups;
@@ -530,6 +618,13 @@ sub modify_key_shares_filter
             $selectedgroupid = unpack("n", $key_share);
 
             if ($testtype == LOOK_ONLY) {
+                return;
+            }
+            if ($testtype == HYBRID_EC_POINT_FORMAT) {
+                #group (2), key_exchange length (2), EC point, ML-KEM ciphertext
+                $message->set_extension(TLSProxy::Message::EXT_KEY_SHARE,
+                    to_hybrid_ec_point($key_share, 4));
+                $message->repack();
                 return;
             }
             if ($testtype == NO_KEY_SHARES_IN_HRR) {
