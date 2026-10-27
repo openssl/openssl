@@ -10,11 +10,13 @@
 #include <openssl/err.h>
 #include "err_local.h"
 
-int ERR_set_mark(void)
+ERR_STATE *ERR_get_state(void)
 {
-    ERR_STATE *es;
+    return ossl_err_get_state_int(0);
+}
 
-    es = ossl_err_get_state_int(0);
+static ossl_inline int ERR_set_mark_int(ERR_STATE *es)
+{
     if (es == NULL)
         return 0;
 
@@ -22,6 +24,18 @@ int ERR_set_mark(void)
         return 0;
     es->err_marks[es->top]++;
     return 1;
+}
+
+int ERR_set_mark(void)
+{
+    ERR_STATE *es = ossl_err_get_state_int(0);
+
+    return ERR_set_mark_int(es);
+}
+
+int ERR_STATE_set_mark(ERR_STATE *es)
+{
+    return ERR_set_mark_int(es);
 }
 
 int ERR_pop(void)
@@ -37,11 +51,8 @@ int ERR_pop(void)
     return 1;
 }
 
-int ERR_pop_to_mark(void)
+static ossl_inline int ERR_pop_to_mark_int(ERR_STATE *es)
 {
-    ERR_STATE *es;
-
-    es = ossl_err_get_state_int(0);
     if (es == NULL)
         return 0;
 
@@ -55,6 +66,18 @@ int ERR_pop_to_mark(void)
         return 0;
     es->err_marks[es->top]--;
     return 1;
+}
+
+int ERR_pop_to_mark(void)
+{
+    ERR_STATE *es = ossl_err_get_state_int(1);
+
+    return ERR_pop_to_mark_int(es);
+}
+
+int ERR_STATE_pop_to_mark(ERR_STATE *es)
+{
+    return ERR_pop_to_mark_int(es);
 }
 
 int ERR_count_to_mark(void)
@@ -76,12 +99,10 @@ int ERR_count_to_mark(void)
     return count;
 }
 
-int ERR_clear_last_mark(void)
+static ossl_inline int ERR_clear_last_mark_int(ERR_STATE *es)
 {
-    ERR_STATE *es;
     int top;
 
-    es = ossl_err_get_state_int(0);
     if (es == NULL)
         return 0;
 
@@ -95,4 +116,16 @@ int ERR_clear_last_mark(void)
         return 0;
     es->err_marks[top]--;
     return 1;
+}
+
+int ERR_clear_last_mark(void)
+{
+    ERR_STATE *es = ossl_err_get_state_int(0);
+
+    return ERR_clear_last_mark_int(es);
+}
+
+int ERR_STATE_clear_last_mark(ERR_STATE *es)
+{
+    return ERR_clear_last_mark_int(es);
 }
