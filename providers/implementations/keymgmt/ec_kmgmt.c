@@ -1383,6 +1383,7 @@ static void ec_gen_cleanup(void *genctx)
     OPENSSL_free(gctx->encoding);
     OPENSSL_free(gctx->seed);
     OPENSSL_free(gctx->gen);
+    OPENSSL_free(gctx->group_check);
     OPENSSL_free(gctx);
 }
 
