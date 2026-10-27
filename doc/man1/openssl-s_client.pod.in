@@ -1194,7 +1194,7 @@ The B<ech> options were added in OpenSSL 4.0.
 The B<-expected-rpks> option was added in OpenSSL 4.0.
 
 The B<-server_cert_type> and B<-client_cert_type> options were added in
-OpenSSL 4.1.
+OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
