@@ -3248,14 +3248,26 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
     return X509_TRUST_UNTRUSTED;
 }
 
+/*
+ * As a last resort, check whether the last untrusted certificate is signed by
+ * an explicit DANE-TA(2) SPKI(1) Full(0) public key in the TLSA RRset.
+ */
 static int check_dane_pkeys(X509_STORE_CTX *ctx)
 {
     SSL_DANE *dane = ctx->dane;
     danetls_record *t;
-    int num = ctx->num_untrusted;
-    X509 *cert = sk_X509_value(ctx->chain, num - 1);
+    X509 *cert;
     int recnum = sk_danetls_record_num(dane->trecs);
-    int i;
+    int ix, i;
+
+    /*
+     * When a self-signed leaf was replaced by its trust store copy,
+     * num_untrusted is 0 and the leaf itself is checked against the keys.
+     */
+    ix = ctx->num_untrusted > 0 ? ctx->num_untrusted - 1 : 0;
+    cert = sk_X509_value(ctx->chain, ix);
+    if (!ossl_assert(cert != NULL))
+        return X509_TRUST_UNTRUSTED;
 
     for (i = 0; i < recnum; ++i) {
         t = sk_danetls_record_value(dane->trecs, i);
@@ -3268,12 +3280,11 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
 
         /* Record match via a bare TA public key */
         ctx->bare_ta_signed = 1;
-        dane->mdpth = num - 1;
+        dane->mdpth = ix;
         dane->mtlsa = t;
 
         /* Prune any excess chain certificates */
-        num = sk_X509_num(ctx->chain);
-        for (; num > ctx->num_untrusted; --num)
+        for (i = sk_X509_num(ctx->chain) - 1; i > ix; --i)
             X509_free(sk_X509_pop(ctx->chain));
 
         return X509_TRUST_TRUSTED;
