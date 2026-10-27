@@ -41,10 +41,7 @@ jobs:
       - name: "Check if this PR affects a CVE"
         if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
         run: |
-          git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./log.txt
-          set +e
-          grep -q "CVE-" ./log.txt
-          if [ $? -eq 0 ]; then
+          if git log --pretty=format:%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -q "CVE-"; then
             echo "Changes in this PR reference a CVE"
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
