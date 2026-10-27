@@ -71,11 +71,11 @@ jobs:
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
       - name: "Check if this is a feature branch merge"
-        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' && github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          set +e
-          echo ${{ github.head_ref }} | grep -q "feature"
-          if [ $? -eq 0 ]; then
+          if [ "x${HEAD_REF#feature/}" != "x${HEAD_REF}" ]; then
             echo "Feature branch found"
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
