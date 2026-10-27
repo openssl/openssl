@@ -585,6 +585,8 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     order_fn = OSSL_FN_MONT_CTX_get0_modulus(mont);
     w = ossl_fn_get_dsize(order_fn);
     need = ossl_fn_ctx_max_size(ossl_ec_group_fn_reduce_ord_ctx_size(group),
+        OSSL_FN_to_mont_quick_ctx_size(NULL, NULL, mont));
+    need = ossl_fn_ctx_max_size(need,
         OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
     need = ossl_fn_ctx_add_size(need, OSSL_FN_CTX_size(1, 3, 3 * w));
     if (need == 0) {
