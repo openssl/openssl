@@ -314,6 +314,8 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
                 mont),
             OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont)),
         ossl_ec_group_fn_reduce_ord_ctx_size(group));
+    need = ossl_fn_ctx_max_size(need,
+        OSSL_FN_to_mont_quick_ctx_size(NULL, NULL, mont));
     /*
      * Seven temporaries; rk is one limb wider, see below.
      * The order of the SM2 curve group is fixed, so we don't have to worry
