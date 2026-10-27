@@ -1813,6 +1813,164 @@ end:
     return res;
 }
 
+/* ALPN callback selector for ech_alpn_in_out_test */
+static const char *inneralpn = "inner";
+static const char *outeralpn = "outer";
+static int alpn_select_cb(SSL *ssl, const unsigned char **out,
+    unsigned char *outlen, const unsigned char *in,
+    unsigned int inlen, void *arg)
+{
+    unsigned int protlen = 0;
+    const unsigned char *prot;
+
+    for (prot = in; prot < in + inlen; prot += protlen) {
+        protlen = *prot++;
+        if (in + inlen < prot + protlen)
+            return SSL_TLSEXT_ERR_NOACK;
+        if (protlen == strlen(inneralpn)
+            && memcmp(prot, inneralpn, protlen) == 0) {
+            *out = prot;
+            *outlen = protlen;
+            return SSL_TLSEXT_ERR_OK;
+        }
+        if (protlen == strlen(outeralpn)
+            && memcmp(prot, outeralpn, protlen) == 0) {
+            *out = prot;
+            *outlen = protlen;
+            return SSL_TLSEXT_ERR_OK;
+        }
+    }
+    return SSL_TLSEXT_ERR_NOACK;
+}
+/*
+ * Test roundtrip with inner/outer ALPN variations and
+ * ensure errors and retry-configs are handled properly.
+ * There's a few cases to test, as usual we pick between
+ * 'em using the idx parameter.
+ *
+ * idx : case
+ * 0   : nominal operation, ECH success, set inner and outer alpns
+ *       inner alpn used
+ * 1   : bad ECHConfig, ECH required, outer alpn used and retry-configs
+ *       provided and available
+ * 2   : bad ECHConfig, ECH required, no outer alpn set (so we get
+ *       inner) and retry-configs provided and available
+ */
+static int ech_alpn_in_out_test(int idx)
+{
+    int res = 0, clientstatus, serverstatus;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    char *supplied_inner = "inner.server.example"; /* inner set via ECH API */
+    char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
+    unsigned char alpn_inner[] = { /* "inner, secret, http/1.1" */
+        0x05, 0x69, 0x6e, 0x6e, 0x65, 0x72,
+        0x06, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74,
+        0x08, 0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31
+    };
+    size_t alpn_inner_len = sizeof(alpn_inner);
+    unsigned char alpn_outer[] = { /* "outer, public, h2" */
+        0x05, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x06, 0x70,
+        0x75, 0x62, 0x6c, 0x69, 0x63, 0x02, 0x68, 0x32
+    };
+    size_t alpn_outer_len = sizeof(alpn_outer);
+    const unsigned char *sel_alpn = NULL;
+    unsigned int sel_alpn_len = 0;
+    unsigned char *retryconfig = NULL;
+    size_t retryconfiglen = 0;
+    BIO *in = NULL;
+    OSSL_ECHSTORE *es = NULL;
+
+    /* set up client/server using pem_kp2 */
+    if ((in = BIO_new(BIO_s_mem())) == NULL
+        || BIO_write(in, pem_kp2, (int)strlen(pem_kp2)) <= 0
+        || !TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set1_echstore(sctx, es))
+        || !TEST_false(SSL_CTX_set_alpn_protos(cctx, alpn_inner,
+            (unsigned int)alpn_inner_len))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, supplied_inner)))
+        goto end;
+    /* for test 0 and 1, setup outer alpn, but not for test 2 */
+    if (idx != 2 && !TEST_true(SSL_ech_set1_outer_alpn_protos(clientssl, alpn_outer, alpn_outer_len)))
+        goto end;
+    /* setup alpn callback for server */
+    SSL_CTX_set_alpn_select_cb(sctx, alpn_select_cb, NULL);
+    if (idx == 0) {
+        /* set the correct EHCConfigList on client */
+        if (!TEST_true(SSL_set1_ech_config_list(clientssl,
+                (unsigned char *)ec_kp2, ec_kp2len)))
+            goto end;
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE)))
+            goto end;
+    }
+    if (idx == 1 || idx == 2) {
+        /* set the wrong EHCConfigList on client */
+        if (!TEST_true(SSL_set1_ech_config_list(clientssl,
+                (unsigned char *)ec_kp1, ec_kp1len)))
+            goto end;
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_R_ECH_REQUIRED)))
+            goto end;
+    }
+    /* get ECH results */
+    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
+    SSL_set_verify_result(clientssl, X509_V_OK); /* override cert check */
+    clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
+    /* check expected ECH and alpn results */
+    SSL_get0_alpn_selected(clientssl, &sel_alpn, &sel_alpn_len);
+    switch (idx) {
+    case 0:
+        if (!TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS)
+            || !TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS)
+            || !TEST_mem_eq(sel_alpn, sel_alpn_len, inneralpn, strlen(inneralpn)))
+            goto end;
+        break;
+    case 1:
+        if (!TEST_int_eq(serverstatus, SSL_ECH_STATUS_GREASE)
+            || !TEST_int_eq(clientstatus, SSL_ECH_STATUS_FAILED_ECH)
+            || !TEST_mem_eq(sel_alpn, sel_alpn_len, outeralpn, strlen(outeralpn)))
+            goto end;
+        /* if that happened, we should get retry-configs */
+        if (!TEST_true(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+                &retryconfiglen)))
+            goto end;
+        break;
+    case 2:
+        if (!TEST_int_eq(serverstatus, SSL_ECH_STATUS_GREASE)
+            || !TEST_int_eq(clientstatus, SSL_ECH_STATUS_FAILED_ECH)
+            || !TEST_mem_eq(sel_alpn, sel_alpn_len, inneralpn, strlen(inneralpn)))
+            goto end;
+        if (!TEST_true(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+                &retryconfiglen)))
+            goto end;
+        break;
+    default:
+        TEST_error("Should not get here");
+        goto end;
+    }
+    res = 1; /* all good */
+end:
+    OSSL_ECHSTORE_free(es);
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    OPENSSL_free(cinner);
+    OPENSSL_free(couter);
+    BIO_free_all(in);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    OPENSSL_free(retryconfig);
+    return res;
+}
+
 /* Test roundtrip with GREASE'd ECH, then again with retry-config */
 static int ech_grease_test(int idx)
 {
@@ -2564,6 +2722,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ech_keylog_random, 4);
     ADD_TEST(ech_unauth_client_status_test);
     ADD_ALL_TESTS(test_ech_cb_server_random, 3);
+    ADD_ALL_TESTS(ech_alpn_in_out_test, 3);
     return 1;
 err:
     return 0;
