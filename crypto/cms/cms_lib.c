@@ -436,12 +436,13 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
             xof_len = 64;
         else {
             if (ptype == V_ASN1_INTEGER && pval != NULL) {
-                int val = ASN1_INTEGER_get((ASN1_INTEGER *)pval);
+               long val = ASN1_INTEGER_get((ASN1_INTEGER *)pval);
+               if (val <= 0 || (val % 8) != 0)
+                   goto err;
 
-                if (EVP_MD_is_a(digest, LN_shake128_len) && val > 0)
-                    xof_len = (size_t)val / 8;
-                else if (EVP_MD_is_a(digest, LN_shake256_len) && val > 0)
-                    xof_len = (size_t)val / 8;
+                if (EVP_MD_is_a(digest, SN_shake128) || EVP_MD_is_a(digest, SN_shake256)) {
+                    xof_len = (size_t) val / 8;
+                }
             }
         }
 
