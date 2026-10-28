@@ -3168,14 +3168,12 @@ int SSL_shutdown(SSL *s)
 /*
  * Write out a fatal alert queued by SSL_send_fatal_alert(). A record left
  * partially written by an earlier SSL_write() is completed first, since the
- * alert cannot be written until it has been.
+ * alert cannot be written until it has been. During the handshake the alert
+ * goes into the buffering BIO, so it is only sent once that has been flushed.
  */
 static int ssl_dispatch_fatal_alert(SSL *s, SSL_CONNECTION *sc)
 {
     int ret;
-
-    if (sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_NONE)
-        return 1;
 
     if (sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_PENDING
         && RECORD_LAYER_write_pending(&sc->rlayer)) {
@@ -3186,7 +3184,20 @@ static int ssl_dispatch_fatal_alert(SSL *s, SSL_CONNECTION *sc)
         sc->rlayer.wpend_tot = 0;
     }
 
-    return s->method->ssl_dispatch_alert(s);
+    if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
+        ret = s->method->ssl_dispatch_alert(s);
+        if (ret <= 0)
+            return ret;
+    }
+
+    if (sc->wbio != NULL) {
+        sc->rwstate = SSL_WRITING;
+        if (BIO_flush(sc->wbio) <= 0)
+            return -1;
+        sc->rwstate = SSL_NOTHING;
+    }
+
+    return 1;
 }
 
 int SSL_send_fatal_alert(SSL *s, uint8_t alert)
@@ -3210,12 +3221,11 @@ int SSL_send_fatal_alert(SSL *s, uint8_t alert)
 
     if (ssl_reset_error_state(sc) == 0) {
         /*
-         * The connection has already failed. Only a retry of a blocked
-         * alert queued by an earlier call to this function may continue,
-         * not one queued internally by SSLfatal().
+         * The connection has already failed. Only a retry of an alert that
+         * an earlier call to this function could not finish writing may
+         * continue, not an alert queued internally by SSLfatal().
          */
-        if (!sc->s3.app_fatal_alert
-            || sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_NONE) {
+        if (!sc->s3.app_fatal_alert) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
             return -1;
         }
@@ -3257,17 +3267,26 @@ int SSL_send_fatal_alert(SSL *s, uint8_t alert)
         return -1;
     }
 
-    if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
+    if (sc->s3.app_fatal_alert) {
         /*
-         * Only a retry of our own fatal alert, with the same description,
-         * can continue. Any other queued alert, such as a close_notify from
-         * SSL_shutdown(), is left alone.
+         * A retry: our alert is still queued, or it has been written but
+         * the write BIO has not been flushed yet. Only the same alert can
+         * be retried.
          */
-        if (!sc->s3.app_fatal_alert || sc->s3.send_alert[1] != desc) {
+        if (sc->s3.send_alert[0] != SSL3_AL_FATAL
+            || sc->s3.send_alert[1] != desc) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
             sc->statem.error_state = ERROR_STATE_SSL;
             return -1;
         }
+    } else if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
+        /*
+         * Any other queued alert, such as a close_notify from SSL_shutdown(),
+         * is left alone.
+         */
+        ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
     } else {
         /* A connection that has sent a close_notify cannot send an alert */
         if ((sc->shutdown & SSL_SENT_SHUTDOWN) != 0) {
@@ -3279,14 +3298,22 @@ int SSL_send_fatal_alert(SSL *s, uint8_t alert)
         /*
          * Put the connection into the same error state as an internally
          * detected fatal error and queue the alert. This also removes the
-         * session from the cache.
+         * session from the cache. In DTLS, stop the retransmission timer
+         * first, so that DTLSv1_handle_timeout() does not retransmit the
+         * current flight after the alert.
          */
+        if (SSL_CONNECTION_IS_DTLS(sc))
+            dtls1_stop_timer(sc);
         sc->s3.app_fatal_alert = 1;
         ossl_statem_send_fatal(sc, alert);
     }
 
     ret = ssl_dispatch_fatal_alert(s, sc);
-    if (sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_NONE)
+    /*
+     * Keep the flag while the alert is still queued or not yet flushed, so
+     * that the call can be retried.
+     */
+    if (ret > 0 || !SSL_want_write(s))
         sc->s3.app_fatal_alert = 0;
     if (ret <= 0 && !SSL_want_write(s))
         ssl_update_error_state(sc);

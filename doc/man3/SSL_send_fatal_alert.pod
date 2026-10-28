@@ -30,20 +30,21 @@ more: subsequent calls to L<SSL_read_ex(3)>, L<SSL_write_ex(3)>,
 L<SSL_do_handshake(3)> and related functions fail, and L<SSL_shutdown(3)> fails
 without sending a close_notify alert.
 The session is removed from the session cache and cannot be resumed.
+For DTLS the retransmission timer is stopped, so L<DTLSv1_handle_timeout(3)>
+does not retransmit any handshake messages after the alert.
 The application should then close the underlying transport.
 
 The function may be called after the handshake has completed, or during the
 handshake between calls to L<SSL_do_handshake(3)>, L<SSL_connect(3)> or
 L<SSL_accept(3)>, for example when using nonblocking I/O.
-It must not be called from within any callback invoked by libssl, for example
-a certificate verification callback, an info callback set with
+Calls from within any callback invoked by libssl, for example a certificate
+verification callback, an info callback set with
 L<SSL_CTX_set_info_callback(3)>, a message callback set with
 L<SSL_CTX_set_msg_callback(3)> or a record padding callback set with
-L<SSL_CTX_set_record_padding_callback(3)>.
-Such calls are not supported.
+L<SSL_CTX_set_record_padding_callback(3)>, must not be made.
 A call made while the handshake state machine is running is detected and
 fails, but calls from other callbacks, such as those invoked by the record
-layer, are not detected and lead to undefined behaviour.
+layer, are not detected.
 Callbacks that run during the handshake have their own means of aborting it
 with an alert.
 During the handshake the alert is protected with the keys that are current
@@ -54,13 +55,13 @@ alert itself.
 If an earlier call to L<SSL_write_ex(3)> left a record only partially written
 because of a nonblocking write BIO, that record is written out first, followed
 by the alert.
-If the alert cannot be written immediately, SSL_send_fatal_alert() returns a
-value less than or equal to 0 and L<SSL_get_error(3)> returns
+If the alert cannot be written and flushed immediately, SSL_send_fatal_alert()
+returns a value less than or equal to 0 and L<SSL_get_error(3)> returns
 B<SSL_ERROR_WANT_WRITE>.
 The connection is nevertheless already in the failed state.
 The application should call SSL_send_fatal_alert() again, with the same
 I<alert>, once the write BIO is writable, to finish sending the alert.
-Such a retry is the only call that succeeds on a connection that has already
+Such a retry is the only call that is accepted on a connection that has already
 failed; calling it with a different I<alert> at that point fails.
 
 The alert description must be valid for the protocol version in use.
@@ -81,7 +82,7 @@ L<SSL_shutdown_ex(3)>.
 =head1 RETURN VALUES
 
 SSL_send_fatal_alert() returns 1 if the alert has been written to the write
-BIO.
+BIO and the write BIO has been flushed.
 It returns a value less than or equal to 0 if the alert could not be sent yet
 or if an error occurred.
 In that case L<SSL_get_error(3)> should be called to find out whether the
