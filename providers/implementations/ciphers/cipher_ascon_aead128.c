@@ -473,6 +473,20 @@ static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
+    if (p.ivlen != NULL) {
+        size_t iv_len = 0;
+
+        if (!OSSL_PARAM_get_size_t(p.ivlen, &iv_len)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        /* The nonce length is fixed */
+        if (iv_len != ASCON_AEAD_NONCE_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+    }
+
     if (p.tag != NULL) {
         /* when data is NULL, this is a request to set tag length */
         if (p.tag->data == NULL) {
