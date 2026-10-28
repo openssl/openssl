@@ -4038,16 +4038,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
          * make ABI-breaking changes, we may want to return an error in this case.
          */
         if (larg == TLSEXT_NAMETYPE_host_name) {
-            size_t len;
-
             OPENSSL_free(sc->ext.hostname);
             sc->ext.hostname = NULL;
 
             ret = 1;
             if (parg == NULL)
                 break;
-            len = strlen((char *)parg);
-            if (len == 0 || len > TLSEXT_MAXLEN_host_name) {
+            if (!ossl_ssl_is_valid_sni_hostname((char *)parg)) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME);
                 return 0;
             }

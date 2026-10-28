@@ -138,6 +138,21 @@ OpenSSL 4.2
 
    *Timo Keller*
 
+ * SSL_set_tlsext_host_name(), and the inner and outer names given to
+   SSL_ech_set1_server_names() and SSL_ech_set1_outer_server_name(), are now
+   validated as DNS hostnames suitable for the server_name extension as
+   specified in RFC 6066: ASCII labels of letters, digits, hyphens or
+   underscores, no trailing dot, and no IPv4 or IPv6 address literal.
+   Previously any string (of at most 255 characters for
+   SSL_set_tlsext_host_name(), of any length and including the empty string
+   for the ECH functions) was accepted and sent verbatim, producing a
+   non-compliant ClientHello for names such as IP addresses. These functions
+   now fail with SSL_R_TLS_EXT_INVALID_SERVERNAME for such names;
+   applications that connect to servers by IP address must not set an SNI
+   host name in that case.
+
+   *Paul Grubbs*
+
 OpenSSL 4.1
 -----------
 

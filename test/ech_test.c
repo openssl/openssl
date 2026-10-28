@@ -2514,6 +2514,104 @@ end:
 
 #endif
 
+/*
+ * The inner and outer names given to SSL_ech_set1_server_names() and
+ * SSL_ech_set1_outer_server_name() are sent as server_name HostNames, so they
+ * are subject to the same checks as SSL_set_tlsext_host_name().  As with that
+ * function, a rejected call clears the names it would have set.
+ */
+static int ech_server_name_validation(void)
+{
+    static const char *const invalid[] = {
+        "",
+        "1.1.1.1",
+        "::1",
+        "joe@example.com",
+        "\xe4\xbd\xa0\xe5\xa5\xbd\xe4\xb8\x96\xe7\x95\x8c", /* UTF-8 */
+        "example.com.",
+        "example..com",
+        "example.123",
+    };
+    static const char *const inner = "inner.example.com";
+    static const char *const outer = "outer.example.com";
+    char name255[TLSEXT_MAXLEN_host_name + 1];
+    char name256[TLSEXT_MAXLEN_host_name + 2];
+    SSL_CTX *ctx = NULL;
+    SSL *s = NULL;
+    size_t i;
+    int rv = 0;
+
+    /* Four 63 character labels: 255 characters, the longest valid name */
+    memset(name255, 'a', 255);
+    name255[63] = name255[127] = name255[191] = '.';
+    name255[255] = '\0';
+    /* Labels of 1, 63, 63, 63 and 62 characters: 256 characters */
+    memset(name256, 'a', 256);
+    name256[1] = name256[65] = name256[129] = name256[193] = '.';
+    name256[256] = '\0';
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, propq, TLS_client_method()))
+        || !TEST_ptr(s = SSL_new(ctx)))
+        goto end;
+
+    /* Valid names, and the documented NULL/empty/no_outer cases */
+    if (!TEST_true(SSL_ech_set1_server_names(s, inner, outer, 0))
+        || !TEST_str_eq(SSL_get_servername(s, TLSEXT_NAMETYPE_host_name),
+            inner)
+        || !TEST_true(SSL_ech_set1_outer_server_name(s, outer, 0))
+        || !TEST_true(SSL_ech_set1_outer_server_name(s, NULL, 0))
+        || !TEST_true(SSL_ech_set1_outer_server_name(s, "", 0))
+        /* the outer name is ignored with no_outer set */
+        || !TEST_true(SSL_ech_set1_outer_server_name(s, "1.1.1.1", 1))
+        || !TEST_true(SSL_ech_set1_server_names(s, inner, "1.1.1.1", 1))
+        || !TEST_true(SSL_ech_set1_server_names(s, inner, NULL, 0))
+        || !TEST_true(SSL_ech_set1_server_names(s, NULL, outer, 0))
+        || !TEST_ptr_null(SSL_get_servername(s, TLSEXT_NAMETYPE_host_name))
+        /* 255 characters is the longest acceptable name */
+        || !TEST_true(SSL_ech_set1_server_names(s, name255, NULL, 0)))
+        goto end;
+
+    for (i = 0; i <= OSSL_NELEM(invalid); i++) {
+        const char *bad = i < OSSL_NELEM(invalid) ? invalid[i] : name256;
+
+        TEST_info("invalid: \"%s\"",
+            i < OSSL_NELEM(invalid) ? bad : "<256 characters>");
+        if (!TEST_true(SSL_ech_set1_server_names(s, inner, outer, 0)))
+            goto end;
+        ERR_clear_error();
+        if (!TEST_false(SSL_ech_set1_server_names(s, bad, outer, 0))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_TLS_EXT_INVALID_SERVERNAME)
+            /* the previously set inner name has been cleared */
+            || !TEST_ptr_null(SSL_get_servername(s, TLSEXT_NAMETYPE_host_name)))
+            goto end;
+        /* An empty outer name means "no override", not an invalid name */
+        if (*bad == '\0')
+            continue;
+        ERR_clear_error();
+        if (!TEST_true(SSL_ech_set1_server_names(s, inner, outer, 0))
+            || !TEST_false(SSL_ech_set1_server_names(s, inner, bad, 0))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_TLS_EXT_INVALID_SERVERNAME)
+            || !TEST_ptr_null(SSL_get_servername(s, TLSEXT_NAMETYPE_host_name)))
+            goto end;
+        ERR_clear_error();
+        /* SSL_ech_set1_outer_server_name() only clears the outer name */
+        if (!TEST_true(SSL_ech_set1_server_names(s, inner, outer, 0))
+            || !TEST_false(SSL_ech_set1_outer_server_name(s, bad, 0))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_TLS_EXT_INVALID_SERVERNAME)
+            || !TEST_str_eq(SSL_get_servername(s, TLSEXT_NAMETYPE_host_name),
+                inner))
+            goto end;
+    }
+    rv = 1;
+end:
+    SSL_free(s);
+    SSL_CTX_free(ctx);
+    return rv;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_ECH
@@ -2549,6 +2647,7 @@ int setup_tests(void)
     ADD_TEST(ech_api_basic_calls);
     ADD_TEST(ech_boring_compat);
     ADD_TEST(ech_bad_public_names);
+    ADD_TEST(ech_server_name_validation);
     suite_combos = OSSL_NELEM(kem_str_list) * OSSL_NELEM(kdf_str_list)
         * OSSL_NELEM(aead_str_list);
     ADD_ALL_TESTS(test_ech_suites, suite_combos);

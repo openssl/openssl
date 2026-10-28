@@ -190,6 +190,16 @@ all. Providing a NULL for the I<outer_name> means to send the I<public_name>
 provided from the ECHConfigList unless the I<no_outer> provided has the value
 1.
 
+A non-NULL I<inner_name>, and an I<outer_name> that is used (that is,
+non-NULL, not empty and with I<no_outer> set to 0), must be DNS hostnames
+satisfying the same requirements as for L<SSL_set_tlsext_host_name(3)>; in
+particular IPv4 and IPv6 address literals are not permitted.  If a name is
+not a valid hostname, the function fails with
+B<SSL_R_TLS_EXT_INVALID_SERVERNAME>; as with L<SSL_set_tlsext_host_name(3)>,
+the names that the function would have set are cleared (so a cleared outer
+name means the B<public_name> from the ECHConfig is used).  An empty
+I<outer_name> is treated like a NULL one.
+
 If a client has called L<SSL_CTX_set_alpn_protos(3)> or
 L<SSL_set_alpn_protos(3)> then the ALPN value will be the same in the inner and
 outer ClientHello messages.  SSL_ech_set1_outer_alpn_protos() and
@@ -414,6 +424,9 @@ L<openssl-s_client(1)>, L<openssl-s_server(1)> and L<openssl-ech(1)>.
 =head1 HISTORY
 
 The functionality described here was added in OpenSSL 4.0.
+
+SSL_ech_set1_server_names() and SSL_ech_set1_outer_server_name() validate
+the names they are given as DNS hostnames since OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
