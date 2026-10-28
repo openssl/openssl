@@ -395,7 +395,7 @@ static __owur int kdf(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
  * Rejection-sample one SHAKE128 block. |*pcurr| points at the next
  * coefficient to fill. |endout| is one past the last coefficient.
  * Current callers pass SCALAR_SAMPLING_BUFSIZE, a positive multiple of
- * three. A shorter trailing group is not read.
+ * three. A trailing group of length less than 3 is not read.
  *
  * Once |*pcurr| reaches |endout|, the rest of this block is left
  * unused. The following squeeze begins at the next block.
