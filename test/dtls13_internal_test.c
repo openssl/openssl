@@ -2423,7 +2423,6 @@ static int test_dtls13_hrr_lost_server_hello(int idx)
         dglen[ndg++] = ret;
         if (!TEST_int_lt(ndg, (int)OSSL_NELEM(dg)))
             goto end;
-
     }
     if (!TEST_int_ge(ndg, 2))
         goto end;
@@ -2481,7 +2480,6 @@ static int test_dtls13_hrr_lost_server_hello(int idx)
             || !TEST_size_t_gt(BIO_ctrl_pending(bio), 0)
             || !TEST_ulong_eq(ERR_peek_error(), 0))
             goto end;
-
     }
     if (!connect_while_readable(client, bio)
         || !TEST_int_eq(SSL_accept(server), 1))
@@ -3288,11 +3286,29 @@ static int reordered_ack_verify_cb(int ok, X509_STORE_CTX *ctx)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_ZLIB) || !defined(OPENSSL_NO_BROTLI) || !defined(OPENSSL_NO_ZSTD)
+#define DTLS13_HAVE_CERT_COMP
+#endif
+
+#ifdef DTLS13_HAVE_CERT_COMP
+static void comp_cert_seen_cb(const SSL *s, int where, int ret)
+{
+    int *seen = SSL_get_app_data(s);
+
+    /* TLS_ST_SR_COMP_CERT */
+    if (seen != NULL && strcmp(SSL_state_string(s), "TRCCC") == 0)
+        *seen = 1;
+}
+#endif
+
 /*
  * Delay a genuine epoch-2 ACK until part of the client's final flight arrives.
  * idx 0: empty Certificate, TLS_ST_SR_CERT.
  * idx 1: nonempty Certificate and CertificateVerify, TLS_ST_SR_CERT_VRFY.
  * idx 2: nonempty Certificate, TLS_ST_SR_CERT.
+ * idx 3: compressed Certificate. The client ACK sent before it must not have
+ *        its epoch 2 write keys reinstalled, which would reuse record number
+ *        (2, 0) for the Certificate. The ACK is not delayed in this variant.
  */
 static int test_dtls13_reordered_ack(int idx)
 {
@@ -3302,9 +3318,16 @@ static int test_dtls13_reordered_ack(int idx)
     unsigned char dg[32][2048], ack[2048], buf;
     int dglen[32];
     int ndg = 0, acklen, ret, calls = 0, i, ack_delivered = 0;
-    int testresult = 0;
+    int testresult = 0, comp_seen = 0;
     size_t n0 = 0, n2 = 0, d0, d2, off, hdrlen, reclen;
     OSSL_HANDSHAKE_STATE target = idx == 1 ? TLS_ST_SR_CERT_VRFY : TLS_ST_SR_CERT;
+
+#ifndef DTLS13_HAVE_CERT_COMP
+    if (idx == 3) {
+        TEST_info("No certificate compression algorithm configured");
+        return 1;
+    }
+#endif
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
@@ -3314,8 +3337,9 @@ static int test_dtls13_reordered_ack(int idx)
 
     SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, reordered_ack_verify_cb);
     SSL_CTX_set_cert_cb(cctx, cert_cb_wait_once, &calls);
-    /* Exercise ordinary Certificate states even when compression is available. */
-    SSL_CTX_set_options(cctx, SSL_OP_NO_TX_CERTIFICATE_COMPRESSION);
+    /* Exercise ordinary Certificate states unless compression is under test. */
+    if (idx != 3)
+        SSL_CTX_set_options(cctx, SSL_OP_NO_TX_CERTIFICATE_COMPRESSION);
 
     if (idx != 0
         && (!TEST_true(SSL_CTX_use_certificate_file(cctx, cert, SSL_FILETYPE_PEM))
@@ -3327,6 +3351,13 @@ static int test_dtls13_reordered_ack(int idx)
         goto end;
     sc = SSL_CONNECTION_FROM_SSL(server);
     cc = SSL_CONNECTION_FROM_SSL(client);
+#ifdef DTLS13_HAVE_CERT_COMP
+    if (idx == 3) {
+        if (!TEST_true(SSL_set_app_data(server, &comp_seen)))
+            goto end;
+        SSL_set_info_callback(server, comp_cert_seen_cb);
+    }
+#endif
 
     ret = SSL_connect(client);
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
@@ -3388,6 +3419,40 @@ static int test_dtls13_reordered_ack(int idx)
     }
     if (!TEST_int_gt(ndg, 0))
         goto end;
+
+    if (idx == 3) {
+        pitem *item;
+        dtls_sent_msg *msg;
+        DTLS1_RECORD_NUMBER *rec;
+
+        /*
+         * The ACK above took the first epoch 2 record number. The compressed
+         * Certificate, the first message of the flight, must follow it rather
+         * than restart at (2, 0) by installing the same write keys again.
+         */
+        if (!TEST_true(comp_seen == 0)
+            || !TEST_ptr(item = pqueue_peek(&cc->d1->sent_messages))
+            || !TEST_ptr(msg = item->data)
+            || !TEST_ptr(rec = ossl_list_record_number_head(&msg->rec_nums))
+            || !TEST_uint64_t_eq(rec->epoch, 2)
+            || !TEST_uint64_t_gt(rec->seqnum, 0))
+            goto end;
+
+        /* Deliver the whole flight; the held ACK is not part of this variant. */
+        for (i = 0; i < ndg; i++)
+            if (!TEST_int_eq(mempacket_test_inject(SSL_get_rbio(server),
+                                 (const char *)dg[i], dglen[i], -1,
+                                 INJECT_PACKET_IGNORE_REC_SEQ),
+                    dglen[i]))
+                goto end;
+        ndg = 0;
+        ret = SSL_accept(server);
+        /* Prove the compressed path ran, then that the flight was accepted. */
+        if (!TEST_true(comp_seen)
+            || !TEST_int_eq(ret, 1))
+            goto end;
+        ack_delivered = 1;
+    }
 
     /* Keep retransmission from interfering with record-by-record delivery. */
     sc->d1->next_timeout = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
@@ -3528,7 +3593,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_server_flight_full_ack);
     ADD_ALL_TESTS(test_dtls13_plaintext_ack_epoch, 3);
     ADD_ALL_TESTS(test_dtls13_delayed_server_ack, 4);
-    ADD_ALL_TESTS(test_dtls13_reordered_ack, 3);
+    ADD_ALL_TESTS(test_dtls13_reordered_ack, 4);
 #endif
     return 1;
 }
