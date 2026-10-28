@@ -21,4 +21,5 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_CIPHER_PARAM_KEYLEN',      'keylen', 'size_t'],
                           ['OSSL_CIPHER_PARAM_SPEED',       'speed',  'uint'],
                           ['OSSL_CIPHER_PARAM_AEAD_TAG',    'tag',    'octet_string'],
+                          ['OSSL_CIPHER_PARAM_AEAD_IVLEN',  'ivlen',  'size_t'],
                          )); -}
