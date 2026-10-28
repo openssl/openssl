@@ -1061,11 +1061,6 @@ static int test_evp_stale_key_reinit(int idx)
 
     ct_len += ct_fin_len;
 
-    int tl = EVP_CIPHER_CTX_get_tag_length(ctx_reinit);
-
-    if (tl > 0)
-        taglen = tl;
-
     get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, tag, taglen);
     get_tagparams[1] = OSSL_PARAM_construct_end();
 
