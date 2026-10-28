@@ -52,6 +52,12 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
     if (mtmp->finish)
         mtmp->finish(rsa);
     rsa->meth = meth;
+    /*
+     * The cached blinding parameters were set up with the old method's
+     * bn_mod_exp and its Montgomery context, so they must not be reused.
+     */
+    ossl_rsa_free_blinding(rsa);
+    rsa->blindings_sa = ossl_rsa_alloc_blinding();
     if (meth->init)
         meth->init(rsa);
     return 1;
