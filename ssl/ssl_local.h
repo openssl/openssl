@@ -2329,6 +2329,8 @@ typedef struct dtls1_state_st {
     unsigned int req_blocking_mode : 2;
 #endif
 
+    /* Support for fake time during testing */
+    OSSL_TIME (*now_cb)(void);
 } DTLS1_STATE;
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
@@ -3135,6 +3137,7 @@ __owur int dtls1_handle_timeout(SSL_CONNECTION *s);
 void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
+int dtls1_set_override_now_cb(SSL *s, OSSL_TIME (*now_cb)(void));
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
