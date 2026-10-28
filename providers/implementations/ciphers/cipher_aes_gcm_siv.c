@@ -265,6 +265,20 @@ static int ossl_aes_gcm_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[]
             return 0;
         }
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_IVLEN);
+    if (p != NULL) {
+        size_t iv_len;
+
+        if (!OSSL_PARAM_get_size_t(p, &iv_len)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        /* The nonce length can not be modified */
+        if (iv_len != sizeof(ctx->nonce)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+    }
     return 1;
 }
 
