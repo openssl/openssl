@@ -102,6 +102,8 @@ push @curves_no_nid, qw(MLKEM512X25519)
     unless (disabled("ml-kem") || disabled("ecx") || ($fips_mode && !$fips_4_2));
 push @curves_no_nid, qw(SecP256r1MLKEM512)
     unless (disabled("ml-kem") || disabled("ec") || ($fips_mode && !$fips_4_2));
+push @curves_no_nid, qw(MLKEM1024X448)
+    unless (disabled("ml-kem") || disabled("ecx") || ($fips_mode && !$fips_4_2));
 
 push @curves_tls_1_3, @curves_no_nid;
 push @curves, @curves_no_nid;

@@ -27,3 +27,13 @@ FIPSversion = >=3.5.0
 Kem = X448MLKEM1024
 KeyName = x448mlkem1024
 Unapproved = 1
+
+FIPSversion = >=4.2.0
+KeyGen = MLKEM1024X448
+KeyName = mlkem1024x448
+Unapproved = 1
+
+FIPSversion = >=4.2.0
+Kem = MLKEM1024X448
+KeyName = mlkem1024x448
+Unapproved = 1

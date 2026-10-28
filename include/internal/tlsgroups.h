@@ -70,6 +70,7 @@
 #define OSSL_TLS_GROUP_ID_X25519MLKEM768 0x11EC
 #define OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024 0x11ED
 #define OSSL_TLS_GROUP_ID_curveSM2MLKEM768 0x11EE
+#define OSSL_TLS_GROUP_ID_MLKEM1024X448 0x11EF
 
 /*
  * RFC 7919: "Codepoints ... between 256 and 511, inclusive ... are set aside

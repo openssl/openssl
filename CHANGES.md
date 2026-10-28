@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The hybrid ML-KEM-1024 + X448 TLS key exchange group (KEM) has
+   been registered by IANA under the name "MLKEM1024X448".  This
+   is now supported by OpenSSL TLS implementation under that name.
+   The algorithm is also available under its original OpenSSL 3.5
+   name "X448MLKEM1024".
+
+   *Viktor Dukhovni*
+
  * s390x: Disable mod-expo offloading to a crypto card for small exponents.
    Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
    environment variable to specify the minimum number of bits that the

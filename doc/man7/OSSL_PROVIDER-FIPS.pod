@@ -166,7 +166,7 @@ It is used internally as a sub algorithm of CSHAKE.
 
 =item X25519MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
 
-=item X448MLKEM1024, see L<EVP_PKEY-MLX-KEM(7)>
+=item MLKEM1024X448, see L<EVP_PKEY-MLX-KEM(7)>
 
 =item SecP256r1MLKEM512, see L<EVP_PKEY-MLX-KEM(7)>
 
@@ -286,7 +286,7 @@ included in SP 800-56Arev3 are not approved for key agreement".
 
 =item X25519MLKEM768, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
-=item X448MLKEM1024, see L<EVP_KEYMGMT-MLX-KEM(7)>
+=item MLKEM1024X448, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
 =item SecP256r1MLKEM512, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
@@ -658,6 +658,11 @@ The ML-DSA-44, ML-DSA-65, ML-DSA-87 signature algorithms, the ML-KEM-512,
 ML-KEM-768, ML-KEM-768 key exchange algorithms, and the hybrid X25519MLKEM768,
 SecP256r1MLKEM768, SecP384r1MLKEM1024 key exchange algorithms were added in
 OpenSSL 3.5.
+
+In OpenSSL 4.2, the B<X448MLKEM1024> algorithm, originally added in OpenSSL 3.5
+prior to the registration of a corresponding TLS codepoint, was renamed to
+C<MLKEM1024X448> to match its IANA registration, and it became available as a
+TLS key exchange group.
 
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
 

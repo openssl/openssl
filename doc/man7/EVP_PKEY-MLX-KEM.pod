@@ -35,7 +35,7 @@ secret and a 32 byte L<EVP_PKEY-X25519(7)> shared secret.
 X25519 is not an approved FIPS algorithm, but this combination is still allowed
 by FIPS 140-3, since ML-KEM is FIPS approved.
 
-=item B<X448MLKEM1024>
+=item B<MLKEM1024X448>
 
 Similar to B<X25519MLKEM768> with a higher security strength, the shared secret
 is the concatenation of a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret followed
@@ -94,7 +94,7 @@ key generation and KEM operation contexts:
 
 =item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR> or B<OSSL_KEM_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
-Returns 0 for X448MLKEM1024, which is advertised with C<fips=no>, and 1 for
+Returns 0 for MLKEM1024X448, which is advertised with C<fips=no>, and 1 for
 X25519MLKEM768, SecP256r1MLKEM768 and SecP384r1MLKEM1024.  See
 L<fips_module(7)/FIPS indicators> for more information.
 
@@ -156,7 +156,7 @@ An 800-byte ML-KEM-512 public key followed by a 32-byte X25519 public key.
 
 A 1184-byte ML-KEM-768 public key followed by a 32-byte X25519 public key.
 
-=item B<X448MLKEM1024>
+=item B<MLKEM1024X448>
 
 A 1568-byte ML-KEM-1024 public key followed by a 56-byte X448 public key.
 
@@ -206,7 +206,7 @@ The format of the private keys for the different algorithms is:
 
 2400 byte ML-KEM-768 private key followed by a 32 byte X25519 private key.
 
-=item B<X448MLKEM1024>
+=item B<MLKEM1024X448>
 
 3168 byte ML-KEM-1024 private key followed by a 56 byte X448 private key.
 
@@ -222,9 +222,10 @@ The format of the private keys for the different algorithms is:
 
 =over 4
 
-=item https://datatracker.ietf.org/doc/draft-ietf-tls-ecdhe-mlkem/
+=item https://www.rfc-editor.org/info/rfc10024/
 
-Note that B<X448MLKEM1024> is not defined by this document.
+Note that B<MLKEM1024X448> was defined separately, in
+L<draft-preussmattsson-tls-mlkem1024-x448-01|https://datatracker.ietf.org/doc/html/draft-preussmattsson-tls-mlkem1024-x448-01>
 
 =item SP800-227
 

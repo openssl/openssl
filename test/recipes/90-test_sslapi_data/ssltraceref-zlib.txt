@@ -14,12 +14,13 @@ Header:
       compression_methods (len=1)
         No Compression (0x00)
       extensions, length = ?
-        extension_type=supported_groups(10), length=20
+        extension_type=supported_groups(10), length=22
           MLKEM512 (512)
           MLKEM768 (513)
           MLKEM1024 (514)
           X25519MLKEM768 (4588)
           SecP256r1MLKEM768 (4587)
+          MLKEM1024X448 (4591)
           SecP384r1MLKEM1024 (4589)
           secp521r1 (P-521) (25)
           secp384r1 (P-384) (24)
