@@ -149,10 +149,11 @@ Manual Pages
 The manual pages for the master branch and all current stable releases are
 available online.
 
-- [OpenSSL master](https://www.openssl.org/docs/manmaster)
-- [OpenSSL 3.0](https://www.openssl.org/docs/man3.0)
-- [OpenSSL 3.1](https://www.openssl.org/docs/man3.1)
-- [OpenSSL 3.2](https://www.openssl.org/docs/man3.2)
+- [OpenSSL master](https://docs.openssl.org/master/)
+- [OpenSSL 4.1](https://docs.openssl.org/4.1/)
+- [OpenSSL 4.0](https://docs.openssl.org/4.0/)
+- [OpenSSL 3.6](https://docs.openssl.org/3.6/)
+- [OpenSSL 3.5](https://docs.openssl.org/3.5/)
 
 Demos
 -----
