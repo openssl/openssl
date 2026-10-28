@@ -12948,7 +12948,7 @@ end:
 
 /*
  * Set up a connection for the SSL_send_fatal_alert() tests.
- * prot 0: TLSv1.3, prot 1: TLSv1.2, prot 2: DTLSv1.2
+ * prot 0: TLSv1.3, prot 1: TLSv1.2, prot 2: DTLSv1.2, prot 3: DTLSv1.3
  */
 static int fatal_alert_setup(int prot, SSL_CTX **sctx, SSL_CTX **cctx,
     SSL **serverssl, SSL **clientssl)
@@ -12964,10 +12964,15 @@ static int fatal_alert_setup(int prot, SSL_CTX **sctx, SSL_CTX **cctx,
     case 1:
         version = TLS1_2_VERSION;
         break;
-    default:
+    case 2:
         smeth = DTLS_server_method();
         cmeth = DTLS_client_method();
         version = DTLS1_2_VERSION;
+        break;
+    default:
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        version = DTLS1_3_VERSION;
         break;
     }
 
@@ -12994,8 +12999,14 @@ static int fatal_alert_prot_skip(int prot)
 #else
         return 0;
 #endif
-    default:
+    case 2:
 #if defined(OPENSSL_NO_DTLS) || defined(OPENSSL_NO_DTLS1_2)
+        return 1;
+#else
+        return 0;
+#endif
+    default:
+#if defined(OPENSSL_NO_DTLS) || defined(OSSL_NO_USABLE_DTLS1_3)
         return 1;
 #else
         return 0;
@@ -13011,6 +13022,8 @@ static int fatal_alert_prot_skip(int prot)
  * Test 3: TLSv1.2, server sends the alert
  * Test 4: DTLSv1.2, client sends the alert
  * Test 5: DTLSv1.2, server sends the alert
+ * Test 6: DTLSv1.3, client sends the alert
+ * Test 7: DTLSv1.3, server sends the alert
  */
 static int test_send_fatal_alert(int idx)
 {
@@ -13143,6 +13156,100 @@ static int test_send_fatal_alert_pending_write(int idx)
         || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_SSL)
         || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
             SSL_R_TLSV1_ALERT_INTERNAL_ERROR))
+        goto end;
+
+    testresult = 1;
+
+end:
+    ERR_clear_error();
+    BIO_free(bretry);
+    BIO_free(tmp);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test SSL_send_fatal_alert() on a connection that has failed internally
+ * while the write BIO was blocked, so that libssl's own alert is still queued.
+ * The call must fail and must not write that alert or its own alert.
+ * Test 0: TLSv1.3
+ * Test 1: TLSv1.2
+ */
+static int test_send_fatal_alert_internal_blocked(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[80];
+    /* An application data record that cannot be decrypted */
+    static const unsigned char badrec[] = {
+        0x17, 0x03, 0x03, 0x00, 0x20,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
+    };
+    BIO *bretry = NULL, *tmp = NULL;
+    uint64_t written;
+
+    if (fatal_alert_prot_skip(idx))
+        return TEST_skip("Protocol version not usable");
+
+    if (!TEST_ptr(bretry = BIO_new(bio_s_always_retry()))
+        || !fatal_alert_setup(idx, &sctx, &cctx, &serverssl, &clientssl))
+        goto end;
+
+    /* Swap the client's write BIO so that its alert write blocks */
+    tmp = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(clientssl, bretry);
+    bretry = NULL;
+
+    /* The client fails internally with SSLfatal() and queues an alert */
+    if (!TEST_int_eq(BIO_write(SSL_get_rbio(clientssl), badrec,
+                         sizeof(badrec)),
+            (int)sizeof(badrec))
+        || !TEST_int_le(SSL_read(clientssl, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_SSL))
+        goto end;
+    ERR_clear_error();
+
+    /* Reinstate the original write BIO: the queued alert could now be sent */
+    SSL_set0_wbio(clientssl, tmp);
+    tmp = NULL;
+    written = BIO_number_written(SSL_get_wbio(clientssl));
+
+    /*
+     * Neither our alert nor the internally queued one, even with the same
+     * description, may be sent.
+     */
+    if (!TEST_int_eq(SSL_send_fatal_alert(clientssl, SSL_AD_ACCESS_DENIED),
+            -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_PROTOCOL_IS_SHUTDOWN))
+        goto end;
+    ERR_clear_error();
+    if (!TEST_int_eq(SSL_send_fatal_alert(clientssl, SSL_AD_BAD_RECORD_MAC),
+            -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_PROTOCOL_IS_SHUTDOWN)
+        || !TEST_uint64_t_eq(BIO_number_written(SSL_get_wbio(clientssl)),
+            written))
+        goto end;
+    ERR_clear_error();
+
+    /* The server has received nothing from the client */
+    if (!TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_READ))
         goto end;
 
     testresult = 1;
@@ -19970,8 +20077,9 @@ int setup_tests(void)
     ADD_TEST(test_ticket_abort_session_leak);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_TEST(test_async_shutdown);
-    ADD_ALL_TESTS(test_send_fatal_alert, 6);
+    ADD_ALL_TESTS(test_send_fatal_alert, 8);
     ADD_ALL_TESTS(test_send_fatal_alert_pending_write, 2);
+    ADD_ALL_TESTS(test_send_fatal_alert_internal_blocked, 2);
     ADD_ALL_TESTS(test_send_fatal_alert_errors, 3);
     ADD_ALL_TESTS(test_send_fatal_alert_in_handshake, 2);
     ADD_ALL_TESTS(test_ssl_bio_eof, 2);

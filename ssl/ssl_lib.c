@@ -3208,7 +3208,19 @@ int SSL_send_fatal_alert(SSL *s, uint8_t alert)
         return -1;
     }
 
-    sc->statem.error_state = ERROR_STATE_NOERROR;
+    if (ssl_reset_error_state(sc) == 0) {
+        /*
+         * The connection has already failed. Only a retry of a blocked
+         * alert queued by an earlier call to this function may continue,
+         * not one queued internally by SSLfatal().
+         */
+        if (!sc->s3.app_fatal_alert
+            || sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_NONE) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+            return -1;
+        }
+        sc->statem.error_state = ERROR_STATE_NOERROR;
+    }
     sc->rwstate = SSL_NOTHING;
 
     if (sc->handshake_func == NULL) {
@@ -3220,6 +3232,9 @@ int SSL_send_fatal_alert(SSL *s, uint8_t alert)
     /*
      * Calling this from a callback invoked by the handshake state machine
      * would leave the state machine running after the alert has been sent.
+     * Callbacks invoked outside the state machine, for example from the
+     * record layer, are not detected here; calling this function from any
+     * libssl callback is documented as unsupported.
      */
     if (ossl_statem_get_in_handshake(sc)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -3243,20 +3258,19 @@ int SSL_send_fatal_alert(SSL *s, uint8_t alert)
     }
 
     if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
-        /* Only a retry of the same fatal alert can continue */
-        if (sc->s3.send_alert[0] != SSL3_AL_FATAL
-            || sc->s3.send_alert[1] != desc) {
+        /*
+         * Only a retry of our own fatal alert, with the same description,
+         * can continue. Any other queued alert, such as a close_notify from
+         * SSL_shutdown(), is left alone.
+         */
+        if (!sc->s3.app_fatal_alert || sc->s3.send_alert[1] != desc) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
             sc->statem.error_state = ERROR_STATE_SSL;
             return -1;
         }
     } else {
-        /*
-         * A connection that has already failed, or that has sent a
-         * close_notify, cannot send a fatal alert.
-         */
-        if (ossl_statem_in_error(sc)
-            || (sc->shutdown & SSL_SENT_SHUTDOWN) != 0) {
+        /* A connection that has sent a close_notify cannot send an alert */
+        if ((sc->shutdown & SSL_SENT_SHUTDOWN) != 0) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
             sc->statem.error_state = ERROR_STATE_SSL;
             return -1;
@@ -3267,10 +3281,13 @@ int SSL_send_fatal_alert(SSL *s, uint8_t alert)
          * detected fatal error and queue the alert. This also removes the
          * session from the cache.
          */
+        sc->s3.app_fatal_alert = 1;
         ossl_statem_send_fatal(sc, alert);
     }
 
     ret = ssl_dispatch_fatal_alert(s, sc);
+    if (sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_NONE)
+        sc->s3.app_fatal_alert = 0;
     if (ret <= 0 && !SSL_want_write(s))
         ssl_update_error_state(sc);
     return ret;

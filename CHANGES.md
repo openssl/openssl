@@ -48,8 +48,8 @@ OpenSSL 4.2
    until now there was no public API to do so. After the call the connection
    is in the same failed state as after an internally detected fatal error,
    and `SSL_shutdown()` does not send a close_notify. The function has the
-   same signature and semantics as in BoringSSL. It is not supported on QUIC
-   objects.
+   same signature as in BoringSSL and compatible behaviour. It is not
+   supported on QUIC objects.
 
    *kinchpik*
 

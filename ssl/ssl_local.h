@@ -1432,6 +1432,11 @@ struct ssl_connection_st {
         int alert_dispatch;
         unsigned char send_alert[2];
         /*
+         * Set while the alert in send_alert was queued by
+         * SSL_send_fatal_alert() and has not been written out yet
+         */
+        int app_fatal_alert;
+        /*
          * This flag is set when we should renegotiate ASAP, basically when there
          * is no more data in the read or write buffers
          */
