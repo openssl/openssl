@@ -60,9 +60,6 @@ jobs:
             },{
               "branch": "openssl-3.5",
               "extra_config": "no-afalgeng enable-fips enable-tfo"
-            },{
-              "branch": "openssl-3.4",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
           }]
           EOF
           )
