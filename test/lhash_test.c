@@ -213,6 +213,56 @@ static uint64_t hashtable_hash(HT_KEY *key)
     return (uint64_t)(*(uint32_t *)key->keybuf);
 }
 
+static uint64_t hashtable_collision_hash(HT_KEY *key)
+{
+    return 42;
+}
+
+static int test_hashtable_collisions(int idx)
+{
+    static unsigned char keys[][5] = { "aaa", "bbb", "bbbb", "" };
+    HT_CONFIG hash_conf = {
+        .ht_hash_fn = hashtable_collision_hash,
+        .collision_check = 1,
+        .no_rcu = idx,
+    };
+    struct {
+        HT_KEY key_header;
+    } key;
+    HT *ht = NULL;
+    HT_VALUE value = { 0 }, *found;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(ht = ossl_ht_new(&hash_conf)))
+        goto end;
+
+    /* Distinct keys must survive a collision even when their lengths differ. */
+    for (i = 0; i < OSSL_NELEM(keys); i++) {
+        HT_INIT_KEY(&key);
+        key.key_header.keybuf = keys[i];
+        key.key_header.keysize = strlen((char *)keys[i]);
+        value.value = keys[i];
+        if (!TEST_int_eq(ossl_ht_insert(ht, TO_HT_KEY(&key), &value, NULL), 1))
+            goto end;
+    }
+
+    for (i = 0; i < OSSL_NELEM(keys); i++) {
+        HT_INIT_KEY(&key);
+        key.key_header.keybuf = keys[i];
+        key.key_header.keysize = strlen((char *)keys[i]);
+        if (!TEST_ptr(found = ossl_ht_get(ht, TO_HT_KEY(&key)))
+            || !TEST_ptr_eq(found->value, keys[i]))
+            goto end;
+    }
+
+    ret = 1;
+
+end:
+    ossl_ht_free(ht);
+    return ret;
+}
+
 static int test_int_hashtable(int idx)
 {
     static struct {
@@ -920,6 +970,7 @@ int setup_tests(void)
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
     ADD_ALL_TESTS(test_int_hashtable, 2);
+    ADD_ALL_TESTS(test_hashtable_collisions, 2);
     ADD_ALL_TESTS(test_hashtable_stress, 4);
     ADD_ALL_TESTS(test_hashtable_multithread, 2);
     ADD_MFAIL_TEST(test_hashtable_insert_replace_mfail);
