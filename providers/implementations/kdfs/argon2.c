@@ -570,11 +570,12 @@ static int fill_mem_blocks_mt(KDF_ARGON2 *ctx)
             for (l = 0; l < ctx->lanes; ++l) {
                 ARGON2_POS p;
                 if (l >= ctx->threads) {
-                    if (ossl_crypto_thread_join(t[l - ctx->threads], NULL) == 0)
+                    void *thr = t[l - ctx->threads];
+                    if (ossl_crypto_thread_join(thr, NULL) == 0)
                         goto fail;
-                    if (ossl_crypto_thread_clean(t[l - ctx->threads]) == 0)
+                    t[l - ctx->threads] = NULL;
+                    if (ossl_crypto_thread_clean(thr) == 0)
                         goto fail;
-                    t[l] = NULL;
                 }
 
                 p.pass = r;
@@ -587,22 +588,16 @@ static int fill_mem_blocks_mt(KDF_ARGON2 *ctx)
                 t[l] = ossl_crypto_thread_start(ctx->libctx, &fill_segment_thr,
                     (void *)&t_data[l]);
                 if (t[l] == NULL) {
-                    for (ll = 0; ll < l; ++ll) {
-                        if (ossl_crypto_thread_join(t[ll], NULL) == 0)
-                            goto fail;
-                        if (ossl_crypto_thread_clean(t[ll]) == 0)
-                            goto fail;
-                        t[ll] = NULL;
-                    }
                     goto fail;
                 }
             }
             for (l = ctx->lanes - ctx->threads; l < ctx->lanes; ++l) {
-                if (ossl_crypto_thread_join(t[l], NULL) == 0)
-                    goto fail;
-                if (ossl_crypto_thread_clean(t[l]) == 0)
+                void *thr = t[l];
+                if (ossl_crypto_thread_join(thr, NULL) == 0)
                     goto fail;
                 t[l] = NULL;
+                if (ossl_crypto_thread_clean(thr) == 0)
+                    goto fail;
             }
         }
     }
@@ -613,10 +608,18 @@ static int fill_mem_blocks_mt(KDF_ARGON2 *ctx)
     return 1;
 
 fail:
-    if (t_data != NULL)
-        OPENSSL_free(t_data);
-    if (t != NULL)
-        OPENSSL_free(t);
+    if (t != NULL) {
+        for (ll = 0; ll < ctx->lanes; ++ll) {
+            if (t[ll] == NULL)
+                continue;
+            if (ossl_crypto_thread_join(t[ll], NULL) != 0)
+                (void)ossl_crypto_thread_clean(t[ll]);
+            t[ll] = NULL;
+        }
+    }
+
+    OPENSSL_free(t_data);
+    OPENSSL_free(t);
     return 0;
 }
 
@@ -1103,8 +1106,15 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     if (initialize(ctx) != 1)
         return 0;
 
-    if (fill_memory_blocks(ctx) != 1)
+    if (fill_memory_blocks(ctx) != 1) {
+        if (ctx->type != ARGON2_D)
+            OPENSSL_secure_clear_free(ctx->memory,
+                ctx->memory_blocks * sizeof(BLOCK));
+        else
+            OPENSSL_clear_free(ctx->memory,
+                ctx->memory_blocks * sizeof(BLOCK));
         return 0;
+    }
 
     finalize(ctx, out);
 
