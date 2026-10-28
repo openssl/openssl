@@ -1573,6 +1573,137 @@ IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(RSA, "RSA")
 IMPLEMENT_TEST_SUITE_PROTECTED_PVK(RSA, "RSA")
 #endif
 
+/*
+ * Encoding a private key to type-specific DER must not leave the key in
+ * memory that is freed during the encoding.  While the encoding runs, the
+ * allocator below records every block it hands out, and searches a block
+ * for the private exponent when it is freed.  Blocks allocated before the
+ * allocator was installed are passed straight through.
+ */
+#define WATCH_MAX 4096
+
+static CRYPTO_malloc_fn watch_saved_malloc;
+static CRYPTO_realloc_fn watch_saved_realloc;
+static CRYPTO_free_fn watch_saved_free;
+static struct {
+    void *ptr;
+    size_t size;
+} watch_blocks[WATCH_MAX];
+static size_t watch_count;
+static int watch_overflow;
+static const unsigned char *watch_secret;
+static size_t watch_secret_len;
+static int watch_found;
+
+static void watch_add(void *ptr, size_t size)
+{
+    if (watch_count == WATCH_MAX) {
+        watch_overflow = 1;
+        return;
+    }
+    watch_blocks[watch_count].ptr = ptr;
+    watch_blocks[watch_count].size = size;
+    watch_count++;
+}
+
+/* Forget |ptr|, first searching it for the secret if |scan| is set */
+static void watch_remove(void *ptr, int scan)
+{
+    const unsigned char *p = ptr;
+    size_t i, j;
+
+    for (i = watch_count; i-- > 0;) {
+        if (watch_blocks[i].ptr != ptr)
+            continue;
+        if (scan && watch_secret != NULL)
+            for (j = 0; j + watch_secret_len <= watch_blocks[i].size; j++)
+                if (memcmp(p + j, watch_secret, watch_secret_len) == 0) {
+                    watch_found = 1;
+                    break;
+                }
+        watch_blocks[i] = watch_blocks[--watch_count];
+        return;
+    }
+}
+
+static void *watch_malloc(size_t num, const char *file, int line)
+{
+    void *ret = watch_saved_malloc(num, file, line);
+
+    if (ret != NULL)
+        watch_add(ret, num);
+    return ret;
+}
+
+static void *watch_realloc(void *ptr, size_t num, const char *file, int line)
+{
+    void *ret = watch_saved_realloc(ptr, num, file, line);
+
+    if (ptr != NULL && (ret != NULL || num == 0))
+        watch_remove(ptr, 0);
+    if (ret != NULL)
+        watch_add(ret, num);
+    return ret;
+}
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        watch_remove(ptr, 1);
+    watch_saved_free(ptr, file, line);
+}
+
+static int test_type_specific_der_cleanse(void)
+{
+    BIGNUM *d = NULL;
+    unsigned char *secret = NULL, *der = NULL, *data = NULL;
+    size_t datalen = 0;
+    OSSL_ENCODER_CTX *ectx = NULL;
+    int secretlen = 0, derlen, encoded, ok = 0;
+
+    if (!TEST_ptr(key_RSA)
+        || !TEST_true(EVP_PKEY_get_bn_param(key_RSA, OSSL_PKEY_PARAM_RSA_D, &d))
+        || !TEST_int_gt(secretlen = BN_num_bytes(d), 0)
+        || !TEST_ptr(secret = OPENSSL_malloc(secretlen))
+        || !TEST_int_eq(BN_bn2bin(d, secret), secretlen)
+        || !TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(key_RSA,
+                         EVP_PKEY_KEYPAIR, "DER", "type-specific", NULL)))
+        goto err;
+
+    CRYPTO_get_mem_functions(&watch_saved_malloc, &watch_saved_realloc,
+        &watch_saved_free);
+    if (!CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free)) {
+        ok = TEST_skip("the allocator can no longer be replaced");
+        goto err;
+    }
+    watch_count = 0;
+    watch_overflow = 0;
+    watch_found = 0;
+    watch_secret = secret;
+    watch_secret_len = secretlen;
+
+    derlen = i2d_PrivateKey(key_RSA, &der);
+    encoded = OSSL_ENCODER_to_data(ectx, &data, &datalen);
+
+    watch_secret = NULL;
+    CRYPTO_set_mem_functions(watch_saved_malloc, watch_saved_realloc,
+        watch_saved_free);
+
+    if (!TEST_int_gt(derlen, 0)
+        || !TEST_true(encoded)
+        || !TEST_false(watch_overflow)
+        || !TEST_false(watch_found))
+        goto err;
+    ok = 1;
+err:
+    OPENSSL_free(der);
+    OPENSSL_free(data);
+    OSSL_ENCODER_CTX_free(ectx);
+    OPENSSL_clear_free(secret, secretlen);
+    BN_clear_free(d);
+    return ok;
+}
+
 #ifndef OPENSSL_NO_ML_DSA
 KEYS(ML_DSA_44);
 KEYS(ML_DSA_65);
@@ -2108,6 +2239,7 @@ int setup_tests(void)
          * set (e.g. LMS under FIPS), so the test stays portable.
          */
         ADD_TEST(test_fromdata_no_keygen);
+        ADD_TEST(test_type_specific_der_cleanse);
     }
 
     return ok;
