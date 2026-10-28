@@ -527,10 +527,22 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
         fn_nid = OBJ_obj2nid(fn);
         if (fn_opt != XN_FLAG_FN_NONE) {
             int objlen, fld_len;
+            char *objalloc = NULL;
+
             if ((fn_opt == XN_FLAG_FN_OID) || (fn_nid == NID_undef)) {
-                OBJ_obj2txt(objtmp, sizeof(objtmp), fn, 1);
+                objlen = OBJ_obj2txt(objtmp, sizeof(objtmp), fn, 1);
                 fld_len = 0; /* XXX: what should this be? */
                 objbuf = objtmp;
+                if (objlen > (int)(sizeof(objtmp) - 1)) {
+                    if (objlen > INT_MAX - 1) { /* catch an integer overflow */
+                        ERR_raise(ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+                        return -1;
+                    }
+                    if ((objalloc = OPENSSL_malloc(objlen + 1)) == NULL)
+                        return -1;
+                    OBJ_obj2txt(objalloc, objlen + 1, fn, 1);
+                    objbuf = objalloc;
+                }
             } else {
                 if (fn_opt == XN_FLAG_FN_SN) {
                     fld_len = FN_WIDTH_SN;
@@ -544,8 +556,11 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
                 }
             }
             objlen = (int)strlen(objbuf);
-            if (!io_ch(arg, objbuf, objlen))
+            if (!io_ch(arg, objbuf, objlen)) {
+                OPENSSL_free(objalloc);
                 return -1;
+            }
+            OPENSSL_free(objalloc);
             if ((objlen < fld_len) && (flags & XN_FLAG_FN_ALIGN)) {
                 if (!do_indent(io_ch, arg, fld_len - objlen))
                     return -1;

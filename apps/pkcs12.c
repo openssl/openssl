@@ -1326,7 +1326,8 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
 {
     char *value;
     const char *ln;
-    char objbuf[80];
+    char objbuf[80], *obj;
+    int objlen;
 
     switch (av->type) {
     case V_ASN1_BMPSTRING:
@@ -1359,8 +1360,15 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
         ln = OBJ_nid2ln(OBJ_obj2nid(av->value.object));
         if (!ln)
             ln = "";
-        OBJ_obj2txt(objbuf, sizeof(objbuf), av->value.object, 1);
-        BIO_printf(out, "%s (%s)\n", ln, objbuf);
+        obj = objbuf;
+        objlen = OBJ_obj2txt(objbuf, sizeof(objbuf), av->value.object, 1);
+        if (objlen > (int)(sizeof(objbuf) - 1)) {
+            obj = app_malloc((size_t)objlen + 1, "object text");
+            OBJ_obj2txt(obj, objlen + 1, av->value.object, 1);
+        }
+        BIO_printf(out, "%s (%s)\n", ln, obj);
+        if (obj != objbuf)
+            OPENSSL_free(obj);
         break;
 
     default:
