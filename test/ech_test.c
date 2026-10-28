@@ -1902,7 +1902,7 @@ static int ech_alpn_in_out_test(int idx)
     /* setup alpn callback for server */
     SSL_CTX_set_alpn_select_cb(sctx, alpn_select_cb, NULL);
     if (idx == 0) {
-        /* set the correct EHCConfigList on client */
+        /* set the correct ECHConfigList on client */
         if (!TEST_true(SSL_set1_ech_config_list(clientssl,
                 (unsigned char *)ec_kp2, ec_kp2len)))
             goto end;
@@ -1911,12 +1911,14 @@ static int ech_alpn_in_out_test(int idx)
             goto end;
     }
     if (idx == 1 || idx == 2) {
-        /* set the wrong EHCConfigList on client */
+        /* set the wrong ECHConfigList on client */
         if (!TEST_true(SSL_set1_ech_config_list(clientssl,
                 (unsigned char *)ec_kp1, ec_kp1len)))
             goto end;
         if (!TEST_false(create_ssl_connection(serverssl, clientssl,
-                SSL_R_ECH_REQUIRED)))
+                SSL_ERROR_SSL))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_ECH_REQUIRED))
             goto end;
     }
     /* get ECH results */
