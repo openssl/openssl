@@ -840,9 +840,15 @@ int pkcs12_main(int argc, char **argv)
 
                 BIO_printf(bio_err, " using PBKDF2, Iteration %ld\n",
                     ASN1_INTEGER_get(pbkdf2_param->iter));
-                BIO_printf(bio_err, "Key length: %ld, Salt length: %d\n",
-                    ASN1_INTEGER_get(pbkdf2_param->keylength),
-                    ASN1_STRING_length(pbkdf2_param->salt->value.octet_string));
+                if (pbkdf2_param->salt == NULL
+                    || pbkdf2_param->salt->type != V_ASN1_OCTET_STRING)
+                    BIO_printf(bio_err, "Key length: %ld, Salt: (invalid)\n",
+                        ASN1_INTEGER_get(pbkdf2_param->keylength));
+                else
+                    BIO_printf(bio_err, "Key length: %ld, Salt length: %d\n",
+                        ASN1_INTEGER_get(pbkdf2_param->keylength),
+                        ASN1_STRING_length(
+                            pbkdf2_param->salt->value.octet_string));
                 if (pbkdf2_param->prf == NULL) {
                     prfnid = NID_hmacWithSHA1;
                 } else {
