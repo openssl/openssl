@@ -237,25 +237,25 @@ typedef struct {
     const unsigned char *in;
     unsigned int inlen;
     /*
-     * GOOD == positive return value from DTLSv1_listen, no output yet
-     * VERIFY == 0 return value, HelloVerifyRequest sent
-     * DROP == 0 return value, no output
+     * OTT_GOOD == positive return value from DTLSv1_listen, no output yet
+     * OTT_VERIFY == 0 return value, HelloVerifyRequest sent
+     * OTT_DROP == 0 return value, no output
      */
-    enum { GOOD,
-        VERIFY,
-        DROP } outtype;
+    enum { OTT_GOOD,
+        OTT_VERIFY,
+        OTT_DROP } outtype;
 } tests;
 
 static tests testpackets[9] = {
-    { clienthello_nocookie, sizeof(clienthello_nocookie), VERIFY },
-    { clienthello_nocookie_frag, sizeof(clienthello_nocookie_frag), VERIFY },
-    { clienthello_nocookie_short, sizeof(clienthello_nocookie_short), DROP },
-    { clienthello_2ndfrag, sizeof(clienthello_2ndfrag), DROP },
-    { clienthello_cookie, sizeof(clienthello_cookie), GOOD },
-    { clienthello_cookie_frag, sizeof(clienthello_cookie_frag), GOOD },
-    { clienthello_badcookie, sizeof(clienthello_badcookie), VERIFY },
-    { clienthello_cookie_short, sizeof(clienthello_cookie_short), DROP },
-    { record_short, sizeof(record_short), DROP }
+    { clienthello_nocookie, sizeof(clienthello_nocookie), OTT_VERIFY },
+    { clienthello_nocookie_frag, sizeof(clienthello_nocookie_frag), OTT_VERIFY },
+    { clienthello_nocookie_short, sizeof(clienthello_nocookie_short), OTT_DROP },
+    { clienthello_2ndfrag, sizeof(clienthello_2ndfrag), OTT_DROP },
+    { clienthello_cookie, sizeof(clienthello_cookie), OTT_GOOD },
+    { clienthello_cookie_frag, sizeof(clienthello_cookie_frag), OTT_GOOD },
+    { clienthello_badcookie, sizeof(clienthello_badcookie), OTT_VERIFY },
+    { clienthello_cookie_short, sizeof(clienthello_cookie_short), OTT_DROP },
+    { record_short, sizeof(record_short), OTT_DROP }
 };
 
 #define COOKIE_LEN 20
@@ -322,13 +322,13 @@ static int dtls_listen_test(int i)
         goto err;
     datalen = BIO_get_mem_data(outbio, &data);
 
-    if (tp->outtype == VERIFY) {
+    if (tp->outtype == OTT_VERIFY) {
         if (!TEST_int_eq(ret, 0)
             || !TEST_mem_eq(data, datalen, verify, sizeof(verify)))
             goto err;
     } else if (datalen == 0) {
-        if (!TEST_true((ret == 0 && tp->outtype == DROP)
-                || (ret == 1 && tp->outtype == GOOD)))
+        if (!TEST_true((ret == 0 && tp->outtype == OTT_DROP)
+                || (ret == 1 && tp->outtype == OTT_GOOD)))
             goto err;
     } else {
         TEST_info("Test %d: unexpected data output", i);
