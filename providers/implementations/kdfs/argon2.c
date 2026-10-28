@@ -1111,6 +1111,14 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
         return 0;
 
     if (fill_memory_blocks(ctx) != 1)
+        if (ctx->type != ARGON2_D) {
+            OPENSSL_secure_clear_free(ctx->memory,
+                ctx->memory_blocks * sizeof(BLOCK));
+        }
+        else {
+            OPENSSL_clear_free(ctx->memory,
+                ctx->memory_blocks * sizeof(BLOCK));
+        }
         return 0;
 
     finalize(ctx, out);
