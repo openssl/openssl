@@ -2105,18 +2105,31 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 
     /*
      * The callback may have switched to an SSL_CTX with a different set of
-     * custom extensions. The collected extensions are indexed by that set, so
-     * collect them again for the context now in use.
+     * custom extensions, possibly in an earlier call that returned
+     * SSL_CLIENT_HELLO_RETRY. The collected extensions are indexed by the
+     * custom extensions in use when they were collected, so collect them
+     * again unless neither set has any.
      */
-    if (SSL_CONNECTION_GET_CTX(s) != sctx) {
+    if (clienthello->pre_proc_exts_len != TLSEXT_IDX_num_builtins
+        || s->cert->custext.meths_count != 0) {
         PACKET extensions = clienthello->extensions;
+        void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
+            = s->ext.debug_cb;
+        int ret;
 
         OPENSSL_free(clienthello->pre_proc_exts);
         clienthello->pre_proc_exts = NULL;
         clienthello->pre_proc_exts_len = 0;
-        if (!tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
-                &clienthello->pre_proc_exts,
-                &clienthello->pre_proc_exts_len, 1)) {
+        /*
+         * The first collection has already initialised the built-in
+         * extensions and passed the extensions to the debug callback.
+         */
+        s->ext.debug_cb = NULL;
+        ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
+            &clienthello->pre_proc_exts,
+            &clienthello->pre_proc_exts_len, 0);
+        s->ext.debug_cb = debug_cb;
+        if (!ret) {
             /* SSLfatal already been called */
             goto err;
         }
