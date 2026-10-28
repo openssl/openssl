@@ -1240,7 +1240,7 @@ IF[{- !$disabled{tests} -}]
     IF[{- !$disabled{'ml-kem'} -}]
       PROGRAMS{noinst}=ml_kem_internal_test
       SOURCE[ml_kem_internal_test]=ml_kem_internal_test.c
-      INCLUDE[ml_kem_internal_test]=../include ../apps/include
+      INCLUDE[ml_kem_internal_test]=../include ../apps/include ../crypto/ml_kem
       DEPEND[ml_kem_internal_test]=../libcrypto.a libtestutil.a
 
       PROGRAMS{noinst}=ml_kem_evp_extra_test

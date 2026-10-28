@@ -1,9 +1,15 @@
 LIBS = ../../libcrypto
 
+$MLKEMX86=
 $MLKEMASM=
 IF[{- !$disabled{asm} -}]
   $MLKEMASM_x86_64=ml_kem_avx2.s
   $MLKEMDEF_x86_64=MLKEM_AVX2_X86_64_ASM
+
+  IF[$target{asm_arch} eq "x86_64"]
+    $MLKEMX86=ml_kem_avx512.c
+  ENDIF
+
   $MLKEMDEF_ppc64=MLKEM_NTT_PPC_ASM
 
   IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
@@ -27,7 +33,7 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-$COMMON=ml_kem.c $MLKEMASM $MLKEM_VX
+$COMMON=ml_kem.c $MLKEMASM $MLKEM_VX $MLKEMX86
 
 IF[{- !$disabled{'ml-kem'} -}]
     SOURCE[../../libcrypto]=$COMMON
