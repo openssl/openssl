@@ -1433,7 +1433,8 @@ struct ssl_connection_st {
         unsigned char send_alert[2];
         /*
          * Set while the alert in send_alert was queued by
-         * SSL_send_fatal_alert() and has not been written out yet
+         * SSL_send_fatal_alert() and has not been written out and flushed
+         * yet
          */
         int app_fatal_alert;
         /*
