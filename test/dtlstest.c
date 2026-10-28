@@ -74,7 +74,7 @@ static unsigned int timer_cb(SSL *s, unsigned int timer_us)
 static OSSL_TIME fake_now_base;
 static OSSL_TIME fake_now_advanced;
 
-static OSSL_TIME fake_now_cb()
+static OSSL_TIME fake_now_cb(void)
 {
     return ossl_time_add(fake_now_base, fake_now_advanced);
 }
