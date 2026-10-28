@@ -562,6 +562,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     { 4588, "X25519MLKEM768" },
     { 4589, "SecP384r1MLKEM1024" },
     { 4590, "curveSM2MLKEM768" },
+    { 4591, "MLKEM1024X448" },
     { 25497, "X25519Kyber768Draft00" },
     { 25498, "SecP256r1Kyber768Draft00" },
     { 0xFF01, "arbitrary_explicit_prime_curves" },

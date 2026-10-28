@@ -598,7 +598,7 @@ internally for non security purposes.
 
 =item X25519 and X448 Key Generation and Key Exchange
 
-=item X448MLKEM1024 Key Generation and Key Encapsulation
+=item MLKEM1024X448 Key Generation and Key Encapsulation
 
 The other hybrid ML-KEM algorithms supplied by the FIPS provider are approved,
 including X25519MLKEM768, SecP256r1MLKEM768 and SecP384r1MLKEM1024.
