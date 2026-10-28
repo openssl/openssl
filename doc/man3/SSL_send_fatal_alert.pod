@@ -35,9 +35,17 @@ The application should then close the underlying transport.
 The function may be called after the handshake has completed, or during the
 handshake between calls to L<SSL_do_handshake(3)>, L<SSL_connect(3)> or
 L<SSL_accept(3)>, for example when using nonblocking I/O.
-It must not be called from within a callback invoked by libssl while it is
-processing the handshake; such callbacks have their own means of aborting the
-handshake with an alert.
+It must not be called from within any callback invoked by libssl, for example
+a certificate verification callback, an info callback set with
+L<SSL_CTX_set_info_callback(3)>, a message callback set with
+L<SSL_CTX_set_msg_callback(3)> or a record padding callback set with
+L<SSL_CTX_set_record_padding_callback(3)>.
+Such calls are not supported.
+A call made while the handshake state machine is running is detected and
+fails, but calls from other callbacks, such as those invoked by the record
+layer, are not detected and lead to undefined behaviour.
+Callbacks that run during the handshake have their own means of aborting it
+with an alert.
 During the handshake the alert is protected with the keys that are current
 for the sender, so a peer that has moved to different keys, or that expects a
 different record version, may report a record layer error rather than the
@@ -52,7 +60,8 @@ B<SSL_ERROR_WANT_WRITE>.
 The connection is nevertheless already in the failed state.
 The application should call SSL_send_fatal_alert() again, with the same
 I<alert>, once the write BIO is writable, to finish sending the alert.
-Calling it with a different I<alert> at that point fails.
+Such a retry is the only call that succeeds on a connection that has already
+failed; calling it with a different I<alert> at that point fails.
 
 The alert description must be valid for the protocol version in use.
 The closure alerts B<SSL_AD_CLOSE_NOTIFY> and B<SSL_AD_USER_CANCELLED> are not
@@ -61,6 +70,9 @@ cleanly.
 The function fails if a fatal alert has already been sent, if the connection
 has already failed, or if a close_notify alert has already been sent, and the
 state of the connection is then left unchanged.
+This includes a connection on which libssl itself detected a fatal error but
+could not yet write its own alert because the write BIO blocked: that alert is
+not sent by SSL_send_fatal_alert(), and no other alert is sent in its place.
 
 SSL_send_fatal_alert() is not supported for QUIC connection or stream objects,
 which signal errors with a CONNECTION_CLOSE frame instead; see
