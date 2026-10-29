@@ -307,7 +307,7 @@ static void *kdf_pbkdf1_derive_skey(void *vctx, const char *key_type ossl_unused
         return NULL;
 
     if (kdf_pbkdf1_derive(vctx, key, keylen, params) == 0) {
-        OPENSSL_free(key);
+        OPENSSL_clear_free(key, keylen);
         return NULL;
     }
 
@@ -315,7 +315,7 @@ static void *kdf_pbkdf1_derive_skey(void *vctx, const char *key_type ossl_unused
         (void *)key, keylen);
 
     ret = import(provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);
-    OPENSSL_free(key);
+    OPENSSL_clear_free(key, keylen);
 
     return ret;
 }
