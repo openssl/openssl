@@ -76,7 +76,6 @@ OpenSSL 4.2
 
    *Viktor Dukhovni*
 
-
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
    key parameter without exporting the key, so it is also available for keys
