@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set_session_id_context, SSL_set_session_id_context - set context within which session can be reused (server side only)
+SSL_CTX_set_session_id_context, SSL_set_session_id_context
+- set context within which session can be reused (server side only)
 
 =head1 SYNOPSIS
 
