@@ -1103,7 +1103,7 @@ tail:
     if (fn_e != NULL) {
         if (!rsa->meth->ossl_fn_mod_exp(vrfy, r0, fn_e, f_n, ctx, mont_n))
             goto err;
-        if (!OSSL_FN_mod_sub_quick(vrfy, vrfy, I, f_n))
+        if (!OSSL_FN_mod_sub_quick(vrfy, vrfy, f_I, f_n))
             goto err;
         if (!OSSL_FN_is_zero(vrfy)) {
             if (f_d == NULL)
