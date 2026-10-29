@@ -150,18 +150,35 @@ err:
  */
 static int ech_check_format(const unsigned char *val, size_t len, int *fmt)
 {
-    size_t span = 0;
+    size_t span = 0, offset = 2, innerlen = 0;
+    int foundgood = 0;
     char *copy_with_NUL = NULL;
 
     if (fmt == NULL || len <= 4 || val == NULL)
         return 0;
-    /* binary encoding starts with two octet length and ECH version */
-    if (len == 2 + ((size_t)(val[0]) * 256 + (size_t)(val[1]))
-        && val[2] == ((OSSL_ECH_RFC9849_VERSION / 256) & 0xff)
-        && val[3] == ((OSSL_ECH_RFC9849_VERSION % 256) & 0xff)) {
-        *fmt = OSSL_ECH_FMT_BIN;
-        return 1;
+
+    /*
+     * binary encoding starts with two octet outer length then a sequence of
+     * ECH version and inner length, so we'll accept as binary if there is
+     * any occurrence of the supported version at the right place in the
+     * input and if following the inner lengths matches the outer length
+     */
+    while ((offset + 4) < len) {
+        innerlen = (size_t)(val[offset + 2]) * 256 + (size_t)(val[offset + 3]);
+        if (val[offset] == ((OSSL_ECH_RFC9849_VERSION / 256) & 0xff)
+            && val[offset + 1] == ((OSSL_ECH_RFC9849_VERSION % 256) & 0xff)) {
+            if ((offset + 4 + innerlen) <= len)
+                foundgood = 1;
+        }
+        offset += innerlen + 4;
     }
+    if (foundgood == 1 && offset == len) {
+        if ((len - 2) == ((size_t)(val[0]) * 256 + (size_t)(val[1]))) {
+            *fmt = OSSL_ECH_FMT_BIN;
+            return 1;
+        }
+    }
+
     /* ensure we always end with a NUL so strspn is safe */
     copy_with_NUL = OPENSSL_malloc(len + 1);
     if (copy_with_NUL == NULL)
@@ -290,15 +307,19 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
         || ee->public_name[0] == '\0'
         || ee->public_name[0] == '.'
         || ee->public_name[strlen(ee->public_name) - 1] == '.'
-        || strlen(ee->public_name) > 255)
+        || strlen(ee->public_name) > 255) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
+    }
     /*
      * Use X509_VERIFY_PARAM_add1_host to avoid coding same checks twice.
      * This checks max 63 octets per label, overall length and some other
      * DNS label checks.
      */
-    if (X509_VERIFY_PARAM_add1_host(vpm, ee->public_name, 0) == 0)
+    if (X509_VERIFY_PARAM_add1_host(vpm, ee->public_name, 0) == 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
+    }
     /*
      * but we still have to check the last label restrictions, which
      * are intended to avoid confusion with IP address literals in
@@ -308,18 +329,24 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
     if (lastlabel == NULL) /* if there are no dots */
         lastlabel = ee->public_name;
     lllen = strlen(lastlabel);
-    if (lllen < 2)
+    if (lllen < 2) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
+    }
     if (lastlabel[0] == '.') {
         lastlabel++;
         lllen--;
     }
-    if (strspn(lastlabel, "0123456789") == lllen)
+    if (strspn(lastlabel, "0123456789") == lllen) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
+    }
     if (lastlabel[0] == '0' && lllen > 2
         && (lastlabel[1] == 'x' || lastlabel[1] == 'X')
-        && strspn(lastlabel + 2, "0123456789abcdefABCDEF") == (lllen - 2))
+        && strspn(lastlabel + 2, "0123456789abcdefABCDEF") == (lllen - 2)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
+    }
     rv = 1;
 err:
     X509_VERIFY_PARAM_free(vpm);
@@ -517,16 +544,19 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv, int for_ret
     remaining = PACKET_remaining(&pkt);
     while (remaining > 0) {
         if (ech_decode_one_entry(&ee, &pkt, priv, for_retry) != 1) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
             goto err;
         }
         remaining = PACKET_remaining(&pkt);
         /* if unsupported version we can skip over */
         if (ee == NULL)
             continue;
-        /* do final checks on suites, exts, and fail if issues */
-        if (ech_final_config_checks(ee) != 1)
-            goto err;
+        /* do final checks on suites, exts, and skip if issues */
+        if (ech_final_config_checks(ee) != 1) {
+            ossl_echstore_entry_free(ee);
+            ee = NULL;
+            continue;
+        }
         /* push entry into store */
         if (es->entries == NULL)
             es->entries = sk_OSSL_ECHSTORE_ENTRY_new_null();
@@ -540,7 +570,10 @@ static int ech_decode_and_flatten(OSSL_ECHSTORE *es, EVP_PKEY *priv, int for_ret
         }
         ee = NULL;
     }
-    rv = 1;
+    if (es->entries == NULL) /* nothing worked */
+        rv = 0;
+    else
+        rv = 1;
 err:
     ossl_echstore_entry_free(ee);
     return rv;
