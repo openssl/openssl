@@ -27,11 +27,13 @@
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
+#include "internal/der.h"
 #include "crypto/rsa.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
+#include "prov/der_digests.h"
 #include "prov/securitycheck.h"
 #include "internal/fips.h"
 
@@ -1912,7 +1914,7 @@ static int rsa_sigalg_signverify_init(void *vprsactx, void *vrsa,
             desc))
         return 0;
 
-    /* PSS is currently not supported as a sigalg */
+    /* PSS padding is not supported with the RSA-{hash} sigalgs */
     if (prsactx->pad_mode == RSA_PKCS1_PSS_PADDING) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
@@ -2115,3 +2117,384 @@ IMPL_RSA_SIGALG(sha3_512, "SHA3-512");
 #if !defined(OPENSSL_NO_SM3) && !defined(FIPS_MODULE)
 IMPL_RSA_SIGALG(sm3, "SM3");
 #endif
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * RSA-PSS as a signature algorithm in its own right.  Unlike the
+ * composite RSA-{hash} sigalgs above, the message digest is not fixed by
+ * the algorithm name; it's given with the OSSL_SIGNATURE_PARAM_DIGEST
+ * parameter, defaulting to SHA1 when absent (the same default as an
+ * "RSA" signature context switched to PSS padding).  PSS padding is
+ * implied and cannot be changed.  Both RSA and RSA-PSS keys are
+ * accepted; the restrictions an RSA-PSS key may carry are honoured
+ * through the common rsa_signverify_init() / rsa_set_ctx_params()
+ * processing.
+ */
+
+static OSSL_FUNC_signature_set_ctx_params_fn rsa_pss_set_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn rsa_pss_settable_ctx_params;
+static OSSL_FUNC_signature_query_key_types_fn rsa_pss_query_key_types;
+static OSSL_FUNC_signature_sign_init_fn rsa_pss_sign_init;
+static OSSL_FUNC_signature_sign_message_init_fn rsa_pss_sign_message_init;
+static OSSL_FUNC_signature_verify_init_fn rsa_pss_verify_init;
+static OSSL_FUNC_signature_verify_message_init_fn rsa_pss_verify_message_init;
+
+/*
+ * The hash algorithms accepted in RSASSA-PSS-params, mapped from their
+ * OID to the NIDs that ossl_rsa_oaeppss_nid2name() understands.
+ */
+static const struct {
+    int nid;
+    const unsigned char *oid;
+    size_t oid_sz;
+} rsa_pss_aid_hashes[] = {
+    { NID_sha1, ossl_der_oid_id_sha1, DER_OID_SZ_id_sha1 },
+    { NID_sha224, ossl_der_oid_id_sha224, DER_OID_SZ_id_sha224 },
+    { NID_sha256, ossl_der_oid_id_sha256, DER_OID_SZ_id_sha256 },
+    { NID_sha384, ossl_der_oid_id_sha384, DER_OID_SZ_id_sha384 },
+    { NID_sha512, ossl_der_oid_id_sha512, DER_OID_SZ_id_sha512 },
+    { NID_sha512_224, ossl_der_oid_id_sha512_224, DER_OID_SZ_id_sha512_224 },
+    { NID_sha512_256, ossl_der_oid_id_sha512_256, DER_OID_SZ_id_sha512_256 },
+};
+
+/*
+ * Read a HashAlgorithm (RFC 8017, A.2.1), an AlgorithmIdentifier whose
+ * parameters are NULL when present, and may be absent altogether.
+ */
+static int rsa_pss_aid_read_hash(PACKET *pkt, int *nid)
+{
+    PACKET aid;
+    size_t i = 0;
+
+    if (!ossl_DER_r_begin_sequence(pkt, DER_NO_CONTEXT, &aid))
+        return 0;
+    for (i = 0; i < OSSL_NELEM(rsa_pss_aid_hashes); i++)
+        if (ossl_DER_r_precompiled(&aid, DER_NO_CONTEXT,
+                rsa_pss_aid_hashes[i].oid,
+                rsa_pss_aid_hashes[i].oid_sz))
+            break;
+    if (i >= OSSL_NELEM(rsa_pss_aid_hashes))
+        return 0;
+    if (PACKET_remaining(&aid) > 0 && !ossl_DER_r_null(&aid, DER_NO_CONTEXT))
+        return 0;
+    if (PACKET_remaining(&aid) != 0)
+        return 0;
+    *nid = rsa_pss_aid_hashes[i].nid;
+    return 1;
+}
+
+/*
+ * Decode RSASSA-PSS-params (RFC 8017, A.2.3) and apply them, much the
+ * same as the "digest", "mgf1-digest" and "saltlen" parameters would.
+ * Elided elements take their ASN.1 DEFAULT values.
+ */
+static int rsa_pss_set_aid_params(PROV_RSA_CTX *prsactx,
+    const unsigned char *der, size_t der_len)
+{
+    static const char desc[] = "RSA-PSS Set AlgorithmIdentifier Params";
+    PACKET pkt, params, elem;
+    unsigned int id = 0;
+    int hashnid = NID_sha1, mgf1hashnid = NID_sha1;
+    uint32_t saltlen = 20, trailer = 1;
+    const char *mdname = NULL, *mgf1mdname = NULL;
+
+    if (!PACKET_buf_init(&pkt, der, der_len)
+        || !ossl_DER_r_begin_sequence(&pkt, DER_NO_CONTEXT, &params))
+        return 0;
+
+    while (PACKET_remaining(&params) > 0) {
+        if (!ossl_DER_r_peek_element(&params, &id, NULL))
+            return 0;
+        switch (id) {
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 0:
+            /* hashAlgorithm [0] HashAlgorithm */
+            if (!ossl_DER_r_element(&params, &id, &elem)
+                || !rsa_pss_aid_read_hash(&elem, &hashnid)
+                || PACKET_remaining(&elem) != 0)
+                return 0;
+            break;
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 1: {
+            /* maskGenAlgorithm [1] MaskGenAlgorithm */
+            PACKET mgf;
+
+            if (!ossl_DER_r_element(&params, &id, &elem)
+                || !ossl_DER_r_begin_sequence(&elem, DER_NO_CONTEXT, &mgf)
+                || !ossl_DER_r_precompiled(&mgf, DER_NO_CONTEXT,
+                    ossl_der_oid_id_mgf1, DER_OID_SZ_id_mgf1)
+                || !rsa_pss_aid_read_hash(&mgf, &mgf1hashnid)
+                || PACKET_remaining(&mgf) != 0
+                || PACKET_remaining(&elem) != 0)
+                return 0;
+            break;
+        }
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 2:
+            /* saltLength [2] INTEGER */
+            if (!ossl_DER_r_uint32(&params, 2, &saltlen))
+                return 0;
+            break;
+        case DER_C_CONTEXT | DER_F_CONSTRUCTED | 3:
+            /* trailerField [3] TrailerField */
+            if (!ossl_DER_r_uint32(&params, 3, &trailer))
+                return 0;
+            break;
+        default:
+            return 0;
+        }
+    }
+
+    /*
+     * trailerField must be trailerFieldBC (1), no other value is defined.
+     * Salt lengths are int in this code.
+     */
+    if (PACKET_remaining(&pkt) != 0 || trailer != 1 || saltlen > INT_MAX)
+        return 0;
+
+    mdname = ossl_rsa_oaeppss_nid2name(hashnid);
+    mgf1mdname = ossl_rsa_oaeppss_nid2name(mgf1hashnid);
+    if (mdname == NULL || mgf1mdname == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        return 0;
+    }
+
+    /* The same minimum salt length check as for the "saltlen" parameter */
+    if (rsa_pss_restricted(prsactx) && (int)saltlen < prsactx->min_saltlen) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_PSS_SALTLEN_TOO_SMALL,
+            "Should be more than %d, but would be set to %d",
+            prsactx->min_saltlen, (int)saltlen);
+        return 0;
+    }
+
+    /* call rsa_setup_mgf1_md before rsa_setup_md to avoid duplication */
+    if (!rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
+        || !rsa_setup_md(prsactx, mdname, prsactx->propq, desc))
+        return 0;
+    prsactx->saltlen = (int)saltlen;
+    return 1;
+}
+
+static int rsa_pss_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
+{
+    PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+    struct rsa_pss_set_ctx_params_st p;
+
+    if (prsactx == NULL)
+        return 0;
+
+    /*
+     * PSS padding is implied with this algorithm.  Force it up front, so
+     * that the PSS related parameters are accepted regardless of the key
+     * type, and check that it's still there after the common processing.
+     */
+    prsactx->pad_mode = RSA_PKCS1_PSS_PADDING;
+
+    if (!rsa_pss_set_ctx_params_decoder(params, &p))
+        return 0;
+
+    /* The signature to verify, given with EVP_PKEY_CTX_set_signature() */
+    if (p.sig != NULL && prsactx->operation == EVP_PKEY_OP_VERIFYMSG) {
+        OPENSSL_free(prsactx->sig);
+        prsactx->sig = NULL;
+        prsactx->siglen = 0;
+        if (!OSSL_PARAM_get_octet_string(p.sig, (void **)&prsactx->sig,
+                0, &prsactx->siglen))
+            return 0;
+    }
+
+    /*
+     * The AlgorithmIdentifier parameters, a RSASSA-PSS-params value.  They
+     * are applied before the common processing, so the individual "digest",
+     * "mgf1-digest" and "saltlen" parameters take precedence over them.
+     */
+    if (p.algid != NULL) {
+        const unsigned char *aid = NULL;
+        size_t aid_len = 0;
+
+        if (!OSSL_PARAM_get_octet_string_ptr(p.algid, (const void **)&aid,
+                &aid_len)
+            || !rsa_pss_set_aid_params(prsactx, aid, aid_len)) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER,
+                "invalid algorithm-id-params");
+            return 0;
+        }
+    }
+
+    /* rsa_set_ctx_params() ignores the "signature" parameter */
+    if (!rsa_set_ctx_params(prsactx, params))
+        return 0;
+
+    if (prsactx->pad_mode != RSA_PKCS1_PSS_PADDING) {
+        ERR_raise_data(ERR_LIB_PROV,
+            PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE,
+            "only PSS padding is allowed with RSA-PSS");
+        prsactx->pad_mode = RSA_PKCS1_PSS_PADDING;
+        return 0;
+    }
+
+    return 1;
+}
+
+static const OSSL_PARAM *rsa_pss_settable_ctx_params(
+    ossl_unused void *vprsactx, ossl_unused void *provctx)
+{
+    return rsa_pss_set_ctx_params_list;
+}
+
+static const char **rsa_pss_query_key_types(void)
+{
+    static const char *keytypes[] = { "RSA", "RSA-PSS", NULL };
+
+    return keytypes;
+}
+
+static int rsa_pss_signverify_init(void *vprsactx, void *vrsa,
+    const OSSL_PARAM params[],
+    int operation, const char *desc)
+{
+    PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    /*
+     * rsa_pss_set_ctx_params() takes care of forcing PSS padding and
+     * processing the parameters.
+     */
+    if (!rsa_signverify_init(prsactx, vrsa, rsa_pss_set_ctx_params, params,
+            operation, desc))
+        return 0;
+
+    /*
+     * If no digest was given through the parameters, and the key doesn't
+     * impose one, apply the same default as rsa_set_ctx_params() does for
+     * PSS padding.  This is necessary because rsa_set_ctx_params() does
+     * nothing at all when there are no parameters.
+     */
+    if (prsactx->md == NULL
+        && !rsa_setup_md(prsactx, RSA_DEFAULT_DIGEST_NAME, NULL, desc))
+        return 0;
+
+    return 1;
+}
+
+static int rsa_pss_signverify_message_init(void *vprsactx, void *vrsa,
+    const OSSL_PARAM params[],
+    int operation, const char *desc)
+{
+    PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+
+    if (!rsa_pss_signverify_init(vprsactx, vrsa, params, operation, desc))
+        return 0;
+
+    if (prsactx->mdctx == NULL) {
+        prsactx->mdctx = EVP_MD_CTX_new();
+        if (prsactx->mdctx == NULL)
+            return 0;
+    }
+
+    /*
+     * |params| are signature parameters and were already processed by
+     * rsa_pss_set_ctx_params(); the digest context wants none of them.
+     */
+    if (!EVP_DigestInit_ex2(prsactx->mdctx, prsactx->md, NULL))
+        goto error;
+
+    return 1;
+
+error:
+    EVP_MD_CTX_free(prsactx->mdctx);
+    prsactx->mdctx = NULL;
+    return 0;
+}
+
+static int rsa_pss_sign_init(void *vprsactx, void *vrsa,
+    const OSSL_PARAM params[])
+{
+    static const char desc[] = "RSA-PSS Sign Init";
+    PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+
+#ifdef FIPS_MODULE
+    if (prsactx != NULL)
+        prsactx->verify_message = 1;
+#endif
+
+    return rsa_pss_signverify_init(prsactx, vrsa, params,
+        EVP_PKEY_OP_SIGN, desc);
+}
+
+static int rsa_pss_sign_message_init(void *vprsactx, void *vrsa,
+    const OSSL_PARAM params[])
+{
+    static const char desc[] = "RSA-PSS Sign Message Init";
+    PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+
+#ifdef FIPS_MODULE
+    if (prsactx != NULL)
+        prsactx->verify_message = 1;
+#endif
+
+    return rsa_pss_signverify_message_init(prsactx, vrsa, params,
+        EVP_PKEY_OP_SIGNMSG, desc);
+}
+
+static int rsa_pss_verify_init(void *vprsactx, void *vrsa,
+    const OSSL_PARAM params[])
+{
+    static const char desc[] = "RSA-PSS Verify Init";
+    PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+
+#ifdef FIPS_MODULE
+    if (prsactx != NULL)
+        prsactx->verify_message = 0;
+#endif
+
+    return rsa_pss_signverify_init(prsactx, vrsa, params,
+        EVP_PKEY_OP_VERIFY, desc);
+}
+
+static int rsa_pss_verify_message_init(void *vprsactx, void *vrsa,
+    const OSSL_PARAM params[])
+{
+    static const char desc[] = "RSA-PSS Verify Message Init";
+    PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+
+#ifdef FIPS_MODULE
+    if (prsactx != NULL)
+        prsactx->verify_message = 1;
+#endif
+
+    return rsa_pss_signverify_message_init(prsactx, vrsa, params,
+        EVP_PKEY_OP_VERIFYMSG, desc);
+}
+
+const OSSL_DISPATCH ossl_rsa_pss_signature_functions[] = {
+    { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))rsa_newctx },
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))rsa_pss_sign_init },
+    { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))rsa_sign },
+    { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_INIT,
+        (void (*)(void))rsa_pss_sign_message_init },
+    { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_UPDATE,
+        (void (*)(void))rsa_signverify_message_update },
+    { OSSL_FUNC_SIGNATURE_SIGN_MESSAGE_FINAL,
+        (void (*)(void))rsa_sign_message_final },
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))rsa_pss_verify_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))rsa_verify },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,
+        (void (*)(void))rsa_pss_verify_message_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_UPDATE,
+        (void (*)(void))rsa_signverify_message_update },
+    { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_FINAL,
+        (void (*)(void))rsa_verify_message_final },
+    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))rsa_freectx },
+    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))rsa_dupctx },
+    { OSSL_FUNC_SIGNATURE_QUERY_KEY_TYPES,
+        (void (*)(void))rsa_pss_query_key_types },
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))rsa_get_ctx_params },
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+        (void (*)(void))rsa_gettable_ctx_params },
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS,
+        (void (*)(void))rsa_pss_set_ctx_params },
+    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
+        (void (*)(void))rsa_pss_settable_ctx_params },
+    OSSL_DISPATCH_END
+};
