@@ -71,6 +71,26 @@ int X509_set_subject_name(X509 *x, const X509_NAME *name)
     return 1;
 }
 
+static int x509_set1_bit_string(int *modified, ASN1_BIT_STRING **pbs, const ASN1_BIT_STRING *bs)
+{
+    ASN1_BIT_STRING *in;
+
+    if (pbs == NULL || bs == NULL)
+        return 0;
+
+    in = ASN1_STRING_dup(bs);
+    if (in == NULL)
+        return 0;
+
+    ASN1_BIT_STRING_free(*pbs);
+    *pbs = in;
+
+    if (modified != NULL)
+        *modified = 1;
+
+    return 1;
+}
+
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm)
 {
     ASN1_TIME *new;
@@ -101,6 +121,24 @@ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
         return 0;
     return ossl_x509_set1_time(&x->cert_info.enc.modified,
         &x->cert_info.validity.notAfter, tm);
+}
+
+int X509_set1_issuerUID(X509 *x, const ASN1_BIT_STRING *uid)
+{
+    if (x == NULL || uid == NULL)
+        return 0;
+
+    return x509_set1_bit_string(&x->cert_info.enc.modified,
+        &x->cert_info.issuerUID, uid);
+}
+
+int X509_set1_subjectUID(X509 *x, const ASN1_BIT_STRING *uid)
+{
+    if (x == NULL || uid == NULL)
+        return 0;
+
+    return x509_set1_bit_string(&x->cert_info.enc.modified,
+        &x->cert_info.subjectUID, uid);
 }
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
