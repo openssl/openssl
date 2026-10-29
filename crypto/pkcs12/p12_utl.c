@@ -8,25 +8,37 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "internal/cryptlib.h"
+#include "internal/safe_math.h"
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 #include "crypto/pkcs7/pk7_local.h"
 #include <crypto/asn1.h>
+
+OSSL_SAFE_MATH_SIGNED(int, int)
 
 /* Cheap and nasty Unicode stuff */
 
 unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
     unsigned char **uni, int *unilen)
 {
-    int ulen, i;
+    int ulen, i, err = 0;
     unsigned char *unitmp;
 
-    if (asclen == -1)
-        asclen = (int)strlen(asc);
+    if (asclen == -1) {
+        size_t len = strlen(asc);
+
+        if (len > INT_MAX)
+            return NULL;
+        asclen = (int)len;
+    }
     if (asclen < 0)
         return NULL;
-    ulen = asclen * 2 + 2;
+    /* If this changes, revisit test_safe_math_asc2uni_boundary() */
+    ulen = safe_add_int(safe_mul_int(asclen, 2, &err), 2, &err);
+    if (err)
+        return NULL;
     if ((unitmp = OPENSSL_malloc(ulen)) == NULL)
         return NULL;
     for (i = 0; i < ulen - 2; i += 2) {
