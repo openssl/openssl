@@ -849,10 +849,10 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     OSSL_FN *sp = NULL, *sq = NULL;
     OSSL_FN *f_n = NULL, *f_p = NULL, *f_q = NULL;
     OSSL_FN *f_dmp1 = NULL, *f_dmq1 = NULL, *f_iqmp = NULL, *f_d = NULL;
-    OSSL_FN *f_I = NULL, *diff = NULL;
+    OSSL_FN *f_I = NULL;
     OSSL_FN_MONT_CTX *mont_p = NULL, *mont_q = NULL, *mont_n = NULL;
     const void *token = NULL;
-    size_t nl, pl, ql, il;
+    size_t nl, pl, ql;
     int ret = 0, smooth = 0;
 #ifndef FIPS_MODULE
     int i, ex_primes = 0;
@@ -918,13 +918,11 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     if (fn_d != NULL)
         f_d = OSSL_FN_CTX_get_limbs(ctx, nl);
     f_I = OSSL_FN_CTX_get_limbs(ctx, nl);
-    il = (size_t)I->dsize > nl ? (size_t)I->dsize : nl;
-    diff = OSSL_FN_CTX_get_limbs(ctx, il);
     if (r1 == NULL || m1 == NULL || vrfy == NULL || t == NULL
         || sp == NULL || sq == NULL || f_n == NULL || f_p == NULL
         || f_q == NULL || f_dmp1 == NULL || f_dmq1 == NULL
         || f_iqmp == NULL || (fn_d != NULL && f_d == NULL)
-        || f_I == NULL || diff == NULL)
+        || f_I == NULL)
         goto err;
     if (!OSSL_FN_copy_truncate(f_n, fn_n)
         || !OSSL_FN_copy_truncate(f_p, fn_p)
@@ -942,7 +940,7 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
      * division by n that follows for an I >= n is not, but constant time
      * is not guaranteed for such an input anyway.
      */
-    if (ossl_fn_sub_words(diff->d, il, I->d, (size_t)I->dsize, f_n->d, nl)) {
+    if (OSSL_FN_cmp(I, f_n) < 0) {
         if (OSSL_FN_copy_truncate(f_I, I) == NULL)
             goto err;
     } else if (!OSSL_FN_mod(f_I, I, f_n, ctx)) {
@@ -1139,7 +1137,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     OSSL_FN_CTX *fn_ctx = NULL;
     OSSL_FN *fn_r0 = NULL;
     const OSSL_FN *fn_I = NULL, *fn_n = NULL;
-    size_t fn_size, nl, il;
+    size_t fn_size, nl;
     int ret = 0;
 
     if (rsa->meth->ossl_fn_rsa_mod_exp == NULL
@@ -1198,10 +1196,9 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
                 bn_get_ossl_fn(rsa->dmq1),
                 bn_get_ossl_fn(rsa->q), NULL)),
         OSSL_FN_CTX_size(8, 48, 24 * nl + 16));
-    /* Bringing I below n: f_I and the range check, and a reduction */
-    il = (size_t)fn_I->dsize > nl ? (size_t)fn_I->dsize : nl;
+    /* Bringing I below n: f_I, and a reduction */
     fn_size = ossl_fn_ctx_add_size(fn_size,
-        ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 2, nl + il),
+        ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, nl),
             OSSL_FN_mod_ctx_size(fn_n, fn_I, fn_n)));
     if (fn_size == 0)
         goto err;
