@@ -7637,6 +7637,10 @@ static void idle_pending_state_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
         || sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST)
         st->retry_sent++;
     rx = sc->listener_rx;
+    /*
+     * This test is single-threaded, but a mutex lock follows the normal queue
+     * access pattern.
+     */
     ossl_crypto_mutex_lock(rx->mutex);
     if (!ossl_list_urxe_is_empty(&rx->urxe_pending))
         st->queued++;
@@ -7837,6 +7841,10 @@ static void redrive_idle_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 
     if (sc != NULL && sc->listener_idle && sc->listener_rx != NULL) {
         rx = sc->listener_rx;
+        /*
+         * This test is single-threaded, but a mutex lock follows the normal
+         * queue access pattern.
+         */
         ossl_crypto_mutex_lock(rx->mutex);
         if (ossl_list_urxe_is_empty(&rx->urxe_pending))
             (*(size_t *)arg)++;
