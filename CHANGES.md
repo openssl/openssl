@@ -33,6 +33,15 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Private keys and seeds are checked when they are loaded or imported,
+   and refused with `ERR_R_SECRET_NOT_KEY_MATERIAL` if their encoding is
+   evidently not key material, such as a small integer, a mostly-zero
+   value or a fill pattern. Keys OpenSSL generates are not checked. See
+   `CRYPTO_secret_check_enable(3)` for the key types covered and for
+   turning the check off.
+
+   *Bob Beck*
+
  * s390x: Disable mod-expo offloading to a crypto card for small exponents.
    Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
    environment variable to specify the minimum number of bits that the

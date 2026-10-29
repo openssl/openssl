@@ -59,6 +59,14 @@ Instead, the self tests will be run on demand when a particular algorithm is
 used.
 The default value of C<0> runs the self tests during initialization.
 
+=item B<secret-check>
+
+If set to C<0>, the module accepts private keys and seeds whose encoding is
+evidently not key material. The default value of C<1> rejects them.
+The module reads this value once, when it is loaded;
+CRYPTO_secret_check_enable() and CRYPTO_secret_check_disable() do not
+change it. See L<CRYPTO_secret_check_enable(3)>.
+
 =item B<module-mac>
 
 The calculated MAC of the FIPS provider file.
@@ -227,6 +235,7 @@ See L<config(5)>.
 
 L<config(5)>
 L<openssl-fipsinstall(1)>
+L<CRYPTO_secret_check_enable(3)>
 
 =head1 HISTORY
 

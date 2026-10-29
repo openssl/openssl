@@ -13,4 +13,11 @@
 #include <openssl/conftypes.h>
 void ossl_config_add_ssl_module(void);
 
+/**
+ * @brief Register the "secret_check" configuration module, which turns
+ * the check of private keys and seeds on or off for the process.
+ * @see CRYPTO_secret_check_enable(3), config(5)
+ */
+void ossl_config_add_secret_check_module(void);
+
 #endif /* !defined(OSSL_LIBCRYPTO_CONF_CONF_LOCAL_H) */

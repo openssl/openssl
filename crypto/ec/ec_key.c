@@ -18,6 +18,7 @@
 #include <string.h>
 #include "ec_local.h"
 #include "internal/refcount.h"
+#include "internal/secret_check.h"
 #include <openssl/err.h>
 #include <openssl/self_test.h>
 #include "prov/providercommon.h"
@@ -746,6 +747,12 @@ int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
         return 0; /* intentional for legacy compatibility */
     }
 
+    if (ossl_secret_check_enabled()
+        && !ossl_secret_bn_check(priv_key, BN_num_bits(order))) {
+        ERR_raise(ERR_LIB_EC, ERR_R_SECRET_NOT_KEY_MATERIAL);
+        return 0;
+    }
+
     /*
      * We should never leak the bit length of the secret scalar in the key,
      * so we always set the `BN_FLG_CONSTTIME` flag on the internal `BIGNUM`
@@ -962,6 +969,17 @@ int EC_KEY_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
         return 0;
     }
     ret = eckey->group->meth->oct2priv(eckey, buf, len);
+    if (ret == 1 && ossl_secret_check_enabled()) {
+        int width_bits = BN_num_bits(EC_GROUP_get0_order(eckey->group));
+
+        if (width_bits != 0
+            && !ossl_secret_bn_check(eckey->priv_key, (size_t)width_bits)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_SECRET_NOT_KEY_MATERIAL);
+            BN_clear_free(eckey->priv_key);
+            eckey->priv_key = NULL;
+            ret = 0;
+        }
+    }
     if (ret == 1)
         eckey->dirty_cnt++;
     return ret;

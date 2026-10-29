@@ -399,6 +399,20 @@ int CRYPTO_secure_malloc_initialized(void);
 size_t CRYPTO_secure_actual_size(void *ptr);
 size_t CRYPTO_secure_used(void);
 
+/**
+ * @brief Enable, for the whole process, the check of private keys and
+ * seeds on load for encodings that are evidently not key material.
+ * @see CRYPTO_secret_check_enable(3)
+ */
+int CRYPTO_secret_check_enable(void);
+
+/**
+ * @brief Disable, for the whole process, the check of private keys and
+ * seeds on load for encodings that are evidently not key material.
+ * @see CRYPTO_secret_check_disable(3)
+ */
+int CRYPTO_secret_check_disable(void);
+
 void OPENSSL_cleanse(void *ptr, size_t len);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG

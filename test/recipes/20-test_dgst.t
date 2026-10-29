@@ -25,6 +25,8 @@ sub tsignverify {
     my $testtext = shift;
     my $privkey = shift;
     my $pubkey = shift;
+    # Remaining arguments are program options placed before the command
+    my @opts = @_;
 
     my $data_to_sign = srctop_file('test', 'data.bin');
     my $other_data = srctop_file('test', 'data2.bin');
@@ -32,22 +34,22 @@ sub tsignverify {
     my $sigfile = basename($privkey, '.pem') . '.sig';
     plan tests => 4;
 
-    ok(run(app(['openssl', 'dgst', '-sign', $privkey,
+    ok(run(app(['openssl', @opts, 'dgst', '-sign', $privkey,
                 '-out', $sigfile,
                 $data_to_sign])),
        $testtext.": Generating signature");
 
-    ok(run(app(['openssl', 'dgst', '-prverify', $privkey,
+    ok(run(app(['openssl', @opts, 'dgst', '-prverify', $privkey,
                 '-signature', $sigfile,
                 $data_to_sign])),
        $testtext.": Verify signature with private key");
 
-    ok(run(app(['openssl', 'dgst', '-verify', $pubkey,
+    ok(run(app(['openssl', @opts, 'dgst', '-verify', $pubkey,
                 '-signature', $sigfile,
                 $data_to_sign])),
        $testtext.": Verify signature with public key");
 
-    ok(!run(app(['openssl', 'dgst', '-verify', $pubkey,
+    ok(!run(app(['openssl', @opts, 'dgst', '-verify', $pubkey,
                  '-signature', $sigfile,
                  $other_data])),
        $testtext.": Expect failure verifying mismatching data");
@@ -195,7 +197,8 @@ subtest "ML-DSA-44 signature generation and verification with `dgst` CLI" => sub
     }
     tsignverify("Ml-DSA-44",
                 srctop_file("test","testmldsa44.pem"),
-                srctop_file("test","testmldsa44pub.pem"));
+                srctop_file("test","testmldsa44pub.pem"),
+                '-allow-insecure-private-keys');
 };
 subtest "ML-DSA-65 signature generation and verification with `dgst` CLI" => sub {
     if (disabled("ml-dsa")) {
@@ -205,7 +208,8 @@ subtest "ML-DSA-65 signature generation and verification with `dgst` CLI" => sub
     }
     tsignverify("Ml-DSA-65",
                 srctop_file("test","testmldsa65.pem"),
-                srctop_file("test","testmldsa65pub.pem"));
+                srctop_file("test","testmldsa65pub.pem"),
+                '-allow-insecure-private-keys');
 };
 subtest "ML-DSA-87 signature generation and verification with `dgst` CLI" => sub {
     if (disabled("ml-dsa")) {
@@ -215,7 +219,8 @@ subtest "ML-DSA-87 signature generation and verification with `dgst` CLI" => sub
     }
     tsignverify("Ml-DSA-87",
                 srctop_file("test","testmldsa87.pem"),
-                srctop_file("test","testmldsa87pub.pem"));
+                srctop_file("test","testmldsa87pub.pem"),
+                '-allow-insecure-private-keys');
 };
 
 subtest "SHA1 generation by provider with `dgst` CLI" => sub {
