@@ -42,6 +42,8 @@ static const int expected_types[] = {
 int FuzzerInitialize(int *argc, char ***argv)
 {
     FuzzerSetRand();
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    ERR_clear_error();
     return 1;
 }
 
