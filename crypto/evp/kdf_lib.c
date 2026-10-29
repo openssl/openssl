@@ -18,6 +18,7 @@
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
+#include "internal/sizes.h"
 #include "evp_local.h"
 #include "internal/param_build_set.h"
 
@@ -76,6 +77,12 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
         EVP_KDF_CTX_free(dst);
         return NULL;
     }
+
+    /*
+     * The derived keys live in algctx and were copied by dupctx() above; a
+     * provider that cannot copy them, because they exist only as handles on a
+     * token, fails there.
+     */
     return dst;
 }
 
@@ -295,6 +302,93 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
     if (mgmt != skeymgmt)
         EVP_SKEYMGMT_free(skeymgmt);
     return ret;
+}
+int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->meth->derive_multi == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    return ctx->meth->derive_multi(ctx->algctx, params);
+}
+
+EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose,
+    const char *propquery)
+{
+    EVP_SKEY *skey = NULL;
+    EVP_SKEYMGMT *skeymgmt;
+    char keytype[OSSL_MAX_NAME_SIZE] = "";
+    OSSL_PARAM p[2];
+    void *keydata;
+
+    if (ctx == NULL || purpose == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (ctx->meth->get_skey == NULL
+        || ctx->meth->get_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return NULL;
+    }
+
+    /*
+     * Ask which key type this derivation produced for the purpose; each may
+     * use a different one, so the skeymgmt is resolved per call rather than
+     * once for the whole derivation.  A purpose no key was derived for, such
+     * as a MAC key in an AEAD ciphersuite, is reported by the provider
+     * failing here.
+     */
+    p[0] = OSSL_PARAM_construct_utf8_string(purpose, keytype, sizeof(keytype));
+    p[1] = OSSL_PARAM_construct_end();
+    if (!ctx->meth->get_ctx_params(ctx->algctx, p) || keytype[0] == '\0') {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_KEY,
+            "no key derived for purpose %s", purpose);
+        return NULL;
+    }
+
+    skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->meth->prov, keytype,
+        propquery);
+    if (skeymgmt == NULL)
+        skeymgmt = EVP_SKEYMGMT_fetch(ossl_provider_libctx(ctx->meth->prov),
+            keytype, propquery);
+    if (skeymgmt == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+        return NULL;
+    }
+
+    keydata = ctx->meth->get_skey(ctx->algctx, purpose,
+        ossl_provider_ctx(skeymgmt->prov), skeymgmt->import);
+
+    /* evp_skey_alloc() takes its own reference on the skeymgmt */
+    if (keydata != NULL && (skey = evp_skey_alloc(skeymgmt)) != NULL)
+        skey->keydata = keydata;
+
+    EVP_SKEYMGMT_free(skeymgmt);
+
+    return skey;
+}
+
+int EVP_KDF_CTX_get0_IV(EVP_KDF_CTX *ctx, const char *purpose,
+    const unsigned char **pIV, size_t *pIVlen)
+{
+    if (ctx == NULL || purpose == NULL || pIV == NULL || pIVlen == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->meth->get_iv == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    return ctx->meth->get_iv(ctx->algctx, purpose, pIV, pIVlen);
 }
 #endif /* !FIPS_MODULE */
 
