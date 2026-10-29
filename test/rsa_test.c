@@ -828,6 +828,94 @@ err:
     return ret;
 }
 
+/*
+ * The default method's rsa_mod_exp is reachable directly through
+ * RSA_meth_get_mod_exp(), so it must compute I^d mod n for any I, not
+ * only the I < n that RSA's own callers pass, and whatever the BIGNUM's
+ * allocation.
+ */
+static int test_rsa_mod_exp_input(int idx)
+{
+    int (*mod_exp)(BIGNUM *, const BIGNUM *, RSA *, BN_CTX *);
+    RSA *key = NULL;
+    BN_CTX *ctx = NULL;
+    BIGNUM *in = NULL, *r = NULL, *want = NULL, *t = NULL;
+    const BIGNUM *n, *d;
+    int i, bits, nbits, failed = 0, ret = 0;
+
+    mod_exp = RSA_meth_get_mod_exp(RSA_PKCS1_OpenSSL());
+    if (!TEST_true(mod_exp != NULL)
+        || !TEST_int_gt(rsa_setkey(&key, NULL, idx), 0)
+        || !TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(r = BN_new())
+        || !TEST_ptr(want = BN_new())
+        || !TEST_ptr(t = BN_new()))
+        goto err;
+    RSA_get0_key(key, &n, NULL, &d);
+    nbits = BN_num_bits(n);
+    /* n's width in bits, rounded up to whole limbs */
+    bits = (nbits + BN_BITS2 - 1) / BN_BITS2 * BN_BITS2;
+
+    for (i = 0; i < 9; i++) {
+        BN_free(in);
+        if (!TEST_ptr(in = BN_new()))
+            goto err;
+        switch (i) {
+        case 0: /* I = 0 */
+            BN_zero(in);
+            break;
+        case 1: /* I = n - 1 */
+            BN_sub(in, n, BN_value_one());
+            break;
+        case 2: /* I = n */
+            BN_copy(in, n);
+            break;
+        case 3: /* I = 2n + 7 */
+            BN_lshift1(in, n);
+            BN_add_word(in, 7);
+            break;
+        case 4: /* I = 2^bits - 1, the largest value at n's width */
+            BN_set_bit(in, bits);
+            BN_sub_word(in, 1);
+            break;
+        case 5: /* I = n^2 - 1 */
+            BN_sqr(in, n, ctx);
+            BN_sub_word(in, 1);
+            break;
+        case 6: /* I = 2^(3 * nbits) */
+            BN_set_bit(in, 3 * nbits);
+            break;
+        case 7: /* I = 5, allocated at four times n's width */
+            BN_set_bit(in, 4 * bits);
+            BN_set_word(in, 5);
+            break;
+        case 8: /* I = n - 1, likewise */
+            BN_set_bit(in, 4 * bits);
+            BN_sub(in, n, BN_value_one());
+            break;
+        }
+        if (!TEST_true(BN_nnmod(t, in, n, ctx))
+            || !TEST_true(BN_mod_exp(want, t, d, n, ctx)))
+            goto err;
+        /* Check every case, so each is seen to fail on its own */
+        if (!TEST_true(mod_exp(r, in, key, ctx))
+            || !TEST_BN_eq(r, want)) {
+            TEST_info("input case %d", i);
+            failed++;
+        }
+    }
+
+    ret = failed == 0;
+err:
+    BN_free(in);
+    BN_free(r);
+    BN_free(want);
+    BN_free(t);
+    BN_CTX_free(ctx);
+    RSA_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
@@ -842,6 +930,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     ADD_TEST(test_rsa_saos);
     ADD_TEST(test_rsa_no_public_exp);
+    ADD_ALL_TESTS(test_rsa_mod_exp_input, 3);
     ADD_TEST(test_EVP_rsa_legacy_key);
     return 1;
 }
