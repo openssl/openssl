@@ -427,6 +427,7 @@ static const char *mlx_kem_algs[] = {
 #ifndef OPENSSL_NO_ECX
     "MLKEM512X25519",
     "X25519MLKEM768",
+    "MLKEM1024X448",
 #endif
     "SecP256r1MLKEM768",
     "SecP384r1MLKEM1024",

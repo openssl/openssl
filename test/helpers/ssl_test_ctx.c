@@ -548,6 +548,8 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_MLKEM512X25519;
     } else if (OPENSSL_strcasecmp("X25519MLKEM768", value) == 0) {
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_X25519MLKEM768;
+    } else if (OPENSSL_strcasecmp("MLKEM1024X448", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_MLKEM1024X448;
     } else if (OPENSSL_strcasecmp("SecP256r1MLKEM512", value) == 0) {
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP256r1MLKEM512;
     } else if (OPENSSL_strcasecmp("SecP256r1MLKEM768", value) == 0) {

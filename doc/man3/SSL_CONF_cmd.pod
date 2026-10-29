@@ -923,8 +923,8 @@ OpenSSL 4.0 introduced the B<curveSM2> (also known as C<ECDHE over SM2>) key
 exchange group as specified in RFC8998, and B<curveSM2MLKEM768>, which is a
 hybrid of the B<curveSM2> group with B<ML-KEM-768>.
 
-OpenSSL 4.2 introduced support for two additional B<hybrid> ECDH PQ key
-exchange groups: B<MLKEM512X25519> and B<SecP256r1MLKEM512>.
+OpenSSL 4.2 introduced support for three additional B<hybrid> TLS ECDH PQ key
+exchange groups: B<MLKEM512X25519>, B<SecP256r1MLKEM512> and B<MLKEM1024X448>.
 
 As of OpenSSL 3.5 key exchange group names are case-insensitive.
 
