@@ -6,11 +6,10 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-
 use strict;
 use warnings;
 
-use OpenSSL::Test qw(:DEFAULT data_file bldtop_dir srctop_file srctop_dir bldtop_file);
+use OpenSSL::Test qw(:DEFAULT bldtop_dir srctop_file srctop_dir);
 use OpenSSL::Test::Utils;
 
 BEGIN {
@@ -20,22 +19,12 @@ BEGIN {
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
-my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
-my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);
+require(srctop_file("test", "recipes", "evp.pl"));
+
 my $no_des = disabled("des");
-my $no_dh = disabled("dh");
-my $no_slh_dsa = disabled("slh-dsa");
-my $no_dsa = disabled("dsa");
-my $no_ec = disabled("ec");
-my $no_ecx = disabled("ecx");
-my $no_ec2m = disabled("ec2m");
-my $no_sm2 = disabled("sm2") || disabled("x963kdf");
 my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
 my $no_ascon128 = disabled("ascon128");
-my $no_ml_dsa = disabled("ml-dsa");
-my $no_ml_kem = disabled("ml-kem");
-my $no_lms = disabled("lms");
 my $no_sskdf = disabled("sskdf");
 my $no_x942kdf = disabled("x942kdf");
 my $no_x963kdf = disabled("x963kdf");
@@ -46,13 +35,6 @@ my $no_krb5kdf = disabled("krb5kdf");
 my $no_snmpkdf = disabled("snmpkdf");
 my $no_srtpkdf = disabled("srtpkdf");
 my $no_sshkdf = disabled("sshkdf");
-
-# Default config depends on if the legacy module is built or not
-my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
-
-my @configs = ( $defaultcnf );
-# Only add the FIPS config if the FIPS module has been built
-push @configs, 'fips-and-base.cnf' unless $no_fips;
 
 # A list of tests that run with both the default and fips provider.
 my @files = qw(
@@ -72,10 +54,6 @@ my @files = qw(
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt
                 evppkey_kdf_tls1_prf_fips.txt
-                evppkey_rsa.txt
-                evppkey_rsa_common.txt
-                evppkey_rsa_kem.txt
-                evppkey_rsa_sigalg.txt
                 evprand.txt
               );
 push @files, qw(evpkdf_ikev2.txt) unless $no_ikev2kdf;
@@ -89,68 +67,8 @@ push @files, qw(
 push @files, qw(evpkdf_ss.txt) unless $no_sskdf;
 push @files, qw(evpkdf_x942.txt) unless $no_x942kdf;
 push @files, qw(evpkdf_x963.txt) unless $no_x963kdf;
-push @files, qw(
-                evppkey_ffdhe.txt
-                evppkey_dh.txt
-               ) unless $no_dh;
-push @files, qw(evppkey_ffdhe_x942kdf.txt) unless ($no_x942kdf || $no_dh);
 push @files, qw(evpmac_cmac_des.txt) unless $no_des;
 push @files, qw(evpkdf_x942_des.txt) unless ($no_des || $no_x942kdf);
-push @files, qw(
-                evppkey_slh_dsa_keygen.txt
-                evppkey_slh_dsa_siggen.txt
-                evppkey_slh_dsa_sigver.txt
-               ) unless $no_slh_dsa;
-push @files, qw(
-                evppkey_dsa.txt
-                evppkey_dsa_sigalg.txt
-               ) unless $no_dsa;
-push @files, qw(
-                evppkey_ecx.txt
-                evppkey_ecx_sigalg.txt
-                evppkey_mismatch_ecx.txt
-               ) unless $no_ecx;
-push @files, qw(
-                evppkey_ecc.txt
-                evppkey_ecdh.txt
-                evppkey_ecdsa.txt
-                evppkey_ecdsa_sigalg.txt
-                evppkey_kas.txt
-                evppkey_mismatch.txt
-               ) unless $no_ec;
-push @files, qw(
-                evpmd_ml_dsa_mu.txt
-                evppkey_ml_dsa_keygen.txt
-                evppkey_ml_dsa_siggen.txt
-                evppkey_ml_dsa_sigver.txt
-                evppkey_ml_dsa_44_wycheproof_sign.txt
-                evppkey_ml_dsa_44_wycheproof_verify.txt
-                evppkey_ml_dsa_65_wycheproof_sign.txt
-                evppkey_ml_dsa_65_wycheproof_verify.txt
-                evppkey_ml_dsa_87_wycheproof_sign.txt
-                evppkey_ml_dsa_87_wycheproof_verify.txt
-               ) unless $no_ml_dsa;
-push @files, qw(
-                evppkey_ml_kem_512_keygen.txt
-                evppkey_ml_kem_512_encap.txt
-                evppkey_ml_kem_512_decap.txt
-                evppkey_ml_kem_768_keygen.txt
-                evppkey_ml_kem_768_encap.txt
-                evppkey_ml_kem_768_decap.txt
-                evppkey_ml_kem_1024_keygen.txt
-                evppkey_ml_kem_1024_encap.txt
-                evppkey_ml_kem_1024_decap.txt
-                evppkey_ml_kem_keygen.txt
-                evppkey_ml_kem_encap_decap.txt
-               ) unless $no_ml_kem;
-push @files, qw(evppkey_mlx_kem_ecx.txt) unless ($no_ml_kem || $no_ecx);
-push @files, qw(evppkey_mlx_kem_ec.txt) unless ($no_ml_kem || $no_ec);
-push @files, qw(
-                evppkey_lms_sigver.txt
-               ) unless $no_lms;
-push @files, qw(
-                evppkey_ecdsa_rfc6979.txt
-               ) unless ($no_ec || $no_determinstic_nonce);
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
@@ -189,39 +107,14 @@ my @defltfiles = qw(
                      evppkey_kdf_tls1_prf.txt
                     );
 push @defltfiles, qw(evpkdf_krb5.txt) unless $no_krb5kdf;
-push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
-push @defltfiles, qw(evppkey_ecx_kem.txt) unless $no_ecx;
-push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless ($no_dsa || $no_determinstic_nonce);
-push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_ascon_aead128.txt) unless $no_ascon128;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 push @defltfiles, qw(evpkdf_hmac_drbg.txt) unless $no_determinstic_nonce;
 
-plan tests =>
-    + (scalar(@configs) * scalar(@files))
-    + scalar(@defltfiles)
-    + 3; # error output tests
-
-foreach (@configs) {
-    my $conf = srctop_file("test", $_);
-
-    foreach my $f ( @files ) {
-        ok(run(test(["evp_test",
-                     "-config", $conf,
-                     data_file("$f")])),
-           "running evp_test -config $conf $f");
-    }
-}
-
-my $conf = srctop_file("test", $defaultcnf);
-foreach my $f ( @defltfiles ) {
-    ok(run(test(["evp_test",
-                 "-config", $conf,
-                 data_file("$f")])),
-       "running evp_test -config $conf $f");
-}
+evp_tests(files => \@files, default_files => \@defltfiles,
+          extra => 3); # error output tests
 
 # test_errors OPTIONS
 #
