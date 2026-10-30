@@ -2787,7 +2787,16 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 s->s3.tmp.new_cipher = cipher;
             }
             if (!s->hit) {
-                if (!tls_choose_sigalg(s, 1)) {
+                /*
+                 * While no valid cookie has arrived, final_key_share() has
+                 * made a HelloRetryRequest the next message. It carries no
+                 * certificate and no signature, so a PSK-only server need
+                 * not hold a certificate for it. The ClientHello that
+                 * carries the valid cookie selects the credential as usual.
+                 */
+                if (!(s->hello_retry_request == SSL_HRR_PENDING
+                        && tls_hrr_cookie_pending(s))
+                    && !tls_choose_sigalg(s, 1)) {
                     /* SSLfatal already called */
                     goto err;
                 }

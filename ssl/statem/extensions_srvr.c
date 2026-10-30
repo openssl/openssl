@@ -1596,6 +1596,17 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (sess == NULL) {
         size_t j;
 
+        /*
+         * A PSK-only server that validates the client's address statelessly
+         * may not be able to look the identity up before the cookie is
+         * valid. Defer the decision to the retried ClientHello, which is
+         * subject to the same checks below. This comes after the lookup on
+         * purpose: a PSK that is found is used as before, and that decides
+         * how the key_share of this ClientHello is handled.
+         */
+        if (tls_hrr_cookie_pending(s))
+            return 1;
+
         for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
             ;
         if (j < s->ssl_pkey_num) {
