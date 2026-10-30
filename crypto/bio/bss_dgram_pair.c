@@ -1559,7 +1559,7 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     OSSL_TIME now;
     struct bio_dgram_pair_st *peer;
 
-    if (b->pair->tcpdump_f == NULL || sz == 0)
+    if (b->pair == NULL || b->pair->tcpdump_f == NULL || sz == 0)
         return;
 
     if ((sz + sizeof(ip_hdr) + sizeof(udp_hdr)) > 65535)
