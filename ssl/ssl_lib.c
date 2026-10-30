@@ -3165,6 +3165,161 @@ int SSL_shutdown(SSL *s)
     return ret;
 }
 
+/*
+ * Write out a fatal alert queued by SSL_send_fatal_alert(). A record left
+ * partially written by an earlier SSL_write() is completed first, since the
+ * alert cannot be written until it has been. During the handshake the alert
+ * goes into the buffering BIO, so it is only sent once that has been flushed.
+ */
+static int ssl_dispatch_fatal_alert(SSL *s, SSL_CONNECTION *sc)
+{
+    int ret;
+
+    if (sc->s3.alert_dispatch == SSL_ALERT_DISPATCH_PENDING
+        && RECORD_LAYER_write_pending(&sc->rlayer)) {
+        ret = HANDLE_RLAYER_WRITE_RETURN(sc,
+            sc->rlayer.wrlmethod->retry_write_records(sc->rlayer.wrl));
+        if (ret <= 0)
+            return ret;
+        sc->rlayer.wpend_tot = 0;
+    }
+
+    if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
+        ret = s->method->ssl_dispatch_alert(s);
+        if (ret <= 0)
+            return ret;
+    }
+
+    if (sc->wbio != NULL) {
+        sc->rwstate = SSL_WRITING;
+        if (BIO_flush(sc->wbio) <= 0)
+            return -1;
+        sc->rwstate = SSL_NOTHING;
+    }
+
+    return 1;
+}
+
+int SSL_send_fatal_alert(SSL *s, uint8_t alert)
+{
+    SSL_CONNECTION *sc;
+    int desc, ret;
+
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s)) {
+        /* QUIC reports fatal errors with CONNECTION_CLOSE, not alerts */
+        ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
+        return -1;
+    }
+#endif
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
+
+    if (ssl_reset_error_state(sc) == 0) {
+        /*
+         * The connection has already failed. Only a retry of an alert that
+         * an earlier call to this function could not finish writing may
+         * continue, not an alert queued internally by SSLfatal().
+         */
+        if (!sc->s3.app_fatal_alert) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+            return -1;
+        }
+        sc->statem.error_state = ERROR_STATE_NOERROR;
+    }
+    sc->rwstate = SSL_NOTHING;
+
+    if (sc->handshake_func == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
+    }
+
+    /*
+     * Calling this from a callback invoked by the handshake state machine
+     * would leave the state machine running after the alert has been sent.
+     * Callbacks invoked outside the state machine, for example from the
+     * record layer, are not detected here; calling this function from any
+     * libssl callback is documented as unsupported.
+     */
+    if (ossl_statem_get_in_handshake(sc)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
+    }
+
+    /*
+     * Map the alert to the wire value in the same way as ssl3_send_alert().
+     * The closure alerts close_notify and user_canceled are not error alerts.
+     */
+    if (SSL_CONNECTION_TREAT_AS_TLS13(sc))
+        desc = tls13_alert_code(alert);
+    else
+        desc = s->method->ssl3_enc->alert_value(alert);
+    if (desc < 0 || desc == SSL3_AD_CLOSE_NOTIFY
+        || desc == TLS1_AD_USER_CANCELLED) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_ALERT);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
+    }
+
+    if (sc->s3.app_fatal_alert) {
+        /*
+         * A retry: our alert is still queued, or it has been written but
+         * the write BIO has not been flushed yet. Only the same alert can
+         * be retried.
+         */
+        if (sc->s3.send_alert[0] != SSL3_AL_FATAL
+            || sc->s3.send_alert[1] != desc) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+            sc->statem.error_state = ERROR_STATE_SSL;
+            return -1;
+        }
+    } else if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
+        /*
+         * Any other queued alert, such as a close_notify from SSL_shutdown(),
+         * is left alone.
+         */
+        ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+        sc->statem.error_state = ERROR_STATE_SSL;
+        return -1;
+    } else {
+        /* A connection that has sent a close_notify cannot send an alert */
+        if ((sc->shutdown & SSL_SENT_SHUTDOWN) != 0) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+            sc->statem.error_state = ERROR_STATE_SSL;
+            return -1;
+        }
+
+        /*
+         * Put the connection into the same error state as an internally
+         * detected fatal error and queue the alert. This also removes the
+         * session from the cache. In DTLS, stop the retransmission timer
+         * first, so that DTLSv1_handle_timeout() does not retransmit the
+         * current flight after the alert.
+         */
+        if (SSL_CONNECTION_IS_DTLS(sc))
+            dtls1_stop_timer(sc);
+        sc->s3.app_fatal_alert = 1;
+        ossl_statem_send_fatal(sc, alert);
+    }
+
+    ret = ssl_dispatch_fatal_alert(s, sc);
+    /*
+     * Keep the flag while the alert is still queued or not yet flushed, so
+     * that the call can be retried.
+     */
+    if (ret > 0 || !SSL_want_write(s))
+        sc->s3.app_fatal_alert = 0;
+    if (ret <= 0 && !SSL_want_write(s))
+        ssl_update_error_state(sc);
+    return ret;
+}
+
 int SSL_key_update(SSL *s, int updatetype)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);

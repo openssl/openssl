@@ -2791,6 +2791,10 @@ DEPEND[html/man3/SSL_rstate_string.html]=man3/SSL_rstate_string.pod
 GENERATE[html/man3/SSL_rstate_string.html]=man3/SSL_rstate_string.pod
 DEPEND[man/man3/SSL_rstate_string.3]=man3/SSL_rstate_string.pod
 GENERATE[man/man3/SSL_rstate_string.3]=man3/SSL_rstate_string.pod
+DEPEND[html/man3/SSL_send_fatal_alert.html]=man3/SSL_send_fatal_alert.pod
+GENERATE[html/man3/SSL_send_fatal_alert.html]=man3/SSL_send_fatal_alert.pod
+DEPEND[man/man3/SSL_send_fatal_alert.3]=man3/SSL_send_fatal_alert.pod
+GENERATE[man/man3/SSL_send_fatal_alert.3]=man3/SSL_send_fatal_alert.pod
 DEPEND[html/man3/SSL_session_reused.html]=man3/SSL_session_reused.pod
 GENERATE[html/man3/SSL_session_reused.html]=man3/SSL_session_reused.pod
 DEPEND[man/man3/SSL_session_reused.3]=man3/SSL_session_reused.pod
@@ -3781,6 +3785,7 @@ html/man3/SSL_poll.html \
 html/man3/SSL_read.html \
 html/man3/SSL_read_early_data.html \
 html/man3/SSL_rstate_string.html \
+html/man3/SSL_send_fatal_alert.html \
 html/man3/SSL_session_reused.html \
 html/man3/SSL_set1_echstore.html \
 html/man3/SSL_set1_host.html \
@@ -4464,6 +4469,7 @@ man/man3/SSL_poll.3 \
 man/man3/SSL_read.3 \
 man/man3/SSL_read_early_data.3 \
 man/man3/SSL_rstate_string.3 \
+man/man3/SSL_send_fatal_alert.3 \
 man/man3/SSL_session_reused.3 \
 man/man3/SSL_set1_echstore.3 \
 man/man3/SSL_set1_host.3 \
