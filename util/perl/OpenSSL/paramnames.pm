@@ -10,6 +10,7 @@ package OpenSSL::paramnames;
 
 use strict;
 use warnings;
+use String::CRC32;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -687,17 +688,28 @@ sub output_endifdef {
 # Generate string based macros for public consumption
 sub generate_public_macros {
     my @macros = ();
+    my %hashstack = ();
 
     foreach my $name (keys %params) {
         my $val = $params{$name};
+        my $valhash = crc32($val);
         my $def = '# define ' . $name . ' ';
+
+        if (exists $hashstack{$val}) {
+            die("conflicting hash values for $name\n") if $valhash != $hashstack{$val};
+        }
+        die("Hash evaluates to a reserved value\n") if $valhash == 0;
+
+        $hashstack{$val} = $valhash;
 
         if (substr($val, 0, 1) eq '*') {
             $def .= substr($val, 1);
         } else {
             $def .= '"' . $val . '"';
         }
-        push(@macros, $def)
+        push(@macros, $def);
+        $def = '# define ' . $name . '_HASH' . ' ' . $valhash;
+        push(@macros, $def);
     }
     return join("\n", sort @macros);
 }
@@ -738,6 +750,18 @@ sub trie_matched {
     printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
   }
+}
+
+sub get_field_from_name {
+    my $trieref = shift;
+    my $identmap = shift;
+
+    return $identmap->{$trieref->{'name'}};
+}
+sub get_num_from_field {
+    my $concat_num = shift;
+    my $field = shift;
+    return $concat_num->{$field};
 }
 
 sub generate_decoder_from_trie {
@@ -976,6 +1000,7 @@ sub output_param_decoder {
     # Output param decoder
     my %t = generate_trie(keys(%prms));
     locate_long_endings(\%t);
+    my %hashmap = ();
 
     printf "#ifndef %s_decoder\n", $decoder_name_base;
     printf "static ossl_unused int %s_decoder\n", $decoder_name_base;
@@ -986,8 +1011,54 @@ sub output_param_decoder {
     print "    *count = 0;\n" if $with_count;
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
-    print "        for (; (s = p->key) != NULL; p++)\n";
+    print "        for (; (s = p->key) != NULL; p++) {\n";
+    print "            switch (p->keyhash) {\n";
+    print "            default:\n";
+    print "               break;\n";
+    for (my $i = 0; $i <= $#params; $i++) {
+        my $pname = $params[$i][0];
+        my $pident = $params[$i][1];
+        my $pnum = $params[$i][3];
+        my $fipscondition = undef;
+      
+        if (exists $hashmap{$pname}) { 
+            next;
+        }
+        $hashmap{$pname} = 1;
+
+        if ($pident eq $default_indicator) {
+            $fipscondition = "#if defined (FIPS_MODULE)\n";
+        }
+        if (defined($pnum)) {
+            if ($pnum eq "fips") {
+                $fipscondition = "#if defined (FIPS_MODULE)\n";
+            }
+            if ($pnum eq "!fips") {
+                $fipscondition = "#if !defined (FIPS_MODULE)\n";
+            }
+        }
+        if (defined($fipscondition)) {
+            print $fipscondition;
+        }
+        my $field = get_field_from_name(\%t, \%prms);
+        my $num = get_num_from_field(\%concat_num, $field);
+        my $num = $concat_num{$field};
+        print "            case ", $pname . '_HASH', ":\n";
+        if (defined($num)) {
+            printf "r->%s[%s] = (OSSL_PARAM *)p;\n", $pident, $num;
+        } else {
+            print "                r->", $pident, " = (OSSL_PARAM *)p;\n"; 
+        }
+        print "                continue;\n";
+        print "                break;\n";
+        if (defined($fipscondition)) {
+            print "#endif\n";
+        }
+    }
+    print "        };\n";
+
     generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
+    print "    }\n";
     print "    return 1;\n";
     print "}\n#endif\n";
     print "/* End of machine generated */";

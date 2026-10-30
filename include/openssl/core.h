@@ -90,6 +90,14 @@ struct ossl_param_st {
     size_t return_size; /* returned content size */
 };
 
+/*
+ * Hashmap table for fast parameter lookup
+ */
+struct ossl_param_hashmap_st {
+    uint32_t hash;
+    size_t offset;
+};
+
 /* Currently supported OSSL_PARAM data types */
 /*
  * OSSL_PARAM_INTEGER and OSSL_PARAM_UNSIGNED_INTEGER
