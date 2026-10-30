@@ -17,7 +17,7 @@
 #include "x509_local.h"
 #include "crypto/objects/obj_dat.h"
 #include "crypto/siphash.h"
-#include <openssl/rand.h>
+#include "crypto/rand.h"
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
@@ -504,8 +504,16 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
              * time an attacker-controlled OID is seen, so unkeyed hashing
              * cannot be used to force O(n^2) collisions (hash flooding).
              *
+             * The key only has to be unpredictable, not secret, so it is
+             * drawn with ossl_rand_hash_salt(), which still succeeds in a
+             * library context without a usable RAND (e.g. only the null
+             * provider loaded) instead of making every such certificate
+             * with an unknown extension invalid.
+             *
              * The key and the entry wrappers remain valid for the duration of
-             * the scan; the table never outlives this function.
+             * the scan; the table never outlives this function. Only this
+             * and the later extensions can be inserted, so the wrappers are
+             * sized for count - i entries.
              *
              * If the table cannot be set up or an insert fails, fail closed
              * with EXFLAG_INVALID, as ossl_x509v3_cache_extensions() does for
@@ -517,8 +525,8 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
                 OSSL_LIB_CTX *libctx = NULL;
 
                 ossl_x509_get0_libctx(x509, &libctx, NULL);
-                if (RAND_bytes_ex(libctx, (unsigned char *)k, sizeof(k), 0) <= 0
-                    || (arr = OPENSSL_malloc_array(count, sizeof(*arr))) == NULL
+                if (!ossl_rand_hash_salt(libctx, (unsigned char *)k, sizeof(k))
+                    || (arr = OPENSSL_malloc_array(count - i, sizeof(*arr))) == NULL
                     || (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL) {
                     *flags |= EXFLAG_INVALID;
                     break;
