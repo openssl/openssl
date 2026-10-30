@@ -11,6 +11,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
@@ -27,6 +28,8 @@ static const char *eekeystr;
 static const char *cacertstr;
 
 #ifndef OPENSSL_NO_OCSP
+#include "../crypto/ocsp/ocsp_local.h"
+
 static int get_cert_and_key(X509 **cert_out, EVP_PKEY **key_out)
 {
     BIO *certbio, *keybio;
@@ -159,6 +162,79 @@ err:
     return ret;
 }
 
+static int test_resp_get1_basic(int idx)
+{
+    /* Negative lengths select a truncated response and an empty response. */
+    static const int tail_lengths[] = { 0, 1, 16, 4096, -1, -2 };
+    OCSP_BASICRESP *bs = NULL, *decoded = NULL;
+    OCSP_RESPONSE *resp = NULL, *parsed = NULL;
+    X509 *signer = NULL;
+    EVP_PKEY *key = NULL;
+    ASN1_OCTET_STRING *oct;
+    unsigned char *buf = NULL, *der = NULL;
+    const unsigned char *p;
+    int len, der_len, tail_len = tail_lengths[idx];
+    int ret = 0;
+
+    if (!TEST_ptr(bs = make_dummy_resp())
+        || !TEST_true(get_cert_and_key(&signer, &key))
+        || !TEST_true(OCSP_basic_sign(bs, signer, key, EVP_sha256(), NULL, 0))
+        || !TEST_ptr(resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL,
+                         bs)))
+        goto end;
+
+    oct = resp->responseBytes->response;
+    len = (int)ASN1_STRING_get_length(oct);
+    if (!TEST_int_gt(len, 1)
+        || !TEST_ptr(buf = OPENSSL_malloc(len + (tail_len > 0 ? tail_len : 0))))
+        goto end;
+    memcpy(buf, ASN1_STRING_get0_data(oct), len);
+    if (tail_len > 0) {
+        memset(buf + len, 0xa5, tail_len);
+        len += tail_len;
+    } else if (tail_len == -1) {
+        len--;
+    } else if (tail_len == -2) {
+        len = 0;
+    }
+    if (!TEST_true(ASN1_OCTET_STRING_set(oct, buf, len))
+        || !TEST_int_gt(der_len = i2d_OCSP_RESPONSE(resp, &der), 0))
+        goto end;
+
+    /* The outer response is well formed, even if its packed contents are not. */
+    p = der;
+    if (!TEST_ptr(parsed = d2i_OCSP_RESPONSE(NULL, &p, der_len))
+        || !TEST_ptr_eq(p, der + der_len))
+        goto end;
+    ERR_clear_error();
+    decoded = OCSP_response_get1_basic(parsed);
+    if (tail_len == 0) {
+        if (!TEST_ptr(decoded)
+            || !TEST_int_eq(OCSP_basic_verify(decoded, NULL, NULL,
+                                OCSP_NOVERIFY),
+                1))
+            goto end;
+    } else {
+        if (!TEST_ptr_null(decoded)
+            || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_ASN1)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                ASN1_R_DECODE_ERROR))
+            goto end;
+        ERR_clear_error();
+    }
+    ret = 1;
+end:
+    OPENSSL_free(buf);
+    OPENSSL_free(der);
+    OCSP_BASICRESP_free(bs);
+    OCSP_BASICRESP_free(decoded);
+    OCSP_RESPONSE_free(resp);
+    OCSP_RESPONSE_free(parsed);
+    X509_free(signer);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 static int test_access_description(int testcase)
 {
     ACCESS_DESCRIPTION *ad = ACCESS_DESCRIPTION_new();
@@ -275,6 +351,7 @@ int setup_tests(void)
         return 0;
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_resp_signer);
+    ADD_ALL_TESTS(test_resp_get1_basic, 6);
     ADD_ALL_TESTS(test_access_description, 3);
     ADD_TEST(test_ocsp_url_svcloc_new);
     ADD_TEST(test_req_verify_signer_libctx);
