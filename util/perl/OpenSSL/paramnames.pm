@@ -752,16 +752,33 @@ sub trie_matched {
   }
 }
 
-sub get_field_from_name {
+sub generate_keyhash_from_trie {
+    my $with_count = shift;
+    my $n = shift;
     my $trieref = shift;
     my $identmap = shift;
-
-    return $identmap->{$trieref->{'name'}};
-}
-sub get_num_from_field {
     my $concat_num = shift;
-    my $field = shift;
-    return $concat_num->{$field};
+    my $process_dup = shift;
+    my $ifdefs = shift;
+    my $idt = "    ";
+    my $indent0 = $idt x ($n + 3);
+    my $indent1 = $indent0 . $idt;
+    my $indent2 = $indent1 . $idt;
+    my $field;
+
+    #$DB::single = 1;
+    for my $key (keys %$identmap) {
+        $field = $identmap->{$key};
+        my $num = $concat_num->{$field};
+        my $dup = $process_dup->{$field};
+        output_ifdef($ifdefs->{$field});
+        printf "%scase %s:\n", $indent0, $key . '_HASH';
+        trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
+        printf "%scontinue;\n", $indent0;
+        output_endifdef($ifdefs->{$field});
+    }
+
+    return;
 }
 
 sub generate_decoder_from_trie {
@@ -1015,46 +1032,50 @@ sub output_param_decoder {
     print "            switch (p->keyhash) {\n";
     print "            default:\n";
     print "               break;\n";
-    for (my $i = 0; $i <= $#params; $i++) {
-        my $pname = $params[$i][0];
-        my $pident = $params[$i][1];
-        my $pnum = $params[$i][3];
-        my $fipscondition = undef;
-      
-        if (exists $hashmap{$pname}) { 
-            next;
-        }
-        $hashmap{$pname} = 1;
-
-        if ($pident eq $default_indicator) {
-            $fipscondition = "#if defined (FIPS_MODULE)\n";
-        }
-        if (defined($pnum)) {
-            if ($pnum eq "fips") {
-                $fipscondition = "#if defined (FIPS_MODULE)\n";
-            }
-            if ($pnum eq "!fips") {
-                $fipscondition = "#if !defined (FIPS_MODULE)\n";
-            }
-        }
-        if (defined($fipscondition)) {
-            print $fipscondition;
-        }
-        my $field = get_field_from_name(\%t, \%prms);
-        my $num = get_num_from_field(\%concat_num, $field);
-        my $num = $concat_num{$field};
-        print "            case ", $pname . '_HASH', ":\n";
-        if (defined($num)) {
-            printf "r->%s[%s] = (OSSL_PARAM *)p;\n", $pident, $num;
-        } else {
-            print "                r->", $pident, " = (OSSL_PARAM *)p;\n"; 
-        }
-        print "                continue;\n";
-        print "                break;\n";
-        if (defined($fipscondition)) {
-            print "#endif\n";
-        }
-    }
+    generate_keyhash_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
+    #print "            switch (p->keyhash) {\n";
+    #print "            default:\n";
+    #print "               break;\n";
+    #for (my $i = 0; $i <= $#params; $i++) {
+    #    my $pname = $params[$i][0];
+    #    my $pident = $params[$i][1];
+    #    my $pnum = $params[$i][3];
+    #    my $fipscondition = undef;
+    #  
+    #    if (exists $hashmap{$pname}) { 
+    #        next;
+    #    }
+    #    $hashmap{$pname} = 1;
+    #
+    #    if ($pident eq $default_indicator) {
+    #        $fipscondition = "#if defined (FIPS_MODULE)\n";
+    #    }
+    #    if (defined($pnum)) {
+    #        if ($pnum eq "fips") {
+    #            $fipscondition = "#if defined (FIPS_MODULE)\n";
+    #        }
+    #        if ($pnum eq "!fips") {
+    #            $fipscondition = "#if !defined (FIPS_MODULE)\n";
+    #        }
+    #    }
+    #    if (defined($fipscondition)) {
+    #        print $fipscondition;
+    #    }
+    #    my $field = get_field_from_name(\%t, \%prms);
+    #    my $num = get_num_from_field(\%concat_num, $field);
+    #    my $num = $concat_num{$field};
+    #    print "            case ", $pname . '_HASH', ":\n";
+    #    if (defined($num)) {
+    #        printf "r->%s[%s] = (OSSL_PARAM *)p;\n", $pident, $num;
+    #    } else {
+    #        print "                r->", $pident, " = (OSSL_PARAM *)p;\n"; 
+    #    }
+    #    print "                continue;\n";
+    #    print "                break;\n";
+    #    if (defined($fipscondition)) {
+    #        print "#endif\n";
+    #    }
+    #}
     print "        };\n";
 
     generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);

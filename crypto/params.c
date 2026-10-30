@@ -75,6 +75,7 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
     res.data = data;
     res.data_size = data_size;
     res.return_size = OSSL_PARAM_UNMODIFIED;
+    res.keyhash = 0;
     return res;
 }
 

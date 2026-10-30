@@ -14,6 +14,7 @@
 #include <openssl/core_names.h>
 #include <openssl/comp.h>
 #include <openssl/ssl.h>
+#include "internal/params.h"
 #include "internal/e_os.h"
 #include "internal/packet.h"
 #include "internal/ssl3_cbc.h"
@@ -62,7 +63,7 @@ int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
      * Provided cipher, the TLS padding/MAC removal is performed provider
      * side so we need to tell the ctx about our TLS version and mac size
      */
-    OSSL_PARAM params[3], *pprm = params;
+    OSSL_PARAM params[3];
     size_t macsize = 0;
     int imacsize = -1;
 
@@ -72,11 +73,13 @@ int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
     if (imacsize > 0)
         macsize = (size_t)imacsize;
 
-    *pprm++ = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_TLS_VERSION,
-        &rl->version);
-    *pprm++ = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_TLS_MAC_SIZE,
-        &macsize);
-    *pprm = OSSL_PARAM_construct_end();
+    OSSL_PARAM_fast_int(&params[0], OSSL_CIPHER_PARAM_TLS_VERSION,
+		    OSSL_CIPHER_PARAM_TLS_VERSION_HASH, &rl->version);
+
+    OSSL_PARAM_fast_size_t(&params[1], OSSL_CIPHER_PARAM_TLS_MAC_SIZE,
+		    OSSL_CIPHER_PARAM_TLS_MAC_SIZE_HASH, &macsize);
+
+    OSSL_PARAM_fast_end(&params[2]);
 
     if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);

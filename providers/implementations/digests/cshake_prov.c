@@ -24,6 +24,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+#include "internal/params.h"
 #include "internal/common.h"
 #include "internal/sha3.h"
 #include "providers/implementations/digests/cshake_prov.inc"
@@ -165,8 +166,9 @@ static int cshake_set_xoflen(CSHAKE_CTX *ctx, size_t xoflen)
 {
     OSSL_PARAM params[2];
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen);
-    params[1] = OSSL_PARAM_construct_end();
+    OSSL_PARAM_fast_size_t(&params[0], OSSL_DIGEST_PARAM_XOFLEN,
+        OSSL_DIGEST_PARAM_XOFLEN_HASH, &xoflen);
+    OSSL_PARAM_fast_end(&params[1]);
 
     ctx->xoflen = xoflen;
     if (ctx->md != NULL)

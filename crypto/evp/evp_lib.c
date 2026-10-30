@@ -19,13 +19,13 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/objects.h>
-#include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/rsa.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include "crypto/evp.h"
 #include "crypto/cryptlib.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
@@ -858,7 +858,8 @@ int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx)
          * So try to get the xoflen instead. This will return -1 if the
          * xof length has not been set.
          */
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &sz);
+        OSSL_PARAM_fast_size_t(&params[0], OSSL_DIGEST_PARAM_SIZE,
+            OSSL_DIGEST_PARAM_SIZE_HASH, &sz);
         if (EVP_MD_CTX_get_params(c, params) != 1
             || sz > INT_MAX
             || sz == 0)

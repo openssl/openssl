@@ -25,6 +25,7 @@
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
 #include <openssl/provider.h>
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/refcount.h"
@@ -8055,9 +8056,9 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
         OSSL_PARAM params[2];
         int decrypt_only = 0;
 
-        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_DECRYPT_ONLY,
-            &decrypt_only);
-        params[1] = OSSL_PARAM_construct_end();
+        OSSL_PARAM_fast_int(&params[0], OSSL_CIPHER_PARAM_DECRYPT_ONLY,
+            OSSL_CIPHER_PARAM_DECRYPT_ONLY_HASH, &decrypt_only);
+        OSSL_PARAM_fast_end(&params[1]);
         if (EVP_CIPHER_get_params((EVP_CIPHER *)ciph, params)
             && decrypt_only) {
             /* If a cipher is decrypt-only, it is unusable */

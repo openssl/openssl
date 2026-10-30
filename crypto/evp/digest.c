@@ -11,8 +11,8 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
-#include <openssl/params.h>
 #include <openssl/core_names.h>
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/provider.h"
@@ -371,8 +371,9 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
      * older providers can use the supplied value. Ideally we should have just
      * used the size passed into ctx->digest->dfinal().
      */
-    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &size);
-    params[i++] = OSSL_PARAM_construct_end();
+    OSSL_PARAM_fast_size_t(&params[i++], OSSL_DIGEST_PARAM_XOFLEN,
+        OSSL_DIGEST_PARAM_XOFLEN_HASH, &size);
+    OSSL_PARAM_fast_end(&params[i]);
 
     if (ossl_likely(EVP_MD_CTX_set_params(ctx, params) >= 0))
         ret = ctx->digest->dfinal(ctx->algctx, md, &size, size);
@@ -730,16 +731,17 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     switch (cmd) {
     case EVP_MD_CTRL_XOF_LEN:
         sz = (size_t)p1;
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
+        OSSL_PARAM_fast_size_t(&params[0], OSSL_DIGEST_PARAM_XOFLEN,
+            OSSL_DIGEST_PARAM_XOFLEN_HASH, &sz);
         break;
     case EVP_MD_CTRL_MICALG:
         set_params = 0;
-        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
-            p2, p1 ? p1 : 9999);
+        OSSL_PARAM_fast_utf8_string(&params[0], OSSL_DIGEST_PARAM_MICALG,
+            OSSL_DIGEST_PARAM_MICALG_HASH, p2, (p1 ? p1 : 9999));
         break;
     case EVP_CTRL_SSL3_MASTER_SECRET:
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
-            p2, p1);
+        OSSL_PARAM_fast_octet_string(&params[0], OSSL_DIGEST_PARAM_SSL3_MS,
+            OSSL_DIGEST_PARAM_SSL3_MS_HASH, p2, p1);
         break;
     default:
         goto conclude;
