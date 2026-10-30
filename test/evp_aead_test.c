@@ -1380,6 +1380,7 @@ err:
     return testresult;
 }
 /*
+ * Regression test for CVE-2026-45446
  * AES-GCM-SIV with an empty payload: a decrypt with an all-zero tag must be
  * rejected whether or not an explicit empty payload Update was made, while the
  * correct tag must still verify.
@@ -1394,7 +1395,8 @@ static int test_aes_gcm_siv_empty_data(void)
     unsigned char zero_tag[16] = { 0 };
     unsigned char real_tag[16];
     unsigned char out[16];
-    int outl, ret = 0;
+    int outl = 0;
+    int testresult = 0;
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *c = EVP_CIPHER_fetch(NULL, "AES-128-GCM-SIV", NULL);
 
@@ -1453,13 +1455,11 @@ static int test_aes_gcm_siv_empty_data(void)
         goto err;
     EVP_CIPHER_CTX_free(ctx);
     ctx = NULL;
-
-    ret = 1;
+    testresult = 1;
 err:
     EVP_CIPHER_CTX_free(ctx);
-
     EVP_CIPHER_free(c);
-    return ret;
+    return testresult;
 }
 
 /*
