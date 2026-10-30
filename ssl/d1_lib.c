@@ -1844,6 +1844,12 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
         return NULL;
     }
 
+    /* The listener cannot service a paused asynchronous job. */
+    if ((ctx->mode & SSL_MODE_ASYNC) != 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
+        return NULL;
+    }
+
     if ((dl = OPENSSL_zalloc(sizeof(*dl))) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
@@ -2093,9 +2099,9 @@ int ossl_dtls_listener_test_and_set_peeloff(SSL *ssl, int using_peeloff)
 /*
  * ossl_dtls_conn_is_peel_eligible - is ssl a valid target for SSL_listen_ex()?
  *
- * A peel-eligible new_conn is exactly what SSL_new(ctx) on a DTLS SSL_CTX
- * produces: no handshake started, no listener association, no BIOs set.
- * Nothing else may be done to it before it is passed to SSL_listen_ex().
+ * A peel-eligible new_conn is an undriven SSL_new(ctx) result on a DTLS
+ * SSL_CTX: no handshake role, listener association, or BIOs. Application
+ * callbacks, their arguments, and ex-data may be configured before handoff.
  */
 int ossl_dtls_conn_is_peel_eligible(SSL *ssl)
 {
@@ -2128,15 +2134,36 @@ int ossl_dtls_conn_is_peel_eligible(SSL *ssl)
     return 1;
 }
 
+static void dtls_rebind_record_layers(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    s->rlayer.s = s;
+    ossl_record_layer_set_cbarg(s->rlayer.rrl, s);
+    ossl_record_layer_set_cbarg(s->rlayer.wrl, s);
+
+    /* Retained write layers must follow their owner when retransmitted. */
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+
+        ossl_record_layer_set_cbarg(sent_msg->saved_retransmit_state.wrl, s);
+    }
+}
+
 /*
  * dtls_swap_connection_bodies - exchange the entire connection state of a
  * and b, other than each side's own identity (SSL_CTX, reference count,
- * lock, ex_data), which stays put.
+ * lock, ex_data), which stay put.
+ *
+ * Neither side has a job or wait context: SSL_MODE_ASYNC is rejected while
+ * the listener owns a connection, and an undriven receiving SSL has not run
+ * one. a and b are always created from the same SSL_CTX, so every callback,
+ * argument and policy setting that was copied from it at SSL_new() time is
+ * already equivalent on both sides and moves with the body.
  *
  * Self-inverse: calling this a second time with the same two arguments
  * restores both a and b to exactly what they held before the first call.
- * ossl_dtls_transfer_connection_state() relies on this to roll back cleanly
- * if it can't make the swap visible via established_conns afterward.
  */
 static void dtls_swap_connection_bodies(SSL_CONNECTION *a, SSL_CONNECTION *b)
 {
@@ -2172,21 +2199,13 @@ static void dtls_swap_connection_bodies(SSL_CONNECTION *a, SSL_CONNECTION *b)
     b->ssl.ex_data = b_ex_data;
     b->user_ssl = SSL_CONNECTION_GET_SSL(b);
 
-    /* rlayer.s is a back-pointer to the owning SSL_CONNECTION on each side. */
-    a->rlayer.s = a;
-    b->rlayer.s = b;
-
     /*
-     * Whichever of a/b now holds a live rrl/wrl (there may be one on either
-     * side, depending on which direction this call is undoing) still thinks
-     * its owner is the other side. Rebind rather than recreate the record
-     * layer, which would reset per-epoch protocol state that cannot be
-     * rederived -- most importantly the DTLS anti-replay bitmap.
+     * All active and retained record layers must follow their new owner on
+     * both sides. Rebind rather than recreate them to preserve per-epoch
+     * protocol state, especially the anti-replay bitmap.
      */
-    ossl_record_layer_set_cbarg(a->rlayer.rrl, a);
-    ossl_record_layer_set_cbarg(a->rlayer.wrl, a);
-    ossl_record_layer_set_cbarg(b->rlayer.rrl, b);
-    ossl_record_layer_set_cbarg(b->rlayer.wrl, b);
+    dtls_rebind_record_layers(a);
+    dtls_rebind_record_layers(b);
 }
 
 /*
@@ -2199,27 +2218,22 @@ static void dtls_swap_connection_bodies(SSL_CONNECTION *a, SSL_CONNECTION *b)
  * place) but must still be registered in that listener's established_conns
  * table, i.e. mid-handshake, not fresh. This function does not touch
  * incoming_connections itself. dst must have already passed
- * ossl_dtls_conn_is_peel_eligible(): a bare, untouched SSL_new() result on a
- * DTLS SSL_CTX.
+ * ossl_dtls_conn_is_peel_eligible(): an undriven SSL_new() result on the same
+ * SSL_CTX as src, which is the listener's. That SSL_CTX defines the
+ * connection's callbacks, verification and security policy.
  *
- * On success (1), dst becomes, in every respect but its own identity
- * (SSL_CTX, reference count, lock, ex_data), the connection src was: same
- * peer address, same in-flight handshake state, same live record layer
- * (including its DTLS anti-replay bitmap) now addressed to dst instead of
- * src. src ends up in the state of a just-created, never-touched SSL_new()
- * result, safe to SSL_free() normally -- the caller still owns that
- * reference and is expected to free it.
+ * On success (1), dst keeps its identity (SSL_CTX, reference count, lock,
+ * ex_data), while taking src's peer address, in-flight handshake state, and
+ * live record layers (including its DTLS anti-replay bitmap) now addressed to
+ * dst instead of src. src has a fresh connection body but retains its original
+ * ex-data. The caller must release its reference to src with SSL_free().
  *
  * On failure (0), neither src nor dst is modified.
  *
- * dl->mutex is held for the entire operation, not just the
- * established_conns calls at either end of it: dst must never become
- * reachable through established_conns before its body has actually been
- * swapped in (another thread could find it and drive a half-migrated
- * connection), and src must never be unreachable while it's still the only
- * side holding valid state. Holding the lock across the swap itself is
- * cheap -- it's a handful of struct assignments, nothing fallible -- so
- * there's no reason to split the critical section and reopen that window.
+ * Handoff does not allocate: dst takes over src's existing entry in
+ * established_conns, so it cannot fail for lack of memory part way through.
+ * dl->mutex covers the routing change and the body swap, so packet routing
+ * cannot observe a partially transferred connection.
  */
 int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst)
 {
@@ -2231,9 +2245,10 @@ int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst)
     src_sc = SSL_CONNECTION_FROM_SSL_ONLY(src);
     dst_sc = SSL_CONNECTION_FROM_SSL_ONLY(dst);
 
-    if (src_sc == NULL || dst_sc == NULL
+    if (src_sc == NULL || dst_sc == NULL || src == dst
         || src_sc->d1 == NULL || dst_sc->d1 == NULL
-        || src_sc->d1->listener == NULL) {
+        || src_sc->d1->listener == NULL
+        || src->ctx != dst->ctx) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -2256,26 +2271,25 @@ int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst)
         return 0;
     }
 
-    ossl_dgram_conn_lookup_unregister(dl->established_conns, &peer_addr);
-
     /*
-     * Swap the two connections' bodies wholesale: dst takes on src's
-     * mid-handshake state (including the version/method the handshake has
-     * negotiated so far), and src takes on dst's original, never-touched
-     * state. Only now, with dst fully populated, is it safe to make it
-     * visible via established_conns.
+     * Route the peer to dst. This reuses src's existing entry and does not
+     * allocate. Nothing has been modified yet if it fails.
      */
-    dtls_swap_connection_bodies(dst_sc, src_sc);
-
-    if (!ossl_dgram_conn_lookup_register_addr(dl->established_conns, &peer_addr, dst)) {
-        /* Undo the swap -- self-inverse -- and put src back as it was. */
-        dtls_swap_connection_bodies(dst_sc, src_sc);
-        ossl_dgram_conn_lookup_register_addr(dl->established_conns, &peer_addr, src);
+    if (!ossl_dgram_conn_lookup_replace_addr(dl->established_conns, &peer_addr, dst)) {
         SSL_free(listener);
         ossl_crypto_mutex_unlock(dl->mutex);
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+
+    /*
+     * Swap the two connections' bodies wholesale: dst takes on src's
+     * mid-handshake state (including the version/method the handshake has
+     * negotiated so far), and src takes on dst's original, never-touched
+     * state. The routing mutex is still held, so routing never sees dst
+     * before it is fully populated.
+     */
+    dtls_swap_connection_bodies(dst_sc, src_sc);
 
     ossl_crypto_mutex_unlock(dl->mutex);
 
@@ -2285,7 +2299,8 @@ int ossl_dtls_transfer_connection_state(SSL *src, SSL *dst)
 /*
  * ossl_dtls_listen_ex - DTLS backend for SSL_listen_ex().
  *
- * Pulls the next already-cookie-validated connection off listener's
+ * Pulls the next connection (cookie-validated unless address validation was
+ * disabled with SSL_LISTENER_FLAG_NO_VALIDATE) off listener's
  * incoming_connections (the same queue SSL_accept_connection() drains) and
  * transplants its state onto new_conn.
  *
@@ -2297,7 +2312,13 @@ int ossl_dtls_listen_ex(SSL *listener, SSL *new_conn)
     DTLS_LISTENER *dl;
     SSL *src;
 
-    if (!IS_DTLS_LISTENER(listener) || !ossl_dtls_conn_is_peel_eligible(new_conn)) {
+    /*
+     * The listener's SSL_CTX defines the connection's callbacks, verification
+     * and security policy, so new_conn must have been created from it. Reject
+     * before anything is taken off the accept queue.
+     */
+    if (!IS_DTLS_LISTENER(listener) || !ossl_dtls_conn_is_peel_eligible(new_conn)
+        || new_conn->ctx != listener->ctx) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return -1;
     }
@@ -2309,6 +2330,14 @@ int ossl_dtls_listen_ex(SSL *listener, SSL *new_conn)
         return -1;
 
     ossl_crypto_mutex_lock(dl->mutex);
+
+    /* As for SSL_accept_connection(), a fatal listener hands out nothing. */
+    if (dl->fatal) {
+        ossl_crypto_mutex_unlock(dl->mutex);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
     src = sk_SSL_shift(dl->incoming_connections);
     ossl_crypto_mutex_unlock(dl->mutex);
 
@@ -2326,7 +2355,7 @@ int ossl_dtls_listen_ex(SSL *listener, SSL *new_conn)
         return -1;
     }
 
-    /* src is now an empty, fresh shell -- ordinary SSL_free() applies. */
+    /* Release the source shell and its original ex-data. */
     SSL_free(src);
 
     return 1;
@@ -2532,6 +2561,16 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
         return;
 
     /*
+     * The context or pending callback may have enabled async mode after
+     * listener creation. Reject it before SSL_accept() can start a job.
+     * The drive pass removes the connection after releasing its drive ref.
+     */
+    if ((sc->mode & SSL_MODE_ASYNC) != 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
+        goto failed;
+    }
+
+    /*
      * Drive the state machine with SSL_accept().
      *
      * We MUST set TLS1_FLAGS_STATELESS to prevent the state machine from
@@ -2560,6 +2599,12 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     if (dl->require_hrr_cookie || dl->require_hvr_cookie)
         sc->s3.flags &= ~TLS1_FLAGS_STATELESS;
 
+    /* A handshake callback must not enable async mode for a later drive. */
+    if ((sc->mode & SSL_MODE_ASYNC) != 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
+        goto failed;
+    }
+
     /* Check if connection is ready to move to established */
     if (dtls_listener_conn_ready(ssl, dl)) {
         if (ctx->ready_conns != NULL && sk_SSL_push(ctx->ready_conns, ssl) > 0)
@@ -2577,10 +2622,12 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     }
 
     /* Fatal error on this connection - mark for removal */
-    if (ssl_err == SSL_ERROR_SYSCALL || ssl_err == SSL_ERROR_SSL) {
-        if (ctx->failed_conns != NULL && sk_SSL_push(ctx->failed_conns, ssl) > 0)
-            ctx->error_count++;
-    }
+    if (ssl_err != SSL_ERROR_SYSCALL && ssl_err != SSL_ERROR_SSL)
+        return;
+
+failed:
+    if (ctx->failed_conns != NULL && sk_SSL_push(ctx->failed_conns, ssl) > 0)
+        ctx->error_count++;
 }
 
 /*

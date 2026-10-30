@@ -1377,10 +1377,9 @@ err:
  */
 void ossl_record_layer_set_cbarg(OSSL_RECORD_LAYER *rl, void *cbarg)
 {
-    if (rl == NULL)
-        return;
-
-    rl->cbarg = cbarg;
+    /* A retained previous read epoch belongs to the same connection. */
+    for (; rl != NULL; rl = rl->prev_epoch_rl)
+        rl->cbarg = cbarg;
 }
 
 static int

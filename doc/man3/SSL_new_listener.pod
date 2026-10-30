@@ -134,15 +134,15 @@ subsequent calls on the same I<ssl> object are no-ops. This call is supported
 only on listener SSL objects.
 
 The SSL_listen_ex() function behaves in a similar fashion to L<DTLSv1_listen(3)>
-in that it polls a listening SSL object, and, if a new connection is available,
-writes that connection into the SSL object pointed to by B<new_conn>.  Note that
-once a connection is returned from a listener via this call, accepting
-connections via L<SSL_accept_connection(3)> is no longer permissible, and will
-result in an error. Many calls into the QUIC API may trigger the QUIC reactor
-(such as L<SSL_poll(3)>) and select L<SSL_accept_connection(3)> mode for the
-port. Applications intending to use SSL_listen_ex() must call it before any
-operation selects that mode; in practice, it should be the first I/O call made
-on the listener.
+in that it checks a listening SSL object for a new connection and, if one is
+available, writes that connection into the SSL object pointed to by
+B<new_conn>.  Note that once a connection is returned from a listener via this
+call, accepting connections via L<SSL_accept_connection(3)> is no longer
+permissible, and will result in an error. Many calls into the QUIC API may
+trigger the QUIC reactor (such as L<SSL_poll(3)>) and select
+L<SSL_accept_connection(3)> mode for the port. Applications intending to use
+SSL_listen_ex() must call it before any operation selects that mode; in
+practice, it should be the first I/O call made on the listener.
 
 Likewise, if a listener has accepted a connection via
 L<SSL_accept_connection(3)>, it is impermissible to accept connections via
@@ -151,29 +151,44 @@ B<new_conn> parameter must be a fresh standalone connection returned by
 L<SSL_new(3)> using L<OSSL_QUIC_method(3)>. The connection must not use
 thread assisted mode, have been started or shut down, have streams or network
 BIOs configured on it, or belong to another QUIC object hierarchy. For DTLS
-listeners, B<new_conn> must instead be a freshly created, untouched SSL
+listeners, B<new_conn> must instead be a freshly created, undriven SSL
 object from L<SSL_new(3)> on a DTLS B<SSL_CTX>: no handshake role set, no
-BIOs attached, and no existing listener association; see L</DTLS LISTENER
-USAGE> below for details. The application must not access I<new_conn>
+BIOs attached, and no existing listener association. It must be created from
+the listener's own B<SSL_CTX>; otherwise SSL_listen_ex() fails and leaves the
+accept queue unchanged. Application ex-data may be set before handoff; see
+L</DTLS LISTENER USAGE> below for details. The application must not access I<new_conn>
 concurrently while SSL_listen_ex() is executing.
 
 On success, I<new_conn> is adopted into the listener's object hierarchy and
-uses its shared network port and TLS configuration derived from the listener.
+uses its shared network port. Application ex-data set on I<new_conn> is
+retained. Applications must not call L<SSL_set_bio(3)> or L<SSL_set_fd(3)> to
+install a private connected BIO or file descriptor on the returned connection;
+it continues to use the listener's shared network port.
+
+For QUIC, TLS configuration is derived from the listener.
 Certificates, verification parameters, ciphersuites, ALPN configuration and
 other security policy must be configured on the listener's
 B<SSL_CTX>. The connection is reset to accepted-connection defaults. TLS
 callbacks and QUIC message tracing callbacks are derived from the listener.
-Application ex data set on I<new_conn> is retained. Applications must not rely
-on any other configuration applied to I<new_conn> before the call being
-retained. Configure such settings on the listener or after SSL_listen_ex()
-succeeds. Applications must not call L<SSL_set_bio(3)> or L<SSL_set_fd(3)> to
-install a private connected BIO or file descriptor on the returned connection;
-it continues to use the listener's shared network port.
+Apart from application ex-data, applications must not rely on configuration
+applied to I<new_conn> before the call being retained. Configure such settings
+on the listener or after SSL_listen_ex() succeeds.
+
+For DTLS, the listener's responsibility ends at address validation, and its
+B<SSL_CTX> defines the configuration of every connection it hands off:
+callbacks and their arguments, certificate selection, verification mode and
+parameters, and security policy. These are all configured once on the
+listener's B<SSL_CTX>, including the cookie generation and verification
+callbacks, which the listener itself uses. The handed-off connection uses that
+configuration. Per-connection settings and callbacks, such as
+L<SSL_set_msg_callback(3)>, are applied to I<new_conn> after SSL_listen_ex()
+returns success and before the handshake is continued. Such settings made on
+I<new_conn> before the call are not retained.
 
 Once B<SSL_listen_ex()> returns success, the connection written to I<new_conn>
 is already in the accept (server) state. Use L<SSL_do_handshake(3)> (or
 L<SSL_handle_events(3)>) to progress its handshake towards completion.
-L<SSL_accept(3)> must not be used for this purpose; use
+For QUIC connections, L<SSL_accept(3)> must not be used for this purpose; use
 L<SSL_do_handshake(3)> instead.
 
 The SSL_accept_connection() call is supported only on a listener SSL object and
@@ -262,6 +277,19 @@ The SSL_new_listener() function supports DTLS when called with an SSL_CTX
 created using L<DTLS_server_method(3)> or L<DTLS_method(3)>. A DTLS listener
 provides server-side connection demultiplexing, allowing multiple DTLS clients
 to connect to the same UDP socket.
+
+B<SSL_MODE_ASYNC> is not supported by DTLS listeners, because a listener cannot
+service a paused asynchronous cryptographic job from within its own event
+handling and a job cannot be moved to the connection that receives it. The
+mode must not be enabled on the listener's B<SSL_CTX>, and SSL_new_listener()
+fails with B<ERR_R_UNSUPPORTED> if it is. A pending connection that has the mode
+enabled, whether by the pending-connection callback or by a later change to the
+B<SSL_CTX>, is discarded before the listener processes it.
+
+After SSL_accept_connection() returns a connection, or SSL_listen_ex()
+succeeds, the application may enable B<SSL_MODE_ASYNC> on that connection using
+L<SSL_set_mode(3)>. This concerns asynchronous cryptographic jobs, not
+nonblocking network I/O or use of L<SSL_poll(3)>.
 
 For DTLS listeners, address validation is performed by default: the listener
 sends a HelloVerifyRequest (HVR) with a cookie for DTLS 1.0/1.2 connections and
@@ -369,13 +397,15 @@ Note that SSL_new_listener_from() is not supported for DTLS listeners and
 will return NULL if called with a DTLS SSL object.
 
 SSL_listen_ex() is supported for DTLS listeners. It transfers the state of a
-connection which has already passed cookie validation onto the
-caller-supplied B<new_conn>. B<new_conn> must be freshly created via
-L<SSL_new(3)> on a DTLS B<SSL_CTX> and otherwise untouched: no handshake role
-set (via L<SSL_set_connect_state(3)> or L<SSL_set_accept_state(3)>), no BIOs
-attached (via L<SSL_set_bio(3)> or similar), and no existing listener
-association. Anything else fails with a return value of -1. As with
-SSL_accept_connection(), the handshake is B<not> complete when SSL_listen_ex()
+connection from the listener's accept queue onto the caller-supplied
+B<new_conn>. The connection has passed cookie validation unless
+B<SSL_LISTENER_FLAG_NO_VALIDATE> disabled address validation.
+The application is responsible for meeting the preconditions on B<new_conn>
+described above: it must be undriven (no handshake role set via
+L<SSL_set_connect_state(3)> or L<SSL_set_accept_state(3)>, and no BIOs attached
+via L<SSL_set_bio(3)> or similar), have no existing listener association, and
+have been created from the listener's B<SSL_CTX>.
+As with SSL_accept_connection(), the handshake is B<not> complete when SSL_listen_ex()
 returns 1; the application must still call L<SSL_do_handshake(3)> or
 L<SSL_accept(3)> to complete it before sending or receiving application data.
 
@@ -384,6 +414,30 @@ SSL_listen_ex(): whichever of the two is called first on a given listener
 permanently commits that listener to that method for the remainder of its
 lifetime. Subsequent calls to the other function on the same listener fail
 (NULL from SSL_accept_connection(), -1 from SSL_listen_ex()).
+
+For a DTLS listener, SSL_listen_ex() does not read from the network and does not
+wait. It only takes a connection that is already in the listener's accept
+queue, and returns 0 if there is none. The listener must be driven separately,
+for example by L<SSL_poll(3)> waiting for B<SSL_POLL_EVENT_IC> or by
+L<SSL_handle_events(3)>, which process incoming datagrams and queue connections
+once their address has been validated. SSL_listen_ex() is then called when a
+connection is available.
+
+Once the listener has encountered a permanent network error, SSL_listen_ex()
+fails with -1, as SSL_accept_connection() does, and connections that were
+already queued are not removed from the queue.
+
+For DTLS peeloff, application ex-data on B<new_conn> is preserved. Ex-data on
+the pending SSL object is not transferred or merged into B<new_conn>, even
+when both objects use the same index. The pending object is released during
+successful handoff, invoking its ex-data cleanup callbacks with that object
+as their parent. The handed-off connection uses the callbacks and arguments
+configured on the listener's B<SSL_CTX>.
+
+Application callbacks may already have run on the pending object before
+handoff, as described in L<SSL_CTX_set_new_pending_conn_cb(3)>. SSL_listen_ex()
+does not undo handshake processing or callback effects that occurred before it
+returned success.
 
 =head1 RETURN VALUES
 

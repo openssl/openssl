@@ -2493,9 +2493,9 @@ typedef struct dtls_listener_st {
     size_t cur_blocking_waiters;
 
     /*
-     * DTLS Peeloff mode, as a DTLS_PEELOFF_MODE.  This is used to control whether
-     * the listener will peel off connections to be handled by the caller, or
-     * whether it will handle them itself.
+     * DTLS_PEELOFF_UNSET until the listener selects DTLS_PEELOFF_ACCEPT for
+     * SSL_accept_connection() or DTLS_PEELOFF_LISTEN for SSL_listen_ex().
+     * Both APIs hand connections to the caller to complete the handshake.
      */
     int peeloff_mode;
 

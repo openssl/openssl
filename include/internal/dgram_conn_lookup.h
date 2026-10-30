@@ -41,6 +41,7 @@ struct dgram_conn_lookup_methods_st {
     int (*register_conn)(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e, SSL *ssl);
     int (*register_conn_addr)(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer, SSL *ssl);
     int (*unregister_conn)(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer);
+    int (*replace_conn_addr)(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer, SSL *ssl);
     void (*foreach)(DGRAM_CONN_LOOKUP *lookup, ossl_dgram_conn_lookup_iter_fn cb,
         void *arg);
     void (*free)(DGRAM_CONN_LOOKUP *lookup);
@@ -67,6 +68,13 @@ int ossl_dgram_conn_lookup_register_addr(DGRAM_CONN_LOOKUP *lookup,
     SSL *ssl);
 int ossl_dgram_conn_lookup_unregister(DGRAM_CONN_LOOKUP *lookup,
     const BIO_ADDR *peer);
+
+/*
+ * Point an existing registration for peer at ssl. Does not allocate, so it
+ * cannot fail for lack of memory. Returns 0 if peer is not registered.
+ */
+int ossl_dgram_conn_lookup_replace_addr(DGRAM_CONN_LOOKUP *lookup,
+    const BIO_ADDR *peer, SSL *ssl);
 void ossl_dgram_conn_lookup_foreach(DGRAM_CONN_LOOKUP *lookup,
     ossl_dgram_conn_lookup_iter_fn cb,
     void *arg);

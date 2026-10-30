@@ -334,6 +334,42 @@ static int addr_unregister_conn(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer)
 }
 
 /*
+ * Point an existing registration for a peer address at a different SSL.
+ * Unlike unregistering and registering again, this does not allocate, so it
+ * cannot fail for lack of memory.
+ */
+static int addr_replace_conn_addr(DGRAM_CONN_LOOKUP *lookup,
+    const BIO_ADDR *peer, SSL *ssl)
+{
+    ADDR_LOOKUP_DATA *data;
+    DGRAM_CONN_ENTRY lookup_key;
+    DGRAM_CONN_ENTRY *entry;
+    uint8_t hashkey[ADDR_HASHKEY_MAX_LEN];
+
+    if (lookup == NULL || lookup->impl_data == NULL || peer == NULL
+        || ssl == NULL)
+        return 0;
+
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
+
+    memset(&lookup_key, 0, sizeof(lookup_key));
+    BIO_ADDR_copy(&lookup_key.peer, peer);
+
+    if (!build_hashkey_into(peer, hashkey, sizeof(hashkey),
+            &lookup_key.hashkey_len))
+        return 0;
+    lookup_key.hashkey = hashkey;
+    lookup_key.siphash_key = data->hash_key;
+
+    entry = lh_DGRAM_CONN_ENTRY_retrieve(data->htable, &lookup_key);
+    if (entry == NULL)
+        return 0;
+
+    entry->ssl = ssl;
+    return 1;
+}
+
+/*
  * Free the lookup structure and all entries.
  */
 static void addr_free(DGRAM_CONN_LOOKUP *lookup)
@@ -411,6 +447,7 @@ static const DGRAM_CONN_LOOKUP_METHODS addr_methods = {
     addr_register_conn,
     addr_register_conn_addr,
     addr_unregister_conn,
+    addr_replace_conn_addr,
     addr_foreach,
     addr_free,
     addr_num_items
@@ -492,6 +529,15 @@ int ossl_dgram_conn_lookup_unregister(DGRAM_CONN_LOOKUP *lookup,
         || lookup->methods->unregister_conn == NULL)
         return 0;
     return lookup->methods->unregister_conn(lookup, peer);
+}
+
+int ossl_dgram_conn_lookup_replace_addr(DGRAM_CONN_LOOKUP *lookup,
+    const BIO_ADDR *peer, SSL *ssl)
+{
+    if (lookup == NULL || lookup->methods == NULL
+        || lookup->methods->replace_conn_addr == NULL)
+        return 0;
+    return lookup->methods->replace_conn_addr(lookup, peer, ssl);
 }
 
 void ossl_dgram_conn_lookup_foreach(DGRAM_CONN_LOOKUP *lookup,

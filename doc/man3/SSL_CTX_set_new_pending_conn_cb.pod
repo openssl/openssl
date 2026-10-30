@@ -24,6 +24,21 @@ registered callback may be used to decorate the preallocated B<SSL> object or
 create other associations with its parent B<SSL> prior to a call to
 SSL_accept_connection().
 
+For a DTLS connection handed off using L<SSL_listen_ex(3)>, the receiving
+B<SSL> is a different object from the pending object passed to this callback.
+The connection state is moved onto the receiving object, and the pending object
+is then released. Settings applied to the pending object, such as callbacks
+installed with L<SSL_set_msg_callback(3)>, are part of the connection state and
+move with it, but its ex-data does not: the ex-data cleanup callbacks run when
+the pending object is released during successful handoff, and the receiving
+object keeps its own ex-data. This callback must therefore not install
+per-object callbacks whose arguments are held in the pending object's ex-data,
+because they would be left referring to released data. Callbacks that apply to
+every connection should be configured on the listener's B<SSL_CTX>, and
+per-connection settings applied to the receiving object after
+L<SSL_listen_ex(3)> succeeds. This differs from SSL_accept_connection(), which
+returns the decorated pending object itself.
+
 =head1 RETURN VALUES
 
 SSL_CTX_set_new_pending_conn_cb() returns no value.
@@ -34,6 +49,9 @@ object, implying that the associated new connection will not be available for
 handling on a subsequent call to SSL_accept_connection().  A nonzero return
 value is treated as success, allowing the new connection to be enqueued to the
 accept queue.
+
+For DTLS listeners, rejection also prevents the connection from being handed
+off through SSL_listen_ex().
 
 =head1 SEE ALSO
 
@@ -52,9 +70,18 @@ delivered to applications' registered TLS callbacks prior to those SSL objects
 being returned in SSL_accept_connection().  Applications should expect this
 possibility.
 
+For DTLS SSL_listen_ex(), callbacks may likewise run on the pending object
+before handoff. After successful handoff, the connection continues with the
+callbacks configured on the listener's B<SSL_CTX>. This does not undo work
+already performed on the pending object.
+
 In particular no references should be held on SSL objects passed to these
 callbacks until such time as they are returned through a call to
 SSL_accept_connection.
+
+With DTLS SSL_listen_ex(), the pending object is not returned to the
+application and must not be retained or used as an alias for the receiving
+object.
 
 =back
 
