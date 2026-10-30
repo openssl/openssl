@@ -72,6 +72,7 @@ jobs:
           no-autoload-config,
           no-bf,
           no-blake2,
+          no-buildinfo-cflags,
           no-buildtest-c++,
           no-bulk,
           no-cached-fetch,
