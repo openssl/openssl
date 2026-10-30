@@ -36,7 +36,7 @@ OpenSSL 4.2
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
-   must be configured with `enable-pcap` option.
+   must be configured with `enable-dgram-pair-pcap` option.
    <!-- https://github.com/openssl/openssl/pull/32266 -->
 
    *Alexandr Nedvedicky*
