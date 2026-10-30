@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => $no_fips ? 59 : 65;
+plan tests => $no_fips ? 61 : 67;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -265,13 +265,20 @@ for my $file ("pbmac1_256_256.bad-iter.p12", "pbmac1_256_256.bad-salt.p12",
 for my $file ("pbmac1_256_256.bad-salt-type.p12", "pbmac1_256_256.no-salt.p12")
 {
     my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    my $info = "$file.info.txt";
     with({ exit_checker => sub { return shift == 1; } },
         sub {
             ok(run(app(["openssl", "pkcs12", "-info", "-in", $path,
-                        "-password", "pass:1234", "-noout"])),
-            "test pkcs12 -info does not crash on bad PBMAC1 salt in $file");
+                        "-password", "pass:1234", "-noout"],
+                       stderr => $info)),
+            "test pkcs12 -info on bad PBMAC1 salt in $file");
             }
         );
+    open DATA, $info;
+    my @match = grep /Salt: \(invalid\)/, <DATA>;
+    close DATA;
+    ok(scalar @match == 1,
+       "test pkcs12 -info reports invalid PBMAC1 salt in $file");
 }
 
 # Test some bad pkcs12 files
