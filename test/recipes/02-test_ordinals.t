@@ -7,14 +7,14 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 setup("test_ordinals");
 
 plan tests => 2;
 
-ok(testordinals(srctop_file("util", "libcrypto.num")), "Test libcrypto.num");
-ok(testordinals(srctop_file("util", "libssl.num")), "Test libssl.num");
+ok(testordinals(bldtop_file("util", "libcrypto.num")), "Test libcrypto.num");
+ok(testordinals(bldtop_file("util", "libssl.num")), "Test libssl.num");
 
 sub testordinals
 {
@@ -24,8 +24,12 @@ sub testordinals
     my $qualifier = "";
     my $newqual;
     my $lastfunc = "";
+    my $fh;
 
-    open(my $fh, '<', $filename);
+    if (!open($fh, '<', $filename)) {
+        print STDERR "Unable to open $filename: $!\n";
+        return 0;
+    }
     while (my $line = <$fh>) {
         my @tokens = split(/(?:\s+|\s*:\s*)/, $line);
         #Check the line looks sane
