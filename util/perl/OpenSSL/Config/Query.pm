@@ -150,6 +150,37 @@ sub get_config {
     return { map { $_ => $self->{config}->{$_} } @_ };
 }
 
+=item B<get_manpods>
+
+=item B<get_htmlpods>
+
+The returned result is an array reference holding the pod every manual page,
+or every HTML page, is made from, section by section. Each page's pod is the
+first element of its generator.
+
+=cut
+
+sub get_manpods {
+    my $self = shift;
+
+    return $self->_get_doc_pods('mandocs');
+}
+
+sub get_htmlpods {
+    my $self = shift;
+
+    return $self->_get_doc_pods('htmldocs');
+}
+
+sub _get_doc_pods {
+    my $self = shift;
+    my $kind = shift;           # 'mandocs' or 'htmldocs'
+
+    return [ map { $self->{info}->{generate}->{$_}->[0] }
+             map { @{$self->{info}->{$kind}->{$_} // []} }
+             qw(man1 man3 man5 man7) ];
+}
+
 ########
 #
 #  Helper functions
