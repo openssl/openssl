@@ -7025,7 +7025,10 @@ end:
 #endif /* OPENSSL_NO_DTLS1_2 */
 
 #if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
-/* Tick the listener's incoming-connection pump once, without blocking. */
+/*
+ * Tick the listener once, without blocking. Both no progress and a newly
+ * queued connection are successful outcomes; only a fatal error fails.
+ */
 static int listener_tick(SSL *listener)
 {
     return TEST_int_ge(ossl_dtls_tick((DTLS_LISTENER *)listener), 0);
@@ -7505,7 +7508,8 @@ static int test_dtls12_listener_alert_after_hvr_frees_pending(void)
         goto end;
 
     for (k = 0; k < 100 && !pending_conn_sent_hvr(dl); k++) {
-        listener_tick(listener);
+        if (!listener_tick(listener))
+            goto end;
         OSSL_sleep(10);
     }
     if (!TEST_true(pending_conn_sent_hvr(dl)))
@@ -7518,7 +7522,8 @@ static int test_dtls12_listener_alert_after_hvr_frees_pending(void)
     for (k = 0; k < 100
         && ossl_dgram_conn_lookup_num_items(dl->pending_conns) != 0;
         k++) {
-        listener_tick(listener);
+        if (!listener_tick(listener))
+            goto end;
         OSSL_sleep(10);
     }
     if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
@@ -7637,7 +7642,8 @@ static int test_dtls_listener_idle_pending_not_driven_int(int version)
     for (k = 0; k < 200; k++) {
         int prev = idle_pending_accept_calls;
 
-        listener_tick(listener);
+        if (!listener_tick(listener))
+            goto end;
         if (idle_pending_accept_calls == prev && idle_pending_settled(dl))
             break;
         OSSL_sleep(10);
@@ -7647,8 +7653,10 @@ static int test_dtls_listener_idle_pending_not_driven_int(int version)
         goto end;
 
     idle_pending_accept_calls = 0;
-    for (k = 0; k < IDLE_PENDING_TICKS; k++)
-        listener_tick(listener);
+    for (k = 0; k < IDLE_PENDING_TICKS; k++) {
+        if (!listener_tick(listener))
+            goto end;
+    }
     if (!TEST_int_eq(idle_pending_accept_calls, 0)
         || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
             2))
@@ -7871,7 +7879,8 @@ static int redrive_setup(REDRIVE_FIXTURE *fx, int version, uint64_t flags,
     for (k = 0; k < 200; k++) {
         if (redrive_all_idle((DTLS_LISTENER *)fx->listener, nclients))
             return 1;
-        listener_tick(fx->listener);
+        if (!listener_tick(fx->listener))
+            return 0;
         OSSL_sleep(10);
     }
     return TEST_true(redrive_all_idle((DTLS_LISTENER *)fx->listener, nclients));
@@ -7971,7 +7980,8 @@ static int test_dtls_listener_redrive(int idx)
     OSSL_sleep(50);
 
     if (njunk == 1) {
-        listener_tick(fx.listener);
+        if (!listener_tick(fx.listener))
+            goto end;
     } else {
         item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
         item.desc.value.ssl = fx.listener;
@@ -8073,7 +8083,8 @@ static int test_dtls_listener_redrive_driven_earlier(int idx)
     OSSL_sleep(50);
 
     fx.batch = 2;
-    listener_tick(fx.listener);
+    if (!listener_tick(fx.listener))
+        goto end;
     if (!redrive_finish(&fx, f))
         goto end;
 
@@ -8147,7 +8158,8 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
     for (k = 0; k < 200
         && SSL_get_accept_connection_queue_len(fx.listener) == 0;
         k++) {
-        listener_tick(fx.listener);
+        if (!listener_tick(fx.listener))
+            goto end;
         OSSL_sleep(10);
     }
     if (!TEST_ptr(serverssl = SSL_accept_connection(fx.listener,
@@ -8161,7 +8173,8 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
         if (!TEST_int_le(SSL_read(fx.clients[ei], buf, sizeof(buf)), 0)
             || !TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0))
             goto end;
-        listener_tick(fx.listener);
+        if (!listener_tick(fx.listener))
+            goto end;
         OSSL_sleep(10);
     }
     ERR_clear_error();
@@ -8324,9 +8337,8 @@ static int test_dtls13_listener_conn_read_timeout(void)
 
     SSL_set_connect_state(clientssl);
     for (i = 0; i < 100 && serverssl == NULL; i++) {
-        if (!TEST_true(client_step(clientssl)))
+        if (!TEST_true(client_step(clientssl)) || !listener_tick(listener))
             goto end;
-        listener_tick(listener);
         serverssl = SSL_accept_connection(listener,
             SSL_ACCEPT_CONNECTION_NO_BLOCK);
     }
