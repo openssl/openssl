@@ -14,7 +14,7 @@
 #include "internal/safe_math.h"
 #include "internal/threads_common.h"
 
-#ifndef OPENSSL_NO_PCAP
+#ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
 #include <openssl/rand.h>
 #include <stdio.h>
 
@@ -316,7 +316,7 @@ struct bio_dgram_peer_st {
      * indexed one per direction.
      */
     struct rbuf_map_st map[2];
-#ifndef OPENSSL_NO_PCAP
+#ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
     FILE *tcpdump_f;
     CRYPTO_MUTEX *pcap_mutex;
     uint16_t ip_id;
@@ -601,7 +601,7 @@ static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
 {
     int ret = 0;
 
-#ifndef OPENSSL_NO_PCAP
+#ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
 #define LINKTYPE_IPV4 0x00e4 /* IANA type */
     struct bio_dgram_pair_st *bp;
     char *filename = (char *)ptr;
@@ -686,7 +686,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
         CRYPTO_THREAD_lock_free(b1->pair->peerlock);
         ring_buf_destroy(&b1->pair->map[0].rbuf);
         ring_buf_destroy(&b1->pair->map[1].rbuf);
-#ifndef OPENSSL_NO_PCAP
+#ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
         if (b1->pair->tcpdump_f != NULL) {
             fclose(b1->pair->tcpdump_f);
             ossl_crypto_mutex_free(&b1->pair->pcap_mutex);
@@ -1527,7 +1527,7 @@ static ossl_inline size_t compute_rbuf_growth(size_t target, size_t current)
     return current;
 }
 
-#ifndef OPENSSL_NO_PCAP
+#ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
 static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
 {
     struct {
@@ -1725,7 +1725,7 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
         return -BIO_R_NON_FATAL;
     }
 
-#ifndef OPENSSL_NO_PCAP
+#ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
     dgram_pcap(b, buf, sz);
 #endif
 

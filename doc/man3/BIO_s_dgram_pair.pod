@@ -119,7 +119,7 @@ the BIO is freed.
 BIO_dgram_pair_set0_pcap_file() creates a packet capture file with desired filename
 and writes all packets transmitted over BIO dgram pair. The file is truncated
 if it exists already. To enable the feature you must configure your OpenSSL
-library build with B<enable-pcap> option.
+library build with B<enable-dgram-pair-pcap> option.
 
 L<BIO_flush(3)> is a no-op.
 
