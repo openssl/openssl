@@ -75,6 +75,20 @@ struct evp_mac_ctx_st {
      * OSSL_FUNC_mac_newctx()
      */
     void *algctx;
+    /*
+     * Life-cycle state, see life_cycle-mac(7).  EVP_MAC_CTX_new() leaves it
+     * at EVP_MAC_STATE_NEW (zero), a successful EVP_MAC_init() or
+     * EVP_MAC_init_SKEY() moves to INITIALISED, EVP_MAC_update() to UPDATED
+     * and EVP_MAC_final()/EVP_MAC_finalXOF() to FINALISED.  EVP_MAC_update(),
+     * EVP_MAC_final() and EVP_MAC_finalXOF() are rejected in the NEW and
+     * FINALISED states.
+     */
+    enum {
+        EVP_MAC_STATE_NEW = 0,
+        EVP_MAC_STATE_INITIALISED,
+        EVP_MAC_STATE_UPDATED,
+        EVP_MAC_STATE_FINALISED
+    } state;
 } /* EVP_MAC_CTX */;
 
 struct evp_kdf_ctx_st {
