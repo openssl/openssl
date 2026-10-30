@@ -317,8 +317,10 @@ struct bio_dgram_peer_st {
      */
     struct rbuf_map_st map[2];
 #ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
-    FILE *tcpdump_f;
+#ifdef OPENSSL_THREADS
     CRYPTO_MUTEX *pcap_mutex;
+#endif
+    FILE *tcpdump_f;
     uint16_t ip_id;
 #endif
 };
@@ -632,15 +634,20 @@ static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
 
     if (filename != NULL) {
         if (bp->pair->tcpdump_f == NULL) {
+#ifdef OPENSSL_THREADS
             bp->pair->pcap_mutex = ossl_crypto_mutex_new();
-            if (bp->pair->pcap_mutex != NULL) {
+            if (bp->pair->pcap_mutex != NULL)
+#endif
+            {
                 bp->pair->tcpdump_f = fopen(filename, "wb");
                 if (bp->pair->tcpdump_f != NULL) {
                     ret = fwrite(&pcap_f_header, sizeof(pcap_f_header), 1,
                         bp->pair->tcpdump_f);
-                } else {
-                    ossl_crypto_mutex_free(&bp->pair->pcap_mutex);
                 }
+#ifdef OPENSSL_THREADS
+                else
+                    ossl_crypto_mutex_free(&bp->pair->pcap_mutex);
+#endif
             }
         }
     }
@@ -689,7 +696,9 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
 #ifndef OPENSSL_NO_DGRAM_PAIR_PCAP
         if (b1->pair->tcpdump_f != NULL) {
             fclose(b1->pair->tcpdump_f);
+#ifdef OPENSSL_THREADS
             ossl_crypto_mutex_free(&b1->pair->pcap_mutex);
+#endif
             b1->pair->tcpdump_f = NULL;
         }
 #endif
@@ -1601,12 +1610,16 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     udp_hdr.uh_dport = (peer == NULL || peer->local_addr == NULL) ? htons(4040) : peer->local_addr->s_in.sin_port;
     udp_hdr.uh_csum = 0;
     udp_hdr.uh_len = htons((uint16_t)(sz + sizeof(udp_hdr)));
+#ifdef OPENSSL_THREADS
     ossl_crypto_mutex_lock(b->pair->pcap_mutex);
+#endif
     fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, b->pair->tcpdump_f);
     fwrite(&ip_hdr, sizeof(ip_hdr), 1, b->pair->tcpdump_f);
     fwrite(&udp_hdr, sizeof(udp_hdr), 1, b->pair->tcpdump_f);
     fwrite(buf, sz, 1, b->pair->tcpdump_f);
+#ifdef OPENSSL_THREADS
     ossl_crypto_mutex_unlock(b->pair->pcap_mutex);
+#endif
 }
 #endif
 
