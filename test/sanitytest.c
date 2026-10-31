@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,9 +10,14 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/types.h>
+#include <openssl/crypto.h>
 #include "testutil.h"
 #include "internal/numbers.h"
 #include "internal/time.h"
+
+#if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
+#include <windows.h>
+#endif
 
 #if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
 #include <signal.h>
@@ -320,6 +325,29 @@ static int test_sanity_sleep(int i)
     return 1;
 }
 
+#if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_SYS_WIN_CORE)
+/*
+ * libcrypto looks up its user32.dll functions on first use, so that loading
+ * it does not map user32.dll into the process.  This test links libcrypto
+ * statically, so a direct user32 import would load it at startup.
+ */
+static int test_sanity_user32_on_demand(void)
+{
+    int service;
+
+    if (!TEST_ptr_null(GetModuleHandleW(L"user32.dll")))
+        return 0;
+    service = OPENSSL_isservice();
+    /*
+     * Where user32.dll cannot be loaded, e.g. when Win32k system calls are
+     * disabled for the process, OPENSSL_isservice() reports -1.
+     */
+    if (GetModuleHandleW(L"user32.dll") == NULL)
+        return TEST_int_eq(service, -1);
+    return TEST_int_ge(service, 0);
+}
+#endif
+
 int setup_tests(void)
 {
     ADD_TEST(test_sanity_null_zero);
@@ -331,5 +359,8 @@ int setup_tests(void)
     ADD_TEST(test_sanity_memcmp);
     ADD_TEST(test_sanity_cleanse);
     ADD_ALL_TESTS(test_sanity_sleep, OSSL_NELEM(sleep_test_vectors));
+#if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_SYS_WIN_CORE)
+    ADD_TEST(test_sanity_user32_on_demand);
+#endif
     return 1;
 }
