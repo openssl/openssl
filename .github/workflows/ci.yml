@@ -882,8 +882,9 @@ jobs:
       run: |
         mkdir nss
         cd nss
-        git clone --depth 1 --branch NSS_3_112_3_RTM https://github.com/nss-dev/nss.git
-        hg clone https://hg.mozilla.org/projects/nspr -r NSPR_4_36_BRANCH
+        # A failed clone leaves a partial directory behind; remove it before each attempt.
+        "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nss && git clone --depth 1 --branch NSS_3_112_3_RTM https://github.com/nss-dev/nss.git'
+        "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nspr && hg clone https://hg.mozilla.org/projects/nspr -r NSPR_4_36_BRANCH'
         cd nss
         USE_64=1 make nss_build_all
         USE_64=1 make install
