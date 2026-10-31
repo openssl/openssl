@@ -358,6 +358,17 @@ foreach my $lib ( keys %errorfile ) {
     }
 }
 
+# Derive descriptions before writing state or emitting source.  Preserve
+# explicit descriptions, including '*' for an intentionally empty string.
+foreach my $i ( keys %rcodes ) {
+    next if exists $strings{$i} && $strings{$i} ne '';
+    my $rn = $i;
+
+    $rn =~ s/^.*?_R_//;
+    $rn =~ tr/_[A-Z]/ [a-z]/;
+    $strings{$i} = $rn;
+}
+
 # In -emit mode the state is the single source of truth: write the one
 # requested file to standard output and do nothing else.
 if ( defined $emit ) {
@@ -710,17 +721,9 @@ EOF
 
     # Add each reason code.
     foreach my $i ( @reasons ) {
-        my $rn;
+        my $rn = $strings{$i};
 
-        if ( exists $strings{$i} ) {
-            $rn = $strings{$i};
-            $rn = "" if $rn eq '*';
-        } else {
-            $i =~ /^${lib}_R_(\S+)$/;
-            $rn = $1;
-            $rn =~ tr/_[A-Z]/ [a-z]/;
-            $strings{$i} = $rn;
-        }
+        $rn = "" if $rn eq '*';
         my $lines;
 
         $lines = "    { ERR_PACK($pack_lib, 0, $i), \"$rn\" },";
