@@ -2379,7 +2379,7 @@ int SSL_get_async_status(SSL *s, int *status)
  * error sticking.
  * Designed to be called at the beginning of any function that
  * is expected to be followed by a call to SSL_get_error().
- * It returns 0 if the state machine is in the MSG_FLOW_ERROR state,
+ * It returns 0 if the connection has a terminal error,
  * in this case the calling function can and should return immediately.
  */
 static int ssl_reset_error_state(SSL_CONNECTION *sc)
@@ -2387,6 +2387,24 @@ static int ssl_reset_error_state(SSL_CONNECTION *sc)
     if (sc == NULL)
         return 1;
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (SSL_CONNECTION_IS_DTLS(sc) && sc->d1 != NULL
+        && sc->d1->listener != NULL && sc->d1->rx != NULL) {
+        unsigned long error = ossl_dgram_demux_get_error(sc->d1->rx->demux);
+
+        /* Buffered reads and writes must also observe shared transport failure. */
+        if (error != 0) {
+            ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
+            ossl_statem_send_fatal(sc, SSL_AD_NO_ALERT);
+            sc->rwstate = SSL_NOTHING;
+            if (ERR_GET_LIB(error) == ERR_LIB_SYS)
+                sc->statem.error_state = ERROR_STATE_SYSCALL;
+            else
+                sc->statem.error_state = ERROR_STATE_SSL;
+            return 0;
+        }
+    }
+#endif
     if (sc->statem.state == MSG_FLOW_ERROR) {
         sc->statem.error_state = ERROR_STATE_SSL;
         return 0;

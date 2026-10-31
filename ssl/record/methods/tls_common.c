@@ -412,7 +412,8 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
             size_t pkt_len = 0;
             void *pkt_handle = NULL;
 
-            if (rl->get_urxe_packet(rl->cbarg, &pkt_data, &pkt_len, &pkt_handle)) {
+            ret = rl->get_urxe_packet(rl->cbarg, &pkt_data, &pkt_len, &pkt_handle);
+            if (ret > 0) {
                 size_t urxe_data_read = pkt_len;
 
                 if (urxe_data_read > max - left)
@@ -427,8 +428,9 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                 if (rl->release_urxe_packet != NULL)
                     rl->release_urxe_packet(rl->cbarg, pkt_handle);
             } else {
-                /* No packets available */
-                ret = OSSL_RECORD_RETURN_RETRY;
+                /* Distinguish an empty queue from a permanent receive failure. */
+                ret = ret == 0 ? OSSL_RECORD_RETURN_RETRY
+                               : OSSL_RECORD_RETURN_FATAL;
             }
         } else
 #endif
@@ -1982,12 +1984,19 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                          * in or is genuinely non-blocking, and keeps the
                          * behaviour below.
                          */
-                        if (rl->block_for_write != NULL
-                            && rl->block_for_write(rl->cbarg))
+                        ret = 0;
+                        if (rl->block_for_write != NULL)
+                            ret = rl->block_for_write(rl->cbarg);
+                        if (ret > 0)
                             continue;
 
-                        ret = OSSL_RECORD_RETURN_RETRY;
-                        i = 0;
+                        if (ret < 0) {
+                            ret = OSSL_RECORD_RETURN_FATAL;
+                            i = -1;
+                        } else {
+                            ret = OSSL_RECORD_RETURN_RETRY;
+                            i = 0;
+                        }
                         tmpwrit = 0;
                     } else {
                         ERR_clear_last_mark();
