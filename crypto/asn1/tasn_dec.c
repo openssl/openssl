@@ -910,7 +910,11 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, long len,
         } else {
             ASN1_BOOLEAN *tbool;
             tbool = (ASN1_BOOLEAN *)pval;
-            *tbool = *cont;
+            /*
+             * BER allows any non-zero octet for TRUE, DER only 0xFF.
+             * Store the canonical value so that re-encoding yields DER.
+             */
+            *tbool = *cont ? 0xFF : 0;
         }
         break;
 

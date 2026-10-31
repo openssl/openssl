@@ -596,7 +596,8 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
             if (!*tbool && !it->size)
                 return -1;
         }
-        c = (unsigned char)*tbool;
+        /* DER requires TRUE to be encoded as 0xFF */
+        c = *tbool ? 0xFF : 0;
         cont = &c;
         len = 1;
         break;
