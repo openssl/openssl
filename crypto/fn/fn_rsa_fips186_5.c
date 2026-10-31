@@ -253,15 +253,15 @@ int ossl_fn_rsa_fips186_5_derive_prime(OSSL_FN *Y, OSSL_FN *X,
     if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
         return 0;
 
-    base = OSSL_FN_CTX_get_limbs(ctx, bits_limbs);
-    range = OSSL_FN_CTX_get_limbs(ctx, bits_limbs + 1);
-    R = OSSL_FN_CTX_get_limbs(ctx, r1r2x2_limbs);
-    tmp = OSSL_FN_CTX_get_limbs(ctx, r1r2x2_limbs);
-    r1r2x2 = OSSL_FN_CTX_get_limbs(ctx, r1r2x2_limbs);
-    y1 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Y->dsize);
-    r1x2 = OSSL_FN_CTX_get_limbs(ctx, r1x2_limbs);
-    g = OSSL_FN_CTX_get_limbs(ctx, (size_t)Y->dsize);
-    r1r2x2_step = OSSL_FN_CTX_get_limbs(ctx, r1r2x2_limbs + 1);
+    base = OSSL_FN_CTX_get_limbs(ctx, token, bits_limbs);
+    range = OSSL_FN_CTX_get_limbs(ctx, token, bits_limbs + 1);
+    R = OSSL_FN_CTX_get_limbs(ctx, token, r1r2x2_limbs);
+    tmp = OSSL_FN_CTX_get_limbs(ctx, token, r1r2x2_limbs);
+    r1r2x2 = OSSL_FN_CTX_get_limbs(ctx, token, r1r2x2_limbs);
+    y1 = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Y->dsize);
+    r1x2 = OSSL_FN_CTX_get_limbs(ctx, token, r1x2_limbs);
+    g = OSSL_FN_CTX_get_limbs(ctx, token, (size_t)Y->dsize);
+    r1r2x2_step = OSSL_FN_CTX_get_limbs(ctx, token, r1r2x2_limbs + 1);
     if (r1r2x2_step == NULL)
         goto err;
 
@@ -488,10 +488,10 @@ int ossl_fn_rsa_fips186_5_gen_prob_primes(OSSL_FN *p, OSSL_FN *Xpout,
     bitlimbs = (size_t)bitlen / OSSL_FN_BITS
         + ((size_t)bitlen % OSSL_FN_BITS != 0);
 
-    p1i = (p1 != NULL) ? p1 : OSSL_FN_CTX_get_limbs(ctx, bitlimbs);
-    p2i = (p2 != NULL) ? p2 : OSSL_FN_CTX_get_limbs(ctx, bitlimbs);
-    Xp1i = (Xp1 != NULL) ? (OSSL_FN *)Xp1 : OSSL_FN_CTX_get_limbs(ctx, bitlimbs);
-    Xp2i = (Xp2 != NULL) ? (OSSL_FN *)Xp2 : OSSL_FN_CTX_get_limbs(ctx, bitlimbs);
+    p1i = (p1 != NULL) ? p1 : OSSL_FN_CTX_get_limbs(ctx, token, bitlimbs);
+    p2i = (p2 != NULL) ? p2 : OSSL_FN_CTX_get_limbs(ctx, token, bitlimbs);
+    Xp1i = (Xp1 != NULL) ? (OSSL_FN *)Xp1 : OSSL_FN_CTX_get_limbs(ctx, token, bitlimbs);
+    Xp2i = (Xp2 != NULL) ? (OSSL_FN *)Xp2 : OSSL_FN_CTX_get_limbs(ctx, token, bitlimbs);
     if (p1i == NULL || p2i == NULL || Xp1i == NULL || Xp2i == NULL)
         goto err;
     clear_mask = (p1 == NULL ? 1 : 0) | (p2 == NULL ? 2 : 0)
