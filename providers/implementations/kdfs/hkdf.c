@@ -311,11 +311,18 @@ static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, struct hkdf_all_set_ctx_par
 
     if (p->mode != NULL) {
         if (p->mode->data_type == OSSL_PARAM_UTF8_STRING) {
-            if (OPENSSL_strcasecmp(p->mode->data, "EXTRACT_AND_EXPAND") == 0) {
+            char mode[sizeof("EXTRACT_AND_EXPAND")], *s = mode;
+            OSSL_PARAM param = *p->mode;
+
+            if (param.data != NULL)
+                param.data_size = OPENSSL_strnlen(param.data, param.data_size);
+            if (!OSSL_PARAM_get_utf8_string(&param, &s, sizeof(mode)))
+                return 0;
+            if (OPENSSL_strcasecmp(mode, "EXTRACT_AND_EXPAND") == 0) {
                 ctx->mode = EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND;
-            } else if (OPENSSL_strcasecmp(p->mode->data, "EXTRACT_ONLY") == 0) {
+            } else if (OPENSSL_strcasecmp(mode, "EXTRACT_ONLY") == 0) {
                 ctx->mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
-            } else if (OPENSSL_strcasecmp(p->mode->data, "EXPAND_ONLY") == 0) {
+            } else if (OPENSSL_strcasecmp(mode, "EXPAND_ONLY") == 0) {
                 ctx->mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
             } else {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);

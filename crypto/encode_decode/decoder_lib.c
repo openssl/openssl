@@ -19,6 +19,7 @@
 #include "internal/bio.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
+#include "internal/params.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "internal/e_os.h"
@@ -855,7 +856,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     int ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
-    const char *data_type = NULL;
+    char *data_type = NULL, *data_structure_copy = NULL, *input_type = NULL;
     const char *data_structure = NULL;
     /* Saved to restore on return, mutated in PEM->DER transition. */
     const char *start_input_type = ctx->start_input_type;
@@ -945,19 +946,21 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         /* Get the data type if there is one */
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
-        if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_type))
+        if (p != NULL && !ossl_param_get_utf8_string(p, &data_type, 0))
             goto end;
 
         /* Get the data structure if there is one */
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_STRUCTURE);
-        if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_structure))
+        if (p != NULL && !ossl_param_get_utf8_string(p, &data_structure_copy, 0))
             goto end;
+        data_structure = data_structure_copy;
 
         /* Get the new input type if there is one */
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_INPUT_TYPE);
         if (p != NULL) {
-            if (!OSSL_PARAM_get_utf8_string_ptr(p, &ctx->start_input_type))
+            if (!ossl_param_get_utf8_string(p, &input_type, 0))
                 goto end;
+            ctx->start_input_type = input_type;
             /*
              * When switching PKCS8 from PEM to DER we decrypt the data if needed
              * and then determine the algorithm OID.  Likewise, with SPKI, only
@@ -1211,5 +1214,8 @@ end:
     ossl_core_bio_free(cbio);
     BIO_free(new_data.bio);
     ctx->start_input_type = start_input_type;
+    OPENSSL_free(data_type);
+    OPENSSL_free(data_structure_copy);
+    OPENSSL_free(input_type);
     return ok;
 }

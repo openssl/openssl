@@ -106,7 +106,10 @@ The organization of the data depends on the parameter type and flag.
 The I<data_size> needs special attention with the parameter type
 B<OSSL_PARAM_UTF8_STRING> in relation to C strings.  When setting
 parameters, the size should be set to the length of the string, not
-counting the terminating NUL byte.  When requesting parameters, the
+counting the terminating NUL byte.
+The input need not contain a terminating NUL byte.
+Consumers must use I<data_size> to limit reads from the input.
+When requesting parameters, the
 size should be set to the size of the buffer to be populated, which
 should accommodate enough space for a terminating NUL byte.
 
@@ -191,6 +194,8 @@ the pointer to it.
 
 I<data_size> must be set to the size of the data, not the size of the
 pointer to the data.
+As with B<OSSL_PARAM_UTF8_STRING>, the input need not contain a terminating
+NUL byte, and consumers must use I<data_size> to limit reads.
 If this is used in a parameter request,
 I<data_size> is not relevant.  However, the I<responder> will set
 I<return_size> to the size of the data.

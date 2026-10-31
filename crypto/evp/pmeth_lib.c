@@ -658,7 +658,7 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 {
     OSSL_PARAM sig_md_params[2], *p = sig_md_params;
     /* 80 should be big enough */
-    char name[80] = "";
+    char name[81] = "";
     const EVP_MD *tmp;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
@@ -673,11 +673,14 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
         name,
-        sizeof(name));
+        sizeof(name) - 1);
     *p = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_CTX_get_params(ctx, sig_md_params))
+    if (!EVP_PKEY_CTX_get_params(ctx, sig_md_params)
+        || !OSSL_PARAM_modified(sig_md_params)
+        || sig_md_params[0].return_size >= sizeof(name))
         return 0;
+    name[sig_md_params[0].return_size] = '\0';
 
     tmp = evp_get_digestbyname_ex(ctx->libctx, name);
     if (tmp == NULL)

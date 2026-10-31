@@ -57,7 +57,7 @@
         [ 'x942kdf_key_check', 'X942KDF_KEY_CHECK', 'unsigned char', '0', 'indicator' ],
         [ 'pbkdf2_lower_bound_check', 'PBKDF2_LOWER_BOUND_CHECK', 'unsigned char', '1', 'indicator' ],
         [ 'ecdh_cofactor_check', 'ECDH_COFACTOR_CHECK', 'unsigned char', '0', 'indicator' ],
-        [ 'module_filename', 'OSSL_PROV_PARAM_CORE_MODULE_FILENAME', 'const char *', 'NULL', 'selftest' ],
-        [ 'module_checksum_data', 'OSSL_PROV_FIPS_PARAM_MODULE_MAC', 'const char *', 'NULL', 'selftest' ],
+        [ 'module_filename', 'OSSL_PROV_PARAM_CORE_MODULE_FILENAME', 'char *', 'NULL', 'selftest' ],
+        [ 'module_checksum_data', 'OSSL_PROV_FIPS_PARAM_MODULE_MAC', 'char *', 'NULL', 'selftest' ],
         [ 'conditional_error_check', 'OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS', 'unsigned char', '1', 'selftest' ],
         [ 'defer_tests', 'OSSL_PROV_FIPS_PARAM_DEFER_TESTS', 'unsigned char', '0', 'selftest' ]) -}

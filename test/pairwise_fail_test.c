@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/params.h>
 #include <openssl/pem.h>
 #include <openssl/core_names.h>
 #include <openssl/self_test.h>
@@ -49,21 +50,24 @@ static int self_test_on_pairwise_fail(const OSSL_PARAM params[], void *arg)
 {
     struct self_test_arg *args = arg;
     const OSSL_PARAM *p = NULL;
-    const char *type = NULL, *phase = NULL;
+    char *type = NULL, *phase = NULL;
+    int ret = 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
-        return 0;
-    phase = (const char *)p->data;
+    if (p == NULL || !OSSL_PARAM_get_utf8_string(p, &phase, 0))
+        goto end;
     if (strcmp(phase, OSSL_SELF_TEST_PHASE_CORRUPT) == 0) {
         p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_TYPE);
-        if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        type = (const char *)p->data;
+        if (p == NULL || !OSSL_PARAM_get_utf8_string(p, &type, 0))
+            goto end;
         if (strcmp(type, args->type) == 0)
-            return 0;
+            goto end;
     }
-    return 1;
+    ret = 1;
+end:
+    OPENSSL_free(type);
+    OPENSSL_free(phase);
+    return ret;
 }
 
 static int setup_selftest_pairwise_failure(const char *type)

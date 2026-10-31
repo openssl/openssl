@@ -76,7 +76,7 @@ DEFINE[../providers/libfips.a]=$CPUIDDEF
 # already gets everything that the static libcrypto.a has, and doesn't need it
 # added again.
 IF[{- !$disabled{module} && !$disabled{shared} -}]
-  SOURCE[../providers/legacy]=$CPUID_COMMON
+  SOURCE[../providers/legacy]=$CPUID_COMMON params.c
   DEFINE[../providers/legacy]=$CPUIDDEF
 ENDIF
 
@@ -94,8 +94,8 @@ SOURCE[../providers/libfips.a]=$CORE_COMMON
 
 # Central utilities
 $UTIL_COMMON=\
-        cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
-        threads_pthread.c threads_win.c threads_none.c threads_common.c \
+        cryptlib.c params.c params_concat.c params_from_text.c bsearch.c \
+        ex_data.c o_str.c threads_pthread.c threads_win.c threads_none.c threads_common.c \
         initthread.c context.c sparse_array.c asn1_dsa.c packet.c \
         param_build.c param_build_set.c der_writer.c threads_lib.c \
         params_dup.c time.c array_alloc.c aligned_alloc.c deterministic_nonce.c

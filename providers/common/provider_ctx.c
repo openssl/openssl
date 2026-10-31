@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "prov/provider_ctx.h"
+#include "internal/params.h"
 #include "prov/bio.h"
 
 PROV_CTX *ossl_prov_ctx_new(void)
@@ -75,7 +76,7 @@ OSSL_FUNC_core_get_params_fn *ossl_prov_ctx_get0_core_get_params(PROV_CTX *ctx)
     return ctx->core_get_params;
 }
 
-const char *
+char *
 ossl_prov_ctx_get_param(PROV_CTX *ctx, const char *name, const char *defval)
 {
     char *val = NULL;
@@ -84,7 +85,7 @@ ossl_prov_ctx_get_param(PROV_CTX *ctx, const char *name, const char *defval)
     if (ctx == NULL
         || ctx->handle == NULL
         || ctx->core_get_params == NULL)
-        return defval;
+        return OPENSSL_strdup(defval);
 
     param[0].key = (char *)name;
     param[0].data_type = OSSL_PARAM_UTF8_PTR;
@@ -95,26 +96,34 @@ ossl_prov_ctx_get_param(PROV_CTX *ctx, const char *name, const char *defval)
     /* Errors are ignored, returning the default value */
     if (ctx->core_get_params(ctx->handle, param)
         && OSSL_PARAM_modified(param)
-        && val != NULL)
-        return val;
-    return defval;
+        && val != NULL) {
+        char *copy = NULL;
+
+        param[0].data_size = param[0].return_size;
+        if (!ossl_param_get_utf8_string(param, &copy, 0))
+            return NULL;
+        return copy;
+    }
+    return OPENSSL_strdup(defval);
 }
 
 int ossl_prov_ctx_get_bool_param(PROV_CTX *ctx, const char *name, int defval)
 {
-    const char *val = ossl_prov_ctx_get_param(ctx, name, NULL);
+    char *val = ossl_prov_ctx_get_param(ctx, name, NULL);
+    int ret = defval;
 
     if (val != NULL) {
         if ((strcmp(val, "1") == 0)
             || (OPENSSL_strcasecmp(val, "yes") == 0)
             || (OPENSSL_strcasecmp(val, "true") == 0)
             || (OPENSSL_strcasecmp(val, "on") == 0))
-            return 1;
+            ret = 1;
         else if ((strcmp(val, "0") == 0)
             || (OPENSSL_strcasecmp(val, "no") == 0)
             || (OPENSSL_strcasecmp(val, "false") == 0)
             || (OPENSSL_strcasecmp(val, "off") == 0))
-            return 0;
+            ret = 0;
     }
-    return defval;
+    OPENSSL_free(val);
+    return ret;
 }

@@ -971,8 +971,10 @@ int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name)
 
 int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
 {
-    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    OSSL_PARAM *p = params;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, name, namelen),
+        OSSL_PARAM_END
+    };
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
         /* There is no legacy support for this */
@@ -984,10 +986,13 @@ int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
     if (name == NULL)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-        name, namelen);
     if (!EVP_PKEY_CTX_get_params(ctx, params))
         return -1;
+    if (OSSL_PARAM_modified(params)) {
+        if (params[0].return_size >= namelen)
+            return -1;
+        name[params[0].return_size] = '\0';
+    }
     return 1;
 }
 #endif /* !FIPS_MODULE */

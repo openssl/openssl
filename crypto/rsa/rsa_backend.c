@@ -24,6 +24,7 @@
 #endif
 #include "internal/sizes.h"
 #include "internal/param_build_set.h"
+#include "internal/params.h"
 #include "crypto/rsa.h"
 #include "crypto/rsa_params.h"
 #include "rsa_local.h"
@@ -399,7 +400,7 @@ int ossl_rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss,
 int ossl_rsa_pss_params_30_fromdata_parsed(RSA_PSS_PARAMS_30 *pss_params,
     int *defaults_set, const RSA_PARAMS *p, OSSL_LIB_CTX *libctx)
 {
-    const char *propq = NULL;
+    char *propq = NULL, *mgfname = NULL, *mdname = NULL, *mgf1mdname = NULL;
     EVP_MD *md = NULL, *mgf1md = NULL;
     int saltlen;
     int ret = 0;
@@ -408,10 +409,14 @@ int ossl_rsa_pss_params_30_fromdata_parsed(RSA_PSS_PARAMS_30 *pss_params,
         return 0;
 
     if (p->digest_props != NULL) {
-        if (p->digest_props->data_type == OSSL_PARAM_UTF8_STRING)
-            propq = p->digest_props->data;
-        else if (!OSSL_PARAM_get_utf8_ptr(p->digest_props, &propq))
-            return 0;
+        const char *data;
+
+        if ((p->digest_props->data_type == OSSL_PARAM_UTF8_PTR
+                && p->digest_props->data == NULL)
+            || !OSSL_PARAM_get_utf8_string_ptr(p->digest_props, &data)
+            || (data != NULL
+                && !ossl_param_get_utf8_string(p->digest_props, &propq, 0)))
+            goto err;
     }
     /*
      * If we get any of the parameters, we know we have at least some
@@ -422,24 +427,21 @@ int ossl_rsa_pss_params_30_fromdata_parsed(RSA_PSS_PARAMS_30 *pss_params,
         && (p->digest != NULL || p->maskgenfunc != NULL || p->mgf1_digest != NULL
             || p->pss_saltlen != NULL)) {
         if (!ossl_rsa_pss_params_30_set_defaults(pss_params))
-            return 0;
+            goto err;
         *defaults_set = 1;
     }
 
     if (p->maskgenfunc != NULL) {
         int default_maskgenalg_nid = ossl_rsa_pss_params_30_maskgenalg(NULL);
-        const char *mgfname = NULL;
 
-        if (p->maskgenfunc->data_type == OSSL_PARAM_UTF8_STRING)
-            mgfname = p->maskgenfunc->data;
-        else if (!OSSL_PARAM_get_utf8_ptr(p->maskgenfunc, &mgfname))
-            return 0;
+        if (!ossl_param_get_utf8_string(p->maskgenfunc, &mgfname, 0))
+            goto err;
 
         if (mgfname == NULL
             || OPENSSL_strcasecmp(mgfname,
                    ossl_rsa_mgf_nid2name(default_maskgenalg_nid))
                 != 0)
-            return 0;
+            goto err;
     }
 
     /*
@@ -448,11 +450,7 @@ int ossl_rsa_pss_params_30_fromdata_parsed(RSA_PSS_PARAMS_30 *pss_params,
      */
 
     if (p->digest != NULL) {
-        const char *mdname = NULL;
-
-        if (p->digest->data_type == OSSL_PARAM_UTF8_STRING)
-            mdname = p->digest->data;
-        else if (!OSSL_PARAM_get_utf8_ptr(p->digest, &mdname))
+        if (!ossl_param_get_utf8_string(p->digest, &mdname, 0))
             goto err;
 
         if ((md = EVP_MD_fetch(libctx, mdname, propq)) == NULL
@@ -462,11 +460,7 @@ int ossl_rsa_pss_params_30_fromdata_parsed(RSA_PSS_PARAMS_30 *pss_params,
     }
 
     if (p->mgf1_digest != NULL) {
-        const char *mgf1mdname = NULL;
-
-        if (p->mgf1_digest->data_type == OSSL_PARAM_UTF8_STRING)
-            mgf1mdname = p->mgf1_digest->data;
-        else if (!OSSL_PARAM_get_utf8_ptr(p->mgf1_digest, &mgf1mdname))
+        if (!ossl_param_get_utf8_string(p->mgf1_digest, &mgf1mdname, 0))
             goto err;
 
         if ((mgf1md = EVP_MD_fetch(libctx, mgf1mdname, propq)) == NULL
@@ -484,6 +478,10 @@ int ossl_rsa_pss_params_30_fromdata_parsed(RSA_PSS_PARAMS_30 *pss_params,
     ret = 1;
 
 err:
+    OPENSSL_free(propq);
+    OPENSSL_free(mgfname);
+    OPENSSL_free(mdname);
+    OPENSSL_free(mgf1mdname);
     EVP_MD_free(md);
     EVP_MD_free(mgf1md);
     return ret;

@@ -18,6 +18,7 @@
 #include <openssl/indicator.h>
 #include <openssl/self_test.h>
 #include "internal/cryptlib.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "prov/implementations.h"
 #include "prov/names.h"
@@ -122,6 +123,7 @@ void ossl_fips_prov_ossl_ctx_free(void *fgbl)
 {
     if (((FIPS_GLOBAL *)fgbl)->deferred_lock)
         CRYPTO_THREAD_lock_free(((FIPS_GLOBAL *)fgbl)->deferred_lock);
+    free_fips_params(&((FIPS_GLOBAL *)fgbl)->fips_params);
     OPENSSL_free(fgbl);
 }
 

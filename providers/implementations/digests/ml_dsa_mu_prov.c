@@ -144,15 +144,15 @@ static const OSSL_PARAM *mu_settable_ctx_params(ossl_unused void *ctx,
     return ml_dsa_mu_set_ctx_params_list;
 }
 
-static int set_property_query(MU_CTX *ctx, const char *propq)
+static int set_property_query(MU_CTX *ctx, const OSSL_PARAM *propq)
 {
+    if (propq->data == NULL && propq->data_type != OSSL_PARAM_UTF8_STRING)
+        return 0;
     OPENSSL_free(ctx->propq);
     ctx->propq = NULL;
-    if (propq != NULL) {
-        ctx->propq = OPENSSL_strdup(propq);
-        if (ctx->propq == NULL)
-            return 0;
-    }
+    if (propq->data != NULL
+        && !OSSL_PARAM_get_utf8_string(propq, &ctx->propq, 0))
+        return 0;
     return 1;
 }
 
@@ -208,8 +208,7 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
     if (p.propq != NULL) {
-        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING
-            || !set_property_query(ctx, p.propq->data))
+        if (!set_property_query(ctx, p.propq))
             return 0;
     }
     if (p.pubkey != NULL) {
@@ -220,17 +219,19 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->keylen = p.pubkey->data_size;
     }
     if (p.digestname != NULL) {
+        char *name = NULL;
         int ret;
 
-        if (p.digestname->data_type != OSSL_PARAM_UTF8_STRING)
+        if (!OSSL_PARAM_get_utf8_string(p.digestname, &name, 0))
             return 0;
-        ret = ossl_der_oid_pq_dsa_prehash_digest(p.digestname->data,
+        ret = ossl_der_oid_pq_dsa_prehash_digest(name,
             &ctx->oid, &ctx->oid_len, &ctx->digest_len);
         if (ret)
             ctx->remaining = ctx->digest_len;
         else
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
-                "%s is not supported", p.digestname->data);
+                "%s is not supported", name);
+        OPENSSL_free(name);
         return ret;
     }
     return 1;

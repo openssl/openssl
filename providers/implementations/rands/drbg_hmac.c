@@ -418,26 +418,30 @@ static const OSSL_PARAM *drbg_hmac_gettable_ctx_params(ossl_unused void *vctx,
 static int drbg_fetch_algs_from_prov(const struct drbg_set_ctx_params_st *p,
     OSSL_LIB_CTX *libctx,
     EVP_MAC_CTX **macctx,
-    EVP_MD **digest, const char *propq)
+    EVP_MD **digest, const OSSL_PARAM *propq)
 {
     EVP_MD *md = NULL;
     int ret = 0;
     const char *propquery = NULL;
+    char *name = NULL, *propbuf = NULL;
 
 #ifndef FIPS_MODULE
-    if (propq == NULL)
-        propquery = "provider=default";
-    else
-        propquery = propq;
+    propquery = "provider=default";
+    if (propq != NULL && propq->data_type == OSSL_PARAM_UTF8_STRING
+        && propq->data != NULL) {
+        if (!OSSL_PARAM_get_utf8_string(propq, &propbuf, 0))
+            goto done;
+        propquery = propbuf;
+    }
 #endif
 
     if (macctx == NULL || digest == NULL)
-        return 0;
+        goto done;
 
     if (p->digest != NULL) {
-        if (p->digest->data_type != OSSL_PARAM_UTF8_STRING)
+        if (!OSSL_PARAM_get_utf8_string(p->digest, &name, 0))
             goto done;
-        md = EVP_MD_fetch(libctx, p->digest->data, propquery);
+        md = EVP_MD_fetch(libctx, name, propquery);
         if (md) {
             EVP_MD_free(*digest);
             *digest = md;
@@ -452,6 +456,8 @@ static int drbg_fetch_algs_from_prov(const struct drbg_set_ctx_params_st *p,
     ret = 1;
 
 done:
+    OPENSSL_free(name);
+    OPENSSL_free(propbuf);
     return ret;
 }
 
@@ -469,7 +475,7 @@ static int drbg_hmac_set_ctx_params_locked(PROV_DRBG *ctx, const struct drbg_set
     /* try to fetch mac and digest from provider */
     (void)ERR_set_mark();
     if (!drbg_fetch_algs_from_prov(p, libctx, &hmac->ctx, &prov_md,
-            (p->propq != NULL && p->propq->data_type == OSSL_PARAM_UTF8_STRING) ? p->propq->data : NULL)) {
+            p->propq)) {
         (void)ERR_pop_to_mark();
         if (p->digest != NULL) {
             /* fall back to full implementation search */

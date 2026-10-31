@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include "internal/params.h"
 #include <ctype.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
@@ -78,7 +79,8 @@ static int fips_provider_version(OSSL_LIB_CTX *libctx, FIPS_VERSION *vers)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PROVIDER *fips_prov;
-    char *vs;
+    char *vs = NULL, *version = NULL;
+    int ret = -1;
 
     if (!OSSL_PROVIDER_available(libctx, "fips"))
         return 0;
@@ -86,14 +88,18 @@ static int fips_provider_version(OSSL_LIB_CTX *libctx, FIPS_VERSION *vers)
     if ((fips_prov = OSSL_PROVIDER_load(libctx, "fips")) == NULL)
         return -1;
     if (!OSSL_PROVIDER_get_params(fips_prov, params)
-        || sscanf(vs, "%d.%d.%d", &vers->major, &vers->minor, &vers->patch) != 3)
+        || !OSSL_PARAM_modified(params))
         goto err;
-    if (!OSSL_PROVIDER_unload(fips_prov))
-        return -1;
-    return 1;
+    params[0].data_size = params[0].return_size;
+    if (!ossl_param_get_utf8_string(params, &version, 0)
+        || sscanf(version, "%d.%d.%d", &vers->major, &vers->minor, &vers->patch) != 3)
+        goto err;
+    ret = 1;
 err:
-    OSSL_PROVIDER_unload(fips_prov);
-    return -1;
+    OPENSSL_free(version);
+    if (!OSSL_PROVIDER_unload(fips_prov))
+        ret = -1;
+    return ret;
 }
 
 int fips_provider_version_eq(OSSL_LIB_CTX *libctx, int major, int minor, int patch)

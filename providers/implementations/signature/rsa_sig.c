@@ -1610,16 +1610,18 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                 return 0;
         } else {
             int i;
+            char *pad_name = NULL;
 
-            if (p.pad->data == NULL)
+            if (!OSSL_PARAM_get_utf8_string(p.pad, &pad_name, 0))
                 return 0;
 
             for (i = 0; padding_item[i].id != 0; i++) {
-                if (strcmp(p.pad->data, padding_item[i].ptr) == 0) {
+                if (strcmp(pad_name, padding_item[i].ptr) == 0) {
                     pad_mode = padding_item[i].id;
                     break;
                 }
             }
+            OPENSSL_free(pad_name);
         }
 
         switch (pad_mode) {
@@ -1689,19 +1691,25 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             if (!OSSL_PARAM_get_int(p.slen, &saltlen))
                 return 0;
         } else {
-            if (strcmp(p.slen->data, OSSL_PKEY_RSA_PSS_SALT_LEN_DIGEST) == 0)
+            char *saltname = NULL;
+
+            if (!OSSL_PARAM_get_utf8_string(p.slen, &saltname, 0))
+                return 0;
+            if (strcmp(saltname, OSSL_PKEY_RSA_PSS_SALT_LEN_DIGEST) == 0)
                 saltlen = RSA_PSS_SALTLEN_DIGEST;
-            else if (strcmp(p.slen->data, OSSL_PKEY_RSA_PSS_SALT_LEN_MAX) == 0)
+            else if (strcmp(saltname, OSSL_PKEY_RSA_PSS_SALT_LEN_MAX) == 0)
                 saltlen = RSA_PSS_SALTLEN_MAX;
-            else if (strcmp(p.slen->data, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO) == 0)
+            else if (strcmp(saltname, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO) == 0)
                 saltlen = RSA_PSS_SALTLEN_AUTO;
-            else if (strcmp(p.slen->data, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX) == 0)
+            else if (strcmp(saltname, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX) == 0)
                 saltlen = RSA_PSS_SALTLEN_AUTO_DIGEST_MAX;
-            else if (!ossl_strtoint(p.slen->data, NULL, 10, &saltlen)) {
+            else if (!ossl_strtoint(saltname, NULL, 10, &saltlen)) {
+                OPENSSL_free(saltname);
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH,
                     "invalid RSA-PSS saltlen value");
                 return 0;
             }
+            OPENSSL_free(saltname);
         }
 
         /*

@@ -279,6 +279,9 @@ will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_utf8_ptr() retrieves the UTF8 string pointer from the parameter
 referenced by I<p> and stores it in I<*val>.
+It does not add a terminating NUL byte.
+Use I<p-E<gt>data_size> to limit reads from an input parameter.
+For a value returned by a parameter request, use I<p-E<gt>return_size>.
 
 OSSL_PARAM_set_utf8_ptr() sets the UTF8 string pointer in the parameter
 referenced by I<p> to the values I<val>.
@@ -295,6 +298,9 @@ OSSL_PARAM_get_utf8_string_ptr() retrieves the pointer to a UTF8 string from
 the parameter pointed to by I<p>, and stores that pointer in I<*val>.
 This is different from OSSL_PARAM_get_utf8_string(), which copies the
 string.
+It does not add a terminating NUL byte.
+Use I<p-E<gt>data_size> to limit reads from an input parameter.
+For a value returned by a parameter request, use I<p-E<gt>return_size>.
 
 OSSL_PARAM_get_octet_string_ptr() retrieves the pointer to a octet string
 from the parameter pointed to by I<p>, and stores that pointer in I<*val>,

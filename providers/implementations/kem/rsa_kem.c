@@ -227,9 +227,12 @@ static int rsakem_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         return 0;
 
     if (p.op != NULL) {
-        if (p.op->data_type != OSSL_PARAM_UTF8_STRING)
+        char *opname = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p.op, &opname, 0))
             return 0;
-        op = rsakem_opname2id(p.op->data);
+        op = rsakem_opname2id(opname);
+        OPENSSL_free(opname);
         if (op < 0)
             return 0;
         prsactx->op = op;

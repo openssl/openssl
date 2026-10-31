@@ -207,7 +207,7 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
 {
     const char *source = NULL;
     size_t source_len = 0;
-    const char *prompt_info = NULL;
+    char *prompt_info = NULL;
     const UI_METHOD *ui_method = NULL;
     UI_METHOD *allocated_ui_method = NULL;
     void *ui_data = NULL;
@@ -252,7 +252,6 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
                 "Prompt info data type incorrect");
             return 0;
         }
-        prompt_info = p->data;
     }
 
     if (data->type == is_pem_password) {
@@ -277,9 +276,14 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
         return 0;
     }
 
+    if (p != NULL && !OSSL_PARAM_get_utf8_string(p, &prompt_info, 0)) {
+        UI_destroy_method(allocated_ui_method);
+        return 0;
+    }
     ret = do_ui_passphrase(pass, pass_size, pass_len, prompt_info, verify,
         ui_method, ui_data);
 
+    OPENSSL_free(prompt_info);
     UI_destroy_method(allocated_ui_method);
 
 do_cache:
@@ -313,7 +317,8 @@ static int ossl_pw_get_password(char *buf, int size, int rwflag,
         OSSL_PARAM_END
     };
 
-    params[0].data = (void *)info;
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PASSPHRASE_PARAM_INFO,
+        (char *)info, 0);
     if (ossl_pw_get_passphrase(buf, (size_t)size, &password_len, params,
             rwflag, userdata))
         return (int)password_len;

@@ -24,6 +24,7 @@
 #include "crypto/ec_params.h"
 #include "crypto/bn.h"
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "ec_local.h"
 
 /* functions for EC_GROUP objects */
@@ -1522,30 +1523,18 @@ err:
 static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    int ok = 0, nid;
-    const char *curve_name = NULL;
+    int nid;
+    char *curve_name = NULL;
 
-    switch (p->data_type) {
-    case OSSL_PARAM_UTF8_STRING:
-        /* The OSSL_PARAM functions have no support for this */
-        curve_name = p->data;
-        ok = (curve_name != NULL);
-        break;
-    case OSSL_PARAM_UTF8_PTR:
-        ok = OSSL_PARAM_get_utf8_ptr(p, &curve_name);
-        break;
+    if (!ossl_param_get_utf8_string(p, &curve_name, 0))
+        return NULL;
+    nid = ossl_ec_curve_name2nid(curve_name);
+    OPENSSL_free(curve_name);
+    if (nid == NID_undef) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
+        return NULL;
     }
-
-    if (ok) {
-        nid = ossl_ec_curve_name2nid(curve_name);
-        if (nid == NID_undef) {
-            ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
-            return NULL;
-        } else {
-            return EC_GROUP_new_by_curve_name_ex(libctx, propq, nid);
-        }
-    }
-    return NULL;
+    return EC_GROUP_new_by_curve_name_ex(libctx, propq, nid);
 }
 
 /* These parameters can be set directly into an EC_GROUP */
@@ -1609,6 +1598,7 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
     int is_prime_field = 1;
     BN_CTX *bnctx = NULL;
     const unsigned char *buf = NULL;
+    char *field_type = NULL;
 #ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     int encoding_flag = -1;
 #endif
@@ -1660,13 +1650,13 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
     }
 
     ptmp = params->field_type;
-    if (ptmp == NULL || ptmp->data_type != OSSL_PARAM_UTF8_STRING) {
+    if (ptmp == NULL || !OSSL_PARAM_get_utf8_string(ptmp, &field_type, 0)) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
         goto err;
     }
-    if (OPENSSL_strcasecmp(ptmp->data, SN_X9_62_prime_field) == 0) {
+    if (OPENSSL_strcasecmp(field_type, SN_X9_62_prime_field) == 0) {
         is_prime_field = 1;
-    } else if (OPENSSL_strcasecmp(ptmp->data,
+    } else if (OPENSSL_strcasecmp(field_type,
                    SN_X9_62_characteristic_two_field)
         == 0) {
         is_prime_field = 0;
@@ -1825,6 +1815,7 @@ err:
         EC_GROUP_free(group);
         group = NULL;
     }
+    OPENSSL_free(field_type);
     EC_POINT_free(point);
     BN_CTX_end(bnctx);
     BN_CTX_free(bnctx);

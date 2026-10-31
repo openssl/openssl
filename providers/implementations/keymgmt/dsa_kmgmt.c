@@ -517,8 +517,13 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.type != NULL) {
-        if (p.type->data_type != OSSL_PARAM_UTF8_STRING
-            || ((gen_type = dsa_gen_type_name2id(p.type->data)) == -1)) {
+        char *type = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p.type, &type, 0))
+            return 0;
+        gen_type = dsa_gen_type_name2id(type);
+        OPENSSL_free(type);
+        if (gen_type == -1) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
@@ -556,8 +561,8 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (p.digest->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         OPENSSL_free(gctx->mdname);
-        gctx->mdname = OPENSSL_strdup(p.digest->data);
-        if (gctx->mdname == NULL)
+        gctx->mdname = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p.digest, &gctx->mdname, 0))
             return 0;
     }
 
@@ -565,8 +570,8 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         OPENSSL_free(gctx->mdprops);
-        gctx->mdprops = OPENSSL_strdup(p.propq->data);
-        if (gctx->mdprops == NULL)
+        gctx->mdprops = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p.propq, &gctx->mdprops, 0))
             return 0;
     }
     return 1;
@@ -672,8 +677,9 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     } else if (gctx->hindex != 0) {
         ossl_ffc_params_set_h(ffc, gctx->hindex);
     }
-    if (gctx->mdname != NULL)
-        ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops);
+    if (gctx->mdname != NULL
+        && !ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
+        goto end;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
 

@@ -747,8 +747,15 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 
     if (set_params)
         ret = EVP_MD_CTX_set_params(ctx, params);
-    else
+    else {
         ret = EVP_MD_CTX_get_params(ctx, params);
+        if (ret > 0 && OSSL_PARAM_modified(params) && p2 != NULL) {
+            if (params[0].return_size >= params[0].data_size)
+                ret = 0;
+            else
+                ((char *)p2)[params[0].return_size] = '\0';
+        }
+    }
 
 conclude:
     if (ret <= 0)

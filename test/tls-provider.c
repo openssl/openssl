@@ -24,6 +24,7 @@
 /* For TLS1_3_VERSION */
 #include <openssl/ssl.h>
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "internal/refcount.h"
 
 #include <crypto/asn1.h>
@@ -239,12 +240,11 @@ static struct tls_group_st xor_kemgroup = {
 
 static const OSSL_PARAM xor_group_params[] = {
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME,
-        XORGROUP_NAME, sizeof(XORGROUP_NAME)),
+        XORGROUP_NAME "-outside-size", sizeof(XORGROUP_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL,
-        XORGROUP_NAME_INTERNAL,
-        sizeof(XORGROUP_NAME_INTERNAL)),
-    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_ALG, ALGORITHM,
-        sizeof(ALGORITHM)),
+        XORGROUP_NAME_INTERNAL "-outside-size", sizeof(XORGROUP_NAME_INTERNAL) - 1),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_ALG,
+        ALGORITHM "-outside-size", sizeof(ALGORITHM) - 1),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_ID, &xor_group.group_id),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,
         &xor_group.secbits),
@@ -258,12 +258,11 @@ static const OSSL_PARAM xor_group_params[] = {
 
 static const OSSL_PARAM xor_kemgroup_params[] = {
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME,
-        XORKEMGROUP_NAME, sizeof(XORKEMGROUP_NAME)),
+        XORKEMGROUP_NAME "-outside-size", sizeof(XORKEMGROUP_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL,
-        XORKEMGROUP_NAME_INTERNAL,
-        sizeof(XORKEMGROUP_NAME_INTERNAL)),
-    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_ALG, ALGORITHM,
-        sizeof(ALGORITHM)),
+        XORKEMGROUP_NAME_INTERNAL "-outside-size", sizeof(XORKEMGROUP_NAME_INTERNAL) - 1),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_ALG,
+        ALGORITHM "-outside-size", sizeof(ALGORITHM) - 1),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_ID, &xor_kemgroup.group_id),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,
         &xor_kemgroup.secbits),
@@ -327,12 +326,11 @@ static struct tls_sigalg_st xor_sigalg12 = {
 
 static const OSSL_PARAM xor_sig_nohash_params[] = {
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,
-        XORSIGALG_NAME, sizeof(XORSIGALG_NAME)),
+        XORSIGALG_NAME "-outside-size", sizeof(XORSIGALG_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_NAME,
-        XORSIGALG_NAME,
-        sizeof(XORSIGALG_NAME)),
+        XORSIGALG_NAME "-outside-size", sizeof(XORSIGALG_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_OID,
-        XORSIGALG_OID, sizeof(XORSIGALG_OID)),
+        XORSIGALG_OID "-outside-size", sizeof(XORSIGALG_OID) - 1),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,
         &xor_sigalg.code_point),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,
@@ -350,14 +348,13 @@ static const OSSL_PARAM xor_sig_nohash_params[] = {
 
 static const OSSL_PARAM xor_sig_hash_params[] = {
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,
-        XORSIGALG_HASH_NAME, sizeof(XORSIGALG_HASH_NAME)),
+        XORSIGALG_HASH_NAME "-outside-size", sizeof(XORSIGALG_HASH_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_NAME,
-        XORSIGALG_HASH_NAME,
-        sizeof(XORSIGALG_HASH_NAME)),
+        XORSIGALG_HASH_NAME "-outside-size", sizeof(XORSIGALG_HASH_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME,
-        XORSIGALG_HASH, sizeof(XORSIGALG_HASH)),
+        XORSIGALG_HASH "-outside-size", sizeof(XORSIGALG_HASH) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_OID,
-        XORSIGALG_HASH_OID, sizeof(XORSIGALG_HASH_OID)),
+        XORSIGALG_HASH_OID "-outside-size", sizeof(XORSIGALG_HASH_OID) - 1),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,
         &xor_sigalg_hash.code_point),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,
@@ -375,12 +372,11 @@ static const OSSL_PARAM xor_sig_hash_params[] = {
 
 static const OSSL_PARAM xor_sig_12_params[] = {
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,
-        XORSIGALG12_NAME, sizeof(XORSIGALG12_NAME)),
+        XORSIGALG12_NAME "-outside-size", sizeof(XORSIGALG12_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_NAME,
-        XORSIGALG12_NAME,
-        sizeof(XORSIGALG12_NAME)),
+        XORSIGALG12_NAME "-outside-size", sizeof(XORSIGALG12_NAME) - 1),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_OID,
-        XORSIGALG12_OID, sizeof(XORSIGALG12_OID)),
+        XORSIGALG12_OID "-outside-size", sizeof(XORSIGALG12_OID) - 1),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,
         &xor_sigalg12.code_point),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,
@@ -970,9 +966,15 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING
-            || (strcmp(p->data, XORGROUP_NAME_INTERNAL) != 0
-                && strcmp(p->data, XORKEMGROUP_NAME_INTERNAL) != 0))
+        char *group = NULL;
+        int matches;
+
+        if (!OSSL_PARAM_get_utf8_string(p, &group, 0))
+            return 0;
+        matches = strcmp(group, XORGROUP_NAME_INTERNAL) == 0
+            || strcmp(group, XORKEMGROUP_NAME_INTERNAL) == 0;
+        OPENSSL_free(group);
+        if (!matches)
             return 0;
     }
 
@@ -1777,21 +1779,31 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *save_paramsp = OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_SAVE_PARAMETERS);
 
     if (cipherp != NULL) {
-        const char *ciphername = NULL;
-        const char *props = NULL;
+        const char *data = NULL;
+        char *ciphername = NULL;
+        char *props = NULL;
 
-        if (!OSSL_PARAM_get_utf8_string_ptr(cipherp, &ciphername))
+        if (!OSSL_PARAM_get_utf8_string_ptr(cipherp, &data)
+            || (data != NULL
+                && !ossl_param_get_utf8_string(cipherp, &ciphername, 0)))
             return 0;
-        if (propsp != NULL && !OSSL_PARAM_get_utf8_string_ptr(propsp, &props))
+        if (propsp != NULL
+            && (!OSSL_PARAM_get_utf8_string_ptr(propsp, &data)
+                || (data != NULL
+                    && !ossl_param_get_utf8_string(propsp, &props, 0)))) {
+            OPENSSL_free(ciphername);
             return 0;
+        }
 
         EVP_CIPHER_free(ctx->cipher);
         ctx->cipher = NULL;
         ctx->cipher_intent = ciphername != NULL;
-        if (ciphername != NULL
-            && ((ctx->cipher = EVP_CIPHER_fetch(libctx, ciphername, props)) == NULL)) {
+        if (ciphername != NULL)
+            ctx->cipher = EVP_CIPHER_fetch(libctx, ciphername, props);
+        OPENSSL_free(ciphername);
+        OPENSSL_free(props);
+        if (ctx->cipher_intent && ctx->cipher == NULL)
             return 0;
-        }
     }
 
     if (save_paramsp != NULL) {

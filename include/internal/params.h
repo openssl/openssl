@@ -13,6 +13,9 @@
 #include <stddef.h>
 #include <openssl/params.h>
 
+/* Copy either UTF8 string form, using data_size, and append a NUL byte. */
+int ossl_param_get_utf8_string(const OSSL_PARAM *p, char **val, size_t max_len);
+
 /*
  * Extract the parameter into an allocated buffer.
  * Any existing allocation in *out is cleared and freed.

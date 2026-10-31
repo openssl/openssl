@@ -19,6 +19,7 @@
 #include <openssl/params.h>
 #include "internal/numbers.h"
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "testutil.h"
 
 /*-
@@ -111,6 +112,7 @@ static void *init_object(void)
         goto fail;
     strcpy(obj->p5, p5_init);
     obj->p6 = p6_init;
+    obj->p6_l = sizeof(p6_init) - 1;
 
     return obj;
 fail:
@@ -194,7 +196,7 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
                 return 0;
             strcpy(params->data, obj->p5);
         } else if (strcmp(params->key, "p6") == 0) {
-            params->return_size = strlen(obj->p6);
+            params->return_size = obj->p6_l;
             *(const char **)params->data = obj->p6;
         }
 
@@ -235,7 +237,7 @@ static int api_set_params(void *vobj, const OSSL_PARAM *params)
     if ((p = OSSL_PARAM_locate_const(params, "p6")) != NULL) {
         if (!TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p6)))
             return 0;
-        obj->p6_l = strlen(obj->p6);
+        obj->p6_l = p->data_size;
     }
 
     return 1;
@@ -261,9 +263,13 @@ static int api_get_params(void *vobj, OSSL_PARAM *params)
     if ((p = OSSL_PARAM_locate(params, "p5")) != NULL
         && !TEST_true(OSSL_PARAM_set_utf8_string(p, obj->p5)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p6")) != NULL
-        && !TEST_true(OSSL_PARAM_set_utf8_ptr(p, obj->p6)))
-        return 0;
+    if ((p = OSSL_PARAM_locate(params, "p6")) != NULL) {
+        if (!TEST_uint_eq(p->data_type, OSSL_PARAM_UTF8_PTR))
+            return 0;
+        p->return_size = obj->p6_l;
+        if (p->data != NULL)
+            *(const char **)p->data = obj->p6;
+    }
 
     return 1;
 }
@@ -390,7 +396,7 @@ static OSSL_PARAM *construct_api_params(void)
         sizeof(app_p5));
     /* sizeof(app_p6_init), because we know that's what we're using */
     params[n++] = OSSL_PARAM_construct_utf8_ptr("p6", (char **)&app_p6,
-        sizeof(app_p6_init));
+        sizeof(app_p6_init) - 1);
     params[n++] = OSSL_PARAM_construct_octet_string("foo", &foo, sizeof(foo));
     params[n++] = OSSL_PARAM_construct_end();
 
@@ -701,10 +707,83 @@ static int test_more_allocate_from_text(void)
     return check_octetstr_from_hexstr();
 }
 
+static int test_utf8_copy(int idx)
+{
+    static char input[] = { 'a', 'b', 'c', 'd' };
+    char *input_ptr = input;
+    OSSL_PARAM p = idx < 2
+        ? OSSL_PARAM_construct_utf8_string("test", input, 3)
+        : OSSL_PARAM_construct_utf8_ptr("test", &input_ptr, 3);
+    char buf[5], *out = NULL, *bufptr = buf;
+    int ret = 0;
+
+    if ((idx & 1) != 0)
+        p.data_size = 0;
+    if (!TEST_true(ossl_param_get_utf8_string(&p, &out, 0))
+        || !TEST_str_eq(out, p.data_size == 0 ? "" : "abc")
+        || !TEST_true(ossl_param_get_utf8_string(&p, &bufptr, sizeof(buf)))
+        || !TEST_str_eq(buf, out))
+        goto end;
+    OPENSSL_free(out);
+    out = NULL;
+
+    p.data_size = sizeof(input);
+    if (!TEST_true(ossl_param_get_utf8_string(&p, &out, 0))
+        || !TEST_str_eq(out, "abcd")
+        || !TEST_false(ossl_param_get_utf8_string(&p, &bufptr, sizeof(input))))
+        goto end;
+    OPENSSL_free(out);
+    out = NULL;
+
+    p.data_size = SIZE_MAX;
+    if (!TEST_false(ossl_param_get_utf8_string(&p, &out, 0))
+        || !TEST_ptr_null(out)
+        || !TEST_false(ossl_param_get_utf8_string(NULL, &out, 0)))
+        goto end;
+    p.data = NULL;
+    p.data_size = 0;
+    if (!TEST_false(ossl_param_get_utf8_string(&p, &out, 0)))
+        goto end;
+    ret = 1;
+end:
+    OPENSSL_free(out);
+    return ret;
+}
+
+static int test_utf8_pointer_roundtrip(int use_api)
+{
+    struct object_st *obj = NULL;
+    const struct provider_dispatch_st *prov = use_api ? &provider_api : &provider_raw;
+    char input[] = { 'a', 'b', 'c' };
+    char *input_ptr = input;
+    const char *output = NULL;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_ptr("p6", &input_ptr, sizeof(input)),
+        OSSL_PARAM_END
+    };
+    int ret = 0;
+
+    if (!TEST_ptr(obj = init_object())
+        || !TEST_true(prov->set_params(obj, params)))
+        goto end;
+    params[0].data = &output;
+    if (!TEST_true(prov->get_params(obj, params))
+        || !TEST_size_t_eq(params[0].return_size, sizeof(input))
+        || !TEST_mem_eq(output, params[0].return_size, input, sizeof(input)))
+        goto end;
+    ret = 1;
+end:
+    if (obj != NULL)
+        cleanup_object(obj);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_case, OSSL_NELEM(test_cases));
     ADD_ALL_TESTS(test_allocate_from_text, OSSL_NELEM(int_from_text_test_cases));
     ADD_TEST(test_more_allocate_from_text);
+    ADD_ALL_TESTS(test_utf8_copy, 4);
+    ADD_ALL_TESTS(test_utf8_pointer_roundtrip, 2);
     return 1;
 }

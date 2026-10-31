@@ -24,6 +24,7 @@
 #include "crypto/evp.h" /* evp_method_store_cache_flush */
 #include "crypto/rand.h"
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
 #include "internal/refcount.h"
@@ -593,11 +594,17 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
             return NULL;
 
         for (i = 0; params[i].key != NULL; i++) {
+            char *value = NULL;
+            int ok;
+
             if (params[i].data_type != OSSL_PARAM_UTF8_STRING)
                 continue;
-            if (ossl_provider_info_add_parameter(&template, params[i].key,
-                    (char *)params[i].data)
-                <= 0) {
+            ok = OSSL_PARAM_get_utf8_string(&params[i], &value, 0)
+                && ossl_provider_info_add_parameter(&template, params[i].key,
+                       value)
+                    > 0;
+            OPENSSL_free(value);
+            if (!ok) {
                 sk_INFOPAIR_pop_free(template.parameters, infopair_free);
                 return NULL;
             }
@@ -863,7 +870,8 @@ int OSSL_PROVIDER_get_conf_parameters(const OSSL_PROVIDER *prov,
 int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
     const char *name, int defval)
 {
-    char *val = NULL;
+    char *val = NULL, *value = NULL;
+    int ret = defval;
     OSSL_PARAM param[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     param[0].key = (char *)name;
@@ -876,18 +884,22 @@ int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
     if (OSSL_PROVIDER_get_conf_parameters(prov, param)
         && OSSL_PARAM_modified(param)
         && val != NULL) {
-        if ((strcmp(val, "1") == 0)
-            || (OPENSSL_strcasecmp(val, "yes") == 0)
-            || (OPENSSL_strcasecmp(val, "true") == 0)
-            || (OPENSSL_strcasecmp(val, "on") == 0))
-            return 1;
-        else if ((strcmp(val, "0") == 0)
-            || (OPENSSL_strcasecmp(val, "no") == 0)
-            || (OPENSSL_strcasecmp(val, "false") == 0)
-            || (OPENSSL_strcasecmp(val, "off") == 0))
-            return 0;
+        param[0].data_size = param[0].return_size;
+        if (!ossl_param_get_utf8_string(param, &value, 0))
+            return defval;
+        if ((strcmp(value, "1") == 0)
+            || (OPENSSL_strcasecmp(value, "yes") == 0)
+            || (OPENSSL_strcasecmp(value, "true") == 0)
+            || (OPENSSL_strcasecmp(value, "on") == 0))
+            ret = 1;
+        else if ((strcmp(value, "0") == 0)
+            || (OPENSSL_strcasecmp(value, "no") == 0)
+            || (OPENSSL_strcasecmp(value, "false") == 0)
+            || (OPENSSL_strcasecmp(value, "off") == 0))
+            ret = 0;
     }
-    return defval;
+    OPENSSL_free(value);
+    return ret;
 }
 
 int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,

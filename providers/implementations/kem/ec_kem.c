@@ -310,9 +310,12 @@ static int eckem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     if (p.op != NULL) {
-        if (p.op->data_type != OSSL_PARAM_UTF8_STRING)
+        char *opname = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p.op, &opname, 0))
             return 0;
-        mode = ossl_eckem_modename2id(p.op->data);
+        mode = ossl_eckem_modename2id(opname);
+        OPENSSL_free(opname);
         if (mode == KEM_MODE_UNDEFINED)
             return 0;
         ctx->mode = mode;

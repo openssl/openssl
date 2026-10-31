@@ -149,10 +149,13 @@ int ossl_cipher_cbc_cts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (p.mode != NULL) {
         int id;
+        char *mode = NULL;
 
-        if (p.mode->data_type != OSSL_PARAM_UTF8_STRING
-            || p.mode->data == NULL
-            || (id = ossl_cipher_cbc_cts_mode_name2id(p.mode->data)) < 0) {
+        if (!OSSL_PARAM_get_utf8_string(p.mode, &mode, 0))
+            return 0;
+        id = ossl_cipher_cbc_cts_mode_name2id(mode);
+        OPENSSL_free(mode);
+        if (id < 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }

@@ -422,18 +422,6 @@ static const OSSL_PARAM *ed448_gettable_params(void *provctx)
     return ed_get_params_list;
 }
 
-static int set_property_query(ECX_KEY *ecxkey, const char *propq)
-{
-    OPENSSL_free(ecxkey->propq);
-    ecxkey->propq = NULL;
-    if (propq != NULL) {
-        ecxkey->propq = OPENSSL_strdup(propq);
-        if (ecxkey->propq == NULL)
-            return 0;
-    }
-    return 1;
-}
-
 static int ecx_set_params(void *key, const OSSL_PARAM params[])
 {
     ECX_KEY *ecxkey = key;
@@ -455,8 +443,12 @@ static int ecx_set_params(void *key, const OSSL_PARAM params[])
     }
 
     if (p.propq != NULL) {
-        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING
-            || !set_property_query(ecxkey, p.propq->data))
+        if (p.propq->data == NULL && p.propq->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        OPENSSL_free(ecxkey->propq);
+        ecxkey->propq = NULL;
+        if (p.propq->data != NULL
+            && !OSSL_PARAM_get_utf8_string(p.propq, &ecxkey->propq, 0))
             return 0;
     }
 
@@ -573,6 +565,8 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (p.group != NULL) {
         const char *groupname = NULL;
+        char *group = NULL;
+        int matches;
 
         /*
          * We optionally allow setting a group name - but each algorithm only
@@ -590,20 +584,20 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
             /* We only support this for key exchange at the moment */
             break;
         }
-        if (p.group->data_type != OSSL_PARAM_UTF8_STRING
-            || groupname == NULL
-            || OPENSSL_strcasecmp(p.group->data, groupname) != 0) {
+        if (!OSSL_PARAM_get_utf8_string(p.group, &group, 0))
+            return 0;
+        matches = groupname != NULL && OPENSSL_strcasecmp(group, groupname) == 0;
+        OPENSSL_free(group);
+        if (!matches) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
     }
 
     if (p.kdfpropq != NULL) {
-        if (p.kdfpropq->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
         OPENSSL_free(gctx->propq);
-        gctx->propq = OPENSSL_strdup(p.kdfpropq->data);
-        if (gctx->propq == NULL)
+        gctx->propq = NULL;
+        if (!OSSL_PARAM_get_utf8_string(p.kdfpropq, &gctx->propq, 0))
             return 0;
     }
 

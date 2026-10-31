@@ -738,9 +738,9 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
 {
     PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)ctx->data;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    char *ecb;
+    char *base = NULL, *ecb = NULL, *propbuf = NULL;
     const char *propquery = NULL;
-    int i, cipher_init = 0;
+    int i, ret = 0, cipher_init = 0;
 
     if (p->df != NULL && OSSL_PARAM_get_int(p->df, &i)) {
         /* FIPS errors out in the drbg_ctr_init() call later */
@@ -748,30 +748,33 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
         cipher_init = 1;
     }
 
-#ifndef FIPS_MODULE
-    propquery = "provider=default";
-    if (p->propq != NULL
-        && p->propq->data_type == OSSL_PARAM_UTF8_STRING)
-        propquery = (const char *)p->propq->data;
-#endif
-
     if (p->cipher != NULL) {
-        const char *base = (const char *)p->cipher->data;
+        size_t baselen;
         size_t ctr_str_len = sizeof("CTR") - 1;
-        size_t ecb_str_len = sizeof("ECB") - 1;
 
-        if (p->cipher->data_type != OSSL_PARAM_UTF8_STRING
-            || p->cipher->data_size < ctr_str_len) {
-            return 0;
+#ifndef FIPS_MODULE
+        propquery = "provider=default";
+        if (p->propq != NULL
+            && p->propq->data_type == OSSL_PARAM_UTF8_STRING) {
+            if (p->propq->data != NULL
+                && !OSSL_PARAM_get_utf8_string(p->propq, &propbuf, 0))
+                goto end;
+            propquery = propbuf;
         }
-        if (OPENSSL_strcasecmp("CTR", base + p->cipher->data_size - ctr_str_len) != 0) {
+#endif
+        if (!OSSL_PARAM_get_utf8_string(p->cipher, &base, 0))
+            goto end;
+        baselen = strlen(base);
+        if (p->cipher->data_size < ctr_str_len)
+            goto end;
+        if (baselen != p->cipher->data_size
+            || OPENSSL_strcasecmp("CTR", base + baselen - ctr_str_len) != 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_REQUIRE_CTR_MODE_CIPHER);
-            return 0;
+            goto end;
         }
-        if ((ecb = OPENSSL_strndup(base, p->cipher->data_size)) == NULL) {
-            return 0;
-        }
-        strcpy(ecb + p->cipher->data_size - ecb_str_len, "ECB");
+        if ((ecb = OPENSSL_strdup(base)) == NULL)
+            goto end;
+        memcpy(ecb + baselen - ctr_str_len, "ECB", sizeof("ECB"));
         EVP_CIPHER_free(ctr->cipher_ecb);
         EVP_CIPHER_free(ctr->cipher_ctr);
         ctr->cipher_ctr = NULL;
@@ -782,18 +785,22 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
          */
         ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
         ctr->cipher_ecb = EVP_CIPHER_fetch(libctx, ecb, propquery);
-        OPENSSL_free(ecb);
         if (ctr->cipher_ctr == NULL || ctr->cipher_ecb == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_FIND_CIPHERS);
-            return 0;
+            goto end;
         }
         cipher_init = 1;
     }
 
     if (cipher_init && !drbg_ctr_init(ctx))
-        return 0;
+        goto end;
 
-    return ossl_drbg_set_ctx_params(ctx, p);
+    ret = ossl_drbg_set_ctx_params(ctx, p);
+end:
+    OPENSSL_free(base);
+    OPENSSL_free(ecb);
+    OPENSSL_free(propbuf);
+    return ret;
 }
 
 static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])

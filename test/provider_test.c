@@ -8,6 +8,7 @@
  */
 
 #include <stddef.h>
+#include <openssl/params.h>
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 #include "testutil.h"
@@ -38,7 +39,8 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     OSSL_PROVIDER *legacy)
 {
     OSSL_PROVIDER *prov = NULL;
-    const char *greeting = NULL;
+    char *greeting = NULL;
+    OSSL_PARAM greeting_param;
     char expected_greeting[256];
     int ok = 0;
     long err;
@@ -88,8 +90,12 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
         EVP_set_default_properties(*libctx, "");
     }
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
-        || !TEST_ptr(greeting = greeting_request[0].data)
-        || !TEST_size_t_gt(greeting_request[0].data_size, 0)
+        || !TEST_size_t_le(greeting_request[0].return_size,
+            greeting_request[0].data_size))
+        goto err;
+    greeting_param = greeting_request[0];
+    greeting_param.data_size = greeting_param.return_size;
+    if (!TEST_true(OSSL_PARAM_get_utf8_string(&greeting_param, &greeting, 0))
         || !TEST_str_eq(greeting, expected_greeting))
         goto err;
 
@@ -147,6 +153,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     ERR_print_errors_fp(stderr);
     ok = 1;
 err:
+    OPENSSL_free(greeting);
     OSSL_PROVIDER_unload(base);
     OSSL_PROVIDER_unload(deflt);
     OSSL_PROVIDER_unload(legacy);
@@ -161,7 +168,8 @@ err:
 static int test_provider_ex(OSSL_LIB_CTX **libctx, const char *name)
 {
     OSSL_PROVIDER *prov = NULL;
-    const char *greeting = NULL;
+    char *greeting = NULL;
+    OSSL_PARAM greeting_param;
     int ok = 0;
     long err;
     const char custom_buf[] = "Custom greeting";
@@ -179,8 +187,12 @@ static int test_provider_ex(OSSL_LIB_CTX **libctx, const char *name)
         goto err;
 
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
-        || !TEST_ptr(greeting = greeting_request[0].data)
-        || !TEST_size_t_gt(greeting_request[0].data_size, 0)
+        || !TEST_size_t_le(greeting_request[0].return_size,
+            greeting_request[0].data_size))
+        goto err;
+    greeting_param = greeting_request[0];
+    greeting_param.data_size = greeting_param.return_size;
+    if (!TEST_true(OSSL_PARAM_get_utf8_string(&greeting_param, &greeting, 0))
         || !TEST_str_eq(greeting, custom_buf))
         goto err;
 
@@ -205,6 +217,7 @@ static int test_provider_ex(OSSL_LIB_CTX **libctx, const char *name)
     ERR_print_errors_fp(stderr);
     ok = 1;
 err:
+    OPENSSL_free(greeting);
     OSSL_PARAM_BLD_free(bld);
     OSSL_PARAM_free(params);
     OSSL_PROVIDER_unload(prov);
