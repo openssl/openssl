@@ -18,7 +18,7 @@
 #include "internal/quic_predef.h"
 #include "internal/quic_stream.h"
 #include "internal/quic_fc.h"
-#include <openssl/lhash.h>
+#include "internal/htable.h"
 
 #ifndef OPENSSL_NO_QUIC
 
@@ -81,6 +81,9 @@ struct quic_stream_st {
     QUIC_STREAM_LIST_NODE active_node; /* for use by QUIC_STREAM_MAP */
     QUIC_STREAM_LIST_NODE accept_node; /* accept queue of remotely-created streams */
     QUIC_STREAM_LIST_NODE ready_for_gc_node; /* queue of streams now ready for GC */
+
+    /* Membership of the QUIC_STREAM_MAP stream ID hash table. */
+    OSSL_QUEUE_MEMBER(qsm);
 
     /* Temporary link used by TXP. */
     QUIC_STREAM *txp_next;
@@ -553,8 +556,20 @@ static ossl_inline ossl_unused size_t ossl_quic_stream_recv_pending(const QUIC_S
  *   - allows iteration over the active streams only.
  *
  */
+/*
+ * Stream ID index. The table has a fixed 1 << QUIC_STREAM_MAP_BITS buckets
+ * (1 KB per connection on LP64): the default stream limits allow a few
+ * hundred open streams, so chains stay short, and a connection that opens
+ * more only walks longer chains, it never allocates or rehashes.
+ */
+#define QUIC_STREAM_MAP_BITS 7
+
+DEFINE_QUEUE_OF(qsm, QUIC_STREAM);
+DEFINE_HTABLE_OF(qsm, QUIC_STREAM, QUIC_STREAM_MAP_BITS);
+typedef OSSL_HTABLE(qsm) QUIC_STREAM_TABLE;
+
 struct quic_stream_map_st {
-    LHASH_OF(QUIC_STREAM) *map;
+    QUIC_STREAM_TABLE map; /* stream ID -> QUIC_STREAM, nodes embedded in streams */
     QUIC_CHANNEL *ch;
     QUIC_STREAM_LIST_NODE active_list;
     QUIC_STREAM_LIST_NODE accept_list;

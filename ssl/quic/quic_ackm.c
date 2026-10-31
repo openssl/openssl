@@ -15,6 +15,20 @@
 DEFINE_LIST_OF(tx_history, OSSL_ACKM_TX_PKT);
 
 /*
+ * Packet number index of the TX history. Packet numbers are sequential, so
+ * they select buckets directly. The table has 1 << TX_HISTORY_BITS buckets
+ * (512 bytes per packet number space on LP64); with more packets in flight
+ * the chains grow as in-flight / buckets, but the only chain walk is the
+ * lookup of the largest acknowledged packet once per ACK frame, whose
+ * processing walks the whole history for loss detection anyway. Packets are
+ * removed through their node, without a lookup.
+ */
+#define TX_HISTORY_BITS 6
+
+DEFINE_QUEUE_OF(tx_history_pn, OSSL_ACKM_TX_PKT);
+DEFINE_HTABLE_OF(tx_history_pn, OSSL_ACKM_TX_PKT, TX_HISTORY_BITS);
+
+/*
  * TX Packet History
  * *****************
  *
@@ -34,12 +48,14 @@ struct tx_pkt_history_st {
     packets;
 
     /*
-     * Mapping from packet numbers (uint64_t) to (OSSL_ACKM_TX_PKT *)
+     * Mapping from packet numbers (uint64_t) to (OSSL_ACKM_TX_PKT *), the
+     * nodes embedded in the packets.
      *
      * Invariant: A packet is in this map if and only if it is in the linked
      *            list.
      */
-    LHASH_OF(OSSL_ACKM_TX_PKT) *map;
+    OSSL_HTABLE(tx_history_pn)
+    map;
 
     /*
      * The lowest packet number which may currently be added to the history list
@@ -57,43 +73,34 @@ struct tx_pkt_history_st {
     uint64_t highest_sent;
 };
 
-DEFINE_LHASH_OF_EX(OSSL_ACKM_TX_PKT);
-
-static unsigned long tx_pkt_info_hash(const OSSL_ACKM_TX_PKT *pkt)
+/* Retrieve a packet information structure by packet number. */
+static OSSL_ACKM_TX_PKT *
+tx_pkt_history_by_pkt_num(struct tx_pkt_history_st *h, uint64_t pkt_num)
 {
-    /* Using low bits of the packet number as the hash should be enough */
-    return (unsigned long)pkt->pkt_num;
-}
+    OSSL_ACKM_TX_PKT *pkt;
 
-static int tx_pkt_info_compare(const OSSL_ACKM_TX_PKT *a,
-    const OSSL_ACKM_TX_PKT *b)
-{
-    if (a->pkt_num < b->pkt_num)
-        return -1;
-    if (a->pkt_num > b->pkt_num)
-        return 1;
-    return 0;
-}
-
-static int
-tx_pkt_history_init(struct tx_pkt_history_st *h)
-{
-    ossl_list_tx_history_init(&h->packets);
-    h->watermark = 0;
-    h->highest_sent = 0;
-
-    h->map = lh_OSSL_ACKM_TX_PKT_new(tx_pkt_info_hash, tx_pkt_info_compare);
-    if (h->map == NULL)
-        return 0;
-
-    return 1;
+    OSSL_HTABLE_FIND(pkt, tx_history_pn, &h->map, pkt_num,
+        pkt->pkt_num == pkt_num);
+    return pkt;
 }
 
 static void
+tx_pkt_history_init(struct tx_pkt_history_st *h)
+{
+    ossl_list_tx_history_init(&h->packets);
+    ossl_htable_tx_history_pn_init(&h->map);
+    h->watermark = 0;
+    h->highest_sent = 0;
+}
+
+/*
+ * Forget every packet without touching it: a packet still in the history
+ * may already have been released by its on_discarded callback.
+ */
+static void
 tx_pkt_history_destroy(struct tx_pkt_history_st *h)
 {
-    lh_OSSL_ACKM_TX_PKT_free(h->map);
-    h->map = NULL;
+    ossl_htable_tx_history_pn_init(&h->map);
     ossl_list_tx_history_init(&h->packets);
 }
 
@@ -101,25 +108,17 @@ static int
 tx_pkt_history_add_actual(struct tx_pkt_history_st *h,
     OSSL_ACKM_TX_PKT *pkt)
 {
-    OSSL_ACKM_TX_PKT *existing;
-
     /*
-     * There should not be any existing packet with this number
-     * in our mapping.
+     * Packet numbers are unique because tx_pkt_history_add() only admits
+     * numbers at or above the watermark, so there is no existing packet
+     * with this number to look for. The packet must not be in a list yet.
      */
-    existing = lh_OSSL_ACKM_TX_PKT_retrieve(h->map, pkt);
-    if (!ossl_assert(existing == NULL))
-        return 0;
-
-    /* Should not already be in a list. */
     if (!ossl_assert(ossl_list_tx_history_next(pkt) == NULL
-            && ossl_list_tx_history_prev(pkt) == NULL))
+            && ossl_list_tx_history_prev(pkt) == NULL
+            && !ossl_queue_tx_history_pn_hashed(pkt)))
         return 0;
 
-    lh_OSSL_ACKM_TX_PKT_insert(h->map, pkt);
-    if (lh_OSSL_ACKM_TX_PKT_error(h->map))
-        return 0;
-
+    ossl_htable_tx_history_pn_add(&h->map, pkt, pkt->pkt_num);
     ossl_list_tx_history_insert_tail(&h->packets, pkt);
     return 1;
 }
@@ -140,31 +139,15 @@ tx_pkt_history_add(struct tx_pkt_history_st *h,
     return 1;
 }
 
-/* Retrieve a packet information structure by packet number. */
-static OSSL_ACKM_TX_PKT *
-tx_pkt_history_by_pkt_num(struct tx_pkt_history_st *h, uint64_t pkt_num)
+/*
+ * Remove a packet information structure, which must be in the history log,
+ * through its own nodes: no lookup is needed.
+ */
+static void
+tx_pkt_history_remove(struct tx_pkt_history_st *h, OSSL_ACKM_TX_PKT *pkt)
 {
-    OSSL_ACKM_TX_PKT key;
-
-    key.pkt_num = pkt_num;
-
-    return lh_OSSL_ACKM_TX_PKT_retrieve(h->map, &key);
-}
-
-/* Remove a packet information structure from the history log. */
-static int
-tx_pkt_history_remove(struct tx_pkt_history_st *h, uint64_t pkt_num)
-{
-    OSSL_ACKM_TX_PKT key, *pkt;
-    key.pkt_num = pkt_num;
-
-    pkt = tx_pkt_history_by_pkt_num(h, pkt_num);
-    if (pkt == NULL)
-        return 0;
-
     ossl_list_tx_history_remove(&h->packets, pkt);
-    lh_OSSL_ACKM_TX_PKT_delete(h->map, &key);
-    return 1;
+    ossl_htable_tx_history_pn_del(&h->map, pkt);
 }
 
 /*
@@ -718,7 +701,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_newly_acked_pkts(OSSL_ACKM *ackm
 
             if (range_contains(&ack->ack_ranges[ridx], pkt->pkt_num)) {
                 /* We have matched this range. */
-                tx_pkt_history_remove(h, pkt->pkt_num);
+                tx_pkt_history_remove(h, pkt);
 
                 *fixup = pkt;
                 fixup = &pkt->anext;
@@ -797,7 +780,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
         if (ossl_time_compare(pkt->time, lost_send_time) <= 0
             || ackm->largest_acked_pkt[pkt_space]
                 >= pkt->pkt_num + K_PKT_THRESHOLD) {
-            tx_pkt_history_remove(h, pkt->pkt_num);
+            tx_pkt_history_remove(h, pkt);
 
             *fixup = pkt;
             fixup = &pkt->lnext;
@@ -1061,8 +1044,7 @@ OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
     for (i = 0; i < (int)OSSL_NELEM(ackm->tx_history); ++i) {
         ackm->largest_acked_pkt[i] = QUIC_PN_INVALID;
         ackm->rx_ack_flush_deadline[i] = ossl_time_infinite();
-        if (tx_pkt_history_init(&ackm->tx_history[i]) < 1)
-            goto err;
+        tx_pkt_history_init(&ackm->tx_history[i]);
     }
 
     for (i = 0; i < (int)OSSL_NELEM(ackm->rx_history); ++i)
@@ -1079,13 +1061,6 @@ OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
     ackm->tx_max_ack_delay = DEFAULT_TX_MAX_ACK_DELAY;
 
     return ackm;
-
-err:
-    while (--i >= 0)
-        tx_pkt_history_destroy(&ackm->tx_history[i]);
-
-    OPENSSL_free(ackm);
-    return NULL;
 }
 
 void ossl_ackm_free(OSSL_ACKM *ackm)
@@ -1758,7 +1733,7 @@ int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM *ackm,
     if (pkt == NULL)
         return 0;
 
-    tx_pkt_history_remove(h, pkt->pkt_num);
+    tx_pkt_history_remove(h, pkt);
     pkt->lnext = NULL;
     ackm_on_pkts_lost(ackm, pkt_space, pkt, /*pseudo=*/1);
     return 1;

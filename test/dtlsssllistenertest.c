@@ -4793,6 +4793,233 @@ err:
 }
 
 /*
+ * Pending connections expire oldest first, and only the ones that are due.
+ *
+ * Three clients send a ClientHello one second apart under a three second
+ * pending timeout. A tick half a second after the first one is due must
+ * expire it alone; the second and third follow, one per second, in order.
+ * Expiry stops at the first connection that is not due, so this would fail
+ * if the pending table were not walked in creation order.
+ */
+#define EXPIRY_ORDER_CLIENTS 3
+
+static int test_pending_timeout_expires_oldest_first(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[EXPIRY_ORDER_CLIENTS] = { NULL };
+    int client_fds[EXPIRY_ORDER_CLIENTS] = { -1, -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int server_fd = -1;
+    int testresult = 0;
+    int i;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            0, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    /* HVR is required, so the connections stay pending */
+    if (!TEST_true(create_udp_listener(sctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 3000)))
+        goto err;
+
+    timeout_test_fake_time = ossl_time_from_time_t(1700000000);
+    if (!TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
+            timeout_test_now_cb, NULL)))
+        goto err;
+
+    /* One ClientHello per second: created at T, T + 1 and T + 2 */
+    for (i = 0; i < EXPIRY_ORDER_CLIENTS; i++) {
+        if (i > 0)
+            timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+                ossl_seconds2time(1));
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i])))
+            goto err;
+    }
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                            ((DTLS_LISTENER *)listener)->pending_conns),
+            EXPIRY_ORDER_CLIENTS))
+        goto err;
+
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    /* T + 3.5: the first is due, the second (2.5 s old) is not */
+    timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+        ossl_ms2time(1500));
+    for (i = EXPIRY_ORDER_CLIENTS - 1; i >= 0; i--) {
+        poll_item.revents = 0;
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+                &poll_timeout, 0, &poll_result))
+            || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                                   ((DTLS_LISTENER *)listener)->pending_conns),
+                (size_t)i))
+            goto err;
+        /* A second later the next one is due */
+        timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+            ossl_seconds2time(1));
+    }
+
+    testresult = 1;
+
+err:
+    for (i = 0; i < EXPIRY_ORDER_CLIENTS; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A peer address hashed by one lookup probes and registers in the lookups
+ * created to share its hashing key, through a key or hashed afresh.
+ */
+static int test_dgram_conn_lookup_shared_key(void)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *ssl = NULL;
+    DGRAM_CONN_LOOKUP *a = NULL, *b = NULL;
+    DGRAM_CONN_KEY key, bkey;
+    DGRAM_URXE urxe;
+    BIO_ADDR *peer = NULL;
+    unsigned char raw[4] = { 192, 0, 2, 1 };
+    int testresult = 0;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(ssl = SSL_new(sctx))
+        || !TEST_ptr(peer = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(peer, AF_INET, raw, sizeof(raw),
+            htons(4433)))
+        || !TEST_ptr(a = ossl_dgram_conn_lookup_new_addr(NULL, 0))
+        || !TEST_ptr(b = ossl_dgram_conn_lookup_new_addr(a, 0)))
+        goto end;
+
+    /* Hashed by |a|, the key registers in and finds through |b| alone */
+    if (!TEST_true(ossl_dgram_conn_lookup_hash(a, peer, &key))
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(a, &key))
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(b, &key))
+        || !TEST_true(ossl_dgram_conn_lookup_register_key(b, &key, peer, ssl))
+        || !TEST_ptr_eq(ossl_dgram_conn_lookup_find_key(b, &key), ssl)
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(a, &key))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(b), 1)
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(a), 0))
+        goto end;
+
+    /* Hashed afresh by |b|, and by a datagram's peer address, it is found */
+    memset(&urxe, 0, sizeof(urxe));
+    BIO_ADDR_copy(&urxe.peer, peer);
+    if (!TEST_true(ossl_dgram_conn_lookup_hash(b, peer, &bkey))
+        || !TEST_uint64_t_eq(bkey.hash, key.hash)
+        || !TEST_size_t_eq(bkey.len, key.len)
+        || !TEST_mem_eq(bkey.buf, bkey.len, key.buf, key.len)
+        || !TEST_ptr_eq(ossl_dgram_conn_lookup_find_key(b, &bkey), ssl)
+        || !TEST_ptr_eq(ossl_dgram_conn_lookup_find(b, &urxe), ssl)
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find(a, &urxe)))
+        goto end;
+
+    /* Unregistered through its own link, it is gone from |b| */
+    if (!TEST_true(ossl_dgram_conn_lookup_unregister(ssl))
+        || !TEST_false(ossl_dgram_conn_lookup_unregister(ssl))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(b), 0)
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(b, &key)))
+        goto end;
+
+    testresult = 1;
+end:
+    /* The lookups unlink what is still registered; the SSL is freed last */
+    ossl_dgram_conn_lookup_free(b);
+    ossl_dgram_conn_lookup_free(a);
+    BIO_ADDR_free(peer);
+    SSL_free(ssl);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
+/*
+ * A lookup created for a few entries grows under many: every entry stays
+ * found through the growth, and so does every one left after unregistering.
+ */
+#define LOOKUP_GROW_CONNS 300
+
+static int test_dgram_conn_lookup_grows(void)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *ssl[LOOKUP_GROW_CONNS] = { NULL };
+    DGRAM_CONN_LOOKUP *lookup = NULL;
+    DGRAM_URXE urxe;
+    unsigned char raw[4] = { 192, 0, 2, 1 };
+    int i, testresult = 0;
+
+    memset(&urxe, 0, sizeof(urxe));
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
+        /* 64 buckets to start with, doubled at 65, 129 and 257 entries */
+        || !TEST_ptr(lookup = ossl_dgram_conn_lookup_new_addr(NULL, 4)))
+        goto end;
+
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        if (!TEST_ptr(ssl[i] = SSL_new(sctx))
+            || !TEST_true(BIO_ADDR_rawmake(&urxe.peer, AF_INET, raw,
+                sizeof(raw), htons(1024 + i)))
+            || !TEST_true(ossl_dgram_conn_lookup_register_addr(lookup,
+                &urxe.peer, ssl[i])))
+            goto end;
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(lookup),
+            LOOKUP_GROW_CONNS))
+        goto end;
+
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        if (!TEST_true(BIO_ADDR_rawmake(&urxe.peer, AF_INET, raw, sizeof(raw),
+                htons(1024 + i)))
+            || !TEST_ptr_eq(ossl_dgram_conn_lookup_find(lookup, &urxe), ssl[i]))
+            goto end;
+
+    for (i = 0; i < LOOKUP_GROW_CONNS; i += 2)
+        if (!TEST_true(ossl_dgram_conn_lookup_unregister(ssl[i])))
+            goto end;
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(lookup),
+            LOOKUP_GROW_CONNS / 2))
+        goto end;
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        if (!TEST_true(BIO_ADDR_rawmake(&urxe.peer, AF_INET, raw, sizeof(raw),
+                htons(1024 + i)))
+            || !TEST_ptr_eq(ossl_dgram_conn_lookup_find(lookup, &urxe),
+                i % 2 == 0 ? NULL : ssl[i]))
+            goto end;
+
+    testresult = 1;
+end:
+    /* Freeing the lookup unlinks what is still registered */
+    ossl_dgram_conn_lookup_free(lookup);
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        SSL_free(ssl[i]);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
+/*
  * ============================================================================
  * new_pending_conn_cb tests
  * ============================================================================
@@ -6172,7 +6399,7 @@ static int test_dtls_listener_ssl_clear_mfail(int idx)
     DTLS_LISTENER *dl = NULL;
     DGRAM_URXE probe = { 0 };
     CRYPTO_free_fn saved_free = NULL;
-    int have_peer = 0, wrapped = 0, ret;
+    int wrapped = 0, ret;
     /* Invariant failures must fail even when an allocation was injected. */
     int testresult = -1;
 
@@ -6195,7 +6422,6 @@ static int test_dtls_listener_ssl_clear_mfail(int idx)
 
     dl = (DTLS_LISTENER *)listener;
     probe.peer = sc->d1->peer_addr;
-    have_peer = 1;
     if (!TEST_int_eq(BIO_ADDR_family(&probe.peer), AF_INET)
         || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl, &probe),
             serverssl)
@@ -6267,9 +6493,6 @@ end:
         && !TEST_true(CRYPTO_set_mem_functions(ssl_clear_malloc,
             ssl_clear_realloc, saved_free)))
         testresult = -1;
-    /* Remove any stale entry before freeing the object on a failing run. */
-    if (have_peer)
-        ossl_dtls_listener_unregister_established_conn(listener, &probe.peer);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(listener);
@@ -6277,6 +6500,144 @@ end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     ERR_clear_error();
+    return testresult;
+}
+
+/*
+ * Regression test: a connection is registered under the peer address its
+ * ClientHello came from, through a node embedded in it. Freeing it after the
+ * application changed its peer address (idx 0 clears it, idx 1 moves it) must
+ * still unlink it, or the table keeps pointing into freed memory.
+ */
+static int test_dtls_listener_free_after_peer_change(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl;
+    DGRAM_URXE probe = { 0 };
+    BIO_ADDR other;
+    struct in_addr ina;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr))
+        || !drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr(sc->d1))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    probe.peer = sc->d1->peer_addr;
+    if (!TEST_size_t_eq(
+            ossl_dgram_conn_lookup_num_items(dl->established_conns), 1)
+        || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl, &probe),
+            serverssl))
+        goto end;
+
+    if (idx == 0) {
+        if (!TEST_true(SSL_set1_initial_peer_addr(serverssl, NULL)))
+            goto end;
+    } else {
+        ina.s_addr = htonl(INADDR_LOOPBACK);
+        if (!TEST_true(BIO_ADDR_rawmake(&other, AF_INET, &ina, sizeof(ina),
+                htons(9999)))
+            || !TEST_true(SSL_set1_initial_peer_addr(serverssl, &other)))
+            goto end;
+    }
+
+    SSL_free(serverssl);
+    serverssl = NULL;
+
+    if (!TEST_size_t_eq(
+            ossl_dgram_conn_lookup_num_items(dl->established_conns), 0)
+        || !TEST_ptr_null(ossl_dtls_listener_find_established_conn(dl, &probe)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static BIO_ADDR peer_change_pending_addr;
+
+static int peer_change_pending_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    return SSL_set1_initial_peer_addr(new_ssl, &peer_change_pending_addr);
+}
+
+/*
+ * Regression test: a new_pending_conn_cb() that gives the pending connection
+ * another peer address. The connection was registered in pending_conns under
+ * the address its ClientHello came from, so promoting it to established must
+ * unlink it through its node rather than by its current address, or it is
+ * freed while still linked in pending_conns.
+ */
+static int test_dtls_listener_promote_after_peer_change(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl;
+    DGRAM_URXE probe = { 0 };
+    struct in_addr ina;
+    int testresult = 0;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_true(BIO_ADDR_rawmake(&peer_change_pending_addr, AF_INET, &ina,
+            sizeof(ina), htons(9999)))
+        || !TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_new_pending_conn_cb(sctx, peer_change_pending_cb, NULL);
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr))
+        || !drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns), 0)
+        || !TEST_size_t_eq(
+            ossl_dgram_conn_lookup_num_items(dl->established_conns), 1)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr(sc->d1))
+        goto end;
+
+    /* It is registered under the address the callback gave it. */
+    probe.peer = sc->d1->peer_addr;
+    if (!TEST_int_eq(BIO_ADDR_rawport(&probe.peer), htons(9999))
+        || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl, &probe),
+            serverssl))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
     return testresult;
 }
 #endif
@@ -7511,9 +7872,10 @@ static int test_dtls_listener_flood_then_handshake(void)
 }
 
 #ifndef OPENSSL_NO_DTLS1_2
-static void get_pending_conn_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+static int get_pending_conn_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     *(SSL **)arg = ssl;
+    return 1;
 }
 
 /* Has the listener's single pending connection sent its HVR? */
@@ -7623,20 +7985,21 @@ typedef struct {
     int queued; /* pending connections with a datagram still queued */
 } IDLE_PENDING_STATE;
 
-static void idle_pending_state_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+static int idle_pending_state_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     IDLE_PENDING_STATE *st = arg;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     if (sc == NULL || sc->listener_rx == NULL) {
         st->queued++;
-        return;
+        return 1;
     }
     if (sc->hello_retry_request == SSL_HRR_PENDING
         || sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST)
         st->retry_sent++;
     if (!ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
         st->queued++;
+    return 1;
 }
 
 /*
@@ -7826,13 +8189,14 @@ static void redrive_ch_cb(int write_p, int version, int content_type,
         (*(int *)arg)++;
 }
 
-static void redrive_idle_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+static int redrive_idle_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     if (sc != NULL && sc->listener_idle && sc->listener_rx != NULL
         && ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
         (*(size_t *)arg)++;
+    return 1;
 }
 
 /* Are all |n| pending connections waiting for their peers? */
@@ -8072,13 +8436,14 @@ typedef struct {
     size_t n;
 } REDRIVE_ORDER;
 
-static void redrive_order_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+static int redrive_order_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     REDRIVE_ORDER *order = arg;
 
     if (order->n < 2)
         order->ports[order->n] = BIO_ADDR_rawport(peer);
     order->n++;
+    return 1;
 }
 
 static int redrive_client_port(REDRIVE_FIXTURE *fx, size_t i, uint16_t *port)
@@ -8168,10 +8533,11 @@ static void redrive_sh_cb(int write_p, int version, int content_type,
         cp->sent = 1;
 }
 
-static void redrive_set_sh_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+static int redrive_set_sh_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     SSL_set_msg_callback(ssl, redrive_sh_cb);
     SSL_set_msg_callback_arg(ssl, arg);
+    return 1;
 }
 
 /*
@@ -8568,6 +8934,8 @@ int setup_tests(void)
     ADD_TEST(test_ssl_ownership_pending_timeout_cleanup);
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_MFAIL_ALL_NO_CHECK_TESTS(test_dtls_listener_ssl_clear_mfail, 2);
+    ADD_ALL_TESTS(test_dtls_listener_free_after_peer_change, 2);
+    ADD_TEST(test_dtls_listener_promote_after_peer_change);
 #endif
 
     /* Max number of pending connections tests */
@@ -8577,6 +8945,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listener_max_dgram_size_functional);
     ADD_TEST(test_pending_conn_cap_enforcement);
     ADD_TEST(test_pending_cap_with_timeout);
+    ADD_TEST(test_pending_timeout_expires_oldest_first);
+    ADD_TEST(test_dgram_conn_lookup_shared_key);
+    ADD_TEST(test_dgram_conn_lookup_grows);
 
     /* new_pending_conn_cb tests (DTLS listener) */
     ADD_TEST(test_new_pending_cb_allow_all);
