@@ -10,6 +10,7 @@
  */
 
 #include "helpers/cmp_testlib.h"
+#include "../crypto/crmf/crmf_local.h" /* for manipulating the CertId issuer */
 
 #include "cmp_mock_srv.h"
 
@@ -218,6 +219,167 @@ static int test_exec_RR_ses_receive_error(void)
     fixture->expected = OSSL_CMP_PKISTATUS_rejection;
     EXECUTE_TEST(execute_exec_RR_ses_test, tear_down);
     return result;
+}
+
+/*
+ * Create a CertId the issuer of which is not a directoryName, such that
+ * OSSL_CRMF_CERTID_get0_issuer() yields NULL for it, while
+ * OSSL_CRMF_CERTID_get0_serialNumber() yields the serial number as usual.
+ */
+static OSSL_CRMF_CERTID *certid_new_non_dirName_issuer(void)
+{
+    OSSL_CRMF_CERTID *cid = OSSL_CRMF_CERTID_new();
+    ASN1_IA5STRING *dns = ASN1_IA5STRING_new();
+
+    if (cid == NULL || dns == NULL)
+        goto err;
+    if (!ASN1_STRING_set1_string(dns, "server.example"))
+        goto err;
+    GENERAL_NAME_set0_value(cid->issuer, GEN_DNS, dns);
+    dns = NULL; /* ownership transferred to cid->issuer */
+    if (!ASN1_INTEGER_set(cid->serialNumber, 1))
+        goto err;
+    return cid;
+
+err:
+    ASN1_IA5STRING_free(dns);
+    OSSL_CRMF_CERTID_free(cid);
+    return NULL;
+}
+
+/*
+ * Transfer callback wrapping the mock server: add a CertId to the revCerts
+ * field of the RP, which the server side omits for an RR request derived from
+ * a PKCS#10 CSR because such a request contains no issuer and serial number.
+ */
+static OSSL_CMP_MSG *transfer_add_revCerts(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    OSSL_CMP_SRV_CTX *srv_ctx = OSSL_CMP_CTX_get_transfer_cb_arg(ctx);
+    OSSL_CMP_MSG *rp = ossl_cmp_mock_server_perform(ctx, req);
+    OSSL_CRMF_CERTID *cid;
+
+    if (rp == NULL || OSSL_CMP_MSG_get_bodytype(rp) != OSSL_CMP_PKIBODY_RP)
+        return rp;
+
+    if ((cid = certid_new_non_dirName_issuer()) == NULL)
+        goto err;
+    if (!sk_OSSL_CRMF_CERTID_push(rp->body->value.rp->revCerts, cid)) {
+        OSSL_CRMF_CERTID_free(cid);
+        goto err;
+    }
+    /* the body has been modified after the server protected the message */
+    if (!ossl_cmp_msg_protect(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx), rp))
+        goto err;
+    return rp;
+
+err:
+    OSSL_CMP_MSG_free(rp);
+    return NULL;
+}
+
+/*
+ * The certificate to be revoked is given by a PKCS#10 CSR, so the RR contains
+ * neither issuer nor serial number, yet the RP contains a CertId in revCerts.
+ * The client cannot compare the CertId with what it did not send and thus
+ * must not reject the response.
+ * The CertId issuer is not a directoryName, such that the issuer comparison
+ * compares NULL with NULL and succeeds, which makes the client go on
+ * comparing the serial numbers with the one it did not send being NULL.
+ */
+static int test_exec_RR_ses_p10CSR_revCerts(void)
+{
+    OSSL_CMP_CTX *ctx;
+    X509_REQ *csr = NULL;
+
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    ctx = fixture->cmp_ctx;
+    fixture->expected = OSSL_CMP_PKISTATUS_accepted;
+    if (!TEST_ptr(csr = load_csr_der(pkcs10_f, libctx))
+        /* drop the reference cert such that the CSR is used instead */
+        || !TEST_true(OSSL_CMP_CTX_set1_oldCert(ctx, NULL))
+        || !TEST_true(OSSL_CMP_CTX_set1_p10CSR(ctx, csr))
+        /* no recipient can be derived from just a CSR */
+        || !TEST_true(OSSL_CMP_CTX_set1_recipient(ctx,
+            X509_get_subject_name(server_cert)))
+        || !TEST_true(OSSL_CMP_CTX_set_transfer_cb(ctx,
+            transfer_add_revCerts))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    X509_REQ_free(csr);
+    EXECUTE_TEST(execute_exec_RR_ses_test, tear_down);
+    return result;
+}
+
+static OSSL_CMP_MSG *transfer_rr_partial_certDetails(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req, int drop_serial)
+{
+    OSSL_CMP_MSG *copy;
+    OSSL_CMP_MSG *rsp;
+    OSSL_CMP_REVDETAILS *rd;
+    OSSL_CRMF_CERTTEMPLATE *tmpl;
+
+    if (OSSL_CMP_MSG_get_bodytype(req) != OSSL_CMP_PKIBODY_RR)
+        return ossl_cmp_mock_server_perform(ctx, req);
+    if ((copy = OSSL_CMP_MSG_dup(req)) == NULL)
+        return NULL;
+    if ((rd = sk_OSSL_CMP_REVDETAILS_value(copy->body->value.rr, 0)) == NULL
+        || (tmpl = rd->certDetails) == NULL) {
+        OSSL_CMP_MSG_free(copy);
+        return NULL;
+    }
+    if (drop_serial != 0) {
+        ASN1_INTEGER_free(tmpl->serialNumber);
+        tmpl->serialNumber = NULL;
+    } else {
+        X509_NAME_free((X509_NAME *)tmpl->issuer);
+        tmpl->issuer = NULL;
+    }
+    /* the client sends the request unprotected, so no need to re-protect it */
+    rsp = ossl_cmp_mock_server_perform(ctx, copy);
+    OSSL_CMP_MSG_free(copy);
+    return rsp;
+}
+
+static OSSL_CMP_MSG *transfer_rr_no_serial(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    return transfer_rr_partial_certDetails(ctx, req, 1);
+}
+
+static OSSL_CMP_MSG *transfer_rr_no_issuer(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    return transfer_rr_partial_certDetails(ctx, req, 0);
+}
+
+/*
+ * The RR identifies the cert to be revoked only partially, by just its issuer
+ * or just its serial number. The mock server has a reference cert, so it must
+ * reject the request, and in particular it must not dereference the absent
+ * component when comparing the request with the reference cert.
+ */
+static int test_exec_RR_ses_partial_certDetails(OSSL_CMP_transfer_cb_t cb)
+{
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    fixture->expected = OSSL_CMP_PKISTATUS_rejection;
+    if (!TEST_true(OSSL_CMP_CTX_set_transfer_cb(fixture->cmp_ctx, cb))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    EXECUTE_TEST(execute_exec_RR_ses_test, tear_down);
+    return result;
+}
+
+static int test_exec_RR_ses_no_serial(void)
+{
+    return test_exec_RR_ses_partial_certDetails(transfer_rr_no_serial);
+}
+
+static int test_exec_RR_ses_no_issuer(void)
+{
+    return test_exec_RR_ses_partial_certDetails(transfer_rr_no_issuer);
 }
 
 static int test_exec_IR_ses(void)
@@ -605,6 +767,9 @@ int setup_tests(void)
     ADD_TEST(test_exec_RR_ses_ok);
     ADD_TEST(test_exec_RR_ses_request_error);
     ADD_TEST(test_exec_RR_ses_receive_error);
+    ADD_TEST(test_exec_RR_ses_p10CSR_revCerts);
+    ADD_TEST(test_exec_RR_ses_no_serial);
+    ADD_TEST(test_exec_RR_ses_no_issuer);
     ADD_TEST(test_exec_CR_ses_explicit_confirm);
     ADD_TEST(test_exec_CR_ses_implicit_confirm);
     ADD_TEST(test_exec_IR_ses);

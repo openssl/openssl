@@ -485,6 +485,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     return ret;
 }
 
+#ifndef FIPS_MODULE
 EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
     const char *key_type, const char *propquery,
     size_t keylen, const OSSL_PARAM params[])
@@ -580,6 +581,7 @@ cleanup:
         EVP_SKEYMGMT_free(skeymgmt);
     return ret;
 }
+#endif /* !FIPS_MODULE */
 
 int evp_keyexch_get_number(const EVP_KEYEXCH *keyexch)
 {

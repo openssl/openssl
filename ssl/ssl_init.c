@@ -19,7 +19,6 @@
 static int stopped;
 
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
-static int ssl_base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
 #ifndef OPENSSL_NO_COMP
@@ -33,7 +32,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 #endif
     ssl_sort_cipher_list();
     OSSL_TRACE(INIT, "ossl_init_ssl_base: SSL_add_ssl_module()\n");
-    ssl_base_inited = 1;
     return 1;
 }
 

@@ -24,6 +24,7 @@
 #include "internal/packet.h"
 #include "internal/sizes.h"
 #include "internal/fips.h"
+#include "fips/fipsindicator.h"
 
 #define ml_dsa_set_ctx_params_st ml_dsa_verifymsg_set_ctx_params_st
 #define ml_dsa_set_ctx_params_decoder ml_dsa_verifymsg_set_ctx_params_decoder
@@ -462,6 +463,11 @@ static int ml_dsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
         && !OSSL_PARAM_set_octet_string(p.id,
             ctx->aid_len == 0 ? NULL : ctx->aid_buf,
             ctx->aid_len))
+        return 0;
+
+    if (!OSSL_FIPS_IND_GET_PARAM_CONDITIONAL(p.ind,
+            ctx->test_entropy_len == 0
+                && ctx->msg_encode == ML_DSA_MESSAGE_ENCODE_PURE))
         return 0;
 
     return 1;

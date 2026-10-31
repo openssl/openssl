@@ -33,6 +33,7 @@ ENDIF
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$MD5DEF
+DEFINE[../../providers/libdefault.a]=$MD5DEF
 DEFINE[../../providers/liblegacy.a]=$MD5DEF
 
 GENERATE[md5-586.S]=asm/md5-586.pl

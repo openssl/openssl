@@ -428,6 +428,23 @@ static int obj_ht_foreach_certs(HT_VALUE *v, void *arg)
 }
 
 /*
+ * Increment the reference count of the object contained in |a|, if any.
+ * The X509_OBJECT itself is not reference counted.
+ */
+static int x509_object_up_ref_count(X509_OBJECT *a)
+{
+    switch (a->type) {
+    case X509_LU_NONE:
+        break;
+    case X509_LU_X509:
+        return X509_up_ref(a->data.x509);
+    case X509_LU_CRL:
+        return X509_CRL_up_ref(a->data.crl);
+    }
+    return 1;
+}
+
+/*
  * May be called with |ret| == NULL just for the side effect of
  * caching all certs matching the given subject DN in |ctx->store->objs|.
  * Returns 1 if successful,
@@ -479,7 +496,7 @@ int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TY
     }
 
     if (ret != NULL) {
-        if (!X509_OBJECT_up_ref_count(tmp))
+        if (!x509_object_up_ref_count(tmp))
             return -1;
         ret->type = tmp->type;
         ret->data = tmp->data;
@@ -511,7 +528,7 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
         return 0;
     }
 
-    if (!X509_OBJECT_up_ref_count(obj)) {
+    if (!x509_object_up_ref_count(obj)) {
         obj->type = X509_LU_NONE;
         X509_OBJECT_free(obj);
         return 0;
@@ -600,18 +617,12 @@ int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x)
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 int X509_OBJECT_up_ref_count(X509_OBJECT *a)
 {
-    switch (a->type) {
-    case X509_LU_NONE:
-        break;
-    case X509_LU_X509:
-        return X509_up_ref(a->data.x509);
-    case X509_LU_CRL:
-        return X509_CRL_up_ref(a->data.crl);
-    }
-    return 1;
+    return x509_object_up_ref_count(a);
 }
+#endif
 
 X509 *X509_OBJECT_get0_X509(const X509_OBJECT *a)
 {
@@ -742,13 +753,64 @@ static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
     ret->type = obj->type;
     ret->data = obj->data;
 
-    if (!X509_OBJECT_up_ref_count(ret)) {
+    if (!x509_object_up_ref_count(ret)) {
         OPENSSL_free(ret);
         return NULL;
     }
 
     return ret;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+static int obj_ht_to_stack(HT_VALUE *v, void *arg)
+{
+    STACK_OF(X509_OBJECT) **sk = arg;
+    STACK_OF(X509_OBJECT) *objs = v->value;
+    X509_OBJECT *obj;
+    int i;
+
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
+        obj = sk_X509_OBJECT_value(objs, i);
+        if (sk_X509_OBJECT_push(*sk, obj) == 0)
+            goto err;
+    }
+
+    return 1;
+
+err:
+    sk_X509_OBJECT_zero(*sk);
+
+    return 0;
+}
+
+static int obj_ht_zero_stacks(HT_VALUE *v, void *arg)
+{
+    STACK_OF(X509_OBJECT) *objs = v->value;
+
+    sk_X509_OBJECT_zero(objs);
+
+    return 1;
+}
+
+STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
+{
+    X509_STORE *store = (X509_STORE *)xs;
+
+    if (xs->objs_ht != NULL) {
+        ossl_ht_foreach_until(xs->objs_ht, obj_ht_to_stack, &store->objs);
+        if (sk_X509_OBJECT_num(store->objs) > 0
+            || ossl_ht_count(xs->objs_ht) == 0) {
+            ossl_ht_foreach_until(xs->objs_ht, obj_ht_zero_stacks, NULL);
+            ossl_ht_free(xs->objs_ht);
+            store->objs_ht = NULL;
+        } else {
+            return NULL;
+        }
+    }
+
+    return xs->objs;
+}
+#endif
 
 static int obj_ht_foreach_object(HT_VALUE *v, void *arg)
 {
@@ -775,21 +837,6 @@ err:
 
     return 0;
 }
-
-#ifndef OPENSSL_NO_DEPRECATED_4_0
-STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
-{
-    X509_STORE *store = (X509_STORE *)xs;
-
-    if (xs->objs_ht != NULL) {
-        ossl_ht_foreach_until(xs->objs_ht, obj_ht_foreach_object, &store->objs);
-        ossl_ht_free(xs->objs_ht);
-        store->objs_ht = NULL;
-    }
-
-    return xs->objs;
-}
-#endif
 
 STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
 {
@@ -981,7 +1028,7 @@ end:
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
     X509_OBJECT *x)
 {
-    int idx, i, num;
+    int idx, i, num, sorted;
     X509_OBJECT *obj;
 
     idx = sk_X509_OBJECT_find(h, x);
@@ -989,11 +1036,16 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
         return NULL;
     if ((x->type != X509_LU_X509) && (x->type != X509_LU_CRL))
         return sk_X509_OBJECT_value(h, idx);
+    sorted = sk_X509_OBJECT_is_sorted(h);
     for (i = idx, num = sk_X509_OBJECT_num(h); i < num; i++) {
         obj = sk_X509_OBJECT_value(h, i);
         if (x509_object_cmp((const X509_OBJECT **)&obj,
-                (const X509_OBJECT **)&x))
-            return NULL;
+                (const X509_OBJECT **)&x)) {
+            /* Matching objects are contiguous only in a sorted stack. */
+            if (sorted)
+                return NULL;
+            continue;
+        }
         if (x->type == X509_LU_X509) {
             if (!X509_cmp(obj->data.x509, x->data.x509))
                 return obj;

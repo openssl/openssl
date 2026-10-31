@@ -587,7 +587,8 @@ static int file_load_file(struct file_ctx_st *ctx,
 
     data.object_cb = object_cb;
     data.object_cbarg = object_cbarg;
-    OSSL_DECODER_CTX_set_construct_data(ctx->_.file.decoderctx, &data);
+    if (!OSSL_DECODER_CTX_set_construct_data(ctx->_.file.decoderctx, &data))
+        return 0;
     OSSL_DECODER_CTX_set_passphrase_cb(ctx->_.file.decoderctx, pw_cb, pw_cbarg);
 
     /* Launch */
@@ -611,22 +612,12 @@ static int file_load_file(struct file_ctx_st *ctx,
 
 static char *file_name_to_uri(struct file_ctx_st *ctx, const char *name)
 {
-    char *data = NULL;
+    const char *pathsep = ossl_ends_with_dirsep(ctx->uri) ? "" : "/";
+    char *data;
 
     assert(name != NULL);
-    {
-        const char *pathsep = ossl_ends_with_dirsep(ctx->uri) ? "" : "/";
-        size_t calculated_length = strlen(ctx->uri) + strlen(pathsep)
-            + strlen(name) + 1 /* \0 */;
-
-        data = OPENSSL_zalloc(calculated_length);
-        if (data == NULL)
-            return NULL;
-
-        OPENSSL_strlcat(data, ctx->uri, calculated_length);
-        OPENSSL_strlcat(data, pathsep, calculated_length);
-        OPENSSL_strlcat(data, name, calculated_length);
-    }
+    if (ossl_asprintf(&data, "%s%s%s", ctx->uri, pathsep, name) < 0)
+        return NULL;
     return data;
 }
 

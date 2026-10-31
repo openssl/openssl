@@ -358,7 +358,7 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     switch (operation) {
 
     case ASN1_OP_STREAM_PRE:
-        if (CMS_stream(&sarg->boundary, cms) <= 0)
+        if (ossl_cms_stream(cms) <= 0)
             return 0;
         /* fall through */
     case ASN1_OP_DETACHED_PRE:
@@ -372,6 +372,13 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (CMS_dataFinal(cms, sarg->ndef_bio) <= 0)
             return 0;
         break;
+
+    case ASN1_OP_GET0_STREAM_CONTENT: {
+        ASN1_STRING **content = exarg;
+        ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
+
+        *content = pos == NULL ? NULL : *pos;
+    } break;
 
     case ASN1_OP_FREE_POST:
         OPENSSL_free(cms->ctx.propq);

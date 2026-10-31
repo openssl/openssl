@@ -470,11 +470,15 @@ int ocsp_main(int argc, char **argv)
             if (issuer == NULL)
                 goto end;
             if (issuers == NULL) {
-                if ((issuers = sk_X509_new_null()) == NULL)
+                if ((issuers = sk_X509_new_null()) == NULL) {
+                    X509_free(issuer);
                     goto end;
+                }
             }
-            if (!sk_X509_push(issuers, issuer))
+            if (!sk_X509_push(issuers, issuer)) {
+                X509_free(issuer);
                 goto end;
+            }
             break;
         case OPT_CERT:
             reset_unknown();
@@ -1055,6 +1059,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
         if (!OCSP_check_validity(thisupd, nextupd, nsec, maxage)) {
             BIO_puts(out, "WARNING: Status times invalid.\n");
             ERR_print_errors(out);
+            ret = 0;
         }
         BIO_printf(out, "%s\n"
                         "\tThis Update: ",

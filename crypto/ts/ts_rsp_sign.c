@@ -18,6 +18,7 @@
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
 #include "internal/time.h"
+#include "crypto/asn1.h"
 #include "crypto/ess.h"
 #include "ts_local.h"
 
@@ -300,7 +301,7 @@ int TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx,
     }
     if (text) {
         if ((utf8_text = ASN1_UTF8STRING_new()) == NULL
-            || !ASN1_STRING_set1_string(utf8_text, text)) {
+            || !ossl_asn1_string_set1_string(utf8_text, text)) {
             ERR_raise(ERR_LIB_TS, ERR_R_ASN1_LIB);
             goto err;
         }
@@ -647,7 +648,7 @@ static int ossl_ess_add1_signing_cert(PKCS7_SIGNER_INFO *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);
-    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set1_data(seq, pp, len)) {
+    if ((seq = ASN1_STRING_new()) == NULL || !ossl_asn1_string_set1_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;
@@ -678,7 +679,7 @@ static int ossl_ess_add1_signing_cert_v2(PKCS7_SIGNER_INFO *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
-    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set1_data(seq, pp, len)) {
+    if ((seq = ASN1_STRING_new()) == NULL || !ossl_asn1_string_set1_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;

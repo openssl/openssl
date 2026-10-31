@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -980,6 +980,13 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
                 loss_info.tx_size = p->num_bytes;
 
                 ackm->cc_method->on_data_lost(ackm->cc_data, &loss_info);
+            } else {
+                /*
+                 * The packet is no longer in flight all the same, so the CC
+                 * must stop counting it.
+                 */
+                ackm->cc_method->on_data_invalidated(ackm->cc_data,
+                    p->num_bytes);
             }
         }
 
@@ -1144,11 +1151,9 @@ int ossl_ackm_on_tx_ack_only_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
         return 0;
 
     /*
-     * A packet containing only an ACK frame must not be treated as
-     * in-flight or ack-eliciting; if it were, ossl_ackm_on_tx_packet()
-     * below would (correctly) perform bytes-in-flight/timer/CC bookkeeping
-     * for a packet we are about to discard from history, which would be
-     * incorrect.
+     * A packet containing only an ACK frame is not kept in history, so it
+     * must not be in-flight or ack-eliciting: ossl_ackm_on_tx_packet() below
+     * performs bytes-in-flight, timer and CC bookkeeping for such packets.
      */
     if (pkt->is_inflight || pkt->is_ack_eliciting)
         return 0;

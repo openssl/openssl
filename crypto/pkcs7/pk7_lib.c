@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -432,46 +432,17 @@ STACK_OF(X509) *pkcs7_get0_certificates(const PKCS7 *p7)
     return NULL;
 }
 
-static STACK_OF(PKCS7_RECIP_INFO) *pkcs7_get_recipient_info(const PKCS7 *p7)
-{
-    if (p7->d.ptr == NULL)
-        return NULL;
-    if (PKCS7_type_is_signedAndEnveloped(p7))
-        return p7->d.signed_and_enveloped->recipientinfo;
-    if (PKCS7_type_is_enveloped(p7))
-        return p7->d.enveloped->recipientinfo;
-    return NULL;
-}
-
-/*
- * Set up the library context into any loaded structure that needs it.
- * i.e loaded X509 objects.
- */
-void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
+/* Point the signer infos of a PKCS7 at its context */
+void ossl_pkcs7_SignerInfos_set_ctx(PKCS7 *p7)
 {
     int i;
     const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
-    OSSL_LIB_CTX *libctx = ossl_pkcs7_ctx_get0_libctx(ctx);
-    const char *propq = ossl_pkcs7_ctx_get0_propq(ctx);
-    STACK_OF(PKCS7_RECIP_INFO) *rinfos;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
-    STACK_OF(X509) *certs;
 
     if (ctx == NULL || p7->d.ptr == NULL)
         return;
 
-    rinfos = pkcs7_get_recipient_info(p7);
     sinfos = PKCS7_get_signer_info(p7);
-    certs = pkcs7_get0_certificates(p7);
-
-    for (i = 0; i < sk_X509_num(certs); i++)
-        ossl_x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);
-
-    for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rinfos); i++) {
-        PKCS7_RECIP_INFO *ri = sk_PKCS7_RECIP_INFO_value(rinfos, i);
-
-        ossl_x509_set0_libctx(ri->cert, libctx, propq);
-    }
 
     for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
         PKCS7_SIGNER_INFO *si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
@@ -511,7 +482,7 @@ int ossl_pkcs7_ctx_propagate(const PKCS7 *from, PKCS7 *to)
     if (!ossl_pkcs7_set1_propq(to, from->ctx.propq))
         return 0;
 
-    ossl_pkcs7_resolve_libctx(to);
+    ossl_pkcs7_SignerInfos_set_ctx(to);
     return 1;
 }
 
@@ -716,8 +687,8 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
     return 1;
 }
 
-/* unfortunately cannot constify BIO_new_NDEF() due to this and CMS_stream() */
-int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
+/* Return the content octet string that indefinite-length streaming encodes */
+ASN1_OCTET_STRING *ossl_pkcs7_get0_stream_content(PKCS7 *p7)
 {
     ASN1_OCTET_STRING *os = NULL;
 
@@ -769,11 +740,26 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
         break;
     }
 
+    return os;
+}
+
+int ossl_pkcs7_stream(PKCS7 *p7)
+{
+    ASN1_OCTET_STRING *os = ossl_pkcs7_get0_stream_content(p7);
+
     if (os == NULL)
         return 0;
 
-    os->flags |= ASN1_STRING_FLAG_NDEF;
-    *boundary = &os->data;
+    p7->state |= PKCS7_STATE_STREAMING;
 
     return 1;
 }
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
+{
+    if (boundary != NULL)
+        *boundary = NULL;
+    return ossl_pkcs7_stream(p7);
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */

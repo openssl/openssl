@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include "internal/e_os.h"
+#include "internal/threads_common.h"
 #include "internal/cryptlib.h"
 #include "internal/mem_alloc_utils.h"
 #include "crypto/cryptlib.h"
@@ -119,7 +120,7 @@ static void parseit(void)
 
     /*
      * Get the count (parsing stops at the '@' if present), and percentage.
-     * Ignore an unparsable/overflowing count rather than acting on garbage.
+     * An unparsable or overflowing count is ignored.
      * Validate that the count is followed by '@' or end-of-string.
      */
     if (!ossl_strtol(md_failstring, &end, 10, &md_count)
@@ -219,6 +220,8 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         return NULL;
 
     if (allow_customize) {
+        TSAN_BENIGN(&allow_customize,
+            "allow_customize is intentionally racy");
         /*
          * Disallow customization after the first allocation. We only set this
          * if necessary to avoid a store to the same cache line on every

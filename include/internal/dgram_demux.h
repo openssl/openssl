@@ -104,6 +104,17 @@ struct dgram_urxe_st {
 #define URXE_DEMUX_STATE_PENDING 1 /* on urx_pending list */
 #define URXE_DEMUX_STATE_ISSUED 2 /* on neither list */
 
+/* Maximum number of datagrams received in a single call (one batch). */
+#define DEMUX_MAX_MSGS_PER_CALL 32
+
+/*
+ * Free-list limit used by the DTLS listener: two receive batches, so one
+ * full batch can always be cached. Enforced by
+ * ossl_dgram_demux_release_urxe() once set with
+ * ossl_dgram_demux_set_max_free_urxe(); the default 0 is unbounded.
+ */
+#define DEMUX_MAX_FREE_URXE (2 * DEMUX_MAX_MSGS_PER_CALL)
+
 /* List structure tracking a queue of URXEs. */
 DEFINE_LIST_OF(urxe, DGRAM_URXE);
 typedef OSSL_LIST(urxe) DGRAM_URXE_LIST;
@@ -167,6 +178,17 @@ void ossl_dgram_demux_set_bio(DGRAM_DEMUX *demux, BIO *net_bio);
  * Returns 1 on success, 0 if mtu is below minimum.
  */
 int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu);
+
+/*
+ * Sets the maximum number of URXEs cached on the free list; 0 (the
+ * default) leaves it unbounded.
+ */
+void ossl_dgram_demux_set_max_free_urxe(DGRAM_DEMUX *demux, size_t max_free);
+
+/*
+ * Returns the number of URXEs currently cached on the free list.
+ */
+size_t ossl_dgram_demux_get_free_list_len(DGRAM_DEMUX *demux);
 
 /*
  * Set the default packet handler. This is called for every incoming datagram.

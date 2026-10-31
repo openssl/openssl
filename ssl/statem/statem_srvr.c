@@ -75,6 +75,25 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
+    if (st->hand_state == TLS_ST_SR_ACK) {
+        st->hand_state = st->pre_ack_hand_state;
+        if (mt == SSL3_MT_DUMMY)
+            return 1;
+    }
+
+    /*
+     * An ACK may arrive before or between messages of the client's flight.
+     * Preserve the interrupted read state so CertificateVerify and Finished
+     * are still required, even if the ACK covers our entire flight.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(s) && mt == DTLS13_MT_ACK
+        && s->hello_retry_request != SSL_HRR_PENDING
+        && dtls13_server_waiting_for_client_flight(st->hand_state)) {
+        st->pre_ack_hand_state = st->hand_state;
+        st->hand_state = TLS_ST_SR_ACK;
+        return 1;
+    }
+
     /*
      * Note: There is no case for TLS_ST_BEFORE because at that stage we have
      * not negotiated TLSv1.3 yet, so that case is handled by
@@ -134,7 +153,7 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
 
     case TLS_ST_SR_COMP_CERT:
     case TLS_ST_SR_CERT:
-        if (!received_client_cert(s)) {
+        if (st->no_cert_verify || !received_client_cert(s)) {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_SR_FINISHED;
                 return 1;
@@ -154,10 +173,10 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
         }
         break;
 
-    case TLS_ST_SR_ACK:
     case TLS_ST_SW_KEY_UPDATE:
     case TLS_ST_SW_SESSION_TICKET:
         if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
             st->hand_state = TLS_ST_SR_ACK;
             return 1;
         }
@@ -191,6 +210,7 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
         }
 
         if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
             st->hand_state = TLS_ST_SR_ACK;
             return 1;
         }
@@ -607,6 +627,12 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
     OSSL_HANDSHAKE_STATE next_state;
     OSSL_STATEM *st = &s->statem;
 
+    if (st->ack_for_retransmit && st->hand_state != TLS_ST_SW_ACK) {
+        st->deferred_ack_state = st->hand_state;
+        st->hand_state = TLS_ST_SW_ACK;
+        return WRITE_TRAN_CONTINUE;
+    }
+
     /*
      * No case for TLS_ST_BEFORE, because at that stage we have not negotiated
      * TLSv1.3 yet, so that is handled by ossl_statem_server_write_transition()
@@ -803,6 +829,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_SW_ACK:
         st->hand_state = st->deferred_ack_state;
+        if (st->ack_for_retransmit) {
+            st->ack_for_retransmit = 0;
+            return WRITE_TRAN_FINISHED;
+        }
 
         return WRITE_TRAN_CONTINUE;
     }
@@ -1227,14 +1257,13 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_ERROR;
             }
 
-            if (!SSL_CONNECTION_IS_DTLS13(s)
-                && s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
+            if (SSL_CONNECTION_IS_DTLS13(s)) {
+                dtls13_hellos_done(s);
+            } else if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
                 && !ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
                 /* SSLfatal() already called */
                 return WORK_ERROR;
-            } else {
-                s->dtls13_process_hello = 1;
             }
             /*
              * We don't yet know whether the next record we are going to receive
@@ -1670,9 +1699,7 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     int cb_ret = 0;
 
 #if !defined(OPENSSL_NO_DTLS)
-    DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
-        ? (DTLS_LISTENER *)s->d1->listener
-        : NULL;
+    DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
     if (dl != NULL && dl->require_hvr_cookie && sctx->app_gen_cookie_cb == NULL) {
         cb_ret = ossl_dtls_listener_gen_cookie_cb(ussl, s->d1->cookie, &cookie_leni);
@@ -1965,7 +1992,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
             && clienthello->dtls_cookie_len == 0
             && ossl_assert(ssl_get_min_max_version(s, &minversion,
-                                &maxversion, NULL)
+                               &maxversion, NULL)
                 == 0)
             && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0) {
             OPENSSL_free(clienthello);
@@ -2070,6 +2097,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    unsigned char *snonce = s->s3.server_random;
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
@@ -2084,6 +2112,38 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         case SSL_CLIENT_HELLO_ERROR:
         default:
             SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
+            goto err;
+        }
+    }
+
+    /*
+     * The callback may have switched to an SSL_CTX with a different set of
+     * custom extensions, possibly in an earlier call that returned
+     * SSL_CLIENT_HELLO_RETRY. The collected extensions are indexed by the
+     * custom extensions in use when they were collected, so collect them
+     * again unless neither set has any.
+     */
+    if (clienthello->pre_proc_exts_len != TLSEXT_IDX_num_builtins
+        || s->cert->custext.meths_count != 0) {
+        PACKET extensions = clienthello->extensions;
+        void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
+            = s->ext.debug_cb;
+        int ret;
+
+        OPENSSL_free(clienthello->pre_proc_exts);
+        clienthello->pre_proc_exts = NULL;
+        clienthello->pre_proc_exts_len = 0;
+        /*
+         * The first collection has already initialised the built-in
+         * extensions and passed the extensions to the debug callback.
+         */
+        s->ext.debug_cb = NULL;
+        ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
+            &clienthello->pre_proc_exts,
+            &clienthello->pre_proc_exts_len, 0);
+        s->ext.debug_cb = debug_cb;
+        if (!ret) {
+            /* SSLfatal already been called */
             goto err;
         }
     }
@@ -2119,9 +2179,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             int verify_ret = 0;
 
 #if !defined(OPENSSL_NO_DTLS)
-            DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
-                ? (DTLS_LISTENER *)s->d1->listener
-                : NULL;
+            DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
             if (dl != NULL && dl->require_hvr_cookie && sctx->app_verify_cookie_cb == NULL) {
                 verify_ret = ossl_dtls_listener_verify_cookie_cb(ussl,
@@ -2210,6 +2268,23 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             SSL_EXT_CLIENT_HELLO,
             clienthello->pre_proc_exts, NULL, 0)) {
         /* SSLfatal() already called */
+        goto err;
+    }
+
+    /*
+     * Generate the server_random now. The protocol version (and hence any
+     * downgrade sentinel) is known, and the cheap structural checks on the
+     * ClientHello (cookie, record boundary, cipher list, SCSVs) have all
+     * passed, so we do not spend entropy on a ClientHello we are going to
+     * reject anyway. It must happen before the session lookup below, as the
+     * callbacks invoked from there on such as the session ticket callbacks,
+     * tls_session_secret_cb, the (D)TLSv1.3 PSK callbacks and the servername
+     * callback can observe the value via SSL_get_server_random(). Note that
+     * in the TLSv1.2 flow tls_session_secret_cb in particular needs it for
+     * SessionTicket key derivation.
+     */
+    if (ssl_fill_hello_random(s, 1, snonce, SSL3_RANDOM_SIZE, dgrd) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -2315,21 +2390,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             clienthello->pre_proc_exts, NULL, 0, 1)) {
         /* SSLfatal() already called */
         goto err;
-    }
-
-    /*
-     * Check if we want to use external pre-shared secret for this handshake
-     * for not reused session only. We need to generate server_random before
-     * calling tls_session_secret_cb in order to allow SessionTicket
-     * processing to use it in key derivation.
-     */
-    {
-        unsigned char *pos;
-        pos = s->s3.server_random;
-        if (ssl_fill_hello_random(s, 1, pos, SSL3_RANDOM_SIZE, dgrd) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
     }
 
     if (!s->hit && !tls1_set_server_sigalgs(s)) {
@@ -2796,7 +2856,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (!WPACKET_put_bytes_u16(pkt, version)
         /*
          * Random stuff. Filling of the server_random takes place in
-         * tls_process_client_hello()
+         * tls_early_post_process_client_hello()
          */
         || !WPACKET_memcpy(pkt,
             s->hello_retry_request == SSL_HRR_PENDING
@@ -4074,6 +4134,32 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
     return WORK_FINISHED_CONTINUE;
 }
 
+static void tls_clear_pending_client_identity(SSL_CONNECTION *sc)
+{
+    OSSL_STACK_OF_X509_free(sc->s3.tmp.pending_peer_chain);
+    sc->s3.tmp.pending_peer_chain = NULL;
+    EVP_PKEY_free(sc->s3.tmp.pending_peer_rpk);
+    sc->s3.tmp.pending_peer_rpk = NULL;
+}
+
+/*
+ * Clear old verification state before verifying fresh credentials, or after
+ * accepting an empty initial Certificate response. Empty PHA responses retain
+ * the previous state. Do not clear results produced by the new verification.
+ */
+static void tls_clear_client_verification_state(SSL_CONNECTION *sc, long verify_result)
+{
+    OSSL_STACK_OF_X509_free(sc->verified_chain);
+    sc->verified_chain = NULL;
+    X509_VERIFY_PARAM_move_peername(sc->param, NULL);
+    sc->dane.mdpth = -1;
+    sc->dane.pdpth = -1;
+    X509_free(sc->dane.mcert);
+    sc->dane.mcert = NULL;
+    sc->dane.mtlsa = NULL;
+    sc->verify_result = verify_result;
+}
+
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 {
     EVP_PKEY *peer_rpk = NULL;
@@ -4084,8 +4170,10 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     }
 
     /* Stash the parsed RPK; verification runs in the post-process step. */
-    EVP_PKEY_free(sc->session->peer_rpk);
-    sc->session->peer_rpk = peer_rpk;
+    tls_clear_pending_client_identity(sc);
+    sc->s3.tmp.pending_peer_rpk = peer_rpk;
+    if (peer_rpk != NULL)
+        tls_clear_client_verification_state(sc, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 }
@@ -4094,17 +4182,20 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
     WORK_STATE wst)
 {
-    EVP_PKEY *peer_rpk = sc->session->peer_rpk;
+    EVP_PKEY *peer_rpk = sc->s3.tmp.pending_peer_rpk;
     SSL_SESSION *new_sess = NULL;
 
     (void)wst;
+
+    if (SSL_CONNECTION_IS_VERSION13(sc))
+        sc->statem.no_cert_verify = peer_rpk == NULL;
 
     if (peer_rpk == NULL) {
         if ((sc->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
             && (sc->verify_mode & SSL_VERIFY_PEER)) {
             SSLfatal(sc, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            return WORK_ERROR;
+            goto err;
         }
     } else {
         int v_ok;
@@ -4119,7 +4210,7 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
         if (v_ok <= 0) {
             SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            return WORK_ERROR;
+            goto err;
         }
     }
 
@@ -4127,26 +4218,25 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
      * Sessions must be immutable once they go into the session cache. Otherwise
      * we can get multi-thread problems. Therefore we don't "update" sessions,
      * we replace them with a duplicate. Here, we need to do this every time
-     * a new RPK (or certificate) is received via post-handshake authentication,
-     * as the session may have already gone into the session cache.
+     * a PHA response is accepted, even if empty, because refreshed tickets
+     * will update the session's key and ID.
      */
     if (sc->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(sc->session, 0)) == NULL) {
             SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            return WORK_ERROR;
+            goto err;
         }
 
         SSL_SESSION_free(sc->session);
         sc->session = new_sess;
     }
 
-    /* Ensure there is no peer/peer_chain */
-    X509_free(sc->session->peer);
-    sc->session->peer = NULL;
-    sk_X509_pop_free(sc->session->peer_chain, X509_free);
-    sc->session->peer_chain = NULL;
-
-    sc->session->verify_result = sc->verify_result;
+    if (peer_rpk != NULL || sc->post_handshake_auth != SSL_PHA_REQUESTED) {
+        if (peer_rpk == NULL)
+            tls_clear_client_verification_state(sc, X509_V_OK);
+        ossl_session_set0_peer(sc->session, NULL, peer_rpk, sc->verify_result);
+        sc->s3.tmp.pending_peer_rpk = NULL;
+    }
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -4155,7 +4245,7 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
     if (SSL_CONNECTION_IS_VERSION13(sc)) {
         if (!ssl3_digest_cached_records(sc, 1)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
 
         /* Save the current hash state for when we receive the CertificateVerify */
@@ -4163,7 +4253,7 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
                 sizeof(sc->cert_verify_hash),
                 &sc->cert_verify_hash_len)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
 
         /* resend session tickets */
@@ -4171,6 +4261,10 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
     }
 
     return WORK_FINISHED_CONTINUE;
+
+err:
+    tls_clear_pending_client_identity(sc);
+    return WORK_ERROR;
 }
 
 MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
@@ -4269,14 +4363,17 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
+        x = NULL;
     }
 
     /*
      * Stash the parsed chain so that tls_post_process_client_certificate() can
      * run verification and may pause the handshake via SSL_set_retry_verify().
      */
-    OSSL_STACK_OF_X509_free(s->session->peer_chain);
-    s->session->peer_chain = sk;
+    tls_clear_pending_client_identity(s);
+    s->s3.tmp.pending_peer_chain = sk;
+    if (sk_X509_num(sk) > 0)
+        tls_clear_client_verification_state(s, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 
@@ -4287,8 +4384,8 @@ err:
 }
 
 /*
- * Verify s->session->peer_chain (parked by tls_process_client_certificate())
- * and finalize the peer cert / TLS 1.3 handshake-hash bookkeeping.
+ * Verify the parked chain from tls_process_client_certificate() and finalize
+ * the peer cert / TLS 1.3 handshake-hash bookkeeping.
  * Allows the verify callback to defer via SSL_set_retry_verify(), in which
  * case we return WORK_MORE_A and the state machine re-enters this function
  * once the application has supplied a verdict.
@@ -4299,26 +4396,30 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     STACK_OF(X509) *sk;
     SSL_SESSION *new_sess = NULL;
     EVP_PKEY *pkey;
-    int i;
+    int has_cert, i;
 
     if (s->ext.client_cert_type == TLSEXT_cert_type_rpk)
         return tls_post_process_client_rpk(s, wst);
 
-    sk = s->session->peer_chain;
+    sk = s->s3.tmp.pending_peer_chain;
     (void)wst;
 
-    if (sk == NULL || sk_X509_num(sk) <= 0) {
+    has_cert = sk != NULL && sk_X509_num(sk) > 0;
+    if (SSL_CONNECTION_IS_VERSION13(s))
+        s->statem.no_cert_verify = !has_cert;
+    if (!has_cert) {
         /* Fail only if we required a certificate */
         if ((s->verify_mode & SSL_VERIFY_PEER)
             && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
             SSLfatal(s, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            return WORK_ERROR;
+            goto err;
         }
+
         /* No client certificate so digest cached records */
         if (s->s3.handshake_buffer && !ssl3_digest_cached_records(s, 0)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
     } else {
         if (s->rwstate == SSL_RETRY_VERIFY)
@@ -4336,13 +4437,13 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
         if (i <= 0) {
             SSLfatal(s, ssl_x509err2alert(s->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            return WORK_ERROR;
+            goto err;
         }
         pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                 SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-            return WORK_ERROR;
+            goto err;
         }
     }
 
@@ -4350,31 +4451,29 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
      * Sessions must be immutable once they go into the session cache. Otherwise
      * we can get multi-thread problems. Therefore we don't "update" sessions,
      * we replace them with a duplicate. Here, we need to do this every time
-     * a new certificate is received via post-handshake authentication, as the
-     * session may have already gone into the session cache.
+     * a PHA response is accepted, even if empty, because refreshed tickets
+     * will update the session's key and ID.
      */
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
-            return WORK_ERROR;
+            goto err;
         }
 
         SSL_SESSION_free(s->session);
         s->session = new_sess;
-        /* peer_chain follows the session via ssl_session_dup(); refresh sk. */
-        sk = s->session->peer_chain;
     }
 
-    if (sk != NULL && sk_X509_num(sk) > 0) {
-        X509_free(s->session->peer);
-        /* Server keeps the EE cert in session->peer; peer_chain holds issuers only. */
-        s->session->peer = sk_X509_shift(sk);
-        s->session->verify_result = s->verify_result;
+    if (!has_cert) {
+        tls_clear_pending_client_identity(s);
+        sk = NULL;
+        if (s->post_handshake_auth != SSL_PHA_REQUESTED)
+            tls_clear_client_verification_state(s, X509_V_OK);
     }
-
-    /* Ensure there is no RPK */
-    EVP_PKEY_free(s->session->peer_rpk);
-    s->session->peer_rpk = NULL;
+    if (has_cert || s->post_handshake_auth != SSL_PHA_REQUESTED) {
+        ossl_session_set0_peer(s->session, sk, NULL, s->verify_result);
+        s->s3.tmp.pending_peer_chain = NULL;
+    }
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -4382,7 +4481,7 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
      */
     if (SSL_CONNECTION_IS_VERSION13(s) && !ssl3_digest_cached_records(s, 1)) {
         /* SSLfatal() already called */
-        return WORK_ERROR;
+        goto err;
     }
 
     /* Save the current hash state for when we receive the CertificateVerify */
@@ -4391,7 +4490,7 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
                 sizeof(s->cert_verify_hash),
                 &s->cert_verify_hash_len)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
 
         /* Resend session tickets */
@@ -4399,6 +4498,10 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     }
 
     return WORK_FINISHED_CONTINUE;
+
+err:
+    tls_clear_pending_client_identity(s);
+    return WORK_ERROR;
 }
 
 #ifndef OPENSSL_NO_COMP_ALG
@@ -4843,12 +4946,11 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
         } else {
             /*
-             * No ALPN was negotiated on this handshake. If we resumed a
-             * session that had previously negotiated ALPN, the stale value
-             * must be cleared from the (copied) session before it is stored
-             * in the new ticket. Otherwise a subsequent 0-RTT attempt using
-             * that ticket would incorrectly assume an ALPN protocol had been
-             * negotiated. See tls_handle_alpn().
+             * No ALPN was negotiated on this handshake. A resumed session
+             * carries the protocol from the handshake that created it, and
+             * a 0-RTT attempt using the new ticket checks that ALPN is
+             * consistent with the session, so clear it. See
+             * tls_handle_alpn().
              */
             OPENSSL_free(s->session->ext.alpn_selected);
             s->session->ext.alpn_selected = NULL;

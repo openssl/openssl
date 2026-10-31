@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2020
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,6 +9,7 @@
  */
 
 #include <openssl/http.h>
+#include <openssl/httperr.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
@@ -237,6 +238,82 @@ err:
     BIO_free(wbio);
     BIO_free(rbio);
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
+    return res;
+}
+
+static const struct {
+    const char *url;
+    const char *redirects[4];
+    int success;
+} redirect_tests[] = {
+    { "https://server/start", { "http://server/end" }, 0 },
+    { "https://server/start", { "/relative", "http://server/end" }, 0 },
+    { "http://server/start",
+        { "https://server/secure", "/relative", "http://server/end" }, 0 },
+    { "http://server/start", { "/relative", "http://server/end" }, 1 },
+    { "https://server/start", { "/relative", "https://server/end" }, 1 },
+};
+
+/* Replace each flushed request with the next response, using a single mem BIO. */
+static long http_redirect_cb(BIO *bio, int oper, const char *argp, size_t len,
+    int cmd, long argl, int ret, size_t *processed)
+{
+    const char *const *redirect = (const char *const *)BIO_get_callback_arg(bio);
+
+    if (oper != (BIO_CB_CTRL | BIO_CB_RETURN))
+        return ret;
+    if (cmd == BIO_C_DO_STATE_MACHINE)
+        return 1; /* mock a successful connection */
+    if (cmd != BIO_CTRL_FLUSH)
+        return ret;
+    if (!TEST_int_eq(BIO_reset(bio), 1))
+        return 0;
+    if (*redirect != NULL) {
+        BIO_set_callback_arg(bio, (char *)(redirect + 1));
+        return BIO_printf(bio, "HTTP/1.0 302 Found\r\nLocation: %s\r\n\r\n",
+                   *redirect)
+            > 0;
+    }
+    return BIO_puts(bio, "HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\n" text1) > 0;
+}
+
+/* The redirect policy uses the requested protocol; no actual TLS is needed. */
+static BIO *http_noop_update(BIO *bio, void *arg, int connect, int detail)
+{
+    return bio;
+}
+
+static int test_http_redirect(int idx)
+{
+    BIO *bio = BIO_new(BIO_s_mem());
+    BIO *rsp = NULL;
+    char buf[sizeof(text1)];
+    unsigned long err;
+    int res = 0;
+
+    if (!TEST_ptr(bio))
+        goto end;
+    BIO_set_callback_ex(bio, http_redirect_cb);
+    BIO_set_callback_arg(bio, (char *)redirect_tests[idx].redirects);
+    ERR_clear_error();
+    rsp = OSSL_HTTP_get(redirect_tests[idx].url, NULL, NULL, bio, NULL,
+        http_noop_update, NULL, 0, NULL, NULL, 0,
+        OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0);
+    if (redirect_tests[idx].success) {
+        res = TEST_ptr(rsp)
+            && TEST_int_eq(BIO_read(rsp, buf, sizeof(buf)), sizeof(text1) - 1)
+            && TEST_mem_eq(buf, sizeof(text1) - 1, text1, sizeof(text1) - 1);
+    } else {
+        err = ERR_peek_last_error();
+        res = TEST_ptr_null(rsp)
+            && TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_HTTP)
+            && TEST_int_eq(ERR_GET_REASON(err), HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP);
+    }
+
+end:
+    BIO_free(rsp);
+    BIO_free(bio);
+    ERR_clear_error();
     return res;
 }
 
@@ -682,6 +759,7 @@ int setup_tests(void)
 
     ADD_TEST(test_http_get_txt);
     ADD_TEST(test_http_get_txt_redirected);
+    ADD_ALL_TESTS(test_http_redirect, OSSL_NELEM(redirect_tests));
     ADD_TEST(test_http_get_txt_fatal_status);
     ADD_TEST(test_http_get_txt_error_status);
     ADD_TEST(test_http_post_txt);

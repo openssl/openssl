@@ -66,6 +66,16 @@ struct CMS_ContentInfo_st {
         void *otherData;
     } d;
     CMS_CTX ctx;
+    /*-
+     * Set when the content octet string is empty and is to be filled at
+     * dataFinal time from the memory BIO ossl_cms_content_bio() returns.
+     * Cleared:
+     * - once the string has been filled;
+     * - when the content is detached;
+     * - when streaming is set up, where the encoder writes the content out
+     *   and records its position in the string rather than filling it.
+     */
+    int contentIncomplete;
 };
 
 DEFINE_STACK_OF(CMS_CertificateChoices)
@@ -74,6 +84,7 @@ struct CMS_SignedData_st {
     int32_t version;
     STACK_OF(X509_ALGOR) *digestAlgorithms;
     CMS_EncapsulatedContentInfo *encapContentInfo;
+    /* untrusted certificates for chain building, may include signer certs: */
     STACK_OF(CMS_CertificateChoices) *certificates;
     STACK_OF(CMS_RevocationInfoChoice) *crls;
     STACK_OF(CMS_SignerInfo) *signerInfos;
@@ -145,6 +156,8 @@ struct CMS_EncryptedContentInfo_st {
     int debug;
     /* Set to 1 if we have no cert and need extra safety measures for MMA */
     int havenocert;
+    /* Set to 1 if key length mismatch can be reported without an MMA risk */
+    int harderr;
 };
 
 struct CMS_RecipientInfo_st {
@@ -430,12 +443,20 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms);
 const CMS_CTX *ossl_cms_get0_cmsctx(const CMS_ContentInfo *cms);
 OSSL_LIB_CTX *ossl_cms_ctx_get0_libctx(const CMS_CTX *ctx);
 const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx);
-void ossl_cms_resolve_libctx(CMS_ContentInfo *ci);
+void ossl_cms_infos_set_cmsctx(CMS_ContentInfo *ci);
 
 CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     const unsigned char *precomp_md,
     unsigned int precomp_mdlen);
+/**
+ * @brief Prepare the content of cms for indefinite-length streaming.
+ * The content octet string is created if it is not already present, and the
+ * content is recorded as created here rather than read in via d2i.
+ * @param cms the CMS_ContentInfo to prepare for streaming
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_stream(CMS_ContentInfo *cms);
 
 CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
     OSSL_LIB_CTX *libctx,

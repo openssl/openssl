@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
-
-/* unused, to avoid warning. */
-static int idx;
 
 #define FUZZTIME 1485898104
 
@@ -50,7 +47,9 @@ time_t time(time_t *t) TIME_IMPL(t)
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
-    idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    if (SSL_get_ex_data_X509_STORE_CTX_idx() != 0) {
+        /* Just suppress warning */
+    }
     comp_methods = SSL_COMP_get_compression_methods();
     if (comp_methods != NULL)
         sk_SSL_COMP_sort(comp_methods);

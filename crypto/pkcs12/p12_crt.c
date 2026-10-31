@@ -126,7 +126,7 @@ PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
         if (!copy_bag_attr(bag, pkey, NID_LocalKeySet))
             goto err;
 
-        if (name && !PKCS12_add_friendlyname(bag, name, -1))
+        if (name && !PKCS12_add_friendlyname(bag, name, namelen))
             goto err;
         if (keyidlen && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
             goto err;

@@ -11,6 +11,7 @@ use POSIX ":sys_wait_h";
 package TLSProxy::Proxy;
 
 use File::Spec;
+use File::Temp qw/tempfile/;
 use IO::Socket;
 use IO::Select;
 use TLSProxy::Record;
@@ -117,6 +118,7 @@ sub init
         serverconnects => 1,
         reneg => 0,
         sessionfile => undef,
+        expected_tickets => 2,
 
         #Public read
         isdtls => $isdtls,
@@ -125,6 +127,8 @@ sub init
         serverpid => 0,
         clientpid => 0,
         clientexit => 0,
+        clientoutput => "",
+        client_alerts => [],
         execute => $execute,
         cert => $cert,
         debug => $debug,
@@ -164,8 +168,11 @@ sub clearClient
     $self->{seen_msgseq} = {};
     $self->{clientflags} = "";
     $self->{sessionfile} = undef;
+    $self->{expected_tickets} = 2;
     $self->{clientpid} = 0;
     $self->{clientexit} = 0;
+    $self->{clientoutput} = "";
+    $self->{client_alerts} = [];
     $is_tls13 = 0;
     $ciphersuite = undef;
 
@@ -317,10 +324,23 @@ sub start
 
     open(my $savedin, "<&STDIN");
 
-    # Temporarily replace STDIN so that sink process can inherit it...
-    open(STDIN, "$^X -e 'sleep(10)' |") if $self->{isdtls};
+    # DTLS s_server exits when its stdin reaches EOF, so it needs one that
+    # stays open for as long as the test does.  Give it the read end of a
+    # pipe and keep the write end here; closing that in clientstart() is
+    # what lets it finish.
+    my $stdin_holder;
+    if ($self->{isdtls}) {
+        my $rd;
+
+        # A previous run that died before its teardown may have left one.
+        close($self->{stdin_holder}) if defined($self->{stdin_holder});
+        pipe($rd, $stdin_holder) or die "Failed to create stdin pipe: $!\n";
+        open(STDIN, "<&", $rd) or die "Failed to replace STDIN: $!\n";
+        close($rd);
+    }
     $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
     $self->{real_serverpid} = $pid;
+    $self->{stdin_holder} = $stdin_holder;
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
@@ -417,11 +437,21 @@ sub clientstart
         if ($self->debug) {
             print STDERR "Client command: $execcmd\n";
         }
+
+        # Capture s_client's stdout+stderr so it can be inspected after exit
+        # (see clientoutput/client_alerts). The open() below only wires the
+        # client's stdin. The file is created in the test results directory
+        # (the current working directory during a test run).
+        my (undef, $capturefile) = tempfile("client-XXXXXX",
+                                            DIR => File::Spec->curdir,
+                                            SUFFIX => ".out", OPEN => 0);
+        $self->{clientcapture} = $capturefile;
+
         open(my $savedout, ">&STDOUT");
         # If we open pipe with new descriptor, attempt to close it,
         # explicitly or implicitly, would incur waitpid and effectively
         # dead-lock...
-        if (!($pid = open(STDOUT, "| $execcmd"))) {
+        if (!($pid = open(STDOUT, "| $execcmd >\"$capturefile\" 2>&1"))) {
             my $err = $!;
             kill(3, $self->{real_serverpid});
             die "Failed to $execcmd: $err\n";
@@ -474,7 +504,7 @@ sub clientstart
     $self->{client_epoch} = 0;
     $self->{client_sequence_number} = 0;
 
-    while($fdset->count && $ctr < 10) {
+    while($fdset->count && $ctr < 50) {
         if (defined($self->{sessionfile})) {
             # s_client got -ign_eof and won't be exiting voluntarily, so we
             # look for data *and* session ticket...
@@ -495,7 +525,7 @@ sub clientstart
             }
         }
 
-        if (!(@ready = $fdset->can_read(1))) {
+        if (!(@ready = $fdset->can_read(0.1))) {
             my $success_flag = TLSProxy::Message->success();
             my $handshake_done = $self->handshake_complete();
             my $msg_end = TLSProxy::Message->end();
@@ -563,7 +593,7 @@ sub clientstart
         }
     }
 
-    if ($ctr >= 10) {
+    if ($ctr >= 50) {
         kill(3, $self->{real_serverpid});
         print "No progress made\n";
         $success = 0;
@@ -596,6 +626,13 @@ sub clientstart
 
     my $pid;
     if (--$self->{serverconnects} == 0) {
+        # Let a DTLS s_server see EOF on its stdin, so that it exits and the
+        # sink process reading its output finishes too.  This has to happen
+        # before either is waited for.
+        if (defined($self->{stdin_holder})) {
+            close($self->{stdin_holder});
+            $self->{stdin_holder} = undef;
+        }
         $pid = $self->{serverpid};
         print "Waiting for 'perl -ne print' process to close: $pid...\n";
         $pid = waitpid($pid, 0);
@@ -622,6 +659,19 @@ sub clientstart
     print "Waiting for s_client process to close: $pid...\n";
     waitpid($pid, 0);
     $self->{clientexit} = $?;
+
+    # Slurp and parse the captured s_client output
+    if (defined $self->{clientcapture}) {
+        if (open(my $fh, '<', $self->{clientcapture})) {
+            local $/;
+            $self->{clientoutput} = <$fh>;
+            close($fh);
+        }
+        unlink $self->{clientcapture};
+        $self->{clientcapture} = undef;
+        print STDERR $self->{clientoutput} if $self->debug;
+        $self->{client_alerts} = _parse_alerts($self->{clientoutput});
+    }
 
     return $success;
 }
@@ -668,32 +718,58 @@ sub construct_alert_message
     die "construct_alert_message only valid for DTLSv1.3 tests\n"
         if !$self->{isdtls} || !$self->is_tls13();
 
-    my $seqhi = ($sequence_number >> 32) & 0xffff;
-    my $seqmi = ($sequence_number >> 16) & 0xffff;
-    my $seqlo = ($sequence_number >> 0) & 0xffff;
-
-    # DTLS Record Layer Header
-    my $content_type = pack("C", 21);              # Alert (21)
-    my $legacy_version = pack("n", 0xFEFD);        # DTLS 1.2 (0xFEFD)
-    my $epoch_bytes = pack("n", $epoch);           # 2 bytes
-    my $sequence_bytes = pack('nnn', $seqhi, $seqmi, $seqlo);
-
-    my $length = pack("n", 2);                     # 2 bytes for alert payload
-
-    # Alert Message
     my $alert_level = pack("C", 1);                # Warning (1)
     my $alert_description = pack("C", 0);          # close_notify (0)
+    my $alert_payload = $alert_level.$alert_description;
 
-    # Combine all parts
-    my $packet = $content_type.
-                 $legacy_version.
-                 $epoch_bytes.
-                 $sequence_bytes.
-                 $length.
-                 $alert_level.
-                 $alert_description;
+    if ($epoch == 0) {
+        # Epoch 0 uses DTLSPlaintext.
+        my $seqhi = ($sequence_number >> 32) & 0xffff;
+        my $seqmi = ($sequence_number >> 16) & 0xffff;
+        my $seqlo = ($sequence_number >> 0) & 0xffff;
 
-    return $packet;
+        return pack("C", 21).                 # Alert (21)
+               pack("n", 0xFEFD).             # legacy version DTLS 1.2
+               pack("n", $epoch).
+               pack('nnn', $seqhi, $seqmi, $seqlo).
+               pack("n", length($alert_payload)).
+               $alert_payload;
+    }
+
+    # Keyed epochs use DTLSCiphertext. The p_ossltest cipher leaves the
+    # payload unchanged and does not verify the tag. The inner plaintext
+    # holds close_notify and its content type; a zero tag follows.
+    # The header uses a 16 bit sequence number and a length field. Mask the
+    # sequence number with the first two payload bytes, as in Record.pm.
+    my $payload = $alert_payload.pack("C", 21).("\x00" x 16);
+    my $maskhi = unpack("n", substr($payload, 0, 2));
+    my $seqlo = ($sequence_number & 0xffff) ^ $maskhi;
+    my $first = 0x20 | 0x08 | 0x04 | ($epoch & 0x03);
+
+    return pack("C", $first).
+           pack("n", $seqlo).
+           pack("n", length($payload)).
+           $payload;
+}
+
+# Parse alerts logged by s_client's -msg message callback, e.g.
+#   >>> DTLS 1.2, Alert [length 0002], fatal unexpected_message
+# ">>>" is an alert we sent, "<<<" one we received. Returns a list of
+# { direction => 'sent'|'recv', level, name } hashrefs.
+sub _parse_alerts
+{
+    my $output = shift;
+    my @alerts;
+
+    foreach my $line (split /\n/, $output) {
+        next unless $line =~ /^(>>>|<<<) .+, Alert \[length [0-9a-f]+\], (warning|fatal) (\S+)$/;
+        push @alerts, {
+            direction => ($1 eq '>>>') ? 'sent' : 'recv',
+            level => $2,
+            name => $3,
+        };
+    }
+    return \@alerts;
 }
 
 sub process_packet
@@ -753,7 +829,7 @@ sub process_packet
                 foreach my $record (@{$message->{records}}) {
                     if (@{$self->{session_ticket_seq}} == 0) {
                         push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
-                    } elsif (scalar(@{$self->{session_ticket_seq}}) != 2) {
+                    } elsif (scalar(@{$self->{session_ticket_seq}}) != $self->{expected_tickets}) {
                         my $match = $self->find_session_ticket_ack($record->epoch, $record->seq);
                         if ($match == -1) {
                             push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
@@ -800,7 +876,8 @@ sub seen_session_ticket_ack
     my $record = shift;
 
     my $ack_hash = $self->{saw_session_ticket_ack};
-    return if !$self->{saw_session_ticket} || scalar(keys %{$ack_hash}) == 2;
+    return if !$self->{saw_session_ticket}
+              || scalar(keys %{$ack_hash}) == $self->{expected_tickets};
     return if $record->content_type() != TLSProxy::Record::RT_ACK;
 
     my @record_numbers = ();
@@ -818,7 +895,7 @@ sub seen_session_ticket_ack
         if ($match != -1) {
             my $session_ticket = splice(@{$ticket_seq}, $match, 1);
             $ack_hash->{$key} = $session_ticket;
-            last if scalar(keys %{$ack_hash}) == 2;
+            last if scalar(keys %{$ack_hash}) == $self->{expected_tickets};
         }
     }
 }
@@ -847,8 +924,9 @@ sub handshake_complete
     my $res = 0;
 
     if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
-        # We need to wait for the second ack message for the handshake to be complete
-        if (scalar(keys %{$self->{saw_session_ticket_ack}}) == 2) {
+        # The handshake is complete once every expected NewSessionTicket
+        # (2 by default, but only 1 follows a resumption) has been acked
+        if (scalar(keys %{$self->{saw_session_ticket_ack}}) == $self->{expected_tickets}) {
             $res = 1;
         }
     } else {
@@ -935,6 +1013,40 @@ sub clientexit
 {
     my $self = shift;
     return $self->{clientexit};
+}
+# True only if s_client exited cleanly (i.e. was not killed by a signal) with
+# a non-zero status, meaning it rejected the connection rather than crashing.
+sub client_failed
+{
+    my $self = shift;
+    my $status = $self->{clientexit};
+    return 0 if ($status & 127) != 0;
+    return ($status >> 8) != 0;
+}
+# Raw captured s_client stdout+stderr from the last run.
+sub clientoutput
+{
+    my $self = shift;
+    return $self->{clientoutput};
+}
+# Arrayref of all alerts parsed from the s_client -msg output.
+sub client_alerts
+{
+    my $self = shift;
+    return $self->{client_alerts};
+}
+# True if s_client locally generated the named fatal alert (e.g.
+# "unexpected_message"). Requires -msg in clientflags. Reflects the alert
+# s_client generated regardless of whether the peer ever received it.
+sub client_sent_fatal_alert
+{
+    my ($self, $name) = @_;
+    foreach my $alert (@{$self->{client_alerts}}) {
+        return 1 if $alert->{direction} eq 'sent'
+                    && $alert->{level} eq 'fatal'
+                    && $alert->{name} eq $name;
+    }
+    return 0;
 }
 
 #Read/write accessors
@@ -1057,6 +1169,14 @@ sub sessionfile
         TLSProxy::Message->successondata(1);
     }
     return $self->{sessionfile};
+}
+sub expected_tickets
+{
+    my $self = shift;
+    if (@_) {
+        $self->{expected_tickets} = shift;
+    }
+    return $self->{expected_tickets};
 }
 
 sub ciphersuite

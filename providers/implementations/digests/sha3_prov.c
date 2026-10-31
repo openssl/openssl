@@ -482,10 +482,18 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md = {
         { OSSL_FUNC_DIGEST_DESERIALIZE, (void (*)(void))name##_deserialize }, \
         PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
 
+#ifdef FIPS_MODULE
+#define PROV_SHA3_FIPS_GET_CTX_PARAMS \
+    PROV_DISPATCH_FUNC_DIGEST_GET_CTX_PARAMS,
+#else
+#define PROV_SHA3_FIPS_GET_CTX_PARAMS
+#endif
+
 #define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)     \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags), \
         { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },           \
-        PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+        PROV_SHA3_FIPS_GET_CTX_PARAMS                                     \
+            PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 #define PROV_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)             \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),          \

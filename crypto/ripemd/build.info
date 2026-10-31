@@ -17,6 +17,7 @@ ENDIF
 
 SOURCE[../../libcrypto]=rmd_dgst.c rmd_one.c $RMD160ASM
 DEFINE[../../libcrypto]=$RMD160DEF
+DEFINE[../../providers/libdefault.a]=$RMD160DEF
 
 # When all deprecated symbols are removed, libcrypto doesn't export the
 # RIPEMD160 functions, so we must include them directly in liblegacy.a

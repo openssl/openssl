@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -467,9 +467,30 @@ static const struct rx_test_op rx_script_2[] = {
     RX_OP_END,
 };
 
+/*
+ * The test verifies connection window is still enforced.
+ * The stream frame fits to stream control window, but exceeds
+ * connection flow control window.
+ */
+static const struct rx_test_op rx_script_3[] = {
+    RX_OP_STEP_TIME(1000 * OSSL_TIME_MS),
+    RX_OP_INIT_CONN(INIT_WINDOW_SIZE, 10 * INIT_WINDOW_SIZE),
+    RX_OP_INIT_STREAM(0, INIT_S_WINDOW_SIZE, 30 * INIT_S_WINDOW_SIZE),
+    RX_OP_INIT_STREAM(1, INIT_S_WINDOW_SIZE, 30 * INIT_S_WINDOW_SIZE),
+    RX_OP_INIT_STREAM(2, INIT_S_WINDOW_SIZE, 30 * INIT_S_WINDOW_SIZE),
+    RX_OP_RX(0, INIT_S_WINDOW_SIZE, 0),
+    RX_OP_CHECK_ERROR_STREAM(0, OSSL_QUIC_ERR_NO_ERROR, 0),
+    RX_OP_RX(1, INIT_S_WINDOW_SIZE, 0),
+    RX_OP_CHECK_ERROR_STREAM(1, OSSL_QUIC_ERR_NO_ERROR, 0),
+    RX_OP_RX(2, INIT_S_WINDOW_SIZE, 0),
+    RX_OP_CHECK_ERROR_STREAM(2, OSSL_QUIC_ERR_FLOW_CONTROL_ERROR, 0),
+    RX_OP_END,
+};
+
 static const struct rx_test_op *rx_scripts[] = {
     rx_script_1,
-    rx_script_2
+    rx_script_2,
+    rx_script_3
 };
 
 static int run_rxfc_script(const struct rx_test_op *script)

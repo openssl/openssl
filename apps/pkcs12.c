@@ -110,6 +110,7 @@ typedef enum OPTION_choice {
     OPT_JDKTRUST,
     OPT_PBMAC1_PBKDF2,
     OPT_PBMAC1_PBKDF2_MD,
+    OPT_NOVERSIONCHECK,
 #ifndef OPENSSL_NO_DES
     OPT_LEGACY_ALG
 #endif
@@ -122,11 +123,11 @@ const OPTIONS pkcs12_options[] = {
     { "out", OPT_OUT, '>', "Output file" },
     { "passin", OPT_PASSIN, 's', "Input file pass phrase source" },
     { "passout", OPT_PASSOUT, 's', "Output file pass phrase source" },
-    { "password", OPT_PASSWORD, 's', "Set PKCS#12 import/export password source" },
+    { "password", OPT_PASSWORD, 's', "Set PKCS #12 import/export password source" },
     { "twopass", OPT_TWOPASS, '-', "Separate MAC, encryption passwords" },
     { "nokeys", OPT_NOKEYS, '-', "Don't output private keys" },
     { "nocerts", OPT_NOCERTS, '-', "Don't output certificates" },
-    { "noout", OPT_NOOUT, '-', "Don't output anything, just verify PKCS#12 input" },
+    { "noout", OPT_NOOUT, '-', "Don't output anything, just verify PKCS #12 input" },
 #ifndef OPENSSL_NO_DES
     { "legacy", OPT_LEGACY_ALG, '-',
 #ifdef OPENSSL_NO_RC2
@@ -139,8 +140,8 @@ const OPTIONS pkcs12_options[] = {
     OPT_PROV_OPTIONS,
     OPT_R_OPTIONS,
 
-    OPT_SECTION("PKCS#12 import (parsing PKCS#12)"),
-    { "info", OPT_INFO, '-', "Print info about PKCS#12 structure" },
+    OPT_SECTION("PKCS #12 import (parsing PKCS #12)"),
+    { "info", OPT_INFO, '-', "Print info about PKCS #12 structure" },
     { "nomacver", OPT_NOMACVER, '-', "Don't verify integrity MAC" },
     { "clcerts", OPT_CLCERTS, '-', "Only output client certificates" },
     { "cacerts", OPT_CACERTS, '-', "Only output CA certificates" },
@@ -148,10 +149,10 @@ const OPTIONS pkcs12_options[] = {
     { "noenc", OPT_NOENC, '-', "Don't encrypt private keys" },
     { "nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated" },
 
-    OPT_SECTION("PKCS#12 output (export)"),
-    { "export", OPT_EXPORT, '-', "Create PKCS12 file" },
+    OPT_SECTION("PKCS #12 output (export)"),
+    { "export", OPT_EXPORT, '-', "Create PKCS #12 file" },
     { "inkey", OPT_INKEY, 's', "Private key, else read from -in input file" },
-    { "certfile", OPT_CERTFILE, '<', "Extra certificates for PKCS12 output" },
+    { "certfile", OPT_CERTFILE, '<', "Extra certificates for PKCS #12 output" },
     { "passcerts", OPT_PASSCERTS, 's', "Certificate file pass phrase source" },
     { "chain", OPT_CHAIN, '-', "Build and add certificate chain for EE cert," },
     { OPT_MORE_STR, 0, 0,
@@ -191,7 +192,9 @@ const OPTIONS pkcs12_options[] = {
     { "maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility" },
     { "macsaltlen", OPT_MACSALTLEN, 'p', "Specify the salt len for MAC" },
     { "nomac", OPT_NOMAC, '-', "Don't generate MAC" },
-    { "jdktrust", OPT_JDKTRUST, 's', "Mark certificate in PKCS#12 store as trusted for JDK compatibility" },
+    { "jdktrust", OPT_JDKTRUST, 's', "Mark certificate in PKCS #12 store as trusted for JDK compatibility" },
+    { "noversioncheck", OPT_NOVERSIONCHECK, '-',
+        "Don't check the loaded PKCS #12 version info is valid" },
     { NULL }
 };
 
@@ -207,6 +210,7 @@ int pkcs12_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
     int use_legacy = 0;
 #endif
+    int version_check = 1;
     /* use library defaults for the iter, maciter, cert, and key PBE */
     int iter = 0, maciter = 0, pbmac1_pbkdf2 = 0;
     int macsaltlen = PKCS12_SALT_LEN;
@@ -404,6 +408,9 @@ int pkcs12_main(int argc, char **argv)
             use_legacy = 1;
             break;
 #endif
+        case OPT_NOVERSIONCHECK:
+            version_check = 0;
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
@@ -727,7 +734,7 @@ int pkcs12_main(int argc, char **argv)
             jdk_trust, (void *)obj);
 
         if (p12 == NULL) {
-            BIO_printf(bio_err, "Error creating PKCS12 structure for %s\n",
+            BIO_printf(bio_err, "Error creating PKCS #12 structure for %s\n",
                 outfile);
             goto export_end;
         }
@@ -747,7 +754,7 @@ int pkcs12_main(int argc, char **argv)
                 }
             } else {
                 if (!PKCS12_set_mac(p12, mpass, -1, NULL, macsaltlen, maciter, macmd)) {
-                    BIO_puts(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n"
+                    BIO_puts(bio_err, "Error creating PKCS #12 MAC; no PKCS12KDF support?\n"
                                       "Use -nomac or -pbmac1_pbkdf2 if PKCS12KDF support not available\n");
                     goto export_end;
                 }
@@ -786,6 +793,10 @@ int pkcs12_main(int argc, char **argv)
     }
     if ((p12 = d2i_PKCS12_bio(in, &p12)) == NULL) {
         ERR_print_errors(bio_err);
+        goto end;
+    }
+    if (version_check && !PKCS12_check_version(p12)) {
+        BIO_printf(bio_err, "PKCS #12 file contains an invalid version number\n");
         goto end;
     }
 
@@ -871,7 +882,7 @@ int pkcs12_main(int argc, char **argv)
             pkcs12kdf = EVP_KDF_fetch(app_get0_libctx(), "PKCS12KDF",
                 app_get0_propq());
             if (pkcs12kdf == NULL) {
-                BIO_puts(bio_err, "Error verifying PKCS12 MAC; no PKCS12KDF support.\n");
+                BIO_puts(bio_err, "Error verifying PKCS #12 MAC; no PKCS12KDF support.\n");
                 BIO_puts(bio_err, "Use -nomacver if MAC verification is not required.\n");
                 goto end;
             }
@@ -952,6 +963,7 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
 {
     STACK_OF(X509_ATTRIBUTE) *attrs = NULL;
     X509_ATTRIBUTE *attr = NULL;
+    ASN1_OBJECT *obj = NULL;
 
     /* Nothing to do */
     if (cbarg == NULL)
@@ -960,8 +972,17 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
     /* Get the current attrs */
     attrs = (STACK_OF(X509_ATTRIBUTE) *)PKCS12_SAFEBAG_get0_attrs(bag);
 
-    /* Create a new attr for the JDK Trusted Usage and add it */
-    attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, (ASN1_OBJECT *)cbarg);
+    /*
+     * Create a new attr for the JDK Trusted Usage and add it. The attr owns
+     * its value, so give it a copy: cbarg stays owned by the caller.
+     */
+    if ((obj = OBJ_dup((ASN1_OBJECT *)cbarg)) == NULL)
+        return -1;
+    attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, obj);
+    if (attr == NULL) {
+        ASN1_OBJECT_free(obj);
+        return -1;
+    }
 
     /* Add the new attr, if attrs is NULL, it'll be initialised */
     X509at_add1_attr(&attrs, attr);
@@ -1033,6 +1054,51 @@ int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
                 pass, passlen, options, pempass, enc))
             return 0;
     }
+    return 1;
+}
+
+static int extract_symmetric_key(BIO *out, const PKCS12_SAFEBAG *bag,
+    const char *pass, int passlen, int options, const EVP_CIPHER *enc)
+{
+    PKCS8_PRIV_KEY_INFO *p8;
+    EVP_SKEY *skey = NULL;
+
+    if (options & NOKEYS)
+        return 1;
+
+    p8 = PKCS12_decrypt_secretbag(bag, pass, passlen,
+        app_get0_libctx(), app_get0_propq());
+    if (p8 == NULL)
+        return 0;
+    skey = PKCS8_PRIV_KEY_INFO_get1_skey(p8, app_get0_libctx(),
+        app_get0_propq(), NULL, 0);
+    PKCS8_PRIV_KEY_INFO_free(p8);
+    if (skey == NULL)
+        return 0;
+    if (enc == NULL) {
+        const unsigned char *kdata = NULL;
+        size_t klen = 0;
+
+        EVP_SKEY_get0_raw_key(skey, &kdata, &klen);
+
+        if (kdata != NULL && klen > 0) {
+            BIO_puts(bio_err, "Bag Value: ");
+            BIO_puts(out, "\n    Key Data: ");
+            hex_print(out, kdata, (int)klen);
+
+            BIO_printf(bio_err, "    Key management: %s\n", EVP_SKEY_get0_skeymgmt_name(skey));
+            BIO_printf(bio_err, "    Key Length: %zu bytes\n", klen);
+        } else {
+            BIO_printf(bio_err, "Error obtaining key bytes\n");
+            EVP_SKEY_free(skey);
+            return 0;
+        }
+    } else {
+        BIO_puts(bio_err, "Bag Value: ");
+        print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
+    }
+
+    EVP_SKEY_free(skey);
     return 1;
 }
 
@@ -1115,8 +1181,12 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         print_attribs(out, attrs, "Bag Attributes");
         BIO_puts(bio_err, "Bag Type: ");
         i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_bag_type(bag));
-        BIO_puts(bio_err, "\nBag Value: ");
-        print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
+        BIO_puts(bio_err, "\n");
+
+        if (PKCS12_SAFEBAG_get_bag_nid(bag) == NID_pkcs8ShroudedKeyBag)
+            return extract_symmetric_key(out, bag, pass, passlen, options, enc);
+        else
+            print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
         return 1;
 
     case NID_safeContentsBag:

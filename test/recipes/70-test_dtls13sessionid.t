@@ -76,6 +76,9 @@ $proxy->clientflags("$clientflags -sess_in $session");
 $proxy->serverflags($serverflags);
 $proxy->sessionfile($session);
 $proxy->filter(\&inject_session_id_filter);
+# The server sends at most one NewSessionTicket after a resumption, so the
+# proxy must not wait for the default two to be acked.
+$proxy->expected_tickets(1);
 TLSProxy::Message->successondata(1);
 $proxy->start();
 ok(TLSProxy::Message->success() && !server_sent_certificate(),

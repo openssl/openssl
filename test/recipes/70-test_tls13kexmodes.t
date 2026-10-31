@@ -123,6 +123,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
             TLSProxy::Message::SERVER,
             checkhandshake::KEY_SHARE_HRR_EXTENSION],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::SERVER,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
             TLSProxy::Message::CLIENT,
@@ -170,6 +173,9 @@ sub setup_extensions
         [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
             TLSProxy::Message::CLIENT,
             checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_COOKIE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::COOKIE_EXTENSION],
 
         [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
             TLSProxy::Message::SERVER,
@@ -194,9 +200,11 @@ use constant {
     NON_DHE_KEX_MODE_ONLY => 2,
     DHE_KEX_MODE_ONLY => 3,
     UNKNOWN_KEX_MODES => 4,
-    BOTH_KEX_MODES => 5
+    BOTH_KEX_MODES => 5,
+    BOTH_KEX_MODES_NO_KEY_SHARE => 6,
+    NON_DHE_KEX_MODE_ONLY_NO_GROUPS => 7
 };
-my $testcount = 13;
+my $testcount = 15;
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
@@ -429,6 +437,35 @@ sub run_tests
     $proxy->start();
     ok(TLSProxy::Message->fail(), "Resume with dhe kex mode, no overlapping groups");
 
+    #Test 14: Attempt a resume with both non-dhe and dhe kex mode and a
+    #         supported_groups extension but no key_share extension. Should fail
+    #         (RFC 8446 section 9.2: a ClientHello containing supported_groups
+    #         MUST also contain key_share), even though non-dhe resumption is
+    #         allowed by the server
+    $proxy->clear();
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448 -allow_no_dhe_kex");
+    $testtype = BOTH_KEX_MODES_NO_KEY_SHARE;
+    $proxy->start();
+    ok(TLSProxy::Message->fail()
+       && TLSProxy::Message->alert->description()
+          == TLSProxy::Message::AL_DESC_MISSING_EXTENSION,
+       "Resume with both kex modes, supported_groups but no key_share");
+
+    #Test 15: Attempt a resume with non-dhe kex mode only and with neither a
+    #         supported_groups nor a key_share extension. Should resume without
+    #         a key_share (omitting both extensions is permitted for a PSK-only
+    #         ClientHello)
+    $proxy->clear();
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448 -allow_no_dhe_kex");
+    $testtype = NON_DHE_KEX_MODE_ONLY_NO_GROUPS;
+    $proxy->start();
+    ok(TLSProxy::Message->success(),
+       "Resume with non-dhe kex mode, no supported_groups and no key_share");
+
     unlink $session;
 }
 
@@ -436,8 +473,10 @@ sub modify_kex_modes_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the initial ClientHello
-    return if ($proxy->flight != 0);
+    # We're only interested in the initial ClientHello, and in DTLS also in the
+    # one resent with the HelloRetryRequest cookie
+    return if ($proxy->flight != 0
+               && !($proxy->isdtls() && $proxy->flight == 2));
 
     foreach my $message (@{$proxy->message_list}) {
         if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
@@ -446,7 +485,8 @@ sub modify_kex_modes_filter
             if ($testtype == EMPTY_EXTENSION) {
                 $ext = pack "C",
                     0x00;       #List length
-            } elsif ($testtype == NON_DHE_KEX_MODE_ONLY) {
+            } elsif ($testtype == NON_DHE_KEX_MODE_ONLY
+                     || $testtype == NON_DHE_KEX_MODE_ONLY_NO_GROUPS) {
                 $ext = pack "C2",
                     0x01,       #List length
                     0x00;       #psk_ke
@@ -459,7 +499,8 @@ sub modify_kex_modes_filter
                     0x02,       #List length
                     0xfe,       #unknown
                     0xff;       #unknown
-            } elsif ($testtype == BOTH_KEX_MODES) {
+            } elsif ($testtype == BOTH_KEX_MODES
+                     || $testtype == BOTH_KEX_MODES_NO_KEY_SHARE) {
                 #We deliberately list psk_ke first...should still use psk_dhe_ke, except if the server is configured otherwise.
                 $ext = pack "C3",
                     0x02,       #List length
@@ -473,6 +514,15 @@ sub modify_kex_modes_filter
             } else {
                 $message->set_extension(
                     TLSProxy::Message::EXT_PSK_KEX_MODES, $ext);
+            }
+
+            if ($testtype == BOTH_KEX_MODES_NO_KEY_SHARE
+                || $testtype == NON_DHE_KEX_MODE_ONLY_NO_GROUPS) {
+                $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE);
+            }
+            if ($testtype == NON_DHE_KEX_MODE_ONLY_NO_GROUPS) {
+                $message->delete_extension(
+                    TLSProxy::Message::EXT_SUPPORTED_GROUPS);
             }
 
             $message->repack();

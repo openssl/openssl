@@ -17,9 +17,11 @@ our @EXPORT_OK = qw(generate_public_macros
                     produce_param_decoder
                     produce_param_decoder_with_count);
 
+our $headers_included = 0;
 my $case_sensitive = 1;
 my $need_break = 0;
 my $invalid_param = "invalid param";
+my $default_indicator = "fips indicator";
 
 my %params = (
 # Well known parameter names that core passes to providers
@@ -175,6 +177,7 @@ my %params = (
     'OSSL_DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
     'OSSL_DIGEST_PARAM_FUNCTION_NAME' =>    "function-name", # utf8 string
     'OSSL_DIGEST_PARAM_CUSTOMIZATION' =>    "customization", # utf8 string
+    'OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR' => '*OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR',
     'OSSL_DIGEST_PARAM_PROPERTIES' => '*OSSL_ALG_PARAM_PROPERTIES',# utf8 string
 
 # external mu digest parameters
@@ -646,8 +649,12 @@ my %params = (
     'OSSL_LIBSSL_RECORD_LAYER_PARAM_HS_PADDING' =>     "hs_padding",
 
 # Symmetric Key parameters
-    'OSSL_SKEY_PARAM_RAW_BYTES' => "raw-bytes",
+    'OSSL_SKEY_PARAM_ALIAS' => "skey-alias",
+    'OSSL_SKEY_PARAM_ALGORITHM_OID' => "skey-algorithm-oid",
+    'OSSL_SKEY_PARAM_ALGORITHM_PARAMS' => "skey-algorithm-params",
     'OSSL_SKEY_PARAM_KEY_LENGTH' => "key-length",
+    'OSSL_SKEY_PARAM_LOCAL_KEYID' => "skey-local-keyid",
+    'OSSL_SKEY_PARAM_RAW_BYTES' => "raw-bytes",
 );
 
 sub output_ifdef {
@@ -699,6 +706,7 @@ sub trie_matched {
   my $with_count = shift;
   my $field = shift;
   my $num = shift;
+  my $dup = shift;
   my $indent1 = shift;
   my $indent2 = shift;
 
@@ -706,6 +714,9 @@ sub trie_matched {
     printf "%sERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,\n", $indent1;
     printf "%s               \"param %%s is unsupported\", s);\n", $indent1;
     printf "%sreturn 0;\n", $indent1;
+  } elsif ($field eq $default_indicator) {
+    printf "%sif (!OSSL_PARAM_set_int((OSSL_PARAM *)p, 1))\n", $indent1;
+    printf "%sreturn 0;\n", $indent2;
   } elsif (defined($num)) {
     printf "%sif (ossl_unlikely(r->num_%s >= %s)) {\n", $indent1, $field, $num;
     printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_TOO_MANY_RECORDS,\n", $indent2;
@@ -716,9 +727,13 @@ sub trie_matched {
     printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
   } else {
     printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
-    printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
-    printf "%s               \"param %%s is repeated\", s);\n", $indent2;
-    printf "%sreturn 0;\n", $indent2;
+    if (defined $dup && $dup eq 'first') {
+      printf "%sbreak;\n", $indent2;
+    } else {
+      printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
+      printf "%s               \"param %%s is repeated\", s);\n", $indent2;
+      printf "%sreturn 0;\n", $indent2;
+    }
     printf "%s}\n", $indent1;
     printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
@@ -731,6 +746,7 @@ sub generate_decoder_from_trie {
     my $trieref = shift;
     my $identmap = shift;
     my $concat_num = shift;
+    my $process_dup = shift;
     my $ifdefs = shift;
     my $idt = "    ";
     my $indent0 = $idt x ($n + 3);
@@ -744,6 +760,7 @@ sub generate_decoder_from_trie {
 
         $field = $identmap->{$trieref->{'name'}};
         my $num = $concat_num->{$field};
+        my $dup = $process_dup->{$field};
         output_ifdef($ifdefs->{$field});
         printf "%sif (ossl_likely($strcmp(\"$suf\", s + $n) == 0", $indent0;
         if (not $case_sensitive) {
@@ -753,7 +770,7 @@ sub generate_decoder_from_trie {
         }
         print ")) {\n";
         printf "%s/* %s */\n", $indent1, $trieref->{'name'};
-        trie_matched($with_count, $field, $num, $indent1, $indent2);
+        trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
         printf "%s}\n", $indent0;
 
         # If this is at the top level and it's conditional, we have to
@@ -772,10 +789,11 @@ sub generate_decoder_from_trie {
         if ($l eq 'val') {
             $field = $identmap->{$trieref->{'val'}};
             my $num = $concat_num->{$field};
+            my $dup = $process_dup->{$field};
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
             output_ifdef($ifdefs->{$field});
-            trie_matched($with_count, $field, $num, $indent1, $indent2);
+            trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
             output_endifdef($ifdefs->{$field});
         } else {
             printf "%sbreak;\n", $indent1;
@@ -785,7 +803,7 @@ sub generate_decoder_from_trie {
                 printf "   case '%s':", uc $l if ($l =~ /[a-z]/);
             }
             print "\n";
-            generate_decoder_from_trie($with_count, $n + 1, $trieref->{$l}, $identmap, $concat_num, $ifdefs);
+            generate_decoder_from_trie($with_count, $n + 1, $trieref->{$l}, $identmap, $concat_num, $process_dup, $ifdefs);
         }
     }
     if ($need_break) {
@@ -862,18 +880,24 @@ sub output_param_decoder {
     my @keys = ();
     my %prms = ();
     my %concat_num = ();
+    my %process_dup = ();
     my %ifdefs = ();
 
-    print "/* Machine generated by util/perl/OpenSSL/paramnames.pm */\n";
-    # IWYU
-    print "#include <string.h>\n";
-    print "#include <openssl/params.h>\n";
-    print "#include \"internal/common.h\"\n";
-    print "#include \"prov/proverr.h\"\n";
-    print "\n";
+    if (!$headers_included) {
+        $headers_included = 1;
+        print "/* Machine generated by util/perl/OpenSSL/paramnames.pm */\n";
+        # IWYU
+        print "#include <string.h>\n";
+        print "#include <openssl/params.h>\n";
+        print "#include <openssl/e_os2.h>\n";
+        print "#include \"internal/common.h\"\n";
+        print "#include \"prov/proverr.h\"\n";
+        print "\n";
+    }
+    print "/* Machine generated */\n";
     # Output gettable param array
     printf "#ifndef %s_list\n", $decoder_name_base;
-    printf "static const OSSL_PARAM %s_list[] = {\n", $decoder_name_base;
+    printf "static ossl_unused const OSSL_PARAM %s_list[] = {\n", $decoder_name_base;
     for (my $i = 0; $i <= $#params; $i++) {
         my $pname = $params[$i][0];
         my $pident = $params[$i][1];
@@ -885,6 +909,9 @@ sub output_param_decoder {
         if ($pident eq $invalid_param) {
             # Skip error cases in parameter list
             next;
+        } elsif ($pident eq $default_indicator) {
+            # These are only relevant for the FIPS provider
+            $ifdefs{$pident} = ' defined(FIPS_MODULE)';
         }
         if (defined $pnum) {
             if ($pnum eq 'hidden') {
@@ -897,6 +924,10 @@ sub output_param_decoder {
             } elsif (substr($pnum, 0, 3) eq '#if') {
                 # Trim the `#if' from the front
                 $ifdefs{$pident} = substr($pnum, 3);
+            } elsif ($pnum =~ '^duplicate: *(first)') {
+                # This provides a provision for other duplicate resolution methods
+                # even though they aren't implemented yet
+                $process_dup{$pident} = $1;
             } elsif (not defined $concat_num{$pident}) {
                 $concat_num{$pident} = $pnum;
             }
@@ -915,13 +946,15 @@ sub output_param_decoder {
     printf "#ifndef %s_st\n", $decoder_name_base;
     printf "struct %s_st {\n", $decoder_name_base;
     my %done_prms = ();
+    my $have_struct_field = 0;
     foreach my $pident (sort values %prms) {
-        if ($pident eq $invalid_param) {
-            # Skip error cases in structure
+        if ($pident eq $invalid_param || $pident eq $default_indicator) {
+            # Skip error cases and default indicators in structure
             next;
         }
         if (not defined $done_prms{$pident}) {
             $done_prms{$pident} = 1;
+            $have_struct_field = 1;
             output_ifdef($ifdefs{$pident});
             if (defined($concat_num{$pident})) {
                 printf "    OSSL_PARAM *%s[%s];\n", $pident, $concat_num{$pident};
@@ -937,6 +970,7 @@ sub output_param_decoder {
             output_endifdef($ifdefs{$pident});
         }
     }
+    print "    int dummy; /* unused */\n" unless $have_struct_field;
     print "};\n#endif\n\n";
 
     # Output param decoder
@@ -944,7 +978,7 @@ sub output_param_decoder {
     locate_long_endings(\%t);
 
     printf "#ifndef %s_decoder\n", $decoder_name_base;
-    printf "static int %s_decoder\n", $decoder_name_base;
+    printf "static ossl_unused int %s_decoder\n", $decoder_name_base;
     printf "    (const OSSL_PARAM *p, struct %s_st *r", $decoder_name_base;
     printf "%s)\n", ($with_count ? ", int *count" : "");
     print "{\n";
@@ -953,7 +987,7 @@ sub output_param_decoder {
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
     print "        for (; (s = p->key) != NULL; p++)\n";
-    generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%ifdefs);
+    generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
     print "    return 1;\n";
     print "}\n#endif\n";
     print "/* End of machine generated */";

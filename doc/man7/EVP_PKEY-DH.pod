@@ -130,6 +130,20 @@ Where s is the security strength of the key which has values of
 
 =back
 
+=head2 DH and DHX key generation FIPS indicator
+
+The following key generation parameter can be retrieved with
+L<EVP_PKEY_CTX_get_params(3)> from the OpenSSL FIPS provider:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+Returns 1 if the operation is FIPS approved, or 0 otherwise.
+See L<fips_module(7)/FIPS indicators> for more information.
+
+=back
+
 =head2 DH and DHX key validation
 
 For keys that are not a named group the FIPS186-4 standard specifies that the

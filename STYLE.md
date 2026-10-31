@@ -217,13 +217,27 @@ exception, and the per-field commenting requirement on structures.
 Use the classic `/* ... */` comment markers. Do not use `// ...`
 markers.
 
-Comments should describe *what* the code does and *why*. Do not
-parrot the effect of each statement; well-written code is its own
-description of *how*. As the complexity of the code increases, the
-size and detail of comments should also increase. Err in favour of
-more comments rather than fewer: code that is *obvious* to you
-today will not necessarily be obvious to someone else two years
+Comments describe *what* the code does and, where the code does
+not make it evident, *why*: the requirement, invariant, or
+external constraint it satisfies. Do not parrot the effect of each
+statement; well-written code is its own description of *how*. The
+more subtle the code, the more a comment is needed -- code that is
+obvious to you today will not be obvious to someone else two years
 later.
+
+A comment is a fact about the code as it is, for a reader who has
+seen no other version of the file. Write the minimum that conveys
+the fact; a comment that can lose words without losing meaning is
+too long.
+
+Your reasoning while making a change is not a fact about the code.
+What the code used to do, what you considered and rejected, and
+why you chose this do not belong in comments.
+Before submitting, check every comment in your diff for "we",
+"no longer", "previously", "now", "instead of", "so that", "rather
+than" and "unlike", and for the shape "we do not do X here because
+...". Each marks a decision being narrated. Delete it, or replace
+it with the constraint the code satisfies.
 
 ### Multi-line comment blocks
 

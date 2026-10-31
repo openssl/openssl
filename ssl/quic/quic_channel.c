@@ -46,8 +46,7 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
     const unsigned char *retry_token,
     size_t retry_token_len,
-    const QUIC_CONN_ID *retry_scid,
-    int drop_later_pn);
+    const QUIC_CONN_ID *retry_scid);
 static int ch_restart(QUIC_CHANNEL *ch);
 
 static void ch_cleanup(QUIC_CHANNEL *ch);
@@ -75,8 +74,7 @@ static void rxku_detected(QUIC_PN pn, void *arg);
 static int ch_retry(QUIC_CHANNEL *ch,
     const unsigned char *retry_token,
     size_t retry_token_len,
-    const QUIC_CONN_ID *retry_scid,
-    int drop_later_pn);
+    const QUIC_CONN_ID *retry_scid);
 static void ch_update_idle(QUIC_CHANNEL *ch);
 static int ch_discard_el(QUIC_CHANNEL *ch,
     uint32_t enc_level);
@@ -92,6 +90,11 @@ static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
 static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state);
 
 DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
+
+typedef struct cfq_data_retire_cid {
+    uint64_t rtcid_seq;
+    QUIC_CHANNEL *rtcid_ch;
+} CFQ_DATA_RETIRE_CID_T;
 
 QUIC_NEEDS_LOCK
 static QLOG *ch_get_qlog(QUIC_CHANNEL *ch)
@@ -169,7 +172,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     qtx_args.get_qlog_cb = ch_get_qlog_cb;
     qtx_args.get_qlog_cb_arg = ch;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
-    ch->rx_max_udp_payload_size = qtx_args.mdpl;
+    ch->rx_max_udp_payload_size = QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE;
 
     ch->ping_deadline = ossl_time_infinite();
 
@@ -308,8 +311,12 @@ static int ch_init(QUIC_CHANNEL *ch)
             goto err;
     }
 
+    ch->rsqp = ossl_quic_rstream_qparm_new(ch);
+    if (ch->rsqp == NULL)
+        goto err;
+
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
-        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0);
+        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, ch->rsqp);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
     }
@@ -408,6 +415,9 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
         ossl_quic_rstream_free(ch->crypto_recv[pn_space]);
         ch->crypto_recv[pn_space] = NULL;
     }
+
+    ossl_quic_rstream_qparm_destroy(ch->rsqp);
+    ch->rsqp = NULL;
 
     ossl_qrx_pkt_release(ch->qrx_pkt);
     ch->qrx_pkt = NULL;
@@ -582,20 +592,18 @@ SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
-void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
+int ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
 {
-    SSL_free(ch->tls);
-    ch->tls = ssl;
-#ifndef OPENSSL_NO_QLOG
     /*
-     * If we're using qlog, make sure the tls gets further configured properly
+     * Rebind the handshake layer first, so that a failure leaves the channel
+     * unmodified.
      */
-    ch->use_qlog = 1;
-    if (ch->tls->ctx->qlog_title != NULL) {
-        OPENSSL_free(ch->qlog_title);
-        ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title);
-    }
-#endif
+    if (!ossl_assert(ch != NULL && ssl != NULL && ch->tls == NULL)
+        || !ossl_quic_tls_set0_ssl(ch->qtls, ssl))
+        return 0;
+
+    ch->tls = ssl;
+    return 1;
 }
 
 static void free_buf_mem(unsigned char *buf, size_t buf_len, void *arg)
@@ -2618,7 +2626,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
 
         if (!ch_retry(ch, ch->qrx_pkt->hdr->data,
                 ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
-                &ch->qrx_pkt->hdr->src_conn_id, old_have_processed_any_pkt))
+                &ch->qrx_pkt->hdr->src_conn_id))
             ossl_quic_channel_raise_protocol_error(ch, OSSL_QUIC_ERR_INTERNAL_ERROR,
                 0, "handling retry packet");
         break;
@@ -2986,9 +2994,29 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
     ch_start_terminating(ch, &tcause, 0);
 }
 
+/*
+ * Force the ACKM to consider every Initial packet still in flight as lost, so
+ * that the CRYPTO data they carried is sent again. None may be in flight, e.g.
+ * when a Version Negotiation packet has just had us mark them all and a Retry
+ * follows before we send again; their data is then already queued.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int ch_mark_initial_pkts_pseudo_lost(QUIC_CHANNEL *ch)
+{
+    OSSL_ACKM *ackm = ch->ackm;
+    QUIC_PN pn;
+
+    while (ossl_ackm_get_largest_unacked(ackm, QUIC_PN_SPACE_INITIAL, &pn))
+        if (!ossl_ackm_mark_packet_pseudo_lost(ackm, QUIC_PN_SPACE_INITIAL, pn))
+            return 0;
+
+    return 1;
+}
+
 /**
  * ch_restart - Restarts the QUIC channel by simulating loss of the initial
- * packet. This forces the packet to be regenerated with the updated protocol
+ * packets. This forces them to be regenerated with the updated protocol
  * version number.
  *
  * @ch: Pointer to the QUIC_CHANNEL structure.
@@ -2998,22 +3026,19 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code,
 static int ch_restart(QUIC_CHANNEL *ch)
 {
     /*
-     * Just pretend we lost our initial packet, so it gets
+     * Just pretend we lost our initial packets, so they get
      * regenerated, with our updated protocol version number
      */
-    return ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
-        /* PN= */ 0);
+    return ch_mark_initial_pkts_pseudo_lost(ch);
 }
 
 /* Called when a server asks us to do a retry. */
 static int ch_retry(QUIC_CHANNEL *ch,
     const unsigned char *retry_token,
     size_t retry_token_len,
-    const QUIC_CONN_ID *retry_scid,
-    int drop_later_pn)
+    const QUIC_CONN_ID *retry_scid)
 {
     void *buf;
-    QUIC_PN pn = 0;
 
     /*
      * RFC 9000 s. 17.2.5.1: "A client MUST discard a Retry packet that contains
@@ -3050,24 +3075,16 @@ static int ch_retry(QUIC_CHANNEL *ch,
     ch->doing_retry = 1;
 
     /*
-     * If a retry isn't our first response, we need to drop packet number
-     * one instead (i.e. the case where we did version negotiation first
-     */
-    if (drop_later_pn == 1)
-        pn = 1;
-
-    /*
-     * We need to stimulate the Initial EL to generate the first CRYPTO frame
+     * We need to stimulate the Initial EL to generate the CRYPTO frames
      * again. We can do this most cleanly by simply forcing the ACKM to consider
-     * the first Initial packet as lost, which it effectively was as the server
-     * hasn't processed it. This also maintains the desired behaviour with e.g.
-     * PNs not resetting and so on.
+     * every Initial packet we have sent as lost, which they effectively were as
+     * the server hasn't processed them (RFC 9002 s. 6.3). This also maintains
+     * the desired behaviour with e.g. PNs not resetting and so on.
      *
-     * The PN we used initially is always zero, because QUIC does not allow
-     * repeated retries.
+     * The ClientHello may span more than one Initial packet, so all of them
+     * must be marked, not only the first.
      */
-    if (!ossl_ackm_mark_packet_pseudo_lost(ch->ackm, QUIC_PN_SPACE_INITIAL,
-            pn))
+    if (!ch_mark_initial_pkts_pseudo_lost(ch))
         return 0;
 
     /*
@@ -3314,19 +3331,33 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
     ch_start_terminating(ch, &tcause, 0);
 }
 
-static void free_frame_data(unsigned char *buf, size_t buf_len, void *arg)
+static void free_frame_rtcid(unsigned char *buf, size_t buf_len, void *arg)
 {
+    CFQ_DATA_RETIRE_CID_T *cfq_data_rtcid = (CFQ_DATA_RETIRE_CID_T *)arg;
+    QUIC_CHANNEL *ch = cfq_data_rtcid->rtcid_ch;
+
+    if (ch->cur_retire_prior_to < cfq_data_rtcid->rtcid_seq)
+        ch->cur_retire_prior_to = cfq_data_rtcid->rtcid_seq;
+
     OPENSSL_free(buf);
+    OPENSSL_free(cfq_data_rtcid);
 }
 
 static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
 {
+    CFQ_DATA_RETIRE_CID_T *cfq_data_rtcid = NULL;
     BUF_MEM *buf_mem = NULL;
     WPACKET wpkt;
     size_t l;
 
     if (!ossl_quic_srtm_remove(ch->srtm, ch, seq_num, NULL))
         goto err;
+
+    cfq_data_rtcid = OPENSSL_malloc(sizeof(CFQ_DATA_RETIRE_CID_T));
+    if (cfq_data_rtcid == NULL)
+        goto err;
+    cfq_data_rtcid->rtcid_seq = seq_num;
+    cfq_data_rtcid->rtcid_ch = ch;
 
     if ((buf_mem = BUF_MEM_new()) == NULL)
         goto err;
@@ -3346,7 +3377,7 @@ static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
     if (ossl_quic_cfq_add_frame(ch->cfq, 1, QUIC_PN_SPACE_APP,
             OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID, 0,
             (unsigned char *)buf_mem->data, l,
-            free_frame_data, NULL)
+            free_frame_rtcid, cfq_data_rtcid)
         == NULL)
         goto err;
 
@@ -3360,6 +3391,7 @@ err:
         OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
         "internal error enqueueing retire conn id");
     BUF_MEM_free(buf_mem);
+    OPENSSL_free(cfq_data_rtcid);
     return 0;
 }
 
@@ -3368,6 +3400,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
 {
     uint64_t new_remote_seq_num = ch->cur_remote_seq_num;
     uint64_t new_retire_prior_to = ch->cur_retire_prior_to;
+    uint64_t retire_prior_to;
 
     if (!ossl_quic_channel_is_active(ch))
         return;
@@ -3466,10 +3499,10 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      * that NEW_CONNECTION_ID frame, by definition this will always be met.
      * This may change in future when we change our CID handling.
      */
-    while (new_retire_prior_to > ch->cur_retire_prior_to) {
-        if (!ch_enqueue_retire_conn_id(ch, ch->cur_retire_prior_to))
-            break;
-        ++ch->cur_retire_prior_to;
+    retire_prior_to = ch->cur_retire_prior_to;
+    while (new_retire_prior_to > retire_prior_to) {
+        ch_enqueue_retire_conn_id(ch, retire_prior_to);
+        retire_prior_to++;
     }
 }
 
@@ -3839,7 +3872,7 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
             goto err;
 
     if (can_recv)
-        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
+        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, ch->rsqp)) == NULL)
             goto err;
 
     /* TXFC */
@@ -4024,12 +4057,23 @@ void ossl_quic_channel_set_incoming_stream_auto_reject(QUIC_CHANNEL *ch,
 
 void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs)
 {
+    OSSL_RTT_INFO rtt_info;
+
     ossl_quic_stream_map_stop_sending_recv_part(&ch->qsm, qs,
         ch->incoming_stream_auto_reject_aec);
 
     ossl_quic_stream_map_reset_stream_send_part(&ch->qsm, qs,
         ch->incoming_stream_auto_reject_aec);
     qs->deleted = 1;
+
+    /*
+     * A rejected stream is never placed on the accept queue, so it would
+     * otherwise never be retired and would consume the peer's stream credit
+     * for the lifetime of the connection.
+     */
+    ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(ch), &rtt_info);
+    ossl_quic_stream_map_retire_stream_credit(&ch->qsm, qs,
+        rtt_info.smoothed_rtt);
 
     ossl_quic_stream_map_update_state(&ch->qsm, qs);
 }

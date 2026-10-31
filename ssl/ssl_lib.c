@@ -572,12 +572,35 @@ int SSL_clear(SSL *s)
     return s->method->ssl_reset(s);
 }
 
+static void ssl_connection_clear_tls13_secrets(SSL_CONNECTION *sc)
+{
+    OPENSSL_cleanse(sc->early_secret, sizeof(sc->early_secret));
+    OPENSSL_cleanse(sc->handshake_secret, sizeof(sc->handshake_secret));
+    OPENSSL_cleanse(sc->master_secret, sizeof(sc->master_secret));
+    OPENSSL_cleanse(sc->resumption_master_secret,
+        sizeof(sc->resumption_master_secret));
+    OPENSSL_cleanse(sc->client_finished_secret,
+        sizeof(sc->client_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_secret,
+        sizeof(sc->server_finished_secret));
+    OPENSSL_cleanse(sc->client_app_traffic_secret,
+        sizeof(sc->client_app_traffic_secret));
+    OPENSSL_cleanse(sc->server_app_traffic_secret,
+        sizeof(sc->server_app_traffic_secret));
+    OPENSSL_cleanse(sc->exporter_master_secret,
+        sizeof(sc->exporter_master_secret));
+    OPENSSL_cleanse(sc->early_exporter_master_secret,
+        sizeof(sc->early_exporter_master_secret));
+}
+
 int ossl_ssl_connection_reset(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return 0;
+
+    ssl_connection_clear_tls13_secrets(sc);
 
     if (ssl_clear_bad_session(sc)) {
         SSL_SESSION_free(sc->session);
@@ -589,12 +612,14 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->psksession_id = NULL;
     sc->psksession_id_len = 0;
     sc->hello_retry_request = SSL_HRR_NONE;
+    sc->dtls13_process_hello = 0;
     sc->sent_tickets = 0;
 
     sc->error = 0;
     sc->hit = 0;
     sc->shutdown = 0;
     sc->ext.early_data_suppressed = 0;
+    sc->ext.early_exporter_ready = 0;
     SSL_SESSION_free(sc->ext.early_data_session);
     sc->ext.early_data_session = NULL;
     sc->ext.tick_age_checked = 0;
@@ -656,8 +681,6 @@ int ossl_ssl_connection_reset(SSL *s)
         SSL *saved_listener = NULL;
         OSSL_TIME saved_created_at = ossl_time_zero();
         unsigned int saved_req_blocking_mode = DTLS_BLOCKING_MODE_INHERIT;
-        unsigned int saved_force_nonblocking = 0;
-        unsigned int saved_being_driven = 0;
         int is_dtls_listener_conn = 0;
 
         if (SSL_CONNECTION_IS_DTLS(sc) && sc->d1 != NULL
@@ -668,8 +691,6 @@ int ossl_ssl_connection_reset(SSL *s)
             saved_listener = sc->d1->listener;
             saved_created_at = sc->d1->created_at;
             saved_req_blocking_mode = sc->d1->req_blocking_mode;
-            saved_force_nonblocking = sc->d1->force_nonblocking;
-            saved_being_driven = sc->d1->being_driven;
             /*
              * Prevent dtls1_free from freeing rx and releasing the listener
              * reference - we'll restore them after ssl_init.
@@ -684,6 +705,14 @@ int ossl_ssl_connection_reset(SSL *s)
         if (!s->method->ssl_init(s)) {
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
             if (is_dtls_listener_conn) {
+                DTLS_LISTENER *dl = (DTLS_LISTENER *)saved_listener;
+
+                /* The detached connection cannot unregister itself on free. */
+                ossl_dtls_listener_unregister_established_conn(saved_listener,
+                    &saved_peer_addr);
+                ossl_crypto_mutex_lock(dl->mutex);
+                sc->listener_rx = NULL;
+                ossl_crypto_mutex_unlock(dl->mutex);
                 ossl_dtls_rx_free(saved_rx);
                 SSL_free(saved_listener);
             }
@@ -703,14 +732,6 @@ int ossl_ssl_connection_reset(SSL *s)
              * connection, not handshake state, so it survives a clear.
              */
             sc->d1->req_blocking_mode = saved_req_blocking_mode;
-            /*
-             * Both of these say something about the call this SSL_clear() may
-             * be nested inside: that the listener is driving the handshake and
-             * that it must not block while doing so. dtls1_clear() carries them
-             * over for the same reason.
-             */
-            sc->d1->force_nonblocking = saved_force_nonblocking;
-            sc->d1->being_driven = saved_being_driven;
         }
 #endif
     } else {
@@ -1160,8 +1181,11 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
     return 1;
 }
 
-int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
-    unsigned int id_len)
+/*
+ * Returns -1 on error, 0 if there is no match and 1 if there is a match.
+ */
+int ssl_has_matching_session_id(const SSL_CONNECTION *sc,
+    const unsigned char *id, unsigned int id_len)
 {
     /*
      * A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
@@ -1171,20 +1195,28 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      * by this SSL.
      */
     SSL_SESSION r, *p;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
 
     if (sc == NULL || id_len > sizeof(r.session_id))
-        return 0;
+        return -1;
 
     r.ssl_version = sc->version;
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
 
     if (!CRYPTO_THREAD_read_lock(sc->session_ctx->lock))
-        return 0;
+        return -1;
     p = lh_SSL_SESSION_retrieve(sc->session_ctx->sessions, &r);
     CRYPTO_THREAD_unlock(sc->session_ctx->lock);
     return (p != NULL);
+}
+
+int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
+    unsigned int id_len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    /* Preserve the public API's boolean return value on internal errors. */
+    return ssl_has_matching_session_id(sc, id, id_len) > 0;
 }
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
@@ -1681,6 +1713,8 @@ void ossl_ssl_connection_free(SSL *ssl)
 #ifndef OPENSSL_NO_ECH
     ossl_ech_conn_clear(&s->ext.ech);
 #endif
+
+    ssl_connection_clear_tls13_secrets(s);
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -2121,17 +2155,9 @@ int SSL_has_pending(const SSL *s)
     sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     /* Check buffered app data if any first */
-    if (SSL_CONNECTION_IS_DTLS(sc)) {
-        TLS_RECORD *rdata;
-        pitem *item, *iter;
-
-        iter = pqueue_iterator(sc->rlayer.d->buffered_app_data);
-        while ((item = pqueue_next(&iter)) != NULL) {
-            rdata = item->data;
-            if (rdata->length > 0)
-                return 1;
-        }
-    }
+    if (SSL_CONNECTION_IS_DTLS(sc)
+        && DTLS_RECORD_LAYER_buffered_app_data_pending(&sc->rlayer))
+        return 1;
 
     if (RECORD_LAYER_processed_read_pending(&sc->rlayer))
         return 1;
@@ -4205,11 +4231,7 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
-        return -1;
-
-    if (sc->session == NULL
-        || (sc->version < TLS1_VERSION && sc->version != DTLS1_BAD_VER))
+    if (sc == NULL || sc->session == NULL)
         return -1;
 
     return sc->ssl.method->ssl3_enc->export_keying_material(sc, out, olen, label,
@@ -4435,6 +4457,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     if ((ret->tktenc = EVP_CIPHER_fetch(libctx, "AES-256-CBC", propq)) == NULL)
         goto err;
+    if ((ret->sha1 = EVP_MD_fetch(libctx, "SHA1", propq)) == NULL)
+        goto err;
+
 #if defined(OPENSSL_HAVE_TLS1PRF)
     if ((ret->tls1prf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_PRF, propq)) == NULL)
         goto err;
@@ -4460,6 +4485,14 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret->cert_store == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
+    }
+
+    if (!SSL_CTX_is_server(ret)) {
+        ret->handshake_certs = sk_X509_HS_CACHE_ENT_new(NULL);
+        if (ret->handshake_certs == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
     }
 #ifndef OPENSSL_NO_CT
     ret->ctlog_store = CTLOG_STORE_new_ex(libctx, propq);
@@ -4720,6 +4753,13 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
     return ((i > 1) ? 1 : 0);
 }
 
+static void free_hs_cache_ent(X509_HS_CACHE_ENT *entry)
+{
+    X509_free(entry->cert);
+    OPENSSL_free(entry);
+    return;
+}
+
 void SSL_CTX_free(SSL_CTX *a)
 {
     int i;
@@ -4761,6 +4801,7 @@ void SSL_CTX_free(SSL_CTX *a)
     EVP_MAC_free(a->hmac);
     EVP_MD_free(a->sha256);
     EVP_CIPHER_free(a->tktenc);
+    EVP_MD_free(a->sha1);
 #ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF_free(a->tls1prf);
 #endif
@@ -4792,7 +4833,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
-    for (j = 0; j < SSL_ENC_NUM_IDX; j++)
+    for (j = 0; j < OSSL_NELEM(a->ssl_cipher_methods); j++)
         ssl_evp_cipher_free(a->ssl_cipher_methods[j]);
     for (j = 0; j < SSL_MD_NUM_IDX; j++)
         ssl_evp_md_free(a->ssl_digest_methods[j]);
@@ -4822,6 +4863,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->client_cert_type);
     OPENSSL_free(a->server_cert_type);
 
+    sk_X509_HS_CACHE_ENT_pop_free(a->handshake_certs, free_hs_cache_ent);
     CRYPTO_THREAD_lock_free(a->lock);
     CRYPTO_FREE_REF(&a->references);
 #ifdef TSAN_REQUIRES_LOCKING
@@ -4842,6 +4884,102 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     OPENSSL_free(a);
+}
+
+X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
+    size_t cert_len, unsigned char *sha1_hash)
+{
+    int idx;
+    X509_HS_CACHE_ENT *find = NULL;
+    X509 *ret = NULL;
+    unsigned int len = SHA_DIGEST_LENGTH;
+    int cache_len;
+
+    if (sctx->handshake_certs == NULL)
+        return NULL;
+
+    if (!EVP_Digest(certbytes, cert_len, sha1_hash, &len, sctx->sha1, NULL))
+        return NULL;
+
+    if (len != SHA_DIGEST_LENGTH)
+        return NULL;
+
+    if (!CRYPTO_THREAD_read_lock(sctx->lock))
+        return NULL;
+
+    cache_len = sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs);
+    for (idx = 0; idx < cache_len; idx++) {
+        find = sk_X509_HS_CACHE_ENT_value(sctx->handshake_certs, idx);
+        if (!memcmp(find->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH)) {
+            X509_up_ref(find->cert);
+            ret = find->cert;
+            break;
+        }
+    }
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
+}
+
+X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert,
+    unsigned char *sha1_hash)
+{
+    X509_HS_CACHE_ENT *tmp, *del;
+    X509 *ret = cert;
+
+    if (sctx->handshake_certs == NULL)
+        return cert;
+
+    /*
+     * Force extension caching on the X509 now, while we still "own" it
+     * exclusively. From this point on the cached cert is treated as
+     * immutable by all readers (they only X509_up_ref it).
+     */
+    if (X509_check_purpose(cert, -1, 0) <= 0)
+        return cert;
+
+    tmp = OPENSSL_malloc(sizeof(X509_HS_CACHE_ENT));
+    if (tmp == NULL)
+        return cert;
+
+    /*
+     * We had to compute the hash of the der string in the find routine, so
+     * we can reuse it here
+     */
+    memcpy(tmp->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH);
+    tmp->cert = cert;
+    if (!X509_up_ref(cert)) {
+        /*
+         * We didn't take a ref, so we can't cache this cert, but we still
+         * own the initial ref, so we can just return it for a single use
+         * Note: We use OPENSSL_free here instead of free_hs_cache_ent, as the
+         * latter drops the ref on the cert, which we don't want
+         */
+        OPENSSL_free(tmp);
+        return cert;
+    }
+
+    if (!CRYPTO_THREAD_write_lock(sctx->lock)) {
+        free_hs_cache_ent(tmp);
+        return cert;
+    }
+
+    if (sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs) > 64) {
+        /*
+         * Evict the oldest entry (index 0). Deleting index 64 with
+         * num > 64 would remove the most-recently-pushed entry, which
+         * is the opposite of what we want.
+         */
+        del = sk_X509_HS_CACHE_ENT_delete(sctx->handshake_certs, 0);
+        if (del != NULL)
+            free_hs_cache_ent(del);
+    }
+    if (!sk_X509_HS_CACHE_ENT_push(sctx->handshake_certs, tmp)) {
+        free_hs_cache_ent(tmp);
+        ret = cert;
+    }
+
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
 }
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
@@ -5408,6 +5546,8 @@ void SSL_set_accept_state(SSL *s)
     }
 #endif
 
+    if (sc == NULL)
+        return;
     sc->server = 1;
     sc->shutdown = 0;
     ossl_statem_clear(sc);
@@ -5428,6 +5568,8 @@ void SSL_set_connect_state(SSL *s)
     }
 #endif
 
+    if (sc == NULL)
+        return;
     sc->server = 0;
     sc->shutdown = 0;
     ossl_statem_clear(sc);
@@ -5913,6 +6055,7 @@ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 {
     CERT *new_cert;
+    uint32_t *new_valid_flags = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     /* TODO(QUIC FUTURE): Add support for QUIC */
@@ -5937,6 +6080,34 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
      */
     if (!ossl_assert(sc->sid_ctx_length <= sizeof(sc->sid_ctx)))
         goto err;
+
+    /*
+     * |valid_flags| is sized from the number of signature algorithm slots of
+     * the SSL_CTX the connection was created from, so it must be resized for
+     * the replacement context.
+     *
+     * The built-in slots are indexed by the fixed SSL_PKEY_* constants and so
+     * mean the same thing in either context. They are preserved because they
+     * may already hold peer signature algorithm state which does not depend
+     * on the SSL_CTX. A provider slot index is instead a position in one
+     * context's provider list, so the same index denotes a different
+     * algorithm here and the old value cannot be carried over. They are reset
+     * rather than recomputed: recomputing them means recomputing the shared
+     * signature algorithms against the replacement context, which would let
+     * its preferences take effect on an established connection.
+     */
+    if (sc->s3.tmp.valid_flags != NULL) {
+        /* Should never happen: ssl_cert_new() enforces this */
+        if (!ossl_assert(new_cert->ssl_pkey_num >= SSL_PKEY_NUM))
+            goto err;
+        new_valid_flags = OPENSSL_calloc(new_cert->ssl_pkey_num,
+            sizeof(*new_valid_flags));
+        if (new_valid_flags == NULL)
+            goto err;
+        memcpy(new_valid_flags, sc->s3.tmp.valid_flags,
+            SSL_PKEY_NUM * sizeof(*new_valid_flags));
+    }
+
     if (!SSL_CTX_up_ref(ctx))
         goto err;
 
@@ -5953,12 +6124,18 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 
     ssl_cert_free(sc->cert);
     sc->cert = new_cert;
+    sc->ssl_pkey_num = new_cert->ssl_pkey_num;
+    if (new_valid_flags != NULL) {
+        OPENSSL_free(sc->s3.tmp.valid_flags);
+        sc->s3.tmp.valid_flags = new_valid_flags;
+    }
     SSL_CTX_free(ssl->ctx); /* decrement reference count */
     ssl->ctx = ctx;
 
     return ssl->ctx;
 
 err:
+    OPENSSL_free(new_valid_flags);
     ssl_cert_free(new_cert);
     return NULL;
 }
@@ -7497,9 +7674,32 @@ int ssl_log_secret(SSL_CONNECTION *sc,
     const uint8_t *secret,
     size_t secret_len)
 {
+    const uint8_t *client_random = sc->s3.client_random;
+
+    /*
+     * If the client attempted ECH, secrets are logged against the inner
+     * ClientHello random. CLIENT_EARLY_LABEL and EARLY_EXPORTER_SECRET_LABEL
+     * are special-cased because they are logged before the server's
+     * acceptance of ECH is known, but are always derived from the inner
+     * ClientHello (see tls13_change_cipher_state()), so they use the inner
+     * random regardless of ech.success. On rejection the early secrets
+     * therefore carry the inner random while later ones carry the outer:
+     * each line is tagged with the random of the ClientHello its secret
+     * was derived from, and since a rejecting server never derives the
+     * early secrets, both peers still log identical material for every label
+     * they both log.
+     */
+#ifndef OPENSSL_NO_ECH
+    if (!sc->server && sc->ext.ech.attempted == 1
+        && (sc->ext.ech.success == 1
+            || strcmp(label, CLIENT_EARLY_LABEL) == 0
+            || strcmp(label, EARLY_EXPORTER_SECRET_LABEL) == 0))
+        client_random = sc->ext.ech.client_random;
+#endif
+
     return nss_keylog_int(label,
         sc,
-        sc->s3.client_random,
+        client_random,
         SSL3_RANDOM_SIZE,
         secret,
         secret_len);
@@ -8508,7 +8708,7 @@ int SSL_listen_ex(SSL *listener, SSL *new_conn)
 #endif
         ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
             "SSL_listen_ex only operates on QUIC SSL objects");
-    return 0;
+    return -1;
 }
 
 int SSL_listen(SSL *ssl)

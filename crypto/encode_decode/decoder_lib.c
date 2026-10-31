@@ -231,6 +231,7 @@ OSSL_DECODER_INSTANCE *
 ossl_decoder_instance_new_forprov(OSSL_DECODER *decoder, void *provctx,
     const char *input_structure)
 {
+    OSSL_DECODER_INSTANCE *decoder_inst = NULL;
     void *decoderctx;
 
     if (!ossl_assert(decoder != NULL)) {
@@ -251,7 +252,10 @@ ossl_decoder_instance_new_forprov(OSSL_DECODER *decoder, void *provctx,
             return 0;
         }
     }
-    return ossl_decoder_instance_new(decoder, decoderctx);
+    decoder_inst = ossl_decoder_instance_new(decoder, decoderctx);
+    if (decoder_inst == NULL)
+        decoder->freectx(decoderctx);
+    return decoder_inst;
 }
 
 OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,

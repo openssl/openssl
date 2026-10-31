@@ -95,6 +95,12 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
+    if (st->hand_state == TLS_ST_CR_ACK) {
+        st->hand_state = st->pre_ack_hand_state;
+        if (mt == SSL3_MT_DUMMY)
+            return 1;
+    }
+
     /*
      * Note: There is no case for TLS_ST_CW_CLNT_HELLO, because we haven't
      * yet negotiated TLSv1.3 at that point so that is handled by
@@ -179,9 +185,9 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
 
     case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CW_FINISHED:
-    case TLS_ST_CR_ACK:
     case TLS_ST_OK:
         if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
             st->hand_state = TLS_ST_CR_ACK;
             return 1;
         }
@@ -419,6 +425,12 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
 
+    if (st->ack_for_retransmit && st->hand_state != TLS_ST_CW_ACK) {
+        st->deferred_ack_state = st->hand_state;
+        st->hand_state = TLS_ST_CW_ACK;
+        return WRITE_TRAN_CONTINUE;
+    }
+
     /*
      * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
      * TLSv1.3 yet at that point. They are handled by
@@ -531,6 +543,11 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_ACK:
+        if (st->ack_for_retransmit) {
+            st->hand_state = st->deferred_ack_state;
+            st->ack_for_retransmit = 0;
+            return WRITE_TRAN_FINISHED;
+        }
         st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
@@ -2311,13 +2328,12 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             }
         }
 
-        if (!SSL_CONNECTION_IS_DTLS13(s)
-            && !ssl->method->ssl3_enc->change_cipher_state(s,
-                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            dtls13_hellos_done(s);
+        } else if (!ssl->method->ssl3_enc->change_cipher_state(s,
+                       SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
             /* SSLfatal() already called */
             goto err;
-        } else {
-            s->dtls13_process_hello = 1;
         }
     }
 
@@ -2494,6 +2510,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
     const unsigned char *certstart, *certbytes;
     size_t chainidx;
     unsigned int context = 0;
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (s->ext.server_cert_type == TLSEXT_cert_type_rpk)
@@ -2525,21 +2542,29 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
         }
 
         certstart = certbytes;
-        x = X509_new_ex(sctx->libctx, sctx->propq);
+        x = ssl_ctx_find_handshake_cert(sctx, certstart, cert_len, sha1_hash);
         if (x == NULL) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        if (d2i_X509(&x, (const unsigned char **)&certbytes,
-                cert_len)
-            == NULL) {
-            SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
-            goto err;
-        }
+            x = X509_new_ex(sctx->libctx, sctx->propq);
+            if (x == NULL) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
+                goto err;
+            }
+            if (d2i_X509(&x, (const unsigned char **)&certbytes,
+                    cert_len)
+                == NULL) {
+                SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
+                goto err;
+            }
 
-        if (certbytes != (certstart + cert_len)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
-            goto err;
+            if (certbytes != (certstart + cert_len)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
+                goto err;
+            }
+
+            /*
+             * Add the cert to our handshake cache
+             */
+            x = ssl_ctx_add_handshake_cert(sctx, x, sha1_hash);
         }
 
         if (SSL_CONNECTION_IS_VERSION13(s)) {
@@ -3313,7 +3338,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
          * tickets for longer than 7 days.
          */
         if (ticket_lifetime_hint > 604800) {
-            ticket_lifetime_hint = 604800;
+            s->session->ext.tick_lifetime_hint = 604800;
         }
 
         if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
@@ -3357,17 +3382,11 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
     s->session->not_resumable = 0;
 
     /*
-     * Refresh the session's recollection of the negotiated ALPN protocol to
-     * match this connection, rather than leaving it as whatever the session
-     * (or the session it was duplicated from, on a resumption) previously
-     * carried. Without this, a connection that resumes a session but
-     * negotiates no ALPN (or a different one) leaves the stale protocol
-     * name in place, and a later 0-RTT attempt against this ticket can
-     * incorrectly trip the "inconsistent early data alpn" check -- or, if
-     * the client happens to offer that same stale protocol again by
-     * coincidence, incorrectly appear consistent. This mirrors, on the
-     * client, the server-side fix for issue #11197 in
-     * tls_construct_new_session_ticket().
+     * The session's ALPN protocol must match what this connection
+     * negotiated, including none. A resumed session carries the protocol
+     * from the handshake that created it, and a later 0-RTT attempt checks
+     * that ALPN is consistent with the session (GitHub issue #11197). The
+     * server side is in tls_construct_new_session_ticket().
      */
     OPENSSL_free(s->session->ext.alpn_selected);
     if (s->s3.alpn_selected != NULL) {
@@ -4508,7 +4527,7 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
     if (SSL_IS_FIRST_HANDSHAKE(sc)
         && !SSL_IS_QUIC_HANDSHAKE(sc)
         && (sc->early_data_state != SSL_EARLY_DATA_NONE
-            || (sc->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+            || SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc))
         && (!ssl->method->ssl3_enc->change_cipher_state(sc,
             SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE | SSL3_CC_COMP_CERT))) {
         /*

@@ -76,12 +76,14 @@ static void test_fail_message_va(const char *prefix, const char *file,
     const char *left, const char *right,
     const char *op, const char *fmt, va_list ap)
 {
+    test_output_record_begin();
     test_fail_message_prefix(prefix, file, line, type, left, right, op);
     if (fmt != NULL) {
         test_vprintf_stderr(fmt, ap);
         test_printf_stderr("\n");
     }
     test_flush_stderr();
+    test_output_record_end();
 }
 
 static void test_fail_message(const char *prefix, const char *file,
@@ -118,20 +120,24 @@ void test_error_c90(const char *desc, ...)
 {
     va_list ap;
 
+    test_output_record_begin();
     va_start(ap, desc);
     test_fail_message_va(NULL, NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_error(const char *file, int line, const char *desc, ...)
 {
     va_list ap;
 
+    test_output_record_begin();
     va_start(ap, desc);
     test_fail_message_va(NULL, file, line, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_perror(const char *s)
@@ -145,6 +151,7 @@ void test_perror(const char *s)
 
 void test_note(const char *fmt, ...)
 {
+    test_output_record_begin();
     test_flush_stdout();
     if (fmt != NULL) {
         va_list ap;
@@ -155,6 +162,7 @@ void test_note(const char *fmt, ...)
         test_printf_stderr("\n");
     }
     test_flush_stderr();
+    test_output_record_end();
 }
 
 int test_skip(const char *file, int line, const char *desc, ...)
@@ -171,16 +179,20 @@ int test_skip_c90(const char *desc, ...)
 {
     va_list ap;
 
+    test_output_record_begin();
     va_start(ap, desc);
     test_fail_message_va("SKIP", NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
     test_printf_stderr("\n");
+    test_output_record_end();
     return TEST_SKIP_CODE;
 }
 
 void test_openssl_errors(void)
 {
+    test_output_record_begin();
     ERR_print_errors_cb(openssl_error_cb, NULL);
+    test_output_record_end();
     ERR_clear_error();
 }
 

@@ -1,5 +1,35 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
+{- use File::Spec::Functions;
+
+   # The L table in crypto/err/openssl.ec names, for each error library,
+   # the files mkerr.pl emits for it: fields three onwards, with NONE
+   # where there is nothing to emit.
+   our @err_files = ();
+   my $ec = catfile($sourcedir, "crypto", "err", "openssl.ec");
+
+   open my $fh, "<", $ec or die "Can't read $ec, $!\n";
+   while (<$fh>) {
+       s|\R$||;
+       next unless m|^L\s|;
+       my @field = split /\s+/;
+       push @err_files, grep { $_ ne "NONE" } @field[2 .. $#field];
+   }
+   close $fh;
+
+   our $err_headers = join(" \\\n         ", grep { m|\.h$| } @err_files);
+   our $err_rules =
+       join("", map {
+                "GENERATE[$_]=util/mkerr.pl -internal \\\n"
+                . "    -conf \$(SRCDIR)/crypto/err/openssl.ec -emit $_\n"
+                . "DEPEND[$_]=crypto/err/openssl.ec crypto/err/openssl.txt\n"
+            } @err_files);
+
+   # Adding a library to the table above changes the rules below, so the
+   # configuration has to be redone when it changes.
+   push @{$config{build_infos}}, $ec;
+   ""
+-}
 
 SUBDIRS=crypto ssl apps util fuzz providers doc
 IF[{- !$disabled{tests} -}]
@@ -30,8 +60,11 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/ct.h \
          include/openssl/err.h \
          include/openssl/ess.h \
+         include/openssl/evp.h \
          include/openssl/fipskey.h \
          include/openssl/lhash.h \
+         {- $err_headers -} \
+         include/openssl/obj_mac.h \
          include/openssl/opensslv.h \
          include/openssl/ocsp.h \
          include/openssl/pkcs12.h \
@@ -45,6 +78,10 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509_acert.h \
          include/openssl/x509_vfy.h \
          include/crypto/dso_conf.h \
+         include/crypto/ec_params.h \
+         include/crypto/rsa_params.h \
+         ssl/t1_lib.inc \
+         ssl/record/methods/tls_common.inc \
          providers/implementations/asymciphers/rsa_enc.inc \
          providers/implementations/asymciphers/sm2_enc.inc \
          providers/implementations/exchange/dh_exch.inc \
@@ -78,10 +115,12 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kem/ec_kem.inc \
          providers/implementations/kem/ecx_kem.inc \
          providers/implementations/kem/ml_kem_kem.inc \
+         providers/implementations/kem/mlx_kem.inc \
          providers/implementations/kem/rsa_kem.inc \
          providers/implementations/keymgmt/dh_kmgmt.inc \
          providers/implementations/keymgmt/dsa_kmgmt.inc \
          providers/implementations/keymgmt/ecx_kmgmt.inc \
+         providers/implementations/keymgmt/keymgmtcommon.inc \
          providers/implementations/keymgmt/lms_kmgmt.inc \
          providers/implementations/keymgmt/mac_legacy_kmgmt.inc \
          providers/implementations/keymgmt/ml_dsa_kmgmt.inc \
@@ -92,6 +131,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/signature/dsa_sig.inc \
          providers/implementations/signature/ecdsa_sig.inc \
          providers/implementations/signature/eddsa_sig.inc \
+         providers/implementations/signature/lms_signature.inc \
          providers/implementations/signature/mac_legacy_sig.inc \
          providers/implementations/signature/ml_dsa_sig.inc \
          providers/implementations/signature/rsa_sig.inc \
@@ -108,14 +148,20 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/cipher_aes_siv.inc \
          providers/implementations/ciphers/cipher_aes_wrp.inc \
          providers/implementations/ciphers/cipher_aes_xts.inc \
+         providers/implementations/ciphers/cipher_ascon_aead128.inc \
          providers/implementations/ciphers/ciphercommon.inc \
          providers/implementations/ciphers/ciphercommon_ccm.inc \
          providers/implementations/ciphers/ciphercommon_gcm.inc \
          providers/implementations/ciphers/cipher_chacha20.inc \
          providers/implementations/ciphers/cipher_chacha20_poly1305.inc \
+         providers/implementations/ciphers/cipher_cts.inc \
+         providers/implementations/ciphers/cipher_des.inc \
          providers/implementations/ciphers/cipher_null.inc \
+         providers/implementations/ciphers/cipher_rc2.inc \
          providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
+         providers/implementations/ciphers/cipher_rc5.inc \
          providers/implementations/ciphers/cipher_sm4_xts.inc \
+         providers/implementations/ciphers/cipher_tdes.inc \
          providers/implementations/digests/blake2_prov.inc \
          providers/implementations/digests/digestcommon.inc \
          providers/implementations/digests/mdc2_prov.inc \
@@ -139,6 +185,12 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/rands/test_rng.inc
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
+
+{- $err_rules -}GENERATE[include/openssl/obj_mac.h]=crypto/objects/objects.pl \
+    -a $(SRCDIR)/crypto/objects/obj_compat.h \
+    $(SRCDIR)/crypto/objects/objects.txt $(SRCDIR)/crypto/objects/obj_mac.num
+DEPEND[include/openssl/obj_mac.h]=crypto/objects/objects.txt \
+    crypto/objects/obj_mac.num crypto/objects/obj_compat.h
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
 GENERATE[include/openssl/bio.h]=include/openssl/bio.h.in
 GENERATE[include/openssl/cmp.h]=include/openssl/cmp.h.in
@@ -154,6 +206,7 @@ GENERATE[include/openssl/crypto.h]=include/openssl/crypto.h.in
 GENERATE[include/openssl/ct.h]=include/openssl/ct.h.in
 GENERATE[include/openssl/err.h]=include/openssl/err.h.in
 GENERATE[include/openssl/ess.h]=include/openssl/ess.h.in
+GENERATE[include/openssl/evp.h]=include/openssl/evp.h.in
 GENERATE[include/openssl/fipskey.h]=include/openssl/fipskey.h.in
 GENERATE[include/openssl/lhash.h]=include/openssl/lhash.h.in
 GENERATE[include/openssl/ocsp.h]=include/openssl/ocsp.h.in
@@ -170,7 +223,9 @@ GENERATE[include/openssl/x509_acert.h]=include/openssl/x509_acert.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
-DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
+DEPEND[ssl/t1_lib.inc \
+       ssl/record/methods/tls_common.inc \
+       providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/asymciphers/sm2_enc.inc \
        providers/implementations/exchange/dh_exch.inc \
        providers/implementations/exchange/ecdh_exch.inc \
@@ -203,10 +258,12 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/kem/ec_kem.inc \
        providers/implementations/kem/ecx_kem.inc \
        providers/implementations/kem/ml_kem_kem.inc \
+       providers/implementations/kem/mlx_kem.inc \
        providers/implementations/kem/rsa_kem.inc \
        providers/implementations/keymgmt/dh_kmgmt.inc \
        providers/implementations/keymgmt/dsa_kmgmt.inc \
        providers/implementations/keymgmt/ecx_kmgmt.inc \
+       providers/implementations/keymgmt/keymgmtcommon.inc \
        providers/implementations/keymgmt/lms_kmgmt.inc \
        providers/implementations/keymgmt/mac_legacy_kmgmt.inc \
        providers/implementations/keymgmt/ml_dsa_kmgmt.inc \
@@ -217,6 +274,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/signature/dsa_sig.inc \
        providers/implementations/signature/ecdsa_sig.inc \
        providers/implementations/signature/eddsa_sig.inc \
+       providers/implementations/signature/lms_signature.inc \
        providers/implementations/signature/mac_legacy_sig.inc \
        providers/implementations/signature/ml_dsa_sig.inc \
        providers/implementations/signature/rsa_sig.inc \
@@ -233,14 +291,20 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/ciphers/cipher_aes_siv.inc \
        providers/implementations/ciphers/cipher_aes_wrp.inc \
        providers/implementations/ciphers/cipher_aes_xts.inc \
+       providers/implementations/ciphers/cipher_ascon_aead128.inc \
        providers/implementations/ciphers/ciphercommon.inc \
        providers/implementations/ciphers/ciphercommon_ccm.inc \
        providers/implementations/ciphers/ciphercommon_gcm.inc \
        providers/implementations/ciphers/cipher_chacha20.inc \
        providers/implementations/ciphers/cipher_chacha20_poly1305.inc \
+       providers/implementations/ciphers/cipher_cts.inc \
+       providers/implementations/ciphers/cipher_des.inc \
        providers/implementations/ciphers/cipher_null.inc \
+       providers/implementations/ciphers/cipher_rc2.inc \
        providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
+       providers/implementations/ciphers/cipher_rc5.inc \
        providers/implementations/ciphers/cipher_sm4_xts.inc \
+       providers/implementations/ciphers/cipher_tdes.inc \
        providers/implementations/digests/blake2_prov.inc \
        providers/implementations/digests/ml_dsa_mu_prov.inc \
        providers/implementations/digests/digestcommon.inc \
@@ -262,8 +326,17 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/rands/seed_src.inc \
        providers/implementations/rands/seed_src_jitter.inc \
        providers/implementations/rands/test_rng.inc \
+       include/crypto/ec_params.h \
+       include/crypto/rsa_params.h \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
 
+GENERATE[include/crypto/ec_params.h]=\
+    include/crypto/ec_params.h.in
+GENERATE[include/crypto/rsa_params.h]=\
+    include/crypto/rsa_params.h.in
+GENERATE[ssl/t1_lib.inc]=ssl/t1_lib.inc.in
+GENERATE[ssl/record/methods/tls_common.inc]=\
+    ssl/record/methods/tls_common.inc.in
 GENERATE[providers/implementations/asymciphers/rsa_enc.inc]=\
     providers/implementations/asymciphers/rsa_enc.inc.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.inc]=\
@@ -330,6 +403,8 @@ GENERATE[providers/implementations/kem/ecx_kem.inc]=\
     providers/implementations/kem/ecx_kem.inc.in
 GENERATE[providers/implementations/kem/ml_kem_kem.inc]=\
     providers/implementations/kem/ml_kem_kem.inc.in
+GENERATE[providers/implementations/kem/mlx_kem.inc]=\
+    providers/implementations/kem/mlx_kem.inc.in
 GENERATE[providers/implementations/kem/rsa_kem.inc]=\
     providers/implementations/kem/rsa_kem.inc.in
 GENERATE[providers/implementations/keymgmt/dh_kmgmt.inc]=\
@@ -338,6 +413,8 @@ GENERATE[providers/implementations/keymgmt/dsa_kmgmt.inc]=\
     providers/implementations/keymgmt/dsa_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/ecx_kmgmt.inc]=\
     providers/implementations/keymgmt/ecx_kmgmt.inc.in
+GENERATE[providers/implementations/keymgmt/keymgmtcommon.inc]=\
+    providers/implementations/keymgmt/keymgmtcommon.inc.in
 GENERATE[providers/implementations/keymgmt/lms_kmgmt.inc]=\
     providers/implementations/keymgmt/lms_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/mac_legacy_kmgmt.inc]=\
@@ -358,6 +435,8 @@ GENERATE[providers/implementations/signature/ecdsa_sig.inc]=\
     providers/implementations/signature/ecdsa_sig.inc.in
 GENERATE[providers/implementations/signature/eddsa_sig.inc]=\
     providers/implementations/signature/eddsa_sig.inc.in
+GENERATE[providers/implementations/signature/lms_signature.inc]=\
+    providers/implementations/signature/lms_signature.inc.in
 GENERATE[providers/implementations/signature/mac_legacy_sig.inc]=\
     providers/implementations/signature/mac_legacy_sig.inc.in
 GENERATE[providers/implementations/signature/ml_dsa_sig.inc]=\
@@ -390,6 +469,8 @@ GENERATE[providers/implementations/ciphers/cipher_aes_wrp.inc]=\
     providers/implementations/ciphers/cipher_aes_wrp.inc.in
 GENERATE[providers/implementations/ciphers/cipher_aes_xts.inc]=\
     providers/implementations/ciphers/cipher_aes_xts.inc.in
+GENERATE[providers/implementations/ciphers/cipher_ascon_aead128.inc]=\
+    providers/implementations/ciphers/cipher_ascon_aead128.inc.in
 GENERATE[providers/implementations/ciphers/ciphercommon.inc]=\
     providers/implementations/ciphers/ciphercommon.inc.in
 GENERATE[providers/implementations/ciphers/ciphercommon_ccm.inc]=\
@@ -400,12 +481,22 @@ GENERATE[providers/implementations/ciphers/cipher_chacha20.inc]=\
     providers/implementations/ciphers/cipher_chacha20.inc.in
 GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.inc]=\
     providers/implementations/ciphers/cipher_chacha20_poly1305.inc.in
+GENERATE[providers/implementations/ciphers/cipher_cts.inc]=\
+    providers/implementations/ciphers/cipher_cts.inc.in
+GENERATE[providers/implementations/ciphers/cipher_des.inc]=\
+    providers/implementations/ciphers/cipher_des.inc.in
 GENERATE[providers/implementations/ciphers/cipher_null.inc]=\
     providers/implementations/ciphers/cipher_null.inc.in
+GENERATE[providers/implementations/ciphers/cipher_rc2.inc]=\
+    providers/implementations/ciphers/cipher_rc2.inc.in
 GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.inc]=\
     providers/implementations/ciphers/cipher_rc4_hmac_md5.inc.in
+GENERATE[providers/implementations/ciphers/cipher_rc5.inc]=\
+    providers/implementations/ciphers/cipher_rc5.inc.in
 GENERATE[providers/implementations/ciphers/cipher_sm4_xts.inc]=\
     providers/implementations/ciphers/cipher_sm4_xts.inc.in
+GENERATE[providers/implementations/ciphers/cipher_tdes.inc]=\
+    providers/implementations/ciphers/cipher_tdes.inc.in
 GENERATE[providers/implementations/digests/blake2_prov.inc]=\
     providers/implementations/digests/blake2_prov.inc.in
 GENERATE[providers/implementations/digests/digestcommon.inc]=\

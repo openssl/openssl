@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,17 +78,21 @@ static void on_acked(void *arg)
         sstream = fifd->get_sstream_by_id(chunks[i].stream_id,
             pkt->ackm_pkt.pkt_space,
             fifd->get_sstream_by_id_arg);
-        if (sstream == NULL)
-            continue;
 
-        if (chunks[i].end >= chunks[i].start)
-            /* coverity[check_return]: Best effort - we cannot fail here. */
-            ossl_quic_sstream_mark_acked(sstream,
-                chunks[i].start, chunks[i].end);
+        if (sstream != NULL) {
+            if (chunks[i].end >= chunks[i].start)
+                /* coverity[check_return]: Best effort - we cannot fail here. */
+                ossl_quic_sstream_mark_acked(sstream,
+                    chunks[i].start, chunks[i].end);
 
-        if (chunks[i].has_fin && chunks[i].stream_id != UINT64_MAX)
-            ossl_quic_sstream_mark_acked_fin(sstream);
+            if (chunks[i].has_fin && chunks[i].stream_id != UINT64_MAX)
+                ossl_quic_sstream_mark_acked_fin(sstream);
+        }
 
+        /*
+         * Resetting the send part frees the send stream, so these must be
+         * confirmed even when it is already gone.
+         */
         if (chunks[i].has_stop_sending && chunks[i].stream_id != UINT64_MAX)
             fifd->confirm_frame(OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
                 chunks[i].stream_id, pkt,
@@ -99,7 +103,7 @@ static void on_acked(void *arg)
                 chunks[i].stream_id, pkt,
                 fifd->confirm_frame_arg);
 
-        if (ossl_quic_sstream_is_totally_acked(sstream))
+        if (sstream != NULL && ossl_quic_sstream_is_totally_acked(sstream))
             fifd->sstream_updated(chunks[i].stream_id, fifd->sstream_updated_arg);
     }
 

@@ -534,6 +534,10 @@ static int ocb_finish(OCB128_CONTEXT *ctx, unsigned char *tag, size_t len,
 
 /*
  * Calculate the tag and verify it against the supplied tag
+ * Returns:
+ * -1: invalid tag length
+ *  0: tag verified
+ * >0: tag mismatch
  */
 int CRYPTO_ocb128_finish(OCB128_CONTEXT *ctx, const unsigned char *tag,
     size_t len)

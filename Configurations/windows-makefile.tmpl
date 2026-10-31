@@ -691,10 +691,26 @@ EOF
   # (in the build tree), but quotes paths of non-generated dependencies (in the
   # source tree). This is a workaround for a limitation of C++Builder's make.exe
   # in handling quoted paths: https://quality.embarcadero.com/browse/RSP-31756
+  # Configure runs the generator script itself through cleanfile(), which
+  # yields native (backslash) paths on Windows, but the remaining generator
+  # arguments are carried over verbatim from build.info.  Arguments written
+  # as $(SRCDIR)/... or $(BLDDIR)/... therefore arrive with forward slashes;
+  # convert those to backslashes and quote them so a path containing spaces
+  # survives the shell.  Anything else is a flag or a bare file name and is
+  # left alone.
+  sub generatearg {
+      my $arg = shift;
+      if ($arg =~ /\$\((?:SRCDIR|BLDDIR)\)/) {
+          $arg =~ s|/|\\|g;
+          return "\"$arg\"";
+      }
+      return $arg;
+  }
+
   sub generatesrc {
       my %args = @_;
       my $gen0 = $args{generator}->[0];
-      my $gen_args = join('', map { " $_" }
+      my $gen_args = join('', map { " ".generatearg($_) }
                               @{$args{generator}}[1..$#{$args{generator}}]);
       my $gen_incs = join("", map { " -I\"$_\"" } @{$args{generator_incs}});
       my $incs = join("", map { " -I\"$_\"" } @{$args{incs}});

@@ -74,7 +74,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     OSSL_STORE_CTX *ctx = NULL;
     char *propq_copy = NULL;
     int no_loader_found = 1;
-    char scheme_copy[256], *p, *schemes[2], *scheme = NULL;
+    char scheme_copy[256], *p = scheme_copy, *schemes[2], *scheme = NULL;
     size_t schemes_n = 0;
     size_t i;
 
@@ -91,14 +91,15 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     schemes[schemes_n++] = "file";
 
     /*
-     * Now, check if we have something that looks like a scheme, and add it
+     * Now, check if we have a syntactically valid scheme, and add it
      * as a second scheme.  However, also check if there's an authority start
      * (://), because that will invalidate the previous file scheme.  Also,
      * check that this isn't actually the file scheme, as there's no point
      * going through that one twice!
      */
     OPENSSL_strlcpy(scheme_copy, uri, sizeof(scheme_copy));
-    if ((p = strchr(scheme_copy, ':')) != NULL) {
+    OSSL_SKIP_SCHEME(p);
+    if (p != scheme_copy && *p == ':') {
         *p++ = '\0';
         if (OPENSSL_strcasecmp(scheme_copy, "file") != 0) {
             if (HAS_PREFIX(p, "//"))
@@ -1091,6 +1092,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         } else if (!loader_set_params(fetched_loader, loader_ctx,
                        params, propq)) {
             (void)fetched_loader->p_close(loader_ctx);
+            loader_ctx = NULL;
             OSSL_STORE_LOADER_free(fetched_loader);
             fetched_loader = NULL;
         }
@@ -1099,20 +1101,16 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
     }
 
     if (loader_ctx == NULL) {
-        ERR_clear_last_mark();
-        return NULL;
+        goto err;
     }
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        ERR_clear_last_mark();
-        return NULL;
+        goto err;
     }
 
     if (ui_method != NULL
         && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data)) {
-        ERR_clear_last_mark();
-        OPENSSL_free(ctx);
-        return NULL;
+        goto err;
     }
 
     ctx->fetched_loader = fetched_loader;
@@ -1129,4 +1127,28 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
     ERR_pop_to_mark();
 
     return ctx;
+
+err:
+    ERR_clear_last_mark();
+    if (loader_ctx != NULL) {
+        /*
+         * Temporary structure so OSSL_STORE_close() can work even when
+         * |ctx| couldn't be allocated or initialized properly.
+         */
+        OSSL_STORE_CTX tmpctx = {
+            NULL,
+        };
+
+        tmpctx.fetched_loader = fetched_loader;
+        tmpctx.loader = loader;
+        tmpctx.loader_ctx = loader_ctx;
+
+        /* We return NULL regardless of an error while closing. */
+        (void)ossl_store_close_it(&tmpctx);
+        fetched_loader = NULL;
+    }
+
+    OSSL_STORE_LOADER_free(fetched_loader);
+    OPENSSL_free(ctx);
+    return NULL;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,6 +39,21 @@ int test_flush_stdout(void);
 int test_flush_tapout(void);
 int test_flush_stderr(void);
 int test_flush_taperr(void);
+
+/**
+ * @brief Begin a logical output record.
+ * Writes made by this thread until the matching test_output_record_end()
+ * are emitted as a unit, so that a record composed of several writes is
+ * not interleaved with output from another thread.  Calls nest; only the
+ * outermost pair has an effect.  Has no effect in a build without
+ * threads.
+ */
+void test_output_record_begin(void);
+
+/**
+ * @brief End a logical output record begun by test_output_record_begin().
+ */
+void test_output_record_end(void);
 
 /* Commodity functions.  There's no need to override these */
 int test_printf_stdout(const char *fmt, ...)

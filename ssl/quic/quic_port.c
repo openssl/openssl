@@ -477,8 +477,8 @@ int ossl_quic_port_set_net_wbio(QUIC_PORT *port, BIO *net_wbio)
     if (!port_update_poll_desc(port, net_wbio, /*for_write=*/1))
         return 0;
 
-    OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
-    ossl_qtx_set_bio(ch->qtx, net_wbio);
+    OSSL_LIST_FOREACH (ch, ch, &port->channel_list)
+        ossl_qtx_set_bio(ch->qtx, net_wbio);
 
     port->net_wbio = net_wbio;
     port_update_addressing_mode(port);
@@ -591,6 +591,9 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     QUIC_CHANNEL_ARGS args = { 0 };
     QUIC_CHANNEL *ch;
     SSL *user_ssl = NULL;
+#ifndef OPENSSL_NO_QLOG
+    SSL_CTX *qlog_ctx;
+#endif
 
     args.port = port;
     args.is_server = is_server;
@@ -649,12 +652,15 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     }
 #ifndef OPENSSL_NO_QLOG
     /*
-     * If we're using qlog, make sure the tls get further configured properly
+     * A deferred SSL_listen_ex() channel does not have its TLS object yet, but
+     * it still uses the port's channel context. Configure its qlog title before
+     * the first packet can cause the qlog object to be instantiated.
      */
     ch->use_qlog = 1;
-    if (ch->tls != NULL && ch->tls->ctx->qlog_title != NULL) {
+    qlog_ctx = ch->tls != NULL ? ch->tls->ctx : port->channel_ctx;
+    if (qlog_ctx != NULL && qlog_ctx->qlog_title != NULL) {
         OPENSSL_free(ch->qlog_title);
-        if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL)
+        if ((ch->qlog_title = OPENSSL_strdup(qlog_ctx->qlog_title)) == NULL)
             goto err;
     }
 #endif
@@ -713,9 +719,14 @@ QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port)
     return ch;
 }
 
+QUIC_CHANNEL *ossl_quic_port_peek_incoming(QUIC_PORT *port)
+{
+    return ossl_list_incoming_ch_head(&port->incoming_channel_list);
+}
+
 int ossl_quic_port_have_incoming(QUIC_PORT *port)
 {
-    return ossl_list_incoming_ch_head(&port->incoming_channel_list) != NULL;
+    return ossl_quic_port_peek_incoming(port) != NULL;
 }
 
 void ossl_quic_port_drop_incoming(QUIC_PORT *port)
@@ -731,6 +742,12 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
             break;
 
         tls = ossl_quic_channel_get0_tls(ch);
+        if (tls == NULL) {
+            /* Unpeeled SSL_listen_ex() channels have no user SSL. */
+            ossl_quic_channel_free(ch);
+            continue;
+        }
+
         /*
          * The user ssl may or may not have been created via the
          * get_conn_user_ssl callback in the QUIC stack.  The
@@ -804,8 +821,7 @@ void ossl_quic_port_subtick(QUIC_PORT *port, QUIC_TICK_RESULT *res,
             port_rx_pre(port);
 
         /* Iterate through all channels and service them. */
-        OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
-        {
+        OSSL_LIST_FOREACH (ch, ch, &port->channel_list) {
             QUIC_TICK_RESULT subr = { 0 };
 
             ossl_quic_channel_subtick(ch, &subr, flags);
@@ -1249,7 +1265,7 @@ static void port_send_retry(QUIC_PORT *port,
      */
     unsigned char buffer[512];
     unsigned char ct_buf[ENCRYPTED_TOKEN_MAX_LEN];
-    WPACKET wpkt;
+    WPACKET wpkt = { 0 };
     size_t written, token_buf_len, ct_len;
     QUIC_PKT_HDR hdr = { 0 };
     QUIC_VALIDATION_TOKEN token = { 0 };
@@ -1335,6 +1351,7 @@ static void port_send_retry(QUIC_PORT *port,
             "port retry send failed due to network BIO I/O error");
 
 err:
+    WPACKET_cleanup(&wpkt);
     cleanup_validation_token(&token);
 }
 
@@ -1401,21 +1418,21 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
 
     if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, client_hdr->dst_conn_id.id_len,
             &hdr, NULL))
-        return;
+        goto err;
 
     /*
      * Add the array of supported versions to the end of the packet
      */
     for (i = 0; i < OSSL_NELEM(supported_versions); i++) {
         if (!WPACKET_put_bytes_u32(&wpkt, supported_versions[i]))
-            return;
+            goto err;
     }
 
     if (!WPACKET_get_total_written(&wpkt, &msg[0].data_len))
-        return;
+        goto err;
 
     if (!WPACKET_finish(&wpkt))
-        return;
+        goto err;
 
     /*
      * Send it back to the client attempting to connect
@@ -1425,6 +1442,10 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
     if (!BIO_sendmmsg(port->net_wbio, msg, sizeof(BIO_MSG), 1, 0, &written))
         ERR_raise_data(ERR_LIB_SSL, SSL_R_QUIC_NETWORK_ERROR,
             "port version negotiation send failed");
+    return;
+err:
+    WPACKET_cleanup(&wpkt);
+    return;
 }
 
 /**
@@ -1454,6 +1475,10 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
  *              token is valid.
  * @param scid  Pointer to the connection ID structure to store the SCID if the
  *              token is valid.
+ * @param gen_new_token Set to 1 if a NEW_TOKEN frame should be sent on the
+ *              new connection.
+ * @param is_retry Set to 1 if the token decrypted and parsed as a token we
+ *              minted for a RETRY packet, even if it then failed validation.
  *
  * @return      1 if the token is valid and ODCID/SCID are successfully set.
  *              0 otherwise.
@@ -1467,7 +1492,8 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
  *   configurable in the future.
  */
 static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
-    BIO_ADDR *peer, QUIC_CONN_ID *odcid, uint8_t *gen_new_token)
+    BIO_ADDR *peer, QUIC_CONN_ID *odcid, uint8_t *gen_new_token,
+    uint8_t *is_retry)
 {
     int ret = 0;
     QUIC_VALIDATION_TOKEN token = { 0 };
@@ -1477,6 +1503,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     OSSL_TIME now = ossl_time_now();
 
     *gen_new_token = 0;
+    *is_retry = 0;
 
     if (!decrypt_validation_token(port, hdr->token, hdr->token_len, NULL,
             &dec_token_len)
@@ -1485,6 +1512,8 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
             dec_token, &dec_token_len)
         || !parse_validation_token(&token, dec_token, dec_token_len))
         goto err;
+
+    *is_retry = token.is_retry;
 
     /*
      * Validate token timestamp. Current time should not be before the token
@@ -1620,6 +1649,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
     QUIC_CONN_ID odcid;
     uint8_t gen_new_token = 0;
+    uint8_t is_retry_token = 0;
     OSSL_QRX *qrx = NULL, *qrx_ref;
     OSSL_QRX *qrx_src = NULL;
     OSSL_QRX_ARGS qrx_args = { 0 };
@@ -1637,6 +1667,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
             (void **)&ch)) {
         assert(ch != NULL);
+        ossl_quic_tx_packetiser_add_unvalidated_credit(ch->txp, e->data_len);
         ossl_quic_channel_inject(ch, e);
         return;
     }
@@ -1778,7 +1809,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (hdr.token != NULL
         && port_validate_token(&hdr, port, &e->peer,
-               &odcid, &gen_new_token)
+               &odcid, &gen_new_token, &is_retry_token)
             == 0) {
         /*
          * RFC 9000 s 8.1.3
@@ -1792,6 +1823,18 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * the request is valid
          */
         if (port->validate_addr == 1) {
+            /*
+             * RFC 9000 s 8.1.2
+             * If we minted this token for a Retry packet, the client has
+             * already processed a Retry and will not accept another one
+             * (RFC 9000 s 17.2.5.2), so sending one would only leave the
+             * client waiting for its idle timeout. The RFC prefers closing
+             * with INVALID_TOKEN, but also allows discarding the packet,
+             * which is what we do here.
+             */
+            if (is_retry_token)
+                goto undesirable;
+
             /*
              * Again: we should consider saving initial encryption level
              * secrets to token here to save some CPU cycles.
@@ -1848,6 +1891,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * Time to reinject packets from qrx to channel before
          * qrx will be destroyed here.
          */
+        ossl_quic_tx_packetiser_add_unvalidated_credit(new_ch->txp, e->data_len);
         while (ossl_qrx_read_pkt(qrx_src, &qrx_pkt) == 1)
             ossl_quic_channel_inject_pkt(new_ch, qrx_pkt);
         ossl_qrx_update_pn_space(qrx_src, new_ch->qrx);
@@ -1899,9 +1943,9 @@ void ossl_quic_port_raise_net_error(QUIC_PORT *port,
     if (triggering_ch != NULL)
         ossl_quic_channel_raise_net_error(triggering_ch);
 
-    OSSL_LIST_FOREACH(ch, ch, &port->channel_list)
-    if (ch != triggering_ch)
-        ossl_quic_channel_raise_net_error(ch);
+    OSSL_LIST_FOREACH (ch, ch, &port->channel_list)
+        if (ch != triggering_ch)
+            ossl_quic_channel_raise_net_error(ch);
 }
 
 void ossl_quic_port_restore_err_state(const QUIC_PORT *port)

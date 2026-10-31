@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,7 +37,6 @@ const char OPT_PARAM_STR[] = "-P";
 
 /* Our state */
 static char **argv;
-static int argc;
 static int opt_index;
 static char *arg;
 static char *flag;
@@ -162,7 +161,6 @@ char *opt_getprog(void)
 char *opt_init(int ac, char **av, const OPTIONS *o)
 {
     /* Store state. */
-    argc = ac;
     argv = av;
     opt_begin();
     opts = o;

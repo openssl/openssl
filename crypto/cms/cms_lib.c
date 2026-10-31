@@ -40,7 +40,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
         ERR_set_mark();
-        ossl_cms_resolve_libctx(ci);
+        ossl_cms_infos_set_cmsctx(ci);
         ERR_pop_to_mark();
     }
     return ci;
@@ -86,26 +86,10 @@ const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx)
     return ctx != NULL ? ctx->propq : NULL;
 }
 
-void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
+void ossl_cms_infos_set_cmsctx(CMS_ContentInfo *ci)
 {
-    int i;
-    CMS_CertificateChoices *cch;
-    STACK_OF(CMS_CertificateChoices) **pcerts;
-    const CMS_CTX *ctx = ossl_cms_get0_cmsctx(ci);
-    OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(ctx);
-    const char *propq = ossl_cms_ctx_get0_propq(ctx);
-
     ossl_cms_SignerInfos_set_cmsctx(ci);
     ossl_cms_RecipientInfos_set_cmsctx(ci);
-
-    pcerts = cms_get0_certificate_choices(ci);
-    if (pcerts != NULL) {
-        for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
-            cch = sk_CMS_CertificateChoices_value(*pcerts, i);
-            if (cch->type == CMS_CERTCHOICE_CERT)
-                ossl_x509_set0_libctx(cch->d.certificate, libctx, propq);
-        }
-    }
 }
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)
@@ -137,7 +121,7 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms)
     /*
      * If content not detached and created return memory BIO
      */
-    if (*pos == NULL || ((*pos)->flags == ASN1_STRING_FLAG_CONT))
+    if (*pos == NULL || cms->contentIncomplete)
         return BIO_new(BIO_s_mem());
     /* Else content was read in: return read only BIO for it */
     return BIO_new_mem_buf((*pos)->data, (*pos)->length);
@@ -217,7 +201,7 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     if (pos == NULL)
         return 0;
     /* If embedded content find memory BIO and set content */
-    if (*pos && ((*pos)->flags & ASN1_STRING_FLAG_CONT)) {
+    if (*pos && cms->contentIncomplete) {
         BIO *mbio;
         unsigned char *cont;
         long contlen;
@@ -231,7 +215,7 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
         BIO_set_flags(mbio, BIO_FLAGS_MEM_RDONLY);
         BIO_set_mem_eof_return(mbio, 0);
         ASN1_STRING_set0(*pos, cont, contlen);
-        (*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
+        cms->contentIncomplete = 0;
     }
 
     switch (OBJ_obj2nid(cms->contentType)) {
@@ -387,15 +371,13 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
     if (detached) {
         ASN1_OCTET_STRING_free(*pos);
         *pos = NULL;
+        cms->contentIncomplete = 0;
         return 1;
     }
     if (*pos == NULL)
         *pos = ASN1_OCTET_STRING_new();
     if (*pos != NULL) {
-        /*
-         * NB: special flag to show content is created and not read in.
-         */
-        (*pos)->flags |= ASN1_STRING_FLAG_CONT;
+        cms->contentIncomplete = 1;
         return 1;
     }
     ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);

@@ -61,7 +61,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         X509V3_set_nconf(&ctx, conf);
         X509V3_EXT_add_nconf(conf, &ctx, "default", cert);
         X509_free(cert);
-        cert = NULL;
     }
 
     cert = X509_new();

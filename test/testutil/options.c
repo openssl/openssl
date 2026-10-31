@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,7 +39,7 @@ char *test_get_argument(size_t n)
 {
     char **argv = opt_rest();
 
-    OPENSSL_assert(n < sizeof(used));
+    OPENSSL_assert(n < OSSL_NELEM(used));
     if ((int)n >= opt_num_rest() || argv == NULL)
         return NULL;
     used[n] = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -322,6 +322,7 @@ static int test_handshake_secrets(void)
     SSL *ssl = NULL;
     SSL_CONNECTION *s;
     int ret = 0;
+    int sz;
     size_t hashsize;
     unsigned char out_master_secret[EVP_MAX_MD_SIZE];
     size_t master_secret_length;
@@ -360,7 +361,10 @@ static int test_handshake_secrets(void)
             handshake_secret, sizeof(handshake_secret)))
         goto err;
 
-    hashsize = EVP_MD_get_size(ssl_handshake_md(s));
+    sz = EVP_MD_get_size(ssl_handshake_md(s));
+    if (sz < 0)
+        goto err;
+    hashsize = (size_t)sz;
     if (!TEST_size_t_eq(sizeof(client_hts), hashsize))
         goto err;
     if (!TEST_size_t_eq(sizeof(client_hts_key), KEYLEN))
@@ -532,9 +536,118 @@ err:
     return ret;
 }
 
+static int connection_tls13_secrets_are_zero(const SSL_CONNECTION *sc)
+{
+    unsigned char zeros[EVP_MAX_MD_SIZE] = { 0 };
+
+#define SECRET_IS_ZERO(name) \
+    (memcmp(sc->name, zeros, sizeof(sc->name)) == 0)
+    return SECRET_IS_ZERO(early_secret)
+        && SECRET_IS_ZERO(handshake_secret)
+        && SECRET_IS_ZERO(master_secret)
+        && SECRET_IS_ZERO(resumption_master_secret)
+        && SECRET_IS_ZERO(client_finished_secret)
+        && SECRET_IS_ZERO(server_finished_secret)
+        && SECRET_IS_ZERO(client_app_traffic_secret)
+        && SECRET_IS_ZERO(server_app_traffic_secret)
+        && SECRET_IS_ZERO(exporter_master_secret)
+        && SECRET_IS_ZERO(early_exporter_master_secret);
+#undef SECRET_IS_ZERO
+}
+
+static void fill_connection_tls13_secrets(SSL_CONNECTION *sc)
+{
+#define FILL_SECRET(name) memset(sc->name, 0xa5, sizeof(sc->name))
+    FILL_SECRET(early_secret);
+    FILL_SECRET(handshake_secret);
+    FILL_SECRET(master_secret);
+    FILL_SECRET(resumption_master_secret);
+    FILL_SECRET(client_finished_secret);
+    FILL_SECRET(server_finished_secret);
+    FILL_SECRET(client_app_traffic_secret);
+    FILL_SECRET(server_app_traffic_secret);
+    FILL_SECRET(exporter_master_secret);
+    FILL_SECRET(early_exporter_master_secret);
+#undef FILL_SECRET
+}
+
+static int test_connection_secret_clear(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc = NULL;
+    int ret = 0;
+
+    ctx = SSL_CTX_new(TLS_method());
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl)))
+        goto err;
+
+    fill_connection_tls13_secrets(sc);
+
+    if (!TEST_true(SSL_clear(ssl))
+        || !TEST_true(connection_tls13_secrets_are_zero(sc)))
+        goto err;
+
+    ret = 1;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return ret;
+}
+
+static int free_secret_marker;
+static int free_secrets_were_cleared;
+
+static void check_connection_secrets_on_free(void *parent, void *ptr,
+    CRYPTO_EX_DATA *ad, int idx,
+    long argl, void *argp)
+{
+    SSL_CONNECTION *sc;
+
+    if (ptr != &free_secret_marker)
+        return;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY((SSL *)parent);
+    free_secrets_were_cleared = sc != NULL
+        && connection_tls13_secrets_are_zero(sc);
+}
+
+static int test_connection_secret_free(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc = NULL;
+    int idx = -1, ret = 0;
+
+    ctx = SSL_CTX_new(TLS_method());
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl))
+        || !TEST_int_ge(idx = SSL_get_ex_new_index(0, NULL, NULL, NULL,
+                            check_connection_secrets_on_free),
+            0)
+        || !TEST_true(SSL_set_ex_data(ssl, idx, &free_secret_marker)))
+        goto err;
+
+    fill_connection_tls13_secrets(sc);
+    free_secrets_were_cleared = 0;
+    SSL_free(ssl);
+    ssl = NULL;
+
+    ret = TEST_true(free_secrets_were_cleared);
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_handshake_secrets);
+    ADD_TEST(test_connection_secret_clear);
+    ADD_TEST(test_connection_secret_free);
     ADD_TEST(test_dtls13_transcript_hash);
     return 1;
 }

@@ -137,7 +137,7 @@ sub run_tests
     $proxy->clear();
     if ($run_test_as_dtls == 1) {
         $proxy->serverflags("-min_protocol DTLSv1.2 -max_protocol DTLSv1.2");
-        $proxy->clientflags("-max_protocol DTLSv1.2");
+        $proxy->clientflags("-max_protocol DTLSv1.2 -msg");
     } else {
         $proxy->serverflags("-tls1_2");
         $proxy->clientflags("-no_tls1_3");
@@ -146,12 +146,15 @@ sub run_tests
     $proxy_start_success = $proxy->start();
 
     if ($run_test_as_dtls == 1) {
-        # DTLS alerts are best-effort (RFC 6347 section 4.2.7): the client's
-        # fatal alert may be lost, so we cannot rely on observing it. What we
-        # verify is that the client rejected the connection, i.e. exited with a
-        # failure. Whether we happened to see the alert is only diagnostic.
-        ok($proxy->clientexit != 0, "Unrecognised record type in DTLS1.2");
-        note("client fatal alert observed") if $fatal_alert;
+        # DTLS alerts are best-effort (RFC 6347 section 4.2.7) so we cannot
+        # rely on the peer observing the client's fatal alert. Instead check
+        # that s_client itself generated the expected unexpected_message alert
+        # and then exited cleanly with a failure (rather than crashing).
+        ok($proxy->client_sent_fatal_alert("unexpected_message")
+               && $proxy->client_failed(),
+           "Unrecognised record type in DTLS1.2")
+            or diag("client exit status: ".$proxy->clientexit.
+                    "\nclient output:\n".$proxy->clientoutput);
     } else {
         ok($fatal_alert, "Unrecognised record type in TLS1.2");
     }
@@ -164,15 +167,18 @@ sub run_tests
         $fatal_alert = 0;
         $proxy->clear();
         if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-min_protocol DTLSv1 -max_protocol DTLSv1 -cipher DEFAULT:\@SECLEVEL=0");
+            $proxy->clientflags("-min_protocol DTLSv1 -max_protocol DTLSv1 -msg -cipher DEFAULT:\@SECLEVEL=0");
         } else {
             $proxy->clientflags("-tls1_1 -cipher DEFAULT:\@SECLEVEL=0");
         }
         $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
         $proxy_start_success = $proxy->start();
         if ($run_test_as_dtls == 1) {
-            ok($proxy->clientexit != 0, "Unrecognised record type in DTLSv1");
-            note("client fatal alert observed") if $fatal_alert;
+            ok($proxy->client_sent_fatal_alert("unexpected_message")
+                   && $proxy->client_failed(),
+               "Unrecognised record type in DTLSv1")
+                or diag("client exit status: ".$proxy->clientexit.
+                        "\nclient output:\n".$proxy->clientoutput);
         } else {
             ok($fatal_alert, "Unrecognised record type in TLSv1.1");
         }

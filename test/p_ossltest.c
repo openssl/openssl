@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -284,7 +284,7 @@ IMPLEMENT_digest_functions(testsha256, SHA256_CTX,
     ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA256_final)
 
 IMPLEMENT_digest_functions(testsha384, SHA512_CTX,
-    SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
+    SHA512_CBLOCK, SHA384_DIGEST_LENGTH, SHA2_FLAGS,
     ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA384_final)
 
 IMPLEMENT_digest_functions(testsha512, SHA512_CTX,

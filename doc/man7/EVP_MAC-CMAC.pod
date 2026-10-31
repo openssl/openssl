@@ -77,7 +77,7 @@ The length of the "size" parameter is equal to that of an B<unsigned int>.
 Gets the MAC block size.  The "block-size" parameter can also be retrieved with
 EVP_MAC_CTX_get_block_size().
 
-=item "fips-indicator" (B<OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+=item "fips-indicator" (B<OSSL_MAC_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
 This option is used by the OpenSSL FIPS provider.
 

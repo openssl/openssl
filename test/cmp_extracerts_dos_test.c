@@ -8,40 +8,13 @@
  */
 
 /*
- * Regression test for: CMP server unauthenticated memory/CPU DoS via
- * cached extraCerts on failed protection checks.
+ * The extraCerts of a CMP message which fails its protection check must not
+ * remain in ctx->untrusted.
  *
- * Root cause (crypto/cmp/cmp_vfy.c, ossl_cmp_msg_check_update(), current
- * master as of this writing):
- *
- *   res = ossl_x509_add_certs_new(&ctx->untrusted, msg->extraCerts, ...);
- *   ...
- *   res = OSSL_CMP_validate_msg(ctx, msg) || (cb...);   // may be 0 (rejected)
- *
- *   if (ctx->noCacheExtraCerts)                          // <-- rollback is
- *       while (num_added-- > 0)                          //  gated on this
- *           X509_free(sk_X509_shift(ctx->untrusted));    //  flag only, NOT
- *                                                          //  on the
- *                                                          //  validation
- *                                                          //  result (res)
- *
- *   if (!res) { ...; return 0; }   // certs from a REJECTED msg are kept
- *
- * This test exercises ossl_cmp_msg_check_update() directly -- no sockets,
- * no HTTP server, no apps/cmp.c -- and asserts on the resulting size of
- * ctx->untrusted. It builds a genuinely PBM-protected OSSL_CMP_MSG using
- * the project's own internal message-creation function
- * (ossl_cmp_genm_new(), same one exercised in test/cmp_msg_test.c) so the
- * message is not hand-crafted to "look" rejectable -- it is rejected for a
- * real reason (the receiving ctx has no matching secret configured), the
- * same way OSSL_CMP_validate_msg() would reject any unauthenticated CMP
- * request in the field.
- *
- * Expected results:
- *   - BEFORE the fix: untrusted_count_after == untrusted_count_before + N
- *     (every rejected message's extraCerts persist)
- *   - AFTER the fix:  untrusted_count_after == untrusted_count_before
- *     (rejected messages leave no residue)
+ * This test calls ossl_cmp_msg_check_update() directly and asserts on the
+ * resulting size of ctx->untrusted. The message is a PBM-protected
+ * OSSL_CMP_MSG built with ossl_cmp_genm_new(), rejected because the receiving
+ * ctx has no matching secret configured.
  */
 
 #include "helpers/cmp_testlib.h"
@@ -75,20 +48,9 @@ static CMP_DOS_TEST_FIXTURE *set_up(const char *const test_case_name)
         return NULL;
     }
     /*
-     * Deliberately do NOT call OSSL_CMP_CTX_set1_secretValue() on the
-     * server ctx. Per OSSL_CMP_validate_msg() (crypto/cmp/cmp_vfy.c):
-     *   case NID_id_PasswordBasedMAC:
-     *     if (ctx->secretValue == NULL) {
-     *         ossl_cmp_info(ctx, "no secret available for verifying..");
-     *         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_PROTECTION);
-     *         return 0;
-     *     }
-     * so every PBM-protected message this ctx receives is unconditionally
-     * rejected -- a deterministic, content-independent rejection path that
-     * models "missing or invalid protection" from the report's repro
-     * steps, without needing to forge a bad MAC by hand.
-     * ctx->noCacheExtraCerts is left at its default (0), exactly as in the
-     * vulnerable deployment ("not setting -no_cache_extracerts").
+     * No secret is set on the server ctx, so OSSL_CMP_validate_msg() rejects
+     * every PBM-protected message it receives. noCacheExtraCerts is left at
+     * its default of 0.
      */
     return fixture;
 }
@@ -241,13 +203,7 @@ err:
     return NULL;
 }
 
-/*
- * Core assertion: N distinct rejected requests must not grow
- * server_ctx->untrusted at all.
- *
- * Before the fix this fails with e.g.:
- *   ERROR: untrusted count after (25) != count before (0)
- */
+/* N distinct rejected requests must not grow server_ctx->untrusted. */
 static int execute_no_unbounded_growth_test(CMP_DOS_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX *server_ctx = fixture->server_ctx;
@@ -293,9 +249,8 @@ static int execute_no_unbounded_growth_test(CMP_DOS_TEST_FIXTURE *fixture)
 }
 
 /*
- * Single-request variant of the same check, useful in isolation since it
- * pins down that even ONE rejected request leaves no residue -- ruling out
- * X509_ADD_FLAG_NO_DUP coincidentally masking the bug in the N-request test.
+ * Single-request variant of the same check. One rejected request cannot be
+ * masked by X509_ADD_FLAG_NO_DUP.
  */
 static int execute_single_rejected_request_test(CMP_DOS_TEST_FIXTURE *fixture)
 {

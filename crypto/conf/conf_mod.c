@@ -646,7 +646,6 @@ char *CONF_get1_default_config_file(void)
 {
     const char *t;
     char *file, *sep = "";
-    size_t size;
 
     if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
         return OPENSSL_strdup(file);
@@ -667,12 +666,8 @@ char *CONF_get1_default_config_file(void)
 #ifndef OPENSSL_SYS_VMS
     sep = "/";
 #endif
-    size = strlen(t) + strlen(sep) + strlen(OPENSSL_CONF) + 1;
-    file = OPENSSL_malloc(size);
-
-    if (file == NULL)
+    if (ossl_asprintf(&file, "%s%s%s", t, sep, OPENSSL_CONF) < 0)
         return NULL;
-    snprintf(file, size, "%s%s%s", t, sep, OPENSSL_CONF);
 
     return file;
 }
@@ -693,6 +688,11 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
 
     if (list_ == NULL) {
         ERR_raise(ERR_LIB_CONF, CONF_R_LIST_CANNOT_BE_NULL);
+        return 0;
+    }
+    /* Reject separators whose byte value is NUL. */
+    if ((unsigned char)sep == '\0') {
+        ERR_raise(ERR_LIB_CONF, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -722,4 +722,36 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
             return 1;
         lstart = p + 1;
     }
+}
+
+/*
+ * Parse a boolean configuration value: 1, yes, true or on (in lower or
+ * uppercase) enables, 0, no, false or off disables.  Returns 0 when the
+ * value is missing or not recognised, without raising an error.
+ */
+int ossl_conf_parse_bool(const char *value, int *result)
+{
+    if (value == NULL)
+        return 0;
+    if (strcmp(value, "1") == 0
+        || strcmp(value, "yes") == 0
+        || strcmp(value, "YES") == 0
+        || strcmp(value, "true") == 0
+        || strcmp(value, "TRUE") == 0
+        || strcmp(value, "on") == 0
+        || strcmp(value, "ON") == 0) {
+        *result = 1;
+        return 1;
+    }
+    if (strcmp(value, "0") == 0
+        || strcmp(value, "no") == 0
+        || strcmp(value, "NO") == 0
+        || strcmp(value, "false") == 0
+        || strcmp(value, "FALSE") == 0
+        || strcmp(value, "off") == 0
+        || strcmp(value, "OFF") == 0) {
+        *result = 0;
+        return 1;
+    }
+    return 0;
 }

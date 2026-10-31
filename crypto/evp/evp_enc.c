@@ -254,6 +254,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         params);
 }
 
+#ifndef FIPS_MODULE
 /*
  * This function is basically evp_cipher_init_internal without ENGINE support.
  * They should be combined when engines are not supported any longer.
@@ -389,6 +390,7 @@ int EVP_CipherInit_SKEY(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 {
     return evp_cipher_init_skey_internal(ctx, cipher, skey, iv, iv_len, enc, params);
 }
+#endif /* !FIPS_MODULE */
 
 int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     const unsigned char *key, const unsigned char *iv,

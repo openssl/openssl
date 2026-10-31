@@ -1306,6 +1306,10 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 
         if (count == 1 && store != NULL) {
             ret = create_provider_children(prov);
+            if (!ret
+                && CRYPTO_atomic_add(&prov->activatecnt, -1, &count,
+                    prov->activatecnt_lock))
+                prov->flag_activated = 0;
         }
     }
     if (lock) {
@@ -1402,6 +1406,7 @@ static int provider_remove_store_methods(OSSL_PROVIDER *prov)
 int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 {
     int count;
+    int ret;
 
     if (prov == NULL)
         return 0;
@@ -1410,11 +1415,18 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
      * If aschild is true, then we only actually do the activation if the
      * provider is a child. If its not, this is still success.
      */
-    if (aschild && !prov->ischild)
+    if (aschild && !prov->ischild) {
+        ossl_lib_ctx_set_new_providers_loaded(prov->libctx);
         return 1;
+    }
 #endif
-    if ((count = provider_activate(prov, 1, upcalls)) > 0)
-        return count == 1 ? provider_flush_store_cache(prov) : 1;
+    if ((count = provider_activate(prov, 1, upcalls)) > 0) {
+        ret = 1;
+        if (count == 1)
+            ret = provider_flush_store_cache(prov);
+        ossl_lib_ctx_set_new_providers_loaded(prov->libctx);
+        return ret;
+    }
 
     return 0;
 }
@@ -1445,6 +1457,9 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
     int activated_fallback_count = 0;
     int ret = 0;
     const OSSL_PROVIDER_INFO *p;
+    OSSL_PROVIDER tmpl = {
+        0,
+    };
 
     if (!CRYPTO_THREAD_read_lock(store->lock))
         return 0;
@@ -1467,9 +1482,38 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
         OSSL_PROVIDER_INFO *info = store->provinfo;
         STACK_OF(INFOPAIR) *params = NULL;
         size_t i;
+        int idx;
 
         if (!p->is_fallback)
             continue;
+
+        /*
+         * Reuse an explicitly loaded fallback and take the activation
+         * reference normally owned by automatic fallback loading.
+         */
+        tmpl.name = (char *)p->name;
+        idx = sk_OSSL_PROVIDER_find(store->providers, &tmpl);
+        if (idx != -1) {
+            int activate_count;
+
+            prov = sk_OSSL_PROVIDER_value(store->providers, idx);
+            /*
+             * store->lock is held. Take flag_lock in order and suppress
+             * internal locking. Fallback entries cannot require parent upcalls.
+             */
+#ifndef FIPS_MODULE
+            if (!ossl_assert(!prov->ischild))
+                goto err;
+#endif
+            if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
+                goto err;
+            activate_count = provider_activate(prov, 0, 0);
+            CRYPTO_THREAD_unlock(prov->flag_lock);
+            if (activate_count < 0)
+                goto err;
+            activated_fallback_count++;
+            continue;
+        }
 
         for (i = 0; i < store->numprovinfo; info++, i++) {
             if (strcmp(info->name, p->name) != 0)
@@ -1675,10 +1719,10 @@ int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name)
 
     prov = ossl_provider_find(libctx, name, 0);
     if (prov != NULL) {
-        if (!CRYPTO_THREAD_read_lock(prov->flag_lock))
-            return 0;
-        available = prov->flag_activated;
-        CRYPTO_THREAD_unlock(prov->flag_lock);
+        if (CRYPTO_THREAD_read_lock(prov->flag_lock)) {
+            available = prov->flag_activated;
+            CRYPTO_THREAD_unlock(prov->flag_lock);
+        }
         ossl_provider_free(prov);
     }
     return available;

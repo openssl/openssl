@@ -111,9 +111,11 @@ static int dtls_ccs_expected(SSL_CONNECTION *s)
     }
 }
 
-static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len)
+static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len, size_t body_len,
+    int track_coverage)
 {
-    dtls_sent_msg *msg = OPENSSL_malloc(sizeof(*msg) + msg_len);
+    const size_t bitmask_len = (track_coverage && body_len > 0 ? RSMBLY_BITMASK_SIZE(body_len) : 0);
+    dtls_sent_msg *msg = OPENSSL_malloc(sizeof(*msg) + msg_len + bitmask_len);
 
     if (msg == NULL)
         return NULL;
@@ -123,6 +125,18 @@ static dtls_sent_msg *dtls1_sent_msg_new(size_t msg_len)
     /* zero length msg gets msg->msg_buf == NULL */
     if (msg_len > 0)
         msg->msg_buf = (unsigned char *)(msg + 1);
+
+    /*
+     * body_len > 0 implies msg_len > 0 (msg_len == body_len + headerlen, and
+     * headerlen is never 0), so msg->msg_buf is already set here. Coverage
+     * tracking only means anything for DTLS 1.3, the only version that ever
+     * processes an ACK; older versions never read msg->covered, so don't pay
+     * for the allocation on their behalf.
+     */
+    if (track_coverage && body_len > 0) {
+        msg->covered = msg->msg_buf + msg_len;
+        memset(msg->covered, 0, bitmask_len);
+    }
 
     return msg;
 }
@@ -184,15 +198,17 @@ static int dtls1_write_hm_header(unsigned char *msgheaderstart,
         || !WPACKET_put_bytes_u24(&msgheader, fraglen)
         || !WPACKET_get_total_written(&msgheader, &msgheaderlen)
         || msgheaderlen != DTLS1_HM_HEADER_LENGTH
-        || !WPACKET_finish(&msgheader))
+        || !WPACKET_finish(&msgheader)) {
+        WPACKET_cleanup(&msgheader);
         return 0;
+    }
 
     return 1;
 }
 
 /*
- * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
- * SSL3_RT_CHANGE_CIPHER_SPEC)
+ * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE,
+ * SSL3_RT_CHANGE_CIPHER_SPEC or SSL3_RT_ACK)
  *
  * When sending a fragmented handshake message this function will re-use
  * s->init_buf->data but overwrite previously sent data to fill out the handshake
@@ -219,6 +235,9 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
     const size_t msg_len = s->d1->w_msg.msg_body_len;
     const unsigned short msg_seq = s->d1->w_msg.msg_seq;
     const unsigned char msg_type = s->d1->w_msg.msg_type;
+    const size_t min_len = recordtype == SSL3_RT_ACK
+        ? DTLS13_ACK_MIN_NONEMPTY_LEN
+        : DTLS1_HM_HEADER_LENGTH + 1;
 
     if (!dtls1_query_mtu(s))
         return -1;
@@ -270,7 +289,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
         else
             curr_mtu = 0;
 
-        if (curr_mtu <= DTLS1_HM_HEADER_LENGTH) {
+        if (curr_mtu < min_len) {
             /*
              * grr.. we could get an error if MTU picked was wrong
              */
@@ -279,7 +298,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                 s->rwstate = SSL_WRITING;
                 return ret;
             }
-            if (s->d1->mtu > overhead + DTLS1_HM_HEADER_LENGTH) {
+            if (s->d1->mtu >= overhead + min_len) {
                 curr_mtu = s->d1->mtu - overhead;
             } else {
                 /* Shouldn't happen */
@@ -304,6 +323,17 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
 
         msgstart = (unsigned char *)&s->init_buf->data[s->init_off];
 
+        if (recordtype == SSL3_RT_ACK) {
+            /* Each record needs a complete vector of record numbers. */
+            if (!ossl_assert(len >= DTLS13_ACK_HEADER_LEN))
+                return -1;
+            len = DTLS13_ACK_HEADER_LEN
+                + ((len - DTLS13_ACK_HEADER_LEN) / DTLS13_RECORD_NUMBER_LEN)
+                    * DTLS13_RECORD_NUMBER_LEN;
+            msgstart[0] = (unsigned char)((len - DTLS13_ACK_HEADER_LEN) >> 8);
+            msgstart[1] = (unsigned char)(len - DTLS13_ACK_HEADER_LEN);
+        }
+
         if (recordtype == SSL3_RT_HANDSHAKE) {
             const size_t fragoff = s->init_off;
             const size_t fraglen = len - DTLS1_HM_HEADER_LENGTH;
@@ -324,6 +354,13 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                  * so fail
                  */
                 return -1;
+
+            /*
+             * Recorded so do_dtls1_write() (rec_layer_d1.c) can tag this
+             * fragment's record number with the byte range it covers.
+             */
+            s->d1->w_frag_off = fragoff;
+            s->d1->w_frag_len = fraglen;
         }
 
         ret = dtls1_write_bytes(s, recordtype, msgstart, len,
@@ -340,12 +377,19 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              * wait for an alert to handle the retransmit
              */
             if (retry && BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0
-                && !(SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU)
-                && dtls1_query_mtu(s))
+                && !(SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU)) {
+                size_t old_mtu = s->d1->mtu;
+
+                if (!dtls1_query_mtu(s))
+                    return -1;
+                /* If MTU didn't change, retry is meaningless */
+                if (s->d1->mtu == old_mtu)
+                    return -1;
                 /* Have one more go */
                 retry = 0;
-            else
+            } else {
                 return -1;
+            }
         } else {
 
             /*
@@ -405,8 +449,12 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
                     if (!ssl3_finish_mac(s, msgstart, xlen))
                         return -1;
             }
+            if (recordtype == SSL3_RT_ACK && s->msg_callback != NULL)
+                s->msg_callback(1, s->version, recordtype, msgstart, written,
+                    ussl, s->msg_callback_arg);
+
             if (written == s->init_num) {
-                if (s->msg_callback)
+                if (s->msg_callback && recordtype != SSL3_RT_ACK)
                     s->msg_callback(1, s->version, recordtype, s->init_buf->data,
                         s->init_off + s->init_num, ussl,
                         s->msg_callback_arg);
@@ -416,9 +464,11 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
 
                 return 1;
             }
+            /* Reuse the last two sent bytes for the next ACK vector length. */
+            if (recordtype == SSL3_RT_ACK)
+                written -= DTLS13_ACK_HEADER_LEN;
             s->init_off += written;
             s->init_num -= written;
-            written -= DTLS1_HM_HEADER_LENGTH;
         }
     }
     return 0;
@@ -434,6 +484,8 @@ int dtls_get_message(SSL_CONNECTION *s, int *mt)
 
 again:
     if (!dtls_get_reassembled_message(s, &errtype, &tmplen)) {
+        if (s->statem.ack_for_retransmit)
+            return 0;
         if (errtype == DTLS1_HM_BAD_FRAGMENT
             || errtype == DTLS1_HM_FRAGMENT_RETRY) {
             /* bad fragment received */
@@ -566,6 +618,15 @@ static int add_record_to_ack_list(SSL_CONNECTION *sc)
     uint64_t epoch = sc->s3.tmp.record_epoch;
     uint64_t sequence = sc->s3.tmp.record_seq_num;
 
+    /*
+     * Retain at most one maximum-sized ACK record's worth of record numbers.
+     * Check before the duplicate scan to bound the work once the list is full.
+     * Excess records may be omitted from ACKs (RFC 9147, section 7.1).
+     */
+    if (ossl_list_record_number_num(&sc->d1->ack_rec_num)
+        >= (SSL3_RT_MAX_PLAIN_LENGTH - DTLS13_ACK_HEADER_LEN) / DTLS13_RECORD_NUMBER_LEN)
+        return 1;
+
     for (recnum = ossl_list_record_number_head(&sc->d1->ack_rec_num);
         recnum != NULL;
         recnum = ossl_list_record_number_next(recnum)) {
@@ -574,7 +635,7 @@ static int add_record_to_ack_list(SSL_CONNECTION *sc)
             return 1;
     }
 
-    recnum = dtls1_record_number_new(epoch, sequence);
+    recnum = dtls1_record_number_new(epoch, sequence, 0, 0);
 
     if (recnum == NULL)
         return 0;
@@ -805,7 +866,34 @@ err:
     return -1;
 }
 
-static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
+/*
+ * True if the message currently being processed only authenticated because
+ * the read record layer retained a previous epoch's keys for retransmission
+ * recovery -- i.e. it did not actually arrive at the currently active
+ * read epoch. Such a message must never be treated as new content: it may
+ * only, at most, trigger a replacement ACK for something already fully
+ * processed.
+ */
+int dtls_record_from_retained_epoch(SSL_CONNECTION *s)
+{
+    return SSL_CONNECTION_IS_DTLS13(s)
+        && s->s3.tmp.record_epoch != dtls1_get_epoch(s, SSL3_CC_READ);
+}
+
+/*
+ * Server read states where an ACK must not finish the client's flight.
+ * The certificate states are also used during post-handshake authentication.
+ * Callers admitting ACKs must exclude a pending HelloRetryRequest.
+ */
+int dtls13_server_waiting_for_client_flight(OSSL_HANDSHAKE_STATE state)
+{
+    return state == TLS_ST_EARLY_DATA
+        || state == TLS_ST_SR_CERT
+        || state == TLS_ST_SR_COMP_CERT
+        || state == TLS_ST_SR_CERT_VRFY;
+}
+
+int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr)
 {
     int i = -1;
@@ -830,10 +918,17 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
 
     /*
      * Discard the message if sequence number was already there, is too far
-     * in the future, already in the queue or if we received a FINISHED
-     * before the SERVER_HELLO, which then must be a stale retransmit.
+     * in the future, already in the queue, if we received a FINISHED
+     * before the SERVER_HELLO (which then must be a stale retransmit), or
+     * if it only authenticated via a retained previous epoch: such a
+     * message must never be buffered for future reassembly and eventually
+     * processed as new content, no matter what sequence number it claims.
      */
-    if (msg_hdr->seq <= s->d1->handshake_read_seq || msg_hdr->seq > s->d1->handshake_read_seq + 10 || item != NULL || (s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED)) {
+    if (msg_hdr->seq <= s->d1->handshake_read_seq
+        || msg_hdr->seq > s->d1->handshake_read_seq + 10
+        || item != NULL
+        || (s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED)
+        || dtls_record_from_retained_epoch(s)) {
         unsigned char devnull[256];
 
         while (frag_len) {
@@ -843,6 +938,24 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             if (i <= 0)
                 goto err;
             frag_len -= readbytes;
+        }
+        /*
+         * A lost ACK can cause an already processed message to be
+         * retransmitted in a new record. ACK it without processing it
+         * again. Epoch 2 is included alongside the post-handshake epochs
+         * (3+) so that a client's Finished, retransmitted after the server
+         * has already moved on to epoch 3, still gets ACKed instead of
+         * silently dropped (see dtls_get_more_records()'s retained
+         * prev_epoch_rl handling, which is what let this record
+         * authenticate at all).
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && s->s3.tmp.record_epoch >= 2
+            && msg_hdr->seq < s->d1->handshake_read_seq
+            && dtls_msg_needs_ack(!s->server, msg_hdr->type)) {
+            if (!add_record_to_ack_list(s))
+                goto err;
+            s->statem.ack_for_retransmit = 1;
         }
     } else {
         if (frag_len != msg_hdr->msg_len) {
@@ -874,8 +987,11 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             goto err;
 
         if (dtls_msg_needs_ack(!s->server, msg_hdr->type)
-            && !add_record_to_ack_list(s))
+            && !add_record_to_ack_list(s)) {
+            pitem_free(item);
+            item = NULL;
             goto err;
+        }
 
         item = pqueue_insert(&s->d1->rcvd_messages, item);
         /*
@@ -1026,23 +1142,34 @@ redo:
         goto f_err;
     }
     if (recvd_type == SSL3_RT_ACK) {
-        if (readbytes == DTLS1_HM_HEADER_LENGTH) {
-            const size_t first_readbytes = readbytes;
+        /*
+         * An ACK has no handshake message header: the bytes already read
+         * are body, and an ACK never spans records (RFC 9147 section 4),
+         * so the rest of the body - if any - is whatever is left in the
+         * current record. Take it directly to avoid re-entering the
+         * timeout path while assembling the ACK.
+         */
+        if (readbytes == DTLS1_HM_HEADER_LENGTH
+            && s->rlayer.curr_rec < s->rlayer.num_recs) {
+            TLS_RECORD *rr = &s->rlayer.tlsrecs[s->rlayer.curr_rec];
 
-            p += DTLS1_HM_HEADER_LENGTH;
-
-            i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL, p,
-                s->init_num - DTLS1_HM_HEADER_LENGTH,
-                0, &readbytes);
-            readbytes += first_readbytes;
             /*
-             * This shouldn't ever fail due to NBIO because we already checked
-             * that we have enough data in the record
+             * DTLS currently processes one record at a time, so an exhausted
+             * record is excluded above. Keep these checks to avoid consuming
+             * a following record if pipelining is added.
              */
-            if (i <= 0) {
-                s->rwstate = SSL_READING;
-                *len = 0;
-                return 0;
+            if (rr->off > 0 && rr->length > 0) {
+                /*
+                 * init_buf has capacity for a full plaintext record, whose size
+                 * has already been checked by the record layer.
+                 */
+                memcpy(p + DTLS1_HM_HEADER_LENGTH, rr->data + rr->off,
+                    rr->length);
+                readbytes += rr->length;
+                if (!ssl_release_record(s, rr, rr->length)) {
+                    /* SSLfatal() already called */
+                    goto f_err;
+                }
             }
         }
         s->init_num = readbytes;
@@ -1079,8 +1206,14 @@ redo:
      * (or dropped)--no further processing at this time
      * While listening, we accept seq 1 (ClientHello with cookie)
      * although we're still expecting seq 0 (ClientHello)
+     *
+     * A message that only authenticated via a retained previous epoch must
+     * always be routed to dtls1_process_out_of_seq_message(), even when its
+     * claimed sequence number happens to match the next expected one: that
+     * match does not mean this content is actually new.
      */
-    if (msg_hdr.seq != s->d1->handshake_read_seq) {
+    if (msg_hdr.seq != s->d1->handshake_read_seq
+        || dtls_record_from_retained_epoch(s)) {
         if (!s->server
             || msg_hdr.seq != 0
             || s->d1->handshake_read_seq != 1
@@ -1236,11 +1369,13 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt)
 
         recnumnext = ossl_list_record_number_next(recnum);
 
-        if (recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
+        if (!SSL_IS_FIRST_HANDSHAKE(s)
+            || recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
             /*
              * rfc9147:
              * During the handshake, ACK records MUST be sent with an epoch which
-             * is equal to or higher than the record which is being acknowledged
+             * is equal to or higher than the record which is being acknowledged.
+             * After the handshake, the sending and receiving epochs can differ.
              */
             if (!WPACKET_put_bytes_u64(pkt, recnum->epoch)
                 || !WPACKET_put_bytes_u64(pkt, recnum->seqnum)) {
@@ -1265,7 +1400,7 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 {
     PACKET record_numbers;
 
-    if (!PACKET_get_length_prefixed_2(pkt, &record_numbers)) {
+    if (!PACKET_as_length_prefixed_2(pkt, &record_numbers)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_LENGTH_TOO_LONG);
         return MSG_PROCESS_ERROR;
     }
@@ -1291,22 +1426,109 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             return MSG_PROCESS_ERROR;
         }
 
+        /*
+         * RFC 9147 section 7: during the initial handshake, an ACK must be
+         * carried in an epoch at least as high as the record it acknowledges.
+         * Ignore unauthorized entries before changing retransmission state.
+         * After the handshake, sending and receiving epochs can differ.
+         */
+        if (SSL_IS_FIRST_HANDSHAKE(s)
+            && epoch > s->s3.tmp.record_epoch)
+            continue;
+
+        /*
+         * Epoch 2 is the fixed handshake epoch and is never used again once
+         * epoch 3 (the first application epoch) is installed. An ACK that
+         * only authenticated via a retained epoch-2 layer must not be
+         * trusted to cancel retransmission of a post-handshake (epoch 3+)
+         * flight. Retained epochs 3+ are unrestricted: unlike epoch 2, which
+         * is never reissued, each of those epochs was freshly minted by an
+         * SSL_key_update() call and gets superseded by the next one, so a
+         * legitimate delayed ACK can authenticate behind a message's own
+         * recorded epoch with no protocol violation.
+         */
+        if (dtls_record_from_retained_epoch(s)
+            && s->s3.tmp.record_epoch == 2
+            && epoch > 2)
+            continue;
+
         iter = pqueue_iterator(&s->d1->sent_messages);
 
         while ((item = pqueue_next(&iter)) != NULL) {
             dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
             DTLS1_RECORD_NUMBER *recnum;
             DTLS1_RECORD_NUMBER *recnum_next = ossl_list_record_number_head(&msg->rec_nums);
+            int matched = 0;
 
             while ((recnum = recnum_next) != NULL) {
                 recnum_next = ossl_list_record_number_next(recnum_next);
 
                 if (recnum->epoch == epoch && recnum->seqnum == sequence_number) {
+                    /*
+                     * Mark this record's byte range covered *before*
+                     * freeing it -- coverage tracks the message as a whole
+                     * across every transmission round, not just whether
+                     * this one specific record number was ever matched.
+                     *
+                     * The range check guards against a corrupt recorded
+                     * range
+                     */
+                    if (msg->covered != NULL
+                        && recnum->frag_off <= msg->msg_info.msg_body_len
+                        && recnum->frag_len
+                            <= msg->msg_info.msg_body_len - recnum->frag_off)
+                        RSMBLY_BITMASK_MARK(msg->covered, (long)recnum->frag_off,
+                            (long)(recnum->frag_off + recnum->frag_len));
                     ossl_list_record_number_remove(&msg->rec_nums, recnum);
                     OPENSSL_free(recnum);
+                    matched = 1;
                 }
             }
+
+            /*
+             * RFC 9147 section 7.2 is a per-record rule, but completeness is
+             * per-message: the peer needs every byte of the message, from
+             * any combination of rounds, not just any one matching record.
+             * Once this ACK completes coverage of the whole message, fully
+             * drain rec_nums -- not just the node that matched -- so every
+             * other consumer that keys off list emptiness
+             * (dtls_any_sent_messages_are_missing_acknowledge(),
+             * dtls1_clear_sent_buffer(), ...) sees it retire, even though
+             * other rounds' record numbers may still be sitting unmatched.
+             */
+            if (matched && msg->covered != NULL) {
+                int is_complete;
+
+                RSMBLY_BITMASK_IS_COMPLETE(msg->covered,
+                    (long)msg->msg_info.msg_body_len, is_complete);
+                if (is_complete)
+                    ossl_list_record_number_elem_free(&msg->rec_nums);
+            }
         }
+    }
+
+    /* Keep the retransmit timer running until the whole flight is ACKed. */
+    if (dtls_any_sent_messages_are_missing_acknowledge(s))
+        return MSG_PROCESS_CONTINUE_READING;
+
+    /*
+     * This ACK interrupted a server still reading the client's flight.
+     * A complete ACK of our flight does not replace the remaining client
+     * messages. It may arrive before Certificate or be reordered after
+     * Certificate or CertificateVerify. Finishing the read sub-state-machine
+     * here would let write_transition() move to TLS_ST_OK and skip them.
+     */
+    if (s->server
+        && dtls13_server_waiting_for_client_flight(s->statem.pre_ack_hand_state)) {
+        /*
+         * We already know above that nothing is left needing
+         * retransmission, so this only resets timeout state and clears the
+         * (already-empty) sent buffer -- it leaves the read state alone, so
+         * the client's flight, including Finished, is still processed on
+         * return.
+         */
+        dtls1_stop_timer(s);
+        return MSG_PROCESS_CONTINUE_READING;
     }
 
     return MSG_PROCESS_FINISHED_READING;
@@ -1371,7 +1593,11 @@ int dtls1_read_failed(SSL_CONNECTION *s, int code)
     }
     /* done, no need to send a retransmit */
     if (!SSL_in_init(ssl)) {
-        BIO_set_flags(SSL_get_rbio(ssl), BIO_FLAGS_READ);
+        BIO *rbio = SSL_get_rbio(ssl);
+
+        /* Connections created by a DTLS listener have no rbio */
+        if (rbio != NULL)
+            BIO_set_flags(rbio, BIO_FLAGS_READ);
         return code;
     }
 
@@ -1433,7 +1659,8 @@ int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type)
     if (!ossl_assert(s->init_off == 0))
         return 0;
 
-    sent_msg = dtls1_sent_msg_new(s->init_num);
+    sent_msg = dtls1_sent_msg_new(s->init_num, s->d1->w_msg.msg_body_len,
+        SSL_CONNECTION_IS_DTLS13(s));
     if (sent_msg == NULL)
         return 0;
 
@@ -1483,12 +1710,20 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
     else
         header_length = DTLS1_HM_HEADER_LENGTH;
 
-    /* Clear the record number list to be acked for retransmitted messages */
-    ossl_list_record_number_elem_free(&sent_msg->rec_nums);
+    /*
+     * Deliberately not clearing rec_nums here: RFC 9147 section 7.2 requires
+     * treating a record as acknowledged if it appears in *any* ACK, so a
+     * late ACK matching an earlier round's record number must still be able
+     * to match something. rec_nums accumulates across every retransmission
+     * round instead; dtls_process_ack() retires entries by tracking byte
+     * range coverage, not by this list ever being reset per round.
+     */
 
     memcpy(s->init_buf->data, sent_msg->msg_buf,
         sent_msg->msg_info.msg_body_len + header_length);
     s->init_num = sent_msg->msg_info.msg_body_len + header_length;
+    /* Always retransmit from the start, not wherever init_off was left */
+    s->init_off = 0;
 
     memcpy(&s->d1->w_msg, &sent_msg->msg_info, sizeof(sent_msg->msg_info));
 

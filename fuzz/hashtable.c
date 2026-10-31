@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * Test hashtable operation.
  */
 #include <limits.h>
+#include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
 #include <internal/common.h>
@@ -344,5 +345,11 @@ void FuzzerCleanup(void)
 {
     ossl_ht_free(fuzzer_table);
     OPENSSL_free(prediction_table);
+
+    fprintf(stderr, "skipped_values: %zu inserts: %zu replacements: %zu deletes %zu\n"
+                    "flushes: %zu lookups: %zu foreaches %zu filters %zu\n",
+        skipped_values, inserts, replacements, deletes,
+        flushes, lookups, foreaches, filters);
+
     OPENSSL_cleanup();
 }

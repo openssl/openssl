@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,7 +39,7 @@ static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     switch (operation) {
 
     case ASN1_OP_STREAM_PRE:
-        if (PKCS7_stream(&sarg->boundary, *pp7) <= 0)
+        if (ossl_pkcs7_stream(*pp7) <= 0)
             return 0;
         /* fall through */
     case ASN1_OP_DETACHED_PRE:
@@ -53,6 +53,12 @@ static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (PKCS7_dataFinal(*pp7, sarg->ndef_bio) <= 0)
             return 0;
         break;
+
+    case ASN1_OP_GET0_STREAM_CONTENT: {
+        ASN1_STRING **content = exarg;
+
+        *content = ossl_pkcs7_get0_stream_content(*pp7);
+    } break;
     }
     return 1;
 }
@@ -76,7 +82,7 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len)
     ret = (PKCS7 *)ASN1_item_d2i_ex((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(PKCS7),
         libctx, propq);
     if (ret != NULL)
-        ossl_pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_SignerInfos_set_ctx(ret);
     return ret;
 }
 

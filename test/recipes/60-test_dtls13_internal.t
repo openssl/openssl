@@ -7,6 +7,11 @@
 # https://www.openssl.org/source/license.html
 
 
-use OpenSSL::Test::Simple;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-simple_test("test_dtls13_internal", "dtls13_internal_test");
+setup("test_dtls13_internal");
+
+plan tests => 1;
+
+ok(run(test(["dtls13_internal_test", srctop_file("apps", "server.pem"),
+             srctop_file("apps", "server.pem")])), "running dtls13_internal_test");

@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 4.2](#openssl-42)
  - [OpenSSL 4.1](#openssl-41)
  - [OpenSSL 4.0](#openssl-40)
  - [OpenSSL 3.6](#openssl-36)
@@ -23,25 +24,157 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 4.2
+-----------
+
+### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
+
+  * Added support for Java keytool PKCS#12 files with symmetric keys.
+    New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
+
 OpenSSL 4.1
 -----------
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
-  * Support for DTLS 1.3 (RFC 9147) added. The DTLS 1.3 work includes:
-    * DTLS 1.3 support in the SSL listener API. `SSL_new_listener()` can
-      create a DTLS listener that demultiplexes incoming datagrams into
-      per-peer connections accepted with `SSL_accept_connection()`.
-    See the ossl-guide-dtlsv13(7) manpage for details.
+OpenSSL 4.1.0 is a feature release adding significant new functionality
+to OpenSSL.
 
-  * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
-    `CRYPTO_atomic_cmp_exch_ptr` have been added.
-  * Initial support for the Elbrus2000 (e2k) architecture
+This release incorporates the following potentially significant or incompatible
+changes:
 
-  * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
+  * Added `VC-WIN32-MSVC2013` and `VC-WIN64A-MSVC2013` build targets to provide
+    internal functions for bridging the gaps in C99 standard support
+    that are present in MSVC 2013.
+
+  * Added optimized ML-DSA and ML-KEM NTT operations on `ppc64le`;
+    optimized ML-DSA operations on `x86_64`;
+    AVX-512-optimized SHAKE x4 operations for ML-DSA on `x86_64`;
+    AVX-512 and VAES optimizations for AES-CBC decryption on `x86_64`.
+
+  * Changed `tsget` utility to use `Net::Curl::Easy` (from the `Net-Curl` CPAN
+    distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who rely
+    on `tsget` should install `Net::Curl::Easy` before upgrading.
+
+  * Dropped Windows-on-Itanium (`VC-WIN64I`) and Windows CE (`VC-CE`) targets
+    from Configurations.
+
+  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure`, as these options
+    did not really disable the implementations.  Use `no-ec` to disable
+    the elliptic curve support.
+
+This release adds the following new features:
+
+  * Support for DTLS 1.3 ([RFC 9147]).
+    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
+
+  * Support for [RFC 8701] GREASE (Generate Random Extensions And Sustain
+    Extensibility).
+
+  * DTLS support in the SSL listener API.
+
+  * Support for IKEV2 KDF.
+
+  * Initial support for the Elbrus2000 (`e2k`) architecture.
+
+Known issues in 4.1.0
+
+  * <https://github.com/openssl/openssl/issues/32878>
+    When a DTLS 1.3 KeyUpdate is received, all other outstanding
+    post-handshake records are dropped from the retransmission buffer.
+    This means post-handshake records still awaiting an ACK (such as a
+    NewSessionTicket) will no longer be retransmitted if the original
+    transmission is lost. A fix is in progress and planned for a future
+    release.
+
+  * <https://github.com/openssl/openssl/issues/33277>
+    A permanent receive failure on a DTLS listener can be reported as
+    `SSL_ERROR_WANT_READ` on an accepted connection. Polling and subsequent
+    accept calls may also fail to report the error, causing applications
+    to continue waiting after a permanent failure.
+
+  * <https://github.com/openssl/openssl/issues/33278>
+    A retryable write failure on a nonblocking connection accepted from a
+    DTLS listener can be reported as `SSL_ERROR_SYSCALL` instead of
+    `SSL_ERROR_WANT_WRITE`. Applications treating this result as fatal may
+    close a connection that is still usable.
+
+  * <https://github.com/openssl/openssl/issues/33242>
+    DTLS 1.3 servers may abort handshakes with an `unexpected_message` alert
+    when a client acknowledges part or all of the server's first flight
+    before sending its response. This can occur after packet loss or while
+    the client is preparing its authentication response.
 
 OpenSSL 4.0
 -----------
+
+### Major changes between OpenSSL 4.0.2 and OpenSSL 4.0.3 [29 Sep 2026]
+
+OpenSSL 4.0.3 is a security patch release.  The most severe CVE fixed
+in this release is High.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed DTLS retransmissions of handshake messages from a stale buffer offset.
+    ([CVE-2026-84782])
+
+  * Fixed a use-after-free in X.509 extension cache under concurrent use.
+    ([CVE-2026-84783])
+
+  * Fixed excessive memory allocation in relative CRLDP processing.
+    ([CVE-2026-35189])
+
+  * Fixed QUIC unvalidated amplification credit may be over-accounted.
+    ([CVE-2026-35191])
+
+  * Fixed potential CPU DoS via O(n^2) fragment reassembly in QUIC.
+    ([CVE-2026-42772])
+
+  * Fixed a timing side-channel leak in generic elliptic curve scalar
+    multiplication.
+    ([CVE-2026-54872])
+
+  * Fixed QUIC `STREAM` fragment metadata DoS.
+    ([CVE-2026-54873])
+
+  * Fixed non-constant-time SM2 scalar multiplication on ARM64 and RISC-V.
+    ([CVE-2026-54875])
+
+  * Fixed out-of-bounds access after `SSL_set_SSL_CTX()` during a handshake.
+    ([CVE-2026-72897])
+
+  * Fixed QUIC connection-level flow control was not enforced for streams.
+    ([CVE-2026-75804])
+
+  * Fixed a NULL pointer dereference in CMP client revocation response handling.
+    ([CVE-2026-75805])
+
+  * Fixed an unauthenticated and undersized DTLS 1.2 AEAD record causing DoS.
+    ([CVE-2026-75806])
+
+  * Fixed a timing side-channel in SM2 signature generation.
+    ([CVE-2026-77696])
+
+  * Fixed an unbounded `RETIRE_CONNECTION_ID` backlog in QUIC stack
+    implementation.
+    ([CVE-2026-84784])
+
+  * Fixed a bug where `EVP_DecryptFinal()` incorrectly reported a stale success
+    on AES-SIV authentication failure.
+
+  * Fixed a regression in base64 encoding BIO filter introduced in OpenSSL 4.0,
+    where incomplete writes down the BIO chain may result in the loss of encoded
+    base64 data.
+
+This release incorporates the following potentially significant or incompatible
+changes:
+
+ * Changed the OpenSSL FIPS provider so that every algorithm advertised
+   with `fips=yes` property explicitly exposes a `fips-indicator` gettable
+   context parameter, that returns 1 for an approved operation.  The absence
+   of an indicator is no longer interpreted as approval.  Algorithms advertised
+   with `fips=no` property, including X448MLKEM1024, remain unapproved
+   and return 0 when they expose the indicator.
 
 ### Major changes between OpenSSL 4.0.1 and OpenSSL 4.0.2 [25 Aug 2026]
 
@@ -2512,6 +2645,8 @@ OpenSSL 0.9.x
 [CVE-2026-34182]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34182
 [CVE-2026-34183]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34183
 [CVE-2026-35188]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35188
+[CVE-2026-35189]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35189
+[CVE-2026-35191]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35191
 [CVE-2026-42764]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42764
 [CVE-2026-42765]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42765
 [CVE-2026-42766]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42766
@@ -2520,23 +2655,37 @@ OpenSSL 0.9.x
 [CVE-2026-42769]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42769
 [CVE-2026-42770]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42770
 [CVE-2026-42771]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42771
+[CVE-2026-42772]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42772
 [CVE-2026-45445]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45445
 [CVE-2026-45446]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45446
 [CVE-2026-45447]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45447
+[CVE-2026-54872]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54872
+[CVE-2026-54873]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54873
 [CVE-2026-54874]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54874
+[CVE-2026-54875]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54875
 [CVE-2026-54876]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54876
 [CVE-2026-63072]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63072
 [CVE-2026-63073]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63073
 [CVE-2026-63074]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63074
 [CVE-2026-63075]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63075
 [CVE-2026-63076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63076
+[CVE-2026-72897]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-72897
 [CVE-2026-75803]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75803
+[CVE-2026-75804]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75804
+[CVE-2026-75805]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75805
+[CVE-2026-75806]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75806
+[CVE-2026-77696]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-77696
+[CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
+[CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
+[CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md
 [RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
 [RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
+[RFC 8701]: https://datatracker.ietf.org/doc/html/rfc8701
 [RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[RFC 9147]: https://datatracker.ietf.org/doc/html/rfc9147
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final

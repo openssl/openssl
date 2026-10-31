@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,6 +34,9 @@ extern "C" {
 
 /* QUIC uses a 4 byte unsigned version number */
 #define OSSL_QUIC1_VERSION 0x0000001
+
+/* Maximum plaintext length: defined by SSL/TLS standards */
+#define SSL3_RT_MAX_PLAIN_LENGTH 16384
 
 #ifdef __cplusplus
 }

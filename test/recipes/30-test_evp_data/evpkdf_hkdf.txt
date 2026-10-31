@@ -301,3 +301,35 @@ Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
 Ctrl.salt = hexsalt:000102030405060708090a0b0c
 Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
 Output = 832390086CDA71FB47625BB5CEB168E4C8E26A1A16ED34D9FC7FE92C1481579338DA362CB8D9F925D7CB
+
+Title = Fixed digest HKDF FIPS indicator tests
+
+Availablein = fips
+FIPSversion = >=3.6.0
+KDF = HKDF-SHA256
+Unapproved = 1
+Ctrl.key-check = key-check:0
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = 58dce10d5801cdfda831726bfebcb743d14a7ee83aa057a93d59b0a1317ff09d105ccecf535692b14dd5
+
+Availablein = fips
+FIPSversion = >=3.6.0
+KDF = HKDF-SHA384
+Unapproved = 1
+Ctrl.key-check = key-check:0
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = fb7e6743eb42cde96f1b70778952ab7548cafe53249f7ffe1497a1635b201ff185b93e951992d858f11a
+
+Availablein = fips
+FIPSversion = >=3.6.0
+KDF = HKDF-SHA512
+Unapproved = 1
+Ctrl.key-check = key-check:0
+Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b
+Ctrl.salt = hexsalt:000102030405060708090a0b0c
+Ctrl.info = hexinfo:f0f1f2f3f4f5f6f7f8f9
+Output = 7413e8997e020610fbf6823f2ce14bff01875db1ca55f68cfcf3954dc8aff53559bd5e3028b080f7c068

@@ -51,6 +51,7 @@ jobs:
       check_run_id: ${{ inputs.check_run_id }}
 
   cross-compilation-aarch64:
+    name: cross-compilation-aarch64 (${{ matrix.platform.capslabel }})
     # pull request title contains 'aarch64'
     # pull request title contains 'arm64'
     # pull request body contains '[aarch64 ci]'
@@ -201,8 +202,8 @@ jobs:
 
     - name: Set OpenSSL caps environment
       if: matrix.platform.opensslcapsname != ''
-      run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
-                 ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
+      run: |
+        echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=${{ matrix.platform.opensslcaps }}" >> "$GITHUB_ENV"
 
     - name: get cpu info
       run: cat /proc/cpuinfo
@@ -211,31 +212,64 @@ jobs:
       if: matrix.platform.tests != 'none'
       run: QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh info -cpusettings
 
-    # A dispatched run takes the push tier, not the pull_request one below: it exists to run
-    # pre-merge what currently only runs post-merge, and evp-only is the weaker signal. Legs
-    # setting `tests: none` stay build-only on every trigger, by design.
+    # A dispatched run, and a pull request that opts in with `[aarch64 ci]` in its body, take the
+    # push tier: both exist to run pre-merge what otherwise only runs post-merge, and evp-only
+    # is the weaker signal. A pull request that only matches on its title keeps the evp tier.
+    # Legs setting `tests: none` stay build-only on every trigger, by design.
     - name: make all tests
-      if: (github.event_name == 'push' || inputs.pr != '') && matrix.platform.tests == ''
+      if: (github.event_name == 'push' || inputs.pr != '' || contains(github.event.pull_request.body, '[aarch64 ci]')) && matrix.platform.tests == ''
       run: |
         .github/workflows/make-test \
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: (github.event_name == 'push' || inputs.pr != '') && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: (github.event_name == 'push' || inputs.pr != '' || contains(github.event.pull_request.body, '[aarch64 ci]')) && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+      if: github.event_name == 'pull_request' && !contains(github.event.pull_request.body, '[aarch64 ci]') && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
                   TESTS="test_evp*" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "cross-compiles-aarch64@${{ matrix.platform.capslabel }}"
         path: artifacts.tar.gz
         if-no-files-found: ignore
+
+  gcs-validation-aarch64:
+    # pull request title contains 'aarch64'
+    # pull request title contains 'arm64'
+    # pull request body contains '[aarch64 ci]'
+    # push event commit message contains '[aarch64 ci]'
+    # cron job
+    # manual dispatch
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (contains(github.event.pull_request.title, 'aarch64') || contains(github.event.pull_request.title, 'AArch64') || contains(github.event.pull_request.title, 'arm64') || contains(github.event.pull_request.body, '[aarch64 ci]') || contains(github.event.head_commit.message, '[aarch64 ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    runs-on: ubuntu-26.04-arm
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: print tool versions
+      run: |
+        gcc --version
+        ld --version
+    - name: config
+      run: |
+        CFLAGS='-mbranch-protection=standard' \
+        LDFLAGS='-Wl,-z,gcs=always -Wl,-z,gcs-report=error' \
+        ./config --strict-warnings enable-demos enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace --banner=Configured
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4

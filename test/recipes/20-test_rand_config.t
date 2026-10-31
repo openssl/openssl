@@ -10,7 +10,7 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT result_dir/;
+use OpenSSL::Test qw/:DEFAULT result_dir with/;
 use OpenSSL::Test::Utils;
 
 setup("test_rand_config");
@@ -57,7 +57,41 @@ my @aria_tests = (
 
 push @rand_tests, @aria_tests unless disabled("aria");
 
-plan tests => scalar @rand_tests * 2;
+# Configured seed sources must be honoured: an available one is used and
+# an unavailable one is an error rather than a silent fallback to the
+# operating system entropy sources.  Not applicable to enable-fips-jitter
+# builds, which hard-wire the JITTER seed source.
+my $rand_seed_none =
+    grep { $_ eq 'OPENSSL_RAND_SEED_NONE' }
+        @{ config('openssl_feature_defines') // [] };
+my @seed_tests;
+if (disabled("fips-jitter")) {
+    push @seed_tests,
+        { seed => 'SEED-SRC',
+          expected_ok => 1,
+          desc => 'configured SEED-SRC seed source works' }
+        unless $rand_seed_none;
+    push @seed_tests,
+        { seed => 'SEED-SRC',
+          strict => 'yes',
+          expected_ok => 1,
+          desc => 'strictly configured SEED-SRC seed source works' }
+        unless $rand_seed_none;
+    push @seed_tests,
+        { seed => 'NONEXISTENT-SEED-SOURCE',
+          expected_ok => 0,
+          desc => 'unavailable configured seed source fails, no fallback' };
+    push @seed_tests,
+        { seed => 'HASH-DRBG',
+          strict => 'yes',
+          args => ['-hex', '1'],
+          expected_exit => 1,
+          stderr_re => qr/error:1200006E:/,
+          desc => 'recursive strict seed source fails cleanly' };
+}
+
+plan tests => scalar @rand_tests * 2 + scalar @seed_tests
+    + scalar grep { defined $_->{stderr_re} } @seed_tests;
 
 my $contents =<<'CONFIGEND';
 openssl_conf = openssl_init
@@ -89,6 +123,41 @@ foreach (@rand_tests) {
     # Also check that instantiating the drbg works
     my $result_dir = result_dir();
     ok(run(app(["openssl", "rand", "-writerand", "$result_dir/$tmpfile.bin"])));
+}
+
+foreach (@seed_tests) {
+    my $tmpfile = 'rand_seed_config.cfg';
+    open(my $cfg, '>', $tmpfile) or die "Could not open file";
+    print $cfg $contents;
+    print $cfg "seed = $_->{seed}\n";
+    print $cfg "seed_strict = $_->{strict}\n" if defined $_->{strict};
+    close $cfg;
+
+    $ENV{OPENSSL_CONF} = $tmpfile;
+
+    my @args = @{ $_->{args} // ['-hex', '16'] };
+    if (defined $_->{expected_exit}) {
+        my $expected_exit = $_->{expected_exit};
+        my $stderr_file = 'rand_seed_config.err';
+
+        with({ exit_checker => sub { return shift == $expected_exit; } },
+            sub {
+                ok(run(app(["openssl", "rand", @args],
+                           stderr => $stderr_file)), $_->{desc});
+            });
+        if (defined $_->{stderr_re}) {
+            open(my $err, '<', $stderr_file)
+                or die "Could not open error output";
+            my $error = do { local $/; <$err> };
+            close($err);
+            like($error, $_->{stderr_re},
+                 "$_->{desc} reports a RAND error");
+        }
+        unlink($stderr_file);
+    } else {
+        my $ok = run(app(["openssl", "rand", @args]));
+        ok(!$ok == !$_->{expected_ok}, $_->{desc});
+    }
 }
 
 # Check that the stdout output contains the expected values.

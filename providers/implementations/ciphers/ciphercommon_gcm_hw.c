@@ -19,7 +19,17 @@ int ossl_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen)
 int ossl_gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad,
     size_t aad_len)
 {
-    return CRYPTO_gcm128_aad(&ctx->gcm, aad, aad_len) == 0;
+    int rv = CRYPTO_gcm128_aad(&ctx->gcm, aad, aad_len);
+
+    /*
+     * CRYPTO_gcm128_aad() returns:
+     * -  0: success -> return 1
+     * - -1: AAD length overflow -> propagate
+     * - -2: AAD follows the payload -> propagate
+     */
+    if (rv == 0)
+        return 1;
+    return rv;
 }
 
 int ossl_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
@@ -54,7 +64,7 @@ int ossl_gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
     int ret = 0;
 
     /* Use saved AAD */
-    if (!ctx->hw->aadupdate(ctx, aad, aad_len))
+    if (ctx->hw->aadupdate(ctx, aad, aad_len) <= 0)
         goto err;
     if (!ctx->hw->cipherupdate(ctx, in, in_len, out))
         goto err;

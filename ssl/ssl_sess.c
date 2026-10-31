@@ -328,7 +328,10 @@ unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 static int def_generate_session_id(SSL *ssl, unsigned char *id,
     unsigned int *id_len)
 {
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    int match;
     unsigned int retry = 0;
+
     do {
         if (RAND_bytes_ex(ssl->ctx->libctx, id, *id_len, 0) <= 0)
             return 0;
@@ -337,7 +340,10 @@ static int def_generate_session_id(SSL *ssl, unsigned char *id,
             id[0]++;
         }
 #endif
-    } while (SSL_has_matching_session_id(ssl, id, *id_len) && (++retry < MAX_SESS_ID_ATTEMPTS));
+        match = ssl_has_matching_session_id(sc, id, *id_len);
+        if (match < 0)
+            return 0;
+    } while (match > 0 && (++retry < MAX_SESS_ID_ATTEMPTS));
     if (retry < MAX_SESS_ID_ATTEMPTS)
         return 1;
     /* else - woops a session_id match */
@@ -354,6 +360,7 @@ static int def_generate_session_id(SSL *ssl, unsigned char *id,
 
 int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
 {
+    int match;
     unsigned int tmp;
     GEN_SESSION_CB cb = def_generate_session_id;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
@@ -401,8 +408,7 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     }
     if (!CRYPTO_THREAD_read_lock(s->session_ctx->lock)) {
         CRYPTO_THREAD_unlock(ssl->lock);
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-            SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     if (s->generate_session_id)
@@ -432,8 +438,13 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     }
     ss->session_id_length = tmp;
     /* Finally, check for a conflict */
-    if (SSL_has_matching_session_id(ssl, ss->session_id,
-            (unsigned int)ss->session_id_length)) {
+    match = ssl_has_matching_session_id(s, ss->session_id,
+        (unsigned int)ss->session_id_length);
+    if (match < 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (match > 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_SSL_SESSION_ID_CONFLICT);
         return 0;
     }
@@ -1165,6 +1176,23 @@ int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s, const unsigned char *alpn,
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
+}
+
+/*
+ * Replace the client identity in an unshared session, taking ownership of the
+ * supplied chain or RPK. The server keeps the leaf separately from its issuers.
+ */
+void ossl_session_set0_peer(SSL_SESSION *sess, STACK_OF(X509) *peer_chain,
+    EVP_PKEY *peer_rpk, long verify_result)
+{
+    X509_free(sess->peer);
+    OSSL_STACK_OF_X509_free(sess->peer_chain);
+    EVP_PKEY_free(sess->peer_rpk);
+
+    sess->peer = peer_chain == NULL ? NULL : sk_X509_shift(peer_chain);
+    sess->peer_chain = peer_chain;
+    sess->peer_rpk = peer_rpk;
+    sess->verify_result = verify_result;
 }
 
 EVP_PKEY *SSL_SESSION_get0_peer_rpk(SSL_SESSION *s)

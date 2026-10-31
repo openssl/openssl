@@ -154,7 +154,8 @@ BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED:143:\
 BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED:144:no hostname or service specified
 BIO_R_NO_PORT_DEFINED:113:no port defined
 BIO_R_NO_SUCH_FILE:128:no such file
-BIO_R_PEER_ADDR_NOT_AVAILABLE:114:peer addr not available
+BIO_R_NULL_PARAMETER:115:null parameter
+BIO_R_PEER_ADDR_NOT_AVAILABLE:151:peer addr not available
 BIO_R_PORT_MISMATCH:150:port mismatch
 BIO_R_TFO_DISABLED:106:tfo disabled
 BIO_R_TFO_NO_KERNEL_SUPPORT:108:tfo no kernel support
@@ -1038,8 +1039,12 @@ PROV_R_COFACTOR_REQUIRED:236:cofactor required
 PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
 PROV_R_DIGEST_NOT_ALLOWED:174:digest not allowed
 PROV_R_EMS_NOT_ENABLED:233:ems not enabled
+PROV_R_ENTROPY_SOURCE_FAILED_APT_CONTINUOUS_TEST:268:\
+        entropy source failed APT continuous test
 PROV_R_ENTROPY_SOURCE_FAILED_CONTINUOUS_TESTS:244:\
 	entropy source failed continuous tests
+PROV_R_ENTROPY_SOURCE_FAILED_RCT_CONTINUOUS_TEST:269:\
+        entropy source failed RCT continuous test
 PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK:186:entropy source strength too weak
 PROV_R_ERROR_INSTANTIATING_DRBG:188:error instantiating drbg
 PROV_R_ERROR_RETRIEVING_ENTROPY:189:error retrieving entropy
@@ -1826,6 +1831,7 @@ X509V3_R_NO_PUBLIC_KEY:114:no public key
 X509V3_R_NO_SUBJECT_DETAILS:125:no subject details
 X509V3_R_OPERATION_NOT_DEFINED:148:operation not defined
 X509V3_R_OTHERNAME_ERROR:147:othername error
+X509V3_R_PATHLEN_TOO_LARGE:175:pathlen too large
 X509V3_R_POLICY_LANGUAGE_ALREADY_DEFINED:155:policy language already defined
 X509V3_R_POLICY_PATH_LENGTH:156:policy path length
 X509V3_R_POLICY_PATH_LENGTH_ALREADY_DEFINED:157:\

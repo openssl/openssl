@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -89,7 +89,13 @@ extern int OPENSSL_s390xcex;
 __attribute__((visibility("hidden")))
 #endif
 extern int OPENSSL_s390xcex_nodev;
+#if defined(__GNUC__) && defined(__linux)
+__attribute__((visibility("hidden")))
 #endif
+extern unsigned int OPENSSL_s390xcex_min_bits;
+#endif
+
+#define S390X_CEX_MIN_BITS_DEFAULT 2048
 
 /* Max number of 64-bit words currently returned by STFLE */
 #define S390X_STFLE_MAX 3
@@ -204,9 +210,9 @@ extern int OPENSSL_s390xcex_nodev;
 #define S390X_KMAC_IIMP 0x4000
 #define S390X_KMAC_CCUP 0x2000
 
-/* Are the s390x vector instructions (VX and VXE) supported? */
-/* This is the case for >= z13 (VX) and >= z14 (VXE).        */
+/* Are the s390x vector instructions (VX) supported? */
+/* This is the case for >= z13.                      */
 #define S390X_VX_CAPABLE ( \
-    (OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX)) && (OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VXE)))
+    (OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX)))
 
 #endif

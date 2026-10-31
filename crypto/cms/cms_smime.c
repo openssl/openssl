@@ -353,10 +353,30 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     int i, n = 0, scount = 0, ret = 0;
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
     int cadesVerify = (flags & CMS_CADES) != 0;
+    int partial = (flags & CMS_VERIFY_PARTIAL) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
 
-    if (dcont == NULL && !check_content(cms))
+    if (dcont == NULL && !check_content(cms)) {
+        /*
+         * A CMS_ContentInfo can be verified more than once (e.g. retried
+         * with a different store).  If a previous call left verify_result
+         * == 1 ("so far, fine") or any of the *_verified flags set on a
+         * SignerInfo, this early failure must still be reflected there
+         * instead of silently keeping the stale "verified" state from the
+         * earlier call.
+         */
+        sinfos = CMS_get0_SignerInfos(cms);
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+            si->verify_result = 0;
+            si->cert_verified = 0;
+            si->attr_verified = 0;
+            si->content_verified = 0;
+        }
         return 0;
+    }
+    /* Set a mark so that we can clear any new errors on success. */
+    (void)ERR_set_mark();
     if (dcont != NULL && !(flags & CMS_BINARY)) {
         const ASN1_OBJECT *coid = CMS_get0_eContentType(cms);
 
@@ -420,6 +440,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
                     si_chains ? &si_chains[i] : NULL,
                     ctx)) {
                 si->verify_result = 0;
+                if (!partial)
+                    goto err;
                 continue;
             }
             si->cert_verified = 1;
@@ -439,6 +461,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
             }
             if (CMS_SignerInfo_verify(si) <= 0) {
                 si->verify_result = 0;
+                if (!partial)
+                    goto err;
                 continue;
             }
             if (cadesVerify) {
@@ -446,6 +470,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
 
                 if (ossl_cms_check_signing_certs(si, si_chain) <= 0) {
                     si->verify_result = 0;
+                    if (!partial)
+                        goto err;
                     continue;
                 }
             }
@@ -468,7 +494,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         tmpin = (len == 0) ? dcont : BIO_new_mem_buf(ptr, len);
         if (tmpin == NULL) {
             ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
-            goto err2;
+            goto err;
         }
     } else {
         tmpin = dcont;
@@ -519,6 +545,8 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
             if (CMS_SignerInfo_verify_ex(si, cmsbio, tmpin) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
                 si->verify_result = 0;
+                if (!partial)
+                    goto err;
                 continue;
             }
             si->content_verified = 1;
@@ -530,14 +558,19 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         if (sk_CMS_SignerInfo_value(sinfos, i)->verify_result)
             n++;
     }
-    if ((flags & CMS_VERIFY_PARTIAL) != 0)
+    if (partial)
         ret = n > 0; /* One success is enough */
     else
         ret = n == scount; /* All must be successful */
 err:
-    if (!ret)
-        for (i = 0; i < scount; i++)
+    /*
+     * On overall failure, verify_result must not stand at 1 ("so far, fine")
+     * for any SignerInfo.
+     */
+    if (!ret) {
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
             sk_CMS_SignerInfo_value(sinfos, i)->verify_result = 0;
+    }
     if (!(flags & SMIME_BINARY) && dcont) {
         do_free_upto(cmsbio, tmpout);
         if (tmpin != dcont)
@@ -554,7 +587,6 @@ err:
     if (out != tmpout)
         BIO_free_all(tmpout);
 
-err2:
     if (si_chains != NULL) {
         for (i = 0; i < scount; ++i)
             OSSL_STACK_OF_X509_free(si_chains[i]);
@@ -562,6 +594,15 @@ err2:
     }
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+
+    /*
+     * On error, keep internal errors for inspection by the caller. Otherwise
+     * clear any new errors queued since the mark.
+     */
+    if (!ret)
+        ERR_clear_last_mark();
+    else
+        ERR_pop_to_mark();
 
     return ret;
 }
@@ -792,6 +833,7 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
         ec->keylen = 0;
+        ec->harderr = 0;
     }
 
     if (ris != NULL && ec != NULL)
@@ -835,10 +877,11 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
             CMS_RecipientInfo_set0_pkey(ri, NULL);
             if (cert != NULL) {
                 /*
-                 * If not debugging clear any error and return success to
-                 * avoid leaking of information useful to MMA
+                 * If not debugging and a failure cannot be reported safely,
+                 * clear any error and return success to avoid leaking of
+                 * information useful to MMA
                  */
-                if (!debug) {
+                if (!debug && (ec == NULL || !ec->harderr)) {
                     ERR_clear_error();
                     return 1;
                 }
@@ -919,6 +962,7 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
         ec->keylen = 0;
+        ec->harderr = 0;
     }
 
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {

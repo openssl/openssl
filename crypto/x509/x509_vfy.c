@@ -1858,16 +1858,59 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
     return X509_cmp(cert_ta, crl_ta) == 0;
 }
 
+/*
+ * Return the full name of the certificate CRL distribution point dp, whose
+ * distpoint is a nameRelativeToCRLIssuer fragment: the CRL issuer name with
+ * the fragment appended.  The CRL issuer is the directoryName in
+ * dp->CRLissuer if there is one, else the issuer of the certificate.
+ *
+ * The result is a fresh X509_NAME owned by the caller.  It is deliberately
+ * not stored in dp->distpoint->dpname: once its extension cache has been
+ * published a certificate is shared between threads without locking, and
+ * computing the name here rather than when the certificate is parsed keeps
+ * a certificate with many relative distribution points from costing a copy
+ * of the issuer name per entry on every parse.  Returns NULL on error.
+ */
+static X509_NAME *crldp_full_name(const X509 *x, const DIST_POINT *dp)
+{
+    const X509_NAME *iname = NULL;
+    int i;
+
+    /*
+     * Note that the below way of determining iname is not really compliant
+     * with https://tools.ietf.org/html/rfc5280#section-4.2.1.13
+     * According to it, sk_GENERAL_NAME_num(dp->CRLissuer) MUST be <= 1
+     * and any CRLissuer could be of type different to GEN_DIRNAME.
+     */
+    for (i = 0; i < sk_GENERAL_NAME_num(dp->CRLissuer); i++) {
+        GENERAL_NAME *gen = sk_GENERAL_NAME_value(dp->CRLissuer, i);
+
+        if (gen->type == GEN_DIRNAME) {
+            iname = gen->d.directoryName;
+            break;
+        }
+    }
+    if (iname == NULL)
+        iname = X509_get_issuer_name(x);
+    return ossl_dist_point_name_full(dp->distpoint, iname);
+}
+
 /*-
  * Check for match between two dist point names: three separate cases.
  * 1. Both are relative names and compare X509_NAME types.
  * 2. One full, one relative. Compare X509_NAME to GENERAL_NAMES.
  * 3. Both are full names and compare two GENERAL_NAMES.
  * 4. One is NULL: automatic match.
+ *
+ * a is the certificate's distribution point name and b the CRL's issuing
+ * distribution point name.  When a is a relative name, aname is its full
+ * name as built by crldp_full_name(); a->dpname itself is not consulted.
+ * For b the full name is the cached b->dpname set when the CRL was parsed.
  */
-static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
+static int idp_check_dp(DIST_POINT_NAME *a, const X509_NAME *aname,
+    DIST_POINT_NAME *b)
 {
-    X509_NAME *nm = NULL;
+    const X509_NAME *nm = NULL;
     GENERAL_NAMES *gens = NULL;
     GENERAL_NAME *gena, *genb;
     int i, j;
@@ -1875,16 +1918,16 @@ static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
     if (a == NULL || b == NULL)
         return 1;
     if (a->type == 1) {
-        if (a->dpname == NULL)
+        if (aname == NULL)
             return 0;
         /* Case 1: two X509_NAME */
         if (b->type == 1) {
             if (b->dpname == NULL)
                 return 0;
-            return X509_NAME_cmp(a->dpname, b->dpname) == 0;
+            return X509_NAME_cmp(aname, b->dpname) == 0;
         }
         /* Case 2: set name and GENERAL_NAMES appropriately */
-        nm = a->dpname;
+        nm = aname;
         gens = b->name.fullname;
     } else if (b->type == 1) {
         if (b->dpname == NULL)
@@ -1939,6 +1982,52 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
     return 0;
 }
 
+/*
+ * Check whether the distribution point name |idpname| of a CRL's IDP extension
+ * matches the default distribution point that RFC 5280, section 6.3.3, assumes
+ * for CRLs not specified in any of the certificate's distribution points: one
+ * whose fullName consists of the certificate issuer name and the names in the
+ * certificate's issuerAltName extension.  The assumed distribution point is
+ * constructed and matched with idp_check_dp().
+ */
+static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
+{
+    DIST_POINT_NAME dpname;
+    GENERAL_NAMES *gens;
+    GENERAL_NAME *gen = NULL;
+    X509_NAME *iname = NULL;
+    int ret = 0;
+
+    /*
+     * An undecodable issuerAltName extension is treated as an absent one;
+     * any decoding errors are not left in the error queue.
+     */
+    ERR_set_mark();
+    gens = X509_get_ext_d2i(x, NID_issuer_alt_name, NULL, NULL);
+    ERR_pop_to_mark();
+    if (gens == NULL && (gens = sk_GENERAL_NAME_new_null()) == NULL)
+        return 0;
+    if ((gen = GENERAL_NAME_new()) == NULL
+        || (iname = X509_NAME_dup(X509_get_issuer_name(x))) == NULL)
+        goto end;
+    GENERAL_NAME_set0_value(gen, GEN_DIRNAME, iname);
+    iname = NULL; /* now owned by |gen| */
+    if (!sk_GENERAL_NAME_push(gens, gen))
+        goto end;
+    gen = NULL; /* now owned by |gens| */
+
+    dpname.type = 0; /* fullName */
+    dpname.name.fullname = gens;
+    dpname.dpname = NULL;
+    ret = idp_check_dp(&dpname, NULL, idpname);
+
+end:
+    GENERAL_NAME_free(gen);
+    X509_NAME_free(iname);
+    GENERAL_NAMES_free(gens);
+    return ret;
+}
+
 /* Check CRLDP and IDP */
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
@@ -1957,17 +2046,40 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     *preasons = crl->idp_reasons;
     for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
+        X509_NAME *dpname = NULL;
+        int match;
 
-        if (crldp_check_crlissuer(dp, crl, crl_score)) {
-            if (crl->idp == NULL
-                || idp_check_dp(dp->distpoint, crl->idp->distpoint)) {
-                *preasons &= dp->dp_reasons;
-                return 1;
-            }
+        if (!crldp_check_crlissuer(dp, crl, crl_score))
+            continue;
+        if (crl->idp == NULL) {
+            match = 1;
+        } else {
+            /*
+             * A relative distribution point name is only comparable in
+             * full form.  Build it for this one comparison and discard it;
+             * if that fails the entry simply does not match.
+             */
+            if (dp->distpoint != NULL && dp->distpoint->type == 1
+                && (dpname = crldp_full_name(x, dp)) == NULL)
+                continue;
+            match = idp_check_dp(dp->distpoint, dpname, crl->idp->distpoint);
+            X509_NAME_free(dpname);
+        }
+        if (match) {
+            *preasons &= dp->dp_reasons;
+            return 1;
         }
     }
-    return (crl->idp == NULL || crl->idp->distpoint == NULL)
-        && (crl_score & CRL_SCORE_ISSUER_NAME) != 0;
+    /*
+     * The CRL is not specified in any distribution point of the certificate.
+     * RFC 5280, section 6.3.3, allows such a CRL if it is issued by the
+     * certificate issuer, assuming a distribution point with the reasons and
+     * cRLIssuer fields omitted and a distribution point name consisting of
+     * the certificate issuer name and any issuerAltName entries.
+     */
+    return (crl_score & CRL_SCORE_ISSUER_NAME) != 0
+        && (crl->idp == NULL || crl->idp->distpoint == NULL
+            || idp_check_issuer(crl->idp->distpoint, x));
 }
 
 /*
@@ -2078,7 +2190,8 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         if (rv != X509_V_OK && !verify_cb_crl(ctx, rv))
             return 0;
         /* Verify CRL signature */
-        if (X509_CRL_verify(crl, ikey) <= 0 && !verify_cb_crl(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE))
+        if (ossl_x509_crl_verify_ex(crl, ikey, ctx->libctx, ctx->propq) <= 0
+            && !verify_cb_crl(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE))
             return 0;
     }
     return 1;
@@ -2398,7 +2511,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 CB_FAIL_IF(1, ctx, xi, issuer_depth,
                     X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY);
             } else {
-                CB_FAIL_IF(X509_verify(xs, pkey) <= 0,
+                CB_FAIL_IF(ossl_x509_verify_ex(xs, pkey, ctx->libctx,
+                               ctx->propq)
+                        <= 0,
                     ctx, xs, n, X509_V_ERR_CERT_SIGNATURE_FAILURE);
             }
         }
@@ -3468,7 +3583,10 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
 
     for (i = 0; i < recnum; ++i) {
         t = sk_danetls_record_value(dane->trecs, i);
-        if (t->usage != DANETLS_USAGE_DANE_TA || t->selector != DANETLS_SELECTOR_SPKI || t->mtype != DANETLS_MATCHING_FULL || X509_verify(cert, t->spki) <= 0)
+        if (t->usage != DANETLS_USAGE_DANE_TA
+            || t->selector != DANETLS_SELECTOR_SPKI
+            || t->mtype != DANETLS_MATCHING_FULL
+            || ossl_x509_verify_ex(cert, t->spki, ctx->libctx, ctx->propq) <= 0)
             continue;
 
         /* Clear any PKIX-?? matches that failed to extend to a full chain */
@@ -4147,7 +4265,8 @@ static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
     if (level > NUM_AUTH_LEVELS)
         level = NUM_AUTH_LEVELS;
 
-    if (!X509_get_signature_info(cert, NULL, NULL, &secbits, NULL))
+    if (!ossl_x509_get_signature_info_ex(cert, NULL, NULL, &secbits, NULL,
+            ctx->libctx, ctx->propq))
         return 0;
 
     return secbits >= minbits_table[level - 1];

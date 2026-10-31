@@ -370,7 +370,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         }
         if (attrtype == V_ASN1_BIT_STRING) {
             /*
-             * ASN1_STRING_set1_data() rejects bit strings, so use the
+             * ossl_asn1_string_set1_data() rejects bit strings, so use the
              * dedicated bit string setter, with zero unused bits.
              */
             if (data == NULL && len > 0) {
@@ -381,7 +381,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
                 ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
                 goto err;
             }
-        } else if (!ASN1_STRING_set1_data(stmp, data, len)) {
+        } else if (!ossl_asn1_string_set1_data(stmp, data, len)) {
             ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
         }

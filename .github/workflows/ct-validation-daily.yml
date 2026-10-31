@@ -69,7 +69,7 @@ permissions:
 jobs:
   validate-dispatch-inputs:
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       (inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != '')
     uses: ./.github/workflows/validate-dispatch-inputs.yml
     with:
@@ -80,7 +80,7 @@ jobs:
   ct-validation:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -141,7 +141,15 @@ jobs:
         # - memcmp: test_crypto_memcmp
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
+        # - SM2/EC: test_ec
+        #
+        # Also covered:
+        # - test_ct_validation_helpers: The Valgrind-based constant-time
+        #   validation helpers from constant_time.h, like CONSTTIME_SECRET and
+        #   CONSTTIME_DECLASSIFY
+        # - test_asn1_string_poison: memcheck reports C-string use of
+        #   ASN1_STRING data, whose NUL terminator libcrypto marks inaccessible
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp" \
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_ct_validation_helpers test_asn1_string_poison" \
                OSSL_VALGRIND_CT=yes \
                test

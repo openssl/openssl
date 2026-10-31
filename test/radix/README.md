@@ -95,6 +95,21 @@ The RADIX test features the following improvements relative to the
 
 - An explicit `OP_END` is no longer needed.
 
+Blocking operations
+-------------------
+
+QUIC clients and listeners are explicitly nonblocking by default. Accepted
+connections and their streams inherit this setting. The interpreter drives
+active endpoints and advances the simulated clock between operations and on
+retries, so an operation must return to allow its peer to make progress.
+
+Tests which require blocking operations must enable them explicitly with
+`SSL_set_blocking_mode` and provide independent progress for the peer and the
+simulated clock while the call waits. `OP_CONNECT_WAIT` always sets the client
+to nonblocking mode, so enable blocking I/O after that operation. The domain
+flags still enable blocking support, which is also needed by tests of
+`SSL_poll` with a nonzero timeout.
+
 Architecture
 ------------
 

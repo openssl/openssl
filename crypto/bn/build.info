@@ -194,3 +194,7 @@ GENERATE[armv8-mont.S]=asm/armv8-mont.pl
 INCLUDE[armv8-mont.o]=..
 GENERATE[riscv64-mont.S]=asm/riscv64-mont.pl
 INCLUDE[riscv64-mont.o]=..
+
+DEPEND[bn_prime.o]=bn_prime.h
+GENERATE[bn_prime.h]=bn_prime.pl
+INCLUDE[bn_prime.o]=.

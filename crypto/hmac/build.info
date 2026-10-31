@@ -17,6 +17,7 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 DEFINE[../../libcrypto]=$HMACDEF
+DEFINE[../../providers/libdefault.a]=$HMACDEF
 DEFINE[../../providers/libfips.a]=$HMACDEF
 
 SOURCE[../../libcrypto]=$COMMON $HMACASM

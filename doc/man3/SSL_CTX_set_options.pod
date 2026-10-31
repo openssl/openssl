@@ -154,8 +154,10 @@ being used).
 
 =item SSL_OP_COOKIE_EXCHANGE
 
-Turn on Cookie Exchange as described in RFC4347 Section 4.2.1. Only affects
-DTLS connections.
+Turn on Cookie Exchange as described in RFC4347 Section 4.2.1 for DTLS 1.0 and
+DTLS 1.2, and in RFC9147 Section 5.1 (HelloRetryRequest cookie) for DTLS 1.3.
+Only affects DTLS connections. See L<SSL_CTX_set_cookie_generate_cb(3)> for the
+callbacks that must be set.
 
 =item SSL_OP_DISABLE_TLSEXT_CA_NAMES
 
@@ -422,6 +424,8 @@ suites, supported groups, supported versions, signature algorithms, key share
 entries, and extensions. GREASE values help prevent ecosystem ossification by
 ensuring servers and middleboxes tolerate unknown values. The injected values
 are consistent across HelloRetryRequest replays within the same connection.
+If a HelloRetryRequest asks for a new key share, the second ClientHello omits
+the GREASE key share so that the requested key share is the only entry.
 
 =back
 

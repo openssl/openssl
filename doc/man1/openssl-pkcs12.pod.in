@@ -44,6 +44,7 @@ PKCS#12 input (parsing) options:
 [B<-idea>]
 [B<-noenc>]
 [B<-nodes>]
+[B<-noversioncheck>]
 
 PKCS#12 output (export) options:
 
@@ -104,14 +105,19 @@ Print out a usage message.
 
 =item B<-passin> I<arg>
 
-The password source for the input, and for encrypting any private keys that
-are output.
+The password source for input files. With B<-export>, it is used to decrypt
+the input private key. Otherwise, it is the password for the input PKCS#12
+file.
 For more information about the format of B<arg>
 see L<openssl-passphrase-options(1)>.
 
 =item B<-passout> I<arg>
 
-The password source for output files.
+The password source for output files. With B<-export>, it is the password for
+the output PKCS#12 file. Otherwise, it is used to encrypt any private keys that
+are output.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-password> I<arg>
 
@@ -137,6 +143,11 @@ No certificates will be output.
 
 This option inhibits all credentials output,
 and so the input is just verified.
+
+=item B<-noversioncheck>
+
+This option disables checking of the version information.
+This should not be required, but is supplied for backwards compatibility.
 
 =item B<-legacy>
 
@@ -484,13 +495,16 @@ L<ossl_store-file(7)>
 =head1 HISTORY
 
 The B<-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+
 The B<-macsaltlen> option default changed from 8 to 16 bytes in OpenSSL 3.6.
 
 The B<-engine> option was removed in OpenSSL 4.0.
 
+The B<-noversioncheck> option was added in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

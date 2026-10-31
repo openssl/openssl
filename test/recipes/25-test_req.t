@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 133;
+plan tests => 134;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -341,6 +341,52 @@ subtest "generating certificate requests" => sub {
     ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
                 "-verify", "-in", "testreq.pem", "-noout"])),
        "Verifying signature on request");
+};
+
+subtest "generating certificate requests with attributes" => sub {
+    plan tests => 10;
+
+    my $csr = "testreq-attrs.pem";
+    my $out = "testreq-attrs.txt";
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                "-section", "req_attrs",
+                "-key", srctop_file(@certs, "ee-key.pem"),
+                @req_new, "-out", $csr])),
+       "Generating request with prompted attributes");
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                "-verify", "-in", $csr, "-noout"])),
+       "Verifying signature on request with prompted attributes");
+
+    ok(run(app(["openssl", "req", "-in", $csr, "-noout", "-text",
+                "-out", $out])),
+       "Printing text of request with prompted attributes");
+    test_file_contains("request with prompted attributes", $out,
+                       "challengePassword", 1);
+    test_file_contains("request with prompted attributes", $out,
+                       "An Example Company", 1);
+
+    $csr = "testreq-attrs-noprompt.pem";
+    $out = "testreq-attrs-noprompt.txt";
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                "-section", "req_attrs_noprompt",
+                "-key", srctop_file(@certs, "ee-key.pem"),
+                @req_new, "-out", $csr])),
+       "Generating request with attributes without prompting");
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                "-verify", "-in", $csr, "-noout"])),
+       "Verifying signature on request with attributes without prompting");
+
+    ok(run(app(["openssl", "req", "-in", $csr, "-noout", "-text",
+                "-out", $out])),
+       "Printing text of request with attributes without prompting");
+    test_file_contains("request with attributes without prompting", $out,
+                       "challengePassword", 1);
+    test_file_contains("request with attributes without prompting", $out,
+                       "NopromptSecret456", 1);
 };
 
 subtest "modifying the subject of an existing certificate request" => sub {

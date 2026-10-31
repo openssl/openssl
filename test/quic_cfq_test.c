@@ -167,6 +167,8 @@ static int test_cfq(void)
     testresult = 1;
 err:
     ossl_quic_cfq_free(cfq);
+    if (testresult && (!TEST_ptr(g_free) || !TEST_size_t_ne(g_free_len, 0)))
+        testresult = 0;
     return testresult;
 }
 
