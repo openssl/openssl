@@ -618,9 +618,9 @@ int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
  * better really, BUT... we might want to keep this if others (e.g.
  * browsers) do it so as to not stand out compared to them.
  *
- * The "+ 9" constant below is from the specification and is the
- * expansion comparing a string length to an encoded SNI extension.
- * Same is true of the 31/32 formula below.
+ * The "+ 9" constant from the specification accounts for the SNI
+ * extension overhead only when SNI is absent. Otherwise, encoded_len
+ * already includes that overhead. The 31/32 formula is also from the spec.
  *
  * Note that the AEAD tag will be added later, so if we e.g. have
  * a padded cleartext of 128 octets, the ciphertext will be 144
@@ -636,10 +636,16 @@ size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
     if (s == NULL || ee == NULL)
         return 0;
     mnl = ee->max_name_length;
+    /*
+     * RFC 9849, Section 6.1.3 recommends mnl + 9 bytes when SNI is
+     * absent, even when mnl is zero (unknown maximum name length).
+     * This is a SHOULD-level recommendation. The existing mnl == 0
+     * behavior may need to be adjusted.
+     */
     if (mnl != 0) {
         /* do weirder padding if SNI present in inner */
         if (s->ext.hostname != NULL) {
-            isnilen = strlen(s->ext.hostname) + 9;
+            isnilen = strlen(s->ext.hostname);
             innersnipadding = (mnl > isnilen) ? (int)(mnl - isnilen) : 0;
         } else {
             innersnipadding = (int)mnl + 9;
