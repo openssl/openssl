@@ -74,7 +74,15 @@ static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n
 
 static unsigned long hash_stream(const QUIC_STREAM *s)
 {
-    return (unsigned long)s->id;
+    /*
+     * The low two bits of a stream ID are its initiator and direction, so
+     * the IDs of one type share them and a map holding mostly one type would
+     * use a quarter of its buckets. Folding the sequence number's low bits
+     * into them keeps every bucket in use whether the IDs come from one
+     * sequence or from all four, and keeps a dense sequence dense (it is a
+     * bijection on each block of 16 IDs), which a general mix would not.
+     */
+    return (unsigned long)(s->id ^ (s->id >> 2));
 }
 
 static int cmp_stream(const QUIC_STREAM *a, const QUIC_STREAM *b)
