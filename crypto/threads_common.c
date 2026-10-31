@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -273,7 +273,8 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
      * and in libcrypto, so we use CRYPTO_THREAD_run_one directly, which is
      * always defined.
      */
-    if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
+    if (!CRYPTO_THREAD_run_once(&master_once, init_master_key)
+        || !master_key_init)
         return NULL;
 
     if (!ossl_assert(id < CRYPTO_THREAD_LOCAL_KEY_MAX))
@@ -343,7 +344,8 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      * Make sure our master key is initialized
      * See notes above on the use of CRYPTO_THREAD_run_once here
      */
-    if (!CRYPTO_THREAD_run_once(&master_once, init_master_key))
+    if (!CRYPTO_THREAD_run_once(&master_once, init_master_key)
+        || !master_key_init)
         return 0;
 
     if (!ossl_assert(id < CRYPTO_THREAD_LOCAL_KEY_MAX))
@@ -358,8 +360,8 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
         /*
          * we didn't find one, but that's ok, just initialize it now
          */
-        mkey = OPENSSL_calloc(CRYPTO_THREAD_LOCAL_KEY_MAX,
-            sizeof(MASTER_KEY_ENTRY));
+        mkey = CRYPTO_calloc(CRYPTO_THREAD_LOCAL_KEY_MAX,
+            sizeof(MASTER_KEY_ENTRY), NULL, 0);
         if (mkey == NULL)
             return 0;
         /*

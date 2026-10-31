@@ -29,6 +29,18 @@ ENDIF
 $LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
 
 IF[{- !$disabled{tests} -}]
+  IF[{- $config{target} =~ /^linux-/ && !$disabled{threads} -}]
+    PROGRAMS{noinst}=crypto_tls_init_test crypto_bootstrap_test
+    SOURCE[crypto_tls_init_test]=crypto_tls_init_test.c
+    INCLUDE[crypto_tls_init_test]=.. ../include
+    DEPEND[crypto_tls_init_test]=../libcrypto.a
+    WRAP[crypto_tls_init_test]=pthread_key_create pthread_key_delete
+    UNIT_TEST[crypto_tls_init_test]=
+    SOURCE[crypto_bootstrap_test]=crypto_bootstrap_test.c
+    INCLUDE[crypto_bootstrap_test]=.. ../include
+    DEPEND[crypto_bootstrap_test]=../libcrypto.a
+  ENDIF
+
   LIBS{noinst,has_main}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
