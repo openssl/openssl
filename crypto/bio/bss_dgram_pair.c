@@ -564,6 +564,7 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
     if (ring_buf_init(&pair->map[1].rbuf, b2->req_buf_len) == 0) {
         CRYPTO_FREE_REF(&pair->ref_cnt);
         CRYPTO_THREAD_lock_free(pair->peerlock);
+        OPENSSL_free(pair->map[0].rbuf.start);
         OPENSSL_free(pair);
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
@@ -577,6 +578,8 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
         CRYPTO_THREAD_lock_free(pair->map[1].lock);
         CRYPTO_THREAD_lock_free(pair->peerlock);
         CRYPTO_FREE_REF(&pair->ref_cnt);
+        OPENSSL_free(pair->map[0].rbuf.start);
+        OPENSSL_free(pair->map[1].rbuf.start);
         OPENSSL_free(pair);
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
