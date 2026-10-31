@@ -701,8 +701,22 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 
     /* XXX EC_POINT_cmp() assumes that the methods are equal */
     /* return 1 if the generators are different */
-    if (r || EC_POINT_cmp(a, EC_GROUP_get0_generator(a), EC_GROUP_get0_generator(b), ctx) != 0)
-        r = 1;
+    if (!r) {
+        const EC_POINT *gen_a = EC_GROUP_get0_generator(a);
+        const EC_POINT *gen_b = EC_GROUP_get0_generator(b);
+
+        if (gen_a == NULL || gen_b == NULL) {
+            /*
+             * A group without a generator cannot match one that has one;
+             * if neither has a generator there is nothing to compare.
+             * (EC_POINT_cmp() would dereference a NULL point.)
+             */
+            if (gen_a != gen_b)
+                r = 1;
+        } else if (EC_POINT_cmp(a, gen_a, gen_b, ctx) != 0) {
+            r = 1;
+        }
+    }
 
     if (!r) {
         const BIGNUM *ao, *bo, *ac, *bc;

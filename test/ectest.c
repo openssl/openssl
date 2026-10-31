@@ -3176,6 +3176,58 @@ err:
     return ret;
 }
 
+/*
+ * Regression test: EC_GROUP_cmp() must not dereference a NULL generator.
+ * Groups created with EC_GROUP_new_curve_GFp() have no generator until
+ * EC_GROUP_set_generator() is called; comparing two such groups used to
+ * crash inside EC_POINT_cmp().
+ */
+static int group_no_generator_cmp_test(void)
+{
+    /* p, a, b of prime192v1. Any valid curve works. */
+    static const char *p_hex =
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFF";
+    static const char *a_hex =
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFC";
+    static const char *b_hex =
+        "64210519E59C80E70FA7E9AB72243049FEB8DEECC146B9B1";
+    BIGNUM *p = NULL, *a = NULL, *b = NULL;
+    EC_GROUP *g = NULL, *h = NULL;
+    BN_CTX *ctx = NULL;
+    int ret = 0, rv;
+
+    if (!TEST_ptr(ctx = BN_CTX_new()))
+        goto err;
+    if (!TEST_true(BN_hex2bn(&p, p_hex))
+        || !TEST_true(BN_hex2bn(&a, a_hex))
+        || !TEST_true(BN_hex2bn(&b, b_hex)))
+        goto err;
+    /* curve set, no generator */
+    if (!TEST_ptr(g = EC_GROUP_new_curve_GFp(p, a, b, ctx))
+        || !TEST_ptr(h = EC_GROUP_dup(g)))
+        goto err;
+
+    /*
+     * Must not crash.  The two groups have identical parameters and neither
+     * has a generator, so they compare equal (order and cofactor are
+     * allocated as zero BIGNUMs at group creation, and both compare equal).
+     */
+    rv = EC_GROUP_cmp(g, h, ctx);
+    if (!TEST_int_eq(rv, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    EC_GROUP_free(g);
+    EC_GROUP_free(h);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
@@ -3208,6 +3260,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(custom_generator_test, (int)crv_len);
     ADD_ALL_TESTS(custom_params_test, (int)crv_len);
     ADD_TEST(ec_d2i_publickey_test);
+    ADD_TEST(group_no_generator_cmp_test);
     return 1;
 }
 
