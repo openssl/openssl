@@ -699,10 +699,18 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     if (r || BN_cmp(a1, b1) != 0 || BN_cmp(a2, b2) != 0 || BN_cmp(a3, b3) != 0)
         r = 1;
 
-    /* XXX EC_POINT_cmp() assumes that the methods are equal */
     /* return 1 if the generators are different */
-    if (r || EC_POINT_cmp(a, EC_GROUP_get0_generator(a), EC_GROUP_get0_generator(b), ctx) != 0)
-        r = 1;
+    if (!r) {
+        const EC_POINT *ag = EC_GROUP_get0_generator(a);
+        const EC_POINT *bg = EC_GROUP_get0_generator(b);
+
+        /* A group has no generator until EC_GROUP_set_generator() is called */
+        if (ag == NULL || bg == NULL)
+            r = ag != bg;
+        /* XXX EC_POINT_cmp() assumes that the methods are equal */
+        else if (EC_POINT_cmp(a, ag, bg, ctx) != 0)
+            r = 1;
+    }
 
     if (!r) {
         const BIGNUM *ao, *bo, *ac, *bc;
