@@ -7531,6 +7531,109 @@ end:
 
 #if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_TLS1_2)
 /*
+ * RFC 8446 Appendix D.3 requires a client that attempted 0-RTT to abort the
+ * current connection if the ServerHello selects TLS 1.2 or older.
+ */
+#if !defined(OSSL_NO_USABLE_DTLS1_3) && !defined(OPENSSL_NO_DTLS1_2)
+static int test_early_data_dtls1_2_fallback(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientssl = NULL;
+    SSL_CONNECTION *clientsc = NULL;
+    RAW_EXTENSION extensions[TLSEXT_IDX_num_builtins] = { 0 };
+    const unsigned char dtls13ver[] = { DTLS1_3_VERSION >> 8,
+                                         DTLS1_3_VERSION & 0xff };
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, DTLS_client_method()))
+        || !TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl)))
+        goto end;
+
+    if (!TEST_true(ssl_choose_client_version(clientsc, DTLS1_2_VERSION,
+            extensions))
+        || !TEST_int_eq(clientsc->version, DTLS1_2_VERSION))
+        goto end;
+
+    SSL_free(clientssl);
+    clientssl = NULL;
+    if (!TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
+        || !TEST_ptr(clientsc->ext.early_data_session = SSL_SESSION_new()))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_false(ssl_choose_client_version(clientsc, DTLS1_2_VERSION,
+            extensions))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            SSL_R_WRONG_SSL_VERSION))
+        goto end;
+
+    /* A valid DTLS 1.3 selection must still work after attempting 0-RTT. */
+    SSL_free(clientssl);
+    clientssl = NULL;
+    if (!TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
+        || !TEST_ptr(clientsc->ext.early_data_session = SSL_SESSION_new())
+        || !TEST_true(PACKET_buf_init(
+               &extensions[TLSEXT_IDX_supported_versions].data,
+               dtls13ver, sizeof(dtls13ver))))
+        goto end;
+    extensions[TLSEXT_IDX_supported_versions].present = 1;
+    if (!TEST_true(ssl_choose_client_version(clientsc, DTLS1_2_VERSION,
+            extensions))
+        || !TEST_int_eq(clientsc->version, DTLS1_3_VERSION))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(clientssl);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
+static int test_early_data_tls1_2_fallback(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientssl = NULL;
+    SSL_CONNECTION *clientsc = NULL;
+    RAW_EXTENSION extensions[TLSEXT_IDX_num_builtins] = { 0 };
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method()))
+        || !TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl)))
+        goto end;
+
+    /* TLS 1.2 fallback remains valid when 0-RTT was not attempted. */
+    if (!TEST_true(ssl_choose_client_version(clientsc, TLS1_2_VERSION,
+            extensions))
+        || !TEST_int_eq(clientsc->version, TLS1_2_VERSION))
+        goto end;
+
+    SSL_free(clientssl);
+    clientssl = NULL;
+    if (!TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
+        || !TEST_ptr(clientsc->ext.early_data_session = SSL_SESSION_new()))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_false(ssl_choose_client_version(clientsc, TLS1_2_VERSION,
+            extensions))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            SSL_R_WRONG_SSL_VERSION))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(clientssl);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * Test that a server attempting to read early data can handle a connection
  * from a TLSv1.2 client.
  */
@@ -19637,6 +19740,10 @@ int setup_tests(void)
 #endif
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 #if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_TLS1_2)
+    ADD_TEST(test_early_data_tls1_2_fallback);
+#if !defined(OSSL_NO_USABLE_DTLS1_3) && !defined(OPENSSL_NO_DTLS1_2)
+    ADD_TEST(test_early_data_dtls1_2_fallback);
+#endif
     ADD_ALL_TESTS(test_early_data_tls1_2, 3);
 #endif
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
