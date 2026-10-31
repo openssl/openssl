@@ -1,0 +1,391 @@
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+#
+# {- join("\n# ", @autowarntext) -}
+
+package OpenSSL::TestHarness;
+
+=head1 NAME
+
+OpenSSL::TestHarness - OpenSSL test harness setup as a C<prove> plugin
+
+=head1 SYNOPSIS
+
+From the build tree:
+
+    PERL5LIB=util/perl prove -POpenSSL::TestHarness [ tests | flags ]
+
+or, on platforms where invoking the C<prove> script directly is awkward
+(VMS):
+
+    perl -MOpenSSL::TestHarness -e "exit OpenSSL::TestHarness->prove()" -- \
+        [ tests | flags ]
+
+=head1 DESCRIPTION
+
+This module carries all the OpenSSL specific test harness setup that
+used to live in F<test/run_tests.pl>, packaged as a L<App::Prove> plugin
+(loaded with C<prove -P>).  It sets up the environment for the test
+recipes, computes default harness options, and implements the OpenSSL
+test selection grammar (test names, C<NN-> number patterns, C<alltests>,
+C<list>, and C<-name> negations), so that a plain C<prove> invocation
+behaves exactly like the old F<test/run_tests.pl>.
+
+This file is generated at build time, with the source and build top
+directories baked in.  If C<SRCTOP>, C<BLDTOP> or C<TOP> are defined
+in the environment, they take precedence over the baked-in values.
+
+=cut
+
+use strict;
+use warnings;
+
+use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
+use File::Basename;
+use Scalar::Util qw(looks_like_number);
+
+{-
+ use File::Spec::Unix;
+ use File::Spec;
+ use Cwd qw(abs_path);
+ # Make the path absolute, and in Unix form, because VMS perl supports
+ # Unix form paths everywhere (this is the same fixup as in
+ # configdata.pm.in)
+ sub fixup_path {
+     my $path = abs_path(shift);
+
+     if ($^O eq 'VMS') {
+         (my $vol, my $dirs, my $file) = File::Spec->splitpath($path);
+         my @dirs = File::Spec->splitdir($dirs);
+         $vol =~ s|:$||;
+         $dirs = File::Spec::Unix->catdir('', $vol, @dirs);
+         $path = File::Spec::Unix->catpath('', $dirs, $file);
+     }
+
+     return $path;
+ }
+-}
+
+# The source and build tops of this build, baked in at build time.
+# Environment variables still take precedence when set.
+my $baked_srctop = '{- fixup_path($config{sourcedir}) -}';
+my $baked_bldtop = '{- fixup_path($config{builddir}) -}';
+
+# Recognise VERBOSE aka V which is common on other projects.
+# Additionally, recognise VERBOSE_FAILURE aka VF aka REPORT_FAILURES
+# and recognise VERBOSE_FAILURE_PROGRESS aka VFP aka REPORT_FAILURES_PROGRESS.
+sub map_verbose_env {
+    $ENV{HARNESS_VERBOSE} = "yes" if $ENV{VERBOSE} || $ENV{V};
+    $ENV{HARNESS_VERBOSE_FAILURE} = "yes"
+        if $ENV{VERBOSE_FAILURE} || $ENV{VF} || $ENV{REPORT_FAILURES};
+    $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS} = "yes"
+        if ($ENV{VERBOSE_FAILURE_PROGRESS} || $ENV{VFP}
+            || $ENV{REPORT_FAILURES_PROGRESS});
+}
+
+# HARNESS_VERBOSE may hold a non-numeric truth value; TAP::Harness wants
+# a number.
+sub tap_verbosity {
+    my $v = exists $ENV{'HARNESS_VERBOSE'} ? $ENV{'HARNESS_VERBOSE'} : 0;
+    return looks_like_number($v) ? $v : ($v ? 1 : 0);
+}
+
+sub detect_jobs {
+    my $cpus = $ENV{"NUMBER_OF_PROCESSORS"}; # Windows sets this.
+    if (!defined($cpus) && $^O =~ /linux/) {
+        # Perl was built on Linux, so try nproc, which is apparently
+        # the less worse way if you are restricted in a
+        # container/cgroup
+        my $tmp = qx(nproc 2>/dev/null);
+        if ($? == 0 && $tmp > 0) {
+            $cpus = $tmp;
+        }
+    }
+    if (!defined($cpus) && -r "/proc/cpuinfo") {
+        # Smells like Linux or something else attempting bug for bug
+        # compatibility with the /proc paradigm.
+        my $tmp = qx(grep -c ^processor /proc/cpuinfo 2>/dev/null);
+        if ($? == 0 && $tmp > 0) {
+            $cpus = $tmp;
+        }
+    }
+    if (!defined($cpus)) {
+        # OpenBSD, FreeBSD, MacOS
+        my $tmp = qx(sysctl -n hw.ncpu 2>/dev/null);
+        if ($? == 0 && $tmp > 0) {
+            $cpus = $tmp;
+        }
+    }
+
+    return (defined($cpus) && $cpus > 0) ? $cpus : 1;
+}
+
+sub find_matching_tests {
+    my ($recipesdir, $glob) = @_;
+
+    if ($glob =~ m|^[\d\[\]\?\-]+$|) {
+        return OpenSSL::Glob::glob(catfile($recipesdir,"$glob-*.t"));
+    }
+
+    return OpenSSL::Glob::glob(catfile($recipesdir,"*-$glob.t"));
+}
+
+# Exit code for failures.  On VMS, perl converts an exit 1 to
+# SS$_ABORT (%SYSTEM-F-ABORT), which is a bit harsh.  As per perl
+# recommendations, we explicitly use the same VMS status code as
+# typical C programs would for exit(1), except we set the error
+# severity rather than success.
+# Ref: https://perldoc.perl.org/perlport#exit
+#      https://perldoc.perl.org/perlvms#$?
+my $EXIT_FAILURE = 1;
+if ($^O eq 'VMS') {
+    $EXIT_FAILURE = 0x35a000              # C facility code
+        + 8                               # 1 << 3 (to make space for the
+                                          # 3 severity bits)
+        + 2                               # severity: E(rror)
+        + 0x10000000;                     # bit 28 set => the shell stays
+                                          # silent
+}
+
+my $has_nonexistent_test = 0;
+
+sub load {
+    my ($class, $p) = @_;
+    my $app = $p->{app_prove};
+
+    map_verbose_env();
+
+    my $srctop = $ENV{SRCTOP} || $ENV{TOP} || $baked_srctop;
+    my $bldtop = $ENV{BLDTOP} || $ENV{TOP} || $baked_bldtop;
+    # The test recipes rely on these; make sure they're set even when
+    # the user invokes prove manually without them.  They are made
+    # relative to the current directory, as the recipes expect them to
+    # be primarily relative (OpenSSL::Test's __cwd() keeps them correct
+    # relative to each directory a recipe moves into).  The round trip
+    # through rel2abs() normalises values that came in already relative.
+    # Note: abs2rel() leaves the path absolute if it's on another volume.
+    $ENV{SRCTOP} = abs2rel(rel2abs($srctop));
+    $ENV{BLDTOP} = abs2rel(rel2abs($bldtop));
+    $srctop = $ENV{SRCTOP};
+    $bldtop = $ENV{BLDTOP};
+
+    my $recipesdir = catdir($srctop, "test", "recipes");
+    my $libdir = rel2abs(catdir($srctop, "util", "perl"));
+    my $bldlibdir = rel2abs(catdir($bldtop, "util", "perl"));
+
+    # The TAP::Harness::OpenSSL and TAP::Parser::OpenSSL modules live in
+    # the source tree's perl module directory; make them reachable.
+    require lib;
+    lib->import($libdir);
+    lib->import($bldlibdir) if $bldlibdir ne $libdir;
+    # OpenSSL::Glob is used for the test selection globbing (VMS
+    # semantics differ from CORE::glob).
+    require OpenSSL::Glob;
+
+    $ENV{OPENSSL_CONF} = rel2abs(catfile($srctop, "apps", "openssl.cnf"));
+    $ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "test"));
+    $ENV{OPENSSL_MODULES} = rel2abs(catdir($bldtop, "providers"));
+    $ENV{CTLOG_FILE} = rel2abs(catfile($srctop, "test", "ct", "log_list.cnf"));
+
+    # The executable extension matters on platforms like MinGW, where
+    # $^O doesn't tell OpenSSL::Test the right value.
+    $ENV{EXE_EXT} //= '{- platform->binext() -}';
+
+    # On platforms that support this, this will ensure malloc returns
+    # data that is set to a non-zero value.  Can be helpful for
+    # detecting uninitialized reads in some situations.
+    $ENV{'MALLOC_PERTURB_'} = '128' if !defined $ENV{'MALLOC_PERTURB_'};
+
+    print "Warning: HARNESS_VERBOSE overrides HARNESS_VERBOSE_FAILURE*\n"
+        if ($ENV{HARNESS_VERBOSE} && ($ENV{HARNESS_VERBOSE_FAILURE}
+                                      || $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS}));
+    print "Warning: HARNESS_VERBOSE_FAILURE_PROGRESS overrides HARNESS_VERBOSE_FAILURE\n"
+        if ($ENV{HARNESS_VERBOSE_FAILURE_PROGRESS} && $ENV{HARNESS_VERBOSE_FAILURE});
+
+    # Effective verbosity, combining what prove was told with the
+    # environment.
+    my $tap_verbosity =
+        $app->verbose ? 1
+        : $app->quiet ? -1
+        : $app->really_quiet ? -2
+        : tap_verbosity();
+
+    # Show test times by default, unless we have lowered verbosity
+    # (HARNESS_VERBOSE value < 0).  But also ensure HARNESS_TIMER is
+    # respected if it is set.
+    my $tap_timer = exists $ENV{'HARNESS_TIMER'} ? $ENV{'HARNESS_TIMER'}
+        : ($tap_verbosity >= 0) ? 1 : 0;
+
+    # Jobs: an explicit prove -j option wins, then HARNESS_JOBS, then
+    # CPU autodetect.
+    my $jobs = $app->jobs // $ENV{HARNESS_JOBS} // detect_jobs();
+    if ($jobs > 1) {
+        if ($tap_verbosity > 0) {
+            print "Warning: HARNESS_JOBS > 1 ignored with HARNESS_VERBOSE\n";
+            $jobs = 1;
+        } elsif (!$app->jobs) {
+            print "Using HARNESS_JOBS=$jobs\n";
+        }
+    }
+    $app->jobs($jobs) if $jobs > 1;
+
+    # Harness defaults equivalent to what test/run_tests.pl used:
+    # merge test script stderr into stdout, warn in test scripts,
+    # show timers, and include the OpenSSL perl module directory in
+    # the test scripts' @INC.
+    $app->merge(1);
+    $app->timer($tap_timer);
+    $app->warnings_warn(1)
+        unless $app->warnings_warn || $app->warnings_fail;
+    push @{$app->{includes}}, $libdir;
+
+    # Use the OpenSSL TAP harness, which provides the failure verbosity
+    # and TAP copy features, unless the user asked for another harness.
+    if (!$app->harness) {
+        require TAP::Harness::OpenSSL;
+        $app->harness('TAP::Harness::OpenSSL');
+    }
+
+    # ----- Test selection -----
+
+    my @alltests = find_matching_tests($recipesdir, "*");
+    my %tests = ();
+    # Getopt::Long with pass_through (which App::Prove uses) leaves a
+    # '--' option terminator in the argument list; drop it, it carries
+    # no meaning for test selection.
+    my @argv = grep { $_ ne '--' } @{$app->{argv}};
+
+    # 'list' lists all available tests by name and stops there.
+    if (grep { $_ eq 'list' } @argv) {
+        foreach (@alltests) {
+            (my $x = basename($_)) =~ s|^[0-9][0-9]-(.*)\.t$|$1|;
+            print $x,"\n";
+        }
+        exit 0;
+    }
+
+    my $initial_arg = 1;
+    foreach my $arg (@argv ? @argv : ('alltests')) {
+        if ($arg eq 'alltests') {
+            warn "'alltests' encountered, ignoring everything before that...\n"
+                unless $initial_arg;
+            %tests = map { $_ => 1 } @alltests;
+            $has_nonexistent_test = 0;
+        } elsif ($arg =~ m/^(-?)(.*)/) {
+            my $sign = $1;
+            my $test = $2;
+            # An argument that looks like a path is taken as a glob for
+            # recipe files directly, otherwise it's matched against test
+            # names the way TESTS= always has been.
+            my @matches = $test =~ m{[/\\]} || $test =~ m|\.t$|
+                ? OpenSSL::Glob::glob($test)
+                : find_matching_tests($recipesdir, $test);
+
+            # If '-foo' is the first arg, it's short for 'alltests -foo'
+            if ($sign eq '-' && $initial_arg) {
+                %tests = map { $_ => 1 } @alltests;
+            }
+
+            # Flag non-existent test so we can return an error
+            if (scalar @matches == 0) {
+                warn "Test $test found no match, skipping ",
+                    ($sign eq '-' ? "removal" : "addition"),
+                    "...\n";
+                $has_nonexistent_test = 1 unless $sign eq '-';
+            } else {
+                foreach $test (@matches) {
+                    if ($sign eq '-') {
+                        delete $tests{$test};
+                    } else {
+                        $tests{$test} = 1;
+                    }
+                }
+            }
+        }
+
+        $initial_arg = 0;
+    }
+
+    # prep recipes are mandatory and need to be always run first
+    my @preps = OpenSSL::Glob::glob(catfile($recipesdir,"00-prep_*.t"));
+    foreach my $test (@preps) {
+        delete $tests{$test};
+    }
+
+    if (@preps) {
+        require TAP::Harness::OpenSSL;
+        my %prepargs =
+            ( verbosity         => $tap_verbosity,
+              lib               => [ $libdir ],
+              switches          => '-w',
+              merge             => 1,
+              timer             => $tap_timer,
+            );
+        $prepargs{jobs} = $jobs if $jobs > 1;
+        my $harness = TAP::Harness::OpenSSL->new(\%prepargs);
+        my $ret =
+            $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())),
+                                       basename($_) ] } @preps);
+        if ($ret->has_errors) {
+            print "Test preparation failed, not running any tests\n";
+            exit $EXIT_FAILURE;
+        }
+    }
+
+    # for parallel test runs, do slow tests first
+    my @sorted = sort {
+        my ($ka, $kb) = ($a, $b);
+        if ($jobs > 1) {
+            for ($ka, $kb) {
+                s/(\d+)-/01-/ if m/test_ssl_new|test_fuzz/;
+            }
+        }
+        $ka cmp $kb;
+    } keys %tests;
+
+    # Hand prove the final, explicit test list, displayed relative to
+    # the current directory where possible.  An empty selection means
+    # there is nothing to run; prove would croak on an empty argument
+    # list, so we stop here instead (with an error status if a
+    # non-existent test was asked for).
+    if (!@sorted) {
+        print "No tests to run\n";
+        exit($has_nonexistent_test ? $EXIT_FAILURE : 0);
+    }
+    $app->{argv} = [ map { abs2rel($_, rel2abs(curdir())) } @sorted ];
+
+    return 1;
+}
+
+# On exit, flag an error if a non-existent test was asked for.
+END {
+    $? = $EXIT_FAILURE if $has_nonexistent_test;
+}
+
+=head2 Direct invocation entry point
+
+C<prove()> runs C<App::Prove> with this plugin loaded, passing along
+any command line arguments (in C<@ARGV> when used with C<perl -e>),
+and returns an exit code, with the failure exit code mangled
+appropriately on VMS.  It exists for platforms where invoking the
+C<prove> script directly is impractical:
+
+    $(PERL) -MOpenSSL::TestHarness -e "exit OpenSSL::TestHarness->prove()" -- ...
+
+=cut
+
+sub prove {
+    my $class = shift;
+
+    require App::Prove;
+    my $app = App::Prove->new;
+    $app->process_args('-P' . (ref $class || $class), @ARGV);
+    return 0 if $app->run;
+    return $EXIT_FAILURE;
+}
+
+1;
