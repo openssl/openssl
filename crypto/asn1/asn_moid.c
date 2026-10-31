@@ -81,10 +81,12 @@ static int do_create(const char *value, const char *name)
         while (ossl_isspace(*ln))
             ln++;
         p--;
-        while (ossl_isspace(*p)) {
-            if (p == ln)
+        while (p >= ln && ossl_isspace(*p)) {
+            if (ln == p)
                 return 0;
             p--;
+            if (p < ln)
+                return 0;
         }
         p++;
         if ((lntmp = OPENSSL_malloc((p - ln) + 1)) == NULL)
