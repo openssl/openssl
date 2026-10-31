@@ -2003,6 +2003,60 @@ err:
 }
 
 /*
+ * EC_GROUP_cmp() must not crash on groups that have no generator yet: two
+ * such groups with the same curve match, and a group without a generator
+ * does not match one with a generator.
+ */
+static int group_cmp_no_generator_test(void)
+{
+    EC_GROUP *named = NULL, *g = NULL, *h = NULL;
+    EC_POINT *gen = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL, *x = NULL, *y = NULL;
+    BN_CTX *ctx = NULL;
+    int r = 0;
+
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(p = BN_new())
+        || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(b = BN_new())
+        || !TEST_ptr(x = BN_new())
+        || !TEST_ptr(y = BN_new())
+        || !TEST_ptr(named = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1))
+        || !TEST_true(EC_GROUP_get_curve(named, p, a, b, ctx))
+        || !TEST_ptr(g = EC_GROUP_new_curve_GFp(p, a, b, ctx))
+        || !TEST_ptr(h = EC_GROUP_dup(g))
+        || !TEST_ptr_null(EC_GROUP_get0_generator(g))
+        || !TEST_int_eq(EC_GROUP_cmp(g, h, ctx), 0))
+        goto err;
+
+    if (!TEST_true(EC_POINT_get_affine_coordinates(named,
+            EC_GROUP_get0_generator(named),
+            x, y, ctx))
+        || !TEST_ptr(gen = EC_POINT_new(h))
+        || !TEST_true(EC_POINT_set_affine_coordinates(h, gen, x, y, ctx))
+        || !TEST_true(EC_GROUP_set_generator(h, gen,
+            EC_GROUP_get0_order(named),
+            EC_GROUP_get0_cofactor(named)))
+        || !TEST_int_eq(EC_GROUP_cmp(g, h, ctx), 1)
+        || !TEST_int_eq(EC_GROUP_cmp(h, g, ctx), 1))
+        goto err;
+
+    r = 1;
+err:
+    EC_GROUP_free(named);
+    EC_GROUP_free(g);
+    EC_GROUP_free(h);
+    EC_POINT_free(gen);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(x);
+    BN_free(y);
+    BN_CTX_free(ctx);
+    return r;
+}
+
+/*
  * This test validates converting an EC_GROUP to an OSSL_PARAM array
  * using EC_GROUP_to_params(). A named and an explicit curve are tested.
  */
@@ -3184,6 +3238,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(parameter_test);
+    ADD_TEST(group_cmp_no_generator_test);
     ADD_TEST(ossl_parameter_test);
     ADD_TEST(ossl_explicit_parameter_options_test);
 #ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
