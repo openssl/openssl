@@ -113,6 +113,11 @@ OpenSSL 4.2
 
    *John Claus*
 
+ * Added `X509v3_addr_get_safi`, which gets the SAFI from the IPAddressFamily
+   structure.
+
+   *Nihal Kotte*
+
  * Added AVX-512 and VAES optimizations for AES-CTR mode. Performance for
    large inputs (1024 bytes or more) improved by 2.9x to 3.9x.
    <!-- https://github.com/openssl/openssl/pull/30755 -->

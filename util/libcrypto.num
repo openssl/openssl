@@ -5738,6 +5738,7 @@ i2d_IPAddrBlocks                        ?	4_2_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_free                       ?	4_2_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_new                        ?	4_2_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_it                         ?	4_2_0	EXIST::FUNCTION:RFC3779
+X509v3_addr_get_safi                    ?	4_2_0	EXIST::FUNCTION:RFC3779
 PKCS8_PRIV_KEY_INFO_get1_skey           ?	4_2_0	EXIST::FUNCTION:
 PKCS12_decrypt_secretbag                ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_new                    ?	4_2_0	EXIST::FUNCTION:
