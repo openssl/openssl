@@ -53,6 +53,14 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
 
 void CRYPTO_THREAD_clean_local(void);
 
+/**
+ * @brief Release the master TLS key after all global teardown handlers.
+ *
+ * All threads using this libcrypto instance must have stopped. Per-thread
+ * cleanup must leave the key available for other threads and later use.
+ */
+void ossl_thread_cleanup_global(void);
+
 /* Do atomics work? */
 
 #if defined(__apple_build_version__) && __apple_build_version__ < 6000000
