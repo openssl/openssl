@@ -509,7 +509,16 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
     rr = rl->rrec;
 
-    if (rl->rbuf.buf == NULL) {
+    /*
+     * A URXE-backed listener connection never reads into rl->rbuf
+     * so skip allocating it. This only holds while rl->prev is NULL:
+     * a connection still draining forwarded previous-epoch bytes reads via
+     * the general rb->buf path until that's exhausted, and rl->prev only
+     * ever goes from set to NULL, never the other way, so this is a stable,
+     * one-time check.
+     */
+    if (rl->rbuf.buf == NULL
+        && !(rl->use_urxe && rl->prev == NULL && rl->get_urxe_packet != NULL)) {
         if (!tls_setup_read_buffer(rl)) {
             /* RLAYERfatal() already called */
             return OSSL_RECORD_RETURN_FATAL;
@@ -532,9 +541,15 @@ again:
         /*
          * If we have buffered records and the original BIO READ has all been processed
          * let's leave and allow the Record Layer to update.
+         *
+         * For URXE-backed listener connections rl->rbuf is never touched
+         * so rl->urxe_left is checked alongside rl->rbuf.left -- whichever
+         * path is inactive for this connection simply stays at 0 throughout,
+         * so this still reduces to the single relevant check either way.
          */
         if (rl->version == DTLS1_3_VERSION
-            && buffered_record == 1 && rl->rbuf.left == 0) {
+            && buffered_record == 1
+            && rl->rbuf.left == 0 && rl->urxe_left == 0) {
             return OSSL_RECORD_RETURN_RETRY;
         }
 
@@ -943,7 +958,7 @@ again:
 }
 
 /*
- * Push any unread buffered bytes and any records already buffered in
+ * Push any unread buffered or URXE bytes and any records already buffered in
  * unprocessed_rcds (see is_next_epoch in dtls_get_more_records()) forward
  * into rl->next, so a pending handshake epoch transition still completes.
  * Must run when rl stops being the active read layer, not deferred until
@@ -962,6 +977,10 @@ static int dtls_forward_pending_records(OSSL_RECORD_LAYER *rl)
         ret = BIO_write_ex(rl->next, rbuf->buf + rbuf->offset, left, &written);
         rbuf->left = 0;
     }
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    ret &= tls_forward_urxe_remainder(rl);
+#endif
 
     while ((item = pqueue_pop(&rl->unprocessed_rcds)) != NULL) {
         rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
