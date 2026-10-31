@@ -2958,6 +2958,9 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
         && !ch_generate_transport_params(ch))
         return 0;
 
+    /* Start the idle interval when the client begins connecting. */
+    ch_update_idle(ch);
+
     /* Change state. */
     ch_record_state_transition(ch, QUIC_CHANNEL_STATE_ACTIVE);
     ch->doing_proactive_ver_neg = 0; /* not currently supported */

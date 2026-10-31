@@ -2207,6 +2207,12 @@ err:
     (OP_PUSH_U64(ms), \
         OP_FUNC(hf_sleep))
 
+/* Client, no socket (link a BIO pair instead). */
+#define OP_NEW_SSL_C_MEM(name) \
+    (OP_PUSH_PZ(#name),        \
+        OP_PUSH_U64(8),        \
+        OP_FUNC(hf_new_ssl))
+
 /* Thread-assisted client, no socket (link a BIO pair instead). */
 #define OP_NEW_SSL_C_TA_MEM(name) \
     (OP_PUSH_PZ(#name),           \
