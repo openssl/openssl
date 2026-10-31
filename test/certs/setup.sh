@@ -461,6 +461,12 @@ NC=$NC ./mkcert.sh genca "Test NC CA 4" ncca4-key ncca4-cert root-key root-cert
     "URI.1 = foo://%40something@good.org" \
     "URI.2 = bar://other@good.org/baz/quux"
 
+# A certificate with the URI SAN "http://good.org\0.bad.org/"
+./mkcert.sh req alt1-key "O = Bad NC Test Certificate 1" \
+    "CN=Joe Bloggs" | \
+    ./mkcert.sh geneeconfig nc-uri-nul-key nc-uri-nul-cert ncca4-key ncca4-cert \
+    "subjectAltName = DER:30:1B:86:19:68:74:74:70:3A:2F:2F:67:6F:6F:64:2E:6F:72:67:00:2E:62:61:64:2E:6F:72:67:2F"
+
 # Certs for CVE-2022-4203 testcase
 
 NC="excluded;otherName:SRVName;UTF8STRING:foo@example.org" ./mkcert.sh genca \
