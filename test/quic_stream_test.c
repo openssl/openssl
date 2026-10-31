@@ -11,6 +11,7 @@
 #include "internal/packet.h"
 #include "internal/quic_record_rx.h"
 #include "internal/quic_stream.h"
+#include "internal/quic_strm_reas.h"
 #include "../ssl/quic/quic_record_rx_local.h"
 #include "../ssl/quic/quic_channel_local.h"
 #include "internal/nelem.h"
@@ -907,7 +908,7 @@ static int test_rstream_reorder(int idx)
     QUIC_CHANNEL *ch = NULL;
     OSSL_QRX_PKT **pkts = NULL;
     QUIC_RSTREAM_QPARM *rsqp = NULL;
-    const size_t data_size = 4096;
+    const size_t data_size = 2048;
     const size_t framesz = 1 + (size_t)(idx % 17);
     const int cleanse = (idx & 1);
     const size_t nframes = (data_size + framesz - 1) / framesz;
@@ -1255,6 +1256,74 @@ err:
     ossl_quic_rstream_qparm_destroy(rsqp);
     pkt_test_free(pkt_a);
     pkt_test_free(pkt_b);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
+/*
+ * A peer must not be able to make the receiver keep an unbounded number
+ * of disjoint ranges by sending tiny fragments with gaps between them.
+ * Flow control only bounds the highest offset, not the number of ranges.
+ */
+static int test_rstream_range_limit(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt = NULL;
+    unsigned char pdata[2] = { 0x41, 0x42 };
+    uint64_t off;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(pkt = pkt_test_new(1200))
+        || !TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    /* 1-byte fragments at offsets 1, 3, 5, ... each create a new range */
+    for (i = 0; i < QUIC_SFRAME_SET_MAX_RANGES; i++) {
+        off = 1 + 2 * i;
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off,
+                pdata, 1, 0)))
+            goto err;
+    }
+
+    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            QUIC_SFRAME_SET_MAX_RANGES)
+        || !TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    /* extending an existing range does not create a new one */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, 2,
+            pdata, 1, 0))
+        || !TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            QUIC_SFRAME_SET_MAX_RANGES - 1))
+        goto err;
+
+    /* two more disjoint fragments: the first fits, the second exceeds */
+    off = 1 + 2 * QUIC_SFRAME_SET_MAX_RANGES;
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off,
+            pdata, 1, 0))
+        || !TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, pkt, off + 2,
+            pdata, 1, 0))
+        || !TEST_int_eq(ch->protocol_error, 1)
+        || !TEST_uint64_t_eq(ch->terminate_cause.error_code,
+            OSSL_QUIC_ERR_FLOW_CONTROL_ERROR)
+        || !TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+            QUIC_SFRAME_SET_MAX_RANGES))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    pkt_test_free(pkt);
     ossl_quic_channel_free(ch);
     return ret;
 }
@@ -3427,6 +3496,7 @@ int setup_tests(void)
     ADD_TEST(test_rstream_dstorage_two_sided_overlap);
     ADD_TEST(test_rstream_zero_length_read);
     ADD_TEST(test_rstream_fin_final_size);
+    ADD_TEST(test_rstream_range_limit);
     ADD_TEST(test_rstream_cleanse_dropped_bytes);
     ADD_TEST(test_rstream_chunk_partial_overlap);
     ADD_TEST(test_rstream_chunk_full_overlap);
