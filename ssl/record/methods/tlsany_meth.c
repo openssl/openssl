@@ -37,7 +37,7 @@ static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 }
 
 static int tls_any_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
-    size_t n_recs, int sending, SSL_MAC_BUF *macs,
+    size_t n_recs, int sending, unsigned char **macs,
     size_t macsize)
 {
     return 1;
