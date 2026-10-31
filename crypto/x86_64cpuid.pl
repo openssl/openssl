@@ -38,11 +38,12 @@ print<<___;
 .text
 
 .globl	OPENSSL_atomic_add
-.type	OPENSSL_atomic_add,\@abi-omnipotent
+.type	OPENSSL_atomic_add,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_atomic_add:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	movl	($arg1),%eax
 .Lspin:	leaq	($arg2,%rax),%r8
 	.byte	0xf0		# lock
@@ -55,11 +56,12 @@ OPENSSL_atomic_add:
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
 .globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,\@abi-omnipotent
+.type	OPENSSL_rdtsc,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_rdtsc:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	rdtsc
 	shl	\$32,%rdx
 	or	%rdx,%rax
@@ -68,13 +70,22 @@ OPENSSL_rdtsc:
 .size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
 
 .globl	OPENSSL_ia32_cpuid
-.type	OPENSSL_ia32_cpuid,\@function,1
+.type	OPENSSL_ia32_cpuid,\@function,1,endbranch
 .align	16
 OPENSSL_ia32_cpuid:
 .cfi_startproc
 	endbranch
-	mov	%rbx,%r8		# save %rbx
+        mov	%rbx,%r8		# save %rbx
+___
+print<<___ if (!$win64);
 .cfi_register	%rbx,%r8
+___
+print<<___ if ($win64);
+	mov	%rbx,24(%rsp)		# save %rbx for unwinding purposes.
+.cfi_offset	%rbx,24-8
+___
+print<<___;
+.cfi_endprolog
 
 	xor	%eax,%eax
 	mov	%rax,8(%rdi)		# clear extended feature flags
@@ -264,11 +275,12 @@ OPENSSL_ia32_cpuid:
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 
 .globl  OPENSSL_cleanse
-.type   OPENSSL_cleanse,\@abi-omnipotent
+.type   OPENSSL_cleanse,\@abi-omnipotent,,endbranch
 .align  16
 OPENSSL_cleanse:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	xor	%rax,%rax
 	cmp	\$15,$arg2
 	jae	.Lot
@@ -302,11 +314,12 @@ OPENSSL_cleanse:
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
 .globl  CRYPTO_memcmp
-.type   CRYPTO_memcmp,\@abi-omnipotent
+.type   CRYPTO_memcmp,\@abi-omnipotent,,endbranch
 .align  16
 CRYPTO_memcmp:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	xor	%rax,%rax
 	xor	%r10,%r10
 	cmp	\$0,$arg3
@@ -349,11 +362,12 @@ my $redzone=win64?8:-8;
 
 print<<___;
 .globl	OPENSSL_instrument_bus
-.type	OPENSSL_instrument_bus,\@abi-omnipotent
+.type	OPENSSL_instrument_bus,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_instrument_bus:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
 	mov	$arg2,$max
@@ -384,11 +398,12 @@ OPENSSL_instrument_bus:
 .size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
 
 .globl	OPENSSL_instrument_bus2
-.type	OPENSSL_instrument_bus2,\@abi-omnipotent
+.type	OPENSSL_instrument_bus2,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_instrument_bus2:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
 	mov	$arg3,$max
@@ -440,11 +455,12 @@ sub gen_random {
 my $rdop = shift;
 print<<___;
 .globl	OPENSSL_ia32_${rdop}_bytes
-.type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent
+.type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_ia32_${rdop}_bytes:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	xor	%rax, %rax	# return value
 	cmp	\$0,$arg2
 	je	.Ldone_${rdop}_bytes
