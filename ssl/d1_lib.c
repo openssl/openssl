@@ -349,6 +349,7 @@ int dtls1_clear(SSL *ssl)
 
     if (s->d1) {
         DTLS_timer_cb timer_cb = s->d1->timer_cb;
+        OSSL_TIME (*now_cb)(void) = s->d1->now_cb;
 #ifndef OPENSSL_NO_SOCK
         BIO_ADDR peer_addr = s->d1->peer_addr;
 #endif
@@ -368,6 +369,7 @@ int dtls1_clear(SSL *ssl)
 
         /* Restore the timer callback from previous state */
         s->d1->timer_cb = timer_cb;
+        s->d1->now_cb = now_cb;
 
 #ifndef OPENSSL_NO_SOCK
         /*
@@ -467,7 +469,7 @@ static void dtls1_bio_set_next_timeout(BIO *bio, const DTLS1_STATE *d1)
 
 void dtls1_start_timer(SSL_CONNECTION *s)
 {
-    OSSL_TIME duration;
+    OSSL_TIME duration, timenow;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
 #ifndef OPENSSL_NO_SCTP
@@ -491,7 +493,13 @@ void dtls1_start_timer(SSL_CONNECTION *s)
 
     /* Set timeout to current time plus duration */
     duration = ossl_us2time(s->d1->timeout_duration_us);
-    s->d1->next_timeout = ossl_time_add(ossl_time_now(), duration);
+
+    if (s->d1->now_cb == NULL)
+        timenow = ossl_time_now();
+    else
+        timenow = s->d1->now_cb();
+
+    s->d1->next_timeout = ossl_time_add(timenow, duration);
 
     /* set s->d1->next_timeout into ssl->rbio interface */
     dtls1_bio_set_next_timeout(SSL_get_rbio(ssl), s->d1);
@@ -506,7 +514,10 @@ int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft)
         return 0;
 
     /* Get current time */
-    timenow = ossl_time_now();
+    if (s->d1->now_cb == NULL)
+        timenow = ossl_time_now();
+    else
+        timenow = s->d1->now_cb();
 
     /*
      * If timer already expired or if remaining time is less than 15 ms,
@@ -532,6 +543,18 @@ int dtls1_is_timer_expired(SSL_CONNECTION *s)
         return 0;
 
     /* Timer expired, so return true */
+    return 1;
+}
+
+int dtls1_set_override_now_cb(SSL *s, OSSL_TIME (*now_cb)(void))
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL || sc->d1 == NULL)
+        return 0;
+
+    sc->d1->now_cb = now_cb;
+
     return 1;
 }
 
