@@ -80,7 +80,7 @@ my @sha_high_rounds_tests =
        expected => '$6$rounds=123456$asaltof16chars..$BtCwjqMJGx5hrJhZywWvt0RLE8uZ4oPwcelCjmw2kSYu.Ec6ycULevoBK25fs2xXgMNrCzIMVcgEJAstJeonj1' },
     );
 
-plan tests => 9 + scalar @sha_tests + scalar @sha_high_rounds_tests;
+plan tests => 11 + scalar @sha_tests + scalar @sha_high_rounds_tests;
 
 
 ok(compare1stline_re([qw{openssl passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
@@ -102,6 +102,12 @@ ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -5 password}], '$5$x
    'SHA256 password with salt xxxxxxxxxxxxxxxx');
 ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -6 password}], '$6$xxxxxxxxxxxxxxxx$VjGUrXBG6/8yW0f6ikBJVOb/lK/Tm9LxHJmFfwMvT7cpk64N9BW7ZQhNeMXAYFbOJ6HDG7wb0QpxJyYQn0rh81'),
    'SHA512 password with salt xxxxxxxxxxxxxxxx');
+
+# A "rounds=" prefix without the terminating '$' is not a valid salt
+ok(!run(app([qw{openssl passwd -5 -salt rounds=xyz password}])),
+   'SHA256 password with invalid rounds salt fails');
+ok(!run(app([qw{openssl passwd -6 -salt rounds=xyz password}])),
+   'SHA512 password with invalid rounds salt fails');
 
 foreach (@sha_tests) {
     ok(compare1stline([qw{openssl passwd}, '-'.$_->{type}, '-salt', $_->{salt},
