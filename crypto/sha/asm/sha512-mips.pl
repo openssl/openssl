@@ -311,6 +311,10 @@ $code.=<<___;
 #include "arch/mips_arch.h"
 
 .text
+/* Clang's integrated assembler needs local symbols declared before use. */
+#if defined(__clang__)
+.local	K${label}
+#endif
 .set	noat
 #if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2
