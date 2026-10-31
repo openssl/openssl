@@ -7985,7 +7985,7 @@ static int test_aes_siv_ctx_reuse(void)
     unsigned char aad[14] = "forged header";
     int outl, ret = 0;
     EVP_CIPHER_CTX *e = NULL, *d = NULL;
-    EVP_CIPHER *c = EVP_CIPHER_fetch(NULL, "AES-128-SIV", NULL);
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-SIV", testpropq);
 
     if (c == NULL) {
         return TEST_skip("AES-128-SIV cipher is not available");
@@ -8040,7 +8040,7 @@ static int test_aes_siv_ctx_dec_retval(void)
     EVP_CIPHER_CTX *enc_ctx = NULL;
     EVP_CIPHER_CTX *dec_ctx = NULL;
 
-    EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-SIV", NULL);
+    EVP_CIPHER *cipher = EVP_CIPHER_fetch(testctx, "AES-128-SIV", testpropq);
 
     if (cipher == NULL)
         return TEST_skip("AES-128-SIV cipher is not available");
