@@ -117,7 +117,8 @@ static int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
      */
     out = BIO_push(b64, out);
     r = i2d_ASN1_bio_stream(out, val, in, flags, it);
-    (void)BIO_flush(out);
+    if (BIO_flush(out) <= 0)
+        r = 0;
     BIO_pop(out);
     BIO_free(b64);
     return r;
