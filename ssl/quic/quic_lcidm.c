@@ -11,6 +11,7 @@
 #include "internal/quic_types.h"
 #include "internal/quic_vlint.h"
 #include "internal/common.h"
+#include "internal/hashfunc.h"
 #include "crypto/siphash.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
@@ -100,7 +101,7 @@ static int lcid_comp(const QUIC_LCID *a, const QUIC_LCID *b)
 
 static unsigned long lcidm_conn_hash(const QUIC_LCIDM_CONN *conn)
 {
-    return (unsigned long)(uintptr_t)conn->opaque;
+    return ossl_lh_hash_ptr(conn->opaque);
 }
 
 static int lcidm_conn_comp(const QUIC_LCIDM_CONN *a, const QUIC_LCIDM_CONN *b)
