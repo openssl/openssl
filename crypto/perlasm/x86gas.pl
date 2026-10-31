@@ -272,6 +272,7 @@ ___
 	$initseg.=".type	$ctor,\@function\n" if ($::pic);
 	$initseg.=<<___;	# OpenBSD way...
 .globl	$ctor
+.hidden $ctor
 .align	2
 $ctor:
 	jmp	$f
