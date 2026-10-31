@@ -29,6 +29,16 @@ ENDIF
 $LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
 
 IF[{- !$disabled{tests} -}]
+  IF[{- $config{target} =~ /^linux-/ && !$disabled{threads} && !$disabled{module} && !$disabled{dso} -}]
+    PROGRAMS{noinst}=conf_unload_test
+    SOURCE[conf_unload_test]=conf_unload_test.c
+    INCLUDE[conf_unload_test]=.. ../include
+    DEPEND[conf_unload_test]=../libcrypto.a
+    MODULES{noinst}=conf_unload_module
+    SOURCE[conf_unload_module]=conf_unload_module.c
+    INCLUDE[conf_unload_module]=../include
+  ENDIF
+
   LIBS{noinst,has_main}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
