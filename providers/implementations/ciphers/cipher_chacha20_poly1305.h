@@ -13,15 +13,38 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CHACHA20_POLY1305_H
 
 #include "include/crypto/poly1305.h"
+#include "include/crypto/chacha_poly1305.h"
 #include "cipher_chacha20.h"
 
 #define NO_TLS_PAYLOAD_LENGTH ((size_t)-1)
 #define CHACHA20_POLY1305_IVLEN 12
 
+#ifdef CHACHA20_POLY1305_AVX512_CAPABLE
+/*
+ * One streaming decision per message, while the state is UNDECIDED.
+ * TLS records do not use it.  AAD up to FUSE_AAD_MAX is held until the
+ * first payload.  See chacha20_poly1305_fuse_decide().
+ */
+#define CHACHA20_POLY1305_FUSE_AAD_MAX 128
+
+enum chacha20_poly1305_fuse_state {
+    FUSE_UNDECIDED = 0,
+    FUSE_OFF,
+    FUSE_ON
+};
+#endif
+
 typedef struct {
     PROV_CIPHER_CTX base; /* must be first */
     PROV_CHACHA20_CTX chacha;
     POLY1305 poly1305;
+#ifdef CHACHA20_POLY1305_AVX512_CAPABLE
+    OSSL_CP_AVX512_CTX fused;
+    unsigned char aad_buf[CHACHA20_POLY1305_FUSE_AAD_MAX];
+    size_t aad_buflen;
+    int fuse_state;
+    int fuse_aad_done;
+#endif
     unsigned int nonce[12 / 4];
     unsigned char tag[POLY1305_BLOCK_SIZE];
     unsigned char tls_aad[POLY1305_BLOCK_SIZE];
