@@ -595,9 +595,9 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     }
     if ((fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need)) == NULL
         || (token = OSSL_FN_CTX_start(fnctx)) == NULL
-        || (t = OSSL_FN_CTX_get_limbs(fnctx, w)) == NULL
-        || (u = OSSL_FN_CTX_get_limbs(fnctx, w)) == NULL
-        || (d = OSSL_FN_CTX_get_limbs(fnctx, w)) == NULL
+        || (t = OSSL_FN_CTX_get_limbs(fnctx, token, w)) == NULL
+        || (u = OSSL_FN_CTX_get_limbs(fnctx, token, w)) == NULL
+        || (d = OSSL_FN_CTX_get_limbs(fnctx, token, w)) == NULL
         || !ossl_ec_group_fn_reduce_ord(group, d, priv_key, fnctx)) {
         ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
         goto err;

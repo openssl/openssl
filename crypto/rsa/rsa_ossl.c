@@ -917,7 +917,7 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     f_iqmp = OSSL_FN_CTX_get_limbs(ctx, token, pl);
     if (fn_d != NULL)
         f_d = OSSL_FN_CTX_get_limbs(ctx, token, nl);
-    f_I = OSSL_FN_CTX_get_limbs(ctx, nl);
+    f_I = OSSL_FN_CTX_get_limbs(ctx, token, nl);
     if (r1 == NULL || m1 == NULL || vrfy == NULL || t == NULL
         || sp == NULL || sq == NULL || f_n == NULL || f_p == NULL
         || f_q == NULL || f_dmp1 == NULL || f_dmq1 == NULL
