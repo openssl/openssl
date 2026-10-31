@@ -63,6 +63,8 @@ struct quic_lcidm_st {
     LHASH_OF(QUIC_LCID) *lcids; /* (QUIC_CONN_ID) -> (QUIC_LCID *)  */
     LHASH_OF(QUIC_LCIDM_CONN) *conns; /* (void *opaque) -> (QUIC_LCIDM_CONN *) */
     size_t lcid_len; /* Length in bytes for all LCIDs */
+    unsigned char cid_prefix[QUIC_MAX_CONN_ID_LEN];
+    size_t cid_prefix_len;
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     QUIC_CONN_ID next_lcid;
 #endif
@@ -108,11 +110,18 @@ static int lcidm_conn_comp(const QUIC_LCIDM_CONN *a, const QUIC_LCIDM_CONN *b)
     return a->opaque != b->opaque;
 }
 
-QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len)
+QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len,
+    const unsigned char *cid_prefix, size_t cid_prefix_len)
 {
     QUIC_LCIDM *lcidm = NULL;
 
     if (lcid_len > QUIC_MAX_CONN_ID_LEN)
+        goto err;
+
+    if (cid_prefix_len > QUIC_MAX_CONN_ID_LEN)
+        goto err;
+
+    if (cid_prefix_len >= lcid_len && lcid_len > 0)
         goto err;
 
     if ((lcidm = OPENSSL_zalloc(sizeof(*lcidm))) == NULL)
@@ -133,6 +142,10 @@ QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len)
 
     lcidm->libctx = libctx;
     lcidm->lcid_len = lcid_len;
+    if (cid_prefix_len > 0) {
+        memcpy(lcidm->cid_prefix, cid_prefix, cid_prefix_len);
+        lcidm->cid_prefix_len = cid_prefix_len;
+    }
     return lcidm;
 
 err:
@@ -324,7 +337,13 @@ static int lcidm_generate_cid(QUIC_LCIDM *lcidm,
 
     return 1;
 #else
-    return ossl_quic_gen_rand_conn_id(lcidm->libctx, lcidm->lcid_len, cid);
+    if (!ossl_quic_gen_rand_conn_id(lcidm->libctx, lcidm->lcid_len, cid))
+        return 0;
+
+    if (lcidm->cid_prefix_len > 0 && lcidm->cid_prefix_len <= cid->id_len)
+        memcpy(cid->id, lcidm->cid_prefix, lcidm->cid_prefix_len);
+
+    return 1;
 #endif
 }
 
