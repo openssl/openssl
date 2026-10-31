@@ -1,0 +1,5 @@
+"make" depend && "make" _build_sw
+make[1]: Entering directory '/Users/npajkovsky/openssl/o-x509-print'
+make[1]: Leaving directory '/Users/npajkovsky/openssl/o-x509-print'
+make[1]: Entering directory '/Users/npajkovsky/openssl/o-x509-print'
+make[1]: Leaving directory '/Users/npajkovsky/openssl/o-x509-print'
