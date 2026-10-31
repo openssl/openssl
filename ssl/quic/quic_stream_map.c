@@ -74,7 +74,14 @@ static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n
 
 static unsigned long hash_stream(const QUIC_STREAM *s)
 {
-    return (unsigned long)s->id;
+    /*
+     * The low two bits of a stream ID identify its initiator and direction.
+     * Folding in bits from the stream ordinal improves bucket use for
+     * consecutive IDs of one type. With mixed stream types, this can produce
+     * longer chains than the original hash at some intermediate table sizes
+     * while LHASH expands.
+     */
+    return (unsigned long)(s->id ^ (s->id >> 2));
 }
 
 static int cmp_stream(const QUIC_STREAM *a, const QUIC_STREAM *b)
