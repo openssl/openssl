@@ -19,7 +19,7 @@ use Cwd qw(abs_path);
 
 setup("test_dgst");
 
-plan tests => 31;
+plan tests => 32;
 
 sub tsignverify {
     my $testtext = shift;
@@ -236,6 +236,59 @@ subtest "SHA1 generation by provider with `dgst` CLI" => sub {
         chomp(@macdata);
         my $expected = qr/SHA1\(\Q$testdata\E\)= 000102030405060708090a0b0c0d0e0f10111213/;
         ok($macdata[0] =~ $expected, "SHA1: Check HASH value is as expected ($macdata[0]) vs ($expected)");
+};
+
+subtest "digest shortcut resolves the digest via -provider options" => sub {
+    if (disabled("module") || disabled("legacy")) {
+        plan tests => 1;
+        ok(1, "Skipped (providers or legacy not supported)");
+        return;
+    }
+    plan tests => 4;
+
+    my $providers_dir = abs_path(bldtop_dir("providers"));
+
+    my $testdata = srctop_file('test', 'data.bin');
+
+    # The shortcut must pick MD4 up from the legacy provider given on the
+    # command line, not silently hash with the default digest.
+    my @md4data = run(app(['openssl', 'md4',
+                           '-provider-path', $providers_dir,
+                           '-provider', 'legacy',
+                           '-provider', 'default',
+                           $testdata]), capture => 1);
+    chomp(@md4data);
+    ok($md4data[0] =~ /^MD4\(\Q$testdata\E\)= [0-9a-f]{32}$/,
+       "digest shortcut resolves MD4 from the legacy provider given on the command line ($md4data[0])");
+
+    # Without the legacy provider the same shortcut must fail loudly
+    # instead of silently falling back to the default digest.
+    my $stderr_file = "dgst_shortcut_md4_err.txt";
+    with({ exit_checker => sub { return shift != 0; } },
+         sub {
+             ok(run(app(['openssl', 'md4', $testdata],
+                        stderr => $stderr_file)),
+                "digest shortcut with unavailable digest errors out");
+         });
+    if (open(my $fh, '<', $stderr_file)) {
+        my $err = do { local $/; <$fh> };
+        close($fh);
+        ok($err =~ /Unknown option or message digest: md4/,
+           "digest shortcut failure names the missing digest");
+    } else {
+        ok(0, "could not read stderr file");
+    }
+    unlink($stderr_file) if -f $stderr_file;
+
+    # The explicit "dgst -md4" option path keeps behaving the same way.
+    my @md4optdata = run(app(['openssl', 'dgst', '-md4',
+                              '-provider-path', $providers_dir,
+                              '-provider', 'legacy',
+                              '-provider', 'default',
+                              $testdata]), capture => 1);
+    chomp(@md4optdata);
+    ok($md4optdata[0] =~ /^MD4\(\Q$testdata\E\)= [0-9a-f]{32}$/,
+       "dgst -md4 via the legacy provider unchanged ($md4optdata[0])");
 };
 
 subtest "HMAC generation with `dgst` CLI" => sub {

@@ -134,8 +134,15 @@ int dgst_main(int argc, char **argv)
     int oneshot_sign = 0;
 
     buf = app_malloc(BUFSIZE, "I/O buffer");
-    md = EVP_MD_fetch(app_get0_libctx(), argv[0], app_get0_propq());
-    if (md != NULL)
+
+    /*
+     * Invoked as a digest shortcut (e.g. "openssl md5 ..."): the command
+     * name is the requested digest.  Record it here and leave the actual
+     * lookup to the opt_md() call below, once -provider and -propquery
+     * have been applied, so that an unavailable digest is reported as an
+     * error instead of silently falling back to the default digest.
+     */
+    if (strcmp(argv[0], "dgst") != 0)
         digestname = argv[0];
 
     opt_set_unknown_name("digest");
