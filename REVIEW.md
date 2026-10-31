@@ -29,8 +29,8 @@ or message being parsed, or a file or network stream, and problems that
 break a security property: memory safety, secrecy of keys and secrets,
 authentication or verification results, constant-time behaviour, or
 enforcement of mandatory properties such as `fips=yes`. The first
-sentence of an Important finding says who can trigger it and what they
-gain.
+sentence of an Important finding names the bug. The second says who can
+trigger it and what they gain.
 
 Functional bugs, behaviour changes, performance regressions, misuse of a
 public API by the calling application, and `STYLE.md` and
@@ -42,9 +42,9 @@ Evidence
 --------
 
 Each finding states the inputs or state that trigger it and what goes
-wrong, with a `file:line` citation for every claim about code outside the
-diff. Read the callee before claiming what it returns or who owns its
-result. A finding that cannot name a trigger is not reported.
+wrong, with a `path/from/root.c:line` citation for every claim about
+code outside the diff. Read the callee before claiming what it returns
+or who owns its result. A finding that cannot name a trigger is not reported.
 
 Error paths and ownership
 -------------------------
@@ -219,6 +219,21 @@ violates.
   requires, unless trivial.
 - Pointers are compared explicitly with `NULL`. Magic numbers are named
   or explained.
+
+Writing the comment
+-------------------
+
+Write like a maintainer reviewing a colleague's patch. Start with what
+is wrong in this diff, address the author directly, and say each fact
+once. Give the trigger and the fix in plain sentences. No preamble, no
+restating, no closing summary. Do not relate a finding to other
+findings unless fixing one changes the other.
+
+Cite a location once, where it matters, always as the full path from
+the repository root with the line number, such as
+`crypto/evp/evp.c:4312`. For several lines in one file, give the path
+once: `crypto/evp/evp.c:4312, 4350, 4401` for separate lines,
+`crypto/evp/evp.c:4312-4330` for a block. Never use a bare file name.
 
 Cap the nits
 ------------
