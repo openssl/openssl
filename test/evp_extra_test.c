@@ -7905,7 +7905,7 @@ static int test_aes_gcm_siv_empty_data(void)
     unsigned char out[16];
     int outl, ret = 0;
     EVP_CIPHER_CTX *ctx = NULL;
-    EVP_CIPHER *c = EVP_CIPHER_fetch(NULL, "AES-128-GCM-SIV", NULL);
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-GCM-SIV", testpropq);
 
     if (c == NULL) {
         return TEST_skip("AES-128-GCM-SIV cipher is not available");
@@ -7969,6 +7969,406 @@ err:
 
     EVP_CIPHER_free(c);
     return ret;
+}
+
+/* A zero-length AAD update must be a no-op for AES-GCM-SIV. */
+static int gcm_siv_encrypt_aad_seq(const EVP_CIPHER *c,
+    const unsigned char *key, const unsigned char *nonce,
+    int aad_before, int empty_aad, int aad_after,
+    const unsigned char *aad, size_t aad_len,
+    const unsigned char *pt, size_t pt_len,
+    unsigned char *ct, unsigned char *tag)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    unsigned char dummy = 0;
+    int outl, ret = 0;
+
+    if (!TEST_ptr(ctx) || !TEST_true(EVP_EncryptInit_ex2(ctx, c, key, nonce, NULL)))
+        goto err;
+    if (aad_before != 0
+        && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad, (int)aad_len)))
+        goto err;
+    if (empty_aad != 0 && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, &dummy, 0)))
+        goto err;
+    if (aad_after != 0
+        && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad, (int)aad_len)))
+        goto err;
+    if (!TEST_true(EVP_EncryptUpdate(ctx, ct, &outl, pt, (int)pt_len))
+        || !TEST_int_eq(outl, (int)pt_len)
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct + outl, &outl))
+        || !TEST_int_eq(outl, 0)
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag)))
+        goto err;
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+static int gcm_siv_decrypt_aad_seq(const EVP_CIPHER *c,
+    const unsigned char *key, const unsigned char *nonce,
+    const unsigned char *aad, size_t aad_len,
+    const unsigned char *ct, size_t ct_len,
+    unsigned char *tag, unsigned char *out)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    unsigned char dummy = 0;
+    int outl, ret = 0;
+
+    /* AAD followed by an empty fragment, then the ciphertext */
+    if (!TEST_ptr(ctx)
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, c, key, nonce, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, tag))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad, (int)aad_len))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, &dummy, 0))
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, (int)ct_len))
+        || !TEST_int_eq(outl, (int)ct_len))
+        goto err;
+    /* Tag verification result is the return value, not a test assertion */
+    ret = EVP_DecryptFinal_ex(ctx, out + outl, &outl);
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+static int test_aes_gcm_siv_zero_length_aad(void)
+{
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-GCM-SIV", testpropq);
+    const unsigned char key[16] = { 0x01 }, nonce[12] = { 0x01 };
+    const unsigned char aad[] = "role=user", pt[] = "transfer 100 to bob";
+    const size_t aad_len = sizeof(aad) - 1, pt_len = sizeof(pt) - 1;
+    unsigned char ct_ref[sizeof(pt) - 1], ct_none[sizeof(pt) - 1];
+    unsigned char ct[sizeof(pt) - 1], out[sizeof(pt) - 1];
+    unsigned char tag_ref[16], tag_none[16], tag[16];
+    int ret = 0;
+
+    if (c == NULL)
+        return TEST_skip("AES-128-GCM-SIV cipher is not available");
+
+    /* Reference: AAD supplied in a single fragment */
+    if (!TEST_true(gcm_siv_encrypt_aad_seq(c, key, nonce, 1, 0, 0,
+            aad, aad_len, pt, pt_len, ct_ref, tag_ref)))
+        goto err;
+
+    /* Sanity: no AAD at all must authenticate differently */
+    if (!TEST_true(gcm_siv_encrypt_aad_seq(c, key, nonce, 0, 0, 0,
+            aad, aad_len, pt, pt_len, ct_none, tag_none))
+        || !TEST_mem_ne(tag_none, sizeof(tag_none), tag_ref, sizeof(tag_ref)))
+        goto err;
+
+    /* AAD followed by an empty fragment must equal AAD alone, not no AAD */
+    if (!TEST_true(gcm_siv_encrypt_aad_seq(c, key, nonce, 1, 1, 0,
+            aad, aad_len, pt, pt_len, ct, tag))
+        || !TEST_mem_eq(tag, sizeof(tag), tag_ref, sizeof(tag_ref))
+        || !TEST_mem_eq(ct, sizeof(ct), ct_ref, sizeof(ct_ref)))
+        goto err;
+
+    /* An empty fragment followed by AAD must also equal AAD alone */
+    if (!TEST_true(gcm_siv_encrypt_aad_seq(c, key, nonce, 0, 1, 1,
+            aad, aad_len, pt, pt_len, ct, tag))
+        || !TEST_mem_eq(tag, sizeof(tag), tag_ref, sizeof(tag_ref))
+        || !TEST_mem_eq(ct, sizeof(ct), ct_ref, sizeof(ct_ref)))
+        goto err;
+
+    /* A lone empty fragment must equal no AAD */
+    if (!TEST_true(gcm_siv_encrypt_aad_seq(c, key, nonce, 0, 1, 0,
+            aad, aad_len, pt, pt_len, ct, tag))
+        || !TEST_mem_eq(tag, sizeof(tag), tag_none, sizeof(tag_none))
+        || !TEST_mem_eq(ct, sizeof(ct), ct_none, sizeof(ct_none)))
+        goto err;
+
+    /* Decrypt the reference with AAD + empty fragment: must verify */
+    if (!TEST_true(gcm_siv_decrypt_aad_seq(c, key, nonce, aad, aad_len,
+            ct_ref, sizeof(ct_ref), tag_ref, out))
+        || !TEST_mem_eq(out, sizeof(out), pt, pt_len))
+        goto err;
+
+    /* Decrypt the no-AAD message with AAD + empty fragment: must fail. */
+    if (!TEST_false(gcm_siv_decrypt_aad_seq(c, key, nonce, aad, aad_len,
+            ct_none, sizeof(ct_none), tag_none, out)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_free(c);
+    return ret;
+}
+
+/*
+ * Seal pt under key, nonce and aad with a fresh context, producing ct and
+ * tag.  A zero aad_len means no AAD update at all.
+ */
+static int gcm_siv_seal(const EVP_CIPHER *c, const unsigned char *key,
+    const unsigned char *nonce, const unsigned char *aad, size_t aad_len,
+    const unsigned char *pt, size_t pt_len, unsigned char *ct,
+    unsigned char *tag)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    int outl, ret = 0;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, c, key, nonce, NULL)))
+        goto err;
+    if (aad_len > 0
+        && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad, (int)aad_len)))
+        goto err;
+    if (!TEST_true(EVP_EncryptUpdate(ctx, ct, &outl, pt, (int)pt_len))
+        || !TEST_int_eq(outl, (int)pt_len)
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct + outl, &outl))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag)))
+        goto err;
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * A long-lived receiver context: keyed once, then re-initialised with the
+ * nonce only for every message it receives.
+ */
+static EVP_CIPHER_CTX *gcm_siv_receiver_new(const EVP_CIPHER *c,
+    const unsigned char *key)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+
+    if (ctx != NULL && !EVP_DecryptInit_ex2(ctx, c, key, NULL, NULL)) {
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = NULL;
+    }
+    return ctx;
+}
+
+/*
+ * Present nonce, ct and tag to the receiver, which supplies aad as the AAD
+ * it believes the message is bound to (none if aad_len is zero). Returns 1 if
+ * the outcome of EVP_DecryptFinal_ex() matches expect_ok and, when the tag was
+ * expected to verify, the recovered plaintext equals pt.
+ */
+static int gcm_siv_receive(EVP_CIPHER_CTX *ctx, const unsigned char *nonce,
+    const unsigned char *aad, size_t aad_len,
+    const unsigned char *ct, size_t ct_len, const unsigned char *tag,
+    const unsigned char *pt, int expect_ok)
+{
+    unsigned char out[64];
+    int outl, ok;
+
+    if (!TEST_size_t_le(ct_len, sizeof(out))
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, nonce, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16,
+            (void *)tag)))
+        return 0;
+    if (aad_len > 0
+        && !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad, (int)aad_len)))
+        return 0;
+    if (!TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, (int)ct_len))
+        || !TEST_int_eq(outl, (int)ct_len))
+        return 0;
+    ok = EVP_DecryptFinal_ex(ctx, out + outl, &outl) == 1;
+    if (!ok)
+        ERR_clear_error();
+    if (!TEST_int_eq(ok, expect_ok))
+        return 0;
+    if (expect_ok && !TEST_mem_eq(out, ct_len, pt, ct_len))
+        return 0;
+    return 1;
+}
+
+/*
+ * Seal a message bound to an AAD and hand it to a long-lived receiver
+ * context. The receiver first verifies it honestly with the correct AAD,
+ * then is re-initialised with the nonce only and given the same ciphertext
+ * and tag again with no AAD at all. The AAD supplied for the first message
+ * must not carry over into the second, so the second presentation must be
+ * rejected. Neither ciphertext nor tag is modified.
+ */
+static int test_aes_gcm_siv_reinit_aad_replay(void)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-GCM-SIV", testpropq);
+    unsigned char key[16] = { 0x01 }, n[12] = { 0x01 };
+    unsigned char aad[] = "tenant=A;role=admin";
+    unsigned char pt[] = "transfer 100 to bob";
+    size_t aad_len = sizeof(aad) - 1, pt_len = sizeof(pt) - 1;
+    unsigned char ct[sizeof(pt)], tag[16];
+    int test = 0;
+
+    if (c == NULL)
+        return TEST_skip("AES-128-GCM-SIV cipher is not available");
+
+    /* Honest verification, then the same message replayed unbound */
+    test = TEST_true(gcm_siv_seal(c, key, n, aad, aad_len, pt, pt_len, ct, tag))
+        && TEST_ptr(ctx = gcm_siv_receiver_new(c, key))
+        && TEST_true(gcm_siv_receive(ctx, n, aad, aad_len, ct, pt_len, tag, pt, 1))
+        && TEST_true(gcm_siv_receive(ctx, n, NULL, 0, ct, pt_len, tag, pt, 0));
+
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(c);
+    return test;
+}
+
+/*
+ * Seal a message bound to the AAD "tenant=A;role=admin" and hand it to a
+ * long-lived receiver context. The receiver is first given a garbage tag
+ * together with the AAD prefix "tenant=A;", which it rejects. It is then
+ * re-initialised with the nonce only and given the genuine ciphertext and
+ * tag under the AAD suffix "role=admin" alone. The prefix from the rejected
+ * attempt must not be concatenated with the suffix, so the second
+ * presentation must be rejected. Neither ciphertext nor tag is modified.
+ */
+static int test_aes_gcm_siv_reinit_aad_prefix(void)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-GCM-SIV", testpropq);
+    unsigned char key[16] = { 0x01 }, n[12] = { 0x01 };
+    unsigned char aad[] = "tenant=A;role=admin";
+    unsigned char pt[] = "transfer 100 to bob";
+    size_t aad_len = sizeof(aad) - 1, pt_len = sizeof(pt) - 1;
+    size_t prefix_len = sizeof("tenant=A;") - 1;
+    unsigned char ct[sizeof(pt)], tag[16], bad_tag[16] = { 0 };
+    int test = 0;
+
+    if (c == NULL)
+        return TEST_skip("AES-128-GCM-SIV cipher is not available");
+
+    /* Rejected probe plants the prefix, replay claims the rest */
+    test = TEST_true(gcm_siv_seal(c, key, n, aad, aad_len, pt, pt_len, ct, tag))
+        && TEST_ptr(ctx = gcm_siv_receiver_new(c, key))
+        && TEST_true(gcm_siv_receive(ctx, n, aad, prefix_len, ct, pt_len,
+            bad_tag, pt, 0))
+        && TEST_true(gcm_siv_receive(ctx, n, aad + prefix_len,
+            aad_len - prefix_len, ct, pt_len, tag, pt, 0));
+
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(c);
+    return test;
+}
+
+/*
+ * Re-initialising a long-lived receiver with neither key nor nonce after a
+ * completed decryption restarts the operation under the same key and nonce.
+ * The AAD of the completed message must not survive that restart: the
+ * genuine ciphertext and tag presented again with no AAD, or after an empty
+ * AAD fragment, must be rejected, and presented again with the correct AAD
+ * must still verify. Neither ciphertext nor tag is modified.
+ */
+static int test_aes_gcm_siv_reinit_aad_replay_no_nonce(void)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-GCM-SIV", testpropq);
+    unsigned char key[16] = { 0x01 }, n[12] = { 0x01 }, dummy = 0;
+    unsigned char aad[] = "tenant=A;role=admin";
+    unsigned char pt[] = "transfer 100 to bob";
+    size_t aad_len = sizeof(aad) - 1, pt_len = sizeof(pt) - 1;
+    unsigned char ct[sizeof(pt)], tag[16], out[sizeof(pt)];
+    int outl, test = 0;
+
+    if (c == NULL)
+        return TEST_skip("AES-128-GCM-SIV cipher is not available");
+
+    if (!TEST_true(gcm_siv_seal(c, key, n, aad, aad_len, pt, pt_len, ct, tag))
+        || !TEST_ptr(ctx = gcm_siv_receiver_new(c, key))
+        || !TEST_true(gcm_siv_receive(ctx, n, aad, aad_len, ct, pt_len, tag, pt, 1)))
+        goto err;
+
+    /* Restart without key or nonce: the previous AAD must be gone */
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, tag))
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, (int)pt_len))
+        || !TEST_false(EVP_DecryptFinal_ex(ctx, out + outl, &outl)))
+        goto err;
+    ERR_clear_error();
+
+    /* Same restart, with an empty AAD fragment that must not act as a reset */
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, tag))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, &dummy, 0))
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, (int)pt_len))
+        || !TEST_false(EVP_DecryptFinal_ex(ctx, out + outl, &outl)))
+        goto err;
+    ERR_clear_error();
+
+    /* The restarted context must still accept the message with its AAD */
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, tag))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad, (int)aad_len))
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, (int)pt_len))
+        || !TEST_int_eq(outl, (int)pt_len)
+        || !TEST_true(EVP_DecryptFinal_ex(ctx, out + outl, &outl))
+        || !TEST_mem_eq(out, pt_len, pt, pt_len))
+        goto err;
+
+    test = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(c);
+    return test;
+}
+
+/*
+ * A re-initialisation with neither key nor nonce before the payload is a
+ * parameter adjustment, not a new message, so the AAD supplied before it
+ * must survive. The sender supplies the AAD prefix, re-initialises with no
+ * arguments, then supplies the suffix and the payload, and must produce the
+ * same ciphertext and tag as a single-fragment seal. The receiver supplies
+ * the prefix, re-initialises with the tag as its only parameter, then
+ * supplies the suffix and the payload, and the message must verify.
+ */
+static int test_aes_gcm_siv_reinit_aad_params_only_keeps(void)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-GCM-SIV", testpropq);
+    unsigned char key[16] = { 0x01 }, n[12] = { 0x01 };
+    unsigned char aad[] = "tenant=A;role=admin";
+    unsigned char pt[] = "transfer 100 to bob";
+    size_t aad_len = sizeof(aad) - 1, pt_len = sizeof(pt) - 1;
+    size_t prefix_len = sizeof("tenant=A;") - 1;
+    unsigned char ct[sizeof(pt)], tag[16], ct2[sizeof(pt)], tag2[16];
+    unsigned char out[sizeof(pt)];
+    OSSL_PARAM params[2];
+    int outl, test = 0;
+
+    if (c == NULL)
+        return TEST_skip("AES-128-GCM-SIV cipher is not available");
+
+    if (!TEST_true(gcm_siv_seal(c, key, n, aad, aad_len, pt, pt_len, ct, tag))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    /* Sender: AAD prefix, parameters-only re-init, AAD suffix, payload */
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, c, key, n, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad, (int)prefix_len))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad + prefix_len,
+            (int)(aad_len - prefix_len)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct2, &outl, pt, (int)pt_len))
+        || !TEST_int_eq(outl, (int)pt_len)
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct2 + outl, &outl))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag2))
+        || !TEST_mem_eq(ct2, pt_len, ct, pt_len)
+        || !TEST_mem_eq(tag2, sizeof(tag2), tag, sizeof(tag)))
+        goto err;
+
+    /* Receiver: AAD prefix, tag via parameters-only re-init, AAD suffix, payload */
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, sizeof(tag));
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, c, key, n, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad, (int)prefix_len))
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, NULL, params))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad + prefix_len,
+            (int)(aad_len - prefix_len)))
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, (int)pt_len))
+        || !TEST_int_eq(outl, (int)pt_len)
+        || !TEST_true(EVP_DecryptFinal_ex(ctx, out + outl, &outl))
+        || !TEST_mem_eq(out, pt_len, pt, pt_len))
+        goto err;
+
+    test = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(c);
+    return test;
 }
 
 /*
@@ -9691,6 +10091,11 @@ int setup_tests(void)
     ADD_TEST(test_aes_gcm_siv_empty_data);
     ADD_TEST(test_aes_siv_ctx_reuse);
     ADD_TEST(test_aes_siv_ctx_dec_retval);
+    ADD_TEST(test_aes_gcm_siv_reinit_aad_replay);
+    ADD_TEST(test_aes_gcm_siv_reinit_aad_prefix);
+    ADD_TEST(test_aes_gcm_siv_reinit_aad_replay_no_nonce);
+    ADD_TEST(test_aes_gcm_siv_reinit_aad_params_only_keeps);
+    ADD_TEST(test_aes_gcm_siv_zero_length_aad);
 
     ADD_TEST(test_invalid_ctx_for_digest);
 
