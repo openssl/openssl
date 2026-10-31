@@ -316,9 +316,11 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
                 errs++;
             }
         }
+#ifndef OPENSSL_NO_MD5
         if ((h == HASH_OLD) || (h == HASH_BOTH))
             errs += add_entry(type, X509_NAME_hash_old(name),
                 filename, digest, 1, ~0);
+#endif
     }
 
 end:
@@ -506,8 +508,10 @@ const OPTIONS rehash_options[] = {
     OPT_SECTION("General"),
     { "help", OPT_HELP, '-', "Display this summary" },
     { "h", OPT_HELP, '-', "Display this summary" },
+#ifndef OPENSSL_NO_MD5
     { "compat", OPT_COMPAT, '-', "Create both new- and old-style hash links" },
     { "old", OPT_OLD, '-', "Use old-style hash to generate links" },
+#endif
     { "n", OPT_N, '-', "Do not remove existing links" },
 
     OPT_SECTION("Output"),

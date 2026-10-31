@@ -330,6 +330,11 @@ PEM_ASN1_write_bio_internal(
     unsigned char iv[EVP_MAX_IV_LENGTH];
 
     if (enc != NULL) {
+#ifdef OPENSSL_NO_MD5
+        /* Traditional PEM encryption derives its key using MD5 */
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_ENCRYPTION);
+        goto err;
+#else
         objstr = EVP_CIPHER_get0_name(enc);
         if (objstr == NULL || EVP_CIPHER_get_iv_length(enc) == 0
             || EVP_CIPHER_get_iv_length(enc) > (int)sizeof(iv)
@@ -342,6 +347,7 @@ PEM_ASN1_write_bio_internal(
             ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
+#endif
     }
 
     if (i2d == NULL && i2d_ctx == NULL) {
@@ -385,8 +391,10 @@ PEM_ASN1_write_bio_internal(
          * The 'iv' is used as the iv and as a salt.  It is NOT taken from
          * the BytesToKey function
          */
+#ifndef OPENSSL_NO_MD5
         if (!EVP_BytesToKey(enc, EVP_md5(), iv, kstr, klen, 1, key, NULL))
             goto err;
+#endif
 
         if (kstr == (unsigned char *)buf)
             OPENSSL_cleanse(buf, PEM_BUFSIZE);
@@ -459,6 +467,13 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
 
     if (cipher->cipher == NULL)
         return 1;
+
+#ifdef OPENSSL_NO_MD5
+    /* Traditional PEM encryption derives its key using MD5 */
+    ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_ENCRYPTION);
+    return 0;
+#endif
+
     if (callback == NULL)
         keylen = PEM_def_callback(buf, PEM_BUFSIZE, 0, u);
     else
@@ -472,9 +487,11 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
     ebcdic2ascii(buf, buf, keylen);
 #endif
 
+#ifndef OPENSSL_NO_MD5
     if (!EVP_BytesToKey(cipher->cipher, EVP_md5(), &(cipher->iv[0]),
             (unsigned char *)buf, keylen, 1, key, NULL))
         return 0;
+#endif
 
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
