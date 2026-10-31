@@ -3676,24 +3676,6 @@ OpenSSL 3.4
 OpenSSL 3.3
 -----------
 
-### Changes between 3.3.2 and 3.3.3 [xx XXX xxxx]
-
- * Fixed possible OOB memory access with invalid low-level GF(2^m) elliptic
-   curve parameters.
-
-   Use of the low-level GF(2^m) elliptic curve APIs with untrusted
-   explicit values for the field polynomial can lead to out-of-bounds memory
-   reads or writes.
-   Applications working with "exotic" explicit binary (GF(2^m)) curve
-   parameters, that make it possible to represent invalid field polynomials
-   with a zero constant term, via the above or similar APIs, may terminate
-   abruptly as a result of reading or writing outside of array bounds. Remote
-   code execution cannot easily be ruled out.
-
-   ([CVE-2024-9143])
-
-   *Viktor Dukhovni*
-
 ### Changes between 3.3.1 and 3.3.2 [3 Sep 2024]
 
  * Fixed possible denial of service in X.509 name checks.
@@ -3962,31 +3944,6 @@ OpenSSL 3.3
 
 OpenSSL 3.2
 -----------
-
-### Changes between 3.2.1 and 3.2.2 [xx XXX xxxx]
-
- * Fixed an issue where some non-default TLS server configurations can cause
-   unbounded memory growth when processing TLSv1.3 sessions. An attacker may
-   exploit certain server configurations to trigger unbounded memory growth that
-   would lead to a Denial of Service
-
-   This problem can occur in TLSv1.3 if the non-default SSL_OP_NO_TICKET option
-   is being used (but not if early_data is also configured and the default
-   anti-replay protection is in use). In this case, under certain conditions,
-   the session cache can get into an incorrect state and it will fail to flush
-   properly as it fills. The session cache will continue to grow in an unbounded
-   manner. A malicious client could deliberately create the scenario for this
-   failure to force a Denial of Service. It may also happen by accident in
-   normal operation.
-
-   ([CVE-2024-2511])
-
-   *Matt Caswell*
-
- * Fixed bug where SSL_export_keying_material() could not be used with QUIC
-   connections. (#23560)
-
-   *Hugo Landau*
 
 ### Changes between 3.2.0 and 3.2.1 [30 Jan 2024]
 
