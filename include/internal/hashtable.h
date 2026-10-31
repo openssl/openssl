@@ -141,7 +141,7 @@ typedef struct ht_config_st {
  */
 static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t *buf, size_t len)
 {
-    if (key->keysize + len > key->bufsize)
+    if (len > key->bufsize - key->keysize)
         return 0;
     memcpy(&key->keybuf[key->keysize], buf, len);
     key->keysize += len;
@@ -354,8 +354,8 @@ static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, cons
      * so check that we don't overflow here, and truncate if
      * we copy more space than we have available
      */
-    if (key != NULL && key->keysize + len > key->bufsize)
-        len = (size_t)(key->bufsize - key->keysize);
+    if (key != NULL && len > key->bufsize - key->keysize)
+        len = key->bufsize - key->keysize;
 
     for (i = 0; i < len && src[i] != '\0'; i++)
         tgt[i] = case_adjust & src[i];

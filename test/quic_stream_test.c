@@ -594,7 +594,7 @@ static int test_rstream_random(int idx)
             if (off > 50)
                 off -= 50;
             size = test_random() % 100 + 1;
-            if (off + size > data_size)
+            if (off > data_size - size)
                 off = data_size - size;
             if (off <= queued_min && off + size > queued_min)
                 queued_min = off + size;
