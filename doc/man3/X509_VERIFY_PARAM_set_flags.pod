@@ -295,7 +295,8 @@ verification callback.
 
 The B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some
 broken certificates and makes verification strictly apply B<X509>
-rules.
+rules. For certificates with an ML-DSA subject public key, strict verification
+also rejects keyUsage bits prohibited by RFC 9881.
 
 B<X509_V_FLAG_ALLOW_PROXY_CERTS> enables proxy certificate verification.
 By default, proxy certificates are not accepted.

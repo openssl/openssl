@@ -687,6 +687,9 @@ static int check_extensions(X509_STORE_CTX *ctx)
                 CB_FAIL_IF((x->ex_kusage & KU_KEY_CERT_SIGN) != 0, ctx, x, i,
                     X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA);
             }
+            /* Check ML-DSA keyUsage according to RFC 9881 section 5 */
+            CB_FAIL_IF(ossl_x509_mldsa_key_usage_invalid(x), ctx, x, i,
+                X509_V_ERR_INVALID_EXTENSION);
             /* Check issuer is non-empty acc. to RFC 5280 section 4.1.2.4 */
             CB_FAIL_IF(X509_NAME_entry_count(X509_get_issuer_name(x)) == 0,
                 ctx, x, i, X509_V_ERR_ISSUER_NAME_EMPTY);
