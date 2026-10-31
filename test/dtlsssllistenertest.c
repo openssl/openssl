@@ -7627,6 +7627,7 @@ static void idle_pending_state_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     IDLE_PENDING_STATE *st = arg;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    DTLS_RX *rx;
 
     if (sc == NULL || sc->listener_rx == NULL) {
         st->queued++;
@@ -7635,8 +7636,15 @@ static void idle_pending_state_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
     if (sc->hello_retry_request == SSL_HRR_PENDING
         || sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST)
         st->retry_sent++;
-    if (!ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
+    rx = sc->listener_rx;
+    /*
+     * This test is single-threaded, but a mutex lock follows the normal queue
+     * access pattern.
+     */
+    ossl_crypto_mutex_lock(rx->mutex);
+    if (!ossl_list_urxe_is_empty(&rx->urxe_pending))
         st->queued++;
+    ossl_crypto_mutex_unlock(rx->mutex);
 }
 
 /*
@@ -7829,10 +7837,19 @@ static void redrive_ch_cb(int write_p, int version, int content_type,
 static void redrive_idle_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    DTLS_RX *rx;
 
-    if (sc != NULL && sc->listener_idle && sc->listener_rx != NULL
-        && ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
-        (*(size_t *)arg)++;
+    if (sc != NULL && sc->listener_idle && sc->listener_rx != NULL) {
+        rx = sc->listener_rx;
+        /*
+         * This test is single-threaded, but a mutex lock follows the normal
+         * queue access pattern.
+         */
+        ossl_crypto_mutex_lock(rx->mutex);
+        if (ossl_list_urxe_is_empty(&rx->urxe_pending))
+            (*(size_t *)arg)++;
+        ossl_crypto_mutex_unlock(rx->mutex);
+    }
 }
 
 /* Are all |n| pending connections waiting for their peers? */
