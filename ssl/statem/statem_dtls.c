@@ -1745,6 +1745,24 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
 
     ret = dtls1_do_write(s, sent_msg->msg_info.record_type);
 
+    /*
+     * If the message was retransmitted through a write record layer that is
+     * no longer the current one, the retransmission used up record sequence
+     * numbers that the current layer does not know about. This only matters
+     * for a ClientHello: it is retransmitted through the epoch 0 layer after
+     * the client has switched to the early data layer, and a ClientHello sent
+     * after a HelloRetryRequest must not reuse any of those sequence numbers.
+     * Keep the saved epoch 0 sequence number up to date for that case.
+     */
+    if (s->rlayer.wrl != saved_state.wrl) {
+        uint64_t epoch, seq;
+
+        if (s->rlayer.wrlmethod->get_epoch(s->rlayer.wrl, &epoch) == 1
+            && epoch == 0
+            && s->rlayer.wrlmethod->get_sequence(s->rlayer.wrl, &seq) == 1)
+            s->rlayer.wlayer_epoch_zero_sequence = seq;
+    }
+
     /* restore current state */
     s->rlayer.wrlmethod = saved_state.wrlmethod;
     s->rlayer.wrl = saved_state.wrl;
