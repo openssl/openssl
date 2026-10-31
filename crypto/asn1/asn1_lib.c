@@ -444,7 +444,7 @@ int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
 
     if (data != NULL && str->data != NULL)
         memcpy(str->data, data, len);
-    if (add_nul_byte) {
+    if (add_nul_byte && str->data != NULL) {
         /*
          * The terminator byte lies beyond str->length. It is written only
          * when data is supplied, and is inaccessible to memory checkers
