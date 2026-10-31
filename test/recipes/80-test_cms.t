@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 43;
+plan tests => 44;
 
 ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");
@@ -1068,6 +1068,34 @@ subtest "CMS decrypt authEnvelopedData with authenticated attributes\n" => sub {
        "reject authEnvelopedData with tampered authAttrs");
     ok(!-s "bad_authattrs.txt",
        "tampered authEnvelopedData leaks no plaintext to -out");
+};
+
+subtest "CMS decrypt authEnvelopedData AES-GCM tag length\n" => sub {
+    plan tests => 4;
+
+    # AES-128-GCM authEnvelopedData (KEK) carrying the 12 octet ICV that
+    # RFC 5084 section 3.2 allows as its minimum must still decrypt.
+    1 while unlink "gcm_tag12.txt";
+    ok(run(app(["openssl", "cms", @defaultprov, "-decrypt", "-inform", "PEM",
+                "-secretkey", "000102030405060708090A0B0C0D0E0F",
+                "-secretkeyid", "C0FEE0",
+                "-in", catfile($datadir, "authenveloped_gcm_tag12.pem"),
+                "-out", "gcm_tag12.txt" ])),
+       "decrypt authEnvelopedData with 12 octet GCM tag");
+    is(read_file_text("gcm_tag12.txt"), "Hello AuthEnvelopedData world\n",
+       "12 octet GCM tag plaintext matches expected");
+
+    # The same message with its ICV truncated to 4 octets is a valid GCM
+    # truncation but is below the RFC 5084 minimum and must be rejected.
+    1 while unlink "gcm_tag4.txt";
+    ok(!run(app(["openssl", "cms", @defaultprov, "-decrypt", "-inform", "PEM",
+                 "-secretkey", "000102030405060708090A0B0C0D0E0F",
+                 "-secretkeyid", "C0FEE0",
+                 "-in", catfile($datadir, "authenveloped_gcm_tag4.pem"),
+                 "-out", "gcm_tag4.txt" ])),
+       "reject authEnvelopedData with 4 octet GCM tag");
+    ok(!-s "gcm_tag4.txt",
+       "short GCM tag leaks no plaintext to -out");
 };
 
 subtest "CMS parse authenticatedData authAttrs and unauthAttrs\n" => sub {
