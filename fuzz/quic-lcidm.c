@@ -85,7 +85,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto err;
     }
 
-    if ((lcidm = ossl_quic_lcidm_new(NULL, lcidl)) == NULL) {
+    if ((lcidm = ossl_quic_lcidm_new(NULL, lcidl, NULL, 0)) == NULL) {
         rc = -1;
         goto err;
     }

@@ -7372,6 +7372,17 @@ void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
     c->new_pending_conn_arg = arg;
 }
 
+int SSL_CTX_set_quic_cid_prefix(SSL_CTX *c,
+    const unsigned char *prefix, size_t prefix_len)
+{
+    if (prefix_len > sizeof(c->quic_cid_prefix))
+        return 0;
+    if (prefix_len > 0)
+        memcpy(c->quic_cid_prefix, prefix, prefix_len);
+    c->quic_cid_prefix_len = prefix_len;
+    return 1;
+}
+
 #ifndef OPENSSL_NO_DEPRECATED_4_0
 int SSL_client_hello_isv2(SSL *s)
 {
@@ -8572,6 +8583,8 @@ int SSL_get_conn_close_info(SSL *s, SSL_CONN_CLOSE_INFO *info,
     return -1;
 #endif
 }
+
+
 
 int SSL_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
     uint64_t *value)
