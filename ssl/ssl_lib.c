@@ -3408,10 +3408,11 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
     case SSL_CTRL_GET_EXTMS_SUPPORT:
         if (!sc->session || SSL_in_init(s) || ossl_statem_get_in_handshake(sc))
             return -1;
-        if (sc->session->flags & SSL_SESS_FLAG_EXTMS)
+        /* TLS 1.3 and DTLS 1.3 always bind the handshake transcript. */
+        if ((sc->session->flags & SSL_SESS_FLAG_EXTMS) != 0
+            || sc->version == TLS1_3_VERSION || sc->version == DTLS1_3_VERSION)
             return 1;
-        else
-            return 0;
+        return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
         return ssl_check_allowed_versions(larg, sc->max_proto_version)
             && ssl_set_version_bound(s->defltmeth->version, (int)larg,

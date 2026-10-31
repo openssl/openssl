@@ -2014,6 +2014,59 @@ end:
     return testresult;
 }
 
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+/*
+ * TLS 1.3 (and DTLS 1.3) provide EMS-equivalent transcript binding without
+ * negotiating the TLS 1.2 extended_master_secret extension.  The API should
+ * report this only after the handshake has completed.
+ */
+static int test_extms_version13(const SSL_METHOD *server_method,
+    const SSL_METHOD *client_method, int version)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, server_method, client_method,
+            version, version, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_int_eq(SSL_get_extms_support(clientssl), -1)
+        || !TEST_int_eq(SSL_get_extms_support(serverssl), -1)
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_version(clientssl), version)
+        || !TEST_int_eq(SSL_version(serverssl), version)
+        || !TEST_int_eq(SSL_get_extms_support(clientssl), 1)
+        || !TEST_int_eq(SSL_get_extms_support(serverssl), 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+static int test_tls13_extms(void)
+{
+    return test_extms_version13(TLS_server_method(), TLS_client_method(),
+        TLS1_3_VERSION);
+}
+#endif
+
+#ifndef OSSL_NO_USABLE_DTLS1_3
+static int test_dtls13_extms(void)
+{
+    return test_extms_version13(DTLS_server_method(), DTLS_client_method(),
+        DTLS1_3_VERSION);
+}
+#endif
+#endif
+
 /*
  * Very focused test to exercise a single case in the server-side state
  * machine, when the ChangeCipherState message needs to actually change
@@ -19609,6 +19662,12 @@ int setup_tests(void)
     ADD_TEST(test_client_hello_cb);
     ADD_TEST(test_no_ems);
     ADD_TEST(test_ccs_change_cipher);
+#endif
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_TEST(test_tls13_extms);
+#endif
+#ifndef OSSL_NO_USABLE_DTLS1_3
+    ADD_TEST(test_dtls13_extms);
 #endif
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
     ADD_ALL_TESTS(test_early_data_read_write, 12);
