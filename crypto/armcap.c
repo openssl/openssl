@@ -462,7 +462,12 @@ void OPENSSL_cpuid_setup(void)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V3)))
         OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
 
-    if (OPENSSL_armcap_P & ARMV9_SVE2) {
+    /*
+     * _armv8_sve_get_vl_bytes() executes an SVE instruction. Some kernels and
+     * hypervisors report SVE2 without SVE (e.g. guests on Apple M4, which has
+     * SME but no SVE), so require both before probing the vector length.
+     */
+    if ((OPENSSL_armcap_P & ARMV8_SVE) && (OPENSSL_armcap_P & ARMV9_SVE2)) {
         uint64_t vl_bytes = _armv8_sve_get_vl_bytes();
 
         if (vl_bytes > 16 && (vl_bytes & (vl_bytes - 1)) == 0) {
