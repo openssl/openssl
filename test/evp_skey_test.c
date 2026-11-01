@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/param_build.h>
@@ -693,6 +694,117 @@ end:
     return ret;
 }
 
+#ifndef OPENSSL_NO_ECX
+/*
+ * EVP_PKEY_derive_SKEY() derives into a temporary buffer when the key
+ * exchange has no derive_skey.  If that fails after the secret has been
+ * written, for instance because more bytes were asked for than the shared
+ * secret has, the buffer must be cleared before it is freed.  While
+ * watching, remember the blocks of |watch_size| bytes that are allocated and
+ * note if one of them still starts with the secret when it is freed.
+ */
+static CRYPTO_malloc_fn saved_malloc;
+static CRYPTO_realloc_fn saved_realloc;
+static CRYPTO_free_fn saved_free;
+static void *watched[16];
+static size_t nwatched, watch_size, watch_secret_len;
+static const unsigned char *watch_secret;
+static int secret_left;
+
+static void watch_forget(void *ptr, int check)
+{
+    size_t i;
+
+    for (i = 0; i < nwatched; i++) {
+        if (watched[i] != ptr)
+            continue;
+        if (check && memcmp(ptr, watch_secret, watch_secret_len) == 0)
+            secret_left = 1;
+        watched[i] = watched[--nwatched];
+        return;
+    }
+}
+
+static void watch_add(void *ptr, size_t num)
+{
+    if (ptr != NULL && num == watch_size
+        && nwatched < sizeof(watched) / sizeof(watched[0]))
+        watched[nwatched++] = ptr;
+}
+
+static void *watch_malloc(size_t num, const char *file, int line)
+{
+    void *ret = saved_malloc(num, file, line);
+
+    watch_add(ret, num);
+    return ret;
+}
+
+static void *watch_realloc(void *ptr, size_t num, const char *file, int line)
+{
+    void *ret = saved_realloc(ptr, num, file, line);
+
+    if (ptr != NULL && (ret != NULL || num == 0))
+        watch_forget(ptr, 0);
+    watch_add(ret, num);
+    return ret;
+}
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        watch_forget(ptr, 1);
+    saved_free(ptr, file, line);
+}
+
+static int test_derive_skey_clears_on_failure(void)
+{
+    EVP_PKEY *a = NULL, *b = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_SKEY *skey = NULL;
+    unsigned char secret[32];
+    size_t secretlen = sizeof(secret);
+    int watching, ret = 0;
+
+    if (!TEST_ptr(deflprov = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(a = EVP_PKEY_Q_keygen(libctx, NULL, "X25519"))
+        || !TEST_ptr(b = EVP_PKEY_Q_keygen(libctx, NULL, "X25519"))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, a, NULL))
+        || !TEST_int_eq(EVP_PKEY_derive_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_derive_set_peer(ctx, b), 1)
+        || !TEST_int_eq(EVP_PKEY_derive(ctx, secret, &secretlen), 1))
+        goto err;
+
+    /* Ask for twice as many bytes as the shared secret has */
+    CRYPTO_get_mem_functions(&saved_malloc, &saved_realloc, &saved_free);
+    watching = CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free);
+    if (!watching)
+        TEST_info("cannot replace the allocator, not checking the secret is cleared");
+    nwatched = 0;
+    watch_size = 2 * secretlen;
+    watch_secret = secret;
+    watch_secret_len = secretlen;
+    secret_left = 0;
+    skey = EVP_PKEY_derive_SKEY(ctx, NULL, OSSL_SKEY_TYPE_GENERIC, NULL,
+        2 * secretlen, NULL);
+    if (watching)
+        CRYPTO_set_mem_functions(saved_malloc, saved_realloc, saved_free);
+
+    if (!TEST_ptr_null(skey)
+        || (watching && !TEST_false(secret_left)))
+        goto err;
+    ret = 1;
+err:
+    OPENSSL_cleanse(secret, sizeof(secret));
+    EVP_SKEY_free(skey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(a);
+    EVP_PKEY_free(b);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -710,6 +822,9 @@ int setup_tests(void)
     ADD_TEST(test_aes_raw_skey);
 #ifndef OPENSSL_NO_DES
     ADD_TEST(test_des_raw_skey);
+#endif
+#ifndef OPENSSL_NO_ECX
+    ADD_TEST(test_derive_skey_clears_on_failure);
 #endif
 
     return 1;
