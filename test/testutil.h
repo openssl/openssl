@@ -738,4 +738,24 @@ EVP_PKEY *PKEY_from_strings(const char **pem);
  */
 BIO *glue2bio(const char **pem, char **out);
 
+/*
+ * Check that a secret is not left in freed memory.  After
+ * test_watch_freed_start() every block allocated through OPENSSL_malloc()
+ * and friends is remembered, and when one of them is freed it is searched
+ * for |secret|.  A block moved by realloc is forgotten without being
+ * searched.  test_watch_freed_stop() stops watching and returns the number
+ * of freed blocks that still held the secret, or -1 if more blocks were live
+ * than could be watched.
+ *
+ * Watching needs the allocator to be replaceable.  On master the mfail hooks
+ * make that possible at any time; elsewhere it only works if the recipe sets
+ * OPENSSL_TEST_WATCH_FREED, so that the hooks are installed before the first
+ * allocation and pass everything through until a watch starts.
+ * test_watch_freed_start() returns 0 and watches nothing if the allocator
+ * cannot be replaced or a watch is already running; callers should then skip
+ * the check.
+ */
+int test_watch_freed_start(const void *secret, size_t secret_len);
+int test_watch_freed_stop(void);
+
 #endif /* OSSL_TESTUTIL_H */
