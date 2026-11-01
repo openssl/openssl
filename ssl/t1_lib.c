@@ -32,7 +32,8 @@
 
 #define MAX_SIGALGS 128
 
-static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pkey);
+static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x,
+    EVP_PKEY *pkey, STACK_OF(X509) *chain);
 static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op, const SIGALG_LOOKUP *lu);
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
@@ -4316,7 +4317,7 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
              * We only get here if the application has called SSL_check_chain(),
              * so check_flags is always set.
              */
-            if (find_sig_alg(s, x, pk) != NULL)
+            if (find_sig_alg(s, x, pk, chain) != NULL)
                 rv |= CERT_PKEY_EE_SIGNATURE;
         } else if (!tls1_check_sig_alg(s, x, default_nid)) {
             if (!check_flags)
@@ -4619,13 +4620,121 @@ static int tls12_get_cert_sigalg_idx(const SSL_CONNECTION *s,
 }
 
 /*
+ * SHA-1 signatures within an offered server chain require a matching peer
+ * advertisement, unless the certificate is self-signed (path start).  The
+ * configured chain is checked at certificate choice time; this does not
+ * infer which non-self-signed certificate a peer may treat as a trust anchor.
+ */
+static int peer_accepts_sha1_cert_signature(SSL_CONNECTION *s, X509 *x,
+    int require_strong)
+{
+    int mdnid, pknid;
+    size_t i, sigalgslen;
+    const uint16_t *sigalgs;
+    const SIGALG_LOOKUP *lu;
+
+    if (!X509_get_signature_info(x, &mdnid, &pknid, NULL, NULL)
+        || mdnid != NID_sha1 || X509_self_signed(x, 0) > 0)
+        return 1;
+    if (require_strong)
+        return 0;
+
+    if (s->s3.tmp.peer_cert_sigalgs != NULL) {
+        sigalgs = s->s3.tmp.peer_cert_sigalgs;
+        sigalgslen = s->s3.tmp.peer_cert_sigalgslen;
+    } else {
+        sigalgs = s->s3.tmp.peer_sigalgs;
+        sigalgslen = s->s3.tmp.peer_sigalgslen;
+    }
+    for (i = 0; i < sigalgslen; i++) {
+        lu = tls1_lookup_sigalg(SSL_CONNECTION_GET_CTX(s), sigalgs[i]);
+        if (lu != NULL && mdnid == lu->hash && pknid == lu->sig)
+            return 1;
+    }
+    return 0;
+}
+
+/*
+ * Check the SHA-1 server-chain restriction against the peer's effective
+ * certificate-signature list. Client fallback policy is deliberately separate.
+ * This also runs immediately before writing a resolved chain, so late chain
+ * construction cannot bypass the selection-time check.
+ */
+static int check_resolved_chain_sha1(SSL_CONNECTION *s, X509 *x,
+    STACK_OF(X509) *chain, int require_strong)
+{
+    int i;
+
+    if (!SSL_CONNECTION_IS_VERSION13(s) || !s->server)
+        return 1;
+    if (!require_strong && s->s3.tmp.peer_cert_sigalgs == NULL
+        && s->s3.tmp.peer_sigalgs == NULL)
+        return 1;
+    if (x != NULL && !peer_accepts_sha1_cert_signature(s, x, require_strong))
+        return 0;
+    for (i = 0; i < sk_X509_num(chain); i++) {
+        if (!peer_accepts_sha1_cert_signature(s, sk_X509_value(chain, i),
+                require_strong))
+            return 0;
+    }
+    return 1;
+}
+
+int tls1_check_chain_sha1(SSL_CONNECTION *s, X509 *x, STACK_OF(X509) *chain)
+{
+    return check_resolved_chain_sha1(s, x, chain, 0);
+}
+
+/* Resolve the same default chain that certificate construction will use. */
+static int check_server_chain_sha1(SSL_CONNECTION *s, X509 *x,
+    STACK_OF(X509) *chain, int require_strong)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    X509_STORE *store;
+    X509_STORE_CTX *xs_ctx;
+    int ok, marked;
+
+    if (!SSL_CONNECTION_IS_VERSION13(s) || !s->server)
+        return 1;
+    if (chain == NULL)
+        chain = sctx->extra_certs;
+    if (chain != NULL || (s->mode & SSL_MODE_NO_AUTO_CHAIN) != 0)
+        return check_resolved_chain_sha1(s, x, chain, require_strong);
+
+    store = s->cert->chain_store != NULL
+        ? s->cert->chain_store
+        : sctx->cert_store;
+    xs_ctx = X509_STORE_CTX_new_ex(sctx->libctx, sctx->propq);
+    if (xs_ctx == NULL)
+        return 0;
+    if (!X509_STORE_CTX_init(xs_ctx, store, x, NULL)) {
+        X509_STORE_CTX_free(xs_ctx);
+        return 0;
+    }
+    /*
+     * As in ssl_add_cert_chain(), an incomplete chain is permitted. Preserve
+     * earlier errors while discarding errors from path construction.
+     */
+    marked = ERR_set_mark();
+    (void)X509_verify_cert(xs_ctx);
+    if (marked)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_error();
+    ok = check_resolved_chain_sha1(s, x, X509_STORE_CTX_get0_chain(xs_ctx),
+        require_strong);
+    X509_STORE_CTX_free(xs_ctx);
+    return ok;
+}
+
+/*
  * Checks the given cert against signature_algorithm_cert restrictions sent by
  * the peer (if any) as well as whether the hash from the sigalg is usable with
  * the key.
  * Returns true if the cert is usable and false otherwise.
  */
 static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
-    X509 *x, EVP_PKEY *pkey)
+    X509 *x, EVP_PKEY *pkey, STACK_OF(X509) *chain)
 {
     const SIGALG_LOOKUP *lu;
     int mdnid, pknid, supported;
@@ -4659,6 +4768,9 @@ static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
     if (x == NULL)
         return 0;
 
+    if (!check_server_chain_sha1(s, x, chain, 0))
+        return 0;
+
     /*
      * The TLS 1.3 signature_algorithms_cert extension places restrictions
      * on the sigalg with which the certificate was signed (by its issuer).
@@ -4684,10 +4796,6 @@ static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
         return 0;
     }
 
-    /*
-     * Without signat_algorithms_cert, any certificate for which we have
-     * a viable public key is permitted.
-     */
     return 1;
 }
 
@@ -4707,7 +4815,7 @@ static int has_usable_cert(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, int idx)
         return 0;
 
     return check_cert_usable(s, sig, s->cert->pkeys[idx].x509,
-        s->cert->pkeys[idx].privatekey);
+        s->cert->pkeys[idx].privatekey, s->cert->pkeys[idx].chain);
 }
 
 /*
@@ -4715,7 +4823,7 @@ static int has_usable_cert(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, int idx)
  * specified signature scheme |sig|, or false otherwise.
  */
 static int is_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, X509 *x,
-    EVP_PKEY *pkey)
+    EVP_PKEY *pkey, STACK_OF(X509) *chain)
 {
     size_t idx;
 
@@ -4726,7 +4834,7 @@ static int is_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, X509 *x,
     if ((int)idx != sig->sig_idx)
         return 0;
 
-    return check_cert_usable(s, sig, x, pkey);
+    return check_cert_usable(s, sig, x, pkey, chain);
 }
 
 /*
@@ -4735,52 +4843,63 @@ static int is_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, X509 *x,
  * available certs/keys to find one that works.
  */
 static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x,
-    EVP_PKEY *pkey)
+    EVP_PKEY *pkey, STACK_OF(X509) *chain)
 {
     const SIGALG_LOOKUP *lu = NULL;
     size_t i;
-    int curve = -1;
+    int curve = -1, require_strong;
     EVP_PKEY *tmppkey;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    /* Look for a shared sigalgs matching possible certificates */
-    for (i = 0; i < s->shared_sigalgslen; i++) {
-        /* Skip SHA1, SHA224, DSA and RSA if not PSS */
-        lu = s->shared_sigalgs[i];
-        if (lu->hash == NID_sha1
-            || lu->hash == NID_sha224
-            || lu->sig == EVP_PKEY_DSA
-            || lu->sig == EVP_PKEY_RSA
-            || !tls_sigalg_compat(s, lu))
-            continue;
-
-        /* Check that we have a cert, and signature_algorithms_cert */
-        if (!tls1_lookup_md(sctx, lu, NULL))
-            continue;
-        if ((pkey == NULL && !has_usable_cert(s, lu, -1))
-            || (pkey != NULL && !is_cert_usable(s, lu, x, pkey)))
-            continue;
-
-        tmppkey = (pkey != NULL) ? pkey
-                                 : s->cert->pkeys[lu->sig_idx].privatekey;
-
-        if (lu->sig == EVP_PKEY_EC) {
-            if (curve == -1)
-                curve = ssl_get_EC_curve_nid(tmppkey);
-            if (lu->curve != NID_undef && curve != lu->curve)
+    /*
+     * A server must use a non-SHA-1 chain if any suitable configured slot
+     * provides one. Only retry with advertised SHA-1 fallback after exhausting
+     * all stronger candidates. External candidates are ranked by the caller.
+     */
+    for (require_strong = s->server && pkey == NULL
+            && SSL_CONNECTION_IS_VERSION13(s);
+        require_strong >= 0; require_strong--) {
+        /* Look for a shared sigalgs matching possible certificates */
+        for (i = 0; i < s->shared_sigalgslen; i++) {
+            /* Skip SHA1, SHA224, DSA and RSA if not PSS */
+            lu = s->shared_sigalgs[i];
+            if (lu->hash == NID_sha1
+                || lu->hash == NID_sha224
+                || lu->sig == EVP_PKEY_DSA
+                || lu->sig == EVP_PKEY_RSA
+                || !tls_sigalg_compat(s, lu))
                 continue;
-        } else if (lu->sig == EVP_PKEY_RSA_PSS) {
-            /* validate that key is large enough for the signature algorithm */
-            if (!rsa_pss_check_min_key_size(sctx, tmppkey, lu))
+
+            /* Check that we have a cert, and signature_algorithms_cert */
+            if (!tls1_lookup_md(sctx, lu, NULL))
                 continue;
+            if ((pkey == NULL && !has_usable_cert(s, lu, -1))
+                || (pkey != NULL && !is_cert_usable(s, lu, x, pkey, chain)))
+                continue;
+
+            if (require_strong
+                && !check_server_chain_sha1(s, s->cert->pkeys[lu->sig_idx].x509,
+                    s->cert->pkeys[lu->sig_idx].chain, 1))
+                continue;
+
+            tmppkey = (pkey != NULL) ? pkey
+                                     : s->cert->pkeys[lu->sig_idx].privatekey;
+
+            if (lu->sig == EVP_PKEY_EC) {
+                if (curve == -1)
+                    curve = ssl_get_EC_curve_nid(tmppkey);
+                if (lu->curve != NID_undef && curve != lu->curve)
+                    continue;
+            } else if (lu->sig == EVP_PKEY_RSA_PSS) {
+                /* validate that key is large enough for the signature algorithm */
+                if (!rsa_pss_check_min_key_size(sctx, tmppkey, lu))
+                    continue;
+            }
+            return lu;
         }
-        break;
     }
 
-    if (i == s->shared_sigalgslen)
-        return NULL;
-
-    return lu;
+    return NULL;
 }
 
 /*
@@ -4803,7 +4922,7 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
     s->s3.tmp.sigalg = NULL;
 
     if (SSL_CONNECTION_IS_VERSION13(s)) {
-        lu = find_sig_alg(s, NULL, NULL);
+        lu = find_sig_alg(s, NULL, NULL, NULL);
         if (lu == NULL) {
             if (!fatalerrs)
                 return 1;

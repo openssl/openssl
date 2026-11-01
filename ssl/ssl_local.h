@@ -3351,6 +3351,7 @@ __owur int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
     int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen,
     int client);
+int tls1_check_chain_sha1(SSL_CONNECTION *s, X509 *x, STACK_OF(X509) *chain);
 int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
     STACK_OF(X509) *chain, int idx);
 void tls1_set_cert_validity(SSL_CONNECTION *s);

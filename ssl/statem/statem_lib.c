@@ -1078,6 +1078,13 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
             return 0;
         }
+        if (!tls1_check_chain_sha1(s, NULL, chain)) {
+            X509_STORE_CTX_free(xs_ctx);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                    SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+            return 0;
+        }
         chain_count = sk_X509_num(chain);
         for (i = 0; i < chain_count; i++) {
             x = sk_X509_value(chain, i);
@@ -1094,6 +1101,12 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
         if (i != 1) {
             if (!for_comp)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
+            return 0;
+        }
+        if (!tls1_check_chain_sha1(s, x, extra_certs)) {
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                    SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
             return 0;
         }
         if (!ssl_add_cert_to_wpacket(s, pkt, x, 0, for_comp)) {
