@@ -29,6 +29,8 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
+  * Added SSL_CTX_set_quic_cid_prefix() for prefix-based QUIC CID routing
+    in multi-process servers.
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
