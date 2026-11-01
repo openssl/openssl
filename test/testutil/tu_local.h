@@ -47,6 +47,11 @@ void test_fail_memory_message(const char *prefix, const char *file,
     const unsigned char *m2, size_t l2);
 
 __owur int setup_test_framework(int argc, char *argv[]);
+/*
+ * Install the freed memory watch hooks at startup if OPENSSL_TEST_WATCH_FREED
+ * is set.  Returns 1 if installed, 0 if not requested, -1 on failure.
+ */
+int test_watch_freed_init(void);
 __owur int pulldown_test_framework(int ret);
 
 __owur int run_tests(const char *test_prog_name);
