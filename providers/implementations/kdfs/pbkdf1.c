@@ -303,7 +303,7 @@ static void *kdf_pbkdf1_derive_skey(void *vctx, const char *key_type ossl_unused
     if (import == NULL || keylen == 0)
         return NULL;
 
-    if ((key = OPENSSL_zalloc(keylen)) == NULL)
+    if ((key = OPENSSL_malloc(keylen)) == NULL)
         return NULL;
 
     if (kdf_pbkdf1_derive(vctx, key, keylen, params) == 0) {
