@@ -348,7 +348,7 @@ jobs:
         path: artifacts.tar.gz
 
   no-shared-macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v6
       with:
@@ -369,7 +369,7 @@ jobs:
       if: success() || failure()
       uses: actions/upload-artifact@v5
       with:
-        name: "ci@no-shared-macos-14"
+        name: "ci@no-shared-macos-15"
         path: artifacts.tar.gz
 
   non-caching:
