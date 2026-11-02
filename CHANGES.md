@@ -33,6 +33,16 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The datagram BIO (L<BIO_s_datagram(3)>) can now use UDP Generic Segmentation
+   Offload (GSO) on Linux. When L<BIO_sendmmsg(3)> is called with the new
+   B<BIO_SENDMMSG_FLAG_GSO> flag and given a run of equal-sized datagrams
+   destined for the same peer, they are submitted to the kernel as a single
+   segmented send. The internal QUIC implementation sets this flag, significantly
+   increasing QUIC transmit throughput and reducing CPU usage. The flag is
+   ignored, with fallback to ordinary sendmmsg(2), where GSO is unavailable.
+
+   *Dimitris Soumis*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build

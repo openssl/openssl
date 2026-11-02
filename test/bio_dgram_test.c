@@ -15,6 +15,13 @@
 #include "internal/sockets.h"
 #include "internal/bio_addr.h"
 
+#if defined(OPENSSL_SYS_LINUX)
+#include <netinet/udp.h> /* UDP_SEGMENT, for the GSO edge-case test */
+#ifndef SOL_UDP
+#define SOL_UDP 17
+#endif
+#endif
+
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 
 #if defined(SO_RCVTIMEO)
@@ -1053,6 +1060,313 @@ static int test_bio_dgram_mfail(void)
     return 1;
 }
 
+/*
+ * Exercise the UDP GSO (UDP_SEGMENT) coalescing path in dgram_sendmmsg(): send a
+ * batch of equal-size datagrams to a single peer with BIO_SENDMMSG_FLAG_GSO
+ * (which triggers coalescing into one segmented sendmsg() where supported) and
+ * verify every datagram is received intact. On platforms/paths without GSO this
+ * still passes via the ordinary sendmmsg() fallback, so it doubles as a
+ * regression guard.
+ */
+#define GSO_NMSG 16
+#define GSO_SEG 64
+static int test_bio_dgram_gso(void)
+{
+    int testresult = 0;
+    BIO *b1 = NULL, *b2 = NULL;
+    int fd1 = -1, fd2 = -1;
+    BIO_ADDR *addr1 = NULL, *addr2 = NULL;
+    struct in_addr ina;
+    union BIO_sock_info_u info2 = { 0 };
+    BIO_MSG tx_msg[GSO_NMSG], rx_msg[GSO_NMSG];
+    unsigned char tx_buf[GSO_NMSG][GSO_SEG], rx_buf[GSO_NMSG][GSO_SEG];
+    size_t i, num_processed = 0;
+
+    memset(&ina, 0, sizeof(ina));
+    ina.s_addr = htonl(0x7f000001UL);
+
+    if (!TEST_ptr(addr1 = BIO_ADDR_new())
+        || !TEST_ptr(addr2 = BIO_ADDR_new()))
+        goto err;
+    if (!TEST_int_eq(BIO_ADDR_rawmake(addr1, AF_INET, &ina, sizeof(ina), 0), 1)
+        || !TEST_int_eq(BIO_ADDR_rawmake(addr2, AF_INET, &ina, sizeof(ina), 0), 1))
+        goto err;
+
+    fd1 = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+    fd2 = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+    if (!TEST_int_ge(fd1, 0) || !TEST_int_ge(fd2, 0))
+        goto err;
+
+    if (BIO_bind(fd1, addr1, 0) <= 0 || BIO_bind(fd2, addr2, 0) <= 0) {
+        testresult = TEST_skip("BIO_bind() failed - address family unavailable");
+        goto err;
+    }
+
+    info2.addr = addr2;
+    if (!TEST_int_gt(BIO_sock_info(fd2, BIO_SOCK_INFO_ADDRESS, &info2), 0))
+        goto err;
+
+    if (!TEST_ptr(b1 = BIO_new_dgram(fd1, 0))
+        || !TEST_ptr(b2 = BIO_new_dgram(fd2, 0)))
+        goto err;
+
+    /* Uniform-size batch addressed to b2, with per-datagram distinct content. */
+    for (i = 0; i < GSO_NMSG; ++i) {
+        memset(tx_buf[i], (int)i + 1, GSO_SEG);
+        tx_msg[i].data = tx_buf[i];
+        tx_msg[i].data_len = GSO_SEG;
+        tx_msg[i].peer = addr2;
+        tx_msg[i].local = NULL;
+        tx_msg[i].flags = 0;
+    }
+
+    if (!TEST_true(do_sendmmsg(b1, tx_msg, GSO_NMSG, BIO_SENDMMSG_FLAG_GSO,
+            &num_processed))
+        || !TEST_size_t_eq(num_processed, GSO_NMSG))
+        goto err;
+
+    for (i = 0; i < GSO_NMSG; ++i) {
+        rx_msg[i].data = rx_buf[i];
+        rx_msg[i].data_len = GSO_SEG;
+        rx_msg[i].peer = NULL;
+        rx_msg[i].local = NULL;
+        rx_msg[i].flags = 0;
+    }
+
+    if (!TEST_true(do_recvmmsg(b2, rx_msg, GSO_NMSG, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, GSO_NMSG))
+        goto err;
+
+    for (i = 0; i < GSO_NMSG; ++i) {
+        if (!TEST_size_t_eq(rx_msg[i].data_len, GSO_SEG)
+            || !TEST_mem_eq(rx_msg[i].data, rx_msg[i].data_len,
+                tx_buf[i], GSO_SEG))
+            goto err;
+    }
+
+    /*
+     * A batch that ends with an empty datagram must still deliver it. An empty
+     * datagram cannot be represented by buffer concatenation, so it must not be
+     * folded into a GSO segment and silently dropped: here two full datagrams
+     * coalesce and the trailing empty one is sent on its own.
+     */
+    {
+        BIO_MSG m3[3], r3[3];
+        unsigned char rb3[3][GSO_SEG];
+
+        m3[0].data = tx_buf[0];
+        m3[0].data_len = GSO_SEG;
+        m3[0].peer = addr2;
+        m3[0].local = NULL;
+        m3[0].flags = 0;
+        m3[1] = m3[0];
+        m3[2] = m3[0];
+        m3[2].data_len = 0; /* empty datagram */
+
+        if (!TEST_true(do_sendmmsg(b1, m3, 3, BIO_SENDMMSG_FLAG_GSO,
+                &num_processed))
+            || !TEST_size_t_eq(num_processed, 3))
+            goto err;
+
+        for (i = 0; i < 3; ++i) {
+            r3[i].data = rb3[i];
+            r3[i].data_len = GSO_SEG;
+            r3[i].peer = NULL;
+            r3[i].local = NULL;
+            r3[i].flags = 0;
+        }
+
+        if (!TEST_true(do_recvmmsg(b2, r3, 3, 0, &num_processed))
+            || !TEST_size_t_eq(num_processed, 3)
+            || !TEST_size_t_eq(r3[0].data_len, GSO_SEG)
+            || !TEST_size_t_eq(r3[1].data_len, GSO_SEG)
+            || !TEST_size_t_eq(r3[2].data_len, 0))
+            goto err;
+    }
+
+    testresult = 1;
+err:
+    BIO_free(b1);
+    BIO_free(b2);
+    if (fd1 >= 0)
+        BIO_closesocket(fd1);
+    if (fd2 >= 0)
+        BIO_closesocket(fd2);
+    BIO_ADDR_free(addr1);
+    BIO_ADDR_free(addr2);
+    return testresult;
+}
+#undef GSO_NMSG
+#undef GSO_SEG
+
+#ifdef UDP_SEGMENT
+/*
+ * Verify that GSO sends do not clobber the application's UDP_SEGMENT socket
+ * option: the per-send segment size must be supplied via a control message, not
+ * by reconfiguring the caller's socket.
+ */
+static int test_bio_dgram_gso_segsize(void)
+{
+    int testresult = 0;
+    BIO *b1 = NULL, *b2 = NULL;
+    int fd1 = -1, fd2 = -1;
+    BIO_ADDR *addr1 = NULL, *addr2 = NULL;
+    struct in_addr ina;
+    union BIO_sock_info_u info2 = { 0 };
+    BIO_MSG tx_msg[4], rx_msg[4];
+    unsigned char tx_buf[4][128], rx_buf[4][128];
+    const int sentinel = 1400;
+    int segnow = -1;
+    socklen_t sl = sizeof(segnow);
+    size_t i, num_processed = 0;
+
+    memset(&ina, 0, sizeof(ina));
+    ina.s_addr = htonl(0x7f000001UL);
+
+    if (!TEST_ptr(addr1 = BIO_ADDR_new())
+        || !TEST_ptr(addr2 = BIO_ADDR_new()))
+        goto err;
+    if (!TEST_int_eq(BIO_ADDR_rawmake(addr1, AF_INET, &ina, sizeof(ina), 0), 1)
+        || !TEST_int_eq(BIO_ADDR_rawmake(addr2, AF_INET, &ina, sizeof(ina), 0), 1))
+        goto err;
+
+    fd1 = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+    fd2 = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+    if (!TEST_int_ge(fd1, 0) || !TEST_int_ge(fd2, 0))
+        goto err;
+
+    if (BIO_bind(fd1, addr1, 0) <= 0 || BIO_bind(fd2, addr2, 0) <= 0) {
+        testresult = TEST_skip("BIO_bind() failed - address family unavailable");
+        goto err;
+    }
+
+    if (setsockopt(fd1, SOL_UDP, UDP_SEGMENT, &sentinel, sizeof(sentinel)) != 0) {
+        testresult = TEST_skip("UDP_SEGMENT unsupported - GSO not available");
+        goto err;
+    }
+
+    info2.addr = addr2;
+    if (!TEST_int_gt(BIO_sock_info(fd2, BIO_SOCK_INFO_ADDRESS, &info2), 0))
+        goto err;
+
+    if (!TEST_ptr(b1 = BIO_new_dgram(fd1, 0))
+        || !TEST_ptr(b2 = BIO_new_dgram(fd2, 0)))
+        goto err;
+
+    for (i = 0; i < 4; ++i) {
+        memset(tx_buf[i], (int)i + 1, 128);
+        tx_msg[i].data = tx_buf[i];
+        tx_msg[i].data_len = 128;
+        tx_msg[i].peer = addr2;
+        tx_msg[i].local = NULL;
+        tx_msg[i].flags = 0;
+    }
+    if (!TEST_true(do_sendmmsg(b1, tx_msg, 4, BIO_SENDMMSG_FLAG_GSO,
+            &num_processed))
+        || !TEST_size_t_eq(num_processed, 4))
+        goto err;
+
+    for (i = 0; i < 4; ++i) {
+        rx_msg[i].data = rx_buf[i];
+        rx_msg[i].data_len = 128;
+        rx_msg[i].peer = NULL;
+        rx_msg[i].local = NULL;
+        rx_msg[i].flags = 0;
+    }
+    if (!TEST_true(do_recvmmsg(b2, rx_msg, 4, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 4))
+        goto err;
+
+    /* The sending socket's UDP_SEGMENT default must be unchanged. */
+    if (!TEST_int_eq(getsockopt(fd1, SOL_UDP, UDP_SEGMENT, &segnow, &sl), 0)
+        || !TEST_int_eq(segnow, sentinel))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(b1);
+    BIO_free(b2);
+    if (fd1 >= 0)
+        BIO_closesocket(fd1);
+    if (fd2 >= 0)
+        BIO_closesocket(fd2);
+    BIO_ADDR_free(addr1);
+    BIO_ADDR_free(addr2);
+    return testresult;
+}
+
+/*
+ * A non-UDP socket must never be coalesced, even when BIO_SENDMMSG_FLAG_GSO is
+ * requested: the kernel silently ignores a UDP_SEGMENT control message on, e.g.,
+ * a Unix datagram socket, which would otherwise turn a batch into one
+ * concatenated datagram. Verify two equal-sized messages are delivered as two
+ * distinct messages, not one.
+ */
+static int test_bio_dgram_gso_nonudp(void)
+{
+    int testresult = 0;
+    int sv[2] = { -1, -1 };
+    BIO *b1 = NULL, *b2 = NULL;
+    BIO_MSG tx[2], rx[2];
+    unsigned char a[4], bb[4], rxbuf[2][8];
+    size_t num_processed = 0;
+
+    if (socketpair(AF_UNIX, SOCK_DGRAM, 0, sv) != 0) {
+        testresult = TEST_skip("AF_UNIX SOCK_DGRAM socketpair unavailable");
+        goto err;
+    }
+    if (!TEST_ptr(b1 = BIO_new_dgram(sv[0], 0))
+        || !TEST_ptr(b2 = BIO_new_dgram(sv[1], 0)))
+        goto err;
+
+    memset(a, 'a', sizeof(a));
+    memset(bb, 'b', sizeof(bb));
+    tx[0].data = a;
+    tx[0].data_len = sizeof(a);
+    tx[0].peer = NULL;
+    tx[0].local = NULL;
+    tx[0].flags = 0;
+    tx[1].data = bb;
+    tx[1].data_len = sizeof(bb);
+    tx[1].peer = NULL;
+    tx[1].local = NULL;
+    tx[1].flags = 0;
+
+    if (!TEST_true(do_sendmmsg(b1, tx, 2, BIO_SENDMMSG_FLAG_GSO,
+            &num_processed))
+        || !TEST_size_t_eq(num_processed, 2))
+        goto err;
+
+    rx[0].data = rxbuf[0];
+    rx[0].data_len = sizeof(rxbuf[0]);
+    rx[0].peer = NULL;
+    rx[0].local = NULL;
+    rx[0].flags = 0;
+    rx[1].data = rxbuf[1];
+    rx[1].data_len = sizeof(rxbuf[1]);
+    rx[1].peer = NULL;
+    rx[1].local = NULL;
+    rx[1].flags = 0;
+
+    /* Two separate 4-byte messages must arrive, not one 8-byte message. */
+    if (!TEST_true(do_recvmmsg(b2, rx, 2, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 2)
+        || !TEST_size_t_eq(rx[0].data_len, sizeof(a))
+        || !TEST_size_t_eq(rx[1].data_len, sizeof(bb)))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(b1);
+    BIO_free(b2);
+    if (sv[0] >= 0)
+        BIO_closesocket(sv[0]);
+    if (sv[1] >= 0)
+        BIO_closesocket(sv[1]);
+    return testresult;
+}
+#endif /* UDP_SEGMENT */
+
 #endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
 
 int setup_tests(void)
@@ -1067,6 +1381,11 @@ int setup_tests(void)
     ADD_TEST(test_bio_dgram_recv_timeout);
 #endif
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
+    ADD_TEST(test_bio_dgram_gso);
+#ifdef UDP_SEGMENT
+    ADD_TEST(test_bio_dgram_gso_segsize);
+    ADD_TEST(test_bio_dgram_gso_nonudp);
+#endif
 #if !defined(OPENSSL_NO_CHACHA)
     ADD_ALL_TESTS(test_bio_dgram_pair, 3);
 #endif

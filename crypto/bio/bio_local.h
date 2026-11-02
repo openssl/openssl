@@ -189,6 +189,7 @@ typedef struct bio_dgram_data_st {
     OSSL_TIME socket_timeout;
     unsigned int peekmode;
     char local_addr_enabled;
+    char gso_capable; /* socket is UDP on a UDP_SEGMENT-capable kernel (Linux) */
 } bio_dgram_data;
 #endif
 

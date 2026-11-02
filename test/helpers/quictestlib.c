@@ -1181,6 +1181,15 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     if (next == NULL)
         return 0;
 
+    /*
+     * A QUIC write BIO that is a filter (such as this one) must never be handed
+     * BIO_SENDMMSG_FLAG_GSO: ossl_qtx_flush_net() only sets that flag when its
+     * write BIO is the built-in datagram BIO, since a filter cannot be assumed to
+     * accept a nonzero flags argument. Fail loudly if that invariant regresses.
+     */
+    if (!TEST_true(flags == 0))
+        return 0;
+
     bdata = BIO_get_data(b);
     if (bdata == NULL || bdata->fault == NULL
         || (bdata->fault->pciphercb == NULL && bdata->fault->datagramcb == NULL))
