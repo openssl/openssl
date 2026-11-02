@@ -771,6 +771,48 @@ end:
     return testresult;
 }
 
+static int test_i2v_GENERAL_NAME_dirname(int idx)
+{
+    static const size_t lengths[] = { 0, 255, 256, 1024 };
+    size_t len = lengths[idx];
+    char expected[1025];
+    GENERAL_NAME *gen = NULL;
+    X509_NAME *name = NULL;
+    STACK_OF(CONF_VALUE) *values = NULL;
+    CONF_VALUE *value;
+    int ret = 0;
+
+    expected[0] = '\0';
+    if (!TEST_ptr(gen = GENERAL_NAME_new())
+        || !TEST_ptr(name = X509_NAME_new()))
+        goto end;
+    if (len != 0) {
+        memcpy(expected, "CN=", 3);
+        memset(expected + 3, 'a', len - 3);
+        expected[len] = '\0';
+        if (!TEST_true(X509_NAME_add_entry_by_txt(name, "CN",
+                V_ASN1_UTF8STRING, (unsigned char *)expected + 3,
+                (int)len - 3, -1, 0)))
+            goto end;
+    }
+    GENERAL_NAME_set0_value(gen, GEN_DIRNAME, name);
+    name = NULL;
+    if (!TEST_ptr(values = i2v_GENERAL_NAME(NULL, gen, NULL))
+        || !TEST_int_eq(sk_CONF_VALUE_num(values), 1))
+        goto end;
+    value = sk_CONF_VALUE_value(values, 0);
+    if (!TEST_str_eq(value->name, "DirName")
+        || !TEST_str_eq(value->value, expected))
+        goto end;
+    ret = 1;
+
+end:
+    sk_CONF_VALUE_pop_free(values, X509V3_conf_free);
+    X509_NAME_free(name);
+    GENERAL_NAME_free(gen);
+    return ret;
+}
+
 int setup_tests(void)
 {
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
@@ -779,5 +821,6 @@ int setup_tests(void)
     ADD_TEST(test_check_subject_flags);
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
     ADD_TEST(test_GENERAL_NAME_cmp);
+    ADD_ALL_TESTS(test_i2v_GENERAL_NAME_dirname, 4);
     return 1;
 }
