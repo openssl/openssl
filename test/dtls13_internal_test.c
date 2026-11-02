@@ -32,12 +32,17 @@ static int test_pqueue_size(int idx)
     size_t i;
     int ret = 0;
 
+    /* An empty queue: size 0 and popping from it yields nothing. */
     if (!TEST_ptr(queue)
         || !TEST_size_t_eq(pqueue_size(queue), 0)
         || !TEST_ptr_null(pqueue_pop(queue))
         || !TEST_size_t_eq(pqueue_size(queue), 0))
         goto end;
 
+    /*
+     * Inserting items succeeds, returns the item back, and grows the size
+     * by exactly one each time (regardless of the priority's value).
+     */
     for (i = 0; i < OSSL_NELEM(priorities); i++) {
         if (!TEST_ptr(items[i] = pitem_new_u64(priorities[i], NULL))
             || !TEST_ptr_eq(pqueue_insert(queue, items[i]), items[i])
@@ -45,11 +50,20 @@ static int test_pqueue_size(int idx)
             goto end;
     }
 
+    /*
+     * A second item with an already-present priority is rejected:
+     * pqueue_insert() returns NULL and the size is unchanged.
+     */
     if (!TEST_ptr(duplicate = pitem_new_u64(2, NULL))
         || !TEST_ptr_null(pqueue_insert(queue, duplicate))
         || !TEST_size_t_eq(pqueue_size(queue), OSSL_NELEM(priorities)))
         goto end;
 
+    /*
+     * Peek then pop, in ascending priority order. peek() must not remove
+     * anything (size drops only after pop()), and popping must shrink the
+     * size by exactly one.
+     */
     for (i = 0; i < OSSL_NELEM(order); i++) {
         if (!TEST_ptr_eq(pqueue_peek(queue), items[order[i]])
             || !TEST_size_t_eq(pqueue_size(queue), OSSL_NELEM(order) - i)
@@ -66,12 +80,14 @@ static int test_pqueue_size(int idx)
             goto end;
     }
 
+    /* Popping an already-empty queue is still a harmless NULL/no-op. */
     for (i = 0; i < 2; i++) {
         if (!TEST_ptr_null(pqueue_pop(queue))
             || !TEST_size_t_eq(pqueue_size(queue), 0))
             goto end;
     }
 
+    /* The now-empty queue is still usable: insert and pop once more. */
     if (!TEST_ptr_eq(pqueue_insert(queue, items[0]), items[0])
         || !TEST_size_t_eq(pqueue_size(queue), 1)
         || !TEST_ptr_eq(pqueue_pop(queue), items[0])
