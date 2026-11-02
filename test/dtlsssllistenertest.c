@@ -6322,7 +6322,7 @@ static int test_dtls_poll_nested_in_pending_cb(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL, *client = NULL, *server = NULL, *newclient = NULL;
     BIO_ADDR *addr = NULL;
-    SSL_POLL_ITEM items[2] = { { 0 } };
+    SSL_POLL_ITEM items[2] = { 0 };
     struct timeval timeout = { 0, 100000 };
     struct nested_poll_cb_data data = { 0 };
     struct poll_watchdog watchdog = { 0 };
