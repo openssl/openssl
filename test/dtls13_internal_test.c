@@ -4658,9 +4658,8 @@ static int test_dtls13_server_keyupdate_preserves_ack(void)
      * acknowledgment of the server's own KeyUpdate -- sent by the client
      * back in the previous step, at the client's own still-current epoch,
      * and only decryptable here because the server retains its previous
-     * read epoch's keys (see the retained-previous-read-epoch fix this PR
-     * is stacked on: it lets an old-epoch ACK that arrives after the read
-     * epoch has already moved on still authenticate, rather than being
+     * read epoch's keys (which lets an old-epoch ACK that arrives after the
+     * read epoch has already moved on still authenticate, rather than being
      * silently dropped). That completes the server's own KeyUpdate too:
      * both sides are now fully resolved, with no deadlock, in just this
      * one call.
@@ -5102,10 +5101,11 @@ static int test_dtls13_server_keyupdate_pha_ticket_waits_for_earlier_ack(void)
      * The server processes the recovered Certificate + Finished. This
      * implicitly retires the CertificateRequest (RFC 9147 7.2), leaving
      * only the still-dropped initial ticket outstanding. The KeyUpdate is
-     * already acknowledged at this point, so the bug sees nothing left to
-     * wait for and issues the reissued ticket quota immediately, under the
-     * old epoch -- the write-key install must instead stay withheld, and
-     * nothing new may be sent to the client yet.
+     * already acknowledged at this point, so retiring the CertificateRequest
+     * must not be mistaken for "nothing left to wait for": issuing the
+     * reissued ticket quota now would send it under the old epoch. The
+     * write-key install must stay withheld while the initial ticket is
+     * outstanding, and nothing new may be sent to the client yet.
      */
     ret = SSL_read(server, buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
@@ -6519,10 +6519,8 @@ static int test_dtls13_pha_ack_stops_timer(void)
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
         /*
          * A fully-ACKed entry isn't swept out of sent_messages until
-         * something calls dtls1_clear_sent_buffer() -- which, absent the
-         * fix below, doesn't happen here. Check acknowledgment directly
-         * rather than via pqueue_size(), so this isn't itself entangled
-         * with the fix under test.
+         * something calls dtls1_clear_sent_buffer(), so check
+         * acknowledgment directly rather than via pqueue_size().
          */
         || !TEST_false(dtls_any_sent_messages_are_missing_acknowledge(sc))
         || !TEST_int_eq(sc->statem.hand_state, TLS_ST_SR_CERT))
@@ -7839,7 +7837,7 @@ end:
 
 /*
  * Combines two mechanisms that have only ever been tested separately: the
- * simultaneous-bidirectional-KeyUpdate deadlock fix (see
+ * simultaneous-bidirectional-KeyUpdate deadlock avoidance (see
  * test_dtls13_server_keyupdate_preserves_ack) and application data racing a
  * KeyUpdate's resolution (see
  * test_dtls13_reciprocal_keyupdate_app_data_classification). Both sides
@@ -8102,8 +8100,7 @@ end:
  * reading, having just received a ticket, with application data the server
  * sent right behind it. Same dtls1_read_bytes() buffering path as
  * test_dtls13_reciprocal_keyupdate_app_data_classification, exercised here
- * for a ticket instead of a KeyUpdate -- this is the scenario the withdrawn
- * fragmentation-based attempt at this was actually trying to reach.
+ * for a ticket instead of a KeyUpdate.
  */
 static int test_dtls13_ticket_app_data_classification(void)
 {
