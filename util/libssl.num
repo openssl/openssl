@@ -103,7 +103,7 @@ BIO_f_ssl                               102	4_0_0	EXIST::FUNCTION:
 BIO_new_ssl                             103	4_0_0	EXIST::FUNCTION:
 BIO_new_ssl_connect                     104	4_0_0	EXIST::FUNCTION:
 BIO_new_buffer_ssl_connect              105	4_0_0	EXIST::FUNCTION:
-BIO_ssl_copy_session_id                 106	4_0_0	EXIST::FUNCTION:
+BIO_ssl_copy_session_id                 106	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_2
 BIO_ssl_shutdown                        107	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_cipher_list                 108	4_0_0	EXIST::FUNCTION:
 SSL_CTX_new                             109	4_0_0	EXIST::FUNCTION:
@@ -204,7 +204,7 @@ SSL_SESSION_get_ticket_lifetime_hint    203	4_0_0	EXIST::FUNCTION:
 SSL_SESSION_get0_ticket                 204	4_0_0	EXIST::FUNCTION:
 SSL_SESSION_get_max_early_data          205	4_0_0	EXIST::FUNCTION:
 SSL_SESSION_set_max_early_data          206	4_0_0	EXIST::FUNCTION:
-SSL_copy_session_id                     207	4_0_0	EXIST::FUNCTION:
+SSL_copy_session_id                     207	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_2
 SSL_SESSION_get0_peer                   208	4_0_0	EXIST::FUNCTION:
 SSL_SESSION_set1_id_context             209	4_0_0	EXIST::FUNCTION:
 SSL_SESSION_set1_id                     210	4_0_0	EXIST::FUNCTION:

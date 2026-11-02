@@ -1609,7 +1609,13 @@ __owur const BIO_METHOD *BIO_f_ssl(void);
 __owur BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
 __owur BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
 __owur BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
-__owur int BIO_ssl_copy_session_id(BIO *to, BIO *from);
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+/**
+ * @brief Copy the session and configuration between SSL BIO chains.
+ * @see BIO_ssl_copy_session_id(3)
+ */
+OSSL_DEPRECATEDIN_4_2 __owur int BIO_ssl_copy_session_id(BIO *to, BIO *from);
+#endif
 void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
@@ -1773,7 +1779,13 @@ void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
 __owur uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s);
 __owur int SSL_SESSION_set_max_early_data(SSL_SESSION *s,
     uint32_t max_early_data);
-__owur int SSL_copy_session_id(SSL *to, const SSL *from);
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+/**
+ * @brief Copy the session and configuration of one SSL object to another.
+ * @see SSL_copy_session_id(3)
+ */
+OSSL_DEPRECATEDIN_4_2 __owur int SSL_copy_session_id(SSL *to, const SSL *from);
+#endif
 __owur X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
 __owur int SSL_SESSION_set1_id_context(SSL_SESSION *s,
     const unsigned char *sid_ctx,

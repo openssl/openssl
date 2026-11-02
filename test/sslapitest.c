@@ -15347,6 +15347,7 @@ end:
 }
 #endif /* OPENSSL_NO_TLS1_2 */
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 /*
  * SSL_copy_session_id() makes |t| share |f|'s CERT, but |t| keeps its own
  * SSL_CTX. It must refuse a CERT sized for a different number of provider
@@ -15388,6 +15389,7 @@ end:
 
     return testresult;
 }
+#endif
 
 /*
  * The ClientHello raw extension array is sized when the ClientHello is
@@ -19787,7 +19789,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sigalg_ctx_switch, 4);
     ADD_ALL_TESTS(test_ctx_switch_more_custom_exts, 2);
     ADD_ALL_TESTS(test_sigalg_ctx_switch_cert_cb, 2);
+#ifndef OPENSSL_NO_DEPRECATED_4_2
     ADD_TEST(test_copy_session_id_ctx_mismatch);
+#endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_sigalg_ctx_switch_reneg);
 #endif

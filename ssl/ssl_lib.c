@@ -2213,7 +2213,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
  * Now in theory, since the calling process own 't' it should be safe to
  * modify.  We need to be able to read f without being hassled
  */
-int SSL_copy_session_id(SSL *t, const SSL *f)
+int ossl_ssl_copy_session_id(SSL *t, const SSL *f)
 {
     int i;
     /* TODO(QUIC FUTURE): Not allowed for QUIC currently. */
@@ -2258,6 +2258,13 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
 
     return 1;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+int SSL_copy_session_id(SSL *t, const SSL *f)
+{
+    return ossl_ssl_copy_session_id(t, f);
+}
+#endif
 
 /* Fix this so it checks all the valid key/cert options */
 int SSL_CTX_check_private_key(const SSL_CTX *ctx)
@@ -5730,7 +5737,7 @@ SSL *SSL_dup(SSL *s)
          * Arranges to share the same session via up_ref.  This "copies"
          * session-id, SSL_METHOD, sid_ctx, and 'cert'
          */
-        if (!SSL_copy_session_id(ret, s))
+        if (!ossl_ssl_copy_session_id(ret, s))
             goto err;
     } else {
         /*

@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Deprecated `SSL_copy_session_id()` and `BIO_ssl_copy_session_id()`.
+   Use `SSL_set_session()` to resume a session on a new connection, or
+   `SSL_dup()` to copy an SSL object.
+
+   *Matt Caswell*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
