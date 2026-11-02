@@ -244,21 +244,35 @@ void ossl_dgram_demux_reinject_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e);
 
 int ossl_dgram_demux_pump(DGRAM_DEMUX *demux);
 
-/*
- * Enable permanent failure retention before the first pump. Once failed,
- * subsequent pumps report the saved error without receiving more datagrams.
- * Replacing the BIO does not clear the failure.
+/**
+ * @brief Retain a permanent receive failure.
+ *
+ * Must be called before the first pump. Once the demux has failed, subsequent
+ * pumps report the saved error without receiving more datagrams. Replacing the
+ * BIO does not clear the failure.
+ *
+ * @param demux the demux to configure
  */
 void ossl_dgram_demux_set_retain_errors(DGRAM_DEMUX *demux);
 
-/*
- * Treat receive errors which concern a single peer, such as an ICMP error
- * answering a datagram sent to it, as transient instead of permanent. The
- * demux is shared by every peer, so such an error must not stop the others.
+/**
+ * @brief Treat receive errors which concern a single peer as transient.
+ *
+ * An example is an ICMP error answering a datagram sent to a peer which is no
+ * longer reachable. Such an error is cleared and the receive retried later,
+ * instead of being treated as a permanent failure. The demux is shared by every
+ * peer, so such an error must not stop the others.
+ *
+ * @param demux the demux to configure
  */
 void ossl_dgram_demux_set_peer_errors_transient(DGRAM_DEMUX *demux);
 
-/* Return the retained error, or zero if no permanent failure was retained. */
+/**
+ * @brief Return the retained permanent error.
+ *
+ * @param demux the demux to query
+ * @returns the retained error, or zero if no permanent failure was retained
+ */
 unsigned long ossl_dgram_demux_get_error(DGRAM_DEMUX *demux);
 
 /*
