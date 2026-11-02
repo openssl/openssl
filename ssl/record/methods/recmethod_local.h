@@ -555,6 +555,17 @@ void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl);
 int tls_release_read_buffer(OSSL_RECORD_LAYER *rl);
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+/**
+ * @brief Hand off unread wire bytes when a URXE-backed layer stops being active.
+ *
+ * Writes the unread remainder of the held datagram to the layer's next BIO,
+ * then returns the datagram to its owner. The datagram is released even if
+ * the write fails.
+ *
+ * @param rl the record layer
+ * @returns 1 on success or if no datagram was held, 0 if the remainder could
+ *          not be written
+ */
 int tls_forward_urxe_remainder(OSSL_RECORD_LAYER *rl);
 #endif
 int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
