@@ -2086,6 +2086,15 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
     if (tsc == NULL || fsc == NULL)
         return 0;
 
+    /*
+     * |t| keeps its own SSL_CTX, whose provider sigalgs index the CERT's
+     * pkeys, so it cannot share a CERT sized for a different set of them.
+     */
+    if (tsc->ssl_pkey_num != fsc->cert->ssl_pkey_num) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
     /* Do we need to do SSL locking? */
     if (!SSL_set_session(t, SSL_get_session(f))) {
         return 0;

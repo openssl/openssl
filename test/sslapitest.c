@@ -11999,6 +11999,48 @@ end:
 #endif /* OPENSSL_NO_TLS1_2 */
 
 /*
+ * SSL_copy_session_id() makes |t| share |f|'s CERT, but |t| keeps its own
+ * SSL_CTX. It must refuse a CERT sized for a different number of provider
+ * sigalgs, and leave |t| unchanged when it does.
+ */
+static int test_copy_session_id_ctx_mismatch(void)
+{
+    OSSL_PROVIDER *tlsprov = NULL;
+    SSL_CTX *sctx = NULL, *newsctx = NULL, *cctx = NULL;
+    SSL *from = NULL, *same = NULL, *to = NULL;
+    SSL_CONNECTION *tosc;
+    CERT *tocert;
+    int testresult = 0;
+
+    if (!sigalg_ctx_switch_setup(&tlsprov, 0, &sctx, &newsctx, &cctx))
+        goto end;
+
+    if (!TEST_ptr(from = SSL_new(sctx))
+        || !TEST_ptr(same = SSL_new(sctx))
+        || !TEST_ptr(to = SSL_new(newsctx))
+        || !TEST_ptr(tosc = SSL_CONNECTION_FROM_SSL_ONLY(to)))
+        goto end;
+    tocert = tosc->cert;
+
+    if (!TEST_false(SSL_copy_session_id(to, from))
+        || !TEST_ptr_eq(tosc->cert, tocert)
+        || !TEST_true(SSL_copy_session_id(same, from)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(from);
+    SSL_free(same);
+    SSL_free(to);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(newsctx);
+    SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(tlsprov);
+
+    return testresult;
+}
+
+/*
  * The ClientHello raw extension array is sized when the ClientHello is
  * collected. Switching to an SSL_CTX with more custom extensions from the
  * ClientHello callback must not make the later parse walk past its end, and
@@ -15965,6 +16007,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sigalg_ctx_switch, 4);
     ADD_ALL_TESTS(test_ctx_switch_more_custom_exts, 2);
     ADD_ALL_TESTS(test_sigalg_ctx_switch_cert_cb, 2);
+    ADD_TEST(test_copy_session_id_ctx_mismatch);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_sigalg_ctx_switch_reneg);
 #endif
