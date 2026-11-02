@@ -98,7 +98,31 @@ typedef struct func_ctx_st {
      * Immediately exit script successfully. Useful for skipping.
      */
     int skip_rest;
+
+    /*
+     * tell terp (test radix process) that unit tests expects timeout.
+     */
+    int expect_timeout;
+
+    /*
+     * tell unit test the timeout has expired.
+     */
+    int timeout_expired;
+    OSSL_TIME deadline_time;
 } FUNC_CTX;
+
+static OSSL_TIME TERP_now(TERP *terp);
+static int timeout_expired(FUNC_CTX *fctx, uint64_t secs)
+{
+    if (fctx->expect_timeout == 0) {
+        fctx->expect_timeout = 1;
+        fctx->deadline_time = ossl_time_add(TERP_now(fctx->terp),
+            ossl_ticks2time(OSSL_TIME_SECOND * secs));
+    }
+    return fctx->timeout_expired;
+}
+
+#define F_TIMEOUT_EXPIRED(timeout_secs) timeout_expired(fctx, timeout_secs)
 
 static ossl_inline int TERP_stk_pop(TERP *terp,
     void *buf, size_t buf_len);
@@ -691,7 +715,18 @@ static int TERP_execute(TERP *terp)
         ++terp->ops_executed;
 
     spin_again:
-        if (ossl_time_compare(TERP_now(terp), terp->deadline_time) >= 0) {
+        /*
+         * expect timeout comes with its own deadline. default deadline for
+         * radix operation to complete is 3 secs. However some operations (for
+         * example connect) is driven by protocol timeout which is 30 seconds.
+         * waiting for connection timeout just to confirm the test is successful
+         * makes tests to run lot longer. Here we allow test scripts to
+         * short circuit connection time out by shorter period.
+         */
+        if (terp->fctx.expect_timeout) {
+            if (ossl_time_compare(TERP_now(terp), terp->fctx.deadline_time) >= 0)
+                terp->fctx.timeout_expired = 1;
+        } else if (ossl_time_compare(TERP_now(terp), terp->deadline_time) >= 0) {
             TEST_error("timed out while executing op %zu", op_num);
             if (terp->log_execute)
                 TERP_log_spin(terp, spin_count);
@@ -803,7 +838,7 @@ err:
 static int TERP_run(SCRIPT_INFO *script_info, TERP_CONFIG *cfg)
 {
     int ok = 0, have_terp = 0;
-    TERP terp;
+    TERP terp = { 0 };
     GEN_SCRIPT gen_script = { 0 };
     BIO *debug_bio = cfg->debug_bio;
 

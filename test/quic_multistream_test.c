@@ -4977,53 +4977,6 @@ static int generate_version_neg(WPACKET *wpkt, uint32_t version)
     return 1;
 }
 
-static int server_gen_version_neg(struct helper *h, BIO_MSG *msg, size_t stride)
-{
-    int rc = 0, have_wpkt = 0;
-    size_t l;
-    WPACKET wpkt;
-    BUF_MEM *buf = NULL;
-    uint32_t version;
-
-    switch (h->inject_word0) {
-    case 0:
-        return 1;
-    case 1:
-        version = QUIC_VERSION_1;
-        break;
-    default:
-        version = 0x5432abcd;
-        break;
-    }
-
-    if (!TEST_ptr(buf = BUF_MEM_new()))
-        goto err;
-
-    if (!TEST_true(WPACKET_init(&wpkt, buf)))
-        goto err;
-
-    have_wpkt = 1;
-
-    generate_version_neg(&wpkt, version);
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &l)))
-        goto err;
-
-    if (!TEST_true(qtest_fault_resize_datagram(h->qtf, l)))
-        goto err;
-
-    memcpy(msg->data, buf->data, l);
-    h->inject_word0 = 0;
-
-    rc = 1;
-err:
-    if (have_wpkt && !WPACKET_finish(&wpkt))
-        WPACKET_cleanup(&wpkt);
-
-    BUF_MEM_free(buf);
-    return rc;
-}
-
 static int do_mutation = 0;
 static QUIC_PKT_HDR *hdr_to_free = NULL;
 
