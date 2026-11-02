@@ -2462,6 +2462,9 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         if (ch->qrx_pkt->hdr->version != 0)
             return;
 
+        if (!ossl_quic_conn_id_eq(&ch->qrx_pkt->hdr->src_conn_id, &ch->init_dcid))
+            return;
+
         /*
          * RFC 9000 s. 6.2: If a client receives a version negotiation
          * packet, we need to do the following:
