@@ -526,9 +526,41 @@ void dtls1_start_timer(SSL_CONNECTION *s)
     dtls1_bio_set_next_timeout(SSL_get_rbio(ssl), s->d1);
 }
 
+/* The listener's retained fatal receive error, or 0 if none has occurred. */
+static unsigned long dtls1_shared_error(const SSL_CONNECTION *s)
+{
+#ifndef OPENSSL_NO_SOCK
+    if (s->d1 != NULL && s->d1->listener != NULL && s->d1->rx != NULL)
+        return ossl_dgram_demux_get_error(s->d1->rx->demux);
+#endif
+    return 0;
+}
+
+/*
+ * If the listener has retained a fatal receive error, make it fatal for this
+ * connection too: raise the shared diagnostic and enter the error state.
+ * Returns the retained error, or 0 if the transport has not failed.
+ */
+unsigned long ossl_dtls_conn_apply_shared_failure(SSL_CONNECTION *s)
+{
+    unsigned long error = dtls1_shared_error(s);
+
+    if (error != 0) {
+        ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
+        ossl_statem_send_fatal(s, SSL_AD_NO_ALERT);
+        s->rwstate = SSL_NOTHING;
+    }
+
+    return error;
+}
+
 int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft)
 {
     OSSL_TIME timenow;
+
+    /* A failed shared transport leaves nothing to wait for */
+    if (dtls1_shared_error(s) != 0)
+        return 0;
 
     /* If no timeout is set, just return NULL */
     if (ossl_time_is_zero(s->d1->next_timeout))
@@ -608,6 +640,12 @@ int dtls1_check_timeout_num(SSL_CONNECTION *s)
 
 int dtls1_handle_timeout(SSL_CONNECTION *s)
 {
+    /* A failed shared transport can neither retransmit nor be waited on. */
+    if (ossl_dtls_conn_apply_shared_failure(s) != 0) {
+        dtls1_stop_timer(s);
+        return -1;
+    }
+
     /* if no timer is expired, don't do anything */
     if (!dtls1_is_timer_expired(s)) {
         return 0;
@@ -1913,6 +1951,7 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     }
 
     ossl_dgram_demux_set_retain_errors(dl->demux);
+    ossl_dgram_demux_set_peer_errors_transient(dl->demux);
     ossl_dgram_demux_set_max_free_urxe(dl->demux, DEMUX_MAX_FREE_URXE);
 
     /* Set up the packet handler callback for routing datagrams to connections */
@@ -3485,8 +3524,16 @@ int ossl_dtls_listener_deregister_blocking_section(SSL *s, uint64_t *generation)
     return need_wait;
 }
 
-/* All registrations owned by the caller must be released before this wait. */
-void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation)
+/*
+ * All registrations owned by the caller must be released before this wait.
+ *
+ * The notifier is cleared by the last registration to be released, which may
+ * belong to a caller further up this thread's stack. That release cannot
+ * happen while this thread is waiting, so the wait gives up at the caller's
+ * deadline.
+ */
+void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation,
+    OSSL_TIME deadline)
 {
     DTLS_LISTENER *dl;
 
@@ -3496,8 +3543,10 @@ void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation)
     dl = (DTLS_LISTENER *)s;
     if (dl->have_notifier) {
         ossl_crypto_mutex_lock(dl->mutex);
-        while (dl->signalled_notifier && dl->notify_generation == generation)
-            ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
+        while (dl->signalled_notifier && dl->notify_generation == generation
+            && ossl_time_compare(ossl_time_now(), deadline) < 0)
+            ossl_crypto_condvar_wait_timeout(dl->notifier_cv, dl->mutex,
+                deadline);
         ossl_crypto_mutex_unlock(dl->mutex);
     }
 }
@@ -3508,7 +3557,8 @@ void ossl_dtls_listener_leave_blocking_section(SSL *s)
     uint64_t generation;
 
     if (ossl_dtls_listener_deregister_blocking_section(s, &generation))
-        ossl_dtls_listener_wait_for_notifier_clear(s, generation);
+        ossl_dtls_listener_wait_for_notifier_clear(s, generation,
+            ossl_time_infinite());
 }
 
 /* Read shared failure state without changing a connection or its error queue. */

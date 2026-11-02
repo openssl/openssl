@@ -67,6 +67,9 @@ struct dgram_demux_st {
     char retain_errors;
     unsigned long permanent_error;
 
+    /* Whether errors concerning a single peer are treated as transient. */
+    char peer_errors_transient;
+
     /* Maximum URXEs cached on urx_free; 0 means unbounded. */
     size_t max_free_urxe;
 
@@ -301,6 +304,36 @@ static int dgram_demux_ensure_free_urxe(DGRAM_DEMUX *demux, size_t min_num_free)
 }
 
 /*
+ * Some errors reported by a datagram socket concern a single peer, not the
+ * socket: an ICMP error answering an earlier datagram we sent to that peer is
+ * queued on the shared socket and surfaced by a later receive. The socket
+ * remains usable, and the datagrams of every other peer are still waiting on
+ * it, so such an error must not be treated as a failure of the transport.
+ */
+static int dgram_demux_err_is_peer_scoped(unsigned long errcode)
+{
+    int err;
+
+    if (!ERR_SYSTEM_ERROR(errcode))
+        return 0;
+
+    err = ERR_GET_REASON(errcode);
+#if defined(OPENSSL_SYS_WINDOWS)
+    return err == WSAECONNRESET
+        || err == WSAENETRESET
+        || err == WSAECONNREFUSED
+        || err == WSAEHOSTUNREACH
+        || err == WSAENETUNREACH;
+#else
+    return err == ECONNREFUSED
+        || err == ECONNRESET
+        || err == EHOSTUNREACH
+        || err == ENETUNREACH
+        || err == EMSGSIZE;
+#endif
+}
+
+/*
  * Receive datagrams from network, placing them into URXEs.
  *
  * Returns DGRAM_DEMUX_PUMP_RES_* value.
@@ -360,7 +393,9 @@ static int dgram_demux_recv(DGRAM_DEMUX *demux)
 
     ERR_set_mark();
     if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd)) {
-        if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
+        if (BIO_err_is_non_fatal(ERR_peek_last_error())
+            || (demux->peer_errors_transient
+                && dgram_demux_err_is_peer_scoped(ERR_peek_last_error()))) {
             /* Transient error, clear the error and stop. */
             ERR_pop_to_mark();
             return DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL;
@@ -453,6 +488,15 @@ void ossl_dgram_demux_set_retain_errors(DGRAM_DEMUX *demux)
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
     demux->retain_errors = 1;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+}
+
+void ossl_dgram_demux_set_peer_errors_transient(DGRAM_DEMUX *demux)
+{
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    demux->peer_errors_transient = 1;
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
 }

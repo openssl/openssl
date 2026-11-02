@@ -251,6 +251,13 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux);
  */
 void ossl_dgram_demux_set_retain_errors(DGRAM_DEMUX *demux);
 
+/*
+ * Treat receive errors which concern a single peer, such as an ICMP error
+ * answering a datagram sent to it, as transient instead of permanent. The
+ * demux is shared by every peer, so such an error must not stop the others.
+ */
+void ossl_dgram_demux_set_peer_errors_transient(DGRAM_DEMUX *demux);
+
 /* Return the retained error, or zero if no permanent failure was retained. */
 unsigned long ossl_dgram_demux_get_error(DGRAM_DEMUX *demux);
 

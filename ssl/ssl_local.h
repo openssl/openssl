@@ -3183,6 +3183,7 @@ void ossl_dtls_listener_set_fatal(DTLS_LISTENER *dl);
 
 /* DTLS poll event functions - used by SSL_poll() */
 int ossl_dtls_listener_has_failed(DTLS_LISTENER *dl);
+unsigned long ossl_dtls_conn_apply_shared_failure(SSL_CONNECTION *s);
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
@@ -3191,7 +3192,8 @@ void ossl_dtls_listener_enter_blocking_section(SSL *s);
 void ossl_dtls_listener_leave_blocking_section(SSL *s);
 /* Deregister without waiting, then wait only for the recorded signal cycle. */
 int ossl_dtls_listener_deregister_blocking_section(SSL *s, uint64_t *generation);
-void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation);
+void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation,
+    OSSL_TIME deadline);
 int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
     int bound_by_event_timeout);
 int ossl_dtls_blocking(const SSL *s);

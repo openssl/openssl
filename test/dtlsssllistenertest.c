@@ -5587,7 +5587,9 @@ static int test_dtls_poll_notification_generation(void)
     ossl_dtls_listener_enter_blocking_section(listener);
     if (!poll_signal_listener(listener))
         goto end;
-    ossl_dtls_listener_wait_for_notifier_clear(listener, generation);
+
+    ossl_dtls_listener_wait_for_notifier_clear(listener, generation,
+        ossl_time_infinite());
     if (!TEST_true(dl->signalled_notifier)
         || !TEST_size_t_eq(dl->cur_blocking_waiters, 1))
         goto end;
@@ -6280,6 +6282,196 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
     TEST_error("cookie exchange loop did not converge");
     return 0;
 }
+
+#if defined(OPENSSL_THREADS)
+struct nested_poll_cb_data {
+    SSL *conn;
+    int entered;
+    int returned;
+};
+
+/*
+ * Poll the already-established connection from inside the pending connection
+ * callback, while the outer SSL_poll() still holds its listener registration.
+ */
+static int nested_poll_pending_cb(SSL_CTX *ctx, SSL *newssl, void *arg)
+{
+    struct nested_poll_cb_data *data = arg;
+    SSL_POLL_ITEM item = { 0 };
+    struct timeval timeout = { 0, 10000 };
+    size_t count = 0;
+
+    data->entered++;
+    item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    item.desc.value.ssl = data->conn;
+    item.events = SSL_POLL_EVENT_EC;
+    if (SSL_poll(&item, 1, sizeof(item), &timeout,
+            SSL_POLL_FLAG_NO_HANDLE_EVENTS, &count))
+        data->returned++;
+    return 0; /* Veto the unrelated incoming connection. */
+}
+
+/*
+ * A pending connection callback may itself call SSL_poll() on a connection of
+ * the same listener. The outer poll holds a registration on the listener's
+ * notifier, so the nested poll's cleanup must not wait for that registration
+ * to be released.
+ */
+static int test_dtls_poll_nested_in_pending_cb(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client = NULL, *server = NULL, *newclient = NULL;
+    BIO_ADDR *addr = NULL;
+    SSL_POLL_ITEM items[2] = { { 0 } };
+    struct timeval timeout = { 0, 100000 };
+    struct nested_poll_cb_data data = { 0 };
+    struct poll_watchdog watchdog = { 0 };
+    CRYPTO_THREAD *thread = NULL;
+    int sfd = -1, cfd = -1, nfd = -1, ok = 0, ret, i;
+    size_t written = 0, count = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey))
+        || !TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_NO_VALIDATE,
+            &listener, &addr, &sfd))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !TEST_true(create_dtls_client_for_addr(cctx, addr, &client, &cfd))
+        || !TEST_true(drive_until_connection_queued(listener, client))
+        || !TEST_ptr(server = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+        goto end;
+
+    data.conn = server;
+    SSL_CTX_set_new_pending_conn_cb(sctx, nested_poll_pending_cb, &data);
+
+    /* The first received datagram signals any already-registered waiters. */
+    if (!TEST_true(SSL_write_ex(client, "x", 1, &written))
+        || !TEST_true(create_dtls_client_for_addr(cctx, addr, &newclient, &nfd)))
+        goto end;
+    /* Queues a ClientHello, provoking the callback during translation. */
+    ret = SSL_connect(newclient);
+    if (!TEST_int_eq(SSL_get_error(newclient, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* The same connection twice: EC registers the listener, R then ticks it. */
+    for (i = 0; i < 2; i++) {
+        items[i].desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        items[i].desc.value.ssl = server;
+    }
+    items[0].events = SSL_POLL_EVENT_EC;
+    items[1].events = SSL_POLL_EVENT_R;
+
+    if (!TEST_ptr(thread = poll_watchdog_start(&watchdog)))
+        goto end;
+    ok = TEST_true(SSL_poll(items, 2, sizeof(items[0]), &timeout,
+             SSL_POLL_FLAG_NO_HANDLE_EVENTS, &count))
+        && TEST_int_eq(data.entered, 1)
+        && TEST_int_eq(data.returned, 1);
+end:
+    poll_watchdog_stop(&watchdog, thread);
+    SSL_free(newclient);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_free(listener);
+    BIO_ADDR_free(addr);
+    if (nfd >= 0)
+        BIO_closesocket(nfd);
+    if (cfd >= 0)
+        BIO_closesocket(cfd);
+    if (sfd >= 0)
+        BIO_closesocket(sfd);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return ok;
+}
+#endif
+
+#if defined(__linux__) && defined(IP_RECVERR)
+/*
+ * An ICMP error concerning one peer, reported on the listener's shared socket
+ * (Linux IP_RECVERR), must not affect other connections of the listener.
+ *
+ * Two connections are established on one listener. The first peer's socket is
+ * closed and a datagram is sent to it, so the kernel queues an ECONNREFUSED
+ * for the shared socket. A read on the unrelated second connection then
+ * encounters that error, but the socket itself still works: the second
+ * connection must go on to receive its peer's application data.
+ *
+ * idx 0 leaves IP_RECVERR disabled as a control: the kernel reports no error
+ * at all. idx 1 enables it.
+ */
+static int test_dtls_listener_peer_udp_error_scope(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client[2] = { NULL, NULL };
+    SSL *server[2] = { NULL, NULL };
+    BIO_ADDR *addr = NULL;
+    int sfd = -1, cfd[2] = { -1, -1 }, one = 1, ok = 0, ret;
+    size_t i, n = 0;
+    char buf[256];
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey))
+        || !TEST_true(create_udp_listener(sctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &addr, &sfd))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0)))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(client); i++)
+        if (!TEST_true(create_dtls_client_for_addr(cctx, addr, &client[i], &cfd[i]))
+            || !TEST_true(drive_until_connection_queued(listener, client[i]))
+            || !TEST_ptr(server[i] = SSL_accept_connection(listener,
+                             SSL_ACCEPT_CONNECTION_NO_BLOCK))
+            || !TEST_true(create_ssl_connection(server[i], client[i],
+                SSL_ERROR_NONE)))
+            goto end;
+
+    if (idx == 1
+        && !TEST_int_eq(setsockopt(sfd, SOL_IP, IP_RECVERR, &one, sizeof(one)), 0))
+        goto end;
+
+    /* Close the first peer and write to it, provoking an ICMP port unreachable. */
+    BIO_closesocket(cfd[0]);
+    cfd[0] = -1;
+    if (!TEST_true(SSL_write_ex(server[0], "to-closed-peer", 14, &n)))
+        goto end;
+
+    OSSL_sleep(20);
+
+    /* The second connection may see the first peer's error or nothing yet. */
+    ERR_set_mark();
+    ret = SSL_read_ex(server[1], buf, sizeof(buf), &n);
+    ERR_pop_to_mark();
+    if (!TEST_false(ret))
+        goto end;
+
+    /* The shared socket is still usable for the second connection's peer. */
+    if (!TEST_true(SSL_write_ex(client[1], "still healthy", 13, &n)))
+        goto end;
+
+    OSSL_sleep(10);
+    ok = TEST_true(dtls_read_with_retry(server[1], buf, sizeof(buf), &n))
+        && TEST_mem_eq(buf, n, "still healthy", 13);
+end:
+    for (i = 0; i < OSSL_NELEM(client); i++) {
+        SSL_free(server[i]);
+        SSL_free(client[i]);
+        if (cfd[i] >= 0)
+            BIO_closesocket(cfd[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(addr);
+    if (sfd >= 0)
+        BIO_closesocket(sfd);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return ok;
+}
+#endif
 
 #ifndef OPENSSL_NO_DTLS1_2
 static CRYPTO_malloc_fn ssl_clear_malloc;
@@ -8104,6 +8296,143 @@ end:
     return testresult;
 }
 
+static unsigned int short_retransmit_timer_cb(SSL *ssl, unsigned int old)
+{
+    return 200000;
+}
+
+static int short_retransmit_timer_pending_cb(SSL_CTX *ctx, SSL *newssl, void *arg)
+{
+    DTLS_set_timer_cb(newssl, short_retransmit_timer_cb);
+    return 1;
+}
+
+/*
+ * After the listener has retained a fatal receive error, a connection whose
+ * handshake flight is still waiting for retransmission must not send it
+ * again, whether the application drives the timer with SSL_handle_events() or
+ * DTLSv1_handle_timeout(), and the timer queries must report no pending
+ * timeout. The connection itself has not observed the failure: another call
+ * on the listener discovered it.
+ *
+ * idx 0 drives the timer with SSL_handle_events(), idx 1 with
+ * DTLSv1_handle_timeout().
+ */
+static int test_dtls_listener_failure_stops_timer(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO_METHOD *method = NULL;
+    BIO *filter = NULL, *sockbio, *send_filter = NULL;
+    struct failing_recv_data recv_data = { 0 };
+    struct failing_send_data send_data = { 0 };
+    struct timeval tv;
+    int server_fd = -1, client_fd = -1, is_infinite = 0;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey)))
+        goto end;
+
+    SSL_CTX_set_new_pending_conn_cb(sctx, short_retransmit_timer_pending_cb, NULL);
+
+    if (!TEST_true(create_udp_listener(sctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !TEST_true(create_dtls_client_for_addr(cctx, server_addr, &clientssl,
+            &client_fd))
+        || !TEST_true(drive_until_connection_queued(listener, clientssl))
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    /* The handshake has not finished, so a flight is waiting for its timer. */
+    if (!TEST_true(SSL_get_event_timeout(serverssl, &tv, &is_infinite))
+        || !TEST_false(is_infinite))
+        goto end;
+
+    /* Count the datagrams the listener sends, without rejecting any. */
+    if (!TEST_ptr(sockbio = SSL_get_wbio(listener))
+        || !TEST_ptr(send_filter = BIO_new(bio_f_failing_send_filter()))
+        || !TEST_true(BIO_up_ref(sockbio))) {
+        BIO_free(send_filter);
+        goto end;
+    }
+
+    BIO_set_data(send_filter, &send_data);
+    BIO_set_init(send_filter, 1);
+    BIO_push(send_filter, sockbio);
+    SSL_set0_wbio(listener, send_filter);
+
+    /* Make every later receive on the listener fail permanently. */
+    if (!TEST_ptr(method = BIO_meth_new(0x84 | BIO_TYPE_FILTER,
+                      "Failing datagram receive filter"))
+        || !TEST_true(BIO_meth_set_ctrl(method, failing_recv_ctrl))
+        || !TEST_true(BIO_meth_set_recvmmsg(method, failing_recv_recvmmsg))
+        || !TEST_ptr(filter = BIO_new(method)))
+        goto end;
+
+    BIO_set_data(filter, &recv_data);
+    BIO_set_init(filter, 1);
+    if (!TEST_ptr(sockbio = SSL_get_rbio(listener))
+        || !TEST_true(BIO_up_ref(sockbio)))
+        goto end;
+
+    BIO_push(filter, sockbio);
+    SSL_set0_rbio(listener, filter);
+    filter = NULL;
+
+    /* Another call on the listener discovers the failure. */
+    ERR_clear_error();
+    if (!TEST_ptr_null(SSL_accept_connection(listener,
+            SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    ERR_clear_error();
+
+    /* The timer queries must agree with the failed state. */
+    if (!TEST_true(SSL_get_event_timeout(serverssl, &tv, &is_infinite))
+        || !TEST_true(is_infinite)
+        || !TEST_int_eq(DTLSv1_get_timeout(serverssl, &tv), 0))
+        goto end;
+
+    /* Let the 200ms retransmission timer expire, then drive it. */
+    OSSL_sleep(250);
+    send_data.sends = 0;
+    if (idx == 0) {
+        if (!TEST_false(SSL_handle_events(serverssl)))
+            goto end;
+    } else if (!TEST_int_eq(DTLSv1_handle_timeout(serverssl), -1)) {
+        goto end;
+    }
+
+    ERR_clear_error();
+    if (!TEST_int_eq(send_data.sends, 0))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free_all(filter);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_meth_free(method);
+    BIO_meth_free(method_failing_send);
+    method_failing_send = NULL;
+    ERR_clear_error();
+    return testresult;
+}
+
 /*
  * Regression test for the receive-queue bound and its overflow policy: a
  * connection left unread must not accumulate an unbounded datagram queue,
@@ -9722,6 +10051,10 @@ int setup_tests(void)
     ADD_TEST(test_dtls12_connection_without_hvr);
     ADD_ALL_TESTS(test_dtls_listener_permanent_recv_error, 2 * RECV_ERROR_NUM_SCENARIOS);
     ADD_ALL_TESTS(test_dtls_listener_transient_recv_error, 2);
+    ADD_ALL_TESTS(test_dtls_listener_failure_stops_timer, 2);
+#if defined(__linux__) && defined(IP_RECVERR)
+    ADD_ALL_TESTS(test_dtls_listener_peer_udp_error_scope, 2);
+#endif
 #endif
 
 #ifndef OPENSSL_NO_DTLS1_3
@@ -9753,6 +10086,7 @@ int setup_tests(void)
     ADD_MFAIL_TEST(test_dtls_poll_registration_failure);
     ADD_ALL_TESTS(test_dtls_poll_cleanup_order, OSSL_NELEM(poll_cleanup_cases));
     ADD_TEST(test_dtls_poll_notification_generation);
+    ADD_TEST(test_dtls_poll_nested_in_pending_cb);
 #endif
 
 #ifndef OPENSSL_NO_DTLS1_3
