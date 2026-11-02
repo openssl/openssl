@@ -4280,13 +4280,16 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
 {
     QCTX ctx;
     const QUIC_TERMINATE_CAUSE *tc;
+    int ret = 0;
 
     if (!expect_quic_conn_only(ssl, &ctx))
         return -1;
 
+    qctx_lock(&ctx);
+
     tc = ossl_quic_channel_get_terminate_cause(ctx.qc->ch);
     if (tc == NULL)
-        return 0;
+        goto out;
 
     info->error_code = tc->error_code;
     info->frame_type = tc->frame_type;
@@ -4297,7 +4300,11 @@ int ossl_quic_get_conn_close_info(SSL *ssl,
         info->flags |= SSL_CONN_CLOSE_FLAG_LOCAL;
     if (!tc->app)
         info->flags |= SSL_CONN_CLOSE_FLAG_TRANSPORT;
-    return 1;
+    ret = 1;
+
+out:
+    qctx_unlock(&ctx);
+    return ret;
 }
 
 /*
