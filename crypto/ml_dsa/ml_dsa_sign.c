@@ -341,6 +341,9 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
 
     /* Pure encoding */
     encoded_len = 1 + 1 + ctx_len + msg_len;
+    /* reject wrapped-around lengths: the memcpy below would then overrun */
+    if (encoded_len < msg_len)
+        return NULL;
     *out_len = encoded_len;
     if (encoded_len <= tmp_len) {
         encoded = tmp;
