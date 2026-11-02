@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 #include "internal/core.h"
 #include <openssl/core_dispatch.h>
 #include <openssl/err.h>
+#include <string.h>
 
 size_t ossl_rand_get_entropy(ossl_unused OSSL_LIB_CTX *ctx,
     unsigned char **pout, int entropy,
@@ -41,6 +42,33 @@ size_t ossl_rand_get_entropy(ossl_unused OSSL_LIB_CTX *ctx,
     return ret;
 }
 
+/*
+ * Copy the seed into a buffer of our own and hand the original straight back
+ * to the seed source. Otherwise ossl_rand_cleanup_user_entropy() would have
+ * to work out who allocated |buf|, but a seed source may be created between
+ * taking entropy from the operating system sources and cleaning it up, so
+ * the seed source present at cleanup time does not tell.
+ */
+static size_t rand_get_seed_copy(EVP_RAND_CTX *rng, unsigned char **pout,
+    int entropy, size_t min_len, size_t max_len)
+{
+    unsigned char *seed = NULL, *buf;
+    size_t ret;
+
+    ret = evp_rand_get_seed(rng, &seed, entropy, min_len, max_len,
+        0, NULL, 0);
+    if (ret == 0)
+        return 0;
+    buf = OPENSSL_secure_malloc(ret);
+    if (buf != NULL)
+        memcpy(buf, seed, ret);
+    evp_rand_clear_seed(rng, seed, ret);
+    if (buf == NULL)
+        return 0;
+    *pout = buf;
+    return ret;
+}
+
 size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
     unsigned char **pout, int entropy,
     size_t min_len, size_t max_len)
@@ -49,10 +77,8 @@ size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
 
     if (ossl_rand_seed_source_strict(ctx)) {
         /*
-         * With strict seeding the seed source must be used, even when the
-         * request arrives before anything instantiated it: create it now
-         * and fail instead of silently substituting the operating system
-         * entropy sources.
+         * With strict seeding the configured seed source must be used,
+         * even when the request arrives before anything instantiated it.
          */
         rng = ossl_rand_get0_seed(ctx);
         if (rng == NULL || !evp_rand_can_seed(rng)) {
@@ -64,8 +90,7 @@ size_t ossl_rand_get_user_entropy(OSSL_LIB_CTX *ctx,
         if (rng == NULL || !evp_rand_can_seed(rng))
             return ossl_rand_get_entropy(ctx, pout, entropy, min_len, max_len);
     }
-    return evp_rand_get_seed(rng, pout, entropy, min_len, max_len,
-        0, NULL, 0);
+    return rand_get_seed_copy(rng, pout, entropy, min_len, max_len);
 }
 
 void ossl_rand_cleanup_entropy(ossl_unused OSSL_LIB_CTX *ctx,
@@ -74,15 +99,11 @@ void ossl_rand_cleanup_entropy(ossl_unused OSSL_LIB_CTX *ctx,
     OPENSSL_secure_clear_free(buf, len);
 }
 
+/* See rand_get_seed_copy() */
 void ossl_rand_cleanup_user_entropy(OSSL_LIB_CTX *ctx,
     unsigned char *buf, size_t len)
 {
-    EVP_RAND_CTX *rng = ossl_rand_get0_seed_noncreating(ctx);
-
-    if (rng != NULL && evp_rand_can_seed(rng))
-        evp_rand_clear_seed(rng, buf, len);
-    else
-        OPENSSL_secure_clear_free(buf, len);
+    ossl_rand_cleanup_entropy(ctx, buf, len);
 }
 
 size_t ossl_rand_get_nonce(ossl_unused OSSL_LIB_CTX *ctx,

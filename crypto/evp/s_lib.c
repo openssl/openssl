@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -160,15 +160,36 @@ static int get_secret_key(const OSSL_PARAM params[], void *arg)
     return 0;
 }
 
+static int get_key_length(const OSSL_PARAM params[], void *arg)
+{
+    const OSSL_PARAM *p = NULL;
+    size_t *len = arg;
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_SKEY_PARAM_KEY_LENGTH)) != NULL)
+        return OSSL_PARAM_get_size_t(p, len);
+
+    return 0;
+}
+
 int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
     size_t *len)
 {
     struct raw_key_details_st raw_key;
 
-    if (skey == NULL || key == NULL || len == NULL) {
+    if (skey == NULL || len == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
+    /*
+     * Only the length is requested, so get it from the key parameters
+     * instead of exporting the secret key.  This way the length is also
+     * available for non-exportable keys if the key management reports it.
+     */
+    if (key == NULL)
+        return evp_skeymgmt_export(skey->skeymgmt, skey->keydata,
+            OSSL_SKEYMGMT_SELECT_PARAMETERS,
+            get_key_length, len);
 
     raw_key.key = (const void **)key;
     raw_key.len = len;
@@ -339,4 +360,50 @@ err:
     EVP_SKEYMGMT_free(skeymgmt);
     EVP_SKEY_free(ret);
     return NULL;
+}
+
+int EVP_SKEY_get0_local_keyid(const EVP_SKEY *skey,
+    const unsigned char **id, size_t *len)
+{
+    if (skey == NULL || id == NULL || len == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (skey->skeymgmt->get_local_keyid == NULL)
+        return 0;
+
+    return skey->skeymgmt->get_local_keyid(skey->keydata, id, len);
+}
+
+int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
+    const unsigned char **oid, size_t *oid_len,
+    const unsigned char **params, size_t *params_len)
+{
+    int ret_oid = 0, ret_params = 0;
+
+    if (skey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (skey->skeymgmt->get_algorithm_id == NULL)
+        return 0;
+
+    if (oid != NULL && oid_len != NULL)
+        ret_oid = 1;
+    if (params != NULL && params_len != NULL)
+        ret_params = 1;
+
+    if (ret_oid == 0 && ret_params == 0)
+        return 0;
+
+    if (ret_oid == 0 && (oid != NULL || oid_len != NULL))
+        return 0;
+
+    if (ret_params == 0 && (params != NULL || params_len != NULL))
+        return 0;
+
+    return skey->skeymgmt->get_algorithm_id(skey->keydata,
+        oid, oid_len, params, params_len);
 }

@@ -414,7 +414,10 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
     const X509_NAME *name);
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
     X509_OBJECT *x);
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+OSSL_DEPRECATEDIN_4_2_FOR("use X509_up_ref() or X509_CRL_up_ref() on the contained object")
 int X509_OBJECT_up_ref_count(X509_OBJECT *a);
+#endif
 X509_OBJECT *X509_OBJECT_new(void);
 void X509_OBJECT_free(X509_OBJECT *a);
 X509_LOOKUP_TYPE X509_OBJECT_get_type(const X509_OBJECT *a);

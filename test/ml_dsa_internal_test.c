@@ -24,6 +24,68 @@
 #include "crypto/ml_dsa.h"
 #include "testutil.h"
 
+#if defined(OPENSSL_ML_DSA_S390X)
+/*
+ * ml_dsa_local.h and ml_dsa_poly.h are internal headers from crypto/ml_dsa/.
+ * They are reachable because test/build.info adds ../crypto/ml_dsa to the
+ * include path when OPENSSL_ML_DSA_S390X is defined.
+ */
+#include "ml_dsa_local.h"
+#include "ml_dsa_poly.h"
+
+/*
+ * Minimal xorshift32 PRNG.
+ * Period: 2^32 - 1.  Seed must be non-zero.
+ */
+static uint32_t xorshift32(uint32_t *state)
+{
+    uint32_t x = *state;
+
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    return *state = x;
+}
+
+/*
+ * Verify that ossl_ml_dsa_poly_ntt_vec128 produces the same output as the
+ * scalar forward NTT on 2^16 random polynomials with coefficients in [0, q).
+ *
+ * The test is compiled only when OPENSSL_ML_DSA_S390X is defined (i.e., when
+ * ml_dsa_ntt_vec128.c is compiled in).  It skips at runtime when the CPU
+ * does not support the VX facility so the binary can run on any s390x host.
+ */
+static int test_poly_ntt_vec128(void)
+{
+    /* xorshift32 seed */
+    uint32_t rng = 31929;
+    int i, j;
+    POLY scalar_copy, vec128_copy;
+
+    if (!S390X_VX_CAPABLE)
+        return TEST_skip("S390X VX not available at runtime");
+
+    for (i = 0; i < (1 << 16); i++) {
+        /* Fill both copies with the same random polynomial in [0, q). */
+        for (j = 0; j < ML_DSA_NUM_POLY_COEFFICIENTS; j++) {
+            uint32_t c = xorshift32(&rng) % ML_DSA_Q;
+
+            scalar_copy.coeff[j] = c;
+            vec128_copy.coeff[j] = c;
+        }
+
+        ossl_ml_dsa_poly_ntt_scalar(&scalar_copy);
+        ossl_ml_dsa_poly_ntt_vec128(&vec128_copy);
+
+        for (j = 0; j < ML_DSA_NUM_POLY_COEFFICIENTS; j++) {
+            if (!TEST_uint_eq(vec128_copy.coeff[j], scalar_copy.coeff[j]))
+                return 0;
+        }
+    }
+    return 1;
+}
+#endif /* OPENSSL_ML_DSA_S390X */
+
 /* Fixed 32-byte seed used for all three parameter-set tests. */
 static const uint8_t test_seed[ML_DSA_SEED_BYTES] = {
     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
@@ -110,5 +172,8 @@ int setup_tests(void)
     ADD_TEST(test_ml_dsa_44);
     ADD_TEST(test_ml_dsa_65);
     ADD_TEST(test_ml_dsa_87);
+#if defined(OPENSSL_ML_DSA_S390X)
+    ADD_TEST(test_poly_ntt_vec128);
+#endif
     return 1;
 }

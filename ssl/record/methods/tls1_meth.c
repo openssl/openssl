@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -175,8 +175,9 @@ static int setup_record_header(const OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec,
     WPACKET hdr;
     size_t hdrsize;
 
-    if (buflen < EVP_AEAD_TLS1_AAD_LEN
-        || !WPACKET_init_static_len(&hdr, buf, EVP_AEAD_TLS1_AAD_LEN, 0)
+    if (buflen < EVP_AEAD_TLS1_AAD_LEN)
+        return 0;
+    if (!WPACKET_init_static_len(&hdr, buf, EVP_AEAD_TLS1_AAD_LEN, 0)
         || (rl->isdtls && !WPACKET_put_bytes_u16(&hdr, rl->epoch))
         || (rl->isdtls ? !WPACKET_put_bytes_u48(&hdr, rl->sequence)
                        : !WPACKET_put_bytes_u64(&hdr, rl->sequence))
@@ -291,6 +292,15 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ds))
                 & EVP_CIPH_FLAG_AEAD_CIPHER)
             != 0) {
+            /*
+             * Publicly invalid: the record is shorter than the mandatory
+             * AEAD overhead (explicit IV plus authentication tag). Leave
+             * alert handling to the caller so TLS reports bad_record_mac
+             * and DTLS silently discards the record.
+             */
+            if (!sending && reclen[ctr] < rl->eivlen + rl->taglen)
+                return 0;
+
             if (!setup_record_header(rl, &recs[ctr], buf[ctr], sizeof(buf[ctr]))) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -401,8 +411,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             OSSL_PARAM params[2], *p = params;
 
             /* Get the MAC */
-            macs[0].alloced = 0;
-
             *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
                 (void **)&macs[0].mac,
                 macsize);

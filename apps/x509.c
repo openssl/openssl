@@ -713,7 +713,7 @@ int x509_main(int argc, char **argv)
     if (!opt_check_md(digest))
         goto opthelp;
 
-    if (reqfile || newcert || privkey != NULL || CAfile != NULL)
+    if (reqfile || newcert || privkeyfile != NULL || CAfile != NULL)
         newout = 1;
     else if (sno != NULL
         || not_before != NULL
@@ -837,13 +837,21 @@ int x509_main(int argc, char **argv)
 
         if (extsect == NULL) {
             extsect = app_conf_try_string(extconf, "default", "extensions");
+            /*
+             * If neither -extfile nor -extensions is provided, and the default
+             * config file's default section doesn't contain the "extensions"
+             * config option, extsect is left as NULL, which is then used
+             * as an indicator to avoid trying to load extensions.
+             */
             if (extfile != NULL && extsect == NULL)
                 extsect = "default";
         }
-        X509V3_set_ctx_test(&ctx2);
-        if (!do_EXT_add_nconf(extconf, extconf, &ctx2, NULL,
-                "Error checking extension section %s\n", extsect))
-            goto err;
+        if (extsect != NULL) {
+            X509V3_set_ctx_test(&ctx2);
+            if (!do_EXT_add_nconf(extconf, extconf, &ctx2, NULL,
+                    "Error checking extension section %s\n", extsect))
+                goto err;
+        }
     } else if (newout && !confquiet) {
         goto err;
     }
@@ -1009,7 +1017,7 @@ cert_loop:
         if (!X509V3_set_issuer_pkey(&ext_ctx, privkey))
             goto err;
     }
-    if (extconf != NULL && !x509toreq) {
+    if (extconf != NULL && !x509toreq && extsect != NULL) {
         if (!do_EXT_add_nconf(extconf, extconf, &ext_ctx, x,
                 "Error adding extensions from section %s\n", extsect))
             goto err;
@@ -1034,7 +1042,7 @@ cert_loop:
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
-        if (extconf != NULL) {
+        if (extconf != NULL && extsect != NULL) {
             if (!do_EXT_REQ_add_nconf(extconf, extconf, &ext_ctx, rq,
                     "Error adding request extensions from section %s\n", extsect))
                 goto err;
@@ -1207,19 +1215,32 @@ cert_loop:
         int error;
 
         if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
-            BIO_puts(out, "Malloc failed\n");
-            goto end_cert_loop;
+            BIO_puts(bio_err, "Malloc failed\n");
+            goto err;
         }
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_USE_CHECK_TIME);
         X509_VERIFY_PARAM_set_time(vpm, tcheck);
 
-        if (!X509_check_certificate_times(vpm, x, &error)) {
-            if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
-                BIO_puts(out, "Certificate will expire\n");
-                expired = 1;
-            }
-        } else {
+        if (X509_check_certificate_times(vpm, x, &error)) {
             BIO_puts(out, "Certificate will not expire\n");
+        } else if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
+            BIO_puts(out, "Certificate will expire\n");
+            expired = 1;
+        } else if (error == X509_V_ERR_CERT_NOT_YET_VALID) {
+            /*
+             * The certificate only becomes valid after the check time,
+             * so it cannot expire before it.
+             */
+            BIO_puts(out, "Certificate will not expire\n");
+        } else {
+            /*
+             * A notBefore or notAfter field that cannot be parsed must not
+             * be reported as "will not expire", see issue #11772.
+             */
+            BIO_printf(bio_err, "Cannot check certificate expiry: %s\n",
+                X509_verify_cert_error_string(error));
+            X509_VERIFY_PARAM_free(vpm);
+            goto err;
         }
         if (multi && k > 0)
             ret |= expired;
@@ -1266,6 +1287,8 @@ end_cert_loop:
     goto end;
 
 err:
+    /* Every path reaching this label is a failure path */
+    ret = 1;
     ERR_print_errors(bio_err);
 
 end:

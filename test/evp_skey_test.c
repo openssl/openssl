@@ -113,7 +113,7 @@ static int test_skey_skeymgmt(void)
     if (!TEST_ptr(deflprov))
         return 0;
 
-    /* Fetch our SKYMGMT for Generic Secrets */
+    /* Fetch our SKEYMGMT for Generic Secrets */
     if (!TEST_ptr(skeymgmt = EVP_SKEYMGMT_fetch(libctx, OSSL_SKEY_TYPE_GENERIC,
                       NULL)))
         goto end;
@@ -308,6 +308,235 @@ end:
 }
 #endif
 
+static int test_skey_metadata_import(int tst)
+{
+    int ret = 0;
+    EVP_SKEY *key = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    OSSL_PARAM *exp_params = NULL;
+    const unsigned char import_key[KEY_SIZE] = {
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59, 0x53, 0x4B, 0x45, 0x59
+    };
+    const char *alias = "my friendly name";
+    const unsigned char local_keyid[] = { 0x01, 0x02, 0x03, 0x04 };
+    const unsigned char alg_oid[] = { 0x06, 0x09, 0x60, 0x86, 0x48,
+        0x01, 0x65, 0x03, 0x04, 0x01, 0x02 };
+    const unsigned char alg_params[] = { 0x04, 0x10, 0x00, 0x01, 0x02, 0x03 };
+    const char *bad_alias = "bad\0alias";
+    const unsigned char *out_id = NULL;
+    size_t out_len = 0;
+    const unsigned char *out_oid = NULL, *out_params = NULL;
+    size_t out_oid_len = 0, out_params_len = 0;
+
+    deflprov = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto end;
+
+    if (!TEST_int_gt(OSSL_PARAM_BLD_push_octet_string(bld,
+                         OSSL_SKEY_PARAM_RAW_BYTES,
+                         import_key, sizeof(import_key)),
+            0))
+        goto end;
+
+    switch (tst) {
+    case 0:
+        /* Import with all metadata */
+        if (!TEST_int_gt(OSSL_PARAM_BLD_push_utf8_string(bld,
+                             OSSL_SKEY_PARAM_ALIAS, alias, 0),
+                0)
+            || !TEST_int_gt(OSSL_PARAM_BLD_push_octet_string(bld,
+                                OSSL_SKEY_PARAM_LOCAL_KEYID,
+                                local_keyid, sizeof(local_keyid)),
+                0)
+            || !TEST_int_gt(OSSL_PARAM_BLD_push_octet_string(bld,
+                                OSSL_SKEY_PARAM_ALGORITHM_OID,
+                                alg_oid, sizeof(alg_oid)),
+                0)
+            || !TEST_int_gt(OSSL_PARAM_BLD_push_octet_string(bld,
+                                OSSL_SKEY_PARAM_ALGORITHM_PARAMS,
+                                alg_params, sizeof(alg_params)),
+                0))
+            goto end;
+        break;
+    case 1:
+        /* Import with no metadata — should succeed */
+        break;
+    case 2:
+        /* Import with alias containing embedded NUL — should fail */
+        if (!TEST_int_gt(OSSL_PARAM_BLD_push_utf8_string(bld,
+                             OSSL_SKEY_PARAM_ALIAS,
+                             bad_alias, sizeof("bad\0alias") - 1),
+                0))
+            goto end;
+        break;
+    default:
+        goto end;
+    }
+
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto end;
+
+    key = EVP_SKEY_import(libctx, OSSL_SKEY_TYPE_GENERIC, NULL,
+        OSSL_SKEYMGMT_SELECT_ALL, params);
+
+    if (tst == 2) {
+        /* Embedded NUL in alias must cause import failure */
+        if (!TEST_ptr_null(key))
+            goto end;
+        ret = 1;
+        goto end;
+    }
+
+    if (!TEST_ptr(key))
+        goto end;
+
+    if (tst == 0) {
+        /* Verify alias via get0_key_id */
+        if (!TEST_str_eq(EVP_SKEY_get0_key_id(key), alias))
+            goto end;
+
+        /* Verify local_keyid */
+        if (!TEST_int_gt(EVP_SKEY_get0_local_keyid(key, &out_id, &out_len), 0)
+            || !TEST_mem_eq(out_id, out_len, local_keyid, sizeof(local_keyid)))
+            goto end;
+
+        /* Verify algorithm_id */
+        if (!TEST_int_gt(EVP_SKEY_get0_algorithm_id(key,
+                             &out_oid, &out_oid_len,
+                             &out_params, &out_params_len),
+                0)
+            || !TEST_mem_eq(out_oid, out_oid_len, alg_oid, sizeof(alg_oid))
+            || !TEST_mem_eq(out_params, out_params_len,
+                alg_params, sizeof(alg_params)))
+            goto end;
+    }
+
+    if (tst == 1) {
+        /* No metadata — get0_key_id should return NULL */
+        if (!TEST_ptr_null(EVP_SKEY_get0_key_id(key)))
+            goto end;
+        /* get0_local_keyid succeeds but returns NULL pointer */
+        if (!TEST_int_gt(EVP_SKEY_get0_local_keyid(key, &out_id, &out_len), 0)
+            || !TEST_ptr_null(out_id)
+            || !TEST_size_t_eq(out_len, 0))
+            goto end;
+    }
+
+    ret = 1;
+end:
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_free(exp_params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_SKEY_free(key);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+
+static int test_skey_metadata_export(int tst)
+{
+    int ret = 0;
+    EVP_SKEY *key = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    OSSL_PARAM *exp_params = NULL;
+    const OSSL_PARAM *p;
+    const unsigned char import_key[KEY_SIZE] = {
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59, 0x53, 0x4B, 0x45, 0x59
+    };
+    const char *alias = "export test alias";
+    const unsigned char local_keyid[] = { 0xAA, 0xBB, 0xCC };
+    int export_ret;
+
+    deflprov = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto end;
+
+    if (!TEST_int_gt(OSSL_PARAM_BLD_push_octet_string(bld,
+                         OSSL_SKEY_PARAM_RAW_BYTES,
+                         import_key, sizeof(import_key)),
+            0)
+        || !TEST_int_gt(OSSL_PARAM_BLD_push_utf8_string(bld,
+                            OSSL_SKEY_PARAM_ALIAS, alias, 0),
+            0)
+        || !TEST_int_gt(OSSL_PARAM_BLD_push_octet_string(bld,
+                            OSSL_SKEY_PARAM_LOCAL_KEYID,
+                            local_keyid, sizeof(local_keyid)),
+            0))
+        goto end;
+
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto end;
+
+    key = EVP_SKEY_import(libctx, OSSL_SKEY_TYPE_GENERIC, NULL,
+        OSSL_SKEYMGMT_SELECT_ALL, params);
+    if (!TEST_ptr(key))
+        goto end;
+
+    switch (tst) {
+    case 0:
+        /* Export SECRET_KEY only — should not include metadata params */
+        if (!TEST_int_gt(EVP_SKEY_export(key,
+                             OSSL_SKEYMGMT_SELECT_SECRET_KEY,
+                             ossl_pkey_todata_cb, &exp_params),
+                0))
+            goto end;
+        if (!TEST_ptr(OSSL_PARAM_locate_const(exp_params,
+                OSSL_SKEY_PARAM_RAW_BYTES)))
+            goto end;
+        if (!TEST_ptr_null(OSSL_PARAM_locate_const(exp_params,
+                OSSL_SKEY_PARAM_ALIAS)))
+            goto end;
+        if (!TEST_ptr_null(OSSL_PARAM_locate_const(exp_params,
+                OSSL_SKEY_PARAM_LOCAL_KEYID)))
+            goto end;
+        break;
+    case 1:
+        /* Export PARAMETERS only — should not include raw bytes */
+        if (!TEST_int_gt(EVP_SKEY_export(key,
+                             OSSL_SKEYMGMT_SELECT_PARAMETERS,
+                             ossl_pkey_todata_cb, &exp_params),
+                0))
+            goto end;
+        if (!TEST_ptr_null(OSSL_PARAM_locate_const(exp_params,
+                OSSL_SKEY_PARAM_RAW_BYTES)))
+            goto end;
+        if (!TEST_ptr(p = OSSL_PARAM_locate_const(exp_params,
+                          OSSL_SKEY_PARAM_ALIAS)))
+            goto end;
+        if (!TEST_ptr(OSSL_PARAM_locate_const(exp_params,
+                OSSL_SKEY_PARAM_LOCAL_KEYID)))
+            goto end;
+        break;
+    case 2:
+        /* Export with selection 0 — should fail */
+        export_ret = EVP_SKEY_export(key, 0,
+            ossl_pkey_todata_cb, &exp_params);
+        if (!TEST_int_le(export_ret, 0))
+            goto end;
+        break;
+    default:
+        goto end;
+    }
+
+    ret = 1;
+end:
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_free(exp_params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_SKEY_free(key);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+
 static int test_skey_to_same_provider(void)
 {
     OSSL_PROVIDER *fake_prov = NULL;
@@ -393,6 +622,77 @@ end:
     return ret;
 }
 
+static int test_skey_get0_raw_key_len(int tst)
+{
+    OSSL_PROVIDER *fake_prov = NULL;
+    EVP_SKEY *key = NULL;
+    OSSL_PARAM params[2];
+    unsigned char import_key[32] = {
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59,
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59
+    };
+    const unsigned char *export_key = NULL;
+    size_t len = 0;
+    int ret = 0;
+
+    deflprov = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+
+    switch (tst) {
+    case 0:
+        /* Generic key, only the length is requested */
+        if (!TEST_ptr(key = EVP_SKEY_import_raw_key(libctx,
+                          OSSL_SKEY_TYPE_GENERIC, import_key, 5, NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, NULL, &len), 1)
+            || !TEST_size_t_eq(len, 5))
+            goto end;
+        break;
+    case 1:
+        /* AES key, only the length is requested */
+        if (!TEST_ptr(key = EVP_SKEY_import_raw_key(libctx, OSSL_SKEY_TYPE_AES,
+                          import_key, sizeof(import_key), NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, NULL, &len), 1)
+            || !TEST_size_t_eq(len, sizeof(import_key)))
+            goto end;
+        break;
+    case 2:
+        /*
+         * The fake provider doesn't report OSSL_SKEY_PARAM_KEY_LENGTH, so
+         * requesting only the length fails even though the key is exportable.
+         */
+        if (!TEST_ptr(fake_prov = fake_cipher_start(libctx)))
+            goto end;
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+            import_key, KEY_SIZE);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!TEST_ptr(key = EVP_SKEY_import(libctx, "fake_cipher",
+                          FAKE_CIPHER_FETCH_PROPS,
+                          OSSL_SKEYMGMT_SELECT_ALL, params))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, NULL, &len), 0))
+            goto end;
+        break;
+    case 3:
+        /* The length pointer is mandatory */
+        if (!TEST_ptr(key = EVP_SKEY_import_raw_key(libctx,
+                          OSSL_SKEY_TYPE_GENERIC, import_key, 5, NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, &export_key, NULL), 0))
+            goto end;
+        break;
+    default:
+        goto end;
+    }
+
+    ret = 1;
+end:
+    EVP_SKEY_free(key);
+    fake_cipher_finish(fake_prov);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -402,8 +702,11 @@ int setup_tests(void)
     ADD_TEST(test_skey_cipher);
     ADD_TEST(test_skey_skeymgmt);
 
+    ADD_ALL_TESTS(test_skey_metadata_import, 3);
+    ADD_ALL_TESTS(test_skey_metadata_export, 3);
     ADD_TEST(test_skey_to_same_provider);
     ADD_TEST(test_skey_to_diff_provider);
+    ADD_ALL_TESTS(test_skey_get0_raw_key_len, 4);
     ADD_TEST(test_aes_raw_skey);
 #ifndef OPENSSL_NO_DES
     ADD_TEST(test_des_raw_skey);

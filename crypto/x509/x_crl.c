@@ -208,7 +208,8 @@ static int crl_set_issuers(X509_CRL *crl)
 
 /*
  * The X509_CRL structure needs a bit of customisation. Cache some extensions
- * and hash of the whole CRL or set EXFLAG_NO_FINGERPRINT if this fails.
+ * and the internal-use fingerprint of the whole CRL, or set
+ * EXFLAG_NO_FINGERPRINT if this fails.
  */
 static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)
@@ -245,7 +246,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_D2I_POST:
-        if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
+        if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509_CRL), crl,
+                crl->fingerprint))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
         crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
         if (crl->idp == NULL && i != -1) {
@@ -464,7 +466,8 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, const X509 *x)
     return 0;
 }
 
-static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
+static int def_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq)
 {
     if (X509_ALGOR_cmp(&crl->sig_alg, &crl->crl.sig_alg) != 0) {
         ERR_raise(ERR_LIB_X509, X509_R_CRL_SIGNATURE_ALGORITHM_MISMATCH);
@@ -472,7 +475,21 @@ static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
     }
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CRL_INFO),
         &crl->sig_alg, &crl->signature, &crl->crl, NULL,
-        r, crl->libctx, crl->propq);
+        r, libctx, propq);
+}
+
+static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
+{
+    return def_crl_verify_ex(crl, r, crl->libctx, crl->propq);
+}
+
+int ossl_x509_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    /* A custom X509_CRL_METHOD has no library context to be told about */
+    if (crl->meth->crl_verify != def_crl_verify)
+        return X509_CRL_verify(crl, r);
+    return def_crl_verify_ex(crl, r, libctx, propq);
 }
 
 static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,

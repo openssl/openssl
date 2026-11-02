@@ -18,6 +18,7 @@ BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 
 void bn_correct_top(BIGNUM *a);
+int bn_set_top_fixed(BIGNUM *a, int words);
 
 /*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
@@ -135,7 +136,7 @@ extern const BIGNUM ossl_bn_inv_sqrt_2;
 int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
-    const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp);
+    const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp, const BIGNUM *n);
 
 #endif
 

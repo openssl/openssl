@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # -*- mode: Perl -*-
-# Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,8 @@ plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop
 plan skip_all => "Test is disabled on MacOS" if config('target') =~ m|^darwin|;
 # AIX reports symbol names differently
 plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
+plan skip_all => "This is unsupported on native Windows"
+    if $^O eq 'MSWin32';
 plan skip_all => "This is unsupported on platforms that don't have 'nm'"
     unless IPC::Cmd::can_run('nm');
 
@@ -65,9 +67,10 @@ plan tests => $testcount;
 my %stsymbols;                  # Static library symbols
 my %shsymbols;                  # Shared library symbols
 my %defsymbols;                 # Symbols taken from ordinals
+my $null_device = devnull();
 foreach (sort keys %stlibname) {
-    my $stlib_cmd = "nm -Pg $stlibpath{$_} 2> /dev/null";
-    my $shlib_cmd = "nm -DPg $shlibpath{$_} 2> /dev/null";
+    my $stlib_cmd = "nm -Pg $stlibpath{$_} 2> $null_device";
+    my $shlib_cmd = "nm -DPg $shlibpath{$_} 2> $null_device";
     my @stlib_lines;
     my @shlib_lines;
     *OSTDERR = *STDERR;
@@ -97,7 +100,7 @@ foreach (sort keys %stlibname) {
         indir $bldtop => sub {
             my $mkdefpath = srctop_file("util", "mkdef.pl");
             my $def_path = srctop_file("util", "lib$_.num");
-            my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_ --OS linux 2> /dev/null";
+            my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_ --OS linux 2> $null_device";
             @def_lines = map { s|\R$||; $_ } `$def_cmd`;
             if ($? != 0) {
                 note "running 'cd $bldtop; $def_cmd' => $?";

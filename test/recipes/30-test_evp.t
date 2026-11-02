@@ -32,6 +32,7 @@ my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2") || disabled("x963kdf");
 my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
+my $no_ascon128 = disabled("ascon128");
 my $no_ml_dsa = disabled("ml-dsa");
 my $no_ml_kem = disabled("ml-kem");
 my $no_lms = disabled("lms");
@@ -70,6 +71,7 @@ my @files = qw(
                 evpmd_sha.txt
                 evppbe_pbkdf2.txt
                 evppkey_kdf_hkdf.txt
+                evppkey_kdf_tls1_prf_fips.txt
                 evppkey_rsa.txt
                 evppkey_rsa_common.txt
                 evppkey_rsa_kem.txt
@@ -95,6 +97,7 @@ push @files, qw(evppkey_ffdhe_x942kdf.txt) unless ($no_x942kdf || $no_dh);
 push @files, qw(evpmac_cmac_des.txt) unless $no_des;
 push @files, qw(evpkdf_x942_des.txt) unless ($no_des || $no_x942kdf);
 push @files, qw(
+                evppkey_slh_dsa_keygen.txt
                 evppkey_slh_dsa_siggen.txt
                 evppkey_slh_dsa_sigver.txt
                ) unless $no_slh_dsa;
@@ -116,6 +119,7 @@ push @files, qw(
                 evppkey_mismatch.txt
                ) unless $no_ec;
 push @files, qw(
+                evpmd_ml_dsa_mu.txt
                 evppkey_ml_dsa_keygen.txt
                 evppkey_ml_dsa_siggen.txt
                 evppkey_ml_dsa_sigver.txt
@@ -139,6 +143,8 @@ push @files, qw(
                 evppkey_ml_kem_keygen.txt
                 evppkey_ml_kem_encap_decap.txt
                ) unless $no_ml_kem;
+push @files, qw(evppkey_mlx_kem_ecx.txt) unless ($no_ml_kem || $no_ecx);
+push @files, qw(evppkey_mlx_kem_ec.txt) unless ($no_ml_kem || $no_ec);
 push @files, qw(
                 evppkey_lms_sigver.txt
                ) unless $no_lms;
@@ -189,6 +195,7 @@ push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless ($no_dsa || $no_determinsti
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
+push @defltfiles, qw(evpciph_ascon_aead128.txt) unless $no_ascon128;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 push @defltfiles, qw(evpkdf_hmac_drbg.txt) unless $no_determinstic_nonce;
 

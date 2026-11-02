@@ -20,6 +20,32 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
+struct tdes_get_param_list_st {
+    struct ossl_cipher_get_param_list_st common;
+    OSSL_PARAM *decrypt;
+};
+
+struct tdes_get_ctx_param_list_st {
+    struct ossl_cipher_get_ctx_param_list_st common;
+    OSSL_PARAM *rand;
+#ifdef FIPS_MODULE
+    OSSL_PARAM *ind;
+#endif
+};
+
+struct tdes_set_ctx_param_list_st {
+    struct ossl_cipher_set_ctx_param_list_st common;
+#ifdef FIPS_MODULE
+    OSSL_PARAM *ind;
+#endif
+};
+
+#define tdes_get_params_st tdes_get_param_list_st
+#define tdes_get_ctx_params_st tdes_get_ctx_param_list_st
+#define tdes_set_ctx_params_st tdes_set_ctx_param_list_st
+
+#include "providers/implementations/ciphers/cipher_tdes.inc"
+
 void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
     size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
 {
@@ -130,12 +156,7 @@ int ossl_tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return tdes_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_tdes)
-OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
-    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
-        CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(ossl_tdes)
-
-            static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
+static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 {
     DES_cblock *deskey = ptr;
     size_t kl = ctx->keylen;
@@ -151,35 +172,54 @@ OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
     return 1;
 }
 
+const OSSL_PARAM *ossl_tdes_gettable_ctx_params(ossl_unused void *cctx,
+    ossl_unused void *provctx)
+{
+    return tdes_get_ctx_params_list;
+}
+
 int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-    OSSL_PARAM *p;
+    struct tdes_get_ctx_param_list_st p;
 
-    if (!ossl_cipher_generic_get_ctx_params(vctx, params))
+    if (ctx == NULL || !tdes_get_ctx_params_decoder(params, &p))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_RANDOM_KEY);
-    if (p != NULL && !tdes_generatekey(ctx, p->data)) {
+    if (!ossl_cipher_common_get_ctx_params(ctx, &p.common))
+        return 0;
+
+    if (p.rand != NULL && !tdes_generatekey(ctx, p.rand->data)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
         return 0;
     }
-    if (!OSSL_FIPS_IND_GET_CTX_PARAM((PROV_TDES_CTX *)vctx, params))
+    if (!OSSL_FIPS_IND_GET_CTX_FROM_PARAM((PROV_TDES_CTX *)vctx, p.ind))
         return 0;
     return 1;
 }
 
-CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(ossl_tdes)
-OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK)
-CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(ossl_tdes)
+const OSSL_PARAM *ossl_tdes_settable_ctx_params(ossl_unused void *cctx,
+    ossl_unused void *provctx)
+{
+    return tdes_set_ctx_params_list;
+}
 
 int ossl_tdes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    if (!OSSL_FIPS_IND_SET_CTX_PARAM((PROV_TDES_CTX *)vctx,
-            OSSL_FIPS_IND_SETTABLE0, params,
-            OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK))
+    PROV_TDES_CTX *ctx = (PROV_TDES_CTX *)vctx;
+    struct tdes_set_ctx_param_list_st p;
+
+    if (ctx == NULL || !tdes_set_ctx_params_decoder(params, &p))
         return 0;
-    return ossl_cipher_generic_set_ctx_params(vctx, params);
+    if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, p.ind))
+        return 0;
+
+    return ossl_cipher_common_set_ctx_params(&ctx->base, &p.common);
+}
+
+const OSSL_PARAM *ossl_tdes_gettable_params(ossl_unused void *provctx)
+{
+    return tdes_get_params_list;
 }
 
 int ossl_tdes_get_params(OSSL_PARAM params[], unsigned int md, uint64_t flags,
@@ -190,14 +230,16 @@ int ossl_tdes_get_params(OSSL_PARAM params[], unsigned int md, uint64_t flags,
 #else
     const int decrypt_only = 0;
 #endif
-    OSSL_PARAM *p;
+    struct tdes_get_param_list_st p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_DECRYPT_ONLY);
-    if (p != NULL && !OSSL_PARAM_set_int(p, decrypt_only)) {
+    if (!tdes_get_params_decoder(params, &p))
+        return 0;
+
+    if (p.decrypt != NULL && !OSSL_PARAM_set_int(p.decrypt, decrypt_only)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    return ossl_cipher_generic_get_params(params, md, flags,
-        kbits, blkbits, ivbits);
+    return ossl_cipher_common_get_params(&p.common, md, flags, kbits, blkbits,
+        ivbits);
 }

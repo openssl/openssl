@@ -53,6 +53,18 @@ ML-DSA hashing operations.
 
 Use L<EVP_PKEY_CTX_set_params(3)> after calling L<EVP_PKEY_keygen_init(3)>.
 
+The following key generation parameter can be retrieved with
+L<EVP_PKEY_CTX_get_params(3)> from the OpenSSL FIPS provider:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+Returns 1 if the operation is FIPS approved, or 0 otherwise.
+See L<fips_module(7)/FIPS indicators> for more information.
+
+=back
+
 =head2 Encoder Parameters
 
 =over 4
@@ -322,7 +334,7 @@ The C<output_formats> B<OSSL_ENCODER_CTX> parameter was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1014,13 +1014,14 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         ? (DTLS_LISTENER *)s->d1->listener
         : NULL;
     int have_verify_cb = (sctx->verify_stateless_cookie_cb != NULL)
-        || (dl != NULL && dl->require_hrr_cookie);
+        || (dl != NULL && dl->require_hrr_cookie)
+        || (SSL_CONNECTION_IS_DTLS(s) && sctx->app_verify_cookie_cb != NULL);
 #else
     int have_verify_cb = (sctx->verify_stateless_cookie_cb != NULL);
 #endif
 
     /* Ignore any cookie if we're not set up to verify it */
-    if (!have_verify_cb || (s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
+    if (!have_verify_cb || !tls_hrr_cookie_required(s))
         return 1;
 
     if (!PACKET_as_length_prefixed_2(pkt, &cookie)) {
@@ -1141,6 +1142,12 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSL_CONNECTION_GET_USER_SSL(s),
             PACKET_data(&appcookie),
             PACKET_remaining(&appcookie));
+    } else if (sctx->verify_stateless_cookie_cb == NULL
+        && SSL_CONNECTION_IS_DTLS(s) && sctx->app_verify_cookie_cb != NULL) {
+        /* Fall back to the HelloVerifyRequest cookie callbacks */
+        verify_ret = sctx->app_verify_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s),
+            PACKET_data(&appcookie),
+            (unsigned int)PACKET_remaining(&appcookie));
     } else
 #endif
         if (sctx->verify_stateless_cookie_cb != NULL) {
@@ -1366,6 +1373,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         unsigned long ticket_agel;
         size_t idlen;
 
+        /* Reset for each fresh iteration. */
+        sess = NULL;
+
         if (!PACKET_get_length_prefixed_2(&identities, &identity)
             || !PACKET_get_net_4(&identities, &ticket_agel)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1400,6 +1410,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 sizeof(pskdata));
             OPENSSL_free(pskid);
             if (pskdatalen > PSK_MAX_PSK_LEN) {
+                OPENSSL_cleanse(pskdata, sizeof(pskdata));
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             } else if (pskdatalen > 0) {
@@ -1500,8 +1511,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 continue;
             }
 
-            age = ossl_time_subtract(ossl_ms2time(ticket_agel),
-                ossl_ms2time(sess->ext.tick_age_add));
+            /* Undo ticket age obfuscation modulo 2^32 (RFC 9846, 4.3.11.1). */
+            age = ossl_ms2time((uint32_t)(ticket_agel - sess->ext.tick_age_add));
             t = ossl_time_subtract(ossl_time_now(), sess->time);
 
             /*
@@ -1529,6 +1540,26 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             }
             /* This PSK is not external, use the correct binder label, ... */
             ext = 0;
+        }
+
+        /*
+         * The binder below, and the 0-RTT gate, both key off sess->cipher --
+         * specifically its handshake digest (algorithm2), which is only
+         * meaningful for a TLS 1.3 (or later) ciphersuite. A
+         * psk_find_session_cb() may return a session with no cipher, or a
+         * pre-TLS-1.3 one; ignore it and fall back to a full handshake rather
+         * than dereference a NULL cipher or misread algorithm2.
+         *
+         * The protocol version is deliberately not checked here:
+         * ssl_get_prev_session() vets it the moment we return and discards any
+         * mismatch, freeing the session so nothing leaks into a ticket or cache.
+         */
+        if (sess->cipher == NULL || sess->cipher->min_tls < TLS1_3_VERSION) {
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            s->ext.early_data_ok = 0;
+            s->ext.ticket_expected = 1;
+            continue;
         }
 
         md = ssl_md(sctx, sess->cipher->algorithm2);
@@ -2020,6 +2051,12 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
     return EXT_RETURN_SENT;
 }
 
+/* Does the HelloRetryRequest ask the client for a different key_share? */
+static int hrr_sends_key_share(const SSL_CONNECTION *s)
+{
+    return s->s3.peer_tmp == NULL && s->s3.group_id != 0;
+}
+
 EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
@@ -2031,10 +2068,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     const TLS_GROUP_INFO *ginf = NULL;
 
     if (s->hello_retry_request == SSL_HRR_PENDING) {
-        if (ckey != NULL) {
-            /* Original key_share was acceptable so don't ask for another one */
+        if (!hrr_sends_key_share(s))
             return EXT_RETURN_NOT_SENT;
-        }
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_put_bytes_u16(pkt, s->s3.group_id)
@@ -2181,12 +2216,13 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
         ? (DTLS_LISTENER *)s->d1->listener
         : NULL;
     int have_gen_cb = (sctx->gen_stateless_cookie_cb != NULL)
-        || (dl != NULL && dl->require_hrr_cookie);
+        || (dl != NULL && dl->require_hrr_cookie)
+        || (SSL_CONNECTION_IS_DTLS(s) && sctx->app_gen_cookie_cb != NULL);
 #else
     int have_gen_cb = (sctx->gen_stateless_cookie_cb != NULL);
 #endif
 
-    if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
+    if (!tls_hrr_cookie_required(s))
         return EXT_RETURN_NOT_SENT;
 
     if (!have_gen_cb) {
@@ -2205,7 +2241,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
         || !ssl->method->put_cipher_by_char(s->s3.tmp.new_cipher, pkt,
             &ciphlen)
         /* Is there a key_share extension present in this HRR? */
-        || !WPACKET_put_bytes_u8(pkt, s->s3.peer_tmp == NULL)
+        || !WPACKET_put_bytes_u8(pkt, hrr_sends_key_share(s))
         || !WPACKET_put_bytes_u64(pkt, time(NULL))
         || !WPACKET_start_sub_packet_u16(pkt)
         || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &hashval1)) {
@@ -2238,6 +2274,14 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     if (dl != NULL && dl->require_hrr_cookie && sctx->gen_stateless_cookie_cb == NULL) {
         gen_ret = ossl_dtls_listener_gen_stateless_cookie_cb(ussl, appcookie1,
             &appcookielen);
+    } else if (sctx->gen_stateless_cookie_cb == NULL
+        && SSL_CONNECTION_IS_DTLS(s) && sctx->app_gen_cookie_cb != NULL) {
+        unsigned int applen = 0;
+
+        /* Fall back to the HelloVerifyRequest cookie callbacks */
+        gen_ret = sctx->app_gen_cookie_cb(ussl, appcookie1, &applen)
+            && applen <= DTLS1_COOKIE_LENGTH;
+        appcookielen = applen;
     } else
 #endif
         if (sctx->gen_stateless_cookie_cb != NULL) {

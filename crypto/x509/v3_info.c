@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -63,7 +63,6 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
 {
     ACCESS_DESCRIPTION *desc;
     int i;
-    size_t nlen;
     char objtmp[80], *ntmp;
     CONF_VALUE *vtmp;
     STACK_OF(CONF_VALUE) *tret = ret;
@@ -80,11 +79,8 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
         tret = tmp;
         vtmp = sk_CONF_VALUE_value(tret, i);
         i2t_ASN1_OBJECT(objtmp, sizeof(objtmp), desc->method);
-        nlen = strlen(objtmp) + 3 + strlen(vtmp->name) + 1;
-        ntmp = OPENSSL_malloc(nlen);
-        if (ntmp == NULL)
+        if (ossl_asprintf(&ntmp, "%s - %s", objtmp, vtmp->name) < 0)
             goto err;
-        snprintf(ntmp, nlen, "%s - %s", objtmp, vtmp->name);
         OPENSSL_free(vtmp->name);
         vtmp->name = ntmp;
     }

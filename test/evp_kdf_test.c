@@ -787,6 +787,77 @@ err:
     return ret;
 }
 
+/*
+ * While watching, remember the blocks of |watch_len| bytes that are
+ * allocated, and note if one of them still holds |watch_key| when freed.
+ */
+static CRYPTO_malloc_fn saved_malloc;
+static CRYPTO_realloc_fn saved_realloc;
+static CRYPTO_free_fn saved_free;
+static void *watched[16];
+static size_t nwatched;
+static const unsigned char *watch_key;
+static size_t watch_len;
+static int key_left;
+
+static void watch_forget(void *ptr, int check)
+{
+    size_t i;
+
+    for (i = 0; i < nwatched; i++) {
+        if (watched[i] != ptr)
+            continue;
+        if (check && memcmp(ptr, watch_key, watch_len) == 0)
+            key_left = 1;
+        watched[i] = watched[--nwatched];
+        return;
+    }
+}
+
+static void *watch_malloc(size_t num, const char *file, int line)
+{
+    void *ret = saved_malloc(num, file, line);
+
+    if (ret != NULL && num == watch_len && nwatched < OSSL_NELEM(watched))
+        watched[nwatched++] = ret;
+    return ret;
+}
+
+static void *watch_realloc(void *ptr, size_t num, const char *file, int line)
+{
+    void *ret = saved_realloc(ptr, num, file, line);
+
+    if (ptr != NULL && (ret != NULL || num == 0))
+        watch_forget(ptr, 0);
+    if (ret != NULL && num == watch_len && nwatched < OSSL_NELEM(watched))
+        watched[nwatched++] = ret;
+    return ret;
+}
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        watch_forget(ptr, 1);
+    saved_free(ptr, file, line);
+}
+
+static int watch_start(const unsigned char *key, size_t len)
+{
+    CRYPTO_get_mem_functions(&saved_malloc, &saved_realloc, &saved_free);
+    if (!CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free))
+        return 0;
+    nwatched = 0;
+    watch_key = key;
+    watch_len = len;
+    key_left = 0;
+    return 1;
+}
+
+static void watch_stop(void)
+{
+    CRYPTO_set_mem_functions(saved_malloc, saved_realloc, saved_free);
+}
+
 static int test_kdf_pbkdf1_skey(void)
 {
     int ret = 0;
@@ -806,6 +877,7 @@ static int test_kdf_pbkdf1_skey(void)
     };
     const unsigned char *export = NULL;
     size_t export_size = 0;
+    int watching;
 
     if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
         goto err;
@@ -829,9 +901,19 @@ static int test_kdf_pbkdf1_skey(void)
                          salt, strlen((char *)salt), NULL))
         || !TEST_ptr(kctx = get_kdfbyname_libctx(libctx, OSSL_KDF_NAME_PBKDF1))
         || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
-        || !TEST_true(EVP_KDF_CTX_set_SKEY(kctx, skey_in, OSSL_KDF_PARAM_SALT))
-        || !TEST_ptr(skey_out = EVP_KDF_derive_SKEY(kctx, NULL, OSSL_SKEY_TYPE_GENERIC,
-                         NULL, sizeof(out), NULL))
+        || !TEST_true(EVP_KDF_CTX_set_SKEY(kctx, skey_in, OSSL_KDF_PARAM_SALT)))
+        goto err;
+
+    /* The derived key must not be left in a buffer freed while deriving */
+    if (!(watching = watch_start(expected, sizeof(expected))))
+        TEST_info("cannot replace the allocator, not checking the key is cleared");
+    skey_out = EVP_KDF_derive_SKEY(kctx, NULL, OSSL_SKEY_TYPE_GENERIC,
+        NULL, sizeof(out), NULL);
+    if (watching)
+        watch_stop();
+
+    if (!TEST_ptr(skey_out)
+        || (watching && !TEST_false(key_left))
         || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey_out, &export, &export_size), 1)
         || !TEST_mem_eq(export, export_size, expected, sizeof(expected)))
         goto err;
@@ -1988,6 +2070,35 @@ static int test_kdf_ss_kmac(void)
 }
 #endif /* OPENSSL_NO_SSKDF */
 
+#ifndef OPENSSL_NO_SRTPKDF
+static int test_kdf_srtpkdf_size(void)
+{
+    int ret = 0;
+    size_t size = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM get_params[2], set_params[2];
+
+    get_params[0] = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &size);
+    get_params[1] = OSSL_PARAM_construct_end();
+    set_params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        "AES-128-CTR", 0);
+    set_params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SRTPKDF))
+        || !TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 0)
+        || !TEST_false(EVP_KDF_CTX_get_params(kctx, get_params))
+        || !TEST_true(EVP_KDF_CTX_set_params(kctx, set_params))
+        || !TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 16))
+        goto err;
+
+    EVP_KDF_CTX_reset(kctx);
+    ret = TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 0);
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_SRTPKDF */
+
 #ifndef OPENSSL_NO_SSHKDF
 static int test_kdf_sshkdf(void)
 {
@@ -2476,6 +2587,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ss_hash);
     ADD_TEST(test_kdf_ss_hmac);
     ADD_TEST(test_kdf_ss_kmac);
+#endif
+#ifndef OPENSSL_NO_SRTPKDF
+    ADD_TEST(test_kdf_srtpkdf_size);
 #endif
 #ifndef OPENSSL_NO_SSHKDF
     ADD_TEST(test_kdf_sshkdf);

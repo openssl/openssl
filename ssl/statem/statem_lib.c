@@ -832,6 +832,15 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
     int was_first = SSL_IS_FIRST_HANDSHAKE(s);
     int ok;
 
+    /*
+     * A DTLS 1.3 Finished is protected with the peer's handshake keys. If we
+     * have not installed them yet we have no key to verify it with either.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(s) && dtls1_get_epoch(s, SSL3_CC_READ) < 2) {
+        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+        return MSG_PROCESS_ERROR;
+    }
+
     /* This is a real handshake so make sure we clean it up at the end */
     if (s->server) {
         /*

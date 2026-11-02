@@ -37,6 +37,9 @@ IF[{- !$disabled{tests} -}]
           testutil/options.c testutil/test_options.c testutil/provider.c \
           testutil/apps_shims.c testutil/random.c testutil/helper.c \
           testutil/compare.c mfail/mfail.c $LIBAPPSSRC
+  IF[{- $target{needs_c99_snprintf_compat} -}]
+    SOURCE[libtestutil.a]=../crypto/msvc2013_snprintf.c
+  ENDIF
   INCLUDE[libtestutil.a]=../include ../apps/include .. mfail
   DEPEND[libtestutil.a]=../libcrypto
 
@@ -49,13 +52,15 @@ IF[{- !$disabled{tests} -}]
           destest mdc2test sha_test \
           exptest pbetest localetest evp_pkey_ctx_new_from_name \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
+          evp_aead_test \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext byteorder_test punycode_test evp_byname_test \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
-          conf_include_test params_api_test params_conversion_test \
+          conf_include_test conf_parse_list_test params_api_test params_conversion_test \
           constant_time_test crypto_memcmp_test ct_validation_helpers_test \
           safe_math_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
+          asn1_string_poison_test \
           ct_test threadstest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_ndef_test bio_core_test bio_dgram_test param_build_test \
@@ -76,7 +81,8 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test
+          engine_stubs_test base64_simdutf_test base64_dec_avx2_test bio_eof_test \
+          ech_test ossl_rbtree_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -251,6 +257,10 @@ IF[{- !$disabled{tests} -}]
                            ../providers/libcommon.a
   ENDIF
 
+  SOURCE[evp_aead_test]=evp_aead_test.c
+  INCLUDE[evp_aead_test]=../include ../apps/include
+  DEPEND[evp_aead_test]=../libcrypto.a libtestutil.a
+
   SOURCE[hpke_test]=hpke_test.c
   INCLUDE[hpke_test]=../include ../apps/include
   DEPEND[hpke_test]=../libcrypto libtestutil.a
@@ -306,7 +316,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[acvp_test]=../libcrypto libtestutil.a
   ENDIF
 
-  SOURCE[ossl_store_test]=ossl_store_test.c
+  SOURCE[ossl_store_test]=ossl_store_test.c fake_storeprov.c
   INCLUDE[ossl_store_test]=../include ../apps/include
   DEPEND[ossl_store_test]=../libcrypto libtestutil.a
 
@@ -359,6 +369,11 @@ IF[{- !$disabled{tests} -}]
     SOURCE[ml_dsa_internal_test]=ml_dsa_internal_test.c
     INCLUDE[ml_dsa_internal_test]=../include ../apps/include
     DEPEND[ml_dsa_internal_test]=../libcrypto.a libtestutil.a
+
+    IF[{- !$disabled{asm} && ($target{perlasm_scheme} // '') ne '31' && defined($config{s390x_vector_cflags}) -}]
+      DEFINE[ml_dsa_internal_test]=OPENSSL_ML_DSA_S390X
+      INCLUDE[ml_dsa_internal_test]=../crypto/ml_dsa
+    ENDIF
   ENDIF
 
   PROGRAMS{noinst}=aeswrap_test
@@ -481,10 +496,6 @@ IF[{- !$disabled{tests} -}]
 
       $QUICTESTHELPERS=helpers/quictestlib.c helpers/noisydgrambio.c helpers/pktsplitbio.c
 
-      SOURCE[quic_multistream_test]=quic_multistream_test.c helpers/ssltestlib.c $QUICTESTHELPERS
-      INCLUDE[quic_multistream_test]=../include ../apps/include
-      DEPEND[quic_multistream_test]=../libcrypto.a ../libssl.a libtestutil.a
-
       SOURCE[quic_radix_test]=radix/quic_radix.c
       SOURCE[quic_radix_test]=helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quic_radix_test]=../include ../apps/include
@@ -518,6 +529,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[memleaktest]=memleaktest.c
   INCLUDE[memleaktest]=../include ../apps/include
   DEPEND[memleaktest]=../libcrypto libtestutil.a
+
+  SOURCE[asn1_string_poison_test]=asn1_string_poison_test.c
+  INCLUDE[asn1_string_poison_test]=../include ../apps/include
+  DEPEND[asn1_string_poison_test]=../libcrypto libtestutil.a
 
   SOURCE[pkcs12_format_test]=pkcs12_format_test.c helpers/pkcs12.c
   INCLUDE[pkcs12_format_test]=../include ../apps/include
@@ -740,7 +755,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   SOURCE[dtlstest]=dtlstest.c helpers/ssltestlib.c
-  INCLUDE[dtlstest]=../include ../apps/include
+  INCLUDE[dtlstest]=.. ../include ../apps/include
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
 
   IF[{- !$disabled{dtls} -}]
@@ -760,6 +775,14 @@ IF[{- !$disabled{tests} -}]
   SOURCE[base64_simdutf_test] = base64_simdutf_test.c
   INCLUDE[base64_simdutf_test] = ../include ../apps/include ../crypto/include ../crypto/evp/
   DEPEND[base64_simdutf_test] = ../libcrypto libtestutil.a
+
+  SOURCE[base64_dec_avx2_test] = base64_dec_avx2_test.c
+  INCLUDE[base64_dec_avx2_test] = ../include ../apps/include ../crypto/include ../crypto/evp/
+  DEPEND[base64_dec_avx2_test] = ../libcrypto.a libtestutil.a
+  IF[{- !$disabled{asm} && $config{processor} ne '386'
+        && ($target{asm_arch} // '') eq 'x86_64' -}]
+    DEFINE[base64_dec_avx2_test] = OPENSSL_CPUID_OBJ
+  ENDIF
 
   SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include ../apps/include
@@ -818,7 +841,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[pemtest]=../include ../apps/include
   DEPEND[pemtest]=../libcrypto libtestutil.a
 
-  SOURCE[dtls13_internal_test]=dtls13_internal_test.c
+  SOURCE[dtls13_internal_test]=dtls13_internal_test.c helpers/ssltestlib.c
   INCLUDE[dtls13_internal_test]=.. ../include ../apps/include
   DEPEND[dtls13_internal_test]=../libssl.a ../libcrypto.a libtestutil.a
 
@@ -902,6 +925,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[conf_include_test]=../include ../apps/include
   DEPEND[conf_include_test]=../libcrypto libtestutil.a
 
+  SOURCE[conf_parse_list_test]=conf_parse_list_test.c
+  INCLUDE[conf_parse_list_test]=../include ../apps/include
+  DEPEND[conf_parse_list_test]=../libcrypto libtestutil.a
+
   IF[{- !$disabled{cmp} -}]
     PROGRAMS{noinst}=cmp_asn_test cmp_ctx_test cmp_status_test cmp_hdr_test \
                      cmp_protect_test cmp_msg_test cmp_vfy_test \
@@ -951,9 +978,9 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ca_internals_test]=ca_internals_test.c ../apps/ca.c ../apps/lib/apps.c \
                             ../apps/lib/app_rand.c ../apps/lib/app_provider.c \
                             ../apps/lib/app_libctx.c ../apps/lib/fmt.c ../apps/lib/apps_ui.c \
-                            ../apps/lib/app_x509.c ../crypto/asn1/a_time.c ../crypto/ctype.c
+                            ../apps/lib/app_x509.c
   INCLUDE[ca_internals_test]=.. ../include ../apps/include
-  DEPEND[ca_internals_test]=libtestutil.a ../libssl
+  DEPEND[ca_internals_test]=libtestutil.a ../libssl.a ../libcrypto.a
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't
@@ -962,7 +989,8 @@ IF[{- !$disabled{tests} -}]
   # programs are forcibly linked with the static libraries, where all symbols
   # are always available.
   IF[1]
-    PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
+    PROGRAMS{noinst}=asprintf_test \
+                     asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
@@ -992,7 +1020,7 @@ IF[{- !$disabled{tests} -}]
       PROGRAMS{noinst}=ectest ec_internal_test evp_pkey_dhkem_test
     ENDIF
     IF[{- !$disabled{ecx} -}]
-      PROGRAMS{noinst}=curve448_internal_test
+      PROGRAMS{noinst}=curve448_internal_test curve25519_internal_test
     ENDIF
     IF[{- !$disabled{cmac} -}]
       PROGRAMS{noinst}=cmactest
@@ -1015,6 +1043,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[asn1_internal_test]=asn1_internal_test.c
     INCLUDE[asn1_internal_test]=.. ../include ../apps/include
     DEPEND[asn1_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[asprintf_test]=asprintf_test.c
+    INCLUDE[asprintf_test]=../include ../apps/include
+    DEPEND[asprintf_test]=../libcrypto.a libtestutil.a
 
     SOURCE[modes_internal_test]=modes_internal_test.c
     INCLUDE[modes_internal_test]=.. ../include ../apps/include
@@ -1048,7 +1080,7 @@ IF[{- !$disabled{tests} -}]
       PROGRAMS{noinst}=tls13ticket_test
       SOURCE[tls13ticket_test]=tls13tickettest.c helpers/ssltestlib.c
       INCLUDE[tls13ticket_test]=../include ../apps/include ..
-      DEPEND[tls13ticket_test]=../libcrypto ../libssl libtestutil.a
+      DEPEND[tls13ticket_test]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
 
     IF[{- !$disabled{psk} && !$disabled{tls1_2} -}]
@@ -1175,6 +1207,10 @@ IF[{- !$disabled{tests} -}]
       SOURCE[curve448_internal_test]=curve448_internal_test.c
       INCLUDE[curve448_internal_test]=.. ../include ../apps/include ../crypto/ec/curve448
       DEPEND[curve448_internal_test]=../libcrypto.a libtestutil.a
+
+      SOURCE[curve25519_internal_test]=curve25519_internal_test.c
+      INCLUDE[curve25519_internal_test]=.. ../include ../apps/include
+      DEPEND[curve25519_internal_test]=../libcrypto.a libtestutil.a
     ENDIF
 
     SOURCE[rc4test]=rc4test.c
@@ -1259,10 +1295,9 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   PROGRAMS{noinst}=asn1_time_test
-  SOURCE[asn1_time_test]=asn1_time_test.c ../crypto/ctype.c \
-                         ../crypto/asn1/a_time.c
+  SOURCE[asn1_time_test]=asn1_time_test.c
   INCLUDE[asn1_time_test]=../include ../apps/include
-  DEPEND[asn1_time_test]=../libcrypto libtestutil.a
+  DEPEND[asn1_time_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=asn1_string_test
   SOURCE[asn1_string_test]=asn1_string_test.c
@@ -1325,7 +1360,7 @@ IF[{- !$disabled{tests} -}]
     SOURCE[p_ossltest]=p_ossltest.c ../providers/prov_running.c
     INCLUDE[p_test]=../include
     INCLUDE[p_ossltest]=../include ../crypto ../providers/common/include ../providers/implementations/include ../providers/implementations
-    DEPEND[p_ossltest]=../providers/libcommon.a ../libcrypto
+    DEPEND[p_ossltest]=../providers/libdefault.a ../libcrypto
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_test]=p_test.ld
       SOURCE[p_ossltest]=p_test.ld
@@ -1475,7 +1510,7 @@ ENDIF
     PROGRAMS{noinst}=quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test
     PROGRAMS{noinst}=quic_srtm_test quic_lcidm_test quic_rcidm_test
     PROGRAMS{noinst}=quic_fifd_test quic_txp_test quic_tserver_test
-    PROGRAMS{noinst}=quic_client_test quic_cc_test quic_multistream_test
+    PROGRAMS{noinst}=quic_client_test quic_cc_test
     PROGRAMS{noinst}=quic_radix_test
 
     SOURCE[quic_ackm_test]=quic_ackm_test.c cc_dummy.c

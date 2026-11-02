@@ -260,9 +260,11 @@ x942_encode_otherinfo(size_t keylen,
         goto err;
     *out_ctr = (pcounter + 2);
     *der = der_buf;
+    der_buf = NULL;
     *der_len = der_buflen;
     ret = 1;
 err:
+    OPENSSL_free(der_buf);
     WPACKET_cleanup(&pkt);
     return ret;
 }

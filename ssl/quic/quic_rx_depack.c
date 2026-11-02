@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1462,7 +1462,6 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
     PACKET pkt;
     OSSL_ACKM_RX_PKT ackm_data;
     uint32_t enc_level;
-    size_t dgram_len = qpacket->datagram_len;
 
     if (ch == NULL)
         return 0;
@@ -1497,8 +1496,6 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
      */
     if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
         ossl_quic_tx_packetiser_set_validated(ch->txp);
-    else
-        ossl_quic_tx_packetiser_add_unvalidated_credit(ch->txp, dgram_len);
 
     /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)

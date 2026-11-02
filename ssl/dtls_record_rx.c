@@ -64,12 +64,27 @@ void ossl_dtls_rx_free(DTLS_RX *rx)
 
 /*
  * Injects a received URXE into the DTLS_RX struct.
+ *
+ * On overflow the oldest queued datagram is evicted: a flight can span
+ * several datagrams, so keeping the newest biases the queue toward the
+ * flight the peer just sent. The evicted URXE is released only after
+ * rx->mutex is dropped, as release takes demux->mutex, which must not
+ * nest under rx->mutex.
  */
 void ossl_dtls_rx_inject_urxe(DTLS_RX *rx, DGRAM_URXE *e)
 {
+    DGRAM_URXE *oldest = NULL;
+
     ossl_crypto_mutex_lock(rx->mutex);
+    if (ossl_list_urxe_num(&rx->urxe_pending) >= OSSL_DTLS_RX_DEFAULT_MAX_QUEUED)
+        oldest = ossl_list_urxe_head(&rx->urxe_pending);
+    if (oldest != NULL)
+        ossl_list_urxe_remove(&rx->urxe_pending, oldest);
     ossl_list_urxe_insert_tail(&rx->urxe_pending, e);
     ossl_crypto_mutex_unlock(rx->mutex);
+
+    if (oldest != NULL)
+        ossl_dtls_rx_release_urxe(rx, oldest);
 }
 
 /*

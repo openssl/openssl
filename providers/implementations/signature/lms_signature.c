@@ -19,6 +19,7 @@
 #include "prov/implementations.h"
 #include "crypto/lms_sig.h"
 #include "internal/fips.h"
+#include "providers/implementations/signature/lms_signature.inc"
 
 static OSSL_FUNC_signature_newctx_fn lms_newctx;
 static OSSL_FUNC_signature_freectx_fn lms_freectx;
@@ -26,6 +27,10 @@ static OSSL_FUNC_signature_verify_message_init_fn lms_verify_msg_init;
 static OSSL_FUNC_signature_verify_fn lms_verify;
 static OSSL_FUNC_signature_digest_verify_init_fn lms_digest_verify_init;
 static OSSL_FUNC_signature_digest_verify_fn lms_digest_verify;
+#ifdef FIPS_MODULE
+static OSSL_FUNC_signature_get_ctx_params_fn lms_get_ctx_params;
+static OSSL_FUNC_signature_gettable_ctx_params_fn lms_gettable_ctx_params;
+#endif
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
@@ -154,6 +159,21 @@ static int lms_digest_verify(void *vctx, const uint8_t *sig, size_t siglen,
     return lms_verify(vctx, sig, siglen, tbs, tbslen);
 }
 
+#ifdef FIPS_MODULE
+static const OSSL_PARAM *lms_gettable_ctx_params(ossl_unused void *vctx,
+    ossl_unused void *provctx)
+{
+    return lms_get_ctx_params_list;
+}
+
+static int lms_get_ctx_params(ossl_unused void *vctx, OSSL_PARAM params[])
+{
+    struct lms_get_ctx_params_st p;
+
+    return lms_get_ctx_params_decoder(params, &p);
+}
+#endif
+
 const OSSL_DISPATCH ossl_lms_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))lms_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))lms_freectx },
@@ -164,5 +184,10 @@ const OSSL_DISPATCH ossl_lms_signature_functions[] = {
         (void (*)(void))lms_digest_verify_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
         (void (*)(void))lms_digest_verify },
+#ifdef FIPS_MODULE
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))lms_get_ctx_params },
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+        (void (*)(void))lms_gettable_ctx_params },
+#endif
     OSSL_DISPATCH_END
 };

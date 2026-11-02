@@ -1,7 +1,7 @@
 /*
  * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -217,7 +217,14 @@ int SSL_ech_get1_status(SSL *ssl, char **inner_sni, char **outer_sni)
         && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
         long vr = X509_V_OK;
 
-        vr = SSL_get_verify_result(ssl);
+        /*
+         * The SUCCESS vs BAD_NAME distinction reflects whether the peer's
+         * certificate verified against the (inner) SNI -- a client-side verdict.
+         * On the server SSL_get_verify_result() is the client certificate's
+         * result, unrelated to ECH, so it is not consulted here.
+         */
+        if (s->server == 0)
+            vr = SSL_get_verify_result(ssl);
         if (sinner != NULL
             && (*inner_sni = OPENSSL_strdup(sinner)) == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);

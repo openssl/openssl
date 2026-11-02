@@ -21,7 +21,7 @@ Table of Contents
    - [Compiler Warnings](#compiler-warnings)
    - [Compression Algorithm Flags](#compression-algorithm-flags)
    - [Seeding the Random Generator](#seeding-the-random-generator)
-   - [Setting the FIPS HMAC key](#setting-the-FIPS-HMAC-key)
+   - [Setting the FIPS HMAC key](#setting-the-fips-hmac-key)
    - [Enable and Disable Features](#enable-and-disable-features)
    - [Displaying configuration data](#displaying-configuration-data)
  - [Installation Steps in Detail](#installation-steps-in-detail)
@@ -698,6 +698,16 @@ Don't automatically load the default `openssl.cnf` file.
 Typically OpenSSL will automatically load a system config file which configures
 default SSL options.
 
+### no-buildinfo-cflags
+
+Don't record the compiler command line and flags in libcrypto.
+
+By default they are reported by `OpenSSL_version(OPENSSL_CFLAGS)` and
+`openssl version -f`.  As they may contain environment specific paths and
+flags, they make it harder to build bit-for-bit identical binaries in
+different build environments.  With this option they are reported as
+`compiler: information not available` instead.
+
 ### enable-buildtest-c++
 
 While testing, generate C++ buildtest files that simply check that the public
@@ -787,9 +797,9 @@ Enable legacy TLS EC groups that were deprecated in RFC8422.  These are the
 Koblitz curves, B<secp160r1>, B<secp160r2>, B<secp192r1>, B<secp224r1>, and the
 binary Elliptic curves that would also be disabled by C<no-ec2m>.
 
-### enable-ec_expicit_curves
+### enable-ec_explicit_curves
 
-Enable support for explictitly specified elliptic curves not matching the
+Enable support for explicitly specified elliptic curves not matching the
 well-known ones. Until this option is on, such curves can't be instantiated
 from ASN.1 formats.
 

@@ -55,9 +55,11 @@ ASN1_SEQUENCE(IPAddressFamily) = {
 
 ASN1_ITEM_TEMPLATE(IPAddrBlocks) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,
     IPAddrBlocks, IPAddressFamily)
-static_ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
+ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
 
-    IMPLEMENT_ASN1_FUNCTIONS(IPAddressRange)
+IMPLEMENT_ASN1_FUNCTIONS_fname(IPAddrBlocks, IPAddrBlocks, IPAddrBlocks)
+
+IMPLEMENT_ASN1_FUNCTIONS(IPAddressRange)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressOrRange)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressChoice)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressFamily)
@@ -93,6 +95,21 @@ unsigned int X509v3_addr_get_afi(const IPAddressFamily *f)
         || f->addressFamily->length < 2)
         return 0;
     return (f->addressFamily->data[0] << 8) | f->addressFamily->data[1];
+}
+
+/*
+ * Get SAFI from an IPAdressFamily.
+ */
+unsigned int X509v3_addr_get_safi(const IPAddressFamily *f)
+{
+    if (f == NULL
+        || f->addressFamily == NULL
+        || f->addressFamily->data == NULL
+        || f->addressFamily->length < 3) {
+        return 0;
+    }
+
+    return f->addressFamily->data[2];
 }
 
 /*

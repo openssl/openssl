@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,7 +20,6 @@ typedef struct quic_fifd_st QUIC_FIFD;
 typedef struct quic_cfq_st QUIC_CFQ;
 typedef struct ossl_quic_tx_packetiser_st OSSL_QUIC_TX_PACKETISER;
 typedef struct ossl_ackm_st OSSL_ACKM;
-typedef struct quic_srt_elem_st QUIC_SRT_ELEM;
 typedef struct ossl_cc_data_st OSSL_CC_DATA;
 typedef struct ossl_cc_method_st OSSL_CC_METHOD;
 typedef struct quic_stream_map_st QUIC_STREAM_MAP;
@@ -43,6 +42,7 @@ typedef struct quic_conn_st QUIC_CONNECTION;
 typedef struct quic_xso_st QUIC_XSO;
 typedef struct quic_listener_st QUIC_LISTENER;
 typedef struct quic_domain_st QUIC_DOMAIN;
+typedef struct quic_rstream_qparm_st QUIC_RSTREAM_QPARM;
 
 #endif
 

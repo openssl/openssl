@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/sockets.h"
+#include "internal/statem.h"
 #include <openssl/rand.h>
 
 static const unsigned char alpn_ossltest[] = {
@@ -241,6 +242,12 @@ DEF_FUNC(hf_new_ssl)
         && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
         goto err;
 
+    /* The interpreter must remain free to tick peers and advance the clock. */
+    if (!is_domain && !TEST_true(SSL_set_blocking_mode(ssl, 0))) {
+        SSL_free(ssl);
+        goto err;
+    }
+
     if (!TEST_true(ossl_quic_set_override_now_cb(ssl, get_time, NULL))) {
         SSL_free(ssl);
         goto err;
@@ -274,8 +281,11 @@ DEF_FUNC(hf_new_ssl_listener_from)
     if (!TEST_ptr(listener = SSL_new_listener_from(domain, flags)))
         goto err;
 
-    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL)))
+    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL))
+        || !TEST_true(SSL_set_blocking_mode(listener, 0))) {
+        SSL_free(listener);
         goto err;
+    }
 
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), listener_name, listener))) {
         SSL_free(listener);
@@ -381,6 +391,11 @@ DEF_FUNC(hf_accept_conn)
     if (conn == NULL)
         F_SPIN_AGAIN();
 
+    if (!TEST_true(SSL_set_blocking_mode(conn, 0))) {
+        SSL_free(conn);
+        goto err;
+    }
+
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), conn_name, conn))) {
         SSL_free(conn);
         goto err;
@@ -440,7 +455,7 @@ DEF_FUNC(hf_pop_err)
     return 1;
 }
 
-DEF_FUNC(hf_stream_reset)
+static int hf_stream_reset_impl(FUNC_CTX *fctx, int expect_success)
 {
     int ok = 0;
     const char *name;
@@ -450,12 +465,27 @@ DEF_FUNC(hf_stream_reset)
     F_POP2(name, args.quic_error_code);
     REQUIRE_SSL(ssl);
 
-    if (!TEST_true(SSL_stream_reset(ssl, &args, sizeof(args))))
-        goto err;
+    if (expect_success) {
+        if (!TEST_true(SSL_stream_reset(ssl, &args, sizeof(args))))
+            goto err;
+    } else {
+        if (!TEST_false(SSL_stream_reset(ssl, &args, sizeof(args))))
+            goto err;
+    }
 
     ok = 1;
 err:
     return ok;
+}
+
+DEF_FUNC(hf_stream_reset)
+{
+    return hf_stream_reset_impl(fctx, 1);
+}
+
+DEF_FUNC(hf_stream_reset_fail)
+{
+    return hf_stream_reset_impl(fctx, 0);
 }
 
 DEF_FUNC(hf_set_default_stream_mode)
@@ -468,6 +498,23 @@ DEF_FUNC(hf_set_default_stream_mode)
     REQUIRE_SSL(ssl);
 
     if (!TEST_true(SSL_set_default_stream_mode(ssl, (uint32_t)mode)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_event_handling_mode)
+{
+    int ok = 0;
+    uint64_t mode;
+    SSL *ssl;
+
+    F_POP(mode);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_set_event_handling_mode(ssl, mode)))
         goto err;
 
     ok = 1;
@@ -493,7 +540,7 @@ err:
     return ok;
 }
 
-DEF_FUNC(hf_shutdown_wait)
+static int hf_shutdown_impl(FUNC_CTX *fctx, int retry)
 {
     int ok = 0, ret;
     uint64_t flags;
@@ -513,12 +560,31 @@ DEF_FUNC(hf_shutdown_wait)
     if (!TEST_int_ge(ret, 0))
         goto err;
 
-    if (ret == 0)
+    if (retry && ret == 0)
         F_SPIN_AGAIN();
 
     ok = 1;
 err:
     return ok;
+}
+
+DEF_FUNC(hf_shutdown_wait)
+{
+    return hf_shutdown_impl(fctx, 1);
+}
+
+/*
+ * Like hf_shutdown_wait, but only calls SSL_shutdown_ex() once rather than
+ * retrying until it reports the shutdown fully complete. Use only when the
+ * script itself is testing an app-managed, poll-driven shutdown sequence
+ * (e.g. a single non-blocking SSL_shutdown_ex() call followed by the script
+ * manually polling and re-driving shutdown) — hf_shutdown_wait's retry loop
+ * would otherwise drive the shutdown to completion here and there, silently
+ * bypassing the very sequence under test.
+ */
+DEF_FUNC(hf_shutdown_once)
+{
+    return hf_shutdown_impl(fctx, 0);
 }
 
 DEF_FUNC(hf_conclude)
@@ -576,8 +642,13 @@ DEF_FUNC(hf_write)
     REQUIRE_SSL(ssl);
 
     r = SSL_write_ex(ssl, buf, buf_len, &bytes_written);
+    if (!check_consistent_want(ssl, r))
+        goto err;
+
+    if (r == 0 && is_want(ssl, r))
+        F_SPIN_AGAIN();
+
     if (!TEST_true(r)
-        || !check_consistent_want(ssl, r)
         || !TEST_size_t_eq(bytes_written, buf_len))
         goto err;
 
@@ -728,11 +799,19 @@ err:
     return ok;
 }
 
+/*
+ * If tolerate_failure is set, tolerates the connection attempt itself failing
+ * (rather than the connection later closing after a successful handshake),
+ * for scripts where fault injection is expected to prevent the handshake
+ * from completing at all.
+ */
 DEF_FUNC(hf_connect_wait)
 {
     int ok = 0, ret;
     SSL *ssl;
+    uint64_t tolerate_failure;
 
+    F_POP(tolerate_failure);
     REQUIRE_SSL(ssl);
 
     /* if not started */
@@ -756,7 +835,7 @@ DEF_FUNC(hf_connect_wait)
         if (is_want(ssl, ret))
             F_SPIN_AGAIN();
 
-        if (!TEST_int_eq(ret, 1))
+        if (!tolerate_failure && !TEST_int_eq(ret, 1))
             goto err;
     }
 
@@ -1325,6 +1404,38 @@ static ossl_inline radix_fault_plain_cb radix_fault_ptr_to_plain_cb(void *ptr)
     return u.cb;
 }
 
+/*
+ * Handshake (crypto stream) message mutator, used to tamper with a QUIC
+ * connection's outgoing TLS handshake messages before they are queued for
+ * transmission.
+ */
+typedef int (*radix_fault_handshake_cb)(RADIX_FAULT *fault,
+    unsigned char *buf, size_t len);
+
+static ossl_inline void *
+radix_fault_handshake_cb_to_ptr(radix_fault_handshake_cb cb)
+{
+    union {
+        radix_fault_handshake_cb cb;
+        void *ptr;
+    } u;
+
+    u.cb = cb;
+    return u.ptr;
+}
+
+static ossl_inline radix_fault_handshake_cb
+radix_fault_ptr_to_handshake_cb(void *ptr)
+{
+    union {
+        radix_fault_handshake_cb cb;
+        void *ptr;
+    } u;
+
+    u.ptr = ptr;
+    return u.cb;
+}
+
 struct radix_fault_st {
     QUIC_PKT_HDR hdr;
     OSSL_QTX_IOVEC io;
@@ -1332,6 +1443,10 @@ struct radix_fault_st {
     radix_fault_plain_cb cb;
     QUIC_CHANNEL *ch;
     uint64_t word0, word1;
+    /* Handshake message mutator state. */
+    unsigned char *handbuf;
+    size_t handbuflen, handbufalloc;
+    radix_fault_handshake_cb hcb;
 };
 
 /* Fault injection against one channel at a time. */
@@ -1450,6 +1565,73 @@ static int radix_fault_prepend_frame(RADIX_FAULT *fault,
     return 1;
 }
 
+#define RADIX_FAULT_GROWTH_ALLOWANCE 1024
+
+static int radix_fault_handshake_mutate(const unsigned char *msgin,
+    size_t msginlen,
+    unsigned char **msgout, size_t *msgoutlen,
+    void *arg)
+{
+    RADIX_FAULT *fault = arg;
+    unsigned char *buf;
+
+    buf = OPENSSL_malloc(msginlen + RADIX_FAULT_GROWTH_ALLOWANCE);
+    if (buf == NULL)
+        return 0;
+
+    OPENSSL_free(fault->handbuf);
+    fault->handbuf = buf;
+    fault->handbuflen = msginlen;
+    fault->handbufalloc = msginlen + RADIX_FAULT_GROWTH_ALLOWANCE;
+    memcpy(buf, msgin, msginlen);
+
+    if (fault->hcb != NULL && !fault->hcb(fault, buf, fault->handbuflen))
+        return 0;
+
+    *msgout = buf;
+    *msgoutlen = fault->handbuflen;
+
+    return 1;
+}
+
+static void radix_fault_handshake_finish(void *arg)
+{
+    RADIX_FAULT *fault = arg;
+
+    OPENSSL_free(fault->handbuf);
+    fault->handbuf = NULL;
+}
+
+static int radix_fault_resize_handshake(RADIX_FAULT *fault, size_t newlen)
+{
+    unsigned char *buf;
+    size_t oldlen = fault->handbuflen;
+
+    if (fault->handbufalloc == 0 || newlen > fault->handbufalloc)
+        return 0;
+
+    buf = fault->handbuf;
+
+    if (newlen > oldlen)
+        memset(buf + oldlen, 0, newlen - oldlen);
+
+    fault->handbuflen = newlen;
+
+    return 1;
+}
+
+static int radix_fault_resize_message(RADIX_FAULT *fault, size_t newlen)
+{
+    if (!radix_fault_resize_handshake(fault, newlen + SSL3_HM_HEADER_LENGTH))
+        return 0;
+
+    fault->handbuf[1] = (unsigned char)((newlen >> 16) & 0xff);
+    fault->handbuf[2] = (unsigned char)((newlen >> 8) & 0xff);
+    fault->handbuf[3] = (unsigned char)((newlen) & 0xff);
+
+    return 1;
+}
+
 DEF_FUNC(hf_set_inject_plain)
 {
     int ok = 0;
@@ -1482,6 +1664,75 @@ DEF_FUNC(hf_set_inject_word)
     int ok = 0;
 
     F_POP2(radix_fault.word0, radix_fault.word1);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+/*
+ * Arms the handshake mutator callback without attaching it to any
+ * connection yet. Used by scripts that need to intercept a server's very
+ * first handshake flight: the corresponding connection does not exist until
+ * a client's Initial packet is accepted, by which point that first flight
+ * has typically already been generated, so the mutator must instead be
+ * installed from a SSL_CTX client_hello callback (see script_54 for an
+ * example) armed with this callback beforehand.
+ */
+DEF_FUNC(hf_set_inject_handshake_cb)
+{
+    int ok = 0;
+    void *cbptr;
+
+    F_POP(cbptr);
+
+    OPENSSL_free(radix_fault.handbuf);
+    radix_fault.handbuf = NULL;
+    radix_fault.handbuflen = 0;
+    radix_fault.word0 = 0;
+    radix_fault.word1 = 0;
+    radix_fault.hcb = radix_fault_ptr_to_handshake_cb(cbptr);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_inject_handshake)
+{
+    int ok = 0;
+    SSL *ssl;
+    void *cbptr;
+
+    F_POP(cbptr);
+    REQUIRE_SSL(ssl);
+
+    OPENSSL_free(radix_fault.handbuf);
+    radix_fault.handbuf = NULL;
+    radix_fault.handbuflen = 0;
+    radix_fault.handbufalloc = 0;
+    radix_fault.word0 = 0;
+    radix_fault.word1 = 0;
+    radix_fault.hcb = radix_fault_ptr_to_handshake_cb(cbptr);
+
+    if (!TEST_true(ossl_statem_set_mutator(ssl, radix_fault_handshake_mutate,
+            radix_fault_handshake_finish, &radix_fault)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_new_ticket)
+{
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_new_session_ticket(ssl)))
+        goto err;
 
     ok = 1;
 err:
@@ -1538,6 +1789,173 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_set_max_early_data)
+{
+    int ok = 0;
+    uint64_t value;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    F_POP(value);
+    REQUIRE_SSL(ssl);
+
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_true(SSL_set_max_early_data(ossl_quic_channel_get0_tls(ch),
+            (uint32_t)value)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_stream_limit_probe)
+{
+    int ok = 0;
+    SSL *conn, *stream;
+    uint64_t flags, count, min_fail, fail_count = 0, i;
+    size_t written;
+
+    F_POP2(count, min_fail);
+    F_POP(flags);
+    REQUIRE_SSL(conn);
+
+    for (i = 0; i < count; ++i) {
+        stream = SSL_new_stream(conn, flags);
+        if (stream == NULL) {
+            if (!TEST_size_t_eq((size_t)ERR_GET_REASON(ERR_peek_last_error()),
+                    (size_t)SSL_R_STREAM_COUNT_LIMITED))
+                goto err;
+
+            ++fail_count;
+            continue;
+        }
+
+        if (!TEST_true(SSL_write_ex(stream, "apple", 5, &written))) {
+            SSL_free(stream);
+            goto err;
+        }
+
+        SSL_free(stream);
+    }
+
+    if (!TEST_uint64_t_ge(fail_count, min_fail))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_idle_timeout)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t value_class, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(value_class);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_value_uint(ssl, (uint32_t)value_class,
+            SSL_VALUE_QUIC_IDLE_TIMEOUT, &v))
+        || !TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_modify_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, requested, v = 0;
+
+    F_POP(requested);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    /* Test bad value is rejected. */
+    if (!TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            OSSL_QUIC_VLINT_MAX + 1)))
+        goto err;
+
+    /* Set value. */
+    if (!TEST_true(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            requested))
+        || !TEST_true(SSL_get_feature_request_uint(ssl, (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, requested))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_reject_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, bad;
+
+    F_POP(bad);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            bad)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, value_class, expected, v = 0;
+
+    F_POP(expected);
+    F_POP(value_class);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_value_uint(ssl, (uint32_t)value_class,
+            (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, expected))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_cannot_change_value_uint)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t ssl_value, current, requested, v = 0;
+
+    F_POP(requested);
+    F_POP(current);
+    F_POP(ssl_value);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_get_feature_request_uint(ssl, (uint32_t)ssl_value, &v))
+        || !TEST_uint64_t_eq(v, current)
+        || !TEST_false(SSL_set_feature_request_uint(ssl, (uint32_t)ssl_value,
+            requested)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -1557,6 +1975,12 @@ err:
 
 #define OP_CONNECT_WAIT(name) \
     (OP_SELECT_SSL(0, name),  \
+        OP_PUSH_U64(0),       \
+        OP_FUNC(hf_connect_wait))
+
+#define OP_CONNECT_WAIT_OR_FAIL(name) \
+    (OP_SELECT_SSL(0, name),          \
+        OP_PUSH_U64(1),               \
         OP_FUNC(hf_connect_wait))
 
 #define OP_LISTEN(name)      \
@@ -1709,6 +2133,11 @@ err:
         OP_PUSH_U64(mode),                     \
         OP_FUNC(hf_set_default_stream_mode))
 
+#define OP_SET_EVENT_HANDLING_MODE(name, mode) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(mode),                     \
+        OP_FUNC(hf_set_event_handling_mode))
+
 #define OP_SET_INCOMING_STREAM_POLICY(name, policy, error_code) \
     (OP_SELECT_SSL(0, name),                                    \
         OP_PUSH_U64(policy),                                    \
@@ -1721,12 +2150,25 @@ err:
         OP_PUSH_U64(error_code),          \
         OP_FUNC(hf_stream_reset))
 
+#define OP_STREAM_RESET_FAIL(name, error_code) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_PZ(#name),                     \
+        OP_PUSH_U64(error_code),               \
+        OP_FUNC(hf_stream_reset_fail))
+
 #define OP_SHUTDOWN_WAIT(name, flags, error_code, reason) \
     (OP_SELECT_SSL(0, name),                              \
         OP_PUSH_U64(flags),                               \
         OP_PUSH_U64(error_code),                          \
         OP_PUSH_PZ(reason),                               \
         OP_FUNC(hf_shutdown_wait))
+
+#define OP_SHUTDOWN_ONCE(name, flags, error_code, reason) \
+    (OP_SELECT_SSL(0, name),                              \
+        OP_PUSH_U64(flags),                               \
+        OP_PUSH_U64(error_code),                          \
+        OP_PUSH_PZ(reason),                               \
+        OP_FUNC(hf_shutdown_once))
 
 #define OP_EXPECT_FIN(name)  \
     (OP_SELECT_SSL(0, name), \
@@ -1858,6 +2300,19 @@ err:
         OP_PUSH_U64(word1),              \
         OP_FUNC(hf_set_inject_word))
 
+#define OP_SET_INJECT_HANDSHAKE_CB(cb)               \
+    (OP_PUSH_P(radix_fault_handshake_cb_to_ptr(cb)), \
+        OP_FUNC(hf_set_inject_handshake_cb))
+
+#define OP_SET_INJECT_HANDSHAKE(name, cb)               \
+    (OP_SELECT_SSL(0, name),                            \
+        OP_PUSH_P(radix_fault_handshake_cb_to_ptr(cb)), \
+        OP_FUNC(hf_set_inject_handshake))
+
+#define OP_NEW_TICKET(name)  \
+    (OP_SELECT_SSL(0, name), \
+        OP_FUNC(hf_new_ticket))
+
 #define OP_PUSH_STREAM_ID_PLUS_ONE(name) \
     (OP_SELECT_SSL(0, name),             \
         OP_FUNC(hf_push_stream_id_plus_one))
@@ -1871,3 +2326,47 @@ err:
     (OP_SELECT_SSL(0, name),              \
         OP_PUSH_SIZE(size),               \
         OP_FUNC(hf_set_write_buf_size))
+
+#define OP_SET_MAX_EARLY_DATA(name, value) \
+    (OP_SELECT_SSL(0, name),               \
+        OP_PUSH_U64(value),                \
+        OP_FUNC(hf_set_max_early_data))
+
+#define OP_STREAM_LIMIT_PROBE(conn_name, flags, count, min_fail) \
+    (OP_SELECT_SSL(0, conn_name),                                \
+        OP_PUSH_U64(flags),                                      \
+        OP_PUSH_U64(count),                                      \
+        OP_PUSH_U64(min_fail),                                   \
+        OP_FUNC(hf_stream_limit_probe))
+
+#define OP_CHECK_IDLE_TIMEOUT(name, value_class, expected_ms) \
+    (OP_SELECT_SSL(0, name),                                  \
+        OP_PUSH_U64(value_class),                             \
+        OP_PUSH_U64(expected_ms),                             \
+        OP_FUNC(hf_check_idle_timeout))
+
+#define OP_MODIFY_VALUE_UINT(name, ssl_value, requested) \
+    (OP_SELECT_SSL(0, name),                             \
+        OP_PUSH_U64(ssl_value),                          \
+        OP_PUSH_U64(requested),                          \
+        OP_FUNC(hf_modify_value_uint))
+
+#define OP_REJECT_VALUE_UINT(name, ssl_value, bad) \
+    (OP_SELECT_SSL(0, name),                       \
+        OP_PUSH_U64(ssl_value),                    \
+        OP_PUSH_U64(bad),                          \
+        OP_FUNC(hf_reject_value_uint))
+
+#define OP_CHECK_VALUE_UINT(name, ssl_value, value_class, expected) \
+    (OP_SELECT_SSL(0, name),                                        \
+        OP_PUSH_U64(ssl_value),                                     \
+        OP_PUSH_U64(value_class),                                   \
+        OP_PUSH_U64(expected),                                      \
+        OP_FUNC(hf_check_value_uint))
+
+#define OP_CANNOT_CHANGE_VALUE_UINT(name, ssl_value, current, requested) \
+    (OP_SELECT_SSL(0, name),                                             \
+        OP_PUSH_U64(ssl_value),                                          \
+        OP_PUSH_U64(current),                                            \
+        OP_PUSH_U64(requested),                                          \
+        OP_FUNC(hf_cannot_change_value_uint))

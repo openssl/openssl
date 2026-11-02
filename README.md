@@ -4,10 +4,10 @@ Welcome to the OpenSSL Project
 [![openssl logo]][www.openssl.org]
 
 [![github actions ci badge]][github actions ci]
-[![Nightly OS Zoo ci badge](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml)
+[![Nightly OS Zoo ci badge](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml/badge.svg?event=schedule)](https://github.com/openssl/openssl/actions/workflows/os-zoo.yml)
 [![Provider Compatibility](https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/provider-compatibility.yml)
 [![Quic Interop](https://github.com/openssl/openssl/actions/workflows/run_quic_interop.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/run_quic_interop.yml)
-[![Daily checks](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml/badge.svg)](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml)
+[![Daily checks](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml/badge.svg?event=schedule)](https://github.com/openssl/openssl/actions/workflows/run-checker-daily.yml)
 [![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=openssl)](https://insights.linuxfoundation.org/project/openssl)
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
@@ -41,7 +41,7 @@ The OpenSSL toolkit includes:
 
 - **libssl**
   an implementation of all TLS protocol versions up to TLSv1.3 ([RFC 8446]),
-  DTLS protocol versions up to DTLSv1.2 ([RFC 6347]) and
+  DTLS protocol versions up to DTLSv1.3 ([RFC 9147]) and
   the QUIC version 1 protocol ([RFC 9000]).
 
 - **libcrypto**
@@ -150,11 +150,10 @@ The manual pages for the master branch and all current stable releases are
 available online.
 
 - [OpenSSL master](https://docs.openssl.org/master/)
+- [OpenSSL 4.1](https://docs.openssl.org/4.1/)
 - [OpenSSL 4.0](https://docs.openssl.org/4.0/)
 - [OpenSSL 3.6](https://docs.openssl.org/3.6/)
 - [OpenSSL 3.5](https://docs.openssl.org/3.5/)
-- [OpenSSL 3.4](https://docs.openssl.org/3.4/)
-- [OpenSSL 3.0](https://docs.openssl.org/3.0/)
 
 Demos
 -----
@@ -230,6 +229,9 @@ All rights reserved.
 
 [RFC 9000]:
      <https://tools.ietf.org/html/rfc9000>
+
+[RFC 9147]:
+    <https://tools.ietf.org/html/rfc9147>
 
 [Binaries]:
     <https://github.com/openssl/openssl/wiki/Binaries>

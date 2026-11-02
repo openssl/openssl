@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,9 +17,12 @@
 #include "crypto/evp.h"
 #include "crypto/ml_dsa.h"
 
+static int do_fips = 0;
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
+    OPT_FIPS,
     OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
@@ -355,6 +358,32 @@ err:
     return ret;
 }
 
+static int ml_dsa_newdata_bad_propq_test(void)
+{
+    int ret = 0;
+    EVP_KEYMGMT *keymgmt = NULL;
+    void *keydata = NULL;
+    OSSL_PARAM params[2];
+
+    if (do_fips)
+        return TEST_skip("FIPS not supported");
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,
+        "provider=fail", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(lib_ctx, "ML-DSA-44", NULL)))
+        goto end;
+
+    if (!TEST_ptr_null(keydata = evp_keymgmt_newdata(keymgmt, params)))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_KEYMGMT_free(keymgmt);
+    return ret;
+}
+
 static int from_data_invalid_public_test(void)
 {
     int ret = 0;
@@ -617,6 +646,86 @@ err:
     return ret;
 }
 
+/*
+ * Finalizing an ML-DSA-MU digest that has had no message data supplied.
+ *
+ * For pure ML-DSA (no "digest" parameter) the empty message is a valid input,
+ * so mu is well defined and the final must succeed.
+ *
+ * For HASH-ML-DSA (a "digest" parameter is set) the input must be a prehashed
+ * message whose size matches the digest, so a prehash of the empty message is
+ * never itself empty and the final must fail.
+ */
+static const char *ml_dsa_mu_empty_message_digest[] = {
+    NULL,
+    "SHA-512",
+};
+
+static int ml_dsa_mu_empty_message_final_test(int tst)
+{
+    const char *digestname = ml_dsa_mu_empty_message_digest[tst / 2];
+    int zero_length_update = tst % 2;
+    int expected = (digestname == NULL);
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    EVP_MD *md = NULL, *shake = NULL;
+    EVP_MD_CTX *mdctx = NULL, *refctx = NULL;
+    uint8_t pub[ML_DSA_44_PUB_LEN];
+    uint8_t mu[ML_DSA_MU_BYTES], expected_mu[ML_DSA_MU_BYTES];
+    uint8_t tr[64];
+    static const uint8_t prefix[] = { 0, 0 };
+    size_t publen = 0;
+    OSSL_PARAM params[3], *p = params;
+
+    if (!TEST_ptr(key = do_gen_key("ML-DSA-44", NULL, 0))
+        || !TEST_true(EVP_PKEY_get_octet_string_param(key,
+            OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub), &publen)))
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_PUB_KEY,
+        pub, publen);
+    if (digestname != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MU_DIGEST,
+            (char *)digestname, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(md = EVP_MD_fetch(lib_ctx, "ML-DSA-MU", NULL))
+        || !TEST_ptr(mdctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestInit_ex2(mdctx, md, params)))
+        goto err;
+
+    /* EVP returns early for a zero-length update without calling mu_update. */
+    if (zero_length_update && !TEST_true(EVP_DigestUpdate(mdctx, NULL, 0)))
+        goto err;
+
+    if (!TEST_int_eq(EVP_DigestFinalXOF(mdctx, mu, sizeof(mu)), expected))
+        goto err;
+
+    if (expected) {
+        /* Pure ML-DSA: mu = SHAKE256(SHAKE256(pub, 64) || 0 || 0, 64). */
+        if (!TEST_ptr(shake = EVP_MD_fetch(lib_ctx, "SHAKE256", NULL))
+            || !TEST_ptr(refctx = EVP_MD_CTX_new())
+            || !TEST_true(EVP_DigestInit_ex2(refctx, shake, NULL))
+            || !TEST_true(EVP_DigestUpdate(refctx, pub, publen))
+            || !TEST_true(EVP_DigestFinalXOF(refctx, tr, sizeof(tr)))
+            || !TEST_true(EVP_DigestInit_ex2(refctx, shake, NULL))
+            || !TEST_true(EVP_DigestUpdate(refctx, tr, sizeof(tr)))
+            || !TEST_true(EVP_DigestUpdate(refctx, prefix, sizeof(prefix)))
+            || !TEST_true(EVP_DigestFinalXOF(refctx, expected_mu, sizeof(expected_mu)))
+            || !TEST_mem_eq(mu, sizeof(mu), expected_mu, sizeof(expected_mu)))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    EVP_MD_CTX_free(refctx);
+    EVP_MD_free(shake);
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_free(md);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 static int ml_dsa_priv_pub_bad_t0_test(void)
 {
     int ret = 0;
@@ -753,6 +862,7 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "fips", OPT_FIPS, '-', "Test with FIPS provider" },
         { "config", OPT_CONFIG_FILE, '<',
             "The configuration file to use for the libctx" },
         { NULL }
@@ -767,6 +877,9 @@ int setup_tests(void)
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
+        case OPT_FIPS:
+            do_fips = 1;
+            break;
         case OPT_CONFIG_FILE:
             config_file = opt_arg();
             break;
@@ -797,6 +910,16 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
+    ADD_TEST(ml_dsa_newdata_bad_propq_test);
+    /*
+     * mu_final() dereferenced an uninitialised digest context for an empty
+     * message, so this test crashes against a FIPS provider that predates
+     * the fix.  Only run it where the provider has it.
+     */
+    if (fips_provider_version_ge(lib_ctx, 4, 0, 4)) {
+        ADD_ALL_TESTS(ml_dsa_mu_empty_message_final_test,
+            2 * OSSL_NELEM(ml_dsa_mu_empty_message_digest));
+    }
 
     /*
      * Tested only in the default configuration, with a non-default provider

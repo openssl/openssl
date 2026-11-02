@@ -2,7 +2,7 @@
 # This file is dual-licensed, meaning that you can use it under your
 # choice of either of the following two licenses:
 #
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License"). You can obtain
 # a copy in the file LICENSE in the source distribution or at
@@ -10,7 +10,7 @@
 #
 # or
 #
-# Copyright (c) 2025, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
+# Copyright (c) 2025-2026, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,31 +61,39 @@ my $SM3K = "SM3K";
 
 # Function arguments
 my ($INP, $LEN, $ADDR) = ("a1", "a2", "sp");
-my ($TMP0, $TMP1, $Wi, $Wj) = ("a3", "a4", "t5", "t6");
+my ($TMP0, $TMP1) = ("a3", "a4");
 my ($KT, $T1, $T2, $T3, $T4, $T5, $T6) = ("t0", "t1", "t2", "t3", "t4", "t5", "t6");
 my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ("s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9");
 my ($W9, $W10, $W11, $W12, $W13 ,$W14 ,$W15) = ("s0", "s1", "a5", "a6", "a7", "s10", "s11");
 my @W = (undef, undef, undef, undef, undef, undef, undef, undef, undef,
         $W9, $W10, $W11, $W12, $W13, $W14, $W15);
+# Misaligned input only; they reuse round temporaries, so are set up per block
+my ($BASE, $SHL, $SHR) = ($T3, $T4, $T5);
+my ($MISALIGNED_INPUT, $ALIGNED_INPUT) = (0, 1);
 
-sub load {
-    my ($rd, $index, $offset) = @_;
-    my $masked = (($index-$offset)& 0x0F);
-    if ($masked < 9) {
-        return "lw $rd, (($index-$offset)&0x0F)*4($ADDR)";
-    } else {
-        return "mv $rd, $W[$masked]";
-    }
+# W[9..15] live in registers, the rest on the stack; Wload/Wstore skip registers
+sub Wreg {
+    my ($index, $offset, $scratch) = @_;
+    my $masked = (($index-$offset) & 0x0F);
+    return $masked < 9 ? $scratch : $W[$masked];
 }
 
-sub store {
-    my ($rs, $index, $offset) = @_;
-    my $masked = (($index-$offset)& 0x0F);
-    if ($masked < 9) {
-        return "sw $rs, (($index-$offset)&0x0F)*4($ADDR)";
-    } else {
-        return "mv $W[$masked], $rs";
+sub Wload {
+    my ($scratch, $index, $offset) = @_;
+    my $masked = (($index-$offset) & 0x0F);
+    if ($masked >= 9) {
+        return "";
     }
+    return "lw $scratch, (($index-$offset)&0x0F)*4($ADDR)";
+}
+
+sub Wstore {
+    my ($scratch, $index, $offset) = @_;
+    my $masked = (($index-$offset) & 0x0F);
+    if ($masked >= 9) {
+        return "";
+    }
+    return "sw $scratch, (($index-$offset)&0x0F)*4($ADDR)";
 }
 
 sub FG0 {
@@ -101,8 +109,8 @@ sub FF1 {
     my ($X, $Y, $Z) = @_;
     my $code=<<___;
     or $TMP0, $X, $Y
-    and $TMP0, $TMP0, $Z
     and $TMP1, $X, $Y
+    and $TMP0, $TMP0, $Z
     or $TMP0, $TMP0, $TMP1
 ___
     return $code;
@@ -123,8 +131,8 @@ sub P0 {
     my $code=<<___;
     @{[roriw $TMP0, $X, 23]}
     @{[roriw $TMP1, $X, 15]}
-    xor $TMP0, $TMP0, $TMP1
-    xor $X, $X, $TMP0
+    xor $TMP0, $TMP0, $X
+    xor $X, $TMP0, $TMP1
 ___
     return $code;
 }
@@ -134,54 +142,64 @@ sub P1 {
     my $code=<<___;
     @{[roriw $TMP0, $X, 17]}
     @{[roriw $TMP1, $X, 9]}
-    xor $TMP0, $TMP0, $TMP1
-    xor $X, $X, $TMP0
+    xor $TMP0, $TMP0, $X
+    xor $X, $TMP0, $TMP1
 ___
     return $code;
 }
 
+# W[j] = P1(W[j-16] ^ W[j-9] ^ ROTL(W[j-3], 15)) ^ ROTL(W[j-13], 7) ^ W[j-6]
 sub EXPAND {
     my ($index) = @_;
-    my $code = <<___;
-    @{[load $T1, $index, 0]}
-    @{[load $T2, $index, 9]}
-    @{[load $T3, $index, 3]}
-    @{[load $T4, $index, 13]}
-    @{[load $T5, $index, 6]}
-    xor $TMP0, $T1, $T2
-    @{[roriw $TMP1, $T3, 17]}
-    xor $T6, $TMP0, $TMP1
-    @{[P1 $T6]}
-    @{[roriw $TMP1, $T4, 25]}
-    xor $T6, $T6, $TMP1
-    xor $T6, $T6, $T5
-    @{[store $T6, $index, 0]}
+    my $w16 = Wreg($index, 0, $T1);
+    my $w9 = Wreg($index, 9, $T2);
+    my $w3 = Wreg($index, 3, $T3);
+    my $w13 = Wreg($index, 13, $T4);
+    my $w6 = Wreg($index, 6, $T5);
+    # W[j] overwrites W[j-16], so W[j-16] is read first
+    my $wj = Wreg($index, 0, $T6);
+    my $code=<<___;
+    @{[Wload $T1, $index, 0]}
+    @{[Wload $T2, $index, 9]}
+    @{[Wload $T3, $index, 3]}
+    @{[Wload $T4, $index, 13]}
+    @{[Wload $T5, $index, 6]}
+    xor $TMP0, $w16, $w9
+    @{[roriw $TMP1, $w3, 17]}
+    @{[roriw $T1, $w13, 25]}
+    xor $wj, $TMP0, $TMP1
+    xor $T1, $T1, $w6
+    @{[P1 $wj]}
+    xor $wj, $wj, $T1
+    @{[Wstore $T6, $index, 0]}
 ___
     return $code;
 }
 
 sub SM3ROUND1 {
     my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
+    my $wj = Wreg($index, 0, $T5);   # W[j]
+    my $w4 = Wreg($index, 12, $T2);  # W[j+4]
     my $code=<<___;
-    @{[load $Wi, $index, 0]}
-    @{[load $T2, $index, 12]}
-    xor $Wj, $Wi, $T2
-    lw $T1, 4*$index($KT)
+    @{[Wload $T5, $index, 0]}
+    @{[Wload $T2, $index, 12]}
+    lw $T1, 4*$index($KT) # T1 = Tj
+    xor $T6, $wj, $w4 # T6 = W'[j] = W[j] ^ W[j+4]
     @{[roriw $T2, $a, 20]} # T2 = A12
-    addw $T3, $T2, $e # T3 = A12_SM = A12 + E
-    addw $T3, $T3, $T1 # T3 = A12_SM = A12 + E + Tj
-    @{[roriw $T3, $T3, 25]} # T3 = SS1
     @{[FG0 $a, $b, $c]}
+    addw $T3, $T2, $T1 # T3 = A12 + Tj
     addw $T4, $TMP0, $d # T4 = FF + D
-    xor $T1, $T3, $T2 # T1 = SS1 ^ A12
-    addw $T1, $T1, $T4 # T1 = T4 + T1 = FF + D + (SS1 ^ A12)
-    addw $d, $T1, $Wj # d = T1 + Wj
+    addw $T3, $T3, $e # T3 = A12 + Tj + E
+    addw $T4, $T4, $T6 # T4 = FF + D + W'
+    @{[roriw $T3, $T3, 25]} # T3 = SS1
+    addw $h, $h, $wj # h = H + W
+    xor $T1, $T3, $T2 # T1 = SS2 = SS1 ^ A12
     @{[FG0 $e, $f, $g]}
+    addw $d, $T1, $T4 # d = TT1
     @{[roriw $b, $b, 23]}
-    @{[roriw $f, $f, 13]}
     addw $T1, $TMP0, $T3 # T1 = GG + SS1
-    addw $T1, $T1, $Wi # T1 = GG + SS1 + Wj
-    addw $h, $h, $T1
+    @{[roriw $f, $f, 13]}
+    addw $h, $h, $T1 # h = TT2
     @{[P0 $h]}
 
 ___
@@ -190,107 +208,94 @@ ___
 
 sub SM3ROUND2 {
     my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
+    my $wj = Wreg($index, 0, $T5);   # W[j]
+    my $w4 = Wreg($index, 12, $T2);  # W[j+4]
     my $code=<<___;
-    @{[load $Wi, $index, 0]}
-    @{[load $T2, $index, 12]}
-    xor $Wj, $Wi, $T2
-    lw $T1, 4*$index($KT)
+    @{[Wload $T5, $index, 0]}
+    @{[Wload $T2, $index, 12]}
+    lw $T1, 4*$index($KT) # T1 = Tj
+    xor $T6, $wj, $w4 # T6 = W'[j] = W[j] ^ W[j+4]
     @{[roriw $T2, $a, 20]} # T2 = A12
-    addw $T3, $T2, $e # T3 = A12_SM = A12 + E
-    addw $T3, $T3, $T1 # T3 = A12_SM = A12 + E + Tj
-    @{[roriw $T3, $T3, 25]} # T3 = SS1
     @{[FF1 $a, $b, $c]}
+    addw $T3, $T2, $T1 # T3 = A12 + Tj
     addw $T4, $TMP0, $d # T4 = FF + D
-    xor $T1, $T3, $T2 # T1 = SS1 ^ A12
-    addw $T1, $T1, $T4 # T1 = T4 + T1 = FF + D + (SS1 ^ A12)
-    addw $d, $T1, $Wj # d = T1 + Wj
+    addw $T3, $T3, $e # T3 = A12 + Tj + E
+    addw $T4, $T4, $T6 # T4 = FF + D + W'
+    @{[roriw $T3, $T3, 25]} # T3 = SS1
+    addw $h, $h, $wj # h = H + W
+    xor $T1, $T3, $T2 # T1 = SS2 = SS1 ^ A12
     @{[GG1 $e, $f, $g]}
+    addw $d, $T1, $T4 # d = TT1
     @{[roriw $b, $b, 23]}
-    @{[roriw $f, $f, 13]}
     addw $T1, $TMP0, $T3 # T1 = GG + SS1
-    addw $T1, $T1, $Wi # T1 = GG + SS1 + Wj
-    addw $h, $h, $T1
+    @{[roriw $f, $f, 13]}
+    addw $h, $h, $T1 # h = TT2
     @{[P0 $h]}
 
 ___
     return $code;
 }
 
-sub loadMsgRev32 {
+# Misaligned: $dst = (lo >> SHL) | (hi << SHR) from two aligned loads
+sub loadDword {
+    my ($ALIGNED, $dst, $off) = @_;
+    if ($ALIGNED) {
+        return "ld $dst, $off($INP)";
+    }
     my $code=<<___;
+    ld $TMP0, $off($BASE)
+    ld $TMP1, ($off+8)($BASE)
+    srl $dst, $TMP0, $SHL
+    sll $TMP1, $TMP1, $SHR
+    or $dst, $dst, $TMP1
+___
+    return $code;
+}
 
-    lw $T1, ($INP)
+# One ld plus rev8 yields two message words, the first in the top half
+sub loadMsgRev32 {
+    my ($ALIGNED) = @_;
+    my $code=<<___;
+    @{[loadDword $ALIGNED, $T1, 0]}
     @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
-    sw $T1, ($ADDR)
-
-    lw $T1, 4($INP)
-    @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
+    srli $T2, $T1, 32
+    sw $T2, 0($ADDR)
     sw $T1, 4($ADDR)
 
-    lw $T1, 8($INP)
+    @{[loadDword $ALIGNED, $T1, 8]}
     @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
-    sw $T1, 8($ADDR)
-
-    lw $T1, 12($INP)
-    @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
+    srli $T2, $T1, 32
+    sw $T2, 8($ADDR)
     sw $T1, 12($ADDR)
 
-    lw $T1, 16($INP)
+    @{[loadDword $ALIGNED, $T1, 16]}
     @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
-    sw $T1, 16($ADDR)
-
-    lw $T1, 20($INP)
-    @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
+    srli $T2, $T1, 32
+    sw $T2, 16($ADDR)
     sw $T1, 20($ADDR)
 
-    lw $T1, 24($INP)
+    @{[loadDword $ALIGNED, $T1, 24]}
     @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
-    sw $T1, 24($ADDR)
-
-    lw $T1, 28($INP)
-    @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
+    srli $T2, $T1, 32
+    sw $T2, 24($ADDR)
     sw $T1, 28($ADDR)
 
-    lw $T1, 32($INP)
-    @{[rev8 $T1, $T1]}
-    srli $T1, $T1, 32
-    sw $T1, 32($ADDR)
+    @{[loadDword $ALIGNED, $W9, 32]}
+    @{[rev8 $W9, $W9]}
+    srli $T2, $W9, 32
+    sw $T2, 32($ADDR)
 
-    lw $T1, 36($INP)
-    @{[rev8 $T1, $T1]}
-    srli $W9, $T1, 32
+    @{[loadDword $ALIGNED, $W11, 40]}
+    @{[rev8 $W11, $W11]}
+    srli $W10, $W11, 32
 
-    lw $T1, 40($INP)
-    @{[rev8 $T1, $T1]}
-    srli $W10, $T1, 32
+    @{[loadDword $ALIGNED, $W13, 48]}
+    @{[rev8 $W13, $W13]}
+    srli $W12, $W13, 32
 
-    lw $T1, 44($INP)
-    @{[rev8 $T1, $T1]}
-    srli $W11, $T1, 32
-
-    lw $T1, 48($INP)
-    @{[rev8 $T1, $T1]}
-    srli $W12, $T1, 32
-
-    lw $T1, 52($INP)
-    @{[rev8 $T1, $T1]}
-    srli $W13, $T1, 32
-
-    lw $T1, 56($INP)
-    @{[rev8 $T1, $T1]}
-    srli $W14, $T1, 32
-
-    lw $T1, 60($INP)
-    @{[rev8 $T1, $T1]}
-    srli $W15, $T1, 32
+    @{[loadDword $ALIGNED, $W15, 56]}
+    @{[rev8 $W15, $W15]}
+    srli $W14, $W15, 32
 ___
     return $code;
 }
@@ -336,140 +341,58 @@ L_round_loop:
     # Decrement length by 1
     addi $LEN, $LEN, -1
 
-    @{[loadMsgRev32]}
+    andi $T1, $INP, 7
+    bnez $T1, L_load_misaligned
+    @{[loadMsgRev32 $ALIGNED_INPUT]}
+    j L_rounds
 
-    @{[SM3ROUND1 0, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 0]}
-    @{[SM3ROUND1 1, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 1]}
-    @{[SM3ROUND1 2, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 2]}
-    @{[SM3ROUND1 3, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 3]}
+L_load_misaligned:
+    andi $BASE, $INP, -8
+    andi $SHL, $INP, 7
+    slli $SHL, $SHL, 3
+    li $SHR, 64
+    sub $SHR, $SHR, $SHL
+    @{[loadMsgRev32 $MISALIGNED_INPUT]}
 
-    @{[SM3ROUND1 4, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 4]}
-    @{[SM3ROUND1 5, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 5]}
-    @{[SM3ROUND1 6, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 6]}
-    @{[SM3ROUND1 7, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 7]}
+L_rounds:
+___
 
-    @{[SM3ROUND1 8, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 8]}
-    @{[SM3ROUND1 9, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 9]}
-    @{[SM3ROUND1 10, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 10]}
-    @{[SM3ROUND1 11, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 11]}
+for (my $i = 0; $i < 16; $i += 4) {
+    $code .= <<___;
+    @{[SM3ROUND1 $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[EXPAND $i]}
+    @{[SM3ROUND1 $i+1, $D, $A, $B, $C, $H, $E, $F, $G]}
+    @{[EXPAND $i+1]}
+    @{[SM3ROUND1 $i+2, $C, $D, $A, $B, $G, $H, $E, $F]}
+    @{[EXPAND $i+2]}
+    @{[SM3ROUND1 $i+3, $B, $C, $D, $A, $F, $G, $H, $E]}
+    @{[EXPAND $i+3]}
+___
+}
 
-    @{[SM3ROUND1 12, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 12]}
-    @{[SM3ROUND1 13, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 13]}
-    @{[SM3ROUND1 14, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 14]}
-    @{[SM3ROUND1 15, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 15]}
+for (my $i = 16; $i < 52; $i += 4) {
+    $code .= <<___;
+    @{[SM3ROUND2 $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[EXPAND $i]}
+    @{[SM3ROUND2 $i+1, $D, $A, $B, $C, $H, $E, $F, $G]}
+    @{[EXPAND $i+1]}
+    @{[SM3ROUND2 $i+2, $C, $D, $A, $B, $G, $H, $E, $F]}
+    @{[EXPAND $i+2]}
+    @{[SM3ROUND2 $i+3, $B, $C, $D, $A, $F, $G, $H, $E]}
+    @{[EXPAND $i+3]}
+___
+}
 
-    @{[SM3ROUND2 16, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 16]}
-    @{[SM3ROUND2 17, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 17]}
-    @{[SM3ROUND2 18, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 18]}
-    @{[SM3ROUND2 19, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 19]}
+for (my $i = 52; $i < 64; $i += 4) {
+    $code .= <<___;
+    @{[SM3ROUND2 $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SM3ROUND2 $i+1, $D, $A, $B, $C, $H, $E, $F, $G]}
+    @{[SM3ROUND2 $i+2, $C, $D, $A, $B, $G, $H, $E, $F]}
+    @{[SM3ROUND2 $i+3, $B, $C, $D, $A, $F, $G, $H, $E]}
+___
+}
 
-    @{[SM3ROUND2 20, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 20]}
-    @{[SM3ROUND2 21, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 21]}
-    @{[SM3ROUND2 22, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 22]}
-    @{[SM3ROUND2 23, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 23]}
-
-    @{[SM3ROUND2 24, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 24]}
-    @{[SM3ROUND2 25, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 25]}
-    @{[SM3ROUND2 26, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 26]}
-    @{[SM3ROUND2 27, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 27]}
-
-    @{[SM3ROUND2 28, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 28]}
-    @{[SM3ROUND2 29, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 29]}
-    @{[SM3ROUND2 30, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 30]}
-    @{[SM3ROUND2 31, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 31]}
-
-    @{[SM3ROUND2 32, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 32]}
-    @{[SM3ROUND2 33, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 33]}
-    @{[SM3ROUND2 34, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 34]}
-    @{[SM3ROUND2 35, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 35]}
-
-    @{[SM3ROUND2 36, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 36]}
-    @{[SM3ROUND2 37, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 37]}
-    @{[SM3ROUND2 38, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 38]}
-    @{[SM3ROUND2 39, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 39]}
-
-    @{[SM3ROUND2 40, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 40]}
-    @{[SM3ROUND2 41, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 41]}
-    @{[SM3ROUND2 42, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 42]}
-    @{[SM3ROUND2 43, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 43]}
-
-    @{[SM3ROUND2 44, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 44]}
-    @{[SM3ROUND2 45, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 45]}
-    @{[SM3ROUND2 46, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 46]}
-    @{[SM3ROUND2 47, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 47]}
-
-    @{[SM3ROUND2 48, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[EXPAND 48]}
-    @{[SM3ROUND2 49, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[EXPAND 49]}
-    @{[SM3ROUND2 50, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[EXPAND 50]}
-    @{[SM3ROUND2 51, $B, $C, $D, $A, $F, $G, $H, $E]}
-    @{[EXPAND 51]}
-
-    @{[SM3ROUND2 52, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SM3ROUND2 53, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[SM3ROUND2 54, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[SM3ROUND2 55, $B, $C, $D, $A, $F, $G, $H, $E]}
-
-    @{[SM3ROUND2 56, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SM3ROUND2 57, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[SM3ROUND2 58, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[SM3ROUND2 59, $B, $C, $D, $A, $F, $G, $H, $E]}
-
-    @{[SM3ROUND2 60, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SM3ROUND2 61, $D, $A, $B, $C, $H, $E, $F, $G]}
-    @{[SM3ROUND2 62, $C, $D, $A, $B, $G, $H, $E, $F]}
-    @{[SM3ROUND2 63, $B, $C, $D, $A, $F, $G, $H, $E]}
-
+$code .= <<___;
     lw $T1, 0(a0)
     lw $T2, 4(a0)
     lw $T3, 8(a0)

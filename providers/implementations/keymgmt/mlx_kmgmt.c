@@ -10,6 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
+#include <openssl/obj_mac.h>
 #include <openssl/param_build.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
@@ -18,7 +19,9 @@
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
+#include "prov/names.h"
 #include "prov/mlx_kem.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
@@ -45,12 +48,15 @@ static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
+    { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_512 },
     { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768 },
     { "EC", "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_512 },
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768 },
     { "X448", NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024 },
 #else
+    { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
 #endif
@@ -673,6 +679,23 @@ static const OSSL_PARAM *mlx_kem_gen_settable_params(ossl_unused void *vgctx,
     return mlx_gen_set_params_list;
 }
 
+#ifdef FIPS_MODULE
+static int mlx_kem_gen_get_params(void *vgctx, OSSL_PARAM params[])
+{
+    PROV_ML_KEM_GEN_CTX *gctx = vgctx;
+    struct keymgmt_fips_gen_get_params_st p;
+    int approved;
+
+    if (gctx == NULL || gctx->evp_type >= OSSL_NELEM(hybrid_vtable)
+        || !keymgmt_fips_gen_get_params_decoder(params, &p))
+        return 0;
+    approved = strcmp(hybrid_vtable[gctx->evp_type].algorithm_name, SN_X448) != 0;
+    if (p.ind != NULL && !OSSL_PARAM_set_int(p.ind, approved))
+        return 0;
+    return 1;
+}
+#endif
+
 static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
@@ -801,15 +824,17 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC)mlx_kem_imexport_types },             \
         { OSSL_FUNC_KEYMGMT_EXPORT, (OSSL_FUNC)mlx_kem_export },                           \
         { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (OSSL_FUNC)mlx_kem_imexport_types },             \
-        OSSL_DISPATCH_END                                                                  \
+        OSSL_KEYMGMT_FIPS_GEN_DISPATCH_END(mlx_kem_gen_get_params)                         \
     }
 /* See |hybrid_vtable| above */
-DECLARE_DISPATCH(p256, 0);
-DECLARE_DISPATCH(p384, 1);
+DECLARE_DISPATCH(p256_512, 0);
+DECLARE_DISPATCH(p256, 1);
+DECLARE_DISPATCH(p384, 2);
 #if !defined(OPENSSL_NO_ECX)
-DECLARE_DISPATCH(x25519, 2);
-DECLARE_DISPATCH(x448, 3);
+DECLARE_DISPATCH(x25519_512, 3);
+DECLARE_DISPATCH(x25519, 4);
+DECLARE_DISPATCH(x448, 5);
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
-DECLARE_DISPATCH(curve_sm2, 4);
+DECLARE_DISPATCH(curve_sm2, 6);
 #endif

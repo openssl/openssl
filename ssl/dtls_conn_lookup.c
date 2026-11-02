@@ -40,63 +40,54 @@ typedef struct addr_lookup_data_st {
     uint64_t hash_key[2]; /* 128-bit SipHash key */
 } ADDR_LOOKUP_DATA;
 
+/* BIO_ADDR contains the raw address for every supported address family. */
+#define ADDR_HASHKEY_MAX_LEN (sizeof(int) + sizeof(uint16_t) + sizeof(BIO_ADDR))
+
 /*
- * Build a hash key from a BIO_ADDR.
+ * Build a hash key from a BIO_ADDR in caller-provided storage.
  * The key format is: family (int) + port (uint16_t) + raw address bytes.
  *
- * Returns allocated hashkey buffer on success, NULL on failure.
+ * Returns 1 on success, 0 on failure.
  */
-static uint8_t *build_hashkey(const BIO_ADDR *peer, size_t *out_len)
+static int build_hashkey_into(const BIO_ADDR *peer, uint8_t *hashkey,
+    size_t capacity, size_t *out_len)
 {
-    size_t hashkey_len = 0;
     size_t addr_len = 0;
-    int family;
+    size_t header_len = sizeof(int) + sizeof(uint16_t);
+    int family = BIO_ADDR_family(peer);
     uint16_t port;
-    uint8_t *hashkey;
-    int *famptr;
-    uint16_t *portptr;
-    uint8_t *addrptr;
-
-    family = BIO_ADDR_family(peer);
 
     /* For AF_UNSPEC (no peer address), use a minimal key */
     if (family == AF_UNSPEC) {
-        hashkey_len = sizeof(int);
-        hashkey = OPENSSL_zalloc(hashkey_len);
-        if (hashkey == NULL)
-            return NULL;
-        famptr = (int *)hashkey;
-        *famptr = family;
-        *out_len = hashkey_len;
-        return hashkey;
+        if (capacity < sizeof(family))
+            return 0;
+        memcpy(hashkey, &family, sizeof(family));
+        *out_len = sizeof(family);
+        return 1;
     }
 
-    if (!BIO_ADDR_rawaddress(peer, NULL, &addr_len))
-        return NULL;
+    if (!BIO_ADDR_rawaddress(peer, NULL, &addr_len)
+        || capacity < header_len || addr_len > capacity - header_len)
+        return 0;
 
     port = BIO_ADDR_rawport(peer);
+    memcpy(hashkey, &family, sizeof(family));
+    memcpy(hashkey + sizeof(family), &port, sizeof(port));
+    if (!BIO_ADDR_rawaddress(peer, hashkey + header_len, NULL))
+        return 0;
 
-    hashkey_len += sizeof(int); /* family */
-    hashkey_len += sizeof(uint16_t); /* port */
-    hashkey_len += addr_len; /* address */
+    *out_len = header_len + addr_len;
+    return 1;
+}
 
-    hashkey = OPENSSL_zalloc(hashkey_len);
-    if (hashkey == NULL)
+/* Return an allocated hash key for callers which need owned storage. */
+static uint8_t *build_hashkey(const BIO_ADDR *peer, size_t *out_len)
+{
+    uint8_t hashkey[ADDR_HASHKEY_MAX_LEN];
+
+    if (!build_hashkey_into(peer, hashkey, sizeof(hashkey), out_len))
         return NULL;
-
-    famptr = (int *)hashkey;
-    portptr = (uint16_t *)(famptr + 1);
-    addrptr = (uint8_t *)(portptr + 1);
-
-    *famptr = family;
-    *portptr = port;
-    if (!BIO_ADDR_rawaddress(peer, addrptr, NULL)) {
-        OPENSSL_free(hashkey);
-        return NULL;
-    }
-
-    *out_len = hashkey_len;
-    return hashkey;
+    return OPENSSL_memdup(hashkey, *out_len);
 }
 
 /*
@@ -313,6 +304,7 @@ static int addr_unregister_conn(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer)
     ADDR_LOOKUP_DATA *data;
     DGRAM_CONN_ENTRY lookup_key;
     DGRAM_CONN_ENTRY *removed;
+    uint8_t hashkey[ADDR_HASHKEY_MAX_LEN];
 
     if (lookup == NULL || lookup->impl_data == NULL || peer == NULL)
         return 0;
@@ -322,16 +314,16 @@ static int addr_unregister_conn(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer)
     memset(&lookup_key, 0, sizeof(lookup_key));
     BIO_ADDR_copy(&lookup_key.peer, peer);
 
-    lookup_key.hashkey = build_hashkey(peer, &lookup_key.hashkey_len);
-    if (lookup_key.hashkey == NULL)
+    /* Cleanup must not depend on allocating a temporary lookup key. */
+    if (!build_hashkey_into(peer, hashkey, sizeof(hashkey),
+            &lookup_key.hashkey_len))
         return 0;
+    lookup_key.hashkey = hashkey;
 
     /* Set SipHash key pointer for hash function */
     lookup_key.siphash_key = data->hash_key;
 
     removed = lh_DGRAM_CONN_ENTRY_delete(data->htable, &lookup_key);
-
-    OPENSSL_free(lookup_key.hashkey);
 
     if (removed != NULL) {
         conn_entry_free(removed);

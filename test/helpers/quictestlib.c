@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1445,6 +1445,7 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
     struct in_addr ina;
     int bio_flags = 0;
     int ok;
+    size_t ring_buf_size = 1500;
 
     ina.s_addr = htonl(0x7f000001);
     bio_flags |= BIO_DGRAM_CAP_HANDLES_DST_ADDR
@@ -1454,7 +1455,16 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
 
     c_bio = NULL;
     s_bio = NULL;
-    ok = BIO_new_bio_dgram_pair(&c_bio, 1500, &s_bio, 1500);
+#if defined(_AIX)
+    /*
+     * AIX has a struct sockaddr_un definition that greatly inflates the size of the
+     * BIO_ADDR structure, two of which are used to form a pseudo udp header in bio
+     * dgram pair BIO's.  We need to increase the size of the pair ring buffers here
+     * to prevent test failures stemming from inability to transmit such large headers
+     */
+    ring_buf_size = 4096;
+#endif
+    ok = BIO_new_bio_dgram_pair(&c_bio, ring_buf_size, &s_bio, ring_buf_size);
     if (ok == 0) {
         TEST_info("%s BIO_new_bio_dgram_pair() error", OPENSSL_FUNC);
         goto done;

@@ -401,8 +401,7 @@ static void test_win_get_send_timeout_converts_milliseconds(void **state)
 /*
  * GET_RECV_TIMER_EXP checks data->_errno == WSAETIMEDOUT on Windows
  * (EAGAIN elsewhere), then consumes/clears it. WSAETIMEDOUT is treated
- * as fatal by BIO_dgram_non_fatal_error, so we set _errno directly
- * rather than driving it through a recvfrom retry that never sets it.
+ * as fatal by BIO_dgram_non_fatal_error, so set _errno directly.
  */
 static void test_win_recv_timer_exp_consumes_errno(void **state)
 {

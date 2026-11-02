@@ -54,6 +54,11 @@ int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
         return 0;
 
     v = lh_CONF_VALUE_insert(conf->data, value);
+    if (lh_CONF_VALUE_error(conf->data)) {
+        (void)sk_CONF_VALUE_pop(ts);
+        return 0;
+    }
+
     if (v != NULL) {
         (void)sk_CONF_VALUE_delete_ptr(ts, v);
         OPENSSL_free(v->name);

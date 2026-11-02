@@ -366,7 +366,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
                 /*
                  * The assist thread alone keeps the idle connection alive. It
                  * waits on real time internally, so advancing fake time can
-                 * outrun it. Rather than race it, wait until it has caught up:
+                 * outrun it. Wait until it has caught up:
                  * the event timeout is computed against fake time, so once the
                  * next deadline is back in the future all events due up to now
                  * - including any keepalive - have been serviced.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     if (!BN_mod_exp_simple(b5, b1, b2, b3, ctx))
         goto done;
 
+#ifndef OPENSSL_NO_STDIO
     if (BN_cmp(b4, b5) != 0) {
         BN_print_fp(stdout, b1);
         putchar('\n');
@@ -95,6 +96,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         BN_print_fp(stdout, b5);
         putchar('\n');
     }
+#endif
+    OPENSSL_assert(BN_cmp(b4, b5) == 0);
 
 done:
     BN_free(b1);

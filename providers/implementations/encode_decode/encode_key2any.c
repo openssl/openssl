@@ -106,6 +106,7 @@ static PKCS8_PRIV_KEY_INFO *key_to_p8info(const void *key, int key_nid,
             params_type, params, der, derlen)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_ASN1_LIB);
         PKCS8_PRIV_KEY_INFO_free(p8info);
+        free_asn1_data(params_type, params);
         OPENSSL_free(der);
         p8info = NULL;
     }
@@ -144,9 +145,7 @@ static X509_SIG *key_to_encp8(const void *key, int key_nid,
     PKCS8_PRIV_KEY_INFO *p8info = key_to_p8info(key, key_nid, params, params_type, k2d, ctx);
     X509_SIG *p8 = NULL;
 
-    if (p8info == NULL) {
-        free_asn1_data(params_type, params);
-    } else {
+    if (p8info != NULL) {
         p8 = p8info_to_encp8(p8info, ctx);
         PKCS8_PRIV_KEY_INFO_free(p8info);
     }
@@ -171,6 +170,7 @@ static X509_PUBKEY *key_to_pubkey(const void *key, int key_nid,
         ERR_raise(ERR_LIB_PROV, ERR_R_X509_LIB);
         X509_PUBKEY_free(xpk);
         OPENSSL_free(der);
+        free_asn1_data(params_type, params);
         xpk = NULL;
     }
 
@@ -273,8 +273,6 @@ static int key_to_pki_der_priv_bio(BIO *out, const void *key,
 
     if (p8info != NULL)
         ret = i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8info);
-    else
-        free_asn1_data(strtype, str);
 
     PKCS8_PRIV_KEY_INFO_free(p8info);
 
@@ -304,8 +302,6 @@ static int key_to_pki_pem_priv_bio(BIO *out, const void *key,
 
     if (p8info != NULL)
         ret = PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8info);
-    else
-        free_asn1_data(strtype, str);
 
     PKCS8_PRIV_KEY_INFO_free(p8info);
 
@@ -356,8 +352,6 @@ static int key_to_spki_pem_pub_bio(BIO *out, const void *key,
 
     if (xpk != NULL)
         ret = PEM_write_bio_X509_PUBKEY(out, xpk);
-    else
-        free_asn1_data(strtype, str);
 
     /* Also frees |str| */
     X509_PUBKEY_free(xpk);
@@ -646,8 +640,8 @@ static int dsa_pki_priv_to_der(const void *dsa, unsigned char **pder,
 }
 
 k2d_NOCTX(dsa_prv, i2d_DSAPrivateKey)
-    k2d_NOCTX(dsa_pub, i2d_DSAPublicKey)
-        k2d_NOCTX(dsa_param, i2d_DSAparams)
+k2d_NOCTX(dsa_pub, i2d_DSAPublicKey)
+k2d_NOCTX(dsa_param, i2d_DSAparams)
 
 #define dsa_epki_priv_to_der dsa_pki_priv_to_der
 
@@ -663,8 +657,9 @@ k2d_NOCTX(dsa_prv, i2d_DSAPrivateKey)
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_EC
-            static int prepare_ec_explicit_params(const void *eckey,
-                void **pstr, int *pstrtype)
+
+static int prepare_ec_explicit_params(const void *eckey, void **pstr,
+    int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
 
@@ -755,7 +750,7 @@ static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder,
 }
 
 k2d_NOCTX(ec_param, i2d_ECParameters)
-    k2d_NOCTX(ec_prv, i2d_ECPrivateKey)
+k2d_NOCTX(ec_prv, i2d_ECPrivateKey)
 
 #define ec_epki_priv_to_der ec_pki_priv_to_der
 
@@ -786,8 +781,8 @@ k2d_NOCTX(ec_param, i2d_ECParameters)
 #ifndef OPENSSL_NO_ECX
 #define prepare_ecx_params NULL
 
-        static int ecx_spki_pub_to_der(const void *vecxkey, unsigned char **pder,
-            ossl_unused void *ctx)
+static int ecx_spki_pub_to_der(const void *vecxkey, unsigned char **pder,
+    ossl_unused void *ctx)
 {
     const ECX_KEY *ecxkey = vecxkey;
     unsigned char *keyblob;
@@ -991,7 +986,7 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
 }
 
 k2d_NOCTX(rsa_prv, i2d_RSAPrivateKey)
-    k2d_NOCTX(rsa_pub, i2d_RSAPublicKey)
+k2d_NOCTX(rsa_pub, i2d_RSAPublicKey)
 
 /*
  * RSA is extremely simple, as PKCS#1 is used for the PKCS#8 |privateKey|
@@ -1004,7 +999,7 @@ k2d_NOCTX(rsa_prv, i2d_RSAPrivateKey)
 #define rsa_type_specific_pub_to_der rsa_pub_k2d
 #define rsa_type_specific_params_to_der NULL
 
-        static int rsa_check_key_type(const void *rsa, int expected_type)
+static int rsa_check_key_type(const void *rsa, int expected_type)
 {
     switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:

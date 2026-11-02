@@ -27,6 +27,7 @@
 #include <openssl/rand.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
+#include <openssl/decoder.h>
 #include "internal/tsan_assist.h"
 #include "internal/nelem.h"
 #include "internal/time.h"
@@ -1395,6 +1396,83 @@ err:
     return ret;
 }
 
+/* Self-signed "Root CA" certificate, the same as in the test store. */
+static const char *kSelfSignedRootCA[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIDFjCCAf6gAwIBAgIBATANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdSb290\n",
+    "IENBMCAXDTIwMTIxMjIwMTEzN1oYDzIxMjAxMjEzMjAxMTM3WjASMRAwDgYDVQQD\n",
+    "DAdSb290IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4eYA9Qa8\n",
+    "oEY4eQ8/HnEZE20C3yubdmv8rLAh7daRCEI7pWM17FJboKJKxdYAlAOXWj25ZyjS\n",
+    "feMhXKTtxjyNjoTRnVTDPdl0opZ2Z3H5xhpQd7P9eO5b4OOMiSPCmiLsPtQ3ngfN\n",
+    "wCtVERc6NEIcaQ06GLDtFZRexv2eh8Yc55QaksBfBcFzQ+UD3gmRySTO2I6Lfi7g\n",
+    "MUjRhipqVSZ66As2Tpex4KTJ2lxpSwOACFaDox+yKrjBTP7FsU3UwAGq7b7OJb3u\n",
+    "aa32B81uK6GJVPVo65gJ7clgZsszYkoDsGjWDqtfwTVVfv1G7rrr3Laio+2Ff3ff\n",
+    "tWgiQ35mJCOvxQIDAQABo3UwczAPBgNVHRMBAf8EBTADAQH/MAsGA1UdDwQEAwIB\n",
+    "BjAdBgNVHQ4EFgQUjvUlrx6ba4Q9fICayVOcTXL3o1IwHwYDVR0jBBgwFoAUjvUl\n",
+    "rx6ba4Q9fICayVOcTXL3o1IwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDQYJKoZIhvcN\n",
+    "AQELBQADggEBABWUjaqtkdRDhVAJZTxkJVgohjRrBwp86Y0JZWdCDua/sErmEaGu\n",
+    "nQVxWWFWIgu6sb8tyQo3/7dBIQl3Rpij9bsgKhToO1OzoG3Oi3d0+zRDHfY6xNrj\n",
+    "TUE00FeLHGNWsgZSIvu99DrGApT/+uPdWfJgMu5szillqW+4hcCUPLjG9ekVNt1s\n",
+    "KhdEklo6PrP6eMbm6s22EIVUxqGE6xxAmrvyhlY1zJH9BJ23Ps+xabjG6OeMRZzT\n",
+    "0F/fU7XIFieSO7rqUcjgo1eYc3ghsDxNUJ6TPBgv5z4SPnstoOBj59rjpJ7Qkpyd\n",
+    "L17VfEadezat37Cpeha7vGDduCsyMfN4kiw=\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+/*
+ * A certificate shared by the threads of test_x509_self_signed(), and a
+ * lock the main thread holds for writing until every worker has started,
+ * so that the workers all reach the certificate at the same time.
+ */
+static X509 *shared_cert = NULL;
+static CRYPTO_RWLOCK *shared_cert_start = NULL;
+
+static void test_x509_self_signed_worker(void)
+{
+    /* Block until the main thread releases the start lock. */
+    if (!TEST_true(CRYPTO_THREAD_read_lock(shared_cert_start))) {
+        multi_set_success(0);
+        return;
+    }
+    CRYPTO_THREAD_unlock(shared_cert_start);
+
+    if (!TEST_int_eq(X509_self_signed(shared_cert, 0), 1))
+        multi_set_success(0);
+}
+
+static void test_x509_self_signed_start(void)
+{
+    CRYPTO_THREAD_unlock(shared_cert_start);
+}
+
+/*
+ * Test that concurrent first use of a certificate's cached extension data
+ * is safe. Every thread calls X509_self_signed() on the same unprocessed
+ * certificate, so they race in ossl_x509v3_cache_extensions() to compute
+ * and install the cache. Under TSAN this detects one thread installing the
+ * cache while another reads it.
+ */
+static int test_x509_self_signed(void)
+{
+    int ret = 0;
+
+    if (!TEST_ptr(shared_cert = X509_from_strings(kSelfSignedRootCA))
+        || !TEST_ptr(shared_cert_start = CRYPTO_THREAD_lock_new())
+        || !TEST_true(CRYPTO_THREAD_write_lock(shared_cert_start)))
+        goto err;
+
+    ret = thread_run_test(&test_x509_self_signed_start, MAXIMUM_THREADS,
+        &test_x509_self_signed_worker, 0, NULL);
+
+err:
+    CRYPTO_THREAD_lock_free(shared_cert_start);
+    shared_cert_start = NULL;
+    X509_free(shared_cert);
+    shared_cert = NULL;
+    return ret;
+}
+
 /* Test using OBJ_create in multiple threads */
 static void test_obj_create_worker(void)
 {
@@ -1424,6 +1502,92 @@ static void test_obj_create_worker(void)
         }
     }
 }
+
+#if defined(OPENSSL_THREADS)
+static thread_t do_all_thread;
+static thread_t load_unload_thread;
+static OSSL_LIB_CTX *do_all_ctx = NULL;
+static OSSL_PROVIDER *defprov = NULL;
+static int load_unload_err = 0;
+static int do_all_err = 0;
+
+static void do_all_fn(void)
+{
+    OSSL_TIME t1, t2;
+    EVP_PKEY *pkey = NULL;
+    OSSL_DECODER_CTX *dctx = NULL;
+
+    t1 = ossl_time_now();
+
+    for (;;) {
+        dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, "RSA",
+            EVP_PKEY_KEYPAIR,
+            do_all_ctx, "");
+        EVP_PKEY_free(pkey);
+        OSSL_DECODER_CTX_free(dctx);
+        t2 = ossl_time_now();
+        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= TORTURE_SECONDS)
+            break;
+    }
+    do_all_err = 0;
+    return;
+}
+
+static void load_unload_fn(void)
+{
+    OSSL_TIME t1, t2;
+
+    t1 = ossl_time_now();
+
+    for (;;) {
+        if (defprov == NULL) {
+            defprov = OSSL_PROVIDER_load(do_all_ctx, "default");
+            if (!TEST_ptr(defprov)) {
+                load_unload_err = 1;
+                return;
+            }
+        } else {
+            if (!TEST_true(OSSL_PROVIDER_unload(defprov))) {
+                load_unload_err = 1;
+                return;
+            }
+            defprov = NULL;
+        }
+        t2 = ossl_time_now();
+        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= TORTURE_SECONDS)
+            break;
+    }
+    if (defprov != NULL)
+        OSSL_PROVIDER_unload(defprov);
+    return;
+}
+
+static int test_do_all_stress(void)
+{
+    do_all_ctx = OSSL_LIB_CTX_new();
+    int ret = 0;
+
+    if (!TEST_ptr(do_all_ctx))
+        goto err;
+
+    if (!TEST_true(run_thread(&load_unload_thread, load_unload_fn))
+        || !TEST_true(run_thread(&do_all_thread, do_all_fn))
+        || !TEST_true(wait_for_thread(load_unload_thread))
+        || !TEST_true(wait_for_thread(do_all_thread)))
+        goto err;
+
+    if (!TEST_int_eq(load_unload_err, 0))
+        goto err;
+
+    if (!TEST_int_eq(do_all_err, 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_LIB_CTX_free(do_all_ctx);
+    return ret;
+}
+#endif
 
 static int test_obj_stress(void)
 {
@@ -1500,6 +1664,7 @@ int setup_tests(void)
     ADD_TEST(torture_rcu_low);
     ADD_TEST(torture_rcu_high);
     ADD_TEST(torture_rcu_high2);
+    ADD_TEST(test_do_all_stress);
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
@@ -1521,6 +1686,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_pem_read);
     ADD_TEST(test_x509_store);
+    ADD_TEST(test_x509_self_signed);
     ADD_TEST(test_obj_stress);
     return 1;
 }

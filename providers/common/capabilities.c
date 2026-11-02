@@ -33,7 +33,7 @@ typedef struct tls_group_constants_st {
     int maxtls; /* Maximum TLS version (or 0 for undefined) */
     int mindtls; /* Minimum DTLS version, -1 unsupported */
     int maxdtls; /* Maximum DTLS version (or 0 for undefined) */
-    int is_kem; /* Indicates utility as KEM */
+    unsigned int is_kem; /* Indicates utility as KEM */
 } TLS_GROUP_CONSTANTS;
 
 /*
@@ -94,6 +94,8 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
     /* 43 */ { OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024, ML_KEM_1024_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
     /* 44 */ { OSSL_TLS_GROUP_ID_curveSM2, 128, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 0 },
     /* 45 */ { OSSL_TLS_GROUP_ID_curveSM2MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 46 */ { OSSL_TLS_GROUP_ID_MLKEM512X25519, ML_KEM_512_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
+    /* 47 */ { OSSL_TLS_GROUP_ID_SecP256r1MLKEM512, ML_KEM_512_SECBITS, TLS1_3_VERSION, 0, DTLS1_3_VERSION, 0, 1 },
 };
 
 #define TLS_GROUP_ENTRY(tlsname, realname, algorithm, idx)              \
@@ -112,14 +114,14 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
         OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,        \
             (unsigned int *)&group_list[idx].secbits),                  \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_TLS,               \
-            (unsigned int *)&group_list[idx].mintls),                   \
+            (int *)&group_list[idx].mintls),                            \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS,               \
-            (unsigned int *)&group_list[idx].maxtls),                   \
+            (int *)&group_list[idx].maxtls),                            \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS,              \
-            (unsigned int *)&group_list[idx].mindtls),                  \
+            (int *)&group_list[idx].mindtls),                           \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS,              \
-            (unsigned int *)&group_list[idx].maxdtls),                  \
-        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_IS_KEM,                \
+            (int *)&group_list[idx].maxdtls),                           \
+        OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_IS_KEM,               \
             (unsigned int *)&group_list[idx].is_kem),                   \
         OSSL_PARAM_END                                                  \
     }
@@ -157,6 +159,7 @@ static const OSSL_PARAM param_group_list[][11] = {
 #ifndef OPENSSL_NO_EC
 #if !defined(OPENSSL_NO_ML_KEM)
 #if !defined(OPENSSL_NO_ECX)
+    TLS_GROUP_ENTRY("MLKEM512X25519", "", "MLKEM512X25519", 46),
     TLS_GROUP_ENTRY("X25519MLKEM768", "", "X25519MLKEM768", 41),
 #endif
 #endif
@@ -198,6 +201,7 @@ static const OSSL_PARAM param_group_list[][11] = {
 #endif
 #endif
 #ifndef OPENSSL_NO_ML_KEM
+    TLS_GROUP_ENTRY("SecP256r1MLKEM512", "", "SecP256r1MLKEM512", 47),
     TLS_GROUP_ENTRY("SecP256r1MLKEM768", "", "SecP256r1MLKEM768", 42),
     TLS_GROUP_ENTRY("SecP384r1MLKEM1024", "", "SecP384r1MLKEM1024", 43),
 #endif
@@ -325,13 +329,13 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[] = {
         OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,    \
             (unsigned int *)&sigalg_constants_list[idx].sec_bits),   \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS,           \
-            (unsigned int *)&sigalg_constants_list[idx].min_tls),    \
+            (int *)&sigalg_constants_list[idx].min_tls),             \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,           \
-            (unsigned int *)&sigalg_constants_list[idx].max_tls),    \
+            (int *)&sigalg_constants_list[idx].max_tls),             \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,          \
-            (unsigned int *)&sigalg_constants_list[idx].min_dtls),   \
+            (int *)&sigalg_constants_list[idx].min_dtls),            \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,          \
-            (unsigned int *)&sigalg_constants_list[idx].max_dtls),   \
+            (int *)&sigalg_constants_list[idx].max_dtls),            \
         OSSL_PARAM_END                                               \
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -614,5 +614,6 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     NULL,
     NULL,
     ktls_alloc_buffers,
-    tls_free_buffers
+    tls_free_buffers,
+    NULL /* set_prev_epoch_rl: DTLS only */
 };

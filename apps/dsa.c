@@ -106,7 +106,6 @@ int dsa_main(int argc, char **argv)
         case OPT_EOF:
         case OPT_ERR:
         opthelp:
-            ret = 0;
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:

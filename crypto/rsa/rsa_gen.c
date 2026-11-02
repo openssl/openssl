@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -87,8 +87,7 @@ DEFINE_STACK_OF(BIGNUM)
  * on their respective exps and coeffs stacks
  */
 #ifndef FIPS_MODULE
-int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
-    BIGNUM *e_value,
+int ossl_rsa_multiprime_derive(RSA *rsa,
     STACK_OF(BIGNUM) *factors,
     STACK_OF(BIGNUM) *exps,
     STACK_OF(BIGNUM) *coeffs)
@@ -458,8 +457,10 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
             tmp = BN_dup(prime);
             if (tmp == NULL)
                 goto err;
-            if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors)))
+            if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors))) {
+                BN_clear_free(tmp);
                 goto err;
+            }
             continue;
         }
 
@@ -528,8 +529,10 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         tmp = BN_dup(prime);
         if (tmp == NULL)
             goto err;
-        if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors)))
+        if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors))) {
+            BN_clear_free(tmp);
             goto err;
+        }
     }
 
     if (BN_cmp(rsa->p, rsa->q) < 0) {
@@ -537,8 +540,12 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         rsa->p = rsa->q;
         rsa->q = tmp;
         /* mirror this in our factor stack */
-        if (!sk_BIGNUM_insert(factors, sk_BIGNUM_delete(factors, 0), 1))
+        tmp = sk_BIGNUM_delete(factors, 0);
+        if (!sk_BIGNUM_insert(factors, tmp, 1)) {
+            /* the factor is no longer on the stack, so free it here */
+            BN_clear_free(tmp);
             goto err;
+        }
     }
 
     /* calculate d */
@@ -568,8 +575,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     }
 
     /* derive any missing exponents and coefficients */
-    if (!ossl_rsa_multiprime_derive(rsa, bits, primes, e_value,
-            factors, exps, coeffs))
+    if (!ossl_rsa_multiprime_derive(rsa, factors, exps, coeffs))
         goto err;
 
     /*
@@ -603,9 +609,10 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     }
     ok = 1;
 err:
-    sk_BIGNUM_free(factors);
-    sk_BIGNUM_free(exps);
-    sk_BIGNUM_free(coeffs);
+    /* On error, these stacks may still contain BIGNUMs. */
+    sk_BIGNUM_pop_free(factors, BN_clear_free);
+    sk_BIGNUM_pop_free(exps, BN_clear_free);
+    sk_BIGNUM_pop_free(coeffs, BN_clear_free);
     if (ok == -1) {
         ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         ok = 0;

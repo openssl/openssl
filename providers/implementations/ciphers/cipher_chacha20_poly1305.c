@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,7 @@
 #define CHACHA20_POLY1305_KEYLEN CHACHA_KEY_SIZE
 #define CHACHA20_POLY1305_BLKLEN 1
 #define CHACHA20_POLY1305_MAX_IVLEN 12
-#define CHACHA20_POLY1305_MODE 0
+#define CHACHA20_POLY1305_MODE EVP_CIPH_STREAM_CIPHER
 #define CHACHA20_POLY1305_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_CUSTOM_IV)
 
@@ -88,7 +88,8 @@ static void chacha20_poly1305_freectx(void *vctx)
 
 static int chacha20_poly1305_get_params(OSSL_PARAM params[])
 {
-    return ossl_cipher_generic_get_params(params, 0, CHACHA20_POLY1305_FLAGS,
+    return ossl_cipher_generic_get_params(params,
+        CHACHA20_POLY1305_MODE, CHACHA20_POLY1305_FLAGS,
         CHACHA20_POLY1305_KEYLEN * 8,
         CHACHA20_POLY1305_BLKLEN * 8,
         CHACHA20_POLY1305_IVLEN * 8);
@@ -114,8 +115,10 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 0;
     }
 
+    /* tag_len == 0 means no tag set yet, report the default */
     if (p.taglen != NULL
-        && !OSSL_PARAM_set_size_t(p.taglen, ctx->tag_len)) {
+        && !OSSL_PARAM_set_size_t(p.taglen,
+            ctx->tag_len == 0 ? POLY1305_BLOCK_SIZE : ctx->tag_len)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -315,6 +318,11 @@ static int chacha20_poly1305_update(void *vctx, unsigned char *out,
     if (inl == 0) {
         *outl = 0;
         return 1;
+    }
+
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
     }
 
     return chacha20_poly1305_cipher(vctx, out, outl, outsize, in, inl);

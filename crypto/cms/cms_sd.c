@@ -304,7 +304,7 @@ static int ossl_cms_add1_signing_cert(CMS_SignerInfo *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);
-    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set1_data(seq, pp, len)) {
+    if (!(seq = ASN1_STRING_new()) || !ossl_asn1_string_set1_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;
@@ -329,7 +329,7 @@ static int ossl_cms_add1_signing_cert_v2(CMS_SignerInfo *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
-    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set1_data(seq, pp, len)) {
+    if (!(seq = ASN1_STRING_new()) || !ossl_asn1_string_set1_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;
@@ -729,7 +729,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     }
 
     if (!(flags & CMS_NOCERTS)) {
-        /* NB ignore -1 return for duplicate cert */
         if (!CMS_add1_cert(cms, signer)) {
             ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
             goto err;
@@ -848,7 +847,7 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms)
     sinfos = CMS_get0_SignerInfos(cms);
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
         si = sk_CMS_SignerInfo_value(sinfos, i);
-        if (si->signer != NULL) {
+        if (si->signer != NULL && si->verify_result) {
             if (!ossl_x509_add_cert_new(&signers, si->signer,
                     X509_ADD_FLAG_DEFAULT)) {
                 sk_X509_free(signers);
@@ -908,6 +907,7 @@ int CMS_set1_signers_certs(CMS_ContentInfo *cms, const STACK_OF(X509) *scerts,
         if (si->signer != NULL)
             continue;
 
+        /* If any certificates passed they take priority */
         for (j = 0; j < sk_X509_num(scerts); j++) {
             x = sk_X509_value(scerts, j);
             if (CMS_SignerInfo_cert_cmp(si, x) == 0) {
@@ -1335,10 +1335,15 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     (void)ERR_set_mark();
     fetched_md = EVP_MD_fetch(libctx, name, propq);
 
-    if (fetched_md != NULL)
+    if (fetched_md != NULL) {
         md = fetched_md;
-    else
+    } else {
         md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
+        /* Reject aliases such as signature algorithm OIDs */
+        if (md != NULL
+            && EVP_MD_get_type(md) != OBJ_obj2nid(si->digestAlgorithm->algorithm))
+            md = NULL;
+    }
     if (md == NULL) {
         (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
@@ -1614,8 +1619,11 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
 static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    EVP_CIPHER *cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), propq);
+    EVP_CIPHER *cipher;
 
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), propq);
+    ERR_pop_to_mark();
     if (cipher != NULL) {
         EVP_CIPHER_free(cipher);
         return CMS_add_simple_smimecap(sk, nid, arg);
@@ -1626,8 +1634,11 @@ static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
 static int cms_add_digest_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    EVP_MD *md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), propq);
+    EVP_MD *md;
 
+    ERR_set_mark();
+    md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), propq);
+    ERR_pop_to_mark();
     if (md != NULL) {
         EVP_MD_free(md);
         return CMS_add_simple_smimecap(sk, nid, arg);

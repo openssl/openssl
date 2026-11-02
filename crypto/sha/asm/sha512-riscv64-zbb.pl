@@ -2,7 +2,7 @@
 # This file is dual-licensed, meaning that you can use it under your
 # choice of either of the following two licenses:
 #
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License"). You can obtain
 # a copy in the file LICENSE in the source distribution or at
@@ -10,7 +10,7 @@
 #
 # or
 #
-# Copyright (c) 2025, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
+# Copyright (c) 2025-2026, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,102 +62,120 @@ my $K512 = "K512";
 # Function arguments
 my ($INP, $LEN, $ADDR) = ("a1", "a2", "sp");
 my ($KT, $T1, $T2, $T3, $T4, $T5, $T6) = ("t0", "t1", "t2", "t3", "t4", "t5", "t6");
+# Shift amounts for misaligned input
+my ($SHL, $SHR) = ("a3", "a4");
+my ($MISALIGNED_INPUT, $ALIGNED_INPUT) = (0, 1);
+# Parity-indexed pairs: W = W[i], U = W[i-15], X = a ^ b
+my ($W0, $W1, $U0, $U1, $X0, $X1) = ("a5", "a6", "a7", "s0", "s1", "s10");
 my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ("s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9");
 
-sub MSGSCHEDULE0 {
-    my (
-        $index,
-    ) = @_;
+# Misaligned: $dst = (lo >> SHL) | (hi << SHR) from two aligned loads
+sub loadDword {
+    my ($ALIGNED, $dst, $off) = @_;
+    if ($ALIGNED) {
+        return "ld $dst, $off($INP)";
+    }
     my $code=<<___;
-    ld $T1, (8*$index+0)($INP)
-    @{[rev8 $T1, $T1]}
-    sd $T1, 8*$index($ADDR)
+    ld $T5, $off($INP)
+    ld $T6, ($off+8)($INP)
+    srl $dst, $T5, $SHL
+    sll $T6, $T6, $SHR
+    or $dst, $dst, $T6
+___
+    return $code;
+}
+
+sub MSGSCHEDULE0 {
+    my ($ALIGNED, $index) = @_;
+    my $Wi = ($index & 1) ? $W1 : $W0;
+    my $code=<<___;
+    @{[loadDword $ALIGNED, $Wi, "8*$index"]}
+    @{[rev8 $Wi, $Wi]}
+    sd $Wi, 8*$index($ADDR)
 ___
 
     return $code;
 }
 
+# W[i-2] and W[i-16] are already in registers
 sub MSGSCHEDULE1 {
-    my (
-        $INDEX,
-    ) = @_;
+    my ($INDEX) = @_;
+    my $Wi2 = ($INDEX & 1) ? $W1 : $W0;
+    # W[i] overwrites W[i-2], so it is written last
+    my $Wi = $Wi2;
+    my $Wi15 = ($INDEX & 1) ? $U1 : $U0;
+    my $Wi16 = ($INDEX & 1) ? $U0 : $U1;
     my $code=<<___;
-    ld $T1, (($INDEX-2)&0x0f)*8($ADDR)
-    ld $T2, (($INDEX-15)&0x0f)*8($ADDR)
     ld $T3, (($INDEX-7)&0x0f)*8($ADDR)
-    ld $T4, ($INDEX&0x0f)*8($ADDR)
-    @{[rori $T5, $T1, 19]}
-    @{[rori $T6, $T1, 61]}
-    srli $T1, $T1, 6
+    ld $Wi15, (($INDEX-15)&0x0f)*8($ADDR)
+    @{[rori $T5, $Wi2, 19]}
+    @{[rori $T6, $Wi2, 61]}
+    srli $T1, $Wi2, 6
     xor $T1, $T1, $T5
     xor $T1, $T1, $T6
     add $T1, $T1, $T3
-    @{[rori $T5, $T2, 1]}
-    @{[rori $T6, $T2, 8]}
-    srli $T2, $T2, 7
+    @{[rori $T5, $Wi15, 1]}
+    @{[rori $T6, $Wi15, 8]}
+    srli $T2, $Wi15, 7
     xor $T2, $T2, $T5
     xor $T2, $T2, $T6
-    add $T1, $T1, $T2
-    add $T1, $T1, $T4
-    sd $T1, 8*($INDEX&0x0f)($ADDR)
+    add $T2, $T2, $Wi16
+    add $Wi, $T1, $T2
+    sd $Wi, 8*($INDEX&0x0f)($ADDR)
 ___
 
     return $code;
 }
 
 sub sha512_T1 {
-    my (
-        $INDEX, $e, $f, $g, $h,
-    ) = @_;
+    my ($INDEX, $e, $f, $g, $h) = @_;
+    my $Wi = ($INDEX & 1) ? $W1 : $W0;
     my $code=<<___;
     ld $T4, 8*$INDEX($KT)
-    add $h, $h, $T1
-    add $h, $h, $T4
     @{[rori $T2, $e, 14]}
     @{[rori $T3, $e, 18]}
-    @{[rori $T4, $e, 41]}
-    xor $T2, $T2, $T3
+    @{[rori $T5, $e, 41]}
+    add $h, $h, $Wi
     xor $T1, $f, $g
-    xor $T2, $T2, $T4
+    add $h, $h, $T4
+    xor $T2, $T2, $T3
     and $T1, $T1, $e
-    add $h, $h, $T2
+    xor $T2, $T2, $T5
     xor $T1, $T1, $g
-    add $T1, $T1, $h
+    add $T2, $T2, $h
+    add $T1, $T1, $T2
 ___
 
     return $code;
 }
 
 sub sha512_T2 {
-    my (
-        $a, $b, $c,
-    ) = @_;
+    my ($INDEX, $a, $b, $c) = @_;
+    my $Xab = ($INDEX & 1) ? $X1 : $X0;
+    my $Xbc = ($INDEX & 1) ? $X0 : $X1;
     my $code=<<___;
     # Sigma0
     @{[rori $T2, $a, 28]}
     @{[rori $T3, $a, 34]}
     @{[rori $T4, $a, 39]}
-    xor $T2, $T2, $T3
     # Maj
-    xor $T5, $b, $c
-    and $T3, $b, $c
-    and $T5, $T5, $a
+    xor $Xab, $a, $b
+    xor $T2, $T2, $T3
+    and $T5, $Xab, $Xbc
     xor $T2, $T2, $T4
-    xor $T3, $T3, $T5
+    xor $T5, $T5, $b
     # T2
-    add $T2, $T2, $T3
+    add $T2, $T2, $T5
 ___
 
     return $code;
 }
 
 sub SHA512ROUND {
-    my (
-        $INDEX, $a, $b, $c, $d, $e, $f, $g, $h
-    ) = @_;
+    my ($INDEX, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
     my $code=<<___;
     @{[sha512_T1 $INDEX, $e, $f, $g, $h]}
-    @{[sha512_T2 $a, $b, $c]}
+    @{[sha512_T2 $INDEX, $a, $b, $c]}
     add $d, $d, $T1
     add $h, $T2, $T1
 ___
@@ -166,11 +184,9 @@ ___
 }
 
 sub SHA512ROUND0 {
-    my (
-        $INDEX, $a, $b, $c, $d, $e, $f, $g, $h
-    ) = @_;
+    my ($ALIGNED, $INDEX, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
     my $code=<<___;
-    @{[MSGSCHEDULE0 $INDEX]}
+    @{[MSGSCHEDULE0 $ALIGNED, $INDEX]}
     @{[SHA512ROUND $INDEX, $a, $b, $c, $d, $e, $f, $g, $h]}
 ___
 
@@ -178,9 +194,7 @@ ___
 }
 
 sub SHA512ROUND1 {
-    my (
-        $INDEX, $a, $b, $c, $d, $e, $f, $g, $h
-    ) = @_;
+    my ($INDEX, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
     my $code=<<___;
     @{[MSGSCHEDULE1 $INDEX]}
     @{[SHA512ROUND $INDEX, $a, $b, $c, $d, $e, $f, $g, $h]}
@@ -188,6 +202,7 @@ ___
 
     return $code;
 }
+
 
 ################################################################################
 # void sha512_block_data_order_zbb(void *c, const void *p, size_t len)
@@ -226,110 +241,75 @@ sha512_block_data_order_zbb:
     ld $G, 48(a0)
     ld $H, 56(a0)
 
+    andi $SHL, $INP, 7
+    beqz $SHL, L_round_loop
+    andi $INP, $INP, -8
+    slli $SHL, $SHL, 3
+    li $T1, 64
+    sub $SHR, $T1, $SHL
+
 L_round_loop:
     # Decrement length by 1
     addi $LEN, $LEN, -1
 
-    @{[SHA512ROUND0 0, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND0 1, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND0 2, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND0 3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    # b ^ c for round 0's Maj; later rounds reuse the previous a ^ b
+    xor $X1, $B, $C
 
-    @{[SHA512ROUND0 4, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND0 5, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND0 6, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND0 7, $B, $C, $D, $E, $F, $G, $H, $A]}
+    bnez $SHL, L_load_misaligned
+___
 
-    @{[SHA512ROUND0 8, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND0 9, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND0 10, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND0 11, $F, $G, $H, $A, $B, $C, $D, $E]}
+# Rounds 0..15, once for aligned and once for misaligned input
+for (my $i = 0; $i < 16; $i += 8) {
+    $code .= <<___;
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA512ROUND0 $ALIGNED_INPUT, $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
 
-    @{[SHA512ROUND0 12, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND0 13, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND0 14, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND0 15, $B, $C, $D, $E, $F, $G, $H, $A]}
+$code .= <<___;
+    j L_message_schedule
+L_load_misaligned:
+___
 
-    @{[SHA512ROUND1 16, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 17, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 18, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 19, $F, $G, $H, $A, $B, $C, $D, $E]}
+for (my $i = 0; $i < 16; $i += 8) {
+    $code .= <<___;
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA512ROUND0 $MISALIGNED_INPUT, $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
 
-    @{[SHA512ROUND1 20, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 21, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 22, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 23, $B, $C, $D, $E, $F, $G, $H, $A]}
+$code .= <<___;
+L_message_schedule:
+    # Round 16's W[i-16] is W[0]; later rounds reuse the previous W[i-15]
+    ld $U1, 0($ADDR)
+___
 
-    @{[SHA512ROUND1 24, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 25, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 26, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 27, $F, $G, $H, $A, $B, $C, $D, $E]}
+for (my $i = 16; $i < 80; $i += 8) {
+    $code .= <<___;
+    @{[SHA512ROUND1 $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA512ROUND1 $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA512ROUND1 $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA512ROUND1 $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA512ROUND1 $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA512ROUND1 $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA512ROUND1 $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA512ROUND1 $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
 
-    @{[SHA512ROUND1 28, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 29, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 30, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 31, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 32, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 33, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 34, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 35, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 36, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 37, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 38, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 39, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 40, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 41, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 42, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 43, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 44, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 45, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 46, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 47, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 48, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 49, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 50, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 51, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 52, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 53, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 54, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 55, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 56, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 57, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 58, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 59, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 60, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 61, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 62, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 63, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 64, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 65, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 66, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 67, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 68, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 69, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 70, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 71, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA512ROUND1 72, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA512ROUND1 73, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA512ROUND1 74, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA512ROUND1 75, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA512ROUND1 76, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA512ROUND1 77, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA512ROUND1 78, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA512ROUND1 79, $B, $C, $D, $E, $F, $G, $H, $A]}
-
+$code .= <<___;
     ld $T1, 0(a0)
     ld $T2, 8(a0)
     ld $T3, 16(a0)

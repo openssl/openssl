@@ -55,7 +55,7 @@ B<-verify>
 [B<-untrusted> I<files>|I<uris>]
 [B<-CAfile> I<file>]
 [B<-CApath> I<dir>]
-[B<-CAstore> I<uri>]
+[B<-CAstore> I<filename>|I<uri>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
@@ -347,7 +347,7 @@ certificates as far as the response already includes them.
 Multiple sources may be given, separated by commas and/or whitespace.
 Each file may contain multiple certificates.
 
-=item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
+=item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<filename>|I<uri>
 
 See L<openssl-verification-options(1)/Trusted Certificate Options> for details.
 At least one of B<-CAfile>, B<-CApath> or B<-CAstore> must be specified.

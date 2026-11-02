@@ -13,6 +13,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
+#include <openssl/pkcs7.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include "crypto/x509.h" /* x509_st definition */
@@ -100,6 +101,118 @@ static int test_x509_tbs_cache(void)
         && TEST_int_gt(X509_sign(x, privkey, signmd), 0)
         && TEST_int_eq(X509_verify(x, pubkey), 1);
     X509_free(x);
+    return ret;
+}
+
+static int test_x509_store_object_count(X509_STORE *store, int expected)
+{
+    STACK_OF(X509_OBJECT) *objs = X509_STORE_get1_objects(store);
+    int ret = TEST_ptr(objs)
+        && TEST_int_eq(sk_X509_OBJECT_num(objs), expected);
+
+    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
+    return ret;
+}
+
+/*
+ * Test both object types with a hash-table store, an unsorted legacy stack,
+ * and a sorted legacy stack. Matching objects are separated by the other type.
+ */
+static int test_x509_store_duplicates(int idx)
+{
+    int crl_test = idx % 2, mode = idx / 2;
+    int i, ret = 0;
+    const unsigned char *p;
+    X509_STORE *store = NULL;
+    STACK_OF(X509_OBJECT) *objs = NULL;
+    X509 *cert = NULL, *certs[4] = { NULL };
+    X509_CRL *crl = NULL, *crls[4] = { NULL };
+    ASN1_TIME *last_update = NULL;
+
+#ifdef OPENSSL_NO_DEPRECATED_4_0
+    if (mode != 0)
+        return TEST_skip("X509_STORE_get0_objects is disabled");
+#endif
+
+    p = certdata;
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(cert = d2i_X509(NULL, &p, sizeof(certdata))))
+        goto end;
+    p = crldata;
+    if (!TEST_ptr(crl = d2i_X509_CRL(NULL, &p, sizeof(crldata)))
+        || !TEST_true(X509_CRL_set_issuer_name(crl,
+            X509_get_subject_name(cert))))
+        goto end;
+
+    /* Decode signed objects so the CRLs have their cached fingerprints. */
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(cert), i + 1))
+            || !TEST_int_gt(X509_sign(cert, privkey, signmd), 0)
+            || !TEST_ptr(certs[i] = X509_dup(cert))
+            || !TEST_ptr(last_update = ASN1_TIME_adj(NULL, 0, i, 0))
+            || !TEST_true(X509_CRL_set1_lastUpdate(crl, last_update))
+            || !TEST_int_gt(X509_CRL_sign(crl, privkey, signmd), 0)
+            || !TEST_ptr(crls[i] = X509_CRL_dup(crl)))
+            goto end;
+        ASN1_TIME_free(last_update);
+        last_update = NULL;
+    }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+    if (mode != 0 && !TEST_ptr(objs = X509_STORE_get0_objects(store)))
+        goto end;
+#endif
+
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(crl_test ? X509_STORE_add_crl(store, crls[i])
+                                : X509_STORE_add_cert(store, certs[i])))
+            goto end;
+        if (i == 0
+            && !TEST_true(crl_test ? X509_STORE_add_cert(store, certs[0])
+                                   : X509_STORE_add_crl(store, crls[0])))
+            goto end;
+    }
+    if (!test_x509_store_object_count(store, 5))
+        goto end;
+    if (mode != 0 && !TEST_false(sk_X509_OBJECT_is_sorted(objs)))
+        goto end;
+    if (mode == 2) {
+        sk_X509_OBJECT_sort(objs);
+        if (!TEST_true(sk_X509_OBJECT_is_sorted(objs)))
+            goto end;
+    }
+
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(crl_test ? X509_STORE_add_crl(store, crls[i])
+                                : X509_STORE_add_cert(store, certs[i]))
+            || !test_x509_store_object_count(store, 5))
+            goto end;
+        /* Equal encodings at different addresses must also be duplicates. */
+        if (crl_test) {
+            X509_CRL_free(crl);
+            crl = X509_CRL_dup(crls[i]);
+            if (!TEST_ptr(crl) || !TEST_true(X509_STORE_add_crl(store, crl)))
+                goto end;
+        } else {
+            X509_free(cert);
+            cert = X509_dup(certs[i]);
+            if (!TEST_ptr(cert) || !TEST_true(X509_STORE_add_cert(store, cert)))
+                goto end;
+        }
+        if (!test_x509_store_object_count(store, 5))
+            goto end;
+    }
+    ret = 1;
+
+end:
+    ASN1_TIME_free(last_update);
+    X509_STORE_free(store);
+    X509_free(cert);
+    X509_CRL_free(crl);
+    for (i = 0; i < 4; i++) {
+        X509_free(certs[i]);
+        X509_CRL_free(crls[i]);
+    }
     return ret;
 }
 
@@ -701,6 +814,202 @@ static int test_nc_empty_dirname_permitted(void)
         sizeof(nc_permitted_empty_dirname), X509_V_OK);
 }
 
+static int test_x509_name_canon_failure_cache(void)
+{
+    static const unsigned char invalid_utf8[] = { 0xc0, 0xaf };
+    int ret = 0, hash_ok = 1;
+    X509 *cert = NULL;
+    X509_NAME *empty = NULL;
+    X509_STORE *store = NULL;
+
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_ptr(empty = X509_NAME_new())
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(cert->cert_info.subject,
+            "CN", V_ASN1_UTF8STRING, invalid_utf8, sizeof(invalid_utf8), -1,
+            0))
+        /*
+         * The first attempt populates DER before canonicalization fails. A
+         * retry must not reuse that partial cache.
+         */
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
+        || !TEST_int_eq(X509_NAME_cmp(cert->cert_info.subject, empty), -2)
+        || !TEST_ulong_eq(X509_NAME_hash_ex(cert->cert_info.subject, NULL,
+                              NULL, &hash_ok),
+            0)
+        || !TEST_false(hash_ok)
+        || !TEST_false(X509_STORE_add_cert(store, cert)))
+        goto end;
+
+    ret = 1;
+
+end:
+    ERR_clear_error();
+    X509_STORE_free(store);
+    X509_NAME_free(empty);
+    X509_free(cert);
+    return ret;
+}
+
+static int test_x509_name_multivalued_rdn_mfail(void)
+{
+    X509_NAME *name = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (unsigned char *)"Alice", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC,
+            (unsigned char *)"Engineering", -1, -1, -1)))
+        goto end;
+
+    MFAIL_start();
+    ret = i2d_X509_NAME(name, NULL) > 0;
+    MFAIL_end();
+
+end:
+    X509_NAME_free(name);
+    return ret;
+}
+
+static int test_x509_attribute_i2d_mfail(void)
+{
+    static const unsigned char value1[] = "first";
+    static const unsigned char value2[] = "second";
+    X509_ATTRIBUTE *attr = NULL;
+    unsigned char *der = NULL;
+    int len, ret = -1;
+
+    if (!TEST_ptr(attr = X509_ATTRIBUTE_create_by_NID(NULL, NID_commonName,
+                      V_ASN1_UTF8STRING, value1, sizeof(value1) - 1))
+        || !TEST_true(X509_ATTRIBUTE_set1_data(attr, V_ASN1_UTF8STRING,
+            value2, sizeof(value2) - 1)))
+        goto end;
+
+    MFAIL_start();
+    len = i2d_X509_ATTRIBUTE(attr, &der);
+    MFAIL_end();
+
+    if (len <= 0)
+        ret = der == NULL ? 0 : -1;
+    else
+        ret = der != NULL ? 1 : -1;
+
+end:
+    OPENSSL_free(der);
+    X509_ATTRIBUTE_free(attr);
+    return ret;
+}
+
+static PKCS7 *make_two_digest_pkcs7(void)
+{
+    PKCS7 *p7 = NULL;
+    X509_ALGOR *alg = NULL;
+
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
+        || !TEST_true(PKCS7_content_new(p7, NID_pkcs7_data))
+        || !TEST_ptr(alg = X509_ALGOR_new())
+        || !TEST_true(X509_ALGOR_set_md(alg, EVP_sha256()))
+        || !TEST_int_gt(sk_X509_ALGOR_push(p7->d.sign->md_algs, alg), 0))
+        goto end;
+    alg = NULL;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new())
+        || !TEST_true(X509_ALGOR_set_md(alg, EVP_sha384()))
+        || !TEST_int_gt(sk_X509_ALGOR_push(p7->d.sign->md_algs, alg), 0))
+        goto end;
+    alg = NULL;
+
+    return p7;
+
+end:
+    X509_ALGOR_free(alg);
+    PKCS7_free(p7);
+    return NULL;
+}
+
+static int test_pkcs7_digest_set_i2d_mfail(void)
+{
+    PKCS7 *p7 = NULL;
+    unsigned char *der = NULL, *p;
+    int len, outlen, ret = -1;
+
+    if (!TEST_ptr(p7 = make_two_digest_pkcs7()))
+        goto end;
+
+    len = i2d_PKCS7(p7, NULL);
+    if (!TEST_int_gt(len, 0) || !TEST_ptr(der = OPENSSL_malloc(len)))
+        goto end;
+    p = der;
+
+    MFAIL_start();
+    outlen = i2d_PKCS7(p7, &p);
+    MFAIL_end();
+
+    if (outlen <= 0)
+        ret = 0;
+    else
+        ret = outlen == len && p == der + len ? 1 : -1;
+
+end:
+    OPENSSL_free(der);
+    PKCS7_free(p7);
+    return ret;
+}
+
+static int test_pkcs7_digest_set_stream_mfail(void)
+{
+    static const unsigned char content[] = "stream content";
+    PKCS7 *p7 = NULL, *expected_p7 = NULL;
+    BIO *in = NULL, *out = NULL;
+    BIO *expected_in = NULL, *expected_out = NULL;
+    char *data = NULL, *expected_data = NULL;
+    long len, expected_len;
+    int outlen, ret = -1;
+
+    if (!TEST_ptr(expected_p7 = make_two_digest_pkcs7())
+        || !TEST_ptr(expected_in = BIO_new_mem_buf(content,
+                         sizeof(content) - 1))
+        || !TEST_ptr(expected_out = BIO_new(BIO_s_mem()))
+        || !TEST_true(i2d_PKCS7_bio_stream(expected_out, expected_p7,
+            expected_in,
+            SMIME_STREAM | PKCS7_BINARY))
+        || !TEST_long_gt(expected_len = BIO_get_mem_data(expected_out,
+                             &expected_data),
+            0)
+        || !TEST_ptr(p7 = make_two_digest_pkcs7())
+        || !TEST_ptr(in = BIO_new_mem_buf(content, sizeof(content) - 1))
+        || !TEST_ptr(out = BIO_new(BIO_s_mem())))
+        goto end;
+
+    MFAIL_start();
+    outlen = i2d_PKCS7_bio_stream(out, p7, in,
+        SMIME_STREAM | PKCS7_BINARY);
+    MFAIL_end();
+
+    if (outlen <= 0) {
+        ret = 0;
+    } else {
+        len = BIO_get_mem_data(out, &data);
+        if (!TEST_long_eq(len, expected_len)
+            || !TEST_mem_eq(data, len, expected_data, expected_len))
+            ret = -1;
+        else
+            ret = 1;
+    }
+
+end:
+    BIO_free(out);
+    BIO_free(in);
+    PKCS7_free(p7);
+    BIO_free(expected_out);
+    BIO_free(expected_in);
+    PKCS7_free(expected_p7);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -734,6 +1043,7 @@ int setup_tests(void)
 
     ADD_TEST(test_x509_tbs_cache);
     ADD_TEST(test_x509_crl_tbs_cache);
+    ADD_ALL_TESTS(test_x509_store_duplicates, 6);
     ADD_TEST(test_asn1_item_verify);
     ADD_MFAIL_NO_CHECK_TEST(test_x509_asn1_item_verify_mfail);
     ADD_MFAIL_TEST(test_x509_issuer_name_hash_mfail);
@@ -746,6 +1056,11 @@ int setup_tests(void)
     ADD_TEST(test_x509_verify_with_new);
     ADD_TEST(test_nc_empty_dirname_excluded);
     ADD_TEST(test_nc_empty_dirname_permitted);
+    ADD_TEST(test_x509_name_canon_failure_cache);
+    ADD_MFAIL_TEST(test_x509_name_multivalued_rdn_mfail);
+    ADD_MFAIL_TEST(test_x509_attribute_i2d_mfail);
+    ADD_MFAIL_TEST(test_pkcs7_digest_set_i2d_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_pkcs7_digest_set_stream_mfail);
     return 1;
 }
 

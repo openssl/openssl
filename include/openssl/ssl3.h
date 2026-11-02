@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -173,8 +173,6 @@ extern "C" {
 
 #define SSL3_RT_MAX_EXTRA (16384)
 
-/* Maximum plaintext length: defined by SSL/TLS standards */
-#define SSL3_RT_MAX_PLAIN_LENGTH 16384
 /* Maximum compression overhead: defined by SSL/TLS standards */
 #define SSL3_RT_MAX_COMPRESSED_OVERHEAD 1024
 

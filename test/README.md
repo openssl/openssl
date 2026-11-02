@@ -149,6 +149,29 @@ To run up to four tests in parallel at any given time:
 
     $ make HARNESS_JOBS=4 test
 
+Test time limit
+---------------
+
+Each test program is run under a watchdog so that a test which hangs is
+identified rather than silently stalling the run. If a test program runs for
+longer than a fixed time limit the watchdog assumes it has hung and aborts it
+(via `abort()`). The abort marks that specific test as failed - so a hang is
+attributed to the test responsible rather than appearing as an anonymous
+stalled run - and, where the environment is configured to produce them, leaves
+a core dump capturing every thread's stack, so it can be seen where the test
+was wedged.
+
+The limit defaults to 1800 seconds (30 minutes) per test program and can be
+changed with the `OPENSSL_TEST_TIMEOUT` environment variable, which gives the
+limit in seconds. Setting it to `0` (or a negative value) disables the
+watchdog entirely.
+
+    $ make OPENSSL_TEST_TIMEOUT=600 test
+
+The limit applies to each individual test program, not to the test run as a
+whole. It only covers test programs built on the test framework; helper
+invocations of the `openssl` application are not affected.
+
 Random numbers in tests
 -----------------------
 

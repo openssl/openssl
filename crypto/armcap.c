@@ -254,6 +254,19 @@ static unsigned int arm_probe_for(void (*probe)(void), volatile unsigned int val
 }
 #endif
 
+#ifdef __aarch64__
+static inline void arm64_setup_rsa_neonized(void)
+{
+    if (OPENSSL_armcap_P & ARMV8_CPUID)
+        OPENSSL_arm_midr = _armv8_cpuid_probe();
+
+    if ((OPENSSL_armcap_P & ARMV7_NEON)
+        && (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A72)
+            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N1)))
+        OPENSSL_armv8_rsa_neonized = 1;
+}
+#endif
+
 void OPENSSL_cpuid_setup(void)
 {
     const char *e;
@@ -271,6 +284,11 @@ void OPENSSL_cpuid_setup(void)
 
     if ((e = getenv("OPENSSL_armcap"))) {
         OPENSSL_armcap_P = (unsigned int)strtoul(e, NULL, 0);
+
+#ifdef __aarch64__
+        arm64_setup_rsa_neonized();
+#endif
+
         return;
     }
 
@@ -412,13 +430,7 @@ void OPENSSL_cpuid_setup(void)
 #endif /* __APPLE__, OSSL_IMPLEMENT_GETAUXVAL */
 
 #ifdef __aarch64__
-    if (OPENSSL_armcap_P & ARMV8_CPUID)
-        OPENSSL_arm_midr = _armv8_cpuid_probe();
-
-    if ((OPENSSL_armcap_P & ARMV7_NEON)
-        && (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A72)
-            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N1)))
-        OPENSSL_armv8_rsa_neonized = 1;
+    arm64_setup_rsa_neonized();
 
     if ((OPENSSL_armcap_P & ARMV8_SHA3)
         && (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1)
@@ -458,7 +470,9 @@ void OPENSSL_cpuid_setup(void)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M2_AVALANCHE_MAX)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_APPLE, APPLE_CPU_PART_M2_BLIZZARD_MAX)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_QCOMM, QCOM_CPU_PART_ORYON_X1)
-            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_NVIDIA, NVIDIA_CPU_PART_OLYMPUS)))
+            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_NVIDIA, NVIDIA_CPU_PART_OLYMPUS)
+            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N3)
+            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V3)))
         OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
 
     if (OPENSSL_armcap_P & ARMV9_SVE2) {

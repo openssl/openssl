@@ -12,6 +12,7 @@ name: Provider compatibility for PRs
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - 'doc/**'
       - '*.md'
@@ -98,7 +99,7 @@ jobs:
                                                  -providers
         working-directory: ${{ matrix.release.dir }}
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.release.tgz }}
           path: ${{ matrix.release.tgz }}
@@ -120,16 +121,6 @@ jobs:
             tgz: PR.tar.gz,
             extra_config: "enable-lms enable-tls-deprecated-ec",
           }, {
-            name: openssl-3.0,
-            dir: branch-3.0,
-            tgz: branch-3.0.tar.gz,
-            extra_config: "",
-          }, {
-            name: openssl-3.4,
-            dir: branch-3.4,
-            tgz: branch-3.4.tar.gz,
-            extra_config: "",
-          }, {
             name: openssl-3.5,
             dir: branch-3.5,
             tgz: branch-3.5.tar.gz,
@@ -143,6 +134,11 @@ jobs:
             name: openssl-4.0,
             dir: branch-4.0,
             tgz: branch-4.0.tar.gz,
+            extra_config: "enable-lms enable-tls-deprecated-ec",
+          }, {
+            name: openssl-4.1,
+            dir: branch-4.1,
+            tgz: branch-4.1.tar.gz,
             extra_config: "enable-lms enable-tls-deprecated-ec",
           }, {
             name: master,
@@ -195,7 +191,7 @@ jobs:
           ./util/opensslwrap.sh version -c
         working-directory: ${{ matrix.branch.dir }}
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.branch.tgz }}
           path: ${{ matrix.branch.tgz }}
@@ -214,22 +210,20 @@ jobs:
         # Note that releases are not used as a test environment for
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
-        tree_a: [ branch-4.0, branch-3.6, branch-3.5, branch-3.4, branch-3.0,
+        tree_a: [ branch-4.1, branch-4.0, branch-3.6, branch-3.5,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
         tree_b: [ PR ]
         include:
           - tree_a: PR
             tree_b: branch-master
           - tree_a: PR
+            tree_b: branch-4.1
+          - tree_a: PR
             tree_b: branch-4.0
           - tree_a: PR
             tree_b: branch-3.6
           - tree_a: PR
             tree_b: branch-3.5
-          - tree_a: PR
-            tree_b: branch-3.4
-          - tree_a: PR
-            tree_b: branch-3.0
     steps:
       - name: early exit checks
         id: early_exit
@@ -265,8 +259,8 @@ jobs:
       - name: set up cross validation of FIPS from A with tree from B
         if: steps.early_exit.outputs.skip != 'true'
         run: |
-          cp providers/fips.so ../${{ matrix.tree_b }}/providers/
-          cp providers/fipsmodule.cnf ../${{ matrix.tree_b }}/providers/
+          cp -f providers/fips.so ../${{ matrix.tree_b }}/providers/
+          cp -f providers/fipsmodule.cnf ../${{ matrix.tree_b }}/providers/
         working-directory: ${{ matrix.tree_a }}
 
       - name: show module versions from cross validation

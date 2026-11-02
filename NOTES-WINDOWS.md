@@ -87,6 +87,8 @@ Quick start
        on the Universal CRT or
     - `perl Configure VC-WIN64A-HYBRIDCRT` if you want 64-bit OpenSSL dependent
        on the Universal CRT or
+    - `perl Configure VC-WIN64-ARM-HYBRIDCRT` if you want Windows on Arm
+       (win-arm64) OpenSSL dependent on the Universal CRT or
     - `perl Configure`              to let Configure figure out the platform
 
     a. If you don't plan to develop OpenSSL yourself and don't need to rebuild,

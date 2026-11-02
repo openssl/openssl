@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/ecx.h"
 #include "prov/securitycheck.h"
+#include "providers/implementations/keymgmt/keymgmtcommon.inc"
 #ifdef S390X_EC_ASM
 #include "arch/s390x_arch.h"
 #include <openssl/sha.h> /* For SHA512_DIGEST_LENGTH */
@@ -102,6 +103,21 @@ static ossl_inline int ecx_key_type_is_ed(ECX_KEY_TYPE type)
 {
     return type == ECX_KEY_TYPE_ED25519 || type == ECX_KEY_TYPE_ED448;
 }
+
+#ifdef FIPS_MODULE
+static int ecx_gen_get_params(void *genctx, OSSL_PARAM params[])
+{
+    struct ecx_gen_ctx *gctx = genctx;
+    struct keymgmt_fips_gen_get_params_st p;
+
+    if (gctx == NULL || !keymgmt_fips_gen_get_params_decoder(params, &p))
+        return 0;
+    if (p.ind != NULL
+        && !OSSL_PARAM_set_int(p.ind, ecx_key_type_is_ed(gctx->type)))
+        return 0;
+    return 1;
+}
+#endif
 
 static void *x25519_new_key(void *provctx)
 {
@@ -433,7 +449,7 @@ static int ecx_set_params(void *key, const OSSL_PARAM params[])
             || !OSSL_PARAM_get_octet_string(p.pub, &buf, sizeof(ecxkey->pubkey),
                 NULL))
             return 0;
-        OPENSSL_clear_free(ecxkey->privkey, ecxkey->keylen);
+        OPENSSL_secure_clear_free(ecxkey->privkey, ecxkey->keylen);
         ecxkey->privkey = NULL;
         ecxkey->haspubkey = 1;
     }
@@ -1020,7 +1036,7 @@ static void ecx_free_key(void *keydata)
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ecx_gen_cleanup },           \
         { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ecx_load },                         \
         { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ecx_dup },                           \
-        OSSL_DISPATCH_END                                                             \
+        OSSL_KEYMGMT_FIPS_GEN_DISPATCH_END(ecx_gen_get_params)                        \
     };
 
 MAKE_KEYMGMT_FUNCTIONS(x25519)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -70,6 +70,25 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     buffered_app_data = d->buffered_app_data;
     memset(d, 0, sizeof(*d));
     d->buffered_app_data = buffered_app_data;
+}
+
+/*
+ * Checks for application data set aside while a handshake was in progress.
+ * dtls1_read_bytes() only returns it once the handshake has finished.
+ */
+int DTLS_RECORD_LAYER_buffered_app_data_pending(const RECORD_LAYER *rl)
+{
+    TLS_RECORD *rdata;
+    pitem *item, *iter;
+
+    iter = pqueue_iterator(rl->d->buffered_app_data);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        rdata = item->data;
+        if (rdata->length > 0)
+            return 1;
+    }
+
+    return 0;
 }
 
 static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
@@ -284,6 +303,8 @@ start:
                     SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
+                /* This must only ever happen once per handshake */
+                sc->dtls13_process_hello = 0;
 
                 /*
                  * Read the Buffered epoch
@@ -302,10 +323,31 @@ start:
                  * Anything other than a timeout is an error. SSLfatal() already
                  * called if appropriate.
                  */
-                if (ret <= 0)
-                    return ret;
-                else
+                if (ret > 0)
                     goto start;
+
+                /*
+                 * Once the record layer holds buffered records from a later
+                 * epoch it asks for a retry without reading the BIO again (see
+                 * dtls_get_more_records()), so nothing has set the BIO's retry
+                 * flags. Without them SSL_get_error() reports
+                 * SSL_ERROR_SYSCALL for what is an ordinary wait for more
+                 * data.
+                 *
+                 * A connection accepted by a DTLS listener has no read BIO of
+                 * its own (see dtls_listener_create_conn_ssl());
+                 * SSL_get_error() already reports SSL_ERROR_WANT_READ for
+                 * SSL_READING on such a connection without needing one.
+                 */
+                if (sc->rwstate == SSL_READING) {
+                    BIO *rbio = SSL_get_rbio(s);
+
+                    if (rbio != NULL && !BIO_should_retry(rbio)) {
+                        BIO_clear_retry_flags(rbio);
+                        BIO_set_retry_read(rbio);
+                    }
+                }
+                return ret;
             }
             rr->off = 0;
             sc->rlayer.num_recs++;
@@ -374,7 +416,8 @@ start:
         return 0;
     }
 
-    if (rr->type == SSL3_RT_HANDSHAKE && SSL_CONNECTION_IS_DTLS13(sc)) {
+    if ((rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)
+        && SSL_CONNECTION_IS_DTLS13(sc)) {
         sc->s3.tmp.record_epoch = rr->epoch;
         sc->s3.tmp.record_seq_num = rr->seq_num;
     }
@@ -570,9 +613,25 @@ start:
 
         /*
          * This may just be a stale retransmit. Also sanity check that we have
-         * at least enough record bytes for a message header
+         * at least enough record bytes for a message header.
+         *
+         * For DTLS 1.3, a record at exactly the previous read epoch is not
+         * necessarily stale: it authenticated (see dtls_get_more_records()'s
+         * retained prev_epoch_rl handling), but that alone doesn't prove it's
+         * a retransmission. Let it through to the normal handshake-message
+         * path below instead of discarding it here -- the sequence and epoch
+         * checks there (dtls_record_from_retained_epoch(),
+         * dtls_prev_epoch_allows_type()) are what actually decide whether it
+         * can be acknowledged. This retained-epoch exception is for handshake
+         * records only (rr->type == SSL3_RT_HANDSHAKE above); an ACK record
+         * still has to be tied to the epoch that authenticated it before it
+         * can touch d1->sent_messages, which dtls_process_ack() enforces
+         * separately.
          */
-        if (rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
+        if ((rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
+                && !(SSL_CONNECTION_IS_DTLS13(sc)
+                    && dtls1_get_epoch(sc, SSL3_CC_READ) > 0
+                    && rr->epoch == dtls1_get_epoch(sc, SSL3_CC_READ) - 1))
             || rr->length < DTLS1_HM_HEADER_LENGTH) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
@@ -584,8 +643,16 @@ start:
         /*
          * If we are server, we may have a repeated FINISHED of the client
          * here, then retransmit our CCS and FINISHED.
+         *
+         * DTLS 1.3 has proper ACK records, so this DTLS 1.2-only fallback
+         * (which infers loss from a bare repeated Finished and reacts by
+         * blindly retransmitting our own flight) is skipped for it. A
+         * repeated DTLS 1.3 Finished instead falls through to the normal
+         * handshake-message path below, which ACKs a message it has
+         * already fully processed without reprocessing it (see the
+         * record_epoch check in statem_dtls.c).
          */
-        if (msg_type == SSL3_MT_FINISHED) {
+        if (!SSL_CONNECTION_IS_DTLS13(sc) && msg_type == SSL3_MT_FINISHED) {
             if (dtls1_check_timeout_num(sc) < 0) {
                 /* SSLfatal) already called */
                 return -1;
@@ -605,8 +672,17 @@ start:
 
                     sc->rwstate = SSL_READING;
                     bio = SSL_get_rbio(s);
-                    BIO_clear_retry_flags(bio);
-                    BIO_set_retry_read(bio);
+                    /*
+                     * A connection accepted by a DTLS listener has no read
+                     * BIO of its own (see dtls_listener_create_conn_ssl());
+                     * SSL_get_error() already reports SSL_ERROR_WANT_READ
+                     * for SSL_READING on such a connection without needing
+                     * one.
+                     */
+                    if (bio != NULL) {
+                        BIO_clear_retry_flags(bio);
+                        BIO_set_retry_read(bio);
+                    }
                     return -1;
                 }
             }
@@ -654,8 +730,16 @@ start:
                  */
                 sc->rwstate = SSL_READING;
                 bio = SSL_get_rbio(s);
-                BIO_clear_retry_flags(bio);
-                BIO_set_retry_read(bio);
+                /*
+                 * A connection accepted by a DTLS listener has no read BIO
+                 * of its own (see dtls_listener_create_conn_ssl());
+                 * SSL_get_error() already reports SSL_ERROR_WANT_READ for
+                 * SSL_READING on such a connection without needing one.
+                 */
+                if (bio != NULL) {
+                    BIO_clear_retry_flags(bio);
+                    BIO_set_retry_read(bio);
+                }
                 return -1;
             }
         }
@@ -811,7 +895,8 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
             return ret;
 
         sent_msg = (dtls_sent_msg *)item->data;
-        rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number);
+        rec_num = dtls1_record_number_new(tmpl.epoch, tmpl.sequence_number,
+            sc->d1->w_frag_off, sc->d1->w_frag_len);
 
         if (rec_num == NULL)
             return -1;
@@ -840,14 +925,17 @@ int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
             /* We've wrapped around, so clear the buffer just in case */
             return 0;
     } else {
-        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == UINT16_MAX)
+        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == DTLS1_MAX_EPOCH)
+            return 0;
+
+        /*
+         * RFC 9147 Section 8: sending implementations MUST NOT allow the
+         * epoch to exceed 2^48-1.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == DTLS1_3_MAX_EPOCH)
             return 0;
 
         s->rlayer.d->w_conn_epoch++;
-
-        if (s->rlayer.d->w_conn_epoch == 0)
-            /* We've wrapped around, so clear the buffer just in case */
-            return 0;
     }
 
     return 1;

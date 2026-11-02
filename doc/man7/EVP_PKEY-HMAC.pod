@@ -75,6 +75,20 @@ The name of a cipher to be used when generating the MAC.
 
 =back
 
+=head2 MAC key generation FIPS indicator
+
+The following key generation parameter can be retrieved with
+L<EVP_PKEY_CTX_get_params(3)> for HMAC and CMAC in the OpenSSL FIPS provider:
+
+=over 4
+
+=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
+
+Returns 1 if the operation is FIPS approved, or 0 otherwise.
+See L<fips_module(7)/FIPS indicators> for more information.
+
+=back
+
 =head1 SEE ALSO
 
 L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
@@ -86,7 +100,7 @@ OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

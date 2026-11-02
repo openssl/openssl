@@ -23,6 +23,7 @@
 #include <openssl/trace.h>
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
+#include "internal/cryptlib.h" /* for ossl_asprintf() */
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
@@ -1264,7 +1265,7 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
     return resp;
 }
 
-static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
+static int redirection_ok(int n_redir, int use_ssl, const char *new_url)
 {
     if (n_redir >= HTTP_VERSION_MAX_REDIRECTIONS) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_TOO_MANY_REDIRECTIONS);
@@ -1272,7 +1273,7 @@ static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
     }
     if (*new_url == '/') /* redirection to same server => same protocol */
         return 1;
-    if (HAS_PREFIX(old_url, OSSL_HTTPS_NAME ":") && !HAS_PREFIX(new_url, OSSL_HTTPS_NAME ":")) {
+    if (use_ssl && !HAS_PREFIX(new_url, OSSL_HTTPS_NAME ":")) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP);
         return 0;
     }
@@ -1331,7 +1332,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         }
         OPENSSL_free(path);
         if (resp == NULL && redirection_url != NULL) {
-            if (redirection_ok(++n_redirs, current_url, redirection_url)
+            if (redirection_ok(++n_redirs, use_ssl, redirection_url)
                 && may_still_retry(max_time, &timeout)) {
                 (void)BIO_reset(bio);
                 OPENSSL_free(current_url);
@@ -1500,25 +1501,19 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
     /* Support for basic (base64) proxy authentication */
     if (proxyuser != NULL) {
-        size_t len = strlen(proxyuser) + 1;
-        char *proxyauth, *proxyauthenc = NULL;
+        char *proxyauth = NULL, *proxyauthenc = NULL;
+        int len;
 
-        if (proxypass != NULL)
-            len += strlen(proxypass);
-        proxyauth = OPENSSL_malloc(len + 1);
-        if (proxyauth == NULL)
+        len = ossl_asprintf(&proxyauth, "%s:%s", proxyuser,
+            proxypass != NULL ? proxypass : "");
+        if (len < 0)
             goto end;
-        if (snprintf(proxyauth, len + 1, "%s:%s", proxyuser,
-                proxypass != NULL ? proxypass : "")
-            != (int)len)
-            goto proxy_end;
-        proxyauthenc = base64encode(proxyauth, len);
+        proxyauthenc = base64encode(proxyauth, (size_t)len);
         if (proxyauthenc != NULL) {
             BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc);
             OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
         }
-    proxy_end:
-        OPENSSL_clear_free(proxyauth, len);
+        OPENSSL_clear_free(proxyauth, (size_t)len);
         if (proxyauthenc == NULL)
             goto end;
     }

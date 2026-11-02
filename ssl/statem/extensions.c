@@ -1431,7 +1431,7 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
                 ss->ext.tick_lifetime_hint = 0;
                 ss->ext.tick_age_add = 0;
                 if (!ssl_generate_session_id(s, ss)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    /* SSLfatal() already called */
                     return 0;
                 }
             } else {
@@ -1699,6 +1699,16 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
     return 1;
 }
 
+/* Is a HelloRetryRequest cookie required before the handshake can proceed? */
+int tls_hrr_cookie_required(const SSL_CONNECTION *s)
+{
+    if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0)
+        return 1;
+
+    return SSL_CONNECTION_IS_DTLS(s)
+        && (s->options & SSL_OP_COOKIE_EXCHANGE) != 0;
+}
+
 static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
 {
 #if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
@@ -1722,12 +1732,18 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      */
     if (!s->server
         && !sent) {
-        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SUITABLE_KEY_SHARE);
-            return 0;
-        }
+        /*
+         * In a full handshake the ServerHello must carry a key_share, so its
+         * absence is a missing_extension alert (RFC 8446, sections 4.2.8
+         * and 6.2). Only when resuming may the server legitimately omit it,
+         * and then only if we offered psk_ke.
+         */
         if (!s->hit) {
             SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_R_NO_SUITABLE_KEY_SHARE);
+            return 0;
+        }
+        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }
     }
@@ -1739,7 +1755,7 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *         we have a suitable key_share
      *     THEN
      *         IF
-     *             we are stateless AND we have no cookie
+     *             a cookie is required AND we have no cookie
      *         THEN
      *             send a HelloRetryRequest
      *     ELSE
@@ -1761,22 +1777,34 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *         THEN
      *             fail
      *         ELSE IF
-     *             we are stateless AND we have no cookie
+     *             a cookie is required AND we have no cookie
      *         THEN
      *             send a HelloRetryRequest
      */
     if (s->server) {
+        /*
+         * RFC 8446, section 9.2: a ClientHello containing a supported_groups
+         * extension MUST also contain a key_share extension, and vice versa
+         * (an empty KeyShare.client_shares vector is permitted).  Servers
+         * MUST abort the handshake with a missing_extension alert otherwise.
+         */
+        if (s->clienthello != NULL) {
+            const RAW_EXTENSION *groups = &s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups];
+
+            if ((sent != 0) != (groups->present != 0)) {
+                SSLfatal(s, SSL_AD_MISSING_EXTENSION,
+                    sent ? SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION
+                         : SSL_R_NO_SUITABLE_KEY_SHARE);
+                return 0;
+            }
+        }
+
         if (s->s3.peer_tmp != NULL) {
             /* We have a suitable key_share */
-            if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
-                && !s->ext.cookieok) {
-                if (!ossl_assert(s->hello_retry_request == SSL_HRR_NONE)) {
-                    /*
-                     * If we are stateless then we wouldn't know about any
-                     * previously sent HRR - so how can this be anything other
-                     * than 0?
-                     */
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            if (tls_hrr_cookie_required(s) && !s->ext.cookieok) {
+                if (s->hello_retry_request != SSL_HRR_NONE) {
+                    /* We already sent an HRR and still have no valid cookie */
+                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
                     return 0;
                 }
                 s->hello_retry_request = SSL_HRR_PENDING;
@@ -1804,15 +1832,10 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                 return 0;
             }
 
-            if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
-                && !s->ext.cookieok) {
-                if (!ossl_assert(s->hello_retry_request == SSL_HRR_NONE)) {
-                    /*
-                     * If we are stateless then we wouldn't know about any
-                     * previously sent HRR - so how can this be anything other
-                     * than 0?
-                     */
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            if (tls_hrr_cookie_required(s) && !s->ext.cookieok) {
+                if (s->hello_retry_request != SSL_HRR_NONE) {
+                    /* We already sent an HRR and still have no valid cookie */
+                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
                     return 0;
                 }
                 s->hello_retry_request = SSL_HRR_PENDING;
@@ -1908,6 +1931,16 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
         /* SSLfatal() already called */
         goto err;
     }
+
+    /*
+     * Client-only: record that this flight's first-offered PSK has derived
+     * s->early_secret, so the early-write key install can refuse to key 0-RTT
+     * off an underived (zero) secret. early_secret aliases s->early_secret
+     * exactly for the identity that 0-RTT is keyed on (the resumption PSK, or
+     * an external PSK selected for early data via usepskfored).
+     */
+    if (!s->server && early_secret == (unsigned char *)s->early_secret)
+        s->ext.early_secret_derived = 1;
 
     /*
      * Create the handshake hash for the binder key...the messages so far are

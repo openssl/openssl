@@ -66,6 +66,16 @@ Key = 5840df6e29b02af1ab493b705bf16ea1ae8338f4dcc176a8
 Plaintext = 466f7250617369
 Ciphertext = afbeb0f07dfbf5419200f2ccb50bb24f
 
+Cipher = id-aes128-wrap-pad
+Key = 5840df6e29b02af1ab493b705bf16ea1
+Plaintext = c37b7e6492584340bed12207808941155068f738
+Ciphertext = ed9f0ecfbb761b7365838733e3f42f81a049f077e901f63bfe0519e8a12e9bcf
+
+Cipher = id-aes256-wrap-pad
+Key = 5840df6e29b02af1ab493b705bf16ea1ae8338f4dcc176a80001020304050607
+Plaintext = c37b7e6492584340bed12207808941155068f738
+Ciphertext = a3696fe696c7baa90972a62d5a334c353ca01cd2d02cb407d72a231e01ead9dd
+
 # AES wrap tests from
 # https://csrc.nist.gov/CSRC/media/Projects/
 # Cryptographic-Algorithm-Validation-Program/documents/mac/kwtestvectors.zip

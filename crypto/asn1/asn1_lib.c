@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,32 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include "asn1_local.h"
+
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define ASN1_HAVE_ASAN 1
+#endif
+#if __has_feature(memory_sanitizer)
+#define ASN1_HAVE_MSAN 1
+#endif
+#endif /* defined(__has_feature) */
+#if defined(__SANITIZE_ADDRESS__) && !defined(ASN1_HAVE_ASAN)
+#define ASN1_HAVE_ASAN 1
+#endif
+#if defined(ASN1_HAVE_ASAN)
+#include <sanitizer/asan_interface.h>
+#endif
+#if defined(ASN1_HAVE_MSAN)
+#include <sanitizer/msan_interface.h>
+#endif
+#if !defined OPENSSL_NO_VALGRIND_CHECK && defined __has_include
+/* Any compiler you're going to run valgrind on has this */
+#if __has_include(<valgrind/memcheck.h>)
+#include <valgrind/memcheck.h>
+#include "internal/thread_once.h"
+#define ASN1_HAVE_VALGRIND 1
+#endif
+#endif /* defined(__has_include) */
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
     long max);
@@ -266,7 +292,7 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
         return 0;
     dst->type = str->type;
     if (!ossl_asn1_string_set_internal(dst, str->data, str->length,
-            /*add_nul_byte=*/0))
+            /*add_nul_byte=*/1))
         return 0;
     /* Copy flags but preserve embed value */
     dst->flags &= ASN1_STRING_FLAG_EMBED;
@@ -288,6 +314,73 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
         return NULL;
     }
     return ret;
+}
+
+#if defined(ASN1_HAVE_VALGRIND)
+static CRYPTO_ONCE valgrind_once = CRYPTO_ONCE_STATIC_INIT;
+static int valgrind_present = 0;
+
+DEFINE_RUN_ONCE_STATIC(detect_valgrind)
+{
+    valgrind_present = RUNNING_ON_VALGRIND != 0;
+    return 1;
+}
+
+static int under_valgrind(void)
+{
+    return RUN_ONCE(&valgrind_once, detect_valgrind) && valgrind_present;
+}
+#endif /* defined(ASN1_HAVE_VALGRIND) */
+
+/**
+ * @brief Mark the NUL terminator at p as inaccessible to memory checkers.
+ * Under AddressSanitizer, MemorySanitizer and Valgrind memcheck a read of
+ * the byte is reported as an error, so C-string use of ASN1_STRING data is
+ * caught while the byte stays present for builds without a checker. The
+ * Valgrind client requests are compiled in wherever its header is found and
+ * are issued only when the process is running under Valgrind.
+ * A poisoned byte needs no unpoisoning before free(): every checker marks
+ * the whole block on free without regard to its previous state.
+ * @param p the terminator byte
+ */
+static void poison_terminator(uint8_t *p)
+{
+#if defined(ASN1_HAVE_ASAN)
+    ASAN_POISON_MEMORY_REGION(p, 1);
+#endif
+#if defined(ASN1_HAVE_MSAN)
+    __msan_poison(p, 1);
+#endif
+#if defined(ASN1_HAVE_VALGRIND)
+    if (under_valgrind())
+        VALGRIND_MAKE_MEM_NOACCESS(p, 1);
+#endif
+}
+
+/**
+ * @brief Make the byte at p accessible again before it is written.
+ * @param p the byte about to hold a NUL terminator
+ */
+static void unpoison_terminator(uint8_t *p)
+{
+#if defined(ASN1_HAVE_ASAN)
+    ASAN_UNPOISON_MEMORY_REGION(p, 1);
+#endif
+#if defined(ASN1_HAVE_MSAN)
+    __msan_unpoison(p, 1);
+#endif
+#if defined(ASN1_HAVE_VALGRIND)
+    if (under_valgrind())
+        VALGRIND_MAKE_MEM_UNDEFINED(p, 1);
+#endif
+}
+
+static void unpoison_buffer(uint8_t *buf, size_t buf_len)
+{
+#if defined(ASN1_HAVE_VALGRIND)
+    if (under_valgrind())
+        VALGRIND_MAKE_MEM_UNDEFINED(buf, buf_len);
+#endif
 }
 
 int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
@@ -344,19 +437,23 @@ int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
         if (c == NULL)
             return 0;
         str->data = c;
+        unpoison_buffer(str->data, alloc_len);
     }
     /* length never includes the added \0 byte */
     str->length = (int)len;
 
-    if (data != NULL && str->data != NULL) {
+    if (data != NULL && str->data != NULL)
         memcpy(str->data, data, len);
-        if (add_nul_byte) {
-            /*
-             * Add a '\0' terminator. This should not be necessary - but we add it as
-             * a safety precaution
-             */
+    if (add_nul_byte) {
+        /*
+         * The terminator byte lies beyond str->length. It is written only
+         * when data is supplied, and is inaccessible to memory checkers
+         * either way; see poison_terminator().
+         */
+        unpoison_terminator(&str->data[len]);
+        if (data != NULL)
             str->data[len] = '\0';
-        }
+        poison_terminator(&str->data[len]);
     }
     ossl_asn1_bit_string_clear_unused_bits(str);
 
@@ -374,7 +471,10 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
     if (!(str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)) {
-        OPENSSL_clear_free(str->data, str->length);
+        if (str->length > 0)
+            OPENSSL_clear_free(str->data, str->length);
+        else
+            OPENSSL_free(str->data);
     }
     str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     str->data = data;
@@ -398,6 +498,27 @@ int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
 int ASN1_STRING_set1_string(ASN1_STRING *str, const char *c_string)
 {
     return ASN1_STRING_set1_data(str, (const uint8_t *)c_string,
+        strlen(c_string));
+}
+
+int ossl_asn1_string_set1_data(ASN1_STRING *str, const uint8_t *data,
+    size_t len_in)
+{
+    if (str->type == V_ASN1_BIT_STRING) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BITSTRING_FORMAT);
+        return 0;
+    }
+    /* This will go away once ASN1_STRING can size_t internally */
+    if (len_in > INT_MAX) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
+        return 0;
+    }
+    return ossl_asn1_string_set_internal(str, data, (int)len_in, /*add_nul_byte=*/1);
+}
+
+int ossl_asn1_string_set1_string(ASN1_STRING *str, const char *c_string)
+{
+    return ossl_asn1_string_set1_data(str, (const uint8_t *)c_string,
         strlen(c_string));
 }
 
@@ -455,7 +576,7 @@ void ossl_asn1_string_free_internal(ASN1_STRING *a, int clear, int embed)
     }
 
     if (!(a->flags & ASN1_STRING_FLAG_NDEF)) {
-        if (clear)
+        if (clear && a->length > 0)
             OPENSSL_clear_free(a->data, a->length);
         else
             OPENSSL_free(a->data);
@@ -514,7 +635,7 @@ int ASN1_STRING_length(const ASN1_STRING *x)
 
 size_t ASN1_STRING_get_length(const ASN1_STRING *x)
 {
-    return (size_t)x->length;
+    return x->length >= 0 ? (size_t)x->length : 0U;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0

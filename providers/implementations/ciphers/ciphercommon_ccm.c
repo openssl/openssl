@@ -212,9 +212,6 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
         if (!ctx->hw->gettag(ctx, p.tag->data, p.tag->data_size))
             return 0;
-        ctx->tag_set = 0;
-        ctx->iv_set = 0;
-        ctx->len_set = 0;
     }
 
     return 1;
@@ -269,6 +266,12 @@ int ossl_ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
     size_t inl)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
+
+    /* A NULL input is only valid as the message length, with no output. */
+    if (in == NULL && out != NULL && inl != 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -427,7 +430,10 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
         if (ctx->enc) {
             if (!hw->auth_encrypt(ctx, in, out, len, NULL, 0))
                 goto err;
+            /* Finished - tag stays readable, but reset other flags */
             ctx->tag_set = 1;
+            ctx->iv_set = 0;
+            ctx->len_set = 0;
         } else {
             /* The tag must be set before actually decrypting data */
             if (!ctx->tag_set) {

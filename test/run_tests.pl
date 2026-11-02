@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -293,6 +293,11 @@ $eres = eval {
                         $output_buffer .= "\n".$self->as_string;
                     }
                 }
+
+                # TAP::Base calls callbacks in list context, so without this
+                # return, every line appended above would also return a copy
+                # of all of $output_buffer, which takes quadratic time.
+                return;
             }
         }
 

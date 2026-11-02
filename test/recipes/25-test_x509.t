@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 155;
+plan tests => 158;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -595,8 +595,32 @@ my $in_key = srctop_file('test', 'certs', 'x509-check-key.pem');
 my $invextfile = srctop_file('test', 'invalid-x509.cnf');
 # Test that invalid extensions settings fail
 ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
-            "-out", "/dev/null", "-days", "3650" , "-extensions", "ext",
+            "-out", File::Spec->devnull(), "-days", "3650" , "-extensions", "ext",
             "-extfile", $invextfile])));
+
+subtest "signing output detection with -key" => sub {
+    plan tests => 5;
+
+    my $v1_cert = srctop_file("test", "testx509.pem");
+    my $with_days_cert = "x509-resigned-with-days.pem";
+    my $default_ext_cert = "x509-resigned-with-default-ext.pem";
+    my $request = "x509-to-request-with-ext.pem";
+
+    ok(!run(app(["openssl", "x509", "-in", $v1_cert, "-noout",
+                 "-days", "1"])),
+       "reject -days when no signed output is requested");
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-signkey", $in_key,
+                "-days", "1", "-out", $with_days_cert])),
+       "accept -days when re-signing with -signkey");
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-key", $in_key,
+                "-out", $default_ext_cert])),
+       "re-sign a certificate with -key");
+    has_SKID($default_ext_cert, 1);
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-x509toreq",
+                "-key", $in_key, "-extfile", $cnf,
+                "-extensions", "v3_req", "-out", $request])),
+       "accept extension options when signing a request with -key");
+};
 
 # Tests for issue #16080 (fixed in 1.1.1o)
 my $b_key = "b-key.pem";
@@ -814,6 +838,95 @@ ok(!run(app(["openssl", "x509", "-multi", "-checkend",
 # Bad parse still returns non-zero
 ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_key])),
     "Bad parse with -checkend returns non-zero");
+
+# Regression test: -checkend must not report a certificate whose validity
+# times cannot be parsed as "will not expire" with a zero exit status.
+# A certificate that is not yet valid at the check time is not expiring.
+# See https://github.com/openssl/openssl/issues/11772
+subtest "x509 -checkend with invalid or future validity times" => sub {
+    plan tests => 7;
+
+    my $c_der = "c-early.der";
+    my $c_bad_after = "c-bad-notafter.pem";
+    my $c_bad_before = "c-bad-notbefore.pem";
+    my $c_future = "c-future.pem";
+    my $c_mixed = "c-mixed.pem";
+
+    # Overwrite the first digit of the notBefore ($which == 0) or notAfter
+    # ($which == 1) UTCTime of a DER certificate with a non-digit, which
+    # keeps the certificate decodable but makes that time unparsable.
+    sub corrupt_time {
+        my ($in, $out, $which) = @_;
+        my $n = 0;
+
+        open(my $fh, "<:raw", $in) or die;
+        local $/;
+        my $der = <$fh>;
+        close($fh);
+        $der =~ s/(\x17\x0d)(\d)(\d{11}Z)/$n++ == $which ? "$1X$3" : "$1$2$3"/ge
+            or die "no UTCTime found in $in";
+        die "only $n UTCTime(s) found in $in" if $n < 2;
+        open($fh, ">:raw", $out) or die;
+        print {$fh} $der;
+        close($fh);
+        return 1;
+    }
+
+    ok(run(app(["openssl", "x509", "-in", $c_early, "-outform", "DER",
+                "-out", $c_der]))
+       && corrupt_time($c_der, "c-bad-notafter.der", 1)
+       && corrupt_time($c_der, "c-bad-notbefore.der", 0)
+       && run(app(["openssl", "x509", "-inform", "DER",
+                   "-in", "c-bad-notafter.der", "-out", $c_bad_after]))
+       && run(app(["openssl", "x509", "-inform", "DER",
+                   "-in", "c-bad-notbefore.der", "-out", $c_bad_before])),
+       "Create certificates with unparsable validity times");
+
+    ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_bad_after])),
+       "Invalid notAfter with -checkend returns non-zero");
+    ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_bad_before])),
+       "Invalid notBefore with -checkend returns non-zero");
+
+    mkchain($c_late, $c_bad_after);
+    ok(!run(app(["openssl", "x509", "-multi", "-checkend", "60",
+                 "-in", $c_chain])),
+       "Multi cert + invalid notAfter in 2nd cert returns non-zero");
+
+    my $not_before = Time::Piece->gmtime(time() + 2 * 366 * 86400)
+                         ->strftime("%Y%m%d%H%M%SZ");
+    my $not_after = Time::Piece->gmtime(time() + 3 * 366 * 86400)
+                        ->strftime("%Y%m%d%H%M%SZ");
+    ok(run(app(["openssl", "x509", "-new", "-key", $c_key, "-subj",
+                "/CN=FUTURE", "-not_before", $not_before,
+                "-not_after", $not_after, "-out", $c_future])),
+       "Create not yet valid certificate");
+
+    my @out = run(app(["openssl", "x509", "-checkend", "60",
+                       "-in", $c_future]), capture => 1, statusvar => \my $ok);
+    ok($ok && grep(/^Certificate will not expire/, @out),
+       "Not yet valid cert with -checkend returns zero and is reported");
+
+    mkchain($c_future, $c_early);
+    ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+                 $delta_early + 3600, "-in", $c_chain])),
+       "Multi cert + not yet valid 1st + expiring 2nd returns non-zero");
+};
+
+# Regression test: with -multi, a failure on a later certificate must set
+# a failing exit status even after an earlier certificate succeeded, i.e.
+# the per-certificate success status must not leak into the final result.
+subtest "x509 -multi later failure is not masked by earlier success" => sub {
+    plan tests => 1;
+
+    # goodcn2-chain.pem holds two certificates without subjectAltName, so
+    # -checkhost falls back to the CN: "www.good.org" matches the first
+    # certificate ("CN=www.good.org") but not the second ("CN=Test NC CA 1")
+    my $chain = srctop_file(@certs, "goodcn2-chain.pem");
+
+    ok(!run(app(["openssl", "x509", "-multi", "-in", $chain, "-noout",
+                 "-checkhost", "www.good.org"])),
+       "-multi returns non-zero when a later certificate fails -checkhost");
+};
 
 # Signing using DER-encoded key and CA cert/key inputs,
 # exercising -keyform, -CAform and -CAkeyform

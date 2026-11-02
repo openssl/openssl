@@ -16,7 +16,8 @@
 #include "internal/tsan_assist.h"
 #include "x509_local.h"
 #include "crypto/objects/obj_dat.h"
-#include "internal/hashfunc.h"
+#include "crypto/siphash.h"
+#include <openssl/rand.h>
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
@@ -346,12 +347,19 @@ int X509_supported_extension(const X509_EXTENSION *ex)
     return 0;
 }
 
-/* Returns 1 on success, 0 if x is invalid, -1 on (internal) error. */
-static int setup_dp(const X509 *x, DIST_POINT *dp)
+/*
+ * Returns 1 on success, 0 if x is invalid.
+ *
+ * The full name of a nameRelativeToCRLIssuer distribution point is not
+ * computed here.  Doing so for every parsed certificate cost an
+ * X509_NAME_dup() of the issuer name per relative distribution point,
+ * which a certificate with many such entries could turn into hundreds of
+ * megabytes of heap on a plain TLS handshake, while the result is only
+ * needed when a CRL is actually being matched against the certificate.
+ * That name is now built on demand in the CRL checking code instead.
+ */
+static int setup_dp(DIST_POINT *dp)
 {
-    const X509_NAME *iname = NULL;
-    int i;
-
     if (dp->distpoint == NULL && sk_GENERAL_NAME_num(dp->CRLissuer) <= 0) {
         ERR_raise(ERR_LIB_X509, X509_R_INVALID_DISTPOINT);
         return 0;
@@ -365,30 +373,10 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
     } else {
         dp->dp_reasons = CRLDP_ALL_REASONS;
     }
-    if (dp->distpoint == NULL || dp->distpoint->type != 1)
-        return 1;
-
-    /* Handle name fragment given by nameRelativeToCRLIssuer */
-    /*
-     * Note that the below way of determining iname is not really compliant
-     * with https://tools.ietf.org/html/rfc5280#section-4.2.1.13
-     * According to it, sk_GENERAL_NAME_num(dp->CRLissuer) MUST be <= 1
-     * and any CRLissuer could be of type different to GEN_DIRNAME.
-     */
-    for (i = 0; i < sk_GENERAL_NAME_num(dp->CRLissuer); i++) {
-        GENERAL_NAME *gen = sk_GENERAL_NAME_value(dp->CRLissuer, i);
-
-        if (gen->type == GEN_DIRNAME) {
-            iname = gen->d.directoryName;
-            break;
-        }
-    }
-    if (iname == NULL)
-        iname = X509_get_issuer_name(x);
-    return DIST_POINT_set_dpname(dp->distpoint, iname) ? 1 : -1;
+    return 1;
 }
 
-/* Return 1 on success, 0 if x is invalid, -1 on (internal) error. */
+/* Return 1 on success, 0 if x is invalid. */
 static int setup_crldp(const X509 *x, STACK_OF(DIST_POINT) **tmp_crldp)
 {
     int i;
@@ -398,10 +386,8 @@ static int setup_crldp(const X509 *x, STACK_OF(DIST_POINT) **tmp_crldp)
         return 0;
 
     for (i = 0; i < sk_DIST_POINT_num(*tmp_crldp); i++) {
-        int res = setup_dp(x, sk_DIST_POINT_value(*tmp_crldp, i));
-
-        if (res < 1)
-            return res;
+        if (!setup_dp(sk_DIST_POINT_value(*tmp_crldp, i)))
+            return 0;
     }
     return 1;
 }
@@ -423,16 +409,44 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
     return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
 
+/*
+ * Per-scan SipHash keying for the duplicate-extension fall-back table.
+ *
+ * Standard extensions have an assigned NID and are deduplicated with the O(1)
+ * bitset in scan_ext_flags(). Only unknown or dynamically registered OIDs,
+ * whose bytes are fully attacker-controlled on an untrusted certificate, reach
+ * the hash table. An unkeyed hash would let an attacker precompute colliding
+ * OIDs and drive the table into O(n^2) chain walks (hash flooding). Hash the
+ * OID with SipHash under a random key drawn once per scan, mirroring the
+ * defense in ssl/quic/quic_lcidm.c.
+ */
+typedef struct {
+    const ASN1_OBJECT *obj;
+    const uint64_t *key; /* 128-bit SipHash key owned by scan_ext_flags */
+} oid_hte;
+
 static unsigned long oid_hash(const void *p)
 {
-    const ASN1_OBJECT *a = p;
+    const oid_hte *e = (const oid_hte *)p;
+    SIPHASH sip = { 0 };
+    unsigned char digest[SIPHASH_MIN_DIGEST_SIZE];
+    unsigned long v = 0;
 
-    return (unsigned long)ossl_fnv1a_hash((uint8_t *)a->data, a->length);
+    if (!SipHash_set_hash_size(&sip, SIPHASH_MIN_DIGEST_SIZE))
+        return 0;
+    if (!SipHash_Init(&sip, (const unsigned char *)e->key, 0, 0))
+        return 0;
+    SipHash_Update(&sip, (const unsigned char *)e->obj->data, e->obj->length);
+
+    if (!SipHash_Final(&sip, digest, sizeof(digest)))
+        return 0;
+    memcpy(&v, digest, sizeof(v) < sizeof(digest) ? sizeof(v) : sizeof(digest));
+    return v;
 }
 
 static int oid_cmp(const void *a, const void *b)
 {
-    return OBJ_cmp((const ASN1_OBJECT *)a, (const ASN1_OBJECT *)b);
+    return OBJ_cmp(((const oid_hte *)a)->obj, ((const oid_hte *)b)->obj);
 }
 
 /*
@@ -447,11 +461,15 @@ static int oid_cmp(const void *a, const void *b)
 static void scan_ext_flags(const X509 *x509, uint32_t *flags)
 {
     OPENSSL_LHASH *h = NULL;
+    oid_hte *arr = NULL;
+    size_t num_entries = 0;
+    uint64_t k[2]; /* random SipHash key for the fall-back table */
     uint8_t ex_bitset[(NUM_NID + 7) / 8];
+    int count = X509_get_ext_count(x509);
 
     memset(ex_bitset, 0, sizeof(ex_bitset));
     /* A certificate MUST NOT include more than one instance of an extension. */
-    for (int i = 0; i < X509_get_ext_count(x509); i++) {
+    for (int i = 0; i < count; i++) {
         const X509_EXTENSION *ex = X509_get_ext(x509, i);
         const ASN1_OBJECT *a = X509_EXTENSION_get_object(ex);
         int nid = OBJ_obj2nid(a);
@@ -482,18 +500,41 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
                 break;
             }
             /*
-             * Hashing the OID should be manageable more cheaply as well, and
-             * without additional dynamic allocations. In the case of this
-             * corner case, it’s not a problem at all, but the other duplicate
-             * detections also require hashing, so for the sake of consistency
-             * it would make sense to use a cheaper construct here later as well.
+             * Create the table and draw a fresh random SipHash key the first
+             * time an attacker-controlled OID is seen, so unkeyed hashing
+             * cannot be used to force O(n^2) collisions (hash flooding).
+             *
+             * The key and the entry wrappers remain valid for the duration of
+             * the scan; the table never outlives this function.
+             *
+             * If the table cannot be set up or an insert fails, fail closed
+             * with EXFLAG_INVALID, as ossl_x509v3_cache_extensions() does for
+             * any other extension it cannot process. Leaving the loop
+             * silently would skip not only the duplicate check but also the
+             * unsupported-critical check for this and every later extension.
              */
-            if (h == NULL && (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL)
-                break;
-            if (OPENSSL_LH_insert(h, (void *)a) != NULL) {
+            if (h == NULL) {
+                OSSL_LIB_CTX *libctx = NULL;
+
+                ossl_x509_get0_libctx(x509, &libctx, NULL);
+                if (RAND_bytes_ex(libctx, (unsigned char *)k, sizeof(k), 0) <= 0
+                    || (arr = OPENSSL_malloc_array(count, sizeof(*arr))) == NULL
+                    || (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL) {
+                    *flags |= EXFLAG_INVALID;
+                    break;
+                }
+            }
+            arr[num_entries].obj = a;
+            arr[num_entries].key = k;
+            if (OPENSSL_LH_insert(h, &arr[num_entries]) != NULL) {
                 *flags |= EXFLAG_DUPLICATE;
                 break;
             }
+            if (OPENSSL_LH_error(h) != 0) {
+                *flags |= EXFLAG_INVALID;
+                break;
+            }
+            num_entries++;
         }
         if (nid == NID_freshest_crl)
             *flags |= EXFLAG_FRESHEST;
@@ -505,6 +546,7 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
         }
     }
     OPENSSL_LH_free(h);
+    OPENSSL_free(arr);
 }
 
 #define V1_ROOT (EXFLAG_V1 | EXFLAG_SS)
@@ -518,8 +560,8 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
 /*
  * Cache info on various X.509v3 extensions and further derived information,
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
- * x->sha1_hash is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
- * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
+ * x->fingerprint is filled in, or else EXFLAG_NO_FINGERPRINT is set in
+ * x->ex_flags.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  *
  * This is usually called by side-effect on objects, and forces us to keep
@@ -537,27 +579,33 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     int i;
     int res;
     uint32_t tmp_ex_flags;
-    unsigned char tmp_sha1_hash[SHA_DIGEST_LENGTH];
+    unsigned char tmp_fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     long tmp_ex_pathlen;
     long tmp_ex_pcpathlen;
     uint32_t tmp_ex_kusage;
     uint32_t tmp_ex_xkusage;
     uint32_t tmp_ex_nscert;
-    ASN1_OCTET_STRING *tmp_skid;
-    AUTHORITY_KEYID *tmp_akid;
-    STACK_OF(GENERAL_NAME) *tmp_altname;
-    NAME_CONSTRAINTS *tmp_nc;
+    ASN1_OCTET_STRING *tmp_skid = NULL;
+    AUTHORITY_KEYID *tmp_akid = NULL;
+    STACK_OF(GENERAL_NAME) *tmp_altname = NULL;
+    NAME_CONSTRAINTS *tmp_nc = NULL;
     STACK_OF(DIST_POINT) *tmp_crldp = NULL;
-    X509_SIG_INFO tmp_siginf;
+#ifndef OPENSSL_NO_RFC3779
+    STACK_OF(IPAddressFamily) *tmp_rfc3779_addr = NULL;
+    struct ASIdentifiers_st *tmp_rfc3779_asid = NULL;
+#endif
+    int ret = 0;
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
-    if (tsan_ld_acq((TSAN_QUALIFIER int *)&const_x->ex_cached))
-        return (const_x->ex_flags & EXFLAG_INVALID) == 0;
+    if (tsan_ld_acq((TSAN_QUALIFIER int *)&const_x->ex_cached)) {
+        ret = (const_x->ex_flags & EXFLAG_INVALID) == 0;
+        goto done;
+    }
 #endif
 
     if (!CRYPTO_THREAD_read_lock(const_x->lock))
-        return 0;
+        goto done;
     tmp_ex_flags = const_x->ex_flags;
     tmp_ex_pcpathlen = const_x->ex_pcpathlen;
     tmp_ex_kusage = const_x->ex_kusage;
@@ -565,13 +613,14 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
     if ((tmp_ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
         CRYPTO_THREAD_unlock(const_x->lock);
-        return (tmp_ex_flags & EXFLAG_INVALID) == 0;
+        ret = (tmp_ex_flags & EXFLAG_INVALID) == 0;
+        goto done;
     }
 
     ERR_set_mark();
 
-    /* Cache the SHA1 digest of the cert */
-    if (!X509_digest(const_x, EVP_sha1(), tmp_sha1_hash, NULL))
+    if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509), const_x,
+            tmp_fingerprint))
         tmp_ex_flags |= EXFLAG_NO_FINGERPRINT;
 
     /* V1 should mean no extensions ... */
@@ -593,6 +642,11 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
                 tmp_ex_flags |= EXFLAG_INVALID;
             } else {
                 tmp_ex_pathlen = ASN1_INTEGER_get(bs->pathlen);
+                if (tmp_ex_pathlen < 0 || tmp_ex_pathlen > 255) {
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_PATHLEN_TOO_LARGE);
+                    tmp_ex_flags |= EXFLAG_INVALID;
+                    tmp_ex_pathlen = -1;
+                }
             }
         }
         BASIC_CONSTRAINTS_free(bs);
@@ -608,10 +662,22 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
             || X509_get_ext_by_NID(const_x, NID_issuer_alt_name, -1) >= 0) {
             tmp_ex_flags |= EXFLAG_INVALID;
         }
-        if (pci->pcPathLengthConstraint != NULL)
-            tmp_ex_pcpathlen = ASN1_INTEGER_get(pci->pcPathLengthConstraint);
-        else
+        if (pci->pcPathLengthConstraint != NULL) {
+            if (pci->pcPathLengthConstraint->type == V_ASN1_NEG_INTEGER) {
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_NEGATIVE_PATHLEN);
+                tmp_ex_flags |= EXFLAG_INVALID;
+                tmp_ex_pcpathlen = -1;
+            } else {
+                tmp_ex_pcpathlen = ASN1_INTEGER_get(pci->pcPathLengthConstraint);
+                if (tmp_ex_pcpathlen < 0 || tmp_ex_pcpathlen > 255) {
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_PATHLEN_TOO_LARGE);
+                    tmp_ex_flags |= EXFLAG_INVALID;
+                    tmp_ex_pcpathlen = -1;
+                }
+            }
+        } else {
             tmp_ex_pcpathlen = -1;
+        }
         PROXY_CERT_INFO_EXTENSION_free(pci);
         tmp_ex_flags |= EXFLAG_PROXY;
     } else if (i != -1) {
@@ -710,8 +776,15 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
          * we could afford doing the (accurate) actual self-signature check, but
          * decided against it for efficiency reasons and according to RFC 5280,
          * CA certs MUST have an SKID and non-root certs MUST have an AKID.
+         *
+         * The cached const_x->skid is not populated until the write-lock
+         * publication below, so the keyid comparison is done directly
+         * against tmp_skid.  X509_check_akid() is retained for its serial
+         * number and issuer name checks.
          */
-        if (X509_check_akid(const_x, tmp_akid) == X509_V_OK
+        if ((tmp_akid == NULL || tmp_akid->keyid == NULL || tmp_skid == NULL
+                || ASN1_OCTET_STRING_cmp(tmp_akid->keyid, tmp_skid) == 0)
+            && X509_check_akid(const_x, tmp_akid) == X509_V_OK
             && check_sig_alg_match(X509_get0_pubkey(const_x), const_x) == X509_V_OK) {
             /*
              * Assume self-signed if the signature alg matches the pkey alg and
@@ -738,21 +811,16 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         tmp_ex_flags |= EXFLAG_INVALID;
 
 #ifndef OPENSSL_NO_RFC3779
-    STACK_OF(IPAddressFamily) *tmp_rfc3779_addr
-        = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
+    tmp_rfc3779_addr = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
     if (tmp_rfc3779_addr == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    struct ASIdentifiers_st *tmp_rfc3779_asid
-        = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
+    tmp_rfc3779_asid = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
     if (tmp_rfc3779_asid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 #endif
 
     scan_ext_flags(const_x, &tmp_ex_flags);
-
-    /* Set x->siginf, ignoring errors due to unsupported algos */
-    (void)ossl_x509_init_sig_info(const_x, &tmp_siginf);
 
     tmp_ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
     ERR_pop_to_mark();
@@ -763,12 +831,22 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
      * do all the updating under a write lock
      */
     if (!CRYPTO_THREAD_write_lock(const_x->lock))
-        return 0;
+        goto done;
+
+    /* See if another thread updated this certificate before we got the write lock. */
+    if ((const_x->ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
+        CRYPTO_THREAD_unlock(const_x->lock);
+        ret = (const_x->ex_flags & EXFLAG_INVALID) == 0;
+        goto done;
+    }
+
+    /* Otherwise, we have the lock, set the cached fields in the cert. */
     ((X509 *)const_x)->ex_flags = tmp_ex_flags;
     ((X509 *)const_x)->ex_pathlen = tmp_ex_pathlen;
     ((X509 *)const_x)->ex_pcpathlen = tmp_ex_pcpathlen;
     if (!(tmp_ex_flags & EXFLAG_NO_FINGERPRINT))
-        memcpy(((X509 *)const_x)->sha1_hash, tmp_sha1_hash, SHA_DIGEST_LENGTH);
+        memcpy(((X509 *)const_x)->fingerprint, tmp_fingerprint,
+            sizeof(tmp_fingerprint));
     if (tmp_ex_flags & EXFLAG_KUSAGE)
         ((X509 *)const_x)->ex_kusage = tmp_ex_kusage;
     ((X509 *)const_x)->ex_xkusage = tmp_ex_xkusage;
@@ -776,21 +854,27 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         ((X509 *)const_x)->ex_nscert = tmp_ex_nscert;
     ASN1_OCTET_STRING_free(((X509 *)const_x)->skid);
     ((X509 *)const_x)->skid = tmp_skid;
+    tmp_skid = NULL;
     AUTHORITY_KEYID_free(((X509 *)const_x)->akid);
     ((X509 *)const_x)->akid = tmp_akid;
+    tmp_akid = NULL;
     sk_GENERAL_NAME_pop_free(((X509 *)const_x)->altname, GENERAL_NAME_free);
     ((X509 *)const_x)->altname = tmp_altname;
+    tmp_altname = NULL;
     NAME_CONSTRAINTS_free(((X509 *)const_x)->nc);
     ((X509 *)const_x)->nc = tmp_nc;
+    tmp_nc = NULL;
     sk_DIST_POINT_pop_free(((X509 *)const_x)->crldp, DIST_POINT_free);
     ((X509 *)const_x)->crldp = tmp_crldp;
+    tmp_crldp = NULL;
 #ifndef OPENSSL_NO_RFC3779
     sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
     ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
+    tmp_rfc3779_addr = NULL;
     ASIdentifiers_free(((X509 *)const_x)->rfc3779_asid);
     ((X509 *)const_x)->rfc3779_asid = tmp_rfc3779_asid;
+    tmp_rfc3779_asid = NULL;
 #endif
-    ((X509 *)const_x)->siginf = tmp_siginf;
 
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
@@ -803,9 +887,22 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     CRYPTO_THREAD_unlock(const_x->lock);
     if (tmp_ex_flags & EXFLAG_INVALID) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
-        return 0;
+        goto done;
     }
-    return 1;
+
+    ret = 1;
+
+done:
+    ASN1_OCTET_STRING_free(tmp_skid);
+    AUTHORITY_KEYID_free(tmp_akid);
+    sk_GENERAL_NAME_pop_free(tmp_altname, GENERAL_NAME_free);
+    NAME_CONSTRAINTS_free(tmp_nc);
+    sk_DIST_POINT_pop_free(tmp_crldp, DIST_POINT_free);
+#ifndef OPENSSL_NO_RFC3779
+    sk_IPAddressFamily_pop_free(tmp_rfc3779_addr, IPAddressFamily_free);
+    ASIdentifiers_free(tmp_rfc3779_asid);
+#endif
+    return ret;
 }
 
 /*-
@@ -856,6 +953,14 @@ void X509_set_proxy_flag(X509 *x)
 
 void X509_set_proxy_pathlen(X509 *x, long l)
 {
+    /*
+     * Out of range values cannot be reported from a void function, so
+     * fail closed: the caller asked for a constraint, and 0 permits no
+     * further delegation and can never be more permissive than the
+     * requested value.
+     */
+    if (l < -1 || l > 255)
+        l = 0;
     x->ex_pcpathlen = l;
 }
 

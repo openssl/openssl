@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@ use File::Spec;
 use File::Copy;
 use File::Compare qw/compare_text/;
 use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT data_file/;
+use OpenSSL::Test qw/:DEFAULT data_file app_fails/;
 use OpenSSL::Test::Utils;
 
 setup("test_dsaparam");
@@ -68,7 +68,7 @@ plan skip_all => "DSA isn't supported in this build"
 my @valid = glob(data_file("valid", "*.pem"));
 my @invalid = glob(data_file("invalid", "*.pem"));
 
-my $num_tests = scalar @valid + scalar @invalid + 4;
+my $num_tests = scalar @valid + scalar @invalid + 5;
 plan tests => $num_tests;
 
 foreach (@valid) {
@@ -101,6 +101,37 @@ subtest "dsaparam DER parameter output" => sub {
     ok(run(app(['openssl', 'dsaparam', '-inform', 'DER', '-in', $params_der,
                 '-noout'])),
        "read the DER DSA parameters back");
+};
+
+subtest "dsaparam error cases" => sub {
+    plan tests => 14;
+
+    app_fails('dsaparam', "unknown option should fail",
+              qr/Unknown option: -badopt/,
+              '-badopt');
+    app_fails('dsaparam', "invalid input format should fail",
+              qr/Invalid format "BAD" for option -inform/,
+              '-inform', 'BAD', '-in', $srcparams);
+    app_fails('dsaparam', "invalid output format should fail",
+              qr/Invalid format "BAD" for option -outform/,
+              '-outform', 'BAD', '-in', $srcparams);
+    app_fails('dsaparam', "non-numeric bitsize should fail",
+              qr/Can't parse "bad" as a number/,
+              'bad');
+    app_fails('dsaparam', "non-numeric q bitsize should fail",
+              qr/Can't parse "bad" as a number/,
+              '512', 'bad');
+    app_fails('dsaparam', "extra positional argument should fail",
+              qr/Extra option/,
+              '512', '160', '5');
+
+    my $garbage = "garbage.pem";
+    open(my $fh, '>', $garbage) or die "Cannot write $garbage: $!";
+    print $fh "not a valid DSA parameter file\n";
+    close($fh);
+    app_fails('dsaparam', "loading garbage DSA parameters file should fail",
+              qr/Could not find or decode key parameters/,
+              '-in', $garbage, '-noout');
 };
 
 subtest "dsaparam DER private key output with -genkey" => sub {

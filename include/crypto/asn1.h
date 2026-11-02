@@ -181,6 +181,28 @@ X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 void ossl_asn1_bit_string_clear_unused_bits(ASN1_STRING *str);
 void ossl_asn1_bit_string_set_unused_bits(ASN1_STRING *str, unsigned int num);
 
+/**
+ * @brief Set str's data as ASN1_STRING_set1_data() does, and NUL-terminate it.
+ * The terminator is not counted in str->length.
+ * @param str the string to set
+ * @param data the bytes to copy, or NULL to allocate len bytes unset
+ * @param len the number of bytes at data
+ * @returns 1 on success, 0 on failure
+ * @see ASN1_STRING_set1_data(3)
+ */
+int ossl_asn1_string_set1_data(ASN1_STRING *str, const uint8_t *data,
+    size_t len);
+
+/**
+ * @brief Set str's data as ASN1_STRING_set1_string() does, and NUL-terminate it.
+ * The terminator is not counted in str->length.
+ * @param str the string to set
+ * @param c_string the NUL-terminated string to copy
+ * @returns 1 on success, 0 on failure
+ * @see ASN1_STRING_set1_string(3)
+ */
+int ossl_asn1_string_set1_string(ASN1_STRING *str, const char *c_string);
+
 int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass,
     char opt, ASN1_TLC *ctx, int depth,

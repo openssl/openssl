@@ -16,6 +16,7 @@ ENDIF
 
 SOURCE[../../libcrypto]=cmll_ecb.c cmll_ofb.c cmll_cfb.c cmll_ctr.c $CMLLASM
 DEFINE[../../libcrypto]=$CMLLDEF
+DEFINE[../../providers/libdefault.a]=$CMLLDEF
 
 GENERATE[cmll-x86.S]=asm/cmll-x86.pl
 DEPEND[cmll-x86.S]=../perlasm/x86asm.pl

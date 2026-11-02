@@ -81,9 +81,9 @@ int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
         }
         if (!SMIME_crlf_copy(in, bio, flags)) {
             rv = 0;
+        } else if (BIO_flush(bio) <= 0) {
+            rv = 0;
         }
-
-        (void)BIO_flush(bio);
         /* Free up successive BIOs until we hit the old output BIO */
         do {
             tbio = BIO_pop(bio);
