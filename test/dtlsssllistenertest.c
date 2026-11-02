@@ -42,6 +42,16 @@
 #undef revents
 #undef events
 #endif
+
+#if defined(OPENSSL_SYS_WINDOWS)
+#include <winsock2.h>
+#include <mstcpip.h>
+
+#if defined(__MINGW32__) && !defined(SIO_UDP_NETRESET)
+#define SIO_UDP_NETRESET _WSAIOW(IOC_VENDOR, 15)
+#endif
+#endif
+
 static char *cert = NULL;
 static char *privkey = NULL;
 
@@ -6405,19 +6415,45 @@ end:
 }
 #endif
 
-#if defined(__linux__) && defined(IP_RECVERR)
+#if (defined(__linux__) && defined(IP_RECVERR)) || defined(OPENSSL_SYS_WINDOWS)
+/*
+ * Have the kernel report, or stop reporting, the error caused by a datagram
+ * sent to a peer which is no longer there. Linux reports it only when
+ * IP_RECVERR is set; Windows reports it unless SIO_UDP_CONNRESET and
+ * SIO_UDP_NETRESET are turned off.
+ */
+static int udp_peer_errors_enable(int fd, int enable)
+{
+#if defined(OPENSSL_SYS_WINDOWS)
+    BOOL behaviour = enable ? TRUE : FALSE;
+    DWORD returned = 0;
+
+    return WSAIoctl(fd, SIO_UDP_CONNRESET, &behaviour, sizeof(behaviour), NULL,
+               0, &returned, NULL, NULL)
+        == 0
+        && WSAIoctl(fd, SIO_UDP_NETRESET, &behaviour, sizeof(behaviour), NULL,
+               0, &returned, NULL, NULL)
+        == 0;
+#else
+    int on = enable != 0;
+
+    return setsockopt(fd, SOL_IP, IP_RECVERR, &on, sizeof(on)) == 0;
+#endif
+}
+
 /*
  * An ICMP error concerning one peer, reported on the listener's shared socket
- * (Linux IP_RECVERR), must not affect other connections of the listener.
+ * (Linux IP_RECVERR, Windows WSAECONNRESET), must not affect other connections
+ * of the listener.
  *
  * Two connections are established on one listener. The first peer's socket is
- * closed and a datagram is sent to it, so the kernel queues an ECONNREFUSED
- * for the shared socket. A read on the unrelated second connection then
- * encounters that error, but the socket itself still works: the second
- * connection must go on to receive its peer's application data.
+ * closed and a datagram is sent to it, so the kernel queues an error for the
+ * shared socket. A read on the unrelated second connection then encounters
+ * that error, but the socket itself still works: the second connection must
+ * go on to receive its peer's application data.
  *
- * idx 0 leaves IP_RECVERR disabled as a control: the kernel reports no error
- * at all. idx 1 enables it.
+ * idx 0 stops the kernel reporting the error as a control, so it reports
+ * nothing at all. idx 1 has it report the error.
  */
 static int test_dtls_listener_peer_udp_error_scope(int idx)
 {
@@ -6425,7 +6461,7 @@ static int test_dtls_listener_peer_udp_error_scope(int idx)
     SSL *listener = NULL, *client[2] = { NULL, NULL };
     SSL *server[2] = { NULL, NULL };
     BIO_ADDR *addr = NULL;
-    int sfd = -1, cfd[2] = { -1, -1 }, one = 1, ok = 0, ret;
+    int sfd = -1, cfd[2] = { -1, -1 }, ok = 0, ret;
     size_t i, n = 0;
     char buf[256];
 
@@ -6447,8 +6483,7 @@ static int test_dtls_listener_peer_udp_error_scope(int idx)
                 SSL_ERROR_NONE)))
             goto end;
 
-    if (idx == 1
-        && !TEST_int_eq(setsockopt(sfd, SOL_IP, IP_RECVERR, &one, sizeof(one)), 0))
+    if (!TEST_true(udp_peer_errors_enable(sfd, idx == 1)))
         goto end;
 
     /* Close the first peer and write to it, provoking an ICMP port unreachable. */
@@ -6462,6 +6497,9 @@ static int test_dtls_listener_peer_udp_error_scope(int idx)
     /* The second connection may see the first peer's error or nothing yet. */
     ERR_set_mark();
     ret = SSL_read_ex(server[1], buf, sizeof(buf), &n);
+    if (ERR_peek_last_error() != 0)
+        TEST_info("read on the second connection reported error 0x%lx",
+            ERR_peek_last_error());
     ERR_pop_to_mark();
     if (!TEST_false(ret))
         goto end;
@@ -10069,7 +10107,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls_listener_permanent_recv_error, 2 * RECV_ERROR_NUM_SCENARIOS);
     ADD_ALL_TESTS(test_dtls_listener_transient_recv_error, 2);
     ADD_ALL_TESTS(test_dtls_listener_failure_stops_timer, 2);
-#if defined(__linux__) && defined(IP_RECVERR)
+#if (defined(__linux__) && defined(IP_RECVERR)) || defined(OPENSSL_SYS_WINDOWS)
     ADD_ALL_TESTS(test_dtls_listener_peer_udp_error_scope, 2);
 #endif
 #endif
