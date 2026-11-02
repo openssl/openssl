@@ -6285,6 +6285,7 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
 
 #if defined(OPENSSL_THREADS)
 struct nested_poll_cb_data {
+    SSL *listener;
     SSL *conn;
     int entered;
     int returned;
@@ -6293,6 +6294,8 @@ struct nested_poll_cb_data {
 /*
  * Poll the already-established connection from inside the pending connection
  * callback, while the outer SSL_poll() still holds its listener registration.
+ * The notifier is signalled first, as another thread's demux would do while
+ * the outer poll waits.
  */
 static int nested_poll_pending_cb(SSL_CTX *ctx, SSL *newssl, void *arg)
 {
@@ -6302,6 +6305,8 @@ static int nested_poll_pending_cb(SSL_CTX *ctx, SSL *newssl, void *arg)
     size_t count = 0;
 
     data->entered++;
+    if (!poll_signal_listener(data->listener))
+        return 0;
     item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
     item.desc.value.ssl = data->conn;
     item.events = SSL_POLL_EVENT_EC;
@@ -6328,7 +6333,7 @@ static int test_dtls_poll_nested_in_pending_cb(void)
     struct poll_watchdog watchdog = { 0 };
     CRYPTO_THREAD *thread = NULL;
     int sfd = -1, cfd = -1, nfd = -1, ok = 0, ret, i;
-    size_t written = 0, count = 0;
+    size_t count = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
@@ -6343,12 +6348,11 @@ static int test_dtls_poll_nested_in_pending_cb(void)
         || !TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
         goto end;
 
+    data.listener = listener;
     data.conn = server;
     SSL_CTX_set_new_pending_conn_cb(sctx, nested_poll_pending_cb, &data);
 
-    /* The first received datagram signals any already-registered waiters. */
-    if (!TEST_true(SSL_write_ex(client, "x", 1, &written))
-        || !TEST_true(create_dtls_client_for_addr(cctx, addr, &newclient, &nfd)))
+    if (!TEST_true(create_dtls_client_for_addr(cctx, addr, &newclient, &nfd)))
         goto end;
     /* Queues a ClientHello, provoking the callback during translation. */
     ret = SSL_connect(newclient);

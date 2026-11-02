@@ -529,7 +529,7 @@ void dtls1_start_timer(SSL_CONNECTION *s)
 /* The listener's retained fatal receive error, or 0 if none has occurred. */
 static unsigned long dtls1_shared_error(const SSL_CONNECTION *s)
 {
-#ifndef OPENSSL_NO_SOCK
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
     if (s->d1 != NULL && s->d1->listener != NULL && s->d1->rx != NULL)
         return ossl_dgram_demux_get_error(s->d1->rx->demux);
 #endif

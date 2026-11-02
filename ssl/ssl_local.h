@@ -3154,6 +3154,18 @@ void dtls1_hm_fragment_free(hm_fragment *frag);
 void dtls1_sent_msg_free(dtls_sent_msg *msg);
 __owur int dtls1_query_mtu(SSL_CONNECTION *s);
 
+/**
+ * @brief Make the listener's retained failure fatal for a connection.
+ *
+ * If the listener the connection belongs to has retained a fatal receive error,
+ * raises that diagnostic on the calling thread's error queue and puts the
+ * connection into its error state.
+ *
+ * @param s the connection
+ * @returns the retained error, or 0 if the transport has not failed
+ */
+unsigned long ossl_dtls_conn_apply_shared_failure(SSL_CONNECTION *s);
+
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags);
 void ossl_dtls_listener_free(SSL *ssl);
@@ -3200,18 +3212,6 @@ void ossl_dtls_listener_set_fatal(DTLS_LISTENER *dl);
  * @returns 1 if the listener has failed, 0 otherwise
  */
 int ossl_dtls_listener_has_failed(DTLS_LISTENER *dl);
-
-/**
- * @brief Make the listener's retained failure fatal for a connection.
- *
- * If the listener the connection belongs to has retained a fatal receive error,
- * raises that diagnostic on the calling thread's error queue and puts the
- * connection into its error state.
- *
- * @param s the connection
- * @returns the retained error, or 0 if the transport has not failed
- */
-unsigned long ossl_dtls_conn_apply_shared_failure(SSL_CONNECTION *s);
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
