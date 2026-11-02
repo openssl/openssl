@@ -329,6 +329,21 @@ use L<SSL_set_blocking_mode(3)> to change it. A listener whose BIO cannot provid
 a poll descriptor, such as one using a memory BIO, has nothing to wait on and is
 nonblocking whatever is requested.
 
+The connections of a DTLS listener share its network socket. If receiving from
+that socket fails permanently, the failure applies to the listener and to every
+connection created by it, including those which have not themselves observed
+it. Their I/O functions fail and retain the original diagnostic: a BIO error is
+reported as B<SSL_ERROR_SSL> and a system error as B<SSL_ERROR_SYSCALL>.
+L<SSL_handle_events(3)> and L<DTLSv1_handle_timeout(3)> fail instead of
+retransmitting, L<SSL_get_event_timeout(3)> reports that no timeout is pending,
+and L<SSL_poll(3)> reports B<SSL_POLL_EVENT_EL> for the listener and
+B<SSL_POLL_EVENT_EC> for its connections.
+
+A receive error which concerns only one peer, such as an ICMP error answering
+a datagram sent to a peer which is no longer reachable, is not a failure of the
+shared socket. It is discarded, and the connections of other peers are
+unaffected.
+
 An example DTLS server using the listener API in single threaded mode which only
 accepts one connection at a time. A typical implementation would utilize L<SSL_poll(3)>
 and can accept multiple connections concurrently.
@@ -424,6 +439,7 @@ additional synchronization is provided in this mode.
 
 L<OSSL_QUIC_server_method(3)>, L<DTLS_server_method(3)>, L<DTLSv1_listen(3)>,
 L<SSL_free(3)>, L<SSL_set_bio(3)>, L<SSL_handle_events(3)>,
+L<DTLSv1_handle_timeout(3)>, L<SSL_get_event_timeout(3)>,
 L<SSL_get_rpoll_descriptor(3)>, L<SSL_set_blocking_mode(3)>,
 L<SSL_CTX_set_cookie_generate_cb(3)>, L<SSL_CTX_set_cookie_verify_cb(3)>,
 L<SSL_CTX_set_stateless_cookie_generate_cb(3)>,

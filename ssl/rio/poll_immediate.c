@@ -32,6 +32,8 @@ typedef struct poll_wait_ctx_st {
 #endif
 #ifndef OPENSSL_NO_DTLS
     DTLS_POLL_WAIT_SLOT *dtls;
+    /* The caller's deadline: bounds the waits in postpoll_translation_cleanup */
+    OSSL_TIME deadline;
 #endif
 } POLL_WAIT_CTX;
 #endif
@@ -524,7 +526,7 @@ static void postpoll_translation_cleanup(ossl_unused SSL_POLL_ITEM *items,
         next = slot->next;
         if (slot->need_wait)
             ossl_dtls_listener_wait_for_notifier_clear(slot->listener,
-                slot->generation);
+                slot->generation, wctx->deadline);
         OPENSSL_free(slot);
     }
     wctx->dtls = NULL;
@@ -741,6 +743,7 @@ static int poll_block(SSL_POLL_ITEM *items,
 #endif
 #ifndef OPENSSL_NO_DTLS
     wctx.dtls = NULL;
+    wctx.deadline = user_deadline;
 #endif
     ossl_rio_poll_builder_init(&rpb);
 

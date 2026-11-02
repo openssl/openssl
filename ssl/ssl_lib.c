@@ -2388,15 +2388,11 @@ static int ssl_reset_error_state(SSL_CONNECTION *sc)
         return 1;
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (SSL_CONNECTION_IS_DTLS(sc) && sc->d1 != NULL
-        && sc->d1->listener != NULL && sc->d1->rx != NULL) {
-        unsigned long error = ossl_dgram_demux_get_error(sc->d1->rx->demux);
+    if (SSL_CONNECTION_IS_DTLS(sc)) {
+        unsigned long error = ossl_dtls_conn_apply_shared_failure(sc);
 
         /* Buffered reads and writes must also observe shared transport failure. */
         if (error != 0) {
-            ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
-            ossl_statem_send_fatal(sc, SSL_AD_NO_ALERT);
-            sc->rwstate = SSL_NOTHING;
             if (ERR_GET_LIB(error) == ERR_LIB_SYS)
                 sc->statem.error_state = ERROR_STATE_SYSCALL;
             else
