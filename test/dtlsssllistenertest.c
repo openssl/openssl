@@ -46,6 +46,7 @@
 #if defined(OPENSSL_SYS_WINDOWS)
 #include <winsock2.h>
 #include <mstcpip.h>
+#include <mswsock.h>
 
 #if defined(__MINGW32__) && !defined(SIO_UDP_NETRESET)
 #define SIO_UDP_NETRESET _WSAIOW(IOC_VENDOR, 15)
