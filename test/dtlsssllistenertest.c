@@ -6326,22 +6326,22 @@ static int test_dtls_poll_nested_in_pending_cb(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL, *client = NULL, *server = NULL, *newclient = NULL;
-    BIO_ADDR *addr = NULL;
+    BIO *cbio;
+    BIO_ADDR *addr = NULL, *newaddr = NULL;
+    struct in_addr ina;
     SSL_POLL_ITEM items[2] = { 0 };
     struct timeval timeout = { 0, 100000 };
     struct nested_poll_cb_data data = { 0 };
     struct poll_watchdog watchdog = { 0 };
     CRYPTO_THREAD *thread = NULL;
-    int sfd = -1, cfd = -1, nfd = -1, ok = 0, ret, i;
+    int ok = 0, ret, i;
     size_t count = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
             privkey))
-        || !TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_NO_VALIDATE,
-            &listener, &addr, &sfd))
-        || !TEST_true(SSL_set_blocking_mode(listener, 0))
-        || !TEST_true(create_dtls_client_for_addr(cctx, addr, &client, &cfd))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE, &listener, &client, &addr))
         || !TEST_true(drive_until_connection_queued(listener, client))
         || !TEST_ptr(server = SSL_accept_connection(listener,
                          SSL_ACCEPT_CONNECTION_NO_BLOCK))
@@ -6352,8 +6352,26 @@ static int test_dtls_poll_nested_in_pending_cb(void)
     data.conn = server;
     SSL_CTX_set_new_pending_conn_cb(sctx, nested_poll_pending_cb, &data);
 
-    if (!TEST_true(create_dtls_client_for_addr(cctx, addr, &newclient, &nfd)))
+    /*
+     * A second client on the same datagram pair, from a different source
+     * port, is a new peer to the listener. No socket is involved, so its
+     * ClientHello is on the listener's side as soon as it is written.
+     */
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    cbio = SSL_get_wbio(client);
+    if (!TEST_ptr(newaddr = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(newaddr, AF_INET, &ina, sizeof(ina),
+            htons(12346)))
+        || !TEST_int_eq(BIO_dgram_set0_local_addr(cbio, newaddr), 1))
         goto end;
+
+    newaddr = NULL; /* ownership transferred */
+    if (!TEST_true(BIO_up_ref(cbio))
+        || !TEST_ptr(newclient = SSL_new(cctx)))
+        goto end;
+
+    SSL_set_bio(newclient, cbio, cbio);
+    SSL_set_connect_state(newclient);
     /* Queues a ClientHello, provoking the callback during translation. */
     ret = SSL_connect(newclient);
     if (!TEST_int_eq(SSL_get_error(newclient, ret), SSL_ERROR_WANT_READ))
@@ -6380,12 +6398,7 @@ end:
     SSL_free(client);
     SSL_free(listener);
     BIO_ADDR_free(addr);
-    if (nfd >= 0)
-        BIO_closesocket(nfd);
-    if (cfd >= 0)
-        BIO_closesocket(cfd);
-    if (sfd >= 0)
-        BIO_closesocket(sfd);
+    BIO_ADDR_free(newaddr);
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
     return ok;
