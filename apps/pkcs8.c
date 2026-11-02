@@ -97,7 +97,7 @@ int pkcs8_main(int argc, char **argv)
 #endif
     char *passin = NULL, *passout = NULL, *p8pass = NULL;
     OPTION_CHOICE o;
-    int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
+    int nocrypt = 0, ret = 1, iter = PKCS5_DEFAULT_ITER;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0, traditional = 0;
 #ifndef OPENSSL_NO_SCRYPT

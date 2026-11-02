@@ -56,7 +56,7 @@ can all be set to zero and sensible defaults will be used.
 
 These defaults are: AES password based encryption (PBES2 with PBKDF2 and
 AES-256-CBC) for private keys and certificates, the PBKDF2 and MAC key
-derivation iteration count of B<PKCS12_DEFAULT_ITER> (currently 2048), and
+derivation iteration count of B<PKCS12_DEFAULT_ITER> (currently 600000), and
 MAC algorithm HMAC with SHA2-256. The MAC key derivation algorithm used
 for the outer PKCS#12 structure is PKCS12KDF.
 

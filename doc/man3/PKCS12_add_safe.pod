@@ -32,7 +32,7 @@ depends on the value of B<safe_nid>:
 =item * If I<safe_nid> is a valid PBE algorithm NID, a PKCS7 B<encryptedData>
 contentInfo is created. The algorithm uses I<pass> as the passphrase and I<iter>
 as the iteration count. If I<iter> is zero then a default value for iteration
-count of 2048 is used.
+count of B<PKCS12_DEFAULT_ITER> (currently 600000) is used.
 
 =item * If I<safe_nid> is 0, a PKCS7 B<encryptedData> contentInfo is created using
 a default encryption algorithm, currently B<NID_pbe_WithSHA1And3_Key_TripleDES_CBC>.

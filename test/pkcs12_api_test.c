@@ -347,7 +347,7 @@ static int pkcs12_create_ex2_test(int test)
         cb_ret = 1;
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
             cert, NULL, NID_undef, NID_undef,
-            0, 0, 0,
+            2048, 2048, 0,
             testctx, NULL,
             pkcs12_create_cb, (void *)&cb_ret);
         /* PKCS12 successfully created */
@@ -358,7 +358,7 @@ static int pkcs12_create_ex2_test(int test)
         cb_ret = -1;
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
             cert, NULL, NID_undef, NID_undef,
-            0, 0, 0,
+            2048, 2048, 0,
             testctx, NULL,
             pkcs12_create_cb, (void *)&cb_ret);
         /* PKCS12 not created */
@@ -369,7 +369,7 @@ static int pkcs12_create_ex2_test(int test)
         cb_ret = 0;
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
             cert, NULL, NID_undef, NID_undef,
-            0, 0, 0,
+            2048, 2048, 0,
             testctx, NULL,
             pkcs12_create_cb, (void *)&cb_ret);
         /* PKCS12 successfully created */
@@ -646,10 +646,10 @@ static int test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero(void)
     }
 
     if (!TEST_ptr(p12 = PKCS12_create_ex2("pass", NULL, key, cert, ca,
-                      NID_undef, NID_undef, 0, -1, 0,
+                      NID_undef, NID_undef, 2048, -1, 0,
                       testctx, NULL, NULL, NULL)))
         goto err;
-    ret = TEST_true(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1, NULL, 0, 0, NULL, NULL));
+    ret = TEST_true(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1, NULL, 0, 2048, NULL, NULL));
 err:
     PKCS12_free(p12);
     EVP_PKEY_free(key);
@@ -683,11 +683,11 @@ static int test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen(void)
     }
 
     if (!TEST_ptr(p12 = PKCS12_create_ex2("pass", NULL, key, cert, ca,
-                      NID_undef, NID_undef, 0, -1, 0,
+                      NID_undef, NID_undef, 2048, -1, 0,
                       testctx, NULL, NULL, NULL)))
         goto err;
     ret = TEST_false(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1,
-        salt, -1, 0, NULL, NULL));
+        salt, -1, 2048, NULL, NULL));
 err:
     PKCS12_free(p12);
     EVP_PKEY_free(key);
@@ -732,7 +732,7 @@ static int test_parse_cert_placement(int idx)
 
     /* Passing all certificates through ca preserves the chosen order. */
     p12 = PKCS12_create_ex("", NULL, exp_key, NULL, all,
-        NID_undef, NID_undef, 0, -1, 0, testctx, "provider=default");
+        NID_undef, NID_undef, 2048, -1, 0, testctx, "provider=default");
     if (!TEST_ptr(p12)
         || !TEST_true(PKCS12_parse(p12, "",
             want_key ? &key : NULL,

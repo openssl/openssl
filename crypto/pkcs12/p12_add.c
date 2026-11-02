@@ -100,6 +100,9 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
     X509_ALGOR *pbe;
     EVP_CIPHER *pbe_ciph = NULL;
 
+    if (iter <= 0)
+        iter = PKCS12_DEFAULT_ITER;
+
     if ((p7 = PKCS7_new_ex(ctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;

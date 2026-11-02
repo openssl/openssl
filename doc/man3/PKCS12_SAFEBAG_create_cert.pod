@@ -56,7 +56,8 @@ PKCS12_SAFEBAG_create_pkcs8_encrypt() creates a new B<PKCS12_SAFEBAG> of type
 B<NID_pkcs8ShroudedKeyBag> by encrypting the supplied PKCS8 I<p8inf>.
 If I<pbe_nid> is 0, a default encryption algorithm is used. I<pass> is the
 passphrase and I<iter> is the iteration count. If I<iter> is zero then a default
-value of 2048 is used. If I<salt> is NULL then a salt is generated randomly.
+value of B<PKCS12_DEFAULT_ITER> (currently 600000) is used. If I<salt> is NULL
+then a salt is generated randomly.
 
 PKCS12_SAFEBAG_create_pkcs8_encrypt_ex() is identical to PKCS12_SAFEBAG_create_pkcs8_encrypt()
 but allows for a library context I<ctx> and property query I<propq> to be used to select

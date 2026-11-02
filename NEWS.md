@@ -32,6 +32,9 @@ OpenSSL 4.2
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
+  * Raised the default PKCS#12 iteration count (`PKCS12_DEFAULT_ITER`) from
+    2048 to 600000.
+
 OpenSSL 4.1
 -----------
 
