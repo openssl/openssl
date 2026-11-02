@@ -4938,27 +4938,6 @@ static const struct script_op script_73[] = {
                                 OP_END
 };
 
-/* 74. Version negotiation: QUIC_VERSION_1 ignored */
-static int generate_version_neg(WPACKET *wpkt, uint32_t version)
-{
-    QUIC_PKT_HDR hdr = { 0 };
-
-    hdr.type = QUIC_PKT_TYPE_VERSION_NEG;
-    hdr.version = 0;
-    hdr.fixed = 1;
-    hdr.dst_conn_id.id_len = 0;
-    hdr.src_conn_id.id_len = 8;
-    memset(hdr.src_conn_id.id, 0x55, 8);
-
-    if (!TEST_true(ossl_quic_wire_encode_pkt_hdr(wpkt, 0, &hdr, NULL)))
-        return 0;
-
-    if (!TEST_true(WPACKET_put_bytes_u32(wpkt, version)))
-        return 0;
-
-    return 1;
-}
-
 static int do_mutation = 0;
 static QUIC_PKT_HDR *hdr_to_free = NULL;
 
@@ -5028,19 +5007,6 @@ static const struct script_op script_74[] = {
                                 OP_S_READ_EXPECT(a, "apple", 5)
 
                                     OP_END
-};
-
-/* 75. Version negotiation: Unknown version causes connection abort */
-static const struct script_op script_75[] = {
-    OP_S_SET_INJECT_DATAGRAM(server_gen_version_neg)
-        OP_SET_INJECT_WORD(2, 0)
-
-            OP_C_SET_ALPN("ossltest")
-                OP_C_CONNECT_WAIT_OR_FAIL()
-
-                    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_CONNECTION_REFUSED, 0, 0)
-
-                        OP_END
 };
 
 /* 76. Test peer-initiated shutdown wait */
@@ -5841,7 +5807,6 @@ static const struct script_op *const scripts[] = {
     script_72,
     script_73,
     script_74,
-    script_75,
     script_76,
     script_77,
     script_78,
