@@ -95,6 +95,7 @@ typedef enum OPTION_choice {
     OPT_NO_NONCE,
     OPT_RESP_NO_CERTS,
     OPT_RESP_KEY_ID,
+    OPT_NO_RESP_KEY_ID
     OPT_NO_CERTS,
     OPT_NO_SIGNATURE_VERIFY,
     OPT_NO_CERT_VERIFY,
@@ -216,6 +217,8 @@ const OPTIONS ocsp_options[] = {
         "Don't check signature on response" },
     { "resp_key_id", OPT_RESP_KEY_ID, '-',
         "Identify response by signing certificate key ID" },
+    { "no_resp_key_id",OPT_NO_RESP_KEY_ID,'-',
+    	"Identify response by signer name instead of key ID, for legacy clients"}
     { "no_cert_verify", OPT_NO_CERT_VERIFY, '-',
         "Don't check signing certificate" },
     { "text", OPT_TEXT, '-', "Print text form of request and response" },
@@ -293,7 +296,7 @@ int ocsp_main(int argc, char **argv)
     int req_text = 0, resp_text = 0, res, ret = 1;
     int req_timeout = -1;
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
-    unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
+    unsigned long sign_flags = 0, verify_flags = 0, rflags = OCSP_RESPID_KEY;
     OPTION_CHOICE o;
 
     if ((reqnames = sk_OPENSSL_STRING_new_null()) == NULL
@@ -372,6 +375,9 @@ int ocsp_main(int argc, char **argv)
         case OPT_RESP_KEY_ID:
             rflags |= OCSP_RESPID_KEY;
             break;
+	case OPT_NO_RESP_KEY_ID:
+	    rflags &= ~OCSP_RESPID_KEY;
+	    break
         case OPT_NO_CERTS:
             sign_flags |= OCSP_NOCERTS;
             break;
@@ -487,7 +493,7 @@ int ocsp_main(int argc, char **argv)
             if (cert == NULL)
                 goto end;
             if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha1();
+                cert_id_md = (EVP_MD *)EVP_sha256();
             if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -497,7 +503,7 @@ int ocsp_main(int argc, char **argv)
         case OPT_SERIAL:
             reset_unknown();
             if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha1();
+                cert_id_md = (EVP_MD *)EVP_sha256();
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -964,6 +970,12 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
         BIO_puts(bio_err, "No issuer certificate specified\n");
         return 0;
     }
+    if (sk_OCSP_CERTID_num(ids) > 0) {
+        BIO_puts(bio_err,
+	    "Error: only one certificate per request is allowed "
+	    "(RFC 9919 lightweight OCSP profile)\n");
+        return 0;
+    }
     if (*req == NULL)
         *req = OCSP_REQUEST_new();
     if (*req == NULL)
@@ -996,6 +1008,11 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
         BIO_puts(bio_err, "No issuer certificate specified\n");
         return 0;
     }
+    if  (sk_OCSP_CERTID_num(ids) > 0) {
+         BIO_puts(bio_err,
+            "Error: only one certificate per request is allowed"
+            "(RFC 9919 lightweight OCSP profile)\n");
+         return 0;
     if (*req == NULL)
         *req = OCSP_REQUEST_new();
     if (*req == NULL)
@@ -1051,6 +1068,18 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
             ret = 0;
             continue;
         }
+
+	/*
+	 * RFC 9919 (Lightweight OCSP Profile) requires next Update to be
+	 * present so clients can determine freshness/cache lifetime.
+	 * RFC 6960 treats it as optional, so OCSP_check_validity() below
+	 * will not itself reject a NULL nextupd --enforce it here.
+	*/
+        if (nextupd == NULL) {
+            BIOS_puts(out, "ERROR: No nextUpdate field in response.\n");
+	    ret = 0;
+	    continue;
+	}
 
         /*
          * Check validity: if invalid write to output BIO so we know which
