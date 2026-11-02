@@ -197,30 +197,6 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
 #ifndef OPENSSL_NO_ECH
         if ((context & SSL_EXT_CLIENT_HELLO) != 0
             && s->ext.ech.attempted == 1) {
-            if (s->ext.ech.ch_depth == 1) {
-                /* mark custom CH ext for ECH compression, if doing ECH */
-                if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX) {
-                    OSSL_TRACE_BEGIN(TLS)
-                    {
-                        BIO_printf(trc_out,
-                            "Too many outers to compress (max=%d)\n",
-                            OSSL_ECH_OUTERS_MAX);
-                    }
-                    OSSL_TRACE_END(TLS);
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
-                    return 0;
-                }
-                s->ext.ech.outer_only[s->ext.ech.n_outer_only] = meth->ext_type;
-                s->ext.ech.n_outer_only++;
-                OSSL_TRACE_BEGIN(TLS)
-                {
-                    BIO_printf(trc_out, "ECH compressing type "
-                                        "0x%04x (tot: %d)\n",
-                        (int)meth->ext_type,
-                        (int)s->ext.ech.n_outer_only);
-                }
-                OSSL_TRACE_END(TLS);
-            }
             if (s->ext.ech.ch_depth == 0) {
                 /*
                  * We store/access the index of the extension handler in
@@ -237,6 +213,10 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                     return 0;
                 }
+                /* The add callback may have omitted this extension. */
+                if ((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0)
+                    continue;
+
                 raws = s->clienthello->pre_proc_exts;
                 for (j = 0; j != (int)s->clienthello->pre_proc_exts_len; j++) {
                     if (raws[j].type == meth->ext_type) {
@@ -316,6 +296,34 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
         if (meth->free_cb != NULL)
             meth->free_cb(SSL_CONNECTION_GET_USER_SSL(s), meth->ext_type,
                 context, out, meth->add_arg);
+
+#ifndef OPENSSL_NO_ECH
+        if ((context & SSL_EXT_CLIENT_HELLO) != 0
+            && s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 1) {
+            /* Only mark extensions actually added to the inner CH. */
+            if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX) {
+                OSSL_TRACE_BEGIN(TLS)
+                {
+                    BIO_printf(trc_out,
+                        "Too many outers to compress (max=%d)\n",
+                        OSSL_ECH_OUTERS_MAX);
+                }
+                OSSL_TRACE_END(TLS);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
+                return 0;
+            }
+            s->ext.ech.outer_only[s->ext.ech.n_outer_only] = meth->ext_type;
+            s->ext.ech.n_outer_only++;
+            OSSL_TRACE_BEGIN(TLS)
+            {
+                BIO_printf(trc_out, "ECH compressing type "
+                                    "0x%04x (tot: %d)\n",
+                    (int)meth->ext_type,
+                    (int)s->ext.ech.n_outer_only);
+            }
+            OSSL_TRACE_END(TLS);
+        }
+#endif
     }
     return 1;
 }
