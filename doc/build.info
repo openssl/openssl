@@ -2579,6 +2579,10 @@ DEPEND[html/man3/SSL_connect.html]=man3/SSL_connect.pod
 GENERATE[html/man3/SSL_connect.html]=man3/SSL_connect.pod
 DEPEND[man/man3/SSL_connect.3]=man3/SSL_connect.pod
 GENERATE[man/man3/SSL_connect.3]=man3/SSL_connect.pod
+DEPEND[html/man3/SSL_copy_session_id.html]=man3/SSL_copy_session_id.pod
+GENERATE[html/man3/SSL_copy_session_id.html]=man3/SSL_copy_session_id.pod
+DEPEND[man/man3/SSL_copy_session_id.3]=man3/SSL_copy_session_id.pod
+GENERATE[man/man3/SSL_copy_session_id.3]=man3/SSL_copy_session_id.pod
 DEPEND[html/man3/SSL_do_handshake.html]=man3/SSL_do_handshake.pod
 GENERATE[html/man3/SSL_do_handshake.html]=man3/SSL_do_handshake.pod
 DEPEND[man/man3/SSL_do_handshake.3]=man3/SSL_do_handshake.pod
@@ -3732,6 +3736,7 @@ html/man3/SSL_alloc_buffers.html \
 html/man3/SSL_check_chain.html \
 html/man3/SSL_clear.html \
 html/man3/SSL_connect.html \
+html/man3/SSL_copy_session_id.html \
 html/man3/SSL_do_handshake.html \
 html/man3/SSL_export_keying_material.html \
 html/man3/SSL_extension_supported.html \
@@ -4416,6 +4421,7 @@ man/man3/SSL_alloc_buffers.3 \
 man/man3/SSL_check_chain.3 \
 man/man3/SSL_clear.3 \
 man/man3/SSL_connect.3 \
+man/man3/SSL_copy_session_id.3 \
 man/man3/SSL_do_handshake.3 \
 man/man3/SSL_export_keying_material.3 \
 man/man3/SSL_extension_supported.3 \
