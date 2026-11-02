@@ -522,6 +522,13 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                          * this record instead of using stale state.
                          */
                         rl->urxe_left = 0;
+                        /*
+                         * The URXE path never reads into rl->rbuf, which
+                         * was only needed to drain rl->prev. Keep it if it
+                         * still holds part of the record being read.
+                         */
+                        if (len + left == 0)
+                            tls_release_read_buffer(rl);
                         return tls_default_read_n_urxe(rl, n, extend,
                             readbytes);
                     }

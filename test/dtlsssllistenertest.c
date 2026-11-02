@@ -35,6 +35,7 @@
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "../ssl/ssl_local.h"
+#include "../ssl/record/methods/recmethod_local.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -6171,6 +6172,10 @@ static int test_dtls_listener_ssl_clear_mfail(int idx)
     SSL_CONNECTION *sc;
     DTLS_LISTENER *dl = NULL;
     DGRAM_URXE probe = { 0 };
+    DGRAM_URXE *held = NULL;
+    static const unsigned char secret[] = "held application data";
+    unsigned char peeked[sizeof(secret)];
+    size_t written, peeklen;
     CRYPTO_free_fn saved_free = NULL;
     int have_peer = 0, wrapped = 0, ret;
     /* Invariant failures must fail even when an allocation was injected. */
@@ -6191,6 +6196,18 @@ static int test_dtls_listener_ssl_clear_mfail(int idx)
         || !TEST_ptr(sc->d1->rx)
         || !TEST_ptr_eq(sc->listener_rx, sc->d1->rx)
         || !TEST_ptr_ne(serverssl->method, serverssl->defltmeth))
+        goto end;
+
+    /*
+     * Leave application data pending. The record layer then still holds the
+     * datagram which carried it, taken from the connection's receive queue.
+     */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_true(SSL_write_ex(clientssl, secret, sizeof(secret), &written))
+        || !TEST_true(SSL_peek_ex(serverssl, peeked, sizeof(peeked), &peeklen))
+        || !TEST_mem_eq(secret, sizeof(secret), peeked, peeklen)
+        || !TEST_ptr(held = sc->rlayer.rrl->packet_handle)
+        || !TEST_int_eq(held->demux_state, URXE_DEMUX_STATE_ISSUED))
         goto end;
 
     dl = (DTLS_LISTENER *)listener;
@@ -6229,6 +6246,14 @@ static int test_dtls_listener_ssl_clear_mfail(int idx)
 
     if (!TEST_ptr_eq(serverssl->method, serverssl->defltmeth)
         || (ret == 0 && !TEST_true(mfail_was_triggered())))
+        goto end;
+
+    /*
+     * The reset has discarded the pending data, so the datagram must be back
+     * with the demux, even if the reset failed. The URXE stays allocated on
+     * the demux's free list.
+     */
+    if (!TEST_int_eq(held->demux_state, URXE_DEMUX_STATE_FREE))
         goto end;
 
     if (ret == 0 && (sc->d1 == NULL || sc->d1->listener == NULL)) {
@@ -6270,6 +6295,76 @@ end:
     /* Remove any stale entry before freeing the object on a failing run. */
     if (have_peer)
         ossl_dtls_listener_unregister_established_conn(listener, &probe.peer);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    ERR_clear_error();
+    return testresult;
+}
+#endif
+
+#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
+static const int listener_read_buffer_versions[] = {
+#ifndef OPENSSL_NO_DTLS1_2
+    DTLS1_2_VERSION,
+#endif
+#ifndef OPENSSL_NO_DTLS1_3
+    DTLS1_3_VERSION,
+#endif
+};
+
+/*
+ * A listener-created connection reads its datagrams straight from the
+ * demultiplexer's buffers, so it must not keep a read buffer of its own once
+ * its handshake is over. Epoch changes give the record layer a previous-epoch
+ * BIO to drain first, which needs the buffer, but nothing is buffered once
+ * that BIO is found empty.
+ */
+static int test_dtls_listener_conn_read_buffer_released(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    static const unsigned char msg[] = "no read buffer needed";
+    unsigned char out[sizeof(msg)];
+    size_t written, readbytes;
+    int version = listener_read_buffer_versions[idx];
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr))
+        || !drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Read application data, then until the connection has nothing more. */
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_true(SSL_read_ex(serverssl, out, sizeof(out), &readbytes))
+        || !TEST_mem_eq(out, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    ret = SSL_read_ex(serverssl, out, sizeof(out), &readbytes);
+    if (!TEST_false(ret)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    if (!TEST_ptr_null(sc->rlayer.rrl->rbuf.buf)
+        || !TEST_size_t_eq(sc->rlayer.rrl->rbuf.len, 0))
+        goto end;
+
+    testresult = 1;
+end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(listener);
@@ -8568,6 +8663,10 @@ int setup_tests(void)
     ADD_TEST(test_ssl_ownership_pending_timeout_cleanup);
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_MFAIL_ALL_NO_CHECK_TESTS(test_dtls_listener_ssl_clear_mfail, 2);
+#endif
+#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
+    ADD_ALL_TESTS(test_dtls_listener_conn_read_buffer_released,
+        OSSL_NELEM(listener_read_buffer_versions));
 #endif
 
     /* Max number of pending connections tests */

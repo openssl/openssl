@@ -510,6 +510,21 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     rr = rl->rrec;
 
     /*
+     * An epoch change supplies a previous-epoch BIO even when no bytes were
+     * forwarded to it. Nothing is written to it after the record layer has
+     * been created, so an empty one never holds anything to drain. Draining
+     * a non-empty one needed rl->rbuf, which the URXE path does not use, so
+     * release it unless it still holds part of a record.
+     */
+    if (rl->use_urxe && rl->get_urxe_packet != NULL
+        && rl->prev != NULL && BIO_pending(rl->prev) == 0) {
+        BIO_free(rl->prev);
+        rl->prev = NULL;
+        if (rl->rstate != SSL_ST_READ_BODY && rl->rbuf.left == 0)
+            tls_release_read_buffer(rl);
+    }
+
+    /*
      * A URXE-backed listener connection never reads into rl->rbuf
      * so skip allocating it. This only holds while rl->prev is NULL:
      * a connection still draining forwarded previous-epoch bytes reads via
