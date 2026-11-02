@@ -100,8 +100,15 @@ int s390x_x25519_mul(unsigned char u_dst[32],
     param.x25519.d_src[0] |= 64;
 
     rc = s390x_pcc(S390X_SCALAR_MULTIPLY_X25519, &param.x25519) ? 0 : 1;
-    if (rc == 1)
+    if (rc == 1) {
+        static const unsigned char kZeros[32] = { 0 };
+
         s390x_flip_endian32(u_dst, param.x25519.u_dst);
+
+        /* Reject an all-zero shared secret (low-order peer key) */
+        if (CRYPTO_memcmp(kZeros, u_dst, 32) == 0)
+            rc = 0;
+    }
 
     OPENSSL_cleanse(param.x25519.d_src, sizeof(param.x25519.d_src));
     return rc;
@@ -135,8 +142,14 @@ int s390x_x448_mul(unsigned char u_dst[56],
 
     rc = s390x_pcc(S390X_SCALAR_MULTIPLY_X448, &param.x448) ? 0 : 1;
     if (rc == 1) {
+        static const unsigned char kZeros[56] = { 0 };
+
         s390x_flip_endian64(param.x448.u_dst, param.x448.u_dst);
         memcpy(u_dst, param.x448.u_dst, 56);
+
+        /* Reject an all-zero shared secret (low-order peer key) */
+        if (CRYPTO_memcmp(kZeros, u_dst, 56) == 0)
+            rc = 0;
     }
 
     OPENSSL_cleanse(param.x448.d_src, sizeof(param.x448.d_src));
