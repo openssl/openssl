@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 154;
+plan tests => 156;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -242,6 +242,14 @@ cert_contains($sda_cert,
               "localityName",
               1, 'X.509 Subject Directory Attributes');
 
+my $sda_int_cert = srctop_file(@certs, "ext-subjectDirectoryAttributes-integer.pem");
+cert_contains($sda_int_cert,
+              '1\.2\.3\.4: 42 ',
+              1, 'X.509 Subject Directory Attributes INTEGER');
+cert_contains($sda_int_cert,
+              '1\.2\.3\.5: -1 ',
+              1, 'X.509 Subject Directory Attributes negative INTEGER');
+
 my $ass_info_cert = srctop_file(@certs, "ext-associatedInformation.pem");
 cert_contains($ass_info_cert,
               "Steve Brule",
@@ -427,7 +435,7 @@ cert_contains($attr_map_cert,
 # localityName has an INTEGER value here, which was intentional to test the
 # display of non-string values.
 cert_contains($attr_map_cert,
-              "commonName:asdf == localityName:03:3E",
+              "commonName:asdf == localityName:830",
               1, 'X.509 Attribute Mappings');
 
 my $aaa_cert = srctop_file(@certs, "ext-allowedAttributeAssignments.pem");
