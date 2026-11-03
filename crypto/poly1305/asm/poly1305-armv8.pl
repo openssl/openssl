@@ -70,6 +70,7 @@ $code.=<<___;
 .hidden	poly1305_emit
 
 .extern poly1305_blocks_sve2
+.hidden poly1305_blocks_sve2
 
 .type	poly1305_init,%function
 .align	5
