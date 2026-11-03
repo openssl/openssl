@@ -2003,9 +2003,7 @@ err:
 }
 
 /*
- * EC_GROUP_cmp() must not crash on groups that have no generator yet: two
- * such groups with the same curve match, and a group without a generator
- * does not match one with a generator.
+ * EC_GROUP_cmp() reports an error if either group has no generator.
  */
 static int group_cmp_no_generator_test(void)
 {
@@ -2026,7 +2024,8 @@ static int group_cmp_no_generator_test(void)
         || !TEST_ptr(g = EC_GROUP_new_curve_GFp(p, a, b, ctx))
         || !TEST_ptr(h = EC_GROUP_dup(g))
         || !TEST_ptr_null(EC_GROUP_get0_generator(g))
-        || !TEST_int_eq(EC_GROUP_cmp(g, h, ctx), 0))
+        || !TEST_int_eq(EC_GROUP_cmp(g, h, ctx), -1)
+        || !TEST_int_eq(EC_GROUP_cmp(named, named, ctx), 0))
         goto err;
 
     if (!TEST_true(EC_POINT_get_affine_coordinates(named,
@@ -2037,8 +2036,8 @@ static int group_cmp_no_generator_test(void)
         || !TEST_true(EC_GROUP_set_generator(h, gen,
             EC_GROUP_get0_order(named),
             EC_GROUP_get0_cofactor(named)))
-        || !TEST_int_eq(EC_GROUP_cmp(g, h, ctx), 1)
-        || !TEST_int_eq(EC_GROUP_cmp(h, g, ctx), 1))
+        || !TEST_int_eq(EC_GROUP_cmp(g, h, ctx), -1)
+        || !TEST_int_eq(EC_GROUP_cmp(h, g, ctx), -1))
         goto err;
 
     r = 1;
