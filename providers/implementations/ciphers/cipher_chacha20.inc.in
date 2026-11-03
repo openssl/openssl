@@ -15,6 +15,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_CIPHER_PARAM_KEYLEN',     'keylen', 'size_t'],
                           ['OSSL_CIPHER_PARAM_IVLEN',      'ivlen',  'size_t'],
                           ['OSSL_CIPHER_PARAM_UPDATED_IV', 'upd_iv', 'octet_string'],
+                          ['OSSL_CIPHER_PARAM_IV',         'iv',     'octet_string'],
                          )); -}
 
 {- produce_param_decoder('chacha20_set_ctx_params',
