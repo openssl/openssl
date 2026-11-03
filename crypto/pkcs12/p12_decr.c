@@ -84,7 +84,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
         goto err;
 
     if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
-        OPENSSL_free(out);
+        OPENSSL_clear_free(out, max_out_len);
         out = NULL;
         ERR_raise(ERR_LIB_PKCS12, ERR_R_EVP_LIB);
         goto err;
@@ -92,7 +92,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
 
     outlen = i;
     if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
-        OPENSSL_free(out);
+        OPENSSL_clear_free(out, max_out_len);
         out = NULL;
         ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR,
             passlen == 0 ? "empty password"
@@ -210,6 +210,8 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
     if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, in, inlen, &oct->data,
             &oct->length, 1, ctx, propq)) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
+        if (zbuf)
+            OPENSSL_cleanse(in, inlen);
         OPENSSL_free(in);
         goto err;
     }
