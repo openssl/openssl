@@ -24,6 +24,7 @@ print <<___;
 .text
 .extern	OPENSSL_Uplink
 .globl	OPENSSL_UplinkTable
+.hidden OPENSSL_UplinkTable
 ___
 for ($i=1;$i<=$N;$i++) {
 print <<___;

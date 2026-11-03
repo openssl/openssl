@@ -79,6 +79,7 @@ die "insane number of elements" if ($#arr != 64*16*37-1);
 
 $code.=<<___;
 .globl	ecp_nistz256_precomputed
+.hidden ecp_nistz256_precomputed
 .type	ecp_nistz256_precomputed,%object
 .align	12
 ecp_nistz256_precomputed:
@@ -121,6 +122,7 @@ $code.=<<___;
 
 // void	ecp_nistz256_to_mont(BN_ULONG x0[4],const BN_ULONG x1[4]);
 .globl	ecp_nistz256_to_mont
+.hidden ecp_nistz256_to_mont
 .type	ecp_nistz256_to_mont,%function
 .align	6
 ecp_nistz256_to_mont:
@@ -150,6 +152,7 @@ ecp_nistz256_to_mont:
 
 // void	ecp_nistz256_from_mont(BN_ULONG x0[4],const BN_ULONG x1[4]);
 .globl	ecp_nistz256_from_mont
+.hidden ecp_nistz256_from_mont
 .type	ecp_nistz256_from_mont,%function
 .align	4
 ecp_nistz256_from_mont:
@@ -179,6 +182,7 @@ ecp_nistz256_from_mont:
 // void	ecp_nistz256_mul_mont(BN_ULONG x0[4],const BN_ULONG x1[4],
 //					     const BN_ULONG x2[4]);
 .globl	ecp_nistz256_mul_mont
+.hidden ecp_nistz256_mul_mont
 .type	ecp_nistz256_mul_mont,%function
 .align	4
 ecp_nistz256_mul_mont:
@@ -205,6 +209,7 @@ ecp_nistz256_mul_mont:
 
 // void	ecp_nistz256_sqr_mont(BN_ULONG x0[4],const BN_ULONG x1[4]);
 .globl	ecp_nistz256_sqr_mont
+.hidden ecp_nistz256_sqr_mont
 .type	ecp_nistz256_sqr_mont,%function
 .align	4
 ecp_nistz256_sqr_mont:
@@ -231,6 +236,7 @@ ecp_nistz256_sqr_mont:
 // void	ecp_nistz256_add(BN_ULONG x0[4],const BN_ULONG x1[4],
 //					const BN_ULONG x2[4]);
 .globl	ecp_nistz256_add
+.hidden ecp_nistz256_add
 .type	ecp_nistz256_add,%function
 .align	4
 ecp_nistz256_add:
@@ -256,6 +262,7 @@ ecp_nistz256_add:
 
 // void	ecp_nistz256_div_by_2(BN_ULONG x0[4],const BN_ULONG x1[4]);
 .globl	ecp_nistz256_div_by_2
+.hidden ecp_nistz256_div_by_2
 .type	ecp_nistz256_div_by_2,%function
 .align	4
 ecp_nistz256_div_by_2:
@@ -279,6 +286,7 @@ ecp_nistz256_div_by_2:
 
 // void	ecp_nistz256_mul_by_2(BN_ULONG x0[4],const BN_ULONG x1[4]);
 .globl	ecp_nistz256_mul_by_2
+.hidden ecp_nistz256_mul_by_2
 .type	ecp_nistz256_mul_by_2,%function
 .align	4
 ecp_nistz256_mul_by_2:
@@ -306,6 +314,7 @@ ecp_nistz256_mul_by_2:
 
 // void	ecp_nistz256_mul_by_3(BN_ULONG x0[4],const BN_ULONG x1[4]);
 .globl	ecp_nistz256_mul_by_3
+.hidden ecp_nistz256_mul_by_3
 .type	ecp_nistz256_mul_by_3,%function
 .align	4
 ecp_nistz256_mul_by_3:
@@ -345,6 +354,7 @@ ecp_nistz256_mul_by_3:
 // void	ecp_nistz256_sub(BN_ULONG x0[4],const BN_ULONG x1[4],
 //				        const BN_ULONG x2[4]);
 .globl	ecp_nistz256_sub
+.hidden ecp_nistz256_sub
 .type	ecp_nistz256_sub,%function
 .align	4
 ecp_nistz256_sub:
@@ -368,6 +378,7 @@ ecp_nistz256_sub:
 
 // void	ecp_nistz256_neg(BN_ULONG x0[4],const BN_ULONG x1[4]);
 .globl	ecp_nistz256_neg
+.hidden ecp_nistz256_neg
 .type	ecp_nistz256_neg,%function
 .align	4
 ecp_nistz256_neg:
@@ -746,6 +757,7 @@ my ($rp_real,$ap_real) = map("x$_",(21,22));
 
 $code.=<<___;
 .globl	ecp_nistz256_point_double
+.hidden ecp_nistz256_point_double
 .type	ecp_nistz256_point_double,%function
 .align	5
 ecp_nistz256_point_double:
@@ -906,6 +918,7 @@ my ($rp_real,$ap_real,$bp_real,$in1infty,$in2infty,$temp0,$temp1,$temp2)=map("x$
 
 $code.=<<___;
 .globl	ecp_nistz256_point_add
+.hidden ecp_nistz256_point_add
 .type	ecp_nistz256_point_add,%function
 .align	5
 ecp_nistz256_point_add:
@@ -1165,6 +1178,7 @@ my ($rp_real,$ap_real,$bp_real,$in1infty,$in2infty,$temp)=map("x$_",(21..26));
 
 $code.=<<___;
 .globl	ecp_nistz256_point_add_affine
+.hidden ecp_nistz256_point_add_affine
 .type	ecp_nistz256_point_add_affine,%function
 .align	5
 ecp_nistz256_point_add_affine:
@@ -1375,6 +1389,7 @@ $code.=<<___;
 // void ecp_nistz256_ord_mul_mont(uint64_t res[4], uint64_t a[4],
 //                                uint64_t b[4]);
 .globl	ecp_nistz256_ord_mul_mont
+.hidden ecp_nistz256_ord_mul_mont
 .type	ecp_nistz256_ord_mul_mont,%function
 .align	4
 ecp_nistz256_ord_mul_mont:
@@ -1519,6 +1534,7 @@ $code.=<<___;
 // void ecp_nistz256_ord_sqr_mont(uint64_t res[4], uint64_t a[4],
 //                                uint64_t rep);
 .globl	ecp_nistz256_ord_sqr_mont
+.hidden ecp_nistz256_ord_sqr_mont
 .type	ecp_nistz256_ord_sqr_mont,%function
 .align	4
 ecp_nistz256_ord_sqr_mont:
@@ -1676,6 +1692,7 @@ $code.=<<___;
 // void	ecp_nistz256_scatter_w5(void *x0,const P256_POINT *x1,
 //					 int x2);
 .globl	ecp_nistz256_scatter_w5
+.hidden ecp_nistz256_scatter_w5
 .type	ecp_nistz256_scatter_w5,%function
 .align	4
 ecp_nistz256_scatter_w5:
@@ -1740,6 +1757,7 @@ ecp_nistz256_scatter_w5:
 // void	ecp_nistz256_gather_w5(P256_POINT *x0,const void *x1,
 //					      int x2);
 .globl	ecp_nistz256_gather_w5
+.hidden ecp_nistz256_gather_w5
 .type	ecp_nistz256_gather_w5,%function
 .align	4
 ecp_nistz256_gather_w5:
@@ -1819,6 +1837,7 @@ ecp_nistz256_gather_w5:
 // void	ecp_nistz256_scatter_w7(void *x0,const P256_POINT_AFFINE *x1,
 //					 int x2);
 .globl	ecp_nistz256_scatter_w7
+.hidden ecp_nistz256_scatter_w7
 .type	ecp_nistz256_scatter_w7,%function
 .align	4
 ecp_nistz256_scatter_w7:
@@ -1865,6 +1884,7 @@ ecp_nistz256_scatter_w7:
 // void	ecp_nistz256_gather_w7(P256_POINT_AFFINE *x0,const void *x1,
 //						     int x2);
 .globl	ecp_nistz256_gather_w7
+.hidden ecp_nistz256_gather_w7
 .type	ecp_nistz256_gather_w7,%function
 .align	4
 ecp_nistz256_gather_w7:

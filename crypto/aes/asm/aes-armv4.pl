@@ -768,6 +768,7 @@ AES_set_decrypt_key:
 
 @ void AES_set_enc2dec_key(const AES_KEY *inp,AES_KEY *out)
 .global	AES_set_enc2dec_key
+.hidden AES_set_enc2dec_key
 .type	AES_set_enc2dec_key,%function
 .align	5
 AES_set_enc2dec_key:

@@ -205,6 +205,7 @@ $code.=<<___;
 #endif
 
 .globl	ChaCha20_ctr32
+.hidden ChaCha20_ctr32
 .type	ChaCha20_ctr32,%function
 .align	5
 ChaCha20_ctr32:

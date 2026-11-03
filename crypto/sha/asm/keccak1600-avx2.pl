@@ -283,6 +283,7 @@ my  $out = $inp;	# in squeeze
 
 $code.=<<___;
 .globl	SHA3_absorb
+.hidden SHA3_absorb
 .type	SHA3_absorb,\@function
 .align	32
 SHA3_absorb:
@@ -364,6 +365,7 @@ $code.=<<___;
 .size	SHA3_absorb,.-SHA3_absorb
 
 .globl	SHA3_squeeze
+.hidden SHA3_squeeze
 .type	SHA3_squeeze,\@function
 .align	32
 SHA3_squeeze:

@@ -122,6 +122,7 @@ $code.=".previous\n"	if ($flavour =~ /64/);
 
 $code.=<<___;
 .globl	${prefix}_set_encrypt_key
+.hidden ${prefix}_set_encrypt_key
 .type	${prefix}_set_encrypt_key,%function
 .align	5
 ${prefix}_set_encrypt_key:
@@ -308,6 +309,7 @@ $code.=<<___;
 .size	${prefix}_set_encrypt_key,.-${prefix}_set_encrypt_key
 
 .globl	${prefix}_set_decrypt_key
+.hidden ${prefix}_set_decrypt_key
 .type	${prefix}_set_decrypt_key,%function
 .align	5
 ${prefix}_set_decrypt_key:
@@ -374,6 +376,7 @@ my ($rndkey0,$rndkey1,$inout)=map("q$_",(0..3));
 
 $code.=<<___;
 .globl	${prefix}_${dir}crypt
+.hidden ${prefix}_${dir}crypt
 .type	${prefix}_${dir}crypt,%function
 .align	5
 ${prefix}_${dir}crypt:
@@ -460,6 +463,7 @@ if ($flavour =~ /64/) {
 
 $code.=<<___;
 .globl	${prefix}_ecb_encrypt
+.hidden ${prefix}_ecb_encrypt
 .type	${prefix}_ecb_encrypt,%function
 .align	5
 ${prefix}_ecb_encrypt:
@@ -1255,6 +1259,7 @@ my ($key4,$key5,$key6,$key7)=("x6","x12","x14",$key);
 
 $code.=<<___;
 .globl	${prefix}_cbc_encrypt
+.hidden ${prefix}_cbc_encrypt
 .type	${prefix}_cbc_encrypt,%function
 .align	5
 ${prefix}_cbc_encrypt:
@@ -2534,6 +2539,7 @@ my ($dat,$tmp)=($dat0,$tmp0);
 
 $code.=<<___;
 .globl	${prefix}_ctr32_encrypt_blocks
+.hidden ${prefix}_ctr32_encrypt_blocks
 .type	${prefix}_ctr32_encrypt_blocks,%function
 .align	5
 ${prefix}_ctr32_encrypt_blocks:
@@ -3028,6 +3034,7 @@ if ($flavour =~ /64/) {
 
 $code.=<<___	if ($flavour =~ /64/);
 .globl	${prefix}_xts_encrypt
+.hidden ${prefix}_xts_encrypt
 .type	${prefix}_xts_encrypt,%function
 .align	5
 ${prefix}_xts_encrypt:
@@ -3705,6 +3712,7 @@ if ($flavour =~ /64/) {
 
 $code.=<<___	if ($flavour =~ /64/);
 .globl	${prefix}_xts_decrypt
+.hidden ${prefix}_xts_decrypt
 .type	${prefix}_xts_decrypt,%function
 .align	5
 ${prefix}_xts_decrypt:

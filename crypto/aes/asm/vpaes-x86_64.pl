@@ -694,6 +694,7 @@ _vpaes_schedule_mangle:
 # Interface to OpenSSL
 #
 .globl	${PREFIX}_set_encrypt_key
+.hidden ${PREFIX}_set_encrypt_key
 .type	${PREFIX}_set_encrypt_key,\@function,3
 .align	16
 ${PREFIX}_set_encrypt_key:
@@ -745,6 +746,7 @@ $code.=<<___;
 .size	${PREFIX}_set_encrypt_key,.-${PREFIX}_set_encrypt_key
 
 .globl	${PREFIX}_set_decrypt_key
+.hidden ${PREFIX}_set_decrypt_key
 .type	${PREFIX}_set_decrypt_key,\@function,3
 .align	16
 ${PREFIX}_set_decrypt_key:
@@ -801,6 +803,7 @@ $code.=<<___;
 .size	${PREFIX}_set_decrypt_key,.-${PREFIX}_set_decrypt_key
 
 .globl	${PREFIX}_encrypt
+.hidden ${PREFIX}_encrypt
 .type	${PREFIX}_encrypt,\@function,3
 .align	16
 ${PREFIX}_encrypt:
@@ -847,6 +850,7 @@ $code.=<<___;
 .size	${PREFIX}_encrypt,.-${PREFIX}_encrypt
 
 .globl	${PREFIX}_decrypt
+.hidden ${PREFIX}_decrypt
 .type	${PREFIX}_decrypt,\@function,3
 .align	16
 ${PREFIX}_decrypt:
@@ -899,6 +903,7 @@ my ($inp,$out,$len,$key,$ivp,$enc)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9");
 #                       unsigned char *ivp,const int enc);
 $code.=<<___;
 .globl	${PREFIX}_cbc_encrypt
+.hidden ${PREFIX}_cbc_encrypt
 .type	${PREFIX}_cbc_encrypt,\@function,6
 .align	16
 ${PREFIX}_cbc_encrypt:
