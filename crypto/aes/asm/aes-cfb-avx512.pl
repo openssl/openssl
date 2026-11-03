@@ -12,7 +12,8 @@
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
-$win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
+$win64=0;
+$win64=1 if ($flavour =~ /[nm]asm|mingw64|win64/ || $output =~ /\.asm$/);
 
 $avx512vaes=0; # will be non-zero if tooling supports Intel AVX-512 and VAES
 
