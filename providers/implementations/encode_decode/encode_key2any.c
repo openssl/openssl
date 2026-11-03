@@ -971,7 +971,7 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
             if ((astr = ASN1_STRING_new()) == NULL)
                 goto err;
             *pstrtype = V_ASN1_SEQUENCE;
-            ASN1_STRING_set0(astr, str, (int)str_sz);
+            ossl_asn1_string_set0(astr, str, (int)str_sz);
             *pstr = astr;
 
             return 1;

@@ -1144,7 +1144,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
             goto err;
         if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0)
             goto err;
-        ASN1_STRING_set0(si->signature, sig, (int)siglen);
+        ossl_asn1_string_set0(si->signature, sig, (int)siglen);
         sig = NULL;
     } else {
         OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(ctx);
@@ -1193,7 +1193,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
                 goto err;
             }
         }
-        ASN1_STRING_set0(si->signature, sig, siglen);
+        ossl_asn1_string_set0(si->signature, sig, siglen);
         sig = NULL;
     }
 
@@ -1290,7 +1290,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
     EVP_MD_CTX_reset(mctx);
 
-    ASN1_STRING_set0(si->signature, abuf, (int)siglen);
+    ossl_asn1_string_set0(si->signature, abuf, (int)siglen);
 
     return 1;
 

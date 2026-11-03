@@ -576,7 +576,7 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encrypt(pctx, ek, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
-    ASN1_STRING_set0(ktri->encryptedKey, ek, (int)eklen);
+    ossl_asn1_string_set0(ktri->encryptedKey, ek, (int)eklen);
     ek = NULL;
 
     ret = 1;
@@ -831,7 +831,7 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
     kekri->key = key;
     kekri->keylen = keylen;
 
-    ASN1_STRING_set0(kekri->kekid->keyIdentifier, id, (int)idlen);
+    ossl_asn1_string_set0(kekri->kekid->keyIdentifier, id, (int)idlen);
 
     kekri->kekid->date = date;
 
@@ -976,7 +976,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
 
-    ASN1_STRING_set0(kekri->encryptedKey, wkey, wkeylen);
+    ossl_asn1_string_set0(kekri->encryptedKey, wkey, wkeylen);
 
     r = 1;
 
