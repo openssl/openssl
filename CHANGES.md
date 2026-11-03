@@ -39,9 +39,12 @@ OpenSSL 4.2
    which `EVP_CIPHER_CTX_test_flags()` now reports as well. Re-enabling padding
    through the flag takes effect on the next initialisation, where before the
    cipher went on producing unpadded output. The request is sent to the
-   provider at each initialisation, so a cipher whose provider implements no
-   `OSSL_FUNC_cipher_set_ctx_params()` function now fails to initialise when
-   the request can be neither delivered nor already met.
+   provider again on initialisation unless the provider is known to hold it
+   already. A cipher whose provider implements no
+   `OSSL_FUNC_cipher_set_ctx_params()` function takes its padding from the
+   parameters of that call instead, and fails to initialise when the call does
+   not carry the parameter while the padding it was last given is known to
+   differ from the one asked for.
    <!-- https://github.com/openssl/openssl/pull/32760 -->
 
    *Madan Mohan Manokar*

@@ -676,6 +676,42 @@ err:
 }
 
 /*
+ * The same refusal, with the request carried by the init parameters.  The
+ * provider never took it, so a retry without the parameter still has to
+ * ask for it and fail, not assume the provider holds it.
+ */
+static int test_init_param_failure_is_reported_on_retry(void)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[16] = { 0 };
+    unsigned int set = 0, pad;
+    OSSL_PARAM params[2];
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &set);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, PAD_REJECT_CIPHER_NAME,
+                      "provider=" PAD_PROV_NAME))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_false(EVP_EncryptInit_ex2(ctx, cipher, key, iv, params)))
+        goto err;
+
+    if (!TEST_true(get_provider_padding(ctx, &pad))
+        || !TEST_uint_eq(pad, 1)
+        || !TEST_false(EVP_EncryptInit_ex2(ctx, NULL, key, iv, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/*
  * An init that keeps the provider context has nothing to tell it about
  * padding, since the value is already there.
  */
@@ -1124,6 +1160,98 @@ err:
     return ret;
 }
 
+/*
+ * Failing to deliver a padding change must leave the known difference in
+ * place.  The provider context was not modified, so a retry that still has
+ * no parameter fails the same way and the provider keeps its default.
+ */
+static int test_init_only_retry_still_fails(void)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    static const unsigned char key[PAD_BLOCK_SIZE] = { 0 };
+    static const unsigned char iv[PAD_BLOCK_SIZE] = { 0 };
+    unsigned int pad;
+    int ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, PAD_INIT_ONLY_CIPHER_NAME,
+                      "provider=" PAD_PROV_NAME))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_NO_PADDING);
+    if (!TEST_false(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+        || !TEST_true(get_provider_padding(ctx, &pad))
+        || !TEST_uint_eq(pad, 1)
+        || !TEST_false(EVP_EncryptInit_ex2(ctx, NULL, key, iv, NULL))
+        || !TEST_true(get_provider_padding(ctx, &pad))
+        || !TEST_uint_eq(pad, 1))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+/*
+ * Padding given to a cipher with no setter is what that cipher holds.  The
+ * flag is then the other way, and an init with no parameter cannot say so,
+ * so it fails and keeps failing.  The provider padding stays where the
+ * earlier init put it: on in the first half, off in the second.
+ */
+static int test_init_only_flag_change_fails(void)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    static const unsigned char key[PAD_BLOCK_SIZE] = { 0 };
+    static const unsigned char iv[PAD_BLOCK_SIZE] = { 0 };
+    OSSL_PARAM params[2];
+    unsigned int pad, set = 1;
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &set);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, PAD_INIT_ONLY_CIPHER_NAME,
+                      "provider=" PAD_PROV_NAME))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, params))
+        || !TEST_true(get_provider_padding(ctx, &pad))
+        || !TEST_uint_eq(pad, 1))
+        goto err;
+
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_NO_PADDING);
+    if (!TEST_false(EVP_EncryptInit_ex2(ctx, NULL, key, iv, NULL))
+        || !TEST_false(EVP_EncryptInit_ex2(ctx, NULL, key, iv, NULL))
+        || !TEST_true(get_provider_padding(ctx, &pad))
+        || !TEST_uint_eq(pad, 1))
+        goto err;
+
+    /* The other way round: padding was turned off, and the flag turns it on. */
+    set = 0;
+    EVP_CIPHER_CTX_free(ctx);
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, params))
+        || !TEST_true(get_provider_padding(ctx, &pad))
+        || !TEST_uint_eq(pad, 0))
+        goto err;
+
+    EVP_CIPHER_CTX_clear_flags(ctx, EVP_CIPH_NO_PADDING);
+    if (!TEST_false(EVP_EncryptInit_ex2(ctx, NULL, key, iv, NULL))
+        || !TEST_false(EVP_EncryptInit_ex2(ctx, NULL, key, iv, NULL))
+        || !TEST_true(get_provider_padding(ctx, &pad))
+        || !TEST_uint_eq(pad, 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
@@ -1138,6 +1266,7 @@ int setup_tests(void)
     ADD_TEST(test_set_flags_no_padding_reaches_provider);
     ADD_TEST(test_padding_param_at_init_survives_reinit);
     ADD_TEST(test_padding_failure_is_reported_on_retry);
+    ADD_TEST(test_init_param_failure_is_reported_on_retry);
     ADD_TEST(test_reinit_leaves_padding_alone);
     ADD_TEST(test_clear_flags_restores_padding);
     ADD_TEST(test_copy_keeps_padding);
@@ -1148,6 +1277,8 @@ int setup_tests(void)
     ADD_TEST(test_failed_setter_padding_is_not_cached);
     ADD_TEST(test_init_params_without_set_ctx_params);
     ADD_TEST(test_init_only_reinit_without_params);
+    ADD_TEST(test_init_only_retry_still_fails);
+    ADD_TEST(test_init_only_flag_change_fails);
     return 1;
 }
 
