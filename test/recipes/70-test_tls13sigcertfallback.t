@@ -311,7 +311,8 @@ sub native_case {
     my $dir = tempdir(CLEANUP => 1);
     my @server = ("openssl", "s_server", "-provider", "default",
         "-accept", "127.0.0.1:0", "-naccept", "1", "-www", "-msg",
-        "-state", "-max_protocol", "TLSv1.3", "-cert", $case->{cert},
+        "-state", "-no_tx_cert_comp", "-no_rx_cert_comp",
+        "-max_protocol", "TLSv1.3", "-cert", $case->{cert},
         "-key", $key, "-cipher", 'DEFAULT:@SECLEVEL=0');
     if ($case->{build_extra}) {
         push @server, "-cert_chain", $ca, "-chainCAfile", $auto_store;
@@ -353,6 +354,7 @@ sub native_case {
             "-min_protocol", $case->{allow_sha1} ? "TLSv1.2" : "TLSv1.3",
             "-sigalgs", $sigalgs, "-cipher", 'DEFAULT:@SECLEVEL=0',
             "-msg", "-showcerts", "-ign_eof", "-verify_return_error",
+            "-no_tx_cert_comp", "-no_rx_cert_comp",
             "-no-CApath", "-no-CAstore", "-CAfile",
             $case->{trust_intermediate} ? $sha1_intermediate : $auto_store);
         push @client, "-partial_chain" if $case->{trust_intermediate};
@@ -439,6 +441,16 @@ sub native_case {
 plan tests => scalar @cases;
 
 for my $case (@cases) {
+    # The SHA-1 cases lower the client minimum to TLS 1.2 so it advertises
+    # SHA-1. A TLS-1.3-only client filters that algorithm out.
+    my $skip_reason = $case->{dual_cert} && disabled("ec")
+        ? "Cross-key-type selection requires EC"
+        : $case->{allow_sha1} && disabled("tls1_2")
+        ? "Advertising SHA-1 requires the TLS 1.2 client minimum" : undef;
+    if (defined $skip_reason) {
+        SKIP: { skip $skip_reason, 1; }
+        next;
+    }
     if ($case->{build_extra} || $case->{trust_intermediate} || $case->{client_auth}) {
         ok(native_case($case), $case->{label});
         next;

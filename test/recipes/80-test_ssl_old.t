@@ -39,7 +39,10 @@ plan skip_all => "No SSL/TLS/DTLS protocol is support by this OpenSSL build"
     if $no_anytls && $no_anydtls;
 
 my $dsaallow = '1';
-my $digest = "-sha1";
+# A TLS-1.3-only client does not advertise SHA-1 certificate signatures.
+# These generic handshake tests need a certificate it can accept; the
+# dedicated certificate-policy recipe covers SHA-1 acceptance and rejection.
+my $digest = $no_tls1_2 ? "-sha256" : "-sha1";
 my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
 my @verifycmd = ("openssl", "verify");
