@@ -63,7 +63,7 @@
         { "inhibit_map", OPT_V_INHIBIT_MAP, '-',                                           \
             "set policy variable inhibit-policy-mapping" },                                \
         { "x509_strict", OPT_V_X509_STRICT, '-',                                           \
-            "disable certificate compatibility work-arounds" },                            \
+            "disable certificate/CRL compatibility work-arounds" },                        \
         { "extended_crl", OPT_V_EXTENDED_CRL, '-',                                         \
             "enable extended CRL features" },                                              \
         { "use_deltas", OPT_V_USE_DELTAS, '-',                                             \
