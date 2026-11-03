@@ -262,6 +262,7 @@ static inline void arm64_setup_rsa_neonized(void)
 
     if ((OPENSSL_armcap_P & ARMV7_NEON)
         && (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A72)
+            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A76)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N1)))
         OPENSSL_armv8_rsa_neonized = 1;
 }
