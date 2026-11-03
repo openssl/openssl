@@ -203,6 +203,21 @@ int ossl_asn1_string_set1_data(ASN1_STRING *str, const uint8_t *data,
  */
 int ossl_asn1_string_set1_string(ASN1_STRING *str, const char *c_string);
 
+/**
+ * @brief Set str's data to data, taking ownership of it.
+ * Any data owned by str is freed, and cleansed if str->length is positive.
+ * @param str the string to set
+ * @param data the buffer to take ownership of, or NULL
+ * @param len the number of bytes at data; a negative len sets the length to 0
+ *
+ * TODO: This API should really return int and report failure, taking a
+ * size_t len. it is left matching the old ASN1_STRING_set0 for now
+ * to make the deprecation process easier to review. Going forward this API
+ * should be changed, or we get rid of it entirely and use the public
+ * setters, or internal fields directly in the implementations.
+ */
+void ossl_asn1_string_set0(ASN1_STRING *str, void *data, int len);
+
 int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass,
     char opt, ASN1_TLC *ctx, int depth,
