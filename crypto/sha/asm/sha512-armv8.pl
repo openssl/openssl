@@ -72,7 +72,7 @@ if ($flavour && $flavour ne "void") {
     $output and open STDOUT,">$output";
 }
 
-if ($output =~ /512/) {
+if ($output && $output =~ m{(^|[\\/])sha512[^\\/]*$}) {
 	$BITS=512;
 	$SZ=8;
 	@Sigma0=(28,34,39);
