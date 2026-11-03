@@ -52,6 +52,117 @@ size_t ossl_ascon_aead128_decrypt_final(ASCON_AEAD_CTX *ctx,
     size_t tag_len);
 void ossl_ascon_aead_cleanup(ASCON_AEAD_CTX *ctx);
 
+typedef struct {
+    uint64_t state[5];
+    size_t offset;
+} ascon_hash256_ctx;
+
+/**
+ * Start an Ascon-Hash256 computation.
+ *
+ * @param ctx    Context.
+ */
+void ossl_ascon_hash256_init(ascon_hash256_ctx *ctx);
+/**
+ * Absorb message bytes.
+ *
+ * @param ctx    Context.
+ * @param m      Message bytes.
+ * @param len    Number of message bytes.
+ */
+void ossl_ascon_hash256_update(ascon_hash256_ctx *ctx, const unsigned char *m,
+    size_t len);
+/**
+ * Write the 32-byte digest.
+ *
+ * @param ctx    Context.
+ * @param digest Output buffer.
+ */
+void ossl_ascon_hash256_final(ascon_hash256_ctx *ctx, unsigned char *digest);
+/**
+ * Clear the context.
+ *
+ * @param ctx    Context.
+ */
+void ossl_ascon_hash256_cleanup(ascon_hash256_ctx *ctx);
+
+typedef struct {
+    uint64_t state[5];
+    size_t offset;
+    uint64_t flags;
+} ascon_xof128_ctx;
+
+typedef struct {
+    uint64_t state[5];
+    size_t offset;
+    uint64_t flags;
+} ascon_cxof128_ctx;
+
+/**
+ * Start an Ascon-XOF128 computation.
+ *
+ * @param ctx    Context.
+ */
+void ossl_ascon_xof128_init(ascon_xof128_ctx *ctx);
+/**
+ * Absorb message bytes.
+ *
+ * @param ctx    Context.
+ * @param m      Message bytes.
+ * @param len    Number of message bytes.
+ */
+void ossl_ascon_xof128_update(ascon_xof128_ctx *ctx, const unsigned char *m,
+    size_t len);
+/**
+ * Squeeze output bytes.
+ *
+ * @param ctx    Context.
+ * @param out    Output buffer.
+ * @param len    Number of bytes to squeeze.
+ */
+void ossl_ascon_xof128_final(ascon_xof128_ctx *ctx, unsigned char *out,
+    size_t len);
+/**
+ * Clear the context.
+ *
+ * @param ctx    Context.
+ */
+void ossl_ascon_xof128_cleanup(ascon_xof128_ctx *ctx);
+
+/**
+ * Start an Ascon-CXOF128 computation.
+ *
+ * @param ctx    Context.
+ * @param in     Customization string, at most 256 bytes.
+ * @param len    Length of the customization string.
+ */
+void ossl_ascon_cxof128_init(ascon_cxof128_ctx *ctx, const unsigned char *in,
+    size_t len);
+/**
+ * Absorb message bytes.
+ *
+ * @param ctx    Context.
+ * @param m      Message bytes.
+ * @param len    Number of message bytes.
+ */
+void ossl_ascon_cxof128_update(ascon_cxof128_ctx *ctx, const unsigned char *m,
+    size_t len);
+/**
+ * Squeeze output bytes.
+ *
+ * @param ctx    Context.
+ * @param out    Output buffer.
+ * @param len    Number of bytes to squeeze.
+ */
+void ossl_ascon_cxof128_final(ascon_cxof128_ctx *ctx, unsigned char *out,
+    size_t len);
+/**
+ * Clear the context.
+ *
+ * @param ctx    Context.
+ */
+void ossl_ascon_cxof128_cleanup(ascon_cxof128_ctx *ctx);
+
 #endif /* OPENSSL_NO_ASCON128 */
 
 #endif /* OSSL_CRYPTO_ASCON_H */
