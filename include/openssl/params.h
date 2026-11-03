@@ -79,208 +79,127 @@ const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *p, const char *key);
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_int(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(int);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, unsigned int *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_uint(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_UNSIGNED_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(unsigned int);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_long(const char *key, long int *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_long(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(long int);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_ulong(const char *key, unsigned long int *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_ulong(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_UNSIGNED_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(unsigned long int);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_int32(const char *key, int32_t *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_int32(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(int32_t);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_uint32(const char *key, uint32_t *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_uint32(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_UNSIGNED_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(uint32_t);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, int64_t *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_int64(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(int64_t);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, uint64_t *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_uint64(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_UNSIGNED_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(uint64_t);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_size_t(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_UNSIGNED_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(size_t);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_time_t(const char *key, time_t *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_time_t(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_INTEGER;
-    res.data = buf;
-    res.data_size = sizeof(time_t);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
     size_t bsize)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_BN(key, buf, bsize);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_UNSIGNED_INTEGER;
-    res.data = buf;
-    res.data_size = bsize;
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_double(key, buf);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_REAL;
-    res.data = buf;
-    res.data_size = sizeof(double);
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
     size_t bsize)
 {
-    OSSL_PARAM res;
+    const size_t length = buf != NULL && bsize == 0 ? strlen(buf) : bsize;
+    OSSL_PARAM res = OSSL_PARAM_utf8_string(key, buf, length);
 
-    if (buf != NULL && bsize == 0)
-        bsize = strlen(buf);
-    res.key = key;
-    res.data_type = OSSL_PARAM_UTF8_STRING;
-    res.data = buf;
-    res.data_size = bsize;
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
     size_t bsize)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_octet_string(key, buf, bsize);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_OCTET_STRING;
-    res.data = buf;
-    res.data_size = bsize;
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
     size_t bsize)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_utf8_ptr(key, buf, bsize);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_UTF8_PTR;
-    res.data = buf;
-    res.data_size = bsize;
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
     size_t bsize)
 {
-    OSSL_PARAM res;
+    OSSL_PARAM res = OSSL_PARAM_octet_ptr(key, buf, bsize);
 
-    res.key = key;
-    res.data_type = OSSL_PARAM_OCTET_PTR;
-    res.data = buf;
-    res.data_size = bsize;
-    res.return_size = OSSL_PARAM_UNMODIFIED;
     return res;
 }
 
 OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_end(void)
 {
-    OSSL_PARAM end = OSSL_PARAM_END;
+    OSSL_PARAM res = OSSL_PARAM_END;
 
-    return end;
+    return res;
 }
 
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
