@@ -381,7 +381,7 @@ OPENSSLDIR={- catdir($config{openssldir}) or
 # The same, but for C
 OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
 # Where modules reside, for C
-MODULESDIR_C={- platform->osslprefix() -}MODULES{- $target{pointer_size} -}:
+MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
 
