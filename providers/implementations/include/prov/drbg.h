@@ -194,16 +194,22 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     unsigned int strength, int prediction_resistance,
     const unsigned char *adin, size_t adinlen);
 
-/*
- * The VMClock generation signal. ossl_prov_vmclock_page() returns the page
- * of |libctx|, mapping it on the first call, or NULL if there is no page the
- * process can read. For ossl_prov_vmclock_changed(), |*epoch| holds the value
- * the caller last saw. It returns 1 and stores the current value there if the
- * guest has since been restored from a snapshot or migrated; returns 1
- * without storing if the page could not be read; returns 0 if nothing changed
- * or |page| is NULL.
+/**
+ * @brief Returns the VMClock page of a library context, mapping it on the
+ * first call.
+ * @param libctx the library context
+ * @returns the page, or NULL if there is no page the process can read
  */
 const volatile void *ossl_prov_vmclock_page(OSSL_LIB_CTX *libctx);
+
+/**
+ * @brief Checks whether the VM generation counter has changed.
+ * @param page the page returned by ossl_prov_vmclock_page(), or NULL
+ * @param epoch the value the caller last saw
+ * @returns 1, storing the current value in |*epoch|, if the guest has since
+ * been restored from a snapshot or migrated; 1 without storing if the page
+ * could not be read; 0 if nothing changed or |page| is NULL
+ */
 int ossl_prov_vmclock_changed(const volatile void *page, uint64_t *epoch);
 
 /* Seeding api */
