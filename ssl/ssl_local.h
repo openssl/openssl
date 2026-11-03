@@ -2221,8 +2221,42 @@ typedef struct dtls_sent_msg_st {
 } dtls_sent_msg;
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
+
+/**
+ * @brief Test whether our own KeyUpdate is still awaiting acknowledgement.
+ *
+ * @param s the DTLS connection
+ * @returns 1 if a KeyUpdate in the sent message queue still has unacknowledged
+ *          record numbers, 0 otherwise.
+ */
 int dtls_has_unacked_key_update(SSL_CONNECTION *s);
+
+/**
+ * @brief Install a deferred KeyUpdate write key once it is safe to do so.
+ *
+ * If our KeyUpdate is waiting to install its new write keys, check whether
+ * it and every message sent before it is now acknowledged (RFC 9147 erratum
+ * 8047), and install the key if so. Called when an ACK is processed, and when
+ * a flight is retired implicitly with no ACK record involved.
+ *
+ * @param s the DTLS connection
+ * @returns 0 only on a fatal error installing the key, in which case
+ *          SSLfatal() has already been called; 1 otherwise, including when
+ *          there was nothing to do.
+ */
 int dtls1_check_deferred_write_key(SSL_CONNECTION *s);
+
+/**
+ * @brief Test whether the next expected handshake message is already buffered.
+ *
+ * Reports a fully received message waiting in the reassembly buffer for the
+ * next expected sequence number, independently of any new record arriving, so
+ * that callers keep reading instead of going idle.
+ *
+ * @param s the DTLS connection
+ * @returns 1 if the next expected message is complete and buffered, 0
+ *          otherwise.
+ */
 int dtls1_has_buffered_ready_message(SSL_CONNECTION *s);
 
 static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype)
@@ -3159,6 +3193,20 @@ __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);
 __owur int dtls1_handle_timeout(SSL_CONNECTION *s);
 void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
+
+/**
+ * @brief Stop the retransmit timer on reading the peer's flight, keeping any
+ * of our own messages that are still unacknowledged.
+ *
+ * Unlike dtls1_stop_timer(), a DTLS 1.3 connection which still has other
+ * unacknowledged messages outstanding keeps them, retiring only what the
+ * peer's flight implicitly acknowledges (RFC 9147 section 7.2). A deferred
+ * KeyUpdate write key is installed if this unblocks it.
+ *
+ * @param s the DTLS connection
+ * @returns 0 only on a fatal error installing a deferred write key, in which
+ *          case SSLfatal() has already been called; 1 otherwise.
+ */
 int dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
