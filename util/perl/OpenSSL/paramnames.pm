@@ -1062,7 +1062,7 @@ sub output_param_decoder {
     print "            /*\n";
     print "             * The return_size field carries potential keyhash values on input\n";
     print "             */\n";
-    print "	       uint32_t keyhash = (uint32_t )p->return_size;\n";
+    print "	       uint32_t keyhash = (uint32_t )(p->return_size & ~OSSL_PARAM_UNMODIFIED_HASHED);\n";
     print "	       if (keyhash != 0xffffffff) {\n";
     print "	           ((OSSL_PARAM *)p)->return_size = OSSL_PARAM_UNMODIFIED;\n";
     print "            }\n";

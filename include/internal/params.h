@@ -55,7 +55,7 @@ int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
         p___->data_type = type;                                       \
         p___->data = ptr;                                             \
         p___->data_size = size;                                       \
-        p___->return_size = hash;                                     \
+        p___->return_size = hash | OSSL_PARAM_UNMODIFIED_HASHED;      \
     } while (0)
 
 #define OSSL_PARAM_fast_octet_string(param, keyname, hash, str, size) \
