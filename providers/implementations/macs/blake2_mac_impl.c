@@ -34,6 +34,7 @@ static OSSL_FUNC_mac_set_ctx_params_fn blake2_mac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn blake2_mac_init;
 static OSSL_FUNC_mac_update_fn blake2_mac_update;
 static OSSL_FUNC_mac_final_fn blake2_mac_final;
+static OSSL_FUNC_mac_cleanse_fn blake2_mac_cleanse;
 
 struct blake2_mac_data_st {
     BLAKE2_CTX ctx;
@@ -236,6 +237,15 @@ static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
+static void blake2_mac_cleanse(void *vmacctx)
+{
+    struct blake2_mac_data_st *macctx = vmacctx;
+
+    OPENSSL_cleanse(macctx->key, sizeof(macctx->key));
+    OPENSSL_cleanse(&macctx->ctx, sizeof(macctx->ctx));
+    BLAKE2_PARAM_INIT(&macctx->params);
+}
+
 const OSSL_DISPATCH BLAKE2_FUNCTIONS[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))blake2_mac_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))blake2_mac_dup },
@@ -243,6 +253,7 @@ const OSSL_DISPATCH BLAKE2_FUNCTIONS[] = {
     { OSSL_FUNC_MAC_INIT, (void (*)(void))blake2_mac_init },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))blake2_mac_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))blake2_mac_final },
+    { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))blake2_mac_cleanse },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
         (void (*)(void))blake2_gettable_ctx_params },
     { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))blake2_get_ctx_params },

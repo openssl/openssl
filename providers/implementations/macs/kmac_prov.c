@@ -80,6 +80,7 @@ static OSSL_FUNC_mac_set_ctx_params_fn kmac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn kmac_init;
 static OSSL_FUNC_mac_update_fn kmac_update;
 static OSSL_FUNC_mac_final_fn kmac_final;
+static OSSL_FUNC_mac_cleanse_fn kmac_cleanse;
 
 #define KMAC_MAX_BLOCKSIZE ((1600 - 128 * 2) / 8) /* 168 */
 
@@ -386,6 +387,18 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return ok;
 }
 
+static void kmac_cleanse(void *vmacctx)
+{
+    struct kmac_data_st *kctx = vmacctx;
+
+    if (kctx->key_len != 0) {
+        OPENSSL_cleanse(kctx->key, kctx->key_len);
+        kctx->key_len = 0;
+    }
+    if (kctx->ctx != NULL)
+        EVP_MD_CTX_reset(kctx->ctx);
+}
+
 static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
@@ -515,6 +528,7 @@ static int kmac_bytepad_encode_key(unsigned char *out, size_t out_max_len,
         { OSSL_FUNC_MAC_INIT, (void (*)(void))kmac_init },                     \
         { OSSL_FUNC_MAC_UPDATE, (void (*)(void))kmac_update },                 \
         { OSSL_FUNC_MAC_FINAL, (void (*)(void))kmac_final },                   \
+        { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))kmac_cleanse },               \
         { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,                                   \
             (void (*)(void))kmac_gettable_ctx_params },                        \
         { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))kmac_get_ctx_params }, \

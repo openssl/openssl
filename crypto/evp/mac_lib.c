@@ -194,6 +194,13 @@ int EVP_MAC_finalXOF(EVP_MAC_CTX *ctx, unsigned char *out, size_t outsize)
     return evp_mac_final(ctx, 1, out, NULL, outsize);
 }
 
+void EVP_MAC_cleanse(EVP_MAC_CTX *ctx)
+{
+    if (ctx == NULL || ctx->meth->cleanse == NULL)
+        return;
+    ctx->meth->cleanse(ctx->algctx);
+}
+
 /*
  * The {get,set}_params functions return 1 if there is no corresponding
  * function in the implementation.  This is the same as if there was one,
