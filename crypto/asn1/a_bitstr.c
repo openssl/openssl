@@ -106,7 +106,7 @@ ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     } else
         s = NULL;
 
-    ASN1_STRING_set0(ret, s, (int)len);
+    ossl_asn1_string_set0(ret, s, (int)len);
     ret->type = V_ASN1_BIT_STRING;
     if (a != NULL)
         (*a) = ret;

@@ -248,7 +248,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         ASN1_INTEGER_free(pubk);
         if (penclen <= 0)
             goto err;
-        ASN1_STRING_set0(pubkey, penc, penclen);
+        ossl_asn1_string_set0(pubkey, penc, penclen);
         ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
 
         penc = NULL;
@@ -330,7 +330,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     wrap_str = ASN1_STRING_new();
     if (wrap_str == NULL)
         goto err;
-    ASN1_STRING_set0(wrap_str, penc, penclen);
+    ossl_asn1_string_set0(wrap_str, penc, penclen);
     penc = NULL;
     rv = X509_ALGOR_set0(talg, OBJ_nid2obj(NID_id_smime_alg_ESDH),
         V_ASN1_SEQUENCE, wrap_str);

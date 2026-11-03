@@ -19,6 +19,7 @@
 #include <openssl/ct.h>
 #include <openssl/err.h>
 
+#include "crypto/asn1.h"
 #include "ct_local.h"
 
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
@@ -402,7 +403,7 @@ int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **out)
         OPENSSL_free(data);
         return -1;
     }
-    ASN1_STRING_set0(oct, data, len);
+    ossl_asn1_string_set0(oct, data, len);
     len = i2d_ASN1_OCTET_STRING(oct, out);
     ASN1_OCTET_STRING_free(oct);
     return len;

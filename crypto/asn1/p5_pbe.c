@@ -12,6 +12,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rand.h>
+#include "crypto/asn1.h"
 #include "crypto/evp.h"
 
 /* PKCS#5 password based encryption structure */
@@ -58,7 +59,7 @@ int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
     else if (RAND_bytes_ex(ctx, sstr, saltlen, 0) <= 0)
         goto err;
 
-    ASN1_STRING_set0(pbe->salt, sstr, saltlen);
+    ossl_asn1_string_set0(pbe->salt, sstr, saltlen);
     sstr = NULL;
 
     if (!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str)) {

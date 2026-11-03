@@ -420,7 +420,7 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
         ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
         goto err;
     }
-    ASN1_STRING_set0(ret->base, buffer, (int)len);
+    ossl_asn1_string_set0(ret->base, buffer, (int)len);
 
     /* set the order */
     tmp = EC_GROUP_get0_order(group);
@@ -1050,7 +1050,7 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
         goto err;
     }
 
-    ASN1_STRING_set0(priv_key->privateKey, priv, (int)privlen);
+    ossl_asn1_string_set0(priv_key->privateKey, priv, (int)privlen);
     priv = NULL;
 
     if (!(a->enc_flag & EC_PKEY_NO_PARAMETERS)) {
@@ -1077,7 +1077,7 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
         }
 
         ossl_asn1_bit_string_set_unused_bits(priv_key->publicKey, 0);
-        ASN1_STRING_set0(priv_key->publicKey, pub, (int)publen);
+        ossl_asn1_string_set0(priv_key->publicKey, pub, (int)publen);
         pub = NULL;
     }
 
