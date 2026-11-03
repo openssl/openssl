@@ -5454,6 +5454,30 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
                 else
                     return SSL_ERROR_SYSCALL;
             }
+
+#ifndef OPENSSL_NO_DTLS
+            /*
+             * Connections created by a DTLS listener send with BIO_sendmmsg()
+             * on the listener's shared BIO. That path does not set retry
+             * flags on the BIO, since the BIO is shared with every other
+             * connection, so none of the checks above can see that the send
+             * needs to be retried. rwstate being SSL_WRITING is what records
+             * it. A permanent failure is reported through error_state, which
+             * was checked first.
+             *
+             * This only applies once the handshake is over. While it is in
+             * progress, flushing a flight is not a send that can be retried,
+             * and a failure there is not recorded in error_state, so
+             * SSL_WRITING does not say that a retry will work.
+             *
+             * A blocking connection waits and sends again instead of
+             * reporting a retry.
+             */
+            if (SSL_CONNECTION_IS_DTLS(sc)
+                && sc->d1 != NULL && sc->d1->listener != NULL
+                && !SSL_in_init(s) && !ossl_dtls_blocking(s))
+                return SSL_ERROR_WANT_WRITE;
+#endif
         }
     }
 
