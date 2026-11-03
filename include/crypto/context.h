@@ -22,6 +22,11 @@ void *ossl_prov_conf_ctx_new(OSSL_LIB_CTX *);
 void *ossl_bio_core_globals_new(OSSL_LIB_CTX *);
 void *ossl_child_prov_ctx_new(OSSL_LIB_CTX *);
 void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *);
+/**
+ * @brief Allocates a library context's VMClock slot, which holds the page
+ * once the context's first DRBG maps it.
+ * @returns the slot, or NULL if it cannot be allocated
+ */
 void *ossl_prov_vmclock_ctx_new(OSSL_LIB_CTX *);
 void *ossl_self_test_set_callback_new(OSSL_LIB_CTX *);
 void *ossl_indicator_set_callback_new(OSSL_LIB_CTX *);
@@ -43,6 +48,10 @@ void ossl_prov_conf_ctx_free(void *);
 void ossl_bio_core_globals_free(void *);
 void ossl_child_prov_ctx_free(void *);
 void ossl_prov_drbg_nonce_ctx_free(void *);
+/**
+ * @brief Frees a slot made by ossl_prov_vmclock_ctx_new(), unmapping the
+ * page if one was mapped.
+ */
 void ossl_prov_vmclock_ctx_free(void *);
 void ossl_indicator_set_callback_free(void *cb);
 void ossl_self_test_set_callback_free(void *);
