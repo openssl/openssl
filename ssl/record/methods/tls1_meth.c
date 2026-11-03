@@ -412,10 +412,10 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             OSSL_PARAM params[2];
 
             /* Get the MAC */
-	    OSSL_PARAM_fast_octet_ptr(&params[0], OSSL_CIPHER_PARAM_TLS_MAC,
-			    OSSL_CIPHER_PARAM_TLS_MAC_HASH, (void **)&macs[0].mac,
-			    macsize);
-	    OSSL_PARAM_fast_end(&params[1]);
+            OSSL_PARAM_fast_octet_ptr(&params[0], OSSL_CIPHER_PARAM_TLS_MAC,
+                OSSL_CIPHER_PARAM_TLS_MAC_HASH, (void **)&macs[0].mac,
+                macsize);
+            OSSL_PARAM_fast_end(&params[1]);
 
             if (!EVP_CIPHER_CTX_get_params(ds, params)) {
                 /* Shouldn't normally happen */

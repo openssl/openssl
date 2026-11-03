@@ -74,10 +74,10 @@ int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
         macsize = (size_t)imacsize;
 
     OSSL_PARAM_fast_int(&params[0], OSSL_CIPHER_PARAM_TLS_VERSION,
-		    OSSL_CIPHER_PARAM_TLS_VERSION_HASH, &rl->version);
+        OSSL_CIPHER_PARAM_TLS_VERSION_HASH, &rl->version);
 
     OSSL_PARAM_fast_size_t(&params[1], OSSL_CIPHER_PARAM_TLS_MAC_SIZE,
-		    OSSL_CIPHER_PARAM_TLS_MAC_SIZE_HASH, &macsize);
+        OSSL_CIPHER_PARAM_TLS_MAC_SIZE_HASH, &macsize);
 
     OSSL_PARAM_fast_end(&params[2]);
 
