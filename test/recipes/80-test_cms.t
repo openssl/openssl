@@ -59,7 +59,8 @@ $no_rc2 = 1 if disabled("legacy");
 plan tests => 43;
 
 ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
-             srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");
+             srctop_file("test", "certs", "serverkey.pem"),
+             srctop_dir("test", "certs")])), "test pkcs7");
 
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips-and-base.cnf");
@@ -295,6 +296,27 @@ if ($no_fips || $old_fips) {
          ]
     );
 }
+
+# Generate PSS with CMS and verify the DER output with PKCS7.
+my @cms2pkcs7_pss_tests = map {
+    [ $_->[0],
+      [ "{cmd1}", @defaultprov, "-sign", "-in", $smcont,
+        "-outform", "DER", "-nodetach", "-signer", $smrsa1,
+        "-keyopt", "rsa_padding_mode:pss", @{$_->[1]},
+        "-out", "{output}.cms" ],
+      [ "{cmd2}", @defaultprov, "-verify", "-in", "{output}.cms",
+        "-inform", "DER", "-CAfile", $smroot, "-out", "{output}.txt" ],
+      \&final_compare
+    ]
+} (
+    [ "signed content DER format, RSA key, PSS default parameters", [] ],
+    [ "signed content DER format, RSA key, PSS no attributes", [ "-noattr" ] ],
+    [ "signed content DER format, RSA key, PSS SHA256, saltlen=16, SHA384 MGF1",
+      [ "-md", "sha256", "-keyopt", "rsa_pss_saltlen:16",
+        "-keyopt", "rsa_mgf1_md:sha384" ] ],
+    [ "signed content DER format, RSA key, PSS saltlen=max",
+      [ "-keyopt", "rsa_pss_saltlen:max" ] ]
+);
 
 my @smime_cms_tests = (
 
@@ -836,10 +858,11 @@ sub read_file_text {
 }
 
 subtest "CMS => PKCS#7 compatibility tests\n" => sub {
-    plan tests => scalar @smime_pkcs7_tests;
+    my @tests = (@smime_pkcs7_tests, @cms2pkcs7_pss_tests);
+    plan tests => scalar @tests;
 
     runner_loop(prefix => 'cms2pkcs7', cmd1 => 'cms', cmd2 => 'smime',
-                tests => [ @smime_pkcs7_tests ]);
+                tests => [ @tests ]);
 };
 subtest "CMS <= PKCS#7 compatibility tests\n" => sub {
     plan tests => scalar @smime_pkcs7_tests;

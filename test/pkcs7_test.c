@@ -9,6 +9,8 @@
 
 #include <string.h>
 #include <openssl/objects.h>
+#include <openssl/cms.h>
+#include <openssl/rsa.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -18,6 +20,7 @@
 
 static X509 *smimecap_cert = NULL;
 static EVP_PKEY *smimecap_privkey = NULL;
+static const char *certsdir = NULL;
 
 static int smimecap_has_nid(STACK_OF(X509_ALGOR) *smcap, int nid)
 {
@@ -67,6 +70,288 @@ end:
     PKCS7_free(p7);
     return ret;
 }
+
+#ifndef OPENSSL_NO_CMS
+enum {
+    KEY_RSA,
+    KEY_RSA_PSS,
+    KEY_RSA_PSS_RESTRICT,
+    KEY_EC,
+    KEY_DSA
+};
+enum {
+    PKCS1,
+    PSS,
+    PSS_SHA1
+};
+enum {
+    KEEP,
+    SALT_17,
+    SALT_31,
+    HASH_SHA512,
+    MGF1_SHA512,
+    MASK_NOT_MGF1,
+    TRAILER_2,
+    EMPTY_PARAMS,
+    NO_PARAMS,
+    OID_RSA_ENCRYPTION,
+    OID_RSASSA_PSS,
+    OID_SHA256_RSA
+};
+static const char *const pkcs7_files[][2] = {
+    { "serverkey.pem", "servercert.pem" },
+    { "server-pss-key.pem", "server-pss-cert.pem" },
+    { "server-pss-restrict-key.pem", "server-pss-restrict-cert.pem" },
+    { "server-ecdsa-key.pem", "server-ecdsa-cert.pem" },
+    { "server-dsa-key.pem", "server-dsa-cert.pem" }
+};
+static const struct pkcs7_pss_case {
+    const char *name;
+    int key, attrs, sign, change, corrupt, expected;
+} pss_cases[] = {
+    { "RSA key, PSS, signed attributes", KEY_RSA, 1, PSS, KEEP, 0, 1 },
+    { "RSA key, PSS, no attributes", KEY_RSA, 0, PSS, KEEP, 0, 1 },
+    { "RSA key, PSS, corrupted signature", KEY_RSA, 1, PSS, KEEP, 1, 0 },
+    { "RSA key, PSS, corrupted, no attributes", KEY_RSA, 0, PSS, KEEP, 1, 0 },
+    { "RSA key, PSS, SHA1 defaults (empty parameters)", KEY_RSA, 1, PSS_SHA1, EMPTY_PARAMS, 0, 1 },
+    { "RSA key, PSS, salt length mismatch", KEY_RSA, 1, PSS, SALT_17, 0, 0 },
+    { "RSA key, PSS, hash mismatch", KEY_RSA, 1, PSS, HASH_SHA512, 0, 0 },
+    { "RSA key, PSS, MGF1 hash mismatch", KEY_RSA, 1, PSS, MGF1_SHA512, 0, 0 },
+    { "RSA key, PSS, mask generation function not MGF1", KEY_RSA, 1, PSS, MASK_NOT_MGF1, 0, 0 },
+    { "RSA key, PSS, trailer field 2", KEY_RSA, 1, PSS, TRAILER_2, 0, 0 },
+    { "RSA key, PSS, parameters absent", KEY_RSA, 1, PSS, NO_PARAMS, 0, 0 },
+    { "RSA key, PSS labelled rsaEncryption", KEY_RSA, 1, PSS, OID_RSA_ENCRYPTION, 0, 0 },
+    { "RSA key, PKCS#1, signed attributes", KEY_RSA, 1, PKCS1, KEEP, 0, 1 },
+    { "RSA key, PKCS#1, no attributes", KEY_RSA, 0, PKCS1, KEEP, 0, 1 },
+    { "RSA key, PKCS#1, corrupted signature", KEY_RSA, 1, PKCS1, KEEP, 1, 0 },
+    { "RSA key, PKCS#1 labelled PSS", KEY_RSA, 1, PKCS1, OID_RSASSA_PSS, 0, 0 },
+    { "RSA key, PKCS#1 with sha256WithRSAEncryption", KEY_RSA, 1, PKCS1, OID_SHA256_RSA, 0, 1 },
+    { "RSA-PSS key, signed attributes", KEY_RSA_PSS, 1, PSS, KEEP, 0, 1 },
+    { "RSA-PSS key, no attributes", KEY_RSA_PSS, 0, PSS, KEEP, 0, 1 },
+    { "RSA-PSS key, salt length mismatch", KEY_RSA_PSS, 1, PSS, SALT_17, 0, 0 },
+    { "RSA-PSS key, hash mismatch", KEY_RSA_PSS, 1, PSS, HASH_SHA512, 0, 0 },
+    /* RSA-PSS keys accept rsaEncryption in the SignerInfo; CMS rejects it. */
+    { "RSA-PSS key, rsaEncryption still accepted", KEY_RSA_PSS, 1, PSS, OID_RSA_ENCRYPTION, 0, 1 },
+    { "restricted RSA-PSS key", KEY_RSA_PSS_RESTRICT, 1, PSS, KEEP, 0, 1 },
+    { "restricted RSA-PSS key, salt below minimum", KEY_RSA_PSS_RESTRICT, 1, PSS, SALT_31, 0, 0 },
+    { "EC key", KEY_EC, 1, PKCS1, KEEP, 0, 1 },
+    { "EC key, no attributes", KEY_EC, 0, PKCS1, KEEP, 0, 1 },
+    { "EC key, corrupted signature", KEY_EC, 0, PKCS1, KEEP, 1, 0 },
+    /* As in CMS, EC/DSA verification ignores the PSS OID. */
+    { "EC key, PSS OID ignored", KEY_EC, 1, PKCS1, NO_PARAMS, 0, 1 },
+    { "DSA key", KEY_DSA, 1, PKCS1, KEEP, 0, 1 },
+    { "DSA key, no attributes", KEY_DSA, 0, PKCS1, KEEP, 0, 1 },
+    { "DSA key, corrupted signature", KEY_DSA, 0, PKCS1, KEEP, 1, 0 },
+    { "DSA key, PSS OID ignored", KEY_DSA, 1, PKCS1, NO_PARAMS, 0, 1 }
+};
+
+static PKCS7 *sign_with_cms(X509 *cert, EVP_PKEY *key, int attrs, int sign,
+    const EVP_MD *md, int saltlen, const EVP_MD *mgf1md)
+{
+    static const char content[] = "Test signature content";
+    CMS_ContentInfo *cms = NULL;
+    CMS_SignerInfo *csi;
+    EVP_PKEY_CTX *pctx;
+    PKCS7 *p7 = NULL;
+    BIO *in = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int derlen;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf(content, sizeof(content) - 1))
+        || !TEST_ptr(cms = CMS_sign(NULL, NULL, NULL, NULL, CMS_PARTIAL | CMS_BINARY))
+        || !TEST_ptr(csi = CMS_add1_signer(cms, cert, key, md,
+                         CMS_KEY_PARAM | CMS_NOSMIMECAP | (attrs ? 0 : CMS_NOATTR))))
+        goto end;
+    if (sign != PKCS1) {
+        pctx = CMS_SignerInfo_get0_pkey_ctx(csi);
+        if (!TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING), 0)
+            || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, saltlen), 0)
+            || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_mgf1_md(pctx, mgf1md), 0))
+            goto end;
+    }
+    if (!TEST_true(CMS_final(cms, in, NULL, CMS_BINARY))
+        || !TEST_int_gt(derlen = i2d_CMS_ContentInfo(cms, &der), 0))
+        goto end;
+    p = der;
+    TEST_ptr(p7 = d2i_PKCS7(NULL, &p, derlen));
+end:
+    OPENSSL_free(der);
+    CMS_ContentInfo_free(cms);
+    BIO_free(in);
+    return p7;
+}
+
+static int change_signature_alg(PKCS7_SIGNER_INFO *si, int change)
+{
+    RSA_PSS_PARAMS *pss = NULL;
+    X509_ALGOR *mgf = NULL;
+    int ret = 0;
+
+    switch (change) {
+    case KEEP:
+        return 1;
+    case SALT_17:
+    case SALT_31:
+    case HASH_SHA512:
+    case MGF1_SHA512:
+    case MASK_NOT_MGF1:
+    case TRAILER_2:
+        if (!TEST_ptr(pss = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(RSA_PSS_PARAMS),
+                          si->digest_enc_alg->parameter)))
+            goto end;
+        if (change == SALT_17 && !TEST_true(ASN1_INTEGER_set(pss->saltLength, 17)))
+            goto end;
+        if (change == SALT_31 && !TEST_true(ASN1_INTEGER_set(pss->saltLength, 31)))
+            goto end;
+        if (change == HASH_SHA512
+            && !TEST_true(X509_ALGOR_set0(pss->hashAlgorithm,
+                OBJ_nid2obj(NID_sha512), V_ASN1_NULL, NULL)))
+            goto end;
+        if (change == MGF1_SHA512) {
+            if (!TEST_ptr(mgf = X509_ALGOR_new())
+                || !TEST_true(X509_ALGOR_set0(mgf, OBJ_nid2obj(NID_sha512), V_ASN1_NULL, NULL))
+                || !TEST_ptr(ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
+                    mgf, &pss->maskGenAlgorithm->parameter)))
+                goto end;
+        }
+        if (change == MASK_NOT_MGF1
+            && !TEST_true(X509_ALGOR_set0(pss->maskGenAlgorithm,
+                OBJ_nid2obj(NID_sha256), V_ASN1_NULL, NULL)))
+            goto end;
+        if (change == TRAILER_2) {
+            if (pss->trailerField == NULL
+                && !TEST_ptr(pss->trailerField = ASN1_INTEGER_new()))
+                goto end;
+            if (!TEST_true(ASN1_INTEGER_set(pss->trailerField, 2)))
+                goto end;
+        }
+        break;
+    case EMPTY_PARAMS:
+        /* An empty sequence selects SHA1, MGF1/SHA1, salt length 20, trailer 1. */
+        if (!TEST_ptr(pss = RSA_PSS_PARAMS_new()))
+            goto end;
+        break;
+    case NO_PARAMS:
+        return TEST_true(X509_ALGOR_set0(si->digest_enc_alg,
+            OBJ_nid2obj(NID_rsassaPss), V_ASN1_UNDEF, NULL));
+    case OID_RSA_ENCRYPTION:
+        return TEST_true(X509_ALGOR_set0(si->digest_enc_alg,
+            OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, NULL));
+    case OID_RSASSA_PSS:
+        /* Valid SHA256 PSS parameters, with default MGF1/SHA1 and salt length. */
+        if (!TEST_ptr(pss = RSA_PSS_PARAMS_new())
+            || !TEST_ptr(pss->hashAlgorithm = X509_ALGOR_new())
+            || !TEST_true(X509_ALGOR_set0(pss->hashAlgorithm,
+                OBJ_nid2obj(NID_sha256), V_ASN1_NULL, NULL))
+            || !TEST_true(X509_ALGOR_set0(si->digest_enc_alg,
+                OBJ_nid2obj(NID_rsassaPss), V_ASN1_UNDEF, NULL)))
+            goto end;
+        break;
+    case OID_SHA256_RSA:
+        return TEST_true(X509_ALGOR_set0(si->digest_enc_alg,
+            OBJ_nid2obj(NID_sha256WithRSAEncryption), V_ASN1_NULL, NULL));
+    default:
+        return 0;
+    }
+    ret = TEST_ptr(ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(RSA_PSS_PARAMS),
+        pss, &si->digest_enc_alg->parameter));
+end:
+    RSA_PSS_PARAMS_free(pss);
+    X509_ALGOR_free(mgf);
+    return ret;
+}
+
+static int corrupt_signature(PKCS7_SIGNER_INFO *si)
+{
+    size_t siglen = ASN1_STRING_get_length(si->enc_digest);
+    unsigned char *sig = NULL;
+    int ret = 0;
+
+    if (!TEST_size_t_gt(siglen, 0)
+        || !TEST_ptr(sig = OPENSSL_memdup(ASN1_STRING_get0_data(si->enc_digest), siglen)))
+        goto end;
+    sig[siglen - 1] ^= 1;
+    ret = TEST_true(ASN1_STRING_set1_data(si->enc_digest, sig, siglen));
+end:
+    OPENSSL_free(sig);
+    return ret;
+}
+
+static int expect_signature_failure(PKCS7 *p7, PKCS7_SIGNER_INFO *si, X509 *cert)
+{
+    BIO *bio = NULL;
+    unsigned char buf[256];
+    int len, ret = 0;
+
+    if (!TEST_ptr(bio = PKCS7_dataInit(p7, NULL)))
+        goto end;
+    while ((len = BIO_read(bio, buf, sizeof(buf))) > 0)
+        continue;
+    ERR_clear_error();
+    /* PKCS7_signatureVerify() must return -1 with PKCS7_R_SIGNATURE_FAILURE */
+    ret = TEST_int_eq(len, 0)
+        && TEST_int_eq(PKCS7_signatureVerify(bio, p7, si, cert), -1)
+        && TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_PKCS7)
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), PKCS7_R_SIGNATURE_FAILURE);
+end:
+    BIO_free_all(bio);
+    return ret;
+}
+
+static int test_pkcs7_pss(int idx)
+{
+    const struct pkcs7_pss_case *tc = &pss_cases[idx];
+    char *keyfile = NULL, *certfile = NULL;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    PKCS7 *p7 = NULL;
+    PKCS7_SIGNER_INFO *si;
+    const EVP_MD *md, *mgf1md;
+    int saltlen = 16, ret = 0;
+
+    TEST_info("%s", tc->name);
+#ifdef OPENSSL_NO_EC
+    if (tc->key == KEY_EC)
+        return TEST_skip("EC is disabled");
+#endif
+#ifdef OPENSSL_NO_DSA
+    if (tc->key == KEY_DSA)
+        return TEST_skip("DSA is disabled");
+#endif
+    md = tc->sign == PSS_SHA1 ? EVP_sha1() : EVP_sha256();
+    if (tc->sign == PSS_SHA1)
+        saltlen = 20;
+    if (tc->key == KEY_RSA_PSS_RESTRICT)
+        saltlen = 32;
+    mgf1md = md;
+    /* RSA: MGF1 hash differs from the digest to make sure the parameter is read */
+    if (tc->key == KEY_RSA && tc->sign == PSS)
+        mgf1md = EVP_sha384();
+    if (!TEST_ptr(keyfile = test_mk_file_path(certsdir, pkcs7_files[tc->key][0]))
+        || !TEST_ptr(certfile = test_mk_file_path(certsdir, pkcs7_files[tc->key][1]))
+        || !TEST_ptr(key = load_pkey_pem(keyfile, NULL))
+        || !TEST_ptr(cert = load_cert_pem(certfile, NULL))
+        || !TEST_ptr(p7 = sign_with_cms(cert, key, tc->attrs, tc->sign, md, saltlen, mgf1md))
+        || !TEST_ptr(si = sk_PKCS7_SIGNER_INFO_value(PKCS7_get_signer_info(p7), 0))
+        || !change_signature_alg(si, tc->change)
+        || (tc->corrupt && !corrupt_signature(si))
+        || !TEST_int_eq(PKCS7_verify(p7, NULL, NULL, NULL, NULL,
+                            PKCS7_NOVERIFY | PKCS7_BINARY),
+            tc->expected)
+        || (!tc->expected && !expect_signature_failure(p7, si, cert)))
+        goto end;
+    ret = 1;
+end:
+    OPENSSL_free(keyfile);
+    OPENSSL_free(certfile);
+    PKCS7_free(p7);
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    ERR_clear_error();
+    return ret;
+}
+#endif
 
 static int pkcs7_issuer_and_serial_negative_idx_test(void)
 {
@@ -561,6 +846,7 @@ int setup_tests(void)
         return 0;
     }
 
+    certsdir = test_get_argument(2);
     certin = test_get_argument(0);
     privkeyin = test_get_argument(1);
     if (certin != NULL && privkeyin != NULL) {
@@ -574,6 +860,10 @@ int setup_tests(void)
         }
     }
 
+#ifndef OPENSSL_NO_CMS
+    if (certsdir != NULL)
+        ADD_ALL_TESTS(test_pkcs7_pss, OSSL_NELEM(pss_cases));
+#endif
     ADD_TEST(pkcs7_issuer_and_serial_negative_idx_test);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(pkcs7_verify_test);
