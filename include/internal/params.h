@@ -48,14 +48,14 @@ int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
  * down to the provider.  The param decoder resets the value to
  * OSSL_PARAM_UNMODIFIED
  */
-#define INIT_OSSL_PARAM_HASHED(param, keyname, hash, ptr, size, type) \
-    do {                                                              \
-        OSSL_PARAM *p___ = (param);                                   \
-        p___->key = keyname;                                          \
-        p___->data_type = type;                                       \
-        p___->data = ptr;                                             \
-        p___->data_size = size;                                       \
-        p___->return_size = hash | OSSL_PARAM_UNMODIFIED_HASHED;      \
+#define INIT_OSSL_PARAM_HASHED(param, keyname, hash, ptr, size, type)      \
+    do {                                                                   \
+        OSSL_PARAM *p___ = (param);                                        \
+        p___->key = keyname;                                               \
+        p___->data_type = type;                                            \
+        p___->data = ptr;                                                  \
+        p___->data_size = size;                                            \
+        p___->return_size = ((size_t)hash | OSSL_PARAM_UNMODIFIED_HASHED); \
     } while (0)
 
 #define OSSL_PARAM_fast_octet_string(param, keyname, hash, str, size) \
