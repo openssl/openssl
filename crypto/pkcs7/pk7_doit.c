@@ -65,7 +65,7 @@ static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7, int streaming)
         ASN1_OCTET_STRING *osdup = ASN1_OCTET_STRING_dup(os);
 
         if (osdup != NULL && streaming)
-            ASN1_STRING_set0(osdup, NULL, 0);
+            ossl_asn1_string_set0(osdup, NULL, 0);
         return osdup;
     }
 
@@ -170,7 +170,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     if (EVP_PKEY_encrypt(pctx, ek, &eklen, key, keylen) <= 0)
         goto err;
 
-    ASN1_STRING_set0(ri->enc_key, ek, (int)eklen);
+    ossl_asn1_string_set0(ri->enc_key, ek, (int)eklen);
     ek = NULL;
 
     ret = 1;
@@ -890,7 +890,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
                     ERR_raise(ERR_LIB_PKCS7, ERR_R_EVP_LIB);
                     goto err;
                 }
-                ASN1_STRING_set0(si->enc_digest, abuf, abuflen);
+                ossl_asn1_string_set0(si->enc_digest, abuf, abuflen);
             }
         }
     } else if (i == NID_pkcs7_digest) {
@@ -927,7 +927,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
              */
             BIO_set_flags(btmp, BIO_FLAGS_MEM_RDONLY);
             BIO_set_mem_eof_return(btmp, 0);
-            ASN1_STRING_set0(os, (unsigned char *)cont, contlen);
+            ossl_asn1_string_set0(os, (unsigned char *)cont, contlen);
         }
     }
     ret = 1;
@@ -981,7 +981,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 
     EVP_MD_CTX_free(mctx);
 
-    ASN1_STRING_set0(si->enc_digest, abuf, (int)siglen);
+    ossl_asn1_string_set0(si->enc_digest, abuf, (int)siglen);
 
     return 1;
 

@@ -292,7 +292,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         enckeylen = EVP_PKEY_get1_encoded_public_key(pkey, &penc);
         if (enckeylen > INT_MAX || enckeylen == 0)
             goto err;
-        ASN1_STRING_set0(pubkey, penc, (int)enckeylen);
+        ossl_asn1_string_set0(pubkey, penc, (int)enckeylen);
         ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
 
         penc = NULL;
@@ -378,7 +378,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     wrap_str = ASN1_STRING_new();
     if (wrap_str == NULL)
         goto err;
-    ASN1_STRING_set0(wrap_str, penc, penclen);
+    ossl_asn1_string_set0(wrap_str, penc, penclen);
     penc = NULL;
     rv = X509_ALGOR_set0(talg, OBJ_nid2obj(kdf_nid), V_ASN1_SEQUENCE, wrap_str);
     if (!rv)
