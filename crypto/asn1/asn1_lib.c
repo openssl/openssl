@@ -470,6 +470,11 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
+    ossl_asn1_string_set0(str, data, len);
+}
+
+void ossl_asn1_string_set0(ASN1_STRING *str, void *data, int len)
+{
     if (!(str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)) {
         if (str->length > 0)
             OPENSSL_clear_free(str->data, str->length);
