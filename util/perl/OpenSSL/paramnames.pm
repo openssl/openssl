@@ -10,7 +10,6 @@ package OpenSSL::paramnames;
 
 use strict;
 use warnings;
-use String::CRC32;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -685,6 +684,37 @@ sub output_endifdef {
     }
 }
 
+sub mycrc32 {
+ my $input = shift;
+
+ my $init_value = 0;
+ my $polynomial = 0xedb88320;
+
+ my @lookup_table;
+
+ for (my $i=0; $i<256; $i++) {
+   my $x = $i;
+   for (my $j=0; $j<8; $j++) {
+     if ($x & 1) {
+       $x = ($x >> 1) ^ $polynomial;
+     } else {
+       $x = $x >> 1;
+     }
+   }
+   push @lookup_table, $x;
+ }
+
+ my $crc = $init_value ^ 0xffffffff;
+
+ foreach my $x (unpack ('C*', $input)) {
+   $crc = (($crc >> 8) & 0xffffff) ^ $lookup_table[ ($crc ^ $x) & 0xff ];
+ }
+
+ $crc = $crc ^ 0xffffffff;
+
+ return $crc;
+}
+
 # Generate string based macros for public consumption
 sub generate_public_macros {
     my @macros = ();
@@ -692,13 +722,13 @@ sub generate_public_macros {
 
     foreach my $name (keys %params) {
         my $val = $params{$name};
-        my $valhash = crc32($val);
+        my $valhash = mycrc32($val);
         my $def = '# define ' . $name . ' ';
 
         if (exists $hashstack{$val}) {
             die("conflicting hash values for $name\n") if $valhash != $hashstack{$val};
         }
-        die("Hash evaluates to a reserved value\n") if $valhash == 0;
+        die("Hash evaluates to a reserved value\n") if $valhash == 0xffffffff;
 
         $hashstack{$val} = $valhash;
 
@@ -766,11 +796,11 @@ sub generate_keyhash_from_trie {
     my $indent2 = $indent1 . $idt;
     my $field;
 
-    #$DB::single = 1;
     for my $key (keys %$identmap) {
         $field = $identmap->{$key};
         my $num = $concat_num->{$field};
         my $dup = $process_dup->{$field};
+
         output_ifdef($ifdefs->{$field});
         printf "%scase %s:\n", $indent0, $key . '_HASH';
         trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
@@ -1029,54 +1059,18 @@ sub output_param_decoder {
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
     print "        for (; (s = p->key) != NULL; p++) {\n";
-    print "            switch (p->keyhash) {\n";
+    print "            /*\n";
+    print "             * The return_size field carries potential keyhash values on input\n";
+    print "             */\n";
+    print "	       uint32_t keyhash = p->return_size;\n";
+    print "	       if (keyhash != 0xffffffff) {\n";
+    print "	           ((OSSL_PARAM *)p)->return_size = OSSL_PARAM_UNMODIFIED;\n";
+    print "            }\n";
+    print "            switch (keyhash) {\n";
     print "            default:\n";
     print "               break;\n";
     generate_keyhash_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
-    #print "            switch (p->keyhash) {\n";
-    #print "            default:\n";
-    #print "               break;\n";
-    #for (my $i = 0; $i <= $#params; $i++) {
-    #    my $pname = $params[$i][0];
-    #    my $pident = $params[$i][1];
-    #    my $pnum = $params[$i][3];
-    #    my $fipscondition = undef;
-    #  
-    #    if (exists $hashmap{$pname}) { 
-    #        next;
-    #    }
-    #    $hashmap{$pname} = 1;
-    #
-    #    if ($pident eq $default_indicator) {
-    #        $fipscondition = "#if defined (FIPS_MODULE)\n";
-    #    }
-    #    if (defined($pnum)) {
-    #        if ($pnum eq "fips") {
-    #            $fipscondition = "#if defined (FIPS_MODULE)\n";
-    #        }
-    #        if ($pnum eq "!fips") {
-    #            $fipscondition = "#if !defined (FIPS_MODULE)\n";
-    #        }
-    #    }
-    #    if (defined($fipscondition)) {
-    #        print $fipscondition;
-    #    }
-    #    my $field = get_field_from_name(\%t, \%prms);
-    #    my $num = get_num_from_field(\%concat_num, $field);
-    #    my $num = $concat_num{$field};
-    #    print "            case ", $pname . '_HASH', ":\n";
-    #    if (defined($num)) {
-    #        printf "r->%s[%s] = (OSSL_PARAM *)p;\n", $pident, $num;
-    #    } else {
-    #        print "                r->", $pident, " = (OSSL_PARAM *)p;\n"; 
-    #    }
-    #    print "                continue;\n";
-    #    print "                break;\n";
-    #    if (defined($fipscondition)) {
-    #        print "#endif\n";
-    #    }
-    #}
-    print "        };\n";
+    print "        }\n";
 
     generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
     print "    }\n";
