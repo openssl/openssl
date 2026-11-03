@@ -187,13 +187,17 @@ sub set_message_contents
         $data .= $self->context;
         my $certlen = length($self->first_certificate);
         my $certlistlen = $certlen + length($extensions)
-                          + length($self->remaining_certdata);
+                          # The certificate length field (3) and the
+                          # extension length field (2) are also part of
+                          # the certificate list
+                          + length($self->remaining_certdata) + 3 + 2;
         my $hi = $certlistlen >> 16;
         $certlistlen = $certlistlen & 0xffff;
         $data .= pack('Cn', $hi, $certlistlen);
         $hi = $certlen >> 16;
         $certlen = $certlen & 0xffff;
         $data .= pack('Cn', $hi, $certlen);
+        $data .= $self->first_certificate;
         $data .= pack('n', length($extensions));
         $data .= $extensions;
         $data .= $self->remaining_certdata();
@@ -203,13 +207,17 @@ sub set_message_contents
         if ($type == TLSEXT_cert_type_x509) {
             # X.509 chain
             my $certlen = length($self->first_certificate);
-            my $certlistlen = $certlen + length($self->remaining_certdata);
+            my $certlistlen = $certlen + length($self->remaining_certdata)
+                              # The certificate length field (3) is also
+                              # part of the certificate list
+                              + 3;
             my $hi = $certlistlen >> 16;
             $certlistlen = $certlistlen & 0xffff;
             $data .= pack('Cn', $hi, $certlistlen);
             $hi = $certlen >> 16;
             $certlen = $certlen & 0xffff;
             $data .= pack('Cn', $hi, $certlen);
+            $data .= $self->first_certificate;
             $data .= $self->remaining_certdata();
             $self->data($data);
         } elsif ($type == TLSEXT_cert_type_rpk) {
