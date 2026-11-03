@@ -112,7 +112,8 @@ jobs:
         ./util/opensslwrap.sh version -c
       working-directory: ./build
     - name: make test
-      run: ../source/.github/workflows/make-test
+      # Flaky on macOS; still run nightly in os-zoo.yml (openssl/project#2072)
+      run: ../source/.github/workflows/make-test TESTS="-test_quic_multistream -test_quic_radix -test_dtlsssllistener"
       working-directory: ./build
     - name: save artifacts
       if: success() || failure()
