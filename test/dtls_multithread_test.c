@@ -475,6 +475,52 @@ err:
     return testresult;
 }
 
+/*
+ * Helper: drive DTLS re-handshake after SSL_clear() with bounded retry
+ * and cooperative sleeps, avoiding the fast runaway spin in create_ssl_connection().
+ */
+static int do_rehandshake(SSL *server_conn, SSL *client)
+{
+    int retc = -1, rets = -1, err, abortctr = 0;
+
+    do {
+        if (!TEST_int_le(++abortctr, 1000)) {
+            TEST_info("do_rehandshake() timed out (retc=%d, rets=%d)", retc, rets);
+            TEST_openssl_errors();
+            return 0;
+        }
+
+        if (retc <= 0) {
+            retc = SSL_connect(client);
+            if (retc <= 0) {
+                err = SSL_get_error(client, retc);
+                if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+                    TEST_info("SSL_connect() failed %d, %d", retc, err);
+                    TEST_openssl_errors();
+                    return 0;
+                }
+            }
+        }
+
+        if (rets <= 0) {
+            rets = SSL_accept(server_conn);
+            if (rets <= 0) {
+                err = SSL_get_error(server_conn, rets);
+                if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+                    TEST_info("SSL_accept() failed %d, %d", rets, err);
+                    TEST_openssl_errors();
+                    return 0;
+                }
+            }
+        }
+
+        if (retc <= 0 || rets <= 0)
+            OSSL_sleep(2);
+    } while (retc <= 0 || rets <= 0);
+
+    return 1;
+}
+
 /* Exercise the SSL_clear() path which replaces d1 after a handshake. */
 static int test_dtls_listener_clear_replace_race(void)
 {
@@ -531,8 +577,7 @@ static int test_dtls_listener_clear_replace_race(void)
 
         SSL_set_accept_state(server_conn);
         SSL_set_connect_state(client);
-        if (!TEST_true(create_ssl_connection(server_conn, client,
-                SSL_ERROR_NONE)))
+        if (!TEST_true(do_rehandshake(server_conn, client)))
             goto err;
     }
 
