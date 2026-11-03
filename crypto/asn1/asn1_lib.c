@@ -468,10 +468,12 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 }
 #endif
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
     ossl_asn1_string_set0(str, data, len);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void ossl_asn1_string_set0(ASN1_STRING *str, void *data, int len)
 {

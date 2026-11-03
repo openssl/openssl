@@ -49,6 +49,13 @@ OpenSSL 4.2
 
    *Matt Caswell*
 
+* Deprecated `ASN1_STRING_set0()`.  It takes ownership of a caller-supplied
+   buffer and cannot report failure.  Use `ASN1_STRING_set1_data()` or
+   `ASN1_STRING_set1_string()` to set the value of an `ASN1_STRING`, and
+   `ASN1_BIT_STRING_set1()` for an `ASN1_BIT_STRING`.
+
+   *Bob Beck*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build

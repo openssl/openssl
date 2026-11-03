@@ -546,7 +546,10 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
 OSSL_DEPRECATEDIN_4_1_FOR("use ASN1_STRING_get_length()")
 int ASN1_STRING_length(const ASN1_STRING *x);
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+OSSL_DEPRECATEDIN_4_2_FOR("use ASN1_STRING_set1_data(), ASN1_STRING_set1_string() or ASN1_BIT_STRING_set1()")
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len);
 int ASN1_STRING_set1_string(ASN1_STRING *str, const char *cstring);
 size_t ASN1_STRING_get_length(const ASN1_STRING *x);

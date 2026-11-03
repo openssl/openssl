@@ -2572,7 +2572,7 @@ ASN1_STRING_dup                         2570	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_type_new                    2571	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_cmp                         2572	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_set                         2573	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
-ASN1_STRING_set0                        2574	4_0_0	EXIST::FUNCTION:
+ASN1_STRING_set0                        2574	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_2
 ASN1_STRING_length                      2575	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 ASN1_STRING_length_set                  2576	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ASN1_STRING_type                        2577	4_0_0	EXIST::FUNCTION:
