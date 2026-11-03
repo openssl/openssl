@@ -58,7 +58,7 @@ $ptr_size=&pointer_size($flavour);
 
 $avx=0;
 
-if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+if (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
 	$avx = ($1>=2.19) + ($1>=2.22);
 }
@@ -73,11 +73,11 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
+if (!$avx && defined $ENV{CC} && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
-if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+if (!$avx && defined $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
 	=~ /#define __clang_major__.([0-9]+)/) {
 	if ($1) {
 		$avx = ($1>=11); #icx started with clang 11

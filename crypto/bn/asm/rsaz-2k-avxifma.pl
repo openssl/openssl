@@ -27,19 +27,19 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+if (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
         =~ /GNU assembler version ([0-9]+)\.([0-9]+)/) {
     my $ver = $1 + $2/100.0;	# 3.1->3.01, 3.10->3.10
     $avxifma = ($ver >= 2.40);
 }
 
-if (!$avxifma && `$ENV{CC} -v 2>&1`
+if (!$avxifma && defined $ENV{CC} && `$ENV{CC} -v 2>&1`
     =~ /\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
     my $ver = $2 + $3/100.0 + $4/10000.0; # 3.1.0->3.01, 3.10.1->3.1001
     $avxifma = ($ver>=16.0);
 }
 
-if (!$avxifma && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+if (!$avxifma && defined $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
     =~ /#define __clang_major__.([0-9]+)/) {
     if ($1) {
         $avxifma = ($1>=16);

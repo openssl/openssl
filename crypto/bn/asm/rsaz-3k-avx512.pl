@@ -38,7 +38,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+if (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
         =~ /GNU assembler version ([0-9]+)\.([0-9]+)/) {
     my $ver = $1 + $2/100.0; # 3.1->3.01, 3.10->3.10
     $avx512ifma = ($ver >= 2.26);
@@ -50,7 +50,7 @@ if (!$avx512ifma && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
     $avx512ifma = ($ver >= 2.1108);
 }
 
-if (!$avx512ifma && `$ENV{CC} -v 2>&1`
+if (!$avx512ifma && defined $ENV{CC} && `$ENV{CC} -v 2>&1`
     =~ /(Apple)?\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
     my $ver = $3 + $4/100.0 + $5/10000.0; # 3.1.0->3.01, 3.10.1->3.1001
     if ($1) {
@@ -63,7 +63,7 @@ if (!$avx512ifma && `$ENV{CC} -v 2>&1`
     }
 }
 
-if (!$avx512ifma && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+if (!$avx512ifma && defined $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
     =~ /#define __clang_major__.([0-9]+)/) {
     if ($1) {
         $avx512ifma = ($1>=11); #icx started with clang 11
