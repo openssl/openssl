@@ -46,17 +46,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#if defined(FIPS_MODULE) && defined(__GLIBC__) && defined(__GLIBC_PREREQ)
-#if __GLIBC_PREREQ(2, 16)
-#include <sys/auxv.h>
-#define OSSL_VMCLOCK_GETAUXVAL
-#endif
-#elif defined(FIPS_MODULE) && defined(__ANDROID_API__)
-#if __ANDROID_API__ >= 18
-#include <sys/auxv.h>
-#define OSSL_VMCLOCK_GETAUXVAL
-#endif
-#endif
 #endif
 
 /* The library context's mapping, made by its first DRBG. */
@@ -160,22 +149,12 @@ static uint64_t vmclock_le64(uint64_t v)
 
 /*
  * OPENSSL_VMCLOCK names another device or file, for tests. A set-user-ID or
- * set-group-ID process ignores it; the FIPS provider, which has no
- * ossl_safe_getenv(), makes the check of OPENSSL_issetugid() itself.
+ * set-group-ID process ignores it.
  */
 static const char *vmclock_path(void)
 {
-    const char *path;
+    const char *path = ossl_safe_getenv("OPENSSL_VMCLOCK");
 
-#ifndef FIPS_MODULE
-    path = ossl_safe_getenv("OPENSSL_VMCLOCK");
-#elif defined(OSSL_VMCLOCK_GETAUXVAL)
-    path = getauxval(AT_SECURE) != 0 ? NULL : getenv("OPENSSL_VMCLOCK");
-#else
-    path = getuid() != geteuid() || getgid() != getegid()
-        ? NULL
-        : getenv("OPENSSL_VMCLOCK");
-#endif
     if (path == NULL || *path == '\0')
         return OSSL_VMCLOCK_DEVICE;
     return path;
