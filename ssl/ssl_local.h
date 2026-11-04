@@ -2129,10 +2129,52 @@ struct hm_header_st {
     size_t frag_len;
 };
 
+/*
+ * A run of bytes of a handshake message: len bytes starting at off, which
+ * follow this struct. Only the bytes of a received fragment which were not
+ * already held are kept, each run in an allocation of its own size, so what is
+ * held for a message depends on what was received and not on the length the
+ * message claims.
+ */
+typedef struct hm_piece_st hm_piece;
+
+struct hm_piece_st {
+    size_t off;
+    size_t len;
+    OSSL_LIST_MEMBER(hm_piece, hm_piece);
+};
+
+DEFINE_LIST_OF(hm_piece, hm_piece);
+
+/*
+ * A received handshake message, queued by message sequence number.
+ *
+ * It is held in one of two forms. Until enough of it has been received it is
+ * held as pieces, ordered by offset and not overlapping, each in an allocation
+ * of the size of the bytes received. Once the pieces would cost as much as buf,
+ * it is held in buf instead, and the pieces are released. buf is one allocation
+ * of msg_len bytes of message data, followed by a bitmap, at covered, in which
+ * a bit is set for each byte of the message received. From then on how much is
+ * held no longer depends on how the message was fragmented.
+ *
+ * A message which arrives whole, in one fragment, is held as a single piece.
+ *
+ * bytes is the number of distinct bytes of the message held as pieces, and held
+ * is what the pieces are charged, see dtls1_hm_piece_cost(); neither is kept
+ * once the message is stored in the buf member.
+ *
+ * The message is complete once every byte of it is held, and incomplete is then
+ * 0. Held as pieces, that is when bytes equals the message length. Held in buf,
+ * it is when every bit of covered is set.
+ */
 typedef struct hm_fragment_st {
     struct hm_header_st msg_header;
-    unsigned char *fragment;
-    unsigned char *reassembly;
+    OSSL_LIST(hm_piece) pieces;
+    unsigned char *buf;
+    unsigned char *covered;
+    size_t bytes;
+    size_t held;
+    int incomplete;
 } hm_fragment;
 
 typedef struct pqueue_st pqueue;
@@ -2213,8 +2255,8 @@ typedef struct dtls_sent_msg_st {
      * which byte ranges of the message have been acknowledged so far --
      * across every transmission round, not just the most recent one. A
      * trailing allocation off the end of this struct (see
-     * dtls1_sent_msg_new()), mirroring how hm_fragment tracks receive-side
-     * reassembly. NULL when msg_info.msg_body_len == 0 (nothing to cover).
+     * dtls1_sent_msg_new()). NULL when msg_info.msg_body_len == 0 (nothing to
+     * cover).
      */
     unsigned char *covered;
     struct dtls1_retransmit_state saved_retransmit_state;
