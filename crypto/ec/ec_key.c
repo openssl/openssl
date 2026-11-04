@@ -277,6 +277,11 @@ static int ec_generate_key(EC_KEY *eckey, int pairwise_test)
             goto err;
     }
 
+    if (BN_cmp(order, BN_value_one()) <= 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
+        goto err;
+    }
+
     do
         if (!BN_priv_rand_range_ex(priv_key, order, 0, ctx))
             goto err;
