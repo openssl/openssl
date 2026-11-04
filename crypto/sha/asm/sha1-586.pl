@@ -146,7 +146,7 @@ $ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32" &&
 $ymm=1 if ($xmm && !$ymm && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|based on LLVM) ([0-9]+\.[0-9]+)/ &&
 		$2>=3.0);	# first version supporting AVX
 
-$ymm=1 if ($xmm && !$ymm && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__` =~ /#define __clang_major__.([0-9]+)/ &&
+$ymm=1 if ($xmm && !$ymm && $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E 2>&1` =~ /#define __clang_major__.([0-9]+)/ &&
 		$1>=11); #icx started with clang 11
 
 $shaext=$xmm;	### set to zero if compiling for 1.0.1
