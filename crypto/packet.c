@@ -591,7 +591,9 @@ int WPACKET_quic_write_vlint(WPACKET *pkt, uint64_t v)
     if (WPACKET_allocate_bytes(pkt, enclen, &b) == 0)
         return 0;
 
-    ossl_quic_vlint_encode(b, v);
+    /* b is NULL for a null WPACKET, which only counts bytes */
+    if (b != NULL)
+        ossl_quic_vlint_encode(b, v);
     return 1;
 }
 
