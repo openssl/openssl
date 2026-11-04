@@ -540,7 +540,7 @@ struct quic_channel_st {
     unsigned int path_challenge_rx;
     /* number of path response frames sent */
     unsigned int path_response_tx;
-    uint64_t on_new_conn_id_recv;
+    uint64_t on_new_conn_id_handled;
 };
 
 #endif
