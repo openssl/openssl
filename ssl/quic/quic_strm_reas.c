@@ -939,6 +939,27 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
         r->start = fs->offset;
     }
 
+    if (fs->range_locked
+        && r->start < fs->locked_range.end
+        && r->end > fs->locked_range.start) {
+        uint64_t overlap_end;
+        size_t overlap_len;
+
+        /* The checked-out range is the first readable chunk. */
+        assert(fs->locked_range.start == fs->offset);
+        assert(r->start >= fs->locked_range.start);
+
+        overlap_end = r->end < fs->locked_range.end
+            ? r->end
+            : fs->locked_range.end;
+        overlap_len = UINT64_TO_SIZE_T(overlap_end - r->start);
+
+        if (fs->cleanse)
+            OPENSSL_cleanse(deconst(data), overlap_len);
+        data += overlap_len;
+        r->start = overlap_end;
+    }
+
     key_sr.sr_range = *r;
 
     /*
@@ -1227,6 +1248,24 @@ int ossl_sframe_set_peek(SFRAME_SET *fs, void **iterator,
     return (range->start == range->end) ? 0 : 1;
 }
 
+int ossl_sframe_set_lock_range(SFRAME_SET *fs, const UINT_RANGE *range)
+{
+    if (fs->range_locked
+        || range->start != fs->offset
+        || range->start >= range->end)
+        return 0;
+
+    fs->locked_range = *range;
+    fs->range_locked = 1;
+    return 1;
+}
+
+void ossl_sframe_set_unlock_range(SFRAME_SET *fs)
+{
+    assert(fs->range_locked);
+    fs->range_locked = 0;
+}
+
 void ossl_sframe_set_destroy_ranges(SFRAME_SET *fs)
 {
     struct stream_range_t *sr, *save_sr;
@@ -1251,6 +1290,9 @@ int ossl_sframe_set_move_offset(SFRAME_SET *fs, uint64_t new_offset)
 
     if (new_offset == fs->offset)
         return 1;
+
+    if (fs->range_locked)
+        return 0;
 
     /*
      * Offset can move forward within the continuous head range only.
