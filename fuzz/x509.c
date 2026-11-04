@@ -60,7 +60,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     X509_print(bio, x509_1);
     BIO_free(bio);
 
+#ifndef OPENSSL_NO_MD5
     X509_issuer_and_serial_hash(x509_1);
+#endif
 
     i2d_X509(x509_1, &der);
     OPENSSL_free(der);

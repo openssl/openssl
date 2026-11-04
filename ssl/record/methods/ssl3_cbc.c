@@ -23,7 +23,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/evp.h>
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_MD5)
 #include <openssl/md5.h>
 #endif
 #include <openssl/sha.h>
@@ -45,7 +45,7 @@
  */
 #define MAX_HASH_BLOCK_SIZE 128
 
-#ifndef FIPS_MODULE
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_MD5)
 /*
  * u32toLE serializes an unsigned, 32-bit number (n) as four bytes at (p) in
  * little-endian order. The value of p is advanced by four.
@@ -70,7 +70,7 @@ static void tls1_md5_final_raw(void *ctx, unsigned char *md_out)
     u32toLE(md5->C, md_out);
     u32toLE(md5->D, md_out);
 }
-#endif /* FIPS_MODULE */
+#endif /* !FIPS_MODULE && !OPENSSL_NO_MD5 */
 
 static void tls1_sha1_final_raw(void *ctx, unsigned char *md_out)
 {
@@ -165,7 +165,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         return 0;
 
     if (EVP_MD_is_a(md, "MD5")) {
-#ifdef FIPS_MODULE
+#if defined(FIPS_MODULE) || defined(OPENSSL_NO_MD5)
         return 0;
 #else
         if (MD5_Init((MD5_CTX *)md_state.c) <= 0)
