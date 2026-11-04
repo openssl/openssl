@@ -1503,6 +1503,41 @@ DEF_SCRIPT(check_thread_assisted_idle,
     OP_TICK_ENABLE(C);
 }
 
+/*
+ * Time before the first connection attempt must not consume the idle timeout.
+ * Use a BIO pair so advancing time is independent of UDP delivery.
+ */
+DEF_SCRIPT(delayed_connect, "Idle timeout starts when the client connects")
+{
+    size_t i;
+
+    for (i = 0; i < 2; ++i) {
+        OP_NEW_SSL_L_MEM(L);
+        OP_NEW_SSL_C_MEM(C);
+        OP_LINK_DGRAM_PAIR(C, L);
+        OP_LISTEN(L);
+
+        /* The second client is created with the clock already advanced. */
+        if (i == 0)
+            OP_SKIP_TIME(60000);
+
+        OP_CONNECT_WAIT(C);
+        OP_ACCEPT_CONN_WAIT(L, S, 0);
+        OP_WRITE_B(C, "apple");
+        OP_READ_EXPECT_B(S, "apple");
+        OP_WRITE_B(S, "orange");
+        OP_READ_EXPECT_B(C, "orange");
+
+        /* An established connection must still expire without peer traffic. */
+        OP_ENGINE_TICK_DISABLE(S);
+        OP_SKIP_TIME(1000);
+        OP_EXPECT_CONNECTED(C);
+        OP_SKIP_TIME(31000);
+        OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT, 0, 0);
+        OP_CLEAR();
+    }
+}
+
 DEF_FUNC(check_stream_reset_5)
 {
     int ok = 0;
@@ -6142,6 +6177,7 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_pc_flood),
     USE(check_ctx_cbks),
     USE(check_thread_assisted_idle),
+    USE(delayed_connect),
     USE(script_5),
     USE(script_6),
     USE(script_7),
