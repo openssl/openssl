@@ -114,10 +114,17 @@ static WPACKET_SUB *wpacket_sub_new(WPACKET *pkt)
 #if __has_builtin(__builtin_ffs)
         idx = __builtin_ffs(pkt->nsubs) - 1;
 #else
-        for (idx = 0; (1 << idx) < pkt->nsubs; i++) {
-            if ((1 << idx) & pkt->nsubs)
-                break;
-        }
+        int snsubs = pkt->nsubs;
+        static const int MultiplyDeBruijnBitPosition[32] = {
+            0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
+            31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
+        };
+
+        /*
+         * (x & -x) isolates the lowest set bit (LSB)
+         * Multiplying hashes that bit uniquely into the upper 5 bits
+         */
+        idx = MultiplyDeBruijnBitPosition[((uint32_t)((snsubs & -snsubs) * 0x077CB531U)) >> 27];
 #endif
         pkt->nsubs &= (~(1 << idx));
         sub = &pkt->inline_subs[idx];

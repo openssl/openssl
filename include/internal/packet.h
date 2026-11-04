@@ -691,7 +691,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
 
 /* Writable packets */
 
-#define WPACKET_INLINE_SUBS 4
+#define WPACKET_INLINE_SUBS 6
 typedef struct wpacket_sub WPACKET_SUB;
 struct wpacket_sub {
     /* The parent WPACKET_SUB if we have one or NULL otherwise */
