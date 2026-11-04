@@ -28,6 +28,9 @@ typedef struct sframe_set_t {
     size_t stream_chunks;
     /* Offset of data not yet dropped */
     uint64_t offset;
+    /* Range returned to a zero-copy caller and not released yet. */
+    UINT_RANGE locked_range;
+    unsigned int range_locked;
     /* Cleanse data on release? */
     int cleanse;
     int move_buffers;
@@ -73,6 +76,30 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *range,
 int ossl_sframe_set_peek(SFRAME_SET *fs, void **iter,
     UINT_RANGE *range, const unsigned char **data,
     int *fin);
+
+/**
+ * ossl_sframe_set_lock_range() locks the first range of stream chunks
+ * so zero-copy caller can access them safely. While range is locked
+ * its chunks are protected from memory relocations which may occur
+ * during stream reassembly process. The stream reassembly process
+ * continues to work making sure following stream chunks are always
+ * appended.
+ * @param fs stream frame set that holds ranges.
+ * @param range range caller wants to lock, the range must be reachable
+ * for read operation.
+ * @returns 1 on success, 0 on failure (when range cannot be locked, because
+ * its end offset is past the gap, or range is locked)
+ */
+int ossl_sframe_set_lock_range(SFRAME_SET *fs, const UINT_RANGE *range);
+
+/**
+ * ossl_sframe_set_unlock_range() unlocks the stream chunks in the
+ * first range previously locked by ossl_sframe_set_lock_range().
+ * Stream reassembly is free to reallocate those chunks again.
+ * @param fs point to stream frame set with range collection
+ * @returns void
+ */
+void ossl_sframe_set_unlock_range(SFRAME_SET *fs);
 
 /*
  * moves reading offset to new position, discarding all consumed
