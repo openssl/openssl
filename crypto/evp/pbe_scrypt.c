@@ -30,8 +30,8 @@
 #define SCRYPT_MAX_MEM (SIZE_MAX / 2)
 #endif
 #else
-/* Default memory limit: 32 MB */
-#define SCRYPT_MAX_MEM (1024 * 1024 * 32)
+/* Default memory limit: enough to handle N=2^15; slightly more than 32 MB */
+#define SCRYPT_MAX_MEM (33557504)
 #endif
 
 int EVP_PBE_scrypt_ex(const char *pass, size_t passlen,
