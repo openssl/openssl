@@ -202,7 +202,7 @@ void *X509V3_EXT_d2i(const X509_EXTENSION *ext)
 void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
     int *idx)
 {
-    int lastpos, i;
+    int lastpos, i, n;
     X509_EXTENSION *ex, *found_ex = NULL;
 
     if (!x) {
@@ -212,13 +212,14 @@ void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
             *crit = -1;
         return NULL;
     }
-    if (idx)
-        lastpos = *idx + 1;
+    n = sk_X509_EXTENSION_num(x);
+    if (idx == NULL || *idx < 0)
+        lastpos = 0;
+    else if (*idx >= n)
+        lastpos = n; /* Nothing can follow *idx; also avoids *idx + 1 overflow */
     else
-        lastpos = 0;
-    if (lastpos < 0)
-        lastpos = 0;
-    for (i = lastpos; i < sk_X509_EXTENSION_num(x); i++) {
+        lastpos = *idx + 1;
+    for (i = lastpos; i < n; i++) {
         ex = sk_X509_EXTENSION_value(x, i);
         if (OBJ_obj2nid(X509_EXTENSION_get_object(ex)) == nid) {
             if (idx) {
