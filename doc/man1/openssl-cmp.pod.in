@@ -165,6 +165,7 @@ Mock server options:
 [B<-accept_unprotected>]
 [B<-accept_unprot_err>]
 [B<-accept_raverified>]
+[B<-enforce_same_credentials>]
 
 Certificate verification options, for both CMP and TLS:
 
@@ -690,6 +691,9 @@ This option applies to both CMP clients and the mock server.
 =item B<-unprotected_errors>
 
 Accept missing or invalid protection of negative responses from the server.
+Note that this option makes sense only for clients
+and would conflict with the server option B<-enforce_same_credentials>.
+
 This applies to the following message types and contents:
 
 =over 4
@@ -1319,6 +1323,19 @@ So far this has no effect because the server does not accept any error messages.
 
 Accept RAVERIFIED as proof of possession (POPO).
 
+=item B<-enforce_same_credentials>
+
+Require checking that the sender name, senderKID, and protection algorithm OID
+remain unchanged in messages belonging to the same transaction.
+This implements RFC 9483 requirements on using same credentials,
+preventing other legitimate clients from taking over a transaction.
+
+Changes to the parameters of the same protection algorithm,
+such as the salt in PBM, are only logged as a warning and accepted.
+
+By default, these extra continuity and consistency checks are disabled
+for backward compatibility and because they are not required by RFC 9810.
+
 =back
 
 =head2 Certificate verification options, for both CMP and TLS
@@ -1560,6 +1577,8 @@ reasons the sender of CMP messages is consistent within a transaction
 on the protection algorithm used, including PBM parameters like the salt.
 The B<-reqin> option reprotects (if protection is requested) also the
 first request message (although in this case no recipNonce update is needed).
+
+The B<-enforce_same_credentials> option was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
