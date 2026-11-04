@@ -804,6 +804,76 @@ err:
     return ret;
 }
 
+static int test_rstream_checked_out_multirange_cover(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt[5] = { 0 };
+    const unsigned char *record = NULL;
+    const unsigned char *nested_record = NULL;
+    unsigned char head[16], future[3] = { 0 }, cover[98], read_buf[1];
+    size_t rec_len = 0, nested_rec_len = 0, readbytes = 0, i;
+    int fin = 0, nested_fin = 0, ret = 0;
+
+    memset(head, 0x41, sizeof(head));
+    memset(future, 0x42, sizeof(future));
+    memset(cover, 0x58, sizeof(cover));
+
+    for (i = 0; i < OSSL_NELEM(pkt); ++i)
+        if (!TEST_ptr(pkt[i] = pkt_test_new(1200)))
+            goto err;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(*ch)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[0], 0,
+            head, sizeof(head), 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[1], 32,
+            &future[0], 1, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[2], 64,
+            &future[1], 1, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[3], 96,
+            &future[2], 1, 0))
+        || !TEST_true(ossl_quic_rstream_get_record(rstream, &record,
+            &rec_len, &fin))
+        || !TEST_size_t_eq(rec_len, sizeof(head))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt[0]), 2))
+        goto err;
+
+    /* Consuming reads and nested checkout cannot bypass the active lock. */
+    if (!TEST_false(ossl_quic_rstream_read(rstream, read_buf,
+            sizeof(read_buf), &readbytes, &nested_fin))
+        || !TEST_false(ossl_quic_rstream_get_record(rstream, &nested_record,
+            &nested_rec_len, &nested_fin))
+        || !TEST_false(ossl_quic_rstream_release_record(rstream,
+            rec_len + 1)))
+        goto err;
+
+    /* The broad cover must not release or modify the checked-out chunk. */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[4], 0,
+            cover, sizeof(cover), 0))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt[0]), 2)
+        || !TEST_mem_eq(record, rec_len, head, sizeof(head)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_release_record(rstream, rec_len))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt[0]), 1))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    for (i = 0; i < OSSL_NELEM(pkt); ++i)
+        pkt_test_free(pkt[i]);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
 /*
  * Many small contiguous frames, each pinning its own packet while the reader
  * lags behind, so a large number of packets are held at once and released only
@@ -2871,6 +2941,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rstream_simple, 2);
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_pkt);
+    ADD_TEST(test_rstream_checked_out_multirange_cover);
     ADD_TEST(test_rstream_pkt_overhead);
     ADD_ALL_TESTS(test_rstream_reorder, 40);
     ADD_TEST(test_rstream_dstorage_two_sided_overlap);
