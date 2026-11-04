@@ -9,6 +9,7 @@
 
 /* Internal tests for the x509 and x509v3 modules */
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -285,6 +286,68 @@ err:
     ASN1_TIME_free(tm);
     X509_NAME_free(name);
     EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/*
+ * The lookup functions that take a |lastpos| cursor search the entries
+ * after it.  With lastpos == INT_MAX nothing can follow, so they must report
+ * "not found" rather than overflow when stepping past it.
+ */
+static int test_lookup_lastpos_int_max(void)
+{
+    X509 *x = NULL;
+    X509_NAME *name = NULL;
+    X509_REQ *req = NULL;
+    BASIC_CONSTRAINTS *bc = NULL;
+    int crit = 0, idx = INT_MAX, ret = 0;
+
+    if (!TEST_ptr(x = X509_new())
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_ptr(req = X509_REQ_new())
+        || !TEST_ptr(bc = BASIC_CONSTRAINTS_new())
+        || !TEST_true(X509_add1_ext_i2d(x, NID_basic_constraints, bc, 1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_NID(name, NID_commonName,
+            MBSTRING_ASC, (const unsigned char *)"test", -1, -1, 0))
+        || !TEST_true(X509_REQ_add1_attr_by_NID(req,
+            NID_pkcs9_challengePassword, MBSTRING_ASC,
+            (const unsigned char *)"pw", -1)))
+        goto err;
+    BASIC_CONSTRAINTS_free(bc);
+    bc = NULL;
+
+    /* Searching from the start finds the single entry */
+    if (!TEST_int_eq(X509_NAME_get_index_by_NID(name, NID_commonName, -1), 0)
+        || !TEST_int_eq(X509_get_ext_by_NID(x, NID_basic_constraints, -1), 0)
+        || !TEST_int_eq(X509_get_ext_by_critical(x, 1, -1), 0)
+        || !TEST_int_eq(X509_REQ_get_attr_by_NID(req,
+                            NID_pkcs9_challengePassword, -1),
+            0))
+        goto err;
+
+    /* Nothing follows INT_MAX */
+    if (!TEST_int_eq(X509_NAME_get_index_by_NID(name, NID_commonName, INT_MAX),
+            -1)
+        || !TEST_int_eq(X509_get_ext_by_NID(x, NID_basic_constraints, INT_MAX),
+            -1)
+        || !TEST_int_eq(X509_get_ext_by_critical(x, 1, INT_MAX), -1)
+        || !TEST_int_eq(X509_REQ_get_attr_by_NID(req,
+                            NID_pkcs9_challengePassword, INT_MAX),
+            -1))
+        goto err;
+
+    bc = X509_get_ext_d2i(x, NID_basic_constraints, &crit, &idx);
+    if (!TEST_ptr_null(bc)
+        || !TEST_int_eq(crit, -1)
+        || !TEST_int_eq(idx, -1))
+        goto err;
+
+    ret = 1;
+err:
+    BASIC_CONSTRAINTS_free(bc);
+    X509_REQ_free(req);
+    X509_NAME_free(name);
+    X509_free(x);
     return ret;
 }
 
@@ -1490,6 +1553,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
     ADD_ALL_TESTS(test_ipaddr_to_asc, OSSL_NELEM(ipaddr_to_asc_tests));
     ADD_TEST(test_crl_add_ext_modifies);
+    ADD_TEST(test_lookup_lastpos_int_max);
     ADD_TEST(test_enc_save_failure);
     ADD_TEST(tests_X509_PURPOSE);
     ADD_TEST(tests_X509_check_time);

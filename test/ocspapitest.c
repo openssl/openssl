@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -112,6 +113,32 @@ err:
     OCSP_BASICRESP_free(bs);
     X509_NAME_free(name);
     return bs_out;
+}
+
+/*
+ * OCSP_resp_find() searches after |last|.  With last == INT_MAX there is
+ * nothing to find, and stepping past it must not overflow.
+ */
+static int test_resp_find_last_int_max(void)
+{
+    OCSP_BASICRESP *bs = NULL;
+    OCSP_CERTID *cid = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(bs = make_dummy_resp())
+        || !TEST_ptr(cid = OCSP_CERTID_dup(OCSP_SINGLERESP_get0_id(OCSP_resp_get0(bs, 0)))))
+        goto err;
+
+    if (!TEST_int_eq(OCSP_resp_find(bs, cid, -1), 0)
+        || !TEST_int_eq(OCSP_resp_find(bs, cid, 0), -1)
+        || !TEST_int_eq(OCSP_resp_find(bs, cid, INT_MAX), -1))
+        goto err;
+
+    ret = 1;
+err:
+    OCSP_CERTID_free(cid);
+    OCSP_BASICRESP_free(bs);
+    return ret;
 }
 
 static int test_resp_signer(void)
@@ -274,6 +301,7 @@ int setup_tests(void)
         || !TEST_ptr(cacertstr = test_get_argument(4)))
         return 0;
 #ifndef OPENSSL_NO_OCSP
+    ADD_TEST(test_resp_find_last_int_max);
     ADD_TEST(test_resp_signer);
     ADD_ALL_TESTS(test_access_description, 3);
     ADD_TEST(test_ocsp_url_svcloc_new);

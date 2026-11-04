@@ -87,6 +87,9 @@ int X509_NAME_get_index_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
         lastpos = -1;
     sk = name->entries;
     n = sk_X509_NAME_ENTRY_num(sk);
+    /* Nothing can follow lastpos; this also keeps lastpos + 1 in range */
+    if (lastpos >= n)
+        return -1;
     for (lastpos++; lastpos < n; lastpos++) {
         ne = sk_X509_NAME_ENTRY_value(sk, lastpos);
         if (OBJ_cmp(ne->object, obj) == 0)
