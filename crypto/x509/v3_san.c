@@ -370,7 +370,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
     return 1;
 
 err:
-    sk_GENERAL_NAME_free(ialt);
+    sk_GENERAL_NAME_pop_free(ialt, GENERAL_NAME_free);
     return 0;
 }
 
