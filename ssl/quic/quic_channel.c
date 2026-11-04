@@ -3466,7 +3466,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      */
     if (new_remote_seq_num == ch->cur_remote_seq_num)
         return;
-    ch->on_new_conn_id_recv++;
+    ch->on_new_conn_id_handled++;
 
     if (new_remote_seq_num > ch->cur_remote_seq_num) {
         /* Add new stateless reset token */
@@ -4422,7 +4422,7 @@ uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch)
     return ch->path_response_tx;
 }
 
-uint64_t ossl_quic_channel_get_on_new_conn_id_recv(const QUIC_CHANNEL *ch)
+uint64_t ossl_quic_channel_get_on_new_conn_id_handled(const QUIC_CHANNEL *ch)
 {
-    return ch->on_new_conn_id_recv;
+    return ch->on_new_conn_id_handled;
 }
