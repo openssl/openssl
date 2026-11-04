@@ -41,7 +41,7 @@ requests made and to the time elapsed since the last reseed; see L<EVP_RAND(7)>.
 A child that keeps its parent's process ID does continue it: after a process
 with process ID 1 calls unshare(2) with B<CLONE_NEWPID>, the child it creates
 by fork(2) is process 1 of the new PID namespace.
-Nor does the automatic reseeding detect that the process, or the virtual
+The automatic reseeding also does not detect that the process, or the virtual
 machine it runs in, has been restored from a saved image: a virtual machine
 restored from a snapshot, a process restored from a checkpoint, or a function
 resumed from an image continues from the generator state in the image, and
