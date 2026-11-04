@@ -3428,6 +3428,13 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
         return;
     }
 
+    /*
+     * do nothing if dealing with older NEW_CONN_ID frame or retransmission.
+     */
+    if (new_remote_seq_num == ch->cur_remote_seq_num)
+        return;
+    ch->on_new_conn_id_handled++;
+
     if (new_remote_seq_num > ch->cur_remote_seq_num) {
         /* Add new stateless reset token */
         if (!ossl_quic_srtm_add(ch->srtm, ch, new_remote_seq_num,
@@ -4170,4 +4177,9 @@ uint64_t ossl_quic_channel_get_path_challenge_count(const QUIC_CHANNEL *ch)
 uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch)
 {
     return ch->path_response_tx;
+}
+
+uint64_t ossl_quic_channel_get_on_new_conn_id_handled(const QUIC_CHANNEL *ch)
+{
+    return ch->on_new_conn_id_handled;
 }
