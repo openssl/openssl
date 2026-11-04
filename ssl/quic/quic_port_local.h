@@ -77,6 +77,10 @@ struct quic_port_st {
     /* Special TSERVER channel. To be removed in the future. */
     QUIC_CHANNEL *tserver_ch;
 
+    /* Test-only hook, see ossl_quic_port_set_new_channel_cb() */
+    ossl_quic_port_new_channel_cb_fn new_channel_cb;
+    void *new_channel_cb_arg;
+
     /* LCIDM used for incoming packet routing by DCID. */
     QUIC_LCIDM *lcidm;
 
