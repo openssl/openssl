@@ -1535,8 +1535,7 @@ err:
 static int test_alpn(int idx)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
-    SSL *clientquic = NULL;
-    QUIC_TSERVER *qtserv = NULL;
+    SSL *clientquic = NULL, *listener = NULL, *serverquic = NULL;
     int testresult = 0;
     int ret;
 
@@ -1548,10 +1547,10 @@ static int test_alpn(int idx)
         goto err;
 
     if (!TEST_ptr(cctx)
-        || !TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert,
+        || !TEST_true(qtest_create_quic_objects_ex(libctx, cctx, NULL, cert,
             privkey,
             QTEST_FLAG_FAKE_TIME,
-            &qtserv,
+            &listener,
             &clientquic, NULL, NULL)))
         goto err;
 
@@ -1574,16 +1573,73 @@ static int test_alpn(int idx)
     } else {
         /* ALPN was provided so we expect the connection to succeed */
         if (!TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_WANT_READ)
-            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+            || !TEST_true(qtest_create_quic_connection_ssl(listener, clientquic,
+                &serverquic)))
             goto err;
     }
 
     testresult = 1;
 err:
-    ossl_quic_tserver_free(qtserv);
+    SSL_free(serverquic);
+    SSL_free(listener);
     SSL_free(clientquic);
     SSL_CTX_free(cctx);
 
+    return testresult;
+}
+
+static void rejected_conn_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+    int idx, long argl, void *argp)
+{
+    if (ptr != NULL)
+        ++*(int *)ptr;
+}
+
+static int reject_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg)
+{
+    int *data = arg;
+
+    ++data[2];
+    if (!SSL_set_ex_data(conn, data[0], &data[1]))
+        data[1] = -1;
+    return 0;
+}
+
+static int test_reject_new_channel(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *client = NULL, *listener = NULL;
+    int data[3] = { -1, 0, 0 };
+    int i, testresult = 0;
+
+    if (!TEST_ptr(cctx)
+        || !TEST_int_ge(data[0] = SSL_get_ex_new_index(0, NULL, NULL, NULL,
+                            rejected_conn_free),
+            0)
+        || !TEST_true(qtest_create_quic_objects_ex(libctx, cctx, NULL, cert,
+            privkey, QTEST_FLAG_FAKE_TIME, &listener, &client, NULL, NULL)))
+        goto err;
+
+    ossl_quic_port_set_new_channel_cb(ossl_quic_listener_get_port(listener),
+        reject_new_channel, data);
+
+    for (i = 0; i < 10 && data[1] == 0; ++i) {
+        if (!TEST_int_le(SSL_connect(client), 0)
+            || !TEST_true(SSL_handle_events(listener)))
+            goto err;
+        qtest_add_time(1);
+    }
+
+    if (!TEST_int_gt(data[2], 0)
+        || !TEST_int_eq(data[1], data[2])
+        || !TEST_size_t_eq(SSL_get_accept_connection_queue_len(listener), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(listener);
+    SSL_free(client);
+    SSL_CTX_free(cctx);
     return testresult;
 }
 
@@ -2339,8 +2395,7 @@ static int test_tparam(int idx)
 {
     int testresult = 0;
     SSL_CTX *c_ctx = NULL;
-    SSL *c_ssl = NULL;
-    QUIC_TSERVER *s = NULL;
+    SSL *c_ssl = NULL, *listener = NULL, *s_ssl = NULL;
     QTEST_FAULT *qtf = NULL;
     struct tparam_ctx ctx = { 0 };
 
@@ -2349,8 +2404,8 @@ static int test_tparam(int idx)
     if (!TEST_ptr(c_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(libctx, c_ctx, NULL, cert,
-            privkey, 0, &s,
+    if (!TEST_true(qtest_create_quic_objects_ex(libctx, c_ctx, NULL, cert,
+            privkey, 0, &listener,
             &c_ssl, &qtf, NULL)))
         goto err;
 
@@ -2358,7 +2413,7 @@ static int test_tparam(int idx)
             &ctx)))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_connection_ex(s, c_ssl,
+    if (!TEST_true(qtest_create_quic_connection_ssl_ex(listener, c_ssl, &s_ssl,
             ctx.t->expect_fail != NULL)))
         goto err;
 
@@ -2393,7 +2448,8 @@ err:
                 (unsigned long long)ctx.t->id, ctx.t->op, ctx.t->buf_len);
     }
 
-    ossl_quic_tserver_free(s);
+    SSL_free(s_ssl);
+    SSL_free(listener);
     SSL_free(c_ssl);
     SSL_CTX_free(c_ctx);
     qtest_fault_free(qtf);
@@ -5747,6 +5803,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_resize_txe);
     ADD_MFAIL_TEST(test_ssl_new_mfail);
     ADD_TEST(test_pending_limit);
+    ADD_TEST(test_reject_new_channel);
 
     return 1;
 err:

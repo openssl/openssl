@@ -942,6 +942,17 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
         }
     }
 
+    if (port->new_channel_cb != NULL && ch->tls != NULL
+        && !port->new_channel_cb(SSL_CONNECTION_FROM_SSL(ch->tls)->user_ssl,
+            ch, port->new_channel_cb_arg)) {
+        SSL *user_ssl = SSL_CONNECTION_FROM_SSL(ch->tls)->user_ssl;
+
+        ((QUIC_CONNECTION *)user_ssl)->ch = NULL;
+        ossl_quic_channel_free(ch);
+        SSL_free(user_ssl);
+        return;
+    }
+
     ossl_list_incoming_ch_insert_tail(&port->incoming_channel_list, ch);
     *new_ch = ch;
 }
@@ -2066,4 +2077,12 @@ uint64_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port)
 void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, uint64_t max_pending_channels)
 {
     port->max_pending_channels = max_pending_channels;
+}
+
+void ossl_quic_port_set_new_channel_cb(QUIC_PORT *port,
+    ossl_quic_port_new_channel_cb_fn cb,
+    void *arg)
+{
+    port->new_channel_cb = cb;
+    port->new_channel_cb_arg = arg;
 }
