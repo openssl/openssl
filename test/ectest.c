@@ -2361,6 +2361,38 @@ err:
     return ret;
 }
 
+static int keygen_invalid_order_test(void)
+{
+    int ret = 0;
+    EC_GROUP *group = NULL;
+    EC_POINT *generator = NULL;
+    EC_KEY *key = NULL;
+    BIGNUM *order = NULL;
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1))
+        || !TEST_ptr(generator = EC_POINT_dup(
+                         EC_GROUP_get0_generator(group), group))
+        || !TEST_ptr(order = BN_new())
+        || !TEST_true(BN_one(order))
+        || !TEST_true(EC_GROUP_set_generator(group, generator, order,
+            BN_value_one()))
+        || !TEST_ptr(key = EC_KEY_new())
+        || !TEST_true(EC_KEY_set_group(key, group))
+        || !TEST_false(EC_KEY_generate_key(key))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            EC_R_INVALID_GROUP_ORDER))
+        goto err;
+
+    ret = 1;
+err:
+    ERR_clear_error();
+    BN_free(order);
+    EC_KEY_free(key);
+    EC_POINT_free(generator);
+    EC_GROUP_free(group);
+    return ret;
+}
+
 /*
  * Helper for ec_point_hex2point_test
  *
@@ -3122,6 +3154,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(check_named_curve_test, crv_len);
     ADD_ALL_TESTS(check_named_curve_lookup_test, crv_len);
     ADD_ALL_TESTS(check_ec_key_field_public_range_test, crv_len);
+    ADD_TEST(keygen_invalid_order_test);
     ADD_ALL_TESTS(check_named_curve_from_ecparameters, crv_len);
     ADD_ALL_TESTS(ec_point_hex2point_test, crv_len);
     ADD_ALL_TESTS(custom_generator_test, crv_len);
