@@ -332,6 +332,10 @@ Accept unprotected error responses which are either explicitly
 unprotected or where protection verification failed. Applies to regular
 error messages as well as certificate responses (IP/CP/KUP) and
 revocation responses (RP) with rejection.
+
+Note that this option makes sense only for clients and would conflict
+with the server-side OSSL_CMP_SRV_CTX_set_enforce_same_credentials(3).
+
 B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 9810.
@@ -885,7 +889,8 @@ the id-it-signKeyPairTypes OID and prints info on the General Response contents:
 L<OSSL_CMP_exec_IR_ses(3)>, L<OSSL_CMP_exec_CR_ses(3)>,
 L<OSSL_CMP_exec_KUR_ses(3)>, L<OSSL_CMP_exec_GENM_ses(3)>,
 L<OSSL_CMP_exec_certreq(3)>, L<OSSL_CMP_MSG_http_perform(3)>,
-L<ERR_print_errors_cb(3)>, L<OSSL_HTTP_open(3)>
+L<ERR_print_errors_cb(3)>, L<OSSL_HTTP_open(3)>,
+OSSL_CMP_SRV_CTX_set_enforce_same_credentials(3)
 
 =head1 HISTORY
 

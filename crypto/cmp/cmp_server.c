@@ -17,6 +17,7 @@
 struct ossl_cmp_srv_ctx_st {
     OSSL_CMP_CTX *ctx; /* CMP client context reused for transactionID etc. */
     void *custom_ctx; /* application-specific server context */
+    OSSL_CMP_PKIHEADER *first_hdr; /* header of 1st request in transaction */
     int certReqId; /* of ir/cr/kur, OSSL_CMP_CERTREQID_NONE for p10cr */
     int polling; /* current transaction is in polling mode */
 
@@ -33,6 +34,7 @@ struct ossl_cmp_srv_ctx_st {
     int acceptUnprotected; /* Accept requests with no/invalid prot. */
     int acceptRAVerified; /* Accept ir/cr/kur with POPO RAVerified */
     int grantImplicitConfirm; /* Grant implicit confirmation if requested */
+    int enforceSameCredentials; /* Require same credentials in a transaction */
 
 }; /* OSSL_CMP_SRV_CTX */
 
@@ -41,6 +43,7 @@ void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx)
     if (srv_ctx == NULL)
         return;
 
+    OSSL_CMP_PKIHEADER_free(srv_ctx->first_hdr);
     OSSL_CMP_CTX_free(srv_ctx->ctx);
     OPENSSL_free(srv_ctx);
 }
@@ -155,6 +158,16 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
         return 0;
     }
     srv_ctx->grantImplicitConfirm = val != 0;
+    return 1;
+}
+
+int OSSL_CMP_SRV_CTX_set_enforce_same_credentials(OSSL_CMP_SRV_CTX *srv_ctx, int val)
+{
+    if (srv_ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    srv_ctx->enforceSameCredentials = val != 0;
     return 1;
 }
 
@@ -622,7 +635,73 @@ static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
         ret = 0;
     if (!OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
         ret = 0;
+    OSSL_CMP_PKIHEADER_free(srv_ctx->first_hdr);
+    srv_ctx->first_hdr = NULL;
     return ret;
+}
+
+/**
+ * Check whether the sender, senderKID, and protection algorithm OID in |hdr|
+ * match those saved in |first_hdr|. Changes to parameters of the same protection
+ * algorithm, such as the PBM salt, are logged as warnings but accepted.
+ * Return 1 if they match, else raise an error and return 0.
+ */
+static int check_same_credentials(const OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_PKIHEADER *hdr, const OSSL_CMP_PKIHEADER *first_hdr)
+{
+    if (GENERAL_NAME_cmp(hdr->sender, first_hdr->sender) != 0) {
+        char *first = X509_NAME_oneline(first_hdr->sender->d.directoryName, NULL, 0);
+        char *actual = X509_NAME_oneline(hdr->sender->d.directoryName, NULL, 0);
+
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_SENDER);
+        ossl_cmp_log2(ERROR, ctx,
+            "sender changed within transaction from %s to %s",
+            first != NULL ? first : "<unknown>",
+            actual != NULL ? actual : "<unknown>");
+        OPENSSL_free(first);
+        OPENSSL_free(actual);
+        return 0;
+    }
+    if ((hdr->senderKID == NULL) != (first_hdr->senderKID == NULL)
+        || (hdr->senderKID != NULL
+            && ASN1_OCTET_STRING_cmp(hdr->senderKID, first_hdr->senderKID) != 0)) {
+        char *first = first_hdr->senderKID == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, first_hdr->senderKID);
+        char *actual = hdr->senderKID == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, hdr->senderKID);
+
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREDENTIALS_CHANGED);
+        ossl_cmp_log2(ERROR, ctx,
+            "senderKID changed within transaction from %s to %s",
+            first_hdr->senderKID == NULL ? "<absent>" : first != NULL ? first
+                                                                      : "<unknown>",
+            hdr->senderKID == NULL ? "<absent>" : actual != NULL ? actual
+                                                                 : "<unknown>");
+        OPENSSL_free(first);
+        OPENSSL_free(actual);
+        return 0;
+    }
+    if ((hdr->protectionAlg == NULL) != (first_hdr->protectionAlg == NULL)
+        || (hdr->protectionAlg != NULL
+            && X509_ALGOR_cmp(hdr->protectionAlg, first_hdr->protectionAlg) != 0)) {
+        char first[128] = "<absent>", actual[128] = "<absent>";
+        int only_parameters_changed = first_hdr->protectionAlg != NULL
+            && hdr->protectionAlg != NULL
+            && OBJ_cmp(first_hdr->protectionAlg->algorithm, hdr->protectionAlg->algorithm) == 0;
+
+        if (first_hdr->protectionAlg != NULL
+            && OBJ_obj2txt(first, sizeof(first), first_hdr->protectionAlg->algorithm, 0) <= 0)
+            OPENSSL_strlcpy(first, "<unknown>", sizeof(first));
+        if (hdr->protectionAlg != NULL
+            && OBJ_obj2txt(actual, sizeof(actual), hdr->protectionAlg->algorithm, 0) <= 0)
+            OPENSSL_strlcpy(actual, "<unknown>", sizeof(actual));
+        if (only_parameters_changed) {
+            ossl_cmp_log1(WARN, ctx, "protection algorithm %s parameters changed within transaction", first);
+            return 1;
+        }
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_ALGORITHM_CHANGED);
+        ossl_cmp_log2(ERROR, ctx, "protection algorithm changed within transaction from %s to %s", first, actual);
+        return 0;
+    }
+    return 1;
 }
 
 /*
@@ -682,7 +761,14 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
             goto err;
         }
+        if (srv_ctx->enforceSameCredentials
+            && (srv_ctx->first_hdr = ASN1_item_dup(ASN1_ITEM_rptr(OSSL_CMP_PKIHEADER), hdr)) == NULL)
+            goto err;
     } else {
+        if (srv_ctx->enforceSameCredentials && srv_ctx->first_hdr != NULL
+            && !check_same_credentials(ctx, hdr, srv_ctx->first_hdr))
+            goto err;
+
         /* transactionID should be already initialized */
         if (ctx->transactionID == NULL) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
@@ -751,6 +837,7 @@ err:
             if (ctx->transactionID == NULL)
                 (void)OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID);
             (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
+            /* could also use srv_ctx->first_hdr->transactionID and nonce */
         }
 
         if ((flags & ERR_TXT_STRING) == 0 || *data == '\0')

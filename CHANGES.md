@@ -215,6 +215,18 @@ OpenSSL 4.2
 
    *David von Oheimb*
 
+ * Added the `OSSL_CMP_SRV_CTX_set_enforce_same_credentials()` API
+   and the `-enforce_same_credentials` option for `openssl cmp`.
+   When enabled, the server checks that the sender name, senderKID,
+   and protection algorithm OID remain unchanged throughout a transaction.
+   Changes to the parameters of the same protection algorithm,
+   such as the PBM salt, are logged as warnings but accepted.
+   These checks are disabled by default.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
 OpenSSL 4.1
 -----------
 
