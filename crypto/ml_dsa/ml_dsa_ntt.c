@@ -230,7 +230,7 @@ static void poly_ntt_inverse_avx2_wrapper(POLY *p)
 /*
  * PPC64le wrapper functions.
  */
-#if !defined(OPENSSL_NO_ASM) && defined(_ARCH_PPC64) && (defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
+#if !defined(OPENSSL_NO_ASM) && defined(_ARCH_PPC64) && !defined(_AIX) && (defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
 #define MLDSA_NTT_PPC_ASM
 #include "arch/ppc_arch.h"
 #endif
