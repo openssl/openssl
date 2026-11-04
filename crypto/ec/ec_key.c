@@ -276,6 +276,16 @@ static int ec_generate_key(EC_KEY *eckey, int pairwise_test)
             goto err;
     }
 
+    /*
+     * The loop below draws from [0, order - 1] until it gets a non-zero
+     * value.  With order <= 1 (a group order below 2, or below 3 for SM2)
+     * there is none, and the loop would never end.
+     */
+    if (BN_cmp(order, BN_value_one()) <= 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
+        goto err;
+    }
+
     do
         if (!BN_priv_rand_range_ex(priv_key, order, 0, ctx))
             goto err;

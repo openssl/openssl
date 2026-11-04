@@ -3128,6 +3128,59 @@ err:
     return ret;
 }
 
+/*
+ * EC_GROUP_set_generator() accepts a group order of 1.  Such a group (or one
+ * of order 2 for a key with the SM2 private key range [1, n - 2]) has no valid
+ * private key, so EC_KEY_generate_key() must fail instead of looping forever.
+ */
+static int degenerate_order_keygen_test(int sm2)
+{
+    BN_CTX *ctx = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL, *order = NULL;
+    EC_GROUP *group = NULL;
+    EC_POINT *gen = NULL;
+    EC_KEY *key = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(p = BN_new())
+        || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(b = BN_new())
+        || !TEST_ptr(order = BN_new())
+        || !TEST_true(BN_set_word(p, 17))
+        || !TEST_true(BN_set_word(a, 1))
+        || !TEST_true(BN_set_word(b, 1))
+        || !TEST_true(BN_set_word(order, sm2 ? 2 : 1))
+        || !TEST_ptr(group = EC_GROUP_new_curve_GFp(p, a, b, ctx))
+        || !TEST_ptr(gen = EC_POINT_new(group))
+        || !TEST_true(EC_POINT_set_to_infinity(group, gen))
+        || !TEST_true(EC_GROUP_set_generator(group, gen, order,
+            BN_value_one()))
+        || !TEST_ptr(key = EC_KEY_new())
+        || !TEST_true(EC_KEY_set_group(key, group)))
+        goto err;
+    if (sm2)
+        EC_KEY_set_flags(key, EC_FLAG_SM2_RANGE);
+
+    ERR_clear_error();
+    if (!TEST_false(EC_KEY_generate_key(key))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            EC_R_INVALID_GROUP_ORDER))
+        goto err;
+
+    ret = 1;
+err:
+    EC_KEY_free(key);
+    EC_POINT_free(gen);
+    EC_GROUP_free(group);
+    BN_free(order);
+    BN_free(b);
+    BN_free(a);
+    BN_free(p);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
 static int ec_d2i_publickey_test(void)
 {
     unsigned char buf[1000];
@@ -3207,6 +3260,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ec_point_hex2point_test, (int)crv_len);
     ADD_ALL_TESTS(custom_generator_test, (int)crv_len);
     ADD_ALL_TESTS(custom_params_test, (int)crv_len);
+    ADD_ALL_TESTS(degenerate_order_keygen_test, 2);
     ADD_TEST(ec_d2i_publickey_test);
     return 1;
 }
