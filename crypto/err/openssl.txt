@@ -219,6 +219,7 @@ CMP_R_ERROR_CREATING_ERROR:118:error creating error
 CMP_R_ERROR_CREATING_GENM:119:error creating genm
 CMP_R_ERROR_CREATING_GENP:120:error creating genp
 CMP_R_ERROR_CREATING_PKICONF:122:error creating pkiconf
+CMP_R_ERROR_CREDENTIALS_CHANGED:206:credentials changed
 CMP_R_ERROR_CREATING_POLLREP:123:error creating pollrep
 CMP_R_ERROR_CREATING_POLLREQ:124:error creating pollreq
 CMP_R_ERROR_CREATING_RP:125:error creating rp

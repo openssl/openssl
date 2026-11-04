@@ -251,7 +251,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         /* add any given ctx->extraCertsOut also to unprotected message */
         if (!ossl_cmp_msg_add_extraCerts(ctx, msg))
             goto err;
-        /* In this case, sender and senderKID are allowed to be msising. */
+        /* In this case, sender and senderKID are allowed to be missing. */
         return 1;
     }
 
