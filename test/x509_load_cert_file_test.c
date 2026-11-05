@@ -284,6 +284,101 @@ err:
 }
 
 /*
+ * Objects that share a name are kept in the order they were added, whatever
+ * the type of the first of them, and the store's getters list each once.
+ */
+static int test_store_same_name_order(void)
+{
+    X509_NAME *name = NULL, *other = NULL;
+    X509 *certs[4] = { NULL, NULL, NULL, NULL }, *lone = NULL;
+    X509_CRL *new_crl = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_OBJECT *obj = NULL;
+    STACK_OF(X509) *got = NULL, *all = NULL;
+    STACK_OF(X509_CRL) *crls = NULL;
+    STACK_OF(X509_OBJECT) *objs = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (unsigned char *)"same.test", -1, -1, 0))
+        || !TEST_ptr(other = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(other, "CN", MBSTRING_ASC,
+            (unsigned char *)"other.test", -1, -1, 0))
+        || !TEST_ptr(new_crl = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(new_crl, name))
+        || !TEST_ptr(lone = X509_new())
+        || !TEST_true(X509_set_subject_name(lone, other))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, NULL, NULL)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(certs); i++)
+        if (!TEST_ptr(certs[i] = X509_new())
+            || !TEST_true(X509_set_subject_name(certs[i], name))
+            || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(certs[i]),
+                (long)i + 1)))
+            goto err;
+
+    /* The CRL is the first object of its name; no certificate is there yet */
+    if (!TEST_true(X509_STORE_add_crl(store, new_crl))
+        || !TEST_ptr_null(obj = X509_STORE_CTX_get_obj_by_subject(ctx,
+                              X509_LU_X509, name))
+        || !TEST_true(X509_STORE_add_cert(store, lone)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(certs); i++)
+        if (!TEST_true(X509_STORE_add_cert(store, certs[i])))
+            goto err;
+    /* Adding what is there, wherever it is among its name, adds nothing */
+    if (!TEST_true(X509_STORE_add_crl(store, new_crl))
+        || !TEST_true(X509_STORE_add_cert(store, certs[0]))
+        || !TEST_true(X509_STORE_add_cert(store, certs[2]))
+        || !TEST_true(X509_STORE_add_cert(store, certs[3]))
+        || !TEST_true(X509_STORE_add_cert(store, lone)))
+        goto err;
+
+    if (!TEST_ptr(got = X509_STORE_CTX_get1_certs(ctx, name))
+        || !TEST_int_eq(sk_X509_num(got), (int)OSSL_NELEM(certs)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(certs); i++)
+        if (!TEST_ptr_eq(sk_X509_value(got, (int)i), certs[i]))
+            goto err;
+
+    /* A lookup by subject finds the first certificate, past the CRL */
+    if (!TEST_ptr(obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509,
+                      name))
+        || !TEST_ptr_eq(X509_OBJECT_get0_X509(obj), certs[0])
+        || !TEST_ptr(crls = X509_STORE_CTX_get1_crls(ctx, name))
+        || !TEST_int_eq(sk_X509_CRL_num(crls), 1)
+        || !TEST_ptr_eq(sk_X509_CRL_value(crls, 0), new_crl)
+        || !TEST_ptr(all = X509_STORE_get1_all_certs(store))
+        || !TEST_int_eq(sk_X509_num(all), (int)OSSL_NELEM(certs) + 1)
+        || !TEST_ptr(objs = X509_STORE_get1_objects(store))
+        || !TEST_int_eq(sk_X509_OBJECT_num(objs), (int)OSSL_NELEM(certs) + 2))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_OBJECT_free(obj);
+    OSSL_STACK_OF_X509_free(got);
+    OSSL_STACK_OF_X509_free(all);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    for (i = 0; i < OSSL_NELEM(certs); i++)
+        X509_free(certs[i]);
+    X509_free(lone);
+    X509_CRL_free(new_crl);
+    X509_NAME_free(name);
+    X509_NAME_free(other);
+    return ret;
+}
+
+/*
  * Test to trigger memory failures in X509_STORE_add_cert.
  */
 static int test_x509_store_add_mfail(void)
@@ -376,6 +471,7 @@ int setup_tests(void)
 
     ADD_TEST(test_load_cert_file);
     ADD_TEST(test_load_same_cn_certs);
+    ADD_TEST(test_store_same_name_order);
     ADD_MFAIL_NO_CHECK_TEST(test_x509_pem_read_mfail);
     ADD_MFAIL_TEST(test_x509_store_add_mfail);
     ADD_MFAIL_TEST(test_x509_get1_objects_mfail);

@@ -13,9 +13,10 @@
 #include <openssl/x509_vfy.h>
 
 #include "internal/refcount.h"
-#include "internal/hashtable.h"
+#include "internal/htable.h"
 
 #include <crypto/asn1.h>
+#include <crypto/x509.h>
 
 #define X509V3_conf_add_error_name_value(val) \
     ERR_add_error_data(4, "name=", (val)->name, ", value=", (val)->value)
@@ -127,9 +128,13 @@ struct x509_lookup_st {
     X509_STORE *store_ctx; /* who owns us */
 };
 
-typedef struct {
-    HT_KEY key_header;
-} OBJS_KEY;
+/*
+ * An X509_STORE's table of names (a certificate's subject, a CRL's issuer).
+ * Its elements are the store's objects themselves: one per name, the first
+ * added under it, which holds the other objects sharing that name.
+ */
+DEFINE_QUEUE_OF(x509_objs, X509_OBJECT);
+DEFINE_HTABLE_DYN_OF(x509_objs, X509_OBJECT, 3, 24);
 
 /*
  * This is used to hold everything.  It is used for all certificate
@@ -139,8 +144,8 @@ typedef struct {
 struct x509_store_st {
     /* The following is a cache of trusted certs */
     int cache; /* if true, stash any hits */
-    /* Maps X509_NAME -> STACK_OF(X509_OBJECT) */
-    HT *objs_ht;
+    /* Maps X509_NAME -> the X509_OBJECTs of that name */
+    OSSL_HTABLE(x509_objs) *objs_ht;
     /*
      * Deprecated. Used only in the X509_STORE_get0_objects() for backward
      * compatibility.
@@ -191,8 +196,23 @@ int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
-STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
-    const X509_NAME *xn);
+
+/**
+ * @brief Looks up the first object of a given type and subject name in the
+ *        store's hash table.
+ *
+ * The caller must hold the store's lock, and the store must not have been
+ * converted by X509_STORE_get0_objects().
+ *
+ * @param store  Store to search.
+ * @param type   Type of object wanted, X509_LU_X509 or X509_LU_CRL.
+ * @param xn     Subject name (issuer name for a CRL) to look up.
+ *
+ * @returns the matching object, which remains owned by the store, or NULL if
+ *          there is none.
+ */
+X509_OBJECT *ossl_x509_store_ht_get_by_subject(const X509_STORE *store,
+    X509_LOOKUP_TYPE type, const X509_NAME *xn);
 int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
 int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
