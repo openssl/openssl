@@ -596,6 +596,7 @@ typedef enum OPTION_choice {
     OPT_KEYLOG_FILE,
     OPT_EARLY_DATA,
     OPT_REQCAFILE,
+    OPT_CERT_AUTHS,
     OPT_TFO,
     OPT_V_ENUM,
     OPT_X_ENUM,
@@ -701,6 +702,9 @@ const OPTIONS s_client_options[] = {
         "Do not load certificates from the default certificates store" },
     { "requestCAfile", OPT_REQCAFILE, '<',
         "PEM format file of CA names to send to the server" },
+    { "certificate_authorities", OPT_CERT_AUTHS, '<',
+        "PEM file of CA certificates whose subject names are sent to the "
+        "server in the certificate_authorities extension" },
     { "expected-rpks", OPT_EXPECTED_RPK, '<',
         "PEM file with expected server public key(s)" },
 #if defined(TCP_FASTOPEN) && !defined(OPENSSL_NO_TFO)
@@ -1022,6 +1026,7 @@ int s_client_main(int argc, char **argv)
     char *passarg = NULL, *pass = NULL;
     char *vfyCApath = NULL, *vfyCAfile = NULL, *vfyCAstore = NULL;
     char *ReqCAfile = NULL;
+    char *CertAuthsFile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
     const char *protohost = NULL;
     struct timeval timeout, *timeoutp;
@@ -1586,6 +1591,9 @@ int s_client_main(int argc, char **argv)
         case OPT_REQCAFILE:
             ReqCAfile = opt_arg();
             break;
+        case OPT_CERT_AUTHS:
+            CertAuthsFile = opt_arg();
+            break;
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
@@ -2140,6 +2148,48 @@ int s_client_main(int argc, char **argv)
             BIO_puts(bio_err, "Error loading CA names\n");
             goto end;
         }
+        SSL_CTX_set0_CA_list(ctx, nm);
+    }
+    if (CertAuthsFile != NULL) {
+        STACK_OF(X509) *ca_certs = NULL;
+        STACK_OF(X509_NAME) *nm = NULL;
+        int i;
+
+        /* Parse every CA certificate contained in the PEM file. */
+        if (!load_certs(CertAuthsFile, 0, &ca_certs, NULL,
+                        "CA certificates for certificate_authorities extension")) {
+            sk_X509_pop_free(ca_certs, X509_free);
+            BIO_puts(bio_err, "Error loading CA certificates\n");
+            goto end;
+        }
+
+        nm = sk_X509_NAME_new_null();
+        if (nm == NULL) {
+            sk_X509_pop_free(ca_certs, X509_free);
+            BIO_puts(bio_err, "Out of memory building CA name list\n");
+            goto end;
+        }
+
+        /* Extract the subject name of each CA certificate. */
+        for (i = 0; i < sk_X509_num(ca_certs); i++) {
+            X509 *ca = sk_X509_value(ca_certs, i);
+            X509_NAME *subj = X509_get_subject_name(ca);
+            X509_NAME *dup = subj == NULL ? NULL : X509_NAME_dup(subj);
+
+            if (dup == NULL || !sk_X509_NAME_push(nm, dup)) {
+                X509_NAME_free(dup);
+                sk_X509_NAME_pop_free(nm, X509_NAME_free);
+                sk_X509_pop_free(ca_certs, X509_free);
+                BIO_puts(bio_err, "Error extracting CA subject names\n");
+                goto end;
+            }
+        }
+        sk_X509_pop_free(ca_certs, X509_free);
+
+        /*
+         * Install the collected CA names. This drives the TLS 1.3
+         * certificate_authorities extension that is sent to the server.
+         */
         SSL_CTX_set0_CA_list(ctx, nm);
     }
 
