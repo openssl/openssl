@@ -100,7 +100,7 @@ struct dgram_urxe_st {
 };
 
 /* Values for demux_state field */
-#define URXE_DEMUX_STATE_FREE 0 /* on urx_free list */
+#define URXE_DEMUX_STATE_FREE 0 /* held by the demux, to receive into */
 #define URXE_DEMUX_STATE_PENDING 1 /* on urx_pending list */
 #define URXE_DEMUX_STATE_ISSUED 2 /* on neither list */
 
@@ -109,9 +109,11 @@ struct dgram_urxe_st {
 
 /*
  * Free-list limit used by the DTLS listener: two receive batches, so one
- * full batch can always be cached. Enforced by
- * ossl_dgram_demux_release_urxe() once set with
- * ossl_dgram_demux_set_max_free_urxe(); the default 0 is unbounded.
+ * full batch can always be cached. Enforced whenever a URXE comes back to
+ * the free list, released by its holder or declined by a route handler,
+ * once set with ossl_dgram_demux_set_max_free_urxe(); the default 0 is
+ * unbounded. The demuxer holds up to one more batch besides, which is not on
+ * the free list: the URXEs its next network read receives into.
  */
 #define DEMUX_MAX_FREE_URXE (2 * DEMUX_MAX_MSGS_PER_CALL)
 
@@ -144,13 +146,24 @@ void ossl_dgram_urxe_insert_tail(DGRAM_URXE_LIST *l, DGRAM_URXE *e);
 typedef void(ossl_dgram_demux_cb_fn)(DGRAM_URXE *e, void *arg);
 
 /*
+ * As ossl_dgram_demux_cb_fn, but the callee may decline the URXE: a return of
+ * 0 means it kept no reference and the demuxer takes the URXE back itself, so
+ * the callee need not call ossl_dgram_demux_release_urxe(). On a thread-safe
+ * demuxer the declined URXEs of a batch are returned under one lock.
+ * A return of 1 transfers ownership as with ossl_dgram_demux_cb_fn.
+ */
+typedef int(ossl_dgram_demux_route_fn)(DGRAM_URXE *e, void *arg);
+
+/*
  * Creates a new demuxer. The given BIO is used to receive datagrams from the
  * network using BIO_recvmmsg.
  *
  * threadsafe: If non-zero, enables internal locking for thread safety. Use this
  *             when the demux may be accessed from multiple threads (DTLS
  *             where connections share a demux). Pass 0 if thread safety is
- *             handled at a higher level (QUIC).
+ *             handled at a higher level (QUIC). A lock serialises the network
+ *             read only: ossl_dgram_demux_release_urxe() takes none, and so
+ *             never waits for a read made by another thread.
  *
  * now is an optional function used to determine the time a datagram was
  * received. now_arg is an opaque argument passed to the function. If now is
@@ -181,12 +194,14 @@ int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu);
 
 /*
  * Sets the maximum number of URXEs cached on the free list; 0 (the
- * default) leaves it unbounded.
+ * default) leaves it unbounded. Not thread-safe, like the two handler
+ * setters: call it before the demux is shared between threads.
  */
 void ossl_dgram_demux_set_max_free_urxe(DGRAM_DEMUX *demux, size_t max_free);
 
 /*
- * Returns the number of URXEs currently cached on the free list.
+ * Returns the number of URXEs currently cached on the free list. Those the
+ * demuxer holds for its next network read are not counted.
  */
 size_t ossl_dgram_demux_get_free_list_len(DGRAM_DEMUX *demux);
 
@@ -201,6 +216,19 @@ size_t ossl_dgram_demux_get_free_list_len(DGRAM_DEMUX *demux);
  */
 void ossl_dgram_demux_set_default_handler(DGRAM_DEMUX *demux,
     ossl_dgram_demux_cb_fn *cb,
+    void *cb_arg);
+
+/**
+ * Set a default packet handler which may decline datagrams (see
+ * ossl_dgram_demux_route_fn). Replaces any handler set with
+ * ossl_dgram_demux_set_default_handler().
+ *
+ * @param demux  the demuxer
+ * @param cb     the handler, or NULL to unset it
+ * @param cb_arg the argument passed to |cb|
+ */
+void ossl_dgram_demux_set_route_handler(DGRAM_DEMUX *demux,
+    ossl_dgram_demux_route_fn *cb,
     void *cb_arg);
 
 /*

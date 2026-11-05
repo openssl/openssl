@@ -418,14 +418,15 @@ void dtls1_free(SSL *ssl)
 
 #ifndef OPENSSL_NO_DTLS
     /*
-     * If this connection was created by a listener, unregister it from the
-     * listener's established_conns lookup table to prevent use-after-free.
-     * The listener routes incoming packets to connections via this table,
-     * so we must remove ourselves before freeing.
+     * If this connection was created by a listener, unlink it from the
+     * listener's established_conns lookup table, which routes incoming
+     * datagrams to it through the link this connection owns, before the
+     * memory goes away. A NULL listener means the registration is to be
+     * kept: ossl_ssl_connection_reset() clears it while it replaces d1, and
+     * dtls_listener_connection_free() clears it after unlinking itself.
      */
     if (s->d1 != NULL && s->d1->listener != NULL)
-        ossl_dtls_listener_unregister_established_conn(s->d1->listener,
-            &s->d1->peer_addr);
+        ossl_dtls_listener_unregister_conn(s->d1->listener, ssl);
 #endif
 
     if (s->d1 != NULL)
@@ -439,8 +440,15 @@ void dtls1_free(SSL *ssl)
             s->listener_rx = NULL;
         ossl_dtls_rx_free(rx);
 
-        if (s->d1->listener != NULL)
+        /*
+         * Only a connection the application accepted holds a reference on
+         * its listener. One the listener still owns gets here with the
+         * pointer set if its method is replaced, see SSL_set_ssl_method().
+         */
+        if (s->d1->listener != NULL && s->listener_ref_held) {
+            s->listener_ref_held = 0;
             SSL_free(s->d1->listener);
+        }
     }
 #endif
 
@@ -618,26 +626,30 @@ void dtls1_start_timer(SSL_CONNECTION *s)
     dtls1_bio_set_next_timeout(SSL_get_rbio(ssl), s->d1);
 }
 
+/*
+ * The time left on the retransmit timer at |now|, or 0 if no timer is
+ * running. A timer within 15 ms of expiry reads as expired, to prevent issues
+ * because of small divergences with socket timeouts.
+ */
+static int dtls1_get_timeout_at(const SSL_CONNECTION *s, OSSL_TIME now,
+    OSSL_TIME *timeleft)
+{
+    if (ossl_time_is_zero(s->d1->next_timeout))
+        return 0;
+
+    *timeleft = ossl_time_subtract(s->d1->next_timeout, now);
+    if (ossl_time_compare(*timeleft, ossl_ms2time(15)) <= 0)
+        *timeleft = ossl_time_zero();
+    return 1;
+}
+
 int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft)
 {
-    OSSL_TIME timenow;
-
     /* If no timeout is set, just return NULL */
     if (ossl_time_is_zero(s->d1->next_timeout))
         return 0;
 
-    /* Get current time */
-    timenow = ossl_time_now();
-
-    /*
-     * If timer already expired or if remaining time is less than 15 ms,
-     * set it to 0 to prevent issues because of small divergences with
-     * socket timeouts.
-     */
-    *timeleft = ossl_time_subtract(s->d1->next_timeout, timenow);
-    if (ossl_time_compare(*timeleft, ossl_ms2time(15)) <= 0)
-        *timeleft = ossl_time_zero();
-    return 1;
+    return dtls1_get_timeout_at(s, ossl_time_now(), timeleft);
 }
 
 int dtls1_is_timer_expired(SSL_CONNECTION *s)
@@ -1445,6 +1457,160 @@ void DTLS_set_timer_cb(SSL *ssl, DTLS_timer_cb cb)
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 /*
+ * The listener's run queue holds the pending connections its next tick
+ * drives. A connection is queued when it is created, whenever a datagram is
+ * routed to it, when its retransmit timer is due, and after a drive that
+ * left it with work: input it did not consume, or a handshake not waiting
+ * for input. A pending connection waiting for its peer is not queued and
+ * costs a tick nothing, so a tick is proportional to the connections with
+ * something to do rather than to the pending table. The queue is driven in
+ * the order queued, first come first served.
+ *
+ * The listener's timer queue holds the pending connections that wait for
+ * their peer with a retransmit timer running, as every DTLS 1.3 connection
+ * does once it has sent its HelloRetryRequest, ordered by the timer's
+ * deadline. A tick moves the ones that are due to the run queue and looks at
+ * no other.
+ *
+ * Both are protected by dl->mutex.
+ */
+DEFINE_QUEUE_OF(listener_run, DTLS_LISTENER_CONN);
+
+/*
+ * The queue links a connection through the block it was given when it was
+ * registered in pending_conns (sc->listener_conn), so a connection that was
+ * never registered has nothing to be queued by, and is not.
+ */
+static void dtls_listener_queue_run(DTLS_LISTENER *dl, SSL_CONNECTION *sc)
+{
+    DTLS_LISTENER_CONN *lc = sc->listener_conn;
+
+    if (lc != NULL && !ossl_queue_listener_run_hashed(lc))
+        ossl_queue_listener_run_add_tail(&dl->run_queue, &dl->run_last, lc);
+}
+
+/* A no-op for a connection that is not queued. */
+static void dtls_listener_dequeue_run(DTLS_LISTENER *dl, SSL_CONNECTION *sc)
+{
+    DTLS_LISTENER_CONN *lc = sc->listener_conn;
+
+    if (lc != NULL && ossl_queue_listener_run_hashed(lc))
+        ossl_queue_listener_run_del_keep_tail(&dl->run_queue, &dl->run_last,
+            lc);
+}
+
+/*
+ * The tree keeps one element per key and refuses a second, so connections
+ * with the same deadline are told apart by their address.
+ */
+static int dtls_listener_timer_cmp(const DTLS_LISTENER_CONN *a,
+    const DTLS_LISTENER_CONN *b)
+{
+    int c = ossl_time_compare(a->timer_at, b->timer_at);
+
+    if (c != 0)
+        return c;
+    return (uintptr_t)a < (uintptr_t)b ? -1 : (uintptr_t)a > (uintptr_t)b;
+}
+
+OSSL_RBT_PROTOTYPE(ossl_dtls_listener_timers, dtls_listener_conn_st, timer_rbe,
+    dtls_listener_timer_cmp)
+
+OSSL_RBT_GENERATE(ossl_dtls_listener_timers, dtls_listener_conn_st, timer_rbe,
+    dtls_listener_timer_cmp);
+
+/*
+ * Wait on the timer queue for the connection's running retransmit timer.
+ * Nothing but a drive of the connection changes the timer, and collecting it
+ * for one takes it off the queue, so the deadline it is queued by stays the
+ * timer's. A no-op for a connection that was never registered, as for the
+ * run queue.
+ */
+static void dtls_listener_timer_add(DTLS_LISTENER *dl, SSL_CONNECTION *sc)
+{
+    DTLS_LISTENER_CONN *lc = sc->listener_conn;
+
+    if (lc == NULL || lc->timer_queued)
+        return;
+
+    lc->timer_at = sc->d1->next_timeout;
+    /* No two connections compare equal, so none can be in its place. */
+    (void)OSSL_RBT_INSERT(ossl_dtls_listener_timers, &dl->timers, lc);
+    lc->timer_queued = 1;
+    dl->num_timers++;
+
+    /* The tree does not keep its earliest element at hand: we do. */
+    if (dl->timer_first == NULL
+        || dtls_listener_timer_cmp(lc, dl->timer_first) < 0)
+        dl->timer_first = lc;
+}
+
+/* Take a connection that is on the timer queue off it. */
+static void dtls_listener_timer_unlink(DTLS_LISTENER *dl,
+    DTLS_LISTENER_CONN *lc)
+{
+    if (dl->timer_first == lc)
+        dl->timer_first = OSSL_RBT_NEXT(ossl_dtls_listener_timers, lc);
+    (void)OSSL_RBT_REMOVE(ossl_dtls_listener_timers, &dl->timers, lc);
+    /* Unlinked again for its next insertion, which debug builds check. */
+    OSSL_RBT_INIT_RBE(ossl_dtls_listener_timers, lc);
+    lc->timer_queued = 0;
+    dl->num_timers--;
+}
+
+/* A no-op for a connection that is not on the timer queue. */
+static void dtls_listener_timer_del(DTLS_LISTENER *dl, SSL_CONNECTION *sc)
+{
+    DTLS_LISTENER_CONN *lc = sc->listener_conn;
+
+    if (lc != NULL && lc->timer_queued)
+        dtls_listener_timer_unlink(dl, lc);
+}
+
+/*
+ * Move the connections whose retransmit timer is due at |now| to the run
+ * queue. As dtls1_get_timeout(), a timer within 15 ms of expiry counts as
+ * expired.
+ */
+static void dtls_listener_run_due_timers(DTLS_LISTENER *dl, OSSL_TIME now)
+{
+    DTLS_LISTENER_CONN *lc;
+
+    while ((lc = dl->timer_first) != NULL) {
+        if (ossl_time_compare(ossl_time_subtract(lc->timer_at, now),
+                ossl_ms2time(15))
+            > 0)
+            break;
+        dtls_listener_timer_unlink(dl, lc);
+        dtls_listener_queue_run(dl, lc->sc);
+    }
+}
+
+/*
+ * Take a connection off the run queue and the timer queue: it is no longer
+ * pending, or about to be driven. A no-op for one that is on neither.
+ */
+static void dtls_listener_unqueue(DTLS_LISTENER *dl, SSL_CONNECTION *sc)
+{
+    dtls_listener_dequeue_run(dl, sc);
+    dtls_listener_timer_del(dl, sc);
+}
+
+/*
+ * Has a connection the listener owns been cut off from it? Replacing the
+ * connection's DTLS state can do that behind the listener's back: a reset
+ * that fails to reallocate the state (ossl_ssl_connection_reset()), or a
+ * change of method that tears it down through dtls1_free(), unregisters the
+ * connection and frees its input queue. It is then in neither lookup table
+ * and can receive nothing, so all that is left for the listener to do is free
+ * it; nothing else will.
+ */
+static int dtls_listener_conn_detached(const SSL_CONNECTION *sc)
+{
+    return sc->d1 == NULL || sc->listener_rx == NULL;
+}
+
+/*
  * dtls_listener_connection_free - free an SSL connection owned by the listener.
  *
  * This function is used to free SSL connections that are in the listener's
@@ -1465,8 +1631,20 @@ void DTLS_set_timer_cb(SSL *ssl, DTLS_timer_cb cb)
  * The assert on ssl->references == 1 ensures that nobody else has taken a
  * reference to this connection while it was in the listener's queues. If
  * this assert fires, something has gone wrong with ownership tracking.
+ *
+ * The connection may be linked into pending_conns or established_conns
+ * through the lookup link it owns, and be on the run queue or the timer
+ * queue, so it is unlinked from all of them here, before the memory goes
+ * away, rather than by every caller. The caller holds the listener mutex, or
+ * is tearing the listener down, or has already unlinked the connection under
+ * the mutex, which makes the unlink here a no-op.
+ *
+ * |dl| is the listener that owns the connection. The caller passes it because
+ * the connection cannot be relied on to name it: sc->d1->listener is gone once
+ * the connection has been cut off from the listener, see
+ * dtls_listener_conn_detached().
  */
-static void dtls_listener_connection_free(SSL *ssl)
+static void dtls_listener_connection_free(DTLS_LISTENER *dl, SSL *ssl)
 {
     SSL_CONNECTION *sc;
 
@@ -1474,12 +1652,17 @@ static void dtls_listener_connection_free(SSL *ssl)
         return;
 
     sc = SSL_CONNECTION_FROM_SSL(ssl);
+    /* Whatever is left of the connection, it must not stay on a queue. */
+    if (sc != NULL)
+        dtls_listener_unqueue(dl, sc);
+    ossl_dgram_conn_lookup_unregister(ssl);
 
     if (sc != NULL && sc->d1 != NULL) {
         /*
-         * Clear listener reference to prevent dtls1_free() from calling
-         * SSL_free() on the listener. The connection does not own the listener
-         * and SSL_free must not free the listener
+         * Clear the listener pointer so that dtls1_free() leaves the listener
+         * alone: the connection is unlinked already, and unlinking it again
+         * would take the listener mutex, which the caller may hold. The
+         * connection does not own the listener and holds no reference on it.
          */
         sc->d1->listener = NULL;
     }
@@ -1584,7 +1767,7 @@ static SSL *dtls_listener_create_conn_ssl(DTLS_LISTENER *dl,
     return ssl;
 
 err:
-    dtls_listener_connection_free(ssl);
+    dtls_listener_connection_free(dl, ssl);
     return NULL;
 }
 
@@ -1614,25 +1797,31 @@ static void dtls_listener_signal_notifier(DTLS_LISTENER *dl)
  * the URXE to the appropriate connection based on peer address, creating a
  * new pending connection if necessary.
  *
- * The URXE ownership is transferred to the connection's DTLS_RX queue.
- * If routing fails, the URXE is released back to the demux.
+ * The URXE ownership is transferred to the connection's DTLS_RX queue and 1
+ * is returned. If routing fails, 0 is returned and the demux takes the URXE
+ * back.
  */
-static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
+static int dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 {
     DTLS_LISTENER *dl = arg;
     SSL *conn_ssl = NULL;
     SSL_CONNECTION *sc = NULL;
+    DGRAM_CONN_KEY key;
     int pending = 0;
 
     ossl_crypto_mutex_lock(dl->mutex);
 
+    /* The tables share a hashing key, so the peer address is hashed once */
+    if (!ossl_dgram_conn_lookup_hash(dl->pending_conns, &urxe->peer, &key))
+        goto release;
+
     /* Check established connections first */
     if (dl->established_conns != NULL)
-        conn_ssl = ossl_dgram_conn_lookup_find(dl->established_conns, urxe);
+        conn_ssl = ossl_dgram_conn_lookup_find_key(dl->established_conns, &key);
 
     /* Check pending connections */
     if (conn_ssl == NULL) {
-        conn_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
+        conn_ssl = ossl_dgram_conn_lookup_find_key(dl->pending_conns, &key);
         pending = 1;
     }
 
@@ -1640,7 +1829,7 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     if (conn_ssl == NULL) {
         /*
          * Reject before allocating anything if the pending connection limit
-         * is reached. The LHASH item count is O(1) and the check does not
+         * is reached. The lookup's item count is O(1) and the check does not
          * need a conn_ssl.
          */
         if (ossl_dgram_conn_lookup_num_items(dl->pending_conns)
@@ -1658,8 +1847,9 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
          * another thread grabs the lock and tries to register a connection
          * for this address.
          */
-        if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
-            dtls_listener_connection_free(conn_ssl);
+        if (!ossl_dgram_conn_lookup_register_key(dl->pending_conns, &key,
+                &urxe->peer, conn_ssl)) {
+            dtls_listener_connection_free(dl, conn_ssl);
             goto release;
         }
 
@@ -1676,8 +1866,7 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 
             sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
             if (sc == NULL || sc->d1 == NULL) {
-                ossl_dgram_conn_lookup_unregister(dl->pending_conns, &urxe->peer);
-                dtls_listener_connection_free(conn_ssl);
+                dtls_listener_connection_free(dl, conn_ssl);
                 goto release;
             }
 
@@ -1691,18 +1880,18 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
                 dl->ssl.ctx->new_pending_conn_arg);
             ossl_crypto_mutex_lock(dl->mutex);
 
-            if (!keep) {
+            if (!keep || dtls_listener_conn_detached(sc)) {
                 /*
-                 * The pending callback doesn't want this connection, so
-                 * unregister and free it. While the mutex was dropped a
-                 * concurrent handler may have found this same connection and
-                 * injected datagrams into its RX queue; freeing releases them
-                 * back to the demux via ossl_dtls_rx_free(), so nothing leaks.
+                 * The pending callback doesn't want this connection, or cut
+                 * it off from the listener, so free it, which also unlinks it
+                 * from pending_conns. While the mutex was dropped a concurrent
+                 * handler may have found this same connection and injected
+                 * datagrams into its RX queue; freeing releases them back to
+                 * the demux via ossl_dtls_rx_free(), so nothing leaks.
                  * being_driven kept the tick away, so the connection still
                  * holds only its single reference and the free is safe.
                  */
-                ossl_dgram_conn_lookup_unregister(dl->pending_conns, &urxe->peer);
-                dtls_listener_connection_free(conn_ssl);
+                dtls_listener_connection_free(dl, conn_ssl);
                 goto release;
             }
 
@@ -1717,6 +1906,10 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     /* Inject packet into connection's URXE queue */
     ossl_dtls_rx_inject_urxe(sc->listener_rx, urxe);
 
+    /* The next tick drives a pending connection that has input. */
+    if (pending)
+        dtls_listener_queue_run(dl, sc);
+
     /*
      * A connection being driven is rechecked by its driver in phase 3 of
      * dtls_listener_drive_pass(). Anything else needs another pass.
@@ -1728,11 +1921,11 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     dtls_listener_signal_notifier(dl);
 
     ossl_crypto_mutex_unlock(dl->mutex);
-    return;
+    return 1;
 
 release:
     ossl_crypto_mutex_unlock(dl->mutex);
-    ossl_dgram_demux_release_urxe(dl->demux, urxe);
+    return 0;
 }
 
 /*
@@ -2060,7 +2253,7 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     ossl_dgram_demux_set_max_free_urxe(dl->demux, DEMUX_MAX_FREE_URXE);
 
     /* Set up the packet handler callback for routing datagrams to connections */
-    ossl_dgram_demux_set_default_handler(dl->demux, dtls_listener_packet_handler, dl);
+    ossl_dgram_demux_set_route_handler(dl->demux, dtls_listener_packet_handler, dl);
 
     dl->incoming_connections = sk_SSL_new_null();
     if (dl->incoming_connections == NULL) {
@@ -2068,17 +2261,29 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
         goto err;
     }
 
-    dl->pending_conns = ossl_dgram_conn_lookup_new_addr();
+    /* Sized for the default pending limit; a raised limit grows it */
+    dl->pending_conns = ossl_dgram_conn_lookup_new_addr(NULL,
+        DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS);
     if (dl->pending_conns == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
-    dl->established_conns = ossl_dgram_conn_lookup_new_addr();
+    /*
+     * Sharing the hashing key, so that a datagram's peer address is hashed
+     * once. Unbounded, it starts small and grows with the connections.
+     */
+    dl->established_conns = ossl_dgram_conn_lookup_new_addr(dl->pending_conns, 0);
     if (dl->established_conns == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
+    ossl_queue_init(&dl->run_queue);
+    dl->run_last = NULL;
+
+    OSSL_RBT_INIT(ossl_dtls_listener_timers, &dl->timers);
+    dl->timer_first = NULL;
+    dl->num_timers = 0;
 
     dl->net_rbio = NULL;
     dl->net_wbio = NULL;
@@ -2151,11 +2356,14 @@ err:
 /*
  * Callback to free SSL objects in pending_conns hash table.
  * The pending_conns hash table owns the SSL objects it contains,
- * so we must free them before freeing the hash table itself.
+ * so we must free them before freeing the hash table itself. The free
+ * unlinks the connection being iterated, which the iteration allows.
  */
 static void dtls_free_pending_ssl_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
-    dtls_listener_connection_free(ssl);
+    DTLS_LISTENER *dl = arg;
+
+    dtls_listener_connection_free(dl, ssl);
 }
 
 void ossl_dtls_listener_free(SSL *s)
@@ -2172,7 +2380,11 @@ void ossl_dtls_listener_free(SSL *s)
         while (sk_SSL_num(dl->incoming_connections) > 0) {
             SSL *conn = sk_SSL_pop(dl->incoming_connections);
 
-            dtls_listener_connection_free(conn);
+            /*
+             * Connections queued for SSL_accept_connection() are registered
+             * in established_conns; the free unlinks them.
+             */
+            dtls_listener_connection_free(dl, conn);
         }
         sk_SSL_free(dl->incoming_connections);
         dl->incoming_connections = NULL;
@@ -2182,7 +2394,8 @@ void ossl_dtls_listener_free(SSL *s)
      * Free all pending connections in the hash table.
      */
     if (dl->pending_conns != NULL) {
-        ossl_dgram_conn_lookup_foreach(dl->pending_conns, dtls_free_pending_ssl_cb, NULL);
+        ossl_dgram_conn_lookup_foreach(dl->pending_conns, dtls_free_pending_ssl_cb,
+            dl);
         ossl_dgram_conn_lookup_free(dl->pending_conns);
         dl->pending_conns = NULL;
     }
@@ -2192,6 +2405,11 @@ void ossl_dtls_listener_free(SSL *s)
         ossl_dgram_conn_lookup_free(dl->established_conns);
         dl->established_conns = NULL;
     }
+
+    /* Every pending connection is gone, and with it what was on the queue. */
+    OSSL_RBT_INIT(ossl_dtls_listener_timers, &dl->timers);
+    dl->timer_first = NULL;
+    dl->num_timers = 0;
 
     ossl_crypto_mutex_free(&dl->mutex);
 
@@ -2330,6 +2548,7 @@ static int dtls_listener_conn_needs_retry(SSL *ssl)
  */
 typedef struct {
     DTLS_LISTENER *dl;
+    OSSL_TIME now; /* The listener's clock, for expiring pending connections */
     int ready_count; /* Connections ready to move to established */
     int error_count; /* Connections with fatal errors */
     STACK_OF(SSL) *to_drive; /* Connections to drive (collected in phase 1) */
@@ -2337,90 +2556,175 @@ typedef struct {
     STACK_OF(SSL) *failed_conns; /* Connections to remove */
 } DRIVE_PENDING_CTX;
 
+/* Push onto a drive pass stack, creating it on first use. */
+static int drive_ctx_push(STACK_OF(SSL) **sk, SSL *ssl)
+{
+    if (*sk == NULL && (*sk = sk_SSL_new_null()) == NULL)
+        return 0;
+    return sk_SSL_push(*sk, ssl) > 0;
+}
+
 /*
- * Callback for collecting pending connections to drive.
- * Called with dl->mutex held. Marks connections as being_driven and up-refs them.
- * Also checks for timed-out connections and marks them as failed.
+ * Expire a pending connection whose handshake has not completed within
+ * dl->pending_timeout. Called with dl->mutex held, in registration order:
+ * every pending connection has the same timeout, so the first one that is
+ * not due ends the walk, whatever the number of connections behind it.
  */
-static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+static int expire_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     DRIVE_PENDING_CTX *ctx = arg;
-    DTLS_LISTENER *dl = ctx->dl;
-    SSL_CONNECTION *sc;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    OSSL_TIME age;
 
-    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     if (sc == NULL)
-        return;
+        return 1;
 
     /*
-     * Skip if already being driven by another thread.
+     * Being driven by another thread: its driver's phase 3 is about to look
+     * at it, and the next tick retries it. Check this before touching sc->d1,
+     * even to test it for NULL, as the driver may be replacing it
+     * (SSL_clear() frees and reallocates it) without holding dl->mutex.
      */
     if (sc->listener_being_driven)
-        return;
+        return 1;
 
-    if (sc->listener_rx == NULL || sc->d1 == NULL)
-        return;
+    if (sc->d1 == NULL)
+        return 1;
 
     /*
-     * Check if this pending connection has exceeded the timeout.
-     * Stale connections that haven't completed their handshake are removed
-     * to prevent resource exhaustion from incomplete handshakes.
+     * Stamped ahead of the clock: created_at comes from the listener's
+     * clock, the wall clock unless overridden (see ossl_time_now()), and that
+     * has stepped back since. Left alone, this connection would not be due
+     * until the clock has made up the whole step, and neither would any
+     * connection behind it, as the walk ends at the first one that is not
+     * due: the table would fill up to max_pending_conns with stale
+     * connections and the listener admit nobody new for as long as that
+     * takes. So age it from here instead, which delays its expiry by one
+     * pending timeout at most, and go on: the connections behind it either
+     * need the same or were created after the step, with a stamp that can be
+     * trusted. Nothing else reads or writes the stamp of a connection that
+     * is not being driven, and dl->mutex is held.
      */
-    if (!ossl_time_is_infinite(dl->pending_timeout)) {
-        OSSL_TIME now = dtls_listener_get_time_direct(dl);
-        OSSL_TIME age = ossl_time_subtract(now, sc->d1->created_at);
+    if (ossl_time_compare(sc->d1->created_at, ctx->now) > 0) {
+        sc->d1->created_at = ctx->now;
+        return 1;
+    }
 
-        if (ossl_time_compare(age, dl->pending_timeout) > 0) {
-            /*
-             * Connection has timed out - mark for removal
-             *
-             * Set being_driven so that a concurrent ossl_dtls_tick() running
-             * phase 1 hits the being_driven check above and skips this
-             * connection, instead of collecting it and freeing it a second
-             * time (double-free).
-             *
-             * No up-ref is needed: phase 1 runs under dl->mutex, so collection
-             * is serialized, and being_driven keeps any other tick away until
-             * our phase 3 frees this connection. The single pending-queue
-             * reference is released by dtls_listener_connection_free() in the
-             * failed_conns loop.
-             *
-             * We intentionally do not handle a failed push specially: if the
-             * push fails (allocation failure) the connection stays registered
-             * in pending_conns and is simply retried on the next tick.
-             */
-            if (ctx->failed_conns != NULL && sk_SSL_push(ctx->failed_conns, ssl) > 0) {
-                sc->listener_being_driven = 1;
-                ctx->error_count++;
-            }
-            return;
+    /*
+     * Not due, so nothing behind it is either, and the walk ends here: the
+     * connections are walked in the order they were created and stamped, and
+     * a stamp the clock has stepped back behind was replaced above.
+     */
+    age = ossl_time_subtract(ctx->now, sc->d1->created_at);
+    if (ossl_time_compare(age, ctx->dl->pending_timeout) <= 0)
+        return 0;
+
+    /*
+     * Connection has timed out - mark for removal
+     *
+     * Set being_driven so that a concurrent ossl_dtls_tick() running
+     * phase 1 hits the being_driven check above and skips this
+     * connection, instead of collecting it and freeing it a second
+     * time (double-free).
+     *
+     * No up-ref is needed: phase 1 runs under dl->mutex, so collection
+     * is serialized, and being_driven keeps any other tick away until
+     * our phase 3 frees this connection. The single pending-queue
+     * reference is released by dtls_listener_connection_free() in the
+     * failed_conns loop.
+     *
+     * We intentionally do not handle a failed push specially: if the
+     * push fails (allocation failure) the connection stays registered
+     * in pending_conns and is simply retried on the next tick.
+     */
+    if (drive_ctx_push(&ctx->failed_conns, ssl)) {
+        sc->listener_being_driven = 1;
+        ctx->error_count++;
+    }
+    return 1;
+}
+
+/*
+ * Is the connection's retransmit timer running and due at |now|? As
+ * dtls1_is_timer_expired(), with the same 15 ms slack, at the |now| the tick
+ * read once for every connection it looks at.
+ */
+static int dtls_listener_timer_due(const SSL_CONNECTION *sc, OSSL_TIME now)
+{
+    OSSL_TIME timeleft;
+
+    return dtls1_get_timeout_at(sc, now, &timeleft)
+        && ossl_time_is_zero(timeleft);
+}
+
+/*
+ * Collect the connections to drive from the run queue, once the ones whose
+ * retransmit timer is due have been moved there. Called with dl->mutex held.
+ * Each one collected is taken off the queues, marked being_driven and
+ * up-referenced, so that it stays valid after the mutex is released; its
+ * driver requeues it in phase 3 if it is left with work. A queued connection
+ * that has nothing to do after all leaves the run queue, for the timer queue
+ * if its retransmit timer runs.
+ */
+static void collect_runnable(DTLS_LISTENER *dl, DRIVE_PENDING_CTX *ctx)
+{
+    DTLS_LISTENER_CONN *lc, *next;
+    OSSL_TIME now = ossl_time_zero();
+
+    /* The retransmit timers run on the system clock, as dtls1_start_timer(). */
+    if (!ossl_queue_empty(&dl->run_queue) || dl->timer_first != NULL)
+        now = ossl_time_now();
+
+    dtls_listener_run_due_timers(dl, now);
+
+    OSSL_QUEUE_FOREACH_DELSAFE (lc, next, listener_run, &dl->run_queue) {
+        SSL_CONNECTION *sc = lc->sc;
+        SSL *ssl = SSL_CONNECTION_GET_SSL(sc);
+
+        /* Another thread's, or expired above: left to its driver. */
+        if (sc->listener_being_driven)
+            continue;
+
+        if (sc->listener_rx == NULL || sc->d1 == NULL) {
+            dtls_listener_unqueue(dl, sc);
+            continue;
         }
+
+        if (sc->listener_idle && !dtls_listener_timer_due(sc, now)) {
+            int empty;
+
+            ossl_crypto_mutex_lock(sc->listener_rx->mutex);
+            empty = ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending);
+            ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
+            if (empty) {
+                /*
+                 * Waiting for its peer: nothing to drive until input comes
+                 * or its retransmit timer, if one runs, is due.
+                 */
+                if (!ossl_time_is_zero(sc->d1->next_timeout))
+                    dtls_listener_timer_add(dl, sc);
+                dtls_listener_dequeue_run(dl, sc);
+                continue;
+            }
+        }
+
+        /*
+         * Up-ref and add to list first, then mark as being driven.
+         * The up-ref ensures the connection stays valid while we drive it
+         * without holding the mutex.
+         */
+        if (!SSL_up_ref(ssl))
+            continue;
+
+        if (!drive_ctx_push(&ctx->to_drive, ssl)) {
+            SSL_free(ssl); /* Release the ref we just took */
+            continue;
+        }
+
+        /* Its drive is what stops or restarts its retransmit timer. */
+        dtls_listener_unqueue(dl, sc);
+        sc->listener_being_driven = 1;
     }
-
-    if (sc->listener_idle && !dtls1_is_timer_expired(sc)) {
-        int empty;
-
-        ossl_crypto_mutex_lock(sc->listener_rx->mutex);
-        empty = ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending);
-        ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
-        if (empty)
-            return;
-    }
-
-    /*
-     * Up-ref and add to list first, then mark as being driven.
-     * The up-ref ensures the connection stays valid while we drive it
-     * without holding the mutex.
-     */
-    if (!SSL_up_ref(ssl))
-        return;
-
-    if (sk_SSL_push(ctx->to_drive, ssl) <= 0) {
-        SSL_free(ssl); /* Release the ref we just took */
-        return;
-    }
-
-    sc->listener_being_driven = 1;
 }
 
 /*
@@ -2466,9 +2770,16 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     if (dl->require_hrr_cookie || dl->require_hvr_cookie)
         sc->s3.flags &= ~TLS1_FLAGS_STATELESS;
 
+    /*
+     * The drive cut the connection off from the listener, so it is neither
+     * ready nor pending and goes on none of the stacks: phase 3 frees it.
+     */
+    if (dtls_listener_conn_detached(sc))
+        return;
+
     /* Check if connection is ready to move to established */
     if (dtls_listener_conn_ready(ssl, dl)) {
-        if (ctx->ready_conns != NULL && sk_SSL_push(ctx->ready_conns, ssl) > 0)
+        if (drive_ctx_push(&ctx->ready_conns, ssl))
             ctx->ready_count++;
         return;
     }
@@ -2484,7 +2795,7 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
 
     /* Fatal error on this connection - mark for removal */
     if (ssl_err == SSL_ERROR_SYSCALL || ssl_err == SSL_ERROR_SSL) {
-        if (ctx->failed_conns != NULL && sk_SSL_push(ctx->failed_conns, ssl) > 0)
+        if (drive_ctx_push(&ctx->failed_conns, ssl))
             ctx->error_count++;
     }
 }
@@ -2505,7 +2816,6 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
  * Returns:
  *   1   At least one connection was moved to incoming_connections
  *   0   No connections completed (all still pending or failed)
- *  -1   Fatal error
  */
 static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
     int *again)
@@ -2517,26 +2827,34 @@ static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
 
     memset(&ctx, 0, sizeof(ctx));
     ctx.dl = dl;
-    ctx.to_drive = sk_SSL_new_null();
-    ctx.ready_conns = sk_SSL_new_null();
-    ctx.failed_conns = sk_SSL_new_null();
-
-    if (ctx.to_drive == NULL || ctx.ready_conns == NULL
-        || ctx.failed_conns == NULL) {
-        sk_SSL_free(ctx.to_drive);
-        sk_SSL_free(ctx.ready_conns);
-        sk_SSL_free(ctx.failed_conns);
-        return -1;
-    }
+    /* The stacks are created by their first push: most passes need none. */
 
     /*
-     * Phase 1: Collect connections to drive.
-     * Hold mutex while iterating pending_conns, mark connections as being_driven,
-     * and up-ref them so they stay valid after we release the mutex.
+     * Phase 1: Expire stale pending connections, oldest first, queue the
+     * ones whose retransmit timer is due, and collect the connections to
+     * drive from the run queue rather than from the whole pending table.
+     * Hold the mutex meanwhile, mark the collected connections as
+     * being_driven, and up-ref them so they stay valid after we release the
+     * mutex.
      */
     ossl_crypto_mutex_lock(dl->mutex);
     dl->pending_input = 0;
-    ossl_dgram_conn_lookup_foreach(dl->pending_conns, collect_pending_cb, &ctx);
+    if (!ossl_time_is_infinite(dl->pending_timeout)) {
+        ctx.now = dtls_listener_get_time_direct(dl);
+        ossl_dgram_conn_lookup_foreach_until(dl->pending_conns,
+            expire_pending_cb, &ctx);
+    }
+    collect_runnable(dl, &ctx);
+
+    /*
+     * Nothing to drive and nothing expired: phase 3 would find nothing to
+     * update. Input queued from here on sets pending_input for the next tick.
+     */
+    if (ctx.to_drive == NULL && ctx.failed_conns == NULL) {
+        *again = 0;
+        ossl_crypto_mutex_unlock(dl->mutex);
+        return 0;
+    }
     ossl_crypto_mutex_unlock(dl->mutex);
 
     /*
@@ -2565,12 +2883,39 @@ static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
         sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
         if (sc != NULL) {
+            int input = 0;
+
             sc->listener_being_driven = 0;
+            if (dtls_listener_conn_detached(sc)) {
+                /*
+                 * Its drive cut it off from the listener, which has it in no
+                 * table to find it by again: free it here, once the reference
+                 * from phase 1 is released.
+                 */
+                SSL_free(ssl);
+                dtls_listener_connection_free(dl, ssl);
+                continue;
+            }
             if (sc->listener_idle && sc->listener_rx != NULL) {
                 ossl_crypto_mutex_lock(sc->listener_rx->mutex);
-                if (!ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
-                    dl->pending_input = 1;
+                input = !ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending);
                 ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
+                if (input)
+                    dl->pending_input = 1;
+            }
+            /*
+             * Queue it for the next tick if it is left with work: input it
+             * did not consume, or a handshake not waiting for input.
+             * Otherwise it waits for its peer off the run queue, however it
+             * got there while it was being driven, and on the timer queue if
+             * its retransmit timer runs.
+             */
+            if (input || !sc->listener_idle) {
+                dtls_listener_queue_run(dl, sc);
+            } else {
+                if (sc->d1 != NULL && !ossl_time_is_zero(sc->d1->next_timeout))
+                    dtls_listener_timer_add(dl, sc);
+                dtls_listener_dequeue_run(dl, sc);
             }
         }
 
@@ -2588,12 +2933,19 @@ static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
         /* Get peer address from the connection */
         if (BIO_ADDR_family(&sc->d1->peer_addr) != AF_UNSPEC) {
 
-            /* Remove from pending */
-            ossl_dgram_conn_lookup_unregister(dl->pending_conns, &sc->d1->peer_addr);
+            /* Remove from pending and from the listener's queues */
+            ossl_dgram_conn_lookup_unregister(ssl);
+            dtls_listener_unqueue(dl, sc);
 
-            /* Add to established connections (inline, we already hold mutex) */
+            /*
+             * Add to established connections (inline, we already hold mutex).
+             * That is refused, and the connection dropped, if its peer
+             * address is one an established connection already has: it is
+             * registered under the address it has now, which the application
+             * may have changed since its ClientHello came in.
+             */
             if (dl->established_conns == NULL || !ossl_dgram_conn_lookup_register_addr(dl->established_conns, &sc->d1->peer_addr, ssl)) {
-                dtls_listener_connection_free(ssl);
+                dtls_listener_connection_free(dl, ssl);
                 continue;
             }
 
@@ -2601,10 +2953,8 @@ static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
             if (sk_SSL_push(dl->incoming_connections, ssl) > 0) {
                 result = 1;
             } else {
-                /* Failed to add to queue, unregister and free */
-                ossl_dgram_conn_lookup_unregister(dl->established_conns,
-                    &sc->d1->peer_addr);
-                dtls_listener_connection_free(ssl);
+                /* Failed to add to queue: free, which also unregisters */
+                dtls_listener_connection_free(dl, ssl);
             }
         }
     }
@@ -2617,16 +2967,12 @@ static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
     if (result)
         dtls_listener_signal_notifier(dl);
 
-    /* Remove failed connections (after releasing refs so ref count is 1) */
-    for (i = 0; i < sk_SSL_num(ctx.failed_conns); i++) {
-        ssl = sk_SSL_value(ctx.failed_conns, i);
-        sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-
-        if (sc != NULL && sc->d1 != NULL)
-            ossl_dgram_conn_lookup_unregister(dl->pending_conns, &sc->d1->peer_addr);
-
-        dtls_listener_connection_free(ssl);
-    }
+    /*
+     * Remove failed connections (after releasing refs so ref count is 1).
+     * The free unlinks them from pending_conns.
+     */
+    for (i = 0; i < sk_SSL_num(ctx.failed_conns); i++)
+        dtls_listener_connection_free(dl, sk_SSL_value(ctx.failed_conns, i));
 
     *again = dl->pending_input;
     /* Out of passes: make sure a blocked waiter ticks again. */
@@ -2649,14 +2995,11 @@ static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
  */
 static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
 {
-    int pass, ret, again = 0, result = 0;
+    int pass, again = 0, result = 0;
 
     for (pass = 0; pass < DTLS_LISTENER_MAX_DRIVE_PASSES; pass++) {
-        ret = dtls_listener_drive_pass(dl,
-            pass == DTLS_LISTENER_MAX_DRIVE_PASSES - 1, &again);
-        if (ret < 0)
-            return -1;
-        if (ret > 0)
+        if (dtls_listener_drive_pass(dl,
+                pass == DTLS_LISTENER_MAX_DRIVE_PASSES - 1, &again))
             result = 1;
         if (!again)
             break;
@@ -2837,13 +3180,14 @@ end:
             /*
              * Ownership did not transfer to the application. A connection taken
              * from incoming_connections is still registered in established_conns;
+             * unlink it under the listener mutex, which is not held here.
              */
-            if (sc != NULL && sc->d1 != NULL)
-                ossl_dtls_listener_unregister_established_conn(ssl, &sc->d1->peer_addr);
-            dtls_listener_connection_free(conn);
+            ossl_dtls_listener_unregister_conn(ssl, conn);
+            dtls_listener_connection_free(dl, conn);
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
+        sc->listener_ref_held = 1;
     }
     return conn;
 }
@@ -3042,28 +3386,30 @@ SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
 }
 
 /*
- * ossl_dtls_listener_unregister_established_conn - unregister an established
- * connection from the listener.
+ * ossl_dtls_listener_unregister_conn - unlink a connection created by this
+ * listener from whichever of its lookup tables it is registered in.
  *
- * Called when a DTLS connection created by this listener is being freed.
+ * Takes the listener mutex. Called when such a connection is being freed
+ * outside the listener's own locked paths: by dtls1_free() for a connection
+ * the application owns, by ossl_ssl_connection_reset() when it cannot
+ * restore the listener association, and by SSL_accept_connection() when
+ * ownership fails to transfer.
  */
-void ossl_dtls_listener_unregister_established_conn(SSL *s, const BIO_ADDR *peer_addr)
+void ossl_dtls_listener_unregister_conn(SSL *s, SSL *conn)
 {
     DTLS_LISTENER *dl;
+    SSL_CONNECTION *sc;
 
-    if (!IS_DTLS_LISTENER(s))
-        return;
-
-    if (peer_addr == NULL || BIO_ADDR_family(peer_addr) == AF_UNSPEC)
+    if (!IS_DTLS_LISTENER(s) || conn == NULL)
         return;
 
     dl = (DTLS_LISTENER *)s;
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(conn);
 
     ossl_crypto_mutex_lock(dl->mutex);
-
-    if (dl->established_conns != NULL)
-        ossl_dgram_conn_lookup_unregister(dl->established_conns, peer_addr);
-
+    if (sc != NULL)
+        dtls_listener_unqueue(dl, sc);
+    ossl_dgram_conn_lookup_unregister(conn);
     ossl_crypto_mutex_unlock(dl->mutex);
 }
 
@@ -3080,7 +3426,7 @@ void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl)
 
     if (dl->established_conns != NULL)
         ossl_dgram_conn_lookup_free(dl->established_conns);
-    dl->established_conns = ossl_dgram_conn_lookup_new_addr();
+    dl->established_conns = ossl_dgram_conn_lookup_new_addr(dl->pending_conns, 0);
 
     ossl_crypto_mutex_unlock(dl->mutex);
 }
