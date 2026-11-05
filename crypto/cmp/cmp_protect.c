@@ -273,12 +273,6 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         if (ctx->protectionAlg == NULL
             && (msg->header->protectionAlg = pbmac_algor(ctx)) == NULL)
             goto err;
-
-        /*
-         * will add any additional certificates from ctx->extraCertsOut
-         * while not needed to validate the protection certificate,
-         * the option to do this might be handy for certain use cases
-         */
     } else if (ctx->cert != NULL && ctx->pkey != NULL) {
         /* use MSG_SIG_ALG according to RFC 9810 5.1.3.3 if client cert and key given */
         if (ctx->protectionAlg == NULL
@@ -294,11 +288,6 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         /* set senderKID to keyIdentifier of the cert according to 5.1.1 */
         if (!set_senderKID(ctx, msg, X509_get0_subject_key_id(ctx->cert)))
             goto err;
-
-        /*
-         * will add ctx->cert followed, if possible, by its chain built
-         * from ctx->untrusted, and then ctx->extraCertsOut
-         */
     } else {
         ERR_raise(ERR_LIB_CMP,
             CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
@@ -313,10 +302,10 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         goto err;
 
     /*
-     * For signature-based protection add ctx->cert followed by its chain.
-     * Finally add any additional certificates from ctx->extraCertsOut;
-     * even if not needed to validate the protection
-     * the option to do this might be handy for certain use cases.
+     * For signature-based protection, add ctx->cert followed by its chain.
+     * In any case, append any given additional certificates from ctx->extraCertsOut;
+     * even if not needed to validate the protection.
+     * The option to do this might be handy for certain use cases.
      */
     if (!ossl_cmp_msg_add_extraCerts(ctx, msg))
         goto err;
