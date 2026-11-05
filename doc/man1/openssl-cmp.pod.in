@@ -1554,6 +1554,11 @@ The B<-engine> option was removed in OpenSSL 4.0.
 
 The B<-nonmatched_error_nonces> option was added in OpenSSL 4.1.
 
+Since OpenSSL 4.2,
+following an RFC 9483 requirement, it is ensured that for efficiency
+reasons the sender of CMP messages is consistent within a transaction
+on the protection algorithm used, including PBM parameters like the salt.
+
 =head1 COPYRIGHT
 
 Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.

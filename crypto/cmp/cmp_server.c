@@ -609,18 +609,23 @@ static int assuming_new_transaction(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
 /* Prepare for next transaction */
 static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
 {
+    OSSL_CMP_CTX *ctx = srv_ctx->ctx;
     int ret = 1;
 
-    srv_ctx->ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
+    ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
     srv_ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
     srv_ctx->polling = 0;
 
     if (srv_ctx->clean_transaction != NULL)
-        ret = srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID);
-    if (!OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL))
+        ret = srv_ctx->clean_transaction(srv_ctx, ctx->transactionID);
+    if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL))
         ret = 0;
-    if (!OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL))
+    if (!OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
         ret = 0;
+    X509_ALGOR_free(ctx->protectionAlg);
+    ctx->protectionAlg = NULL;
+    EVP_MD_free(ctx->prot_sig_md);
+    ctx->prot_sig_md = NULL;
     return ret;
 }
 
@@ -689,6 +694,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     req_verified = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
         srv_ctx->acceptUnprotected);
     if (ctx->secretValue != NULL && ctx->pkey != NULL
+        && ctx->protectionAlg == NULL /* so far, undecided on the protection style */
         && ossl_cmp_hdr_get_protection_nid(hdr) != NID_id_PasswordBasedMAC)
         ctx->secretValue = NULL; /* use MSG_SIG_ALG when protecting rsp */
     if (!req_verified)

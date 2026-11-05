@@ -191,6 +191,15 @@ OpenSSL 4.2
 
    *Alex Gaynor*
 
+ * Following an RFC 9483 requirement, it is now ensured that for efficiency
+   reasons the sender of CMP messages is consistent within a transaction
+   on the protection algorithm used, including PBM parameters like the salt.
+
+   This work was sponsored by Siemens AG.
+   <!-- https://github.com/openssl/openssl/pull/29043 -->
+
+   *David von Oheimb*
+
 OpenSSL 4.1
 -----------
 

@@ -184,9 +184,12 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
     ctx->status = OSSL_CMP_PKISTATUS_unspecified;
     ctx->failInfoCode = -1;
 
+    X509_ALGOR_free(ctx->protectionAlg);
+    ctx->protectionAlg = NULL;
+    EVP_MD_free(ctx->prot_sig_md);
+    ctx->prot_sig_md = NULL;
     OSSL_CMP_ITAVs_free(ctx->genm_ITAVs);
     ctx->genm_ITAVs = NULL;
-
     return ossl_cmp_ctx_set0_statusString(ctx, NULL)
         && ossl_cmp_ctx_set0_newCert(ctx, NULL)
         && ossl_cmp_ctx_set1_newChain(ctx, NULL)
@@ -223,6 +226,8 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     X509_STORE_free(ctx->trusted);
     OSSL_STACK_OF_X509_free(ctx->untrusted);
 
+    X509_ALGOR_free(ctx->protectionAlg);
+    EVP_MD_free(ctx->prot_sig_md);
     X509_free(ctx->cert);
     OSSL_STACK_OF_X509_free(ctx->chain);
     EVP_PKEY_free(ctx->pkey);

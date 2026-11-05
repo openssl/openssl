@@ -69,8 +69,10 @@ struct ossl_cmp_ctx_st {
      */
     int permitTAInExtraCertsForIR;
 
-    /* client authentication */
+    /* sender authentication */
     int unprotectedSend; /* send unprotected PKI messages */
+    X509_ALGOR *protectionAlg; /* alg used in current transaction, to memorize salt etc. */
+    EVP_MD *prot_sig_md; /* cache for digest derived from protectionAlg when signing a message */
     X509 *cert; /* protection cert used to identify and sign for MSG_SIG_ALG */
     STACK_OF(X509) *chain; /* (cached) chain of protection cert including it */
     EVP_PKEY *pkey; /* the key pair corresponding to cert */

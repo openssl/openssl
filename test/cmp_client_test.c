@@ -27,6 +27,7 @@ typedef struct test_fixture {
     int req_type;
     int expected;
     STACK_OF(X509) *caPubs;
+    X509_ALGOR *first_protection_alg;
 } CMP_SES_TEST_FIXTURE;
 
 static OSSL_LIB_CTX *libctx = NULL;
@@ -37,6 +38,7 @@ static X509 *server_cert = NULL;
 static EVP_PKEY *client_key = NULL;
 static X509 *client_cert = NULL;
 static unsigned char ref[CMP_TEST_REFVALUE_LENGTH]; /* not actually used */
+#define TEST_PBM_SECRET (const unsigned char *)"1234", 4
 
 /*
  * For these unit tests, the client abandons message protection, and for
@@ -49,6 +51,7 @@ static void tear_down(CMP_SES_TEST_FIXTURE *fixture)
     OSSL_CMP_CTX_free(fixture->cmp_ctx);
     ossl_cmp_mock_srv_free(fixture->srv_ctx);
     sk_X509_free(fixture->caPubs);
+    X509_ALGOR_free(fixture->first_protection_alg);
     OPENSSL_free(fixture);
 }
 
@@ -354,6 +357,27 @@ static OSSL_CMP_MSG *transfer_rr_no_issuer(OSSL_CMP_CTX *ctx,
     return transfer_rr_partial_certDetails(ctx, req, 0);
 }
 
+static OSSL_CMP_MSG *transfer_check_same_protection_alg(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    CMP_SES_TEST_FIXTURE *fixture = OSSL_CMP_CTX_get_transfer_cb_arg(ctx);
+
+    if (fixture == NULL)
+        return NULL;
+    if (fixture->first_protection_alg == NULL) {
+        if (req->header->protectionAlg != NULL
+            && !TEST_ptr(fixture->first_protection_alg = X509_ALGOR_dup(req->header->protectionAlg)))
+            return NULL;
+    } else if (fixture->first_protection_alg != NULL) {
+        /* client must reuse the previous protection alg, such as PBM including its salt */
+        if (req->header->protectionAlg == NULL
+            || !TEST_int_eq(X509_ALGOR_cmp(fixture->first_protection_alg, req->header->protectionAlg), 0))
+            return NULL;
+    }
+
+    return OSSL_CMP_SRV_process_request(fixture->srv_ctx, req);
+}
+
 /*
  * The RR identifies the cert to be revoked only partially, by just its issuer
  * or just its serial number. The mock server has a reference cert, so it must
@@ -473,12 +497,12 @@ static int test_exec_CR_ses_implicit_confirm(void)
 static int test_exec_KUR_ses(int transfer_error, int server_use_bad_protection,
     int pubkey, int raverified)
 {
+    OSSL_CMP_CTX *ctx, *srv_ctx;
+
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
     fixture->req_type = OSSL_CMP_PKIBODY_KUR;
     /* ctx->oldCert has already been set */
 
-    if (transfer_error)
-        OSSL_CMP_CTX_set_transfer_cb_arg(fixture->cmp_ctx, NULL);
     (void)ossl_cmp_mock_srv_set_useBadProtection(fixture->srv_ctx, server_use_bad_protection);
 
     if (pubkey) {
@@ -493,6 +517,19 @@ static int test_exec_KUR_ses(int transfer_error, int server_use_bad_protection,
     if (pubkey || raverified)
         OSSL_CMP_CTX_set_option(fixture->cmp_ctx, OSSL_CMP_OPT_POPO_METHOD,
             OSSL_CRMF_POPO_RAVERIFIED);
+    ctx = fixture->cmp_ctx;
+    srv_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(fixture->srv_ctx);
+    if (transfer_error) {
+        OSSL_CMP_CTX_set_transfer_cb_arg(ctx, NULL);
+    } else if (!TEST_true(OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_SEND, 0))
+        || !TEST_true(OSSL_CMP_CTX_set1_secretValue(ctx, TEST_PBM_SECRET))
+        || !TEST_true(OSSL_CMP_CTX_set1_secretValue(srv_ctx, TEST_PBM_SECRET))
+        || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(srv_ctx, ref, sizeof(ref)))
+        || !TEST_true(OSSL_CMP_CTX_set_transfer_cb_arg(ctx, fixture))
+        || !TEST_true(OSSL_CMP_CTX_set_transfer_cb(ctx, transfer_check_same_protection_alg))) {
+        tear_down(fixture);
+        return 0;
+    }
     fixture->expected = transfer_error ? OSSL_CMP_PKISTATUS_trans : raverified ? (pubkey ? OSSL_CMP_PKISTATUS_rejected_by_client : OSSL_CMP_PKISTATUS_rejection)
         : server_use_bad_protection != -1                                      ? OSSL_CMP_PKISTATUS_checking_response
                                                                                : OSSL_CMP_PKISTATUS_accepted;
