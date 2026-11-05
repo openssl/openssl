@@ -1606,6 +1606,69 @@ end:
     return ret;
 }
 
+#ifndef OPENSSL_NO_ML_KEM
+/*
+ * Provider keys for the PQ algorithms are not reference counted, so the
+ * key exported to a second provider must stay alive while an encapsulation
+ * context made from it is in use, even after the origin key's dirty count
+ * changes and the key is exported to a third provider.  ML-KEM has a
+ * set_params method, so EVP_PKEY_set_params() does change the dirty count.
+ * Run under ASan to see the failure.
+ */
+static int test_pq_export_survives_set_params(void)
+{
+    OSSL_PARAM noparams[] = { OSSL_PARAM_END };
+    OSSL_LIB_CTX *libctx[3] = { NULL, NULL, NULL };
+    EVP_PKEY_CTX *ectx = NULL, *other = NULL, *dctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    unsigned char *wrapped = NULL;
+    unsigned char secret[64], secret2[64];
+    size_t wlen = 0, slen = 0, slen2 = sizeof(secret2);
+    int i, ret = 0;
+
+    for (i = 0; i < 3; i++)
+        if (!TEST_ptr(libctx[i] = OSSL_LIB_CTX_new()))
+            goto end;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx[0], NULL, "ML-KEM-768"))
+        /* Exported to the second provider */
+        || !TEST_ptr(ectx = EVP_PKEY_CTX_new_from_pkey(libctx[1], pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_encapsulate_init(ectx, NULL), 0)
+        /* The key does not change, but its dirty count does */
+        || !TEST_true(EVP_PKEY_set_params(pkey, noparams))
+        /* Exported to the third provider */
+        || !TEST_ptr(other = EVP_PKEY_CTX_new_from_pkey(libctx[2], pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_encapsulate_init(other, NULL), 0))
+        goto end;
+
+    /* The second provider's context must still work */
+    if (!TEST_int_gt(EVP_PKEY_encapsulate(ectx, NULL, &wlen, NULL, &slen), 0)
+        || !TEST_size_t_le(slen, sizeof(secret))
+        || !TEST_ptr(wrapped = OPENSSL_malloc(wlen))
+        || !TEST_int_gt(EVP_PKEY_encapsulate(ectx, wrapped, &wlen, secret,
+                            &slen),
+            0)
+        || !TEST_ptr(dctx = EVP_PKEY_CTX_new_from_pkey(libctx[0], pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_decapsulate_init(dctx, NULL), 0)
+        || !TEST_int_gt(EVP_PKEY_decapsulate(dctx, secret2, &slen2, wrapped,
+                            wlen),
+            0)
+        || !TEST_mem_eq(secret, slen, secret2, slen2))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_free(wrapped);
+    EVP_PKEY_CTX_free(dctx);
+    EVP_PKEY_CTX_free(other);
+    EVP_PKEY_CTX_free(ectx);
+    EVP_PKEY_free(pkey);
+    for (i = 0; i < 3; i++)
+        OSSL_LIB_CTX_free(libctx[i]);
+    return ret;
+}
+#endif
+
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
 static int test_evp_pbe_alg_add(void)
 {
@@ -1801,6 +1864,9 @@ int setup_tests(void)
     ADD_TEST(test_evp_md_ctx_dup);
     ADD_TEST(test_evp_md_ctx_copy);
     ADD_TEST(test_evp_md_ctx_copy2);
+#ifndef OPENSSL_NO_ML_KEM
+    ADD_TEST(test_pq_export_survives_set_params);
+#endif
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
     ADD_TEST(test_evp_pbe_alg_add);
