@@ -17,6 +17,9 @@
 #include <crypto/ml_kem.h>
 #include "testutil.h"
 #include "testutil/output.h"
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#include "internal/cryptlib.h"
+#endif
 
 static uint8_t ml_kem_private_entropy[] = {
     /* Seed for genkey */
@@ -311,6 +314,108 @@ err:
     return ret;
 }
 
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+/*-
+ * AVX512F, AVX512DQ, AVX512BW, and AVX512VL. SHA3_avx512vl_capable()
+ * requires all four in OPENSSL_ia32cap_P[2], the dword at
+ * OPENSSL_ia32cap_P+8. AVX512VL is bit 31.
+ */
+#define ML_KEM_AVX512_SHAKE_X4_MASK \
+    ((1u << 16) | (1u << 17) | (1u << 30) | (1u << 31))
+
+static int matrix_matches(int evp_type, const uint8_t rho[ML_KEM_RANDOM_BYTES])
+{
+    ML_KEM_KEY *fast = NULL, *slow = NULL;
+    const ML_KEM_VINFO *v;
+    uint8_t *ek = NULL;
+    unsigned int saved;
+    size_t mbytes;
+    int ret = 0;
+
+    fast = ossl_ml_kem_key_new(NULL, NULL, evp_type);
+    slow = ossl_ml_kem_key_new(NULL, NULL, evp_type);
+    if (!TEST_ptr(fast) || !TEST_ptr(slow))
+        goto err;
+    v = ossl_ml_kem_key_vinfo(fast);
+    if (!TEST_ptr(v))
+        goto err;
+
+    ek = OPENSSL_zalloc(v->pubkey_bytes);
+    if (!TEST_ptr(ek))
+        goto err;
+    memcpy(ek + v->vector_bytes, rho, ML_KEM_RANDOM_BYTES);
+
+    if (!TEST_true(ossl_ml_kem_parse_public_key(ek, v->pubkey_bytes, fast)))
+        goto err;
+
+    saved = OPENSSL_ia32cap_P[2];
+    /* Clearing AVX512VL, bit 31, makes SHA3_avx512vl_capable() fail. */
+    OPENSSL_ia32cap_P[2] = saved & ~(1u << 31);
+    if (!TEST_true(ossl_ml_kem_parse_public_key(ek, v->pubkey_bytes, slow))) {
+        OPENSSL_ia32cap_P[2] = saved;
+        goto err;
+    }
+    OPENSSL_ia32cap_P[2] = saved;
+
+    /*-
+     * key->m is rank * rank scalars stored contiguously. Each scalar is
+     * ML_KEM_DEGREE uint16_t SampleNTT coefficients, in NTT form.
+     */
+    mbytes = (size_t)v->rank * (size_t)v->rank * ML_KEM_DEGREE * sizeof(uint16_t);
+    if (!TEST_mem_eq(fast->m, mbytes, slow->m, mbytes))
+        goto err;
+
+    ret = 1;
+err:
+    ossl_ml_kem_key_free(fast);
+    ossl_ml_kem_key_free(slow);
+    OPENSSL_free(ek);
+    return ret;
+}
+
+/*-
+ * Byte-match matrix A from the x4 path with the same matrix generated
+ * with AVX512VL forced off. Ranks 2 and 4 fill an exact number of
+ * four-lane groups. Rank 3 is nine polynomials: two x4 groups and one
+ * scalar polynomial.
+ */
+static int matrix_expand_x4_test(void)
+{
+    static const int alg[3] = {
+        EVP_PKEY_ML_KEM_512,
+        EVP_PKEY_ML_KEM_768,
+        EVP_PKEY_ML_KEM_1024
+    };
+    static const uint8_t rho_zero[ML_KEM_RANDOM_BYTES] = { 0 };
+    static const uint8_t rho_ff[ML_KEM_RANDOM_BYTES] = {
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    };
+    static const uint8_t rho_rand[ML_KEM_RANDOM_BYTES] = {
+        0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,
+        0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+        0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c,
+        0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51
+    };
+    const uint8_t *rhos[3] = { rho_zero, rho_ff, rho_rand };
+    int i, r;
+
+    if ((OPENSSL_ia32cap_P[2] & ML_KEM_AVX512_SHAKE_X4_MASK)
+        != ML_KEM_AVX512_SHAKE_X4_MASK)
+        return TEST_skip("AVX512VL SHAKE x4 is not available");
+
+    for (i = 0; i < (int)OSSL_NELEM(alg); i++) {
+        for (r = 0; r < (int)OSSL_NELEM(rhos); r++) {
+            if (!matrix_matches(alg[i], rhos[r]))
+                return 0;
+        }
+    }
+    return 1;
+}
+#endif
+
 int setup_tests(void)
 {
     if (!TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no", NULL, NULL)))
@@ -318,5 +423,8 @@ int setup_tests(void)
 
     ADD_TEST(sanity_test);
     ADD_MFAIL_TEST(decap_mfail_test);
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+    ADD_TEST(matrix_expand_x4_test);
+#endif
     return 1;
 }
