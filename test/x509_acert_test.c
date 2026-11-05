@@ -149,6 +149,51 @@ done:
     return ret;
 }
 
+/*
+ * AttributeCertificateInfo whose AttCertIssuer uses the v1Form branch of the
+ * CHOICE (a plain SEQUENCE OF GeneralName holding one dNSName).
+ */
+static const unsigned char acert_v1_issuer[] = {
+    0x30, 0x60, 0x30, 0x4c, 0x02, 0x01, 0x01, 0x30, 0x00, 0x30, 0x0d, 0x82,
+    0x0b, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d,
+    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
+    0x0b, 0x05, 0x00, 0x02, 0x01, 0x01, 0x30, 0x22, 0x18, 0x0f, 0x31, 0x39,
+    0x37, 0x30, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x5a, 0x18, 0x0f, 0x31, 0x39, 0x37, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x00, 0x30, 0x0d, 0x06, 0x09,
+    0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b, 0x05, 0x00, 0x03,
+    0x01, 0x00
+};
+
+/*
+ * Setting the issuer name on a decoded certificate whose issuer used the
+ * v1Form branch must not treat the v1Form stack as a v2Form.
+ */
+static int test_set1_issuerName_v1form(void)
+{
+    int ret = 0;
+    X509_ACERT *acert = NULL;
+    X509_NAME *name = NULL;
+    const X509_NAME *got;
+    const unsigned char *p = acert_v1_issuer;
+
+    if (!TEST_ptr(acert = d2i_X509_ACERT(NULL, &p, (long)sizeof(acert_v1_issuer)))
+        || !TEST_ptr_null(X509_ACERT_get0_issuerName(acert))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (unsigned char *)"test", -1, -1, 0))
+        || !TEST_true(X509_ACERT_set1_issuerName(acert, name))
+        || !TEST_ptr(got = X509_ACERT_get0_issuerName(acert))
+        || !TEST_int_eq(X509_NAME_cmp(got, name), 0))
+        goto done;
+
+    ret = 1;
+done:
+    X509_NAME_free(name);
+    X509_ACERT_free(acert);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("[<attribute certs (PEM)>...]\n")
 int setup_tests(void)
 {
@@ -168,6 +213,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_print_acert, cnt);
     ADD_TEST(test_acert_sign);
     ADD_ALL_TESTS(test_object_group_attr, OSSL_NELEM(ietf_syntax_tests));
+    ADD_TEST(test_set1_issuerName_v1form);
 
     return 1;
 }
