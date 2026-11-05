@@ -249,7 +249,8 @@ sub fuzz_check_max_time {
 
 sub fuzz_ok {
     my ($f, %opts) = @_;
-    my $d = srctop_dir('fuzz', 'corpora', $f);
+    # the corpus of the fuzzer, unless the caller has prepared another
+    my $d = $opts{corpus} // srctop_dir('fuzz', 'corpora', $f);
 
     SKIP: {
         skip "No directory $d", 1 unless -d $d;

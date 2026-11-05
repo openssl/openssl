@@ -15,6 +15,7 @@
 #include "crypto/x509.h"
 #include "crypto/asn1.h"
 #include "x509_local.h"
+#include "internal/hashfunc.h"
 
 /*
  * Maximum length of X509_NAME: much larger than anything we should
@@ -324,6 +325,8 @@ static int x509_name_canon(X509_NAME *a)
     OPENSSL_free(a->canon_enc);
     a->canon_enc = NULL;
     a->canon_enclen = 0;
+    /* The hash of no bytes, for the empty name and for a failure below */
+    a->canon_hash = ossl_fnv1a_hash(NULL, 0);
     /* Special case: empty X509_NAME => null encoding */
     if (sk_X509_NAME_ENTRY_num(a->entries) == 0) {
         a->canon_enclen = 0;
@@ -382,6 +385,7 @@ static int x509_name_canon(X509_NAME *a)
 
     a->canon_enc = buf;
     a->canon_enclen = len;
+    a->canon_hash = ossl_fnv1a_hash(buf, len);
     buf = NULL;
     ret = 1;
 
