@@ -18,7 +18,7 @@
 #include "internal/quic_predef.h"
 #include "internal/quic_stream.h"
 #include "internal/quic_fc.h"
-#include <openssl/lhash.h>
+#include "internal/htable.h"
 
 #ifndef OPENSSL_NO_QUIC
 
@@ -78,12 +78,11 @@ struct quic_stream_list_node_st {
 #define QUIC_RSTREAM_STATE_RESET_READ 6 /* /                    */
 
 struct quic_stream_st {
-    QUIC_STREAM_LIST_NODE active_node; /* for use by QUIC_STREAM_MAP */
-    QUIC_STREAM_LIST_NODE accept_node; /* accept queue of remotely-created streams */
-    QUIC_STREAM_LIST_NODE ready_for_gc_node; /* queue of streams now ready for GC */
-
-    /* Temporary link used by TXP. */
-    QUIC_STREAM *txp_next;
+    /*
+     * Membership of the QUIC_STREAM_MAP stream ID hash table, kept on the
+     * same cache line as the ID it is looked up by.
+     */
+    OSSL_HTABLE_MEMBER(qsm);
 
     /*
      * QUIC Stream ID. Do not assume that this encodes a type as this is a
@@ -91,6 +90,13 @@ struct quic_stream_st {
      * use the type field.
      */
     uint64_t id;
+
+    QUIC_STREAM_LIST_NODE active_node; /* for use by QUIC_STREAM_MAP */
+    QUIC_STREAM_LIST_NODE accept_node; /* accept queue of remotely-created streams */
+    QUIC_STREAM_LIST_NODE ready_for_gc_node; /* queue of streams now ready for GC */
+
+    /* Temporary link used by TXP. */
+    QUIC_STREAM *txp_next;
 
     /*
      * Application Error Code (AEC) used for STOP_SENDING frame.
@@ -553,8 +559,22 @@ static ossl_inline ossl_unused size_t ossl_quic_stream_recv_pending(const QUIC_S
  *   - allows iteration over the active streams only.
  *
  */
+/*
+ * Stream ID index. The table starts with 1 << QUIC_STREAM_MAP_MIN_BITS
+ * buckets held in the map itself (128 bytes on LP64), enough for a
+ * connection with a handful of streams, and grows with the number of
+ * streams the connection has open, up to 1 << QUIC_STREAM_MAP_MAX_BITS.
+ */
+#define QUIC_STREAM_MAP_MIN_BITS 4
+#define QUIC_STREAM_MAP_MAX_BITS 20
+
+DEFINE_QUEUE_OF(qsm, QUIC_STREAM);
+DEFINE_HTABLE_DYN_OF(qsm, QUIC_STREAM, QUIC_STREAM_MAP_MIN_BITS,
+    QUIC_STREAM_MAP_MAX_BITS);
+typedef OSSL_HTABLE(qsm) QUIC_STREAM_TABLE;
+
 struct quic_stream_map_st {
-    LHASH_OF(QUIC_STREAM) *map;
+    QUIC_STREAM_TABLE map; /* stream ID -> QUIC_STREAM, nodes embedded in streams */
     QUIC_CHANNEL *ch;
     QUIC_STREAM_LIST_NODE active_list;
     QUIC_STREAM_LIST_NODE accept_list;
