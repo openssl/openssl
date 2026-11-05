@@ -7047,8 +7047,10 @@ static int create_mem_listener_conn(SSL_CTX *sctx, SSL_CTX *cctx,
  *
  * The filter BIO rejects one send as non-fatal, as a full socket buffer would.
  * The error queue must stay empty, and repeating the write must succeed.
+ *
+ * idx 0 runs with DTLS 1.2, idx 1 with DTLS 1.3.
  */
-static int test_dtls_nonblocking_write_retry(void)
+static int test_dtls_nonblocking_write_retry(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
@@ -7057,12 +7059,23 @@ static int test_dtls_nonblocking_write_retry(void)
     int testresult = 0;
     char buf[256];
     size_t written = 0, readbytes = 0;
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
     int ret;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (idx == 1)
+        return TEST_skip("DTLS 1.3 disabled");
+#endif
 
     memset(&data, 0, sizeof(data));
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+            DTLS_client_method(), version, version, &sctx, &cctx,
+            cert, privkey)))
         goto end;
 
     if (!TEST_true(create_mem_listener_conn(sctx, cctx, &data, &listener,
@@ -7167,21 +7180,34 @@ end:
 /*
  * As above, but with the transient failure produced by a real full send
  * buffer: the client never reads.
+ *
+ * idx 0 runs with DTLS 1.2, idx 1 with DTLS 1.3.
  */
-static int test_dtls_nonblocking_write_dgram_pair_full(void)
+static int test_dtls_nonblocking_write_dgram_pair_full(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL, *serverssl = NULL, *clientssl = NULL;
     BIO_ADDR *client_addr = NULL;
     size_t written = 0, readbytes = 0;
     unsigned char payload[1000], buf[2048];
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
     int testresult = 0;
     int i, ret = 1;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (idx == 1)
+        return TEST_skip("DTLS 1.3 disabled");
+#endif
 
     memset(payload, 'x', sizeof(payload));
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+            DTLS_client_method(), version, version, &sctx, &cctx,
+            cert, privkey)))
         goto end;
 
     if (!TEST_true(create_mem_listener_conn(sctx, cctx, NULL, &listener,
@@ -7210,13 +7236,24 @@ static int test_dtls_nonblocking_write_dgram_pair_full(void)
     if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
         goto end;
 
-    memset(payload, 'y', sizeof(payload));
+    /*
+     * The retry must use the same data and length as the write which reported
+     * SSL_ERROR_WANT_WRITE, so the payload is left unchanged.
+     */
     if (!TEST_true(SSL_write_ex(serverssl, payload, sizeof(payload), &written))
         || !TEST_size_t_eq(written, sizeof(payload)))
         goto end;
 
     /* The retried payload is delivered. */
     if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, payload, sizeof(payload)))
+        goto end;
+
+    /* A later write with new contents shows the connection is still usable. */
+    memset(payload, 'y', sizeof(payload));
+    if (!TEST_true(SSL_write_ex(serverssl, payload, sizeof(payload), &written))
+        || !TEST_size_t_eq(written, sizeof(payload))
+        || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
         || !TEST_mem_eq(buf, readbytes, payload, sizeof(payload)))
         goto end;
 
@@ -7458,8 +7495,10 @@ end:
  * the other one must not, and a write on each must then be delivered.
  *
  * This uses real UDP sockets, as a datagram pair has only one peer.
+ *
+ * idx 0 runs with DTLS 1.2, idx 1 with DTLS 1.3.
  */
-static int test_dtls_nonblocking_write_retry_two_conns(void)
+static int test_dtls_nonblocking_write_retry_two_conns(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL, *client[2] = { NULL, NULL };
@@ -7471,12 +7510,23 @@ static int test_dtls_nonblocking_write_retry_two_conns(void)
     int testresult = 0;
     size_t written = 0, readbytes = 0, i;
     char buf[16];
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
     int ret;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (idx == 1)
+        return TEST_skip("DTLS 1.3 disabled");
+#endif
 
     memset(&data, 0, sizeof(data));
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+            DTLS_client_method(), version, version, &sctx, &cctx,
+            cert, privkey)))
         goto end;
 
     if (!TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
@@ -9270,15 +9320,15 @@ int setup_tests(void)
     ADD_TEST(test_dtls_blocking_mode_failed_set_is_inert);
     ADD_TEST(test_dtls_accept_wait_requires_mode_and_flag);
     ADD_TEST(test_dtls_blocking_write);
-    ADD_TEST(test_dtls_nonblocking_write_retry);
+    ADD_ALL_TESTS(test_dtls_nonblocking_write_retry, 2);
     ADD_TEST(test_dtls_nonblocking_write_fatal);
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_ALL_TESTS(test_dtls_nonblocking_handshake_flush_failure, 4);
 #endif
-    ADD_TEST(test_dtls_nonblocking_write_dgram_pair_full);
+    ADD_ALL_TESTS(test_dtls_nonblocking_write_dgram_pair_full, 2);
     ADD_TEST(test_dtls_nonblocking_read_retry);
     ADD_TEST(test_dtls_blocking_write_listener_failed);
-    ADD_TEST(test_dtls_nonblocking_write_retry_two_conns);
+    ADD_ALL_TESTS(test_dtls_nonblocking_write_retry_two_conns, 2);
 
     /* SSL object ownership tests (run with ASAN to detect leaks/double-frees) */
     ADD_TEST(test_ssl_ownership_pending_conn_leak);
