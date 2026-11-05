@@ -43,7 +43,9 @@ static char *datadir = NULL;
 static int is_fips = 0;
 
 static BIO_ADDR *create_addr(struct in_addr *ina, short int port);
+#if OPENSSL_USE_IPV6
 static BIO_ADDR *create_addr6(struct in6_addr *ina, short int port);
+#endif
 static int bio_addr_bind(BIO *bio, BIO_ADDR *addr);
 static SSL *ql_create(SSL_CTX *ssl_ctx, BIO *bio);
 static SSL_CTX *create_server_ctx(void);
@@ -2737,6 +2739,7 @@ static BIO_ADDR *create_addr(struct in_addr *ina, short int port)
     return addr;
 }
 
+#if OPENSSL_USE_IPV6
 static BIO_ADDR *create_addr6(struct in6_addr *ina, short int port)
 {
     BIO_ADDR *addr = NULL;
@@ -2752,6 +2755,7 @@ static BIO_ADDR *create_addr6(struct in6_addr *ina, short int port)
 
     return addr;
 }
+#endif
 
 static int bio_addr_bind(BIO *bio, BIO_ADDR *addr)
 {
@@ -5002,51 +5006,88 @@ static int test_quic_peer_addr_v6(void)
         "::2", 4434);
 }
 
+/*
+ * Test to ensure the use of getpeername in dgram bios
+ * doesn't return uninitialized data
+ */
 static int test_quic_detect_peer_addr_v6(void)
 {
     int ret = 0;
     BIO *cbio = NULL, *sbio = NULL;
     int csock, ssock;
-    BIO_ADDR *caddr, *saddr;
+    BIO_ADDR *caddr = NULL, *saddr = NULL;
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *client = NULL, *server = NULL;
     struct in6_addr v6addr = IN6ADDR_LOOPBACK_INIT;
     int rc, i;
     static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
     BIO_ADDR test_addr = { 0 };
+    int serr;
+    SSL *sconn = NULL;
 
+    /*
+     * Create 2 ipv6 addresses
+     */
     caddr = create_addr6(&v6addr, 4080);
     saddr = create_addr6(&v6addr, 8040);
 
-    if (!TEST_ptr(caddr) || !TEST_ptr(saddr))
+    if (!TEST_ptr(caddr) || !TEST_ptr(saddr)) {
+        ret = TEST_skip("Platform can't create ipv6 addresses");
         goto out;
+    }
 
+    /*
+     * Create udp sockets for each, set them to nonblocking
+     * bind them to their respective addresses
+     */
     csock = BIO_socket(BIO_ADDR_family(caddr), SOCK_DGRAM, IPPROTO_UDP, 0);
     ssock = BIO_socket(BIO_ADDR_family(saddr), SOCK_DGRAM, IPPROTO_UDP, 0);
 
-    if (!TEST_true(BIO_socket_nbio(csock, 1)))
+    if (!TEST_int_ne(csock, INVALID_SOCKET) || !TEST_int_ne(ssock, INVALID_SOCKET)) {
+        ret = TEST_skip("Platform can't create ipv6 sockets");
+        BIO_closesocket(csock);
+        BIO_closesocket(ssock);
         goto out;
-    if (!TEST_true(BIO_socket_nbio(ssock, 1)))
+    }
+    if (!TEST_true(BIO_socket_nbio(csock, 1))
+        || !TEST_true(BIO_socket_nbio(ssock, 1))) {
+        BIO_closesocket(csock);
+        BIO_closesocket(ssock);
         goto out;
+    }
 
-    if (!TEST_true(BIO_bind(csock, caddr, BIO_SOCK_REUSEADDR)))
+    if (!TEST_true(BIO_bind(csock, caddr, BIO_SOCK_REUSEADDR))
+        || !TEST_true(BIO_bind(ssock, saddr, BIO_SOCK_REUSEADDR))) {
+        ret = TEST_skip("Platform can't bind ipv6 addresses");
+        BIO_closesocket(csock);
+        BIO_closesocket(ssock);
         goto out;
-    if (!TEST_true(BIO_bind(ssock, saddr, BIO_SOCK_REUSEADDR)))
-        goto out;
+    }
 
+    /*
+     * Note we must use dgram bios here, not dgram bio pairs, as we
+     * need the bio to call getpeername when we use the DETECT ctrl below
+     */
     cbio = BIO_new_dgram(csock, BIO_CLOSE);
     if (!TEST_ptr(cbio)) {
-        close(csock);
-        close(ssock);
-        TEST_skip("Platform does not support IPv6");
+        /*
+         * If we can't bind the bio to an ipv6 socket, then
+         * this platform doesn't support ipv6
+         */
+        BIO_closesocket(csock);
+        BIO_closesocket(ssock);
+        ret = TEST_skip("Platform does not support IPv6");
         goto out;
     }
     sbio = BIO_new_dgram(ssock, BIO_CLOSE);
     if (!TEST_ptr(sbio)) {
-        close(ssock);
+        BIO_closesocket(ssock);
         goto out;
     }
 
+    /*
+     * Setup out SSL contexts and objects
+     */
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
         goto out;
@@ -5054,6 +5095,13 @@ static int test_quic_detect_peer_addr_v6(void)
         || !TEST_ptr(client = SSL_new(cctx)))
         goto out;
 
+    /*
+     * Connect the socket before starting the SSL connection,
+     * doing so drives the BIO to auto detect the peer address
+     * When the SSL handshake starts.
+     * If we set it locally before the SSL_connect, then the QUIC
+     * stack has no need to auto detect.
+     */
     if (!TEST_true(BIO_connect(csock, saddr, 0)))
         goto out;
 
@@ -5072,25 +5120,46 @@ static int test_quic_detect_peer_addr_v6(void)
     if (!TEST_true(SSL_set_tlsext_host_name(client, "localhost")))
         goto out;
 
-    /* Send ClientHello and server retry. */
+    /*
+     * Send ClientHello and server retry.  The connection doesn't actually
+     * have to complete, it just needs to start connecting so that QUIC detects
+     * the peer address.
+     */
     for (i = 0; i < 5; i++) {
         rc = SSL_connect(client);
-        if (!TEST_int_le(rc, 0)
-            || !TEST_int_eq(SSL_get_error(client, rc), SSL_ERROR_WANT_READ))
-            goto out;
+        if (rc <= 0) {
+            serr = SSL_get_error(client, rc);
+
+            if (serr == SSL_ERROR_SYSCALL) {
+                ret = TEST_skip("Platform does not support operating on connected sockets");
+                goto out;
+            }
+            if (!TEST_int_eq(serr, SSL_ERROR_WANT_READ))
+                goto out;
+        }
         SSL_handle_events(server);
+        sconn = SSL_accept_connection(server, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+        if (sconn != NULL) {
+            TEST_info("Connection established\n");
+            break;
+        }
     }
 
+    /*
+     * Fetch the peer address and compare it to the server address we allocated
+     * above, making sure that they match
+     */
     if (!TEST_true(SSL_get_peer_addr(client, &test_addr)))
         goto out;
-    if (!TEST_mem_eq(&test_addr.s_in6, sizeof(struct sockaddr_in6),
-            &saddr->s_in6, sizeof(struct sockaddr_in6)))
+    if (!TEST_mem_eq(&test_addr.s_in6.sin6_addr, sizeof(struct in6_addr),
+            &saddr->s_in6.sin6_addr, sizeof(struct in6_addr)))
         goto out;
     ret = 1;
 
 out:
     SSL_free(server);
     SSL_free(client);
+    SSL_free(sconn);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     BIO_free(cbio);
