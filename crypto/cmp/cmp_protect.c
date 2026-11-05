@@ -17,9 +17,10 @@
  *
  * Calculate protection for |msg| according to |msg->header->protectionAlg|
  * using the credentials, library context, and property criteria in the ctx.
- * Unless |msg->header->protectionAlg| is PasswordBasedMAC,
- * its value is completed according to |ctx->pkey| and |ctx->digest|,
- * where the latter irrelevant in the case of Edwards curves.
+ * Unless |msg->header->protectionAlg| is PasswordBasedMAC, its value is
+ * completed according to |ctx->pkey| and |ctx->digest| when there is no
+ * cached protection algorithm; otherwise the digest is taken from the cache.
+ * The digest is irrelevant in the case of Edwards curves.
  *
  * returns ASN1_BIT_STRING representing the protection on success, else NULL
  */
@@ -102,7 +103,11 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         OPENSSL_free(prot_part_der);
         return prot;
     } else {
-        const EVP_MD *md = ctx->digest;
+        const EVP_MD *md = ctx->protectionAlg == NULL ? ctx->digest : ctx->prot_sig_md;
+        /*
+         * For consistency, we use the digest alg cached with any given protectionAlg.
+         * The alternative of determining it from protectionAlg can be hard in some cases.
+         */
         char name[80] = "";
 
         if (ctx->pkey == NULL) {
@@ -117,7 +122,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         if ((prot = ASN1_BIT_STRING_new()) == NULL)
             return NULL;
         if (ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART),
-                msg->header->protectionAlg, /* sets X509_ALGOR */
+                msg->header->protectionAlg, /* sets the X509_ALGOR in the header */
                 NULL, prot, &prot_part, NULL, ctx->pkey, md,
                 ctx->libctx, ctx->propq)
             != 0)
@@ -153,7 +158,8 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         return 0;
 
     /* Add first ctx->cert and its chain if using signature-based protection */
-    if (!ctx->unprotectedSend && ctx->secretValue == NULL
+    if (msg->header->protectionAlg != NULL
+        && !IS_MAC_ALG(msg->header->protectionAlg)
         && ctx->cert != NULL && ctx->pkey != NULL) {
         int prepend = X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
             | X509_ADD_FLAG_PREPEND | X509_ADD_FLAG_NO_SS;
@@ -201,7 +207,8 @@ static X509_ALGOR *pbmac_algor(const OSSL_CMP_CTX *ctx)
     pbm = OSSL_CRMF_pbmp_new(ctx->libctx, ctx->pbm_slen,
         EVP_MD_get_type(ctx->pbm_owf), ctx->pbm_itercnt,
         ctx->pbm_mac);
-    pbm_str = ASN1_STRING_new();
+    pbm_str = ASN1_STRING_type_new(V_ASN1_SEQUENCE);
+    /* X509_ALGOR_cmp() would go wrong when using here just X509_STRING_new() */
     if (pbm == NULL || pbm_str == NULL)
         goto err;
     if ((pbm_der_len = i2d_OSSL_CRMF_PBMPARAMETER(pbm, &pbm_der)) < 0)
@@ -241,14 +248,30 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     ASN1_BIT_STRING_free(msg->protection);
     msg->protection = NULL;
 
+    if (!set_senderKID(ctx, msg, NULL)) /* will be changed below for signature-based protection */
+        goto err;
+
     if (ctx->unprotectedSend) {
-        if (!set_senderKID(ctx, msg, NULL))
+        /* add any given ctx->extraCertsOut also to unprotected message */
+        if (!ossl_cmp_msg_add_extraCerts(ctx, msg))
             goto err;
-    } else if (ctx->secretValue != NULL) {
-        /* use PasswordBasedMac according to 5.1.3.1 if secretValue is given */
-        if ((msg->header->protectionAlg = pbmac_algor(ctx)) == NULL)
-            goto err;
-        if (!set_senderKID(ctx, msg, NULL))
+        /* In this case, sender and senderKID are allowed to be missing. */
+        return 1;
+    }
+
+    /*
+     * Set protectionAlg and senderKID.
+     * Use previous protection algorithm in context from same transaction if available,
+     * otherwise set it based on protection mode and available credentials */
+    if (ctx->protectionAlg != NULL
+        && (msg->header->protectionAlg = X509_ALGOR_dup(ctx->protectionAlg)) == NULL)
+        goto err;
+
+    /* client prefers PasswordBasedMac according to RFC 9810 5.1.3.1 if secretValue is given */
+    if (ctx->secretValue != NULL
+        && (ctx->protectionAlg == NULL || IS_MAC_ALG(ctx->protectionAlg))) {
+        if (ctx->protectionAlg == NULL
+            && (msg->header->protectionAlg = pbmac_algor(ctx)) == NULL)
             goto err;
 
         /*
@@ -257,7 +280,10 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
          * the option to do this might be handy for certain use cases
          */
     } else if (ctx->cert != NULL && ctx->pkey != NULL) {
-        /* use MSG_SIG_ALG according to 5.1.3.3 if client cert and key given */
+        /* use MSG_SIG_ALG according to RFC 9810 5.1.3.3 if client cert and key given */
+        if (ctx->protectionAlg == NULL
+            && (msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
+            goto err;
 
         /* make sure that key and certificate match */
         if (!X509_check_private_key(ctx->cert, ctx->pkey)) {
@@ -265,8 +291,6 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             goto err;
         }
 
-        if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
-            goto err;
         /* set senderKID to keyIdentifier of the cert according to 5.1.1 */
         if (!set_senderKID(ctx, msg, X509_get0_subject_key_id(ctx->cert)))
             goto err;
@@ -280,9 +304,12 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
         goto err;
     }
-    if (!ctx->unprotectedSend
-        /* protect according to msg->header->protectionAlg partly set above */
-        && ((msg->protection = ossl_cmp_calc_protection(ctx, msg)) == NULL))
+
+    /*
+     * protect according to msg->header->protectionAlg partly set above;
+     * for signature-based protection, the algorithm is set during signing.
+     */
+    if ((msg->protection = ossl_cmp_calc_protection(ctx, msg)) == NULL)
         goto err;
 
     /*
@@ -299,10 +326,23 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
      * to the client it set to NULL-DN. In this case for identification at least
      * the senderKID must be set, where we took the referenceValue as fallback.
      */
-    if (!(ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
-            && msg->header->senderKID == NULL))
-        return 1;
-    ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
+    if (ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
+        && msg->header->senderKID == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
+        goto err;
+    }
+
+    /*
+     * If no preference is recorded yet, remember for further messages
+     * in the current transaction the protection algorithm used.
+     * This will take effect only for the client side, because the server
+     * bases its preference on the protection of the request message.
+     */
+    if (ctx->protectionAlg == NULL
+        && !ossl_cmp_ctx_set1_protectionAlg(ctx, msg->header->protectionAlg))
+        /* for signature algs, this also caches ctx->digest in ctx->prot_sig_md */
+        goto err;
+    return 1;
 
 err:
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROTECTING_MESSAGE);

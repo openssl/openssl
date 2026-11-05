@@ -609,17 +609,18 @@ static int assuming_new_transaction(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
 /* Prepare for next transaction */
 static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
 {
+    OSSL_CMP_CTX *ctx = srv_ctx->ctx;
     int ret = 1;
 
-    srv_ctx->ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
+    ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
     srv_ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
     srv_ctx->polling = 0;
 
     if (srv_ctx->clean_transaction != NULL)
-        ret = srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID);
-    if (!OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL))
+        ret = srv_ctx->clean_transaction(srv_ctx, ctx->transactionID);
+    if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL))
         ret = 0;
-    if (!OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL))
+    if (!OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
         ret = 0;
     return ret;
 }
@@ -631,7 +632,9 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_CTX *ctx;
+    int backup_unprotectedSend;
     ASN1_OCTET_STRING *backup_secret;
+    X509_ALGOR *preferred_alg = NULL;
     OSSL_CMP_PKIHEADER *hdr;
     int req_type, rsp_type;
     int req_verified = 0;
@@ -644,6 +647,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         return 0;
     }
     ctx = srv_ctx->ctx;
+    backup_unprotectedSend = ctx->unprotectedSend;
     backup_secret = ctx->secretValue;
     req_type = OSSL_CMP_MSG_get_bodytype(req);
     ossl_cmp_log1(DEBUG, ctx,
@@ -653,6 +657,13 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
      * Some things need to be done already before validating the message in
      * order to be able to send an error message as far as needed and possible.
      */
+    /* On unprotected requests, do not respond MAC-based to prevent credential wear-out. */
+    if (req->header->protectionAlg == NULL) {
+        /* any changes here will be restored before return: */
+        ctx->secretValue = NULL;
+        if (ctx->pkey == NULL)
+            ctx->unprotectedSend = 1;
+    }
     if (hdr->sender->type != GEN_DIRNAME) {
         ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
         goto err;
@@ -686,13 +697,26 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         }
     }
 
+    /* set preference for protection of response to be the same as for req */
+    preferred_alg = req->header->protectionAlg;
+    if (preferred_alg != NULL /* can prefer only what is available: */
+        && (IS_MAC_ALG(preferred_alg) ? ctx->secretValue == NULL : ctx->pkey == NULL))
+        preferred_alg = NULL;
+    if (!ossl_cmp_ctx_set1_protectionAlg(ctx, preferred_alg))
+        goto err;
+
     req_verified = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
         srv_ctx->acceptUnprotected);
-    if (ctx->secretValue != NULL && ctx->pkey != NULL
-        && ossl_cmp_hdr_get_protection_nid(hdr) != NID_id_PasswordBasedMAC)
-        ctx->secretValue = NULL; /* use MSG_SIG_ALG when protecting rsp */
-    if (!req_verified)
+    if (!req_verified) {
+        unsigned long err = ERR_peek_last_error();
+
+        /* On protection check failure, send error unprotected to avoid credential wear-out. */
+        if (ERR_GET_LIB(err) == ERR_LIB_CMP
+            && (ERR_GET_REASON(err) == CMP_R_ERROR_VALIDATING_PROTECTION
+                || ERR_GET_REASON(err) == CMP_R_MISSING_PROTECTION))
+            ctx->unprotectedSend = 1; /* will be restored before return */
         goto err;
+    }
 
     if (req_type == OSSL_CMP_PKIBODY_POLLREQ) {
         if (srv_ctx->process_pollReq == NULL)
@@ -741,6 +765,7 @@ err:
         }
     }
     OSSL_CMP_CTX_print_errors(ctx);
+    ctx->unprotectedSend = backup_unprotectedSend;
     ctx->secretValue = backup_secret;
 
     rsp_type = rsp != NULL ? OSSL_CMP_MSG_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;

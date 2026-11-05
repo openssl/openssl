@@ -191,6 +191,30 @@ OpenSSL 4.2
 
    *Alex Gaynor*
 
+ * CMP message protectionAlg is now kept consistent within a transaction.
+   This follows three requirements by the Lightweight CMP Profile [RFC 9483]:
+   - All request messages use the same protection credentials,
+     which implies using the same protection algorithm.
+     This is implemented by caching the preferred protection algorithm,
+     which strengthens the need to call `OSSL_CMP_CTX_reinit()`
+     when reusing a CMP client context for subsequent transactions.
+   - For efficiency, parameters of MAC-based protection
+     such as salt remain constant. This is ensured as given above.
+     The `-reqin` option now reprotects (if protection is requested) also the
+     first request message (although in this case no recipNonce update is needed).
+   - The protection of server responses follows the request protection.
+     An implementation for this requirement was there before. It is now improved
+     such that the server can also handle the case that it does not have the
+     needed credentials for following the protection method indicated by the request,
+     namely by resorting to another method for which it does have the credentials.
+     When responding to requests with invalid protection, now is made sure that
+     the server sends its error unprotected, to avoid DoS and credential wear-out.
+   <!-- https://github.com/openssl/openssl/pull/33584 -->
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
 OpenSSL 4.1
 -----------
 

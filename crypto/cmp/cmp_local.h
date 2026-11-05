@@ -18,6 +18,9 @@
 
 #define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
+#define IS_MAC_ALG(alg) (OBJ_obj2nid((alg)->algorithm) == NID_id_PasswordBasedMAC)
+/* note that so far, the only MAC-based protection algorithm supported is PBM (Password-Based MAC) */
+
 /*
  * this structure is used to store the context for CMP sessions
  */
@@ -69,8 +72,10 @@ struct ossl_cmp_ctx_st {
      */
     int permitTAInExtraCertsForIR;
 
-    /* client authentication */
+    /* sender authentication */
     int unprotectedSend; /* send unprotected PKI messages */
+    X509_ALGOR *protectionAlg; /* preferred alg in current transaction, may include salt */
+    EVP_MD *prot_sig_md; /* caches the digest alg related to signature protectionAlg */
     X509 *cert; /* protection cert used to identify and sign for MSG_SIG_ALG */
     STACK_OF(X509) *chain; /* (cached) chain of protection cert including it */
     EVP_PKEY *pkey; /* the key pair corresponding to cert */
@@ -852,6 +857,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 #define ossl_cmp_info(ctx, msg) ossl_cmp_log(INFO, ctx, msg)
 #define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
 #define ossl_cmp_trace(ctx, msg) ossl_cmp_log(TRACE, ctx, msg)
+int ossl_cmp_ctx_set1_protectionAlg(OSSL_CMP_CTX *ctx, const X509_ALGOR *alg);
 int ossl_cmp_ctx_set1_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
@@ -878,7 +884,6 @@ int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int index);
 /* from cmp_hdr.c */
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
 int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
-int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER *hdr);
 ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);

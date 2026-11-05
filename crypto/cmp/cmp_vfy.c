@@ -595,7 +595,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         return 0;
     }
 
-    switch (ossl_cmp_hdr_get_protection_nid(msg->header)) {
+    switch (OBJ_obj2nid(msg->header->protectionAlg->algorithm)) {
         /* 5.1.3.1.  Shared Secret Information */
     case NID_id_PasswordBasedMAC:
         if (ctx->secretValue == NULL) {
