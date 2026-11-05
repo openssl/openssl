@@ -209,7 +209,7 @@ static double Time_F(int s)
 #error "SIGALRM not defined and the platform is not Windows"
 #endif
 
-static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
+static int multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     const openssl_speed_sec_t *seconds);
 
 static int opt_found(const char *name, unsigned int *result,
@@ -2427,8 +2427,14 @@ int speed_main(int argc, char **argv)
     }
 
 #ifndef NO_FORK
-    if (multi && do_multi(multi, size_num))
-        goto show_res;
+    if (multi) {
+        int multi_result = do_multi(multi, size_num);
+
+        if (multi_result < 0)
+            goto end;
+        if (multi_result > 0)
+            goto show_res;
+    }
 #endif
 
     for (i = 0; i < loopargs_len; ++i) {
@@ -2820,8 +2826,7 @@ int speed_main(int argc, char **argv)
             unsigned int ae_mode = 0;
 
             if (multiblock && (EVP_CIPHER_get_flags(evp_cipher) & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
-                multiblock_speed(evp_cipher, lengths_single, &seconds);
-                ret = 0;
+                ret = multiblock_speed(evp_cipher, lengths_single, &seconds) ? 0 : 1;
                 goto end;
             }
 
@@ -4471,12 +4476,14 @@ static int strtoint(const char *str, const int min_val, const int upper_val,
     }
 }
 
+/* Return 0 in a child, 1 in a successful parent, and -1 on parent failure. */
 static int do_multi(int multi, int size_num)
 {
     int n;
     int fd[2];
     int *fds;
     int status;
+    int ret = 1;
     static char sep[] = ":";
 
     fds = app_malloc_array(multi, sizeof(*fds), "fd buffer for do_multi");
@@ -4519,7 +4526,7 @@ static int do_multi(int multi, int size_num)
             BIO_printf(bio_err, "fdopen failure with 0x%x\n",
                 errno);
             OPENSSL_free(fds);
-            return 1;
+            return -1;
         }
         while (fgets(buf, sizeof(buf), f)) {
             p = strchr(buf, '\n');
@@ -4639,20 +4646,22 @@ static int do_multi(int multi, int size_num)
             if (errno != EINTR) {
                 BIO_printf(bio_err, "Waiting for child failed with 0x%x\n",
                     errno);
-                return 1;
+                return -1;
             }
         if (WIFEXITED(status) && WEXITSTATUS(status)) {
             BIO_printf(bio_err, "Child exited with %d\n", WEXITSTATUS(status));
+            ret = -1;
         } else if (WIFSIGNALED(status)) {
             BIO_printf(bio_err, "Child terminated by signal %d\n",
                 WTERMSIG(status));
+            ret = -1;
         }
     }
-    return 1;
+    return ret;
 }
 #endif
 
-static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
+static int multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     const openssl_speed_sec_t *seconds)
 {
     static const int mblengths_list[] = {
@@ -4660,6 +4669,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     };
     const int *mblengths = mblengths_list;
     int j, count, keylen, num = OSSL_NELEM(mblengths_list), ciph_success = 1;
+    int ret = 0;
     const char *alg_name;
     unsigned char *inp = NULL, *out = NULL, *key, no_key[32], no_iv[16];
     EVP_CIPHER_CTX *ctx = NULL;
@@ -4670,8 +4680,12 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         num = 1;
     }
 
-    inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
-    out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
+    /*
+     * Single-record fallback needs explicit IV, MAC and padding headroom
+     * in both buffers.
+     */
+    inp = app_malloc((size_t)mblengths[num - 1] + 1024, "multiblock input buffer");
+    out = app_malloc((size_t)mblengths[num - 1] + 1024, "multiblock output buffer");
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
         app_bail_out("failed to allocate cipher context\n");
     if (!EVP_EncryptInit_ex(ctx, evp_cipher, NULL, NULL, no_iv))
@@ -4721,10 +4735,10 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 mb_param.out = out;
                 mb_param.inp = inp;
                 mb_param.len = len;
-                (void)EVP_CIPHER_CTX_ctrl(ctx,
+                ciph_success = EVP_CIPHER_CTX_ctrl(ctx,
                     EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
                     sizeof(mb_param), &mb_param);
-            } else {
+            } else if (len > 0 && len <= SSL3_RT_MAX_PLAIN_LENGTH) {
                 int pad;
 
                 if (RAND_bytes(inp, 16) <= 0)
@@ -4734,13 +4748,25 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 aad[12] = (unsigned char)(len);
                 pad = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
                     EVP_AEAD_TLS1_AAD_LEN, aad);
-                ciph_success = EVP_Cipher(ctx, out, inp, (unsigned int)(len + pad));
+                if (pad <= 0)
+                    ciph_success = 0;
+                else
+                    ciph_success = EVP_Cipher(ctx, out, inp,
+                        (unsigned int)(len + pad));
+            } else {
+                ciph_success = 0;
             }
+            if (ciph_success <= 0)
+                break;
         }
         d = Time_F(STOP);
         BIO_printf(bio_err, mr ? "+R:%d:%s:%f\n" : "%d %s ops in %.2fs\n", count, "evp", d);
-        if ((ciph_success <= 0) && (mr == 0))
-            BIO_puts(bio_err, "Error performing cipher op\n");
+        if (ciph_success <= 0) {
+            if (mr == 0)
+                BIO_puts(bio_err, "Error performing cipher op\n");
+            dofail();
+            goto err;
+        }
         results[D_EVP][j] = ((double)count) / d * mblengths[j];
     }
 
@@ -4771,8 +4797,10 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         fprintf(stdout, "\n");
     }
 
+    ret = 1;
 err:
     OPENSSL_free(inp);
     OPENSSL_free(out);
     EVP_CIPHER_CTX_free(ctx);
+    return ret;
 }
