@@ -5465,10 +5465,13 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
              * it. A permanent failure is reported through error_state, which
              * was checked first.
              *
-             * This only applies once the handshake is over. While it is in
-             * progress, flushing a flight is not a send that can be retried,
-             * and a failure there is not recorded in error_state, so
-             * SSL_WRITING does not say that a retry will work.
+             * During initialization, BIO_f_buffer retains unsent output,
+             * but its flush path doesn't reliably distinguish temporary
+             * send failures from permanent ones or record them in
+             * error_state. SSL_WRITING alone isn't enough to report a
+             * retry, so the SSL_in_init guard is needed. This also applies
+             * when KeyUpdate or an additional session ticket puts an
+             * established connection back into initialization.
              *
              * A blocking connection waits and sends again instead of
              * reporting a retry.
