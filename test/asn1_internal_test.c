@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
+#include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
@@ -757,6 +758,89 @@ end:
 }
 #endif
 
+typedef struct {
+    unsigned int write_count;
+    unsigned int fail_on_write;
+} PEM_WRITE_TEST_DATA;
+
+static int pem_write_test_create(BIO *bio)
+{
+    PEM_WRITE_TEST_DATA *data = OPENSSL_zalloc(sizeof(*data));
+
+    if (data == NULL)
+        return 0;
+
+    BIO_set_data(bio, data);
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+static int pem_write_test_destroy(BIO *bio)
+{
+    OPENSSL_free(BIO_get_data(bio));
+    BIO_set_data(bio, NULL);
+    BIO_set_init(bio, 0);
+    return 1;
+}
+
+static int pem_write_test_write(BIO *bio, const char *in, int inl)
+{
+    PEM_WRITE_TEST_DATA *data = BIO_get_data(bio);
+
+    (void)in;
+    if (data == NULL)
+        return 0;
+
+    data->write_count++;
+    if (data->write_count == data->fail_on_write)
+        return -1;
+    return inl;
+}
+
+static long pem_write_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    (void)bio;
+    (void)num;
+    (void)ptr;
+    return cmd == BIO_CTRL_FLUSH ? 1 : 0;
+}
+
+static int test_pem_write_flush_failure(void)
+{
+    static const unsigned char payload[] = { 0x00, 0x11, 0x22, 0x33, 0x44 };
+    BIO_METHOD *method = NULL;
+    BIO *bio = NULL;
+    PEM_WRITE_TEST_DATA *data;
+    ASN1_OCTET_STRING *value = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(method = BIO_meth_new(BIO_TYPE_SOURCE_SINK,
+                      "PEM write failure test"))
+        || !TEST_true(BIO_meth_set_write(method, pem_write_test_write))
+        || !TEST_true(BIO_meth_set_ctrl(method, pem_write_test_ctrl))
+        || !TEST_true(BIO_meth_set_create(method, pem_write_test_create))
+        || !TEST_true(BIO_meth_set_destroy(method, pem_write_test_destroy))
+        || !TEST_ptr(bio = BIO_new(method))
+        || !TEST_ptr(data = BIO_get_data(bio))
+        || !TEST_ptr(value = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(value, payload, sizeof(payload))))
+        goto end;
+
+    /* The header is the first write; fail the final Base64 write on flush. */
+    data->fail_on_write = 2;
+    if (!TEST_false(PEM_write_bio_ASN1_stream(bio, (ASN1_VALUE *)value,
+            NULL, 0, "TEST", ASN1_ITEM_rptr(ASN1_OCTET_STRING)))
+        || !TEST_uint_eq(data->write_count, 2))
+        goto end;
+
+    ret = 1;
+end:
+    ASN1_OCTET_STRING_free(value);
+    BIO_free(bio);
+    BIO_meth_free(method);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -773,6 +857,7 @@ int setup_tests(void)
     ADD_TEST(test_empty_uni_conversions);
     ADD_TEST(test_asn1_string_to_utf8);
     ADD_TEST(test_asn1_item_dup_failure_frees);
+    ADD_TEST(test_pem_write_flush_failure);
 #ifndef OPENSSL_NO_ECX
     ADD_MFAIL_NO_CHECK_TEST(test_asn1_item_dup_mfail);
 #endif
