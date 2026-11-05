@@ -407,6 +407,13 @@ int enc_main(int argc, char **argv)
     /* Get the cipher name, either from progname (if set) or flag. */
     if (!opt_cipher(ciphername, &cipher))
         goto opthelp;
+    if (cipher != NULL
+        && (EVP_CIPHER_get_key_length(cipher) > EVP_MAX_KEY_LENGTH
+            || EVP_CIPHER_get_iv_length(cipher) > EVP_MAX_IV_LENGTH)) {
+        BIO_printf(bio_err, "%s: %s key or iv length not supported\n",
+            prog, EVP_CIPHER_get0_name(cipher));
+        goto end;
+    }
     if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_WRAP_MODE)) {
         wrap = 1;
         streamable = 0;

@@ -317,6 +317,10 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         BIO_get_cipher_ctx(btmp, &ctx);
         keylen = EVP_CIPHER_get_key_length(evp_cipher);
         ivlen = EVP_CIPHER_get_iv_length(evp_cipher);
+        if (ivlen > (int)sizeof(iv)) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+            goto err;
+        }
         xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_get_type(evp_cipher));
         if (ivlen > 0)
             if (RAND_bytes_ex(libctx, iv, ivlen, 0) <= 0)
