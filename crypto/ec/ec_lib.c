@@ -1123,6 +1123,11 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 #ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
+    const EC_POINT **new_points = NULL;
+    const BIGNUM **new_scalars = NULL;
+    EC_POINT *inf_point = NULL;
+    BIGNUM *zero_scalar = NULL;
+    int need_subst = 0;
 
     if (!ec_point_is_compat(r, group)) {
         ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
@@ -1133,9 +1138,56 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         return EC_POINT_set_to_infinity(group, r);
 
     for (i = 0; i < num; i++) {
+        if (scalars[i] == NULL || points[i] == NULL) {
+            need_subst = 1;
+            break;
+        }
+    }
+
+    if (need_subst) {
+        new_points = OPENSSL_calloc(num, sizeof(*new_points));
+        new_scalars = OPENSSL_calloc(num, sizeof(*new_scalars));
+        if (new_points == NULL || new_scalars == NULL)
+            goto err;
+
+        for (i = 0; i < num; i++) {
+            if (points[i] == NULL) {
+                /*  Treat NULL points as points at infinity. */
+                if (inf_point == NULL) {
+                    inf_point = EC_POINT_new(group);
+                    if ((inf_point == NULL)
+                        || (!EC_POINT_set_to_infinity(group, inf_point)))
+                        goto err;
+                }
+                new_points[i] = inf_point;
+            } else {
+                new_points[i] = points[i];
+            }
+
+            /*  Treat NULL scalars as 0. */
+            if (scalars[i] == NULL) {
+                if (zero_scalar == NULL) {
+                    zero_scalar = BN_new();
+
+                    if (zero_scalar == NULL)
+                        goto err;
+
+                    BN_zero(zero_scalar);
+                }
+                new_scalars[i] = zero_scalar;
+            } else {
+                new_scalars[i] = scalars[i];
+            }
+        }
+        points = new_points;
+        scalars = new_scalars;
+    }
+
+    for (i = 0; i < num; i++) {
         if (!ec_point_is_compat(points[i], group)) {
             ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
-            return 0;
+            ret = 0;
+            goto err;
         }
     }
 
@@ -1145,7 +1197,8 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 #endif
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
-        return 0;
+        ret = 0;
+        goto err;
     }
 
     if (group->meth->mul != NULL)
@@ -1157,6 +1210,13 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 #ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
+
+err:
+    EC_POINT_free(inf_point);
+    BN_free(zero_scalar);
+    OPENSSL_free(new_points);
+    OPENSSL_free(new_scalars);
+
     return ret;
 }
 #endif
