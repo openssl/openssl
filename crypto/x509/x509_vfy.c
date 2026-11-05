@@ -1074,6 +1074,9 @@ static int check_cert(X509_STORE_CTX *ctx)
     ctx->current_crl_score = 0;
     ctx->current_reasons = 0;
 
+    /* skip if cert is apparently self-signed */
+    if (ctx->current_cert->ex_flags & EXFLAG_SS)
+        return 1;
     if ((x->ex_flags & EXFLAG_PROXY) != 0)
         return 1;
 
