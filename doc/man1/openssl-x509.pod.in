@@ -367,6 +367,10 @@ With B<-multi> checks if any certificate in the input will expire
 within the next I<arg> seconds and exits nonzero if any will expire
 or zero if none will.
 
+A certificate that only becomes valid after the next I<arg> seconds is
+reported as not expiring.  If the validity period of a certificate cannot
+be parsed, an error is reported and the exit status is nonzero.
+
 =item B<-checkhost> I<host>
 
 Check that the certificate matches the specified host.

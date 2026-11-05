@@ -60,6 +60,9 @@ are used when retrieving algorithms from providers.
 
 CMS_get0_signers() retrieves the signer certificate(s) from I<cms>; it may only
 be called after a successful CMS_verify() or CMS_SignedData_verify() operation.
+Only the certificates of signatures that passed verification are returned.
+This matters when B<CMS_VERIFY_PARTIAL> is set, where the verification may
+succeed even though some of the signatures failed.
 
 CMS_SignerInfo_verify() verifies the signed attributes attached to the given
 SignerInfo B<si>.
@@ -172,7 +175,8 @@ CMS_verify() returns 1 for a successful verification and 0 if an error occurred.
 CMS_SignedData_verify() returns a memory BIO containing the verified content,
 or NULL on error.
 
-CMS_get0_signers() returns all signers or NULL if an error occurred.
+CMS_get0_signers() returns the certificates of all signers whose signatures
+passed verification, or NULL if an error occurred.
 
 The error can be obtained from L<ERR_get_error(3)>.
 

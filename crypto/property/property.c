@@ -815,10 +815,10 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     if (pq == NULL) {
         for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
             impl = sk_IMPLEMENTATION_value(alg->impls, j);
-            if (impl->archived == 1)
+            if (impl == NULL || impl->archived == 1)
                 continue;
-            if (impl != NULL
-                && (prov == NULL || impl->provider == prov)) {
+
+            if (prov == NULL || impl->provider == prov) {
                 best_impl = impl;
                 ret = 1;
                 break;

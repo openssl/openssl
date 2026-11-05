@@ -199,11 +199,22 @@ ultimately be returned may be different.
 
 For DTLS listeners, several per-listener tunables are configured through
 L<SSL_get_value_uint(3)> / L<SSL_set_value_uint(3)>:
-B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (pending-connection cap, default
-256, cannot be disabled), B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> (millisecond
+B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (cap on the connections the
+listener owns at any one time - those still doing their handshake plus
+those waiting in the accept queue - default 256, cannot be disabled),
+B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> (millisecond
 reap timeout, default 30000, B<UINT64_MAX> disables) and
 B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE> (maximum received datagram size in
 bytes, default 2000). See L<SSL_get_value_uint(3)> for details.
+
+Independently of those tunables, a DTLS listener bounds the datagrams queued
+for a connection that the application is not reading: each connection's
+receive queue is limited to a fixed internal number of datagrams, and once
+it is full each further datagram evicts the oldest queued one. Every queued
+datagram holds a buffer of at least B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE>
+bytes whatever its length, so the receive memory held per connection scales
+with that value. DTLS permits datagram loss, so the connection is not
+otherwise affected.
 
 Currently, listener SSL objects are supported for QUIC server usage via
 L<OSSL_QUIC_server_method(3)>, QUIC client-only usage via
@@ -270,7 +281,12 @@ Disables all address validation. The listener will not send HelloVerifyRequest
 faster but provides no protection against amplification attacks, and is not
 recommended for use in untrusted network environments. If both this flag and
 B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION> are specified, the listener fails safe
-and performs address validation.
+and performs address validation. Note that in this mode an accept-queue entry
+is created from the connection's first datagram rather than from a
+cookie-validated handshake; the B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>
+budget limits how many such entries can exist, but cannot stop the budget
+from being occupied by junk, so the flag remains dangerous in untrusted
+environments.
 
 =item B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 

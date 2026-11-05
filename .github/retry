@@ -1,0 +1,25 @@
+#!/bin/sh
+# Run a command that only fails because of the runner or the network, such as a
+# package install or an image pull, up to three times, 30 seconds apart. When
+# every attempt fails, report an environment failure in an error annotation and
+# the job summary, so it is not mistaken for a test failure.
+#
+# Usage: .github/retry COMMAND [ARGUMENT...]
+# Commands that must be retried together: retry sh -c '... && ...'
+
+attempts=3
+
+attempt=1
+while :; do
+    "$@" && exit 0
+    [ "$attempt" -ge $attempts ] && break
+    attempt=$((attempt + 1))
+    sleep 30
+done
+
+cmd="$*"
+cmd=$(printf '%s' "${cmd#sh -c }" | head -n 1 | cut -c 1-100)
+msg="'$cmd' failed $attempts times; this is a runner or network problem, not a test failure"
+echo "::error title=Environment failure::$msg"
+echo "Environment failure: $msg" >> "$GITHUB_STEP_SUMMARY"
+exit 1

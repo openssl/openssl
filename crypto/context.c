@@ -53,6 +53,7 @@ struct ossl_lib_ctx_st {
 
     int ischild;
     int conf_diagnostics;
+    uint64_t new_provider_loaded;
 };
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
@@ -127,6 +128,9 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (!ossl_do_ex_data_init(ctx))
         goto err;
     exdata_done = 1;
+
+    if (!CRYPTO_atomic_store(&ctx->new_provider_loaded, UINT64_MAX, ctx->lock))
+        goto err;
 
     /* P2. We want evp_method_store to be cleaned up before the provider store */
     ctx->evp_method_store = ossl_method_store_new(ctx);
@@ -678,6 +682,43 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
     default:
         return NULL;
     }
+}
+
+int ossl_lib_ctx_get_new_providers_loaded(OSSL_LIB_CTX *ctx, int op)
+{
+    uint64_t ret = 0;
+
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    /*
+     * if the atomic read operation fails here, return 1 to pretend like new
+     * providers are loaded, it ensures that we behave as though there are
+     * new providers loaded if we fail.
+     */
+    if (!CRYPTO_atomic_load(&ctx->new_provider_loaded, &ret, ctx->lock))
+        return 1;
+    return !!(ret & (1ULL << op));
+}
+
+int ossl_lib_ctx_set_new_providers_loaded(OSSL_LIB_CTX *ctx)
+{
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    if (!CRYPTO_atomic_store(&ctx->new_provider_loaded, UINT64_MAX, ctx->lock))
+        return 0;
+    return 1;
+}
+
+int ossl_lib_ctx_clear_new_providers_loaded(OSSL_LIB_CTX *ctx, int op)
+{
+    uint64_t val = ~(1ULL << op);
+    uint64_t ret;
+
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    if (!CRYPTO_atomic_and(&ctx->new_provider_loaded, val, &ret, ctx->lock))
+        return 0;
+    return 1;
 }
 
 void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index)

@@ -35,13 +35,11 @@ make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16} "$@
 RESULT=$?
 set -e
 
-# Move an interesting subset of the test-runs data we want into the artifacts
-# staging directory.
-for test_name in quic_multistream; do
-    if [ -d "test-runs/test_${test_name}" ]; then
-        mv "test-runs/test_${test_name}" "$OSSL_CI_ARTIFACTS_PATH/"
-    fi
-done
+# Move the qlog output from the radix tests into the artifacts staging
+# directory.
+if [ -d "test-runs/test_quic_radix/qlog-output" ]; then
+    mv "test-runs/test_quic_radix/qlog-output" "$OSSL_CI_ARTIFACTS_PATH/quic_radix_qlog"
+fi
 
 # Collect any core dumps together with the matching test binary, so the core is
 # usable with gdb without a rebuild. The executable name is the %e field of the

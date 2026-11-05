@@ -35,6 +35,19 @@ In this case the CSPRNG enters an error state and ceases to provide output,
 until it is able to recover from the error by reseeding itself.
 For more details on reseeding and error recovery, see L<EVP_RAND(7)>.
 
+The automatic reseeding reacts to a change of the process ID (a child created
+by fork(2) does not continue its parent's generator), to the number of
+requests made and to the time elapsed since the last reseed; see L<EVP_RAND(7)>.
+It does not detect that the process, or the virtual machine it runs in, has
+been restored from a saved image: a virtual machine restored from a snapshot,
+a process restored from a checkpoint, or a function resumed from an image
+continues from the generator state in the image, and several copies restored
+from one image produce the same output until their next scheduled reseed.
+An application that runs where such a restore can happen should reseed after
+its own restore signal, for example by calling L<RAND_poll(3)>, which reseeds
+the primary DRBG; the public and private DRBGs then reseed from it at their
+next request.
+
 For values that should remain secret, you can use L<RAND_priv_bytes(3)>
 instead.
 This method does not provide 'better' randomness, it uses the same type of

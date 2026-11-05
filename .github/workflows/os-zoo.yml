@@ -41,7 +41,7 @@ jobs:
   # Only a dispatch carries inputs, so this is skipped on the nightly cron.
   validate-dispatch-inputs:
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       (inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != '')
     uses: ./.github/workflows/validate-dispatch-inputs.yml
     with:
@@ -52,7 +52,7 @@ jobs:
   alpine:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -95,7 +95,7 @@ jobs:
   linux:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -103,14 +103,10 @@ jobs:
       matrix:
         zoo:
           - image: docker.io/library/debian:11
-            # Debian 11 LTS ended 2026-08-31: bullseye-security metadata is
-            # expired and its pool has been pruned.  Use the snapshot repos
-            # the image pins itself.
-            install: |
-              sed -i -e 's|^deb |#deb |' \
-                    -e 's|^# deb http://snapshot|deb http://snapshot|' /etc/apt/sources.list && \
-              apt-get -o Acquire::Check-Valid-Until=false update && \
-              apt-get install -y gcc make perl
+            # Debian 11 LTS ended 2026-08-31 and bullseye moved to
+            # archive.debian.org.
+            setup: sed -i 's|http://deb.debian.org|http://archive.debian.org|' /etc/apt/sources.list
+            install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/debian:12
             install: apt-get update && apt-get install -y gcc make perl
           - image: docker.io/library/debian:13
@@ -132,10 +128,10 @@ jobs:
           - image: docker.io/library/fedora:45
             install: dnf install -y gcc make perl-core
           - image: docker.io/library/centos:8
-            install: |
+            setup: |
               sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
-              sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
-              dnf install -y gcc make perl-core
+              sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+            install: dnf install -y gcc make perl-core
           - image: docker.io/rockylinux/rockylinux:8
             install: dnf install -y gcc make perl-core
           - image: docker.io/rockylinux/rockylinux:9
@@ -149,8 +145,23 @@ jobs:
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: prepare package sources
+      if: matrix.zoo.setup != ''
+      run: ${{ matrix.zoo.setup }}
+    # Images without git get the checkout as a GitHub archive, which leaves out
+    # .github/ (export-ignore), so .github/retry logic is inlined here.
     - name: install packages
-      run: ${{ matrix.zoo.install }}
+      env:
+        INSTALL: ${{ matrix.zoo.install }}
+      run: |
+        for attempt in 1 2 3; do
+          sh -c "$INSTALL" && exit 0
+          if [ "$attempt" -lt 3 ]; then sleep 30; fi
+        done
+        msg="package install failed 3 times; this is a runner or network problem, not a test failure"
+        echo "::error title=Environment failure::$msg"
+        echo "Environment failure: $msg" >> "$GITHUB_STEP_SUMMARY"
+        exit 1
     - name: config
       run: ./config
     - name: config dump
@@ -167,13 +178,13 @@ jobs:
   macos:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-15, macos-15-intel]
+        os: [macos-15, macos-15-intel, macos-26, macos-26-intel]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
@@ -198,7 +209,7 @@ jobs:
   windows:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -220,7 +231,7 @@ jobs:
     - name: install nasm
       run: |
         $installer = "nasm-3.01-installer-x64.exe"
-        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer -MaximumRetryCount 3 -RetryIntervalSec 30
         $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
         $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
         if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
@@ -229,7 +240,7 @@ jobs:
     - name: install jom
       run: |
         mkdir C:\jom
-        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe -MaximumRetryCount 3 -RetryIntervalSec 30
         $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
         $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
         if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
@@ -252,7 +263,7 @@ jobs:
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
-        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip" -MaximumRetryCount 3 -RetryIntervalSec 30
     - name: get cpu info
       working-directory: _build
       run: |
@@ -287,7 +298,7 @@ jobs:
     - name: install jom
       run: |
         mkdir C:\jom
-        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe -MaximumRetryCount 3 -RetryIntervalSec 30
         $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
         $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
         if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
@@ -325,7 +336,7 @@ jobs:
   linux-arm64:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-24.04-arm
@@ -348,7 +359,7 @@ jobs:
   linux-x86:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
@@ -387,7 +398,7 @@ jobs:
           ".github/workflows/make-test"
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@linux-x86"
         path: artifacts.tar.gz
@@ -395,6 +406,8 @@ jobs:
   linux-ppc64le:
     runs-on: linux-ppc64le
     needs: [validate-dispatch-inputs]
+    # Self-hosted runner; its label only exists in openssl/openssl, so keep
+    # this job out of forks (a manual dispatch there would hang forever).
     if: |
       github.repository == 'openssl/openssl' &&
       ( github.event_name == 'schedule' ||
@@ -422,6 +435,8 @@ jobs:
   linux-s390x:
     runs-on: linux-s390x
     needs: [validate-dispatch-inputs]
+    # Self-hosted runner; its label only exists in openssl/openssl, so keep
+    # this job out of forks (a manual dispatch there would hang forever).
     if: |
       github.repository == 'openssl/openssl' &&
       ( github.event_name == 'schedule' ||
@@ -449,6 +464,8 @@ jobs:
   linux-riscv64:
     runs-on: linux-riscv64
     needs: [validate-dispatch-inputs]
+    # Self-hosted runner; its label only exists in openssl/openssl, so keep
+    # this job out of forks (a manual dispatch there would hang forever).
     if: |
       github.repository == 'openssl/openssl' &&
       ( github.event_name == 'schedule' ||
@@ -477,7 +494,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     steps:
@@ -486,7 +503,7 @@ jobs:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -495,21 +512,21 @@ jobs:
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -521,7 +538,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     steps:
@@ -530,7 +547,7 @@ jobs:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -539,7 +556,7 @@ jobs:
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -548,7 +565,7 @@ jobs:
         run: |
           ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -557,7 +574,7 @@ jobs:
         run: |
           make -j4
     - name: make test
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: openbsd
         architecture: x86-64

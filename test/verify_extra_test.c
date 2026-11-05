@@ -16,6 +16,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include "internal/nelem.h"
+#include <openssl/provider.h>
 #include "testutil.h"
 
 static const char *certs_dir;
@@ -679,6 +680,41 @@ err:
     return ret;
 }
 
+static int test_vpm_copy_string_nul_term(void)
+{
+    X509_VERIFY_PARAM *src = NULL, *dest = NULL;
+    const char *test_host = "test.example.com";
+    const char *test_email = "user@example.com";
+    const char *ret_host, *ret_email;
+    int ret = 0;
+
+    if (!TEST_ptr(src = X509_VERIFY_PARAM_new())
+        || !TEST_ptr(dest = X509_VERIFY_PARAM_new()))
+        goto err;
+
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(src, test_host, 0))
+        || !TEST_true(X509_VERIFY_PARAM_set1_email(src, test_email, 0)))
+        goto err;
+
+    if (!TEST_true(X509_VERIFY_PARAM_set1(dest, src)))
+        goto err;
+
+    if (!TEST_ptr(ret_host = X509_VERIFY_PARAM_get0_host(dest, 0))
+        || !TEST_str_eq(ret_host, test_host))
+        goto err;
+
+    if (!TEST_ptr(ret_email = X509_VERIFY_PARAM_get0_email(dest))
+        || !TEST_str_eq(ret_email, test_email))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_VERIFY_PARAM_free(src);
+    X509_VERIFY_PARAM_free(dest);
+    return ret;
+}
+
 static int test_self_signed_good(void)
 {
     return test_self_signed(root_f, 1, 1);
@@ -750,6 +786,79 @@ err:
     X509_free(untrcert);
     X509_free(trcert);
     return testresult;
+}
+
+/*
+ * Verify a chain of certificates decoded in the default library context
+ * through a store context created in a library context that has no
+ * signature algorithms. The signatures must be checked in the store
+ * context's library context, so verification must fail there and succeed
+ * with a store context in the default library context.
+ */
+static int do_test_store_ctx_libctx(int use_empty_libctx, int expected,
+    int expected_error)
+{
+    X509 *eecert = load_cert_from_file(ee_cert); /* may result in NULL */
+    X509 *untrcert = load_cert_from_file(ca_cert);
+    X509 *trcert = load_cert_from_file(sroot_cert);
+    STACK_OF(X509) *trusted = sk_X509_new_null();
+    STACK_OF(X509) *untrusted = sk_X509_new_null();
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *nullprov = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(eecert)
+        || !TEST_ptr(untrcert)
+        || !TEST_ptr(trcert)
+        || !TEST_ptr(trusted)
+        || !TEST_ptr(untrusted))
+        goto err;
+
+    if (use_empty_libctx) {
+        if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+            || !TEST_ptr(nullprov = OSSL_PROVIDER_load(libctx, "null")))
+            goto err;
+    }
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new_ex(libctx, NULL)))
+        goto err;
+
+    if (!TEST_true(sk_X509_push(trusted, trcert)))
+        goto err;
+    trcert = NULL;
+    if (!TEST_true(sk_X509_push(untrusted, untrcert)))
+        goto err;
+    untrcert = NULL;
+
+    if (!TEST_true(X509_STORE_CTX_init(ctx, NULL, eecert, untrusted)))
+        goto err;
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+
+    if (!TEST_int_eq(X509_verify_cert(ctx), expected)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx), expected_error))
+        goto err;
+
+    testresult = 1;
+err:
+    OSSL_STACK_OF_X509_free(trusted);
+    OSSL_STACK_OF_X509_free(untrusted);
+    X509_STORE_CTX_free(ctx);
+    X509_free(eecert);
+    X509_free(untrcert);
+    X509_free(trcert);
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_LIB_CTX_free(libctx);
+    return testresult;
+}
+
+static int test_store_ctx_default_libctx(void)
+{
+    return do_test_store_ctx_libctx(0, 1, X509_V_OK);
+}
+
+static int test_store_ctx_empty_libctx(void)
+{
+    return do_test_store_ctx_libctx(1, 0, X509_V_ERR_CERT_SIGNATURE_FAILURE);
 }
 
 static int test_purpose_ssl_client(void)
@@ -997,11 +1106,14 @@ int setup_tests(void)
     ADD_TEST(test_self_signed_good);
     ADD_TEST(test_self_signed_bad);
     ADD_TEST(test_self_signed_error);
+    ADD_TEST(test_store_ctx_default_libctx);
+    ADD_TEST(test_store_ctx_empty_libctx);
     ADD_TEST(test_purpose_ssl_client);
     ADD_TEST(test_purpose_ssl_server);
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
+    ADD_TEST(test_vpm_copy_string_nul_term);
     ADD_ALL_TESTS(test_pathlen_chain, OSSL_NELEM(pathlen_chains));
     return 1;
 err:

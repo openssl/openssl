@@ -15,11 +15,16 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/pem.h>
+#include <openssl/provider.h>
+#include <openssl/evp.h>
 
 #include "testutil.h"
 
 static const char *certstr;
 static const char *privkeystr;
+static const char *eecertstr;
+static const char *eekeystr;
+static const char *cacertstr;
 
 #ifndef OPENSSL_NO_OCSP
 static int get_cert_and_key(X509 **cert_out, EVP_PKEY **key_out)
@@ -213,9 +218,47 @@ err:
     return ret;
 }
 
+/*
+ * A request whose signer and issuer are decoded in their own library
+ * context verifies while the default library context can fetch nothing.
+ */
+static int test_req_verify_signer_libctx(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *prov = NULL;
+    X509 *signer = NULL, *ca = NULL;
+    EVP_PKEY *key = NULL;
+    X509_STORE *store = NULL;
+    OCSP_REQUEST *req = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(signer = load_cert_pem(eecertstr, libctx))
+        || !TEST_ptr(ca = load_cert_pem(cacertstr, libctx))
+        || !TEST_ptr(key = load_pkey_pem(eekeystr, libctx))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, ca))
+        || !TEST_ptr(req = OCSP_REQUEST_new())
+        || !TEST_true(OCSP_request_sign(req, signer, key, EVP_sha256(), NULL, 0))
+        || !TEST_true(EVP_set_default_properties(NULL, "provider=absent")))
+        goto end;
+    ret = TEST_int_gt(OCSP_request_verify(req, NULL, store, OCSP_PARTIAL_CHAIN), 0);
+    EVP_set_default_properties(NULL, "");
+end:
+    OCSP_REQUEST_free(req);
+    X509_STORE_free(store);
+    EVP_PKEY_free(key);
+    X509_free(ca);
+    X509_free(signer);
+    OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_OCSP */
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile eecertfile eekeyfile cacertfile\n")
 
 int setup_tests(void)
 {
@@ -225,12 +268,16 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(certstr = test_get_argument(0))
-        || !TEST_ptr(privkeystr = test_get_argument(1)))
+        || !TEST_ptr(privkeystr = test_get_argument(1))
+        || !TEST_ptr(eecertstr = test_get_argument(2))
+        || !TEST_ptr(eekeystr = test_get_argument(3))
+        || !TEST_ptr(cacertstr = test_get_argument(4)))
         return 0;
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_resp_signer);
     ADD_ALL_TESTS(test_access_description, 3);
     ADD_TEST(test_ocsp_url_svcloc_new);
+    ADD_TEST(test_req_verify_signer_libctx);
 #endif
     return 1;
 }

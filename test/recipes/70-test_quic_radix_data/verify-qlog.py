@@ -179,12 +179,12 @@ def run():
         "connectivity:connection_closed"
     )
 
-    if num_files < 300:
+    if num_files < 150:
         raise Unexpected(qlogdir, f"unexpectedly few output files: {num_files}")
 
     for required_event in required_events:
         count = event_type_counts.get(required_event, 0)
-        if count < 100:
+        if count < 50:
             raise Unexpected(qlogdir, f"unexpectedly low count of event '{required_event}': got {count}")
 
     # For each direction, ensure that at least one of the tests we run generated

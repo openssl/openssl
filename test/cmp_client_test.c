@@ -312,6 +312,76 @@ static int test_exec_RR_ses_p10CSR_revCerts(void)
     return result;
 }
 
+static OSSL_CMP_MSG *transfer_rr_partial_certDetails(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req, int drop_serial)
+{
+    OSSL_CMP_MSG *copy;
+    OSSL_CMP_MSG *rsp;
+    OSSL_CMP_REVDETAILS *rd;
+    OSSL_CRMF_CERTTEMPLATE *tmpl;
+
+    if (OSSL_CMP_MSG_get_bodytype(req) != OSSL_CMP_PKIBODY_RR)
+        return ossl_cmp_mock_server_perform(ctx, req);
+    if ((copy = OSSL_CMP_MSG_dup(req)) == NULL)
+        return NULL;
+    if ((rd = sk_OSSL_CMP_REVDETAILS_value(copy->body->value.rr, 0)) == NULL
+        || (tmpl = rd->certDetails) == NULL) {
+        OSSL_CMP_MSG_free(copy);
+        return NULL;
+    }
+    if (drop_serial != 0) {
+        ASN1_INTEGER_free(tmpl->serialNumber);
+        tmpl->serialNumber = NULL;
+    } else {
+        X509_NAME_free((X509_NAME *)tmpl->issuer);
+        tmpl->issuer = NULL;
+    }
+    /* the client sends the request unprotected, so no need to re-protect it */
+    rsp = ossl_cmp_mock_server_perform(ctx, copy);
+    OSSL_CMP_MSG_free(copy);
+    return rsp;
+}
+
+static OSSL_CMP_MSG *transfer_rr_no_serial(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    return transfer_rr_partial_certDetails(ctx, req, 1);
+}
+
+static OSSL_CMP_MSG *transfer_rr_no_issuer(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    return transfer_rr_partial_certDetails(ctx, req, 0);
+}
+
+/*
+ * The RR identifies the cert to be revoked only partially, by just its issuer
+ * or just its serial number. The mock server has a reference cert, so it must
+ * reject the request, and in particular it must not dereference the absent
+ * component when comparing the request with the reference cert.
+ */
+static int test_exec_RR_ses_partial_certDetails(OSSL_CMP_transfer_cb_t cb)
+{
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    fixture->expected = OSSL_CMP_PKISTATUS_rejection;
+    if (!TEST_true(OSSL_CMP_CTX_set_transfer_cb(fixture->cmp_ctx, cb))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    EXECUTE_TEST(execute_exec_RR_ses_test, tear_down);
+    return result;
+}
+
+static int test_exec_RR_ses_no_serial(void)
+{
+    return test_exec_RR_ses_partial_certDetails(transfer_rr_no_serial);
+}
+
+static int test_exec_RR_ses_no_issuer(void)
+{
+    return test_exec_RR_ses_partial_certDetails(transfer_rr_no_issuer);
+}
+
 static int test_exec_IR_ses(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
@@ -698,6 +768,8 @@ int setup_tests(void)
     ADD_TEST(test_exec_RR_ses_request_error);
     ADD_TEST(test_exec_RR_ses_receive_error);
     ADD_TEST(test_exec_RR_ses_p10CSR_revCerts);
+    ADD_TEST(test_exec_RR_ses_no_serial);
+    ADD_TEST(test_exec_RR_ses_no_issuer);
     ADD_TEST(test_exec_CR_ses_explicit_confirm);
     ADD_TEST(test_exec_CR_ses_implicit_confirm);
     ADD_TEST(test_exec_IR_ses);

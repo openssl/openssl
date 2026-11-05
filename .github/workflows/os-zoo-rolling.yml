@@ -40,7 +40,7 @@ jobs:
   # Only a dispatch carries inputs, so this is skipped on the nightly cron.
   validate-dispatch-inputs:
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       (inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != '')
     uses: ./.github/workflows/validate-dispatch-inputs.yml
     with:
@@ -49,7 +49,7 @@ jobs:
       check_run_id: ${{ inputs.check_run_id }}
 
   alpine:
-    if: github.repository == 'openssl/openssl'
+    if: github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -88,7 +88,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux:
-    if: github.repository == 'openssl/openssl'
+    if: github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:

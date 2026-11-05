@@ -229,6 +229,11 @@ static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     }
 
+    if (in == NULL && inl != 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     /* Handle AAD operation (out == NULL) - process associated data */
     if (out == NULL) {
         /* Can only add AAD before encryption/decryption updates start */

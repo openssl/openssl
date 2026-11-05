@@ -6,8 +6,9 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use OpenSSL::Test qw/:DEFAULT result_file srctop_file/;
+use OpenSSL::Test qw/:DEFAULT result_file result_dir srctop_file data_file/;
 use OpenSSL::Test::Utils;
+use File::Path 2.00 qw(rmtree);
 
 sub diagnose_failure {
     my ($log, $max_bytes) = @_;
@@ -50,7 +51,7 @@ setup("test_quic_radix");
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
-plan tests => 1;
+plan tests => 2;
 
 # Keep the test's multi-megabyte diagnostics out of the TAP pipe.
 my $redirect = $ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE};
@@ -62,3 +63,26 @@ my $result = run(test(["quic_radix_test",
 
 diagnose_failure($stderr_log, 32 * 1024) if !$result && $redirect;
 ok($result, "running QUIC RADIX tests");
+
+SKIP: {
+    skip "no qlog", 1 if disabled('qlog');
+    skip "not running CI tests", 1 unless $ENV{OSSL_RUN_CI_TESTS};
+
+    subtest "generate and check qlog output" => sub {
+        plan tests => 2;
+
+        my $qlog_output = result_dir("qlog-output");
+        rmtree($qlog_output, { safe => 1 });
+        mkdir($qlog_output);
+        local $ENV{QLOGDIR} = $qlog_output;
+        local $ENV{OSSL_QFILTER} = "* -quic:unknown_event quic:another_unknown_event";
+
+        ok(run(test(["quic_radix_test",
+                     srctop_file("test", "certs", "servercert.pem"),
+                     srctop_file("test", "certs", "serverkey.pem")])),
+               "running quic_radix_test to contribute qlog output");
+
+        ok(run(cmd([data_file("verify-qlog.py")], exe_shell => "python3")),
+               "running qlog verification script");
+    };
+}

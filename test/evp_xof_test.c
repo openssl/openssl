@@ -613,6 +613,54 @@ err:
     return ret;
 }
 
+static const struct {
+    size_t len;
+    int should_pass;
+} customization_boundary_test_data[] = {
+    { 511, 1 },
+    { 512, 1 },
+    { 513, 0 }
+};
+
+static int xof_customization_boundary_test(int tstid)
+{
+    int ret = 0;
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    char custom[514];
+    unsigned char out[32];
+    size_t len = customization_boundary_test_data[tstid].len;
+    OSSL_PARAM params[2];
+
+    if (!TEST_ptr(md = EVP_MD_fetch(NULL, "CSHAKE128", NULL))
+        || !TEST_ptr(ctx = EVP_MD_CTX_new()))
+        goto err;
+
+    memset(custom, 'A', len);
+    custom[len] = '\0';
+    params[0] = OSSL_PARAM_construct_utf8_string(
+        OSSL_DIGEST_PARAM_CUSTOMIZATION, custom, 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (customization_boundary_test_data[tstid].should_pass) {
+        if (!TEST_true(EVP_DigestInit_ex2(ctx, md, params))
+            || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
+            goto err;
+    } else {
+        ERR_set_mark();
+        if (!TEST_false(EVP_DigestInit_ex2(ctx, md, params))) {
+            ERR_clear_last_mark();
+            goto err;
+        }
+        ERR_pop_to_mark();
+    }
+    ret = 1;
+err:
+    EVP_MD_CTX_free(ctx);
+    EVP_MD_free(md);
+    return ret;
+}
+
 static int xof_fail_test(void)
 {
     int ret;
@@ -634,6 +682,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(xof_squeeze_kat_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_large_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_dup_test, OSSL_NELEM(dupoffset_test_data));
+    ADD_ALL_TESTS(xof_customization_boundary_test, OSSL_NELEM(customization_boundary_test_data));
     ADD_TEST(xof_fail_test);
     return 1;
 }

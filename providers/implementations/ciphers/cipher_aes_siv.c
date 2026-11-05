@@ -119,6 +119,11 @@ static int siv_cipher(void *vctx, unsigned char *out, size_t *outl,
     if (!ossl_prov_is_running())
         return 0;
 
+    if (in == NULL && inl != 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     if (out != NULL && outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;

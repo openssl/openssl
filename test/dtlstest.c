@@ -1601,6 +1601,112 @@ end:
 }
 
 /*
+ * Only the hellos may be sent unprotected. A plaintext handshake message
+ * that arrives after them, or that was buffered before them, must be
+ * dropped and not processed: the handshake read keys have not been
+ * installed yet, so e.g. a Finished would be checked with a zero key.
+ *
+ * 0: Finished to the server after it has sent its flight
+ * 1: Certificate to the server before the ClientHello
+ * 2: Certificate to the client before the ServerHello
+ *
+ * A Finished that arrives before the hellos is already discarded as a stale
+ * retransmission, hence the Certificate. Either is a fatal unexpected message
+ * if it is processed.
+ */
+static int test_dtls13_plaintext_after_hellos(int idx)
+{
+#ifdef OPENSSL_NO_EC
+    const char *group = "ffdhe3072";
+#else
+    const char *group = "P-256";
+#endif
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    OSSL_RECORD_LAYER *rl;
+    DTLS_BITMAP bitmap;
+    /*
+     * A handshake message header. The remaining SHA384_DIGEST_LENGTH bytes
+     * are not initialised explicitly, so they are zero: that is the body.
+     */
+    unsigned char msg[DTLS1_HM_HEADER_LENGTH + SHA384_DIGEST_LENGTH] = {
+        SSL3_MT_FINISHED, /* msg_type */
+        0, 0, SHA384_DIGEST_LENGTH, /* length: 3 bytes */
+        0, 1, /* message_seq: 2 bytes */
+        0, 0, 0, /* fragment_offset: 3 bytes */
+        0, 0, SHA384_DIGEST_LENGTH /* fragment_length: 3 bytes */
+    };
+    unsigned char pkt[DTLS1_RT_HEADER_LENGTH + sizeof(msg)];
+    size_t pktlen;
+    int ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    /* Keep ClientHello in one record so sequence number 1 remains unused. */
+    if (!TEST_true(SSL_CTX_set1_groups_list(sctx, group))
+        || !TEST_true(SSL_CTX_set1_groups_list(cctx, group))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx, "TLS_AES_256_GCM_SHA384"))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_256_GCM_SHA384")))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    /* An all zero message with message sequence 1, in record sequence 1 */
+    if (idx > 0)
+        msg[0] = SSL3_MT_CERTIFICATE;
+    pktlen = make_forged_plaintext_record(pkt, 0, 1, SSL3_RT_HANDSHAKE,
+        msg, sizeof(msg));
+
+    switch (idx) {
+    case 0:
+        if (!TEST_int_le(SSL_connect(cssl), 0)
+            || !TEST_int_le(SSL_accept(sssl), 0)
+            || !inject_client_datagram(cssl, pkt, pktlen))
+            goto end;
+
+        /* Discarding the plaintext record must leave replay state unchanged. */
+        rl = SSL_CONNECTION_FROM_SSL_ONLY(sssl)->rlayer.rrl;
+        bitmap = rl->bitmap;
+        ret = SSL_accept(sssl);
+        if (!TEST_int_eq(SSL_get_error(sssl, ret), SSL_ERROR_WANT_READ)
+            || !TEST_ptr_eq(SSL_CONNECTION_FROM_SSL_ONLY(sssl)->rlayer.rrl, rl)
+            || !TEST_uint64_t_eq(rl->bitmap.max_seq_num, bitmap.max_seq_num)
+            || !TEST_uint64_t_eq(rl->bitmap.map, bitmap.map))
+            goto end;
+        break;
+    case 1:
+        if (!inject_client_datagram(cssl, pkt, pktlen))
+            goto end;
+        break;
+    case 2:
+        /* The server's wbio is the client's rbio */
+        if (!inject_client_datagram(sssl, pkt, pktlen))
+            goto end;
+        break;
+    default:
+        goto end;
+    }
+
+    /* The genuine handshake must not be disturbed by it */
+    if (!TEST_true(do_dtls13_handshake(sssl, cssl)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
+
+/*
  * RFC 9147 (DTLS 1.3): TLS_AES_128_CCM_8_SHA256 MUST NOT be used in DTLS
  * without additional safeguards against forgery, due to its short
  * authentication tag. OpenSSL does not implement such safeguards, so a
@@ -2516,6 +2622,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert, 8);
     ADD_ALL_TESTS(test_dtls13_forged_plaintext_alert_plant, 3);
     ADD_TEST(test_dtls13_epoch0_plaintext_alert);
+    ADD_ALL_TESTS(test_dtls13_plaintext_after_hellos, 3);
     ADD_TEST(test_dtls13_ccm8_not_offered);
     ADD_TEST(test_dtls13_ack_read_timeout);
 #endif

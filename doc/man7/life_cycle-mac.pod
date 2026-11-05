@@ -23,7 +23,7 @@ This state represents the MAC after it has been allocated.
 =item initialised
 
 This state represents the MAC when it is set up and capable of processing
-input.
+input or generating output.
 
 =item updated
 
@@ -93,17 +93,19 @@ This is the canonical list.
 =begin man
 
  Function Call                   --------------------- Current State ----------------------
-                                 start   newed    initialised   updated     finaled   freed
+                                 start   newed       initialised   updated     finaled   freed
  EVP_MAC_CTX_new                 newed
- EVP_MAC_init                         initialised initialised initialised initialised
- EVP_MAC_update                                     updated     updated
- EVP_MAC_final                                                  finaled
- EVP_MAC_finalXOF                                               finaled
- EVP_MAC_CTX_free                freed   freed       freed       freed       freed
- EVP_MAC_CTX_get_params                  newed    initialised   updated
- EVP_MAC_CTX_set_params                  newed    initialised   updated
- EVP_MAC_CTX_gettable_params             newed    initialised   updated
- EVP_MAC_CTX_settable_params             newed    initialised   updated
+ EVP_MAC_CTX_dup                         newed       initialised   updated     finaled
+ EVP_MAC_init                            initialised initialised   initialised initialised
+ EVP_MAC_init_SKEY                       initialised initialised   initialised initialised
+ EVP_MAC_update                                      updated       updated
+ EVP_MAC_final                                       finaled       finaled
+ EVP_MAC_finalXOF                                    finaled       finaled
+ EVP_MAC_CTX_free                freed   freed       freed         freed       freed
+ EVP_MAC_CTX_get_params                  newed       initialised   updated     finaled
+ EVP_MAC_CTX_set_params                  newed       initialised   updated     finaled
+ EVP_MAC_CTX_gettable_params             newed       initialised   updated     finaled
+ EVP_MAC_CTX_settable_params             newed       initialised   updated     finaled
 
 =end man
 
@@ -126,7 +128,21 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_MAC_CTX_dup</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">updated</td>
+    <td style="border:1px solid" align="center">finaled</td>
+    <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_init</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_MAC_init_SKEY</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">initialised</td>
@@ -143,14 +159,14 @@ This is the canonical list.
 <tr><th style="border:1px solid" align="left">EVP_MAC_final</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_finalXOF</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
@@ -166,28 +182,28 @@ This is the canonical list.
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_CTX_set_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_CTX_gettable_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_CTX_settable_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td></tr>
 </table>
 
@@ -195,8 +211,11 @@ This is the canonical list.
 
 =head1 NOTES
 
-At some point the EVP layer will begin enforcing the transitions described
-herein.
+Since OpenSSL 4.2, the EVP layer enforces the transitions described herein:
+EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF() fail in the
+B<newed> and B<finaled> states, see L<EVP_MAC(3)>.  Querying the output
+length by calling EVP_MAC_final() with a NULL output buffer is permitted in
+every state and does not change it.
 
 =head1 SEE ALSO
 
@@ -208,7 +227,7 @@ The provider MAC interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

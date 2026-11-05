@@ -50,7 +50,8 @@ Option information: various options set when the library was built.
 
 =item B<-f>
 
-Compilation flags.
+Compilation flags, or C<information not available> when OpenSSL was
+configured with B<no-buildinfo-cflags>.
 
 =item B<-p>
 

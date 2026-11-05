@@ -250,7 +250,7 @@ STACK_OF(PKCS7) *ossl_pkcs12_unpack_authsafes_ex(const PKCS12 *p12,
             ossl_pkcs7_set0_libctx(p7, libctx);
             if (!ossl_pkcs7_set1_propq(p7, propq))
                 goto err;
-            ossl_pkcs7_resolve_libctx(p7);
+            ossl_pkcs7_SignerInfos_set_ctx(p7);
         }
     }
     return p7s;

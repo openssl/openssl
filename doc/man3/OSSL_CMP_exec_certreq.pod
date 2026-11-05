@@ -49,6 +49,7 @@ OSSL_CMP_get1_certReqTemplate
  int OSSL_CMP_get1_certReqTemplate(OSSL_CMP_CTX *ctx,
                                    OSSL_CRMF_CERTTEMPLATE **certTemplate,
                                    OSSL_CMP_ATAVS **keySpec);
+
 =head1 DESCRIPTION
 
 This is the OpenSSL main API for Certificate Management Protocol (CMP) clients.

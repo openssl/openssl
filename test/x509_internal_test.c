@@ -15,6 +15,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/provider.h>
+#include <openssl/rand.h>
 #include "testutil.h"
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
@@ -1245,6 +1247,65 @@ err:
 }
 
 /*
+ * scan_ext_flags() keys its duplicate-extension table with a random SipHash
+ * key. In a library context with no usable RAND, the key must still be drawn
+ * (from the ossl_rand_hash_salt() fallbacks) and the extensions fully
+ * checked, rather than every certificate with an unknown extension being
+ * marked EXFLAG_INVALID. Loading the null provider explicitly stops the
+ * default provider from being activated, so RAND is unavailable.
+ *
+ * idx 0: a single unknown critical extension is reported as unsupported
+ *        critical.
+ * idx 1: a repeated unknown extension is reported as a duplicate.
+ */
+static int tests_x509_check_ext_unknown_oid_no_rand(int idx)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *nullprov = NULL;
+    X509 *x = NULL;
+    ASN1_OBJECT *obj = NULL;
+    ASN1_OCTET_STRING *oct = NULL;
+    X509_EXTENSION *ext = NULL;
+    const unsigned char data[] = { 0x00 };
+    unsigned char buf[16];
+    uint32_t flags;
+    int test = 0;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(nullprov = OSSL_PROVIDER_load(libctx, "null")))
+        goto err;
+    /* Otherwise the fallbacks this test is about would not be exercised */
+    if (!TEST_int_le(RAND_bytes_ex(libctx, buf, sizeof(buf), 0), 0))
+        goto err;
+    ERR_clear_error();
+    if (!TEST_ptr(x = X509_new_ex(libctx, NULL))
+        || !TEST_true(X509_set_version(x, X509_VERSION_3))
+        || !TEST_ptr(obj = OBJ_txt2obj("1.3.6.1.4.1.99999.2.1", 1))
+        || !TEST_ptr(oct = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(oct, data, sizeof(data)))
+        || !TEST_ptr(ext = X509_EXTENSION_create_by_OBJ(NULL, obj, !idx, oct))
+        || !TEST_true(X509_add_ext(x, ext, -1))
+        || (idx == 1 && !TEST_true(X509_add_ext(x, ext, -1))))
+        goto err;
+    flags = X509_get_extension_flags(x);
+    if (!TEST_false(flags & EXFLAG_INVALID))
+        goto err;
+    if (idx == 0 && !TEST_true(flags & EXFLAG_CRITICAL))
+        goto err;
+    if (idx == 1 && !TEST_true(flags & EXFLAG_DUPLICATE))
+        goto err;
+    test = 1;
+err:
+    X509_EXTENSION_free(ext);
+    ASN1_OCTET_STRING_free(oct);
+    ASN1_OBJECT_free(obj);
+    X509_free(x);
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_LIB_CTX_free(libctx);
+    return test;
+}
+
+/*
  * X509_ATTRIBUTE_create_by_NID() must accept a BIT STRING value supplied as
  * raw bytes plus an explicit length, as PKCS8_add_keyusage() does for
  * 'openssl pkcs12 -export -keyex' (0x10) and '-keysig' (0x80).
@@ -1439,6 +1500,7 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
+    ADD_ALL_TESTS(tests_x509_check_ext_unknown_oid_no_rand, 2);
     ADD_ALL_TESTS(test_x509_attribute_bit_string, 2);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);

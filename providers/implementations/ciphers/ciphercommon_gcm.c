@@ -146,6 +146,9 @@ static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
         || ctx->enc)
         return 0;
 
+    if (inl == 0 || inl > ctx->ivlen)
+        return 0;
+
     memcpy(ctx->iv + ctx->ivlen - inl, in, inl);
     if (!ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
         return 0;
@@ -357,6 +360,11 @@ int ossl_gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
     if (inl == 0) {
         *outl = 0;
         return 1;
+    }
+
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
     }
 
     if (outsize < inl) {
