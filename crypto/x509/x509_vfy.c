@@ -1397,6 +1397,11 @@ static STACK_OF(X509_NAME) *get_crldp_full_names(X509 *cert)
     DIST_POINT *dp;
     X509_NAME *dp_name;
 
+    if (sk_DIST_POINT_num(cert->crldp) > 16) {
+        ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT, "Too many dist points in certificate");
+        goto err;
+    }
+
     crldp_names = sk_X509_NAME_new_reserve(NULL, sk_DIST_POINT_num(cert->crldp));
     if (crldp_names == NULL)
         return NULL;
