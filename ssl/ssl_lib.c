@@ -708,13 +708,19 @@ int ossl_ssl_connection_reset(SSL *s)
                 DTLS_LISTENER *dl = (DTLS_LISTENER *)saved_listener;
 
                 /* The detached connection cannot unregister itself on free. */
-                ossl_dtls_listener_unregister_established_conn(saved_listener,
-                    &saved_peer_addr);
+                ossl_dtls_listener_unregister_conn(saved_listener, s);
                 ossl_crypto_mutex_lock(dl->mutex);
                 sc->listener_rx = NULL;
                 ossl_crypto_mutex_unlock(dl->mutex);
                 ossl_dtls_rx_free(saved_rx);
-                SSL_free(saved_listener);
+                /*
+                 * A pending connection, reset by the listener's own drive,
+                 * holds no reference on the listener to release.
+                 */
+                if (sc->listener_ref_held) {
+                    sc->listener_ref_held = 0;
+                    SSL_free(saved_listener);
+                }
             }
 #endif
             return 0;
@@ -1688,6 +1694,14 @@ void ossl_ssl_connection_free(SSL *ssl)
 
     if (ssl->method != NULL)
         ssl->method->ssl_deinit(ssl);
+
+#ifndef OPENSSL_NO_DTLS
+    /*
+     * What linked the connection into a DTLS listener's lookup tables and run
+     * queue. The deinit above, or the listener before it, has unlinked it.
+     */
+    OPENSSL_free(s->listener_conn);
+#endif
 
     ASYNC_WAIT_CTX_free(s->waitctx);
 
