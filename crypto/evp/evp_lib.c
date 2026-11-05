@@ -394,7 +394,7 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         return 0;
 
     if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
-        outsize = ossl_cipher_wrap_output_size((size_t)inl, blocksize);
+        outsize = ossl_cipher_wrap_output_size(ctx, (size_t)inl, blocksize);
     else
         outsize = (size_t)inl + (blocksize == 1 ? 0 : blocksize);
 

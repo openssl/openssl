@@ -61,7 +61,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
     }
 
     if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
-        max_out_len = ossl_cipher_wrap_output_size((size_t)inlen,
+        max_out_len = ossl_cipher_wrap_output_size(ctx, (size_t)inlen,
             (size_t)block_size);
     else
         max_out_len = (size_t)inlen + (size_t)block_size;

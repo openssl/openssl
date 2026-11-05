@@ -690,7 +690,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     }
 
     if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
-        outsize = ossl_cipher_wrap_output_size(inl_, (size_t)blocksize);
+        outsize = ossl_cipher_wrap_output_size(ctx, inl_, (size_t)blocksize);
     else
         outsize = inl_ + (size_t)(blocksize == 1 ? 0 : blocksize);
 
