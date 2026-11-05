@@ -7616,26 +7616,29 @@ end:
 
 /*
  * A received KeyUpdate requesting a reciprocal response leaves hand_state
- * at TLS_ST_OK with in_init still set, so the state machine knows to send
- * that reciprocal KeyUpdate later -- but dtls1_read_bytes() can reach an
- * already-buffered application-data record, sent under the peer's own
- * still-current epoch, before that reciprocal exchange starts. Receiving a
- * record under those conditions (TLS_ST_OK, in_init set) is exactly what
- * DTLS 1.3 buffers application data behind: genuine data, not an error,
- * that will be delivered once the reciprocal exchange completes.
+ * at TLS_ST_OK with in_init still set until that reciprocal KeyUpdate has
+ * been sent, and dtls1_read_bytes() can reach an application-data record,
+ * sent under the peer's own still-current epoch, before that happens.
+ * Receiving a record under those conditions (TLS_ST_OK, in_init set) is
+ * exactly what DTLS 1.3 buffers application data behind: genuine data, not
+ * an error, that will be delivered once the reciprocal exchange completes.
  * dtls1_read_bytes() must report that as an ordinary retry condition
  * (SSL_ERROR_WANT_READ), not a syscall-level failure, and must still
  * deliver the data afterward rather than losing it.
+ *
+ * It must also not leave the receiver idle while it waits. Buffering the
+ * record has to drive the state machine so the reciprocal KeyUpdate is sent
+ * and its retransmit timer armed before WANT_READ is returned; otherwise
+ * nothing is in flight and no event would ever end the wait.
  *
  * The client requests the reciprocal KeyUpdate and holds its own
  * application datagram back so it reaches the server right after, in the
  * same read -- both records sit in the server's buffer before SSL_read()
  * ever touches either one. Processing the KeyUpdate schedules the server's
- * own response and leaves it parked at TLS_ST_OK with in_init set; the
- * already-buffered application record is then buffered rather than
- * delivered. Only once the server's own reciprocal KeyUpdate is sent,
- * acknowledged, and its write-key install completes does the buffered data
- * finally surface.
+ * own response; the application record is then buffered rather than
+ * delivered, and the response is sent before SSL_read() returns. Only once
+ * that reciprocal KeyUpdate is acknowledged and its write-key install
+ * completes does the buffered data finally surface.
  */
 static int test_dtls13_reciprocal_keyupdate_app_data_classification(void)
 {
@@ -7643,7 +7646,8 @@ static int test_dtls13_reciprocal_keyupdate_app_data_classification(void)
     SSL *server = NULL, *client = NULL;
     SSL_CONNECTION *sc;
     unsigned char buf[2048], held[2048];
-    int ret, held_len, testresult = 0;
+    int ret, held_len, is_infinite, testresult = 0;
+    struct timeval tv;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
@@ -7678,26 +7682,31 @@ static int test_dtls13_reciprocal_keyupdate_app_data_classification(void)
 
     /*
      * One SSL_read() processes the KeyUpdate -- scheduling the server's own
-     * reciprocal response and leaving it parked at TLS_ST_OK with in_init
-     * set -- and then reaches the already-buffered application record.
+     * reciprocal response -- then buffers the application record that
+     * follows and sends the response before returning.
      */
     ret = SSL_read(server, buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
-        || !TEST_int_eq(sc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_true(sc->d1->key_update_write_pending)
         || !TEST_false(SSL_is_init_finished(server)))
         goto end;
 
-    /* The client consumes the server's ACK of its KeyUpdate. */
-    ret = SSL_read(client, buf, sizeof(buf));
-    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+    /*
+     * Returning WANT_READ with the application data buffered must not leave
+     * the server idle: its reciprocal KeyUpdate has to be on the wire
+     * already, so an application waiting on SSL_poll() or the event timeout
+     * is woken by the peer's ACK, with no further SSL_read() needed to
+     * start the exchange.
+     */
+    if (!TEST_int_eq(SSL_get_event_timeout(server, &tv, &is_infinite), 1)
+        || !TEST_false(is_infinite)
+        || !TEST_int_gt((int)BIO_ctrl_pending(SSL_get_rbio(client)), 0))
         goto end;
 
-    /* This read drives out the server's own scheduled reciprocal KeyUpdate. */
-    ret = SSL_read(server, buf, sizeof(buf));
-    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
-        goto end;
-
-    /* The client receives the reciprocal KeyUpdate and acknowledges it. */
+    /*
+     * The client consumes the server's ACK of its KeyUpdate, then the
+     * reciprocal KeyUpdate sent in the same read, and acknowledges it.
+     */
     ret = SSL_read(client, buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
         goto end;
@@ -8283,7 +8292,8 @@ static int test_dtls13_client_keyupdate_app_data_classification(void)
     SSL *server = NULL, *client = NULL;
     SSL_CONNECTION *cc;
     unsigned char buf[2048], held[2048];
-    int ret, held_len, testresult = 0;
+    int ret, held_len, is_infinite, testresult = 0;
+    struct timeval tv;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
@@ -8318,23 +8328,30 @@ static int test_dtls13_client_keyupdate_app_data_classification(void)
 
     /*
      * One SSL_read() processes the KeyUpdate -- scheduling the client's own
-     * reciprocal response and leaving it parked at TLS_ST_OK with in_init
-     * set -- and then reaches the already-buffered application record.
+     * reciprocal response -- then buffers the application record that
+     * follows and sends the response before returning.
      */
     ret = SSL_read(client, buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ)
-        || !TEST_int_eq(cc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_true(cc->d1->key_update_write_pending)
         || !TEST_false(SSL_is_init_finished(client)))
         goto end;
 
-    /* The server consumes the client's ACK of its KeyUpdate. */
-    ret = SSL_read(server, buf, sizeof(buf));
-    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
+    /*
+     * The reciprocal KeyUpdate must already be on the wire, with its
+     * retransmit timer armed, rather than waiting for another SSL_read().
+     */
+    if (!TEST_int_eq(SSL_get_event_timeout(client, &tv, &is_infinite), 1)
+        || !TEST_false(is_infinite)
+        || !TEST_int_gt((int)BIO_ctrl_pending(SSL_get_rbio(server)), 0))
         goto end;
 
-    /* This read drives out the client's own scheduled reciprocal KeyUpdate. */
-    ret = SSL_read(client, buf, sizeof(buf));
-    if (!TEST_int_eq(SSL_get_error(client, ret), SSL_ERROR_WANT_READ))
+    /*
+     * The server consumes the client's ACK of its KeyUpdate, then the
+     * reciprocal KeyUpdate sent in the same read, and acknowledges it.
+     */
+    ret = SSL_read(server, buf, sizeof(buf));
+    if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ))
         goto end;
 
     /* The server receives the reciprocal KeyUpdate and acknowledges it. */
