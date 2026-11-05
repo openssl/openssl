@@ -20,6 +20,12 @@ static const char *client_key_f;
 static const char *client_cert_f;
 static const char *pkcs10_f;
 
+typedef enum {
+    PROTECTION_UNPROTECTED,
+    PROTECTION_PBM,
+    PROTECTION_SIGNATURE
+} PROTECTION;
+
 typedef struct test_fixture {
     const char *test_case_name;
     OSSL_CMP_CTX *cmp_ctx;
@@ -27,6 +33,8 @@ typedef struct test_fixture {
     int req_type;
     int expected;
     STACK_OF(X509) *caPubs;
+    X509_ALGOR *first_protection_alg;
+    PROTECTION protection;
 } CMP_SES_TEST_FIXTURE;
 
 static OSSL_LIB_CTX *libctx = NULL;
@@ -37,6 +45,7 @@ static X509 *server_cert = NULL;
 static EVP_PKEY *client_key = NULL;
 static X509 *client_cert = NULL;
 static unsigned char ref[CMP_TEST_REFVALUE_LENGTH]; /* not actually used */
+#define TEST_PBM_SECRET (const unsigned char *)"1234", 4
 
 /*
  * For these unit tests, the client abandons message protection, and for
@@ -49,6 +58,7 @@ static void tear_down(CMP_SES_TEST_FIXTURE *fixture)
     OSSL_CMP_CTX_free(fixture->cmp_ctx);
     ossl_cmp_mock_srv_free(fixture->srv_ctx);
     sk_X509_free(fixture->caPubs);
+    X509_ALGOR_free(fixture->first_protection_alg);
     OPENSSL_free(fixture);
 }
 
@@ -85,25 +95,29 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
+    fixture->protection = PROTECTION_UNPROTECTED;
     if (!TEST_ptr(fixture->srv_ctx = ossl_cmp_mock_srv_new(libctx, NULL))
         || !OSSL_CMP_SRV_CTX_set_accept_unprotected(fixture->srv_ctx, 1)
         || !ossl_cmp_mock_srv_set1_refCert(fixture->srv_ctx, client_cert)
         || !ossl_cmp_mock_srv_set1_certOut(fixture->srv_ctx, client_cert)
         || (srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(fixture->srv_ctx)) == NULL
+        /* equip server for protecting responses signature-based or PBM-based: */
         || !OSSL_CMP_CTX_set1_cert(srv_cmp_ctx, server_cert)
-        || !OSSL_CMP_CTX_set1_pkey(srv_cmp_ctx, server_key))
+        || !OSSL_CMP_CTX_set1_pkey(srv_cmp_ctx, server_key)
+        || !OSSL_CMP_CTX_set1_referenceValue(srv_cmp_ctx, ref, sizeof(ref))
+        || !OSSL_CMP_CTX_set1_secretValue(srv_cmp_ctx, TEST_PBM_SECRET))
         goto err;
     if (!TEST_ptr(fixture->cmp_ctx = ctx = OSSL_CMP_CTX_new(libctx, NULL))
         || !OSSL_CMP_CTX_set_log_cb(fixture->cmp_ctx, print_to_bio_out)
         /* using default verbosity: OSSL_CMP_LOG_INFO */
         || !OSSL_CMP_CTX_set_transfer_cb(ctx, ossl_cmp_mock_server_perform)
         || !OSSL_CMP_CTX_set_transfer_cb_arg(ctx, fixture->srv_ctx)
+        /* by default, the client will send unprotected requests and accept unprotected errors: */
         || !OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_SEND, 1)
         || !OSSL_CMP_CTX_set1_oldCert(ctx, client_cert)
         || !OSSL_CMP_CTX_set1_pkey(ctx, client_key)
         /* client_key is by default used also for newPkey */
-        || !set_simple_trust(ctx, server_cert)
-        || !OSSL_CMP_CTX_set1_referenceValue(ctx, ref, sizeof(ref))) /* not actually needed */
+        || !set_simple_trust(ctx, server_cert))
         goto err;
     fixture->req_type = -1;
     return fixture;
@@ -354,6 +368,37 @@ static OSSL_CMP_MSG *transfer_rr_no_issuer(OSSL_CMP_CTX *ctx,
     return transfer_rr_partial_certDetails(ctx, req, 0);
 }
 
+static OSSL_CMP_MSG *transfer_check_same_protection_alg(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    CMP_SES_TEST_FIXTURE *fixture = OSSL_CMP_CTX_get_transfer_cb_arg(ctx);
+    OSSL_CMP_MSG *rsp;
+
+    if (fixture == NULL)
+        return NULL;
+    if (fixture->first_protection_alg == NULL) {
+        if (req->header->protectionAlg != NULL
+            && !TEST_ptr(fixture->first_protection_alg = X509_ALGOR_dup(req->header->protectionAlg)))
+            return NULL;
+    } else if (fixture->first_protection_alg != NULL) {
+        /* client must reuse the previous protection alg, such as PBM including its salt */
+        if (req->header->protectionAlg == NULL
+            || !TEST_int_eq(X509_ALGOR_cmp(fixture->first_protection_alg, req->header->protectionAlg), 0))
+            return NULL;
+    }
+
+    /* server must reply with signature-based protection or in PBM case with same alg as in request */
+    if (TEST_ptr(rsp = OSSL_CMP_SRV_process_request(fixture->srv_ctx, req))
+        && TEST_ptr(rsp->header->protectionAlg)
+        && (fixture->protection == PROTECTION_PBM
+                ? (TEST_int_eq(OBJ_obj2nid(rsp->header->protectionAlg->algorithm), NID_id_PasswordBasedMAC)
+                      && TEST_int_eq(X509_ALGOR_cmp(req->header->protectionAlg, rsp->header->protectionAlg), 0))
+                : TEST_true(OBJ_find_sigid_algs(OBJ_obj2nid(rsp->header->protectionAlg->algorithm), NULL, NULL))))
+        return rsp;
+    OSSL_CMP_MSG_free(rsp);
+    return NULL;
+}
+
 /*
  * The RR identifies the cert to be revoked only partially, by just its issuer
  * or just its serial number. The mock server has a reference cert, so it must
@@ -471,14 +516,14 @@ static int test_exec_CR_ses_implicit_confirm(void)
 
 /* the KUR transactions include certConf/pkiConf */
 static int test_exec_KUR_ses(int transfer_error, int server_use_bad_protection,
-    int pubkey, int raverified)
+    int pubkey, int raverified, PROTECTION protection)
 {
+    OSSL_CMP_CTX *ctx;
+
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
     fixture->req_type = OSSL_CMP_PKIBODY_KUR;
     /* ctx->oldCert has already been set */
 
-    if (transfer_error)
-        OSSL_CMP_CTX_set_transfer_cb_arg(fixture->cmp_ctx, NULL);
     (void)ossl_cmp_mock_srv_set_useBadProtection(fixture->srv_ctx, server_use_bad_protection);
 
     if (pubkey) {
@@ -493,6 +538,22 @@ static int test_exec_KUR_ses(int transfer_error, int server_use_bad_protection,
     if (pubkey || raverified)
         OSSL_CMP_CTX_set_option(fixture->cmp_ctx, OSSL_CMP_OPT_POPO_METHOD,
             OSSL_CRMF_POPO_RAVERIFIED);
+    fixture->protection = protection;
+    ctx = fixture->cmp_ctx;
+    if (transfer_error) {
+        OSSL_CMP_CTX_set_transfer_cb_arg(ctx, NULL);
+    } else if (protection != PROTECTION_UNPROTECTED) {
+        if (!OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_SEND, 0)
+            || !OSSL_CMP_CTX_set1_referenceValue(ctx, ref, sizeof(ref))
+            || (protection == PROTECTION_PBM
+                    ? !OSSL_CMP_CTX_set1_secretValue(ctx, TEST_PBM_SECRET)
+                    : !OSSL_CMP_CTX_set1_cert(ctx, client_cert))
+            || !OSSL_CMP_CTX_set_transfer_cb(ctx, transfer_check_same_protection_alg)
+            || !OSSL_CMP_CTX_set_transfer_cb_arg(ctx, fixture)) {
+            tear_down(fixture);
+            return 0;
+        }
+    }
     fixture->expected = transfer_error ? OSSL_CMP_PKISTATUS_trans : raverified ? (pubkey ? OSSL_CMP_PKISTATUS_rejected_by_client : OSSL_CMP_PKISTATUS_rejection)
         : server_use_bad_protection != -1                                      ? OSSL_CMP_PKISTATUS_checking_response
                                                                                : OSSL_CMP_PKISTATUS_accepted;
@@ -502,23 +563,24 @@ static int test_exec_KUR_ses(int transfer_error, int server_use_bad_protection,
 
 static int test_exec_KUR_ses_ok(void)
 {
-    return test_exec_KUR_ses(0, -1, 0, 0);
+    return test_exec_KUR_ses(0, -1, 0, 0, PROTECTION_UNPROTECTED);
 }
 
 static int test_exec_KUR_ses_transfer_error(void)
 {
-    return test_exec_KUR_ses(1, -1, 0, 0);
+    return test_exec_KUR_ses(1, -1, 0, 0, PROTECTION_UNPROTECTED);
 }
 
 static int test_exec_KUR_bad_pkiConf_protection(void)
 {
-    return test_exec_KUR_ses(0, -1 /* disabled: OSSL_CMP_PKIBODY_PKICONF */, 0, 0);
+    return test_exec_KUR_ses(0, -1 /* disabled: OSSL_CMP_PKIBODY_PKICONF */, 0, 0,
+        PROTECTION_UNPROTECTED);
 }
 
 static int test_exec_KUR_ses_wrong_popo(void)
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION /* cf ossl_cmp_verify_popo() */
-    return test_exec_KUR_ses(0, -1, 0, 1);
+    return test_exec_KUR_ses(0, -1, 0, 1, PROTECTION_UNPROTECTED);
 #else
     return 1;
 #endif
@@ -526,12 +588,22 @@ static int test_exec_KUR_ses_wrong_popo(void)
 
 static int test_exec_KUR_ses_pub(void)
 {
-    return test_exec_KUR_ses(0, -1, 1, 0);
+    return test_exec_KUR_ses(0, -1, 1, 0, PROTECTION_UNPROTECTED);
 }
 
 static int test_exec_KUR_ses_wrong_pub(void)
 {
-    return test_exec_KUR_ses(0, -1, 1, 1);
+    return test_exec_KUR_ses(0, -1, 1, 1, PROTECTION_UNPROTECTED);
+}
+
+static int test_exec_KUR_ses_PBM_protection(void)
+{
+    return test_exec_KUR_ses(0, -1, 0, 0, PROTECTION_PBM);
+}
+
+static int test_exec_KUR_ses_signature_protection(void)
+{
+    return test_exec_KUR_ses(0, -1, 0, 0, PROTECTION_SIGNATURE);
 }
 
 static int test_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
@@ -779,6 +851,8 @@ int setup_tests(void)
     ADD_TEST(test_exec_KUR_ses_ok);
     ADD_TEST(test_exec_KUR_ses_transfer_error);
     ADD_TEST(test_exec_KUR_bad_pkiConf_protection);
+    ADD_TEST(test_exec_KUR_ses_PBM_protection);
+    ADD_TEST(test_exec_KUR_ses_signature_protection);
     ADD_TEST(test_exec_KUR_ses_wrong_popo);
     ADD_TEST(test_exec_KUR_ses_pub);
     ADD_TEST(test_exec_KUR_ses_wrong_pub);

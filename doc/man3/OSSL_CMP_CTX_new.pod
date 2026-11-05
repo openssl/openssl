@@ -193,7 +193,8 @@ OSSL_CMP_CTX_free() deallocates an OSSL_CMP_CTX structure.
 If the argument is NULL, nothing is done.
 
 OSSL_CMP_CTX_reinit() prepares the given I<ctx> for a further transaction by
-clearing the internal CMP transaction (aka session) status, PKIStatusInfo,
+clearing the internal CMP transaction (aka session) status including the
+transactionID, nonces, any preferred or cached protection algorithm, PKIStatusInfo,
 and any previous results (newCert, newChain, caPubs, and extraCertsIn)
 from the last executed transaction.
 It also clears any ITAVs that were added by OSSL_CMP_CTX_push0_genm_ITAV().
@@ -775,6 +776,13 @@ the I<ctx>. This will be used to validate the recipNonce in incoming messages.
 
 CMP is defined in RFC 9810 (and CRMF in RFC 4211).
 
+The functions that set up the credentials used for protecting outgoing messages
+and options that influence the protection such as OSSL_CMP_CTX_set1_secretValue(),
+OSSL_CMP_CTX_set1_pkey(), OSSL_CMP_CTX_set1_cert(), B<OSSL_CMP_OPT_DIGEST_ALGNID>,
+B<OSSL_CMP_OPT_OWF_ALGNID>, and B<OSSL_CMP_OPT_MAC_ALGNID>
+should not be used while a transaction is active.
+In doubt, OSSL_CMP_CTX_reinit() should be called before.
+
 =head1 RETURN VALUES
 
 OSSL_CMP_CTX_free() and OSSL_CMP_CTX_print_errors() do not return anything.
@@ -901,6 +909,28 @@ Support for central key generation, requested via B<OSSL_CRMF_POPO_NONE>,
 was added in OpenSSL 3.5.
 
 The B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES> option was added in OpenSSL 4.1.
+
+Since OpenSSL 4.2,
+CMP message protectionAlg are kept consistent within a transaction.
+This follows three requirements by the Lightweight CMP Profile [RFC 9483]:
+
+=over 4
+
+=item * All request messages use the same protection credentials,
+        which implies using the same protection algorithm.
+
+=item * For efficiency, parameters of MAC-based protection
+        such as salt remain constant.
+
+=item * The protection of server responses follows the request protection.
+  An implementation for this requirement was there before. It got improved
+  such that the server can also handle the case that it does not have the
+  needed credentials for following the protection method indicated by the request,
+  namely by resorting to another method for which it does have the credentials.
+  When responding to requests with invalid protection, it is made sure that
+  the server sends its error unprotected, to avoid DoS and credential wear-out.
+
+=back
 
 =head1 COPYRIGHT
 

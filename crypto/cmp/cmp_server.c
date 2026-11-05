@@ -609,17 +609,18 @@ static int assuming_new_transaction(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
 /* Prepare for next transaction */
 static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
 {
+    OSSL_CMP_CTX *ctx = srv_ctx->ctx;
     int ret = 1;
 
-    srv_ctx->ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
+    ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
     srv_ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
     srv_ctx->polling = 0;
 
     if (srv_ctx->clean_transaction != NULL)
-        ret = srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID);
-    if (!OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL))
+        ret = srv_ctx->clean_transaction(srv_ctx, ctx->transactionID);
+    if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL))
         ret = 0;
-    if (!OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL))
+    if (!OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
         ret = 0;
     return ret;
 }
@@ -633,6 +634,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CMP_CTX *ctx;
     int backup_unprotectedSend;
     ASN1_OCTET_STRING *backup_secret;
+    X509_ALGOR *preferred_alg = NULL;
     OSSL_CMP_PKIHEADER *hdr;
     int req_type, rsp_type;
     int req_verified = 0;
@@ -694,6 +696,14 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             goto err;
         }
     }
+
+    /* set preference for protection of response to be the same as for req */
+    preferred_alg = req->header->protectionAlg;
+    if (preferred_alg != NULL /* can prefer only what is available: */
+        && (IS_MAC_ALG(preferred_alg) ? ctx->secretValue == NULL : ctx->pkey == NULL))
+        preferred_alg = NULL;
+    if (!ossl_cmp_ctx_set1_protectionAlg(ctx, preferred_alg))
+        goto err;
 
     req_verified = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
         srv_ctx->acceptUnprotected);
