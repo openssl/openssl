@@ -760,8 +760,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
     case BIO_CTRL_DGRAM_DETECT_PEER_ADDR: {
-        BIO_ADDR xaddr, *p = &data->peer;
-        socklen_t xaddr_len = sizeof(xaddr.sa);
+        BIO_ADDR xaddr = { 0 }, *p = &data->peer;
+        socklen_t xaddr_len = sizeof(xaddr);
 
         if (BIO_ADDR_family(p) == AF_UNSPEC) {
             if (getpeername(b->num, (void *)&xaddr.sa, &xaddr_len) == 0
