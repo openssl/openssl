@@ -176,6 +176,7 @@ jobs:
 
   linux-aarch64-graviton4:
     runs-on: graviton4
+    timeout-minutes: 60
     # Self-hosted runner; its label only exists in openssl/openssl, so keep
     # this job out of forks (a run there would wait forever).
     if: github.repository == 'openssl/openssl'
