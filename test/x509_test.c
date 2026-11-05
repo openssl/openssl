@@ -852,6 +852,139 @@ end:
     return ret;
 }
 
+static X509_NAME *canon_hash_name(const char *org, const char *cn)
+{
+    X509_NAME *nm = X509_NAME_new();
+
+    if (nm == NULL
+        || !X509_NAME_add_entry_by_txt(nm, "O", MBSTRING_ASC,
+            (const unsigned char *)org, -1, -1, 0)
+        || !X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
+            (const unsigned char *)cn, -1, -1, 0)) {
+        X509_NAME_free(nm);
+        return NULL;
+    }
+    return nm;
+}
+
+/* Whether |store| holds a certificate with the subject |nm|. */
+static int canon_hash_lookup(X509_STORE *store, const X509_NAME *nm)
+{
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    X509_OBJECT *obj = X509_OBJECT_new();
+    int found = -1;
+
+    if (ctx != NULL && obj != NULL
+        && X509_STORE_CTX_init(ctx, store, NULL, NULL))
+        found = X509_STORE_CTX_get_by_subject(ctx, X509_LU_X509, nm, obj);
+    X509_OBJECT_free(obj);
+    X509_STORE_CTX_free(ctx);
+    return found;
+}
+
+/*
+ * The hash kept with a name's canonical encoding follows that encoding: equal
+ * for names that compare equal, renewed when the name changes, and it is
+ * what an X509_STORE finds the name by.
+ */
+static int test_x509_name_canon_hash(void)
+{
+    X509_NAME *a = NULL, *b = NULL, *c = NULL, *dup = NULL;
+    X509_NAME *empty1 = NULL, *empty2 = NULL;
+    X509_NAME_ENTRY *ne = NULL;
+    X509 *cert = NULL, *anon = NULL;
+    X509_STORE *store = NULL;
+    uint64_t hash_a;
+    int ret = 0;
+
+    /* |a| and |b| differ in case and white space only */
+    if (!TEST_ptr(a = canon_hash_name("Example Org", "Test  Name"))
+        || !TEST_ptr(b = canon_hash_name("example ORG", " test name "))
+        || !TEST_ptr(c = canon_hash_name("Example Org", "Test Name 2"))
+        || !TEST_ptr(empty1 = X509_NAME_new())
+        || !TEST_ptr(empty2 = X509_NAME_new())
+        || !TEST_int_gt(i2d_X509_NAME(a, NULL), 0)
+        || !TEST_int_gt(i2d_X509_NAME(b, NULL), 0)
+        || !TEST_int_gt(i2d_X509_NAME(c, NULL), 0)
+        || !TEST_int_gt(i2d_X509_NAME(empty1, NULL), 0)
+        || !TEST_int_gt(i2d_X509_NAME(empty2, NULL), 0)
+        || !TEST_ptr(dup = X509_NAME_dup(a)))
+        goto end;
+
+    hash_a = a->canon_hash;
+    if (!TEST_int_eq(X509_NAME_cmp(a, b), 0)
+        || !TEST_uint64_t_eq(b->canon_hash, hash_a)
+        || !TEST_uint64_t_eq(dup->canon_hash, hash_a)
+        || !TEST_uint64_t_ne(c->canon_hash, hash_a)
+        || !TEST_ptr_null(empty1->canon_enc)
+        || !TEST_uint64_t_eq(empty1->canon_hash, empty2->canon_hash)
+        || !TEST_uint64_t_ne(empty1->canon_hash, hash_a))
+        goto end;
+
+    /* A changed name gets a new hash, and the old one back when restored */
+    if (!TEST_true(X509_NAME_add_entry_by_txt(b, "OU", MBSTRING_ASC,
+            (const unsigned char *)"Unit", -1, -1, 0))
+        || !TEST_int_gt(i2d_X509_NAME(b, NULL), 0)
+        || !TEST_uint64_t_ne(b->canon_hash, hash_a)
+        || !TEST_ptr(ne = X509_NAME_delete_entry(b, 2))
+        || !TEST_int_gt(i2d_X509_NAME(b, NULL), 0)
+        || !TEST_uint64_t_eq(b->canon_hash, hash_a))
+        goto end;
+    X509_NAME_ENTRY_free(ne);
+    ne = NULL;
+
+    /* An emptied name hashes as an empty one */
+    while (X509_NAME_entry_count(dup) > 0)
+        X509_NAME_ENTRY_free(X509_NAME_delete_entry(dup, 0));
+    if (!TEST_int_gt(i2d_X509_NAME(dup, NULL), 0)
+        || !TEST_uint64_t_eq(dup->canon_hash, empty1->canon_hash))
+        goto end;
+
+    /* The store finds certificates by any name equal to their subject */
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_ptr(anon = X509_new())
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_set_subject_name(cert, a))
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(anon), 2))
+        || !TEST_int_eq(canon_hash_lookup(store, a), 0)
+        || !TEST_true(X509_STORE_add_cert(store, cert))
+        || !TEST_int_eq(canon_hash_lookup(store, a), 1)
+        || !TEST_int_eq(canon_hash_lookup(store, b), 1)
+        || !TEST_int_eq(canon_hash_lookup(store, c), 0)
+        || !TEST_int_eq(canon_hash_lookup(store, empty1), 0)
+        || !TEST_true(X509_STORE_add_cert(store, anon))
+        || !TEST_int_eq(canon_hash_lookup(store, empty1), 1)
+        || !TEST_int_eq(canon_hash_lookup(store, dup), 1))
+        goto end;
+
+    /*
+     * A name changed since it was last encoded carries a stale hash until
+     * the store re-encodes it for the lookup.
+     */
+    if (!TEST_true(X509_NAME_add_entry_by_txt(b, "OU", MBSTRING_ASC,
+            (const unsigned char *)"Unit", -1, -1, 0))
+        || !TEST_uint64_t_eq(b->canon_hash, hash_a)
+        || !TEST_int_eq(canon_hash_lookup(store, b), 0)
+        || !TEST_uint64_t_ne(b->canon_hash, hash_a)
+        || !TEST_ptr(ne = X509_NAME_delete_entry(b, 2))
+        || !TEST_int_eq(canon_hash_lookup(store, b), 1))
+        goto end;
+
+    ret = 1;
+end:
+    X509_NAME_ENTRY_free(ne);
+    X509_STORE_free(store);
+    X509_free(cert);
+    X509_free(anon);
+    X509_NAME_free(a);
+    X509_NAME_free(b);
+    X509_NAME_free(c);
+    X509_NAME_free(dup);
+    X509_NAME_free(empty1);
+    X509_NAME_free(empty2);
+    return ret;
+}
+
 static int test_x509_name_multivalued_rdn_mfail(void)
 {
     X509_NAME *name = NULL;
@@ -1057,6 +1190,7 @@ int setup_tests(void)
     ADD_TEST(test_nc_empty_dirname_excluded);
     ADD_TEST(test_nc_empty_dirname_permitted);
     ADD_TEST(test_x509_name_canon_failure_cache);
+    ADD_TEST(test_x509_name_canon_hash);
     ADD_MFAIL_TEST(test_x509_name_multivalued_rdn_mfail);
     ADD_MFAIL_TEST(test_x509_attribute_i2d_mfail);
     ADD_MFAIL_TEST(test_pkcs7_digest_set_i2d_mfail);

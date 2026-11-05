@@ -60,6 +60,12 @@ struct X509_name_st {
     /* canonical encoding used for rapid Name comparison */
     unsigned char *canon_enc;
     int canon_enclen;
+    /*
+     * Hash of canon_enc, valid whenever canon_enc is: both are set together.
+     * It is not keyed, so that it can be computed once per name and shared
+     * by every table the name is looked up in.
+     */
+    uint64_t canon_hash;
 } /* X509_NAME */;
 
 /* Signature info structure */

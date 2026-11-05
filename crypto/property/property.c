@@ -243,12 +243,7 @@ static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
     QUERY *q;
     int i;
 
-    /*
-     * Instead of iterating over the hashtable with the
-     * ossl_ht_foreach_until function, we just traverse the
-     * linked list, as it much faster this way, as we avoid having
-     * to visit lots of potentially empty nodes
-     */
+    /* Traverse the cache lists themselves; there is no table to walk */
     for (i = 0; i < MAX_CACHE_LINES; i++) {
         if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[i], (void **)&q, sa->alock))
             return;
