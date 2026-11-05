@@ -376,7 +376,7 @@ static int ktls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 }
 
 static int ktls_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
-    size_t n_recs, int sending, SSL_MAC_BUF *mac,
+    size_t n_recs, int sending, unsigned char **mac,
     size_t macsize)
 {
     return 1;

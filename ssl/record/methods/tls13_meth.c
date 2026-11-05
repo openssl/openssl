@@ -107,7 +107,7 @@ end:
 }
 
 static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
-    size_t n_recs, int sending, SSL_MAC_BUF *mac,
+    size_t n_recs, int sending, unsigned char **mac,
     size_t macsize)
 {
     EVP_CIPHER_CTX *enc_ctx;
