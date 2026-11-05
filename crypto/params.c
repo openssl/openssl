@@ -11,7 +11,7 @@
 /* Don't declare the OSSL_PARAM_construct_ functions inline */
 #define OSSL_PARAM_CONSTRUCT_INLINE
 
-/* Need to prototype these functions to prevent compile time warnings */
+/* Need to prototype these functions to prevent "no previous prototype" errors */
 #include <openssl/core.h> /* For OSSL_PARAM */
 OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf);
 OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, unsigned int *buf);
