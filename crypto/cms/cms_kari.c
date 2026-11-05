@@ -235,7 +235,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     out = OPENSSL_malloc(outsize);
     if (out == NULL)
         goto err;
-    out_alloc_len = (size_t)outlen;
+    out_alloc_len = outsize;
     if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, (int)inlen))
         goto err;
     *pout = out;
