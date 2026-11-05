@@ -407,6 +407,25 @@ start:
             return -1;
 
         if (is_dtls13 && current_state == TLS_ST_OK && SSL_in_init(s)) {
+            if (!ossl_statem_get_in_handshake(sc)) {
+                /*
+                 * Post-handshake work is still owed (e.g. a reciprocal
+                 * KeyUpdate) and nothing is driving the state machine. Run it
+                 * now, as the top of this function does, so the message is
+                 * sent and its retransmit timer armed. Otherwise nothing
+                 * would be in flight and no event would ever end the wait for
+                 * the buffered data. It is released by dtls_unbuffer_record()
+                 * once the exchange completes.
+                 */
+                i = sc->handshake_func(s);
+                /* SSLfatal() already called if appropriate */
+                if (i < 0)
+                    return i;
+                if (i == 0)
+                    return -1;
+                goto start;
+            }
+
             /*
              * The record was buffered, not dropped or failed: it will be
              * delivered once the in-progress post-handshake exchange (e.g.

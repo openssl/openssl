@@ -1327,14 +1327,14 @@ static int test_dtls13_listener_keyupdate_app_data_classification(void)
 
     /*
      * The call under test: it processes the KeyUpdate -- scheduling the
-     * accepted connection's own reciprocal response and leaving it parked at
-     * TLS_ST_OK with in_init set -- and then reaches the already-buffered
-     * application record while the connection's rbio is NULL. This must
-     * report SSL_ERROR_WANT_READ, same as the ordinary BIO-pair case.
+     * accepted connection's own reciprocal response -- then buffers the
+     * application record that follows while the connection's rbio is NULL,
+     * and sends the response before returning. This must report
+     * SSL_ERROR_WANT_READ, same as the ordinary BIO-pair case.
      */
     ret = SSL_read(server, buf, sizeof(buf));
     if (!TEST_int_eq(SSL_get_error(server, ret), SSL_ERROR_WANT_READ)
-        || !TEST_int_eq(sc->key_update, SSL_KEY_UPDATE_NOT_REQUESTED)
+        || !TEST_true(sc->d1->key_update_write_pending)
         || !TEST_false(SSL_is_init_finished(server)))
         goto end;
 
