@@ -300,7 +300,8 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 
     rv = 1;
 err:
-    OPENSSL_free(out);
+    if (out != NULL)
+        OPENSSL_clear_free(out, outsize);
     OPENSSL_cleanse(kek, sizeof(kek));
     EVP_CIPHER_CTX_reset(kemri->ctx);
     EVP_PKEY_CTX_free(kemri->pctx);
