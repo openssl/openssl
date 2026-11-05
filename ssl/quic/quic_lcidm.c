@@ -11,9 +11,7 @@
 #include "internal/quic_types.h"
 #include "internal/quic_vlint.h"
 #include "internal/common.h"
-#include "internal/hashfunc.h"
-#include "crypto/siphash.h"
-#include <openssl/lhash.h>
+#include "internal/htable.h"
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
@@ -31,26 +29,37 @@ enum {
 };
 
 typedef struct quic_lcid_st {
+    /* In QUIC_LCIDM.lcids, keyed by cid: link and hash next to the CID. */
+    OSSL_HTABLE_MEMBER(lcid);
     QUIC_CONN_ID cid;
     uint64_t seq_num;
-
-    /* copy of the hash key from lcidm */
-    uint64_t *hash_key;
 
     /* Back-pointer to the owning QUIC_LCIDM_CONN structure. */
     QUIC_LCIDM_CONN *conn;
 
     /* LCID_TYPE_* */
     unsigned int type : 2;
+
+    OSSL_QUEUE_MEMBER(conn_lcid); /* in the owning QUIC_LCIDM_CONN.lcids */
 } QUIC_LCID;
 
-DEFINE_LHASH_OF_EX(QUIC_LCID);
-DEFINE_LHASH_OF_EX(QUIC_LCIDM_CONN);
+/*
+ * The port-wide tables start with a few buckets held in the LCIDM, enough
+ * for a client's single connection, and grow with the number of LCIDs and
+ * connections on the port.
+ */
+#define LCIDM_MIN_BITS 4
+#define LCIDM_MAX_BITS 20
+
+DEFINE_QUEUE_OF(lcid, QUIC_LCID);
+DEFINE_HTABLE_DYN_OF(lcid, QUIC_LCID, LCIDM_MIN_BITS, LCIDM_MAX_BITS);
+DEFINE_QUEUE_OF(conn_lcid, QUIC_LCID);
 
 struct quic_lcidm_conn_st {
-    size_t num_active_lcid;
-    LHASH_OF(QUIC_LCID) *lcids;
+    OSSL_HTABLE_MEMBER(lcidm_conn); /* in QUIC_LCIDM.conns, keyed by opaque */
     void *opaque;
+    size_t num_active_lcid;
+    OSSL_QUEUE lcids; /* this connection's QUIC_LCIDs */
     QUIC_LCID *odcid_lcid_obj;
     uint64_t next_seq_num;
 
@@ -58,55 +67,25 @@ struct quic_lcidm_conn_st {
     unsigned int done_odcid : 1;
 };
 
+DEFINE_QUEUE_OF(lcidm_conn, QUIC_LCIDM_CONN);
+DEFINE_HTABLE_DYN_OF(lcidm_conn, QUIC_LCIDM_CONN, LCIDM_MIN_BITS,
+    LCIDM_MAX_BITS);
+
 struct quic_lcidm_st {
     OSSL_LIB_CTX *libctx;
-    uint64_t hash_key[2]; /* random key for siphash */
-    LHASH_OF(QUIC_LCID) *lcids; /* (QUIC_CONN_ID) -> (QUIC_LCID *)  */
-    LHASH_OF(QUIC_LCIDM_CONN) *conns; /* (void *opaque) -> (QUIC_LCIDM_CONN *) */
+    unsigned char hash_key[OSSL_HTABLE_KEY_SIZE]; /* random key for siphash */
+    OSSL_HTABLE(lcid) lcids; /* (QUIC_CONN_ID) -> (QUIC_LCID *)  */
+    OSSL_HTABLE(lcidm_conn) conns; /* (void *opaque) -> (QUIC_LCIDM_CONN *) */
     size_t lcid_len; /* Length in bytes for all LCIDs */
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     QUIC_CONN_ID next_lcid;
 #endif
 };
 
-static unsigned long lcid_hash(const QUIC_LCID *lcid_obj)
+/* SipHash-2-4 under the LCIDM's random key: the peer chooses its ODCID. */
+static uint64_t lcid_hash(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *cid)
 {
-    SIPHASH siphash = {
-        0,
-    };
-    unsigned long hashval = 0;
-    unsigned char digest[SIPHASH_MIN_DIGEST_SIZE];
-
-    /* Use a supported SipHash digest size (8 or 16); 8 is sufficient here. */
-    if (!SipHash_set_hash_size(&siphash, SIPHASH_MIN_DIGEST_SIZE))
-        goto out;
-    if (!SipHash_Init(&siphash, (uint8_t *)lcid_obj->hash_key, 0, 0))
-        goto out;
-    SipHash_Update(&siphash, lcid_obj->cid.id, lcid_obj->cid.id_len);
-    if (!SipHash_Final(&siphash, digest, SIPHASH_MIN_DIGEST_SIZE))
-        goto out;
-
-    /*
-     * Truncate the 64-bit SipHash digest into an unsigned long.
-     */
-    memcpy(&hashval, digest, sizeof(hashval) < sizeof(digest) ? sizeof(hashval) : sizeof(digest));
-out:
-    return hashval;
-}
-
-static int lcid_comp(const QUIC_LCID *a, const QUIC_LCID *b)
-{
-    return !ossl_quic_conn_id_eq(&a->cid, &b->cid);
-}
-
-static unsigned long lcidm_conn_hash(const QUIC_LCIDM_CONN *conn)
-{
-    return ossl_lh_hash_ptr(conn->opaque);
-}
-
-static int lcidm_conn_comp(const QUIC_LCIDM_CONN *a, const QUIC_LCIDM_CONN *b)
-{
-    return a->opaque != b->opaque;
+    return ossl_siphash24_u64(lcidm->hash_key, cid->id, cid->id_len);
 }
 
 QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len)
@@ -120,28 +99,17 @@ QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len)
         goto err;
 
     /* generate a random key for the hash tables hash function */
-    if (!RAND_bytes_ex(libctx, (unsigned char *)&lcidm->hash_key,
-            sizeof(uint64_t) * 2, 0))
+    if (!RAND_bytes_ex(libctx, lcidm->hash_key, sizeof(lcidm->hash_key), 0))
         goto err;
 
-    if ((lcidm->lcids = lh_QUIC_LCID_new(lcid_hash, lcid_comp)) == NULL)
-        goto err;
-
-    if ((lcidm->conns = lh_QUIC_LCIDM_CONN_new(lcidm_conn_hash,
-             lcidm_conn_comp))
-        == NULL)
-        goto err;
-
+    ossl_htable_lcid_init(&lcidm->lcids);
+    ossl_htable_lcidm_conn_init(&lcidm->conns);
     lcidm->libctx = libctx;
     lcidm->lcid_len = lcid_len;
     return lcidm;
 
 err:
-    if (lcidm != NULL) {
-        lh_QUIC_LCID_free(lcidm->lcids);
-        lh_QUIC_LCIDM_CONN_free(lcidm->conns);
-        OPENSSL_free(lcidm);
-    }
+    OPENSSL_free(lcidm);
     return NULL;
 }
 
@@ -157,55 +125,35 @@ void ossl_quic_lcidm_free(QUIC_LCIDM *lcidm)
     if (lcidm == NULL)
         return;
 
-    /*
-     * Calling OPENSSL_lh_delete during a doall call is unsafe with our
-     * current LHASH implementation for several reasons:
-     *
-     * - firstly, because deletes can cause the hashtable to be contracted,
-     *   resulting in rehashing which might cause items in later buckets to
-     *   move to earlier buckets, which might cause doall to skip an item,
-     *   resulting in a memory leak;
-     *
-     * - secondly, because doall in general is not safe across hashtable
-     *   size changes, as it caches hashtable size and pointer values
-     *   while operating.
-     *
-     * The fix for this is to disable hashtable contraction using the following
-     * call, which guarantees that no rehashing will occur so long as we only
-     * call delete and not insert.
-     */
-    lh_QUIC_LCIDM_CONN_set_down_load(lcidm->conns, 0);
-
-    lh_QUIC_LCIDM_CONN_doall_arg(lcidm->conns, lcidm_delete_conn_, lcidm);
-
-    lh_QUIC_LCID_free(lcidm->lcids);
-    lh_QUIC_LCIDM_CONN_free(lcidm->conns);
+    /* Deleting the visited connection is allowed during doall. */
+    ossl_htable_lcidm_conn_doall_arg(&lcidm->conns, lcidm_delete_conn_, lcidm);
+    ossl_htable_lcid_cleanup(&lcidm->lcids);
+    ossl_htable_lcidm_conn_cleanup(&lcidm->conns);
     OPENSSL_free(lcidm);
 }
 
 static QUIC_LCID *lcidm_get0_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *lcid)
 {
-    QUIC_LCID key;
+    QUIC_LCID *lcid_obj;
 
-    key.cid = *lcid;
-    key.hash_key = (uint64_t *)lcidm->hash_key;
-
-    if (key.cid.id_len > QUIC_MAX_CONN_ID_LEN)
+    if (lcid->id_len > QUIC_MAX_CONN_ID_LEN)
         return NULL;
 
-    return lh_QUIC_LCID_retrieve(lcidm->lcids, &key);
+    OSSL_HTABLE_FIND(lcid_obj, lcid, &lcidm->lcids, lcid_hash(lcidm, lcid),
+        ossl_quic_conn_id_eq(&lcid_obj->cid, lcid));
+    return lcid_obj;
 }
 
 static QUIC_LCIDM_CONN *lcidm_get0_conn(const QUIC_LCIDM *lcidm, void *opaque)
 {
-    QUIC_LCIDM_CONN key;
+    QUIC_LCIDM_CONN *conn;
 
-    key.opaque = opaque;
-
-    return lh_QUIC_LCIDM_CONN_retrieve(lcidm->conns, &key);
+    OSSL_HTABLE_FIND(conn, lcidm_conn, &lcidm->conns, ossl_hash_ptr(opaque),
+        conn->opaque == opaque);
+    return conn;
 }
 
-static QUIC_LCIDM_CONN *lcidm_upsert_conn(const QUIC_LCIDM *lcidm, void *opaque)
+static QUIC_LCIDM_CONN *lcidm_upsert_conn(QUIC_LCIDM *lcidm, void *opaque)
 {
     QUIC_LCIDM_CONN *conn = lcidm_get0_conn(lcidm, opaque);
 
@@ -213,84 +161,52 @@ static QUIC_LCIDM_CONN *lcidm_upsert_conn(const QUIC_LCIDM *lcidm, void *opaque)
         return conn;
 
     if ((conn = OPENSSL_zalloc(sizeof(*conn))) == NULL)
-        goto err;
+        return NULL;
 
-    if ((conn->lcids = lh_QUIC_LCID_new(lcid_hash, lcid_comp)) == NULL)
-        goto err;
-
+    ossl_queue_init(&conn->lcids);
     conn->opaque = opaque;
-
-    lh_QUIC_LCIDM_CONN_insert(lcidm->conns, conn);
-    if (lh_QUIC_LCIDM_CONN_error(lcidm->conns))
-        goto err;
-
+    ossl_htable_lcidm_conn_add(&lcidm->conns, conn, ossl_hash_ptr(opaque));
     return conn;
-
-err:
-    if (conn != NULL) {
-        lh_QUIC_LCID_free(conn->lcids);
-        OPENSSL_free(conn);
-    }
-    return NULL;
 }
 
 static void lcidm_delete_conn_lcid(QUIC_LCIDM *lcidm, QUIC_LCID *lcid_obj)
 {
-    lh_QUIC_LCID_delete(lcidm->lcids, lcid_obj);
-    lh_QUIC_LCID_delete(lcid_obj->conn->lcids, lcid_obj);
+    ossl_htable_lcid_del(&lcidm->lcids, lcid_obj);
+    ossl_queue_conn_lcid_del(lcid_obj);
     assert(lcid_obj->conn->num_active_lcid > 0);
     --lcid_obj->conn->num_active_lcid;
     OPENSSL_free(lcid_obj);
 }
 
-/* doall_arg wrapper */
-static void lcidm_delete_conn_lcid_(QUIC_LCID *lcid_obj, void *arg)
-{
-    lcidm_delete_conn_lcid((QUIC_LCIDM *)arg, lcid_obj);
-}
-
 static void lcidm_delete_conn(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn)
 {
-    /* See comment in ossl_quic_lcidm_free */
-    lh_QUIC_LCID_set_down_load(conn->lcids, 0);
+    QUIC_LCID *lcid_obj, *lcid_next;
 
-    lh_QUIC_LCID_doall_arg(conn->lcids, lcidm_delete_conn_lcid_, lcidm);
-    lh_QUIC_LCIDM_CONN_delete(lcidm->conns, conn);
-    lh_QUIC_LCID_free(conn->lcids);
+    OSSL_QUEUE_FOREACH_DELSAFE (lcid_obj, lcid_next, conn_lcid, &conn->lcids)
+        lcidm_delete_conn_lcid(lcidm, lcid_obj);
+
+    ossl_htable_lcidm_conn_del(&lcidm->conns, conn);
     OPENSSL_free(conn);
 }
 
 static QUIC_LCID *lcidm_conn_new_lcid(QUIC_LCIDM *lcidm, QUIC_LCIDM_CONN *conn,
     const QUIC_CONN_ID *lcid)
 {
-    QUIC_LCID *lcid_obj = NULL;
+    QUIC_LCID *lcid_obj;
 
     if (lcid->id_len > QUIC_MAX_CONN_ID_LEN)
         return NULL;
 
     if ((lcid_obj = OPENSSL_zalloc(sizeof(*lcid_obj))) == NULL)
-        goto err;
+        return NULL;
 
     lcid_obj->cid = *lcid;
     lcid_obj->conn = conn;
-    lcid_obj->hash_key = lcidm->hash_key;
 
-    lh_QUIC_LCID_insert(conn->lcids, lcid_obj);
-    if (lh_QUIC_LCID_error(conn->lcids))
-        goto err;
-
-    lh_QUIC_LCID_insert(lcidm->lcids, lcid_obj);
-    if (lh_QUIC_LCID_error(lcidm->lcids)) {
-        lh_QUIC_LCID_delete(conn->lcids, lcid_obj);
-        goto err;
-    }
-
+    ossl_queue_conn_lcid_add(&conn->lcids, lcid_obj);
+    ossl_htable_lcid_add(&lcidm->lcids, lcid_obj, lcid_hash(lcidm, lcid));
     ++conn->num_active_lcid;
     return lcid_obj;
-
-err:
-    OPENSSL_free(lcid_obj);
-    return NULL;
 }
 
 size_t ossl_quic_lcidm_get_lcid_len(const QUIC_LCIDM *lcidm)
@@ -336,7 +252,7 @@ static int lcidm_generate(QUIC_LCIDM *lcidm,
     uint64_t *seq_num)
 {
     QUIC_LCIDM_CONN *conn;
-    QUIC_LCID key, *lcid_obj;
+    QUIC_LCID *lcid_obj;
     size_t i;
 #define MAX_RETRIES 8
 
@@ -359,11 +275,8 @@ static int lcidm_generate(QUIC_LCIDM *lcidm,
         if (!lcidm_generate_cid(lcidm, lcid_out))
             return 0;
 
-        key.cid = *lcid_out;
-        key.hash_key = lcidm->hash_key;
-
         /* If a collision occurs, retry. */
-    } while (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL);
+    } while (lcidm_get0_lcid(lcidm, lcid_out) != NULL);
 
     if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, lcid_out)) == NULL)
         return 0;
@@ -383,7 +296,7 @@ int ossl_quic_lcidm_enrol_odcid(QUIC_LCIDM *lcidm,
     const QUIC_CONN_ID *initial_odcid)
 {
     QUIC_LCIDM_CONN *conn;
-    QUIC_LCID key, *lcid_obj;
+    QUIC_LCID *lcid_obj;
 
     if (initial_odcid == NULL || initial_odcid->id_len < QUIC_MIN_ODCID_LEN
         || initial_odcid->id_len > QUIC_MAX_CONN_ID_LEN)
@@ -395,9 +308,7 @@ int ossl_quic_lcidm_enrol_odcid(QUIC_LCIDM *lcidm,
     if (conn->done_odcid)
         return 0;
 
-    key.cid = *initial_odcid;
-    key.hash_key = lcidm->hash_key;
-    if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
+    if (lcidm_get0_lcid(lcidm, initial_odcid) != NULL)
         return 0;
 
     if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, initial_odcid)) == NULL)
@@ -476,26 +387,6 @@ int ossl_quic_lcidm_retire_odcid(QUIC_LCIDM *lcidm, void *opaque)
     return 1;
 }
 
-struct retire_args {
-    QUIC_LCID *earliest_seq_num_lcid_obj;
-    uint64_t earliest_seq_num, retire_prior_to;
-};
-
-static void retire_for_conn(QUIC_LCID *lcid_obj, void *arg)
-{
-    struct retire_args *args = arg;
-
-    /* ODCID LCID cannot be retired via this API */
-    if (lcid_obj->type == LCID_TYPE_ODCID
-        || lcid_obj->seq_num >= args->retire_prior_to)
-        return;
-
-    if (lcid_obj->seq_num < args->earliest_seq_num) {
-        args->earliest_seq_num = lcid_obj->seq_num;
-        args->earliest_seq_num_lcid_obj = lcid_obj;
-    }
-}
-
 int ossl_quic_lcidm_retire(QUIC_LCIDM *lcidm,
     void *opaque,
     uint64_t retire_prior_to,
@@ -504,47 +395,46 @@ int ossl_quic_lcidm_retire(QUIC_LCIDM *lcidm,
     uint64_t *retired_seq_num,
     int *did_retire)
 {
-    QUIC_LCIDM_CONN key, *conn;
-    struct retire_args args = { 0 };
-
-    key.opaque = opaque;
+    QUIC_LCIDM_CONN *conn;
+    QUIC_LCID *lcid_obj, *earliest = NULL;
 
     if (did_retire == NULL)
         return 0;
 
     *did_retire = 0;
-    if ((conn = lh_QUIC_LCIDM_CONN_retrieve(lcidm->conns, &key)) == NULL)
+    if ((conn = lcidm_get0_conn(lcidm, opaque)) == NULL)
         return 1;
 
-    args.retire_prior_to = retire_prior_to;
-    args.earliest_seq_num = UINT64_MAX;
-
-    lh_QUIC_LCID_doall_arg(conn->lcids, retire_for_conn, &args);
-    if (args.earliest_seq_num_lcid_obj == NULL)
+    /* Retire the oldest eligible LCID; the ODCID cannot be retired here. */
+    OSSL_QUEUE_FOREACH (lcid_obj, conn_lcid, &conn->lcids) {
+        if (lcid_obj->type == LCID_TYPE_ODCID
+            || lcid_obj->seq_num >= retire_prior_to)
+            continue;
+        if (earliest == NULL || lcid_obj->seq_num < earliest->seq_num)
+            earliest = lcid_obj;
+    }
+    if (earliest == NULL)
         return 1;
 
     if (containing_pkt_dcid != NULL
-        && ossl_quic_conn_id_eq(&args.earliest_seq_num_lcid_obj->cid,
-            containing_pkt_dcid))
+        && ossl_quic_conn_id_eq(&earliest->cid, containing_pkt_dcid))
         return 0;
 
     *did_retire = 1;
     if (retired_lcid != NULL)
-        *retired_lcid = args.earliest_seq_num_lcid_obj->cid;
+        *retired_lcid = earliest->cid;
     if (retired_seq_num != NULL)
-        *retired_seq_num = args.earliest_seq_num_lcid_obj->seq_num;
+        *retired_seq_num = earliest->seq_num;
 
-    lcidm_delete_conn_lcid(lcidm, args.earliest_seq_num_lcid_obj);
+    lcidm_delete_conn_lcid(lcidm, earliest);
     return 1;
 }
 
 int ossl_quic_lcidm_cull(QUIC_LCIDM *lcidm, void *opaque)
 {
-    QUIC_LCIDM_CONN key, *conn;
+    QUIC_LCIDM_CONN *conn;
 
-    key.opaque = opaque;
-
-    if ((conn = lh_QUIC_LCIDM_CONN_retrieve(lcidm->conns, &key)) == NULL)
+    if ((conn = lcidm_get0_conn(lcidm, opaque)) == NULL)
         return 0;
 
     lcidm_delete_conn(lcidm, conn);
@@ -576,11 +466,9 @@ int ossl_quic_lcidm_lookup(QUIC_LCIDM *lcidm,
 int ossl_quic_lcidm_debug_remove(QUIC_LCIDM *lcidm,
     const QUIC_CONN_ID *lcid)
 {
-    QUIC_LCID key, *lcid_obj;
+    QUIC_LCID *lcid_obj;
 
-    key.cid = *lcid;
-    key.hash_key = lcidm->hash_key;
-    if ((lcid_obj = lh_QUIC_LCID_retrieve(lcidm->lcids, &key)) == NULL)
+    if ((lcid_obj = lcidm_get0_lcid(lcidm, lcid)) == NULL)
         return 0;
 
     lcidm_delete_conn_lcid(lcidm, lcid_obj);
@@ -592,7 +480,7 @@ int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
     uint64_t seq_num)
 {
     QUIC_LCIDM_CONN *conn;
-    QUIC_LCID key, *lcid_obj;
+    QUIC_LCID *lcid_obj;
 
     if (lcid == NULL || lcid->id_len > QUIC_MAX_CONN_ID_LEN)
         return 0;
@@ -600,9 +488,7 @@ int ossl_quic_lcidm_debug_add(QUIC_LCIDM *lcidm, void *opaque,
     if ((conn = lcidm_upsert_conn(lcidm, opaque)) == NULL)
         return 0;
 
-    key.cid = *lcid;
-    key.hash_key = lcidm->hash_key;
-    if (lh_QUIC_LCID_retrieve(lcidm->lcids, &key) != NULL)
+    if (lcidm_get0_lcid(lcidm, lcid) != NULL)
         return 0;
 
     if ((lcid_obj = lcidm_conn_new_lcid(lcidm, conn, lcid)) == NULL)
