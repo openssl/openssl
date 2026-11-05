@@ -41,9 +41,13 @@ extern "C" {
 #define PKCS12_IV_ID 2
 #define PKCS12_MAC_ID 3
 
-/* Default iteration count */
+/*
+ * Default iteration count for PKCS#12 encryption and MAC key derivation.
+ * This is deliberately higher than PKCS5_DEFAULT_ITER, which also serves as
+ * the default of the PBKDF2 KDF and of PKCS#8 private key encryption.
+ */
 #ifndef PKCS12_DEFAULT_ITER
-#define PKCS12_DEFAULT_ITER PKCS5_DEFAULT_ITER
+#define PKCS12_DEFAULT_ITER 600000
 #endif
 
 #define PKCS12_MAC_KEY_LENGTH 20

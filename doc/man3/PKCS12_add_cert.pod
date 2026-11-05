@@ -33,7 +33,8 @@ PKCS12_add_key() creates a PKCS#12 keyBag (unencrypted) or a pkcs8shroudedKeyBag
 (encrypted) containing the supplied B<EVP_PKEY> and adds this to the set of PKCS#12
 safeBags. If I<key_nid> is not -1 then the key is encrypted with the supplied
 algorithm, using I<pass> as the passphrase and I<iter> as the iteration count. If
-I<iter> is zero then a default value for iteration count of 2048 is used.
+I<iter> is zero then a default value for iteration count of B<PKCS12_DEFAULT_ITER>
+(currently 600000) is used.
 
 PKCS12_add_key_ex() is identical to PKCS12_add_key() but allows for a library
 context I<ctx> and property query I<propq> to be used to select algorithm

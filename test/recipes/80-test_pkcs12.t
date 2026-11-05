@@ -88,7 +88,7 @@ my $outfile7 = "out7.p12";
 my $outfile8 = "out8.p12";
 
 # Test the -chain option with -untrusted
-ok(run(app(["openssl", "pkcs12", "-export", "-chain",
+ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048", "-chain",
             "-CAfile",  srctop_file(@path,  "sroot-cert.pem"),
             "-untrusted", srctop_file(@path, "ca-cert.pem"),
             "-in", srctop_file(@path, "ee-cert.pem"),
@@ -99,7 +99,7 @@ ok(run(app(["openssl", "pkcs12", "-export", "-chain",
 SKIP: {
     skip "Skipping PKCS#12 test because DES is disabled in this build", 1
         if disabled("des");
-    ok(run(app(["openssl", "pkcs12", "-export",
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
             "-in", srctop_file(@path, "ee-cert.pem"),
             "-certfile", srctop_file(@path, "v3-certs-TDES.p12"),
             "-passcerts", "pass:v3-certs",
@@ -112,7 +112,7 @@ SKIP: {
     skip "Skipping legacy PKCS#12 test because the required algorithms are disabled", 2
         if disabled("des") || disabled("rc2") || disabled("legacy");
     # Test reading legacy PKCS#12 file
-    ok(run(app(["openssl", "pkcs12", "-export",
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
                 "-in", srctop_file(@path, "v3-certs-RC2.p12"),
                 "-passin", "pass:v3-certs",
                 "-provider", "default", "-provider", "legacy",
@@ -127,7 +127,7 @@ SKIP: {
 
 # Test export of PEM file with both cert and key
 # -nomac necessary to avoid legacy provider requirement
-ok(run(app(["openssl", "pkcs12", "-export",
+ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
         "-inkey", srctop_file(@path, "cert-key-cert.pem"),
         "-in", srctop_file(@path, "cert-key-cert.pem"),
         "-passout", "pass:v3-certs",
@@ -144,7 +144,7 @@ ok(run(app(["openssl", "pkcs12",
             "-nomacver", "-nodes"])),
   "test_import_pkcs12_cert_key_cert");
 
-ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile5,
+ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048", "-out", $outfile5,
             "-in", srctop_file(@path, "ee-cert.pem"), "-caname", "testname",
             "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
    "test nokeys single cert");
@@ -166,7 +166,7 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
 # Test export of PEM file with both cert and key, without password.
 # -nomac necessary to avoid legacy provider requirement
 {
-    ok(run(app(["openssl", "pkcs12", "-export",
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
             "-inkey", srctop_file(@path, "cert-key-cert.pem"),
             "-in", srctop_file(@path, "cert-key-cert.pem"),
             "-passout", "pass:",
@@ -179,7 +179,7 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
 }
 
 # Export key + cert + distinct CA cert for combination tests
-ok(run(app(["openssl", "pkcs12", "-export",
+ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
             "-inkey", srctop_file(@path, "ee-key.pem"),
             "-in", srctop_file(@path, "ee-cert.pem"),
             "-certfile", srctop_file(@path, "ca-cert.pem"),
@@ -191,7 +191,8 @@ ok(run(app(["openssl", "pkcs12", "-export",
 # keyBag (created with -keypbe NONE) rather than a shrouded keyBag.
 {
     my $keybag = "keybag.p12";
-    ok(run(app(["openssl", "pkcs12", "-export", "-keyex", "-keypbe", "NONE",
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
+                "-keyex", "-keypbe", "NONE",
                 "-certpbe", "NONE", "-nomac",
                 "-inkey", srctop_file(@path, "cert-key-cert.pem"),
                 "-in", srctop_file(@path, "cert-key-cert.pem"),
@@ -221,7 +222,8 @@ for my $instance (sort keys %pbmac1_tests) {
     # Test export of PEM file with both cert and key, with password.
     {
         my $pbmac1_id = $instance;
-        ok(run(app(["openssl", "pkcs12", "-export", "-pbmac1_pbkdf2",
+        ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
+                "-pbmac1_pbkdf2",
                 "-inkey", srctop_file(@path, "cert-key-cert.pem"),
                 "-in", srctop_file(@path, "cert-key-cert.pem"),
                 "-passout", "pass:1234",
@@ -320,7 +322,8 @@ with({ exit_checker => sub { return shift == 1; } },
 
 # Test with Oracle Trusted Key Usage specified in openssl.cnf
 {
-    ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile7,
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
+                "-out", $outfile7,
                 "-jdktrust", "anyExtendedKeyUsage", "-in", srctop_file(@path, "ee-cert.pem"),
                 "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
        "test nokeys single cert");
@@ -336,7 +339,8 @@ with({ exit_checker => sub { return shift == 1; } },
 # Test Oracle Trusted Key Usage with an OID that is not built in, on two certs
 {
     my $outfile_oid = "out7-custom-oid.p12";
-    ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile_oid,
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
+                "-out", $outfile_oid,
                 "-jdktrust", "1.2.3", "-in", srctop_file(@path, "ee-cert.pem"),
                 "-certfile", srctop_file(@path, "ca-cert.pem"),
                 "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
@@ -355,7 +359,7 @@ subtest "pkcs12 -clcerts/-cacerts filtering and -name" => sub {
     # A PKCS#12 with a key + matching EE cert (gets a localKeyID) and a CA
     # cert added via -certfile (no localKeyID), plus a friendly name.
     my $mixed = "mixed.p12";
-    ok(run(app(["openssl", "pkcs12", "-export",
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
                 "-inkey", srctop_file(@path, "ee-key.pem"),
                 "-in", srctop_file(@path, "ee-cert.pem"),
                 "-certfile", srctop_file(@path, "ca-cert.pem"),
@@ -466,7 +470,7 @@ ok(run(test(["pkcs12_api_test",
     close $out;
 
     my $twocert_p12 = "twocert.p12";
-    ok(run(app(["openssl", "pkcs12", "-export",
+    ok(run(app(["openssl", "pkcs12", "-export", "-iter", "2048",
                 "-inkey", srctop_file(@path, "ee-key.pem"),
                 "-in", srctop_file(@path, "ee-cert.pem"),
                 "-certfile", $extra_certs,

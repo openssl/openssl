@@ -366,7 +366,7 @@ Unless C<-pbmac1_pbkdf2> is specified, this parameter is ignored.
 =item B<-iter> I<count>
 
 This option specifies the iteration count for the encryption key and MAC. The
-default value is 2048.
+default value is 600000.
 
 To discourage attacks by using large dictionaries of common passwords the
 algorithm that derives keys from passwords can have an iteration count applied
@@ -376,7 +376,7 @@ have the same password as the keys and certificates it could also be attacked.
 
 =item B<-noiter>, B<-nomaciter>
 
-By default both encryption and MAC iteration counts are set to 2048, using
+By default both encryption and MAC iteration counts are set to 600000, using
 these options the MAC and encryption iteration counts can be set to 1, since
 this reduces the file security you should not use these options unless you
 really have to. Most software supports both MAC and encryption iteration counts.

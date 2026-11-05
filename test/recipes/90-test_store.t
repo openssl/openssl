@@ -446,7 +446,8 @@ sub init {
                                    "-inkey", $srckey,
                                    "-in", $srccert, "-passout", "pass:password",
                                    "-chain", "-CAfile", "cacert.pem",
-                                   "-export", "-macalg", $macalg,
+                                   "-export", "-iter", "2048",
+                                   "-macalg", $macalg,
                                    "-certpbe", $certpbe, "-keypbe", $keypbe,
                                    "-out", $dstfile]));
                       }, grep(/\.p12/, @generated_files))

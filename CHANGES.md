@@ -33,6 +33,22 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Raised the default PKCS#12 iteration count `PKCS12_DEFAULT_ITER` from
+   2048 to 600000, in line with current OWASP guidance for
+   PBKDF2-HMAC-SHA256. The new default applies to the encryption and MAC
+   key derivation of PKCS#12 files created by `PKCS12_create()`,
+   `PKCS12_add_key()`, `PKCS12_add_safe()`, `PKCS12_set_mac()` and related
+   functions when a zero iteration count is passed, and to the
+   `openssl pkcs12 -export` command when `-iter` is not given.
+   `PKCS12_DEFAULT_ITER` is no longer defined as `PKCS5_DEFAULT_ITER`, which
+   remains 2048 and is still used for PKCS#8 private key encryption
+   (including `openssl pkcs8 -topk8`, which previously used
+   `PKCS12_DEFAULT_ITER`) and as the PBKDF2 KDF default. Use `-iter` or an
+   explicit iteration count where interoperability with software that cannot
+   handle large iteration counts is required.
+
+   *Dimitri John Ledkov*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
