@@ -33,6 +33,12 @@
 #include "testutil.h"
 #include "../ssl/ssl_local.h"
 
+#if defined(_AIX) && !defined(__64BIT__)
+#undef revents
+#undef events
+#endif
+
+
 static char *cert = NULL;
 static char *privkey = NULL;
 

@@ -20,6 +20,16 @@
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 
+#if defined(_AIX)
+/*
+ * AIX <sys/param.h> defines GOOD and BAD as macros, which interferes with
+ * the enum constant GOOD below. We simply undef it.
+ */
+#ifdef GOOD
+# undef GOOD
+#endif
+#endif
+
 #ifndef OPENSSL_NO_SOCK
 #include "internal/sockets.h"
 #endif
