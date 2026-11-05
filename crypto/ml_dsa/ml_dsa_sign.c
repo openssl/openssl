@@ -277,7 +277,8 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         vector_ntt_inverse(&w);
 
         vector_high_bits(&w, gamma2, &w1);
-        ossl_ml_dsa_w1_encode(&w1, gamma2, w1_encoded, w1_encoded_len);
+        if (!ossl_ml_dsa_w1_encode(&w1, gamma2, w1_encoded, w1_encoded_len))
+            break;
 
         if (!shake_xof_2(md_ctx, priv->shake256_md, mu, mu_len,
                 w1_encoded, w1_encoded_len, c_tilde, c_tilde_len))
@@ -477,7 +478,8 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
     /* compute w1_encoded */
     w1 = w_approx;
     vector_use_hint(&sig.hint, w_approx, gamma2, w1);
-    ossl_ml_dsa_w1_encode(w1, gamma2, w1_encoded, w1_encoded_len);
+    if (!ossl_ml_dsa_w1_encode(w1, gamma2, w1_encoded, w1_encoded_len))
+        goto err;
 
     if (!shake_xof_3(md_ctx, pub->shake256_md, mu, mu_len,
             w1_encoded, w1_encoded_len, NULL, 0, c_tilde, c_tilde_len))
