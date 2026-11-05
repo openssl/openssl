@@ -9,6 +9,7 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/param_build.h>
 #include <openssl/proverr.h>
 #include "crypto/lms.h"
@@ -76,6 +77,13 @@ static int lms_import(void *keydata, int selection, const OSSL_PARAM params[])
         || key == NULL
         || !lms_import_decoder(params, &p))
         return 0;
+
+    /* Once a key has a public component, it is no longer changed */
+    if (ossl_lms_key_has(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_IMMUTABLE_ONCE_SET,
+            "Keys are immutable once key material has been loaded or generated");
+        return 0;
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;

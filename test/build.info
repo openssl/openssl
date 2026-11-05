@@ -340,7 +340,7 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=slh_dsa_test
     SOURCE[slh_dsa_test]=slh_dsa_test.c
     INCLUDE[slh_dsa_test]=../include ../apps/include
-    DEPEND[slh_dsa_test]=../libcrypto libtestutil.a
+    DEPEND[slh_dsa_test]=../libcrypto.a libtestutil.a
   ENDIF
   
   IF[{- !$disabled{'deprecated-3.0'} -}]
