@@ -775,8 +775,10 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len
-        || msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
+        || msg_hdr->msg_len > dtls1_max_handshake_message_len(s)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto err;
+    }
 
     if (frag_len == 0) {
         return DTLS1_HM_FRAGMENT_RETRY;
@@ -1230,7 +1232,16 @@ redo:
         chretran = 1;
     }
 
-    if (msg_hdr.frag_len > 0 && msg_hdr.frag_len < msg_hdr.msg_len) {
+    /*
+     * A zero-length fragment of a non-empty message carries no data and must
+     * not be delivered as a complete message. Both lengths are unsigned, so
+     * frag_len < msg_len also catches frag_len == 0 with msg_len > 0; route
+     * it to the reassembly path, which already treats frag_len == 0 as
+     * DTLS1_HM_FRAGMENT_RETRY (see dtls1_reassemble_fragment), keeping the
+     * in-order path consistent with it. A fully empty message
+     * (frag_len == 0 && msg_len == 0) is unaffected.
+     */
+    if (msg_hdr.frag_len < msg_hdr.msg_len) {
         *errtype = dtls1_reassemble_fragment(s, &msg_hdr);
         return 0;
     }
