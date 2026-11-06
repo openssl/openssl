@@ -326,6 +326,16 @@ OSSL_FN_CTX *OSSL_FN_CTX_new_size(OSSL_LIB_CTX *libctx, size_t size);
  * Allocate a new OSSL_FN_CTX in secure memory, given a set of input numbers.
  * Other than allocating in secure memory, this function does exactly the same
  * thing as OSSL_FN_CTX_new().
+ *
+ * @param[in]   libctx          OpenSSL library context, retained and returned
+ *                              by OSSL_FN_CTX_get0_libctx()
+ * @param[in]   max_n_frames    Maximum number of simultaneously active frames.
+ *                              This indicates the expected depth of call stack
+ *                              that the resulting OSSL_FN_CTX will be used in.
+ * @param[in]   max_n_numbers   Maximum number of simultaneously active OSSL_FN.
+ * @param[in]   max_n_limbs     Maximum number of simultaneously active OSSL_FN
+ *                              limbs.
+ * @returns     An allocated OSSL_FN_CTX, or NULL on error.
  */
 OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);

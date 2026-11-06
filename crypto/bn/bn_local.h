@@ -119,13 +119,67 @@ typedef unsigned long long BN_ULLONG;
 
 #define BN_MAX_WORDS (INT_MAX / (4 * BN_BITS2))
 
+/**
+ * Multiply a limb vector by a single limb and add into another vector:
+ * rp[i] += ap[i] * w for i in 0..num-1.
+ *
+ * @param[in, out]  rp      result accumulator, num limbs.
+ * @param[in]   ap      multiplicand, num limbs.
+ * @param[in]   num     number of limbs in ap and rp.
+ * @param[in]   w       the single-limb multiplier.
+ * @returns             the carry out of the most significant limb.
+ */
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
     BN_ULONG w);
+/**
+ * Multiply a limb vector by a single limb: rp[i] = ap[i] * w (with
+ * carry propagation) for i in 0..num-1.
+ *
+ * @param[out]  rp      result, num limbs; may alias ap.
+ * @param[in]   ap      multiplicand, num limbs.
+ * @param[in]   num     number of limbs in ap and rp.
+ * @param[in]   w       the single-limb multiplier.
+ * @returns             the carry out of the most significant limb.
+ */
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+/**
+ * Square a limb vector limb by limb: rp[2*i..2*i+1] = ap[i]^2 for i in
+ * 0..num-1.
+ *
+ * @param[out]  rp      result, 2*num limbs.
+ * @param[in]   ap      input, num limbs.
+ * @param[in]   num     number of limbs in ap.
+ */
 void bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
+/**
+ * Divide the two-limb number h:l by the single limb d.
+ *
+ * @param[in]   h       high limb of the dividend; must be less than d.
+ * @param[in]   l       low limb of the dividend.
+ * @param[in]   d       the divisor limb; must be nonzero.
+ * @returns             the single-limb quotient.
+ */
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
+/**
+ * Add two limb vectors: rp = ap + bp, over num limbs.
+ *
+ * @param[out]  rp      result, num limbs; may alias ap or bp.
+ * @param[in]   ap      first addend, num limbs.
+ * @param[in]   bp      second addend, num limbs.
+ * @param[in]   num     number of limbs in each vector.
+ * @returns             the carry out of the most significant limb (0 or 1).
+ */
 BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     int num);
+/**
+ * Subtract two limb vectors: rp = ap - bp, over num limbs.
+ *
+ * @param[out]  rp      result, num limbs; may alias ap or bp.
+ * @param[in]   ap      minuend, num limbs.
+ * @param[in]   bp      subtrahend, num limbs.
+ * @param[in]   num     number of limbs in each vector.
+ * @returns             the borrow out of the most significant limb (0 or 1).
+ */
 BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     int num);
 
@@ -647,20 +701,87 @@ void BN_RECP_CTX_init(BN_RECP_CTX *recp);
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 
 void bn_init(BIGNUM *a);
+/**
+ * Multiply two limb vectors with the plain schoolbook method: r = a * b.
+ *
+ * @param[out]  r       result, na + nb limbs.
+ * @param[in]   a       first factor, na limbs.
+ * @param[in]   na      number of limbs in a.
+ * @param[in]   b       second factor, nb limbs.
+ * @param[in]   nb      number of limbs in b.
+ */
 void bn_mul_normal(BN_ULONG *r, const BN_ULONG *a, int na, const BN_ULONG *b, int nb);
+/**
+ * Multiply two 8-limb vectors with the comba (unrolled) method: r = a * b.
+ *
+ * @param[out]  r       result, 16 limbs.
+ * @param[in]   a       first factor, 8 limbs.
+ * @param[in]   b       second factor, 8 limbs.
+ */
 void bn_mul_comba8(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
+/**
+ * Multiply two 4-limb vectors with the comba (unrolled) method: r = a * b.
+ *
+ * @param[out]  r       result, 8 limbs.
+ * @param[in]   a       first factor, 4 limbs.
+ * @param[in]   b       second factor, 4 limbs.
+ */
 void bn_mul_comba4(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
 void bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, int n, BN_ULONG *tmp);
 void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a);
 void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a);
 int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n);
 int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b, int cl, int dl);
+/**
+ * Multiply two limb vectors with recursive (Karatsuba) decomposition:
+ * r = a * b.  dna and dnb allow the factors' used lengths to deviate
+ * from the nominal width.
+ *
+ * @param[out]  r       result, 2*n2 limbs.
+ * @param[in]   a       first factor, n2 + dna limbs used.
+ * @param[in]   b       second factor, n2 + dnb limbs used.
+ * @param[in]   n2      nominal number of limbs in each factor.
+ * @param[in]   dna     deviation of a's used length from n2 (-n2 / 2 < dna <= 0).
+ * @param[in]   dnb     deviation of b's used length from n2 (-n2 / 2 < dnb <= 0).
+ * @param[in]   t       scratch space, 4*n2 limbs.
+ */
 void bn_mul_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n2,
     int dna, int dnb, BN_ULONG *t);
+/**
+ * Multiply two limb vectors of unequal used lengths with recursive
+ * decomposition: r = a * b.
+ *
+ * @param[out]  r       result, 4*n limbs.
+ * @param[in]   a       first factor, n + tna limbs used.
+ * @param[in]   b       second factor, n + tnb limbs used.
+ * @param[in]   n       nominal number of limbs in each factor.
+ * @param[in]   tna     the number of words of a beyond n, 0 <= tna < n.
+ * @param[in]   tnb     the number of words of b beyond n, 0 <= tnb < n.
+ * @param[in]   t       scratch space, 8*n limbs.
+ */
 void bn_mul_part_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     int n, int tna, int tnb, BN_ULONG *t);
 void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t);
+/**
+ * Compute only the low n limbs of the product of two n-limb vectors with
+ * the plain schoolbook method.
+ *
+ * @param[out]  r       result, n limbs.
+ * @param[in]   a       first factor, n limbs.
+ * @param[in]   b       second factor, n limbs.
+ * @param[in]   n       number of limbs in each factor and in the result.
+ */
 void bn_mul_low_normal(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n);
+/**
+ * Compute only the low n2 limbs of the product of two n2-limb vectors
+ * with recursive (Karatsuba) decomposition.
+ *
+ * @param[out]  r       result, n2 limbs.
+ * @param[in]   a       first factor, n2 limbs.
+ * @param[in]   b       second factor, n2 limbs.
+ * @param[in]   n2      number of limbs in each factor and in the result.
+ * @param[in]   t       scratch space, 2*n2 limbs.
+ */
 void bn_mul_low_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n2,
     BN_ULONG *t);
 BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
@@ -671,6 +792,21 @@ void bn_correct_top_consttime(BIGNUM *a);
 BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
     int *noinv);
+/**
+ * Multiply two limb vectors and keep only the low nr limbs of the
+ * product: r = (a * b) mod 2^(nr * BN_BITS2).  High limbs that do not
+ * fit are silently truncated.
+ *
+ * @param[out]  r       result, nr limbs.
+ * @param[in]   nr      number of limbs in the result.
+ * @param[in]   a       first factor, na limbs.
+ * @param[in]   na      number of limbs in a.
+ * @param[in]   b       second factor, nb limbs.
+ * @param[in]   nb      number of limbs in b.
+ *
+ * Words of r beyond na + nb are not written; when nr > na + nb, zeroing
+ * them is the caller's responsibility.
+ */
 void bn_mul_truncated(BN_ULONG *r, int nr, const BN_ULONG *a, int na, const BN_ULONG *b, int nb);
 
 static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
