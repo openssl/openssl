@@ -64,7 +64,6 @@ typedef enum OPTION_choice {
     OPT_SSHKDF_DIGEST_CHECK,
     OPT_SSKDF_DIGEST_CHECK,
     OPT_X963KDF_DIGEST_CHECK,
-    OPT_DISALLOW_DSA_SIGN,
     OPT_DISALLOW_TDES_ENCRYPT,
     OPT_HKDF_KEY_CHECK,
     OPT_KBKDF_KEY_CHECK,
@@ -121,8 +120,6 @@ const OPTIONS fipsinstall_options[] = {
         "Enable digest check for SSKDF" },
     { "x963kdf_digest_check", OPT_X963KDF_DIGEST_CHECK, '-',
         "Enable digest check for X963KDF" },
-    { "dsa_sign_disabled", OPT_DISALLOW_DSA_SIGN, '-',
-        "Disallow DSA signing" },
     { "tdes_encrypt_disabled", OPT_DISALLOW_TDES_ENCRYPT, '-',
         "Disallow Triple-DES encryption" },
     { "rsa_pkcs15_padding_disabled", OPT_DISALLOW_PKCS15_PADDING, '-',
@@ -184,7 +181,6 @@ typedef struct {
     unsigned int sshkdf_digest_check : 1;
     unsigned int sskdf_digest_check : 1;
     unsigned int x963kdf_digest_check : 1;
-    unsigned int dsa_sign_disabled : 1;
     unsigned int tdes_encrypt_disabled : 1;
     unsigned int rsa_pkcs15_padding_disabled : 1;
     unsigned int rsa_pss_saltlen_check : 1;
@@ -219,7 +215,6 @@ static const FIPS_OPTS pedantic_opts = {
     1, /* sshkdf_digest_check */
     1, /* sskdf_digest_check */
     1, /* x963kdf_digest_check */
-    1, /* dsa_sign_disabled */
     1, /* tdes_encrypt_disabled */
     1, /* rsa_pkcs15_padding_disabled */
     1, /* rsa_pss_saltlen_check */
@@ -254,7 +249,6 @@ static FIPS_OPTS fips_opts = {
     0, /* sshkdf_digest_check */
     0, /* sskdf_digest_check */
     0, /* x963kdf_digest_check */
-    0, /* dsa_sign_disabled */
     0, /* tdes_encrypt_disabled */
     0, /* rsa_pkcs15_padding_disabled */
     0, /* rsa_pss_saltlen_check */
@@ -423,7 +417,6 @@ static int write_config_fips_section(BIO *out, const char *section,
                         "%s = %s\n"
                         "%s = %s\n"
                         "%s = %s\n"
-                        "%s = %s\n"
                         "%s = %s\n",
             section,
             OSSL_PROV_FIPS_PARAM_INSTALL_VERSION, VERSION_VAL,
@@ -441,7 +434,6 @@ static int write_config_fips_section(BIO *out, const char *section,
             OSSL_PROV_PARAM_SSHKDF_DIGEST_CHECK, opts->sshkdf_digest_check ? "1" : "0",
             OSSL_PROV_PARAM_SSKDF_DIGEST_CHECK, opts->sskdf_digest_check ? "1" : "0",
             OSSL_PROV_PARAM_X963KDF_DIGEST_CHECK, opts->x963kdf_digest_check ? "1" : "0",
-            OSSL_PROV_PARAM_DSA_SIGN_DISABLED, opts->dsa_sign_disabled ? "1" : "0",
             OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED, opts->tdes_encrypt_disabled ? "1" : "0",
             OSSL_PROV_PARAM_RSA_PKCS15_PAD_DISABLED, opts->rsa_pkcs15_padding_disabled ? "1" : "0",
             OSSL_PROV_PARAM_RSA_PSS_SALTLEN_CHECK, opts->rsa_pss_saltlen_check ? "1" : "0",
@@ -679,9 +671,6 @@ int fipsinstall_main(int argc, char **argv)
             break;
         case OPT_X963KDF_DIGEST_CHECK:
             fips_opts.x963kdf_digest_check = 1;
-            break;
-        case OPT_DISALLOW_DSA_SIGN:
-            fips_opts.dsa_sign_disabled = 1;
             break;
         case OPT_DISALLOW_TDES_ENCRYPT:
             fips_opts.tdes_encrypt_disabled = 1;

@@ -190,8 +190,6 @@ The B<X931> padding mode "OSSL_PKEY_RSA_PAD_MODE_X931" is no longer supported
 for signature generation, but may be used for verification for legacy use cases.
 (This is a FIPS 140-3 requirement)
 
-=item DSA, see L<EVP_SIGNATURE-DSA(7)>
-
 =item ED25519, see L<EVP_SIGNATURE-ED25519(7)>
 
 =item ED448, see L<EVP_SIGNATURE-ED448(7)>
@@ -237,8 +235,6 @@ for signature generation, but may be used for verification for legacy use cases.
 =item DH, see L<EVP_KEYMGMT-DH(7)>
 
 =item DHX, see L<EVP_KEYMGMT-DHX(7)>
-
-=item DSA, see L<EVP_KEYMGMT-DSA(7)>
 
 =item RSA, see L<EVP_KEYMGMT-RSA(7)>
 
@@ -453,8 +449,6 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 =item "EDDSA" (B<OSSL_SELF_TEST_DESC_PCT_EDDSA>)
 
-=item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
-
 =item "ML-DSA" (B<OSSL_SELF_TEST_DESC_PCT_ML_DSA>)
 
 =item "ML-KEM" (B<OSSL_SELF_TEST_DESC_PCT_ML_KEM>)
@@ -492,8 +486,6 @@ Symmetric cipher tests used with the "KAT_Cipher" type.
 =item "SHA3" (B<OSSL_SELF_TEST_DESC_MD_SHA3>)
 
 Digest tests used with the "KAT_Digest" type.
-
-=item "DSA" (B<OSSL_SELF_TEST_DESC_SIGN_DSA>)
 
 =item "RSA" (B<OSSL_SELF_TEST_DESC_SIGN_RSA>)
 

@@ -22,11 +22,8 @@ use lib bldtop_dir('.');
 plan skip_all => "These tests are unsupported in a non fips build"
     if disabled("fips");
 
-plan tests => 8;
+plan tests => 6;
 my $provconf = srctop_file("test", "fips-and-base.cnf");
-
-run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
-    capture => 1, statusvar => \my $fips_exit);
 
 SKIP: {
     skip "Skip RSA test because of no rsa in this build", 1
@@ -42,20 +39,6 @@ SKIP: {
     ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "ec"])),
        "fips provider ec keygen pairwise failure test");
-}
-
-SKIP: {
-    skip "Skip DSA tests because of no dsa in this build", 2
-        if disabled("dsa");
-    ok(run(test(["pairwise_fail_test", "-config", $provconf,
-                 "-pairwise", "dsa", "-dsaparam", data_file("dsaparam.pem")])),
-       "fips provider dsa keygen pairwise failure test");
-
-    skip "FIPS provider version is too old", 1
-        if !$fips_exit;
-    ok(run(test(["pairwise_fail_test", "-config", $provconf,
-                 "-pairwise", "dsakat", "-dsaparam", data_file("dsaparam.pem")])),
-       "fips provider dsa keygen kat failure test");
 }
 
 SKIP: {

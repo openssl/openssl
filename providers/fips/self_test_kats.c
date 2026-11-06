@@ -967,7 +967,7 @@ err:
 /*
  * Swap the library context DRBG for KAT testing
  *
- * In FIPS 140-3, the asymmetric POST must be a KAT, not a PCT.  For DSA and ECDSA,
+ * In FIPS 140-3, the asymmetric POST must be a KAT, not a PCT.  For ECDSA,
  * the sign operation includes the random value 'k'.  For a KAT to work, we
  * have to have control of the DRBG to make sure it is in a "test" state, where
  * its output is truly deterministic.
