@@ -427,12 +427,6 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             ret->type = tmp->type;
             memcpy(&ret->data, &tmp->data, sizeof(ret->data));
 
-            /*
-             * Clear any errors that might have been raised processing empty
-             * or malformed files.
-             */
-            ERR_clear_error();
-
             goto finish;
         }
     }

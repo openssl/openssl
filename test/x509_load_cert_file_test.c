@@ -15,6 +15,7 @@
 
 static const char *chain;
 static const char *crl;
+static const char *certdir;
 
 static const char *cn_cert1[] = {
     "-----BEGIN CERTIFICATE-----\n",
@@ -110,6 +111,47 @@ err:
     OSSL_STACK_OF_X509_free(certs);
     sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
     X509_STORE_free(store);
+    return ret;
+}
+
+static int test_cert_dir_preserves_errors(void)
+{
+    X509 *cert = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_OBJECT *obj = NULL;
+    unsigned long error;
+    int ret = 0;
+
+    if (!TEST_ptr(cert = load_cert_pem(chain, NULL))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_load_path(store, certdir))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, NULL, NULL))
+        || !TEST_ptr(obj = X509_OBJECT_new()))
+        goto err;
+
+    ERR_clear_error();
+    ERR_raise(ERR_LIB_USER, ERR_R_INTERNAL_ERROR);
+    error = ERR_peek_last_error();
+    if (!TEST_true(ERR_set_mark())
+        || !TEST_int_eq(X509_STORE_CTX_get_by_subject(ctx, X509_LU_X509,
+                            X509_get_subject_name(cert), obj),
+            1)
+        || !TEST_ulong_eq(ERR_peek_error(), error)
+        || !TEST_ulong_eq(ERR_peek_last_error(), error)
+        || !TEST_true(ERR_pop_to_mark())
+        || !TEST_ulong_eq(ERR_get_error(), error)
+        || !TEST_ulong_eq(ERR_get_error(), 0))
+        goto err;
+
+    ret = 1;
+err:
+    ERR_clear_error();
+    X509_OBJECT_free(obj);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(cert);
     return ret;
 }
 
@@ -243,7 +285,7 @@ static int test_x509_pem_read_mfail(void)
     return 1;
 }
 
-OPT_TEST_DECLARE_USAGE("cert.pem [crl.pem]\n")
+OPT_TEST_DECLARE_USAGE("cert.pem [crl.pem [certdir]]\n")
 
 int setup_tests(void)
 {
@@ -257,8 +299,11 @@ int setup_tests(void)
         return 0;
 
     crl = test_get_argument(1);
+    certdir = test_get_argument(2);
 
     ADD_TEST(test_load_cert_file);
+    if (certdir != NULL)
+        ADD_TEST(test_cert_dir_preserves_errors);
     ADD_TEST(test_load_same_cn_certs);
     ADD_MFAIL_NO_CHECK_TEST(test_x509_pem_read_mfail);
     ADD_MFAIL_TEST(test_x509_store_add_mfail);
