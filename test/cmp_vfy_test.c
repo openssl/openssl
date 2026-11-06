@@ -24,6 +24,7 @@ static const char *ir_rmprotection_f;
 static const char *ip_waiting_f;
 static const char *error_protected_f;
 static const char *instacert_f;
+static const char *instakey_f;
 static const char *instaca_f;
 static const char *ir_protected_0_extracerts;
 static const char *ir_protected_2_extracerts;
@@ -135,15 +136,18 @@ static int test_verify_popo_bad(void)
 }
 #endif
 
+static int validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg, int expected, const X509 *cert)
+{
+    int res = TEST_int_eq(expected, ossl_cmp_msg_check_update(ctx, msg, NULL, 0));
+    X509 *validated = OSSL_CMP_CTX_get0_validatedSrvCert(ctx);
+
+    return res && (!expected || TEST_ptr_eq(validated, cert));
+}
+
 /* indirectly checks also OSSL_CMP_validate_msg(), uses only Insta or self-signed EE certs */
 static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
-    int res = TEST_int_eq(fixture->expected,
-        ossl_cmp_msg_check_update(fixture->cmp_ctx,
-            fixture->msg, NULL, 0));
-    X509 *validated = OSSL_CMP_CTX_get0_validatedSrvCert(fixture->cmp_ctx);
-
-    return res && (!fixture->expected || TEST_ptr_eq(validated, fixture->cert));
+    return validate_msg(fixture->cmp_ctx, fixture->msg, fixture->expected, fixture->cert);
 }
 
 static int test_validate_msg_mac_alg_protection(int miss, int wrong)
@@ -291,6 +295,52 @@ static int test_validate_msg_signature_bad(void)
 static int test_validate_msg_signature_sender_cert_srvcert(void)
 {
     return test_validate_msg_signature_srvcert(0, 0, 0);
+}
+
+/* simulate transaction with some server that another acceptable client tries to hijack */
+static int test_validate_msg_signature_changed_sender(void)
+{
+    X509 *cert_a = srvcert, *cert_b = insta_cert;
+    EVP_PKEY *key_b = NULL;
+    OSSL_CMP_MSG *req_b = NULL;
+    int expected_b;
+
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->expected = 1;
+    fixture->cert = cert_a; /* the cert expected to be the validatedSrvCert */
+
+    /* simulate first request from party A */
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
+        || !TEST_ptr(req_b = OSSL_CMP_MSG_dup(fixture->msg))
+        || !TEST_true(add_trusted(fixture->cmp_ctx, cert_a)) /* trust anchor for cert_a */
+        || !TEST_true(add_trusted(fixture->cmp_ctx, instaca_cert)) /* trust anchor for cert_b */
+        || !TEST_true(execute_validate_msg_test(fixture)))
+        goto end;
+
+    expected_b = 0; /* party B's request should fail */
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    expected_b = 1; /* support more aggressive fuzzing by letting invalid msg pass */
+#endif
+    /* simulate illicit second request from party B */
+    if (!TEST_true(ossl_cmp_hdr_set1_sender(req_b->header, X509_get_subject_name(insta_cert)))
+        || !TEST_ptr(key_b = load_pkey_pem(instakey_f, libctx))
+        || !TEST_true(OSSL_CMP_CTX_set1_pkey(fixture->cmp_ctx, key_b))
+        || !TEST_true(OSSL_CMP_CTX_set1_cert(fixture->cmp_ctx, cert_b))
+        || !TEST_true(ossl_cmp_msg_protect(fixture->cmp_ctx, req_b))
+        || !TEST_true(validate_msg(fixture->cmp_ctx, req_b, expected_b, cert_a)))
+        goto end;
+    ERR_clear_error();
+
+    /* simulate second request from party A */
+    if (!TEST_true(execute_validate_msg_test(fixture)))
+        goto end;
+    result = 1;
+
+end:
+    OSSL_CMP_MSG_free(req_b);
+    EVP_PKEY_free(key_b);
+    tear_down(fixture);
+    return result;
 }
 
 static int test_validate_msg_with_sender(const X509_NAME *name, int expected)
@@ -684,10 +734,11 @@ void cleanup_tests(void)
 #define USAGE "server.crt client.crt "                        \
               "EndEntity1.crt EndEntity2.crt "                \
               "Root_CA.crt Intermediate_CA.crt "              \
-              "CMP_IR_protected.der CMP_IR_unprotected.der "  \
+              "IR_protected.der IR_unprotected.der "          \
               "IP_waitingStatus_PBM.der IR_rmprotection.der " \
               "error_protected.der "                          \
-              "insta.cert.pem insta_ca.cert.pem "             \
+              "insta.cert.pem insta.priv.pem "                \
+              "insta_ca.cert.pem "                            \
               "IR_protected_0_extraCerts.der "                \
               "IR_protected_2_extraCerts.der module_name [module_conf_file]\n"
 OPT_TEST_DECLARE_USAGE(USAGE)
@@ -722,14 +773,15 @@ int setup_tests(void)
         || !TEST_ptr(ir_rmprotection_f = test_get_argument(9))
         || !TEST_ptr(error_protected_f = test_get_argument(10))
         || !TEST_ptr(instacert_f = test_get_argument(11))
-        || !TEST_ptr(instaca_f = test_get_argument(12))
-        || !TEST_ptr(ir_protected_0_extracerts = test_get_argument(13))
-        || !TEST_ptr(ir_protected_2_extracerts = test_get_argument(14))) {
+        || !TEST_ptr(instakey_f = test_get_argument(12))
+        || !TEST_ptr(instaca_f = test_get_argument(13))
+        || !TEST_ptr(ir_protected_0_extracerts = test_get_argument(14))
+        || !TEST_ptr(ir_protected_2_extracerts = test_get_argument(15))) {
         TEST_error("usage: cmp_vfy_test %s", USAGE);
         return 0;
     }
 
-    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 15, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 16, USAGE))
         return 0;
 
     /* Load certificates for 2-level and mixed 3-level chains */
@@ -771,6 +823,7 @@ int setup_tests(void)
     ADD_TEST(test_validate_msg_signature_bad);
 #endif
     ADD_TEST(test_validate_msg_signature_sender_cert_srvcert);
+    ADD_TEST(test_validate_msg_signature_changed_sender);
     ADD_TEST(test_validate_msg_signature_expected_sender);
     ADD_TEST(test_validate_msg_signature_unexpected_sender);
     ADD_TEST(test_msg_check_update_malicious_sender);

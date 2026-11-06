@@ -617,10 +617,8 @@ static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
 
     if (srv_ctx->clean_transaction != NULL)
         ret = srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID);
-    if (!OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL))
-        ret = 0;
-    if (!OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL))
-        ret = 0;
+    /* reset transactionID, senderNonce, protectionAlg, validated peer cert, ...: */
+    OSSL_CMP_CTX_reinit(srv_ctx->ctx);
     return ret;
 }
 

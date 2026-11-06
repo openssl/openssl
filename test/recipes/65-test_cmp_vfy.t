@@ -48,6 +48,7 @@ my @basic_cmd = ("cmp_vfy_test",
                  data_file("IR_rmprotection.der"),
                  data_file("error_protected.der"),
                  data_file("insta.cert.pem"),
+                 data_file("insta.priv.pem"),
                  data_file("insta_ca.cert.pem"),
                  data_file("IR_protected_0_extraCerts.der"),
                  data_file("IR_protected_2_extraCerts.der"));
