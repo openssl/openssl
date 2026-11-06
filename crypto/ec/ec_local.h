@@ -491,6 +491,19 @@ int ossl_ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *, EC_POINT *
 int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *,
     const EC_POINT *, BIGNUM *x,
     BIGNUM *y, BN_CTX *);
+/**
+ * Get the affine coordinates of a point as fixed-width big-endian byte
+ * strings, without giving them BIGNUM form.  x and/or y may be NULL to
+ * skip that coordinate; each non-NULL buffer is len bytes wide.
+ *
+ * @param[in]   group   the group the point belongs to.
+ * @param[in]   point   the point to extract from (unnamed in the prototype).
+ * @param[out]  x       buffer for the x coordinate, or NULL.
+ * @param[out]  y       buffer for the y coordinate, or NULL.
+ * @param[in]   len     the width of each non-NULL buffer, in bytes.
+ * @returns             1 on success, 0 on failure or if the point is at
+ *                      infinity.
+ */
 int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *,
     const EC_POINT *, unsigned char *x,
     unsigned char *y, size_t len);
@@ -552,17 +565,20 @@ int ossl_ec_GFp_mont_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
     BN_CTX *);
 int ossl_ec_GFp_mont_field_set_to_one(const EC_GROUP *, BIGNUM *r, BN_CTX *);
 
-/*-
+/**
  * Copy a BIGNUM field element (a coordinate or a curve coefficient) into 'dst'
  * at fixed width, reading a zero value's NULL OSSL_FN view as the value zero.
  * bn_get_ossl_fn() keeps no limbs for a value of zero and so hands back NULL,
  * which is how a == 0 is held on curves like secp256k1, and how a zero
  * coordinate is held on any curve; treat NULL as 0 rather than dereferencing it.
- * Returns 1 on success, 0 on error.
+ *
+ * @param[out]  dst     the fixed-width destination.
+ * @param[in]   src     the field element to copy.
+ * @returns             1 on success, 0 on error.
  */
 int ossl_ec_fn_read(OSSL_FN *dst, const BIGNUM *src);
 
-/*-
+/**
  * OSSL_FN counterpart of ossl_ec_GFp_simple_ladder_step(), used by
  * ossl_ec_scalar_mul_ladder_fn() for any prime-field (GF(p)) group.
  *
@@ -575,13 +591,30 @@ int ossl_ec_fn_read(OSSL_FN *dst, const BIGNUM *src);
  * place and copies the public base coordinate p->X together with group->a /
  * group->b into field-width temporaries, so no operand needs to be pre-"cleaned"
  * to the field width.  @p ctx is sized per the *_ctx_size companion.
+ *
+ * @param[in]   group   the group to compute in.
+ * @param[in,out] r     first ladder point (X/Z only).
+ * @param[in,out] s     second ladder point (X/Z only).
+ * @param[in]   p       the affine base point.
+ * @param[in]   ctx     the OSSL_FN_CTX arena for scratch.
+ * @returns             1 on success, 0 on error.
  */
 int ossl_ec_point_ladder_step_fn(const EC_GROUP *group, EC_POINT *r,
     EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
+/**
+ * Calculate the OSSL_FN_CTX arena size that ossl_ec_point_ladder_step_fn()
+ * needs.  The points act as width-only models.
+ *
+ * @param[in]   group   the group to size for.
+ * @param[in]   r       a model for the first ladder point.
+ * @param[in]   s       a model for the second ladder point.
+ * @param[in]   p       a model for the base point.
+ * @returns             the arena size in bytes, 0 on error.
+ */
 size_t ossl_ec_point_ladder_step_fn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, EC_POINT *s, EC_POINT *p);
 
-/*-
+/**
  * OSSL_FN counterpart of ossl_ec_GFp_simple_ladder_pre(): initialises the
  * ladder state to (r := 2p, s := p) in x-only projective coordinates and
  * applies coordinate blinding (random, via OSSL_FN_priv_rand_range()).  Works
@@ -589,13 +622,30 @@ size_t ossl_ec_point_ladder_step_fn_ctx_size(const EC_GROUP *group,
  * the step, p->X and group->a / group->b are copied into field-width
  * temporaries, so no operand needs pre-"cleaning".  The only branch is on the
  * public p->Z_is_one.
+ *
+ * @param[in]   group   the group to compute in.
+ * @param[out]  r       receives 2p in x-only projective form.
+ * @param[out]  s       receives p in x-only projective form.
+ * @param[in]   p       the affine base point.
+ * @param[in]   ctx     the OSSL_FN_CTX arena for scratch.
+ * @returns             1 on success, 0 on error.
  */
 int ossl_ec_point_ladder_pre_fn(const EC_GROUP *group, EC_POINT *r,
     EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
+/**
+ * Calculate the OSSL_FN_CTX arena size that ossl_ec_point_ladder_pre_fn()
+ * needs.  The points act as width-only models.
+ *
+ * @param[in]   group   the group to size for.
+ * @param[in]   r       a model for the first ladder point.
+ * @param[in]   s       a model for the second ladder point.
+ * @param[in]   p       a model for the base point.
+ * @returns             the arena size in bytes, 0 on error.
+ */
 size_t ossl_ec_point_ladder_pre_fn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, EC_POINT *s, EC_POINT *p);
 
-/*-
+/**
  * OSSL_FN counterpart of ossl_ec_GFp_simple_ladder_post(): recovers the affine
  * coordinates of r from the final x-only ladder state (r, s) and the affine
  * base p.  The single field inversion uses Fermat's little theorem with the
@@ -603,9 +653,26 @@ size_t ossl_ec_point_ladder_pre_fn_ctx_size(const EC_GROUP *group,
  * constant-time profile of the BIGNUM original.  The two early returns
  * (r->Z == 0 -> infinity, s->Z == 0 -> -p) branch on the public result, again
  * exactly as the original does.
+ *
+ * @param[in]   group   the group to compute in.
+ * @param[in,out] r     the ladder point to normalise to affine.
+ * @param[in]   s       the other final ladder point.
+ * @param[in]   p       the affine base point.
+ * @param[in]   ctx     the OSSL_FN_CTX arena for scratch.
+ * @returns             1 on success, 0 on error.
  */
 int ossl_ec_point_ladder_post_fn(const EC_GROUP *group, EC_POINT *r,
     EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
+/**
+ * Calculate the OSSL_FN_CTX arena size that ossl_ec_point_ladder_post_fn()
+ * needs.  The points act as width-only models.
+ *
+ * @param[in]   group   the group to size for.
+ * @param[in]   r       a model for the first ladder point.
+ * @param[in]   s       a model for the second ladder point.
+ * @param[in]   p       a model for the base point.
+ * @returns             the arena size in bytes, 0 on error.
+ */
 size_t ossl_ec_point_ladder_post_fn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, EC_POINT *s, EC_POINT *p);
 
@@ -768,6 +835,14 @@ void ossl_ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array
         const void *in2),
     void (*felem_inv)(void *out, const void *in),
     void (*felem_contract)(void *out, const void *in));
+/**
+ * Write a scalar as a fixed-width little-endian byte string.
+ *
+ * @param[out]  out     the destination buffer.
+ * @param[in]   len     the width of out, in bytes.
+ * @param[in]   scalar  the scalar to serialise.
+ * @returns             1 on success, 0 on error.
+ */
 int ossl_ec_GFp_nistp_fn_scalar_bytes(unsigned char *out, size_t len,
     const OSSL_FN *scalar);
 void ossl_ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
@@ -911,7 +986,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     const BIGNUM *scalar, const EC_POINT *point,
     BN_CTX *ctx);
 
-/*-
+/**
  * The OSSL_FN counterpart of ossl_ec_scalar_mul_ladder(): the same Montgomery
  * ladder with the same timing-attack defenses, driven by an OSSL_FN scalar
  * that is never materialised as a BIGNUM.
@@ -921,11 +996,26 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
  * that @p fnctx is a caller-owned OSSL_FN_CTX sized by the companion
  * ossl_ec_scalar_mul_ladder_fn_ctx_size() and must not be NULL.
  *
- * Returns 1 on success, 0 otherwise.
+ * @param[in]   group   the group to compute in.
+ * @param[out]  r       the result point.
+ * @param[in]   scalar  the scalar to multiply by.
+ * @param[in]   point   the point to multiply, or NULL for the generator.
+ * @param[in]   fnctx   the OSSL_FN_CTX arena for scratch; must not be NULL.
+ * @returns             1 on success, 0 otherwise.
  */
 int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
     const OSSL_FN *scalar, const EC_POINT *point,
     OSSL_FN_CTX *fnctx);
+/**
+ * Calculate the OSSL_FN_CTX arena size that ossl_ec_scalar_mul_ladder_fn()
+ * needs.  The point and scalar act as width-only models.
+ *
+ * @param[in]   group   the group to size for.
+ * @param[in]   r       a model for the result point.
+ * @param[in]   scalar  a model for the scalar (width only).
+ * @param[in]   point   a model for the point, or NULL.
+ * @returns             the arena size in bytes, 0 on error.
+ */
 size_t ossl_ec_scalar_mul_ladder_fn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point);
 
