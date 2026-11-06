@@ -53,6 +53,7 @@ LoadLibraryA
 LoadLibraryW
 MessageBoxW
 MultiByteToWideChar
+OutputDebugStringW
 QueryPerformanceCounter
 ReadConsoleA
 ReadConsoleW
