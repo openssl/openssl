@@ -572,12 +572,35 @@ int SSL_clear(SSL *s)
     return s->method->ssl_reset(s);
 }
 
+static void ssl_connection_clear_tls13_secrets(SSL_CONNECTION *sc)
+{
+    OPENSSL_cleanse(sc->early_secret, sizeof(sc->early_secret));
+    OPENSSL_cleanse(sc->handshake_secret, sizeof(sc->handshake_secret));
+    OPENSSL_cleanse(sc->master_secret, sizeof(sc->master_secret));
+    OPENSSL_cleanse(sc->resumption_master_secret,
+        sizeof(sc->resumption_master_secret));
+    OPENSSL_cleanse(sc->client_finished_secret,
+        sizeof(sc->client_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_secret,
+        sizeof(sc->server_finished_secret));
+    OPENSSL_cleanse(sc->client_app_traffic_secret,
+        sizeof(sc->client_app_traffic_secret));
+    OPENSSL_cleanse(sc->server_app_traffic_secret,
+        sizeof(sc->server_app_traffic_secret));
+    OPENSSL_cleanse(sc->exporter_master_secret,
+        sizeof(sc->exporter_master_secret));
+    OPENSSL_cleanse(sc->early_exporter_master_secret,
+        sizeof(sc->early_exporter_master_secret));
+}
+
 int ossl_ssl_connection_reset(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return 0;
+
+    ssl_connection_clear_tls13_secrets(sc);
 
     if (ssl_clear_bad_session(sc)) {
         SSL_SESSION_free(sc->session);
@@ -1690,6 +1713,8 @@ void ossl_ssl_connection_free(SSL *ssl)
 #ifndef OPENSSL_NO_ECH
     ossl_ech_conn_clear(&s->ext.ech);
 #endif
+
+    ssl_connection_clear_tls13_secrets(s);
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -2188,7 +2213,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
  * Now in theory, since the calling process own 't' it should be safe to
  * modify.  We need to be able to read f without being hassled
  */
-int SSL_copy_session_id(SSL *t, const SSL *f)
+int ossl_ssl_copy_session_id(SSL *t, const SSL *f)
 {
     int i;
     /* TODO(QUIC FUTURE): Not allowed for QUIC currently. */
@@ -2197,6 +2222,15 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
 
     if (tsc == NULL || fsc == NULL)
         return 0;
+
+    /*
+     * |t| keeps its own SSL_CTX, whose provider sigalgs index the CERT's
+     * pkeys, so it cannot share a CERT sized for a different set of them.
+     */
+    if (tsc->ssl_pkey_num != fsc->cert->ssl_pkey_num) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     /* Do we need to do SSL locking? */
     if (!SSL_set_session(t, SSL_get_session(f))) {
@@ -2224,6 +2258,13 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
 
     return 1;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+int SSL_copy_session_id(SSL *t, const SSL *f)
+{
+    return ossl_ssl_copy_session_id(t, f);
+}
+#endif
 
 /* Fix this so it checks all the valid key/cert options */
 int SSL_CTX_check_private_key(const SSL_CTX *ctx)
@@ -5696,7 +5737,7 @@ SSL *SSL_dup(SSL *s)
          * Arranges to share the same session via up_ref.  This "copies"
          * session-id, SSL_METHOD, sid_ctx, and 'cert'
          */
-        if (!SSL_copy_session_id(ret, s))
+        if (!ossl_ssl_copy_session_id(ret, s))
             goto err;
     } else {
         /*

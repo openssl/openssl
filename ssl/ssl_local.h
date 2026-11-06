@@ -2140,7 +2140,7 @@ typedef struct pitem_st pitem;
 
 struct pqueue_st {
     pitem *items;
-    int count;
+    size_t count;
 };
 
 struct pitem_st {
@@ -2919,6 +2919,17 @@ __owur SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
 __owur SSL *ossl_ssl_connection_new(SSL_CTX *ctx);
 void ossl_ssl_connection_free(SSL *ssl);
 __owur int ossl_ssl_connection_reset(SSL *ssl);
+/**
+ * @brief Give @p t the session, method, session ID context and CERT of @p f.
+ *
+ * The CERT is shared, not copied. Fails if @p f's CERT is sized for a
+ * different number of provider sigalgs than @p t's SSL_CTX.
+ *
+ * @param t The SSL object to copy to.
+ * @param f The SSL object to copy from.
+ * @return 1 on success, 0 on failure.
+ */
+__owur int ossl_ssl_copy_session_id(SSL *t, const SSL *f);
 
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num,

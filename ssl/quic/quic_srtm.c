@@ -9,6 +9,7 @@
 
 #include "internal/quic_srtm.h"
 #include "internal/common.h"
+#include "internal/hashfunc.h"
 #include <openssl/lhash.h>
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
@@ -68,7 +69,7 @@ struct quic_srtm_st {
 
 static unsigned long items_fwd_hash(const SRTM_ITEM *item)
 {
-    return (unsigned long)(uintptr_t)item->opaque;
+    return ossl_lh_hash_ptr(item->opaque);
 }
 
 static int items_fwd_cmp(const SRTM_ITEM *a, const SRTM_ITEM *b)

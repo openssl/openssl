@@ -247,7 +247,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -256,21 +256,21 @@ jobs:
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -360,7 +360,7 @@ jobs:
         path: artifacts.tar.gz
 
   no-shared-macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v6
       with:
@@ -381,7 +381,7 @@ jobs:
       if: success() || failure()
       uses: actions/upload-artifact@v6
       with:
-        name: "ci@no-shared-macos-14"
+        name: "ci@no-shared-macos-15"
         path: artifacts.tar.gz
 
   address_ub_sanitizer:
@@ -397,7 +397,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ec_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ec_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms enable-dgram-pair-pcap && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -477,20 +477,13 @@ jobs:
 
   fuzz_tests_mfail:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: trim corpora to a few seeds per fuzzer
-      env:
-        FUZZ_CORPUS_KEEP: 5
-      run: |
-        for d in fuzz/corpora/*/; do
-          find "$d" -maxdepth 1 -type f | tail -n +$((FUZZ_CORPUS_KEEP + 1)) | xargs -r rm -f
-        done
     - name: Adjust ASLR for sanitizer
       run: sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
@@ -504,6 +497,9 @@ jobs:
     - name: make
       run: make -s -j4
     - name: make test (fuzz with mfail)
+      env:
+        OSSL_FUZZ_TEST_BUDGET: 600
+        OSSL_FUZZ_TEST_JOBS: 4
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
     - name: save artifacts
       if: success() || failure()
@@ -583,7 +579,7 @@ jobs:
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips enable-lms no-threads && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips enable-lms enable-dgram-pair-pcap no-threads && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -641,7 +637,7 @@ jobs:
       run: ./config --strict-warnings --banner=Configured --debug enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
-    - uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331
+    - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
       with:
         toolchain: stable
     - name: get cpu info
@@ -734,10 +730,10 @@ jobs:
     - name: make
       run: make -s -j4
     - name: Setup Python
-      uses: actions/setup-python@v6.0.0
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.PYTHON }}
-    - uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331
+    - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
       with:
         toolchain: stable
     - name: get cpu info

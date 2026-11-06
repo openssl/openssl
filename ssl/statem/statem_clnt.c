@@ -4527,7 +4527,7 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
     if (SSL_IS_FIRST_HANDSHAKE(sc)
         && !SSL_IS_QUIC_HANDSHAKE(sc)
         && (sc->early_data_state != SSL_EARLY_DATA_NONE
-            || (sc->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+            || SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(sc))
         && (!ssl->method->ssl3_enc->change_cipher_state(sc,
             SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE | SSL3_CC_COMP_CERT))) {
         /*

@@ -28,10 +28,15 @@ BIO_ssl_shutdown - SSL BIO
  BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
  BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
  BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
- int BIO_ssl_copy_session_id(BIO *to, BIO *from);
  void BIO_ssl_shutdown(BIO *bio);
 
  long BIO_do_handshake(BIO *b);
+
+The following function has been deprecated since OpenSSL 4.2, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ int BIO_ssl_copy_session_id(BIO *to, BIO *from);
 
 =head1 DESCRIPTION
 
@@ -88,7 +93,7 @@ of a buffering BIO, an SSL BIO (using B<ctx>), and a connect BIO.
 BIO_ssl_copy_session_id() copies an SSL session id between
 BIO chains B<from> and B<to>. It does this by locating the
 SSL BIOs in each chain and calling SSL_copy_session_id() on
-the internal SSL pointer.
+the internal SSL pointer. It is deprecated; see L<SSL_copy_session_id(3)>.
 
 BIO_ssl_shutdown() closes down an SSL connection on BIO
 chain B<bio>. It does this by locating the SSL BIO in the
@@ -300,6 +305,8 @@ decremented) and dissociated with the SSL BIO even if the SSL BIO was not
 explicitly being popped (e.g. a pop higher up the chain). Applications which
 included workarounds for this bug (e.g. freeing BIOs more than once) should
 be modified to handle this fix or they may free up an already freed BIO.
+
+BIO_ssl_copy_session_id() was deprecated in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

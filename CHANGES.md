@@ -33,6 +33,20 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Deprecated `SSL_copy_session_id()` and `BIO_ssl_copy_session_id()`.
+   Use `SSL_set_session()` to resume a session on a new connection, or
+   `SSL_dup()` to copy an SSL object.
+
+   *Matt Caswell*
+
+ * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
+   datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
+   in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
+   must be configured with `enable-dgram-pair-pcap` option.
+   <!-- https://github.com/openssl/openssl/pull/32266 -->
+
+   *Alexandr Nedvedicky*
+
  * s390x: Disable mod-expo offloading to a crypto card for small exponents.
    Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
    environment variable to specify the minimum number of bits that the
@@ -43,6 +57,15 @@ OpenSSL 4.2
    but this can be changed via the `OPENSSL_s390xcap` environment variable.
 
    *Ingo Franzki*
+
+ * Added the `no-buildinfo-cflags` Configure option.  It stops the compiler
+   command line and flags from being recorded in `libcrypto`, which helps
+   reproducible builds across different build environments.
+   `OpenSSL_version(OPENSSL_CFLAGS)` and `openssl version -f` then report
+   `compiler: information not available`.
+   <!-- https://github.com/openssl/openssl/pull/33280 -->
+
+   *Dmitry Misharov*
 
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
@@ -58,6 +81,18 @@ OpenSSL 4.2
    computation.
 
    *Viktor Dukhovni*
+
+ * The EVP layer now enforces the MAC life-cycle described in
+   life_cycle-mac(7).  `EVP_MAC_update()`, `EVP_MAC_final()` and
+   `EVP_MAC_finalXOF()` fail with an error when called on an `EVP_MAC_CTX`
+   that has not been initialised with `EVP_MAC_init()` or
+   `EVP_MAC_init_SKEY()`, including one whose key was only supplied through
+   `EVP_MAC_CTX_set_params()`, or that has already been finalised and not
+   been re-initialised since.  A failed `EVP_MAC_init()` or
+   `EVP_MAC_init_SKEY()` leaves the context uninitialised.
+   <!-- https://github.com/openssl/openssl/pull/33084-->
+
+   *Daniel Kubec*
 
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
@@ -96,6 +131,11 @@ OpenSSL 4.2
 
    *John Claus*
 
+ * Added `X509v3_addr_get_safi`, which gets the SAFI from the IPAddressFamily
+   structure.
+
+   *Nihal Kotte*
+
  * Added AVX-512 and VAES optimizations for AES-CTR mode. Performance for
    large inputs (1024 bytes or more) improved by 2.9x to 3.9x.
    <!-- https://github.com/openssl/openssl/pull/30755 -->
@@ -110,6 +150,13 @@ OpenSSL 4.2
    <!-- https://github.com/openssl/openssl/pull/30973 -->
 
    *Dmitry Belyavskiy*
+
+ * Added `PKCS12_check_version()` API function, that verifies that the loaded
+   PKCS #12 file has its version in accordance with [RFC 7292 Section 4].
+   The check has been enabled in the `openssl pkcs12` command by default,
+   and can be disabled using the newly introduced `-noversioncheck` option.
+
+   *Shane Lontis*
 
  * Added the ASCON-AEAD128 cipher as specified in NIST SP 800-232. ASCON-AEAD128
    provides authenticated encryption with associated data (AEAD) using 128-bit
@@ -137,6 +184,12 @@ OpenSSL 4.2
    (with potential reuse for other architectures with 128 bit vector registers).
 
    *Timo Keller*
+
+ * Ed25519 now uses base 2^51 arithmetic on supported platforms, making it
+   roughly twice as fast.
+   <!-- https://github.com/openssl/openssl/pull/32777 -->
+
+   *Alex Gaynor*
 
 OpenSSL 4.1
 -----------
@@ -24619,6 +24672,7 @@ ndif
 [RFC 5297]: https://datatracker.ietf.org/doc/html/rfc5297
 [RFC 5652]: https://datatracker.ietf.org/doc/html/rfc5652
 [RFC 7250]: https://datatracker.ietf.org/doc/html/rfc7250
+[RFC 7292 Section 4]: https://datatracker.ietf.org/doc/html/rfc7292#section-4
 [RFC 7685]: https://datatracker.ietf.org/doc/html/rfc7685
 [RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
 [RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422

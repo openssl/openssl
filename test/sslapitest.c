@@ -15346,6 +15346,150 @@ end:
     return testresult;
 }
 #endif /* OPENSSL_NO_TLS1_2 */
+
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+/*
+ * SSL_copy_session_id() makes |t| share |f|'s CERT, but |t| keeps its own
+ * SSL_CTX. It must refuse a CERT sized for a different number of provider
+ * sigalgs, and leave |t| unchanged when it does.
+ */
+static int test_copy_session_id_ctx_mismatch(void)
+{
+    OSSL_PROVIDER *tlsprov = NULL;
+    SSL_CTX *sctx = NULL, *newsctx = NULL, *cctx = NULL;
+    SSL *from = NULL, *same = NULL, *to = NULL;
+    SSL_CONNECTION *tosc;
+    CERT *tocert;
+    int testresult = 0;
+
+    if (!sigalg_ctx_switch_setup(&tlsprov, 0, &sctx, &newsctx, &cctx))
+        goto end;
+
+    if (!TEST_ptr(from = SSL_new(sctx))
+        || !TEST_ptr(same = SSL_new(sctx))
+        || !TEST_ptr(to = SSL_new(newsctx))
+        || !TEST_ptr(tosc = SSL_CONNECTION_FROM_SSL_ONLY(to)))
+        goto end;
+    tocert = tosc->cert;
+
+    if (!TEST_false(SSL_copy_session_id(to, from))
+        || !TEST_ptr_eq(tosc->cert, tocert)
+        || !TEST_true(SSL_copy_session_id(same, from)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(from);
+    SSL_free(same);
+    SSL_free(to);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(newsctx);
+    SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(tlsprov);
+
+    return testresult;
+}
+#endif
+
+/*
+ * The ClientHello raw extension array is sized when the ClientHello is
+ * collected. Switching to an SSL_CTX with more custom extensions from the
+ * ClientHello callback must not make the later parse walk past its end, and
+ * the new SSL_CTX must get the custom extension the client sent, which is the
+ * last of its own.
+ */
+struct cust_ext_switch_st {
+    SSL_CTX *newctx;
+    int retry;
+    int parsed; /* Times the new SSL_CTX parsed the client's extension */
+};
+
+static int cust_ext_switch_parse_cb(SSL *s, unsigned int ext_type,
+    unsigned int context, const unsigned char *in, size_t inlen, X509 *x,
+    size_t chainidx, int *al, void *parse_arg)
+{
+    int *parsed = parse_arg;
+
+    if (ext_type == 0xff4f)
+        (*parsed)++;
+    return 1;
+}
+
+static int cust_ext_switch_ch_cb(SSL *s, int *al, void *arg)
+{
+    struct cust_ext_switch_st *data = arg;
+
+    if (SSL_get_SSL_CTX(s) == data->newctx)
+        return SSL_CLIENT_HELLO_SUCCESS;
+    if (SSL_set_SSL_CTX(s, data->newctx) == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+    return data->retry ? SSL_CLIENT_HELLO_RETRY : SSL_CLIENT_HELLO_SUCCESS;
+}
+
+/*
+ * Test 0: The callback switches the SSL_CTX and returns success
+ * Test 1: The callback switches the SSL_CTX and returns retry, so the
+ *         handshake goes on with the new SSL_CTX, which has no callback
+ */
+static int test_ctx_switch_more_custom_exts(int idx)
+{
+    SSL_CTX *sctx = NULL, *newsctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    struct cust_ext_switch_st cbdata;
+    unsigned int i;
+    int testresult = 0;
+
+    memset(&cbdata, 0, sizeof(cbdata));
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
+            0, 0, &newsctx, NULL, cert, privkey)))
+        goto end;
+
+    for (i = 0; i < 64; i++)
+        if (!TEST_true(SSL_CTX_add_custom_ext(newsctx, 0xff10 + i,
+                SSL_EXT_CLIENT_HELLO, NULL, NULL, NULL,
+                cust_ext_switch_parse_cb, &cbdata.parsed)))
+            goto end;
+
+    /* The client sends 0xff4f empty */
+    if (!TEST_true(SSL_CTX_add_custom_ext(cctx, 0xff4f, SSL_EXT_CLIENT_HELLO,
+            NULL, NULL, NULL, NULL, NULL)))
+        goto end;
+
+    cbdata.newctx = newsctx;
+    cbdata.retry = idx == 1;
+    SSL_CTX_set_client_hello_cb(sctx, cust_ext_switch_ch_cb, &cbdata);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (cbdata.retry
+        && (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_WANT_CLIENT_HELLO_CB))
+            || !TEST_int_eq(SSL_get_error(serverssl, -1),
+                SSL_ERROR_WANT_CLIENT_HELLO_CB)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr_eq(SSL_get_SSL_CTX(serverssl), newsctx)
+        || !TEST_int_eq(cbdata.parsed, 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(newsctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -19643,7 +19787,11 @@ int setup_tests(void)
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_sigalg_ctx_switch, 4);
+    ADD_ALL_TESTS(test_ctx_switch_more_custom_exts, 2);
     ADD_ALL_TESTS(test_sigalg_ctx_switch_cert_cb, 2);
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+    ADD_TEST(test_copy_session_id_ctx_mismatch);
+#endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_sigalg_ctx_switch_reneg);
 #endif

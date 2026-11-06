@@ -37,7 +37,7 @@ jobs:
   # Only a dispatch carries inputs, so this is skipped on the nightly cron.
   validate-dispatch-inputs:
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       (inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != '')
     uses: ./.github/workflows/validate-dispatch-inputs.yml
     with:
@@ -48,7 +48,7 @@ jobs:
   test:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     permissions:
@@ -104,7 +104,7 @@ jobs:
   openssh_interop:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       inputs.pr == '' &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
@@ -117,8 +117,7 @@ jobs:
           { openssl: 'openssl-4.1', openssh: 'openssl-4.1', openssl_config: 'no-docs'},
           { openssl: 'openssl-4.0', openssh: 'openssl-4.0', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.6', openssh: 'openssl-3.6', openssl_config: 'no-docs'},
-          { openssl: 'openssl-3.5', openssh: 'openssl-3.5', openssl_config: 'no-docs'},
-          { openssl: 'openssl-3.4', openssh: 'openssl-3.4', openssl_config: 'no-docs'}
+          { openssl: 'openssl-3.5', openssh: 'openssl-3.5', openssl_config: 'no-docs'}
         ]
     runs-on: ubuntu-latest
     env:

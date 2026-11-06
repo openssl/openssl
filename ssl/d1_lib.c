@@ -137,8 +137,8 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 /*
  * Called once the DTLS 1.3 hellos are done. Our handshake read keys are only
  * installed when the peer's first epoch 2 record arrives (dtls1_read_bytes()),
- * so until then nothing but a plaintext alert may be read. Anything already
- * reassembled or buffered arrived unprotected, so discard it.
+ * so until then only plaintext alerts and ACKs may be read. Handshake messages
+ * already reassembled or buffered arrived unprotected, so discard them.
  */
 void dtls13_hellos_done(SSL_CONNECTION *s)
 {
@@ -202,7 +202,8 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch)
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 {
     pitem *item = NULL;
-    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue remaining_sent_messages_buf = { NULL, 0 };
+    pqueue *remaining_sent_messages = &remaining_sent_messages_buf;
     pqueue *sent_messages = &s->d1->sent_messages;
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
@@ -238,8 +239,6 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
     if (SSL_CONNECTION_IS_DTLS13(s))
         while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
             pqueue_insert(&s->d1->sent_messages, item);
-
-    pqueue_free(remaining_sent_messages);
 }
 
 /*

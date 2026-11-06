@@ -121,11 +121,6 @@ jobs:
             tgz: PR.tar.gz,
             extra_config: "enable-lms enable-tls-deprecated-ec",
           }, {
-            name: openssl-3.4,
-            dir: branch-3.4,
-            tgz: branch-3.4.tar.gz,
-            extra_config: "",
-          }, {
             name: openssl-3.5,
             dir: branch-3.5,
             tgz: branch-3.5.tar.gz,
@@ -215,7 +210,7 @@ jobs:
         # Note that releases are not used as a test environment for
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
-        tree_a: [ branch-4.1, branch-4.0, branch-3.6, branch-3.5, branch-3.4,
+        tree_a: [ branch-4.1, branch-4.0, branch-3.6, branch-3.5,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
         tree_b: [ PR ]
         include:
@@ -229,8 +224,6 @@ jobs:
             tree_b: branch-3.6
           - tree_a: PR
             tree_b: branch-3.5
-          - tree_a: PR
-            tree_b: branch-3.4
     steps:
       - name: early exit checks
         id: early_exit
@@ -247,7 +240,7 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/download-artifact@v6.0.0
+      - uses: actions/download-artifact@v8.0.2
         if: steps.early_exit.outputs.skip != 'true'
         with:
           name: ${{ matrix.tree_a }}.tar.gz
@@ -255,7 +248,7 @@ jobs:
         if: steps.early_exit.outputs.skip != 'true'
         run: tar xzf "${{ matrix.tree_a }}.tar.gz"
 
-      - uses: actions/download-artifact@v6.0.0
+      - uses: actions/download-artifact@v8.0.2
         if: steps.early_exit.outputs.skip != 'true'
         with:
           name: ${{ matrix.tree_b }}.tar.gz

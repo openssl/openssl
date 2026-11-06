@@ -691,6 +691,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
 
 /* Writable packets */
 
+#define WPACKET_INLINE_SUBS 6
 typedef struct wpacket_sub WPACKET_SUB;
 struct wpacket_sub {
     /* The parent WPACKET_SUB if we have one or NULL otherwise */
@@ -735,6 +736,9 @@ struct wpacket_st {
     /* Our sub-packets (always at least one if not finished) */
     WPACKET_SUB *subs;
 
+    WPACKET_SUB inline_subs[WPACKET_INLINE_SUBS];
+    unsigned int nsubs;
+
     /* Writing from the end first? */
     unsigned int endfirst : 1;
 };
@@ -755,6 +759,8 @@ struct wpacket_st {
 
 /* QUIC variable-length integer length prefix */
 #define WPACKET_FLAGS_QUIC_VLINT 4
+
+#define WPACKET_FLAGS_SUB_INLINE 8
 
 /*
  * Initialise a WPACKET with the buffer in |buf|. The buffer must exist

@@ -82,6 +82,19 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
     }
 
     /*
+     * An ACK may arrive before or between messages of the client's flight.
+     * Preserve the interrupted read state so CertificateVerify and Finished
+     * are still required, even if the ACK covers our entire flight.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(s) && mt == DTLS13_MT_ACK
+        && s->hello_retry_request != SSL_HRR_PENDING
+        && dtls13_server_waiting_for_client_flight(st->hand_state)) {
+        st->pre_ack_hand_state = st->hand_state;
+        st->hand_state = TLS_ST_SR_ACK;
+        return 1;
+    }
+
+    /*
      * Note: There is no case for TLS_ST_BEFORE because at that stage we have
      * not negotiated TLSv1.3 yet, so that case is handled by
      * ossl_statem_server_read_transition()
@@ -2099,6 +2112,38 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         case SSL_CLIENT_HELLO_ERROR:
         default:
             SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
+            goto err;
+        }
+    }
+
+    /*
+     * The callback may have switched to an SSL_CTX with a different set of
+     * custom extensions, possibly in an earlier call that returned
+     * SSL_CLIENT_HELLO_RETRY. The collected extensions are indexed by the
+     * custom extensions in use when they were collected, so collect them
+     * again unless neither set has any.
+     */
+    if (clienthello->pre_proc_exts_len != TLSEXT_IDX_num_builtins
+        || s->cert->custext.meths_count != 0) {
+        PACKET extensions = clienthello->extensions;
+        void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
+            = s->ext.debug_cb;
+        int ret;
+
+        OPENSSL_free(clienthello->pre_proc_exts);
+        clienthello->pre_proc_exts = NULL;
+        clienthello->pre_proc_exts_len = 0;
+        /*
+         * The first collection has already initialised the built-in
+         * extensions and passed the extensions to the debug callback.
+         */
+        s->ext.debug_cb = NULL;
+        ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
+            &clienthello->pre_proc_exts,
+            &clienthello->pre_proc_exts_len, 0);
+        s->ext.debug_cb = debug_cb;
+        if (!ret) {
+            /* SSLfatal already been called */
             goto err;
         }
     }
