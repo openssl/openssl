@@ -2,7 +2,7 @@
 # switch each to the Legacy provider when needed.
 
 $DH_GOAL=../../libdefault.a ../../libfips.a
-$DSA_GOAL=../../libdefault.a ../../libfips.a
+$DSA_GOAL=../../libdefault.a
 $EC_GOAL=../../libdefault.a ../../libfips.a
 $ECX_GOAL=../../libdefault.a ../../libfips.a
 $KDF_GOAL=../../libdefault.a ../../libfips.a

@@ -112,7 +112,7 @@ typedef struct st_kat_kem_st {
     ST_BUFFER reject_secret;
 } ST_KAT_KEM;
 
-/* FIPS 140-3 only allows DSA verification for legacy purposes */
+/* Some algorithms are only approved for signature verification */
 #define SIGNATURE_MODE_VERIFY_ONLY 1
 #define SIGNATURE_MODE_SIGN_ONLY 2
 #define SIGNATURE_MODE_DIGESTED 4

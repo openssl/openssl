@@ -1852,12 +1852,14 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_DSA
-    dsasign_allowed = fips_provider_version_lt(libctx, 3, 4, 0);
-    ADD_ALL_TESTS(dsa_keygen_test, OSSL_NELEM(dsa_keygen_data));
-    ADD_ALL_TESTS(dsa_paramgen_test, OSSL_NELEM(dsa_paramgen_data));
-    ADD_ALL_TESTS(dsa_pqver_test, OSSL_NELEM(dsa_pqver_data));
-    ADD_ALL_TESTS(dsa_siggen_test, OSSL_NELEM(dsa_siggen_data));
-    ADD_ALL_TESTS(dsa_sigver_test, OSSL_NELEM(dsa_sigver_data));
+    if (fips_provider_version_lt(libctx, 4, 2, 0)) {
+        dsasign_allowed = fips_provider_version_lt(libctx, 3, 4, 0);
+        ADD_ALL_TESTS(dsa_keygen_test, OSSL_NELEM(dsa_keygen_data));
+        ADD_ALL_TESTS(dsa_paramgen_test, OSSL_NELEM(dsa_paramgen_data));
+        ADD_ALL_TESTS(dsa_pqver_test, OSSL_NELEM(dsa_pqver_data));
+        ADD_ALL_TESTS(dsa_siggen_test, OSSL_NELEM(dsa_siggen_data));
+        ADD_ALL_TESTS(dsa_sigver_test, OSSL_NELEM(dsa_sigver_data));
+    }
 #endif /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_EC
