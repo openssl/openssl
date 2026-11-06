@@ -31,8 +31,9 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 
-/* CRL score values */
+#define MAX_DP_NAMES 16
 
+/* CRL score values */
 #define CRL_SCORE_NOCRITICAL 0x100 /* No unhandled critical extensions */
 #define CRL_SCORE_SCOPE 0x080 /* certificate is within CRL scope */
 #define CRL_SCORE_TIME 0x040 /* CRL times valid */
@@ -1396,11 +1397,7 @@ static STACK_OF(X509_NAME) *get_crldp_full_names(X509 *cert)
     STACK_OF(X509_NAME) *crldp_names = NULL;
     DIST_POINT *dp;
     X509_NAME *dp_name;
-
-    if (sk_DIST_POINT_num(cert->crldp) > 16) {
-        ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT, "Too many dist points in certificate");
-        goto err;
-    }
+    int full_names = 0;
 
     crldp_names = sk_X509_NAME_new_reserve(NULL, sk_DIST_POINT_num(cert->crldp));
     if (crldp_names == NULL)
@@ -1409,6 +1406,11 @@ static STACK_OF(X509_NAME) *get_crldp_full_names(X509 *cert)
     for (i = 0; i < sk_DIST_POINT_num(cert->crldp); i++) {
         dp = sk_DIST_POINT_value(cert->crldp, i);
         if (dp->distpoint != NULL && dp->distpoint->type == 1) {
+            full_names++;
+            if (full_names >= MAX_DP_NAMES) {
+                ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT, "Too many dist points in certificate");
+                goto err;
+            }
             dp_name = crldp_full_name(cert, dp);
             if (dp_name == NULL)
                 goto err;
@@ -1445,15 +1447,6 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     if ((x->ex_flags & EXFLAG_PROXY) != 0)
         return 1;
 
-    /*
-     * Pre-build the crldp X509_NAMES here as we will reuse
-     * them for each iteration of the below loop, and we don't
-     * want to rebuild them each time
-     */
-    crldp_names = get_crldp_full_names(x);
-    if (crldp_names == NULL)
-        goto done;
-
     while (ctx->current_reasons != CRLDP_ALL_REASONS) {
         unsigned int last_reasons = ctx->current_reasons;
 
@@ -1464,6 +1457,20 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
 
             ok = ctx->get_crl(ctx, &crl, x);
             if (crl != NULL) {
+
+                /*
+                 * Pre-build the crldp X509_NAMES here as we will reuse
+                 * them for each iteration of the below loop, and we don't
+                 * want to rebuild them each time
+                 */
+                if (crldp_names == NULL) {
+                    crldp_names = get_crldp_full_names(x);
+                    if (crldp_names == NULL) {
+                        ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
+                        goto done;
+                    }
+                }
+
                 ctx->current_crl_score = get_crl_score(ctx, &crl_issuer,
                     &reasons, crl, x, crldp_names);
                 ctx->current_issuer = crl_issuer;
