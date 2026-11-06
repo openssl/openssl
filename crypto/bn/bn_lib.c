@@ -601,6 +601,13 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
         bn_correct_top(&temp);
         n8 = BN_num_bits(&temp);
         n = (n8 + 7) / 8; /* This is what BN_num_bytes() does */
+        if (signedness == SIGNED) {
+            if (!a->neg) {
+                ext = (n * 8 == n8);
+            } else {
+                ext = (n * 8 == n8) && !bn_abs_is_pow2(a);
+            }
+        }
         if (tolen < n + ext)
             return -1;
     }

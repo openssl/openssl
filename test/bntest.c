@@ -22,6 +22,7 @@
 #include "internal/nelem.h"
 #include "internal/numbers.h"
 #include "testutil.h"
+#include "crypto/bn.h"
 
 /*
  * Things in boring, not in openssl.
@@ -2074,6 +2075,16 @@ static int test_bn2signed(int i)
             || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
             || !TEST_int_eq(BN_signed_bn2bin(bn, scratch, test->mpi_len - 1), -1))
             goto err;
+
+        /* Fixed-top inputs can have an unused zero limb above the value. */
+        if (!TEST_ptr(bn2 = BN_new())
+            || !TEST_true(bn_lshift_fixed_top(bn2, bn, 0))
+            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
+                test->mpi_len)
+            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len))
+            goto err;
+        BN_free(bn2);
+        bn2 = NULL;
     }
 
     /* Check that a parse of the reversed buffer works too */
