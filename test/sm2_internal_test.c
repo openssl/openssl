@@ -22,6 +22,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "internal/endian.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SM2
@@ -61,6 +62,55 @@ static int start_fake_rand(const char *hex_bytes)
 
     /* use own random function */
     fake_rand_set_public_private_callbacks(NULL, get_faked_bytes);
+    return 1;
+}
+
+/*-
+ * Feed the fake RNG a scalar for code that draws it with OSSL_FN.
+ *
+ * OSSL_FN_priv_rand_range() draws its bytes straight into the number's limb
+ * array - see ossl_fn_rand() in crypto/fn/fn_rand.c - so the stream it reads
+ * back is the value's byte image in the host's order.  BN_priv_rand_range_ex(),
+ * which this test fed before SM2 moved to OSSL_FN, always read the stream
+ * big-endian.  Take the scalar in the usual big-endian hex, as the standards
+ * print it, and lay the bytes out the way OSSL_FN will read them.
+ *
+ * Re-laying the big-endian value into the host's limb image means: on a
+ * little-endian host reverse the whole buffer; on a big-endian host reverse
+ * the order of the BN_ULONG-sized limb groups only (within a limb a big-endian
+ * host already stores the most-significant byte first, so just the limb order
+ * is opposite to the big-endian byte string).  The hex has to be exactly as
+ * wide as the draw OSSL_FN will make - a whole number of limbs, which for these
+ * 256-bit orders is the 32 bytes of the scalar itself.
+ */
+static int start_fake_rand_fn(const char *hex_bytes)
+{
+    DECLARE_IS_ENDIAN;
+    const size_t w = sizeof(BN_ULONG);
+
+    if (!start_fake_rand(hex_bytes))
+        return 0;
+
+    if (IS_LITTLE_ENDIAN) {
+        size_t i;
+
+        for (i = 0; i < fake_rand_size / 2; i++) {
+            uint8_t t = fake_rand_bytes[i];
+            fake_rand_bytes[i] = fake_rand_bytes[fake_rand_size - 1 - i];
+            fake_rand_bytes[fake_rand_size - 1 - i] = t;
+        }
+    } else if (w != 0 && fake_rand_size % w == 0) {
+        size_t ng = fake_rand_size / w, i, j;
+
+        for (i = 0; i < ng / 2; i++) {
+            for (j = 0; j < w; j++) {
+                uint8_t t = fake_rand_bytes[i * w + j];
+                fake_rand_bytes[i * w + j] = fake_rand_bytes[(ng - 1 - i) * w + j];
+                fake_rand_bytes[(ng - 1 - i) * w + j] = t;
+            }
+        }
+    }
+
     return 1;
 }
 
@@ -171,7 +221,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
     if (!TEST_ptr(ctext))
         goto done;
 
-    start_fake_rand(k_hex);
+    start_fake_rand_fn(k_hex);
     if (!TEST_true(ossl_sm2_encrypt(key, digest,
             (const uint8_t *)message, msg_len,
             ctext, &ctext_len))) {
@@ -225,9 +275,8 @@ static int sm2_crypt_test(void)
             EVP_sm3(),
             "1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0",
             "encryption standard",
-            "004C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F"
-            "0092e8ff62146873c258557548500ab2df2a365e0609ab67640a1f6d57d7b17820"
-            "008349312695a3e1d2f46905f39a766487f2432e95d6be0cb009fe8c69fd8825a7",
+            /* ephemeral nonce k */
+            "4C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F",
             "307B0220245C26FB68B1DDDDB12C4B6BF9F2B6D5FE60A383B0D18D1C4144ABF1"
             "7F6252E7022076CB9264C2A7E88E52B19903FDC47378F605E36811F5C07423A2"
             "4B84400F01B804209C3D7360C30156FAB7C80A0276712DA9D8094A634B766D3A"
@@ -240,9 +289,8 @@ static int sm2_crypt_test(void)
             EVP_sha256(),
             "1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0",
             "encryption standard",
-            "004C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F"
-            "003da18008784352192d70f22c26c243174a447ba272fec64163dd4742bae8bc98"
-            "00df17605cf304e9dd1dfeb90c015e93b393a6f046792f790a6fa4228af67d9588",
+            /* ephemeral nonce k */
+            "4C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F",
             "307B0220245C26FB68B1DDDDB12C4B6BF9F2B6D5FE60A383B0D18D1C4144ABF17F"
             "6252E7022076CB9264C2A7E88E52B19903FDC47378F605E36811F5C07423A24B84"
             "400F01B80420BE89139D07853100EFA763F60CBE30099EA3DF7F8F364F9D10A5E9"
@@ -335,7 +383,7 @@ static int test_sm2_sign(const EC_GROUP *group,
             goto done;
     }
 
-    start_fake_rand(k_hex);
+    start_fake_rand_fn(k_hex);
     sig = ossl_sm2_do_sign(key, EVP_sm3(), userid,
         userid_len, (const uint8_t *)message, msg_len);
     if (!TEST_ptr(sig)) {
@@ -395,8 +443,8 @@ static int sm2_sig_test(void)
             test_alice_id, sizeof(test_alice_id),
             "128B2FA8BD433C6C068C8D803DFF79792A519A55171B1B650C23661D15897263",
             "message digest",
-            "006CB28D99385C175C94F94E934817663FC176D925DD72B727260DBAAE1FB2F96F"
-            "007c47811054c6f99613a578eb8453706ccb96384fe7df5c171671e760bfa8be3a",
+            /* ephemeral nonce k */
+            "6CB28D99385C175C94F94E934817663FC176D925DD72B727260DBAAE1FB2F96F",
             "40F1EC59F793D9F49E09DCEF49130D4194F79FB1EED2CAA55BACDB49C4E755D1",
             "6FC6DAC32C5D5CF10C77DFB20F7C2EB667A457872FB09EC56327A67EC7DEEBE7", 0)))
         goto done;

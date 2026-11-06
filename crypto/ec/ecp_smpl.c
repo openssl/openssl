@@ -18,6 +18,10 @@
 #include <openssl/symhacks.h>
 
 #include "ec_local.h"
+#include "crypto/bn.h" /* bn_get_ossl_fn() */
+#include "crypto/fn.h" /* OSSL_FN_MONT_CTX_{new,free}(), OSSL_FN_to_bytes_be() */
+#include "crypto/fn_intern.h" /* ossl_fn_ctx_{max,add}_size() */
+#include "internal/numbers.h" /* SIZE_MAX */
 
 const EC_METHOD *EC_GFp_simple_method(void)
 {
@@ -75,7 +79,11 @@ const EC_METHOD *EC_GFp_simple_method(void)
         ossl_ec_GFp_simple_blind_coordinates,
         ossl_ec_GFp_simple_ladder_pre,
         ossl_ec_GFp_simple_ladder_step,
-        ossl_ec_GFp_simple_ladder_post
+        ossl_ec_GFp_simple_ladder_post,
+        0, /* group_full_init */
+        0, /* mul_fn */
+        0, /* mul_fn_ctx_size */
+        ossl_ec_GFp_simple_point_get_affine_coords_bytes
     };
 
     return &ret;
@@ -135,6 +143,8 @@ int ossl_ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 
     dest->a_is_minus3 = src->a_is_minus3;
 
+    /* dest->fn_mont_ctx is duplicated generically in EC_GROUP_copy(). */
+
     return 1;
 }
 
@@ -188,6 +198,37 @@ int ossl_ec_GFp_simple_group_set_curve(EC_GROUP *group,
     if (!BN_add_word(tmp_a, 3))
         goto err;
     group->a_is_minus3 = (0 == BN_cmp(tmp_a, group->field));
+
+    /*
+     * Build the significant-width OSSL_FN copy of the field modulus used by
+     * the constant-time OSSL_FN point arithmetic (see ec_local.h).  A tight
+     * copy is required: bn_get_ossl_fn(group->field) exposes the BIGNUM's
+     * allocation width, which can exceed the modulus (e.g. after copying
+     * into a wider reused BIGNUM or for a CONSTTIME field), and the ladder's
+     * fn_mont_ctx and OSSL_FN_mul_mont_quick() demand operand widths equal
+     * to the modulus width. Done here, the universal sink for GF(p) field
+     * setup (every GF(p) method's group_set_curve delegates to this one),
+     * so that named-curve construction - which calls meth->group_set_curve
+     * directly, bypassing EC_GROUP_set_curve() - gets it too.
+     */
+    OSSL_FN_free(group->field_fn);
+    group->field_fn = OSSL_FN_new_limbs((size_t)bn_get_top(group->field));
+    if (group->field_fn == NULL
+        || OSSL_FN_copy_truncate(group->field_fn, bn_get_ossl_fn(group->field))
+            == NULL)
+        goto err;
+
+    /*
+     * Build the field Montgomery context from field_fn.  Methods that keep
+     * point coordinates in Montgomery form (field_encode != NULL) do their
+     * coordinate arithmetic in it; plain-representation methods (nist,
+     * nistp*, simple, sm2) use it for constant-time field arithmetic such as
+     * converting a secret projective point to affine.
+     */
+    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
+    group->fn_mont_ctx = OSSL_FN_MONT_CTX_new(group->field_fn);
+    if (group->fn_mont_ctx == NULL)
+        goto err;
 
     ret = 1;
 
@@ -606,6 +647,142 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
+    return ret;
+}
+
+/*
+ * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
+ * GFp method's point_get_affine_coords_bytes slot, shared by the plain and
+ * Montgomery representations (it decodes the latter, mirroring how
+ * ossl_ec_GFp_simple_point_get_affine_coordinates() recognises both).  The
+ * whole computation runs through the point's fixed-width OSSL_FN view, so a
+ * secret point's coordinates are never processed as BIGNUMs (they are stored as
+ * BIGNUMs, but only their fixed-width view is touched here) and nothing about
+ * their magnitude leaks - unlike the BIGNUM get_affine, whose 'top'-dependent
+ * bookkeeping does.  'x' and/or 'y' may be NULL; each non-NULL buffer is 'len'
+ * bytes.  Returns 0 if 'point' is at infinity, mirroring
+ * point_get_affine_coordinates().
+ *
+ * The field inverse is Fermat's Z^(p-2) mod p via OSSL_FN_mod_inverse_prime(),
+ * constant-time in the (secret) coordinate for the prime field modulus, and
+ * the multiplications are Montgomery multiplications, never division.
+ */
+int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
+    const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len)
+{
+    const OSSL_FN *p_fn;
+    OSSL_FN_CTX *fnctx = NULL;
+    const void *token = NULL;
+    OSSL_FN *X = NULL, *Y = NULL, *Z = NULL, *Zinv = NULL, *Z2 = NULL,
+            *Z3 = NULL;
+    const int is_mont = group->meth->field_encode != NULL;
+    OSSL_FN_MONT_CTX *mont;
+    int nlimbs;
+    size_t need = 0;
+    int ret = 0;
+
+    if (EC_POINT_is_at_infinity(group, point)) {
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
+        return 0;
+    }
+
+    if ((p_fn = group->field_fn) == NULL
+        || (mont = group->fn_mont_ctx) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        return 0;
+    }
+    nlimbs = (int)ossl_fn_get_dsize(p_fn);
+
+    /*
+     * Size the secure arena: six nlimbs temporaries plus the widest nested op.
+     * The composition helpers honour the OSSL_FN_*_ctx_size convention (0 is a
+     * sticky error, OSSL_FN_CTX_SIZE_NONE counts as no contribution). nlimbs is
+     * the field width of an arbitrary curve, so guard the * 6 against overflow.
+     */
+    need = ossl_fn_ctx_max_size(
+        is_mont ? OSSL_FN_from_mont_ctx_size(NULL, p_fn, mont)
+                : OSSL_FN_mont_reduce_ctx_size(NULL, p_fn, mont),
+        OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, mont));
+    need = ossl_fn_ctx_max_size(need,
+        OSSL_FN_to_mont_quick_ctx_size(NULL, NULL, mont));
+    need = ossl_fn_ctx_max_size(need,
+        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+    need = ossl_fn_ctx_add_size(need,
+        (size_t)nlimbs > SIZE_MAX / 6 ? 0
+                                      : OSSL_FN_CTX_size(1, 6, (size_t)nlimbs * 6));
+    if (need == 0) {
+        ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    fnctx = OSSL_FN_CTX_secure_new_size(group->libctx, need);
+    if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
+        goto err;
+
+    if ((X = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Y = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Z = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Zinv = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Z2 = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
+        || (Z3 = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
+        goto err;
+
+    /*
+     * Read the coordinates through their fixed-width OSSL_FN view, so nothing
+     * about their magnitude leaks.  A Montgomery-form method stores them
+     * encoded; decode them to plain.  Plain ones are reduced instead, which
+     * the strict-width Montgomery functions below need.
+     */
+    if (!ossl_ec_fn_read(X, point->X)
+        || !ossl_ec_fn_read(Y, point->Y)
+        || !ossl_ec_fn_read(Z, point->Z)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+    if (is_mont
+            ? (!OSSL_FN_from_mont(X, X, mont, fnctx)
+                  || !OSSL_FN_from_mont(Y, Y, mont, fnctx)
+                  || !OSSL_FN_from_mont(Z, Z, mont, fnctx))
+            : (!OSSL_FN_mont_reduce(X, X, mont, fnctx)
+                  || !OSSL_FN_mont_reduce(Y, Y, mont, fnctx)
+                  || !OSSL_FN_mont_reduce(Z, Z, mont, fnctx))) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /*
+     * If |point| is not in affine form already, convert it:
+     * (x, y) = (X / Z^2, Y / Z^3).  Z_is_one is tested rather than Z == 1: a
+     * Montgomery-form method stores Z as R mod p, not a literal 1.  A secret
+     * point from a scalar multiplication is projective (Z_is_one == 0), so this
+     * conversion is not skipped for it and adds no secret-dependent timing.
+     */
+    if (!point->Z_is_one) {
+        /*
+         * Zinv, Z2 and Z3 are kept in Montgomery form, so multiplying the
+         * plain X and Y by them gives plain results.
+         */
+        if (!OSSL_FN_mod_inverse_prime(Zinv, Z, p_fn, fnctx, mont)
+            || !OSSL_FN_to_mont_quick(Zinv, Zinv, mont, fnctx)
+            || !OSSL_FN_mul_mont_quick(Z2, Zinv, Zinv, mont, fnctx)
+            || !OSSL_FN_mul_mont_quick(Z3, Z2, Zinv, mont, fnctx)
+            || (x != NULL && !OSSL_FN_mul_mont_quick(X, X, Z2, mont, fnctx))
+            || (y != NULL && !OSSL_FN_mul_mont_quick(Y, Y, Z3, mont, fnctx))) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            goto err;
+        }
+    }
+    /* X and Y now hold the affine coordinates; serialise them. */
+    if ((x != NULL && !OSSL_FN_to_bytes_be(X, x, len))
+        || (y != NULL && !OSSL_FN_to_bytes_be(Y, y, len))) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_end(fnctx, token);
+    OSSL_FN_CTX_free(fnctx);
     return ret;
 }
 

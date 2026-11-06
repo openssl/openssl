@@ -97,6 +97,7 @@ providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
+crypto/ec/ec_curves.inc
 providers/fips/fipsparams.inc
 ssl/t1_lib.inc
 ssl/record/methods/tls_common.inc
@@ -226,6 +227,7 @@ providers/implementations/rands/test_rng.inc
 /crypto/encode_decode/encoder_err.c
 /crypto/ess/ess_err.c
 /crypto/evp/evp_err.c
+/crypto/fn/fn_err.c
 /crypto/http/http_err.c
 /crypto/objects/obj_err.c
 /crypto/ocsp/ocsp_err.c
@@ -262,6 +264,7 @@ providers/implementations/rands/test_rng.inc
 /include/crypto/encodererr.h
 /include/crypto/esserr.h
 /include/crypto/evperr.h
+/include/crypto/fnerr.h
 /include/crypto/httperr.h
 /include/crypto/objectserr.h
 /include/crypto/ocsperr.h

@@ -1,0 +1,290 @@
+/*
+ * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include <assert.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include "internal/safe_math.h"
+#include "crypto/fn.h"
+#include "crypto/fnerr.h"
+#include "fn_local.h"
+
+OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
+OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
+
+/*
+ * An OSSL_FN_CTX is a large pre-allocated chunk of memory that can be used
+ * to quickly allocate OSSL_FN instances.  The organization of memory is as
+ * a fairly typical arena, where OSSL_FN instances are "stacked" one after
+ * the other.
+ *
+ * However, there is also the concept of frames, which are arenas within an
+ * arena.  This allows easily passing an OSSL_FN_CTX to a function, and for
+ * that function to allocate such a frame for itself, and easily deallocate
+ * it when it's done.
+ */
+
+size_t OSSL_FN_CTX_size(size_t max_n_frames, size_t max_n_numbers,
+    size_t max_n_limbs)
+{
+    int err = 0;
+    size_t frames, numbers, limbs, total;
+
+    /*
+     * A context always needs at least one frame, since every use of an
+     * OSSL_FN_CTX calls OSSL_FN_CTX_start(), which carves out a frame.
+     */
+    if (max_n_frames == 0)
+        return 0;
+    /*
+     * Number-header and limb budgets must both be present or both absent.
+     * OSSL_FN_CTX_get_limbs() allocates an OSSL_FN header and its limbs
+     * together, so a context with one budget but not the other can never
+     * produce a usable number.
+     */
+    if ((max_n_numbers == 0) != (max_n_limbs == 0))
+        return 0;
+
+    frames = safe_mul_size_t(max_n_frames,
+        sizeof(struct ossl_fn_ctx_frame_st), &err);
+    numbers = safe_mul_size_t(max_n_numbers, sizeof(OSSL_FN), &err);
+    limbs = safe_mul_size_t(max_n_limbs, OSSL_FN_BYTES, &err);
+    total = safe_add_size_t(frames, numbers, &err);
+    total = safe_add_size_t(total, limbs, &err);
+
+    return err == 0 ? total : 0;
+}
+
+OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+    size_t max_n_numbers, size_t max_n_limbs)
+{
+    return OSSL_FN_CTX_new_size(libctx,
+        OSSL_FN_CTX_size(max_n_frames, max_n_numbers, max_n_limbs));
+}
+
+OSSL_FN_CTX *OSSL_FN_CTX_new_size(OSSL_LIB_CTX *libctx, size_t size)
+{
+    size_t total_size;
+    OSSL_FN_CTX *ctx;
+
+    int err = 0;
+
+    /*
+     * A size of 0 is the error return of OSSL_FN_CTX_size() (and the
+     * per-operation ctx-size helpers).  Treat it as an error here too, so a
+     * caller does not get back a context with a zero-size arena that it
+     * would then hand to an operation expecting usable scratch space.
+     */
+    if (size == 0)
+        return NULL;
+
+    total_size = safe_add_size_t(sizeof(*ctx), size, &err);
+    if (err != 0)
+        return NULL;
+
+    ctx = OPENSSL_zalloc(total_size);
+
+    if (ctx != NULL) {
+        ctx->msize = size;
+        ctx->libctx = libctx;
+    }
+
+    return ctx;
+}
+
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
+    size_t max_n_numbers, size_t max_n_limbs)
+{
+    return OSSL_FN_CTX_secure_new_size(libctx,
+        OSSL_FN_CTX_size(max_n_frames, max_n_numbers, max_n_limbs));
+}
+
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new_size(OSSL_LIB_CTX *libctx, size_t size)
+{
+    size_t total_size;
+    OSSL_FN_CTX *ctx;
+
+    int err = 0;
+
+    /* As in OSSL_FN_CTX_new_size(), a size of 0 is an error. */
+    if (size == 0)
+        return NULL;
+
+    total_size = safe_add_size_t(sizeof(*ctx), size, &err);
+    if (err != 0)
+        return NULL;
+
+    ctx = OPENSSL_secure_zalloc(total_size);
+
+    if (ctx != NULL) {
+        ctx->msize = size;
+        ctx->libctx = libctx;
+        ctx->is_securely_allocated = 1;
+    }
+
+    return ctx;
+}
+
+void OSSL_FN_CTX_peak_usage(const OSSL_FN_CTX *ctx, size_t *peak_n_frames,
+    size_t *peak_n_numbers, size_t *peak_n_limbs)
+{
+    if (ctx == NULL) {
+        if (peak_n_frames != NULL)
+            *peak_n_frames = 0;
+        if (peak_n_numbers != NULL)
+            *peak_n_numbers = 0;
+        if (peak_n_limbs != NULL)
+            *peak_n_limbs = 0;
+        return;
+    }
+    if (peak_n_frames != NULL)
+        *peak_n_frames = ctx->peak_n_frames;
+    if (peak_n_numbers != NULL)
+        *peak_n_numbers = ctx->peak_n_numbers;
+    if (peak_n_limbs != NULL)
+        *peak_n_limbs = ctx->peak_n_limbs;
+}
+
+OSSL_LIB_CTX *OSSL_FN_CTX_get0_libctx(const OSSL_FN_CTX *ctx)
+{
+    return ctx == NULL ? NULL : ctx->libctx;
+}
+
+void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx)
+{
+    if (ctx == NULL)
+        return;
+
+    assert(ctx->last_frame == NULL);
+
+    if (ctx->is_securely_allocated)
+        OPENSSL_secure_clear_free(ctx, sizeof(*ctx) + ctx->msize);
+    else
+        OPENSSL_clear_free(ctx, sizeof(*ctx) + ctx->msize);
+}
+
+const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
+{
+    if (ossl_unlikely(ctx == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
+    size_t used = (last_frame == NULL) ? 0 : last_frame->free_memory - ctx->memory;
+
+    if (ctx->msize - used < sizeof(struct ossl_fn_ctx_frame_st))
+        return NULL;
+
+    if (ctx->last_frame == NULL)
+        ctx->last_frame = (struct ossl_fn_ctx_frame_st *)ctx->memory;
+    else
+        ctx->last_frame = (struct ossl_fn_ctx_frame_st *)last_frame->free_memory;
+
+    struct ossl_fn_ctx_frame_st *frame = ctx->last_frame;
+    frame->arena = ctx;
+    frame->previous_frame = last_frame;
+    frame->free_memory = frame->memory;
+    frame->msize = ctx->msize - used - sizeof(*frame);
+    frame->n_numbers = 0;
+    frame->n_limbs = 0;
+
+    ctx->n_frames++;
+    if (ctx->n_frames > ctx->peak_n_frames)
+        ctx->peak_n_frames = ctx->n_frames;
+
+    return ctx->last_frame;
+}
+
+int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token)
+{
+    if (ctx == NULL || token == NULL)
+        return 1;
+
+    struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
+
+    if (ossl_unlikely(last_frame == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    if (last_frame != token) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    ctx->n_numbers -= last_frame->n_numbers;
+    ctx->n_limbs -= last_frame->n_limbs;
+    ctx->n_frames--;
+    ctx->last_frame = last_frame->previous_frame;
+
+    return 1;
+}
+
+OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, const void *token,
+    size_t limbs)
+{
+    if (ossl_unlikely(ctx == NULL || token == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    struct ossl_fn_ctx_frame_st *frame = ctx->last_frame;
+
+    if (ossl_unlikely(frame == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
+
+    /*
+     * Numbers can only be carved out of the most recent frame, and only by
+     * its owner.  A mismatching token means the caller forgot its own
+     * OSSL_FN_CTX_start() (or already ended its frame), and would otherwise
+     * be allocating in someone else's frame.
+     */
+    if (ossl_unlikely(frame != token)) {
+        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        return NULL;
+    }
+
+    size_t totalsize = ossl_fn_totalsize(limbs);
+    size_t used = frame->free_memory - frame->memory;
+    if (totalsize == 0 || frame->msize - used < totalsize)
+        return NULL;
+
+    OSSL_FN *fn = (OSSL_FN *)frame->free_memory;
+    frame->free_memory += totalsize;
+    frame->n_numbers++;
+    frame->n_limbs += limbs;
+
+    ctx->n_numbers++;
+    ctx->n_limbs += limbs;
+    if (ctx->n_numbers > ctx->peak_n_numbers)
+        ctx->peak_n_numbers = ctx->n_numbers;
+    if (ctx->n_limbs > ctx->peak_n_limbs)
+        ctx->peak_n_limbs = ctx->n_limbs;
+
+    memset(fn, 0, totalsize);
+    fn->dsize = (int)limbs;
+    fn->is_securely_allocated = ctx->is_securely_allocated;
+
+    return fn;
+}
+
+OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, const void *token,
+    size_t bytes)
+{
+    return OSSL_FN_CTX_get_limbs(ctx, token, ossl_fn_bytes_to_limbs(bytes));
+}
+
+OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, const void *token,
+    size_t bits)
+{
+    return OSSL_FN_CTX_get_bytes(ctx, token, ossl_fn_bits_to_bytes(bits));
+}

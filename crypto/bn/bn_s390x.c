@@ -24,7 +24,7 @@
  * Returns 1 for success, 0 for failure, and -1 to tell the caller to use the
  * SW-fallback.
  */
-static int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m)
 {
     struct ica_rsa_modexpo me;
