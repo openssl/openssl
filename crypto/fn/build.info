@@ -11,3 +11,5 @@ IF[{- !$disabled{srp} -}]
     SOURCE[$LIBCRYPTO]=fn_srp_consts.c
 ENDIF
 SOURCE[$LIBFIPS]=$COMMON
+
+DEPEND[fn_prime.o]=../bn/bn_prime.h
