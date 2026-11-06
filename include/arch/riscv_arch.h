@@ -26,6 +26,9 @@
 #endif
 #define OSSL_RISCV_HWPROBE
 #include <asm/hwcap.h>
+#ifndef COMPAT_HWCAP_ISA_V
+#define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
+#endif
 extern unsigned int OPENSSL_riscv_hwcap_P;
 #define VECTOR_CAPABLE (OPENSSL_riscv_hwcap_P & COMPAT_HWCAP_ISA_V)
 #define ZVX_MIN 15
