@@ -686,7 +686,7 @@ EVP_PKEY *OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(const OSSL_CRMF_ENCRYPTEDKEY *encrypt
             libctx, propq, pkey, &len);
         if ((p_copy = p) != NULL)
             ret = d2i_AutoPrivateKey_ex(NULL, &p_copy, len, libctx, propq);
-        OPENSSL_free(p);
+        OPENSSL_clear_free(p, len);
         return ret;
     }
 
@@ -764,6 +764,7 @@ unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     int iv_len; /* iv length */
     unsigned char *out = NULL; /* decryption output buffer */
+    size_t outsize = 0; /* size of decryption output buffer */
     int n, ret = 0;
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
     char name[OSSL_MAX_NAME_SIZE];
@@ -822,7 +823,8 @@ unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *
         goto end;
     }
 
-    if ((out = OPENSSL_malloc(enc->encValue->length + EVP_CIPHER_get_block_size(cipher))) == NULL
+    outsize = enc->encValue->length + EVP_CIPHER_get_block_size(cipher);
+    if ((out = OPENSSL_malloc(outsize)) == NULL
         || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto end;
     EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
@@ -846,7 +848,7 @@ end:
     OPENSSL_free(iv);
     if (ret)
         return out;
-    OPENSSL_free(out);
+    OPENSSL_clear_free(out, outsize);
     return NULL;
 }
 

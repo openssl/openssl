@@ -10,6 +10,8 @@
  */
 
 #include "helpers/cmp_testlib.h"
+#include <openssl/core_names.h>
+#include "../crypto/crmf/crmf_local.h"
 
 static const char *newkey_f;
 static const char *server_cert_f;
@@ -538,6 +540,251 @@ void cleanup_tests(void)
 #define USAGE "new.key server.crt pkcs10.der module_name [module_conf_file]\n"
 OPT_TEST_DECLARE_USAGE(USAGE)
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Allocator hooks for checking that CRMF cleanses decrypted private key
+ * material before freeing it.  Blocks allocated through the hooks carry a
+ * header and are kept on a list; blocks allocated before the hooks were
+ * installed come from plain malloc() and are passed through unchanged.
+ * The hooks stay installed until the process exits because blocks
+ * allocated through them may still be live after the test.
+ */
+typedef struct cleanse_hdr_st {
+    struct cleanse_hdr_st *prev, *next;
+    size_t size;
+    size_t pad; /* keep the user part suitably aligned */
+} CLEANSE_HDR;
+
+static CLEANSE_HDR *cleanse_blocks = NULL;
+static int cleanse_hooks_installed = 0;
+static int cleanse_watch = 0;
+static int cleanse_remnants = 0;
+static unsigned char cleanse_secret[32];
+
+static CLEANSE_HDR *cleanse_find(void *ptr)
+{
+    CLEANSE_HDR *h;
+
+    for (h = cleanse_blocks; h != NULL; h = h->next)
+        if ((void *)&h[1] == ptr)
+            return h;
+    return NULL;
+}
+
+static void cleanse_inspect(const unsigned char *p, size_t size,
+    const char *file)
+{
+    size_t i;
+
+    /* only count frees done by the CRMF code under test */
+    if (file == NULL || strstr(file, "crmf_lib.c") == NULL)
+        return;
+    for (i = 0; i + sizeof(cleanse_secret) <= size; i++) {
+        if (memcmp(p + i, cleanse_secret, sizeof(cleanse_secret)) == 0) {
+            cleanse_remnants++;
+            return;
+        }
+    }
+}
+
+static void *cleanse_malloc(size_t size, const char *file, int line)
+{
+    CLEANSE_HDR *h = malloc(sizeof(*h) + size);
+
+    if (h == NULL)
+        return NULL;
+    h->size = size;
+    h->prev = NULL;
+    h->next = cleanse_blocks;
+    if (cleanse_blocks != NULL)
+        cleanse_blocks->prev = h;
+    cleanse_blocks = h;
+    return &h[1];
+}
+
+static void cleanse_free(void *ptr, const char *file, int line)
+{
+    CLEANSE_HDR *h;
+
+    if (ptr == NULL)
+        return;
+    if ((h = cleanse_find(ptr)) == NULL) {
+        free(ptr); /* allocated before the hooks were installed */
+        return;
+    }
+    if (cleanse_watch)
+        cleanse_inspect(ptr, h->size, file);
+    if (h->prev != NULL)
+        h->prev->next = h->next;
+    else
+        cleanse_blocks = h->next;
+    if (h->next != NULL)
+        h->next->prev = h->prev;
+    free(h);
+}
+
+static void *cleanse_realloc(void *ptr, size_t size, const char *file, int line)
+{
+    CLEANSE_HDR *h;
+    void *ret;
+
+    if (ptr == NULL)
+        return cleanse_malloc(size, file, line);
+    if ((h = cleanse_find(ptr)) == NULL)
+        return realloc(ptr, size);
+    if (size == 0) {
+        cleanse_free(ptr, file, line);
+        return NULL;
+    }
+    if ((ret = cleanse_malloc(size, file, line)) == NULL)
+        return NULL;
+    memcpy(ret, ptr, h->size < size ? h->size : size);
+    cleanse_free(ptr, file, line);
+    return ret;
+}
+
+/*
+ * Wrap the DER encoding of |key| in a legacy EncryptedValue: AES-128-CBC
+ * without padding, with the symmetric key encrypted to |recip|.
+ * If |truncate|, append a partial block so that decryption fails in
+ * EVP_DecryptFinal() after EVP_DecryptUpdate() has produced plaintext.
+ */
+static OSSL_CRMF_ENCRYPTEDKEY *encrypt_pkey(EVP_PKEY *key, EVP_PKEY *recip,
+    int truncate)
+{
+    unsigned char *der = NULL, *p, *ct = NULL, *wkey = NULL;
+    unsigned char symkey[16], iv[16];
+    int derlen, ptlen, ctlen = 0, n;
+    size_t wlen = 0;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *cctx = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    ASN1_OCTET_STRING *ivs = NULL;
+    OSSL_CRMF_ENCRYPTEDVALUE *ev = NULL;
+    OSSL_CRMF_ENCRYPTEDKEY *ek = NULL, *ret = NULL;
+
+    if (!TEST_int_gt(derlen = i2d_PrivateKey(key, NULL), 0))
+        return NULL;
+    ptlen = (derlen + 15) / 16 * 16;
+    if (!TEST_ptr(der = OPENSSL_zalloc(ptlen))
+        || !TEST_ptr(ct = OPENSSL_malloc(ptlen + 16 + 5)))
+        goto err;
+    p = der;
+    if (!TEST_int_eq(i2d_PrivateKey(key, &p), derlen)
+        || !TEST_int_eq(RAND_bytes_ex(libctx, symkey, sizeof(symkey), 0), 1)
+        || !TEST_int_eq(RAND_bytes_ex(libctx, iv, sizeof(iv), 0), 1)
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL))
+        || !TEST_ptr(cctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(cctx, cipher, symkey, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_padding(cctx, 0))
+        || !TEST_true(EVP_EncryptUpdate(cctx, ct, &ctlen, der, ptlen))
+        || !TEST_true(EVP_EncryptFinal_ex(cctx, ct + ctlen, &n)))
+        goto err;
+    ctlen += n;
+    if (truncate)
+        ctlen += 5;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(libctx, recip, NULL))
+        || !TEST_int_gt(EVP_PKEY_encrypt_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_encrypt(pctx, NULL, &wlen,
+                            symkey, sizeof(symkey)),
+            0)
+        || !TEST_ptr(wkey = OPENSSL_malloc(wlen))
+        || !TEST_int_gt(EVP_PKEY_encrypt(pctx, wkey, &wlen,
+                            symkey, sizeof(symkey)),
+            0))
+        goto err;
+
+    if (!TEST_ptr(ev = OSSL_CRMF_ENCRYPTEDVALUE_new())
+        || !TEST_ptr(ev->symmAlg = X509_ALGOR_new())
+        || !TEST_ptr(ivs = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(ivs, iv, sizeof(iv)))
+        || !TEST_true(X509_ALGOR_set0(ev->symmAlg, OBJ_nid2obj(NID_aes_128_cbc),
+            V_ASN1_OCTET_STRING, ivs)))
+        goto err;
+    ivs = NULL;
+    /* encValue is mandatory, so OSSL_CRMF_ENCRYPTEDVALUE_new() allocated it */
+    if (!TEST_ptr(ev->encSymmKey = ASN1_BIT_STRING_new())
+        || !TEST_true(ASN1_BIT_STRING_set1(ev->encSymmKey, wkey, wlen, 0))
+        || !TEST_true(ASN1_BIT_STRING_set1(ev->encValue, ct, ctlen, 0))
+        || !TEST_ptr(ek = OSSL_CRMF_ENCRYPTEDKEY_new()))
+        goto err;
+    ek->type = 0; /* encryptedValue */
+    ek->value.encryptedValue = ev;
+    ev = NULL;
+    ret = ek;
+    ek = NULL;
+
+err:
+    OSSL_CRMF_ENCRYPTEDKEY_free(ek);
+    OSSL_CRMF_ENCRYPTEDVALUE_free(ev);
+    ASN1_OCTET_STRING_free(ivs);
+    EVP_PKEY_CTX_free(pctx);
+    EVP_CIPHER_CTX_free(cctx);
+    EVP_CIPHER_free(cipher);
+    OPENSSL_free(wkey);
+    OPENSSL_free(ct);
+    OPENSSL_clear_free(der, ptlen);
+    OPENSSL_cleanse(symkey, sizeof(symkey));
+    return ret;
+}
+
+/*
+ * Decrypt a centrally generated key passed in a legacy EncryptedValue and
+ * check that CRMF does not free any buffer that still holds it.
+ * Test 0: successful decryption via OSSL_CRMF_ENCRYPTEDKEY_get1_pkey().
+ * Test 1: EVP_DecryptFinal() fails after plaintext has been produced.
+ */
+static int test_crmf_encryptedkey_cleanse(int idx)
+{
+    EVP_PKEY *key = NULL, *res = NULL;
+    BIGNUM *priv = NULL;
+    OSSL_CRMF_ENCRYPTEDKEY *ek = NULL;
+    int ret = 0;
+
+    if (!cleanse_hooks_installed) {
+        if (!CRYPTO_set_mem_functions(cleanse_malloc, cleanse_realloc,
+                cleanse_free))
+            return TEST_skip("cannot install memory allocation hooks");
+        cleanse_hooks_installed = 1;
+    }
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(libctx, NULL, "EC", "P-256"))
+        || !TEST_true(EVP_PKEY_get_bn_param(key, OSSL_PKEY_PARAM_PRIV_KEY,
+            &priv))
+        || !TEST_int_eq(BN_bn2binpad(priv, cleanse_secret,
+                            sizeof(cleanse_secret)),
+            sizeof(cleanse_secret))
+        || !TEST_ptr(ek = encrypt_pkey(key, newkey, idx == 1)))
+        goto err;
+
+    cleanse_remnants = 0;
+    cleanse_watch = 1;
+    res = OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(ek, NULL, NULL, newkey, NULL, NULL,
+        libctx, NULL);
+    cleanse_watch = 0;
+
+    if (idx == 0) {
+        if (!TEST_ptr(res) || !TEST_int_eq(EVP_PKEY_eq(res, key), 1))
+            goto err;
+    } else {
+        if (!TEST_ptr_null(res))
+            goto err;
+        ERR_clear_error();
+    }
+    ret = TEST_int_eq(cleanse_remnants, 0);
+
+err:
+    cleanse_watch = 0;
+    OPENSSL_cleanse(cleanse_secret, sizeof(cleanse_secret));
+    BN_clear_free(priv);
+    EVP_PKEY_free(res);
+    EVP_PKEY_free(key);
+    OSSL_CRMF_ENCRYPTEDKEY_free(ek);
+    return ret;
+}
+#endif /* OPENSSL_NO_EC */
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -584,5 +831,9 @@ int setup_tests(void)
     ADD_TEST(test_cmp_create_pollrep);
     ADD_ALL_TESTS_NOSUBTEST(test_cmp_pkimessage_create,
         OSSL_CMP_PKIBODY_POLLREP + 1);
+#ifndef OPENSSL_NO_EC
+    /* replaces the memory allocation functions for the rest of the run */
+    ADD_ALL_TESTS(test_crmf_encryptedkey_cleanse, 2);
+#endif
     return 1;
 }
