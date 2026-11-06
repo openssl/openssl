@@ -270,9 +270,51 @@ static int test_encrypt_decrypt_aes_cbc(void)
     return test_encrypt_decrypt(EVP_aes_128_cbc());
 }
 
+static int test_encrypt_decrypt_aes_cfb(void)
+{
+    return test_encrypt_decrypt(EVP_aes_128_cfb());
+}
+
 static int test_encrypt_decrypt_aes_128_gcm(void)
 {
     return test_encrypt_decrypt(EVP_aes_128_gcm());
+}
+
+static int test_encrypt_rejects_ambiguous_cfb_oid(void)
+{
+    const EVP_CIPHER *ciphers[] = {
+        EVP_aes_128_cfb1(), EVP_aes_128_cfb8(),
+        EVP_aes_192_cfb1(), EVP_aes_192_cfb8(),
+        EVP_aes_256_cfb1(), EVP_aes_256_cfb8()
+    };
+    static const char msg[] = "CMS CFB content";
+    STACK_OF(X509) *recips = NULL;
+    BIO *in = NULL;
+    CMS_ContentInfo *cms = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(recips = sk_X509_new_null())
+        || !TEST_int_gt(sk_X509_push(recips, cert), 0)
+        || !TEST_ptr(in = BIO_new_mem_buf(msg, sizeof(msg) - 1)))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(ciphers); i++) {
+        ERR_clear_error();
+        cms = CMS_encrypt(recips, in, ciphers[i], CMS_BINARY);
+        if (!TEST_ptr_null(cms)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()) & ERR_REASON_MASK,
+                CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM))
+            goto end;
+    }
+
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(in);
+    sk_X509_free(recips);
+    ERR_clear_error();
+    return ret;
 }
 
 static int test_encrypt_decrypt_aes_192_gcm(void)
@@ -1657,6 +1699,8 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_encrypt_decrypt_aes_cbc);
+    ADD_TEST(test_encrypt_decrypt_aes_cfb);
+    ADD_TEST(test_encrypt_rejects_ambiguous_cfb_oid);
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_192_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_256_gcm);
