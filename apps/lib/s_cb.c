@@ -1051,6 +1051,110 @@ static void print_chain_flags(SSL *s, int flags)
  * Very basic selection callback: just use any certificate chain reported as
  * valid. More sophisticated could prioritise according to local policy.
  */
+/*
+ * A SHA-1 fallback must not replace a suitable stronger configured chain.
+ * Self-signed path starts do not need their signatures checked.
+ */
+static int excert_uses_sha1(const SSL_EXCERT *exc)
+{
+    int i, mdnid;
+    X509 *x = exc->cert;
+
+    for (i = -1; x != NULL; i++) {
+        if (X509_self_signed(x, 0) <= 0
+            && (!X509_get_signature_info(x, &mdnid, NULL, NULL, NULL)
+                || mdnid == NID_sha1))
+            return 1;
+        x = exc->chain != NULL && i + 1 < sk_X509_num(exc->chain)
+            ? sk_X509_value(exc->chain, i + 1)
+            : NULL;
+    }
+    return 0;
+}
+
+/*
+ * Cache each candidate's actual chain for this connection. In particular,
+ * classify an automatically built chain after construction, not just its leaf.
+ * The cached chains are local to this callback; SSL_EXCERT is shared by
+ * connections and must not be rewritten here.
+ */
+static int set_server_cert_cb(SSL *ssl, SSL_EXCERT *exc)
+{
+    SSL_EXCERT *candidate, *choices;
+    STACK_OF(X509) *chain;
+    size_t capacity = 0, count = 0, i;
+    int rv, flags, prefer_strong = 0, ret = 0;
+
+    while (exc->next != NULL)
+        exc = exc->next;
+    for (candidate = exc; candidate != NULL; candidate = candidate->prev)
+        capacity++;
+    choices = OPENSSL_malloc_array(capacity, sizeof(*choices));
+    if (choices == NULL)
+        return 0;
+
+    for (candidate = exc; candidate != NULL; candidate = candidate->prev) {
+        rv = SSL_check_chain(ssl, candidate->cert, candidate->key,
+            candidate->chain);
+        if ((rv & CERT_PKEY_VALID) == 0)
+            continue;
+        chain = candidate->chain;
+        if (chain == NULL)
+            SSL_CTX_get_extra_chain_certs_only(SSL_get_SSL_CTX(ssl), &chain);
+        if (!SSL_use_certificate(ssl, candidate->cert)
+            || !SSL_use_PrivateKey(ssl, candidate->key)
+            || !SSL_set1_chain(ssl, chain))
+            goto end;
+        if (candidate->build_chain
+            || (chain == NULL && (SSL_get_mode(ssl) & SSL_MODE_NO_AUTO_CHAIN) == 0)) {
+            flags = candidate->build_chain ? 0
+                                           : SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR | SSL_BUILD_CHAIN_FLAG_CLEAR_ERROR;
+            if (!SSL_build_cert_chain(ssl, flags)) {
+                BIO_puts(bio_err,
+                    "Cannot build candidate chain; trying alternatives\n");
+                ERR_print_errors(bio_err);
+                continue;
+            }
+        }
+        SSL_get0_chain_certs(ssl, &chain);
+        rv = SSL_check_chain(ssl, candidate->cert, candidate->key, chain);
+        BIO_printf(bio_err, "Checking resolved cert chain %zu:\nSubject: ", count + 1);
+        X509_NAME_print_ex(bio_err, X509_get_subject_name(candidate->cert), 0,
+            get_nameopt());
+        BIO_puts(bio_err, "\n");
+        print_chain_flags(ssl, rv);
+        if ((rv & CERT_PKEY_VALID) == 0)
+            continue;
+        choices[count] = *candidate;
+        choices[count].chain = chain == NULL ? NULL : X509_chain_up_ref(chain);
+        if (chain != NULL && choices[count].chain == NULL)
+            goto end;
+        if (!excert_uses_sha1(&choices[count]))
+            prefer_strong = 1;
+        count++;
+    }
+
+    /*
+     * Retain order and separate key-type slots among suitable chains, but
+     * never install a SHA-1 fallback when a suitable stronger chain exists.
+     */
+    SSL_certs_clear(ssl);
+    for (i = 0; i < count; i++) {
+        if (prefer_strong && excert_uses_sha1(&choices[i]))
+            continue;
+        if (!SSL_use_certificate(ssl, choices[i].cert)
+            || !SSL_use_PrivateKey(ssl, choices[i].key)
+            || !SSL_set1_chain(ssl, choices[i].chain))
+            goto end;
+    }
+    ret = 1;
+end:
+    for (i = 0; i < count; i++)
+        OSSL_STACK_OF_X509_free(choices[i].chain);
+    OPENSSL_free(choices);
+    return ret;
+}
+
 static int set_cert_cb(SSL *ssl, void *arg)
 {
     int i, rv;
@@ -1070,6 +1174,8 @@ static int set_cert_cb(SSL *ssl, void *arg)
 
     if (exc == NULL)
         return 1;
+    if (SSL_is_server(ssl) && SSL_version(ssl) == TLS1_3_VERSION)
+        return set_server_cert_cb(ssl, exc);
 
     /*
      * Go to end of list and traverse backwards since we prepend newer

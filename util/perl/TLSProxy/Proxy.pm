@@ -49,7 +49,14 @@ BEGIN
         $s->close();
     };
     if ($@ eq "") {
-        $IP_factory = sub { IO::Socket::INET6->new(Domain => AF_INET6, @_); };
+        $IP_factory = sub {
+            my %args = @_;
+            my $addr = $args{LocalHost} // $args{LocalAddr}
+                       // $args{PeerAddr} // "";
+            my $domain = $addr =~ /\A(?:[0-9]{1,3}\.){3}[0-9]{1,3}\z/
+                         ? AF_INET : AF_INET6;
+            IO::Socket::INET6->new(Domain => $domain, @_);
+        };
         $have_IPv6 = 1;
         $useINET6 = 1;
     } else {

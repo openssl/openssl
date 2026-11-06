@@ -68,6 +68,14 @@ algorithms may also wish to check B<CERT_PKEY_CA_SIGNATURE> too. If no
 chain is suitable a server should fall back to the most secure chain which
 sets B<CERT_PKEY_VALID>.
 
+For TLS 1.3 servers, a SHA-1 certificate signature also requires explicit
+permission in the peer's effective certificate-signature algorithm list.
+A NULL B<chain> uses the applicable default chain, including automatic chain
+construction when enabled. Applications choosing between external candidates
+must prefer a suitable non-SHA-1 chain over a SHA-1 fallback: the
+B<CERT_PKEY_VALID> result assesses one candidate, not the application's full
+set of alternatives.
+
 The validity of a chain is determined by checking if it matches a supported
 signature algorithm, supported curves and in the case of client authentication
 certificate types and issuer names.

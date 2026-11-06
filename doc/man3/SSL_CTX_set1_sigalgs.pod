@@ -88,6 +88,20 @@ be used with the B<_list> forms of the API.
 
 The use of MD5 as a digest is strongly discouraged due to security weaknesses.
 
+
+In TLS 1.3, if the peer omits the certificate-specific signature algorithm
+extension, its normal signature algorithm list also governs certificate
+signatures. A server does not send a SHA-1-signed chain unless the effective
+peer advertisement explicitly permits the relevant SHA-1 scheme and no
+suitable non-SHA-1 chain is available. These checks include automatically
+constructed intermediate chains. Signatures on self-signed path starts are
+exempt. Applications can omit certificates expected to be peer trust anchors
+from the transmitted chain; a signature algorithm list alone does not identify
+which non-self-signed certificate the peer trusts.
+
+The client-certificate fallback permitted by TLS 1.3 is separate from the
+server SHA-1 restriction.
+
 =head1 RETURN VALUES
 
 All these functions return 1 for success and 0 for failure.
