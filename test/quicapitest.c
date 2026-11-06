@@ -5131,6 +5131,11 @@ static int test_quic_detect_peer_addr_v6(void)
             serr = SSL_get_error(client, rc);
 
             if (serr == SSL_ERROR_SYSCALL) {
+                if (!TEST_true(SSL_get_peer_addr(client, &test_addr))
+                    || !TEST_mem_eq(&test_addr.s_in6.sin6_addr,
+                        sizeof(struct in6_addr),
+                        &saddr->s_in6.sin6_addr, sizeof(struct in6_addr)))
+                    goto out;
                 ret = TEST_skip("Platform does not support operating on connected sockets");
                 goto out;
             }
