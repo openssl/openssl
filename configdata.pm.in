@@ -211,9 +211,9 @@ _____
             catfile($config{sourcedir}, 'include', 'openssl', 'configuration.h.in');
 
         my $apps_configuration_h =
-            catfile('apps', 'include', 'configuration.h');
+            catfile('apps', 'include', 'app_conf.h');
         my $apps_configuration_h_in =
-            catfile($config{sourcedir}, 'apps', 'include', 'configuration.h.in');
+            catfile($config{sourcedir}, 'apps', 'include', 'app_conf.h.in');
 
         $create_configuration->($configuration_h, $configuration_h_in);
         $update_configuration->($configuration_h, $configuration_h_in);
