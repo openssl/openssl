@@ -6937,6 +6937,7 @@ static int test_dtls_listener_rx_queue_drops_oldest(void)
     BIO_ADDR *client_addr = NULL;
     BIO *client_bio;
     SSL_CONNECTION *sc;
+    DTLS_RX *rx;
     SSL_POLL_ITEM poll_item;
     struct timeval poll_timeout;
     size_t poll_result, queued, i;
@@ -6992,15 +6993,23 @@ static int test_dtls_listener_rx_queue_drops_oldest(void)
     }
 
     if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_ptr(sc->listener_rx))
+        || !TEST_ptr(rx = sc->listener_rx))
         goto end;
-    queued = ossl_list_urxe_num(&sc->listener_rx->urxe_pending);
+    /*
+     * This test is single-threaded, but a mutex lock follows the normal
+     * queue access pattern.
+     */
+    ossl_crypto_mutex_lock(rx->mutex);
+    queued = ossl_list_urxe_num(&rx->urxe_pending);
+    head = ossl_list_urxe_head(&rx->urxe_pending);
+    tail = ossl_list_urxe_tail(&rx->urxe_pending);
+    ossl_crypto_mutex_unlock(rx->mutex);
+
     if (!TEST_size_t_eq(queued, cap))
         goto end;
 
     /* The oldest datagrams were evicted: only the newest cap ones remain. */
-    if (!TEST_ptr(head = ossl_list_urxe_head(&sc->listener_rx->urxe_pending))
-        || !TEST_ptr(tail = ossl_list_urxe_tail(&sc->listener_rx->urxe_pending)))
+    if (!TEST_ptr(head) || !TEST_ptr(tail))
         goto end;
     head_data = ossl_dgram_urxe_data(head);
     tail_data = ossl_dgram_urxe_data(tail);
@@ -7392,6 +7401,7 @@ static int test_dtls_listener_flood_then_handshake_int(int version)
     int server_fd = -1, client_fd = -1, client2_fd = -1;
     DTLS_LISTENER *dl;
     SSL_CONNECTION *sc;
+    DTLS_RX *rx;
     unsigned char garbage[1200];
     size_t queued, i;
     int testresult = 0, k;
@@ -7443,9 +7453,15 @@ static int test_dtls_listener_flood_then_handshake_int(int version)
 
     /* The receive queue is exactly at its cap, not at the flood size. */
     if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
-        || !TEST_ptr(sc->listener_rx))
+        || !TEST_ptr(rx = sc->listener_rx))
         goto end;
-    queued = ossl_list_urxe_num(&sc->listener_rx->urxe_pending);
+    /*
+     * This test is single-threaded, but a mutex lock follows the normal
+     * queue access pattern.
+     */
+    ossl_crypto_mutex_lock(rx->mutex);
+    queued = ossl_list_urxe_num(&rx->urxe_pending);
+    ossl_crypto_mutex_unlock(rx->mutex);
     if (!TEST_size_t_eq(queued, cap))
         goto end;
 
