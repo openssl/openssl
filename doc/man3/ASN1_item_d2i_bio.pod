@@ -88,8 +88,8 @@ ASN.1 template I<it> and returns an B<ASN1_STRING> object. If the passed in
 I<*oct> is not NULL then this is used to store the returned result, otherwise
 a new B<ASN1_STRING> object is created. If I<oct> is not NULL and I<*oct> is NULL
 then the returned return is also set into I<*oct>. If there is an error the optional
-passed in B<ASN1_STRING> will not be freed, but the previous value may be cleared when
-ASN1_STRING_set0(*oct, NULL, 0) is called internally.
+passed in B<ASN1_STRING> will not be freed, but its previous value may have
+been cleared.
 
 ASN1_item_unpack() uses ASN1_item_d2i() to decode the DER-encoded B<ASN1_STRING>
 I<oct> using the ASN.1 template I<it>.
