@@ -447,6 +447,15 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 
     if (src == NULL)
         return 1;
+    /*
+     * Inheriting from itself is a no-op.  Apart from being pointless, the
+     * code below releases storage owned by dest before reading the
+     * corresponding field from src, which corrupts dest when they are the
+     * same object: the policies stack is used after it is freed, the
+     * host/IP/email stacks are silently emptied, and flags are clobbered.
+     */
+    if (dest == src)
+        return 1;
     inh_flags = dest->inh_flags | src->inh_flags;
 
     if ((inh_flags & X509_VP_FLAG_ONCE) != 0)
