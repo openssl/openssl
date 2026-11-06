@@ -2082,12 +2082,14 @@ static int test_bn2signed(int i)
             goto err;
         if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
                 test->mpi_len)
-            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len))
+            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
+            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len - 1), -1))
             goto err;
         BN_set_flags(bn2, BN_FLG_CONSTTIME);
         if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
                 test->mpi_len)
-            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len))
+            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
+            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len - 1), -1))
             goto err;
         BN_free(bn2);
         bn2 = NULL;
