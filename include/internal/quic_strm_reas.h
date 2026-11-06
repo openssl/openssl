@@ -87,7 +87,7 @@ int ossl_sframe_set_peek(SFRAME_SET *fs, void **iter,
  * @param fs stream frame set that holds ranges.
  * @param range range caller wants to lock, the range must be reachable
  * for read operation.
- * @returns 1 on success, 0 on failure (when range can be locked, because
+ * @returns 1 on success, 0 on failure (when range cannot be locked, because
  * its end offset is past the gap, or range is locked)
  */
 int ossl_sframe_set_lock_range(SFRAME_SET *fs, const UINT_RANGE *range);
