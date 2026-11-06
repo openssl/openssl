@@ -2078,8 +2078,10 @@ static int test_bn2signed(int i)
 
         /* Fixed-top inputs can have an unused zero limb above the value. */
         if (!TEST_ptr(bn2 = BN_new())
-            || !TEST_true(bn_lshift_fixed_top(bn2, bn, 0))
-            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
+            || !TEST_true(bn_lshift_fixed_top(bn2, bn, 0)))
+            goto err;
+        BN_set_flags(bn2, BN_FLG_CONSTTIME);
+        if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
                 test->mpi_len)
             || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len))
             goto err;

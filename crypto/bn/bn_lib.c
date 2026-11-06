@@ -542,6 +542,23 @@ static int bn_abs_is_pow2(const BIGNUM *a)
     int i = a->top - 1;
     BN_ULONG t;
 
+    if ((a->flags & BN_FLG_CONSTTIME) != 0) {
+        BN_ULONG nonzero = 0, not_pow2 = 0, borrow = 1;
+        size_t j, mask;
+
+        /* Preserve the constant-time path used by BN_num_bits(). */
+        for (j = 0; j < (size_t)a->dmax; j++) {
+            mask = constant_time_ge_s((size_t)a->top, j + 1);
+            t = a->d[j] & (BN_ULONG)mask;
+            not_pow2 |= t & (t - borrow);
+            nonzero |= t;
+            borrow &= constant_time_is_zero_bn(t);
+        }
+        return (int)((constant_time_is_zero_bn(not_pow2)
+                         & ~constant_time_is_zero_bn(nonzero))
+            & 1);
+    }
+
     /* Fixed-top BIGNUMs can retain zero limbs above the actual top. */
     while (i > 0 && a->d[i] == 0)
         i--;
