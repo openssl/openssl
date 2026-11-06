@@ -62,6 +62,7 @@ struct stream_chunk_t {
 struct quic_rstream_qparm_st {
     size_t rsqp_pkt_overhead_treshold;
     size_t rsqp_pkt_overhead_sz;
+    size_t rsqp_range_limit;
     QUIC_CHANNEL *rsqp_ch;
 };
 
@@ -222,6 +223,19 @@ static int keep_schunk_data_on_packet(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
         return 0;
 
     return 1;
+}
+
+static int is_range_limit_exceeded(SFRAME_SET *fs)
+{
+    if (fs->stream_ranges >= fs->rsqp->rsqp_range_limit) {
+        ossl_quic_channel_raise_protocol_error(fs->rsqp->rsqp_ch,
+            OSSL_QUIC_ERR_FLOW_CONTROL_ERROR,
+            OSSL_QUIC_FRAME_TYPE_STREAM,
+            "too many gaps in stream data");
+        return 1;
+    }
+
+    return 0;
 }
 
 static struct stream_chunk_t *new_schunk(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
@@ -949,6 +963,9 @@ int ossl_sframe_set_insert(SFRAME_SET *fs, UINT_RANGE *r, OSSL_QRX_PKT *pkt,
     assert(r->start < r->end);
 
     if ((sr = find_range(fs, &key_sr)) == NULL) {
+        if (is_range_limit_exceeded(fs))
+            return 0;
+
         sc = new_schunk(fs, pkt, r, data);
         if (sc == NULL)
             goto err;
@@ -1328,6 +1345,7 @@ QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(QUIC_CHANNEL *ch)
         rsqp->rsqp_pkt_overhead_treshold = PKT_BUFFER_OVERHEAD_TRESHOLD;
         rsqp->rsqp_pkt_overhead_sz = 0;
         rsqp->rsqp_ch = ch;
+        rsqp->rsqp_range_limit = QUIC_SFRAME_SET_MAX_RANGES;
     }
 
     return rsqp;
