@@ -768,10 +768,10 @@ failure:
 static void check_overlap(SSL_CONNECTION *s,
     const uint16_t *prio_groups, size_t prio_num_groups,
     const uint16_t *candidate_groups, size_t candidate_num_groups,
-    int *prio_group_idx, int *candidate_group_idx,
+    size_t *prio_group_idx, size_t *candidate_group_idx,
     uint16_t *selected_group)
 {
-    uint16_t current_group;
+    size_t current_group_idx;
     size_t group_idx = prio_num_groups;
     size_t new_group_idx = 0;
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
@@ -780,12 +780,13 @@ static void check_overlap(SSL_CONNECTION *s,
     *prio_group_idx = 0;
     *selected_group = 0;
 
-    for (current_group = 0; current_group < candidate_num_groups; current_group++) {
-        if (!check_in_list(s, candidate_groups[current_group], prio_groups,
+    for (current_group_idx = 0; current_group_idx < candidate_num_groups;
+        current_group_idx++) {
+        if (!check_in_list(s, candidate_groups[current_group_idx], prio_groups,
                 prio_num_groups, 1, &new_group_idx)
-            || !tls_group_allowed(s, candidate_groups[current_group],
+            || !tls_group_allowed(s, candidate_groups[current_group_idx],
                 SSL_SECOP_CURVE_SUPPORTED)
-            || !tls_valid_group(s, candidate_groups[current_group], version1_3,
+            || !tls_valid_group(s, candidate_groups[current_group_idx], version1_3,
                 version1_3, NULL, NULL))
             /* No overlap or group not suitable, check next group */
             continue;
@@ -796,7 +797,7 @@ static void check_overlap(SSL_CONNECTION *s,
          */
         if (new_group_idx < group_idx) {
             group_idx = new_group_idx;
-            *candidate_group_idx = current_group;
+            *candidate_group_idx = current_group_idx;
             *prio_group_idx = (int)group_idx;
             *selected_group = prio_groups[group_idx];
         }
@@ -901,7 +902,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     first_group_in_tuple = (uint16_t *)srvrgroups;
     for (current_tuple = 0; current_tuple < srvr_num_tuples; current_tuple++) {
         size_t number_of_groups_in_tuple = srvrtuples[current_tuple];
-        int prio_group_idx = 0, candidate_group_idx = 0;
+        size_t prio_group_idx = 0, candidate_group_idx = 0;
 
         /* Server or client preference ? */
         if (s->options & SSL_OP_SERVER_PREFERENCE) {
