@@ -654,7 +654,9 @@ DEF_FUNC(hf_connect_wait)
 {
     int ok = 0, ret;
     SSL *ssl;
+    uint64_t tolerate_failure;
 
+    F_POP(tolerate_failure);
     REQUIRE_SSL(ssl);
 
     /* if not started */
@@ -678,7 +680,7 @@ DEF_FUNC(hf_connect_wait)
         if (is_want(ssl, ret))
             F_SPIN_AGAIN();
 
-        if (!TEST_int_eq(ret, 1))
+        if (!tolerate_failure && !TEST_int_eq(ret, 1))
             goto err;
     }
 
@@ -792,6 +794,30 @@ DEF_FUNC(hf_expect_conn_close_info)
     }
 
     ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_expect_timeout)
+{
+    int ok = 0;
+    SSL *ssl;
+    SSL_CONN_CLOSE_INFO cc_info = { 0 };
+    uint64_t timeout_secs;
+
+    F_POP(timeout_secs);
+    REQUIRE_SSL(ssl);
+
+    if (F_TIMEOUT_EXPIRED(timeout_secs)) {
+        return 1;
+    }
+
+    if (!SSL_get_conn_close_info(ssl, &cc_info, sizeof(cc_info)))
+        F_SPIN_AGAIN();
+
+    TEST_info("connection close reason: %s", cc_info.reason);
+
+    ok = 0;
 err:
     return ok;
 }
@@ -1181,6 +1207,12 @@ err:
 
 #define OP_CONNECT_WAIT(name) \
     (OP_SELECT_SSL(0, name),  \
+        OP_PUSH_U64(0),       \
+        OP_FUNC(hf_connect_wait))
+
+#define OP_CONNECT_WAIT_OR_FAIL(name) \
+    (OP_SELECT_SSL(0, name),          \
+        OP_PUSH_U64(1),               \
         OP_FUNC(hf_connect_wait))
 
 #define OP_LISTEN(name)      \
@@ -1370,6 +1402,11 @@ err:
         OP_PUSH_U64(expect_remote),                                            \
         OP_PUSH_U64(error_code),                                               \
         OP_FUNC(hf_expect_conn_close_info))
+
+#define OP_EXPECT_TIMEOUT(name, timeout_secs) \
+    (OP_SELECT_SSL(0, name),                  \
+        OP_PUSH_U64(timeout_secs),            \
+        OP_FUNC(hf_expect_timeout))
 
 #define OP_WAIT_FOR_DATA(name) \
     (OP_SELECT_SSL(0, name),   \
