@@ -6,7 +6,22 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use strict;
+use warnings;
 
-use OpenSSL::Test::Simple;
+use OpenSSL::Test qw(:DEFAULT srctop_file);
+use OpenSSL::Test::Utils;
 
-simple_test("test_evp_xof", "evp_xof_test");
+BEGIN {
+    setup("test_evp_xof");
+}
+
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+plan tests => $no_fips ? 1 : 2;
+
+ok(run(test(["evp_xof_test"])), "running evp_xof_test");
+
+ok(run(test(["evp_xof_test", "fips", srctop_file("test", "fips-and-base.cnf")])),
+   "running evp_xof_test with the FIPS provider")
+    unless $no_fips;

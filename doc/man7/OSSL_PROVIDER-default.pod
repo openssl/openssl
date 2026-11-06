@@ -65,6 +65,10 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item CSHAKE-KECCAK, see L<EVP_MD-CSHAKE-KECCAK(7)>
 
+=item TurboSHAKE, see L<EVP_MD-TURBOSHAKE(7)>
+
+=item KangarooTwelve (KT), see L<EVP_MD-KANGAROOTWELVE(7)>
+
 =item BLAKE2, see L<EVP_MD-BLAKE2(7)>
 
 =item SM3, see L<EVP_MD-SM3(7)>
@@ -594,6 +598,9 @@ Support for CSHAKE-128 and CSHAKE-256 was added in OpenSSL 4.0.
 
 Support for B<MLKEM512X25519> and B<SecP256r1MLKEM512> was added in OpenSSL
 4.2.
+
+Support for TURBOSHAKE-128, TURBOSHAKE-256, KT-128, and KT-256 was added in
+OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
