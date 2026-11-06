@@ -94,7 +94,7 @@ int ossl_sframe_set_lock_range(SFRAME_SET *fs, const UINT_RANGE *range);
 
 /**
  * ossl_sframe_set_unlock_range() unlocks the stream chunks in the
- * first range previously locked by ossl_sframe_set_unlock_range().
+ * first range previously locked by ossl_sframe_set_lock_range().
  * Stream reassembly is free to reallocate those chunks again.
  * @param fs point to stream frame set with range collection
  * @returns void
