@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * PKCS7 signature verification now honours the RSASSA-PSS parameters in the
+   SignerInfo, so PSS signatures made with ordinary RSA keys verify, including
+   with `openssl ts -verify` and `openssl smime -verify`. For RSA-PSS keys,
+   SignerInfo parameters that do not match the signature are now rejected
+   instead of ignored.
+
+   *Timo Schusser*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build

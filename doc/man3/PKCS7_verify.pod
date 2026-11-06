@@ -34,6 +34,9 @@ Otherwise I<indata> should be NULL, and then the signed data must be in I<p7>.
 The content is written to the BIO I<out> unless it is NULL.
 I<flags> is an optional set of flags, which can be used to modify the operation.
 
+RSASSA-PSS signatures are verified with the parameters given in the SignerInfo
+signatureAlgorithm, for RSA and RSA-PSS signer keys.
+
 PKCS7_get0_signers() retrieves the signer certificates from I<p7>
 by matching the pairs of certificate issuer and serial number contained in
 the SignerInfos with available candidate signer certificates. It does

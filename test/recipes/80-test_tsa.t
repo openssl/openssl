@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,8 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file data_file/;
+use IO::File;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file data_file slurp_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_tsa");
@@ -85,7 +86,7 @@ sub verify_fail {
 
 # main functions
 
-plan tests => 27;
+plan tests => 28;
 
 note "setting up TSA test directory";
 indir "tsa" => sub
@@ -229,6 +230,39 @@ indir "tsa" => sub
      subtest 'verifying resp1 against wrong req3 should fail' => sub {
          verify_fail("req3.tsq", "resp1.tsr", "tsa_cert1.pem", "tsaca.pem")
      };
+    }
+
+    SKIP: {
+        skip "CMS is disabled", 1 if disabled("cms");
+        subtest 'verifying PSS tokens with the existing test TSA' => sub {
+            plan tests => 4;
+            ok(run(app(["openssl", "cms", "-verify", "-binary", "-noverify",
+                        "-inform", "DER", "-in", "resp1.tsr.token",
+                        "-out", "pss-tstinfo.der"])),
+               "extract local time stamp info");
+            ok(run(app(["openssl", "cms", "-sign", "-binary", "-nodetach",
+                        "-in", "pss-tstinfo.der", "-econtent_type",
+                        "id-smime-ct-TSTInfo", "-signer", "tsa_cert1.pem",
+                        "-inkey", "tsa_key1.pem", "-certfile", "tsaca.pem",
+                        "-md", "sha512", "-cades", "-nosmimecap",
+                        "-keyopt", "rsa_padding_mode:pss",
+                        "-keyopt", "rsa_pss_saltlen:64",
+                        "-keyopt", "rsa_mgf1_md:sha512",
+                        "-outform", "DER", "-out", "pss-token.der"])),
+               "sign local time stamp info using PSS");
+            ok(run(app([@VERIFY, "-token_in", "-in", "pss-token.der",
+                        "-queryfile", "req1.tsq", "-CAfile", "tsaca.pem"])),
+               "TS accepts local PSS token");
+            # The last byte of the DER is the last byte of the signature.
+            my $bad = slurp_file("pss-token.der", binary => 1);
+            substr($bad, -1, 1) =~ s{(.)}{chr(ord($1) ^ 1)}es;
+            my $fh = IO::File->new("pss-token-bad.der", ">:raw");
+            print $fh $bad;
+            $fh->close();
+            ok(!run(app([@VERIFY, "-token_in", "-in", "pss-token-bad.der",
+                         "-queryfile", "req1.tsq", "-CAfile", "tsaca.pem"])),
+               "TS rejects PSS token with corrupted signature byte");
+        };
     }
 
     # verifying response with two ESSCertIDs, referring to leaf cert

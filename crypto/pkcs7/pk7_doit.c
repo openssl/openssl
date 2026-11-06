@@ -16,6 +16,7 @@
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "crypto/rsa.h"
 #include "pk7_local.h"
 
 #include <crypto/asn1.h>
@@ -1041,13 +1042,30 @@ err:
     return ret;
 }
 
+/* RFC 4056 permits PSS signatures with rsaEncryption public keys. */
+static int pkcs7_rsa_pss_verify_setup(EVP_PKEY_CTX *pctx,
+    const X509_ALGOR *alg)
+{
+    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+
+    if (OBJ_obj2nid(alg->algorithm) != NID_rsassaPss
+        || (!EVP_PKEY_is_a(pkey, "RSA") && !EVP_PKEY_is_a(pkey, "RSA-PSS")))
+        return 1;
+    return ossl_rsa_pss_to_ctx(NULL, pctx, alg, NULL) > 0;
+}
+
 int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     const X509 *signer)
 {
     ASN1_OCTET_STRING *os;
     EVP_MD_CTX *mdc_tmp, *mdc;
     EVP_MD *md = NULL;
-    int ret = 0, i;
+    EVP_PKEY_CTX *pctx = NULL;
+    unsigned char md_dat[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    const unsigned char *sig_data;
+    size_t sig_len;
+    int ret = 0;
     int md_type;
     STACK_OF(X509_ATTRIBUTE) *sk;
     BIO *btmp;
@@ -1099,10 +1117,17 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     if (!EVP_MD_CTX_copy_ex(mdc_tmp, mdc))
         goto err;
 
+    os = si->enc_digest;
+    pkey = X509_get0_pubkey(signer);
+    if (pkey == NULL) {
+        ret = -1;
+        goto err;
+    }
+    sig_data = ASN1_STRING_get0_data(os);
+    sig_len = ASN1_STRING_get_length(os);
+
     sk = si->auth_attr;
     if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0)) {
-        unsigned char md_dat[EVP_MAX_MD_SIZE];
-        unsigned int md_len;
         int alen;
         const ASN1_OCTET_STRING *message_digest;
 
@@ -1122,9 +1147,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 
         md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_type), propq);
 
-        if (md == NULL || !EVP_VerifyInit_ex(mdc_tmp, md, NULL)) {
+        if (md == NULL || !EVP_DigestInit_ex(mdc_tmp, md, NULL))
             goto err;
-        }
 
         alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
             ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));
@@ -1133,31 +1157,28 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             ret = -1;
             goto err;
         }
-        if (!EVP_VerifyUpdate(mdc_tmp, abuf, alen))
+        if (!EVP_DigestUpdate(mdc_tmp, abuf, alen))
             goto err;
     }
-
-    os = si->enc_digest;
-    pkey = X509_get0_pubkey(signer);
-    if (pkey == NULL) {
-        ret = -1;
-        goto err;
-    }
-
-    const unsigned char *sig_data = ASN1_STRING_get0_data(os);
-    size_t sig_len = ASN1_STRING_get_length(os);
-    if (sig_len > INT_MAX) {
-        ret = -1;
-        goto err;
-    }
-    i = EVP_VerifyFinal_ex(mdc_tmp, sig_data, (int)sig_len, pkey, libctx, propq);
-    if (i <= 0) {
-        ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
-        ret = -1;
-        goto err;
-    }
+    if (!EVP_DigestFinal_ex(mdc_tmp, md_dat, &md_len))
+        goto sigerr;
+    /*
+     * The provider needs only the plain verify operation: the digest is
+     * computed here, also over the signed attributes.
+     */
+    pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+    if (pctx == NULL || EVP_PKEY_verify_init(pctx) <= 0
+        || EVP_PKEY_CTX_set_signature_md(pctx, EVP_MD_CTX_get0_md(mdc_tmp)) <= 0
+        || !pkcs7_rsa_pss_verify_setup(pctx, si->digest_enc_alg)
+        || EVP_PKEY_verify(pctx, sig_data, sig_len, md_dat, md_len) <= 0)
+        goto sigerr;
     ret = 1;
+    goto err;
+sigerr:
+    ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
+    ret = -1;
 err:
+    EVP_PKEY_CTX_free(pctx);
     OPENSSL_free(abuf);
     EVP_MD_CTX_free(mdc_tmp);
     EVP_MD_free(md);
