@@ -2317,11 +2317,25 @@ int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 {
     if (pkey != NULL) {
         if (evp_pkey_is_provided(pkey)) {
+            int ret;
+
             /* Without a set_params method the key cannot change */
             if (pkey->keymgmt->set_params == NULL)
                 return 1;
+
+            ret = evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+
+            /*
+             * Increment the dirty count after the key has changed, under
+             * the lock the export code uses.  An export that read the key
+             * before or during the change carries an older count, so it
+             * is never used as current.
+             */
+            if (!CRYPTO_THREAD_write_lock(pkey->lock))
+                return 0;
             pkey->dirty_cnt++;
-            return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+            CRYPTO_THREAD_unlock(pkey->lock);
+            return ret;
         }
 #ifndef FIPS_MODULE
         /*
