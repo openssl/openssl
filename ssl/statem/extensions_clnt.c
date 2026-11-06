@@ -2465,6 +2465,10 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         const unsigned char *ct = PACKET_data(&encoded_pt);
         size_t ctlen = PACKET_remaining(&encoded_pt);
 
+        if (!tls13_hybrid_ec_point_format_ok(group_id, ct, ctlen)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+            return 0;
+        }
         if (ssl_decapsulate(s, ckey, ct, ctlen, 1) == 0) {
             /* SSLfatal() already called */
             return 0;

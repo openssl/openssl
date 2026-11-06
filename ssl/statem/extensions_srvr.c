@@ -623,6 +623,12 @@ static int tls_accept_ksgroup(SSL_CONNECTION *s, uint16_t ksgroup, PACKET *encod
             SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
         return 0;
     }
+    if (!tls13_hybrid_ec_point_format_ok(ksgroup,
+            PACKET_data(encoded_pubkey),
+            PACKET_remaining(encoded_pubkey))) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+        return 0;
+    }
     if (tls13_set_encoded_pub_key(s->s3.peer_tmp,
             PACKET_data(encoded_pubkey),
             PACKET_remaining(encoded_pubkey))
