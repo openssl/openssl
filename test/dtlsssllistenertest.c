@@ -37,7 +37,6 @@
 #undef revents
 #undef events
 #endif
-
 static char *cert = NULL;
 static char *privkey = NULL;
 
