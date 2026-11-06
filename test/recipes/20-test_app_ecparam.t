@@ -12,7 +12,7 @@ use warnings;
 
 use File::Copy;
 use File::Compare qw/compare_text compare/;
-use OpenSSL::Test qw/:DEFAULT data_file srctop_file/;
+use OpenSSL::Test qw/:DEFAULT data_file srctop_file bldtop_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_app_ecparam");
@@ -307,7 +307,7 @@ subtest "Test -list_curves against the curve data file" => sub {
     # crypto/ec/ec_curves.conf; its keys are NID name suffixes, mapped
     # to display names through obj_mac.h.
     my %sn;
-    open(my $mh, '<', srctop_file('include', 'openssl', 'obj_mac.h'))
+    open(my $mh, '<', bldtop_file('include', 'openssl', 'obj_mac.h'))
         or die "Cannot open obj_mac.h: $!";
     while (<$mh>) {
         $sn{$1} = $2 if /^#define SN_(\w+)\s+"(.*)"$/;
