@@ -273,8 +273,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         vector_copy(y_ntt, &y);
         vector_ntt(y_ntt);
 
-        matrix_mult_vector(&a_ntt, y_ntt, &w);
-        vector_ntt_inverse(&w);
+        matrix_mult_vector_intt(&a_ntt, y_ntt, &w);
 
         vector_high_bits(&w, gamma2, &w1);
         ossl_ml_dsa_w1_encode(&w1, gamma2, w1_encoded, w1_encoded_len);

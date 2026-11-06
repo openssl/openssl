@@ -64,18 +64,40 @@ typedef int(ML_DSA_MATRIX_EXPAND_A_FN)(EVP_MD_CTX *g_ctx, const EVP_MD *md,
 typedef int(ML_DSA_VECTOR_EXPAND_S_FN)(EVP_MD_CTX *h_ctx, const EVP_MD *md,
     int eta, const uint8_t *seed, VECTOR *s1, VECTOR *s2);
 typedef void(ML_DSA_VECTOR_EXPAND_MASK_FN)(VECTOR *out,
-    const uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES], uint32_t kappa, uint32_t gamma1,
-    EVP_MD_CTX *h_ctx, const EVP_MD *md);
+    const uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES], uint32_t kappa,
+    uint32_t gamma1, EVP_MD_CTX *h_ctx, const EVP_MD *md);
+/*
+ * ML_DSA_MATRIX_MULT_INTT_FN: combined matrix-vector multiply followed by
+ * inverse NTT over each output polynomial.
+ *
+ * Computes out[i] = INTT(sum_j A[i,j] (*) s[j]) for each row i.
+ * The optimised vec128 implementation fuses the two operations to avoid a
+ * separate reduce_fully pass between the matrix multiply and the INTT.
+ */
+typedef void(ML_DSA_MATRIX_MULT_INTT_FN)(const MATRIX *a, const VECTOR *s,
+    VECTOR *out);
 
 typedef struct ossl_ml_dsa_sample_ops_st {
     ML_DSA_MATRIX_EXPAND_A_FN *matrix_expand_A;
     ML_DSA_VECTOR_EXPAND_S_FN *vector_expand_S;
     ML_DSA_VECTOR_EXPAND_MASK_FN *vector_expand_mask;
+    ML_DSA_MATRIX_MULT_INTT_FN *matrix_mult_vector_intt;
 } OSSL_ML_DSA_SAMPLE_OPS;
 
 const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void);
 void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,
     VECTOR *vk);
+
+/**
+ * @brief Combined matrix-vector multiplication and inverse NTT.
+ * Computes out[i] = INTT(sum_j A[i,j] (*) s[j]) for each row i.
+ *
+ * @param a A k * l matrix of polynomials in NTT form
+ * @param s A 1 * l vector of polynomials in NTT form
+ * @param out A 1 * k vector of polynomial results in standard form
+ */
+void ossl_ml_dsa_matrix_mult_vector_intt(const MATRIX *a, const VECTOR *s,
+    VECTOR *out);
 int ossl_ml_dsa_poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
     uint32_t gamma1,
     EVP_MD_CTX *h_ctx, const EVP_MD *md);
@@ -102,7 +124,37 @@ void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
 void ossl_ml_dsa_poly_ntt_scalar(POLY *p);
 void ossl_ml_dsa_poly_ntt_vec128(POLY *p);
 void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p);
-void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out);
+/**
+ * @brief Vectorized pointwise polynomial multiplication in NTT form.
+ *
+ * @param lhs Multiplicand polynomial
+ * @param rhs Multiplier polynomial
+ * @param out Result polynomial
+ */
+void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs,
+    POLY *out);
+
+/**
+ * @brief Vectorized matrix-vector multiplication in NTT form.
+ * Computes t[i] = sum_j A[i,j] (*) s[j] for each row i.
+ *
+ * @param a A k * l matrix of polynomials in NTT form
+ * @param s A 1 * l vector of polynomials in NTT form
+ * @param t A 1 * k vector of polynomial results in NTT form
+ */
+void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
+    VECTOR *t);
+
+/**
+ * @brief Vectorized combined matrix-vector multiplication and inverse NTT.
+ * Computes out[i] = INTT(sum_j A[i,j] (*) s[j]) for each row i.
+ *
+ * @param a A k * l matrix of polynomials in NTT form
+ * @param s A 1 * l vector of polynomials in NTT form
+ * @param out A 1 * k vector of polynomial results in standard form
+ */
+void ossl_ml_dsa_matrix_mult_vector_intt_vec128(const MATRIX *a,
+    const VECTOR *s, VECTOR *out);
 #endif
 
 void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r0);
