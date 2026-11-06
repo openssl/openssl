@@ -255,6 +255,32 @@ static void infopair_free(INFOPAIR *pair)
     OPENSSL_free(pair);
 }
 
+/*
+ * Deinitialise a provider: run its teardown callback and release the
+ * resources tied to being initialised.  This is normally done late, when
+ * the last provider reference is dropped (see ossl_provider_free), but is
+ * forced early when the provider store itself is destroyed.
+ */
+static void provider_deinit(OSSL_PROVIDER *prov)
+{
+    if (prov->flag_initialized) {
+        ossl_provider_teardown(prov);
+#ifndef OPENSSL_NO_ERR
+#ifndef FIPS_MODULE
+        if (prov->error_strings != NULL) {
+            ERR_unload_strings(prov->error_lib, prov->error_strings);
+            OPENSSL_free(prov->error_strings);
+            prov->error_strings = NULL;
+        }
+#endif
+#endif
+        OPENSSL_free(prov->operation_bits);
+        prov->operation_bits = NULL;
+        prov->operation_bits_sz = 0;
+        prov->flag_initialized = 0;
+    }
+}
+
 static INFOPAIR *infopair_copy(const INFOPAIR *src)
 {
     INFOPAIR *dest = OPENSSL_zalloc(sizeof(*dest));
@@ -289,11 +315,25 @@ void ossl_provider_store_free(void *vstore)
 {
     struct provider_store_st *store = vstore;
     size_t i;
+    int pi;
 
     if (store == NULL)
         return;
     store->freeing = 1;
     OPENSSL_free(store->default_path);
+    /*
+     * Force all initialised providers to tear down now, rather than
+     * late, when their last reference is dropped.  The late teardown
+     * typically happens while the method store is being emptied (the
+     * cached methods hold the last references), in cache iteration
+     * order; a provider teardown may, however, release resources such
+     * as a child library context whose contents (e.g. thread state
+     * DRBGs) use other cached methods, and those must still be intact
+     * at that point.  Cached method structures hold no resources in
+     * their provider, so tearing the providers down first is safe.
+     */
+    for (pi = 0; pi < sk_OSSL_PROVIDER_num(store->providers); pi++)
+        provider_deinit(sk_OSSL_PROVIDER_value(store->providers, pi));
     sk_OSSL_PROVIDER_pop_free(store->providers, provider_deactivate_free);
 #ifndef FIPS_MODULE
     sk_OSSL_PROVIDER_CHILD_CB_pop_free(store->child_cbs,
@@ -752,22 +792,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * provider's services.  Therefore, we deinit late.
          */
         if (ref == 0) {
-            if (prov->flag_initialized) {
-                ossl_provider_teardown(prov);
-#ifndef OPENSSL_NO_ERR
-#ifndef FIPS_MODULE
-                if (prov->error_strings != NULL) {
-                    ERR_unload_strings(prov->error_lib, prov->error_strings);
-                    OPENSSL_free(prov->error_strings);
-                    prov->error_strings = NULL;
-                }
-#endif
-#endif
-                OPENSSL_free(prov->operation_bits);
-                prov->operation_bits = NULL;
-                prov->operation_bits_sz = 0;
-                prov->flag_initialized = 0;
-            }
+            provider_deinit(prov);
 
 #ifndef FIPS_MODULE
             /*
