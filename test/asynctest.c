@@ -15,6 +15,10 @@
 #include <string.h>
 #include <openssl/async.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <crypto/aarch64_dit.h>
 
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;
@@ -460,6 +464,212 @@ static int test_ASYNC_set_mem_functions(void)
     return 1;
 }
 
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+typedef struct {
+    EVP_PKEY_CTX *ctx;
+    const char *name;
+    int paused;
+    int entry_dit;
+    int resume_dit;
+} DIT_JOB;
+
+static int test_ASYNC_DIT_key_generate(void *arg)
+{
+    DIT_JOB *job = *(DIT_JOB **)arg;
+    EVP_PKEY *pkey = NULL;
+
+    int result = EVP_PKEY_generate(job->ctx, &pkey);
+    EVP_PKEY_free(pkey);
+
+    return result;
+}
+
+static int test_ASYNC_DIT_keygen_callback(EVP_PKEY_CTX *ctx)
+{
+    DIT_JOB *job = EVP_PKEY_CTX_get_app_data(ctx);
+
+    if (!job->paused) {
+        job->paused = 1;
+        job->entry_dit = ossl_get_dit(1);
+
+        ASYNC_pause_job();
+
+        job->resume_dit = ossl_get_dit(1);
+    }
+    return 1;
+}
+
+static int test_ASYNC_DIT(int initial_dit, int lifo)
+{
+    int ret = 0;
+    int job_ret;
+
+    DIT_JOB job_A = { NULL, "A", 0, -1, -1 };
+    DIT_JOB *ptr_job_A = &job_A;
+    DIT_JOB job_B = { NULL, "B", 0, -1, -1 };
+    DIT_JOB *ptr_job_B = &job_B;
+
+    int dit_prev = ossl_get_dit(1);
+
+    /* Test that DIT is supported on this system. If its already turned on, then it must be
+     * supported, otherwise try to turn it on, and see if that works. */
+    if (dit_prev == 0) {
+        ossl_set_dit(1, 1);
+
+        if (!ossl_get_dit(1)) {
+            ossl_set_dit(dit_prev, 1);
+            fprintf(stderr,
+                "test_ASYNC_DIT() - skipped, DIT is not enabled on this CPU.\n");
+            return 1;
+        }
+    }
+
+    ASYNC_WAIT_CTX *wait_context_A = ASYNC_WAIT_CTX_new();
+    ASYNC_WAIT_CTX *wait_context_B = ASYNC_WAIT_CTX_new();
+
+    if (ASYNC_init_thread(2, 2)) {
+        ASYNC_JOB *async_job_A = NULL;
+        ASYNC_JOB *async_job_B = NULL;
+        int dit_after_pause = 0;
+        int dit_after_finish = 0;
+
+        ossl_set_dit(initial_dit, 1);
+
+        job_A.ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", "provider=default");
+        job_B.ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", "provider=default");
+
+        if (job_A.ctx == NULL || job_B.ctx == NULL || wait_context_A == NULL
+            || wait_context_B == NULL) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - failed to allocate contexts.\n");
+            goto err;
+        }
+
+        if (EVP_PKEY_keygen_init(job_A.ctx) == 0 || EVP_PKEY_keygen_init(job_B.ctx) == 0) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - failed to init keygen.\n");
+            goto err;
+        }
+
+        if (EVP_PKEY_CTX_set_rsa_keygen_bits(job_A.ctx, 1024) == 0
+            || EVP_PKEY_CTX_set_rsa_keygen_bits(job_B.ctx, 1024) == 0) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - failed to set key sizes.\n");
+            goto err;
+        }
+
+        EVP_PKEY_CTX_set_cb(job_A.ctx, test_ASYNC_DIT_keygen_callback);
+        EVP_PKEY_CTX_set_cb(job_B.ctx, test_ASYNC_DIT_keygen_callback);
+        EVP_PKEY_CTX_set_app_data(job_A.ctx, &job_A);
+        EVP_PKEY_CTX_set_app_data(job_B.ctx, &job_B);
+
+        if (ASYNC_start_job(
+                &async_job_A, wait_context_A, &job_ret, test_ASYNC_DIT_key_generate, &ptr_job_A,
+                sizeof(ptr_job_A))
+            != ASYNC_PAUSE) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - failed to start / pause job_A.\n");
+            goto err;
+        }
+
+        if (ASYNC_start_job(
+                &async_job_B, wait_context_B, &job_ret, test_ASYNC_DIT_key_generate, &ptr_job_B,
+                sizeof(ptr_job_B))
+            != ASYNC_PAUSE) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - failed to start / pause job_B.\n");
+            goto err;
+        }
+
+        dit_after_pause = ossl_get_dit(1);
+
+        if (lifo) {
+            if (ASYNC_start_job(
+                    &async_job_B, wait_context_B, &job_ret, test_ASYNC_DIT_key_generate,
+                    &ptr_job_B, sizeof(ptr_job_B))
+                != ASYNC_FINISH) {
+                fprintf(stderr,
+                    "test_ASYNC_DIT() - failed to finish job_B.\n");
+                goto err;
+            }
+
+            if (ASYNC_start_job(
+                    &async_job_A, wait_context_A, &job_ret, test_ASYNC_DIT_key_generate,
+                    &ptr_job_A, sizeof(ptr_job_A))
+                != ASYNC_FINISH) {
+                fprintf(stderr,
+                    "test_ASYNC_DIT() - failed to finish job_A.\n");
+                goto err;
+            }
+        } else {
+            if (ASYNC_start_job(
+                    &async_job_A, wait_context_A, &job_ret, test_ASYNC_DIT_key_generate,
+                    &ptr_job_A, sizeof(ptr_job_A))
+                != ASYNC_FINISH) {
+                fprintf(stderr,
+                    "test_ASYNC_DIT() - failed to finish job_A.\n");
+                goto err;
+            }
+
+            if (ASYNC_start_job(
+                    &async_job_B, wait_context_B, &job_ret, test_ASYNC_DIT_key_generate,
+                    &ptr_job_B, sizeof(ptr_job_B))
+                != ASYNC_FINISH) {
+                fprintf(stderr,
+                    "test_ASYNC_DIT() - failed to finish job_B.\n");
+                goto err;
+            }
+        }
+
+        dit_after_finish = ossl_get_dit(1);
+
+        /* Check that main thread DIT has not changed. */
+        if (initial_dit != dit_after_pause) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - Main thread DIT was changed by async start\n");
+            goto err;
+        }
+
+        if (initial_dit != dit_after_finish) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - Main thread DIT was changed by async finish\n");
+            goto err;
+        }
+
+        /* Check that DIT state remained constant for both jobs. */
+        if (job_A.entry_dit != job_A.resume_dit) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - Job A changed DIT state after resume\n");
+            goto err;
+        }
+
+        if (job_B.entry_dit != job_B.resume_dit) {
+            fprintf(stderr,
+                "test_ASYNC_DIT() - Job B changed DIT state after resume\n");
+            goto err;
+        }
+
+    } else {
+        fprintf(stderr,
+            "test_ASYNC_DIT() - failed to initialise threads\n");
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    EVP_PKEY_CTX_free(job_A.ctx);
+    EVP_PKEY_CTX_free(job_B.ctx);
+    ASYNC_WAIT_CTX_free(wait_context_A);
+    ASYNC_WAIT_CTX_free(wait_context_B);
+    ASYNC_cleanup_thread();
+
+    ossl_set_dit(dit_prev, 1);
+
+    return ret;
+}
+#endif // defined(__aarch64__) && !defined(OSSL_NO_DIT)
+
 int main(int argc, char **argv)
 {
     if (!ASYNC_is_capable()) {
@@ -473,7 +683,14 @@ int main(int argc, char **argv)
             || !test_ASYNC_WAIT_CTX_get_all_fds()
             || !test_ASYNC_block_pause()
             || !test_ASYNC_start_job_ex()
-            || !test_ASYNC_set_mem_functions()) {
+            || !test_ASYNC_set_mem_functions()
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+            || !test_ASYNC_DIT(0, 0)
+            || !test_ASYNC_DIT(1, 0)
+            || !test_ASYNC_DIT(0, 1)
+            || !test_ASYNC_DIT(1, 1)
+#endif // defined(__aarch64__) && !defined(OSSL_NO_DIT)
+        ) {
             return 1;
         }
     }

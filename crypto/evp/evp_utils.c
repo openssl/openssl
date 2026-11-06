@@ -15,6 +15,7 @@
 #include <openssl/asn1.h> /* evp_local.h needs it */
 #include <openssl/safestack.h> /* evp_local.h needs it */
 #include "crypto/evp.h" /* evp_local.h needs it */
+#include "crypto/aarch64_dit.h"
 #include "evp_local.h"
 
 /*
@@ -70,10 +71,27 @@ static void seterr(void)
     ERR_raise(ERR_LIB_EVP, EVP_R_CANNOT_SET_PARAMETERS);
 }
 
-PARAM_FUNCTIONS(EVP_CIPHER,
-    evp_do_ciph_getparams, get_params,
-    evp_do_ciph_ctx_getparams, get_ctx_params,
-    evp_do_ciph_ctx_setparams, set_ctx_params)
+PARAM_FUNC(evp_do_ciph_getparams, get_params, EVP_CIPHER, geterr)
+
+int evp_do_ciph_ctx_getparams(const EVP_CIPHER *ciph, void *algctx,
+    OSSL_PARAM params[])
+{
+    PARAM_CHECK(ciph, get_ctx_params, geterr)
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
+    return ciph->get_ctx_params(algctx, params);
+}
+
+int evp_do_ciph_ctx_setparams(const EVP_CIPHER *ciph, void *algctx,
+    OSSL_PARAM params[])
+{
+    PARAM_CHECK(ciph, set_ctx_params, seterr)
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
+    return ciph->set_ctx_params(algctx, params);
+}
 
 PARAM_FUNCTIONS(EVP_MD,
     evp_do_md_getparams, get_params,
