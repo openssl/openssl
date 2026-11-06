@@ -305,8 +305,12 @@ static int SNMPKDF(const EVP_MD *evp_md,
     }
 
     mdsize = EVP_MD_get_size(evp_md);
-    if (mdsize <= 0 || mdsize > keylen)
+    if (mdsize <= 0)
         goto err;
+    if (mdsize != keylen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_OUTPUT_BUFFER_SIZE);
+        goto err;
+    }
 
     if (!EVP_DigestInit_ex(md, evp_md, NULL))
         goto err;
