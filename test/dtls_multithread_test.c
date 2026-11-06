@@ -25,6 +25,10 @@ static char *privkey = NULL;
 #define POLL_TIMEOUT_SEC 5
 #define MAX_POLL_RETRIES 50
 
+#if defined(_AIX) && !defined(__64BIT__) 
+#undef revents
+#undef events
+#endif
 /*
  * Per-thread state for server connection handlers
  */
