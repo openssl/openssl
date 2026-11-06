@@ -98,6 +98,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
 {
     struct evp_keymgmt_util_try_import_data_st import_data;
     OP_CACHE_ELEM *op;
+    size_t gen;
 
     /* Export to where? */
     if (keymgmt == NULL)
@@ -119,6 +120,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             && pk->keymgmt->prov == keymgmt->prov))
         return pk->keydata;
 
+retry:
     if (!CRYPTO_THREAD_read_lock(pk->lock))
         return NULL;
     /*
@@ -135,6 +137,11 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         CRYPTO_THREAD_unlock(pk->lock);
         return ret;
     }
+    /*
+     * Note the dirty count before reading the "origin".  The new entry is
+     * only cached if the count is the same when the export is done.
+     */
+    gen = pk->dirty_cnt;
     CRYPTO_THREAD_unlock(pk->lock);
 
     /* If the "origin" |keymgmt| doesn't support exporting, give up */
@@ -186,6 +193,16 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
 
         return ret;
+    }
+
+    /*
+     * The "origin" changed while we were exporting, so the export may
+     * not match the current key.  Discard it and export again.
+     */
+    if (gen != pk->dirty_cnt) {
+        CRYPTO_THREAD_unlock(pk->lock);
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+        goto retry;
     }
 
     /* Add the new export to the operation cache */
