@@ -859,6 +859,88 @@ err:
 }
 
 /*
+ * After a completed decrypt, a further Update on the same context must be
+ * rejected, and the Final that follows must fail as well instead of reporting
+ * the earlier success.
+ *
+ * How a cipher gets there differs: GCM, OCB and ASCON mark the context
+ * finished, while SIV does its single crypto operation inside the payload
+ * Update and lets any later failed operation overwrite the stored result.
+ *
+ * CCM, GCM-SIV and ChaCha20-Poly1305 are skipped, as in
+ * test_evp_aead_enc_retval(): what Final should do after the rejected Update
+ * is not settled for them yet.
+ */
+static int test_evp_aead_dec_retval(int idx)
+{
+    static const unsigned char in[] = "input";
+
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *enc_ctx = NULL;
+    EVP_CIPHER_CTX *dec_ctx = NULL;
+    OSSL_PARAM tagparams[2];
+
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char ct[sizeof(in) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    unsigned char out[sizeof(in) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+
+    int i = 0, len = 0, ret = 0;
+
+    if (info->mode == EVP_CIPH_CCM_MODE
+        || info->mode == EVP_CIPH_GCM_SIV_MODE
+        || EVP_CIPHER_is_a(info->ciph, "ChaCha20-Poly1305"))
+        return TEST_skip("Cipher %s skipped, Final after a rejected Update "
+                         "is not settled for it",
+            info->name);
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, info->taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+
+    /* encrypt, to get a valid ciphertext and tag */
+    if (!TEST_ptr(enc_ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(enc_ctx, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_true(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(enc_ctx, tagparams))) {
+        TEST_info("%s: encrypt", info->name);
+        goto err;
+    }
+
+    /* decrypt on a separate context */
+    if (!TEST_ptr(dec_ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(dec_ctx, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_params(dec_ctx, tagparams))
+        || !TEST_true(EVP_DecryptUpdate(dec_ctx, out, &len, ct, sizeof(in)))
+        || !TEST_true(EVP_DecryptFinal_ex(dec_ctx, out + len, &len))
+        || !TEST_mem_eq(out, sizeof(in), in, sizeof(in))) {
+        TEST_info("%s: decrypt", info->name);
+        goto err;
+    }
+
+    /* Decryption is fine, provoke error by repeating it on the same context */
+    if (!TEST_false(EVP_DecryptUpdate(dec_ctx, out, &len, ct, sizeof(in)))
+        || !TEST_false(EVP_DecryptFinal_ex(dec_ctx, out + len, &len))) {
+        TEST_info("%s: decrypt Update, Final after Final", info->name);
+        goto err;
+    }
+
+    ret = 1;
+err:
+    ERR_clear_error();
+    EVP_CIPHER_CTX_free(dec_ctx);
+    EVP_CIPHER_CTX_free(enc_ctx);
+    return ret;
+}
+
+/*
  * An update with no input and a nonzero length must fail, except for the
  * CCM message length, which is passed with no input and no output. This is
  * checked for both encryption and decryption.
@@ -1152,6 +1234,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_get_tag_pairwise, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_final_no_tag, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_enc_retval, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_aead_dec_retval, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_update_null_input, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     return 1;
