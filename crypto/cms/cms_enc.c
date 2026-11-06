@@ -117,7 +117,12 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             }
             piv = aparams.iv;
 
-            if (ec->taglen < 4 || ec->taglen > 16
+            /*
+             * RFC 5084 section 3.2 only permits AES-GCM ICVlen values of
+             * 12 to 16 octets. Shorter tags weaken the integrity check, so
+             * reject them rather than passing them on to the cipher.
+             */
+            if (ec->taglen < 12 || ec->taglen > 16
                 || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)ec->taglen, ec->tag) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_SET_TAG_ERROR);
                 goto err;
