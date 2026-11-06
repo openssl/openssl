@@ -628,6 +628,9 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     int ret = 0;
     time_t reseed_time_interval = drbg->reseed_time_interval;
     time_t now = 0;
+    /* The caller's additional input, for a second reseed after generating. */
+    const unsigned char *adin_in = adin;
+    size_t adinlen_in = adinlen;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -671,6 +674,8 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         drbg->fork_id = fork_id;
         reseed_required = 1;
     }
+    if (ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_epoch))
+        reseed_required = 1;
 
     if (drbg->reseed_interval > 0) {
         if (drbg->generate_counter >= drbg->reseed_interval)
@@ -699,6 +704,30 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         drbg->state = EVP_RAND_STATE_ERROR;
         ERR_raise(ERR_LIB_PROV, PROV_R_GENERATE_ERROR);
         goto err;
+    }
+
+    /*
+     * If the guest was snapshotted between the check above and here, every
+     * copy restored from that snapshot holds the same output. Look again, as
+     * the vDSO getrandom() looks at its generation after generating, and if
+     * the generation moved, reseed and generate the output once more, as the
+     * caller asked for it: with prediction resistance if requested and with
+     * the caller's additional input. If that fails, the output must not be
+     * used, so it is cleared.
+     */
+    if (ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_epoch)) {
+        if (!ossl_prov_drbg_reseed_unlocked(drbg, prediction_resistance, NULL,
+                0, adin_in, adinlen_in)) {
+            OPENSSL_cleanse(out, outlen);
+            ERR_raise(ERR_LIB_PROV, PROV_R_RESEED_ERROR);
+            goto err;
+        }
+        if (!drbg->generate(drbg, out, outlen, NULL, 0)) {
+            OPENSSL_cleanse(out, outlen);
+            drbg->state = EVP_RAND_STATE_ERROR;
+            ERR_raise(ERR_LIB_PROV, PROV_R_GENERATE_ERROR);
+            goto err;
+        }
     }
 
     drbg->generate_counter++;
@@ -812,6 +841,8 @@ PROV_DRBG *ossl_rand_drbg_new(void *provctx, void *parent, const OSSL_DISPATCH *
     drbg->reseed = reseed;
     drbg->generate = generate;
     drbg->fork_id = openssl_get_fork_id();
+    drbg->vmclock_page = ossl_prov_vmclock_page(ossl_prov_ctx_get0_libctx(provctx));
+    (void)ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_epoch);
 
     /* Extract parent's functions */
     drbg->parent = parent;
