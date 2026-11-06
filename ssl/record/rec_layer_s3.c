@@ -1157,9 +1157,17 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
 {
     SSL_CONNECTION *s = cbarg;
     DGRAM_URXE *urxe;
+    unsigned long error;
 
     if (s == NULL || s->d1 == NULL || s->d1->rx == NULL)
         return 0;
+
+    /* A shared transport failure also applies to already-queued datagrams. */
+    error = ossl_dgram_demux_get_error(s->d1->rx->demux);
+    if (error != 0) {
+        ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
+        return -1;
+    }
 
     urxe = ossl_dtls_read_datagram(s->d1->rx);
 
@@ -1172,7 +1180,12 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
      * callback can acquire the mutex when needed.
      */
     if (urxe == NULL && s->d1->listener != NULL) {
-        ossl_dgram_demux_pump(s->d1->rx->demux);
+        if (ossl_dgram_demux_pump(s->d1->rx->demux)
+            == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL) {
+            ossl_dtls_listener_set_fatal((DTLS_LISTENER *)s->d1->listener);
+            return -1;
+        }
+
         urxe = ossl_dtls_read_datagram(s->d1->rx);
     }
 
@@ -1183,9 +1196,20 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
      * BIO.
      */
     if (urxe == NULL && s->d1->listener != NULL
-        && ossl_dtls_blocking(SSL_CONNECTION_GET_SSL(s))
-        && ossl_dtls_conn_wait_for_datagram(SSL_CONNECTION_GET_SSL(s)))
-        urxe = ossl_dtls_read_datagram(s->d1->rx);
+        && ossl_dtls_blocking(SSL_CONNECTION_GET_SSL(s))) {
+        int ready = ossl_dtls_conn_wait_for_datagram(SSL_CONNECTION_GET_SSL(s));
+
+        /* The wait may itself have encountered the shared transport failure. */
+        error = ossl_dgram_demux_get_error(s->d1->rx->demux);
+        if (error != 0) {
+            if (ERR_peek_last_error() != error)
+                ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
+            return -1;
+        }
+
+        if (ready)
+            urxe = ossl_dtls_read_datagram(s->d1->rx);
+    }
 
     if (urxe == NULL)
         return 0;

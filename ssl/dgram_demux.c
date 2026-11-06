@@ -63,11 +63,18 @@ struct dgram_demux_st {
     /* Whether internal locking is required */
     char require_mutex;
 
+    /* Permanent failure retention, enabled for shared DTLS listener transports. */
+    char retain_errors;
+    unsigned long permanent_error;
+
+    /* Whether errors concerning a single peer are treated as transient. */
+    char peer_errors_transient;
+
     /* Maximum URXEs cached on urx_free; 0 means unbounded. */
     size_t max_free_urxe;
 
     /*
-     * Mutex protecting the URXE lists (urx_free and urx_pending).
+     * Mutex protecting receiving, the URXE lists and retained error state.
      */
     CRYPTO_MUTEX *mutex;
 };
@@ -297,6 +304,36 @@ static int dgram_demux_ensure_free_urxe(DGRAM_DEMUX *demux, size_t min_num_free)
 }
 
 /*
+ * Some errors reported by a datagram socket concern a single peer, not the
+ * socket: an ICMP error answering an earlier datagram we sent to that peer is
+ * queued on the shared socket and surfaced by a later receive. The socket
+ * remains usable, and the datagrams of every other peer are still waiting on
+ * it, so such an error must not be treated as a failure of the transport.
+ */
+static int dgram_demux_err_is_peer_scoped(unsigned long errcode)
+{
+    int err;
+
+    if (!ERR_SYSTEM_ERROR(errcode))
+        return 0;
+
+    err = ERR_GET_REASON(errcode);
+#if defined(OPENSSL_SYS_WINDOWS)
+    return err == WSAECONNRESET
+        || err == WSAENETRESET
+        || err == WSAECONNREFUSED
+        || err == WSAEHOSTUNREACH
+        || err == WSAENETUNREACH;
+#else
+    return err == ECONNREFUSED
+        || err == ECONNRESET
+        || err == EHOSTUNREACH
+        || err == ENETUNREACH
+        || err == EMSGSIZE;
+#endif
+}
+
+/*
  * Receive datagrams from network, placing them into URXEs.
  *
  * Returns DGRAM_DEMUX_PUMP_RES_* value.
@@ -356,7 +393,9 @@ static int dgram_demux_recv(DGRAM_DEMUX *demux)
 
     ERR_set_mark();
     if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd)) {
-        if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
+        if (BIO_err_is_non_fatal(ERR_peek_last_error())
+            || (demux->peer_errors_transient
+                && dgram_demux_err_is_peer_scoped(ERR_peek_last_error()))) {
             /* Transient error, clear the error and stop. */
             ERR_pop_to_mark();
             return DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL;
@@ -433,11 +472,46 @@ static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
     DGRAM_URXE *e;
     int ret;
 
-    while ((e = ossl_list_urxe_head(&demux->urx_pending)) != NULL)
+    while (demux->permanent_error == 0
+        && (e = ossl_list_urxe_head(&demux->urx_pending)) != NULL)
         if ((ret = dgram_demux_process_pending_urxe(demux, e)) <= 0)
             return ret;
 
+    if (demux->permanent_error != 0)
+        return 0;
+
     return 1;
+}
+
+void ossl_dgram_demux_set_retain_errors(DGRAM_DEMUX *demux)
+{
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    demux->retain_errors = 1;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+}
+
+void ossl_dgram_demux_set_peer_errors_transient(DGRAM_DEMUX *demux)
+{
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    demux->peer_errors_transient = 1;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+}
+
+unsigned long ossl_dgram_demux_get_error(DGRAM_DEMUX *demux)
+{
+    unsigned long error;
+
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    error = demux->permanent_error;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+
+    return error;
 }
 
 /*
@@ -447,9 +521,15 @@ static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
 int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
 {
     int ret;
+    unsigned long error = 0;
 
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
+
+    if (demux->permanent_error != 0) {
+        ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+        goto end;
+    }
 
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
         if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
@@ -476,8 +556,22 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
     ret = DGRAM_DEMUX_PUMP_RES_OK;
 
 end:
+    if (ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL && demux->retain_errors) {
+        if (demux->permanent_error == 0) {
+            demux->permanent_error = ERR_peek_last_error();
+            if (demux->permanent_error == 0)
+                demux->permanent_error = ERR_PACK(ERR_LIB_BIO, 0, ERR_R_INTERNAL_ERROR);
+        }
+        error = demux->permanent_error;
+    }
+
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
+
+    /* Replay the shared diagnostic on the calling thread's error queue. */
+    if (error != 0 && ERR_peek_last_error() != error)
+        ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
+
     return ret;
 }
 

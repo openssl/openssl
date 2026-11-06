@@ -2435,8 +2435,7 @@ typedef struct dtls_listener_st {
 
     /* Notifier has been signalled */
     int signalled_notifier;
-
-    /* Advanced when the last waiter clears the notifier. */
+    /* Completed notifier cycles, protected by the listener mutex. */
     uint64_t notify_generation;
 
     /*
@@ -3154,6 +3153,18 @@ void dtls1_hm_fragment_free(hm_fragment *frag);
 void dtls1_sent_msg_free(dtls_sent_msg *msg);
 __owur int dtls1_query_mtu(SSL_CONNECTION *s);
 
+/**
+ * @brief Make the listener's retained failure fatal for a connection.
+ *
+ * If the listener the connection belongs to has retained a fatal receive error,
+ * raises that diagnostic on the calling thread's error queue and puts the
+ * connection into its error state.
+ *
+ * @param s the connection
+ * @returns the retained error, or 0 if the transport has not failed
+ */
+unsigned long ossl_dtls_conn_apply_shared_failure(SSL_CONNECTION *s);
+
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags);
 void ossl_dtls_listener_free(SSL *ssl);
@@ -3179,8 +3190,27 @@ int ossl_dtls_listener_set_override_now_cb(SSL *s,
 
 int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *value);
 int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t value);
+/**
+ * @brief Record that the listener's network receive has failed permanently.
+ *
+ * Wakes any thread blocked on the listener so that it observes the failure.
+ *
+ * @param dl the listener
+ */
+void ossl_dtls_listener_set_fatal(DTLS_LISTENER *dl);
 
 /* DTLS poll event functions - used by SSL_poll() */
+
+/**
+ * @brief Report whether the listener has a retained fatal failure.
+ *
+ * Reads the shared failure state without changing a connection or its error
+ * queue.
+ *
+ * @param dl the listener
+ * @returns 1 if the listener has failed, 0 otherwise
+ */
+int ossl_dtls_listener_has_failed(DTLS_LISTENER *dl);
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
@@ -3189,7 +3219,19 @@ void ossl_dtls_listener_enter_blocking_section(SSL *s);
 void ossl_dtls_listener_leave_blocking_section(SSL *s);
 /* Deregister without waiting, then wait only for the recorded signal cycle. */
 int ossl_dtls_listener_deregister_blocking_section(SSL *s, uint64_t *generation);
-void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation);
+/**
+ * @brief Wait for a recorded notification cycle to finish.
+ *
+ * All registrations owned by the caller must be released before this wait. The
+ * last registration may belong to a caller further up this thread's stack, so
+ * the wait gives up at the deadline.
+ *
+ * @param s the listener
+ * @param generation the generation recorded when the caller deregistered
+ * @param deadline when to stop waiting, or ossl_time_infinite() for no limit
+ */
+void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation,
+    OSSL_TIME deadline);
 int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
     int bound_by_event_timeout);
 int ossl_dtls_blocking(const SSL *s);
