@@ -27,6 +27,7 @@ Certificate enrollment options:
 [B<-newkey> I<filename>|I<uri>]
 [B<-newkeypass> I<arg>]
 [B<-centralkeygen>
+[B<-require_enveloped_data>]
 [B<-newkeyout> I<filename>]
 [B<-subject> I<name>]
 [B<-days> I<number>]
@@ -319,6 +320,13 @@ L<openssl-passphrase-options(1)>.
 
 Request central key generation for certificate enrollment.
 This applies to B<-cmd> I<ir|cr|kur|p10cr>.
+
+=item B<-require_enveloped_data>
+
+Require centrally generated private keys to be returned using EnvelopedData,
+rejecting the deprecated EncryptedValue alternative. This enables clients to
+enforce the authenticated key delivery required by RFC 9483 section 4.1.6.
+By default, both encodings are accepted for backward compatibility.
 
 =item B<-newkeyout> I<filename>
 

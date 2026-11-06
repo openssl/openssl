@@ -48,4 +48,6 @@ struct ossl_crmf_attributetypeandvalue_st {
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 
+int ossl_crmf_encryptedkey_is_enveloped_data(const OSSL_CRMF_ENCRYPTEDKEY *key);
+
 #endif /* OSSL_CRYPTO_CRMF_H */

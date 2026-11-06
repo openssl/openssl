@@ -241,7 +241,7 @@ jobs:
         path: artifacts.tar.gz
 
   freebsd-x86_64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
       with:
@@ -251,7 +251,7 @@ jobs:
       with:
         operating_system: freebsd
         version: "14.4"
-        shutdown_vm: false
+        shell: cpa.sh {0}
         run: |
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
@@ -260,20 +260,21 @@ jobs:
       with:
         operating_system: freebsd
         version: "14.4"
-        shutdown_vm: false
+        shell: cpa.sh {0}
         run: ./configdata.pm --dump
     - name: make
       uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
-        shutdown_vm: false
+        shell: cpa.sh {0}
         run: make -j4
     - name: make test
       uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
+        shell: cpa.sh {0}
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
@@ -711,7 +712,7 @@ jobs:
         ./util/opensslwrap.sh version -c
 
   external-tests-pyca:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         PYTHON:
@@ -779,8 +780,6 @@ jobs:
       run: make -s -j4
     - name: Clone and Build NSS
       run: |
-        mkdir nss
-        cd nss
         # A failed clone leaves a partial directory behind; remove it before each attempt.
         "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nss && git clone --depth 1 --branch NSS_3_112_3_RTM https://github.com/nss-dev/nss.git'
         "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nspr && hg clone https://hg.mozilla.org/projects/nspr -r NSPR_4_36_BRANCH'

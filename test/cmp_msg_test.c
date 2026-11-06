@@ -416,6 +416,39 @@ static int test_cmp_create_certrep(void)
     return result;
 }
 
+static int test_cmp_reject_encryptedvalue(void)
+{
+    OSSL_CMP_CTX *ctx = NULL;
+    OSSL_CMP_CERTRESPONSE *resp = NULL;
+    X509 *result = NULL;
+    int res = 0;
+
+    if (!TEST_ptr(ctx = OSSL_CMP_CTX_new(libctx, NULL))
+        || !TEST_ptr(resp = OSSL_CMP_CERTRESPONSE_new())
+        || !TEST_ptr(resp->certifiedKeyPair = OSSL_CMP_CERTIFIEDKEYPAIR_new())
+        || !TEST_ptr(resp->certifiedKeyPair->privateKey =
+            OSSL_CRMF_ENCRYPTEDKEY_new())
+        || !TEST_true(OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_POPO_METHOD,
+            OSSL_CRMF_POPO_NONE))
+        || !TEST_true(OSSL_CMP_CTX_set_option(ctx,
+            OSSL_CMP_OPT_REQUIRE_ENVELOPED_DATA, 1)))
+        goto end;
+
+    result = ossl_cmp_certresponse_get1_cert(ctx, resp);
+    if (!TEST_ptr_null(result)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            CMP_R_ENVELOPED_DATA_REQUIRED))
+        goto end;
+    res = 1;
+
+end:
+    X509_free(result);
+    OSSL_CMP_CERTRESPONSE_free(resp);
+    OSSL_CMP_CTX_free(ctx);
+    ERR_clear_error();
+    return res;
+}
+
 static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_PKISI *si = OSSL_CMP_STATUSINFO_new(33, 44, "a text");
@@ -581,6 +614,7 @@ int setup_tests(void)
     ADD_TEST(test_cmp_create_rp);
     ADD_TEST(test_cmp_create_genm);
     ADD_TEST(test_cmp_create_certrep);
+    ADD_TEST(test_cmp_reject_encryptedvalue);
     ADD_TEST(test_cmp_create_pollrep);
     ADD_ALL_TESTS_NOSUBTEST(test_cmp_pkimessage_create,
         OSSL_CMP_PKIBODY_POLLREP + 1);

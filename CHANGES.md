@@ -33,6 +33,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added an opt-in CMP client option to require `EnvelopedData` when receiving
+   centrally generated private keys. This allows clients to reject the
+   deprecated `EncryptedValue` alternative and enforce authenticated key
+   delivery as required by the Lightweight CMP Profile (RFC 9483).
+
+   *quickroom*
+   
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
