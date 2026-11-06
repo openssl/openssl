@@ -11,11 +11,11 @@
 #include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -163,8 +163,8 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
         return 0;
 
     hlen = (int)gmac_size();
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-        out, (size_t)hlen);
+    OSSL_PARAM_fast_octet_string(&params[0], OSSL_CIPHER_PARAM_AEAD_TAG,
+        OSSL_CIPHER_PARAM_AEAD_TAG_HASH, out, (size_t)hlen);
     if (!EVP_CIPHER_CTX_get_params(macctx->ctx, params))
         return 0;
 

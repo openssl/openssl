@@ -11,6 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
+#include "internal/params.h"
 #include "internal/ssl3_cbc.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
@@ -408,13 +409,13 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
         /* Now get a pointer to the MAC (if applicable) */
         if (macs != NULL) {
-            OSSL_PARAM params[2], *p = params;
+            OSSL_PARAM params[2];
 
             /* Get the MAC */
-            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
-                (void **)&macs[0].mac,
+            OSSL_PARAM_fast_octet_ptr(&params[0], OSSL_CIPHER_PARAM_TLS_MAC,
+                OSSL_CIPHER_PARAM_TLS_MAC_HASH, (void **)&macs[0].mac,
                 macsize);
-            *p = OSSL_PARAM_construct_end();
+            OSSL_PARAM_fast_end(&params[1]);
 
             if (!EVP_CIPHER_CTX_get_params(ds, params)) {
                 /* Shouldn't normally happen */

@@ -80,7 +80,7 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
 
 int OSSL_PARAM_modified(const OSSL_PARAM *p)
 {
-    return p != NULL && p->return_size != OSSL_PARAM_UNMODIFIED;
+    return p != NULL && (p->return_size & OSSL_PARAM_UNMODIFIED_HASHED) != OSSL_PARAM_UNMODIFIED_HASHED;
 }
 
 void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p)

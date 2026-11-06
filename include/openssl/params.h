@@ -20,6 +20,7 @@ extern "C" {
 #endif
 
 #define OSSL_PARAM_UNMODIFIED ((size_t)-1)
+#define OSSL_PARAM_UNMODIFIED_HASHED 0xffffffff00000000ULL
 
 #define OSSL_PARAM_END \
     { NULL, 0, NULL, 0, 0 }

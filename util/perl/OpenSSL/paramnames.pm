@@ -684,20 +684,62 @@ sub output_endifdef {
     }
 }
 
+sub mycrc32 {
+ my $input = shift;
+
+ my $init_value = 0;
+ my $polynomial = 0xedb88320;
+
+ my @lookup_table;
+
+ for (my $i=0; $i<256; $i++) {
+   my $x = $i;
+   for (my $j=0; $j<8; $j++) {
+     if ($x & 1) {
+       $x = ($x >> 1) ^ $polynomial;
+     } else {
+       $x = $x >> 1;
+     }
+   }
+   push @lookup_table, $x;
+ }
+
+ my $crc = $init_value ^ 0xffffffff;
+
+ foreach my $x (unpack ('C*', $input)) {
+   $crc = (($crc >> 8) & 0xffffff) ^ $lookup_table[ ($crc ^ $x) & 0xff ];
+ }
+
+ $crc = $crc ^ 0xffffffff;
+
+ return $crc;
+}
+
 # Generate string based macros for public consumption
 sub generate_public_macros {
     my @macros = ();
+    my %hashstack = ();
 
     foreach my $name (keys %params) {
         my $val = $params{$name};
+        my $valhash = mycrc32($val);
         my $def = '# define ' . $name . ' ';
+
+        if (exists $hashstack{$val}) {
+            die("conflicting hash values for $name\n") if $valhash != $hashstack{$val};
+        }
+        die("Hash evaluates to a reserved value\n") if $valhash == 0xffffffff;
+
+        $hashstack{$val} = $valhash;
 
         if (substr($val, 0, 1) eq '*') {
             $def .= substr($val, 1);
         } else {
             $def .= '"' . $val . '"';
         }
-        push(@macros, $def)
+        push(@macros, $def);
+        $def = '# define ' . $name . '_HASH' . ' ' . $valhash;
+        push(@macros, $def);
     }
     return join("\n", sort @macros);
 }
@@ -738,6 +780,35 @@ sub trie_matched {
     printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
   }
+}
+
+sub generate_keyhash_from_trie {
+    my $with_count = shift;
+    my $n = shift;
+    my $trieref = shift;
+    my $identmap = shift;
+    my $concat_num = shift;
+    my $process_dup = shift;
+    my $ifdefs = shift;
+    my $idt = "    ";
+    my $indent0 = $idt x ($n + 3);
+    my $indent1 = $indent0 . $idt;
+    my $indent2 = $indent1 . $idt;
+    my $field;
+
+    for my $key (keys %$identmap) {
+        $field = $identmap->{$key};
+        my $num = $concat_num->{$field};
+        my $dup = $process_dup->{$field};
+
+        output_ifdef($ifdefs->{$field});
+        printf "%scase %s:\n", $indent0, $key . '_HASH';
+        trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
+        printf "%scontinue;\n", $indent0;
+        output_endifdef($ifdefs->{$field});
+    }
+
+    return;
 }
 
 sub generate_decoder_from_trie {
@@ -976,6 +1047,7 @@ sub output_param_decoder {
     # Output param decoder
     my %t = generate_trie(keys(%prms));
     locate_long_endings(\%t);
+    my %hashmap = ();
 
     printf "#ifndef %s_decoder\n", $decoder_name_base;
     printf "static ossl_unused int %s_decoder\n", $decoder_name_base;
@@ -986,8 +1058,22 @@ sub output_param_decoder {
     print "    *count = 0;\n" if $with_count;
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
-    print "        for (; (s = p->key) != NULL; p++)\n";
+    print "        for (; (s = p->key) != NULL; p++) {\n";
+    print "            /*\n";
+    print "             * The return_size field carries potential keyhash values on input\n";
+    print "             */\n";
+    print "	       uint32_t keyhash = (uint32_t )(p->return_size & ~OSSL_PARAM_UNMODIFIED_HASHED);\n";
+    print "	       if (keyhash != 0xffffffff) {\n";
+    print "	           ((OSSL_PARAM *)p)->return_size = OSSL_PARAM_UNMODIFIED;\n";
+    print "            }\n";
+    print "            switch (keyhash) {\n";
+    print "            default:\n";
+    print "               break;\n";
+    generate_keyhash_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
+    print "        }\n";
+
     generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
+    print "    }\n";
     print "    return 1;\n";
     print "}\n#endif\n";
     print "/* End of machine generated */";
