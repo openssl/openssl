@@ -536,6 +536,28 @@ BIGNUM *BN_signed_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     return bin2bn(s, len, ret, BIG, SIGNED);
 }
 
+/* Is the absolute value of |a| an exact power of two? */
+static int bn_abs_is_pow2(const BIGNUM *a)
+{
+    int i = a->top - 1;
+    BN_ULONG t;
+
+    /* Fixed-top BIGNUMs can retain zero limbs above the actual top. */
+    while (i > 0 && a->d[i] == 0)
+        i--;
+    if (i < 0)
+        return 0;
+
+    t = a->d[i];
+    if (t == 0 || (t & (t - 1)) != 0)
+        return 0;
+    while (--i >= 0) {
+        if (a->d[i] != 0)
+            return 0;
+    }
+    return 1;
+}
+
 static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
     endianness_t endianness, signedness_t signedness)
 {
@@ -558,15 +580,17 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen,
         xor = a->neg ? 0xff : 0x00;
         carry = a->neg;
 
-        /*
-         * if |n * 8 == n|, then the MSbit is set, otherwise unset.
-         * We must compensate with one extra byte if that doesn't
-         * correspond to the signedness of the bignum with regards
-         * to 2's complement.
-         */
-        ext = (n * 8 == n8)
-            ? !a->neg /* MSbit set on nonnegative bignum */
-            : a->neg; /* MSbit unset on negative bignum */
+        if (!a->neg) {
+            /* The MSbit is set on nonnegative values with a full top byte. */
+            ext = (n * 8 == n8);
+        } else {
+            /*
+             * A negative value fits in n bytes if its magnitude is at most
+             * 2^(n * 8 - 1).  A full top byte exceeds that limit except when
+             * the magnitude is exactly the limit (e.g. -0x80 in one byte).
+             */
+            ext = (n * 8 == n8) && !bn_abs_is_pow2(a);
+        }
     }
 
     if (tolen == -1) {
