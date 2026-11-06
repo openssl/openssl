@@ -10,7 +10,7 @@
 #include <openssl/err.h>
 #include "crypto/fnerr.h"
 #include "crypto/bn.h" /* For BN_GENCB / BN_GENCB_call and the prime-test status codes */
-#include "../bn/bn_prime.h" /* For the sieve primes[] table and prime_t */
+#include "crypto/bn/bn_prime.h" /* For the sieve primes[] table and prime_t */
 #include "fn_local.h"
 
 #define square(x) ((OSSL_FN_ULONG)(x) * (OSSL_FN_ULONG)(x))
