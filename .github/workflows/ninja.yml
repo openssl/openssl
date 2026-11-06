@@ -7,7 +7,10 @@
 
 name: Ninja GitHub CI
 
-on: [pull_request, push]
+on:
+  schedule:
+    - cron: '15 03 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,6 +20,7 @@ env:
 
 jobs:
   linux:
+    if: github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
     - name: install dependencies
@@ -51,6 +55,7 @@ jobs:
       run: ninja -C _build md-nits
 
   linux-fedora:
+    if: github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     container: docker.io/library/fedora:44
     steps:
@@ -82,6 +87,7 @@ jobs:
         printf '%s\n' "$output" | grep -F "ninja: no work to do."
 
   windows:
+    if: github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch'
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@v6
@@ -120,6 +126,7 @@ jobs:
         ninja test
 
   macos:
+    if: github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch'
     runs-on: macos-15
     steps:
     - uses: actions/checkout@v6
