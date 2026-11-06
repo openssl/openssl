@@ -22,7 +22,7 @@
 #include "internal/packet.h"
 #include "internal/numbers.h"
 #include "internal/common.h"
-#if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
+#if !defined OPENSSL_NO_QUIC
 #include "internal/quic_vlint.h"
 #endif
 
