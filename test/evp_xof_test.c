@@ -380,7 +380,7 @@ static int xof_absorb_test(int tstid)
         sz = 0;
         for (i = 0; i < total; i += sz) {
             sz += stride;
-            if ((i + sz) > total)
+            if (sz > total - i)
                 sz = total - i;
             if (!TEST_true(EVP_DigestUpdate(ctx, td->in + i, sz)))
                 goto err;
@@ -467,7 +467,7 @@ static int do_xof_squeeze_test(const TEST_DATA *td,
         goto err;
 
     while (i < expected_outlen) {
-        if ((i + sz) > expected_outlen)
+        if (sz > expected_outlen - i)
             sz = expected_outlen - i;
         if (!TEST_true(EVP_DigestSqueeze(ctx, out + i, sz)))
             goto err;
@@ -541,7 +541,7 @@ static int do_xof_squeeze_dup_test(const TEST_DATA *td, size_t dupoffset,
         goto err;
 
     while (i < expected_outlen) {
-        if ((i + sz) > expected_outlen)
+        if (sz > expected_outlen - i)
             sz = expected_outlen - i;
         if (!TEST_true(EVP_DigestSqueeze(cur, out + i, sz)))
             goto err;
