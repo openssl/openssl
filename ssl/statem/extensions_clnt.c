@@ -2102,6 +2102,8 @@ int tls_parse_stoc_alpn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     size_t len;
     PACKET confpkt, protpkt;
     int valid = 0;
+    size_t eff_alpn_len = 0;
+    unsigned char *eff_alpn = NULL;
 
     /* We must have requested it. */
     if (!s->s3.alpn_sent) {
@@ -2121,8 +2123,21 @@ int tls_parse_stoc_alpn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
+    eff_alpn = s->ext.alpn;
+    eff_alpn_len = s->ext.alpn_len;
+#ifndef OPENSSL_NO_ECH
+    /*
+     * If we tried ECH and it failed, then we need to compare vs. the
+     * outer alpn, if one was set.
+     */
+    if (s->ext.ech.es != NULL && s->ext.ech.success == 0
+        && s->ext.ech.alpn_outer != NULL) {
+        eff_alpn = s->ext.ech.alpn_outer;
+        eff_alpn_len = s->ext.ech.alpn_outer_len;
+    }
+#endif
     /* It must be a protocol that we sent */
-    if (!PACKET_buf_init(&confpkt, s->ext.alpn, s->ext.alpn_len)) {
+    if (!PACKET_buf_init(&confpkt, eff_alpn, eff_alpn_len)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
