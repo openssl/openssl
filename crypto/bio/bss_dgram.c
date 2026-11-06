@@ -28,6 +28,15 @@
 #define IP_MTU 14 /* linux is lame */
 #endif
 
+#if defined(OPENSSL_SYS_LINUX)
+#include <netinet/udp.h> /* UDP_SEGMENT (GSO) */
+#ifndef SOL_UDP
+#define SOL_UDP 17
+#endif
+/* Keep a coalesced GSO buffer under the ~64 KiB UDP payload maximum. */
+#define OSSL_GSO_MAX_BYTES 61440
+#endif
+
 #if OPENSSL_USE_IPV6 && !defined(IPPROTO_IPV6)
 #define IPPROTO_IPV6 41 /* windows is lame */
 #endif
@@ -369,6 +378,28 @@ static void dgram_update_local_addr(BIO *b)
         BIO_ADDR_clear(&data->local_addr);
 }
 
+#ifdef UDP_SEGMENT
+/*
+ * Detect whether UDP GSO (UDP_SEGMENT) may be used on this socket. An IP family
+ * check is not sufficient: a non-UDP socket such as an ICMP "ping" socket shares
+ * the AF_INET/AF_INET6 family but silently ignores a UDP_SEGMENT control message
+ * and concatenates the datagrams, and a UDP socket on a kernel without
+ * UDP_SEGMENT support (Linux < 4.18) does the same. Both conditions are detected
+ * here with read-only getsockopt() probes that never modify the socket: the
+ * socket must report IPPROTO_UDP, and the UDP_SEGMENT option must be readable
+ * (it is rejected with an error on sockets and kernels that do not support it).
+ */
+static int dgram_detect_gso_capable(int fd)
+{
+    int proto = 0, seg = 0;
+    socklen_t protolen = sizeof(proto), seglen = sizeof(seg);
+
+    return getsockopt(fd, SOL_SOCKET, SO_PROTOCOL, &proto, &protolen) == 0
+        && proto == IPPROTO_UDP
+        && getsockopt(fd, SOL_UDP, UDP_SEGMENT, &seg, &seglen) == 0;
+}
+#endif
+
 #if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG || M_METHOD == M_METHOD_WSARECVMSG
 static int dgram_get_sock_family(BIO *b)
 {
@@ -580,6 +611,9 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         b->init = 1;
         dgram_update_local_addr(b);
+#ifdef UDP_SEGMENT
+        data->gso_capable = dgram_detect_gso_capable(b->num);
+#endif
         if (getpeername(b->num, (struct sockaddr *)&ss, &ss_len) == 0) {
             BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)&ss));
             data->connected = 1;
@@ -1377,6 +1411,128 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     if (num_msg > BIO_MAX_MSGS_PER_CALL)
         num_msg = BIO_MAX_MSGS_PER_CALL;
 
+#ifdef UDP_SEGMENT
+    /*
+     * UDP GSO: when the caller requests it with BIO_SENDMMSG_FLAG_GSO, coalesce
+     * a run of equal-size datagrams destined for the same peer into a single
+     * sendmsg() carrying a UDP_SEGMENT control message, so the kernel (or NIC)
+     * performs the segmentation. This cuts the per-datagram send cost
+     * dramatically for QUIC-style traffic. The iovecs reference the caller's
+     * existing per-datagram buffers, so no extra copy is made.
+     *
+     * The flag is opt-in because coalescing changes datagram boundaries: by
+     * passing it the caller promises it owns the socket and has not configured
+     * UDP_SEGMENT, UDP_CORK or MSG_MORE on it. Coalescing is additionally gated on
+     * data->gso_capable, detected once when the fd was set: the socket must be a
+     * UDP socket on a UDP_SEGMENT-capable kernel, otherwise a UDP_SEGMENT control
+     * message would be silently ignored and the datagrams concatenated into one.
+     * Anything that cannot be coalesced - the flag unset, an incapable socket, a
+     * lone message, mixed sizes or peers, an empty or over-size message, a
+     * per-message local address, or a failed GSO send - falls through to the
+     * ordinary sendmmsg() path without changing any state.
+     */
+    if ((flags & BIO_SENDMMSG_FLAG_GSO) != 0
+        && data->gso_capable
+        && num_msg >= 2
+        && BIO_MSG_N(msg, stride, 0).local == NULL
+        && BIO_MSG_N(msg, stride, 0).data_len > 0) {
+        size_t seg = BIO_MSG_N(msg, stride, 0).data_len;
+        const BIO_ADDR *peer0 = BIO_MSG_N(msg, stride, 0).peer;
+        size_t run = 1, total = seg, k;
+
+        for (k = 1; k < num_msg; ++k) {
+            BIO_MSG *m = &BIO_MSG_N(msg, stride, k);
+
+            if (m->local != NULL)
+                break;
+            /*
+             * An empty datagram is a distinct datagram that buffer
+             * concatenation cannot represent, so it can never be folded into a
+             * GSO batch; stop the run and let it be sent on its own below.
+             */
+            if (m->data_len == 0)
+                break;
+            if ((peer0 == NULL) != (m->peer == NULL))
+                break;
+            if (peer0 != NULL) {
+                const struct sockaddr *sa0 = BIO_ADDR_sockaddr(peer0);
+                const struct sockaddr *sak = BIO_ADDR_sockaddr(m->peer);
+                size_t ps0 = BIO_ADDR_sockaddr_size(peer0);
+
+                if (ps0 != BIO_ADDR_sockaddr_size(m->peer)
+                    || memcmp(sa0, sak, ps0) != 0)
+                    break;
+            }
+            if (total + m->data_len > OSSL_GSO_MAX_BYTES)
+                break;
+            if (m->data_len == seg) {
+                ++run;
+                total += m->data_len;
+                continue;
+            }
+            if (m->data_len < seg) {
+                /* The final segment of a GSO batch is allowed to be shorter. */
+                ++run;
+                total += m->data_len;
+            }
+            break;
+        }
+
+        if (run >= 2) {
+            struct msghdr gmh;
+            struct iovec first_iov;
+            struct iovec giov[BIO_MAX_MSGS_PER_CALL];
+            unsigned char first_ctl[BIO_CMSG_ALLOC_LEN];
+            unsigned char gctl[CMSG_SPACE(sizeof(uint16_t))];
+            struct cmsghdr *cmsg;
+            uint16_t seg16 = (uint16_t)seg;
+            ossl_ssize_t l;
+            size_t j;
+
+            /*
+             * Build the header exactly as the unbatched path would for the first
+             * message: this reuses the existing peer and connected-socket
+             * handling (translate_msg() sends to the connected peer and ignores
+             * msg->peer when the socket is connected), so batching never changes
+             * the destination. Then replace the single iovec with the whole run
+             * and attach the UDP_SEGMENT control message.
+             */
+            translate_msg(b, &gmh, &first_iov, first_ctl,
+                &BIO_MSG_N(msg, stride, 0));
+
+            for (j = 0; j < run; ++j) {
+                giov[j].iov_base = BIO_MSG_N(msg, stride, j).data;
+                giov[j].iov_len = BIO_MSG_N(msg, stride, j).data_len;
+            }
+            gmh.msg_iov = giov;
+            gmh.msg_iovlen = run;
+
+            memset(gctl, 0, sizeof(gctl));
+            gmh.msg_control = gctl;
+            gmh.msg_controllen = sizeof(gctl);
+            cmsg = CMSG_FIRSTHDR(&gmh);
+            cmsg->cmsg_level = SOL_UDP;
+            cmsg->cmsg_type = UDP_SEGMENT;
+            cmsg->cmsg_len = CMSG_LEN(sizeof(uint16_t));
+            memcpy(CMSG_DATA(cmsg), &seg16, sizeof(seg16));
+
+            l = sendmsg(b->num, &gmh, sysflags);
+            if (l >= 0) {
+                for (j = 0; j < run; ++j)
+                    BIO_MSG_N(msg, stride, j).flags = 0;
+                *num_processed = run;
+                return 1;
+            }
+            /*
+             * A GSO send may still fail for transient reasons (e.g. EAGAIN) or
+             * because this path cannot segment. Either way fall through to the
+             * ordinary sendmmsg() path for this call without changing any state,
+             * so transient failures are retried on the next call.
+             */
+        }
+    }
+#endif /* UDP_SEGMENT */
+
     for (i = 0; i < num_msg; ++i) {
         translate_msg(b, &mh[i].msg_hdr, &iov[i],
             control[i], &BIO_MSG_N(msg, stride, i));
@@ -1503,7 +1659,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         sysflags,
         msg[0].peer != NULL ? BIO_ADDR_sockaddr(msg[0].peer) : NULL,
         msg[0].peer != NULL ? BIO_ADDR_sockaddr_size(msg[0].peer) : 0);
-    if (ret <= 0) {
+    if (ret < 0) { /* 0 is a valid send of an empty datagram */
         ERR_raise(ERR_LIB_SYS, get_last_socket_error());
         *num_processed = 0;
         return 0;
@@ -1748,7 +1904,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
         sysflags,
         msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
         msg[0].peer != NULL ? &slen : NULL);
-    if (ret <= 0) {
+    if (ret < 0) { /* 0 is a valid receive of an empty datagram */
         ERR_raise(ERR_LIB_SYS, get_last_socket_error());
         *num_processed = 0;
         return 0;

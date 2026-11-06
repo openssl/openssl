@@ -2,9 +2,10 @@
 
 =head1 NAME
 
-BIO_sendmmsg, BIO_recvmmsg, BIO_dgram_set_local_addr_enable,
-BIO_dgram_get_local_addr_enable, BIO_dgram_get_local_addr_cap,
-BIO_err_is_non_fatal - send and receive multiple datagrams in a single call
+BIO_sendmmsg, BIO_recvmmsg, BIO_SENDMMSG_FLAG_GSO,
+BIO_dgram_set_local_addr_enable, BIO_dgram_get_local_addr_enable,
+BIO_dgram_get_local_addr_cap, BIO_err_is_non_fatal - send and receive multiple
+datagrams in a single call
 
 =head1 SYNOPSIS
 
@@ -16,6 +17,8 @@ BIO_err_is_non_fatal - send and receive multiple datagrams in a single call
      BIO_ADDR *peer, *local;
      uint64_t flags;
  } BIO_MSG;
+
+ #define BIO_SENDMMSG_FLAG_GSO
 
  int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
                   size_t stride, size_t num_msg, uint64_t flags,
@@ -57,8 +60,18 @@ Currently, no input or output per-message flags are defined and this field
 should be set to zero before calling BIO_sendmmsg() or BIO_recvmmsg().
 
 The I<flags> argument to BIO_sendmmsg() and BIO_recvmmsg() provides global
-flags which affect the entire invocation. No global flags are currently
-defined and this argument should be set to zero.
+flags which affect the entire invocation.
+
+For BIO_sendmmsg() over a datagram BIO, B<BIO_SENDMMSG_FLAG_GSO> may be set to
+request UDP Generic Segmentation Offload (GSO) where the platform supports it
+(currently Linux). When set, a leading run of equal-sized datagrams destined for
+the same peer may be coalesced and handed to the kernel as a single segmented
+send, substantially reducing per-datagram transmit overhead for workloads such
+as QUIC. Because coalescing changes datagram boundaries, the caller must own the
+socket and must not have configured UDP_SEGMENT, UDP_CORK or MSG_MORE on it. The
+flag is ignored where GSO is unavailable or inapplicable (for example a non-UDP
+socket), falling back to the ordinary send path. No other global flags are
+defined and this argument should otherwise be set to zero.
 
 When these functions are used to send and receive datagrams, the I<peer> field
 of a B<BIO_MSG> allows the destination address of sent datagrams to be specified
