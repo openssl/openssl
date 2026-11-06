@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/hpke.h>
 #include "testutil.h"
@@ -75,11 +76,12 @@ give_up:
 }
 
 /*
- * The define/vars below and the 3 callback functions are modified
+ * The define/vars below and the callback functions are modified
  * from test/sslapitest.c
  */
 #define TEST_EXT_TYPE1 0xffab /* custom ext type 1: has 1 octet payload */
 #define TEST_EXT_TYPE2 0xffcd /* custom ext type 2: no payload */
+#define TEST_EXT_TYPE3 0xffef /* custom ext type 3: omitted by add callback */
 
 /* A well-encoded ECH extension value */
 static const unsigned char encoded_ech_val[] = {
@@ -146,13 +148,56 @@ static void new_free_cb(SSL *s, unsigned int ext_type, unsigned int context,
     OPENSSL_free((unsigned char *)out);
 }
 
+static int omit_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
+    const unsigned char **out, size_t *outlen, X509 *x,
+    size_t chainidx, int *al, void *add_arg)
+{
+    int *calls = (int *)add_arg;
+
+    (*calls)++;
+    return 0;
+}
+
+/* The server's custom extension parser only sees ClientHelloInner. */
+static void omit_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    const unsigned char *msg = buf;
+    int *outer_count = (int *)arg;
+    PACKET pkt = { 0 }, exts = { 0 }, ext = { 0 };
+    unsigned int type = 0;
+
+    if (!write_p || content_type != SSL3_RT_HANDSHAKE || len == 0
+        || msg[0] != SSL3_MT_CLIENT_HELLO || *outer_count < 0)
+        return;
+
+    if (!TEST_true(PACKET_buf_init(&pkt, buf, len))
+        || !TEST_true(PACKET_forward(&pkt,
+            SSL3_HM_HEADER_LENGTH + 2 + SSL3_RANDOM_SIZE))
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &ext)) /* session ID */
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &ext)) /* cipher suites */
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &ext)) /* compression */
+        || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &exts)))
+        goto err;
+    while (PACKET_remaining(&exts) > 0) {
+        if (!TEST_true(PACKET_get_net_2(&exts, &type))
+            || !TEST_true(PACKET_get_length_prefixed_2(&exts, &ext))
+            || !TEST_uint_ne(type, TEST_EXT_TYPE3))
+            goto err;
+    }
+    (*outer_count)++;
+    return;
+err:
+    *outer_count = -1;
+}
+
 static int new_parse_cb(SSL *s, unsigned int ext_type, unsigned int context,
     const unsigned char *in, size_t inlen, X509 *x,
     size_t chainidx, int *al, void *parse_arg)
 {
     int *server = (int *)parse_arg;
 
-    if (*server != SSL_is_server(s)
+    if (*server != SSL_is_server(s) || ext_type == TEST_EXT_TYPE3
         || inlen != sizeof(char) || *in != 1)
         return -1;
     return 1;
@@ -1298,6 +1343,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
 {
     int res = 0, kemind, kdfind, aeadind, kemsz, kdfsz, aeadsz;
     int clientstatus, serverstatus, server = 1, client = 0;
+    int omit_count = 0, outer_count = 0;
     unsigned int context;
     OSSL_ECHSTORE *es = NULL;
     OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
@@ -1367,8 +1413,14 @@ static int test_ech_roundtrip_helper(int idx, int combo)
                 &client, NULL, &client))
             || !TEST_true(SSL_CTX_add_custom_ext(sctx, TEST_EXT_TYPE2, context,
                 new_add_cb, NULL,
-                &server, NULL, &server)))
+                &server, NULL, &server))
+            || !TEST_true(SSL_CTX_add_custom_ext(cctx, TEST_EXT_TYPE3, context,
+                omit_add_cb, NULL, &omit_count, NULL, NULL))
+            || !TEST_true(SSL_CTX_add_custom_ext(sctx, TEST_EXT_TYPE3, context,
+                NULL, NULL, NULL, new_parse_cb, &server)))
             goto end;
+        SSL_CTX_set_msg_callback(cctx, omit_msg_cb);
+        SSL_CTX_set_msg_callback_arg(cctx, &outer_count);
     }
     if (combo == OSSL_ECH_TEST_CBS) {
         SSL_CTX_ech_set_callback(sctx, ech_test_cb);
@@ -1400,6 +1452,10 @@ static int test_ech_roundtrip_helper(int idx, int combo)
                 SSL_ERROR_NONE)))
             goto end;
     }
+    /* One add callback for the inner CH, with no omitted extension in outer. */
+    if (combo == OSSL_ECH_TEST_CUSTOM
+        && (!TEST_int_eq(omit_count, 1) || !TEST_int_eq(outer_count, 1)))
+        goto end;
     /* override cert verification */
     SSL_set_verify_result(clientssl, X509_V_OK);
     clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
@@ -1806,6 +1862,62 @@ end:
     OPENSSL_free(souter);
     OPENSSL_free(cinner);
     OPENSSL_free(couter);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
+/* ECH controls alone must not silently suppress custom extensions. */
+static int ech_custom_no_config_test(int idx)
+{
+    int res = 0, ret, omit_count = 0, outer_count = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    const unsigned char alpn[] = { 2, 'h', '2' };
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_add_custom_ext(cctx, TEST_EXT_TYPE3,
+            SSL_EXT_CLIENT_HELLO, omit_add_cb, NULL, &omit_count, NULL, NULL))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+
+    /* These setters mark ECH as attempted without creating an inner CH. */
+    if (idx == 0
+        && !TEST_true(SSL_ech_set1_server_names(clientssl,
+            "server.example", "example.com", 0)))
+        goto end;
+    if (idx == 1
+        && !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+            "example.com", 0)))
+        goto end;
+    if (idx == 2
+        && !TEST_true(SSL_ech_set1_outer_alpn_protos(clientssl,
+            alpn, sizeof(alpn))))
+        goto end;
+
+    /* GREASE state would otherwise allow the incomplete ECH setup to proceed. */
+    if (!TEST_true(SSL_ech_set1_grease_suite(clientssl,
+            "X25519,hkdf-sha256,aes-128-gcm")))
+        goto end;
+    SSL_set_msg_callback(clientssl, omit_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &outer_count);
+
+    ERR_clear_error();
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_eq(ret, -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), SSL_R_BAD_EXTENSION)
+        || !TEST_int_eq(omit_count, 0)
+        || !TEST_int_eq(outer_count, 0))
+        goto end;
+
+    res = 1;
+end:
     SSL_free(clientssl);
     SSL_free(serverssl);
     SSL_CTX_free(cctx);
@@ -2560,6 +2672,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_v12_test, suite_combos);
     ADD_ALL_TESTS(ech_in_out_test, 14);
     ADD_ALL_TESTS(ech_grease_test, 4);
+    ADD_ALL_TESTS(ech_custom_no_config_test, 3);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     ADD_ALL_TESTS(test_ech_keylog_random, 4);
     ADD_TEST(ech_unauth_client_status_test);
