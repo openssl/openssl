@@ -338,8 +338,10 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
 #ifdef S390X_MOD_EXP
-    if (s390x_mod_exp_hw(r, a, p, m))
-        return 1;
+    int rc = s390x_mod_exp_hw(r, a, p, m);
+
+    if (rc >= 0)
+        return rc;
 #endif
     return dh_ossl_fn_mod_exp(dh, r, a, p, m);
 }
