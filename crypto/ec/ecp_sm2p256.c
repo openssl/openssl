@@ -600,6 +600,14 @@ static int ecp_sm2p256_mul_one(const EC_GROUP *group, P256_POINT *out,
         P256_POINT_AFFINE a;
     } t, p;
 
+    /*
+     * The scalar is secret (e.g. the SM2 signature nonce k, or a private key
+     * reaching here through mul_fn).  Mark it so that under
+     * enable-ct-validation any branch or memory index depending on it in the
+     * multiplication below is flagged by Valgrind.
+     */
+    CONSTTIME_SECRET(k, P256_LIMBS * sizeof(*k));
+
     if (point == NULL) {
         const EC_POINT *generator = EC_GROUP_get0_generator(group);
 
@@ -684,13 +692,6 @@ static int ecp_sm2p256_points_mul(const EC_GROUP *group,
             ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
             goto err;
         }
-
-        /*
-         * The generator scalar is secret (e.g. the SM2 signature nonce k).
-         * Mark it so that under enable-ct-validation any branch or memory
-         * index depending on it in [k]G is flagged by Valgrind.
-         */
-        CONSTTIME_SECRET(k, sizeof(k));
         if (!ecp_sm2p256_mul_one(group, &p.p, k, NULL))
             goto err;
     } else {
@@ -711,9 +712,8 @@ static int ecp_sm2p256_points_mul(const EC_GROUP *group,
 
     /*
      * The result ([k]G, or [d]C) is public. Declassify it so that the
-     * (legitimately variable-time) serialisation below and the branches the
-     * caller performs on the public signature/ciphertext do not trip
-     * ct-validation.
+     * branches the caller performs on the public signature/ciphertext do not
+     * trip ct-validation.
      */
     CONSTTIME_DECLASSIFY(p.p.X, sizeof(p.p.X));
     CONSTTIME_DECLASSIFY(p.p.Y, sizeof(p.p.Y));
