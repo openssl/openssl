@@ -492,6 +492,16 @@ int ossl_x509_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
     return def_crl_verify_ex(crl, r, libctx, propq);
 }
 
+int X509_CRL_verify_pkey_ctx(X509_CRL *crl, EVP_PKEY_CTX *pctx)
+{
+    if (X509_ALGOR_cmp(&crl->sig_alg, &crl->crl.sig_alg) != 0) {
+        ERR_raise(ERR_LIB_X509, X509_R_CRL_SIGNATURE_ALGORITHM_MISMATCH);
+        return 0;
+    }
+    return ASN1_item_verify_pkey_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
+        &crl->sig_alg, &crl->signature, &crl->crl, pctx);
+}
+
 static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,
     X509_REVOKED *rev)
 {
