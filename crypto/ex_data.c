@@ -215,7 +215,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
  * in the lock, then using them outside the lock. Note this only applies
  * to the global "ex_data" state (ie. class definitions), not 'ad' itself.
  */
-int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
+int CRYPTO_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
     CRYPTO_EX_DATA *ad)
 {
     int mx, i;
@@ -262,7 +262,7 @@ int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
 
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 {
-    return ossl_crypto_new_ex_data_ex(NULL, class_index, obj, ad);
+    return CRYPTO_new_ex_data_ex(NULL, class_index, obj, ad);
 }
 
 /*

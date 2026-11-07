@@ -5,7 +5,7 @@
 CRYPTO_EX_new, CRYPTO_EX_free, CRYPTO_EX_dup,
 CRYPTO_free_ex_index, CRYPTO_get_ex_new_index,
 CRYPTO_alloc_ex_data, CRYPTO_set_ex_data, CRYPTO_get_ex_data,
-CRYPTO_free_ex_data, CRYPTO_new_ex_data
+CRYPTO_free_ex_data, CRYPTO_new_ex_data, CRYPTO_new_ex_data_ex
 - functions supporting application-specific data
 
 =head1 SYNOPSIS
@@ -26,6 +26,8 @@ CRYPTO_free_ex_data, CRYPTO_new_ex_data
                            void **from_d, int idx, long argl, void *argp);
 
  int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
+ int CRYPTO_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
+                           CRYPTO_EX_DATA *ad);
 
  int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
                           int idx);
@@ -70,8 +72,10 @@ structures.  Since the application data can be anything at all it is passed
 and retrieved as a B<void *> type.
 
 The B<CRYPTO_EX_DATA> type is opaque.  To initialize the exdata part of
-a structure, call CRYPTO_new_ex_data(). This is only necessary for
-B<CRYPTO_EX_INDEX_APP> objects.
+a structure, call CRYPTO_new_ex_data_ex() with the library context I<ctx>.
+This is only necessary for B<CRYPTO_EX_INDEX_APP> objects.
+CRYPTO_new_ex_data() does the same with I<ctx> set to NULL, i.e. the
+default library context.
 
 Exdata types are identified by an B<index>, an integer guaranteed to be
 unique within structures for the lifetime of the program.  Applications
@@ -159,6 +163,8 @@ note that NULL may be a valid value.
 dup_func() should return 0 for failure and 1 for success.
 
 =head1 HISTORY
+
+CRYPTO_new_ex_data_ex() was added in OpenSSL 4.2.
 
 CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
 
