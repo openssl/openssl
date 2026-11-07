@@ -41,5 +41,5 @@ IF[{- !$disabled{'ml-dsa'} -}]
 ENDIF
 
 IF[{- !$disabled{'slh-dsa'} -}]
-  SOURCE[$DSA_GOAL]=slh_dsa_sig.c
+  SOURCE[$SLH_DSA_GOAL]=slh_dsa_sig.c
 ENDIF
