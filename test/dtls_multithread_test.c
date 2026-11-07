@@ -334,23 +334,33 @@ static int do_handshake(SSL *client, SSL *listener, SSL **server_conn)
 }
 
 #define NUM_LISTENER_THREADS 2
-#define LISTENER_RACE_ITERATIONS 1000
 #define CLIENT_TRAFFIC_ITERATIONS 25
 #define CLEAR_REPLACE_CYCLES 3
 
+/**
+ * @struct listener_thread_args
+ * @brief State shared between a test and one of its listener threads.
+ */
 struct listener_thread_args {
-    SSL *listener;
-    CRYPTO_THREAD *thread;
-    int result;
+    SSL *listener; /**< The listener the thread polls */
+    CRYPTO_THREAD *thread; /**< The thread, or NULL once it is joined */
+    int *stop; /**< Set to 1 by the test when the thread is to return */
+    CRYPTO_RWLOCK *stop_lock; /**< The lock for atomic access to *stop */
+    int result; /**< 1 if the thread polled without error, else 0 */
 };
 
+/**
+ * @brief Polls ta->listener for incoming connections until *ta->stop is set.
+ * @param arg the struct listener_thread_args of this thread
+ * @returns 0, with ta->result set to 1 if every poll succeeded
+ */
 static unsigned int listener_thread(void *arg)
 {
     struct listener_thread_args *ta = arg;
     SSL_POLL_ITEM item;
     struct timeval timeout;
     size_t result_count;
-    int i;
+    int stop = 0;
 
     ta->result = 0;
     item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
@@ -359,15 +369,38 @@ static unsigned int listener_thread(void *arg)
     timeout.tv_sec = 0;
     timeout.tv_usec = 1000;
 
-    for (i = 0; i < LISTENER_RACE_ITERATIONS; i++) {
+    do {
         item.revents = 0;
         if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count))
             return 0;
         OSSL_sleep(1);
-    }
+        if (!CRYPTO_atomic_load_int(ta->stop, &stop, ta->stop_lock))
+            return 0;
+    } while (!stop);
 
     ta->result = 1;
     return 0;
+}
+
+/**
+ * @brief Tells the listener threads in |args| to return, and joins them.
+ * @param args the NUM_LISTENER_THREADS listener thread arguments
+ * @param stop the stop flag the threads poll
+ * @param stop_lock the lock for atomic access to |stop|
+ */
+static void join_listener_threads(struct listener_thread_args *args,
+    int *stop, CRYPTO_RWLOCK *stop_lock)
+{
+    int i;
+
+    (void)CRYPTO_atomic_store_int(stop, 1, stop_lock);
+    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
+        if (args[i].thread != NULL) {
+            ossl_crypto_thread_native_join(args[i].thread, NULL);
+            ossl_crypto_thread_native_clean(args[i].thread);
+            args[i].thread = NULL;
+        }
+    }
 }
 
 struct client_traffic_thread_args {
@@ -412,14 +445,17 @@ static int test_dtls_listener_clear_race(void)
     SSL *server_conns[NUM_CLIENTS] = { NULL };
     struct listener_thread_args thread_args[NUM_LISTENER_THREADS];
     BIO_ADDR *server_addr = NULL;
+    CRYPTO_RWLOCK *stop_lock = NULL;
     int server_fd = -1;
     int client_fds[NUM_CLIENTS] = { -1, -1, -1 };
+    int stop = 0;
     int testresult = 0;
     int i;
 
     memset(thread_args, 0, sizeof(thread_args));
 
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+    if (!TEST_ptr(stop_lock = CRYPTO_THREAD_lock_new())
+        || !TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
         || !TEST_true(create_listener_ex(sctx, SSL_LISTENER_FLAG_NO_VALIDATE,
             &listener, &server_addr, &server_fd))
@@ -434,6 +470,8 @@ static int test_dtls_listener_clear_race(void)
 
     for (i = 0; i < NUM_LISTENER_THREADS; i++) {
         thread_args[i].listener = listener;
+        thread_args[i].stop = &stop;
+        thread_args[i].stop_lock = stop_lock;
         thread_args[i].thread = ossl_crypto_thread_native_start(
             listener_thread, &thread_args[i], 1);
         if (!TEST_ptr(thread_args[i].thread))
@@ -444,22 +482,15 @@ static int test_dtls_listener_clear_race(void)
         if (!TEST_true(do_handshake(clients[i], listener, &server_conns[i])))
             goto err;
 
-    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
-        ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
-        ossl_crypto_thread_native_clean(thread_args[i].thread);
-        thread_args[i].thread = NULL;
+    join_listener_threads(thread_args, &stop, stop_lock);
+    for (i = 0; i < NUM_LISTENER_THREADS; i++)
         if (!TEST_int_eq(thread_args[i].result, 1))
             goto err;
-    }
 
     testresult = 1;
 err:
-    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
-        if (thread_args[i].thread != NULL) {
-            ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
-            ossl_crypto_thread_native_clean(thread_args[i].thread);
-        }
-    }
+    join_listener_threads(thread_args, &stop, stop_lock);
+    CRYPTO_THREAD_lock_free(stop_lock);
     for (i = 0; i < NUM_CLIENTS; i++) {
         SSL_free(clients[i]);
         SSL_free(server_conns[i]);
@@ -483,14 +514,17 @@ static int test_dtls_listener_clear_replace_race(void)
     struct listener_thread_args thread_args[NUM_LISTENER_THREADS];
     struct client_traffic_thread_args traffic_args;
     BIO_ADDR *server_addr = NULL;
+    CRYPTO_RWLOCK *stop_lock = NULL;
     int server_fd = -1, client_fd = -1;
+    int stop = 0;
     int testresult = 0;
     int i;
 
     memset(thread_args, 0, sizeof(thread_args));
     memset(&traffic_args, 0, sizeof(traffic_args));
 
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+    if (!TEST_ptr(stop_lock = CRYPTO_THREAD_lock_new())
+        || !TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey))
         || !TEST_true(create_listener_ex(sctx, SSL_LISTENER_FLAG_NO_VALIDATE,
             &listener, &server_addr, &server_fd))
@@ -501,6 +535,8 @@ static int test_dtls_listener_clear_replace_race(void)
 
     for (i = 0; i < NUM_LISTENER_THREADS; i++) {
         thread_args[i].listener = listener;
+        thread_args[i].stop = &stop;
+        thread_args[i].stop_lock = stop_lock;
         thread_args[i].thread = ossl_crypto_thread_native_start(
             listener_thread, &thread_args[i], 1);
         if (!TEST_ptr(thread_args[i].thread))
@@ -536,13 +572,10 @@ static int test_dtls_listener_clear_replace_race(void)
             goto err;
     }
 
-    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
-        ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
-        ossl_crypto_thread_native_clean(thread_args[i].thread);
-        thread_args[i].thread = NULL;
+    join_listener_threads(thread_args, &stop, stop_lock);
+    for (i = 0; i < NUM_LISTENER_THREADS; i++)
         if (!TEST_int_eq(thread_args[i].result, 1))
             goto err;
-    }
 
     testresult = 1;
 err:
@@ -550,12 +583,8 @@ err:
         ossl_crypto_thread_native_join(traffic_args.thread, NULL);
         ossl_crypto_thread_native_clean(traffic_args.thread);
     }
-    for (i = 0; i < NUM_LISTENER_THREADS; i++) {
-        if (thread_args[i].thread != NULL) {
-            ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
-            ossl_crypto_thread_native_clean(thread_args[i].thread);
-        }
-    }
+    join_listener_threads(thread_args, &stop, stop_lock);
+    CRYPTO_THREAD_lock_free(stop_lock);
     SSL_free(client);
     SSL_free(server_conn);
     SSL_free(listener);

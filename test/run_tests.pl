@@ -130,12 +130,37 @@ my @alltests = find_matching_tests("*");
 my %tests = ();
 my $has_nonexistent_test = 0;
 
+# The slowest tests, slowest first.  Parallel test runs start these before
+# all others.
+my @slow_tests = qw(
+    test_ssl_new
+    test_ecdsa
+    test_cmp_client
+    test_cms
+    test_threads
+    test_ec
+    test_enc
+    test_mp_rsa
+    test_x509
+    test_req
+    test_verify
+    test_ml_dsa_codecs
+    test_quic_multistream
+    test_enc_more
+);
+my %slow_rank = map { $slow_tests[$_] => $_ } 0 .. $#slow_tests;
+
 sub reorder {
     my $key = pop;
 
-    # for parallel test runs, do slow tests first
-    if ($jobs > 1 && $key =~ m/test_ssl_new|test_fuzz/) {
-        $key =~ s/(\d+)-/01-/;
+    if ($jobs > 1) {
+        (my $name = basename($key)) =~ s/^\d+-(.*)\.t$/$1/;
+
+        if (exists $slow_rank{$name}) {
+            $key =~ s/\d+-(\Q$name\E\.t)$/sprintf("00-%03d-%s", $slow_rank{$name}, $1)/e;
+        } elsif ($name =~ m/^test_fuzz/) {
+            $key =~ s/(\d+)-/01-/;
+        }
     }
     return $key;
 }

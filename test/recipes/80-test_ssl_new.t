@@ -139,9 +139,20 @@ my %skip = (
   "33-compressed-spki.cnf" => disabled("tls1_2") || disabled("tls1_3") || $no_ec,
 );
 
+# These configurations also run in a library context of their own, with the
+# default provider loaded into it.
+my %libctx_tests = map { $_ => 1 } qw(
+  01-simple.cnf
+  10-resumption.cnf
+  11-dtls_resumption.cnf
+  14-curves.cnf
+  20-cert-select.cnf
+  25-cipher.cnf
+);
+
 foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {
-        plan tests => 6 + ($no_fips ? 0 : 3);
+        plan tests => 3 + ($libctx_tests{$conf} ? 3 : 0) + ($no_fips ? 0 : 3);
         test_conf($conf,
                   $conf_dependent_tests{$conf} || $^O eq "VMS" ?  0 : 1,
                   defined($skip{$conf}) ? $skip{$conf} : $no_tls,
@@ -149,7 +160,7 @@ foreach my $conf (@conf_files) {
         test_conf($conf,
                   0,
                   defined($skip{$conf}) ? $skip{$conf} : $no_tls,
-                  "default");
+                  "default") if $libctx_tests{$conf};
         test_conf($conf,
                   0,
                   defined($skip{$conf}) ? $skip{$conf} : $no_tls,

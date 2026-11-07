@@ -1209,7 +1209,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -1267,7 +1267,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -1461,7 +1461,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -2564,7 +2564,7 @@ static int test_ssl_ownership_three_conn_states(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -2612,7 +2612,7 @@ static int test_ssl_ownership_three_conn_states(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000;
+        poll_timeout.tv_usec = 10000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
@@ -2646,7 +2646,7 @@ static int test_ssl_ownership_three_conn_states(void)
     poll_item.events = SSL_POLL_EVENT_R;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 100000;
+    poll_timeout.tv_usec = 10000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
         goto end;
@@ -4572,7 +4572,7 @@ static int cap_test_send_clienthello(SSL_CTX *cctx, const BIO_ADDR *server_addr,
     poll_item.events = SSL_POLL_EVENT_R;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 100000;
+    poll_timeout.tv_usec = 10000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
             &poll_timeout, 0, &poll_result)))
@@ -5315,7 +5315,7 @@ static int test_dtls_poll_listener_enters_blocking_section(void)
     poll_item.events = SSL_POLL_EVENT_IC;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 100000;
+    poll_timeout.tv_usec = 10000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0,
             &poll_result)))
@@ -5491,7 +5491,7 @@ static int test_dtls_poll_registration_failure(void)
     BIO *registration_bio = NULL;
     int fd[2] = { -1, -1 };
     SSL_POLL_ITEM items[2] = { 0 };
-    struct timeval timeout = { 1, 0 };
+    struct timeval timeout = { 0, 100000 };
     struct poll_registration_test registration = { 0 };
     size_t count = 0, failures = 0, i;
     /* An invariant failure must fail ADD_MFAIL_TEST even during injection. */
@@ -5768,7 +5768,7 @@ static long poll_cleanup_bio_cb(BIO *bio, int oper, const char *argp,
 static CRYPTO_THREAD_RETVAL poll_cleanup_worker(void *arg)
 {
     struct poll_cleanup_test *t = arg;
-    const struct timeval timeout = { 1, 0 };
+    const struct timeval timeout = { 0, 100000 };
 
     t->ret = SSL_poll(t->items, OSSL_NELEM(t->items), sizeof(t->items[0]),
         &timeout, SSL_POLL_FLAG_NO_HANDLE_EVENTS, &t->count);
@@ -6064,7 +6064,7 @@ static int test_dtls_poll_conn_honours_retransmit_timer(void)
     poll_item.events = SSL_POLL_EVENT_R;
     poll_item.revents = 0;
     poll_timeout.tv_sec = 0;
-    poll_timeout.tv_usec = 500000;
+    poll_timeout.tv_usec = 150000;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0,
             &poll_result)))
@@ -6322,7 +6322,7 @@ static int test_dtls_poll_shared_listener(int idx)
     BIO *signal_bio = NULL;
     int server_fd = -1, client_fd[2] = { -1, -1 };
     SSL_POLL_ITEM items[3] = { 0 };
-    struct timeval timeout = { 1, 0 };
+    struct timeval timeout = { 0, 100000 };
     DTLS_LISTENER *dl;
     struct poll_shared_listener_signal signal = { 0 };
     struct poll_watchdog watchdog = { 0 };
@@ -7081,13 +7081,13 @@ static void queue_cap_msg_cb(int write_p, int version, int content_type,
 }
 
 /*
- * Accelerated DTLS retransmit policy for these tests: 100 ms initial,
+ * Accelerated DTLS retransmit policy for these tests: 10 ms initial,
  * doubling, capped at 6 s, so retransmit-driven phases stay fast.
  */
 static unsigned int queue_cap_timer_cb(SSL *ssl, unsigned int us)
 {
     if (us == 0)
-        return 100000;
+        return 10000;
     return us * 2 > 6000000 ? 6000000 : us * 2;
 }
 
@@ -7164,6 +7164,11 @@ static int test_dtls_listener_accept_queue_capped_int(int version)
     /* Bound the runtime of the retransmit-driven phases below. */
     DTLS_set_timer_cb(client_a, queue_cap_timer_cb);
     DTLS_set_timer_cb(client_b, queue_cap_timer_cb);
+    /* Each ClientHello is one datagram, however often it is retransmitted */
+    SSL_set_options(client_a, SSL_OP_NO_QUERY_MTU);
+    SSL_set_mtu(client_a, 1800);
+    SSL_set_options(client_b, SSL_OP_NO_QUERY_MTU);
+    SSL_set_mtu(client_b, 1800);
 
     /* Phase 1: client A fills the accept queue to the cap. */
     if (!drive_client_to_promotion(listener, client_a, ACCEPT_CAP_TEST_LIMIT))
@@ -7765,26 +7770,52 @@ static int test_dtls_listener_idle_pending_not_driven(void)
     return ok;
 }
 
-/*
- * Gives each recvmmsg() at most one datagram, as the recvmsg() fallback does,
- * or for one call only, as many as *data says.
+/**
+ * @struct one_dgram_state_st
+ * @brief State of the one datagram per read filter.
+ */
+typedef struct one_dgram_state_st {
+    size_t batch; /**< datagrams the next read may take; 0 means one */
+    size_t queued; /**< datagrams sent to the socket and not yet read */
+    int fd; /**< the socket under the filter */
+} ONE_DGRAM_STATE;
+
+/**
+ * @brief Read one datagram from the socket under the filter, or for one call
+ * only, as many as the state's batch says.
+ *
+ * Each of the state's queued datagrams is read once it has arrived, as
+ * loopback delivery may lag sendto(). A read with none queued is passed
+ * through with the socket's own readiness.
+ *
+ * @returns 1 if any datagram was read, 0 otherwise
  */
 static int one_dgram_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags, size_t *msgs_processed)
 {
-    size_t *batch = BIO_get_data(bio);
+    ONE_DGRAM_STATE *st = BIO_get_data(bio);
     BIO *next = BIO_next(bio);
-    size_t max = 1;
+    size_t max = st->batch > 0 ? st->batch : 1;
+    size_t done = 0, n;
 
     if (next == NULL)
         return 0;
-    if (batch != NULL && *batch > 0)
-        max = *batch;
-    if (!BIO_recvmmsg(next, msg, stride, num_msg > max ? max : num_msg, flags,
-            msgs_processed))
+    if (num_msg > max)
+        num_msg = max;
+    while (done < num_msg && st->queued > 0
+        && BIO_socket_wait(st->fd, 1, time(NULL) + DTLS_READ_TIMEOUT_SEC) > 0
+        && BIO_recvmmsg(next, (BIO_MSG *)((uint8_t *)msg + done * stride),
+            stride, 1, flags, &n)
+        && n > 0) {
+        done += n;
+        st->queued -= n < st->queued ? n : st->queued;
+    }
+    if (done == 0 && !BIO_recvmmsg(next, msg, stride, num_msg, flags, &done)) {
+        *msgs_processed = 0;
         return 0;
-    if (batch != NULL)
-        *batch = 0;
+    }
+    *msgs_processed = done;
+    st->batch = 0;
     return 1;
 }
 
@@ -7855,7 +7886,7 @@ typedef struct {
     SSL *listener;
     BIO_ADDR *server_addr;
     int server_fd;
-    size_t batch; /* datagrams the listener's next read may take */
+    ONE_DGRAM_STATE rx; /* the listener's reads from server_fd */
     size_t nclients;
     SSL *clients[REDRIVE_MAX_CLIENTS];
     int fds[REDRIVE_MAX_CLIENTS];
@@ -7913,7 +7944,8 @@ static int redrive_setup(REDRIVE_FIXTURE *fx, int version, uint64_t flags,
     if (!TEST_ptr(sockbio = SSL_get_rbio(fx->listener))
         || !TEST_ptr(filter = BIO_new(bio_f_one_dgram_filter())))
         return 0;
-    BIO_set_data(filter, &fx->batch);
+    fx->rx.fd = fx->server_fd;
+    BIO_set_data(filter, &fx->rx);
     BIO_set_init(filter, 1);
     if (!TEST_true(BIO_up_ref(sockbio))) {
         BIO_free(filter);
@@ -7936,11 +7968,11 @@ static int redrive_setup(REDRIVE_FIXTURE *fx, int version, uint64_t flags,
             return 0;
     }
 
+    fx->rx.queued = nclients;
     for (k = 0; k < 200; k++) {
+        listener_tick(fx->listener);
         if (redrive_all_idle((DTLS_LISTENER *)fx->listener, nclients))
             return 1;
-        listener_tick(fx->listener);
-        OSSL_sleep(10);
     }
     return TEST_true(redrive_all_idle((DTLS_LISTENER *)fx->listener, nclients));
 }
@@ -7950,15 +7982,17 @@ static int redrive_send_junk(REDRIVE_FIXTURE *fx, size_t i)
     return TEST_int_eq(BIO_write(SSL_get_wbio(fx->clients[i]), "", 1), 1);
 }
 
-/* Have client |i| send its second ClientHello */
+/* Have client |i| read its HVR/HRR and send its second ClientHello */
 static int redrive_send_ch2(REDRIVE_FIXTURE *fx, size_t i)
 {
     int k;
 
     for (k = 0; k < 30 && fx->ch_count[i] < 2; k++) {
-        if (!client_step(fx->clients[i]))
+        if (!TEST_int_gt(BIO_socket_wait(fx->fds[i], 1,
+                             time(NULL) + DTLS_READ_TIMEOUT_SEC),
+                0)
+            || !client_step(fx->clients[i]))
             return 0;
-        OSSL_sleep(10);
     }
     return TEST_int_eq(fx->ch_count[i], 2);
 }
@@ -8036,7 +8070,7 @@ static int test_dtls_listener_redrive(int idx)
             goto end;
     if (!redrive_send_ch2(&fx, ci))
         goto end;
-    OSSL_sleep(50);
+    fx.rx.queued = njunk + 1;
 
     if (njunk == 1) {
         listener_tick(fx.listener);
@@ -8138,9 +8172,9 @@ static int test_dtls_listener_redrive_driven_earlier(int idx)
         || !redrive_send_junk(&fx, s)
         || !redrive_send_ch2(&fx, f))
         goto end;
-    OSSL_sleep(50);
+    fx.rx.queued = 4;
 
-    fx.batch = 2;
+    fx.rx.batch = 2;
     listener_tick(fx.listener);
     if (!redrive_finish(&fx, f))
         goto end;
@@ -8212,24 +8246,27 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
     /* Accept client ei */
     if (!redrive_send_ch2(&fx, ei))
         goto end;
+    fx.rx.queued = 1;
     for (k = 0; k < 200
         && SSL_get_accept_connection_queue_len(fx.listener) == 0;
-        k++) {
+        k++)
         listener_tick(fx.listener);
-        OSSL_sleep(10);
-    }
     if (!TEST_ptr(serverssl = SSL_accept_connection(fx.listener,
                       SSL_ACCEPT_CONNECTION_NO_BLOCK))
         || !TEST_true(create_ssl_connection(serverssl, fx.clients[ei],
             SSL_ERROR_NONE)))
         goto end;
 
-    /* Let any post-handshake messages settle */
+    /* Let any post-handshake messages settle: no flight awaits its ACK */
     for (k = 0; k < 20; k++) {
         if (!TEST_int_le(SSL_read(fx.clients[ei], buf, sizeof(buf)), 0)
             || !TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0))
             goto end;
         listener_tick(fx.listener);
+        if (!DTLSv1_get_timeout(fx.clients[ei], &timeout)
+            && !DTLSv1_get_timeout(serverssl, &timeout)
+            && redrive_all_idle((DTLS_LISTENER *)fx.listener, njunk + 1))
+            break;
         OSSL_sleep(10);
     }
     ERR_clear_error();
@@ -8246,7 +8283,7 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
             goto end;
     if (!redrive_send_ch2(&fx, ci))
         goto end;
-    OSSL_sleep(50);
+    fx.rx.queued = njunk + 1;
 
     item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
     item.desc.value.ssl = serverssl;

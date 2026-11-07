@@ -315,9 +315,10 @@ sub cmd {
     my %opts = @_;
     return sub {
         my $num = shift;
+        my $in_run = shift;
         # Make a copy to not destroy the caller's array
         my @cmdargs = ( @$cmd );
-        my @prog = __wrap_cmd(shift @cmdargs, $opts{exe_shell} // ());
+        my @prog = __wrap_cmd(shift @cmdargs, $opts{exe_shell}, $in_run);
 
         return __decorate_cmd($num, [ @prog, fixup_cmd_elements(@cmdargs) ],
                               %opts);
@@ -335,10 +336,10 @@ sub app {
             my $resultdir = result_dir();
             my $srcdir = srctop_dir();
             return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx.%p", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
-                       exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                       exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
         } else {
             return cmd([ @prog, @cmdargs ],
-                       exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                       exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
         }
     }
 }
@@ -350,7 +351,7 @@ sub fuzz {
         my @cmdargs = ( @{$cmd} );
         my @prog = __fixup_prg(__fuzz_file(shift @cmdargs, __exeext()));
         return cmd([ @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
     }
 }
 
@@ -365,7 +366,7 @@ sub test {
            my $resultdir = result_dir();
            my $srcdir = srctop_dir();
            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx.%p", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
         } elsif (defined $ENV{OSSL_VALGRIND_CT}) {
            # Constant-time validation mode: mark secret data as undefined and
            # fail immediately if any branch or memory index depends on it.
@@ -378,10 +379,10 @@ sub test {
                         "--error-exitcode=1",
                         "--num-callers=20",
                         @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
         } else {
             return cmd([ @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
         }
     }
 }
@@ -396,7 +397,7 @@ sub perlapp {
         my @cmdargs = ( @{$cmd} );
         my @prog = __apps_file(shift @cmdargs, undef);
         return cmd([ @interpreter, @interpreter_args,
-                     @prog, @cmdargs ], %opts) -> (shift);
+                     @prog, @cmdargs ], %opts) -> (@_);
     }
 }
 
@@ -410,7 +411,7 @@ sub perltest {
         my @cmdargs = ( @{$cmd} );
         my @prog = __test_file(shift @cmdargs, undef);
         return cmd([ @interpreter, @interpreter_args,
-                     @prog, @cmdargs ], %opts) -> (shift);
+                     @prog, @cmdargs ], %opts) -> (@_);
     }
 }
 
@@ -468,10 +469,15 @@ the function C<with> further down.
 =cut
 
 sub run {
-    my ($cmd, $display_cmd) = shift->(0);
+    my ($cmd, $display_cmd) = shift->(0, 1);
     my %opts = @_;
 
     return () if !$cmd;
+
+    # On Windows the command is not run through util/wrap.pl, so it gets
+    # that script's environment here.
+    my %wrap_env = $^O eq "MSWin32" ? __wrap_env() : ();
+    local @ENV{keys %wrap_env} = values %wrap_env;
 
     my $prefix = "";
     if ( $^O eq "VMS" ) { # VMS
@@ -1328,12 +1334,18 @@ sub __cwd {
 sub __wrap_cmd {
     my $cmd = shift;
     my $exe_shell = shift;
+    my $in_run = shift;
 
     my @prefix = ();
 
     if (defined($exe_shell)) {
         # If $exe_shell is defined, trust it
         @prefix = ( $exe_shell );
+    } elsif (__direct_env_ok()) {
+        @prefix = __direct_env();
+    } elsif ($in_run && $^O eq "MSWin32") {
+        # run() gives the command the environment from __wrap_env, and the
+        # Windows build puts the DLLs next to the programs.
     } else {
         # Otherwise, use the standard wrapper
         my $std_wrapper = __bldtop_file("util", "wrap.pl");
@@ -1352,6 +1364,57 @@ sub __wrap_cmd {
     }
 
     return (@prefix, $cmd);
+}
+
+# __wrap_env
+#
+# __wrap_env returns the environment variables util/wrap.pl sets for the
+# commands it runs, given the current environment, as a list of names and
+# values.
+sub __wrap_env {
+    my $top = $directories{BLDTOP};
+    my $providers = catdir($top, "providers");
+    my $conf = catfile($top, "apps", "openssl.cnf");
+    my %env = ( OPENSSL_RUNNING_UNIT_TESTS => "yes" );
+
+    $env{OPENSSL_MODULES} = $providers
+        if ($ENV{OPENSSL_MODULES} // '') eq '' && -d $providers;
+    $env{OPENSSL_CONF} = $conf
+        if ($ENV{OPENSSL_CONF} // '') eq '' && -f $conf;
+
+    return %env;
+}
+
+# __direct_env_ok
+#
+# __direct_env_ok returns true if commands can be run with the environment
+# from __direct_env in place of util/wrap.pl.  That holds on the platforms
+# where util/shlib_wrap.sh sets the library search path with no more than
+# environment variables, unless OPENSSL_REGRESSION asks util/shlib_wrap.sh
+# to defer to another build.
+sub __direct_env_ok {
+    return 0 if $^O =~ m/^(?:VMS|MSWin32|solaris|irix|nsk)$/;
+    return 0 if ($ENV{OPENSSL_REGRESSION} // '') ne '';
+    return 1;
+}
+
+# __direct_env
+#
+# __direct_env returns an env(1) command line that gives a command the
+# environment util/wrap.pl and util/shlib_wrap.sh would give it, to be
+# placed before the command.  It works both for callers that execute the
+# command through a shell and for those, such as CA.pl, that execute it
+# without one.
+sub __direct_env {
+    my $top = $directories{BLDTOP};
+    my %env = __wrap_env();
+
+    foreach (qw(LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH)) {
+        $env{$_} = $top . ":" . ($ENV{$_} // '');
+    }
+
+    return ( "env",
+             map { "$_=" . (fixup_cmd_elements($env{$_}))[0] } sort keys %env );
 }
 
 # __fixup_prg PROG

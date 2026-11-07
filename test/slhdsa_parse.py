@@ -36,12 +36,20 @@ def print_hexlabel(label, tag, value):
     print(label + " = hex" + tag + ":" + value)
 
 def parse_slh_dsa_key_gen(groups):
+    coverage = set()
     for grp in groups:
         name = grp['parameterSet'].replace('-', '_')
         for tst in grp['tests']:
+            # Key generation from a seed is deterministic, so by default only
+            # the first test of each parameter set is run.
+            extended_test = name in coverage
+            coverage.add(name)
+
             print("");
             print_label("FIPSversion", ">=3.5.0")
             print_label("KeyGen", grp['parameterSet'])
+            if extended_test:
+                print_label("Extended-Test", "1")
             print_label("KeyName", "tcId" + str(tst['tcId']))
             print_hexlabel("Ctrl", "seed", tst['skSeed'] + tst['skPrf'] + tst['pkSeed'])
             print_hexlabel("CtrlOut", "pub", tst['pk'])
