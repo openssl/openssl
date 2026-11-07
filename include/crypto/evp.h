@@ -16,6 +16,15 @@
 #include "internal/refcount.h"
 #include "crypto/ecx.h"
 
+/* DES3-WRAP adds an eight-byte IV and an eight-byte checksum. */
+static ossl_inline size_t ossl_cipher_wrap_output_size(const EVP_CIPHER_CTX *ctx,
+    size_t inlen, size_t blocksize)
+{
+    if (EVP_CIPHER_is_a(EVP_CIPHER_CTX_get0_cipher(ctx), "DES3-WRAP"))
+        return inlen + 16;
+    return ((inlen + blocksize - 1) / blocksize + 1) * blocksize;
+}
+
 /*
  * Default PKCS5 PBE KDF salt lengths
  * In RFC 8018, PBE1 uses 8 bytes (64 bits) for its salt length.

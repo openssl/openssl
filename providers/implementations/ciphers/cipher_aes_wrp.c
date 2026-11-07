@@ -248,7 +248,7 @@ static int aes_wrap_cipher(void *vctx,
     const unsigned char *in, size_t inl)
 {
     PROV_AES_WRAP_CTX *ctx = (PROV_AES_WRAP_CTX *)vctx;
-    int len;
+    int len, required;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -258,7 +258,11 @@ static int aes_wrap_cipher(void *vctx,
         return 1;
     }
 
-    if (outsize < inl) {
+    required = aes_wrap_cipher_internal(ctx, NULL, in, inl);
+    if (required <= 0)
+        return 0;
+
+    if (outsize < (size_t)required) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
