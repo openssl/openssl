@@ -127,6 +127,11 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    if (test_watch_freed_init() < 0) {
+        test_printf_stderr("Freed memory watch installation failed - aborting\n");
+        return ret;
+    }
+
     gi_ret = global_init();
 
     test_open_streams();
