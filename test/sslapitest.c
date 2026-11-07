@@ -19329,6 +19329,30 @@ err:
     return ret;
 }
 
+static int test_ssl_conf_sigalgs_without_ctx(void)
+{
+    SSL_CONF_CTX *cctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = SSL_CONF_CTX_new()))
+        goto err;
+    if (!TEST_uint_eq(SSL_CONF_CTX_set_flags(cctx,
+                          SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_CLIENT),
+            SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_CLIENT))
+        goto err;
+    if (!TEST_int_eq(SSL_CONF_cmd(cctx, "-sigalgs", "RSA+SHA256"), 2)
+        || !TEST_int_eq(SSL_CONF_cmd(cctx, "-client_sigalgs",
+                            "rsa_pss_rsae_sha256"),
+            2))
+        goto err;
+
+    ret = 1;
+
+err:
+    SSL_CONF_CTX_free(cctx);
+    return ret;
+}
+
 /*
  * Test that SSL_CTX_set1_groups() when called with a list where the first
  * entry is unsupported, will send a key_share that uses the next usable entry.
@@ -19858,6 +19882,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
     ADD_TEST(test_ssl_conf_flags);
+    ADD_TEST(test_ssl_conf_sigalgs_without_ctx);
     ADD_ALL_TESTS(test_http_verbs, 3);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_grease);
