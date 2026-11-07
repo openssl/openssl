@@ -411,7 +411,7 @@ static int x509_store_add(X509_STORE *store, void *x, int crl)
         X509_OBJECT_free(obj);
         return 0;
     }
-
+    sk_X509_OBJECT_sort(store->objs);
     if (X509_OBJECT_retrieve_match(store->objs, obj)) {
         ret = 1;
     } else {
