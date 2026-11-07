@@ -12,6 +12,12 @@ IF[{- !$disabled{asm} -}]
     $ML_DSA_ASM_ppc64=asm/mldsa_ntt_ppc64le.S asm/mldsa_intt_ppc64le.S
   ENDIF
 
+  # AIX supports both 32-bit (ppc32) and 64-bit (ppc64) builds
+  IF[{- $target{sys_id} eq "AIX" -}]
+    $ML_DSA_ASM_ppc32=asm/mldsa_ntt_ppcbe.S asm/mldsa_intt_ppcbe.S
+    $ML_DSA_ASM_ppc64=asm/mldsa_ntt_ppcbe.S asm/mldsa_intt_ppcbe.S
+  ENDIF
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$ML_DSA_ASM_{- $target{asm_arch} -}]
