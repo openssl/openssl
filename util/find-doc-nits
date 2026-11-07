@@ -1287,6 +1287,13 @@ sub check_env_vars {
     );
     my @except_env_files = (
         "$config{sourcedir}/providers/implementations/kem/template_kem.c",
+        # The test harness machinery holds the test environment variables
+        # that used to live in test/run_tests.pl (which was exempted along
+        # with the rest of test/).  They're documented in the modules'
+        # POD and in test/README.md.
+        "$config{sourcedir}/util/perl/OpenSSL/TestHarness.pm.in",
+        "$config{sourcedir}/util/perl/TAP/Harness/OpenSSL.pm",
+        "$config{sourcedir}/util/perl/TAP/Parser/OpenSSL.pm",
         # The following files are generated, and are therefore found in the
         # build directory rather than the source directory
         "$config{builddir}/providers/implementations/keymgmt/template_kmgmt.c",
