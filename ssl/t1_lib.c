@@ -4012,9 +4012,7 @@ int tls1_set_sigalgs_list(SSL_CTX *ctx, CERT *c, const char *str, int client)
 {
     sig_cb_st sig;
     sig.sigalgcnt = 0;
-
-    if (ctx != NULL)
-        sig.ctx = ctx;
+    sig.ctx = ctx;
     if (!CONF_parse_list(str, ':', 1, sig_cb, &sig))
         return 0;
     if (sig.sigalgcnt == 0) {
