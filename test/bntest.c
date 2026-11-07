@@ -22,6 +22,7 @@
 #include "internal/nelem.h"
 #include "internal/numbers.h"
 #include "testutil.h"
+#include "crypto/bn.h"
 
 /*
  * Things in boring, not in openssl.
@@ -2030,7 +2031,7 @@ static const MPITEST kSignedTests_BE[] = {
     { "-18446744073709551616", "\xff\x00\x00\x00\x00\x00\x00\x00\x00", 9 },
 };
 
-static int copy_reversed(uint8_t *dst, uint8_t *src, size_t len)
+static int copy_reversed(uint8_t *dst, const uint8_t *src, size_t len)
 {
     for (dst += len - 1; len > 0; src++, dst--, len--)
         *dst = *src;
@@ -2067,6 +2068,33 @@ static int test_bn2signed(int i)
     BN_free(bn2);
     bn2 = NULL;
 
+    /* Check the minimum signed big-endian width and reject one byte less. */
+    if (test->mpi_len > 0) {
+        if (!TEST_int_eq(BN_signed_bn2bin(bn, scratch, test->mpi_len),
+                test->mpi_len)
+            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
+            || !TEST_int_eq(BN_signed_bn2bin(bn, scratch, test->mpi_len - 1), -1))
+            goto err;
+
+        /* Fixed-top inputs can have an unused zero limb above the value. */
+        if (!TEST_ptr(bn2 = BN_new())
+            || !TEST_true(bn_lshift_fixed_top(bn2, bn, 0)))
+            goto err;
+        if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
+                test->mpi_len)
+            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
+            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len - 1), -1))
+            goto err;
+        BN_set_flags(bn2, BN_FLG_CONSTTIME);
+        if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
+                test->mpi_len)
+            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
+            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len - 1), -1))
+            goto err;
+        BN_free(bn2);
+        bn2 = NULL;
+    }
+
     /* Check that a parse of the reversed buffer works too */
     if (!TEST_ptr(bn2 = BN_signed_lebin2bn(reversed, sizeof(reversed), NULL))
         || !TEST_BN_eq(bn, bn2))
@@ -2098,6 +2126,31 @@ static int test_bn2signed(int i)
     if (!TEST_ptr(bn2 = BN_signed_bin2bn(reversed, sizeof(reversed), NULL))
         || !TEST_BN_eq(bn, bn2))
         goto err;
+
+    /* Check the minimum signed little-endian width and reject one byte less. */
+    if (test->mpi_len > 0) {
+        if (!TEST_int_eq(BN_signed_bn2lebin(bn, scratch, test->mpi_len),
+                test->mpi_len)
+            || !TEST_true(copy_reversed(reversed, (const uint8_t *)test->mpi,
+                    test->mpi_len))
+            || !TEST_mem_eq(reversed, test->mpi_len, scratch, test->mpi_len)
+            || !TEST_int_eq(BN_signed_bn2lebin(bn, scratch,
+                    test->mpi_len - 1), -1))
+            goto err;
+    }
+
+    /* Check the minimum native-endian width and reject one byte less. */
+    if (test->mpi_len > 0) {
+        if (!TEST_int_eq(BN_signed_bn2native(bn, scratch, test->mpi_len),
+                test->mpi_len)
+            || !TEST_ptr(bn2 = BN_signed_native2bn(scratch, test->mpi_len, NULL))
+            || !TEST_BN_eq(bn, bn2)
+            || !TEST_int_eq(BN_signed_bn2native(bn, scratch,
+                    test->mpi_len - 1), -1))
+            goto err;
+        BN_free(bn2);
+        bn2 = NULL;
+    }
 
     st = 1;
 err:
