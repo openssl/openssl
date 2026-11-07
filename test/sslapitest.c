@@ -3445,6 +3445,7 @@ static int test_psk_binder_growth(int idx)
     SSL_set_connect_state(ssl);
     sc = SSL_CONNECTION_FROM_SSL(ssl);
     sc->version = TLS1_3_VERSION;
+    sc->ext.psk_resumption_offered = 1;
     /* Secure-buffer growth allocates before freeing, forcing relocation. */
     if (!TEST_ptr(sc->psksession = create_a_psk(ssl, hashsize))
         || !TEST_ptr(sc->psksession_id = OPENSSL_memdup(psksession_id, psksession_id_len))
