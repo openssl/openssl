@@ -144,6 +144,15 @@ void ossl_dgram_urxe_insert_tail(DGRAM_URXE_LIST *l, DGRAM_URXE *e);
 typedef void(ossl_dgram_demux_cb_fn)(DGRAM_URXE *e, void *arg);
 
 /*
+ * As ossl_dgram_demux_cb_fn, but the callee may decline the URXE: a return of
+ * 0 means it kept no reference and the demuxer takes the URXE back itself, so
+ * the callee need not call ossl_dgram_demux_release_urxe(). On a thread-safe
+ * demuxer the declined URXEs of a batch are returned under one lock.
+ * A return of 1 transfers ownership as with ossl_dgram_demux_cb_fn.
+ */
+typedef int(ossl_dgram_demux_route_fn)(DGRAM_URXE *e, void *arg);
+
+/*
  * Creates a new demuxer. The given BIO is used to receive datagrams from the
  * network using BIO_recvmmsg.
  *
@@ -201,6 +210,19 @@ size_t ossl_dgram_demux_get_free_list_len(DGRAM_DEMUX *demux);
  */
 void ossl_dgram_demux_set_default_handler(DGRAM_DEMUX *demux,
     ossl_dgram_demux_cb_fn *cb,
+    void *cb_arg);
+
+/**
+ * Set a default packet handler which may decline datagrams (see
+ * ossl_dgram_demux_route_fn). Replaces any handler set with
+ * ossl_dgram_demux_set_default_handler().
+ *
+ * @param demux  the demuxer
+ * @param cb     the handler, or NULL to unset it
+ * @param cb_arg the argument passed to |cb|
+ */
+void ossl_dgram_demux_set_route_handler(DGRAM_DEMUX *demux,
+    ossl_dgram_demux_route_fn *cb,
     void *cb_arg);
 
 /*
