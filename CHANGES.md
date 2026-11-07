@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Restored `darwin-ppc{,64}{,-cc}` targets.
+   <!-- https://github.com/openssl/openssl/pull/33585 -->
+
+   *Sergey Fedorov*
+
  * Deprecated `SSL_copy_session_id()` and `BIO_ssl_copy_session_id()`.
    Use `SSL_set_session()` to resume a session on a new connection, or
    `SSL_dup()` to copy an SSL object.
