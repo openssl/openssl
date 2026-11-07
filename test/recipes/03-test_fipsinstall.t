@@ -63,7 +63,7 @@ my @commandline =
         ( 'x942kdf_key_check',              'x942kdf-key-check' )
     );
 
-plan tests => 41 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
+plan tests => 43 + (scalar @pedantic_okay) + (scalar @pedantic_fail)
               + 4 * (scalar @commandline);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
@@ -163,6 +163,12 @@ ok(run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
             '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_sect', '-verify'])),
    "fipsinstall verify");
+
+# A spaced FIPSversion gate must mean the same as the no-space form
+ok(run(test(["fips_version_test", "-config", $provconf, ">= 3.1.0"])),
+   "spaced '>= 3.1.0' gate matches like '>=3.1.0'");
+ok(!run(test(["fips_version_test", "-config", $provconf, "< 3.1.0"])),
+   "spaced '< 3.1.0' gate rejects like '<3.1.0'");
 
 # Test that default options for fipsinstall output the 'install-status' for
 # FIPS 140-2 providers.

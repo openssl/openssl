@@ -171,7 +171,7 @@ int fips_provider_version_ge(OSSL_LIB_CTX *libctx, int major, int minor, int pat
 int fips_provider_version_match(OSSL_LIB_CTX *libctx, const char *versions)
 {
     const char *p;
-    int major, minor, patch, r;
+    int major, minor, patch, r = 0;
     enum {
         MODE_EQ,
         MODE_NE,
@@ -211,6 +211,13 @@ int fips_provider_version_match(OSSL_LIB_CTX *libctx, const char *versions)
         } else {
             TEST_info("Error matching FIPS version: mode %s\n", p);
             return -1;
+        }
+        if (p == versions) {
+            /* Lone operator token: the version is the next token */
+            for (; isspace((unsigned char)(*versions)); versions++)
+                continue;
+            for (p = versions; *versions != '\0' && !isspace((unsigned char)(*versions)); versions++)
+                continue;
         }
         if (sscanf(p, "%d.%d.%d", &major, &minor, &patch) != 3) {
             TEST_info("Error matching FIPS version: version %s\n", p);
