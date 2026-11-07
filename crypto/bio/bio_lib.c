@@ -1078,8 +1078,14 @@ retry:
             case BIO_R_CONNECT_ERROR:
             case BIO_R_NBIO_CONNECT_ERROR:
                 /* some likely retryable connection error occurred */
-                (void)BIO_reset(bio); /* often needed to avoid retry failure */
-                do_retry = 1;
+                /*
+                 * Retrying makes sense only when a timeout bounds it;
+                 * with timeout == 0 (no timeout) this would loop forever.
+                 */
+                if (timeout > 0) {
+                    (void)BIO_reset(bio); /* often needed to avoid retry failure */
+                    do_retry = 1;
+                }
                 break;
             default:
                 break;
