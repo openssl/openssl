@@ -21,6 +21,7 @@
 
 #define MAX_SUPPORTED_GROUPS 128
 #define MAX_KEY_SHARES 16
+#define MAX_PRE_SHARED_KEYS 16
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
@@ -716,7 +717,7 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
 
         /*
          * Check if this share is in supported_groups sent from client
-         * RFC 8446 also mandates that clients send keyshares in the same
+         * RFC 9846 also mandates that clients send keyshares in the same
          * order as listed in the supported groups extension, but its not
          * required that the server check that, and some clients violate this
          * so instead of failing the connection when that occurs, log a trace
@@ -728,7 +729,7 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         }
 
         if (key_share_pos < previous_key_share_pos)
-            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 8446 order\n", group_id);
+            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 9846 order\n", group_id);
 
         previous_key_share_pos = key_share_pos;
 
@@ -1332,10 +1333,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     s->ext.ticket_expected = 0;
-    for (id = 0; PACKET_remaining(&identities) != 0; id++) {
+    for (id = 0; PACKET_remaining(&identities) != 0 && id < MAX_PRE_SHARED_KEYS; id++) {
         PACKET identity;
         unsigned long ticket_agel;
         size_t idlen;
+
+        /* Reset for each fresh iteration. */
+        sess = NULL;
 
         if (!PACKET_get_length_prefixed_2(&identities, &identity)
             || !PACKET_get_net_4(&identities, &ticket_agel)) {
@@ -1371,6 +1375,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 sizeof(pskdata));
             OPENSSL_free(pskid);
             if (pskdatalen > PSK_MAX_PSK_LEN) {
+                OPENSSL_cleanse(pskdata, sizeof(pskdata));
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             } else if (pskdatalen > 0) {
@@ -1406,7 +1411,10 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 #endif /* OPENSSL_NO_PSK */
 
         if (sess != NULL) {
-            /* We found a PSK */
+            /*
+             * We found an external (not a resumption) PSK - duplicate the
+             * session, set the session id to our own, and mark it as external.
+             */
             SSL_SESSION *sesstmp = ssl_session_dup(sess, 0);
 
             if (sesstmp == NULL) {
@@ -1422,7 +1430,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              */
             memcpy(sess->sid_ctx, s->sid_ctx, s->sid_ctx_length);
             sess->sid_ctx_length = s->sid_ctx_length;
-            ext = 1;
+            sess->psk_external = ext = 1;
             if (id == 0)
                 s->ext.early_data_ok = 1;
             s->ext.ticket_expected = 1;
@@ -1466,8 +1474,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 continue;
             }
 
-            age = ossl_time_subtract(ossl_ms2time(ticket_agel),
-                ossl_ms2time(sess->ext.tick_age_add));
+            /* Undo ticket age obfuscation modulo 2^32 (RFC 9846, 4.3.11.1). */
+            age = ossl_ms2time((uint32_t)(ticket_agel - sess->ext.tick_age_add));
             t = ossl_time_subtract(ossl_time_now(), sess->time);
 
             /*
@@ -1493,6 +1501,28 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                  */
                 s->ext.early_data_ok = 1;
             }
+            /* This PSK is not external, use the correct binder label, ... */
+            ext = 0;
+        }
+
+        /*
+         * The binder below, and the 0-RTT gate, both key off sess->cipher --
+         * specifically its handshake digest (algorithm2), which is only
+         * meaningful for a TLS 1.3 (or later) ciphersuite. A
+         * psk_find_session_cb() may return a session with no cipher, or a
+         * pre-TLS-1.3 one; ignore it and fall back to a full handshake rather
+         * than dereference a NULL cipher or misread algorithm2.
+         *
+         * The protocol version is deliberately not checked here:
+         * ssl_get_prev_session() vets it the moment we return and discards any
+         * mismatch, freeing the session so nothing leaks into a ticket or cache.
+         */
+        if (sess->cipher == NULL || sess->cipher->min_tls < TLS1_3_VERSION) {
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            s->ext.early_data_ok = 0;
+            s->ext.ticket_expected = 1;
+            continue;
         }
 
         md = ssl_md(sctx, sess->cipher->algorithm2);
@@ -1515,11 +1545,34 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             s->ext.ticket_expected = 1;
             continue;
         }
+        /*
+         * Same-hash ciphersuite changes are allowed for TLSv1.3 PSK
+         * resumption, but RFC 9846 Section 4.3.10 requires the selected
+         * ciphersuite to match the selected PSK before accepting early data.
+         */
+        if (sess->cipher->id != s->s3.tmp.new_cipher->id)
+            s->ext.early_data_ok = 0;
         break;
     }
 
-    if (sess == NULL)
-        return 1;
+    if (sess == NULL) {
+        size_t j;
+
+        for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
+            ;
+        if (j < s->ssl_pkey_num) {
+            /* A certificate exists. Fallback to a full handshake */
+            return 1;
+        }
+        /*
+         * decrypt_error here to keep the alert the same as if the binder
+         * failed. See RFC9846 Appendix F.6. Note we make no attempt to do this
+         * in constant time compared to verifying the binder. None of this code
+         * is constant time anyway.
+         */
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
 
     binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
     hashsize = EVP_MD_get_size(md);
@@ -1738,7 +1791,15 @@ EXT_RETURN tls_construct_stoc_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-    if (!s->ext.ticket_expected || !tls_use_ticket(s)) {
+    /*
+     * Don't tell the client to expect a NewSessionTicket when any
+     * ticket we'd mint would be rejected by ssl_get_prev_session()
+     * whenever SSL_VERIFY_PEER is set with no sid_ctx configured (see
+     * the checks there).  In TLS 1.2, once promised the ticket MUST
+     * be sent.
+     */
+    if (!s->ext.ticket_expected || !tls_use_ticket(s)
+        || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0)) {
         s->ext.ticket_expected = 0;
         return EXT_RETURN_NOT_SENT;
     }
