@@ -128,6 +128,11 @@ static int rand_inited = 0;
 
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
+#ifndef FIPS_MODULE
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return 0;
+#endif
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     rand_meth_lock = CRYPTO_THREAD_lock_new();
     if (rand_meth_lock == NULL)
@@ -468,7 +473,8 @@ void *ossl_rand_ctx_new(OSSL_LIB_CTX *libctx)
      * We need to ensure that base libcrypto thread handling has been
      * initialised.
      */
-    OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL);
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        goto err0;
 
     /* Prepopulate the random provider name */
     dgbl->random_provider_name = OPENSSL_strdup(random_provider_fips_name);
