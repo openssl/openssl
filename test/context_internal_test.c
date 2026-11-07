@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,21 @@
 #include "internal/cryptlib.h"
 #include "testutil.h"
 
+#ifdef TEST_FAIL_TLS_STORE
+static int fail_next_store;
+extern int __real_CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *value);
+int __wrap_CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *value);
+
+int __wrap_CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *value)
+{
+    if (fail_next_store) {
+        fail_next_store = 0;
+        return 0;
+    }
+    return __real_CRYPTO_THREAD_set_local(key, value);
+}
+#endif
+
 static int test_set0_default(void)
 {
     OSSL_LIB_CTX *global = OSSL_LIB_CTX_get0_global_default();
@@ -23,6 +38,15 @@ static int test_set0_default(void)
         || !TEST_ptr(local)
         || !TEST_ptr_eq(global, OSSL_LIB_CTX_set0_default(NULL)))
         goto err;
+
+#ifdef TEST_FAIL_TLS_STORE
+    fail_next_store = 1;
+    prev = OSSL_LIB_CTX_set0_default(local);
+    if (!TEST_ptr_null(prev)
+        || !TEST_int_eq(fail_next_store, 0)
+        || !TEST_ptr_eq(global, OSSL_LIB_CTX_set0_default(NULL)))
+        goto err;
+#endif
 
     /* Check we can change the local default context */
     if (!TEST_ptr(prev = OSSL_LIB_CTX_set0_default(local))
