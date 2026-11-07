@@ -165,6 +165,7 @@ Mock server options:
 [B<-accept_unprotected>]
 [B<-accept_unprot_err>]
 [B<-accept_raverified>]
+[B<-enforce_same_credentials>]
 
 Certificate verification options, for both CMP and TLS:
 
@@ -1319,6 +1320,18 @@ So far this has no effect because the server does not accept any error messages.
 
 Accept RAVERIFIED as proof of possession (POPO).
 
+=item B<-enforce_same_credentials>
+
+Require checking that the sender name, senderKID, and protection algorithm
+remain unchanged in messages belonging to the same transaction.
+Note that with PBM-protected messages,
+the algorithm includes as a parameter the salt value being used.
+This implements RFC 9483 requirements on using same credentials,
+preventing other legitimate clients from taking over a transaction
+and enforces efficient checking of PBM-based message protection.
+By default, these extra continuity and consistency checks are disabled
+for backward compatibility and because they are not required by RFC 9810.
+
 =back
 
 =head2 Certificate verification options, for both CMP and TLS
@@ -1553,6 +1566,13 @@ The B<-ta_in_ip_extracerts> quirk option was added in OpenSSL 4.0.
 The B<-engine> option was removed in OpenSSL 4.0.
 
 The B<-nonmatched_error_nonces> option was added in OpenSSL 4.1.
+
+Since OpenSSL 4.2,
+following an RFC 9483 requirement, it is ensured that for efficiency
+reasons the sender of CMP messages is consistent within a transaction
+on the protection algorithm used, including PBM parameters like the salt.
+
+The B<-enforce_same_credentials> option was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
