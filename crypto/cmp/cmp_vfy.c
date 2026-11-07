@@ -393,7 +393,7 @@ static int check_msg_given_cert(const OSSL_CMP_CTX *ctx, X509 *cert,
 /*-
  * Try all certs in given list for verifying msg, normally or in 3GPP mode.
  * If already_checked1 == NULL then certs are assumed to be the msg->extraCerts.
- * On success cache the found cert using ossl_cmp_ctx_set1_validatedSrvCert().
+ * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
  */
 static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
     const char *desc,
@@ -422,7 +422,7 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
         if (mode_3gpp ? check_cert_path_3gpp(ctx, msg, cert)
                       : check_cert_path(ctx, ctx->trusted, cert)) {
             /* store successful sender cert for further msgs in transaction */
-            return ossl_cmp_ctx_set1_validatedSrvCert(ctx, cert);
+            return ossl_cmp_ctx_set1_validatedPeerCert(ctx, cert);
         }
     }
     if (in_extraCerts && n_acceptable_certs == 0)
@@ -433,7 +433,7 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
 /*-
  * Verify msg trying first ctx->untrusted, which should include extraCerts
  * at its front, then trying the trusted certs in truststore (if any) of ctx.
- * On success cache the found cert using ossl_cmp_ctx_set1_validatedSrvCert().
+ * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
  */
 static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     int mode_3gpp)
@@ -470,11 +470,11 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
 /*-
  * Verify message signature with any acceptable and valid candidate cert.
- * On success cache the found cert using ossl_cmp_ctx_set1_validatedSrvCert().
+ * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
  */
 static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
-    X509 *scrt = ctx->validatedSrvCert; /* previous successful sender cert */
+    X509 *scrt = ctx->validatedPeerCert; /* first successfully  sender cert */
     GENERAL_NAME *sender = msg->header->sender;
     char *sname = NULL;
     char *skid_str = NULL;
@@ -516,7 +516,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         ctx->log_cb = backup_log_cb;
         (void)check_msg_given_cert(ctx, scrt, msg);
         ctx->log_cb = NULL;
-        (void)ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL); /* this invalidates scrt */
+        (void)ossl_cmp_ctx_set1_validatedPeerCert(ctx, NULL); /* this invalidates scrt */
     }
 
     res = check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */)
@@ -567,7 +567,7 @@ end:
  * the sender certificate can have been pinned by providing it in ctx->srvCert,
  * else it is searched in msg->extraCerts, ctx->untrusted, in ctx->trusted
  * (in this order) and is path is validated against ctx->trusted.
- * On success cache the found cert using ossl_cmp_ctx_set1_validatedSrvCert().
+ * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
  *
  * If ctx->permitTAInExtraCertsForIR is true, when validating a CMP IP message,
  * trust anchors for validating the IP message (and any subsequent responses
@@ -666,7 +666,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             if (verify_signature(ctx, msg, scrt)) {
                 ossl_cmp_debug(ctx,
                     "successfully validated signature-based CMP message protection using pinned sender cert");
-                return ossl_cmp_ctx_set1_validatedSrvCert(ctx, scrt);
+                return ossl_cmp_ctx_set1_validatedPeerCert(ctx, scrt);
             }
             ossl_cmp_warn(ctx, "CMP message signature verification failed");
             ERR_raise(ERR_LIB_CMP, CMP_R_SRVCERT_DOES_NOT_VALIDATE_MSG);

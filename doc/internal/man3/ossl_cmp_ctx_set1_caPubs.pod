@@ -3,7 +3,7 @@
 =head1 NAME
 
 ossl_cmp_ctx_set1_caPubs,
-ossl_cmp_ctx_set0_validatedSrvCert,
+ossl_cmp_ctx_set1_validatedPeerCert,
 ossl_cmp_ctx_set_status,
 ossl_cmp_ctx_set0_statusString,
 ossl_cmp_ctx_set_failInfoCode,
@@ -17,7 +17,7 @@ ossl_cmp_ctx_set1_recipNonce
  #include <openssl/cmp.h>
 
  int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs);
- int ossl_cmp_ctx_set0_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
+ int ossl_cmp_ctx_set1_validatedPeerCert(OSSL_CMP_CTX *ctx, X509 *cert);
  int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
  int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
                                     OSSL_CMP_PKIFREETEXT *text);
@@ -34,8 +34,8 @@ ossl_cmp_ctx_set1_caPubs() copies the given stack of CA certificates
 to the caPubs field of the context.
 The reference counts of those certificates handled successfully are increased.
 
-ossl_cmp_ctx_set0_validatedSrvCert() sets the validatedSrvCert of the context,
-which caches any already validated server cert, or NULL if not available.
+ossl_cmp_ctx_set1_validatedPeerCert() sets the validatedPeerCert of the context,
+which caches any already validated sender cert, or NULL if not available.
 
 ossl_cmp_ctx_set_status() sets the status field of the context.
 
