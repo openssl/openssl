@@ -609,7 +609,7 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (p.ikm != NULL) {
         if (p.ikm->data_size != 0 && p.ikm->data != NULL) {
-            OPENSSL_free(gctx->dhkem_ikm);
+            OPENSSL_clear_free(gctx->dhkem_ikm, gctx->dhkem_ikmlen);
             gctx->dhkem_ikm = NULL;
             if (!OSSL_PARAM_get_octet_string(p.ikm, (void **)&gctx->dhkem_ikm, 0,
                     &gctx->dhkem_ikmlen))

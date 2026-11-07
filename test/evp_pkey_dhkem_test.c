@@ -798,6 +798,118 @@ static int test_ed_curve_unsupported(void)
 }
 #endif
 
+/*
+ * Setting a new IKM on a key generation context frees the previous one.  The
+ * IKM determines the private key, so it must be cleared before it is freed.
+ * While watching, remember the blocks of |watch_size| bytes that are
+ * allocated and note if one of them still holds the old IKM when it is freed.
+ */
+static CRYPTO_malloc_fn saved_malloc;
+static CRYPTO_realloc_fn saved_realloc;
+static CRYPTO_free_fn saved_free;
+static void *watched[64];
+static size_t nwatched, watch_size;
+static const unsigned char *watch_secret;
+static int secret_left;
+
+static void watch_forget(void *ptr, int check)
+{
+    size_t i;
+
+    for (i = 0; i < nwatched; i++) {
+        if (watched[i] != ptr)
+            continue;
+        if (check && memcmp(ptr, watch_secret, watch_size) == 0)
+            secret_left = 1;
+        watched[i] = watched[--nwatched];
+        return;
+    }
+}
+
+static void watch_add(void *ptr, size_t num)
+{
+    if (ptr != NULL && num == watch_size && nwatched < OSSL_NELEM(watched))
+        watched[nwatched++] = ptr;
+}
+
+static void *watch_malloc(size_t num, const char *file, int line)
+{
+    void *ret = saved_malloc(num, file, line);
+
+    watch_add(ret, num);
+    return ret;
+}
+
+static void *watch_realloc(void *ptr, size_t num, const char *file, int line)
+{
+    void *ret = saved_realloc(ptr, num, file, line);
+
+    if (ptr != NULL && (ret != NULL || num == 0))
+        watch_forget(ptr, 0);
+    watch_add(ret, num);
+    return ret;
+}
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        watch_forget(ptr, 1);
+    saved_free(ptr, file, line);
+}
+
+static int test_ikm_cleared_on_reset(int tstid)
+{
+    unsigned char ikm1[32], ikm2[32];
+    OSSL_PARAM params[3], *p;
+    EVP_PKEY_CTX *genctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const char *alg = tstid == TEST_KEYTYPE_P256 ? "EC" : "X25519";
+    size_t i;
+    int watching, ret = 0;
+
+    for (i = 0; i < sizeof(ikm1); i++) {
+        ikm1[i] = (unsigned char)(0xa0 + i);
+        ikm2[i] = (unsigned char)(0x40 + i);
+    }
+
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, alg, NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1))
+        goto err;
+
+    CRYPTO_get_mem_functions(&saved_malloc, &saved_realloc, &saved_free);
+    watching = CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free);
+    if (!watching)
+        TEST_info("cannot replace the allocator, not checking the IKM is cleared");
+    nwatched = 0;
+    watch_size = sizeof(ikm1);
+    watch_secret = ikm1;
+    secret_left = 0;
+
+    p = params;
+    if (tstid == TEST_KEYTYPE_P256)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+            "P-256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
+        ikm1, sizeof(ikm1));
+    *p = OSSL_PARAM_construct_end();
+    ret = TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1);
+    /* Replace the IKM: the copy of ikm1 is freed here */
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
+        ikm2, sizeof(ikm2));
+    params[1] = OSSL_PARAM_construct_end();
+    ret = ret && TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1);
+    if (watching)
+        CRYPTO_set_mem_functions(saved_malloc, saved_realloc, saved_free);
+
+    ret = ret
+        && TEST_int_eq(EVP_PKEY_generate(genctx, &pkey), 1)
+        && (!watching || TEST_false(secret_left));
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(genctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     const char *prov_name = "default";
@@ -840,6 +952,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_input_size_small, TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_null_params, TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_set_params, TEST_KEYTYPES_P256_X25519);
+    ADD_ALL_TESTS(test_ikm_cleared_on_reset, TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_nopublic,
         TEST_KEM_ENCAP_DECAP * TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_noauthpublic,
@@ -854,6 +967,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_input_size_small, TEST_KEYTYPE_P256);
     ADD_ALL_TESTS(test_null_params, TEST_KEYTYPE_P256);
     ADD_ALL_TESTS(test_set_params, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_ikm_cleared_on_reset, TEST_KEYTYPE_P256 + 1);
     ADD_ALL_TESTS(test_nopublic,
         TEST_KEM_ENCAP_DECAP * TEST_KEYTYPE_P256);
     ADD_ALL_TESTS(test_noauthpublic,
