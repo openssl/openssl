@@ -1077,6 +1077,143 @@ err:
     return ret;
 }
 
+/* Auxiliary attributes for the COMPAT trust regression tests. */
+static const struct {
+    int trust_nid;
+    int reject_nid;
+} compat_aux[] = {
+    { NID_undef, NID_undef },
+    { NID_undef, NID_anyExtendedKeyUsage },
+    { NID_undef, NID_server_auth },
+    { NID_server_auth, NID_undef },
+    { NID_anyExtendedKeyUsage, NID_anyExtendedKeyUsage },
+    { NID_anyExtendedKeyUsage, NID_undef },
+    { NID_undef, NID_client_auth },
+    { NID_undef, NID_OCSP_sign }
+};
+
+static X509 *load_compat_cert(const char *name, int aux)
+{
+    char *path = test_mk_file_path(certs_dir, name);
+    X509 *cert = NULL;
+
+    if (!TEST_ptr(path)
+        || !TEST_ptr(cert = load_cert_from_file(path)))
+        goto err;
+    if ((compat_aux[aux].trust_nid != NID_undef
+            && !TEST_true(X509_add1_trust_object(cert,
+                OBJ_nid2obj(compat_aux[aux].trust_nid))))
+        || (compat_aux[aux].reject_nid != NID_undef
+            && !TEST_true(X509_add1_reject_object(cert,
+                OBJ_nid2obj(compat_aux[aux].reject_nid))))) {
+        X509_free(cert);
+        cert = NULL;
+    }
+err:
+    OPENSSL_free(path);
+    return cert;
+}
+
+static int test_compat_trust(int idx)
+{
+    int aux = idx / 2;
+    int self_signed = idx % 2;
+    int rejected = compat_aux[aux].reject_nid == NID_anyExtendedKeyUsage;
+    int expected = rejected ? X509_TRUST_REJECTED
+        : self_signed       ? X509_TRUST_TRUSTED
+                            : X509_TRUST_UNTRUSTED;
+    int ret = 0;
+    X509 *cert = load_compat_cert(self_signed ? "root-cert.pem" : "ca-cert.pem",
+        aux);
+
+    if (!TEST_ptr(cert)
+        || !TEST_int_eq(X509_check_trust(cert, X509_TRUST_COMPAT, 0), expected)
+        || !TEST_int_eq(X509_check_trust(cert, X509_TRUST_COMPAT,
+                            X509_TRUST_NO_SS_COMPAT),
+            rejected ? X509_TRUST_REJECTED : X509_TRUST_UNTRUSTED))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(cert);
+    return ret;
+}
+
+/* obj_trust's fallback must retain the caller's anyEKU flag semantics. */
+static int test_compat_trust_fallback(void)
+{
+    X509 *cert = load_compat_cert("root-cert.pem", 1);
+    int ret = 0;
+
+    if (!TEST_ptr(cert)
+        || !TEST_int_eq(X509_TRUST_get_by_id(NID_client_auth), -1)
+        || !TEST_int_eq(X509_check_trust(cert, NID_client_auth,
+                            X509_TRUST_DO_SS_COMPAT),
+            X509_TRUST_TRUSTED)
+        || !TEST_int_eq(X509_check_trust(cert, NID_client_auth,
+                            X509_TRUST_DO_SS_COMPAT | X509_TRUST_NO_SS_COMPAT),
+            X509_TRUST_UNTRUSTED)
+        || !TEST_int_eq(X509_check_trust(cert, NID_client_auth,
+                            X509_TRUST_DO_SS_COMPAT | X509_TRUST_OK_ANY_EKU),
+            X509_TRUST_REJECTED))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(cert);
+    return ret;
+}
+
+static int test_compat_purpose(int idx)
+{
+    int aux = idx / 6;
+    int mode = (idx / 2) % 3;
+    int purpose = idx % 2 == 0 ? X509_PURPOSE_CRL_SIGN : X509_PURPOSE_OCSP_HELPER;
+    int rejected = compat_aux[aux].reject_nid == NID_anyExtendedKeyUsage;
+    int ret = 0;
+    X509 *root = NULL, *cert = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+
+    /* Setting only the parameter after init leaves DEFAULT trust in place. */
+    if (mode == 2 && compat_aux[aux].trust_nid != NID_undef
+        && compat_aux[aux].trust_nid != NID_anyExtendedKeyUsage)
+        rejected = 1;
+    if (!TEST_ptr(root = load_compat_cert("root-cert.pem", aux))
+        || !TEST_ptr(cert = load_cert_from_file(ca_cert))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_ptr(param = X509_VERIFY_PARAM_new())
+        || !TEST_true(X509_STORE_add_cert(store, root)))
+        goto err;
+    X509_VERIFY_PARAM_set_time(param, 1609459200);
+    if (mode == 0 && !TEST_true(X509_VERIFY_PARAM_set_purpose(param, purpose)))
+        goto err;
+    if (!TEST_true(X509_STORE_set1_param(store, param))
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        goto err;
+    if (mode == 1 && !TEST_true(X509_STORE_CTX_set_purpose(ctx, purpose)))
+        goto err;
+    if (mode == 2
+        && !TEST_true(X509_VERIFY_PARAM_set_purpose(
+            X509_STORE_CTX_get0_param(ctx), purpose)))
+        goto err;
+    if (!TEST_int_eq(X509_verify_cert(ctx), !rejected)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            rejected ? X509_V_ERR_CERT_REJECTED : X509_V_OK))
+        goto err;
+
+    ret = 1;
+err:
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(cert);
+    X509_free(root);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -1099,6 +1236,9 @@ int setup_tests(void)
         || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem")))
         goto err;
 
+    ADD_ALL_TESTS(test_compat_trust, OSSL_NELEM(compat_aux) * 2);
+    ADD_TEST(test_compat_trust_fallback);
+    ADD_ALL_TESTS(test_compat_purpose, OSSL_NELEM(compat_aux) * 6);
     ADD_TEST(test_alt_chains_cert_forgery);
     ADD_TEST(test_store_ctx);
     ADD_TEST(test_distinguishing_id);
