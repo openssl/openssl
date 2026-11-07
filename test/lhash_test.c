@@ -473,6 +473,44 @@ end:
     return testresult;
 }
 
+HT_START_KEY_DEFN(rawkey)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 16)
+HT_END_KEY_DEFN(RAWKEY)
+
+/*
+ * With collision_check, keys of different sizes must not match even when
+ * their hashes are equal. hashtable_hash() only hashes the first 4 bytes.
+ */
+static int test_hashtable_collision_keysize(void)
+{
+    HT_CONFIG hash_conf = {
+        .ht_hash_fn = hashtable_hash,
+        .collision_check = 1,
+        .no_rcu = 1,
+    };
+    static int v1 = 1, v2 = 2;
+    RAWKEY a, b;
+    HT_VALUE *v;
+    HT *ht;
+    int *res;
+    int testresult = 0;
+
+    HT_INIT_RAW_KEY(&a);
+    HT_COPY_RAW_KEY(TO_HT_KEY(&a), (const uint8_t *)"abcd", 4);
+    HT_INIT_RAW_KEY(&b);
+    HT_COPY_RAW_KEY(TO_HT_KEY(&b), (const uint8_t *)"abcde", 5);
+
+    if (!TEST_ptr(ht = ossl_ht_new(&hash_conf)))
+        return 0;
+    if (TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&a), &v1, NULL), 1)
+        && TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&b), &v2, NULL), 1)
+        && TEST_ptr(res = ossl_ht_test_int_get(ht, TO_HT_KEY(&b), &v))
+        && TEST_int_eq(*res, v2))
+        testresult = 1;
+    ossl_ht_free(ht);
+    return testresult;
+}
+
 static void hashtable_intfree(HT_VALUE *v)
 {
     OPENSSL_free(v->value);
@@ -920,6 +958,7 @@ int setup_tests(void)
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
     ADD_ALL_TESTS(test_int_hashtable, 2);
+    ADD_TEST(test_hashtable_collision_keysize);
     ADD_ALL_TESTS(test_hashtable_stress, 4);
     ADD_ALL_TESTS(test_hashtable_multithread, 2);
     ADD_MFAIL_TEST(test_hashtable_insert_replace_mfail);
