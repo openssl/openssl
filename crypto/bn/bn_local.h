@@ -119,13 +119,75 @@ typedef unsigned long long BN_ULLONG;
 
 #define BN_MAX_WORDS (INT_MAX / (4 * BN_BITS2))
 
+/**
+ * @brief Multiply a word array by a word and accumulate: rp += ap * w.
+ *
+ * @param rp the num-word accumulator, updated in place
+ * @param ap the num-word multiplicand
+ * @param num the number of words in rp and ap
+ * @param w the single-word multiplier
+ * @returns the carry word out of the most significant word of rp
+ */
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
     BN_ULONG w);
+
+/**
+ * @brief Multiply a word array by a word: rp = ap * w.
+ *
+ * @param rp the num-word result
+ * @param ap the num-word multiplicand
+ * @param num the number of words in rp and ap
+ * @param w the single-word multiplier
+ * @returns the carry word out of the most significant word of rp
+ */
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+
+/**
+ * @brief Square each word of an array independently.
+ *
+ * rp[2 * i] and rp[2 * i + 1] receive the low and high words of ap[i]^2.
+ * This is a building block for squaring, not a full square of ap.
+ *
+ * @param rp the 2 * num-word result
+ * @param ap the num-word input
+ * @param num the number of words in ap
+ */
 void bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
+
+/**
+ * @brief Divide the double word h:l by the word d.
+ *
+ * The caller must ensure that d is nonzero and h < d, so that the quotient
+ * fits in one word.
+ *
+ * @param h the high word of the dividend
+ * @param l the low word of the dividend
+ * @param d the divisor
+ * @returns the quotient
+ */
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
+
+/**
+ * @brief Add two word arrays of equal length: rp = ap + bp.
+ *
+ * @param rp the num-word result; may alias ap or bp
+ * @param ap the first num-word addend
+ * @param bp the second num-word addend
+ * @param num the number of words in each array
+ * @returns the carry out of the most significant word (0 or 1)
+ */
 BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     int num);
+
+/**
+ * @brief Subtract two word arrays of equal length: rp = ap - bp.
+ *
+ * @param rp the num-word result; may alias ap or bp
+ * @param ap the num-word minuend
+ * @param bp the num-word subtrahend
+ * @param num the number of words in each array
+ * @returns the borrow out of the most significant word (0 or 1)
+ */
 BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     int num);
 
@@ -647,20 +709,92 @@ void BN_RECP_CTX_init(BN_RECP_CTX *recp);
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 
 void bn_init(BIGNUM *a);
+/**
+ * @brief Schoolbook multiplication: r = a * b.
+ *
+ * @param r the na + nb-word result; must not alias a or b
+ * @param a the na-word first factor
+ * @param na the number of words in a
+ * @param b the nb-word second factor
+ * @param nb the number of words in b
+ */
 void bn_mul_normal(BN_ULONG *r, const BN_ULONG *a, int na, const BN_ULONG *b, int nb);
+
+/**
+ * @brief Comba multiplication of two 8-word arrays: r = a * b.
+ *
+ * @param r the 16-word result; must not alias a or b
+ * @param a the 8-word first factor
+ * @param b the 8-word second factor
+ */
 void bn_mul_comba8(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
+
+/**
+ * @brief Comba multiplication of two 4-word arrays: r = a * b.
+ *
+ * @param r the 8-word result; must not alias a or b
+ * @param a the 4-word first factor
+ * @param b the 4-word second factor
+ */
 void bn_mul_comba4(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
 void bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, int n, BN_ULONG *tmp);
 void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a);
 void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a);
 int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n);
 int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b, int cl, int dl);
+/**
+ * @brief Karatsuba multiplication: r = a * b.
+ *
+ * @param r the 2 * n2-word result
+ * @param a the first factor, n2 + dna words
+ * @param b the second factor, n2 + dnb words
+ * @param n2 the nominal operand size in words, a power of 2
+ * @param dna the difference between a's size and n2; not positive, with
+ * n2 / 2 + dna positive
+ * @param dnb the difference between b's size and n2; not positive, with
+ * n2 / 2 + dnb positive
+ * @param t scratch space of 2 * n2 words
+ */
 void bn_mul_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n2,
     int dna, int dnb, BN_ULONG *t);
+
+/**
+ * @brief Karatsuba multiplication of operands longer than n words:
+ * r = a * b.
+ *
+ * @param r the result, 8 * n words as bn_mul_fixed_top() allocates
+ * @param a the first factor, n + tna words
+ * @param b the second factor, n + tnb words
+ * @param n the half size of the multiplication in words
+ * @param tna the number of words of a beyond n, 0 <= tna < n
+ * @param tnb the number of words of b beyond n, 0 <= tnb < n
+ * @param t scratch space, 8 * n words as bn_mul_fixed_top() allocates
+ */
 void bn_mul_part_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     int n, int tna, int tnb, BN_ULONG *t);
 void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t);
+/**
+ * @brief Schoolbook multiplication keeping only the low half:
+ * r = a * b mod 2^(n * BN_BITS2).
+ *
+ * @param r the n-word result; must not alias a or b
+ * @param a the n-word first factor
+ * @param b the n-word second factor
+ * @param n the number of words in each operand and in the result
+ */
 void bn_mul_low_normal(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n);
+
+/**
+ * @brief Karatsuba multiplication keeping only the low half:
+ * r = a * b mod 2^(n2 * BN_BITS2).
+ *
+ * @param r the n2-word result
+ * @param a the n2-word first factor
+ * @param b the n2-word second factor
+ * @param n2 the number of words in each operand and in the result, a
+ * power of 2
+ * @param t scratch space of 2 * n2 words
+ */
 void bn_mul_low_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n2,
     BN_ULONG *t);
 BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
@@ -671,6 +805,20 @@ void bn_correct_top_consttime(BIGNUM *a);
 BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
     int *noinv);
+/**
+ * @brief Schoolbook multiplication truncated to the result size:
+ * r = a * b mod 2^(nr * BN_BITS2).
+ *
+ * Words of r beyond na + nb are not written; when nr > na + nb, zeroing
+ * them is the caller's responsibility.
+ *
+ * @param r the nr-word result; must not alias a or b
+ * @param nr the number of words in r
+ * @param a the na-word first factor
+ * @param na the number of words in a
+ * @param b the nb-word second factor
+ * @param nb the number of words in b
+ */
 void bn_mul_truncated(BN_ULONG *r, int nr, const BN_ULONG *a, int na, const BN_ULONG *b, int nb);
 
 static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)

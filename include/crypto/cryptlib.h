@@ -36,6 +36,15 @@ void ossl_malloc_setup_failures(void);
 int ossl_crypto_alloc_ex_data_intern(int class_index, void *obj,
     CRYPTO_EX_DATA *ad, int idx);
 
+/**
+ * @brief Count the significant bits of a size_t, in constant time.
+ *
+ * The loop runs over every bit of the type regardless of the value.
+ *
+ * @param value the value
+ * @returns the position of the most significant set bit plus one, or 0 for
+ * a value of 0
+ */
 size_t ossl_num_bits(size_t value);
 
 #endif /* OSSL_CRYPTO_CRYPTLIB_H */

@@ -99,36 +99,61 @@ typedef struct ec_params_st {
 __owur int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
     const BIGNUM *x, BN_CTX *ctx);
 
-/*-
- * The OSSL_FN counterpart of ossl_ec_group_do_inverse_ord(): computes
- * res := a^-1 mod order, entirely in OSSL_FN form so a secret operand (the
- * ECDSA nonce) never becomes a BIGNUM.  Dispatches to the method's
- * field_inverse_mod_ord_fn when set (a dedicated constant-time inverse such as
- * nistz256's assembly addition chain), otherwise uses OSSL_FN_mod_inverse_prime()
- * with the group's cached order Montgomery context.
+/**
+ * @brief The OSSL_FN counterpart of ossl_ec_group_do_inverse_ord().
  *
- * Returns 1 on success, 0 on error.
+ * Computes res := a^-1 mod order, entirely in OSSL_FN form so a secret
+ * operand (the ECDSA nonce) never becomes a BIGNUM.  Dispatches to the
+ * method's field_inverse_mod_ord_fn when set (a dedicated constant-time
+ * inverse such as nistz256's assembly addition chain), otherwise uses
+ * OSSL_FN_mod_inverse_prime() with the group's cached order Montgomery
+ * context.
+ *
+ * @param group the group
+ * @param res receives the inverse
+ * @param a the value to invert
+ * @param ctx the arena
+ * @returns 1 on success, 0 on error
  */
 __owur int ossl_ec_group_do_inverse_ord_fn(const EC_GROUP *group, OSSL_FN *res,
     const OSSL_FN *a, OSSL_FN_CTX *ctx);
 
-/*-
- * Computes res := a mod order in constant time, with Montgomery reductions
- * rather than division, so that secret operands can be brought into the
- * group's order Montgomery domain.  |res| must be as wide as the modulus of
- * that context (group->fn_mont_ctx_ord, see OSSL_FN_MONT_CTX_get0_modulus()).
- * ossl_ec_group_fn_reduce_ord_ctx_size() gives the arena it needs.
+/**
+ * @brief Compute res := a mod order in constant time.
  *
- * Returns 1 on success, 0 on error.
+ * Montgomery reductions are used rather than division, so that secret
+ * operands can be brought into the group's order Montgomery domain.
+ *
+ * @param group the group
+ * @param res receives the result; must be as wide as the modulus of the
+ * group's order Montgomery context (see ossl_ec_group_get0_fn_mont_ord() and
+ * OSSL_FN_MONT_CTX_get0_modulus())
+ * @param a the value to reduce, at most twice the width of the order
+ * @param ctx the arena, sized by ossl_ec_group_fn_reduce_ord_ctx_size()
+ * @returns 1 on success, 0 on error
  */
 __owur int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
     const BIGNUM *a, OSSL_FN_CTX *ctx);
+
+/**
+ * @brief Calculate the arena payload size that ossl_ec_group_fn_reduce_ord()
+ * needs.
+ *
+ * @param group the group
+ * @returns the size, or 0 on error or if the group has no order Montgomery
+ * context
+ */
 size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group);
 
-/* The group's cached order Montgomery context, or NULL if it has none */
+/**
+ * @brief Get the group's cached order Montgomery context.
+ *
+ * @param group the group
+ * @returns the context, or NULL if the group has none
+ */
 OSSL_FN_MONT_CTX *ossl_ec_group_get0_fn_mont_ord(const EC_GROUP *group);
 
-/*-
+/**
  * Computes  r := scalar * point,  or  r := scalar * generator  when @p point
  * is NULL, with a secret scalar.
  *
@@ -159,23 +184,35 @@ OSSL_FN_MONT_CTX *ossl_ec_group_get0_fn_mont_ord(const EC_GROUP *group);
  * on one group can amortise by sizing one with EC_POINT_mul_fn_ctx_size() and
  * passing it in.
  *
- * This function returns 1 on success, 0 on error.
+ * @param group the group
+ * @param r receives the result
+ * @param scalar the secret scalar
+ * @param point the point to multiply, or NULL for the generator
+ * @param ctx a caller-owned arena, or NULL to allocate one internally
+ * @returns 1 on success, 0 on error
  */
 __owur int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r,
     const OSSL_FN *scalar, const EC_POINT *point,
     OSSL_FN_CTX *ctx);
 
-/*
+/**
  * Size of the OSSL_FN_CTX that EC_POINT_mul_fn() needs for @p group, for
  * callers that pre-allocate one to reuse.  Follows the OSSL_FN _ctx_size
  * convention: 0 on error, OSSL_FN_CTX_SIZE_NONE if no context is needed.
  * A group that EC_POINT_mul_fn() cannot serve - one over a non-prime field
  * (GF(2^m)) - has no OSSL_FN path and likewise yields 0.
+ *
+ * @param group the group
+ * @param r the result point
+ * @param scalar the scalar
+ * @param point the point, or NULL for the generator
+ * @returns the size, OSSL_FN_CTX_SIZE_NONE if no context is needed, or 0 on
+ * error
  */
 __owur size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
     const OSSL_FN *scalar, const EC_POINT *point);
 
-/*
+/**
  * Write the affine coordinates of @p point as fixed-width big-endian byte
  * strings, in constant time, via the group method's
  * point_get_affine_coords_bytes.  @p x and/or @p y may be NULL to skip that
@@ -184,8 +221,13 @@ __owur size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
  * BIGNUM form, so nothing about their magnitude leaks - this is the extraction
  * path for a secret point (an ECDH shared point, an SM2 kP).
  *
- * Returns 1 on success, 0 on failure, if @p point is at infinity, or if the
- * group's method provides no such operation.
+ * @param group the group
+ * @param point the point
+ * @param x receives len bytes of the x coordinate, or NULL to skip it
+ * @param y receives len bytes of the y coordinate, or NULL to skip it
+ * @param len the width of each non-NULL buffer in bytes
+ * @returns 1 on success, 0 on failure, if point is at infinity, or if the
+ * group's method provides no such operation
  */
 __owur int EC_POINT_get_affine_coords_bytes(const EC_GROUP *group,
     const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len);

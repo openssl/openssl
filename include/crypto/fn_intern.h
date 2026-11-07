@@ -162,131 +162,293 @@ struct ossl_fn_st {
               .fixed = { .dsize = (nlimbs), .d = { __VA_ARGS__ } } \
           }
 
+/**
+ * @brief Set an OSSL_FN from a little-endian array of limbs.
+ *
+ * Limbs of f beyond the given ones are zeroed.
+ *
+ * @param f the destination
+ * @param words the limbs, least significant first
+ * @param limbs the number of limbs in words; must not exceed f's width
+ * @returns 1 on success, 0 on error
+ */
 int ossl_fn_set_words(OSSL_FN *f, const OSSL_FN_ULONG *words, size_t limbs);
+
+/**
+ * @brief Get the limbs of an OSSL_FN.
+ *
+ * @param f the number
+ * @returns a pointer to f's ossl_fn_get_dsize(f) limbs, least significant
+ * first, or NULL if f is NULL
+ */
 const OSSL_FN_ULONG *ossl_fn_get_words(const OSSL_FN *f);
 
+/**
+ * @brief Get the width of an OSSL_FN.
+ *
+ * @param f the number; must not be NULL
+ * @returns the number of limbs
+ */
 size_t ossl_fn_get_dsize(const OSSL_FN *f);
 
-/*
+/**
+ * @brief Get the small-factors constant.
+ *
  * The product of the primes 3..751 (see SP 800-89 5.3.3 step f), the
- * small-factors constant used by primality-related key validation.  A
- * read-only view on static constant storage; never NULL, never to be
- * freed, cleared, or written to.
+ * small-factors constant used by primality-related key validation.
+ *
+ * @returns a read-only view on static constant storage; never NULL, never to
+ * be freed, cleared, or written to
  */
 const OSSL_FN *ossl_fn_get0_small_factors(void);
 
+/* doc-exempt: declared only, there is no definition */
 void ossl_fn_set_negative(OSSL_FN *f, bool neg);
 
+/* doc-exempt: declared only, there is no definition */
 bool ossl_fn_is_negative(const OSSL_FN *f);
+
+/**
+ * @brief Tell whether an OSSL_FN was allocated with OSSL_FN_new() or
+ * OSSL_FN_secure_new().
+ *
+ * @param f the number; must not be NULL
+ * @returns true if f was allocated dynamically
+ */
 bool ossl_fn_is_dynamically_allocated(const OSSL_FN *f);
+
+/**
+ * @brief Tell whether an OSSL_FN was allocated with OSSL_FN_secure_new().
+ *
+ * @param f the number; must not be NULL
+ * @returns true if f was allocated in secure memory
+ */
 bool ossl_fn_is_securely_allocated(const OSSL_FN *f);
 
+/**
+ * @brief Unsigned addition of limb arrays of any sizes: r = a + b,
+ * truncated to rl limbs.
+ *
+ * The addition is performed at the precision of the wider operand.  See
+ * crypto/fn/fn_addsub.c for the full carry contract.
+ *
+ * @param r the rl-limb result
+ * @param rl the number of limbs in r
+ * @param a the al-limb first addend
+ * @param al the number of limbs in a
+ * @param b the bl-limb second addend
+ * @param bl the number of limbs in b
+ * @returns the carry out of max(al, bl) limbs when rl <= max(al, bl);
+ * otherwise the carry is absorbed into r and 0 is returned
+ */
 OSSL_FN_ULONG ossl_fn_add_words(OSSL_FN_ULONG *r, size_t rl,
     const OSSL_FN_ULONG *a, size_t al,
     const OSSL_FN_ULONG *b, size_t bl);
+
+/**
+ * @brief Unsigned subtraction of limb arrays of any sizes: r = a - b,
+ * truncated to rl limbs.
+ *
+ * The subtraction is performed at the precision of the wider operand.  See
+ * crypto/fn/fn_addsub.c for the full borrow contract.
+ *
+ * @param r the rl-limb result
+ * @param rl the number of limbs in r
+ * @param a the al-limb minuend
+ * @param al the number of limbs in a
+ * @param b the bl-limb subtrahend
+ * @param bl the number of limbs in b
+ * @returns the borrow out of max(al, bl) limbs when rl <= max(al, bl);
+ * otherwise the borrow is propagated through r and the borrow out of rl
+ * limbs is returned
+ */
 OSSL_FN_ULONG ossl_fn_sub_words(OSSL_FN_ULONG *r, size_t rl,
     const OSSL_FN_ULONG *a, size_t al,
     const OSSL_FN_ULONG *b, size_t bl);
 
-/*
- * Generate a DSA/ECDSA nonce 0 <= out < range, hedged against RNG failure.
+/**
+ * @brief Generate a DSA/ECDSA nonce 0 <= out < range, hedged against RNG
+ * failure.
+ *
  * The nonce mixes in |priv| and |message| alongside fresh random bytes, so an
  * RNG weakness is not fatal as long as |priv| stays secret.  This is the
- * OSSL_FN analogue of ossl_bn_gen_dsa_nonce_fixed_top(); |out| must be sized to
- * hold at least num_bits(|range|) bits.  |libctx| is used to fetch the digest
- * and for RNG access.  Returns 1 on success, 0 on error.
+ * OSSL_FN analogue of ossl_bn_gen_dsa_nonce_fixed_top().
+ *
+ * @param out receives the nonce; must hold at least num_bits(range) bits
+ * @param range the exclusive upper bound
+ * @param priv the private key
+ * @param message the message
+ * @param message_len the length of message in bytes
+ * @param libctx used to fetch the digest and for RNG access
+ * @returns 1 on success, 0 on error
  */
 int ossl_fn_gen_dsa_nonce(OSSL_FN *out, const OSSL_FN *range,
     const OSSL_FN *priv, const unsigned char *message,
     size_t message_len, OSSL_LIB_CTX *libctx);
 
-/*
- * Miller-Rabin probabilistic primality test (FIPS 186-4 C.3.1, or the
- * enhanced variant C.3.2 when |enhanced| is nonzero).  |status| returns
- * the primality verdict (a BN_PRIMETEST_* code).  Returns 1 on success
- * (|status| is set), 0 on error.
+/**
+ * @brief Miller-Rabin probabilistic primality test (FIPS 186-4 C.3.1, or the
+ * enhanced variant C.3.2).
+ *
+ * @param w the candidate
+ * @param iterations the number of rounds
+ * @param ctx the arena, sized by ossl_fn_miller_rabin_is_prime_ctx_size()
+ * @param cb the progress callback, or NULL
+ * @param enhanced nonzero for the enhanced variant (C.3.2)
+ * @param status receives the primality verdict (a BN_PRIMETEST_* code)
+ * @param libctx the library context, for RNG access
+ * @returns 1 on success (|status| is set), 0 on error
  */
 int ossl_fn_miller_rabin_is_prime(const OSSL_FN *w, int iterations,
     OSSL_FN_CTX *ctx, BN_GENCB *cb, int enhanced, int *status,
     OSSL_LIB_CTX *libctx);
 
-/*
- * Calculate the arena payload size that ossl_fn_miller_rabin_is_prime()
- * needs for a candidate of width |w|->dsize.  |w| may be a width-only
- * model: the nested sizing functions inspect widths only.  Returns 0 on
- * arithmetic overflow or invalid input.
+/**
+ * @brief Calculate the arena payload size that
+ * ossl_fn_miller_rabin_is_prime() needs.
+ *
+ * @param w the candidate, or a width-only model of it: the nested sizing
+ * functions inspect widths only
+ * @returns the size, or 0 on arithmetic overflow or invalid input
  */
 size_t ossl_fn_miller_rabin_is_prime_ctx_size(const OSSL_FN *w);
 
-/*
- * Test whether |w| is probably prime, clamping |checks| to a minimum
- * round count based on the candidate's width.  When |do_trial_division|
- * is nonzero, small factors are weeded out first.  Returns 1 when probably
- * prime, 0 when composite, -1 on error.
+/**
+ * @brief Test whether a number is probably prime.
+ *
+ * @param w the candidate
+ * @param checks the number of Miller-Rabin rounds, clamped to a minimum
+ * based on the candidate's size
+ * @param ctx the arena, sized by ossl_fn_check_prime_ctx_size()
+ * @param do_trial_division nonzero to weed out small factors first
+ * @param cb the progress callback, or NULL
+ * @param libctx the library context, for RNG access
+ * @returns 1 when probably prime, 0 when composite, -1 on error
  */
 int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
 
-/*
- * Calculate the arena payload size that ossl_fn_check_prime() needs for a
- * candidate of width |w|->dsize.  Returns 0 on arithmetic overflow or
- * invalid input.
+/**
+ * @brief Calculate the arena payload size that ossl_fn_check_prime() needs.
+ *
+ * @param w the candidate; only its width is used
+ * @returns the size, or 0 on arithmetic overflow or invalid input
  */
 size_t ossl_fn_check_prime_ctx_size(const OSSL_FN *w);
 
-/*
- * Test whether |w| is probably prime, for key generation.  Always
- * trial-divides; |checks| is used unclamped.  Returns 1 when probably
- * prime, 0 when composite, -1 on error.
+/**
+ * @brief Test whether a number is probably prime, for key generation.
+ *
+ * Always trial-divides.
+ *
+ * @param w the candidate
+ * @param checks the number of Miller-Rabin rounds, used unclamped
+ * @param ctx the arena, sized by ossl_fn_check_generated_prime_ctx_size()
+ * @param cb the progress callback, or NULL
+ * @param libctx the library context, for RNG access
+ * @returns 1 when probably prime, 0 when composite, -1 on error
  */
 int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
     OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
 
-/*
- * Calculate the arena payload size that ossl_fn_check_generated_prime()
- * needs for a candidate of width |w|->dsize.  Returns 0 on arithmetic
- * overflow or invalid input.
+/**
+ * @brief Calculate the arena payload size that
+ * ossl_fn_check_generated_prime() needs.
+ *
+ * @param w the candidate; only its width is used
+ * @returns the size, or 0 on arithmetic overflow or invalid input
  */
 size_t ossl_fn_check_generated_prime_ctx_size(const OSSL_FN *w);
 
-/*
- * Generate a probable prime (an RSA p or q candidate) per FIPS 186-5
- * A.1.6 (Steps 4 & 5), optionally enforcing |p| congruent to |c| mod 8.
+/**
+ * @brief Generate a probable prime (an RSA p or q candidate) per FIPS 186-5
+ * A.1.6 (Steps 4 & 5).
+ *
  * |p| and |Xpout| must have room for nlen/2 bits; one limb of headroom
  * over that width lets a carry past the width be detected rather than
  * truncated.  Internally generated auxiliary primes and random draws
- * that are not returned are cleared.  Returns 1 on success, 0 on error.
+ * that are not returned are cleared.
+ *
+ * @param p receives the prime
+ * @param Xpout receives the random value the prime was derived from
+ * @param p1 receives the first auxiliary prime, or NULL
+ * @param p2 receives the second auxiliary prime, or NULL
+ * @param Xp the starting random value, or NULL to generate one
+ * @param Xp1 the starting value for the first auxiliary prime, or NULL to
+ * generate one
+ * @param Xp2 the starting value for the second auxiliary prime, or NULL to
+ * generate one
+ * @param nlen the modulus size in bits
+ * @param e the public exponent
+ * @param ctx the arena, sized by
+ * ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size()
+ * @param cb the progress callback, or NULL
+ * @param c when nonzero, p is made congruent to c mod 8
+ * @param libctx the library context, for RNG access
+ * @returns 1 on success, 0 on error
  */
 int ossl_fn_rsa_fips186_5_gen_prob_primes(OSSL_FN *p, OSSL_FN *Xpout,
     OSSL_FN *p1, OSSL_FN *p2, const OSSL_FN *Xp, const OSSL_FN *Xp1,
     const OSSL_FN *Xp2, int nlen, const OSSL_FN *e, OSSL_FN_CTX *ctx,
     BN_GENCB *cb, uint32_t c, OSSL_LIB_CTX *libctx);
 
-/*
- * Calculate the arena payload size that
- * ossl_fn_rsa_fips186_5_gen_prob_primes() needs.  |p1|, |p2|, |Xp1|
- * and |Xp2| may be NULL, as for the operation.  Returns 0 on
- * arithmetic overflow or invalid input.
+/**
+ * @brief Calculate the arena payload size that
+ * ossl_fn_rsa_fips186_5_gen_prob_primes() needs.
+ *
+ * The arguments are those of the operation; |p1|, |p2|, |Xp1| and |Xp2| may
+ * be NULL, as for the operation.
+ *
+ * @param p the prime
+ * @param Xpout the random value the prime is derived from
+ * @param p1 the first auxiliary prime, or NULL
+ * @param p2 the second auxiliary prime, or NULL
+ * @param Xp1 the starting value for the first auxiliary prime, or NULL
+ * @param Xp2 the starting value for the second auxiliary prime, or NULL
+ * @param nlen the modulus size in bits
+ * @param e the public exponent
+ * @returns the size, or 0 on arithmetic overflow or invalid input
  */
 size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(const OSSL_FN *p,
     const OSSL_FN *Xpout, const OSSL_FN *p1, const OSSL_FN *p2,
     const OSSL_FN *Xp1, const OSSL_FN *Xp2, int nlen, const OSSL_FN *e);
 
-/*
- * Generate a probable prime factor per FIPS 186-5 B.9 from two
- * auxiliary primes using the Chinese Remainder Theorem.  Same width
- * contract as ossl_fn_rsa_fips186_5_gen_prob_primes().  Returns 1 on
- * success, 0 on error.
+/**
+ * @brief Generate a probable prime factor per FIPS 186-5 B.9 from two
+ * auxiliary primes using the Chinese Remainder Theorem.
+ *
+ * Same width contract as ossl_fn_rsa_fips186_5_gen_prob_primes().
+ *
+ * @param Y receives the prime
+ * @param X receives the random value the prime was derived from
+ * @param Xin the starting random value, or NULL to generate one
+ * @param r1 the first auxiliary prime
+ * @param r2 the second auxiliary prime
+ * @param nlen the modulus size in bits
+ * @param e the public exponent
+ * @param ctx the arena, sized by
+ * ossl_fn_rsa_fips186_5_derive_prime_ctx_size()
+ * @param cb the progress callback, or NULL
+ * @param c when nonzero, Y is made congruent to c mod 8
+ * @param libctx the library context, for RNG access
+ * @returns 1 on success, 0 on error
  */
 int ossl_fn_rsa_fips186_5_derive_prime(OSSL_FN *Y, OSSL_FN *X,
     const OSSL_FN *Xin, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
     const OSSL_FN *e, OSSL_FN_CTX *ctx, BN_GENCB *cb, uint32_t c,
     OSSL_LIB_CTX *libctx);
 
-/*
- * Calculate the arena payload size that
- * ossl_fn_rsa_fips186_5_derive_prime() needs.  Returns 0 on
- * arithmetic overflow or invalid input.
+/**
+ * @brief Calculate the arena payload size that
+ * ossl_fn_rsa_fips186_5_derive_prime() needs.
+ *
+ * @param Y the prime
+ * @param X the random value the prime is derived from
+ * @param r1 the first auxiliary prime
+ * @param r2 the second auxiliary prime
+ * @param nlen the modulus size in bits
+ * @param e the public exponent
+ * @returns the size, or 0 on arithmetic overflow or invalid input
  */
 size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size(const OSSL_FN *Y,
     const OSSL_FN *X, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
