@@ -256,9 +256,10 @@ err:
  * default method's BIGNUM -> OSSL_FN conversion happens; see
  * dh_ossl_fn_mod_exp() above.
  *
- * On s390x, the hardware accelerated s390x_mod_exp_hw() is tried first
- * and the OSSL_FN path serves as its fallback, mirroring the role
- * BN_mod_exp_mont() had before.
+ * On s390x, the hardware accelerated s390x_mod_exp_hw() is tried first.
+ * When it asks for the software fallback (returns -1), the OSSL_FN path
+ * takes over, mirroring the role BN_mod_exp_mont() had before; its
+ * success or failure is returned as is.
  *
  * Keeping the OSSL_FN conversion behind this hook means surgical
  * overrides (DH_meth_set_bn_mod_exp()) keep being honored by the default
@@ -269,8 +270,10 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
 #ifdef S390X_MOD_EXP
-    if (s390x_mod_exp_hw(r, a, p, m))
-        return 1;
+    int rc = s390x_mod_exp_hw(r, a, p, m);
+
+    if (rc >= 0)
+        return rc;
 #endif
     return dh_ossl_fn_mod_exp(dh, r, a, p, m);
 }

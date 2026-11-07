@@ -181,7 +181,17 @@ extern const BIGNUM ossl_bn_inv_sqrt_2;
 
 int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-/* Hardware acceleration only, no software fallback */
+/**
+ * @brief Compute |r| = |a|^|p| mod |m| on the crypto card, without a
+ * software fallback.
+ *
+ * @param r the result
+ * @param a the base
+ * @param p the exponent
+ * @param m the modulus
+ * @returns 1 on success, 0 on failure, and -1 to tell the caller to use
+ * its software fallback
+ */
 int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m);
 int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
