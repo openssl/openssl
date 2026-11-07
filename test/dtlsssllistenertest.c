@@ -20,6 +20,7 @@
  *   - SSL_poll()
  */
 
+#include <errno.h>
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
@@ -6733,6 +6734,7 @@ end:
 struct failing_send_data {
     int fails_remaining; /* sends still to be rejected */
     int sends; /* sends attempted through the filter */
+    int fatal_errno; /* if non-zero, rejected sends fail with this errno */
 };
 
 static long failing_send_ctrl(BIO *bio, int cmd, long num, void *ptr)
@@ -6767,6 +6769,11 @@ static int failing_send_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     if (data->fails_remaining > 0) {
         data->fails_remaining--;
         *msgs_processed = 0;
+        if (data->fatal_errno != 0) {
+            /* A system error BIO_err_is_non_fatal() does not accept. */
+            ERR_raise(ERR_LIB_SYS, data->fatal_errno);
+            return 0;
+        }
         /*
          * BIO_err_is_non_fatal() accepts this, so the record layer treats the
          * send as one to be attempted again rather than as an error.
@@ -6776,6 +6783,30 @@ static int failing_send_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     }
 
     return BIO_sendmmsg(next, msg, stride, num_msg, flags, msgs_processed);
+}
+
+/*
+ * The receive counterpart of the above, used to make the listener's own
+ * receive fail. A non-fatal rejection is not distinguished here: fatal_errno
+ * must be set.
+ */
+static int failing_send_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
+{
+    struct failing_send_data *data = BIO_get_data(bio);
+    BIO *next = BIO_next(bio);
+
+    if (data == NULL || next == NULL)
+        return 0;
+
+    if (data->fails_remaining > 0 && data->fatal_errno != 0) {
+        data->fails_remaining--;
+        *msgs_processed = 0;
+        ERR_raise(ERR_LIB_SYS, data->fatal_errno);
+        return 0;
+    }
+
+    return BIO_recvmmsg(next, msg, stride, num_msg, flags, msgs_processed);
 }
 
 /* Choose a sufficiently large type likely to be unused for this custom BIO */
@@ -6792,7 +6823,9 @@ static const BIO_METHOD *bio_f_failing_send_filter(void)
         if (method_failing_send == NULL
             || !BIO_meth_set_ctrl(method_failing_send, failing_send_ctrl)
             || !BIO_meth_set_sendmmsg(method_failing_send,
-                failing_send_sendmmsg))
+                failing_send_sendmmsg)
+            || !BIO_meth_set_recvmmsg(method_failing_send,
+                failing_send_recvmmsg))
             return NULL;
     }
     return method_failing_send;
@@ -6916,6 +6949,706 @@ end:
     SSL_CTX_free(cctx);
     BIO_meth_free(method_failing_send);
     method_failing_send = NULL;
+    return testresult;
+}
+
+/*
+ * Create a DTLS listener and accept a connection from a client, leaving the
+ * handshake on the accepted connection unfinished. If data is not NULL, the
+ * filter BIO is placed in front of the listener's writes, passing everything
+ * through until the test sets data->fails_remaining.
+ *
+ * The caller frees whatever has been returned, whether or not this succeeds.
+ */
+static int accept_mem_listener_conn(SSL_CTX *sctx, SSL_CTX *cctx,
+    struct failing_send_data *data, SSL **listener, SSL **clientssl,
+    SSL **serverssl, BIO_ADDR **client_addr)
+{
+    BIO *sockbio = NULL, *filter = NULL;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int retc, err_code, abortctr = 0;
+
+    *serverssl = NULL;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD, listener, clientssl,
+            client_addr)))
+        return 0;
+
+    if (data != NULL) {
+        /* Filter the listener's writes only, as test_dtls_blocking_write does. */
+        if (!TEST_ptr(sockbio = SSL_get_wbio(*listener))
+            || !TEST_ptr(filter = BIO_new(bio_f_failing_send_filter())))
+            return 0;
+
+        BIO_set_data(filter, data);
+        BIO_set_init(filter, 1);
+
+        if (!TEST_true(BIO_up_ref(sockbio))) {
+            BIO_free(filter);
+            return 0;
+        }
+
+        BIO_push(filter, sockbio);
+        SSL_set0_wbio(*listener, filter);
+    }
+
+    SSL_set_connect_state(*clientssl);
+    while (*serverssl == NULL) {
+        if (!TEST_int_lt(++abortctr, 100))
+            return 0;
+
+        retc = SSL_connect(*clientssl);
+        err_code = SSL_get_error(*clientssl, retc);
+        if (retc <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err_code);
+            return 0;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = *listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+                &poll_timeout, 0, &poll_result)))
+            return 0;
+
+        if ((poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            *serverssl = SSL_accept_connection(*listener,
+                SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    return TEST_ptr(*serverssl);
+}
+
+/*
+ * As accept_mem_listener_conn(), then complete the handshake.
+ */
+static int create_mem_listener_conn(SSL_CTX *sctx, SSL_CTX *cctx,
+    struct failing_send_data *data, SSL **listener, SSL **clientssl,
+    SSL **serverssl, BIO_ADDR **client_addr)
+{
+    return TEST_true(accept_mem_listener_conn(sctx, cctx, data, listener,
+               clientssl, serverssl, client_addr))
+        && TEST_true(create_ssl_connection(*serverssl, *clientssl,
+            SSL_ERROR_NONE));
+}
+
+/*
+ * Test that a write on a non-blocking listener connection reports a transient
+ * send failure as SSL_ERROR_WANT_WRITE, not SSL_ERROR_SYSCALL.
+ *
+ * The filter BIO rejects one send as non-fatal, as a full socket buffer would.
+ * The error queue must stay empty, and repeating the write must succeed.
+ *
+ * idx 0 runs with DTLS 1.2, idx 1 with DTLS 1.3.
+ */
+static int test_dtls_nonblocking_write_retry(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    struct failing_send_data data;
+    int testresult = 0;
+    char buf[256];
+    size_t written = 0, readbytes = 0;
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
+    int ret;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (idx == 1)
+        return TEST_skip("DTLS 1.3 disabled");
+#endif
+
+    memset(&data, 0, sizeof(data));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version, &sctx, &cctx,
+            cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_mem_listener_conn(sctx, cctx, &data, &listener,
+            &clientssl, &serverssl, &client_addr)))
+        goto end;
+
+    /* The connection stays non-blocking. Reject the next send only. */
+    if (!TEST_int_eq(SSL_get_blocking_mode(serverssl), 0))
+        goto end;
+
+    data.sends = 0;
+    data.fails_remaining = 1;
+    ERR_clear_error();
+
+    ret = SSL_write_ex(serverssl, "msg", 3, &written);
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_WRITE)
+        || !TEST_ulong_eq(ERR_peek_error(), 0)
+        || !TEST_int_eq(data.fails_remaining, 0)
+        || !TEST_true(SSL_net_write_desired(serverssl)))
+        goto end;
+
+    /* The same write, repeated, now goes through. */
+    if (!TEST_true(SSL_write_ex(serverssl, "msg", 3, &written))
+        || !TEST_size_t_eq(written, 3)
+        || !TEST_false(SSL_net_write_desired(serverssl)))
+        goto end;
+
+    if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, "msg", 3))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_meth_free(method_failing_send);
+    method_failing_send = NULL;
+    return testresult;
+}
+
+/*
+ * Test that a permanent send failure on a non-blocking listener connection is
+ * still reported as fatal, not as SSL_ERROR_WANT_WRITE, so that reporting
+ * a transient failure as retryable does not hide a real one.
+ *
+ * The filter BIO rejects one send with a system error which is not transient.
+ */
+static int test_dtls_nonblocking_write_fatal(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    struct failing_send_data data;
+    int testresult = 0;
+    size_t written = 0;
+    int ret, err;
+
+    memset(&data, 0, sizeof(data));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_mem_listener_conn(sctx, cctx, &data, &listener,
+            &clientssl, &serverssl, &client_addr)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_get_blocking_mode(serverssl), 0))
+        goto end;
+
+    data.sends = 0;
+    data.fails_remaining = 1;
+    data.fatal_errno = EIO;
+    ERR_clear_error();
+
+    ret = SSL_write_ex(serverssl, "msg", 3, &written);
+    err = SSL_get_error(serverssl, ret);
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_eq(err, SSL_ERROR_SYSCALL)
+        || !TEST_int_eq(data.fails_remaining, 0)
+        || !TEST_ulong_ne(ERR_peek_error(), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_meth_free(method_failing_send);
+    method_failing_send = NULL;
+    return testresult;
+}
+
+/*
+ * As above, but with the transient failure produced by a real full send
+ * buffer: the client never reads.
+ *
+ * idx 0 runs with DTLS 1.2, idx 1 with DTLS 1.3.
+ */
+static int test_dtls_nonblocking_write_dgram_pair_full(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    size_t written = 0, readbytes = 0;
+    unsigned char payload[1000], buf[2048];
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
+    int testresult = 0;
+    int i, ret = 1;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (idx == 1)
+        return TEST_skip("DTLS 1.3 disabled");
+#endif
+
+    memset(payload, 'x', sizeof(payload));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version, &sctx, &cctx,
+            cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_mem_listener_conn(sctx, cctx, NULL, &listener,
+            &clientssl, &serverssl, &client_addr)))
+        goto end;
+
+    /* The client never reads, so the pair's buffer eventually fills. */
+    ERR_clear_error();
+    for (i = 0; i < 100; i++) {
+        ret = SSL_write_ex(serverssl, payload, sizeof(payload), &written);
+        if (ret != 1)
+            break;
+    }
+
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_gt(i, 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_WRITE)
+        || !TEST_ulong_eq(ERR_peek_error(), 0)
+        || !TEST_true(SSL_net_write_desired(serverssl)))
+        goto end;
+
+    /* Once the client reads, the same write succeeds. */
+    while ((ret = SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) == 1)
+        continue;
+
+    if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The retry must use the same data and length as the write which reported
+     * SSL_ERROR_WANT_WRITE, so the payload is left unchanged.
+     */
+    if (!TEST_true(SSL_write_ex(serverssl, payload, sizeof(payload), &written))
+        || !TEST_size_t_eq(written, sizeof(payload)))
+        goto end;
+
+    /* The retried payload is delivered. */
+    if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, payload, sizeof(payload)))
+        goto end;
+
+    /* A later write with new contents shows the connection is still usable. */
+    memset(payload, 'y', sizeof(payload));
+    if (!TEST_true(SSL_write_ex(serverssl, payload, sizeof(payload), &written))
+        || !TEST_size_t_eq(written, sizeof(payload))
+        || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, payload, sizeof(payload)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Put a failing-send filter on top of base, which the filter takes a reference
+ * to. Returns the filter, or NULL.
+ */
+static BIO *push_failing_filter(BIO *base, struct failing_send_data *data)
+{
+    BIO *filter;
+
+    if (!TEST_ptr(filter = BIO_new(bio_f_failing_send_filter())))
+        return NULL;
+
+    BIO_set_data(filter, data);
+    BIO_set_init(filter, 1);
+
+    if (!TEST_true(BIO_up_ref(base))) {
+        BIO_free(filter);
+        return NULL;
+    }
+
+    BIO_push(filter, base);
+    return filter;
+}
+
+#ifndef OPENSSL_NO_DTLS1_2
+/*
+ * Test how a send failure while the handshake is being flushed is reported on
+ * a non-blocking listener connection.
+ *
+ * The handshake flights are written through the buffering BIO, which sends
+ * when it is flushed, so these sends do not take the record layer's handling of
+ * a failed send and a failure is not recorded in error_state. Neither a
+ * transient failure nor a permanent one may be reported as
+ * SSL_ERROR_WANT_WRITE: both are SSL_ERROR_SYSCALL.
+ *
+ * Bit 0 of idx selects a permanent failure (EIO) over a transient one. Bit 1
+ * removes the session ticket, so that the final flight is the change cipher
+ * spec and Finished alone and its only send is the flush after Finished.
+ * Otherwise the failure falls in the flush made part way through writing the
+ * flight, when the next fragment does not fit in the MTU.
+ */
+static int test_dtls_nonblocking_handshake_flush_failure(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    struct failing_send_data data;
+    int testresult = 0;
+    int ret = 0, err = 0, i;
+
+    memset(&data, 0, sizeof(data));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, DTLS1_2_VERSION, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if ((idx & 2) != 0)
+        SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
+
+    if (!TEST_true(accept_mem_listener_conn(sctx, cctx, &data, &listener,
+            &clientssl, &serverssl, &client_addr)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_get_blocking_mode(serverssl), 0))
+        goto end;
+
+    /*
+     * The server's first flight has already been sent. Reject its next send,
+     * which in DTLS 1.2 is the final flight, written when the buffering BIO is
+     * flushed after the client's Finished arrives.
+     */
+    data.sends = 0;
+    data.fails_remaining = 1;
+    data.fatal_errno = (idx & 1) != 0 ? EIO : 0;
+    ERR_clear_error();
+
+    for (i = 0; i < 10 && data.fails_remaining > 0; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_false(ret <= 0
+                && SSL_get_error(clientssl, ret) != SSL_ERROR_WANT_READ
+                && SSL_get_error(clientssl, ret) != SSL_ERROR_WANT_WRITE))
+            goto end;
+
+        ret = SSL_do_handshake(serverssl);
+        err = SSL_get_error(serverssl, ret);
+        if (data.fails_remaining > 0
+            && !TEST_int_eq(err, SSL_ERROR_WANT_READ))
+            goto end;
+    }
+
+    if (!TEST_int_eq(data.fails_remaining, 0)
+        || !TEST_int_le(ret, 0)
+        || !TEST_int_eq(err, SSL_ERROR_SYSCALL))
+        goto end;
+
+    /* Confirm the send which failed was the one after Finished. */
+    if ((idx & 2) != 0
+        && !TEST_int_eq(SSL_get_state(serverssl), TLS_ST_SW_FINISHED))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_meth_free(method_failing_send);
+    method_failing_send = NULL;
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_2 */
+
+/*
+ * Test that a write on a blocking listener connection is not reported as
+ * SSL_ERROR_WANT_WRITE when the wait for the socket cannot be performed because
+ * the listener has failed.
+ *
+ * A blocking connection which gets a transient send failure waits and sends
+ * again, so it never reports a retry. If the wait fails, the write must not
+ * ask the application to retry as if it had been a non-blocking one: the
+ * listener is gone, so retrying would never succeed.
+ *
+ * Blocking mode needs a network BIO with a socket descriptor, so this test
+ * uses a real UDP socket, but it never waits on it: the listener's receive is
+ * made to fail first, so the wait fails at once.
+ */
+static int test_dtls_blocking_write_listener_failed(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO *filter = NULL;
+    struct failing_send_data send_data, recv_data;
+    int server_fd = -1, client_fd = -1;
+    int testresult = 0;
+    size_t written = 0;
+    int ret, err;
+
+    memset(&send_data, 0, sizeof(send_data));
+    memset(&recv_data, 0, sizeof(recv_data));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey)))
+        goto end;
+
+    if (!TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    /* One filter for each direction of the listener's socket. */
+    if (!TEST_ptr(filter = push_failing_filter(SSL_get_wbio(listener),
+                      &send_data)))
+        goto end;
+    SSL_set0_wbio(listener, filter);
+
+    if (!TEST_ptr(filter = push_failing_filter(SSL_get_rbio(listener),
+                      &recv_data)))
+        goto end;
+    SSL_set0_rbio(listener, filter);
+    filter = NULL;
+
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr, &clientssl,
+            &client_fd)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_true(SSL_set_blocking_mode(serverssl, 1))
+        || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 1))
+        goto end;
+
+    /*
+     * Fail the listener's receive permanently. Accepting ticks the listener,
+     * which receives from the socket and so finds the failure.
+     */
+    recv_data.fatal_errno = EIO;
+    recv_data.fails_remaining = 1;
+    if (!TEST_ptr_null(SSL_accept_connection(listener,
+            SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_int_eq(recv_data.fails_remaining, 0))
+        goto end;
+    ERR_clear_error();
+
+    /* Now reject one send as transient. A working listener would resend. */
+    send_data.fails_remaining = 1;
+
+    ret = SSL_write_ex(serverssl, "msg", 3, &written);
+    err = SSL_get_error(serverssl, ret);
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_ne(err, SSL_ERROR_WANT_WRITE)
+        || !TEST_int_ne(err, SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(send_data.fails_remaining, 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_meth_free(method_failing_send);
+    method_failing_send = NULL;
+    return testresult;
+}
+
+/*
+ * Test that a transient send failure on one listener connection does not
+ * change what another connection of the same listener reports.
+ *
+ * All connections send through the listener's one network BIO, so a retry
+ * flag kept on it would be seen by both. The filter BIO rejects a single send
+ * as non-fatal: the connection which makes it must report SSL_ERROR_WANT_WRITE,
+ * the other one must not, and a write on each must then be delivered.
+ *
+ * This uses real UDP sockets, as a datagram pair has only one peer.
+ *
+ * idx 0 runs with DTLS 1.2, idx 1 with DTLS 1.3.
+ */
+static int test_dtls_nonblocking_write_retry_two_conns(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client[2] = { NULL, NULL };
+    SSL *server[2] = { NULL, NULL };
+    BIO_ADDR *server_addr = NULL;
+    BIO *filter = NULL;
+    struct failing_send_data data;
+    int server_fd = -1, client_fd[2] = { -1, -1 };
+    int testresult = 0;
+    size_t written = 0, readbytes = 0, i;
+    char buf[16];
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
+    int ret;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (idx == 1)
+        return TEST_skip("DTLS 1.3 disabled");
+#endif
+
+    memset(&data, 0, sizeof(data));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version, &sctx, &cctx,
+            cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    if (!TEST_ptr(filter = push_failing_filter(SSL_get_wbio(listener), &data)))
+        goto end;
+    SSL_set0_wbio(listener, filter);
+
+    for (i = 0; i < OSSL_NELEM(client); i++) {
+        if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+                &client[i], &client_fd[i]))
+            || !TEST_true(drive_until_connection_queued(listener, client[i]))
+            || !TEST_ptr(server[i] = SSL_accept_connection(listener,
+                             SSL_ACCEPT_CONNECTION_NO_BLOCK))
+            || !TEST_true(create_ssl_connection(server[i], client[i],
+                SSL_ERROR_NONE)))
+            goto end;
+    }
+
+    /* Reject the next send, which is the first connection's. */
+    data.fails_remaining = 1;
+    ERR_clear_error();
+
+    ret = SSL_write_ex(server[0], "one", 3, &written);
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_eq(SSL_get_error(server[0], ret), SSL_ERROR_WANT_WRITE)
+        || !TEST_true(SSL_net_write_desired(server[0])))
+        goto end;
+
+    /* The other connection is unaffected, and sends. */
+    if (!TEST_true(SSL_write_ex(server[1], "two", 3, &written))
+        || !TEST_size_t_eq(written, 3)
+        || !TEST_false(SSL_net_write_desired(server[1])))
+        goto end;
+
+    /* The first connection's retry now goes through. */
+    if (!TEST_true(SSL_write_ex(server[0], "one", 3, &written))
+        || !TEST_size_t_eq(written, 3)
+        || !TEST_false(SSL_net_write_desired(server[0])))
+        goto end;
+
+    if (!TEST_true(dtls_read_with_retry(client[0], buf, sizeof(buf),
+            &readbytes))
+        || !TEST_mem_eq(buf, readbytes, "one", 3)
+        || !TEST_true(dtls_read_with_retry(client[1], buf, sizeof(buf),
+            &readbytes))
+        || !TEST_mem_eq(buf, readbytes, "two", 3))
+        goto end;
+
+    testresult = 1;
+end:
+    for (i = 0; i < OSSL_NELEM(client); i++) {
+        SSL_free(server[i]);
+        SSL_free(client[i]);
+        if (client_fd[i] >= 0)
+            BIO_closesocket(client_fd[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_meth_free(method_failing_send);
+    method_failing_send = NULL;
+    return testresult;
+}
+
+/*
+ * Read side counterpart of the write retry tests: a read on a non-blocking
+ * listener connection with nothing to read must report SSL_ERROR_WANT_READ
+ * with an empty error queue, and succeed once the client has sent something.
+ *
+ * Listener connections have no read BIO of their own, so this depends on
+ * SSL_get_error() reporting a missing read BIO on such a connection as
+ * SSL_ERROR_WANT_READ.
+ */
+static int test_dtls_nonblocking_read_retry(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    char buf[256];
+    size_t written = 0, readbytes = 0;
+    int ret;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_mem_listener_conn(sctx, cctx, NULL, &listener,
+            &clientssl, &serverssl, &client_addr)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_get_blocking_mode(serverssl), 0))
+        goto end;
+
+    ERR_clear_error();
+    ret = SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes);
+    if (!TEST_int_eq(ret, 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ)
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto end;
+
+    /* The same read, repeated after the client sends, now goes through. */
+    if (!TEST_true(SSL_write_ex(clientssl, "msg", 3, &written))
+        || !TEST_size_t_eq(written, 3)
+        || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, "msg", 3))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
     return testresult;
 }
 
@@ -8554,6 +9287,15 @@ int setup_tests(void)
     ADD_TEST(test_dtls_blocking_mode_failed_set_is_inert);
     ADD_TEST(test_dtls_accept_wait_requires_mode_and_flag);
     ADD_TEST(test_dtls_blocking_write);
+    ADD_ALL_TESTS(test_dtls_nonblocking_write_retry, 2);
+    ADD_TEST(test_dtls_nonblocking_write_fatal);
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_ALL_TESTS(test_dtls_nonblocking_handshake_flush_failure, 4);
+#endif
+    ADD_ALL_TESTS(test_dtls_nonblocking_write_dgram_pair_full, 2);
+    ADD_TEST(test_dtls_nonblocking_read_retry);
+    ADD_TEST(test_dtls_blocking_write_listener_failed);
+    ADD_ALL_TESTS(test_dtls_nonblocking_write_retry_two_conns, 2);
 
     /* SSL object ownership tests (run with ASAN to detect leaks/double-frees) */
     ADD_TEST(test_ssl_ownership_pending_conn_leak);

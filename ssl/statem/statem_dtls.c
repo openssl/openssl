@@ -259,6 +259,35 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
     while (s->init_num > 0) {
         unsigned char *msgstart;
 
+        used_len = BIO_wpending(s->wbio) + overhead;
+        if (s->d1->mtu > used_len)
+            curr_mtu = s->d1->mtu - used_len;
+        else
+            curr_mtu = 0;
+
+        if (curr_mtu < min_len) {
+            /*
+             * grr.. we could get an error if MTU picked was wrong
+             */
+            ret = BIO_flush(s->wbio);
+            if (ret <= 0) {
+                s->rwstate = SSL_WRITING;
+                return ret;
+            }
+            if (s->d1->mtu >= overhead + min_len) {
+                curr_mtu = s->d1->mtu - overhead;
+            } else {
+                /* Shouldn't happen */
+                return -1;
+            }
+        }
+
+        /*
+         * This is done after the flush above, not before it. The flush can
+         * fail and ask to be retried, and this function is then called again
+         * for the same fragment, which must find |init_off| and |init_num| as
+         * they were.
+         */
         if (recordtype == SSL3_RT_HANDSHAKE && s->init_off > 0) {
             /*
              * We must be writing a fragment other than the first one
@@ -281,29 +310,6 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              */
             s->init_off -= DTLS1_HM_HEADER_LENGTH;
             s->init_num += DTLS1_HM_HEADER_LENGTH;
-        }
-
-        used_len = BIO_wpending(s->wbio) + overhead;
-        if (s->d1->mtu > used_len)
-            curr_mtu = s->d1->mtu - used_len;
-        else
-            curr_mtu = 0;
-
-        if (curr_mtu < min_len) {
-            /*
-             * grr.. we could get an error if MTU picked was wrong
-             */
-            ret = BIO_flush(s->wbio);
-            if (ret <= 0) {
-                s->rwstate = SSL_WRITING;
-                return ret;
-            }
-            if (s->d1->mtu >= overhead + min_len) {
-                curr_mtu = s->d1->mtu - overhead;
-            } else {
-                /* Shouldn't happen */
-                return -1;
-            }
         }
 
         if (s->init_num > curr_mtu)

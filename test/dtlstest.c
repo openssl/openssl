@@ -2577,6 +2577,129 @@ end:
 }
 #endif /* OPENSSL_NO_DTLS1_3 */
 
+#ifndef OPENSSL_NO_DTLS1_2
+/*
+ * Run a DTLS 1.2 handshake in which the server's write BIO reports a transient
+ * failure, as a full socket buffer does, after |after| operations. The server
+ * must report SSL_ERROR_WANT_WRITE, and repeating the call must go on to
+ * complete the handshake. *retried says whether the failure was reached.
+ *
+ * The server's MTU is small so that its flight is fragmented, and a flush has
+ * to be made part way through writing a handshake message.
+ */
+static int handshake_with_write_retry_after(SSL_CTX *sctx, SSL_CTX *cctx,
+    unsigned int after, int *retried)
+{
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *retry = NULL, *wbio;
+    int testresult = 0, ret, err, i, sdone = 0, cdone = 0;
+
+    *retried = 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    SSL_set_options(serverssl, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_true(SSL_set_mtu(serverssl, 256)))
+        goto end;
+
+    if (!TEST_ptr(retry = BIO_new(bio_s_maybe_retry()))
+        || !TEST_ptr(wbio = SSL_get_wbio(serverssl))
+        || !TEST_true(BIO_up_ref(wbio))) {
+        BIO_free(retry);
+        goto end;
+    }
+    SSL_set0_wbio(serverssl, BIO_push(retry, wbio));
+
+    if (!TEST_long_eq(BIO_ctrl(retry, MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT,
+                          after, NULL),
+            1))
+        goto end;
+
+    for (i = 0; i < 200 && !(cdone && sdone); i++) {
+        if (!cdone) {
+            ret = SSL_connect(clientssl);
+            if (ret == 1) {
+                cdone = 1;
+            } else {
+                err = SSL_get_error(clientssl, ret);
+                if (!TEST_true(err == SSL_ERROR_WANT_READ
+                        || err == SSL_ERROR_WANT_WRITE))
+                    goto end;
+            }
+        }
+        if (!sdone) {
+            ret = SSL_accept(serverssl);
+            if (ret == 1) {
+                sdone = 1;
+            } else {
+                err = SSL_get_error(serverssl, ret);
+                if (err == SSL_ERROR_WANT_WRITE) {
+                    *retried = 1;
+                    /* Let everything through from now on. */
+                    if (!TEST_long_eq(BIO_ctrl(retry,
+                                          MAYBE_RETRY_CTRL_SET_RETRY_AFTER_CNT,
+                                          1000000, NULL),
+                            1))
+                        goto end;
+                } else if (!TEST_int_eq(err, SSL_ERROR_WANT_READ)) {
+                    goto end;
+                }
+            }
+        }
+    }
+
+    testresult = TEST_true(cdone && sdone);
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    return testresult;
+}
+
+/*
+ * Test that a handshake can be resumed after the server's write fails
+ * transiently, wherever in its flights that happens. A flush made between the
+ * fragments of one handshake message must leave the message to be written
+ * again from where it was.
+ *
+ * The failure is moved one operation later each time, until a handshake
+ * completes without reaching it.
+ */
+static int test_dtls_server_handshake_write_retry(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    unsigned int after;
+    int retried = 0, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    for (after = 0; after < 200; after++) {
+        if (!handshake_with_write_retry_after(sctx, cctx, after, &retried)) {
+            TEST_info("Handshake failed with a retry after %u operations",
+                after);
+            goto end;
+        }
+        if (!retried)
+            break;
+    }
+
+    /* The sweep must have exercised retries and then run past the end. */
+    if (!TEST_uint_gt(after, 0) || !TEST_uint_lt(after, 200))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_2 */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -2629,6 +2752,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_client_retransmit);
     ADD_TEST(test_dtls_server_retransmit);
+    ADD_TEST(test_dtls_server_handshake_write_retry);
 #endif
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM) \
     && !defined(OPENSSL_NO_DTLS1_3)
@@ -2643,4 +2767,5 @@ void cleanup_tests(void)
 {
     bio_f_tls_dump_filter_free();
     bio_s_mempacket_test_free();
+    bio_s_maybe_retry_free();
 }
