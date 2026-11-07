@@ -12,6 +12,7 @@ use warnings;
 use lib ".";
 use Getopt::Std;
 use File::Basename;
+use File::Path qw(mkpath);
 use Pod::Html;
 use File::Spec::Functions qw(:DEFAULT rel2abs);
 
@@ -24,12 +25,14 @@ use File::Spec::Functions qw(:DEFAULT rel2abs);
 
 # Options.
 our ($opt_i);    # -i INFILE, one page; without it, pods are read from @ARGV
+                 # and the -f file
 our ($opt_o);    # -o OUTFILE with -i, otherwise the directory to write into
 our ($opt_t);    # -t TITLE, only with -i
 our ($opt_r);    # -r PODROOT
 our ($opt_j);    # -j JOBS, only without -i
+our ($opt_f);    # -f FILE, a file naming more pods, one per line, only without -i
 
-getopts('i:o:t:r:j:');
+getopts('i:o:t:r:j:f:');
 die "-o flag missing" unless $opt_o;
 die "-r flag missing" unless $opt_r;
 
@@ -71,6 +74,7 @@ sub format_page
     $out = rel2abs($out) or die "Can't convert to real path: $!";
 
     unlink $out;
+    mkpath(dirname($out));
 
     pod2html "--infile=$pod",
              "--outfile=$out",
@@ -119,7 +123,18 @@ sub page_of
     return ("$opt_o/man$section/$name.html", $name);
 }
 
+# The pods come from the command line and from the file given with -f,
+# which is how the whole set is named without the shell expanding every
+# path onto one command line.
 my @pods = @ARGV;
+
+if (defined $opt_f) {
+    open my $fh, '<', $opt_f
+        or die "Can't read $opt_f, $!\n";
+    chomp(my @listed = <$fh>);
+    close $fh;
+    push @pods, grep { $_ ne '' } @listed;
+}
 
 exit 0 unless @pods;
 
