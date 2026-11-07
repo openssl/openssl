@@ -264,7 +264,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     unsigned char *out = NULL;
     int outlen = 0;
     int rv = 0;
-    size_t outsize;
+    size_t outsize = 0;
 
     if (keklen > sizeof(kek)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
@@ -300,7 +300,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 
     rv = 1;
 err:
-    OPENSSL_free(out);
+    OPENSSL_clear_free(out, outsize);
     OPENSSL_cleanse(kek, sizeof(kek));
     EVP_CIPHER_CTX_reset(kemri->ctx);
     EVP_PKEY_CTX_free(kemri->pctx);
