@@ -60,9 +60,10 @@ status will be SCT_VALIDATION_STATUS_UNKNOWN_LOG.
 If the SCT is of an unsupported version (only v1 is currently supported), the
 validation status will be SCT_VALIDATION_STATUS_UNKNOWN_VERSION.
 
-If the SCT's signature is incorrect, its timestamp is in the future (relative to
-the time in CT_POLICY_EVAL_CTX), or if it is otherwise invalid, the validation
-status will be SCT_VALIDATION_STATUS_INVALID.
+If the SCT's signature is incorrect, its signature algorithm is not supported,
+its timestamp is in the future (relative to the time in CT_POLICY_EVAL_CTX), or
+if it is otherwise invalid, the validation status will be
+SCT_VALIDATION_STATUS_INVALID.
 
 If all checks pass, the validation status will be SCT_VALIDATION_STATUS_VALID.
 

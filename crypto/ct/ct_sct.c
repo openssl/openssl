@@ -247,7 +247,7 @@ int SCT_is_complete(const SCT *sct)
 
 int SCT_signature_is_complete(const SCT *sct)
 {
-    return SCT_get_signature_nid(sct) != NID_undef && sct->sig != NULL && sct->sig_len > 0;
+    return sct->sig != NULL && sct->sig_len > 0;
 }
 
 sct_source_t SCT_get_source(const SCT *sct)
