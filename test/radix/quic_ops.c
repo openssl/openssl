@@ -905,6 +905,30 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_expect_timeout)
+{
+    int ok = 0;
+    SSL *ssl;
+    SSL_CONN_CLOSE_INFO cc_info = { 0 };
+    uint64_t timeout_secs;
+
+    F_POP(timeout_secs);
+    REQUIRE_SSL(ssl);
+
+    if (F_TIMEOUT_EXPIRED(timeout_secs)) {
+        return 1;
+    }
+
+    if (!SSL_get_conn_close_info(ssl, &cc_info, sizeof(cc_info)))
+        F_SPIN_AGAIN();
+
+    TEST_info("connection close reason: %s", cc_info.reason);
+
+    ok = 0;
+err:
+    return ok;
+}
+
 DEF_FUNC(hf_wait_for_data)
 {
     int ok = 0;
@@ -2180,6 +2204,11 @@ err:
         OP_PUSH_U64(expect_remote),                                            \
         OP_PUSH_U64(error_code),                                               \
         OP_FUNC(hf_expect_conn_close_info))
+
+#define OP_EXPECT_TIMEOUT(name, timeout_secs) \
+    (OP_SELECT_SSL(0, name),                  \
+        OP_PUSH_U64(timeout_secs),            \
+        OP_FUNC(hf_expect_timeout))
 
 #define OP_WAIT_FOR_DATA(name) \
     (OP_SELECT_SSL(0, name),   \
