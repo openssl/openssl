@@ -387,7 +387,7 @@ static int key_to_type_specific_der_bio(BIO *out, const void *key,
     }
 
     ret = BIO_write(out, der, derlen);
-    OPENSSL_free(der);
+    OPENSSL_clear_free(der, derlen);
     return ret > 0;
 }
 #define key_to_type_specific_der_priv_bio key_to_type_specific_der_bio
