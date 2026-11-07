@@ -1,0 +1,105 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_loongarch_hwcap - the LoongArch processor capabilities vector
+
+=head1 SYNOPSIS
+
+ env OPENSSL_loongarch_hwcap=... <application>
+
+=head1 DESCRIPTION
+
+libcrypto supports LoongArch instruction set extensions. These
+extensions are denoted by individual bits in the capabilities vector.
+On Linux, when libcrypto is initialized, the results returned by
+C<getauxval(AT_HWCAP)> are stored in the vector. These capabilities
+account for both hardware and operating system support.
+
+To override the set of instructions available to an application, you can
+set the B<OPENSSL_loongarch_hwcap> environment variable before you start the
+application.
+
+The environment variable specifies an unsigned 32-bit capability mask.
+Numbers may be decimal, hexadecimal with a C<0x> prefix, or octal with a
+leading C<0>.
+A numeric value replaces the detected capabilities. A value prefixed with
+C<~> clears the specified bits from the detected capabilities.
+
+Empty values, signs, whitespace, trailing characters and values outside
+the unsigned 32-bit range are invalid. Invalid overrides are ignored and
+the automatically detected capabilities are used. Enabling instructions
+unsupported by the processor or operating system can cause an illegal
+instruction exception.
+
+The environment variable is read once at library initialization. Changing
+it after initialization does not change algorithm selection. This facility
+is unavailable in builds configured with B<no-asm>.
+
+Note that the capability bits are controlled independently. For example,
+clearing LSX does not also clear LASX. To disable both extensions, clear
+C<0x30>.
+
+Currently the following extensions are used:
+
+=over 4
+
+=item LSX
+
+128-bit vector extension
+
+HWCAP bit 4 (C<0x10>)
+
+=item LASX
+
+256-bit vector extension
+
+HWCAP bit 5 (C<0x20>)
+
+=back
+
+=head1 RETURN VALUES
+
+Not available.
+
+=head1 EXAMPLES
+
+Check currently detected capabilities:
+
+ $ openssl info -cpusettings
+ OPENSSL_loongarch_hwcap=0x5e7f
+
+Note: The displayed value is the effective capabilities vector. If the
+B<OPENSSL_loongarch_hwcap> environment variable is set, its value is also
+displayed as C<env:...>.
+
+Disable all instruction set extensions:
+
+ export OPENSSL_loongarch_hwcap=0
+
+Only enable the LSX extension, on a system supporting it:
+
+ export OPENSSL_loongarch_hwcap=0x10
+
+Enable both LSX and LASX, on a system supporting both:
+
+ export OPENSSL_loongarch_hwcap=0x30
+
+Disable LASX while retaining other detected capabilities:
+
+ export OPENSSL_loongarch_hwcap='~0x20'
+
+Disable both LSX and LASX:
+
+ export OPENSSL_loongarch_hwcap='~0x30'
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
