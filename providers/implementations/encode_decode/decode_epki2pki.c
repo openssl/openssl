@@ -124,6 +124,7 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
 {
     const unsigned char *pder = der;
     unsigned char *new_der = NULL;
+    int new_der_len = 0;
     X509_SIG *p8 = NULL;
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     const X509_ALGOR *alg = NULL;
@@ -141,7 +142,6 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
             ok = 0;
         } else {
             const ASN1_OCTET_STRING *oct;
-            int new_der_len = 0;
 
             X509_SIG_get0(p8, &alg, &oct);
             if (!PKCS12_pbe_crypt_ex(alg, pbuf, (int)plen,
@@ -190,7 +190,7 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
         ok = data_cb(params, data_cbarg);
     }
     PKCS8_PRIV_KEY_INFO_free(p8inf);
-    OPENSSL_free(new_der);
+    OPENSSL_clear_free(new_der, new_der_len);
     return ok;
 }
 
