@@ -695,19 +695,27 @@ end:
         OSSL_PARAM_free(fuzzed_params);                                                        \
     } while (0);
 
+/*
+ * Per the libFuzzer contract, this must return 0 on a normal run and -1 to
+ * reject an input that is too short to even select an operation and
+ * algorithm, so that libFuzzer does not add it to the corpus. Any other
+ * value is undefined behaviour and trips an assertion in libFuzzer's own
+ * driver loop; whether the fuzzed crypto operation itself succeeded or
+ * failed is irrelevant to libFuzzer and must not affect this return value.
+ */
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    int r = 1;
+    int r = 0;
     uint64_t *operation = NULL;
     int64_t *algorithm = NULL;
 
     if (!read_uint(&buf, &len, &operation)) {
-        r = 0;
+        r = -1;
         goto end;
     }
 
     if (!read_int(&buf, &len, &algorithm)) {
-        r = 0;
+        r = -1;
         goto end;
     }
 
@@ -750,7 +758,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         /* not yet implemented */
         break;
     default:
-        r = 0;
+        r = -1;
         goto end;
     }
 
