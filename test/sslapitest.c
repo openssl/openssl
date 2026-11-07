@@ -19342,7 +19342,8 @@ static int test_ssl_conf_sigalgs_without_ctx(void)
         goto err;
     if (!TEST_int_eq(SSL_CONF_cmd(cctx, "-sigalgs", "RSA+SHA256"), 2)
         || !TEST_int_eq(SSL_CONF_cmd(cctx, "-client_sigalgs",
-                               "rsa_pss_rsae_sha256"), 2))
+                            "rsa_pss_rsae_sha256"),
+            2))
         goto err;
 
     ret = 1;
