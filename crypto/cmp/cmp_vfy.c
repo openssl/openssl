@@ -422,7 +422,8 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
         if (mode_3gpp ? check_cert_path_3gpp(ctx, msg, cert)
                       : check_cert_path(ctx, ctx->trusted, cert)) {
             /* store successful sender cert for further msgs in transaction */
-            return ossl_cmp_ctx_set1_validatedSrvCert(ctx, cert);
+            return ctx->validatedSrvCert != NULL
+                || ossl_cmp_ctx_set1_validatedSrvCert(ctx, cert);
         }
     }
     if (in_extraCerts && n_acceptable_certs == 0)
@@ -504,19 +505,19 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
          * (assuming that the certificate itself was not revoked meanwhile and
          *  is a good guess for use in validating also the current message)
          */
-        if (check_msg_given_cert(ctx, scrt, msg)) {
-            ctx->log_cb = backup_log_cb;
-            (void)ERR_pop_to_mark();
+        res = check_msg_given_cert(ctx, scrt, msg);
+        ctx->log_cb = backup_log_cb;
+        (void)ERR_pop_to_mark();
+        if (res)
             return 1;
-        }
+
         /* cached sender cert has shown to be no more successfully usable */
-        /* re-do the above check (just) for adding diagnostic information */
+        /* re-do the above check just for adding diagnostic information */
         ossl_cmp_info(ctx,
             "trying to verify msg signature with previously validated cert");
-        ctx->log_cb = backup_log_cb;
         (void)check_msg_given_cert(ctx, scrt, msg);
-        ctx->log_cb = NULL;
-        (void)ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL); /* this invalidates scrt */
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_SENDER);
+        return 0;
     }
 
     res = check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */)

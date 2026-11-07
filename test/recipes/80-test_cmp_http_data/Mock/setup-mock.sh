@@ -114,20 +114,20 @@ rename_signerfiles() {
     mv signer_subinterCA-crl1.pem newcrl.pem
     rm -f signer_root-key.pem signer_interCA-key.pem signer_interCA-cert.pem \
         signer_subinterCA-key.pem
-    mv signer_subinterCA-cert.pem issuing.crt
+    mv signer_subinterCA-cert.pem issuing.crt # subinterCA cert only
     cat issuing.crt >> big_issuing.crt
     mv signer_leaf-key.pem new.key
     $OPENSSL pkey -in new.key -out new_pass_12345.key -aes256 -passout file:12345.txt
     mv signer_leaf-csr.pem csr.pem
     cp new.key signer.key
     mv signer_leaf-cert.pem signer_only.crt
-    mv signer_issuing-cert.pem signer_issuing.crt
-    mv signer_chain.pem signer.crt
+    mv signer_issuing-cert.pem issuing_inter.pem # signer chain: subinterCA and interCA certs
+    mv signer_chain.pem signer.crt # signer cert with its chain
 }
 remove_signerfiles() {
     echo "Removing signer files"
     rm -f root.crt signer_root.crt newcrl.pem oldcrl.pem new.key signer.key signer_only.crt \
-        signer_no_SKID.crt signer_issuing.crt signer.crt issuing.crt csr.pem
+        signer_no_SKID.crt issuing_inter.pem signer.crt issuing.crt csr.pem
 }
 
 #  cannot use genee() because this uses a self-signature for the POP in a PKCS#10 CSR

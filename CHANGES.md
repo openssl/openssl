@@ -117,6 +117,20 @@ OpenSSL 4.2
 
    *Dr Paul Dale*
 
+ * Fixed caching of validated CMP message sender certificates.
+
+   On the server side, caching was possible beyond a transaction, which made
+   little sense, would be against the spirit of no_cache_extracerts, and enabled
+   long-lasting server runs to accept certs that become expired or revoked.
+
+   Moreover, on both client and server side, a validated peer cert should
+   be cached only when encountered for the first time in a transaction.
+   Updating a cached cert within the same transaction is now prevented.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
    newly assigned IANA codepoints per [draft-rosomakho-tls-ecdhe-mlkem512-00].
 
