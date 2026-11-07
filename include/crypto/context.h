@@ -33,6 +33,16 @@ void *ossl_threads_ctx_new(OSSL_LIB_CTX *);
 #endif
 
 void ossl_provider_store_free(void *);
+/**
+ * @brief Release providers owning child contexts before parent method stores.
+ * @param vstore Provider store in a library context being destroyed, or NULL.
+ *
+ * No concurrent context users may remain. The decoder cache must already have
+ * been released. Child callbacks and cached methods are detached before the
+ * corresponding provider references are released. The store itself is retained
+ * for ossl_provider_store_free().
+ */
+void ossl_provider_store_free_child_owners(void *vstore);
 void ossl_property_string_data_free(void *);
 void ossl_stored_namemap_free(void *);
 void ossl_property_defns_free(void *);
