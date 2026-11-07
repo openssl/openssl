@@ -9,16 +9,11 @@ ranking for human reviewers.
 
 Every review covers, in this order of priority:
 
-1. Bugs that a tool cannot find, above all those that can lead to a
-   vulnerability.
+1. Bugs that compilers, static analysers, sanitizers and fuzzers miss,
+   above all those that can lead to a vulnerability.
 2. Changes to documented or long-standing behaviour.
 3. Conformance with `STYLE.md` and `DOCUMENTATION.md` at the repository
    root.
-
-The checks below come from the CVEs, post-merge regression fixes and
-maintainer reviews between October 2023 and October 2026. Most security
-bugs and regressions in that period were visible in the diff that
-introduced them.
 
 What Important means here
 -------------------------
@@ -44,7 +39,9 @@ Evidence
 Each finding states the inputs or state that trigger it and what goes
 wrong, with a `file:line` citation for every claim about code outside the
 diff. Read the callee before claiming what it returns or who owns its
-result. A finding that cannot name a trigger is not reported.
+result. A bug finding that cannot name a trigger is not reported. Style,
+documentation and compatibility findings cite the rule or the manual
+page instead.
 
 Error paths and ownership
 -------------------------
@@ -53,15 +50,19 @@ Error paths and ownership
   `return` in a function that otherwise uses `goto err` usually leaks.
 - Code after a shared `err:` or `end:` label only touches objects that
   are initialised on every path reaching it.
-- `sk_*_push()`, `*_set0_*()` and `*_add*()` take ownership only on
-  success; `set1` copies. State who frees the object on success and on
-  failure, and check the pointer is set to `NULL` after a transfer.
+- `sk_*_push()`, `*_set0_*()` and `*_add0_*()` take ownership only on
+  success. `set1` and `add1` take a new reference or a copy; the caller
+  keeps its own. Read the callee to see which. State who frees the
+  object on success and on failure, and check the pointer is set to
+  `NULL` after a transfer.
 - A pointer freed inside a loop or retry path is not freed again at the
   common exit.
 - Each type is released with its own free function, not
   `OPENSSL_free()`. `dup` and `free` functions cover every new owned
   field; a struct-copying `dupctx` must not alias owned pointers.
-- Free functions accept `NULL`; do not guard calls to them.
+- Public `*_free()` functions accept `NULL`; a `NULL` guard before
+  calling one is redundant. Read an internal free function before
+  assuming the same.
 
 Untrusted input
 ---------------
@@ -82,7 +83,8 @@ Untrusted input
   conversions are checked against `INT_MAX`.
 - `int`-returning sizes such as `EVP_MD_get_size()` are checked for
   `<= 0` before use as `size_t`. Such a check must not reject inputs the
-  manual page allows, such as a `NULL` digest.
+  manual page allows: where a `NULL` digest is valid, do not pass it to
+  `EVP_MD_get_size()`, which fails on `NULL`.
 - Allocations, queues and work driven by peer input have an explicit
   bound that does not depend on the peer acknowledging or the
   application draining. Watch for quadratic work in peer-chosen sizes.
@@ -116,8 +118,9 @@ Security semantics
 - Secret data is not used in branches, memory indexing or early exits.
   BIGNUMs holding keys or nonces stay constant-time through every
   operation, including platform-specific EC code and assembly.
-- Secrets are cleansed on every path. Zeroisation does not depend on
-  `OPENSSL_PEDANTIC_ZEROIZATION`.
+- Secrets are cleansed on every path. Zeroisation of secrets does not
+  depend on `OPENSSL_PEDANTIC_ZEROIZATION`; that macro is only for
+  non-secret data such as salts.
 
 Parallel paths and new modes
 ----------------------------
@@ -159,8 +162,8 @@ Compatibility
   flag semantics or `const` qualifiers are compared against its manual
   page. Say which existing callers break.
 - A restriction added to a generic helper applies to all its callers.
-- Behaviour changes and large refactors are not suitable for stable
-  branches.
+- If the pull request targets a stable branch (`openssl-*`), a
+  behaviour change or large refactor is a finding.
 
 Providers and the FIPS module
 -----------------------------
@@ -169,19 +172,20 @@ Providers and the FIPS module
   fallback to legacy global lookups such as `EVP_get_digestbyname()`.
 - Provider operations can be reached with no key or cipher set; check
   that `update`, `final` and `get_params` handle that.
-- `ossl_prov_is_running()` is checked at operation entry points, not on
-  per-update paths.
+- `ossl_prov_is_running()` is checked at operation entry points. Do not
+  add new checks on per-update paths; existing ones are not a finding.
 - Files added to or removed from the FIPS provider are reflected in the
-  FIPS source lists and checksums.
+  FIPS source lists.
 
 Build configurations and platforms
 ----------------------------------
 
 - Code and tests are guarded by exactly the `OPENSSL_NO_*` or platform
-  conditions they need, and build with `no-deprecated`.
+  conditions they need.
 - Assembly dispatch checks every capability it uses. Constant tables go
   in `.rodata`.
-- New public headers have `extern "C"` guards and use `ossl_inline`.
+- New public headers have `extern "C"` guards. Inline functions in
+  public headers use `ossl_inline`.
 
 Tests
 -----
@@ -210,8 +214,8 @@ violates.
   updates it.
 - New public symbols have a POD page in `doc/man3` with a `HISTORY`
   entry naming the release, and are removed from
-  `util/missingcrypto*.txt` if listed. Public manual pages do not
-  describe internal functions.
+  `util/missingcrypto*.txt` or `util/missingssl*.txt` if listed.
+  Public manual pages do not describe internal functions.
 - New commands and options are documented in `doc/man1`, and new
   Configure options in `INSTALL.md`.
 - User-visible changes have a `CHANGES.md` entry written for users.
@@ -223,17 +227,21 @@ violates.
 Cap the nits
 ------------
 
-Report at most ten Nits per review, functional bugs first. Important
-findings are not limited.
+Report at most ten non-functional Nits per review. Functional Nits and
+Important findings are not limited.
 
 Do not report
 -------------
 
 - What CI already reports: compiler warnings, clang-format, codespell,
-  `make doc-nits`, `make md-nits`.
-- Commit messages, CLA status, rebasing and target branches; maintainers
-  and bots handle these.
+  `make doc-nits`, `make md-nits`, `no-deprecated` build failures, FIPS
+  checksum changes.
+- Commit messages, CLA status, rebasing and the choice of target branch.
 - Questions about intent with no defect behind them.
+- Security issues in code the pull request does not change. Pull
+  requests are public and such issues are embargoed. Do not mention,
+  hint at or ask about them in any comment or summary.
 - `STYLE.md` and `DOCUMENTATION.md` non-conformance in code the pull
   request does not touch.
-- Files regenerated by `make update`.
+- Files regenerated by `make update`. The `update` rule in
+  `Configurations/unix-Makefile.tmpl` lists the targets that write them.
