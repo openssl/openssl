@@ -3704,6 +3704,22 @@ int has_stdin_waiting(void)
     peeked = PeekConsoleInput(inhand, &inputrec, insize, &events);
     if (!peeked) {
         /* Probably redirected input? _kbhit() does not work in this case */
+        if (GetFileType(inhand) == FILE_TYPE_PIPE) {
+            DWORD avail = 0;
+
+            /*
+             * For a pipe we must only report readiness when bytes are really
+             * buffered: the caller follows up with a blocking raw_read_stdin()
+             * and would otherwise hang until the writer sends something.
+             * Unlike ReadFile(), PeekNamedPipe() does not wait for data to
+             * arrive, and leaves in the pipe whatever it reports. If it fails
+             * we cannot tell what is buffered, so report ready and let the
+             * subsequent read report the condition.
+             */
+            if (!PeekNamedPipe(inhand, NULL, 0, NULL, &avail, NULL))
+                return 1;
+            return avail > 0;
+        }
         if (!feof(stdin)) {
             return 1;
         }

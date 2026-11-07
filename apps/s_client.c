@@ -3334,7 +3334,14 @@ re_start:
                     tv.tv_usec = 0;
                     i = select(width, (void *)&readfds, (void *)&writefds,
                         NULL, &tv);
-                    if (!i && (!has_stdin_waiting() || !read_tty))
+                    /*
+                     * -no-interactive never reads stdin, so its progress must
+                     * not depend on stdin being readable: fall through on a
+                     * timeout and let the dispatch below take the
+                     * nointeractive exit.
+                     */
+                    if (!i && !nointeractive
+                        && (!has_stdin_waiting() || !read_tty))
                         continue;
                 } else
                     i = select(width, (void *)&readfds, (void *)&writefds,
