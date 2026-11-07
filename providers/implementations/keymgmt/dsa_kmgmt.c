@@ -18,7 +18,6 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "prov/securitycheck.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -72,7 +71,6 @@ struct dsa_gen_ctx {
     char *mdprops;
     OSSL_CALLBACK *cb;
     void *cbarg;
-    OSSL_FIPS_IND_DECLARE
 };
 typedef struct dh_name2id_st {
     const char *name;
@@ -80,11 +78,7 @@ typedef struct dh_name2id_st {
 } DSA_GENTYPE_NAME2ID;
 
 static const DSA_GENTYPE_NAME2ID dsatype2id[] = {
-#ifdef FIPS_MODULE
-    { "default", DSA_PARAMGEN_TYPE_FIPS_186_4 },
-#else
     { "default", DSA_PARAMGEN_TYPE_FIPS_DEFAULT },
-#endif
     { "fips186_4", DSA_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_2", DSA_PARAMGEN_TYPE_FIPS_186_2 },
 };
@@ -460,15 +454,10 @@ static void *dsa_gen_init(void *provctx, int selection,
         gctx->libctx = libctx;
         gctx->pbits = 2048;
         gctx->qbits = 224;
-#ifdef FIPS_MODULE
-        gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_4;
-#else
         gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_DEFAULT;
-#endif
         gctx->gindex = -1;
         gctx->pcounter = -1;
         gctx->hindex = 0;
-        OSSL_FIPS_IND_INIT(gctx)
     }
     if (!dsa_gen_set_params(gctx, params)) {
         dsa_gen_cleanup(gctx);
@@ -510,10 +499,6 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     int gen_type = -1;
 
     if (gctx == NULL || !dsa_gen_set_params_decoder(params, &p))
-        return 0;
-
-    if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(gctx, OSSL_FIPS_IND_SETTABLE0,
-            p.ind_sign))
         return 0;
 
     if (p.type != NULL) {
@@ -586,8 +571,6 @@ static int dsa_gen_get_params(void *genctx, OSSL_PARAM *params)
     if (gctx == NULL || !dsa_gen_get_params_decoder(params, &p))
         return 0;
 
-    if (!OSSL_FIPS_IND_GET_CTX_FROM_PARAM(gctx, p.ind))
-        return 0;
     return 1;
 }
 
@@ -618,17 +601,6 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
-
-#ifdef FIPS_MODULE
-    /*
-     * DSA signing is not approved in FIPS 140-3, so there is no
-     * need for DSA keygen either.
-     */
-    if (!OSSL_FIPS_IND_ON_UNAPPROVED(gctx, OSSL_FIPS_IND_SETTABLE0,
-            gctx->libctx, "DSA", "Keygen",
-            FIPS_CONFIG_DSA_SIGN_DISABLED))
-        return 0;
-#endif
 
     dsa = ossl_dsa_new(gctx->libctx);
     if (dsa == NULL)

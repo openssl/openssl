@@ -1,7 +1,7 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$DSA_GOAL=../../libdefault.a ../../libfips.a
+$DSA_GOAL=../../libdefault.a
 $EC_GOAL=../../libdefault.a ../../libfips.a
 $MAC_GOAL=../../libdefault.a ../../libfips.a
 $RSA_GOAL=../../libdefault.a ../../libfips.a
@@ -46,5 +46,5 @@ IF[{- !$disabled{'ml-dsa'} -}]
 ENDIF
 
 IF[{- !$disabled{'slh-dsa'} -}]
-  SOURCE[$DSA_GOAL]=slh_dsa_sig.c
+  SOURCE[$SLH_DSA_GOAL]=slh_dsa_sig.c
 ENDIF

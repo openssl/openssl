@@ -32,7 +32,6 @@ B<openssl fipsinstall>
 [B<-sshkdf_digest_check>]
 [B<-sskdf_digest_check>]
 [B<-x963kdf_digest_check>]
-[B<-dsa_sign_disabled>]
 [B<-no_pbkdf2_lower_bound_check>]
 [B<-no_short_mac>]
 [B<-tdes_encrypt_disabled>]
@@ -267,11 +266,6 @@ Configure the module to enable a run-time digest check when deriving a key by
 X963KDF.
 See NIST SP 800-131Ar2 for details.
 
-=item B<-dsa_sign_disabled>
-
-Configure the module to not allow DSA signing (DSA signature verification is
-still allowed). See FIPS 140-3 IG C.K for details.
-
 =item B<-tdes_encrypt_disabled>
 
 Configure the module to not allow Triple-DES encryption.
@@ -476,7 +470,6 @@ B<-tls1_prf_digest_check>,
 B<-sshkdf_digest_check>,
 B<-sskdf_digest_check>,
 B<-x963kdf_digest_check>,
-B<-dsa_sign_disabled>,
 B<-no_pbkdf2_lower_bound_check>,
 B<-no_short_mac>,
 B<-tdes_encrypt_disabled>,

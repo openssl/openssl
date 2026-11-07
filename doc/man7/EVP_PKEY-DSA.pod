@@ -13,25 +13,12 @@ and I<gindex> may need to be stored for validation purposes. For B<DSA> these
 fields are not stored in the ASN1 data so they need to be stored externally if
 validation is required.
 
-As part of FIPS 140-3 DSA is not longer FIPS approved for key generation and
-signature validation, but is still allowed for signature verification.
+DSA is not FIPS approved, and is not supported by the OpenSSL FIPS provider.
 
 =head2 DSA parameters
 
 The B<DSA> key type supports the FFC parameters (see
 L<EVP_PKEY-FFC(7)/FFC parameters>).
-
-It also supports the following parameters:
-
-=over 4
-
-=item "sign-check" (B<OSSL_PKEY_PARAM_FIPS_SIGN_CHECK>) <integer
-
-=item "fips-indicator" (B<OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
-
-See L<provider-keymgmt(7)/Common Information Parameters> for more information.
-
-=back
 
 =head2 DSA key generation parameters
 
@@ -47,17 +34,16 @@ For "group" this can be any one of 2048, 3072, 4096, 6144 or 8192.
 =head2 DSA key validation
 
 For DSA keys, L<EVP_PKEY_param_check(3)> behaves in the following way:
-The OpenSSL FIPS provider conforms to the rules within the FIPS186-4
-standard for FFC parameter validation. For backwards compatibility the OpenSSL
-default provider uses a much simpler check (see below) for parameter validation,
-unless the seed parameter is set.
+The OpenSSL default provider conforms to the rules within the FIPS186-4
+standard for FFC parameter validation when the I<seed> parameter is set, and
+uses a much simpler check otherwise.
 
 For DSA keys, L<EVP_PKEY_param_check_quick(3)> behaves in the following way:
 A simple check of L and N and partial g is performed. The default provider
 also supports validation of legacy "fips186_2" keys.
 
 For DSA keys, L<EVP_PKEY_public_check(3)>, L<EVP_PKEY_private_check(3)> and
-L<EVP_PKEY_pairwise_check(3)> the OpenSSL default and FIPS providers conform to
+L<EVP_PKEY_pairwise_check(3)> the OpenSSL default provider conforms to
 the rules within SP800-56Ar3 for public, private and pairwise tests respectively.
 
 =head1 EXAMPLES
@@ -129,11 +115,12 @@ L<OSSL_PROVIDER-FIPS(7)>
 =head1 HISTORY
 
 DSA Key generation and signature generation are no longer FIPS approved in
-OpenSSL 3.4. See L<fips_module(7)/FIPS indicators> for more information.
+OpenSSL 3.4, and DSA was removed from the FIPS provider in OpenSSL 4.2.
+See L<fips_module(7)/FIPS indicators> for more information.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

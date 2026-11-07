@@ -10,7 +10,6 @@
 #include "internal/deprecated.h"
 
 #include <openssl/rsa.h>
-#include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
@@ -139,52 +138,6 @@ int ossl_ec_check_security_strength(const EC_GROUP *group, int protect)
 }
 
 #endif /* OPENSSL_NO_EC */
-
-#ifndef OPENSSL_NO_DSA
-/*
- * Check for valid key sizes if fips mode. Refer to
- * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
- * "Table 2"
- */
-int ossl_dsa_check_key(const DSA *dsa, int sign)
-{
-    size_t L, N;
-    const BIGNUM *p, *q;
-
-    if (dsa == NULL)
-        return 0;
-
-    p = DSA_get0_p(dsa);
-    q = DSA_get0_q(dsa);
-    if (p == NULL || q == NULL)
-        return 0;
-
-    L = BN_num_bits(p);
-    N = BN_num_bits(q);
-
-    /*
-     * For Digital signature verification DSA keys with < 112 bits of
-     * security strength, are still allowed for legacy
-     * use. The bounds given in SP 800-131Ar2 - Table 2 are
-     * (512 <= L < 2048 or 160 <= N < 224).
-     *
-     * We are a little stricter and insist that both minimums are met.
-     * For example a L = 256, N = 160 key *would* be allowed by SP 800-131Ar2
-     * but we don't.
-     */
-    if (!sign) {
-        if (L < 512 || N < 160)
-            return 0;
-        if (L < 2048 || N < 224)
-            return 1;
-    }
-
-    /* Valid sizes for both sign and verify */
-    if (L == 2048 && (N == 224 || N == 256)) /* 112 bits */
-        return 1;
-    return (L == 3072 && N == 256); /* 128 bits */
-}
-#endif /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_DH
 /*
