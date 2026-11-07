@@ -5670,7 +5670,7 @@ static int test_early_data_psk_cipher_off_wire(void)
         return TEST_skip("CHACHA is not supported in FIPS");
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-            &serverssl, &sess, 2, SHA256_DIGEST_LENGTH, 0)))
+            &serverssl, &sess, 2, SHA256_DIGEST_LENGTH)))
         goto end;
 
     if (!TEST_true(SSL_set_ciphersuites(clientssl,
