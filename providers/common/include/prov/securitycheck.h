@@ -26,10 +26,6 @@ int ossl_ec_check_curve_allowed(const EC_GROUP *group);
 int ossl_ec_check_security_strength(const EC_GROUP *group, int protect);
 #endif
 
-#ifndef OPENSSL_NO_DSA
-int ossl_dsa_check_key(const DSA *dsa, int sign);
-#endif
-
 #ifndef OPENSSL_NO_DH
 int ossl_dh_check_key(const DH *dh);
 #endif
