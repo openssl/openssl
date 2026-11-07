@@ -272,7 +272,7 @@ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
 
 /*
  * This function combines the previous ones: look up a certificate ID and if
- * found extract status information. Return 0 is successful.
+ * uniquely matched, extract status information. Return 1 if successful.
  */
 int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
     int *reason,
@@ -283,9 +283,13 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
     int i = OCSP_resp_find(bs, id, -1);
     OCSP_SINGLERESP *single;
 
-    /* Maybe check for multiple responses and give an error? */
     if (i < 0)
         return 0;
+    if (OCSP_resp_find(bs, id, i) >= 0) {
+        ERR_raise_data(ERR_LIB_OCSP, ERR_R_PASSED_INVALID_ARGUMENT,
+            "multiple responses for the same CertID");
+        return 0;
+    }
     single = OCSP_resp_get0(bs, i);
     i = OCSP_single_get0_status(single, reason, revtime, thisupd, nextupd);
     if (status != NULL)
