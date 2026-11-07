@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added `CRYPTO_new_ex_data_ex()`, an `OSSL_LIB_CTX`-aware variant of
+   `CRYPTO_new_ex_data()`.
+
+   *Richard Levitte*
+
  * Deprecated `SSL_copy_session_id()` and `BIO_ssl_copy_session_id()`.
    Use `SSL_set_session()` to resume a session on a new connection, or
    `SSL_dup()` to copy an SSL object.
