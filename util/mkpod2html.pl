@@ -28,8 +28,9 @@ our ($opt_o);    # -o OUTFILE with -i, otherwise the directory to write into
 our ($opt_t);    # -t TITLE, only with -i
 our ($opt_r);    # -r PODROOT
 our ($opt_j);    # -j JOBS, only without -i
+our ($opt_f);    # -f MANDOCS, read pod file names from this file
 
-getopts('i:o:t:r:j:');
+getopts('i:o:t:r:f:j:');
 die "-o flag missing" unless $opt_o;
 die "-r flag missing" unless $opt_r;
 
@@ -119,7 +120,13 @@ sub page_of
     return ("$opt_o/man$section/$name.html", $name);
 }
 
-my @pods = @ARGV;
+open(my $fh, '<', $opt_f) or die "Could not open '$opt_f': $!\n";
+my @pods = ();
+while (<$fh>) {
+    chomp($_);
+    push @pods, $_;
+}
+close($fh);
 
 exit 0 unless @pods;
 
