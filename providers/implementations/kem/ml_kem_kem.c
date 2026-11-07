@@ -49,7 +49,7 @@ static void *ml_kem_newctx(void *provctx)
 {
     PROV_ML_KEM_CTX *ctx;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
+    if (!ossl_prov_is_running())
         return NULL;
 
 #ifdef FIPS_MODULE
@@ -58,11 +58,7 @@ static void *ml_kem_newctx(void *provctx)
         return NULL;
 #endif
 
-    ctx->key = NULL;
-    ctx->entropy = NULL;
-    ctx->op = 0;
-    ctx->test_entropy_used = 0;
-    return ctx;
+    return OPENSSL_zalloc(sizeof(*ctx));
 }
 
 static void ml_kem_freectx(void *vctx)
