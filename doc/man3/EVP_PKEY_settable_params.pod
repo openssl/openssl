@@ -53,6 +53,9 @@ size I<bsize> into a key I<pkey> for the associated field I<key_name>.
 
 These functions only work for B<EVP_PKEY>s that contain a provider side key.
 
+Setting parameters changes the key itself.  It must not be done while another
+thread is using the same B<EVP_PKEY>, or an operation context created from it.
+
 =head1 RETURN VALUES
 
 EVP_PKEY_settable_params() returns NULL on error or if it is not supported,
