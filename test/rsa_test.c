@@ -27,6 +27,7 @@
 
 #include "testutil.h"
 
+#include "rsa_local.h"
 #include <openssl/rsa.h>
 
 #define SetKey                                     \
@@ -753,6 +754,177 @@ err:
     return ret;
 }
 
+/*
+ * A private operation on a key without a public exponent sets up
+ * blinding with a public exponent recovered from d, p and q.  Exercise
+ * that recovery: sign with such a key, then add the public exponent and
+ * verify the round trip.  A wrongly recovered exponent fails it.
+ */
+static int test_rsa_no_public_exp(void)
+{
+    /* key1 material, minus the public exponent */
+    static unsigned char n[] = "\x00\xAA\x36\xAB\xCE\x88\xAC\xFD\xFF\x55\x52\x3C\x7F\xC4\x52\x3F"
+                               "\x90\xEF\xA0\x0D\xF3\x77\x4A\x25\x9F\x2E\x62\xB4\xC5\xD9\x9C\xB5"
+                               "\xAD\xB3\x00\xA0\x28\x5E\x53\x01\x93\x0E\x0C\x70\xFB\x68\x76\x93"
+                               "\x9C\xE6\x16\xCE\x62\x4A\x11\xE0\x08\x6D\x34\x1E\xBC\xAC\xA0\xA1"
+                               "\xF5";
+
+    static unsigned char e[] = "\x11";
+
+    static unsigned char d[] = "\x0A\x03\x37\x48\x62\x64\x87\x69\x5F\x5F\x30\xBC\x38\xB9\x8B\x44"
+                               "\xC2\xCD\x2D\xFF\x43\x40\x98\xCD\x20\xD8\xA1\x38\xD0\x90\xBF\x64"
+                               "\x79\x7C\x3F\xA7\xA2\xCD\xCB\x3C\xD1\xE0\xBD\xBA\x26\x54\xB4\xF9"
+                               "\xDF\x8E\x8A\xE5\x9D\x73\x3D\x9F\x33\xB3\x01\x62\x4A\xFD\x1D\x51";
+
+    static unsigned char p[] = "\x00\xD8\x40\xB4\x16\x66\xB4\x2E\x92\xEA\x0D\xA3\xB4\x32\x04\xB5"
+                               "\xCF\xCE\x33\x52\x52\x4D\x04\x16\xA5\xA4\x41\xE7\x00\xAF\x46\x12"
+                               "\x0D";
+
+    static unsigned char q[] = "\x00\xC9\x7F\xB1\xF0\x27\xF4\x53\xF6\x34\x12\x33\xEA\xAA\xD1\xD9"
+                               "\x35\x3F\x6C\x42\xD0\x88\x66\xB1\xD0\x5A\x0F\x20\x35\x02\x8B\x9D"
+                               "\x89";
+
+    static unsigned char msg[] = "toto";
+
+    RSA *key = NULL;
+    unsigned char ctext[64], ptext[64];
+    int ret = 0;
+
+    if (!TEST_ptr(key = RSA_new())
+        || !TEST_true(RSA_set0_key(key,
+            BN_bin2bn(n, sizeof(n) - 1, NULL),
+            BN_bin2bn(e, sizeof(e) - 1, NULL),
+            BN_bin2bn(d, sizeof(d) - 1, NULL)))
+        || !TEST_true(RSA_set0_factors(key,
+            BN_bin2bn(p, sizeof(p) - 1, NULL),
+            BN_bin2bn(q, sizeof(q) - 1, NULL))))
+        goto err;
+
+    /*
+     * Drop the public exponent (RSA_set0_key() won't accept a NULL one);
+     * the private op's blinding setup must recover it from d, p and q.
+     */
+    BN_clear_free(key->e);
+    key->e = NULL;
+
+    /* private op: blinding setup recovers the public exponent */
+    if (!TEST_int_eq(RSA_private_encrypt(sizeof(msg) - 1, msg, ctext, key,
+                         RSA_PKCS1_PADDING),
+            RSA_size(key)))
+        goto err;
+
+    /* add the real public exponent for the verification op */
+    if (!TEST_true(RSA_set0_key(key, NULL,
+            BN_bin2bn(e, sizeof(e) - 1, NULL), NULL))
+        || !TEST_int_eq(RSA_public_decrypt(RSA_size(key), ctext, ptext, key,
+                            RSA_PKCS1_PADDING),
+            (int)(sizeof(msg) - 1))
+        || !TEST_mem_eq(ptext, sizeof(msg) - 1, msg, sizeof(msg) - 1))
+        goto err;
+
+    ret = 1;
+err:
+    RSA_free(key);
+    return ret;
+}
+
+/*
+ * The default method's rsa_mod_exp is reachable directly through
+ * RSA_meth_get_mod_exp(), so it must compute I^d mod n for any I, not
+ * only the 0 <= I < n that RSA's own callers pass, and whatever the
+ * BIGNUM's allocation.
+ */
+static int test_rsa_mod_exp_input(int idx)
+{
+    int (*mod_exp)(BIGNUM *, const BIGNUM *, RSA *, BN_CTX *);
+    RSA *key = NULL;
+    BN_CTX *ctx = NULL;
+    BIGNUM *in = NULL, *r = NULL, *want = NULL, *t = NULL;
+    const BIGNUM *n, *d;
+    int i, bits, nbits, failed = 0, ret = 0;
+
+    mod_exp = RSA_meth_get_mod_exp(RSA_PKCS1_OpenSSL());
+    if (!TEST_true(mod_exp != NULL)
+        || !TEST_int_gt(rsa_setkey(&key, NULL, idx), 0)
+        || !TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(r = BN_new())
+        || !TEST_ptr(want = BN_new())
+        || !TEST_ptr(t = BN_new()))
+        goto err;
+    RSA_get0_key(key, &n, NULL, &d);
+    nbits = BN_num_bits(n);
+    /* n's width in bits, rounded up to whole limbs */
+    bits = (nbits + BN_BITS2 - 1) / BN_BITS2 * BN_BITS2;
+
+    for (i = 0; i < 11; i++) {
+        BN_free(in);
+        if (!TEST_ptr(in = BN_new()))
+            goto err;
+        switch (i) {
+        case 0: /* I = 0 */
+            BN_zero(in);
+            break;
+        case 1: /* I = n - 1 */
+            BN_sub(in, n, BN_value_one());
+            break;
+        case 2: /* I = n */
+            BN_copy(in, n);
+            break;
+        case 3: /* I = 2n + 7 */
+            BN_lshift1(in, n);
+            BN_add_word(in, 7);
+            break;
+        case 4: /* I = 2^bits - 1, the largest value at n's width */
+            BN_set_bit(in, bits);
+            BN_sub_word(in, 1);
+            break;
+        case 5: /* I = n^2 - 1 */
+            BN_sqr(in, n, ctx);
+            BN_sub_word(in, 1);
+            break;
+        case 6: /* I = 2^(3 * nbits) */
+            BN_set_bit(in, 3 * nbits);
+            break;
+        case 7: /* I = 5, allocated at four times n's width */
+            BN_set_bit(in, 4 * bits);
+            BN_set_word(in, 5);
+            break;
+        case 8: /* I = n - 1, likewise */
+            BN_set_bit(in, 4 * bits);
+            BN_sub(in, n, BN_value_one());
+            break;
+        case 9: /* I = -5 */
+            BN_set_word(in, 5);
+            BN_set_negative(in, 1);
+            break;
+        case 10: /* I = -(2n + 7) */
+            BN_lshift1(in, n);
+            BN_add_word(in, 7);
+            BN_set_negative(in, 1);
+            break;
+        }
+        if (!TEST_true(BN_nnmod(t, in, n, ctx))
+            || !TEST_true(BN_mod_exp(want, t, d, n, ctx)))
+            goto err;
+        /* Check every case, so each is seen to fail on its own */
+        if (!TEST_true(mod_exp(r, in, key, ctx))
+            || !TEST_BN_eq(r, want)) {
+            TEST_info("input case %d", i);
+            failed++;
+        }
+    }
+
+    ret = failed == 0;
+err:
+    BN_free(in);
+    BN_free(r);
+    BN_free(want);
+    BN_free(t);
+    BN_CTX_free(ctx);
+    RSA_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
@@ -761,6 +933,8 @@ int setup_tests(void)
     ADD_MFAIL_ALL_TESTS(test_rsa_oaep_mfail, 3);
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     ADD_TEST(test_rsa_saos);
+    ADD_TEST(test_rsa_no_public_exp);
+    ADD_ALL_TESTS(test_rsa_mod_exp_input, 3);
     ADD_TEST(test_EVP_rsa_legacy_key);
     return 1;
 }

@@ -28,6 +28,9 @@
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
+#include "internal/constant_time.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h" /* ossl_fn_get_words(), ossl_fn_get_dsize() */
 #include "ec_local.h"
 #include "internal/refcount.h"
 
@@ -598,22 +601,26 @@ __owur static int ecp_nistz256_bignum_to_field_elem(BN_ULONG out[P256_LIMBS],
     return bn_copy_words(out, in, P256_LIMBS);
 }
 
-/* r = sum(scalar[i]*point[i]) */
-__owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
+/*
+ * r = sum(p_str[i]*point[i]), where each scalar is pre-encoded as a fixed
+ * 33-byte little-endian string.  This is the constant-time variable-point core
+ * used by ecp_nistz256_points_mul_str(), which both the BIGNUM
+ * (ecp_nistz256_points_mul) and OSSL_FN (ecp_nistz256_points_mul_fn) entry
+ * points wrap.
+ */
+__owur static int ecp_nistz256_windowed_mul_str(const EC_GROUP *group,
     P256_POINT *r,
-    const BIGNUM **scalar,
+    const unsigned char (*p_str)[33],
     const EC_POINT **point,
-    size_t num, BN_CTX *ctx)
+    size_t num)
 {
     size_t i;
-    int j, ret = 0;
+    int ret = 0;
     unsigned int idx;
-    unsigned char (*p_str)[33] = NULL;
     const unsigned int window_size = 5;
     const unsigned int mask = (1 << (window_size + 1)) - 1;
     unsigned int wvalue;
     P256_POINT *temp; /* place for 5 temporary points */
-    const BIGNUM **scalars = NULL;
     P256_POINT(*table)
     [16] = NULL;
     void *table_storage = NULL;
@@ -621,47 +628,13 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
     if ((num * 16 + 6) > OPENSSL_MALLOC_MAX_NELEMS(P256_POINT)
         || (table = OPENSSL_aligned_alloc_array(num * 16 + 5, sizeof(P256_POINT), 64,
                 &table_storage))
-            == NULL
-        || (p_str = OPENSSL_malloc_array(num, 33)) == NULL
-        || (scalars = OPENSSL_malloc_array(num, sizeof(BIGNUM *))) == NULL)
+            == NULL)
         goto err;
 
     temp = (P256_POINT *)(table + num);
 
     for (i = 0; i < num; i++) {
         P256_POINT *row = table[i];
-
-        /* This is an unusual input, we don't guarantee constant-timeness. */
-        if ((BN_num_bits(scalar[i]) > 256) || BN_is_negative(scalar[i])) {
-            BIGNUM *mod;
-
-            if ((mod = BN_CTX_get(ctx)) == NULL)
-                goto err;
-            if (!BN_nnmod(mod, scalar[i], group->order, ctx)) {
-                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-                goto err;
-            }
-            scalars[i] = mod;
-        } else
-            scalars[i] = scalar[i];
-
-        for (j = 0; j < bn_get_top(scalars[i]) * BN_BYTES; j += BN_BYTES) {
-            BN_ULONG d = bn_get_words(scalars[i])[j / BN_BYTES];
-
-            p_str[i][j + 0] = (unsigned char)d;
-            p_str[i][j + 1] = (unsigned char)(d >> 8);
-            p_str[i][j + 2] = (unsigned char)(d >> 16);
-            p_str[i][j + 3] = (unsigned char)(d >>= 24);
-            if (BN_BYTES == 8) {
-                d >>= 8;
-                p_str[i][j + 4] = (unsigned char)d;
-                p_str[i][j + 5] = (unsigned char)(d >> 8);
-                p_str[i][j + 6] = (unsigned char)(d >> 16);
-                p_str[i][j + 7] = (unsigned char)(d >> 24);
-            }
-        }
-        for (; j < 33; j++)
-            p_str[i][j] = 0;
 
         if (!ecp_nistz256_bignum_to_field_elem(temp[0].X, point[i]->X)
             || !ecp_nistz256_bignum_to_field_elem(temp[0].Y, point[i]->Y)
@@ -765,9 +738,46 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
     ret = 1;
 err:
     OPENSSL_free(table_storage);
-    OPENSSL_free(p_str);
-    OPENSSL_free(scalars);
     return ret;
+}
+
+/* r = sum(scalar[i]*point[i]) */
+/* BIGNUM -> 33-byte little-endian p_str; reduce out-of-range/negative first. */
+__owur static int ecp_nistz256_bn_scalar_str(unsigned char p_str[33],
+    const BIGNUM *scalar, const EC_GROUP *group, BN_CTX *ctx)
+{
+    int i;
+    BIGNUM *mod;
+
+    /* This is an unusual input, we don't guarantee constant-timeness. */
+    if ((BN_num_bits(scalar) > 256) || BN_is_negative(scalar)) {
+        if ((mod = BN_CTX_get(ctx)) == NULL)
+            return 0;
+        if (!BN_nnmod(mod, scalar, group->order, ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            return 0;
+        }
+        scalar = mod;
+    }
+
+    for (i = 0; i < bn_get_top(scalar) * BN_BYTES; i += BN_BYTES) {
+        BN_ULONG d = bn_get_words(scalar)[i / BN_BYTES];
+
+        p_str[i + 0] = (unsigned char)d;
+        p_str[i + 1] = (unsigned char)(d >> 8);
+        p_str[i + 2] = (unsigned char)(d >> 16);
+        p_str[i + 3] = (unsigned char)(d >>= 24);
+        if (BN_BYTES == 8) {
+            d >>= 8;
+            p_str[i + 4] = (unsigned char)d;
+            p_str[i + 5] = (unsigned char)(d >> 8);
+            p_str[i + 6] = (unsigned char)(d >> 16);
+            p_str[i + 7] = (unsigned char)(d >> 24);
+        }
+    }
+    for (; i < 33; i++)
+        p_str[i] = 0;
+    return 1;
 }
 
 /* Coordinates of G, for which we have precomputed tables */
@@ -925,191 +935,225 @@ __owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *gr
 }
 
 /* r = scalar*G + sum(scalars[i]*points[i]) */
-__owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
-    EC_POINT *r,
-    const BIGNUM *scalar,
-    size_t num,
-    const EC_POINT *points[],
-    const BIGNUM *scalars[], BN_CTX *ctx)
+/*
+ * Return the precomputed multiples-of-generator table to use for a fixed-point
+ * multiplication, or NULL if none applies (the caller then treats the
+ * generator as an ordinary point).  Shared by the BIGNUM and OSSL_FN paths.
+ */
+static const PRECOMP256_ROW *ecp_nistz256_generator_precomp_table(
+    const EC_GROUP *group, BN_CTX *ctx)
 {
-    int i = 0, ret = 0, no_precomp_for_generator = 0, p_is_infinity = 0;
-    unsigned char p_str[33] = { 0 };
+    const NISTZ256_PRE_COMP *pre_comp = group->pre_comp.nistz256;
+    const EC_POINT *generator = EC_GROUP_get0_generator(group);
     const PRECOMP256_ROW *preComputedTable = NULL;
-    const NISTZ256_PRE_COMP *pre_comp = NULL;
-    const EC_POINT *generator = NULL;
-    const BIGNUM **new_scalars = NULL;
-    const EC_POINT **new_points = NULL;
-    unsigned int idx = 0;
+    ALIGN32 union {
+        P256_POINT p;
+        P256_POINT_AFFINE a;
+    } p;
+
+    if (generator == NULL)
+        return NULL;
+
+    if (pre_comp != NULL) {
+        /*
+         * If there is a precomputed table for the generator, check that it was
+         * generated with the same generator.
+         */
+        EC_POINT *pre_comp_generator = EC_POINT_new(group);
+
+        if (pre_comp_generator == NULL)
+            return NULL;
+
+        ecp_nistz256_gather_w7(&p.a, pre_comp->precomp[0], 1);
+        if (ecp_nistz256_set_from_affine(pre_comp_generator, group, &p.a, ctx)
+            && EC_POINT_cmp(group, generator, pre_comp_generator, ctx) == 0)
+            preComputedTable = (const PRECOMP256_ROW *)pre_comp->precomp;
+
+        EC_POINT_free(pre_comp_generator);
+    }
+
+    /*
+     * If there is no precomputed data, but the generator is the default, a
+     * hardcoded table of precomputed data is used.  This is because
+     * applications, such as Apache, do not use EC_KEY_precompute_mult.
+     */
+    if (preComputedTable == NULL && ecp_nistz256_is_affine_G(generator))
+        preComputedTable = ecp_nistz256_precomputed;
+
+    return preComputedTable;
+}
+
+/*
+ * Fixed-point multiplication r = scalar*G using the precomputed table, with the
+ * scalar supplied as a fixed 33-byte little-endian string.  Constant-time;
+ * shared by the BIGNUM and OSSL_FN paths.
+ */
+static void ecp_nistz256_fixed_mul_str(P256_POINT *out,
+    const PRECOMP256_ROW *preComputedTable, const unsigned char p_str[33])
+{
     const unsigned int window_size = 7;
     const unsigned int mask = (1 << (window_size + 1)) - 1;
+    unsigned int idx = 0;
     unsigned int wvalue;
+    int i;
+    BN_ULONG infty;
     ALIGN32 union {
         P256_POINT p;
         P256_POINT_AFFINE a;
     } t, p;
-    BIGNUM *tmp_scalar;
 
-    if ((num + 1) == 0 || (num + 1) > OPENSSL_MALLOC_MAX_NELEMS(void *)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+    /* First window */
+    wvalue = (p_str[0] << 1) & mask;
+    idx += window_size;
+
+    wvalue = _booth_recode_w7(wvalue);
+
+    ecp_nistz256_gather_w7(&p.a, preComputedTable[0], wvalue >> 1);
+
+    ecp_nistz256_neg(p.p.Z, p.p.Y);
+    copy_conditional(p.p.Y, p.p.Z, wvalue & 1);
+
+    /*
+     * Since affine infinity is encoded as (0,0) and Jacobian is (,,0), we need
+     * to harmonize them by assigning "one" or zero to Z.
+     */
+    infty = (p.p.X[0] | p.p.X[1] | p.p.X[2] | p.p.X[3] | p.p.Y[0] | p.p.Y[1] | p.p.Y[2] | p.p.Y[3]);
+    if (P256_LIMBS == 8)
+        infty |= (p.p.X[4] | p.p.X[5] | p.p.X[6] | p.p.X[7] | p.p.Y[4] | p.p.Y[5] | p.p.Y[6] | p.p.Y[7]);
+
+    infty = 0 - is_zero(infty);
+    infty = ~infty;
+
+    p.p.Z[0] = ONE[0] & infty;
+    p.p.Z[1] = ONE[1] & infty;
+    p.p.Z[2] = ONE[2] & infty;
+    p.p.Z[3] = ONE[3] & infty;
+    if (P256_LIMBS == 8) {
+        p.p.Z[4] = ONE[4] & infty;
+        p.p.Z[5] = ONE[5] & infty;
+        p.p.Z[6] = ONE[6] & infty;
+        p.p.Z[7] = ONE[7] & infty;
     }
 
-    memset(&p, 0, sizeof(p));
-    BN_CTX_start(ctx);
+    for (i = 1; i < 37; i++) {
+        unsigned int off = (idx - 1) / 8;
 
-    if (scalar) {
+        wvalue = p_str[off] | p_str[off + 1] << 8;
+        wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
+        idx += window_size;
+
+        wvalue = _booth_recode_w7(wvalue);
+
+        ecp_nistz256_gather_w7(&t.a, preComputedTable[i], wvalue >> 1);
+
+        ecp_nistz256_neg(t.p.Z, t.a.Y);
+        copy_conditional(t.a.Y, t.p.Z, wvalue & 1);
+
+        ecp_nistz256_point_add_affine(&p.p, &p.p, &t.a);
+    }
+
+    memcpy(out, &p.p, sizeof(*out));
+}
+
+/*
+ * Extract a secret OSSL_FN scalar into a fixed 33-byte little-endian string,
+ * over the full field width (constant-time; no dependence on the value's
+ * magnitude).  Fails if the scalar does not fit in 256 bits.
+ */
+static int ecp_nistz256_fn_scalar_str(unsigned char p_str[33],
+    const OSSL_FN *scalar)
+{
+    const OSSL_FN_ULONG *w = ossl_fn_get_words(scalar);
+    size_t dsize = ossl_fn_get_dsize(scalar);
+    size_t i, j;
+
+    for (i = P256_LIMBS; i < dsize; i++)
+        if (w[i] != 0)
+            return 0;
+
+    for (j = 0; j < 32; j += OSSL_FN_BYTES) {
+        OSSL_FN_ULONG d = j / OSSL_FN_BYTES < dsize ? w[j / OSSL_FN_BYTES] : 0;
+
+        p_str[j + 0] = (unsigned char)d;
+        p_str[j + 1] = (unsigned char)(d >> 8);
+        p_str[j + 2] = (unsigned char)(d >> 16);
+        p_str[j + 3] = (unsigned char)(d >>= 24);
+        if (OSSL_FN_BYTES == 8) {
+            d >>= 8;
+            p_str[j + 4] = (unsigned char)d;
+            p_str[j + 5] = (unsigned char)(d >> 8);
+            p_str[j + 6] = (unsigned char)(d >> 16);
+            p_str[j + 7] = (unsigned char)(d >> 24);
+        }
+    }
+    p_str[32] = 0;
+
+    return 1;
+}
+
+/*
+ * Core shared by the BIGNUM and OSSL_FN entry points:
+ * r = scalar*generator + sum(scalars[i]*points[i]).  Each scalar is already in
+ * the 33-byte little-endian p_str form; scalar == NULL means no generator
+ * term.  Uses the same constant-time fixed_mul_str()/windowed_mul_str() cores,
+ * and keeps the multi-scalar sum used by the BIGNUM path.
+ */
+__owur static int ecp_nistz256_points_mul_str(const EC_GROUP *group,
+    EC_POINT *r,
+    const unsigned char *scalar,
+    size_t num,
+    const EC_POINT *points[],
+    const unsigned char (*scalars)[33], BN_CTX *ctx)
+{
+    int ret = 0, no_precomp_for_generator = 0, p_is_infinity = 0;
+    const PRECOMP256_ROW *preComputedTable = NULL;
+    const EC_POINT *generator = NULL;
+    const unsigned char (*use_strs)[33] = scalars;
+    const EC_POINT **new_points = NULL;
+    unsigned char (*new_strs)[33] = NULL;
+    ALIGN32 union {
+        P256_POINT p;
+        P256_POINT_AFFINE a;
+    } t, p;
+
+    memset(&p, 0, sizeof(p));
+
+    if (scalar != NULL) {
         generator = EC_GROUP_get0_generator(group);
         if (generator == NULL) {
             ERR_raise(ERR_LIB_EC, EC_R_UNDEFINED_GENERATOR);
             goto err;
         }
-
-        /* look if we can use precomputed multiples of generator */
-        pre_comp = group->pre_comp.nistz256;
-
-        if (pre_comp) {
-            /*
-             * If there is a precomputed table for the generator, check that
-             * it was generated with the same generator.
-             */
-            EC_POINT *pre_comp_generator = EC_POINT_new(group);
-            if (pre_comp_generator == NULL)
-                goto err;
-
-            ecp_nistz256_gather_w7(&p.a, pre_comp->precomp[0], 1);
-            if (!ecp_nistz256_set_from_affine(pre_comp_generator,
-                    group, &p.a, ctx)) {
-                EC_POINT_free(pre_comp_generator);
-                goto err;
-            }
-
-            if (0 == EC_POINT_cmp(group, generator, pre_comp_generator, ctx))
-                preComputedTable = (const PRECOMP256_ROW *)pre_comp->precomp;
-
-            EC_POINT_free(pre_comp_generator);
-        }
-
-        if (preComputedTable == NULL && ecp_nistz256_is_affine_G(generator)) {
-            /*
-             * If there is no precomputed data, but the generator is the
-             * default, a hardcoded table of precomputed data is used. This
-             * is because applications, such as Apache, do not use
-             * EC_KEY_precompute_mult.
-             */
-            preComputedTable = ecp_nistz256_precomputed;
-        }
-
-        if (preComputedTable) {
-            BN_ULONG infty;
-
-            if ((BN_num_bits(scalar) > 256)
-                || BN_is_negative(scalar)) {
-                if ((tmp_scalar = BN_CTX_get(ctx)) == NULL)
-                    goto err;
-
-                if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
-                    ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-                    goto err;
-                }
-                scalar = tmp_scalar;
-            }
-
-            for (i = 0; i < bn_get_top(scalar) * BN_BYTES; i += BN_BYTES) {
-                BN_ULONG d = bn_get_words(scalar)[i / BN_BYTES];
-
-                p_str[i + 0] = (unsigned char)d;
-                p_str[i + 1] = (unsigned char)(d >> 8);
-                p_str[i + 2] = (unsigned char)(d >> 16);
-                p_str[i + 3] = (unsigned char)(d >>= 24);
-                if (BN_BYTES == 8) {
-                    d >>= 8;
-                    p_str[i + 4] = (unsigned char)d;
-                    p_str[i + 5] = (unsigned char)(d >> 8);
-                    p_str[i + 6] = (unsigned char)(d >> 16);
-                    p_str[i + 7] = (unsigned char)(d >> 24);
-                }
-            }
-
-            for (; i < 33; i++)
-                p_str[i] = 0;
-
-            /* First window */
-            wvalue = (p_str[0] << 1) & mask;
-            idx += window_size;
-
-            wvalue = _booth_recode_w7(wvalue);
-
-            ecp_nistz256_gather_w7(&p.a, preComputedTable[0],
-                wvalue >> 1);
-
-            ecp_nistz256_neg(p.p.Z, p.p.Y);
-            copy_conditional(p.p.Y, p.p.Z, wvalue & 1);
-
-            /*
-             * Since affine infinity is encoded as (0,0) and
-             * Jacobian is (,,0), we need to harmonize them
-             * by assigning "one" or zero to Z.
-             */
-            infty = (p.p.X[0] | p.p.X[1] | p.p.X[2] | p.p.X[3] | p.p.Y[0] | p.p.Y[1] | p.p.Y[2] | p.p.Y[3]);
-            if (P256_LIMBS == 8)
-                infty |= (p.p.X[4] | p.p.X[5] | p.p.X[6] | p.p.X[7] | p.p.Y[4] | p.p.Y[5] | p.p.Y[6] | p.p.Y[7]);
-
-            infty = 0 - is_zero(infty);
-            infty = ~infty;
-
-            p.p.Z[0] = ONE[0] & infty;
-            p.p.Z[1] = ONE[1] & infty;
-            p.p.Z[2] = ONE[2] & infty;
-            p.p.Z[3] = ONE[3] & infty;
-            if (P256_LIMBS == 8) {
-                p.p.Z[4] = ONE[4] & infty;
-                p.p.Z[5] = ONE[5] & infty;
-                p.p.Z[6] = ONE[6] & infty;
-                p.p.Z[7] = ONE[7] & infty;
-            }
-
-            for (i = 1; i < 37; i++) {
-                unsigned int off = (idx - 1) / 8;
-                wvalue = p_str[off] | p_str[off + 1] << 8;
-                wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
-                idx += window_size;
-
-                wvalue = _booth_recode_w7(wvalue);
-
-                ecp_nistz256_gather_w7(&t.a,
-                    preComputedTable[i], wvalue >> 1);
-
-                ecp_nistz256_neg(t.p.Z, t.a.Y);
-                copy_conditional(t.a.Y, t.p.Z, wvalue & 1);
-
-                ecp_nistz256_point_add_affine(&p.p, &p.p, &t.a);
-            }
+        /* Use precomputed multiples of the generator when available. */
+        preComputedTable = ecp_nistz256_generator_precomp_table(group, ctx);
+        if (preComputedTable != NULL) {
+            ecp_nistz256_fixed_mul_str(&p.p, preComputedTable, scalar);
         } else {
             p_is_infinity = 1;
             no_precomp_for_generator = 1;
         }
-    } else
+    } else {
         p_is_infinity = 1;
+    }
 
     if (no_precomp_for_generator) {
         /*
-         * Without a precomputed table for the generator, it has to be
-         * handled like a normal point.
+         * Without a precomputed table for the generator, it has to be handled
+         * like a normal point.
          */
-        new_scalars = OPENSSL_malloc_array(num + 1, sizeof(BIGNUM *));
-        if (new_scalars == NULL)
-            goto err;
-
+        new_strs = OPENSSL_malloc_array(num + 1, 33);
         new_points = OPENSSL_malloc_array(num + 1, sizeof(EC_POINT *));
-        if (new_points == NULL)
+        if (new_strs == NULL || new_points == NULL) {
+            num++;
             goto err;
-
-        memcpy(new_scalars, scalars, num * sizeof(BIGNUM *));
-        new_scalars[num] = scalar;
-        memcpy(new_points, points, num * sizeof(EC_POINT *));
+        }
+        if (num) {
+            memcpy(new_strs, scalars, num * 33);
+            memcpy(new_points, points, num * sizeof(EC_POINT *));
+        }
+        memcpy(new_strs[num], scalar, 33);
         new_points[num] = generator;
-
-        scalars = new_scalars;
+        use_strs = (const unsigned char (*)[33])new_strs;
         points = new_points;
         num++;
     }
@@ -1119,26 +1163,143 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
         if (p_is_infinity)
             out = &p.p;
 
-        if (!ecp_nistz256_windowed_mul(group, out, scalars, points, num, ctx))
+        if (!ecp_nistz256_windowed_mul_str(group, out, use_strs, points, num))
             goto err;
 
         if (!p_is_infinity)
             ecp_nistz256_point_add(&p.p, &p.p, out);
     }
 
-    /* Not constant-time, but we're only operating on the public output. */
-    if (!bn_set_words(r->X, p.p.X, P256_LIMBS) || !bn_set_words(r->Y, p.p.Y, P256_LIMBS) || !bn_set_words(r->Z, p.p.Z, P256_LIMBS)) {
-        goto err;
+    /*
+     * The result may be secret (e.g. an ECDH shared point), so write the
+     * coordinates in constant time through the fixed-width OSSL_FN
+     * representation: bn_release() normalises 'top' without leaking, via
+     * timing, the number of leading zero limbs (unlike bn_set_words()).
+     */
+    {
+        OSSL_FN *rx = NULL, *ry = NULL, *rz = NULL;
+        int ok;
+
+        ok = (rx = bn_acquire_ossl_fn(r->X, P256_LIMBS)) != NULL
+            && (ry = bn_acquire_ossl_fn(r->Y, P256_LIMBS)) != NULL
+            && (rz = bn_acquire_ossl_fn(r->Z, P256_LIMBS)) != NULL
+            && ossl_fn_set_words(rx, p.p.X, P256_LIMBS)
+            && ossl_fn_set_words(ry, p.p.Y, P256_LIMBS)
+            && ossl_fn_set_words(rz, p.p.Z, P256_LIMBS);
+        if (rx != NULL)
+            bn_release(r->X, P256_LIMBS);
+        if (ry != NULL)
+            bn_release(r->Y, P256_LIMBS);
+        if (rz != NULL)
+            bn_release(r->Z, P256_LIMBS);
+        if (!ok)
+            goto err;
     }
     r->Z_is_one = is_one(r->Z) & 1;
 
     ret = 1;
 
 err:
-    BN_CTX_end(ctx);
     OPENSSL_free(new_points);
-    OPENSSL_free(new_scalars);
+    /* 'new_strs' held serialised scalars; cleanse before freeing. */
+    OPENSSL_clear_free(new_strs, (size_t)num * 33);
     return ret;
+}
+
+__owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
+    EC_POINT *r,
+    const BIGNUM *scalar,
+    size_t num,
+    const EC_POINT *points[],
+    const BIGNUM *scalars[], BN_CTX *ctx)
+{
+    int ret = 0;
+    size_t i;
+    unsigned char buf[33];
+    unsigned char *g_str = NULL;
+    unsigned char (*p_strs)[33] = NULL;
+
+    BN_CTX_start(ctx);
+
+    if (num > 0) {
+        if ((p_strs = OPENSSL_malloc_array(num, 33)) == NULL)
+            goto err;
+        for (i = 0; i < num; i++) {
+            if (!ecp_nistz256_bn_scalar_str(p_strs[i], scalars[i], group, ctx))
+                goto err;
+        }
+    }
+    if (scalar != NULL) {
+        if (!ecp_nistz256_bn_scalar_str(buf, scalar, group, ctx))
+            goto err;
+        g_str = buf;
+    }
+
+    ret = ecp_nistz256_points_mul_str(group, r, g_str, num, points,
+        (const unsigned char (*)[33])p_strs, ctx);
+
+err:
+    BN_CTX_end(ctx);
+    /* buf and p_strs held serialised scalars; cleanse before freeing. */
+    OPENSSL_cleanse(buf, sizeof(buf));
+    OPENSSL_clear_free(p_strs, num * 33);
+    return ret;
+}
+
+/*
+ * OSSL_FN counterpart of ecp_nistz256_points_mul() and the 'mul_fn' slot of
+ * this method, reached from EC_POINT_mul_fn() when the scalar is secret.  The
+ * scalar is extracted into a fixed-width byte string and never materialised as
+ * a BIGNUM; the constant-time cores (fixed_mul_str for the generator, or
+ * windowed_mul_str for a variable point) are shared with the BIGNUM path.
+ */
+__owur static int ecp_nistz256_points_mul_fn(const EC_GROUP *group,
+    EC_POINT *r,
+    const OSSL_FN *scalar,
+    const EC_POINT *point,
+    OSSL_FN_CTX *fnctx)
+{
+    int ret = 0;
+    unsigned char s_str[33] = { 0 };
+    unsigned char (*ps_str)[33] = &s_str;
+    BN_CTX *ctx = NULL;
+
+    (void)fnctx; /* this method needs no OSSL_FN scratch context */
+
+    if (scalar == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (point != NULL && EC_POINT_is_at_infinity(group, point))
+        return EC_POINT_set_to_infinity(group, r);
+
+    /* Fixed-width extraction of the secret scalar; reject over-wide inputs. */
+    if (!ecp_nistz256_fn_scalar_str(s_str, scalar)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    /* Used by the generator-table check and windowed_mul_str's point setup. */
+    if ((ctx = BN_CTX_new_ex(group->libctx)) == NULL)
+        goto err;
+
+    if (point == NULL)
+        ret = ecp_nistz256_points_mul_str(group, r, s_str, 0, NULL, NULL, ctx);
+    else
+        ret = ecp_nistz256_points_mul_str(group, r, NULL, 1, &point,
+            (const unsigned char (*)[33])ps_str, ctx);
+err:
+    /* 's_str' held the secret scalar; do not leave it on the stack. */
+    OPENSSL_cleanse(s_str, sizeof(s_str));
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+/* This method needs no scratch context; see ecp_nistz256_points_mul_fn(). */
+static size_t ecp_nistz256_points_mul_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+{
+    return OSSL_FN_CTX_SIZE_NONE;
 }
 
 __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
@@ -1181,6 +1342,122 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
     }
 
     return 1;
+}
+
+/*
+ * Read a coordinate BIGNUM into P256 limbs at fixed width, in constant time.
+ * Unlike ecp_nistz256_bignum_to_field_elem() (bn_copy_words(), which copies only
+ * the significant limbs and so leaks the coordinate's magnitude) this reads the
+ * full width through the BIGNUM's OSSL_FN view - needed because the point read
+ * here is secret.  Returns 0 if the BIGNUM has no OSSL_FN view or holds a value
+ * wider than P256 (checked by folding the excess limbs in constant time).
+ */
+static int ecp_nistz256_secret_coord(BN_ULONG out[P256_LIMBS], const BIGNUM *in)
+{
+    const OSSL_FN *fn = bn_get_ossl_fn(in);
+    const OSSL_FN_ULONG *w;
+    size_t dsize, i;
+    OSSL_FN_ULONG hi = 0;
+    int fits;
+
+    if (fn == NULL)
+        return 0;
+    w = ossl_fn_get_words(fn);
+    dsize = ossl_fn_get_dsize(fn);
+    for (i = 0; i < P256_LIMBS; i++)
+        out[i] = i < dsize ? w[i] : 0;
+    for (; i < dsize; i++)
+        hi |= w[i];
+
+    /* Whether the value fits is a validity condition, not a secret */
+    fits = (int)(constant_time_is_zero_bn(hi) & 1);
+    CONSTTIME_DECLASSIFY(&fits, sizeof(fits));
+    return fits;
+}
+
+/*
+ * Serialise a P256 field element (little-endian limbs, reduced mod p) into
+ * 'len' big-endian bytes, in constant time.
+ */
+static ossl_inline void ecp_nistz256_felem_to_be(unsigned char *out, size_t len,
+    const BN_ULONG *in)
+{
+    size_t i;
+
+    for (i = 0; i < len; i++)
+        out[len - 1 - i] = (unsigned char)(in[i / sizeof(BN_ULONG)]
+            >> (8 * (i % sizeof(BN_ULONG))));
+}
+
+/*
+ * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
+ * method's point_get_affine_coords_bytes slot.  'point' may be secret (an ECDH
+ * shared point), so its coordinates are read through their fixed-width OSSL_FN
+ * views (never a variable-width BIGNUM) and the field inverse is nistz256's
+ * constant-time assembly FLT inverse - the same math as
+ * ecp_nistz256_get_affine().  See EC_POINT_get_affine_coords_bytes().
+ */
+__owur static int ecp_nistz256_point_get_affine_coords_bytes(
+    const EC_GROUP *group, const EC_POINT *point,
+    unsigned char *x, unsigned char *y, size_t len)
+{
+    BN_ULONG z_inv2[P256_LIMBS];
+    BN_ULONG z_inv3[P256_LIMBS];
+    BN_ULONG point_x[P256_LIMBS], point_y[P256_LIMBS], point_z[P256_LIMBS];
+    BN_ULONG x_ret[P256_LIMBS], y_ret[P256_LIMBS];
+    int ret = 0;
+
+    if (len != P256_LIMBS * sizeof(BN_ULONG)) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (EC_POINT_is_at_infinity(group, point)) {
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
+        return 0;
+    }
+
+    if (!ecp_nistz256_secret_coord(point_x, point->X)
+        || !ecp_nistz256_secret_coord(point_y, point->Y)
+        || !ecp_nistz256_secret_coord(point_z, point->Z)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    /*
+     * If Z_is_one the point is already in affine coordinates, so skip the
+     * (constant-time assembly) field inverse and Montgomery conversions.
+     */
+    if (!point->Z_is_one) {
+        ecp_nistz256_mod_inverse(z_inv3, point_z);
+        ecp_nistz256_sqr_mont(z_inv2, z_inv3);
+        if (x != NULL)
+            ecp_nistz256_mul_mont(point_x, point_x, z_inv2);
+        if (y != NULL) {
+            ecp_nistz256_mul_mont(z_inv3, z_inv3, z_inv2);
+            ecp_nistz256_mul_mont(point_y, point_y, z_inv3);
+        }
+    }
+
+    /* point_x, point_y now hold the affine coordinates (Montgomery form). */
+    if (x != NULL) {
+        ecp_nistz256_from_mont(x_ret, point_x);
+        ecp_nistz256_felem_to_be(x, len, x_ret);
+    }
+    if (y != NULL) {
+        ecp_nistz256_from_mont(y_ret, point_y);
+        ecp_nistz256_felem_to_be(y, len, y_ret);
+    }
+    ret = 1;
+
+err:
+    OPENSSL_cleanse(z_inv2, sizeof(z_inv2));
+    OPENSSL_cleanse(z_inv3, sizeof(z_inv3));
+    OPENSSL_cleanse(point_x, sizeof(point_x));
+    OPENSSL_cleanse(point_y, sizeof(point_y));
+    OPENSSL_cleanse(point_z, sizeof(point_z));
+    OPENSSL_cleanse(x_ret, sizeof(x_ret));
+    OPENSSL_cleanse(y_ret, sizeof(y_ret));
+    return ret;
 }
 
 static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
@@ -1255,8 +1532,15 @@ void ecp_nistz256_ord_sqr_mont(BN_ULONG res[P256_LIMBS],
     const BN_ULONG a[P256_LIMBS],
     BN_ULONG rep);
 
-static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
-    const BIGNUM *x, BN_CTX *ctx)
+/*
+ * Core constant-time order inverse shared by the BIGNUM and OSSL_FN entry
+ * points: out = in^-1 mod ord(p256), with in and out plain
+ * BN_ULONG[P256_LIMBS] field elements and in reduced (< ord).  It is Fermat's
+ * little theorem, in^(ord-2), via an addition chain in the order's Montgomery
+ * domain.
+ */
+static void ecp_nistz256_inv_mod_ord_fe(BN_ULONG out[P256_LIMBS],
+    const BN_ULONG in[P256_LIMBS])
 {
     /* RR = 2^512 mod ord(p256) */
     static const BN_ULONG RR[P256_LIMBS] = {
@@ -1272,8 +1556,7 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
      * with -1 offset.
      */
     BN_ULONG table[15][P256_LIMBS];
-    BN_ULONG out[P256_LIMBS], t[P256_LIMBS];
-    int i, ret = 0;
+    int i;
     enum {
         i_1 = 0,
         i_10,
@@ -1291,32 +1574,9 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
         i_x32
     };
 
-    /*
-     * Catch allocation failure early.
-     */
-    if (bn_wexpand(r, P256_LIMBS) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-        goto err;
-    }
-
-    if ((BN_num_bits(x) > 256) || BN_is_negative(x)) {
-        BIGNUM *tmp;
-
-        if ((tmp = BN_CTX_get(ctx)) == NULL
-            || !BN_nnmod(tmp, x, group->order, ctx)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-            goto err;
-        }
-        x = tmp;
-    }
-
-    if (!ecp_nistz256_bignum_to_field_elem(t, x)) {
-        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
-        goto err;
-    }
-
-    ecp_nistz256_ord_mul_mont(table[0], t, RR);
+    ecp_nistz256_ord_mul_mont(table[0], in, RR);
 #if 0
+    BN_ULONG t[P256_LIMBS];
     /*
      * Original sparse-then-fixed-window algorithm, retained for reference.
      */
@@ -1423,10 +1683,39 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     }
 #endif
     ecp_nistz256_ord_mul_mont(out, out, one);
+}
 
-    /*
-     * Can't fail, but check return code to be consistent anyway.
-     */
+static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
+    const BIGNUM *x, BN_CTX *ctx)
+{
+    BN_ULONG in[P256_LIMBS], out[P256_LIMBS];
+    int ret = 0;
+
+    /* Catch allocation failure early. */
+    if (bn_wexpand(r, P256_LIMBS) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    if ((BN_num_bits(x) > 256) || BN_is_negative(x)) {
+        BIGNUM *tmp;
+
+        if ((tmp = BN_CTX_get(ctx)) == NULL
+            || !BN_nnmod(tmp, x, group->order, ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            goto err;
+        }
+        x = tmp;
+    }
+
+    if (!ecp_nistz256_bignum_to_field_elem(in, x)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    ecp_nistz256_inv_mod_ord_fe(out, in);
+
+    /* Can't fail, but check return code to be consistent anyway. */
     if (!bn_set_words(r, out, P256_LIMBS))
         goto err;
 
@@ -1434,8 +1723,51 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
 err:
     return ret;
 }
+
+/*
+ * OSSL_FN entry point for the order inverse (the field_inverse_mod_ord_fn
+ * method slot): r = a^-1 mod ord(p256), reading the secret operand a through
+ * its fixed-width OSSL_FN view, never as a BIGNUM.  a is the ECDSA nonce,
+ * already reduced mod the order (< 2^256).  See
+ * ossl_ec_group_do_inverse_ord_fn().
+ */
+static int ecp_nistz256_inv_mod_ord_fn(const EC_GROUP *group, OSSL_FN *r,
+    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+{
+    BN_ULONG in[P256_LIMBS], out[P256_LIMBS];
+    unsigned char buf[P256_LIMBS * sizeof(BN_ULONG)];
+    const OSSL_FN_ULONG *w = ossl_fn_get_words(a);
+    size_t dsize = ossl_fn_get_dsize(a), i;
+    OSSL_FN_ULONG hi = 0;
+    int ret = 0;
+
+    /* Read a at fixed P256 width; it is already reduced mod the order. */
+    for (i = 0; i < P256_LIMBS; i++)
+        in[i] = i < dsize ? w[i] : 0;
+    for (; i < dsize; i++)
+        hi |= w[i];
+    if (hi != 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    ecp_nistz256_inv_mod_ord_fe(out, in);
+
+    /* out is a plain reduced field element; write it into r big-endian. */
+    ecp_nistz256_felem_to_be(buf, sizeof(buf), out);
+    if (!OSSL_FN_from_bytes_be(r, buf, sizeof(buf)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_cleanse(in, sizeof(in));
+    OPENSSL_cleanse(out, sizeof(out));
+    OPENSSL_cleanse(buf, sizeof(buf));
+    return ret;
+}
 #else
 #define ecp_nistz256_inv_mod_ord NULL
+#define ecp_nistz256_inv_mod_ord_fn NULL
 #endif
 
 static int ecp_nistz256group_full_init(EC_GROUP *group,
@@ -1546,6 +1878,19 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
     group->mont_data = ordmont;
     ordmont = NULL;
 
+    /*
+     * Cache the order in OSSL_FN Montgomery form too (this fast initialiser
+     * bypasses ec_precompute_mont_data()), so the constant-time ECDSA nonce
+     * inverse reuses it instead of rebuilding one per signature.
+     */
+    {
+        const OSSL_FN *order_fn = bn_get_ossl_fn(group->order);
+
+        if (order_fn != NULL
+            && (group->fn_mont_ctx_ord = OSSL_FN_MONT_CTX_new(order_fn)) == NULL)
+            goto err;
+    }
+
     ok = 1;
 
 err:
@@ -1621,7 +1966,11 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* ladder_pre */
         0, /* ladder_step */
         0, /* ladder_post */
-        ecp_nistz256group_full_init
+        ecp_nistz256group_full_init,
+        ecp_nistz256_points_mul_fn, /* mul_fn */
+        ecp_nistz256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
+        ecp_nistz256_point_get_affine_coords_bytes,
+        ecp_nistz256_inv_mod_ord_fn /* field_inverse_mod_ord_fn, may be NULL */
     };
 
     return &ret;

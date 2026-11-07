@@ -13,12 +13,58 @@
 
 #include <openssl/bn.h>
 #include <limits.h>
+#include "types.h"
 
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 
 void bn_correct_top(BIGNUM *a);
 int bn_set_top_fixed(BIGNUM *a, int words);
+
+/*
+ * bn_acquire_ossl_fn() and bn_release() work in tandem, and are
+ * most useful at call sites that temporarily operate on a BIGNUM's
+ * fixed-width OSSL_FN representation.
+ */
+
+/**
+ * Acquire the OSSL_FN from a BIGNUM.  The BIGNUM should no longer be
+ * used until bn_release() is called.
+ *
+ * @param[in]   b       The BIGNUM instance to get an OSSL_FN from
+ * @param[in]   limbs   The minimum number of limbs 'b' should be expanded to.
+ *                      Note that this doesn't set 'top', that's done by
+ *                      bn_release().
+ * @returns     the OSSL_FN instance of the BIGNUM, if there is one
+ * @pre         b must not be NULL
+ */
+OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs);
+
+/**
+ * Release the BIGNUM from which the OSSL_FN was acquired.  This will
+ * adjust the BIGNUM to what was done with its OSSL_FN, and the BIGNUM
+ * can again be used with BN_ functions.
+ *
+ * @param[in]   b       The BIGNUM instance to release
+ * @param[in]   limbs   The maximum number of significant limbs.  This sets
+ *                      'top'.
+ * @pre         b and b->data must not be NULL
+ */
+void bn_release(BIGNUM *b, int limbs);
+
+/**
+ * Get the OSSL_FN from a BIGNUM for read-only access.  Unlike
+ * bn_acquire_ossl_fn(), this does not acquire or resize the BIGNUM:
+ * the BIGNUM remains fully usable with BN_ functions, no bn_release()
+ * call is needed, and the returned OSSL_FN keeps the BIGNUM's current
+ * allocated width without any expansion.  Use this for read-only
+ * operands; use bn_acquire_ossl_fn() for writable results.
+ *
+ * @param[in]   bn   The BIGNUM instance to get an OSSL_FN from
+ * @returns     the OSSL_FN instance of the BIGNUM, or NULL if it has none
+ * @pre         bn must not be NULL
+ */
+const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn);
 
 /*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
@@ -135,6 +181,19 @@ extern const BIGNUM ossl_bn_inv_sqrt_2;
 
 int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+/**
+ * @brief Compute |r| = |a|^|p| mod |m| on the crypto card, without a
+ * software fallback.
+ *
+ * @param r the result
+ * @param a the base
+ * @param p the exponent
+ * @param m the modulus
+ * @returns 1 on success, 0 on failure, and -1 to tell the caller to use
+ * its software fallback
+ */
+int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m);
 int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
     const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp, const BIGNUM *n);
 

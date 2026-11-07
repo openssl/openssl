@@ -13,6 +13,7 @@
 #include <openssl/dsa.h>
 #include "internal/refcount.h"
 #include "internal/ffc.h"
+#include "crypto/fn.h"
 
 struct dsa_st {
     /*
@@ -27,6 +28,7 @@ struct dsa_st {
     int flags;
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
+    OSSL_FN_MONT_CTX *method_mont_fn_p;
     CRYPTO_REF_COUNT references;
 #ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;

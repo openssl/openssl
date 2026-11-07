@@ -12,7 +12,7 @@ use warnings;
 
 use File::Copy;
 use File::Compare qw/compare_text compare/;
-use OpenSSL::Test qw/:DEFAULT data_file srctop_file/;
+use OpenSSL::Test qw/:DEFAULT data_file srctop_file bldtop_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_app_ecparam");
@@ -37,7 +37,7 @@ my $prime = param_file('valid', 'prime256v1-named.pem');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 9;
+plan tests => 10;
 
 sub compare_pem {
     my ($file1, $file2) = @_;
@@ -298,4 +298,40 @@ subtest "Check ecparam -text and -list_curves" => sub {
        "explicit parameters do not print a curve OID");
 
     ok(run(app(['openssl', 'ecparam', '-list_curves'])), "Test -list_curves");
+};
+
+subtest "Test -list_curves against the curve data file" => sub {
+    plan tests => 1;
+
+    # The expected list comes from the source of truth,
+    # crypto/ec/ec_curves.conf; its keys are NID name suffixes, mapped
+    # to display names through obj_mac.h.
+    my %sn;
+    open(my $mh, '<', bldtop_file('include', 'openssl', 'obj_mac.h'))
+        or die "Cannot open obj_mac.h: $!";
+    while (<$mh>) {
+        $sn{$1} = $2 if /^#define SN_(\w+)\s+"(.*)"$/;
+    }
+    close $mh;
+
+    my @pairs = do(srctop_file('crypto', 'ec', 'ec_curves.conf'));
+    die "Cannot load ec_curves.conf: $@" if $@;
+    my %records = @pairs;
+    my @expected;
+    while (@pairs) {
+        my ($name, $record) = splice @pairs, 0, 2;
+        my $r = $records{$record->{alias_of} // $name};
+        next if ref $r->{enabled} eq 'CODE' && !$r->{enabled}->();
+        my $macro = $name;
+        $macro =~ s/-/_/g;
+        $macro =~ s/\./_/g;
+        die "No SN for NID_$macro\n" unless exists $sn{$macro};
+        push @expected, $sn{$macro};
+    }
+
+    my @out = run(app([ 'openssl', 'ecparam', '-list_curves' ]), capture => 1);
+    my @actual = map { /^\s*(\S+)\s*:/ ? ($1) : () } @out;
+
+    is_deeply(\@actual, \@expected,
+              "builtin curve list matches crypto/ec/ec_curves.conf");
 };
