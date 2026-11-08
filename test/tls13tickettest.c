@@ -273,7 +273,8 @@ static int tls_shutdown(struct tls13_channel *ch)
 static int ticket_enable(SSL_CTX *ctx)
 {
     unsigned flags = SSL_SESS_CACHE_NO_INTERNAL_STORE;
-    if (SSL_CTX_is_server(ctx))
+    /* SSL_CTX_is_server() is not available in this release. */
+    if (SSL_CTX_get_ssl_method(ctx) == TLS_server_method())
         flags |= SSL_SESS_CACHE_SERVER;
     else
         flags |= SSL_SESS_CACHE_CLIENT;
