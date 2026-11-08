@@ -892,7 +892,7 @@ static int tls13_digest_offered(SSL_CONNECTION *s, const SSL_CIPHER *cipher)
          */
         if (c->min_tls > TLS1_2_VERSION
             && ssl_cipher_get_handshake_digest_nid(c) == want
-            && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
+            && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
             return 1;
     }
     return 0;
@@ -945,7 +945,7 @@ static int tls13_early_cipher_offered(SSL_CONNECTION *s, const SSL_SESSION *sess
      * ciphersuite filter.
      */
     return c != NULL
-        && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED)
+        && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0)
         && sk_SSL_CIPHER_find(ssl_get_ciphers_by_id(s), c) >= 0;
 }
 
