@@ -369,7 +369,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
     /* store does not include CRLs */
     ret = cmp_validate_cert_path(ctx, store, scrt);
     if (ret != 1) {
-        ossl_cmp_warn(ctx, "also exceptional 3GPP mode cert path validation failed");
+        ossl_cmp_warn(ctx, "exceptional 3GPP mode message protection cert path validation failed");
     } else if (OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_IP) {
         /*
          * verify that the newly enrolled certificate (which assumed rid ==
@@ -384,6 +384,8 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
         if (ret == 1)
             ret = cmp_validate_cert_path(ctx, store, newcrt);
         X509_free(newcrt);
+        if (ret != 1)
+            ossl_cmp_warn(ctx, "exceptional 3GPP mode cert path validation of the new cert failed");
     }
 
 err:
