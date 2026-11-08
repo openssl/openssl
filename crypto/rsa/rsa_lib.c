@@ -779,9 +779,19 @@ int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
             return 0;
 
         for (i = 2; i < pnum; i++) {
-            BIGNUM *prime = sk_BIGNUM_pop(primes);
-            BIGNUM *exp = sk_BIGNUM_pop(exps);
-            BIGNUM *coeff = sk_BIGNUM_pop(coeffs);
+            /*
+             * The components arrive in natural order (r1..rn, dmp1, dmq1,
+             * d3..dn, iqmp, t3..tn) and prime_infos must end up in that same
+             * ascending order, so consume the stacks from the front.
+             * Ownership transfers exactly as it would with pop().
+             */
+            BIGNUM *prime = sk_BIGNUM_value(primes, 0);
+            BIGNUM *exp = sk_BIGNUM_value(exps, 0);
+            BIGNUM *coeff = sk_BIGNUM_value(coeffs, 0);
+
+            sk_BIGNUM_delete(primes, 0);
+            sk_BIGNUM_delete(exps, 0);
+            sk_BIGNUM_delete(coeffs, 0);
             RSA_PRIME_INFO *pinfo = NULL;
 
             if (!ossl_assert(prime != NULL && exp != NULL && coeff != NULL))
