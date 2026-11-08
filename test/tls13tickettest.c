@@ -1394,8 +1394,9 @@ static int tls_early_data_retry(struct tls13_channel *x)
     enum endpoint_state c = ENDPOINT_WRITE_EARLY_DATA;
     enum endpoint_state s = ENDPOINT_READ_EARLY_DATA;
     size_t w = SIZE_MAX, r = SIZE_MAX;
+    int i;
 
-    for (int i = 0; i < 100 && (c != ENDPOINT_DONE || s != ENDPOINT_DONE); i++) {
+    for (i = 0; i < 100 && (c != ENDPOINT_DONE || s != ENDPOINT_DONE); i++) {
         if (c == ENDPOINT_WRITE_EARLY_DATA) {
             if (SSL_write_early_data(x->c.ssl, m, sizeof(m), &w) > 0)
                 c = ENDPOINT_DONE;
