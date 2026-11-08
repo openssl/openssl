@@ -22,6 +22,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
+#include "internal/e_os.h"
 #include "internal/o_dir.h"
 #include "mfail.h"
 
@@ -82,14 +83,16 @@ static void testfile(const char *pathname, int file_idx)
     unsigned char *buf;
     size_t s;
 
-    if (stat(pathname, &st) < 0 || !S_ISREG(st.st_mode))
-        return;
-
-    fprintf(stderr, "# CORPUS_FILE file_idx=%d size=%lld path=%s\n",
-        file_idx, (long long)st.st_size, pathname);
     f = fopen(pathname, "rb");
     if (f == NULL)
         return;
+    if (fstat(fileno(f), &st) < 0 || !S_ISREG(st.st_mode)) {
+        fclose(f);
+        return;
+    }
+
+    fprintf(stderr, "# CORPUS_FILE file_idx=%d size=%lld path=%s\n",
+        file_idx, (long long)st.st_size, pathname);
     buf = malloc(st.st_size);
     if (buf == NULL) {
         fclose(f);
