@@ -74,9 +74,6 @@ OpenSSL 4.0
 
    *Mounir IDRASSI*
 
-
- * none yet
-
 ### Changes between 4.0.2 and 4.0.3 [29 Sep 2026]
 
  * Fixed DTLS retransmissions of handshake messages from a stale buffer offset.
