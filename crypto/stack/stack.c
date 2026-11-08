@@ -472,7 +472,6 @@ void OPENSSL_sk_zero(OPENSSL_STACK *st)
 {
     if (st == NULL || st->num == 0)
         return;
-    memset(st->data, 0, sizeof(*st->data) * st->num);
     st->num = 0;
 }
 
