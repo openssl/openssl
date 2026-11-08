@@ -8,6 +8,7 @@
  */
 
 #include <stddef.h>
+#include <limits.h>
 #include "internal/cryptlib.h"
 
 typedef int (*cmpthunk_fn)(const void *, const void *);
@@ -20,7 +21,7 @@ const void *ossl_bsearch(const void *key, const void *base, int num,
     int l, h, i = 0, c = 0;
     const char *p = NULL;
 
-    if (num == 0)
+    if (num <= 0 || size <= 0 || num > INT_MAX / size)
         return NULL;
     l = 0;
     h = num;
