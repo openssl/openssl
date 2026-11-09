@@ -1782,6 +1782,7 @@ static int test_cms_overlong_relative_dist_points(void)
         goto err;
     ok = 1;
 err:
+    CMS_ContentInfo_free(cms);
     X509_STORE_free(store);
     BIO_free(content);
     BIO_free(in);
