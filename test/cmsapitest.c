@@ -2063,10 +2063,14 @@ int setup_tests(void)
     ADD_TEST(test_encrypted_data_aead);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     ADD_TEST(test_cms_aesgcm_iv_too_long);
-    ADD_TEST(test_cms_overlong_relative_dist_points);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
     ADD_TEST(test_pwri_kek_unwrap_no_iv_key);
     if (ed448_cert != NULL && ed448_privkey != NULL) {
+        /*
+         * We only run the overlong test if we have ec enabled
+         * as the root cert uses ec keys
+         */
+        ADD_TEST(test_cms_overlong_relative_dist_points);
         ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs);
         ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs_md);
         ADD_TEST(test_CMS_add1_signer_ed448_noattr);
