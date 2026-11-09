@@ -946,6 +946,7 @@ err:
     EVP_CIPHER_CTX_free(ctx);
     return testresult;
 }
+
 /*
  * Verify stale key is not being used after providing a new key in multiple steps.
  * This test performs a full round of encryption and then changes the
@@ -1034,6 +1035,7 @@ static int test_evp_stale_key_reinit(int idx)
             goto err;
         }
     }
+
     /* Initialize first with key */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key, iv))) {
         errmsg = "FIRST_KEY_INIT";
@@ -1068,6 +1070,7 @@ static int test_evp_stale_key_reinit(int idx)
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
+
     /* use same context with a different key and iv in multiple steps */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key2, NULL))) {
         errmsg = "REINIT_KEY";
@@ -1106,6 +1109,7 @@ static int test_evp_stale_key_reinit(int idx)
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
+
     /* Initialize in a single step */
     if (!TEST_ptr(ctx_onestep = EVP_CIPHER_CTX_new())) {
         errmsg = "CTX_ALLOC_BASE_CASE";
@@ -1165,6 +1169,7 @@ static int test_evp_stale_key_reinit(int idx)
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
+
     /* Compare single-call vs key->iv */
     if (!TEST_int_eq(ct_reinit_len, ct_onestep_len)
         || !TEST_mem_eq(ct_reinit, ct_reinit_len,
@@ -1184,7 +1189,6 @@ err:
     if (errmsg != NULL) {
         TEST_info("evp_stale_key_reinit_test %d, %s: %s",
             idx, errmsg, info->name);
-        testresult = 0;
     }
 
     EVP_CIPHER_CTX_free(ctx_onestep);
