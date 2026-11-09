@@ -2299,7 +2299,7 @@ static int test_tls13_ticket_lifetime_cap(int idx)
 {
     static const uint32_t wire[] = { ONE_WEEK_SEC, ONE_WEEK_SEC + 1, UINT32_MAX };
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel ch = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel ch = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL, *rt = NULL;
     int test;
 
@@ -2339,8 +2339,8 @@ static int test_tls13_ticket_lifetime_cap(int idx)
 static int test_tls13_ticket_lifetime_bound_offer(int idx)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL, *rt = NULL;
     const unsigned long hint = ONE_WEEK_SEC + 3600;
     const time_t age = idx == 0 ? ONE_WEEK_SEC + 1800 : ONE_WEEK_SEC - 3600;
@@ -2404,8 +2404,8 @@ static int zero_lifetime_gen_cb(SSL *ssl, void *arg)
 static int test_tls13_ticket_lifetime_zero(int idx)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     int test;
 
@@ -2460,8 +2460,8 @@ static int test_tls13_ticket_lifetime_zero(int idx)
 static int test_tls13_ticket_lifetime_suppress_early_data(int idx)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL, *rt = NULL, *use;
     int test;
 
