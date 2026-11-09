@@ -55,27 +55,27 @@ my $q = 3329;
 my $code = '';
 
 # Register aliases.
-my $arg = 'x0';
+my $coeff_base = 'x0';
 
-my ($constants_gpr, $q_gpr) = ('w9', 'w11');
-my $table_gpr = 'x12';
-my ($pass_gpr, $pass_count) = ('x1', 'w2');
-my ($vec_a, $vec_b, $vec_product, $vec_tmp, $vec_sum, $vec_batch_a) =
+my ($packed_zc, $q_reg) = ('w9', 'w11');
+my $twiddle_ptr = 'x12';
+my ($coeff_ptr, $batches_left) = ('x1', 'w2');
+my ($a_v, $b_v, $product_v, $tmp_v, $sum_v, $batch_a_v) =
     map("v$_", (0, 1, 2, 3, 5, 4));
-my ($vec_a2, $vec_b2, $vec_product2, $vec_tmp2, $vec_sum2) =
+my ($a2_v, $b2_v, $product2_v, $tmp2_v, $sum2_v) =
     map("v$_", (16, 17, 18, 19, 20));
-my ($quad_a, $quad_b, $quad_product, $quad_sum) =
+my ($a_q, $b_q, $product_q, $sum_q) =
     map("q$_", (0, 1, 2, 5));
-my ($quad_a2, $quad_b2, $quad_product2, $quad_sum2) =
+my ($a2_q, $b2_q, $product2_q, $sum2_q) =
     map("q$_", (16, 17, 18, 20));
-my ($vec_barrett, $vec_recip, $vec_root, $vec_q) =
+my ($barrett_v, $c_v, $z_v, $q_v) =
     map("v$_", (28, 29, 30, 31));
-my ($quad_recip, $quad_root) = map("q$_", (29, 30));
+my ($c_q, $z_q) = map("q$_", (29, 30));
 # Indexed halfword operands must use v0-v15.  v6 holds z and c in lanes 0/1.
-my ($vec_intt_constants, $single_intt_constants) = ('v6', 's6');
+my ($intt_zc_v, $intt_zc_s) = ('v6', 's6');
 
 # Inverse (z,c) pairs for lengths >= 8; c = round(2^15*z/q).
-my %intt_constants = (
+my %intt_zc_constants = (
     # Layer 3
     8 => [
         -821, -8081, 1355, 13338, 450, 4429, 936, 9213,
@@ -111,12 +111,12 @@ sub intt_reduce {
         for (my $j = 0; $j < $len; $j += 8) {
             my $off = 2 * ($base + $j);
             $code .= <<___;
-        ldr     $quad_a, [$arg, #$off]
+        ldr     $a_q, [$coeff_base, #$off]
 
-        sqrdmulh $vec_tmp.8h, $vec_a.8h, $vec_barrett.8h
-        mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+        sqrdmulh $tmp_v.8h, $a_v.8h, $barrett_v.8h
+        mls     $a_v.8h, $tmp_v.8h, $q_v.8h
 
-        str     $quad_a, [$arg, #$off]
+        str     $a_q, [$coeff_base, #$off]
 ___
         }
     }
@@ -133,53 +133,53 @@ sub ntt_vector_layer {
     if ($len == 8) {
         for (my $start = 0; $start < 256; $start += 2 * $len) {
             $code .= <<___;
-        ldp     $quad_root, $quad_recip, [$table_gpr], #32
+        ldp     $z_q, $c_q, [$twiddle_ptr], #32
 ___
             my $a = 2 * $start;
             $code .= <<___;
-        ldp     $quad_a, $quad_b, [$arg, #$a]
+        ldp     $a_q, $b_q, [$coeff_base, #$a]
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mul     $product_v.8h, $b_v.8h, $z_v.8h
+        sqrdmulh $tmp_v.8h, $b_v.8h, $c_v.8h
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
 
         // Butterfly sum/difference.
-        sub     $vec_sum.8h, $vec_a.8h, $vec_product.8h
-        add     $vec_a.8h, $vec_a.8h, $vec_product.8h
+        sub     $sum_v.8h, $a_v.8h, $product_v.8h
+        add     $a_v.8h, $a_v.8h, $product_v.8h
 
-        stp     $quad_a, $quad_sum, [$arg, #$a]
+        stp     $a_q, $sum_q, [$coeff_base, #$a]
 ___
         }
     } else {
         for (my $start = 0; $start < 256; $start += 2 * $len) {
             $code .= <<___;
-        ldp     $quad_root, $quad_recip, [$table_gpr], #32
+        ldp     $z_q, $c_q, [$twiddle_ptr], #32
 ___
             for (my $j = 0; $j < $len; $j += 16) {
                 my $a = 2 * ($start + $j);
                 my $b = 2 * ($start + $len + $j);
 
                 $code .= <<___;
-        ldp     $quad_a, $quad_a2, [$arg, #$a]
-        ldp     $quad_b, $quad_b2, [$arg, #$b]
+        ldp     $a_q, $a2_q, [$coeff_base, #$a]
+        ldp     $b_q, $b2_q, [$coeff_base, #$b]
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
-        mul     $vec_product2.8h, $vec_b2.8h, $vec_root.8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_recip.8h
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
-        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+        mul     $product_v.8h, $b_v.8h, $z_v.8h
+        mul     $product2_v.8h, $b2_v.8h, $z_v.8h
+        sqrdmulh $tmp_v.8h, $b_v.8h, $c_v.8h
+        sqrdmulh $tmp2_v.8h, $b2_v.8h, $c_v.8h
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
+        mls     $product2_v.8h, $tmp2_v.8h, $q_v.8h
 
         // Butterfly sum/difference.
-        sub     $vec_sum.8h, $vec_a.8h, $vec_product.8h
-        sub     $vec_sum2.8h, $vec_a2.8h, $vec_product2.8h
-        add     $vec_a.8h, $vec_a.8h, $vec_product.8h
-        add     $vec_a2.8h, $vec_a2.8h, $vec_product2.8h
+        sub     $sum_v.8h, $a_v.8h, $product_v.8h
+        sub     $sum2_v.8h, $a2_v.8h, $product2_v.8h
+        add     $a_v.8h, $a_v.8h, $product_v.8h
+        add     $a2_v.8h, $a2_v.8h, $product2_v.8h
 
-        stp     $quad_a, $quad_a2, [$arg, #$a]
-        stp     $quad_sum, $quad_sum2, [$arg, #$b]
+        stp     $a_q, $a2_q, [$coeff_base, #$a]
+        stp     $sum_q, $sum2_q, [$coeff_base, #$b]
 ___
             }
         }
@@ -198,28 +198,28 @@ sub ntt_interleaved_layer {
     my $shape = $len == 2 ? '.4s' : '.2d';
     my $loop = ".Lossl_ml_kem_ntt_armv8_length${len}_loop";
     $code .= <<___;
-        mov     $pass_gpr, $arg
-        mov     $pass_count, #16
+        mov     $coeff_ptr, $coeff_base
+        mov     $batches_left, #16
 $loop:
-        ldp     $quad_root, $quad_recip, [$table_gpr], #32
-        ldp     $quad_a, $quad_b, [$pass_gpr]
-        uzp1    $vec_batch_a$shape, $vec_a$shape, $vec_b$shape
-        uzp2    $vec_b$shape, $vec_a$shape, $vec_b$shape
+        ldp     $z_q, $c_q, [$twiddle_ptr], #32
+        ldp     $a_q, $b_q, [$coeff_ptr]
+        uzp1    $batch_a_v$shape, $a_v$shape, $b_v$shape
+        uzp2    $b_v$shape, $a_v$shape, $b_v$shape
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mul     $product_v.8h, $b_v.8h, $z_v.8h
+        sqrdmulh $tmp_v.8h, $b_v.8h, $c_v.8h
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
 
         // Butterfly sum/difference.
-        sub     $vec_sum.8h, $vec_batch_a.8h, $vec_product.8h
-        add     $vec_batch_a.8h, $vec_batch_a.8h, $vec_product.8h
+        sub     $sum_v.8h, $batch_a_v.8h, $product_v.8h
+        add     $batch_a_v.8h, $batch_a_v.8h, $product_v.8h
 
-        zip1    $vec_a$shape, $vec_batch_a$shape, $vec_sum$shape
-        zip2    $vec_b$shape, $vec_batch_a$shape, $vec_sum$shape
-        stp     $quad_a, $quad_b, [$pass_gpr], #32
+        zip1    $a_v$shape, $batch_a_v$shape, $sum_v$shape
+        zip2    $b_v$shape, $batch_a_v$shape, $sum_v$shape
+        stp     $a_q, $b_q, [$coeff_ptr], #32
 
-        subs    $pass_count, $pass_count, #1
+        subs    $batches_left, $batches_left, #1
         b.ne    $loop
 ___
 }
@@ -228,31 +228,31 @@ ___
 # residues to give canonical output in [0,q).
 sub ntt_reduce {
     $code .= <<___;
-        mov     $pass_gpr, $arg
-        mov     $pass_count, #8
+        mov     $coeff_ptr, $coeff_base
+        mov     $batches_left, #8
 .Lntt_canonical_loop:
 ___
     for (1..2) {
         $code .= <<___;
-        ldp     $quad_a, $quad_b, [$pass_gpr]
+        ldp     $a_q, $b_q, [$coeff_ptr]
 
-        sqrdmulh $vec_tmp.8h, $vec_a.8h, $vec_barrett.8h
-        mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+        sqrdmulh $tmp_v.8h, $a_v.8h, $barrett_v.8h
+        mls     $a_v.8h, $tmp_v.8h, $q_v.8h
 
-        sshr    $vec_tmp.8h, $vec_a.8h, #15
-        mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+        sshr    $tmp_v.8h, $a_v.8h, #15
+        mls     $a_v.8h, $tmp_v.8h, $q_v.8h
 
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_barrett.8h
-        mls     $vec_b.8h, $vec_tmp.8h, $vec_q.8h
+        sqrdmulh $tmp_v.8h, $b_v.8h, $barrett_v.8h
+        mls     $b_v.8h, $tmp_v.8h, $q_v.8h
 
-        sshr    $vec_tmp.8h, $vec_b.8h, #15
-        mls     $vec_b.8h, $vec_tmp.8h, $vec_q.8h
+        sshr    $tmp_v.8h, $b_v.8h, #15
+        mls     $b_v.8h, $tmp_v.8h, $q_v.8h
 
-        stp     $quad_a, $quad_b, [$pass_gpr], #32
+        stp     $a_q, $b_q, [$coeff_ptr], #32
 ___
     }
     $code .= <<___;
-        subs    $pass_count, $pass_count, #1
+        subs    $batches_left, $batches_left, #1
         b.ne    .Lntt_canonical_loop
 ___
 }
@@ -269,11 +269,11 @@ sub ntt {
 .align  4
 $name:
         AARCH64_VALID_CALL_TARGET
-        adrp    $table_gpr, .Lntt_constants
-        add     $table_gpr, $table_gpr, #:lo12:.Lntt_constants
-        mov     $q_gpr, #$q
-        dup     $vec_q.8h, $q_gpr
-        movi    $vec_barrett.8h, #10
+        adrp    $twiddle_ptr, .Lntt_constants
+        add     $twiddle_ptr, $twiddle_ptr, #:lo12:.Lntt_constants
+        mov     $q_reg, #$q
+        dup     $q_v.8h, $q_reg
+        movi    $barrett_v.8h, #10
 ___
     ntt_vector_layer(128);
     ntt_vector_layer(64);
@@ -301,64 +301,64 @@ sub intt_vector_layer {
 
     if ($len == 8) {
         for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
-            my ($z, $c) = @{$intt_constants{$len}}[2 * $group, 2 * $group + 1];
+            my ($z, $c) = @{$intt_zc_constants{$len}}[2 * $group, 2 * $group + 1];
             my $z_bits = $z & 0xffff;
             my $c_bits = $c & 0xffff;
             $code .= <<___;
-        mov     $constants_gpr, #$z_bits
-        movk    $constants_gpr, #$c_bits, lsl #16
-        fmov    $single_intt_constants, $constants_gpr
+        mov     $packed_zc, #$z_bits
+        movk    $packed_zc, #$c_bits, lsl #16
+        fmov    $intt_zc_s, $packed_zc
 ___
             my $a = 2 * $start;
             $code .= <<___;
-        ldp     $quad_a, $quad_b, [$arg, #$a]
+        ldp     $a_q, $b_q, [$coeff_base, #$a]
 
         // Butterfly sum/difference.
-        add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
-        sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
+        add     $sum_v.8h, $a_v.8h, $b_v.8h
+        sub     $b_v.8h, $a_v.8h, $b_v.8h
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_intt_constants.h[0]
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_intt_constants.h[1]
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mul     $product_v.8h, $b_v.8h, $intt_zc_v.h[0]
+        sqrdmulh $tmp_v.8h, $b_v.8h, $intt_zc_v.h[1]
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
 
-        stp     $quad_sum, $quad_product, [$arg, #$a]
+        stp     $sum_q, $product_q, [$coeff_base, #$a]
 ___
         }
     } else {
         for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
-            my ($z, $c) = @{$intt_constants{$len}}[2 * $group, 2 * $group + 1];
+            my ($z, $c) = @{$intt_zc_constants{$len}}[2 * $group, 2 * $group + 1];
             my $z_bits = $z & 0xffff;
             my $c_bits = $c & 0xffff;
             $code .= <<___;
-        mov     $constants_gpr, #$z_bits
-        movk    $constants_gpr, #$c_bits, lsl #16
-        fmov    $single_intt_constants, $constants_gpr
+        mov     $packed_zc, #$z_bits
+        movk    $packed_zc, #$c_bits, lsl #16
+        fmov    $intt_zc_s, $packed_zc
 ___
             for (my $j = 0; $j < $len; $j += 16) {
                 my $a = 2 * ($start + $j);
                 my $b = 2 * ($start + $len + $j);
 
                 $code .= <<___;
-        ldp     $quad_a, $quad_a2, [$arg, #$a]
-        ldp     $quad_b, $quad_b2, [$arg, #$b]
+        ldp     $a_q, $a2_q, [$coeff_base, #$a]
+        ldp     $b_q, $b2_q, [$coeff_base, #$b]
 
         // Butterfly sum/difference.
-        add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
-        add     $vec_sum2.8h, $vec_a2.8h, $vec_b2.8h
-        sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
-        sub     $vec_b2.8h, $vec_a2.8h, $vec_b2.8h
+        add     $sum_v.8h, $a_v.8h, $b_v.8h
+        add     $sum2_v.8h, $a2_v.8h, $b2_v.8h
+        sub     $b_v.8h, $a_v.8h, $b_v.8h
+        sub     $b2_v.8h, $a2_v.8h, $b2_v.8h
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_intt_constants.h[0]
-        mul     $vec_product2.8h, $vec_b2.8h, $vec_intt_constants.h[0]
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_intt_constants.h[1]
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_intt_constants.h[1]
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
-        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+        mul     $product_v.8h, $b_v.8h, $intt_zc_v.h[0]
+        mul     $product2_v.8h, $b2_v.8h, $intt_zc_v.h[0]
+        sqrdmulh $tmp_v.8h, $b_v.8h, $intt_zc_v.h[1]
+        sqrdmulh $tmp2_v.8h, $b2_v.8h, $intt_zc_v.h[1]
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
+        mls     $product2_v.8h, $tmp2_v.8h, $q_v.8h
 
-        stp     $quad_sum, $quad_sum2, [$arg, #$a]
-        stp     $quad_product, $quad_product2, [$arg, #$b]
+        stp     $sum_q, $sum2_q, [$coeff_base, #$a]
+        stp     $product_q, $product2_q, [$coeff_base, #$b]
 ___
             }
         }
@@ -375,27 +375,27 @@ sub intt_interleaved_layer {
     my $shape = $len == 2 ? '.4s' : '.2d';
     my $loop = ".Lossl_ml_kem_intt_armv8_length${len}_loop";
     $code .= <<___;
-        mov     $pass_gpr, $arg
-        mov     $pass_count, #16
+        mov     $coeff_ptr, $coeff_base
+        mov     $batches_left, #16
 $loop:
-        ldp     $quad_root, $quad_recip, [$table_gpr], #32
-        ldp     $quad_a, $quad_b, [$pass_gpr]
-        uzp1    $vec_batch_a$shape, $vec_a$shape, $vec_b$shape
-        uzp2    $vec_b$shape, $vec_a$shape, $vec_b$shape
+        ldp     $z_q, $c_q, [$twiddle_ptr], #32
+        ldp     $a_q, $b_q, [$coeff_ptr]
+        uzp1    $batch_a_v$shape, $a_v$shape, $b_v$shape
+        uzp2    $b_v$shape, $a_v$shape, $b_v$shape
         // Butterfly sum/difference.
-        add     $vec_sum.8h, $vec_batch_a.8h, $vec_b.8h
-        sub     $vec_b.8h, $vec_batch_a.8h, $vec_b.8h
+        add     $sum_v.8h, $batch_a_v.8h, $b_v.8h
+        sub     $b_v.8h, $batch_a_v.8h, $b_v.8h
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mul     $product_v.8h, $b_v.8h, $z_v.8h
+        sqrdmulh $tmp_v.8h, $b_v.8h, $c_v.8h
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
 
-        zip1    $vec_a$shape, $vec_sum$shape, $vec_product$shape
-        zip2    $vec_b$shape, $vec_sum$shape, $vec_product$shape
-        stp     $quad_a, $quad_b, [$pass_gpr], #32
+        zip1    $a_v$shape, $sum_v$shape, $product_v$shape
+        zip2    $b_v$shape, $sum_v$shape, $product_v$shape
+        stp     $a_q, $b_q, [$coeff_ptr], #32
 
-        subs    $pass_count, $pass_count, #1
+        subs    $batches_left, $batches_left, #1
         b.ne    $loop
 ___
 }
@@ -407,35 +407,35 @@ sub intt_normalize {
     my $z_bits = -26 & 0xffff;
     my $c_bits = -256 & 0xffff;
     $code .= <<___;
-        mov     $constants_gpr, #$z_bits
-        movk    $constants_gpr, #$c_bits, lsl #16
-        fmov    $single_intt_constants, $constants_gpr
-        mov     $pass_gpr, $arg
-        mov     $pass_count, #8
+        mov     $packed_zc, #$z_bits
+        movk    $packed_zc, #$c_bits, lsl #16
+        fmov    $intt_zc_s, $packed_zc
+        mov     $coeff_ptr, $coeff_base
+        mov     $batches_left, #8
 .Lintt_scale_loop:
 ___
     for (1..2) {
         $code .= <<___;
-        ldp     $quad_b, $quad_b2, [$pass_gpr]
+        ldp     $b_q, $b2_q, [$coeff_ptr]
 
         // Inverse normalization.
-        mul     $vec_product.8h, $vec_b.8h, $vec_intt_constants.h[0]
-        mul     $vec_product2.8h, $vec_b2.8h, $vec_intt_constants.h[0]
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_intt_constants.h[1]
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_intt_constants.h[1]
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
-        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+        mul     $product_v.8h, $b_v.8h, $intt_zc_v.h[0]
+        mul     $product2_v.8h, $b2_v.8h, $intt_zc_v.h[0]
+        sqrdmulh $tmp_v.8h, $b_v.8h, $intt_zc_v.h[1]
+        sqrdmulh $tmp2_v.8h, $b2_v.8h, $intt_zc_v.h[1]
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
+        mls     $product2_v.8h, $tmp2_v.8h, $q_v.8h
 
-        sshr    $vec_tmp.8h, $vec_product.8h, #15
-        sshr    $vec_tmp2.8h, $vec_product2.8h, #15
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
-        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+        sshr    $tmp_v.8h, $product_v.8h, #15
+        sshr    $tmp2_v.8h, $product2_v.8h, #15
+        mls     $product_v.8h, $tmp_v.8h, $q_v.8h
+        mls     $product2_v.8h, $tmp2_v.8h, $q_v.8h
 
-        stp     $quad_product, $quad_product2, [$pass_gpr], #32
+        stp     $product_q, $product2_q, [$coeff_ptr], #32
 ___
     }
     $code .= <<___;
-        subs    $pass_count, $pass_count, #1
+        subs    $batches_left, $batches_left, #1
         b.ne    .Lintt_scale_loop
 ___
 }
@@ -452,11 +452,11 @@ sub intt {
 .align  4
 $name:
         AARCH64_VALID_CALL_TARGET
-        adrp    $table_gpr, .Lintt_short_constants
-        add     $table_gpr, $table_gpr, #:lo12:.Lintt_short_constants
-        mov     $q_gpr, #$q
-        dup     $vec_q.8h, $q_gpr
-        movi    $vec_barrett.8h, #10
+        adrp    $twiddle_ptr, .Lintt_short_constants
+        add     $twiddle_ptr, $twiddle_ptr, #:lo12:.Lintt_short_constants
+        mov     $q_reg, #$q
+        dup     $q_v.8h, $q_reg
+        movi    $barrett_v.8h, #10
 ___
     intt_interleaved_layer(2);
     intt_interleaved_layer(4);
