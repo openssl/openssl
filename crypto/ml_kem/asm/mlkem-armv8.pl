@@ -122,21 +122,15 @@ ___
     }
 }
 
-# Forward Cooley-Tukey butterflies, unrolled for lengths >= 8.
-# For each group with twiddle z:
-#   for each butterfly pair (a,b):
-#       t = b*z mod q
-#       (a,b) = (a+t,a-t)
-sub ntt_vector_layer {
-    my ($len) = @_;
-
-    if ($len == 8) {
-        for (my $start = 0; $start < 256; $start += 2 * $len) {
-            $code .= <<___;
+# Length-8 forward butterflies use one vector per half of each group.
+# (a,b) = (a+b*z,a-b*z) modulo q.
+sub ntt_layer8 {
+    for (my $start = 0; $start < 256; $start += 16) {
+        $code .= <<___;
         ldp     $z_q, $c_q, [$twiddle_ptr], #32
 ___
-            my $a = 2 * $start;
-            $code .= <<___;
+        my $a = 2 * $start;
+        $code .= <<___;
         ldp     $a_q, $b_q, [$coeff_base, #$a]
 
         // Twiddle multiplication.
@@ -150,17 +144,26 @@ ___
 
         stp     $a_q, $sum_q, [$coeff_base, #$a]
 ___
-        }
-    } else {
-        for (my $start = 0; $start < 256; $start += 2 * $len) {
-            $code .= <<___;
+    }
+}
+
+# Forward Cooley-Tukey butterflies, unrolled for lengths >= 16.
+# For each group with twiddle z:
+#   for each butterfly pair (a,b):
+#       t = b*z mod q
+#       (a,b) = (a+t,a-t)
+sub ntt_vector_layer {
+    my ($len) = @_;
+
+    for (my $start = 0; $start < 256; $start += 2 * $len) {
+        $code .= <<___;
         ldp     $z_q, $c_q, [$twiddle_ptr], #32
 ___
-            for (my $j = 0; $j < $len; $j += 16) {
-                my $a = 2 * ($start + $j);
-                my $b = 2 * ($start + $len + $j);
+        for (my $j = 0; $j < $len; $j += 16) {
+            my $a = 2 * ($start + $j);
+            my $b = 2 * ($start + $len + $j);
 
-                $code .= <<___;
+            $code .= <<___;
         ldp     $a_q, $a2_q, [$coeff_base, #$a]
         ldp     $b_q, $b2_q, [$coeff_base, #$b]
 
@@ -181,7 +184,6 @@ ___
         stp     $a_q, $a2_q, [$coeff_base, #$a]
         stp     $sum_q, $sum2_q, [$coeff_base, #$b]
 ___
-            }
         }
     }
 }
@@ -279,7 +281,7 @@ ___
     ntt_vector_layer(64);
     ntt_vector_layer(32);
     ntt_vector_layer(16);
-    ntt_vector_layer(8);
+    ntt_layer8();
     ntt_interleaved_layer(4);
     ntt_interleaved_layer(2);
 
@@ -291,26 +293,22 @@ ___
 ___
 }
 
-# Inverse Gentleman-Sande butterflies, unrolled for lengths >= 8.
-# For each group with inverse twiddle z:
-#   for each butterfly pair (a,b):
-#       (a,b) = (a+b,(a-b)*z mod q)
-sub intt_vector_layer {
-    my ($len) = @_;
+# Length-8 inverse butterflies use one vector per half of each group.
+# (a,b) = (a+b,(a-b)*z) modulo q, using inverse twiddles.
+sub intt_layer8 {
     my $group = 0;
 
-    if ($len == 8) {
-        for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
-            my ($z, $c) = @{$intt_zc_constants{$len}}[2 * $group, 2 * $group + 1];
-            my $z_bits = $z & 0xffff;
-            my $c_bits = $c & 0xffff;
-            $code .= <<___;
+    for (my $start = 0; $start < 256; $start += 16, ++$group) {
+        my ($z, $c) = @{$intt_zc_constants{8}}[2 * $group, 2 * $group + 1];
+        my $z_bits = $z & 0xffff;
+        my $c_bits = $c & 0xffff;
+        $code .= <<___;
         mov     $packed_zc, #$z_bits
         movk    $packed_zc, #$c_bits, lsl #16
         fmov    $intt_zc_s, $packed_zc
 ___
-            my $a = 2 * $start;
-            $code .= <<___;
+        my $a = 2 * $start;
+        $code .= <<___;
         ldp     $a_q, $b_q, [$coeff_base, #$a]
 
         // Butterfly sum/difference.
@@ -324,22 +322,31 @@ ___
 
         stp     $sum_q, $product_q, [$coeff_base, #$a]
 ___
-        }
-    } else {
-        for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
-            my ($z, $c) = @{$intt_zc_constants{$len}}[2 * $group, 2 * $group + 1];
-            my $z_bits = $z & 0xffff;
-            my $c_bits = $c & 0xffff;
-            $code .= <<___;
+    }
+}
+
+# Inverse Gentleman-Sande butterflies, unrolled for lengths >= 16.
+# For each group with inverse twiddle z:
+#   for each butterfly pair (a,b):
+#       (a,b) = (a+b,(a-b)*z mod q)
+sub intt_vector_layer {
+    my ($len) = @_;
+    my $group = 0;
+
+    for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
+        my ($z, $c) = @{$intt_zc_constants{$len}}[2 * $group, 2 * $group + 1];
+        my $z_bits = $z & 0xffff;
+        my $c_bits = $c & 0xffff;
+        $code .= <<___;
         mov     $packed_zc, #$z_bits
         movk    $packed_zc, #$c_bits, lsl #16
         fmov    $intt_zc_s, $packed_zc
 ___
-            for (my $j = 0; $j < $len; $j += 16) {
-                my $a = 2 * ($start + $j);
-                my $b = 2 * ($start + $len + $j);
+        for (my $j = 0; $j < $len; $j += 16) {
+            my $a = 2 * ($start + $j);
+            my $b = 2 * ($start + $len + $j);
 
-                $code .= <<___;
+            $code .= <<___;
         ldp     $a_q, $a2_q, [$coeff_base, #$a]
         ldp     $b_q, $b2_q, [$coeff_base, #$b]
 
@@ -360,7 +367,6 @@ ___
         stp     $sum_q, $sum2_q, [$coeff_base, #$a]
         stp     $product_q, $product2_q, [$coeff_base, #$b]
 ___
-            }
         }
     }
 }
@@ -460,7 +466,7 @@ $name:
 ___
     intt_interleaved_layer(2);
     intt_interleaved_layer(4);
-    intt_vector_layer(8);
+    intt_layer8();
     # After layer 3, center sum paths to preserve signed 16-bit headroom.
     intt_reduce(8, 16);
     intt_vector_layer(16);
