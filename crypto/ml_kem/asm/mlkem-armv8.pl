@@ -13,6 +13,7 @@
 # leave 128 coefficient pairs: forward lengths 128..2, inverse lengths 2..128.
 # Roots are z = 17^bitrev7(i) mod q; inverse layers use their inverses.
 # Inputs and outputs are canonical [0,q); intermediate lanes are signed 16-bit.
+# Twiddle multiplication: r = low16(x*z) - q*round(x*c/2^15).
 #
 # Eight halfword lanes are processed in parallel.  Lengths >= 16 use paired
 # vector butterflies; length 8 uses adjacent vectors.  Lengths 4 and 2 batch
@@ -103,68 +104,6 @@ my %intt_constants = (
     ],
 );
 
-# Reduce eight signed lanes using round(2^15/q) = 10; clobbers vec_tmp.
-# For the transform bounds above, the result has magnitude less than q.
-sub center_vector {
-    my ($v) = @_;
-    # Subtract q * round(x * 10 / 2^15).
-    $code .= <<___;
-        sqrdmulh $vec_tmp.8h, $v.8h, $vec_barrett.8h
-        mls     $v.8h, $vec_tmp.8h, $vec_q.8h
-___
-}
-
-# Reduce eight signed lanes to [0,q); clobbers vec_tmp.
-sub canonicalize_vector {
-    my ($v) = @_;
-
-    center_vector($v);
-    # Add q exactly to negative lanes.  SSHR produces zero or -1.
-    $code .= <<___;
-        sshr    $vec_tmp.8h, $v.8h, #15
-        mls     $v.8h, $vec_tmp.8h, $vec_q.8h
-___
-}
-
-# Pack inverse z/c into lanes 0/1, returning complete arithmetic operands.
-sub load_inverse_constants {
-    my ($z, $c) = @_;
-
-    my $z_bits = $z & 0xffff;
-    my $c_bits = $c & 0xffff;
-    $code .= <<___;
-        mov     $constants_gpr, #$z_bits
-        movk    $constants_gpr, #$c_bits, lsl #16
-        fmov    $single_inverse_constants, $constants_gpr
-___
-    return ($inverse_root_lane, $inverse_recip_lane);
-}
-
-# Set vec_product = vec_b*z mod q with signed representatives; clobbers vec_tmp.
-# root and recip are complete operands for z and c=round(2^15*z/q).
-sub multiply_by_twiddle {
-    my ($root, $recip) = @_;
-    # r = low16(x*z) - q*round(x*c/2^15), congruent to x*z mod q.
-    $code .= <<___;
-        mul     $vec_product.8h, $vec_b.8h, $root
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
-___
-}
-
-# Two independent twiddle products; clobbers vec_tmp and vec_tmp2.
-sub multiply_pair_by_twiddle {
-    my ($root, $recip) = @_;
-    $code .= <<___;
-        mul     $vec_product.8h, $vec_b.8h, $root
-        mul     $vec_product2.8h, $vec_b2.8h, $root
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $recip
-        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
-        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
-___
-}
-
 # Center the first len coefficients of each stride-sized inverse block.
 # Only these sum paths can exceed the later signed-16-bit bound.
 sub center_inverse_blocks {
@@ -173,70 +112,50 @@ sub center_inverse_blocks {
     for (my $base = 0; $base < 256; $base += $stride) {
         for (my $j = 0; $j < $len; $j += 8) {
             my $off = 2 * ($base + $j);
-            $code .= "        ldr     $quad_a, [$arg, #$off]\n";
-            center_vector($vec_a);
-            $code .= "        str     $quad_a, [$arg, #$off]\n";
+            $code .= <<___;
+        ldr     $quad_a, [$arg, #$off]
+        sqrdmulh $vec_tmp.8h, $vec_a.8h, $vec_barrett.8h
+        mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+        str     $quad_a, [$arg, #$off]
+___
         }
     }
 }
 
-# Canonicalize all 256 forward coefficients, four vectors per iteration.
-sub canonicalize_polynomial {
-    $code .= <<___;
-        mov     $pass_gpr, $arg
-        mov     $pass_count, #8
-.Lntt_canonical_loop:
-___
-    for (1..2) {
-        $code .= "        ldp     $quad_a, $quad_b, [$pass_gpr]\n";
-        canonicalize_vector($vec_a);
-        canonicalize_vector($vec_b);
-        $code .= "        stp     $quad_a, $quad_b, [$pass_gpr], #32\n";
-    }
-    $code .= <<___;
-        subs    $pass_count, $pass_count, #1
-        b.ne    .Lntt_canonical_loop
-___
-}
+# Unrolled forward layers with lengths >= 8.
+sub forward_wide_layer {
+    my ($len) = @_;
 
-# Scale by 128^-1 = -26 (mod q).  Products lie in (-q,q), so a sign-mask
-# correction gives canonical [0,q) output without a separate centering pass.
-sub normalize_inverse {
-    # The reciprocal for -26 is -256.
-    my ($root, $recip) = load_inverse_constants(-26, -256);
-    $code .= <<___;
-        mov     $pass_gpr, $arg
-        mov     $pass_count, #8
-.Lintt_scale_loop:
-___
-    for (1..2) {
+    for (my $start = 0; $start < 256; $start += 2 * $len) {
         $code .= <<___;
-        ldp     $quad_b, $quad_b2, [$pass_gpr]
+        ldp     $quad_root, $quad_recip, [$table_gpr], #32
 ___
-        multiply_pair_by_twiddle($root, $recip);
-        $code .= <<___;
-        sshr    $vec_tmp.8h, $vec_product.8h, #15
-        sshr    $vec_tmp2.8h, $vec_product2.8h, #15
+        if ($len == 8) {
+            my $a = 2 * $start;
+            $code .= <<___;
+        ldp     $quad_a, $quad_b, [$arg, #$a]
+        mul     $vec_product.8h, $vec_b.8h, $root_8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
-        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
-        stp     $quad_product, $quad_product2, [$pass_gpr], #32
+        sub     $vec_sum.8h, $vec_a.8h, $vec_product.8h
+        add     $vec_a.8h, $vec_a.8h, $vec_product.8h
+        stp     $quad_a, $quad_sum, [$arg, #$a]
 ___
-    }
-    $code .= <<___;
-        subs    $pass_count, $pass_count, #1
-        b.ne    .Lintt_scale_loop
-___
-}
+            next;
+        }
+        for (my $j = 0; $j < $len; $j += 16) {
+            my $a = 2 * ($start + $j);
+            my $b = 2 * ($start + $len + $j);
 
-# Forward (a,b) <- (a+z*b,a-z*b), using two vector butterflies.
-sub forward_butterfly_pair {
-    my ($a, $b) = @_;
-    $code .= <<___;
+            $code .= <<___;
         ldp     $quad_a, $quad_a2, [$arg, #$a]
         ldp     $quad_b, $quad_b2, [$arg, #$b]
-___
-    multiply_pair_by_twiddle($root_8h, $recip_8h);
-    $code .= <<___;
+        mul     $vec_product.8h, $vec_b.8h, $root_8h
+        mul     $vec_product2.8h, $vec_b2.8h, $root_8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $recip_8h
+        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
         sub     $vec_sum.8h, $vec_a.8h, $vec_product.8h
         sub     $vec_sum2.8h, $vec_a2.8h, $vec_product2.8h
         add     $vec_a.8h, $vec_a.8h, $vec_product.8h
@@ -244,34 +163,6 @@ ___
         stp     $quad_a, $quad_a2, [$arg, #$a]
         stp     $quad_sum, $quad_sum2, [$arg, #$b]
 ___
-}
-
-# Length 8 has adjacent A/B vectors.
-sub forward_butterfly_length8 {
-    my ($a) = @_;
-    $code .= "        ldp     $quad_a, $quad_b, [$arg, #$a]\n";
-    multiply_by_twiddle($root_8h, $recip_8h);
-    $code .= <<___;
-        sub     $vec_sum.8h, $vec_a.8h, $vec_product.8h
-        add     $vec_a.8h, $vec_a.8h, $vec_product.8h
-        stp     $quad_a, $quad_sum, [$arg, #$a]
-___
-}
-
-sub forward_wide_layer {
-    my ($len) = @_;
-
-    for (my $start = 0; $start < 256; $start += 2 * $len) {
-        $code .= "        ldp     $quad_root, $quad_recip, [$table_gpr], #32\n";
-        if ($len == 8) {
-            forward_butterfly_length8(2 * $start);
-            next;
-        }
-        for (my $j = 0; $j < $len; $j += 16) {
-            my $a = 2 * ($start + $j);
-            my $b = 2 * ($start + $len + $j);
-
-            forward_butterfly_pair($a, $b);
         }
     }
 }
@@ -293,9 +184,9 @@ $loop:
         ldp     $quad_a, $quad_b, [$pass_gpr]
         uzp1    $vec_batch_a$shape, $vec_a$shape, $vec_b$shape
         uzp2    $vec_b$shape, $vec_a$shape, $vec_b$shape
-___
-    multiply_by_twiddle($root_8h, $recip_8h);
-    $code .= <<___;
+        mul     $vec_product.8h, $vec_b.8h, $root_8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
+        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         sub     $vec_sum.8h, $vec_batch_a.8h, $vec_product.8h
         add     $vec_batch_a.8h, $vec_batch_a.8h, $vec_product.8h
         zip1    $vec_a$shape, $vec_batch_a$shape, $vec_sum$shape
@@ -327,59 +218,83 @@ ___
     forward_wide_layer(8);
     forward_short_layer(4);
     forward_short_layer(2);
-    canonicalize_polynomial();
+
+    # Canonicalize with Barrett reduction and a sign-mask correction.
     $code .= <<___;
+        mov     $pass_gpr, $arg
+        mov     $pass_count, #8
+.Lntt_canonical_loop:
+___
+    for (1..2) {
+        $code .= <<___;
+        ldp     $quad_a, $quad_b, [$pass_gpr]
+        sqrdmulh $vec_tmp.8h, $vec_a.8h, $vec_barrett.8h
+        mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+        sshr    $vec_tmp.8h, $vec_a.8h, #15
+        mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_barrett.8h
+        mls     $vec_b.8h, $vec_tmp.8h, $vec_q.8h
+        sshr    $vec_tmp.8h, $vec_b.8h, #15
+        mls     $vec_b.8h, $vec_tmp.8h, $vec_q.8h
+        stp     $quad_a, $quad_b, [$pass_gpr], #32
+___
+    }
+    $code .= <<___;
+        subs    $pass_count, $pass_count, #1
+        b.ne    .Lntt_canonical_loop
         ret
 .size   $name,.-$name
 
 ___
 }
 
-# Inverse (a,b) <- (a+b,z*(a-b)), using two vector butterflies.
-sub inverse_butterfly_pair {
-    my ($a, $b, $root, $recip) = @_;
-    $code .= <<___;
-        ldp     $quad_a, $quad_a2, [$arg, #$a]
-        ldp     $quad_b, $quad_b2, [$arg, #$b]
-        add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
-        add     $vec_sum2.8h, $vec_a2.8h, $vec_b2.8h
-        sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
-        sub     $vec_b2.8h, $vec_a2.8h, $vec_b2.8h
-___
-    multiply_pair_by_twiddle($root, $recip);
-    $code .= <<___;
-        stp     $quad_sum, $quad_sum2, [$arg, #$a]
-        stp     $quad_product, $quad_product2, [$arg, #$b]
-___
-}
-
-sub inverse_butterfly_length8 {
-    my ($a, $root, $recip) = @_;
-    $code .= <<___;
-        ldp     $quad_a, $quad_b, [$arg, #$a]
-        add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
-        sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
-___
-    multiply_by_twiddle($root, $recip);
-    $code .= "        stp     $quad_sum, $quad_product, [$arg, #$a]\n";
-}
-
+# Unrolled inverse layers with lengths >= 8.
 sub inverse_wide_layer {
     my ($len) = @_;
     my $group = 0;
 
     for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
         my ($z, $c) = @{$intt_constants{$len}}[2 * $group, 2 * $group + 1];
-        my ($root, $recip) = load_inverse_constants($z, $c);
+        my $z_bits = $z & 0xffff;
+        my $c_bits = $c & 0xffff;
+        $code .= <<___;
+        mov     $constants_gpr, #$z_bits
+        movk    $constants_gpr, #$c_bits, lsl #16
+        fmov    $single_inverse_constants, $constants_gpr
+___
         if ($len == 8) {
-            inverse_butterfly_length8(2 * $start, $root, $recip);
+            my $a = 2 * $start;
+            $code .= <<___;
+        ldp     $quad_a, $quad_b, [$arg, #$a]
+        add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
+        sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
+        mul     $vec_product.8h, $vec_b.8h, $inverse_root_lane
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $inverse_recip_lane
+        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        stp     $quad_sum, $quad_product, [$arg, #$a]
+___
             next;
         }
         for (my $j = 0; $j < $len; $j += 16) {
             my $a = 2 * ($start + $j);
             my $b = 2 * ($start + $len + $j);
 
-            inverse_butterfly_pair($a, $b, $root, $recip);
+            $code .= <<___;
+        ldp     $quad_a, $quad_a2, [$arg, #$a]
+        ldp     $quad_b, $quad_b2, [$arg, #$b]
+        add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
+        add     $vec_sum2.8h, $vec_a2.8h, $vec_b2.8h
+        sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
+        sub     $vec_b2.8h, $vec_a2.8h, $vec_b2.8h
+        mul     $vec_product.8h, $vec_b.8h, $inverse_root_lane
+        mul     $vec_product2.8h, $vec_b2.8h, $inverse_root_lane
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $inverse_recip_lane
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $inverse_recip_lane
+        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+        stp     $quad_sum, $quad_sum2, [$arg, #$a]
+        stp     $quad_product, $quad_product2, [$arg, #$b]
+___
         }
     }
 }
@@ -401,9 +316,9 @@ $loop:
         uzp2    $vec_b$shape, $vec_a$shape, $vec_b$shape
         add     $vec_sum.8h, $vec_batch_a.8h, $vec_b.8h
         sub     $vec_b.8h, $vec_batch_a.8h, $vec_b.8h
-___
-    multiply_by_twiddle($root_8h, $recip_8h);
-    $code .= <<___;
+        mul     $vec_product.8h, $vec_b.8h, $root_8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
+        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         zip1    $vec_a$shape, $vec_sum$shape, $vec_product$shape
         zip2    $vec_b$shape, $vec_sum$shape, $vec_product$shape
         stp     $quad_a, $quad_b, [$pass_gpr], #32
@@ -435,8 +350,37 @@ ___
     inverse_wide_layer(64);
     center_inverse_blocks(64, 128);
     inverse_wide_layer(128);
-    normalize_inverse();
+
+    # Scale by 128^-1 = -26 (mod q), with reciprocal -256.
+    my $z_bits = -26 & 0xffff;
+    my $c_bits = -256 & 0xffff;
     $code .= <<___;
+        mov     $constants_gpr, #$z_bits
+        movk    $constants_gpr, #$c_bits, lsl #16
+        fmov    $single_inverse_constants, $constants_gpr
+        mov     $pass_gpr, $arg
+        mov     $pass_count, #8
+.Lintt_scale_loop:
+___
+    for (1..2) {
+        $code .= <<___;
+        ldp     $quad_b, $quad_b2, [$pass_gpr]
+        mul     $vec_product.8h, $vec_b.8h, $inverse_root_lane
+        mul     $vec_product2.8h, $vec_b2.8h, $inverse_root_lane
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $inverse_recip_lane
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $inverse_recip_lane
+        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+        sshr    $vec_tmp.8h, $vec_product.8h, #15
+        sshr    $vec_tmp2.8h, $vec_product2.8h, #15
+        mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+        mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+        stp     $quad_product, $quad_product2, [$pass_gpr], #32
+___
+    }
+    $code .= <<___;
+        subs    $pass_count, $pass_count, #1
+        b.ne    .Lintt_scale_loop
         ret
 .size   $name,.-$name
 
