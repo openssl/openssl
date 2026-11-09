@@ -11,7 +11,8 @@
 #
 # The transforms operate on 256 coefficients modulo q = 3329.  Seven layers
 # leave 128 coefficient pairs: forward lengths 128..2, inverse lengths 2..128.
-# Roots are z = 17^bitrev7(i) mod q; inverse layers use their inverses.
+# Twiddle factors are z = 17^bitrev7(i) mod q; inverse layers use their inverses.
+# Each z has a reduction constant c = round(2^15*z/q).
 # Inputs and outputs are canonical [0,q); intermediate lanes are signed 16-bit.
 # Twiddle multiplication: r = low16(x*z) - q*round(x*c/2^15).
 #
@@ -54,7 +55,9 @@ my $q = 3329;
 my $code = '';
 
 # Register aliases.
-my ($arg, $constants_gpr, $q_gpr) = ('x0', 'w9', 'w11');
+my $arg = 'x0';
+
+my ($constants_gpr, $q_gpr) = ('w9', 'w11');
 my $table_gpr = 'x12';
 my ($pass_gpr, $pass_count) = ('x1', 'w2');
 my ($vec_a, $vec_b, $vec_product, $vec_tmp, $vec_sum, $vec_batch_a) =
@@ -69,7 +72,7 @@ my ($vec_barrett, $vec_recip, $vec_root, $vec_q) =
     map("v$_", (28, 29, 30, 31));
 my ($quad_recip, $quad_root) = map("q$_", (29, 30));
 # Indexed halfword operands must use v0-v15.  v6 holds z and c in lanes 0/1.
-my ($vec_inverse_constants, $single_inverse_constants) = ('v6', 's6');
+my ($vec_intt_constants, $single_intt_constants) = ('v6', 's6');
 
 # Inverse (z,c) pairs for lengths >= 8; c = round(2^15*z/q).
 my %intt_constants = (
@@ -101,7 +104,7 @@ my %intt_constants = (
 
 # Center the first len coefficients of each stride-sized inverse block.
 # Only these sum paths can exceed the later signed-16-bit bound.
-sub center_inverse_blocks {
+sub intt_reduce {
     my ($len, $stride) = @_;
     # Product halves are already reduced by twiddle multiplication.
     for (my $base = 0; $base < 256; $base += $stride) {
@@ -124,14 +127,14 @@ ___
 #   for each butterfly pair (a,b):
 #       t = b*z mod q
 #       (a,b) = (a+t,a-t)
-sub forward_wide_layer {
+sub ntt_vector_layer {
     my ($len) = @_;
 
-    for (my $start = 0; $start < 256; $start += 2 * $len) {
-        $code .= <<___;
+    if ($len == 8) {
+        for (my $start = 0; $start < 256; $start += 2 * $len) {
+            $code .= <<___;
         ldp     $quad_root, $quad_recip, [$table_gpr], #32
 ___
-        if ($len == 8) {
             my $a = 2 * $start;
             $code .= <<___;
         ldp     $quad_a, $quad_b, [$arg, #$a]
@@ -147,13 +150,17 @@ ___
 
         stp     $quad_a, $quad_sum, [$arg, #$a]
 ___
-            next;
         }
-        for (my $j = 0; $j < $len; $j += 16) {
-            my $a = 2 * ($start + $j);
-            my $b = 2 * ($start + $len + $j);
-
+    } else {
+        for (my $start = 0; $start < 256; $start += 2 * $len) {
             $code .= <<___;
+        ldp     $quad_root, $quad_recip, [$table_gpr], #32
+___
+            for (my $j = 0; $j < $len; $j += 16) {
+                my $a = 2 * ($start + $j);
+                my $b = 2 * ($start + $len + $j);
+
+                $code .= <<___;
         ldp     $quad_a, $quad_a2, [$arg, #$a]
         ldp     $quad_b, $quad_b2, [$arg, #$b]
 
@@ -174,6 +181,7 @@ ___
         stp     $quad_a, $quad_a2, [$arg, #$a]
         stp     $quad_sum, $quad_sum2, [$arg, #$b]
 ___
+            }
         }
     }
 }
@@ -185,11 +193,9 @@ ___
 #   z = load_lane_twiddles()
 #   t = b*z mod q
 #   store_interleaved(a+t,a-t)
-sub forward_short_layer {
+sub ntt_interleaved_layer {
     my ($len) = @_;
-    my $shape = $len == 2 ? '.4s'
-              : $len == 4 ? '.2d'
-              : die "bad batch length $len";
+    my $shape = $len == 2 ? '.4s' : '.2d';
     my $loop = ".Lossl_ml_kem_ntt_armv8_length${len}_loop";
     $code .= <<___;
         mov     $pass_gpr, $arg
@@ -218,29 +224,9 @@ $loop:
 ___
 }
 
-sub forward_ntt {
-    my $name = 'ossl_ml_kem_ntt_armv8';
-    $code .= <<___;
-.globl  $name
-.type   $name,%function
-.align  4
-$name:
-        AARCH64_VALID_CALL_TARGET
-        adrp    $table_gpr, .Lntt_constants
-        add     $table_gpr, $table_gpr, #:lo12:.Lntt_constants
-        mov     $q_gpr, #$q
-        dup     $vec_q.8h, $q_gpr
-        movi    $vec_barrett.8h, #10
-___
-    forward_wide_layer(128);
-    forward_wide_layer(64);
-    forward_wide_layer(32);
-    forward_wide_layer(16);
-    forward_wide_layer(8);
-    forward_short_layer(4);
-    forward_short_layer(2);
-
-    # Canonicalize with Barrett reduction and a sign-mask correction.
+# Barrett-reduce all 256 coefficients in place, then correct negative
+# residues to give canonical output in [0,q).
+sub ntt_reduce {
     $code .= <<___;
         mov     $pass_gpr, $arg
         mov     $pass_count, #8
@@ -268,6 +254,37 @@ ___
     $code .= <<___;
         subs    $pass_count, $pass_count, #1
         b.ne    .Lntt_canonical_loop
+___
+}
+
+# void ossl_ml_kem_ntt_armv8(uint16_t *c);
+# Input: x0 points to 256 polynomial coefficients in [0,3329).
+# Output: c is overwritten with its forward NTT, also in [0,3329).
+# No return value.
+sub ntt {
+    my $name = 'ossl_ml_kem_ntt_armv8';
+    $code .= <<___;
+.globl  $name
+.type   $name,%function
+.align  4
+$name:
+        AARCH64_VALID_CALL_TARGET
+        adrp    $table_gpr, .Lntt_constants
+        add     $table_gpr, $table_gpr, #:lo12:.Lntt_constants
+        mov     $q_gpr, #$q
+        dup     $vec_q.8h, $q_gpr
+        movi    $vec_barrett.8h, #10
+___
+    ntt_vector_layer(128);
+    ntt_vector_layer(64);
+    ntt_vector_layer(32);
+    ntt_vector_layer(16);
+    ntt_vector_layer(8);
+    ntt_interleaved_layer(4);
+    ntt_interleaved_layer(2);
+
+    ntt_reduce();
+    $code .= <<___;
         ret
 .size   $name,.-$name
 
@@ -278,20 +295,20 @@ ___
 # For each group with inverse twiddle z:
 #   for each butterfly pair (a,b):
 #       (a,b) = (a+b,(a-b)*z mod q)
-sub inverse_wide_layer {
+sub intt_vector_layer {
     my ($len) = @_;
     my $group = 0;
 
-    for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
-        my ($z, $c) = @{$intt_constants{$len}}[2 * $group, 2 * $group + 1];
-        my $z_bits = $z & 0xffff;
-        my $c_bits = $c & 0xffff;
-        $code .= <<___;
+    if ($len == 8) {
+        for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
+            my ($z, $c) = @{$intt_constants{$len}}[2 * $group, 2 * $group + 1];
+            my $z_bits = $z & 0xffff;
+            my $c_bits = $c & 0xffff;
+            $code .= <<___;
         mov     $constants_gpr, #$z_bits
         movk    $constants_gpr, #$c_bits, lsl #16
-        fmov    $single_inverse_constants, $constants_gpr
+        fmov    $single_intt_constants, $constants_gpr
 ___
-        if ($len == 8) {
             my $a = 2 * $start;
             $code .= <<___;
         ldp     $quad_a, $quad_b, [$arg, #$a]
@@ -301,19 +318,28 @@ ___
         sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_inverse_constants.h[0]
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_inverse_constants.h[1]
+        mul     $vec_product.8h, $vec_b.8h, $vec_intt_constants.h[0]
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_intt_constants.h[1]
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
 
         stp     $quad_sum, $quad_product, [$arg, #$a]
 ___
-            next;
         }
-        for (my $j = 0; $j < $len; $j += 16) {
-            my $a = 2 * ($start + $j);
-            my $b = 2 * ($start + $len + $j);
-
+    } else {
+        for (my $start = 0; $start < 256; $start += 2 * $len, ++$group) {
+            my ($z, $c) = @{$intt_constants{$len}}[2 * $group, 2 * $group + 1];
+            my $z_bits = $z & 0xffff;
+            my $c_bits = $c & 0xffff;
             $code .= <<___;
+        mov     $constants_gpr, #$z_bits
+        movk    $constants_gpr, #$c_bits, lsl #16
+        fmov    $single_intt_constants, $constants_gpr
+___
+            for (my $j = 0; $j < $len; $j += 16) {
+                my $a = 2 * ($start + $j);
+                my $b = 2 * ($start + $len + $j);
+
+                $code .= <<___;
         ldp     $quad_a, $quad_a2, [$arg, #$a]
         ldp     $quad_b, $quad_b2, [$arg, #$b]
 
@@ -324,30 +350,29 @@ ___
         sub     $vec_b2.8h, $vec_a2.8h, $vec_b2.8h
 
         // Twiddle multiplication.
-        mul     $vec_product.8h, $vec_b.8h, $vec_inverse_constants.h[0]
-        mul     $vec_product2.8h, $vec_b2.8h, $vec_inverse_constants.h[0]
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_inverse_constants.h[1]
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_inverse_constants.h[1]
+        mul     $vec_product.8h, $vec_b.8h, $vec_intt_constants.h[0]
+        mul     $vec_product2.8h, $vec_b2.8h, $vec_intt_constants.h[0]
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_intt_constants.h[1]
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_intt_constants.h[1]
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
 
         stp     $quad_sum, $quad_sum2, [$arg, #$a]
         stp     $quad_product, $quad_product2, [$arg, #$b]
 ___
+            }
         }
     }
 }
 
-# Same lane layout as forward_short_layer().  For each 32-byte batch:
+# Same lane layout as ntt_interleaved_layer().  For each 32-byte batch:
 #   (a,b) = deinterleave(load_batch())
 #   z = load_lane_twiddles()
 #   (a,b) = (a+b,(a-b)*z mod q)
 #   store_interleaved(a,b)
-sub inverse_short_layer {
+sub intt_interleaved_layer {
     my ($len) = @_;
-    my $shape = $len == 2 ? '.4s'
-              : $len == 4 ? '.2d'
-              : die "bad batch length $len";
+    my $shape = $len == 2 ? '.4s' : '.2d';
     my $loop = ".Lossl_ml_kem_intt_armv8_length${len}_loop";
     $code .= <<___;
         mov     $pass_gpr, $arg
@@ -375,39 +400,16 @@ $loop:
 ___
 }
 
-sub inverse_ntt {
-    my $name = 'ossl_ml_kem_intt_armv8';
-    $code .= <<___;
-.globl  $name
-.type   $name,%function
-.align  4
-$name:
-        AARCH64_VALID_CALL_TARGET
-        adrp    $table_gpr, .Lintt_short_constants
-        add     $table_gpr, $table_gpr, #:lo12:.Lintt_short_constants
-        mov     $q_gpr, #$q
-        dup     $vec_q.8h, $q_gpr
-        movi    $vec_barrett.8h, #10
-___
-    inverse_short_layer(2);
-    inverse_short_layer(4);
-    inverse_wide_layer(8);
-    # After layer 3, center sum paths to preserve signed 16-bit headroom.
-    center_inverse_blocks(8, 16);
-    inverse_wide_layer(16);
-    inverse_wide_layer(32);
-    inverse_wide_layer(64);
-    # After layer 6, center sums before the final layer to avoid 16-bit overflow.
-    center_inverse_blocks(64, 128);
-    inverse_wide_layer(128);
-
+# Normalize all 256 coefficients in place by multiplying by the inverse
+# of 128 modulo q, then correct negative residues to give output in [0,q).
+sub intt_normalize {
     # Scale by the inverse of 128 modulo q (-26), with reduction constant -256.
     my $z_bits = -26 & 0xffff;
     my $c_bits = -256 & 0xffff;
     $code .= <<___;
         mov     $constants_gpr, #$z_bits
         movk    $constants_gpr, #$c_bits, lsl #16
-        fmov    $single_inverse_constants, $constants_gpr
+        fmov    $single_intt_constants, $constants_gpr
         mov     $pass_gpr, $arg
         mov     $pass_count, #8
 .Lintt_scale_loop:
@@ -417,10 +419,10 @@ ___
         ldp     $quad_b, $quad_b2, [$pass_gpr]
 
         // Inverse normalization.
-        mul     $vec_product.8h, $vec_b.8h, $vec_inverse_constants.h[0]
-        mul     $vec_product2.8h, $vec_b2.8h, $vec_inverse_constants.h[0]
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_inverse_constants.h[1]
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_inverse_constants.h[1]
+        mul     $vec_product.8h, $vec_b.8h, $vec_intt_constants.h[0]
+        mul     $vec_product2.8h, $vec_b2.8h, $vec_intt_constants.h[0]
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_intt_constants.h[1]
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_intt_constants.h[1]
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
 
@@ -435,6 +437,41 @@ ___
     $code .= <<___;
         subs    $pass_count, $pass_count, #1
         b.ne    .Lintt_scale_loop
+___
+}
+
+# void ossl_ml_kem_intt_armv8(uint16_t *c);
+# Input: x0 points to 256 NTT coefficients in [0,3329).
+# Output: c is overwritten with its inverse NTT, also in [0,3329).
+# No return value.
+sub intt {
+    my $name = 'ossl_ml_kem_intt_armv8';
+    $code .= <<___;
+.globl  $name
+.type   $name,%function
+.align  4
+$name:
+        AARCH64_VALID_CALL_TARGET
+        adrp    $table_gpr, .Lintt_short_constants
+        add     $table_gpr, $table_gpr, #:lo12:.Lintt_short_constants
+        mov     $q_gpr, #$q
+        dup     $vec_q.8h, $q_gpr
+        movi    $vec_barrett.8h, #10
+___
+    intt_interleaved_layer(2);
+    intt_interleaved_layer(4);
+    intt_vector_layer(8);
+    # After layer 3, center sum paths to preserve signed 16-bit headroom.
+    intt_reduce(8, 16);
+    intt_vector_layer(16);
+    intt_vector_layer(32);
+    intt_vector_layer(64);
+    # After layer 6, center sums before the final layer to avoid 16-bit overflow.
+    intt_reduce(64, 128);
+    intt_vector_layer(128);
+
+    intt_normalize();
+    $code .= <<___;
         ret
 .size   $name,.-$name
 
@@ -446,8 +483,8 @@ $code .= <<___;
 
 .text
 ___
-forward_ntt();
-inverse_ntt();
+ntt();
+intt();
 
 # Each 32-byte entry holds eight twiddles followed by eight reduction
 # constants, c = round(2^15*z/q).
