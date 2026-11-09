@@ -145,9 +145,11 @@ so it must be last or immediately before `pre_shared_key`; a callback cannot
 compute that length.
 
 OpenSSL 4.1 and later no longer emit it and `SSL_OP_TLSEXT_PADDING` is a no-op,
-so there is no built-in slot. If padding returns or is a custom extension,
-OpenSSL-generated padding is appended after the ordered extensions;
-application padding is the application's responsibility.
+so there is no built-in slot. If OpenSSL reintroduces generated padding, it
+must be inserted immediately before `pre_shared_key` when that extension is
+sent, otherwise at the end; the implementation must adjust the emitted order so
+that `pre_shared_key` remains last. Application-supplied padding is the
+application's responsibility and must also be placed before `pre_shared_key`.
 
 #### GREASE
 
@@ -159,18 +161,23 @@ algorithms and versions is independent.
 
 #### ECH
 
-ECH (RFC 9849) has an outer and an encoded inner ClientHello. Extensions
-compressed from the outer are listed in `outer_extensions`; that extension and
-the referenced extensions must be contiguous in the inner ClientHello, in outer
-order.
+ECH (RFC 9849) has three views of the same handshake message:
+ClientHelloOuter, ClientHelloInner, and EncodedClientHelloInner. The callback
+orders the logical ClientHelloInner extension list. Extensions that OpenSSL
+chooses to compress are removed from EncodedClientHelloInner and replaced by a
+single `ech_outer_extensions` (0xfd00) placeholder at the position of the
+contiguous block; the placeholder does not appear in ClientHelloInner or
+ClientHelloOuter. The referenced extensions stay in ClientHelloOuter in the
+same relative order. The server reconstructs ClientHelloInner by replacing the
+placeholder with that contiguous block, in outer order.
 
-For v1, invoke the callback for the inner ClientHello and cache the type order,
-then apply the same type order to the outer without reusing indices (the arrays
-and `len` can differ). Construct compressed extensions first so
-`outer_extensions` stays contiguous. The inner order is the `outer_extensions`
-list first, in the callback's relative order, then the remaining types. The
-fallback is to reject real ECH when ordering is set, while still allowing ECH
-GREASE, which has no inner ClientHello.
+For v1, invoke the callback for the logical inner ClientHello and cache the
+type order. When building ClientHelloOuter, apply the same type order to the
+outer extension list without reusing inner indices (the arrays and `len` can
+differ). Compressed extensions form one contiguous block in the inner list; the
+`ech_outer_extensions` placeholder takes that block's position in the encoded
+inner. The fallback is to reject real ECH when ordering is set, while still
+allowing ECH GREASE, which has no inner ClientHello.
 
 #### HelloRetryRequest
 
