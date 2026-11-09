@@ -2053,6 +2053,92 @@ static int test_tls13_external_psk_digest_not_offered(void)
     return test;
 }
 
+#ifndef OPENSSL_NO_CHACHA
+/*
+ * TLS 1.3 0-RTT suppressed while the ClientHello is still being flushed.
+ *
+ * The external PSK is bound to TLS_AES_128_GCM_SHA256 but only ChaCha20 is
+ * offered, so 0-RTT is suppressed while the PSK (same digest) is still used for
+ * resumption.  A client BIO that holds only 64 bytes makes the first
+ * SSL_write_early_data() stop with WANT_WRITE part way through the ClientHello.
+ * The later calls must finish the handshake without trying to send early data,
+ * with and without middlebox compatibility mode.
+ */
+static int test_tls13_suppress_early_data_want_write(int idx)
+{
+    const unsigned char m[] = "message";
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    BIO *cbio = NULL, *sbio = NULL;
+    size_t w = 0;
+    int i, early_done = 0, test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_CHACHA20_POLY1305_SHA256"))
+        && TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_CHACHA20_POLY1305_SHA256"))
+        && TEST_true(tls_channel_init(c, s, &conn))
+        && TEST_true(enable_external_psk(conn.c.ssl, conn.s.ssl))
+        && TEST_true(BIO_new_bio_pair(&cbio, 64, &sbio, 16384));
+    if (test == 0)
+        goto end;
+    SSL_set_bio(conn.c.ssl, cbio, cbio);
+    SSL_set_bio(conn.s.ssl, sbio, sbio);
+    if (idx == 0)
+        SSL_clear_options(conn.c.ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+
+    for (i = 0; i < 100; i++) {
+        /*
+         * Client: keep calling SSL_write_early_data() until it succeeds.  With
+         * early data suppressed, success means the application can stop
+         * writing early data, not that the handshake is complete.  After that,
+         * finish the handshake with SSL_connect().
+         */
+        if (!early_done) {
+            if (SSL_write_early_data(conn.c.ssl, m, sizeof(m), &w) > 0)
+                early_done = 1;
+            else if (!is_retryable(conn.c.ssl, 0))
+                break;
+        } else if (!SSL_is_init_finished(conn.c.ssl)
+            && SSL_connect(conn.c.ssl) <= 0
+            && !is_retryable(conn.c.ssl, 0)) {
+            break;
+        }
+        /* Server: run the handshake, which also reads from the client's small buffer. */
+        if (!SSL_is_init_finished(conn.s.ssl)
+            && SSL_accept(conn.s.ssl) <= 0
+            && !is_retryable(conn.s.ssl, 0))
+            break;
+        /* Stop once both sides are done; any failure is caught below. */
+        if (early_done && SSL_is_init_finished(conn.c.ssl)
+            && SSL_is_init_finished(conn.s.ssl))
+            break;
+    }
+
+    /*
+     * An error from SSL_write_early_data() leaves early_done unset; an error
+     * from SSL_connect() or SSL_accept() leaves a handshake unfinished.
+     */
+    test = TEST_true(early_done)
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_true(SSL_is_init_finished(conn.c.ssl))
+        && TEST_true(SSL_is_init_finished(conn.s.ssl))
+        && TEST_int_eq(SSL_get_early_data_status(conn.c.ssl),
+            SSL_EARLY_DATA_REJECTED)
+        && TEST_true(SSL_session_reused(conn.c.ssl))
+        && TEST_uint_eq(conn.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(conn.c.stats.ch_has_early_data, 0);
+
+end:
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+#endif
+
 static int sni_switch_cb(SSL *ssl, int *alert, void *arg)
 {
     (void)alert;
@@ -2603,6 +2689,9 @@ int setup_tests(void)
     ADD_TEST(test_tls13_external_psk_digest_not_offered);
     ADD_TEST(test_tls13_external_psk_no_master_key);
     ADD_TEST(test_tls13_ticket_sni_session_ctx);
+#ifndef OPENSSL_NO_CHACHA
+    ADD_ALL_TESTS(test_tls13_suppress_early_data_want_write, 2);
+#endif
     ADD_ALL_TESTS(test_tls13_psk_bad_server_session, 4);
     ADD_ALL_TESTS(test_tls13_ticket_lifetime_cap, 3);
     ADD_ALL_TESTS(test_tls13_ticket_lifetime_bound_offer, 2);
