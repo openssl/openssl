@@ -649,6 +649,7 @@ static void ml_kem_ntt_init(void)
         matrix_mult_intt = matrix_mult_intt_avx2;
         matrix_mult_transpose_add = matrix_mult_transpose_add_avx2;
     }
+#endif
 #if defined(MLKEM_NTT_ARMV8_ASM)
     if (OPENSSL_armcap_P & ARMV7_NEON) {
         scalar_ntt = scalar_ntt_armv8;
