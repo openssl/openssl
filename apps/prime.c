@@ -132,7 +132,6 @@ int prime_main(int argc, char **argv)
             break;
         case OPT_CHECKS:
             /* ignore parameter and argument */
-            opt_arg();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
