@@ -4888,8 +4888,6 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
 
     if (SSL_CONNECTION_IS_VERSION13(s)) {
 #ifndef OPENSSL_NO_PSK
-        size_t j;
-
         /*
          * If we allow "old" style PSK callbacks, and we have no certificate (so
          * we're not going to succeed without a PSK anyway), and we're in
@@ -4897,14 +4895,8 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
          * TLSv1.3 spec). Therefore we should prioritise ciphersuites using
          * that.
          */
-        if (s->psk_server_callback != NULL) {
-            for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
-                ;
-            if (j == s->ssl_pkey_num) {
-                /* There are no certificates */
-                prefer_sha256 = 1;
-            }
-        }
+        if (s->psk_server_callback != NULL && !ssl_has_any_cert(s))
+            prefer_sha256 = 1;
 #endif
     } else {
         tls1_set_cert_validity(s);
