@@ -1406,11 +1406,11 @@ static STACK_OF(X509_NAME) *get_crldp_full_names(X509 *cert)
     for (i = 0; i < sk_DIST_POINT_num(cert->crldp); i++) {
         dp = sk_DIST_POINT_value(cert->crldp, i);
         if (dp->distpoint != NULL && dp->distpoint->type == 1) {
-            full_names++;
             if (full_names >= MAX_DP_NAMES) {
                 ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT, "Too many dist points in certificate");
                 goto err;
             }
+            full_names++;
             dp_name = crldp_full_name(cert, dp);
             if (dp_name == NULL)
                 goto err;
@@ -1460,13 +1460,13 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
 
                 /*
                  * Pre-build the crldp X509_NAMES here as we will reuse
-                 * them for each iteration of the below loop, and we don't
+                 * them for each iteration of the above loop, and we don't
                  * want to rebuild them each time
                  */
                 if (crldp_names == NULL) {
                     crldp_names = get_crldp_full_names(x);
                     if (crldp_names == NULL) {
-                        ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
+                        ok = verify_cb_crl(ctx, X509_V_ERR_OUT_OF_MEM);
                         goto done;
                     }
                 }
@@ -1584,28 +1584,30 @@ int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 
 static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
     X509 **pissuer, int *pscore, unsigned int *preasons,
-    STACK_OF(X509_CRL) *crls)
+    STACK_OF(X509_CRL) *crls, STACK_OF(X509_NAME) **crldp_names)
 {
     int i, crl_score, best_score = *pscore;
     unsigned int reasons, best_reasons = 0;
     X509 *x = ctx->current_cert;
     X509_CRL *crl, *best_crl = NULL;
     X509 *crl_issuer = NULL, *best_crl_issuer = NULL;
-    STACK_OF(X509_NAME) *crldp_names = NULL;
-
-    /*
-     * Pre-build the crldp X509_NAMES here as we will reuse
-     * them for each iteration of the below loop, and we don't
-     * want to rebuild them each time
-     */
-    crldp_names = get_crldp_full_names(x);
-    if (crldp_names == NULL)
-        return 0;
 
     for (i = 0; i < sk_X509_CRL_num(crls); i++) {
         crl = sk_X509_CRL_value(crls, i);
         reasons = *preasons;
-        crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x, crldp_names);
+        /*
+         * Pre-build the crldp X509_NAMES here as we will reuse
+         * them for each iteration of the below loop, and we don't
+         * want to rebuild them each time.  We also store this in a pointer
+         * passed by the caller, as lookups call this twice, so we save having
+         * to rebuild again.
+         */
+        if (*crldp_names == NULL) {
+            *crldp_names = get_crldp_full_names(x);
+            if (*crldp_names == NULL)
+                return 0;
+        }
+        crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x, *crldp_names);
         if (crl_score < best_score || crl_score == 0)
             continue;
         /* If current CRL is equivalent use it if it is newer */
@@ -1628,7 +1630,6 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
         best_score = crl_score;
         best_reasons = reasons;
     }
-    sk_X509_NAME_pop_free(crldp_names, X509_NAME_free);
 
     if (best_crl != NULL) {
         if (!X509_CRL_up_ref(best_crl))
@@ -2154,10 +2155,11 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     X509_CRL *crl = NULL, *dcrl = NULL;
     STACK_OF(X509_CRL) *skcrl;
     const X509_NAME *nm = X509_get_issuer_name(x);
+    STACK_OF(X509_NAME) *crldp_names = NULL;
 
     reasons = ctx->current_reasons;
     ok = get_crl_sk(ctx, &crl, &dcrl,
-        &issuer, &crl_score, &reasons, ctx->crls);
+        &issuer, &crl_score, &reasons, ctx->crls, &crldp_names);
     if (ok)
         goto done;
 
@@ -2168,11 +2170,13 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     if (skcrl == NULL && crl != NULL)
         goto done;
 
-    get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl);
+    get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl, &crldp_names);
 
     sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
 
 done:
+    sk_X509_NAME_pop_free(crldp_names, X509_NAME_free);
+
     /* If we got any kind of CRL use it and return success */
     if (crl != NULL) {
         ctx->current_issuer = issuer;
