@@ -29,5 +29,6 @@ ok(run(test(["cmsapitest", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "smime-certs", "smec1.pem"),
              srctop_file("test", "certs", "alt1-cert.pem"),
              srctop_file("test", "certs", "alt1-key.pem"),
+             srctop_file("test", "certs", "root-cert.pem"),
              @ed448_args])),
              "running cmsapitest");
