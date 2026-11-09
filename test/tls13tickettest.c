@@ -1039,10 +1039,10 @@ static int test_tls13_ticket_alpn_cleared(void)
     const unsigned char m[] = "message";
     unsigned char buf[256];
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed2 = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed3 = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
+    struct tls13_channel resumed2 = { { NULL }, { NULL } };
+    struct tls13_channel resumed3 = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL, *sess2 = NULL, *sess2b = NULL;
     size_t w = 0, r = 0;
     int test;
@@ -1210,8 +1210,8 @@ static int test_tls13_ticket_alpn_mismatch_reject_early_data(void)
     const unsigned char m[] = "message";
     unsigned char buf[256];
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     size_t w = 0, r = 0;
     int test;
