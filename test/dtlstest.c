@@ -2001,7 +2001,7 @@ static int test_dtls_client_retransmit(void)
     fake_now_base = ossl_time_now();
     fake_now_advanced = ossl_time_zero();
 
-    if (!TEST_true(dtls1_set_override_now_cb(clientssl, fake_now_cb)))
+    if (!TEST_true(dtls1_set_now_cb(clientssl, fake_now_cb)))
         goto end;
 
     /*
@@ -2030,8 +2030,8 @@ static int test_dtls_client_retransmit(void)
             goto end;
 
         /* Wait for the retransmit timer to actually expire */
-        ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
-        ossl_time_add(fake_now_advanced, ossl_us2time(10));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(clientssl), 0))
             goto end;
@@ -2129,7 +2129,7 @@ static int test_dtls_server_retransmit(void)
     fake_now_base = ossl_time_now();
     fake_now_advanced = ossl_time_zero();
 
-    if (!TEST_true(dtls1_set_override_now_cb(serverssl, fake_now_cb)))
+    if (!TEST_true(dtls1_set_now_cb(serverssl, fake_now_cb)))
         goto end;
 
     /* Flight 1: the client sends its ClientHello without any restriction. */
@@ -2162,8 +2162,8 @@ static int test_dtls_server_retransmit(void)
         if (!TEST_int_gt((int)DTLSv1_get_timeout(serverssl, &tv), 0))
             goto end;
 
-        ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
-        ossl_time_add(fake_now_advanced, ossl_us2time(10));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(serverssl), 0))
             goto end;
@@ -2272,7 +2272,7 @@ static int test_dtls_client_retransmit_dtls13(void)
     fake_now_base = ossl_time_now();
     fake_now_advanced = ossl_time_zero();
 
-    if (!TEST_true(dtls1_set_override_now_cb(clientssl, fake_now_cb)))
+    if (!TEST_true(dtls1_set_now_cb(clientssl, fake_now_cb)))
         goto end;
 
     /*
@@ -2301,8 +2301,8 @@ static int test_dtls_client_retransmit_dtls13(void)
             goto end;
 
         /* Wait for the retransmit timer to actually expire */
-        ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
-        ossl_time_add(fake_now_advanced, ossl_us2time(10));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(clientssl), 0))
             goto end;
@@ -2394,7 +2394,7 @@ static int test_dtls_server_retransmit_dtls13(void)
     fake_now_base = ossl_time_now();
     fake_now_advanced = ossl_time_zero();
 
-    if (!TEST_true(dtls1_set_override_now_cb(serverssl, fake_now_cb)))
+    if (!TEST_true(dtls1_set_now_cb(serverssl, fake_now_cb)))
         goto end;
 
     /* Flight 1: the client sends its ClientHello without any restriction. */
@@ -2425,8 +2425,8 @@ static int test_dtls_server_retransmit_dtls13(void)
         if (!TEST_int_gt((int)DTLSv1_get_timeout(serverssl, &tv), 0))
             goto end;
 
-        ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
-        ossl_time_add(fake_now_advanced, ossl_us2time(10));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(serverssl), 0))
             goto end;

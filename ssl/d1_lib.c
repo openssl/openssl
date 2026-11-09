@@ -547,7 +547,7 @@ int dtls1_is_timer_expired(SSL_CONNECTION *s)
     return 1;
 }
 
-int dtls1_set_override_now_cb(SSL *s, OSSL_TIME (*now_cb)(void))
+int dtls1_set_now_cb(SSL *s, OSSL_TIME (*now_cb)(void))
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
