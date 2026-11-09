@@ -22,13 +22,9 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
+#include "internal/e_os.h"
 #include "internal/o_dir.h"
 #include "mfail.h"
-
-#if defined(_WIN32)
-#include <io.h>
-#define fileno _fileno
-#endif
 
 #if defined(_WIN32) && defined(_MAX_PATH) && !defined(PATH_MAX)
 #define PATH_MAX _MAX_PATH
