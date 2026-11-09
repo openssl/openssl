@@ -68,7 +68,7 @@
 /include/openssl/x509_vfy.h
 /include/openssl/core_names.h
 
-/apps/include/configuration.h
+/apps/include/app_conf.h
 
 # Auto generated parameter name files
 /crypto/params_idx.c

@@ -33,7 +33,7 @@
 #include "progs.h"
 #include "opt.h"
 #include "names.h"
-#include "configuration.h"
+#include "app_conf.h"
 
 static int verbose = 0;
 static const char *select_name = NULL;
