@@ -2192,7 +2192,7 @@ static int badsess_psk_find_cb(SSL *ssl, const unsigned char *id, size_t idlen,
 static int test_tls13_psk_bad_server_session(int idx)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel conn = { { NULL }, { NULL } };
     int test;
 
     badsess_kind = idx;
