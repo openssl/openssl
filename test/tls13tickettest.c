@@ -2053,6 +2053,70 @@ static int test_tls13_external_psk_digest_not_offered(void)
     return test;
 }
 
+static int sni_switch_cb(SSL *ssl, int *alert, void *arg)
+{
+    (void)alert;
+    return SSL_set_SSL_CTX(ssl, (SSL_CTX *)arg) != NULL
+        ? SSL_TLSEXT_ERR_OK
+        : SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+static int sni_session_ctx_setup(SSL_CTX *c, SSL_CTX *s, SSL_CTX *vhost)
+{
+    SSL_CTX_set_options(s, SSL_OP_NO_TICKET);
+    SSL_CTX_set_options(vhost, SSL_OP_NO_TICKET);
+    SSL_CTX_set_session_cache_mode(s, SSL_SESS_CACHE_SERVER);
+    SSL_CTX_set_session_cache_mode(vhost, SSL_SESS_CACHE_OFF);
+    SSL_CTX_set_session_cache_mode(c,
+        SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    return 1;
+}
+
+/*
+ * The server runs with SSL_OP_NO_TICKET and a server session cache on its
+ * original context, and an SNI callback switches the connection to a context
+ * whose session cache is off.  The cache that matters is the one that stores
+ * and looks up sessions, which belongs to the original context, so stateful
+ * tickets must still be issued and the next connection must resume.
+ */
+static int test_tls13_ticket_sni_session_ctx(void)
+{
+    SSL_CTX *c = NULL, *s = NULL, *vhost = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &vhost, NULL, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(sni_session_ctx_setup(c, s, vhost))
+        && TEST_true(SSL_CTX_set_tlsext_servername_callback(s, sni_switch_cb))
+        && TEST_true(SSL_CTX_set_tlsext_servername_arg(s, vhost))
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(SSL_set_tlsext_host_name(initial.c.ssl, "review.example"))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_ptr_eq(SSL_get_SSL_CTX(initial.s.ssl), vhost)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_tlsext_host_name(resumed.c.ssl, "review.example"))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_true(SSL_session_reused(resumed.c.ssl));
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    SSL_CTX_free(vhost);
+    return test;
+}
+
 /*
  * A client psk_use_session callback that returns a session with no master key
  * must be rejected (SSL_ERROR_SSL), not used to build a binder from an empty
@@ -2538,6 +2602,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_cipher_retire_full_handshake);
     ADD_TEST(test_tls13_external_psk_digest_not_offered);
     ADD_TEST(test_tls13_external_psk_no_master_key);
+    ADD_TEST(test_tls13_ticket_sni_session_ctx);
     ADD_ALL_TESTS(test_tls13_psk_bad_server_session, 4);
     ADD_ALL_TESTS(test_tls13_ticket_lifetime_cap, 3);
     ADD_ALL_TESTS(test_tls13_ticket_lifetime_bound_offer, 2);

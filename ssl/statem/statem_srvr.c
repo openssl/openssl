@@ -775,7 +775,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          */
         if (s->num_tickets <= s->sent_tickets
             || ((s->options & SSL_OP_NO_TICKET) != 0
-                && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
+                && (s->session_ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
             || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE
             || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0))
