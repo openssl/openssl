@@ -16,12 +16,17 @@
 #include "internal/refcount.h"
 #include "crypto/ecx.h"
 
-/* DES3-WRAP adds an eight-byte IV and an eight-byte checksum. */
+/*
+ * Wrap output includes a full block after rounding up the input.
+ * DES3-WRAP instead adds an eight-byte IV and an eight-byte checksum.
+ */
 static ossl_inline size_t ossl_cipher_wrap_output_size(const EVP_CIPHER_CTX *ctx,
     size_t inlen, size_t blocksize)
 {
+#if !defined(OPENSSL_NO_DES)
     if (EVP_CIPHER_is_a(EVP_CIPHER_CTX_get0_cipher(ctx), "DES3-WRAP"))
         return inlen + 16;
+#endif
     return ((inlen + blocksize - 1) / blocksize + 1) * blocksize;
 }
 

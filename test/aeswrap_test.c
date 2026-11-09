@@ -170,7 +170,7 @@ static int aeswrap_pad_output_size_test(int idx)
     unsigned char *encrypted = NULL, *plain = NULL;
 
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(NULL,
-                         des ? "DES3-WRAP" : "AES-128-WRAP-PAD", NULL))
+                      des ? "DES3-WRAP" : "AES-128-WRAP-PAD", NULL))
         || !TEST_int_eq(EVP_CIPHER_get_block_size(cipher), 8)
         || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
         || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, NULL, NULL))
