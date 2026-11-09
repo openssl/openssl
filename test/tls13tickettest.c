@@ -1292,8 +1292,8 @@ static int test_tls13_ticket_cipher_mismatch_reject_early_data(void)
     const unsigned char m[] = "message";
     unsigned char buf[256];
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     unsigned char edexp[32];
     size_t w = 0, r = 0;
@@ -1819,8 +1819,8 @@ static int test_tls13_external_psk_sid_ctx_not_shared(void)
 static int test_tls13_ticket_cipher_mismatch_suppress_early_data(void)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     unsigned char edexp[32];
     int test;
@@ -1881,8 +1881,8 @@ static int test_tls13_ticket_cipher_mismatch_suppress_early_data(void)
 static int test_tls13_ticket_alpn_mismatch_suppress_early_data(void)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     unsigned char edexp[32];
     int test;
@@ -1944,8 +1944,8 @@ static int test_tls13_ticket_cipher_retire_external_psk_early_data(void)
     const unsigned char m[] = "message";
     unsigned char buf[256];
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     size_t w = 0, r = 0;
     int test;
@@ -2006,8 +2006,8 @@ static int test_tls13_ticket_cipher_retire_external_psk_early_data(void)
 static int test_tls13_ticket_cipher_retire_full_handshake(void)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     int test;
 
@@ -2051,7 +2051,7 @@ static int test_tls13_ticket_cipher_retire_full_handshake(void)
 static int test_tls13_external_psk_digest_not_offered(void)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel conn = { { NULL }, { NULL } };
     int test;
 
     test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
@@ -2087,7 +2087,7 @@ static int test_tls13_external_psk_no_master_key(void)
     const unsigned char m[] = "message";
     size_t w = 0;
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel conn = { { NULL }, { NULL } };
     int test;
 
     test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
