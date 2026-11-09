@@ -870,8 +870,8 @@ static int test_tls13_ticket_disable_server(void)
 static int test_tls13_ticket_no_decrypt(void)
 {
     SSL_CTX *c = NULL, *s = NULL;
-    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
-    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel initial = { { NULL }, { NULL } };
+    struct tls13_channel resumed = { { NULL }, { NULL } };
     SSL_SESSION *sess = NULL;
     unsigned char k1[TICKET_KEYS_LENGTH];
     unsigned char k2[TICKET_KEYS_LENGTH];
