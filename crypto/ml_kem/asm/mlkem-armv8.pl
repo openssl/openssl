@@ -26,14 +26,13 @@
 #
 # These fit signed 16-bit lanes and require only one final canonicalization.
 # Inverse sum paths are center-reduced after layers 3 and 6, bounding the final
-# layer by [-4421,4421].  Scaling by 128^-1 = 3303 = -26 (mod q) is fused with
-# canonicalization.
+# layer by [-4421,4421].  Scaling by the inverse of 128 modulo q (3303, or -26)
+# is fused with canonicalization.
 #
 # Long layers are unrolled; lengths 4 and 2 each loop over sixteen batches.
 # Final reduction/scaling passes each use eight 64-byte iterations.
 # Addresses and branch conditions depend only on public offsets and counters;
-# canonicalization uses sign masks.  Both entry points use caller-saved
-# registers and need no stack frame.
+# canonicalization uses sign masks.
 use strict;
 use warnings;
 
@@ -54,7 +53,7 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 my $q = 3329;
 my $code = '';
 
-# Caller-saved register aliases (AAPCS64).
+# Register aliases.
 my ($arg, $constants_gpr, $q_gpr) = ('x0', 'w9', 'w11');
 my $table_gpr = 'x12';
 my ($pass_gpr, $pass_count) = ('x1', 'w2');
@@ -71,10 +70,6 @@ my ($vec_barrett, $vec_recip, $vec_root, $vec_q) =
 my ($quad_recip, $quad_root) = map("q$_", (29, 30));
 # Indexed halfword operands must use v0-v15.  v6 holds z and c in lanes 0/1.
 my ($vec_inverse_constants, $single_inverse_constants) = ('v6', 's6');
-my $inverse_root_lane = "$vec_inverse_constants.h[0]";
-my $inverse_recip_lane = "$vec_inverse_constants.h[1]";
-my $root_8h = "$vec_root.8h";
-my $recip_8h = "$vec_recip.8h";
 
 # Inverse (z,c) pairs for lengths >= 8; c = round(2^15*z/q).
 my %intt_constants = (
@@ -114,15 +109,21 @@ sub center_inverse_blocks {
             my $off = 2 * ($base + $j);
             $code .= <<___;
         ldr     $quad_a, [$arg, #$off]
+
         sqrdmulh $vec_tmp.8h, $vec_a.8h, $vec_barrett.8h
         mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+
         str     $quad_a, [$arg, #$off]
 ___
         }
     }
 }
 
-# Unrolled forward layers with lengths >= 8.
+# Forward Cooley-Tukey butterflies, unrolled for lengths >= 8.
+# For each group with twiddle z:
+#   for each butterfly pair (a,b):
+#       t = b*z mod q
+#       (a,b) = (a+t,a-t)
 sub forward_wide_layer {
     my ($len) = @_;
 
@@ -134,11 +135,16 @@ ___
             my $a = 2 * $start;
             $code .= <<___;
         ldp     $quad_a, $quad_b, [$arg, #$a]
-        mul     $vec_product.8h, $vec_b.8h, $root_8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
+
+        // Twiddle multiplication.
+        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+
+        // Butterfly sum/difference.
         sub     $vec_sum.8h, $vec_a.8h, $vec_product.8h
         add     $vec_a.8h, $vec_a.8h, $vec_product.8h
+
         stp     $quad_a, $quad_sum, [$arg, #$a]
 ___
             next;
@@ -150,16 +156,21 @@ ___
             $code .= <<___;
         ldp     $quad_a, $quad_a2, [$arg, #$a]
         ldp     $quad_b, $quad_b2, [$arg, #$b]
-        mul     $vec_product.8h, $vec_b.8h, $root_8h
-        mul     $vec_product2.8h, $vec_b2.8h, $root_8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $recip_8h
+
+        // Twiddle multiplication.
+        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
+        mul     $vec_product2.8h, $vec_b2.8h, $vec_root.8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_recip.8h
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+
+        // Butterfly sum/difference.
         sub     $vec_sum.8h, $vec_a.8h, $vec_product.8h
         sub     $vec_sum2.8h, $vec_a2.8h, $vec_product2.8h
         add     $vec_a.8h, $vec_a.8h, $vec_product.8h
         add     $vec_a2.8h, $vec_a2.8h, $vec_product2.8h
+
         stp     $quad_a, $quad_a2, [$arg, #$a]
         stp     $quad_sum, $quad_sum2, [$arg, #$b]
 ___
@@ -169,7 +180,11 @@ ___
 
 # Length 2 batches four [a0,a1 | b0,b1] groups as 32-bit blocks;
 # length 4 batches two [a0..a3 | b0..b3] groups as 64-bit blocks.
-# UZP separates A/B halves; ZIP restores memory order after the butterflies.
+# For each 32-byte batch:
+#   (a,b) = deinterleave(load_batch())
+#   z = load_lane_twiddles()
+#   t = b*z mod q
+#   store_interleaved(a+t,a-t)
 sub forward_short_layer {
     my ($len) = @_;
     my $shape = $len == 2 ? '.4s'
@@ -184,14 +199,20 @@ $loop:
         ldp     $quad_a, $quad_b, [$pass_gpr]
         uzp1    $vec_batch_a$shape, $vec_a$shape, $vec_b$shape
         uzp2    $vec_b$shape, $vec_a$shape, $vec_b$shape
-        mul     $vec_product.8h, $vec_b.8h, $root_8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
+
+        // Twiddle multiplication.
+        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+
+        // Butterfly sum/difference.
         sub     $vec_sum.8h, $vec_batch_a.8h, $vec_product.8h
         add     $vec_batch_a.8h, $vec_batch_a.8h, $vec_product.8h
+
         zip1    $vec_a$shape, $vec_batch_a$shape, $vec_sum$shape
         zip2    $vec_b$shape, $vec_batch_a$shape, $vec_sum$shape
         stp     $quad_a, $quad_b, [$pass_gpr], #32
+
         subs    $pass_count, $pass_count, #1
         b.ne    $loop
 ___
@@ -228,14 +249,19 @@ ___
     for (1..2) {
         $code .= <<___;
         ldp     $quad_a, $quad_b, [$pass_gpr]
+
         sqrdmulh $vec_tmp.8h, $vec_a.8h, $vec_barrett.8h
         mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+
         sshr    $vec_tmp.8h, $vec_a.8h, #15
         mls     $vec_a.8h, $vec_tmp.8h, $vec_q.8h
+
         sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_barrett.8h
         mls     $vec_b.8h, $vec_tmp.8h, $vec_q.8h
+
         sshr    $vec_tmp.8h, $vec_b.8h, #15
         mls     $vec_b.8h, $vec_tmp.8h, $vec_q.8h
+
         stp     $quad_a, $quad_b, [$pass_gpr], #32
 ___
     }
@@ -248,7 +274,10 @@ ___
 ___
 }
 
-# Unrolled inverse layers with lengths >= 8.
+# Inverse Gentleman-Sande butterflies, unrolled for lengths >= 8.
+# For each group with inverse twiddle z:
+#   for each butterfly pair (a,b):
+#       (a,b) = (a+b,(a-b)*z mod q)
 sub inverse_wide_layer {
     my ($len) = @_;
     my $group = 0;
@@ -266,11 +295,16 @@ ___
             my $a = 2 * $start;
             $code .= <<___;
         ldp     $quad_a, $quad_b, [$arg, #$a]
+
+        // Butterfly sum/difference.
         add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
         sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
-        mul     $vec_product.8h, $vec_b.8h, $inverse_root_lane
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $inverse_recip_lane
+
+        // Twiddle multiplication.
+        mul     $vec_product.8h, $vec_b.8h, $vec_inverse_constants.h[0]
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_inverse_constants.h[1]
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+
         stp     $quad_sum, $quad_product, [$arg, #$a]
 ___
             next;
@@ -282,16 +316,21 @@ ___
             $code .= <<___;
         ldp     $quad_a, $quad_a2, [$arg, #$a]
         ldp     $quad_b, $quad_b2, [$arg, #$b]
+
+        // Butterfly sum/difference.
         add     $vec_sum.8h, $vec_a.8h, $vec_b.8h
         add     $vec_sum2.8h, $vec_a2.8h, $vec_b2.8h
         sub     $vec_b.8h, $vec_a.8h, $vec_b.8h
         sub     $vec_b2.8h, $vec_a2.8h, $vec_b2.8h
-        mul     $vec_product.8h, $vec_b.8h, $inverse_root_lane
-        mul     $vec_product2.8h, $vec_b2.8h, $inverse_root_lane
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $inverse_recip_lane
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $inverse_recip_lane
+
+        // Twiddle multiplication.
+        mul     $vec_product.8h, $vec_b.8h, $vec_inverse_constants.h[0]
+        mul     $vec_product2.8h, $vec_b2.8h, $vec_inverse_constants.h[0]
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_inverse_constants.h[1]
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_inverse_constants.h[1]
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+
         stp     $quad_sum, $quad_sum2, [$arg, #$a]
         stp     $quad_product, $quad_product2, [$arg, #$b]
 ___
@@ -299,7 +338,11 @@ ___
     }
 }
 
-# Same lane layout as forward_short_layer(), with sum/difference before multiply.
+# Same lane layout as forward_short_layer().  For each 32-byte batch:
+#   (a,b) = deinterleave(load_batch())
+#   z = load_lane_twiddles()
+#   (a,b) = (a+b,(a-b)*z mod q)
+#   store_interleaved(a,b)
 sub inverse_short_layer {
     my ($len) = @_;
     my $shape = $len == 2 ? '.4s'
@@ -314,14 +357,19 @@ $loop:
         ldp     $quad_a, $quad_b, [$pass_gpr]
         uzp1    $vec_batch_a$shape, $vec_a$shape, $vec_b$shape
         uzp2    $vec_b$shape, $vec_a$shape, $vec_b$shape
+        // Butterfly sum/difference.
         add     $vec_sum.8h, $vec_batch_a.8h, $vec_b.8h
         sub     $vec_b.8h, $vec_batch_a.8h, $vec_b.8h
-        mul     $vec_product.8h, $vec_b.8h, $root_8h
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $recip_8h
+
+        // Twiddle multiplication.
+        mul     $vec_product.8h, $vec_b.8h, $vec_root.8h
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_recip.8h
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
+
         zip1    $vec_a$shape, $vec_sum$shape, $vec_product$shape
         zip2    $vec_b$shape, $vec_sum$shape, $vec_product$shape
         stp     $quad_a, $quad_b, [$pass_gpr], #32
+
         subs    $pass_count, $pass_count, #1
         b.ne    $loop
 ___
@@ -344,14 +392,16 @@ ___
     inverse_short_layer(2);
     inverse_short_layer(4);
     inverse_wide_layer(8);
+    # After layer 3, center sum paths to preserve signed 16-bit headroom.
     center_inverse_blocks(8, 16);
     inverse_wide_layer(16);
     inverse_wide_layer(32);
     inverse_wide_layer(64);
+    # After layer 6, center sums before the final layer to avoid 16-bit overflow.
     center_inverse_blocks(64, 128);
     inverse_wide_layer(128);
 
-    # Scale by 128^-1 = -26 (mod q), with reciprocal -256.
+    # Scale by the inverse of 128 modulo q (-26), with reduction constant -256.
     my $z_bits = -26 & 0xffff;
     my $c_bits = -256 & 0xffff;
     $code .= <<___;
@@ -365,16 +415,20 @@ ___
     for (1..2) {
         $code .= <<___;
         ldp     $quad_b, $quad_b2, [$pass_gpr]
-        mul     $vec_product.8h, $vec_b.8h, $inverse_root_lane
-        mul     $vec_product2.8h, $vec_b2.8h, $inverse_root_lane
-        sqrdmulh $vec_tmp.8h, $vec_b.8h, $inverse_recip_lane
-        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $inverse_recip_lane
+
+        // Inverse normalization.
+        mul     $vec_product.8h, $vec_b.8h, $vec_inverse_constants.h[0]
+        mul     $vec_product2.8h, $vec_b2.8h, $vec_inverse_constants.h[0]
+        sqrdmulh $vec_tmp.8h, $vec_b.8h, $vec_inverse_constants.h[1]
+        sqrdmulh $vec_tmp2.8h, $vec_b2.8h, $vec_inverse_constants.h[1]
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+
         sshr    $vec_tmp.8h, $vec_product.8h, #15
         sshr    $vec_tmp2.8h, $vec_product2.8h, #15
         mls     $vec_product.8h, $vec_tmp.8h, $vec_q.8h
         mls     $vec_product2.8h, $vec_tmp2.8h, $vec_q.8h
+
         stp     $quad_product, $quad_product2, [$pass_gpr], #32
 ___
     }
@@ -395,7 +449,8 @@ ___
 forward_ntt();
 inverse_ntt();
 
-# Each 32-byte table entry holds z[8], then c[8] = round(2^15*z/q).
+# Each 32-byte entry holds eight twiddles followed by eight reduction
+# constants, c = round(2^15*z/q).
 # Entries follow transform consumption order:
 #
 #   Forward   0..30: lengths 128..8, one root broadcast per entry.
@@ -407,14 +462,17 @@ $code .= <<___;
 .rodata
 .align  4
 // Forward NTT: broadcast lengths 128..8, then lane-packed lengths 4 and 2.
-// Each entry is { z[8], round(2^15*z/q)[8] } and occupies 32 bytes.
+// 8 twiddles followed by 8 reduction constants per 32-byte entry.
 .Lntt_constants:
+// Length 128
         .short  -1600, -1600, -1600, -1600, -1600, -1600, -1600, -1600
         .short  -15749, -15749, -15749, -15749, -15749, -15749, -15749, -15749
+// Length 64
         .short  -749, -749, -749, -749, -749, -749, -749, -749
         .short  -7373, -7373, -7373, -7373, -7373, -7373, -7373, -7373
         .short  -40, -40, -40, -40, -40, -40, -40, -40
         .short  -394, -394, -394, -394, -394, -394, -394, -394
+// Length 32
         .short  -687, -687, -687, -687, -687, -687, -687, -687
         .short  -6762, -6762, -6762, -6762, -6762, -6762, -6762, -6762
         .short  630, 630, 630, 630, 630, 630, 630, 630
@@ -423,6 +481,7 @@ $code .= <<___;
         .short  -14095, -14095, -14095, -14095, -14095, -14095, -14095, -14095
         .short  848, 848, 848, 848, 848, 848, 848, 848
         .short  8347, 8347, 8347, 8347, 8347, 8347, 8347, 8347
+// Length 16
         .short  1062, 1062, 1062, 1062, 1062, 1062, 1062, 1062
         .short  10453, 10453, 10453, 10453, 10453, 10453, 10453, 10453
         .short  -1410, -1410, -1410, -1410, -1410, -1410, -1410, -1410
@@ -439,6 +498,7 @@ $code .= <<___;
         .short  5601, 5601, 5601, 5601, 5601, 5601, 5601, 5601
         .short  -1583, -1583, -1583, -1583, -1583, -1583, -1583, -1583
         .short  -15582, -15582, -15582, -15582, -15582, -15582, -15582, -15582
+// Length 8
         .short  296, 296, 296, 296, 296, 296, 296, 296
         .short  2914, 2914, 2914, 2914, 2914, 2914, 2914, 2914
         .short  -882, -882, -882, -882, -882, -882, -882, -882
@@ -471,6 +531,7 @@ $code .= <<___;
         .short  -13338, -13338, -13338, -13338, -13338, -13338, -13338, -13338
         .short  821, 821, 821, 821, 821, 821, 821, 821
         .short  8081, 8081, 8081, 8081, 8081, 8081, 8081, 8081
+// Length 4
         .short  289, 289, 289, 289, 331, 331, 331, 331
         .short  2845, 2845, 2845, 2845, 3258, 3258, 3258, 3258
         .short  -76, -76, -76, -76, -1573, -1573, -1573, -1573
@@ -503,6 +564,7 @@ $code .= <<___;
         .short  -8416, -8416, -8416, -8416, -2156, -2156, -2156, -2156
         .short  1227, 1227, 1227, 1227, 910, 910, 910, 910
         .short  12078, 12078, 12078, 12078, 8957, 8957, 8957, 8957
+// Length 2
         .short  17, 17, -568, -568, 583, 583, -680, -680
         .short  167, 167, -5591, -5591, 5739, 5739, -6693, -6693
         .short  1637, 1637, 723, 723, -1041, -1041, 1100, 1100
@@ -537,8 +599,9 @@ $code .= <<___;
         .short  -11999, -11999, -3878, -3878, 8711, 8711, -11566, -11566
 .align  4
 // Inverse NTT: lane-packed length-2 entries followed by length-4 entries.
-// Each entry is { z^-1[8], round(2^15*z^-1/q)[8] } and occupies 32 bytes.
+// 8 inverse twiddles followed by 8 reduction constants per 32-byte entry.
 .Lintt_short_constants:
+// Length 2
         .short  1175, 1175, -885, -885, 394, 394, 1219, 1219
         .short  11566, 11566, -8711, -8711, 3878, 3878, 11999, 11999
         .short  -1029, -1029, 1455, 1455, -1212, -1212, 1607, 1607
@@ -571,6 +634,7 @@ $code .= <<___;
         .short  -10828, -10828, 10247, 10247, -7117, -7117, -16113, -16113
         .short  680, 680, -583, -583, 568, 568, -17, -17
         .short  6693, 6693, -5739, -5739, 5591, 5591, -167, -167
+// Length 4
         .short  -910, -910, -910, -910, -1227, -1227, -1227, -1227
         .short  -8957, -8957, -8957, -8957, -12078, -12078, -12078, -12078
         .short  219, 219, 219, 219, 855, 855, 855, 855
