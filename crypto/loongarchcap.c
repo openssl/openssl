@@ -29,7 +29,7 @@ void OPENSSL_cpuid_setup(void)
     trigger = 1;
 
     OPENSSL_loongarch_hwcap_P = getauxval(AT_HWCAP);
-    if ((env = getenv("OPENSSL_loongarch_hwcap")) != NULL) {
+    if ((env = getenv("OPENSSL_loongarchcap")) != NULL) {
         int clear = *env == '~';
         const char *value = env + clear;
         char *end;

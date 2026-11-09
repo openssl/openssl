@@ -95,9 +95,9 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
 #elif defined(__loongarch__)
     const char *env;
 
-    cpu_info_append(CPUINFO_PREFIX "OPENSSL_loongarch_hwcap=0x%x",
+    cpu_info_append(CPUINFO_PREFIX "OPENSSL_loongarchcap=0x%x",
         OPENSSL_loongarch_hwcap_P);
-    if ((env = getenv("OPENSSL_loongarch_hwcap")) != NULL)
+    if ((env = getenv("OPENSSL_loongarchcap")) != NULL)
         cpu_info_append(" env:%s", env);
 #elif defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC)
     const char *env;
