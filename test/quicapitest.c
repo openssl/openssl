@@ -4768,6 +4768,107 @@ err:
 }
 
 /*
+ * Discard an unread completed stream at a full connection receive window.
+ * One ordinary event tick must release the stream, send MAX_DATA, and let a
+ * real peer deliver the next byte without another application read.
+ */
+static int test_stream_gc_connection_credit(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *listener = NULL;
+    SSL *sending = NULL, *receiving = NULL, *nextsend = NULL, *nextrecv = NULL;
+    QUIC_CHANNEL *client_ch, *server_ch;
+    QUIC_STREAM *stream;
+    QUIC_STREAM_MAP *qsm;
+    unsigned char payload[64] = { 1 }, byte = 0;
+    size_t written = 0, readbytes = 0;
+    uint64_t id;
+    int i, ret, testresult = 0;
+
+    if (!TEST_ptr(cctx = create_client_ctx())
+        || !TEST_ptr(sctx = create_server_ctx())
+        || !TEST_true(create_quic_ssl_objects_ex(sctx, cctx, NULL,
+            &listener, &clientssl, 1))
+        || !TEST_ptr(client_ch = ossl_quic_conn_get_channel(clientssl))
+        || !TEST_true(ossl_quic_channel_set_max_data_request(client_ch, sizeof(payload)))
+        || !TEST_true(SSL_set_default_stream_mode(clientssl, SSL_DEFAULT_STREAM_MODE_NONE))
+        || !TEST_true(SSL_set_incoming_stream_policy(clientssl,
+            SSL_INCOMING_STREAM_POLICY_ACCEPT, 0))
+        || !TEST_true(queue_incoming_connection(listener, clientssl))
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener, 0)))
+        goto err;
+    for (i = 0; i < 20; ++i) {
+        ret = SSL_do_handshake(serverssl);
+        if (ret != 1 && !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        ret = SSL_connect(clientssl);
+        if (ret != 1 && !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        if (SSL_is_init_finished(clientssl) && SSL_is_init_finished(serverssl))
+            break;
+        fake_now = ossl_time_add(fake_now, ossl_ms2time(1));
+    }
+    if (!TEST_int_lt(i, 20)
+        || !TEST_true(SSL_set_default_stream_mode(serverssl, SSL_DEFAULT_STREAM_MODE_NONE))
+        || !TEST_ptr(server_ch = ossl_quic_conn_get_channel(serverssl))
+        || !TEST_ptr(sending = SSL_new_stream(serverssl, SSL_STREAM_FLAG_UNI))
+        || !TEST_true(SSL_write_ex(sending, payload, sizeof(payload), &written))
+        || !TEST_size_t_eq(written, sizeof(payload))
+        || !TEST_true(SSL_stream_conclude(sending, 0)))
+        goto err;
+    id = SSL_get_stream_id(sending);
+    qsm = ossl_quic_channel_get_qsm(client_ch);
+    for (i = 0; i < 20; ++i) {
+        if (!TEST_true(SSL_handle_events(clientssl)))
+            goto err;
+        stream = ossl_quic_stream_map_get_by_id(qsm, id);
+        if (stream != NULL && stream->recv_state == QUIC_RSTREAM_STATE_DATA_RECVD)
+            break;
+        fake_now = ossl_time_add(fake_now, ossl_ms2time(1));
+        if (!TEST_true(SSL_handle_events(serverssl)))
+            goto err;
+    }
+    if (!TEST_int_lt(i, 20)
+        || !TEST_ptr(receiving = SSL_accept_stream(clientssl, 0))
+        || !TEST_uint64_t_eq(SSL_get_stream_id(receiving), id)
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&client_ch->conn_rxfc), 0)
+        || !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(&server_ch->conn_txfc, 0), 0))
+        goto err;
+
+    /* SSL_free only marks the object; no stream I/O follows on this endpoint. */
+    SSL_free(receiving);
+    receiving = NULL;
+    if (!TEST_ptr(stream = ossl_quic_stream_map_get_by_id(qsm, id))
+        || !TEST_true(stream->ready_for_gc)
+        || !TEST_true(SSL_handle_events(clientssl))
+        || !TEST_ptr_null(ossl_quic_stream_map_get_by_id(qsm, id))
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&client_ch->conn_rxfc), sizeof(payload))
+        || !TEST_true(SSL_handle_events(serverssl))
+        || !TEST_uint64_t_gt(ossl_quic_txfc_get_credit(&server_ch->conn_txfc, 0), 0)
+        || !TEST_ptr(nextsend = SSL_new_stream(serverssl, SSL_STREAM_FLAG_UNI))
+        || !TEST_true(SSL_write_ex(nextsend, payload, 1, &written))
+        || !TEST_size_t_eq(written, 1)
+        || !TEST_true(SSL_handle_events(clientssl))
+        || !TEST_ptr(nextrecv = SSL_accept_stream(clientssl, 0))
+        || !TEST_true(SSL_read_ex(nextrecv, &byte, 1, &readbytes))
+        || !TEST_size_t_eq(readbytes, 1)
+        || !TEST_int_eq(byte, payload[0]))
+        goto err;
+    testresult = 1;
+err:
+    SSL_free(nextrecv);
+    SSL_free(nextsend);
+    SSL_free(receiving);
+    SSL_free(sending);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * When the server has a different primary group than the client, the server
  * should not fail on the client hello retry.
  */
@@ -5736,6 +5837,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
     ADD_TEST(test_reject_stream_gc);
+    ADD_TEST(test_stream_gc_connection_credit);
     ADD_TEST(test_client_hello_retry);
 #if OPENSSL_USE_IPV6
     ADD_TEST(test_quic_peer_addr_v6);

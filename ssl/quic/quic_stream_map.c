@@ -292,7 +292,7 @@ static int stream_has_data_to_send(QUIC_STREAM *s)
     return (shdr.is_fin && shdr.len == 0) || shdr.offset < fc_limit;
 }
 
-static ossl_unused int qsm_send_part_permits_gc(const QUIC_STREAM *qs)
+static int qsm_send_part_permits_gc(const QUIC_STREAM *qs)
 {
     switch (qs->send_state) {
     case QUIC_SSTREAM_STATE_NONE:
@@ -306,7 +306,14 @@ static ossl_unused int qsm_send_part_permits_gc(const QUIC_STREAM *qs)
 
 static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
 {
-    int recv_stream_fully_drained = 0; /* TODO(QUIC FUTURE): Optimisation */
+    int recv_stream_fully_drained
+        = qs->recv_state == QUIC_RSTREAM_STATE_NONE
+        || qs->recv_state == QUIC_RSTREAM_STATE_DATA_RECVD
+        || qs->recv_state == QUIC_RSTREAM_STATE_DATA_READ
+        || qs->recv_state == QUIC_RSTREAM_STATE_RESET_RECVD
+        || qs->recv_state == QUIC_RSTREAM_STATE_RESET_READ;
+
+    /* A STOP ACK does not establish the peer's final size (RFC 9000 s. 4.5). */
 
     /*
      * If sstream has no FIN, we auto-reset it at marked-for-deletion time, so
@@ -318,12 +325,10 @@ static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
         || ossl_quic_stream_send_get_final_size(qs, NULL));
 
     return qs->deleted
-        && (!ossl_quic_stream_has_recv(qs)
-            || recv_stream_fully_drained
-            || qs->acked_stop_sending)
-        && (!ossl_quic_stream_has_send(qs)
-            || qs->send_state == QUIC_SSTREAM_STATE_DATA_RECVD
-            || qs->send_state == QUIC_SSTREAM_STATE_RESET_RECVD);
+        && (recv_stream_fully_drained
+            || (qs->recv_state == QUIC_RSTREAM_STATE_SIZE_KNOWN
+                && qs->acked_stop_sending))
+        && qsm_send_part_permits_gc(qs);
 }
 
 int ossl_quic_stream_map_is_local_allowed_by_stream_limit(QUIC_STREAM_MAP *qsm,
@@ -550,10 +555,10 @@ int ossl_quic_stream_map_notify_reset_stream_acked(QUIC_STREAM_MAP *qsm,
 
     case QUIC_SSTREAM_STATE_RESET_SENT:
         qs->send_state = QUIC_SSTREAM_STATE_RESET_RECVD;
-        return 1;
-
+        /* FALLTHROUGH */
     case QUIC_SSTREAM_STATE_RESET_RECVD:
-        /* Already in the correct state. */
+        /* A queued retransmission is no longer needed after any copy is ACKed. */
+        qs->want_reset_stream = 0;
         return 1;
     }
 }
@@ -832,13 +837,24 @@ size_t ossl_quic_stream_map_get_total_accept_queue_len(QUIC_STREAM_MAP *qsm)
         + ossl_quic_stream_map_get_accept_queue_len(qsm, /*is_uni=*/1);
 }
 
-void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm)
+int ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm, OSSL_TIME rtt)
 {
     QUIC_STREAM *qs;
+    uint64_t swm, rwm;
 
     while ((qs = ready_for_gc_head(&qsm->ready_for_gc_list)) != NULL) {
+        if (ossl_quic_stream_has_recv(qs)) {
+            /* Final size is accounted; discard unread bytes exactly once. */
+            swm = ossl_quic_rxfc_get_swm(&qs->rxfc);
+            rwm = ossl_quic_rxfc_get_rwm(&qs->rxfc);
+            if (rwm > swm
+                || (swm != rwm
+                    && !ossl_quic_rxfc_on_retire(&qs->rxfc, swm - rwm, rtt)))
+                return 0;
+        }
         ossl_quic_stream_map_release(qsm, qs);
     }
+    return 1;
 }
 
 static int eligible_for_shutdown_flush(QUIC_STREAM *qs)

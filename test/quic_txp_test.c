@@ -1706,8 +1706,236 @@ static int test_dyn_script_1(int idx)
     return 1;
 }
 
+static int control_test_init(struct helper *h)
+{
+    if (!helper_init(h))
+        return 0;
+    if (!TEST_true(ossl_ackm_on_handshake_confirmed(h->args.ackm))
+        || !TEST_true(ossl_qtx_provide_secret(h->args.qtx, QUIC_ENC_LEVEL_1RTT,
+            QRL_SUITE_AES128GCM, NULL, secret_1, sizeof(secret_1)))
+        || !TEST_true(ossl_qrx_provide_secret(h->qrx, QUIC_ENC_LEVEL_1RTT,
+            QRL_SUITE_AES128GCM, NULL, secret_1, sizeof(secret_1)))) {
+        helper_cleanup(h);
+        return 0;
+    }
+    ossl_quic_tx_packetiser_notify_handshake_complete(h->txp);
+    return 1;
+}
+
+static QUIC_STREAM *control_stream_new(struct helper *h, uint64_t id)
+{
+    QUIC_STREAM *s = ossl_quic_stream_map_alloc(&h->qsm, id, id & 3);
+
+    if (!TEST_ptr(s))
+        return NULL;
+    if (ossl_quic_stream_has_send(s)
+        && (!TEST_ptr(s->sstream = ossl_quic_sstream_new(256))
+            || !TEST_true(ossl_quic_txfc_init(&s->txfc, &h->conn_txfc))))
+        return NULL;
+    if (ossl_quic_stream_has_recv(s)
+        && !TEST_true(ossl_quic_rxfc_init(&s->rxfc, &h->conn_rxfc,
+            16, 16, fake_now, NULL)))
+        return NULL;
+    return s;
+}
+
+static OSSL_QRX_PKT *control_packet(struct helper *h)
+{
+    QUIC_TXP_STATUS status = { 0 };
+    OSSL_QRX_PKT *packet = NULL;
+
+    if (!TEST_true(ossl_quic_tx_packetiser_generate(h->txp, &status))
+        || !TEST_size_t_eq(status.sent_pkt, 1))
+        return NULL;
+    ossl_qtx_finish_dgram(h->args.qtx);
+    if (!TEST_true(ossl_qtx_flush_net(h->args.qtx))
+        || !TEST_int_eq(ossl_quic_demux_pump(h->demux), QUIC_DEMUX_PUMP_RES_OK)
+        || !TEST_true(ossl_qrx_read_pkt(h->qrx, &packet)))
+        return NULL;
+    return packet;
+}
+
+static int control_ack(struct helper *h, uint64_t first, uint64_t last)
+{
+    OSSL_QUIC_ACK_RANGE range = { 0 };
+    OSSL_QUIC_FRAME_ACK ack = { 0 };
+
+    range.start = first;
+    range.end = last;
+    ack.ack_ranges = &range;
+    ack.num_ack_ranges = 1;
+    return ossl_ackm_on_rx_ack_frame(h->args.ackm, &ack,
+        QUIC_PN_SPACE_APP, fake_now(NULL));
+}
+
+/* Parse actual emitted credit rather than infer it from a scheduling flag. */
+static int control_credit(OSSL_QRX_PKT *packet, uint64_t wanted, uint64_t *credit)
+{
+    PACKET data;
+    uint64_t type, id, value;
+    OSSL_QUIC_FRAME_RESET_STREAM reset;
+    OSSL_QUIC_FRAME_STOP_SENDING stop;
+    int found = 0;
+
+    if (!TEST_true(PACKET_buf_init(&data, packet->hdr->data, packet->hdr->len)))
+        return 0;
+    while (PACKET_remaining(&data) != 0) {
+        if (!TEST_true(ossl_quic_wire_peek_frame_header(&data, &type, NULL)))
+            return 0;
+        switch (type) {
+        case OSSL_QUIC_FRAME_TYPE_PADDING:
+            if (!TEST_true(ossl_quic_wire_decode_padding(&data)))
+                return 0;
+            break;
+        case OSSL_QUIC_FRAME_TYPE_PING:
+            if (!TEST_true(ossl_quic_wire_decode_frame_ping(&data)))
+                return 0;
+            break;
+        case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
+            if (!TEST_true(ossl_quic_wire_decode_frame_max_data(&data, &value)))
+                return 0;
+            break;
+        case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
+            if (!TEST_true(ossl_quic_wire_decode_frame_reset_stream(&data, &reset)))
+                return 0;
+            break;
+        case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
+            if (!TEST_true(ossl_quic_wire_decode_frame_stop_sending(&data, &stop)))
+                return 0;
+            break;
+        case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
+            if (!TEST_true(ossl_quic_wire_decode_frame_max_stream_data(&data, &id, &value)))
+                return 0;
+            if (id == wanted) {
+                *credit = value;
+                found = 1;
+            }
+            break;
+        default:
+            TEST_error("Unexpected control packet frame %llu", (unsigned long long)type);
+            return 0;
+        }
+    }
+    return found;
+}
+
+/* Lose the credit-only packet, then ACK three later real packets. */
+static int test_control_frame_loss(void)
+{
+    struct helper h;
+    QUIC_STREAM *reset, *stop, *credit;
+    OSSL_QRX_PKT *packet = NULL;
+    uint64_t limit = 0;
+    size_t i;
+    int testresult = 0;
+
+    if (!control_test_init(&h))
+        return 0;
+    if (!TEST_ptr(reset = control_stream_new(&h, 0))
+        || !TEST_ptr(stop = control_stream_new(&h, 3))
+        || !TEST_ptr(credit = control_stream_new(&h, 7))
+        || !TEST_true(ossl_quic_stream_map_reset_stream_send_part(&h.qsm, reset, 7))
+        || !TEST_true(ossl_quic_stream_map_stop_sending_recv_part(&h.qsm, stop, 8))
+        || !TEST_true(ossl_quic_rxfc_on_rx_stream_frame(&credit->rxfc, 16, 0))
+        || !TEST_true(ossl_quic_rxfc_on_retire(&credit->rxfc, 16, ossl_ms2time(1))))
+        goto err;
+    ossl_quic_stream_map_update_state(&h.qsm, credit);
+    if (!TEST_ptr(packet = control_packet(&h))
+        || !TEST_uint64_t_eq(packet->pn, 0)
+        || !TEST_true(control_credit(packet, 7, &limit))
+        || !TEST_uint64_t_eq(limit, 32)
+        || !TEST_false(reset->want_reset_stream)
+        || !TEST_false(stop->want_stop_sending)
+        || !TEST_false(credit->want_max_stream_data))
+        goto err;
+    ossl_qrx_pkt_release(packet);
+    packet = NULL;
+    for (i = 1; i <= 3; ++i) {
+        ossl_quic_tx_packetiser_schedule_ack_eliciting(h.txp, QUIC_PN_SPACE_APP);
+        if (!TEST_ptr(packet = control_packet(&h))
+            || !TEST_uint64_t_eq(packet->pn, i))
+            goto err;
+        ossl_qrx_pkt_release(packet);
+        packet = NULL;
+    }
+    if (!TEST_true(control_ack(&h, 1, 3))
+        || !TEST_true(reset->want_reset_stream)
+        || !TEST_true(stop->want_stop_sending)
+        || !TEST_true(credit->want_max_stream_data)
+        || !TEST_ptr(packet = control_packet(&h))
+        || !TEST_true(control_credit(packet, 7, &limit))
+        || !TEST_uint64_t_eq(limit, 32))
+        goto err;
+    testresult = 1;
+err:
+    ossl_qrx_pkt_release(packet);
+    helper_cleanup(&h);
+    return testresult;
+}
+
+/* ACK of another RESET copy may precede loss, or clear a queued resend. */
+static int test_reset_ack_loss_order(int idx)
+{
+    struct helper h;
+    QUIC_STREAM *s;
+    OSSL_QRX_PKT *packet = NULL;
+    size_t i;
+    int testresult = 0;
+
+    if (!control_test_init(&h))
+        return 0;
+    if (!TEST_ptr(s = control_stream_new(&h, 0))
+        || !TEST_true(ossl_quic_stream_map_reset_stream_send_part(&h.qsm, s, 0))
+        || !TEST_ptr(packet = control_packet(&h)))
+        goto err;
+    ossl_qrx_pkt_release(packet);
+    packet = NULL;
+    if (idx != 1
+        && !TEST_true(ossl_quic_stream_map_notify_reset_stream_acked(&h.qsm, s)))
+        goto err;
+    if (idx == 2) {
+        if (!TEST_true(ossl_quic_rxfc_on_rx_stream_frame(&s->rxfc, 0, 1))
+            || !TEST_true(ossl_quic_stream_map_notify_reset_recv_part(&h.qsm, s, 0, 0)))
+            goto err;
+        s->deleted = 1;
+        ossl_quic_stream_map_update_state(&h.qsm, s);
+        if (!TEST_true(ossl_quic_stream_map_gc(&h.qsm, ossl_ms2time(10)))
+            || !TEST_ptr_null(ossl_quic_stream_map_get_by_id(&h.qsm, 0)))
+            goto err;
+    }
+    for (i = 1; i <= 3; ++i) {
+        ossl_quic_tx_packetiser_schedule_ack_eliciting(h.txp, QUIC_PN_SPACE_APP);
+        if (!TEST_ptr(packet = control_packet(&h)))
+            goto err;
+        ossl_qrx_pkt_release(packet);
+        packet = NULL;
+    }
+    if (!TEST_true(control_ack(&h, 1, 3)))
+        goto err;
+    if (idx == 1
+        && (!TEST_true(s->want_reset_stream)
+            || !TEST_true(ossl_quic_stream_map_notify_reset_stream_acked(&h.qsm, s))))
+        goto err;
+    if (idx == 2) {
+        if (!TEST_ptr_null(ossl_quic_stream_map_get_by_id(&h.qsm, 0)))
+            goto err;
+    } else if (!TEST_int_eq(s->send_state, QUIC_SSTREAM_STATE_RESET_RECVD)
+        || !TEST_false(s->want_reset_stream)) {
+        goto err;
+    }
+    if (!TEST_size_t_eq(ossl_quic_txpim_get_in_use(h.args.txpim), 0))
+        goto err;
+    testresult = 1;
+err:
+    ossl_qrx_pkt_release(packet);
+    helper_cleanup(&h);
+    return testresult;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_control_frame_loss);
+    ADD_ALL_TESTS(test_reset_ack_loss_order, 3);
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     ADD_ALL_TESTS(test_dyn_script_1,
         (int)(OSSL_NELEM(dyn_script_1_crypto_1a)

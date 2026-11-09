@@ -603,8 +603,11 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
      * this must happen after RXFC checks above as even if we sent STOP_SENDING
      * we must still enforce correct flow control (RFC 9000 s. 3.5).
      */
-    if (stream->stop_sending)
+    if (stream->stop_sending) {
+        /* FIN may have established final size since STOP was acknowledged. */
+        ossl_quic_stream_map_update_state(&ch->qsm, stream);
         return 1; /* not an error - packet reordering, etc. */
+    }
 
     /*
      * The receive stream buffer may or may not choose to consume the data
@@ -644,8 +647,10 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    if (rs_fin)
+    if (rs_fin) {
         ossl_quic_stream_map_notify_totally_received(&ch->qsm, stream);
+        ossl_quic_stream_map_update_state(&ch->qsm, stream);
+    }
 
     *datalen = frame_data.len;
 

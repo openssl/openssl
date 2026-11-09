@@ -872,9 +872,10 @@ size_t ossl_quic_stream_map_get_total_accept_queue_len(QUIC_STREAM_MAP *qsm);
 
 /*
  * Delete streams ready for GC. Pointers to those QUIC_STREAM objects become
- * invalid.
+ * invalid. Retire discarded receive bytes using the connection's smoothed RTT.
+ * Returns 0 on an internal flow-control error, retaining the failing stream.
  */
-void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm);
+int ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm, OSSL_TIME rtt);
 
 /*
  * Begins shutdown stream flush triage. Analyses all streams, including deleted
