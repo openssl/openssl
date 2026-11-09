@@ -113,7 +113,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     ok = ossl_epki2pki_der_decode(der, der_len, selection, data_cb, data_cbarg,
         pw_cb, pw_cbarg, PROV_LIBCTX_OF(ctx->provctx),
         ctx->propq);
-    OPENSSL_free(der);
+    OPENSSL_clear_free(der, der_len);
     return ok;
 }
 
@@ -155,6 +155,7 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
             }
             alg = NULL;
         }
+        OPENSSL_cleanse(pbuf, sizeof(pbuf));
         X509_SIG_free(p8);
     } else {
         ERR_pop_to_mark();
