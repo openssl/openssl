@@ -3337,10 +3337,11 @@ __owur int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long id);
 __owur int tls_group_allowed(SSL_CONNECTION *s, uint16_t curve, int op);
 void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
     size_t *pgroupslen);
+void tls1_get_supported_groups_and_tuples(SSL_CONNECTION *s,
+    const uint16_t **pgroups, size_t *pgroupslen,
+    const size_t **ptuples, size_t *ptupleslen);
 void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
     size_t *pgroupslen);
-void tls1_get_group_tuples(SSL_CONNECTION *s, const size_t **ptuples,
-    size_t *ptupleslen);
 
 __owur int tls1_set_server_sigalgs(SSL_CONNECTION *s);
 

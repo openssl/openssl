@@ -843,8 +843,8 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     /* Get list of server supported groups and the group tuples */
-    tls1_get_supported_groups(s, &srvrgroups, &srvr_num_groups);
-    tls1_get_group_tuples(s, &srvrtuples, &srvr_num_tuples);
+    tls1_get_supported_groups_and_tuples(s, &srvrgroups, &srvr_num_groups,
+        &srvrtuples, &srvr_num_tuples);
     /* Get the clients list of supported groups. */
     tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
 

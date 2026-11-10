@@ -222,8 +222,8 @@ static const uint16_t suiteb_curves[] = {
 
 /*
  * Group tuples matching the Suite B group lists returned by
- * tls1_get_supported_groups(): a single tuple holding both P-256 and P-384,
- * or a single tuple holding just one of them.
+ * tls1_get_supported_groups_and_tuples(): a single tuple holding both P-256
+ * and P-384, or a single tuple holding just one of them.
  */
 static const size_t suiteb_tuples_both[] = { OSSL_NELEM(suiteb_curves) };
 static const size_t suiteb_tuples_one[] = { 1 };
@@ -813,41 +813,77 @@ uint16_t tls1_nid2group_id(int nid)
 }
 
 /*
- * Set *pgroups to the supported groups list and *pgroupslen to
- * the number of groups supported.
+ * Set *pgroups to the supported groups list and *pgroupslen to the number of
+ * groups supported. If ptuples is not NULL, also set *ptuples to the list of
+ * group tuple sizes and *ptupleslen to the number of tuples.
+ *
+ * This is the only place that decides where the group list comes from, so the
+ * tuples returned here always partition exactly the group list returned
+ * alongside them.
  */
-void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
-    size_t *pgroupslen)
+void tls1_get_supported_groups_and_tuples(SSL_CONNECTION *s,
+    const uint16_t **pgroups, size_t *pgroupslen,
+    const size_t **ptuples, size_t *ptupleslen)
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const size_t *tuples;
+    size_t tupleslen;
 
-    /* For Suite B mode only include P-256, P-384 */
+    /*
+     * For Suite B mode only include P-256, P-384. The fixed group list forms
+     * a single tuple.
+     */
     switch (tls1_suiteb(s)) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *pgroups = suiteb_curves;
         *pgroupslen = OSSL_NELEM(suiteb_curves);
+        tuples = suiteb_tuples_both;
+        tupleslen = OSSL_NELEM(suiteb_tuples_both);
         break;
 
     case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
         *pgroups = suiteb_curves;
         *pgroupslen = 1;
+        tuples = suiteb_tuples_one;
+        tupleslen = OSSL_NELEM(suiteb_tuples_one);
         break;
 
     case SSL_CERT_FLAG_SUITEB_192_LOS:
         *pgroups = suiteb_curves + 1;
         *pgroupslen = 1;
+        tuples = suiteb_tuples_one;
+        tupleslen = OSSL_NELEM(suiteb_tuples_one);
         break;
 
     default:
         if (s->ext.supportedgroups == NULL) {
             *pgroups = sctx->ext.supportedgroups;
             *pgroupslen = sctx->ext.supportedgroups_len;
+            tuples = sctx->ext.tuples;
+            tupleslen = sctx->ext.tuples_len;
         } else {
             *pgroups = s->ext.supportedgroups;
             *pgroupslen = s->ext.supportedgroups_len;
+            tuples = s->ext.tuples;
+            tupleslen = s->ext.tuples_len;
         }
         break;
     }
+
+    if (ptuples != NULL) {
+        *ptuples = tuples;
+        *ptupleslen = tupleslen;
+    }
+}
+
+/*
+ * Set *pgroups to the supported groups list and *pgroupslen to
+ * the number of groups supported.
+ */
+void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
+    size_t *pgroupslen)
+{
+    tls1_get_supported_groups_and_tuples(s, pgroups, pgroupslen, NULL, NULL);
 }
 
 /*
@@ -874,41 +910,6 @@ void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s, const uint16_t **pgro
     } else {
         *pgroups = s->ext.keyshares;
         *pgroupslen = s->ext.keyshares_len;
-    }
-}
-
-/*
- * Set *ptuples to the list of group tuple sizes and *ptupleslen to the number
- * of tuples. The tuples returned here always partition exactly the group list
- * returned by tls1_get_supported_groups().
- */
-void tls1_get_group_tuples(SSL_CONNECTION *s, const size_t **ptuples,
-    size_t *ptupleslen)
-{
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-
-    if (tls1_suiteb(s)) {
-        const uint16_t *groups;
-        size_t groupslen;
-
-        /*
-         * In Suite B mode the fixed group list forms a single tuple. Derive
-         * its size from the list tls1_get_supported_groups() actually returns
-         * rather than repeating the Suite B profile selection here.
-         */
-        tls1_get_supported_groups(s, &groups, &groupslen);
-        *ptuples = groupslen == OSSL_NELEM(suiteb_curves) ? suiteb_tuples_both
-                                                          : suiteb_tuples_one;
-        *ptupleslen = 1;
-        return;
-    }
-
-    if (s->ext.supportedgroups == NULL) {
-        *ptuples = sctx->ext.tuples;
-        *ptupleslen = sctx->ext.tuples_len;
-    } else {
-        *ptuples = s->ext.tuples;
-        *ptupleslen = s->ext.tuples_len;
     }
 }
 
