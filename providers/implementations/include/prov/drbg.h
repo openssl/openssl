@@ -43,6 +43,17 @@
 typedef struct prov_drbg_st PROV_DRBG;
 
 /*
+ * What a DRBG remembers of the VMClock page between two looks, read and
+ * written under the DRBG's lock by ossl_prov_vmclock_changed().
+ */
+typedef struct prov_vmclock_state_st {
+    /* The generation as of the last look that could read the page. */
+    uint64_t epoch;
+    /* Set while the page is in mid-update and was for a whole read. */
+    int unreadable;
+} PROV_VMCLOCK_STATE;
+
+/*
  * The state of all types of DRBGs.
  */
 struct prov_drbg_st {
@@ -79,13 +90,13 @@ struct prov_drbg_st {
     int fork_id;
     /*
      * The VMClock page of our library context, NULL where there is none, and
-     * the generation as of our last check, read and written under our lock
+     * what we saw in it at our last check, read and written under our lock
      * by ossl_prov_vmclock_changed(). A guest restored from a snapshot keeps
      * its pid and its clock, so this is the one check that sees that restore;
      * it never triggers where there is no VMClock device.
      */
     const volatile void *vmclock_page;
-    uint64_t vmclock_epoch;
+    PROV_VMCLOCK_STATE vmclock_state;
     unsigned short flags; /* various external flags */
 
     /*
@@ -205,12 +216,14 @@ const volatile void *ossl_prov_vmclock_page(OSSL_LIB_CTX *libctx);
 /**
  * @brief Checks whether the VM generation counter has changed.
  * @param page the page returned by ossl_prov_vmclock_page(), or NULL
- * @param epoch the value the caller last saw
- * @returns 1, storing the current value in |*epoch|, if the guest has since
- * been restored from a snapshot or migrated; 1 without storing if the page
- * could not be read; 0 if nothing changed or |page| is NULL
+ * @param state what the caller last saw, updated by the call
+ * @returns 1 if the guest has since been restored from a snapshot or
+ * migrated, if the page has just become unreadable, being in mid-update for
+ * a whole read, or if it has just become readable again; 0 if nothing
+ * changed, if the page is still unreadable, or if |page| is NULL
  */
-int ossl_prov_vmclock_changed(const volatile void *page, uint64_t *epoch);
+int ossl_prov_vmclock_changed(const volatile void *page,
+    PROV_VMCLOCK_STATE *state);
 
 /* Seeding api */
 OSSL_FUNC_rand_get_seed_fn ossl_drbg_get_seed;

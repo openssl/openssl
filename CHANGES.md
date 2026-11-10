@@ -75,12 +75,13 @@ OpenSSL 4.2
    count, with no system call, before and after each generate call. A change
    before is treated like a change of pid; a change after replaces the output
    with one generated after a reseed. A page that stays in mid-update for a
-   bounded number of reads counts as a change. The reseed draws on the
-   kernel's generator, so restored copies diverge only if the guest kernel has
-   reseeded first, which it does on the VMGenID notification when it has the
-   vmgenid driver. Processes that cannot open the device (by default only root
-   can) and hosts without the device are unaffected. In a debug build,
-   OPENSSL_VMCLOCK names another path, for tests.
+   bounded number of looks counts as a change once, and once more when it
+   can be read again. The reseed draws on the kernel's generator, so restored
+   copies diverge only if the guest kernel has reseeded first, which it does
+   on the VMGenID notification when it has the vmgenid driver. Processes that
+   cannot open the device (by default only root can) and hosts without the
+   device are unaffected. In a debug build, OPENSSL_VMCLOCK names another
+   path, for tests.
 
    *Yuxiang Ji*
 
