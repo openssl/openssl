@@ -1350,6 +1350,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_test]=provider_test.c p_test.c
   INCLUDE[provider_test]=../include ../apps/include
   DEPEND[provider_test]=../libcrypto libtestutil.a
+  PROGRAMS{noinst}=childrand_teardown_test
+  SOURCE[childrand_teardown_test]=childrand_teardown_test.c
+  INCLUDE[childrand_teardown_test]=../include ../apps/include
+  DEPEND[childrand_teardown_test]=../libcrypto libtestutil.a
   IF[{- !$disabled{module} -}]
     MODULES{noinst}=p_test p_ossltest
     SOURCE[p_test]=p_test.c
@@ -1378,6 +1382,16 @@ IF[{- !$disabled{tests} -}]
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[fake-cipher]=fake-cipher.ld
       GENERATE[fake-cipher.ld]=../util/providers.num
+    ENDIF
+    # Provider with a child libctx that pulls RAND into it; used by
+    # childrand_teardown_test.
+    MODULES{noinst}=p_childrand
+    SOURCE[p_childrand]=p_childrand.c
+    INCLUDE[p_childrand]=../include
+    DEPEND[p_childrand]=../libcrypto
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[p_childrand]=p_childrand.ld
+      GENERATE[p_childrand.ld]=../util/providers.num
     ENDIF
     MODULES{noinst}=tls-provider-child
     SOURCE[tls-provider-child]=tls-provider-module.c tls-provider.c
