@@ -257,7 +257,9 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
          * end up the final owner of a retired layer, not just the ones
          * that originally triggered the epoch change.
          */
-        if ((SSL_CONNECTION_IS_DTLS13(s) || record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
+        if ((SSL_CONNECTION_IS_DTLS13(s)
+                || record_type == SSL3_RT_CHANGE_CIPHER_SPEC
+                || record_type == SSL3_RT_HANDSHAKE)
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
             && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
             && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
