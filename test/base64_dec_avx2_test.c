@@ -26,6 +26,7 @@
  * PEM_read_bio_ex does.
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
@@ -465,6 +466,36 @@ end:
     OPENSSL_free(input);
     OPENSSL_free(decoded);
     return ret;
+}
+
+/*
+ * EVP_EncodeBlock() and EVP_DecodeBlock() must reject invalid arguments:
+ * NULL output or input buffer, or negative length, by returning -1.
+ * EVP_EncodeBlock() must also reject lengths for which the base64 output
+ * length overflows, without reading the input.
+ */
+static int test_block_invalid_args(void)
+{
+    unsigned char in[4];
+    unsigned char out[9];
+
+    /* "AAAA" is valid base64, ensuring the tests are otherwise well-formed. */
+    memset(in, 'A', sizeof(in));
+
+    /* EVP_EncodeBlock() */
+    if (!TEST_int_eq(EVP_EncodeBlock(NULL, in, (int)sizeof(in)), -1)
+        || !TEST_int_eq(EVP_EncodeBlock(out, NULL, (int)sizeof(in)), -1)
+        || !TEST_int_eq(EVP_EncodeBlock(out, in, -1), -1)
+        || !TEST_int_eq(EVP_EncodeBlock(out, in, (INT_MAX / 4) * 3 + 1), -1))
+        return 0;
+
+    /* EVP_DecodeBlock() */
+    if (!TEST_int_eq(EVP_DecodeBlock(NULL, in, (int)sizeof(in)), -1)
+        || !TEST_int_eq(EVP_DecodeBlock(out, NULL, (int)sizeof(in)), -1)
+        || !TEST_int_eq(EVP_DecodeBlock(out, in, -1), -1))
+        return 0;
+
+    return 1;
 }
 
 static int test_decode_avx2_vs_scalar(int idx)
@@ -1213,6 +1244,9 @@ int setup_tests(void)
 {
     /* states up front whether the AVX2 path is reached at all */
     ADD_TEST(test_avx2_dispatch);
+
+    /* EVP_EncodeBlock()/EVP_DecodeBlock() reject invalid arguments */
+    ADD_TEST(test_block_invalid_args);
 
     /* Standard alphabet: test_sizes x WS patterns */
     ADD_ALL_TESTS(test_decode_avx2_vs_scalar, NUM_SIZES * WS_COUNT);
