@@ -35,7 +35,8 @@ Differences to `quic_multistream_test`
 --------------------------------------
 
 The RADIX test features the following improvements relative to the
-`quic_multistream_test` framework:
+`quic_multistream_test` framework, which it has since replaced entirely
+(all of its scripts were migrated here and it was removed):
 
 - Due to usage of the new QUIC server API, opcodes are no longer duplicated
   into “C” and “S” variants. There is symmetry between all endpoints in this
