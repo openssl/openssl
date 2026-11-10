@@ -144,6 +144,16 @@ err:
     return rv;
 }
 
+static int item_sign_once(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx,
+    unsigned char *sig, size_t *siglen,
+    const unsigned char *tbs, size_t tbslen)
+{
+    /* A NULL |ctx| means one-shot message signing through |pctx| */
+    if (ctx != NULL)
+        return EVP_DigestSign(ctx, sig, siglen, tbs, tbslen);
+    return EVP_PKEY_sign(pctx, sig, siglen, tbs, tbslen);
+}
+
 static int replace_algor_contents_from_DER(X509_ALGOR *algor, const unsigned char *aid, size_t len)
 {
     /* as a workaround for d2i_*() freeing its first argument, using NULL instead: */
@@ -159,115 +169,52 @@ static int replace_algor_contents_from_DER(X509_ALGOR *algor, const unsigned cha
     return ret;
 }
 
-int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
-    X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
-    const void *data, EVP_MD_CTX *ctx)
+static int item_set_algors_from_pkey_ctx(X509_ALGOR *algor1,
+    X509_ALGOR *algor2, EVP_PKEY_CTX *pctx)
 {
-    const EVP_MD *md;
-    EVP_PKEY_CTX *pctx;
-    EVP_PKEY *pkey;
+    OSSL_PARAM params[2];
+    unsigned char aid[128];
+    size_t aid_len = 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID,
+        aid, sizeof(aid));
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
+        return 0;
+
+    if ((aid_len = params[0].return_size) == 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+        return 0;
+    }
+
+    if (algor1 != NULL && !replace_algor_contents_from_DER(algor1, aid, aid_len))
+        return 0;
+    if (algor2 != NULL && !replace_algor_contents_from_DER(algor2, aid, aid_len))
+        return 0;
+    return 1;
+}
+
+/*
+ * Encode |data| and sign the encoding, storing the result in |signature|.
+ * Signing is composed through |ctx| when non-NULL, otherwise in one shot
+ * through the message signing context |pctx|.
+ * Returns the signature length, or 0 on error.
+ */
+static int item_sign_tail(const ASN1_ITEM *it, ASN1_BIT_STRING *signature,
+    const void *data, EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
+{
     unsigned char *buf_in = NULL, *buf_out = NULL;
     size_t inl = 0, outl = 0, outll = 0;
-    int signid, paramtype, buf_len = 0;
-    int rv, pkey_id;
-
-    md = EVP_MD_CTX_get0_md(ctx);
-    pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
-
-    if (pctx == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
-        goto err;
-    }
-
-    pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-
-    if (pkey == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
-        goto err;
-    }
-
-    if (pkey->ameth == NULL) {
-        OSSL_PARAM params[2];
-        unsigned char aid[128];
-        size_t aid_len = 0;
-
-        if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
-            goto err;
-        }
-
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID,
-            aid, sizeof(aid));
-        params[1] = OSSL_PARAM_construct_end();
-
-        if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
-            goto err;
-
-        if ((aid_len = params[0].return_size) == 0) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
-            goto err;
-        }
-
-        if (algor1 != NULL && !replace_algor_contents_from_DER(algor1, aid, aid_len))
-            goto err;
-        if (algor2 != NULL && !replace_algor_contents_from_DER(algor2, aid, aid_len))
-            goto err;
-
-        rv = 3;
-    } else if (pkey->ameth->item_sign) {
-        rv = pkey->ameth->item_sign(ctx, it, data, algor1, algor2, signature);
-        if (rv == 1)
-            outl = signature->length;
-        /*-
-         * Return value meanings:
-         * <=0: error.
-         *   1: method does everything.
-         *   2: carry on as normal.
-         *   3: ASN1 method sets algorithm identifiers: just sign.
-         */
-        if (rv <= 0)
-            ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
-        if (rv <= 1)
-            goto err;
-    } else {
-        rv = 2;
-    }
-
-    if (rv == 2) {
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
-            goto err;
-        }
-
-        pkey_id =
-#ifndef OPENSSL_NO_SM2
-            EVP_PKEY_get_id(pkey) == NID_sm2 ? NID_sm2 :
-#endif
-                                             pkey->ameth->pkey_id;
-
-        if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(md), pkey_id)) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
-            goto err;
-        }
-
-        paramtype = pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL ? V_ASN1_NULL : V_ASN1_UNDEF;
-        if (algor1 != NULL
-            && !X509_ALGOR_set0(algor1, OBJ_nid2obj(signid), paramtype, NULL))
-            goto err;
-        if (algor2 != NULL
-            && !X509_ALGOR_set0(algor2, OBJ_nid2obj(signid), paramtype, NULL))
-            goto err;
-    }
+    int buf_len = 0;
 
     buf_len = ASN1_item_i2d(data, &buf_in, it);
     if (buf_len <= 0) {
-        outl = 0;
         ERR_raise(ERR_LIB_ASN1, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     inl = buf_len;
-    if (!EVP_DigestSign(ctx, NULL, &outll, buf_in, inl)) {
-        outl = 0;
+    if (!item_sign_once(ctx, pctx, NULL, &outll, buf_in, inl)) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
     }
@@ -278,7 +225,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         goto err;
     }
 
-    if (!EVP_DigestSign(ctx, buf_out, &outl, buf_in, inl)) {
+    if (!item_sign_once(ctx, pctx, buf_out, &outl, buf_in, inl)) {
         outl = 0;
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
@@ -302,4 +249,114 @@ err:
     OPENSSL_clear_free((char *)buf_in, inl);
     OPENSSL_clear_free((char *)buf_out, outll);
     return (int)outl;
+}
+
+int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+    X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+    const void *data, EVP_MD_CTX *ctx)
+{
+    const EVP_MD *md;
+    EVP_PKEY_CTX *pctx;
+    EVP_PKEY *pkey;
+    int signid, paramtype;
+    int rv, pkey_id;
+
+    md = EVP_MD_CTX_get0_md(ctx);
+    pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
+
+    if (pctx == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+        return 0;
+    }
+
+    pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+        return 0;
+    }
+
+    if (pkey->ameth == NULL) {
+        /*
+         * Provider keys: stamp the algorithm identifiers from the
+         * signature implementation.  Only composed (EVP_DigestSignInit())
+         * contexts are supported here; message contexts belong with
+         * ASN1_item_sign_pkey_ctx().
+         */
+        if (EVP_PKEY_CTX_get_operation(pctx) != EVP_PKEY_OP_SIGNCTX) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+            return 0;
+        }
+        if (!item_set_algors_from_pkey_ctx(algor1, algor2, pctx))
+            return 0;
+
+        rv = 3;
+    } else if (pkey->ameth->item_sign) {
+        rv = pkey->ameth->item_sign(ctx, it, data, algor1, algor2, signature);
+        if (rv == 1)
+            return signature->length;
+        /*-
+         * Return value meanings:
+         * <=0: error.
+         *   1: method does everything.
+         *   2: carry on as normal.
+         *   3: ASN1 method sets algorithm identifiers: just sign.
+         */
+        if (rv <= 0) {
+            ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
+            return 0;
+        }
+    } else {
+        rv = 2;
+    }
+
+    if (rv == 2) {
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+            return 0;
+        }
+
+        pkey_id =
+#ifndef OPENSSL_NO_SM2
+            EVP_PKEY_get_id(pkey) == NID_sm2 ? NID_sm2 :
+#endif
+                                             pkey->ameth->pkey_id;
+
+        if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(md), pkey_id)) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+            return 0;
+        }
+
+        paramtype = pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL ? V_ASN1_NULL : V_ASN1_UNDEF;
+        if (algor1 != NULL
+            && !X509_ALGOR_set0(algor1, OBJ_nid2obj(signid), paramtype, NULL))
+            return 0;
+        if (algor2 != NULL
+            && !X509_ALGOR_set0(algor2, OBJ_nid2obj(signid), paramtype, NULL))
+            return 0;
+    }
+
+    return item_sign_tail(it, signature, data, ctx, NULL);
+}
+
+/*
+ * Sign with a message context (EVP_PKEY_sign_message_init()) directly,
+ * without an EVP_MD_CTX.  This is the entry point for signature algorithms
+ * that are fetched as such (EVP_SIGNATURE), notably composite ones.
+ */
+int ASN1_item_sign_pkey_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+    X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+    const void *data, EVP_PKEY_CTX *pctx)
+{
+    if (pctx == NULL
+        || EVP_PKEY_CTX_get_operation(pctx) != EVP_PKEY_OP_SIGNMSG
+        || EVP_PKEY_CTX_get0_pkey(pctx) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+        return 0;
+    }
+
+    if (!item_set_algors_from_pkey_ctx(algor1, algor2, pctx))
+        return 0;
+
+    return item_sign_tail(it, signature, data, NULL, pctx);
 }

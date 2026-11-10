@@ -53,7 +53,17 @@ int i2d_X509_ACERT_bio(BIO *bp, const X509_ACERT *acert);
 
 int X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx);
+/**
+ * @brief Sign an attribute certificate with an EVP_PKEY_CTX.
+ * @see X509_ACERT_sign_pkey_ctx(3)
+ */
+int X509_ACERT_sign_pkey_ctx(X509_ACERT *x, EVP_PKEY_CTX *pctx);
 int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r);
+/**
+ * @brief Verify an attribute certificate signature with an EVP_PKEY_CTX.
+ * @see X509_ACERT_verify_pkey_ctx(3)
+ */
+int X509_ACERT_verify_pkey_ctx(X509_ACERT *a, EVP_PKEY_CTX *pctx);
 
 #define X509_ACERT_VERSION_2 1
 

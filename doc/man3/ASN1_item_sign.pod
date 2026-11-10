@@ -3,7 +3,9 @@
 =head1 NAME
 
 ASN1_item_sign, ASN1_item_sign_ex, ASN1_item_sign_ctx,
-ASN1_item_verify, ASN1_item_verify_ex, ASN1_item_verify_ctx -
+ASN1_item_sign_pkey_ctx,
+ASN1_item_verify, ASN1_item_verify_ex, ASN1_item_verify_ctx,
+ASN1_item_verify_pkey_ctx -
 ASN1 sign and verify
 
 =head1 SYNOPSIS
@@ -24,6 +26,10 @@ ASN1 sign and verify
                         X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
                         const void *data, EVP_MD_CTX *ctx);
 
+ int ASN1_item_sign_pkey_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+                             X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+                             const void *data, EVP_PKEY_CTX *pctx);
+
  int ASN1_item_verify_ex(const ASN1_ITEM *it, const X509_ALGOR *alg,
                          const ASN1_BIT_STRING *signature, const void *data,
                          const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
@@ -36,6 +42,10 @@ ASN1 sign and verify
  int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
                           const ASN1_BIT_STRING *signature, const void *data,
                           EVP_MD_CTX *ctx);
+
+ int ASN1_item_verify_pkey_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                               const ASN1_BIT_STRING *signature,
+                               const void *data, EVP_PKEY_CTX *pctx);
 
 =head1 DESCRIPTION
 
@@ -61,6 +71,11 @@ they must have been allocated beforehand (e.g., using I<X509_ALGOR_new()>,
 or indirectly like for the B<X509>fields I<sig_alg> and I<cert_info.signature>),
 and the ASN1_item_sign_ex() function sets into it the signature algorithm. This
 is done before generating the signature value and setting it into I<signature>.
+Both I<algor1> and I<algor2> receive the same algorithm identifier;
+which of the two structure fields each pointer refers to is the caller's
+choice.  For B<X509>, for example, I<algor1> is I<cert_info.signature>
+(embedded in the signed data) and I<algor2> is I<sig_alg> (in the outer
+envelope); other structures assign them differently.
 
 The B<OSSL_LIB_CTX> specified in I<libctx> and the property query string
 specified in I<props> are used when searching for algorithms in providers.
@@ -72,6 +87,13 @@ NULL for the I<id>, I<libctx> and I<propq>.
 
 ASN1_item_sign_ctx() is similar to ASN1_item_sign() but uses the parameters
 contained in digest context I<ctx>.
+
+ASN1_item_sign_pkey_ctx() is similar to ASN1_item_sign_ctx() but takes an
+B<EVP_PKEY_CTX> I<pctx> directly, without a digest context.  It must have
+been initialised for message signing with EVP_PKEY_sign_message_init() on a
+fetched signature algorithm (B<EVP_SIGNATURE>), notably composite ones such
+as "RSA-SHA256"; the DER encoding of I<data> is signed in one shot with
+EVP_PKEY_sign(), without a separate digest step.
 
 ASN1_item_verify_ex() is used to verify the signature I<signature> of internal
 data I<data> using the public key I<pkey> and algorithm identifier I<alg>.
@@ -87,6 +109,13 @@ NULL for the I<id>, I<libctx> and I<propq>.
 
 ASN1_item_verify_ctx() is similar to ASN1_item_verify() but uses the parameters
 contained in digest context I<ctx>.
+
+ASN1_item_verify_pkey_ctx() is similar to ASN1_item_verify_ctx() but takes a
+key-carrying B<EVP_PKEY_CTX> I<pctx> directly, without a digest context, and
+initialises it for message verification with the signature algorithm given by
+I<alg>, fetched by its OID; see L<EVP_PKEY_verify(3)>.  The
+AlgorithmIdentifier parameters in I<alg>, when present, are passed on to the
+signature implementation.
 
 
 =head1 RETURN VALUES
@@ -219,6 +248,9 @@ L<X509_sign(3)>,
 L<X509_verify(3)>
 
 =head1 HISTORY
+
+ASN1_item_sign_pkey_ctx() and ASN1_item_verify_pkey_ctx() were added in
+OpenSSL 4.2.
 
 ASN1_item_sign_ex() and ASN1_item_verify_ex() were added in OpenSSL 3.0.
 
