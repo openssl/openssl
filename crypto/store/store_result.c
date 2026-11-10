@@ -740,6 +740,8 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
         params[1] = OSSL_PARAM_construct_end();
 
         skey = EVP_SKEY_import_SKEYMGMT(libctx, skeymgmt, OSSL_SKEYMGMT_SELECT_ALL, params);
+        /* The EVP_SKEY holds its own reference to the SKEYMGMT */
+        EVP_SKEYMGMT_free(skeymgmt);
     }
 
     if (skey != NULL)
