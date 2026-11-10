@@ -93,7 +93,7 @@ if (disabled("ec")) {
     $proxy->serverflags("-groups P-384");
 }
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 32;
+plan tests => 38;
 ok(TLSProxy::Message->success(), "Success after HRR");
 
 #Test 2: The server sending an HRR requesting a group the client already sent
@@ -358,18 +358,24 @@ $proxy->start();
 ok(is_missing_extension_client_alert(),
    "Missing key_share in ServerHello gives missing_extension alert");
 
-#Tests 27-32: The ECDHE-MLKEM hybrid groups carry an EC point that TLS 1.3
+#Tests 27-38: The ECDHE-MLKEM hybrid groups carry an EC point that TLS 1.3
 #             requires to be in uncompressed form (RFC 8446 section 4.2.8.2).
 #             A point re-encoded in the SEC1 "hybrid" form (0x06/0x07) must be
 #             rejected with an illegal_parameter alert in both directions.
 SKIP: {
-    skip "No EC or ML-KEM support in this OpenSSL build", 6
+    skip "No EC or ML-KEM support in this OpenSSL build", 12
         if disabled("ec") || disabled("ml-kem");
 
-    foreach my $grp (["SecP256r1MLKEM768", 65], ["SecP384r1MLKEM1024", 97]) {
+    my @grps = (["SecP256r1MLKEM768", 65], ["SecP384r1MLKEM1024", 97],
+                ["SecP256r1MLKEM512", 65]);
+
+    #curveSM2MLKEM768 is only available if SM2 is enabled
+    push @grps, ["curveSM2MLKEM768", 65] if !disabled("sm2");
+
+    foreach my $grp (@grps) {
         my ($grpname, $len) = @$grp;
 
-        #Test 27/30: Sanity check, the unmodified hybrid handshake succeeds
+        #Test 27/30/33/36: Sanity check, the unmodified handshake succeeds
         $proxy->clear();
         $direction = SERVER_TO_CLIENT;
         $testtype = LOOK_ONLY;
@@ -378,7 +384,7 @@ SKIP: {
         $proxy->start();
         ok(TLSProxy::Message->success(), "$grpname handshake succeeds");
 
-        #Test 28/31: Hybrid point format in the ClientHello key_share
+        #Test 28/31/34/37: Hybrid point format in the ClientHello key_share
         $proxy->clear();
         $direction = CLIENT_TO_SERVER;
         $testtype = HYBRID_EC_POINT_FORMAT;
@@ -390,7 +396,7 @@ SKIP: {
         ok($ecpointrewrites == 1 && is_illegal_parameter_alert(1),
            "$grpname hybrid EC point in ClientHello is rejected");
 
-        #Test 29/32: Hybrid point format in the ServerHello key_share
+        #Test 29/32/35/38: Hybrid point format in the ServerHello key_share
         $proxy->clear();
         $direction = SERVER_TO_CLIENT;
         $testtype = HYBRID_EC_POINT_FORMAT;
@@ -402,6 +408,8 @@ SKIP: {
         ok($ecpointrewrites == 1 && is_illegal_parameter_alert(0),
            "$grpname hybrid EC point in ServerHello is rejected");
     }
+
+    skip "No SM2 support in this OpenSSL build", 3 if disabled("sm2");
 }
 
 sub is_illegal_parameter_alert
