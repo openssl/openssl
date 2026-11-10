@@ -1327,6 +1327,8 @@ Accept RAVERIFIED as proof of possession (POPO).
 
 Require checking that the sender name, senderKID, and protection algorithm OID
 remain unchanged in messages belonging to the same transaction.
+With signature-based protection, the sender certificate used for the
+first request must also be used for all later requests in the transaction.
 This implements RFC 9483 requirements on using same credentials,
 preventing other legitimate clients from taking over a transaction.
 

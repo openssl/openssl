@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2020
  * Copyright Siemens AG 2015-2020
  *
@@ -15,18 +15,28 @@ typedef struct test_fixture {
     const char *test_case_name;
     int reason;
     int change_parameters_only;
+    int use_signature;
     OSSL_CMP_SRV_CTX *srv_ctx;
     OSSL_CMP_MSG *req;
+    EVP_PKEY *key1, *key2;
+    X509 *cert1, *cert2;
 } CMP_SRV_TEST_FIXTURE;
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 static OSSL_CMP_MSG *request = NULL;
 #define TEST_PBM_SECRET (const unsigned char *)"1234", 4
+#define TEST_KEY_ALG "RSA", (size_t)2048
 
 static void tear_down(CMP_SRV_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_SRV_CTX_free(fixture->srv_ctx);
+    if (fixture->req != request)
+        OSSL_CMP_MSG_free(fixture->req);
+    EVP_PKEY_free(fixture->key1);
+    EVP_PKEY_free(fixture->key2);
+    X509_free(fixture->cert1);
+    X509_free(fixture->cert2);
     OPENSSL_free(fixture);
 }
 
@@ -64,6 +74,20 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
 static int delay_delivery(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *req)
 {
     return 1; /* always expect the client to poll */
+}
+
+static X509 *generate_minimal_cert(EVP_PKEY *pkey, const X509_NAME *subject)
+{
+    X509 *cert = NULL;
+
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_true(X509_set_pubkey(cert, pkey))
+        || !TEST_true(X509_set_subject_name(cert, subject))
+        || !TEST_int_gt(X509_sign(cert, pkey, EVP_sha256()), 0)) {
+        X509_free(cert);
+        return NULL;
+    }
+    return cert;
 }
 
 static OSSL_CMP_MSG *poll_with_credential_case(CMP_SRV_TEST_FIXTURE *fixture,
@@ -123,6 +147,11 @@ static OSSL_CMP_MSG *poll_with_credential_case(CMP_SRV_TEST_FIXTURE *fixture,
                 goto end;
         }
         break;
+    case CMP_R_ERROR_CERTIFICATE_CHANGED:
+        if (!TEST_true(OSSL_CMP_CTX_set1_cert(client_ctx, fixture->cert2))
+            || !TEST_true(OSSL_CMP_CTX_set1_pkey(client_ctx, fixture->key2)))
+            goto end;
+        break;
     default:
         TEST_error("invalid credential change case");
         goto end;
@@ -144,11 +173,12 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
     OSSL_CMP_CTX *client_ctx;
     OSSL_CMP_CTX *cmp_ctx;
     char *dummy_custom_ctx = "@test_dummy", *custom_ctx;
-    const OSSL_CMP_PKIHEADER *first_hdr = fixture->req->header;
     OSSL_CMP_MSG *rsp = NULL;
     OSSL_CMP_ERRORMSGCONTENT *errorContent;
     int use_polling = fixture->reason != dummy_errorCode;
     int expected_error = fixture->change_parameters_only ? CMP_R_UNSUPPORTED_PKIBODY : fixture->reason;
+    X509_NAME *subject = NULL;
+    X509_STORE *trusted_store = NULL;
     int res = 0;
 
     if (!TEST_ptr(client_ctx = OSSL_CMP_CTX_new(libctx, NULL))
@@ -172,10 +202,34 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
         || !OSSL_CMP_CTX_set1_referenceValue(cmp_ctx, (unsigned char *)"server", 6)
         || !OSSL_CMP_CTX_set1_secretValue(cmp_ctx, TEST_PBM_SECRET))
         goto end;
+    if (fixture->use_signature) {
+        if (!TEST_ptr(subject = X509_NAME_new())
+            || !TEST_true(X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_ASC,
+                (const unsigned char *)"CMP client", -1, -1, 0))
+            || !TEST_ptr(fixture->key1 = EVP_PKEY_Q_keygen(libctx, NULL, TEST_KEY_ALG))
+            || !TEST_ptr(fixture->key2 = EVP_PKEY_Q_keygen(libctx, NULL, TEST_KEY_ALG))
+            || !TEST_ptr(fixture->cert1 = generate_minimal_cert(fixture->key1, subject))
+            || !TEST_ptr(fixture->cert2 = generate_minimal_cert(fixture->key2, subject))
+            || !TEST_true(ossl_cmp_hdr_set1_sender(fixture->req->header, subject))
+            /* reprotect the first request using key1 and cert1 */
+            || !TEST_true(OSSL_CMP_CTX_set1_cert(client_ctx, fixture->cert1))
+            || !TEST_true(OSSL_CMP_CTX_set1_pkey(client_ctx, fixture->key1))
+            || !TEST_true(ossl_cmp_msg_protect(client_ctx, fixture->req)))
+            goto end;
+        if (!TEST_ptr(trusted_store = X509_STORE_new())
+            || !TEST_true(X509_STORE_add_cert(trusted_store, fixture->cert1))
+            || !TEST_true(X509_STORE_add_cert(trusted_store, fixture->cert2))
+            || !TEST_true(X509_VERIFY_PARAM_set_flags(X509_STORE_get0_param(trusted_store),
+                X509_V_FLAG_NO_CHECK_TIME | X509_V_FLAG_PARTIAL_CHAIN))
+            || !TEST_true(OSSL_CMP_CTX_set0_trusted(cmp_ctx, trusted_store)))
+
+            goto end;
+        trusted_store = NULL;
+    }
 
     if (!TEST_ptr(rsp = OSSL_CMP_CTX_server_perform(client_ctx, fixture->req)))
         goto end;
-    if (use_polling && !TEST_ptr(rsp = poll_with_credential_case(fixture, client_ctx, first_hdr, rsp)))
+    if (use_polling && !TEST_ptr(rsp = poll_with_credential_case(fixture, client_ctx, fixture->req->header, rsp)))
         goto end;
 
     if (!TEST_int_eq(OSSL_CMP_MSG_get_bodytype(rsp), OSSL_CMP_PKIBODY_ERROR)
@@ -188,47 +242,63 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
 end:
     OSSL_CMP_MSG_free(rsp);
     OSSL_CMP_CTX_free(client_ctx);
+    X509_STORE_free(trusted_store);
+    X509_NAME_free(subject);
     return res;
 }
 
-static int test_handle_request_case(int credential_change_reason, int params_only)
+static int test_handle_request_case(int credential_change_reason, int params_only, int use_signature)
 {
     SETUP_TEST_FIXTURE(CMP_SRV_TEST_FIXTURE, set_up);
-    fixture->req = request;
+    if (!TEST_ptr(fixture->req = OSSL_CMP_MSG_dup(request))) {
+        tear_down(fixture);
+        return 0;
+    }
     fixture->reason = credential_change_reason;
     fixture->change_parameters_only = params_only;
+    fixture->use_signature = use_signature;
     EXECUTE_TEST(execute_test_handle_request, tear_down);
     return result;
 }
 
 static int test_handle_request_no_credential_change(void)
 {
-    return test_handle_request_case(CMP_R_UNSUPPORTED_PKIBODY, 0);
+    return test_handle_request_case(CMP_R_UNSUPPORTED_PKIBODY, 0, 0);
 }
 
 static int test_handle_request(void)
 {
-    return test_handle_request_case(dummy_errorCode, 0);
+    return test_handle_request_case(dummy_errorCode, 0, 0);
 }
 
 static int test_handle_request_sender_change(void)
 {
-    return test_handle_request_case(CMP_R_UNEXPECTED_SENDER, 0);
+    return test_handle_request_case(CMP_R_UNEXPECTED_SENDER, 0, 0);
 }
 
 static int test_handle_request_senderKID_change(void)
 {
-    return test_handle_request_case(CMP_R_ERROR_CREDENTIALS_CHANGED, 0);
+    return test_handle_request_case(CMP_R_ERROR_CREDENTIALS_CHANGED, 0, 0);
 }
 
 static int test_handle_request_protection_parameters_change(void)
 {
-    return test_handle_request_case(CMP_R_ERROR_ALGORITHM_CHANGED, 1);
+    return test_handle_request_case(CMP_R_ERROR_ALGORITHM_CHANGED, 1, 0);
 }
 
 static int test_handle_request_protection_algorithm_change(void)
 {
-    return test_handle_request_case(CMP_R_ERROR_ALGORITHM_CHANGED, 0);
+    return test_handle_request_case(CMP_R_ERROR_ALGORITHM_CHANGED, 0, 0);
+}
+
+static int test_handle_request_signature_cert_unchanged(void)
+{
+    return test_handle_request_case(CMP_R_UNSUPPORTED_PKIBODY, 0, 1);
+}
+
+static int test_handle_request_signature_cert_changed(void)
+{
+    return test_handle_request_case(CMP_R_ERROR_CERTIFICATE_CHANGED, 0, 1);
 }
 
 void cleanup_tests(void)
@@ -287,5 +357,7 @@ int setup_tests(void)
     ADD_TEST(test_handle_request_senderKID_change);
     ADD_TEST(test_handle_request_protection_parameters_change);
     ADD_TEST(test_handle_request_protection_algorithm_change);
+    ADD_TEST(test_handle_request_signature_cert_unchanged);
+    ADD_TEST(test_handle_request_signature_cert_changed);
     return 1;
 }

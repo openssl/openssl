@@ -219,6 +219,8 @@ OpenSSL 4.2
    and the `-enforce_same_credentials` option for `openssl cmp`.
    When enabled, the server checks that the sender name, senderKID,
    and protection algorithm OID remain unchanged throughout a transaction.
+   With signature-based protection, the sender certificate used for the
+   first request must also be used for all later requests in the transaction.
    Changes to the parameters of the same protection algorithm,
    such as the PBM salt, are logged as warnings but accepted.
    These checks are disabled by default.

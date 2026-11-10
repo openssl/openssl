@@ -213,6 +213,7 @@ CMP_R_ENCOUNTERED_KEYUPDATEWARNING:176:encountered keyupdatewarning
 CMP_R_ENCOUNTERED_WAITING:162:encountered waiting
 CMP_R_ERROR_ALGORITHM_CHANGED:207:algorithm changed
 CMP_R_ERROR_CALCULATING_PROTECTION:115:error calculating protection
+CMP_R_ERROR_CERTIFICATE_CHANGED:208:certificate changed
 CMP_R_ERROR_CREATING_CERTCONF:116:error creating certconf
 CMP_R_ERROR_CREATING_CERTREP:117:error creating certrep
 CMP_R_ERROR_CREATING_CERTREQ:163:error creating certreq

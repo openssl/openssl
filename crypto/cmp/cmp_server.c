@@ -18,6 +18,7 @@ struct ossl_cmp_srv_ctx_st {
     OSSL_CMP_CTX *ctx; /* CMP client context reused for transactionID etc. */
     void *custom_ctx; /* application-specific server context */
     OSSL_CMP_PKIHEADER *first_hdr; /* header of 1st request in transaction */
+    X509 *first_client_cert; /* 1st request signer cert in transaction */
     int certReqId; /* of ir/cr/kur, OSSL_CMP_CERTREQID_NONE for p10cr */
     int polling; /* current transaction is in polling mode */
 
@@ -44,6 +45,7 @@ void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx)
         return;
 
     OSSL_CMP_PKIHEADER_free(srv_ctx->first_hdr);
+    X509_free(srv_ctx->first_client_cert);
     OSSL_CMP_CTX_free(srv_ctx->ctx);
     OPENSSL_free(srv_ctx);
 }
@@ -637,6 +639,8 @@ static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
         ret = 0;
     OSSL_CMP_PKIHEADER_free(srv_ctx->first_hdr);
     srv_ctx->first_hdr = NULL;
+    X509_free(srv_ctx->first_client_cert);
+    srv_ctx->first_client_cert = NULL;
     return ret;
 }
 
@@ -644,6 +648,10 @@ static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
  * Check whether the sender, senderKID, and protection algorithm OID in |hdr|
  * match those saved in |first_hdr|. Changes to parameters of the same protection
  * algorithm, such as the PBM salt, are logged as warnings but accepted.
+ * Note that this does not check the actual credentials themselves,
+ * only the identifiers and protection algorithm.
+ * For signature-based protection, the relevant credentials are the sender
+ * key and certificate, which is checked by check_same_sender_cert().
  * Return 1 if they match, else raise an error and return 0.
  */
 static int check_same_credentials(const OSSL_CMP_CTX *ctx,
@@ -700,6 +708,25 @@ static int check_same_credentials(const OSSL_CMP_CTX *ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_ALGORITHM_CHANGED);
         ossl_cmp_log2(ERROR, ctx, "protection algorithm changed within transaction from %s to %s", first, actual);
         return 0;
+    }
+    return 1;
+}
+
+static int check_same_sender_cert(OSSL_CMP_SRV_CTX *srv_ctx)
+{
+    OSSL_CMP_CTX *ctx = srv_ctx->ctx;
+    X509 *cert = ctx->validatedSrvCert;
+
+    if (srv_ctx->first_client_cert != NULL) {
+        if (cert != NULL && X509_cmp(srv_ctx->first_client_cert, cert) == 0)
+            return 1;
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CERTIFICATE_CHANGED);
+        return 0;
+    }
+    if (cert != NULL) {
+        if (!X509_up_ref(cert))
+            return 0;
+        srv_ctx->first_client_cert = cert;
     }
     return 1;
 }
@@ -803,6 +830,9 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             ctx->unprotectedSend = 1; /* will be restored before return */
         goto err;
     }
+
+    if (srv_ctx->enforceSameCredentials && !check_same_sender_cert(srv_ctx))
+        goto err;
 
     if (req_type == OSSL_CMP_PKIBODY_POLLREQ) {
         if (srv_ctx->process_pollReq == NULL)
