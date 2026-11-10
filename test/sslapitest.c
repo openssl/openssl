@@ -8394,6 +8394,130 @@ end:
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
 #endif
 
+#if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_EC)
+/*
+ * Test TLSv1.3 group negotiation on a server running in Suite B mode.
+ * In Suite B mode the server's supported groups list is replaced by a fixed
+ * list of P-256 and/or P-384, and the group tuples used by the key_share
+ * processing must describe that list rather than the configured one
+ * (CVE-2026-35190).
+ *
+ * Test 0: SUITEB_128_LOS, client offers X25519 only: no shared group
+ * Test 1: SUITEB_128_LOS, client offers X25519 and P-384: HRR to P-384
+ * Test 2: SUITEB_128_LOS, client offers P-256 only: P-256
+ * Test 3: SUITEB_128_LOS_ONLY, client offers P-384 and P-256: P-256
+ * Test 4: SUITEB_192_LOS, client offers P-256 and P-384: P-384
+ * Test 5: SUITEB_192_LOS, client offers X25519 and P-256: no shared group
+ *
+ * Each of the above is run four times so that both the client and the server
+ * preference walks of the key_share processing are covered, with the server
+ * group list configured either on the SSL_CTX or on the SSL object:
+ *
+ * Tests  0 -  5: client preference, groups set on the SSL_CTX
+ * Tests  6 - 11: server preference, groups set on the SSL_CTX
+ * Tests 12 - 17: client preference, groups set on the SSL
+ * Tests 18 - 23: server preference, groups set on the SSL
+ */
+static int test_suiteb_tls13_groups(int idx)
+{
+    const struct {
+        unsigned long cert_flags;
+        const char *certfile;
+        const char *keyfile;
+        const char *clientgroups;
+        int expectednid;
+    } tests[] = {
+        { SSL_CERT_FLAG_SUITEB_128_LOS, "p256-server-cert.pem",
+            "p256-server-key.pem", "X25519", NID_undef },
+        { SSL_CERT_FLAG_SUITEB_128_LOS, "p256-server-cert.pem",
+            "p256-server-key.pem", "X25519:P-384", NID_secp384r1 },
+        { SSL_CERT_FLAG_SUITEB_128_LOS, "p256-server-cert.pem",
+            "p256-server-key.pem", "P-256", NID_X9_62_prime256v1 },
+        { SSL_CERT_FLAG_SUITEB_128_LOS_ONLY, "p256-server-cert.pem",
+            "p256-server-key.pem", "P-384:P-256", NID_X9_62_prime256v1 },
+        { SSL_CERT_FLAG_SUITEB_192_LOS, "p384-server-cert.pem",
+            "p384-server-key.pem", "P-256:P-384", NID_secp384r1 },
+        { SSL_CERT_FLAG_SUITEB_192_LOS, "p384-server-cert.pem",
+            "p384-server-key.pem", "X25519:P-256", NID_undef },
+    };
+    /*
+     * Make the configured server group list disagree as much as possible
+     * with the Suite B list: several tuples with several groups each. The
+     * '?' prefix lets groups unavailable in the current provider (e.g.
+     * X25519 in FIPS) drop out; the exact resulting shape does not matter
+     * as long as it differs from the Suite B list.
+     */
+    const char *groups = "?X25519 / P-256:P-384 / ?X448:P-521 / ?ffdhe2048";
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *s = NULL, *c = NULL;
+    char *scert = NULL, *skey = NULL;
+    int server_pref = (idx / OSSL_NELEM(tests)) & 1;
+    int groups_on_ssl = (idx / OSSL_NELEM(tests)) >> 1;
+    int test = 0;
+
+    idx %= OSSL_NELEM(tests);
+
+#ifdef OPENSSL_NO_ECX
+    if (strncmp(tests[idx].clientgroups, "X25519", 6) == 0)
+        return TEST_skip("X25519 is not supported in this build.");
+#endif
+    if (is_fips && strncmp(tests[idx].clientgroups, "X25519", 6) == 0)
+        return TEST_skip("X25519 might not be available in fips provider.");
+
+    if (!TEST_ptr(scert = test_mk_file_path(certsdir, tests[idx].certfile))
+        || !TEST_ptr(skey = test_mk_file_path(certsdir, tests[idx].keyfile)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION,
+            TLS1_3_VERSION, &sctx, &cctx, scert, skey)))
+        goto end;
+
+    if (!groups_on_ssl && !TEST_true(SSL_CTX_set1_groups_list(sctx, groups)))
+        goto end;
+    if (!TEST_true(SSL_CTX_set1_groups_list(cctx, tests[idx].clientgroups)))
+        goto end;
+
+    SSL_CTX_set_cert_flags(sctx, tests[idx].cert_flags);
+    if (server_pref)
+        SSL_CTX_set_options(sctx, SSL_OP_SERVER_PREFERENCE);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &s, &c, NULL, NULL)))
+        goto end;
+
+    if (groups_on_ssl && !TEST_true(SSL_set1_groups_list(s, groups)))
+        goto end;
+
+    if (tests[idx].expectednid == NID_undef) {
+        /*
+         * The server must reject the ClientHello because there is no shared
+         * group and not for any other reason. Asking for SSL_ERROR_SSL makes
+         * create_ssl_connection() stop at the server's failure and leave its
+         * error on the queue.
+         */
+        if (!TEST_false(create_ssl_connection(s, c, SSL_ERROR_SSL))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_NO_SUITABLE_KEY_SHARE))
+            goto end;
+    } else {
+        if (!TEST_true(create_ssl_connection(s, c, SSL_ERROR_NONE))
+            || !TEST_int_eq(SSL_get_negotiated_group(s), tests[idx].expectednid)
+            || !TEST_int_eq(SSL_get_negotiated_group(c), tests[idx].expectednid))
+            goto end;
+    }
+
+    test = 1;
+end:
+    SSL_free(s);
+    SSL_free(c);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OPENSSL_free(scert);
+    OPENSSL_free(skey);
+    return test;
+}
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_EC) */
+
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
 /*
  * Test (D)TLSv1.3 Cipher Suite
@@ -19718,6 +19842,9 @@ int setup_tests(void)
 #else
     /* Test with only TLSv1.3 versions */
     ADD_ALL_TESTS(test_key_exchange, 23);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_suiteb_tls13_groups, 24);
 #endif
     ADD_ALL_TESTS(test_custom_exts, 6);
     ADD_TEST(test_pha_key_update);
