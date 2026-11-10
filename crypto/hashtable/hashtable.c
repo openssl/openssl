@@ -585,13 +585,14 @@ static void free_old_ht_value(void *arg)
 static ossl_inline int match_key(HT_KEY *a, HT_KEY *b)
 {
     /*
-     * keys match if they are both present, the same size
-     * and compare equal in memory
+     * If both keys are present, they match when they are the same size and
+     * compare equal in memory.
      */
     PREFETCH(a->keybuf);
     PREFETCH(b->keybuf);
-    if (a->keybuf != NULL && b->keybuf != NULL && a->keysize == b->keysize)
-        return !memcmp(a->keybuf, b->keybuf, a->keysize);
+    if (a->keybuf != NULL && b->keybuf != NULL)
+        return a->keysize == b->keysize
+            && !memcmp(a->keybuf, b->keybuf, a->keysize);
 
     return 1;
 }
