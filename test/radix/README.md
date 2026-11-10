@@ -18,8 +18,9 @@ test vignettes for network protocol testing applications. While it is currently
 used for QUIC, it has been designed to be agnostic so that it can be adapted to
 other protocols in future if desired.
 
-In particular, it does not assume a single client and a single server. Examples of vignettes designed to be
-supported by the RADIX test framework in future include:
+In particular, it does not assume a single client and a single server. Examples
+of vignettes designed to be supported by the RADIX test framework in future
+include:
 
 - single client ↔ single server
 - multiple clients ↔ single server
@@ -58,7 +59,9 @@ The RADIX test framework has the following features:
 - Scripts are named, rather than numbered, giving more useful debug output,
   and hopefully reducing the frequency of merge conflicts.
 
-- Debug logging has been designed to be accessible and useful.
+- Debug output includes a listing of each generated script (with its name,
+  source location and description), a trace of each executed operation, and
+  the final state of the operand stack.
 
 - Logging of child threads is buffered and printed after a test is complete,
   which avoids non-deterministic interleaving of test output.
