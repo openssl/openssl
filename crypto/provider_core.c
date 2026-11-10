@@ -242,6 +242,32 @@ static void provider_deactivate_free(OSSL_PROVIDER *prov)
     ossl_provider_free(prov);
 }
 
+/*
+ * Deinitialise a provider: run its teardown callback and release the
+ * resources tied to being initialised.  This is normally done late, when
+ * the last provider reference is dropped (see ossl_provider_free), but is
+ * forced early when the provider store itself is destroyed.
+ */
+static void provider_deinit(OSSL_PROVIDER *prov)
+{
+    if (prov->flag_initialized) {
+        ossl_provider_teardown(prov);
+#ifndef OPENSSL_NO_ERR
+#ifndef FIPS_MODULE
+        if (prov->error_strings != NULL) {
+            ERR_unload_strings(prov->error_lib, prov->error_strings);
+            OPENSSL_free(prov->error_strings);
+            prov->error_strings = NULL;
+        }
+#endif
+#endif
+        OPENSSL_free(prov->operation_bits);
+        prov->operation_bits = NULL;
+        prov->operation_bits_sz = 0;
+        prov->flag_initialized = 0;
+    }
+}
+
 #ifndef FIPS_MODULE
 static void ossl_provider_child_cb_free(OSSL_PROVIDER_CHILD_CB *cb)
 {
@@ -820,22 +846,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * provider's services.  Therefore, we deinit late.
          */
         if (ref == 0) {
-            if (prov->flag_initialized) {
-                ossl_provider_teardown(prov);
-#ifndef OPENSSL_NO_ERR
-#ifndef FIPS_MODULE
-                if (prov->error_strings != NULL) {
-                    ERR_unload_strings(prov->error_lib, prov->error_strings);
-                    OPENSSL_free(prov->error_strings);
-                    prov->error_strings = NULL;
-                }
-#endif
-#endif
-                OPENSSL_free(prov->operation_bits);
-                prov->operation_bits = NULL;
-                prov->operation_bits_sz = 0;
-                prov->flag_initialized = 0;
-            }
+            provider_deinit(prov);
 
 #ifndef FIPS_MODULE
             /*
