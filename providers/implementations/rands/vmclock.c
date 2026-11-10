@@ -123,28 +123,21 @@ static uint16_t vmclock_le16(uint16_t v)
 {
     DECLARE_IS_ENDIAN;
 
-    if (IS_LITTLE_ENDIAN)
-        return v;
-    return (uint16_t)((v >> 8) | (v << 8));
+    return IS_LITTLE_ENDIAN ? v : __builtin_bswap16(v);
 }
 
 static uint32_t vmclock_le32(uint32_t v)
 {
     DECLARE_IS_ENDIAN;
 
-    if (IS_LITTLE_ENDIAN)
-        return v;
-    return (v >> 24) | ((v >> 8) & 0xff00u) | ((v << 8) & 0xff0000u) | (v << 24);
+    return IS_LITTLE_ENDIAN ? v : __builtin_bswap32(v);
 }
 
 static uint64_t vmclock_le64(uint64_t v)
 {
     DECLARE_IS_ENDIAN;
 
-    if (IS_LITTLE_ENDIAN)
-        return v;
-    return ((uint64_t)vmclock_le32((uint32_t)v) << 32)
-        | vmclock_le32((uint32_t)(v >> 32));
+    return IS_LITTLE_ENDIAN ? v : __builtin_bswap64(v);
 }
 
 /*
