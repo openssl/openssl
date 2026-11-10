@@ -228,6 +228,14 @@ static const uint16_t suiteb_curves[] = {
 static const size_t suiteb_tuples_both[] = { OSSL_NELEM(suiteb_curves) };
 static const size_t suiteb_tuples_one[] = { 1 };
 
+/*
+ * Requested key shares in Suite B mode: the "no key share was requested"
+ * marker described at tls1_get_requested_keyshare_groups(). It makes
+ * tls_construct_ctos_key_share() send a single key share for the first usable
+ * group of the Suite B list returned by tls1_get_supported_groups().
+ */
+static const uint16_t suiteb_keyshares[] = { 0 };
+
 /* Group list string of the built-in pseudo group DEFAULT_SUITE_B */
 #define SUITE_B_GROUP_NAME "DEFAULT_SUITE_B"
 #define SUITE_B_GROUP_LIST "?secp256r1:?secp384r1",
@@ -862,11 +870,22 @@ void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
  * The 'flag' is checked right at the beginning in tls_construct_ctos_key_share and either
  * the "list of requested key share groups" is used, or the "list of supported groups" in
  * combination with setting add_only_one = 1 is applied.
+ *
+ * In Suite B mode the supported groups list is replaced by a fixed list, so
+ * the configured key shares do not apply: they may name groups that are not
+ * in that list, and a key share for a group missing from supported_groups is
+ * rejected by the peer. The same 'flag' is returned in that case.
  */
 void tls1_get_requested_keyshare_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
     size_t *pgroupslen)
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    if (tls1_suiteb(s)) {
+        *pgroups = suiteb_keyshares;
+        *pgroupslen = OSSL_NELEM(suiteb_keyshares);
+        return;
+    }
 
     if (s->ext.supportedgroups == NULL) {
         *pgroups = sctx->ext.supportedgroups;

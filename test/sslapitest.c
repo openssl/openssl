@@ -8513,6 +8513,93 @@ end:
     OPENSSL_free(skey);
     return testresult;
 }
+
+/*
+ * Test TLSv1.3 group negotiation with a client running in Suite B mode.
+ * In Suite B mode the client's supported_groups extension carries a fixed
+ * list of P-256 and/or P-384, so the key_share extension must offer a group
+ * from that list rather than one from the configured key shares.
+ *
+ * Test 0: SUITEB_128_LOS: P-256
+ * Test 1: SUITEB_128_LOS_ONLY: P-256
+ * Test 2: SUITEB_192_LOS: P-384
+ *
+ * Each of the above is run three times with different client group
+ * configurations, none of which may influence the result:
+ *
+ * Tests 0 - 2: default groups
+ * Tests 3 - 5: groups without key share markers set on the SSL_CTX
+ * Tests 6 - 8: groups with explicit key shares set on the SSL
+ */
+static int test_suiteb_tls13_client_keyshare(int idx)
+{
+    static const struct {
+        unsigned long cert_flags;
+        const char *certfile;
+        const char *keyfile;
+        int expectednid;
+    } tests[] = {
+        { SSL_CERT_FLAG_SUITEB_128_LOS, "p256-server-cert.pem",
+            "p256-server-key.pem", NID_X9_62_prime256v1 },
+        { SSL_CERT_FLAG_SUITEB_128_LOS_ONLY, "p256-server-cert.pem",
+            "p256-server-key.pem", NID_X9_62_prime256v1 },
+        { SSL_CERT_FLAG_SUITEB_192_LOS, "p384-server-cert.pem",
+            "p384-server-key.pem", NID_secp384r1 },
+    };
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    char *scert = NULL, *skey = NULL;
+    int groupcfg = idx / OSSL_NELEM(tests);
+    int testresult = 0;
+
+    idx %= OSSL_NELEM(tests);
+
+    if (!TEST_ptr(scert = test_mk_file_path(certsdir, tests[idx].certfile))
+        || !TEST_ptr(skey = test_mk_file_path(certsdir, tests[idx].keyfile)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION,
+            TLS1_3_VERSION, &sctx, &cctx, scert, skey)))
+        goto end;
+
+    /* The server accepts every group the client could wrongly pick */
+    if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "P-521:P-384:P-256")))
+        goto end;
+
+    if (groupcfg == 1
+        && !TEST_true(SSL_CTX_set1_groups_list(cctx, "P-521:P-384:P-256")))
+        goto end;
+
+    SSL_CTX_set_cert_flags(cctx, tests[idx].cert_flags);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (groupcfg == 2
+        && !TEST_true(SSL_set1_groups_list(clientssl,
+            "*P-521 / *P-384:P-256")))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_get_negotiated_group(serverssl),
+            tests[idx].expectednid)
+        || !TEST_int_eq(SSL_get_negotiated_group(clientssl),
+            tests[idx].expectednid))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OPENSSL_free(scert);
+    OPENSSL_free(skey);
+    return testresult;
+}
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_EC) */
 
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
@@ -19842,6 +19929,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_suiteb_tls13_groups, 24);
+    ADD_ALL_TESTS(test_suiteb_tls13_client_keyshare, 9);
 #endif
     ADD_ALL_TESTS(test_custom_exts, 6);
     ADD_TEST(test_pha_key_update);
