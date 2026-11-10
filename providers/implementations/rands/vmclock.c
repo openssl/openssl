@@ -141,16 +141,36 @@ static uint64_t vmclock_le64(uint64_t v)
 }
 
 /*
- * OPENSSL_VMCLOCK names another device or file, for tests. A set-user-ID or
- * set-group-ID process ignores it.
+ * OPENSSL_VMCLOCK names another device or file, for tests. Only a debug
+ * build reads it, and there a set-user-ID or set-group-ID process ignores
+ * it.
  */
 static const char *vmclock_path(void)
 {
+#ifndef NDEBUG
     const char *path = ossl_safe_getenv("OPENSSL_VMCLOCK");
 
-    if (path == NULL || *path == '\0')
-        return OSSL_VMCLOCK_DEVICE;
-    return path;
+    if (path != NULL && *path != '\0')
+        return path;
+#endif
+    return OSSL_VMCLOCK_DEVICE;
+}
+
+/*
+ * The device or, in a debug build, where a test may name one, a regular
+ * file that holds the whole structure: reading past the end of a shorter
+ * file would fault.
+ */
+static int vmclock_file_ok(const struct stat *st)
+{
+    if (S_ISCHR(st->st_mode))
+        return 1;
+#ifndef NDEBUG
+    if (S_ISREG(st->st_mode)
+        && st->st_size >= (off_t)sizeof(struct ossl_vmclock_page))
+        return 1;
+#endif
+    return 0;
 }
 
 /* Maps the page, setting |*len|; returns NULL if there is none we can read. */
@@ -169,14 +189,7 @@ static void *vmclock_map(size_t *len)
     fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
     if (fd < 0)
         return NULL;
-    /*
-     * The device, or for tests a regular file that holds the whole
-     * structure: reading past the end of a shorter file would fault.
-     */
-    if (fstat(fd, &st) != 0
-        || !(S_ISCHR(st.st_mode)
-            || (S_ISREG(st.st_mode)
-                && st.st_size >= (off_t)sizeof(struct ossl_vmclock_page)))) {
+    if (fstat(fd, &st) != 0 || !vmclock_file_ok(&st)) {
         close(fd);
         return NULL;
     }
